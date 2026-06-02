@@ -1,0 +1,796 @@
+import { useEffect, useState, useMemo, useRef } from "react";
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { Card, Row, Col, Tag, Typography, Empty, Space, Divider, Button, Modal, List, Badge, Spin, Alert, Input } from 'antd';
+import { StockOutlined, LineChartOutlined, ClockCircleOutlined, HistoryOutlined, AlertOutlined, RiseOutlined, FallOutlined, AreaChartOutlined, WarningOutlined, SearchOutlined, CaretUpOutlined, CaretDownOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import { local_ip } from '../../constant';
+import StockKLineModal from '../../components/StockKLineModal';
+import './index.scss';
+
+const { Title, Text } = Typography;
+
+const colorMap = {
+    lowGreen: '#00B42A',
+    mediumGreen: '#00B42A',
+    highGreen: '#00881C',
+    lowRed: '#F53F3F',
+    mediumRed: '#F53F3F',
+    highRed: '#C92323',
+};
+
+const bgMap = {
+    lowGreen: '#E8FFEA',
+    mediumGreen: '#AFF0B5',
+    highGreen: '#73E581',
+    lowRed: '#FFECE8',
+    mediumRed: '#FFD8D0',
+    highRed: '#FFB1A4',
+};
+
+const DingPan = () => {
+    const navigate = useNavigate();
+    const [data, setData] = useState({ unNormalDaPanData: [], unNormalStockList: [], diagnoseData: [], topAndBottomBlockData: null, allStockData: {}, amountInfo: null, jingJiaQiangChouData: [], kaiPanZhuDongData: [] });
+    const [loading, setLoading] = useState(true);
+    const [lastUpdated, setLastUpdated] = useState(null);
+    const [history, setHistory] = useState([]); // 记录所有发生过的急速异动
+    const [searchQuery, setSearchQuery] = useState(''); // 自选股搜索关键词
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [klineModalVisible, setKlineModalVisible] = useState(false);
+    const [selectedStock, setSelectedStock] = useState(null);
+    const notifiedStocks = useRef(new Set()); // 用于记录已通知的异动，防止重复提醒
+    const prevAllStockDataRef = useRef({}); // 记录上一次的自选股数据，用于对比涨幅趋势
+
+    // 资金与成交量趋势监控相关
+    const [amountHistory, setAmountHistory] = useState([]);
+    const [topAlert, setTopAlert] = useState(null); // 存储当前显示的顶部告警信息
+
+    // 打开 K 线弹窗
+    const showKLine = (stock) => {
+        setSelectedStock(stock);
+        setKlineModalVisible(true);
+    };
+
+    // 跳转到重点板块并定位
+    const jumpToBlock = (blockName) => {
+        navigate(`/block?blockName=${encodeURIComponent(blockName)}`);
+    };
+
+    // 请求通知权限
+    useEffect(() => {
+        if ("Notification" in window) {
+            if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
+        }
+    }, []);
+
+    const sendDesktopNotification = (stockName, label, changeDiff, stockCode, desc) => {
+
+        // 记录到历史记录中（去重逻辑：如果 3 分钟内名称、代码、标签、幅度都一致，则不重复添加）
+        setHistory(prev => {
+            const now = Date.now();
+            const threeMinutesAgo = now - 3 * 60 * 1000;
+            
+            const isDuplicate = prev.some(item => 
+                item.id > threeMinutesAgo && // 只检查 3 分钟内的记录
+                item.name === stockName && 
+                item.code === stockCode && 
+                item.label === label && 
+                item.changeDiff === changeDiff
+            );
+            
+            if (isDuplicate) return prev;
+
+            return [{
+                id: now,
+                name: stockName,
+                code: stockCode,
+                label,
+                desc,
+                changeDiff,
+                time: dayjs().format('HH:mm:ss'),
+                type: label.includes('拉升') ? 'up' : 'down'
+            }, ...prev];
+        });
+
+        if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+        const time = dayjs().format('HH:mm');
+        const notifyKey = `${stockName}-${label}-${time}`;
+        if (notifiedStocks.current.has(notifyKey)) return;
+
+        new Notification("📈 盯盘异动提醒", {
+            body: `【${stockName}】发生急速波动！\n类型：${label}\n幅度：${changeDiff}\n时间：${dayjs().format('HH:mm:ss')}`,
+            icon: '/favicon.svg'
+        });
+
+        notifiedStocks.current.add(notifyKey);
+
+
+        // 10分钟后清除记录，允许再次提醒
+        setTimeout(() => {
+            notifiedStocks.current.delete(notifyKey);
+        }, 10 * 60 * 1000);
+    };
+
+    const dapanList = useMemo(() => {
+        const value = data.unNormalDaPanData || [];
+        return value.map(item => {
+            const isUp = item.change > 0;
+            const statusKey = isUp ? 'highRed' : 'highGreen';
+            return {
+                name: item.name,
+                color: colorMap[statusKey],
+                bgColor: bgMap[statusKey],
+                statusKey,
+                change: `${isUp ? '+' : ''}${item.change}${Math.abs(item.change) > 100 ? '' : '%'}`,
+                desc: `${item.name}: ${isUp ? '涨' : '跌'} ${item.change}${item.change > 100 ? '' : '%'} `,
+            };
+        });
+    }, [data.unNormalDaPanData]);
+
+    const filteredAllStockData = useMemo(() => {
+        const stocks = data.allStockData || [];
+        if (!searchQuery) return stocks;
+        const query = searchQuery.toLowerCase();
+        return stocks.filter(stock => 
+            (stock.stockName && stock.stockName.toLowerCase().includes(query)) ||
+            (stock.code && stock.code.toLowerCase().includes(query))
+        );
+    }, [data.allStockData, searchQuery]);
+
+    const stockData = useMemo(() => {
+        const value = data.unNormalStockList || [];
+        const waveList = [];
+        const changeList = [];
+
+        value.forEach(item => {
+            const change = item.change;
+
+            // 1. 处理普通涨跌 (按 change 排序)
+            let statusKey = '';
+            if (change < 0) {
+                if (change > -2) statusKey = 'lowGreen';
+                else if (change > -5) statusKey = 'mediumGreen';
+                else statusKey = 'highGreen';
+            } else if (change > 0) {
+                if (change < 2) statusKey = 'lowRed';
+                else if (change < 5) statusKey = 'mediumRed';
+                else statusKey = 'highRed';
+            }
+
+            if (statusKey) {
+                changeList.push({
+                    name: item.name,
+                    code: item.code,
+                    color: colorMap[statusKey],
+                    bgColor: bgMap[statusKey],
+                    statusKey,
+                    changeValue: change,
+                    change: `${change > 0 ? '+' : ''}${change}%`,
+                    label: change > 0 ? '幅度大涨' : '幅度大跌',
+                    desc: item.desc,
+                    type: 'change'
+                });
+            }
+
+            // 2. 处理急速波动 (放在最前面)
+            if (Math.abs(item.change_diff) > 0.3) {
+                const waveStatusKey = item.change_diff > 0 ? 'highRed' : 'highGreen';
+                const label = item.change_diff > 0 ? '急速拉升 ⚡' : '急速下跌 📉';
+                const changeDiffStr = `${item.change_diff > 0 ? '+' : ''}${item.change_diff.toFixed(2)}%`;
+
+                waveList.push({
+                    name: item.name,
+                    code: item.code,
+                    color: colorMap[waveStatusKey],
+                    bgColor: bgMap[waveStatusKey],
+                    statusKey: waveStatusKey,
+                    change: `${item.change}%`,
+                    change_diff: changeDiffStr,
+                    label,
+                    desc: item.desc,
+                    time: dayjs().format('HH:mm:ss'),
+                    type: 'wave'
+                });
+
+                // 触发桌面通知和记录
+                sendDesktopNotification(item.name, label, changeDiffStr, item.code, item.desc);
+            }
+        });
+
+        // 按 change 从大到小排序
+        changeList.sort((a, b) => b.changeValue - a.changeValue);
+
+        // 按急速异动的幅度降序排序，幅度越大的在越前面
+        waveList.sort((a, b) => {
+            const aVal = parseFloat(a.change_diff);
+            const bVal = parseFloat(b.change_diff);
+            return Math.abs(bVal) - Math.abs(aVal);
+        });
+
+        //     // mock
+        //      // 触发桌面通知和记录
+        //  sendDesktopNotification('测试移动', '急速拉升 ⚡', '+2%', 'sh688313');
+
+        return { waveList, changeList };
+    }, [data.unNormalStockList]);
+
+    const fetchData = async () => {
+        try {
+            const response = await axios.get(`http://${local_ip}:3000/notice_data`);
+            const newData = response.data;
+            
+            // 为自选股数据注入上一次的涨幅信息
+            if (newData.allStockData && Array.isArray(newData.allStockData)) {
+                newData.allStockData = newData.allStockData.map(stock => {
+                    const prevData = prevAllStockDataRef.current[stock.code];
+                    return {
+                        ...stock,
+                        prevChange: prevData !== undefined ? prevData : stock.change
+                    };
+                });
+                
+                // 更新 ref 以供下次对比
+                const nextPrevData = {};
+                newData.allStockData.forEach(stock => {
+                    nextPrevData[stock.code] = stock.change;
+                });
+                prevAllStockDataRef.current = nextPrevData;
+            }
+
+            setData(newData);
+            setLastUpdated(dayjs().format('HH:mm:ss'));
+        } catch (error) {
+            console.error('Fetch data failed:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchAmountData = async () => {
+        try {
+            const response = await axios.get(`http://${local_ip}:3000/dapan_data`);
+            const dapanData = response.data;
+            const amountInfo = { mainMoney: dapanData.mainMoney, amountChangeDiff: dapanData.amountChangeDiff };
+            const indexQuote = dapanData.index_quote || [];
+            const shangzheng = indexQuote.find(item => item.secu_code === 'sh000001');
+            const shenzheng = indexQuote.find(item => item.secu_code === 'sz399001');
+            const chuangyeban = indexQuote.find(item => item.secu_code === 'sz399006');
+            const kechuangban = indexQuote.find(item => item.secu_code === 'sh000688');
+            
+            if (amountInfo) {
+                const mainMoney = parseFloat(amountInfo.mainMoney) || 0;
+                const amountChangeDiff = parseFloat(amountInfo.amountChangeDiff) || 0;
+                
+                // 提取四大指数的价格
+                const szPrice = parseFloat(shangzheng?.last_px || 0);
+                const shPrice = parseFloat(shenzheng?.last_px || 0);
+                const cyPrice = parseFloat(chuangyeban?.last_px || 0);
+                const kcPrice = parseFloat(kechuangban?.last_px || 0);
+
+                const normalizedInfo = { 
+                    ...amountInfo, 
+                    mainMoney, 
+                    amountChangeDiff,
+                    szPrice,
+                    shPrice,
+                    cyPrice,
+                    kcPrice
+                };
+                console.log('>>> normalized info', normalizedInfo);
+                
+                let triggerAlert = null;
+
+                // 1. 趋势判断
+                setAmountHistory(prev => {
+                    const newHistory = [...prev, normalizedInfo].slice(-3); // 只保留最近3次
+                    
+                    if (newHistory.length === 3) {
+                        const [h1, h2, h3] = newHistory;
+                        
+                        // 资金趋势
+                        const isMainMoneyIncreasing = h3.mainMoney > h2.mainMoney && h2.mainMoney > h1.mainMoney;
+                        const isMainMoneyDecreasing = h3.mainMoney < h2.mainMoney && h2.mainMoney < h1.mainMoney;
+                        
+                        // 成交量趋势
+                        const isAmountIncreasing = h3.amountChangeDiff > h2.amountChangeDiff && h2.amountChangeDiff > h1.amountChangeDiff;
+                        const isAmountDecreasing = h3.amountChangeDiff < h2.amountChangeDiff && h2.amountChangeDiff < h1.amountChangeDiff;
+
+                        // 指数价格趋势 (以上证指数为基准)
+                        const isPriceIncreasing = h3.szPrice > h2.szPrice && h2.szPrice > h1.szPrice;
+                        const isPriceDecreasing = h3.szPrice < h2.szPrice && h2.szPrice < h1.szPrice;
+
+                        let trendTitle = '';
+                        let alertType = 'warning';
+
+                        // 量价齐升逻辑
+                        if (isPriceIncreasing && isAmountIncreasing) {
+                            trendTitle = '🚀 量价齐升！大盘指数与成交量双双走强，适合出手博弈！';
+                            alertType = 'error'; // 积极信号用红色
+                        } 
+                        // 量价背离逻辑 (价升量缩)
+                        else if (isPriceIncreasing && isAmountDecreasing) {
+                            trendTitle = '⚠️ 量价趋势背离！指数上涨但成交量萎缩，需警惕诱多风险！';
+                            alertType = 'success'; // 风险信号用绿色 (按用户之前逻辑，缩量用绿色)
+                        }
+                        // 量价背离逻辑 (价跌量增)
+                        else if (isPriceDecreasing && isAmountIncreasing) {
+                            trendTitle = '⚠️ 量价背离！指数下跌但成交量放大，恐慌盘正在涌出，注意风险！';
+                            alertType = 'success';
+                        }
+                        // 基础趋势判断
+                        else if (isMainMoneyIncreasing && isAmountIncreasing) {
+                            trendTitle = '⚠️ 大盘量价齐升！主力资金与成交量均在持续走强';
+                            alertType = 'error';
+                        }
+                        else if (isMainMoneyDecreasing && isAmountDecreasing) {
+                            trendTitle = '🚨 警惕！量价齐跌，主力资金与成交量持续萎缩';
+                            alertType = 'success';
+                        }
+                        else if (isMainMoneyIncreasing) {
+                            trendTitle = '💰 主力资金持续加速流入';
+                            alertType = 'error';
+                        }
+                        else if (isMainMoneyDecreasing) {
+                            trendTitle = '💸 主力资金持续加速流出';
+                            alertType = 'success';
+                        }
+                        else if (isAmountIncreasing) {
+                            trendTitle = '📈 成交量持续放量增加';
+                            alertType = 'error';
+                        }
+                        else if (isAmountDecreasing) {
+                            trendTitle = '📉 成交量持续缩量减少';
+                            alertType = 'success';
+                        }
+
+                        if (trendTitle) {
+                            triggerAlert = {
+                                title: trendTitle,
+                                time: dayjs().format('HH:mm:ss'),
+                                mainMoney: h3.mainMoney,
+                                amountChangeDiff: h3.amountChangeDiff,
+                                moneyTrend: h3.mainMoney >= 0 ? '净流入' : '净流出',
+                                amountTrend: h3.amountChangeDiff >= 0 ? '持续增加' : '持续减少',
+                                type: alertType
+                            };
+                        }
+                    }
+                    
+                    if (triggerAlert) {
+                        setTopAlert(triggerAlert);
+                    }
+                    
+                    return newHistory;
+                });
+            }
+        } catch (error) {
+            console.error('Fetch amount data failed:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+        fetchAmountData();
+        
+        const monitorTimer = setInterval(fetchData, 5000);
+        const amountTimer = setInterval(fetchAmountData, 10000); // 10s 轮询一次
+        
+        return () => {
+            clearInterval(monitorTimer);
+            clearInterval(amountTimer);
+        };
+    }, []);
+
+    console.log('>> amount history', amountHistory);
+
+    return (
+        <div className="dingpan-container">
+            {topAlert && (
+                <div className="top-global-alert" style={{ marginBottom: 16 }}>
+                    <Alert
+                        message={<Text strong style={{ fontSize: '16px' }}>{topAlert.title}</Text>}
+                        description={
+                            <div style={{ marginTop: 8 }}>
+                                <Space size="large">
+                                    <span><ClockCircleOutlined /> 发生时间: <Text strong>{topAlert.time}</Text></span>
+                                    <span>主力资金: <Text strong style={{ color: topAlert.mainMoney >= 0 ? '#cf1322' : '#389e0d' }}>{topAlert.moneyTrend} ({topAlert.mainMoney > 0 ? '+' : ''}{topAlert.mainMoney}亿)</Text></span>
+                                    <span>当前成交量相比上一日: <Text strong  style={{ color: topAlert.amountChangeDiff >= 0 ? '#cf1322' : '#389e0d' }}>{topAlert.amountChangeDiff}亿</Text></span>
+                                </Space>
+                                <div style={{ marginTop: 8, color: '#666' }}>
+                                    提示：当前大盘核心指标出现显著趋势性变化，请密切关注仓位风险。
+                                </div>
+                            </div>
+                        }
+                        type={topAlert.type}
+                        showIcon
+                        closable
+                        onClose={() => setTopAlert(null)}
+                        icon={<WarningOutlined style={{ fontSize: '24px' }} />}
+                    />
+                </div>
+            )}
+            <div className="page-header">
+                <div className="header-left">
+                    <Title level={4}>实时监控面板</Title>
+                    {lastUpdated && (
+                        <Text type="secondary">
+                            <ClockCircleOutlined /> 最后更新: {lastUpdated}
+                        </Text>
+                    )}
+                </div>
+                <div className="header-right">
+                    <Badge count={history.length} overflowCount={99} size="small" offset={[0, 0]}>
+                        <Button
+                            type="primary"
+                            icon={<HistoryOutlined />}
+                            onClick={() => setIsModalOpen(true)}
+                            className="history-btn"
+                        >
+                            异动历史记录
+                        </Button>
+                    </Badge>
+                </div>
+            </div>
+
+            {loading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                    <Spin size="large" tip="正在初始化实时监控数据..." />
+                </div>
+            ) : (
+                <Row gutter={[24, 24]}>
+                    {/* 左侧主要监控区 */}
+                    <Col xs={24} lg={17}>
+                        {/* 抢筹与拉升模块 */}
+                        <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
+                            <Col span={12}>
+                                <Card
+                                    title={<><RiseOutlined style={{ color: '#ff4d4f' }} /> 竞价抢筹监控</>}
+                                    className="monitor-card jingjia-card"
+                                    variant="borderless"
+                                >
+                                    {data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0 ? (
+                                        <div className="jingjia-grid">
+                                            {data.jingJiaQiangChouData.map((item, index) => {
+                                                const isUp = item.change >= 0;
+                                                const color = isUp ? '#f5222d' : '#52c41a';
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className="jingjia-item"
+                                                        onClick={() => showKLine({ name: item.stockName, code: item.code, change: item.change })}
+                                                        style={{ cursor: 'pointer' }}
+                                                    >
+                                                        <div className="stock-info">
+                                                            <Text strong style={{ fontSize: '14px' }}>{item.stockName}</Text>
+                                                            <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.code?.replace('sh', '').replace('sz', '')}</Text>
+                                                        </div>
+                                                        <div className="stock-values">
+                                                            <Text strong style={{ color: color, fontSize: '14px' }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
+                                                            <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.last_px?.toFixed(2)}</Text>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <Empty description="暂无竞价抢筹数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                                    )}
+                                </Card>
+                            </Col>
+                            <Col span={12}>
+                                <Card
+                                    title={<><ThunderboltOutlined style={{ color: '#faad14' }} /> 开盘主动拉升</>}
+                                    className="monitor-card zhudong-card"
+                                    variant="borderless"
+                                >
+                                    {data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0 ? (
+                                        <div className="jingjia-grid">
+                                            {data.kaiPanZhuDongData.map((item, index) => {
+                                                const isUp = item.change >= 0;
+                                                const color = isUp ? '#f5222d' : '#52c41a';
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className="jingjia-item"
+                                                        onClick={() => showKLine({ name: item.stockName, code: item.code, change: item.change })}
+                                                        style={{ cursor: 'pointer' }}
+                                                    >
+                                                        <div className="stock-info">
+                                                            <Text strong style={{ fontSize: '14px' }}>{item.stockName}</Text>
+                                                            <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.code?.replace('sh', '').replace('sz', '')}</Text>
+                                                        </div>
+                                                        <div className="stock-values">
+                                                            <Text strong style={{ color: color, fontSize: '14px' }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
+                                                            <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.last_px?.toFixed(2)}</Text>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <Empty description="暂无主动拉升数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                                    )}
+                                </Card>
+                            </Col>
+                        </Row>
+
+                        {/* 急速异动横幅条 */}
+                        {stockData.waveList.length > 0 && (
+                            <div className="wave-banner">
+                                <div className="wave-banner-title">
+                                    <StockOutlined className="wave-icon" />
+                                    <span>急速异动:</span>
+                                </div>
+                                <div className="wave-items-wrapper">
+                                    {stockData.waveList.map((item, index) => (
+                                        <div
+                                            key={index}
+                                            className={`wave-banner-item ${item.statusKey}`}
+                                            onClick={() => showKLine(item)}
+                                        >
+                                            <span className="wave-time">{item.time}</span>
+                                            <span className="wave-name">{item.name}</span>
+                                            <span className="wave-label">{item.label}</span>
+                                            <Tag color={item.color} className="wave-tag">{item.change_diff}</Tag>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 顶部监控栏：板块涨跌幅 + 大盘异常 */}
+                        <Row gutter={[16, 16]} style={{ marginBottom: 12 }}>
+                            <Col xs={24} md={8}>
+                                <Card className="top-block-card" variant="borderless" style={{ height: '100%' }}>
+                                    <div className="block-card-header">
+                                        <RiseOutlined className="rise-icon" />
+                                        <Title level={5} style={{ margin: 0 }}>涨幅前五板块</Title>
+                                    </div>
+                                    <div className="block-items-container">
+                                        {data.topAndBottomBlockData && data.topAndBottomBlockData.firstNumList.map((item, index) => (
+                                            <div 
+                                                key={index} 
+                                                className="block-item rise"
+                                                onClick={() => jumpToBlock(item.blockName)}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <span className="block-name">{item.blockName}</span>
+                                                <span className="block-change">+{item.avgChange}%</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Card>
+                            </Col>
+                            <Col xs={24} md={8}>
+                                <Card className="bottom-block-card" variant="borderless" style={{ height: '100%' }}>
+                                    <div className="block-card-header">
+                                        <FallOutlined className="fall-icon" />
+                                        <Title level={5} style={{ margin: 0 }}>跌幅前五板块</Title>
+                                    </div>
+                                    <div className="block-items-container">
+                                        {data.topAndBottomBlockData && data.topAndBottomBlockData.lastNumList.map((item, index) => (
+                                            <div 
+                                                key={index} 
+                                                className="block-item fall"
+                                                onClick={() => jumpToBlock(item.blockName)}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <span className="block-name">{item.blockName}</span>
+                                                <span className="block-change">{item.avgChange}%</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Card>
+                            </Col>
+                            <Col xs={24} md={8}>
+                                <Card
+                                    title={<><LineChartOutlined /> 大盘异常监控</>}
+                                    className="monitor-card dapan-card"
+                                    variant="borderless"
+                                    style={{ height: '100%' }}
+                                >
+                                    {dapanList.length > 0 ? (
+                                        <Space direction="vertical" style={{ width: '100%' }} split={<Divider style={{ margin: '4px 0' }} />}>
+                                            {dapanList.map((item, index) => (
+                                                <div key={index} className={`data-item ${item.statusKey}`} style={{ backgroundColor: item.bgColor, padding: '4px 12px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                                                    <Text strong style={{ color: item.color, fontSize: '13px' }}>{item.name}</Text>
+                                                    <Tag color={item.color} style={{ marginLeft: 'auto', border: 'none', fontWeight: 'bold', fontSize: '12px' }}>
+                                                        {item.change}
+                                                    </Tag>
+                                                </div>
+                                            ))}
+                                        </Space>
+                                    ) : (
+                                        <Empty description="暂无大盘异常数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                                    )}
+                                </Card>
+                            </Col>
+                        </Row>
+
+                        {/* 个股异动监控区 */}
+                        <Card
+                            title={<><StockOutlined /> 个股幅度异动 (按涨幅排序)</>}
+                            className="monitor-card stock-card"
+                            variant="borderless"
+                        >
+                            {stockData.changeList.length > 0 ? (
+                                <div className="stock-grid">
+                                    {stockData.changeList.map((item, index) => (
+                                        <div
+                                            key={index}
+                                            className={`stock-item ${item.type} ${item.statusKey}`}
+                                            style={{ backgroundColor: item.bgColor, borderColor: item.color, cursor: 'pointer' }}
+                                            onClick={() => showKLine(item)}
+                                        >
+                                            <div className="stock-info">
+                                                <Text strong style={{ color: item.color }}>{item.name}</Text>
+                                                <Text type="secondary" size="small" style={{ fontSize: '11px', display: 'block', opacity: 0.8, color: item.color }}>
+                                                    {item.label}
+                                                </Text>
+                                                {item.desc && (
+                                                    <Text type="secondary" size="small" style={{ fontSize: '10px', display: 'block', opacity: 0.9, color: item.color, fontStyle: 'italic', marginTop: '2px' }}>
+                                                        {item.desc}
+                                                    </Text>
+                                                )}
+                                            </div>
+                                            <Tag color={item.color} className="stock-tag" style={{ border: 'none' }}>
+                                                {item.change}
+                                            </Tag>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <Empty description="暂无个股异动数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                            )}
+                        </Card>
+                    </Col>
+
+                    {/* 右侧独立列：自选股全量监控 */}
+                    <Col xs={24} lg={7}>
+                        <Card
+                            title={<><AreaChartOutlined /> 自选股全量监控</>}
+                            className="monitor-card all-stock-card"
+                            variant="borderless"
+                            bodyStyle={{ padding: '0 8px' }}
+                            style={{ height: '100%' }}
+                        >
+                            <div style={{ padding: '8px 4px' }}>
+                                <Input
+                                    placeholder="搜索股票名称/代码"
+                                    prefix={<SearchOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                    allowClear
+                                    size="small"
+                                    style={{ borderRadius: '4px' }}
+                                />
+                            </div>
+                            <div className="all-stock-list" style={{ maxHeight: 'calc(100vh - 250px)', overflowY: 'auto' }}>
+                                {filteredAllStockData && filteredAllStockData.length > 0 ? (
+                                    filteredAllStockData.map((stock, index) => {
+                                        const kline = stock || {};
+                                        const isUp = kline.change >= 0;
+                                        const color = isUp ? '#f5222d' : '#52c41a';
+                                        
+                                        // 涨幅趋势判断
+                                        const currentChange = kline.change || 0;
+                                        const prevChange = kline.prevChange || 0;
+                                        const isTrendingUp = currentChange > prevChange;
+                                        const isTrendingDown = currentChange < prevChange;
+                                        const trendColor = isTrendingUp ? '#f5222d' : (isTrendingDown ? '#52c41a' : '#999');
+
+                                        return (
+                                            <div 
+                                                key={stock.code || index} 
+                                                className="all-stock-item"
+                                                style={{ 
+                                                    display: 'flex', 
+                                                    justifyContent: 'space-between', 
+                                                    alignItems: 'center',
+                                                    padding: '8px 6px',
+                                                    borderBottom: '1px solid #f0f0f0',
+                                                    backgroundColor: index % 2 === 0 ? '#fafafa' : '#fff',
+                                                    cursor: 'pointer'
+                                                }}
+                                                onClick={() => showKLine({ name: stock.stockName, code: stock.code, change: kline.change })}
+                                            >
+                                                <div style={{ width: '85px', minWidth: 0 }}>
+                                                    <Text strong style={{ fontSize: '12px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stock.stockName}</Text>
+                                                    <div style={{ fontSize: '10px', color: '#999' }}>{stock.code?.replace('sh', '').replace('sz', '')}</div>
+                                                </div>
+                                                <div style={{ width: '50px', textAlign: 'right' }}>
+                                                    <Text strong style={{ color: color, fontSize: '12px' }}>{kline.close_px?.toFixed(2)}</Text>
+                                                </div>
+                                                <div style={{ flex: 1, textAlign: 'right', paddingRight: '8px' }}>
+                                                    <Space size={4} style={{ fontSize: '11px' }}>
+                                                        <Text type="secondary" style={{ fontSize: '10px' }}>{prevChange.toFixed(2)}%</Text>
+                                                        <Text type="secondary">→</Text>
+                                                        <Text strong style={{ color: color }}>{currentChange.toFixed(2)}%</Text>
+                                                    </Space>
+                                                </div>
+                                                <div style={{ width: '20px', textAlign: 'center' }}>
+                                                    {isTrendingUp && <CaretUpOutlined style={{ color: '#f5222d' }} />}
+                                                    {isTrendingDown && <CaretDownOutlined style={{ color: '#52c41a' }} />}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    <div style={{ padding: '40px 0' }}>
+                                        <Empty description="暂无股票数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+                    </Col>
+                </Row>
+            )}
+
+            {/* 异动历史弹窗 */}
+            <Modal
+                title={<span><HistoryOutlined /> 异动历史记录汇总</span>}
+                open={isModalOpen}
+                onCancel={() => setIsModalOpen(false)}
+                footer={null}
+                width={600}
+                className="history-modal"
+            >
+                <List
+                    itemLayout="horizontal"
+                    dataSource={history}
+                    locale={{ emptyText: <Empty description="今日暂无历史异动记录" /> }}
+                    renderItem={(item) => (
+                        <List.Item
+                            className={`history-item ${item.type}`}
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => showKLine({ name: item.name, code: item.code, change: item.changeValue || 0 })}
+                        >
+                            <List.Item.Meta
+                                avatar={
+                                    <div className={`history-avatar ${item.type}`}>
+                                        {item.type === 'up' ? '🚀' : '📉'}
+                                    </div>
+                                }
+                                title={
+                                    <div className="history-title">
+                                        <Text strong>{item.name}</Text>
+                                        <Tag color={item.type === 'up' ? 'error' : 'success'} borderless className="history-tag">
+                                            {item.label}
+                                        </Tag>
+                                    </div>
+                                }
+                                description={
+                                    <div className="history-desc">
+                                        <Space split={<Divider type="vertical" />} wrap>
+                                            <Text type="secondary"><ClockCircleOutlined /> {item.time}</Text>
+                                            <Text strong style={{ color: item.type === 'up' ? '#cf1322' : '#389e0d' }}>
+                                                异动幅度: {item.changeDiff}
+                                            </Text>
+                                        </Space>
+                                    </div>
+                                }
+                            />
+                        </List.Item>
+                    )}
+                />
+            </Modal>
+
+            {/* K 线图弹窗 */}
+            <StockKLineModal
+                visible={klineModalVisible}
+                onCancel={() => setKlineModalVisible(false)}
+                code={selectedStock?.code}
+                stockInfo={{
+                    name: selectedStock?.name,
+                    change: selectedStock?.change || selectedStock?.changeValue
+                }}
+            />
+        </div>
+    );
+};
+
+export default DingPan;
+

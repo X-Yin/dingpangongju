@@ -1,0 +1,19 @@
+.sentiment-container {
+    padding: 0;
+
+    .page-header {
+        margin-bottom: 16px !important;
+        h4 {
+            margin-bottom: 2px;
+            font-size: 16px;
+        }
+    }
+
+    .ant-card-small > .ant-card-head {
+        min-height: 32px;
+        padding: 0 8px;
+        .ant-card-head-title {
+            padding: 6px 0;
+        }
+    }
+}
