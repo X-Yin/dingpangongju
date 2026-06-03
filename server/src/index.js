@@ -75,6 +75,11 @@ app.get('/dapan_data', async (req, res) => {
   res.json(dapanData);
 });
 
+app.get('/jingjia_data', async (req, res) => {
+  const jingJiaQiangChouData = await getJingJiaQiangChouData();
+  res.json(jingJiaQiangChouData);
+});
+
 
 // 启动服务
 app.listen(port, () => {

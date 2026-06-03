@@ -9,8 +9,10 @@ const stockList = {
     'sh688981': '中芯国际',
     'sh688347': '华虹公司',
     'sh688072': '拓荆科技',
+    'sz002371': '北方华创',
     'sh688256': '寒武纪',
     'sz002837': '英维克',
+    'sz301018': '申菱环境',
     'sh601138': '工业富联',
     'sz300757': '罗博特科',
     'sz300394': '天孚通信',
@@ -39,7 +41,8 @@ const stockList = {
     'sh688146': '中船特气',
     'sz300408': '三环集团',
     'sh600118': '中国卫星',
-    'sh600879': '航天电子'
+    'sh600879': '航天电子',
+    'sz000657': '中钨高新'
 };
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
@@ -161,7 +164,16 @@ exports.filterUnNormalStockData = () => {
             });
         }
     }
-    return unNormalStockList;
+    // 对unNormalStockList按stockName去重，保留每个股票的第一条异常记录
+    const uniqueList = [];
+    const seenCodes = new Set();
+    for (const item of unNormalStockList) {
+        if (!seenCodes.has(item.code)) {
+            seenCodes.add(item.code);
+            uniqueList.push(item);
+        }
+    }
+    return uniqueList;
 };
 
 const getAllStockData = () => {

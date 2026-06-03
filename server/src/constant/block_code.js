@@ -96,7 +96,7 @@ exports.default = [
     },
     {
         "blockName": "光模块",
-        "code": "sh688310",
+        "code": "sh688313",
         "name": "仕佳光子"
     },
     {

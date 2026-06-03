@@ -1,0 +1,117 @@
+{
+    "sh688981": {
+    "stockName": "中芯国际",
+    "kline": [
+      {
+        "trade_date": 20260603,
+        "preclose_px": 132.48,
+        "close_px": 134,
+        "open_px": 132,
+        "high_px": 138.75,
+        "low_px": 131.85,
+        "ma5_px": 138.51,
+        "ma10_px": 140.25,
+        "ma20_px": 131.08,
+        "amp": 5.21,
+        "tr": 4.96,
+        "change_px": 1.52,
+        "change": 1.35,
+        "business_amount": 99212745,
+        "business_balance": 13487781965,
+        "change_diff": 0
+      }
+    ]
+  },
+  "sh688347": {
+    "stockName": "华虹公司",
+    "kline": [
+      {
+        "trade_date": 20260603,
+        "preclose_px": 226.5,
+        "close_px": 233.24,
+        "open_px": 226.3,
+        "high_px": 246.33,
+        "low_px": 221.58,
+        "ma5_px": 233.79,
+        "ma10_px": 216.98,
+        "ma20_px": 188.18,
+        "amp": 10.93,
+        "tr": 7.63,
+        "change_px": 6.74,
+        "change": 2.98,
+        "business_amount": 31097087,
+        "business_balance": 7338481576,
+        "change_diff": 0
+      }
+    ]
+  },
+  "sh688072": {
+    "stockName": "拓荆科技",
+    "kline": [
+      {
+        "trade_date": 20260603,
+        "preclose_px": 596,
+        "close_px": 615.49,
+        "open_px": 590,
+        "high_px": 641.8,
+        "low_px": 589.12,
+        "ma5_px": 619.09,
+        "ma10_px": 645.66,
+        "ma20_px": 583.17,
+        "amp": 8.84,
+        "tr": 4.22,
+        "change_px": 19.49,
+        "change": 3.27,
+        "business_amount": 11921055,
+        "business_balance": 7346117137,
+        "change_diff": 0
+      }
+    ]
+  },
+  "sz002371": {
+    "stockName": "北方华创",
+    "kline": [
+      {
+        "trade_date": 20260603,
+        "preclose_px": 602.8,
+        "close_px": 614.84,
+        "open_px": 602.81,
+        "high_px": 633.66,
+        "low_px": 594,
+        "ma5_px": 619.28,
+        "ma10_px": 645.16,
+        "ma20_px": 615.51,
+        "amp": 6.58,
+        "tr": 1.99,
+        "change_px": 12.04,
+        "change": 2,
+        "business_amount": 14416128,
+        "business_balance": 8857781075,
+        "change_diff": 0
+      }
+    ]
+  },
+  "sh688256": {
+    "stockName": "寒武纪",
+    "kline": [
+      {
+        "trade_date": 20260603,
+        "preclose_px": 1300,
+        "close_px": 1378.1,
+        "open_px": 1292.3,
+        "high_px": 1428.01,
+        "low_px": 1291,
+        "ma5_px": 1323.52,
+        "ma10_px": 1335.2,
+        "ma20_px": 1297.51,
+        "amp": 10.54,
+        "tr": 2.64,
+        "change_px": 78.1,
+        "change": 6.01,
+        "business_amount": 16559805,
+        "business_balance": 22683725029,
+        "change_diff": 0
+      }
+    ]
+  }
+}

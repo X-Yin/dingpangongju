@@ -4,6 +4,7 @@ import App from './App.jsx';
 import DingPan from './pages/dingpan/index.jsx';
 import Block from './pages/block/index.jsx';
 import Sentiment from './pages/sentiment/index.jsx';
+import JingJiaQiangChou from './pages/jingjia/index.jsx';
 
 const router = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
       {
         path: 'sentiment',
         element: <Sentiment />,
+      },
+      {
+        path: 'jingjia',
+        element: <JingJiaQiangChou />,
       }
     ]
   }

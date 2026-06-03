@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Layout, Menu, Button, Modal, Carousel } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined } from '@ant-design/icons';
+import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import PreMarketReading from './components/PreMarketReading';
 import './App.scss';
 
@@ -18,6 +18,11 @@ function App() {
       key: '/dingpan',
       icon: <DesktopOutlined />,
       label: '盯盘',
+    },
+    {
+      key: '/jingjia',
+      icon: <ThunderboltOutlined />,
+      label: '竞价抢筹',
     },
     {
       key: '/block',
