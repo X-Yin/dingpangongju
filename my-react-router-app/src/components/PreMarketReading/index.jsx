@@ -11,6 +11,8 @@ import lixunjingmi20260601 from '../../assets/20260601-立讯精密.png';
 import haohuanengyuan20260601 from '../../assets/20260601-昊华能源.png';
 import chuangyebanzhi20260602 from '../../assets/20260602-创业板指.png';
 import gongyefulian20260602 from '../../assets/20260602-工业富联.png';
+import lixunjingmi20260603 from '../../assets/20260603-立讯精密.png';
+import chuangyebanzhi20260603 from '../../assets/20260603-创业板指.png';
 import './index.scss';
 
 const { Title, Paragraph, Text } = Typography;
@@ -46,6 +48,7 @@ const PreMarketReading = () => {
     { key: 'case-hanwuji', href: '#case-hanwuji', title: '清仓之后不操作' },
     { key: 'case-inducement', href: '#case-inducement', title: '退潮期的冲高诱多' },
     { key: 'rebound-strategy', href: '#rebound-strategy', title: '退潮期超跌反弹博弈' },
+    { key: 'outflow-warning', href: '#outflow-warning', title: '资金净流出加速风险' },
   ].map(item => ({
     ...item,
     title: <Tooltip title={item.title} placement="top"><span>{item.title}</span></Tooltip>
@@ -272,6 +275,53 @@ const PreMarketReading = () => {
               <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>个股表现</Text></Divider>
               <div className="case-image-container single">
                 <Image src={gongyefulian20260602} className="case-image" />
+              </div>
+            </Card>
+            
+            <Card 
+              id="outflow-warning"
+              className="section-card" 
+              title={<><WarningOutlined style={{ color: '#faad14' }} /> 实战案例复盘: 资金净流出加速风险 (20260603)</>}
+              variant="borderless"
+            >
+              <Paragraph>
+                <Text type="secondary">盘面现象：</Text>
+                20260603 上午，创业板一度冲高 <Text strong style={{ color: '#cf1322' }}>4%</Text>，市场情绪高涨。但午后形势突变，国家队大幅减持沪深 300ETF，导致大盘高位跳水。
+              </Paragraph>
+
+              <Alert
+                className="lesson-alert"
+                message="风险信号"
+                description={
+                  <>
+                    <div>关注资金流出速度：上午净流入 +100 亿，下午快速转为流出，最终收盘 <Text strong style={{ color: 'green' }}>-280 亿</Text>。</div>
+                    <Text strong style={{ color: '#cf1322', marginTop: 8, display: 'block' }}>
+                      核心教训：一旦观察到大盘资金净流出速度显著加快，必须立即减仓，不可对反弹抱有幻想！
+                    </Text>
+                  </>
+                }
+                type="warning"
+                showIcon
+                icon={<WarningOutlined />}
+              />
+
+              <div className="case-image-container">
+              <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>指数表现</Text></Divider>
+              <div className="case-image-container single">
+                <Image 
+                  src={chuangyebanzhi20260603} 
+                  className="case-image"
+                  placeholder={<div style={{ background: '#f5f5f5', height: 200 }} />}
+                />
+              </div>
+              <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>个股表现</Text></Divider>
+              <div className="case-image-container single">
+                <Image 
+                  src={lixunjingmi20260603} 
+                  className="case-image"
+                  placeholder={<div style={{ background: '#f5f5f5', height: 200 }} />}
+                />
+              </div>
               </div>
             </Card>
 

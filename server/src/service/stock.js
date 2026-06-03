@@ -42,7 +42,9 @@ const stockList = {
     'sz300408': '三环集团',
     'sh600118': '中国卫星',
     'sh600879': '航天电子',
-    'sz000657': '中钨高新'
+    'sz000657': '中钨高新',
+    'sh688082': '盛美上海',
+    'sh688808': '联讯仪器'
 };
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
