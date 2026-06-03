@@ -18,7 +18,7 @@ const pollKaiPaiZhuDongData = async (timeRange = { startHour: 9, startMinute: 30
     };
 
     // 初始化时先清理一次
-    clearDir();
+    // clearDir();
 
     let num = 1;
     let pollTimer = null;
@@ -87,17 +87,17 @@ const getKaiPanZhuDongData = () => {
     // 如果文件夹下面只有一个文件或没有文件，就返回一个空数据
     if (files.length < 2) return [];
 
-    // 获取序号最新的文件和序号倒数第二的文件
+    // 获取序号最新的文件和序号第一个的文件
     const latestFile = files[files.length - 1];
-    const prevFile = files[files.length - 2];
+    const firstFile = files[0];
 
     const latestData = JSON.parse(fs.readFileSync(path.resolve(dirPath, latestFile), 'utf-8'));
-    const prevData = JSON.parse(fs.readFileSync(path.resolve(dirPath, prevFile), 'utf-8'));
+    const firstData = JSON.parse(fs.readFileSync(path.resolve(dirPath, firstFile), 'utf-8'));
 
-    // 比对逻辑：如果最新数据比上一次数据高，就放入结果中
+    // 比对逻辑：如果最新数据比第一个序号的数据高，就放入结果中
     const result = latestData.filter((stock) => {
-        const prevStock = prevData.find(stockItem => stock.code === stockItem.code);
-        return stock?.kline?.[0]?.change > prevStock?.kline?.[0]?.change;
+        const firstStock = firstData.find(stockItem => stock.code === stockItem.code);
+        return stock?.kline?.[0]?.change > firstStock?.kline?.[0]?.change;
     }).map(stock => ({
         code: stock.code,
         stockName: stock.stockName,

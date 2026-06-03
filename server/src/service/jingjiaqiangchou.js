@@ -3,21 +3,6 @@ const fs = require('fs');
 const path = require('path');
 
 const pollJingJiaQiangChouData = async (hour = 9, minute = 24) => {
-    // 先删除 data/jingjiaqiangchou 文件夹下面的所有文件
-    fs.readdir(path.resolve(__dirname, '../data/jingjiaqiangchou'), (err, files) => {
-        if (err) {
-            console.error('读取文件夹失败:', err);
-            return;
-        }
-        files.forEach(file => {
-            fs.unlink(path.resolve(__dirname, '../data/jingjiaqiangchou', file), (err) => {
-                if (err) {
-                    console.error('删除文件失败:', err);
-                }
-            });
-        });
-    });
-
     // 设置一个定时器，每隔一秒轮询一次，如果当前时间是上午的 9:24 读取本地的 data/stockData.json 文件内容，存储到本地的 data/jingjiaqiangchouData/924.json 文件中
     const intervalId = setInterval(() => {
         const currentTime = new Date();
