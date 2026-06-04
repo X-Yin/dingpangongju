@@ -1,7 +1,12 @@
 const puppeteer = require('puppeteer');
+const path = require('path');
+const fs = require('fs');
+const dayjs = require('dayjs');
+
+const amountPath = path.resolve(__dirname, '../data/amount.json');
 
 // 获取成交量信息
-const getAmountInfo = async () => {
+const fetchAmountInfo = async () => {
     // 启动浏览器
     const browser = await puppeteer.launch({
         headless: 'new', // 无头模式，如需看到浏览器改为 false
@@ -33,6 +38,7 @@ const getAmountInfo = async () => {
 
         await browser.close();
         if (Math.abs(Number(parseFloat(result.mainMoney))) > 0 && Math.abs(Number(parseFloat(result.amountChangeDiff))) > 0) {
+
             return result;
         } else {
             throw new Error('成交量信息获取失败');
@@ -44,6 +50,38 @@ const getAmountInfo = async () => {
     }
 };
 
+const getAmountInfo = async () => {
+    // 读取 amount.json 的文件，把最新的一条数据拿出来返回
+    const amountData = fs.existsSync(amountPath) ? JSON.parse(fs.readFileSync(amountPath, 'utf8') || '[]') : [];
+    return amountData?.[amountData.length - 1]?.[1];
+}
+
+const pollAmountInfo = async (interval = 1000 * 10) => {
+    // 立即执行首次获取
+    const fetchAndSave = async () => {
+        try {
+            const amountInfo = await fetchAmountInfo();
+            // 先把文件中的内容读取出来，然后将当前的内容合并到文件中，文件中的内容是一个二维数组，数组中的每一项也是一个数组，第一个值 是当前的时间 DD:MM:SS，第二个值 是当前的成交量信息
+            const amountData = fs.existsSync(amountPath) ? JSON.parse(fs.readFileSync(amountPath, 'utf8') || '[]') : [];
+            amountData.push([dayjs().format('HHmmss'), amountInfo]);
+
+            // 保存到文件
+            fs.writeFileSync(amountPath, JSON.stringify(amountData, null, 2));
+        } catch (error) {
+            console.error('轮询获取成交量信息失败，等待下一次轮询:', error.message);
+        }
+    };
+    
+    // 首次立即执行
+    fetchAndSave();
+    // 设置轮询
+    setInterval(fetchAndSave, interval);
+}
+
+const getAmountHistory = () => {
+    return fs.existsSync(amountPath) ? JSON.parse(fs.readFileSync(amountPath, 'utf8') || '[]') : [];
+}
+
 // let num = 0;
 // const mockAmountInfo = async () => {
 //     num++;
@@ -54,3 +92,5 @@ const getAmountInfo = async () => {
 // }
 
 exports.getAmountInfo = getAmountInfo;
+exports.getAmountHistory = getAmountHistory;
+exports.pollAmountInfo = pollAmountInfo;

@@ -7,6 +7,7 @@ const { getBlockData, pollBlockData, getTopAndBottomBlockData } = require('./ser
 // const { diagnose } = require('./service/diagnose');
 const { getJingJiaQiangChouData, pollJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
 const { pollKaiPaiZhuDongData, getKaiPanZhuDongData } = require('./service/kaipanzhudong');
+const { getAmountHistory, pollAmountInfo } = require('./service/amount');
 
 const POLL_CONFIG = {
   kaipanzhudong: {
@@ -80,6 +81,11 @@ app.get('/jingjia_data', async (req, res) => {
   res.json(jingJiaQiangChouData);
 });
 
+app.get('/amount_history', async (req, res) => {
+  const amountHistory = await getAmountHistory();
+  res.json(amountHistory);
+});
+
 
 // 启动服务
 app.listen(port, () => {
@@ -98,6 +104,8 @@ app.listen(port, () => {
     endHour: POLL_CONFIG.kaipanzhudong.endHour,
     endMinute: POLL_CONFIG.kaipanzhudong.endMinute
   });
+  // 轮询成交量信息
+  pollAmountInfo(10000);
   console.log(`服务运行在 http://localhost:${port}`);
 });
 

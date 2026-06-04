@@ -5,6 +5,7 @@ import DingPan from './pages/dingpan/index.jsx';
 import Block from './pages/block/index.jsx';
 import Sentiment from './pages/sentiment/index.jsx';
 import JingJiaQiangChou from './pages/jingjia/index.jsx';
+import VolumeStatistics from './pages/volume/index.jsx';
 
 const router = createBrowserRouter([
   {
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
       {
         path: 'jingjia',
         element: <JingJiaQiangChou />,
+      },
+      {
+        path: 'volume',
+        element: <VolumeStatistics />,
       }
     ]
   }

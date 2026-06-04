@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Layout, Menu, Button, Modal, Carousel } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, ThunderboltOutlined, AreaChartOutlined } from '@ant-design/icons';
 import PreMarketReading from './components/PreMarketReading';
 import './App.scss';
 
@@ -33,6 +33,11 @@ function App() {
       key: '/sentiment',
       icon: <CoffeeOutlined />,
       label: '情绪复盘',
+    },
+    {
+      key: '/volume',
+      icon: <AreaChartOutlined />,
+      label: '成交量统计',
     },
   ];
 

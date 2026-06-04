@@ -91,7 +91,11 @@ const getTopAndBottomBlockData = (num = 5) => {
     const lastNumList = blockData.slice(-num).sort((a, b) => a.avgChange - b.avgChange);
     return {
         firstNumList,
-        lastNumList
+        lastNumList,
+        defensiveBlock: blockData.filter(i => ['煤炭', '电力', '银行', '医药', '消费'].includes(i.blockName)).map(i => ({
+            blockName: i.blockName,
+            avgChange: i.avgChange
+        }))
     };
 }
 
