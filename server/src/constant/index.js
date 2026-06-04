@@ -8,3 +8,8 @@ exports.clsReqStockUrl = `https://x-quote.cls.cn/v2/quote/a/kline?fq_type=1&app=
 exports.clsReqDaPanUrl = `https://x-quote.cls.cn/quote/index/home?app=CailianpressWeb&os=web&sv=8.7.9&sign=${clsReqConfig.dapan_sign}`
 
 exports.clsReqStockTlineUrl = `https://x-quote.cls.cn/v2/quote/a/tline?app=CailianpressWeb&os=web&secu_code=$code&sv=8.7.9&sign=${clsReqConfig.stock_sign}`;
+
+exports.clsReqEmotionUrl = `https://x-quote.cls.cn/v2/quote/a/stock/emotion?app=CailianpressWeb&os=web&sv=8.7.9&sign=${clsReqConfig.dapan_sign}`
+
+// 请求各个指数的 k 线图接口
+exports.clsReqIndexUrl = `https://x-quote.cls.cn/v2/quote/a/kline?app=CailianpressWeb&code=$code&limit=$limit&os=web&period=d&sv=8.7.9&sign=${clsReqConfig.stock_sign}`

@@ -44,7 +44,8 @@ const DingPan = () => {
     // 资金与成交量趋势监控相关
     const [amountHistory, setAmountHistory] = useState([]);
     const [mainMoneyHistory, setMainMoneyHistory] = useState([]); // 记录主力资金历史，用于趋势预警
-    const [topAlert, setTopAlert] = useState(null); // 存储当前显示的顶部告警信息
+    const [defensiveBlockHistory, setDefensiveBlockHistory] = useState([]); // 记录防御板块历史，用于趋势预警
+    const [alerts, setAlerts] = useState([]); // 存储当前显示的顶部告警信息列表
 
     // 打开 K 线弹窗
     const showKLine = (stock) => {
@@ -243,6 +244,47 @@ const DingPan = () => {
 
             setData(newData);
             setLastUpdated(dayjs().format('HH:mm:ss'));
+
+            // 处理防御板块趋势逻辑
+            if (newData.topAndBottomBlockData && Array.isArray(newData.topAndBottomBlockData.defensiveBlock)) {
+                const currentDefensiveBlocks = newData.topAndBottomBlockData.defensiveBlock;
+                
+                setDefensiveBlockHistory(prev => {
+                    const newHistory = [...prev, currentDefensiveBlocks].slice(-3);
+                    
+                    // 当达到 3 次记录时进行趋势判断
+                    if (newHistory.length === 3) {
+                        // 筛选出涨幅持续增加的防御板块
+                        const strengtheningBlocks = currentDefensiveBlocks.filter(block => {
+                            const b0 = newHistory[0].find(b => b.blockName === block.blockName);
+                            const b1 = newHistory[1].find(b => b.blockName === block.blockName);
+                            const b2 = newHistory[2].find(b => b.blockName === block.blockName);
+                            if (!b0 || !b1 || !b2) return false;
+                            return parseFloat(b2.avgChange) > parseFloat(b1.avgChange) && parseFloat(b1.avgChange) > parseFloat(b0.avgChange);
+                        });
+
+                        if (strengtheningBlocks.length > 0) {
+                              const newDefensiveAlert = {
+                                  id: 'defensive-' + Date.now(),
+                                  title: '🛡️ 防御板块走强预警',
+                                  time: dayjs().format('HH:mm:ss'),
+                                  type: 'warning',
+                                  description: `防御板块（${strengtheningBlocks.map(b => b.blockName).join('、')}）涨幅已连续三次增加，市场防御情绪升温，请注意风险！`,
+                                  isDefensive: true
+                              };
+                              setAlerts(prev => {
+                                  // 移除旧的防御预警，加入新的
+                                  const filtered = prev.filter(a => !a.isDefensive);
+                                  return [newDefensiveAlert, ...filtered];
+                              });
+                          } else {
+                              // 如果没有走强的板块了，移除旧的防御预警
+                              setAlerts(prev => prev.filter(a => !a.isDefensive));
+                          }
+                    }
+                    return newHistory;
+                });
+            }
         } catch (error) {
             console.error('Fetch data failed:', error);
         } finally {
@@ -369,19 +411,25 @@ const DingPan = () => {
 
                         if (trendTitle) {
                             triggerAlert = {
+                                id: 'trend-' + Date.now(),
                                 title: trendTitle,
                                 time: dayjs().format('HH:mm:ss'),
                                 mainMoney: h3.mainMoney,
                                 amountChangeDiff: h3.amountChangeDiff,
                                 moneyTrend: h3.mainMoney >= 0 ? '净流入' : '净流出',
                                 amountTrend: h3.amountChangeDiff >= 0 ? '持续增加' : '持续减少',
-                                type: alertType
+                                type: alertType,
+                                isTrend: true
                             };
                         }
                     }
                     
                     if (triggerAlert) {
-                        setTopAlert(triggerAlert);
+                        setAlerts(prev => {
+                            // 移除旧的趋势预警，加入新的
+                            const filtered = prev.filter(a => !a.isTrend);
+                            return [triggerAlert, ...filtered];
+                        });
                     }
                     
                     return newHistory;
@@ -409,28 +457,44 @@ const DingPan = () => {
 
     return (
         <div className="dingpan-container">
-            {topAlert && (
-                <div className="top-global-alert" style={{ marginBottom: 16 }}>
-                    <Alert
-                        message={<Text strong style={{ fontSize: '16px' }}>{topAlert.title}</Text>}
-                        description={
-                            <div style={{ marginTop: 8 }}>
-                                <Space size="large">
-                                    <span><ClockCircleOutlined /> 发生时间: <Text strong>{topAlert.time}</Text></span>
-                                    <span>主力资金: <Text strong style={{ color: topAlert.mainMoney >= 0 ? '#cf1322' : '#389e0d' }}>{topAlert.moneyTrend} ({topAlert.mainMoney > 0 ? '+' : ''}{topAlert.mainMoney}亿)</Text></span>
-                                    <span>当前成交量相比上一日: <Text strong  style={{ color: topAlert.amountChangeDiff >= 0 ? '#cf1322' : '#389e0d' }}>{topAlert.amountChangeDiff}亿</Text></span>
-                                </Space>
-                                <div style={{ marginTop: 8, color: '#666' }}>
-                                    提示：当前大盘核心指标出现显著趋势性变化，请密切关注仓位风险。
-                                </div>
-                            </div>
-                        }
-                        type={topAlert.type}
-                        showIcon
-                        closable
-                        onClose={() => setTopAlert(null)}
-                        icon={<WarningOutlined style={{ fontSize: '24px' }} />}
-                    />
+            {alerts.length > 0 && (
+                <div className="top-global-alerts" style={{ marginBottom: 16 }}>
+                    <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                        {alerts.map(alert => (
+                            <Alert
+                                key={alert.id}
+                                message={<Text strong style={{ fontSize: '16px' }}>{alert.title}</Text>}
+                                description={
+                                    <div style={{ marginTop: 8 }}>
+                                        {alert.isDefensive ? (
+                                            <div style={{ color: '#666' }}>
+                                                <Space direction="vertical" size={4}>
+                                                    <span><ClockCircleOutlined /> 发生时间: <Text strong>{alert.time}</Text></span>
+                                                    <Text>{alert.description}</Text>
+                                                </Space>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Space size="large">
+                                                    <span><ClockCircleOutlined /> 发生时间: <Text strong>{alert.time}</Text></span>
+                                                    <span>主力资金: <Text strong style={{ color: alert.mainMoney >= 0 ? '#cf1322' : '#389e0d' }}>{alert.moneyTrend} ({alert.mainMoney > 0 ? '+' : ''}{alert.mainMoney}亿)</Text></span>
+                                                    <span>当前成交量相比上一日: <Text strong  style={{ color: alert.amountChangeDiff >= 0 ? '#cf1322' : '#389e0d' }}>{alert.amountChangeDiff}亿</Text></span>
+                                                </Space>
+                                                <div style={{ marginTop: 8, color: '#666' }}>
+                                                    提示：当前大盘核心指标出现显著趋势性变化，请密切关注仓位风险。
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                }
+                                type={alert.type}
+                                showIcon
+                                closable
+                                onClose={() => setAlerts(prev => prev.filter(a => a.id !== alert.id))}
+                                icon={<WarningOutlined style={{ fontSize: '24px' }} />}
+                            />
+                        ))}
+                    </Space>
                 </div>
             )}
             <div className="page-header">

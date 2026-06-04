@@ -1,0 +1,83 @@
+[
+  {
+    "date": "20260525",
+    "originData": {
+      "up_num": 103,
+      "down_num": 15,
+      "up_ratio": 75.74
+    },
+    "emotion": 80.04
+  },
+  {
+    "date": "20260526",
+    "originData": {
+      "up_num": 46,
+      "down_num": 16,
+      "up_ratio": 65.71
+    },
+    "emotion": 50.83
+  },
+  {
+    "date": "20260527",
+    "originData": {
+      "up_num": 47,
+      "down_num": 22,
+      "up_ratio": 69.12
+    },
+    "emotion": 50.87
+  },
+  {
+    "date": "20260528",
+    "originData": {
+      "up_num": 101,
+      "down_num": 8,
+      "up_ratio": 82.79
+    },
+    "emotion": 86.27
+  },
+  {
+    "date": "20260529",
+    "originData": {
+      "up_num": 49,
+      "down_num": 50,
+      "up_ratio": 56.98
+    },
+    "emotion": 33.19
+  },
+  {
+    "date": "20260601",
+    "originData": {
+      "up_num": 118,
+      "down_num": 21,
+      "up_ratio": 74.21
+    },
+    "emotion": 82.73
+  },
+  {
+    "date": "20260602",
+    "originData": {
+      "up_num": 64,
+      "down_num": 13,
+      "up_ratio": 75.29
+    },
+    "emotion": 64.97
+  },
+  {
+    "date": "20260603",
+    "originData": {
+      "up_num": 66,
+      "down_num": 10,
+      "up_ratio": 56.9
+    },
+    "emotion": 55.94
+  },
+  {
+    "date": "20260604",
+    "originData": {
+      "up_num": 90,
+      "down_num": 32,
+      "up_ratio": 81
+    },
+    "emotion": 71.2
+  }
+]

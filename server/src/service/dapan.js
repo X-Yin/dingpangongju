@@ -13,6 +13,7 @@ const getDaPanData = async () => {
     const data = response.data.data;
     return data;
 }
+exports.getDaPanData = getDaPanData;
 
 exports.pollDaPanData = async (interval = 10000) => {
     const task = async () => {

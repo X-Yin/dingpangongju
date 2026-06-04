@@ -201,7 +201,7 @@ exports.default = [
     },
     {
         "blockName": "pcb",
-        "code": "sz002475",
+        "code": "sz300476",
         "name": "胜宏科技"
     },
     {

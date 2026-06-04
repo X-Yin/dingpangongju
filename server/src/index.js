@@ -8,6 +8,7 @@ const { getBlockData, pollBlockData, getTopAndBottomBlockData } = require('./ser
 const { getJingJiaQiangChouData, pollJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
 const { pollKaiPaiZhuDongData, getKaiPanZhuDongData } = require('./service/kaipanzhudong');
 const { getAmountHistory, pollAmountInfo } = require('./service/amount');
+const { getAllEmotionData, getAllIndexKlineData, updateCurrentEmotionData } = require('./service/emotion');
 
 const POLL_CONFIG = {
   kaipanzhudong: {
@@ -85,6 +86,23 @@ app.get('/amount_history', async (req, res) => {
   const amountHistory = await getAmountHistory();
   res.json(amountHistory);
 });
+
+// 返回所有日期的情绪数据
+app.get('/emotion_data', async (req, res) => {
+  const emotionData = await getAllEmotionData();
+  const indexKlineData = await getAllIndexKlineData();
+  res.json({ 
+    emotionData,
+    indexKlineData
+  });
+});
+
+// 更新当日最新的情绪数据
+app.post('/update_emotion_data', async (req, res) => {
+  await updateCurrentEmotionData();
+  res.json({ message: '情绪数据更新成功' });
+});
+
 
 
 // 启动服务

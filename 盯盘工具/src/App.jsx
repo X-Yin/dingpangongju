@@ -20,6 +20,11 @@ function App() {
       label: '盯盘',
     },
     {
+      key: '/volume',
+      icon: <AreaChartOutlined />,
+      label: '成交量统计',
+    },
+    {
       key: '/jingjia',
       icon: <ThunderboltOutlined />,
       label: '竞价抢筹',
@@ -33,11 +38,6 @@ function App() {
       key: '/sentiment',
       icon: <CoffeeOutlined />,
       label: '情绪复盘',
-    },
-    {
-      key: '/volume',
-      icon: <AreaChartOutlined />,
-      label: '成交量统计',
     },
   ];
 
