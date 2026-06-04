@@ -13,17 +13,21 @@ const { Title, Text } = Typography;
 const Sentiment = () => {
   const [data, setData] = useState([]);
   const [indexKlineData, setIndexKlineData] = useState(null);
+  const [techIndexData, setTechIndexData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
   const containerRef = useRef(null);
   const chartRef = useRef(null);
+  const techContainerRef = useRef(null);
+  const techChartRef = useRef(null);
 
   const fetchData = async () => {
     try {
       const response = await axios.get(`http://${local_ip}:3000/emotion_data`);
       setData(response.data.emotionData || []);
       setIndexKlineData(response.data.indexKlineData || null);
+      setTechIndexData(response.data.techIndexData || []);
       setError(null);
     } catch (err) {
       console.error('Fetch emotion data failed:', err);
@@ -52,10 +56,15 @@ const Sentiment = () => {
   }, []);
 
   useEffect(() => {
-    if (!loading && data.length > 0 && containerRef.current) {
-      renderChart(data);
+    if (!loading) {
+      if (data.length > 0 && containerRef.current) {
+        renderChart(data);
+      }
+      if (techIndexData.length > 0 && techContainerRef.current) {
+        renderTechChart(techIndexData);
+      }
     }
-  }, [loading, data]);
+  }, [loading, data, techIndexData]);
 
   // 处理窗口缩放
   useEffect(() => {
@@ -63,25 +72,24 @@ const Sentiment = () => {
       if (chartRef.current && containerRef.current) {
         chartRef.current.applyOptions({ width: containerRef.current.clientWidth });
       }
+      if (techChartRef.current && techContainerRef.current) {
+        techChartRef.current.applyOptions({ width: techContainerRef.current.clientWidth });
+      }
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const renderChart = (historyData) => {
-    if (chartRef.current) {
-      chartRef.current.remove();
-    }
-
-    const chart = createChart(containerRef.current, {
+  const createBaseChart = (container, height = 500) => {
+    return createChart(container, {
       layout: {
         background: { type: ColorType.Solid, color: '#ffffff' },
         textColor: '#333',
         fontSize: 12,
       },
-      width: containerRef.current.clientWidth,
-      height: 500,
+      width: container.clientWidth,
+      height: height,
       grid: {
         vertLines: { color: '#f0f0f0' },
         horzLines: { color: '#f0f0f0' },
@@ -102,7 +110,118 @@ const Sentiment = () => {
         mode: 0,
       },
     });
+  };
 
+  const renderTechChart = (techData) => {
+    if (techChartRef.current) {
+      techChartRef.current.remove();
+    }
+
+    const chart = createBaseChart(techContainerRef.current);
+    techChartRef.current = chart;
+
+    // 创建 Tooltip 元素
+    const tooltip = document.createElement('div');
+    tooltip.className = 'chart-tooltip';
+    techContainerRef.current.appendChild(tooltip);
+
+    const lineSeries = chart.addLineSeries({
+      color: '#722ed1',
+      lineWidth: 3,
+      priceFormat: {
+        type: 'price',
+        precision: 2,
+        minMove: 0.01,
+      },
+    });
+
+    const chartData = techData.map(item => {
+      const dateStr = String(item.date);
+      const year = dateStr.substring(0, 4);
+      const month = dateStr.substring(4, 6);
+      const day = dateStr.substring(6, 8);
+      const formattedDate = `${year}-${month}-${day}`;
+      return {
+        time: formattedDate,
+        value: parseFloat(item.changeSumResult) || 0,
+      };
+    }).sort((a, b) => a.time.localeCompare(b.time));
+
+    lineSeries.setData(chartData);
+
+    chart.timeScale().applyOptions({
+      tickMarkFormatter: (time) => {
+        return dayjs(time).format('MM-DD');
+      },
+    });
+
+    // 订阅十字光标移动事件
+    chart.subscribeCrosshairMove((param) => {
+      if (
+        param.point === undefined ||
+        !param.time ||
+        param.point.x < 0 ||
+        param.point.x > techContainerRef.current.clientWidth ||
+        param.point.y < 0 ||
+        param.point.y > 500
+      ) {
+        tooltip.style.display = 'none';
+      } else {
+        const dateStr = param.time;
+        const dataPoint = chartData.find(d => d.time === dateStr);
+        
+        if (dataPoint) {
+          tooltip.style.display = 'block';
+          const { value } = dataPoint;
+          
+          tooltip.innerHTML = `
+             <div class="tooltip-title">${dayjs(dateStr).format('YYYY-MM-DD')}</div>
+             <div class="tooltip-item">
+               <span class="label">科技情绪:</span>
+               <span class="value ${value >= 0 ? 'up' : 'down'}">${value.toFixed(2)}</span>
+             </div>
+           `;
+ 
+           let x = param.point.x + 15;
+           const y = param.point.y + 15;
+          
+          if (x > techContainerRef.current.clientWidth - 150) {
+            x = param.point.x - 165;
+          }
+
+          tooltip.style.left = x + 'px';
+          tooltip.style.top = y + 'px';
+        }
+      }
+    });
+
+    chart.applyOptions({
+      localization: {
+        timeFormatter: (time) => {
+          return dayjs(time).format('YYYY-MM-DD');
+        },
+      },
+    });
+
+    // 添加基准线 (0 轴)
+    const baselineSeries = chart.addLineSeries({
+      color: '#ff4d4f',
+      lineWidth: 1,
+      lineStyle: 2,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    });
+    baselineSeries.setData(chartData.map(d => ({ time: d.time, value: 0 })));
+
+    chart.timeScale().fitContent();
+  };
+
+  const renderChart = (historyData) => {
+    if (chartRef.current) {
+      chartRef.current.remove();
+    }
+
+    const chart = createBaseChart(containerRef.current);
     chartRef.current = chart;
 
     // 创建 Tooltip 元素
@@ -113,7 +232,6 @@ const Sentiment = () => {
     const lineSeries = chart.addLineSeries({
       color: '#1890ff',
       lineWidth: 3,
-      title: '市场情绪指数',
       priceFormat: {
         type: 'price',
         precision: 2,
@@ -219,26 +337,30 @@ const Sentiment = () => {
   const currentEmotion = latestData ? parseFloat(latestData.emotion) : 0;
   const emotionDiff = (latestData && prevData) ? (parseFloat(latestData.emotion) - parseFloat(prevData.emotion)) : 0;
   const currentUpRatio = latestData?.originData?.up_ratio;
+  
+  const latestTechData = techIndexData.length > 0 ? techIndexData[techIndexData.length - 1] : null;
+  const currentTechEmotion = latestTechData ? parseFloat(latestTechData.changeSumResult) : 0;
 
   const getEmotionSuggestion = () => {
-    if (!latestData) return null;
-    const emotion = currentEmotion;
-    if (emotion > 80) {
+    if (!latestTechData) return null;
+    const techEmotion = currentTechEmotion;
+    
+    if (techEmotion > 140) {
       return {
-        message: '⚠️ 情绪过热预警：当前情绪指数已超过 80',
-        description: '次日市场存在较大的退潮风险，请谨慎出手，防止大盘次日冲高回落，建议以减仓观望为主。',
+        message: '⚠️ 科技情绪过热预警：当前科技情绪已超过 140',
+        description: '次日回调风险较大，防止冲高回落，次日冲高适合减仓观望。',
         type: 'error'
       };
-    } else if (emotion < 60) {
+    } else if (techEmotion < -100) {
       return {
-        message: '🚀 情绪修复预期：当前情绪指数低于 60',
-        description: '明天大盘有较强的情绪修复预期，次日可以积极寻找开盘表现强势的龙头股票，考虑重仓出手博弈。',
+        message: '🚀 科技情绪修复预期：当前科技情绪低于 -100',
+        description: '次日修复的概率极大，第二天找表现强势的龙头，开盘可以重仓出手介入。',
         type: 'success'
       };
     } else {
       return {
-        message: '🔎 情绪不明朗：当前情绪指数在 60-80 之间',
-        description: '市场情绪处于混沌期，多空博弈激烈，次日建议保持耐心，观察开盘后的承接力度再决定是否出手。',
+        message: '🔎 科技情绪混沌期：当前情绪处于 -100 到 140 之间',
+        description: '当前科技情绪处于混沌期，情况不明朗，建议保持耐心，谨慎出手。',
         type: 'info'
       };
     }
@@ -279,6 +401,7 @@ const Sentiment = () => {
       )}
 
       <Row gutter={[24, 24]}>
+
         {indexKlineData && (
           <Col span={24}>
             <Divider orientation="left"><AreaChartOutlined /> 指数行情回顾</Divider>
@@ -302,49 +425,9 @@ const Sentiment = () => {
           </Col>
         )}
 
-        <Col span={24}>
-          <Card bordered={false} className="summary-card">
-            <Row gutter={24}>
-              <Col span={6}>
-                <Statistic
-                  title="当前情绪指数"
-                  value={currentEmotion}
-                  precision={2}
-                  valueStyle={{ color: currentEmotion >= 0 ? '#f5222d' : '#52c41a' }}
-                  prefix={<LineChartOutlined />}
-                />
-              </Col>
-              <Col span={6}>
-                <Statistic
-                  title="较上一交易日"
-                  value={Math.abs(emotionDiff)}
-                  precision={2}
-                  valueStyle={{ color: emotionDiff >= 0 ? '#f5222d' : '#52c41a' }}
-                  prefix={emotionDiff >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
-                />
-              </Col>
-              <Col span={6}>
-                <Statistic
-                  title="涨停 / 跌停"
-                  value={latestData?.originData?.up_num || 0}
-                  suffix={`/ ${latestData?.originData?.down_num || 0}`}
-                />
-              </Col>
-              <Col span={6}>
-                <Statistic
-                  title="封板率"
-                  value={currentUpRatio}
-                  suffix="%"
-                  valueStyle={{ color: parseFloat(currentUpRatio) >= 70 ? '#f5222d' : '#8c8c8c' }}
-                />
-              </Col>
-            </Row>
-          </Card>
-        </Col>
-
-        <Col span={24}>
+        <Col span={12}>
           <Card 
-            title={<span><LineChartOutlined /> 情绪走势图</span>} 
+            title={<span><LineChartOutlined /> 大盘情绪</span>} 
             bordered={false} 
             className="chart-card"
           >
@@ -354,6 +437,22 @@ const Sentiment = () => {
               <div ref={containerRef} className="chart-container" />
             ) : (
               <Alert message="暂无情绪统计数据" type="info" showIcon />
+            )}
+          </Card>
+        </Col>
+
+        <Col span={12}>
+          <Card 
+            title={<span><LineChartOutlined /> 科技板块情绪</span>} 
+            bordered={false} 
+            className="chart-card"
+          >
+            {loading ? (
+              <div className="loading-container"><Spin tip="加载中..." /></div>
+            ) : techIndexData.length > 0 ? (
+              <div ref={techContainerRef} className="chart-container" />
+            ) : (
+              <Alert message="暂无科技板块情绪数据" type="info" showIcon />
             )}
           </Card>
         </Col>

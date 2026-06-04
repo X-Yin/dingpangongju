@@ -689,29 +689,6 @@
       }
     ]
   },
-  "sh600869": {
-    "stockName": "远东股份",
-    "kline": [
-      {
-        "trade_date": 20260604,
-        "preclose_px": 26.9,
-        "close_px": 26.5,
-        "open_px": 26.5,
-        "high_px": 27.25,
-        "low_px": 26.08,
-        "ma5_px": 25.15,
-        "ma10_px": 23.17,
-        "ma20_px": 22.33,
-        "amp": 4.35,
-        "tr": 5.78,
-        "change_px": -0.4,
-        "change": -1.49,
-        "business_amount": 128268018,
-        "business_balance": 3410698921,
-        "change_diff": 0
-      }
-    ]
-  },
   "sh603256": {
     "stockName": "宏和科技",
     "kline": [

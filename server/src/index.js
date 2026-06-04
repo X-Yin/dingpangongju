@@ -8,7 +8,7 @@ const { getBlockData, pollBlockData, getTopAndBottomBlockData } = require('./ser
 const { getJingJiaQiangChouData, pollJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
 const { pollKaiPaiZhuDongData, getKaiPanZhuDongData } = require('./service/kaipanzhudong');
 const { getAmountHistory, pollAmountInfo } = require('./service/amount');
-const { getAllEmotionData, getAllIndexKlineData, updateCurrentEmotionData } = require('./service/emotion');
+const { getAllEmotionData, getAllIndexKlineData, updateCurrentEmotionData, updateCurrentTechIndexData, getAllTechIndexData } = require('./service/emotion');
 
 const POLL_CONFIG = {
   kaipanzhudong: {
@@ -91,15 +91,18 @@ app.get('/amount_history', async (req, res) => {
 app.get('/emotion_data', async (req, res) => {
   const emotionData = await getAllEmotionData();
   const indexKlineData = await getAllIndexKlineData();
+  const techIndexData = await getAllTechIndexData();
   res.json({ 
     emotionData,
-    indexKlineData
+    indexKlineData,
+    techIndexData
   });
 });
 
 // 更新当日最新的情绪数据
 app.post('/update_emotion_data', async (req, res) => {
   await updateCurrentEmotionData();
+  await updateCurrentTechIndexData();
   res.json({ message: '情绪数据更新成功' });
 });
 
