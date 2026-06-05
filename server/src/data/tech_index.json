@@ -78,5 +78,9 @@
   {
     "date": 20260604,
     "changeSumResult": 101.6
+  },
+  {
+    "date": 20260605,
+    "changeSumResult": -167.92
   }
 ]

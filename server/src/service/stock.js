@@ -43,7 +43,8 @@ const stockList = {
     'sh600879': '航天电子',
     'sz000657': '中钨高新',
     'sh688082': '盛美上海',
-    'sh688808': '联讯仪器'
+    'sh688808': '联讯仪器',
+    'sz002851': '麦格米特'
 };
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');

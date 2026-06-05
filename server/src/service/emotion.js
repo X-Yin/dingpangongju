@@ -43,8 +43,13 @@ const updateCurrentEmotionData = async () => {
     // 先读取本地的 src/data/emotion.json
     const oldData = fs.readFileSync(emotionPath, "utf-8") || '[]';
     const oldDataJson = JSON.parse(oldData);
-    // 合并新的情绪数据
-    oldDataJson.push(data);
+    // 合并新的情绪数据，检查重复日期，如有则覆盖
+    const existingIndex = oldDataJson.findIndex(item => item.date === data.date);
+    if (existingIndex !== -1) {
+        oldDataJson[existingIndex] = data;
+    } else {
+        oldDataJson.push(data);
+    }
     // 写入本地的 src/data/emotion.json
     fs.writeFileSync(emotionPath, JSON.stringify(oldDataJson, null, 2));
 }
@@ -131,10 +136,18 @@ const updateCurrentTechIndexData = async () => {
         changeSumResult: parseFloat(changeSumResult.toFixed(2)),
     });
 
-    // 先把之前的 tech_index.json 的数据读出来，然后合并新的数据
+    // 先把之前的 tech_index.json 的数据读出来，然后合并新的数据，检查重复日期，如有则覆盖
     const oldData = fs.readFileSync(techIndexPath, "utf-8") || '[]';
     const oldDataJson = JSON.parse(oldData);
-    oldDataJson.push(...changeSumData);
+    // 合并新的数据，检查重复日期，如有则覆盖
+    changeSumData.forEach(item => {
+        const existingIndex = oldDataJson.findIndex(existingItem => existingItem.date === item.date);
+        if (existingIndex !== -1) {
+            oldDataJson[existingIndex] = item;
+        } else {
+            oldDataJson.push(item);
+        }
+    });
     fs.writeFileSync(techIndexPath, JSON.stringify(oldDataJson, null, 2));
 }
 

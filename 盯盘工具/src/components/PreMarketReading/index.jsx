@@ -13,6 +13,10 @@ import chuangyebanzhi20260602 from '../../assets/20260602-创业板指.png';
 import gongyefulian20260602 from '../../assets/20260602-工业富联.png';
 import lixunjingmi20260603 from '../../assets/20260603-立讯精密.png';
 import chuangyebanzhi20260603 from '../../assets/20260603-创业板指.png';
+import kejiqingxu0603 from '../../assets/20260603-科技情绪指数.png';
+import kejiqingxu0605 from '../../assets/20260605-科技情绪指数.png';
+import tianfutongxin0605 from '../../assets/20260605-天孚通信.png';
+import yuanjiekeji0605 from '../../assets/20260605-源杰科技.png';
 import './index.scss';
 
 const { Title, Paragraph, Text } = Typography;
@@ -49,6 +53,7 @@ const PreMarketReading = () => {
     { key: 'case-inducement', href: '#case-inducement', title: '退潮期的冲高诱多' },
     { key: 'rebound-strategy', href: '#rebound-strategy', title: '退潮期超跌反弹博弈' },
     { key: 'outflow-warning', href: '#outflow-warning', title: '资金净流出加速风险' },
+    { key: 'case-0605', href: '#case-0605', title: '一周期一次出手纪律' },
   ].map(item => ({
     ...item,
     title: <Tooltip title={item.title} placement="top"><span>{item.title}</span></Tooltip>
@@ -157,7 +162,7 @@ const PreMarketReading = () => {
             >
               <Paragraph>
                 <Text type="secondary">背景回顾：</Text>
-                寒武纪竞价小幅高开 <Text type="danger" strong>+0.61%</Text>，表现略强于中芯国际。开盘后快速下挫，本人在中芯国际与华虹离场后，反手于 <Text type="success" strong>-2%</Text> 处加仓。然而下午随大盘大幅跳水，最终收跌 <Text type="success" strong>-5.8%</Text>，当日产生二次亏损。
+                寒武纪竞价小幅高开 <Text type="danger" strong>+0.61%</Text>，表现略强于中芯国际。开盘后快速下挫，本人在中芯国际与华虹离场后，反手于 <Text type="success" strong>-2%</Text> 处加仓。然而下午随大盘大幅跳水，最终收跌 <Text type="success" strong>-5.8%</Text>，当日产生二次亏损。<Text type='danger' strong>不要相信个别科技股票的上涨可以带动其他大部分负反馈严重的股票翻红，这个时候的规则是少数服从多数。大多数科技股票如果都表现不好，那个别表现好也不能追！！！</Text>
               </Paragraph>
 
               <Alert
@@ -296,8 +301,9 @@ const PreMarketReading = () => {
                   <>
                     <div>关注资金流出速度：上午净流入 +100 亿，下午快速转为流出，最终收盘 <Text strong style={{ color: 'green' }}>-280 亿</Text>。</div>
                     <Text strong style={{ color: '#cf1322', marginTop: 8, display: 'block' }}>
-                      核心教训：一旦观察到大盘资金净流出速度显著加快，必须立即减仓，不可对反弹抱有幻想！
+                      核心教训：一旦观察到大盘资金净流出速度显著加快，必须立即减仓，不可对反弹抱有幻想！汪汪队一定开始大幅度减仓，往往都是持续两三天的操作，不可能只有一天！
                     </Text>
+                    <Text strong style={{ color: '#cf1322', marginTop: 8, display: 'block' }}>另外科技情绪指数已经连续两天大于 100，其实已经情绪过热了，此时冲高回落其实是大概率的事情，这个时候就不适合出手博弈，最好持股观望，或者是空仓等待下一次冰点的博弈机会！！！</Text>
                   </>
                 }
                 type="warning"
@@ -306,6 +312,14 @@ const PreMarketReading = () => {
               />
 
               <div className="case-image-container">
+                <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>科技情绪指数表现</Text></Divider>
+              <div className="case-image-container single">
+                <Image 
+                  src={kejiqingxu0603} 
+                  className="case-image"
+                  placeholder={<div style={{ background: '#f5f5f5', height: 200 }} />}
+                />
+              </div>
               <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>指数表现</Text></Divider>
               <div className="case-image-container single">
                 <Image 
@@ -325,6 +339,70 @@ const PreMarketReading = () => {
               </div>
             </Card>
 
+            <Card 
+              id="case-0605"
+              className="section-card" 
+              title={<><CheckCircleOutlined style={{ color: '#eb2f96' }} /> 核心纪律: 一个星期只有一次全仓机会 (2026-06-05)</>}
+              variant="borderless"
+            >
+              <Paragraph>
+                <Text type="secondary">背景回顾：</Text>
+                2026-06-02 至 06-04，科技情绪指数已连续 <Text strong style={{ color: '#cf1322' }}>三天超过 100</Text>。市场处于明显的情绪过热阶段，风险极大。
+              </Paragraph>
+
+              <Alert
+                className="lesson-alert"
+                message="操作失误"
+                description={
+                  <>
+                    <div>在情绪高潮期，面对 CPO 光模块开盘冲高，未能克制欲望，实施了 <Text strong style={{ color: '#cf1322' }}>全仓追高</Text> 操作。</div>
+                    <div style={{ marginTop: 8 }}>
+                      <Space direction="vertical" size={0}>
+                        <span>• 源杰科技: <Text strong>3.4%</Text> 买入 → 收盘 <Text strong type="success">-3.87%</Text> (当日回撤 <Text strong type="danger">-7.27%</Text>)</span>
+                        <span>• 天孚通信: <Text strong>2.2%</Text> 买入 → 收盘 <Text strong type="success">-4.88%</Text> (当日回撤 <Text strong type="danger">-7.08%</Text>)</span>
+                      </Space>
+                    </div>
+                  </>
+                }
+                type="error"
+                showIcon
+                icon={<WarningOutlined />}
+              />
+
+              <Alert
+                className="lesson-alert"
+                message="核心策略 (必须死守)"
+                description={
+                  <>
+                    <div>1. <Text strong>出手时机</Text>：真正适合全仓出手的机会，一个星期通常只有一次。即科技指数情绪 <Text strong style={{ color: '#cf1322' }}>低于 -100</Text> 或 <Text strong style={{ color: '#cf1322' }}>连续多日为负</Text> 后的次日。</div>
+                    <div>2. <Text strong>识别诱多</Text>：非冰点后的早盘冲高，大概率是冲高回落套人。</div>
+                    <div>3. <Text strong>仓位管理</Text>：冰点次日可全仓+追高；其他时间要么空仓，要么持股，最多 <Text strong>半仓</Text> 博弈。</div>
+                    <Text strong style={{ color: '#cf1322', marginTop: 8, display: 'block' }}>
+                      宁可踏空，绝不被冲高回落套住！冲高回落是对“早上追高+重仓”模式的最大威胁。
+                    </Text>
+                  </>
+                }
+                type="success"
+                showIcon
+                icon={<BulbOutlined />}
+              />
+
+              <div className="case-image-container">
+                <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>情绪背景: 连续三天过热</Text></Divider>
+                <Image src={kejiqingxu0605} className="case-image" />
+                
+                <Row gutter={16} style={{ marginTop: 16 }}>
+                  <Col span={12}>
+                    <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>错误案例: 天孚通信冲高回落</Text></Divider>
+                    <Image src={tianfutongxin0605} className="case-image" />
+                  </Col>
+                  <Col span={12}>
+                    <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>错误案例: 源杰科技大幅回撤</Text></Divider>
+                    <Image src={yuanjiekeji0605} className="case-image" />
+                  </Col>
+                </Row>
+              </div>
+            </Card>
             <Divider>
               <Text type="secondary" style={{ fontSize: '12px' }}>
                 <InfoCircleOutlined /> 交易纪律是盈利的基石
