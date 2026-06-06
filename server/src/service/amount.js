@@ -50,7 +50,11 @@ const fetchAmountInfo = async () => {
     }
 };
 
+let num = 0;
 const getAmountInfo = async () => {
+    // num++;
+    // return {"mainMoney": "-873.55亿","amountChangeDiff": "+" + (num * 1 + 3216.55) + "亿"}
+
     // 读取 amount.json 的文件，把最新的一条数据拿出来返回
     const amountData = fs.existsSync(amountPath) ? JSON.parse(fs.readFileSync(amountPath, 'utf8') || '[]') : [];
     return amountData?.[amountData.length - 1]?.[1];
@@ -63,6 +67,14 @@ const pollAmountInfo = async (interval = 1000 * 10) => {
             const amountInfo = await fetchAmountInfo();
             // 先把文件中的内容读取出来，然后将当前的内容合并到文件中，文件中的内容是一个二维数组，数组中的每一项也是一个数组，第一个值 是当前的时间 DD:MM:SS，第二个值 是当前的成交量信息
             const amountData = fs.existsSync(amountPath) ? JSON.parse(fs.readFileSync(amountPath, 'utf8') || '[]') : [];
+            // 判断如果是周六周日，或者是时间上小于上午九点半，或者是大于下午三点就不写入文件
+            const now = dayjs();
+            const isWeekend = now.isWeekend();
+            const isBefore930 = now.isBefore('09:30:00');
+            const isAfter1530 = now.isAfter('15:30:00');
+            if (isWeekend || isBefore930 || isAfter1530) {
+                return;
+            }
             amountData.push([dayjs().format('HHmmss'), amountInfo]);
 
             // 保存到文件
@@ -71,7 +83,7 @@ const pollAmountInfo = async (interval = 1000 * 10) => {
             console.error('轮询获取成交量信息失败，等待下一次轮询:', error.message);
         }
     };
-    
+
     // 首次立即执行
     fetchAndSave();
     // 设置轮询
@@ -79,17 +91,15 @@ const pollAmountInfo = async (interval = 1000 * 10) => {
 }
 
 const getAmountHistory = () => {
-    return fs.existsSync(amountPath) ? JSON.parse(fs.readFileSync(amountPath, 'utf8') || '[]') : [];
+    const data = fs.existsSync(amountPath) ? JSON.parse(fs.readFileSync(amountPath, 'utf8') || '[]') : [];
+    // 过滤 data 这个二维数组中，每一项的第一项时间，重复的就只保留最新的
+    const uniqueData = data.filter((item, index, arr) => arr.findIndex(t => t[0] === item[0]) === index);
+    return uniqueData;
 }
 
-// let num = 0;
-// const mockAmountInfo = async () => {
-//     num++;
-//     return {
-//         'mainMoney': '-200',
-//         'amountChangeDiff': -1000 - num * 10 + ''
-//     }
-// }
+// (async () => {
+//     getAmountHistory();
+// })();
 
 exports.getAmountInfo = getAmountInfo;
 exports.getAmountHistory = getAmountHistory;

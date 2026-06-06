@@ -44,7 +44,9 @@ const stockList = {
     'sz000657': '中钨高新',
     'sh688082': '盛美上海',
     'sh688808': '联讯仪器',
-    'sz002851': '麦格米特'
+    'sz002851': '麦格米特',
+    'sz300776': '帝尔激光',
+    'sz000725': '京东方A'
 };
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
@@ -95,6 +97,16 @@ const getStockListData = async (stockCodeList, limit = 1) => {
     for (const code in stockListData) {
         stockListData[code].kline.sort((a, b) => b.trade_date - a.trade_date);
     }
+    // mock 把 change 为负数的变成正的
+    // for (const code in stockListData) {
+    //     stockListData[code].kline.forEach(item => {
+    //         if (item.change < 0) {
+    //             item.change = -item.change;
+    //         }
+    //     });
+    // }
+    // stockListData['sh688981'].kline[0].change = -9999999;
+
     return stockListData;
 };
 
@@ -146,15 +158,15 @@ exports.filterUnNormalStockData = () => {
         const [code, value] = data[i];
         const kline = value.kline[0];
         // 如果涨幅前后相差超过 0.3%，则认为是急速异动股票
-        if (Math.abs(kline.change_diff) > 0.3) {
-            unNormalStockList.push({
-                name: value.stockName,
-                code,
-                change: kline.change,
-                change_diff: kline.change_diff,
-                desc: `急速异动，异动幅度：${kline.change_diff.toFixed(2)}%`
-            });
-        }
+        // if (Math.abs(kline.change_diff) > 0.3) {
+        //     unNormalStockList.push({
+        //         name: value.stockName,
+        //         code,
+        //         change: kline.change,
+        //         change_diff: kline.change_diff,
+        //         desc: `急速异动，异动幅度：${kline.change_diff.toFixed(2)}%`
+        //     });
+        // }
         // 果当日最新的涨幅涨超 2%，或者跌超 -2%，则认为是异常波动股票
         if (Math.abs(kline.change) > 2) {
             unNormalStockList.push({

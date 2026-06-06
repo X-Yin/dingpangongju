@@ -28,8 +28,6 @@ export default function KLine({ data = [], height = 500 }) {
         borderColor: '#D1D4DC',
         timeVisible: true,
         secondsVisible: false,
-        fixLeftEdge: true,
-        fixRightEdge: true,
         tickMarkFormatter: (time) => {
           // time 是 { day: 29, month: 5, year: 2026 } 或者 字符串 "2026-05-29"
           // 这里可以根据需要自定义横轴展示的文案

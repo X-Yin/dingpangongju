@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Card, Row, Col, Tag, Typography, Empty, Space, Divider, Button, Modal, List, Badge, Spin, Alert, Input } from 'antd';
-import { StockOutlined, LineChartOutlined, ClockCircleOutlined, HistoryOutlined, AlertOutlined, RiseOutlined, FallOutlined, AreaChartOutlined, WarningOutlined, SearchOutlined, CaretUpOutlined, CaretDownOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Tag, Typography, Empty, Space, Divider, Button, Modal, List, Badge, Spin, Alert, Input, Tooltip } from 'antd';
+import { StockOutlined, LineChartOutlined, ClockCircleOutlined, HistoryOutlined, AlertOutlined, RiseOutlined, FallOutlined, AreaChartOutlined, WarningOutlined, SearchOutlined, CaretUpOutlined, CaretDownOutlined, ThunderboltOutlined, CloseOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
 import StockKLineModal from '../../components/StockKLineModal';
+import { useEmotionSuggestion } from '../../hooks/emotion';
 import './index.scss';
 
 const { Title, Text } = Typography;
@@ -46,6 +47,7 @@ const DingPan = () => {
     const [mainMoneyHistory, setMainMoneyHistory] = useState([]); // 记录主力资金历史，用于趋势预警
     const [defensiveBlockHistory, setDefensiveBlockHistory] = useState([]); // 记录防御板块历史，用于趋势预警
     const [alerts, setAlerts] = useState([]); // 存储当前显示的顶部告警信息列表
+    const [techIndexData, setTechIndexData] = useState([]); // 科技情绪数据
 
     // 打开 K 线弹窗
     const showKLine = (stock) => {
@@ -146,6 +148,8 @@ const DingPan = () => {
         const value = data.unNormalStockList || [];
         const waveList = [];
         const changeList = [];
+        let upCount = 0;
+        let downCount = 0;
 
         value.forEach(item => {
             const change = item.change;
@@ -156,10 +160,12 @@ const DingPan = () => {
                 if (change > -2) statusKey = 'lowGreen';
                 else if (change > -5) statusKey = 'mediumGreen';
                 else statusKey = 'highGreen';
+                downCount++;
             } else if (change > 0) {
                 if (change < 2) statusKey = 'lowRed';
                 else if (change < 5) statusKey = 'mediumRed';
                 else statusKey = 'highRed';
+                upCount++;
             }
 
             if (statusKey) {
@@ -205,6 +211,9 @@ const DingPan = () => {
         // 按 change 从大到小排序
         changeList.sort((a, b) => b.changeValue - a.changeValue);
 
+        // Calculate total change value
+        const totalChangeValue = changeList.reduce((sum, item) => sum + item.changeValue, 0);
+
         // 按急速异动的幅度降序排序，幅度越大的在越前面
         waveList.sort((a, b) => {
             const aVal = parseFloat(a.change_diff);
@@ -212,11 +221,7 @@ const DingPan = () => {
             return Math.abs(bVal) - Math.abs(aVal);
         });
 
-        //     // mock
-        //      // 触发桌面通知和记录
-        //  sendDesktopNotification('测试移动', '急速拉升 ⚡', '+2%', 'sh688313');
-
-        return { waveList, changeList };
+        return { waveList, changeList, upCount, downCount, totalChangeValue };
     }, [data.unNormalStockList]);
 
     const fetchData = async () => {
@@ -289,6 +294,17 @@ const DingPan = () => {
             console.error('Fetch data failed:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchEmotionData = async () => {
+        try {
+            const response = await axios.get(`http://${local_ip}:3000/emotion_data`);
+            if (response.data && response.data.techIndexData) {
+                setTechIndexData(response.data.techIndexData);
+            }
+        } catch (error) {
+            console.error('Fetch emotion data failed:', error);
         }
     };
 
@@ -443,6 +459,7 @@ const DingPan = () => {
     useEffect(() => {
         fetchData();
         fetchAmountData();
+        fetchEmotionData();
         
         const monitorTimer = setInterval(fetchData, 5000);
         const amountTimer = setInterval(fetchAmountData, 10000); // 10s 轮询一次
@@ -453,13 +470,52 @@ const DingPan = () => {
         };
     }, []);
 
-    console.log('>> amount history', amountHistory);
+    const emotionSuggestion = useEmotionSuggestion(techIndexData);
+
+    const marketRiskWarning = useMemo(() => {
+        // 新增：如果所有股票涨跌幅加起来是负数，也认为是市场情绪不佳
+        if (stockData.downCount > stockData.upCount || stockData.totalChangeValue < 0) {
+            return `当日大盘整体做多情绪不佳，容易冲高回落，不要因为某些个股涨幅异动而强行出手。善战者，求之于势，不责于人！`;
+        }
+        return null;
+    }, [stockData.upCount, stockData.downCount, stockData.totalChangeValue]);
 
     return (
         <div className="dingpan-container">
-            {alerts.length > 0 && (
+            {(alerts.length > 0 || emotionSuggestion || marketRiskWarning) && (
                 <div className="top-global-alerts" style={{ marginBottom: 16 }}>
                     <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                        {marketRiskWarning && (
+                            <Alert
+                                message={<Text strong style={{ fontSize: '18px', color: '#cf1322' }}>🚨 极端风险预警：市场空头占优</Text>}
+                                description={
+                                    <div style={{ marginTop: 8 }}>
+                                        <Text strong style={{ fontSize: '15px' }}>
+                                            {marketRiskWarning}
+                                        </Text>
+                                    </div>
+                                }
+                                type="error"
+                                showIcon
+                                icon={<WarningOutlined style={{ fontSize: '28px' }} />}
+                            />
+                        )}
+                        {emotionSuggestion && (
+                            <Alert
+                                message={<Text strong style={{ fontSize: '16px' }}>{emotionSuggestion.message}</Text>}
+                                description={
+                                    <div style={{ marginTop: 8 }}>
+                                        <Text>{emotionSuggestion.description}</Text>
+                                        <div style={{ marginTop: 8, color: '#666' }}>
+                                            提示：当前建议为综合前几日的科技情绪指数复盘之后给出的提示
+                                        </div>
+                                    </div>
+                                }
+                                type={emotionSuggestion.type}
+                                showIcon
+                                icon={<ThunderboltOutlined style={{ fontSize: '24px' }} />}
+                            />
+                        )}
                         {alerts.map(alert => (
                             <Alert
                                 key={alert.id}
@@ -695,35 +751,69 @@ const DingPan = () => {
 
                         {/* 个股异动监控区 */}
                         <Card
-                            title={<><StockOutlined /> 个股幅度异动 (按涨幅排序)</>}
+                            title={
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '8px 0' }}>
+                                    <span><StockOutlined /> 个股幅度异动 (按涨幅排序)</span>
+                                    {marketRiskWarning && (
+                                        <Text strong style={{ fontSize: '15px', color: '#ff4d4f', fontStyle: 'italic', textDecoration: 'underline' }}>
+                                            ⚠️ {marketRiskWarning}
+                                        </Text>
+                                    )}
+                                </div>
+                            }
                             className="monitor-card stock-card"
                             variant="borderless"
                         >
                             {stockData.changeList.length > 0 ? (
                                 <div className="stock-grid">
-                                    {stockData.changeList.map((item, index) => (
-                                        <div
-                                            key={index}
-                                            className={`stock-item ${item.type} ${item.statusKey}`}
-                                            style={{ backgroundColor: item.bgColor, borderColor: item.color, cursor: 'pointer' }}
-                                            onClick={() => showKLine(item)}
-                                        >
-                                            <div className="stock-info">
-                                                <Text strong style={{ color: item.color }}>{item.name}</Text>
-                                                <Text type="secondary" size="small" style={{ fontSize: '11px', display: 'block', opacity: 0.8, color: item.color }}>
-                                                    {item.label}
-                                                </Text>
-                                                {item.desc && (
-                                                    <Text type="secondary" size="small" style={{ fontSize: '10px', display: 'block', opacity: 0.9, color: item.color, fontStyle: 'italic', marginTop: '2px' }}>
-                                                        {item.desc}
+                                    {stockData.changeList.map((item, index) => {
+                                        const isRedStock = item.statusKey?.includes('Red');
+                                        const showRiskOverlay = marketRiskWarning && isRedStock;
+
+                                        const stockItemContent = (
+                                            <div
+                                                key={index}
+                                                className={`stock-item ${item.type} ${item.statusKey} ${showRiskOverlay ? 'has-risk-overlay' : ''}`}
+                                                style={{ backgroundColor: item.bgColor, borderColor: item.color, cursor: 'pointer', position: 'relative' }}
+                                                onClick={() => showKLine(item)}
+                                            >
+                                                <div className="stock-info">
+                                                    <Text strong style={{ color: item.color }}>{item.name}</Text>
+                                                    <Text type="secondary" size="small" style={{ fontSize: '11px', display: 'block', opacity: 0.8, color: item.color }}>
+                                                        {item.label}
                                                     </Text>
+                                                    {item.desc && (
+                                                        <Text type="secondary" size="small" style={{ fontSize: '10px', display: 'block', opacity: 0.9, color: item.color, fontStyle: 'italic', marginTop: '2px' }}>
+                                                            {item.desc}
+                                                        </Text>
+                                                    )}
+                                                </div>
+                                                <Tag color={item.color} className="stock-tag" style={{ border: 'none' }}>
+                                                    {item.change}
+                                                </Tag>
+                                                {showRiskOverlay && (
+                                                    <div className="risk-overlay">
+                                                        <CloseOutlined className="risk-cross-icon" />
+                                                    </div>
                                                 )}
                                             </div>
-                                            <Tag color={item.color} className="stock-tag" style={{ border: 'none' }}>
-                                                {item.change}
-                                            </Tag>
-                                        </div>
-                                    ))}
+                                        );
+
+                                        if (showRiskOverlay) {
+                                            return (
+                                                <Tooltip 
+                                                    key={index}
+                                                    title="当日情绪不佳，该股票不建议购买，谨慎出手"
+                                                    color="#ff4d4f"
+                                                    placement="top"
+                                                >
+                                                    {stockItemContent}
+                                                </Tooltip>
+                                            );
+                                        }
+
+                                        return stockItemContent;
+                                    })}
                                 </div>
                             ) : (
                                 <Empty description="暂无个股异动数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
@@ -876,4 +966,3 @@ const DingPan = () => {
 };
 
 export default DingPan;
-

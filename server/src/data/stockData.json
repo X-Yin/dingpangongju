@@ -895,5 +895,51 @@
         "change_diff": 0
       }
     ]
+  },
+  "sz300776": {
+    "stockName": "帝尔激光",
+    "kline": [
+      {
+        "trade_date": 20260605,
+        "preclose_px": 164.3,
+        "close_px": 170.16,
+        "open_px": 159.35,
+        "high_px": 184.88,
+        "low_px": 156.6,
+        "ma5_px": 156.45,
+        "ma10_px": 158.22,
+        "ma20_px": 148.61,
+        "amp": 17.21,
+        "tr": 15.53,
+        "change_px": 5.86,
+        "change": 3.57,
+        "business_amount": 27801208,
+        "business_balance": 4782532377,
+        "change_diff": 0
+      }
+    ]
+  },
+  "sz000725": {
+    "stockName": "京东方A",
+    "kline": [
+      {
+        "trade_date": 20260605,
+        "preclose_px": 6.15,
+        "close_px": 6.43,
+        "open_px": 6.11,
+        "high_px": 6.77,
+        "low_px": 6.01,
+        "ma5_px": 5.8,
+        "ma10_px": 5.66,
+        "ma20_px": 5.01,
+        "amp": 12.36,
+        "tr": 15.15,
+        "change_px": 0.28,
+        "change": 4.55,
+        "business_amount": 5504115519,
+        "business_balance": 35684789249,
+        "change_diff": 0
+      }
+    ]
   }
 }
