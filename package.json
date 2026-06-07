@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
+    "vditor": "^3.11.2"
+  }
+}

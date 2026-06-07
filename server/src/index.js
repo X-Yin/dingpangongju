@@ -9,6 +9,7 @@ const { getJingJiaQiangChouData, pollJingJiaQiangChouData } = require('./service
 const { pollKaiPaiZhuDongData, getKaiPanZhuDongData } = require('./service/kaipanzhudong');
 const { getAmountHistory, pollAmountInfo } = require('./service/amount');
 const { getAllEmotionData, getAllIndexKlineData, updateCurrentEmotionData, updateCurrentTechIndexData, getAllTechIndexData } = require('./service/emotion');
+const { getMainProblem, writeMainProblem, updateMainProblemSeq, delMainProblem, updatePersonalSugg } = require('./service/mainProblem');
 
 const POLL_CONFIG = {
   kaipanzhudong: {
@@ -31,6 +32,9 @@ app.use(cors({
   origin: '*', // 对所有来源开放跨域访问
   optionsSuccessStatus: 200 // 一些旧浏览器（IE11，各种 SmartTV）在 204 时会窒息
 }));
+
+// 解析 JSON 请求体
+app.use(express.json());
 // 端口
 const port = 3000;
 
@@ -109,6 +113,36 @@ app.post('/update_emotion_data', async (req, res) => {
 app.get('/jisuyidong_rank', async (req, res) => {
   const jisuyidongRankData = getJiSuYiDongRankData();
   res.json(jisuyidongRankData);
+});
+
+app.get('/get_main_problem', async (req, res) => {
+  const mainProblemData = await getMainProblem();
+  res.json(mainProblemData);
+});
+
+app.post('/update_main_problem', async (req, res) => {
+  const { id, title, content } = req.body;
+  writeMainProblem({ id, title, content });
+  res.json({ message: '更新成功' });
+});
+
+app.post('/update_main_problem_seq', async (req, res) => {
+  const { seq_ids } = req.body;
+  updateMainProblemSeq({ seq_ids });
+  res.json({ message: '更新成功' });
+});
+
+app.post('/del_main_problem', async (req, res) => {
+  const { id } = req.body;
+  delMainProblem({ id });
+  res.json({ message: '删除成功' });
+});
+
+app.post('/update_personal_sugg', async (req, res) => {
+  const { globalSuggContent, tempSuggContent } = req.body;
+  console.log('>> person sugg', globalSuggContent, tempSuggContent);
+  updatePersonalSugg({ globalSuggContent, tempSuggContent });
+  res.json({ message: '更新成功' });
 });
 
 // 启动服务

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.5",
+    "@hello-pangea/dnd": "^18.0.1",
     "antd": "^6.4.3",
     "axios": "^1.16.1",
     "dayjs": "^1.11.21",
@@ -19,7 +20,8 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^6.9.0",
-    "sass": "^1.100.0"
+    "sass": "^1.100.0",
+    "vditor": "^3.11.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
