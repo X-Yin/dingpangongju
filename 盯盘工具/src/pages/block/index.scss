@@ -18,6 +18,9 @@
     }
 
     .header-actions {
+      display: flex;
+      flex-direction: row;
+
       .toggle-all-btn {
         border-radius: 8px;
         display: flex;

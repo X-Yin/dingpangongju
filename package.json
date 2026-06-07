@@ -1,7 +1,9 @@
 {
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
+    "chart.js": "^4.5.1",
     "dayjs": "^1.11.21",
+    "react-chartjs-2": "^5.3.1",
     "vditor": "^3.11.2"
   }
 }

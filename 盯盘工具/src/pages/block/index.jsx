@@ -6,6 +6,7 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
 import StockKLineModal from '../../components/StockKLineModal';
+import BlockRankingModal from '../../components/BlockRankingModal';
 import './index.scss';
 
 const { Title, Text } = Typography;
@@ -41,6 +42,7 @@ const Block = () => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [expandedKeys, setExpandedKeys] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [rankingModalVisible, setRankingModalVisible] = useState(false); // New state for ranking modal
   const [selectedStock, setSelectedStock] = useState(null);
   const isFirstLoad = useRef(true); // 记录是否是初次加载
 
@@ -113,6 +115,11 @@ const Block = () => {
     setExpandedKeys([]);
   };
 
+  // 显示排名弹窗
+  const showRankingModal = () => {
+    setRankingModalVisible(true);
+  };
+
   const isAllExpanded = blocks.length > 0 && expandedKeys.length === blocks.length;
 
   return (
@@ -127,6 +134,14 @@ const Block = () => {
           )}
         </div>
         <div className="header-actions">
+          <Button
+            type='primary'
+            onClick={showRankingModal}
+            className="view-ranking-btn"
+            style={{ marginRight: '10px' }}
+          >
+            查看排名
+          </Button>
           <Button 
             icon={isAllExpanded ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
             onClick={isAllExpanded ? collapseAll : expandAll}
@@ -222,6 +237,13 @@ const Block = () => {
           name: selectedStock?.name,
           change: selectedStock?.change
         }}
+      />
+
+      {/* 板块排名弹窗 */}
+      <BlockRankingModal
+        visible={rankingModalVisible}
+        onCancel={() => setRankingModalVisible(false)}
+        blocks={blocks}
       />
     </div>
   );
