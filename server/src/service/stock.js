@@ -76,11 +76,11 @@ exports.getSingleStockTlineData = getSingleStockTlineData;
  **/
 let num = 0;
 const getStockListData = async (stockCodeList, limit = 1) => {
-    if (num === 0) {
-        num++;
-        return JSON.parse(fs.readFileSync(path.resolve(__dirname, '../mock/mockStockData1.json')));
-    }
-    return JSON.parse(fs.readFileSync(path.resolve(__dirname, '../mock/mockStockData2.json')));
+    // if (num === 0) {
+    //     num++;
+    //     return JSON.parse(fs.readFileSync(path.resolve(__dirname, '../mock/mockStockData1.json')));
+    // }
+    // return JSON.parse(fs.readFileSync(path.resolve(__dirname, '../mock/mockStockData2.json')));
 
     const promises = [];
     const stockListData = {};
