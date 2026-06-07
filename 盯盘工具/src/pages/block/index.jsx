@@ -156,7 +156,7 @@ const Block = () => {
                   title={
                     <div className="card-title-content" onClick={(e) => toggleExpand(e, block.blockName)} style={{ cursor: 'pointer' }}>
                       <Text strong className="block-name">{block.blockName}</Text>
-                      <Tag 
+                      <Tag
                         color={colors.bg} 
                         style={{ color: colors.text, borderColor: colors.border, fontWeight: 'bold' }}
                       >

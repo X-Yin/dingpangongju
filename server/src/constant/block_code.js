@@ -458,5 +458,30 @@ exports.default = [
          "blockName": "煤炭",
         "code": "sh601918",
         "name": "新集能源"
+    },
+    {
+        "blockName": "玻璃基板",
+        "code": "sz000725",
+        "name": "新东方A"
+    },
+    {
+        "blockName": "玻璃基板",
+        "code": "sz300776",
+        "name": "帝尔激光"
+    },
+    {
+        "blockName": "玻璃基板",
+        "code": "sh600552",
+        "name": "凯盛科技"
+    },
+    {
+        "blockName": "玻璃基板",
+        "code": "sh600552",
+        "name": "凯盛科技"
+    },
+    {
+        "blockName": "玻璃基板",
+        "code": "sh603773",
+        "name": "沃格光电"
     }
 ]

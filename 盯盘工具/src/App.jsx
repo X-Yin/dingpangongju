@@ -39,11 +39,6 @@ function App() {
       icon: <CoffeeOutlined />,
       label: '情绪复盘',
     },
-    {
-      key: '/zhuyaomaodun',
-      icon: <BookOutlined />,
-      label: '主要矛盾',
-    },
   ];
 
   return (

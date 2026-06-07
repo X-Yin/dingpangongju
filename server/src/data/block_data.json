@@ -596,5 +596,37 @@
       "code": "sh601918",
       "change": -4.99
     }
+  ],
+  "玻璃基板": [
+    {
+      "name": "新东方A",
+      "blockName": "玻璃基板",
+      "code": "sz000725",
+      "change": 4.55
+    },
+    {
+      "name": "帝尔激光",
+      "blockName": "玻璃基板",
+      "code": "sz300776",
+      "change": 3.57
+    },
+    {
+      "name": "凯盛科技",
+      "blockName": "玻璃基板",
+      "code": "sh600552",
+      "change": 9.98
+    },
+    {
+      "name": "凯盛科技",
+      "blockName": "玻璃基板",
+      "code": "sh600552",
+      "change": 9.98
+    },
+    {
+      "name": "沃格光电",
+      "blockName": "玻璃基板",
+      "code": "sh603773",
+      "change": 8.17
+    }
   ]
 }

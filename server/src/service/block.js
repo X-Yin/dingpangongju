@@ -4,6 +4,7 @@ const fs = require('fs');
 const { default: blockCodeList } = require('../constant/block_code.js');
 const { getSingleStockData } = require('./stock');
 const { sleep } = require('../utils/index.js');
+const dayjs = require('dayjs');
 
 const blockPath = path.resolve(__dirname, '../data/block_data.json');
 
@@ -57,6 +58,7 @@ const pollBlockData = async (interval = 60000) => {
             const blockData = JSON.parse(originData || '{}');
             blockData[blockName] = blockListData[blockName];
             fs.writeFileSync(blockPath, JSON.stringify(blockData, null, 2));
+
             await sleep(1000);
         }
         console.log('---------- 轮询板块数据完成！---------- ', new Date().toLocaleString());
