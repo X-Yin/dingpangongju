@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const { filterUnNormalDaPanData, pollDaPanData, getAllDaPanData } = require('./service/dapan');
-const { filterUnNormalStockData, pollStockData, getSingleStockData, getSingleStockTlineData, getAllStockData } = require('./service/stock');
+const { filterUnNormalStockData, pollStockData, getSingleStockData, getSingleStockTlineData, getAllStockData, getJiSuYiDongRankData } = require('./service/stock');
 const { getBlockData, pollBlockData, getTopAndBottomBlockData } = require('./service/block');
 // const { diagnose } = require('./service/diagnose');
 const { getJingJiaQiangChouData, pollJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
@@ -106,7 +106,10 @@ app.post('/update_emotion_data', async (req, res) => {
   res.json({ message: '情绪数据更新成功' });
 });
 
-
+app.get('/jisuyidong_rank', async (req, res) => {
+  const jisuyidongRankData = getJiSuYiDongRankData();
+  res.json(jisuyidongRankData);
+});
 
 // 启动服务
 app.listen(port, () => {

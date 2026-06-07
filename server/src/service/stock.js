@@ -50,6 +50,7 @@ const stockList = {
 };
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
+const jisuyidongPath = path.resolve(__dirname, '../data/jisuyidong.json');
 
 const getSingleStockData = async (code, limit = 1) => {
     const response = await axios.get(getClsReqUrl(code, limit));
@@ -75,11 +76,11 @@ exports.getSingleStockTlineData = getSingleStockTlineData;
  **/
 let num = 0;
 const getStockListData = async (stockCodeList, limit = 1) => {
-    // if (num === 0) {
-    //     num++;
-    //     return JSON.parse(fs.readFileSync(path.resolve(__dirname, '../mock/mockStockData1.json')));
-    // }
-    // return JSON.parse(fs.readFileSync(path.resolve(__dirname, '../mock/mockStockData2.json')));
+    if (num === 0) {
+        num++;
+        return JSON.parse(fs.readFileSync(path.resolve(__dirname, '../mock/mockStockData1.json')));
+    }
+    return JSON.parse(fs.readFileSync(path.resolve(__dirname, '../mock/mockStockData2.json')));
 
     const promises = [];
     const stockListData = {};
@@ -158,18 +159,47 @@ exports.filterUnNormalStockData = () => {
         const [code, value] = data[i];
         const kline = value.kline[0];
         // 如果涨幅前后相差超过 0.3%，则认为是急速异动股票
-        // if (Math.abs(kline.change_diff) > 0.3) {
-        //     unNormalStockList.push({
-        //         name: value.stockName,
-        //         code,
-        //         change: kline.change,
-        //         change_diff: kline.change_diff,
-        //         desc: `急速异动，异动幅度：${kline.change_diff.toFixed(2)}%`
-        //     });
-        // }
+        if (Math.abs(kline.change_diff) > 0.3) {
+            const item = {
+                type: 1,
+                name: value.stockName,
+                code,
+                change: kline.change,
+                change_diff: kline.change_diff,
+                desc: `急速异动，异动幅度：${kline.change_diff.toFixed(2)}%`
+            };
+            unNormalStockList.push(item);
+            // 将当前的数据写入到 data/jisuyidong.json 中，先把之前的数据读取出来，然后再塞进去，再写入
+            try {
+                const localData = JSON.parse(fs.readFileSync(jisuyidongPath, 'utf-8')) || {};
+                if (localData[item.code]) {
+                    if (kline.change_diff > 0) {
+                        localData[item.code].up++;
+                    } else {
+                        localData[item.code].down++;
+                    }
+                    localData[item.code].change = item.change;
+                } else {
+                    localData[item.code] = {
+                        stockName: item.name,
+                        change: item.change,
+                        up: 0,
+                        down: 0,
+                    };
+                }
+                fs.writeFileSync(
+                    jisuyidongPath,
+                    JSON.stringify(localData, null, 2),
+                    'utf-8'
+                );
+            } catch (e) {
+                console.log('---------- 写入极速异动股票数据失败！----------', e);
+            }
+        }
         // 果当日最新的涨幅涨超 2%，或者跌超 -2%，则认为是异常波动股票
         if (Math.abs(kline.change) > 2) {
             unNormalStockList.push({
+                type: 2,
                 name: value.stockName,
                 code,
                 change: kline.change,
@@ -179,15 +209,15 @@ exports.filterUnNormalStockData = () => {
         }
     }
     // 对unNormalStockList按stockName去重，保留每个股票的第一条异常记录
-    const uniqueList = [];
-    const seenCodes = new Set();
-    for (const item of unNormalStockList) {
-        if (!seenCodes.has(item.code)) {
-            seenCodes.add(item.code);
-            uniqueList.push(item);
-        }
-    }
-    return uniqueList;
+    // const uniqueList = [];
+    // const seenCodes = new Set();
+    // for (const item of unNormalStockList) {
+    //     if (!seenCodes.has(item.code)) {
+    //         seenCodes.add(item.code);
+    //         uniqueList.push(item);
+    //     }
+    // }
+    return unNormalStockList;
 };
 
 const getAllStockData = () => {
@@ -209,6 +239,38 @@ const getAllStockData = () => {
     return sortedStockArray;
 }
 exports.getAllStockData = getAllStockData;
+
+const getJiSuYiDongRankData = () => {
+    const jisuyidongData = JSON.parse(fs.readFileSync(jisuyidongPath, 'utf-8')) || {};
+    // 将股票数据转换为数组，每个对象包含独立的code字段，再按涨幅从高到低排序
+    const stockArray = Object.entries(jisuyidongData).map(([code, value]) => {
+        return {
+            code,
+            stockName: value.stockName,
+            change: value.change,
+            up: value.up,
+            down: value.down,
+        };
+    });
+    // stockArray 根据每个对象的 up 字段从高到低排序
+    const upList = stockArray.sort((a, b) => {
+        const upA = a.up || 0;
+        const upB = b.up || 0;
+        return upB - upA;
+    });
+    const downList = stockArray.sort((a, b) => {
+        const downA = a.down || 0;
+        const downB = b.down || 0;
+        return downB - downA;
+    });
+    // 取 upList 和 downList 的前 20 个
+    const result = {
+        upList: upList.slice(0, 20).filter(item => item.up > 0),
+        downList: downList.slice(0, 20).filter(item => item.down > 0),
+    };
+    return result;
+};
+exports.getJiSuYiDongRankData = getJiSuYiDongRankData;
 
 // (async () => {
 //     console.log(getAllStockData());

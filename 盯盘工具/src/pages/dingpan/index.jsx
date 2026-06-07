@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Card, Row, Col, Tag, Typography, Empty, Space, Divider, Button, Modal, List, Badge, Spin, Alert, Input, Tooltip } from 'antd';
+import { Card, Row, Col, Tag, Typography, Empty, Space, Divider, Button, Modal, List, Badge, Spin, Alert, Input, Tooltip, Tabs } from 'antd';
+const { TabPane } = Tabs;
 import { StockOutlined, LineChartOutlined, ClockCircleOutlined, HistoryOutlined, AlertOutlined, RiseOutlined, FallOutlined, AreaChartOutlined, WarningOutlined, SearchOutlined, CaretUpOutlined, CaretDownOutlined, ThunderboltOutlined, CloseOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
@@ -48,6 +49,8 @@ const DingPan = () => {
     const [defensiveBlockHistory, setDefensiveBlockHistory] = useState([]); // 记录防御板块历史，用于趋势预警
     const [alerts, setAlerts] = useState([]); // 存储当前显示的顶部告警信息列表
     const [techIndexData, setTechIndexData] = useState([]); // 科技情绪数据
+    const [jisuYidongUpList, setJisuYidongUpList] = useState([]); // 急速异动上涨排名
+    const [jisuYidongDownList, setJisuYidongDownList] = useState([]); // 急速异动下跌排名
 
     // 打开 K 线弹窗
     const showKLine = (stock) => {
@@ -146,7 +149,7 @@ const DingPan = () => {
 
     const stockData = useMemo(() => {
         const value = data.unNormalStockList || [];
-        const waveList = [];
+        let waveList = [];
         const changeList = [];
         let upCount = 0;
         let downCount = 0;
@@ -168,7 +171,8 @@ const DingPan = () => {
                 upCount++;
             }
 
-            if (statusKey) {
+            // item.type = 1 代表急速异动，item.type = 2 代码涨幅异动，在个股涨幅异动那里只显示涨幅异动的
+            if (statusKey && item.type === 2) {
                 changeList.push({
                     name: item.name,
                     code: item.code,
@@ -183,7 +187,7 @@ const DingPan = () => {
                 });
             }
 
-            // 2. 处理急速波动 (放在最前面)
+            // 2. 处理急速波动 (放在最前面)，急速波动的不用判断 item.type，全量判断所有的 unNormalStockList
             if (Math.abs(item.change_diff) > 0.3) {
                 const waveStatusKey = item.change_diff > 0 ? 'highRed' : 'highGreen';
                 const label = item.change_diff > 0 ? '急速拉升 ⚡' : '急速下跌 📉';
@@ -202,6 +206,11 @@ const DingPan = () => {
                     time: dayjs().format('HH:mm:ss'),
                     type: 'wave'
                 });
+
+                // waveList 要去重，把重复的 code 给删除掉
+                waveList = waveList.filter((item, index, arr) => 
+                    index === arr.findIndex(t => t.code === item.code)
+                );
 
                 // 触发桌面通知和记录
                 sendDesktopNotification(item.name, label, changeDiffStr, item.code, item.desc);
@@ -456,17 +465,32 @@ const DingPan = () => {
         }
     };
 
+    const fetchJisuYidongRank = async () => {
+        try {
+            const response = await axios.get(`http://${local_ip}:3000/jisuyidong_rank`);
+            if (response.data) {
+                setJisuYidongUpList(response.data.upList || []);
+                setJisuYidongDownList(response.data.downList || []);
+            }
+        } catch (error) {
+            console.error('Fetch jisuyidong_rank data failed:', error);
+        }
+    };
+
     useEffect(() => {
         fetchData();
         fetchAmountData();
         fetchEmotionData();
+        fetchJisuYidongRank();
         
         const monitorTimer = setInterval(fetchData, 5000);
         const amountTimer = setInterval(fetchAmountData, 10000); // 10s 轮询一次
+        const jisuYidongRankTimer = setInterval(fetchJisuYidongRank, 3000); // 3s 轮询一次
         
         return () => {
             clearInterval(monitorTimer);
             clearInterval(amountTimer);
+            clearInterval(jisuYidongRankTimer);
         };
     }, []);
 
@@ -479,6 +503,8 @@ const DingPan = () => {
         }
         return null;
     }, [stockData.upCount, stockData.downCount, stockData.totalChangeValue]);
+
+    console.log('>>> stockData.waveList', stockData.waveList);
 
     return (
         <div className="dingpan-container">
@@ -908,47 +934,119 @@ const DingPan = () => {
                 open={isModalOpen}
                 onCancel={() => setIsModalOpen(false)}
                 footer={null}
-                width={600}
+                width={1000}
                 className="history-modal"
             >
-                <List
-                    itemLayout="horizontal"
-                    dataSource={history}
-                    locale={{ emptyText: <Empty description="今日暂无历史异动记录" /> }}
-                    renderItem={(item) => (
-                        <List.Item
-                            className={`history-item ${item.type}`}
-                            style={{ cursor: 'pointer' }}
-                            onClick={() => showKLine({ name: item.name, code: item.code, change: item.changeValue || 0 })}
-                        >
-                            <List.Item.Meta
-                                avatar={
-                                    <div className={`history-avatar ${item.type}`}>
-                                        {item.type === 'up' ? '🚀' : '📉'}
-                                    </div>
-                                }
-                                title={
-                                    <div className="history-title">
-                                        <Text strong>{item.name}</Text>
-                                        <Tag color={item.type === 'up' ? 'error' : 'success'} borderless className="history-tag">
-                                            {item.label}
-                                        </Tag>
-                                    </div>
-                                }
-                                description={
-                                    <div className="history-desc">
-                                        <Space split={<Divider type="vertical" />} wrap>
-                                            <Text type="secondary"><ClockCircleOutlined /> {item.time}</Text>
-                                            <Text strong style={{ color: item.type === 'up' ? '#cf1322' : '#389e0d' }}>
-                                                异动幅度: {item.changeDiff}
-                                            </Text>
-                                        </Space>
-                                    </div>
-                                }
-                            />
-                        </List.Item>
-                    )}
-                />
+                <Tabs defaultActiveKey="1" style={{ marginTop: -16 }}>
+                    <TabPane tab="最新异动" key="1">
+                        <List
+                            itemLayout="horizontal"
+                            dataSource={history}
+                            locale={{ emptyText: <Empty description="今日暂无历史异动记录" /> }}
+                            renderItem={(item) => (
+                                <List.Item
+                                    className={`history-item ${item.type}`}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => showKLine({ name: item.name, code: item.code, change: item.changeValue || 0 })}
+                                >
+                                    <List.Item.Meta
+                                        avatar={
+                                            <div className={`history-avatar ${item.type}`}>
+                                                {item.type === 'up' ? '🚀' : '📉'}
+                                            </div>
+                                        }
+                                        title={
+                                            <div className="history-title">
+                                                <Text strong>{item.name}</Text>
+                                                <Tag color={item.type === 'up' ? 'error' : 'success'} borderless className="history-tag">
+                                                    {item.label}
+                                                </Tag>
+                                            </div>
+                                        }
+                                        description={
+                                            <div className="history-desc">
+                                                <Space split={<Divider type="vertical" />} wrap>
+                                                    <Text type="secondary"><ClockCircleOutlined /> {item.time}</Text>
+                                                    <Text strong style={{ color: item.type === 'up' ? '#cf1322' : '#389e0d' }}>
+                                                        异动幅度: {item.changeDiff}
+                                                    </Text>
+                                                </Space>
+                                            </div>
+                                        }
+                                    />
+                                </List.Item>
+                            )}
+                        />
+                    </TabPane>
+                    <TabPane tab="急速异动排名" key="2">
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Card title="📈 急速拉升榜" size="small" headStyle={{ backgroundColor: '#f6ffed', borderBottom: '1px solid #b7eb8f' }}>
+                                    {jisuYidongUpList.length > 0 ? (
+                                        <List
+                                            itemLayout="horizontal"
+                                            dataSource={jisuYidongUpList}
+                                            renderItem={(item, index) => (
+                                                <List.Item onClick={() => showKLine({ name: item.name, code: item.code, change: item.change })}
+                                                style={{ cursor: 'pointer' }}>
+                                                    <List.Item.Meta
+                                                        avatar={<Text type="secondary">{index + 1}.</Text>}
+                                                        title={
+                                                            <Space>
+                                                                <Text strong style={{ color: '#f5222d' }}>{item.stockName} ({item.code?.replace('sh', '').replace('sz', '')})</Text>
+                                                                <Tag color="error" bordered={false}>{item.change}%</Tag>
+                                                            </Space>
+                                                        }
+                                                        description={
+                                                            <Space>
+                                                                <Text type="secondary">上涨次数: {item.up}</Text>
+                                                                <Text type="secondary">下跌次数: {item.down}</Text>
+                                                            </Space>
+                                                        }
+                                                    />
+                                                </List.Item>
+                                            )}
+                                        />
+                                    ) : (
+                                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无急速拉升数据" />
+                                    )}
+                                </Card>
+                            </Col>
+                            <Col span={12}>
+                                <Card title="📉 急速下跌榜" size="small" headStyle={{ backgroundColor: '#fff1f0', borderBottom: '1px solid #ffa39e' }}>
+                                    {jisuYidongDownList.length > 0 ? (
+                                        <List
+                                            itemLayout="horizontal"
+                                            dataSource={jisuYidongDownList}
+                                            renderItem={(item, index) => (
+                                                <List.Item onClick={() => showKLine({ name: item.name, code: item.code, change: item.change })}
+                                                style={{ cursor: 'pointer' }}>
+                                                    <List.Item.Meta
+                                                        avatar={<Text type="secondary">{index + 1}.</Text>}
+                                                        title={
+                                                            <Space>
+                                                                <Text strong style={{ color: '#52c41a' }}>{item.stockName} ({item.code?.replace('sh', '').replace('sz', '')})</Text>
+                                                                <Tag color="success" bordered={false}>{item.change}%</Tag>
+                                                            </Space>
+                                                        }
+                                                        description={
+                                                            <Space>
+                                                                <Text type="secondary">上涨次数: {item.up}</Text>
+                                                                <Text type="secondary">下跌次数: {item.down}</Text>
+                                                            </Space>
+                                                        }
+                                                    />
+                                                </List.Item>
+                                            )}
+                                        />
+                                    ) : (
+                                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无急速下跌数据" />
+                                    )}
+                                </Card>
+                            </Col>
+                        </Row>
+                    </TabPane>
+                </Tabs>
             </Modal>
 
             {/* K 线图弹窗 */}
