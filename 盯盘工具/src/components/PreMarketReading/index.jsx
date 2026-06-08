@@ -17,6 +17,7 @@ import kejiqingxu0603 from '../../assets/20260603-科技情绪指数.png';
 import kejiqingxu0605 from '../../assets/20260605-科技情绪指数.png';
 import tianfutongxin0605 from '../../assets/20260605-天孚通信.png';
 import yuanjiekeji0605 from '../../assets/20260605-源杰科技.png';
+import kejiqingxuzhishu0608 from '../../assets/20260608-科技情绪指数.png';
 import './index.scss';
 
 const { Title, Paragraph, Text } = Typography;
@@ -53,7 +54,7 @@ const PreMarketReading = () => {
     { key: 'case-inducement', href: '#case-inducement', title: '退潮期的冲高诱多' },
     { key: 'rebound-strategy', href: '#rebound-strategy', title: '退潮期超跌反弹博弈' },
     { key: 'outflow-warning', href: '#outflow-warning', title: '资金净流出加速风险' },
-    { key: 'case-0605', href: '#case-0605', title: '一周期一次出手纪律' },
+    { key: 'case-0605', href: '#case-0605', title: '一周期一次出手纪律' },    { key: 'timing-selection', href: '#timing-selection', title: '择时大于选股' },
   ].map(item => ({
     ...item,
     title: <Tooltip title={item.title} placement="top"><span>{item.title}</span></Tooltip>
@@ -403,6 +404,57 @@ const PreMarketReading = () => {
                 </Row>
               </div>
             </Card>
+            
+            <Card 
+              id="timing-selection"
+              className="section-card"
+              title={'择时大于选股(0608)'}
+              style={{ marginTop: 16 }} 
+            >
+              <Alert
+                className="lesson-alert"
+                message="核心理念"
+                description={
+                  <>
+                    <Text strong>择时大于选股，过程大于结果。</Text>
+                  </>
+                }
+                type="info"
+                showIcon
+                icon={<InfoCircleOutlined />}
+              />
+              <Alert
+                className="lesson-alert"
+                message="冰点出击策略"
+                description={
+                  <>
+                    <div>当市场处于<Text strong type="danger">连续冰点</Text>时，应积极寻找当天<Text strong type="success">表现强势的个股出手</Text>，而非纠结于单次操作的盈亏。</div>
+                  </>
+                }
+                type="success"
+                showIcon
+                icon={<CheckCircleOutlined />}
+              />
+              <div className="principle-content">
+                <Text type="secondary">好比打篮球有空位就该投篮，此时不投，更待何时？</Text>
+              </div>
+              <Alert
+                className="lesson-alert"
+                message="结果导向不如过程正确"
+                description={
+                  <>
+                    <div>我们应只关注<Text strong>过程是否合理正确</Text>，而非个别交易的短期结果。</div>
+                    <Text strong type="success" style={{ display: 'block', marginTop: 8 }}>只要过程正确，重复多次，最终必将盈利。</Text>
+                  </>
+                }
+                type="success"
+                showIcon
+                icon={<CheckCircleOutlined />}
+              />
+                <Image src={kejiqingxuzhishu0608} className="principle-image"></Image>
+            </Card>
+
+
             <Divider>
               <Text type="secondary" style={{ fontSize: '12px' }}>
                 <InfoCircleOutlined /> 交易纪律是盈利的基石

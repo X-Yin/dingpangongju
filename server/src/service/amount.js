@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs');
 const dayjs = require('dayjs');
+const { sleep } = require('../utils/index');
 
 const amountPath = path.resolve(__dirname, '../data/amount.json');
 
@@ -26,19 +27,33 @@ const fetchAmountInfo = async () => {
 
         // 等待目标元素渲染完成
         await page.waitForSelector('.hq-stock-money', { timeout: 30000 });
+        await sleep(1000);
 
         const result = await page.evaluate(() => {
             const element1 = document.querySelector('.hq-stock-money span.zhulivalue');
             const element2 = document.querySelector('.hq-stock-amount span.valfont');
+            console.log('>>>element1,2', element1, element2);
             return {
                 'mainMoney': element1 ? element1.innerText.trim() : null,
                 'amountChangeDiff': element2 ? element2.innerText.trim() : null,
             }
         });
 
+        console.log('>>> 成交量 result', result);
+
         await browser.close();
         if (Math.abs(Number(parseFloat(result.mainMoney))) > 0 && Math.abs(Number(parseFloat(result.amountChangeDiff))) > 0) {
+            //  const now = dayjs();
+            // const isWeekend = now.isWeekend();
+            // const isBefore930 = now.isBefore('09:30:00');
+            // const isAfter1530 = now.isAfter('15:30:00');
+            // if (isWeekend || isBefore930 || isAfter1530) {
+            //     return;
+            // }
+            // amountData.push([dayjs().format('HHmmss'), result]);
 
+            // // 保存到文件
+            // fs.writeFileSync(amountPath, JSON.stringify(amountData, null, 2))
             return result;
         } else {
             throw new Error('成交量信息获取失败');
@@ -68,13 +83,13 @@ const pollAmountInfo = async (interval = 1000 * 10) => {
             // 先把文件中的内容读取出来，然后将当前的内容合并到文件中，文件中的内容是一个二维数组，数组中的每一项也是一个数组，第一个值 是当前的时间 DD:MM:SS，第二个值 是当前的成交量信息
             const amountData = fs.existsSync(amountPath) ? JSON.parse(fs.readFileSync(amountPath, 'utf8') || '[]') : [];
             // 判断如果是周六周日，或者是时间上小于上午九点半，或者是大于下午三点就不写入文件
-            const now = dayjs();
-            const isWeekend = now.isWeekend();
-            const isBefore930 = now.isBefore('09:30:00');
-            const isAfter1530 = now.isAfter('15:30:00');
-            if (isWeekend || isBefore930 || isAfter1530) {
-                return;
-            }
+            // const now = dayjs();
+            // const isWeekend = now.isWeekend();
+            // const isBefore930 = now.isBefore('09:30:00');
+            // const isAfter1530 = now.isAfter('15:30:00');
+            // if (isWeekend || isBefore930 || isAfter1530) {
+            //     return;
+            // }
             amountData.push([dayjs().format('HHmmss'), amountInfo]);
 
             // 保存到文件

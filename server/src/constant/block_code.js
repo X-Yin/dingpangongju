@@ -476,11 +476,6 @@ exports.default = [
     },
     {
         "blockName": "玻璃基板",
-        "code": "sh600552",
-        "name": "凯盛科技"
-    },
-    {
-        "blockName": "玻璃基板",
         "code": "sh603773",
         "name": "沃格光电"
     }

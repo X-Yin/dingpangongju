@@ -123,6 +123,7 @@
 
       .lesson-alert {
         margin-top: 16px;
+        margin-bottom: 16px;
         border-radius: 8px;
         
         .ant-alert-message {
@@ -155,6 +156,20 @@
             transform: scale(1.01);
           }
         }
+      }
+
+      .principle-content {
+        padding: 12px 16px;
+        line-height: 1.6;
+        margin-bottom: 16px;
+      }
+      .principle-title {
+        font-weight: bold;
+      }
+      .principle-image {
+        max-width: 100%;
+        display: block;
+        padding: 12px 16px;
       }
 
       .main-image {

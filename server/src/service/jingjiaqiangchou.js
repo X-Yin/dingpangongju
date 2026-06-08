@@ -29,7 +29,7 @@ const pollJingJiaQiangChouData = async (hour = 9, minute = 24) => {
                 }
                 fs.writeFileSync(path.resolve(__dirname, '../data/jingjiaqiangchou/index.json'), JSON.stringify(resultData, null, 2), 'utf-8');
                 console.log('>>> 竞价抢筹数据已更新');
-            }, 60000);
+            }, 90000);
         }
     }, 1000);
     return intervalId;

@@ -6,7 +6,7 @@
   "scripts": {
     "clear": "node script/clear.js",
     "dev": "node src/index.js",
-    "start": "npm run dev",
+    "start": "npm run clear & npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
