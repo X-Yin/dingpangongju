@@ -941,5 +941,51 @@
         "change_diff": 0
       }
     ]
+  },
+  "sh688668": {
+    "stockName": "鼎通科技",
+    "kline": [
+      {
+        "trade_date": 20260608,
+        "preclose_px": 395.97,
+        "close_px": 391.78,
+        "open_px": 385.23,
+        "high_px": 410.99,
+        "low_px": 373,
+        "ma5_px": 348.38,
+        "ma10_px": 317.12,
+        "ma20_px": 291.12,
+        "amp": 9.59,
+        "tr": 6.26,
+        "change_px": -4.19,
+        "change": -1.06,
+        "business_amount": 8711814,
+        "business_balance": 3421555889,
+        "change_diff": 0
+      }
+    ]
+  },
+  "sh688017": {
+    "stockName": "绿的谐波",
+    "kline": [
+      {
+        "trade_date": 20260608,
+        "preclose_px": 393,
+        "close_px": 428.25,
+        "open_px": 375.54,
+        "high_px": 450.2,
+        "low_px": 375.45,
+        "ma5_px": 353.93,
+        "ma10_px": 333.85,
+        "ma20_px": 323.06,
+        "amp": 19.02,
+        "tr": 15.84,
+        "change_px": 35.25,
+        "change": 8.97,
+        "business_amount": 29040769,
+        "business_balance": 11949975351,
+        "change_diff": 0
+      }
+    ]
   }
 }

@@ -147,23 +147,27 @@ app.post('/update_personal_sugg', async (req, res) => {
 
 // 启动服务
 app.listen(port, () => {
-  // 大盘数据 20s 轮训一次
-  pollDaPanData(20000);
-  // 个股数据 10s 轮询一次
-  pollStockData(10000);
-  // 板块数据 1min 轮询
-  pollBlockData(60000);
-  // 竞价抢筹数据轮询服务
-  pollJingJiaQiangChouData(POLL_CONFIG.jingjiaqiangchou.hour, POLL_CONFIG.jingjiaqiangchou.minute);
-  // 开盘主动拉升轮询服务
-  pollKaiPaiZhuDongData({ 
-    startHour: POLL_CONFIG.kaipanzhudong.startHour,
-    startMinute: POLL_CONFIG.kaipanzhudong.startMinute,
-    endHour: POLL_CONFIG.kaipanzhudong.endHour,
-    endMinute: POLL_CONFIG.kaipanzhudong.endMinute
-  });
-  // 轮询成交量信息
-  pollAmountInfo(10000);
+  const disablePolling = process.argv.includes('--no-poll');
+
+  if (!disablePolling) {
+    // 大盘数据 20s 轮训一次
+    pollDaPanData(20000);
+    // 个股数据 10s 轮询一次
+    pollStockData(10000);
+    // 板块数据 1min 轮询
+    pollBlockData(60000);
+    // 竞价抢筹数据轮询服务
+    pollJingJiaQiangChouData(POLL_CONFIG.jingjiaqiangchou.hour, POLL_CONFIG.jingjiaqiangchou.minute);
+    // 开盘主动拉升轮询服务
+    pollKaiPaiZhuDongData({ 
+      startHour: POLL_CONFIG.kaipanzhudong.startHour,
+      startMinute: POLL_CONFIG.kaipanzhudong.startMinute,
+      endHour: POLL_CONFIG.kaipanzhudong.endHour,
+      endMinute: POLL_CONFIG.kaipanzhudong.endMinute
+    });
+    // 轮询成交量信息
+    pollAmountInfo(10000);
+  }
   console.log(`服务运行在 http://localhost:${port}`);
 });
 

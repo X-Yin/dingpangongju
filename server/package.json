@@ -6,6 +6,7 @@
   "scripts": {
     "clear": "node script/clear.js",
     "dev": "node src/index.js",
+    "no-poll": "node src/index.js --no-poll",
     "start": "npm run clear & npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

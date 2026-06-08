@@ -301,6 +301,11 @@ exports.default = [
     },
     {
         "blockName": "机器人",
+        "code": "sh688017",
+        "name": "绿的谐波"
+    },
+    {
+        "blockName": "机器人",
         "code": "sh603119",
         "name": "浙江荣泰"
     },
@@ -436,6 +441,11 @@ exports.default = [
     },
     {
          "blockName": "光纤",
+        "code": "sh600522",
+        "name": "中天科技"
+    },
+    {
+         "blockName": "光纤",
         "code": "sh601869",
         "name": "长飞光纤"
     },
@@ -478,5 +488,20 @@ exports.default = [
         "blockName": "玻璃基板",
         "code": "sh603773",
         "name": "沃格光电"
+    },
+    {
+        "blockName": "PPE树脂",
+        "code": "sh605589",
+        "name": "圣泉集团"
+    },
+    {
+        "blockName": "PPE树脂",
+        "code": "sz002669",
+        "name": "康达新材"
+    },
+    {
+        "blockName": "PPE树脂",
+        "code": "sh601208",
+        "name": "东材科技"
     }
 ]

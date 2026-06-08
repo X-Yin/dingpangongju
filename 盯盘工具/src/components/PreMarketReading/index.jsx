@@ -6,6 +6,7 @@ import zhongxinCase from '../../assets/20260529-中芯国际.png';
 import zhongxinFenshi from '../../assets/20260529-中芯国际分时.png';
 import hanwujiCase from '../../assets/20260529-寒武纪.png';
 import hanwujiFenshi from '../../assets/20260529-寒武纪分时.png';
+import kejiqingxuzhishu0529 from '../../assets/20260529-科技情绪指数.png';
 import chuangyebanzhi20260601 from '../../assets/20260601-创业板指.png';
 import lixunjingmi20260601 from '../../assets/20260601-立讯精密.png';
 import haohuanengyuan20260601 from '../../assets/20260601-昊华能源.png';
@@ -204,8 +205,7 @@ const PreMarketReading = () => {
               variant="borderless"
             >
               <Paragraph>
-                <Text type="secondary">盘面现象：</Text>
-                上午指数冲高，但成交量显著缩减（缩量上涨）。这在退潮期是典型的<Text strong color="#cf1322">诱多信号</Text>。下午大盘大幅跳水，上午追高资金悉数被套。
+                <span style={{ color: 'red', fontWeight: 'bold' }}>科技情绪指数前一日 0529 只有 -58，并没有到 -100 以下，说明情绪退潮的不彻底，市场情绪还没有到冰点.</span>这个时候最多只能<span style={{ color: 'red' }}>半仓操作</span>。因为随时有可能会冲高回落。果然 0601 当天上午冲高，但是下午大盘就大幅跳水，上午追高资金悉数被套。
               </Paragraph>
 
               <Alert
@@ -213,9 +213,9 @@ const PreMarketReading = () => {
                 message="博弈逻辑"
                 description={
                   <>
-                    <div>退潮期严禁追高，任何盘中拉升都是主力兑现的机会。</div>
+                    <div>只能在冰点（情绪指数-100以下）博弈</div>
                     <Text strong style={{ color: '#cf1322' }}>
-                      寻找低位、低估值的防御性板块（如煤炭、电力）进行低吸，往往能在大盘跳水时获得超额收益。
+                      大盘非冰点的时候，最多只能半仓操作，不能全仓，随时会<span style={{color: 'red', fontWeight: 'bold'}}>冲高回落</span>
                     </Text>
                   </>
                 }
@@ -223,6 +223,8 @@ const PreMarketReading = () => {
                 showIcon
                 icon={<BulbOutlined />}
               />
+              <Divider>当天的科技情绪指数没有到 -100 以下，情绪降温不彻底</Divider>
+              <Image src={kejiqingxuzhishu0529}></Image>
 
               <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>案例 1: 创业板指缩量诱多</Text></Divider>
               <div className="case-image-container single">
@@ -237,13 +239,6 @@ const PreMarketReading = () => {
                 <Image src={lixunjingmi20260601} className="case-image" />
               </div>
 
-              <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>案例 3: 昊华能源 (低位防御板块走强)</Text></Divider>
-              <Paragraph>
-                防御板块煤炭不受指数跳水影响，全天高举高打，走出独立行情。
-              </Paragraph>
-              <div className="case-image-container single">
-                <Image src={haohuanengyuan20260601} className="case-image" />
-              </div>
             </Card>
 
             <Card 

@@ -46,7 +46,9 @@ const stockList = {
     'sh688808': '联讯仪器',
     'sz002851': '麦格米特',
     'sz300776': '帝尔激光',
-    'sz000725': '京东方A'
+    'sz000725': '京东方A',
+    'sh688668': '鼎通科技',
+    'sh688017': '绿的谐波'
 };
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
