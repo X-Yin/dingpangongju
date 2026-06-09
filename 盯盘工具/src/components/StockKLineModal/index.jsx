@@ -65,7 +65,7 @@ const StockKLineModal = ({
                 {stockInfo.code && <Text type="secondary">({stockInfo.code})</Text>}
                 {stockInfo.change !== undefined && (
                   <Tag color={parseFloat(stockInfo.change) > 0 ? 'error' : 'success'} borderless>
-                    {stockInfo.change > 0 ? '+' : ''}{stockInfo.change}%
+                    {stockInfo.change > 0 ? '+' : ''}{stockInfo.change}
                   </Tag>
                 )}
               </Space>

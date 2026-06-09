@@ -109,7 +109,17 @@ const getAmountHistory = () => {
     const data = fs.existsSync(amountPath) ? JSON.parse(fs.readFileSync(amountPath, 'utf8') || '[]') : [];
     // 过滤 data 这个二维数组中，每一项的第一项时间，重复的就只保留最新的
     const uniqueData = data.filter((item, index, arr) => arr.findIndex(t => t[0] === item[0]) === index);
-    return uniqueData;
+
+    return uniqueData.map(i => {
+        const { mainMoney } = i[1];
+        if (mainMoney && mainMoney.indexOf('万') !== -1) {
+            return [i[0], {
+                ...i[1],
+                mainMoney: `${(parseFloat(mainMoney.replace('万', '')) / 10000).toFixed(2)}亿`,
+            }]
+        }
+        return i;
+    });
 }
 
 // (async () => {

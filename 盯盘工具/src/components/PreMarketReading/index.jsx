@@ -19,6 +19,9 @@ import kejiqingxu0605 from '../../assets/20260605-科技情绪指数.png';
 import tianfutongxin0605 from '../../assets/20260605-天孚通信.png';
 import yuanjiekeji0605 from '../../assets/20260605-源杰科技.png';
 import kejiqingxuzhishu0608 from '../../assets/20260608-科技情绪指数.png';
+import zhongchuanteqi0609 from '../../assets/20260609-中船特气.png';
+import hudiangufen0609 from '../../assets/20260609-沪电股份.png';
+import lianxunguangong0609 from '../../assets/20260609-联讯仪器.png';
 import './index.scss';
 
 const { Title, Paragraph, Text } = Typography;
@@ -56,6 +59,7 @@ const PreMarketReading = () => {
     { key: 'rebound-strategy', href: '#rebound-strategy', title: '退潮期超跌反弹博弈' },
     { key: 'outflow-warning', href: '#outflow-warning', title: '资金净流出加速风险' },
     { key: 'case-0605', href: '#case-0605', title: '一周期一次出手纪律' },    { key: 'timing-selection', href: '#timing-selection', title: '择时大于选股' },
+    { key: 'rebound-dip', href: '#rebound-dip', title: '情绪反弹龙头表现不如小弟' },
   ].map(item => ({
     ...item,
     title: <Tooltip title={item.title} placement="top"><span>{item.title}</span></Tooltip>
@@ -449,6 +453,28 @@ const PreMarketReading = () => {
                 <Image src={kejiqingxuzhishu0608} className="principle-image"></Image>
             </Card>
 
+            <Card
+              id="rebound-dip"
+              className="section-card"
+              title={<><InfoCircleOutlined style={{ color: '#1890ff' }} /> 退潮期强势个股，在反弹第一天往往会补跌(0609)</>}
+              variant="borderless"
+            >
+              <Paragraph>
+                退潮期强势的个股，往往是板块中逻辑最硬，业绩最优的个股，在退潮期机构为了避险只能抱团这种龙头股。但是一旦市场情绪开始反弹，那么由于这个龙头已经上涨过了，所以资金会先撤出来，然后去低位洼地的同板块的其他个股。因此在反弹的第一天往往会看到退潮期抗跌的龙头，反而表现不如后排的小弟
+              </Paragraph>
+              <Paragraph>
+                <Text type="secondary">案例一：</Text>在退潮期连续两天强势的中船特气，反而在 6.09 市场情绪反弹的第一天，反而还是下跌的
+              </Paragraph>
+              <Paragraph>
+                <Text type="secondary">案例二：</Text>在退潮期连续上涨的联讯仪器，是光模块测试设备的龙头，但是在 6.09 市场情绪反弹的第一天，新易盛上涨了 8 个点，而它只涨了 0.19%
+              </Paragraph>
+              <Paragraph>
+                <Text type="secondary">案例三：</Text>在退潮期率先开始反弹抗跌的沪电股份，但是在 6.09 这一天情绪反弹的第一天，深南和胜宏都是七八个点的涨幅，沪电只有不到 3 个点
+              </Paragraph>
+              <Image src={zhongchuanteqi0609}></Image>
+              <Image src={lianxunguangong0609}></Image>
+              <Image src={hudiangufen0609}></Image>
+            </Card>
 
             <Divider>
               <Text type="secondary" style={{ fontSize: '12px' }}>

@@ -85,6 +85,7 @@ const getBlockData = () => {
     return blockList.sort((a, b) => b.avgChange - a.avgChange);
 };
 
+let block_rank_list_prev = {};
 // 找出涨幅前五和跌幅前五的板块返回
 const getTopAndBottomBlockData = (num = 5) => {
     const blockData = getBlockData();
