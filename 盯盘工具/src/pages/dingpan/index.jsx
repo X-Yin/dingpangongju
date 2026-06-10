@@ -3,8 +3,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Card, Row, Col, Tag, Typography, Empty, Space, Divider, Button, Modal, List, Badge, Spin, Alert, Input, Tooltip, Tabs } from 'antd';
 const { TabPane } = Tabs;
-import { StockOutlined, LineChartOutlined, ClockCircleOutlined, HistoryOutlined, AlertOutlined, RiseOutlined, FallOutlined, AreaChartOutlined, WarningOutlined, SearchOutlined, CaretUpOutlined, CaretDownOutlined, ThunderboltOutlined, CloseOutlined } from '@ant-design/icons';
+import { StockOutlined, LineChartOutlined, ClockCircleOutlined, HistoryOutlined, AlertOutlined, RiseOutlined, FallOutlined, AreaChartOutlined, WarningOutlined, SearchOutlined, CaretUpOutlined, CaretDownOutlined, ThunderboltOutlined, CloseOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { createChart, ColorType } from 'lightweight-charts';
 import { local_ip } from '../../constant';
 import StockKLineModal from '../../components/StockKLineModal';
 import { useEmotionSuggestion } from '../../hooks/emotion';
@@ -51,6 +52,11 @@ const DingPan = () => {
     const [techIndexData, setTechIndexData] = useState([]); // 科技情绪数据
     const [jisuYidongUpList, setJisuYidongUpList] = useState([]); // 急速异动上涨排名
     const [jisuYidongDownList, setJisuYidongDownList] = useState([]); // 急速异动下跌排名
+
+    // 主力资金趋势图相关
+    const [historyData, setHistoryData] = useState([]);
+    const mainMoneyContainerRef = useRef(null);
+    const mainMoneyChartRef = useRef(null);
 
     // 打开 K 线弹窗
     const showKLine = (stock) => {
@@ -121,22 +127,6 @@ const DingPan = () => {
         }, 10 * 60 * 1000);
     };
 
-    const dapanList = useMemo(() => {
-        const value = data.unNormalDaPanData || [];
-        return value.map(item => {
-            const isUp = item.change > 0;
-            const statusKey = isUp ? 'highRed' : 'highGreen';
-            return {
-                name: item.name,
-                color: colorMap[statusKey],
-                bgColor: bgMap[statusKey],
-                statusKey,
-                change: `${isUp ? '+' : ''}${item.change}${Math.abs(item.change) > 100 ? '' : '%'}`,
-                desc: `${item.name}: ${isUp ? '涨' : '跌'} ${item.change}${item.change > 100 ? '' : '%'} `,
-            };
-        });
-    }, [data.unNormalDaPanData]);
-
     const filteredAllStockData = useMemo(() => {
         const stocks = data.allStockData || [];
         if (!searchQuery) return stocks;
@@ -146,6 +136,20 @@ const DingPan = () => {
             (stock.code && stock.code.toLowerCase().includes(query))
         );
     }, [data.allStockData, searchQuery]);
+
+    const moneyStatus = useMemo(() => {
+        if (historyData.length < 2) return null;
+        
+        const latest = historyData[historyData.length - 1][1];
+        const prev = historyData[historyData.length - 2][1];
+        
+        const curMoney = parseFloat(latest.mainMoney) || 0;
+        const preMoney = parseFloat(prev.mainMoney) || 0;
+        
+        return curMoney >= preMoney ? 
+            { label: '加速流入', color: '#f5222d', icon: <ArrowUpOutlined /> } : 
+            { label: '加速流出', color: '#52c41a', icon: <ArrowDownOutlined /> };
+    }, [historyData]);
 
     const stockData = useMemo(() => {
         const value = data.unNormalStockList || [];
@@ -477,20 +481,122 @@ const DingPan = () => {
         }
     };
 
+    const fetchHistoryData = async () => {
+        try {
+            const response = await axios.get(`http://${local_ip}:3000/amount_history`);
+            setHistoryData(response.data);
+        } catch (err) {
+            console.error('Fetch history data failed:', err);
+        }
+    };
+
+    const createBaseChart = (container) => {
+        return createChart(container, {
+            layout: {
+                background: { type: ColorType.Solid, color: '#ffffff' },
+                textColor: '#333',
+                fontSize: 10,
+            },
+            width: container.clientWidth,
+            height: 220, // 增加高度
+            grid: {
+                vertLines: { color: '#f0f0f0' },
+                horzLines: { color: '#f0f0f0' },
+            },
+            timeScale: {
+                timeVisible: true,
+                secondsVisible: false,
+                borderColor: '#D1D4DC',
+                tickMarkFormatter: (time) => {
+                    return dayjs.unix(time).format('HH:mm');
+                },
+            },
+            localization: {
+                timeFormatter: (time) => {
+                    return dayjs.unix(time).format('HH:mm:ss');
+                },
+            },
+            rightPriceScale: {
+                borderColor: '#D1D4DC',
+                autoScale: true,
+            },
+            handleScroll: true,
+            handleScale: true,
+        });
+    };
+
+    const renderMainMoneyChart = (data) => {
+        if (!mainMoneyContainerRef.current) return;
+        
+        if (mainMoneyChartRef.current) {
+            mainMoneyChartRef.current.remove();
+        }
+
+        const chart = createBaseChart(mainMoneyContainerRef.current);
+        mainMoneyChartRef.current = chart;
+
+        const series = chart.addLineSeries({
+            color: '#f5222d',
+            lineWidth: 2,
+            priceFormat: {
+                type: 'price',
+                precision: 0,
+                minMove: 1,
+            },
+        });
+
+        const today = dayjs().format('YYYY-MM-DD');
+        const sortedData = [...data].sort((a, b) => a[0].localeCompare(b[0]));
+        
+        const chartData = sortedData.map(([time, val]) => {
+            const hh = time.substring(0, 2);
+            const mm = time.substring(2, 4);
+            const ss = time.substring(4, 6);
+            return {
+                time: dayjs(`${today} ${hh}:${mm}:${ss}`).unix(),
+                value: parseFloat(val.mainMoney) || 0,
+            };
+        });
+
+        series.setData(chartData);
+        chart.timeScale().fitContent();
+    };
+
+    useEffect(() => {
+        if (historyData.length > 0) {
+            renderMainMoneyChart(historyData);
+        }
+    }, [historyData]);
+
+    // 处理窗口缩放
+    useEffect(() => {
+        const handleResize = () => {
+            if (mainMoneyChartRef.current && mainMoneyContainerRef.current) {
+                mainMoneyChartRef.current.applyOptions({ width: mainMoneyContainerRef.current.clientWidth });
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     useEffect(() => {
         fetchData();
         fetchAmountData();
         fetchEmotionData();
         fetchJisuYidongRank();
+        fetchHistoryData();
         
         const monitorTimer = setInterval(fetchData, 5000);
         const amountTimer = setInterval(fetchAmountData, 10000); // 10s 轮询一次
         const jisuYidongRankTimer = setInterval(fetchJisuYidongRank, 3000); // 3s 轮询一次
+        const historyTimer = setInterval(fetchHistoryData, 10000); // 10s 轮询一次
         
         return () => {
             clearInterval(monitorTimer);
             clearInterval(amountTimer);
             clearInterval(jisuYidongRankTimer);
+            clearInterval(historyTimer);
         };
     }, []);
 
@@ -704,143 +810,105 @@ const DingPan = () => {
                             </Row>
                         )}
 
-                        {/* 抢筹与拉升模块 */}
-                        {( (data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0) || (data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0) ) && (
-                            <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
-                                {data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0 && (
-                                    <Col span={data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0 ? 12 : 24}>
-                                        <Card
-                                            title={<><RiseOutlined style={{ color: '#ff4d4f' }} /> 竞价抢筹监控</>}
-                                            className="monitor-card jingjia-card"
-                                            variant="borderless"
-                                        >
-                                            <div className="jingjia-grid">
-                                                {data.jingJiaQiangChouData.map((item, index) => {
-                                                    const isUp = item.change >= 0;
-                                                    const color = isUp ? '#f5222d' : '#52c41a';
-                                                    return (
-                                                        <div
-                                                            key={index}
-                                                            className="jingjia-item"
-                                                            onClick={() => showKLine({ name: item.stockName, code: item.code, change: item.change })}
-                                                            style={{ cursor: 'pointer' }}
-                                                        >
-                                                            <div className="stock-info">
-                                                                <Text strong style={{ fontSize: '14px' }}>{item.stockName}</Text>
-                                                                <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.code?.replace('sh', '').replace('sz', '')}</Text>
-                                                            </div>
-                                                            <div className="stock-values">
-                                                                <Text strong style={{ color: color, fontSize: '14px' }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
-                                                                <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.last_px?.toFixed(2)}</Text>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </Card>
-                                    </Col>
-                                )}
-                                {data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0 && (
-                                    <Col span={data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0 ? 12 : 24}>
-                                        <Card
-                                            title={<><ThunderboltOutlined style={{ color: '#faad14' }} /> 开盘主动拉升</>}
-                                            className="monitor-card zhudong-card"
-                                            variant="borderless"
-                                        >
-                                            <div className="jingjia-grid">
-                                                {data.kaiPanZhuDongData.map((item, index) => {
-                                                    const isUp = item.change >= 0;
-                                                    const color = isUp ? '#f5222d' : '#52c41a';
-                                                    return (
-                                                        <div
-                                                            key={index}
-                                                            className="jingjia-item"
-                                                            onClick={() => showKLine({ name: item.stockName, code: item.code, change: item.change })}
-                                                            style={{ cursor: 'pointer' }}
-                                                        >
-                                                            <div className="stock-info">
-                                                                <Text strong style={{ fontSize: '14px' }}>{item.stockName}</Text>
-                                                                <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.code?.replace('sh', '').replace('sz', '')}</Text>
-                                                            </div>
-                                                            <div className="stock-values">
-                                                                <Text strong style={{ color: color, fontSize: '14px' }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
-                                                                <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.last_px?.toFixed(2)}</Text>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </Card>
-                                    </Col>
-                                )}
-                            </Row>
-                        )}
-
-                        {/* 顶部监控栏：板块涨跌幅 + 大盘异常 */}
-                        <Row gutter={[16, 16]} style={{ marginBottom: 12 }}>
-                            <Col xs={24} md={8}>
-                                <Card className="top-block-card" variant="borderless" style={{ height: '100%' }}>
-                                    <div className="block-card-header">
-                                        <RiseOutlined className="rise-icon" />
-                                        <Title level={5} style={{ margin: 0 }}>涨幅前五板块</Title>
-                                    </div>
-                                    <div className="block-items-container">
-                                        {data.topAndBottomBlockData && data.topAndBottomBlockData.firstNumList.map((item, index) => (
-                                            <div 
-                                                key={index} 
-                                                className="block-item rise"
-                                                onClick={() => jumpToBlock(item.blockName)}
-                                                style={{ cursor: 'pointer' }}
-                                            >
-                                                <span className="block-name">{item.blockName}</span>
-                                                <span className="block-change">+{item.avgChange}%</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </Card>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Card className="bottom-block-card" variant="borderless" style={{ height: '100%' }}>
-                                    <div className="block-card-header">
-                                        <FallOutlined className="fall-icon" />
-                                        <Title level={5} style={{ margin: 0 }}>跌幅前五板块</Title>
-                                    </div>
-                                    <div className="block-items-container">
-                                        {data.topAndBottomBlockData && data.topAndBottomBlockData.lastNumList.map((item, index) => (
-                                            <div 
-                                                key={index} 
-                                                className="block-item fall"
-                                                onClick={() => jumpToBlock(item.blockName)}
-                                                style={{ cursor: 'pointer' }}
-                                            >
-                                                <span className="block-name">{item.blockName}</span>
-                                                <span className="block-change">{item.avgChange}%</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </Card>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Card
-                                    title={<><LineChartOutlined /> 大盘异常监控</>}
-                                    className="monitor-card dapan-card"
-                                    variant="borderless"
-                                    style={{ height: '100%' }}
-                                >
-                                    {dapanList.length > 0 ? (
-                                        <Space direction="vertical" style={{ width: '100%' }} split={<Divider style={{ margin: '4px 0' }} />}>
-                                            {dapanList.map((item, index) => (
-                                                <div key={index} className={`data-item ${item.statusKey}`} style={{ backgroundColor: item.bgColor, padding: '4px 12px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between' }}>
-                                                    <Text strong style={{ color: item.color, fontSize: '13px' }}>{item.name}</Text>
-                                                    <Tag color={item.color} style={{ marginLeft: 'auto', border: 'none', fontWeight: 'bold', fontSize: '12px' }}>
-                                                        {item.change}
-                                                    </Tag>
+                        {/* 顶部监控栏：板块涨跌幅 */}
+                        <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
+                            <Col span={24}>
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <Card className="top-block-card" variant="borderless" style={{ flex: 1 }}>
+                                        <div className="block-card-header">
+                                            <RiseOutlined className="rise-icon" />
+                                            <Title level={5} style={{ margin: 0, fontSize: '13px' }}>涨幅前五</Title>
+                                        </div>
+                                        <div className="block-items-container">
+                                            {data.topAndBottomBlockData && data.topAndBottomBlockData.firstNumList.map((item, index) => (
+                                                <div 
+                                                    key={index} 
+                                                    className="block-item rise"
+                                                    onClick={() => jumpToBlock(item.blockName)}
+                                                    style={{ cursor: 'pointer' }}
+                                                >
+                                                    <span className="block-name">{item.blockName}</span>
+                                                    <span className="block-change">+{item.avgChange}%</span>
                                                 </div>
                                             ))}
-                                        </Space>
-                                    ) : (
-                                        <Empty description="暂无大盘异常数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                                        </div>
+                                    </Card>
+                                    <Card className="bottom-block-card" variant="borderless" style={{ flex: 1 }}>
+                                        <div className="block-card-header">
+                                            <FallOutlined className="fall-icon" />
+                                            <Title level={5} style={{ margin: 0, fontSize: '13px' }}>跌幅前五</Title>
+                                        </div>
+                                        <div className="block-items-container">
+                                            {data.topAndBottomBlockData && data.topAndBottomBlockData.lastNumList.map((item, index) => (
+                                                <div 
+                                                    key={index} 
+                                                    className="block-item fall"
+                                                    onClick={() => jumpToBlock(item.blockName)}
+                                                    style={{ cursor: 'pointer' }}
+                                                >
+                                                    <span className="block-name">{item.blockName}</span>
+                                                    <span className="block-change">{item.avgChange}%</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </Card>
+                                </div>
+                            </Col>
+                        </Row>
+
+                        {/* 主力资金趋势监控（全宽，左右结构） */}
+                        <Row gutter={[16, 16]} style={{ marginBottom: 12 }}>
+                            <Col span={24}>
+                                <Card
+                                    title={<><LineChartOutlined /> 主力资金趋势监控 (亿)</>}
+                                    extra={moneyStatus && (
+                                        <Tag color={moneyStatus.color} icon={moneyStatus.icon}>
+                                            {moneyStatus.label}
+                                        </Tag>
                                     )}
+                                    className="monitor-card dapan-card"
+                                    variant="borderless"
+                                >
+                                    <Row gutter={24} align="middle">
+                                        <Col xs={24} md={16}>
+                                            {historyData.length > 0 ? (
+                                                <div ref={mainMoneyContainerRef} style={{ width: '100%', height: '220px' }} />
+                                            ) : (
+                                                <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <Empty description="暂无主力资金趋势数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                                                </div>
+                                            )}
+                                        </Col>
+                                        <Col xs={24} md={8}>
+                                            <div className="history-values-side">
+                                                <div style={{ marginBottom: 12, borderBottom: '1px solid #f0f0f0', paddingBottom: 8 }}>
+                                                    <Text strong type="secondary" style={{ fontSize: '12px' }}>
+                                                        <ClockCircleOutlined /> 最近 5 次资金明细
+                                                    </Text>
+                                                </div>
+                                                <List
+                                                    size="small"
+                                                    dataSource={historyData.slice(-5).reverse()}
+                                                    renderItem={([time, val]) => {
+                                                        const amount = parseFloat(val.mainMoney) || 0;
+                                                        const color = amount >= 0 ? '#f5222d' : '#52c41a';
+                                                        return (
+                                                            <List.Item style={{ padding: '8px 0', borderBottom: '1px dashed #f0f0f0' }}>
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                                                                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                                        {time.substring(0, 2)}:{time.substring(2, 4)}:{time.substring(4, 6)}
+                                                                    </Text>
+                                                                    <Text strong style={{ color: color, fontSize: '14px' }}>
+                                                                        {amount > 0 ? '+' : ''}{amount} 亿
+                                                                    </Text>
+                                                                </div>
+                                                            </List.Item>
+                                                        );
+                                                    }}
+                                                />
+                                            </div>
+                                        </Col>
+                                    </Row>
                                 </Card>
                             </Col>
                         </Row>
@@ -949,7 +1017,6 @@ const DingPan = () => {
                                         const prevChange = kline.prevChange || 0;
                                         const isTrendingUp = currentChange > prevChange;
                                         const isTrendingDown = currentChange < prevChange;
-                                        const trendColor = isTrendingUp ? '#f5222d' : (isTrendingDown ? '#52c41a' : '#999');
 
                                         return (
                                             <div 

@@ -122,8 +122,8 @@
     .block-card-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: 6px;
+      margin-bottom: 4px;
 
       h5 {
         font-weight: 600;
@@ -132,30 +132,36 @@
     }
 
     .block-items-container {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
     }
 
     .block-item {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      padding: 4px 12px;
+      padding: 4px 6px;
       border-radius: 6px;
       font-weight: 600;
       transition: all 0.3s;
 
       &:hover {
-        transform: translateX(4px);
+        transform: translateY(-2px);
       }
 
       .block-name {
-        font-size: 13px;
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        text-align: center;
       }
 
       .block-change {
-        font-size: 14px;
+        font-size: 12px;
       }
     }
   }
@@ -196,9 +202,24 @@
     border-radius: 12px;
     border: 1px solid #f0f0f0;
     height: 100%;
+
+    .ant-card-head {
+      padding: 0 16px;
+      min-height: 40px;
+      border-bottom: 1px solid #f0f0f0;
+
+      .ant-card-head-title {
+        font-size: 14px;
+        padding: 8px 0;
+      }
+    }
+
+    .ant-card-body {
+      padding: 12px !important;
+    }
     
     &.jingjia-card, &.zhudong-card {
-      min-height: 200px;
+      min-height: 120px;
       height: auto;
       display: flex;
       flex-direction: column;
