@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Layout, Menu, Button, Modal, Carousel } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, ThunderboltOutlined, AreaChartOutlined } from '@ant-design/icons';
+import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, ThunderboltOutlined, AreaChartOutlined, FileTextOutlined } from '@ant-design/icons';
 import PreMarketReading from './components/PreMarketReading';
+import OperationRecord from './components/OperationRecord';
 import './App.scss';
 
 const { Sider, Content, Header } = Layout;
@@ -12,6 +13,7 @@ function App() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [preMarketVisible, setPreMarketVisible] = useState(false);
+  const [operationRecordVisible, setOperationRecordVisible] = useState(false);
 
   const menuItems = [
     {
@@ -118,6 +120,15 @@ function App() {
             >
               盘前必读
             </Button>
+            <Button
+              type="primary"
+              icon={<FileTextOutlined />}
+              onClick={() => setOperationRecordVisible(true)}
+              className="operation-record-btn"
+              style={{ marginLeft: 8 }}
+            >
+              操作记录
+            </Button>
           </div>
         </Header>
         <Content className="app-content">
@@ -137,6 +148,20 @@ function App() {
         className="pre-market-modal"
       >
         <PreMarketReading />
+      </Modal>
+      <Modal
+        title={<span><FileTextOutlined style={{ color: '#1890ff', marginRight: '8px' }} />操作记录</span>}
+        open={operationRecordVisible}
+        onCancel={() => setOperationRecordVisible(false)}
+        footer={null}
+        width={1200}
+        centered
+        bodyStyle={{
+          maxHeight: '800px',
+          overflowY: 'auto'
+        }}
+      >
+        <OperationRecord />
       </Modal>
     </Layout>
   );

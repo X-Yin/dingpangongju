@@ -10,6 +10,7 @@ const { pollKaiPaiZhuDongData, getKaiPanZhuDongData } = require('./service/kaipa
 const { getAmountHistory, pollAmountInfo } = require('./service/amount');
 const { getAllEmotionData, getAllIndexKlineData, updateCurrentEmotionData, updateCurrentTechIndexData, getAllTechIndexData } = require('./service/emotion');
 const { getMainProblem, writeMainProblem, updateMainProblemSeq, delMainProblem, updatePersonalSugg } = require('./service/mainProblem');
+const { getOpRecord, updateOpRecord } = require('./service/opRecord');
 
 const POLL_CONFIG = {
   kaipanzhudong: {
@@ -144,6 +145,21 @@ app.post('/update_personal_sugg', async (req, res) => {
   updatePersonalSugg({ globalSuggContent, tempSuggContent });
   res.json({ message: '更新成功' });
 });
+
+// 更新操作记录
+app.post('/update_op_record', async (req, res) => {
+  const { record } = req.body;
+  updateOpRecord(record);
+  res.json({ message: '更新成功' });
+});
+
+// 返回操作记录
+app.get('/get_op_record', async (req, res) => {
+  const opRecord = getOpRecord();
+  res.json(opRecord);
+});
+
+
 
 // 启动服务
 app.listen(port, () => {
