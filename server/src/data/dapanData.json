@@ -87,16 +87,6 @@
     "suspend_num": 10,
     "status": true
   },
-  "listed_today": [
-    {
-      "secu_name": "N高特",
-      "secu_code": "sz301669",
-      "ipo_price": 7.08,
-      "ipo_pe": 29.97,
-      "allot_max": 16500,
-      "lot_rate": 0.0217,
-      "issue_vol": 120000000
-    }
-  ],
+  "listed_today": [],
   "purchase_today": []
 }

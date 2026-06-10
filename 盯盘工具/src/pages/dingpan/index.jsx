@@ -504,8 +504,6 @@ const DingPan = () => {
         return null;
     }, [stockData.upCount, stockData.downCount, stockData.totalChangeValue]);
 
-    console.log('>>> stockData.waveList', stockData.waveList);
-
     return (
         <div className="dingpan-container">
             {(alerts.length > 0 || emotionSuggestion || marketRiskWarning) && (
@@ -607,9 +605,34 @@ const DingPan = () => {
                     <Spin size="large" tip="正在初始化实时监控数据..." />
                 </div>
             ) : (
-                <Row gutter={[24, 24]}>
-                    {/* 左侧主要监控区 */}
-                    <Col xs={24} lg={17}>
+                <>
+                    {/* 急速异动横幅条 */}
+                    {stockData.waveList.length > 0 && (
+                        <div className="wave-banner">
+                            <div className="wave-banner-title">
+                                <StockOutlined className="wave-icon" />
+                                <span>急速异动:</span>
+                            </div>
+                            <div className="wave-items-wrapper">
+                                {stockData.waveList.map((item, index) => (
+                                    <div
+                                        key={index}
+                                        className={`wave-banner-item ${item.statusKey}`}
+                                        onClick={() => showKLine(item)}
+                                    >
+                                        <span className="wave-time">{item.time}</span>
+                                        <span className="wave-name">{item.name}</span>
+                                        <span className="wave-label">{item.label}</span>
+                                        <Text strong style={{ color: item.color, marginRight: 4 }}>{item.change}</Text>
+                                        <Tag color={item.color} className="wave-tag">{item.change_diff}</Tag>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    <Row gutter={[24, 24]}>
+                        {/* 左侧主要监控区 */}
+                        <Col xs={24} lg={17}>
                         {/* 抢筹与拉升模块 */}
                         {( (data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0) || (data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0) ) && (
                             <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
@@ -682,28 +705,76 @@ const DingPan = () => {
                             </Row>
                         )}
 
-                        {/* 急速异动横幅条 */}
-                        {stockData.waveList.length > 0 && (
-                            <div className="wave-banner">
-                                <div className="wave-banner-title">
-                                    <StockOutlined className="wave-icon" />
-                                    <span>急速异动:</span>
-                                </div>
-                                <div className="wave-items-wrapper">
-                                    {stockData.waveList.map((item, index) => (
-                                        <div
-                                            key={index}
-                                            className={`wave-banner-item ${item.statusKey}`}
-                                            onClick={() => showKLine(item)}
+                        {/* 抢筹与拉升模块 */}
+                        {( (data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0) || (data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0) ) && (
+                            <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
+                                {data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0 && (
+                                    <Col span={data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0 ? 12 : 24}>
+                                        <Card
+                                            title={<><RiseOutlined style={{ color: '#ff4d4f' }} /> 竞价抢筹监控</>}
+                                            className="monitor-card jingjia-card"
+                                            variant="borderless"
                                         >
-                                            <span className="wave-time">{item.time}</span>
-                                            <span className="wave-name">{item.name}</span>
-                                            <span className="wave-label">{item.label}</span>
-                                            <Tag color={item.color} className="wave-tag">{item.change_diff}</Tag>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                                            <div className="jingjia-grid">
+                                                {data.jingJiaQiangChouData.map((item, index) => {
+                                                    const isUp = item.change >= 0;
+                                                    const color = isUp ? '#f5222d' : '#52c41a';
+                                                    return (
+                                                        <div
+                                                            key={index}
+                                                            className="jingjia-item"
+                                                            onClick={() => showKLine({ name: item.stockName, code: item.code, change: item.change })}
+                                                            style={{ cursor: 'pointer' }}
+                                                        >
+                                                            <div className="stock-info">
+                                                                <Text strong style={{ fontSize: '14px' }}>{item.stockName}</Text>
+                                                                <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.code?.replace('sh', '').replace('sz', '')}</Text>
+                                                            </div>
+                                                            <div className="stock-values">
+                                                                <Text strong style={{ color: color, fontSize: '14px' }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
+                                                                <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.last_px?.toFixed(2)}</Text>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </Card>
+                                    </Col>
+                                )}
+                                {data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0 && (
+                                    <Col span={data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0 ? 12 : 24}>
+                                        <Card
+                                            title={<><ThunderboltOutlined style={{ color: '#faad14' }} /> 开盘主动拉升</>}
+                                            className="monitor-card zhudong-card"
+                                            variant="borderless"
+                                        >
+                                            <div className="jingjia-grid">
+                                                {data.kaiPanZhuDongData.map((item, index) => {
+                                                    const isUp = item.change >= 0;
+                                                    const color = isUp ? '#f5222d' : '#52c41a';
+                                                    return (
+                                                        <div
+                                                            key={index}
+                                                            className="jingjia-item"
+                                                            onClick={() => showKLine({ name: item.stockName, code: item.code, change: item.change })}
+                                                            style={{ cursor: 'pointer' }}
+                                                        >
+                                                            <div className="stock-info">
+                                                                <Text strong style={{ fontSize: '14px' }}>{item.stockName}</Text>
+                                                                <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.code?.replace('sh', '').replace('sz', '')}</Text>
+                                                            </div>
+                                                            <div className="stock-values">
+                                                                <Text strong style={{ color: color, fontSize: '14px' }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
+                                                                <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.last_px?.toFixed(2)}</Text>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </Card>
+                                    </Col>
+                                )}
+                            </Row>
                         )}
 
                         {/* 顶部监控栏：板块涨跌幅 + 大盘异常 */}
@@ -926,6 +997,7 @@ const DingPan = () => {
                         </Card>
                     </Col>
                 </Row>
+            </> // Closing fragment tag added here
             )}
 
             {/* 异动历史弹窗 */}
