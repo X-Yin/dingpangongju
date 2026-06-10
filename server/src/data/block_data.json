@@ -4,49 +4,49 @@
       "name": "中芯国际",
       "blockName": "半导体",
       "code": "sh688981",
-      "change": 4.41
+      "change": -1.54
     },
     {
       "name": "华虹",
       "blockName": "半导体",
       "code": "sh688347",
-      "change": 6.36
+      "change": -2.46
     },
     {
       "name": "东芯股份",
       "blockName": "半导体",
       "code": "sh688110",
-      "change": 7.73
+      "change": -0.07
     },
     {
       "name": "芯原股份",
       "blockName": "半导体",
       "code": "sh688521",
-      "change": 6.82
+      "change": 0.44
     },
     {
       "name": "北方华创",
       "blockName": "半导体",
       "code": "sz002371",
-      "change": 5.35
+      "change": 0.34
     },
     {
       "name": "中微公司",
       "blockName": "半导体",
       "code": "sh688012",
-      "change": 7.37
+      "change": 1.43
     },
     {
       "name": "拓荆科技",
       "blockName": "半导体",
       "code": "sh688072",
-      "change": 5.02
+      "change": 3.52
     },
     {
       "name": "寒武纪",
       "blockName": "半导体",
       "code": "sh688256",
-      "change": 1.57
+      "change": -3.07
     }
   ],
   "cpu": [
@@ -54,19 +54,19 @@
       "name": "中国长城",
       "blockName": "cpu",
       "code": "sz000066",
-      "change": 2.21
+      "change": -0.37
     },
     {
       "name": "澜起科技",
       "blockName": "cpu",
       "code": "sh688008",
-      "change": 5.39
+      "change": -2.28
     },
     {
       "name": "海光信息",
       "blockName": "cpu",
       "code": "sh688041",
-      "change": 3.27
+      "change": 6.2
     }
   ],
   "存储": [
@@ -74,19 +74,19 @@
       "name": "佰维存储",
       "blockName": "存储",
       "code": "sh688525",
-      "change": 5.77
+      "change": 3.88
     },
     {
       "name": "江波龙",
       "blockName": "存储",
       "code": "sz301308",
-      "change": 6.1
+      "change": -1.49
     },
     {
       "name": "兆易创新",
       "blockName": "存储",
       "code": "sh603986",
-      "change": 5.59
+      "change": -3.93
     }
   ],
   "光模块": [
@@ -94,49 +94,49 @@
       "name": "中际旭创",
       "blockName": "光模块",
       "code": "sz300308",
-      "change": 2.17
+      "change": -2.8
     },
     {
       "name": "新易盛",
       "blockName": "光模块",
       "code": "sz300502",
-      "change": 8.38
+      "change": -1.68
     },
     {
       "name": "东山精密",
       "blockName": "光模块",
       "code": "sz002384",
-      "change": 5.35
+      "change": -5.41
     },
     {
       "name": "汇绿生态",
       "blockName": "光模块",
       "code": "sz001267",
-      "change": 3.55
+      "change": -0.35
     },
     {
       "name": "立讯精密",
       "blockName": "光模块",
       "code": "sz002475",
-      "change": 4.84
+      "change": -5.52
     },
     {
       "name": "仕佳光子",
       "blockName": "光模块",
       "code": "sh688313",
-      "change": 7.78
+      "change": -5.76
     },
     {
       "name": "源杰科技",
       "blockName": "光模块",
       "code": "sh688498",
-      "change": 6.12
+      "change": -1.69
     },
     {
       "name": "永鼎股份",
       "blockName": "光模块",
       "code": "sh600105",
-      "change": 7.36
+      "change": -8.08
     }
   ],
   "cpo": [
@@ -144,19 +144,19 @@
       "name": "天孚通信",
       "blockName": "cpo",
       "code": "sz300394",
-      "change": 4.42
+      "change": -7.4
     },
     {
       "name": "罗博特科",
       "blockName": "cpo",
       "code": "sz300757",
-      "change": 2.96
+      "change": -1.75
     },
     {
       "name": "工业富联",
       "blockName": "cpo",
       "code": "sh601138",
-      "change": 6.04
+      "change": -4.83
     }
   ],
   "液冷": [
@@ -164,31 +164,31 @@
       "name": "英维克",
       "blockName": "液冷",
       "code": "sz002837",
-      "change": 10
+      "change": -1.18
     },
     {
       "name": "申菱环境",
       "blockName": "液冷",
       "code": "sz301018",
-      "change": 13.61
+      "change": -3.03
     },
     {
       "name": "大元泵业",
       "blockName": "液冷",
       "code": "sh603706",
-      "change": -0.28
+      "change": -0.05
     },
     {
       "name": "飞龙股份",
       "blockName": "液冷",
       "code": "sz002536",
-      "change": 8.6
+      "change": -0.48
     },
     {
       "name": "川润股份",
       "blockName": "液冷",
       "code": "sz002272",
-      "change": 8.79
+      "change": 3.36
     }
   ],
   "电子布": [
@@ -196,25 +196,25 @@
       "name": "宏和科技",
       "blockName": "电子布",
       "code": "sh603256",
-      "change": 10
+      "change": -4.58
     },
     {
       "name": "中材科技",
       "blockName": "电子布",
       "code": "sz002080",
-      "change": 10
+      "change": -2.91
     },
     {
       "name": "国际复材",
       "blockName": "电子布",
       "code": "sz301256",
-      "change": 3.86
+      "change": 3.63
     },
     {
       "name": "中国巨石",
       "blockName": "电子布",
       "code": "sh600176",
-      "change": 10.01
+      "change": 0.64
     }
   ],
   "铜箔": [
@@ -222,13 +222,13 @@
       "name": "德福科技",
       "blockName": "铜箔",
       "code": "sz301511",
-      "change": 11.15
+      "change": 0.22
     },
     {
       "name": "铜冠铜箔",
       "blockName": "铜箔",
       "code": "sz301217",
-      "change": 8.54
+      "change": 0.03
     }
   ],
   "pcb": [
@@ -236,31 +236,31 @@
       "name": "沪电股份",
       "blockName": "pcb",
       "code": "sz002463",
-      "change": 2.99
+      "change": -7.43
     },
     {
       "name": "生益科技",
       "blockName": "pcb",
       "code": "sh600183",
-      "change": 10
+      "change": -0.39
     },
     {
       "name": "景旺电子",
       "blockName": "pcb",
       "code": "sh603228",
-      "change": 4.71
+      "change": 4.33
     },
     {
       "name": "深南电路",
       "blockName": "pcb",
       "code": "sz002916",
-      "change": 7.12
+      "change": -3.26
     },
     {
       "name": "胜宏科技",
       "blockName": "pcb",
       "code": "sz300476",
-      "change": 8.82
+      "change": -3.59
     }
   ],
   "北美缺电": [
@@ -268,25 +268,25 @@
       "name": "潍柴动力",
       "blockName": "北美缺电",
       "code": "sz000338",
-      "change": 1.23
+      "change": -7.12
     },
     {
       "name": "东方电气",
       "blockName": "北美缺电",
       "code": "sh600875",
-      "change": 2.48
+      "change": -5.28
     },
     {
       "name": "杰瑞股份",
       "blockName": "北美缺电",
       "code": "sz002353",
-      "change": 2.85
+      "change": -4.37
     },
     {
       "name": "伊戈尔",
       "blockName": "北美缺电",
       "code": "sz002842",
-      "change": 3.57
+      "change": 4.38
     }
   ],
   "锂电": [
@@ -294,31 +294,31 @@
       "name": "宁德时代",
       "blockName": "锂电",
       "code": "sz300750",
-      "change": 1.65
+      "change": -2.75
     },
     {
       "name": "天齐锂业",
       "blockName": "锂电",
       "code": "sz002466",
-      "change": 6.78
+      "change": -0.88
     },
     {
       "name": "赣锋锂业",
       "blockName": "锂电",
       "code": "sz002460",
-      "change": 8.25
+      "change": -0.5
     },
     {
       "name": "多氟多",
       "blockName": "锂电",
       "code": "sz002407",
-      "change": 0.92
+      "change": 2.3
     },
     {
       "name": "恩捷股份",
       "blockName": "锂电",
       "code": "sz002812",
-      "change": 3.01
+      "change": -3.05
     }
   ],
   "化工": [
@@ -326,25 +326,25 @@
       "name": "万华化学",
       "blockName": "化工",
       "code": "sh600309",
-      "change": -0.72
+      "change": -1.95
     },
     {
       "name": "华鲁恒升",
       "blockName": "化工",
       "code": "sh600426",
-      "change": 0.04
+      "change": -0.78
     },
     {
       "name": "宝丰能源",
       "blockName": "化工",
       "code": "sh600989",
-      "change": -3.6
+      "change": -1.27
     },
     {
       "name": "云天化",
       "blockName": "化工",
       "code": "sh600096",
-      "change": -0.55
+      "change": -0.24
     }
   ],
   "商业航天": [
@@ -352,31 +352,31 @@
       "name": "航天电子",
       "blockName": "商业航天",
       "code": "sh600879",
-      "change": 0
+      "change": -4.92
     },
     {
       "name": "中国卫星",
       "blockName": "商业航天",
       "code": "sh600118",
-      "change": -2.86
+      "change": -2.79
     },
     {
       "name": "中国卫通",
       "blockName": "商业航天",
       "code": "sh601698",
-      "change": -0.87
+      "change": -3.92
     },
     {
       "name": "西部材料",
       "blockName": "商业航天",
       "code": "sz002149",
-      "change": -4.95
+      "change": -5.44
     },
     {
       "name": "信维通信",
       "blockName": "商业航天",
       "code": "sz300136",
-      "change": -0.63
+      "change": -6.42
     }
   ],
   "机器人": [
@@ -384,37 +384,37 @@
       "name": "三花智控",
       "blockName": "机器人",
       "code": "sz002050",
-      "change": 0.23
+      "change": -4.49
     },
     {
       "name": "绿的谐波",
       "blockName": "机器人",
       "code": "sh688017",
-      "change": -1.89
+      "change": 0.91
     },
     {
       "name": "浙江荣泰",
       "blockName": "机器人",
       "code": "sh603119",
-      "change": 0.62
+      "change": -3.72
     },
     {
       "name": "拓普集团",
       "blockName": "机器人",
       "code": "sh601689",
-      "change": -0.51
+      "change": -6.7
     },
     {
       "name": "五洲新春",
       "blockName": "机器人",
       "code": "sh603667",
-      "change": -2.02
+      "change": -8.21
     },
     {
       "name": "万向钱潮",
       "blockName": "机器人",
       "code": "sz000559",
-      "change": -1.56
+      "change": -7.59
     }
   ],
   "消费": [
@@ -422,31 +422,31 @@
       "name": "步步高",
       "blockName": "消费",
       "code": "sz002251",
-      "change": -2.79
+      "change": -7.95
     },
     {
       "name": "东百集团",
       "blockName": "消费",
       "code": "sh600693",
-      "change": -5.99
+      "change": -4.78
     },
     {
       "name": "中百集团",
       "blockName": "消费",
       "code": "sz000759",
-      "change": -3.99
+      "change": -6.15
     },
     {
       "name": "一鸣食品",
       "blockName": "消费",
       "code": "sh605179",
-      "change": -0.57
+      "change": -0.78
     },
     {
       "name": "永辉超市",
       "blockName": "消费",
       "code": "sh601933",
-      "change": -2.93
+      "change": -2.42
     }
   ],
   "医药": [
@@ -454,19 +454,19 @@
       "name": "药明康德",
       "blockName": "医药",
       "code": "sh688076",
-      "change": -0.07
+      "change": -1.63
     },
     {
       "name": "新华制药",
       "blockName": "医药",
       "code": "sz000756",
-      "change": -1.04
+      "change": 1.05
     },
     {
       "name": "众生药业",
       "blockName": "医药",
       "code": "sz002317",
-      "change": 0.14
+      "change": 0.78
     }
   ],
   "证券": [
@@ -474,19 +474,19 @@
       "name": "中信建投",
       "blockName": "证券",
       "code": "sh601066",
-      "change": 2.34
+      "change": -0.04
     },
     {
       "name": "中信证券",
       "blockName": "证券",
       "code": "sh600030",
-      "change": 0.35
+      "change": 2.19
     },
     {
       "name": "国泰海通",
       "blockName": "证券",
       "code": "sh601211",
-      "change": 0.36
+      "change": 3.27
     }
   ],
   "银行": [
@@ -494,19 +494,19 @@
       "name": "农业银行",
       "blockName": "银行",
       "code": "sh601288",
-      "change": 0.46
+      "change": 1.67
     },
     {
       "name": "中国银行",
       "blockName": "银行",
       "code": "sh601988",
-      "change": -0.16
+      "change": 1.47
     },
     {
       "name": "工商银行",
       "blockName": "银行",
       "code": "sh601398",
-      "change": 0.53
+      "change": 1.99
     }
   ],
   "MLCC": [
@@ -514,19 +514,19 @@
       "name": "风华高科",
       "blockName": "MLCC",
       "code": "sz000636",
-      "change": 9.99
+      "change": -2.08
     },
     {
       "name": "三环集团",
       "blockName": "MLCC",
       "code": "sz300408",
-      "change": 14.73
+      "change": -6.4
     },
     {
       "name": "国瓷材料",
       "blockName": "MLCC",
       "code": "sz300285",
-      "change": 15.26
+      "change": -7.94
     }
   ],
   "电力": [
@@ -534,19 +534,19 @@
       "name": "大唐发电",
       "blockName": "电力",
       "code": "sh601991",
-      "change": 6.05
+      "change": 0.65
     },
     {
       "name": "华电辽能",
       "blockName": "电力",
       "code": "sh600396",
-      "change": 10
+      "change": -9.99
     },
     {
       "name": "华电能源",
       "blockName": "电力",
       "code": "sh600726",
-      "change": 2.84
+      "change": -6.85
     }
   ],
   "国产超节点": [
@@ -554,13 +554,13 @@
       "name": "华勤技术",
       "blockName": "国产超节点",
       "code": "sh603296",
-      "change": 3.36
+      "change": 0.64
     },
     {
       "name": "浪潮信息",
       "blockName": "国产超节点",
       "code": "sz000977",
-      "change": 2.71
+      "change": -0.12
     }
   ],
   "光纤": [
@@ -568,25 +568,25 @@
       "name": "亨通光电",
       "blockName": "光纤",
       "code": "sh600487",
-      "change": 10
+      "change": 1.77
     },
     {
       "name": "中天科技",
       "blockName": "光纤",
       "code": "sh600522",
-      "change": 9.99
+      "change": -7.86
     },
     {
       "name": "长飞光纤",
       "blockName": "光纤",
       "code": "sh601869",
-      "change": 10
+      "change": -6.53
     },
     {
       "name": "远东股份",
       "blockName": "光纤",
       "code": "sh600869",
-      "change": 7.91
+      "change": 6.52
     }
   ],
   "煤炭": [
@@ -594,19 +594,19 @@
       "name": "华电能源",
       "blockName": "煤炭",
       "code": "sh600726",
-      "change": 2.84
+      "change": -6.85
     },
     {
       "name": "昊华能源",
       "blockName": "煤炭",
       "code": "sh601101",
-      "change": 1.34
+      "change": -7.47
     },
     {
       "name": "新集能源",
       "blockName": "煤炭",
       "code": "sh601918",
-      "change": -2.89
+      "change": -4.06
     }
   ],
   "玻璃基板": [
@@ -614,25 +614,25 @@
       "name": "新东方A",
       "blockName": "玻璃基板",
       "code": "sz000725",
-      "change": 3.66
+      "change": -7.52
     },
     {
       "name": "帝尔激光",
       "blockName": "玻璃基板",
       "code": "sz300776",
-      "change": 2.8
+      "change": -5.1
     },
     {
       "name": "凯盛科技",
       "blockName": "玻璃基板",
       "code": "sh600552",
-      "change": 3.13
+      "change": -9.06
     },
     {
       "name": "沃格光电",
       "blockName": "玻璃基板",
       "code": "sh603773",
-      "change": 10
+      "change": 3.2
     }
   ],
   "PPE树脂": [
@@ -640,19 +640,19 @@
       "name": "圣泉集团",
       "blockName": "PPE树脂",
       "code": "sh605589",
-      "change": 10.01
+      "change": 9.99
     },
     {
       "name": "康达新材",
       "blockName": "PPE树脂",
       "code": "sz002669",
-      "change": 9.99
+      "change": 10.01
     },
     {
       "name": "东材科技",
       "blockName": "PPE树脂",
       "code": "sh601208",
-      "change": 10
+      "change": 4.58
     }
   ]
 }

@@ -1,107 +1,11055 @@
 [
   [
-    "084051",
+    "093632",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-112.84亿",
+      "amountChangeDiff": "-3.78亿"
     }
   ],
   [
-    "084101",
+    "093641",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-118.70亿",
+      "amountChangeDiff": "+41.67亿"
     }
   ],
   [
-    "084111",
+    "093651",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-119.27亿",
+      "amountChangeDiff": "+108.39亿"
     }
   ],
   [
-    "084122",
+    "093700",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-119.27亿",
+      "amountChangeDiff": "+160.34亿"
     }
   ],
   [
-    "084131",
+    "093711",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-130.03亿",
+      "amountChangeDiff": "-77.90亿"
     }
   ],
   [
-    "084142",
+    "093721",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-134.86亿",
+      "amountChangeDiff": "-16.00亿"
     }
   ],
   [
-    "084151",
+    "093731",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-134.86亿",
+      "amountChangeDiff": "+55.15亿"
     }
   ],
   [
-    "084201",
+    "093741",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-141.75亿",
+      "amountChangeDiff": "+100.90亿"
     }
   ],
   [
-    "084211",
+    "093751",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-141.75亿",
+      "amountChangeDiff": "+163.27亿"
     }
   ],
   [
-    "084221",
+    "093801",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-141.75亿",
+      "amountChangeDiff": "+211.57亿"
     }
   ],
   [
-    "084231",
+    "093811",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-144.46亿",
+      "amountChangeDiff": "-13.05亿"
     }
   ],
   [
-    "084241",
+    "093821",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-148.89亿",
+      "amountChangeDiff": "+44.85亿"
     }
   ],
   [
-    "084251",
+    "093831",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-148.89亿",
+      "amountChangeDiff": "+102.54亿"
     }
   ],
   [
-    "084301",
+    "093841",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-148.89亿",
+      "amountChangeDiff": "+145.88亿"
     }
   ],
   [
-    "084312",
+    "093851",
     {
-      "mainMoney": "430.44亿",
-      "amountChangeDiff": "-1567.23亿"
+      "mainMoney": "-155.07亿",
+      "amountChangeDiff": "+189.35亿"
+    }
+  ],
+  [
+    "093900",
+    {
+      "mainMoney": "-155.12亿",
+      "amountChangeDiff": "+239.81亿"
+    }
+  ],
+  [
+    "093911",
+    {
+      "mainMoney": "-155.12亿",
+      "amountChangeDiff": "+271.59亿"
+    }
+  ],
+  [
+    "093922",
+    {
+      "mainMoney": "-158.70亿",
+      "amountChangeDiff": "+104.46亿"
+    }
+  ],
+  [
+    "093931",
+    {
+      "mainMoney": "-161.25亿",
+      "amountChangeDiff": "+152.95亿"
+    }
+  ],
+  [
+    "093940",
+    {
+      "mainMoney": "-161.25亿",
+      "amountChangeDiff": "+210.20亿"
+    }
+  ],
+  [
+    "093951",
+    {
+      "mainMoney": "-161.25亿",
+      "amountChangeDiff": "+252.47亿"
+    }
+  ],
+  [
+    "094001",
+    {
+      "mainMoney": "-161.25亿",
+      "amountChangeDiff": "+314.86亿"
+    }
+  ],
+  [
+    "094011",
+    {
+      "mainMoney": "-166.94亿",
+      "amountChangeDiff": "+103.24亿"
+    }
+  ],
+  [
+    "094020",
+    {
+      "mainMoney": "-174.92亿",
+      "amountChangeDiff": "+159.24亿"
+    }
+  ],
+  [
+    "094031",
+    {
+      "mainMoney": "-179.84亿",
+      "amountChangeDiff": "+221.58亿"
+    }
+  ],
+  [
+    "094040",
+    {
+      "mainMoney": "-179.84亿",
+      "amountChangeDiff": "+261.64亿"
+    }
+  ],
+  [
+    "094051",
+    {
+      "mainMoney": "-180.89亿",
+      "amountChangeDiff": "+319.62亿"
+    }
+  ],
+  [
+    "094100",
+    {
+      "mainMoney": "-179.84亿",
+      "amountChangeDiff": "+364.47亿"
+    }
+  ],
+  [
+    "094111",
+    {
+      "mainMoney": "-189.05亿",
+      "amountChangeDiff": "+156.97亿"
+    }
+  ],
+  [
+    "094121",
+    {
+      "mainMoney": "-189.05亿",
+      "amountChangeDiff": "+207.76亿"
+    }
+  ],
+  [
+    "094130",
+    {
+      "mainMoney": "-193.02亿",
+      "amountChangeDiff": "+246.71亿"
+    }
+  ],
+  [
+    "094141",
+    {
+      "mainMoney": "-193.02亿",
+      "amountChangeDiff": "+295.92亿"
+    }
+  ],
+  [
+    "094151",
+    {
+      "mainMoney": "-193.02亿",
+      "amountChangeDiff": "+342.70亿"
+    }
+  ],
+  [
+    "094200",
+    {
+      "mainMoney": "-193.02亿",
+      "amountChangeDiff": "+385.18亿"
+    }
+  ],
+  [
+    "094211",
+    {
+      "mainMoney": "-194.58亿",
+      "amountChangeDiff": "+210.00亿"
+    }
+  ],
+  [
+    "094221",
+    {
+      "mainMoney": "-199.52亿",
+      "amountChangeDiff": "+244.66亿"
+    }
+  ],
+  [
+    "094231",
+    {
+      "mainMoney": "-199.52亿",
+      "amountChangeDiff": "+294.97亿"
+    }
+  ],
+  [
+    "094240",
+    {
+      "mainMoney": "-199.52亿",
+      "amountChangeDiff": "+337.15亿"
+    }
+  ],
+  [
+    "094251",
+    {
+      "mainMoney": "-199.52亿",
+      "amountChangeDiff": "+389.82亿"
+    }
+  ],
+  [
+    "094300",
+    {
+      "mainMoney": "-206.85亿",
+      "amountChangeDiff": "+434.34亿"
+    }
+  ],
+  [
+    "094311",
+    {
+      "mainMoney": "-206.85亿",
+      "amountChangeDiff": "+213.89亿"
+    }
+  ],
+  [
+    "094321",
+    {
+      "mainMoney": "-206.85亿",
+      "amountChangeDiff": "+266.78亿"
+    }
+  ],
+  [
+    "094330",
+    {
+      "mainMoney": "-206.85亿",
+      "amountChangeDiff": "+311.53亿"
+    }
+  ],
+  [
+    "094340",
+    {
+      "mainMoney": "-209.49亿",
+      "amountChangeDiff": "+354.02亿"
+    }
+  ],
+  [
+    "094351",
+    {
+      "mainMoney": "-212.56亿",
+      "amountChangeDiff": "+392.79亿"
+    }
+  ],
+  [
+    "094401",
+    {
+      "mainMoney": "-215.40亿",
+      "amountChangeDiff": "+441.35亿"
+    }
+  ],
+  [
+    "094411",
+    {
+      "mainMoney": "-218.48亿",
+      "amountChangeDiff": "+228.84亿"
+    }
+  ],
+  [
+    "094421",
+    {
+      "mainMoney": "-220.43亿",
+      "amountChangeDiff": "+263.38亿"
+    }
+  ],
+  [
+    "094431",
+    {
+      "mainMoney": "-218.48亿",
+      "amountChangeDiff": "+318.14亿"
+    }
+  ],
+  [
+    "094441",
+    {
+      "mainMoney": "-220.43亿",
+      "amountChangeDiff": "+350.90亿"
+    }
+  ],
+  [
+    "094451",
+    {
+      "mainMoney": "-220.43亿",
+      "amountChangeDiff": "+383.81亿"
+    }
+  ],
+  [
+    "094500",
+    {
+      "mainMoney": "-222.76亿",
+      "amountChangeDiff": "+420.27亿"
+    }
+  ],
+  [
+    "094511",
+    {
+      "mainMoney": "-227.24亿",
+      "amountChangeDiff": "+451.88亿"
+    }
+  ],
+  [
+    "094521",
+    {
+      "mainMoney": "-225.71亿",
+      "amountChangeDiff": "+284.98亿"
+    }
+  ],
+  [
+    "094530",
+    {
+      "mainMoney": "-227.70亿",
+      "amountChangeDiff": "+321.61亿"
+    }
+  ],
+  [
+    "094540",
+    {
+      "mainMoney": "-227.70亿",
+      "amountChangeDiff": "+376.91亿"
+    }
+  ],
+  [
+    "094550",
+    {
+      "mainMoney": "-228.85亿",
+      "amountChangeDiff": "+414.03亿"
+    }
+  ],
+  [
+    "094600",
+    {
+      "mainMoney": "-228.85亿",
+      "amountChangeDiff": "+454.50亿"
+    }
+  ],
+  [
+    "094611",
+    {
+      "mainMoney": "-228.85亿",
+      "amountChangeDiff": "+274.08亿"
+    }
+  ],
+  [
+    "094620",
+    {
+      "mainMoney": "-228.85亿",
+      "amountChangeDiff": "+324.14亿"
+    }
+  ],
+  [
+    "094631",
+    {
+      "mainMoney": "-229.94亿",
+      "amountChangeDiff": "+358.08亿"
+    }
+  ],
+  [
+    "094641",
+    {
+      "mainMoney": "-229.56亿",
+      "amountChangeDiff": "+398.86亿"
+    }
+  ],
+  [
+    "094650",
+    {
+      "mainMoney": "-229.94亿",
+      "amountChangeDiff": "+433.97亿"
+    }
+  ],
+  [
+    "094701",
+    {
+      "mainMoney": "-229.71亿",
+      "amountChangeDiff": "+455.48亿"
+    }
+  ],
+  [
+    "094712",
+    {
+      "mainMoney": "-229.71亿",
+      "amountChangeDiff": "+488.72亿"
+    }
+  ],
+  [
+    "094721",
+    {
+      "mainMoney": "-229.71亿",
+      "amountChangeDiff": "+341.50亿"
+    }
+  ],
+  [
+    "094731",
+    {
+      "mainMoney": "-231.21亿",
+      "amountChangeDiff": "+369.21亿"
+    }
+  ],
+  [
+    "094741",
+    {
+      "mainMoney": "-231.21亿",
+      "amountChangeDiff": "+405.17亿"
+    }
+  ],
+  [
+    "094751",
+    {
+      "mainMoney": "-231.21亿",
+      "amountChangeDiff": "+434.08亿"
+    }
+  ],
+  [
+    "094801",
+    {
+      "mainMoney": "-232.31亿",
+      "amountChangeDiff": "+479.24亿"
+    }
+  ],
+  [
+    "094810",
+    {
+      "mainMoney": "-233.56亿",
+      "amountChangeDiff": "+315.80亿"
+    }
+  ],
+  [
+    "094821",
+    {
+      "mainMoney": "-233.56亿",
+      "amountChangeDiff": "+355.86亿"
+    }
+  ],
+  [
+    "094831",
+    {
+      "mainMoney": "-233.56亿",
+      "amountChangeDiff": "+386.69亿"
+    }
+  ],
+  [
+    "094841",
+    {
+      "mainMoney": "-233.56亿",
+      "amountChangeDiff": "+420.10亿"
+    }
+  ],
+  [
+    "094851",
+    {
+      "mainMoney": "-233.38亿",
+      "amountChangeDiff": "+450.09亿"
+    }
+  ],
+  [
+    "094901",
+    {
+      "mainMoney": "-232.48亿",
+      "amountChangeDiff": "+494.09亿"
+    }
+  ],
+  [
+    "094911",
+    {
+      "mainMoney": "-233.31亿",
+      "amountChangeDiff": "+336.98亿"
+    }
+  ],
+  [
+    "094921",
+    {
+      "mainMoney": "-233.55亿",
+      "amountChangeDiff": "+371.43亿"
+    }
+  ],
+  [
+    "094931",
+    {
+      "mainMoney": "-233.55亿",
+      "amountChangeDiff": "+405.62亿"
+    }
+  ],
+  [
+    "094941",
+    {
+      "mainMoney": "-233.12亿",
+      "amountChangeDiff": "+452.06亿"
+    }
+  ],
+  [
+    "094951",
+    {
+      "mainMoney": "-233.12亿",
+      "amountChangeDiff": "+487.71亿"
+    }
+  ],
+  [
+    "095001",
+    {
+      "mainMoney": "-233.12亿",
+      "amountChangeDiff": "+517.82亿"
+    }
+  ],
+  [
+    "095011",
+    {
+      "mainMoney": "-232.85亿",
+      "amountChangeDiff": "+361.36亿"
+    }
+  ],
+  [
+    "095021",
+    {
+      "mainMoney": "-233.41亿",
+      "amountChangeDiff": "+401.61亿"
+    }
+  ],
+  [
+    "095031",
+    {
+      "mainMoney": "-232.85亿",
+      "amountChangeDiff": "+445.95亿"
+    }
+  ],
+  [
+    "095041",
+    {
+      "mainMoney": "-228.55亿",
+      "amountChangeDiff": "+476.13亿"
+    }
+  ],
+  [
+    "095051",
+    {
+      "mainMoney": "-228.55亿",
+      "amountChangeDiff": "+512.49亿"
+    }
+  ],
+  [
+    "095101",
+    {
+      "mainMoney": "-227.47亿",
+      "amountChangeDiff": "+539.21亿"
+    }
+  ],
+  [
+    "095111",
+    {
+      "mainMoney": "-227.47亿",
+      "amountChangeDiff": "+392.46亿"
+    }
+  ],
+  [
+    "095122",
+    {
+      "mainMoney": "-224.82亿",
+      "amountChangeDiff": "+433.83亿"
+    }
+  ],
+  [
+    "095131",
+    {
+      "mainMoney": "-224.82亿",
+      "amountChangeDiff": "+470.73亿"
+    }
+  ],
+  [
+    "095141",
+    {
+      "mainMoney": "-224.30亿",
+      "amountChangeDiff": "+499.88亿"
+    }
+  ],
+  [
+    "095151",
+    {
+      "mainMoney": "-224.30亿",
+      "amountChangeDiff": "+535.58亿"
+    }
+  ],
+  [
+    "095201",
+    {
+      "mainMoney": "-226.33亿",
+      "amountChangeDiff": "+556.22亿"
+    }
+  ],
+  [
+    "095211",
+    {
+      "mainMoney": "-228.73亿",
+      "amountChangeDiff": "+578.50亿"
+    }
+  ],
+  [
+    "095221",
+    {
+      "mainMoney": "-228.73亿",
+      "amountChangeDiff": "+438.79亿"
+    }
+  ],
+  [
+    "095231",
+    {
+      "mainMoney": "-227.29亿",
+      "amountChangeDiff": "+468.86亿"
+    }
+  ],
+  [
+    "095241",
+    {
+      "mainMoney": "-226.88亿",
+      "amountChangeDiff": "+505.25亿"
+    }
+  ],
+  [
+    "095251",
+    {
+      "mainMoney": "-226.88亿",
+      "amountChangeDiff": "+535.31亿"
+    }
+  ],
+  [
+    "095301",
+    {
+      "mainMoney": "-225.85亿",
+      "amountChangeDiff": "+559.41亿"
+    }
+  ],
+  [
+    "095312",
+    {
+      "mainMoney": "-226.47亿",
+      "amountChangeDiff": "+403.82亿"
+    }
+  ],
+  [
+    "095321",
+    {
+      "mainMoney": "-226.41亿",
+      "amountChangeDiff": "+434.88亿"
+    }
+  ],
+  [
+    "095332",
+    {
+      "mainMoney": "-227.05亿",
+      "amountChangeDiff": "+466.56亿"
+    }
+  ],
+  [
+    "095342",
+    {
+      "mainMoney": "-227.05亿",
+      "amountChangeDiff": "+499.06亿"
+    }
+  ],
+  [
+    "095352",
+    {
+      "mainMoney": "-227.05亿",
+      "amountChangeDiff": "+525.72亿"
+    }
+  ],
+  [
+    "095402",
+    {
+      "mainMoney": "-227.05亿",
+      "amountChangeDiff": "+559.23亿"
+    }
+  ],
+  [
+    "095412",
+    {
+      "mainMoney": "-226.49亿",
+      "amountChangeDiff": "+391.88亿"
+    }
+  ],
+  [
+    "095421",
+    {
+      "mainMoney": "-226.78亿",
+      "amountChangeDiff": "+435.50亿"
+    }
+  ],
+  [
+    "095431",
+    {
+      "mainMoney": "-226.78亿",
+      "amountChangeDiff": "+452.47亿"
+    }
+  ],
+  [
+    "095441",
+    {
+      "mainMoney": "-226.79亿",
+      "amountChangeDiff": "+491.99亿"
+    }
+  ],
+  [
+    "095451",
+    {
+      "mainMoney": "-226.79亿",
+      "amountChangeDiff": "+515.67亿"
+    }
+  ],
+  [
+    "095501",
+    {
+      "mainMoney": "-226.79亿",
+      "amountChangeDiff": "+543.26亿"
+    }
+  ],
+  [
+    "095511",
+    {
+      "mainMoney": "-228.57亿",
+      "amountChangeDiff": "+357.18亿"
+    }
+  ],
+  [
+    "095521",
+    {
+      "mainMoney": "-228.57亿",
+      "amountChangeDiff": "+383.68亿"
+    }
+  ],
+  [
+    "095531",
+    {
+      "mainMoney": "-230.17亿",
+      "amountChangeDiff": "+413.54亿"
+    }
+  ],
+  [
+    "095541",
+    {
+      "mainMoney": "-231.23亿",
+      "amountChangeDiff": "+449.12亿"
+    }
+  ],
+  [
+    "095551",
+    {
+      "mainMoney": "-232.43亿",
+      "amountChangeDiff": "+485.39亿"
+    }
+  ],
+  [
+    "095601",
+    {
+      "mainMoney": "-232.43亿",
+      "amountChangeDiff": "+504.23亿"
+    }
+  ],
+  [
+    "095611",
+    {
+      "mainMoney": "-232.43亿",
+      "amountChangeDiff": "+349.99亿"
+    }
+  ],
+  [
+    "095621",
+    {
+      "mainMoney": "-232.43亿",
+      "amountChangeDiff": "+391.62亿"
+    }
+  ],
+  [
+    "095631",
+    {
+      "mainMoney": "-233.51亿",
+      "amountChangeDiff": "+421.34亿"
+    }
+  ],
+  [
+    "095641",
+    {
+      "mainMoney": "-234.64亿",
+      "amountChangeDiff": "+455.81亿"
+    }
+  ],
+  [
+    "095651",
+    {
+      "mainMoney": "-234.64亿",
+      "amountChangeDiff": "+477.61亿"
+    }
+  ],
+  [
+    "095701",
+    {
+      "mainMoney": "-236.31亿",
+      "amountChangeDiff": "+501.23亿"
+    }
+  ],
+  [
+    "095711",
+    {
+      "mainMoney": "-236.06亿",
+      "amountChangeDiff": "+520.46亿"
+    }
+  ],
+  [
+    "095721",
+    {
+      "mainMoney": "-237.37亿",
+      "amountChangeDiff": "+396.79亿"
+    }
+  ],
+  [
+    "095731",
+    {
+      "mainMoney": "-238.74亿",
+      "amountChangeDiff": "+426.18亿"
+    }
+  ],
+  [
+    "095741",
+    {
+      "mainMoney": "-238.74亿",
+      "amountChangeDiff": "+449.82亿"
+    }
+  ],
+  [
+    "095750",
+    {
+      "mainMoney": "-240.74亿",
+      "amountChangeDiff": "+486.93亿"
+    }
+  ],
+  [
+    "095801",
+    {
+      "mainMoney": "-240.74亿",
+      "amountChangeDiff": "+511.68亿"
+    }
+  ],
+  [
+    "095811",
+    {
+      "mainMoney": "-241.21亿",
+      "amountChangeDiff": "+526.03亿"
+    }
+  ],
+  [
+    "095821",
+    {
+      "mainMoney": "-241.21亿",
+      "amountChangeDiff": "+423.58亿"
+    }
+  ],
+  [
+    "095830",
+    {
+      "mainMoney": "-241.21亿",
+      "amountChangeDiff": "+460.48亿"
+    }
+  ],
+  [
+    "095841",
+    {
+      "mainMoney": "-241.38亿",
+      "amountChangeDiff": "+489.18亿"
+    }
+  ],
+  [
+    "095851",
+    {
+      "mainMoney": "-247.46亿",
+      "amountChangeDiff": "+534.40亿"
+    }
+  ],
+  [
+    "095901",
+    {
+      "mainMoney": "-247.46亿",
+      "amountChangeDiff": "+554.38亿"
+    }
+  ],
+  [
+    "095911",
+    {
+      "mainMoney": "-250.52亿",
+      "amountChangeDiff": "+449.05亿"
+    }
+  ],
+  [
+    "095921",
+    {
+      "mainMoney": "-250.52亿",
+      "amountChangeDiff": "+487.42亿"
+    }
+  ],
+  [
+    "095931",
+    {
+      "mainMoney": "-250.52亿",
+      "amountChangeDiff": "+509.45亿"
+    }
+  ],
+  [
+    "095941",
+    {
+      "mainMoney": "-258.83亿",
+      "amountChangeDiff": "+544.06亿"
+    }
+  ],
+  [
+    "095951",
+    {
+      "mainMoney": "-258.83亿",
+      "amountChangeDiff": "+572.64亿"
+    }
+  ],
+  [
+    "100001",
+    {
+      "mainMoney": "-258.83亿",
+      "amountChangeDiff": "+593.95亿"
+    }
+  ],
+  [
+    "100011",
+    {
+      "mainMoney": "-258.83亿",
+      "amountChangeDiff": "+470.48亿"
+    }
+  ],
+  [
+    "100021",
+    {
+      "mainMoney": "-264.23亿",
+      "amountChangeDiff": "+505.62亿"
+    }
+  ],
+  [
+    "100031",
+    {
+      "mainMoney": "-264.23亿",
+      "amountChangeDiff": "+532.90亿"
+    }
+  ],
+  [
+    "100041",
+    {
+      "mainMoney": "-264.23亿",
+      "amountChangeDiff": "+559.28亿"
+    }
+  ],
+  [
+    "100051",
+    {
+      "mainMoney": "-264.23亿",
+      "amountChangeDiff": "+584.97亿"
+    }
+  ],
+  [
+    "100101",
+    {
+      "mainMoney": "-264.66亿",
+      "amountChangeDiff": "+612.78亿"
+    }
+  ],
+  [
+    "100111",
+    {
+      "mainMoney": "-264.66亿",
+      "amountChangeDiff": "+626.28亿"
+    }
+  ],
+  [
+    "100121",
+    {
+      "mainMoney": "-265.54亿",
+      "amountChangeDiff": "+490.97亿"
+    }
+  ],
+  [
+    "100131",
+    {
+      "mainMoney": "-269.42亿",
+      "amountChangeDiff": "+519.87亿"
+    }
+  ],
+  [
+    "100144",
+    {
+      "mainMoney": "-268.86亿",
+      "amountChangeDiff": "+562.30亿"
+    }
+  ],
+  [
+    "100151",
+    {
+      "mainMoney": "-270.60亿",
+      "amountChangeDiff": "+562.30亿"
+    }
+  ],
+  [
+    "100201",
+    {
+      "mainMoney": "-270.60亿",
+      "amountChangeDiff": "+614.82亿"
+    }
+  ],
+  [
+    "100211",
+    {
+      "mainMoney": "-270.60亿",
+      "amountChangeDiff": "+493.45亿"
+    }
+  ],
+  [
+    "100221",
+    {
+      "mainMoney": "-272.75亿",
+      "amountChangeDiff": "+517.69亿"
+    }
+  ],
+  [
+    "100231",
+    {
+      "mainMoney": "-275.69亿",
+      "amountChangeDiff": "+545.51亿"
+    }
+  ],
+  [
+    "100241",
+    {
+      "mainMoney": "-272.75亿",
+      "amountChangeDiff": "+554.74亿"
+    }
+  ],
+  [
+    "100251",
+    {
+      "mainMoney": "-277.20亿",
+      "amountChangeDiff": "+560.82亿"
+    }
+  ],
+  [
+    "100301",
+    {
+      "mainMoney": "-277.80亿",
+      "amountChangeDiff": "+596.40亿"
+    }
+  ],
+  [
+    "100311",
+    {
+      "mainMoney": "-277.20亿",
+      "amountChangeDiff": "+605.62亿"
+    }
+  ],
+  [
+    "100321",
+    {
+      "mainMoney": "-279.45亿",
+      "amountChangeDiff": "+512.56亿"
+    }
+  ],
+  [
+    "100331",
+    {
+      "mainMoney": "-279.45亿",
+      "amountChangeDiff": "+493.67亿"
+    }
+  ],
+  [
+    "100342",
+    {
+      "mainMoney": "-280.64亿",
+      "amountChangeDiff": "+540.15亿"
+    }
+  ],
+  [
+    "100351",
+    {
+      "mainMoney": "-280.64亿",
+      "amountChangeDiff": "+574.25亿"
+    }
+  ],
+  [
+    "100401",
+    {
+      "mainMoney": "-280.42亿",
+      "amountChangeDiff": "+564.48亿"
+    }
+  ],
+  [
+    "100411",
+    {
+      "mainMoney": "-280.42亿",
+      "amountChangeDiff": "+607.72亿"
+    }
+  ],
+  [
+    "100421",
+    {
+      "mainMoney": "-280.42亿",
+      "amountChangeDiff": "+549.65亿"
+    }
+  ],
+  [
+    "100431",
+    {
+      "mainMoney": "-280.61亿",
+      "amountChangeDiff": "+549.65亿"
+    }
+  ],
+  [
+    "100441",
+    {
+      "mainMoney": "-281.34亿",
+      "amountChangeDiff": "+607.97亿"
+    }
+  ],
+  [
+    "100451",
+    {
+      "mainMoney": "-288.46亿",
+      "amountChangeDiff": "+636.66亿"
+    }
+  ],
+  [
+    "100501",
+    {
+      "mainMoney": "-284.37亿",
+      "amountChangeDiff": "+664.47亿"
+    }
+  ],
+  [
+    "100511",
+    {
+      "mainMoney": "-289.87亿",
+      "amountChangeDiff": "+664.47亿"
+    }
+  ],
+  [
+    "100521",
+    {
+      "mainMoney": "-288.46亿",
+      "amountChangeDiff": "+664.47亿"
+    }
+  ],
+  [
+    "100531",
+    {
+      "mainMoney": "-293.47亿",
+      "amountChangeDiff": "+664.47亿"
+    }
+  ],
+  [
+    "100541",
+    {
+      "mainMoney": "-299.45亿",
+      "amountChangeDiff": "+664.47亿"
+    }
+  ],
+  [
+    "100551",
+    {
+      "mainMoney": "-299.45亿",
+      "amountChangeDiff": "+664.47亿"
+    }
+  ],
+  [
+    "100601",
+    {
+      "mainMoney": "-303.54亿",
+      "amountChangeDiff": "+683.57亿"
+    }
+  ],
+  [
+    "100611",
+    {
+      "mainMoney": "-303.54亿",
+      "amountChangeDiff": "+683.57亿"
+    }
+  ],
+  [
+    "100621",
+    {
+      "mainMoney": "-311.78亿",
+      "amountChangeDiff": "+567.81亿"
+    }
+  ],
+  [
+    "100631",
+    {
+      "mainMoney": "-311.78亿",
+      "amountChangeDiff": "+673.73亿"
+    }
+  ],
+  [
+    "100641",
+    {
+      "mainMoney": "-316.33亿",
+      "amountChangeDiff": "+697.04亿"
+    }
+  ],
+  [
+    "100651",
+    {
+      "mainMoney": "-316.33亿",
+      "amountChangeDiff": "+723.90亿"
+    }
+  ],
+  [
+    "100701",
+    {
+      "mainMoney": "-316.33亿",
+      "amountChangeDiff": "+642.88亿"
+    }
+  ],
+  [
+    "100711",
+    {
+      "mainMoney": "-320.34亿",
+      "amountChangeDiff": "+675.25亿"
+    }
+  ],
+  [
+    "100721",
+    {
+      "mainMoney": "-320.34亿",
+      "amountChangeDiff": "+698.10亿"
+    }
+  ],
+  [
+    "100731",
+    {
+      "mainMoney": "-321.73亿",
+      "amountChangeDiff": "+642.88亿"
+    }
+  ],
+  [
+    "100741",
+    {
+      "mainMoney": "-320.34亿",
+      "amountChangeDiff": "+669.01亿"
+    }
+  ],
+  [
+    "100751",
+    {
+      "mainMoney": "-324.08亿",
+      "amountChangeDiff": "+716.02亿"
+    }
+  ],
+  [
+    "100801",
+    {
+      "mainMoney": "-324.08亿",
+      "amountChangeDiff": "+665.19亿"
+    }
+  ],
+  [
+    "100811",
+    {
+      "mainMoney": "-324.08亿",
+      "amountChangeDiff": "+730.47亿"
+    }
+  ],
+  [
+    "100821",
+    {
+      "mainMoney": "-324.08亿",
+      "amountChangeDiff": "+661.88亿"
+    }
+  ],
+  [
+    "100831",
+    {
+      "mainMoney": "-327.82亿",
+      "amountChangeDiff": "+629.35亿"
+    }
+  ],
+  [
+    "100841",
+    {
+      "mainMoney": "-325.39亿",
+      "amountChangeDiff": "+682.34亿"
+    }
+  ],
+  [
+    "100851",
+    {
+      "mainMoney": "-330.67亿",
+      "amountChangeDiff": "+727.14亿"
+    }
+  ],
+  [
+    "100901",
+    {
+      "mainMoney": "-330.67亿",
+      "amountChangeDiff": "+753.74亿"
+    }
+  ],
+  [
+    "100911",
+    {
+      "mainMoney": "-338.44亿",
+      "amountChangeDiff": "+629.35亿"
+    }
+  ],
+  [
+    "100921",
+    {
+      "mainMoney": "-338.44亿",
+      "amountChangeDiff": "+681.90亿"
+    }
+  ],
+  [
+    "100931",
+    {
+      "mainMoney": "-338.44亿",
+      "amountChangeDiff": "+711.36亿"
+    }
+  ],
+  [
+    "100941",
+    {
+      "mainMoney": "-343.49亿",
+      "amountChangeDiff": "+732.16亿"
+    }
+  ],
+  [
+    "100951",
+    {
+      "mainMoney": "-343.49亿",
+      "amountChangeDiff": "+757.95亿"
+    }
+  ],
+  [
+    "101001",
+    {
+      "mainMoney": "-349.84亿",
+      "amountChangeDiff": "+771.97亿"
+    }
+  ],
+  [
+    "101011",
+    {
+      "mainMoney": "-346.01亿",
+      "amountChangeDiff": "+771.97亿"
+    }
+  ],
+  [
+    "101021",
+    {
+      "mainMoney": "-353.02亿",
+      "amountChangeDiff": "+757.95亿"
+    }
+  ],
+  [
+    "101031",
+    {
+      "mainMoney": "-356.63亿",
+      "amountChangeDiff": "+710.56亿"
+    }
+  ],
+  [
+    "101041",
+    {
+      "mainMoney": "-356.63亿",
+      "amountChangeDiff": "+756.62亿"
+    }
+  ],
+  [
+    "101051",
+    {
+      "mainMoney": "-358.77亿",
+      "amountChangeDiff": "+783.32亿"
+    }
+  ],
+  [
+    "101101",
+    {
+      "mainMoney": "-359.11亿",
+      "amountChangeDiff": "+786.24亿"
+    }
+  ],
+  [
+    "101111",
+    {
+      "mainMoney": "-359.11亿",
+      "amountChangeDiff": "+809.63亿"
+    }
+  ],
+  [
+    "101121",
+    {
+      "mainMoney": "-359.11亿",
+      "amountChangeDiff": "+788.63亿"
+    }
+  ],
+  [
+    "101131",
+    {
+      "mainMoney": "-360.90亿",
+      "amountChangeDiff": "+761.82亿"
+    }
+  ],
+  [
+    "101141",
+    {
+      "mainMoney": "-364.43亿",
+      "amountChangeDiff": "+779.77亿"
+    }
+  ],
+  [
+    "101151",
+    {
+      "mainMoney": "-363.86亿",
+      "amountChangeDiff": "+794.27亿"
+    }
+  ],
+  [
+    "101201",
+    {
+      "mainMoney": "-366.28亿",
+      "amountChangeDiff": "+814.24亿"
+    }
+  ],
+  [
+    "101211",
+    {
+      "mainMoney": "-364.43亿",
+      "amountChangeDiff": "+791.64亿"
+    }
+  ],
+  [
+    "101221",
+    {
+      "mainMoney": "-366.28亿",
+      "amountChangeDiff": "+754.89亿"
+    }
+  ],
+  [
+    "101232",
+    {
+      "mainMoney": "-368.01亿",
+      "amountChangeDiff": "+828.51亿"
+    }
+  ],
+  [
+    "101241",
+    {
+      "mainMoney": "-368.01亿",
+      "amountChangeDiff": "+811.84亿"
+    }
+  ],
+  [
+    "101251",
+    {
+      "mainMoney": "-372.84亿",
+      "amountChangeDiff": "+834.14亿"
+    }
+  ],
+  [
+    "101301",
+    {
+      "mainMoney": "-376.56亿",
+      "amountChangeDiff": "+791.11亿"
+    }
+  ],
+  [
+    "101311",
+    {
+      "mainMoney": "-372.84亿",
+      "amountChangeDiff": "+818.94亿"
+    }
+  ],
+  [
+    "101321",
+    {
+      "mainMoney": "-379.60亿",
+      "amountChangeDiff": "+844.62亿"
+    }
+  ],
+  [
+    "101331",
+    {
+      "mainMoney": "-382.07亿",
+      "amountChangeDiff": "+814.38亿"
+    }
+  ],
+  [
+    "101341",
+    {
+      "mainMoney": "-382.07亿",
+      "amountChangeDiff": "+835.56亿"
+    }
+  ],
+  [
+    "101351",
+    {
+      "mainMoney": "-382.07亿",
+      "amountChangeDiff": "+851.79亿"
+    }
+  ],
+  [
+    "101401",
+    {
+      "mainMoney": "-386.78亿",
+      "amountChangeDiff": "+871.14亿"
+    }
+  ],
+  [
+    "101411",
+    {
+      "mainMoney": "-386.78亿",
+      "amountChangeDiff": "+782.68亿"
+    }
+  ],
+  [
+    "101421",
+    {
+      "mainMoney": "-386.78亿",
+      "amountChangeDiff": "+806.83亿"
+    }
+  ],
+  [
+    "101431",
+    {
+      "mainMoney": "-386.78亿",
+      "amountChangeDiff": "+823.50亿"
+    }
+  ],
+  [
+    "101441",
+    {
+      "mainMoney": "-389.03亿",
+      "amountChangeDiff": "+839.26亿"
+    }
+  ],
+  [
+    "101452",
+    {
+      "mainMoney": "-390.71亿",
+      "amountChangeDiff": "+863.65亿"
+    }
+  ],
+  [
+    "101501",
+    {
+      "mainMoney": "-393.17亿",
+      "amountChangeDiff": "+885.54亿"
+    }
+  ],
+  [
+    "101511",
+    {
+      "mainMoney": "-395.16亿",
+      "amountChangeDiff": "+791.27亿"
+    }
+  ],
+  [
+    "101521",
+    {
+      "mainMoney": "-393.17亿",
+      "amountChangeDiff": "+811.45亿"
+    }
+  ],
+  [
+    "101531",
+    {
+      "mainMoney": "-395.16亿",
+      "amountChangeDiff": "+835.43亿"
+    }
+  ],
+  [
+    "101541",
+    {
+      "mainMoney": "-395.16亿",
+      "amountChangeDiff": "+857.08亿"
+    }
+  ],
+  [
+    "101552",
+    {
+      "mainMoney": "-400.16亿",
+      "amountChangeDiff": "+876.68亿"
+    }
+  ],
+  [
+    "101601",
+    {
+      "mainMoney": "-401.67亿",
+      "amountChangeDiff": "+891.03亿"
+    }
+  ],
+  [
+    "101612",
+    {
+      "mainMoney": "-401.67亿",
+      "amountChangeDiff": "+902.84亿"
+    }
+  ],
+  [
+    "101621",
+    {
+      "mainMoney": "-404.09亿",
+      "amountChangeDiff": "+834.63亿"
+    }
+  ],
+  [
+    "101633",
+    {
+      "mainMoney": "-403.23亿",
+      "amountChangeDiff": "+854.89亿"
+    }
+  ],
+  [
+    "101644",
+    {
+      "mainMoney": "-404.09亿",
+      "amountChangeDiff": "+882.89亿"
+    }
+  ],
+  [
+    "101652",
+    {
+      "mainMoney": "-403.84亿",
+      "amountChangeDiff": "+899.53亿"
+    }
+  ],
+  [
+    "101701",
+    {
+      "mainMoney": "-403.84亿",
+      "amountChangeDiff": "+917.43亿"
+    }
+  ],
+  [
+    "101711",
+    {
+      "mainMoney": "-405.55亿",
+      "amountChangeDiff": "+931.63亿"
+    }
+  ],
+  [
+    "101721",
+    {
+      "mainMoney": "-405.55亿",
+      "amountChangeDiff": "+856.77亿"
+    }
+  ],
+  [
+    "101731",
+    {
+      "mainMoney": "-405.55亿",
+      "amountChangeDiff": "+892.10亿"
+    }
+  ],
+  [
+    "101741",
+    {
+      "mainMoney": "-409.63亿",
+      "amountChangeDiff": "+910.05亿"
+    }
+  ],
+  [
+    "101751",
+    {
+      "mainMoney": "-409.63亿",
+      "amountChangeDiff": "+924.97亿"
+    }
+  ],
+  [
+    "101801",
+    {
+      "mainMoney": "-412.21亿",
+      "amountChangeDiff": "+953.15亿"
+    }
+  ],
+  [
+    "101811",
+    {
+      "mainMoney": "-412.21亿",
+      "amountChangeDiff": "+858.36亿"
+    }
+  ],
+  [
+    "101821",
+    {
+      "mainMoney": "-417.36亿",
+      "amountChangeDiff": "+872.53亿"
+    }
+  ],
+  [
+    "101831",
+    {
+      "mainMoney": "-417.36亿",
+      "amountChangeDiff": "+892.79亿"
+    }
+  ],
+  [
+    "101841",
+    {
+      "mainMoney": "-417.36亿",
+      "amountChangeDiff": "+914.84亿"
+    }
+  ],
+  [
+    "101851",
+    {
+      "mainMoney": "-418.87亿",
+      "amountChangeDiff": "+930.03亿"
+    }
+  ],
+  [
+    "101901",
+    {
+      "mainMoney": "-418.87亿",
+      "amountChangeDiff": "+947.24亿"
+    }
+  ],
+  [
+    "101911",
+    {
+      "mainMoney": "-419.94亿",
+      "amountChangeDiff": "+854.20亿"
+    }
+  ],
+  [
+    "101921",
+    {
+      "mainMoney": "-419.94亿",
+      "amountChangeDiff": "+883.11亿"
+    }
+  ],
+  [
+    "101931",
+    {
+      "mainMoney": "-425.01亿",
+      "amountChangeDiff": "+906.77亿"
+    }
+  ],
+  [
+    "101941",
+    {
+      "mainMoney": "-422.43亿",
+      "amountChangeDiff": "+924.44亿"
+    }
+  ],
+  [
+    "101951",
+    {
+      "mainMoney": "-425.01亿",
+      "amountChangeDiff": "+937.36亿"
+    }
+  ],
+  [
+    "102001",
+    {
+      "mainMoney": "-427.25亿",
+      "amountChangeDiff": "+955.25亿"
+    }
+  ],
+  [
+    "102011",
+    {
+      "mainMoney": "-428.51亿",
+      "amountChangeDiff": "+873.00亿"
+    }
+  ],
+  [
+    "102021",
+    {
+      "mainMoney": "-427.25亿",
+      "amountChangeDiff": "+889.00亿"
+    }
+  ],
+  [
+    "102031",
+    {
+      "mainMoney": "-433.34亿",
+      "amountChangeDiff": "+915.35亿"
+    }
+  ],
+  [
+    "102041",
+    {
+      "mainMoney": "-433.34亿",
+      "amountChangeDiff": "+933.56亿"
+    }
+  ],
+  [
+    "102051",
+    {
+      "mainMoney": "-433.34亿",
+      "amountChangeDiff": "+954.09亿"
+    }
+  ],
+  [
+    "102101",
+    {
+      "mainMoney": "-439.76亿",
+      "amountChangeDiff": "+968.68亿"
+    }
+  ],
+  [
+    "102111",
+    {
+      "mainMoney": "-439.76亿",
+      "amountChangeDiff": "+869.89亿"
+    }
+  ],
+  [
+    "102121",
+    {
+      "mainMoney": "-439.76亿",
+      "amountChangeDiff": "+891.43亿"
+    }
+  ],
+  [
+    "102131",
+    {
+      "mainMoney": "-442.29亿",
+      "amountChangeDiff": "+912.09亿"
+    }
+  ],
+  [
+    "102143",
+    {
+      "mainMoney": "-442.29亿",
+      "amountChangeDiff": "+926.66亿"
+    }
+  ],
+  [
+    "102152",
+    {
+      "mainMoney": "-445.72亿",
+      "amountChangeDiff": "+941.89亿"
+    }
+  ],
+  [
+    "102201",
+    {
+      "mainMoney": "-449.20亿",
+      "amountChangeDiff": "+962.31亿"
+    }
+  ],
+  [
+    "102211",
+    {
+      "mainMoney": "-449.20亿",
+      "amountChangeDiff": "+969.36亿"
+    }
+  ],
+  [
+    "102221",
+    {
+      "mainMoney": "-449.20亿",
+      "amountChangeDiff": "+879.40亿"
+    }
+  ],
+  [
+    "102231",
+    {
+      "mainMoney": "-449.26亿",
+      "amountChangeDiff": "+896.87亿"
+    }
+  ],
+  [
+    "102241",
+    {
+      "mainMoney": "-448.90亿",
+      "amountChangeDiff": "+910.37亿"
+    }
+  ],
+  [
+    "102251",
+    {
+      "mainMoney": "-448.90亿",
+      "amountChangeDiff": "+927.82亿"
+    }
+  ],
+  [
+    "102301",
+    {
+      "mainMoney": "-449.75亿",
+      "amountChangeDiff": "+953.42亿"
+    }
+  ],
+  [
+    "102311",
+    {
+      "mainMoney": "-451.01亿",
+      "amountChangeDiff": "+960.36亿"
+    }
+  ],
+  [
+    "102321",
+    {
+      "mainMoney": "-451.89亿",
+      "amountChangeDiff": "+859.44亿"
+    }
+  ],
+  [
+    "102331",
+    {
+      "mainMoney": "-451.89亿",
+      "amountChangeDiff": "+890.53亿"
+    }
+  ],
+  [
+    "102341",
+    {
+      "mainMoney": "-453.37亿",
+      "amountChangeDiff": "+910.69亿"
+    }
+  ],
+  [
+    "102351",
+    {
+      "mainMoney": "-453.37亿",
+      "amountChangeDiff": "+932.33亿"
+    }
+  ],
+  [
+    "102401",
+    {
+      "mainMoney": "-453.37亿",
+      "amountChangeDiff": "+946.91亿"
+    }
+  ],
+  [
+    "102411",
+    {
+      "mainMoney": "-455.24亿",
+      "amountChangeDiff": "+961.74亿"
+    }
+  ],
+  [
+    "102421",
+    {
+      "mainMoney": "-455.24亿",
+      "amountChangeDiff": "+877.80亿"
+    }
+  ],
+  [
+    "102431",
+    {
+      "mainMoney": "-456.32亿",
+      "amountChangeDiff": "+895.97亿"
+    }
+  ],
+  [
+    "102441",
+    {
+      "mainMoney": "-462.01亿",
+      "amountChangeDiff": "+907.58亿"
+    }
+  ],
+  [
+    "102451",
+    {
+      "mainMoney": "-462.01亿",
+      "amountChangeDiff": "+930.57亿"
+    }
+  ],
+  [
+    "102501",
+    {
+      "mainMoney": "-463.44亿",
+      "amountChangeDiff": "+943.71亿"
+    }
+  ],
+  [
+    "102511",
+    {
+      "mainMoney": "-463.44亿",
+      "amountChangeDiff": "+956.57亿"
+    }
+  ],
+  [
+    "102521",
+    {
+      "mainMoney": "-463.44亿",
+      "amountChangeDiff": "+892.14亿"
+    }
+  ],
+  [
+    "102532",
+    {
+      "mainMoney": "-465.40亿",
+      "amountChangeDiff": "+916.78亿"
+    }
+  ],
+  [
+    "102541",
+    {
+      "mainMoney": "-468.28亿",
+      "amountChangeDiff": "+931.83亿"
+    }
+  ],
+  [
+    "102551",
+    {
+      "mainMoney": "-471.78亿",
+      "amountChangeDiff": "+950.14亿"
+    }
+  ],
+  [
+    "102601",
+    {
+      "mainMoney": "-471.78亿",
+      "amountChangeDiff": "+963.51亿"
+    }
+  ],
+  [
+    "102611",
+    {
+      "mainMoney": "-473.20亿",
+      "amountChangeDiff": "+889.22亿"
+    }
+  ],
+  [
+    "102621",
+    {
+      "mainMoney": "-475.32亿",
+      "amountChangeDiff": "+903.12亿"
+    }
+  ],
+  [
+    "102631",
+    {
+      "mainMoney": "-476.01亿",
+      "amountChangeDiff": "+922.68亿"
+    }
+  ],
+  [
+    "102642",
+    {
+      "mainMoney": "-477.25亿",
+      "amountChangeDiff": "+936.49亿"
+    }
+  ],
+  [
+    "102651",
+    {
+      "mainMoney": "-477.33亿",
+      "amountChangeDiff": "+952.53亿"
+    }
+  ],
+  [
+    "102701",
+    {
+      "mainMoney": "-477.25亿",
+      "amountChangeDiff": "+965.82亿"
+    }
+  ],
+  [
+    "102711",
+    {
+      "mainMoney": "-478.07亿",
+      "amountChangeDiff": "+973.49亿"
+    }
+  ],
+  [
+    "102721",
+    {
+      "mainMoney": "-481.73亿",
+      "amountChangeDiff": "+895.84亿"
+    }
+  ],
+  [
+    "102732",
+    {
+      "mainMoney": "-481.73亿",
+      "amountChangeDiff": "+924.86亿"
+    }
+  ],
+  [
+    "102742",
+    {
+      "mainMoney": "-481.73亿",
+      "amountChangeDiff": "+939.58亿"
+    }
+  ],
+  [
+    "102751",
+    {
+      "mainMoney": "-484.53亿",
+      "amountChangeDiff": "+958.13亿"
+    }
+  ],
+  [
+    "102801",
+    {
+      "mainMoney": "-484.53亿",
+      "amountChangeDiff": "+972.66亿"
+    }
+  ],
+  [
+    "102811",
+    {
+      "mainMoney": "-486.85亿",
+      "amountChangeDiff": "+898.37亿"
+    }
+  ],
+  [
+    "102821",
+    {
+      "mainMoney": "-489.31亿",
+      "amountChangeDiff": "+919.10亿"
+    }
+  ],
+  [
+    "102831",
+    {
+      "mainMoney": "-492.62亿",
+      "amountChangeDiff": "+935.25亿"
+    }
+  ],
+  [
+    "102841",
+    {
+      "mainMoney": "-489.31亿",
+      "amountChangeDiff": "+952.49亿"
+    }
+  ],
+  [
+    "102851",
+    {
+      "mainMoney": "-492.62亿",
+      "amountChangeDiff": "+966.17亿"
+    }
+  ],
+  [
+    "102901",
+    {
+      "mainMoney": "-492.62亿",
+      "amountChangeDiff": "+982.96亿"
+    }
+  ],
+  [
+    "102911",
+    {
+      "mainMoney": "-496.17亿",
+      "amountChangeDiff": "+993.13亿"
+    }
+  ],
+  [
+    "102921",
+    {
+      "mainMoney": "-496.17亿",
+      "amountChangeDiff": "+935.62亿"
+    }
+  ],
+  [
+    "102931",
+    {
+      "mainMoney": "-500.42亿",
+      "amountChangeDiff": "+960.82亿"
+    }
+  ],
+  [
+    "102941",
+    {
+      "mainMoney": "-500.42亿",
+      "amountChangeDiff": "+973.24亿"
+    }
+  ],
+  [
+    "102951",
+    {
+      "mainMoney": "-501.60亿",
+      "amountChangeDiff": "+995.50亿"
+    }
+  ],
+  [
+    "103001",
+    {
+      "mainMoney": "-501.60亿",
+      "amountChangeDiff": "+1011.38亿"
+    }
+  ],
+  [
+    "103011",
+    {
+      "mainMoney": "-506.35亿",
+      "amountChangeDiff": "+1023.31亿"
+    }
+  ],
+  [
+    "103021",
+    {
+      "mainMoney": "-506.35亿",
+      "amountChangeDiff": "+966.58亿"
+    }
+  ],
+  [
+    "103031",
+    {
+      "mainMoney": "-509.45亿",
+      "amountChangeDiff": "+986.49亿"
+    }
+  ],
+  [
+    "103041",
+    {
+      "mainMoney": "-512.38亿",
+      "amountChangeDiff": "+1001.88亿"
+    }
+  ],
+  [
+    "103051",
+    {
+      "mainMoney": "-512.38亿",
+      "amountChangeDiff": "+1021.84亿"
+    }
+  ],
+  [
+    "103101",
+    {
+      "mainMoney": "-514.74亿",
+      "amountChangeDiff": "+1035.29亿"
+    }
+  ],
+  [
+    "103111",
+    {
+      "mainMoney": "-514.74亿",
+      "amountChangeDiff": "+1045.85亿"
+    }
+  ],
+  [
+    "103121",
+    {
+      "mainMoney": "-516.31亿",
+      "amountChangeDiff": "+997.55亿"
+    }
+  ],
+  [
+    "103131",
+    {
+      "mainMoney": "-514.74亿",
+      "amountChangeDiff": "+1010.04亿"
+    }
+  ],
+  [
+    "103141",
+    {
+      "mainMoney": "-516.86亿",
+      "amountChangeDiff": "+1024.14亿"
+    }
+  ],
+  [
+    "103151",
+    {
+      "mainMoney": "-516.86亿",
+      "amountChangeDiff": "+1045.99亿"
+    }
+  ],
+  [
+    "103201",
+    {
+      "mainMoney": "-516.81亿",
+      "amountChangeDiff": "+1063.26亿"
+    }
+  ],
+  [
+    "103211",
+    {
+      "mainMoney": "-522.34亿",
+      "amountChangeDiff": "+1071.59亿"
+    }
+  ],
+  [
+    "103221",
+    {
+      "mainMoney": "-522.34亿",
+      "amountChangeDiff": "+999.35亿"
+    }
+  ],
+  [
+    "103231",
+    {
+      "mainMoney": "-522.34亿",
+      "amountChangeDiff": "+1013.90亿"
+    }
+  ],
+  [
+    "103241",
+    {
+      "mainMoney": "-522.34亿",
+      "amountChangeDiff": "+1025.88亿"
+    }
+  ],
+  [
+    "103251",
+    {
+      "mainMoney": "-526.98亿",
+      "amountChangeDiff": "+1057.12亿"
+    }
+  ],
+  [
+    "103301",
+    {
+      "mainMoney": "-526.98亿",
+      "amountChangeDiff": "+1072.73亿"
+    }
+  ],
+  [
+    "103311",
+    {
+      "mainMoney": "-526.98亿",
+      "amountChangeDiff": "+1009.09亿"
+    }
+  ],
+  [
+    "103321",
+    {
+      "mainMoney": "-529.35亿",
+      "amountChangeDiff": "+1018.32亿"
+    }
+  ],
+  [
+    "103331",
+    {
+      "mainMoney": "-529.35亿",
+      "amountChangeDiff": "+1040.29亿"
+    }
+  ],
+  [
+    "103341",
+    {
+      "mainMoney": "-536.28亿",
+      "amountChangeDiff": "+1052.64亿"
+    }
+  ],
+  [
+    "103351",
+    {
+      "mainMoney": "-536.28亿",
+      "amountChangeDiff": "+1066.30亿"
+    }
+  ],
+  [
+    "103401",
+    {
+      "mainMoney": "-536.28亿",
+      "amountChangeDiff": "+1079.46亿"
+    }
+  ],
+  [
+    "103411",
+    {
+      "mainMoney": "-538.04亿",
+      "amountChangeDiff": "+1018.86亿"
+    }
+  ],
+  [
+    "103421",
+    {
+      "mainMoney": "-538.04亿",
+      "amountChangeDiff": "+1034.97亿"
+    }
+  ],
+  [
+    "103431",
+    {
+      "mainMoney": "-540.40亿",
+      "amountChangeDiff": "+1055.92亿"
+    }
+  ],
+  [
+    "103441",
+    {
+      "mainMoney": "-540.40亿",
+      "amountChangeDiff": "+1071.92亿"
+    }
+  ],
+  [
+    "103451",
+    {
+      "mainMoney": "-540.40亿",
+      "amountChangeDiff": "+1084.39亿"
+    }
+  ],
+  [
+    "103501",
+    {
+      "mainMoney": "-541.38亿",
+      "amountChangeDiff": "+1097.44亿"
+    }
+  ],
+  [
+    "103511",
+    {
+      "mainMoney": "-542.14亿",
+      "amountChangeDiff": "+1108.12亿"
+    }
+  ],
+  [
+    "103521",
+    {
+      "mainMoney": "-544.19亿",
+      "amountChangeDiff": "+1038.71亿"
+    }
+  ],
+  [
+    "103531",
+    {
+      "mainMoney": "-546.12亿",
+      "amountChangeDiff": "+1050.66亿"
+    }
+  ],
+  [
+    "103541",
+    {
+      "mainMoney": "-546.12亿",
+      "amountChangeDiff": "+1065.42亿"
+    }
+  ],
+  [
+    "103551",
+    {
+      "mainMoney": "-547.49亿",
+      "amountChangeDiff": "+1078.31亿"
+    }
+  ],
+  [
+    "103601",
+    {
+      "mainMoney": "-547.49亿",
+      "amountChangeDiff": "+1091.17亿"
+    }
+  ],
+  [
+    "103611",
+    {
+      "mainMoney": "-548.41亿",
+      "amountChangeDiff": "+1099.12亿"
+    }
+  ],
+  [
+    "103621",
+    {
+      "mainMoney": "-548.86亿",
+      "amountChangeDiff": "+1047.44亿"
+    }
+  ],
+  [
+    "103631",
+    {
+      "mainMoney": "-550.30亿",
+      "amountChangeDiff": "+1057.94亿"
+    }
+  ],
+  [
+    "103641",
+    {
+      "mainMoney": "-550.30亿",
+      "amountChangeDiff": "+1075.07亿"
+    }
+  ],
+  [
+    "103652",
+    {
+      "mainMoney": "-550.30亿",
+      "amountChangeDiff": "+1085.40亿"
+    }
+  ],
+  [
+    "103701",
+    {
+      "mainMoney": "-550.30亿",
+      "amountChangeDiff": "+1103.15亿"
+    }
+  ],
+  [
+    "103711",
+    {
+      "mainMoney": "-552.85亿",
+      "amountChangeDiff": "+1115.32亿"
+    }
+  ],
+  [
+    "103721",
+    {
+      "mainMoney": "-556.96亿",
+      "amountChangeDiff": "+1062.39亿"
+    }
+  ],
+  [
+    "103731",
+    {
+      "mainMoney": "-556.96亿",
+      "amountChangeDiff": "+1072.62亿"
+    }
+  ],
+  [
+    "103741",
+    {
+      "mainMoney": "-559.81亿",
+      "amountChangeDiff": "+1093.11亿"
+    }
+  ],
+  [
+    "103751",
+    {
+      "mainMoney": "-559.81亿",
+      "amountChangeDiff": "+1105.23亿"
+    }
+  ],
+  [
+    "103801",
+    {
+      "mainMoney": "-561.28亿",
+      "amountChangeDiff": "+1126.89亿"
+    }
+  ],
+  [
+    "103811",
+    {
+      "mainMoney": "-562.35亿",
+      "amountChangeDiff": "+1067.49亿"
+    }
+  ],
+  [
+    "103821",
+    {
+      "mainMoney": "-564.58亿",
+      "amountChangeDiff": "+1080.75亿"
+    }
+  ],
+  [
+    "103831",
+    {
+      "mainMoney": "-562.35亿",
+      "amountChangeDiff": "+1093.16亿"
+    }
+  ],
+  [
+    "103841",
+    {
+      "mainMoney": "-564.58亿",
+      "amountChangeDiff": "+1107.49亿"
+    }
+  ],
+  [
+    "103851",
+    {
+      "mainMoney": "-567.14亿",
+      "amountChangeDiff": "+1118.53亿"
+    }
+  ],
+  [
+    "103901",
+    {
+      "mainMoney": "-569.74亿",
+      "amountChangeDiff": "+1135.22亿"
+    }
+  ],
+  [
+    "103911",
+    {
+      "mainMoney": "-571.55亿",
+      "amountChangeDiff": "+1074.64亿"
+    }
+  ],
+  [
+    "103921",
+    {
+      "mainMoney": "-573.59亿",
+      "amountChangeDiff": "+1093.19亿"
+    }
+  ],
+  [
+    "103931",
+    {
+      "mainMoney": "-575.69亿",
+      "amountChangeDiff": "+1121.18亿"
+    }
+  ],
+  [
+    "103941",
+    {
+      "mainMoney": "-575.69亿",
+      "amountChangeDiff": "+1136.35亿"
+    }
+  ],
+  [
+    "103951",
+    {
+      "mainMoney": "-579.82亿",
+      "amountChangeDiff": "+1159.05亿"
+    }
+  ],
+  [
+    "104001",
+    {
+      "mainMoney": "-579.82亿",
+      "amountChangeDiff": "+1179.23亿"
+    }
+  ],
+  [
+    "104011",
+    {
+      "mainMoney": "-586.88亿",
+      "amountChangeDiff": "+1124.10亿"
+    }
+  ],
+  [
+    "104021",
+    {
+      "mainMoney": "-586.88亿",
+      "amountChangeDiff": "+1147.42亿"
+    }
+  ],
+  [
+    "104031",
+    {
+      "mainMoney": "-592.46亿",
+      "amountChangeDiff": "+1165.57亿"
+    }
+  ],
+  [
+    "104041",
+    {
+      "mainMoney": "-586.88亿",
+      "amountChangeDiff": "+1184.37亿"
+    }
+  ],
+  [
+    "104051",
+    {
+      "mainMoney": "-592.46亿",
+      "amountChangeDiff": "+1196.61亿"
+    }
+  ],
+  [
+    "104101",
+    {
+      "mainMoney": "-600.37亿",
+      "amountChangeDiff": "+1210.34亿"
+    }
+  ],
+  [
+    "104111",
+    {
+      "mainMoney": "-596.83亿",
+      "amountChangeDiff": "+1148.17亿"
+    }
+  ],
+  [
+    "104121",
+    {
+      "mainMoney": "-602.43亿",
+      "amountChangeDiff": "+1162.29亿"
+    }
+  ],
+  [
+    "104131",
+    {
+      "mainMoney": "-602.43亿",
+      "amountChangeDiff": "+1174.12亿"
+    }
+  ],
+  [
+    "104141",
+    {
+      "mainMoney": "-602.43亿",
+      "amountChangeDiff": "+1187.07亿"
+    }
+  ],
+  [
+    "104152",
+    {
+      "mainMoney": "-608.02亿",
+      "amountChangeDiff": "+1205.14亿"
+    }
+  ],
+  [
+    "104201",
+    {
+      "mainMoney": "-610.48亿",
+      "amountChangeDiff": "+1212.92亿"
+    }
+  ],
+  [
+    "104211",
+    {
+      "mainMoney": "-608.02亿",
+      "amountChangeDiff": "+1224.42亿"
+    }
+  ],
+  [
+    "104221",
+    {
+      "mainMoney": "-610.48亿",
+      "amountChangeDiff": "+1162.58亿"
+    }
+  ],
+  [
+    "104232",
+    {
+      "mainMoney": "-610.48亿",
+      "amountChangeDiff": "+1182.71亿"
+    }
+  ],
+  [
+    "104242",
+    {
+      "mainMoney": "-610.48亿",
+      "amountChangeDiff": "+1188.54亿"
+    }
+  ],
+  [
+    "104252",
+    {
+      "mainMoney": "-611.21亿",
+      "amountChangeDiff": "+1198.53亿"
+    }
+  ],
+  [
+    "104301",
+    {
+      "mainMoney": "-614.97亿",
+      "amountChangeDiff": "+1216.03亿"
+    }
+  ],
+  [
+    "104311",
+    {
+      "mainMoney": "-615.44亿",
+      "amountChangeDiff": "+1227.57亿"
+    }
+  ],
+  [
+    "104321",
+    {
+      "mainMoney": "-614.97亿",
+      "amountChangeDiff": "+1172.94亿"
+    }
+  ],
+  [
+    "104331",
+    {
+      "mainMoney": "-615.44亿",
+      "amountChangeDiff": "+1189.58亿"
+    }
+  ],
+  [
+    "104341",
+    {
+      "mainMoney": "-615.44亿",
+      "amountChangeDiff": "+1200.03亿"
+    }
+  ],
+  [
+    "104351",
+    {
+      "mainMoney": "-615.23亿",
+      "amountChangeDiff": "+1211.43亿"
+    }
+  ],
+  [
+    "104401",
+    {
+      "mainMoney": "-616.05亿",
+      "amountChangeDiff": "+1219.84亿"
+    }
+  ],
+  [
+    "104411",
+    {
+      "mainMoney": "-616.14亿",
+      "amountChangeDiff": "+1163.02亿"
+    }
+  ],
+  [
+    "104421",
+    {
+      "mainMoney": "-616.14亿",
+      "amountChangeDiff": "+1180.37亿"
+    }
+  ],
+  [
+    "104431",
+    {
+      "mainMoney": "-616.00亿",
+      "amountChangeDiff": "+1191.84亿"
+    }
+  ],
+  [
+    "104441",
+    {
+      "mainMoney": "-616.07亿",
+      "amountChangeDiff": "+1202.24亿"
+    }
+  ],
+  [
+    "104451",
+    {
+      "mainMoney": "-616.07亿",
+      "amountChangeDiff": "+1211.90亿"
+    }
+  ],
+  [
+    "104501",
+    {
+      "mainMoney": "-616.07亿",
+      "amountChangeDiff": "+1222.10亿"
+    }
+  ],
+  [
+    "104511",
+    {
+      "mainMoney": "-615.81亿",
+      "amountChangeDiff": "+1228.02亿"
+    }
+  ],
+  [
+    "104521",
+    {
+      "mainMoney": "-616.43亿",
+      "amountChangeDiff": "+1161.52亿"
+    }
+  ],
+  [
+    "104531",
+    {
+      "mainMoney": "-616.43亿",
+      "amountChangeDiff": "+1171.09亿"
+    }
+  ],
+  [
+    "104541",
+    {
+      "mainMoney": "-617.87亿",
+      "amountChangeDiff": "+1183.49亿"
+    }
+  ],
+  [
+    "104551",
+    {
+      "mainMoney": "-617.43亿",
+      "amountChangeDiff": "+1191.43亿"
+    }
+  ],
+  [
+    "104601",
+    {
+      "mainMoney": "-618.22亿",
+      "amountChangeDiff": "+1207.65亿"
+    }
+  ],
+  [
+    "104611",
+    {
+      "mainMoney": "-618.22亿",
+      "amountChangeDiff": "+1139.79亿"
+    }
+  ],
+  [
+    "104621",
+    {
+      "mainMoney": "-617.67亿",
+      "amountChangeDiff": "+1150.80亿"
+    }
+  ],
+  [
+    "104631",
+    {
+      "mainMoney": "-617.67亿",
+      "amountChangeDiff": "+1161.84亿"
+    }
+  ],
+  [
+    "104641",
+    {
+      "mainMoney": "-617.97亿",
+      "amountChangeDiff": "+1170.91亿"
+    }
+  ],
+  [
+    "104651",
+    {
+      "mainMoney": "-617.97亿",
+      "amountChangeDiff": "+1187.97亿"
+    }
+  ],
+  [
+    "104701",
+    {
+      "mainMoney": "-618.26亿",
+      "amountChangeDiff": "+1200.18亿"
+    }
+  ],
+  [
+    "104711",
+    {
+      "mainMoney": "-618.06亿",
+      "amountChangeDiff": "+1152.38亿"
+    }
+  ],
+  [
+    "104721",
+    {
+      "mainMoney": "-617.56亿",
+      "amountChangeDiff": "+1164.88亿"
+    }
+  ],
+  [
+    "104731",
+    {
+      "mainMoney": "-616.39亿",
+      "amountChangeDiff": "+1178.27亿"
+    }
+  ],
+  [
+    "104741",
+    {
+      "mainMoney": "-616.39亿",
+      "amountChangeDiff": "+1187.97亿"
+    }
+  ],
+  [
+    "104751",
+    {
+      "mainMoney": "-615.73亿",
+      "amountChangeDiff": "+1204.12亿"
+    }
+  ],
+  [
+    "104801",
+    {
+      "mainMoney": "-615.73亿",
+      "amountChangeDiff": "+1220.64亿"
+    }
+  ],
+  [
+    "104811",
+    {
+      "mainMoney": "-615.12亿",
+      "amountChangeDiff": "+1231.19亿"
+    }
+  ],
+  [
+    "104821",
+    {
+      "mainMoney": "-615.12亿",
+      "amountChangeDiff": "+1188.51亿"
+    }
+  ],
+  [
+    "104831",
+    {
+      "mainMoney": "-614.60亿",
+      "amountChangeDiff": "+1203.11亿"
+    }
+  ],
+  [
+    "104841",
+    {
+      "mainMoney": "-615.59亿",
+      "amountChangeDiff": "+1213.19亿"
+    }
+  ],
+  [
+    "104851",
+    {
+      "mainMoney": "-615.59亿",
+      "amountChangeDiff": "+1224.20亿"
+    }
+  ],
+  [
+    "104901",
+    {
+      "mainMoney": "-617.85亿",
+      "amountChangeDiff": "+1237.30亿"
+    }
+  ],
+  [
+    "104911",
+    {
+      "mainMoney": "-616.12亿",
+      "amountChangeDiff": "+1179.79亿"
+    }
+  ],
+  [
+    "104921",
+    {
+      "mainMoney": "-617.85亿",
+      "amountChangeDiff": "+1192.59亿"
+    }
+  ],
+  [
+    "104931",
+    {
+      "mainMoney": "-620.30亿",
+      "amountChangeDiff": "+1203.74亿"
+    }
+  ],
+  [
+    "104941",
+    {
+      "mainMoney": "-622.43亿",
+      "amountChangeDiff": "+1214.70亿"
+    }
+  ],
+  [
+    "104951",
+    {
+      "mainMoney": "-623.67亿",
+      "amountChangeDiff": "+1225.17亿"
+    }
+  ],
+  [
+    "105001",
+    {
+      "mainMoney": "-623.96亿",
+      "amountChangeDiff": "+1238.76亿"
+    }
+  ],
+  [
+    "105011",
+    {
+      "mainMoney": "-623.67亿",
+      "amountChangeDiff": "+1180.00亿"
+    }
+  ],
+  [
+    "105021",
+    {
+      "mainMoney": "-623.96亿",
+      "amountChangeDiff": "+1189.03亿"
+    }
+  ],
+  [
+    "105031",
+    {
+      "mainMoney": "-624.21亿",
+      "amountChangeDiff": "+1202.56亿"
+    }
+  ],
+  [
+    "105041",
+    {
+      "mainMoney": "-624.21亿",
+      "amountChangeDiff": "+1210.41亿"
+    }
+  ],
+  [
+    "105051",
+    {
+      "mainMoney": "-624.20亿",
+      "amountChangeDiff": "+1224.92亿"
+    }
+  ],
+  [
+    "105101",
+    {
+      "mainMoney": "-624.20亿",
+      "amountChangeDiff": "+1234.99亿"
+    }
+  ],
+  [
+    "105111",
+    {
+      "mainMoney": "-624.41亿",
+      "amountChangeDiff": "+1239.90亿"
+    }
+  ],
+  [
+    "105121",
+    {
+      "mainMoney": "-625.18亿",
+      "amountChangeDiff": "+1189.52亿"
+    }
+  ],
+  [
+    "105131",
+    {
+      "mainMoney": "-625.18亿",
+      "amountChangeDiff": "+1196.80亿"
+    }
+  ],
+  [
+    "105141",
+    {
+      "mainMoney": "-625.92亿",
+      "amountChangeDiff": "+1212.77亿"
+    }
+  ],
+  [
+    "105151",
+    {
+      "mainMoney": "-626.00亿",
+      "amountChangeDiff": "+1222.84亿"
+    }
+  ],
+  [
+    "105201",
+    {
+      "mainMoney": "-625.65亿",
+      "amountChangeDiff": "+1230.24亿"
+    }
+  ],
+  [
+    "105211",
+    {
+      "mainMoney": "-625.92亿",
+      "amountChangeDiff": "+1173.34亿"
+    }
+  ],
+  [
+    "105221",
+    {
+      "mainMoney": "-625.58亿",
+      "amountChangeDiff": "+1188.16亿"
+    }
+  ],
+  [
+    "105231",
+    {
+      "mainMoney": "-625.58亿",
+      "amountChangeDiff": "+1198.02亿"
+    }
+  ],
+  [
+    "105241",
+    {
+      "mainMoney": "-625.58亿",
+      "amountChangeDiff": "+1210.75亿"
+    }
+  ],
+  [
+    "105251",
+    {
+      "mainMoney": "-625.71亿",
+      "amountChangeDiff": "+1222.10亿"
+    }
+  ],
+  [
+    "105301",
+    {
+      "mainMoney": "-625.79亿",
+      "amountChangeDiff": "+1231.89亿"
+    }
+  ],
+  [
+    "105311",
+    {
+      "mainMoney": "-625.79亿",
+      "amountChangeDiff": "+1180.53亿"
+    }
+  ],
+  [
+    "105321",
+    {
+      "mainMoney": "-625.40亿",
+      "amountChangeDiff": "+1187.90亿"
+    }
+  ],
+  [
+    "105331",
+    {
+      "mainMoney": "-625.40亿",
+      "amountChangeDiff": "+1204.90亿"
+    }
+  ],
+  [
+    "105341",
+    {
+      "mainMoney": "-625.40亿",
+      "amountChangeDiff": "+1220.67亿"
+    }
+  ],
+  [
+    "105351",
+    {
+      "mainMoney": "-626.71亿",
+      "amountChangeDiff": "+1231.32亿"
+    }
+  ],
+  [
+    "105401",
+    {
+      "mainMoney": "-626.59亿",
+      "amountChangeDiff": "+1240.29亿"
+    }
+  ],
+  [
+    "105411",
+    {
+      "mainMoney": "-626.71亿",
+      "amountChangeDiff": "+1245.91亿"
+    }
+  ],
+  [
+    "105421",
+    {
+      "mainMoney": "-626.59亿",
+      "amountChangeDiff": "+1190.13亿"
+    }
+  ],
+  [
+    "105431",
+    {
+      "mainMoney": "-628.72亿",
+      "amountChangeDiff": "+1202.88亿"
+    }
+  ],
+  [
+    "105441",
+    {
+      "mainMoney": "-627.48亿",
+      "amountChangeDiff": "+1219.34亿"
+    }
+  ],
+  [
+    "105451",
+    {
+      "mainMoney": "-628.72亿",
+      "amountChangeDiff": "+1228.43亿"
+    }
+  ],
+  [
+    "105501",
+    {
+      "mainMoney": "-631.75亿",
+      "amountChangeDiff": "+1238.45亿"
+    }
+  ],
+  [
+    "105511",
+    {
+      "mainMoney": "-631.75亿",
+      "amountChangeDiff": "+1247.00亿"
+    }
+  ],
+  [
+    "105521",
+    {
+      "mainMoney": "-633.07亿",
+      "amountChangeDiff": "+1197.96亿"
+    }
+  ],
+  [
+    "105531",
+    {
+      "mainMoney": "-634.64亿",
+      "amountChangeDiff": "+1206.66亿"
+    }
+  ],
+  [
+    "105541",
+    {
+      "mainMoney": "-634.64亿",
+      "amountChangeDiff": "+1226.31亿"
+    }
+  ],
+  [
+    "105551",
+    {
+      "mainMoney": "-636.43亿",
+      "amountChangeDiff": "+1238.10亿"
+    }
+  ],
+  [
+    "105601",
+    {
+      "mainMoney": "-636.43亿",
+      "amountChangeDiff": "+1249.92亿"
+    }
+  ],
+  [
+    "105611",
+    {
+      "mainMoney": "-637.88亿",
+      "amountChangeDiff": "+1188.47亿"
+    }
+  ],
+  [
+    "105621",
+    {
+      "mainMoney": "-637.88亿",
+      "amountChangeDiff": "+1203.08亿"
+    }
+  ],
+  [
+    "105631",
+    {
+      "mainMoney": "-637.88亿",
+      "amountChangeDiff": "+1214.78亿"
+    }
+  ],
+  [
+    "105641",
+    {
+      "mainMoney": "-640.06亿",
+      "amountChangeDiff": "+1227.27亿"
+    }
+  ],
+  [
+    "105651",
+    {
+      "mainMoney": "-644.64亿",
+      "amountChangeDiff": "+1242.15亿"
+    }
+  ],
+  [
+    "105701",
+    {
+      "mainMoney": "-644.64亿",
+      "amountChangeDiff": "+1254.86亿"
+    }
+  ],
+  [
+    "105711",
+    {
+      "mainMoney": "-649.14亿",
+      "amountChangeDiff": "+1263.75亿"
+    }
+  ],
+  [
+    "105721",
+    {
+      "mainMoney": "-649.14亿",
+      "amountChangeDiff": "+1217.19亿"
+    }
+  ],
+  [
+    "105731",
+    {
+      "mainMoney": "-649.14亿",
+      "amountChangeDiff": "+1224.67亿"
+    }
+  ],
+  [
+    "105741",
+    {
+      "mainMoney": "-650.73亿",
+      "amountChangeDiff": "+1235.58亿"
+    }
+  ],
+  [
+    "105751",
+    {
+      "mainMoney": "-650.73亿",
+      "amountChangeDiff": "+1256.29亿"
+    }
+  ],
+  [
+    "105802",
+    {
+      "mainMoney": "-652.61亿",
+      "amountChangeDiff": "+1266.58亿"
+    }
+  ],
+  [
+    "105811",
+    {
+      "mainMoney": "-655.34亿",
+      "amountChangeDiff": "+1207.59亿"
+    }
+  ],
+  [
+    "105821",
+    {
+      "mainMoney": "-652.61亿",
+      "amountChangeDiff": "+1216.93亿"
+    }
+  ],
+  [
+    "105831",
+    {
+      "mainMoney": "-655.34亿",
+      "amountChangeDiff": "+1229.92亿"
+    }
+  ],
+  [
+    "105841",
+    {
+      "mainMoney": "-658.11亿",
+      "amountChangeDiff": "+1239.28亿"
+    }
+  ],
+  [
+    "105851",
+    {
+      "mainMoney": "-658.11亿",
+      "amountChangeDiff": "+1245.29亿"
+    }
+  ],
+  [
+    "105901",
+    {
+      "mainMoney": "-660.06亿",
+      "amountChangeDiff": "+1254.29亿"
+    }
+  ],
+  [
+    "105911",
+    {
+      "mainMoney": "-659.28亿",
+      "amountChangeDiff": "+1194.69亿"
+    }
+  ],
+  [
+    "105921",
+    {
+      "mainMoney": "-660.90亿",
+      "amountChangeDiff": "+1203.87亿"
+    }
+  ],
+  [
+    "105931",
+    {
+      "mainMoney": "-660.06亿",
+      "amountChangeDiff": "+1210.20亿"
+    }
+  ],
+  [
+    "105941",
+    {
+      "mainMoney": "-660.90亿",
+      "amountChangeDiff": "+1219.59亿"
+    }
+  ],
+  [
+    "105951",
+    {
+      "mainMoney": "-661.65亿",
+      "amountChangeDiff": "+1227.31亿"
+    }
+  ],
+  [
+    "110001",
+    {
+      "mainMoney": "-661.65亿",
+      "amountChangeDiff": "+1237.02亿"
+    }
+  ],
+  [
+    "110011",
+    {
+      "mainMoney": "-663.03亿",
+      "amountChangeDiff": "+1178.92亿"
+    }
+  ],
+  [
+    "110021",
+    {
+      "mainMoney": "-663.60亿",
+      "amountChangeDiff": "+1193.18亿"
+    }
+  ],
+  [
+    "110031",
+    {
+      "mainMoney": "-664.27亿",
+      "amountChangeDiff": "+1201.34亿"
+    }
+  ],
+  [
+    "110041",
+    {
+      "mainMoney": "-664.27亿",
+      "amountChangeDiff": "+1212.22亿"
+    }
+  ],
+  [
+    "110051",
+    {
+      "mainMoney": "-664.27亿",
+      "amountChangeDiff": "+1222.22亿"
+    }
+  ],
+  [
+    "110101",
+    {
+      "mainMoney": "-665.31亿",
+      "amountChangeDiff": "+1241.32亿"
+    }
+  ],
+  [
+    "110111",
+    {
+      "mainMoney": "-665.31亿",
+      "amountChangeDiff": "+1246.21亿"
+    }
+  ],
+  [
+    "110121",
+    {
+      "mainMoney": "-666.07亿",
+      "amountChangeDiff": "+1203.37亿"
+    }
+  ],
+  [
+    "110131",
+    {
+      "mainMoney": "-666.07亿",
+      "amountChangeDiff": "+1213.48亿"
+    }
+  ],
+  [
+    "110141",
+    {
+      "mainMoney": "-666.07亿",
+      "amountChangeDiff": "+1225.45亿"
+    }
+  ],
+  [
+    "110151",
+    {
+      "mainMoney": "-668.15亿",
+      "amountChangeDiff": "+1238.54亿"
+    }
+  ],
+  [
+    "110201",
+    {
+      "mainMoney": "-668.15亿",
+      "amountChangeDiff": "+1246.74亿"
+    }
+  ],
+  [
+    "110211",
+    {
+      "mainMoney": "-668.15亿",
+      "amountChangeDiff": "+1175.25亿"
+    }
+  ],
+  [
+    "110221",
+    {
+      "mainMoney": "-669.03亿",
+      "amountChangeDiff": "+1185.04亿"
+    }
+  ],
+  [
+    "110231",
+    {
+      "mainMoney": "-668.79亿",
+      "amountChangeDiff": "+1198.37亿"
+    }
+  ],
+  [
+    "110241",
+    {
+      "mainMoney": "-669.03亿",
+      "amountChangeDiff": "+1207.46亿"
+    }
+  ],
+  [
+    "110251",
+    {
+      "mainMoney": "-669.57亿",
+      "amountChangeDiff": "+1219.11亿"
+    }
+  ],
+  [
+    "110301",
+    {
+      "mainMoney": "-669.57亿",
+      "amountChangeDiff": "+1233.13亿"
+    }
+  ],
+  [
+    "110311",
+    {
+      "mainMoney": "-669.94亿",
+      "amountChangeDiff": "+1241.44亿"
+    }
+  ],
+  [
+    "110322",
+    {
+      "mainMoney": "-669.21亿",
+      "amountChangeDiff": "+1186.54亿"
+    }
+  ],
+  [
+    "110331",
+    {
+      "mainMoney": "-669.21亿",
+      "amountChangeDiff": "+1196.45亿"
+    }
+  ],
+  [
+    "110342",
+    {
+      "mainMoney": "-668.20亿",
+      "amountChangeDiff": "+1193.40亿"
+    }
+  ],
+  [
+    "110351",
+    {
+      "mainMoney": "-668.20亿",
+      "amountChangeDiff": "+1213.50亿"
+    }
+  ],
+  [
+    "110401",
+    {
+      "mainMoney": "-668.53亿",
+      "amountChangeDiff": "+1216.09亿"
+    }
+  ],
+  [
+    "110411",
+    {
+      "mainMoney": "-669.19亿",
+      "amountChangeDiff": "+1227.38亿"
+    }
+  ],
+  [
+    "110421",
+    {
+      "mainMoney": "-669.19亿",
+      "amountChangeDiff": "+1183.95亿"
+    }
+  ],
+  [
+    "110431",
+    {
+      "mainMoney": "-669.47亿",
+      "amountChangeDiff": "+1196.93亿"
+    }
+  ],
+  [
+    "110441",
+    {
+      "mainMoney": "-669.47亿",
+      "amountChangeDiff": "+1206.77亿"
+    }
+  ],
+  [
+    "110451",
+    {
+      "mainMoney": "-670.17亿",
+      "amountChangeDiff": "+1218.12亿"
+    }
+  ],
+  [
+    "110501",
+    {
+      "mainMoney": "-670.17亿",
+      "amountChangeDiff": "+1229.94亿"
+    }
+  ],
+  [
+    "110511",
+    {
+      "mainMoney": "-670.44亿",
+      "amountChangeDiff": "+1178.31亿"
+    }
+  ],
+  [
+    "110521",
+    {
+      "mainMoney": "-671.14亿",
+      "amountChangeDiff": "+1186.34亿"
+    }
+  ],
+  [
+    "110531",
+    {
+      "mainMoney": "-670.44亿",
+      "amountChangeDiff": "+1194.95亿"
+    }
+  ],
+  [
+    "110541",
+    {
+      "mainMoney": "-674.17亿",
+      "amountChangeDiff": "+1206.77亿"
+    }
+  ],
+  [
+    "110551",
+    {
+      "mainMoney": "-674.17亿",
+      "amountChangeDiff": "+1214.69亿"
+    }
+  ],
+  [
+    "110601",
+    {
+      "mainMoney": "-674.91亿",
+      "amountChangeDiff": "+1224.27亿"
+    }
+  ],
+  [
+    "110611",
+    {
+      "mainMoney": "-674.91亿",
+      "amountChangeDiff": "+1166.78亿"
+    }
+  ],
+  [
+    "110621",
+    {
+      "mainMoney": "-675.39亿",
+      "amountChangeDiff": "+1175.67亿"
+    }
+  ],
+  [
+    "110631",
+    {
+      "mainMoney": "-675.39亿",
+      "amountChangeDiff": "+1186.91亿"
+    }
+  ],
+  [
+    "110641",
+    {
+      "mainMoney": "-676.73亿",
+      "amountChangeDiff": "+1193.33亿"
+    }
+  ],
+  [
+    "110651",
+    {
+      "mainMoney": "-676.73亿",
+      "amountChangeDiff": "+1193.33亿"
+    }
+  ],
+  [
+    "110701",
+    {
+      "mainMoney": "-676.73亿",
+      "amountChangeDiff": "+1193.33亿"
+    }
+  ],
+  [
+    "110711",
+    {
+      "mainMoney": "-676.73亿",
+      "amountChangeDiff": "+1193.33亿"
+    }
+  ],
+  [
+    "110721",
+    {
+      "mainMoney": "-677.90亿",
+      "amountChangeDiff": "+1193.33亿"
+    }
+  ],
+  [
+    "110731",
+    {
+      "mainMoney": "-678.17亿",
+      "amountChangeDiff": "+1193.33亿"
+    }
+  ],
+  [
+    "110741",
+    {
+      "mainMoney": "-678.20亿",
+      "amountChangeDiff": "+1196.85亿"
+    }
+  ],
+  [
+    "110751",
+    {
+      "mainMoney": "-678.17亿",
+      "amountChangeDiff": "+1207.32亿"
+    }
+  ],
+  [
+    "110801",
+    {
+      "mainMoney": "-678.20亿",
+      "amountChangeDiff": "+1204.38亿"
+    }
+  ],
+  [
+    "110811",
+    {
+      "mainMoney": "-678.20亿",
+      "amountChangeDiff": "+1152.98亿"
+    }
+  ],
+  [
+    "110821",
+    {
+      "mainMoney": "-678.61亿",
+      "amountChangeDiff": "+1154.68亿"
+    }
+  ],
+  [
+    "110831",
+    {
+      "mainMoney": "-678.61亿",
+      "amountChangeDiff": "+1180.42亿"
+    }
+  ],
+  [
+    "110841",
+    {
+      "mainMoney": "-680.25亿",
+      "amountChangeDiff": "+1165.88亿"
+    }
+  ],
+  [
+    "110851",
+    {
+      "mainMoney": "-680.25亿",
+      "amountChangeDiff": "+1187.09亿"
+    }
+  ],
+  [
+    "110901",
+    {
+      "mainMoney": "-680.25亿",
+      "amountChangeDiff": "+1187.09亿"
+    }
+  ],
+  [
+    "110912",
+    {
+      "mainMoney": "-681.94亿",
+      "amountChangeDiff": "+1163.85亿"
+    }
+  ],
+  [
+    "110921",
+    {
+      "mainMoney": "-681.94亿",
+      "amountChangeDiff": "+1173.13亿"
+    }
+  ],
+  [
+    "110931",
+    {
+      "mainMoney": "-684.66亿",
+      "amountChangeDiff": "+1167.01亿"
+    }
+  ],
+  [
+    "110941",
+    {
+      "mainMoney": "-684.93亿",
+      "amountChangeDiff": "+1182.88亿"
+    }
+  ],
+  [
+    "110951",
+    {
+      "mainMoney": "-685.13亿",
+      "amountChangeDiff": "+1147.23亿"
+    }
+  ],
+  [
+    "111002",
+    {
+      "mainMoney": "-685.13亿",
+      "amountChangeDiff": "+1202.85亿"
+    }
+  ],
+  [
+    "111011",
+    {
+      "mainMoney": "-684.99亿",
+      "amountChangeDiff": "+1139.53亿"
+    }
+  ],
+  [
+    "111021",
+    {
+      "mainMoney": "-684.99亿",
+      "amountChangeDiff": "+1174.61亿"
+    }
+  ],
+  [
+    "111031",
+    {
+      "mainMoney": "-686.11亿",
+      "amountChangeDiff": "+1145.70亿"
+    }
+  ],
+  [
+    "111041",
+    {
+      "mainMoney": "-686.11亿",
+      "amountChangeDiff": "+1163.32亿"
+    }
+  ],
+  [
+    "111051",
+    {
+      "mainMoney": "-686.11亿",
+      "amountChangeDiff": "+1174.77亿"
+    }
+  ],
+  [
+    "111101",
+    {
+      "mainMoney": "-686.34亿",
+      "amountChangeDiff": "+1174.77亿"
+    }
+  ],
+  [
+    "111111",
+    {
+      "mainMoney": "-688.82亿",
+      "amountChangeDiff": "+1195.55亿"
+    }
+  ],
+  [
+    "111121",
+    {
+      "mainMoney": "-688.82亿",
+      "amountChangeDiff": "+1137.24亿"
+    }
+  ],
+  [
+    "111131",
+    {
+      "mainMoney": "-691.00亿",
+      "amountChangeDiff": "+1149.40亿"
+    }
+  ],
+  [
+    "111141",
+    {
+      "mainMoney": "-692.94亿",
+      "amountChangeDiff": "+1163.77亿"
+    }
+  ],
+  [
+    "111151",
+    {
+      "mainMoney": "-691.00亿",
+      "amountChangeDiff": "+1171.88亿"
+    }
+  ],
+  [
+    "111201",
+    {
+      "mainMoney": "-695.38亿",
+      "amountChangeDiff": "+1188.16亿"
+    }
+  ],
+  [
+    "111211",
+    {
+      "mainMoney": "-697.87亿",
+      "amountChangeDiff": "+1191.04亿"
+    }
+  ],
+  [
+    "111221",
+    {
+      "mainMoney": "-697.87亿",
+      "amountChangeDiff": "+1135.93亿"
+    }
+  ],
+  [
+    "111233",
+    {
+      "mainMoney": "-699.82亿",
+      "amountChangeDiff": "+1144.95亿"
+    }
+  ],
+  [
+    "111242",
+    {
+      "mainMoney": "-699.82亿",
+      "amountChangeDiff": "+1153.32亿"
+    }
+  ],
+  [
+    "111251",
+    {
+      "mainMoney": "-699.82亿",
+      "amountChangeDiff": "+1160.33亿"
+    }
+  ],
+  [
+    "111301",
+    {
+      "mainMoney": "-699.82亿",
+      "amountChangeDiff": "+1174.00亿"
+    }
+  ],
+  [
+    "111311",
+    {
+      "mainMoney": "-702.97亿",
+      "amountChangeDiff": "+1178.53亿"
+    }
+  ],
+  [
+    "111321",
+    {
+      "mainMoney": "-704.02亿",
+      "amountChangeDiff": "+1128.49亿"
+    }
+  ],
+  [
+    "111331",
+    {
+      "mainMoney": "-704.02亿",
+      "amountChangeDiff": "+1141.37亿"
+    }
+  ],
+  [
+    "111341",
+    {
+      "mainMoney": "-706.13亿",
+      "amountChangeDiff": "+1157.87亿"
+    }
+  ],
+  [
+    "111352",
+    {
+      "mainMoney": "-707.39亿",
+      "amountChangeDiff": "+1166.89亿"
+    }
+  ],
+  [
+    "111401",
+    {
+      "mainMoney": "-706.13亿",
+      "amountChangeDiff": "+1176.43亿"
+    }
+  ],
+  [
+    "111412",
+    {
+      "mainMoney": "-709.16亿",
+      "amountChangeDiff": "+1183.33亿"
+    }
+  ],
+  [
+    "111421",
+    {
+      "mainMoney": "-709.16亿",
+      "amountChangeDiff": "+1138.75亿"
+    }
+  ],
+  [
+    "111431",
+    {
+      "mainMoney": "-710.23亿",
+      "amountChangeDiff": "+1153.07亿"
+    }
+  ],
+  [
+    "111441",
+    {
+      "mainMoney": "-713.45亿",
+      "amountChangeDiff": "+1163.34亿"
+    }
+  ],
+  [
+    "111451",
+    {
+      "mainMoney": "-714.93亿",
+      "amountChangeDiff": "+1175.34亿"
+    }
+  ],
+  [
+    "111501",
+    {
+      "mainMoney": "-714.93亿",
+      "amountChangeDiff": "+1185.19亿"
+    }
+  ],
+  [
+    "111511",
+    {
+      "mainMoney": "-714.93亿",
+      "amountChangeDiff": "+1189.82亿"
+    }
+  ],
+  [
+    "111521",
+    {
+      "mainMoney": "-714.68亿",
+      "amountChangeDiff": "+1146.47亿"
+    }
+  ],
+  [
+    "111531",
+    {
+      "mainMoney": "-714.68亿",
+      "amountChangeDiff": "+1155.32亿"
+    }
+  ],
+  [
+    "111541",
+    {
+      "mainMoney": "-714.68亿",
+      "amountChangeDiff": "+1169.69亿"
+    }
+  ],
+  [
+    "111551",
+    {
+      "mainMoney": "-714.81亿",
+      "amountChangeDiff": "+1175.62亿"
+    }
+  ],
+  [
+    "111601",
+    {
+      "mainMoney": "-714.35亿",
+      "amountChangeDiff": "+1191.54亿"
+    }
+  ],
+  [
+    "111611",
+    {
+      "mainMoney": "-714.62亿",
+      "amountChangeDiff": "+1196.54亿"
+    }
+  ],
+  [
+    "111621",
+    {
+      "mainMoney": "-714.62亿",
+      "amountChangeDiff": "+1143.94亿"
+    }
+  ],
+  [
+    "111631",
+    {
+      "mainMoney": "-714.54亿",
+      "amountChangeDiff": "+1156.60亿"
+    }
+  ],
+  [
+    "111641",
+    {
+      "mainMoney": "-714.01亿",
+      "amountChangeDiff": "+1165.24亿"
+    }
+  ],
+  [
+    "111651",
+    {
+      "mainMoney": "-714.32亿",
+      "amountChangeDiff": "+1176.97亿"
+    }
+  ],
+  [
+    "111701",
+    {
+      "mainMoney": "-714.32亿",
+      "amountChangeDiff": "+1187.40亿"
+    }
+  ],
+  [
+    "111711",
+    {
+      "mainMoney": "-714.32亿",
+      "amountChangeDiff": "+1131.94亿"
+    }
+  ],
+  [
+    "111721",
+    {
+      "mainMoney": "-714.32亿",
+      "amountChangeDiff": "+1142.25亿"
+    }
+  ],
+  [
+    "111731",
+    {
+      "mainMoney": "-715.19亿",
+      "amountChangeDiff": "+1151.08亿"
+    }
+  ],
+  [
+    "111741",
+    {
+      "mainMoney": "-714.92亿",
+      "amountChangeDiff": "+1159.69亿"
+    }
+  ],
+  [
+    "111751",
+    {
+      "mainMoney": "-715.19亿",
+      "amountChangeDiff": "+1173.05亿"
+    }
+  ],
+  [
+    "111801",
+    {
+      "mainMoney": "-714.38亿",
+      "amountChangeDiff": "+1183.53亿"
+    }
+  ],
+  [
+    "111811",
+    {
+      "mainMoney": "-714.38亿",
+      "amountChangeDiff": "+1189.95亿"
+    }
+  ],
+  [
+    "111821",
+    {
+      "mainMoney": "-714.38亿",
+      "amountChangeDiff": "+1148.06亿"
+    }
+  ],
+  [
+    "111831",
+    {
+      "mainMoney": "-714.38亿",
+      "amountChangeDiff": "+1159.55亿"
+    }
+  ],
+  [
+    "111841",
+    {
+      "mainMoney": "-713.02亿",
+      "amountChangeDiff": "+1168.47亿"
+    }
+  ],
+  [
+    "111851",
+    {
+      "mainMoney": "-713.47亿",
+      "amountChangeDiff": "+1176.39亿"
+    }
+  ],
+  [
+    "111901",
+    {
+      "mainMoney": "-713.02亿",
+      "amountChangeDiff": "+1182.80亿"
+    }
+  ],
+  [
+    "111911",
+    {
+      "mainMoney": "-713.64亿",
+      "amountChangeDiff": "+1189.35亿"
+    }
+  ],
+  [
+    "111922",
+    {
+      "mainMoney": "-713.64亿",
+      "amountChangeDiff": "+1131.25亿"
+    }
+  ],
+  [
+    "111931",
+    {
+      "mainMoney": "-713.52亿",
+      "amountChangeDiff": "+1144.38亿"
+    }
+  ],
+  [
+    "111941",
+    {
+      "mainMoney": "-713.52亿",
+      "amountChangeDiff": "+1154.29亿"
+    }
+  ],
+  [
+    "111951",
+    {
+      "mainMoney": "-713.06亿",
+      "amountChangeDiff": "+1164.13亿"
+    }
+  ],
+  [
+    "112001",
+    {
+      "mainMoney": "-713.06亿",
+      "amountChangeDiff": "+1174.33亿"
+    }
+  ],
+  [
+    "112011",
+    {
+      "mainMoney": "-712.12亿",
+      "amountChangeDiff": "+1179.55亿"
+    }
+  ],
+  [
+    "112021",
+    {
+      "mainMoney": "-711.44亿",
+      "amountChangeDiff": "+1143.36亿"
+    }
+  ],
+  [
+    "112031",
+    {
+      "mainMoney": "-712.12亿",
+      "amountChangeDiff": "+1151.92亿"
+    }
+  ],
+  [
+    "112042",
+    {
+      "mainMoney": "-711.35亿",
+      "amountChangeDiff": "+1160.64亿"
+    }
+  ],
+  [
+    "112051",
+    {
+      "mainMoney": "-711.37亿",
+      "amountChangeDiff": "+1171.18亿"
+    }
+  ],
+  [
+    "112101",
+    {
+      "mainMoney": "-712.38亿",
+      "amountChangeDiff": "+1180.68亿"
+    }
+  ],
+  [
+    "112111",
+    {
+      "mainMoney": "-712.38亿",
+      "amountChangeDiff": "+1184.11亿"
+    }
+  ],
+  [
+    "112121",
+    {
+      "mainMoney": "-712.38亿",
+      "amountChangeDiff": "+1123.14亿"
+    }
+  ],
+  [
+    "112132",
+    {
+      "mainMoney": "-714.93亿",
+      "amountChangeDiff": "+1133.44亿"
+    }
+  ],
+  [
+    "112142",
+    {
+      "mainMoney": "-714.93亿",
+      "amountChangeDiff": "+1141.71亿"
+    }
+  ],
+  [
+    "112152",
+    {
+      "mainMoney": "-714.93亿",
+      "amountChangeDiff": "+1148.01亿"
+    }
+  ],
+  [
+    "112201",
+    {
+      "mainMoney": "-714.93亿",
+      "amountChangeDiff": "+1157.14亿"
+    }
+  ],
+  [
+    "112211",
+    {
+      "mainMoney": "-715.36亿",
+      "amountChangeDiff": "+1160.11亿"
+    }
+  ],
+  [
+    "112221",
+    {
+      "mainMoney": "-715.36亿",
+      "amountChangeDiff": "+1116.97亿"
+    }
+  ],
+  [
+    "112231",
+    {
+      "mainMoney": "-716.91亿",
+      "amountChangeDiff": "+1132.01亿"
+    }
+  ],
+  [
+    "112241",
+    {
+      "mainMoney": "-716.91亿",
+      "amountChangeDiff": "+1139.93亿"
+    }
+  ],
+  [
+    "112251",
+    {
+      "mainMoney": "-717.39亿",
+      "amountChangeDiff": "+1145.76亿"
+    }
+  ],
+  [
+    "112301",
+    {
+      "mainMoney": "-717.39亿",
+      "amountChangeDiff": "+1153.94亿"
+    }
+  ],
+  [
+    "112312",
+    {
+      "mainMoney": "-719.14亿",
+      "amountChangeDiff": "+1160.29亿"
+    }
+  ],
+  [
+    "112321",
+    {
+      "mainMoney": "-719.14亿",
+      "amountChangeDiff": "+1163.02亿"
+    }
+  ],
+  [
+    "112331",
+    {
+      "mainMoney": "-721.18亿",
+      "amountChangeDiff": "+1117.57亿"
+    }
+  ],
+  [
+    "112341",
+    {
+      "mainMoney": "-721.18亿",
+      "amountChangeDiff": "+1129.10亿"
+    }
+  ],
+  [
+    "112351",
+    {
+      "mainMoney": "-723.08亿",
+      "amountChangeDiff": "+1147.86亿"
+    }
+  ],
+  [
+    "112402",
+    {
+      "mainMoney": "-723.08亿",
+      "amountChangeDiff": "+1162.93亿"
+    }
+  ],
+  [
+    "112412",
+    {
+      "mainMoney": "-723.08亿",
+      "amountChangeDiff": "+1166.11亿"
+    }
+  ],
+  [
+    "112421",
+    {
+      "mainMoney": "-723.08亿",
+      "amountChangeDiff": "+1129.19亿"
+    }
+  ],
+  [
+    "112432",
+    {
+      "mainMoney": "-724.76亿",
+      "amountChangeDiff": "+1142.32亿"
+    }
+  ],
+  [
+    "112442",
+    {
+      "mainMoney": "-725.55亿",
+      "amountChangeDiff": "+1152.12亿"
+    }
+  ],
+  [
+    "112452",
+    {
+      "mainMoney": "-727.19亿",
+      "amountChangeDiff": "+1163.16亿"
+    }
+  ],
+  [
+    "112501",
+    {
+      "mainMoney": "-728.84亿",
+      "amountChangeDiff": "+1178.24亿"
+    }
+  ],
+  [
+    "112512",
+    {
+      "mainMoney": "-728.84亿",
+      "amountChangeDiff": "+1135.31亿"
+    }
+  ],
+  [
+    "112522",
+    {
+      "mainMoney": "-728.84亿",
+      "amountChangeDiff": "+1145.02亿"
+    }
+  ],
+  [
+    "112532",
+    {
+      "mainMoney": "-733.91亿",
+      "amountChangeDiff": "+1158.88亿"
+    }
+  ],
+  [
+    "112542",
+    {
+      "mainMoney": "-733.91亿",
+      "amountChangeDiff": "+1166.96亿"
+    }
+  ],
+  [
+    "112552",
+    {
+      "mainMoney": "-733.91亿",
+      "amountChangeDiff": "+1175.04亿"
+    }
+  ],
+  [
+    "112602",
+    {
+      "mainMoney": "-735.68亿",
+      "amountChangeDiff": "+1187.66亿"
+    }
+  ],
+  [
+    "112612",
+    {
+      "mainMoney": "-735.94亿",
+      "amountChangeDiff": "+1143.49亿"
+    }
+  ],
+  [
+    "112621",
+    {
+      "mainMoney": "-735.94亿",
+      "amountChangeDiff": "+1153.82亿"
+    }
+  ],
+  [
+    "112631",
+    {
+      "mainMoney": "-736.06亿",
+      "amountChangeDiff": "+1161.64亿"
+    }
+  ],
+  [
+    "112642",
+    {
+      "mainMoney": "-736.57亿",
+      "amountChangeDiff": "+1170.94亿"
+    }
+  ],
+  [
+    "112652",
+    {
+      "mainMoney": "-736.92亿",
+      "amountChangeDiff": "+1179.25亿"
+    }
+  ],
+  [
+    "112702",
+    {
+      "mainMoney": "-736.57亿",
+      "amountChangeDiff": "+1189.28亿"
+    }
+  ],
+  [
+    "112712",
+    {
+      "mainMoney": "-736.92亿",
+      "amountChangeDiff": "+1147.68亿"
+    }
+  ],
+  [
+    "112722",
+    {
+      "mainMoney": "-736.92亿",
+      "amountChangeDiff": "+1157.69亿"
+    }
+  ],
+  [
+    "112732",
+    {
+      "mainMoney": "-737.19亿",
+      "amountChangeDiff": "+1164.21亿"
+    }
+  ],
+  [
+    "112741",
+    {
+      "mainMoney": "-737.19亿",
+      "amountChangeDiff": "+1173.94亿"
+    }
+  ],
+  [
+    "112751",
+    {
+      "mainMoney": "-736.16亿",
+      "amountChangeDiff": "+1181.33亿"
+    }
+  ],
+  [
+    "112802",
+    {
+      "mainMoney": "-736.16亿",
+      "amountChangeDiff": "+1187.40亿"
+    }
+  ],
+  [
+    "112812",
+    {
+      "mainMoney": "-736.16亿",
+      "amountChangeDiff": "+1196.06亿"
+    }
+  ],
+  [
+    "112822",
+    {
+      "mainMoney": "-736.17亿",
+      "amountChangeDiff": "+1145.12亿"
+    }
+  ],
+  [
+    "112832",
+    {
+      "mainMoney": "-737.57亿",
+      "amountChangeDiff": "+1155.71亿"
+    }
+  ],
+  [
+    "112842",
+    {
+      "mainMoney": "-737.57亿",
+      "amountChangeDiff": "+1162.66亿"
+    }
+  ],
+  [
+    "112851",
+    {
+      "mainMoney": "-737.79亿",
+      "amountChangeDiff": "+1171.62亿"
+    }
+  ],
+  [
+    "112902",
+    {
+      "mainMoney": "-737.51亿",
+      "amountChangeDiff": "+1181.79亿"
+    }
+  ],
+  [
+    "112912",
+    {
+      "mainMoney": "-737.51亿",
+      "amountChangeDiff": "+1185.74亿"
+    }
+  ],
+  [
+    "112923",
+    {
+      "mainMoney": "-736.99亿",
+      "amountChangeDiff": "+1126.73亿"
+    }
+  ],
+  [
+    "112933",
+    {
+      "mainMoney": "-736.99亿",
+      "amountChangeDiff": "+1134.52亿"
+    }
+  ],
+  [
+    "112942",
+    {
+      "mainMoney": "-736.78亿",
+      "amountChangeDiff": "+1145.21亿"
+    }
+  ],
+  [
+    "112952",
+    {
+      "mainMoney": "-736.78亿",
+      "amountChangeDiff": "+1153.86亿"
+    }
+  ],
+  [
+    "113002",
+    {
+      "mainMoney": "-736.78亿",
+      "amountChangeDiff": "+1166.53亿"
+    }
+  ],
+  [
+    "113012",
+    {
+      "mainMoney": "-736.90亿",
+      "amountChangeDiff": "+1168.55亿"
+    }
+  ],
+  [
+    "113022",
+    {
+      "mainMoney": "-736.84亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113032",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113043",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113052",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113101",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113112",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113123",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113132",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113141",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113151",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113201",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113212",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113222",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113232",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113242",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113252",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113305",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113312",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113322",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113333",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113342",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113351",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113402",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113412",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "113422",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "125955",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "130004",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+1168.68亿"
+    }
+  ],
+  [
+    "130015",
+    {
+      "mainMoney": "-736.48亿",
+      "amountChangeDiff": "+890.42亿"
+    }
+  ],
+  [
+    "130025",
+    {
+      "mainMoney": "-737.87亿",
+      "amountChangeDiff": "+911.39亿"
+    }
+  ],
+  [
+    "130035",
+    {
+      "mainMoney": "-737.87亿",
+      "amountChangeDiff": "+978.24亿"
+    }
+  ],
+  [
+    "130045",
+    {
+      "mainMoney": "-737.87亿",
+      "amountChangeDiff": "+1075.72亿"
+    }
+  ],
+  [
+    "130055",
+    {
+      "mainMoney": "-746.74亿",
+      "amountChangeDiff": "+1097.40亿"
+    }
+  ],
+  [
+    "130105",
+    {
+      "mainMoney": "-742.26亿",
+      "amountChangeDiff": "+1134.98亿"
+    }
+  ],
+  [
+    "130115",
+    {
+      "mainMoney": "-749.58亿",
+      "amountChangeDiff": "+993.60亿"
+    }
+  ],
+  [
+    "130125",
+    {
+      "mainMoney": "-749.37亿",
+      "amountChangeDiff": "+1012.35亿"
+    }
+  ],
+  [
+    "130135",
+    {
+      "mainMoney": "-751.61亿",
+      "amountChangeDiff": "+1036.04亿"
+    }
+  ],
+  [
+    "130145",
+    {
+      "mainMoney": "-751.61亿",
+      "amountChangeDiff": "+1054.26亿"
+    }
+  ],
+  [
+    "130155",
+    {
+      "mainMoney": "-756.42亿",
+      "amountChangeDiff": "+1075.19亿"
+    }
+  ],
+  [
+    "130205",
+    {
+      "mainMoney": "-765.14亿",
+      "amountChangeDiff": "+1082.45亿"
+    }
+  ],
+  [
+    "130215",
+    {
+      "mainMoney": "-769.31亿",
+      "amountChangeDiff": "+980.37亿"
+    }
+  ],
+  [
+    "130225",
+    {
+      "mainMoney": "-765.14亿",
+      "amountChangeDiff": "+991.64亿"
+    }
+  ],
+  [
+    "130235",
+    {
+      "mainMoney": "-773.14亿",
+      "amountChangeDiff": "+1001.37亿"
+    }
+  ],
+  [
+    "130245",
+    {
+      "mainMoney": "-773.14亿",
+      "amountChangeDiff": "+1016.00亿"
+    }
+  ],
+  [
+    "130255",
+    {
+      "mainMoney": "-778.12亿",
+      "amountChangeDiff": "+1027.42亿"
+    }
+  ],
+  [
+    "130305",
+    {
+      "mainMoney": "-776.20亿",
+      "amountChangeDiff": "+1041.39亿"
+    }
+  ],
+  [
+    "130315",
+    {
+      "mainMoney": "-779.73亿",
+      "amountChangeDiff": "+1048.92亿"
+    }
+  ],
+  [
+    "130325",
+    {
+      "mainMoney": "-779.73亿",
+      "amountChangeDiff": "+961.38亿"
+    }
+  ],
+  [
+    "130335",
+    {
+      "mainMoney": "-779.73亿",
+      "amountChangeDiff": "+961.38亿"
+    }
+  ],
+  [
+    "130345",
+    {
+      "mainMoney": "-781.46亿",
+      "amountChangeDiff": "+999.37亿"
+    }
+  ],
+  [
+    "130355",
+    {
+      "mainMoney": "-782.58亿",
+      "amountChangeDiff": "+994.24亿"
+    }
+  ],
+  [
+    "130405",
+    {
+      "mainMoney": "-782.58亿",
+      "amountChangeDiff": "+1032.21亿"
+    }
+  ],
+  [
+    "130415",
+    {
+      "mainMoney": "-782.58亿",
+      "amountChangeDiff": "+1026.93亿"
+    }
+  ],
+  [
+    "130425",
+    {
+      "mainMoney": "-782.95亿",
+      "amountChangeDiff": "+947.70亿"
+    }
+  ],
+  [
+    "130435",
+    {
+      "mainMoney": "-783.55亿",
+      "amountChangeDiff": "+966.34亿"
+    }
+  ],
+  [
+    "130445",
+    {
+      "mainMoney": "-783.55亿",
+      "amountChangeDiff": "+978.98亿"
+    }
+  ],
+  [
+    "130455",
+    {
+      "mainMoney": "-783.81亿",
+      "amountChangeDiff": "+985.70亿"
+    }
+  ],
+  [
+    "130505",
+    {
+      "mainMoney": "-783.81亿",
+      "amountChangeDiff": "+996.03亿"
+    }
+  ],
+  [
+    "130515",
+    {
+      "mainMoney": "-783.81亿",
+      "amountChangeDiff": "+996.03亿"
+    }
+  ],
+  [
+    "130525",
+    {
+      "mainMoney": "-786.01亿",
+      "amountChangeDiff": "+996.03亿"
+    }
+  ],
+  [
+    "130535",
+    {
+      "mainMoney": "-783.81亿",
+      "amountChangeDiff": "+996.03亿"
+    }
+  ],
+  [
+    "130545",
+    {
+      "mainMoney": "-788.04亿",
+      "amountChangeDiff": "+996.03亿"
+    }
+  ],
+  [
+    "130555",
+    {
+      "mainMoney": "-788.04亿",
+      "amountChangeDiff": "+996.03亿"
+    }
+  ],
+  [
+    "130605",
+    {
+      "mainMoney": "-788.04亿",
+      "amountChangeDiff": "+996.03亿"
+    }
+  ],
+  [
+    "130615",
+    {
+      "mainMoney": "-788.33亿",
+      "amountChangeDiff": "+1007.59亿"
+    }
+  ],
+  [
+    "130625",
+    {
+      "mainMoney": "-788.33亿",
+      "amountChangeDiff": "+1001.52亿"
+    }
+  ],
+  [
+    "130635",
+    {
+      "mainMoney": "-788.98亿",
+      "amountChangeDiff": "+935.74亿"
+    }
+  ],
+  [
+    "130645",
+    {
+      "mainMoney": "-789.10亿",
+      "amountChangeDiff": "+961.53亿"
+    }
+  ],
+  [
+    "130655",
+    {
+      "mainMoney": "-788.90亿",
+      "amountChangeDiff": "+971.08亿"
+    }
+  ],
+  [
+    "130705",
+    {
+      "mainMoney": "-788.90亿",
+      "amountChangeDiff": "+983.00亿"
+    }
+  ],
+  [
+    "130715",
+    {
+      "mainMoney": "-788.82亿",
+      "amountChangeDiff": "+920.39亿"
+    }
+  ],
+  [
+    "130725",
+    {
+      "mainMoney": "-788.82亿",
+      "amountChangeDiff": "+902.82亿"
+    }
+  ],
+  [
+    "130735",
+    {
+      "mainMoney": "-789.15亿",
+      "amountChangeDiff": "+902.82亿"
+    }
+  ],
+  [
+    "130745",
+    {
+      "mainMoney": "-788.82亿",
+      "amountChangeDiff": "+930.31亿"
+    }
+  ],
+  [
+    "130755",
+    {
+      "mainMoney": "-789.15亿",
+      "amountChangeDiff": "+947.87亿"
+    }
+  ],
+  [
+    "130805",
+    {
+      "mainMoney": "-789.17亿",
+      "amountChangeDiff": "+891.39亿"
+    }
+  ],
+  [
+    "130815",
+    {
+      "mainMoney": "-789.42亿",
+      "amountChangeDiff": "+899.92亿"
+    }
+  ],
+  [
+    "130825",
+    {
+      "mainMoney": "-789.75亿",
+      "amountChangeDiff": "+860.21亿"
+    }
+  ],
+  [
+    "130835",
+    {
+      "mainMoney": "-789.75亿",
+      "amountChangeDiff": "+869.24亿"
+    }
+  ],
+  [
+    "130845",
+    {
+      "mainMoney": "-791.53亿",
+      "amountChangeDiff": "+914.57亿"
+    }
+  ],
+  [
+    "130855",
+    {
+      "mainMoney": "-791.53亿",
+      "amountChangeDiff": "+914.57亿"
+    }
+  ],
+  [
+    "130905",
+    {
+      "mainMoney": "-791.53亿",
+      "amountChangeDiff": "+836.95亿"
+    }
+  ],
+  [
+    "130915",
+    {
+      "mainMoney": "-791.49亿",
+      "amountChangeDiff": "+868.20亿"
+    }
+  ],
+  [
+    "130925",
+    {
+      "mainMoney": "-791.49亿",
+      "amountChangeDiff": "+853.19亿"
+    }
+  ],
+  [
+    "130935",
+    {
+      "mainMoney": "-791.49亿",
+      "amountChangeDiff": "+885.89亿"
+    }
+  ],
+  [
+    "130945",
+    {
+      "mainMoney": "-792.10亿",
+      "amountChangeDiff": "+885.89亿"
+    }
+  ],
+  [
+    "130955",
+    {
+      "mainMoney": "-792.37亿",
+      "amountChangeDiff": "+811.06亿"
+    }
+  ],
+  [
+    "131005",
+    {
+      "mainMoney": "-791.87亿",
+      "amountChangeDiff": "+872.87亿"
+    }
+  ],
+  [
+    "131015",
+    {
+      "mainMoney": "-792.67亿",
+      "amountChangeDiff": "+885.89亿"
+    }
+  ],
+  [
+    "131025",
+    {
+      "mainMoney": "-792.67亿",
+      "amountChangeDiff": "+885.89亿"
+    }
+  ],
+  [
+    "131035",
+    {
+      "mainMoney": "-792.67亿",
+      "amountChangeDiff": "+829.12亿"
+    }
+  ],
+  [
+    "131045",
+    {
+      "mainMoney": "-793.97亿",
+      "amountChangeDiff": "+811.06亿"
+    }
+  ],
+  [
+    "131055",
+    {
+      "mainMoney": "-794.96亿",
+      "amountChangeDiff": "+814.41亿"
+    }
+  ],
+  [
+    "131105",
+    {
+      "mainMoney": "-795.77亿",
+      "amountChangeDiff": "+821.40亿"
+    }
+  ],
+  [
+    "131115",
+    {
+      "mainMoney": "-797.54亿",
+      "amountChangeDiff": "+843.47亿"
+    }
+  ],
+  [
+    "131125",
+    {
+      "mainMoney": "-799.81亿",
+      "amountChangeDiff": "+785.99亿"
+    }
+  ],
+  [
+    "131135",
+    {
+      "mainMoney": "-799.81亿",
+      "amountChangeDiff": "+785.99亿"
+    }
+  ],
+  [
+    "131145",
+    {
+      "mainMoney": "-800.95亿",
+      "amountChangeDiff": "+806.02亿"
+    }
+  ],
+  [
+    "131155",
+    {
+      "mainMoney": "-800.95亿",
+      "amountChangeDiff": "+821.40亿"
+    }
+  ],
+  [
+    "131205",
+    {
+      "mainMoney": "-802.99亿",
+      "amountChangeDiff": "+775.85亿"
+    }
+  ],
+  [
+    "131215",
+    {
+      "mainMoney": "-802.99亿",
+      "amountChangeDiff": "+843.47亿"
+    }
+  ],
+  [
+    "131225",
+    {
+      "mainMoney": "-802.99亿",
+      "amountChangeDiff": "+804.16亿"
+    }
+  ],
+  [
+    "131235",
+    {
+      "mainMoney": "-805.54亿",
+      "amountChangeDiff": "+785.33亿"
+    }
+  ],
+  [
+    "131245",
+    {
+      "mainMoney": "-805.54亿",
+      "amountChangeDiff": "+804.16亿"
+    }
+  ],
+  [
+    "131255",
+    {
+      "mainMoney": "-805.54亿",
+      "amountChangeDiff": "+821.07亿"
+    }
+  ],
+  [
+    "131305",
+    {
+      "mainMoney": "-807.41亿",
+      "amountChangeDiff": "+821.07亿"
+    }
+  ],
+  [
+    "131315",
+    {
+      "mainMoney": "-808.17亿",
+      "amountChangeDiff": "+838.34亿"
+    }
+  ],
+  [
+    "131325",
+    {
+      "mainMoney": "-809.90亿",
+      "amountChangeDiff": "+752.27亿"
+    }
+  ],
+  [
+    "131335",
+    {
+      "mainMoney": "-808.17亿",
+      "amountChangeDiff": "+747.14亿"
+    }
+  ],
+  [
+    "131345",
+    {
+      "mainMoney": "-809.90亿",
+      "amountChangeDiff": "+783.31亿"
+    }
+  ],
+  [
+    "131357",
+    {
+      "mainMoney": "-809.90亿",
+      "amountChangeDiff": "+769.45亿"
+    }
+  ],
+  [
+    "131408",
+    {
+      "mainMoney": "-816.20亿",
+      "amountChangeDiff": "+791.12亿"
+    }
+  ],
+  [
+    "131415",
+    {
+      "mainMoney": "-816.20亿",
+      "amountChangeDiff": "+796.24亿"
+    }
+  ],
+  [
+    "131425",
+    {
+      "mainMoney": "-816.20亿",
+      "amountChangeDiff": "+815.35亿"
+    }
+  ],
+  [
+    "131436",
+    {
+      "mainMoney": "-821.51亿",
+      "amountChangeDiff": "+823.50亿"
+    }
+  ],
+  [
+    "131445",
+    {
+      "mainMoney": "-821.51亿",
+      "amountChangeDiff": "+832.36亿"
+    }
+  ],
+  [
+    "131455",
+    {
+      "mainMoney": "-823.07亿",
+      "amountChangeDiff": "+802.22亿"
+    }
+  ],
+  [
+    "131505",
+    {
+      "mainMoney": "-824.81亿",
+      "amountChangeDiff": "+806.66亿"
+    }
+  ],
+  [
+    "131515",
+    {
+      "mainMoney": "-824.81亿",
+      "amountChangeDiff": "+806.66亿"
+    }
+  ],
+  [
+    "131525",
+    {
+      "mainMoney": "-827.44亿",
+      "amountChangeDiff": "+742.14亿"
+    }
+  ],
+  [
+    "131535",
+    {
+      "mainMoney": "-829.46亿",
+      "amountChangeDiff": "+754.02亿"
+    }
+  ],
+  [
+    "131545",
+    {
+      "mainMoney": "-829.46亿",
+      "amountChangeDiff": "+763.84亿"
+    }
+  ],
+  [
+    "131555",
+    {
+      "mainMoney": "-829.46亿",
+      "amountChangeDiff": "+774.45亿"
+    }
+  ],
+  [
+    "131605",
+    {
+      "mainMoney": "-830.09亿",
+      "amountChangeDiff": "+763.84亿"
+    }
+  ],
+  [
+    "131615",
+    {
+      "mainMoney": "-831.49亿",
+      "amountChangeDiff": "+711.09亿"
+    }
+  ],
+  [
+    "131625",
+    {
+      "mainMoney": "-831.49亿",
+      "amountChangeDiff": "+723.33亿"
+    }
+  ],
+  [
+    "131635",
+    {
+      "mainMoney": "-831.49亿",
+      "amountChangeDiff": "+736.44亿"
+    }
+  ],
+  [
+    "131645",
+    {
+      "mainMoney": "-832.82亿",
+      "amountChangeDiff": "+726.37亿"
+    }
+  ],
+  [
+    "131655",
+    {
+      "mainMoney": "-832.82亿",
+      "amountChangeDiff": "+737.71亿"
+    }
+  ],
+  [
+    "131705",
+    {
+      "mainMoney": "-834.69亿",
+      "amountChangeDiff": "+763.25亿"
+    }
+  ],
+  [
+    "131715",
+    {
+      "mainMoney": "-835.80亿",
+      "amountChangeDiff": "+699.18亿"
+    }
+  ],
+  [
+    "131725",
+    {
+      "mainMoney": "-835.80亿",
+      "amountChangeDiff": "+767.28亿"
+    }
+  ],
+  [
+    "131735",
+    {
+      "mainMoney": "-837.24亿",
+      "amountChangeDiff": "+707.05亿"
+    }
+  ],
+  [
+    "131745",
+    {
+      "mainMoney": "-835.80亿",
+      "amountChangeDiff": "+728.24亿"
+    }
+  ],
+  [
+    "131755",
+    {
+      "mainMoney": "-839.21亿",
+      "amountChangeDiff": "+738.33亿"
+    }
+  ],
+  [
+    "131805",
+    {
+      "mainMoney": "-839.21亿",
+      "amountChangeDiff": "+739.75亿"
+    }
+  ],
+  [
+    "131815",
+    {
+      "mainMoney": "-839.21亿",
+      "amountChangeDiff": "+754.15亿"
+    }
+  ],
+  [
+    "131825",
+    {
+      "mainMoney": "-839.21亿",
+      "amountChangeDiff": "+678.23亿"
+    }
+  ],
+  [
+    "131835",
+    {
+      "mainMoney": "-838.92亿",
+      "amountChangeDiff": "+680.62亿"
+    }
+  ],
+  [
+    "131845",
+    {
+      "mainMoney": "-838.95亿",
+      "amountChangeDiff": "+687.04亿"
+    }
+  ],
+  [
+    "131855",
+    {
+      "mainMoney": "-839.33亿",
+      "amountChangeDiff": "+704.67亿"
+    }
+  ],
+  [
+    "131905",
+    {
+      "mainMoney": "-839.33亿",
+      "amountChangeDiff": "+715.62亿"
+    }
+  ],
+  [
+    "131915",
+    {
+      "mainMoney": "-839.33亿",
+      "amountChangeDiff": "+635.03亿"
+    }
+  ],
+  [
+    "131925",
+    {
+      "mainMoney": "-840.42亿",
+      "amountChangeDiff": "+636.66亿"
+    }
+  ],
+  [
+    "131935",
+    {
+      "mainMoney": "-840.83亿",
+      "amountChangeDiff": "+651.29亿"
+    }
+  ],
+  [
+    "131945",
+    {
+      "mainMoney": "-840.83亿",
+      "amountChangeDiff": "+665.62亿"
+    }
+  ],
+  [
+    "131955",
+    {
+      "mainMoney": "-841.08亿",
+      "amountChangeDiff": "+680.06亿"
+    }
+  ],
+  [
+    "132005",
+    {
+      "mainMoney": "-841.15亿",
+      "amountChangeDiff": "+686.56亿"
+    }
+  ],
+  [
+    "132015",
+    {
+      "mainMoney": "-841.89亿",
+      "amountChangeDiff": "+630.25亿"
+    }
+  ],
+  [
+    "132025",
+    {
+      "mainMoney": "-841.89亿",
+      "amountChangeDiff": "+634.17亿"
+    }
+  ],
+  [
+    "132035",
+    {
+      "mainMoney": "-841.89亿",
+      "amountChangeDiff": "+651.54亿"
+    }
+  ],
+  [
+    "132045",
+    {
+      "mainMoney": "-841.89亿",
+      "amountChangeDiff": "+656.17亿"
+    }
+  ],
+  [
+    "132055",
+    {
+      "mainMoney": "-842.28亿",
+      "amountChangeDiff": "+676.98亿"
+    }
+  ],
+  [
+    "132105",
+    {
+      "mainMoney": "-841.93亿",
+      "amountChangeDiff": "+694.30亿"
+    }
+  ],
+  [
+    "132115",
+    {
+      "mainMoney": "-841.93亿",
+      "amountChangeDiff": "+698.22亿"
+    }
+  ],
+  [
+    "132125",
+    {
+      "mainMoney": "-841.93亿",
+      "amountChangeDiff": "+643.57亿"
+    }
+  ],
+  [
+    "132135",
+    {
+      "mainMoney": "-841.37亿",
+      "amountChangeDiff": "+645.61亿"
+    }
+  ],
+  [
+    "132145",
+    {
+      "mainMoney": "-842.49亿",
+      "amountChangeDiff": "+666.90亿"
+    }
+  ],
+  [
+    "132155",
+    {
+      "mainMoney": "-842.49亿",
+      "amountChangeDiff": "+676.52亿"
+    }
+  ],
+  [
+    "132205",
+    {
+      "mainMoney": "-843.02亿",
+      "amountChangeDiff": "+680.86亿"
+    }
+  ],
+  [
+    "132215",
+    {
+      "mainMoney": "-843.02亿",
+      "amountChangeDiff": "+688.71亿"
+    }
+  ],
+  [
+    "132225",
+    {
+      "mainMoney": "-844.42亿",
+      "amountChangeDiff": "+633.99亿"
+    }
+  ],
+  [
+    "132235",
+    {
+      "mainMoney": "-844.42亿",
+      "amountChangeDiff": "+645.50亿"
+    }
+  ],
+  [
+    "132245",
+    {
+      "mainMoney": "-845.80亿",
+      "amountChangeDiff": "+648.28亿"
+    }
+  ],
+  [
+    "132255",
+    {
+      "mainMoney": "-849.28亿",
+      "amountChangeDiff": "+663.84亿"
+    }
+  ],
+  [
+    "132305",
+    {
+      "mainMoney": "-850.09亿",
+      "amountChangeDiff": "+671.80亿"
+    }
+  ],
+  [
+    "132315",
+    {
+      "mainMoney": "-850.36亿",
+      "amountChangeDiff": "+674.23亿"
+    }
+  ],
+  [
+    "132325",
+    {
+      "mainMoney": "-850.09亿",
+      "amountChangeDiff": "+615.85亿"
+    }
+  ],
+  [
+    "132335",
+    {
+      "mainMoney": "-850.36亿",
+      "amountChangeDiff": "+619.49亿"
+    }
+  ],
+  [
+    "132345",
+    {
+      "mainMoney": "-851.55亿",
+      "amountChangeDiff": "+631.40亿"
+    }
+  ],
+  [
+    "132355",
+    {
+      "mainMoney": "-851.99亿",
+      "amountChangeDiff": "+638.59亿"
+    }
+  ],
+  [
+    "132405",
+    {
+      "mainMoney": "-851.99亿",
+      "amountChangeDiff": "+666.45亿"
+    }
+  ],
+  [
+    "132415",
+    {
+      "mainMoney": "-851.99亿",
+      "amountChangeDiff": "+666.45亿"
+    }
+  ],
+  [
+    "132425",
+    {
+      "mainMoney": "-853.32亿",
+      "amountChangeDiff": "+604.75亿"
+    }
+  ],
+  [
+    "132435",
+    {
+      "mainMoney": "-853.32亿",
+      "amountChangeDiff": "+609.53亿"
+    }
+  ],
+  [
+    "132445",
+    {
+      "mainMoney": "-853.32亿",
+      "amountChangeDiff": "+618.10亿"
+    }
+  ],
+  [
+    "132455",
+    {
+      "mainMoney": "-853.29亿",
+      "amountChangeDiff": "+639.19亿"
+    }
+  ],
+  [
+    "132505",
+    {
+      "mainMoney": "-853.29亿",
+      "amountChangeDiff": "+655.16亿"
+    }
+  ],
+  [
+    "132515",
+    {
+      "mainMoney": "-853.09亿",
+      "amountChangeDiff": "+648.57亿"
+    }
+  ],
+  [
+    "132525",
+    {
+      "mainMoney": "-852.70亿",
+      "amountChangeDiff": "+602.16亿"
+    }
+  ],
+  [
+    "132535",
+    {
+      "mainMoney": "-852.53亿",
+      "amountChangeDiff": "+605.07亿"
+    }
+  ],
+  [
+    "132545",
+    {
+      "mainMoney": "-852.53亿",
+      "amountChangeDiff": "+615.58亿"
+    }
+  ],
+  [
+    "132555",
+    {
+      "mainMoney": "-852.96亿",
+      "amountChangeDiff": "+621.38亿"
+    }
+  ],
+  [
+    "132605",
+    {
+      "mainMoney": "-853.72亿",
+      "amountChangeDiff": "+631.69亿"
+    }
+  ],
+  [
+    "132615",
+    {
+      "mainMoney": "-853.72亿",
+      "amountChangeDiff": "+569.12亿"
+    }
+  ],
+  [
+    "132625",
+    {
+      "mainMoney": "-854.44亿",
+      "amountChangeDiff": "+576.81亿"
+    }
+  ],
+  [
+    "132635",
+    {
+      "mainMoney": "-855.03亿",
+      "amountChangeDiff": "+592.16亿"
+    }
+  ],
+  [
+    "132645",
+    {
+      "mainMoney": "-854.44亿",
+      "amountChangeDiff": "+599.97亿"
+    }
+  ],
+  [
+    "132655",
+    {
+      "mainMoney": "-855.03亿",
+      "amountChangeDiff": "+615.34亿"
+    }
+  ],
+  [
+    "132705",
+    {
+      "mainMoney": "-856.34亿",
+      "amountChangeDiff": "+620.24亿"
+    }
+  ],
+  [
+    "132715",
+    {
+      "mainMoney": "-857.20亿",
+      "amountChangeDiff": "+556.71亿"
+    }
+  ],
+  [
+    "132725",
+    {
+      "mainMoney": "-856.83亿",
+      "amountChangeDiff": "+562.49亿"
+    }
+  ],
+  [
+    "132735",
+    {
+      "mainMoney": "-856.88亿",
+      "amountChangeDiff": "+572.13亿"
+    }
+  ],
+  [
+    "132745",
+    {
+      "mainMoney": "-856.88亿",
+      "amountChangeDiff": "+576.75亿"
+    }
+  ],
+  [
+    "132755",
+    {
+      "mainMoney": "-856.29亿",
+      "amountChangeDiff": "+586.56亿"
+    }
+  ],
+  [
+    "132807",
+    {
+      "mainMoney": "-856.51亿",
+      "amountChangeDiff": "+599.01亿"
+    }
+  ],
+  [
+    "132815",
+    {
+      "mainMoney": "-856.29亿",
+      "amountChangeDiff": "+599.94亿"
+    }
+  ],
+  [
+    "132825",
+    {
+      "mainMoney": "-856.29亿",
+      "amountChangeDiff": "+545.25亿"
+    }
+  ],
+  [
+    "132835",
+    {
+      "mainMoney": "-856.92亿",
+      "amountChangeDiff": "+553.19亿"
+    }
+  ],
+  [
+    "132845",
+    {
+      "mainMoney": "-856.25亿",
+      "amountChangeDiff": "+556.27亿"
+    }
+  ],
+  [
+    "132855",
+    {
+      "mainMoney": "-857.10亿",
+      "amountChangeDiff": "+566.40亿"
+    }
+  ],
+  [
+    "132905",
+    {
+      "mainMoney": "-857.61亿",
+      "amountChangeDiff": "+574.54亿"
+    }
+  ],
+  [
+    "132916",
+    {
+      "mainMoney": "-857.61亿",
+      "amountChangeDiff": "+574.54亿"
+    }
+  ],
+  [
+    "132925",
+    {
+      "mainMoney": "-857.61亿",
+      "amountChangeDiff": "+528.49亿"
+    }
+  ],
+  [
+    "132935",
+    {
+      "mainMoney": "-859.00亿",
+      "amountChangeDiff": "+540.01亿"
+    }
+  ],
+  [
+    "132945",
+    {
+      "mainMoney": "-859.00亿",
+      "amountChangeDiff": "+540.01亿"
+    }
+  ],
+  [
+    "132956",
+    {
+      "mainMoney": "-859.87亿",
+      "amountChangeDiff": "+548.47亿"
+    }
+  ],
+  [
+    "133005",
+    {
+      "mainMoney": "-859.56亿",
+      "amountChangeDiff": "+564.21亿"
+    }
+  ],
+  [
+    "133015",
+    {
+      "mainMoney": "-859.87亿",
+      "amountChangeDiff": "+574.46亿"
+    }
+  ],
+  [
+    "133025",
+    {
+      "mainMoney": "-859.87亿",
+      "amountChangeDiff": "+522.12亿"
+    }
+  ],
+  [
+    "133035",
+    {
+      "mainMoney": "-859.87亿",
+      "amountChangeDiff": "+524.57亿"
+    }
+  ],
+  [
+    "133045",
+    {
+      "mainMoney": "-860.01亿",
+      "amountChangeDiff": "+537.34亿"
+    }
+  ],
+  [
+    "133055",
+    {
+      "mainMoney": "-860.01亿",
+      "amountChangeDiff": "+567.24亿"
+    }
+  ],
+  [
+    "133105",
+    {
+      "mainMoney": "-860.01亿",
+      "amountChangeDiff": "+573.35亿"
+    }
+  ],
+  [
+    "133115",
+    {
+      "mainMoney": "-860.41亿",
+      "amountChangeDiff": "+580.28亿"
+    }
+  ],
+  [
+    "133125",
+    {
+      "mainMoney": "-861.37亿",
+      "amountChangeDiff": "+535.18亿"
+    }
+  ],
+  [
+    "133135",
+    {
+      "mainMoney": "-861.37亿",
+      "amountChangeDiff": "+526.00亿"
+    }
+  ],
+  [
+    "133145",
+    {
+      "mainMoney": "-864.40亿",
+      "amountChangeDiff": "+556.68亿"
+    }
+  ],
+  [
+    "133155",
+    {
+      "mainMoney": "-864.40亿",
+      "amountChangeDiff": "+568.28亿"
+    }
+  ],
+  [
+    "133206",
+    {
+      "mainMoney": "-865.47亿",
+      "amountChangeDiff": "+571.49亿"
+    }
+  ],
+  [
+    "133215",
+    {
+      "mainMoney": "-865.47亿",
+      "amountChangeDiff": "+572.82亿"
+    }
+  ],
+  [
+    "133225",
+    {
+      "mainMoney": "-866.18亿",
+      "amountChangeDiff": "+536.63亿"
+    }
+  ],
+  [
+    "133235",
+    {
+      "mainMoney": "-866.18亿",
+      "amountChangeDiff": "+546.96亿"
+    }
+  ],
+  [
+    "133245",
+    {
+      "mainMoney": "-867.26亿",
+      "amountChangeDiff": "+548.39亿"
+    }
+  ],
+  [
+    "133255",
+    {
+      "mainMoney": "-871.16亿",
+      "amountChangeDiff": "+559.05亿"
+    }
+  ],
+  [
+    "133305",
+    {
+      "mainMoney": "-869.86亿",
+      "amountChangeDiff": "+571.45亿"
+    }
+  ],
+  [
+    "133315",
+    {
+      "mainMoney": "-871.60亿",
+      "amountChangeDiff": "+489.63亿"
+    }
+  ],
+  [
+    "133326",
+    {
+      "mainMoney": "-871.16亿",
+      "amountChangeDiff": "+504.76亿"
+    }
+  ],
+  [
+    "133335",
+    {
+      "mainMoney": "-871.60亿",
+      "amountChangeDiff": "+524.48亿"
+    }
+  ],
+  [
+    "133345",
+    {
+      "mainMoney": "-871.60亿",
+      "amountChangeDiff": "+522.77亿"
+    }
+  ],
+  [
+    "133355",
+    {
+      "mainMoney": "-872.18亿",
+      "amountChangeDiff": "+545.37亿"
+    }
+  ],
+  [
+    "133405",
+    {
+      "mainMoney": "-873.97亿",
+      "amountChangeDiff": "+549.91亿"
+    }
+  ],
+  [
+    "133416",
+    {
+      "mainMoney": "-876.05亿",
+      "amountChangeDiff": "+562.76亿"
+    }
+  ],
+  [
+    "133425",
+    {
+      "mainMoney": "-877.73亿",
+      "amountChangeDiff": "+562.76亿"
+    }
+  ],
+  [
+    "133435",
+    {
+      "mainMoney": "-877.73亿",
+      "amountChangeDiff": "+497.75亿"
+    }
+  ],
+  [
+    "133445",
+    {
+      "mainMoney": "-877.73亿",
+      "amountChangeDiff": "+504.61亿"
+    }
+  ],
+  [
+    "133455",
+    {
+      "mainMoney": "-879.03亿",
+      "amountChangeDiff": "+529.56亿"
+    }
+  ],
+  [
+    "133505",
+    {
+      "mainMoney": "-880.53亿",
+      "amountChangeDiff": "+531.06亿"
+    }
+  ],
+  [
+    "133515",
+    {
+      "mainMoney": "-880.53亿",
+      "amountChangeDiff": "+546.58亿"
+    }
+  ],
+  [
+    "133525",
+    {
+      "mainMoney": "-881.15亿",
+      "amountChangeDiff": "+521.75亿"
+    }
+  ],
+  [
+    "133536",
+    {
+      "mainMoney": "-883.28亿",
+      "amountChangeDiff": "+547.72亿"
+    }
+  ],
+  [
+    "133545",
+    {
+      "mainMoney": "-883.28亿",
+      "amountChangeDiff": "+547.72亿"
+    }
+  ],
+  [
+    "133555",
+    {
+      "mainMoney": "-885.99亿",
+      "amountChangeDiff": "+547.72亿"
+    }
+  ],
+  [
+    "133605",
+    {
+      "mainMoney": "-885.99亿",
+      "amountChangeDiff": "+576.93亿"
+    }
+  ],
+  [
+    "133615",
+    {
+      "mainMoney": "-889.80亿",
+      "amountChangeDiff": "+576.93亿"
+    }
+  ],
+  [
+    "133625",
+    {
+      "mainMoney": "-888.45亿",
+      "amountChangeDiff": "+576.93亿"
+    }
+  ],
+  [
+    "133635",
+    {
+      "mainMoney": "-890.66亿",
+      "amountChangeDiff": "+527.86亿"
+    }
+  ],
+  [
+    "133645",
+    {
+      "mainMoney": "-892.07亿",
+      "amountChangeDiff": "+543.18亿"
+    }
+  ],
+  [
+    "133655",
+    {
+      "mainMoney": "-892.07亿",
+      "amountChangeDiff": "+559.36亿"
+    }
+  ],
+  [
+    "133705",
+    {
+      "mainMoney": "-892.78亿",
+      "amountChangeDiff": "+563.64亿"
+    }
+  ],
+  [
+    "133715",
+    {
+      "mainMoney": "-892.07亿",
+      "amountChangeDiff": "+567.54亿"
+    }
+  ],
+  [
+    "133725",
+    {
+      "mainMoney": "-892.78亿",
+      "amountChangeDiff": "+531.31亿"
+    }
+  ],
+  [
+    "133735",
+    {
+      "mainMoney": "-892.78亿",
+      "amountChangeDiff": "+544.10亿"
+    }
+  ],
+  [
+    "133746",
+    {
+      "mainMoney": "-895.42亿",
+      "amountChangeDiff": "+549.60亿"
+    }
+  ],
+  [
+    "133755",
+    {
+      "mainMoney": "-895.42亿",
+      "amountChangeDiff": "+561.22亿"
+    }
+  ],
+  [
+    "133805",
+    {
+      "mainMoney": "-897.12亿",
+      "amountChangeDiff": "+568.70亿"
+    }
+  ],
+  [
+    "133816",
+    {
+      "mainMoney": "-896.85亿",
+      "amountChangeDiff": "+487.85亿"
+    }
+  ],
+  [
+    "133825",
+    {
+      "mainMoney": "-896.95亿",
+      "amountChangeDiff": "+487.85亿"
+    }
+  ],
+  [
+    "133836",
+    {
+      "mainMoney": "-896.95亿",
+      "amountChangeDiff": "+510.33亿"
+    }
+  ],
+  [
+    "133845",
+    {
+      "mainMoney": "-896.95亿",
+      "amountChangeDiff": "+510.33亿"
+    }
+  ],
+  [
+    "133855",
+    {
+      "mainMoney": "-896.98亿",
+      "amountChangeDiff": "+520.67亿"
+    }
+  ],
+  [
+    "133905",
+    {
+      "mainMoney": "-897.08亿",
+      "amountChangeDiff": "+538.09亿"
+    }
+  ],
+  [
+    "133915",
+    {
+      "mainMoney": "-897.08亿",
+      "amountChangeDiff": "+539.50亿"
+    }
+  ],
+  [
+    "133926",
+    {
+      "mainMoney": "-897.08亿",
+      "amountChangeDiff": "+473.30亿"
+    }
+  ],
+  [
+    "133935",
+    {
+      "mainMoney": "-898.84亿",
+      "amountChangeDiff": "+490.43亿"
+    }
+  ],
+  [
+    "133946",
+    {
+      "mainMoney": "-898.84亿",
+      "amountChangeDiff": "+503.48亿"
+    }
+  ],
+  [
+    "133955",
+    {
+      "mainMoney": "-899.66亿",
+      "amountChangeDiff": "+503.48亿"
+    }
+  ],
+  [
+    "134005",
+    {
+      "mainMoney": "-899.66亿",
+      "amountChangeDiff": "+527.91亿"
+    }
+  ],
+  [
+    "134015",
+    {
+      "mainMoney": "-902.81亿",
+      "amountChangeDiff": "+522.07亿"
+    }
+  ],
+  [
+    "134025",
+    {
+      "mainMoney": "-904.55亿",
+      "amountChangeDiff": "+469.50亿"
+    }
+  ],
+  [
+    "134037",
+    {
+      "mainMoney": "-904.55亿",
+      "amountChangeDiff": "+488.07亿"
+    }
+  ],
+  [
+    "134045",
+    {
+      "mainMoney": "-904.55亿",
+      "amountChangeDiff": "+488.07亿"
+    }
+  ],
+  [
+    "134055",
+    {
+      "mainMoney": "-907.17亿",
+      "amountChangeDiff": "+501.89亿"
+    }
+  ],
+  [
+    "134105",
+    {
+      "mainMoney": "-907.17亿",
+      "amountChangeDiff": "+508.50亿"
+    }
+  ],
+  [
+    "134115",
+    {
+      "mainMoney": "-907.53亿",
+      "amountChangeDiff": "+453.57亿"
+    }
+  ],
+  [
+    "134125",
+    {
+      "mainMoney": "-908.51亿",
+      "amountChangeDiff": "+469.32亿"
+    }
+  ],
+  [
+    "134135",
+    {
+      "mainMoney": "-909.41亿",
+      "amountChangeDiff": "+473.67亿"
+    }
+  ],
+  [
+    "134148",
+    {
+      "mainMoney": "-908.51亿",
+      "amountChangeDiff": "+485.00亿"
+    }
+  ],
+  [
+    "134156",
+    {
+      "mainMoney": "-909.34亿",
+      "amountChangeDiff": "+496.55亿"
+    }
+  ],
+  [
+    "134205",
+    {
+      "mainMoney": "-909.02亿",
+      "amountChangeDiff": "+500.51亿"
+    }
+  ],
+  [
+    "134216",
+    {
+      "mainMoney": "-909.34亿",
+      "amountChangeDiff": "+459.13亿"
+    }
+  ],
+  [
+    "134225",
+    {
+      "mainMoney": "-909.02亿",
+      "amountChangeDiff": "+468.91亿"
+    }
+  ],
+  [
+    "134237",
+    {
+      "mainMoney": "-909.02亿",
+      "amountChangeDiff": "+479.48亿"
+    }
+  ],
+  [
+    "134245",
+    {
+      "mainMoney": "-909.07亿",
+      "amountChangeDiff": "+482.20亿"
+    }
+  ],
+  [
+    "134255",
+    {
+      "mainMoney": "-909.79亿",
+      "amountChangeDiff": "+496.91亿"
+    }
+  ],
+  [
+    "134305",
+    {
+      "mainMoney": "-909.79亿",
+      "amountChangeDiff": "+505.28亿"
+    }
+  ],
+  [
+    "134315",
+    {
+      "mainMoney": "-909.31亿",
+      "amountChangeDiff": "+443.23亿"
+    }
+  ],
+  [
+    "134325",
+    {
+      "mainMoney": "-909.05亿",
+      "amountChangeDiff": "+454.86亿"
+    }
+  ],
+  [
+    "134335",
+    {
+      "mainMoney": "-909.05亿",
+      "amountChangeDiff": "+464.95亿"
+    }
+  ],
+  [
+    "134345",
+    {
+      "mainMoney": "-909.05亿",
+      "amountChangeDiff": "+473.91亿"
+    }
+  ],
+  [
+    "134355",
+    {
+      "mainMoney": "-908.62亿",
+      "amountChangeDiff": "+489.40亿"
+    }
+  ],
+  [
+    "134405",
+    {
+      "mainMoney": "-909.01亿",
+      "amountChangeDiff": "+513.48亿"
+    }
+  ],
+  [
+    "134415",
+    {
+      "mainMoney": "-908.62亿",
+      "amountChangeDiff": "+519.44亿"
+    }
+  ],
+  [
+    "134425",
+    {
+      "mainMoney": "-906.93亿",
+      "amountChangeDiff": "+460.09亿"
+    }
+  ],
+  [
+    "134435",
+    {
+      "mainMoney": "-906.93亿",
+      "amountChangeDiff": "+466.65亿"
+    }
+  ],
+  [
+    "134445",
+    {
+      "mainMoney": "-907.52亿",
+      "amountChangeDiff": "+469.84亿"
+    }
+  ],
+  [
+    "134455",
+    {
+      "mainMoney": "-908.07亿",
+      "amountChangeDiff": "+475.74亿"
+    }
+  ],
+  [
+    "134505",
+    {
+      "mainMoney": "-908.07亿",
+      "amountChangeDiff": "+484.11亿"
+    }
+  ],
+  [
+    "134515",
+    {
+      "mainMoney": "-908.87亿",
+      "amountChangeDiff": "+491.03亿"
+    }
+  ],
+  [
+    "134525",
+    {
+      "mainMoney": "-908.21亿",
+      "amountChangeDiff": "+428.36亿"
+    }
+  ],
+  [
+    "134535",
+    {
+      "mainMoney": "-908.87亿",
+      "amountChangeDiff": "+433.84亿"
+    }
+  ],
+  [
+    "134545",
+    {
+      "mainMoney": "-911.16亿",
+      "amountChangeDiff": "+447.53亿"
+    }
+  ],
+  [
+    "134555",
+    {
+      "mainMoney": "-911.16亿",
+      "amountChangeDiff": "+455.60亿"
+    }
+  ],
+  [
+    "134605",
+    {
+      "mainMoney": "-911.16亿",
+      "amountChangeDiff": "+462.21亿"
+    }
+  ],
+  [
+    "134615",
+    {
+      "mainMoney": "-911.16亿",
+      "amountChangeDiff": "+462.23亿"
+    }
+  ],
+  [
+    "134625",
+    {
+      "mainMoney": "-912.03亿",
+      "amountChangeDiff": "+413.95亿"
+    }
+  ],
+  [
+    "134635",
+    {
+      "mainMoney": "-911.82亿",
+      "amountChangeDiff": "+423.33亿"
+    }
+  ],
+  [
+    "134645",
+    {
+      "mainMoney": "-911.82亿",
+      "amountChangeDiff": "+431.71亿"
+    }
+  ],
+  [
+    "134655",
+    {
+      "mainMoney": "-911.82亿",
+      "amountChangeDiff": "+443.50亿"
+    }
+  ],
+  [
+    "134705",
+    {
+      "mainMoney": "-911.76亿",
+      "amountChangeDiff": "+448.43亿"
+    }
+  ],
+  [
+    "134715",
+    {
+      "mainMoney": "-911.76亿",
+      "amountChangeDiff": "+384.06亿"
+    }
+  ],
+  [
+    "134725",
+    {
+      "mainMoney": "-912.69亿",
+      "amountChangeDiff": "+387.39亿"
+    }
+  ],
+  [
+    "134735",
+    {
+      "mainMoney": "-912.69亿",
+      "amountChangeDiff": "+406.72亿"
+    }
+  ],
+  [
+    "134745",
+    {
+      "mainMoney": "-915.14亿",
+      "amountChangeDiff": "+422.27亿"
+    }
+  ],
+  [
+    "134755",
+    {
+      "mainMoney": "-915.14亿",
+      "amountChangeDiff": "+434.49亿"
+    }
+  ],
+  [
+    "134805",
+    {
+      "mainMoney": "-915.14亿",
+      "amountChangeDiff": "+436.22亿"
+    }
+  ],
+  [
+    "134815",
+    {
+      "mainMoney": "-919.55亿",
+      "amountChangeDiff": "+389.88亿"
+    }
+  ],
+  [
+    "134825",
+    {
+      "mainMoney": "-917.40亿",
+      "amountChangeDiff": "+400.59亿"
+    }
+  ],
+  [
+    "134835",
+    {
+      "mainMoney": "-919.55亿",
+      "amountChangeDiff": "+410.75亿"
+    }
+  ],
+  [
+    "134845",
+    {
+      "mainMoney": "-922.29亿",
+      "amountChangeDiff": "+430.20亿"
+    }
+  ],
+  [
+    "134855",
+    {
+      "mainMoney": "-922.29亿",
+      "amountChangeDiff": "+442.62亿"
+    }
+  ],
+  [
+    "134905",
+    {
+      "mainMoney": "-925.29亿",
+      "amountChangeDiff": "+445.00亿"
+    }
+  ],
+  [
+    "134915",
+    {
+      "mainMoney": "-925.29亿",
+      "amountChangeDiff": "+456.41亿"
+    }
+  ],
+  [
+    "134925",
+    {
+      "mainMoney": "-925.29亿",
+      "amountChangeDiff": "+417.79亿"
+    }
+  ],
+  [
+    "134935",
+    {
+      "mainMoney": "-931.24亿",
+      "amountChangeDiff": "+423.70亿"
+    }
+  ],
+  [
+    "134945",
+    {
+      "mainMoney": "-928.46亿",
+      "amountChangeDiff": "+428.85亿"
+    }
+  ],
+  [
+    "134955",
+    {
+      "mainMoney": "-935.62亿",
+      "amountChangeDiff": "+455.64亿"
+    }
+  ],
+  [
+    "135005",
+    {
+      "mainMoney": "-935.62亿",
+      "amountChangeDiff": "+458.54亿"
+    }
+  ],
+  [
+    "135015",
+    {
+      "mainMoney": "-939.55亿",
+      "amountChangeDiff": "+458.54亿"
+    }
+  ],
+  [
+    "135025",
+    {
+      "mainMoney": "-941.67亿",
+      "amountChangeDiff": "+411.80亿"
+    }
+  ],
+  [
+    "135035",
+    {
+      "mainMoney": "-939.55亿",
+      "amountChangeDiff": "+418.91亿"
+    }
+  ],
+  [
+    "135045",
+    {
+      "mainMoney": "-943.84亿",
+      "amountChangeDiff": "+442.59亿"
+    }
+  ],
+  [
+    "135055",
+    {
+      "mainMoney": "-943.84亿",
+      "amountChangeDiff": "+449.96亿"
+    }
+  ],
+  [
+    "135105",
+    {
+      "mainMoney": "-946.52亿",
+      "amountChangeDiff": "+465.45亿"
+    }
+  ],
+  [
+    "135115",
+    {
+      "mainMoney": "-946.52亿",
+      "amountChangeDiff": "+474.19亿"
+    }
+  ],
+  [
+    "135125",
+    {
+      "mainMoney": "-948.64亿",
+      "amountChangeDiff": "+426.67亿"
+    }
+  ],
+  [
+    "135135",
+    {
+      "mainMoney": "-951.48亿",
+      "amountChangeDiff": "+439.76亿"
+    }
+  ],
+  [
+    "135145",
+    {
+      "mainMoney": "-951.48亿",
+      "amountChangeDiff": "+455.39亿"
+    }
+  ],
+  [
+    "135155",
+    {
+      "mainMoney": "-954.89亿",
+      "amountChangeDiff": "+469.83亿"
+    }
+  ],
+  [
+    "135205",
+    {
+      "mainMoney": "-954.89亿",
+      "amountChangeDiff": "+473.70亿"
+    }
+  ],
+  [
+    "135215",
+    {
+      "mainMoney": "-957.11亿",
+      "amountChangeDiff": "+425.21亿"
+    }
+  ],
+  [
+    "135225",
+    {
+      "mainMoney": "-957.11亿",
+      "amountChangeDiff": "+445.78亿"
+    }
+  ],
+  [
+    "135235",
+    {
+      "mainMoney": "-963.59亿",
+      "amountChangeDiff": "+456.87亿"
+    }
+  ],
+  [
+    "135245",
+    {
+      "mainMoney": "-964.54亿",
+      "amountChangeDiff": "+468.12亿"
+    }
+  ],
+  [
+    "135255",
+    {
+      "mainMoney": "-963.59亿",
+      "amountChangeDiff": "+475.28亿"
+    }
+  ],
+  [
+    "135305",
+    {
+      "mainMoney": "-965.03亿",
+      "amountChangeDiff": "+480.95亿"
+    }
+  ],
+  [
+    "135315",
+    {
+      "mainMoney": "-965.03亿",
+      "amountChangeDiff": "+425.85亿"
+    }
+  ],
+  [
+    "135325",
+    {
+      "mainMoney": "-965.03亿",
+      "amountChangeDiff": "+439.12亿"
+    }
+  ],
+  [
+    "135335",
+    {
+      "mainMoney": "-965.27亿",
+      "amountChangeDiff": "+446.52亿"
+    }
+  ],
+  [
+    "135345",
+    {
+      "mainMoney": "-965.27亿",
+      "amountChangeDiff": "+453.28亿"
+    }
+  ],
+  [
+    "135355",
+    {
+      "mainMoney": "-966.97亿",
+      "amountChangeDiff": "+461.17亿"
+    }
+  ],
+  [
+    "135405",
+    {
+      "mainMoney": "-966.41亿",
+      "amountChangeDiff": "+470.28亿"
+    }
+  ],
+  [
+    "135415",
+    {
+      "mainMoney": "-966.97亿",
+      "amountChangeDiff": "+482.34亿"
+    }
+  ],
+  [
+    "135425",
+    {
+      "mainMoney": "-967.68亿",
+      "amountChangeDiff": "+482.34亿"
+    }
+  ],
+  [
+    "135435",
+    {
+      "mainMoney": "-967.68亿",
+      "amountChangeDiff": "+444.23亿"
+    }
+  ],
+  [
+    "135445",
+    {
+      "mainMoney": "-967.68亿",
+      "amountChangeDiff": "+450.46亿"
+    }
+  ],
+  [
+    "135455",
+    {
+      "mainMoney": "-968.61亿",
+      "amountChangeDiff": "+453.40亿"
+    }
+  ],
+  [
+    "135505",
+    {
+      "mainMoney": "-968.52亿",
+      "amountChangeDiff": "+478.02亿"
+    }
+  ],
+  [
+    "135525",
+    {
+      "mainMoney": "-968.61亿",
+      "amountChangeDiff": "+438.28亿"
+    }
+  ],
+  [
+    "135535",
+    {
+      "mainMoney": "-968.39亿",
+      "amountChangeDiff": "+447.98亿"
+    }
+  ],
+  [
+    "135545",
+    {
+      "mainMoney": "-968.39亿",
+      "amountChangeDiff": "+450.53亿"
+    }
+  ],
+  [
+    "135555",
+    {
+      "mainMoney": "-968.79亿",
+      "amountChangeDiff": "+469.10亿"
+    }
+  ],
+  [
+    "135605",
+    {
+      "mainMoney": "-968.79亿",
+      "amountChangeDiff": "+479.77亿"
+    }
+  ],
+  [
+    "135615",
+    {
+      "mainMoney": "-968.88亿",
+      "amountChangeDiff": "+470.62亿"
+    }
+  ],
+  [
+    "135625",
+    {
+      "mainMoney": "-969.39亿",
+      "amountChangeDiff": "+431.92亿"
+    }
+  ],
+  [
+    "135635",
+    {
+      "mainMoney": "-969.39亿",
+      "amountChangeDiff": "+454.68亿"
+    }
+  ],
+  [
+    "135645",
+    {
+      "mainMoney": "-969.35亿",
+      "amountChangeDiff": "+460.51亿"
+    }
+  ],
+  [
+    "135655",
+    {
+      "mainMoney": "-968.70亿",
+      "amountChangeDiff": "+470.31亿"
+    }
+  ],
+  [
+    "135705",
+    {
+      "mainMoney": "-969.10亿",
+      "amountChangeDiff": "+485.22亿"
+    }
+  ],
+  [
+    "135715",
+    {
+      "mainMoney": "-968.06亿",
+      "amountChangeDiff": "+436.10亿"
+    }
+  ],
+  [
+    "135725",
+    {
+      "mainMoney": "-968.06亿",
+      "amountChangeDiff": "+443.58亿"
+    }
+  ],
+  [
+    "135735",
+    {
+      "mainMoney": "-968.06亿",
+      "amountChangeDiff": "+463.95亿"
+    }
+  ],
+  [
+    "135745",
+    {
+      "mainMoney": "-968.00亿",
+      "amountChangeDiff": "+474.33亿"
+    }
+  ],
+  [
+    "135755",
+    {
+      "mainMoney": "-968.00亿",
+      "amountChangeDiff": "+491.13亿"
+    }
+  ],
+  [
+    "135805",
+    {
+      "mainMoney": "-968.40亿",
+      "amountChangeDiff": "+496.77亿"
+    }
+  ],
+  [
+    "135815",
+    {
+      "mainMoney": "-968.43亿",
+      "amountChangeDiff": "+501.96亿"
+    }
+  ],
+  [
+    "135825",
+    {
+      "mainMoney": "-968.40亿",
+      "amountChangeDiff": "+453.20亿"
+    }
+  ],
+  [
+    "135835",
+    {
+      "mainMoney": "-967.74亿",
+      "amountChangeDiff": "+467.91亿"
+    }
+  ],
+  [
+    "135845",
+    {
+      "mainMoney": "-966.59亿",
+      "amountChangeDiff": "+482.23亿"
+    }
+  ],
+  [
+    "135855",
+    {
+      "mainMoney": "-966.59亿",
+      "amountChangeDiff": "+489.35亿"
+    }
+  ],
+  [
+    "135905",
+    {
+      "mainMoney": "-966.11亿",
+      "amountChangeDiff": "+489.35亿"
+    }
+  ],
+  [
+    "135915",
+    {
+      "mainMoney": "-965.75亿",
+      "amountChangeDiff": "+503.29亿"
+    }
+  ],
+  [
+    "135925",
+    {
+      "mainMoney": "-965.75亿",
+      "amountChangeDiff": "+441.60亿"
+    }
+  ],
+  [
+    "135935",
+    {
+      "mainMoney": "-965.75亿",
+      "amountChangeDiff": "+454.50亿"
+    }
+  ],
+  [
+    "135945",
+    {
+      "mainMoney": "-965.75亿",
+      "amountChangeDiff": "+457.35亿"
+    }
+  ],
+  [
+    "135955",
+    {
+      "mainMoney": "-965.64亿",
+      "amountChangeDiff": "+472.10亿"
+    }
+  ],
+  [
+    "140005",
+    {
+      "mainMoney": "-965.58亿",
+      "amountChangeDiff": "+490.59亿"
+    }
+  ],
+  [
+    "140015",
+    {
+      "mainMoney": "-965.64亿",
+      "amountChangeDiff": "+493.95亿"
+    }
+  ],
+  [
+    "140025",
+    {
+      "mainMoney": "-965.99亿",
+      "amountChangeDiff": "+500.58亿"
+    }
+  ],
+  [
+    "140035",
+    {
+      "mainMoney": "-965.58亿",
+      "amountChangeDiff": "+466.66亿"
+    }
+  ],
+  [
+    "140045",
+    {
+      "mainMoney": "-965.99亿",
+      "amountChangeDiff": "+477.02亿"
+    }
+  ],
+  [
+    "140055",
+    {
+      "mainMoney": "-966.40亿",
+      "amountChangeDiff": "+488.11亿"
+    }
+  ],
+  [
+    "140105",
+    {
+      "mainMoney": "-965.95亿",
+      "amountChangeDiff": "+501.72亿"
+    }
+  ],
+  [
+    "140115",
+    {
+      "mainMoney": "-966.40亿",
+      "amountChangeDiff": "+509.24亿"
+    }
+  ],
+  [
+    "140125",
+    {
+      "mainMoney": "-965.44亿",
+      "amountChangeDiff": "+459.48亿"
+    }
+  ],
+  [
+    "140135",
+    {
+      "mainMoney": "-965.44亿",
+      "amountChangeDiff": "+473.37亿"
+    }
+  ],
+  [
+    "140145",
+    {
+      "mainMoney": "-965.44亿",
+      "amountChangeDiff": "+483.43亿"
+    }
+  ],
+  [
+    "140155",
+    {
+      "mainMoney": "-963.69亿",
+      "amountChangeDiff": "+499.08亿"
+    }
+  ],
+  [
+    "140205",
+    {
+      "mainMoney": "-964.17亿",
+      "amountChangeDiff": "+514.18亿"
+    }
+  ],
+  [
+    "140215",
+    {
+      "mainMoney": "-963.69亿",
+      "amountChangeDiff": "+515.51亿"
+    }
+  ],
+  [
+    "140225",
+    {
+      "mainMoney": "-963.69亿",
+      "amountChangeDiff": "+456.60亿"
+    }
+  ],
+  [
+    "140235",
+    {
+      "mainMoney": "-963.44亿",
+      "amountChangeDiff": "+463.08亿"
+    }
+  ],
+  [
+    "140245",
+    {
+      "mainMoney": "-963.49亿",
+      "amountChangeDiff": "+479.95亿"
+    }
+  ],
+  [
+    "140255",
+    {
+      "mainMoney": "-963.49亿",
+      "amountChangeDiff": "+487.66亿"
+    }
+  ],
+  [
+    "140305",
+    {
+      "mainMoney": "-962.59亿",
+      "amountChangeDiff": "+494.36亿"
+    }
+  ],
+  [
+    "140315",
+    {
+      "mainMoney": "-962.59亿",
+      "amountChangeDiff": "+442.22亿"
+    }
+  ],
+  [
+    "140325",
+    {
+      "mainMoney": "-962.59亿",
+      "amountChangeDiff": "+452.92亿"
+    }
+  ],
+  [
+    "140335",
+    {
+      "mainMoney": "-961.23亿",
+      "amountChangeDiff": "+467.93亿"
+    }
+  ],
+  [
+    "140345",
+    {
+      "mainMoney": "-961.73亿",
+      "amountChangeDiff": "+470.54亿"
+    }
+  ],
+  [
+    "140355",
+    {
+      "mainMoney": "-961.23亿",
+      "amountChangeDiff": "+495.57亿"
+    }
+  ],
+  [
+    "140405",
+    {
+      "mainMoney": "-960.48亿",
+      "amountChangeDiff": "+500.71亿"
+    }
+  ],
+  [
+    "140415",
+    {
+      "mainMoney": "-960.48亿",
+      "amountChangeDiff": "+437.70亿"
+    }
+  ],
+  [
+    "140425",
+    {
+      "mainMoney": "-960.48亿",
+      "amountChangeDiff": "+451.13亿"
+    }
+  ],
+  [
+    "140435",
+    {
+      "mainMoney": "-962.81亿",
+      "amountChangeDiff": "+457.04亿"
+    }
+  ],
+  [
+    "140445",
+    {
+      "mainMoney": "-962.81亿",
+      "amountChangeDiff": "+461.46亿"
+    }
+  ],
+  [
+    "140455",
+    {
+      "mainMoney": "-963.31亿",
+      "amountChangeDiff": "+468.61亿"
+    }
+  ],
+  [
+    "140505",
+    {
+      "mainMoney": "-963.54亿",
+      "amountChangeDiff": "+469.78亿"
+    }
+  ],
+  [
+    "140515",
+    {
+      "mainMoney": "-963.54亿",
+      "amountChangeDiff": "+469.78亿"
+    }
+  ],
+  [
+    "140525",
+    {
+      "mainMoney": "-963.54亿",
+      "amountChangeDiff": "+469.78亿"
+    }
+  ],
+  [
+    "140535",
+    {
+      "mainMoney": "-963.50亿",
+      "amountChangeDiff": "+469.78亿"
+    }
+  ],
+  [
+    "140545",
+    {
+      "mainMoney": "-963.50亿",
+      "amountChangeDiff": "+469.78亿"
+    }
+  ],
+  [
+    "140555",
+    {
+      "mainMoney": "-963.50亿",
+      "amountChangeDiff": "+469.78亿"
+    }
+  ],
+  [
+    "140605",
+    {
+      "mainMoney": "-963.88亿",
+      "amountChangeDiff": "+469.78亿"
+    }
+  ],
+  [
+    "140615",
+    {
+      "mainMoney": "-964.03亿",
+      "amountChangeDiff": "+481.70亿"
+    }
+  ],
+  [
+    "140625",
+    {
+      "mainMoney": "-964.99亿",
+      "amountChangeDiff": "+419.29亿"
+    }
+  ],
+  [
+    "140635",
+    {
+      "mainMoney": "-964.99亿",
+      "amountChangeDiff": "+430.52亿"
+    }
+  ],
+  [
+    "140655",
+    {
+      "mainMoney": "-965.36亿",
+      "amountChangeDiff": "+449.51亿"
+    }
+  ],
+  [
+    "140705",
+    {
+      "mainMoney": "-965.92亿",
+      "amountChangeDiff": "+451.62亿"
+    }
+  ],
+  [
+    "140715",
+    {
+      "mainMoney": "-965.92亿",
+      "amountChangeDiff": "+461.07亿"
+    }
+  ],
+  [
+    "140725",
+    {
+      "mainMoney": "-967.66亿",
+      "amountChangeDiff": "+399.26亿"
+    }
+  ],
+  [
+    "140735",
+    {
+      "mainMoney": "-967.66亿",
+      "amountChangeDiff": "+411.77亿"
+    }
+  ],
+  [
+    "140745",
+    {
+      "mainMoney": "-967.66亿",
+      "amountChangeDiff": "+400.94亿"
+    }
+  ],
+  [
+    "140755",
+    {
+      "mainMoney": "-967.91亿",
+      "amountChangeDiff": "+439.56亿"
+    }
+  ],
+  [
+    "140805",
+    {
+      "mainMoney": "-968.91亿",
+      "amountChangeDiff": "+411.77亿"
+    }
+  ],
+  [
+    "140815",
+    {
+      "mainMoney": "-968.91亿",
+      "amountChangeDiff": "+434.10亿"
+    }
+  ],
+  [
+    "140825",
+    {
+      "mainMoney": "-968.91亿",
+      "amountChangeDiff": "+434.10亿"
+    }
+  ],
+  [
+    "140835",
+    {
+      "mainMoney": "-969.41亿",
+      "amountChangeDiff": "+417.49亿"
+    }
+  ],
+  [
+    "140845",
+    {
+      "mainMoney": "-969.76亿",
+      "amountChangeDiff": "+364.45亿"
+    }
+  ],
+  [
+    "140855",
+    {
+      "mainMoney": "-969.76亿",
+      "amountChangeDiff": "+372.84亿"
+    }
+  ],
+  [
+    "140905",
+    {
+      "mainMoney": "-969.65亿",
+      "amountChangeDiff": "+380.06亿"
+    }
+  ],
+  [
+    "140915",
+    {
+      "mainMoney": "-969.65亿",
+      "amountChangeDiff": "+413.87亿"
+    }
+  ],
+  [
+    "140925",
+    {
+      "mainMoney": "-969.65亿",
+      "amountChangeDiff": "+417.49亿"
+    }
+  ],
+  [
+    "140935",
+    {
+      "mainMoney": "-969.58亿",
+      "amountChangeDiff": "+377.73亿"
+    }
+  ],
+  [
+    "140945",
+    {
+      "mainMoney": "-969.85亿",
+      "amountChangeDiff": "+349.73亿"
+    }
+  ],
+  [
+    "140955",
+    {
+      "mainMoney": "-969.37亿",
+      "amountChangeDiff": "+352.03亿"
+    }
+  ],
+  [
+    "141005",
+    {
+      "mainMoney": "-969.37亿",
+      "amountChangeDiff": "+389.59亿"
+    }
+  ],
+  [
+    "141015",
+    {
+      "mainMoney": "-968.66亿",
+      "amountChangeDiff": "+376.98亿"
+    }
+  ],
+  [
+    "141026",
+    {
+      "mainMoney": "-968.66亿",
+      "amountChangeDiff": "+391.38亿"
+    }
+  ],
+  [
+    "141035",
+    {
+      "mainMoney": "-968.66亿",
+      "amountChangeDiff": "+393.76亿"
+    }
+  ],
+  [
+    "141045",
+    {
+      "mainMoney": "-966.99亿",
+      "amountChangeDiff": "+371.28亿"
+    }
+  ],
+  [
+    "141055",
+    {
+      "mainMoney": "-966.99亿",
+      "amountChangeDiff": "+371.28亿"
+    }
+  ],
+  [
+    "141105",
+    {
+      "mainMoney": "-966.84亿",
+      "amountChangeDiff": "+371.28亿"
+    }
+  ],
+  [
+    "141115",
+    {
+      "mainMoney": "-966.84亿",
+      "amountChangeDiff": "+360.64亿"
+    }
+  ],
+  [
+    "141125",
+    {
+      "mainMoney": "-966.84亿",
+      "amountChangeDiff": "+369.70亿"
+    }
+  ],
+  [
+    "141135",
+    {
+      "mainMoney": "-967.45亿",
+      "amountChangeDiff": "+373.71亿"
+    }
+  ],
+  [
+    "141145",
+    {
+      "mainMoney": "-967.45亿",
+      "amountChangeDiff": "+335.52亿"
+    }
+  ],
+  [
+    "141155",
+    {
+      "mainMoney": "-967.45亿",
+      "amountChangeDiff": "+358.54亿"
+    }
+  ],
+  [
+    "141205",
+    {
+      "mainMoney": "-967.48亿",
+      "amountChangeDiff": "+341.69亿"
+    }
+  ],
+  [
+    "141215",
+    {
+      "mainMoney": "-968.11亿",
+      "amountChangeDiff": "+303.28亿"
+    }
+  ],
+  [
+    "141225",
+    {
+      "mainMoney": "-968.11亿",
+      "amountChangeDiff": "+373.71亿"
+    }
+  ],
+  [
+    "141235",
+    {
+      "mainMoney": "-968.11亿",
+      "amountChangeDiff": "+318.30亿"
+    }
+  ],
+  [
+    "141245",
+    {
+      "mainMoney": "-968.11亿",
+      "amountChangeDiff": "+323.60亿"
+    }
+  ],
+  [
+    "141255",
+    {
+      "mainMoney": "-968.77亿",
+      "amountChangeDiff": "+335.93亿"
+    }
+  ],
+  [
+    "141305",
+    {
+      "mainMoney": "-968.77亿",
+      "amountChangeDiff": "+344.68亿"
+    }
+  ],
+  [
+    "141315",
+    {
+      "mainMoney": "-968.77亿",
+      "amountChangeDiff": "+341.69亿"
+    }
+  ],
+  [
+    "141325",
+    {
+      "mainMoney": "-968.71亿",
+      "amountChangeDiff": "+304.17亿"
+    }
+  ],
+  [
+    "141335",
+    {
+      "mainMoney": "-967.64亿",
+      "amountChangeDiff": "+311.80亿"
+    }
+  ],
+  [
+    "141345",
+    {
+      "mainMoney": "-967.54亿",
+      "amountChangeDiff": "+321.73亿"
+    }
+  ],
+  [
+    "141355",
+    {
+      "mainMoney": "-967.54亿",
+      "amountChangeDiff": "+329.41亿"
+    }
+  ],
+  [
+    "141405",
+    {
+      "mainMoney": "-967.54亿",
+      "amountChangeDiff": "+334.57亿"
+    }
+  ],
+  [
+    "141415",
+    {
+      "mainMoney": "-965.25亿",
+      "amountChangeDiff": "+313.26亿"
+    }
+  ],
+  [
+    "141425",
+    {
+      "mainMoney": "-965.25亿",
+      "amountChangeDiff": "+285.14亿"
+    }
+  ],
+  [
+    "141435",
+    {
+      "mainMoney": "-965.09亿",
+      "amountChangeDiff": "+286.22亿"
+    }
+  ],
+  [
+    "141445",
+    {
+      "mainMoney": "-965.09亿",
+      "amountChangeDiff": "+321.73亿"
+    }
+  ],
+  [
+    "141455",
+    {
+      "mainMoney": "-965.21亿",
+      "amountChangeDiff": "+316.45亿"
+    }
+  ],
+  [
+    "141505",
+    {
+      "mainMoney": "-965.21亿",
+      "amountChangeDiff": "+280.54亿"
+    }
+  ],
+  [
+    "141515",
+    {
+      "mainMoney": "-964.40亿",
+      "amountChangeDiff": "+299.64亿"
+    }
+  ],
+  [
+    "141525",
+    {
+      "mainMoney": "-964.32亿",
+      "amountChangeDiff": "+278.07亿"
+    }
+  ],
+  [
+    "141535",
+    {
+      "mainMoney": "-964.32亿",
+      "amountChangeDiff": "+292.57亿"
+    }
+  ],
+  [
+    "141545",
+    {
+      "mainMoney": "-964.32亿",
+      "amountChangeDiff": "+299.57亿"
+    }
+  ],
+  [
+    "141555",
+    {
+      "mainMoney": "-964.32亿",
+      "amountChangeDiff": "+306.34亿"
+    }
+  ],
+  [
+    "141605",
+    {
+      "mainMoney": "-965.18亿",
+      "amountChangeDiff": "+302.00亿"
+    }
+  ],
+  [
+    "141615",
+    {
+      "mainMoney": "-965.37亿",
+      "amountChangeDiff": "+291.11亿"
+    }
+  ],
+  [
+    "141625",
+    {
+      "mainMoney": "-965.37亿",
+      "amountChangeDiff": "+270.28亿"
+    }
+  ],
+  [
+    "141635",
+    {
+      "mainMoney": "-967.18亿",
+      "amountChangeDiff": "+309.77亿"
+    }
+  ],
+  [
+    "141645",
+    {
+      "mainMoney": "-965.82亿",
+      "amountChangeDiff": "+271.95亿"
+    }
+  ],
+  [
+    "141656",
+    {
+      "mainMoney": "-967.23亿",
+      "amountChangeDiff": "+286.10亿"
+    }
+  ],
+  [
+    "141705",
+    {
+      "mainMoney": "-967.18亿",
+      "amountChangeDiff": "+291.08亿"
+    }
+  ],
+  [
+    "141715",
+    {
+      "mainMoney": "-967.23亿",
+      "amountChangeDiff": "+296.40亿"
+    }
+  ],
+  [
+    "141725",
+    {
+      "mainMoney": "-967.23亿",
+      "amountChangeDiff": "+292.36亿"
+    }
+  ],
+  [
+    "141735",
+    {
+      "mainMoney": "-967.42亿",
+      "amountChangeDiff": "+300.22亿"
+    }
+  ],
+  [
+    "141745",
+    {
+      "mainMoney": "-967.42亿",
+      "amountChangeDiff": "+252.56亿"
+    }
+  ],
+  [
+    "141755",
+    {
+      "mainMoney": "-968.13亿",
+      "amountChangeDiff": "+264.81亿"
+    }
+  ],
+  [
+    "141805",
+    {
+      "mainMoney": "-968.13亿",
+      "amountChangeDiff": "+274.22亿"
+    }
+  ],
+  [
+    "141816",
+    {
+      "mainMoney": "-968.56亿",
+      "amountChangeDiff": "+222.95亿"
+    }
+  ],
+  [
+    "141825",
+    {
+      "mainMoney": "-968.56亿",
+      "amountChangeDiff": "+275.34亿"
+    }
+  ],
+  [
+    "141835",
+    {
+      "mainMoney": "-968.56亿",
+      "amountChangeDiff": "+231.92亿"
+    }
+  ],
+  [
+    "141845",
+    {
+      "mainMoney": "-968.56亿",
+      "amountChangeDiff": "+225.74亿"
+    }
+  ],
+  [
+    "141855",
+    {
+      "mainMoney": "-969.57亿",
+      "amountChangeDiff": "+249.16亿"
+    }
+  ],
+  [
+    "141905",
+    {
+      "mainMoney": "-969.57亿",
+      "amountChangeDiff": "+246.55亿"
+    }
+  ],
+  [
+    "141915",
+    {
+      "mainMoney": "-969.62亿",
+      "amountChangeDiff": "+267.48亿"
+    }
+  ],
+  [
+    "141925",
+    {
+      "mainMoney": "-968.97亿",
+      "amountChangeDiff": "+267.48亿"
+    }
+  ],
+  [
+    "141935",
+    {
+      "mainMoney": "-968.97亿",
+      "amountChangeDiff": "+232.92亿"
+    }
+  ],
+  [
+    "142801",
+    {
+      "mainMoney": "-962.09亿",
+      "amountChangeDiff": "+205.79亿"
+    }
+  ],
+  [
+    "142810",
+    {
+      "mainMoney": "-962.08亿",
+      "amountChangeDiff": "+125.24亿"
+    }
+  ],
+  [
+    "142820",
+    {
+      "mainMoney": "-962.08亿",
+      "amountChangeDiff": "+129.61亿"
+    }
+  ],
+  [
+    "142830",
+    {
+      "mainMoney": "-961.76亿",
+      "amountChangeDiff": "+137.20亿"
+    }
+  ],
+  [
+    "142840",
+    {
+      "mainMoney": "-961.74亿",
+      "amountChangeDiff": "+149.01亿"
+    }
+  ],
+  [
+    "142850",
+    {
+      "mainMoney": "-961.76亿",
+      "amountChangeDiff": "+152.77亿"
+    }
+  ],
+  [
+    "142900",
+    {
+      "mainMoney": "-961.74亿",
+      "amountChangeDiff": "+159.84亿"
+    }
+  ],
+  [
+    "142910",
+    {
+      "mainMoney": "-961.99亿",
+      "amountChangeDiff": "+171.60亿"
+    }
+  ],
+  [
+    "142920",
+    {
+      "mainMoney": "-961.99亿",
+      "amountChangeDiff": "+103.49亿"
+    }
+  ],
+  [
+    "142930",
+    {
+      "mainMoney": "-962.30亿",
+      "amountChangeDiff": "+106.95亿"
+    }
+  ],
+  [
+    "142940",
+    {
+      "mainMoney": "-962.30亿",
+      "amountChangeDiff": "+118.83亿"
+    }
+  ],
+  [
+    "142950",
+    {
+      "mainMoney": "-962.24亿",
+      "amountChangeDiff": "+130.95亿"
+    }
+  ],
+  [
+    "143000",
+    {
+      "mainMoney": "-963.02亿",
+      "amountChangeDiff": "+141.54亿"
+    }
+  ],
+  [
+    "143010",
+    {
+      "mainMoney": "-962.24亿",
+      "amountChangeDiff": "+147.21亿"
+    }
+  ],
+  [
+    "143020",
+    {
+      "mainMoney": "-963.02亿",
+      "amountChangeDiff": "+60.78亿"
+    }
+  ],
+  [
+    "143030",
+    {
+      "mainMoney": "-961.62亿",
+      "amountChangeDiff": "+94.86亿"
+    }
+  ],
+  [
+    "143040",
+    {
+      "mainMoney": "-961.62亿",
+      "amountChangeDiff": "+98.68亿"
+    }
+  ],
+  [
+    "143050",
+    {
+      "mainMoney": "-962.48亿",
+      "amountChangeDiff": "+112.49亿"
+    }
+  ],
+  [
+    "143100",
+    {
+      "mainMoney": "-962.48亿",
+      "amountChangeDiff": "+121.42亿"
+    }
+  ],
+  [
+    "143110",
+    {
+      "mainMoney": "-961.61亿",
+      "amountChangeDiff": "+35.23亿"
+    }
+  ],
+  [
+    "143120",
+    {
+      "mainMoney": "-962.42亿",
+      "amountChangeDiff": "+43.14亿"
+    }
+  ],
+  [
+    "143130",
+    {
+      "mainMoney": "-961.61亿",
+      "amountChangeDiff": "+56.96亿"
+    }
+  ],
+  [
+    "143140",
+    {
+      "mainMoney": "-961.61亿",
+      "amountChangeDiff": "+67.32亿"
+    }
+  ],
+  [
+    "143150",
+    {
+      "mainMoney": "-961.61亿",
+      "amountChangeDiff": "+76.74亿"
+    }
+  ],
+  [
+    "143201",
+    {
+      "mainMoney": "-962.19亿",
+      "amountChangeDiff": "+90.36亿"
+    }
+  ],
+  [
+    "143210",
+    {
+      "mainMoney": "-961.12亿",
+      "amountChangeDiff": "+97.88亿"
+    }
+  ],
+  [
+    "143220",
+    {
+      "mainMoney": "-962.33亿",
+      "amountChangeDiff": "+25.26亿"
+    }
+  ],
+  [
+    "143230",
+    {
+      "mainMoney": "-962.33亿",
+      "amountChangeDiff": "+36.31亿"
+    }
+  ],
+  [
+    "143240",
+    {
+      "mainMoney": "-962.33亿",
+      "amountChangeDiff": "+50.09亿"
+    }
+  ],
+  [
+    "143250",
+    {
+      "mainMoney": "-962.36亿",
+      "amountChangeDiff": "+62.76亿"
+    }
+  ],
+  [
+    "143300",
+    {
+      "mainMoney": "-961.65亿",
+      "amountChangeDiff": "+73.64亿"
+    }
+  ],
+  [
+    "143310",
+    {
+      "mainMoney": "-962.36亿",
+      "amountChangeDiff": "+84.17亿"
+    }
+  ],
+  [
+    "143320",
+    {
+      "mainMoney": "-961.33亿",
+      "amountChangeDiff": "+16.65亿"
+    }
+  ],
+  [
+    "143330",
+    {
+      "mainMoney": "-961.33亿",
+      "amountChangeDiff": "+29.96亿"
+    }
+  ],
+  [
+    "143340",
+    {
+      "mainMoney": "-961.33亿",
+      "amountChangeDiff": "+42.90亿"
+    }
+  ],
+  [
+    "143350",
+    {
+      "mainMoney": "-961.25亿",
+      "amountChangeDiff": "+58.10亿"
+    }
+  ],
+  [
+    "143400",
+    {
+      "mainMoney": "-960.44亿",
+      "amountChangeDiff": "+65.75亿"
+    }
+  ],
+  [
+    "143411",
+    {
+      "mainMoney": "-960.44亿",
+      "amountChangeDiff": "+77.62亿"
+    }
+  ],
+  [
+    "143420",
+    {
+      "mainMoney": "-959.63亿",
+      "amountChangeDiff": "+4.30亿"
+    }
+  ],
+  [
+    "143430",
+    {
+      "mainMoney": "-958.48亿",
+      "amountChangeDiff": "+19.54亿"
+    }
+  ],
+  [
+    "143440",
+    {
+      "mainMoney": "-958.48亿",
+      "amountChangeDiff": "+18.34亿"
+    }
+  ],
+  [
+    "143451",
+    {
+      "mainMoney": "-958.48亿",
+      "amountChangeDiff": "+28.65亿"
+    }
+  ],
+  [
+    "143500",
+    {
+      "mainMoney": "-958.27亿",
+      "amountChangeDiff": "+61.22亿"
+    }
+  ],
+  [
+    "143510",
+    {
+      "mainMoney": "-958.27亿",
+      "amountChangeDiff": "+66.66亿"
+    }
+  ],
+  [
+    "143520",
+    {
+      "mainMoney": "-958.05亿",
+      "amountChangeDiff": "-10.99亿"
+    }
+  ],
+  [
+    "143531",
+    {
+      "mainMoney": "-958.05亿",
+      "amountChangeDiff": "+11.37亿"
+    }
+  ],
+  [
+    "143541",
+    {
+      "mainMoney": "-957.51亿",
+      "amountChangeDiff": "+5.57亿"
+    }
+  ],
+  [
+    "143550",
+    {
+      "mainMoney": "-957.51亿",
+      "amountChangeDiff": "+14.81亿"
+    }
+  ],
+  [
+    "143600",
+    {
+      "mainMoney": "-957.00亿",
+      "amountChangeDiff": "+31.97亿"
+    }
+  ],
+  [
+    "143610",
+    {
+      "mainMoney": "-957.00亿",
+      "amountChangeDiff": "+46.85亿"
+    }
+  ],
+  [
+    "143620",
+    {
+      "mainMoney": "-957.06亿",
+      "amountChangeDiff": "-14.55亿"
+    }
+  ],
+  [
+    "143630",
+    {
+      "mainMoney": "-957.00亿",
+      "amountChangeDiff": "+7.01亿"
+    }
+  ],
+  [
+    "143640",
+    {
+      "mainMoney": "-958.38亿",
+      "amountChangeDiff": "+21.24亿"
+    }
+  ],
+  [
+    "143650",
+    {
+      "mainMoney": "-958.38亿",
+      "amountChangeDiff": "+33.64亿"
+    }
+  ],
+  [
+    "143700",
+    {
+      "mainMoney": "-958.38亿",
+      "amountChangeDiff": "+42.31亿"
+    }
+  ],
+  [
+    "143711",
+    {
+      "mainMoney": "-959.95亿",
+      "amountChangeDiff": "-35.97亿"
+    }
+  ],
+  [
+    "143720",
+    {
+      "mainMoney": "-959.95亿",
+      "amountChangeDiff": "-28.63亿"
+    }
+  ],
+  [
+    "143730",
+    {
+      "mainMoney": "-959.74亿",
+      "amountChangeDiff": "-21.38亿"
+    }
+  ],
+  [
+    "143740",
+    {
+      "mainMoney": "-959.68亿",
+      "amountChangeDiff": "-6.93亿"
+    }
+  ],
+  [
+    "143751",
+    {
+      "mainMoney": "-959.68亿",
+      "amountChangeDiff": "+7.42亿"
+    }
+  ],
+  [
+    "143801",
+    {
+      "mainMoney": "-959.68亿",
+      "amountChangeDiff": "+24.87亿"
+    }
+  ],
+  [
+    "143810",
+    {
+      "mainMoney": "-961.06亿",
+      "amountChangeDiff": "-54.12亿"
+    }
+  ],
+  [
+    "143821",
+    {
+      "mainMoney": "-961.06亿",
+      "amountChangeDiff": "-48.87亿"
+    }
+  ],
+  [
+    "143831",
+    {
+      "mainMoney": "-961.00亿",
+      "amountChangeDiff": "-40.68亿"
+    }
+  ],
+  [
+    "143840",
+    {
+      "mainMoney": "-961.10亿",
+      "amountChangeDiff": "-23.16亿"
+    }
+  ],
+  [
+    "143850",
+    {
+      "mainMoney": "-961.10亿",
+      "amountChangeDiff": "-23.16亿"
+    }
+  ],
+  [
+    "143900",
+    {
+      "mainMoney": "-961.10亿",
+      "amountChangeDiff": "-1.97亿"
+    }
+  ],
+  [
+    "143910",
+    {
+      "mainMoney": "-961.48亿",
+      "amountChangeDiff": "+6.79亿"
+    }
+  ],
+  [
+    "143921",
+    {
+      "mainMoney": "-961.48亿",
+      "amountChangeDiff": "-76.76亿"
+    }
+  ],
+  [
+    "143930",
+    {
+      "mainMoney": "-961.75亿",
+      "amountChangeDiff": "-67.51亿"
+    }
+  ],
+  [
+    "143940",
+    {
+      "mainMoney": "-961.75亿",
+      "amountChangeDiff": "-48.84亿"
+    }
+  ],
+  [
+    "143950",
+    {
+      "mainMoney": "-963.51亿",
+      "amountChangeDiff": "-31.26亿"
+    }
+  ],
+  [
+    "144000",
+    {
+      "mainMoney": "-963.51亿",
+      "amountChangeDiff": "-20.50亿"
+    }
+  ],
+  [
+    "144010",
+    {
+      "mainMoney": "-964.55亿",
+      "amountChangeDiff": "-12.31亿"
+    }
+  ],
+  [
+    "144020",
+    {
+      "mainMoney": "-965.00亿",
+      "amountChangeDiff": "-92.90亿"
+    }
+  ],
+  [
+    "144030",
+    {
+      "mainMoney": "-964.55亿",
+      "amountChangeDiff": "-83.62亿"
+    }
+  ],
+  [
+    "144040",
+    {
+      "mainMoney": "-965.00亿",
+      "amountChangeDiff": "-55.29亿"
+    }
+  ],
+  [
+    "144051",
+    {
+      "mainMoney": "-965.00亿",
+      "amountChangeDiff": "-41.68亿"
+    }
+  ],
+  [
+    "144100",
+    {
+      "mainMoney": "-965.37亿",
+      "amountChangeDiff": "-32.44亿"
+    }
+  ],
+  [
+    "144110",
+    {
+      "mainMoney": "-965.37亿",
+      "amountChangeDiff": "-15.86亿"
+    }
+  ],
+  [
+    "144120",
+    {
+      "mainMoney": "-966.71亿",
+      "amountChangeDiff": "-95.46亿"
+    }
+  ],
+  [
+    "144130",
+    {
+      "mainMoney": "-970.31亿",
+      "amountChangeDiff": "-84.45亿"
+    }
+  ],
+  [
+    "144141",
+    {
+      "mainMoney": "-970.31亿",
+      "amountChangeDiff": "-72.21亿"
+    }
+  ],
+  [
+    "144151",
+    {
+      "mainMoney": "-971.76亿",
+      "amountChangeDiff": "-47.26亿"
+    }
+  ],
+  [
+    "144201",
+    {
+      "mainMoney": "-971.76亿",
+      "amountChangeDiff": "-44.91亿"
+    }
+  ],
+  [
+    "144210",
+    {
+      "mainMoney": "-971.76亿",
+      "amountChangeDiff": "-31.71亿"
+    }
+  ],
+  [
+    "144220",
+    {
+      "mainMoney": "-973.12亿",
+      "amountChangeDiff": "-92.07亿"
+    }
+  ],
+  [
+    "144230",
+    {
+      "mainMoney": "-974.75亿",
+      "amountChangeDiff": "-84.26亿"
+    }
+  ],
+  [
+    "144240",
+    {
+      "mainMoney": "-976.34亿",
+      "amountChangeDiff": "-70.42亿"
+    }
+  ],
+  [
+    "144251",
+    {
+      "mainMoney": "-976.34亿",
+      "amountChangeDiff": "-58.27亿"
+    }
+  ],
+  [
+    "144300",
+    {
+      "mainMoney": "-976.34亿",
+      "amountChangeDiff": "-43.10亿"
+    }
+  ],
+  [
+    "144311",
+    {
+      "mainMoney": "-977.34亿",
+      "amountChangeDiff": "-39.79亿"
+    }
+  ],
+  [
+    "144320",
+    {
+      "mainMoney": "-978.04亿",
+      "amountChangeDiff": "-120.30亿"
+    }
+  ],
+  [
+    "144330",
+    {
+      "mainMoney": "-977.57亿",
+      "amountChangeDiff": "-93.92亿"
+    }
+  ],
+  [
+    "144340",
+    {
+      "mainMoney": "-979.39亿",
+      "amountChangeDiff": "-77.41亿"
+    }
+  ],
+  [
+    "144351",
+    {
+      "mainMoney": "-979.39亿",
+      "amountChangeDiff": "-70.45亿"
+    }
+  ],
+  [
+    "144400",
+    {
+      "mainMoney": "-979.39亿",
+      "amountChangeDiff": "-57.23亿"
+    }
+  ],
+  [
+    "144411",
+    {
+      "mainMoney": "-980.29亿",
+      "amountChangeDiff": "-51.13亿"
+    }
+  ],
+  [
+    "144420",
+    {
+      "mainMoney": "-981.14亿",
+      "amountChangeDiff": "-133.41亿"
+    }
+  ],
+  [
+    "144431",
+    {
+      "mainMoney": "-981.14亿",
+      "amountChangeDiff": "-106.17亿"
+    }
+  ],
+  [
+    "144441",
+    {
+      "mainMoney": "-981.57亿",
+      "amountChangeDiff": "-89.18亿"
+    }
+  ],
+  [
+    "144451",
+    {
+      "mainMoney": "-982.23亿",
+      "amountChangeDiff": "-75.04亿"
+    }
+  ],
+  [
+    "144500",
+    {
+      "mainMoney": "-982.23亿",
+      "amountChangeDiff": "-64.53亿"
+    }
+  ],
+  [
+    "144512",
+    {
+      "mainMoney": "-982.57亿",
+      "amountChangeDiff": "-54.98亿"
+    }
+  ],
+  [
+    "144520",
+    {
+      "mainMoney": "-982.57亿",
+      "amountChangeDiff": "-145.43亿"
+    }
+  ],
+  [
+    "144531",
+    {
+      "mainMoney": "-983.26亿",
+      "amountChangeDiff": "-134.22亿"
+    }
+  ],
+  [
+    "144540",
+    {
+      "mainMoney": "-983.26亿",
+      "amountChangeDiff": "-128.31亿"
+    }
+  ],
+  [
+    "144551",
+    {
+      "mainMoney": "-982.51亿",
+      "amountChangeDiff": "-105.79亿"
+    }
+  ],
+  [
+    "144601",
+    {
+      "mainMoney": "-983.84亿",
+      "amountChangeDiff": "-94.47亿"
+    }
+  ],
+  [
+    "144610",
+    {
+      "mainMoney": "-983.84亿",
+      "amountChangeDiff": "-165.17亿"
+    }
+  ],
+  [
+    "144621",
+    {
+      "mainMoney": "-983.84亿",
+      "amountChangeDiff": "-146.40亿"
+    }
+  ],
+  [
+    "144630",
+    {
+      "mainMoney": "-984.50亿",
+      "amountChangeDiff": "-143.72亿"
+    }
+  ],
+  [
+    "144641",
+    {
+      "mainMoney": "-984.50亿",
+      "amountChangeDiff": "-130.11亿"
+    }
+  ],
+  [
+    "144650",
+    {
+      "mainMoney": "-984.93亿",
+      "amountChangeDiff": "-107.78亿"
+    }
+  ],
+  [
+    "144700",
+    {
+      "mainMoney": "-984.93亿",
+      "amountChangeDiff": "-88.24亿"
+    }
+  ],
+  [
+    "144710",
+    {
+      "mainMoney": "-985.58亿",
+      "amountChangeDiff": "-84.14亿"
+    }
+  ],
+  [
+    "144721",
+    {
+      "mainMoney": "-985.94亿",
+      "amountChangeDiff": "-169.43亿"
+    }
+  ],
+  [
+    "144730",
+    {
+      "mainMoney": "-985.58亿",
+      "amountChangeDiff": "-149.36亿"
+    }
+  ],
+  [
+    "144740",
+    {
+      "mainMoney": "-985.58亿",
+      "amountChangeDiff": "-147.18亿"
+    }
+  ],
+  [
+    "144751",
+    {
+      "mainMoney": "-984.66亿",
+      "amountChangeDiff": "-122.43亿"
+    }
+  ],
+  [
+    "144801",
+    {
+      "mainMoney": "-984.66亿",
+      "amountChangeDiff": "-103.57亿"
+    }
+  ],
+  [
+    "144811",
+    {
+      "mainMoney": "-984.29亿",
+      "amountChangeDiff": "-101.49亿"
+    }
+  ],
+  [
+    "144821",
+    {
+      "mainMoney": "-984.14亿",
+      "amountChangeDiff": "-185.57亿"
+    }
+  ],
+  [
+    "144830",
+    {
+      "mainMoney": "-984.14亿",
+      "amountChangeDiff": "-171.52亿"
+    }
+  ],
+  [
+    "144840",
+    {
+      "mainMoney": "-985.16亿",
+      "amountChangeDiff": "-156.23亿"
+    }
+  ],
+  [
+    "144850",
+    {
+      "mainMoney": "-985.16亿",
+      "amountChangeDiff": "-142.36亿"
+    }
+  ],
+  [
+    "144900",
+    {
+      "mainMoney": "-985.89亿",
+      "amountChangeDiff": "-133.48亿"
+    }
+  ],
+  [
+    "144911",
+    {
+      "mainMoney": "-985.89亿",
+      "amountChangeDiff": "-117.07亿"
+    }
+  ],
+  [
+    "144921",
+    {
+      "mainMoney": "-985.89亿",
+      "amountChangeDiff": "-218.06亿"
+    }
+  ],
+  [
+    "144930",
+    {
+      "mainMoney": "-985.67亿",
+      "amountChangeDiff": "-207.38亿"
+    }
+  ],
+  [
+    "144940",
+    {
+      "mainMoney": "-986.00亿",
+      "amountChangeDiff": "-179.63亿"
+    }
+  ],
+  [
+    "144950",
+    {
+      "mainMoney": "-986.00亿",
+      "amountChangeDiff": "-161.85亿"
+    }
+  ],
+  [
+    "145001",
+    {
+      "mainMoney": "-986.00亿",
+      "amountChangeDiff": "-143.80亿"
+    }
+  ],
+  [
+    "145011",
+    {
+      "mainMoney": "-985.54亿",
+      "amountChangeDiff": "-116.73亿"
+    }
+  ],
+  [
+    "145021",
+    {
+      "mainMoney": "-984.82亿",
+      "amountChangeDiff": "-242.68亿"
+    }
+  ],
+  [
+    "145031",
+    {
+      "mainMoney": "-984.82亿",
+      "amountChangeDiff": "-234.96亿"
+    }
+  ],
+  [
+    "145041",
+    {
+      "mainMoney": "-984.82亿",
+      "amountChangeDiff": "-175.89亿"
+    }
+  ],
+  [
+    "145050",
+    {
+      "mainMoney": "-983.28亿",
+      "amountChangeDiff": "-172.74亿"
+    }
+  ],
+  [
+    "145100",
+    {
+      "mainMoney": "-983.28亿",
+      "amountChangeDiff": "-140.09亿"
+    }
+  ],
+  [
+    "145111",
+    {
+      "mainMoney": "-983.28亿",
+      "amountChangeDiff": "-122.16亿"
+    }
+  ],
+  [
+    "145121",
+    {
+      "mainMoney": "-982.31亿",
+      "amountChangeDiff": "-122.16亿"
+    }
+  ],
+  [
+    "145130",
+    {
+      "mainMoney": "-981.37亿",
+      "amountChangeDiff": "-113.61亿"
+    }
+  ],
+  [
+    "145140",
+    {
+      "mainMoney": "-981.37亿",
+      "amountChangeDiff": "-191.13亿"
+    }
+  ],
+  [
+    "145150",
+    {
+      "mainMoney": "-979.84亿",
+      "amountChangeDiff": "-155.45亿"
+    }
+  ],
+  [
+    "145200",
+    {
+      "mainMoney": "-979.84亿",
+      "amountChangeDiff": "-143.69亿"
+    }
+  ],
+  [
+    "145210",
+    {
+      "mainMoney": "-979.84亿",
+      "amountChangeDiff": "-133.93亿"
+    }
+  ],
+  [
+    "145221",
+    {
+      "mainMoney": "-979.24亿",
+      "amountChangeDiff": "-227.05亿"
+    }
+  ],
+  [
+    "145231",
+    {
+      "mainMoney": "-979.73亿",
+      "amountChangeDiff": "-206.99亿"
+    }
+  ],
+  [
+    "145240",
+    {
+      "mainMoney": "-979.24亿",
+      "amountChangeDiff": "-186.71亿"
+    }
+  ],
+  [
+    "145251",
+    {
+      "mainMoney": "-979.18亿",
+      "amountChangeDiff": "-163.24亿"
+    }
+  ],
+  [
+    "145300",
+    {
+      "mainMoney": "-978.86亿",
+      "amountChangeDiff": "-153.37亿"
+    }
+  ],
+  [
+    "145311",
+    {
+      "mainMoney": "-978.86亿",
+      "amountChangeDiff": "-137.42亿"
+    }
+  ],
+  [
+    "145321",
+    {
+      "mainMoney": "-978.86亿",
+      "amountChangeDiff": "-240.52亿"
+    }
+  ],
+  [
+    "145331",
+    {
+      "mainMoney": "-979.30亿",
+      "amountChangeDiff": "-228.52亿"
+    }
+  ],
+  [
+    "145340",
+    {
+      "mainMoney": "-978.08亿",
+      "amountChangeDiff": "-199.17亿"
+    }
+  ],
+  [
+    "145351",
+    {
+      "mainMoney": "-978.08亿",
+      "amountChangeDiff": "-190.38亿"
+    }
+  ],
+  [
+    "145401",
+    {
+      "mainMoney": "-977.06亿",
+      "amountChangeDiff": "-174.93亿"
+    }
+  ],
+  [
+    "145410",
+    {
+      "mainMoney": "-977.76亿",
+      "amountChangeDiff": "-150.56亿"
+    }
+  ],
+  [
+    "145421",
+    {
+      "mainMoney": "-977.06亿",
+      "amountChangeDiff": "-144.51亿"
+    }
+  ],
+  [
+    "145431",
+    {
+      "mainMoney": "-976.31亿",
+      "amountChangeDiff": "-266.34亿"
+    }
+  ],
+  [
+    "145440",
+    {
+      "mainMoney": "-976.31亿",
+      "amountChangeDiff": "-230.19亿"
+    }
+  ],
+  [
+    "145450",
+    {
+      "mainMoney": "-976.31亿",
+      "amountChangeDiff": "-220.90亿"
+    }
+  ],
+  [
+    "145501",
+    {
+      "mainMoney": "-976.31亿",
+      "amountChangeDiff": "-195.50亿"
+    }
+  ],
+  [
+    "145511",
+    {
+      "mainMoney": "-976.25亿",
+      "amountChangeDiff": "-195.50亿"
+    }
+  ],
+  [
+    "145521",
+    {
+      "mainMoney": "-975.99亿",
+      "amountChangeDiff": "-304.38亿"
+    }
+  ],
+  [
+    "145531",
+    {
+      "mainMoney": "-975.48亿",
+      "amountChangeDiff": "-312.85亿"
+    }
+  ],
+  [
+    "145540",
+    {
+      "mainMoney": "-975.48亿",
+      "amountChangeDiff": "-256.71亿"
+    }
+  ],
+  [
+    "145550",
+    {
+      "mainMoney": "-975.53亿",
+      "amountChangeDiff": "-256.71亿"
+    }
+  ],
+  [
+    "145601",
+    {
+      "mainMoney": "-975.53亿",
+      "amountChangeDiff": "-185.99亿"
+    }
+  ],
+  [
+    "145611",
+    {
+      "mainMoney": "-975.53亿",
+      "amountChangeDiff": "-220.39亿"
+    }
+  ],
+  [
+    "145621",
+    {
+      "mainMoney": "-975.06亿",
+      "amountChangeDiff": "-195.41亿"
+    }
+  ],
+  [
+    "145631",
+    {
+      "mainMoney": "-975.54亿",
+      "amountChangeDiff": "-281.82亿"
+    }
+  ],
+  [
+    "145640",
+    {
+      "mainMoney": "-975.06亿",
+      "amountChangeDiff": "-303.61亿"
+    }
+  ],
+  [
+    "145651",
+    {
+      "mainMoney": "-974.76亿",
+      "amountChangeDiff": "-244.93亿"
+    }
+  ],
+  [
+    "145700",
+    {
+      "mainMoney": "-974.57亿",
+      "amountChangeDiff": "-224.39亿"
+    }
+  ],
+  [
+    "145711",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-189.29亿"
+    }
+  ],
+  [
+    "145722",
+    {
+      "mainMoney": "-974.14亿",
+      "amountChangeDiff": "-190.41亿"
+    }
+  ],
+  [
+    "145730",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145740",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145750",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145800",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145810",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145821",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145831",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145841",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145850",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145900",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145911",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145921",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145930",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145940",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "145951",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "150000",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "150010",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "150021",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-190.07亿"
+    }
+  ],
+  [
+    "150030",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150040",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150051",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150100",
+    {
+      "mainMoney": "-974.09亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150111",
+    {
+      "mainMoney": "-974.35亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150120",
+    {
+      "mainMoney": "-974.35亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150130",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150141",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150151",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150201",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150211",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150221",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150230",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150240",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150250",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150300",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150311",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150320",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150331",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150340",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150351",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150400",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150410",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150420",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150431",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150440",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150450",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150500",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150511",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150521",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150530",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150540",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150550",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150600",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150610",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150620",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150631",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150641",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150650",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150700",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150711",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150721",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150730",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150740",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150750",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150800",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150810",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150821",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150831",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150840",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150850",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150901",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150911",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150920",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150934",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "150954",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151002",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151012",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151022",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151032",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151042",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151052",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151102",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151112",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151122",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151132",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151142",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151152",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151202",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151212",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151222",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151232",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151242",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151252",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151302",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151312",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151322",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151332",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151342",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151352",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151402",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151412",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151422",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151432",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151442",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151452",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151502",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151512",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151522",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151532",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151542",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151552",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151602",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151612",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151622",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151633",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151642",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151652",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151702",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151712",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151722",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151732",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151742",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151752",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151802",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151812",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151822",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151832",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151842",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151852",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151902",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151912",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151922",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151932",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151942",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "151952",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152002",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152012",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152022",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152032",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152042",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152052",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152102",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152112",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152122",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152132",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152142",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152152",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152202",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152212",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152222",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152235",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152242",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152252",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152302",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152312",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152322",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152333",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152342",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152352",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152402",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152413",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152422",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152432",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152442",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152452",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152502",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152513",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152522",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152532",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152543",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152552",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152603",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152613",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152622",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152633",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152642",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152652",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152702",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152713",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152723",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152732",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152742",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152752",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152802",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152812",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152822",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152833",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152842",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152852",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152902",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152912",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152922",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152932",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152942",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "152952",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153003",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153012",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153022",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153033",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153042",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153052",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153102",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153112",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153122",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153133",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153142",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153152",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153202",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153212",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153222",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153232",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153242",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153252",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153302",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153312",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153322",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153332",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
+    }
+  ],
+  [
+    "153342",
+    {
+      "mainMoney": "-974.05亿",
+      "amountChangeDiff": "-225.46亿"
     }
   ]
 ]

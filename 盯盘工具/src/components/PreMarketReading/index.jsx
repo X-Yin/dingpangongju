@@ -22,6 +22,12 @@ import kejiqingxuzhishu0608 from '../../assets/20260608-科技情绪指数.png';
 import zhongchuanteqi0609 from '../../assets/20260609-中船特气.png';
 import hudiangufen0609 from '../../assets/20260609-沪电股份.png';
 import lianxunguangong0609 from '../../assets/20260609-联讯仪器.png';
+import hanwuji0610 from '../../assets/20260610-寒武纪.png';
+import zhulizijin0610 from '../../assets/20260610-主力资金.png';
+import yingweike0610 from '../../assets/20260610-英维克.png';
+import yuanjiekeji0610 from '../../assets/20260610-源杰科技.png';
+import shengyikeji0610 from '../../assets/20260610-生益科技.png';
+import huahong0610 from '../../assets/20260610-华虹.png'
 import './index.scss';
 
 const { Title, Paragraph, Text } = Typography;
@@ -52,6 +58,7 @@ const PreMarketReading = () => {
   ];
 
   const menuItems = [
+    { key: 'outflow-rebound-0610', href: '#outflow-rebound-0610', title: '操他妈了个逼！' },
     { key: 'steps', href: '#steps', title: '看盘核心步骤' },
     { key: 'case-zhongxin', href: '#case-zhongxin', title: '高位票竞价和开盘不及预期直接卖' },
     { key: 'case-hanwuji', href: '#case-hanwuji', title: '清仓之后不操作' },
@@ -470,10 +477,85 @@ const PreMarketReading = () => {
               </Paragraph>
               <Paragraph>
                 <Text type="secondary">案例三：</Text>在退潮期率先开始反弹抗跌的沪电股份，但是在 6.09 这一天情绪反弹的第一天，深南和胜宏都是七八个点的涨幅，沪电只有不到 3 个点
-              </Paragraph>
+              </Paragraph> 
               <Image src={zhongchuanteqi0609}></Image>
               <Image src={lianxunguangong0609}></Image>
               <Image src={hudiangufen0609}></Image>
+            </Card>
+
+            <Card id="outflow-rebound-0610" className="section-card" title={<><BookOutlined style={{ color: '#ff4d4f' }} /> 操他妈了个逼！(20260610)</>} variant="borderless">
+              <Alert
+                className="lesson-alert"
+                message={<Text strong style={{ fontSize: '16px' }}>大盘资金净流出，个股大概率冲高回落！</Text>}
+                description={
+                  <>
+                    <Paragraph>
+                      当市场主力资金持续净流出时，任何个股的短期冲高都难以维系，最终大概率会被大盘拖累回落。
+                      此时应坚决避免<Text strong type="danger">追高</Text>，核心关注<Text strong>资金流向趋势</Text>。
+                    </Paragraph>
+                    <Paragraph>
+                      早盘一旦发现情况不对劲，尤其在大盘主力资金持续流出背景下，应立即<Text strong type="danger">清仓手中持仓</Text>。
+                      切勿追逐其他早盘强势股，它们极大概率也会<Text strong type="danger">冲高回落</Text>。
+                    </Paragraph>
+                  </>
+                }
+                type="warning"
+                showIcon
+                icon={<WarningOutlined />}
+              />
+
+              <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>大盘主力资金趋势</Text></Divider>
+              <Image src={zhulizijin0610} className="case-image" />
+
+              <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>案例分析: 冲高回落个股</Text></Divider>
+              <Paragraph>比如寒武纪</Paragraph>
+              <Image src={hanwuji0610} className="case-image" />
+              <Paragraph>比如英维克</Paragraph>
+              <Image src={yingweike0610} className="case-image" />
+              <Paragraph>比如华虹股份</Paragraph>
+              <Image src={huahong0610} className="case-image" />
+
+              <Alert
+                className="lesson-alert"
+                message={<Text strong style={{ fontSize: '16px' }}>个人案例反思：顽强个股的抉择</Text>}
+                description={
+                  <>
+                    <Paragraph>
+                      自己买的持仓在大盘资金净流出的时候表现还挺顽强，这个时候就<Text strong type="success">不要卖了</Text>，因为搞不好尾盘就给你拉回来了。
+                      就比如这一天的持仓是<Text strong>源杰科技</Text>和<Text strong>生益科技</Text>，其实当天这两个也就开盘和中间某个时间段跌的多，尾盘基本上都拉回来了。
+                      如果不卖的话，其实当天平均一下，收盘才亏了一个点左右。
+                    </Paragraph>
+                    <Paragraph>
+                      但是就是因为自己早上把这两个全卖了，然后去追高其他的个股，结果导致当天<Text strong type="danger">亏了快 5 个点</Text>。
+                      这个错误已经犯了很多次了，后面再犯我就是狗！！！
+                    </Paragraph>
+                  </>
+                }
+                type="info"
+                showIcon
+                icon={<BulbOutlined />}
+              />
+              <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>案例分析: 顽强个股</Text></Divider>
+              <Paragraph>源杰科技</Paragraph>
+              <Image src={yuanjiekeji0610} className="case-image" />
+              <Paragraph>生益科技</Paragraph>
+              <Image src={shengyikeji0610} className="case-image" />
+
+              <Alert
+                className="lesson-alert"
+                message={<Text strong style={{ fontSize: '16px' }}>操盘三条铁律</Text>}
+                description={
+                  <Space direction="vertical">
+                    <Paragraph>1. <Text strong type="danger">如果当天大盘的资金在持续净流出，并且大部分个股都在下跌，这个时候就赶快卖掉自己手中的持仓！</Text></Paragraph>
+                    <Paragraph>2. <Text strong type="success">如果一开盘发现自己的持仓表现的还挺顽强，那开盘没卖，后面就也别再卖了。到尾盘大概率就会被拉起来。</Text></Paragraph>
+                    <Paragraph>3. <Text strong type="warning">如果一开始卖掉自己手中的持仓，不能去追其他的早盘强势个股，就算有利好刺激消息也不行，大概率会回落被带下来。</Text></Paragraph>
+                    <Paragraph strong style={{ color: 'red', fontStyle: 'italic' }}>总而言之，要么就开盘操作，要是开盘没操作后面就也别再有任何操作了。唯一可以操作的就是等尾盘的时候，看看拿点先手博弈次日的反弹！</Paragraph>
+                  </Space>
+                }
+                type="success"
+                showIcon
+                icon={<CheckCircleOutlined />}
+              />
             </Card>
 
             <Divider>

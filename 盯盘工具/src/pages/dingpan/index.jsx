@@ -616,16 +616,15 @@ const DingPan = () => {
                             <div className="wave-items-wrapper">
                                 {stockData.waveList.map((item, index) => (
                                     <div
-                                        key={index}
-                                        className={`wave-banner-item ${item.statusKey}`}
-                                        onClick={() => showKLine(item)}
-                                    >
-                                        <span className="wave-time">{item.time}</span>
-                                        <span className="wave-name">{item.name}</span>
-                                        <span className="wave-label">{item.label}</span>
-                                        <Text strong style={{ color: item.color, marginRight: 4 }}>{item.change}</Text>
-                                        <Tag color={item.color} className="wave-tag">{item.change_diff}</Tag>
-                                    </div>
+                                            key={index}
+                                            className={`wave-banner-item ${item.statusKey}`}
+                                            onClick={() => showKLine(item)}
+                                        >
+                                            <span className="wave-time">{item.time}</span>
+                                            <span className="wave-name">{item.name}</span>
+                                            <Text strong style={{ color: item.color, marginRight: 4 }}>【{item.change}】</Text>
+                                            <Tag color={item.color} className="wave-tag">{item.change_diff}</Tag>
+                                        </div>
                                 ))}
                             </div>
                         </div>
