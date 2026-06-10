@@ -52,6 +52,8 @@ const DingPan = () => {
     const [techIndexData, setTechIndexData] = useState([]); // 科技情绪数据
     const [jisuYidongUpList, setJisuYidongUpList] = useState([]); // 急速异动上涨排名
     const [jisuYidongDownList, setJisuYidongDownList] = useState([]); // 急速异动下跌排名
+    const [showJingJiaQiangChou, setShowJingJiaQiangChou] = useState(true); // 控制竞价抢筹模块显示
+    const [showKaiPanZhuDong, setShowKaiPanZhuDong] = useState(true); // 控制开盘主动拉升模块显示
 
     // 主力资金趋势图相关
     const [historyData, setHistoryData] = useState([]);
@@ -739,14 +741,23 @@ const DingPan = () => {
                         {/* 左侧主要监控区 */}
                         <Col xs={24} lg={17}>
                         {/* 抢筹与拉升模块 */}
-                        {( (data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0) || (data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0) ) && (
+                        {( (showJingJiaQiangChou && data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0) || (showKaiPanZhuDong && data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0) ) && (
                             <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
-                                {data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0 && (
-                                    <Col span={data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0 ? 12 : 24}>
+                                {showJingJiaQiangChou && data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0 && (
+                                    <Col span={showKaiPanZhuDong && data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0 ? 12 : 24}>
                                         <Card
                                             title={<><RiseOutlined style={{ color: '#ff4d4f' }} /> 竞价抢筹监控</>}
                                             className="monitor-card jingjia-card"
                                             variant="borderless"
+                                            extra={
+                                                <CloseOutlined 
+                                                    style={{ cursor: 'pointer', color: '#999' }} 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setShowJingJiaQiangChou(false);
+                                                    }}
+                                                />
+                                            }
                                         >
                                             <div className="jingjia-grid">
                                                 {data.jingJiaQiangChouData.map((item, index) => {
@@ -774,12 +785,21 @@ const DingPan = () => {
                                         </Card>
                                     </Col>
                                 )}
-                                {data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0 && (
-                                    <Col span={data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0 ? 12 : 24}>
+                                {showKaiPanZhuDong && data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0 && (
+                                    <Col span={showJingJiaQiangChou && data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0 ? 12 : 24}>
                                         <Card
                                             title={<><ThunderboltOutlined style={{ color: '#faad14' }} /> 开盘主动拉升</>}
                                             className="monitor-card zhudong-card"
                                             variant="borderless"
+                                            extra={
+                                                <CloseOutlined 
+                                                    style={{ cursor: 'pointer', color: '#999' }} 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setShowKaiPanZhuDong(false);
+                                                    }}
+                                                />
+                                            }
                                         >
                                             <div className="jingjia-grid">
                                                 {data.kaiPanZhuDongData.map((item, index) => {

@@ -1,0 +1,15 @@
+[
+    {
+        "code": "sh688313",
+        "stockName": "仕佳光子",
+        "change": 1.45,
+        "business_amount": 99212745,
+        "business_balance": 13487781965,
+        "change_diff": 0,
+        "kline": [
+            {
+                "change": 1.45
+            }
+        ]
+    }
+]
