@@ -679,6 +679,12 @@
       "blockName": "半导体材料",
       "code": "sh688146",
       "change": 19.79
+    },
+    {
+      "name": "有研粉材",
+      "blockName": "半导体材料",
+      "code": "sh688456",
+      "change": 18.12
     }
   ]
 }

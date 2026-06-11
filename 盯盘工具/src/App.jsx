@@ -85,22 +85,16 @@ function App() {
                 vertical
               >
                 <div className="reminder-item">
-                  <span className="reminder-text">一个星期只有一次全仓出手的机会！宁可踏空，绝对不能冲高回落被套住！！！</span>
+                  <span className="reminder-text">只做顺周期，不做逆周期</span>
                 </div>
                 <div className="reminder-item">
-                  <span className="reminder-text">别人贪婪我更贪婪，别人恐慌我更恐慌</span>
+                  <span className="reminder-text">一个星期只有一次全仓出手的机会！宁可踏空，绝对不能冲高回落被套住！！！</span>
                 </div>
                 <div className="reminder-item">
                   <span className="reminder-text">善战者，求之于势，不责于人。要看整体大势，不要被个股的涨幅所迷惑！</span>
                 </div>
                 <div className="reminder-item">
                   <span className="reminder-text">能赚到钱不算本事，能躲开市场抽风那一下子才是本事！</span>
-                </div>
-                <div className="reminder-item">
-                  <span className="reminder-text">大道甚夷，而民好径。确保政治正确，程序正确。在过程上下功夫，不追求结果！</span>
-                </div>
-                <div className="reminder-item">
-                  <span className="reminder-text">赚钱的秘诀并不在于预测，而在于应对。不要提前预设市场会怎么样，而是开盘之后你看见它怎么样，你就怎么样</span>
                 </div>
               </Carousel>
             </div>
