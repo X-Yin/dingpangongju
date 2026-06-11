@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Typography, Card, Tag, Space, Divider, Alert, Image, Anchor, Row, Col, Tooltip } from 'antd';
-import { BookOutlined, InfoCircleOutlined, CheckCircleOutlined, WarningOutlined, BulbOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { BookOutlined, InfoCircleOutlined, CheckCircleOutlined, WarningOutlined, BulbOutlined, UnorderedListOutlined, RiseOutlined } from '@ant-design/icons';
 import guzhiqihuojiaoge from '../../assets/guzhiqihuojiaoge.png';
 import zhongxinCase from '../../assets/20260529-中芯国际.png';
 import zhongxinFenshi from '../../assets/20260529-中芯国际分时.png';
@@ -34,32 +34,10 @@ const { Title, Paragraph, Text } = Typography;
 
 const PreMarketReading = () => {
   const scrollContainerRef = useRef(null);
-  const steps = [
-    {
-      title: '竞价看龙头表现',
-      content: '重点观察中际旭创、新易盛、寒武纪、中芯国际等标的的竞价强弱，判断核心资金意图。'
-    },
-    {
-      title: '开盘看量能与指数',
-      content: '观察大盘是缩量还是放量，上证、创业、科创指数的涨跌趋势是否同步。'
-    },
-    {
-      title: '筛选科技大票情绪',
-      content: '在科技核心票中筛选跌幅居前者，判断当天市场整体情绪压力位。'
-    },
-    {
-      title: '延迟操作与风控执行',
-      content: '开盘不急于操作，观察至 9:31 后决策。持仓下跌超 -2% 立即止损，不赌反转，只做主升惯性。'
-    },
-    {
-      title: '机会判断与影子战法',
-      content: '确认大盘情绪无虞后，结合机构消息差或当前主线龙头，寻找确定性买点。'
-    }
-  ];
 
   const menuItems = [
+    { key: 'trend-following', href: '#trend-following', title: '跟随趋势，拥抱确定性' },
     { key: 'outflow-rebound-0610', href: '#outflow-rebound-0610', title: '操他妈了个逼！' },
-    { key: 'steps', href: '#steps', title: '看盘核心步骤' },
     { key: 'case-zhongxin', href: '#case-zhongxin', title: '高位票竞价和开盘不及预期直接卖' },
     { key: 'case-hanwuji', href: '#case-hanwuji', title: '清仓之后不操作' },
     { key: 'case-inducement', href: '#case-inducement', title: '退潮期的冲高诱多' },
@@ -97,33 +75,43 @@ const PreMarketReading = () => {
               style={{ width: 500 }}
             /> 
 
-            <Card 
-              id="steps"
-              className="section-card" 
-              title={<><BulbOutlined style={{ color: '#1890ff' }} /> 看盘核心步骤</>}
+            <Card
+              id="trend-following"
+              className="section-card"
+              title={<><RiseOutlined style={{ color: '#52c41a' }} /> 跟随趋势，拥抱确定性</>}
               variant="borderless"
             >
-              <div className="principle-box">
-                <span className="principle-label">核心原则:</span>
-                <span className="principle-text">从宏观到微观，从龙头到细分，从下跌到上涨</span>
-              </div>
-
-              {steps.map((step, index) => (
-                <div key={index} className="step-item">
-                  <div className="step-number">{index + 1}</div>
-                  <span className="step-title">{step.title}</span>
-                  <div className="step-content">{step.content}</div>
-                </div>
-              ))}
-
               <Alert
                 className="lesson-alert"
-                message="避险逻辑"
-                description="前四步的核心目的都是为了判断当天情绪，确保大盘不会跳水，从而成功避开大阴线。"
-                type="info"
+                message="核心理念：趋势大于波动"
+                description="做短线不是简单的今天买明天卖。追逐热点若无大盘情绪配合，极易遭遇冲高回落。最重要的并非日内波动，而是趋势的跟随。"
+                type="success"
                 showIcon
                 icon={<CheckCircleOutlined />}
               />
+
+              <div className="principle-content" style={{ marginTop: 16 }}>
+                <Paragraph>
+                  <Text strong>1. 仓位配比策略：</Text>
+                  找好主线与支线。一般采用 <Text type="danger">主线:支线 = 7:3</Text>，或 <Text type="danger">主线:支线1:支线2 = 6:2:2</Text>。
+                </Paragraph>
+
+                <Paragraph>
+                  <Text strong>2. 止损与跟随准则：</Text>
+                  只要没有 <Text type="success" strong>开盘砸破 -4%</Text> 或 <Text type="success" strong>跌破 10 日线</Text>，就坚持跟随趋势高抛低吸。
+                  涨了适度止盈，回调企稳反弹时顺势加仓，<Text underline>严禁提前盲目抄底</Text>。
+                </Paragraph>
+
+                <Paragraph>
+                  <Text strong>3. 减少无谓调仓：</Text>
+                  趋势未坏，不要随便换股。忽略日内震荡，只要未达止损位，保持定力。回调是暂时的，趋势会修复价格。
+                </Paragraph>
+
+                <Paragraph>
+                  <Text strong>4. 确定性是盈利之本：</Text>
+                  跟随趋势最大的好处是<Text strong>确定性</Text>。强势股在回调时抗跌，上涨时领涨，因为资金主动性强，趋势力量大。
+                </Paragraph>
+              </div>
             </Card>
 
             <Card 

@@ -503,5 +503,30 @@ exports.default = [
         "blockName": "PPE树脂",
         "code": "sh601208",
         "name": "东材科技"
+    },
+    {
+        "blockName": "半导体材料",
+        "code": "sh688545",
+        "name": "兴福电子"
+    },
+    {
+        "blockName": "半导体材料",
+        "code": "sz300666",
+        "name": " 江丰电子"
+    },
+    {
+        "blockName": "半导体材料",
+        "code": "sz002409",
+        "name": " 雅克科技"
+    },
+    {
+        "blockName": "半导体材料",
+        "code": "sh688146",
+        "name": "中船特气"
+    },
+    {
+        "blockName": "半导体材料",
+        "code": "sh688456",
+        "name": "有研粉材"
     }
 ]

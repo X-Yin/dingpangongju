@@ -48,7 +48,10 @@ const stockList = {
     'sz300776': '帝尔激光',
     'sz000725': '京东方A',
     'sh688668': '鼎通科技',
-    'sh688017': '绿的谐波'
+    'sh688017': '绿的谐波',
+    'sz300666': '江丰电子',
+    'sh688629': '华丰科技',
+    'sh688456': '有研粉材'
 };
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');

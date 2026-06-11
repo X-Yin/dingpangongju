@@ -27,11 +27,6 @@ function App() {
       label: '成交量统计',
     },
     {
-      key: '/jingjia',
-      icon: <ThunderboltOutlined />,
-      label: '竞价抢筹',
-    },
-    {
       key: '/block',
       icon: <AppstoreOutlined />,
       label: '重点板块',

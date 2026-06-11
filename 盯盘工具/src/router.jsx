@@ -30,10 +30,6 @@ const router = createBrowserRouter([
         element: <Sentiment />,
       },
       {
-        path: 'jingjia',
-        element: <JingJiaQiangChou />,
-      },
-      {
         path: 'volume',
         element: <VolumeStatistics />,
       },

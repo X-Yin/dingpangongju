@@ -11,6 +11,7 @@ const { getAmountHistory, pollAmountInfo } = require('./service/amount');
 const { getAllEmotionData, getAllIndexKlineData, updateCurrentEmotionData, updateCurrentTechIndexData, getAllTechIndexData } = require('./service/emotion');
 const { getMainProblem, writeMainProblem, updateMainProblemSeq, delMainProblem, updatePersonalSugg } = require('./service/mainProblem');
 const { getOpRecord, updateOpRecord } = require('./service/opRecord');
+const { updateMainLine, getMainLine } = require('./service/marketMainLine');
 
 const POLL_CONFIG = {
   kaipanzhudong: {
@@ -157,6 +158,19 @@ app.post('/update_op_record', async (req, res) => {
 app.get('/get_op_record', async (req, res) => {
   const opRecord = getOpRecord();
   res.json(opRecord);
+});
+
+// 更新市场主线和支线
+app.post('/update_main_line', async (req, res) => {
+  const { data } = req.body;
+  updateMainLine(data);
+  res.json({ message: '更新成功' });
+});
+
+// 返回市场主线和支线
+app.get('/get_main_line', async (req, res) => {
+  const mainLineData = getMainLine();
+  res.json(mainLineData);
 });
 
 

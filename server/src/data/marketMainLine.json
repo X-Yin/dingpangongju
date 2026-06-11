@@ -1,0 +1,10 @@
+[{
+  "blockName": "半导体",
+  "stocks": [{
+    "stockName": "拓荆科技",
+    "change": 3.5,
+    "code": "sh688123"
+  }],
+  "reason": "成为主线 or 支线的理由",
+  "lineType": "main/branch"
+}]
