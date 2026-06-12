@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { filterUnNormalDaPanData, pollDaPanData, getAllDaPanData } = require('./service/dapan');
 const { filterUnNormalStockData, pollStockData, getSingleStockData, getSingleStockTlineData, getAllStockData, getJiSuYiDongRankData } = require('./service/stock');
-const { getBlockData, pollBlockData, getTopAndBottomBlockData } = require('./service/block');
+const { getBlockData, pollBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock } = require('./service/block');
 // const { diagnose } = require('./service/diagnose');
 const { getJingJiaQiangChouData, pollJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
 const { pollKaiPaiZhuDongData, getKaiPanZhuDongData } = require('./service/kaipanzhudong');
@@ -173,7 +173,11 @@ app.get('/get_main_line', async (req, res) => {
   res.json(mainLineData);
 });
 
-
+// 返回当前热门板块
+app.get('/current_day_hot_block', async (req, res) => {
+  const currentDayHotBlock = await getCurrentDayHotBlock();
+  res.json(currentDayHotBlock);
+});
 
 // 启动服务
 app.listen(port, () => {

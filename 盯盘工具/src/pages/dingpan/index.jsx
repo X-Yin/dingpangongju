@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Card, Row, Col, Tag, Typography, Empty, Space, Divider, Button, Modal, List, Badge, Spin, Alert, Input, Tooltip, Tabs } from 'antd';
 const { TabPane } = Tabs;
-import { StockOutlined, LineChartOutlined, ClockCircleOutlined, HistoryOutlined, AlertOutlined, RiseOutlined, FallOutlined, AreaChartOutlined, WarningOutlined, SearchOutlined, CaretUpOutlined, CaretDownOutlined, ThunderboltOutlined, CloseOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import { StockOutlined, LineChartOutlined, ClockCircleOutlined, HistoryOutlined, AlertOutlined, RiseOutlined, FallOutlined, AreaChartOutlined, WarningOutlined, SearchOutlined, CaretUpOutlined, CaretDownOutlined, ThunderboltOutlined, CloseOutlined, ArrowUpOutlined, ArrowDownOutlined, FireOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { createChart, ColorType } from 'lightweight-charts';
 import { local_ip } from '../../constant';
@@ -54,6 +54,7 @@ const DingPan = () => {
     const [jisuYidongDownList, setJisuYidongDownList] = useState([]); // 急速异动下跌排名
     const [showJingJiaQiangChou, setShowJingJiaQiangChou] = useState(true); // 控制竞价抢筹模块显示
     const [showKaiPanZhuDong, setShowKaiPanZhuDong] = useState(true); // 控制开盘主动拉升模块显示
+    const [hotBlocks, setHotBlocks] = useState([]); // 当日热门板块
 
     // 主力资金趋势图相关
     const [historyData, setHistoryData] = useState([]);
@@ -323,6 +324,17 @@ const DingPan = () => {
         }
     };
 
+    const fetchHotBlocks = async () => {
+        try {
+            const response = await axios.get(`http://${local_ip}:3000/current_day_hot_block`);
+            if (response.data && Array.isArray(response.data)) {
+                setHotBlocks(response.data);
+            }
+        } catch (error) {
+            console.error('Fetch hot blocks failed:', error);
+        }
+    };
+
     const fetchAmountData = async () => {
         try {
             const response = await axios.get(`http://${local_ip}:3000/dapan_data`);
@@ -588,17 +600,20 @@ const DingPan = () => {
         fetchEmotionData();
         fetchJisuYidongRank();
         fetchHistoryData();
+        fetchHotBlocks();
         
         const monitorTimer = setInterval(fetchData, 5000);
         const amountTimer = setInterval(fetchAmountData, 10000); // 10s 轮询一次
         const jisuYidongRankTimer = setInterval(fetchJisuYidongRank, 3000); // 3s 轮询一次
         const historyTimer = setInterval(fetchHistoryData, 10000); // 10s 轮询一次
+        const hotBlocksTimer = setInterval(fetchHotBlocks, 10000); // 10s 轮询一次
         
         return () => {
             clearInterval(monitorTimer);
             clearInterval(amountTimer);
             clearInterval(jisuYidongRankTimer);
             clearInterval(historyTimer);
+            clearInterval(hotBlocksTimer);
         };
     }, []);
 
@@ -827,6 +842,32 @@ const DingPan = () => {
                                         </Card>
                                     </Col>
                                 )}
+                            </Row>
+                        )}
+
+                        {/* 当日热门板块 */}
+                        {hotBlocks.length > 0 && (
+                            <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
+                                <Col span={24}>
+                                    <Card className="hot-blocks-card" variant="borderless">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <FireOutlined style={{ color: '#faad14', fontSize: '20px' }} />
+                                            <Title level={5} style={{ margin: 0, fontSize: '14px' }}>当日热门板块</Title>
+                                        </div>
+                                        <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                                            {hotBlocks.map((blockName, index) => (
+                                                <Tag 
+                                                    key={index}
+                                                    color="orange"
+                                                    style={{ fontSize: '14px', padding: '4px 12px', cursor: 'pointer' }}
+                                                    onClick={() => jumpToBlock(blockName)}
+                                                >
+                                                    {blockName}
+                                                </Tag>
+                                            ))}
+                                        </div>
+                                    </Card>
+                                </Col>
                             </Row>
                         )}
 

@@ -27,7 +27,8 @@ import zhulizijin0610 from '../../assets/20260610-主力资金.png';
 import yingweike0610 from '../../assets/20260610-英维克.png';
 import yuanjiekeji0610 from '../../assets/20260610-源杰科技.png';
 import shengyikeji0610 from '../../assets/20260610-生益科技.png';
-import huahong0610 from '../../assets/20260610-华虹.png'
+import huahong0610 from '../../assets/20260610-华虹.png';
+import shangzheng0611 from '../../assets/20260611-上证指数.png';
 import './index.scss';
 
 const { Title, Paragraph, Text } = Typography;
@@ -37,6 +38,7 @@ const PreMarketReading = () => {
 
   const menuItems = [
     { key: 'trend-following', href: '#trend-following', title: '跟随趋势，拥抱确定性' },
+    { key: 'weak-shock', href: '#weak-shock', title: '弱势震荡期的操作策略' },
     { key: 'outflow-rebound-0610', href: '#outflow-rebound-0610', title: '操他妈了个逼！' },
     { key: 'case-zhongxin', href: '#case-zhongxin', title: '高位票竞价和开盘不及预期直接卖' },
     { key: 'case-hanwuji', href: '#case-hanwuji', title: '清仓之后不操作' },
@@ -544,6 +546,48 @@ const PreMarketReading = () => {
                 showIcon
                 icon={<CheckCircleOutlined />}
               />
+            </Card>
+
+            <Card
+              id="weak-shock"
+              className="section-card"
+              title={<><WarningOutlined style={{ color: '#faad14' }} /> 弱势震荡期的操作策略(20260611)</>}
+              variant="borderless"
+            >
+              <Alert
+                className="lesson-alert"
+                message="市场阶段特征"
+                description="大盘下跌到底部不会立刻反转，而是会弱势震荡一段时间。这个阶段的核心特征是：全天轮动较快，目的是为了护指数。"
+                type="info"
+                showIcon
+                icon={<InfoCircleOutlined />}
+              />
+
+              <Paragraph style={{ marginTop: 16 }}>
+                例如：当天开盘先拉 <Text strong>CPO</Text>，后来拉 <Text strong>寒武纪</Text>，最后拉 <Text strong>宁德时代</Text>。同时 <Text strong>银行</Text>、<Text strong>证券</Text> 都在上涨，目的就是为了在这个位置护住指数不继续下跌。
+              </Paragraph>
+
+              <Alert
+                className="lesson-alert"
+                message="操作铁律"
+                description={
+                  <>
+                    <Paragraph>
+                      <Text strong style={{ color: '#cf1322' }}>绝对不会在这个地方立刻开始主升浪行情，所以一旦涨的多就会被砸下来。</Text>
+                    </Paragraph>
+                    <Paragraph>
+                      这个时候千万不能追高，最重要的就是要在这段时间内<Text strong type="danger">管住手</Text>。
+                    </Paragraph>
+                    <Paragraph>
+                      <Text strong style={{ color: '#cf1322', fontSize: '18px' }}>空仓最重要。只要不放量大阳线就不开仓。</Text>
+                    </Paragraph>
+                  </>
+                }
+                type="warning"
+                showIcon
+                icon={<WarningOutlined />}
+              />
+              <Image src={shangzheng0611} className="case-image" />
             </Card>
 
             <Divider>

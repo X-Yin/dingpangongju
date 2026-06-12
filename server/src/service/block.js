@@ -102,6 +102,12 @@ const getTopAndBottomBlockData = (num = 5) => {
     };
 }
 
+const getCurrentDayHotBlock = () => {
+    const currentDayHotBlock = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/current_day_hot_block.json'), 'utf-8') || '[]');
+    return currentDayHotBlock;
+}
+
 exports.getBlockData = getBlockData;
 exports.pollBlockData = pollBlockData;
 exports.getTopAndBottomBlockData = getTopAndBottomBlockData;
+exports.getCurrentDayHotBlock = getCurrentDayHotBlock;

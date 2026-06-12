@@ -5,6 +5,7 @@ const dayjs = require('dayjs');
 const { sleep } = require('../utils/index');
 
 const amountPath = path.resolve(__dirname, '../data/amount.json');
+const currentDayHotBlockPath = path.resolve(__dirname, '../data/current_day_hot_block.json');
 
 // 获取成交量信息
 const fetchAmountInfo = async () => {
@@ -32,14 +33,19 @@ const fetchAmountInfo = async () => {
         const result = await page.evaluate(() => {
             const element1 = document.querySelector('.hq-stock-money span.zhulivalue');
             const element2 = document.querySelector('.hq-stock-amount span.valfont');
-            console.log('>>>element1,2', element1, element2);
+            // 把页面上所有类名是 hot-topthree-item 并且内部有 h3 标签的元素都取出来
+            const element3 = document.querySelectorAll('.hq-stock-section .hq-topthree-item.block a h3');
+            const currentDayHotBlock = [];
+            element3.forEach((item) => {
+                currentDayHotBlock.push(item.innerText);
+            });
+
             return {
                 'mainMoney': element1 ? element1.innerText.trim() : null,
                 'amountChangeDiff': element2 ? element2.innerText.trim() : null,
+                'currentDayHotBlock': currentDayHotBlock.slice(0, 6),
             }
         });
-
-        console.log('>>> 成交量 result', result);
 
         await browser.close();
         if (Math.abs(Number(parseFloat(result.mainMoney))) > 0 && Math.abs(Number(parseFloat(result.amountChangeDiff))) > 0) {
@@ -94,6 +100,8 @@ const pollAmountInfo = async (interval = 1000 * 10) => {
 
             // 保存到文件
             fs.writeFileSync(amountPath, JSON.stringify(amountData, null, 2));
+            const { currentDayHotBlock } = amountInfo;
+            fs.writeFileSync(currentDayHotBlockPath, JSON.stringify(currentDayHotBlock, null, 2));
         } catch (error) {
             console.error('轮询获取成交量信息失败，等待下一次轮询:', error.message);
         }
