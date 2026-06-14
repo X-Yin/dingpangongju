@@ -51,7 +51,10 @@ const stockList = {
     'sh688017': '绿的谐波',
     'sz300666': '江丰电子',
     'sh688629': '华丰科技',
-    'sh688456': '有研粉材'
+    'sh603993': '洛阳钼业',
+    'sh601899': '紫金矿业',
+    'sz300750': '宁德时代',
+    'sz002407': '多氟多'
 };
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');

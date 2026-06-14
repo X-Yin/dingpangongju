@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { filterUnNormalDaPanData, pollDaPanData, getAllDaPanData } = require('./service/dapan');
 const { filterUnNormalStockData, pollStockData, getSingleStockData, getSingleStockTlineData, getAllStockData, getJiSuYiDongRankData } = require('./service/stock');
-const { getBlockData, pollBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock } = require('./service/block');
+const { getBlockData, pollBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock, getBlockHistory, pollBlockHistory, getBlockDayHistory, updateBlockDayHistory } = require('./service/block');
 // const { diagnose } = require('./service/diagnose');
 const { getJingJiaQiangChouData, pollJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
 const { pollKaiPaiZhuDongData, getKaiPanZhuDongData } = require('./service/kaipanzhudong');
@@ -12,6 +12,7 @@ const { getAllEmotionData, getAllIndexKlineData, updateCurrentEmotionData, updat
 const { getMainProblem, writeMainProblem, updateMainProblemSeq, delMainProblem, updatePersonalSugg } = require('./service/mainProblem');
 const { getOpRecord, updateOpRecord } = require('./service/opRecord');
 const { updateMainLine, getMainLine } = require('./service/marketMainLine');
+const { getTimelineData, updateTimelineEvent, deleteTimelineEvent } = require('./service/timeline');
 
 const POLL_CONFIG = {
   kaipanzhudong: {
@@ -179,6 +180,46 @@ app.get('/current_day_hot_block', async (req, res) => {
   res.json(currentDayHotBlock);
 });
 
+// 返回板块数据历史记录
+app.get('/block_history', async (req, res) => {
+  const blockHistory = await getBlockHistory();
+  res.json(blockHistory);
+});
+
+// 返回时间线数据
+app.get('/get_timeline', async (req, res) => {
+  const timelineData = getTimelineData();
+  res.json(timelineData);
+});
+
+// 更新时间线事件
+app.post('/update_timeline_event', async (req, res) => {
+  const event = req.body;
+  updateTimelineEvent(event);
+  res.json({ message: '更新成功' });
+});
+
+// 删除时间线事件
+app.post('/delete_timeline_event', async (req, res) => {
+  const { id } = req.body;
+  deleteTimelineEvent(id);
+  res.json({ message: '删除成功' });
+});
+
+// 返回板块数据历史记录
+app.get('/block_day_history', async (req, res) => {
+  const blockDayHistory = await getBlockDayHistory();
+  res.json(blockDayHistory);
+});
+
+// 更新板块数据历史记录
+app.post('/update_block_day_history', async (req, res) => {
+  await updateBlockDayHistory();
+  res.json({ message: '更新成功' });
+});
+
+
+
 // 启动服务
 app.listen(port, () => {
   const disablePolling = process.argv.includes('--no-poll');
@@ -201,6 +242,8 @@ app.listen(port, () => {
     });
     // 轮询成交量信息
     pollAmountInfo(10000);
+    // 轮询板块数据历史记录
+    pollBlockHistory(300000);
   }
   console.log(`服务运行在 http://localhost:${port}`);
 });

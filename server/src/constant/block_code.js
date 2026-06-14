@@ -161,7 +161,7 @@ exports.default = [
     },
     {
         "blockName": "电子布",
-        "code": "sz301256",
+        "code": "sz301526",
         "name": "国际复材"
     },
     {
@@ -528,5 +528,40 @@ exports.default = [
         "blockName": "半导体材料",
         "code": "sh688456",
         "name": "有研粉材"
-    }
+    },
+    {
+        "blockName": "贵金属",
+        "code": "sh601899",
+        "name": "紫金矿业"
+    },
+    {
+        "blockName": "贵金属",
+        "code": "sh603993",
+        "name": "洛阳泪业"
+    },
+    {
+        "blockName": "贵金属",
+        "code": "sz000630",
+        "name": "铜陵有色"
+    },
+    {
+        "blockName": "贵金属",
+        "code": "sh601600",
+        "name": "中国铝业"
+    },
+    {
+        "blockName": "钨",
+        "code": "sz000657",
+        "name": "中钨高新"
+    },
+    {
+        "blockName": "钨",
+        "code": "sh600549",
+        "name": "厦门钨业"
+    },
+    {
+        "blockName": "钨",
+        "code": "sz301377",
+        "name": "鼎泰高科"
+    },
 ]

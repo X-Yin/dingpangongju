@@ -29,6 +29,8 @@ const clearDirectories = () => {
 
     // 清空 jisuyidong.json 文件
     fs.writeFileSync(path.resolve(__dirname, '../src/data/jisuyidong.json'), '{}');
+    // 清空 block_history.json 文件
+    fs.writeFileSync(path.resolve(__dirname, '../src/data/block_history.json'), '[]');
 };
 
 clearDirectories();

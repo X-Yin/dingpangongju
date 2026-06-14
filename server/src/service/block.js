@@ -85,7 +85,6 @@ const getBlockData = () => {
     return blockList.sort((a, b) => b.avgChange - a.avgChange);
 };
 
-let block_rank_list_prev = {};
 // 找出涨幅前五和跌幅前五的板块返回
 const getTopAndBottomBlockData = (num = 5) => {
     const blockData = getBlockData();
@@ -107,7 +106,77 @@ const getCurrentDayHotBlock = () => {
     return currentDayHotBlock;
 }
 
+// 每隔 1min 自动读取一次板块数据，并且计算每个板块的 avgChange，将时间和结果储存到本地的 data/block_history.json 文件中
+const pollBlockHistory = async (interval = 60000) => {
+    const task = async () => {
+        const blockData = getBlockData();
+        const blockHistory = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/block_history.json'), 'utf-8') || '[]');
+        blockHistory.push({
+            time: dayjs().format('HH:mm'),
+            blockData: blockData.map(item => ({
+                blockName: item.blockName,
+                avgChange: item.avgChange
+            }))
+        });
+        fs.writeFileSync(path.resolve(__dirname, '../data/block_history.json'), JSON.stringify(blockHistory, null, 2));
+    };
+    setInterval(task, interval);
+}
+
+let num = 0;
+const getBlockHistory = () => {
+    // if (num === 0) {
+    //     num++;
+    //     return require('../mock/block_history_1.json');
+    // }
+    // return require('../mock/block_history_2.json');
+
+    const blockHistory = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/block_history.json'), 'utf-8') || '[]');
+    return blockHistory;
+}
+
+const getBlockDayHistory = () => {
+    const blockDayHistory = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/block_data_day_history.json'), 'utf-8') || '[]');
+    return blockDayHistory;
+};
+
+const updateBlockDayHistory = () => {
+    // 先通过 getBlockData 获取最新的板块数据，然后序列化成 block_data_day_history.json 内部的格式，存储下来
+    const blockData = getBlockData();
+    const blockDayHistory = getBlockDayHistory();
+    const today = dayjs().format('YYYY-MM-DD');
+    
+    // 检查今天是否已经有记录
+    const existingIndex = blockDayHistory.findIndex(item => item.time === today);
+    
+    if (existingIndex !== -1) {
+        // 如果今天已经有记录，则替换
+        blockDayHistory[existingIndex] = {
+            time: today,
+            blockData: blockData.map(item => ({
+                blockName: item.blockName,
+                avgChange: item.avgChange
+            }))
+        };
+    } else {
+        // 如果今天没有记录，则追加
+        blockDayHistory.push({
+            time: today,
+            blockData: blockData.map(item => ({
+                blockName: item.blockName,
+                avgChange: item.avgChange
+            }))
+        });
+    }
+    
+    fs.writeFileSync(path.resolve(__dirname, '../data/block_data_day_history.json'), JSON.stringify(blockDayHistory, null, 2));
+};
+
 exports.getBlockData = getBlockData;
 exports.pollBlockData = pollBlockData;
 exports.getTopAndBottomBlockData = getTopAndBottomBlockData;
 exports.getCurrentDayHotBlock = getCurrentDayHotBlock;
+exports.pollBlockHistory = pollBlockHistory;
+exports.getBlockHistory = getBlockHistory;
+exports.getBlockDayHistory = getBlockDayHistory;
+exports.updateBlockDayHistory = updateBlockDayHistory;
