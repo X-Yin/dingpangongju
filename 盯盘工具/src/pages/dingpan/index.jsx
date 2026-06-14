@@ -61,6 +61,11 @@ const DingPan = () => {
     const mainMoneyContainerRef = useRef(null);
     const mainMoneyChartRef = useRef(null);
 
+    // 板块异动监控相关
+    const [blockHistoryData, setBlockHistoryData] = useState([]);
+    const prevBlockHistoryRef = useRef(null);
+    const [blockAlerts, setBlockAlerts] = useState([]);
+
     // 打开 K 线弹窗
     const showKLine = (stock) => {
         setSelectedStock(stock);
@@ -504,6 +509,50 @@ const DingPan = () => {
         }
     };
 
+    const fetchBlockHistory = async () => {
+        try {
+            const response = await axios.get(`http://${local_ip}:3000/block_history`);
+            const newData = response.data;
+            
+            // 对比上一次的数据，检测异动
+            if (prevBlockHistoryRef.current && newData.length > 0) {
+                const prevData = prevBlockHistoryRef.current;
+                const latestNewData = newData[newData.length - 1];
+                const latestPrevData = prevData.length > 0 ? prevData[prevData.length - 1] : null;
+                
+                if (latestPrevData && latestNewData) {
+                    const newAlerts = [];
+                    
+                    latestNewData.blockData.forEach(newBlock => {
+                        const prevBlock = latestPrevData.blockData.find(b => b.blockName === newBlock.blockName);
+                        if (prevBlock) {
+                            const change = newBlock.avgChange - prevBlock.avgChange;
+                            if (Math.abs(change) > 0.3) {
+                                newAlerts.push({
+                                    id: `${newBlock.blockName}-${Date.now()}`,
+                                    blockName: newBlock.blockName,
+                                    prevChange: prevBlock.avgChange,
+                                    newChange: newBlock.avgChange,
+                                    changeDiff: change,
+                                    time: dayjs().format('HH:mm:ss'),
+                                    type: change > 0 ? 'up' : 'down'
+                                });
+                            }
+                        }
+                    });
+                    
+                    // 直接替换掉旧的告警，只显示当前这次轮询到的异动数据
+                    setBlockAlerts(newAlerts);
+                }
+            }
+            
+            prevBlockHistoryRef.current = newData;
+            setBlockHistoryData(newData);
+        } catch (err) {
+            console.error('Fetch block history data failed:', err);
+        }
+    };
+
     const createBaseChart = (container) => {
         return createChart(container, {
             layout: {
@@ -601,12 +650,14 @@ const DingPan = () => {
         fetchJisuYidongRank();
         fetchHistoryData();
         fetchHotBlocks();
+        fetchBlockHistory();
         
         const monitorTimer = setInterval(fetchData, 5000);
         const amountTimer = setInterval(fetchAmountData, 10000); // 10s 轮询一次
         const jisuYidongRankTimer = setInterval(fetchJisuYidongRank, 3000); // 3s 轮询一次
         const historyTimer = setInterval(fetchHistoryData, 10000); // 10s 轮询一次
         const hotBlocksTimer = setInterval(fetchHotBlocks, 10000); // 10s 轮询一次
+        const blockHistoryTimer = setInterval(fetchBlockHistory, 10000); // 10s 轮询一次
         
         return () => {
             clearInterval(monitorTimer);
@@ -614,6 +665,7 @@ const DingPan = () => {
             clearInterval(jisuYidongRankTimer);
             clearInterval(historyTimer);
             clearInterval(hotBlocksTimer);
+            clearInterval(blockHistoryTimer);
         };
     }, []);
 
@@ -729,29 +781,165 @@ const DingPan = () => {
                 </div>
             ) : (
                 <>
-                    {/* 急速异动横幅条 */}
-                    {stockData.waveList.length > 0 && (
-                        <div className="wave-banner">
-                            <div className="wave-banner-title">
-                                <StockOutlined className="wave-icon" />
-                                <span>急速异动:</span>
-                            </div>
-                            <div className="wave-items-wrapper">
-                                {stockData.waveList.map((item, index) => (
-                                    <div
-                                            key={index}
-                                            className={`wave-banner-item ${item.statusKey}`}
-                                            onClick={() => showKLine(item)}
-                                        >
-                                            <span className="wave-time">{item.time}</span>
-                                            <span className="wave-name">{item.name}</span>
-                                            <Text strong style={{ color: item.color, marginRight: 4 }}>【{item.change}】</Text>
-                                            <Tag color={item.color} className="wave-tag">{item.change_diff}</Tag>
+                    <Row gutter={16} style={{ marginBottom: 16 }}>
+                        {/* 个股异动监控 */}
+                        <Col xs={24} lg={12}>
+                            <Card 
+                                title={<><StockOutlined style={{ color: '#1890ff', marginRight: 8 }} /> 个股异动监控</>}
+                                className="monitor-card stock-alert-card"
+                                variant="borderless"
+                                bodyStyle={{ maxHeight: '400px', overflowY: 'auto' }}
+                            >
+                                <Row gutter={16}>
+                                    {/* 上涨个股 */}
+                                    <Col xs={24} lg={12}>
+                                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                                            <CaretUpOutlined style={{ color: '#f5222d', marginRight: 8 }} />
+                                            <Text strong style={{ color: '#f5222d' }}>上涨异动</Text>
                                         </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                                        <List
+                                            size="small"
+                                            dataSource={stockData.waveList.filter(a => a.statusKey === 'highRed')}
+                                            renderItem={(item) => (
+                                                <List.Item
+                                                    style={{ cursor: 'pointer' }}
+                                                    onClick={() => showKLine(item)}
+                                                >
+                                                    <List.Item.Meta
+                                                        title={
+                                                            <Space>
+                                                                <Text strong>{item.name}</Text>
+                                                                <Tag color="error">
+                                                                    {item.change}
+                                                                </Tag>
+                                                            </Space>
+                                                        }
+                                                        description={
+                                                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                                急速变动 · {item.change_diff} · {item.time}
+                                                            </Text>
+                                                        }
+                                                    />
+                                                </List.Item>
+                                            )}
+                                        />
+                                    </Col>
+                                    {/* 下跌个股 */}
+                                    <Col xs={24} lg={12}>
+                                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                                            <CaretDownOutlined style={{ color: '#52c41a', marginRight: 8 }} />
+                                            <Text strong style={{ color: '#52c41a' }}>下跌异动</Text>
+                                        </div>
+                                        <List
+                                            size="small"
+                                            dataSource={stockData.waveList.filter(a => a.statusKey === 'highGreen')}
+                                            renderItem={(item) => (
+                                                <List.Item
+                                                    style={{ cursor: 'pointer' }}
+                                                    onClick={() => showKLine(item)}
+                                                >
+                                                    <List.Item.Meta
+                                                        title={
+                                                            <Space>
+                                                                <Text strong>{item.name}</Text>
+                                                                <Tag color="success">
+                                                                    {item.change}
+                                                                </Tag>
+                                                            </Space>
+                                                        }
+                                                        description={
+                                                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                                急速变动 · {item.change_diff} · {item.time}
+                                                            </Text>
+                                                        }
+                                                    />
+                                                </List.Item>
+                                            )}
+                                        />
+                                    </Col>
+                                </Row>
+                            </Card>
+                        </Col>
+
+                        {/* 板块异动监控 */}
+                        <Col xs={24} lg={12}>
+                            <Card 
+                                title={<><AlertOutlined style={{ color: '#faad14', marginRight: 8 }} /> 板块异动监控</>}
+                                className="monitor-card block-alert-card"
+                                variant="borderless"
+                                bodyStyle={{ maxHeight: '400px', overflowY: 'auto' }}
+                            >
+                                <Row gutter={16}>
+                                    {/* 上涨板块 */}
+                                    <Col xs={24} lg={12}>
+                                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                                            <CaretUpOutlined style={{ color: '#f5222d', marginRight: 8 }} />
+                                            <Text strong style={{ color: '#f5222d' }}>上涨异动</Text>
+                                        </div>
+                                        <List
+                                            size="small"
+                                            dataSource={blockAlerts.filter(a => a.type === 'up')}
+                                            renderItem={(item) => (
+                                                <List.Item
+                                                    style={{ cursor: 'pointer' }}
+                                                    onClick={() => jumpToBlock(item.blockName)}
+                                                >
+                                                    <List.Item.Meta
+                                                        title={
+                                                            <Space>
+                                                                <Text strong>{item.blockName}</Text>
+                                                                <Tag color="error">
+                                                                    {item.changeDiff > 0 ? '+' : ''}{item.changeDiff.toFixed(2)}%
+                                                                </Tag>
+                                                            </Space>
+                                                        }
+                                                        description={
+                                                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                                {item.prevChange.toFixed(2)}% → {item.newChange.toFixed(2)}% · {item.time}
+                                                            </Text>
+                                                        }
+                                                    />
+                                                </List.Item>
+                                            )}
+                                        />
+                                    </Col>
+                                    {/* 下跌板块 */}
+                                    <Col xs={24} lg={12}>
+                                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                                            <CaretDownOutlined style={{ color: '#52c41a', marginRight: 8 }} />
+                                            <Text strong style={{ color: '#52c41a' }}>下跌异动</Text>
+                                        </div>
+                                        <List
+                                            size="small"
+                                            dataSource={blockAlerts.filter(a => a.type === 'down')}
+                                            renderItem={(item) => (
+                                                <List.Item
+                                                    style={{ cursor: 'pointer' }}
+                                                    onClick={() => jumpToBlock(item.blockName)}
+                                                >
+                                                    <List.Item.Meta
+                                                        title={
+                                                            <Space>
+                                                                <Text strong>{item.blockName}</Text>
+                                                                <Tag color="success">
+                                                                    {item.changeDiff > 0 ? '+' : ''}{item.changeDiff.toFixed(2)}%
+                                                                </Tag>
+                                                            </Space>
+                                                        }
+                                                        description={
+                                                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                                {item.prevChange.toFixed(2)}% → {item.newChange.toFixed(2)}% · {item.time}
+                                                            </Text>
+                                                        }
+                                                    />
+                                                </List.Item>
+                                            )}
+                                        />
+                                    </Col>
+                                </Row>
+                            </Card>
+                        </Col>
+                    </Row>
                     <Row gutter={[24, 24]}>
                         {/* 左侧主要监控区 */}
                         <Col xs={24} lg={17}>

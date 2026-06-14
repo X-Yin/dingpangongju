@@ -29,6 +29,8 @@ import yuanjiekeji0610 from '../../assets/20260610-源杰科技.png';
 import shengyikeji0610 from '../../assets/20260610-生益科技.png';
 import huahong0610 from '../../assets/20260610-华虹.png';
 import shangzheng0611 from '../../assets/20260611-上证指数.png';
+import zhongjixuchuang0612 from '../../assets/20260612-中际旭创.png';
+import xinyisheng0612 from '../../assets/20260612-新易盛.png';
 import './index.scss';
 
 const { Title, Paragraph, Text } = Typography;
@@ -39,6 +41,7 @@ const PreMarketReading = () => {
   const menuItems = [
     { key: 'trend-following', href: '#trend-following', title: '跟随趋势，拥抱确定性' },
     { key: 'weak-shock', href: '#weak-shock', title: '弱势震荡期的操作策略' },
+    { key: 'high-volume-yin', href: '#high-volume-yin', title: '高位放量大阴线信号' },
     { key: 'outflow-rebound-0610', href: '#outflow-rebound-0610', title: '操他妈了个逼！' },
     { key: 'case-zhongxin', href: '#case-zhongxin', title: '高位票竞价和开盘不及预期直接卖' },
     { key: 'case-hanwuji', href: '#case-hanwuji', title: '清仓之后不操作' },
@@ -588,6 +591,96 @@ const PreMarketReading = () => {
                 icon={<WarningOutlined />}
               />
               <Image src={shangzheng0611} className="case-image" />
+            </Card>
+
+            <Card
+              id="high-volume-yin"
+              className="section-card"
+              title={<><WarningOutlined style={{ color: '#cf1322' }} /> 高位放量大阴线信号(0612)</>}
+              variant="borderless"
+            >
+              <Alert
+                className="lesson-alert"
+                message="核心信号识别"
+                description={
+                  <div>
+                    <Paragraph style={{ margin: 0 }}>
+                      <Text strong style={{ color: '#cf1322' }}>高位放量大阴线</Text>，一般表示中期内行情就结束了。
+                    </Paragraph>
+                    <Paragraph style={{ margin: 0 }}>
+                      <Text strong>判断标准：</Text>一个股票如果中期（两三个月内）上涨了接近一倍，这基本上就已经是在高位了。
+                    </Paragraph>
+                  </div>
+                }
+                type="error"
+                showIcon
+                icon={<WarningOutlined />}
+              />
+
+              <Alert
+                className="lesson-alert"
+                message="案例一：中际旭创 (0605)"
+                description={
+                  <div>
+                    <Paragraph style={{ margin: 0 }}>
+                      中际旭创 0605 这一天的放量大阴线，就是预示着 <Text strong>CPO 行情的结束</Text>。
+                    </Paragraph>
+                    <Paragraph style={{ margin: 0 }}>
+                      上一轮市场风格主要是围绕海外算力硬件在炒作，但是龙头这里直接一根放量大阴线，也是表示市场风格已经开始切换了。
+                    </Paragraph>
+                    <Paragraph style={{ margin: 0 }}>
+                      <Text strong style={{ color: '#cf1322' }}>操作建议：中期内至少一个月，这个方向不用再看了。</Text>
+                    </Paragraph>
+                  </div>
+                }
+                type="info"
+                showIcon
+                icon={<InfoCircleOutlined />}
+              />
+
+              <div style={{ marginTop: 16, marginBottom: 16 }}>
+                <Image src={zhongjixuchuang0612} />
+              </div>
+
+              <Alert
+                className="lesson-alert"
+                message="案例二：新易盛 (0611-0612)"
+                description={
+                  <div>
+                    <Paragraph style={{ margin: 0 }}>
+                      新易盛 0611 这一天也是一根放量大阴线，虽然有传什么二季度业绩不及预期这样的小作文导致的。
+                    </Paragraph>
+                    <Paragraph style={{ margin: 0 }}>
+                      但是可以看到 0612 这一天也是大阴线。所以其实只要高位放量大阴线，基本上就是行情结束的标志。
+                    </Paragraph>
+                  </div>
+                }
+                type="warning"
+                showIcon
+                icon={<BulbOutlined />}
+              />
+
+              <div style={{ marginTop: 16, marginBottom: 16 }}>
+                <Image src={xinyisheng0612} />
+              </div>
+
+              <Alert
+                className="lesson-alert"
+                message="操作铁律"
+                description={
+                  <div>
+                    <Paragraph style={{ margin: 0 }}>
+                      <Text strong style={{ color: '#cf1322', fontSize: '16px' }}>不要有幻想了，短期内是不可能再拉起来了。</Text>
+                    </Paragraph>
+                    <Paragraph style={{ margin: 0 }}>
+                      你可以去看看别的方向，去想想当下市场的风格是不是已经开始切换了。
+                    </Paragraph>
+                  </div>
+                }
+                type="error"
+                showIcon
+                icon={<CheckCircleOutlined />}
+              />
             </Card>
 
             <Divider>

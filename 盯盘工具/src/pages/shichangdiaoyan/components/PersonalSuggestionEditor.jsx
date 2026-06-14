@@ -12,13 +12,14 @@ const PersonalSuggestionEditor = ({
     const vditorRef = useRef(null);
     const editorInstance = useRef(null);
     const [isContentModified, setIsContentModified] = useState(false);
+    console.log('initialContent', initialContent);
 
     // Effect for initializing Vditor on mount and cleaning up on unmount
     useEffect(() => {
         setTimeout(() => {
-            if (!vditorRef.current || editorInstance.current) {
-                return; // Don't re-initialize if already done or ref not available
-            }
+            // if (!vditorRef.current || editorInstance.current) {
+            //     return; // Don't re-initialize if already done or ref not available
+            // }
 
             const currentVditor = new Vditor(vditorRef.current, {
                 minHeight: 200,
@@ -46,7 +47,7 @@ const PersonalSuggestionEditor = ({
                 editorInstance.current = null;
             }
         };
-    }, [cacheId]); // Depend on cacheId to ensure re-initialization if cacheId changes (acting as a key)
+    }, [cacheId, initialContent]); // Depend on cacheId to ensure re-initialization if cacheId changes (acting as a key)
 
     // Effect to update Vditor content when initialContent prop changes from parent
     useEffect(() => {

@@ -37,9 +37,9 @@ function App() {
       label: '情绪复盘',
     },
     {
-      key: '/zhuyaomaodun',
+      key: '/shichangdiaoyan',
       icon: <BookOutlined />,
-      label: '主要矛盾',
+      label: '市场调研',
     },
   ];
 

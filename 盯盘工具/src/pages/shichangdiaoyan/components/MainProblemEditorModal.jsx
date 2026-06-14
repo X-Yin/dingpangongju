@@ -17,7 +17,8 @@ const MainProblemEditorModal = ({
     const editorInstance = useRef(null);
 
     useEffect(() => {
-        if (!visible) {
+       setTimeout(() => {
+         if (!visible) {
             // Destroy Vditor instance when modal is closed
             if (editorInstance.current) {
                 editorInstance.current.destroy();
@@ -27,29 +28,30 @@ const MainProblemEditorModal = ({
         }
 
         // Modal is visible, initialize or update Vditor
-        if (!vditorRef.current) return; // Ensure ref is available
+        // if (!vditorRef.current) return; // Ensure ref is available
 
         setTitle(initialTitle);
         setContent(initialContent);
 
         if (!editorInstance.current) {
             editorInstance.current = new Vditor(vditorRef.current, {
-                minHeight: 300,
-                type: 'markdown',
-                value: initialContent,
-                cache: { id: 'main-problem-vditor-cache' },
-                input: (value) => {
-                    setContent(value);
-                },
-                after: () => {
-                    if (editorInstance.current) {
-                        editorInstance.current.setValue(initialContent);
+                    minHeight: 300,
+                    type: 'markdown',
+                    value: initialContent,
+                    cache: { id: 'main-problem-vditor-cache' },
+                    input: (value) => {
+                        setContent(value);
+                    },
+                    after: () => {
+                        if (editorInstance.current) {
+                            editorInstance.current.setValue(initialContent);
+                        }
                     }
-                }
-            });
+                });
         } else {
             editorInstance.current.setValue(initialContent);
         }
+       }, 500);
 
         return () => {
             // Cleanup when component unmounts or `visible` changes to false

@@ -13,6 +13,14 @@ const { getMainProblem, writeMainProblem, updateMainProblemSeq, delMainProblem, 
 const { getOpRecord, updateOpRecord } = require('./service/opRecord');
 const { updateMainLine, getMainLine } = require('./service/marketMainLine');
 const { getTimelineData, updateTimelineEvent, deleteTimelineEvent } = require('./service/timeline');
+const { 
+  getResearchReports, 
+  getResearchReportById,
+  createResearchReport, 
+  updateResearchReport, 
+  deleteResearchReport,
+  moveResearchReport 
+} = require('./service/researchReport');
 
 const POLL_CONFIG = {
   kaipanzhudong: {
@@ -218,6 +226,46 @@ app.post('/update_block_day_history', async (req, res) => {
   res.json({ message: '更新成功' });
 });
 
+// 获取研报列表
+app.get('/get_research_reports', async (req, res) => {
+  const researchReports = getResearchReports();
+  res.json(researchReports);
+});
+
+// 获取单个研报
+app.get('/get_research_report', async (req, res) => {
+  const { id } = req.query;
+  const report = getResearchReportById(id);
+  res.json(report);
+});
+
+// 创建研报/文件夹
+app.post('/create_research_report', async (req, res) => {
+  const { parentId, name, type, content } = req.body;
+  const newItem = createResearchReport(parentId, name, type, content);
+  res.json({ message: '创建成功', data: newItem });
+});
+
+// 更新研报/文件夹
+app.post('/update_research_report', async (req, res) => {
+  const { id, name, content } = req.body;
+  const updatedItem = updateResearchReport(id, { name, content });
+  res.json({ message: '更新成功', data: updatedItem });
+});
+
+// 删除研报/文件夹
+app.post('/delete_research_report', async (req, res) => {
+  const { id } = req.body;
+  const success = deleteResearchReport(id);
+  res.json({ message: success ? '删除成功' : '删除失败' });
+});
+
+// 移动研报/文件夹
+app.post('/move_research_report', async (req, res) => {
+  const { id, newParentId } = req.body;
+  const success = moveResearchReport(id, newParentId);
+  res.json({ message: success ? '移动成功' : '移动失败' });
+});
 
 
 // 启动服务

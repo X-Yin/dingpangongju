@@ -6,7 +6,7 @@ import Block from './pages/block/index.jsx';
 import Sentiment from './pages/sentiment/index.jsx';
 import JingJiaQiangChou from './pages/jingjia/index.jsx';
 import VolumeStatistics from './pages/volume/index.jsx';
-import ZhuYaoMaoDun from './pages/zhuyaomaodun/index.jsx';
+import ShiChangDiaoYan from './pages/shichangdiaoyan/index.jsx';
 
 const router = createBrowserRouter([
   {
@@ -34,8 +34,8 @@ const router = createBrowserRouter([
         element: <VolumeStatistics />,
       },
       {
-        path: 'zhuyaomaodun',
-        element: <ZhuYaoMaoDun />,
+        path: 'shichangdiaoyan',
+        element: <ShiChangDiaoYan />,
       }
     ]
   }
