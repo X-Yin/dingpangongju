@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Menu } from 'antd';
-import { ClockCircleOutlined, BookOutlined, FileTextOutlined, FileSearchOutlined } from '@ant-design/icons';
+import { Menu, Input } from 'antd';
+import { ClockCircleOutlined, BookOutlined, FileTextOutlined, FileSearchOutlined, SearchOutlined } from '@ant-design/icons';
 import TimelineModule from './modules/TimelineModule';
 import MainProblemModule from './modules/MainProblemModule';
 import SuggestionModule from './modules/SuggestionModule';
@@ -8,6 +8,7 @@ import ResearchReportModule from './modules/ResearchReportModule';
 
 const ShiChangDiaoYan = () => {
   const [currentModule, setCurrentModule] = useState('timeline');
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   const menuItems = [
     {
@@ -32,6 +33,10 @@ const ShiChangDiaoYan = () => {
     },
   ];
 
+  const filteredMenuItems = menuItems.filter(item => 
+    item.label.toLowerCase().includes(searchKeyword.toLowerCase())
+  );
+
   const renderModule = () => {
     switch (currentModule) {
       case 'timeline':
@@ -50,10 +55,18 @@ const ShiChangDiaoYan = () => {
   return (
     <div className="shichangdiaoyan-container">
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Input
+          placeholder="搜索菜单..."
+          prefix={<SearchOutlined />}
+          value={searchKeyword}
+          onChange={(e) => setSearchKeyword(e.target.value)}
+          allowClear
+          style={{ marginBottom: 16 }}
+        />
         <Menu
           mode="horizontal"
           selectedKeys={[currentModule]}
-          items={menuItems}
+          items={filteredMenuItems}
           onClick={({ key }) => setCurrentModule(key)}
           style={{ marginBottom: 16 }}
         />

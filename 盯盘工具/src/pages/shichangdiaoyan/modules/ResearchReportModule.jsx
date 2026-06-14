@@ -7,7 +7,8 @@ import {
   EditOutlined, 
   DeleteOutlined, 
   MoreOutlined, 
-  SaveOutlined 
+  SaveOutlined,
+  SearchOutlined 
 } from '@ant-design/icons';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
@@ -21,6 +22,8 @@ const ResearchReportModule = () => {
   const [treeData, setTreeData] = useState([]);
   const [selectedKey, setSelectedKey] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [openKeys, setOpenKeys] = useState([]);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [newItemName, setNewItemName] = useState('');
@@ -48,6 +51,89 @@ const ResearchReportModule = () => {
   useEffect(() => {
     fetchReports();
   }, []);
+
+  useEffect(() => {
+    const searchKeys = getOpenKeysFromTree(treeData, searchKeyword);
+    const parentKeys = selectedKey ? getParentKeys(treeData, selectedKey) : [];
+    const mergedKeys = [...new Set([...searchKeys, ...parentKeys])];
+    setOpenKeys(mergedKeys);
+  }, [searchKeyword, treeData, selectedKey]);
+
+  const filterTreeData = (items, keyword) => {
+    if (!keyword.trim()) {
+      return items;
+    }
+    
+    const lowerKeyword = keyword.toLowerCase();
+    
+    const filterItems = (items) => {
+      return items.filter(item => {
+        const nameMatch = item.name.toLowerCase().includes(lowerKeyword);
+        
+        if (item.type === 'folder' && item.children && item.children.length > 0) {
+          const filteredChildren = filterItems(item.children);
+          if (filteredChildren.length > 0) {
+            return true;
+          }
+        }
+        
+        return nameMatch;
+      }).map(item => {
+        if (item.type === 'folder' && item.children && item.children.length > 0) {
+          return {
+            ...item,
+            children: filterItems(item.children)
+          };
+        }
+        return item;
+      });
+    };
+    
+    return filterItems(items);
+  };
+
+  const getOpenKeysFromTree = (items, keyword) => {
+    if (!keyword.trim()) return [];
+    
+    const lowerKeyword = keyword.toLowerCase();
+    const newOpenKeys = [];
+    
+    const collectOpenKeys = (items) => {
+      items.forEach(item => {
+        if (item.type === 'folder' && item.children && item.children.length > 0) {
+          const filteredChildren = filterTreeData(item.children, keyword);
+          if (filteredChildren.length > 0) {
+            newOpenKeys.push(item.id);
+            collectOpenKeys(item.children);
+          }
+        }
+      });
+    };
+    
+    collectOpenKeys(items);
+    return newOpenKeys;
+  };
+
+  const getParentKeys = (items, targetId) => {
+    const parentKeys = [];
+    
+    const findParent = (items, targetId, currentParents = []) => {
+      for (const item of items) {
+        if (item.id === targetId) {
+          return currentParents;
+        }
+        if (item.children && item.children.length > 0) {
+          const result = findParent(item.children, targetId, [...currentParents, item.id]);
+          if (result) {
+            return result;
+          }
+        }
+      }
+      return null;
+    };
+    
+    return findParent(items, targetId) || [];
+  };
 
   const buildMenuItems = (items, parentId = null) => {
     return items.map(item => {
@@ -345,6 +431,13 @@ const ResearchReportModule = () => {
       <Sider width={300} theme="light" style={{ borderRight: '1px solid #f0f0f0' }}>
         <div style={{ padding: 16, borderBottom: '1px solid #f0f0f0' }}>
           <Space direction="vertical" style={{ width: '100%' }}>
+            <Input
+              placeholder="搜索文件夹或研报..."
+              prefix={<SearchOutlined />}
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              allowClear
+            />
             <Space style={{ width: '100%' }}>
               <Button 
                 type="primary" 
@@ -370,7 +463,9 @@ const ResearchReportModule = () => {
         <Menu
           mode="inline"
           selectedKeys={selectedKey ? [selectedKey] : []}
-          items={buildMenuItems(treeData)}
+          openKeys={openKeys}
+          onOpenChange={setOpenKeys}
+          items={buildMenuItems(filterTreeData(treeData, searchKeyword))}
           onSelect={handleMenuSelect}
           style={{ height: '100%', borderRight: 0 }}
         />
