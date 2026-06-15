@@ -24,14 +24,37 @@ const PersonalSuggestionEditor = ({
             const currentVditor = new Vditor(vditorRef.current, {
                 minHeight: 200,
                 type: 'markdown',
-                value: initialContent, // Use initialContent directly
+                value: initialContent,
                 cache: { id: cacheId },
+                toolbar: [
+                    'emoji',
+                    'headings',
+                    'bold',
+                    'italic',
+                    'strike',
+                    'line',
+                    'quote',
+                    'list',
+                    'ordered-list',
+                    'check',
+                    'outdent',
+                    'indent',
+                    'code',
+                    'inline-code',
+                    'link',
+                    'table',
+                    'color',
+                    'highlight',
+                    'undo',
+                    'redo',
+                    'fullscreen',
+                    'info',
+                    'help'
+                ],
                 input: (value) => {
-                    // When user inputs, update modified flag
                     setIsContentModified(value !== initialContent);
                 },
                 after: () => {
-                    // Ensure the editor has the correct initial content after rendering
                     if (editorInstance.current && editorInstance.current.getValue() !== initialContent) {
                         editorInstance.current.setValue(initialContent);
                     }

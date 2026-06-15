@@ -45,6 +45,7 @@ const updateTimelineEvent = (event) => {
   
   // 按时间排序（最旧的在最前面，从低到高）
   data.sort((a, b) => new Date(a.date) - new Date(b.date));
+  console.log('>>> update timeline event:', data);
   writeTimelineData(data);
 };
 

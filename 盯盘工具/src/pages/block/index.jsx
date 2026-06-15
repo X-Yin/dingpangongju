@@ -184,6 +184,10 @@ const Block = () => {
       rightPriceScale: {
         borderColor: '#D1D4DC',
         autoScale: true,
+        scaleMargins: {
+          top: 0.1, // 顶部留出 10% 空间
+          bottom: 0.1, // 底部留出 10% 空间
+        },
       },
       handleScroll: true,
       handleScale: true,
@@ -236,19 +240,35 @@ const Block = () => {
 
     // 为了tooltip准备各板块在各时间点的数据
     const intraDayBlockDataMap = {};
+    let allPrices = []; // 收集所有价格用于计算范围
     selectedBlocks.forEach((blockName) => {
       let currentPrice = startingPrices[blockName];
-      const blockDataPoints = historyData.map(item => {
+      let lastChange = 0; // 记录上一次的涨幅
+      const blockDataPoints = historyData.map((item, index) => {
         const block = item.blockData.find(b => b.blockName === blockName);
         if (!block) return null;
         
-        currentPrice = currentPrice * (1 + block.avgChange / 100);
+        // 将涨幅乘以 5，让波动看起来更明显
+        const amplifiedChange = block.avgChange * 5;
         
-        return {
+        if (index === 0) {
+          // 第一个数据点，直接使用当前涨幅计算
+          currentPrice = currentPrice * (1 + amplifiedChange / 100);
+          lastChange = amplifiedChange;
+        } else {
+          // 后续数据点：价格变化 = (当前涨幅 - 上一次涨幅) * 上一次价格 / 100
+          const priceChange = (amplifiedChange - lastChange) * currentPrice / 100;
+          currentPrice = currentPrice + priceChange;
+          lastChange = amplifiedChange;
+        }
+        
+        const dataPoint = {
           time: item.time,
           price: currentPrice,
           change: block.avgChange
         };
+        allPrices.push(currentPrice);
+        return dataPoint;
       }).filter(Boolean);
       
       intraDayBlockDataMap[blockName] = blockDataPoints;
@@ -399,6 +419,31 @@ const Block = () => {
     });
 
     chart.timeScale().fitContent();
+    
+    // 设置自定义价格范围，让折线变化更明显
+    if (allPrices.length > 0) {
+      const minPrice = Math.min(...allPrices);
+      const maxPrice = Math.max(...allPrices);
+      const priceRange = maxPrice - minPrice;
+      
+      // 计算更紧凑的范围：增加一些边距但不要太多
+      const padding = priceRange * 0.15; // 15% 的边距
+      const newMin = minPrice - padding;
+      const newMax = maxPrice + padding;
+      
+      // 为每个系列设置价格范围
+      selectedBlocks.forEach((blockName) => {
+        const series = seriesRef.current[blockName];
+        if (series) {
+          series.applyOptions({
+            priceRange: {
+              minValue: newMin,
+              maxValue: newMax,
+            },
+          });
+        }
+      });
+    }
   }, [historyData, selectedBlocks, dayHistoryData, createBaseChart]);
 
   // 重置图表
@@ -458,25 +503,34 @@ const Block = () => {
 
     // 为了tooltip准备各板块在各时间点的数据
     const blockDataMap = {};
+    let allDayPrices = []; // 收集所有日历史价格用于计算范围
     selectedDayBlocks.forEach(blockName => {
       let currentPrice = 100;
       const blockDataPoints = sortedData
         .map(item => {
           const blockData = item.blocks && item.blocks[blockName];
-          if (!blockData) return null;
+          if (!blockData || !item.date) return null;
           
-          const dateStr = item.date;
+          const dateStr = String(item.date);
           // 将 '20260612' 格式转换为 '2026-06-12'
-          const formattedDate = `${dateStr.slice(0,4)}-${dateStr.slice(4,6)}-${dateStr.slice(6,8)}`;
+          let formattedDate = dateStr;
+          if (dateStr.length === 8) {
+            formattedDate = `${dateStr.slice(0,4)}-${dateStr.slice(4,6)}-${dateStr.slice(6,8)}`;
+          }
+          
+          // 将涨幅乘以 5，让波动看起来更明显
+          const amplifiedChange = blockData.avgChange * 5;
           
           // 连续累积计算：新价格 = 前一天价格 * (1 + 今日涨幅/100)
-          currentPrice = currentPrice * (1 + blockData.avgChange / 100);
+          currentPrice = currentPrice * (1 + amplifiedChange / 100);
           
-          return {
+          const dataPoint = {
             date: formattedDate,
             price: currentPrice,
             change: blockData.avgChange
           };
+          allDayPrices.push(currentPrice);
+          return dataPoint;
         })
         .filter(Boolean);
       
@@ -520,13 +574,18 @@ const Block = () => {
     
     const baselineData = sortedData
       .map(item => {
-        const dateStr = item.date;
-        const formattedDate = `${dateStr.slice(0,4)}-${dateStr.slice(4,6)}-${dateStr.slice(6,8)}`;
+        if (!item.date) return null;
+        const dateStr = String(item.date);
+        let formattedDate = dateStr;
+        if (dateStr.length === 8) {
+          formattedDate = `${dateStr.slice(0,4)}-${dateStr.slice(4,6)}-${dateStr.slice(6,8)}`;
+        }
         return { 
           time: dayjs(formattedDate).unix(), 
           value: 100 
         };
-      });
+      })
+      .filter(Boolean);
     baselineSeries.setData(baselineData);
 
     // 订阅十字光标移动事件
@@ -621,6 +680,31 @@ const Block = () => {
     });
 
     chart.timeScale().fitContent();
+    
+    // 设置自定义价格范围，让折线变化更明显
+    if (allDayPrices.length > 0) {
+      const minPrice = Math.min(...allDayPrices);
+      const maxPrice = Math.max(...allDayPrices);
+      const priceRange = maxPrice - minPrice;
+      
+      // 计算更紧凑的范围：增加一些边距但不要太多
+      const padding = priceRange * 0.15; // 15% 的边距
+      const newMin = minPrice - padding;
+      const newMax = maxPrice + padding;
+      
+      // 为每个系列设置价格范围
+      selectedDayBlocks.forEach((blockName) => {
+        const series = daySeriesRef.current[blockName];
+        if (series) {
+          series.applyOptions({
+            priceRange: {
+              minValue: newMin,
+              maxValue: newMax,
+            },
+          });
+        }
+      });
+    }
   }, [dayHistoryData, selectedDayBlocks, createBaseChart]);
 
   // 处理窗口缩放

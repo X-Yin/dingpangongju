@@ -50,12 +50,15 @@ const TimelineEventEditorModal = ({
         }
         
         const event = {
-            id: id !== null ? id : Date.now(),
             title,
             description,
             date: date.format('YYYY-MM-DD'),
             type,
         };
+        // 只有编辑现有事件时才添加 id
+        if (id !== null) {
+            event.id = id;
+        }
         onSave(event);
     };
 

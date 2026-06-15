@@ -291,7 +291,7 @@ app.listen(port, () => {
     // 轮询成交量信息
     pollAmountInfo(10000);
     // 轮询板块数据历史记录
-    pollBlockHistory(300000);
+    pollBlockHistory(60000);
   }
   console.log(`服务运行在 http://localhost:${port}`);
 });

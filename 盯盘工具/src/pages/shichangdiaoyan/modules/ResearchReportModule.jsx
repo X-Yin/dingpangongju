@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Layout, Menu, Button, Input, Modal, message, Space, Dropdown, Typography } from 'antd';
+import { Layout, Menu, Button, Input, Modal, message, Space, Dropdown, Typography, Tooltip } from 'antd';
 import { 
   FolderOutlined, 
   FileTextOutlined, 
@@ -192,9 +192,23 @@ const ResearchReportModule = () => {
         key: item.id,
         label: (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-            <Space>
+            <Space style={{ flex: 1, minWidth: 0 }}>
               {item.type === 'folder' ? <FolderOutlined /> : <FileTextOutlined />}
-              <span>{item.name}</span>
+              <Tooltip title={item.name}>
+                <span 
+                  style={{ 
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-block',
+                    maxWidth: '160px',
+                    verticalAlign: 'middle',
+                    lineHeight: '1'
+                  }}
+                >
+                  {item.name}
+                </span>
+              </Tooltip>
             </Space>
             <Dropdown 
               menu={{ items: menuOptions }}
@@ -274,7 +288,8 @@ const ResearchReportModule = () => {
       });
       message.success('创建成功');
       setCreateModalVisible(false);
-      await refreshAndKeepSelection();
+      // 只刷新数据，不保持选择，因为新创建的项不是当前选择的
+      await fetchReports();
     } catch (error) {
       console.error('创建失败', error);
       message.error('创建失败');
@@ -294,6 +309,7 @@ const ResearchReportModule = () => {
     }
     
     try {
+      // 使用 handleRename 中设置的 item 的 id（通过 selectedKey 保存）
       await axios.post(`http://${local_ip}:3000/update_research_report`, {
         id: selectedKey,
         name: newItemName
@@ -327,7 +343,7 @@ const ResearchReportModule = () => {
             setCurrentItem(null);
             setCurrentContent('');
           }
-          fetchReports();
+          await fetchReports();
         } catch (error) {
           console.error('删除失败', error);
           message.error('删除失败');
@@ -340,13 +356,16 @@ const ResearchReportModule = () => {
     const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
     setTreeData(response.data);
     
-    if (selectedKey) {
-      const updatedItem = findItemById(response.data, selectedKey);
-      setCurrentItem(updatedItem);
-      if (updatedItem?.type === 'report') {
-        setCurrentContent(updatedItem.content || '');
+    // 使用 setTimeout 确保 state 更新后再处理
+    setTimeout(() => {
+      if (selectedKey) {
+        const updatedItem = findItemById(response.data, selectedKey);
+        setCurrentItem(updatedItem);
+        if (updatedItem?.type === 'report') {
+          setCurrentContent(updatedItem.content || '');
+        }
       }
-    }
+    }, 0);
   };
 
   const handleSave = async () => {
@@ -356,8 +375,9 @@ const ResearchReportModule = () => {
     }
 
     try {
+      // 确保使用当前项的 id 而不是 selectedKey
       await axios.post(`http://${local_ip}:3000/update_research_report`, {
-        id: selectedKey,
+        id: currentItem.id,
         content: currentContent,
         name: currentItem.name
       });
@@ -387,6 +407,31 @@ const ResearchReportModule = () => {
             type: 'markdown',
             value: currentContent,
             cache: { id: 'research-report-vditor-cache' },
+            toolbar: [
+              'emoji',
+              'headings',
+              'bold',
+              'italic',
+              'strike',
+              'line',
+              'quote',
+              'list',
+              'ordered-list',
+              'check',
+              'outdent',
+              'indent',
+              'code',
+              'inline-code',
+              'link',
+              'table',
+              'color',
+              'highlight',
+              'undo',
+              'redo',
+              'fullscreen',
+              'info',
+              'help'
+            ],
             input: (value) => {
               setCurrentContent(value);
               setIsModified(true);
@@ -424,7 +469,7 @@ const ResearchReportModule = () => {
         }
       }, 50);
     }
-  }, [selectedKey]);
+  }, [currentItem?.id]);
 
   return (
     <Layout style={{ height: 'calc(100vh - 180px)', background: '#fff' }}>
