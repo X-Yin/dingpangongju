@@ -267,6 +267,20 @@ app.post('/move_research_report', async (req, res) => {
   res.json({ message: success ? '移动成功' : '移动失败' });
 });
 
+// 标记/取消标记研报为重点
+app.post('/toggle_research_report_important', async (req, res) => {
+  const { id } = req.body;
+  const report = getResearchReportById(id);
+  if (!report) {
+    return res.json({ message: '未找到该项' });
+  }
+  const updatedItem = updateResearchReport(id, { 
+    isImportant: !report.isImportant,
+    updatedAt: new Date().toISOString()
+  });
+  res.json({ message: '更新成功', data: updatedItem });
+});
+
 
 // 启动服务
 app.listen(port, () => {

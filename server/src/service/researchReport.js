@@ -2,23 +2,52 @@ const fs = require('fs');
 const path = require('path');
 const { generateUniqueId } = require('../utils');
 
-const RESEARCH_REPORTS_PATH = path.resolve(__dirname, '../data/research_reports.json');
+const RESEARCH_REPORTS_DIR = path.resolve(__dirname, '../data/research_reports');
+const MENU_FILE = path.resolve(RESEARCH_REPORTS_DIR, 'menu.json');
 
-const ensureDataFile = () => {
-  if (!fs.existsSync(RESEARCH_REPORTS_PATH)) {
-    fs.writeFileSync(RESEARCH_REPORTS_PATH, JSON.stringify([], null, 2), 'utf-8');
+const ensureDataDir = () => {
+  if (!fs.existsSync(RESEARCH_REPORTS_DIR)) {
+    fs.mkdirSync(RESEARCH_REPORTS_DIR, { recursive: true });
+  }
+  if (!fs.existsSync(MENU_FILE)) {
+    fs.writeFileSync(MENU_FILE, JSON.stringify([], null, 2), 'utf-8');
   }
 };
 
-const getResearchReports = () => {
-  ensureDataFile();
-  const data = JSON.parse(fs.readFileSync(RESEARCH_REPORTS_PATH, 'utf-8'));
+const getMenu = () => {
+  ensureDataDir();
+  const data = JSON.parse(fs.readFileSync(MENU_FILE, 'utf-8'));
   return data;
 };
 
-const writeResearchReports = (data) => {
-  ensureDataFile();
-  fs.writeFileSync(RESEARCH_REPORTS_PATH, JSON.stringify(data, null, 2), 'utf-8');
+const writeMenu = (data) => {
+  ensureDataDir();
+  fs.writeFileSync(MENU_FILE, JSON.stringify(data, null, 2), 'utf-8');
+};
+
+const getReportContentPath = (id) => {
+  return path.resolve(RESEARCH_REPORTS_DIR, `${id}.json`);
+};
+
+const saveReportContent = (id, content) => {
+  const contentPath = getReportContentPath(id);
+  fs.writeFileSync(contentPath, JSON.stringify({ content }, null, 2), 'utf-8');
+};
+
+const getReportContent = (id) => {
+  const contentPath = getReportContentPath(id);
+  if (fs.existsSync(contentPath)) {
+    const data = JSON.parse(fs.readFileSync(contentPath, 'utf-8'));
+    return data.content;
+  }
+  return '';
+};
+
+const deleteReportContent = (id) => {
+  const contentPath = getReportContentPath(id);
+  if (fs.existsSync(contentPath)) {
+    fs.unlinkSync(contentPath);
+  }
 };
 
 const findItemById = (items, id) => {
@@ -37,16 +66,16 @@ const findItemById = (items, id) => {
 const removeItemById = (items, id) => {
   for (let i = 0; i < items.length; i++) {
     if (items[i].id === id) {
+      const removedItem = items[i];
       items.splice(i, 1);
-      return true;
+      return removedItem;
     }
     if (items[i].children) {
-      if (removeItemById(items[i].children, id)) {
-        return true;
-      }
+      const removed = removeItemById(items[i].children, id);
+      if (removed) return removed;
     }
   }
-  return false;
+  return null;
 };
 
 const updateItemById = (items, id, updates) => {
@@ -86,34 +115,70 @@ const addItemToParent = (items, parentId, newItem) => {
   return false;
 };
 
+const deleteItemRecursively = (items, id) => {
+  const removedItem = removeItemById(items, id);
+  if (!removedItem) return;
+
+  if (removedItem.type === 'report') {
+    deleteReportContent(id);
+  } else if (removedItem.type === 'folder' && removedItem.children) {
+    const deleteChildren = (children) => {
+      for (const child of children) {
+        if (child.type === 'report') {
+          deleteReportContent(child.id);
+        } else if (child.children) {
+          deleteChildren(child.children);
+        }
+      }
+    };
+    deleteChildren(removedItem.children);
+  }
+};
+
+const getResearchReports = () => {
+  return getMenu();
+};
+
 const getResearchReportById = (id) => {
-  const data = getResearchReports();
-  return findItemById(data, id);
+  const menu = getMenu();
+  const item = findItemById(menu, id);
+  if (!item) return null;
+  
+  if (item.type === 'report') {
+    return {
+      ...item,
+      content: getReportContent(id)
+    };
+  }
+  return item;
 };
 
 const createResearchReport = (parentId, name, type, content = '') => {
-  const data = getResearchReports();
+  const menu = getMenu();
   const newItem = {
     id: generateUniqueId(),
     name,
     type,
+    isImportant: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
-  if (type === 'report') {
-    newItem.content = content;
-  }
   if (type === 'folder') {
     newItem.children = [];
   }
-  addItemToParent(data, parentId, newItem);
-  writeResearchReports(data);
+  addItemToParent(menu, parentId, newItem);
+  writeMenu(menu);
+  
+  if (type === 'report') {
+    saveReportContent(newItem.id, content);
+  }
+  
   return newItem;
 };
 
 const updateResearchReport = (id, updates) => {
-  const data = getResearchReports();
-  const item = findItemById(data, id);
+  const menu = getMenu();
+  const item = findItemById(menu, id);
   if (!item) return null;
   
   const updatedItem = {
@@ -121,28 +186,31 @@ const updateResearchReport = (id, updates) => {
     ...updates,
     updatedAt: new Date().toISOString()
   };
-  updateItemById(data, id, updatedItem);
-  writeResearchReports(data);
+  
+  updateItemById(menu, id, updatedItem);
+  writeMenu(menu);
+  
+  if (item.type === 'report' && updates.content !== undefined) {
+    saveReportContent(id, updates.content);
+  }
+  
   return updatedItem;
 };
 
 const deleteResearchReport = (id) => {
-  const data = getResearchReports();
-  const success = removeItemById(data, id);
-  if (success) {
-    writeResearchReports(data);
-  }
-  return success;
+  const menu = getMenu();
+  deleteItemRecursively(menu, id);
+  writeMenu(menu);
+  return true;
 };
 
 const moveResearchReport = (id, newParentId) => {
-  const data = getResearchReports();
-  const item = findItemById(data, id);
-  if (!item) return false;
+  const menu = getMenu();
+  const removedItem = removeItemById(menu, id);
+  if (!removedItem) return false;
   
-  removeItemById(data, id);
-  addItemToParent(data, newParentId, item);
-  writeResearchReports(data);
+  addItemToParent(menu, newParentId, removedItem);
+  writeMenu(menu);
   return true;
 };
 

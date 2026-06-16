@@ -8,7 +8,8 @@ import {
   DeleteOutlined, 
   MoreOutlined, 
   SaveOutlined,
-  SearchOutlined 
+  SearchOutlined,
+  StarOutlined
 } from '@ant-design/icons';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
@@ -24,6 +25,7 @@ const ResearchReportModule = () => {
   const [loading, setLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [openKeys, setOpenKeys] = useState([]);
+  const [filterImportant, setFilterImportant] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [newItemName, setNewItemName] = useState('');
@@ -67,22 +69,25 @@ const ResearchReportModule = () => {
   }, []);
 
   useEffect(() => {
-    const searchKeys = getOpenKeysFromTree(treeData, searchKeyword);
+    const searchKeys = getOpenKeysFromTree(treeData, searchKeyword, filterImportant);
     const parentKeys = selectedKey ? getParentKeys(treeData, selectedKey) : [];
     const mergedKeys = [...new Set([...searchKeys, ...parentKeys])];
     setOpenKeys(mergedKeys);
-  }, [searchKeyword, treeData, selectedKey]);
+  }, [searchKeyword, treeData, selectedKey, filterImportant]);
 
-  const filterTreeData = (items, keyword) => {
-    if (!keyword.trim()) {
-      return items;
-    }
-    
-    const lowerKeyword = keyword.toLowerCase();
-    
+  const filterTreeData = (items, keyword, onlyImportant = false) => {
     const filterItems = (items) => {
       return items.filter(item => {
-        const nameMatch = item.name.toLowerCase().includes(lowerKeyword);
+        let match = true;
+        
+        if (keyword.trim()) {
+          const lowerKeyword = keyword.toLowerCase();
+          match = item.name.toLowerCase().includes(lowerKeyword);
+        }
+        
+        if (onlyImportant) {
+          match = match && (item.type === 'folder' || item.isImportant);
+        }
         
         if (item.type === 'folder' && item.children && item.children.length > 0) {
           const filteredChildren = filterItems(item.children);
@@ -91,7 +96,7 @@ const ResearchReportModule = () => {
           }
         }
         
-        return nameMatch;
+        return match;
       }).map(item => {
         if (item.type === 'folder' && item.children && item.children.length > 0) {
           return {
@@ -106,8 +111,8 @@ const ResearchReportModule = () => {
     return filterItems(items);
   };
 
-  const getOpenKeysFromTree = (items, keyword) => {
-    if (!keyword.trim()) return [];
+  const getOpenKeysFromTree = (items, keyword, onlyImportant = false) => {
+    if (!keyword.trim() && !onlyImportant) return [];
     
     const lowerKeyword = keyword.toLowerCase();
     const newOpenKeys = [];
@@ -115,7 +120,7 @@ const ResearchReportModule = () => {
     const collectOpenKeys = (items) => {
       items.forEach(item => {
         if (item.type === 'folder' && item.children && item.children.length > 0) {
-          const filteredChildren = filterTreeData(item.children, keyword);
+          const filteredChildren = filterTreeData(item.children, keyword, onlyImportant);
           if (filteredChildren.length > 0) {
             newOpenKeys.push(item.id);
             collectOpenKeys(item.children);
@@ -126,6 +131,39 @@ const ResearchReportModule = () => {
     
     collectOpenKeys(items);
     return newOpenKeys;
+  };
+
+  const handleToggleImportant = async (item) => {
+    // 保存当前的 openKeys
+    const savedOpenKeys = [...openKeys];
+    
+    try {
+      // 标记正在刷新
+      isRefreshingRef.current = true;
+      
+      await axios.post(`http://${local_ip}:3000/toggle_research_report_important`, {
+        id: item.id
+      });
+      message.success(item.isImportant ? '已取消重点标记' : '已标记为重点');
+      
+      const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
+      setTreeData(response.data);
+      
+      // 使用 setTimeout 确保 state 更新后再处理
+      setTimeout(() => {
+        // 恢复之前的展开状态
+        setOpenKeys(savedOpenKeys);
+        
+        // 延迟后解除刷新标记
+        setTimeout(() => {
+          isRefreshingRef.current = false;
+        }, 100);
+      }, 0);
+    } catch (error) {
+      console.error('标记重点失败:', error);
+      message.error('标记重点失败');
+      isRefreshingRef.current = false;
+    }
   };
 
   const getParentKeys = (items, targetId) => {
@@ -153,6 +191,22 @@ const ResearchReportModule = () => {
     return items.map(item => {
       // 构建菜单项
       const menuOptions = [];
+      
+      // 如果是研报，添加标记重点选项
+      if (item.type === 'report') {
+        menuOptions.push(
+          {
+            key: 'toggle-important',
+            icon: <StarOutlined />,
+            label: item.isImportant ? '取消重点' : '标记重点',
+            onClick: (e) => {
+              e.domEvent.stopPropagation();
+              handleToggleImportant(item);
+            }
+          },
+          { type: 'divider' }
+        );
+      }
       
       // 如果是文件夹，添加新增子项选项
       if (item.type === 'folder') {
@@ -207,7 +261,7 @@ const ResearchReportModule = () => {
         label: (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
             <Space style={{ flex: 1, minWidth: 0 }}>
-              {item.type === 'folder' ? <FolderOutlined /> : <FileTextOutlined />}
+              {item.type === 'folder' ? <FolderOutlined /> : (item.isImportant ? <StarOutlined style={{ color: '#faad14' }} /> : <FileTextOutlined />)}
               <Tooltip title={item.name}>
                 <span 
                   style={{ 
@@ -217,7 +271,9 @@ const ResearchReportModule = () => {
                     display: 'inline-block',
                     maxWidth: '160px',
                     verticalAlign: 'middle',
-                    lineHeight: '1'
+                    lineHeight: '1',
+                    color: item.isImportant ? '#faad14' : 'inherit',
+                    fontWeight: item.isImportant ? 'bold' : 'normal'
                   }}
                 >
                   {item.name}
@@ -227,6 +283,10 @@ const ResearchReportModule = () => {
             <Dropdown 
               menu={{ items: menuOptions }}
               trigger={['click']}
+              dropdownStyle={{
+                maxHeight: '300px',
+                overflowY: 'auto'
+              }}
             >
               <Button type="text" size="small" icon={<MoreOutlined />} onClick={(e) => e.stopPropagation()} />
             </Dropdown>
@@ -256,16 +316,27 @@ const ResearchReportModule = () => {
     
     // 直接从当前的 treeData 获取 item，不使用 setTimeout
     const item = findItemById(treeData, key);
-    setCurrentItem(item);
     
     if (item && item.type === 'report') {
-      setCurrentContent(item.content || '');
-      setIsModified(false);
-      
-      if (editorInstance.current) {
-        editorInstance.current.setValue(item.content || '');
+      // 研报需要单独获取完整内容
+      try {
+        const response = await axios.get(`http://${local_ip}:3000/get_research_report`, {
+          params: { id: key }
+        });
+        const fullReport = response.data;
+        setCurrentItem(fullReport);
+        setCurrentContent(fullReport.content || '');
+        setIsModified(false);
+        
+        if (editorInstance.current) {
+          editorInstance.current.setValue(fullReport.content || '');
+        }
+      } catch (error) {
+        console.error('获取研报内容失败', error);
+        message.error('获取研报内容失败');
       }
     } else {
+      setCurrentItem(item);
       setCurrentContent('');
       setIsModified(false);
     }
@@ -446,15 +517,26 @@ const ResearchReportModule = () => {
       setTreeData(response.data);
       
       // 使用 setTimeout 确保 state 更新后再处理
-      setTimeout(() => {
+      setTimeout(async () => {
         // 恢复之前的展开状态
         setOpenKeys(savedOpenKeys);
         
         if (selectedKey) {
           const updatedItem = findItemById(response.data, selectedKey);
-          setCurrentItem(updatedItem);
           if (updatedItem?.type === 'report') {
-            setCurrentContent(updatedItem.content || '');
+            // 研报需要重新获取完整内容
+            try {
+              const reportResponse = await axios.get(`http://${local_ip}:3000/get_research_report`, {
+                params: { id: selectedKey }
+              });
+              setCurrentItem(reportResponse.data);
+              setCurrentContent(reportResponse.data.content || '');
+            } catch (error) {
+              console.error('重新获取研报内容失败', error);
+              setCurrentItem(updatedItem);
+            }
+          } else {
+            setCurrentItem(updatedItem);
           }
         }
         
@@ -588,13 +670,28 @@ const ResearchReportModule = () => {
       <Sider width={300} theme="light" style={{ borderRight: '1px solid #f0f0f0' }}>
         <div style={{ padding: 16, borderBottom: '1px solid #f0f0f0' }}>
           <Space direction="vertical" style={{ width: '100%' }}>
-            <Input
-              placeholder="搜索文件夹或研报..."
-              prefix={<SearchOutlined />}
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              allowClear
-            />
+            <Space style={{ width: '100%' }}>
+              <Input
+                placeholder="搜索文件夹或研报..."
+                prefix={<SearchOutlined />}
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                allowClear
+                style={{ flex: 1 }}
+              />
+              <Button 
+                type={filterImportant ? 'primary' : 'default'}
+                icon={<StarOutlined />}
+                onClick={() => {
+                  setFilterImportant(!filterImportant);
+                  if (filterImportant) {
+                    setSearchKeyword('');
+                  }
+                }}
+              >
+                重点研报
+              </Button>
+            </Space>
             <Space style={{ width: '100%' }}>
               <Button 
                 type="primary" 
@@ -627,7 +724,7 @@ const ResearchReportModule = () => {
               setOpenKeys(keys);
             }
           }}
-          items={buildMenuItems(filterTreeData(treeData, searchKeyword))}
+          items={buildMenuItems(filterTreeData(treeData, searchKeyword, filterImportant))}
           onSelect={handleMenuSelect}
           style={{ height: '100%', borderRight: 0 }}
         />
