@@ -726,7 +726,7 @@ const ResearchReportModule = () => {
           }}
           items={buildMenuItems(filterTreeData(treeData, searchKeyword, filterImportant))}
           onSelect={handleMenuSelect}
-          style={{ height: '100%', borderRight: 0 }}
+          style={{ height: 'calc(100% - 180px)', overflowY: 'auto', borderRight: 0 }}
         />
       </Sider>
       <Content style={{ padding: 16, overflow: 'auto' }}>
