@@ -9,7 +9,8 @@ import {
   MoreOutlined, 
   SaveOutlined,
   SearchOutlined,
-  StarOutlined
+  StarOutlined,
+  PushpinOutlined
 } from '@ant-design/icons';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
@@ -166,6 +167,39 @@ const ResearchReportModule = () => {
     }
   };
 
+  const handlePinReport = async (item) => {
+    // 保存当前的 openKeys
+    const savedOpenKeys = [...openKeys];
+    
+    try {
+      // 标记正在刷新
+      isRefreshingRef.current = true;
+      
+      await axios.post(`http://${local_ip}:3000/pin_research_report`, {
+        id: item.id
+      });
+      message.success('置顶成功');
+      
+      const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
+      setTreeData(response.data);
+      
+      // 使用 setTimeout 确保 state 更新后再处理
+      setTimeout(() => {
+        // 恢复之前的展开状态
+        setOpenKeys(savedOpenKeys);
+        
+        // 延迟后解除刷新标记
+        setTimeout(() => {
+          isRefreshingRef.current = false;
+        }, 100);
+      }, 0);
+    } catch (error) {
+      console.error('置顶失败:', error);
+      message.error('置顶失败');
+      isRefreshingRef.current = false;
+    }
+  };
+
   const getParentKeys = (items, targetId) => {
     const parentKeys = [];
     
@@ -192,9 +226,18 @@ const ResearchReportModule = () => {
       // 构建菜单项
       const menuOptions = [];
       
-      // 如果是研报，添加标记重点选项
+      // 如果是研报，添加标记重点和置顶选项
       if (item.type === 'report') {
         menuOptions.push(
+          {
+            key: 'pin',
+            icon: <PushpinOutlined />,
+            label: '置顶',
+            onClick: (e) => {
+              e.domEvent.stopPropagation();
+              handlePinReport(item);
+            }
+          },
           {
             key: 'toggle-important',
             icon: <StarOutlined />,

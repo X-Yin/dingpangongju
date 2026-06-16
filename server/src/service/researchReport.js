@@ -115,6 +115,38 @@ const addItemToParent = (items, parentId, newItem) => {
   return false;
 };
 
+const findParentAndIndex = (items, id, parent = null) => {
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].id === id) {
+      return { parent, items, index: i };
+    }
+    if (items[i].children) {
+      const result = findParentAndIndex(items[i].children, id, items[i]);
+      if (result) return result;
+    }
+  }
+  return null;
+};
+
+const pinResearchReport = (id) => {
+  const menu = getMenu();
+  const result = findParentAndIndex(menu, id);
+  if (!result) return false;
+
+  const { items, index } = result;
+  const item = items[index];
+  
+  // 只有研报可以置顶
+  if (item.type !== 'report') return false;
+
+  // 移除该项并插入到开头
+  items.splice(index, 1);
+  items.unshift(item);
+  
+  writeMenu(menu);
+  return true;
+};
+
 const deleteItemRecursively = (items, id) => {
   const removedItem = removeItemById(items, id);
   if (!removedItem) return;
@@ -220,5 +252,6 @@ module.exports = {
   createResearchReport,
   updateResearchReport,
   deleteResearchReport,
-  moveResearchReport
+  moveResearchReport,
+  pinResearchReport
 };

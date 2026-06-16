@@ -19,7 +19,8 @@ const {
   createResearchReport, 
   updateResearchReport, 
   deleteResearchReport,
-  moveResearchReport 
+  moveResearchReport,
+  pinResearchReport
 } = require('./service/researchReport');
 
 const POLL_CONFIG = {
@@ -279,6 +280,13 @@ app.post('/toggle_research_report_important', async (req, res) => {
     updatedAt: new Date().toISOString()
   });
   res.json({ message: '更新成功', data: updatedItem });
+});
+
+// 置顶研报
+app.post('/pin_research_report', async (req, res) => {
+  const { id } = req.body;
+  const success = pinResearchReport(id);
+  res.json({ message: success ? '置顶成功' : '置顶失败', success });
 });
 
 
