@@ -81,9 +81,9 @@ const Block = () => {
       setDayHistoryData(dayHistoryResponse.data);
       setLastUpdated(dayjs().format('HH:mm:ss'));
       
-      // 初始化选中的板块（默认选中银行、cpo、光纤、半导体）
+      // 初始化选中的板块（默认选中银行、cpo、半导体、消费、光模块）
       if (isFirstLoad.current && blockResponse.data.length > 0) {
-        const initialSelected = ['银行', 'cpo', '半导体'];
+        const initialSelected = ['银行', 'cpo', '半导体', '消费', '光模块'];
         setSelectedBlocks(initialSelected);
         setSelectedDayBlocks(initialSelected);
       }

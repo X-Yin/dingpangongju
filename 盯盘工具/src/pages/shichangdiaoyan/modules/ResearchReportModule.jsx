@@ -305,17 +305,21 @@ const ResearchReportModule = () => {
       // 标记正在刷新，防止菜单自动收起
       isRefreshingRef.current = true;
       
-      await axios.post(`http://${local_ip}:3000/create_research_report`, {
+      const response = await axios.post(`http://${local_ip}:3000/create_research_report`, {
         parentId: parentIdToKeep,
         name: newItemName,
         type: newItemType,
         content: ''
       });
+      
+      const newItem = response.data.data;
       message.success('创建成功');
       setCreateModalVisible(false);
       
       // 刷新数据
-      await fetchReports(false);
+      const reportsResponse = await axios.get(`http://${local_ip}:3000/get_research_reports`);
+      const newTreeData = reportsResponse.data;
+      setTreeData(newTreeData);
       
       // 刷新后重新展开之前展开的菜单，并确保父文件夹也展开
       setTimeout(() => {
@@ -324,6 +328,24 @@ const ResearchReportModule = () => {
           keysToKeep.push(parentIdToKeep);
         }
         setOpenKeys(keysToKeep);
+        
+        // 如果是新创建的研报，就选中它
+        if (newItem.type === 'report') {
+          // 从新获取的数据中找到完整的 item
+          const itemFromNewData = findItemById(newTreeData, newItem.id);
+          
+          setSelectedKey(newItem.id);
+          currentEditingIdRef.current = newItem.id;
+          setCurrentItem(itemFromNewData || newItem);
+          setCurrentContent('');
+          setIsModified(false);
+          
+          // 设置编辑器内容
+          if (editorInstance.current) {
+            editorInstance.current.setValue('');
+          }
+        }
+        
         // 延迟一段时间后再解除刷新标记
         setTimeout(() => {
           isRefreshingRef.current = false;
@@ -559,7 +581,7 @@ const ResearchReportModule = () => {
     } else {
       currentEditingIdRef.current = null;
     }
-  }, [currentItem?.id, currentContent]);
+  }, [currentItem?.id]);
 
   return (
     <Layout style={{ height: 'calc(100vh - 180px)', background: '#fff' }}>

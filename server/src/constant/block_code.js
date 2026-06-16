@@ -564,4 +564,19 @@ exports.default = [
         "code": "sz301377",
         "name": "鼎泰高科"
     },
+    {
+        "blockName": "MPO",
+        "code": "sz300570",
+        "name": "太辰光"
+    },
+    {
+        "blockName": "MPO",
+        "code": "sz300548",
+        "name": "长芯博创"
+    },
+    {
+        "blockName": "MPO",
+        "code": "sz301486",
+        "name": "致尚科技"
+    },
 ]

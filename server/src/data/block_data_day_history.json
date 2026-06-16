@@ -1,5 +1,97 @@
 [
   {
+    "date": "20260616",
+    "blocks": {
+      "电子布": {
+        "avgChange": 10.11
+      },
+      "MPO": {
+        "avgChange": 7.65
+      },
+      "玻璃基板": {
+        "avgChange": 7.23
+      },
+      "PPE树脂": {
+        "avgChange": 6.42
+      },
+      "MLCC": {
+        "avgChange": 5.75
+      },
+      "光纤": {
+        "avgChange": 5.08
+      },
+      "钨": {
+        "avgChange": 4.41
+      },
+      "半导体材料": {
+        "avgChange": 3.64
+      },
+      "光模块": {
+        "avgChange": 2.87
+      },
+      "铜箔": {
+        "avgChange": 2.8
+      },
+      "pcb": {
+        "avgChange": 2.67
+      },
+      "锂电": {
+        "avgChange": 1.88
+      },
+      "电力": {
+        "avgChange": 1.78
+      },
+      "液冷": {
+        "avgChange": 1.73
+      },
+      "cpo": {
+        "avgChange": 1.65
+      },
+      "商业航天": {
+        "avgChange": 1.45
+      },
+      "北美缺电": {
+        "avgChange": 0.82
+      },
+      "煤炭": {
+        "avgChange": 0.68
+      },
+      "存储": {
+        "avgChange": 0.61
+      },
+      "消费": {
+        "avgChange": 0.26
+      },
+      "cpu": {
+        "avgChange": 0.19
+      },
+      "证券": {
+        "avgChange": 0.14
+      },
+      "半导体": {
+        "avgChange": -0.11
+      },
+      "机器人": {
+        "avgChange": -0.7
+      },
+      "医药": {
+        "avgChange": -0.97
+      },
+      "国产超节点": {
+        "avgChange": -1.02
+      },
+      "化工": {
+        "avgChange": -1.48
+      },
+      "银行": {
+        "avgChange": -1.51
+      },
+      "贵金属": {
+        "avgChange": -2.46
+      }
+    }
+  },
+  {
     "date": "20260615",
     "blocks": {
       "铜箔": {
