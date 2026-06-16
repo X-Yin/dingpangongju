@@ -79,14 +79,6 @@ const VolumeStatistics = () => {
         timeVisible: true,
         secondsVisible: true,
         borderColor: '#D1D4DC',
-        tickMarkFormatter: (time) => {
-          return dayjs.unix(time).format('HH:mm:ss');
-        },
-      },
-      localization: {
-        timeFormatter: (time) => {
-          return dayjs.unix(time).format('HH:mm:ss');
-        },
       },
       rightPriceScale: {
         borderColor: '#D1D4DC',
@@ -115,20 +107,49 @@ const VolumeStatistics = () => {
       },
     });
 
-    const today = dayjs().format('YYYY-MM-DD');
     const sortedData = [...historyData].sort((a, b) => a[0].localeCompare(b[0]));
     
-    const chartData = sortedData.map(([time, val]) => {
-      const hh = time.substring(0, 2);
-      const mm = time.substring(2, 4);
-      const ss = time.substring(4, 6);
+    // 过滤掉中午休盘的数据 (11:30 - 13:00)
+    const filteredData = sortedData.filter(([time]) => {
+      const timeStr = `${time.substring(0, 2)}:${time.substring(2, 4)}`;
+      if (timeStr >= '11:30' && timeStr < '13:00') {
+        return false;
+      }
+      return true;
+    });
+
+    // 创建时间到索引的映射
+    const timeIndexMap = {};
+    filteredData.forEach(([time], index) => {
+      const formattedTime = `${time.substring(0, 2)}:${time.substring(2, 4)}:${time.substring(4, 6)}`;
+      timeIndexMap[index] = formattedTime;
+    });
+
+    // 使用索引作为时间
+    const chartData = filteredData.map(([time, val], idx) => {
       return {
-        time: dayjs(`${today} ${hh}:${mm}:${ss}`).unix(),
+        time: idx,
         value: parseFloat(val.mainMoney) || 0,
       };
     });
 
     series.setData(chartData);
+
+    // 设置 X 轴格式化
+    chart.timeScale().applyOptions({
+      tickMarkFormatter: (time) => {
+        return timeIndexMap[time] || '';
+      },
+    });
+
+    chart.applyOptions({
+      localization: {
+        timeFormatter: (time) => {
+          return timeIndexMap[time] || '';
+        },
+      },
+    });
+
     chart.timeScale().fitContent();
   };
 
@@ -150,20 +171,49 @@ const VolumeStatistics = () => {
       },
     });
 
-    const today = dayjs().format('YYYY-MM-DD');
     const sortedData = [...historyData].sort((a, b) => a[0].localeCompare(b[0]));
     
-    const chartData = sortedData.map(([time, val]) => {
-      const hh = time.substring(0, 2);
-      const mm = time.substring(2, 4);
-      const ss = time.substring(4, 6);
+    // 过滤掉中午休盘的数据 (11:30 - 13:00)
+    const filteredData = sortedData.filter(([time]) => {
+      const timeStr = `${time.substring(0, 2)}:${time.substring(2, 4)}`;
+      if (timeStr >= '11:30' && timeStr < '13:00') {
+        return false;
+      }
+      return true;
+    });
+
+    // 创建时间到索引的映射
+    const timeIndexMap = {};
+    filteredData.forEach(([time], index) => {
+      const formattedTime = `${time.substring(0, 2)}:${time.substring(2, 4)}:${time.substring(4, 6)}`;
+      timeIndexMap[index] = formattedTime;
+    });
+
+    // 使用索引作为时间
+    const chartData = filteredData.map(([time, val], idx) => {
       return {
-        time: dayjs(`${today} ${hh}:${mm}:${ss}`).unix(),
+        time: idx,
         value: parseFloat(val.amountChangeDiff) || 0,
       };
     });
 
     series.setData(chartData);
+
+    // 设置 X 轴格式化
+    chart.timeScale().applyOptions({
+      tickMarkFormatter: (time) => {
+        return timeIndexMap[time] || '';
+      },
+    });
+
+    chart.applyOptions({
+      localization: {
+        timeFormatter: (time) => {
+          return timeIndexMap[time] || '';
+        },
+      },
+    });
+
     chart.timeScale().fitContent();
   };
 

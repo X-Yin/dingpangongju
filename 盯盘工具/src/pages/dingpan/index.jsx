@@ -657,7 +657,7 @@ const DingPan = () => {
         const jisuYidongRankTimer = setInterval(fetchJisuYidongRank, 3000); // 3s 轮询一次
         const historyTimer = setInterval(fetchHistoryData, 10000); // 10s 轮询一次
         const hotBlocksTimer = setInterval(fetchHotBlocks, 10000); // 10s 轮询一次
-        const blockHistoryTimer = setInterval(fetchBlockHistory, 10000); // 10s 轮询一次
+        const blockHistoryTimer = setInterval(fetchBlockHistory, 30000); // 30s 轮询一次
         
         return () => {
             clearInterval(monitorTimer);

@@ -34,12 +34,26 @@ const ResearchReportModule = () => {
   const [currentContent, setCurrentContent] = useState('');
   const [isModified, setIsModified] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
+  // 用于保存刷新前的 openKeys 状态
+  const previousOpenKeysRef = useRef([]);
+  // 用于标记是否正在进行数据刷新操作，避免菜单自动收起
+  const isRefreshingRef = useRef(false);
 
-  const fetchReports = async () => {
+  const fetchReports = async (keepOpenKeys = true) => {
     try {
+      // 如果需要保持 openKeys，先保存下来
+      const savedOpenKeys = keepOpenKeys ? [...openKeys] : [];
+      
       setLoading(true);
       const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
       setTreeData(response.data);
+      
+      // 恢复之前的展开状态
+      if (keepOpenKeys && savedOpenKeys.length > 0) {
+        setTimeout(() => {
+          setOpenKeys(savedOpenKeys);
+        }, 0);
+      }
     } catch (error) {
       console.error('获取研报列表失败', error);
       message.error('获取研报列表失败');
@@ -237,6 +251,10 @@ const ResearchReportModule = () => {
 
   const handleMenuSelect = async ({ key }) => {
     setSelectedKey(key);
+    // 保存当前的 openKeys，防止后续操作影响展开状态
+    previousOpenKeysRef.current = [...openKeys];
+    
+    // 直接从当前的 treeData 获取 item，不使用 setTimeout
     const item = findItemById(treeData, key);
     setCurrentItem(item);
     
@@ -279,20 +297,42 @@ const ResearchReportModule = () => {
       return;
     }
     
+    // 保存当前的 openKeys 和 contextMenuParentId
+    const savedOpenKeys = [...openKeys];
+    const parentIdToKeep = contextMenuParentId;
+    
     try {
+      // 标记正在刷新，防止菜单自动收起
+      isRefreshingRef.current = true;
+      
       await axios.post(`http://${local_ip}:3000/create_research_report`, {
-        parentId: contextMenuParentId,
+        parentId: parentIdToKeep,
         name: newItemName,
         type: newItemType,
         content: ''
       });
       message.success('创建成功');
       setCreateModalVisible(false);
-      // 只刷新数据，不保持选择，因为新创建的项不是当前选择的
-      await fetchReports();
+      
+      // 刷新数据
+      await fetchReports(false);
+      
+      // 刷新后重新展开之前展开的菜单，并确保父文件夹也展开
+      setTimeout(() => {
+        const keysToKeep = [...savedOpenKeys];
+        if (parentIdToKeep && !keysToKeep.includes(parentIdToKeep)) {
+          keysToKeep.push(parentIdToKeep);
+        }
+        setOpenKeys(keysToKeep);
+        // 延迟一段时间后再解除刷新标记
+        setTimeout(() => {
+          isRefreshingRef.current = false;
+        }, 100);
+      }, 50);
     } catch (error) {
       console.error('创建失败', error);
       message.error('创建失败');
+      isRefreshingRef.current = false;
     }
   };
 
@@ -333,7 +373,13 @@ const ResearchReportModule = () => {
       okType: 'danger',
       cancelText: '取消',
       onOk: async () => {
+        // 保存当前的 openKeys，删除后需要过滤掉被删除的项
+        const savedOpenKeys = [...openKeys];
+        
         try {
+          // 标记正在刷新
+          isRefreshingRef.current = true;
+          
           await axios.post(`http://${local_ip}:3000/delete_research_report`, {
             id: item.id
           });
@@ -343,29 +389,62 @@ const ResearchReportModule = () => {
             setCurrentItem(null);
             setCurrentContent('');
           }
-          await fetchReports();
+          
+          // 刷新数据并重新设置 openKeys，过滤掉被删除的文件夹
+          await fetchReports(false);
+          
+          setTimeout(() => {
+            // 过滤掉被删除的项及其子项
+            const filteredOpenKeys = savedOpenKeys.filter(key => key !== item.id);
+            setOpenKeys(filteredOpenKeys);
+            
+            // 延迟后解除刷新标记
+            setTimeout(() => {
+              isRefreshingRef.current = false;
+            }, 100);
+          }, 50);
         } catch (error) {
           console.error('删除失败', error);
           message.error('删除失败');
+          isRefreshingRef.current = false;
         }
       }
     });
   };
 
   const refreshAndKeepSelection = async () => {
-    const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
-    setTreeData(response.data);
+    // 保存当前的 openKeys
+    const savedOpenKeys = [...openKeys];
     
-    // 使用 setTimeout 确保 state 更新后再处理
-    setTimeout(() => {
-      if (selectedKey) {
-        const updatedItem = findItemById(response.data, selectedKey);
-        setCurrentItem(updatedItem);
-        if (updatedItem?.type === 'report') {
-          setCurrentContent(updatedItem.content || '');
+    try {
+      // 标记正在刷新
+      isRefreshingRef.current = true;
+      
+      const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
+      setTreeData(response.data);
+      
+      // 使用 setTimeout 确保 state 更新后再处理
+      setTimeout(() => {
+        // 恢复之前的展开状态
+        setOpenKeys(savedOpenKeys);
+        
+        if (selectedKey) {
+          const updatedItem = findItemById(response.data, selectedKey);
+          setCurrentItem(updatedItem);
+          if (updatedItem?.type === 'report') {
+            setCurrentContent(updatedItem.content || '');
+          }
         }
-      }
-    }, 0);
+        
+        // 延迟后解除刷新标记
+        setTimeout(() => {
+          isRefreshingRef.current = false;
+        }, 100);
+      }, 0);
+    } catch (error) {
+      console.error('刷新数据失败', error);
+      isRefreshingRef.current = false;
+    }
   };
 
   const handleSave = async () => {
@@ -389,6 +468,9 @@ const ResearchReportModule = () => {
       message.error('保存失败');
     }
   };
+
+  // 用 ref 来跟踪当前正在编辑的项目 id，防止内容错位
+  const currentEditingIdRef = useRef(null);
 
   useEffect(() => {
     if (!currentItem || currentItem.type !== 'report') {
@@ -458,18 +540,26 @@ const ResearchReportModule = () => {
   }, [currentItem?.type === 'report']);
 
   useEffect(() => {
-    if (editorInstance.current && currentItem?.type === 'report') {
-      setTimeout(() => {
-        if (editorInstance.current) {
-          try {
-            editorInstance.current.setValue(currentContent || '');
-          } catch (error) {
-            console.warn('设置编辑器内容时出错:', error);
+    // 当选中的项目变化时，更新跟踪的 id 并设置编辑器内容
+    if (currentItem?.type === 'report') {
+      currentEditingIdRef.current = currentItem.id;
+      
+      if (editorInstance.current) {
+        setTimeout(() => {
+          // 确保当前的 currentItem 没有在延迟期间变化
+          if (editorInstance.current && currentEditingIdRef.current === currentItem.id) {
+            try {
+              editorInstance.current.setValue(currentContent || '');
+            } catch (error) {
+              console.warn('设置编辑器内容时出错:', error);
+            }
           }
-        }
-      }, 50);
+        }, 50);
+      }
+    } else {
+      currentEditingIdRef.current = null;
     }
-  }, [currentItem?.id]);
+  }, [currentItem?.id, currentContent]);
 
   return (
     <Layout style={{ height: 'calc(100vh - 180px)', background: '#fff' }}>
@@ -509,7 +599,12 @@ const ResearchReportModule = () => {
           mode="inline"
           selectedKeys={selectedKey ? [selectedKey] : []}
           openKeys={openKeys}
-          onOpenChange={setOpenKeys}
+          onOpenChange={(keys) => {
+            // 如果正在刷新数据，忽略 openKeys 的变化
+            if (!isRefreshingRef.current) {
+              setOpenKeys(keys);
+            }
+          }}
           items={buildMenuItems(filterTreeData(treeData, searchKeyword))}
           onSelect={handleMenuSelect}
           style={{ height: '100%', borderRight: 0 }}

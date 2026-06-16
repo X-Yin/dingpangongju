@@ -221,6 +221,16 @@ const Block = () => {
     // 获取今天日期用于构建完整时间
     const today = dayjs().format('YYYY-MM-DD');
 
+    // 过滤掉中午休盘的数据 (11:30 - 13:00)
+    const filteredHistoryData = historyData.filter(item => {
+      const time = item.time;
+      // 大于等于 11:30 且小于 13:00 的数据会被过滤掉
+      if (time >= '11:30' && time < '13:00') {
+        return false;
+      }
+      return true;
+    });
+
     // 计算所有板块的起始价格
     const startingPrices = {};
     selectedBlocks.forEach((blockName) => {
@@ -244,7 +254,7 @@ const Block = () => {
     selectedBlocks.forEach((blockName) => {
       let currentPrice = startingPrices[blockName];
       let lastChange = 0; // 记录上一次的涨幅
-      const blockDataPoints = historyData.map((item, index) => {
+      const blockDataPoints = filteredHistoryData.map((item, index) => {
         const block = item.blockData.find(b => b.blockName === blockName);
         if (!block) return null;
         
@@ -274,7 +284,13 @@ const Block = () => {
       intraDayBlockDataMap[blockName] = blockDataPoints;
     });
 
-    // 为每个选中的板块创建一条线
+    // 创建时间到索引的映射，用于 tooltip 查找
+    const timeIndexMap = {};
+    filteredHistoryData.forEach((item, index) => {
+      timeIndexMap[index] = item.time;
+    });
+
+    // 为每个选中的板块创建一条线 - 使用索引作为时间轴，避免中间空白
     selectedBlocks.forEach((blockName, index) => {
       const color = blockColors[index % blockColors.length];
       const series = chart.addLineSeries({
@@ -289,14 +305,11 @@ const Block = () => {
       
       seriesRef.current[blockName] = series;
 
-      // 准备该板块的数据 - 基于历史最后价格，连续累积计算价格
+      // 使用索引作为时间，这样不会有中午休盘的空白
       const blockDataPoints = intraDayBlockDataMap[blockName];
-      const blockChartData = blockDataPoints.map(item => {
-        const [hh, mm] = item.time.split(':');
-        const time = dayjs(`${today} ${hh}:${mm}`).unix();
-        
+      const blockChartData = blockDataPoints.map((item, idx) => {
         return {
-          time: time,
+          time: idx, // 使用索引作为时间
           value: item.price
         };
       });
@@ -319,10 +332,8 @@ const Block = () => {
       });
       
       const startingPrice = startingPrices[blockName];
-      const baselineData = historyData.map(item => {
-        const [hh, mm] = item.time.split(':');
-        const time = dayjs(`${today} ${hh}:${mm}`).unix();
-        return { time: time, value: startingPrice };
+      const baselineData = filteredHistoryData.map((item, idx) => {
+        return { time: idx, value: startingPrice };
       });
       baselineSeries.setData(baselineData);
     });
@@ -331,7 +342,7 @@ const Block = () => {
     chart.subscribeCrosshairMove((param) => {
       if (
         param.point === undefined ||
-        !param.time ||
+        param.time === undefined ||
         param.point.x < 0 ||
         param.point.x > chartContainerRef.current.clientWidth ||
         param.point.y < 0 ||
@@ -339,8 +350,13 @@ const Block = () => {
       ) {
         tooltip.style.display = 'none';
       } else {
-        const timeUnix = param.time;
-        const timeStr = dayjs.unix(timeUnix).format('HH:mm');
+        const idx = param.time;
+        const timeStr = timeIndexMap[idx];
+        
+        if (!timeStr) {
+          tooltip.style.display = 'none';
+          return;
+        }
         
         tooltip.style.display = 'block';
         
@@ -403,17 +419,17 @@ const Block = () => {
       }
     });
 
-    // 设置 X 轴格式化
+    // 设置 X 轴格式化 - 显示实际的时间而不是索引
     chart.timeScale().applyOptions({
       tickMarkFormatter: (time) => {
-        return dayjs.unix(time).format('HH:mm');
+        return timeIndexMap[time] || '';
       },
     });
 
     chart.applyOptions({
       localization: {
         timeFormatter: (time) => {
-          return dayjs.unix(time).format('HH:mm');
+          return timeIndexMap[time] || '';
         },
       },
     });
@@ -446,9 +462,19 @@ const Block = () => {
     }
   }, [historyData, selectedBlocks, dayHistoryData, createBaseChart]);
 
-  // 重置图表
+  // 全选当日分时板块
+  const selectAllBlocks = () => {
+    setSelectedBlocks(blocks.map(b => b.blockName));
+  };
+
+  // 重置当日分时图表
   const resetChart = () => {
     setSelectedBlocks(['银行', 'cpo', '光纤', '半导体']);
+  };
+
+  // 全选日历史板块
+  const selectAllDayBlocks = () => {
+    setSelectedDayBlocks(blocks.map(b => b.blockName));
   };
 
   // 重置日历史图表
@@ -508,7 +534,16 @@ const Block = () => {
       let currentPrice = 100;
       const blockDataPoints = sortedData
         .map(item => {
-          const blockData = item.blocks && item.blocks[blockName];
+          // 兼容两种数据格式：数组格式和对象格式
+          let blockData;
+          if (Array.isArray(item.blocks)) {
+            // 新数据格式：数组格式
+            blockData = item.blocks.find(b => b.blockName === blockName);
+          } else {
+            // 旧数据格式：对象格式
+            blockData = item.blocks && item.blocks[blockName];
+          }
+          
           if (!blockData || !item.date) return null;
           
           const dateStr = String(item.date);
@@ -754,67 +789,58 @@ const Block = () => {
             type='primary'
             onClick={showRankingModal}
             className="view-ranking-btn"
-            style={{ marginRight: '10px' }}
           >
             查看排名
-          </Button>
-          <Button 
-            icon={isAllExpanded ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
-            onClick={isAllExpanded ? collapseAll : expandAll}
-            className="toggle-all-btn"
-            style={{ marginRight: '10px' }}
-          >
-            {isAllExpanded ? '全部收起' : '全部展开'}
-          </Button>
-          <Button 
-            type={showChart ? 'default' : 'primary'}
-            icon={<LineChartOutlined />}
-            onClick={() => setShowChart(!showChart)}
-          >
-            {showChart ? '隐藏图表' : '显示图表'}
           </Button>
         </div>
       </div>
 
-      {showChart && (
-        <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
-          <Col span={24}>
-            <Card 
-              title={<span><LineChartOutlined /> 板块当日分时</span>} 
-              bordered={false} 
-              className="chart-card"
-              extra={
+      <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
+        <Col span={24}>
+          <Card 
+            title={<span><LineChartOutlined /> 板块当日分时</span>} 
+            bordered={false} 
+            className="chart-card"
+            extra={
+              <Space>
+                <Button 
+                  type="default" 
+                  size="small"
+                  onClick={selectAllBlocks}
+                >
+                  全选
+                </Button>
                 <Button 
                   type="default" 
                   size="small"
                   onClick={resetChart}
                 >
-                  重置
+                  恢复默认
                 </Button>
-              }
-            >
-              {loading ? (
-                <div className="loading-container"><Spin tip="加载中..." /></div>
-              ) : historyData.length > 0 ? (
-                <>
-                  <div style={{ marginBottom: '16px' }}>
-                    <Text type="secondary" style={{ marginRight: '16px' }}>选择板块:</Text>
-                    <Checkbox.Group 
-                      options={blocks.map(b => ({ label: b.blockName, value: b.blockName }))}
-                      value={selectedBlocks}
-                      onChange={handleBlockSelect}
-                      style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}
-                    />
-                  </div>
-                  <div ref={chartContainerRef} className="chart-container" style={{ height: '500px' }} />
-                </>
-              ) : (
-                <Alert message="暂无板块历史数据" type="info" showIcon />
-              )}
-            </Card>
-          </Col>
-        </Row>
-      )}
+              </Space>
+            }
+          >
+            {loading ? (
+              <div className="loading-container"><Spin tip="加载中..." /></div>
+            ) : historyData.length > 0 ? (
+              <>
+                <div style={{ marginBottom: '16px' }}>
+                  <Text type="secondary" style={{ marginRight: '16px' }}>选择板块:</Text>
+                  <Checkbox.Group 
+                    options={blocks.map(b => ({ label: b.blockName, value: b.blockName }))}
+                    value={selectedBlocks}
+                    onChange={handleBlockSelect}
+                    style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}
+                  />
+                </div>
+                <div ref={chartContainerRef} className="chart-container" style={{ height: '500px' }} />
+              </>
+            ) : (
+              <Alert message="暂无板块历史数据" type="info" showIcon />
+            )}
+          </Card>
+        </Col>
+      </Row>
 
       {/* 板块历史走势图表 */}
       <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
@@ -824,24 +850,31 @@ const Block = () => {
             bordered={false} 
             className="chart-card"
             extra={
-              <Space>
-                <Button 
-                  type="default" 
-                  size="small"
-                  onClick={resetDayChart}
-                >
-                  重置
-                </Button>
-                <Button 
-                  type="primary" 
-                  size="small"
-                  loading={updatingDayHistory}
-                  onClick={updateDayHistory}
-                >
-                  {updatingDayHistory ? '更新中...' : '更新数据'}
-                </Button>
-              </Space>
-            }
+                <Space>
+                  <Button 
+                    type="default" 
+                    size="small"
+                    onClick={selectAllDayBlocks}
+                  >
+                    全选
+                  </Button>
+                  <Button 
+                    type="default" 
+                    size="small"
+                    onClick={resetDayChart}
+                  >
+                    恢复默认
+                  </Button>
+                  <Button 
+                    type="primary" 
+                    size="small"
+                    loading={updatingDayHistory}
+                    onClick={updateDayHistory}
+                  >
+                    {updatingDayHistory ? '更新中...' : '更新数据'}
+                  </Button>
+                </Space>
+              }
           >
             {loading ? (
               <div className="loading-container"><Spin tip="加载中..." /></div>
@@ -864,6 +897,24 @@ const Block = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* 展开/收起按钮 */}
+      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <Space>
+          <Button 
+            icon={<MenuUnfoldOutlined />}
+            onClick={expandAll}
+          >
+            全部展开
+          </Button>
+          <Button 
+            icon={<MenuFoldOutlined />}
+            onClick={collapseAll}
+          >
+            全部收起
+          </Button>
+        </Space>
+      </div>
 
       {loading ? (
         <div className="loading-wrapper">

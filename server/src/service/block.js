@@ -144,28 +144,30 @@ const updateBlockDayHistory = () => {
     // 先通过 getBlockData 获取最新的板块数据，然后序列化成 block_data_day_history.json 内部的格式，存储下来
     const blockData = getBlockData();
     const blockDayHistory = getBlockDayHistory();
-    const today = dayjs().format('YYYY-MM-DD');
+    const today = dayjs().format('YYYYMMDD');
+    
+    // 将 blockData 数组转换成对象格式，与旧数据保持一致
+    const blocksObj = {};
+    blockData.forEach(item => {
+        blocksObj[item.blockName] = {
+            avgChange: item.avgChange
+        };
+    });
     
     // 检查今天是否已经有记录
-    const existingIndex = blockDayHistory.findIndex(item => item.time === today);
+    const existingIndex = blockDayHistory.findIndex(item => item.date === today);
     
     if (existingIndex !== -1) {
         // 如果今天已经有记录，则替换
         blockDayHistory[existingIndex] = {
-            time: today,
-            blockData: blockData.map(item => ({
-                blockName: item.blockName,
-                avgChange: item.avgChange
-            }))
+            date: today,
+            blocks: blocksObj
         };
     } else {
         // 如果今天没有记录，则追加
-        blockDayHistory.push({
-            time: today,
-            blockData: blockData.map(item => ({
-                blockName: item.blockName,
-                avgChange: item.avgChange
-            }))
+        blockDayHistory.unshift({
+            date: today,
+            blocks: blocksObj
         });
     }
     

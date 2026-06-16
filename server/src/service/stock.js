@@ -56,7 +56,10 @@ const stockList = {
     'sz301526': '国际复材',
     'sz002208': '合肥城建',
     'sh688630': '芯基微装',
-    'sz002428': '风华高科'
+    'sz000636': '风华高科',
+    'sz300570': '太辰光',
+    'sz300548': '长芯博创',
+    'sh603629': '利通电子'
 };
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
