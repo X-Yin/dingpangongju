@@ -221,6 +221,15 @@ const TimelineModule = () => {
 
       <Card 
         title={<><PictureOutlined style={{ marginRight: 8 }} /> 市场节奏推演</>}
+        extra={
+          <Button 
+            type="link" 
+            icon={<EditOutlined />}
+            onClick={() => window.open('https://my.feishu.cn/wiki/HuXWwr3Vti7dlskCZFzcIhlknOf', '_blank')}
+          >
+            编辑
+          </Button>
+        }
       >
         <div onPaste={handlePaste} style={{ textAlign: 'center' }}>
           {previewImage ? (
