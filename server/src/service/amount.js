@@ -119,14 +119,22 @@ const getAmountHistory = () => {
     const uniqueData = data.filter((item, index, arr) => arr.findIndex(t => t[0] === item[0]) === index);
 
     return uniqueData.map(i => {
-        const { mainMoney } = i[1];
+        const { mainMoney, amountChangeDiff } = i[1];
+        let updatedItem = { ...i[1] };
+        
         if (mainMoney && mainMoney.indexOf('万') !== -1) {
-            return [i[0], {
-                ...i[1],
-                mainMoney: `${(parseFloat(mainMoney.replace('万', '')) / 10000).toFixed(2)}亿`,
-            }]
+            updatedItem.mainMoney = `${(parseFloat(mainMoney.replace('万', '')) / 10000).toFixed(2)}亿`;
         }
-        return i;
+        
+        if (amountChangeDiff && amountChangeDiff.indexOf('万') !== -1) {
+            // 处理正负号
+            const isPositive = amountChangeDiff.startsWith('+') || amountChangeDiff.startsWith('-');
+            const sign = isPositive ? amountChangeDiff.charAt(0) : '';
+            const valueStr = isPositive ? amountChangeDiff.slice(1) : amountChangeDiff;
+            updatedItem.amountChangeDiff = `${sign}${(parseFloat(valueStr.replace('万', '')) / 10000).toFixed(2)}亿`;
+        }
+        
+        return [i[0], updatedItem];
     });
 }
 

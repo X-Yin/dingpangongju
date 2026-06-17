@@ -1,6 +1,9 @@
 // 引入 express
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const { filterUnNormalDaPanData, pollDaPanData, getAllDaPanData } = require('./service/dapan');
 const { filterUnNormalStockData, pollStockData, getSingleStockData, getSingleStockTlineData, getAllStockData, getJiSuYiDongRankData } = require('./service/stock');
 const { getBlockData, pollBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock, getBlockHistory, pollBlockHistory, getBlockDayHistory, updateBlockDayHistory } = require('./service/block');
@@ -13,6 +16,7 @@ const { getMainProblem, writeMainProblem, updateMainProblemSeq, delMainProblem, 
 const { getOpRecord, updateOpRecord } = require('./service/opRecord');
 const { updateMainLine, getMainLine } = require('./service/marketMainLine');
 const { getTimelineData, updateTimelineEvent, deleteTimelineEvent } = require('./service/timeline');
+const { getMarketRhythmData, updateMarketRhythmItem } = require('./service/marketRhythm');
 const { 
   getResearchReports, 
   getResearchReportById,
@@ -47,6 +51,27 @@ app.use(cors({
 
 // 解析 JSON 请求体
 app.use(express.json());
+
+// 静态文件服务
+app.use('/static', express.static(path.join(__dirname, '../static')));
+
+// 配置 multer 存储
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const staticPath = path.join(__dirname, '../static');
+    if (!fs.existsSync(staticPath)) {
+      fs.mkdirSync(staticPath, { recursive: true });
+    }
+    cb(null, staticPath);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'market-rhythm-' + uniqueSuffix + ext);
+  }
+});
+
+const upload = multer({ storage: storage });
 // 端口
 const port = 3000;
 
@@ -287,6 +312,47 @@ app.post('/pin_research_report', async (req, res) => {
   const { id } = req.body;
   const success = pinResearchReport(id);
   res.json({ message: success ? '置顶成功' : '置顶失败', success });
+});
+
+// 上传市场节奏推演图片
+app.post('/upload_market_rhythm_image', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: '请上传图片' });
+    }
+    const imageUrl = `http://localhost:3000/static/${req.file.filename}`;
+    res.json({ 
+      message: '上传成功', 
+      imageUrl: imageUrl,
+      filename: req.file.filename
+    });
+  } catch (error) {
+    console.error('上传失败:', error);
+    res.status(500).json({ message: '上传失败' });
+  }
+});
+
+// 获取市场节奏推演列表
+app.get('/get_market_rhythm', async (req, res) => {
+  try {
+    const data = getMarketRhythmData();
+    res.json(data);
+  } catch (error) {
+    console.error('获取数据失败:', error);
+    res.status(500).json({ message: '获取数据失败' });
+  }
+});
+
+// 更新市场节奏推演
+app.post('/update_market_rhythm', async (req, res) => {
+  try {
+    const { imageUrl } = req.body;
+    const updatedItem = updateMarketRhythmItem({ imageUrl });
+    res.json({ message: '更新成功', data: updatedItem });
+  } catch (error) {
+    console.error('更新失败:', error);
+    res.status(500).json({ message: '更新失败' });
+  }
 });
 
 
