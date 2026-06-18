@@ -204,6 +204,11 @@ exports.default = [
         "code": "sz300476",
         "name": "胜宏科技"
     },
+     {
+        "blockName": "北美缺电",
+        "code": "sh603308",
+        "name": "应流股份"
+    },
     {
         "blockName": "北美缺电",
         "code": "sz000338",
