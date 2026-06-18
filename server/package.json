@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "clear": "node script/clear.js",
+    "clear-jz": "node script/clear-jingjia-zhudong.js",
     "dev": "node src/index.js",
     "no-poll": "node src/index.js --no-poll",
     "start": "npm run clear & npm run dev",
