@@ -3,91 +3,91 @@
     "date": "20260618",
     "blocks": {
       "MLCC": {
-        "avgChange": 5.74
-      },
-      "存储": {
-        "avgChange": 4.47
-      },
-      "铜箔": {
-        "avgChange": 4.31
+        "avgChange": 6.64
       },
       "半导体": {
-        "avgChange": 4.15
+        "avgChange": 5.55
       },
-      "光模块": {
-        "avgChange": 3.77
-      },
-      "医药": {
-        "avgChange": 3.76
-      },
-      "PPE树脂": {
-        "avgChange": 3.09
-      },
-      "cpo": {
-        "avgChange": 2.47
-      },
-      "北美缺电": {
-        "avgChange": 2.41
+      "存储": {
+        "avgChange": 5.32
       },
       "cpu": {
-        "avgChange": 2.34
+        "avgChange": 4.86
       },
-      "机器人": {
-        "avgChange": 2.25
+      "cpo": {
+        "avgChange": 4.04
       },
-      "光纤": {
-        "avgChange": 2.19
+      "医药": {
+        "avgChange": 3.72
       },
-      "液冷": {
-        "avgChange": 1.65
+      "光模块": {
+        "avgChange": 3.56
       },
-      "国产超节点": {
-        "avgChange": 1.32
-      },
-      "商业航天": {
-        "avgChange": 0.66
-      },
-      "消费": {
-        "avgChange": 0.62
-      },
-      "pcb": {
-        "avgChange": 0.49
+      "PPE树脂": {
+        "avgChange": 3.31
       },
       "钨": {
-        "avgChange": 0.27
+        "avgChange": 3.17
+      },
+      "铜箔": {
+        "avgChange": 3.11
+      },
+      "北美缺电": {
+        "avgChange": 2.73
+      },
+      "国产超节点": {
+        "avgChange": 2.54
+      },
+      "机器人": {
+        "avgChange": 2.16
+      },
+      "光纤": {
+        "avgChange": 1.4
+      },
+      "液冷": {
+        "avgChange": 0.9
+      },
+      "商业航天": {
+        "avgChange": 0.76
+      },
+      "pcb": {
+        "avgChange": 0.68
       },
       "电子布": {
-        "avgChange": 0.14
+        "avgChange": -0.31
+      },
+      "消费": {
+        "avgChange": -0.53
       },
       "半导体材料": {
-        "avgChange": -0.42
-      },
-      "银行": {
-        "avgChange": -2.1
-      },
-      "MPO": {
-        "avgChange": -2.34
+        "avgChange": -0.96
       },
       "玻璃基板": {
-        "avgChange": -2.38
-      },
-      "证券": {
-        "avgChange": -2.59
+        "avgChange": -1.76
       },
       "贵金属": {
-        "avgChange": -2.65
+        "avgChange": -1.99
+      },
+      "MPO": {
+        "avgChange": -2.05
+      },
+      "银行": {
+        "avgChange": -2.26
+      },
+      "证券": {
+        "avgChange": -2.38
       },
       "化工": {
-        "avgChange": -2.86
+        "avgChange": -2.56
       },
       "锂电": {
-        "avgChange": -2.99
+        "avgChange": -2.79
       },
       "煤炭": {
-        "avgChange": -5.34
+        "avgChange": -5.27
       },
       "电力": {
-        "avgChange": -5.37
+        "avgChange": -6.5
       }
     }
   },
