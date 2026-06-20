@@ -59,7 +59,8 @@ const stockList = {
     'sz000636': '风华高科',
     'sz300570': '太辰光',
     'sz300548': '长芯博创',
-    'sh603629': '利通电子'
+    'sh603629': '利通电子',
+    'sz003031': '中瓷电子'
 };
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');

@@ -31,6 +31,7 @@ import huahong0610 from '../../assets/20260610-华虹.png';
 import shangzheng0611 from '../../assets/20260611-上证指数.png';
 import zhongjixuchuang0612 from '../../assets/20260612-中际旭创.png';
 import xinyisheng0612 from '../../assets/20260612-新易盛.png';
+import dapangailan0618 from '../../assets/20260618-大盘概览.png';
 import './index.scss';
 
 const { Title, Paragraph, Text } = Typography;
@@ -48,8 +49,11 @@ const PreMarketReading = () => {
     { key: 'case-inducement', href: '#case-inducement', title: '退潮期的冲高诱多' },
     { key: 'rebound-strategy', href: '#rebound-strategy', title: '退潮期超跌反弹博弈' },
     { key: 'outflow-warning', href: '#outflow-warning', title: '资金净流出加速风险' },
-    { key: 'case-0605', href: '#case-0605', title: '一周期一次出手纪律' },    { key: 'timing-selection', href: '#timing-selection', title: '择时大于选股' },
+    { key: 'case-0605', href: '#case-0605', title: '一周期一次出手纪律' },
+    { key: 'timing-selection', href: '#timing-selection', title: '择时大于选股' },
     { key: 'rebound-dip', href: '#rebound-dip', title: '情绪反弹龙头表现不如小弟' },
+    { key: 'tech-main-rise', href: '#tech-main-rise', title: '科技主升浪行情中的各个阶段' },
+    { key: 'capital-flow-index', href: '#capital-flow-index', title: '大盘资金净流出而指数红盘的原因' },
   ].map(item => ({
     ...item,
     title: <Tooltip title={item.title} placement="top"><span>{item.title}</span></Tooltip>
@@ -681,6 +685,171 @@ const PreMarketReading = () => {
                 showIcon
                 icon={<CheckCircleOutlined />}
               />
+            </Card>
+
+            <Card
+              id="tech-main-rise"
+              className="section-card"
+              title={<><RiseOutlined style={{ color: '#52c41a' }} /> 科技主升浪行情中的各个阶段 (0618)</>}
+              variant="borderless"
+            >
+              <Alert
+                className="lesson-alert"
+                message="行情阶段概述"
+                description="科技主升浪行情分为两个关键阶段，不同阶段的操作策略完全不同。"
+                type="info"
+                showIcon
+                icon={<InfoCircleOutlined />}
+              />
+
+              <div style={{ marginTop: 16 }}>
+                <Alert
+                  className="lesson-alert"
+                  message="第一个阶段：主线确定性确立"
+                  description="在科技板块第一天反弹大阳线的时候，和板块共振走强的是资金最看好、确定性最强的主线。比如 6.15 科技反弹的第一天，资金去了半年报业绩兑现度最高的光通信和 PCB 上游原材料。但其他确定性没有那么高的票（如寒武纪、工业富联）不会被资金关注，因为弹性不如光通信和 PCB 涨价原材料那么性感。"
+                  type="success"
+                  showIcon
+                  icon={<CheckCircleOutlined />}
+                />
+
+                <Alert
+                  className="lesson-alert"
+                  style={{ marginTop: 16 }}
+                  message="第二个阶段：获利盘消化与补涨轮动"
+                  description={
+                    <>
+                      <Paragraph>在光通信和 PCB 经过连续两天的大阳线上涨之后，积累了天量的获利盘，场内资金有兑现出来去其他低位方向做补涨的需求。此时场外踏空资金也会开始着急，但不敢去高位接盘，因此只能选择去低位的寒武纪、兆易创新、工业富联等前期没有大涨过但同样有一定业绩兑现度的股票。</Paragraph>
+                    </>
+                  }
+                  type="warning"
+                  showIcon
+                  icon={<BulbOutlined />}
+                />
+
+                <Alert
+                  className="lesson-alert"
+                  style={{ marginTop: 16 }}
+                  message="踏空资金来源分析"
+                  description={
+                    <>
+                      <div>1. 在 6.15-6.16 科技反弹前两天就提前下车的资金</div>
+                      <div>2. 前期科技深度回调时，为了避险而去了银行、证券等红利板块的资金</div>
+                    </>
+                  }
+                  type="info"
+                  showIcon
+                  icon={<InfoCircleOutlined />}
+                />
+
+                <Alert
+                  className="lesson-alert"
+                  style={{ marginTop: 16 }}
+                  message="主升浪轮动与弱势震荡的本质区别"
+                  description={
+                    <>
+                      <Paragraph>第二个阶段会出现热点轮动极快的情况(比如在 6.17，半导体设备突然大涨。在 6.18 机器人、寒武纪、兆易创新、工业富联等全都在拉，盘面非常乱，并且轮动极快)，看起来像弱势震荡期盘面，但两者有本质不同：</Paragraph>
+                      <div style={{ marginTop: 8 }}>
+                        <div><Text strong>弱势震荡期</Text>：市场没有统一共识主线，资金随便找有利好的板块拉一下</div>
+                        <div><Text strong>主升浪期</Text>：主线位置太高，踏空资金不敢上，只能去低位找补涨；一旦主线获利盘消化完毕，主线会再次爆发，且这次爆发会受之前踏空资金强烈追捧，涨幅更大、加速更快</div>
+                      </div>
+                    </>
+                  }
+                  type="warning"
+                  showIcon
+                  icon={<WarningOutlined />}
+                />
+
+                <Alert
+                  className="lesson-alert"
+                  style={{ marginTop: 16 }}
+                  message="第二阶段操作核心（必须牢记）"
+                  description={
+                    <Text strong style={{ color: '#cf1322', fontSize: '16px' }}>
+                      不能追热点，一定要坚守自己的主线。主升浪行情中消化获利盘速度很快，可能一两天就结束；如果在高速轮动期去追热点，反而会到处挨打！
+                    </Text>
+                  }
+                  type="error"
+                  showIcon
+                  icon={<WarningOutlined />}
+                />
+              </div>
+            </Card>
+
+            <Card
+              id="capital-flow-index"
+              className="section-card"
+              title={<><InfoCircleOutlined style={{ color: '#1890ff' }} /> 大盘资金净流出而指数红盘的原因（20260618）</>}
+              variant="borderless"
+            >
+              <Alert
+                className="lesson-alert"
+                message="资金统计机制"
+                description="软件统计资金净流入和流出：是统计那些主动买入或者是主动卖出的大单。也就是说被动买入或者被动卖出的大单不会被统计到。另外小单也不会被统计到。这其实就给了大资金一些操作的空间。他们可以大单买，小单卖。或者是大单卖，小单买。"
+                type="info"
+                showIcon
+                icon={<InfoCircleOutlined />}
+              />
+
+              <Alert
+                className="lesson-alert"
+                style={{ marginTop: 16 }}
+                message="指数红盘的本质"
+                description="指数红盘只取决于那些有指数权重的个股是否上涨。而这些指数权重个股，可能是正在主升的龙头板块。也有可能是低位的板块。"
+                type="success"
+                showIcon
+                icon={<CheckCircleOutlined />}
+              />
+
+              <Alert
+                className="lesson-alert"
+                style={{ marginTop: 16 }}
+                message="核心原因：市场风格切换或高低切"
+                description={
+                  <>
+                    <div>大盘资金净流出，而指数红盘。更有可能是市场风格的切换 or 资金在题材内部做高低切。</div>
+                    <div style={{ marginTop: 8 }}>
+                      <Text strong>机制：</Text>资金正在从一些高位的股票中流出（大盘资金净流出的原因），然后流入了一些低位的股票（有指数权重）。这样就形成了一种大盘资金在加速净流出，而指数却依然保持红盘的原因。
+                    </div>
+                  </>
+                }
+                type="warning"
+                showIcon
+                icon={<BulbOutlined />}
+              />
+
+              <Alert
+                className="lesson-alert"
+                style={{ marginTop: 16 }}
+                message="当下市场分析"
+                description="对当下的市场而言，更有可能是因为资金从白酒，银行，消费等价值权重股流出，然后去了创业板或者是科创板带有指数权重的股票，所以造成了这种现象，这是市场风格的切换。"
+                type="info"
+                showIcon
+                icon={<InfoCircleOutlined />}
+              />
+
+              <Alert
+                className="lesson-alert"
+                style={{ marginTop: 16 }}
+                message={<Text strong style={{ fontSize: '16px' }}>核心判断（必须牢记）</Text>}
+                description={
+                  <>
+                    <div>总而言之，当大盘资金净流出加速的时候，肯定是有一些板块在大量失血。</div>
+                    <div style={{ marginTop: 8 }}>
+                      <Text strong type="danger">如果是当下热门的板块在大幅下跌，那说明是市场在退潮。</Text>
+                    </div>
+                    <div style={{ marginTop: 8 }}>
+                      <Text strong type="success">如果不是热门的板块在下跌，那一般是从其他的板块抽血，是市场资金极致抱团的一种体现。</Text>
+                    </div>
+                  </>
+                }
+                type="error"
+                showIcon
+                icon={<WarningOutlined />}
+              />
+
+              <div style={{ marginTop: 16 }}>
+                <Image src={dapangailan0618} className="case-image" />
+              </div>
             </Card>
 
             <Divider>

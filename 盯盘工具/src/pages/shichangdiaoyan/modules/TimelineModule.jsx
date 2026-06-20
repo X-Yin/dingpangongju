@@ -13,6 +13,10 @@ const TimelineModule = () => {
   const [previewImage, setPreviewImage] = useState(null);
   const [uploading, setUploading] = useState(false);
   const uploadRef = useRef(null);
+  const [recentOperationData, setRecentOperationData] = useState(null);
+  const [recentOperationPreviewImage, setRecentOperationPreviewImage] = useState(null);
+  const [recentOperationUploading, setRecentOperationUploading] = useState(false);
+  const recentOperationUploadRef = useRef(null);
 
   const fetchTimelineData = async () => {
     try {
@@ -41,9 +45,24 @@ const TimelineModule = () => {
     }
   };
 
+  const fetchRecentOperationData = async () => {
+    try {
+      const response = await axios.get(`http://${local_ip}:3000/get_recent_operation`);
+      const data = response.data;
+      setRecentOperationData(data);
+      if (data) {
+        setRecentOperationPreviewImage(data.imageUrl || null);
+      }
+    } catch (error) {
+      console.error('Error fetching recent operation data:', error);
+      message.error('获取近期操作方案数据失败');
+    }
+  };
+
   useEffect(() => {
     fetchTimelineData();
     fetchMarketRhythmData();
+    fetchRecentOperationData();
   }, []);
 
   const handleAddOrUpdateTimelineEvent = async (event) => {
@@ -149,6 +168,55 @@ const TimelineModule = () => {
         const file = item.getAsFile();
         if (file) {
           handleImageUpload(file);
+        }
+      }
+    }
+  };
+
+  const handleRecentOperationImageUpload = async (file) => {
+    setRecentOperationUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await axios.post(
+        `http://${local_ip}:3000/upload_recent_operation_image`, 
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+      
+      const imageUrl = response.data.imageUrl;
+      setRecentOperationPreviewImage(imageUrl);
+      
+      // 自动保存
+      await axios.post(`http://${local_ip}:3000/update_recent_operation`, {
+        imageUrl
+      });
+      
+      message.success('图片上传成功');
+      fetchRecentOperationData();
+    } catch (error) {
+      console.error('上传图片失败:', error);
+      message.error('上传图片失败');
+    } finally {
+      setRecentOperationUploading(false);
+    }
+    return false;
+  };
+
+  const handleRecentOperationPaste = async (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let item of items) {
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          handleRecentOperationImageUpload(file);
         }
       }
     }
@@ -271,6 +339,63 @@ const TimelineModule = () => {
         {marketRhythmData && marketRhythmData.updatedAt && (
           <div style={{ color: '#8c8c8c', fontSize: '12px', marginTop: 16, textAlign: 'center' }}>
             最后更新：{new Date(marketRhythmData.updatedAt).toLocaleString()}
+          </div>
+        )}
+      </Card>
+
+      <Card 
+        title={<><PictureOutlined style={{ marginRight: 8 }} /> 近期操作方案</>}
+        style={{ marginTop: 16 }}
+        extra={
+          <Button 
+            type="link" 
+            icon={<EditOutlined />}
+            onClick={() => window.open('https://my.feishu.cn/wiki/JuCFwv1mti7JsVk5HEIcm7VCnhe', '_blank')}
+          >
+            编辑
+          </Button>
+        }
+      >
+        <div onPaste={handleRecentOperationPaste} style={{ textAlign: 'center' }}>
+          {recentOperationPreviewImage ? (
+            <div style={{ position: 'relative', width: '70vw', margin: '0 auto' }}>
+              <Image 
+                src={recentOperationPreviewImage} 
+                style={{ width: '100%', objectFit: 'contain' }}
+              />
+              <Upload
+                ref={recentOperationUploadRef}
+                showUploadList={false}
+                beforeUpload={handleRecentOperationImageUpload}
+                accept="image/*"
+              >
+                <Button 
+                  type="default" 
+                  size="small" 
+                  style={{ position: 'absolute', top: 4, right: 4 }}
+                  loading={recentOperationUploading}
+                >
+                  更换图片
+                </Button>
+              </Upload>
+            </div>
+          ) : (
+            <Upload
+              ref={recentOperationUploadRef}
+              showUploadList={false}
+              beforeUpload={handleRecentOperationImageUpload}
+              accept="image/*"
+            >
+              <Button icon={<PictureOutlined />} loading={recentOperationUploading}>
+                选择图片或粘贴上传
+              </Button>
+            </Upload>
+          )}
+        </div>
+
+        {recentOperationData && recentOperationData.updatedAt && (
+          <div style={{ color: '#8c8c8c', fontSize: '12px', marginTop: 16, textAlign: 'center' }}>
+            最后更新：{new Date(recentOperationData.updatedAt).toLocaleString()}
           </div>
         )}
       </Card>
