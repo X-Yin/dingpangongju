@@ -26,6 +26,8 @@ const TimelineModule = () => {
   const [newProjectTitle, setNewProjectTitle] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [editingProject, setEditingProject] = useState(null);
+  const [editingProjectTitle, setEditingProjectTitle] = useState('');
+  const [editingProjectDescription, setEditingProjectDescription] = useState('');
   const mermaidRef = useRef(null);
 
   const fetchTimelineData = async () => {
@@ -155,9 +157,19 @@ const TimelineModule = () => {
     if (!editingProject) {
       return;
     }
-    handleUpdateProject(editingProject.id, { content: currentProjectContent });
+    if (!editingProjectTitle.trim()) {
+      message.error('请输入项目标题');
+      return;
+    }
+    handleUpdateProject(editingProject.id, { 
+      title: editingProjectTitle, 
+      description: editingProjectDescription, 
+      content: currentProjectContent 
+    });
     setLongTermRhythmEditorVisible(false);
     setEditingProject(null);
+    setEditingProjectTitle('');
+    setEditingProjectDescription('');
   };
 
   const handleProjectSelect = (projectId) => {
@@ -629,6 +641,8 @@ const TimelineModule = () => {
                       const project = longTermRhythmProjects.find(p => p.id === selectedProjectId);
                       setEditingProject(project);
                       setCurrentProjectContent(project.content);
+                      setEditingProjectTitle(project.title);
+                      setEditingProjectDescription(project.description || '');
                       setLongTermRhythmEditorVisible(true);
                     }}
                   >
@@ -738,6 +752,8 @@ const TimelineModule = () => {
         onCancel={() => {
           setLongTermRhythmEditorVisible(false);
           setEditingProject(null);
+          setEditingProjectTitle('');
+          setEditingProjectDescription('');
           if (selectedProjectId) {
             const project = longTermRhythmProjects.find(p => p.id === selectedProjectId);
             if (project) {
@@ -749,6 +765,23 @@ const TimelineModule = () => {
         okText="保存"
         cancelText="取消"
       >
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ marginBottom: 8, fontWeight: 500 }}>项目标题</p>
+          <Input
+            value={editingProjectTitle}
+            onChange={(e) => setEditingProjectTitle(e.target.value)}
+            placeholder="请输入项目标题"
+          />
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ marginBottom: 8, fontWeight: 500 }}>项目描述</p>
+          <Input.TextArea
+            value={editingProjectDescription}
+            onChange={(e) => setEditingProjectDescription(e.target.value)}
+            placeholder="请输入项目描述（可选）"
+            rows={3}
+          />
+        </div>
         <div style={{ marginBottom: 16 }}>
           <p style={{ color: '#666', fontSize: '12px', marginBottom: 8 }}>
             使用 Mermaid 语法编辑甘特图，参考：<a href="https://mermaid.js.org/syntax/gantt.html" target="_blank" rel="noopener noreferrer">Mermaid Gantt 文档</a>
@@ -766,7 +799,7 @@ const TimelineModule = () => {
         <Input.TextArea
           value={currentProjectContent}
           onChange={(e) => setCurrentProjectContent(e.target.value)}
-          rows={20}
+          rows={16}
           placeholder="输入 Mermaid 甘特图语法..."
           style={{ fontFamily: 'monospace' }}
         />
