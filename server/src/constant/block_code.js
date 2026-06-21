@@ -180,6 +180,11 @@ exports.default = [
         "name": "铜冠铜箔"
     },
     {
+        "blockName": "铜箔",
+        "code": "sz002203",
+        "name": "海亮股份"
+    },
+    {
         "blockName": "pcb",
         "code": "sz002463",
         "name": "沪电股份"
@@ -583,5 +588,20 @@ exports.default = [
         "blockName": "MPO",
         "code": "sz301486",
         "name": "致尚科技"
+    },
+    {
+        "blockName": "功率半导体",
+        "code": "sh600460",
+        "name": "士兰微"
+    },
+    {
+        "blockName": "功率半导体",
+        "code": "sz300623",
+        "name": "捷捷微电"
+    },
+    {
+        "blockName": "功率半导体",
+        "code": "sz300373",
+        "name": "扬杰科技"
     },
 ]

@@ -18,7 +18,7 @@ const { updateMainLine, getMainLine } = require('./service/marketMainLine');
 const { getTimelineData, updateTimelineEvent, deleteTimelineEvent } = require('./service/timeline');
 const { getMarketRhythmData, updateMarketRhythmItem } = require('./service/marketRhythm');
 const { getRecentOperationData, updateRecentOperationItem } = require('./service/recentOperation');
-const { getLongTermRhythmData, updateLongTermRhythmItem } = require('./service/longTermRhythm');
+const { getLongTermRhythmData, updateLongTermRhythmItem, getAllProjects, createProject, updateProject, deleteProject } = require('./service/longTermRhythm');
 const { 
   getResearchReports, 
   getResearchReportById,
@@ -416,10 +416,68 @@ app.post('/update_recent_operation', async (req, res) => {
   }
 });
 
+// 获取长期炒作节奏项目列表
+app.get('/get_long_term_rhythm_projects', async (req, res) => {
+  try {
+    const projects = getAllProjects();
+    res.json(projects);
+  } catch (error) {
+    console.error('获取数据失败:', error);
+    res.status(500).json({ message: '获取数据失败' });
+  }
+});
+
+// 创建长期炒作节奏项目
+app.post('/create_long_term_rhythm_project', async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    const newProject = createProject(title, description);
+    res.json({ message: '创建成功', data: newProject });
+  } catch (error) {
+    console.error('创建失败:', error);
+    res.status(500).json({ message: '创建失败' });
+  }
+});
+
+// 更新长期炒作节奏项目
+app.post('/update_long_term_rhythm_project', async (req, res) => {
+  try {
+    const { id, title, description, content } = req.body;
+    const updatedProject = updateProject(id, { title, description, content });
+    if (!updatedProject) {
+      return res.status(404).json({ message: '项目不存在' });
+    }
+    res.json({ message: '更新成功', data: updatedProject });
+  } catch (error) {
+    console.error('更新失败:', error);
+    res.status(500).json({ message: '更新失败' });
+  }
+});
+
+// 删除长期炒作节奏项目
+app.post('/delete_long_term_rhythm_project', async (req, res) => {
+  try {
+    const { id } = req.body;
+    const success = deleteProject(id);
+    res.json({ message: success ? '删除成功' : '删除失败', success });
+  } catch (error) {
+    console.error('删除失败:', error);
+    res.status(500).json({ message: '删除失败' });
+  }
+});
+
+// 保持向后兼容的旧接口
 // 获取长期炒作节奏数据
 app.get('/get_long_term_rhythm', async (req, res) => {
   try {
-    const data = getLongTermRhythmData();
+    const projects = getAllProjects();
+    const data = projects.length > 0 ? {
+      content: projects[0].content,
+      updatedAt: projects[0].updatedAt
+    } : {
+      content: '',
+      updatedAt: new Date().toISOString()
+    };
     res.json(data);
   } catch (error) {
     console.error('获取数据失败:', error);

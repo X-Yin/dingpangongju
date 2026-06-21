@@ -1240,5 +1240,51 @@
         "change_diff": 0
       }
     ]
+  },
+  "sz003031": {
+    "stockName": "中瓷电子",
+    "kline": [
+      {
+        "trade_date": 20260618,
+        "preclose_px": 160.26,
+        "close_px": 176.29,
+        "open_px": 160.58,
+        "high_px": 176.29,
+        "low_px": 160.5,
+        "ma5_px": 158.4,
+        "ma10_px": 149.7,
+        "ma20_px": 148.43,
+        "amp": 9.85,
+        "tr": 4.66,
+        "change_px": 16.03,
+        "change": 10,
+        "business_amount": 15847766,
+        "business_balance": 2693468294,
+        "change_diff": 0
+      }
+    ]
+  },
+  "sh600460": {
+    "stockName": "士兰微",
+    "kline": [
+      {
+        "trade_date": 20260618,
+        "preclose_px": 40.83,
+        "close_px": 41.83,
+        "open_px": 40.5,
+        "high_px": 42.62,
+        "low_px": 40.45,
+        "ma5_px": 37.69,
+        "ma10_px": 35.6,
+        "ma20_px": 35.03,
+        "amp": 5.31,
+        "tr": 8.66,
+        "change_px": 1,
+        "change": 2.45,
+        "business_amount": 144192061,
+        "business_balance": 5978511055,
+        "change_diff": 0
+      }
+    ]
   }
 }

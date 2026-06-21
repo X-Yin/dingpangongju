@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Card, Button, Timeline, message, Modal, Space, Upload, Image, Tabs, Input } from 'antd';
+import { Card, Button, Timeline, message, Modal, Space, Upload, Image, Tabs, Input, Select } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined, ClockCircleOutlined, PictureOutlined, BarChartOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../../constant';
@@ -18,9 +18,14 @@ const TimelineModule = () => {
   const [recentOperationPreviewImage, setRecentOperationPreviewImage] = useState(null);
   const [recentOperationUploading, setRecentOperationUploading] = useState(false);
   const recentOperationUploadRef = useRef(null);
-  const [longTermRhythmData, setLongTermRhythmData] = useState(null);
-  const [longTermRhythmContent, setLongTermRhythmContent] = useState('');
+  const [longTermRhythmProjects, setLongTermRhythmProjects] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [currentProjectContent, setCurrentProjectContent] = useState('');
   const [longTermRhythmEditorVisible, setLongTermRhythmEditorVisible] = useState(false);
+  const [createProjectModalVisible, setCreateProjectModalVisible] = useState(false);
+  const [newProjectTitle, setNewProjectTitle] = useState('');
+  const [newProjectDescription, setNewProjectDescription] = useState('');
+  const [editingProject, setEditingProject] = useState(null);
   const mermaidRef = useRef(null);
 
   const fetchTimelineData = async () => {
@@ -64,47 +69,102 @@ const TimelineModule = () => {
     }
   };
 
-  const fetchLongTermRhythmData = async () => {
+  const fetchLongTermRhythmProjects = async () => {
     try {
-      const response = await axios.get(`http://${local_ip}:3000/get_long_term_rhythm`);
-      const data = response.data;
-      console.log('Received data:', data);
-      setLongTermRhythmData(data);
-      if (data && data.content) {
-        setLongTermRhythmContent(data.content);
-      } else {
-        // 提供默认内容
-        setLongTermRhythmContent(`gantt
-    title 长期炒作节奏规划
-    dateFormat  YYYY-MM-DD
-    section 第一阶段
-    建仓布局期           :active, a1, 2026-06-01, 2026-06-15
-    震荡洗盘期           :done, a2, 2026-06-16, 2026-06-30
-    section 第二阶段
-    初步拉升期           :crit, b1, 2026-07-01, 2026-07-15
-    回调确认期           :active, b2, 2026-07-16, 2026-07-31`);
+      const response = await axios.get(`http://${local_ip}:3000/get_long_term_rhythm_projects`);
+      const projects = response.data || [];
+      setLongTermRhythmProjects(projects);
+      if (projects.length > 0) {
+        const defaultProjectId = selectedProjectId || projects[0].id;
+        setSelectedProjectId(defaultProjectId);
+        const project = projects.find(p => p.id === defaultProjectId);
+        if (project) {
+          setCurrentProjectContent(project.content);
+        }
       }
     } catch (error) {
-      console.error('Error fetching long term rhythm data:', error);
-      message.error('获取长期炒作节奏数据失败');
-      // 出错时也提供默认内容
-      setLongTermRhythmContent(`gantt
-    title 长期炒作节奏规划
-    dateFormat  YYYY-MM-DD
-    section 第一阶段
-    建仓布局期           :active, a1, 2026-06-01, 2026-06-15
-    震荡洗盘期           :done, a2, 2026-06-16, 2026-06-30`);
+      console.error('Error fetching long term rhythm projects:', error);
+      message.error('获取长期炒作节奏项目失败');
     }
   };
 
-  const updateLongTermRhythmData = async (content) => {
+  const handleCreateProject = async () => {
+    if (!newProjectTitle.trim()) {
+      message.error('请输入项目标题');
+      return;
+    }
     try {
-      await axios.post(`http://${local_ip}:3000/update_long_term_rhythm`, { content });
-      message.success('长期炒作节奏更新成功');
-      fetchLongTermRhythmData();
+      const response = await axios.post(`http://${local_ip}:3000/create_long_term_rhythm_project`, {
+        title: newProjectTitle,
+        description: newProjectDescription
+      });
+      const newProject = response.data.data;
+      message.success('项目创建成功');
+      setNewProjectTitle('');
+      setNewProjectDescription('');
+      setCreateProjectModalVisible(false);
+      await fetchLongTermRhythmProjects();
+      // 自动选中新创建的项目
+      setSelectedProjectId(newProject.id);
+      setCurrentProjectContent(newProject.content);
     } catch (error) {
-      console.error('Error updating long term rhythm data:', error);
-      message.error('更新长期炒作节奏失败');
+      console.error('Error creating project:', error);
+      message.error('创建项目失败');
+    }
+  };
+
+  const handleUpdateProject = async (id, updates) => {
+    try {
+      await axios.post(`http://${local_ip}:3000/update_long_term_rhythm_project`, {
+        id,
+        ...updates
+      });
+      message.success('项目更新成功');
+      await fetchLongTermRhythmProjects();
+    } catch (error) {
+      console.error('Error updating project:', error);
+      message.error('更新项目失败');
+    }
+  };
+
+  const handleDeleteProject = async (id) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: '您确定要删除这个项目吗？此操作不可撤销。',
+      okText: '确认',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await axios.post(`http://${local_ip}:3000/delete_long_term_rhythm_project`, { id });
+          message.success('项目删除成功');
+          if (selectedProjectId === id) {
+            setSelectedProjectId(null);
+            setCurrentProjectContent('');
+          }
+          await fetchLongTermRhythmProjects();
+        } catch (error) {
+          console.error('Error deleting project:', error);
+          message.error('删除项目失败');
+        }
+      }
+    });
+  };
+
+  const handleSaveLongTermRhythm = () => {
+    if (!editingProject) {
+      return;
+    }
+    handleUpdateProject(editingProject.id, { content: currentProjectContent });
+    setLongTermRhythmEditorVisible(false);
+    setEditingProject(null);
+  };
+
+  const handleProjectSelect = (projectId) => {
+    setSelectedProjectId(projectId);
+    const project = longTermRhythmProjects.find(p => p.id === projectId);
+    if (project) {
+      setCurrentProjectContent(project.content);
     }
   };
 
@@ -112,7 +172,7 @@ const TimelineModule = () => {
     fetchTimelineData();
     fetchMarketRhythmData();
     fetchRecentOperationData();
-    fetchLongTermRhythmData();
+    fetchLongTermRhythmProjects();
   }, []);
 
   useEffect(() => {
@@ -121,35 +181,35 @@ const TimelineModule = () => {
       theme: 'default',
       securityLevel: 'loose',
       themeVariables: {
-    // 任务条颜色
-    taskBkg: '#8A2BE2',          // 默认任务背景色（紫）
-    critBkg: '#FF0000',          // crit 任务背景色（红）
-    activeTaskBkg: '#00FA9A',    // active 任务背景色（绿）
-    doneTaskBkg: '#D3D3D3',      // done 任务背景色（灰）
-    
-    // 区域背景色（交替颜色，实现图1中的淡黄、淡蓝背景）
-    sectionBkg: '#F0F8FF',       // 偶数区域背景色
-    altSectionBkg: '#FFFFE0',    // 奇数区域背景色
-    sectionBkg2: '#F5FFFA',      // 有的变体支持第三种交替色
-    
-    // 字体和边框
-    taskTextLightColor: '#FFFFFF', // 任务文本颜色（深色背景上）
-    taskTextDarkColor: '#000000'   // 任务文本颜色（浅色背景上）
-  }
+        // 任务条颜色
+        taskBkg: '#8A2BE2',          // 默认任务背景色（紫）
+        critBkg: '#FF0000',          // crit 任务背景色（红）
+        activeTaskBkg: '#00FA9A',    // active 任务背景色（绿）
+        doneTaskBkg: '#D3D3D3',      // done 任务背景色（灰）
+
+        // 区域背景色（交替颜色，实现图1中的淡黄、淡蓝背景）
+        sectionBkg: '#F0F8FF',       // 偶数区域背景色
+        altSectionBkg: '#FFFFE0',    // 奇数区域背景色
+        sectionBkg2: '#F5FFFA',      // 有的变体支持第三种交替色
+
+        // 字体和边框
+        taskTextLightColor: '#FFFFFF', // 任务文本颜色（深色背景上）
+        taskTextDarkColor: '#000000'   // 任务文本颜色（浅色背景上）
+      }
     });
   }, []);
 
   useEffect(() => {
     const renderMermaid = async () => {
-      if (mermaidRef.current && longTermRhythmContent) {
+      if (mermaidRef.current && currentProjectContent) {
         try {
           // 清空容器
           mermaidRef.current.innerHTML = '';
 
           // 使用 render 方法
-          const id = 'graph-' + Date.now();
+          const id = 'graph_' + Date.now();
           try {
-            const result = await mermaid.render(id, longTermRhythmContent);
+            const result = await mermaid.render(id, currentProjectContent);
             mermaidRef.current.innerHTML = result.svg;
           } catch (renderError) {
             console.error('Render error:', renderError);
@@ -170,11 +230,16 @@ const TimelineModule = () => {
       }
     };
 
-    setTimeout(() => {
+    if (!mermaidRef.current) {
+      setTimeout(() => {
+        renderMermaid();
+      }, 2000);
+    } else {
       renderMermaid();
-    }, 1000);
+    }
 
-  }, [longTermRhythmContent]);
+
+  }, [currentProjectContent]);
 
   const handleAddOrUpdateTimelineEvent = async (event) => {
     try {
@@ -333,10 +398,7 @@ const TimelineModule = () => {
     }
   };
 
-  const handleSaveLongTermRhythm = () => {
-    updateLongTermRhythmData(longTermRhythmContent);
-    setLongTermRhythmEditorVisible(false);
-  };
+
 
   const tabItems = [
     {
@@ -547,27 +609,77 @@ const TimelineModule = () => {
       ),
       children: (
         <div>
-          <div style={{ marginBottom: 16, textAlign: 'right' }}>
+          <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Select
+                style={{ width: 300 }}
+                placeholder="选择项目"
+                value={selectedProjectId}
+                onChange={handleProjectSelect}
+                options={longTermRhythmProjects.map(project => ({
+                  label: project.title,
+                  value: project.id
+                }))}
+              />
+              {selectedProjectId && (
+                <Space>
+                  <Button
+                    icon={<EditOutlined />}
+                    onClick={() => {
+                      const project = longTermRhythmProjects.find(p => p.id === selectedProjectId);
+                      setEditingProject(project);
+                      setCurrentProjectContent(project.content);
+                      setLongTermRhythmEditorVisible(true);
+                    }}
+                  >
+                    编辑甘特图
+                  </Button>
+                  <Button
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDeleteProject(selectedProjectId)}
+                  >
+                    删除项目
+                  </Button>
+                </Space>
+              )}
+            </div>
             <Button
               type="primary"
-              icon={<EditOutlined />}
-              onClick={() => setLongTermRhythmEditorVisible(true)}
+              icon={<PlusOutlined />}
+              onClick={() => setCreateProjectModalVisible(true)}
             >
-              编辑
+              新建项目
             </Button>
           </div>
-          <div
-            ref={mermaidRef}
-            style={{
-              width: '100%',
-              overflow: 'auto',
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          />
-          {longTermRhythmData && longTermRhythmData.updatedAt && (
-            <div style={{ color: '#8c8c8c', fontSize: '12px', marginTop: 16, textAlign: 'center' }}>
-              最后更新：{new Date(longTermRhythmData.updatedAt).toLocaleString()}
+
+          {selectedProjectId && longTermRhythmProjects.find(p => p.id === selectedProjectId) && (
+            <>
+              {longTermRhythmProjects.find(p => p.id === selectedProjectId).description && (
+                <div style={{ marginBottom: 16, padding: '12px 16px', background: '#f5f5f5', borderRadius: 6 }}>
+                  {longTermRhythmProjects.find(p => p.id === selectedProjectId).description}
+                </div>
+              )}
+              <div
+                ref={mermaidRef}
+                style={{
+                  width: '100%',
+                  overflow: 'auto',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}
+              />
+              {longTermRhythmProjects.find(p => p.id === selectedProjectId).updatedAt && (
+                <div style={{ color: '#8c8c8c', fontSize: '12px', marginTop: 16, textAlign: 'center' }}>
+                  最后更新：{new Date(longTermRhythmProjects.find(p => p.id === selectedProjectId).updatedAt).toLocaleString()}
+                </div>
+              )}
+            </>
+          )}
+
+          {!selectedProjectId && (
+            <div style={{ textAlign: 'center', color: '#8c8c8c', padding: '40px' }}>
+              请选择或新建一个项目
             </div>
           )}
         </div>
@@ -589,10 +701,50 @@ const TimelineModule = () => {
       />
 
       <Modal
+        title="新建项目"
+        open={createProjectModalVisible}
+        onOk={handleCreateProject}
+        onCancel={() => {
+          setCreateProjectModalVisible(false);
+          setNewProjectTitle('');
+          setNewProjectDescription('');
+        }}
+        okText="创建"
+        cancelText="取消"
+      >
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ marginBottom: 8, fontWeight: 500 }}>项目标题</p>
+          <Input
+            value={newProjectTitle}
+            onChange={(e) => setNewProjectTitle(e.target.value)}
+            placeholder="请输入项目标题"
+          />
+        </div>
+        <div>
+          <p style={{ marginBottom: 8, fontWeight: 500 }}>项目描述</p>
+          <Input.TextArea
+            value={newProjectDescription}
+            onChange={(e) => setNewProjectDescription(e.target.value)}
+            placeholder="请输入项目描述（可选）"
+            rows={4}
+          />
+        </div>
+      </Modal>
+
+      <Modal
         title="编辑长期炒作节奏"
         open={longTermRhythmEditorVisible}
         onOk={handleSaveLongTermRhythm}
-        onCancel={() => setLongTermRhythmEditorVisible(false)}
+        onCancel={() => {
+          setLongTermRhythmEditorVisible(false);
+          setEditingProject(null);
+          if (selectedProjectId) {
+            const project = longTermRhythmProjects.find(p => p.id === selectedProjectId);
+            if (project) {
+              setCurrentProjectContent(project.content);
+            }
+          }
+        }}
         width={800}
         okText="保存"
         cancelText="取消"
@@ -612,8 +764,8 @@ const TimelineModule = () => {
           </ul>
         </div>
         <Input.TextArea
-          value={longTermRhythmContent}
-          onChange={(e) => setLongTermRhythmContent(e.target.value)}
+          value={currentProjectContent}
+          onChange={(e) => setCurrentProjectContent(e.target.value)}
           rows={20}
           placeholder="输入 Mermaid 甘特图语法..."
           style={{ fontFamily: 'monospace' }}

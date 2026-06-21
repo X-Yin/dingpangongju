@@ -95,6 +95,12 @@
       "blockName": "铜箔",
       "code": "sz301217",
       "change": 10.08
+    },
+    {
+      "name": "海亮股份",
+      "blockName": "铜箔",
+      "code": "sz002203",
+      "change": 10
     }
   ],
   "PPE树脂": [
@@ -150,6 +156,12 @@
     }
   ],
   "北美缺电": [
+    {
+      "name": "应流股份",
+      "blockName": "北美缺电",
+      "code": "sh603308",
+      "change": 6.58
+    },
     {
       "name": "潍柴动力",
       "blockName": "北美缺电",
@@ -751,6 +763,26 @@
       "blockName": "MPO",
       "code": "sz301486",
       "change": -1.79
+    }
+  ],
+  "功率半导体": [
+    {
+      "name": "士兰微",
+      "blockName": "功率半导体",
+      "code": "sh600460",
+      "change": 2.45
+    },
+    {
+      "name": "捷捷微电",
+      "blockName": "功率半导体",
+      "code": "sz300623",
+      "change": 1.68
+    },
+    {
+      "name": "扬杰科技",
+      "blockName": "功率半导体",
+      "code": "sz300373",
+      "change": 7.91
     }
   ]
 }

@@ -445,19 +445,20 @@ const ResearchReportModule = () => {
         
         // 如果是新创建的研报，就选中它
         if (newItem.type === 'report') {
-          // 从新获取的数据中找到完整的 item
-          const itemFromNewData = findItemById(newTreeData, newItem.id);
-          
-          setSelectedKey(newItem.id);
-          currentEditingIdRef.current = newItem.id;
-          setCurrentItem(itemFromNewData || newItem);
+          // 先清空编辑器和内容状态
           setCurrentContent('');
           setIsModified(false);
-          
-          // 设置编辑器内容
           if (editorInstance.current) {
             editorInstance.current.setValue('');
           }
+          
+          // 从新获取的数据中找到完整的 item
+          const itemFromNewData = findItemById(newTreeData, newItem.id);
+          
+          // 然后选中并设置当前项
+          currentEditingIdRef.current = newItem.id;
+          setCurrentItem(itemFromNewData || newItem);
+          setSelectedKey(newItem.id);
         }
         
         // 延迟一段时间后再解除刷新标记
@@ -635,7 +636,7 @@ const ResearchReportModule = () => {
             minHeight: 500,
             type: 'markdown',
             value: currentContent,
-            cache: { id: 'research-report-vditor-cache' },
+            cache: { enable: false },
             toolbar: [
               'emoji',
               'headings',
