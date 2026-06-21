@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout, Menu, Button, Modal, Carousel } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, ThunderboltOutlined, AreaChartOutlined, FileTextOutlined } from '@ant-design/icons';
+import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, ThunderboltOutlined, AreaChartOutlined, FileTextOutlined, CalendarOutlined } from '@ant-design/icons';
 import PreMarketReading from './components/PreMarketReading';
 import OperationRecord from './components/OperationRecord';
+import TodayPlan from './components/TodayPlan';
+import dayjs from 'dayjs';
 import './App.scss';
 
 const { Sider, Content, Header } = Layout;
@@ -14,6 +16,38 @@ function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [preMarketVisible, setPreMarketVisible] = useState(false);
   const [operationRecordVisible, setOperationRecordVisible] = useState(false);
+  const [todayPlanVisible, setTodayPlanVisible] = useState(false);
+  const [timerId, setTimerId] = useState(null);
+
+  // 设置9:10的定时器
+  useEffect(() => {
+    const now = dayjs();
+    const targetTime = now.hour(9).minute(10).second(0).millisecond(0);
+    
+    let delay = targetTime.diff(now);
+    
+    // 如果已经过了9:10，就不再设置定时器
+    if (delay <= 0) {
+      return;
+    }
+
+    const id = setTimeout(() => {
+      setTodayPlanVisible(true);
+      // 打开后清除定时器
+      if (timerId) {
+        clearTimeout(timerId);
+        setTimerId(null);
+      }
+    }, delay);
+
+    setTimerId(id);
+
+    return () => {
+      if (id) {
+        clearTimeout(id);
+      }
+    };
+  }, []);
 
   const menuItems = [
     {
@@ -111,10 +145,17 @@ function App() {
             </Button>
             <Button
               type="primary"
+              icon={<CalendarOutlined />}
+              onClick={() => setTodayPlanVisible(true)}
+              className="today-plan-btn"
+            >
+              今日计划
+            </Button>
+            <Button
+              type="primary"
               icon={<FileTextOutlined />}
               onClick={() => setOperationRecordVisible(true)}
               className="operation-record-btn"
-              style={{ marginLeft: 8 }}
             >
               操作记录
             </Button>
@@ -151,6 +192,20 @@ function App() {
         }}
       >
         <OperationRecord />
+      </Modal>
+      <Modal
+        title={<span><CalendarOutlined style={{ color: '#1890ff', marginRight: '8px' }} />今日交易计划 - {dayjs().format('YYYY-MM-DD')}</span>}
+        open={todayPlanVisible}
+        onCancel={() => setTodayPlanVisible(false)}
+        footer={null}
+        width={1200}
+        centered
+        bodyStyle={{
+          maxHeight: '800px',
+          overflowY: 'auto'
+        }}
+      >
+        <TodayPlan />
       </Modal>
     </Layout>
   );

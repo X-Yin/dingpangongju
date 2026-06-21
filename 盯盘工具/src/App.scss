@@ -60,13 +60,14 @@
       .header-reminder {
         height: 50px;
         flex: 1;
+        min-width: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         background: #fffbe6;
-        padding: 4px 16px;
+        padding: 4px 12px;
         border-radius: 4px;
-        margin: 0 24px;
+        margin: 0 16px;
         animation: pulse-warning 2s infinite;
 
         .reminder-carousel-container {
@@ -107,15 +108,17 @@
         margin-left: auto;
         display: flex;
         align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
 
         .pre-market-btn {
           height: 40px;
           border-radius: 20px;
-          padding: 0 24px;
+          padding: 0 16px;
           font-weight: 600;
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
           background: linear-gradient(135deg, #1890ff 0%, #0050b3 100%);
           border: none;
           box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
@@ -128,14 +131,34 @@
           }
         }
 
-        .operation-record-btn {
+        .today-plan-btn {
           height: 40px;
           border-radius: 20px;
-          padding: 0 24px;
+          padding: 0 16px;
           font-weight: 600;
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
+          background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+          border: none;
+          box-shadow: 0 4px 12px rgba(82, 196, 26, 0.3);
+          transition: all 0.3s;
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(82, 196, 26, 0.4);
+            filter: brightness(1.1);
+          }
+        }
+
+        .operation-record-btn {
+          height: 40px;
+          border-radius: 20px;
+          padding: 0 16px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 6px;
           background: linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%);
           border: none;
           box-shadow: 0 4px 12px rgba(255, 77, 79, 0.3);
