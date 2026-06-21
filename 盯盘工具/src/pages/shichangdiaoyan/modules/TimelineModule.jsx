@@ -26,7 +26,7 @@ const TimelineModule = () => {
   const fetchTimelineData = async () => {
     try {
       const response = await axios.get(`http://${local_ip}:3000/get_timeline`);
-      const sortedData = [...(response.data || [])].sort((a, b) => 
+      const sortedData = [...(response.data || [])].sort((a, b) =>
         new Date(a.date) - new Date(b.date)
       );
       setTimelineList(sortedData);
@@ -68,13 +68,32 @@ const TimelineModule = () => {
     try {
       const response = await axios.get(`http://${local_ip}:3000/get_long_term_rhythm`);
       const data = response.data;
+      console.log('Received data:', data);
       setLongTermRhythmData(data);
-      if (data) {
-        setLongTermRhythmContent(data.content || '');
+      if (data && data.content) {
+        setLongTermRhythmContent(data.content);
+      } else {
+        // 提供默认内容
+        setLongTermRhythmContent(`gantt
+    title 长期炒作节奏规划
+    dateFormat  YYYY-MM-DD
+    section 第一阶段
+    建仓布局期           :active, a1, 2026-06-01, 2026-06-15
+    震荡洗盘期           :done, a2, 2026-06-16, 2026-06-30
+    section 第二阶段
+    初步拉升期           :crit, b1, 2026-07-01, 2026-07-15
+    回调确认期           :active, b2, 2026-07-16, 2026-07-31`);
       }
     } catch (error) {
       console.error('Error fetching long term rhythm data:', error);
       message.error('获取长期炒作节奏数据失败');
+      // 出错时也提供默认内容
+      setLongTermRhythmContent(`gantt
+    title 长期炒作节奏规划
+    dateFormat  YYYY-MM-DD
+    section 第一阶段
+    建仓布局期           :active, a1, 2026-06-01, 2026-06-15
+    震荡洗盘期           :done, a2, 2026-06-16, 2026-06-30`);
     }
   };
 
@@ -100,25 +119,61 @@ const TimelineModule = () => {
     mermaid.initialize({
       startOnLoad: false,
       theme: 'default',
-      securityLevel: 'loose'
+      securityLevel: 'loose',
+      themeVariables: {
+    // 任务条颜色
+    taskBkg: '#8A2BE2',          // 默认任务背景色（紫）
+    critBkg: '#FF0000',          // crit 任务背景色（红）
+    activeTaskBkg: '#00FA9A',    // active 任务背景色（绿）
+    doneTaskBkg: '#D3D3D3',      // done 任务背景色（灰）
+    
+    // 区域背景色（交替颜色，实现图1中的淡黄、淡蓝背景）
+    sectionBkg: '#F0F8FF',       // 偶数区域背景色
+    altSectionBkg: '#FFFFE0',    // 奇数区域背景色
+    sectionBkg2: '#F5FFFA',      // 有的变体支持第三种交替色
+    
+    // 字体和边框
+    taskTextLightColor: '#FFFFFF', // 任务文本颜色（深色背景上）
+    taskTextDarkColor: '#000000'   // 任务文本颜色（浅色背景上）
+  }
     });
   }, []);
 
   useEffect(() => {
-    if (mermaidRef.current && longTermRhythmContent) {
-      mermaidRef.current.innerHTML = '';
-      try {
-        mermaid.render('mermaid-chart', longTermRhythmContent).then(({ svg }) => {
-          mermaidRef.current.innerHTML = svg;
-        }).catch((error) => {
-          console.error('Error rendering mermaid chart:', error);
-          mermaidRef.current.innerHTML = '<div style="color: red;">图表渲染失败，请检查 Mermaid 语法</div>';
-        });
-      } catch (error) {
-        console.error('Error rendering mermaid chart:', error);
-        mermaidRef.current.innerHTML = '<div style="color: red;">图表渲染失败，请检查 Mermaid 语法</div>';
+    const renderMermaid = async () => {
+      if (mermaidRef.current && longTermRhythmContent) {
+        try {
+          // 清空容器
+          mermaidRef.current.innerHTML = '';
+
+          // 使用 render 方法
+          const id = 'graph-' + Date.now();
+          try {
+            const result = await mermaid.render(id, longTermRhythmContent);
+            mermaidRef.current.innerHTML = result.svg;
+          } catch (renderError) {
+            console.error('Render error:', renderError);
+            // 显示具体错误
+            mermaidRef.current.innerHTML = `<div style="color: red; padding: 20px;">
+              <p>图表渲染失败</p>
+              <p style="font-size: 12px;">错误: ${renderError.message || renderError}</p>
+              <p style="font-size: 12px; margin-top: 10px;">尝试检查您的甘特图语法是否正确</p>
+            </div>`;
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          mermaidRef.current.innerHTML = `<div style="color: red; padding: 20px;">
+            <p>出错了</p>
+            <pre style="background: #f5f5f5; padding: 10px; font-size: 12px;">${error}</pre>
+          </div>`;
+        }
       }
-    }
+    };
+
+    setTimeout(() => {
+      renderMermaid();
+    }, 1000);
+
   }, [longTermRhythmContent]);
 
   const handleAddOrUpdateTimelineEvent = async (event) => {
@@ -185,9 +240,9 @@ const TimelineModule = () => {
     try {
       const formData = new FormData();
       formData.append('image', file);
-      
+
       const response = await axios.post(
-        `http://${local_ip}:3000/upload_market_rhythm_image`, 
+        `http://${local_ip}:3000/upload_market_rhythm_image`,
         formData,
         {
           headers: {
@@ -195,15 +250,15 @@ const TimelineModule = () => {
           }
         }
       );
-      
+
       const imageUrl = response.data.imageUrl;
       setPreviewImage(imageUrl);
-      
+
       // 自动保存
       await axios.post(`http://${local_ip}:3000/update_market_rhythm`, {
         imageUrl
       });
-      
+
       message.success('图片上传成功');
       fetchMarketRhythmData();
     } catch (error) {
@@ -234,9 +289,9 @@ const TimelineModule = () => {
     try {
       const formData = new FormData();
       formData.append('image', file);
-      
+
       const response = await axios.post(
-        `http://${local_ip}:3000/upload_recent_operation_image`, 
+        `http://${local_ip}:3000/upload_recent_operation_image`,
         formData,
         {
           headers: {
@@ -244,15 +299,15 @@ const TimelineModule = () => {
           }
         }
       );
-      
+
       const imageUrl = response.data.imageUrl;
       setRecentOperationPreviewImage(imageUrl);
-      
+
       // 自动保存
       await axios.post(`http://${local_ip}:3000/update_recent_operation`, {
         imageUrl
       });
-      
+
       message.success('图片上传成功');
       fetchRecentOperationData();
     } catch (error) {
@@ -295,8 +350,8 @@ const TimelineModule = () => {
       children: (
         <div>
           <div style={{ marginBottom: 16, textAlign: 'right' }}>
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               icon={<PlusOutlined />}
               onClick={() => setTimelineModalVisible(true)}
             >
@@ -324,17 +379,17 @@ const TimelineModule = () => {
                     )}
                   </div>
                   <Space>
-                    <Button 
-                      type="link" 
+                    <Button
+                      type="link"
                       size="small"
                       icon={<EditOutlined />}
                       onClick={() => handleEditTimelineEvent(item)}
                     >
                       编辑
                     </Button>
-                    <Button 
-                      type="link" 
-                      danger 
+                    <Button
+                      type="link"
+                      danger
                       size="small"
                       icon={<DeleteOutlined />}
                       onClick={() => showDeleteTimelineConfirm(item)}
@@ -365,8 +420,8 @@ const TimelineModule = () => {
       children: (
         <div>
           <div style={{ marginBottom: 16, textAlign: 'right' }}>
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               icon={<EditOutlined />}
               onClick={() => window.open('https://my.feishu.cn/wiki/HuXWwr3Vti7dlskCZFzcIhlknOf', '_blank')}
             >
@@ -376,8 +431,8 @@ const TimelineModule = () => {
           <div onPaste={handlePaste} style={{ textAlign: 'center' }}>
             {previewImage ? (
               <div style={{ position: 'relative', width: '70vw', margin: '0 auto' }}>
-                <Image 
-                  src={previewImage} 
+                <Image
+                  src={previewImage}
                   style={{ width: '100%', objectFit: 'contain' }}
                 />
                 <Upload
@@ -386,9 +441,9 @@ const TimelineModule = () => {
                   beforeUpload={handleImageUpload}
                   accept="image/*"
                 >
-                  <Button 
-                    type="default" 
-                    size="small" 
+                  <Button
+                    type="default"
+                    size="small"
                     style={{ position: 'absolute', top: 4, right: 4 }}
                     loading={uploading}
                   >
@@ -429,8 +484,8 @@ const TimelineModule = () => {
       children: (
         <div>
           <div style={{ marginBottom: 16, textAlign: 'right' }}>
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               icon={<EditOutlined />}
               onClick={() => window.open('https://my.feishu.cn/wiki/JuCFwv1mti7JsVk5HEIcm7VCnhe', '_blank')}
             >
@@ -440,8 +495,8 @@ const TimelineModule = () => {
           <div onPaste={handleRecentOperationPaste} style={{ textAlign: 'center' }}>
             {recentOperationPreviewImage ? (
               <div style={{ position: 'relative', width: '70vw', margin: '0 auto' }}>
-                <Image 
-                  src={recentOperationPreviewImage} 
+                <Image
+                  src={recentOperationPreviewImage}
                   style={{ width: '100%', objectFit: 'contain' }}
                 />
                 <Upload
@@ -450,9 +505,9 @@ const TimelineModule = () => {
                   beforeUpload={handleRecentOperationImageUpload}
                   accept="image/*"
                 >
-                  <Button 
-                    type="default" 
-                    size="small" 
+                  <Button
+                    type="default"
+                    size="small"
                     style={{ position: 'absolute', top: 4, right: 4 }}
                     loading={recentOperationUploading}
                   >
@@ -493,22 +548,22 @@ const TimelineModule = () => {
       children: (
         <div>
           <div style={{ marginBottom: 16, textAlign: 'right' }}>
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               icon={<EditOutlined />}
               onClick={() => setLongTermRhythmEditorVisible(true)}
             >
               编辑
             </Button>
           </div>
-          <div 
-            ref={mermaidRef} 
-            style={{ 
-              width: '100%', 
+          <div
+            ref={mermaidRef}
+            style={{
+              width: '100%',
               overflow: 'auto',
               display: 'flex',
               justifyContent: 'center'
-            }} 
+            }}
           />
           {longTermRhythmData && longTermRhythmData.updatedAt && (
             <div style={{ color: '#8c8c8c', fontSize: '12px', marginTop: 16, textAlign: 'center' }}>
@@ -546,6 +601,15 @@ const TimelineModule = () => {
           <p style={{ color: '#666', fontSize: '12px', marginBottom: 8 }}>
             使用 Mermaid 语法编辑甘特图，参考：<a href="https://mermaid.js.org/syntax/gantt.html" target="_blank" rel="noopener noreferrer">Mermaid Gantt 文档</a>
           </p>
+          <p style={{ color: '#666', fontSize: '12px', marginBottom: 4 }}>
+            <strong>状态/颜色说明：</strong>
+          </p>
+          <ul style={{ color: '#666', fontSize: '12px', paddingLeft: 20, marginTop: 0, marginBottom: 0 }}>
+            <li><strong>done</strong> - 已完成</li>
+            <li><strong>active</strong> - 进行中</li>
+            <li><strong>crit</strong> - 关键阶段</li>
+            <li><strong>milestone</strong> - 里程碑</li>
+          </ul>
         </div>
         <Input.TextArea
           value={longTermRhythmContent}
