@@ -18,6 +18,7 @@ const { updateMainLine, getMainLine } = require('./service/marketMainLine');
 const { getTimelineData, updateTimelineEvent, deleteTimelineEvent } = require('./service/timeline');
 const { getMarketRhythmData, updateMarketRhythmItem } = require('./service/marketRhythm');
 const { getRecentOperationData, updateRecentOperationItem } = require('./service/recentOperation');
+const { getLongTermRhythmData, updateLongTermRhythmItem } = require('./service/longTermRhythm');
 const { 
   getResearchReports, 
   getResearchReportById,
@@ -408,6 +409,29 @@ app.post('/update_recent_operation', async (req, res) => {
   try {
     const { imageUrl } = req.body;
     const updatedItem = updateRecentOperationItem({ imageUrl });
+    res.json({ message: '更新成功', data: updatedItem });
+  } catch (error) {
+    console.error('更新失败:', error);
+    res.status(500).json({ message: '更新失败' });
+  }
+});
+
+// 获取长期炒作节奏数据
+app.get('/get_long_term_rhythm', async (req, res) => {
+  try {
+    const data = getLongTermRhythmData();
+    res.json(data);
+  } catch (error) {
+    console.error('获取数据失败:', error);
+    res.status(500).json({ message: '获取数据失败' });
+  }
+});
+
+// 更新长期炒作节奏
+app.post('/update_long_term_rhythm', async (req, res) => {
+  try {
+    const { content } = req.body;
+    const updatedItem = updateLongTermRhythmItem({ content });
     res.json({ message: '更新成功', data: updatedItem });
   } catch (error) {
     console.error('更新失败:', error);
