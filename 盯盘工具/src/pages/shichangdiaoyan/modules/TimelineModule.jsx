@@ -192,112 +192,9 @@ const TimelineModule = () => {
     mermaid.initialize({
       startOnLoad: false,
       theme: 'default',
-      securityLevel: 'loose',
-      themeVariables: {
-        // 任务条颜色
-        taskBkg: '#8A2BE2',          // 默认任务背景色（紫）
-        critBkg: '#FF0000',          // crit 任务背景色（红）
-        activeTaskBkg: '#00FA9A',    // active 任务背景色（绿）
-        doneTaskBkg: '#D3D3D3',      // done 任务背景色（灰）
-
-        // 先注释掉默认的 section 背景色，让我们的自定义代码完全控制
-        // sectionBkg: '#F0F8FF',       // 偶数区域背景色
-        // altSectionBkg: '#FFFFE0',    // 奇数区域背景色
-        // sectionBkg2: '#F5FFFA',      // 有的变体支持第三种交替色
-
-        // 字体和边框
-        taskTextLightColor: '#FFFFFF', // 任务文本颜色（深色背景上）
-        taskTextDarkColor: '#000000'   // 任务文本颜色（浅色背景上）
-      }
+      securityLevel: 'loose'
     });
   }, []);
-
-  // 定义我们要应用的 4 种淡色系任务背景色
-  const taskColors = ['#E1BEE7', '#BBDEFB', '#FFE0B2', '#F8BBD0']; // 淡紫, 淡蓝, 淡橙, 淡粉
-
-  // 用于应用自定义样式的函数
-  const applyCustomStyles = (svgElement) => {
-    if (!svgElement) return;
-
-    // 1. 解析 Mermaid 文本，获取所有任务所属的 section 索引（严格按照从上到下的顺序）
-    const taskSectionList = [];
-    let currentSectionIndex = -1;
-    const lines = (currentProjectContent || '').split('\n');
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      // 检测 section 开始
-      if (trimmed.toLowerCase().startsWith('section')) {
-        currentSectionIndex++;
-        continue;
-      }
-      // 检测任务行（包含冒号，不以%%开头，并且已经进入了某个 section）
-      if (currentSectionIndex >= 0 && trimmed && !trimmed.startsWith('%%') && trimmed.includes(':')) {
-        taskSectionList.push(currentSectionIndex);
-      }
-    }
-
-    // 2. 获取所有的任务图形元素 (只选择具有 'task' class 的元素，排除 'taskText' 等文本)
-    // .task 类在 Mermaid 中专门用于任务条 (包括 rect, path, polygon 等)
-    const taskShapes = Array.from(svgElement.querySelectorAll('.task'));
-
-    // 3. 按图形在图表中的垂直位置 (Y 坐标) 进行从上到下的排序
-    // 这确保了图形的顺序与文本中解析出的任务顺序 100% 匹配
-    taskShapes.sort((a, b) => {
-      let yA = parseFloat(a.getAttribute('y'));
-      if (isNaN(yA)) {
-        try { yA = a.getBoundingClientRect().top; } catch(e) { yA = 0; }
-      }
-      
-      let yB = parseFloat(b.getAttribute('y'));
-      if (isNaN(yB)) {
-        try { yB = b.getBoundingClientRect().top; } catch(e) { yB = 0; }
-      }
-      
-      return yA - yB;
-    });
-
-    // 4. 按顺序一一对应分配颜色
-    taskShapes.forEach((shape, index) => {
-      // 排除关键任务 (crit)，确保它保持红色
-      if (shape.classList.contains('crit') || shape.getAttribute('fill') === '#FF0000') {
-        shape.setAttribute('fill', '#FF0000');
-        shape.style.fill = '#FF0000';
-        shape.classList.add('mermaid-gantt-crit');
-        return;
-      }
-
-      // 如果图形数量与解析出的任务对应，分配对应的 section 颜色
-      // 即使由于某种原因不匹配，也回退到最后一个已知的 section
-      const sectionIndex = index < taskSectionList.length ? taskSectionList[index] : (taskSectionList[taskSectionList.length - 1] || 0);
-      const color = taskColors[sectionIndex % taskColors.length];
-      
-      shape.setAttribute('fill', color);
-      shape.style.fill = color;
-    });
-
-    // 确保 Crit 任务保持红色 (双重保险)
-    const critSelectors = [
-      'rect.crit',
-      'rect.task.crit',
-      'rect[class*="crit"]'
-    ];
-    
-    let critTasks = [];
-    for (const selector of critSelectors) {
-      const found = svgElement.querySelectorAll(selector);
-      if (found.length > 0) {
-        critTasks = Array.from(found);
-        break;
-      }
-    }
-
-    critTasks.forEach(rect => {
-      rect.setAttribute('fill', '#FF0000');
-      rect.style.fill = '#FF0000';
-      rect.classList.add('mermaid-gantt-crit');
-    });
-  };
 
   useEffect(() => {
     const renderMermaid = async () => {
@@ -311,27 +208,6 @@ const TimelineModule = () => {
           try {
             const result = await mermaid.render(id, currentProjectContent);
             mermaidRef.current.innerHTML = result.svg;
-
-            // 立即尝试应用样式
-            const svgElement = mermaidRef.current.querySelector('svg');
-            if (svgElement) {
-              applyCustomStyles(svgElement);
-            }
-
-            // 使用 MutationObserver 监听 DOM 变化，确保样式始终生效
-            const observer = new MutationObserver((mutations) => {
-              const svg = mermaidRef.current.querySelector('svg');
-              if (svg) {
-                applyCustomStyles(svg);
-              }
-            });
-
-            // 配置 observer 监听子节点变化
-            observer.observe(mermaidRef.current, {
-              childList: true,
-              subtree: true
-            });
-
           } catch (renderError) {
             console.error('Render error:', renderError);
             // 显示具体错误

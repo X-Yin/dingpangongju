@@ -5,31 +5,6 @@
   fill: rgba(0, 0, 0, 0.05) !important;
 }
 
-/* ===== Crit 关键任务 (统一红色) ===== */
-.mermaid-container rect.crit,
-.mermaid-container rect.task.crit,
-.mermaid-container rect[class*="crit"],
-.mermaid-gantt-crit {
-  fill: #FF0000 !important;
-}
-
-/* ===== 字体颜色调整 ===== */
-/* Task 内部文字设为黑色（因为背景现在是淡色） */
-.mermaid-container .taskText {
-  fill: #000000 !important;
-}
-
-/* Task 外部文字（左右两侧）设为黑色 */
-.mermaid-container .taskTextOutsideRight,
-.mermaid-container .taskTextOutsideLeft {
-  fill: #000000 !important;
-}
-
-/* Section 标题字体颜色（因为 section 背景现在是浅色，所以标题用深色） */
-.mermaid-container .sectionTitle {
-  fill: #333333 !important;
-}
-
 /* 给 mermaid 容器一个类名方便选择 */
 .mermaid-container {
   width: 100%;
