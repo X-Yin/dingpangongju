@@ -1,13 +1,5 @@
 [
   {
-    "id": 7,
-    "title": "6 月股指期货交割日",
-    "description": "股指期货交割日，当天下跌的概率非常大",
-    "date": "2026-06-22",
-    "type": "milestone",
-    "createdAt": "2026-06-16T10:27:43.426Z"
-  },
-  {
     "id": 4,
     "title": "长鑫存储上市",
     "date": "2026-06-30",
@@ -22,6 +14,14 @@
     "date": "2026-07-07",
     "type": "policy",
     "createdAt": "2026-06-20T07:27:21.017Z"
+  },
+  {
+    "id": 15,
+    "title": "美国 6 月 cpi 数据",
+    "description": "北京时间晚上 8 点半",
+    "date": "2026-07-14",
+    "type": "incident",
+    "createdAt": "2026-06-22T07:35:24.065Z"
   },
   {
     "id": 2,
@@ -40,12 +40,12 @@
     "createdAt": "2026-06-20T07:30:07.235Z"
   },
   {
-    "id": 13,
-    "title": "pcb 三季度主线",
-    "description": " 7月中下旬起 —— 中游 PCB 板厂加速行情（三季度核心主线）。Q3 起 MSAF、Vera Rubin 高端机型大批量交付，Q3/Q4/2027Q1 业绩连续超预期，市场回归业绩定价，遵循产能为王逻辑。",
-    "date": "2026-07-15",
-    "type": "incident",
-    "createdAt": "2026-06-21T14:17:03.291Z"
+    "id": 14,
+    "title": "日本央行 7 月议息会议",
+    "description": "",
+    "date": "2026-07-17",
+    "type": "policy",
+    "createdAt": "2026-06-22T07:33:37.891Z"
   },
   {
     "id": 3,
@@ -54,6 +54,14 @@
     "description": "指数可能会提前博弈这个会议的利好预期",
     "type": "policy",
     "createdAt": "2026-06-13T14:00:24.732Z"
+  },
+  {
+    "id": 16,
+    "title": "美联储 7 月议息会议",
+    "description": "",
+    "date": "2026-07-30",
+    "type": "incident",
+    "createdAt": "2026-06-22T07:35:53.649Z"
   },
   {
     "id": 6,

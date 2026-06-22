@@ -1,5 +1,100 @@
 [
   {
+    "date": "20260622",
+    "blocks": {
+      "钨": {
+        "avgChange": 9.98
+      },
+      "光纤": {
+        "avgChange": 8.42
+      },
+      "证券": {
+        "avgChange": 7.62
+      },
+      "存储": {
+        "avgChange": 7.17
+      },
+      "玻璃基板": {
+        "avgChange": 6.31
+      },
+      "PPE树脂": {
+        "avgChange": 6
+      },
+      "化工": {
+        "avgChange": 5.96
+      },
+      "锂电": {
+        "avgChange": 5.85
+      },
+      "贵金属": {
+        "avgChange": 4.83
+      },
+      "北美缺电": {
+        "avgChange": 4.55
+      },
+      "功率半导体": {
+        "avgChange": 4.53
+      },
+      "电子布": {
+        "avgChange": 4.39
+      },
+      "半导体材料": {
+        "avgChange": 3.59
+      },
+      "煤炭": {
+        "avgChange": 3.07
+      },
+      "MPO": {
+        "avgChange": 2.97
+      },
+      "MLCC": {
+        "avgChange": 2.39
+      },
+      "cpu": {
+        "avgChange": 2.38
+      },
+      "半导体": {
+        "avgChange": 2.06
+      },
+      "光模块": {
+        "avgChange": 1.67
+      },
+      "电力": {
+        "avgChange": 1.47
+      },
+      "银行": {
+        "avgChange": 1.27
+      },
+      "铜箔": {
+        "avgChange": 1.1
+      },
+      "消费": {
+        "avgChange": 0.92
+      },
+      "国产超节点": {
+        "avgChange": -0.24
+      },
+      "液冷": {
+        "avgChange": -0.26
+      },
+      "医药": {
+        "avgChange": -1.22
+      },
+      "pcb": {
+        "avgChange": -1.43
+      },
+      "机器人": {
+        "avgChange": -2.86
+      },
+      "商业航天": {
+        "avgChange": -3.38
+      },
+      "cpo": {
+        "avgChange": -3.55
+      }
+    }
+  },
+  {
     "date": "20260618",
     "blocks": {
       "MLCC": {
