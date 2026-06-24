@@ -1008,6 +1008,7 @@ const Block = () => {
         visible={rankingModalVisible}
         onCancel={() => setRankingModalVisible(false)}
         blocks={blocks}
+        onStockClick={showKLine}
       />
     </div>
   );

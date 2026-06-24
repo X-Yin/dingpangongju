@@ -31,6 +31,17 @@ const bgMap = {
     highRed: '#FFB1A4',
 };
 
+const isInMiddayBreak = (time) => {
+    if (typeof time !== 'string' || time.length < 4) return false;
+    const normalizedTime = time.padEnd(6, '0');
+    return normalizedTime >= '113000' && normalizedTime < '130000';
+};
+
+const filterTradingSessionHistoryData = (records) => {
+    if (!Array.isArray(records)) return [];
+    return records.filter(([time]) => !isInMiddayBreak(time));
+};
+
 const DingPan = () => {
     const navigate = useNavigate();
     const [data, setData] = useState({ unNormalDaPanData: [], unNormalStockList: [], diagnoseData: [], topAndBottomBlockData: null, allStockData: {}, amountInfo: null, jingJiaQiangChouData: [], kaiPanZhuDongData: [], kaiPanXiaCuoData: [] });
@@ -504,7 +515,7 @@ const DingPan = () => {
     const fetchHistoryData = async () => {
         try {
             const response = await axios.get(`http://${local_ip}:3000/amount_history`);
-            setHistoryData(response.data);
+            setHistoryData(filterTradingSessionHistoryData(response.data));
         } catch (err) {
             console.error('Fetch history data failed:', err);
         }
