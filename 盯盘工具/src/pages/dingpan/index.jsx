@@ -1066,7 +1066,7 @@ const DingPan = () => {
                                     <Card className="top-block-card" variant="borderless" style={{ flex: 1 }}>
                                         <div className="block-card-header">
                                             <RiseOutlined className="rise-icon" />
-                                            <Title level={5} style={{ margin: 0, fontSize: '13px' }}>涨幅前五</Title>
+                                            <Title level={5} style={{ margin: 0, fontSize: '13px' }}>涨幅前十</Title>
                                         </div>
                                         <div className="block-items-container">
                                             {data.topAndBottomBlockData && data.topAndBottomBlockData.firstNumList.map((item, index) => (
@@ -1076,7 +1076,20 @@ const DingPan = () => {
                                                     onClick={() => jumpToBlock(item.blockName)}
                                                     style={{ cursor: 'pointer' }}
                                                 >
-                                                    <span className="block-name">{item.blockName}</span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <span className="block-name">{item.blockName}</span>
+                                                        {item.rankChange !== 0 && (
+                                                            <span style={{ 
+                                                                fontSize: '10px', 
+                                                                color: item.rankChange > 0 ? '#f5222d' : '#52c41a',
+                                                                display: 'flex',
+                                                                alignItems: 'center'
+                                                            }}>
+                                                                {item.rankChange > 0 ? '↑' : '↓'}
+                                                                {Math.abs(item.rankChange)}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <span className="block-change">+{item.avgChange}%</span>
                                                 </div>
                                             ))}
@@ -1085,7 +1098,7 @@ const DingPan = () => {
                                     <Card className="bottom-block-card" variant="borderless" style={{ flex: 1 }}>
                                         <div className="block-card-header">
                                             <FallOutlined className="fall-icon" />
-                                            <Title level={5} style={{ margin: 0, fontSize: '13px' }}>跌幅前五</Title>
+                                            <Title level={5} style={{ margin: 0, fontSize: '13px' }}>跌幅前十</Title>
                                         </div>
                                         <div className="block-items-container">
                                             {data.topAndBottomBlockData && data.topAndBottomBlockData.lastNumList.map((item, index) => (
@@ -1095,7 +1108,20 @@ const DingPan = () => {
                                                     onClick={() => jumpToBlock(item.blockName)}
                                                     style={{ cursor: 'pointer' }}
                                                 >
-                                                    <span className="block-name">{item.blockName}</span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <span className="block-name">{item.blockName}</span>
+                                                        {item.rankChange !== 0 && (
+                                                            <span style={{ 
+                                                                fontSize: '10px', 
+                                                                color: item.rankChange > 0 ? '#f5222d' : '#52c41a',
+                                                                display: 'flex',
+                                                                alignItems: 'center'
+                                                            }}>
+                                                                {item.rankChange > 0 ? '↑' : '↓'}
+                                                                {Math.abs(item.rankChange)}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <span className="block-change">{item.avgChange}%</span>
                                                 </div>
                                             ))}

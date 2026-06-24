@@ -122,5 +122,13 @@
   {
     "date": 20260622,
     "changeSumResult": 43.87
+  },
+  {
+    "date": 20260623,
+    "changeSumResult": -103.03
+  },
+  {
+    "date": 20260624,
+    "changeSumResult": 106.9
   }
 ]

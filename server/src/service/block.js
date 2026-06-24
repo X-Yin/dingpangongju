@@ -7,6 +7,26 @@ const { sleep } = require('../utils/index.js');
 const dayjs = require('dayjs');
 
 const blockPath = path.resolve(__dirname, '../data/block_data.json');
+const previousRankPath = path.resolve(__dirname, '../data/previous_block_rank.json');
+
+// 保存上一次的排名数据
+const savePreviousRank = (blockList) => {
+  const rankMap = {};
+  blockList.forEach((item, index) => {
+    rankMap[item.blockName] = index;
+  });
+  fs.writeFileSync(previousRankPath, JSON.stringify(rankMap, null, 2));
+};
+
+// 读取上一次的排名数据
+const getPreviousRank = () => {
+  try {
+    const data = fs.readFileSync(previousRankPath, 'utf-8');
+    return JSON.parse(data);
+  } catch (e) {
+    return {};
+  }
+};
 
 // 对 blockCodeList 做分组，板块相同的放在一起
 const divideBlockCodeList = (codeList) => {
@@ -85,16 +105,35 @@ const getBlockData = () => {
     return blockList.sort((a, b) => b.avgChange - a.avgChange);
 };
 
-// 找出涨幅前五和跌幅前五的板块返回
-const getTopAndBottomBlockData = (num = 5) => {
+// 找出涨幅前十和跌幅前十的板块返回
+const getTopAndBottomBlockData = (num = 10) => {
     const blockData = getBlockData();
-    const firstNumList = blockData.slice(0, num);
+    const previousRank = getPreviousRank();
+    
+    // 为每个板块计算排名变化
+    const blockDataWithRankChange = blockData.map((item, currentIndex) => {
+        const previousIndex = previousRank[item.blockName];
+        let rankChange = 0;
+        if (previousIndex !== undefined) {
+            // 排名数字越小越好，所以如果 currentIndex 0，previousIndex 是 2，说明前进了 2 名
+            rankChange = previousIndex - currentIndex;
+        }
+        return {
+            ...item,
+            rankChange
+        };
+    });
+    
+    // 保存当前排名，供下次使用
+    savePreviousRank(blockData);
+    
+    const firstNumList = blockDataWithRankChange.slice(0, num);
     // 先获取最后num个数据，再按跌幅从大到小（即涨跌幅从小到大）排序
-    const lastNumList = blockData.slice(-num).sort((a, b) => a.avgChange - b.avgChange);
+    const lastNumList = blockDataWithRankChange.slice(-num).sort((a, b) => a.avgChange - b.avgChange);
     return {
         firstNumList,
         lastNumList,
-        defensiveBlock: blockData.filter(i => ['煤炭', '电力', '银行', '医药', '消费'].includes(i.blockName)).map(i => ({
+        defensiveBlock: blockDataWithRankChange.filter(i => ['煤炭', '电力', '银行', '医药', '消费'].includes(i.blockName)).map(i => ({
             blockName: i.blockName,
             avgChange: i.avgChange
         }))

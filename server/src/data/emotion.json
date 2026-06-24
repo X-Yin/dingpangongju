@@ -178,5 +178,23 @@
       "up_ratio": 79
     },
     "emotion": 83.2
+  },
+  {
+    "date": "20260623",
+    "originData": {
+      "up_num": 122,
+      "down_num": 50,
+      "up_ratio": 66
+    },
+    "emotion": 67.8
+  },
+  {
+    "date": "20260624",
+    "originData": {
+      "up_num": 54,
+      "down_num": 24,
+      "up_ratio": 86
+    },
+    "emotion": 63
   }
 ]

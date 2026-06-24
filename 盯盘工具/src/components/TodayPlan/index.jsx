@@ -10,7 +10,8 @@ const TodayPlan = () => {
   const vditorRef = useRef(null);
   const vditorInstanceRef = useRef(null);
   const [isSaving, setIsSaving] = useState(false);
-  const todayKey = `today_plan_${dayjs().format('YYYY-MM-DD')}`;
+  // 使用固定的 key 来存储计划内容，这样跨天也能保留内容
+  const planKey = 'today_plan_content';
 
   // 初始化 Vditor
   useEffect(() => {
@@ -56,7 +57,7 @@ const TodayPlan = () => {
       },
       after: () => {
         // 加载本地存储的内容
-        const savedContent = localStorage.getItem(todayKey);
+        const savedContent = localStorage.getItem(planKey);
         if (savedContent && vditorInstanceRef.current) {
           vditorInstanceRef.current.setValue(savedContent);
         }
@@ -78,7 +79,7 @@ const TodayPlan = () => {
     try {
       setIsSaving(true);
       const content = vditorInstanceRef.current.getValue();
-      localStorage.setItem(todayKey, content);
+      localStorage.setItem(planKey, content);
       message.success('保存成功！');
     } catch (error) {
       message.error('保存失败：' + (error.message || '未知错误'));

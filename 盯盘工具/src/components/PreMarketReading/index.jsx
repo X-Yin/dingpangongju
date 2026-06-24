@@ -32,6 +32,8 @@ import shangzheng0611 from '../../assets/20260611-上证指数.png';
 import zhongjixuchuang0612 from '../../assets/20260612-中际旭创.png';
 import xinyisheng0612 from '../../assets/20260612-新易盛.png';
 import dapangailan0618 from '../../assets/20260618-大盘概览.png';
+import zhaoyichuangxin0623 from '../../assets/20260623-兆易创新.png';
+import chuangyebanzhi0623 from '../../assets/20260623-创业板指.png';
 import './index.scss';
 
 const { Title, Paragraph, Text } = Typography;
@@ -54,6 +56,7 @@ const PreMarketReading = () => {
     { key: 'rebound-dip', href: '#rebound-dip', title: '情绪反弹龙头表现不如小弟' },
     { key: 'tech-main-rise', href: '#tech-main-rise', title: '科技主升浪行情中的各个阶段' },
     { key: 'capital-flow-index', href: '#capital-flow-index', title: '大盘资金净流出而指数红盘的原因' },
+    { key: 'handle-pullback', href: '#handle-pullback', title: '指数大涨后的深度回调处理' },
   ].map(item => ({
     ...item,
     title: <Tooltip title={item.title} placement="top"><span>{item.title}</span></Tooltip>
@@ -850,6 +853,81 @@ const PreMarketReading = () => {
               <div style={{ marginTop: 16 }}>
                 <Image src={dapangailan0618} className="case-image" />
               </div>
+            </Card>
+
+            <Card
+              id="handle-pullback"
+              className="section-card"
+              title={<><BulbOutlined style={{ color: '#faad14' }} /> 指数大涨后，如何成功处理深度回调 (20260623)</>}
+              variant="borderless"
+            >
+              <Alert
+                className="lesson-alert"
+                message="市场规律"
+                description="指数上涨较多的情况下，肯定要深度回调个一两天，大概回调幅度至少 3 个点起步。"
+                type="info"
+                showIcon
+                icon={<InfoCircleOutlined />}
+              />
+              <div style={{ marginTop: 16, marginBottom: 16 }}>
+                <Image src={chuangyebanzhi0623} className="case-image" />
+              </div>
+
+              <Alert
+                className="lesson-alert"
+                message={<Text strong style={{ fontSize: '16px' }}>回调应对策略与操作纪律</Text>}
+                description={
+                  <Space direction="vertical" size="small">
+                    <Paragraph style={{ margin: 0 }}>
+                      <Text strong type="danger">1. 果断止盈：</Text>
+                      当指数上涨较多时，如果高位股票开盘就剧烈兑现，<Text strong>这个时候不要死拿，立刻卖出</Text>。
+                    </Paragraph>
+                    <Paragraph style={{ margin: 0 }}>
+                      <Text strong type="warning">2. 警惕强势诱多：</Text>
+                      这个时候很容易有一个迷惑的地方：一些前期强势的股票，上午会延续之前的强势动能继续上涨，或者是下跌之后迅速拉起来，给你一种很强的感觉。但是<Text strong type="danger">这种感觉是错误的！</Text>如果大盘后面持续下跌两三个点，再强的个股也会被带下来。
+                    </Paragraph>
+                    <Paragraph style={{ margin: 0 }}>
+                      <Text strong type="success">3. 抄底时机：</Text>
+                      如果想要抄底，<Text strong type="danger">绝对不能在上午抄底</Text>，必须要等到下午或者是快收盘的时候才能抄底。一般大盘如果当日深度回调两三个点乃至四五个点，那么就存在尾盘翘尾的需求，这个时候才是可以去抄底的良机。
+                    </Paragraph>
+                  </Space>
+                }
+                type="warning"
+                showIcon
+                icon={<WarningOutlined />}
+              />
+              
+              <div style={{ marginTop: 16 }}>
+                <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>案例分析：兆易创新</Text></Divider>
+                <Image src={zhaoyichuangxin0623} className="case-image" />
+              </div>
+              <Alert
+                className="lesson-alert"
+                style={{ marginTop: 16 }}
+                message={<Text strong style={{ fontSize: '16px' }}>巨大亏损是怎么造成的？（绝对红线）</Text>}
+                description={
+                  <Space direction="vertical" size="small">
+                    <Paragraph style={{ margin: 0 }}>
+                      事实上，如果上午跑的及时，最多也就亏损 3-4 个点。下午如果能成功抄底，尾盘反弹还能翘尾 1-2 个点甚至更多，当天就能做到<Text strong type="success">几乎不亏损</Text>。
+                    </Paragraph>
+                    <Paragraph style={{ margin: 0, padding: '8px 12px', background: '#fff1f0', borderLeft: '4px solid #ff4d4f' }}>
+                      <Text strong type="danger">唯一会出现单日 10% 以上巨大回撤的致命操作路径：</Text>
+                      <br/>
+                      上午在股票 A 上割肉亏损 3-4% <br/>
+                      <Text strong>→</Text> <Text underline>随后立刻买入</Text>另外一个上午看起来强势的股票 B <br/>
+                      <Text strong>→</Text> 结果股票 B 冲高回落，下午被大盘拖累大跌 7-8% <br/>
+                      <Text strong>→</Text> <Text strong type="danger">直接单日回撤 10%+，心态彻底崩盘！</Text>
+                    </Paragraph>
+                    <Paragraph style={{ margin: 0 }}>
+                      <Text strong style={{ color: '#cf1322' }}>规避方法极其简单：管住手，抄底动作必须、只能放在下午和尾盘！</Text>
+                    </Paragraph>
+                  </Space>
+                }
+                type="error"
+                showIcon
+                icon={<WarningOutlined />}
+              />
+              
             </Card>
 
             <Divider>
