@@ -13,3 +13,7 @@ exports.clsReqEmotionUrl = `https://x-quote.cls.cn/v2/quote/a/stock/emotion?app=
 
 // 请求各个指数的 k 线图接口
 exports.clsReqIndexUrl = `https://x-quote.cls.cn/v2/quote/a/kline?app=CailianpressWeb&code=$code&limit=$limit&os=web&period=d&sv=8.7.9&sign=${clsReqConfig.stock_sign}`
+
+// 股票列表
+const { stockList } = require('./stock_list');
+exports.stockList = stockList;

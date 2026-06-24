@@ -1,5 +1,100 @@
 [
   {
+    "date": "20260624",
+    "blocks": {
+      "电子布": {
+        "avgChange": 11.42
+      },
+      "存储": {
+        "avgChange": 7.03
+      },
+      "cpu": {
+        "avgChange": 5.52
+      },
+      "半导体": {
+        "avgChange": 5.28
+      },
+      "半导体材料": {
+        "avgChange": 5.16
+      },
+      "铜箔": {
+        "avgChange": 4.2
+      },
+      "锂电": {
+        "avgChange": 4.13
+      },
+      "cpo": {
+        "avgChange": 4.13
+      },
+      "化工": {
+        "avgChange": 3.58
+      },
+      "光模块": {
+        "avgChange": 2.83
+      },
+      "医药": {
+        "avgChange": 2.62
+      },
+      "玻璃基板": {
+        "avgChange": 2.44
+      },
+      "pcb": {
+        "avgChange": 2.39
+      },
+      "商业航天": {
+        "avgChange": 2.35
+      },
+      "功率半导体": {
+        "avgChange": 2.21
+      },
+      "液冷": {
+        "avgChange": 2.12
+      },
+      "光纤": {
+        "avgChange": 2.02
+      },
+      "MPO": {
+        "avgChange": 1.41
+      },
+      "MLCC": {
+        "avgChange": 1.32
+      },
+      "机器人": {
+        "avgChange": 1.18
+      },
+      "国产超节点": {
+        "avgChange": 1.1
+      },
+      "PPE树脂": {
+        "avgChange": 0.87
+      },
+      "钨": {
+        "avgChange": -0.61
+      },
+      "贵金属": {
+        "avgChange": -1.44
+      },
+      "煤炭": {
+        "avgChange": -1.68
+      },
+      "北美缺电": {
+        "avgChange": -1.8
+      },
+      "电力": {
+        "avgChange": -2.1
+      },
+      "证券": {
+        "avgChange": -2.5
+      },
+      "银行": {
+        "avgChange": -2.54
+      },
+      "消费": {
+        "avgChange": -4.26
+      }
+    }
+  },
+  {
     "date": "20260623",
     "blocks": {
       "功率半导体": {
