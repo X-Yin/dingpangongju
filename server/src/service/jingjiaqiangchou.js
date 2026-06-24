@@ -9,13 +9,11 @@ const pollJingJiaQiangChouData = async (hour = 9, minute = 24) => {
         if (currentTime.getHours() === hour && currentTime.getMinutes() === minute) {
             const stockData = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/stockData.json'), 'utf-8'));
             fs.writeFileSync(path.resolve(__dirname, '../data/jingjiaqiangchou/924.json'), JSON.stringify(stockData, null, 2));
-            console.log('>>> 924 数据已更新');
             // 取消当前的定时器，新开一个 setTimeout，等待 60s 之后再读取一次 data/stockData.json，重新存储到 ../data/jingjiaqiangchouData/925.json
             clearInterval(intervalId);
             setTimeout(() => {
                 const stockData = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/stockData.json'), 'utf-8'));
                 fs.writeFileSync(path.resolve(__dirname, '../data/jingjiaqiangchou/925.json'), JSON.stringify(stockData, null, 2), 'utf-8');
-                console.log('>>> 925 数据已更新');
                 // 分别读取 924.json 和 925.json 两个文件内容，进行对比，如果发现某个股票的涨幅 925 的涨幅要大于 924 的涨幅，就重新存储到 ../data/jingjiaqiangchouData/index.json
                 const resultData = {};
                 const data924 = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/jingjiaqiangchou/924.json'), 'utf-8'));
@@ -49,5 +47,31 @@ const getJingJiaQiangChouData = async () => {
     }));
 }
 
+const clearJingJiaQiangChouData = (hour = 9, minute = 30) => {
+    const dirPath = path.resolve(__dirname, '../data/jingjiaqiangchou');
+    const timer = setInterval(() => {
+        const currentTime = new Date();
+        if (currentTime.getHours() !== hour || currentTime.getMinutes() !== minute) {
+            return;
+        }
+
+        if (fs.existsSync(dirPath)) {
+            const files = fs.readdirSync(dirPath);
+            files.forEach(file => {
+                const filePath = path.resolve(dirPath, file);
+                if (fs.statSync(filePath).isFile()) {
+                    fs.unlinkSync(filePath);
+                }
+            });
+        }
+
+        console.log(`>>> 已在 ${hour}:${String(minute).padStart(2, '0')} 自动清除竞价抢筹数据`);
+        clearInterval(timer);
+    }, 1000);
+
+    return timer;
+};
+
 exports.pollJingJiaQiangChouData = pollJingJiaQiangChouData;
 exports.getJingJiaQiangChouData = getJingJiaQiangChouData;
+exports.clearJingJiaQiangChouData = clearJingJiaQiangChouData;

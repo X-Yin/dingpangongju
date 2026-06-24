@@ -8,8 +8,9 @@ const { filterUnNormalDaPanData, pollDaPanData, getAllDaPanData } = require('./s
 const { filterUnNormalStockData, pollStockData, getSingleStockData, getSingleStockTlineData, getAllStockData, getJiSuYiDongRankData } = require('./service/stock');
 const { getBlockData, pollBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock, getBlockHistory, pollBlockHistory, getBlockDayHistory, updateBlockDayHistory } = require('./service/block');
 // const { diagnose } = require('./service/diagnose');
-const { getJingJiaQiangChouData, pollJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
+const { getJingJiaQiangChouData, pollJingJiaQiangChouData, clearJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
 const { pollKaiPaiZhuDongData, getKaiPanZhuDongData } = require('./service/kaipanzhudong');
+const { pollKaiPanXiaCuoData, getKaiPanXiaCuoData } = require('./service/kaipanxiacuo');
 const { getAmountHistory, pollAmountInfo } = require('./service/amount');
 const { getAllEmotionData, getAllIndexKlineData, updateCurrentEmotionData, updateCurrentTechIndexData, getAllTechIndexData } = require('./service/emotion');
 const { getMainProblem, writeMainProblem, updateMainProblemSeq, delMainProblem, updatePersonalSugg } = require('./service/mainProblem');
@@ -34,7 +35,13 @@ const POLL_CONFIG = {
     startHour: 9,
     startMinute: 30,
     endHour: 9,
-    endMinute: 35
+    endMinute: 40
+  },
+  kaipanxiacuo: {
+    startHour: 9,
+    startMinute: 30,
+    endHour: 9,
+    endMinute: 40
   },
   jingjiaqiangchou: {
     hour: 9,
@@ -103,13 +110,15 @@ app.get('/notice_data', async (req, res) => {
   const allStockData = getAllStockData();
   const jingJiaQiangChouData = await getJingJiaQiangChouData();
   const kaiPanZhuDongData = getKaiPanZhuDongData();
+  const kaiPanXiaCuoData = getKaiPanXiaCuoData();
   res.json({
     unNormalDaPanData,
     unNormalStockList,
     topAndBottomBlockData,
     allStockData,
     jingJiaQiangChouData,
-    kaiPanZhuDongData
+    kaiPanZhuDongData,
+    kaiPanXiaCuoData
   });
 });
 
@@ -141,6 +150,11 @@ app.get('/dapan_data', async (req, res) => {
 app.get('/jingjia_data', async (req, res) => {
   const jingJiaQiangChouData = await getJingJiaQiangChouData();
   res.json(jingJiaQiangChouData);
+});
+
+app.get('/kaipan_xiacuo_data', async (req, res) => {
+  const kaiPanXiaCuoData = getKaiPanXiaCuoData();
+  res.json(kaiPanXiaCuoData);
 });
 
 app.get('/amount_history', async (req, res) => {
@@ -511,12 +525,21 @@ app.listen(port, () => {
     pollBlockData(60000);
     // 竞价抢筹数据轮询服务
     pollJingJiaQiangChouData(POLL_CONFIG.jingjiaqiangchou.hour, POLL_CONFIG.jingjiaqiangchou.minute);
+    // 竞价抢筹数据 9:30 自动清理
+    clearJingJiaQiangChouData(9, 30);
     // 开盘主动拉升轮询服务
     pollKaiPaiZhuDongData({ 
       startHour: POLL_CONFIG.kaipanzhudong.startHour,
       startMinute: POLL_CONFIG.kaipanzhudong.startMinute,
       endHour: POLL_CONFIG.kaipanzhudong.endHour,
       endMinute: POLL_CONFIG.kaipanzhudong.endMinute
+    });
+    // 开盘持续下挫轮询服务
+    pollKaiPanXiaCuoData({
+      startHour: POLL_CONFIG.kaipanxiacuo.startHour,
+      startMinute: POLL_CONFIG.kaipanxiacuo.startMinute,
+      endHour: POLL_CONFIG.kaipanxiacuo.endHour,
+      endMinute: POLL_CONFIG.kaipanxiacuo.endMinute
     });
     // 轮询成交量信息
     pollAmountInfo(10000);
@@ -525,5 +548,3 @@ app.listen(port, () => {
   }
   console.log(`服务运行在 http://localhost:${port}`);
 });
-
-

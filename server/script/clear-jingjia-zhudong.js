@@ -4,7 +4,8 @@ const path = require('path');
 const clearDirectories = () => {
     const directories = [
         path.resolve(__dirname, '../src/data/jingjiaqiangchou'),
-        path.resolve(__dirname, '../src/data/kaipanzhudong')
+        path.resolve(__dirname, '../src/data/kaipanzhudong'),
+        path.resolve(__dirname, '../src/data/kaipanxiacuo')
     ];
 
     directories.forEach(dir => {

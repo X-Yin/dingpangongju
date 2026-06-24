@@ -33,7 +33,7 @@ const bgMap = {
 
 const DingPan = () => {
     const navigate = useNavigate();
-    const [data, setData] = useState({ unNormalDaPanData: [], unNormalStockList: [], diagnoseData: [], topAndBottomBlockData: null, allStockData: {}, amountInfo: null, jingJiaQiangChouData: [], kaiPanZhuDongData: [] });
+    const [data, setData] = useState({ unNormalDaPanData: [], unNormalStockList: [], diagnoseData: [], topAndBottomBlockData: null, allStockData: {}, amountInfo: null, jingJiaQiangChouData: [], kaiPanZhuDongData: [], kaiPanXiaCuoData: [] });
     const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState(null);
     const [history, setHistory] = useState([]); // 记录所有发生过的急速异动
@@ -54,6 +54,7 @@ const DingPan = () => {
     const [jisuYidongDownList, setJisuYidongDownList] = useState([]); // 急速异动下跌排名
     const [showJingJiaQiangChou, setShowJingJiaQiangChou] = useState(true); // 控制竞价抢筹模块显示
     const [showKaiPanZhuDong, setShowKaiPanZhuDong] = useState(true); // 控制开盘主动拉升模块显示
+    const [showKaiPanXiaCuo, setShowKaiPanXiaCuo] = useState(true); // 控制开盘持续下挫模块显示
     const [hotBlocks, setHotBlocks] = useState([]); // 当日热门板块
 
     // 主力资金趋势图相关
@@ -1030,6 +1031,51 @@ const DingPan = () => {
                                         </Card>
                                     </Col>
                                 )}
+                            </Row>
+                        )}
+
+                        {showKaiPanXiaCuo && data.kaiPanXiaCuoData && data.kaiPanXiaCuoData.length > 0 && (
+                            <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
+                                <Col span={24}>
+                                    <Card
+                                        title={<><FallOutlined style={{ color: '#52c41a' }} /> 开盘持续下挫</>}
+                                        className="monitor-card zhudong-card"
+                                        variant="borderless"
+                                        extra={
+                                            <CloseOutlined
+                                                style={{ cursor: 'pointer', color: '#999' }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowKaiPanXiaCuo(false);
+                                                }}
+                                            />
+                                        }
+                                    >
+                                        <div className="jingjia-grid">
+                                            {data.kaiPanXiaCuoData.map((item, index) => {
+                                                const isUp = item.change >= 0;
+                                                const color = isUp ? '#f5222d' : '#52c41a';
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className="jingjia-item"
+                                                        onClick={() => showKLine({ name: item.stockName, code: item.code, change: item.change })}
+                                                        style={{ cursor: 'pointer' }}
+                                                    >
+                                                        <div className="stock-info">
+                                                            <Text strong style={{ fontSize: '14px' }}>{item.stockName}</Text>
+                                                            <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.code?.replace('sh', '').replace('sz', '')}</Text>
+                                                        </div>
+                                                        <div className="stock-values">
+                                                            <Text strong style={{ color: color, fontSize: '14px' }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
+                                                            <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.last_px?.toFixed(2)}</Text>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </Card>
+                                </Col>
                             </Row>
                         )}
 

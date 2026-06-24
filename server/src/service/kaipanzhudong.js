@@ -6,20 +6,6 @@ const pollKaiPaiZhuDongData = async (timeRange = { startHour: 9, startMinute: 30
     const { startHour, startMinute, endHour, endMinute } = timeRange;
     const dirPath = path.resolve(__dirname, '../data/kaipanzhudong');
 
-    // 清理文件夹的辅助函数
-    const clearDir = () => {
-        if (fs.existsSync(dirPath)) {
-            const files = fs.readdirSync(dirPath);
-            files.forEach(file => {
-                fs.unlinkSync(path.join(dirPath, file));
-            });
-            console.log('---------- 已清理 kaipanzhudong 文件夹 ----------');
-        }
-    };
-
-    // 初始化时先清理一次
-    // clearDir();
-
     let num = 1;
     let pollTimer = null;
     
@@ -60,8 +46,8 @@ const pollKaiPaiZhuDongData = async (timeRange = { startHour: 9, startMinute: 30
                     code,
                     ...stockDataMap[code]
                 }));
-                const kaipanzhudongData = stockList.filter(stock => stock.kline && stock.kline[0] && stock.kline[0].change > 0.03);
-                fs.writeFileSync(path.resolve(dirPath, `kaipanzhudong_${num}.json`), JSON.stringify(kaipanzhudongData, null, 2));
+                // const kaipanzhudongData = stockList.filter(stock => stock.kline && stock.kline[0] && stock.kline[0].change > 0.03);
+                fs.writeFileSync(path.resolve(dirPath, `kaipanzhudong_${num}.json`), JSON.stringify(stockList, null, 2));
                 num++;
             };
 
@@ -106,12 +92,6 @@ const getKaiPanZhuDongData = () => {
 
     return result;
 }
-
-// (async () => {
-//     const data = getKaiPanZhuDongData();
-//     console.log(data);
-// })()
-
 
 exports.pollKaiPaiZhuDongData = pollKaiPaiZhuDongData;
 exports.getKaiPanZhuDongData = getKaiPanZhuDongData;

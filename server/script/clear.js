@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 
-// 删除 src/data/kaipanzhudong 和 src/data/jingjiaqiangchou 目录下的所有文件
+// 删除竞价抢筹、开盘主动拉升、开盘持续下挫目录下的所有文件
 const clearDirectories = () => {
     const directories = [
         path.resolve(__dirname, '../src/data/kaipanzhudong'),
-        path.resolve(__dirname, '../src/data/jingjiaqiangchou')
+        path.resolve(__dirname, '../src/data/jingjiaqiangchou'),
+        path.resolve(__dirname, '../src/data/kaipanxiacuo')
     ];
 
     directories.forEach(dir => {
