@@ -196,5 +196,14 @@
       "up_ratio": 81
     },
     "emotion": 67.2
+  },
+  {
+    "date": "20260625",
+    "originData": {
+      "up_num": 74,
+      "down_num": 53,
+      "up_ratio": 71
+    },
+    "emotion": 50.4
   }
 ]
