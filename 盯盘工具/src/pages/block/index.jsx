@@ -231,29 +231,13 @@ const Block = () => {
       return true;
     });
 
-    // 计算所有板块的起始价格
-    const startingPrices = {};
-    selectedBlocks.forEach((blockName) => {
-      let startingPrice = 100;
-      if (dayHistoryData.length > 0) {
-        let historyPrice = 100;
-        for (const historyItem of dayHistoryData) {
-          const blockData = historyItem.blocks && historyItem.blocks[blockName];
-          if (blockData) {
-            historyPrice = historyPrice * (1 + blockData.avgChange / 100);
-          }
-        }
-        startingPrice = historyPrice;
-      }
-      startingPrices[blockName] = startingPrice;
-    });
-
     // 为了tooltip准备各板块在各时间点的数据
     const intraDayBlockDataMap = {};
     let allPrices = []; // 收集所有价格用于计算范围
     selectedBlocks.forEach((blockName) => {
-      let currentPrice = startingPrices[blockName];
+      let currentPrice = 100;
       let lastChange = 0; // 记录上一次的涨幅
+      let isFirst = true;
       const blockDataPoints = filteredHistoryData.map((item, index) => {
         const block = item.blockData.find(b => b.blockName === blockName);
         if (!block) return null;
@@ -261,10 +245,11 @@ const Block = () => {
         // 将涨幅乘以 5，让波动看起来更明显
         const amplifiedChange = block.avgChange * 5;
         
-        if (index === 0) {
-          // 第一个数据点，直接使用当前涨幅计算
-          currentPrice = currentPrice * (1 + amplifiedChange / 100);
+        if (isFirst) {
+          // 第一个数据点，强制为 100
+          currentPrice = 100;
           lastChange = amplifiedChange;
+          isFirst = false;
         } else {
           // 后续数据点：价格变化 = (当前涨幅 - 上一次涨幅) * 上一次价格 / 100
           const priceChange = (amplifiedChange - lastChange) * currentPrice / 100;
@@ -331,9 +316,8 @@ const Block = () => {
         opacity: 0.5,
       });
       
-      const startingPrice = startingPrices[blockName];
       const baselineData = filteredHistoryData.map((item, idx) => {
-        return { time: idx, value: startingPrice };
+        return { time: idx, value: 100 };
       });
       baselineSeries.setData(baselineData);
     });
@@ -532,6 +516,7 @@ const Block = () => {
     let allDayPrices = []; // 收集所有日历史价格用于计算范围
     selectedDayBlocks.forEach(blockName => {
       let currentPrice = 100;
+      let isFirst = true;
       const blockDataPoints = sortedData
         .map(item => {
           // 兼容两种数据格式：数组格式和对象格式
@@ -556,8 +541,13 @@ const Block = () => {
           // 将涨幅乘以 5，让波动看起来更明显
           const amplifiedChange = blockData.avgChange * 5;
           
-          // 连续累积计算：新价格 = 前一天价格 * (1 + 今日涨幅/100)
-          currentPrice = currentPrice * (1 + amplifiedChange / 100);
+          if (isFirst) {
+            currentPrice = 100;
+            isFirst = false;
+          } else {
+            // 连续累积计算：新价格 = 前一天价格 * (1 + 今日涨幅/100)
+            currentPrice = currentPrice * (1 + amplifiedChange / 100);
+          }
           
           const dataPoint = {
             date: formattedDate,

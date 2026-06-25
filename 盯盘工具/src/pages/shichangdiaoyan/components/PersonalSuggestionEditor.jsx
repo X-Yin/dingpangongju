@@ -55,9 +55,8 @@ const PersonalSuggestionEditor = ({
                     setIsContentModified(value !== initialContent);
                 },
                 after: () => {
-                    if (editorInstance.current && editorInstance.current.getValue() !== initialContent) {
-                        editorInstance.current.setValue(initialContent);
-                    }
+                    // 移除 after 钩子中的 getValue 调用，避免 Vditor 未完全初始化时出现错误
+                    // 初始内容已经通过 value 配置项设置
                 }
             });
             editorInstance.current = currentVditor;
@@ -76,17 +75,25 @@ const PersonalSuggestionEditor = ({
     useEffect(() => {
         if (!editorInstance.current) return; // Ensure Vditor is initialized
 
-        const currentEditorValue = editorInstance.current.getValue();
+        try {
+            const currentEditorValue = editorInstance.current.getValue();
 
-        // If initialContent changes and it's different from current editor content,
-        // and the user hasn't modified it locally, update the editor.
-        if (initialContent !== currentEditorValue && !isContentModified) {
-            editorInstance.current.setValue(initialContent);
-        }
+            // If initialContent changes and it's different from current editor content,
+            // and the user hasn't modified it locally, update the editor.
+            if (initialContent !== currentEditorValue && !isContentModified) {
+                editorInstance.current.setValue(initialContent || '');
+            }
 
-        // Reset modified status if initialContent matches current editor content
-        if (initialContent === currentEditorValue && isContentModified) {
-            setIsContentModified(false);
+            // Reset modified status if initialContent matches current editor content
+            if (initialContent === currentEditorValue && isContentModified) {
+                setIsContentModified(false);
+            }
+        } catch (error) {
+            console.warn("Vditor getValue error in useEffect:", error);
+            // Fallback: update if not modified
+            if (!isContentModified) {
+                editorInstance.current.setValue(initialContent || '');
+            }
         }
     }, [initialContent, isContentModified]);
 
