@@ -716,21 +716,21 @@
     "stockName": "中船特气",
     "kline": [
       {
-        "trade_date": 20260622,
-        "preclose_px": 364,
+        "trade_date": 20260625,
+        "preclose_px": 389.99,
         "close_px": 389.99,
-        "open_px": 368,
-        "high_px": 399.5,
-        "low_px": 366,
-        "ma5_px": 346.92,
-        "ma10_px": 318.04,
-        "ma20_px": 247.7,
-        "amp": 9.2,
-        "tr": 12.1,
-        "change_px": 25.99,
-        "change": 7.14,
-        "business_amount": 17544098,
-        "business_balance": 6728036479,
+        "open_px": 0,
+        "high_px": 0,
+        "low_px": 0,
+        "ma5_px": 361.3,
+        "ma10_px": 331.84,
+        "ma20_px": 260.5,
+        "amp": 0,
+        "tr": 0,
+        "change_px": 0,
+        "change": 0,
+        "business_amount": 0,
+        "business_balance": 0,
         "change_diff": 0
       }
     ]
@@ -1329,6 +1329,75 @@
         "change": -0.64,
         "business_amount": 10219377,
         "business_balance": 1280910764,
+        "change_diff": 0
+      }
+    ]
+  },
+  "sh688521": {
+    "stockName": "芯原股份",
+    "kline": [
+      {
+        "trade_date": 20260625,
+        "preclose_px": 300.9,
+        "close_px": 338.05,
+        "open_px": 300.02,
+        "high_px": 350.88,
+        "low_px": 295.31,
+        "ma5_px": 296.39,
+        "ma10_px": 267.85,
+        "ma20_px": 251.54,
+        "amp": 18.47,
+        "tr": 6.31,
+        "change_px": 37.15,
+        "change": 12.35,
+        "business_amount": 33196150,
+        "business_balance": 10695151523,
+        "change_diff": 0
+      }
+    ]
+  },
+  "sz000811": {
+    "stockName": "冰轮环境",
+    "kline": [
+      {
+        "trade_date": 20260625,
+        "preclose_px": 48.65,
+        "close_px": 53.52,
+        "open_px": 50.92,
+        "high_px": 53.52,
+        "low_px": 50.55,
+        "ma5_px": 46.24,
+        "ma10_px": 39.64,
+        "ma20_px": 35.65,
+        "amp": 6.1,
+        "tr": 6.49,
+        "change_px": 4.87,
+        "change": 10.01,
+        "business_amount": 63453567,
+        "business_balance": 3358103587,
+        "change_diff": 0
+      }
+    ]
+  },
+  "sz300567": {
+    "stockName": "精测电子",
+    "kline": [
+      {
+        "trade_date": 20260625,
+        "preclose_px": 251.13,
+        "close_px": 263,
+        "open_px": 261.58,
+        "high_px": 269.5,
+        "low_px": 250.53,
+        "ma5_px": 230.88,
+        "ma10_px": 217.26,
+        "ma20_px": 204.27,
+        "amp": 7.55,
+        "tr": 5.34,
+        "change_px": 11.87,
+        "change": 4.73,
+        "business_amount": 12114324,
+        "business_balance": 3128365926,
         "change_diff": 0
       }
     ]
