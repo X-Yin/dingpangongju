@@ -1125,6 +1125,27 @@ const DingPan = () => {
                                             <RiseOutlined className="rise-icon" />
                                             <Title level={5} style={{ margin: 0, fontSize: '13px' }}>涨幅前十</Title>
                                         </div>
+                                        <div style={{ padding: '0 12px 8px 12px' }}>
+                                            <Alert 
+                                                message={
+                                                    <span style={{ color: '#d4380d' }}>
+                                                        {`[${lastUpdated || dayjs().format('HH:mm:ss')}] 排名提升≥3: `}
+                                                        {data.topAndBottomBlockData?.upRankBlocks?.length > 0 ? (
+                                                            data.topAndBottomBlockData.upRankBlocks.map((b, idx) => (
+                                                                <span key={b.blockName}>
+                                                                    <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{b.blockName}</span>
+                                                                    {`(↑${b.rankChange})`}
+                                                                    {idx < data.topAndBottomBlockData.upRankBlocks.length - 1 ? '、' : ''}
+                                                                </span>
+                                                            ))
+                                                        ) : '暂无明显异动'}
+                                                    </span>
+                                                } 
+                                                type="error" 
+                                                showIcon 
+                                                style={{ padding: '4px 8px', fontSize: '12px' }} 
+                                            />
+                                        </div>
                                         <div className="block-items-container">
                                             {data.topAndBottomBlockData && data.topAndBottomBlockData.firstNumList.map((item, index) => (
                                                 <div 
@@ -1147,7 +1168,7 @@ const DingPan = () => {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <span className="block-change">+{item.avgChange}%</span>
+                                                    <span className="block-change">{item.avgChange > 0 ? '+' : ''}{item.avgChange}%</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -1156,6 +1177,27 @@ const DingPan = () => {
                                         <div className="block-card-header">
                                             <FallOutlined className="fall-icon" />
                                             <Title level={5} style={{ margin: 0, fontSize: '13px' }}>跌幅前十</Title>
+                                        </div>
+                                        <div style={{ padding: '0 12px 8px 12px' }}>
+                                            <Alert 
+                                                message={
+                                                    <span style={{ color: '#389e0d' }}>
+                                                        {`[${lastUpdated || dayjs().format('HH:mm:ss')}] 排名下降≥3: `}
+                                                        {data.topAndBottomBlockData?.downRankBlocks?.length > 0 ? (
+                                                            data.topAndBottomBlockData.downRankBlocks.map((b, idx) => (
+                                                                <span key={b.blockName}>
+                                                                    <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{b.blockName}</span>
+                                                                    {`(↓${Math.abs(b.rankChange)})`}
+                                                                    {idx < data.topAndBottomBlockData.downRankBlocks.length - 1 ? '、' : ''}
+                                                                </span>
+                                                            ))
+                                                        ) : '暂无明显异动'}
+                                                    </span>
+                                                } 
+                                                type="success" 
+                                                showIcon 
+                                                style={{ padding: '4px 8px', fontSize: '12px' }} 
+                                            />
                                         </div>
                                         <div className="block-items-container">
                                             {data.topAndBottomBlockData && data.topAndBottomBlockData.lastNumList.map((item, index) => (

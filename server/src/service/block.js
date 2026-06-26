@@ -130,9 +130,24 @@ const getTopAndBottomBlockData = (num = 10) => {
     const firstNumList = blockDataWithRankChange.slice(0, num);
     // 先获取最后num个数据，再按跌幅从大到小（即涨跌幅从小到大）排序
     const lastNumList = blockDataWithRankChange.slice(-num).sort((a, b) => a.avgChange - b.avgChange);
+    
+    // 找出排名提升 >= 3 和 下降 >= 3 的板块
+    const upRankBlocks = blockDataWithRankChange.filter(item => item.rankChange >= 3).map(item => ({
+        blockName: item.blockName,
+        rankChange: item.rankChange,
+        avgChange: item.avgChange
+    }));
+    const downRankBlocks = blockDataWithRankChange.filter(item => item.rankChange <= -3).map(item => ({
+        blockName: item.blockName,
+        rankChange: item.rankChange,
+        avgChange: item.avgChange
+    }));
+
     return {
         firstNumList,
         lastNumList,
+        upRankBlocks,
+        downRankBlocks,
         defensiveBlock: blockDataWithRankChange.filter(i => ['煤炭', '电力', '银行', '医药', '消费'].includes(i.blockName)).map(i => ({
             blockName: i.blockName,
             avgChange: i.avgChange

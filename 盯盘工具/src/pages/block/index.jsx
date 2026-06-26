@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Typography, Card, Row, Col, Tag, Spin, Empty, Space, Button, Divider, Checkbox, Alert } from 'antd';
+import { Typography, Card, Row, Col, Tag, Spin, Empty, Space, Button, Divider, Checkbox, Alert, Table } from 'antd';
 import { AppstoreOutlined, CaretRightOutlined, ClockCircleOutlined, MenuUnfoldOutlined, MenuFoldOutlined, LineChartOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { createChart, ColorType } from 'lightweight-charts';
@@ -171,7 +171,7 @@ const Block = () => {
         fontSize: 12,
       },
       width: container.clientWidth,
-      height: 500,
+      height: 350,
       grid: {
         vertLines: { color: '#f0f0f0' },
         horzLines: { color: '#f0f0f0' },
@@ -222,7 +222,7 @@ const Block = () => {
     const today = dayjs().format('YYYY-MM-DD');
 
     // 过滤掉中午休盘的数据 (11:30 - 13:00)
-    const filteredHistoryData = historyData.filter(item => {
+    let filteredHistoryData = historyData.filter(item => {
       const time = item.time;
       // 大于等于 11:30 且小于 13:00 的数据会被过滤掉
       if (time >= '11:30' && time < '13:00') {
@@ -230,6 +230,21 @@ const Block = () => {
       }
       return true;
     });
+
+    // 将所有的数据分段成 10 个进行渲染
+    if (filteredHistoryData.length > 10) {
+      const sampledData = [];
+      const chunkSize = filteredHistoryData.length / 10;
+      for (let i = 0; i < 10; i++) {
+        // 获取每个分段中的最后一个数据节点
+        const index = Math.min(
+          Math.floor((i + 1) * chunkSize) - 1,
+          filteredHistoryData.length - 1
+        );
+        sampledData.push(filteredHistoryData[index]);
+      }
+      filteredHistoryData = sampledData;
+    }
 
     // 为了tooltip准备各板块在各时间点的数据
     const intraDayBlockDataMap = {};
@@ -330,7 +345,7 @@ const Block = () => {
         param.point.x < 0 ||
         param.point.x > chartContainerRef.current.clientWidth ||
         param.point.y < 0 ||
-        param.point.y > 500
+        param.point.y > 350
       ) {
         tooltip.style.display = 'none';
       } else {
@@ -386,7 +401,7 @@ const Block = () => {
           }
           
           // 检查底部边界
-          if (y + tooltipHeight > 500) {
+          if (y + tooltipHeight > 350) {
             y = param.point.y - tooltipHeight - 10;
           }
           
@@ -621,7 +636,7 @@ const Block = () => {
         param.point.x < 0 ||
         param.point.x > dayChartContainerRef.current.clientWidth ||
         param.point.y < 0 ||
-        param.point.y > 500
+        param.point.y > 350
       ) {
         tooltip.style.display = 'none';
       } else {
@@ -672,7 +687,7 @@ const Block = () => {
           }
           
           // 检查底部边界
-          if (y + tooltipHeight > 500) {
+          if (y + tooltipHeight > 350) {
             y = param.point.y - tooltipHeight - 10;
           }
           
@@ -761,8 +776,6 @@ const Block = () => {
     }
   }, [loading, renderDayChart]);
 
-  const isAllExpanded = blocks.length > 0 && expandedKeys.length === blocks.length;
-
   return (
     <div className="block-container">
       <div className="page-header">
@@ -786,7 +799,7 @@ const Block = () => {
       </div>
 
       <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
-        <Col span={24}>
+        <Col xs={24} xl={12}>
           <Card 
             title={<span><LineChartOutlined /> 板块当日分时</span>} 
             bordered={false} 
@@ -814,27 +827,39 @@ const Block = () => {
               <div className="loading-container"><Spin tip="加载中..." /></div>
             ) : historyData.length > 0 ? (
               <>
-                <div style={{ marginBottom: '16px' }}>
-                  <Text type="secondary" style={{ marginRight: '16px' }}>选择板块:</Text>
+                <div style={{ marginBottom: '16px' }} className="custom-checkbox-group-wrapper">
+                  <Text type="secondary" style={{ marginRight: '16px', fontWeight: 500 }}>选择板块:</Text>
                   <Checkbox.Group 
-                    options={blocks.map(b => ({ label: b.blockName, value: b.blockName }))}
                     value={selectedBlocks}
                     onChange={handleBlockSelect}
-                    style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}
-                  />
+                    className="custom-checkbox-group"
+                  >
+                    {blocks.map(b => {
+                      const isChecked = selectedBlocks.includes(b.blockName);
+                      const selectedIndex = selectedBlocks.indexOf(b.blockName);
+                      const color = isChecked ? blockColors[selectedIndex % blockColors.length] : undefined;
+                      return (
+                        <Checkbox 
+                          key={b.blockName} 
+                          value={b.blockName}
+                          style={isChecked ? { '--custom-color': color } : {}}
+                        >
+                          <span style={isChecked ? { color } : {}}>{b.blockName}</span>
+                        </Checkbox>
+                      );
+                    })}
+                  </Checkbox.Group>
                 </div>
-                <div ref={chartContainerRef} className="chart-container" style={{ height: '500px' }} />
+                <div ref={chartContainerRef} className="chart-container" style={{ height: '350px' }} />
               </>
             ) : (
               <Alert message="暂无板块历史数据" type="info" showIcon />
             )}
           </Card>
         </Col>
-      </Row>
 
-      {/* 板块历史走势图表 */}
-      <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
-        <Col span={24}>
+        {/* 板块历史走势图表 */}
+        <Col xs={24} xl={12}>
           <Card 
             title={<span><LineChartOutlined /> 板块历史走势</span>} 
             bordered={false} 
@@ -870,16 +895,30 @@ const Block = () => {
               <div className="loading-container"><Spin tip="加载中..." /></div>
             ) : dayHistoryData.length > 0 ? (
               <>
-                <div style={{ marginBottom: '16px' }}>
-                  <Text type="secondary" style={{ marginRight: '16px' }}>选择板块:</Text>
+                <div style={{ marginBottom: '16px' }} className="custom-checkbox-group-wrapper">
+                  <Text type="secondary" style={{ marginRight: '16px', fontWeight: 500 }}>选择板块:</Text>
                   <Checkbox.Group 
-                    options={blocks.map(b => ({ label: b.blockName, value: b.blockName }))}
                     value={selectedDayBlocks}
                     onChange={handleDayBlockSelect}
-                    style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}
-                  />
+                    className="custom-checkbox-group"
+                  >
+                    {blocks.map(b => {
+                      const isChecked = selectedDayBlocks.includes(b.blockName);
+                      const selectedIndex = selectedDayBlocks.indexOf(b.blockName);
+                      const color = isChecked ? blockColors[selectedIndex % blockColors.length] : undefined;
+                      return (
+                        <Checkbox 
+                          key={b.blockName} 
+                          value={b.blockName}
+                          style={isChecked ? { '--custom-color': color } : {}}
+                        >
+                          <span style={isChecked ? { color } : {}}>{b.blockName}</span>
+                        </Checkbox>
+                      );
+                    })}
+                  </Checkbox.Group>
                 </div>
-                <div ref={dayChartContainerRef} className="chart-container" style={{ height: '500px' }} />
+                <div ref={dayChartContainerRef} className="chart-container" style={{ height: '350px' }} />
               </>
             ) : (
               <Alert message="暂无板块历史走势数据" type="info" showIcon />
@@ -888,42 +927,23 @@ const Block = () => {
         </Col>
       </Row>
 
-      {/* 展开/收起按钮 */}
-      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <Space>
-          <Button 
-            icon={<MenuUnfoldOutlined />}
-            onClick={expandAll}
-          >
-            全部展开
-          </Button>
-          <Button 
-            icon={<MenuFoldOutlined />}
-            onClick={collapseAll}
-          >
-            全部收起
-          </Button>
-        </Space>
-      </div>
-
       {loading ? (
         <div className="loading-wrapper">
           <Spin size="large" description="正在加载板块数据..." />
         </div>
       ) : blocks.length > 0 ? (
-        <Row gutter={[20, 20]} className="block-grid">
+        <div className="masonry-grid">
           {blocks.map((block) => {
             const status = getStatus(block.avgChange);
             const colors = colorMap[status];
-            const isExpanded = expandedKeys.includes(block.blockName);
 
             return (
-              <Col xs={24} sm={12} lg={8} key={block.blockName} id={`block-${block.blockName}`}>
+              <div key={block.blockName} className="masonry-item" id={`block-${block.blockName}`}>
                 <Card 
                   variant="borderless" 
-                  className={`block-card ${status} ${isExpanded ? 'expanded' : ''}`}
+                  className={`block-card ${status}`}
                   title={
-                    <div className="card-title-content" onClick={(e) => toggleExpand(e, block.blockName)} style={{ cursor: 'pointer' }}>
+                    <div className="card-title-content">
                       <Text strong className="block-name">{block.blockName}</Text>
                       <Tag
                         color={colors.bg} 
@@ -933,51 +953,35 @@ const Block = () => {
                       </Tag>
                     </div>
                   }
-                  extra={
-                    <Button 
-                      type="text" 
-                      size="small"
-                      icon={<CaretRightOutlined rotate={isExpanded ? 90 : 0} />}
-                      onClick={(e) => toggleExpand(e, block.blockName)}
-                    />
-                  }
                 >
                   <div className="card-body-wrapper">
-                    {isExpanded ? (
-                      <div className="stock-details-list">
-                        <Space direction="vertical" style={{ width: '100%' }} size={8}>
-                          {block.data.map((stock) => {
-                            const stockStatus = getStatus(stock.change);
-                            const stockColors = colorMap[stockStatus];
-                            return (
-                              <div 
-                                key={stock.name} 
-                                className="stock-detail-item"
-                                style={{ backgroundColor: stockColors.bg, color: stockColors.text, cursor: 'pointer' }}
-                                onClick={() => showKLine(stock)}
-                              >
-                                <span>{stock.name}</span>
-                                <span style={{ fontWeight: 'bold' }}>
-                                  {stock.change > 0 ? '+' : ''}{stock.change}%
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </Space>
-                      </div>
-                    ) : (
-                      <div className="stock-preview" onClick={(e) => toggleExpand(e, block.blockName)} style={{ cursor: 'pointer' }}>
-                        <Text type="secondary" size="small">包含 {block.data.length} 只个股</Text>
-                        <Divider type="vertical" />
-                        <Text type="link" size="small">点击查看详情</Text>
-                      </div>
-                    )}
+                    <div className="stock-details-list">
+                      <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                        {block.data.map((stock) => {
+                          const stockStatus = getStatus(stock.change);
+                          const stockColors = colorMap[stockStatus];
+                          return (
+                            <div 
+                              key={stock.name} 
+                              className="stock-detail-item"
+                              style={{ backgroundColor: stockColors.bg, color: stockColors.text, cursor: 'pointer' }}
+                              onClick={() => showKLine(stock)}
+                            >
+                              <span>{stock.name}</span>
+                              <span style={{ fontWeight: 'bold' }}>
+                                {stock.change > 0 ? '+' : ''}{stock.change}%
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </Space>
+                    </div>
                   </div>
                 </Card>
-              </Col>
+              </div>
             );
           })}
-        </Row>
+        </div>
       ) : (
         <Empty description="暂无板块监控数据" />
       )}
