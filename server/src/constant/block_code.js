@@ -411,6 +411,11 @@ exports.default = [
     },
     {
         "blockName": "MLCC",
+        "code": "sz002859",
+        "name": "洁美科技"
+    },
+    {
+        "blockName": "MLCC",
         "code": "sz000636",
         "name": "风华高科"
        },

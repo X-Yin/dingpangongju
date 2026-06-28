@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Layout, Menu, Button, Modal, Carousel } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { DollarOutlined, DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, ThunderboltOutlined, AreaChartOutlined, FileTextOutlined, CalendarOutlined } from '@ant-design/icons';
+import { DollarOutlined, DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, ThunderboltOutlined, AreaChartOutlined, FileTextOutlined, CalendarOutlined, BarChartOutlined } from '@ant-design/icons';
 import PreMarketReading from './components/PreMarketReading';
 import OperationRecord from './components/OperationRecord';
 import TodayPlan from './components/TodayPlan';
@@ -23,9 +23,9 @@ function App() {
   useEffect(() => {
     const now = dayjs();
     const targetTime = now.hour(9).minute(10).second(0).millisecond(0);
-    
+
     let delay = targetTime.diff(now);
-    
+
     // 如果已经过了9:10，就不再设置定时器
     if (delay <= 0) {
       return;
@@ -58,12 +58,12 @@ function App() {
     {
       key: '/volume',
       icon: <AreaChartOutlined />,
-      label: '成交量统计',
+      label: '当日成交量',
     },
     {
       key: '/block',
       icon: <AppstoreOutlined />,
-      label: '重点板块',
+      label: '重点板块走势',
     },
     {
       key: '/sentiment',
@@ -78,18 +78,23 @@ function App() {
     {
       key: '/block_money_change',
       icon: <DollarOutlined />,
-      label: '板块资金',
+      label: '板块当日资金',
+    },
+    {
+      key: '/block_money_day_history',
+      icon: <BarChartOutlined />,
+      label: '板块历史成交',
     },
   ];
 
   return (
     <Layout className="app-layout">
-      <Sider 
-        theme="light" 
-        className="app-sider" 
-        width={200} 
-        trigger={null} 
-        collapsible 
+      <Sider
+        theme="light"
+        className="app-sider"
+        width={200}
+        trigger={null}
+        collapsible
         collapsed={collapsed}
       >
         <div className="logo">
@@ -115,10 +120,10 @@ function App() {
           <div className="header-reminder">
             <span className="reminder-icon">⚠️</span>
             <div className="reminder-carousel-container">
-              <Carousel 
-                dotPosition="left" 
-                dots={false} 
-                autoplay 
+              <Carousel
+                dotPosition="left"
+                dots={false}
+                autoplay
                 autoplaySpeed={5000}
                 effect="scrollx"
                 vertical

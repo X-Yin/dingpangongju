@@ -4,6 +4,7 @@ import App from './App.jsx';
 import DingPan from './pages/dingpan/index.jsx';
 import Block from './pages/block/index.jsx';
 import BlockMoneyChange from './pages/block_money_change/index.jsx';
+import BlockMoneyDayHistory from './pages/block_money_day_history/index.jsx';
 import Sentiment from './pages/sentiment/index.jsx';
 import JingJiaQiangChou from './pages/jingjia/index.jsx';
 import VolumeStatistics from './pages/volume/index.jsx';
@@ -41,6 +42,10 @@ const router = createBrowserRouter([
       {
         path: 'shichangdiaoyan',
         element: <ShiChangDiaoYan />,
+      },
+      {
+        path: 'block_money_day_history',
+        element: <BlockMoneyDayHistory />,
       }
     ]
   }

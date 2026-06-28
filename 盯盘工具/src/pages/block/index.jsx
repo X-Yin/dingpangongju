@@ -6,6 +6,7 @@ import axios from 'axios';
 import { createChart, ColorType } from 'lightweight-charts';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
+import useRunOnce from '../../hooks/useRunOnce';
 import StockKLineModal from '../../components/StockKLineModal';
 import BlockRankingModal from '../../components/BlockRankingModal';
 import './index.scss';
@@ -82,36 +83,9 @@ const Block = () => {
       setDayHistoryData(dayHistoryResponse.data);
       setLastUpdated(dayjs().format('HH:mm:ss'));
       
-      // 初始化选中的板块（默认选中银行、cpo、半导体、消费、光模块）
+      // 默认全部展开
       if (isFirstLoad.current && blockResponse.data.length > 0) {
-        const initialSelected = ['银行', 'cpo', '半导体', '消费', '光模块'];
-        setSelectedBlocks(initialSelected);
-        setSelectedDayBlocks(initialSelected);
-      }
-      
-      // 处理自动定位逻辑
-      const params = new URLSearchParams(location.search);
-      const targetBlock = params.get('blockName');
-
-      if (isFirstLoad.current && blockResponse.data.length > 0) {
-        if (targetBlock) {
-          // 如果有目标板块，仅展开该板块
-          setExpandedKeys([targetBlock]);
-          // 延迟滚动，确保 DOM 已渲染
-          setTimeout(() => {
-            const element = document.getElementById(`block-${targetBlock}`);
-            if (element) {
-              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              setHighlightedBlock(targetBlock);
-              setTimeout(() => {
-                setHighlightedBlock(null);
-              }, 2000);
-            }
-          }, 500);
-        } else {
-          // 否则默认全部展开
-          setExpandedKeys(blockResponse.data.map(b => b.blockName));
-        }
+        setExpandedKeys(blockResponse.data.map(b => b.blockName));
         isFirstLoad.current = false;
       }
       
@@ -120,7 +94,7 @@ const Block = () => {
       console.error('Fetch block data failed:', error);
       setLoading(false);
     }
-  }, [location]);
+  }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -128,6 +102,40 @@ const Block = () => {
     const timer = setInterval(fetchData, 10000); // 10秒刷新一次
     return () => clearInterval(timer);
   }, [fetchData]);
+
+  // 使用 useRunOnce 确保自动滚动逻辑只执行一次
+  useRunOnce(() => {
+    const params = new URLSearchParams(location.search);
+    const targetBlock = params.get('blockName');
+    const noAutoScroll = params.get('no_auto_scroll');
+    
+    if (targetBlock) {
+      // 如果有目标板块，展开该板块并只选中该板块
+      setExpandedKeys([targetBlock]);
+      setSelectedBlocks([targetBlock]);
+      setSelectedDayBlocks([targetBlock]);
+      
+      // 只有没有 no_auto_scroll 参数时才自动滚动
+      if (!noAutoScroll) {
+        // 延迟滚动，确保 DOM 已渲染
+        setTimeout(() => {
+          const element = document.getElementById(`block-${targetBlock}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setHighlightedBlock(targetBlock);
+            setTimeout(() => {
+              setHighlightedBlock(null);
+            }, 2000);
+          }
+        }, 500);
+      }
+    } else {
+      // 没有目标板块，设置默认选中的板块
+      const initialSelected = ['银行', 'cpo', '半导体', '消费', '光模块'];
+      setSelectedBlocks(initialSelected);
+      setSelectedDayBlocks(initialSelected);
+    }
+  }, !loading && blocks.length > 0);
 
   // 切换单个展开状态，增加 e.stopPropagation() 防止意外冒泡
   const toggleExpand = (e, blockName) => {

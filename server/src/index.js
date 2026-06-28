@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const { filterUnNormalDaPanData, pollDaPanData, getAllDaPanData } = require('./service/dapan');
 const { filterUnNormalStockData, pollStockData, getSingleStockData, getSingleStockTlineData, getAllStockData, getJiSuYiDongRankData } = require('./service/stock');
-const { getBlockData, pollBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock, getBlockHistory, pollBlockHistory, getBlockDayHistory, updateBlockDayHistory } = require('./service/block');
+const { getBlockData, pollBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock, getBlockHistory, pollBlockHistory, getBlockDayHistory, updateBlockDayHistory, getBlockMoneyDayHistory, updateBlockMoneyDayHistory } = require('./service/block');
 // const { diagnose } = require('./service/diagnose');
 const { getJingJiaQiangChouData, pollJingJiaQiangChouData, clearJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
 const { pollKaiPaiZhuDongData, getKaiPanZhuDongData } = require('./service/kaipanzhudong');
@@ -531,6 +531,27 @@ app.get('/get_block_money_change_time', async (req, res) => {
   } catch (error) {
     console.error('获取数据失败:', error);
     res.status(500).json({ message: '获取数据失败' });
+  }
+});
+
+// 获取各个板块的资金流入流出情况历史记录
+app.get('/get_block_money_day_history', async (req, res) => {
+  try {
+    const blockMoneyDayHistory = getBlockMoneyDayHistory();
+    res.json(blockMoneyDayHistory);
+  } catch (error) {
+    console.error('获取数据失败:', error);
+    res.status(500).json({ message: '获取数据失败' });
+  }
+});
+
+app.get('/update_block_money_day_history', async (req, res) => {
+  try {
+    const blockMoneyDayHistory = await updateBlockMoneyDayHistory();
+    res.json(blockMoneyDayHistory);
+  } catch (error) {
+    console.error('更新数据失败:', error);
+    res.status(500).json({ message: '更新数据失败' });
   }
 });
 
