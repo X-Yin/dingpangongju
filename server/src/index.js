@@ -570,7 +570,7 @@ app.listen(port, () => {
     // 轮询各个板块的资金流入流出情况
     pollDFCFBlockMoney(10000);
     // 轮询各个板块的资金分时情况
-    pollTimeDFCFBlockMoneyChange(3000);
+    pollTimeDFCFBlockMoneyChange(300000);
   }
   console.log(`服务运行在 http://localhost:${port}`);
 });

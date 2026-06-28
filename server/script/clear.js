@@ -6,7 +6,9 @@ const clearDirectories = () => {
     const directories = [
         path.resolve(__dirname, '../src/data/kaipanzhudong'),
         path.resolve(__dirname, '../src/data/jingjiaqiangchou'),
-        path.resolve(__dirname, '../src/data/kaipanxiacuo')
+        path.resolve(__dirname, '../src/data/kaipanxiacuo'),
+        path.resolve(__dirname, '../src/data/blockMoneyChangeTime.json'),
+        path.resolve(__dirname, '../src/data/blockMoneyChange.json'),
     ];
 
     directories.forEach(dir => {

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Card, Row, Col, Tag, Typography, Empty, Space, Divider, Button, Modal, List, Badge, Spin, Alert, Input, Tooltip, Tabs } from 'antd';
 const { TabPane } = Tabs;
-import { StockOutlined, LineChartOutlined, ClockCircleOutlined, HistoryOutlined, AlertOutlined, RiseOutlined, FallOutlined, AreaChartOutlined, WarningOutlined, SearchOutlined, CaretUpOutlined, CaretDownOutlined, ThunderboltOutlined, CloseOutlined, ArrowUpOutlined, ArrowDownOutlined, FireOutlined } from '@ant-design/icons';
+import { StockOutlined, LineChartOutlined, ClockCircleOutlined, HistoryOutlined, AlertOutlined, RiseOutlined, FallOutlined, AreaChartOutlined, WarningOutlined, SearchOutlined, CaretUpOutlined, CaretDownOutlined, ThunderboltOutlined, CloseOutlined, ArrowUpOutlined, ArrowDownOutlined, FireOutlined, DollarOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { createChart, ColorType } from 'lightweight-charts';
 import { local_ip } from '../../constant';
@@ -43,7 +43,24 @@ const filterTradingSessionHistoryData = (records) => {
 };
 
 const DingPan = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  
+  // 重点监控股票列表
+  const keyStockList = [
+    '中际旭创',
+    '新易盛',
+    '天孚通信',
+    '源杰科技',
+    '寒武纪',
+    '中芯国际',
+    '华虹宏力',
+    '兆易创新',
+    '英维克',
+    '沪电股份',
+    '胜宏科技',
+    '工业富联',
+    '罗博特科'
+  ];
     const [data, setData] = useState({ unNormalDaPanData: [], unNormalStockList: [], diagnoseData: [], topAndBottomBlockData: null, allStockData: {}, amountInfo: null, jingJiaQiangChouData: [], kaiPanZhuDongData: [], kaiPanXiaCuoData: [] });
     const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState(null);
@@ -77,6 +94,10 @@ const DingPan = () => {
     const [blockHistoryData, setBlockHistoryData] = useState([]);
     const prevBlockHistoryRef = useRef(null);
     const [blockAlerts, setBlockAlerts] = useState([]);
+    
+    // 板块资金监控相关
+    const [blockMoneyData, setBlockMoneyData] = useState([]);
+    const targetBlocks = ['中证500', '光通信模块', '半导体概念', 'PCB', '机器人概念', '商业航天', '银行Ⅱ', '证券Ⅱ'];
 
     // 打开 K 线弹窗
     const showKLine = (stock) => {
@@ -166,9 +187,13 @@ const DingPan = () => {
         const curMoney = parseFloat(latest.mainMoney) || 0;
         const preMoney = parseFloat(prev.mainMoney) || 0;
         
-        return curMoney >= preMoney ? 
-            { label: '加速流入', color: '#f5222d', icon: <ArrowUpOutlined /> } : 
-            { label: '加速流出', color: '#52c41a', icon: <ArrowDownOutlined /> };
+        if (curMoney > preMoney) {
+            return { label: '加速流入', color: '#f5222d', icon: <ArrowUpOutlined /> };
+        } else if (curMoney < preMoney) {
+            return { label: '加速流出', color: '#52c41a', icon: <ArrowDownOutlined /> };
+        }
+        // 等于的时候返回 null，什么都不展示
+        return null;
     }, [historyData]);
 
     const stockData = useMemo(() => {
@@ -565,6 +590,20 @@ const DingPan = () => {
         }
     };
 
+    const fetchBlockMoneyChange = async () => {
+        try {
+            const response = await axios.get(`http://${local_ip}:3000/get_block_money_change`);
+            const data = response.data || [];
+            // 筛选目标板块
+            const filteredData = data.filter(item => targetBlocks.includes(item.block));
+            // 按照资金从大到小排序（流入最大的排前面，流出最大的排后面）
+            const sortedData = [...filteredData].sort((a, b) => b.money - a.money);
+            setBlockMoneyData(sortedData);
+        } catch (err) {
+            console.error('Fetch block money change data failed:', err);
+        }
+    };
+
     const createBaseChart = (container) => {
         return createChart(container, {
             layout: {
@@ -663,6 +702,7 @@ const DingPan = () => {
         fetchHistoryData();
         fetchHotBlocks();
         fetchBlockHistory();
+        fetchBlockMoneyChange();
         
         const monitorTimer = setInterval(fetchData, 5000);
         const amountTimer = setInterval(fetchAmountData, 10000); // 10s 轮询一次
@@ -670,6 +710,7 @@ const DingPan = () => {
         const historyTimer = setInterval(fetchHistoryData, 10000); // 10s 轮询一次
         const hotBlocksTimer = setInterval(fetchHotBlocks, 10000); // 10s 轮询一次
         const blockHistoryTimer = setInterval(fetchBlockHistory, 30000); // 30s 轮询一次
+        const blockMoneyTimer = setInterval(fetchBlockMoneyChange, 3000); // 3s 轮询一次
         
         return () => {
             clearInterval(monitorTimer);
@@ -678,6 +719,7 @@ const DingPan = () => {
             clearInterval(historyTimer);
             clearInterval(hotBlocksTimer);
             clearInterval(blockHistoryTimer);
+            clearInterval(blockMoneyTimer);
         };
     }, []);
 
@@ -701,86 +743,57 @@ const DingPan = () => {
     return (
         <div className="dingpan-container">
             {(alerts.length > 0 || emotionSuggestion || marketRiskWarning || kaiPanXiaCuoWarning) && (
-                <div className="top-global-alerts" style={{ marginBottom: 16 }}>
-                    <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                <div className="top-global-alerts" style={{ marginBottom: 12 }}>
+                    <Space direction="vertical" style={{ width: '100%' }} size={8}>
                         {kaiPanXiaCuoWarning && (
                             <Alert
-                                message={<Text strong style={{ fontSize: '18px', color: '#cf1322' }}>🚨 开盘下挫预警：禁止操作</Text>}
-                                description={
-                                    <div style={{ marginTop: 8 }}>
-                                        <Text strong style={{ fontSize: '15px' }}>
-                                            {kaiPanXiaCuoWarning}
-                                        </Text>
-                                    </div>
+                                message={
+                                    <Text>
+                                        <Text strong>🚨 开盘下挫预警</Text>：{kaiPanXiaCuoWarning}
+                                    </Text>
                                 }
                                 type="error"
                                 showIcon
-                                icon={<WarningOutlined style={{ fontSize: '28px' }} />}
+                                icon={<WarningOutlined />}
                             />
                         )}
                         {marketRiskWarning && (
                             <Alert
-                                message={<Text strong style={{ fontSize: '18px', color: '#cf1322' }}>🚨 极端风险预警：市场空头占优</Text>}
-                                description={
-                                    <div style={{ marginTop: 8 }}>
-                                        <Text strong style={{ fontSize: '15px' }}>
-                                            {marketRiskWarning}
-                                        </Text>
-                                    </div>
+                                message={
+                                    <Text>
+                                        <Text strong>🚨 极端风险预警</Text>：{marketRiskWarning}
+                                    </Text>
                                 }
                                 type="error"
                                 showIcon
-                                icon={<WarningOutlined style={{ fontSize: '28px' }} />}
+                                icon={<WarningOutlined />}
                             />
                         )}
                         {emotionSuggestion && (
                             <Alert
-                                message={<Text strong style={{ fontSize: '16px' }}>{emotionSuggestion.message}</Text>}
-                                description={
-                                    <div style={{ marginTop: 8 }}>
-                                        <Text>{emotionSuggestion.description}</Text>
-                                        <div style={{ marginTop: 8, color: '#666' }}>
-                                            提示：当前建议为综合前几日的科技情绪指数复盘之后给出的提示
-                                        </div>
-                                    </div>
+                                message={
+                                    <Text>
+                                        <Text strong>{emotionSuggestion.message}</Text>：{emotionSuggestion.description}
+                                    </Text>
                                 }
                                 type={emotionSuggestion.type}
                                 showIcon
-                                icon={<ThunderboltOutlined style={{ fontSize: '24px' }} />}
+                                icon={<ThunderboltOutlined />}
                             />
                         )}
                         {alerts.map(alert => (
                             <Alert
                                 key={alert.id}
-                                message={<Text strong style={{ fontSize: '16px' }}>{alert.title}</Text>}
-                                description={
-                                    <div style={{ marginTop: 8 }}>
-                                        {alert.isDefensive ? (
-                                            <div style={{ color: '#666' }}>
-                                                <Space direction="vertical" size={4}>
-                                                    <span><ClockCircleOutlined /> 发生时间: <Text strong>{alert.time}</Text></span>
-                                                    <Text>{alert.description}</Text>
-                                                </Space>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <Space size="large">
-                                                    <span><ClockCircleOutlined /> 发生时间: <Text strong>{alert.time}</Text></span>
-                                                    <span>主力资金: <Text strong style={{ color: alert.mainMoney >= 0 ? '#cf1322' : '#389e0d' }}>{alert.moneyTrend} ({alert.mainMoney > 0 ? '+' : ''}{alert.mainMoney}亿)</Text></span>
-                                                    <span>当前成交量相比上一日: <Text strong  style={{ color: alert.amountChangeDiff >= 0 ? '#cf1322' : '#389e0d' }}>{alert.amountChangeDiff}亿</Text></span>
-                                                </Space>
-                                                <div style={{ marginTop: 8, color: '#666' }}>
-                                                    提示：当前大盘核心指标出现显著趋势性变化，请密切关注仓位风险。
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
+                                message={
+                                    <Text>
+                                        <Text strong>{alert.title}</Text>：{alert.isDefensive ? alert.description : `[${alert.time}] 主力资金${alert.moneyTrend}(${alert.mainMoney > 0 ? '+' : ''}${alert.mainMoney}亿)，成交量变化${alert.amountChangeDiff}亿`}
+                                    </Text>
                                 }
                                 type={alert.type}
                                 showIcon
                                 closable
                                 onClose={() => setAlerts(prev => prev.filter(a => a.id !== alert.id))}
-                                icon={<WarningOutlined style={{ fontSize: '24px' }} />}
+                                icon={<WarningOutlined />}
                             />
                         ))}
                     </Space>
@@ -817,7 +830,7 @@ const DingPan = () => {
                 <>
                     <Row gutter={16} style={{ marginBottom: 16 }}>
                         {/* 个股异动监控 */}
-                        <Col xs={24} lg={12}>
+                        <Col xs={24} lg={9}>
                             <Card 
                                 title={<><StockOutlined style={{ color: '#1890ff', marginRight: 8 }} /> 个股异动监控</>}
                                 className="monitor-card stock-alert-card"
@@ -896,7 +909,7 @@ const DingPan = () => {
                         </Col>
 
                         {/* 板块异动监控 */}
-                        <Col xs={24} lg={12}>
+                        <Col xs={24} lg={9}>
                             <Card 
                                 title={<><AlertOutlined style={{ color: '#faad14', marginRight: 8 }} /> 板块异动监控</>}
                                 className="monitor-card block-alert-card"
@@ -971,6 +984,44 @@ const DingPan = () => {
                                         />
                                     </Col>
                                 </Row>
+                            </Card>
+                        </Col>
+
+                        {/* 板块资金监控 */}
+                        <Col xs={24} lg={6}>
+                            <Card 
+                                title={<><DollarOutlined style={{ color: '#1890ff', marginRight: 8 }} /> 板块资金监控</>}
+                                className="monitor-card block-money-card"
+                                variant="borderless"
+                                bodyStyle={{ maxHeight: '400px', overflowY: 'auto' }}
+                                extra={
+                                    <Button 
+                                        type="link" 
+                                        size="small"
+                                        onClick={() => navigate('/block_money_change')}
+                                    >
+                                        查看更多
+                                    </Button>
+                                }
+                            >
+                                <Row gutter={[8, 8]}>
+                                    {blockMoneyData.map((item, index) => {
+                                        const isInflow = item.money >= 0;
+                                        return (
+                                            <Col xs={12} key={index}>
+                                                <div className="block-money-item">
+                                                    <Text strong className="block-name">{item.block}</Text>
+                                                    <Text strong className={`block-money ${isInflow ? 'inflow' : 'outflow'}`}>
+                                                        {isInflow ? '+' : ''}{(item.money / 100000000).toFixed(2)}亿
+                                                    </Text>
+                                                </div>
+                                            </Col>
+                                        );
+                                    })}
+                                </Row>
+                                {blockMoneyData.length === 0 && (
+                                    <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                                )}
                             </Card>
                         </Col>
                     </Row>
@@ -1311,16 +1362,7 @@ const DingPan = () => {
 
                         {/* 个股异动监控区 */}
                         <Card
-                            title={
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '8px 0' }}>
-                                    <span><StockOutlined /> 个股幅度异动 (按涨幅排序)</span>
-                                    {marketRiskWarning && (
-                                        <Text strong style={{ fontSize: '15px', color: '#ff4d4f', fontStyle: 'italic', textDecoration: 'underline' }}>
-                                            ⚠️ {marketRiskWarning}
-                                        </Text>
-                                    )}
-                                </div>
-                            }
+                            title={<span><StockOutlined /> 个股幅度异动</span>}
                             className="monitor-card stock-card"
                             variant="borderless"
                         >
@@ -1329,28 +1371,32 @@ const DingPan = () => {
                                     {stockData.changeList.map((item, index) => {
                                         const isRedStock = item.statusKey?.includes('Red');
                                         const showRiskOverlay = marketRiskWarning && isRedStock;
+                                        
+                                        // 判断是否为重点监控股票且涨跌幅度达标
+                                        const isKeyStock = keyStockList.includes(item.name);
+                                        const changeValue = item.changeValue;
+                                        const isGold = isKeyStock && changeValue > 4;
+                                        const isPurple = isKeyStock && changeValue < -4;
+                                        
+                                        // 确定文字颜色
+                                        const textColor = isGold ? '#B8860B' : isPurple ? '#8B008B' : item.color;
 
                                         const stockItemContent = (
                                             <div
                                                 key={index}
-                                                className={`stock-item ${item.type} ${item.statusKey} ${showRiskOverlay ? 'has-risk-overlay' : ''}`}
-                                                style={{ backgroundColor: item.bgColor, borderColor: item.color, cursor: 'pointer', position: 'relative' }}
+                                                className={`stock-item ${item.type} ${item.statusKey} ${showRiskOverlay ? 'has-risk-overlay' : ''} ${isGold ? 'key-stock-gold' : ''} ${isPurple ? 'key-stock-purple' : ''}`}
+                                                style={{ 
+                                                    backgroundColor: isGold || isPurple ? 'transparent' : item.bgColor, 
+                                                    borderColor: isGold || isPurple ? 'transparent' : item.color, 
+                                                    cursor: 'pointer', 
+                                                    position: 'relative' 
+                                                }}
                                                 onClick={() => showKLine(item)}
                                             >
                                                 <div className="stock-info">
-                                                    <Text strong style={{ color: item.color }}>{item.name}</Text>
-                                                    <Text type="secondary" size="small" style={{ fontSize: '11px', display: 'block', opacity: 0.8, color: item.color }}>
-                                                        {item.label}
-                                                    </Text>
-                                                    {item.desc && (
-                                                        <Text type="secondary" size="small" style={{ fontSize: '10px', display: 'block', opacity: 0.9, color: item.color, fontStyle: 'italic', marginTop: '2px' }}>
-                                                            {item.desc}
-                                                        </Text>
-                                                    )}
+                                                    <Text strong style={{ color: textColor, fontSize: '12px' }}>{item.name}</Text>
                                                 </div>
-                                                <Tag color={item.color} className="stock-tag" style={{ border: 'none' }}>
-                                                    {item.change}
-                                                </Tag>
+                                                <Text strong style={{ color: textColor, fontSize: '13px' }}>{item.change}</Text>
                                                 {showRiskOverlay && (
                                                     <div className="risk-overlay">
                                                         <CloseOutlined className="risk-cross-icon" />
