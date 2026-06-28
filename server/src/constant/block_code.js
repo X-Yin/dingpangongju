@@ -56,6 +56,11 @@ exports.default = [
     },
     {
         "blockName": "存储",
+        "code": "sz001309",
+        "name": "德明利"
+    },
+    {
+        "blockName": "存储",
         "code": "sh688525",
         "name": "佰维存储"
     },

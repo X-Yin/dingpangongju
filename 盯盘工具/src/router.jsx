@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import App from './App.jsx';
 import DingPan from './pages/dingpan/index.jsx';
 import Block from './pages/block/index.jsx';
+import BlockMoneyChange from './pages/block_money_change/index.jsx';
 import Sentiment from './pages/sentiment/index.jsx';
 import JingJiaQiangChou from './pages/jingjia/index.jsx';
 import VolumeStatistics from './pages/volume/index.jsx';
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
       {
         path: 'block',
         element: <Block />,
+      },
+      {
+        path: 'block_money_change',
+        element: <BlockMoneyChange />,
       },
       {
         path: 'sentiment',

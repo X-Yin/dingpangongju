@@ -14,6 +14,12 @@ exports.clsReqEmotionUrl = `https://x-quote.cls.cn/v2/quote/a/stock/emotion?app=
 // 请求各个指数的 k 线图接口
 exports.clsReqIndexUrl = `https://x-quote.cls.cn/v2/quote/a/kline?app=CailianpressWeb&code=$code&limit=$limit&os=web&period=d&sv=8.7.9&sign=${clsReqConfig.stock_sign}`
 
+// 请求东方财富的概念资金流入流出板块接口
+exports.dfcfBlockMoneyUrl = 'https://data.eastmoney.com/dataapi/bkzj/getbkzj?key=f62&code=m%3A90%2Bt%3A3' 
+
+// 请求东方财富的行业资金流入流出板块接口
+exports.dfcfBlockMoneyIndustryUrl = 'https://data.eastmoney.com/dataapi/bkzj/getbkzj?key=f62&code=m%3A90%2Bs%3A4';
+
 // 股票列表
 const { stockList } = require('./stock_list');
 exports.stockList = stockList;

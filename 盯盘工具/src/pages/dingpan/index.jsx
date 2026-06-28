@@ -691,11 +691,33 @@ const DingPan = () => {
         return null;
     }, [stockData.upCount, stockData.downCount, stockData.totalChangeValue]);
 
+    const kaiPanXiaCuoWarning = useMemo(() => {
+        if (data.kaiPanXiaCuoData && data.kaiPanXiaCuoData.length >= 10) {
+            return `今天市场开盘快速下挫，大部分股票开盘兑现较为剧烈，建议今天不要有任何操作。`;
+        }
+        return null;
+    }, [data.kaiPanXiaCuoData]);
+
     return (
         <div className="dingpan-container">
-            {(alerts.length > 0 || emotionSuggestion || marketRiskWarning) && (
+            {(alerts.length > 0 || emotionSuggestion || marketRiskWarning || kaiPanXiaCuoWarning) && (
                 <div className="top-global-alerts" style={{ marginBottom: 16 }}>
                     <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                        {kaiPanXiaCuoWarning && (
+                            <Alert
+                                message={<Text strong style={{ fontSize: '18px', color: '#cf1322' }}>🚨 开盘下挫预警：禁止操作</Text>}
+                                description={
+                                    <div style={{ marginTop: 8 }}>
+                                        <Text strong style={{ fontSize: '15px' }}>
+                                            {kaiPanXiaCuoWarning}
+                                        </Text>
+                                    </div>
+                                }
+                                type="error"
+                                showIcon
+                                icon={<WarningOutlined style={{ fontSize: '28px' }} />}
+                            />
+                        )}
                         {marketRiskWarning && (
                             <Alert
                                 message={<Text strong style={{ fontSize: '18px', color: '#cf1322' }}>🚨 极端风险预警：市场空头占优</Text>}

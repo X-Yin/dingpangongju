@@ -60,6 +60,7 @@ const Block = () => {
   const [dayHistoryData, setDayHistoryData] = useState([]);
   const [selectedDayBlocks, setSelectedDayBlocks] = useState([]);
   const [updatingDayHistory, setUpdatingDayHistory] = useState(false);
+  const [highlightedBlock, setHighlightedBlock] = useState(null);
   const isFirstLoad = useRef(true);
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
@@ -101,6 +102,10 @@ const Block = () => {
             const element = document.getElementById(`block-${targetBlock}`);
             if (element) {
               element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              setHighlightedBlock(targetBlock);
+              setTimeout(() => {
+                setHighlightedBlock(null);
+              }, 2000);
             }
           }, 500);
         } else {
@@ -938,7 +943,11 @@ const Block = () => {
             const colors = colorMap[status];
 
             return (
-              <div key={block.blockName} className="masonry-item" id={`block-${block.blockName}`}>
+              <div 
+                key={block.blockName} 
+                className={`masonry-item ${highlightedBlock === block.blockName ? 'highlight-flash' : ''}`} 
+                id={`block-${block.blockName}`}
+              >
                 <Card 
                   variant="borderless" 
                   className={`block-card ${status}`}

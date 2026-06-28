@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Layout, Menu, Button, Modal, Carousel } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, ThunderboltOutlined, AreaChartOutlined, FileTextOutlined, CalendarOutlined } from '@ant-design/icons';
+import { DollarOutlined, DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, ThunderboltOutlined, AreaChartOutlined, FileTextOutlined, CalendarOutlined } from '@ant-design/icons';
 import PreMarketReading from './components/PreMarketReading';
 import OperationRecord from './components/OperationRecord';
 import TodayPlan from './components/TodayPlan';
@@ -74,6 +74,11 @@ function App() {
       key: '/shichangdiaoyan',
       icon: <BookOutlined />,
       label: '市场调研',
+    },
+    {
+      key: '/block_money_change',
+      icon: <DollarOutlined />,
+      label: '板块资金',
     },
   ];
 

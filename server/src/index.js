@@ -29,6 +29,7 @@ const {
   moveResearchReport,
   pinResearchReport
 } = require('./service/researchReport');
+const { pollDFCFBlockMoney, getBlockMoneyChangeList, pollTimeDFCFBlockMoneyChange, getBlockMoneyChangeTimeList } = require('./service/blockMoney');
 
 const POLL_CONFIG = {
   kaipanzhudong: {
@@ -511,6 +512,27 @@ app.post('/update_long_term_rhythm', async (req, res) => {
   }
 });
 
+// 获取各个板块的资金流入流出情况
+app.get('/get_block_money_change', async (req, res) => {
+  try {
+    const blockMoneyChangeList = getBlockMoneyChangeList();
+    res.json(blockMoneyChangeList);
+  } catch (error) {
+    console.error('获取数据失败:', error);
+    res.status(500).json({ message: '获取数据失败' });
+  }
+});
+
+// 获取各个板块的资金分时情况
+app.get('/get_block_money_change_time', async (req, res) => {
+  try {
+    const blockMoneyChangeTimeList = getBlockMoneyChangeTimeList();
+    res.json(blockMoneyChangeTimeList);
+  } catch (error) {
+    console.error('获取数据失败:', error);
+    res.status(500).json({ message: '获取数据失败' });
+  }
+});
 
 // 启动服务
 app.listen(port, () => {
@@ -545,6 +567,10 @@ app.listen(port, () => {
     pollAmountInfo(10000);
     // 轮询板块数据历史记录
     pollBlockHistory(60000);
+    // 轮询各个板块的资金流入流出情况
+    pollDFCFBlockMoney(10000);
+    // 轮询各个板块的资金分时情况
+    pollTimeDFCFBlockMoneyChange(3000);
   }
   console.log(`服务运行在 http://localhost:${port}`);
 });

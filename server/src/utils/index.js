@@ -1,4 +1,4 @@
-const { clsReqStockUrl, clsReqDaPanUrl, clsReqStockTlineUrl, clsReqEmotionUrl, clsReqIndexUrl } = require('../constant');
+const { clsReqStockUrl, clsReqDaPanUrl, clsReqStockTlineUrl, clsReqEmotionUrl, clsReqIndexUrl, dfcfBlockMoneyUrl, dfcfBlockMoneyIndustryUrl } = require('../constant');
 
 exports.sleep = async (n) => {
     return new Promise(resolve => {
@@ -32,7 +32,18 @@ exports.getClsReqIndexUrl = (code, limit) => {
     return clsReqIndexUrl.replace('$code', code).replace('$limit', limit);
 }
 
+// 返回东方财富请求板块资金流入流出数据的 url
+exports.getDFCFBlockMoneyUrl = () => {
+    return dfcfBlockMoneyUrl;
+}
+
+// 返回东方财富请求行业资金流入流出数据的 url
+exports.getDFCFBlockMoneyIndustryUrl = () => {
+    return dfcfBlockMoneyIndustryUrl;
+}
+
 // 使用当前时间戳生成一个唯一 id
 exports.generateUniqueId = () => {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
+
