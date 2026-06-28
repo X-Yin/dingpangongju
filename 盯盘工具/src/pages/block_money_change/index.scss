@@ -234,11 +234,11 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 4px;
+            padding: var(--bubble-content-padding, 4px);
             width: 90%;
             
             .block-name {
-                font-size: 12px;
+                font-size: var(--bubble-name-font-size, 12px);
                 line-height: 1.2;
                 word-break: break-word;
                 text-align: center;
@@ -246,8 +246,8 @@
             }
 
             .block-money {
-                font-size: 11px;
-                margin-top: 4px;
+                font-size: var(--bubble-money-font-size, 11px);
+                margin-top: var(--bubble-money-margin-top, 4px);
                 text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
             }
         }

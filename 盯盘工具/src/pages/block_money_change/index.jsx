@@ -23,6 +23,21 @@ const DEFAULT_SELECTED_BLOCKS = [
 const PLAYBACK_INTERVAL_MS = 1300;
 const BUBBLE_TRANSITION_MS = 980;
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+const getBubbleTextStyle = (radius, blockName) => {
+    const diameter = radius * 2;
+    const maxNameFontSize = blockName && blockName.length > 4 ? 12 : 15;
+    const nameFontSize = Math.min(diameter * 0.18, maxNameFontSize);
+    const moneyFontSize = Math.min(diameter * 0.14, 15);
+    const contentPadding = clamp(diameter * 0.06, 2, 8);
+    const moneyMarginTop = clamp(diameter * 0.035, 1, 4);
+
+    return {
+        '--bubble-name-font-size': `${nameFontSize}px`,
+        '--bubble-money-font-size': `${moneyFontSize}px`,
+        '--bubble-content-padding': `${contentPadding}px`,
+        '--bubble-money-margin-top': `${moneyMarginTop}px`
+    };
+};
 
 const BlockMoneyChange = () => {
     const [timeSeriesData, setTimeSeriesData] = useState([]);
@@ -429,6 +444,7 @@ const BlockMoneyChange = () => {
                                 height: item.r * 2,
                                 left: `${item.stageX - item.r}px`,
                                 top: `${item.stageY - item.r}px`,
+                                ...getBubbleTextStyle(item.r, item.block),
                             }}
                             onClick={() => handleCircleClick(item.jumpUrl)}
                             title={item.block}
