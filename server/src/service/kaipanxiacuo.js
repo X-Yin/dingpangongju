@@ -77,6 +77,8 @@ const getKaiPanXiaCuoData = () => {
 
     const latestData = JSON.parse(fs.readFileSync(path.resolve(dirPath, latestFile), 'utf-8'));
     const firstData = JSON.parse(fs.readFileSync(path.resolve(dirPath, firstFile), 'utf-8'));
+    const a1 = latestData.find(stock => stock.stockName === '北方华创');
+    const a1First = firstData.find(stockItem => stockItem.stockName === '北方华创');
 
     return latestData.filter((stock) => {
         const firstStock = firstData.find(stockItem => stock.code === stockItem.code);
@@ -87,15 +89,6 @@ const getKaiPanXiaCuoData = () => {
         ...stock.kline[0]
     }));
 };
-
-(async () => {
-    await pollKaiPanXiaCuoData({
-        startHour: 23,
-        startMinute: 9,
-        endHour: 23,
-        endMinute: 12,
-    });
-})()
 
 exports.pollKaiPanXiaCuoData = pollKaiPanXiaCuoData;
 exports.getKaiPanXiaCuoData = getKaiPanXiaCuoData;

@@ -6,9 +6,7 @@ const clearDirectories = () => {
     const directories = [
         path.resolve(__dirname, '../src/data/kaipanzhudong'),
         path.resolve(__dirname, '../src/data/jingjiaqiangchou'),
-        path.resolve(__dirname, '../src/data/kaipanxiacuo'),
-        path.resolve(__dirname, '../src/data/blockMoneyChangeTime.json'),
-        path.resolve(__dirname, '../src/data/blockMoneyChange.json'),
+        path.resolve(__dirname, '../src/data/kaipanxiacuo')
     ];
 
     directories.forEach(dir => {
@@ -34,6 +32,10 @@ const clearDirectories = () => {
     fs.writeFileSync(path.resolve(__dirname, '../src/data/jisuyidong.json'), '{}');
     // 清空 block_history.json 文件
     fs.writeFileSync(path.resolve(__dirname, '../src/data/block_history.json'), '[]');
+    // 清空 block_history.json 文件
+    fs.writeFileSync(path.resolve(__dirname, '../src/data/blockMoneyChangeTime.json'), '[]');
+    // 清空 block_history.json 文件
+    fs.writeFileSync(path.resolve(__dirname, '../src/data/blockMoneyChange.json'), '[]');
 };
 
 clearDirectories();
