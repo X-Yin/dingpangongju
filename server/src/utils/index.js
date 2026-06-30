@@ -1,4 +1,4 @@
-const { clsReqStockUrl, clsReqDaPanUrl, clsReqStockTlineUrl, clsReqEmotionUrl, clsReqIndexUrl, dfcfBlockMoneyUrl, dfcfBlockMoneyIndustryUrl } = require('../constant');
+const { clsReqStockUrl, clsReqDaPanUrl, clsReqStockTlineUrl, clsReqEmotionUrl, clsReqIndexUrl, dfcfBlockMoneyUrl, dfcfBlockMoneyIndustryUrl, clsReqMainFundUrl, dfcfStockTlineDay2Url } = require('../constant');
 
 exports.sleep = async (n) => {
     return new Promise(resolve => {
@@ -40,6 +40,24 @@ exports.getDFCFBlockMoneyUrl = () => {
 // 返回东方财富请求行业资金流入流出数据的 url
 exports.getDFCFBlockMoneyIndustryUrl = () => {
     return dfcfBlockMoneyIndustryUrl;
+}
+
+// 返回财联社请求主力资金流向数据的 url
+exports.getClsReqMainFundUrl = (code) => {
+    return clsReqMainFundUrl.replace('$code', code);
+}
+
+// 返回东方财富请求近两个交易日分时数据的 url
+exports.getDFCFStockTlineDay2Url = (code) => {
+    code = code.slice(2);
+    if (code.startsWith('60') || code.startsWith('688')) {
+        code = `1.${code}`;
+    } else if (code.startsWith('30')) {
+        code = `4.${code}`;
+    } else if (code.startsWith('00')) {
+        code = `0.${code}`;
+    }
+    return dfcfStockTlineDay2Url.replace('$code', code).replace('$timestamp', Date.now());
 }
 
 // 使用当前时间戳生成一个唯一 id

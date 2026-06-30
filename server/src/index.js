@@ -30,6 +30,7 @@ const {
   pinResearchReport
 } = require('./service/researchReport');
 const { pollDFCFBlockMoney, getBlockMoneyChangeList, pollTimeDFCFBlockMoneyChange, getBlockMoneyChangeTimeList } = require('./service/blockMoney');
+const { getStockPositionMainFund, addStockPosition, deleteStockPosition } = require('./service/stockPosition');
 
 const POLL_CONFIG = {
   kaipanzhudong: {
@@ -554,6 +555,40 @@ app.get('/update_block_money_day_history', async (req, res) => {
     res.status(500).json({ message: '更新数据失败' });
   }
 });
+
+// 获取股票持仓资金流入流出情况
+app.get('/get_stock_position', async (req, res) => {
+  try {
+    const stockPositionMainFund = await getStockPositionMainFund();
+    res.json(stockPositionMainFund);
+  } catch (error) {
+    console.error('获取数据失败:', error);
+    res.status(500).json({ message: '获取数据失败' });
+  }
+});
+
+app.post('/add_stock_position', async (req, res) => {
+  try {
+    const { code, name } = req.body;
+    const success = addStockPosition(code, name);
+    res.json({ message: success ? '添加成功' : '添加失败', success });
+  } catch (error) {
+    console.error('添加失败:', error);
+    res.status(500).json({ message: '添加失败' });
+  }
+});
+
+app.post('/delete_stock_position', async (req, res) => {
+  try {
+    const { code } = req.body;
+    const success = deleteStockPosition(code);
+    res.json({ message: success ? '删除成功' : '删除失败', success });
+  } catch (error) {
+    console.error('删除失败:', error);
+    res.status(500).json({ message: '删除失败' });
+  }
+});
+
 
 // 启动服务
 app.listen(port, () => {

@@ -17,11 +17,17 @@ const getSingleStockData = async (code, limit = 1) => {
 }
 exports.getSingleStockData = getSingleStockData;
 
+let tlineNum = 0;
 const getSingleStockTlineData = async (code) => {
     const response = await axios.get(getClsReqStockTlineUrl(code));
     // [{trade_date: 20260529, open_px: xx, close_px: xx, high_px: xx, low_px: xx, change(当日涨幅百分比): xx}]
     const tline = response.data.data;
-    return tline;
+    // mock
+    // if (tlineNum === 0) {
+    //     tline.line[tline.line.length - 1].change = 9;
+    //     tlineNum++;
+    // }
+       return tline;
 }
 exports.getSingleStockTlineData = getSingleStockTlineData;
 
