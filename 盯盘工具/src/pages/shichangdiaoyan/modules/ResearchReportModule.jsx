@@ -302,38 +302,48 @@ const ResearchReportModule = () => {
       const menuItem = {
         key: item.id,
         label: (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-            <Space style={{ flex: 1, minWidth: 0 }}>
-              {item.type === 'folder' ? <FolderOutlined /> : (item.isImportant ? <StarOutlined style={{ color: '#faad14' }} /> : <FileTextOutlined />)}
-              <Tooltip title={item.name}>
-                <span 
-                  style={{ 
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    display: 'inline-block',
-                    maxWidth: '160px',
-                    verticalAlign: 'middle',
-                    lineHeight: '1',
-                    color: item.isImportant ? '#faad14' : 'inherit',
-                    fontWeight: item.isImportant ? 'bold' : 'normal'
-                  }}
-                >
-                  {item.name}
-                </span>
-              </Tooltip>
-            </Space>
-            <Dropdown 
-              menu={{ items: menuOptions }}
-              trigger={['click']}
-              dropdownStyle={{
-                maxHeight: '300px',
-                overflowY: 'auto'
-              }}
-            >
-              <Button type="text" size="small" icon={<MoreOutlined />} onClick={(e) => e.stopPropagation()} />
-            </Dropdown>
-          </div>
+          <Dropdown
+            menu={{ items: menuOptions }}
+            trigger={['contextMenu']}
+            align={{ offset: [10, 10] }}
+            dropdownStyle={{
+              maxHeight: '300px',
+              overflowY: 'auto'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <Space style={{ flex: 1, minWidth: 0 }}>
+                {item.type === 'folder' ? <FolderOutlined /> : (item.isImportant ? <StarOutlined style={{ color: '#faad14' }} /> : <FileTextOutlined />)}
+                <Tooltip title={item.name} placement="left">
+                  <span 
+                    style={{ 
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      display: 'inline-block',
+                      maxWidth: '160px',
+                      verticalAlign: 'middle',
+                      lineHeight: '1',
+                      color: item.isImportant ? '#faad14' : 'inherit',
+                      fontWeight: item.isImportant ? 'bold' : 'normal'
+                    }}
+                  >
+                    {item.name}
+                  </span>
+                </Tooltip>
+              </Space>
+              <Dropdown 
+                menu={{ items: menuOptions }}
+                trigger={['click']}
+                dropdownStyle={{
+                  maxHeight: '300px',
+                  overflowY: 'auto'
+                }}
+              >
+                <Button type="text" size="small" icon={<MoreOutlined />} onClick={(e) => e.stopPropagation()} />
+              </Dropdown>
+            </div>
+          </Dropdown>
         ),
       };
 

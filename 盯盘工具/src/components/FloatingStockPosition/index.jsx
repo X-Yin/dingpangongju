@@ -11,7 +11,7 @@ const ALERT_THRESHOLD = 0.3; // 涨跌幅变化绝对值阈值（%）
 const FloatingStockPosition = () => {
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [adding, setAdding] = useState(false);
   const [newCode, setNewCode] = useState('');
   const [newName, setNewName] = useState('');
@@ -23,7 +23,7 @@ const FloatingStockPosition = () => {
   const [volumeDiffPercentMap, setVolumeDiffPercentMap] = useState({}); // code -> 量能差百分比
   const prevChangeRef = useRef({}); // 上一次的涨幅数据，用于比对
   const [pos, setPos] = useState({ x: 20, y: window.innerHeight - 400 });
-  const dragRef = useRef({ dragging: false, offsetX: 0, offsetY: 0 });
+  const dragRef = useRef({ dragging: false, moved: false, offsetX: 0, offsetY: 0, startX: 0, startY: 0 });
 
   const handleDragStart = (e) => {
     // 点击图标等元素时不触发拖动
@@ -31,8 +31,11 @@ const FloatingStockPosition = () => {
     const box = e.currentTarget.parentElement.getBoundingClientRect();
     dragRef.current = {
       dragging: true,
+      moved: false,
       offsetX: e.clientX - box.left,
       offsetY: e.clientY - box.top,
+      startX: e.clientX,
+      startY: e.clientY,
     };
     document.body.style.userSelect = 'none';
   };
@@ -40,6 +43,12 @@ const FloatingStockPosition = () => {
   useEffect(() => {
     const handleMove = (e) => {
       if (!dragRef.current.dragging) return;
+      // 移动距离超过阈值才视为拖动，避免抖动误判
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+        dragRef.current.moved = true;
+      }
       const x = e.clientX - dragRef.current.offsetX;
       const y = e.clientY - dragRef.current.offsetY;
       // 限制在视口范围内
@@ -63,6 +72,15 @@ const FloatingStockPosition = () => {
       window.removeEventListener('mouseup', handleUp);
     };
   }, []);
+
+  // 标题点击：仅当未发生实质拖动时才切换展开/收起
+  const handleHeaderClick = () => {
+    if (dragRef.current.moved) {
+      dragRef.current.moved = false;
+      return;
+    }
+    setExpanded(!expanded);
+  };
 
   const fetchPositions = useCallback(async () => {
     try {
@@ -245,11 +263,7 @@ const FloatingStockPosition = () => {
       <div
         className="fsp-header"
         onMouseDown={handleDragStart}
-        onClick={(e) => {
-          // 避免拖动后的 mouseup 触发收起/展开
-          if (e.detail === 0) return;
-          setExpanded(!expanded);
-        }}
+        onClick={handleHeaderClick}
       >
         <div className="fsp-title">
           <FolderOpenOutlined className="fsp-title-icon" />
@@ -263,7 +277,7 @@ const FloatingStockPosition = () => {
               onClick={(e) => { e.stopPropagation(); fetchPositions(); }}
             />
           </Tooltip>
-          <MinusOutlined className="fsp-toggle-icon" />
+          {expanded && <MinusOutlined className="fsp-toggle-icon" />}
         </div>
       </div>
 

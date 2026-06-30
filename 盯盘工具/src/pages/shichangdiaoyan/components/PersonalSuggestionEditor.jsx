@@ -12,20 +12,19 @@ const PersonalSuggestionEditor = ({
     const vditorRef = useRef(null);
     const editorInstance = useRef(null);
     const [isContentModified, setIsContentModified] = useState(false);
-    console.log('initialContent', initialContent);
+    // 用 ref 保存最新的 initialContent，避免回调闭包捕获到旧值
+    const initialContentRef = useRef(initialContent);
+    useEffect(() => {
+        initialContentRef.current = initialContent;
+    }, [initialContent]);
 
     // Effect for initializing Vditor on mount and cleaning up on unmount
     useEffect(() => {
         setTimeout(() => {
-            // if (!vditorRef.current || editorInstance.current) {
-            //     return; // Don't re-initialize if already done or ref not available
-            // }
-
             const currentVditor = new Vditor(vditorRef.current, {
                 minHeight: 200,
                 type: 'markdown',
-                value: initialContent,
-                cache: { id: cacheId },
+                cache: { enable: false },
                 toolbar: [
                     'emoji',
                     'headings',
@@ -52,11 +51,11 @@ const PersonalSuggestionEditor = ({
                     'help'
                 ],
                 input: (value) => {
-                    setIsContentModified(value !== initialContent);
+                    setIsContentModified(value !== initialContentRef.current);
                 },
                 after: () => {
-                    // 移除 after 钩子中的 getValue 调用，避免 Vditor 未完全初始化时出现错误
-                    // 初始内容已经通过 value 配置项设置
+                    // 在编辑器初始化完成后设置内容（从 ref 读取最新值）
+                    currentVditor.setValue(initialContentRef.current || '');
                 }
             });
             editorInstance.current = currentVditor;
@@ -69,28 +68,24 @@ const PersonalSuggestionEditor = ({
                 editorInstance.current = null;
             }
         };
-    }, [cacheId, initialContent]); // Depend on cacheId to ensure re-initialization if cacheId changes (acting as a key)
+    }, []); // 仅在挂载时初始化一次
 
     // Effect to update Vditor content when initialContent prop changes from parent
     useEffect(() => {
-        if (!editorInstance.current) return; // Ensure Vditor is initialized
+        if (!editorInstance.current) return;
 
         try {
             const currentEditorValue = editorInstance.current.getValue();
 
-            // If initialContent changes and it's different from current editor content,
-            // and the user hasn't modified it locally, update the editor.
             if (initialContent !== currentEditorValue && !isContentModified) {
                 editorInstance.current.setValue(initialContent || '');
             }
 
-            // Reset modified status if initialContent matches current editor content
             if (initialContent === currentEditorValue && isContentModified) {
                 setIsContentModified(false);
             }
         } catch (error) {
             console.warn("Vditor getValue error in useEffect:", error);
-            // Fallback: update if not modified
             if (!isContentModified) {
                 editorInstance.current.setValue(initialContent || '');
             }
