@@ -5,6 +5,7 @@ import { DollarOutlined, DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, Me
 import PreMarketReading from './components/PreMarketReading';
 import OperationRecord from './components/OperationRecord';
 import TodayPlan from './components/TodayPlan';
+import FloatingStockPosition from './components/FloatingStockPosition';
 import dayjs from 'dayjs';
 import './App.scss';
 
@@ -65,16 +66,7 @@ function App() {
       icon: <AppstoreOutlined />,
       label: '重点板块走势',
     },
-    {
-      key: '/sentiment',
-      icon: <CoffeeOutlined />,
-      label: '情绪复盘',
-    },
-    {
-      key: '/shichangdiaoyan',
-      icon: <BookOutlined />,
-      label: '市场调研',
-    },
+
     {
       key: '/block_money_change',
       icon: <DollarOutlined />,
@@ -84,6 +76,16 @@ function App() {
       key: '/block_money_day_history',
       icon: <BarChartOutlined />,
       label: '板块历史成交',
+    },
+        {
+      key: '/sentiment',
+      icon: <CoffeeOutlined />,
+      label: '情绪复盘',
+    },
+    {
+      key: '/shichangdiaoyan',
+      icon: <BookOutlined />,
+      label: '市场调研',
     },
   ];
 
@@ -217,6 +219,8 @@ function App() {
       >
         <TodayPlan />
       </Modal>
+
+      <FloatingStockPosition />
     </Layout>
   );
 }

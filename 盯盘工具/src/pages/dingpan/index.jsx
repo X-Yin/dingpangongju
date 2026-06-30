@@ -331,7 +331,7 @@ const DingPan = () => {
                                   id: 'defensive-' + Date.now(),
                                   title: '🛡️ 防御板块走强预警',
                                   time: dayjs().format('HH:mm:ss'),
-                                  type: 'warning',
+                                  type: 'success',
                                   description: `防御板块（${strengtheningBlocks.map(b => b.blockName).join('、')}）涨幅已连续三次增加，市场防御情绪升温，请注意风险！`,
                                   isDefensive: true
                               };
@@ -752,7 +752,7 @@ const DingPan = () => {
                                         <Text strong>🚨 开盘下挫预警</Text>：{kaiPanXiaCuoWarning}
                                     </Text>
                                 }
-                                type="error"
+                                type="success"
                                 showIcon
                                 icon={<WarningOutlined />}
                             />
@@ -764,7 +764,7 @@ const DingPan = () => {
                                         <Text strong>🚨 极端风险预警</Text>：{marketRiskWarning}
                                     </Text>
                                 }
-                                type="error"
+                                type="success"
                                 showIcon
                                 icon={<WarningOutlined />}
                             />

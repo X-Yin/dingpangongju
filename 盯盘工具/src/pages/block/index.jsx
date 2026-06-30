@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Typography, Card, Row, Col, Tag, Spin, Empty, Space, Button, Divider, Checkbox, Alert, Table } from 'antd';
-import { AppstoreOutlined, CaretRightOutlined, ClockCircleOutlined, MenuUnfoldOutlined, MenuFoldOutlined, LineChartOutlined } from '@ant-design/icons';
+import { Typography, Card, Row, Col, Tag, Spin, Empty, Space, Button, Divider, Alert, Table } from 'antd';
+import { AppstoreOutlined, CaretRightOutlined, ClockCircleOutlined, MenuUnfoldOutlined, MenuFoldOutlined, LineChartOutlined, CheckOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { createChart, ColorType } from 'lightweight-charts';
 import dayjs from 'dayjs';
@@ -842,26 +842,32 @@ const Block = () => {
               <>
                 <div style={{ marginBottom: '16px' }} className="custom-checkbox-group-wrapper">
                   <Text type="secondary" style={{ marginRight: '16px', fontWeight: 500 }}>选择板块:</Text>
-                  <Checkbox.Group 
-                    value={selectedBlocks}
-                    onChange={handleBlockSelect}
-                    className="custom-checkbox-group"
-                  >
+                  <div className="custom-checkbox-group">
                     {blocks.map(b => {
                       const isChecked = selectedBlocks.includes(b.blockName);
                       const selectedIndex = selectedBlocks.indexOf(b.blockName);
                       const color = isChecked ? blockColors[selectedIndex % blockColors.length] : undefined;
                       return (
-                        <Checkbox 
-                          key={b.blockName} 
-                          value={b.blockName}
+                        <div
+                          key={b.blockName}
+                          className={`custom-checkbox-item ${isChecked ? 'checked' : ''}`}
+                          onClick={() => {
+                            if (isChecked) {
+                              handleBlockSelect(selectedBlocks.filter(name => name !== b.blockName));
+                            } else {
+                              handleBlockSelect([...selectedBlocks, b.blockName]);
+                            }
+                          }}
                           style={isChecked ? { '--custom-color': color } : {}}
                         >
-                          <span style={isChecked ? { color } : {}}>{b.blockName}</span>
-                        </Checkbox>
+                          <div className="custom-checkbox-box">
+                            {isChecked && <CheckOutlined className="custom-checkbox-check" />}
+                          </div>
+                          <span className="custom-checkbox-label">{b.blockName}</span>
+                        </div>
                       );
                     })}
-                  </Checkbox.Group>
+                  </div>
                 </div>
                 <div ref={chartContainerRef} className="chart-container" style={{ height: '350px' }} />
               </>
@@ -910,26 +916,32 @@ const Block = () => {
               <>
                 <div style={{ marginBottom: '16px' }} className="custom-checkbox-group-wrapper">
                   <Text type="secondary" style={{ marginRight: '16px', fontWeight: 500 }}>选择板块:</Text>
-                  <Checkbox.Group 
-                    value={selectedDayBlocks}
-                    onChange={handleDayBlockSelect}
-                    className="custom-checkbox-group"
-                  >
+                  <div className="custom-checkbox-group">
                     {blocks.map(b => {
                       const isChecked = selectedDayBlocks.includes(b.blockName);
                       const selectedIndex = selectedDayBlocks.indexOf(b.blockName);
                       const color = isChecked ? blockColors[selectedIndex % blockColors.length] : undefined;
                       return (
-                        <Checkbox 
-                          key={b.blockName} 
-                          value={b.blockName}
+                        <div
+                          key={b.blockName}
+                          className={`custom-checkbox-item ${isChecked ? 'checked' : ''}`}
+                          onClick={() => {
+                            if (isChecked) {
+                              handleDayBlockSelect(selectedDayBlocks.filter(name => name !== b.blockName));
+                            } else {
+                              handleDayBlockSelect([...selectedDayBlocks, b.blockName]);
+                            }
+                          }}
                           style={isChecked ? { '--custom-color': color } : {}}
                         >
-                          <span style={isChecked ? { color } : {}}>{b.blockName}</span>
-                        </Checkbox>
+                          <div className="custom-checkbox-box">
+                            {isChecked && <CheckOutlined className="custom-checkbox-check" />}
+                          </div>
+                          <span className="custom-checkbox-label">{b.blockName}</span>
+                        </div>
                       );
                     })}
-                  </Checkbox.Group>
+                  </div>
                 </div>
                 <div ref={dayChartContainerRef} className="chart-container" style={{ height: '350px' }} />
               </>

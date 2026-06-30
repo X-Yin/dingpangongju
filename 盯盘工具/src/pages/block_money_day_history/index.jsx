@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Typography, Spin, Alert, Button, Row, Col, Checkbox, Space, message, Modal, Tag } from 'antd';
-import { ReloadOutlined, AppstoreOutlined, FundOutlined, BarChartOutlined } from '@ant-design/icons';
+import { Card, Typography, Spin, Alert, Button, Row, Col, Space, message, Modal, Tag } from 'antd';
+import { ReloadOutlined, AppstoreOutlined, FundOutlined, BarChartOutlined, CheckOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { createChart, ColorType } from 'lightweight-charts';
 import dayjs from 'dayjs';
@@ -9,7 +9,6 @@ import { local_ip } from '../../constant';
 import './index.scss';
 
 const { Title, Text } = Typography;
-const { Group: CheckboxGroup } = Checkbox;
 
 // 定义不同板块的颜色
 const BLOCK_COLORS = [
@@ -120,6 +119,16 @@ const BlockMoneyDayHistory = () => {
 
   const resetToDefault = () => {
     setSelectedBlocks(['光模块', 'cpo', '半导体', '银行']);
+  };
+
+  // 勾选板块时，新增的板块放到数组最前面，对应图表也展示在第一个位置
+  const handleBlocksChange = (checkedValues) => {
+    setSelectedBlocks((prev) => {
+      const prevSet = new Set(prev);
+      const added = checkedValues.filter((v) => !prevSet.has(v));
+      const kept = prev.filter((v) => checkedValues.includes(v));
+      return [...added, ...kept];
+    });
   };
 
   const handleDiagnosis = async () => {
@@ -409,11 +418,11 @@ const BlockMoneyDayHistory = () => {
         priceLineVisible: false,
       });
 
-      // 将成交金额归一化到涨幅范围内显示 - 使用 BusinessDay 格式
+      // 将成交金额归一化到 [0, changeRange] 正数范围内，确保所有柱子方向朝上
       const amountChartData = data.map((item) => {
         const amount = item.blockAmounts[blockName] || 0;
-        // 归一化到涨幅范围
-        const normalizedValue = changeRange > 0 ? (amount / maxAmount) * changeRange + minChange : 0;
+        // 归一化到正数范围，柱子始终从 0 向上
+        const normalizedValue = changeRange > 0 ? (amount / maxAmount) * changeRange : 0;
 
         const dateStr = formatDate(item.date);
         const [year, month, day] = dateStr.split('-');
@@ -761,12 +770,32 @@ const BlockMoneyDayHistory = () => {
               </Button>
             </Space>
           </div>
-          <CheckboxGroup
-            options={allBlocks}
-            value={selectedBlocks}
-            onChange={setSelectedBlocks}
-            style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}
-          />
+          <div className="custom-checkbox-group">
+            {allBlocks.map((blockName) => {
+              const isChecked = selectedBlocks.includes(blockName);
+              const selectedIndex = selectedBlocks.indexOf(blockName);
+              const color = isChecked ? BLOCK_COLORS[selectedIndex % BLOCK_COLORS.length] : undefined;
+              return (
+                <div
+                  key={blockName}
+                  className={`custom-checkbox-item ${isChecked ? 'checked' : ''}`}
+                  onClick={() => {
+                    if (isChecked) {
+                      handleBlocksChange(selectedBlocks.filter((name) => name !== blockName));
+                    } else {
+                      handleBlocksChange([...selectedBlocks, blockName]);
+                    }
+                  }}
+                  style={isChecked ? { '--custom-color': color } : {}}
+                >
+                  <div className="custom-checkbox-box">
+                    {isChecked && <CheckOutlined className="custom-checkbox-check" />}
+                  </div>
+                  <span className="custom-checkbox-label">{blockName}</span>
+                </div>
+              );
+            })}
+          </div>
         </Space>
       </Card>
 

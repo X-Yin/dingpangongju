@@ -17,11 +17,12 @@ const DEFAULT_SELECTED_BLOCKS = [
     'MLCC',
     '商业航天',
     '机器人概念',
-    '锂电池概念'
+    '锂电池概念',
+    '创新药'
 ];
 
-const PLAYBACK_INTERVAL_MS = 1300;
-const BUBBLE_TRANSITION_MS = 980;
+const PLAYBACK_INTERVAL_MS = 2200;
+const BUBBLE_TRANSITION_MS = 1800;
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const getBubbleTextStyle = (radius, blockName) => {
     const diameter = radius * 2;
@@ -48,13 +49,18 @@ const BlockMoneyChange = () => {
     const containerRef = useRef(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const playIntervalRef = useRef(null);
+    // 用 ref 保存最新的 isRealTime，避免 setInterval 闭包捕获到初始值导致回放时被轮询重置到最后一帧
+    const isRealTimeRef = useRef(isRealTime);
+    useEffect(() => {
+        isRealTimeRef.current = isRealTime;
+    }, [isRealTime]);
 
     const fetchTimeData = async () => {
         try {
             const response = await axios.get(`http://${local_ip}:3000/get_block_money_change_time`);
             if (response.data && Array.isArray(response.data)) {
                 setTimeSeriesData(response.data);
-                if (isRealTime && response.data.length > 0) {
+                if (isRealTimeRef.current && response.data.length > 0) {
                     setCurrentIndex(response.data.length - 1);
                 }
             }

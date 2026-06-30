@@ -23,7 +23,7 @@ export const useEmotionSuggestion = (techIndexData) => {
       return {
         message: '🚨 连续高潮风险预警：科技情绪已连续两天超过 100',
         description: '千万不能调仓换股！此时风险远远大于机会。建议要么空仓等待，要么持股观望。若次日冲高应果断减仓，绝对不能出手，随时可能出现开盘大幅度兑现或冲高回落。',
-        type: 'error'
+        type: 'success'
       };
     }
 
@@ -31,7 +31,7 @@ export const useEmotionSuggestion = (techIndexData) => {
       return {
         message: '🔥 连续冰点修复预警：科技情绪已连续两天为负',
         description: '市场情绪极度低迷后蕴含转机。次日如果竞价抢筹高开，并且开盘后高举高打，可以考虑果断全仓出手博弈反弹。',
-        type: 'success'
+        type: 'error'
       };
     }
 
@@ -39,19 +39,19 @@ export const useEmotionSuggestion = (techIndexData) => {
       return {
         message: '⚠️ 科技情绪过热预警：科技情绪已超过 140',
         description: '次日回调风险较大，防止冲高回落，次日冲高适合减仓观望。完全不适合出手博弈',
-        type: 'error'
+        type: 'success'
       };
     } else if (techEmotion < -100) {
       return {
         message: '🚀 科技情绪修复预期：科技情绪低于 -100',
         description: '次日修复的概率极大，第二天找竞价抢筹，并且开盘高举高打，表现强势的龙头，开盘可以全仓出手。',
-        type: 'success'
+        type: 'error'
       };
     } else if (techEmotion < 0 && techEmotion >= -100) {
       return {
         message: '科技情绪略微低迷：当前科技情绪介于 -100 到 0 之间',
         description: '次日有一定修复概率，但是也有继续下探的风险，如果次日竞价抢筹，并且高举高打，可以考虑全仓出手。如果次日开盘继续往下砸，就不适合出手',
-        type: 'success'
+        type: 'error'
       };
     } else {
       return {

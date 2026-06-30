@@ -181,6 +181,60 @@ const BlockRankingModal = ({ visible, onCancel, blocks, onStockClick }) => {
     onCancel?.();
   }, [onCancel, saveCurrentBlocks]);
 
+  // 点击柱状图或 x 轴标签展示对应板块的成分股
+  const handleBarClick = useCallback((event) => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    const showBlockStocks = (index) => {
+      if (index === undefined || index === null || index < 0 || index >= sortedBlocks.length) return;
+      const blockName = sortedBlocks[index]?.blockName;
+      const block = displayBlocks.find(b => b.blockName === blockName);
+      if (block) {
+        const sortedStocks = [...block.data].sort((a, b) => b.change - a.change);
+        setSelectedBlock({ ...block, data: sortedStocks });
+      }
+    };
+
+    // 1. 点击柱状图本身
+    const elements = getElementsAtEvent(chart, event);
+    if (elements.length > 0) {
+      showBlockStocks(elements[0].index);
+      return;
+    }
+
+    // 2. 点击 x 轴标签区域也展示成分股
+    const xScale = chart.scales.x;
+    if (xScale && chart.canvas) {
+      const nativeEvent = event.native || event;
+      const rect = chart.canvas.getBoundingClientRect();
+      const x = nativeEvent.clientX - rect.left;
+      const y = nativeEvent.clientY - rect.top;
+      // 点击位置在 x 轴水平范围内，且在图表区域下方（x 轴标签所在区域）
+      if (x >= xScale.left && x <= xScale.right && y >= chart.chartArea.bottom) {
+        const index = xScale.getValueForPixel(x);
+        if (index !== undefined && index !== null) {
+          showBlockStocks(Math.round(index));
+        }
+      }
+    }
+  }, [sortedBlocks, displayBlocks]);
+
+  // hover 时切换鼠标指针，提示柱状图和 x 轴标签均可点击
+  const handleBarHover = useCallback((event, elements) => {
+    const chart = chartRef.current;
+    if (!chart || !chart.canvas) return;
+    const xScale = chart.scales.x;
+    if (!xScale) return;
+    const nativeEvent = event.native || event;
+    const rect = chart.canvas.getBoundingClientRect();
+    const x = nativeEvent.clientX - rect.left;
+    const y = nativeEvent.clientY - rect.top;
+    const isOnBar = elements.length > 0;
+    const isOnLabel = x >= xScale.left && x <= xScale.right && y >= chart.chartArea.bottom;
+    chart.canvas.style.cursor = (isOnBar || isOnLabel) ? 'pointer' : 'default';
+  }, []);
+
   const chartData = {
     labels: sortedBlocks.map(block => {
       const displayLabel = getDisplayLabel(block.blockName);
@@ -286,20 +340,7 @@ const BlockRankingModal = ({ visible, onCancel, blocks, onStockClick }) => {
             </Space>
           </div>
           <div style={{ width: '100%', height: '500px', minHeight: '500px', marginBottom: '32px' }}>
-              <Bar ref={chartRef} data={chartData} options={chartOptions} onClick={(event) => {
-                const chart = chartRef.current;
-                if (!chart) return;
-                const elements = getElementsAtEvent(chart, event);
-                if (elements.length > 0) {
-                  const clickedElementIndex = elements[0].index;
-                  const blockName = sortedBlocks[clickedElementIndex]?.blockName;
-                  const block = displayBlocks.find(b => b.blockName === blockName);
-                  if (block) {
-                    const sortedStocks = [...block.data].sort((a, b) => b.change - a.change);
-                    setSelectedBlock({ ...block, data: sortedStocks });
-                  }
-                }
-              }} />
+              <Bar ref={chartRef} data={chartData} options={chartOptions} onClick={handleBarClick} onHover={handleBarHover} />
           </div>
         </>
       ) : (
