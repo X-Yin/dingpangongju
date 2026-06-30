@@ -1,5 +1,5 @@
-// 股票持仓服务
-const { getClsReqMainFundUrl, getDFCFStockTlineDay2Url } = require('../utils');
+    // 股票持仓服务
+const { getClsReqMainFundUrl, getDFCFStockTlineDay2Url, getClsReqStockTlineDay5Url } = require('../utils');
 const axios = require('axios');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
@@ -63,81 +63,49 @@ const getStockPositionMainFund = async () => {
     return result;
 };
 
-const handleStockTline = (tlineStr) => {
-    tlineStr = tlineStr.split(",");
-    const timeStr = tlineStr[0];
-    const amount = tlineStr[5];
-    const totalMoney = tlineStr[6];
-    return {
-        time: {
-            date: timeStr.split(" ")[0],
-            hourMin: timeStr.split(" ")[1]
-        },
-        amount,
-        totalMoney
-    };
-};
-
 const diff2DayStockTline = async () => {
     // 先把所有股票持仓都获取到
     const stock_positions = JSON.parse(fs.readFileSync(stock_position_path, 'utf8')) || [];
     // 遍历所有股票持仓，分别请求东方财富接口返回数据
     const result = [];
-    const browser = await puppeteer.launch({
-        headless: 'new',
-        defaultViewport: null,
-    });
-    try {
-        for (const item of stock_positions) {
-            try {
-                const tlineUrl = getDFCFStockTlineDay2Url(item.code);
-                const page = await browser.newPage();
-                await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-                await page.goto(tlineUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-                // 获取 body 下的 pre 元素中的文本（浏览器会把纯文本响应渲染到 <pre> 中）
-                const htmlStr = await page.evaluate(() => {
-                    return document.body.querySelector('pre')?.textContent || '';
-                });
-                await page.close();
-
-                console.log(htmlStr);
-
-                const reg = /^[\w]+\(([\s\S]*)\);?$/;
-
-                // 提取 JSONP 格式中的 JSON 字符串
-                const match = htmlStr.match(reg);
-                if (!match || !match[1]) {
-                    continue;
-                }
-                const jsonText = match[1];
-                const data = JSON.parse(jsonText)?.data?.trends || [];
-                const lastestData = handleStockTline(data[data.length - 1] || '');
-                const yesterdayFinalIndex = data.findIndex(i => handleStockTline(i).time.hourMin === lastestData.time.hourMin);
-                let yesterdayTotalAmount = 0;
-                for (let i = yesterdayFinalIndex; i >= 0; i--) {
-                    yesterdayTotalAmount += Number(data[i].amount);
-                }
-
-                const todayStartIndex = data.findIndex(i => {
-                    const tline = handleStockTline(i);
-                    return tline.time.hourMin === '09:30' && tline.time.date === lastestData.time.date;
-                });
-                let todayTotalAmount = 0;
-                for (let i = todayStartIndex; i < data.length; i++) {
-                    todayTotalAmount += Number(data[i].amount);
-                }
-                const amountDiffPercent = ((todayTotalAmount - yesterdayTotalAmount) / yesterdayTotalAmount * 100).toFixed(2) + '%';
-                result.push({
-                    code: item.code,
-                    name: item.name,
-                    amountDiffPercent
-                });
-            } catch (error) {
-                console.error(`获取 ${item.name} 分时数据失败:`, error.message);
-            }
+    for (const item of stock_positions) {
+        try {
+            const tlineData = getClsReqStockTlineDay5Url(item.code);
+            const res = await axios.get(tlineData);
+            const tline = res.data.data.line;
+            // 按日期分组，提取所有不重复的日期并排序
+            const dates = [...new Set(tline.map(item => item.date))].sort((a, b) => a - b);
+            // 最新一天和倒数第二天
+            const latestDate = dates[dates.length - 1];
+            const prevDate = dates[dates.length - 2];
+            // 取出最新一天和倒数第二天的所有分时数据
+            const latestDayLine = tline.filter(item => item.date === latestDate);
+            const prevDayLine = tline.filter(item => item.date === prevDate);
+            // 取今日分时最后一条数据的时刻作为基准时刻（HHMM 格式）
+            const currentMinute = latestDayLine.length > 0
+                ? latestDayLine[latestDayLine.length - 1].minute
+                : 0;
+            // 累计今天当前时刻之前（含）的所有成交量
+            const todayTotal = latestDayLine
+                .filter(line => line.minute <= currentMinute)
+                .reduce((sum, line) => sum + (line.business_amount || 0), 0);
+            // 累计前一交易日同一时刻之前（含）的所有成交量
+            const prevTotal = prevDayLine
+                .filter(line => line.minute <= currentMinute)
+                .reduce((sum, line) => sum + (line.business_amount || 0), 0);
+            // 量能差值及百分比（相较前一交易日同时刻）
+            const volumeDiff = todayTotal - prevTotal;
+            const volumeDiffPercent = prevTotal !== 0
+                ? Number(((volumeDiff / prevTotal) * 100).toFixed(2))
+                : 0;
+            result.push({
+                code: item.code,
+                name: item.name,
+                volumeDiffPercent
+            });
+        } catch (error) {
+            console.error(`获取 ${item.name} 五日分时失败:`, error.message);
         }
-    } finally {
-        await browser.close();
     }
     return result;
 };
@@ -145,5 +113,6 @@ const diff2DayStockTline = async () => {
 module.exports = {
     addStockPosition,
     deleteStockPosition,
-    getStockPositionMainFund
+    getStockPositionMainFund,
+    diff2DayStockTline
 };

@@ -30,7 +30,7 @@ const {
   pinResearchReport
 } = require('./service/researchReport');
 const { pollDFCFBlockMoney, getBlockMoneyChangeList, pollTimeDFCFBlockMoneyChange, getBlockMoneyChangeTimeList } = require('./service/blockMoney');
-const { getStockPositionMainFund, addStockPosition, deleteStockPosition } = require('./service/stockPosition');
+const { getStockPositionMainFund, addStockPosition, deleteStockPosition, diff2DayStockTline } = require('./service/stockPosition');
 
 const POLL_CONFIG = {
   kaipanzhudong: {
@@ -589,6 +589,15 @@ app.post('/delete_stock_position', async (req, res) => {
   }
 });
 
+app.get('/diff2_day_stock_tline', async (req, res) => {
+  try {
+    const result = await diff2DayStockTline();
+    res.json(result);
+  } catch (error) {
+    console.error('获取数据失败:', error);
+    res.status(500).json({ message: '获取数据失败' });
+  }
+});
 
 // 启动服务
 app.listen(port, () => {
