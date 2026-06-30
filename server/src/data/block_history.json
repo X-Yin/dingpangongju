@@ -8623,5 +8623,880 @@
         "avgChange": -5.23
       }
     ]
+  },
+  {
+    "time": "10:29",
+    "blockData": [
+      {
+        "blockName": "MPO",
+        "avgChange": 6.19
+      },
+      {
+        "blockName": "玻璃基板",
+        "avgChange": 5.81
+      },
+      {
+        "blockName": "国产超节点",
+        "avgChange": 5.72
+      },
+      {
+        "blockName": "光模块",
+        "avgChange": 4.39
+      },
+      {
+        "blockName": "pcb",
+        "avgChange": 4.23
+      },
+      {
+        "blockName": "机器人",
+        "avgChange": 4
+      },
+      {
+        "blockName": "商业航天",
+        "avgChange": 3.69
+      },
+      {
+        "blockName": "cpo",
+        "avgChange": 3.64
+      },
+      {
+        "blockName": "液冷",
+        "avgChange": 3.27
+      },
+      {
+        "blockName": "cpu",
+        "avgChange": 3.06
+      },
+      {
+        "blockName": "锂电",
+        "avgChange": 2.8
+      },
+      {
+        "blockName": "铜箔",
+        "avgChange": 1.98
+      },
+      {
+        "blockName": "北美缺电",
+        "avgChange": 1.09
+      },
+      {
+        "blockName": "半导体",
+        "avgChange": 1.04
+      },
+      {
+        "blockName": "光纤",
+        "avgChange": 0.65
+      },
+      {
+        "blockName": "PPE树脂",
+        "avgChange": 0.63
+      },
+      {
+        "blockName": "功率半导体",
+        "avgChange": 0.23
+      },
+      {
+        "blockName": "电子布",
+        "avgChange": -0.4
+      },
+      {
+        "blockName": "证券",
+        "avgChange": -0.4
+      },
+      {
+        "blockName": "医药",
+        "avgChange": -1.1
+      },
+      {
+        "blockName": "钨",
+        "avgChange": -1.57
+      },
+      {
+        "blockName": "消费",
+        "avgChange": -1.63
+      },
+      {
+        "blockName": "银行",
+        "avgChange": -2.05
+      },
+      {
+        "blockName": "半导体材料",
+        "avgChange": -2.13
+      },
+      {
+        "blockName": "煤炭",
+        "avgChange": -2.16
+      },
+      {
+        "blockName": "电力",
+        "avgChange": -2.27
+      },
+      {
+        "blockName": "贵金属",
+        "avgChange": -2.86
+      },
+      {
+        "blockName": "化工",
+        "avgChange": -3.36
+      },
+      {
+        "blockName": "存储",
+        "avgChange": -3.44
+      },
+      {
+        "blockName": "MLCC",
+        "avgChange": -5.22
+      }
+    ]
+  },
+  {
+    "time": "10:30",
+    "blockData": [
+      {
+        "blockName": "MPO",
+        "avgChange": 6.3
+      },
+      {
+        "blockName": "玻璃基板",
+        "avgChange": 5.88
+      },
+      {
+        "blockName": "国产超节点",
+        "avgChange": 5.71
+      },
+      {
+        "blockName": "光模块",
+        "avgChange": 4.56
+      },
+      {
+        "blockName": "pcb",
+        "avgChange": 4.43
+      },
+      {
+        "blockName": "cpo",
+        "avgChange": 3.9
+      },
+      {
+        "blockName": "机器人",
+        "avgChange": 3.71
+      },
+      {
+        "blockName": "液冷",
+        "avgChange": 3.27
+      },
+      {
+        "blockName": "商业航天",
+        "avgChange": 3.27
+      },
+      {
+        "blockName": "cpu",
+        "avgChange": 3.14
+      },
+      {
+        "blockName": "锂电",
+        "avgChange": 2.83
+      },
+      {
+        "blockName": "铜箔",
+        "avgChange": 1.79
+      },
+      {
+        "blockName": "北美缺电",
+        "avgChange": 1.07
+      },
+      {
+        "blockName": "半导体",
+        "avgChange": 1.02
+      },
+      {
+        "blockName": "光纤",
+        "avgChange": 0.92
+      },
+      {
+        "blockName": "PPE树脂",
+        "avgChange": 0.67
+      },
+      {
+        "blockName": "功率半导体",
+        "avgChange": 0.22
+      },
+      {
+        "blockName": "电子布",
+        "avgChange": -0.05
+      },
+      {
+        "blockName": "证券",
+        "avgChange": -0.41
+      },
+      {
+        "blockName": "医药",
+        "avgChange": -1.15
+      },
+      {
+        "blockName": "钨",
+        "avgChange": -1.69
+      },
+      {
+        "blockName": "消费",
+        "avgChange": -1.77
+      },
+      {
+        "blockName": "电力",
+        "avgChange": -1.88
+      },
+      {
+        "blockName": "银行",
+        "avgChange": -2.16
+      },
+      {
+        "blockName": "煤炭",
+        "avgChange": -2.19
+      },
+      {
+        "blockName": "半导体材料",
+        "avgChange": -2.33
+      },
+      {
+        "blockName": "贵金属",
+        "avgChange": -2.94
+      },
+      {
+        "blockName": "存储",
+        "avgChange": -3.41
+      },
+      {
+        "blockName": "化工",
+        "avgChange": -3.55
+      },
+      {
+        "blockName": "MLCC",
+        "avgChange": -5.01
+      }
+    ]
+  },
+  {
+    "time": "10:31",
+    "blockData": [
+      {
+        "blockName": "MPO",
+        "avgChange": 6.51
+      },
+      {
+        "blockName": "玻璃基板",
+        "avgChange": 5.91
+      },
+      {
+        "blockName": "国产超节点",
+        "avgChange": 5.67
+      },
+      {
+        "blockName": "光模块",
+        "avgChange": 4.83
+      },
+      {
+        "blockName": "pcb",
+        "avgChange": 4.52
+      },
+      {
+        "blockName": "cpo",
+        "avgChange": 4.03
+      },
+      {
+        "blockName": "机器人",
+        "avgChange": 3.71
+      },
+      {
+        "blockName": "cpu",
+        "avgChange": 3.3
+      },
+      {
+        "blockName": "液冷",
+        "avgChange": 3.12
+      },
+      {
+        "blockName": "商业航天",
+        "avgChange": 2.92
+      },
+      {
+        "blockName": "锂电",
+        "avgChange": 2.7
+      },
+      {
+        "blockName": "铜箔",
+        "avgChange": 1.56
+      },
+      {
+        "blockName": "半导体",
+        "avgChange": 1.14
+      },
+      {
+        "blockName": "光纤",
+        "avgChange": 1
+      },
+      {
+        "blockName": "北美缺电",
+        "avgChange": 0.94
+      },
+      {
+        "blockName": "PPE树脂",
+        "avgChange": 0.79
+      },
+      {
+        "blockName": "电子布",
+        "avgChange": 0.38
+      },
+      {
+        "blockName": "功率半导体",
+        "avgChange": 0.16
+      },
+      {
+        "blockName": "证券",
+        "avgChange": -0.54
+      },
+      {
+        "blockName": "医药",
+        "avgChange": -1.22
+      },
+      {
+        "blockName": "钨",
+        "avgChange": -1.69
+      },
+      {
+        "blockName": "消费",
+        "avgChange": -1.95
+      },
+      {
+        "blockName": "电力",
+        "avgChange": -1.96
+      },
+      {
+        "blockName": "银行",
+        "avgChange": -2.06
+      },
+      {
+        "blockName": "煤炭",
+        "avgChange": -2.36
+      },
+      {
+        "blockName": "半导体材料",
+        "avgChange": -2.49
+      },
+      {
+        "blockName": "贵金属",
+        "avgChange": -3.1
+      },
+      {
+        "blockName": "存储",
+        "avgChange": -3.26
+      },
+      {
+        "blockName": "化工",
+        "avgChange": -3.63
+      },
+      {
+        "blockName": "MLCC",
+        "avgChange": -5.04
+      }
+    ]
+  },
+  {
+    "time": "10:32",
+    "blockData": [
+      {
+        "blockName": "MPO",
+        "avgChange": 6.63
+      },
+      {
+        "blockName": "玻璃基板",
+        "avgChange": 6.05
+      },
+      {
+        "blockName": "国产超节点",
+        "avgChange": 5.53
+      },
+      {
+        "blockName": "光模块",
+        "avgChange": 4.79
+      },
+      {
+        "blockName": "pcb",
+        "avgChange": 4.6
+      },
+      {
+        "blockName": "cpo",
+        "avgChange": 4.13
+      },
+      {
+        "blockName": "机器人",
+        "avgChange": 3.31
+      },
+      {
+        "blockName": "液冷",
+        "avgChange": 3.06
+      },
+      {
+        "blockName": "cpu",
+        "avgChange": 3.01
+      },
+      {
+        "blockName": "商业航天",
+        "avgChange": 2.85
+      },
+      {
+        "blockName": "锂电",
+        "avgChange": 2.55
+      },
+      {
+        "blockName": "铜箔",
+        "avgChange": 1.56
+      },
+      {
+        "blockName": "光纤",
+        "avgChange": 1.02
+      },
+      {
+        "blockName": "半导体",
+        "avgChange": 1.02
+      },
+      {
+        "blockName": "北美缺电",
+        "avgChange": 0.85
+      },
+      {
+        "blockName": "PPE树脂",
+        "avgChange": 0.84
+      },
+      {
+        "blockName": "功率半导体",
+        "avgChange": 0.81
+      },
+      {
+        "blockName": "电子布",
+        "avgChange": 0.59
+      },
+      {
+        "blockName": "证券",
+        "avgChange": -0.56
+      },
+      {
+        "blockName": "医药",
+        "avgChange": -1.35
+      },
+      {
+        "blockName": "钨",
+        "avgChange": -1.64
+      },
+      {
+        "blockName": "电力",
+        "avgChange": -1.92
+      },
+      {
+        "blockName": "消费",
+        "avgChange": -1.95
+      },
+      {
+        "blockName": "银行",
+        "avgChange": -2.11
+      },
+      {
+        "blockName": "半导体材料",
+        "avgChange": -2.3
+      },
+      {
+        "blockName": "煤炭",
+        "avgChange": -2.31
+      },
+      {
+        "blockName": "贵金属",
+        "avgChange": -3.23
+      },
+      {
+        "blockName": "存储",
+        "avgChange": -3.28
+      },
+      {
+        "blockName": "化工",
+        "avgChange": -3.73
+      },
+      {
+        "blockName": "MLCC",
+        "avgChange": -5.21
+      }
+    ]
+  },
+  {
+    "time": "10:33",
+    "blockData": [
+      {
+        "blockName": "MPO",
+        "avgChange": 6.72
+      },
+      {
+        "blockName": "玻璃基板",
+        "avgChange": 6.15
+      },
+      {
+        "blockName": "国产超节点",
+        "avgChange": 5.91
+      },
+      {
+        "blockName": "光模块",
+        "avgChange": 5.01
+      },
+      {
+        "blockName": "pcb",
+        "avgChange": 4.47
+      },
+      {
+        "blockName": "cpo",
+        "avgChange": 4.17
+      },
+      {
+        "blockName": "机器人",
+        "avgChange": 3.58
+      },
+      {
+        "blockName": "cpu",
+        "avgChange": 3.26
+      },
+      {
+        "blockName": "液冷",
+        "avgChange": 3.17
+      },
+      {
+        "blockName": "商业航天",
+        "avgChange": 3.14
+      },
+      {
+        "blockName": "锂电",
+        "avgChange": 2.62
+      },
+      {
+        "blockName": "铜箔",
+        "avgChange": 1.69
+      },
+      {
+        "blockName": "半导体",
+        "avgChange": 1.17
+      },
+      {
+        "blockName": "北美缺电",
+        "avgChange": 1.06
+      },
+      {
+        "blockName": "光纤",
+        "avgChange": 1.05
+      },
+      {
+        "blockName": "PPE树脂",
+        "avgChange": 0.96
+      },
+      {
+        "blockName": "功率半导体",
+        "avgChange": 0.84
+      },
+      {
+        "blockName": "电子布",
+        "avgChange": 0.8
+      },
+      {
+        "blockName": "证券",
+        "avgChange": -0.59
+      },
+      {
+        "blockName": "医药",
+        "avgChange": -1.27
+      },
+      {
+        "blockName": "钨",
+        "avgChange": -1.43
+      },
+      {
+        "blockName": "消费",
+        "avgChange": -1.87
+      },
+      {
+        "blockName": "银行",
+        "avgChange": -2.11
+      },
+      {
+        "blockName": "煤炭",
+        "avgChange": -2.17
+      },
+      {
+        "blockName": "电力",
+        "avgChange": -2.19
+      },
+      {
+        "blockName": "半导体材料",
+        "avgChange": -2.31
+      },
+      {
+        "blockName": "贵金属",
+        "avgChange": -2.99
+      },
+      {
+        "blockName": "存储",
+        "avgChange": -3.09
+      },
+      {
+        "blockName": "化工",
+        "avgChange": -3.59
+      },
+      {
+        "blockName": "MLCC",
+        "avgChange": -5.25
+      }
+    ]
+  },
+  {
+    "time": "10:34",
+    "blockData": [
+      {
+        "blockName": "MPO",
+        "avgChange": 6.87
+      },
+      {
+        "blockName": "玻璃基板",
+        "avgChange": 6.04
+      },
+      {
+        "blockName": "国产超节点",
+        "avgChange": 5.95
+      },
+      {
+        "blockName": "光模块",
+        "avgChange": 5.16
+      },
+      {
+        "blockName": "pcb",
+        "avgChange": 4.8
+      },
+      {
+        "blockName": "cpo",
+        "avgChange": 4.43
+      },
+      {
+        "blockName": "机器人",
+        "avgChange": 3.7
+      },
+      {
+        "blockName": "cpu",
+        "avgChange": 3.33
+      },
+      {
+        "blockName": "液冷",
+        "avgChange": 3.17
+      },
+      {
+        "blockName": "商业航天",
+        "avgChange": 3.14
+      },
+      {
+        "blockName": "锂电",
+        "avgChange": 2.65
+      },
+      {
+        "blockName": "铜箔",
+        "avgChange": 2.07
+      },
+      {
+        "blockName": "电子布",
+        "avgChange": 1.3
+      },
+      {
+        "blockName": "光纤",
+        "avgChange": 1.18
+      },
+      {
+        "blockName": "PPE树脂",
+        "avgChange": 1.09
+      },
+      {
+        "blockName": "半导体",
+        "avgChange": 1.09
+      },
+      {
+        "blockName": "北美缺电",
+        "avgChange": 0.98
+      },
+      {
+        "blockName": "功率半导体",
+        "avgChange": 0.77
+      },
+      {
+        "blockName": "证券",
+        "avgChange": -0.55
+      },
+      {
+        "blockName": "医药",
+        "avgChange": -1.24
+      },
+      {
+        "blockName": "钨",
+        "avgChange": -1.35
+      },
+      {
+        "blockName": "电力",
+        "avgChange": -1.72
+      },
+      {
+        "blockName": "消费",
+        "avgChange": -2.07
+      },
+      {
+        "blockName": "煤炭",
+        "avgChange": -2.11
+      },
+      {
+        "blockName": "半导体材料",
+        "avgChange": -2.14
+      },
+      {
+        "blockName": "银行",
+        "avgChange": -2.16
+      },
+      {
+        "blockName": "贵金属",
+        "avgChange": -2.93
+      },
+      {
+        "blockName": "存储",
+        "avgChange": -3.05
+      },
+      {
+        "blockName": "化工",
+        "avgChange": -3.7
+      },
+      {
+        "blockName": "MLCC",
+        "avgChange": -5.08
+      }
+    ]
+  },
+  {
+    "time": "10:35",
+    "blockData": [
+      {
+        "blockName": "MPO",
+        "avgChange": 6.77
+      },
+      {
+        "blockName": "玻璃基板",
+        "avgChange": 6.29
+      },
+      {
+        "blockName": "国产超节点",
+        "avgChange": 5.98
+      },
+      {
+        "blockName": "光模块",
+        "avgChange": 5.22
+      },
+      {
+        "blockName": "pcb",
+        "avgChange": 4.89
+      },
+      {
+        "blockName": "cpo",
+        "avgChange": 4.41
+      },
+      {
+        "blockName": "机器人",
+        "avgChange": 3.39
+      },
+      {
+        "blockName": "液冷",
+        "avgChange": 3.31
+      },
+      {
+        "blockName": "cpu",
+        "avgChange": 3.3
+      },
+      {
+        "blockName": "商业航天",
+        "avgChange": 3.09
+      },
+      {
+        "blockName": "锂电",
+        "avgChange": 2.83
+      },
+      {
+        "blockName": "铜箔",
+        "avgChange": 1.99
+      },
+      {
+        "blockName": "电子布",
+        "avgChange": 1.61
+      },
+      {
+        "blockName": "PPE树脂",
+        "avgChange": 1.48
+      },
+      {
+        "blockName": "半导体",
+        "avgChange": 1.37
+      },
+      {
+        "blockName": "光纤",
+        "avgChange": 1.34
+      },
+      {
+        "blockName": "北美缺电",
+        "avgChange": 0.96
+      },
+      {
+        "blockName": "功率半导体",
+        "avgChange": 0.72
+      },
+      {
+        "blockName": "证券",
+        "avgChange": -0.56
+      },
+      {
+        "blockName": "钨",
+        "avgChange": -1.12
+      },
+      {
+        "blockName": "医药",
+        "avgChange": -1.41
+      },
+      {
+        "blockName": "电力",
+        "avgChange": -1.69
+      },
+      {
+        "blockName": "半导体材料",
+        "avgChange": -1.99
+      },
+      {
+        "blockName": "消费",
+        "avgChange": -2.03
+      },
+      {
+        "blockName": "煤炭",
+        "avgChange": -2.05
+      },
+      {
+        "blockName": "银行",
+        "avgChange": -2.16
+      },
+      {
+        "blockName": "贵金属",
+        "avgChange": -2.85
+      },
+      {
+        "blockName": "存储",
+        "avgChange": -3.03
+      },
+      {
+        "blockName": "化工",
+        "avgChange": -3.68
+      },
+      {
+        "blockName": "MLCC",
+        "avgChange": -4.95
+      }
+    ]
   }
 ]
