@@ -267,7 +267,7 @@ const FloatingStockPosition = () => {
       >
         <div className="fsp-title">
           <FolderOpenOutlined className="fsp-title-icon" />
-          <span className="fsp-title-text">我的持仓</span>
+          <span className="fsp-title-text">{expanded ? '我的持仓' : '持仓'}</span>
           {positions.length > 0 && <span className="fsp-count">{positions.length}</span>}
         </div>
         <div className="fsp-header-actions">

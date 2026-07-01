@@ -6,7 +6,7 @@
   border-radius: 10px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
   overflow: hidden;
-  transition: width 0.25s ease;
+  transition: width 0.25s ease, height 0.25s ease, border-radius 0.25s ease;
 
   // 整个组件异动时的红色阴影闪烁
   &.alerting {
@@ -19,6 +19,33 @@
     }
     50% {
       box-shadow: 0 6px 28px rgba(245, 34, 45, 0.75), 0 0 18px rgba(245, 34, 45, 0.5);
+    }
+  }
+
+  // 折叠圆形状态下，异动时让圆形背景闪烁红色
+  &.collapsed.alerting {
+    animation: fsp-circle-flash 0.8s ease-in-out infinite;
+
+    .fsp-header {
+      animation: fsp-circle-bg-flash 0.8s ease-in-out infinite;
+    }
+  }
+
+  @keyframes fsp-circle-flash {
+    0%, 100% {
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+    }
+    50% {
+      box-shadow: 0 6px 28px rgba(245, 34, 45, 0.9), 0 0 18px rgba(245, 34, 45, 0.7);
+    }
+  }
+
+  @keyframes fsp-circle-bg-flash {
+    0%, 100% {
+      background: linear-gradient(135deg, #1890ff, #36cfc9);
+    }
+    50% {
+      background: linear-gradient(135deg, #f5222d, #ff7875);
     }
   }
 
@@ -88,17 +115,47 @@
     }
   }
 
-  // 折叠状态下隐藏刷新按钮和计数，避免挤压
+  // 折叠状态下简化为圆形，只显示图标和"持仓"
   &.collapsed {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+
     .fsp-header {
-      .fsp-title {
-        gap: 6px;
+      width: 56px;
+      height: 56px;
+      padding: 0;
+      border-radius: 50%;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .fsp-title {
+      flex-direction: column;
+      gap: 2px;
+      font-size: 12px;
+      justify-content: center;
+      align-items: center;
+
+      .fsp-title-icon {
+        font-size: 16px;
+      }
+
+      .fsp-title-text {
+        font-size: 11px;
+        line-height: 1;
       }
 
       .fsp-count,
       .fsp-action-icon {
         display: none;
       }
+    }
+
+    .fsp-header-actions {
+      display: none;
     }
   }
 

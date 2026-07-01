@@ -1,12 +1,16 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Typography, Spin, Alert, Button, Row, Col, Space, message, Modal, Tag } from 'antd';
-import { ReloadOutlined, AppstoreOutlined, FundOutlined, BarChartOutlined, CheckOutlined } from '@ant-design/icons';
+import { Card, Typography, Spin, Alert, Button, Row, Col, Space, message, Modal, Tag, Slider } from 'antd';
+import { ReloadOutlined, AppstoreOutlined, FundOutlined, BarChartOutlined, CheckOutlined, PlayCircleOutlined, PauseCircleOutlined, StepBackwardOutlined, StepForwardOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { createChart, ColorType } from 'lightweight-charts';
+import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title as ChartTitle, Tooltip as ChartTooltip, Legend } from 'chart.js';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
 import './index.scss';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, ChartTitle, ChartTooltip, Legend);
 
 const { Title, Text } = Typography;
 
@@ -28,7 +32,10 @@ const BlockMoneyDayHistory = () => {
   const [changeData, setChangeData] = useState([]); // 涨幅数据
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'combined'
+  const [viewMode, setViewMode] = useState('grid'); // 'grid', 'combined', or 'bar'
+  const [barDateIndex, setBarDateIndex] = useState(0); // 柱状图当前显示的日期索引
+  const [barPlaying, setBarPlaying] = useState(false); // 柱状图回放状态
+  const barPlayTimerRef = useRef(null); // 回放定时器
   const [selectedBlocks, setSelectedBlocks] = useState([]);
   const [allBlocks, setAllBlocks] = useState([]);
   const [diagnosisModalVisible, setDiagnosisModalVisible] = useState(false);
@@ -130,6 +137,125 @@ const BlockMoneyDayHistory = () => {
       return [...added, ...kept];
     });
   };
+
+  // 柱状图回放控制
+  const handleBarPlay = () => {
+    if (data.length === 0) return;
+    // 如果已经到最后一天，从头开始
+    if (barDateIndex >= data.length - 1) {
+      setBarDateIndex(0);
+    }
+    setBarPlaying((prev) => !prev);
+  };
+
+  const handleBarStep = (direction) => {
+    setBarPlaying(false);
+    setBarDateIndex((prev) => {
+      const next = prev + direction;
+      if (next < 0) return 0;
+      if (next >= data.length) return data.length - 1;
+      return next;
+    });
+  };
+
+  // 柱状图数据 - 根据当前选中的日期索引构建
+  const barChartData = useMemo(() => {
+    if (data.length === 0 || selectedBlocks.length === 0) return null;
+    const currentData = data[barDateIndex];
+    if (!currentData) return null;
+
+    // 找到对应日期的涨幅数据
+    const currentDateChange = changeData.find((item) => item.date === currentData.date);
+
+    // 构建板块数据：成交金额 + 涨幅
+    const blockValues = selectedBlocks.map((blockName) => {
+      const amount = currentData.blockAmounts[blockName] || 0;
+      const change = currentDateChange?.blocks?.[blockName]?.avgChange ?? 0;
+      return { name: blockName, amount, change };
+    });
+
+    // 按成交金额降序排序
+    blockValues.sort((a, b) => b.amount - a.amount);
+
+    return {
+      date: currentData.date,
+      formattedDate: formatDate(currentData.date),
+      labels: blockValues.map((b) => b.name),
+      datasets: [
+        {
+          label: '成交金额',
+          data: blockValues.map((b) => b.amount),
+          backgroundColor: blockValues.map((b) => {
+            if (b.change > 0) return 'rgba(207, 19, 34, 0.6)';
+            if (b.change < 0) return 'rgba(56, 158, 13, 0.6)';
+            return 'rgba(89, 89, 89, 0.6)';
+          }),
+          borderColor: blockValues.map((b) => {
+            if (b.change > 0) return 'rgba(207, 19, 34, 1)';
+            if (b.change < 0) return 'rgba(56, 158, 13, 1)';
+            return 'rgba(89, 89, 89, 1)';
+          }),
+          borderWidth: 1,
+          // 自定义 tooltip：在金额基础上附加涨幅
+          blockChanges: blockValues.map((b) => b.change),
+        },
+      ],
+    };
+  }, [data, changeData, selectedBlocks, barDateIndex]);
+
+  const barChartOptions = useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { bottom: 8 } },
+    plugins: {
+      legend: { position: 'top' },
+      title: {
+        display: true,
+        text: barChartData
+          ? `板块成交金额排名 (${barChartData.formattedDate})`
+          : '板块成交金额排名',
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const amount = context.parsed.y;
+            const change = context.dataset.blockChanges?.[context.dataIndex] ?? 0;
+            let amountStr;
+            if (amount >= 100000000) {
+              amountStr = `${(amount / 100000000).toFixed(2)} 亿`;
+            } else if (amount >= 10000) {
+              amountStr = `${(amount / 10000).toFixed(2)} 万`;
+            } else {
+              amountStr = `${amount}`;
+            }
+            return [`金额: ${amountStr}`, `涨幅: ${change > 0 ? '+' : ''}${change.toFixed(2)}%`];
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        title: { display: true, text: '板块名称' },
+        ticks: {
+          autoSkip: false,
+          maxRotation: 75,
+          minRotation: 75,
+          padding: 4,
+          font: { size: 12 },
+        },
+      },
+      y: {
+        title: { display: true, text: '成交金额' },
+        ticks: {
+          callback: (value) => {
+            if (value >= 100000000) return `${(value / 100000000).toFixed(1)}亿`;
+            if (value >= 10000) return `${(value / 10000).toFixed(0)}万`;
+            return value;
+          },
+        },
+      },
+    },
+  }), [barChartData]);
 
   const handleDiagnosis = async () => {
     try {
@@ -273,11 +399,46 @@ const BlockMoneyDayHistory = () => {
     if (!loading && data.length > 0 && changeData.length > 0) {
       if (viewMode === 'grid') {
         renderGridCharts();
-      } else {
+      } else if (viewMode === 'combined') {
         renderCombinedChart();
       }
+      // bar 视图由 barChartData memo 驱动，无需在此处理
     }
   }, [loading, data, changeData, viewMode, selectedBlocks]);
+
+  // 数据加载完成后，柱状图默认指向最新日期
+  useEffect(() => {
+    if (data.length > 0) {
+      setBarDateIndex(data.length - 1);
+    }
+  }, [data]);
+
+  // 柱状图回放定时器
+  useEffect(() => {
+    if (barPlaying && data.length > 0) {
+      barPlayTimerRef.current = setInterval(() => {
+        setBarDateIndex((prev) => {
+          if (prev >= data.length - 1) {
+            // 回放到最后一天，停止
+            setBarPlaying(false);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 800);
+      return () => clearInterval(barPlayTimerRef.current);
+    } else {
+      if (barPlayTimerRef.current) {
+        clearInterval(barPlayTimerRef.current);
+        barPlayTimerRef.current = null;
+      }
+    }
+  }, [barPlaying, data.length]);
+
+  // 切换视图或数据刷新时停止回放
+  useEffect(() => {
+    setBarPlaying(false);
+  }, [viewMode]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -739,6 +900,13 @@ const BlockMoneyDayHistory = () => {
               合并视图
             </Button>
             <Button 
+              type={viewMode === 'bar' ? 'primary' : 'default'}
+              icon={<BarChartOutlined />}
+              onClick={() => setViewMode('bar')}
+            >
+              柱状图
+            </Button>
+            <Button 
               type="primary"
               onClick={handleDiagnosis}
             >
@@ -835,7 +1003,7 @@ const BlockMoneyDayHistory = () => {
               </Col>
             ))}
           </Row>
-        ) : (
+        ) : viewMode === 'combined' ? (
           <Card title="板块成交金额趋势对比">
             <div 
               ref={combinedChartContainerRef} 
@@ -862,6 +1030,60 @@ const BlockMoneyDayHistory = () => {
                   <Text>{blockName}</Text>
                 </div>
               ))}
+            </div>
+          </Card>
+        ) : (
+          <Card title="板块成交金额柱状图">
+            {/* 回放控制栏 */}
+            <div className="bar-replay-controls">
+              <Space>
+                <Button
+                  size="small"
+                  icon={<StepBackwardOutlined />}
+                  onClick={() => handleBarStep(-1)}
+                  disabled={barDateIndex <= 0}
+                />
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={barPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                  onClick={handleBarPlay}
+                >
+                  {barPlaying ? '暂停' : '回放'}
+                </Button>
+                <Button
+                  size="small"
+                  icon={<StepForwardOutlined />}
+                  onClick={() => handleBarStep(1)}
+                  disabled={barDateIndex >= data.length - 1}
+                />
+              </Space>
+              <Text strong style={{ marginLeft: 16 }}>
+                {barChartData ? barChartData.formattedDate : ''} ({barDateIndex + 1}/{data.length})
+              </Text>
+            </div>
+            {/* 日期滑块 */}
+            <div className="bar-slider-wrapper">
+              <Slider
+                min={0}
+                max={data.length - 1}
+                value={barDateIndex}
+                onChange={(value) => {
+                  setBarPlaying(false);
+                  setBarDateIndex(value);
+                }}
+                tooltip={{
+                  formatter: (value) => data[value] ? formatDate(data[value].date) : '',
+                }}
+              />
+            </div>
+            {/* 柱状图 */}
+            <div className="bar-chart-container">
+              {barChartData ? (
+                <Bar data={barChartData} options={barChartOptions} />
+              ) : (
+                <Text type="secondary">暂无数据</Text>
+              )}
             </div>
           </Card>
         )

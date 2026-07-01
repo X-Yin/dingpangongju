@@ -10,7 +10,7 @@ const { getBlockData, pollBlockData, getTopAndBottomBlockData, getCurrentDayHotB
 // const { diagnose } = require('./service/diagnose');
 const { getJingJiaQiangChouData, pollJingJiaQiangChouData, clearJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
 const { pollKaiPaiZhuDongData, getKaiPanZhuDongData } = require('./service/kaipanzhudong');
-const { pollKaiPanXiaCuoData, getKaiPanXiaCuoData } = require('./service/kaipanxiacuo');
+const { getKaiPanXiaCuoData } = require('./service/kaipanxiacuo');
 const { getAmountHistory, pollAmountInfo } = require('./service/amount');
 const { getAllEmotionData, getAllIndexKlineData, updateCurrentEmotionData, updateCurrentTechIndexData, getAllTechIndexData } = require('./service/emotion');
 const { getMainProblem, writeMainProblem, updateMainProblemSeq, delMainProblem, updatePersonalSugg } = require('./service/mainProblem');
@@ -20,11 +20,11 @@ const { getTimelineData, updateTimelineEvent, deleteTimelineEvent } = require('.
 const { getMarketRhythmData, updateMarketRhythmItem } = require('./service/marketRhythm');
 const { getRecentOperationData, updateRecentOperationItem } = require('./service/recentOperation');
 const { getLongTermRhythmData, updateLongTermRhythmItem, getAllProjects, createProject, updateProject, deleteProject } = require('./service/longTermRhythm');
-const { 
-  getResearchReports, 
+const {
+  getResearchReports,
   getResearchReportById,
-  createResearchReport, 
-  updateResearchReport, 
+  createResearchReport,
+  updateResearchReport,
   deleteResearchReport,
   moveResearchReport,
   pinResearchReport
@@ -169,7 +169,7 @@ app.get('/emotion_data', async (req, res) => {
   const emotionData = await getAllEmotionData();
   const indexKlineData = await getAllIndexKlineData();
   const techIndexData = await getAllTechIndexData();
-  res.json({ 
+  res.json({
     emotionData,
     indexKlineData,
     techIndexData
@@ -336,7 +336,7 @@ app.post('/toggle_research_report_important', async (req, res) => {
   if (!report) {
     return res.json({ message: '未找到该项' });
   }
-  const updatedItem = updateResearchReport(id, { 
+  const updatedItem = updateResearchReport(id, {
     isImportant: !report.isImportant,
     updatedAt: new Date().toISOString()
   });
@@ -357,8 +357,8 @@ app.post('/upload_market_rhythm_image', upload.single('image'), async (req, res)
       return res.status(400).json({ message: '请上传图片' });
     }
     const imageUrl = `http://localhost:3000/static/${req.file.filename}`;
-    res.json({ 
-      message: '上传成功', 
+    res.json({
+      message: '上传成功',
       imageUrl: imageUrl,
       filename: req.file.filename
     });
@@ -398,8 +398,8 @@ app.post('/upload_recent_operation_image', recentOperationUpload.single('image')
       return res.status(400).json({ message: '请上传图片' });
     }
     const imageUrl = `http://localhost:3000/static/${req.file.filename}`;
-    res.json({ 
-      message: '上传成功', 
+    res.json({
+      message: '上传成功',
       imageUrl: imageUrl,
       filename: req.file.filename
     });
@@ -615,27 +615,26 @@ app.listen(port, () => {
     // 竞价抢筹数据 9:30 自动清理
     clearJingJiaQiangChouData(9, 30);
     // 开盘主动拉升轮询服务
-    pollKaiPaiZhuDongData({ 
+    pollKaiPaiZhuDongData({
       startHour: POLL_CONFIG.kaipanzhudong.startHour,
       startMinute: POLL_CONFIG.kaipanzhudong.startMinute,
       endHour: POLL_CONFIG.kaipanzhudong.endHour,
       endMinute: POLL_CONFIG.kaipanzhudong.endMinute
     });
-    // 开盘持续下挫轮询服务
-    pollKaiPanXiaCuoData({
-      startHour: POLL_CONFIG.kaipanxiacuo.startHour,
-      startMinute: POLL_CONFIG.kaipanxiacuo.startMinute,
-      endHour: POLL_CONFIG.kaipanxiacuo.endHour,
-      endMinute: POLL_CONFIG.kaipanxiacuo.endMinute
-    });
-    // 轮询成交量信息
-    pollAmountInfo(10000);
-    // 轮询板块数据历史记录
-    pollBlockHistory(60000);
-    // 轮询各个板块的资金流入流出情况
-    pollDFCFBlockMoney(10000);
-    // 轮询各个板块的资金分时情况
-    pollTimeDFCFBlockMoneyChange(300000);
+
+    // 超过当天下午3点就停止轮询
+    const now = new Date();
+    const hour = now.getHours();
+    if (hour < 15) {
+      // 轮询各个板块的资金流入流出情况
+      pollDFCFBlockMoney(10000);
+      // 轮询各个板块的资金分时情况，
+      pollTimeDFCFBlockMoneyChange(300000);
+      // 轮询成交量信息
+      pollAmountInfo(10000);
+      // 轮询板块数据历史记录
+      pollBlockHistory(60000);
+    }
   }
   console.log(`服务运行在 http://localhost:${port}`);
 });

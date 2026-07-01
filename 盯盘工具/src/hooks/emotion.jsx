@@ -31,7 +31,8 @@ export const useEmotionSuggestion = (techIndexData) => {
       return {
         message: '🔥 连续冰点修复预警：科技情绪已连续两天为负',
         description: '市场情绪极度低迷后蕴含转机。次日如果竞价抢筹高开，并且开盘后高举高打，可以考虑果断全仓出手博弈反弹。',
-        type: 'error'
+        type: 'error',
+        canTrade: true
       };
     }
 
@@ -45,7 +46,8 @@ export const useEmotionSuggestion = (techIndexData) => {
       return {
         message: '🚀 科技情绪修复预期：科技情绪低于 -100',
         description: '次日修复的概率极大，第二天找竞价抢筹，并且开盘高举高打，表现强势的龙头，开盘可以全仓出手。',
-        type: 'error'
+        type: 'error',
+        canTrade: true
       };
     } else if (techEmotion < 0 && techEmotion >= -100) {
       return {

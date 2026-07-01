@@ -53,9 +53,18 @@ const  pollTimeDFCFBlockMoneyChange = (interval = 300000) => {
     }, interval);
 };
 
+let num = 0;
 const getBlockMoneyChangeList = () => {
     const prevContent = fs.readFileSync(blockMoneyPath, 'utf-8') || '[]';
     const prevContentJson = JSON.parse(prevContent);
+    // if (num === 0) {
+    //     num++;
+    //     // prevContentJson[0].money += 10000000000;
+    //      prevContentJson[1].money -= 10000000000;
+    //      prevContentJson[2].money += 10000000000;
+    //      prevContentJson[3].money -= 10000000000;
+    //     return prevContentJson;
+    // }
     return prevContentJson;
 };
 
