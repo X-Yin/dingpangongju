@@ -1,0 +1,1877 @@
+[
+  {
+    "code": "sh688981",
+    "stockName": "中芯国际",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 140.31,
+        "close_px": 141.28,
+        "open_px": 143.4,
+        "high_px": 143.82,
+        "low_px": 141.09,
+        "ma5_px": 147.8,
+        "ma10_px": 148.88,
+        "ma20_px": 139.87,
+        "amp": 1.95,
+        "tr": 0.43,
+        "change_px": 0.97,
+        "change": 0.69,
+        "business_amount": 8500945,
+        "business_balance": 1215108042,
+        "change_diff": -0.6400000000000001
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688347",
+    "stockName": "华虹公司",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 285,
+        "close_px": 288.8,
+        "open_px": 293.66,
+        "high_px": 299,
+        "low_px": 286.5,
+        "ma5_px": 302.04,
+        "ma10_px": 311.08,
+        "ma20_px": 275.44,
+        "amp": 4.39,
+        "tr": 0.82,
+        "change_px": 3.8,
+        "change": 1.33,
+        "business_amount": 3342635,
+        "business_balance": 980882039,
+        "change_diff": -0.30999999999999983
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688072",
+    "stockName": "拓荆科技",
+    "kline": [
+      {
+        "trade_date": 20260626,
+        "preclose_px": 823,
+        "close_px": 832,
+        "open_px": 806.66,
+        "high_px": 865,
+        "low_px": 790,
+        "ma5_px": 798.6,
+        "ma10_px": 743.77,
+        "ma20_px": 675.16,
+        "amp": 9.11,
+        "tr": 2.84,
+        "change_px": 9,
+        "change": 1.09,
+        "business_amount": 8024535,
+        "business_balance": 6691102132,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz002371",
+    "stockName": "北方华创",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 816,
+        "close_px": 802.36,
+        "open_px": 832.31,
+        "high_px": 834.8,
+        "low_px": 800,
+        "ma5_px": 855.56,
+        "ma10_px": 826.31,
+        "ma20_px": 745.35,
+        "amp": 4.26,
+        "tr": 0.21,
+        "change_px": -13.64,
+        "change": -1.67,
+        "business_amount": 1514610,
+        "business_balance": 1242470200,
+        "change_diff": -0.48
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688256",
+    "stockName": "寒武纪",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 1353,
+        "close_px": 1356,
+        "open_px": 1383,
+        "high_px": 1383.99,
+        "low_px": 1355,
+        "ma5_px": 1432.38,
+        "ma10_px": 1447.29,
+        "ma20_px": 1380.51,
+        "amp": 2.14,
+        "tr": 0.17,
+        "change_px": 3,
+        "change": 0.22,
+        "business_amount": 1056256,
+        "business_balance": 1445508443,
+        "change_diff": -0.06999999999999998
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz002837",
+    "stockName": "英维克",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 71.43,
+        "close_px": 72.72,
+        "open_px": 71.01,
+        "high_px": 73.19,
+        "low_px": 71,
+        "ma5_px": 73.97,
+        "ma10_px": 78.04,
+        "ma20_px": 74.28,
+        "amp": 3.07,
+        "tr": 0.53,
+        "change_px": 1.29,
+        "change": 1.81,
+        "business_amount": 5953155,
+        "business_balance": 428474221,
+        "change_diff": -0.18999999999999995
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz301018",
+    "stockName": "申菱环境",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 117.78,
+        "close_px": 123.01,
+        "open_px": 117.78,
+        "high_px": 124.99,
+        "low_px": 117.78,
+        "ma5_px": 114.78,
+        "ma10_px": 112.25,
+        "ma20_px": 108.65,
+        "amp": 6.12,
+        "tr": 1.23,
+        "change_px": 5.23,
+        "change": 4.44,
+        "business_amount": 3488057,
+        "business_balance": 423547138,
+        "change_diff": -0.5899999999999999
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh601138",
+    "stockName": "工业富联",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 64.72,
+        "close_px": 64.14,
+        "open_px": 65.77,
+        "high_px": 66,
+        "low_px": 64,
+        "ma5_px": 67.01,
+        "ma10_px": 70.27,
+        "ma20_px": 71.73,
+        "amp": 3.09,
+        "tr": 0.07,
+        "change_px": -0.58,
+        "change": -0.9,
+        "business_amount": 13959067,
+        "business_balance": 906189908,
+        "change_diff": -0.21999999999999997
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz300757",
+    "stockName": "罗博特科",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 512.73,
+        "close_px": 504.93,
+        "open_px": 513.28,
+        "high_px": 515,
+        "low_px": 503,
+        "ma5_px": 549.29,
+        "ma10_px": 574.3,
+        "ma20_px": 601.85,
+        "amp": 2.34,
+        "tr": 0.4,
+        "change_px": -7.8,
+        "change": -1.52,
+        "business_amount": 648700,
+        "business_balance": 330149673,
+        "change_diff": -0.07000000000000006
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz300394",
+    "stockName": "天孚通信",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 250.1,
+        "close_px": 243.5,
+        "open_px": 250.58,
+        "high_px": 253.99,
+        "low_px": 241.2,
+        "ma5_px": 266.41,
+        "ma10_px": 292.35,
+        "ma20_px": 325.93,
+        "amp": 5.11,
+        "tr": 0.63,
+        "change_px": -6.6,
+        "change": -2.64,
+        "business_amount": 6845299,
+        "business_balance": 1673963573,
+        "change_diff": -0.050000000000000266
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz300502",
+    "stockName": "新易盛",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 526,
+        "close_px": 508.8,
+        "open_px": 526,
+        "high_px": 530,
+        "low_px": 506.88,
+        "ma5_px": 545.27,
+        "ma10_px": 556.71,
+        "ma20_px": 551.86,
+        "amp": 4.4,
+        "tr": 0.51,
+        "change_px": -17.2,
+        "change": -3.27,
+        "business_amount": 6434524,
+        "business_balance": 3314582870,
+        "change_diff": -0.20999999999999996
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz300308",
+    "stockName": "中际旭创",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 1116,
+        "close_px": 1095.02,
+        "open_px": 1136.54,
+        "high_px": 1141,
+        "low_px": 1091.5,
+        "ma5_px": 1169.44,
+        "ma10_px": 1226.67,
+        "ma20_px": 1227.05,
+        "amp": 4.44,
+        "tr": 0.51,
+        "change_px": -20.98,
+        "change": -1.88,
+        "business_amount": 5629636,
+        "business_balance": 6240746287,
+        "change_diff": -0.1499999999999999
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688048",
+    "stockName": "长华光芯",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 410.6,
+        "close_px": 438.96,
+        "open_px": 428,
+        "high_px": 439,
+        "low_px": 420.11,
+        "ma5_px": 450.98,
+        "ma10_px": 432.31,
+        "ma20_px": 398.32,
+        "amp": 4.6,
+        "tr": 1.16,
+        "change_px": 28.36,
+        "change": 6.91,
+        "business_amount": 2050245,
+        "business_balance": 882996582,
+        "change_diff": 0.04999999999999982
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz301511",
+    "stockName": "德福科技",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 153.1,
+        "close_px": 141.2,
+        "open_px": 155,
+        "high_px": 156.44,
+        "low_px": 141.2,
+        "ma5_px": 147.76,
+        "ma10_px": 147.02,
+        "ma20_px": 147.87,
+        "amp": 9.95,
+        "tr": 1.84,
+        "change_px": -11.9,
+        "change": -7.77,
+        "business_amount": 6911381,
+        "business_balance": 1032597707,
+        "change_diff": -0.6899999999999995
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz301217",
+    "stockName": "铜冠铜箔",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 154.63,
+        "close_px": 158.1,
+        "open_px": 159.98,
+        "high_px": 167.67,
+        "low_px": 158,
+        "ma5_px": 160.11,
+        "ma10_px": 167.33,
+        "ma20_px": 161.41,
+        "amp": 6.25,
+        "tr": 1.19,
+        "change_px": 3.47,
+        "change": 2.24,
+        "business_amount": 9893723,
+        "business_balance": 1608822351,
+        "change_diff": -0.8299999999999996
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688008",
+    "stockName": "澜起科技",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 266.8,
+        "close_px": 270.19,
+        "open_px": 277,
+        "high_px": 277.77,
+        "low_px": 268,
+        "ma5_px": 286.39,
+        "ma10_px": 279.35,
+        "ma20_px": 261.77,
+        "amp": 3.66,
+        "tr": 0.81,
+        "change_px": 3.39,
+        "change": 1.27,
+        "business_amount": 9284556,
+        "business_balance": 2542940416,
+        "change_diff": -0.3500000000000001
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688041",
+    "stockName": "海光信息",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 325.4,
+        "close_px": 343.93,
+        "open_px": 340,
+        "high_px": 353.53,
+        "low_px": 337,
+        "ma5_px": 342.36,
+        "ma10_px": 342.59,
+        "ma20_px": 318.21,
+        "amp": 5.08,
+        "tr": 0.3,
+        "change_px": 18.53,
+        "change": 5.69,
+        "business_amount": 6988763,
+        "business_balance": 2416696627,
+        "change_diff": -0.25
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz002475",
+    "stockName": "立讯精密",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 64.44,
+        "close_px": 63.12,
+        "open_px": 64.79,
+        "high_px": 65.22,
+        "low_px": 63.02,
+        "ma5_px": 65.02,
+        "ma10_px": 67.72,
+        "ma20_px": 67.38,
+        "amp": 3.41,
+        "tr": 0.2,
+        "change_px": -1.32,
+        "change": -2.05,
+        "business_amount": 14514334,
+        "business_balance": 930993655,
+        "change_diff": -0.32999999999999985
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh600183",
+    "stockName": "生益科技",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 160.78,
+        "close_px": 160.5,
+        "open_px": 163,
+        "high_px": 164,
+        "low_px": 158.79,
+        "ma5_px": 162.29,
+        "ma10_px": 169.35,
+        "ma20_px": 165.86,
+        "amp": 3.24,
+        "tr": 0.31,
+        "change_px": -0.28,
+        "change": -0.17,
+        "business_amount": 7450678,
+        "business_balance": 1200271360,
+        "change_diff": -0.33
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh603986",
+    "stockName": "兆易创新",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 677.77,
+        "close_px": 668,
+        "open_px": 690,
+        "high_px": 694.99,
+        "low_px": 664,
+        "ma5_px": 725.52,
+        "ma10_px": 735.89,
+        "ma20_px": 636.74,
+        "amp": 4.57,
+        "tr": 1.28,
+        "change_px": -9.77,
+        "change": -1.44,
+        "business_amount": 8527571,
+        "business_balance": 5818033389,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688313",
+    "stockName": "仕佳光子",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 158.57,
+        "close_px": 151,
+        "open_px": 158,
+        "high_px": 158.57,
+        "low_px": 149.01,
+        "ma5_px": 165.19,
+        "ma10_px": 178.42,
+        "ma20_px": 170.63,
+        "amp": 6.03,
+        "tr": 0.93,
+        "change_px": -7.57,
+        "change": -4.77,
+        "business_amount": 4214507,
+        "business_balance": 643886208,
+        "change_diff": -0.04999999999999982
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688498",
+    "stockName": "源杰科技",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 1659.23,
+        "close_px": 1617.19,
+        "open_px": 1699.9,
+        "high_px": 1702.11,
+        "low_px": 1617.19,
+        "ma5_px": 1712.48,
+        "ma10_px": 1759.55,
+        "ma20_px": 1649.75,
+        "amp": 5.12,
+        "tr": 0.41,
+        "change_px": -42.04,
+        "change": -2.53,
+        "business_amount": 501369,
+        "business_balance": 828549722,
+        "change_diff": -0.16999999999999993
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz002384",
+    "stockName": "东山精密",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 232.73,
+        "close_px": 230.19,
+        "open_px": 238,
+        "high_px": 239.98,
+        "low_px": 230.11,
+        "ma5_px": 238.65,
+        "ma10_px": 249.11,
+        "ma20_px": 242.91,
+        "amp": 4.24,
+        "tr": 1.03,
+        "change_px": -2.54,
+        "change": -1.09,
+        "business_amount": 14276908,
+        "business_balance": 3366637718,
+        "change_diff": -0.21000000000000008
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz002916",
+    "stockName": "深南电路",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 454.48,
+        "close_px": 435.57,
+        "open_px": 450,
+        "high_px": 453,
+        "low_px": 435.5,
+        "ma5_px": 443.81,
+        "ma10_px": 439.96,
+        "ma20_px": 423.15,
+        "amp": 3.85,
+        "tr": 0.42,
+        "change_px": -18.91,
+        "change": -4.16,
+        "business_amount": 2768980,
+        "business_balance": 1231104120,
+        "change_diff": -0.31000000000000005
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz002463",
+    "stockName": "沪电股份",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 135.35,
+        "close_px": 130.68,
+        "open_px": 136,
+        "high_px": 137.9,
+        "low_px": 130.5,
+        "ma5_px": 138.87,
+        "ma10_px": 141.95,
+        "ma20_px": 139.72,
+        "amp": 5.47,
+        "tr": 0.48,
+        "change_px": -4.67,
+        "change": -3.45,
+        "business_amount": 9278887,
+        "business_balance": 1242624347,
+        "change_diff": -0.3700000000000001
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz300476",
+    "stockName": "胜宏科技",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 308.07,
+        "close_px": 298.6,
+        "open_px": 305.51,
+        "high_px": 307,
+        "low_px": 298.5,
+        "ma5_px": 317.21,
+        "ma10_px": 325.28,
+        "ma20_px": 334.46,
+        "amp": 2.76,
+        "tr": 0.54,
+        "change_px": -9.47,
+        "change": -3.07,
+        "business_amount": 4653196,
+        "business_balance": 1408476360,
+        "change_diff": -0.29000000000000004
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688525",
+    "stockName": "佰维存储",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 427.91,
+        "close_px": 440,
+        "open_px": 450,
+        "high_px": 452.88,
+        "low_px": 434.19,
+        "ma5_px": 448.9,
+        "ma10_px": 453.93,
+        "ma20_px": 397.19,
+        "amp": 4.37,
+        "tr": 1.81,
+        "change_px": 12.09,
+        "change": 2.83,
+        "business_amount": 8554221,
+        "business_balance": 3805886698,
+        "change_diff": -0.04999999999999982
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz301308",
+    "stockName": "江波龙",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 618.02,
+        "close_px": 683,
+        "open_px": 680,
+        "high_px": 698,
+        "low_px": 659.16,
+        "ma5_px": 654.38,
+        "ma10_px": 656.79,
+        "ma20_px": 596.97,
+        "amp": 6.28,
+        "tr": 3.22,
+        "change_px": 64.98,
+        "change": 10.51,
+        "business_amount": 9065658,
+        "business_balance": 6162283069,
+        "change_diff": 0.40000000000000036
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh601869",
+    "stockName": "长飞光纤",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 475.08,
+        "close_px": 455.31,
+        "open_px": 489,
+        "high_px": 489,
+        "low_px": 453.43,
+        "ma5_px": 489.83,
+        "ma10_px": 524.49,
+        "ma20_px": 493.32,
+        "amp": 7.49,
+        "tr": 0.52,
+        "change_px": -19.77,
+        "change": -4.16,
+        "business_amount": 2102375,
+        "business_balance": 985957470,
+        "change_diff": -0.94
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh600487",
+    "stockName": "亨通光电",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 89.42,
+        "close_px": 88.6,
+        "open_px": 91.5,
+        "high_px": 92.63,
+        "low_px": 88.02,
+        "ma5_px": 96.63,
+        "ma10_px": 106.02,
+        "ma20_px": 105.66,
+        "amp": 5.16,
+        "tr": 0.97,
+        "change_px": -0.82,
+        "change": -0.92,
+        "business_amount": 23756207,
+        "business_balance": 2147814124,
+        "change_diff": -0.07000000000000006
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh603256",
+    "stockName": "宏和科技",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 238,
+        "close_px": 230.25,
+        "open_px": 238.23,
+        "high_px": 241.74,
+        "low_px": 229,
+        "ma5_px": 244.56,
+        "ma10_px": 257.97,
+        "ma20_px": 242.61,
+        "amp": 5.35,
+        "tr": 0.25,
+        "change_px": -7.75,
+        "change": -3.26,
+        "business_amount": 2215700,
+        "business_balance": 521262313,
+        "change_diff": -0.43999999999999995
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688146",
+    "stockName": "中船特气",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 330.14,
+        "close_px": 327.65,
+        "open_px": 335,
+        "high_px": 339.9,
+        "low_px": 321.3,
+        "ma5_px": 350.28,
+        "ma10_px": 360.07,
+        "ma20_px": 315.99,
+        "amp": 5.63,
+        "tr": 1.2,
+        "change_px": -2.49,
+        "change": -0.75,
+        "business_amount": 1744483,
+        "business_balance": 579576060,
+        "change_diff": -0.71
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz300408",
+    "stockName": "三环集团",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 144.89,
+        "close_px": 148.66,
+        "open_px": 148.5,
+        "high_px": 152.95,
+        "low_px": 146.8,
+        "ma5_px": 155.82,
+        "ma10_px": 156.02,
+        "ma20_px": 149.21,
+        "amp": 4.24,
+        "tr": 0.61,
+        "change_px": 3.77,
+        "change": 2.6,
+        "business_amount": 11433361,
+        "business_balance": 1716148385,
+        "change_diff": -0.6000000000000001
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh600118",
+    "stockName": "中国卫星",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 86.3,
+        "close_px": 86.79,
+        "open_px": 87.85,
+        "high_px": 88.87,
+        "low_px": 86.44,
+        "ma5_px": 84.46,
+        "ma10_px": 79.52,
+        "ma20_px": 78.5,
+        "amp": 2.82,
+        "tr": 0.96,
+        "change_px": 0.49,
+        "change": 0.57,
+        "business_amount": 11375929,
+        "business_balance": 999767239,
+        "change_diff": -0.3600000000000001
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh600879",
+    "stockName": "航天电子",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 22.27,
+        "close_px": 22.74,
+        "open_px": 22.77,
+        "high_px": 23.33,
+        "low_px": 22.55,
+        "ma5_px": 21.74,
+        "ma10_px": 20.56,
+        "ma20_px": 20.58,
+        "amp": 3.5,
+        "tr": 1.14,
+        "change_px": 0.47,
+        "change": 2.11,
+        "business_amount": 37624202,
+        "business_balance": 862840537,
+        "change_diff": -0.31000000000000005
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz000657",
+    "stockName": "中钨高新",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 89.4,
+        "close_px": 87.82,
+        "open_px": 89.76,
+        "high_px": 90.58,
+        "low_px": 87.25,
+        "ma5_px": 93.23,
+        "ma10_px": 96.95,
+        "ma20_px": 90.69,
+        "amp": 3.72,
+        "tr": 0.78,
+        "change_px": -1.58,
+        "change": -1.77,
+        "business_amount": 11298455,
+        "business_balance": 1004590116,
+        "change_diff": -0.15999999999999992
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh688082",
+    "stockName": "盛美上海",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 363.43,
+        "close_px": 357.77,
+        "open_px": 369.69,
+        "high_px": 372,
+        "low_px": 356.6,
+        "ma5_px": 385.64,
+        "ma10_px": 400.51,
+        "ma20_px": 355.02,
+        "amp": 4.24,
+        "tr": 0.19,
+        "change_px": -5.66,
+        "change": -1.56,
+        "business_amount": 904212,
+        "business_balance": 327952922,
+        "change_diff": -0.040000000000000036
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688808",
+    "stockName": "联讯仪器",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 2270,
+        "close_px": 2269.77,
+        "open_px": 2255,
+        "high_px": 2283,
+        "low_px": 2222,
+        "ma5_px": 2247.42,
+        "ma10_px": 2353.31,
+        "ma20_px": 2305.3,
+        "amp": 2.69,
+        "tr": 0.49,
+        "change_px": -0.23,
+        "change": -0.01,
+        "business_amount": 94572,
+        "business_balance": 213304879,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz002851",
+    "stockName": "麦格米特",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 147.62,
+        "close_px": 150.58,
+        "open_px": 148.79,
+        "high_px": 152.5,
+        "low_px": 146.66,
+        "ma5_px": 153.76,
+        "ma10_px": 160.62,
+        "ma20_px": 159.84,
+        "amp": 3.96,
+        "tr": 0.65,
+        "change_px": 2.96,
+        "change": 2.01,
+        "business_amount": 2991614,
+        "business_balance": 448873932,
+        "change_diff": -0.3600000000000003
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz000725",
+    "stockName": "京东方A",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 8.38,
+        "close_px": 8.06,
+        "open_px": 8.21,
+        "high_px": 8.52,
+        "low_px": 7.96,
+        "ma5_px": 8.6,
+        "ma10_px": 8.01,
+        "ma20_px": 7.1,
+        "amp": 6.68,
+        "tr": 2.26,
+        "change_px": -0.32,
+        "change": -3.82,
+        "business_amount": 800789239,
+        "business_balance": 6554707967,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh601899",
+    "stockName": "紫金矿业",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 27.82,
+        "close_px": 28.81,
+        "open_px": 27.64,
+        "high_px": 29,
+        "low_px": 27.62,
+        "ma5_px": 26.64,
+        "ma10_px": 26.43,
+        "ma20_px": 27.66,
+        "amp": 4.96,
+        "tr": 0.38,
+        "change_px": 0.99,
+        "change": 3.56,
+        "business_amount": 78164846,
+        "business_balance": 2224432127,
+        "change_diff": -0.029999999999999805
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz300750",
+    "stockName": "宁德时代",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 380,
+        "close_px": 379.57,
+        "open_px": 379.23,
+        "high_px": 380.3,
+        "low_px": 374.5,
+        "ma5_px": 383.75,
+        "ma10_px": 388.19,
+        "ma20_px": 392.06,
+        "amp": 1.53,
+        "tr": 0.08,
+        "change_px": -0.43,
+        "change": -0.11,
+        "business_amount": 3508461,
+        "business_balance": 1322543571,
+        "change_diff": -0.05
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz002407",
+    "stockName": "多氟多",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 49.34,
+        "close_px": 48.41,
+        "open_px": 48.51,
+        "high_px": 49.7,
+        "low_px": 48.2,
+        "ma5_px": 51.61,
+        "ma10_px": 47.51,
+        "ma20_px": 42.73,
+        "amp": 3.04,
+        "tr": 3.4,
+        "change_px": -0.93,
+        "change": -1.88,
+        "business_amount": 36650233,
+        "business_balance": 1789159361,
+        "change_diff": -0.15999999999999992
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz002636",
+    "stockName": "金安国纪",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 106.95,
+        "close_px": 111,
+        "open_px": 110,
+        "high_px": 116.16,
+        "low_px": 110,
+        "ma5_px": 112.17,
+        "ma10_px": 112.54,
+        "ma20_px": 101.25,
+        "amp": 5.76,
+        "tr": 1.85,
+        "change_px": 4.05,
+        "change": 3.79,
+        "business_amount": 13430744,
+        "business_balance": 1522413580,
+        "change_diff": -0.3700000000000001
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz301526",
+    "stockName": "国际复材",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 46.99,
+        "close_px": 44.95,
+        "open_px": 47.64,
+        "high_px": 48.53,
+        "low_px": 44.9,
+        "ma5_px": 46.11,
+        "ma10_px": 46.17,
+        "ma20_px": 39.24,
+        "amp": 7.72,
+        "tr": 2.56,
+        "change_px": -2.04,
+        "change": -4.34,
+        "business_amount": 36011391,
+        "business_balance": 1673937005,
+        "change_diff": -0.20999999999999996
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688630",
+    "stockName": "芯基微装",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 480.32,
+        "close_px": 476.51,
+        "open_px": 488.33,
+        "high_px": 499,
+        "low_px": 476.1,
+        "ma5_px": 494.3,
+        "ma10_px": 507.98,
+        "ma20_px": 470.59,
+        "amp": 4.77,
+        "tr": 0.52,
+        "change_px": -3.81,
+        "change": -0.79,
+        "business_amount": 684148,
+        "business_balance": 334804436,
+        "change_diff": -0.20000000000000007
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz300570",
+    "stockName": "太辰光",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 237.12,
+        "close_px": 222.83,
+        "open_px": 240.54,
+        "high_px": 241.91,
+        "low_px": 222.68,
+        "ma5_px": 236.14,
+        "ma10_px": 243.46,
+        "ma20_px": 230.2,
+        "amp": 8.11,
+        "tr": 1.72,
+        "change_px": -14.29,
+        "change": -6.03,
+        "business_amount": 3310362,
+        "business_balance": 760181962,
+        "change_diff": -0.29000000000000004
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh603629",
+    "stockName": "利通电子",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 166.61,
+        "close_px": 167.65,
+        "open_px": 171.19,
+        "high_px": 171.33,
+        "low_px": 165.51,
+        "ma5_px": 176.11,
+        "ma10_px": 187.33,
+        "ma20_px": 174.94,
+        "amp": 3.49,
+        "tr": 0.99,
+        "change_px": 1.04,
+        "change": 0.62,
+        "business_amount": 2546300,
+        "business_balance": 428893243,
+        "change_diff": 0.44999999999999996
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh600460",
+    "stockName": "士兰微",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 47.25,
+        "close_px": 46.88,
+        "open_px": 47.98,
+        "high_px": 48.07,
+        "low_px": 46.56,
+        "ma5_px": 50.49,
+        "ma10_px": 50.23,
+        "ma20_px": 43.46,
+        "amp": 3.2,
+        "tr": 0.94,
+        "change_px": -0.37,
+        "change": -0.78,
+        "business_amount": 15708096,
+        "business_balance": 743411991,
+        "change_diff": -0.29000000000000004
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz301377",
+    "stockName": "鼎泰高科",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 518.04,
+        "close_px": 513.29,
+        "open_px": 509.89,
+        "high_px": 527.79,
+        "low_px": 509.89,
+        "ma5_px": 533.71,
+        "ma10_px": 567.28,
+        "ma20_px": 541.39,
+        "amp": 3.46,
+        "tr": 0.71,
+        "change_px": -4.75,
+        "change": -0.92,
+        "business_amount": 706645,
+        "business_balance": 366851444,
+        "change_diff": -0.14
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh688200",
+    "stockName": "华峰测控",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 464,
+        "close_px": 456.73,
+        "open_px": 466,
+        "high_px": 468.8,
+        "low_px": 453.21,
+        "ma5_px": 485.14,
+        "ma10_px": 474.39,
+        "ma20_px": 402.12,
+        "amp": 3.36,
+        "tr": 0.39,
+        "change_px": -7.27,
+        "change": -1.57,
+        "business_amount": 788407,
+        "business_balance": 362714794,
+        "change_diff": -0.06000000000000005
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz002436",
+    "stockName": "兴森科技",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 46.37,
+        "close_px": 45.37,
+        "open_px": 47.11,
+        "high_px": 47.49,
+        "low_px": 45.24,
+        "ma5_px": 47.12,
+        "ma10_px": 48.87,
+        "ma20_px": 45.65,
+        "amp": 4.85,
+        "tr": 0.94,
+        "change_px": -1,
+        "change": -2.16,
+        "business_amount": 14313015,
+        "business_balance": 664148441,
+        "change_diff": -0.20000000000000018
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh688147",
+    "stockName": "微导纳米",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 129.01,
+        "close_px": 135.72,
+        "open_px": 134.34,
+        "high_px": 137.43,
+        "low_px": 132,
+        "ma5_px": 143.01,
+        "ma10_px": 135,
+        "ma20_px": 117.19,
+        "amp": 4.21,
+        "tr": 0.53,
+        "change_px": 6.71,
+        "change": 5.2,
+        "business_amount": 2462237,
+        "business_balance": 332671039,
+        "change_diff": -0.22999999999999954
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh688521",
+    "stockName": "芯原股份",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 303,
+        "close_px": 299.07,
+        "open_px": 308.16,
+        "high_px": 308.2,
+        "low_px": 294.08,
+        "ma5_px": 324.96,
+        "ma10_px": 324.68,
+        "ma20_px": 283.52,
+        "amp": 4.66,
+        "tr": 0.38,
+        "change_px": -3.93,
+        "change": -1.3,
+        "business_amount": 2019427,
+        "business_balance": 610436679,
+        "change_diff": -0.08000000000000007
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz300567",
+    "stockName": "精测电子",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 263.92,
+        "close_px": 255.45,
+        "open_px": 268.67,
+        "high_px": 270,
+        "low_px": 255.22,
+        "ma5_px": 282.11,
+        "ma10_px": 270.73,
+        "ma20_px": 235.43,
+        "amp": 5.6,
+        "tr": 0.44,
+        "change_px": -8.47,
+        "change": -3.21,
+        "business_amount": 996006,
+        "business_balance": 259722097,
+        "change_diff": -0.08000000000000007
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz002409",
+    "stockName": "雅克科技",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 199.5,
+        "close_px": 192.07,
+        "open_px": 203.25,
+        "high_px": 205,
+        "low_px": 192.01,
+        "ma5_px": 212.93,
+        "ma10_px": 197.21,
+        "ma20_px": 165.97,
+        "amp": 6.51,
+        "tr": 2.05,
+        "change_px": -7.43,
+        "change": -3.72,
+        "business_amount": 6523201,
+        "business_balance": 1294452787,
+        "change_diff": -0.22999999999999998
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh605358",
+    "stockName": "立昂微",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 64.67,
+        "close_px": 62.63,
+        "open_px": 63.4,
+        "high_px": 65.19,
+        "low_px": 61.58,
+        "ma5_px": 71.32,
+        "ma10_px": 71.51,
+        "ma20_px": 70.39,
+        "amp": 5.58,
+        "tr": 1.21,
+        "change_px": -2.04,
+        "change": -3.15,
+        "business_amount": 9355347,
+        "business_balance": 591763418,
+        "change_diff": -0.6299999999999999
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz002859",
+    "stockName": "洁美科技",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 93.27,
+        "close_px": 91.14,
+        "open_px": 93.16,
+        "high_px": 96.04,
+        "low_px": 90.52,
+        "ma5_px": 100.55,
+        "ma10_px": 100.01,
+        "ma20_px": 93.47,
+        "amp": 5.92,
+        "tr": 0.53,
+        "change_px": -2.13,
+        "change": -2.28,
+        "business_amount": 2254538,
+        "business_balance": 210301474,
+        "change_diff": -0.4299999999999997
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh688362",
+    "stockName": "甬矽电子",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 90,
+        "close_px": 87.93,
+        "open_px": 95.3,
+        "high_px": 96.99,
+        "low_px": 87.5,
+        "ma5_px": 91.73,
+        "ma10_px": 84.22,
+        "ma20_px": 73.7,
+        "amp": 10.54,
+        "tr": 1.45,
+        "change_px": -2.07,
+        "change": -2.3,
+        "business_amount": 6587552,
+        "business_balance": 606372006,
+        "change_diff": -0.5199999999999998
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh600584",
+    "stockName": "长电科技",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 90.88,
+        "close_px": 93.48,
+        "open_px": 94.85,
+        "high_px": 95.96,
+        "low_px": 92.28,
+        "ma5_px": 98.11,
+        "ma10_px": 97.96,
+        "ma20_px": 87.33,
+        "amp": 4.05,
+        "tr": 1.99,
+        "change_px": 2.6,
+        "change": 2.86,
+        "business_amount": 35640515,
+        "business_balance": 3368059142,
+        "change_diff": -0.20999999999999996
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz002156",
+    "stockName": "通富微电",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 64.8,
+        "close_px": 65.4,
+        "open_px": 66.65,
+        "high_px": 67.36,
+        "low_px": 65.28,
+        "ma5_px": 69.47,
+        "ma10_px": 71.24,
+        "ma20_px": 67.45,
+        "amp": 3.21,
+        "tr": 1.13,
+        "change_px": 0.6,
+        "change": 0.93,
+        "business_amount": 17093730,
+        "business_balance": 1138377325,
+        "change_diff": -0.009999999999999898
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh688503",
+    "stockName": "聚和材料",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 115.05,
+        "close_px": 113.99,
+        "open_px": 116.51,
+        "high_px": 119.65,
+        "low_px": 113.22,
+        "ma5_px": 122.95,
+        "ma10_px": 110.49,
+        "ma20_px": 100.91,
+        "amp": 5.59,
+        "tr": 1.1,
+        "change_px": -1.06,
+        "change": -0.92,
+        "business_amount": 2656756,
+        "business_balance": 308705589,
+        "change_diff": -0.45000000000000007
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh603757",
+    "stockName": "大元泵业",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 71.99,
+        "close_px": 75.11,
+        "open_px": 70.31,
+        "high_px": 76.11,
+        "low_px": 70.31,
+        "ma5_px": 73.94,
+        "ma10_px": 72.78,
+        "ma20_px": 62.55,
+        "amp": 8.06,
+        "tr": 1.34,
+        "change_px": 3.12,
+        "change": 4.33,
+        "business_amount": 2506600,
+        "business_balance": 183899190,
+        "change_diff": 0.15000000000000036
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz002536",
+    "stockName": "飞龙股份",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 51.96,
+        "close_px": 53.7,
+        "open_px": 51.82,
+        "high_px": 54.01,
+        "low_px": 51.66,
+        "ma5_px": 49.65,
+        "ma10_px": 48.74,
+        "ma20_px": 45.58,
+        "amp": 4.52,
+        "tr": 2.79,
+        "change_px": 1.74,
+        "change": 3.35,
+        "business_amount": 15173741,
+        "business_balance": 805291381,
+        "change_diff": -0.31000000000000005
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh600176",
+    "stockName": "中国巨石",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 70.9,
+        "close_px": 69.31,
+        "open_px": 71.88,
+        "high_px": 72.8,
+        "low_px": 68.85,
+        "ma5_px": 70.24,
+        "ma10_px": 69.08,
+        "ma20_px": 57.47,
+        "amp": 5.57,
+        "tr": 0.76,
+        "change_px": -1.59,
+        "change": -2.24,
+        "business_amount": 30136070,
+        "business_balance": 2138434458,
+        "change_diff": -0.41000000000000014
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688120",
+    "stockName": "华海清科",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 267.5,
+        "close_px": 265.01,
+        "open_px": 272,
+        "high_px": 273.24,
+        "low_px": 261.02,
+        "ma5_px": 293.14,
+        "ma10_px": 277.16,
+        "ma20_px": 238.15,
+        "amp": 4.57,
+        "tr": 0.39,
+        "change_px": -2.49,
+        "change": -0.93,
+        "business_amount": 1943856,
+        "business_balance": 519366246,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh600160",
+    "stockName": "巨化股份",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 49.35,
+        "close_px": 49.9,
+        "open_px": 48.8,
+        "high_px": 50.69,
+        "low_px": 48.8,
+        "ma5_px": 52.59,
+        "ma10_px": 51.61,
+        "ma20_px": 47.41,
+        "amp": 3.83,
+        "tr": 0.54,
+        "change_px": 0.55,
+        "change": 1.11,
+        "business_amount": 14488531,
+        "business_balance": 722061674,
+        "change_diff": -0.4099999999999999
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh688629",
+    "stockName": "华丰科技",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 180,
+        "close_px": 184.51,
+        "open_px": 186.47,
+        "high_px": 189.96,
+        "low_px": 183.3,
+        "ma5_px": 182.39,
+        "ma10_px": 167.48,
+        "ma20_px": 155.55,
+        "amp": 3.7,
+        "tr": 0.95,
+        "change_px": 4.51,
+        "change": 2.51,
+        "business_amount": 4388335,
+        "business_balance": 821171347,
+        "change_diff": -0.2200000000000002
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sz001309",
+    "stockName": "德明利",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 881.91,
+        "close_px": 876.27,
+        "open_px": 877.1,
+        "high_px": 899,
+        "low_px": 860,
+        "ma5_px": 881.06,
+        "ma10_px": 878.23,
+        "ma20_px": 766.5,
+        "amp": 4.42,
+        "tr": 3.21,
+        "change_px": -5.64,
+        "change": -0.64,
+        "business_amount": 5295896,
+        "business_balance": 4656698758,
+        "change_diff": 0.33999999999999997
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz300285",
+    "stockName": "国瓷材料",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 90.73,
+        "close_px": 91,
+        "open_px": 92.5,
+        "high_px": 94.43,
+        "low_px": 90.95,
+        "ma5_px": 95.3,
+        "ma10_px": 96.58,
+        "ma20_px": 83.37,
+        "amp": 3.84,
+        "tr": 1.45,
+        "change_px": 0.27,
+        "change": 0.3,
+        "business_amount": 12378642,
+        "business_balance": 1146157625,
+        "change_diff": -0.18
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz000636",
+    "stockName": "风华高科",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 63.23,
+        "close_px": 62.81,
+        "open_px": 64.99,
+        "high_px": 65.78,
+        "low_px": 62.5,
+        "ma5_px": 67.93,
+        "ma10_px": 72.06,
+        "ma20_px": 68.89,
+        "amp": 5.19,
+        "tr": 1.07,
+        "change_px": -0.42,
+        "change": -0.66,
+        "business_amount": 12363070,
+        "business_balance": 796122852,
+        "change_diff": -0.22000000000000003
+      }
+    ],
+    "isImportant": false
+  },
+  {
+    "code": "sh688702",
+    "stockName": "盛科通信",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 323.64,
+        "close_px": 323.03,
+        "open_px": 333.5,
+        "high_px": 334.74,
+        "low_px": 320.03,
+        "ma5_px": 354.05,
+        "ma10_px": 339.84,
+        "ma20_px": 311.92,
+        "amp": 4.55,
+        "tr": 0.69,
+        "change_px": -0.61,
+        "change": -0.19,
+        "business_amount": 1399068,
+        "business_balance": 458099017,
+        "change_diff": -1.11
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sz301165",
+    "stockName": "锐捷网络",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 94.89,
+        "close_px": 97.99,
+        "open_px": 96.78,
+        "high_px": 98.68,
+        "low_px": 93.13,
+        "ma5_px": 88.9,
+        "ma10_px": 77.34,
+        "ma20_px": 69.49,
+        "amp": 5.85,
+        "tr": 0.87,
+        "change_px": 3.1,
+        "change": 3.27,
+        "business_amount": 9670399,
+        "business_balance": 933896416,
+        "change_diff": 0.08000000000000007
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688025",
+    "stockName": "杰普特",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 395,
+        "close_px": 399,
+        "open_px": 400,
+        "high_px": 413.57,
+        "low_px": 396.47,
+        "ma5_px": 416.78,
+        "ma10_px": 433.71,
+        "ma20_px": 417.62,
+        "amp": 4.33,
+        "tr": 0.53,
+        "change_px": 4,
+        "change": 1.01,
+        "business_amount": 500764,
+        "business_balance": 202211691,
+        "change_diff": -0.8
+      }
+    ],
+    "isImportant": true
+  },
+  {
+    "code": "sh688820",
+    "stockName": "盛合晶微",
+    "kline": [
+      {
+        "trade_date": 20260706,
+        "preclose_px": 172.67,
+        "close_px": 187.01,
+        "open_px": 183.5,
+        "high_px": 193,
+        "low_px": 183.5,
+        "ma5_px": 184.08,
+        "ma10_px": 192.84,
+        "ma20_px": 183.7,
+        "amp": 5.5,
+        "tr": 3.6,
+        "change_px": 14.34,
+        "change": 8.3,
+        "business_amount": 6229667,
+        "business_balance": 1170623834,
+        "change_diff": -0.9100000000000001
+      }
+    ],
+    "isImportant": true
+  }
+]

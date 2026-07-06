@@ -1,0 +1,115 @@
+[
+  {
+    "id": 1783219660075.0093,
+    "title": "半年报业绩",
+    "description": "资金极致抱团业绩高增的板块，大部分股票披露业绩在 8 月底，到了 8 月中旬存储等高位股会开始震荡，等待业绩落地",
+    "startDate": "2026-07-06",
+    "endDate": "2026-08-15",
+    "level": "positive",
+    "descInline": true
+  },
+  {
+    "id": 1783219660075.125,
+    "title": "pcb上游材料涨价",
+    "description": "铜箔，电子布，树脂，ccl 大概率也就在 7 月上旬会迎来超预期的提价",
+    "startDate": "2026-07-06",
+    "endDate": "2026-07-15",
+    "level": "positive",
+    "descInline": true
+  },
+  {
+    "id": 1783264502887.537,
+    "title": "华为韬定律第一阶段炒作",
+    "description": "这个属于产业趋势确立的第一阶段情绪炒作，相关概念股会一直持续到 9 月新机发布之前都有行情，这里也是一波大行情的起点",
+    "startDate": "2026-07-06",
+    "endDate": "2026-08-15",
+    "level": "positive",
+    "descInline": true,
+    "isImportant": false
+  },
+  {
+    "id": 1783219660075.489,
+    "title": "三星 Q2 业绩",
+    "description": "大概率炸裂，对存储有催化作用",
+    "startDate": "2026-07-07",
+    "endDate": "2026-07-07",
+    "level": "positive"
+  },
+  {
+    "id": 1783219660075.42,
+    "title": "长鑫存储上市",
+    "description": "7.7 询价，7.13 申购，7.10 最后的跑路时间（目前时间有所推迟，待定）",
+    "startDate": "2026-07-07",
+    "endDate": "2026-07-13",
+    "level": "positive",
+    "descInline": true,
+    "isImportant": false
+  },
+  {
+    "id": 1783219660075.9097,
+    "title": "美国新版关税",
+    "description": "美国新版关税有可能不及预期，7.7 关税豁免听证会开始、7月中旬听证会结果出炉、7.24 新版关税落地",
+    "startDate": "2026-07-07",
+    "endDate": "2026-07-24",
+    "level": "negative",
+    "descInline": true
+  },
+  {
+    "id": 1783219660075.9993,
+    "title": "可回收火箭",
+    "description": "商业航天催化主题性行情",
+    "startDate": "2026-07-10",
+    "endDate": "2026-07-15",
+    "level": "neutral",
+    "descInline": true
+  },
+  {
+    "id": 1783219660075.8025,
+    "title": "美国 6 月 CPI",
+    "description": "关注对通胀加息的影响，大概率通胀还是会比较高",
+    "startDate": "2026-07-14",
+    "endDate": "2026-07-14",
+    "level": "negative",
+    "descInline": false
+  },
+  {
+    "id": 1783220441457.3806,
+    "title": "长江存储申报上市",
+    "description": "递交申报大概在 7.15 - 8.10，交易所受理大概在 8.31 之前会完成，利好万泽科技这些影子股",
+    "startDate": "2026-07-15",
+    "endDate": "2026-08-31",
+    "level": "positive",
+    "descInline": true,
+    "isImportant": false
+  },
+  {
+    "id": 1783219771711,
+    "title": "中报预增轮动",
+    "description": "中报预增 7.15 截止，这段时间内随着各家公司的预增公告出来，资金会不停地去炒作各种利好公司，例如锂电，创新药，存储，pcb，光通信等，所以盘面上可能会轮动较快",
+    "startDate": "2026-07-06",
+    "endDate": "2026-07-15",
+    "level": "positive",
+    "descInline": false,
+    "isImportant": true
+  },
+  {
+    "id": 1783219868545,
+    "title": "长鑫上市影子股主升浪",
+    "description": "长鑫上市之前最后的交易窗口大概就在这两周，影子股会迎来主升浪，兆易创新、合肥城建",
+    "startDate": "2026-07-06",
+    "endDate": "2026-07-13",
+    "level": "positive",
+    "descInline": false,
+    "isImportant": true
+  },
+  {
+    "id": 1783219970040,
+    "title": "美国新版关税利空影响",
+    "description": "部分资金可能会在这个窗口减仓避险",
+    "startDate": "2026-07-15",
+    "endDate": "2026-07-24",
+    "level": "negative",
+    "descInline": true,
+    "isImportant": true
+  }
+]

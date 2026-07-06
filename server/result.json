@@ -1,0 +1,1883 @@
+{
+  "今日板块分时历史数据": [
+    {
+      "time": "14:16",
+      "blockData": [
+        {
+          "blockName": "医药",
+          "avgChange": 2.4
+        },
+        {
+          "blockName": "机器人",
+          "avgChange": 2.13
+        },
+        {
+          "blockName": "贵金属",
+          "avgChange": 2.1
+        },
+        {
+          "blockName": "化工",
+          "avgChange": 1.52
+        },
+        {
+          "blockName": "消费",
+          "avgChange": 1.19
+        },
+        {
+          "blockName": "锂电",
+          "avgChange": -0.76
+        },
+        {
+          "blockName": "银行",
+          "avgChange": -0.94
+        },
+        {
+          "blockName": "北美缺电",
+          "avgChange": -0.97
+        },
+        {
+          "blockName": "液冷",
+          "avgChange": -1.03
+        },
+        {
+          "blockName": "钨",
+          "avgChange": -1.45
+        },
+        {
+          "blockName": "煤炭",
+          "avgChange": -2.15
+        },
+        {
+          "blockName": "证券",
+          "avgChange": -2.17
+        },
+        {
+          "blockName": "PPE树脂",
+          "avgChange": -3.2
+        },
+        {
+          "blockName": "商业航天",
+          "avgChange": -3.97
+        },
+        {
+          "blockName": "国产超节点",
+          "avgChange": -4.27
+        },
+        {
+          "blockName": "铜箔",
+          "avgChange": -4.31
+        },
+        {
+          "blockName": "玻璃基板",
+          "avgChange": -4.33
+        },
+        {
+          "blockName": "电子布",
+          "avgChange": -4.85
+        },
+        {
+          "blockName": "MPO",
+          "avgChange": -5.2
+        },
+        {
+          "blockName": "pcb",
+          "avgChange": -5.59
+        },
+        {
+          "blockName": "功率半导体",
+          "avgChange": -5.69
+        },
+        {
+          "blockName": "半导体材料",
+          "avgChange": -6.51
+        },
+        {
+          "blockName": "光纤",
+          "avgChange": -6.74
+        },
+        {
+          "blockName": "半导体",
+          "avgChange": -7.04
+        },
+        {
+          "blockName": "光模块",
+          "avgChange": -7.79
+        },
+        {
+          "blockName": "cpu",
+          "avgChange": -7.8
+        },
+        {
+          "blockName": "电力",
+          "avgChange": -8.12
+        },
+        {
+          "blockName": "cpo",
+          "avgChange": -8.36
+        },
+        {
+          "blockName": "存储",
+          "avgChange": -9
+        },
+        {
+          "blockName": "MLCC",
+          "avgChange": -9.2
+        }
+      ]
+    },
+    {
+      "time": "14:26",
+      "blockData": [
+        {
+          "blockName": "医药",
+          "avgChange": 2.6
+        },
+        {
+          "blockName": "贵金属",
+          "avgChange": 1.74
+        },
+        {
+          "blockName": "机器人",
+          "avgChange": 1.7
+        },
+        {
+          "blockName": "化工",
+          "avgChange": 1.42
+        },
+        {
+          "blockName": "消费",
+          "avgChange": 1.29
+        },
+        {
+          "blockName": "银行",
+          "avgChange": -0.73
+        },
+        {
+          "blockName": "液冷",
+          "avgChange": -1.06
+        },
+        {
+          "blockName": "北美缺电",
+          "avgChange": -1.17
+        },
+        {
+          "blockName": "锂电",
+          "avgChange": -1.27
+        },
+        {
+          "blockName": "钨",
+          "avgChange": -2.02
+        },
+        {
+          "blockName": "煤炭",
+          "avgChange": -2.28
+        },
+        {
+          "blockName": "证券",
+          "avgChange": -2.38
+        },
+        {
+          "blockName": "PPE树脂",
+          "avgChange": -3.88
+        },
+        {
+          "blockName": "商业航天",
+          "avgChange": -4.35
+        },
+        {
+          "blockName": "国产超节点",
+          "avgChange": -4.59
+        },
+        {
+          "blockName": "铜箔",
+          "avgChange": -4.94
+        },
+        {
+          "blockName": "玻璃基板",
+          "avgChange": -5.09
+        },
+        {
+          "blockName": "电子布",
+          "avgChange": -5.42
+        },
+        {
+          "blockName": "MPO",
+          "avgChange": -6.07
+        },
+        {
+          "blockName": "pcb",
+          "avgChange": -6.21
+        },
+        {
+          "blockName": "功率半导体",
+          "avgChange": -6.36
+        },
+        {
+          "blockName": "半导体材料",
+          "avgChange": -7.25
+        },
+        {
+          "blockName": "半导体",
+          "avgChange": -7.32
+        },
+        {
+          "blockName": "光纤",
+          "avgChange": -7.38
+        },
+        {
+          "blockName": "光模块",
+          "avgChange": -8.13
+        },
+        {
+          "blockName": "电力",
+          "avgChange": -8.23
+        },
+        {
+          "blockName": "cpu",
+          "avgChange": -8.28
+        },
+        {
+          "blockName": "cpo",
+          "avgChange": -8.9
+        },
+        {
+          "blockName": "存储",
+          "avgChange": -9.36
+        },
+        {
+          "blockName": "MLCC",
+          "avgChange": -9.48
+        }
+      ]
+    },
+    {
+      "time": "14:36",
+      "blockData": [
+        {
+          "blockName": "医药",
+          "avgChange": 2.85
+        },
+        {
+          "blockName": "贵金属",
+          "avgChange": 1.93
+        },
+        {
+          "blockName": "机器人",
+          "avgChange": 1.51
+        },
+        {
+          "blockName": "化工",
+          "avgChange": 1.2
+        },
+        {
+          "blockName": "消费",
+          "avgChange": 0.87
+        },
+        {
+          "blockName": "银行",
+          "avgChange": -0.73
+        },
+        {
+          "blockName": "液冷",
+          "avgChange": -0.9
+        },
+        {
+          "blockName": "北美缺电",
+          "avgChange": -1.13
+        },
+        {
+          "blockName": "锂电",
+          "avgChange": -1.43
+        },
+        {
+          "blockName": "钨",
+          "avgChange": -1.86
+        },
+        {
+          "blockName": "证券",
+          "avgChange": -2.26
+        },
+        {
+          "blockName": "煤炭",
+          "avgChange": -2.42
+        },
+        {
+          "blockName": "PPE树脂",
+          "avgChange": -3.39
+        },
+        {
+          "blockName": "商业航天",
+          "avgChange": -4.36
+        },
+        {
+          "blockName": "国产超节点",
+          "avgChange": -4.61
+        },
+        {
+          "blockName": "铜箔",
+          "avgChange": -4.82
+        },
+        {
+          "blockName": "玻璃基板",
+          "avgChange": -5.03
+        },
+        {
+          "blockName": "电子布",
+          "avgChange": -5.25
+        },
+        {
+          "blockName": "功率半导体",
+          "avgChange": -5.97
+        },
+        {
+          "blockName": "MPO",
+          "avgChange": -6.09
+        },
+        {
+          "blockName": "pcb",
+          "avgChange": -6.23
+        },
+        {
+          "blockName": "半导体材料",
+          "avgChange": -6.85
+        },
+        {
+          "blockName": "半导体",
+          "avgChange": -7.36
+        },
+        {
+          "blockName": "光纤",
+          "avgChange": -7.42
+        },
+        {
+          "blockName": "光模块",
+          "avgChange": -8.12
+        },
+        {
+          "blockName": "cpu",
+          "avgChange": -8.36
+        },
+        {
+          "blockName": "电力",
+          "avgChange": -8.54
+        },
+        {
+          "blockName": "cpo",
+          "avgChange": -9.07
+        },
+        {
+          "blockName": "存储",
+          "avgChange": -9.29
+        },
+        {
+          "blockName": "MLCC",
+          "avgChange": -9.52
+        }
+      ]
+    },
+    {
+      "time": "14:46",
+      "blockData": [
+        {
+          "blockName": "医药",
+          "avgChange": 2.16
+        },
+        {
+          "blockName": "贵金属",
+          "avgChange": 1.53
+        },
+        {
+          "blockName": "消费",
+          "avgChange": 1.45
+        },
+        {
+          "blockName": "机器人",
+          "avgChange": 0.87
+        },
+        {
+          "blockName": "化工",
+          "avgChange": 0.73
+        },
+        {
+          "blockName": "银行",
+          "avgChange": -0.67
+        },
+        {
+          "blockName": "液冷",
+          "avgChange": -1.27
+        },
+        {
+          "blockName": "北美缺电",
+          "avgChange": -1.51
+        },
+        {
+          "blockName": "锂电",
+          "avgChange": -1.83
+        },
+        {
+          "blockName": "钨",
+          "avgChange": -2.4
+        },
+        {
+          "blockName": "证券",
+          "avgChange": -2.62
+        },
+        {
+          "blockName": "煤炭",
+          "avgChange": -2.75
+        },
+        {
+          "blockName": "PPE树脂",
+          "avgChange": -3.54
+        },
+        {
+          "blockName": "国产超节点",
+          "avgChange": -4.88
+        },
+        {
+          "blockName": "商业航天",
+          "avgChange": -4.91
+        },
+        {
+          "blockName": "铜箔",
+          "avgChange": -5.59
+        },
+        {
+          "blockName": "电子布",
+          "avgChange": -5.74
+        },
+        {
+          "blockName": "玻璃基板",
+          "avgChange": -5.83
+        },
+        {
+          "blockName": "pcb",
+          "avgChange": -6.7
+        },
+        {
+          "blockName": "功率半导体",
+          "avgChange": -6.88
+        },
+        {
+          "blockName": "MPO",
+          "avgChange": -7.07
+        },
+        {
+          "blockName": "半导体材料",
+          "avgChange": -7.57
+        },
+        {
+          "blockName": "半导体",
+          "avgChange": -8.02
+        },
+        {
+          "blockName": "光纤",
+          "avgChange": -8.27
+        },
+        {
+          "blockName": "电力",
+          "avgChange": -8.42
+        },
+        {
+          "blockName": "光模块",
+          "avgChange": -8.44
+        },
+        {
+          "blockName": "cpu",
+          "avgChange": -9.11
+        },
+        {
+          "blockName": "cpo",
+          "avgChange": -9.57
+        },
+        {
+          "blockName": "存储",
+          "avgChange": -9.77
+        },
+        {
+          "blockName": "MLCC",
+          "avgChange": -9.94
+        }
+      ]
+    },
+    {
+      "time": "15:00",
+      "blockData": [
+        {
+          "blockName": "消费",
+          "avgChange": 1.62
+        },
+        {
+          "blockName": "医药",
+          "avgChange": 1.57
+        },
+        {
+          "blockName": "贵金属",
+          "avgChange": 1.51
+        },
+        {
+          "blockName": "机器人",
+          "avgChange": 0.66
+        },
+        {
+          "blockName": "化工",
+          "avgChange": 0.63
+        },
+        {
+          "blockName": "银行",
+          "avgChange": -0.85
+        },
+        {
+          "blockName": "液冷",
+          "avgChange": -1.01
+        },
+        {
+          "blockName": "北美缺电",
+          "avgChange": -1.38
+        },
+        {
+          "blockName": "锂电",
+          "avgChange": -1.56
+        },
+        {
+          "blockName": "钨",
+          "avgChange": -2.12
+        },
+        {
+          "blockName": "证券",
+          "avgChange": -2.7
+        },
+        {
+          "blockName": "煤炭",
+          "avgChange": -2.84
+        },
+        {
+          "blockName": "PPE树脂",
+          "avgChange": -3.58
+        },
+        {
+          "blockName": "国产超节点",
+          "avgChange": -4.92
+        },
+        {
+          "blockName": "铜箔",
+          "avgChange": -5.13
+        },
+        {
+          "blockName": "商业航天",
+          "avgChange": -5.22
+        },
+        {
+          "blockName": "玻璃基板",
+          "avgChange": -5.26
+        },
+        {
+          "blockName": "电子布",
+          "avgChange": -5.68
+        },
+        {
+          "blockName": "pcb",
+          "avgChange": -6.45
+        },
+        {
+          "blockName": "MPO",
+          "avgChange": -6.57
+        },
+        {
+          "blockName": "功率半导体",
+          "avgChange": -6.88
+        },
+        {
+          "blockName": "半导体材料",
+          "avgChange": -7.77
+        },
+        {
+          "blockName": "半导体",
+          "avgChange": -7.88
+        },
+        {
+          "blockName": "光纤",
+          "avgChange": -7.93
+        },
+        {
+          "blockName": "光模块",
+          "avgChange": -8.29
+        },
+        {
+          "blockName": "电力",
+          "avgChange": -8.63
+        },
+        {
+          "blockName": "cpu",
+          "avgChange": -9.36
+        },
+        {
+          "blockName": "存储",
+          "avgChange": -9.75
+        },
+        {
+          "blockName": "MLCC",
+          "avgChange": -9.76
+        },
+        {
+          "blockName": "cpo",
+          "avgChange": -9.8
+        }
+      ]
+    }
+  ],
+  "今日板块资金流入流出数据": [
+    {
+      "time": "13:05",
+      "data": [
+        {
+          "money": 3362051840,
+          "block": "人形机器人"
+        },
+        {
+          "money": 3016709376,
+          "block": "稀土永磁"
+        },
+        {
+          "money": 2966869760,
+          "block": "黄金概念"
+        },
+        {
+          "money": 1673025024,
+          "block": "减速器"
+        },
+        {
+          "money": 899017360,
+          "block": "培育钻石"
+        },
+        {
+          "money": 833506192,
+          "block": "华为欧拉"
+        },
+        {
+          "money": 788155408,
+          "block": "汽车整车"
+        },
+        {
+          "money": 757785376,
+          "block": "小红书概念"
+        },
+        {
+          "money": 692672016,
+          "block": "华为昇腾"
+        },
+        {
+          "money": 568596992,
+          "block": "新零售"
+        },
+        {
+          "money": 483437248,
+          "block": "飞行汽车(eVTOL)"
+        },
+        {
+          "money": 314970256,
+          "block": "短剧互动游戏"
+        },
+        {
+          "money": 309054976,
+          "block": "创新药"
+        },
+        {
+          "money": 121855376,
+          "block": "煤化工概念"
+        },
+        {
+          "money": -1015024,
+          "block": "第四代半导体"
+        },
+        {
+          "money": -21467088,
+          "block": "旅游概念"
+        },
+        {
+          "money": -29401856,
+          "block": "大飞机"
+        },
+        {
+          "money": -79662624,
+          "block": "白酒"
+        },
+        {
+          "money": -112171376,
+          "block": "冰雪经济"
+        },
+        {
+          "money": -220210432,
+          "block": "跨境支付"
+        },
+        {
+          "money": -247272192,
+          "block": "绿色电力"
+        },
+        {
+          "money": -306042944,
+          "block": "CRO"
+        },
+        {
+          "money": -317007920,
+          "block": "农业种植"
+        },
+        {
+          "money": -462025888,
+          "block": "创新医疗服务"
+        },
+        {
+          "money": -580165920,
+          "block": "航天航空"
+        },
+        {
+          "money": -661455120,
+          "block": "虚拟电厂"
+        },
+        {
+          "money": -962576912,
+          "block": "油气资源"
+        },
+        {
+          "money": -1066113024,
+          "block": "海洋经济"
+        },
+        {
+          "money": -1107366656,
+          "block": "无人驾驶"
+        },
+        {
+          "money": -1890973440,
+          "block": "锂电池概念"
+        },
+        {
+          "money": -1926769664,
+          "block": "可控核聚变"
+        },
+        {
+          "money": -1931531264,
+          "block": "海工装备"
+        },
+        {
+          "money": -2297341440,
+          "block": "特高压"
+        },
+        {
+          "money": -2337428992,
+          "block": "铜缆高速连接"
+        },
+        {
+          "money": -2349728256,
+          "block": "抖音概念(字节概念)"
+        },
+        {
+          "money": -2756071168,
+          "block": "机器人概念"
+        },
+        {
+          "money": -2798131456,
+          "block": "超级电容"
+        },
+        {
+          "money": -3128637696,
+          "block": "军工"
+        },
+        {
+          "money": -3395490560,
+          "block": "光伏概念"
+        },
+        {
+          "money": -3406072576,
+          "block": "碳化硅"
+        },
+        {
+          "money": -3543279104,
+          "block": "华为海思"
+        },
+        {
+          "money": -3748415232,
+          "block": "MLCC"
+        },
+        {
+          "money": -3818571008,
+          "block": "光刻机(胶)"
+        },
+        {
+          "money": -4048409856,
+          "block": "卫星互联网"
+        },
+        {
+          "money": -4685802752,
+          "block": "商业航天"
+        },
+        {
+          "money": -5721436928,
+          "block": "玻璃基板"
+        },
+        {
+          "money": -6592238848,
+          "block": "液冷概念"
+        },
+        {
+          "money": -7670978560,
+          "block": "光纤概念"
+        },
+        {
+          "money": -8613863936,
+          "block": "第三代半导体"
+        },
+        {
+          "money": -9261755392,
+          "block": "先进封装"
+        },
+        {
+          "money": -11833503488,
+          "block": "PCB"
+        },
+        {
+          "money": -11853771776,
+          "block": "AI眼镜"
+        },
+        {
+          "money": -13961314304,
+          "block": "中证500"
+        },
+        {
+          "money": -16381433344,
+          "block": "光通信模块"
+        },
+        {
+          "money": -16388454656,
+          "block": "CPO概念"
+        },
+        {
+          "money": -27487848704,
+          "block": "存储芯片"
+        },
+        {
+          "money": -39482368000,
+          "block": "半导体概念"
+        },
+        {
+          "money": 130725472,
+          "block": "保险Ⅱ"
+        },
+        {
+          "money": 18835776,
+          "block": "银行Ⅱ"
+        },
+        {
+          "money": -2630334720,
+          "block": "证券Ⅱ"
+        }
+      ]
+    },
+    {
+      "time": "13:30",
+      "data": [
+        {
+          "money": 3183278592,
+          "block": "稀土永磁"
+        },
+        {
+          "money": 2976436992,
+          "block": "黄金概念"
+        },
+        {
+          "money": 2920620544,
+          "block": "人形机器人"
+        },
+        {
+          "money": 1864958976,
+          "block": "新零售"
+        },
+        {
+          "money": 1641646080,
+          "block": "减速器"
+        },
+        {
+          "money": 901422528,
+          "block": "培育钻石"
+        },
+        {
+          "money": 854710784,
+          "block": "汽车整车"
+        },
+        {
+          "money": 821194032,
+          "block": "小红书概念"
+        },
+        {
+          "money": 816007520,
+          "block": "华为欧拉"
+        },
+        {
+          "money": 578353504,
+          "block": "华为昇腾"
+        },
+        {
+          "money": 450187296,
+          "block": "飞行汽车(eVTOL)"
+        },
+        {
+          "money": 358446688,
+          "block": "短剧互动游戏"
+        },
+        {
+          "money": 327938304,
+          "block": "创新药"
+        },
+        {
+          "money": 198903040,
+          "block": "煤化工概念"
+        },
+        {
+          "money": 48209920,
+          "block": "大飞机"
+        },
+        {
+          "money": 7558976,
+          "block": "白酒"
+        },
+        {
+          "money": -29041232,
+          "block": "旅游概念"
+        },
+        {
+          "money": -33484544,
+          "block": "绿色电力"
+        },
+        {
+          "money": -72920544,
+          "block": "第四代半导体"
+        },
+        {
+          "money": -133583792,
+          "block": "冰雪经济"
+        },
+        {
+          "money": -209194976,
+          "block": "跨境支付"
+        },
+        {
+          "money": -295512960,
+          "block": "农业种植"
+        },
+        {
+          "money": -382804096,
+          "block": "CRO"
+        },
+        {
+          "money": -555130848,
+          "block": "创新医疗服务"
+        },
+        {
+          "money": -595696016,
+          "block": "航天航空"
+        },
+        {
+          "money": -829348704,
+          "block": "虚拟电厂"
+        },
+        {
+          "money": -1026367136,
+          "block": "油气资源"
+        },
+        {
+          "money": -1182801152,
+          "block": "海洋经济"
+        },
+        {
+          "money": -2170985984,
+          "block": "海工装备"
+        },
+        {
+          "money": -2295491328,
+          "block": "可控核聚变"
+        },
+        {
+          "money": -2320339712,
+          "block": "锂电池概念"
+        },
+        {
+          "money": -2329710080,
+          "block": "无人驾驶"
+        },
+        {
+          "money": -2607135744,
+          "block": "特高压"
+        },
+        {
+          "money": -2918793728,
+          "block": "抖音概念(字节概念)"
+        },
+        {
+          "money": -3144574720,
+          "block": "铜缆高速连接"
+        },
+        {
+          "money": -3369553664,
+          "block": "超级电容"
+        },
+        {
+          "money": -3458301952,
+          "block": "军工"
+        },
+        {
+          "money": -3865125120,
+          "block": "碳化硅"
+        },
+        {
+          "money": -3959085824,
+          "block": "华为海思"
+        },
+        {
+          "money": -4465699328,
+          "block": "MLCC"
+        },
+        {
+          "money": -4490990336,
+          "block": "光刻机(胶)"
+        },
+        {
+          "money": -4512622592,
+          "block": "光伏概念"
+        },
+        {
+          "money": -4592863488,
+          "block": "卫星互联网"
+        },
+        {
+          "money": -4787757312,
+          "block": "机器人概念"
+        },
+        {
+          "money": -5294121984,
+          "block": "玻璃基板"
+        },
+        {
+          "money": -5645514496,
+          "block": "商业航天"
+        },
+        {
+          "money": -8080324608,
+          "block": "光纤概念"
+        },
+        {
+          "money": -8234144512,
+          "block": "液冷概念"
+        },
+        {
+          "money": -9771990528,
+          "block": "第三代半导体"
+        },
+        {
+          "money": -10638800384,
+          "block": "先进封装"
+        },
+        {
+          "money": -14272762112,
+          "block": "AI眼镜"
+        },
+        {
+          "money": -14334876672,
+          "block": "PCB"
+        },
+        {
+          "money": -17532252160,
+          "block": "中证500"
+        },
+        {
+          "money": -19884225024,
+          "block": "光通信模块"
+        },
+        {
+          "money": -19964436480,
+          "block": "CPO概念"
+        },
+        {
+          "money": -33003315200,
+          "block": "存储芯片"
+        },
+        {
+          "money": -47442403328,
+          "block": "半导体概念"
+        },
+        {
+          "money": 135973536,
+          "block": "保险Ⅱ"
+        },
+        {
+          "money": 51713856,
+          "block": "银行Ⅱ"
+        },
+        {
+          "money": -2701813760,
+          "block": "证券Ⅱ"
+        }
+      ]
+    },
+    {
+      "time": "13:55",
+      "data": [
+        {
+          "money": 3015453440,
+          "block": "稀土永磁"
+        },
+        {
+          "money": 2853055744,
+          "block": "黄金概念"
+        },
+        {
+          "money": 1847694336,
+          "block": "新零售"
+        },
+        {
+          "money": 1561891072,
+          "block": "人形机器人"
+        },
+        {
+          "money": 1341161984,
+          "block": "减速器"
+        },
+        {
+          "money": 891698960,
+          "block": "培育钻石"
+        },
+        {
+          "money": 870836768,
+          "block": "小红书概念"
+        },
+        {
+          "money": 837035840,
+          "block": "汽车整车"
+        },
+        {
+          "money": 836100064,
+          "block": "华为欧拉"
+        },
+        {
+          "money": 628237056,
+          "block": "创新药"
+        },
+        {
+          "money": 477001568,
+          "block": "华为昇腾"
+        },
+        {
+          "money": 441648336,
+          "block": "短剧互动游戏"
+        },
+        {
+          "money": 246849792,
+          "block": "飞行汽车(eVTOL)"
+        },
+        {
+          "money": 164579200,
+          "block": "煤化工概念"
+        },
+        {
+          "money": 70771840,
+          "block": "白酒"
+        },
+        {
+          "money": -8344336,
+          "block": "旅游概念"
+        },
+        {
+          "money": -119983360,
+          "block": "绿色电力"
+        },
+        {
+          "money": -153167168,
+          "block": "跨境支付"
+        },
+        {
+          "money": -180867344,
+          "block": "冰雪经济"
+        },
+        {
+          "money": -182554416,
+          "block": "第四代半导体"
+        },
+        {
+          "money": -246826208,
+          "block": "农业种植"
+        },
+        {
+          "money": -270670848,
+          "block": "大飞机"
+        },
+        {
+          "money": -389888720,
+          "block": "CRO"
+        },
+        {
+          "money": -586804416,
+          "block": "创新医疗服务"
+        },
+        {
+          "money": -695976832,
+          "block": "航天航空"
+        },
+        {
+          "money": -988742704,
+          "block": "虚拟电厂"
+        },
+        {
+          "money": -1154601472,
+          "block": "油气资源"
+        },
+        {
+          "money": -1655278848,
+          "block": "海洋经济"
+        },
+        {
+          "money": -2922772480,
+          "block": "海工装备"
+        },
+        {
+          "money": -3136879616,
+          "block": "可控核聚变"
+        },
+        {
+          "money": -3392051968,
+          "block": "抖音概念(字节概念)"
+        },
+        {
+          "money": -3471538688,
+          "block": "特高压"
+        },
+        {
+          "money": -3990198528,
+          "block": "无人驾驶"
+        },
+        {
+          "money": -4010315264,
+          "block": "超级电容"
+        },
+        {
+          "money": -4138192384,
+          "block": "铜缆高速连接"
+        },
+        {
+          "money": -4141029376,
+          "block": "锂电池概念"
+        },
+        {
+          "money": -4820284672,
+          "block": "华为海思"
+        },
+        {
+          "money": -4901403392,
+          "block": "碳化硅"
+        },
+        {
+          "money": -4937875712,
+          "block": "军工"
+        },
+        {
+          "money": -5419807488,
+          "block": "MLCC"
+        },
+        {
+          "money": -5709548544,
+          "block": "卫星互联网"
+        },
+        {
+          "money": -5998617344,
+          "block": "光刻机(胶)"
+        },
+        {
+          "money": -6648545536,
+          "block": "玻璃基板"
+        },
+        {
+          "money": -6713474560,
+          "block": "光伏概念"
+        },
+        {
+          "money": -7513082624,
+          "block": "商业航天"
+        },
+        {
+          "money": -9277304832,
+          "block": "机器人概念"
+        },
+        {
+          "money": -10732175872,
+          "block": "光纤概念"
+        },
+        {
+          "money": -11111792128,
+          "block": "液冷概念"
+        },
+        {
+          "money": -11714032896,
+          "block": "第三代半导体"
+        },
+        {
+          "money": -12293239808,
+          "block": "先进封装"
+        },
+        {
+          "money": -16605226496,
+          "block": "AI眼镜"
+        },
+        {
+          "money": -17570171136,
+          "block": "PCB"
+        },
+        {
+          "money": -23104921600,
+          "block": "中证500"
+        },
+        {
+          "money": -24507793664,
+          "block": "光通信模块"
+        },
+        {
+          "money": -24994211328,
+          "block": "CPO概念"
+        },
+        {
+          "money": -38863810560,
+          "block": "存储芯片"
+        },
+        {
+          "money": -57649393664,
+          "block": "半导体概念"
+        },
+        {
+          "money": 180859312,
+          "block": "保险Ⅱ"
+        },
+        {
+          "money": 164666336,
+          "block": "银行Ⅱ"
+        },
+        {
+          "money": -2766859008,
+          "block": "证券Ⅱ"
+        }
+      ]
+    },
+    {
+      "time": "14:20",
+      "data": [
+        {
+          "money": 3095711488,
+          "block": "稀土永磁"
+        },
+        {
+          "money": 2976800512,
+          "block": "黄金概念"
+        },
+        {
+          "money": 1927884032,
+          "block": "新零售"
+        },
+        {
+          "money": 1351585792,
+          "block": "创新药"
+        },
+        {
+          "money": 1289499904,
+          "block": "小红书概念"
+        },
+        {
+          "money": 1205327520,
+          "block": "短剧互动游戏"
+        },
+        {
+          "money": 1167607552,
+          "block": "减速器"
+        },
+        {
+          "money": 927072256,
+          "block": "人形机器人"
+        },
+        {
+          "money": 880177152,
+          "block": "培育钻石"
+        },
+        {
+          "money": 844107872,
+          "block": "汽车整车"
+        },
+        {
+          "money": 843775840,
+          "block": "华为欧拉"
+        },
+        {
+          "money": 459857936,
+          "block": "华为昇腾"
+        },
+        {
+          "money": 244626944,
+          "block": "绿色电力"
+        },
+        {
+          "money": 214803520,
+          "block": "煤化工概念"
+        },
+        {
+          "money": 182025216,
+          "block": "飞行汽车(eVTOL)"
+        },
+        {
+          "money": 159346192,
+          "block": "跨境支付"
+        },
+        {
+          "money": 118973568,
+          "block": "白酒"
+        },
+        {
+          "money": -2885360,
+          "block": "旅游概念"
+        },
+        {
+          "money": -206186656,
+          "block": "冰雪经济"
+        },
+        {
+          "money": -220151520,
+          "block": "CRO"
+        },
+        {
+          "money": -245537408,
+          "block": "第四代半导体"
+        },
+        {
+          "money": -290039152,
+          "block": "创新医疗服务"
+        },
+        {
+          "money": -301755456,
+          "block": "农业种植"
+        },
+        {
+          "money": -406767360,
+          "block": "大飞机"
+        },
+        {
+          "money": -680408912,
+          "block": "航天航空"
+        },
+        {
+          "money": -1035437344,
+          "block": "虚拟电厂"
+        },
+        {
+          "money": -1238389504,
+          "block": "油气资源"
+        },
+        {
+          "money": -2003910656,
+          "block": "海洋经济"
+        },
+        {
+          "money": -2716223488,
+          "block": "抖音概念(字节概念)"
+        },
+        {
+          "money": -3351866112,
+          "block": "海工装备"
+        },
+        {
+          "money": -3629247488,
+          "block": "可控核聚变"
+        },
+        {
+          "money": -3794780160,
+          "block": "无人驾驶"
+        },
+        {
+          "money": -3943047936,
+          "block": "特高压"
+        },
+        {
+          "money": -4293201152,
+          "block": "超级电容"
+        },
+        {
+          "money": -4558524928,
+          "block": "铜缆高速连接"
+        },
+        {
+          "money": -4892559616,
+          "block": "锂电池概念"
+        },
+        {
+          "money": -5491351808,
+          "block": "碳化硅"
+        },
+        {
+          "money": -5543086080,
+          "block": "华为海思"
+        },
+        {
+          "money": -5544538880,
+          "block": "军工"
+        },
+        {
+          "money": -6032812544,
+          "block": "卫星互联网"
+        },
+        {
+          "money": -6068113152,
+          "block": "MLCC"
+        },
+        {
+          "money": -6727338240,
+          "block": "光刻机(胶)"
+        },
+        {
+          "money": -7600808960,
+          "block": "光伏概念"
+        },
+        {
+          "money": -7765000448,
+          "block": "玻璃基板"
+        },
+        {
+          "money": -8417007360,
+          "block": "商业航天"
+        },
+        {
+          "money": -11056390144,
+          "block": "机器人概念"
+        },
+        {
+          "money": -11932537344,
+          "block": "光纤概念"
+        },
+        {
+          "money": -12578259200,
+          "block": "第三代半导体"
+        },
+        {
+          "money": -12644311808,
+          "block": "液冷概念"
+        },
+        {
+          "money": -13606226688,
+          "block": "先进封装"
+        },
+        {
+          "money": -17693399808,
+          "block": "AI眼镜"
+        },
+        {
+          "money": -19277796608,
+          "block": "PCB"
+        },
+        {
+          "money": -25217024000,
+          "block": "中证500"
+        },
+        {
+          "money": -26178510848,
+          "block": "光通信模块"
+        },
+        {
+          "money": -27197951488,
+          "block": "CPO概念"
+        },
+        {
+          "money": -42403336192,
+          "block": "存储芯片"
+        },
+        {
+          "money": -63305465856,
+          "block": "半导体概念"
+        },
+        {
+          "money": 387901184,
+          "block": "银行Ⅱ"
+        },
+        {
+          "money": 239161104,
+          "block": "保险Ⅱ"
+        },
+        {
+          "money": -2853960448,
+          "block": "证券Ⅱ"
+        }
+      ]
+    },
+    {
+      "time": "15:00",
+      "data": [
+        {
+          "money": 3144610816,
+          "block": "黄金概念"
+        },
+        {
+          "money": 2626901248,
+          "block": "稀土永磁"
+        },
+        {
+          "money": 1908549888,
+          "block": "新零售"
+        },
+        {
+          "money": 1507952736,
+          "block": "短剧互动游戏"
+        },
+        {
+          "money": 1483838048,
+          "block": "小红书概念"
+        },
+        {
+          "money": 1055566848,
+          "block": "创新药"
+        },
+        {
+          "money": 846183184,
+          "block": "汽车整车"
+        },
+        {
+          "money": 845472160,
+          "block": "华为欧拉"
+        },
+        {
+          "money": 726565664,
+          "block": "培育钻石"
+        },
+        {
+          "money": 628834560,
+          "block": "减速器"
+        },
+        {
+          "money": 331307264,
+          "block": "跨境支付"
+        },
+        {
+          "money": 301824064,
+          "block": "华为昇腾"
+        },
+        {
+          "money": 248581072,
+          "block": "煤化工概念"
+        },
+        {
+          "money": 232195584,
+          "block": "绿色电力"
+        },
+        {
+          "money": 31955280,
+          "block": "白酒"
+        },
+        {
+          "money": -37553232,
+          "block": "旅游概念"
+        },
+        {
+          "money": -243469312,
+          "block": "飞行汽车(eVTOL)"
+        },
+        {
+          "money": -255256752,
+          "block": "冰雪经济"
+        },
+        {
+          "money": -349517728,
+          "block": "第四代半导体"
+        },
+        {
+          "money": -376708480,
+          "block": "农业种植"
+        },
+        {
+          "money": -431391936,
+          "block": "CRO"
+        },
+        {
+          "money": -447605504,
+          "block": "创新医疗服务"
+        },
+        {
+          "money": -877459168,
+          "block": "航天航空"
+        },
+        {
+          "money": -1099386112,
+          "block": "大飞机"
+        },
+        {
+          "money": -1404530032,
+          "block": "虚拟电厂"
+        },
+        {
+          "money": -1477640960,
+          "block": "油气资源"
+        },
+        {
+          "money": -1620080384,
+          "block": "人形机器人"
+        },
+        {
+          "money": -3165992448,
+          "block": "海洋经济"
+        },
+        {
+          "money": -3380015872,
+          "block": "抖音概念(字节概念)"
+        },
+        {
+          "money": -4633511424,
+          "block": "海工装备"
+        },
+        {
+          "money": -5243034368,
+          "block": "超级电容"
+        },
+        {
+          "money": -5355204608,
+          "block": "可控核聚变"
+        },
+        {
+          "money": -5401474304,
+          "block": "特高压"
+        },
+        {
+          "money": -5981823744,
+          "block": "无人驾驶"
+        },
+        {
+          "money": -6231066112,
+          "block": "铜缆高速连接"
+        },
+        {
+          "money": -6394288128,
+          "block": "华为海思"
+        },
+        {
+          "money": -7110614272,
+          "block": "碳化硅"
+        },
+        {
+          "money": -7571512320,
+          "block": "卫星互联网"
+        },
+        {
+          "money": -7776551168,
+          "block": "MLCC"
+        },
+        {
+          "money": -8058869760,
+          "block": "军工"
+        },
+        {
+          "money": -8706265344,
+          "block": "锂电池概念"
+        },
+        {
+          "money": -9275789056,
+          "block": "光刻机(胶)"
+        },
+        {
+          "money": -9736407296,
+          "block": "玻璃基板"
+        },
+        {
+          "money": -11420922624,
+          "block": "光伏概念"
+        },
+        {
+          "money": -12692318208,
+          "block": "商业航天"
+        },
+        {
+          "money": -15570455040,
+          "block": "光纤概念"
+        },
+        {
+          "money": -15775753216,
+          "block": "第三代半导体"
+        },
+        {
+          "money": -16085927168,
+          "block": "先进封装"
+        },
+        {
+          "money": -17152416256,
+          "block": "液冷概念"
+        },
+        {
+          "money": -18096275456,
+          "block": "机器人概念"
+        },
+        {
+          "money": -21871132160,
+          "block": "AI眼镜"
+        },
+        {
+          "money": -25162723584,
+          "block": "PCB"
+        },
+        {
+          "money": -31724269568,
+          "block": "光通信模块"
+        },
+        {
+          "money": -32954645248,
+          "block": "CPO概念"
+        },
+        {
+          "money": -33854918656,
+          "block": "中证500"
+        },
+        {
+          "money": -51218849792,
+          "block": "存储芯片"
+        },
+        {
+          "money": -79827042304,
+          "block": "半导体概念"
+        },
+        {
+          "money": 652359680,
+          "block": "银行Ⅱ"
+        },
+        {
+          "money": 293744864,
+          "block": "保险Ⅱ"
+        },
+        {
+          "money": -3344172032,
+          "block": "证券Ⅱ"
+        }
+      ]
+    }
+  ],
+  "大盘主力资金和成交量数据": [
+    {
+      "time": "14:33:42",
+      "主力资金流入流出": "-966.22亿",
+      "相较上一日成交量变化": "-2591.56亿"
+    },
+    {
+      "time": "14:40:23",
+      "主力资金流入流出": "-1016.00亿",
+      "相较上一日成交量变化": "-2708.92亿"
+    },
+    {
+      "time": "14:47:05",
+      "主力资金流入流出": "-1099.48亿",
+      "相较上一日成交量变化": "-2348.33亿"
+    },
+    {
+      "time": "14:53:42",
+      "主力资金流入流出": "-1180.42亿",
+      "相较上一日成交量变化": "-2191.43亿"
+    },
+    {
+      "time": "15:00:51",
+      "主力资金流入流出": "-1208.06亿",
+      "相较上一日成交量变化": "-2089.22亿"
+    }
+  ]
+}

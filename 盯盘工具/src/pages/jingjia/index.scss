@@ -1,0 +1,61 @@
+.jingjia-page {
+  padding: 24px;
+  background-color: #f0f2f5;
+  min-height: calc(100vh - 64px);
+
+  .stat-card {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .tline-card {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s;
+    border: 2px solid transparent; // 预留边框位置
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      transform: translateY(-4px);
+    }
+
+    // 上涨趋势闪烁效果
+    &.trend-up {
+      border-color: #ff4d4f;
+      animation: flash-red 2s infinite ease-in-out;
+    }
+
+    // 下跌趋势闪烁效果
+    &.trend-down {
+      border-color: #52c41a;
+      animation: flash-green 2s infinite ease-in-out;
+    }
+  }
+
+  @keyframes flash-red {
+    0% { box-shadow: 0 0 5px rgba(245, 34, 45, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(245, 34, 45, 0.6); }
+    100% { box-shadow: 0 0 5px rgba(245, 34, 45, 0.2); }
+  }
+
+  @keyframes flash-green {
+    0% { box-shadow: 0 0 5px rgba(82, 196, 26, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(82, 196, 26, 0.6); }
+    100% { box-shadow: 0 0 5px rgba(82, 196, 26, 0.2); }
+  }
+
+  .tline-chart-container {
+    position: relative;
+    
+    // 强制分时图容器内的图表占满
+    div {
+      width: 100% !important;
+    }
+  }
+
+  .tline-card {
+    .tline-chart-container {
+      height: 200px !important; // 恢复高度并适应一排四个的布局
+    }
+  }
+}

@@ -1,0 +1,78 @@
+.volume-statistics {
+  padding: 24px;
+  background-color: #f5f7fa;
+  min-height: calc(100vh - 64px);
+
+  .page-header {
+    margin-bottom: 24px;
+    
+    h2 {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+  }
+
+  .stat-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+    }
+
+    &.main-money {
+      border-left: 4px solid #f5222d;
+    }
+
+    &.amount-change {
+      border-left: 4px solid #1890ff;
+    }
+
+    .ant-statistic-title {
+      font-size: 14px;
+      color: #8c8c8c;
+    }
+
+    .ant-statistic-content {
+      font-weight: 600;
+    }
+  }
+
+  .chart-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+    .ant-card-head {
+      border-bottom: 1px solid #f0f0f0;
+      font-weight: 600;
+    }
+
+    .loading-container {
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 300px;
+    }
+  }
+
+  .table-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+    .ant-card-head {
+      border-bottom: 1px solid #f0f0f0;
+      font-weight: 600;
+    }
+
+    .ant-table-thead > tr > th {
+      background-color: #fafafa;
+    }
+  }
+}

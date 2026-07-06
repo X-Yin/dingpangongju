@@ -1,0 +1,374 @@
+.custom-gantt-container {
+  margin-top: 24px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #f0f0f0;
+
+  .gantt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+    }
+
+    .gantt-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a1a;
+      display: flex;
+      align-items: center;
+      
+      &::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 16px;
+        background: #1890ff;
+        margin-right: 8px;
+        border-radius: 2px;
+      }
+    }
+  }
+
+  .gantt-chart-wrapper {
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid #f0f0f0;
+    border-radius: 4px;
+
+    &.is-thumbnail {
+      .gantt-chart-scroll {
+        overflow-x: hidden;
+      }
+      
+      .timeline-header {
+        .day-cell {
+          border-right: none;
+          .date-num { font-size: 10px; }
+          .date-weekday { display: none; }
+        }
+      }
+
+      .grid-line {
+        border-right: none;
+      }
+
+      .gantt-bar-row {
+        height: 32px; // 缩略模式下行高减小
+        
+        .bar {
+          top: 6px;
+          height: 20px;
+        }
+
+        .event-info-label {
+          .title {
+            font-size: 12px;
+          }
+        }
+      }
+    }
+  }
+
+  .gantt-chart-scroll {
+    overflow-x: auto;
+    position: relative;
+    min-height: 200px;
+  }
+
+  .timeline-header {
+    display: flex;
+    background: #fafafa;
+    border-bottom: 1px solid #f0f0f0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    width: fit-content;
+    min-width: 100%;
+
+    .days-header {
+      display: flex;
+    }
+
+    .day-cell {
+      padding: 8px 0;
+      text-align: center;
+      border-right: 1px solid #f0f0f0;
+      font-size: 12px;
+
+      .date-num {
+        font-weight: 600;
+        color: #595959;
+      }
+
+      .date-weekday {
+        font-size: 10px;
+        color: #8c8c8c;
+        transform: scale(0.9);
+        line-height: 1;
+        margin: 2px 0;
+      }
+
+      .date-month {
+        color: #8c8c8c;
+        transform: scale(0.85);
+      }
+
+      &.today {
+        background: rgba(24, 144, 255, 0.15) !important; // 更明显的淡蓝色背景
+        .date-num, .date-weekday, .date-month { 
+          color: #1890ff !important; // 核心文字变为蓝色
+          font-weight: bold;
+        }
+      }
+
+      &.weekend {
+        background: #fafafa;
+        color: #bfbfbf;
+      }
+
+      &.highlight-purple {
+        background: rgba(114, 46, 209, 0.12) !important; // 淡紫色背景
+        .date-num, .date-weekday, .date-month {
+          color: #722ed1 !important; // 紫色文字
+          font-weight: bold !important;
+        }
+      }
+    }
+  }
+
+  .label-spacer {
+    width: 280px;
+    min-width: 280px;
+    flex-shrink: 0;
+    background: #fff;
+    border-right: 1px solid #f0f0f0;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #595959;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    left: 0;
+    z-index: 11;
+    box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.05);
+  }
+
+  .gantt-main-area {
+    position: relative;
+    width: fit-content; // 改为 fit-content 以便被内容撑开
+    min-width: 100%;
+  }
+
+  .gantt-body {
+    position: relative;
+    padding: 8px 0;
+    z-index: 2;
+    width: fit-content;
+    min-width: 100%;
+
+    .gantt-bar-row {
+      display: flex;
+      height: 44px;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.02);
+      transition: background-color 0.2s;
+      width: 100%; // 确保占满父容器宽度
+
+      &.dragging {
+        background: #fafafa;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+      }
+
+      &:hover {
+        background: #fffbe6; // 浅黄色背景 (Ant Design Warning 背景色)
+        .event-info-label {
+          background: #fffbe6; // 确保吸顶栏同步变色
+        }
+        .drag-handle {
+          opacity: 1;
+        }
+      }
+
+      &.important {
+        background: #fff1f0; // 极浅红背景
+        .event-info-label {
+          background: #fff1f0;
+          .title {
+            color: #f5222d; // 鲜艳红文字
+            font-weight: bold;
+          }
+        }
+        &:hover {
+          background: #ffccc7; // 悬浮时稍深的红色背景
+          .event-info-label {
+            background: #ffccc7;
+          }
+        }
+      }
+
+      &.expired {
+        .title {
+          text-decoration: line-through;
+          color: #bfbfbf;
+        }
+        .bar {
+          opacity: 0.5;
+          filter: grayscale(0.5);
+        }
+        .bar-description {
+          color: #bfbfbf;
+          text-decoration: line-through;
+        }
+      }
+
+      .event-info-label {
+        width: 280px;
+        min-width: 280px;
+        flex-shrink: 0;
+        padding: 0 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fff; // 必须是实色背景，防止滚动时方块透过来
+        border-right: 1px solid #f0f0f0;
+        position: sticky;
+        left: 0;
+        z-index: 12; // 确保高于 bar-container 和 grid-background
+        box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.05); // 添加微弱阴影增强边界感
+
+        .label-left {
+          display: flex;
+          align-items: center;
+          overflow: hidden;
+          flex-grow: 1;
+        }
+
+        .drag-handle {
+          cursor: grab;
+          color: #bfbfbf;
+          margin-right: 8px;
+          opacity: 0.3;
+          transition: opacity 0.2s;
+          display: flex;
+          align-items: center;
+
+          &:active {
+            cursor: grabbing;
+          }
+
+          &:hover {
+            color: #1890ff;
+          }
+        }
+
+        .title {
+          font-size: 13px;
+          color: #434343;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-right: 4px;
+        }
+      }
+
+      .bar-container {
+        flex-grow: 1;
+        position: relative;
+        height: 100%;
+      }
+
+      .bar {
+        position: absolute;
+        top: 10px;
+        height: 24px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        color: #fff;
+        font-size: 12px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        overflow: hidden;
+        white-space: nowrap;
+
+        &:hover {
+          transform: translateY(-1px);
+          filter: brightness(1.1);
+        }
+
+        .bar-text {
+          font-weight: 500;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+          flex-shrink: 0;
+          margin-right: 8px;
+        }
+
+        &.desc-inline {
+          padding: 0 10px;
+          
+          .bar-inline-desc {
+            color: #fff;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            opacity: 0.9;
+          }
+        }
+      }
+
+      .bar-description {
+        position: absolute;
+        top: 10px;
+        height: 24px;
+        line-height: 24px;
+        font-size: 12px;
+        color: #595959;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+    }
+  }
+
+  .grid-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    pointer-events: none;
+    z-index: 1;
+
+    .grid-lines {
+      display: flex;
+      height: 100%;
+    }
+
+    .grid-line {
+      border-right: 1px solid #f5f5f5;
+      height: 100%;
+
+      &.today {
+        background: rgba(24, 144, 255, 0.08); // 整个一列背景变为淡蓝色
+        border-right-color: rgba(24, 144, 255, 0.3);
+        border-left: 1px solid rgba(24, 144, 255, 0.3);
+      }
+
+      &.weekend {
+        background: rgba(0, 0, 0, 0.015);
+      }
+    }
+  }
+}

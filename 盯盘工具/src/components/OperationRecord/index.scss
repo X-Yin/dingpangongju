@@ -1,0 +1,82 @@
+.operation-record-wrapper {
+  .operation-content {
+    display: flex;
+    gap: 16px;
+    min-height: 400px;
+
+    .calendar-section {
+      width: 400px;
+      flex-shrink: 0;
+
+      .ant-card-body {
+        padding: 12px;
+      }
+
+      .ant-picker-calendar-date {
+        padding: 2px !important;
+        margin: 0 !important;
+        height: auto !important;
+        border: none !important; // 强制移除 antd 默认边框
+        
+        &::before {
+          display: none !important; // 移除可能存在的伪元素边框
+        }
+      }
+
+      .date-cell-content {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 4px;
+        transition: all 0.2s;
+        font-size: 14px;
+        border: none !important; // 确保没有边框
+
+        &.date-cell-default {
+          color: #666;
+          background: #f5f5f5;
+        }
+
+        &.date-cell-buy {
+          color: #fff;
+          background: linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%);
+          font-weight: bold;
+        }
+
+        &.date-cell-sell {
+          color: #fff;
+          background: linear-gradient(135deg, #1890ff 0%, #0050b3 100%);
+          font-weight: bold;
+        }
+
+        &.date-cell-both {
+          color: #fff;
+          background: linear-gradient(135deg, #ff4d4f 0%, #1890ff 100%);
+          font-weight: bold;
+        }
+      }
+
+      // 选中状态的特殊处理：不使用边框，改用轻微阴影或缩放
+      .ant-picker-calendar-date-selected {
+        background: transparent !important;
+        .date-cell-content {
+          border: none !important;
+          transform: scale(1.1);
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+          z-index: 2;
+        }
+      }
+    }
+
+    .detail-section {
+      flex: 1;
+
+      .ant-card-body {
+        height: calc(100% - 57px);
+        overflow-y: auto;
+      }
+    }
+  }
+}

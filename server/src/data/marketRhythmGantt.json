@@ -1,0 +1,191 @@
+[
+  {
+    "id": 1783182046886,
+    "title": "半年报业绩",
+    "description": "资金极致抱团业绩高增的板块，大部分股票披露业绩在 8 月底，到了 8 月中旬存储等高位股会开始震荡，等待业绩落地",
+    "startDate": "2026-07-06",
+    "endDate": "2026-08-15",
+    "level": "positive",
+    "descInline": true
+  },
+  {
+    "id": 1783183511355,
+    "title": "pcb上游材料涨价",
+    "description": "铜箔，电子布，树脂，ccl 大概率也就在 7 月上旬会迎来超预期的提价",
+    "startDate": "2026-07-06",
+    "endDate": "2026-07-15",
+    "level": "positive",
+    "descInline": true
+  },
+  {
+    "id": 1783264491639,
+    "title": "华为韬定律第一阶段炒作",
+    "description": "7.3 韬定律 V2 论文发布，产业趋势确立，这个属于产业趋势确立的第一阶段情绪炒作，相关概念股会一直持续到 9 月新机发布之前都有行情，这里也是一波大行情的起点",
+    "startDate": "2026-07-06",
+    "endDate": "2026-08-15",
+    "level": "positive",
+    "descInline": true,
+    "isImportant": false
+  },
+  {
+    "id": 1783181899291,
+    "title": "三星 Q2 业绩",
+    "description": "大概率炸裂，对存储有催化作用",
+    "startDate": "2026-07-07",
+    "endDate": "2026-07-07",
+    "level": "positive"
+  },
+  {
+    "id": 1783181959188,
+    "title": "长鑫存储上市",
+    "description": "7.7 询价，7.13 申购，7.10 最后的跑路时间",
+    "startDate": "2026-07-07",
+    "endDate": "2026-07-13",
+    "level": "positive",
+    "descInline": true
+  },
+  {
+    "id": 1783182707939,
+    "title": "美国新版关税",
+    "description": "美国新版关税有可能不及预期，7.7 关税豁免听证会开始、7月中旬听证会结果出炉、7.24 新版关税落地",
+    "startDate": "2026-07-07",
+    "endDate": "2026-07-24",
+    "level": "negative",
+    "descInline": true
+  },
+  {
+    "id": 1783182935428,
+    "title": "可回收火箭",
+    "description": "商业航天催化主题性行情",
+    "startDate": "2026-07-10",
+    "endDate": "2026-07-15",
+    "level": "neutral",
+    "descInline": true
+  },
+  {
+    "id": 1783182765704,
+    "title": "美国 6 月 CPI",
+    "description": "关注对通胀加息的影响，大概率通胀还是会比较高",
+    "startDate": "2026-07-14",
+    "endDate": "2026-07-14",
+    "level": "negative",
+    "descInline": false
+  },
+  {
+    "id": 1783220342658,
+    "title": "长江存储申报上市",
+    "description": "递交申报大概在 7.15 - 8.10，交易所受理大概在 8.31 之前会完成，利好万泽科技这些影子股",
+    "startDate": "2026-07-15",
+    "endDate": "2026-08-31",
+    "level": "positive",
+    "descInline": true,
+    "isImportant": false
+  },
+  {
+    "id": 1783182823066,
+    "title": "日本央行议息",
+    "description": "大概率这次不会加息，市场预计真正下次加息在 10-12 月",
+    "startDate": "2026-07-17",
+    "endDate": "2026-07-17",
+    "level": "neutral",
+    "descInline": false
+  },
+  {
+    "id": 1783183602634,
+    "title": "华为 WAIC 大会发布超节点",
+    "description": "利好浪潮、华勤、盛科通信等超节点公司",
+    "startDate": "2026-07-17",
+    "endDate": "2026-07-17",
+    "level": "neutral",
+    "descInline": false
+  },
+  {
+    "id": 1783183686682,
+    "title": "intel 业绩",
+    "startDate": "2026-07-23",
+    "endDate": "2026-07-23",
+    "level": "neutral",
+    "descInline": false
+  },
+  {
+    "id": 1783183721479,
+    "title": "谷歌业绩",
+    "startDate": "2026-07-28",
+    "endDate": "2026-07-28",
+    "level": "neutral",
+    "descInline": false
+  },
+  {
+    "id": 1783183887652,
+    "title": " meta，微软、海力士业绩",
+    "startDate": "2026-07-29",
+    "endDate": "2026-07-29",
+    "level": "neutral",
+    "descInline": false
+  },
+  {
+    "id": 1783184266227,
+    "title": "苹果、亚马逊业绩",
+    "startDate": "2026-07-30",
+    "endDate": "2026-07-30",
+    "level": "neutral",
+    "descInline": false
+  },
+  {
+    "id": 1783182882683,
+    "title": "美联储议息会议",
+    "description": "这次美联储大概也不会加息，最早可能到 9 月，市场普遍预计在 12 月，当然如果下半年通胀回落，也可能不加息",
+    "startDate": "2026-07-30",
+    "endDate": "2026-07-30",
+    "level": "neutral",
+    "descInline": false
+  },
+  {
+    "id": 1783184631243,
+    "title": "AMD 业绩",
+    "startDate": "2026-08-04",
+    "endDate": "2026-08-04",
+    "level": "neutral",
+    "descInline": false
+  },
+  {
+    "id": 1783184665776,
+    "title": "闪迪业绩",
+    "startDate": "2026-08-13",
+    "endDate": "2026-08-13",
+    "level": "neutral",
+    "descInline": false
+  },
+  {
+    "id": 1783184739660,
+    "title": "lumentum 业绩",
+    "startDate": "2026-08-18",
+    "endDate": "2026-08-18",
+    "level": "neutral",
+    "descInline": false
+  },
+  {
+    "id": 1783184709134,
+    "title": "英伟达业绩",
+    "startDate": "2026-08-26",
+    "endDate": "2026-08-26",
+    "level": "neutral",
+    "descInline": false
+  },
+  {
+    "id": 1783184751400,
+    "title": "博通业绩",
+    "startDate": "2026-09-04",
+    "endDate": "2026-09-04",
+    "level": "neutral",
+    "descInline": false
+  },
+  {
+    "id": 1783184770051,
+    "title": "甲骨文业绩",
+    "startDate": "2026-09-13",
+    "endDate": "2026-09-13",
+    "level": "neutral",
+    "descInline": false
+  }
+]

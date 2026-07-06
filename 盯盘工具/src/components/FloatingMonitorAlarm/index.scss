@@ -1,0 +1,390 @@
+.floating-monitor-alarm {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fa8c16, #fa541c);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(250, 84, 28, 0.35);
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
+  user-select: none;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  .fma-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    color: #fff;
+  }
+
+  .fma-icon {
+    font-size: 18px;
+    color: #fff;
+  }
+
+  .fma-label {
+    font-size: 11px;
+    line-height: 1;
+    color: #fff;
+  }
+
+  // 闪烁红色
+  &.blinking {
+    animation: fma-blink 0.8s ease-in-out infinite;
+  }
+
+  @keyframes fma-blink {
+    0%, 100% {
+      box-shadow: 0 6px 24px rgba(250, 84, 28, 0.35);
+      background: linear-gradient(135deg, #fa8c16, #fa541c);
+    }
+    50% {
+      box-shadow: 0 6px 28px rgba(245, 34, 45, 0.9), 0 0 18px rgba(245, 34, 45, 0.7);
+      background: linear-gradient(135deg, #f5222d, #ff7875);
+    }
+  }
+}
+
+.monitor-alarm-drawer {
+  .ant-drawer-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .fma-live-time {
+    font-size: 13px;
+    font-weight: 400;
+    color: #8c8c8c;
+    margin-left: 8px;
+  }
+
+  .glass-btn {
+    background: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    color: #333 !important;
+    border-radius: 8px;
+    font-weight: 600;
+    height: 32px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.4) !important;
+      border-color: rgba(255, 255, 255, 0.5) !important;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    &.ai-btn {
+      color: #1890ff !important;
+      background: rgba(24, 144, 255, 0.05) !important;
+      border-color: rgba(24, 144, 255, 0.2) !important;
+
+      &:hover {
+        background: rgba(24, 144, 255, 0.15) !important;
+        border-color: rgba(24, 144, 255, 0.4) !important;
+      }
+    }
+
+    &.copy-btn {
+      color: #722ed1 !important;
+      background: rgba(114, 46, 209, 0.05) !important;
+      border-color: rgba(114, 46, 209, 0.2) !important;
+
+      &:hover {
+        background: rgba(114, 46, 209, 0.15) !important;
+        border-color: rgba(114, 46, 209, 0.4) !important;
+      }
+    }
+
+    &.read-all-btn {
+      color: #52c41a !important;
+      background: rgba(82, 196, 26, 0.05) !important;
+      border-color: rgba(82, 196, 26, 0.2) !important;
+
+      &:hover:not(:disabled) {
+        background: rgba(82, 196, 26, 0.15) !important;
+        border-color: rgba(82, 196, 26, 0.4) !important;
+      }
+
+      &:disabled {
+        background: rgba(0, 0, 0, 0.04) !important;
+        border-color: rgba(0, 0, 0, 0.1) !important;
+        color: #bfbfbf !important;
+        box-shadow: none;
+      }
+    }
+  }
+
+  .drawer-split-container {
+    display: flex;
+    gap: 20px;
+    height: 100%;
+  }
+
+  .drawer-left-panel {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+  }
+
+  .drawer-right-panel {
+    flex: 1;
+    min-width: 0;
+    border-left: 1px solid #f0f0f0;
+    padding-left: 20px;
+    overflow-y: auto;
+  }
+
+  .fma-ai-empty {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #bfbfbf;
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  .fma-ai-loading {
+    padding: 100px 0;
+    text-align: center;
+    background: rgba(24, 144, 255, 0.02);
+    border-radius: 12px;
+  }
+
+  .fma-ai-content {
+    background: linear-gradient(135deg, rgba(24, 144, 255, 0.05) 0%, rgba(114, 46, 209, 0.05) 100%);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(24, 144, 255, 0.1);
+    min-height: 200px;
+
+    .ai-header {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: #1890ff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+
+      .ai-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .ai-time {
+        font-size: 12px;
+        color: #8c8c8c;
+        font-weight: normal;
+        background: rgba(0, 0, 0, 0.04);
+        padding: 2px 8px;
+        border-radius: 4px;
+      }
+    }
+
+    .markdown-body {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #434343;
+
+      p {
+        margin-bottom: 8px;
+      }
+
+      ul, ol {
+        padding-left: 20px;
+        margin-bottom: 8px;
+      }
+    }
+  }
+
+  .ant-drawer-body {
+    padding: 12px;
+    overflow-y: auto;
+    max-height: calc(100vh - 55px);
+  }
+
+  .fma-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .fma-card {
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+      background: #fafafa;
+    }
+
+    .fma-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+
+    .fma-card-time {
+      font-size: 12px;
+      color: #8c8c8c;
+      flex-shrink: 0;
+    }
+
+    .fma-card-tag {
+      font-size: 11px;
+      color: #fff;
+      background: #52c41a;
+      padding: 2px 8px;
+      border-radius: 10px;
+      line-height: 18px;
+      font-weight: 500;
+      flex-shrink: 0;
+
+      &.read-tag {
+        background: #d9d9d9;
+        color: #595959;
+      }
+    }
+
+    .fma-mark-read-btn {
+      flex-shrink: 0;
+      background: rgba(0, 0, 0, 0.04) !important;
+      border: 1px solid rgba(0, 0, 0, 0.05) !important;
+      color: #8c8c8c;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      .anticon {
+        font-size: 10px;
+      }
+      
+      &:hover {
+        background: #52c41a !important;
+        border-color: #52c41a !important;
+        color: #fff !important;
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 2px 8px rgba(82, 196, 26, 0.3);
+      }
+      
+      &:active {
+        transform: scale(0.95);
+      }
+    }
+
+    .fma-card-item {
+      padding: 8px 0;
+      border-top: 1px solid #f5f5f5;
+
+      &:first-of-type {
+        border-top: none;
+        padding-top: 0;
+      }
+
+      &:last-of-type {
+        padding-bottom: 0;
+      }
+    }
+
+    .fma-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(0, 0, 0, 0.88);
+      margin-bottom: 4px;
+    }
+
+    .fma-card-desc {
+      font-size: 12px;
+      color: #595959;
+      line-height: 1.6;
+      word-break: break-all;
+    }
+
+    // 未读：红色高亮边框 + 阴影
+    &.unread {
+      border-color: #ff4d4f;
+      background: linear-gradient(135deg, #fff1f0 0%, #fff 100%);
+      box-shadow: 0 4px 16px rgba(255, 77, 79, 0.12);
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #ff4d4f, #ff7875);
+      }
+
+      .fma-card-title {
+        color: #cf1322;
+      }
+
+      .fma-card-desc {
+        color: #a8071a;
+      }
+
+      .fma-card-time {
+        color: #ff7875;
+      }
+    }
+
+    // 已读：灰色降级
+    &.read {
+      border-color: #f0f0f0;
+      background: #fafafa;
+
+      .fma-card-title {
+        color: #8c8c8c;
+      }
+
+      .fma-card-desc {
+        color: #8c8c8c;
+      }
+
+      .fma-card-time {
+        color: #bfbfbf;
+      }
+    }
+  }
+}

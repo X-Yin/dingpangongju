@@ -1,0 +1,377 @@
+[
+  {
+    "code": "sh688981",
+    "name": "中芯国际",
+    "isImportant": true
+  },
+  {
+    "code": "sh688347",
+    "name": "华虹公司",
+    "isImportant": true
+  },
+  {
+    "code": "sh688072",
+    "name": "拓荆科技",
+    "isImportant": true
+  },
+  {
+    "code": "sz002371",
+    "name": "北方华创",
+    "isImportant": true
+  },
+  {
+    "code": "sh688256",
+    "name": "寒武纪",
+    "isImportant": true
+  },
+  {
+    "code": "sz002837",
+    "name": "英维克",
+    "isImportant": true
+  },
+  {
+    "code": "sz301018",
+    "name": "申菱环境",
+    "isImportant": true
+  },
+  {
+    "code": "sh601138",
+    "name": "工业富联",
+    "isImportant": false
+  },
+  {
+    "code": "sz300757",
+    "name": "罗博特科",
+    "isImportant": false
+  },
+  {
+    "code": "sz300394",
+    "name": "天孚通信",
+    "isImportant": false
+  },
+  {
+    "code": "sz300502",
+    "name": "新易盛",
+    "isImportant": true
+  },
+  {
+    "code": "sz300308",
+    "name": "中际旭创",
+    "isImportant": true
+  },
+  {
+    "code": "sh688048",
+    "name": "长华光芯",
+    "isImportant": true
+  },
+  {
+    "code": "sz301511",
+    "name": "德福科技",
+    "isImportant": true
+  },
+  {
+    "code": "sz301217",
+    "name": "铜冠铜箔",
+    "isImportant": true
+  },
+  {
+    "code": "sh688008",
+    "name": "澜起科技",
+    "isImportant": true
+  },
+  {
+    "code": "sh688041",
+    "name": "海光信息",
+    "isImportant": true
+  },
+  {
+    "code": "sz002475",
+    "name": "立讯精密",
+    "isImportant": false
+  },
+  {
+    "code": "sh600183",
+    "name": "生益科技",
+    "isImportant": true
+  },
+  {
+    "code": "sh603986",
+    "name": "兆易创新",
+    "isImportant": true
+  },
+  {
+    "code": "sh688313",
+    "name": "仕佳光子",
+    "isImportant": true
+  },
+  {
+    "code": "sh688498",
+    "name": "源杰科技",
+    "isImportant": true
+  },
+  {
+    "code": "sz002384",
+    "name": "东山精密",
+    "isImportant": false
+  },
+  {
+    "code": "sz002916",
+    "name": "深南电路",
+    "isImportant": false
+  },
+  {
+    "code": "sz002463",
+    "name": "沪电股份",
+    "isImportant": true
+  },
+  {
+    "code": "sz300476",
+    "name": "胜宏科技",
+    "isImportant": true
+  },
+  {
+    "code": "sh688525",
+    "name": "佰维存储",
+    "isImportant": true
+  },
+  {
+    "code": "sz301308",
+    "name": "江波龙",
+    "isImportant": true
+  },
+  {
+    "code": "sh601869",
+    "name": "长飞光纤",
+    "isImportant": false
+  },
+  {
+    "code": "sh600487",
+    "name": "亨通光电",
+    "isImportant": false
+  },
+  {
+    "code": "sh603256",
+    "name": "宏和科技",
+    "isImportant": true
+  },
+  {
+    "code": "sh688146",
+    "name": "中船特气",
+    "isImportant": false
+  },
+  {
+    "code": "sz300408",
+    "name": "三环集团",
+    "isImportant": false
+  },
+  {
+    "code": "sh600118",
+    "name": "中国卫星",
+    "isImportant": false
+  },
+  {
+    "code": "sh600879",
+    "name": "航天电子",
+    "isImportant": false
+  },
+  {
+    "code": "sz000657",
+    "name": "中钨高新",
+    "isImportant": false
+  },
+  {
+    "code": "sh688082",
+    "name": "盛美上海",
+    "isImportant": true
+  },
+  {
+    "code": "sh688808",
+    "name": "联讯仪器",
+    "isImportant": false
+  },
+  {
+    "code": "sz002851",
+    "name": "麦格米特",
+    "isImportant": false
+  },
+  {
+    "code": "sz000725",
+    "name": "京东方A",
+    "isImportant": false
+  },
+  {
+    "code": "sh601899",
+    "name": "紫金矿业",
+    "isImportant": false
+  },
+  {
+    "code": "sz300750",
+    "name": "宁德时代",
+    "isImportant": false
+  },
+  {
+    "code": "sz002407",
+    "name": "多氟多",
+    "isImportant": false
+  },
+  {
+    "code": "sz002636",
+    "name": "金安国纪",
+    "isImportant": true
+  },
+  {
+    "code": "sz301526",
+    "name": "国际复材",
+    "isImportant": true
+  },
+  {
+    "code": "sh688630",
+    "name": "芯基微装",
+    "isImportant": false
+  },
+  {
+    "code": "sz300570",
+    "name": "太辰光",
+    "isImportant": false
+  },
+  {
+    "code": "sh603629",
+    "name": "利通电子",
+    "isImportant": false
+  },
+  {
+    "code": "sh600460",
+    "name": "士兰微",
+    "isImportant": false
+  },
+  {
+    "code": "sz301377",
+    "name": "鼎泰高科",
+    "isImportant": false
+  },
+  {
+    "code": "sh688200",
+    "name": "华峰测控",
+    "isImportant": false
+  },
+  {
+    "code": "sz002436",
+    "name": "兴森科技",
+    "isImportant": false
+  },
+  {
+    "code": "sh688147",
+    "name": "微导纳米",
+    "isImportant": false
+  },
+  {
+    "code": "sh688521",
+    "name": "芯原股份",
+    "isImportant": true
+  },
+  {
+    "code": "sz300567",
+    "name": "精测电子",
+    "isImportant": false
+  },
+  {
+    "code": "sz002409",
+    "name": "雅克科技",
+    "isImportant": true
+  },
+  {
+    "code": "sh605358",
+    "name": "立昂微",
+    "isImportant": false
+  },
+  {
+    "code": "sz002859",
+    "name": "洁美科技",
+    "isImportant": false
+  },
+  {
+    "code": "sh688362",
+    "name": "甬矽电子",
+    "isImportant": false
+  },
+  {
+    "code": "sh600584",
+    "name": "长电科技",
+    "isImportant": false
+  },
+  {
+    "code": "sz002156",
+    "name": "通富微电",
+    "isImportant": false
+  },
+  {
+    "code": "sh688503",
+    "name": "聚和材料",
+    "isImportant": false
+  },
+  {
+    "code": "sh603757",
+    "name": "大元泵业",
+    "isImportant": false
+  },
+  {
+    "code": "sz002536",
+    "name": "飞龙股份",
+    "isImportant": false
+  },
+  {
+    "code": "sh600176",
+    "name": "中国巨石",
+    "isImportant": true
+  },
+  {
+    "code": "sh688120",
+    "name": "华海清科",
+    "isImportant": false
+  },
+  {
+    "code": "sh600160",
+    "name": "巨化股份",
+    "isImportant": false
+  },
+  {
+    "code": "sh688629",
+    "name": "华丰科技",
+    "isImportant": false
+  },
+  {
+    "code": "sz001309",
+    "name": "德明利",
+    "isImportant": true
+  },
+  {
+    "code": "sz300285",
+    "name": "国瓷材料",
+    "isImportant": true
+  },
+  {
+    "code": "sz000636",
+    "name": "风华高科",
+    "isImportant": false
+  },
+  {
+    "code": "sh688702",
+    "name": "盛科通信",
+    "isImportant": true
+  },
+  {
+    "code": "sz301165",
+    "name": "锐捷网络",
+    "isImportant": true
+  },
+  {
+    "code": "sh688025",
+    "name": "杰普特",
+    "isImportant": true
+  },
+  {
+    "code": "sh688820",
+    "name": "盛合晶微",
+    "isImportant": true
+  }
+]

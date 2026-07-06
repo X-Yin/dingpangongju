@@ -1,0 +1,20 @@
+[
+    {
+        "code": "1234",
+        "stockName": "股票 1",
+        "kline": [
+            {
+                "change": -1.4
+            }
+        ]
+    },
+    {
+        "code": "5678",
+        "stockName": "股票 2",
+        "kline": [
+            {
+                "change": 1.4
+            }
+        ]
+    }
+]

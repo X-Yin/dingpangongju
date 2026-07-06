@@ -1,0 +1,90 @@
+.jigou-reports-page {
+  padding: 24px;
+  background: #f0f2f5;
+  min-height: 100%;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    background: #fff;
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      h4 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .update-time {
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+    }
+  }
+
+  .report-card {
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .report-title-container {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+
+      .report-title {
+        font-weight: 600;
+        color: #1a1a1a;
+        white-space: normal;
+        word-break: break-all;
+      }
+
+      .report-time-inline {
+        font-size: 12px;
+        color: #8c8c8c;
+        font-weight: normal;
+      }
+    }
+
+    .report-text {
+      color: #434343;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+
+    .ant-card-head {
+      border-bottom: 1px solid #f0f0f0;
+      min-height: 48px;
+      padding: 0 20px;
+    }
+
+    .ant-card-body {
+      padding: 20px;
+    }
+  }
+
+  .ant-list-item {
+    padding: 0;
+    margin-bottom: 16px;
+  }
+}

@@ -1,0 +1,58 @@
+// 设置 react-router 路由配置和组件，要求 / 路径渲染 App 组件
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import App from './App.jsx';
+import DingPan from './pages/dingpan/index.jsx';
+import Block from './pages/block/index.jsx';
+import BlockMoneyChange from './pages/block_money_change/index.jsx';
+import BlockMoneyDayHistory from './pages/block_money_day_history/index.jsx';
+import Sentiment from './pages/sentiment/index.jsx';
+import JingJiaQiangChou from './pages/jingjia/index.jsx';
+import VolumeStatistics from './pages/volume/index.jsx';
+import ShiChangDiaoYan from './pages/shichangdiaoyan/index.jsx';
+import JigouReports from './pages/JigouReports/index.jsx';
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <App />,
+    children: [
+      {
+        path: '',
+        element: <Navigate to="/dingpan" replace />,
+      },
+      {
+        path: 'dingpan',
+        element: <DingPan />,
+      },
+      {
+        path: 'block',
+        element: <Block />,
+      },
+      {
+        path: 'block_money_change',
+        element: <BlockMoneyChange />,
+      },
+      {
+        path: 'sentiment',
+        element: <Sentiment />,
+      },
+      {
+        path: 'volume',
+        element: <VolumeStatistics />,
+      },
+      {
+        path: 'shichangdiaoyan',
+        element: <ShiChangDiaoYan />,
+      },
+      {
+        path: 'jigou_reports',
+        element: <JigouReports />,
+      },
+      {
+        path: 'block_money_day_history',
+        element: <BlockMoneyDayHistory />,
+      }
+    ]
+  }
+]);
+export default router;
