@@ -1,16 +1,698 @@
 [
   {
+    "date": "20260911",
+    "mainMoney": -542.3,
+    "amountChangeDiff": 3246.76,
+    "mainMoneyRaw": "-542.30",
+    "amountChangeDiffRaw": "3246.76",
+    "totalAmount": 19900,
+    "totalAmountRaw": "19900亿"
+  },
+  {
+    "date": "20260910",
+    "mainMoney": -336.38,
+    "amountChangeDiff": -2107.32,
+    "mainMoneyRaw": "-336.38",
+    "amountChangeDiffRaw": "-2107.32",
+    "totalAmount": 16600,
+    "totalAmountRaw": "16600亿"
+  },
+  {
+    "date": "20260909",
+    "mainMoney": -97.1,
+    "amountChangeDiff": -1051.62,
+    "mainMoneyRaw": "-97.10",
+    "amountChangeDiffRaw": "-1051.62",
+    "totalAmount": 18700,
+    "totalAmountRaw": "18700亿"
+  },
+  {
+    "date": "20260908",
+    "mainMoney": -56.53,
+    "amountChangeDiff": 139.72,
+    "mainMoneyRaw": "-56.53",
+    "amountChangeDiffRaw": "139.72",
+    "totalAmount": 19800,
+    "totalAmountRaw": "19800亿"
+  },
+  {
+    "date": "20260907",
+    "mainMoney": 386.12,
+    "amountChangeDiff": -868.4,
+    "mainMoneyRaw": "386.12",
+    "amountChangeDiffRaw": "-868.40",
+    "totalAmount": 19600,
+    "totalAmountRaw": "19600亿"
+  },
+  {
+    "date": "20260904",
+    "mainMoney": -405.69,
+    "amountChangeDiff": 2690.01,
+    "mainMoneyRaw": "-405.69",
+    "amountChangeDiffRaw": "2690.01",
+    "totalAmount": 20299.999999999996,
+    "totalAmountRaw": "20299.999999999996亿"
+  },
+  {
+    "date": "20260903",
+    "mainMoney": -127.32,
+    "amountChangeDiff": -380.44,
+    "mainMoneyRaw": "-127.32",
+    "amountChangeDiffRaw": "-380.44",
+    "totalAmount": 17600,
+    "totalAmountRaw": "17600亿"
+  },
+  {
+    "date": "20260902",
+    "mainMoney": -554.54,
+    "amountChangeDiff": -2318.55,
+    "mainMoneyRaw": "-554.54",
+    "amountChangeDiffRaw": "-2318.55",
+    "totalAmount": 18200,
+    "totalAmountRaw": "18200亿"
+  },
+  {
+    "date": "20260901",
+    "mainMoney": -320.99,
+    "amountChangeDiff": -933.71,
+    "mainMoneyRaw": "-320.99",
+    "amountChangeDiffRaw": "-933.71",
+    "totalAmount": 20500,
+    "totalAmountRaw": "20500亿"
+  },
+  {
+    "date": "20260831",
+    "mainMoney": -50.62,
+    "amountChangeDiff": 278.48,
+    "mainMoneyRaw": "-50.62",
+    "amountChangeDiffRaw": "278.48",
+    "totalAmount": 21500,
+    "totalAmountRaw": "21500亿"
+  },
+  {
+    "date": "20260828",
+    "mainMoney": -336.57,
+    "amountChangeDiff": -232.86,
+    "mainMoneyRaw": "-336.57",
+    "amountChangeDiffRaw": "-232.86",
+    "totalAmount": 21200,
+    "totalAmountRaw": "21200亿"
+  },
+  {
+    "date": "20260827",
+    "mainMoney": 547.55,
+    "amountChangeDiff": 3191.05,
+    "mainMoneyRaw": "547.55",
+    "amountChangeDiffRaw": "3191.05",
+    "totalAmount": 21400,
+    "totalAmountRaw": "21400亿"
+  },
+  {
+    "date": "20260826",
+    "mainMoney": 122.19,
+    "amountChangeDiff": -223.39,
+    "mainMoneyRaw": "122.19",
+    "amountChangeDiffRaw": "-223.39",
+    "totalAmount": 18200,
+    "totalAmountRaw": "18200亿"
+  },
+  {
+    "date": "20260825",
+    "mainMoney": 64.41,
+    "amountChangeDiff": -1769.48,
+    "mainMoneyRaw": "64.41",
+    "amountChangeDiffRaw": "-1769.48",
+    "totalAmount": 18400,
+    "totalAmountRaw": "18400亿"
+  },
+  {
+    "date": "20260824",
+    "mainMoney": -752.06,
+    "amountChangeDiff": 1290.75,
+    "mainMoneyRaw": "-752.06",
+    "amountChangeDiffRaw": "1290.75",
+    "totalAmount": 20200,
+    "totalAmountRaw": "20200亿"
+  },
+  {
+    "date": "20260821",
+    "mainMoney": 158,
+    "amountChangeDiff": -2016.56,
+    "mainMoneyRaw": "158.00",
+    "amountChangeDiffRaw": "-2016.56",
+    "totalAmount": 18900,
+    "totalAmountRaw": "18900亿"
+  },
+  {
+    "date": "20260820",
+    "mainMoney": -40.01,
+    "amountChangeDiff": -4361.59,
+    "mainMoneyRaw": "-40.01",
+    "amountChangeDiffRaw": "-4361.59",
+    "totalAmount": 20900,
+    "totalAmountRaw": "20900亿"
+  },
+  {
+    "date": "20260819",
+    "mainMoney": -1617.26,
+    "amountChangeDiff": 1102.67,
+    "mainMoneyRaw": "-1617.26",
+    "amountChangeDiffRaw": "1102.67",
+    "totalAmount": 25299.999999999996,
+    "totalAmountRaw": "25299.999999999996亿"
+  },
+  {
+    "date": "20260818",
+    "mainMoney": -668,
+    "amountChangeDiff": 172.56,
+    "mainMoneyRaw": "-668.00",
+    "amountChangeDiffRaw": "172.56",
+    "totalAmount": 24200,
+    "totalAmountRaw": "24200亿"
+  },
+  {
+    "date": "20260817",
+    "mainMoney": 505.83,
+    "amountChangeDiff": 2459.67,
+    "mainMoneyRaw": "505.83",
+    "amountChangeDiffRaw": "2459.67",
+    "totalAmount": 24000,
+    "totalAmountRaw": "24000亿"
+  },
+  {
+    "date": "20260814",
+    "mainMoney": -139.85,
+    "amountChangeDiff": -4114.4,
+    "mainMoneyRaw": "-139.85",
+    "amountChangeDiffRaw": "-4114.40",
+    "totalAmount": 21600,
+    "totalAmountRaw": "21600亿"
+  },
+  {
+    "date": "20260813",
+    "mainMoney": -472.35,
+    "amountChangeDiff": 4008.23,
+    "mainMoneyRaw": "-472.35",
+    "amountChangeDiffRaw": "4008.23",
+    "totalAmount": 25700,
+    "totalAmountRaw": "25700亿"
+  },
+  {
+    "date": "20260812",
+    "mainMoney": 262.49,
+    "amountChangeDiff": -1684.29,
+    "mainMoneyRaw": "262.49",
+    "amountChangeDiffRaw": "-1684.29",
+    "totalAmount": 21700,
+    "totalAmountRaw": "21700亿"
+  },
+  {
+    "date": "20260811",
+    "mainMoney": -425.88,
+    "amountChangeDiff": -2031.32,
+    "mainMoneyRaw": "-425.88",
+    "amountChangeDiffRaw": "-2031.32",
+    "totalAmount": 23400,
+    "totalAmountRaw": "23400亿"
+  },
+  {
+    "date": "20260810",
+    "mainMoney": -389.99,
+    "amountChangeDiff": -1446.98,
+    "mainMoneyRaw": "-389.99",
+    "amountChangeDiffRaw": "-1446.98",
+    "totalAmount": 25400,
+    "totalAmountRaw": "25400亿"
+  },
+  {
+    "date": "20260807",
+    "mainMoney": 282.71,
+    "amountChangeDiff": 1358.84,
+    "mainMoneyRaw": "282.71",
+    "amountChangeDiffRaw": "1358.84",
+    "totalAmount": 26800,
+    "totalAmountRaw": "26800亿"
+  },
+  {
+    "date": "20260806",
+    "mainMoney": -412.04,
+    "amountChangeDiff": -1324.03,
+    "mainMoneyRaw": "-412.04",
+    "amountChangeDiffRaw": "-1324.03",
+    "totalAmount": 25476.86,
+    "totalAmountRaw": "25476.86亿"
+  },
+  {
+    "date": "20260805",
+    "mainMoney": 476.9,
+    "amountChangeDiff": 4481.4,
+    "mainMoneyRaw": "476.90",
+    "amountChangeDiffRaw": "4481.40",
+    "totalAmount": 26532.94,
+    "totalAmountRaw": "26532.94亿"
+  },
+  {
+    "date": "20260804",
+    "mainMoney": 538.72,
+    "amountChangeDiff": 2173.81,
+    "mainMoneyRaw": "538.72",
+    "amountChangeDiffRaw": "2173.81",
+    "totalAmount": 22286.61,
+    "totalAmountRaw": "22286.61亿"
+  },
+  {
+    "date": "20260803",
+    "mainMoney": -368.81,
+    "amountChangeDiff": -5488.1,
+    "mainMoneyRaw": "-368.81",
+    "amountChangeDiffRaw": "-5488.10",
+    "totalAmount": 20112.81,
+    "totalAmountRaw": "20112.81亿"
+  },
+  {
+    "date": "20260731",
+    "mainMoney": 649.47,
+    "amountChangeDiff": 1947.17,
+    "mainMoneyRaw": "649.47",
+    "amountChangeDiffRaw": "1947.17",
+    "totalAmount": 25333.28,
+    "totalAmountRaw": "25333.28亿"
+  },
+  {
+    "date": "20260730",
+    "mainMoney": -91,
+    "amountChangeDiff": 467,
+    "mainMoneyRaw": "-91",
+    "amountChangeDiffRaw": "467",
+    "totalAmount": 23584,
+    "totalAmountRaw": "23584亿"
+  },
+  {
+    "date": "20260729",
+    "mainMoney": -18.64,
+    "amountChangeDiff": 2735.34,
+    "mainMoneyRaw": "-18.64",
+    "amountChangeDiffRaw": "2735.34",
+    "totalAmount": 22927.61,
+    "totalAmountRaw": "22927.61亿"
+  },
+  {
+    "date": "20260728",
+    "mainMoney": -1044.84,
+    "amountChangeDiff": -495.38,
+    "mainMoneyRaw": "-1044.84",
+    "amountChangeDiffRaw": "-495.38",
+    "totalAmount": 20393.05,
+    "totalAmountRaw": "20393.05亿"
+  },
+  {
+    "date": "20260727",
+    "mainMoney": 271.45,
+    "amountChangeDiff": 1441.65,
+    "mainMoneyRaw": "271.45",
+    "amountChangeDiffRaw": "1441.65",
+    "totalAmount": 20888.43,
+    "totalAmountRaw": "20888.43亿"
+  },
+  {
+    "date": "20260724",
+    "mainMoney": -743.68,
+    "amountChangeDiff": -2651.04,
+    "mainMoneyRaw": "-743.68",
+    "amountChangeDiffRaw": "-2651.04",
+    "totalAmount": 19446.78,
+    "totalAmountRaw": "19446.78亿"
+  },
+  {
+    "date": "20260723",
+    "mainMoney": -168.18,
+    "amountChangeDiff": -4590.37,
+    "mainMoneyRaw": "-168.18",
+    "amountChangeDiffRaw": "-4590.37",
+    "totalAmount": 22097.82,
+    "totalAmountRaw": "22097.82亿"
+  },
+  {
+    "date": "20260722",
+    "mainMoney": -182.87,
+    "amountChangeDiff": -3069.51,
+    "mainMoneyRaw": "-182.87",
+    "amountChangeDiffRaw": "-3069.51",
+    "totalAmount": 26450.72,
+    "totalAmountRaw": "26450.72亿"
+  },
+  {
+    "date": "20260721",
+    "mainMoney": 249.29,
+    "amountChangeDiff": 2796.47,
+    "mainMoneyRaw": "249.29",
+    "amountChangeDiffRaw": "2796.47",
+    "totalAmount": 27425.3,
+    "totalAmountRaw": "27425.30亿"
+  },
+  {
+    "date": "20260720",
+    "mainMoney": -459.43,
+    "amountChangeDiff": 464.24,
+    "mainMoneyRaw": "-459.43",
+    "amountChangeDiffRaw": "464.24",
+    "totalAmount": 27182.88,
+    "totalAmountRaw": "27182.88亿"
+  },
+  {
+    "date": "20260717",
+    "mainMoney": -1411.07,
+    "amountChangeDiff": 2527.45,
+    "mainMoneyRaw": "-1411.07",
+    "amountChangeDiffRaw": "2527.45",
+    "totalAmount": 26718
+  },
+  {
+    "date": "20260716",
+    "mainMoney": -748.26,
+    "amountChangeDiff": -1685.12,
+    "mainMoneyRaw": "-748.26",
+    "amountChangeDiffRaw": "-1685.12",
+    "totalAmount": 24191
+  },
+  {
+    "date": "20260715",
+    "mainMoney": -459.99,
+    "amountChangeDiff": -1322.26,
+    "mainMoneyRaw": "-459.99",
+    "amountChangeDiffRaw": "-1322.26",
+    "totalAmount": 25876
+  },
+  {
+    "date": "20260714",
+    "mainMoney": 168.91,
+    "amountChangeDiff": -1152.1,
+    "mainMoneyRaw": "168.91",
+    "amountChangeDiffRaw": "-1152.10",
+    "totalAmount": 27196
+  },
+  {
+    "date": "20260713",
+    "mainMoney": -1549.67,
+    "amountChangeDiff": -5759.88,
+    "mainMoneyRaw": "-1549.67亿",
+    "amountChangeDiffRaw": "-5759.88亿",
+    "totalAmount": 28348
+  },
+  {
+    "date": "20260710",
+    "mainMoney": -415.38,
+    "amountChangeDiff": 4784.37,
+    "mainMoneyRaw": "-415.38亿",
+    "amountChangeDiffRaw": "+4784.37亿",
+    "totalAmount": 34108
+  },
+  {
+    "date": "20260709",
+    "mainMoney": 274.58,
+    "amountChangeDiff": 3496.89,
+    "mainMoneyRaw": "274.58亿",
+    "amountChangeDiffRaw": "+3496.89亿",
+    "totalAmount": 29324
+  },
+  {
+    "date": "20260708",
+    "mainMoney": -602.46,
+    "amountChangeDiff": -158.64,
+    "mainMoneyRaw": "-602.46亿",
+    "amountChangeDiffRaw": "-158.64亿",
+    "totalAmount": 25827
+  },
+  {
+    "date": "20260707",
+    "mainMoney": -755.94,
+    "amountChangeDiff": -5140.29,
+    "mainMoneyRaw": "-755.94亿",
+    "amountChangeDiffRaw": "-5140.29亿",
+    "totalAmount": 25986
+  },
+  {
     "date": "20260706",
     "mainMoney": -820.48,
     "amountChangeDiff": -930.5,
     "mainMoneyRaw": "-820.48亿",
-    "amountChangeDiffRaw": "-930.50亿"
+    "amountChangeDiffRaw": "-930.50亿",
+    "totalAmount": 31126
   },
   {
     "date": "20260703",
     "mainMoney": -160.81,
     "amountChangeDiff": -2686.84,
     "mainMoneyRaw": "-160.81亿",
-    "amountChangeDiffRaw": "-2686.84亿"
+    "amountChangeDiffRaw": "-2686.84亿",
+    "totalAmount": 32054
+  },
+  {
+    "date": "20260702",
+    "totalAmount": 34741
+  },
+  {
+    "date": "20260701",
+    "totalAmount": 36830
+  },
+  {
+    "date": "20260630",
+    "totalAmount": 32941
+  },
+  {
+    "date": "20260629",
+    "totalAmount": 35395
+  },
+  {
+    "date": "20260626",
+    "totalAmount": 35757
+  },
+  {
+    "date": "20260625",
+    "totalAmount": 36192
+  },
+  {
+    "date": "20260624",
+    "totalAmount": 33071
+  },
+  {
+    "date": "20260623",
+    "totalAmount": 34662
+  },
+  {
+    "date": "20260622",
+    "totalAmount": 37624
+  },
+  {
+    "date": "20260618",
+    "totalAmount": 33321
+  },
+  {
+    "date": "20260617",
+    "totalAmount": 31142
+  },
+  {
+    "date": "20260616",
+    "totalAmount": 30865
+  },
+  {
+    "date": "20260615",
+    "totalAmount": 30509
+  },
+  {
+    "date": "20260612",
+    "totalAmount": 32362
+  },
+  {
+    "date": "20260611",
+    "totalAmount": 25751
+  },
+  {
+    "date": "20260610",
+    "totalAmount": 26443
+  },
+  {
+    "date": "20260609",
+    "totalAmount": 26669
+  },
+  {
+    "date": "20260608",
+    "totalAmount": 28236
+  },
+  {
+    "date": "20260605",
+    "totalAmount": 31010
+  },
+  {
+    "date": "20260604",
+    "totalAmount": 27794
+  },
+  {
+    "date": "20260603",
+    "totalAmount": 31534
+  },
+  {
+    "date": "20260602",
+    "totalAmount": 28132
+  },
+  {
+    "date": "20260601",
+    "totalAmount": 28969
+  },
+  {
+    "date": "20260529",
+    "totalAmount": 33412
+  },
+  {
+    "date": "20260528",
+    "totalAmount": 29875
+  },
+  {
+    "date": "20260527",
+    "totalAmount": 32602
+  },
+  {
+    "date": "20260526",
+    "totalAmount": 32646
+  },
+  {
+    "date": "20260525",
+    "totalAmount": 32272
+  },
+  {
+    "date": "20260522",
+    "totalAmount": 29249
+  },
+  {
+    "date": "20260521",
+    "totalAmount": 35076
+  },
+  {
+    "date": "20260520",
+    "totalAmount": 29767
+  },
+  {
+    "date": "20260519",
+    "totalAmount": 29092
+  },
+  {
+    "date": "20260518",
+    "totalAmount": 29174
+  },
+  {
+    "date": "20260515",
+    "totalAmount": 33704
+  },
+  {
+    "date": "20260514",
+    "totalAmount": 33884
+  },
+  {
+    "date": "20260513",
+    "totalAmount": 32645
+  },
+  {
+    "date": "20260512",
+    "totalAmount": 32700
+  },
+  {
+    "date": "20260511",
+    "totalAmount": 35657
+  },
+  {
+    "date": "20260508",
+    "totalAmount": 30759
+  },
+  {
+    "date": "20260507",
+    "totalAmount": 31686
+  },
+  {
+    "date": "20260506",
+    "totalAmount": 32469
+  },
+  {
+    "date": "20260430",
+    "totalAmount": 27595
+  },
+  {
+    "date": "20260429",
+    "totalAmount": 26090
+  },
+  {
+    "date": "20260428",
+    "totalAmount": 25508
+  },
+  {
+    "date": "20260427",
+    "totalAmount": 26051
+  },
+  {
+    "date": "20260424",
+    "totalAmount": 26051
+  },
+  {
+    "date": "20260423",
+    "totalAmount": 28235
+  },
+  {
+    "date": "20260422",
+    "totalAmount": 25790
+  },
+  {
+    "date": "20260421",
+    "totalAmount": 24268
+  },
+  {
+    "date": "20260420",
+    "totalAmount": 26066
+  },
+  {
+    "date": "20260417",
+    "totalAmount": 24530
+  },
+  {
+    "date": "20260416",
+    "totalAmount": 23551
+  },
+  {
+    "date": "20260415",
+    "totalAmount": 24296
+  },
+  {
+    "date": "20260414",
+    "totalAmount": 23969
+  },
+  {
+    "date": "20260413",
+    "totalAmount": 21632
+  },
+  {
+    "date": "20260410",
+    "totalAmount": 23377
+  },
+  {
+    "date": "20260409",
+    "totalAmount": 21474
+  },
+  {
+    "date": "20260408",
+    "totalAmount": 24509
+  },
+  {
+    "date": "20260407",
+    "totalAmount": 16237
+  },
+  {
+    "date": "20260403",
+    "totalAmount": 16690
+  },
+  {
+    "date": "20260402",
+    "totalAmount": 18579
+  },
+  {
+    "date": "20260401",
+    "totalAmount": 20250
   }
 ]

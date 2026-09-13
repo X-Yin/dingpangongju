@@ -10,6 +10,13 @@ import './index.scss';
 
 const { Title, Text } = Typography;
 
+const isAfterMarketClose = () => {
+  const now = dayjs();
+  const currentHour = now.hour();
+  const currentMinute = now.minute();
+  return currentHour < 9 || (currentHour === 9 && currentMinute < 15) || currentHour >= 15 || (currentHour === 14 && currentMinute >= 59);
+};
+
 const JingJiaQiangChou = () => {
     const [data, setData] = useState([]);
     const [tlineDataMap, setTlineDataMap] = useState({}); // 存储每只股票的分时数据
@@ -81,10 +88,23 @@ const JingJiaQiangChou = () => {
 
     useEffect(() => {
         fetchData();
-        // 开启 5s 定时器
-        timerRef.current = setInterval(fetchData, 5000);
+
+        const timers = [];
+        const schedulePoll = (callback, delay) => {
+            const timer = setTimeout(() => {
+                if (!isAfterMarketClose()) {
+                    callback();
+                    schedulePoll(callback, delay);
+                }
+            }, delay);
+            timers.push(timer);
+            return timer;
+        };
+
+        schedulePoll(fetchData, 5000);
+
         return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
+            timers.forEach(clearTimeout);
         };
     }, []);
 

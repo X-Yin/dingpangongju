@@ -1,0 +1,66 @@
+.shichangdiaoyan-container {
+  height: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: transparent;
+
+  .diaoyan-header {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 16px 24px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+
+    .header-menu {
+      background: transparent;
+      border-bottom: none;
+      line-height: 40px;
+      display: flex;
+      justify-content: flex-start;
+
+      .ant-menu-item {
+        margin: 0 4px;
+        border-radius: 8px;
+        transition: all 0.3s;
+        
+        &::after {
+          display: none;
+        }
+
+        &-selected {
+          background: rgba(var(--theme-color-rgb, 24, 144, 255), 0.1);
+          color: var(--theme-color, #1890ff) !important;
+          font-weight: 600;
+        }
+
+        &:hover {
+          background: rgba(0, 0, 0, 0.04);
+          color: var(--theme-color, #1890ff) !important;
+        }
+      }
+    }
+  }
+
+  .diaoyan-content {
+    flex: 1;
+    min-height: 0;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    padding: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    & > div {
+      height: 100%;
+    }
+  }
+}

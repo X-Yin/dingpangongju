@@ -28,7 +28,7 @@
         display: inline-block;
         width: 4px;
         height: 16px;
-        background: #1890ff;
+        background: var(--theme-color, #1890ff);
         margin-right: 8px;
         border-radius: 2px;
       }
@@ -120,9 +120,9 @@
       }
 
       &.today {
-        background: rgba(24, 144, 255, 0.15) !important; // 更明显的淡蓝色背景
+        background: rgba(var(--theme-color-rgb, 24, 144, 255), 0.15) !important; // 更明显的淡蓝色背景
         .date-num, .date-weekday, .date-month { 
-          color: #1890ff !important; // 核心文字变为蓝色
+          color: var(--theme-color, #1890ff) !important; // 核心文字变为蓝色
           font-weight: bold;
         }
       }
@@ -261,13 +261,14 @@
           transition: opacity 0.2s;
           display: flex;
           align-items: center;
+          touch-action: none;
 
           &:active {
             cursor: grabbing;
           }
 
           &:hover {
-            color: #1890ff;
+            color: var(--theme-color, #1890ff);
           }
         }
 
@@ -361,9 +362,9 @@
       height: 100%;
 
       &.today {
-        background: rgba(24, 144, 255, 0.08); // 整个一列背景变为淡蓝色
-        border-right-color: rgba(24, 144, 255, 0.3);
-        border-left: 1px solid rgba(24, 144, 255, 0.3);
+        background: rgba(var(--theme-color-rgb, 24, 144, 255), 0.08); // 整个一列背景变为淡蓝色
+        border-right-color: rgba(var(--theme-color-rgb, 24, 144, 255), 0.3);
+        border-left: 1px solid rgba(var(--theme-color-rgb, 24, 144, 255), 0.3);
       }
 
       &.weekend {

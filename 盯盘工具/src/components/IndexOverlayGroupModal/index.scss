@@ -1,0 +1,145 @@
+.iog-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.iog-form-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.iog-form-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.iog-form-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.iog-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.iog-date-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.iog-date-hint {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.iog-date-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.iog-date-empty {
+    font-size: 12px;
+    color: #9ca3af;
+    padding: 4px 0;
+}
+
+.iog-form-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.iog-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.iog-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.iog-list-count {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.iog-loading {
+    display: flex;
+    justify-content: center;
+    padding: 40px 0;
+}
+
+.iog-group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.iog-group-item {
+    display: flex;
+    align-items: flex-start;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.iog-group-item:hover {
+    border-color: #1677ff;
+    box-shadow: 0 2px 8px rgba(22, 119, 255, 0.12);
+}
+
+.iog-group-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.iog-group-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.iog-group-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.iog-group-desc {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+    word-break: break-all;
+}
+
+.iog-group-dates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.iog-group-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding-left: 8px;
+}

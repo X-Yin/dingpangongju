@@ -130,18 +130,25 @@ const findParentAndIndex = (items, id, parent = null) => {
 
 const pinResearchReport = (id) => {
   const menu = getMenu();
-  const result = findParentAndIndex(menu, id);
-  if (!result) return false;
+  const item = findItemById(menu, id);
+  if (!item || item.type !== 'report') return false;
 
-  const { items, index } = result;
-  const item = items[index];
+  // 切换置顶状态
+  const newIsPinned = !item.isPinned;
   
-  // 只有研报可以置顶
-  if (item.type !== 'report') return false;
-
-  // 移除该项并插入到开头
-  items.splice(index, 1);
-  items.unshift(item);
+  // 更新状态并处理位置
+  const result = findParentAndIndex(menu, id);
+  if (result) {
+    const { items, index } = result;
+    const targetItem = items[index];
+    targetItem.isPinned = newIsPinned;
+    
+    // 如果是置顶操作，则移动到其所在层级的开头
+    if (newIsPinned) {
+      items.splice(index, 1);
+      items.unshift(targetItem);
+    }
+  }
   
   writeMenu(menu);
   return true;
@@ -192,6 +199,7 @@ const createResearchReport = (parentId, name, type, content = '') => {
     name,
     type,
     isImportant: false,
+    isHidden: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -236,14 +244,68 @@ const deleteResearchReport = (id) => {
   return true;
 };
 
+const deleteResearchReports = (ids) => {
+  const menu = getMenu();
+  for (const id of ids) {
+    deleteItemRecursively(menu, id);
+  }
+  writeMenu(menu);
+  return true;
+};
+
 const moveResearchReport = (id, newParentId) => {
   const menu = getMenu();
   const removedItem = removeItemById(menu, id);
   if (!removedItem) return false;
-  
+
   addItemToParent(menu, newParentId, removedItem);
   writeMenu(menu);
   return true;
+};
+
+/**
+ * 取最近 N 个文件夹（按 name 即日期字符串降序）内所有研报及其内容
+ * 用于「复制上下文」功能
+ */
+const getRecentFoldersReports = (folderCount = 30) => {
+  const menu = getMenu();
+  const folders = menu
+    .filter((item) => item && item.type === 'folder')
+    .sort((a, b) => String(b.name).localeCompare(String(a.name)));
+
+  const recentFolders = folders.slice(0, folderCount);
+  const result = [];
+
+  for (const folder of recentFolders) {
+    const reports = [];
+    const collectReports = (items) => {
+      if (!Array.isArray(items)) return;
+      for (const item of items) {
+        if (item.type === 'report') {
+          reports.push({
+            id: item.id,
+            name: item.name,
+            content: getReportContent(item.id),
+            isImportant: !!item.isImportant,
+            isPinned: !!item.isPinned,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+          });
+        } else if (item.type === 'folder' && item.children) {
+          collectReports(item.children);
+        }
+      }
+    };
+    collectReports(folder.children);
+    // 文件夹内按 updatedAt 降序排列研报
+    reports.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+    result.push({
+      folderName: folder.name,
+      reports,
+    });
+  }
+
+  return result;
 };
 
 module.exports = {
@@ -252,6 +314,8 @@ module.exports = {
   createResearchReport,
   updateResearchReport,
   deleteResearchReport,
+  deleteResearchReports,
   moveResearchReport,
-  pinResearchReport
+  pinResearchReport,
+  getRecentFoldersReports,
 };

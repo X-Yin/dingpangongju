@@ -1,0 +1,295 @@
+.data-center-container {
+  padding: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+
+  .dc-header {
+    margin-bottom: 16px;
+
+    .dc-title {
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .dc-subtitle {
+      font-size: 13px;
+      color: #8c8c8c;
+      margin: 0;
+    }
+  }
+
+  .dc-tabs {
+    .ant-tabs-tab {
+      font-size: 15px;
+    }
+  }
+}
+
+// 通用工具栏
+.dc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+
+  .dc-selected-info {
+    font-size: 13px;
+    color: #595959;
+    margin-left: auto;
+    margin-right: 0;
+
+    strong {
+      color: #262626;
+    }
+  }
+}
+
+// 选项栏
+.dc-options-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+
+  > span:first-child {
+    font-size: 14px;
+    color: #595959;
+    font-weight: 500;
+  }
+}
+
+// ========== 数据文件 Tab ==========
+.dc-data-files {
+  .dc-files-body {
+    display: flex;
+    gap: 16px;
+    min-height: 500px;
+  }
+
+  .dc-files-tree {
+    flex: 0 0 380px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 12px;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 1px solid #f0f0f0;
+
+    .ant-tree {
+      background: transparent;
+      font-size: 13px;
+    }
+  }
+
+  .dc-file-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+
+    &.dc-file-item-dim {
+      opacity: 0.4;
+    }
+
+    .dc-file-name {
+      margin-right: 4px;
+    }
+
+    .dc-file-size {
+      font-size: 11px;
+      color: #bfbfbf;
+    }
+
+    .dc-file-alias-badge {
+      font-size: 10px;
+      color: #fff;
+      background: var(--theme-color, #1890ff);
+      padding: 0 4px;
+      border-radius: 3px;
+      line-height: 16px;
+      height: 16px;
+    }
+
+    .dc-hidden-badge {
+      font-size: 10px;
+      color: #fff;
+      background: #bfbfbf;
+      padding: 0 4px;
+      border-radius: 3px;
+      line-height: 16px;
+      height: 16px;
+    }
+
+    &.dc-file-item-hidden {
+      opacity: 0.5;
+    }
+
+    .dc-rename-btn {
+      font-size: 12px;
+      color: #bfbfbf;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, color 0.2s;
+      margin-left: 2px;
+
+      &:hover {
+        color: var(--theme-color, #1890ff);
+      }
+    }
+  }
+
+  // hover 时显示重命名按钮
+  .ant-tree-treenode:hover .dc-rename-btn {
+    opacity: 1;
+  }
+
+  .dc-files-preview {
+    flex: 1;
+    min-width: 0;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    overflow: hidden;
+
+    .dc-preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #fafafa;
+      border-bottom: 1px solid #f0f0f0;
+
+      .dc-preview-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: #262626;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .dc-preview-content {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      margin: 0;
+      padding: 12px;
+      font-size: 12px;
+      line-height: 1.6;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #333;
+      background: #fff;
+    }
+  }
+}
+
+// ========== 自选股数据 Tab ==========
+.dc-stocks-data {
+  .dc-stocks-list {
+    min-height: 400px;
+  }
+
+  .dc-stocks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 8px;
+  }
+
+  .dc-stock-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fff;
+    user-select: none;
+
+    &:hover {
+      border-color: var(--theme-color, #1890ff);
+      box-shadow: 0 2px 8px rgba(var(--theme-color-rgb, 22, 119, 255), 0.15);
+    }
+
+    &.dc-stock-chip-selected {
+      border-color: var(--theme-color, #1890ff);
+      background: rgba(var(--theme-color-rgb, 22, 119, 255), 0.06);
+    }
+
+    .dc-stock-chip-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #262626;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 80px;
+    }
+
+    .dc-stock-chip-code {
+      font-size: 11px;
+      color: #8c8c8c;
+      flex-shrink: 0;
+    }
+
+    .dc-stock-chip-change {
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: auto;
+    }
+
+    .dc-stock-chip-check {
+      color: var(--theme-color, #1890ff);
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+  }
+}
+
+// ========== 指数数据 Tab ==========
+.dc-indexes-data {
+  .dc-index-tag {
+    padding: 4px 12px;
+    font-size: 13px;
+    border-radius: 4px;
+    border: 1px solid #d9d9d9;
+    margin-right: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &.ant-tag-checkable-checked {
+      background: var(--theme-color, #1890ff);
+      border-color: var(--theme-color, #1890ff);
+      color: #fff;
+    }
+  }
+
+  .dc-indexes-tips {
+    margin-top: 8px;
+
+    p {
+      margin: 0 0 4px 0;
+      font-size: 13px;
+      color: #595959;
+      line-height: 1.8;
+
+      strong {
+        color: #262626;
+      }
+    }
+  }
+}

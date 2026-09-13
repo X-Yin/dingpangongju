@@ -1,0 +1,135 @@
+.logic-explore-modal {
+  .ant-modal-content {
+    border-radius: var(--ios-r-lg);
+    background: var(--ios-glass);
+    box-shadow: var(--ios-shadow-3);
+    backdrop-filter: var(--ios-blur);
+    font-family: var(--ios-font);
+  }
+
+  .ant-modal-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--ios-separator);
+    background: var(--ios-glass);
+    backdrop-filter: var(--ios-blur);
+    border-radius: var(--ios-r-lg) var(--ios-r-lg) 0 0;
+
+    .ant-modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ios-label);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  .ant-modal-body {
+    padding: 20px 24px;
+    max-height: 650px;
+    overflow-y: auto;
+  }
+
+  .ant-tabs-nav {
+    margin-bottom: 16px;
+  }
+
+  .logic-explore-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .logic-explore-item {
+    padding: 16px;
+    background: rgba(248, 250, 252, 0.8);
+    border-radius: 10px;
+    border: 1px solid rgba(226, 232, 240, 0.6);
+    transition: box-shadow 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  .logic-explore-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .logic-explore-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .logic-explore-folder-tag {
+    flex-shrink: 0;
+  }
+
+  .logic-explore-time {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 10px;
+  }
+
+  .logic-explore-content {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+
+    &.markdown-content {
+      h1, h2, h3, h4, h5, h6 {
+        margin: 12px 0 8px;
+        color: #1e293b;
+      }
+
+      p {
+        margin: 8px 0;
+      }
+
+      ul, ol {
+        margin: 8px 0;
+        padding-left: 20px;
+      }
+
+      li {
+        margin: 4px 0;
+      }
+
+      code {
+        background: rgba(0, 0, 0, 0.06);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'SF Mono', Consolas, Monaco, monospace;
+        font-size: 12px;
+      }
+
+      strong {
+        color: #1e293b;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .logic-explore-empty {
+    padding: 40px 0;
+    text-align: center;
+  }
+
+  .highlight-stock {
+    background: linear-gradient(135deg, rgba(255, 230, 230, 0.8) 0%, rgba(255, 200, 200, 0.8) 100%);
+    color: #d93636;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin: 0 2px;
+  }
+}

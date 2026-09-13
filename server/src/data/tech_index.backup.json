@@ -1,0 +1,309 @@
+[
+  {
+    "date": 20260508,
+    "changeSumResult": -1.45,
+    "rawSum": -4.34
+  },
+  {
+    "date": 20260511,
+    "changeSumResult": 44.71,
+    "rawSum": 144.32
+  },
+  {
+    "date": 20260512,
+    "changeSumResult": 10.71,
+    "rawSum": 32.25
+  },
+  {
+    "date": 20260513,
+    "changeSumResult": 45.09,
+    "rawSum": 145.73
+  },
+  {
+    "date": 20260514,
+    "changeSumResult": -24.44,
+    "rawSum": -74.85
+  },
+  {
+    "date": 20260515,
+    "changeSumResult": -24.09,
+    "rawSum": -73.72
+  },
+  {
+    "date": 20260518,
+    "changeSumResult": 21.17,
+    "rawSum": 64.5
+  },
+  {
+    "date": 20260519,
+    "changeSumResult": 7.4,
+    "rawSum": 22.24
+  },
+  {
+    "date": 20260520,
+    "changeSumResult": 46.54,
+    "rawSum": 151.25
+  },
+  {
+    "date": 20260521,
+    "changeSumResult": -44.35,
+    "rawSum": -142.97
+  },
+  {
+    "date": 20260522,
+    "changeSumResult": 63.45,
+    "rawSum": 224.68
+  },
+  {
+    "date": 20260525,
+    "changeSumResult": 60.57,
+    "rawSum": 210.62
+  },
+  {
+    "date": 20260526,
+    "changeSumResult": 1.04,
+    "rawSum": 3.13
+  },
+  {
+    "date": 20260527,
+    "changeSumResult": -12.53,
+    "rawSum": -37.78
+  },
+  {
+    "date": 20260528,
+    "changeSumResult": 45.99,
+    "rawSum": 149.15
+  },
+  {
+    "date": 20260529,
+    "changeSumResult": -19.25,
+    "rawSum": -58.47
+  },
+  {
+    "date": 20260601,
+    "changeSumResult": -60,
+    "rawSum": -207.94
+  },
+  {
+    "date": 20260602,
+    "changeSumResult": 56.36,
+    "rawSum": 191.42
+  },
+  {
+    "date": 20260603,
+    "changeSumResult": 43.66,
+    "rawSum": 140.41
+  },
+  {
+    "date": 20260604,
+    "changeSumResult": 32.63,
+    "rawSum": 101.6
+  },
+  {
+    "date": 20260605,
+    "changeSumResult": -50.78,
+    "rawSum": -167.92
+  },
+  {
+    "date": 20260608,
+    "changeSumResult": -33.01,
+    "rawSum": -102.87
+  },
+  {
+    "date": 20260609,
+    "changeSumResult": 62.43,
+    "rawSum": 219.62
+  },
+  {
+    "date": 20260610,
+    "changeSumResult": -20.74,
+    "rawSum": -63.15
+  },
+  {
+    "date": 20260611,
+    "changeSumResult": 12.51,
+    "rawSum": 37.74
+  },
+  {
+    "date": 20260612,
+    "changeSumResult": -10,
+    "rawSum": -30.1
+  },
+  {
+    "date": 20260615,
+    "changeSumResult": 69.74,
+    "rawSum": 258.68
+  },
+  {
+    "date": 20260616,
+    "changeSumResult": 27.76,
+    "rawSum": 85.51
+  },
+  {
+    "date": 20260617,
+    "changeSumResult": 41.19,
+    "rawSum": 131.36
+  },
+  {
+    "date": 20260618,
+    "changeSumResult": 43.63,
+    "rawSum": 140.31
+  },
+  {
+    "date": 20260622,
+    "changeSumResult": 14.52,
+    "rawSum": 43.87
+  },
+  {
+    "date": 20260623,
+    "changeSumResult": -33.05,
+    "rawSum": -103.03
+  },
+  {
+    "date": 20260624,
+    "changeSumResult": 44.52,
+    "rawSum": 143.61
+  },
+  {
+    "date": 20260625,
+    "changeSumResult": 49.79,
+    "rawSum": 163.94
+  },
+  {
+    "date": 20260626,
+    "changeSumResult": -49.61,
+    "rawSum": -163.22
+  },
+  {
+    "date": 20260629,
+    "changeSumResult": -6.75,
+    "rawSum": -20.27
+  },
+  {
+    "date": 20260630,
+    "changeSumResult": 41.39,
+    "rawSum": 132.11
+  },
+  {
+    "date": 20260701,
+    "changeSumResult": -38.65,
+    "rawSum": -122.32
+  },
+  {
+    "date": 20260702,
+    "changeSumResult": -72.4,
+    "rawSum": -274.83
+  },
+  {
+    "date": 20260703,
+    "changeSumResult": 5.8,
+    "rawSum": 17.41
+  },
+  {
+    "date": 20260706,
+    "changeSumResult": -29.44,
+    "rawSum": -91.02
+  },
+  {
+    "date": 20260707,
+    "changeSumResult": -18.05,
+    "rawSum": -54.76
+  },
+  {
+    "date": 20260708,
+    "changeSumResult": -32.66,
+    "rawSum": -101.72
+  },
+  {
+    "date": 20260709,
+    "changeSumResult": 94.55,
+    "rawSum": 536.15
+  },
+  {
+    "date": 20260710,
+    "changeSumResult": -84.53,
+    "rawSum": -371.86
+  },
+  {
+    "date": 20260713,
+    "changeSumResult": -89.56,
+    "rawSum": -434.8
+  },
+  {
+    "date": 20260714,
+    "changeSumResult": 80.85,
+    "rawSum": 336.84
+  },
+  {
+    "date": 20260715,
+    "changeSumResult": -85.46,
+    "rawSum": -381.92
+  },
+  {
+    "date": 20260716,
+    "changeSumResult": -84.97,
+    "rawSum": -376.55
+  },
+  {
+    "date": 20260717,
+    "changeSumResult": -98.69,
+    "rawSum": -753.59
+  },
+  {
+    "date": 20260720,
+    "changeSumResult": -96.21,
+    "rawSum": -592.2
+  },
+  {
+    "date": 20260721,
+    "changeSumResult": 99.07,
+    "rawSum": 805.36
+  },
+  {
+    "date": 20260722,
+    "changeSumResult": -52.51,
+    "rawSum": -174.99
+  },
+  {
+    "date": 20260723,
+    "changeSumResult": -49.17,
+    "rawSum": -161.48
+  },
+  {
+    "date": 20260724,
+    "changeSumResult": -37.68,
+    "rawSum": -118.88
+  },
+  {
+    "date": 20260726,
+    "changeSumResult": -37.9,
+    "rawSum": -119.66
+  },
+  {
+    "date": 20260727,
+    "changeSumResult": 77.79,
+    "rawSum": 312.01
+  },
+  {
+    "date": 20260728,
+    "changeSumResult": -98.43,
+    "rawSum": -725.89
+  },
+  {
+    "date": 20260729,
+    "changeSumResult": -46.17,
+    "rawSum": -149.83
+  },
+  {
+    "date": 20260730,
+    "changeSumResult": -96.49,
+    "rawSum": -603.55
+  },
+  {
+    "date": 20260731,
+    "changeSumResult": 42.76,
+    "rawSum": 348.08,
+    "baseEmotion": 82.11,
+    "pullbackPenalty": -98.38
+  }
+]

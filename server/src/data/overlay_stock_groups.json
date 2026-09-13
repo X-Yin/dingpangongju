@@ -1,0 +1,234 @@
+[
+  {
+    "id": "g_1785944027573_gi3paz",
+    "name": "存储",
+    "stocks": [
+      {
+        "code": "sz301308",
+        "stockName": "江波龙",
+        "change": 8.59
+      },
+      {
+        "code": "sh603986",
+        "stockName": "兆易创新",
+        "change": 8.26
+      },
+      {
+        "code": "sh688525",
+        "stockName": "佰维存储",
+        "change": 7.14
+      },
+      {
+        "code": "sz001309",
+        "stockName": "德明利",
+        "change": 6.06
+      },
+      {
+        "code": "sh688825",
+        "stockName": "长鑫科技",
+        "change": -1.27
+      }
+    ],
+    "createdAt": "2026-08-05T15:33:47.573Z",
+    "updatedAt": "2026-08-05T15:34:12.890Z"
+  },
+  {
+    "id": "g_1785944096950_mmv7lj",
+    "name": "光纤",
+    "stocks": [
+      {
+        "code": "sh601869",
+        "stockName": "长飞光纤",
+        "change": 10
+      },
+      {
+        "code": "sh600487",
+        "stockName": "亨通光电",
+        "change": 8.24
+      }
+    ],
+    "createdAt": "2026-08-05T15:34:56.950Z",
+    "updatedAt": "2026-08-05T15:34:56.950Z"
+  },
+  {
+    "id": "g_1785944112769_ckv3vh",
+    "name": "铜箔",
+    "stocks": [
+      {
+        "code": "sz301511",
+        "stockName": "德福科技",
+        "change": 11.72
+      },
+      {
+        "code": "sz301217",
+        "stockName": "铜冠铜箔",
+        "change": 10.14
+      }
+    ],
+    "createdAt": "2026-08-05T15:35:12.769Z",
+    "updatedAt": "2026-08-05T15:35:12.769Z"
+  },
+  {
+    "id": "g_1785944133543_odwu4v",
+    "name": "电子布",
+    "stocks": [
+      {
+        "code": "sz300395",
+        "stockName": "菲利华",
+        "change": -1.68
+      },
+      {
+        "code": "sh603256",
+        "stockName": "宏和科技",
+        "change": -2.31
+      },
+      {
+        "code": "sz301526",
+        "stockName": "国际复材",
+        "change": -2.91
+      },
+      {
+        "code": "sh600176",
+        "stockName": "中国巨石",
+        "change": -3.04
+      },
+      {
+        "code": "sz002080",
+        "stockName": "中材科技",
+        "change": -3.06
+      }
+    ],
+    "createdAt": "2026-08-05T15:35:33.543Z",
+    "updatedAt": "2026-08-18T14:48:50.144Z"
+  },
+  {
+    "id": "g_1785944188402_99pu5a",
+    "name": "半导体",
+    "stocks": [
+      {
+        "code": "sh688012",
+        "stockName": "中微公司",
+        "change": 12.67
+      },
+      {
+        "code": "sh688072",
+        "stockName": "拓荆科技",
+        "change": 12.14
+      },
+      {
+        "code": "sh688361",
+        "stockName": "中科飞测",
+        "change": 7.43
+      },
+      {
+        "code": "sh688120",
+        "stockName": "华海清科",
+        "change": 6.53
+      }
+    ],
+    "createdAt": "2026-08-05T15:36:28.402Z",
+    "updatedAt": "2026-08-05T15:36:28.402Z"
+  },
+  {
+    "id": "g_1785944545943_jwwtxl",
+    "name": "光芯片",
+    "stocks": [
+      {
+        "code": "sh688313",
+        "stockName": "仕佳光子",
+        "change": 1.44
+      },
+      {
+        "code": "sh688048",
+        "stockName": "长光华芯",
+        "change": 1.22
+      },
+      {
+        "code": "sh688498",
+        "stockName": "源杰科技",
+        "change": 1.16
+      }
+    ],
+    "createdAt": "2026-08-05T15:42:25.943Z",
+    "updatedAt": "2026-08-18T14:47:41.010Z"
+  },
+  {
+    "id": "g_1785946083862_li9n91",
+    "name": "国产超节点",
+    "stocks": [
+      {
+        "code": "sz301165",
+        "stockName": "锐捷网络",
+        "change": 7.37
+      },
+      {
+        "code": "sh688702",
+        "stockName": "盛科通信",
+        "change": 3.68
+      },
+      {
+        "code": "sh688629",
+        "stockName": "华丰科技",
+        "change": 3.38
+      }
+    ],
+    "createdAt": "2026-08-05T16:08:03.862Z",
+    "updatedAt": "2026-08-05T16:08:03.862Z"
+  },
+  {
+    "id": "g_1785979352485_xixas4",
+    "name": "液冷",
+    "stocks": [
+      {
+        "code": "sz002536",
+        "stockName": "飞龙股份",
+        "change": -0.18
+      },
+      {
+        "code": "sz002837",
+        "stockName": "英维克",
+        "change": -0.86
+      },
+      {
+        "code": "sh603757",
+        "stockName": "大元泵业",
+        "change": -2.07
+      },
+      {
+        "code": "sz301018",
+        "stockName": "申菱环境",
+        "change": -2.38
+      }
+    ],
+    "createdAt": "2026-08-06T01:22:32.485Z",
+    "updatedAt": "2026-08-06T01:22:44.160Z"
+  },
+  {
+    "id": "g_1787064494654_49mi5i",
+    "name": "先进封装",
+    "stocks": [
+      {
+        "code": "sz002156",
+        "stockName": "通富微电",
+        "change": 2.02
+      },
+      {
+        "code": "sh688820",
+        "stockName": "盛合晶微",
+        "change": 0.34
+      },
+      {
+        "code": "sh600584",
+        "stockName": "长电科技",
+        "change": -0.5
+      },
+      {
+        "code": "sh688362",
+        "stockName": "甬矽电子",
+        "change": -0.69
+      }
+    ],
+    "createdAt": "2026-08-18T14:48:14.654Z",
+    "updatedAt": "2026-08-18T14:48:14.654Z"
+  }
+]

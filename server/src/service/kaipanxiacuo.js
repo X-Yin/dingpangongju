@@ -23,13 +23,19 @@ const getKaiPanXiaCuoData = () => {
     const latestData = JSON.parse(fs.readFileSync(path.resolve(dirPath, latestFile), 'utf-8'));
     const firstData = JSON.parse(fs.readFileSync(path.resolve(dirPath, firstFile), 'utf-8'));
 
-    // 比对逻辑与主动拉升相反：最新 change 小于第一次的 change 即为持续下挫
+    const monitorStocks = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/monitor_stocks.json'), 'utf-8'));
+    const blockMap = {};
+    monitorStocks.forEach(s => {
+        blockMap[s.code] = s.blockName;
+    });
+
     return latestData.filter((stock) => {
         const firstStock = firstData.find(stockItem => stock.code === stockItem.code);
         return stock?.kline?.[0]?.change < firstStock?.kline?.[0]?.change;
     }).map(stock => ({
         code: stock.code,
         stockName: stock.stockName,
+        blockName: blockMap[stock.code] || '',
         ...stock.kline[0]
     }));
 };

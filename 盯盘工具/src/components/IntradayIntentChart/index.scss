@@ -1,0 +1,219 @@
+.intraday-intent-chart-container {
+  width: 100%;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+
+  .chart-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .stock-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .chart-title {
+      font-size: 12px;
+      color: #8c8c8c;
+    }
+  }
+
+  .chart-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+
+    .chart-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    .timeline-tooltip {
+      position: absolute;
+      top: 20px;
+      z-index: 100;
+      width: 160px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      pointer-events: none;
+      display: none;
+      backdrop-filter: blur(4px);
+
+      .timeline-tooltip-header {
+        padding: 6px 10px;
+        background: #f8f8f8;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top-left-radius: 6px;
+        border-top-right-radius: 6px;
+
+        .time {
+          font-size: 12px;
+          font-weight: bold;
+          color: #333;
+        }
+
+        .status {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+        }
+      }
+
+      .timeline-tooltip-body {
+        padding: 8px 10px;
+
+        .item {
+          display: flex;
+          justify-content: space-between;
+          line-height: 1.8;
+          font-size: 12px;
+
+          .label {
+            color: #666;
+          }
+
+          .value {
+            font-weight: 600;
+            font-family: 'Roboto Mono', monospace;
+          }
+        }
+
+        .intent-info {
+          margin-top: 6px;
+          padding-top: 6px;
+          border-top: 1px dashed #e8e8e8;
+        }
+      }
+    }
+
+    .chart-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      pointer-events: none;
+      display: none;
+      z-index: 50;
+      opacity: 0.5
+    }
+  }
+
+  .interval-bar-container {
+    padding: 14px 0 10px 0;
+    border-top: 1px solid #f0f0f0;
+    background: linear-gradient(180deg, rgba(252, 253, 255, 0.92), rgba(248, 250, 252, 0.88));
+    position: relative;
+
+    .interval-bar-label {
+      font-size: 12px;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      font-weight: 600;
+      padding-left: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.03em;
+
+      &::before {
+        content: '';
+        width: 3px;
+        height: 12px;
+        background: linear-gradient(180deg, var(--theme-color, #1890ff), var(--theme-color-dark, #096dd9));
+        border-radius: 2px;
+      }
+    }
+
+    .interval-bar-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .interval-bar {
+      display: flex;
+      height: 30px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+
+      .interval-segment {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid rgba(0, 0, 0, 0.035);
+        cursor: pointer;
+        transition: background-color 0.18s ease, box-shadow 0.18s ease;
+        box-sizing: border-box;
+        overflow: hidden;
+        background-color: var(--segment-bg, transparent);
+
+        &:last-child {
+          border-right: none;
+        }
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.85);
+          box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+        }
+
+        .interval-indicator {
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 2px;
+          background-color: var(--indicator-color, #6b7a96);
+          opacity: 0.7;
+        }
+
+        .interval-text {
+          font-size: 8px;
+          font-weight: 500;
+          color: #1a1a1a;
+          text-align: center;
+          white-space: nowrap;
+          overflow: hidden;
+          // text-overflow: ellipsis;
+          padding: 0 6px;
+          max-width: 100%;
+          box-sizing: border-box;
+          letter-spacing: 0.02em;
+        }
+      }
+    }
+
+    .interval-time-row {
+      display: flex;
+      margin-top: 5px;
+
+      .interval-time-cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .interval-time-text {
+          font-size: 9.5px;
+          color: #8c8c8c;
+          font-family: 'SF Mono', 'Roboto Mono', monospace;
+          letter-spacing: 0.02em;
+        }
+      }
+    }
+  }
+}

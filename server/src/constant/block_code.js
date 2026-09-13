@@ -61,6 +61,11 @@ exports.default = [
     },
     {
         "blockName": "存储",
+        "code": "sh688825",
+        "name": "长鑫科技"
+    },
+    {
+        "blockName": "存储",
         "code": "sh688525",
         "name": "佰维存储"
     },
@@ -86,11 +91,6 @@ exports.default = [
     },
     {
         "blockName": "光模块",
-        "code": "sz002384",
-        "name": "东山精密"
-    },
-    {
-        "blockName": "光模块",
         "code": "sz001267",
         "name": "汇绿生态"
     },
@@ -100,14 +100,24 @@ exports.default = [
         "name": "立讯精密"
     },
     {
-        "blockName": "光模块",
+        "blockName": "MPO",
         "code": "sh688313",
         "name": "仕佳光子"
     },
     {
-        "blockName": "光模块",
+        "blockName": "光芯片",
+        "code": "sz002384",
+        "name": "东山精密"
+    },
+    {
+        "blockName": "光芯片",
         "code": "sh688498",
         "name": "源杰科技"
+    },
+    {
+        "blockName": "光芯片",
+        "code": "sh688498",
+        "name": "长光华芯"
     },
     {
         "blockName": "光模块",
@@ -196,11 +206,6 @@ exports.default = [
     },
     {
         "blockName": "pcb",
-        "code": "sh600183",
-        "name": "生益科技"
-    },
-    {
-        "blockName": "pcb",
         "code": "sh603228",
         "name": "景旺电子"
     },
@@ -214,7 +219,7 @@ exports.default = [
         "code": "sz300476",
         "name": "胜宏科技"
     },
-     {
+    {
         "blockName": "北美缺电",
         "code": "sh603308",
         "name": "应流股份"
@@ -366,7 +371,7 @@ exports.default = [
     },
     {
         "blockName": "医药",
-        "code": "sh688076",
+        "code": "sh603259",
         "name": "药明康德"
     },
     {
@@ -418,8 +423,8 @@ exports.default = [
         "blockName": "MLCC",
         "code": "sz000636",
         "name": "风华高科"
-       },
-       {
+    },
+    {
         "blockName": "MLCC",
         "code": "sz300408",
         "name": "三环集团"
@@ -451,48 +456,63 @@ exports.default = [
     },
     {
         "blockName": "国产超节点",
+        "code": "sh688629",
+        "name": "华丰科技"
+    },
+    {
+        "blockName": "国产超节点",
         "code": "sz000977",
         "name": "浪潮信息"
     },
     {
-         "blockName": "光纤",
+        "blockName": "国产超节点",
+        "code": "sz301165",
+        "name": "锐捷网络"
+    },
+    {
+        "blockName": "国产超节点",
+        "code": "sh688702",
+        "name": "盛科通信"
+    },
+    {
+        "blockName": "光纤",
         "code": "sh600487",
         "name": "亨通光电"
     },
     {
-         "blockName": "光纤",
+        "blockName": "光纤",
         "code": "sh600522",
         "name": "中天科技"
     },
     {
-         "blockName": "光纤",
+        "blockName": "光纤",
         "code": "sh601869",
         "name": "长飞光纤"
     },
     {
-         "blockName": "光纤",
+        "blockName": "光纤",
         "code": "sh600869",
         "name": "远东股份"
     },
     {
-         "blockName": "煤炭",
+        "blockName": "煤炭",
         "code": "sh600726",
         "name": "华电能源"
     },
     {
-         "blockName": "煤炭",
+        "blockName": "煤炭",
         "code": "sh601101",
         "name": "昊华能源"
     },
     {
-         "blockName": "煤炭",
+        "blockName": "煤炭",
         "code": "sh601918",
         "name": "新集能源"
     },
     {
         "blockName": "玻璃基板",
         "code": "sz000725",
-        "name": "新东方A"
+        "name": "京东方A"
     },
     {
         "blockName": "玻璃基板",
@@ -615,13 +635,178 @@ exports.default = [
         "name": "扬杰科技"
     },
     {
-        "blockName": "制冷剂",
-        "code": "sh600160",
-        "name": "巨化股份"
+        "blockName": "AI电源",
+        "code": "sz002851",
+        "name": "麦格米特"
     },
     {
-        "blockName": "制冷剂",
-        "code": "sh600378",
-        "name": "昊华科技"
+        "blockName": "AI电源",
+        "code": "sz002364",
+        "name": "中恒电气"
     },
+    {
+        "code": "sh688362",
+        "name": "甬矽电子",
+        "blockName": "先进封装"
+    },
+    {
+        "code": "sh600584",
+        "name": "长电科技",
+        "blockName": "先进封装"
+    },
+    {
+        "code": "sz002185",
+        "name": "华天科技",
+        "blockName": "先进封装"
+    },
+    {
+        "code": "sz002156",
+        "name": "通富微电",
+        "blockName": "先进封装"
+    },
+    {
+        "code": "sh688820",
+        "name": "盛合晶微",
+        "blockName": "先进封装"
+    },
+    {
+        "blockName": "AI 应用",
+        "code": "sz301171",
+        "name": "易点天下"
+    },
+    {
+        "blockName": "AI 应用",
+        "code": "sz300364",
+        "name": "中文在线"
+    },
+    {
+        "blockName": "AI 应用",
+        "code": "sz300418",
+        "name": "昆仑万维"
+    },
+    {
+        "blockName": "AI 应用",
+        "code": "sz300058",
+        "name": "蓝色光标"
+    },
+    {
+        "blockName": "AI 应用",
+        "code": "sh601360",
+        "name": "三六零"
+    },
+    {
+        "blockName": "AI 应用",
+        "code": "sh688111",
+        "name": "金山办公"
+    },
+    {
+        "blockName": "特高压",
+        "code": "sh601179",
+        "name": "中国西电"
+    },
+    {
+        "blockName": "特高压",
+        "code": "sh600089",
+        "name": "特变电工"
+    },
+    {
+        "blockName": "特高压",
+        "code": "sh600312",
+        "name": "平高电气"
+    },
+    {
+        "blockName": "特高压",
+        "code": "sz000400",
+        "name": "许继电气"
+    },
+    {
+        "blockName": "CCL",
+        "code": "sh600183",
+        "name": "生益科技"
+    },
+    {
+        "blockName": "CCL",
+        "code": "sz002636",
+        "name": "金安国纪"
+    },
+    {
+        "blockName": "半导体",
+        "code": "sz300604",
+        "name": "长川科技"
+    },
+    {
+        "blockName": "CCL",
+        "code": "sh603186",
+        "name": "华正新材"
+    },
+    {
+        "blockName": "MPO",
+        "code": "sh688025",
+        "name": "杰普特"
+    },
+    {
+        "blockName": "贵金属",
+        "code": "sh601212",
+        "name": "白银有色"
+    },
+    {
+        "blockName": "贵金属",
+        "code": "sz001337",
+        "name": "四川黄金"
+    },
+    {
+        "blockName": "贵金属",
+        "code": "sz300139",
+        "name": "晓程科技"
+    },
+    {
+        "blockName": "贵金属",
+        "code": "sz000506",
+        "name": "招金黄金"
+    },
+    {
+        "blockName": "房地产",
+        "code": "sz000560",
+        "name": "我爱我家"
+    },
+    {
+        "blockName": "房地产",
+        "code": "sh600048",
+        "name": "保利发展"
+    },
+    {
+        "blockName": "房地产",
+        "code": "sz000002",
+        "name": "万科 A"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh600967",
+        "name": "内蒙一机"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh600760",
+        "name": "中航沈飞"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh601606",
+        "name": "长城军工"
+    },
+    {
+        "blockName": "粮食",
+        "code": "sz000930",
+        "name": "中粮科技"
+    },
+    {
+        "blockName": "粮食",
+        "code": "sh600540",
+        "name": "新赛股份"
+    },
+    {
+        "blockName": "粮食",
+        "code": "sh600127",
+        "name": "金健米业"
+    }
 ]

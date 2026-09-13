@@ -1,0 +1,88 @@
+{
+  "updatedAt": "2026-09-04T05:49:21.013Z",
+  "summary": {
+    "total": 84,
+    "classified": 3,
+    "errorCount": 0,
+    "requestMode": "串行拉取，每只间隔 1-2s"
+  },
+  "categories": [
+    {
+      "key": "ma5_up",
+      "label": "沿着 5 日线上行",
+      "order": 2,
+      "count": 2,
+      "stocks": [
+        {
+          "code": "sz301171",
+          "stockName": "易点天下",
+          "blockName": "AI 应用",
+          "isImportant": false,
+          "tradeDate": 20260904,
+          "close_px": 38.83,
+          "change": 12.71,
+          "ma3": 36.26,
+          "ma5": 36.71,
+          "ma10": 35.754999999999995,
+          "ma20": 36.5275,
+          "prevMa3": 35.57333333333334,
+          "prevMa5": 36.028,
+          "prevMa10": 35.506,
+          "recentFiveDayGain": 2.18,
+          "reason": "收盘位于主要均线上方，当前更接近 5 日线运行。",
+          "categoryKey": "ma5_up",
+          "categoryLabel": "沿着 5 日线上行"
+        },
+        {
+          "code": "sz002536",
+          "stockName": "飞龙股份",
+          "blockName": "液冷",
+          "isImportant": false,
+          "tradeDate": 20260904,
+          "close_px": 59.47,
+          "change": -5.65,
+          "ma3": 60.19,
+          "ma5": 57.652,
+          "ma10": 54.548,
+          "ma20": 48.7695,
+          "prevMa3": 57.96333333333333,
+          "prevMa5": 56.424,
+          "prevMa10": 53.298,
+          "recentFiveDayGain": 8.32,
+          "reason": "最新收盘价贴近 5 日线，且均线继续拐头向上。",
+          "categoryKey": "ma5_up",
+          "categoryLabel": "沿着 5 日线上行"
+        }
+      ]
+    },
+    {
+      "key": "pullback_ma20_reclaim_ma10",
+      "label": "前期回踩 20 日均线，现在强势站上 10 日均线",
+      "order": 11,
+      "count": 1,
+      "stocks": [
+        {
+          "code": "sh603228",
+          "stockName": "景旺电子",
+          "blockName": "pcb",
+          "isImportant": false,
+          "tradeDate": 20260904,
+          "close_px": 96.31,
+          "change": 8.92,
+          "ma3": 91.18,
+          "ma5": 91.86600000000001,
+          "ma10": 92.279,
+          "ma20": 93.42450000000001,
+          "prevMa3": 88.84333333333335,
+          "prevMa5": 91.384,
+          "prevMa10": 92.13199999999998,
+          "recentFiveDayGain": -0.19,
+          "reason": "近几日回踩 20 日线后，最新一日放量转强并重新站上 10 日线。",
+          "categoryKey": "pullback_ma20_reclaim_ma10",
+          "categoryLabel": "前期回踩 20 日均线，现在强势站上 10 日均线"
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

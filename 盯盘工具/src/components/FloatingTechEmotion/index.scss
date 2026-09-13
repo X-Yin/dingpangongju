@@ -1,0 +1,185 @@
+.floating-tech-emotion {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 999;
+  width: 200px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(245, 249, 255, 0.76));
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 22px;
+  box-shadow:
+    0 24px 60px rgba(78, 102, 145, 0.16),
+    0 10px 26px rgba(130, 150, 184, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  padding: 12px;
+  cursor: pointer;
+  transition:
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+
+  &:hover {
+    box-shadow:
+      0 28px 70px rgba(78, 102, 145, 0.2),
+      0 14px 34px rgba(130, 150, 184, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    border-color: rgba(115, 132, 166, 0.22);
+    transform: translateY(-2px);
+  }
+
+  .fte-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .fte-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .fte-title-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .fte-badge {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4f46e5;
+    flex-shrink: 0;
+  }
+
+  .fte-title {
+    font-size: 14px;
+    color: #12213a;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    flex-shrink: 0;
+  }
+
+  .fte-refresh-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover {
+      background: rgba(107, 114, 128, 0.1);
+      color: #4f46e5;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  .fte-value-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .fte-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #12213a;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+
+    &.positive {
+      color: #f5222d;
+    }
+
+    &.negative {
+      color: #52c41a;
+    }
+  }
+
+  .fte-jxhc-alert {
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(244, 114, 114, 0.26);
+    background: linear-gradient(180deg, rgba(255, 244, 244, 0.92), rgba(255, 240, 240, 0.96));
+    margin-bottom: 10px;
+
+    .fte-jxhc-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .fte-jxhc-alert-badge {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #f5222d;
+      flex-shrink: 0;
+      animation: fte-blink 1s ease-in-out infinite;
+    }
+
+    .fte-jxhc-title {
+      font-size: 11px;
+      color: #f5222d;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .fte-jxhc-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .fte-jxhc-name {
+      font-size: 13px;
+      color: #12213a;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fte-jxhc-change {
+      font-size: 16px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+
+      &.negative {
+        color: #52c41a;
+      }
+
+      &.positive {
+        color: #f5222d;
+      }
+    }
+  }
+}
+
+@keyframes fte-blink {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}

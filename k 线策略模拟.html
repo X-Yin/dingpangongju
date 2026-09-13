@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>持仓时间 · 收益率测算终端</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  :root{
+    --bg:#000000;
+    --fg:#ffffff;
+    --muted:#8f8f8f;
+    --border:#2e2e2e;
+    --panel:#0c0c0c;
+    --up:#fb2c36;      /* 红涨 */
+    --down:#00bb7f;    /* 绿跌 */
+    --blue:#3080ff;
+    --sans:'Inter','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+    --mono:'Fira Code','SFMono-Regular',Consolas,'PingFang SC','Microsoft YaHei',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{background:var(--bg);}
+  body{
+    background:var(--bg);color:var(--fg);
+    font-family:var(--sans);font-weight:400;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px;}
+
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  .label{
+    font-family:var(--mono);font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--muted);
+  }
+
+  /* ---------- 顶栏 ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 28px;height:60px;
+    background:rgba(0,0,0,.88);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+  }
+  header .brand{display:flex;align-items:baseline;gap:14px;}
+  header h1{font-size:16px;font-weight:600;letter-spacing:.02em;}
+  header .sub{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  header .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--down);margin-right:6px;animation:blink 2.4s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+  /* ---------- 主布局 ---------- */
+  .shell{
+    display:grid;grid-template-columns:320px 1fr;
+    min-height:calc(100vh - 60px);
+  }
+  @media (max-width:960px){.shell{grid-template-columns:1fr;}}
+
+  /* ---------- 左侧控制面板 ---------- */
+  aside{
+    border-right:1px solid var(--border);
+    padding:28px 24px 60px;
+    position:sticky;top:60px;align-self:start;
+    height:calc(100vh - 60px);overflow-y:auto;
+  }
+  @media (max-width:960px){aside{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border);}}
+
+  .step{margin-bottom:36px;}
+  .step-head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
+  .step-num{
+    font-family:var(--mono);font-size:11px;color:var(--bg);
+    background:var(--fg);border-radius:2px;padding:2px 7px;letter-spacing:.05em;
+  }
+  .step-title{font-size:14px;font-weight:600;}
+  .step-desc{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:16px;}
+
+  .field{margin-bottom:14px;}
+  .field .label{display:block;margin-bottom:8px;}
+  input[type=number]{
+    width:100%;background:var(--panel);color:var(--fg);
+    border:1px solid var(--border);border-radius:4px;
+    font-family:var(--mono);font-size:15px;padding:10px 12px;
+    outline:none;transition:border-color .2s;
+  }
+  input[type=number]:focus{border-color:var(--blue);}
+  .input-suffix{position:relative;}
+  .input-suffix span{
+    position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    font-family:var(--mono);font-size:12px;color:var(--muted);pointer-events:none;
+  }
+  .input-suffix input{padding-right:34px;}
+
+  .btn{
+    width:100%;cursor:pointer;border-radius:4px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    padding:12px 16px;transition:background-color .2s,color .2s,border-color .2s;
+  }
+  .btn-primary{background:var(--fg);color:var(--bg);border:1px solid var(--fg);}
+  .btn-primary:hover{background:#d8d8d8;border-color:#d8d8d8;}
+  .btn-ghost{background:transparent;color:var(--fg);border:1px solid var(--border);}
+  .btn-ghost:hover{border-color:var(--fg);}
+
+  /* 单选模式 */
+  .radio-group{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+  .radio-card{
+    display:flex;align-items:flex-start;gap:12px;
+    border:1px solid var(--border);border-radius:4px;
+    padding:12px 14px;cursor:pointer;
+    transition:border-color .2s,background-color .2s;
+  }
+  .radio-card:hover{border-color:#4a4a4a;}
+  .radio-card.active{border-color:var(--fg);background:var(--panel);}
+  .radio-card input{accent-color:var(--fg);margin-top:3px;}
+  .radio-card .rc-name{font-size:13px;font-weight:600;margin-bottom:3px;}
+  .radio-card .rc-desc{font-size:11px;color:var(--muted);line-height:1.6;}
+  .radio-card .rc-tag{font-family:var(--mono);font-size:10px;letter-spacing:.1em;margin-left:auto;padding:2px 6px;border-radius:2px;}
+  .tag-up{color:var(--up);border:1px solid var(--up);}
+  .tag-down{color:var(--down);border:1px solid var(--down);}
+
+  .divider{height:1px;background:var(--border);margin:28px 0;}
+
+  .hint{font-size:11px;color:var(--muted);line-height:1.8;}
+  .hint b{color:var(--fg);font-weight:600;}
+
+  /* ---------- 右侧主区 ---------- */
+  main{padding:28px;min-width:0;}
+  @media (max-width:960px){main{padding:20px 16px 48px;}}
+
+  .panel{border:1px solid var(--border);border-radius:6px;background:var(--panel);margin-bottom:24px;overflow:hidden;}
+  .panel-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 20px;border-bottom:1px solid var(--border);
+  }
+  .panel-head .label{color:var(--fg);}
+  .panel-head .meta{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;}
+
+  /* 统计条 */
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    border-bottom:1px solid var(--border);
+  }
+  @media (max-width:720px){.stats{grid-template-columns:repeat(2,1fr);}}
+  .stat{padding:18px 20px;border-right:1px solid var(--border);}
+  .stat:last-child{border-right:none;}
+  @media (max-width:720px){.stat:nth-child(2){border-right:none;}.stat:nth-child(1),.stat:nth-child(2){border-bottom:1px solid var(--border);}}
+  .stat .label{margin-bottom:8px;display:block;}
+  .stat .val{font-family:var(--mono);font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;}
+  .val.pos{color:var(--up);}
+  .val.neg{color:var(--down);}
+  .val.neu{color:var(--fg);}
+
+  #klineChart{width:100%;height:460px;}
+  #lineChart{width:100%;height:420px;}
+
+  .legend-note{
+    display:flex;gap:22px;padding:10px 20px;border-top:1px solid var(--border);
+    font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;
+  }
+  .legend-note i{display:inline-block;font-style:normal;margin-right:6px;}
+  .tri-up{color:var(--up);}
+  .tri-down{color:var(--down);}
+
+  /* 表格 */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;}
+  thead th{
+    text-align:right;padding:10px 16px;color:var(--muted);font-weight:400;
+    font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    border-bottom:1px solid var(--border);white-space:nowrap;
+  }
+  thead th:first-child, tbody td:first-child{text-align:left;}
+  tbody td{padding:9px 16px;text-align:right;border-bottom:1px solid #1a1a1a;white-space:nowrap;color:#d6d6d6;}
+  tbody tr:hover td{background:#111111;}
+  tbody tr:last-child td{border-bottom:none;}
+  td.pos{color:var(--up);}
+  td.neg{color:var(--down);}
+
+  /* 折线图区说明 */
+  .mc-note{padding:12px 20px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.8;}
+  .mc-note b{color:var(--fg);font-weight:600;}
+
+  .empty-tip{
+    display:flex;align-items:center;justify-content:center;height:100%;
+    color:var(--muted);font-family:var(--mono);font-size:12px;letter-spacing:.1em;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>持仓时间 · 收益率测算终端</h1>
+    <span class="sub">HOLDING-PERIOD SIMULATOR</span>
+  </div>
+  <div class="sub"><span class="dot"></span>SIM READY</div>
+</header>
+
+<div class="shell">
+  <!-- ============ 左侧控制 ============ -->
+  <aside>
+    <!-- 第一步 -->
+    <section class="step">
+      <div class="step-head">
+        <span class="step-num">01</span>
+        <span class="step-title">生成 K 线数据</span>
+      </div>
+      <p class="step-desc">随机生成指定根数的 K 线。可指定这些 K 线走完后相对于起点的整体涨幅（正为上涨，负为下跌）。</p>
+      <div class="field">
+        <label class="label" for="countInput">K 线根数（60 – 500，默认 100）</label>
+        <div class="input-suffix">
+          <input type="number" id="countInput" value="100" step="10" min="60" max="500">
+          <span>根</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="returnInput">整体涨幅（%）</label>
+        <div class="input-suffix">
+          <input type="number" id="returnInput" value="100" step="1" min="-99" max="10000">
+          <span>%</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="genBtn">随机生成 K 线</button>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- 第二步 -->
+    <section class="step">
+      <div class="step-head">
+        <span class="step-num">02</span>
+        <span class="step-title">选择操作模式与次数</span>
+      </div>
+      <p class="step-desc">把全部 K 线按操作次数均分为若干时间段，每段内按所选模式确定一个买点和一个卖点，逐笔复利计算。</p>
+
+      <div class="radio-group" id="modeGroup">
+        <label class="radio-card active">
+          <input type="radio" name="mode" value="low" checked>
+          <span>
+            <span class="rc-name">低吸高抛</span>
+            <div class="rc-desc">每段时间内：第一根阴线收盘买入，持仓超过半段后，随机一根阳线收盘卖出。</div>
+          </span>
+          <span class="rc-tag tag-down">BUY LOW</span>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="mode" value="high">
+          <span>
+            <span class="rc-name">追涨杀跌</span>
+            <div class="rc-desc">每段时间内：第一根阳线收盘追入，持仓超过半段后，随机一根阴线收盘卖出。</div>
+          </span>
+          <span class="rc-tag tag-up">CHASE</span>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="mode" value="ma">
+          <span>
+            <span class="rc-name">均线趋势</span>
+            <div class="rc-desc">MA5 上穿 MA10 且收盘价站上 MA5 的当天买入；收盘价跌破 MA10 当天卖出。信号驱动，不限次数。</div>
+          </span>
+          <span class="rc-tag" style="color:var(--blue);border:1px solid var(--blue)">MA 5/10</span>
+        </label>
+      </div>
+
+      <div class="field" id="opsField">
+        <label class="label" for="opsInput">操作次数（1 – 100）</label>
+        <div class="input-suffix">
+          <input type="number" id="opsInput" value="3" step="1" min="1" max="100">
+          <span>次</span>
+        </div>
+      </div>
+      <p class="hint" id="opsHint">
+        <b>操作 1 次</b> = 从头持有到尾；<b>操作 2 次</b> = 每次约持仓 1/2 时间；<b>操作 N 次</b> = 每次约持仓 1/N 时间。修改模式或次数后立即重新测算。
+      </p>
+    </section>
+
+    <div class="divider" id="scanDivider"></div>
+
+    <!-- 第四步控制 -->
+    <section class="step" id="scanStep">
+      <div class="step-head">
+        <span class="step-num">04</span>
+        <span class="step-title">操作次数扫描</span>
+      </div>
+      <p class="step-desc">对操作次数 1 – 50 逐一测算：每个次数独立生成 5 组随机 K 线（整体涨幅取上方输入值），计算后取平均收益率，绘制成折线。</p>
+      <button class="btn btn-ghost" id="scanBtn">开始扫描 1 – 50 次</button>
+    </section>
+  </aside>
+
+  <!-- ============ 右侧主区 ============ -->
+  <main>
+    <!-- 第三步：K 线图 + 明细 -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="label">03 / K 线走势与买卖点</span>
+        <span class="meta" id="klineMeta">—</span>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <span class="label">整体收益率</span>
+          <div class="val neu" id="statTotal">—</div>
+        </div>
+        <div class="stat">
+          <span class="label">基准：持有不动</span>
+          <div class="val neu" id="statBench">—</div>
+        </div>
+        <div class="stat">
+          <span class="label">操作次数</span>
+          <div class="val neu" id="statOps">—</div>
+        </div>
+        <div class="stat">
+          <span class="label">平均每笔收益</span>
+          <div class="val neu" id="statAvg">—</div>
+        </div>
+      </div>
+      <div id="klineChart"></div>
+      <div class="legend-note">
+        <span><i class="tri-up">▲</i>买点 BUY</span>
+        <span><i class="tri-down">▼</i>卖点 SELL</span>
+        <span><i style="color:var(--up)">■</i>阳线（涨）</span>
+        <span><i style="color:var(--down)">■</i>阴线（跌）</span>
+        <span id="maLegend" style="display:contents;">
+        <span><i style="color:#a893f4">―</i>MA20</span>
+        <span><i style="color:var(--blue)">―</i>MA30</span>
+        <span><i style="color:#c8a94e">―</i>MA60</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- 操作明细表 -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="label">操作明细</span>
+        <span class="meta" id="tableMeta">—</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>买入 K 线</th>
+              <th>买入价</th>
+              <th>卖出 K 线</th>
+              <th>卖出价</th>
+              <th>持仓根数</th>
+              <th>单笔收益率</th>
+              <th>累计收益率</th>
+            </tr>
+          </thead>
+          <tbody id="opsTable">
+            <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px 0;">暂无数据</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 第四步：折线图 -->
+    <div class="panel" id="scanPanel">
+      <div class="panel-head">
+        <span class="label">04 / 操作次数 × 平均收益率</span>
+        <span class="meta" id="lineMeta">尚未扫描</span>
+      </div>
+      <div id="lineChart"></div>
+      <div class="legend-note">
+        <span><i id="scanAvgSwatch" style="color:var(--fg)">―</i>平均收益率（每档 5 次均值）</span>
+        <span><i style="color:var(--blue)">┅</i>收益率均线（1 至当前档的累平均）</span>
+        <span><i style="color:rgba(48,128,255,.55)">■</i>5 次模拟的波动区间</span>
+      </div>
+      <p class="mc-note">
+        横轴为操作次数（1 – 50），纵轴为整体持仓收益率。每个操作次数独立重复 <b>5 次</b> 模拟（每次重新随机生成同涨幅、同根数的 K 线路径），取<b>平均值</b>；蓝色虚线为收益率均线，即第 1 档至当前档所有平均收益率的累平均值。模式、K 线根数与整体涨幅取自左侧面板当前设置。
+      </p>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var UP = '#fb2c36', DOWN = '#00bb7f', BLUE = '#3080ff', MUTED = '#8f8f8f', BORDER = '#2e2e2e';
+
+  var klines = [];          // 当前 K 线：{open, close, high, low}
+  var klineChart = null, lineChart = null;
+
+  /* ---------------- 工具 ---------------- */
+  function randn(){ // Box-Muller 标准正态
+    var u = 0, v = 0;
+    while(u === 0) u = Math.random();
+    while(v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+  function fmtPct(r, digits){
+    if(digits === undefined) digits = 2;
+    var v = r * 100;
+    return (v >= 0 ? '+' : '') + v.toFixed(digits) + '%';
+  }
+  function cls(r){ return r > 0 ? 'pos' : (r < 0 ? 'neg' : 'neu'); }
+  function getMode(){ return document.querySelector('input[name="mode"]:checked').value; }
+  function getReturnPct(){
+    var v = parseFloat(document.getElementById('returnInput').value);
+    if(isNaN(v)) v = 0;
+    return Math.max(-99, Math.min(10000, v));
+  }
+  function getCount(){
+    var v = parseInt(document.getElementById('countInput').value, 10);
+    if(isNaN(v)) v = 100;
+    v = Math.max(60, Math.min(500, v));
+    document.getElementById('countInput').value = v;
+    return v;
+  }
+  function getOps(){
+    var v = parseInt(document.getElementById('opsInput').value, 10);
+    if(isNaN(v)) v = 1;
+    v = Math.max(1, Math.min(Math.min(100, getCount()), v));
+    document.getElementById('opsInput').value = v;
+    return v;
+  }
+
+  /* ---------------- 均线工具 ---------------- */
+  function calcMA(ks, period){
+    var out = [], sum = 0;
+    for(var i = 0; i < ks.length; i++){
+      sum += ks[i].close;
+      if(i >= period) sum -= ks[i - period].close;
+      out.push(i >= period - 1 ? sum / period : null);
+    }
+    return out;
+  }
+  // 收盘价向下穿越均线的次数（从均线上方跌到下方记 1 次）
+  function countBreaks(ks, maArr){
+    var c = 0;
+    for(var i = 1; i < ks.length; i++){
+      if(maArr[i] === null || maArr[i - 1] === null) continue;
+      if(ks[i - 1].close >= maArr[i - 1] && ks[i].close < maArr[i]) c++;
+    }
+    return c;
+  }
+
+  /* ---------------- 第一步：生成 K 线 ----------------
+   * 高波动版，模拟真实股票节奏：
+   *  - 基础噪声 ±3.5%，10% 概率单根急跌 -4% ~ -12%，单日涨跌幅钳制 ±20%；
+   *  - 中段固定安排三轮回调：两轮中级（-16% ~ -32%，破 20/30 日线）+
+   *    一轮深度回调（-26% 起，破 60 日线），每轮后中阳线拉起；
+   *  - 对数收益整体平移，使末端精确落在指定整体涨幅上；
+   *  - 硬性校验：至少跌破 MA20 ×3、MA30 ×2、MA60 ×1，不达标自动重新生成。
+   */
+  function genPath(totalPct, n){
+    var target = Math.log(1 + totalPct / 100);
+    var LIMU = Math.log(1.2), LIMD = Math.log(0.8);   // ±20%
+    var rs = [], i, j;
+
+    // 基础：高波动噪声 + 随机急跌
+    for(i = 0; i < n - 1; i++){
+      var r;
+      if(Math.random() < 0.10) r = -(0.04 + Math.random() * 0.08);   // 急跌 -4% ~ -12%
+      else r = 0.005 + randn() * 0.035;                              // 高波动
+      rs.push(r);
+    }
+
+    // 中段三轮回调（位置按根数比例缩放）：两轮中级 + 一轮深度（深度轮安排在 MA60 生效之后）
+    var waves = [
+      {pos: Math.round(n * (0.22 + Math.random() * 0.14)), len: 3 + Math.floor(Math.random() * 2), deep: false},
+      {pos: Math.round(n * (0.42 + Math.random() * 0.12)), len: 3 + Math.floor(Math.random() * 2), deep: false},
+      {pos: Math.round(n * (0.58 + Math.random() * 0.16)), len: 5 + Math.floor(Math.random() * 3), deep: true}
+    ];
+    for(j = 0; j < waves.length; j++){
+      var w = waves[j];
+      for(i = w.pos; i < Math.min(w.pos + w.len, n - 3); i++){
+        rs[i] = -(0.05 + Math.random() * (w.deep ? 0.05 : 0.04));
+      }
+      var rec = Math.min(w.pos + w.len, n - 3);
+      rs[rec]     = 0.04 + Math.random() * 0.05;   // 中阳反包
+      rs[rec + 1] = 0.03 + Math.random() * 0.04;   // 续涨
+    }
+
+    // 对齐目标涨幅（迭代平移，钳制 ±20% 后仍收敛到目标）
+    for(var pass = 0; pass < 6; pass++){
+      var sum = 0;
+      for(i = 0; i < n - 1; i++) sum += Math.max(LIMD, Math.min(LIMU, rs[i]));
+      var resid = (target - sum) / (n - 1);
+      if(Math.abs(resid) < 1e-10) break;
+      for(i = 0; i < n - 1; i++) rs[i] += resid;
+    }
+
+    var ks = [], prevClose = 100;
+    for(i = 0; i < n; i++){
+      var open, close;
+      if(i === 0){ open = 100; close = 100; }
+      else {
+        open = prevClose;
+        var rr = Math.max(LIMD, Math.min(LIMU, rs[i - 1]));
+        close = prevClose * Math.exp(rr);
+      }
+      var hi = Math.max(open, close) * (1 + Math.random() * 0.02);
+      var lo = Math.min(open, close) * (1 - Math.random() * 0.02);
+      ks.push({open: open, close: close, high: hi, low: lo});
+      prevClose = close;
+    }
+    return ks;
+  }
+
+  function generateKlines(totalPct, n){
+    // 根数不足以支撑 MA60 时，自动放宽对应要求（尽力而为）
+    var req60 = n >= 70 ? 1 : 0;
+    var req30 = n >= 40 ? 2 : 0;
+    var best = null, bestScore = -1;
+    for(var attempt = 0; attempt < 300; attempt++){
+      var ks = genPath(totalPct, n);
+      var b20 = countBreaks(ks, calcMA(ks, 20));
+      var b30 = countBreaks(ks, calcMA(ks, 30));
+      var b60 = countBreaks(ks, calcMA(ks, 60));
+      if(b20 >= 3 && b30 >= req30 && b60 >= req60) return ks;
+      var score = Math.min(b20, 3) * 100 + Math.min(b30, req30) * 10 + Math.min(b60, req60);
+      if(score > bestScore){ bestScore = score; best = ks; }
+    }
+    return best;   // 极端输入下返回最接近达标的一条
+  }
+
+  /* ---------------- 第二步：按模式模拟操作 ----------------
+   * 操作 N 次：把全部 K 线均分为 N 段（每段 L 根），每段一次完整买卖。
+   * high 追涨杀跌：段内第一根【阳线】收盘价追入，持仓超过 L/2 根后，
+   *                在之后的 K 线中随机挑一根【阴线】收盘价卖出。
+   * low  低吸高抛：段内第一根【阴线】收盘价买入，持仓超过 L/2 根后，
+   *                在之后的 K 线中随机挑一根【阳线】收盘价卖出。
+   * 兜底：段内无买入信号则持币跳过；满足最小持仓后若无反向 K 线，
+   *       则在段末收盘卖出（优先保证最小持仓时间不被破坏）。
+   * 操作 1 次 = 从头持有到尾。
+   */
+  function isYang(k){ return k.close > k.open; }
+  function isYin(k){  return k.close < k.open; }
+
+  /* 均线趋势策略：
+   * 买入：MA5 上穿 MA10 且收盘价站上 MA5 的当天（条件由不满足变为满足的那一根）收盘买入；
+   * 卖出：持仓期间收盘价跌破 MA10 的当天收盘卖出；末尾仍持仓则以最后一根收盘了结。
+   */
+  function simulateMA(ks){
+    var n = ks.length;
+    var ma5 = calcMA(ks, 5), ma10 = calcMA(ks, 10);
+    var trades = [], i;
+    var holding = -1;   // 买入下标，-1 为空仓
+    function cond(i){
+      return ma5[i] !== null && ma10[i] !== null &&
+             ma5[i] > ma10[i] && ks[i].close > ma5[i];
+    }
+    for(i = 1; i < n; i++){
+      if(holding < 0){
+        if(cond(i) && !cond(i - 1)) holding = i;                    // 信号当日买入
+      } else {
+        if(ma10[i] !== null && ks[i].close < ma10[i]){              // 跌破 MA10 卖出
+          trades.push({buyIdx: holding, buyPrice: ks[holding].close, sellIdx: i, sellPrice: ks[i].close});
+          holding = -1;
+        }
+      }
+    }
+    if(holding >= 0){
+      trades.push({buyIdx: holding, buyPrice: ks[holding].close, sellIdx: n - 1, sellPrice: ks[n - 1].close});
+    }
+    var cum = 1;
+    for(i = 0; i < trades.length; i++){
+      var t = trades[i];
+      t.ret = t.sellPrice / t.buyPrice - 1;
+      cum *= (1 + t.ret);
+      t.cumRet = cum - 1;
+    }
+    return {trades: trades, totalRet: cum - 1};
+  }
+
+  function simulate(ks, mode, ops){
+    var n = ks.length;
+    var trades = [], s, i;
+    if(mode === 'ma') return simulateMA(ks);
+    if(ops === 1){
+      trades.push({buyIdx: 0, buyPrice: ks[0].open, sellIdx: n - 1, sellPrice: ks[n - 1].close});
+    } else {
+      for(s = 0; s < ops; s++){
+        var start = Math.floor(s * n / ops);
+        var end   = Math.floor((s + 1) * n / ops);   // 排他右端点
+        var segLen = end - start;
+        var minHold = Math.ceil(segLen / 2);         // 至少过 segLen/2 根后才可卖（含买卖两端持仓 > segLen/2 根）
+
+        // 找段内第一根信号 K 线：追涨杀跌找阳线，低吸高抛找阴线
+        var bi = -1;
+        for(i = start; i < end; i++){
+          if(mode === 'high' ? isYang(ks[i]) : isYin(ks[i])){ bi = i; break; }
+        }
+        if(bi < 0) continue;   // 段内无信号，持币跳过
+
+        // 满足最小持仓（> segLen/2 根）之后，随机挑一根反向 K 线卖出
+        var cands = [];
+        for(i = bi + minHold; i < end; i++){
+          if(mode === 'high' ? isYin(ks[i]) : isYang(ks[i])) cands.push(i);
+        }
+        // 兜底：没有符合方向的卖点就持有到段末，最小持仓时间优先
+        var si = cands.length ? cands[Math.floor(Math.random() * cands.length)] : end - 1;
+
+        trades.push({
+          buyIdx: bi, buyPrice: ks[bi].close,
+          sellIdx: si, sellPrice: ks[si].close
+        });
+      }
+    }
+    var cum = 1;
+    for(i = 0; i < trades.length; i++){
+      var t = trades[i];
+      t.ret = t.sellPrice / t.buyPrice - 1;
+      cum *= (1 + t.ret);
+      t.cumRet = cum - 1;
+    }
+    return {trades: trades, totalRet: cum - 1};
+  }
+
+  /* ---------------- 第三步：K 线图 + 买卖点 ---------------- */
+  function renderKline(ks, result, mode){
+    var categories = [], data = [], i;
+    for(i = 0; i < ks.length; i++){
+      categories.push(String(i + 1));
+      data.push([ks[i].open, ks[i].close, ks[i].low, ks[i].high]);
+    }
+    var buys = result.trades.map(function(t){
+      return {value: [t.buyIdx, +(ks[t.buyIdx].low * 0.965).toFixed(2)]};
+    });
+    var sells = result.trades.map(function(t){
+      return {value: [t.sellIdx, +(ks[t.sellIdx].high * 1.035).toFixed(2)]};
+    });
+
+    // 均线：普通模式画 MA20/30/60，均线趋势模式画策略使用的 MA5/MA10
+    function mar(period){
+      return calcMA(ks, period).map(function(v){ return v === null ? null : +v.toFixed(2); });
+    }
+    var maDefs = mode === 'ma'
+      ? [{name: 'MA5', data: mar(5), color: '#a893f4'}, {name: 'MA10', data: mar(10), color: BLUE}]
+      : [{name: 'MA20', data: mar(20), color: '#a893f4'}, {name: 'MA30', data: mar(30), color: BLUE}, {name: 'MA60', data: mar(60), color: '#c8a94e'}];
+    var maSeries = maDefs.map(function(d){
+      return {
+        name: d.name, type: 'line', data: d.data, z: 5,
+        symbol: 'none', smooth: 0.2,
+        lineStyle: {color: d.color, width: 1.2},
+        tooltip: {show: false}
+      };
+    });
+    document.getElementById('maLegend').innerHTML = maDefs.map(function(d){
+      return '<span><i style="color:' + d.color + '">―</i>' + d.name + '</span>';
+    }).join('');
+
+    var option = {
+      backgroundColor: 'transparent',
+      animation: false,
+      textStyle: {fontFamily: "Fira Code, Consolas, monospace"},
+      grid: {left: 62, right: 20, top: 26, bottom: 64},
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {type: 'cross', lineStyle: {color: '#4a4a4a'}, label: {backgroundColor: '#1a1a1a', borderColor: BORDER, color: '#fff', fontFamily: "Fira Code, monospace", fontSize: 11}},
+        backgroundColor: 'rgba(12,12,12,.95)',
+        borderColor: BORDER,
+        textStyle: {color: '#fff', fontFamily: "Fira Code, monospace", fontSize: 11},
+        formatter: function(params){
+          var p = params.filter(function(x){ return x.seriesType === 'candlestick'; })[0];
+          if(!p) return '';
+          var d = p.data; // [idx, open, close, low, high]
+          var o = d[1], c = d[2], l = d[3], h = d[4];
+          var color = c >= o ? UP : DOWN;
+          var chg = (c / o - 1) * 100;
+          return '<div style="color:' + MUTED + '">第 ' + p.name + ' 根</div>'
+            + '开 ' + o.toFixed(2) + '　收 <span style="color:' + color + '">' + c.toFixed(2) + '</span><br>'
+            + '高 ' + h.toFixed(2) + '　低 ' + l.toFixed(2) + '<br>'
+            + '<span style="color:' + color + '">' + (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%</span>';
+        }
+      },
+      xAxis: {
+        type: 'category', data: categories,
+        axisLine: {lineStyle: {color: BORDER}},
+        axisTick: {show: false},
+        axisLabel: {color: MUTED, fontSize: 10, interval: 9}
+      },
+      yAxis: {
+        scale: true, position: 'left',
+        axisLine: {show: false}, axisTick: {show: false},
+        axisLabel: {color: MUTED, fontSize: 10, formatter: function(v){ return v.toFixed(1); }},
+        splitLine: {lineStyle: {color: '#161616'}}
+      },
+      dataZoom: [
+        {type: 'inside', start: 0, end: 100},
+        {type: 'slider', start: 0, end: 100, height: 22, bottom: 12,
+         borderColor: BORDER, backgroundColor: 'transparent',
+         fillerColor: 'rgba(255,255,255,.06)',
+         handleStyle: {color: '#3a3a3a'}, moveHandleStyle: {color: '#3a3a3a'},
+         dataBackground: {lineStyle: {color: BORDER}, areaStyle: {color: 'rgba(255,255,255,.04)'}},
+         textStyle: {color: MUTED, fontSize: 10}}
+      ],
+      series: [
+        {
+          name: 'K线', type: 'candlestick', data: data,
+          itemStyle: {
+            color: 'rgba(251,44,54,.85)',        // 阳线实体：红
+            color0: 'rgba(0,187,127,.85)',       // 阴线实体：绿
+            borderColor: UP, borderColor0: DOWN
+          },
+          barMaxWidth: 10
+        }
+      ].concat(maSeries, [
+        {
+          name: '买点', type: 'scatter', data: buys, z: 10,
+          symbol: 'triangle', symbolSize: 13,
+          itemStyle: {color: UP, borderColor: '#000', borderWidth: 1},
+          label: {show: true, position: 'bottom', formatter: 'B', color: UP, fontSize: 9, fontFamily: "Fira Code, monospace", distance: 2}
+        },
+        {
+          name: '卖点', type: 'scatter', data: sells, z: 10,
+          symbol: 'triangle', symbolRotate: 180, symbolSize: 13,
+          itemStyle: {color: DOWN, borderColor: '#000', borderWidth: 1},
+          label: {show: true, position: 'top', formatter: 'S', color: DOWN, fontSize: 9, fontFamily: "Fira Code, monospace", distance: 2}
+        }
+      ])
+    };
+    klineChart.setOption(option, true);
+  }
+
+  /* ---------------- 表格与统计 ---------------- */
+  function renderTable(result){
+    var tbody = document.getElementById('opsTable');
+    if(!result.trades.length){
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px 0;">全程未触发买入信号，空仓</td></tr>';
+      return;
+    }
+    var html = '';
+    result.trades.forEach(function(t, i){
+      html += '<tr>'
+        + '<td>' + (i + 1) + '</td>'
+        + '<td>' + (t.buyIdx + 1) + '</td>'
+        + '<td>' + t.buyPrice.toFixed(2) + '</td>'
+        + '<td>' + (t.sellIdx + 1) + '</td>'
+        + '<td>' + t.sellPrice.toFixed(2) + '</td>'
+        + '<td>' + (t.sellIdx - t.buyIdx + 1) + '</td>'
+        + '<td class="' + cls(t.ret) + '">' + fmtPct(t.ret) + '</td>'
+        + '<td class="' + cls(t.cumRet) + '">' + fmtPct(t.cumRet) + '</td>'
+        + '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  function renderStats(result, benchRet, ops, mode){
+    var nT = result.trades.length;
+    var avg = nT ? result.trades.reduce(function(a, t){ return a + t.ret; }, 0) / nT : 0;
+    var el;
+    el = document.getElementById('statTotal'); el.textContent = fmtPct(result.totalRet); el.className = 'val ' + cls(result.totalRet);
+    el = document.getElementById('statBench'); el.textContent = fmtPct(benchRet);       el.className = 'val ' + cls(benchRet);
+    el = document.getElementById('statAvg');   el.textContent = fmtPct(avg);            el.className = 'val ' + cls(avg);
+    if(mode === 'ma'){
+      el = document.getElementById('statOps'); el.textContent = nT; el.className = 'val neu';
+      document.getElementById('klineMeta').textContent = '均线趋势 MA5/MA10 · ' + nT + ' 笔 · ' + klines.length + ' 根';
+    } else {
+      el = document.getElementById('statOps'); el.textContent = ops; el.className = 'val neu';
+      var modeName = mode === 'low' ? '低吸高抛' : '追涨杀跌';
+      document.getElementById('klineMeta').textContent = modeName + ' × ' + ops + ' 次 · ' + klines.length + ' 根';
+    }
+    document.getElementById('tableMeta').textContent = '共 ' + nT + ' 笔 · 复利累计';
+  }
+
+  /* 均线趋势模式：隐藏操作次数输入与次数扫描 */
+  function applyModeVisibility(mode){
+    var isMA = mode === 'ma';
+    document.getElementById('opsField').style.display = isMA ? 'none' : '';
+    document.getElementById('opsHint').style.display = isMA ? 'none' : '';
+    document.getElementById('scanDivider').style.display = isMA ? 'none' : '';
+    document.getElementById('scanStep').style.display = isMA ? 'none' : '';
+    document.getElementById('scanPanel').style.display = isMA ? 'none' : '';
+  }
+
+  /* ---------------- 主流程 ---------------- */
+  function runSimulation(){
+    if(!klines.length) return;
+    var mode = getMode(), ops = getOps();
+    var result = simulate(klines, mode, ops);
+    var benchRet = klines[klines.length - 1].close / klines[0].open - 1;
+    renderKline(klines, result, mode);
+    renderTable(result);
+    renderStats(result, benchRet, ops, mode);
+  }
+
+  /* ---------------- 第四步：次数扫描（每档 5 次取平均） ---------------- */
+  function runScan(){
+    var btn = document.getElementById('scanBtn');
+    btn.disabled = true;
+    btn.textContent = '计算中…';
+
+    setTimeout(function(){
+      var mode = getMode(), retPct = getReturnPct(), cnt = getCount();
+      var xs = [], avgYs = [], minYs = [], maxYs = [];
+      for(var ops = 1; ops <= 50; ops++){
+        var sum = 0, mn = Infinity, mx = -Infinity;
+        for(var rep = 0; rep < 5; rep++){
+          var ks = generateKlines(retPct, cnt);
+          var r = simulate(ks, mode, ops).totalRet;
+          sum += r;
+          if(r < mn) mn = r;
+          if(r > mx) mx = r;
+        }
+        xs.push(ops);
+        avgYs.push(+(sum / 5 * 100).toFixed(3));
+        minYs.push(+(mn * 100).toFixed(3));
+        maxYs.push(+(mx * 100).toFixed(3));
+      }
+      renderLine(xs, avgYs, minYs, maxYs, mode, retPct);
+      btn.disabled = false;
+      btn.textContent = '开始扫描 1 – 50 次';
+    }, 30);
+  }
+
+  function renderLine(xs, avgYs, minYs, maxYs, mode, retPct){
+    var modeName = mode === 'low' ? '低吸高抛' : '追涨杀跌';
+    var accent = mode === 'low' ? DOWN : UP;
+
+    // 收益率均线：截至当前次数，所有档位平均收益率的累平均
+    var cumYs = [], cumSum = 0;
+    for(var ci = 0; ci < avgYs.length; ci++){
+      cumSum += avgYs[ci];
+      cumYs.push(+(cumSum / (ci + 1)).toFixed(3));
+    }
+    var option = {
+      backgroundColor: 'transparent',
+      textStyle: {fontFamily: "Fira Code, Consolas, monospace"},
+      grid: {left: 66, right: 24, top: 34, bottom: 52},
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(12,12,12,.95)', borderColor: BORDER,
+        textStyle: {color: '#fff', fontFamily: "Fira Code, monospace", fontSize: 11},
+        formatter: function(params){
+          var i = params[0].dataIndex;
+          var s = '<div style="color:' + MUTED + '">操作 ' + xs[i] + ' 次（5 次模拟）</div>';
+          s += '平均 <span style="color:' + (avgYs[i] >= 0 ? UP : DOWN) + '">' + (avgYs[i] >= 0 ? '+' : '') + avgYs[i].toFixed(2) + '%</span><br>';
+          s += '均线 <span style="color:' + BLUE + '">' + (cumYs[i] >= 0 ? '+' : '') + cumYs[i].toFixed(2) + '%</span><br>';
+          s += '<span style="color:' + MUTED + '">区间 ' + minYs[i].toFixed(2) + '% ~ ' + (maxYs[i] >= 0 ? '+' : '') + maxYs[i].toFixed(2) + '%</span>';
+          return s;
+        }
+      },
+      xAxis: {
+        type: 'category', data: xs, name: '操作次数',
+        nameLocation: 'middle', nameGap: 32,
+        nameTextStyle: {color: MUTED, fontSize: 11},
+        axisLine: {lineStyle: {color: BORDER}}, axisTick: {show: false},
+        axisLabel: {color: MUTED, fontSize: 10, interval: 4}
+      },
+      yAxis: {
+        type: 'value', name: '收益率 %', scale: true,
+        nameTextStyle: {color: MUTED, fontSize: 11},
+        axisLabel: {color: MUTED, fontSize: 10, formatter: '{value}%'},
+        splitLine: {lineStyle: {color: '#161616'}}
+      },
+      series: [
+        {
+          name: '区间', type: 'line', data: minYs,
+          lineStyle: {opacity: 0}, symbol: 'none', stack: 'band',
+          areaStyle: {opacity: 0}, silent: true
+        },
+        {
+          name: '波动区间', type: 'line',
+          data: maxYs.map(function(v, i){ return +(v - minYs[i]).toFixed(3); }),
+          lineStyle: {opacity: 0}, symbol: 'none', stack: 'band',
+          areaStyle: {color: 'rgba(48,128,255,.10)'}, silent: true
+        },
+        {
+          name: '平均收益率', type: 'line', data: avgYs,
+          smooth: 0.25, symbol: 'circle', symbolSize: 5,
+          lineStyle: {color: accent, width: 2},
+          itemStyle: {color: accent, borderColor: '#000', borderWidth: 1},
+          markLine: {
+            silent: true, symbol: 'none',
+            lineStyle: {color: '#3a3a3a', type: 'dashed'},
+            label: {color: MUTED, fontSize: 10, fontFamily: "Fira Code, monospace"},
+            data: [
+              {yAxis: 0, label: {formatter: '0%'}},
+              {yAxis: retPct, label: {formatter: '基准 ' + (retPct >= 0 ? '+' : '') + retPct.toFixed(0) + '%'}}
+            ]
+          }
+        },
+        {
+          name: '收益率均线', type: 'line', data: cumYs,
+          smooth: 0.25, symbol: 'none',
+          lineStyle: {color: BLUE, width: 1.5, type: 'dashed'},
+          tooltip: {show: false}
+        }
+      ]
+    };
+    lineChart.setOption(option, true);
+    document.getElementById('scanAvgSwatch').style.color = accent;
+    document.getElementById('lineMeta').textContent = modeName + ' · 整体涨幅 ' + (retPct >= 0 ? '+' : '') + retPct.toFixed(1) + '% · 每档 5 次取平均';
+  }
+
+  /* ---------------- 事件绑定 ---------------- */
+  function bind(){
+    klineChart = echarts.init(document.getElementById('klineChart'));
+    lineChart  = echarts.init(document.getElementById('lineChart'));
+
+    document.getElementById('genBtn').addEventListener('click', function(){
+      klines = generateKlines(getReturnPct(), getCount());
+      runSimulation();
+    });
+    document.getElementById('returnInput').addEventListener('change', function(){
+      document.getElementById('returnInput').value = getReturnPct();
+    });
+    document.getElementById('countInput').addEventListener('change', function(){
+      getCount();
+      klines = generateKlines(getReturnPct(), getCount());
+      runSimulation();
+    });
+    document.getElementById('opsInput').addEventListener('input', function(){
+      runSimulation();
+    });
+    document.getElementById('modeGroup').addEventListener('change', function(e){
+      var cards = document.querySelectorAll('.radio-card');
+      cards.forEach(function(c){ c.classList.remove('active'); });
+      e.target.closest('.radio-card').classList.add('active');
+      applyModeVisibility(getMode());
+      runSimulation();
+    });
+    applyModeVisibility(getMode());
+    document.getElementById('scanBtn').addEventListener('click', runScan);
+
+    window.addEventListener('resize', function(){
+      klineChart.resize(); lineChart.resize();
+    });
+
+    // 初始自动跑一遍
+    klines = generateKlines(getReturnPct(), getCount());
+    runSimulation();
+  }
+
+  if(window.echarts){ bind(); }
+  else {
+    document.getElementById('klineChart').innerHTML = '<div class="empty-tip">图表库加载失败，请检查网络后刷新</div>';
+  }
+})();
+</script>
+</body>
+</html>

@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Dev startup marker
+.dev_last_clear_date
+./default.profraw

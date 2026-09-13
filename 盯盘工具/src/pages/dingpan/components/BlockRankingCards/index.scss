@@ -1,0 +1,28 @@
+.blocks-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+
+  .unified-list-item {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 4px;
+    gap: 2px;
+    text-align: center;
+
+    .item-name {
+      font-size: 15px;
+      justify-content: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .item-value {
+      font-size: 13px;
+    }
+  }
+}

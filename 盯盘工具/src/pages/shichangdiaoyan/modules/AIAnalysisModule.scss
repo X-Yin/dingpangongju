@@ -1,5 +1,46 @@
 .ai-analysis-module {
+  margin-top: 24px;
+
+  .ant-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    .ant-card-head {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  .analysis-title-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .title-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .last-update {
+      font-size: 12px;
+      color: #8c8c8c;
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+
   .ai-content-area {
+    min-height: 200px;
+    position: relative;
+    padding: 12px;
+
     .markdown-body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       font-size: 14px;
@@ -31,26 +72,28 @@
 
       blockquote {
         margin: 12px 0;
-        padding: 8px 16px;
+        padding: 10px 18px;
         border-left: 4px solid #722ed1;
         background: #f9f0ff;
         color: #595959;
+        border-radius: 0 8px 8px 0;
       }
 
       code {
         padding: 2px 6px;
-        background: #f0f0f0;
+        background: rgba(114, 46, 209, 0.05);
         border-radius: 4px;
         font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
         font-size: 13px;
-        color: #c41d7f;
+        color: #722ed1;
       }
 
       pre {
-        padding: 12px;
-        background: #f5f5f5;
-        border-radius: 6px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 8px;
         overflow-x: auto;
+        border: 1px solid #e9ecef;
         code {
           padding: 0;
           background: none;
@@ -61,14 +104,14 @@
       table {
         width: 100%;
         border-collapse: collapse;
-        margin: 12px 0;
+        margin: 16px 0;
         th, td {
-          padding: 8px 12px;
+          padding: 10px 14px;
           border: 1px solid #e8e8e8;
           text-align: left;
         }
         th {
-          background: #f0f0f0;
+          background: #f5f5f5;
           font-weight: 600;
         }
         tr:nth-child(even) {
@@ -79,11 +122,11 @@
       hr {
         border: none;
         border-top: 1px solid #e8e8e8;
-        margin: 16px 0;
+        margin: 20px 0;
       }
 
       a {
-        color: #1890ff;
+        color: var(--theme-color, #1890ff);
         text-decoration: none;
         &:hover { text-decoration: underline; }
       }

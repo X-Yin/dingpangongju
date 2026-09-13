@@ -34,15 +34,19 @@ const pollJingJiaQiangChouData = async (hour = 9, minute = 24) => {
 }
 
 const getJingJiaQiangChouData = async () => {
-    // 是否存在 /data/jingjiaqiangchou/index.json 文件
     if (!fs.existsSync(path.resolve(__dirname, '../data/jingjiaqiangchou/index.json'))) {
         return null;
     }
-    // 读取 /data/jingjiaqiangchou/index.json 文件内容
     const data = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/jingjiaqiangchou/index.json'), 'utf-8'));
+    const monitorStocks = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/monitor_stocks.json'), 'utf-8'));
+    const blockMap = {};
+    monitorStocks.forEach(s => {
+        blockMap[s.code] = s.blockName;
+    });
     return Object.entries(data).map(([code, value]) => ({
         code,
         stockName: value.stockName,
+        blockName: blockMap[code] || '',
         ...value.kline[0]
     }));
 }

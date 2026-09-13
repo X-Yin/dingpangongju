@@ -1,0 +1,28 @@
+.block-money-card {
+  height: auto !important;
+
+  .block-money-alerts {
+    margin-bottom: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .block-money-alert-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .block-money-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+
+    .item-name {
+      font-size: 13px;
+    }
+  }
+}

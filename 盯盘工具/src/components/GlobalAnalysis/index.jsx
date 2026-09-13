@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Button, Spin, message } from 'antd';
-import { ThunderboltOutlined, CopyOutlined } from '@ant-design/icons';
+import { Button, Spin, message, Modal, Checkbox } from 'antd';
+import { ThunderboltOutlined, CopyOutlined, SelectOutlined } from '@ant-design/icons';
 import { marked } from 'marked';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
@@ -29,6 +29,10 @@ const GlobalAnalysis = () => {
   const [lastAnalysisTime, setLastAnalysisTime] = useState(null); // 上次分析完成时间
   const [now, setNow] = useState(Date.now()); // 当前时间，每秒刷新
   const abortRef = useRef(null);
+  const [contextModalVisible, setContextModalVisible] = useState(false);
+  const [contextData, setContextData] = useState(null);
+  const [contextLoading, setContextLoading] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState([]);
 
   // 每秒刷新当前时间，用于按钮禁用状态和闪烁判断
   useEffect(() => {
@@ -91,6 +95,51 @@ const GlobalAnalysis = () => {
     }
   };
 
+  const getDataDescription = (value) => {
+    if (Array.isArray(value)) return `数组 [${value.length}项]`;
+    if (value !== null && typeof value === 'object') return `对象 [${Object.keys(value).length}字段]`;
+    if (typeof value === 'string') return `字符串 [${value.length}字符]`;
+    if (typeof value === 'number') return '数值';
+    return typeof value;
+  };
+
+  const openContextModal = async () => {
+    setContextModalVisible(true);
+    setContextLoading(true);
+    try {
+      const res = await fetch(`http://${local_ip}:3000/global_analysis_data`);
+      if (!res.ok) {
+        message.error('获取数据失败');
+        return;
+      }
+      const data = await res.json();
+      setContextData(data);
+      // setSelectedKeys(Object.keys(data));
+    } catch (err) {
+      console.error('获取上下文数据失败:', err);
+      message.error('获取数据失败');
+    } finally {
+      setContextLoading(false);
+    }
+  };
+
+  const handleCopyContext = async () => {
+    const selectedObj = {};
+    selectedKeys.forEach(key => {
+      if (contextData[key] !== undefined) {
+        selectedObj[key] = contextData[key];
+      }
+    });
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(selectedObj));
+      message.success('已复制到剪贴板');
+      setContextModalVisible(false);
+    } catch (err) {
+      console.error('复制失败:', err);
+      message.error('复制失败');
+    }
+  };
+
   const fetchAnalysis = async () => {
     if (isButtonDisabled) return;
     setLoading(true);
@@ -139,7 +188,7 @@ const GlobalAnalysis = () => {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-        // 智谱返回的是 SSE 格式，每行以 data: 开头
+        // AI 返回的是 SSE 格式，每行以 data: 开头
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
         for (const line of lines) {
@@ -149,9 +198,11 @@ const GlobalAnalysis = () => {
           if (jsonStr === '[DONE]') continue;
           try {
             const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              result += delta;
+            const delta = parsed.choices?.[0]?.delta || {};
+            // 优先取 content，为空时回退到 reasoning_content（DeepSeek 思考模式）
+            const text = delta.content || delta.reasoning_content || '';
+            if (text) {
+              result += text;
               setContent(result);
             }
           } catch (e) {
@@ -188,6 +239,12 @@ const GlobalAnalysis = () => {
           </span>
         </div>
         <div className="global-analysis-actions">
+          <Button
+            icon={<SelectOutlined />}
+            onClick={openContextModal}
+          >
+            选择复制上下文
+          </Button>
           <Button
             icon={<CopyOutlined />}
             onClick={fetchQuestionData}
@@ -226,6 +283,59 @@ const GlobalAnalysis = () => {
           />
         )}
       </div>
+
+      <Modal
+        title="选择复制上下文"
+        open={contextModalVisible}
+        onCancel={() => setContextModalVisible(false)}
+        onOk={handleCopyContext}
+        okText="复制到剪贴板"
+        cancelText="取消"
+        width={600}
+        centered
+        okButtonProps={{ disabled: selectedKeys.length === 0 }}
+      >
+        <Spin spinning={contextLoading}>
+          {contextData && Object.keys(contextData).length > 0 && (
+            <div className="context-select-container">
+              <div className="context-select-header">
+                <Checkbox
+                  indeterminate={selectedKeys.length > 0 && selectedKeys.length < Object.keys(contextData).length}
+                  checked={selectedKeys.length === Object.keys(contextData).length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedKeys(Object.keys(contextData));
+                    } else {
+                      setSelectedKeys([]);
+                    }
+                  }}
+                >
+                  全选 ({selectedKeys.length}/{Object.keys(contextData).length})
+                </Checkbox>
+              </div>
+              <div className="context-checkbox-list">
+                {Object.keys(contextData).map(key => (
+                  <div key={key} className="context-checkbox-item">
+                    <Checkbox
+                      checked={selectedKeys.includes(key)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedKeys([...selectedKeys, key]);
+                        } else {
+                          setSelectedKeys(selectedKeys.filter(k => k !== key));
+                        }
+                      }}
+                    >
+                      <span className="context-key">{key}</span>
+                      <span className="context-desc">{getDataDescription(contextData[key])}</span>
+                    </Checkbox>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </Spin>
+      </Modal>
     </div>
   );
 };

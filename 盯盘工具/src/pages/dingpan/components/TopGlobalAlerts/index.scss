@@ -1,0 +1,16 @@
+.top-global-alerts {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+
+  .ant-alert {
+    border-radius: 0 0 12px 12px;
+    padding: 14px 20px;
+    backdrop-filter: blur(10px);
+
+    .ant-alert-message {
+      margin-bottom: 4px;
+    }
+  }
+}

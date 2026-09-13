@@ -4,6 +4,7 @@ import { AreaChartOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../constant';
 import StockTimeLine from '../StockTimeLine';
+import { getThemeColor } from '../../utils/theme';
 
 const { Text } = Typography;
 
@@ -48,7 +49,7 @@ const StockTimeLineModal = ({
     <Modal
       title={
         <Space>
-          <AreaChartOutlined style={{ color: '#1890ff' }} />
+          <AreaChartOutlined style={{ color: getThemeColor() }} />
           <span>个股分时走势</span>
           {stockInfo.name && <Text strong>{stockInfo.name}</Text>}
           {stockInfo.code && <Text type="secondary">({stockInfo.code})</Text>}

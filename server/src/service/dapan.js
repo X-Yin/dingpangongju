@@ -3,23 +3,35 @@
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const { getClsReqDaPanUrl, sleep } = require("../utils");
+const { getClsReqDaPanUrl, sleep, isTradingHours } = require("../utils");
 const { getAmountInfo } = require('./amount');
 
 const dapanDataPath = path.resolve(__dirname, '../data/dapanData.json');
 
 const getDaPanData = async () => {
-    const response = await axios.get(getClsReqDaPanUrl());
-    const data = response.data.data;
-    return data;
+    try {
+        const response = await axios.get(getClsReqDaPanUrl());
+        const data = response.data.data;
+        return data;
+    } catch (error) {
+        console.error("获取大盘数据失败:", error.message);
+        return null;
+    }
 }
 exports.getDaPanData = getDaPanData;
 
 exports.pollDaPanData = async (interval = 10000) => {
     const task = async () => {
-        const data = await getDaPanData();
-        fs.writeFileSync(dapanDataPath, JSON.stringify(data, null, 2));
-        console.log('---------- 轮询大盘数据完成！----------', new Date().toLocaleString());
+        if (!isTradingHours()) return;
+        try {
+            const data = await getDaPanData();
+            if (data) {
+                fs.writeFileSync(dapanDataPath, JSON.stringify(data, null, 2));
+                console.log('---------- 轮询大盘数据完成！----------', new Date().toLocaleString());
+            }
+        } catch (error) {
+            console.error("轮询大盘数据任务失败:", error.message);
+        }
     };
 
     // 立即执行一次

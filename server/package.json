@@ -6,9 +6,13 @@
   "scripts": {
     "clear": "node script/clear.js",
     "clear-jz": "node script/clear-jingjia-zhudong.js",
-    "dev": "node src/index.js",
-    "no-poll": "node src/index.js --no-poll",
+    "clean-intraday-history": "node script/clean-intraday-history.js",
+    "dev": "node script/dev-with-clear.js",
+    "poll": "node src/poll.js",
+    "poll-all": "node src/poll.js --all",
     "start": "npm run clear & npm run dev",
+    "git": "node script/git-push.js",
+    "tech_block_crowd_refresh": "node src/service/科技板块拥挤度计算/block_amount_money.js --reset",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -19,6 +23,7 @@
     "cors": "^2.8.6",
     "dayjs": "^1.11.21",
     "express": "^5.2.1",
+    "iconv-lite": "^0.7.3",
     "multer": "^2.2.0",
     "nodemon": "^3.1.14",
     "puppeteer": "^25.1.0"

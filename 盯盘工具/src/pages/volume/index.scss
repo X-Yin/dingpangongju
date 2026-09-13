@@ -13,30 +13,19 @@
     }
   }
 
-  .stat-card {
+  .index-kline-card {
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    transition: transform 0.3s ease;
+    margin-bottom: 16px;
 
-    &:hover {
-      transform: translateY(-4px);
-    }
-
-    &.main-money {
-      border-left: 4px solid #f5222d;
-    }
-
-    &.amount-change {
-      border-left: 4px solid #1890ff;
-    }
-
-    .ant-statistic-title {
-      font-size: 14px;
-      color: #8c8c8c;
-    }
-
-    .ant-statistic-content {
+    .ant-card-head {
+      border-bottom: 1px solid #f0f0f0;
       font-weight: 600;
+      text-align: center;
+    }
+
+    .ant-card-body {
+      padding: 12px;
     }
   }
 

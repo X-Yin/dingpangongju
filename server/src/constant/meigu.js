@@ -1,0 +1,26 @@
+const MEI_GU_STOCK_CODE = {
+    '英伟达': 'gb_nvda',
+    'SK海力士': 'gb_skhy',
+    '美光': 'gb_mu',
+    '闪迪': 'gb_sndk',
+    '康宁': 'gb_glw',
+    'Lumentum': 'gb_lite',
+    'Coherent': 'gb_cohr',
+    'AAOI': 'gb_aaoi',
+    'ASML': 'gb_asml',
+    '台积电': 'gb_tsm',
+    '迈威尔科技': 'gb_mrvl',
+    '高通': 'gb_qcom',
+    'AMD': 'gb_amd',
+    '博通': 'gb_avgo',
+    '英特尔': 'gb_intc',
+    'Meta': 'gb_meta',
+    '苹果': 'gb_aapl',
+    '微软': 'gb_msft',
+    '谷歌': 'gb_googl',
+    '亚马逊': 'gb_amzn',
+    '特斯拉': 'gb_tsla',
+    'CoreWeave': 'gb_crwv',
+};
+
+module.exports = { MEI_GU_STOCK_CODE };

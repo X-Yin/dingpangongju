@@ -98,12 +98,13 @@ const compareBlockData = (prevBlockData, currBlockData) => {
     const prevMap = new Map();
     prevBlockData.forEach((b, i) => prevMap.set(b.blockName, { rank: i, avgChange: b.avgChange }));
     const changes = [];
+    const totalBlocks = currBlockData.length;
     currBlockData.forEach((b, currRank) => {
         const prev = prevMap.get(b.blockName);
         if (!prev) return; // 新增板块，跳过
         const rankDiff = currRank - prev.rank;
         if (Math.abs(rankDiff) > BLOCK_RANK_THRESHOLD) {
-            changes.push({ blockName: b.blockName, rankDiff });
+            changes.push({ blockName: b.blockName, rankDiff, currentRank: currRank, totalBlocks });
         }
     });
     return changes;
@@ -158,12 +159,21 @@ const pollOnce = () => {
             if (lastSeenBlockData !== null) {
                 const blockChanges = compareBlockData(lastSeenBlockData, blockData);
                 if (blockChanges.length > 0) {
+                    blockChanges.sort((a, b) => {
+                        const aIsUp = a.rankDiff < 0;
+                        const bIsUp = b.rankDiff < 0;
+                        if (aIsUp !== bIsUp) {
+                            return aIsUp ? -1 : 1;
+                        }
+                        return Math.abs(b.rankDiff) - Math.abs(a.rankDiff);
+                    });
                     const parts = blockChanges.map(c => {
                         const sub = [];
                         if (Math.abs(c.rankDiff) > BLOCK_RANK_THRESHOLD) {
-                            const color = c.rankDiff < 0 ? '#ff4d4f' : '#52c41a'; // 排名数字减小是上升，红色
+                            const color = c.rankDiff < 0 ? '#ff4d4f' : '#52c41a';
                             const rankType = c.rankDiff < 0 ? '上升' : '下降';
                             sub.push(`排名${rankType} <span style="color: ${color}; font-weight: bold;">${Math.abs(c.rankDiff)}名</span>`);
+                            sub.push(`当前 <span style="color: #8c8c8c; font-weight: bold;">${c.currentRank + 1}/${c.totalBlocks}</span>`);
                         }
                         return sub.length > 0 ? `<b>${c.blockName}</b>: ${sub.join('，')}` : null;
                     }).filter(Boolean);
@@ -221,6 +231,24 @@ const pollOnce = () => {
     // 4. 有报警则写入文件
     if (newAlarms.length > 0) {
         const alarms = readAlarms();
+        
+        // 增加去重逻辑：如果最近 1 分钟内已经存在相同 title 和 description 的报警，则不再重复添加
+        const oneMinuteAgo = dayjs().subtract(1, 'minute');
+        const isDuplicate = alarms.some(group => {
+            if (dayjs(group.time).isBefore(oneMinuteAgo)) return false;
+            return group.alarms.some(existingAlarm => 
+                newAlarms.some(newAlarm => 
+                    newAlarm.title === existingAlarm.title && 
+                    newAlarm.description === existingAlarm.description
+                )
+            );
+        });
+
+        if (isDuplicate) {
+            console.log('[monitor] 检测到内容重复的报警，已跳过写入');
+            return;
+        }
+
         alarms.push({ id: genId(), time: nowStr, read: false, alarms: newAlarms });
         const cutoff = dayjs().subtract(ALARM_RETENTION_HOURS, 'hour');
         const filtered = alarms.filter(group => group && group.time && dayjs(group.time).isAfter(cutoff));
@@ -233,7 +261,7 @@ const pollOnce = () => {
 const startMonitor = () => {
     if (pollingStarted) return;
     pollingStarted = true;
-    console.log('[monitor] 开始轮询主力资金与成交量，间隔 1s');
+    console.log(`[monitor] 开始轮询主力资金与成交量，间隔 ${POLL_INTERVAL / 1000}s`);
     // 启动时清理一次过期报警
     cleanupAlarms();
     pollOnce();

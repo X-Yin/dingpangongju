@@ -1,9 +1,10 @@
 // 返回重点板块数据
 const path = require('path');
 const fs = require('fs');
-const { default: blockCodeList } = require('../constant/block_code.js');
+const { getBlocksConfig } = require('./blockConfig');
 const { getSingleStockData } = require('./stock');
-const { sleep } = require('../utils/index.js');
+const { sleep, batchParallel } = require('../utils/index.js');
+const { useCLS } = require('../config');
 const dayjs = require('dayjs');
 
 const blockPath = path.resolve(__dirname, '../data/block_data.json');
@@ -29,9 +30,12 @@ const getPreviousRank = () => {
 };
 
 // 对 blockCodeList 做分组，板块相同的放在一起
+// 过滤掉占位符条目（code === '__block_placeholder__'），但保留板块名
 const divideBlockCodeList = (codeList) => {
   const blockGroupData = {};
   for (const item of codeList) {
+    // 跳过占位符条目
+    if (item.code === '__block_placeholder__') continue;
     if (!blockGroupData[item.blockName]) {
       blockGroupData[item.blockName] = [];
     }
@@ -64,24 +68,30 @@ const getSingleBlockData = async (blockName, codeList) => {
 // 轮询板块数据，并且写入到本地的文件当中
 const pollBlockData = async (interval = 60000) => {
   const task = async () => {
-    // 拆分板块数据
-    const blockGroupData = divideBlockCodeList(blockCodeList);
-    // 每一个板块数据依次写入，防止同时发出的请求太多，接口返回有问题
-    for (const blockName in blockGroupData) {
-      const blockListData = await getSingleBlockData(blockName, blockGroupData[blockName]);
-      let originData = '{}';
-      try {
-        originData = fs.readFileSync(blockPath, 'utf-8');
-      } catch (e) {
-        originData = '{}';
-      }
-      const blockData = JSON.parse(originData || '{}');
-      blockData[blockName] = blockListData[blockName];
-      fs.writeFileSync(blockPath, JSON.stringify(blockData, null, 2));
+    try {
+      // 每次获取最新的配置
+      const blockCodeList = getBlocksConfig();
+      // 拆分板块数据
+      const blockGroupData = divideBlockCodeList(blockCodeList);
+      // 每一个板块数据依次写入，防止同时发出的请求太多，接口返回有问题
+      for (const blockName in blockGroupData) {
+        const blockListData = await getSingleBlockData(blockName, blockGroupData[blockName]);
+        let originData = '{}';
+        try {
+          originData = fs.readFileSync(blockPath, 'utf-8');
+        } catch (e) {
+          originData = '{}';
+        }
+        const blockData = JSON.parse(originData || '{}');
+        blockData[blockName] = blockListData[blockName];
+        fs.writeFileSync(blockPath, JSON.stringify(blockData, null, 2));
 
-      await sleep(1000);
+        if (useCLS()) await sleep(1000);
+      }
+      console.log('---------- 轮询板块数据完成！---------- ', new Date().toLocaleString());
+    } catch (error) {
+      console.error("轮询板块数据任务失败:", error.message);
     }
-    console.log('---------- 轮询板块数据完成！---------- ', new Date().toLocaleString());
   };
 
   // 立即执行一次
@@ -92,16 +102,71 @@ const pollBlockData = async (interval = 60000) => {
 
 const getBlockData = () => {
   const blockData = JSON.parse(fs.readFileSync(blockPath, 'utf-8') || '{}');
-  const blockList = Object.keys(blockData).map(blockName => ({
-    blockName,
-    // 每个板块的平均涨幅
-    avgChange: Number((blockData[blockName].reduce((acc, cur) => acc + cur.change, 0) / blockData[blockName].length).toFixed(2)),
-    data: blockData[blockName]
-  }));
-  // 并且每个 blockList 内部的股票也是从高到低排序
-  blockList.forEach(item => {
-    item.data.sort((a, b) => b.change - a.change);
+  
+  // 每次获取最新的配置
+  const blockCodeList = getBlocksConfig();
+  
+  // 从配置文件获取所有板块和股票的对应关系（排除占位符）
+  const configGroups = divideBlockCodeList(blockCodeList);
+  
+  // 获取所有板块名
+  const allBlockNames = new Set(blockCodeList.map(item => item.blockName));
+  const blockList = [];
+  
+  allBlockNames.forEach(blockName => {
+    // 配置中的股票列表
+    const configStocks = configGroups[blockName] || [];
+    
+    // 实时行情中的股票列表（以 code 为 key）
+    const marketDataMap = {};
+    (blockData[blockName] || []).forEach(item => {
+      marketDataMap[item.code] = item;
+    });
+    
+    // 合并：以配置为准，实时行情作为补充
+    const mergedData = configStocks.map(stock => {
+      const marketData = marketDataMap[stock.code];
+      if (marketData) {
+        return {
+          ...stock,
+          change: marketData.change,
+          price: marketData.price,
+          open: marketData.open,
+          high: marketData.high,
+          low: marketData.low,
+          volume: marketData.volume,
+          amount: marketData.amount,
+        };
+      } else {
+        // 没有实时行情数据，显示默认值
+        return {
+          ...stock,
+          change: 0,
+          price: null,
+          noMarketData: true, // 标记为无行情数据
+        };
+      }
+    });
+    
+    // 计算平均涨跌幅（只计算有行情数据的股票）
+    const stocksWithData = mergedData.filter(s => !s.noMarketData);
+    const avgChange = stocksWithData.length > 0
+      ? Number((stocksWithData.reduce((acc, cur) => acc + cur.change, 0) / stocksWithData.length).toFixed(2))
+      : 0;
+    
+    blockList.push({
+      blockName,
+      avgChange,
+      data: mergedData.sort((a, b) => {
+        // 有行情数据的排在前面
+        if (a.noMarketData && !b.noMarketData) return 1;
+        if (!a.noMarketData && b.noMarketData) return -1;
+        // 按涨跌幅排序
+        return b.change - a.change;
+      })
+    });
   });
+  
   return blockList.sort((a, b) => b.avgChange - a.avgChange);
 };
 
@@ -163,16 +228,20 @@ const getCurrentDayHotBlock = () => {
 // 每隔 1min 自动读取一次板块数据，并且计算每个板块的 avgChange，将时间和结果储存到本地的 data/block_data_change_time.json 文件中
 const pollBlockHistory = async (interval = 60000) => {
   const task = async () => {
-    const blockData = getBlockData();
-    const blockHistory = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/block_data_change_time.json'), 'utf-8') || '[]');
-    blockHistory.push({
-      time: dayjs().format('HH:mm'),
-      blockData: blockData.map(item => ({
-        blockName: item.blockName,
-        avgChange: item.avgChange
-      }))
-    });
-    fs.writeFileSync(path.resolve(__dirname, '../data/block_data_change_time.json'), JSON.stringify(blockHistory, null, 2));
+    try {
+      const blockData = getBlockData();
+      const blockHistory = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/block_data_change_time.json'), 'utf-8') || '[]');
+      blockHistory.push({
+        time: dayjs().format('HH:mm'),
+        blockData: blockData.map(item => ({
+          blockName: item.blockName,
+          avgChange: item.avgChange
+        }))
+      });
+      fs.writeFileSync(path.resolve(__dirname, '../data/block_data_change_time.json'), JSON.stringify(blockHistory, null, 2));
+    } catch (error) {
+      console.error("记录板块历史数据失败:", error.message);
+    }
   };
   setInterval(task, interval);
 }
@@ -195,30 +264,32 @@ const getBlockDayHistory = () => {
 };
 
 const updateBlockDayHistory = () => {
-  // 先通过 getBlockData 获取最新的板块数据，然后序列化成 block_data_day_history.json 内部的格式，存储下来
-  const blockData = getBlockData();
+  const blockHistoryPath = path.resolve(__dirname, '../data/block_data_change_time.json');
+  const blockHistory = JSON.parse(fs.readFileSync(blockHistoryPath, 'utf-8') || '[]');
+  
+  if (!Array.isArray(blockHistory) || blockHistory.length === 0) {
+    throw new Error('当日暂无板块分时数据，无法记录收盘历史');
+  }
+  
+  const lastRecord = blockHistory[blockHistory.length - 1];
   const blockDayHistory = getBlockDayHistory();
   const today = dayjs().format('YYYYMMDD');
   
-  // 将 blockData 数组转换成对象格式，与旧数据保持一致
   const blocksObj = {};
-  blockData.forEach(item => {
+  lastRecord.blockData.forEach(item => {
     blocksObj[item.blockName] = {
       avgChange: item.avgChange
     };
   });
   
-  // 检查今天是否已经有记录
   const existingIndex = blockDayHistory.findIndex(item => item.date === today);
   
   if (existingIndex !== -1) {
-    // 如果今天已经有记录，则替换
     blockDayHistory[existingIndex] = {
       date: today,
       blocks: blocksObj
     };
   } else {
-    // 如果今天没有记录，则追加
     blockDayHistory.unshift({
       date: today,
       blocks: blocksObj
@@ -248,17 +319,26 @@ const updateBlockMoneyDayHistory = async () => {
     const stocks = blockData[blockName];
     let totalAmount = 0;
     
-    // 获取每个股票的成交金额
-    for (const stock of stocks) {
+    const fetchAmount = async (stock) => {
       try {
         const klineData = await getSingleStockData(stock.code, 1);
         if (klineData && klineData[0] && klineData[0].business_balance) {
-          totalAmount += klineData[0].business_balance;
+          return klineData[0].business_balance;
         }
-        await sleep(1000); // 避免请求过快
       } catch (e) {
         console.log(`获取股票 ${stock.name} 成交金额失败:`, e.message);
       }
+      return 0;
+    };
+
+    if (useCLS()) {
+      for (const stock of stocks) {
+        totalAmount += await fetchAmount(stock);
+        await sleep(1000);
+      }
+    } else {
+      const amounts = await batchParallel(stocks, fetchAmount, 10);
+      totalAmount = amounts.reduce((sum, val) => sum + val, 0);
     }
     
     blockAmounts[blockName] = totalAmount;
@@ -292,7 +372,75 @@ const getBlockMoneyDayHistory = () => {
   return blockMoneyDayHistory;
 };
 
+const scheduleBlockDayHistory = (hour = 15, minute = 1) => {
+  let executedDates = new Set();
+
+  const task = () => {
+    const now = dayjs();
+    const today = now.format('YYYYMMDD');
+    const dayOfWeek = now.day();
+
+    if (dayOfWeek === 0 || dayOfWeek === 6) return;
+
+    if (executedDates.has(today)) return;
+
+    const targetTime = now.hour(hour).minute(minute).second(0).millisecond(0);
+    if (!now.isAfter(targetTime)) return;
+
+    console.log('开始记录每日板块涨跌幅历史...', now.format('YYYY-MM-DD HH:mm:ss'));
+    try {
+      updateBlockDayHistory();
+      console.log('每日板块涨跌幅历史记录完成:', today);
+      executedDates.add(today);
+    } catch (e) {
+      console.error('每日板块涨跌幅历史记录失败:', e.message);
+    }
+  };
+
+  task();
+  setInterval(task, 60 * 1000);
+  console.log(`每日板块涨跌幅历史记录已调度，超过 ${hour}:${String(minute).padStart(2, '0')} 且未记录时将自动执行`);
+};
+
+// 立即刷新板块数据（同步等待完成）
+const refreshBlockData = async () => {
+  console.log('---------- 开始刷新板块数据 ---------- ', new Date().toLocaleString());
+  try {
+    // 每次获取最新的配置
+    const blockCodeList = getBlocksConfig();
+    // 拆分板块数据
+    const blockGroupData = divideBlockCodeList(blockCodeList);
+    const totalBlocks = Object.keys(blockGroupData).length;
+    let completedBlocks = 0;
+
+    // 每一个板块数据依次写入，防止同时发出的请求太多，接口返回有问题
+    for (const blockName in blockGroupData) {
+      const blockListData = await getSingleBlockData(blockName, blockGroupData[blockName]);
+      let originData = '{}';
+      try {
+        originData = fs.readFileSync(blockPath, 'utf-8');
+      } catch (e) {
+        originData = '{}';
+      }
+      const blockData = JSON.parse(originData || '{}');
+      blockData[blockName] = blockListData[blockName];
+      fs.writeFileSync(blockPath, JSON.stringify(blockData, null, 2));
+
+      completedBlocks++;
+      console.log(`刷新进度: ${completedBlocks}/${totalBlocks} - ${blockName}`);
+
+      if (useCLS()) await sleep(500);
+    }
+    console.log('---------- 刷新板块数据完成！---------- ', new Date().toLocaleString());
+    return { success: true, message: '刷新成功', totalBlocks, updatedAt: new Date().toISOString() };
+  } catch (error) {
+    console.error("刷新板块数据失败:", error.message);
+    return { success: false, message: error.message };
+  }
+};
+
 exports.getBlockData = getBlockData;
+exports.refreshBlockData = refreshBlockData;
 exports.pollBlockData = pollBlockData;
 exports.getTopAndBottomBlockData = getTopAndBottomBlockData;
 exports.getCurrentDayHotBlock = getCurrentDayHotBlock;
@@ -300,5 +448,6 @@ exports.pollBlockHistory = pollBlockHistory;
 exports.getBlockHistory = getBlockHistory;
 exports.getBlockDayHistory = getBlockDayHistory;
 exports.updateBlockDayHistory = updateBlockDayHistory;
+exports.scheduleBlockDayHistory = scheduleBlockDayHistory;
 exports.getBlockMoneyDayHistory = getBlockMoneyDayHistory;
 exports.updateBlockMoneyDayHistory = updateBlockMoneyDayHistory;

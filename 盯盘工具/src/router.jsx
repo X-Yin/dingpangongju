@@ -1,15 +1,18 @@
-// 设置 react-router 路由配置和组件，要求 / 路径渲染 App 组件
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import App from './App.jsx';
 import DingPan from './pages/dingpan/index.jsx';
-import Block from './pages/block/index.jsx';
-import BlockMoneyChange from './pages/block_money_change/index.jsx';
-import BlockMoneyDayHistory from './pages/block_money_day_history/index.jsx';
+import KeyBlocks from './pages/key_blocks/index.jsx';
 import Sentiment from './pages/sentiment/index.jsx';
-import JingJiaQiangChou from './pages/jingjia/index.jsx';
 import VolumeStatistics from './pages/volume/index.jsx';
 import ShiChangDiaoYan from './pages/shichangdiaoyan/index.jsx';
 import JigouReports from './pages/JigouReports/index.jsx';
+import StockDiagnosis from './pages/stock_diagnosis/index.jsx';
+import MainFund from './pages/MainFund/index.jsx';
+import FuPan from './pages/fupan/index.jsx';
+import StrategyCenter from './pages/strategy_center/index.jsx';
+import AiPrediction from './pages/ai_prediction/index.jsx';
+import OpeningBattle from './pages/OpeningBattle/index.jsx';
+import TrainingCamp from './pages/trainingCamp/index.jsx';
 
 const router = createBrowserRouter([
   {
@@ -26,11 +29,11 @@ const router = createBrowserRouter([
       },
       {
         path: 'block',
-        element: <Block />,
+        element: <KeyBlocks />,
       },
       {
         path: 'block_money_change',
-        element: <BlockMoneyChange />,
+        element: <KeyBlocks />,
       },
       {
         path: 'sentiment',
@@ -49,10 +52,34 @@ const router = createBrowserRouter([
         element: <JigouReports />,
       },
       {
-        path: 'block_money_day_history',
-        element: <BlockMoneyDayHistory />,
+        path: 'stock_diagnosis',
+        element: <StockDiagnosis />,
+      },
+      {
+        path: 'fupan',
+        element: <FuPan />,
+      },
+      {
+        path: 'strategy_center',
+        element: <StrategyCenter />,
+      },
+      {
+        path: 'ai_prediction',
+        element: <AiPrediction />,
+      },
+      {
+        path: 'opening_battle',
+        element: <OpeningBattle />,
+      },
+      {
+        path: 'training_camp',
+        element: <TrainingCamp />,
       }
     ]
+  },
+  {
+    path: 'main_fund',
+    element: <MainFund />,
   }
 ]);
 export default router;

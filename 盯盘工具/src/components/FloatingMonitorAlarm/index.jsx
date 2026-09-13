@@ -4,16 +4,23 @@ import { BellOutlined, CheckOutlined, RobotOutlined, CopyOutlined } from '@ant-d
 import { useNavigate } from 'react-router-dom';
 import { marked } from 'marked';
 import axios from 'axios';
+import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
 import './index.scss';
 
-// 配置 marked
 marked.setOptions({
   breaks: true,
   gfm: true,
 });
 
-const POLL_INTERVAL = 1000;       // 前端轮询间隔 1s
+const POLL_INTERVAL = 1000;
+
+const isAfterMarketClose = () => {
+  const now = dayjs();
+  const currentHour = now.hour();
+  const currentMinute = now.minute();
+  return currentHour < 9 || (currentHour === 9 && currentMinute < 15) || currentHour >= 15 || (currentHour === 14 && currentMinute >= 59);
+};
 
 const FloatingMonitorAlarm = () => {
   const navigate = useNavigate();
@@ -23,12 +30,13 @@ const FloatingMonitorAlarm = () => {
   const [aiContent, setAiContent] = useState('');
   const [aiTime, setAiTime] = useState('');
   const [loadingAI, setLoadingAI] = useState(false);
+  const [aiPanelVisible, setAiPanelVisible] = useState(false);
   const [pos, setPos] = useState({ x: window.innerWidth - 76, y: window.innerHeight / 2 - 28 });
   const [now, setNow] = useState(new Date());
-  const seenIdsRef = useRef(new Set());      // 已见过的报警 id
+  const seenIdsRef = useRef(new Set());
   const dragRef = useRef({ dragging: false, moved: false, offsetX: 0, offsetY: 0, startX: 0, startY: 0 });
+  const containerRef = useRef(null);
 
-  // 拖动处理（点击 vs 拖动通过移动距离区分）
   const handleMouseDown = (e) => {
     dragRef.current = {
       dragging: true,
@@ -39,11 +47,15 @@ const FloatingMonitorAlarm = () => {
       startY: e.clientY,
     };
     document.body.style.userSelect = 'none';
+    if (containerRef.current) {
+      containerRef.current.style.transition = 'none';
+      containerRef.current.style.willChange = 'left, top';
+    }
   };
 
   useEffect(() => {
     const handleMove = (e) => {
-      if (!dragRef.current.dragging) return;
+      if (!dragRef.current.dragging || !containerRef.current) return;
       const dx = e.clientX - dragRef.current.startX;
       const dy = e.clientY - dragRef.current.startY;
       if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
@@ -51,17 +63,22 @@ const FloatingMonitorAlarm = () => {
       }
       const x = e.clientX - dragRef.current.offsetX;
       const y = e.clientY - dragRef.current.offsetY;
-      const maxX = window.innerWidth - 56;
-      const maxY = window.innerHeight - 56;
-      setPos({
-        x: Math.max(0, Math.min(x, maxX)),
-        y: Math.max(0, Math.min(y, maxY)),
-      });
+      const maxX = window.innerWidth - 72;
+      const maxY = window.innerHeight - 72;
+      const newX = Math.max(0, Math.min(x, maxX));
+      const newY = Math.max(0, Math.min(y, maxY));
+      containerRef.current.style.left = `${newX}px`;
+      containerRef.current.style.top = `${newY}px`;
     };
     const handleUp = () => {
-      if (dragRef.current.dragging) {
-        dragRef.current.dragging = false;
-        document.body.style.userSelect = '';
+      if (!dragRef.current.dragging) return;
+      dragRef.current.dragging = false;
+      document.body.style.userSelect = '';
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setPos({ x: rect.left, y: rect.top });
+        containerRef.current.style.transition = '';
+        containerRef.current.style.willChange = '';
       }
     };
     window.addEventListener('mousemove', handleMove);
@@ -100,8 +117,24 @@ const FloatingMonitorAlarm = () => {
   // 1s 轮询
   useEffect(() => {
     fetchAlarms();
-    const t = setInterval(fetchAlarms, POLL_INTERVAL);
-    return () => clearInterval(t);
+
+    const timers = [];
+    const schedulePoll = (callback, delay) => {
+      const timer = setTimeout(() => {
+        if (!isAfterMarketClose()) {
+          callback();
+          schedulePoll(callback, delay);
+        }
+      }, delay);
+      timers.push(timer);
+      return timer;
+    };
+
+    schedulePoll(fetchAlarms, POLL_INTERVAL);
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
   }, [fetchAlarms]);
 
   // 实时时间每秒更新
@@ -137,6 +170,7 @@ const FloatingMonitorAlarm = () => {
   const handleAIAnalysis = async () => {
     if (alarms.length === 0 || loadingAI) return;
     
+    setAiPanelVisible(true);
     setLoadingAI(true);
     setAiContent('');
     const startTime = new Date().toLocaleTimeString('zh-CN', { hour12: false });
@@ -256,52 +290,58 @@ const FloatingMonitorAlarm = () => {
   return (
     <>
       <div
+        ref={containerRef}
         className={`floating-monitor-alarm ${blinking ? 'blinking' : ''}`}
         style={{ left: pos.x, top: pos.y }}
         onMouseDown={handleMouseDown}
         onClick={handleClick}
       >
-        <Badge count={unreadCount} size="small" offset={[-2, 2]} overflowCount={99}>
-          <div className="fma-icon-wrap">
-            <BellOutlined className="fma-icon" />
-          </div>
-        </Badge>
-        <span className="fma-label">监控</span>
+        <div className="fma-content">
+          <Badge count={unreadCount} size="small" offset={[-2, 2]} overflowCount={99}>
+            <div className="fma-icon-wrap">
+              <BellOutlined className="fma-icon" />
+            </div>
+          </Badge>
+          <span className="fma-label">监控</span>
+        </div>
       </div>
 
       <Drawer
         title={<span>监控报警 <span className="fma-live-time">{now.toLocaleTimeString('zh-CN', { hour12: false })}</span></span>}
         placement="right"
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        width={850}
+        onClose={() => {
+          setDrawerOpen(false);
+          setAiPanelVisible(false);
+        }}
+        width={aiPanelVisible ? 850 : 500}
         className="monitor-alarm-drawer"
         destroyOnClose={false}
         extra={
           <Space size="middle">
-            <Button 
-              icon={<CopyOutlined />} 
-              onClick={handleCopyAlarms}
-              className="glass-btn copy-btn"
-            >
-              复制报警
-            </Button>
-            <Button 
-              icon={<RobotOutlined />} 
-              onClick={handleAIAnalysis}
-              loading={loadingAI}
-              className="glass-btn ai-btn"
-            >
-              AI 分析
-            </Button>
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               icon={<CheckOutlined />}
               onClick={markAllRead}
               disabled={unreadCount === 0}
               className="glass-btn read-all-btn"
             >
               全部已读
+            </Button>
+            <Button
+              icon={<CopyOutlined />}
+              onClick={handleCopyAlarms}
+              className="glass-btn copy-btn"
+            >
+              复制报警
+            </Button>
+            <Button
+              icon={<RobotOutlined />}
+              onClick={handleAIAnalysis}
+              loading={loadingAI}
+              className="glass-btn ai-btn"
+            >
+              AI 分析
             </Button>
           </Space>
         }
@@ -347,31 +387,33 @@ const FloatingMonitorAlarm = () => {
             )}
           </div>
 
-          <div className="drawer-right-panel">
-            {loadingAI && !aiContent ? (
-              <div className="fma-ai-loading">
-                <Spin tip="AI 正在分析报警信息..." />
-              </div>
-            ) : aiContent ? (
-              <div className="fma-ai-content">
-                <div className="ai-header">
-                  <div className="ai-title">
-                    <RobotOutlined /> AI 分析结果
-                  </div>
-                  {aiTime && <span className="ai-time">{aiTime}</span>}
+          {aiPanelVisible && (
+            <div className="drawer-right-panel">
+              {loadingAI && !aiContent ? (
+                <div className="fma-ai-loading">
+                  <Spin tip="AI 正在分析报警信息..." />
                 </div>
-                <div 
-                  className="markdown-body" 
-                  dangerouslySetInnerHTML={{ __html: marked.parse(aiContent) }} 
-                />
-              </div>
-            ) : (
-              <div className="fma-ai-empty">
-                <RobotOutlined style={{ fontSize: 40, color: '#bfbfbf', marginBottom: 16 }} />
-                <p>点击上方「AI 分析」按钮<br/>获取深度市场解读</p>
-              </div>
-            )}
-          </div>
+              ) : aiContent ? (
+                <div className="fma-ai-content">
+                  <div className="ai-header">
+                    <div className="ai-title">
+                      <RobotOutlined /> AI 分析结果
+                    </div>
+                    {aiTime && <span className="ai-time">{aiTime}</span>}
+                  </div>
+                  <div 
+                    className="markdown-body" 
+                    dangerouslySetInnerHTML={{ __html: marked.parse(aiContent) }} 
+                  />
+                </div>
+              ) : (
+                <div className="fma-ai-empty">
+                  <RobotOutlined style={{ fontSize: 40, color: '#bfbfbf', marginBottom: 16 }} />
+                  <p>点击上方「AI 分析」按钮<br/>获取深度市场解读</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </Drawer>
     </>

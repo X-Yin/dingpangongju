@@ -40,6 +40,12 @@ const clearDirectories = () => {
     fs.writeFileSync(path.resolve(__dirname, '../src/data/monitor_alarms.json'), '[]');
     // 清空 stock_position_fund_flow.json 文件
      fs.writeFileSync(path.resolve(__dirname, '../src/data/stock_position_fund_flow.json'), '{}');
+     // 清空 stock_position_analysis.json 文件
+     fs.writeFileSync(path.resolve(__dirname, '../src/data/stock_position_analysis.json'), '');
+    // 清空 strategy_state.json 文件
+    fs.writeFileSync(path.resolve(__dirname, '../src/data/strategy_state.json'), '{}');
+    // 清空 strategy_records.json 文件
+    fs.writeFileSync(path.resolve(__dirname, '../src/data/strategy_records.json'), '[]');
 };
 
 clearDirectories();

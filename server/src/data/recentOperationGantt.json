@@ -1,115 +1,112 @@
 [
   {
-    "id": 1783219660075.0093,
-    "title": "半年报业绩",
-    "description": "资金极致抱团业绩高增的板块，大部分股票披露业绩在 8 月底，到了 8 月中旬存储等高位股会开始震荡，等待业绩落地",
-    "startDate": "2026-07-06",
-    "endDate": "2026-08-15",
-    "level": "positive",
-    "descInline": true
-  },
-  {
-    "id": 1783219660075.125,
-    "title": "pcb上游材料涨价",
-    "description": "铜箔，电子布，树脂，ccl 大概率也就在 7 月上旬会迎来超预期的提价",
-    "startDate": "2026-07-06",
-    "endDate": "2026-07-15",
-    "level": "positive",
-    "descInline": true
-  },
-  {
-    "id": 1783264502887.537,
-    "title": "华为韬定律第一阶段炒作",
-    "description": "这个属于产业趋势确立的第一阶段情绪炒作，相关概念股会一直持续到 9 月新机发布之前都有行情，这里也是一波大行情的起点",
-    "startDate": "2026-07-06",
-    "endDate": "2026-08-15",
-    "level": "positive",
-    "descInline": true,
-    "isImportant": false
-  },
-  {
-    "id": 1783219660075.489,
-    "title": "三星 Q2 业绩",
-    "description": "大概率炸裂，对存储有催化作用",
-    "startDate": "2026-07-07",
-    "endDate": "2026-07-07",
-    "level": "positive"
-  },
-  {
-    "id": 1783219660075.42,
-    "title": "长鑫存储上市",
-    "description": "7.7 询价，7.13 申购，7.10 最后的跑路时间（目前时间有所推迟，待定）",
-    "startDate": "2026-07-07",
-    "endDate": "2026-07-13",
-    "level": "positive",
-    "descInline": true,
-    "isImportant": false
-  },
-  {
-    "id": 1783219660075.9097,
-    "title": "美国新版关税",
-    "description": "美国新版关税有可能不及预期，7.7 关税豁免听证会开始、7月中旬听证会结果出炉、7.24 新版关税落地",
-    "startDate": "2026-07-07",
-    "endDate": "2026-07-24",
-    "level": "negative",
-    "descInline": true
-  },
-  {
-    "id": 1783219660075.9993,
-    "title": "可回收火箭",
-    "description": "商业航天催化主题性行情",
-    "startDate": "2026-07-10",
-    "endDate": "2026-07-15",
+    "id": 1788664272819,
+    "title": "美国 8 月 cpi 公布",
+    "description": "9 月议息会议之前的最重磅数据",
+    "startDate": "2026-09-11",
+    "endDate": "2026-09-11",
     "level": "neutral",
-    "descInline": true
+    "descInline": false,
+    "isImportant": false,
+    "notify": true
   },
   {
-    "id": 1783219660075.8025,
-    "title": "美国 6 月 CPI",
-    "description": "关注对通胀加息的影响，大概率通胀还是会比较高",
-    "startDate": "2026-07-14",
-    "endDate": "2026-07-14",
+    "id": 1785640544229.5657,
+    "title": "甲骨文业绩",
+    "description": "",
+    "startDate": "2026-09-14",
+    "endDate": "2026-09-14",
     "level": "negative",
-    "descInline": false
+    "descInline": false,
+    "isImportant": false,
+    "notify": false
   },
   {
-    "id": 1783220441457.3806,
-    "title": "长江存储申报上市",
-    "description": "递交申报大概在 7.15 - 8.10，交易所受理大概在 8.31 之前会完成，利好万泽科技这些影子股",
-    "startDate": "2026-07-15",
-    "endDate": "2026-08-31",
-    "level": "positive",
-    "descInline": true,
-    "isImportant": false
+    "id": 1787465871128.3733,
+    "title": "美联储议息会议",
+    "description": "凌晨两点",
+    "startDate": "2026-09-17",
+    "endDate": "2026-09-17",
+    "level": "negative",
+    "descInline": false,
+    "isImportant": false,
+    "notify": true
   },
   {
-    "id": 1783219771711,
-    "title": "中报预增轮动",
-    "description": "中报预增 7.15 截止，这段时间内随着各家公司的预增公告出来，资金会不停地去炒作各种利好公司，例如锂电，创新药，存储，pcb，光通信等，所以盘面上可能会轮动较快",
-    "startDate": "2026-07-06",
-    "endDate": "2026-07-15",
+    "id": 1786368312224.391,
+    "title": "华为全连接大会",
+    "description": "华为全联接大会，9 月 17 日上海世博举办；核心看点：950PR / 950DT NPU、UB 统一互联协议、2024 卡真机点亮、国产大模型训练落地、华为链产业链标的。",
+    "startDate": "2026-09-17",
+    "endDate": "2026-09-17",
     "level": "positive",
     "descInline": false,
-    "isImportant": true
+    "isImportant": false,
+    "notify": true
   },
   {
-    "id": 1783219868545,
-    "title": "长鑫上市影子股主升浪",
-    "description": "长鑫上市之前最后的交易窗口大概就在这两周，影子股会迎来主升浪，兆易创新、合肥城建",
-    "startDate": "2026-07-06",
-    "endDate": "2026-07-13",
+    "id": 1785640544229.6,
+    "title": "习近平访问美国",
+    "description": "重大外事访问之前，市场会提前博弈预期，指数往往会走出单边上涨行情。但是访问结束就会利好兑现。",
+    "startDate": "2026-09-24",
+    "endDate": "2026-09-24",
+    "level": "negative",
+    "descInline": false,
+    "isImportant": false,
+    "notify": true
+  },
+  {
+    "id": 1785640544229.1633,
+    "title": "中国央行降息",
+    "description": "9 - 10 月份，央行有可能会降息",
+    "startDate": "2026-09-30",
+    "endDate": "2026-09-30",
     "level": "positive",
     "descInline": false,
-    "isImportant": true
+    "isImportant": false,
+    "notify": true
   },
   {
-    "id": 1783219970040,
-    "title": "美国新版关税利空影响",
-    "description": "部分资金可能会在这个窗口减仓避险",
-    "startDate": "2026-07-15",
-    "endDate": "2026-07-24",
+    "id": 1785640544229.9602,
+    "title": "美国商业地产债务风险进入集中释放期",
+    "description": "2026 年美国商业地产到期债务规模超 9300 亿美元，叠加写字楼空置率持续攀升、估值大幅回落，下半年大概率出现中小银行信贷资产恶化、局部违约潮，若风险失控可能向全球金融市场传导，引发新一轮金融动荡。",
+    "startDate": "2026-09-30",
+    "endDate": "2026-09-30",
     "level": "negative",
+    "descInline": false,
+    "isImportant": false,
+    "notify": false
+  },
+  {
+    "id": 1784448557936,
+    "title": "中美贸易摩擦升级",
+    "description": "民主党掌控众议院：加码对华产业竞争法案，出台新能源、电动车反补贴关税",
+    "startDate": "2026-11-04",
+    "endDate": "2026-11-30",
+    "level": "neutral",
     "descInline": true,
-    "isImportant": true
+    "isImportant": false,
+    "notify": true
+  },
+  {
+    "id": 1788664373493,
+    "title": "中美关税暂停期到期",
+    "description": "如果能重新谈成关税，那你好我好大家好。如果谈不成，就会重新燃气关税大战 2.0",
+    "startDate": "2026-11-10",
+    "endDate": "2026-11-10",
+    "level": "neutral",
+    "descInline": false,
+    "isImportant": false,
+    "notify": true
+  },
+  {
+    "id": 1785640789131.9211,
+    "title": "深圳 APEC 会议",
+    "description": "11.18 - 11.19 深圳 APEC 会议。中国借APEC主场推动亚太经贸规则重塑、深化区域经济一体化的战略意图十分明确。深圳领导人会议将成为下半年中国外交的两大高光时刻。",
+    "startDate": "2026-11-18",
+    "endDate": "2026-11-19",
+    "level": "positive",
+    "descInline": false,
+    "isImportant": false,
+    "notify": true
   }
 ]

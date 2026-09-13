@@ -1,0 +1,14 @@
+{
+  "dapanData.json": "大盘数据",
+  "amountSnapshot": "成交量历史快照",
+  "fundSnapshot": "主力资金历史快照",
+  "amount.json": "今日成交量分时数据",
+  "amount_day_history.json": "成交量历史日期数据",
+  "blockMoneyChangeTime.json": "当日板块资金分时数据",
+  "block_data_change_time.json": "今日板块排名分时数据",
+  "block_data_day_history.json": "板块排名历史日期数据",
+  "block_money_change_day_history.json": "板块资金流入日期数据",
+  "tech_index.json": "科技情绪历史日期数据",
+  "block_money_day_history.json": "板块成交量日期数据",
+  "timeline.json": "未来时间线事件"
+}

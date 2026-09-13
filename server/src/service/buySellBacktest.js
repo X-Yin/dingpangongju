@@ -1,0 +1,1591 @@
+// 训练营 - 买卖点历史回测
+// 依据「当下已有的买卖点诊断」对全部自选股进行多日回测：
+//   买入信号 = 训练营回放买点诊断 allPassed（市场级，命中时对所有未持仓自选股买入）
+//   卖出信号 = 训练营回放模拟持仓卖点诊断 isSell（个股级）
+// 交易规则：首次触发买入信号即买入；持仓期间再次触发买入信号忽略，仅等卖出信号；
+//          卖出后下一次买入信号可再次买入（每个股票同一时刻最多一笔持仓）。
+// 诊断逻辑与前端 src/pages/trainingCamp/utils/buyPointChecks.js、sellPointChecks.js、
+// src/utils/replayResilience.js 保持一致（两处同步）。
+const { loadTrainingCampData, getTrainingCampDates } = require('./trainingCamp');
+const fs = require('fs');
+const path = require('path');
+
+const SELL_CONDITION_PERSIST_MIN = 5; // 卖出条件持续满足分钟数
+
+// 回测排除的股票（不参与任何策略的回测）
+const EXCLUDED_CODES = new Set(['sh688498', 'sh688808']); // 源杰科技、联讯仪器
+
+// 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
+const STRATEGIES = {
+  highest_gain: { id: 'highest_gain', name: '买入最高涨幅', desc: '买点命中时只买入回测起始日至当前整体涨幅最大的股票' },
+  highest_5d_gain: { id: 'highest_5d_gain', name: '5日涨幅最大', desc: '买点命中时只买入最近 5 个交易日涨幅最大的股票' },
+  highest_3d_gain: { id: 'highest_3d_gain', name: '3日涨幅最大', desc: '买点命中时只买入最近 3 个交易日涨幅最大的股票' },
+  highest_4d_gain: { id: 'highest_4d_gain', name: '4日涨幅最大', desc: '买点命中时只买入最近 4 个交易日涨幅最大的股票' },
+  highest_2d_gain: { id: 'highest_2d_gain', name: '2日涨幅最大', desc: '买点命中时只买入最近 2 个交易日涨幅最大的股票' },
+  highest_10d_gain: { id: 'highest_10d_gain', name: '10日涨幅最大', desc: '买点命中时只买入最近 10 个交易日涨幅最大的股票' },
+  highest_3d_gain_twice: { id: 'highest_3d_gain_twice', name: '3日涨幅两次买入', desc: '买点命中时先买入 5 成仓位，剩余 5 成等当天收盘再买入，成本价为两次买入价格平均值（选股逻辑同 3 日涨幅最大）' },
+  highest_5d_gain_2nd: { id: 'highest_5d_gain_2nd', name: '5日涨幅第二名', desc: '买点命中时只买入最近 5 个交易日涨幅第二大的股票' },
+  highest_3d_gain_2nd: { id: 'highest_3d_gain_2nd', name: '3日涨幅第二名', desc: '买点命中时只买入最近 3 个交易日涨幅第二大的股票' },
+  highest_3d_ma_slope: { id: 'highest_3d_ma_slope', name: '3日线斜率最陡峭', desc: '买点命中时只买入 3 日涨幅均线斜率角度最大的股票' },
+  highest_5d_ma_slope: { id: 'highest_5d_ma_slope', name: '5日线斜率最陡峭', desc: '买点命中时只买入 5 日涨幅均线斜率角度最大的股票' },
+  highest_5d_resilience: { id: 'highest_5d_resilience', name: '5日抗分歧分数最大', desc: '买点命中时只买入最近 5 个交易日抗分歧分数汇总最大的股票' },
+  highest_3d_resilience: { id: 'highest_3d_resilience', name: '3日抗分歧分数最大', desc: '买点命中时只买入最近 3 个交易日抗分歧分数汇总最大的股票' },
+  highest_3d_reports: { id: 'highest_3d_reports', name: '3日研报覆盖数最多', desc: '买点命中时只买入过去 3 个交易日研报覆盖数最多的股票（覆盖数相同取 3 日涨幅最大）' },
+  highest_5d_reports: { id: 'highest_5d_reports', name: '5日研报覆盖数最多', desc: '买点命中时只买入过去 5 个交易日研报覆盖数最多的股票（覆盖数相同取 5 日涨幅最大）' },
+  highest_3d_reports_2nd: { id: 'highest_3d_reports_2nd', name: '3日研报覆盖数第二名', desc: '买点命中时只买入过去 3 个交易日研报覆盖数第二多的股票（覆盖数相同取 3 日涨幅最大）' },
+  highest_5d_reports_2nd: { id: 'highest_5d_reports_2nd', name: '5日研报覆盖数第二名', desc: '买点命中时只买入过去 5 个交易日研报覆盖数第二多的股票（覆盖数相同取 5 日涨幅最大）' },
+  highest_3d_reports_top5_gain: { id: 'highest_3d_reports_top5_gain', name: '3日研报前五&涨幅最大', desc: '买点命中时在最近 3 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 3 日涨幅最大的一只' },
+  highest_5d_reports_top5_gain: { id: 'highest_5d_reports_top5_gain', name: '5日研报前五&涨幅最大', desc: '买点命中时在最近 5 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 5 日涨幅最大的一只' },
+};
+
+// 回测结果缓存文件（按 策略+日期范围 存储，避免重复回测）
+const backtestCacheDir = path.join(__dirname, '../data/backtest_results');
+const getBacktestCacheFile = (strategy, startDate, endDate) => path.join(backtestCacheDir, `backtest_${strategy}_${startDate}_${endDate}.json`);
+
+const readCachedBacktest = (strategy, startDate, endDate) => {
+  try {
+    const file = getBacktestCacheFile(strategy, startDate, endDate);
+    if (!fs.existsSync(file)) return null;
+    const data = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    if (!data || data.range?.startDate !== startDate || data.range?.endDate !== endDate) return null;
+    return data;
+  } catch {
+    return null;
+  }
+};
+
+const writeCachedBacktest = (strategy, startDate, endDate, result) => {
+  try {
+    if (!fs.existsSync(backtestCacheDir)) fs.mkdirSync(backtestCacheDir, { recursive: true });
+    fs.writeFileSync(getBacktestCacheFile(strategy, startDate, endDate), JSON.stringify(result, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('回测结果缓存写入失败:', e.message);
+  }
+};
+
+// ============================================================
+// 机构研报覆盖索引：research_reports/menu.json（日期文件夹 → 报告标题/正文）
+// 按自选股名称匹配报告标题或正文，统计每日每只股票的研报覆盖数
+// ============================================================
+const researchReportsDir = path.join(__dirname, '../data/research_reports');
+let reportIndexCache = null; // { YYYYMMDD: { stockName: count } }
+let reportIndexMtime = 0; // menu.json 修改时间，用于检测新增/编辑研报后自动重建索引
+
+// 读取报告正文内容（id.json 存放 { content }），供正文匹配股票名使用
+const readReportContent = (id) => {
+  try {
+    const contentPath = path.join(researchReportsDir, `${id}.json`);
+    if (!fs.existsSync(contentPath)) return '';
+    return JSON.parse(fs.readFileSync(contentPath, 'utf-8')).content || '';
+  } catch {
+    return '';
+  }
+};
+
+const loadReportIndex = () => {
+  const menuFile = path.join(researchReportsDir, 'menu.json');
+  let mtime = 0;
+  try {
+    mtime = fs.statSync(menuFile).mtimeMs;
+  } catch {
+    // menu.json 不存在时按 0 处理
+  }
+  if (reportIndexCache && mtime === reportIndexMtime) return reportIndexCache;
+  const { getMonitorStocks } = require('./monitorStock');
+  const stockNames = Array.from(new Set(
+    getMonitorStocks().map(s => s.name).filter(Boolean)
+  )).sort((a, b) => b.length - a.length); // 长名优先，避免"天孚通信"被"通信"误配
+  const index = {};
+  try {
+    const menu = JSON.parse(fs.readFileSync(menuFile, 'utf-8'));
+    const walk = (node, folderDate) => {
+      if (!node) return;
+      if (node.type === 'folder') {
+        const date = String(node.name || '');
+        if (!/^\d{8}$/.test(date)) return;
+        for (const child of (node.children || [])) walk(child, date);
+      } else if (node.type === 'report') {
+        const id = String(node.id || '');
+        if (!folderDate || !id) return;
+        // 标题或正文命中股票名的都计入覆盖（正文如"相关国内标的：天孚通信，仕佳光子"）
+        const text = `${String(node.name || '')}\n${readReportContent(id)}`;
+        const matchedNames = stockNames.filter(n => text.includes(n));
+        if (matchedNames.length === 0) return;
+        if (!index[folderDate]) index[folderDate] = {};
+        for (const n of matchedNames) {
+          index[folderDate][n] = (index[folderDate][n] || 0) + 1;
+        }
+      }
+    };
+    for (const root of menu) walk(root, null);
+  } catch (e) {
+    console.error('研报索引加载失败:', e.message);
+  }
+  reportIndexCache = index;
+  reportIndexMtime = mtime;
+  return index;
+};
+
+// 某只股票在 winDates（升序）内的研报覆盖总数
+const sumReportCount = (stockName, winDates, reportIndex) => {
+  if (!stockName || !reportIndex) return 0;
+  let count = 0;
+  for (const d of winDates) {
+    const day = reportIndex[d];
+    if (day) count += day[stockName] || 0;
+  }
+  return count;
+};
+
+// ============================================================
+// 以下为买点诊断移植（对齐 src/pages/trainingCamp/utils/buyPointChecks.js）
+// ============================================================
+const minuteToSeconds = (minute) => {
+  const m = Number(minute);
+  const h = Math.floor(m / 100);
+  const mm = m % 100;
+  return h * 3600 + mm * 60;
+};
+
+const fmtTime = (timeKey) => {
+  const t = String(timeKey || '').padStart(6, '0');
+  if (t.length < 4) return '--:--:--';
+  return `${t.substring(0, 2)}:${t.substring(2, 4)}:${t.substring(4, 6)}`;
+};
+
+// 在当前桶之前寻找约 targetMin 分钟前的桶（targetMin±1 分钟内取最近的；找不到回退到至少 targetMin-1 分钟前最近的）
+const findBucketMinutesAgo = (buckets, currentIndex, targetMin = 5) => {
+  if (currentIndex <= 0) return null;
+  const currentSec = minuteToSeconds(buckets[currentIndex].minute);
+  const minSec = (targetMin - 1) * 60;
+  const maxSec = (targetMin + 1) * 60;
+  let hit = null;
+  let hitIdx = -1;
+  let minDelta = Infinity;
+  for (let i = currentIndex - 1; i >= 0; i--) {
+    const diff = currentSec - minuteToSeconds(buckets[i].minute);
+    if (diff >= minSec && diff <= maxSec) {
+      if (diff < minDelta) { minDelta = diff; hit = buckets[i]; hitIdx = i; }
+    } else if (diff > maxSec) {
+      break;
+    }
+  }
+  if (!hit) {
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      if (currentSec - minuteToSeconds(buckets[i].minute) >= minSec) {
+        hit = buckets[i];
+        hitIdx = i;
+        break;
+      }
+    }
+  }
+  return hit ? { bucket: hit, index: hitIdx } : null;
+};
+
+// 训练营回放买点诊断（对齐前端 buyPointChecks.js，返回 { success, data } 或 null）
+const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
+  const buckets = timeBuckets || [];
+  if (buckets.length === 0 || currentIndex < 0 || currentIndex >= buckets.length) return null;
+  const current = buckets[currentIndex];
+  const checks = [];
+  let allPassed = true;
+  const targetDateStr = String(campData?.date || '').replace(/-/g, '');
+
+  // 检查2：最近 5min 资金净流入大于 20 亿
+  const currentFund = Number(current.fundFlow) || 0;
+  const pastFundHit = findBucketMinutesAgo(buckets, currentIndex, 5);
+  const fundResult = pastFundHit
+    ? {
+        hasData: true,
+        diff: currentFund - (Number(pastFundHit.bucket.fundFlow) || 0),
+        currentValue: currentFund,
+        pastValue: Number(pastFundHit.bucket.fundFlow) || 0,
+        currentTime: fmtTime(current.timeKey),
+        pastTime: fmtTime(pastFundHit.bucket.timeKey),
+      }
+    : { hasData: false, diff: 0, currentValue: currentFund, pastValue: 0, currentTime: fmtTime(current.timeKey), pastTime: null };
+  const fundDiff = parseFloat(fundResult.diff.toFixed(2));
+  const checkFundPassed = fundResult.hasData && fundDiff > 20;
+  checks.push({
+    id: 'fund_inflow',
+    title: '最近 5min 资金净流入大于 20 亿',
+    passed: checkFundPassed,
+    value: fundResult.hasData ? `${fundDiff >= 0 ? '+' : ''}${fundDiff.toFixed(2)}亿` : '数据不足',
+    reason: checkFundPassed
+      ? `最近 5 分钟资金净流入 ${fundDiff.toFixed(2)} 亿（${fundResult.pastTime}→${fundResult.currentTime}），超过 20 亿阈值`
+      : !fundResult.hasData
+        ? '资金数据不足，无法判断最近 5 分钟净流入'
+        : `最近 5 分钟资金净流入 ${fundDiff.toFixed(2)} 亿（${fundResult.pastTime}→${fundResult.currentTime}），未达到 20 亿阈值`,
+  });
+  if (!checkFundPassed) allPassed = false;
+
+  // 检查3：当前量能（amountChangeDiff = 今日累计成交额 − 昨日全天成交额）为正，且大于 5min 前的值
+  const volNow = current.volume !== null && current.volume !== undefined && !Number.isNaN(Number(current.volume)) ? Number(current.volume) : null;
+  const pastVolHit = findBucketMinutesAgo(buckets, currentIndex, 5);
+  const past2VolHit = pastVolHit ? findBucketMinutesAgo(buckets, pastVolHit.index, 5) : null;
+  let volumeResult;
+  if (volNow === null) {
+    volumeResult = {
+      hasData: false, diff: 0, last5minVol: 0, prev5minVol: 0,
+      currentTime: fmtTime(current.timeKey),
+      pastTime: pastVolHit ? fmtTime(pastVolHit.bucket.timeKey) : null,
+      past2Time: past2VolHit ? fmtTime(past2VolHit.bucket.timeKey) : null,
+    };
+  } else {
+    const last5minVol = parseFloat(volNow.toFixed(2));
+    const prev5minVol = pastVolHit ? parseFloat((Number(pastVolHit.bucket.volume) || 0).toFixed(2)) : 0;
+    volumeResult = {
+      hasData: true,
+      diff: parseFloat((last5minVol - prev5minVol).toFixed(2)),
+      last5minVol,
+      prev5minVol,
+      currentTime: fmtTime(current.timeKey),
+      pastTime: pastVolHit ? fmtTime(pastVolHit.bucket.timeKey) : null,
+      past2Time: past2VolHit ? fmtTime(past2VolHit.bucket.timeKey) : null,
+      currentCumulative: parseFloat(volNow.toFixed(2)),
+      pastCumulative: pastVolHit ? parseFloat((Number(pastVolHit.bucket.volume) || 0).toFixed(2)) : null,
+      past2Cumulative: past2VolHit ? parseFloat((Number(past2VolHit.bucket.volume) || 0).toFixed(2)) : null,
+    };
+  }
+  const volDiff = volumeResult.hasData ? volumeResult.diff : 0;
+  // 判定规则（对齐线上 buySellDiagnose.js）：当前量能为正时只需较 5min 前增加；为负时需增加 100 亿以上
+  const checkVolumePassed = !volumeResult.hasData ? false
+    : volumeResult.last5minVol > 0
+      ? volumeResult.last5minVol > volumeResult.prev5minVol
+      : volDiff >= 100;
+  const todayHasIceFlag = campData?.todayHasIce === true;
+  const prevDayHasIceFlag = campData?.prevDayHasIce === true;
+  if (todayHasIceFlag || prevDayHasIceFlag) {
+    const iceSource = todayHasIceFlag ? `今日(${targetDateStr.substring(4, 6)}-${targetDateStr.substring(6, 8)})` : '前一交易日';
+    checks.push({
+      id: 'volume_expansion',
+      title: '当前量能为正（今日累计成交额超昨日全天）',
+      passed: true,
+      exempted: true,
+      value: volumeResult.hasData ? `${volDiff >= 0 ? '增加' : '减少'} ${Math.abs(volDiff).toFixed(2)}亿（已豁免）` : '已豁免',
+      reason: `${iceSource}盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免`,
+    });
+  } else {
+    checks.push({
+      id: 'volume_expansion',
+      title: '量能较 5min 前增加（负值需增加超 100 亿）',
+      passed: checkVolumePassed,
+      value: volumeResult.hasData ? `${volDiff >= 0 ? '+' : '-'} ${Math.abs(volDiff).toFixed(2)}亿` : '数据不足',
+      reason: !volumeResult.hasData
+        ? '量能数据不足，无法判断当前量能'
+        : (() => {
+            const volChangeText = volDiff >= 0 ? `+ ${volDiff.toFixed(2)} 亿` : `- ${Math.abs(volDiff).toFixed(2)} 亿`;
+            return volumeResult.last5minVol > 0
+              ? checkVolumePassed
+                ? `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为正，较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}，持续放量`
+                : `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿虽为正，但较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}`
+              : checkVolumePassed
+                ? `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为负，但较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}，达到 100 亿阈值`
+                : `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为负，较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿仅${volChangeText}，未达到增加 100 亿的阈值`;
+          })(),
+    });
+    if (!checkVolumePassed) allPassed = false;
+  }
+
+  // 检查4：开盘后自选股低于开盘价不超过 30 只（仅 9:30-10:00 生效）
+  const changes = current.stockChanges || [];
+  const inOpeningWindow = Number(current.minute) >= 930 && Number(current.minute) <= 1000;
+  if (inOpeningWindow) {
+    const openingBucket = buckets.find(b => Number(b.minute) === 930) || buckets[0];
+    const openingMap = new Map((openingBucket?.stockChanges || []).map(s => [s.code, s.changePct]));
+    let belowCount = 0;
+    let validCount = 0;
+    changes.forEach(s => {
+      const openPct = openingMap.get(s.code);
+      if (openPct !== undefined && openPct !== null) {
+        validCount++;
+        if (Number(s.changePct) < Number(openPct)) belowCount++;
+      }
+    });
+    const checkOpeningPassed = belowCount <= 30;
+    checks.push({
+      id: 'opening_below',
+      title: '开盘后自选股低于开盘价不超过 30 只',
+      passed: checkOpeningPassed,
+      value: `${belowCount} / ${validCount}只`,
+      reason: checkOpeningPassed
+        ? `开盘后自选股共 ${validCount} 只，${belowCount} 只现价低于 9:30 开盘价，未超过 30 只`
+        : belowCount > 30
+          ? `开盘后自选股共 ${validCount} 只，${belowCount} 只现价低于 9:30 开盘价，超过 30 只阈值，市场开盘跳水严重`
+          : '分时数据获取异常',
+    });
+    if (!checkOpeningPassed) allPassed = false;
+  } else {
+    checks.push({
+      id: 'opening_below',
+      title: '开盘后自选股低于开盘价不超过 30 只',
+      passed: true,
+      value: '非交易时段',
+      reason: '此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过',
+    });
+  }
+
+  // 检查6：9:30 竞价开盘科技情绪 > 80 时，后续触发买点要求当前科技情绪 < 40
+  const openEmotionBucket = buckets.find(b => Number(b.minute) === 930) || buckets[0];
+  const openingAuctionEmotion = openEmotionBucket && openEmotionBucket.techEmotion !== null && openEmotionBucket.techEmotion !== undefined && !Number.isNaN(Number(openEmotionBucket.techEmotion))
+    ? Number(openEmotionBucket.techEmotion)
+    : null;
+  const currentRetraceEmotion = current.techEmotion !== null && current.techEmotion !== undefined && !Number.isNaN(Number(current.techEmotion))
+    ? Number(current.techEmotion)
+    : null;
+
+  let checkEmotionRetracePassed;
+  let emotionRetraceReason;
+  if (openingAuctionEmotion === null) {
+    checkEmotionRetracePassed = true;
+    emotionRetraceReason = '暂无 9:30 竞价科技情绪分时数据，跳过该检查';
+  } else if (openingAuctionEmotion <= 80) {
+    checkEmotionRetracePassed = true;
+    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 未超过 80，当前情绪须低于 40 的限制不生效`;
+  } else if (currentRetraceEmotion === null) {
+    checkEmotionRetracePassed = false;
+    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 80，但暂无当前分时数据，无法确认情绪回落至 40 以下`;
+  } else if (currentRetraceEmotion < 40) {
+    checkEmotionRetracePassed = true;
+    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 80，当前科技情绪 ${currentRetraceEmotion.toFixed(2)} 已回落至 40 以下，允许买入`;
+  } else {
+    checkEmotionRetracePassed = false;
+    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 80，当前科技情绪 ${currentRetraceEmotion.toFixed(2)} 未回落至 40 以下，禁止买入`;
+  }
+  checks.push({
+    id: 'emotion_retrace_after_open',
+    title: '竞价情绪超 80 时当前情绪须低于 40',
+    passed: checkEmotionRetracePassed,
+    value: openingAuctionEmotion === null ? '暂无分时数据' : `开盘 ${openingAuctionEmotion.toFixed(2)} / 当前 ${currentRetraceEmotion === null ? '--' : currentRetraceEmotion.toFixed(2)}`,
+    reason: emotionRetraceReason,
+  });
+  if (!checkEmotionRetracePassed) allPassed = false;
+
+  return {
+    success: true,
+    data: {
+      targetDate: targetDateStr,
+      timeKey: current.timeKey,
+      displayTime: current.displayTime || fmtTime(current.timeKey),
+      checks,
+      allPassed,
+      passedCount: checks.filter(c => c.passed).length,
+      totalCheckCount: checks.length,
+    },
+  };
+};
+
+// ============================================================
+// 以下为抗分歧指数移植（对齐 src/utils/replayResilience.js）
+// ============================================================
+const getReplayLimitType = (code) => {
+  const c = String(code || '').toUpperCase();
+  if (c.startsWith('SH688') || c.startsWith('688')) return 'STAR';
+  if (c.startsWith('SZ3') || c.startsWith('3')) return 'GEM';
+  return 'MAIN';
+};
+
+const calculateReplayResilience = (stockPoints, indexPoints, code) => {
+  if (!Array.isArray(stockPoints) || stockPoints.length < 5) return null;
+  if (!Array.isArray(indexPoints) || indexPoints.length < 5) return null;
+  const limits = { STAR: 20, GEM: 20, MAIN: 10 };
+  const limitType = getReplayLimitType(code);
+  const limitPct = limits[limitType] ?? 10;
+  const limitEps = 0.001;
+
+  const indexMap = new Map();
+  for (const item of indexPoints) {
+    const m = parseInt(item.minute);
+    const px = item.lastPx != null ? parseFloat(item.lastPx) : (100 + (item.change != null ? parseFloat(item.change) : 0));
+    if (!isNaN(m) && px > 0) {
+      indexMap.set(m, { px, change: item.change != null ? parseFloat(item.change) : 0 });
+    }
+  }
+  if (indexMap.size < 5) return null;
+
+  const aligned = [];
+  for (const s of stockPoints) {
+    const m = parseInt(s.minute);
+    const idx = indexMap.get(m);
+    if (!idx) continue;
+    const stockPx = s.lastPx != null ? parseFloat(s.lastPx) : (100 + (s.change != null ? parseFloat(s.change) : 0));
+    if (!(stockPx > 0)) continue;
+    const stockChange = s.change != null ? parseFloat(s.change) : 0;
+    const prevClose = stockPx / (1 + stockChange / 100);
+    const limitUpPrice = prevClose * (1 + limitPct / 100);
+    const limitDownPrice = prevClose * (1 - limitPct / 100);
+    aligned.push({
+      minute: m,
+      stockPx,
+      indexPx: idx.px,
+      stockChange,
+      indexChange: idx.change,
+      isLockUp: stockPx >= limitUpPrice - limitEps,
+      isLockDown: stockPx <= limitDownPrice + limitEps,
+      prevClose,
+    });
+  }
+  aligned.sort((a, b) => a.minute - b.minute);
+  if (aligned.length < 5) return null;
+
+  const totalMinutes = aligned.length;
+  const lockUpCount = aligned.filter(p => p.isLockUp).length;
+  const lockDownCount = aligned.filter(p => p.isLockDown).length;
+  const lockUpRatio = lockUpCount / totalMinutes;
+  const lockDownRatio = lockDownCount / totalMinutes;
+
+  const freeMinutes = aligned.filter(p => !p.isLockUp && !p.isLockDown);
+  const stockRets = [];
+  const indexRets = [];
+  for (let i = 1; i < freeMinutes.length; i++) {
+    const prev = freeMinutes[i - 1];
+    const curr = freeMinutes[i];
+    if (prev.stockPx > 0 && prev.indexPx > 0) {
+      stockRets.push((curr.stockPx - prev.stockPx) / prev.stockPx * 100);
+      indexRets.push((curr.indexPx - prev.indexPx) / prev.indexPx * 100);
+    }
+  }
+
+  const upStockRets = [];
+  const upIndexRets = [];
+  const downStockRets = [];
+  const downIndexRets = [];
+  for (let i = 0; i < indexRets.length; i++) {
+    if (indexRets[i] > 0) {
+      upIndexRets.push(indexRets[i]);
+      upStockRets.push(stockRets[i]);
+    } else if (indexRets[i] < 0) {
+      downIndexRets.push(indexRets[i]);
+      downStockRets.push(stockRets[i]);
+    }
+  }
+
+  const safeRatio = (xArr, yArr, minSamples = 3) => {
+    if (xArr.length < minSamples || yArr.length < minSamples) return null;
+    const meanX = xArr.reduce((a, b) => a + b, 0) / xArr.length;
+    const meanY = yArr.reduce((a, b) => a + b, 0) / yArr.length;
+    if (Math.abs(meanX) < 0.005) return null;
+    return meanY / meanX;
+  };
+
+  const upRatio = safeRatio(upIndexRets, upStockRets);
+  const downRatio = safeRatio(downIndexRets, downStockRets);
+
+  const upStockChg = [];
+  const upIndexChg = [];
+  const downStockChg = [];
+  const downIndexChg = [];
+  for (const p of freeMinutes) {
+    if (p.indexChange > 0) {
+      upStockChg.push(p.stockChange);
+      upIndexChg.push(p.indexChange);
+    } else if (p.indexChange < 0) {
+      downStockChg.push(p.stockChange);
+      downIndexChg.push(p.indexChange);
+    }
+  }
+  const avg = (arr) => arr.length === 0 ? 0 : arr.reduce((a, b) => a + b, 0) / arr.length;
+  const excessUp = avg(upStockChg) - avg(upIndexChg);
+  const excessDown = avg(downStockChg) - avg(downIndexChg);
+
+  let offenseScore = 0;
+  if (upRatio !== null) {
+    offenseScore = Math.min(4, Math.max(0, upRatio * 1.6));
+  } else {
+    offenseScore = 1.0;
+  }
+
+  let defenseScore = 0;
+  if (downRatio !== null) {
+    if (downRatio < 0) {
+      defenseScore = 6.0 + Math.min(4, Math.abs(downRatio) * 2);
+    } else {
+      defenseScore = 5.0 / (downRatio + 1.0);
+    }
+  } else {
+    defenseScore = 2.5;
+  }
+
+  const excessUpScore = Math.max(-2, Math.min(2, excessUp * 0.3));
+  const excessDownScore = Math.max(-3, Math.min(5, excessDown * 0.8));
+
+  let lockScore = 0;
+  if (lockUpRatio > 0.5) {
+    lockScore = 5 + (lockUpRatio - 0.5) * 10;
+  } else if (lockUpRatio > 0) {
+    lockScore = lockUpRatio * 4;
+  }
+  if (lockDownRatio > 0.5) {
+    lockScore -= 5 + (lockDownRatio - 0.5) * 10;
+  } else if (lockDownRatio > 0) {
+    lockScore -= lockDownRatio * 4;
+  }
+
+  let resilienceScore = 5.0 + offenseScore + defenseScore + excessUpScore + excessDownScore + lockScore;
+  resilienceScore = Math.max(0, Math.min(30, resilienceScore));
+  return parseFloat(resilienceScore.toFixed(4));
+};
+
+// ============================================================
+// 以下为卖点诊断移植（对齐 src/pages/trainingCamp/utils/sellPointChecks.js）
+// ============================================================
+const toNumber = (v) => {
+  const n = Number(v);
+  return Number.isNaN(n) ? null : n;
+};
+
+// 取某只股票（或指数）截至当前 minute 的分时序列 { minute, change, lastPx }
+const getTlinePoints = (replayStocks, code, minute) => {
+  const entry = (replayStocks || []).find(s => s.code === code);
+  if (!entry) return [];
+  return (entry.tlinePoints || [])
+    .filter(p => p.minute != null && p.minute <= minute)
+    .sort((a, b) => a.minute - b.minute);
+};
+
+// 检查条件2（高位放量大阴线）在过去 N 分钟内是否持续满足
+const checkCondition2Persist = (replayStocks, code, currentMinute, openPrice) => {
+  const PERSIST_MIN = SELL_CONDITION_PERSIST_MIN;
+  const entry = (replayStocks || []).find(s => s.code === code);
+  if (!entry || !entry.tlinePoints || entry.tlinePoints.length === 0) return { satisfied: false, checkedMin: 0 };
+  const sorted = [...entry.tlinePoints]
+    .filter(p => p.minute != null && p.minute <= currentMinute && p.lastPx != null && p.lastPx > 0)
+    .sort((a, b) => a.minute - b.minute);
+  if (sorted.length === 0) return { satisfied: false, checkedMin: 0 };
+
+  const recent = sorted.slice(-PERSIST_MIN);
+  if (recent.length < PERSIST_MIN) {
+    return { satisfied: false, checkedMin: recent.length };
+  }
+  for (let i = 0; i < recent.length; i++) {
+    const dayHighAtMinute = sorted
+      .filter(p => p.minute <= recent[i].minute)
+      .reduce((mx, p) => Math.max(mx, p.lastPx), 0);
+    const px = recent[i].lastPx;
+    const amp = px > 0 ? ((dayHighAtMinute - px) / px) * 100 : 0;
+    if (!(amp > 8 && px < openPrice)) {
+      return { satisfied: false, checkedMin: i + 1 };
+    }
+  }
+  return { satisfied: true, checkedMin: recent.length };
+};
+
+// 检查条件3（科技板块情绪退潮）在过去 N 分钟内是否持续满足
+const checkCondition3Persist = (timeBuckets, currentIndex) => {
+  const PERSIST_MIN = SELL_CONDITION_PERSIST_MIN;
+  if (!Array.isArray(timeBuckets) || currentIndex < 0) return { satisfied: false, checkedMin: 0 };
+
+  let coveredMin = 0;
+  for (let i = currentIndex; i >= 0; i--) {
+    const bucket = timeBuckets[i];
+    const techEmotion = toNumber(bucket?.techEmotion);
+    const downStocksCount = (bucket?.stockChanges || []).filter(s => {
+      const pct = toNumber(s.changePct);
+      return pct !== null && pct < -9;
+    }).length;
+    const cond3True = techEmotion !== null && techEmotion === -100 && downStocksCount >= 5;
+    if (!cond3True) break;
+    const bucketMinute = toNumber(bucket?.minute);
+    if (bucketMinute === null || bucketMinute === undefined) break;
+    if (i === currentIndex) {
+      coveredMin += 5;
+    } else {
+      const prevBucketMinute = toNumber(timeBuckets[i + 1]?.minute);
+      if (prevBucketMinute !== null && prevBucketMinute !== undefined) {
+        coveredMin += prevBucketMinute - bucketMinute;
+      } else {
+        coveredMin += 5;
+      }
+    }
+    if (coveredMin >= PERSIST_MIN) {
+      return { satisfied: true, checkedMin: coveredMin };
+    }
+  }
+  return { satisfied: false, checkedMin: coveredMin };
+};
+
+// 检查条件6（跌破最迟买入日低点）在过去 N 分钟内是否持续满足
+const checkBuyDayLowPersist = (replayStocks, code, currentMinute, buyDayLow) => {
+  const PERSIST_MIN = SELL_CONDITION_PERSIST_MIN;
+  const entry = (replayStocks || []).find(s => s.code === code);
+  if (!entry || !entry.tlinePoints || entry.tlinePoints.length === 0) return { satisfied: false, checkedMin: 0 };
+  const sorted = [...entry.tlinePoints]
+    .filter(p => p.minute != null && p.minute <= currentMinute && p.lastPx != null && p.lastPx > 0)
+    .sort((a, b) => a.minute - b.minute);
+  if (sorted.length === 0) return { satisfied: false, checkedMin: 0 };
+  const recent = sorted.slice(-PERSIST_MIN);
+  if (recent.length < PERSIST_MIN) {
+    return { satisfied: false, checkedMin: recent.length };
+  }
+  for (let i = 0; i < recent.length; i++) {
+    if (!(recent[i].lastPx < buyDayLow)) {
+      return { satisfied: false, checkedMin: i + 1 };
+    }
+  }
+  return { satisfied: true, checkedMin: recent.length };
+};
+
+// 训练营回放模拟持仓卖点诊断（对齐前端 sellPointChecks.js）
+const runSellPointDiagnosis = (position, currentBucket, replayStocks, timeBuckets, currentIndex) => {
+  const code = position?.code;
+  const stockName = position?.stockName || position?.name || code;
+  const buyPrice = toNumber(position?.buyPrice);
+  const stockChanges = currentBucket?.stockChanges || [];
+  const stock = stockChanges.find(s => s.code === code);
+  const closePrice = stock?.lastPx != null ? toNumber(stock.lastPx) : null;
+  const minute = currentBucket?.minute;
+  const displayTime = fmtTime(currentBucket?.timeKey).substring(0, 5); // 归一化 HH:MM，避免原快照 displayTime 格式不一致
+
+  if (closePrice === null || closePrice <= 0 || minute == null) {
+    return {
+      isSell: false,
+      code,
+      stockName,
+      closePrice: null,
+      change: null,
+      returnRate: null,
+      dayHigh: null,
+      techEmotion: null,
+      resilienceScore: null,
+      conditions: [],
+      conclusion: '当前时间桶无该股票价格数据，无法诊断',
+      displayTime,
+    };
+  }
+
+  const change = stock?.changePct != null ? toNumber(stock.changePct) : null;
+
+  const stockPoints = getTlinePoints(replayStocks, code, minute).filter(p => p.lastPx != null && p.lastPx > 0);
+  const dayHigh = stockPoints.reduce((mx, p) => Math.max(mx, p.lastPx), 0);
+  const openPrice = stockPoints.length > 0 ? stockPoints[0].lastPx : null;
+
+  // ===== 条件1：均线破位 =====
+  const ma5 = stock?.dailyMa5 != null ? toNumber(stock.dailyMa5) : null;
+  const ma5Slope = stock?.dailyMa5Slope != null ? toNumber(stock.dailyMa5Slope) : null;
+  const ma10 = stock?.dailyMa10 != null ? toNumber(stock.dailyMa10) : null;
+  const ma10Slope = stock?.dailyMa10Slope != null ? toNumber(stock.dailyMa10Slope) : null;
+  const prevLow = stock?.dailyPrevLow != null ? toNumber(stock.dailyPrevLow) : null;
+
+  let condition1 = {
+    name: '均线破位',
+    satisfied: false,
+    detail: '',
+    subConditions: [],
+  };
+  if (ma10 === null) {
+    condition1.detail = '缺少日K线数据（不足10个交易日），无法计算MA10';
+    condition1.subConditions = [{ label: '状态', value: '数据不足' }];
+  } else {
+    const inTradingWindow = minute != null && minute >= 930 && minute < 1450;
+    const deepFall = change !== null && change < -3;
+
+    let ruleType = 4;
+    let slopeInfo = '';
+    if (ma10Slope !== null && ma10Slope < 0) {
+      if (ma5Slope !== null && ma5Slope > 0) {
+        if (openPrice !== null && openPrice > ma10) {
+          ruleType = 1;
+        } else {
+          ruleType = 3;
+        }
+      } else {
+        ruleType = 2;
+      }
+      slopeInfo = `10日线斜率 ${ma10Slope.toFixed(2)} < 0`;
+      if (ma5Slope !== null) slopeInfo += `，5日线斜率 ${ma5Slope.toFixed(2)}`;
+    } else {
+      ruleType = 4;
+      slopeInfo = ma10Slope !== null
+        ? `10日线斜率 ${ma10Slope.toFixed(2)} ≥ 0`
+        : '10日线斜率数据不足（视为非负）';
+    }
+
+    const formatBreakDetail = (broken, triggerLine, triggerLabel) => {
+      if (!broken) {
+        return `现价 ${closePrice.toFixed(2)} 未跌破${triggerLabel} ${triggerLine.toFixed(2)}，未触发`;
+      } else if (inTradingWindow && !deepFall) {
+        return `现价 ${closePrice.toFixed(2)} 跌破${triggerLabel} ${triggerLine.toFixed(2)}，但当前涨幅 ${(change ?? 0).toFixed(2)}% 未低于 -3%（14:50 前需涨幅 < -3%），暂不触发`;
+      } else if (inTradingWindow) {
+        return `现价 ${closePrice.toFixed(2)} 跌破${triggerLabel} ${triggerLine.toFixed(2)}，且当前涨幅 ${change.toFixed(2)}% < -3%，触发卖点`;
+      } else {
+        return `现价 ${closePrice.toFixed(2)} 跌破${triggerLabel} ${triggerLine.toFixed(2)}（14:50 后跌破即触发），触发卖点`;
+      }
+    };
+
+    if (ruleType === 1) {
+      const broken = closePrice < ma10;
+      condition1.satisfied = broken && (!inTradingWindow || deepFall);
+      condition1.detail = formatBreakDetail(broken, ma10, '10日线');
+    } else if (ruleType === 2) {
+      const brokenPrevLow = prevLow !== null && closePrice < prevLow;
+      condition1.satisfied = brokenPrevLow;
+      condition1.detail = prevLow === null
+        ? `${slopeInfo}，改用前低判断，但缺少前一交易日最低价数据`
+        : brokenPrevLow
+          ? `${slopeInfo}，现价 ${closePrice.toFixed(2)} 跌破前一交易日最低价 ${prevLow.toFixed(2)}，下降趋势延续，触发卖点`
+          : `${slopeInfo}，现价 ${closePrice.toFixed(2)} 未跌破前一交易日最低价 ${prevLow.toFixed(2)}，暂不触发`;
+    } else if (ruleType === 3) {
+      if (ma5 !== null) {
+        const broken = closePrice < ma5;
+        condition1.satisfied = broken && (!inTradingWindow || deepFall);
+        condition1.detail = formatBreakDetail(broken, ma5, '5日线');
+      } else {
+        condition1.detail = `${slopeInfo}，缺少MA5数据，无法按规则③判断`;
+      }
+    } else {
+      const broken = closePrice < ma10;
+      condition1.satisfied = broken && (!inTradingWindow || deepFall);
+      condition1.detail = formatBreakDetail(broken, ma10, '10日线');
+    }
+  }
+
+  // ===== 条件2：高位放量大阴线（需持续 ≥5 分钟） =====
+  const amplitude = closePrice > 0 ? ((dayHigh - closePrice) / closePrice) * 100 : 0;
+  const isCondition2RawTrue = openPrice !== null && amplitude > 8 && closePrice < openPrice;
+  const cond2Persist = isCondition2RawTrue
+    ? checkCondition2Persist(replayStocks, code, minute, openPrice)
+    : { satisfied: false, checkedMin: 0 };
+  const condition2 = {
+    name: '高位放量大阴线',
+    satisfied: cond2Persist.satisfied,
+    pending: isCondition2RawTrue && !cond2Persist.satisfied,
+    pendingMinutes: isCondition2RawTrue ? cond2Persist.checkedMin : 0,
+    detail: openPrice !== null
+      ? `回落 ${amplitude.toFixed(2)}%${amplitude > 8 ? ' > 8%' : ' ≤ 8%'}，现价 ${closePrice.toFixed(2)}${closePrice < openPrice ? ' < 开盘' : ' ≥ 开盘'}，${amplitude > 8 && closePrice < openPrice ? '为高位大阴线' : '未触发'}${isCondition2RawTrue && !cond2Persist.satisfied ? `（已持续 ${cond2Persist.checkedMin} 分钟，需≥${SELL_CONDITION_PERSIST_MIN} 分钟）` : ''}`
+      : '无日内开盘价数据，无法判断',
+    subConditions: [],
+  };
+
+  // ===== 条件3：科技板块情绪退潮（需持续 ≥5 分钟） =====
+  const techEmotion = toNumber(currentBucket?.techEmotion);
+  const downStocksCount = (currentBucket?.stockChanges || []).filter(s => {
+    const pct = toNumber(s.changePct);
+    return pct !== null && pct < -9;
+  }).length;
+  const techCrash = techEmotion !== null && techEmotion === -100;
+  const isCondition3RawTrue = techCrash && downStocksCount >= 5;
+  const cond3Persist = isCondition3RawTrue
+    ? checkCondition3Persist(timeBuckets, currentIndex)
+    : { satisfied: false, checkedMin: 0 };
+  const condition3 = {
+    name: '科技板块情绪退潮',
+    satisfied: cond3Persist.satisfied,
+    pending: isCondition3RawTrue && !cond3Persist.satisfied,
+    pendingMinutes: isCondition3RawTrue ? cond3Persist.checkedMin : 0,
+    detail: techCrash && downStocksCount >= 5
+      ? `科技情绪指数 = -100 且自选股中跌幅<-9%的个股 ${downStocksCount} 个（>=5），市场触底${!cond3Persist.satisfied ? `（已持续 ${cond3Persist.checkedMin} 分钟，需≥${SELL_CONDITION_PERSIST_MIN} 分钟）` : ''}`
+      : techCrash
+        ? `科技情绪指数 = -100，但自选股中跌幅<-9%的个股仅 ${downStocksCount} 个（<5），未触发`
+        : techEmotion !== null
+          ? `科技情绪指数 ${techEmotion.toFixed(2)}，未达到 -100（需 = -100 且自选股中跌幅<-9%个股 >=5 才触发）`
+          : '当日科技情绪数据暂无',
+    subConditions: [],
+  };
+
+  // ===== 条件4：抗分歧指数 < 6 且 当前涨幅 ≤ -5%（14:50后生效） =====
+  const isSh688 = String(code).toLowerCase().startsWith('sh688');
+  const indexCode = isSh688 ? 'sh000688' : 'sz399006';
+  const indexPoints = getTlinePoints(replayStocks, indexCode, minute);
+  let resilienceScore = null;
+  if (stockPoints.length >= 5 && indexPoints.length >= 5) {
+    const raw = calculateReplayResilience(stockPoints, indexPoints, code);
+    if (raw != null) resilienceScore = parseFloat(raw.toFixed(2));
+  }
+  const isResilienceWeak = resilienceScore !== null && resilienceScore < 6;
+  const isFalling = change !== null && change <= -5;
+  const isAfter1450 = minute != null && minute >= 1450;
+  const condition4 = {
+    name: '抗分歧指数弱势',
+    satisfied: isResilienceWeak && isFalling && isAfter1450,
+    detail: resilienceScore === null
+      ? '分时数据不足，无法计算抗分歧指数'
+      : !isAfter1450
+        ? `抗分歧指数 ${resilienceScore.toFixed(2)} < 6，且涨幅 ${change.toFixed(2)}% ≤ -5%，但当前时间未到 14:50，条件暂不生效`
+        : isResilienceWeak && isFalling
+          ? `抗分歧指数 ${resilienceScore.toFixed(2)} < 6，且涨幅 ${change.toFixed(2)}% ≤ -5%，个股抗跌性弱且正在下跌`
+          : !isResilienceWeak
+            ? `抗分歧指数 ${resilienceScore.toFixed(2)} ≥ 6，个股抗跌性尚可，未触发`
+            : `抗分歧指数 ${resilienceScore.toFixed(2)} < 6，但涨幅 ${change.toFixed(2)}% > -5%，未触发`,
+    subConditions: [],
+  };
+
+  // ===== 条件5：连续三日（含当日）抗分歧指数均 < 10 =====
+  const r3dValid = stock?.resilience3dValid === true;
+  const r3dAllBelow10 = stock?.resilience3dAllBelow10 === true;
+  const r3dScores = Array.isArray(stock?.resilience3dScores) ? stock.resilience3dScores : [];
+  const condition5 = {
+    name: '连续三日抗分歧弱势',
+    satisfied: r3dAllBelow10,
+    detail: !r3dValid
+      ? '历史分时数据不足，无法判断连续三日弱势'
+      : r3dAllBelow10
+        ? `近三日抗分歧指数均 < 10（${r3dScores.join('、')}），个股连续弱势，资金持续分歧`
+        : `近三日抗分歧指数未全部 < 10（${r3dScores.join('、')}），未触发`,
+    subConditions: [],
+  };
+
+  // ===== 条件6：现价跌破最迟一天买入（买入日 buyDate）当日的最低点 —— 需持续 ≥5 分钟 =====
+  const lastBuyDayRaw = String(position?.buyDate || '').replace(/-/g, '');
+  let condition6 = {
+    name: '跌破最迟买入日低点',
+    satisfied: false,
+    pending: false,
+    pendingMinutes: 0,
+    detail: '',
+    subConditions: [],
+  };
+  const stockEntry6 = (replayStocks || []).find(s => s.code === code);
+  const dailyLowMap = stockEntry6?.dailyLowMap || {};
+  if (!lastBuyDayRaw) {
+    condition6.detail = '该模拟持仓无买入日期，无法判断最迟买入日低点';
+    condition6.subConditions = [{ label: '状态', value: '无买入日期' }];
+  } else {
+    const buyDayLowRaw = dailyLowMap[parseInt(lastBuyDayRaw)];
+    const buyDayLow = buyDayLowRaw != null ? toNumber(buyDayLowRaw) : null;
+    if (buyDayLow === null || buyDayLow <= 0) {
+      condition6.detail = `最迟买入日 ${lastBuyDayRaw} 无日K线最低价数据，无法判断`;
+      condition6.subConditions = [{ label: '状态', value: '无K线数据' }];
+    } else {
+      const brokenBuyDayLow = closePrice < buyDayLow;
+      const persist6 = brokenBuyDayLow
+        ? checkBuyDayLowPersist(replayStocks, code, minute, buyDayLow)
+        : { satisfied: false, checkedMin: 0 };
+      condition6.satisfied = persist6.satisfied;
+      condition6.pending = brokenBuyDayLow && !persist6.satisfied;
+      condition6.pendingMinutes = brokenBuyDayLow ? persist6.checkedMin : 0;
+      condition6.detail = brokenBuyDayLow
+        ? `现价 ${closePrice.toFixed(2)} 已跌破最迟买入日（${lastBuyDayRaw}）最低价 ${buyDayLow.toFixed(2)}，买入成本线告破${condition6.pending ? `（已持续 ${persist6.checkedMin} 分钟，需≥${SELL_CONDITION_PERSIST_MIN} 分钟才触发）` : ''}`
+        : `现价 ${closePrice.toFixed(2)} 未跌破最迟买入日（${lastBuyDayRaw}）最低价 ${buyDayLow.toFixed(2)}，暂不触发`;
+      condition6.subConditions = [
+        { label: '最迟买入日', value: lastBuyDayRaw },
+        { label: '买入日最低价', value: buyDayLow.toFixed(2) },
+        { label: '现价', value: closePrice.toFixed(2) },
+      ];
+    }
+  }
+
+  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6];
+  const satisfiedCount = conditions.filter(c => c.satisfied).length;
+  const isSell = satisfiedCount > 0;
+  const returnRate = buyPrice !== null && buyPrice > 0
+    ? parseFloat((((closePrice - buyPrice) / buyPrice) * 100).toFixed(2))
+    : null;
+
+  return {
+    isSell,
+    code,
+    stockName,
+    closePrice: parseFloat(closePrice.toFixed(2)),
+    change: change !== null ? parseFloat(change.toFixed(2)) : null,
+    returnRate,
+    dayHigh: dayHigh > 0 ? parseFloat(dayHigh.toFixed(2)) : null,
+    techEmotion,
+    resilienceScore,
+    conditions,
+    conclusion: isSell
+      ? `共触发 ${satisfiedCount} 个卖出条件（${conditions.filter(c => c.satisfied).map(c => c.name).join('、')}），建议卖出离场`
+      : '所有卖出条件均未触发，当前可继续持有',
+    displayTime,
+  };
+};
+
+// ============================================================
+// 回放股票结构构建（对齐 trainingCamp/index.jsx 中 replayStocks 的 useMemo 构建逻辑，全量时间桶）
+// ============================================================
+const buildReplayStocks = (campData) => {
+  const timeBuckets = campData?.timeBuckets || [];
+  const stockMap = new Map();
+  const indexTline = { sh000688: [], sz399006: [] };
+  const indexNames = { sh000688: '科创指数', sz399006: '创业板指数' };
+  for (const bucket of timeBuckets) {
+    const itl = bucket.indexTline || {};
+    if (itl.kcb && itl.kcb.changePct != null) {
+      indexTline.sh000688.push({ minute: bucket.minute, change: itl.kcb.changePct, lastPx: itl.kcb.price });
+    }
+    if (itl.cyb && itl.cyb.changePct != null) {
+      indexTline.sz399006.push({ minute: bucket.minute, change: itl.cyb.changePct, lastPx: itl.cyb.price });
+    }
+    for (const sc of bucket.stockChanges) {
+      if (!stockMap.has(sc.code)) {
+        const lowByCode = campData.dailyLowByCode || {};
+        stockMap.set(sc.code, { code: sc.code, stockName: sc.name, tlinePoints: [], dailyLowMap: lowByCode[sc.code] || null });
+      }
+      if (sc.changePct != null) {
+        stockMap.get(sc.code).tlinePoints.push({ minute: bucket.minute, change: sc.changePct, lastPx: sc.lastPx });
+      }
+    }
+  }
+  Object.entries(indexTline).forEach(([code, points]) => {
+    if (points.length > 0) {
+      stockMap.set(code, { code, stockName: indexNames[code], isDefaultIndex: true, tlinePoints: points });
+    }
+  });
+  return Array.from(stockMap.values()).filter(s => s.tlinePoints.length > 0);
+};
+
+// 计算某只股票截至当前 minute 的日内抗分歧分数（供单股策略选股用，与卖点诊断条件4口径一致）
+const calcResilienceAtMinute = (replayStocks, code, minute) => {
+  const isSh688 = String(code).toLowerCase().startsWith('sh688');
+  const indexCode = isSh688 ? 'sh000688' : 'sz399006';
+  const stockPoints = getTlinePoints(replayStocks, code, minute).filter(p => p.lastPx != null && p.lastPx > 0);
+  const indexPoints = getTlinePoints(replayStocks, indexCode, minute);
+  if (stockPoints.length < 5 || indexPoints.length < 5) return null;
+  const raw = calculateReplayResilience(stockPoints, indexPoints, code);
+  return raw != null ? parseFloat(raw.toFixed(2)) : null;
+};
+
+// 从回放数据提取每个股票「当日 EOD」信息：收盘涨幅、收盘价、当日抗分歧分数
+// （当日抗分歧分数取 resilience3dScores 的最后一位，即 score(当天)，与 resilience3d 口径一致）
+const extractDailyInfo = (campData) => {
+  const buckets = campData?.timeBuckets || [];
+  const lastBucket = buckets[buckets.length - 1];
+  const info = new Map();
+  for (const sc of lastBucket?.stockChanges || []) {
+    let resilience = null;
+    if (Array.isArray(sc.resilience3dScores) && sc.resilience3dScores.length === 3) {
+      const today = sc.resilience3dScores[2];
+      if (today != null && !Number.isNaN(Number(today))) resilience = Number(today);
+    }
+    info.set(sc.code, {
+      code: sc.code,
+      name: sc.name || sc.code,
+      changePct: sc.changePct != null ? Number(sc.changePct) : null,
+      closePx: sc.lastPx != null ? Number(sc.lastPx) : null,
+      resilience,
+    });
+  }
+  return info;
+};
+
+// 窗口累计涨幅：winDates 最后一位为当日（用盘中涨幅），其余为历史 EOD 涨幅，复利相乘
+const computeWindowGain = (code, winDates, dailyInfos, todayIntradayChange) => {
+  let prod = 1;
+  for (let i = 0; i < winDates.length; i++) {
+    let ch;
+    if (i === winDates.length - 1) {
+      ch = todayIntradayChange != null ? Number(todayIntradayChange) : null;
+    } else {
+      ch = dailyInfos.get(winDates[i])?.get(code)?.changePct;
+    }
+    if (ch == null || !Number.isFinite(ch)) return null;
+    prod *= 1 + ch / 100;
+  }
+  return (prod - 1) * 100;
+};
+
+// 窗口抗分歧分数汇总：winDates 最后一位为当日（用盘中分数），其余为历史 EOD 分数
+const computeWindowResilience = (code, winDates, dailyInfos, todayIntradayResilience) => {
+  let sum = 0;
+  for (let i = 0; i < winDates.length; i++) {
+    let r;
+    if (i === winDates.length - 1) {
+      r = todayIntradayResilience != null ? Number(todayIntradayResilience) : null;
+    } else {
+      r = dailyInfos.get(winDates[i])?.get(code)?.resilience;
+    }
+    if (r == null || !Number.isFinite(r)) return null;
+    sum += r;
+  }
+  return sum;
+};
+
+// 计算 N 日线斜率角度：以「N 日涨幅均线」为观测线（用涨幅替代价格，消除不同股票价格差异）
+// avgRet(d) = 近 N 个交易日涨幅均值，今日涨幅用当前盘中涨幅（避免未来数据），其余用历史 EOD 涨幅
+// 斜率Δ（每日变化，% / 天）= avgRet(今日) - avgRet(昨日)
+// 角度（度）= atan(Δ) * 180 / π；取当日角度最大（即线最陡峭）的股票买入
+const computeMaSlopeAngle = (code, days, di, rangeDates, dailyInfos, todayIntradayChange) => {
+  if (!days || todayIntradayChange == null || !Number.isFinite(Number(todayIntradayChange))) return null;
+  if (di < days) return null; // 历史日不足，无法得到「昨日N日涨幅均线」
+  // 今日N日涨幅均线 = (今日盘中涨幅 + 最近 days-1 个历史 EOD 涨幅) / days
+  const todayRets = [Number(todayIntradayChange)];
+  for (let i = di - 1; i >= 0 && todayRets.length < days; i--) {
+    const r = dailyInfos.get(rangeDates[i])?.get(code)?.changePct;
+    if (r == null || !Number.isFinite(Number(r))) return null;
+    todayRets.push(Number(r));
+  }
+  if (todayRets.length < days) return null;
+  // 昨日N日涨幅均线 = 最近 days 个历史 EOD 涨幅 / days
+  const yestRets = [];
+  for (let i = di - 1; i >= di - days; i--) {
+    if (i < 0) return null;
+    const r = dailyInfos.get(rangeDates[i])?.get(code)?.changePct;
+    if (r == null || !Number.isFinite(Number(r))) return null;
+    yestRets.push(Number(r));
+  }
+  if (yestRets.length < days) return null;
+  const avgToday = todayRets.reduce((a, b) => a + b, 0) / days;
+  const avgYesterday = yestRets.reduce((a, b) => a + b, 0) / days;
+  if (!Number.isFinite(avgToday) || !Number.isFinite(avgYesterday)) return null;
+  const delta = avgToday - avgYesterday; // 斜率（百分点 / 天）
+  const angle = Math.atan(delta) * 180 / Math.PI; // 转化为角度
+  return angle;
+};
+
+// 单股策略选股：在买点命中的当前时间桶，按策略指标选择最优的一只股票
+const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos, strategyId) => {
+  const isReportStrategy = strategyId.includes('reports');
+  const isTop5ReportGainMode = strategyId.includes('reports_top5_gain'); // 研报覆盖前五（含覆盖数相同）中取窗口涨幅最大
+  const isPureReportMode = isReportStrategy && !isTop5ReportGainMode; // 研报覆盖数最多/第二多
+  const isMaSlopeMode = strategyId.includes('ma_slope'); // 均线斜率最陡峭（3日/5日）
+  const useSecond = strategyId.includes('_2nd');
+  const dayMatch = strategyId.match(/(\d+)d/);
+  const days = dayMatch ? Number(dayMatch[1]) : null;
+
+  // 涨幅/抗分歧窗口按 days 天
+  let winDates;
+  if (strategyId === 'highest_gain') {
+    winDates = rangeDates.slice(0, di + 1); // 回测起始日至当日
+  } else if (days) {
+    winDates = rangeDates.slice(Math.max(0, di - days + 1), di + 1);
+  } else {
+    winDates = rangeDates.slice(Math.max(0, di - 2), di + 1); // 最近 3 个交易日
+  }
+  // 研报覆盖窗口与涨幅/抗分歧窗口一致（按对应 3 天/5 天统计）
+  let reportWinDates = null;
+  if (isReportStrategy && days) {
+    reportWinDates = winDates;
+  }
+  const gainMode = strategyId === 'highest_gain' || strategyId.includes('_gain');
+
+  let best = null;
+  let bestVal = -Infinity;
+  let bestMetric = null;
+  let second = null;
+  let secondVal = -Infinity;
+  let secondMetric = null;
+  const top5Candidates = isTop5ReportGainMode ? [] : null;
+  const reportIndex = isReportStrategy ? loadReportIndex() : null;
+  for (const sc of bucket.stockChanges) {
+    if (EXCLUDED_CODES.has(sc.code)) continue;
+    if (sc.lastPx == null || sc.lastPx <= 0) continue;
+    if (stocks.has(sc.code) && stocks.get(sc.code).holding) continue;
+    let val;
+    let metric = null;
+    if (isMaSlopeMode) {
+      // 涨幅均线斜率角度：用当前盘中涨幅作为"今日涨幅均线"的今日成分，避免未来数据
+      const angle = computeMaSlopeAngle(sc.code, days, di, rangeDates, dailyInfos, Number(sc.changePct));
+      if (angle == null || !Number.isFinite(angle)) continue;
+      val = angle;
+      metric = parseFloat(angle.toFixed(4));
+    } else if (isTop5ReportGainMode) {
+      // 收集研报覆盖数与涨幅候选，事后按覆盖数取前五再按涨幅最大选股
+      const reportCount = sumReportCount(sc.name, reportWinDates, reportIndex);
+      const gain = computeWindowGain(sc.code, winDates, dailyInfos, sc.changePct);
+      if (gain == null || !Number.isFinite(gain)) continue;
+      top5Candidates.push({ sc, reportCount, gain });
+      continue;
+    }
+    if (isPureReportMode) {
+      // 研报覆盖数最多/第二多（按对应 days 天统计）；覆盖数相同取 days 天涨幅最大
+      const reportCount = sumReportCount(sc.name, reportWinDates, reportIndex);
+      const gain = computeWindowGain(sc.code, winDates, dailyInfos, sc.changePct);
+      if (gain == null || !Number.isFinite(gain)) continue;
+      val = reportCount * 100000 + gain;
+      metric = reportCount;
+    } else if (gainMode) {
+      val = computeWindowGain(sc.code, winDates, dailyInfos, sc.changePct);
+    } else {
+      const intradayResilience = calcResilienceAtMinute(replayStocks, sc.code, bucket.minute);
+      val = computeWindowResilience(sc.code, winDates, dailyInfos, intradayResilience);
+    }
+    if (val == null || !Number.isFinite(val)) continue;
+    if (val > bestVal) {
+      second = best;
+      secondVal = bestVal;
+      secondMetric = bestMetric;
+      bestVal = val;
+      best = sc;
+      bestMetric = metric;
+    } else if (val > secondVal) {
+      secondVal = val;
+      second = sc;
+      secondMetric = metric;
+    }
+  }
+  if (isTop5ReportGainMode) {
+    // 研报覆盖数降序取前五（覆盖数相同的股票全部纳入），再取 days 天涨幅最大的一只
+    if (!top5Candidates.length) return null;
+    top5Candidates.sort((a, b) => b.reportCount - a.reportCount);
+    const threshold = top5Candidates[Math.min(4, top5Candidates.length - 1)].reportCount;
+    let pick = null;
+    for (const c of top5Candidates) {
+      if (c.reportCount < threshold) break; // 已按覆盖数降序
+      if (!pick || c.gain > pick.gain) pick = c;
+    }
+    if (!pick) return null;
+    return { stock: pick.sc, metric: pick.reportCount };
+  }
+  if (useSecond) {
+    if (!second) return null;
+    return { stock: second, metric: isPureReportMode ? secondMetric : parseFloat(secondVal.toFixed(4)) };
+  }
+  if (!best) return null;
+  const metric = isPureReportMode ? bestMetric : parseFloat(bestVal.toFixed(4));
+  return { stock: best, metric };
+};
+
+// ============================================================
+// 多日回测主循环
+// ============================================================
+const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain', onProgress) => {
+  const allDates = getTrainingCampDates();
+  // 升序处理（按时间先后）
+  const rangeDates = allDates.filter(d => d >= startDate && d <= endDate).sort();
+  const total = rangeDates.length;
+  if (total === 0) {
+    return { success: false, message: '所选日期范围内无可回测交易日' };
+  }
+  const strategy = STRATEGIES[strategyId];
+
+  // 单股策略的持仓状态（同一时刻仅一只股票）
+  let singlePosition = null; // { code, stockName, buyDate, buyDateDisplay, buyTime, buyPrice, buyChange, metric }
+  // 两次买入策略挂起的首笔半仓（买点触发当日先买 5 成，等收盘补足剩余 5 成后再建立正式持仓）
+  let pendingHalfBuy = null; // { code, stockName, buyDate, buyDateDisplay, buyTime, buyPrice1, buyChange1, metric, closePrice }
+  const singleTrades = [];
+  const skippedDates = [];
+
+  // 历史每日 EOD 信息：{ date: Map<code, {changePct, closePx, resilience}> }
+  const dailyInfos = new Map();
+  // 回测期间出现过的全部自选股（供复制K线等使用）
+  const seenStocks = new Map(); // code -> { code, name }
+
+  for (let di = 0; di < total; di++) {
+    const dateStr = rangeDates[di];
+    if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'loading' });
+    let campData;
+    try {
+      campData = await loadTrainingCampData(dateStr);
+    } catch (e) {
+      skippedDates.push({ date: dateStr, message: e.message || '加载失败' });
+      continue;
+    }
+    if (!campData || campData.success === false) {
+      skippedDates.push({ date: dateStr, message: campData?.message || '无回放数据' });
+      continue;
+    }
+
+    const timeBuckets = campData.timeBuckets || [];
+    if (timeBuckets.length === 0) {
+      skippedDates.push({ date: dateStr, message: '无时间桶数据' });
+      continue;
+    }
+    const replayStocks = buildReplayStocks(campData);
+    const dateDisplay = campData.dateDisplay || dateStr;
+    // 记录当日 EOD 信息（供后续日期选股使用）
+    dailyInfos.set(dateStr, extractDailyInfo(campData));
+    // 记录回测期间出现过的全部自选股（供前端复制K线等使用）
+    for (const bucket of timeBuckets) {
+      for (const sc of bucket.stockChanges) {
+        if (EXCLUDED_CODES.has(sc.code)) continue;
+        if (!seenStocks.has(sc.code)) seenStocks.set(sc.code, { code: sc.code, name: sc.name || sc.code });
+      }
+    }
+
+    if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
+
+    const sellPositions = (bi) => {
+      const bucket = timeBuckets[bi];
+      // 单股策略：仅诊断唯一持仓
+      if (!singlePosition) return;
+      if (dateStr <= singlePosition.buyDate) return;
+      const position = { code: singlePosition.code, stockName: singlePosition.stockName, buyPrice: singlePosition.buyPrice, buyDate: singlePosition.buyDate };
+      const result = runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi);
+      if (result.isSell && result.closePrice != null) {
+        const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
+        singleTrades.push({
+          seq: singleTrades.length + 1,
+          metric: singlePosition.metric,
+          code: singlePosition.code,
+          stockName: singlePosition.stockName,
+          buyDate: singlePosition.buyDate,
+          buyDateDisplay: singlePosition.buyDateDisplay,
+          buyTime: singlePosition.buyTime,
+          buyPrice: singlePosition.buyPrice,
+          buyChange: singlePosition.buyChange,
+          sellDate: dateStr,
+          sellDateDisplay: dateDisplay,
+          sellTime: result.displayTime,
+          sellPrice: result.closePrice,
+          sellChange: result.change,
+          sellReason: satisfiedNames || '卖出条件触发',
+          returnRate: result.returnRate,
+        });
+        singlePosition = null;
+      }
+    };
+
+    const isTwice = strategy.id === 'highest_3d_gain_twice'; // 两次买入策略（选股同 3 日涨幅最大，仅建仓成本计算不同）
+    const lastBucket = timeBuckets[timeBuckets.length - 1]; // 用于两次买入策略的收盘补仓
+    for (let bi = 0; bi < timeBuckets.length; bi++) {
+      const bucket = timeBuckets[bi];
+
+      // 两次买入策略：非收盘桶上，先建立挂起的首笔半仓（买点触发当日不等收盘）
+      if (isTwice && pendingHalfBuy && bucket === lastBucket) {
+        const closeStock = (bucket.stockChanges || []).find(s => s.code === pendingHalfBuy.code);
+        const closePrice = closeStock?.lastPx != null && closeStock.lastPx > 0 ? Number(closeStock.lastPx) : null;
+        if (closePrice != null) {
+          // 成本价 = (首笔半仓买入价 + 收盘补仓买入价) / 2
+          const avgPrice = parseFloat(((pendingHalfBuy.buyPrice1 + closePrice) / 2).toFixed(2));
+          const closeChange = closeStock.changePct != null ? parseFloat(Number(closeStock.changePct).toFixed(2)) : pendingHalfBuy.buyChange1;
+          singlePosition = {
+            code: pendingHalfBuy.code,
+            stockName: pendingHalfBuy.stockName,
+            buyDate: pendingHalfBuy.buyDate,
+            buyDateDisplay: pendingHalfBuy.buyDateDisplay,
+            buyTime: pendingHalfBuy.buyTime,
+            buyPrice: avgPrice,
+            buyChange: closeChange,
+            metric: pendingHalfBuy.metric,
+          };
+        }
+        pendingHalfBuy = null;
+      }
+
+      // 买入信号
+      const buyResult = runBuyPointDiagnosis(timeBuckets, bi, campData);
+      if (buyResult?.data?.allPassed === true) {
+        const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
+        // 单股策略：同一时刻仅持有一只，未持仓时按指标选最优的一只买入
+        if (!singlePosition && !pendingHalfBuy) {
+          // 选股前无持仓（仅单股持仓，且未持仓才会进入这里），持仓 Map 传空即可
+          const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, isTwice ? 'highest_3d_gain' : strategy.id);
+          if (picked) {
+            const sc = picked.stock;
+            if (isTwice) {
+              // 两次买入：买点触发当日先把首笔半仓挂起，留待收盘补足另 5 成
+              if (bucket === lastBucket) {
+                // 买点恰好在收盘桶触发：直接按收盘价一次性成交，成本价即为收盘价
+                const closeStock = (bucket.stockChanges || []).find(s => s.code === sc.code);
+                const closePx = closeStock?.lastPx != null && closeStock.lastPx > 0 ? parseFloat(Number(closeStock.lastPx).toFixed(2)) : parseFloat(Number(sc.lastPx).toFixed(2));
+                singlePosition = {
+                  code: sc.code,
+                  stockName: sc.name || sc.code,
+                  buyDate: dateStr,
+                  buyDateDisplay: dateDisplay,
+                  buyTime,
+                  buyPrice: closePx,
+                  buyChange: closeStock?.changePct != null ? parseFloat(Number(closeStock.changePct).toFixed(2)) : (sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null),
+                  metric: picked.metric,
+                };
+              } else {
+                pendingHalfBuy = {
+                  code: sc.code,
+                  stockName: sc.name || sc.code,
+                  buyDate: dateStr,
+                  buyDateDisplay: dateDisplay,
+                  buyTime,
+                  buyPrice1: parseFloat(Number(sc.lastPx).toFixed(2)),
+                  buyChange1: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
+                  metric: picked.metric,
+                };
+              }
+            } else {
+              singlePosition = {
+                code: sc.code,
+                stockName: sc.name || sc.code,
+                buyDate: dateStr,
+                buyDateDisplay: dateDisplay,
+                buyTime,
+                buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
+                buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
+                metric: picked.metric,
+              };
+            }
+          }
+        }
+      }
+
+      // 卖出信号
+      sellPositions(bi);
+    }
+
+    // 两次买入策略：当日尾盘仍有挂起半仓（买点触发但收盘桶无该股报价）→ 次日自动取消，不产生持仓
+    if (isTwice && pendingHalfBuy) {
+      pendingHalfBuy = null;
+    }
+  }
+
+  // 组装结果
+  // 期末持仓：按最近一个有效日期的收盘价估算浮盈，计入整体收益
+  let overallReturn = 1;
+  for (const t of singleTrades) {
+    if (t.returnRate != null && Number.isFinite(t.returnRate)) overallReturn *= 1 + t.returnRate / 100;
+  }
+  let holding = null;
+  if (singlePosition) {
+    holding = { ...singlePosition };
+    // 自最后一日起向前找到最近的收盘数据，用于估算期末浮盈
+    for (let i = rangeDates.length - 1; i >= 0; i--) {
+      const info = dailyInfos.get(rangeDates[i])?.get(singlePosition.code);
+      if (info && info.closePx != null && info.closePx > 0) {
+        holding.buyReturn = singlePosition.buyPrice > 0
+          ? parseFloat((((info.closePx - singlePosition.buyPrice) / singlePosition.buyPrice) * 100).toFixed(2))
+          : null;
+        break;
+      }
+    }
+    overallReturn *= 1 + (holding.buyReturn || 0) / 100;
+  }
+  overallReturn = parseFloat(((overallReturn - 1) * 100).toFixed(2));
+  const validTrades = singleTrades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
+  const winCount = validTrades.filter(t => t.returnRate > 0).length;
+  return {
+    success: true,
+    type: 'single',
+    strategy: { id: strategy.id, name: strategy.name, desc: strategy.desc },
+    range: { startDate, endDate },
+    skippedDates,
+    seenStocks: Array.from(seenStocks.values()),
+    trades: singleTrades,
+    currentHolding: holding,
+    summary: {
+      tradeCount: singleTrades.length,
+      winCount,
+      winRate: validTrades.length > 0 ? parseFloat((winCount / validTrades.length * 100).toFixed(2)) : null,
+      overallReturn,
+      holding: !!holding,
+    },
+  };
+};
+
+// 多策略共享数据回测：外层日期、内层策略，同一天回放数据只加载一次依次喂给全部策略。
+// 与 runRangeBacktest 的差异仅在于数据加载被整组策略共享（dailyInfos/seenStocks 由 campData 派生，与策略无关，可共享），
+// 持仓状态与成交流水按策略独立维护，单策略结果结构与 runRangeBacktest 完全一致。
+// 返回：[{ strategyId, result }]
+const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress) => {
+  const ids = (Array.isArray(strategyIds) ? strategyIds : []).filter(id => STRATEGIES[id]);
+  if (ids.length === 0) return [];
+  const allDates = getTrainingCampDates();
+  // 升序处理（按时间先后）
+  const rangeDates = allDates.filter(d => d >= startDate && d <= endDate).sort();
+  const total = rangeDates.length;
+  if (total === 0) {
+    return ids.map(strategyId => ({ strategyId, result: { success: false, message: '所选日期范围内无可回测交易日' } }));
+  }
+
+  // 每个策略独立的持仓状态与成交流水
+  const states = ids.map(strategyId => ({
+    strategy: STRATEGIES[strategyId],
+    singlePosition: null, // { code, stockName, buyDate, buyDateDisplay, buyTime, buyPrice, buyChange, metric }
+    // 两次买入策略挂起的首笔半仓（买点触发当日先买 5 成，等收盘补足剩余 5 成后再建立正式持仓）
+    pendingHalfBuy: null, // { code, stockName, buyDate, buyDateDisplay, buyTime, buyPrice1, buyChange1, metric, closePrice }
+    singleTrades: [],
+    skippedDates: [],
+  }));
+
+  // 整组策略共享：每日 EOD 信息与期间出现过的自选股（均由 campData 派生）
+  const dailyInfos = new Map();
+  const seenStocks = new Map(); // code -> { code, name }
+
+  for (let di = 0; di < total; di++) {
+    const dateStr = rangeDates[di];
+    if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'loading' });
+    let campData;
+    try {
+      campData = await loadTrainingCampData(dateStr);
+    } catch (e) {
+      states.forEach(st => st.skippedDates.push({ date: dateStr, message: e.message || '加载失败' }));
+      continue;
+    }
+    if (!campData || campData.success === false) {
+      states.forEach(st => st.skippedDates.push({ date: dateStr, message: campData?.message || '无回放数据' }));
+      continue;
+    }
+
+    const timeBuckets = campData.timeBuckets || [];
+    if (timeBuckets.length === 0) {
+      states.forEach(st => st.skippedDates.push({ date: dateStr, message: '无时间桶数据' }));
+      continue;
+    }
+    const replayStocks = buildReplayStocks(campData);
+    const dateDisplay = campData.dateDisplay || dateStr;
+    // 记录当日 EOD 信息（供后续日期选股使用，与策略无关）
+    dailyInfos.set(dateStr, extractDailyInfo(campData));
+    // 记录回测期间出现过的全部自选股（供前端复制K线等使用）
+    for (const bucket of timeBuckets) {
+      for (const sc of bucket.stockChanges) {
+        if (EXCLUDED_CODES.has(sc.code)) continue;
+        if (!seenStocks.has(sc.code)) seenStocks.set(sc.code, { code: sc.code, name: sc.name || sc.code });
+      }
+    }
+
+    if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
+
+    // 内层策略：同一天数据依次跑本组全部策略的买卖点诊断
+    for (const st of states) {
+      const { strategy, singleTrades } = st;
+      const isTwice = strategy.id === 'highest_3d_gain_twice'; // 两次买入策略（选股同 3 日涨幅最大，仅建仓成本计算不同）
+      const lastBucket = timeBuckets[timeBuckets.length - 1]; // 用于两次买入策略的收盘补仓
+      for (let bi = 0; bi < timeBuckets.length; bi++) {
+        const bucket = timeBuckets[bi];
+
+        // 两次买入策略：非收盘桶上，先建立挂起的首笔半仓（买点触发当日不等收盘）
+        if (isTwice && st.pendingHalfBuy && bucket === lastBucket) {
+          const closeStock = (bucket.stockChanges || []).find(s => s.code === st.pendingHalfBuy.code);
+          const closePrice = closeStock?.lastPx != null && closeStock.lastPx > 0 ? Number(closeStock.lastPx) : null;
+          if (closePrice != null) {
+            // 成本价 = (首笔半仓买入价 + 收盘补仓买入价) / 2
+            const avgPrice = parseFloat(((st.pendingHalfBuy.buyPrice1 + closePrice) / 2).toFixed(2));
+            const closeChange = closeStock.changePct != null ? parseFloat(Number(closeStock.changePct).toFixed(2)) : st.pendingHalfBuy.buyChange1;
+            st.singlePosition = {
+              code: st.pendingHalfBuy.code,
+              stockName: st.pendingHalfBuy.stockName,
+              buyDate: st.pendingHalfBuy.buyDate,
+              buyDateDisplay: st.pendingHalfBuy.buyDateDisplay,
+              buyTime: st.pendingHalfBuy.buyTime,
+              buyPrice: avgPrice,
+              buyChange: closeChange,
+              metric: st.pendingHalfBuy.metric,
+            };
+          }
+          st.pendingHalfBuy = null;
+        }
+
+        // 买入信号
+        const buyResult = runBuyPointDiagnosis(timeBuckets, bi, campData);
+        if (buyResult?.data?.allPassed === true) {
+          const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
+          // 单股策略：同一时刻仅持有一只，未持仓时按指标选最优的一只买入
+          if (!st.singlePosition && !st.pendingHalfBuy) {
+            // 选股前无持仓（仅单股持仓，且未持仓才会进入这里），持仓 Map 传空即可
+            const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, isTwice ? 'highest_3d_gain' : strategy.id);
+            if (picked) {
+              const sc = picked.stock;
+              if (isTwice) {
+                // 两次买入：买点触发当日先把首笔半仓挂起，留待收盘补足另 5 成
+                if (bucket === lastBucket) {
+                  // 买点恰好在收盘桶触发：直接按收盘价一次性成交，成本价即为收盘价
+                  const closeStock = (bucket.stockChanges || []).find(s => s.code === sc.code);
+                  const closePx = closeStock?.lastPx != null && closeStock.lastPx > 0 ? parseFloat(Number(closeStock.lastPx).toFixed(2)) : parseFloat(Number(sc.lastPx).toFixed(2));
+                  st.singlePosition = {
+                    code: sc.code,
+                    stockName: sc.name || sc.code,
+                    buyDate: dateStr,
+                    buyDateDisplay: dateDisplay,
+                    buyTime,
+                    buyPrice: closePx,
+                    buyChange: closeStock?.changePct != null ? parseFloat(Number(closeStock.changePct).toFixed(2)) : (sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null),
+                    metric: picked.metric,
+                  };
+                } else {
+                  st.pendingHalfBuy = {
+                    code: sc.code,
+                    stockName: sc.name || sc.code,
+                    buyDate: dateStr,
+                    buyDateDisplay: dateDisplay,
+                    buyTime,
+                    buyPrice1: parseFloat(Number(sc.lastPx).toFixed(2)),
+                    buyChange1: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
+                    metric: picked.metric,
+                  };
+                }
+              } else {
+                st.singlePosition = {
+                  code: sc.code,
+                  stockName: sc.name || sc.code,
+                  buyDate: dateStr,
+                  buyDateDisplay: dateDisplay,
+                  buyTime,
+                  buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
+                  buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
+                  metric: picked.metric,
+                };
+              }
+            }
+          }
+        }
+
+        // 卖出信号（同日买入不可同日卖出）
+        if (st.singlePosition && dateStr > st.singlePosition.buyDate) {
+          const position = { code: st.singlePosition.code, stockName: st.singlePosition.stockName, buyPrice: st.singlePosition.buyPrice, buyDate: st.singlePosition.buyDate };
+          const result = runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi);
+          if (result.isSell && result.closePrice != null) {
+            const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
+            singleTrades.push({
+              seq: singleTrades.length + 1,
+              metric: st.singlePosition.metric,
+              code: st.singlePosition.code,
+              stockName: st.singlePosition.stockName,
+              buyDate: st.singlePosition.buyDate,
+              buyDateDisplay: st.singlePosition.buyDateDisplay,
+              buyTime: st.singlePosition.buyTime,
+              buyPrice: st.singlePosition.buyPrice,
+              buyChange: st.singlePosition.buyChange,
+              sellDate: dateStr,
+              sellDateDisplay: dateDisplay,
+              sellTime: result.displayTime,
+              sellPrice: result.closePrice,
+              sellChange: result.change,
+              sellReason: satisfiedNames || '卖出条件触发',
+              returnRate: result.returnRate,
+            });
+            st.singlePosition = null;
+          }
+        }
+      }
+
+      // 两次买入策略：当日尾盘仍有挂起半仓（买点触发但收盘桶无该股报价）→ 次日自动取消，不产生持仓
+      if (isTwice && st.pendingHalfBuy) {
+        st.pendingHalfBuy = null;
+      }
+    }
+  }
+
+  // 逐策略组装结果（与 runRangeBacktest 单策略版完全一致）
+  return states.map(st => {
+    const { strategy, singleTrades, skippedDates } = st;
+    // 期末持仓：按最近一个有效日期的收盘价估算浮盈，计入整体收益
+    let overallReturn = 1;
+    for (const t of singleTrades) {
+      if (t.returnRate != null && Number.isFinite(t.returnRate)) overallReturn *= 1 + t.returnRate / 100;
+    }
+    let holding = null;
+    if (st.singlePosition) {
+      holding = { ...st.singlePosition };
+      // 自最后一日起向前找到最近的收盘数据，用于估算期末浮盈
+      for (let i = rangeDates.length - 1; i >= 0; i--) {
+        const info = dailyInfos.get(rangeDates[i])?.get(st.singlePosition.code);
+        if (info && info.closePx != null && info.closePx > 0) {
+          holding.buyReturn = st.singlePosition.buyPrice > 0
+            ? parseFloat((((info.closePx - st.singlePosition.buyPrice) / st.singlePosition.buyPrice) * 100).toFixed(2))
+            : null;
+          break;
+        }
+      }
+      overallReturn *= 1 + (holding.buyReturn || 0) / 100;
+    }
+    overallReturn = parseFloat(((overallReturn - 1) * 100).toFixed(2));
+    const validTrades = singleTrades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
+    const winCount = validTrades.filter(t => t.returnRate > 0).length;
+    return {
+      strategyId: strategy.id,
+      result: {
+        success: true,
+        type: 'single',
+        strategy: { id: strategy.id, name: strategy.name, desc: strategy.desc },
+        range: { startDate, endDate },
+        skippedDates,
+        seenStocks: Array.from(seenStocks.values()),
+        trades: singleTrades,
+        currentHolding: holding,
+        summary: {
+          tradeCount: singleTrades.length,
+          winCount,
+          winRate: validTrades.length > 0 ? parseFloat((winCount / validTrades.length * 100).toFixed(2)) : null,
+          overallReturn,
+          holding: !!holding,
+        },
+      },
+    };
+  });
+};
+
+module.exports = {
+  runRangeBacktest,
+  runRangeBacktestMulti,
+  STRATEGIES,
+  readCachedBacktest,
+  writeCachedBacktest,
+  loadReportIndex,
+  sumReportCount,
+};

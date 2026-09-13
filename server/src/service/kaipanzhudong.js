@@ -61,7 +61,6 @@ const getKaiPanZhuDongData = () => {
     const dirPath = path.resolve(__dirname, '../data/kaipanzhudong');
     if (!fs.existsSync(dirPath)) return [];
 
-    // 获取并按序号排序文件
     const files = fs.readdirSync(dirPath)
         .filter(file => file.startsWith('kaipanzhudong_') && file.endsWith('.json'))
         .sort((a, b) => {
@@ -70,28 +69,59 @@ const getKaiPanZhuDongData = () => {
             return numA - numB;
         });
 
-    // 如果文件夹下面只有一个文件或没有文件，就返回一个空数据
     if (files.length < 2) return [];
 
-    // 获取序号最新的文件和序号第一个的文件
     const latestFile = files[files.length - 1];
     const firstFile = files[0];
 
     const latestData = JSON.parse(fs.readFileSync(path.resolve(dirPath, latestFile), 'utf-8'));
     const firstData = JSON.parse(fs.readFileSync(path.resolve(dirPath, firstFile), 'utf-8'));
 
-    // 比对逻辑：如果最新数据比第一个序号的数据高，就放入结果中
+    const monitorStocks = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/monitor_stocks.json'), 'utf-8'));
+    const blockMap = {};
+    monitorStocks.forEach(s => {
+        blockMap[s.code] = s.blockName;
+    });
+
     const result = latestData.filter((stock) => {
         const firstStock = firstData.find(stockItem => stock.code === stockItem.code);
         return stock?.kline?.[0]?.change > firstStock?.kline?.[0]?.change;
     }).map(stock => ({
         code: stock.code,
         stockName: stock.stockName,
+        blockName: blockMap[stock.code] || '',
         ...stock.kline[0]
     }));
 
     return result;
 }
 
+const getKaiPanHighChangeStocks = () => {
+    const dirPath = path.resolve(__dirname, '../data/kaipanzhudong');
+    if (!fs.existsSync(dirPath)) return [];
+
+    const files = fs.readdirSync(dirPath)
+        .filter(file => file.startsWith('kaipanzhudong_') && file.endsWith('.json'))
+        .sort((a, b) => {
+            const numA = parseInt(a.match(/kaipanzhudong_(\d+)\.json/)[1]);
+            const numB = parseInt(b.match(/kaipanzhudong_(\d+)\.json/)[1]);
+            return numA - numB;
+        });
+
+    if (files.length === 0) return [];
+
+    const firstFile = files[0];
+    const firstData = JSON.parse(fs.readFileSync(path.resolve(dirPath, firstFile), 'utf-8'));
+
+    return firstData
+        .filter(stock => stock?.kline?.[0]?.change > 2)
+        .map(stock => ({
+            code: stock.code,
+            stockName: stock.stockName,
+            change: stock.kline[0].change
+        }));
+};
+
 exports.pollKaiPaiZhuDongData = pollKaiPaiZhuDongData;
 exports.getKaiPanZhuDongData = getKaiPanZhuDongData;
+exports.getKaiPanHighChangeStocks = getKaiPanHighChangeStocks;

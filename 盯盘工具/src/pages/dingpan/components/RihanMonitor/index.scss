@@ -1,0 +1,13 @@
+.rihan-simple-card {
+  height: auto !important;
+
+  .rihan-simple-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+
+    .item-name {
+      font-size: 13px;
+    }
+  }
+}

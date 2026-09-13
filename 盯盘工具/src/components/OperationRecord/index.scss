@@ -47,13 +47,13 @@
 
         &.date-cell-sell {
           color: #fff;
-          background: linear-gradient(135deg, #1890ff 0%, #0050b3 100%);
+          background: linear-gradient(135deg, var(--theme-color, #1890ff) 0%, #0050b3 100%);
           font-weight: bold;
         }
 
         &.date-cell-both {
           color: #fff;
-          background: linear-gradient(135deg, #ff4d4f 0%, #1890ff 100%);
+          background: linear-gradient(135deg, #ff4d4f 0%, var(--theme-color, #1890ff) 100%);
           font-weight: bold;
         }
       }

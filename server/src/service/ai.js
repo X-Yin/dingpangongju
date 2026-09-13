@@ -92,7 +92,15 @@ const getGlobalAnalysisData = () => {
 
   // 7. 科技情绪指数（最近 10 天，数据从新到旧排列）
   const techIndexRaw = JSON.parse(fs.readFileSync(path.join(dataDir, 'tech_index.json'), 'utf8'));
-  const techIndex = techIndexRaw.slice(0, 10);
+  const techIndex = techIndexRaw.slice(-10);
+
+  // 8. 板块涨跌幅历史 5 天数据（最近 5 天，数据从新到旧排列）
+  const blockDataDayHistoryRaw = JSON.parse(fs.readFileSync(path.join(dataDir, 'block_data_day_history.json'), 'utf8'));
+  const blockDataDayHistory = blockDataDayHistoryRaw.slice(0, 5);
+
+  // 9. 大盘主力资金&成交量近 5 天数据
+  const amountDayHistoryRaw = JSON.parse(fs.readFileSync(path.join(dataDir, 'amount_day_history.json'), 'utf8'));
+  const amountDayHistory = amountDayHistoryRaw.slice(0, 5);
 
   return {
     blockHistory: blockHistory.slice(-5),
@@ -102,6 +110,8 @@ const getGlobalAnalysisData = () => {
     blockMoneyDayHistory,
     dapanData,
     techIndex,
+    blockDataDayHistory,
+    amountDayHistory
   };
 };
 
@@ -110,10 +120,12 @@ const generateAIContext = () => {
     const { reports, researchReports } = getJigouReportsDataWithResearch();
     return {
         '今日板块分时历史数据': data.blockHistory,
-        '今日板块资金流入流出数据': data.blockMoneyChange,
-        '大盘主力资金和成交量数据': data.amount,
-        '今日个股涨跌幅数据': data.stockData,
+        '近5天板块涨跌幅数据': data.blockDataDayHistory,
+        '今日板块资金分时流入流出数据': data.blockMoneyChange,
         '近5天板块资金日历史数据': data.blockMoneyDayHistory,
+        '今日大盘主力资金和成交量分时数据': data.amount,
+        '近5天大盘主力资金和成交量数据': data.amountDayHistory,
+        '今日个股涨跌幅数据': data.stockData,
         '大盘数据': data.dapanData,
         '科技情绪指数（近10天）': data.techIndex,
         '机构调研交流圈最新帖子': reports,

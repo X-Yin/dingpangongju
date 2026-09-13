@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
-import { Menu, Input } from 'antd';
-import { ClockCircleOutlined, BookOutlined, FileTextOutlined, FileSearchOutlined, SearchOutlined } from '@ant-design/icons';
+import { Menu } from 'antd';
+import { ClockCircleOutlined, BookOutlined, FileTextOutlined, FileSearchOutlined } from '@ant-design/icons';
 import TimelineModule from './modules/TimelineModule';
 import MainProblemModule from './modules/MainProblemModule';
 import SuggestionModule from './modules/SuggestionModule';
 import ResearchReportModule from './modules/ResearchReportModule';
+import './index.scss';
 
 const ShiChangDiaoYan = () => {
-  const [currentModule, setCurrentModule] = useState('timeline');
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [currentModule, setCurrentModule] = useState('researchReport');
 
   const menuItems = [
+    {
+      key: 'researchReport',
+      icon: <FileSearchOutlined />,
+      label: '近期研报',
+    },
     {
       key: 'timeline',
       icon: <ClockCircleOutlined />,
@@ -25,17 +30,8 @@ const ShiChangDiaoYan = () => {
       key: 'suggestion',
       icon: <FileTextOutlined />,
       label: '个人观点',
-    },
-    {
-      key: 'researchReport',
-      icon: <FileSearchOutlined />,
-      label: '近期研报',
-    },
+    }
   ];
-
-  const filteredMenuItems = menuItems.filter(item => 
-    item.label.toLowerCase().includes(searchKeyword.toLowerCase())
-  );
 
   const renderModule = () => {
     switch (currentModule) {
@@ -54,25 +50,17 @@ const ShiChangDiaoYan = () => {
 
   return (
     <div className="shichangdiaoyan-container">
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <Input
-          placeholder="搜索菜单..."
-          prefix={<SearchOutlined />}
-          value={searchKeyword}
-          onChange={(e) => setSearchKeyword(e.target.value)}
-          allowClear
-          style={{ marginBottom: 16 }}
-        />
+      <div className="diaoyan-header">
         <Menu
           mode="horizontal"
           selectedKeys={[currentModule]}
-          items={filteredMenuItems}
+          items={menuItems}
           onClick={({ key }) => setCurrentModule(key)}
-          style={{ marginBottom: 16 }}
+          className="header-menu"
         />
-        <div style={{ flexGrow: 1 }}>
-          {renderModule()}
-        </div>
+      </div>
+      <div className="diaoyan-content">
+        {renderModule()}
       </div>
     </div>
   );

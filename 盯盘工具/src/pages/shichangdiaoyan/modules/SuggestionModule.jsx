@@ -3,6 +3,7 @@ import { Row, Col, message } from 'antd';
 import axios from 'axios';
 import { local_ip } from '../../../constant';
 import PersonalSuggestionEditor from '../components/PersonalSuggestionEditor';
+import './ModulesCommon.scss';
 
 const SuggestionModule = () => {
   const [globalSuggData, setGlobalSuggData] = useState('');
@@ -47,8 +48,11 @@ const SuggestionModule = () => {
   };
 
   return (
-    <div>
-      <Row gutter={[16, 16]}>
+    <div className="module-common-container">
+      <div className="module-header">
+        <h2 style={{ fontSize: '22px', fontWeight: 600 }}>个人观点</h2>
+      </div>
+      <Row gutter={[24, 24]}>
         <Col span={12}>
           <PersonalSuggestionEditor
             title="全局市场观点"

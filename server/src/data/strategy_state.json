@@ -1,0 +1,28 @@
+{
+  "overnight_crisis_escape": {
+    "lastCheckedTime": "2026-09-11 09:59:01",
+    "lastTriggeredTime": "2026-09-11 09:32:07"
+  },
+  "high_open_high_walk": {
+    "advisoryToday": "2026-09-11",
+    "preconditionMet": false,
+    "triggerIndexCode": null,
+    "triggerIndexName": null,
+    "checkedToday": "2026-09-11"
+  },
+  "high_open_max_half_position": {
+    "triggeredToday": "2026-09-11"
+  },
+  "opening_net_inflow": {
+    "triggeredToday": "2026-09-11"
+  },
+  "volume_shrink_stagnation": {
+    "lastTriggeredTime": "2026-09-11 15:00:25"
+  },
+  "panic_outflow": {
+    "lastTriggeredTime": "2026-09-11 14:36:05"
+  },
+  "tail_dip_buying": {
+    "checkedToday": "2026-09-11"
+  }
+}

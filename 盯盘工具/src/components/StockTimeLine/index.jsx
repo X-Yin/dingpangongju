@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import dayjs from 'dayjs';
+import { getThemeColor, getThemeColorRgba } from '../../utils/theme';
 import './index.scss';
 
 /**
@@ -75,28 +76,33 @@ export default function StockTimeLine({ data = [], height = 450 }) {
           top: 0.1,
           bottom: 0.3, // 价格线占上部 70%
         },
+        priceFormat: {
+          type: 'custom',
+          minMove: 0.01,
+          formatter: (value) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`,
+        },
       },
-      handleScroll: true,
-      handleScale: true,
+      handleScroll: false,
+      handleScale: false,
       crosshair: {
         mode: 0,
-        vertLine: { labelBackgroundColor: '#1890ff' },
-        horzLine: { labelBackgroundColor: '#1890ff' },
+        vertLine: { labelBackgroundColor: getThemeColor() },
+        horzLine: { labelBackgroundColor: getThemeColor() },
       },
     });
 
     chartRef.current = chart;
 
+    const themeColor = getThemeColor();
     // 2. 添加价格面积图
     const areaSeries = chart.addAreaSeries({
-      lineColor: '#1890ff',
-      topColor: 'rgba(24, 144, 255, 0.2)',
-      bottomColor: 'rgba(24, 144, 255, 0.01)',
+      lineColor: themeColor,
+      topColor: getThemeColorRgba(0.2),
+      bottomColor: getThemeColorRgba(0.01),
       lineWidth: 2,
       priceFormat: {
-        type: 'price',
-        precision: 2,
-        minMove: 0.01,
+        type: 'custom',
+        formatter: (value) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`,
       },
     });
 
@@ -150,21 +156,23 @@ export default function StockTimeLine({ data = [], height = 450 }) {
         curr = curr.add(1, 'minute');
       }
 
-      // 填充隐藏系列，确保 X 轴拥有全天所有的“坑位”
-      const basePrice = data[0].last_px;
-      dummySeries.setData(allTimePoints.map(t => ({ time: t, value: basePrice })));
+      // 填充隐藏系列，确保 X 轴拥有全天所有的“坑位”，使用涨幅 0
+      dummySeries.setData(allTimePoints.map(t => ({ time: t, value: 0 })));
 
       // 填充实际数据
-      const formattedData = [];
-      const volumeData = [];
+      const rawFormattedData = [];
+      const rawVolumeData = [];
 
       data.forEach((item, index) => {
         const timestamp = formatTimestamp(item.date, item.minute);
         const price = item.last_px;
         
-        formattedData.push({
+        // 使用数据自带的 change（相对昨收的涨跌幅）作为 Y 轴值
+        const change = item.change !== undefined && item.change !== null ? parseFloat(item.change) : 0;
+        
+        rawFormattedData.push({
           time: timestamp,
-          value: price,
+          value: change,
         });
 
         // 成交量颜色逻辑：上涨红 (#f5222d)，下跌绿 (#52c41a)
@@ -177,15 +185,34 @@ export default function StockTimeLine({ data = [], height = 450 }) {
           color = item.change >= 0 ? '#f5222d' : '#52c41a';
         }
 
-        volumeData.push({
+        rawVolumeData.push({
           time: timestamp,
           value: item.business_amount,
           color: color,
         });
       });
 
-      formattedData.sort((a, b) => a.time - b.time);
-      volumeData.sort((a, b) => a.time - b.time);
+      rawFormattedData.sort((a, b) => a.time - b.time);
+      rawVolumeData.sort((a, b) => a.time - b.time);
+
+      // 去重逻辑
+      const formattedData = [];
+      for (let i = 0; i < rawFormattedData.length; i++) {
+        if (i === 0 || rawFormattedData[i].time !== rawFormattedData[i - 1].time) {
+          formattedData.push(rawFormattedData[i]);
+        } else {
+          formattedData[formattedData.length - 1] = rawFormattedData[i];
+        }
+      }
+
+      const volumeData = [];
+      for (let i = 0; i < rawVolumeData.length; i++) {
+        if (i === 0 || rawVolumeData[i].time !== rawVolumeData[i - 1].time) {
+          volumeData.push(rawVolumeData[i]);
+        } else {
+          volumeData[volumeData.length - 1] = rawVolumeData[i];
+        }
+      }
 
       areaSeries.setData(formattedData);
       volumeSeries.setData(volumeData);

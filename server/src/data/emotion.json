@@ -268,5 +268,158 @@
       "up_ratio": 61
     },
     "emotion": 44.4
+  },
+  {
+    "date": "20260707",
+    "originData": {
+      "up_num": 34,
+      "down_num": 45,
+      "up_ratio": 59
+    },
+    "emotion": 30.4
+  },
+  {
+    "date": "20260708",
+    "originData": {
+      "up_num": 55,
+      "down_num": 44,
+      "up_ratio": 77
+    },
+    "emotion": 50
+  },
+  {
+    "date": "20260709",
+    "originData": {
+      "up_num": 75,
+      "down_num": 14,
+      "up_ratio": 82
+    },
+    "emotion": 73
+  },
+  {
+    "date": "20260710",
+    "originData": {
+      "up_num": 92,
+      "down_num": 5,
+      "up_ratio": 50
+    },
+    "emotion": 64.2
+  },
+  {
+    "date": "20260712",
+    "originData": {
+      "up_num": 92,
+      "down_num": 5,
+      "up_ratio": 50
+    },
+    "emotion": 64.2
+  },
+  {
+    "date": "20260713",
+    "originData": {
+      "up_num": 30,
+      "down_num": 171,
+      "up_ratio": 67
+    },
+    "emotion": -16.8
+  },
+  {
+    "date": "20260714",
+    "originData": {
+      "up_num": 85,
+      "down_num": 25,
+      "up_ratio": 79
+    },
+    "emotion": 70.8
+  },
+  {
+    "date": "20260715",
+    "originData": {
+      "up_num": 73,
+      "down_num": 33,
+      "up_ratio": 77
+    },
+    "emotion": 61.6
+  },
+  {
+    "date": "20260716",
+    "originData": {
+      "up_num": 46,
+      "down_num": 38,
+      "up_ratio": 63
+    },
+    "emotion": 40.4
+  },
+  {
+    "date": "20260717",
+    "originData": {
+      "up_num": 34,
+      "down_num": 198,
+      "up_ratio": 77
+    },
+    "emotion": -20
+  },
+  {
+    "date": "20260720",
+    "originData": {
+      "up_num": 41,
+      "down_num": 309,
+      "up_ratio": 49
+    },
+    "emotion": -78.4
+  },
+  {
+    "date": "20260721",
+    "originData": {
+      "up_num": 120,
+      "down_num": 26,
+      "up_ratio": 93
+    },
+    "emotion": 92.8
+  },
+  {
+    "date": "20260722",
+    "originData": {
+      "up_num": 46,
+      "down_num": 9,
+      "up_ratio": 55
+    },
+    "emotion": 47.2
+  },
+  {
+    "date": "20260723",
+    "originData": {
+      "up_num": 127,
+      "down_num": 2,
+      "up_ratio": 83
+    },
+    "emotion": 99.2
+  },
+  {
+    "date": "20260724",
+    "originData": {
+      "up_num": 42,
+      "down_num": 24,
+      "up_ratio": 78
+    },
+    "emotion": 53.4
+  },
+  {
+    "date": "20260726",
+    "originData": {
+      "up_num": 42,
+      "down_num": 24,
+      "up_ratio": 78
+    },
+    "emotion": 53.4
+  },
+  {
+    "date": "20260727",
+    "originData": {
+      "up_num": 65,
+      "down_num": 2,
+      "up_ratio": 85
+    },
+    "emotion": 75.6
   }
 ]

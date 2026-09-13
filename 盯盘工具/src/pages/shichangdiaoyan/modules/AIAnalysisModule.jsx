@@ -205,16 +205,16 @@ ${JSON.stringify(context, null, 2)}`;
   };
 
   return (
-    <div className="ai-analysis-module" style={{ marginTop: 24 }}>
+    <div className="ai-analysis-module">
       <Card 
         title={
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="analysis-title-wrapper">
+            <div className="title-main">
               <ThunderboltOutlined style={{ color: '#722ed1' }} />
               <span>AI 分析市场风格</span>
             </div>
             {lastUpdateTime && (
-              <div style={{ fontSize: '12px', color: '#8c8c8c', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div className="last-update">
                 <HistoryOutlined style={{ fontSize: '12px' }} />
                 <span>上次分析时间：{dayjs(lastUpdateTime).format('YYYY-MM-DD HH:mm:ss')}</span>
               </div>
@@ -265,6 +265,7 @@ ${JSON.stringify(context, null, 2)}`;
               icon={<ThunderboltOutlined />} 
               onClick={startAnalysis}
               loading={loading}
+              className="analysis-btn"
               style={{ 
                 borderRadius: '12px',
                 background: 'linear-gradient(135deg, #722ed1 0%, #2f54eb 100%)',
@@ -276,15 +277,8 @@ ${JSON.stringify(context, null, 2)}`;
             </Button>
           </Space>
         }
-        style={{ 
-          borderRadius: '12px', 
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-          background: 'rgba(255, 255, 255, 0.7)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.3)'
-        }}
       >
-        <div className="ai-content-area" style={{ minHeight: '200px', position: 'relative' }}>
+        <div className="ai-content-area">
           {!hasStarted ? (
             <Empty 
               description={
@@ -319,12 +313,6 @@ ${JSON.stringify(context, null, 2)}`;
           ) : (
             <div 
               className="markdown-body"
-              style={{ 
-                fontSize: '14px', 
-                lineHeight: '1.8',
-                color: '#262626',
-                padding: '12px'
-              }}
               dangerouslySetInnerHTML={{ __html: marked.parse(content) }}
             />
           )}

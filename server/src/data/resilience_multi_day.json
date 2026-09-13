@@ -1,0 +1,4998 @@
+{
+  "dates": [
+    20260910,
+    20260909,
+    20260908,
+    20260907,
+    20260904
+  ],
+  "stocks": [
+    {
+      "code": "sh603186",
+      "stockName": "华正新材",
+      "blockName": "ccl",
+      "isImportant": true,
+      "change": 2.8,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 13.2158,
+          "stockChange": 2.8,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 22.8488,
+          "stockChange": 10,
+          "indexChange": -0.14,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 16.1552,
+          "stockChange": 3.6,
+          "indexChange": -1.15,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 21.3619,
+          "stockChange": 10,
+          "indexChange": 3.41,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.2572,
+          "stockChange": -6.2,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 17.41,
+      "latestSingleScore": 13.22,
+      "latestStatus": "极强抗跌",
+      "trend": "improving",
+      "hasTransition": true,
+      "klineCondition": {
+        "close": 217.99,
+        "ma5": 195.62,
+        "ma10": 187.69,
+        "ma20": 181.15
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sz002636",
+      "stockName": "金安国纪",
+      "blockName": "电子布",
+      "isImportant": false,
+      "change": 10,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 27.0166,
+          "stockChange": 10,
+          "indexChange": -0.49,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.975,
+          "stockChange": 1.25,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 12.3724,
+          "stockChange": 0.87,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.0254,
+          "stockChange": 5.32,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.6596,
+          "stockChange": -5.78,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 17.12,
+      "latestSingleScore": 27.02,
+      "latestStatus": "极强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 76.45,
+        "ma5": 69.45,
+        "ma10": 70.81,
+        "ma20": 68.01
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688809",
+      "stockName": "强一股份",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": 4.61,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 14.3657,
+          "stockChange": 4.61,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 14.3861,
+          "stockChange": 3.92,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 16.5913,
+          "stockChange": 4.32,
+          "indexChange": -1.52,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 11.3215,
+          "stockChange": 8.64,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 3.8786,
+          "stockChange": -10.23,
+          "indexChange": -2.1,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 15.11,
+      "latestSingleScore": 14.37,
+      "latestStatus": "极强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 499,
+        "ma5": 456.01,
+        "ma10": 455.3,
+        "ma20": 457.44
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688519",
+      "stockName": "南亚新材",
+      "blockName": "ccl",
+      "isImportant": false,
+      "change": 6.15,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 17.2084,
+          "stockChange": 6.15,
+          "indexChange": -0.69,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 14.6747,
+          "stockChange": 2.44,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.8861,
+          "stockChange": -1.09,
+          "indexChange": -1.52,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 11.5234,
+          "stockChange": 7.75,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.7436,
+          "stockChange": -5.61,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 14.26,
+      "latestSingleScore": 17.21,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 309.59,
+        "ma5": 288.19,
+        "ma10": 291.54,
+        "ma20": 292.35
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh603083",
+      "stockName": "剑桥科技",
+      "blockName": "光模块",
+      "isImportant": false,
+      "change": 7.05,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 15.7645,
+          "stockChange": 7.05,
+          "indexChange": -0.49,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.2936,
+          "stockChange": -1.49,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 17.7195,
+          "stockChange": 7.33,
+          "indexChange": -1.15,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 20.3755,
+          "stockChange": 10,
+          "indexChange": 3.41,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 11.7905,
+          "stockChange": 1.11,
+          "indexChange": -0.78,
+          "status": "较强抗跌"
+        }
+      ],
+      "latestScore": 13.93,
+      "latestSingleScore": 15.76,
+      "latestStatus": "较强抗跌",
+      "trend": "improving",
+      "hasTransition": true,
+      "klineCondition": {
+        "close": 234.43,
+        "ma5": 214.22,
+        "ma10": 200.14,
+        "ma20": 191.39
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sz301511",
+      "stockName": "德福科技",
+      "blockName": "铜箔",
+      "isImportant": true,
+      "change": 2.82,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 14.2732,
+          "stockChange": 2.82,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.6762,
+          "stockChange": 2.54,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 14.5173,
+          "stockChange": 3.62,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 12.9263,
+          "stockChange": 16.97,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.9145,
+          "stockChange": -4.98,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 13.49,
+      "latestSingleScore": 14.27,
+      "latestStatus": "较强抗跌",
+      "trend": "improving",
+      "hasTransition": true,
+      "klineCondition": {
+        "close": 108.68,
+        "ma5": 100.4,
+        "ma10": 96.26,
+        "ma20": 92.61
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sh601869",
+      "stockName": "长飞光纤",
+      "blockName": "光纤",
+      "isImportant": true,
+      "change": -1.42,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.5635,
+          "stockChange": -1.42,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 17.1146,
+          "stockChange": 6.04,
+          "indexChange": -0.14,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 14.5591,
+          "stockChange": 4.08,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.701,
+          "stockChange": 5.73,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.8383,
+          "stockChange": -3.73,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 13.41,
+      "latestSingleScore": 8.56,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 435.74,
+        "ma5": 414.79,
+        "ma10": 411.61,
+        "ma20": 394.27
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sz002436",
+      "stockName": "兴森科技",
+      "blockName": "pcb",
+      "isImportant": true,
+      "change": 0.66,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.8607,
+          "stockChange": 0.66,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.4544,
+          "stockChange": -1.67,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 21.3552,
+          "stockChange": 9.17,
+          "indexChange": -1.15,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 28.3065,
+          "stockChange": 10,
+          "indexChange": 3.41,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.041,
+          "stockChange": -5.06,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 13.22,
+      "latestSingleScore": 9.86,
+      "latestStatus": "较强抗跌",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 39.71,
+        "ma5": 37.89,
+        "ma10": 36.49,
+        "ma20": 35.71
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sz301526",
+      "stockName": "国际复材",
+      "blockName": "电子布",
+      "isImportant": true,
+      "change": 6.79,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 16.6791,
+          "stockChange": 6.79,
+          "indexChange": -0.49,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.8833,
+          "stockChange": 1.59,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.1376,
+          "stockChange": -1.2,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.6359,
+          "stockChange": 4.06,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.0679,
+          "stockChange": -3.44,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 12.9,
+      "latestSingleScore": 16.68,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 29.42,
+        "ma5": 27.58,
+        "ma10": 28.24,
+        "ma20": 30.76
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002916",
+      "stockName": "深南电路",
+      "blockName": "pcb",
+      "isImportant": false,
+      "change": 2.35,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 12.0806,
+          "stockChange": 2.35,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.0314,
+          "stockChange": 0.21,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 16.4538,
+          "stockChange": 4.8,
+          "indexChange": -1.15,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 22.139,
+          "stockChange": 10,
+          "indexChange": 3.41,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.9002,
+          "stockChange": -2.85,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 12.86,
+      "latestSingleScore": 12.08,
+      "latestStatus": "较强抗跌",
+      "trend": "improving",
+      "hasTransition": true,
+      "klineCondition": {
+        "close": 392.31,
+        "ma5": 370.98,
+        "ma10": 363.06,
+        "ma20": 361.42
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sz300395",
+      "stockName": "菲利华",
+      "blockName": "电子布",
+      "isImportant": false,
+      "change": 2.13,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 12.9661,
+          "stockChange": 2.13,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 12.9232,
+          "stockChange": 3.25,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 12.1231,
+          "stockChange": 2.08,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.5784,
+          "stockChange": 4.52,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.4048,
+          "stockChange": -3.43,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 12.67,
+      "latestSingleScore": 12.97,
+      "latestStatus": "较强抗跌",
+      "trend": "improving",
+      "hasTransition": true,
+      "klineCondition": {
+        "close": 100.49,
+        "ma5": 95.37,
+        "ma10": 94.31,
+        "ma20": 91.75
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sh603256",
+      "stockName": "宏和科技",
+      "blockName": "电子布",
+      "isImportant": false,
+      "change": 0.66,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 11.8198,
+          "stockChange": 0.66,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.7296,
+          "stockChange": 1.16,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 14.3242,
+          "stockChange": 2.39,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.5715,
+          "stockChange": 2.59,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 2.2007,
+          "stockChange": -10,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 12.62,
+      "latestSingleScore": 11.82,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 129.1,
+        "ma5": 125.73,
+        "ma10": 132.44,
+        "ma20": 137.89
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002463",
+      "stockName": "沪电股份",
+      "blockName": "pcb",
+      "isImportant": false,
+      "change": 0.29,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.8871,
+          "stockChange": 0.29,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 12.4996,
+          "stockChange": 2.12,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 13.394,
+          "stockChange": 1.83,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 12.9179,
+          "stockChange": 10,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.4898,
+          "stockChange": -4.23,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 12.26,
+      "latestSingleScore": 10.89,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 127.92,
+        "ma5": 122.9,
+        "ma10": 121.67,
+        "ma20": 120.33
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sh688048",
+      "stockName": "长光华芯",
+      "blockName": "光芯片",
+      "isImportant": true,
+      "change": -1.53,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.247,
+          "stockChange": -1.53,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.1448,
+          "stockChange": -1.52,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 17.2602,
+          "stockChange": 5.17,
+          "indexChange": -1.52,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 11.9009,
+          "stockChange": 10.28,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 10.6742,
+          "stockChange": -1.3,
+          "indexChange": -2.1,
+          "status": "较强抗跌"
+        }
+      ],
+      "latestScore": 12.22,
+      "latestSingleScore": 9.25,
+      "latestStatus": "较强抗跌",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 305.96,
+        "ma5": 300.84,
+        "ma10": 292.45,
+        "ma20": 299.3
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz300394",
+      "stockName": "天孚通信",
+      "blockName": "cpo",
+      "isImportant": false,
+      "change": 4.25,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 16.5528,
+          "stockChange": 4.25,
+          "indexChange": -0.49,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.5498,
+          "stockChange": -0.18,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.0879,
+          "stockChange": -3.18,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.9304,
+          "stockChange": 7.36,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 11.1927,
+          "stockChange": -0.04,
+          "indexChange": -0.78,
+          "status": "较强抗跌"
+        }
+      ],
+      "latestScore": 12.06,
+      "latestSingleScore": 16.55,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 269,
+        "ma5": 260.25,
+        "ma10": 257.84,
+        "ma20": 263.91
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh600176",
+      "stockName": "中国巨石",
+      "blockName": "电子布",
+      "isImportant": true,
+      "change": 1.85,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 11.8995,
+          "stockChange": 1.85,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 13.1713,
+          "stockChange": 3.09,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.547,
+          "stockChange": -0.74,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.5359,
+          "stockChange": 3.78,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.7172,
+          "stockChange": -5.75,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 11.87,
+      "latestSingleScore": 11.9,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 43.46,
+        "ma5": 41.88,
+        "ma10": 42.63,
+        "ma20": 42.39
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz001309",
+      "stockName": "德明利",
+      "blockName": "存储",
+      "isImportant": false,
+      "change": 2.09,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 12.6624,
+          "stockChange": 2.09,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.1803,
+          "stockChange": -1.72,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 14.7756,
+          "stockChange": 3.18,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.1428,
+          "stockChange": 3.24,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.4284,
+          "stockChange": -3.4,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 11.87,
+      "latestSingleScore": 12.66,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 418.22,
+        "ma5": 408,
+        "ma10": 414.15,
+        "ma20": 412.27
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh603228",
+      "stockName": "景旺电子",
+      "blockName": "pcb",
+      "isImportant": true,
+      "change": 0.38,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.8509,
+          "stockChange": 0.38,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 13.1675,
+          "stockChange": 2.45,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 12.26,
+          "stockChange": 0.94,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 21.8465,
+          "stockChange": 10,
+          "indexChange": 3.41,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 18.0107,
+          "stockChange": 8.96,
+          "indexChange": -0.78,
+          "status": "极强抗跌"
+        }
+      ],
+      "latestScore": 11.76,
+      "latestSingleScore": 9.85,
+      "latestStatus": "较强抗跌",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 110.01,
+        "ma5": 105.78,
+        "ma10": 98.58,
+        "ma20": 96.02
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sh600105",
+      "stockName": "永鼎股份",
+      "blockName": "光芯片",
+      "isImportant": false,
+      "change": -2.65,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 6.9612,
+          "stockChange": -2.65,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 16.4853,
+          "stockChange": 6.06,
+          "indexChange": -0.14,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 11.6684,
+          "stockChange": 0.31,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.7998,
+          "stockChange": 4.92,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.0494,
+          "stockChange": -5.45,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 11.7,
+      "latestSingleScore": 6.96,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 40.38,
+        "ma5": 39.42,
+        "ma10": 39.35,
+        "ma20": 39.63
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz301217",
+      "stockName": "铜冠铜箔",
+      "blockName": "铜箔",
+      "isImportant": false,
+      "change": 1.16,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 11.7057,
+          "stockChange": 1.16,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 12.5206,
+          "stockChange": 1.62,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.9457,
+          "stockChange": -1.39,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.6106,
+          "stockChange": 6.07,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.9676,
+          "stockChange": -3.79,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 11.39,
+      "latestSingleScore": 11.71,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 108.45,
+        "ma5": 105.8,
+        "ma10": 109.53,
+        "ma20": 113.03
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688498",
+      "stockName": "源杰科技",
+      "blockName": "光芯片",
+      "isImportant": false,
+      "change": 0.06,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.2198,
+          "stockChange": 0.06,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.1951,
+          "stockChange": 0.17,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 12.5338,
+          "stockChange": 0.76,
+          "indexChange": -1.52,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 12.9045,
+          "stockChange": 16.1,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 8.2337,
+          "stockChange": -2.79,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 11.32,
+      "latestSingleScore": 10.22,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 1719,
+        "ma5": 1664,
+        "ma10": 1586.24,
+        "ma20": 1575.25
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sh688025",
+      "stockName": "杰普特",
+      "blockName": "MPO",
+      "isImportant": false,
+      "change": 3.06,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 12.9308,
+          "stockChange": 3.06,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 12.3171,
+          "stockChange": 0.71,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.0635,
+          "stockChange": -3.31,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 12.5007,
+          "stockChange": 12.51,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 8.2262,
+          "stockChange": -3.27,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 11.1,
+      "latestSingleScore": 12.93,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 407.97,
+        "ma5": 392.93,
+        "ma10": 390.1,
+        "ma20": 399.1
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz300408",
+      "stockName": "三环集团",
+      "blockName": "MLCC",
+      "isImportant": false,
+      "change": -0.06,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.1978,
+          "stockChange": -0.06,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 12.5279,
+          "stockChange": 2.26,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 11.3307,
+          "stockChange": 0.22,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.0768,
+          "stockChange": 6.01,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 7.6378,
+          "stockChange": -2.26,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 11.02,
+      "latestSingleScore": 9.2,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 117.7,
+        "ma5": 114.79,
+        "ma10": 112.92,
+        "ma20": 114.33
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688630",
+      "stockName": "芯基微装",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": -0.36,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.4118,
+          "stockChange": -0.36,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 12.1365,
+          "stockChange": 1.43,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.8982,
+          "stockChange": -1.23,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 12.2159,
+          "stockChange": 10.59,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.4525,
+          "stockChange": -4.92,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.82,
+      "latestSingleScore": 10.41,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 409.3,
+        "ma5": 401.19,
+        "ma10": 402.69,
+        "ma20": 418.64
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh600183",
+      "stockName": "生益科技",
+      "blockName": "pcb",
+      "isImportant": false,
+      "change": -0.81,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.9415,
+          "stockChange": -0.81,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.934,
+          "stockChange": 1.29,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.2255,
+          "stockChange": -1.26,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.832,
+          "stockChange": 7.75,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.67,
+          "stockChange": -3.97,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.7,
+      "latestSingleScore": 9.94,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 146.96,
+        "ma5": 145.41,
+        "ma10": 145.87,
+        "ma20": 139.83
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688403",
+      "stockName": "汇成股份",
+      "blockName": "先进封装",
+      "isImportant": false,
+      "change": -2.71,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.075,
+          "stockChange": -2.71,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 7.4719,
+          "stockChange": -3.44,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 16.5537,
+          "stockChange": 4.7,
+          "indexChange": -1.52,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.3364,
+          "stockChange": 6.96,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 10.7163,
+          "stockChange": -0.83,
+          "indexChange": -2.1,
+          "status": "较强抗跌"
+        }
+      ],
+      "latestScore": 10.7,
+      "latestSingleScore": 8.07,
+      "latestStatus": "较强抗跌",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 25.1,
+        "ma5": 25.4,
+        "ma10": 25.1,
+        "ma20": 24.41
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002080",
+      "stockName": "中材科技",
+      "blockName": "电子布",
+      "isImportant": false,
+      "change": 0.63,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.6849,
+          "stockChange": 0.63,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.4087,
+          "stockChange": 1.32,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.0046,
+          "stockChange": -0.66,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.146,
+          "stockChange": 5.82,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.0122,
+          "stockChange": -4.68,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.7,
+      "latestSingleScore": 10.68,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 50.85,
+        "ma5": 49.78,
+        "ma10": 50.61,
+        "ma20": 52.53
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz300570",
+      "stockName": "太辰光",
+      "blockName": "MPO",
+      "isImportant": false,
+      "change": 0.85,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 11.95,
+          "stockChange": 0.85,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.2036,
+          "stockChange": 0,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.8209,
+          "stockChange": -2.21,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 12.7605,
+          "stockChange": 14.5,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.5438,
+          "stockChange": -4.55,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.66,
+      "latestSingleScore": 11.95,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 203.27,
+        "ma5": 198.49,
+        "ma10": 196.77,
+        "ma20": 197.14
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002384",
+      "stockName": "东山精密",
+      "blockName": "光模块",
+      "isImportant": false,
+      "change": -1.18,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.7175,
+          "stockChange": -1.18,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 13.5361,
+          "stockChange": 5.17,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.7003,
+          "stockChange": -2.17,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.1467,
+          "stockChange": 6.65,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 9.963,
+          "stockChange": -0.27,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.65,
+      "latestSingleScore": 8.72,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 193.74,
+        "ma5": 189.09,
+        "ma10": 189.03,
+        "ma20": 195.11
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688313",
+      "stockName": "仕佳光子",
+      "blockName": "光芯片",
+      "isImportant": false,
+      "change": 1.22,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 12.5005,
+          "stockChange": 1.22,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.0162,
+          "stockChange": -1.52,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.0873,
+          "stockChange": -3.03,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 11.9834,
+          "stockChange": 9.38,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 8.4955,
+          "stockChange": -3.73,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.53,
+      "latestSingleScore": 12.5,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 149.75,
+        "ma5": 148.89,
+        "ma10": 150.35,
+        "ma20": 152.72
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh600118",
+      "stockName": "中国卫星",
+      "blockName": "商业航天",
+      "isImportant": false,
+      "change": 0.63,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.7106,
+          "stockChange": 0.63,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.287,
+          "stockChange": 0.86,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.5669,
+          "stockChange": 0.24,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 7.9627,
+          "stockChange": 0.17,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 9.415,
+          "stockChange": -0.48,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.52,
+      "latestSingleScore": 10.71,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 58.73,
+        "ma5": 58.06,
+        "ma10": 58.69,
+        "ma20": 61.21
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688668",
+      "stockName": "鼎通科技",
+      "blockName": "cpo",
+      "isImportant": false,
+      "change": -2.64,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.5567,
+          "stockChange": -2.64,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.13,
+          "stockChange": -0.55,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 11.844,
+          "stockChange": -0.24,
+          "indexChange": -1.52,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.996,
+          "stockChange": 5.64,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.3491,
+          "stockChange": -6.39,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.51,
+      "latestSingleScore": 8.56,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 256.55,
+        "ma5": 260.41,
+        "ma10": 260.05,
+        "ma20": 259.28
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz000636",
+      "stockName": "风华高科",
+      "blockName": "MLCC",
+      "isImportant": false,
+      "change": 2.41,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 11.8323,
+          "stockChange": 2.41,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.9956,
+          "stockChange": -0.26,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.6668,
+          "stockChange": -1.23,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.5468,
+          "stockChange": 4.21,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.3291,
+          "stockChange": -4.37,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.5,
+      "latestSingleScore": 11.83,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 50.9,
+        "ma5": 49.86,
+        "ma10": 51.29,
+        "ma20": 53.68
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh600487",
+      "stockName": "亨通光电",
+      "blockName": "光纤",
+      "isImportant": false,
+      "change": -4.07,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 5.4315,
+          "stockChange": -4.07,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 15.4969,
+          "stockChange": 5.56,
+          "indexChange": -0.14,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.352,
+          "stockChange": -1.39,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 8.9496,
+          "stockChange": 2.86,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.707,
+          "stockChange": -4.7,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 10.43,
+      "latestSingleScore": 5.43,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 63.91,
+        "ma5": 63.97,
+        "ma10": 65.55,
+        "ma20": 64.66
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz300757",
+      "stockName": "罗博特科",
+      "blockName": "cpo",
+      "isImportant": false,
+      "change": -0.64,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.0527,
+          "stockChange": -0.64,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.1528,
+          "stockChange": -0.19,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 12.9826,
+          "stockChange": 1.88,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 11.655,
+          "stockChange": 10.1,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 7.7123,
+          "stockChange": -1.92,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.4,
+      "latestSingleScore": 9.05,
+      "latestStatus": "较强抗跌",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 638.5,
+        "ma5": 626.17,
+        "ma10": 596.77,
+        "ma20": 556.07
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sz300308",
+      "stockName": "中际旭创",
+      "blockName": "光模块",
+      "isImportant": true,
+      "change": -2.07,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.106,
+          "stockChange": -2.07,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.9102,
+          "stockChange": 0.72,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 12.0888,
+          "stockChange": 0.44,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 11.8327,
+          "stockChange": 10.38,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 10.507,
+          "stockChange": 0.12,
+          "indexChange": -0.78,
+          "status": "较强抗跌"
+        }
+      ],
+      "latestScore": 10.37,
+      "latestSingleScore": 8.11,
+      "latestStatus": "较强抗跌",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 890.1,
+        "ma5": 882.77,
+        "ma10": 861.88,
+        "ma20": 886.35
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz300502",
+      "stockName": "新易盛",
+      "blockName": "光模块",
+      "isImportant": false,
+      "change": -0.94,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.5949,
+          "stockChange": -0.94,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.8508,
+          "stockChange": -0.38,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 11.4324,
+          "stockChange": -0.19,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.9665,
+          "stockChange": 8.08,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 11.0611,
+          "stockChange": 0.32,
+          "indexChange": -0.78,
+          "status": "较强抗跌"
+        }
+      ],
+      "latestScore": 10.29,
+      "latestSingleScore": 9.59,
+      "latestStatus": "较强抗跌",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 410.9,
+        "ma5": 409.06,
+        "ma10": 402.04,
+        "ma20": 413.78
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz300476",
+      "stockName": "胜宏科技",
+      "blockName": "pcb",
+      "isImportant": false,
+      "change": -1.52,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.4094,
+          "stockChange": -1.52,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 12.1285,
+          "stockChange": 1.96,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.6004,
+          "stockChange": -1.91,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.4804,
+          "stockChange": 6.36,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 8.8987,
+          "stockChange": -1.35,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.05,
+      "latestSingleScore": 8.41,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 229.95,
+        "ma5": 229.09,
+        "ma10": 231.08,
+        "ma20": 244.03
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688008",
+      "stockName": "澜起科技",
+      "blockName": "cpu",
+      "isImportant": false,
+      "change": 0.02,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.3752,
+          "stockChange": 0.02,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.749,
+          "stockChange": -0.18,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.0056,
+          "stockChange": -1.1,
+          "indexChange": -1.52,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.0207,
+          "stockChange": 5.39,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 10.7256,
+          "stockChange": -1.22,
+          "indexChange": -2.1,
+          "status": "较强抗跌"
+        }
+      ],
+      "latestScore": 10.04,
+      "latestSingleScore": 10.38,
+      "latestStatus": "较强抗跌",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 195.33,
+        "ma5": 194.36,
+        "ma10": 197.12,
+        "ma20": 201.68
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688147",
+      "stockName": "微导纳米",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": -0.56,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.7974,
+          "stockChange": -0.56,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.0328,
+          "stockChange": 0.16,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.3039,
+          "stockChange": -2.63,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.2813,
+          "stockChange": 4.9,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.1942,
+          "stockChange": -6.12,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.04,
+      "latestSingleScore": 9.8,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 102.64,
+        "ma5": 103.13,
+        "ma10": 110.47,
+        "ma20": 115.17
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688362",
+      "stockName": "甬矽电子",
+      "blockName": "先进封装",
+      "isImportant": false,
+      "change": -0.71,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.9631,
+          "stockChange": -0.71,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.6307,
+          "stockChange": -2.31,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 11.4889,
+          "stockChange": -0.34,
+          "indexChange": -1.52,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.6897,
+          "stockChange": 3.94,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.7889,
+          "stockChange": -4.62,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 10.03,
+      "latestSingleScore": 9.96,
+      "latestStatus": "较强抗跌",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 58.88,
+        "ma5": 59.68,
+        "ma10": 60.77,
+        "ma20": 63.36
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh603119",
+      "stockName": "浙江荣泰",
+      "blockName": "机器人",
+      "isImportant": false,
+      "change": -3.45,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 6.0023,
+          "stockChange": -3.45,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.3959,
+          "stockChange": 0.5,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 14.3876,
+          "stockChange": 3.97,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 29.931,
+          "stockChange": 10.01,
+          "indexChange": 3.41,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.0055,
+          "stockChange": -3.61,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 9.93,
+      "latestSingleScore": 6,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 52.11,
+        "ma5": 51.68,
+        "ma10": 50.99,
+        "ma20": 51.27
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz301377",
+      "stockName": "鼎泰高科",
+      "blockName": "钨",
+      "isImportant": false,
+      "change": -0.18,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.0481,
+          "stockChange": -0.18,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.2789,
+          "stockChange": -1.75,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 11.368,
+          "stockChange": 0.56,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.1898,
+          "stockChange": 5.46,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.9152,
+          "stockChange": -3.54,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 9.9,
+      "latestSingleScore": 10.05,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 391.31,
+        "ma5": 391.06,
+        "ma10": 394.75,
+        "ma20": 409.24
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688361",
+      "stockName": "中科飞测",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": -0.12,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.7342,
+          "stockChange": -0.12,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 7.4505,
+          "stockChange": -2.02,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 12.4702,
+          "stockChange": 0.45,
+          "indexChange": -1.52,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.0466,
+          "stockChange": 4.79,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.5643,
+          "stockChange": -6.57,
+          "indexChange": -2.1,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 9.88,
+      "latestSingleScore": 9.73,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 308.79,
+        "ma5": 309.49,
+        "ma10": 328.36,
+        "ma20": 340.99
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688120",
+      "stockName": "华海清科",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": 1.44,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 11.1998,
+          "stockChange": 1.44,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.1679,
+          "stockChange": -0.7,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.1939,
+          "stockChange": -1.71,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 8.9422,
+          "stockChange": 1.11,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 9.5248,
+          "stockChange": -2.7,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 9.85,
+      "latestSingleScore": 11.2,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 243.76,
+        "ma5": 243.15,
+        "ma10": 249.14,
+        "ma20": 260.16
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688347",
+      "stockName": "华虹",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": 0.05,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.8867,
+          "stockChange": 0.05,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.1347,
+          "stockChange": -0.36,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.3825,
+          "stockChange": -1.72,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.4099,
+          "stockChange": 2.34,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.7834,
+          "stockChange": -8.88,
+          "indexChange": -2.1,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 9.8,
+      "latestSingleScore": 9.89,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 224.11,
+        "ma5": 225.03,
+        "ma10": 236.8,
+        "ma20": 240.34
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh603986",
+      "stockName": "兆易创新",
+      "blockName": "存储",
+      "isImportant": false,
+      "change": -0.32,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.5934,
+          "stockChange": -0.32,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.4991,
+          "stockChange": -1.06,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 11.3217,
+          "stockChange": 0.13,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.0008,
+          "stockChange": 3.65,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.5341,
+          "stockChange": -2.95,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 9.8,
+      "latestSingleScore": 9.59,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 380.64,
+        "ma5": 381.16,
+        "ma10": 387.37,
+        "ma20": 398.45
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688082",
+      "stockName": "盛美上海",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": 0.47,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.9172,
+          "stockChange": 0.47,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.2738,
+          "stockChange": -1.53,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.056,
+          "stockChange": -0.2,
+          "indexChange": -1.52,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.733,
+          "stockChange": 4.15,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.9437,
+          "stockChange": -4.05,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 9.75,
+      "latestSingleScore": 10.92,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 277.84,
+        "ma5": 277.36,
+        "ma10": 283.42,
+        "ma20": 294.14
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688629",
+      "stockName": "华丰科技",
+      "blockName": "国产超节点",
+      "isImportant": false,
+      "change": -2.13,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 7.7796,
+          "stockChange": -2.13,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 12.9757,
+          "stockChange": 2.2,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.1381,
+          "stockChange": -3.05,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.9539,
+          "stockChange": 4.13,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 7.4612,
+          "stockChange": -3.98,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 9.63,
+      "latestSingleScore": 7.78,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 123.6,
+        "ma5": 124.66,
+        "ma10": 127.49,
+        "ma20": 134.16
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh600584",
+      "stockName": "长电科技",
+      "blockName": "先进封装",
+      "isImportant": false,
+      "change": -0.76,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.1783,
+          "stockChange": -0.76,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.7177,
+          "stockChange": 0.06,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.8869,
+          "stockChange": -0.58,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 8.6812,
+          "stockChange": 2.43,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.5403,
+          "stockChange": -5.49,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 9.59,
+      "latestSingleScore": 9.18,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 68.12,
+        "ma5": 68.34,
+        "ma10": 70.83,
+        "ma20": 74.6
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002156",
+      "stockName": "通富微电",
+      "blockName": "先进封装",
+      "isImportant": false,
+      "change": -0.02,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.7558,
+          "stockChange": -0.02,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.6007,
+          "stockChange": 0.05,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.4201,
+          "stockChange": -1.4,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.3236,
+          "stockChange": 4.01,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.0161,
+          "stockChange": -4.47,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 9.59,
+      "latestSingleScore": 9.76,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 58.34,
+        "ma5": 58.21,
+        "ma10": 59.99,
+        "ma20": 62.03
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz000657",
+      "stockName": "中钨高新",
+      "blockName": "钨",
+      "isImportant": false,
+      "change": -1.79,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 7.7531,
+          "stockChange": -1.79,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.2253,
+          "stockChange": 1.07,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.6132,
+          "stockChange": -0.23,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.5928,
+          "stockChange": 4.09,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.4007,
+          "stockChange": -3.97,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 9.53,
+      "latestSingleScore": 7.75,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 59.42,
+        "ma5": 59.48,
+        "ma10": 61.21,
+        "ma20": 64.18
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002654",
+      "stockName": "万润科技",
+      "blockName": "存储",
+      "isImportant": false,
+      "change": -0.29,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.0436,
+          "stockChange": -0.29,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 7.6674,
+          "stockChange": -1.79,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.8704,
+          "stockChange": 0.29,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 8.1459,
+          "stockChange": 0.87,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 13.8845,
+          "stockChange": 2.22,
+          "indexChange": -0.78,
+          "status": "较强抗跌"
+        }
+      ],
+      "latestScore": 9.53,
+      "latestSingleScore": 10.04,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 13.66,
+        "ma5": 13.8,
+        "ma10": 13.77,
+        "ma20": 13.77
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz300567",
+      "stockName": "精测电子",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": -0.12,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.6923,
+          "stockChange": -0.12,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.0557,
+          "stockChange": -1.56,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.7239,
+          "stockChange": -0.41,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.7275,
+          "stockChange": 4.98,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.2629,
+          "stockChange": -4.83,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 9.49,
+      "latestSingleScore": 9.69,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 192.9,
+        "ma5": 193.38,
+        "ma10": 199.46,
+        "ma20": 209.94
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688146",
+      "stockName": "中船特气",
+      "blockName": "半导体材料",
+      "isImportant": false,
+      "change": -0.4,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.3369,
+          "stockChange": -0.4,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.4527,
+          "stockChange": -1.16,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.5345,
+          "stockChange": -2.41,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.4046,
+          "stockChange": 3.07,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 10.1142,
+          "stockChange": -2.09,
+          "indexChange": -2.1,
+          "status": "较强抗跌"
+        }
+      ],
+      "latestScore": 9.44,
+      "latestSingleScore": 9.34,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 224.8,
+        "ma5": 227.98,
+        "ma10": 234.99,
+        "ma20": 252.41
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002428",
+      "stockName": "云南锗业",
+      "blockName": "磷化铟",
+      "isImportant": false,
+      "change": -1.52,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.2274,
+          "stockChange": -1.52,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.6126,
+          "stockChange": 1.53,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.3952,
+          "stockChange": -2.12,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.9928,
+          "stockChange": 5.64,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.0599,
+          "stockChange": -4.92,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 9.41,
+      "latestSingleScore": 8.23,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 90.04,
+        "ma5": 90.12,
+        "ma10": 92.97,
+        "ma20": 97.14
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz300285",
+      "stockName": "国瓷材料",
+      "blockName": "MLCC",
+      "isImportant": false,
+      "change": -0.03,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.9768,
+          "stockChange": -0.03,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.158,
+          "stockChange": 0.05,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.0636,
+          "stockChange": -3.07,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.4221,
+          "stockChange": 3.08,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.3588,
+          "stockChange": -5.09,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 9.4,
+      "latestSingleScore": 9.98,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 60.35,
+        "ma5": 60.74,
+        "ma10": 63.29,
+        "ma20": 65.4
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688825",
+      "stockName": "长鑫科技",
+      "blockName": "存储",
+      "isImportant": true,
+      "change": 0.58,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.9213,
+          "stockChange": 0.58,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 7.305,
+          "stockChange": -2.6,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.9048,
+          "stockChange": -0.14,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.7319,
+          "stockChange": 6.7,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 10.0566,
+          "stockChange": -1.35,
+          "indexChange": -2.1,
+          "status": "较强抗跌"
+        }
+      ],
+      "latestScore": 9.38,
+      "latestSingleScore": 10.92,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 57.2,
+        "ma5": 57.15,
+        "ma10": 56.87,
+        "ma20": 57.32
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688820",
+      "stockName": "盛合晶微",
+      "blockName": "先进封装",
+      "isImportant": false,
+      "change": 1.28,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.1985,
+          "stockChange": 1.28,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 6.4246,
+          "stockChange": -3.64,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 11.4872,
+          "stockChange": 0.54,
+          "indexChange": -1.52,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.5535,
+          "stockChange": 3.73,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.9848,
+          "stockChange": -3.94,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 9.37,
+      "latestSingleScore": 10.2,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 126.38,
+        "ma5": 126.73,
+        "ma10": 128.44,
+        "ma20": 130.92
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688012",
+      "stockName": "中微公司",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": 0.36,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.2119,
+          "stockChange": 0.36,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.8958,
+          "stockChange": -0.9,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 7.8515,
+          "stockChange": -2.32,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.2826,
+          "stockChange": 2.56,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 9.2475,
+          "stockChange": -1.64,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 8.99,
+      "latestSingleScore": 10.21,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 334.19,
+        "ma5": 336.52,
+        "ma10": 344.7,
+        "ma20": 358.19
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002475",
+      "stockName": "立讯精密",
+      "blockName": "光模块",
+      "isImportant": false,
+      "change": -2.52,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 6.9403,
+          "stockChange": -2.52,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.1582,
+          "stockChange": 1.45,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.8344,
+          "stockChange": -1.56,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.1769,
+          "stockChange": 3,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.0637,
+          "stockChange": -3.33,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 8.98,
+      "latestSingleScore": 6.94,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 54.45,
+        "ma5": 55.12,
+        "ma10": 56,
+        "ma20": 55.88
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz301165",
+      "stockName": "锐捷网络",
+      "blockName": "国产超节点",
+      "isImportant": false,
+      "change": -1.36,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.4649,
+          "stockChange": -1.36,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.3074,
+          "stockChange": -0.11,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.9907,
+          "stockChange": -1.62,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 8.4862,
+          "stockChange": 2.09,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 3.9244,
+          "stockChange": -6.33,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 8.92,
+      "latestSingleScore": 8.46,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 108.56,
+        "ma5": 110.1,
+        "ma10": 115.46,
+        "ma20": 121.13
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688072",
+      "stockName": "拓荆科技",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": -0.04,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.6929,
+          "stockChange": -0.04,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.5352,
+          "stockChange": -0.13,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 7.2608,
+          "stockChange": -3.06,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.9173,
+          "stockChange": 4.82,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 8.5488,
+          "stockChange": -2.98,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 8.83,
+      "latestSingleScore": 9.69,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 630.95,
+        "ma5": 633.6,
+        "ma10": 645.1,
+        "ma20": 667.78
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688256",
+      "stockName": "寒武纪",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": -1.05,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.6759,
+          "stockChange": -1.05,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.3974,
+          "stockChange": -0.38,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.2561,
+          "stockChange": -3.06,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 8.9953,
+          "stockChange": 1.9,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 9.2117,
+          "stockChange": -2.54,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 8.78,
+      "latestSingleScore": 8.68,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 1043.84,
+        "ma5": 1064.43,
+        "ma10": 1079.8,
+        "ma20": 1067.67
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002851",
+      "stockName": "麦格米特",
+      "blockName": "AI电源",
+      "isImportant": false,
+      "change": 0.58,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 9.6623,
+          "stockChange": 0.58,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.5637,
+          "stockChange": -1.2,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.1016,
+          "stockChange": -2.6,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.8318,
+          "stockChange": 8.96,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.23,
+          "stockChange": -4.7,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 8.78,
+      "latestSingleScore": 9.66,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 127.8,
+        "ma5": 127.33,
+        "ma10": 126.32,
+        "ma20": 125.93
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sh688017",
+      "stockName": "绿的谐波",
+      "blockName": "机器人",
+      "isImportant": false,
+      "change": -1.87,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 7.7361,
+          "stockChange": -1.87,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.6274,
+          "stockChange": -0.7,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.9326,
+          "stockChange": -0.82,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.8535,
+          "stockChange": 5.42,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 7.7814,
+          "stockChange": -3.65,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 8.77,
+      "latestSingleScore": 7.74,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 285.08,
+        "ma5": 288.58,
+        "ma10": 290.08,
+        "ma20": 306.03
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002050",
+      "stockName": "三花智控",
+      "blockName": "机器人",
+      "isImportant": false,
+      "change": -2.02,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 7.5556,
+          "stockChange": -2.02,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.4282,
+          "stockChange": -0.08,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.3209,
+          "stockChange": -0.77,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.2232,
+          "stockChange": 2.93,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 7.2684,
+          "stockChange": -2.31,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 8.77,
+      "latestSingleScore": 7.56,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 35.46,
+        "ma5": 35.97,
+        "ma10": 36.02,
+        "ma20": 36.57
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688702",
+      "stockName": "盛科通信",
+      "blockName": "国产超节点",
+      "isImportant": false,
+      "change": -1.95,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.0853,
+          "stockChange": -1.95,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.8524,
+          "stockChange": -0.65,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.1837,
+          "stockChange": -2.82,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 8.5435,
+          "stockChange": -0.15,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.9604,
+          "stockChange": -6.4,
+          "indexChange": -2.1,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 8.71,
+      "latestSingleScore": 8.09,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 307,
+        "ma5": 316.87,
+        "ma10": 341.81,
+        "ma20": 362.89
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688981",
+      "stockName": "中芯国际",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": -1.1,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.5477,
+          "stockChange": -1.1,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.8419,
+          "stockChange": -0.83,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.1445,
+          "stockChange": -2.09,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.2312,
+          "stockChange": 2.46,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 8.9381,
+          "stockChange": -2.2,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 8.51,
+      "latestSingleScore": 8.55,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 119.18,
+        "ma5": 121.29,
+        "ma10": 123.36,
+        "ma20": 125.38
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh601138",
+      "stockName": "工业富联",
+      "blockName": "cpo",
+      "isImportant": false,
+      "change": -2.04,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 7.3014,
+          "stockChange": -2.04,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.3339,
+          "stockChange": 0.76,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 7.8873,
+          "stockChange": -2.73,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.5541,
+          "stockChange": 4.52,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 11.302,
+          "stockChange": 0.78,
+          "indexChange": -0.78,
+          "status": "较强抗跌"
+        }
+      ],
+      "latestScore": 8.51,
+      "latestSingleScore": 7.3,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 63.91,
+        "ma5": 64.83,
+        "ma10": 64.1,
+        "ma20": 63.67
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688041",
+      "stockName": "海光信息",
+      "blockName": "cpu",
+      "isImportant": false,
+      "change": -1.45,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.0585,
+          "stockChange": -1.45,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.3769,
+          "stockChange": -0.46,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.101,
+          "stockChange": -2.39,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 7.9689,
+          "stockChange": -0.39,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 9.9259,
+          "stockChange": -1.03,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 8.51,
+      "latestSingleScore": 8.06,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 232.37,
+        "ma5": 238.29,
+        "ma10": 243.47,
+        "ma20": 248.83
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002371",
+      "stockName": "北方华创",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": -1.2,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.1766,
+          "stockChange": -1.2,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.7554,
+          "stockChange": -0.23,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 8.2964,
+          "stockChange": -1.93,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.1723,
+          "stockChange": 3.52,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 7.2548,
+          "stockChange": -2.69,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 8.41,
+      "latestSingleScore": 8.18,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 638.64,
+        "ma5": 646.35,
+        "ma10": 661.96,
+        "ma20": 693.41
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh603629",
+      "stockName": "利通电子",
+      "blockName": "算力租赁",
+      "isImportant": false,
+      "change": -2.64,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 6.5949,
+          "stockChange": -2.64,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.3452,
+          "stockChange": 0.25,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.038,
+          "stockChange": -2.15,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 8.9177,
+          "stockChange": 2.8,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.8913,
+          "stockChange": -2.92,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 8.33,
+      "latestSingleScore": 6.59,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 106.38,
+        "ma5": 108.87,
+        "ma10": 112.67,
+        "ma20": 120.94
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002837",
+      "stockName": "英维克",
+      "blockName": "液冷",
+      "isImportant": false,
+      "change": -2.16,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 7.5824,
+          "stockChange": -2.16,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.6272,
+          "stockChange": -0.9,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 7.901,
+          "stockChange": -2.28,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 8.708,
+          "stockChange": 0.88,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.2584,
+          "stockChange": -6.69,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 8.04,
+      "latestSingleScore": 7.58,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 61.08,
+        "ma5": 62.98,
+        "ma10": 64.82,
+        "ma20": 61.21
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688200",
+      "stockName": "华峰测控",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": 0.44,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 10.5285,
+          "stockChange": 0.44,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.2086,
+          "stockChange": -1.69,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 4.7517,
+          "stockChange": -5.2,
+          "indexChange": -1.52,
+          "status": "偏弱"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 10.7908,
+          "stockChange": 7.08,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.9798,
+          "stockChange": -5.06,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 7.83,
+      "latestSingleScore": 10.53,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 355.55,
+        "ma5": 360.82,
+        "ma10": 373.31,
+        "ma20": 391.06
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz000977",
+      "stockName": "浪潮信息",
+      "blockName": "国产超节点",
+      "isImportant": false,
+      "change": -1.33,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.518,
+          "stockChange": -1.33,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 7.7308,
+          "stockChange": -1.3,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 6.3351,
+          "stockChange": -3.24,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 6.8088,
+          "stockChange": -3.83,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 2.5029,
+          "stockChange": -9.99,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 7.53,
+      "latestSingleScore": 8.52,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 70.43,
+        "ma5": 73.32,
+        "ma10": 78.68,
+        "ma20": 77.55
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688808",
+      "stockName": "联讯仪器",
+      "blockName": "光模块",
+      "isImportant": false,
+      "change": -1.42,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 8.3071,
+          "stockChange": -1.42,
+          "indexChange": -0.69,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 4.7354,
+          "stockChange": -6.86,
+          "indexChange": -0.69,
+          "status": "偏弱"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 9.5107,
+          "stockChange": -0.15,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 11.5589,
+          "stockChange": 7.78,
+          "indexChange": 2.42,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 9.1047,
+          "stockChange": -2.49,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 7.52,
+      "latestSingleScore": 8.31,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 2436,
+        "ma5": 2536.38,
+        "ma10": 2472.97,
+        "ma20": 2374.39
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002126",
+      "stockName": "银轮股份",
+      "blockName": "液冷",
+      "isImportant": false,
+      "change": -2.13,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 7.231,
+          "stockChange": -2.13,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.1962,
+          "stockChange": 0.75,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 4.7728,
+          "stockChange": -5.18,
+          "indexChange": -1.15,
+          "status": "偏弱"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 8.8316,
+          "stockChange": 1.49,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.0453,
+          "stockChange": -5.49,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 7.4,
+      "latestSingleScore": 7.23,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 39.54,
+        "ma5": 40.8,
+        "ma10": 41.59,
+        "ma20": 41.45
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz301018",
+      "stockName": "申菱环境",
+      "blockName": "液冷",
+      "isImportant": false,
+      "change": -3.41,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 6.5233,
+          "stockChange": -3.41,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.51,
+          "stockChange": -0.7,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 5.8074,
+          "stockChange": -4.8,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.8072,
+          "stockChange": 3.5,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.2085,
+          "stockChange": -8.71,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 7.28,
+      "latestSingleScore": 6.52,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 97.27,
+        "ma5": 101.76,
+        "ma10": 104.58,
+        "ma20": 100.13
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz300602",
+      "stockName": "飞荣达",
+      "blockName": "液冷",
+      "isImportant": false,
+      "change": -3.35,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 6.856,
+          "stockChange": -3.35,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 9.8219,
+          "stockChange": -0.1,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 4.9765,
+          "stockChange": -5.87,
+          "indexChange": -1.15,
+          "status": "偏弱"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 7.4509,
+          "stockChange": -1.36,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.0488,
+          "stockChange": -6.67,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 7.22,
+      "latestSingleScore": 6.86,
+      "latestStatus": "跟随指数",
+      "trend": "stable",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 38.37,
+        "ma5": 40.57,
+        "ma10": 42.9,
+        "ma20": 42.64
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz002536",
+      "stockName": "飞龙股份",
+      "blockName": "液冷",
+      "isImportant": true,
+      "change": -5.47,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 4.7686,
+          "stockChange": -5.47,
+          "indexChange": -0.49,
+          "status": "偏弱"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 6.2136,
+          "stockChange": -3.02,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 10.5857,
+          "stockChange": 2.13,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 7.4846,
+          "stockChange": -1.53,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 3.8213,
+          "stockChange": -7.57,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 7.19,
+      "latestSingleScore": 4.77,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 53.71,
+        "ma5": 56.95,
+        "ma10": 56.69,
+        "ma20": 51.85
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh688798",
+      "stockName": "艾为电子",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": -5.77,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 3.9695,
+          "stockChange": -5.77,
+          "indexChange": -0.69,
+          "status": "偏弱"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.1844,
+          "stockChange": -1.93,
+          "indexChange": -0.69,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 5.2573,
+          "stockChange": -4.44,
+          "indexChange": -1.52,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 7.6127,
+          "stockChange": -1.93,
+          "indexChange": 2.42,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 8.6015,
+          "stockChange": -2.36,
+          "indexChange": -2.1,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 6.47,
+      "latestSingleScore": 3.97,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 55.06,
+        "ma5": 59.8,
+        "ma10": 62.53,
+        "ma20": 58.92
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sz301171",
+      "stockName": "易点天下",
+      "blockName": "AI 应用",
+      "isImportant": false,
+      "change": -2.53,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 6.7034,
+          "stockChange": -2.53,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 5.5312,
+          "stockChange": -3.65,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 6.0518,
+          "stockChange": -4.24,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 11.4795,
+          "stockChange": 5.28,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 19.0061,
+          "stockChange": 11.12,
+          "indexChange": -0.78,
+          "status": "极强抗跌"
+        }
+      ],
+      "latestScore": 6.1,
+      "latestSingleScore": 6.7,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 36.24,
+        "ma5": 38.12,
+        "ma10": 37.07,
+        "ma20": 36.55
+      },
+      "isBullishArrangement": false
+    },
+    {
+      "code": "sh603757",
+      "stockName": "大元泵业",
+      "blockName": "液冷",
+      "isImportant": false,
+      "change": -4.31,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 5.0832,
+          "stockChange": -4.31,
+          "indexChange": -0.49,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 4.5361,
+          "stockChange": -4.98,
+          "indexChange": -0.14,
+          "status": "偏弱"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 5.5148,
+          "stockChange": -2.21,
+          "indexChange": -1.15,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 8.9049,
+          "stockChange": 0.65,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 3.0005,
+          "stockChange": -8.85,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 5.04,
+      "latestSingleScore": 5.08,
+      "latestStatus": "跟随指数",
+      "trend": "declining",
+      "hasTransition": false,
+      "klineCondition": {
+        "close": 64.8,
+        "ma5": 69.82,
+        "ma10": 70.5,
+        "ma20": 66.69
+      },
+      "isBullishArrangement": false
+    }
+  ],
+  "transitionedStocks": [
+    {
+      "code": "sh603186",
+      "stockName": "华正新材",
+      "blockName": "ccl",
+      "isImportant": true,
+      "change": 2.8,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 13.2158,
+          "stockChange": 2.8,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 22.8488,
+          "stockChange": 10,
+          "indexChange": -0.14,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 16.1552,
+          "stockChange": 3.6,
+          "indexChange": -1.15,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 21.3619,
+          "stockChange": 10,
+          "indexChange": 3.41,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 5.2572,
+          "stockChange": -6.2,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 17.41,
+      "latestSingleScore": 13.22,
+      "latestStatus": "极强抗跌",
+      "trend": "improving",
+      "hasTransition": true,
+      "klineCondition": {
+        "close": 217.99,
+        "ma5": 195.62,
+        "ma10": 187.69,
+        "ma20": 181.15
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sh603083",
+      "stockName": "剑桥科技",
+      "blockName": "光模块",
+      "isImportant": false,
+      "change": 7.05,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 15.7645,
+          "stockChange": 7.05,
+          "indexChange": -0.49,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 8.2936,
+          "stockChange": -1.49,
+          "indexChange": -0.14,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 17.7195,
+          "stockChange": 7.33,
+          "indexChange": -1.15,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 20.3755,
+          "stockChange": 10,
+          "indexChange": 3.41,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 11.7905,
+          "stockChange": 1.11,
+          "indexChange": -0.78,
+          "status": "较强抗跌"
+        }
+      ],
+      "latestScore": 13.93,
+      "latestSingleScore": 15.76,
+      "latestStatus": "较强抗跌",
+      "trend": "improving",
+      "hasTransition": true,
+      "klineCondition": {
+        "close": 234.43,
+        "ma5": 214.22,
+        "ma10": 200.14,
+        "ma20": 191.39
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sz301511",
+      "stockName": "德福科技",
+      "blockName": "铜箔",
+      "isImportant": true,
+      "change": 2.82,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 14.2732,
+          "stockChange": 2.82,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 11.6762,
+          "stockChange": 2.54,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 14.5173,
+          "stockChange": 3.62,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 12.9263,
+          "stockChange": 16.97,
+          "indexChange": 3.41,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 4.9145,
+          "stockChange": -4.98,
+          "indexChange": -0.78,
+          "status": "偏弱"
+        }
+      ],
+      "latestScore": 13.49,
+      "latestSingleScore": 14.27,
+      "latestStatus": "较强抗跌",
+      "trend": "improving",
+      "hasTransition": true,
+      "klineCondition": {
+        "close": 108.68,
+        "ma5": 100.4,
+        "ma10": 96.26,
+        "ma20": 92.61
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sz002916",
+      "stockName": "深南电路",
+      "blockName": "pcb",
+      "isImportant": false,
+      "change": 2.35,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 12.0806,
+          "stockChange": 2.35,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 10.0314,
+          "stockChange": 0.21,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 16.4538,
+          "stockChange": 4.8,
+          "indexChange": -1.15,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 22.139,
+          "stockChange": 10,
+          "indexChange": 3.41,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.9002,
+          "stockChange": -2.85,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 12.86,
+      "latestSingleScore": 12.08,
+      "latestStatus": "较强抗跌",
+      "trend": "improving",
+      "hasTransition": true,
+      "klineCondition": {
+        "close": 392.31,
+        "ma5": 370.98,
+        "ma10": 363.06,
+        "ma20": 361.42
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sz300395",
+      "stockName": "菲利华",
+      "blockName": "电子布",
+      "isImportant": false,
+      "change": 2.13,
+      "dailyResults": [
+        {
+          "date": 20260910,
+          "resilienceScore": 12.9661,
+          "stockChange": 2.13,
+          "indexChange": -0.49,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260909,
+          "resilienceScore": 12.9232,
+          "stockChange": 3.25,
+          "indexChange": -0.14,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260908,
+          "resilienceScore": 12.1231,
+          "stockChange": 2.08,
+          "indexChange": -1.15,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260907,
+          "resilienceScore": 9.5784,
+          "stockChange": 4.52,
+          "indexChange": 3.41,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260904,
+          "resilienceScore": 6.4048,
+          "stockChange": -3.43,
+          "indexChange": -0.78,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 12.67,
+      "latestSingleScore": 12.97,
+      "latestStatus": "较强抗跌",
+      "trend": "improving",
+      "hasTransition": true,
+      "klineCondition": {
+        "close": 100.49,
+        "ma5": 95.37,
+        "ma10": 94.31,
+        "ma20": 91.75
+      },
+      "isBullishArrangement": true
+    }
+  ],
+  "updatedAt": "2026-09-10T07:12:37.343Z"
+}

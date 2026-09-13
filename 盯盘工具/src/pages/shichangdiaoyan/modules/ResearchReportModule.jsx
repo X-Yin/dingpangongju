@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Layout, Menu, Button, Input, Modal, message, Space, Dropdown, Typography, Tooltip } from 'antd';
+import { Layout, Menu, Button, Input, Modal, message, Space, Dropdown, Typography, Tooltip, Checkbox } from 'antd';
 import { 
   FolderOutlined, 
   FileTextOutlined, 
@@ -10,12 +10,16 @@ import {
   SaveOutlined,
   SearchOutlined,
   StarOutlined,
-  PushpinOutlined
+  PushpinOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined
 } from '@ant-design/icons';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
 import axios from 'axios';
 import { local_ip } from '../../../constant';
+import { getThemeColor } from '../../../utils/theme';
+import './ResearchReportModule.scss';
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;
@@ -27,11 +31,15 @@ const ResearchReportModule = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [openKeys, setOpenKeys] = useState([]);
   const [filterImportant, setFilterImportant] = useState(false);
+  const [showHiddenFolders, setShowHiddenFolders] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemType, setNewItemType] = useState('folder');
   const [contextMenuParentId, setContextMenuParentId] = useState(null);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [selectedFolders, setSelectedFolders] = useState([]);
+  const [showCheckboxes, setShowCheckboxes] = useState(false);
   const vditorRef = useRef(null);
   const editorInstance = useRef(null);
   const [currentContent, setCurrentContent] = useState('');
@@ -40,10 +48,80 @@ const ResearchReportModule = () => {
   const [shouldFocusEditor, setShouldFocusEditor] = useState(false);
   const createInputRef = useRef(null);
   const renameInputRef = useRef(null);
+  const blurTimerRef = useRef(null);
   // 用于保存刷新前的 openKeys 状态
   const previousOpenKeysRef = useRef([]);
   // 用于标记是否正在进行数据刷新操作，避免菜单自动收起
   const isRefreshingRef = useRef(false);
+
+  const handleToggleSelect = (item) => {
+    if (item.type !== 'folder') return;
+    
+    setSelectedFolders(prev => {
+      if (prev.includes(item.id)) {
+        return prev.filter(id => id !== item.id);
+      } else {
+        return [...prev, item.id];
+      }
+    });
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedFolders.length === 0) {
+      if (showCheckboxes) {
+        setShowCheckboxes(false);
+      } else {
+        setShowCheckboxes(true);
+      }
+      return;
+    }
+    
+    const folderNames = selectedFolders.map(id => {
+      const item = findItemById(treeData, id);
+      return item?.name || '未知文件夹';
+    }).join('、');
+    
+    Modal.confirm({
+      title: '确认批量删除',
+      content: `确定要删除以下 ${selectedFolders.length} 个文件夹吗？这将删除文件夹内的所有内容。\n\n${folderNames}`,
+      okText: '确认',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          isRefreshingRef.current = true;
+          
+          await axios.post(`http://${local_ip}:3000/delete_research_reports`, {
+            ids: selectedFolders
+          });
+          
+          message.success(`成功删除 ${selectedFolders.length} 个文件夹`);
+          
+          if (selectedFolders.includes(selectedKey)) {
+            setSelectedKey(null);
+            setCurrentItem(null);
+            setCurrentContent('');
+          }
+          
+          setSelectedFolders([]);
+          setShowCheckboxes(false);
+          await fetchReports(false);
+          
+          setTimeout(() => {
+            isRefreshingRef.current = false;
+          }, 100);
+        } catch (error) {
+          console.error('批量删除失败:', error);
+          message.error('批量删除失败');
+          isRefreshingRef.current = false;
+        }
+      },
+      onCancel: () => {
+        setSelectedFolders([]);
+        setShowCheckboxes(false);
+      }
+    });
+  };
 
   useEffect(() => {
     if (createModalVisible) {
@@ -60,6 +138,14 @@ const ResearchReportModule = () => {
       }, 100);
     }
   }, [renameModalVisible]);
+
+  useEffect(() => {
+    return () => {
+      if (blurTimerRef.current) {
+        clearTimeout(blurTimerRef.current);
+      }
+    };
+  }, []);
 
   const fetchReports = async (keepOpenKeys = true) => {
     try {
@@ -89,16 +175,21 @@ const ResearchReportModule = () => {
   }, []);
 
   useEffect(() => {
-    const searchKeys = getOpenKeysFromTree(treeData, searchKeyword, filterImportant);
+    const searchKeys = getOpenKeysFromTree(treeData, searchKeyword, filterImportant, showHiddenFolders);
     const parentKeys = selectedKey ? getParentKeys(treeData, selectedKey) : [];
     const mergedKeys = [...new Set([...searchKeys, ...parentKeys])];
     setOpenKeys(mergedKeys);
-  }, [searchKeyword, treeData, selectedKey, filterImportant]);
+  }, [searchKeyword, treeData, selectedKey, filterImportant, showHiddenFolders]);
 
-  const filterTreeData = (items, keyword, onlyImportant = false) => {
-    const filterItems = (items) => {
-      return items.filter(item => {
+  const filterTreeData = (items, keyword, onlyImportant = false, showHidden = false) => {
+    const filterAndSortItems = (items) => {
+      // 1. 过滤逻辑
+      let filtered = items.filter(item => {
         let match = true;
+        
+        if (item.type === 'folder' && item.isHidden && !showHidden) {
+          return false;
+        }
         
         if (keyword.trim()) {
           const lowerKeyword = keyword.toLowerCase();
@@ -110,28 +201,37 @@ const ResearchReportModule = () => {
         }
         
         if (item.type === 'folder' && item.children && item.children.length > 0) {
-          const filteredChildren = filterItems(item.children);
+          const filteredChildren = filterAndSortItems(item.children);
           if (filteredChildren.length > 0) {
             return true;
           }
         }
         
         return match;
+      });
+
+      // 2. 排序逻辑：置顶优先，其次名称倒序排列（最新的日期在最上面）
+      return filtered.sort((a, b) => {
+        // 置顶优先
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        // 其次名称倒序
+        return b.name.localeCompare(a.name);
       }).map(item => {
         if (item.type === 'folder' && item.children && item.children.length > 0) {
           return {
             ...item,
-            children: filterItems(item.children)
+            children: filterAndSortItems(item.children)
           };
         }
         return item;
       });
     };
     
-    return filterItems(items);
+    return filterAndSortItems(items);
   };
 
-  const getOpenKeysFromTree = (items, keyword, onlyImportant = false) => {
+  const getOpenKeysFromTree = (items, keyword, onlyImportant = false, showHidden = false) => {
     if (!keyword.trim() && !onlyImportant) return [];
     
     const lowerKeyword = keyword.toLowerCase();
@@ -140,7 +240,7 @@ const ResearchReportModule = () => {
     const collectOpenKeys = (items) => {
       items.forEach(item => {
         if (item.type === 'folder' && item.children && item.children.length > 0) {
-          const filteredChildren = filterTreeData(item.children, keyword, onlyImportant);
+          const filteredChildren = filterTreeData(item.children, keyword, onlyImportant, showHidden);
           if (filteredChildren.length > 0) {
             newOpenKeys.push(item.id);
             collectOpenKeys(item.children);
@@ -197,7 +297,7 @@ const ResearchReportModule = () => {
       await axios.post(`http://${local_ip}:3000/pin_research_report`, {
         id: item.id
       });
-      message.success('置顶成功');
+      message.success(item.isPinned ? '已取消置顶' : '置顶成功');
       
       const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
       setTreeData(response.data);
@@ -215,6 +315,34 @@ const ResearchReportModule = () => {
     } catch (error) {
       console.error('置顶失败:', error);
       message.error('置顶失败');
+      isRefreshingRef.current = false;
+    }
+  };
+
+  const handleToggleHidden = async (item) => {
+    const savedOpenKeys = [...openKeys];
+    
+    try {
+      isRefreshingRef.current = true;
+      
+      await axios.post(`http://${local_ip}:3000/toggle_research_report_hidden`, {
+        id: item.id
+      });
+      message.success(item.isHidden ? '已取消隐藏' : '已隐藏文件夹');
+      
+      const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
+      setTreeData(response.data);
+      
+      setTimeout(() => {
+        setOpenKeys(savedOpenKeys);
+        
+        setTimeout(() => {
+          isRefreshingRef.current = false;
+        }, 100);
+      }, 0);
+    } catch (error) {
+      console.error('隐藏/取消隐藏失败:', error);
+      message.error('操作失败');
       isRefreshingRef.current = false;
     }
   };
@@ -251,7 +379,7 @@ const ResearchReportModule = () => {
           {
             key: 'pin',
             icon: <PushpinOutlined />,
-            label: '置顶',
+            label: item.isPinned ? '取消置顶' : '置顶',
             onClick: (e) => {
               e.domEvent.stopPropagation();
               handlePinReport(item);
@@ -291,6 +419,15 @@ const ResearchReportModule = () => {
               handleCreateInFolder(item.id, 'report');
             }
           },
+          {
+            key: 'toggle-hidden',
+            icon: item.isHidden ? <EyeOutlined /> : <EyeInvisibleOutlined />,
+            label: item.isHidden ? '取消隐藏' : '隐藏文件夹',
+            onClick: (e) => {
+              e.domEvent.stopPropagation();
+              handleToggleHidden(item);
+            }
+          },
           { type: 'divider' }
         );
       }
@@ -319,8 +456,9 @@ const ResearchReportModule = () => {
       );
       
       const menuItem = {
-        key: item.id,
-        label: (
+      key: item.id,
+      className: item.isHidden ? 'hidden-folder-item-container' : '',
+      label: (
           <Dropdown
             menu={{ items: menuOptions }}
             trigger={['contextMenu']}
@@ -330,9 +468,32 @@ const ResearchReportModule = () => {
               overflowY: 'auto'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <div 
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+              className={item.isHidden ? 'hidden-folder-item' : ''}
+            >
               <Space style={{ flex: 1, minWidth: 0 }}>
-                {item.type === 'folder' ? <FolderOutlined /> : (item.isImportant ? <StarOutlined style={{ color: '#faad14' }} /> : <FileTextOutlined />)}
+                {item.type === 'folder' ? (
+                  <Space size={4}>
+                    {parentId === null && showCheckboxes && (
+                      <Checkbox
+                        checked={selectedFolders.includes(item.id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleToggleSelect(item);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    )}
+                    <FolderOutlined />
+                    {item.isHidden && <EyeInvisibleOutlined style={{ color: '#999', fontSize: '12px' }} />}
+                  </Space>
+                ) : (
+                  <Space size={4}>
+                    {item.isPinned && <PushpinOutlined style={{ color: getThemeColor(), fontSize: '12px' }} />}
+                    {item.isImportant ? <StarOutlined style={{ color: '#faad14' }} /> : <FileTextOutlined />}
+                  </Space>
+                )}
                 <Tooltip title={item.name} placement="left">
                   <span 
                     style={{ 
@@ -343,8 +504,9 @@ const ResearchReportModule = () => {
                       maxWidth: '160px',
                       verticalAlign: 'middle',
                       lineHeight: '1',
-                      color: item.isImportant ? '#faad14' : 'inherit',
-                      fontWeight: item.isImportant ? 'bold' : 'normal'
+                      color: item.isHidden ? '#999' : (item.isImportant ? '#faad14' : 'inherit'),
+                      fontWeight: item.isHidden ? 'normal' : ((item.isImportant || item.isPinned) ? 'bold' : 'normal'),
+                      fontStyle: item.isHidden ? 'italic' : 'normal'
                     }}
                   >
                     {item.name}
@@ -388,6 +550,10 @@ const ResearchReportModule = () => {
   };
 
   const handleMenuSelect = async ({ key }) => {
+    if (selectedFolders.includes(key)) {
+      return;
+    }
+    
     setSelectedKey(key);
     // 保存当前的 openKeys，防止后续操作影响展开状态
     previousOpenKeysRef.current = [...openKeys];
@@ -619,6 +785,8 @@ const ResearchReportModule = () => {
             setCurrentContent('');
           }
           
+          setSelectedFolders(prev => prev.filter(id => id !== item.id));
+          
           // 刷新数据并重新设置 openKeys，过滤掉被删除的文件夹
           await fetchReports(false);
           
@@ -812,50 +980,73 @@ const ResearchReportModule = () => {
   }, [currentItem?.id]);
 
   return (
-    <Layout style={{ height: 'calc(100vh - 180px)', background: '#fff' }}>
-      <Sider width={300} theme="light" style={{ borderRight: '1px solid #f0f0f0' }}>
-        <div style={{ padding: 16, borderBottom: '1px solid #f0f0f0' }}>
+    <Layout className="research-report-module">
+      <Sider width={300} className="report-sider">
+        <div className="sider-header">
           <Space direction="vertical" style={{ width: '100%' }}>
-            <Space style={{ width: '100%' }}>
-              <Input
-                placeholder="搜索文件夹或研报..."
-                prefix={<SearchOutlined />}
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-                allowClear
-                style={{ flex: 1 }}
-              />
-              <Button 
-                type={filterImportant ? 'primary' : 'default'}
-                icon={<StarOutlined />}
-                onClick={() => {
-                  setFilterImportant(!filterImportant);
-                  if (filterImportant) {
-                    setSearchKeyword('');
-                  }
-                }}
-              >
-                重点研报
-              </Button>
-            </Space>
-            <Space style={{ width: '100%' }}>
+            <div className="search-wrapper">
+              <div className={`search-flex-container ${searchFocused ? 'search-focused' : ''}`}>
+                <Input
+                  placeholder="搜索文件夹或研报..."
+                  prefix={<SearchOutlined />}
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  allowClear
+                  style={{ flex: 1 }}
+                  onFocus={() => {
+                    if (blurTimerRef.current) {
+                      clearTimeout(blurTimerRef.current);
+                    }
+                    setSearchFocused(true);
+                  }}
+                  onBlur={() => {
+                    blurTimerRef.current = setTimeout(() => {
+                      setSearchFocused(false);
+                    }, 150);
+                  }}
+                />
+                <Button 
+                  type={filterImportant ? 'primary' : 'default'}
+                  icon={<StarOutlined />}
+                  onClick={() => {
+                    setFilterImportant(!filterImportant);
+                    if (filterImportant) {
+                      setSearchKeyword('');
+                    }
+                  }}
+                  className="search-action-btn"
+                >
+                  <span className={`btn-label ${searchFocused ? 'hidden' : ''}`}>重点</span>
+                </Button>
+                <Button 
+                  type={showHiddenFolders ? 'primary' : 'default'}
+                  icon={showHiddenFolders ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                  onClick={() => setShowHiddenFolders(!showHiddenFolders)}
+                  className="search-action-btn"
+                >
+                  <span className={`btn-label ${searchFocused ? 'hidden' : ''}`}>隐藏</span>
+                </Button>
+              </div>
+            </div>
+            <div className="action-buttons">
               <Button 
                 type="primary" 
-                icon={<PlusOutlined />} 
-                onClick={() => handleCreate('folder')}
+                onClick={handleCreateTodayFolder}
                 style={{ flex: 1.5 }}
               >
-                新建文件夹
+                今日
               </Button>
               <Button 
-                onClick={handleCreateTodayFolder}
+                danger 
+                icon={<DeleteOutlined />} 
+                onClick={handleBatchDelete}
                 style={{ flex: 1 }}
               >
-                创建当日文件夹
+                批量删除
               </Button>
-            </Space>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              在根目录创建，或点击文件夹右侧的 ··· 在其中创建
+            </div>
+            <Text type="secondary" style={{ fontSize: 12, textAlign: 'center', display: 'block' }}>
+              右键文件夹或点击 ··· 可在其中创建子项
             </Text>
           </Space>
         </div>
@@ -864,29 +1055,30 @@ const ResearchReportModule = () => {
           selectedKeys={selectedKey ? [selectedKey] : []}
           openKeys={openKeys}
           onOpenChange={(keys) => {
-            // 如果正在刷新数据，忽略 openKeys 的变化
             if (!isRefreshingRef.current) {
               setOpenKeys(keys);
             }
           }}
-          items={buildMenuItems(filterTreeData(treeData, searchKeyword, filterImportant))}
+          items={buildMenuItems(filterTreeData(treeData, searchKeyword, filterImportant, showHiddenFolders))}
           onSelect={handleMenuSelect}
-          style={{ height: 'calc(100% - 180px)', overflowY: 'auto', borderRight: 0 }}
+          className="report-menu"
+          style={{ maxHeight: '700px', overflowY: 'auto' }}
         />
       </Sider>
-      <Content style={{ padding: 16, overflow: 'auto' }}>
+      <Content className="report-content">
         {currentItem?.type === 'report' ? (
           <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div>
-                <Text strong style={{ fontSize: 18 }}>{currentItem.name}</Text>
-                {isModified && <Text type="warning" style={{ marginLeft: 8 }}>(有未保存的修改)</Text>}
+            <div className="content-header">
+              <div className="title-section">
+                <Text strong className="report-title">{currentItem.name}</Text>
+                {isModified && <span className="modified-tag">有未保存的修改</span>}
               </div>
               <Button 
                 type="primary" 
                 icon={<SaveOutlined />} 
                 onClick={handleSave}
                 disabled={!isModified}
+                className="save-btn"
               >
                 保存
               </Button>
@@ -894,26 +1086,17 @@ const ResearchReportModule = () => {
             <div 
               ref={vditorRef} 
               className="vditor-container" 
-              style={{ 
-                minHeight: 500, 
-                border: '1px solid #f0f0f0',
-                borderRadius: 4
-              }} 
             />
           </>
         ) : currentItem?.type === 'folder' ? (
-          <div style={{ textAlign: 'center', padding: 50 }}>
-            <FolderOutlined style={{ fontSize: 48, color: '#1890ff' }} />
-            <div style={{ marginTop: 16, color: '#666' }}>
-              文件夹: {currentItem.name}
-            </div>
+          <div className="empty-state">
+            <FolderOutlined className="empty-icon" style={{ color: getThemeColor() }} />
+            <div className="empty-text">文件夹: {currentItem.name}</div>
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: 50 }}>
-            <FileTextOutlined style={{ fontSize: 48, color: '#999' }} />
-            <div style={{ marginTop: 16, color: '#999' }}>
-              请从左侧选择一个研报或文件夹
-            </div>
+          <div className="empty-state">
+            <FileTextOutlined className="empty-icon" />
+            <div className="empty-text">请从左侧选择一个研报或文件夹</div>
           </div>
         )}
       </Content>

@@ -5,6 +5,7 @@ import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../../constant';
 import MainProblemEditorModal from '../components/MainProblemEditorModal';
+import './ModulesCommon.scss';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -112,12 +113,12 @@ const MainProblemModule = () => {
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={2} style={{ margin: 0 }}>消息面</Title>
-        <Button type="primary" onClick={() => setIsModalVisible(true)}>新建</Button>
+    <div className="module-common-container">
+      <div className="module-header">
+        <Title level={2}>消息面</Title>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalVisible(true)}>新建</Button>
       </div>
-      <Paragraph type="secondary">拖拽列表项可调整消息面的顺序。</Paragraph>
+      <div className="module-description">拖拽列表项可调整消息面的顺序。</div>
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="main-problems-list">
           {(provided) => (
@@ -135,33 +136,21 @@ const MainProblemModule = () => {
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
+                        className={`draggable-item ${snapshot.isDragging ? 'is-dragging' : ''}`}
                         style={{
                           ...provided.draggableProps.style,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          backgroundColor: snapshot.isDragging ? '#e6f7ff' : 'white',
-                          padding: '12px 16px',
-                          marginBottom: '8px',
-                          border: '1px solid #f0f0f0',
-                          borderRadius: '4px',
-                          boxShadow: snapshot.isDragging ? '0 2px 8px rgba(0,0,0,0.15)' : 'none',
                         }}
                       >
-                        <Card 
-                          bordered={false} 
-                          size="small"
-                          style={{ flexGrow: 1, marginRight: '16px' }}
-                        >
-                          <Title level={4} style={{ margin: 0 }}>{item.title}</Title>
-                          <Text type="secondary">ID: {item.id}</Text>
-                          <Paragraph style={{ marginTop: '8px' }}>
-                            {item.content.length > 40 ? `${item.content.substring(0, 40)}...` : item.content}
+                        <div className="item-content-wrapper">
+                          <Title level={4}>{item.title}</Title>
+                          <Text className="item-id">ID: {item.id}</Text>
+                          <Paragraph className="item-preview">
+                            {item.content.length > 80 ? `${item.content.substring(0, 80)}...` : item.content}
                           </Paragraph>
-                        </Card>
+                        </div>
                         <Space>
-                          <Button type="link" onClick={() => handleEdit(item)}>编辑</Button>
-                          <Button type="link" danger onClick={() => showDeleteConfirm(item)}>删除</Button>
+                          <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(item)}>编辑</Button>
+                          <Button type="link" danger icon={<DeleteOutlined />} onClick={() => showDeleteConfirm(item)}>删除</Button>
                         </Space>
                       </div>
                     )}

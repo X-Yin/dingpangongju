@@ -32,6 +32,12 @@
         gap: 4px;
       }
     }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
   }
 
   .report-card {
@@ -45,11 +51,26 @@
       transform: translateY(-2px);
     }
 
+    &.report-card-new {
+      border: 2px solid #ff4d4f;
+      box-shadow: 0 2px 12px rgba(255, 77, 79, 0.18);
+
+      .ant-card-head {
+        background: linear-gradient(90deg, rgba(255, 77, 79, 0.06), transparent);
+      }
+    }
+
     .report-title-container {
       display: flex;
       align-items: baseline;
       gap: 12px;
       flex-wrap: wrap;
+
+      .new-tag {
+        margin-right: 0;
+        font-weight: 600;
+        animation: new-tag-flash 1.6s ease-in-out infinite;
+      }
 
       .report-title {
         font-weight: 600;
@@ -86,5 +107,47 @@
   .ant-list-item {
     padding: 0;
     margin-bottom: 16px;
+  }
+}
+
+@keyframes new-tag-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* 添加近期研报弹窗样式（弹窗通过 portal 挂载到 body，需放在顶层） */
+.add-research-report-modal {
+  .arr-form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 12px;
+
+    &.arr-important-row {
+      gap: 12px;
+    }
+
+    &.arr-editor-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    .arr-label {
+      flex-shrink: 0;
+      white-space: nowrap;
+      min-width: 70px;
+    }
+
+    .arr-title-input {
+      flex: 1;
+    }
+
+    .arr-vditor-container {
+      width: 100%;
+      border: 1px solid #f0f0f0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
   }
 }

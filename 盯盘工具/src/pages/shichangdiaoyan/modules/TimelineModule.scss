@@ -1,0 +1,181 @@
+.timeline-module {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .timeline-card {
+    height: 100%;
+    border: none;
+    background: transparent;
+
+    .ant-card-body {
+      padding: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ant-tabs {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      .ant-tabs-nav {
+        margin-bottom: 20px;
+        padding: 0 24px;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 8px;
+        
+        &::before {
+          display: none;
+        }
+      }
+
+      .ant-tabs-content-holder {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 0 24px 24px;
+      }
+    }
+  }
+
+  /* Timeline Tab Styles */
+  .timeline-tab-content {
+    .action-bar {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: flex-start;
+
+      .ant-btn {
+        border-radius: 8px;
+        font-weight: 600;
+        height: 36px;
+        padding: 0 20px;
+        box-shadow: 0 2px 8px rgba(var(--theme-color-rgb, 24, 144, 255), 0.15);
+      }
+    }
+
+    .ant-timeline {
+      padding: 8px;
+
+      .ant-timeline-item {
+        padding-bottom: 24px;
+
+        .event-card {
+          background: rgba(255, 255, 255, 0.5);
+          backdrop-filter: blur(5px);
+          border-radius: 12px;
+          padding: 16px;
+          border: 1px solid rgba(0, 0, 0, 0.04);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          transition: all 0.3s;
+
+          &:hover {
+            transform: translateX(4px);
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+          }
+
+          .event-main {
+            flex: 1;
+
+            .event-title {
+              font-size: 16px;
+              font-weight: 600;
+              color: #262626;
+              margin-bottom: 4px;
+            }
+
+            .event-date {
+              font-size: 13px;
+              color: #8c8c8c;
+              margin-bottom: 8px;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+            }
+
+            .event-description {
+              font-size: 14px;
+              color: #595959;
+              line-height: 1.6;
+            }
+          }
+
+          .event-actions {
+            opacity: 0;
+            transition: opacity 0.2s;
+          }
+
+          &:hover .event-actions {
+            opacity: 1;
+          }
+        }
+      }
+    }
+  }
+
+  /* Long Term Rhythm Tab Styles */
+  .long-term-rhythm-content {
+    .project-selector-bar {
+      margin-bottom: 24px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .selector-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .ant-select-selector {
+          border-radius: 8px !important;
+        }
+      }
+    }
+
+    .project-description-box {
+      margin-bottom: 24px;
+      padding: 16px 20px;
+      background: #fff7e6;
+      border-radius: 12px;
+      border: 1px solid #ffd591;
+      color: #d46b08;
+      font-size: 14px;
+      line-height: 1.6;
+      box-shadow: 0 2px 8px rgba(250, 173, 20, 0.05);
+    }
+
+    .mermaid-wrapper {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+      min-height: 300px;
+      display: flex;
+      justify-content: center;
+      overflow: auto;
+
+      /* 解决周末/非工作日的自带蒙层发白问题 */
+      rect.excludeBkg {
+        fill: rgba(0, 0, 0, 0.05) !important;
+      }
+    }
+
+    .last-updated {
+      margin-top: 20px;
+      text-align: center;
+      color: #bfbfbf;
+      font-size: 12px;
+    }
+  }
+}

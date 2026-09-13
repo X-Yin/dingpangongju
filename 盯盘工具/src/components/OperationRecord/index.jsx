@@ -7,6 +7,7 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import { local_ip } from '../../constant';
+import { getThemeColor } from '../../utils/theme';
 import './index.scss';
 
 // 设置 dayjs 语言为中文
@@ -432,7 +433,7 @@ const OperationRecord = () => {
                                     <List.Item
                                       style={{
                                         background: index === currentRecordIndex ? '#e6f7ff' : 'transparent',
-                                        border: index === currentRecordIndex ? '1px solid #1890ff' : '1px solid #f0f0f0',
+                                        border: index === currentRecordIndex ? `1px solid ${getThemeColor()}` : '1px solid #f0f0f0',
                                         borderRadius: 4,
                                         cursor: 'pointer',
                                         padding: '8px 12px'

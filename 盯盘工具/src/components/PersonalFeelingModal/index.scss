@@ -1,0 +1,485 @@
+// 个人感受记录弹窗（三列布局）
+.personal-feeling-modal {
+  width: 80%;
+  .ant-modal-content {
+    border-radius: 20px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(71, 96, 139, 0.22);
+  }
+
+  .ant-modal-header {
+    border-bottom: 1px solid rgba(18, 33, 58, 0.08);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(18px);
+    padding: 16px 24px;
+    margin-bottom: 0;
+  }
+
+  .ant-modal-body {
+    padding: 18px 20px;
+    background:
+      radial-gradient(circle at top left, rgba(96, 165, 250, 0.06), transparent 35%),
+      radial-gradient(circle at bottom right, rgba(139, 92, 246, 0.05), transparent 35%),
+      #f8fafc;
+  }
+
+  .ant-modal-footer {
+    border-top: 1px solid rgba(18, 33, 58, 0.06);
+    padding: 12px 24px;
+  }
+}
+
+.pfm-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  height: 72vh;
+  min-height: 520px;
+}
+
+// 展开 AI 分析模块后的三列布局
+.pfm-container-ai {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+// 标题栏：标题 + 「AI 分析今日行情」按钮
+.pfm-modal-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: 4px;
+}
+
+.pfm-ai-toggle-btn {
+  flex-shrink: 0;
+}
+
+.pfm-col {
+  display: flex;
+  flex-direction: column;
+  // 对齐 dingpan all-stock-card premium-style 玻璃拟态风格
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 18px 46px rgba(71, 96, 139, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(22px);
+  overflow: hidden;
+}
+
+.pfm-col-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  background:
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.08), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.36) 100%);
+  backdrop-filter: blur(18px);
+  flex-shrink: 0;
+}
+
+.pfm-col-title-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.12);
+  flex-shrink: 0;
+
+  .anticon {
+    font-size: 16px;
+  }
+
+  &.pfm-col-title-icon-feeling {
+    background:
+      linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(139, 92, 246, 0.12)),
+      rgba(255, 255, 255, 0.65);
+    .anticon { color: #4f46e5; }
+  }
+
+  &.pfm-col-title-icon-global {
+    background:
+      linear-gradient(135deg, rgba(250, 140, 22, 0.22), rgba(245, 34, 45, 0.1)),
+      rgba(255, 255, 255, 0.65);
+    .anticon { color: #fa8c16; }
+  }
+
+  &.pfm-col-title-icon-fund {
+    background:
+      linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(139, 92, 246, 0.16)),
+      rgba(255, 255, 255, 0.65);
+    .anticon { color: #6366f1; }
+  }
+}
+
+.pfm-col-title-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.1;
+  flex: 1;
+  min-width: 0;
+}
+
+.pfm-col-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: #12213a;
+}
+
+.pfm-col-subtitle {
+  font-size: 11px;
+  color: rgba(71, 85, 105, 0.72);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pfm-refresh-btn {
+  flex-shrink: 0;
+  color: rgba(0, 0, 0, 0.45);
+  &:hover { color: var(--theme-color, #1890ff); }
+}
+
+// ===== 左列：情绪记录 =====
+.pfm-col-feeling {
+  .pfm-feeling-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 14px 8px;
+  }
+
+  .pfm-feeling-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    transition: all 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.88);
+      border-color: rgba(96, 165, 250, 0.3);
+    }
+
+    &.pfm-feeling-item-latest {
+      background: rgba(255, 251, 230, 0.85);
+      border-color: rgba(255, 213, 79, 0.5);
+      box-shadow:
+        0 6px 16px rgba(250, 140, 22, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+
+    &.pfm-feeling-item-disabled {
+      background: rgba(241, 245, 249, 0.6);
+      border-style: dashed;
+      border-color: rgba(148, 163, 184, 0.28);
+      box-shadow: none;
+      opacity: 0.85;
+
+      &:hover {
+        background: rgba(241, 245, 249, 0.6);
+        border-color: rgba(148, 163, 184, 0.28);
+      }
+
+      .pfm-feeling-time {
+        color: #94a3b8;
+      }
+    }
+  }
+
+  .pfm-feeling-lock {
+    font-size: 10px;
+    font-weight: 600;
+    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.16);
+    padding: 1px 6px;
+    border-radius: 8px;
+    line-height: 1.4;
+  }
+
+  .pfm-feeling-time {
+    flex-shrink: 0;
+    width: 56px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    padding-top: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+
+    &.pfm-feeling-time-clickable {
+      cursor: pointer;
+
+      &:hover .pfm-feeling-time-text {
+        color: var(--theme-color, #1890ff);
+      }
+    }
+  }
+
+  .pfm-feeling-time-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  // 点击时间拉取数据中的 loading 图标
+  .pfm-feeling-loading {
+    font-size: 10px;
+    color: var(--theme-color, #1890ff);
+  }
+
+  .ant-input {
+    flex: 1;
+  }
+
+  // 输入框包裹层：占据剩余宽度，内部先渲染快捷 tag 再渲染输入框
+  .pfm-input-wrap {
+    flex: 1;
+    min-width: 0;
+
+    .ant-input {
+      flex: none;
+      width: 100%;
+    }
+  }
+
+  // 输入框上方快捷 tag 条
+  .pfm-feeling-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 0 0 6px;
+  }
+
+  .pfm-feeling-tag {
+    margin: 0;
+    font-size: 12px;
+    line-height: 20px;
+    cursor: pointer;
+    border-radius: 8px;
+    user-select: none;
+    color: #475569;
+    background: rgba(241, 245, 249, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    transition: all 0.15s;
+
+    &:hover {
+      color: #fff;
+      background: var(--theme-color, #1890ff);
+      border-color: var(--theme-color, #1890ff);
+    }
+  }
+
+  .pfm-feeling-badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #fa8c16, #ffa940);
+    padding: 1px 6px;
+    border-radius: 8px;
+    line-height: 1.4;
+    box-shadow: 0 2px 6px rgba(250, 140, 22, 0.3);
+  }
+
+  .pfm-empty {
+    text-align: center;
+    color: #94a3b8;
+    padding: 40px 0;
+    font-size: 13px;
+  }
+}
+
+// ===== 中/右列：AI 总结公共样式 =====
+.pfm-col-global,
+.pfm-col-fund {
+  .pfm-ai-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+  }
+}
+
+.pfm-ai-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 12px;
+  height: 100%;
+
+  .pfm-ai-loading-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+  }
+
+  .pfm-ai-loading-sub {
+    font-size: 12px;
+    color: #94a3b8;
+    text-align: center;
+  }
+}
+
+.pfm-ai-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+
+  .pfm-ai-empty-icon {
+    font-size: 40px;
+    color: #cbd5e1;
+  }
+
+  .pfm-ai-empty-text {
+    color: #94a3b8;
+    font-size: 13px;
+  }
+}
+
+.pfm-ai-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pfm-ai-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+// ===== Markdown 渲染样式 =====
+.pfm-ai-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.75;
+  color: #262626;
+  word-wrap: break-word;
+
+  &.markdown-body {
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 18px;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    h1 { font-size: 18px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0; }
+    h2 { font-size: 16px; padding-bottom: 5px; border-bottom: 1px solid #e2e8f0; }
+    h3 { font-size: 14px; }
+    h4 { font-size: 13px; }
+
+    p { margin: 8px 0; }
+
+    ul, ol {
+      padding-left: 22px;
+      margin: 8px 0;
+      li { margin: 3px 0; }
+    }
+
+    strong { font-weight: 600; color: #1e293b; }
+
+    em { font-style: italic; }
+
+    blockquote {
+      margin: 10px 0;
+      padding: 8px 14px;
+      border-left: 4px solid #6366f1;
+      background: #eef2ff;
+      color: #475569;
+      border-radius: 0 6px 6px 0;
+    }
+
+    code {
+      padding: 2px 6px;
+      background: #f1f5f9;
+      border-radius: 4px;
+      font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #c41d7f;
+    }
+
+    pre {
+      padding: 10px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      overflow-x: auto;
+      code {
+        padding: 0;
+        background: none;
+        color: inherit;
+      }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      th, td {
+        padding: 6px 10px;
+        border: 1px solid #e2e8f0;
+        text-align: left;
+        font-size: 12px;
+      }
+      th {
+        background: #f8fafc;
+        font-weight: 600;
+      }
+      tr:nth-child(even) {
+        background: #fafafa;
+      }
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #e2e8f0;
+      margin: 14px 0;
+    }
+
+    a {
+      color: var(--theme-color, #1890ff);
+      text-decoration: none;
+      &:hover { text-decoration: underline; }
+    }
+  }
+}
+
+// 滚动条美化
+.pfm-feeling-list,
+.pfm-ai-body {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 3px;
+    &:hover {
+      background: rgba(148, 163, 184, 0.55);
+    }
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}

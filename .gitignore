@@ -1,4 +1,10 @@
 node_modules/
 **/node_modules/
+**/kline_cache/
 **/.chrome-profile/
 .vscode
+**/dist/
+AI/
+./server/default.profraw
+自选股全量股票过去分时数据/
+default.profraw

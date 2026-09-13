@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Card, Button, Timeline, message, Modal, Space, Upload, Image, Tabs, Input, Select } from 'antd';
+import { Card, Button, Timeline, message, Modal, Space, Tabs, Input, Select } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined, ClockCircleOutlined, PictureOutlined, BarChartOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../../constant';
 import TimelineEventEditorModal from '../components/TimelineEventEditorModal';
 import CustomGantt from '../components/CustomGantt';
-import AIAnalysisModule from './AIAnalysisModule';
 import mermaid from 'mermaid';
-import './index.css';
+import './TimelineModule.scss';
 
 const TimelineModule = () => {
   const [timelineList, setTimelineList] = useState([]);
@@ -73,7 +72,6 @@ const TimelineModule = () => {
       setNewProjectDescription('');
       setCreateProjectModalVisible(false);
       await fetchLongTermRhythmProjects();
-      // 自动选中新创建的项目
       setSelectedProjectId(newProject.id);
       setCurrentProjectContent(newProject.content);
     } catch (error) {
@@ -164,17 +162,14 @@ const TimelineModule = () => {
     const renderMermaid = async () => {
       if (mermaidRef.current && currentProjectContent) {
         try {
-          // 清空容器
           mermaidRef.current.innerHTML = '';
 
-          // 使用 render 方法
           const id = 'graph_' + Date.now();
           try {
             const result = await mermaid.render(id, currentProjectContent);
             mermaidRef.current.innerHTML = result.svg;
           } catch (renderError) {
             console.error('Render error:', renderError);
-            // 显示具体错误
             mermaidRef.current.innerHTML = `<div style="color: red; padding: 20px;">
               <p>图表渲染失败</p>
               <p style="font-size: 12px;">错误: ${renderError.message || renderError}</p>
@@ -277,8 +272,8 @@ const TimelineModule = () => {
         </span>
       ),
       children: (
-        <div>
-          <div style={{ marginBottom: 16, textAlign: 'left' }}>
+        <div className="timeline-tab-content">
+          <div className="action-bar">
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -293,44 +288,47 @@ const TimelineModule = () => {
                 key={item.id}
                 color={getTimelineItemColor(item.type)}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ flexGrow: 1 }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px' }}>
+                <div className="event-card">
+                  <div className="event-main">
+                    <div className="event-title">
                       {item.title}
                     </div>
-                    <div style={{ color: '#8c8c8c', fontSize: '14px', marginBottom: '8px' }}>
+                    <div className="event-date">
+                      <ClockCircleOutlined />
                       {formatTimelineDate(item.date)}
                     </div>
                     {item.description && (
-                      <div style={{ color: '#595959' }}>
+                      <div className="event-description">
                         {item.description}
                       </div>
                     )}
                   </div>
-                  <Space>
-                    <Button
-                      type="link"
-                      size="small"
-                      icon={<EditOutlined />}
-                      onClick={() => handleEditTimelineEvent(item)}
-                    >
-                      编辑
-                    </Button>
-                    <Button
-                      type="link"
-                      danger
-                      size="small"
-                      icon={<DeleteOutlined />}
-                      onClick={() => showDeleteTimelineConfirm(item)}
-                    >
-                      删除
-                    </Button>
-                  </Space>
+                  <div className="event-actions">
+                    <Space>
+                      <Button
+                        type="link"
+                        size="small"
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditTimelineEvent(item)}
+                      >
+                        编辑
+                      </Button>
+                      <Button
+                        type="link"
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                        onClick={() => showDeleteTimelineConfirm(item)}
+                      >
+                        删除
+                      </Button>
+                    </Space>
+                  </div>
                 </div>
               </Timeline.Item>
             ))}
             {timelineList.length === 0 && (
-              <div style={{ textAlign: 'center', color: '#8c8c8c', padding: '20px' }}>
+              <div style={{ textAlign: 'center', color: '#8c8c8c', padding: '40px' }}>
                 暂无时间线事件，点击上方"新建事件"添加
               </div>
             )}
@@ -343,21 +341,6 @@ const TimelineModule = () => {
       label: (
         <span>
           <PictureOutlined style={{ marginRight: 8 }} />
-          市场节奏推演
-        </span>
-      ),
-      children: (
-        <div>
-          <CustomGantt />
-          <AIAnalysisModule />
-        </div>
-      ),
-    },
-    {
-      key: '3',
-      label: (
-        <span>
-          <PictureOutlined style={{ marginRight: 8 }} />
           近期操作方案
         </span>
       ),
@@ -367,13 +350,13 @@ const TimelineModule = () => {
             title="近期操作方案"
             fetchUrl={`http://${local_ip}:3000/get_recent_operation_gantt`}
             saveUrl={`http://${local_ip}:3000/update_recent_operation_gantt`}
-            syncUrl={`http://${local_ip}:3000/get_market_rhythm_gantt`}
+            syncTimelineUrl={`http://${local_ip}:3000/get_timeline`}
           />
         </div>
       ),
     },
     {
-      key: '4',
+      key: '3',
       label: (
         <span>
           <BarChartOutlined style={{ marginRight: 8 }} />
@@ -381,9 +364,9 @@ const TimelineModule = () => {
         </span>
       ),
       children: (
-        <div>
-          <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="long-term-rhythm-content">
+          <div className="project-selector-bar">
+            <div className="selector-left">
               <Select
                 style={{ width: 300 }}
                 placeholder="选择项目"
@@ -431,16 +414,16 @@ const TimelineModule = () => {
           {selectedProjectId && longTermRhythmProjects.find(p => p.id === selectedProjectId) && (
             <>
               {longTermRhythmProjects.find(p => p.id === selectedProjectId).description && (
-                <div style={{ marginBottom: 16, padding: '12px 16px', background: '#f5f5f5', borderRadius: 6 }}>
+                <div className="project-description-box">
                   {longTermRhythmProjects.find(p => p.id === selectedProjectId).description}
                 </div>
               )}
               <div
-              ref={mermaidRef}
-              className="mermaid-container"
-            />
+                ref={mermaidRef}
+                className="mermaid-wrapper"
+              />
               {longTermRhythmProjects.find(p => p.id === selectedProjectId).updatedAt && (
-                <div style={{ color: '#8c8c8c', fontSize: '12px', marginTop: 16, textAlign: 'center' }}>
+                <div className="last-updated">
                   最后更新：{new Date(longTermRhythmProjects.find(p => p.id === selectedProjectId).updatedAt).toLocaleString()}
                 </div>
               )}
@@ -448,8 +431,9 @@ const TimelineModule = () => {
           )}
 
           {!selectedProjectId && (
-            <div style={{ textAlign: 'center', color: '#8c8c8c', padding: '40px' }}>
-              请选择或新建一个项目
+            <div className="empty-state" style={{ textAlign: 'center', color: '#8c8c8c', padding: '60px' }}>
+              <BarChartOutlined style={{ fontSize: 48, marginBottom: 16, opacity: 0.5 }} />
+              <div>请选择或新建一个长期炒作节奏项目</div>
             </div>
           )}
         </div>
@@ -458,8 +442,8 @@ const TimelineModule = () => {
   ];
 
   return (
-    <div>
-      <Card>
+    <div className="timeline-module">
+      <Card className="timeline-card">
         <Tabs items={tabItems} />
       </Card>
 

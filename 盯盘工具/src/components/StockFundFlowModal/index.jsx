@@ -5,6 +5,7 @@ import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
+import { getThemeColor, getThemeColorRgba } from '../../utils/theme';
 import './index.scss';
 
 const { Text } = Typography;
@@ -13,8 +14,9 @@ const formatTimeToTimestamp = (timeStr) => {
   const padded = String(timeStr).padStart(6, '0');
   const hh = padded.substring(0, 2);
   const mm = padded.substring(2, 4);
+  const ss = padded.substring(4, 6);
   const today = dayjs();
-  return today.hour(Number(hh)).minute(Number(mm)).second(0).unix();
+  return today.hour(Number(hh)).minute(Number(mm)).second(Number(ss)).unix();
 };
 
 const StockFundFlowChart = ({ data = [], height = 450 }) => {
@@ -60,15 +62,18 @@ const StockFundFlowChart = ({ data = [], height = 450 }) => {
       },
       crosshair: {
         mode: 0,
-        vertLine: { labelBackgroundColor: '#1890ff' },
-        horzLine: { labelBackgroundColor: '#1890ff' },
+        vertLine: { labelBackgroundColor: getThemeColor() },
+        horzLine: { labelBackgroundColor: getThemeColor() },
       },
+      handleScroll: false,
+      handleScale: false,
     });
 
+    const themeColor = getThemeColor();
     const areaSeries = chart.addAreaSeries({
-      lineColor: '#1890ff',
-      topColor: 'rgba(24, 144, 255, 0.25)',
-      bottomColor: 'rgba(24, 144, 255, 0.02)',
+      lineColor: themeColor,
+      topColor: getThemeColorRgba(0.25),
+      bottomColor: getThemeColorRgba(0.02),
       lineWidth: 2,
       priceFormat: {
         type: 'price',
@@ -103,21 +108,43 @@ const StockFundFlowChart = ({ data = [], height = 450 }) => {
     });
 
     if (data.length > 0) {
-      const fundData = data
+      // 1. 处理主力资金数据，并按时间去重
+      const rawFundData = data
         .map((item) => ({
           time: formatTimeToTimestamp(item.time),
           value: item.mainFund,
         }))
         .sort((a, b) => a.time - b.time);
+
+      // 去重：只保留同一秒内的最后一个点
+      const fundData = [];
+      for (let i = 0; i < rawFundData.length; i++) {
+        if (i === 0 || rawFundData[i].time !== rawFundData[i - 1].time) {
+          fundData.push(rawFundData[i]);
+        } else {
+          // 如果时间相同，用最新的值覆盖
+          fundData[fundData.length - 1] = rawFundData[i];
+        }
+      }
       areaSeries.setData(fundData);
 
-      const changeData = data
+      // 2. 处理涨幅数据，并按时间去重
+      const rawChangeData = data
         .filter(item => item.change !== undefined && item.change !== null)
         .map((item) => ({
           time: formatTimeToTimestamp(item.time),
           value: item.change,
         }))
         .sort((a, b) => a.time - b.time);
+
+      const changeData = [];
+      for (let i = 0; i < rawChangeData.length; i++) {
+        if (i === 0 || rawChangeData[i].time !== rawChangeData[i - 1].time) {
+          changeData.push(rawChangeData[i]);
+        } else {
+          changeData[changeData.length - 1] = rawChangeData[i];
+        }
+      }
       changeSeries.setData(changeData);
 
       chart.timeScale().fitContent();
@@ -225,7 +252,7 @@ const StockFundFlowModal = ({ visible, onCancel, stockInfo = {}, code }) => {
     <Modal
       title={
         <Space>
-          <LineChartOutlined style={{ color: '#1890ff' }} />
+          <LineChartOutlined style={{ color: getThemeColor() }} />
           <span>主力资金净流入</span>
           {stockInfo.name && <Text strong>{stockInfo.name}</Text>}
           {stockInfo.code && <Text type="secondary">({stockInfo.code})</Text>}

@@ -1,0 +1,944 @@
+// ==================== 页面布局：左列 70% / 右列 30% ====================
+.opening-battle-container {
+  padding: 16px 20px 32px;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #f8fafc 0%, #f1f5f9 40%, #e8ecf1 100%);
+
+  .ob-page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.02em;
+
+    .anticon {
+      color: #e11d48;
+      font-size: 20px;
+    }
+  }
+
+  .ob-layout {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .ob-left-col {
+    width: 70%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .ob-right-col {
+    width: 30%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  // 左列底部：持仓分时图 60% + 3日涨幅榜 40%
+  .ob-bottom-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .ob-bottom-col-intraday {
+    flex: 0 0 60%;
+    min-width: 0;
+  }
+
+  .ob-bottom-col-rank {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+// ==================== Card Base ====================
+.ob-module {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(18, 33, 58, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ob-module-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ob-module-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: 0.01em;
+
+  .ob-module-icon {
+    color: #e11d48;
+    font-size: 15px;
+    opacity: 0.85;
+  }
+}
+
+.ob-total-tag {
+  font-size: 11px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 10px;
+  border-radius: 100px;
+  border: 1px solid rgba(18, 33, 58, 0.06);
+  flex-shrink: 0;
+}
+
+// ==================== Colors ====================
+.ob-up { color: #e11d48; }
+.ob-down { color: #059669; }
+.ob-vs {
+  color: #cbd5e1;
+  font-size: 11px;
+  margin: 0 4px;
+}
+
+.ob-count-pair {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+
+  .ob-count-num {
+    font-weight: 700;
+  }
+}
+
+.ob-empty-mini {
+  font-size: 12px;
+  color: #cbd5e1;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.ob-rank {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.ob-rank-top {
+  background: linear-gradient(135deg, #e11d48, #f43f5e);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(225, 29, 72, 0.2);
+}
+
+.ob-stock-name {
+  color: #334155;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ob-change-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+// ==================== 开盘拉升斜率（供其他页面复用） ====================
+.ob-slope-body {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  flex: 1;
+}
+
+.ob-slope-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.ob-slope-col-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.01em;
+}
+
+.ob-slope-head {
+  display: grid;
+  grid-template-columns: 22px 1fr 1fr 1fr 1fr;
+  gap: 8px;
+  font-size: 10px;
+  color: #94a3b8;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(18, 33, 58, 0.06);
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  span {
+    text-align: right;
+    &:first-child { text-align: left; }
+    &:nth-child(2) { text-align: left; }
+  }
+}
+
+.ob-slope-row {
+  display: grid;
+  grid-template-columns: 22px 1fr 1fr 1fr 1fr;
+  gap: 8px;
+  font-size: 12px;
+  padding: 4px 0;
+  align-items: center;
+  border-bottom: 1px solid rgba(18, 33, 58, 0.03);
+
+  &:last-child { border-bottom: none; }
+
+  &:hover {
+    background: rgba(18, 33, 58, 0.02);
+  }
+
+  .ob-change-cell,
+  span:nth-child(5) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+}
+
+.ob-slope-divider {
+  width: 1px;
+  background: rgba(18, 33, 58, 0.06);
+}
+
+// ==================== 开盘统计（供其他页面复用） ====================
+.ob-stat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  justify-content: center;
+}
+
+.ob-stat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(18, 33, 58, 0.05);
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.ob-stat-label {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 500;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ob-stat-pair {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+
+  .ob-up,
+  .ob-down {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+
+    em {
+      font-size: 18px;
+      font-weight: 800;
+      font-style: normal;
+      font-variant-numeric: tabular-nums;
+    }
+
+    small {
+      font-size: 10px;
+      font-weight: 400;
+      color: #94a3b8;
+    }
+  }
+
+  .ob-up:not(:has(small)) {
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .ob-down:not(:has(small)) {
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// ==================== 主力资金 & 成交量（左列三行） ====================
+.ob-fund-module {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  // 第一行：主力资金 + 资金明细
+  .ob-fund-row-top {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .ob-fund-chart-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  // 第二行：成交量整行
+  .ob-fund-row-bottom {
+    min-width: 0;
+  }
+
+  .ob-fund-chart-volume {
+    width: 100%;
+  }
+
+  .ob-fund-chart-body-volume {
+    height: 230px !important;
+  }
+
+  .ob-fund-chart-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(18, 33, 58, 0.06);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .ob-fund-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(18, 33, 58, 0.04);
+    background: rgba(248, 250, 252, 0.6);
+  }
+
+  .ob-fund-chart-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .ob-fund-chart-value {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+  }
+
+  .ob-fund-chart-body {
+    height: 230px;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .ob-fund-detail {
+    flex: 0 0 220px;
+    height: 260px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(18, 33, 58, 0.06);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .ob-fund-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(18, 33, 58, 0.04);
+    background: rgba(248, 250, 252, 0.6);
+    flex-shrink: 0;
+  }
+
+  .ob-fund-detail-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .ob-fund-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ob-fund-switch-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #475569;
+    cursor: pointer;
+  }
+
+  .ob-fund-table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 6px;
+
+    &::-webkit-scrollbar { width: 3px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-thumb { background: rgba(18, 33, 58, 0.1); border-radius: 2px; }
+
+    .data-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      border: 1px solid rgba(18, 33, 58, 0.04);
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.6);
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      &.up .item-value { color: #e11d48; }
+      &.down .item-value { color: #059669; }
+      &.big-outflow { background: rgba(5, 150, 105, 0.06); }
+      &.big-inflow { background: rgba(225, 29, 72, 0.06); }
+
+      .item-time {
+        font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+        color: #64748b;
+        min-width: 56px;
+      }
+
+      .item-value {
+        font-weight: 600;
+        min-width: 80px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .item-diff {
+        font-size: 10px;
+        margin-left: 2px;
+
+        &.up { color: #e11d48; }
+        &.down { color: #059669; }
+        &.big-outflow-text { font-weight: 700; }
+        &.big-inflow-text { font-weight: 700; }
+      }
+    }
+  }
+}
+
+// ==================== 持仓股分时图 ====================
+.ob-intraday-module {
+  .ob-intraday-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    min-width: 0;
+
+    &.two {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .ob-intraday-chart-card {
+    min-width: 0;
+    border: 1px solid rgba(18, 33, 58, 0.06);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .ob-intraday-chart-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(18, 33, 58, 0.04);
+    background: rgba(248, 250, 252, 0.6);
+    font-size: 12px;
+  }
+
+  .ob-intraday-chart-name {
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ob-intraday-chart-code {
+    color: #94a3b8;
+    font-size: 11px;
+    font-family: monospace;
+  }
+
+  .ob-intraday-chart-change {
+    margin-left: auto;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ob-intraday-chart-body {
+    height: 200px;
+    position: relative;
+  }
+}
+
+// ==================== 3日涨幅排行榜 ====================
+.ob-rank3-module {
+  .ob-rank3-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ob-rank3-head {
+    display: grid;
+    grid-template-columns: 22px 1fr 1fr 1fr;
+    gap: 8px;
+    font-size: 10px;
+    color: #94a3b8;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(18, 33, 58, 0.06);
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    span {
+      text-align: right;
+      &:first-child { text-align: left; }
+      &:nth-child(2) { text-align: left; }
+    }
+  }
+
+  .ob-rank3-row {
+    display: grid;
+    grid-template-columns: 22px 1fr 1fr 1fr;
+    gap: 8px;
+    font-size: 12px;
+    padding: 10px 0;
+    align-items: center;
+    border-bottom: 1px solid rgba(18, 33, 58, 0.03);
+
+    &:last-child { border-bottom: none; }
+
+    &:hover {
+      background: rgba(18, 33, 58, 0.02);
+    }
+  }
+}
+
+// ==================== 买点 / 卖点诊断卡片 ====================
+.ob-diagnosis-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid rgba(18, 33, 58, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: calc(50vh - 40px);
+  overflow: hidden;
+
+  .ob-diagnosis-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(18, 33, 58, 0.06);
+    flex-shrink: 0;
+    gap: 8px;
+  }
+
+  .ob-diagnosis-actions {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ob-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid rgba(18, 33, 58, 0.12);
+    background: #fff;
+    color: #64748b;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+
+    &:hover {
+      color: #e11d48;
+      border-color: rgba(225, 29, 72, 0.35);
+      background: rgba(225, 29, 72, 0.04);
+    }
+  }
+
+  .ob-status-badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 3px 12px;
+    border-radius: 100px;
+    border: 1px solid rgba(18, 33, 58, 0.06);
+    white-space: nowrap;
+
+    &.hit {
+      color: #cf1322;
+      background: rgba(225, 29, 72, 0.1);
+      border-color: rgba(225, 29, 72, 0.2);
+    }
+  }
+
+  .ob-diagnosis-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-thumb { background: rgba(18, 33, 58, 0.12); border-radius: 2px; }
+  }
+
+  .ob-diagnosis-loading {
+    padding: 30px 0;
+    text-align: center;
+  }
+}
+
+// 买点检查项（样式完全对齐卖点条件卡 .ob-sell-cond）
+.ob-buy-check {
+  display: grid;
+  grid-template-columns: 18px auto auto;
+  align-items: center;
+  column-gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(18, 33, 58, 0.06);
+
+  &.passed { background: rgba(5, 150, 105, 0.04); border-color: rgba(5, 150, 105, 0.15); }
+  &.failed { background: rgba(225, 29, 72, 0.05); border-color: rgba(225, 29, 72, 0.2); }
+  &.exempted { background: rgba(250, 173, 20, 0.06); border-color: rgba(250, 173, 20, 0.25); }
+
+  .ob-buy-check-icon {
+    font-size: 14px;
+    grid-row: span 2;
+  }
+  &.passed .ob-buy-check-icon { color: #52c41a; }
+  &.failed .ob-buy-check-icon { color: #cf1322; }
+  &.exempted .ob-buy-check-icon { color: #fa8c16; }
+
+  .ob-buy-check-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+  }
+
+  .ob-buy-check-badge {
+    justify-self: end;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 999px;
+    color: #fff;
+    white-space: nowrap;
+
+    &.passed { background: #52c41a; }
+    &.failed { background: #ff4d4f; }
+    &.exempted { background: #fa8c16; }
+  }
+
+  .ob-buy-check-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    grid-column: 2 / -1;
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.6;
+
+    b {
+      color: #12213a;
+      font-weight: 600;
+      margin-right: 6px;
+    }
+  }
+}
+
+.ob-conclusion {
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  background: #f0f9ff;
+  border: 1px solid rgba(22, 119, 255, 0.2);
+  color: #0958d9;
+
+  &.hit {
+    background: #fff1f0;
+    border-color: rgba(255, 77, 79, 0.3);
+    color: #cf1322;
+    font-weight: 600;
+  }
+}
+
+// 卖点持仓卡片
+.ob-sell-stock {
+  border: 1px solid rgba(18, 33, 58, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  flex-shrink: 0;
+
+  &.hit {
+    border-color: rgba(255, 77, 79, 0.4);
+    box-shadow: 0 0 0 1px rgba(255, 77, 79, 0.08);
+  }
+
+  .ob-sell-stock-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(248, 250, 252, 0.7);
+    border-bottom: 1px solid rgba(18, 33, 58, 0.05);
+  }
+
+  .ob-sell-stock-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: #12213a;
+  }
+
+  .ob-sell-stock-code {
+    font-size: 11px;
+    color: #94a3b8;
+    font-family: monospace;
+  }
+
+  .ob-sell-stock-change {
+    font-weight: 700;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ob-sell-stock-tag {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    &.safe { color: #1677ff; background: rgba(22, 119, 255, 0.08); }
+    &.hit { color: #cf1322; background: rgba(225, 29, 72, 0.1); }
+  }
+
+  .ob-sell-stock-conds {
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ob-sell-cond {
+    display: grid;
+    grid-template-columns: 18px auto auto;
+    align-items: center;
+    column-gap: 8px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(18, 33, 58, 0.06);
+
+    &.safe { background: rgba(5, 150, 105, 0.04); border-color: rgba(5, 150, 105, 0.15); }
+    &.hit { background: rgba(225, 29, 72, 0.05); border-color: rgba(225, 29, 72, 0.2); }
+    &.pending { background: rgba(250, 173, 20, 0.06); border-color: rgba(250, 173, 20, 0.25); }
+
+    .ob-sell-cond-icon {
+      font-size: 14px;
+      grid-row: span 2;
+    }
+    &.safe .ob-sell-cond-icon { color: #52c41a; }
+    &.hit .ob-sell-cond-icon { color: #cf1322; }
+    &.pending .ob-sell-cond-icon { color: #fa8c16; }
+
+    .ob-sell-cond-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .ob-sell-cond-badge {
+      justify-self: end;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 8px;
+      border-radius: 999px;
+      color: #fff;
+      white-space: nowrap;
+    }
+    &.safe .ob-sell-cond-badge { background: #52c41a; }
+    &.hit .ob-sell-cond-badge { background: #ff4d4f; }
+    &.pending .ob-sell-cond-badge { background: #fa8c16; }
+
+    .ob-sell-cond-detail {
+      grid-column: 2 / -1;
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+  }
+}
+
+// ==================== 弹窗 ====================
+.ob-alert-modal {
+  .ant-modal-content {
+    border-radius: 14px;
+  }
+
+  .ob-alert-content {
+    .ob-alert-big {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .ob-alert-stock {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(225, 29, 72, 0.2);
+      background: rgba(225, 29, 72, 0.04);
+      margin-bottom: 10px;
+
+      .ob-alert-stock-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+
+      .ob-alert-stock-code {
+        font-size: 12px;
+        color: #94a3b8;
+        font-family: monospace;
+      }
+    }
+
+    .ob-alert-reason {
+      font-size: 13px;
+      color: #595959;
+      line-height: 1.7;
+      margin-bottom: 10px;
+      word-break: break-word;
+    }
+
+    .ob-alert-sub {
+      font-size: 12px;
+      color: #8c8c8c;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(18, 33, 58, 0.1);
+      line-height: 1.6;
+    }
+
+    .ob-alert-time {
+      font-size: 11px;
+      color: #b0b8c4;
+      margin-top: 8px;
+    }
+  }
+}
+
+// ==================== 响应式 ====================
+@media (max-width: 1280px) {
+  .opening-battle-container {
+    .ob-left-col {
+      width: 74%;
+    }
+
+    .ob-right-col {
+      width: 26%;
+    }
+  }
+}
+
+@media (max-width: 992px) {
+  .opening-battle-container {
+    .ob-layout {
+      flex-direction: column;
+    }
+
+    .ob-left-col,
+    .ob-right-col {
+      width: 100%;
+    }
+
+    .ob-bottom-row {
+      flex-direction: column;
+    }
+
+    .ob-bottom-col-intraday,
+    .ob-bottom-col-rank {
+      flex: none;
+      width: 100%;
+    }
+
+    .ob-diagnosis-card {
+      height: calc(60vh - 40px);
+    }
+  }
+}

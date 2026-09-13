@@ -2,7 +2,9 @@
 
 const { getDFCFBlockMoneyUrl, sleep, getDFCFBlockMoneyIndustryUrl } = require('../utils');
 const axios = require('axios');
-const { default: blockMoneyList } = require('../constant/block_money');
+const blockMoneyConfig = require('../constant/block_money');
+const blockMoneyList = blockMoneyConfig.default;
+const techBlockList = blockMoneyConfig.techBlockList;
 const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
@@ -10,39 +12,70 @@ const dayjs = require('dayjs');
 const blockMoneyPath = path.join(__dirname, '../data/blockMoneyChange.json');
 const blockMoneyTimePath = path.join(__dirname, '../data/blockMoneyChangeTime.json');
 const blockMoneyDayHistoryPath = path.join(__dirname, '../data/block_money_change_day_history.json');
+const techBlockRatioPath = path.join(__dirname, '../data/tech_block_ratio.json');
 
-const MAX_DAY_HISTORY = 30;
+const MAX_DAY_HISTORY = 90;
 
 
 // 每隔 10s 轮询一次接口，将数据存储到本地的 src/data/blockMoneyChange.json 中
 const pollDFCFBlockMoney = async (interval = 10000) => {
     setInterval(async () => {
-        const res = await axios.get(getDFCFBlockMoneyUrl());
-        const totalBlockMoneyChangeList = res.data.data.diff;
-        const blockMoneyChangeList = totalBlockMoneyChangeList.filter(item => blockMoneyList.includes(item.f14));
-        const result = blockMoneyChangeList.map(item => ({
-            money: item.f62,
-            block: item.f14,
-            blockCode: item.f13 + '.' + item.f12,
-            jumpUrl: `https://quote.eastmoney.com/center/gridlist.html#boards2-${item.f13 + '.' + item.f12}`,
-        }));
+        try {
+            const res = await axios.get(getDFCFBlockMoneyUrl());
+            const totalBlockMoneyChangeList = res.data.data.diff;
+            const blockMoneyChangeList = totalBlockMoneyChangeList.filter(item => blockMoneyList.includes(item.f14));
+            const result = blockMoneyChangeList.map(item => ({
+                money: item.f62,
+                block: item.f14,
+                blockCode: item.f13 + '.' + item.f12,
+                jumpUrl: `https://quote.eastmoney.com/center/gridlist.html#boards2-${item.f13 + '.' + item.f12}`,
+            }));
 
-        const res2 = await axios.get(getDFCFBlockMoneyIndustryUrl());
-        const totalBlockMoneyIndustryChangeList = res2.data.data.diff;
-        const industryBlockMoneyChangeList = totalBlockMoneyIndustryChangeList.filter(item => blockMoneyList.includes(item.f14));
-        const industryResult = industryBlockMoneyChangeList.map(item => ({
-            money: item.f62,
-            block: item.f14,
-            blockCode: item.f13 + '.' + item.f12,
-            jumpUrl: `https://quote.eastmoney.com/center/gridlist.html#boards2-${item.f13 + '.' + item.f12}`,
-        }));
+            const res2 = await axios.get(getDFCFBlockMoneyIndustryUrl());
+            const totalBlockMoneyIndustryChangeList = res2.data.data.diff;
+            const industryBlockMoneyChangeList = totalBlockMoneyIndustryChangeList.filter(item => blockMoneyList.includes(item.f14));
+            const industryResult = industryBlockMoneyChangeList.map(item => ({
+                money: item.f62,
+                block: item.f14,
+                blockCode: item.f13 + '.' + item.f12,
+                jumpUrl: `https://quote.eastmoney.com/center/gridlist.html#boards2-${item.f13 + '.' + item.f12}`,
+            }));
 
-        fs.writeFileSync(blockMoneyPath, JSON.stringify([...result, ...industryResult], null, 2));
+            const filteredResult = [...result, ...industryResult];
+            fs.writeFileSync(blockMoneyPath, JSON.stringify(filteredResult, null, 2));
+
+            const allBlockData = [
+                ...totalBlockMoneyChangeList.map(item => ({
+                    money: item.f62,
+                    block: item.f14,
+                })),
+                ...totalBlockMoneyIndustryChangeList.map(item => ({
+                    money: item.f62,
+                    block: item.f14,
+                })),
+            ];
+
+            const totalMoney = allBlockData.reduce((sum, item) => sum + Math.abs(item.money || 0), 0);
+            const techBlockMoney = allBlockData
+                .filter(item => techBlockList.includes(item.block))
+                .reduce((sum, item) => sum + Math.abs(item.money || 0), 0);
+            const techRatio = totalMoney > 0 ? (techBlockMoney / totalMoney * 100) : 0;
+
+            fs.writeFileSync(techBlockRatioPath, JSON.stringify({
+                totalMoney,
+                techBlockMoney,
+                techRatio: parseFloat(techRatio.toFixed(2)),
+                timestamp: Date.now(),
+            }, null, 2));
+        } catch (error) {
+            console.error("轮询板块资金数据失败:", error.message);
+        }
     }, interval);
 };
 
-const  pollTimeDFCFBlockMoneyChange = (interval = 300000) => {
-    setInterval(() => {
+// 10:00 之前每 30s 记录一次板块资金快照，10:00 之后每 3min 记录一次
+const pollTimeDFCFBlockMoneyChange = (beforeInterval = 30000, afterInterval = 180000, switchHour = 10) => {
+    const fetchAndSave = () => {
         const time = dayjs().format('HHmmss');
         const blockMoneyChangeData = JSON.parse(fs.readFileSync(blockMoneyPath, 'utf-8') || '[]');
         const data = fs.readFileSync(blockMoneyTimePath, 'utf-8') || '[]';
@@ -53,21 +86,30 @@ const  pollTimeDFCFBlockMoneyChange = (interval = 300000) => {
         }
         dataJson.push(result);
         fs.writeFileSync(blockMoneyTimePath, JSON.stringify(dataJson));
-    }, interval);
+    };
+
+    // 根据当前时间决定轮询间隔：switchHour 前用 beforeInterval，之后用 afterInterval
+    const getInterval = () => {
+        const now = new Date();
+        return now.getHours() < switchHour ? beforeInterval : afterInterval;
+    };
+
+    // 立即执行首次
+    fetchAndSave();
+
+    // 递归 setTimeout，支持动态切换间隔
+    const scheduleNext = () => {
+        setTimeout(() => {
+            fetchAndSave();
+            scheduleNext();
+        }, getInterval());
+    };
+    scheduleNext();
 };
 
-let num = 0;
 const getBlockMoneyChangeList = () => {
     const prevContent = fs.readFileSync(blockMoneyPath, 'utf-8') || '[]';
     const prevContentJson = JSON.parse(prevContent);
-    // if (num === 0) {
-    //     num++;
-    //     // prevContentJson[0].money += 10000000000;
-    //      prevContentJson[1].money -= 10000000000;
-    //      prevContentJson[2].money += 10000000000;
-    //      prevContentJson[3].money -= 10000000000;
-    //     return prevContentJson;
-    // }
     return prevContentJson;
 };
 
@@ -77,22 +119,35 @@ const getBlockMoneyChangeTimeList = () => {
     return prevContentJson;
 };
 
+const getTechBlockRatio = () => {
+    const content = fs.existsSync(techBlockRatioPath) ? (fs.readFileSync(techBlockRatioPath, 'utf-8') || '{}') : '{}';
+    return JSON.parse(content);
+};
+
 // 读取按天维度的板块资金历史记录
 const getBlockMoneyChangeDayHistory = () => {
     const content = fs.existsSync(blockMoneyDayHistoryPath) ? (fs.readFileSync(blockMoneyDayHistoryPath, 'utf-8') || '[]') : '[]';
     return JSON.parse(content);
 };
 
-// 收盘后把当日最新的板块资金数据写入按天维度的历史文件，最多保留近 30 天
+// 收盘后把当日最新的板块资金数据写入按天维度的历史文件，最多保留近 90 天
 const updateBlockMoneyChangeDayHistory = () => {
     const currentList = getBlockMoneyChangeList();
     if (!Array.isArray(currentList) || currentList.length === 0) {
         throw new Error('当日暂无板块资金数据，无法记录收盘历史');
     }
 
+    const techBlockRatio = getTechBlockRatio();
+
     const dayHistory = getBlockMoneyChangeDayHistory();
     const today = dayjs().format('YYYYMMDD');
-    const record = { date: today, data: currentList };
+    const record = { 
+        date: today, 
+        data: currentList,
+        techRatio: techBlockRatio.techRatio || 0,
+        totalMoney: techBlockRatio.totalMoney || 0,
+        techBlockMoney: techBlockRatio.techBlockMoney || 0,
+    };
 
     // 同一天重复记录则覆盖
     const existingIndex = dayHistory.findIndex(item => item.date === today);
@@ -103,7 +158,7 @@ const updateBlockMoneyChangeDayHistory = () => {
         dayHistory.unshift(record);
     }
 
-    // 超过 30 天的最早数据剔除
+    // 超过 90 天的最早数据剔除
     const trimmed = dayHistory.slice(0, MAX_DAY_HISTORY);
 
     fs.writeFileSync(blockMoneyDayHistoryPath, JSON.stringify(trimmed, null, 2));
@@ -159,3 +214,4 @@ exports.getBlockMoneyChangeTimeList = getBlockMoneyChangeTimeList;
 exports.getBlockMoneyChangeDayHistory = getBlockMoneyChangeDayHistory;
 exports.updateBlockMoneyChangeDayHistory = updateBlockMoneyChangeDayHistory;
 exports.scheduleBlockMoneyChangeDayHistory = scheduleBlockMoneyChangeDayHistory;
+exports.getTechBlockRatio = getTechBlockRatio;

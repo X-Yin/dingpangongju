@@ -1,0 +1,532 @@
+.stock-statistics-panel {
+  padding: 8px 4px 4px;
+
+  .statistics-summary {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: stretch;
+
+    .stat-distribution-card {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid rgba(18, 33, 58, 0.06);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.88);
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+      .stat-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #12213a;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .distribution-body {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .donut-wrap {
+        position: relative;
+        flex: 0 0 150px;
+        width: 150px;
+        height: 150px;
+
+        svg {
+          display: block;
+          overflow: visible;
+        }
+
+        .donut-segment {
+          cursor: pointer;
+          transition: opacity 0.18s ease, transform 0.18s ease, filter 0.18s ease;
+          transform-origin: 100px 100px;
+          opacity: 1;
+
+          &.active {
+            filter: drop-shadow(0 0 4px rgba(18, 33, 58, 0.25));
+            transform: scale(1.04);
+          }
+
+          &.dimmed {
+            opacity: 0.35;
+          }
+        }
+
+        .donut-center {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          text-align: center;
+          pointer-events: none;
+          line-height: 1.2;
+
+          .donut-center-num {
+            font-size: 22px;
+            font-weight: 800;
+            font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+            color: #12213a;
+            letter-spacing: -0.02em;
+          }
+
+          .donut-center-label {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 2px;
+          }
+
+          .donut-center-pct {
+            font-size: 11px;
+            color: #94a3b8;
+            font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+            margin-top: 1px;
+          }
+        }
+      }
+
+      .range-legend {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        .range-legend-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 4px 8px;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: background 0.18s ease;
+
+          &:hover,
+          &.active {
+            background: rgba(18, 33, 58, 0.05);
+          }
+
+          .range-color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            flex-shrink: 0;
+          }
+
+          .range-label {
+            font-size: 12px;
+            color: #475569;
+            flex: 1;
+            white-space: nowrap;
+          }
+
+          .range-count {
+            font-size: 13px;
+            font-weight: 700;
+            font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+            color: #12213a;
+            font-variant-numeric: tabular-nums;
+            min-width: 28px;
+            text-align: right;
+          }
+
+          .range-pct {
+            font-size: 11px;
+            color: #94a3b8;
+            font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+            font-variant-numeric: tabular-nums;
+            min-width: 44px;
+            text-align: right;
+          }
+        }
+      }
+    }
+
+    .stat-limit-card {
+      flex: 0 0 560px;
+      border: 1px solid rgba(18, 33, 58, 0.06);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.88);
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+      .stat-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #12213a;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .limit-summary-row {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 12px;
+
+        .limit-total-item {
+          flex: 1;
+          text-align: center;
+          padding: 10px 8px;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: box-shadow 0.18s ease, transform 0.18s ease;
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 99, 140, 0.12);
+          }
+
+          &.up {
+            background: rgba(225, 29, 72, 0.08);
+            border: 1px solid rgba(225, 29, 72, 0.2);
+          }
+
+          &.down {
+            background: rgba(5, 150, 105, 0.08);
+            border: 1px solid rgba(5, 150, 105, 0.2);
+          }
+
+          .limit-total-num {
+            font-size: 24px;
+            font-weight: 800;
+            font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+            line-height: 1.1;
+
+            &.up {
+              color: #e11d48;
+            }
+
+            &.down {
+              color: #059669;
+            }
+          }
+
+          .limit-total-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+          }
+        }
+      }
+
+      .limit-board-table {
+        width: 100%;
+        border-collapse: collapse;
+
+        td {
+          padding: 6px 8px;
+          font-size: 13px;
+          border-bottom: 1px dashed rgba(148, 163, 184, 0.18);
+        }
+
+        td:last-child {
+          text-align: right;
+        }
+
+        .board-tag {
+          display: inline-block;
+          padding: 1px 8px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 600;
+          color: #fff;
+        }
+
+        .board-tag.main {
+          background: #3b82f6;
+        }
+
+        .board-tag.cyb {
+          background: #8b5cf6;
+        }
+
+        .board-tag.kcb {
+          background: #06b6d4;
+        }
+
+        .limit-up-num,
+        .limit-down-num {
+          font-weight: 700;
+          font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+        }
+
+        .limit-up-num {
+          color: #e11d48;
+        }
+
+        .limit-down-num {
+          color: #059669;
+        }
+
+        .limit-hoverable {
+          cursor: pointer;
+          padding: 2px 4px;
+          border-radius: 4px;
+          transition: background 0.18s ease;
+
+          &:hover {
+            background: rgba(18, 33, 58, 0.06);
+          }
+        }
+      }
+    }
+  }
+
+  .statistics-sectors {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .sector-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #12213a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    .sector-card {
+      border: 1px solid rgba(18, 33, 58, 0.06);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+
+      .sector-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 12px;
+
+        .sector-name-cell {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 0;
+
+          .sector-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #12213a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .sector-count.ant-tag {
+            margin: 0;
+            padding: 0 7px;
+            font-size: 10px;
+            height: 16px;
+            line-height: 14px;
+            border-radius: 999px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.22);
+            color: #3b82f6;
+            font-weight: 600;
+          }
+        }
+
+        .sector-avg {
+          font-size: 13px;
+          font-weight: 800;
+          font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+          font-variant-numeric: tabular-nums;
+          letter-spacing: -0.02em;
+
+          &.up {
+            color: #e11d48;
+          }
+
+          &.down {
+            color: #059669;
+          }
+        }
+      }
+
+      .sector-stock-list {
+        padding: 6px 10px 10px;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+        border-top: 1px dashed rgba(148, 163, 184, 0.18);
+        margin-top: 2px;
+
+        .sector-stock-item {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 5px 9px;
+          cursor: pointer;
+          border-radius: 9px;
+          border: 1px solid rgba(18, 33, 58, 0.06);
+          background: rgba(255, 255, 255, 0.88);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+          min-width: 150px;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.98);
+            border-color: rgba(18, 33, 58, 0.12);
+            box-shadow: 0 6px 16px rgba(74, 99, 140, 0.1);
+            transform: translateY(-1px);
+          }
+
+          .sector-stock-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #12213a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            min-width: 0;
+          }
+
+          .sector-stock-code {
+            font-size: 10px;
+            color: #8a97ae;
+            font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+            white-space: nowrap;
+            flex-shrink: 0;
+          }
+
+          .sector-stock-change {
+            font-size: 12px;
+            font-weight: 800;
+            font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+            flex-shrink: 0;
+            min-width: 48px;
+            text-align: right;
+
+            &.up {
+              color: #e11d48;
+            }
+
+            &.down {
+              color: #059669;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// 涨停/跌停 tooltip 内容（挂载在 body 下，需脱离 .stock-statistics-panel 作用域）
+.limit-tooltip-content {
+  width: 280px;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+
+  .limit-tooltip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    font-weight: 700;
+    color: #12213a;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(18, 33, 58, 0.03);
+    border-radius: 8px 8px 0 0;
+
+    .limit-tooltip-count {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+    }
+  }
+
+  .limit-tooltip-list {
+    overflow-y: auto;
+    max-height: 270px;
+    padding: 4px;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.4);
+      border-radius: 3px;
+    }
+  }
+
+  .limit-tooltip-empty {
+    display: block;
+    text-align: center;
+    padding: 12px;
+    color: #94a3b8;
+    font-size: 12px;
+  }
+
+  .limit-tooltip-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: rgba(18, 33, 58, 0.06);
+    }
+
+    .limit-tooltip-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #12213a;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .limit-tooltip-code {
+      font-size: 10px;
+      color: #8a97ae;
+      font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+      flex-shrink: 0;
+    }
+
+    .limit-tooltip-change {
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+      min-width: 52px;
+      text-align: right;
+
+      &.up {
+        color: #e11d48;
+      }
+
+      &.down {
+        color: #059669;
+      }
+    }
+  }
+}

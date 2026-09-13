@@ -1,18 +1,40 @@
 import { useEffect, useState, useMemo, useRef } from "react";
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Card, Row, Col, Tag, Typography, Empty, Space, Divider, Button, Modal, List, Badge, Spin, Alert, Input, Tooltip, Tabs } from 'antd';
-const { TabPane } = Tabs;
-import { StockOutlined, LineChartOutlined, ClockCircleOutlined, HistoryOutlined, AlertOutlined, RiseOutlined, FallOutlined, AreaChartOutlined, WarningOutlined, SearchOutlined, CaretUpOutlined, CaretDownOutlined, ThunderboltOutlined, CloseOutlined, ArrowUpOutlined, ArrowDownOutlined, FireOutlined, DollarOutlined, PlusOutlined, DeleteOutlined, StarOutlined, StarFilled } from '@ant-design/icons';
+import { Row, Col, Spin, Modal, message } from 'antd';
+import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { createChart, ColorType } from 'lightweight-charts';
+import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import { local_ip } from '../../constant';
 import StockKLineModal from '../../components/StockKLineModal';
-import CustomGantt from '../shichangdiaoyan/components/CustomGantt';
+import IndexOverlayTline from '../../components/IndexOverlayTline';
 import { useEmotionSuggestion } from '../../hooks/emotion';
+import { getThemeColor } from '../../utils/theme';
+import TopGlobalAlerts from './components/TopGlobalAlerts';
+import PageMeta from './components/PageMeta';
+import MainMoneyCharts from './components/MainMoneyCharts';
+import OpeningBattleCards from './components/OpeningBattleCards';
+import BlockRankingCards from './components/BlockRankingCards';
+import WatchlistTopRanking from './components/WatchlistTopRanking';
+import StockAlertCard from './components/StockAlertCard';
+import BlockAlertCard from './components/BlockAlertCard';
+import OverlayTimelineSection from './components/OverlayTimelineSection';
+import StockChangeMonitor from './components/StockChangeMonitor';
+import BlockMoneyMonitor from './components/BlockMoneyMonitor';
+import RihanMonitor from './components/RihanMonitor';
+import WatchlistMonitor from './components/WatchlistMonitor';
+import HistoryModal from './components/HistoryModal';
+import GoodNewsModal from './components/GoodNewsModal';
+import LogicExploreModal from './components/LogicExploreModal';
+import AddStockModal from './components/AddStockModal';
+import RenameStockModal from './components/RenameStockModal';
+import IndexOverlayFullscreenModal from './components/IndexOverlayFullscreenModal';
+import BuyPointDiagnosisModal from './components/BuyPointDiagnosisModal';
+import ThemeColorModal from './components/ThemeColorModal';
+import { DEFAULT_THEME_COLOR } from './utils/themeColor';
+import { fetchAndCopyContext } from './utils/copyContext';
 import './index.scss';
-
-const { Title, Text } = Typography;
 
 const colorMap = {
     lowGreen: '#00B42A',
@@ -43,10 +65,35 @@ const filterTradingSessionHistoryData = (records) => {
     return records.filter(([time]) => !isInMiddayBreak(time));
 };
 
-const DingPan = () => {
-        const navigate = useNavigate();
+const isAfterMarketClose = () => {
+    const now = dayjs();
+    const dayOfWeek = now.day();
+    if (dayOfWeek === 0 || dayOfWeek === 6) return true;
+    const currentHour = now.hour();
+    const currentMinute = now.minute();
+    return currentHour < 9 || (currentHour === 9 && currentMinute < 15) || currentHour >= 15 || (currentHour === 14 && currentMinute >= 59);
+};
 
-        const [data, setData] = useState({ unNormalDaPanData: [], unNormalStockList: [], diagnoseData: [], topAndBottomBlockData: null, allStockData: {}, amountInfo: null, jingJiaQiangChouData: [], kaiPanZhuDongData: [], kaiPanXiaCuoData: [] });
+// 判断当前是否在交易时段内（周末和非交易时间不提醒）
+const isWithinTradingHours = () => {
+    const now = dayjs();
+    const dayOfWeek = now.day(); // 0 (周日) 到 6 (周六)
+    if (dayOfWeek === 0 || dayOfWeek === 6) return false; // 周末不提醒
+
+    const timeMinutes = now.hour() * 60 + now.minute();
+    // 交易时段：9:15-11:30, 13:00-15:00
+    if (timeMinutes >= 9 * 60 + 15 && timeMinutes <= 11 * 60 + 30) return true;
+    if (timeMinutes >= 13 * 60 && timeMinutes <= 15 * 60) return true;
+    return false;
+};
+
+const DingPan = () => {
+    const navigate = useNavigate();
+
+    // 功能开关：板块异动监控模块（设为true可重新启用）
+    const SHOW_BLOCK_ALERT_MONITOR = false;
+
+    const [data, setData] = useState({ unNormalDaPanData: [], unNormalStockList: [], diagnoseData: [], topAndBottomBlockData: null, allStockData: {}, amountInfo: null, jingJiaQiangChouData: [], kaiPanZhuDongData: [], kaiPanXiaCuoData: [], openingPrices: null });
     const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState(null);
     const [history, setHistory] = useState([]); // 记录所有发生过的急速异动
@@ -54,16 +101,77 @@ const DingPan = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [klineModalVisible, setKlineModalVisible] = useState(false);
     const [selectedStock, setSelectedStock] = useState(null);
+    const [overlayInlineAddStock, setOverlayInlineAddStock] = useState(null); // 首页叠加分时增量添加
     const notifiedStocks = useRef(new Set()); // 用于记录已通知的异动，防止重复提醒
     const prevAllStockDataRef = useRef({}); // 记录上一次的自选股数据，用于对比涨幅趋势
     const [newStockCode, setNewStockCode] = useState(''); // 新增股票代码
     const [newStockName, setNewStockName] = useState(''); // 新增股票名称
+    const [newStockBlockName, setNewStockBlockName] = useState(''); // 新增股票板块
+    const [newStockRiskScore, setNewStockRiskScore] = useState(''); // 风险偏好分数
+    const [newStockIsTech, setNewStockIsTech] = useState(true); // 是否为科技股，默认打开
+    const [addStockModalVisible, setAddStockModalVisible] = useState(false); // 新增股票弹窗可见性
     const [showOnlyImportant, setShowOnlyImportant] = useState(() => {
         return localStorage.getItem('dingpan_showOnlyImportant') === 'true';
     }); // 是否只显示重点标记股票
     const [sortOrder, setSortOrder] = useState(() => {
         return localStorage.getItem('dingpan_sortOrder') || 'none'; // 'none', 'asc', 'desc'
     }); // 排序设置
+    const [sortField, setSortField] = useState(() => {
+        return localStorage.getItem('dingpan_sortField') || 'change'; // 'change' | 'mainFund'
+    }); // 排序字段
+    const [showOnlyGoodNews, setShowOnlyGoodNews] = useState(() => {
+        return localStorage.getItem('dingpan_showOnlyGoodNews') === 'true';
+    }); // 是否只显示有利好消息的股票
+    const [stockViewMode, setStockViewMode] = useState(() => {
+        const saved = localStorage.getItem('dingpan_stockViewMode');
+        const valid = ['grouped', 'merged', 'statistics', 'research'];
+        return valid.includes(saved) ? saved : 'grouped';
+    }); // 个股幅度异动视图模式
+
+    // DIY 主题色配置：{ itemTitleColor, itemBorderColor, numberFontFamily }
+    const [themeColor, setThemeColor] = useState(() => {
+        try {
+            const saved = localStorage.getItem('dingpan_themeColor');
+            return saved ? { ...DEFAULT_THEME_COLOR, ...JSON.parse(saved) } : { ...DEFAULT_THEME_COLOR };
+        } catch {
+            return { ...DEFAULT_THEME_COLOR };
+        }
+    });
+    const [themeColorModalVisible, setThemeColorModalVisible] = useState(false);
+
+    // 研报数据相关状态
+    const [jigouReports, setJigouReports] = useState([]);
+    const [recentResearchReports, setRecentResearchReports] = useState([]);
+    const [researchReportsLoading, setResearchReportsLoading] = useState(false);
+    const [researchReportsLoaded, setResearchReportsLoaded] = useState(false);
+
+    // 利好消息弹窗相关状态
+    const [showGoodNewsModal, setShowGoodNewsModal] = useState(false);
+    const [matchedReports, setMatchedReports] = useState([]);
+    const [currentGoodNewsStock, setCurrentGoodNewsStock] = useState('');
+
+    // 逻辑探查弹窗相关状态
+    const [showLogicExploreModal, setShowLogicExploreModal] = useState(false);
+    const [logicExploreStock, setLogicExploreStock] = useState(null);
+    const [logicExploreLoading, setLogicExploreLoading] = useState(false);
+    const [jigouMatchedReports, setJigouMatchedReports] = useState([]);
+    const [researchMatchedReports, setResearchMatchedReports] = useState([]);
+
+    // 重命名股票弹窗相关状态
+    const [renameModalVisible, setRenameModalVisible] = useState(false);
+    const [renameStockCode, setRenameStockCode] = useState('');
+    const [renameStockName, setRenameStockName] = useState('');
+    const [refreshingStockData, setRefreshingStockData] = useState(false);
+    const [watchlistMainFund, setWatchlistMainFund] = useState({});
+
+    // 买点诊断弹窗相关状态
+    const [showBuyPointDiagnosisModal, setShowBuyPointDiagnosisModal] = useState(false);
+    const [buyPointDiagnosisStock, setBuyPointDiagnosisStock] = useState(null);
+    const [buyPointDiagnosisData, setBuyPointDiagnosisData] = useState(null);
+    const [buyPointDiagnosisLoading, setBuyPointDiagnosisLoading] = useState(false);
+
+    // 交易纪律弹窗状态（每个交易日 9:30-9:40 强制显示，期间不可手动关闭，9:40 后自动关闭）
+    const [disciplineModalVisible, setDisciplineModalVisible] = useState(false);
 
     // 监听筛选状态变化并存入 localStorage
     useEffect(() => {
@@ -75,6 +183,55 @@ const DingPan = () => {
         localStorage.setItem('dingpan_sortOrder', sortOrder);
     }, [sortOrder]);
 
+    useEffect(() => {
+        localStorage.setItem('dingpan_sortField', sortField);
+    }, [sortField]);
+
+    // 表头排序：同字段循环 none→asc→desc→none，切换字段默认倒序（大到小）
+    const handleSortChange = (field) => {
+        if (field === sortField) {
+            if (sortOrder === 'none') setSortOrder('asc');
+            else if (sortOrder === 'asc') setSortOrder('desc');
+            else setSortOrder('none');
+        } else {
+            setSortField(field);
+            setSortOrder('desc');
+        }
+    };
+
+    // 监听利好筛选状态变化并存入 localStorage
+    useEffect(() => {
+        localStorage.setItem('dingpan_showOnlyGoodNews', showOnlyGoodNews);
+    }, [showOnlyGoodNews]);
+
+    // 监听主题色配置变化并存入 localStorage
+    useEffect(() => {
+        localStorage.setItem('dingpan_themeColor', JSON.stringify(themeColor));
+    }, [themeColor]);
+
+    // 交易纪律弹窗：每个交易日 9:30:00-9:40:00 显示，周末与午休/收盘后不显示
+    useEffect(() => {
+        const updateVisibility = () => {
+            const now = dayjs();
+            const dayOfWeek = now.day();
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                setDisciplineModalVisible(prev => (prev ? false : prev));
+                return;
+            }
+            const totalSeconds = now.hour() * 3600 + now.minute() * 60 + now.second();
+            const inWindow = totalSeconds >= 9 * 3600 + 30 * 60 && totalSeconds < 9 * 3600 + 40 * 60;
+            setDisciplineModalVisible(prev => (prev !== inWindow ? inWindow : prev));
+        };
+        updateVisibility();
+        const id = setInterval(updateVisibility, 1000);
+        return () => clearInterval(id);
+    }, []);
+
+    const handleSaveThemeColor = (next) => {
+        setThemeColor(next);
+        setThemeColorModalVisible(false);
+    };
+
     // 新增自选股
     const handleAddStock = async () => {
         if (!newStockCode || !newStockName) {
@@ -83,10 +240,17 @@ const DingPan = () => {
         try {
             await axios.post(`http://${local_ip}:3000/add_monitor_stock`, {
                 code: newStockCode,
-                name: newStockName
+                name: newStockName,
+                blockName: newStockBlockName || 'xxx',
+                riskScore: newStockRiskScore || null,
+                isTech: newStockIsTech
             });
             setNewStockCode('');
             setNewStockName('');
+            setNewStockBlockName('');
+            setNewStockRiskScore('');
+            setNewStockIsTech(true);
+            setAddStockModalVisible(false);
             fetchData(); // 重新拉取数据
         } catch (error) {
             console.error('Add stock failed:', error);
@@ -95,7 +259,7 @@ const DingPan = () => {
 
     // 删除自选股
     const handleDeleteStock = async (e, code) => {
-        e.stopPropagation(); // 阻止触发跳转 K 线
+        if (e && e.stopPropagation) e.stopPropagation(); // 阻止触发跳转 K 线
         Modal.confirm({
             title: '确认删除',
             content: '确定要将该股票从自选股监控中移除吗？',
@@ -121,23 +285,240 @@ const DingPan = () => {
         }
     };
 
+    // 切换置顶
+    const handleToggleStockTop = async (stock) => {
+        try {
+            await axios.post(`http://${local_ip}:3000/toggle_stock_top`, { code: stock.code });
+            fetchData();
+        } catch (error) {
+            console.error('Toggle top failed:', error);
+        }
+    };
+
+    // 打开重命名弹窗
+    const handleOpenRenameModal = (stock) => {
+        setRenameStockCode(stock.code);
+        setRenameStockName(stock.stockName);
+        setRenameModalVisible(true);
+    };
+
+    // 确认重命名
+    const handleConfirmRename = async () => {
+        if (!renameStockCode || !renameStockName.trim()) {
+            return;
+        }
+        try {
+            await axios.post(`http://${local_ip}:3000/update_monitor_stock_name`, {
+                code: renameStockCode,
+                name: renameStockName.trim()
+            });
+            setRenameModalVisible(false);
+            fetchData();
+        } catch (error) {
+            console.error('Rename stock failed:', error);
+        }
+    };
+
+    // 判断股票是否有匹配的利好研报
+    const hasGoodNews = (stockName) => {
+        if (!stockName || !jigouReports.length) return false;
+        return jigouReports.some(report => {
+            const titleMatch = report.title && report.title.includes(stockName);
+            const textMatch = report.text && report.text.includes(stockName);
+            return titleMatch || textMatch;
+        });
+    };
+
+    // 高亮文本中的股票名称
+    const highlightStockName = (text, stockName) => {
+        if (!text || !stockName) return text;
+        const cleanedText = text.replace(/<e[^>]*>/g, '');
+        const regex = new RegExp(`(${stockName})`, 'g');
+        return cleanedText.replace(regex, '<span class="highlight-stock">$1</span>');
+    };
+
+    // 点击利好消息打开弹窗
+    const handleViewGoodNews = (stockName) => {
+        if (!stockName) return;
+        const matched = jigouReports.filter(report => {
+            const titleMatch = report.title && report.title.includes(stockName);
+            const textMatch = report.text && report.text.includes(stockName);
+            return titleMatch || textMatch;
+        });
+        setCurrentGoodNewsStock(stockName);
+        setMatchedReports(matched);
+        setShowGoodNewsModal(true);
+    };
+
+    // 从市场调研研报树中递归收集所有研报项
+    const collectAllResearchReports = (treeItems) => {
+        const results = [];
+        if (!treeItems || !Array.isArray(treeItems)) return results;
+
+        const traverse = (items, folderPath = []) => {
+            for (const item of items) {
+                if (item.type === 'folder') {
+                    if (item.children && item.children.length > 0) {
+                        traverse(item.children, [...folderPath, item.name]);
+                    }
+                } else if (item.type === 'report') {
+                    results.push({
+                        ...item,
+                        folderPath: folderPath.join(' / ')
+                    });
+                }
+            }
+        };
+
+        traverse(treeItems);
+        return results;
+    };
+
+    // 研报视图：点击图标查看个股相关研报（使用预计算数据，无需重复拉取）
+    const handleViewYanbaoDetail = (stock) => {
+        if (!stock || !stock.stockName) return;
+        setLogicExploreStock(stock);
+        setJigouMatchedReports(stock.jigouReports || []);
+        setResearchMatchedReports(stock.researchReports || []);
+        setShowLogicExploreModal(true);
+    };
+
+    // 打开逻辑探查弹窗
+    const handleLogicExplore = async (stock) => {
+        if (!stock || !stock.stockName) return;
+
+        setLogicExploreStock(stock);
+        setShowLogicExploreModal(true);
+        setLogicExploreLoading(true);
+        setJigouMatchedReports([]);
+        setResearchMatchedReports([]);
+
+        try {
+            const stockName = stock.stockName;
+
+            // 1. 匹配机构研报（标题和内容都匹配），按发布时间倒序排列
+            const jigouMatched = jigouReports.filter(report => {
+                const titleMatch = report.title && report.title.includes(stockName);
+                const textMatch = report.text && report.text.includes(stockName);
+                return titleMatch || textMatch;
+            }).sort((a, b) => {
+                const timeA = a.createTime ? new Date(a.createTime).getTime() : 0;
+                const timeB = b.createTime ? new Date(b.createTime).getTime() : 0;
+                return timeB - timeA;
+            });
+            setJigouMatchedReports(jigouMatched);
+
+            // 2. 获取市场调研所有研报，扫描标题和内容
+            const researchResponse = await axios.get(`http://${local_ip}:3000/get_research_reports`);
+            const researchTree = researchResponse.data || [];
+            const allReports = collectAllResearchReports(researchTree);
+
+            // 并发获取所有研报的完整内容，分批处理避免过多并发
+            const batchSize = 10;
+            const fullContentReports = [];
+
+            for (let i = 0; i < allReports.length; i += batchSize) {
+                const batch = allReports.slice(i, i + batchSize);
+                const batchResults = await Promise.all(
+                    batch.map(async (report) => {
+                        try {
+                            const contentResponse = await axios.get(`http://${local_ip}:3000/get_research_report`, {
+                                params: { id: report.id }
+                            });
+                            const content = contentResponse.data?.content || '';
+                            return {
+                                ...report,
+                                content
+                            };
+                        } catch (e) {
+                            return { ...report, content: '' };
+                        }
+                    })
+                );
+
+                // 过滤出名称或内容匹配股票名称的研报
+                const matchedBatch = batchResults.filter(report => {
+                    const nameMatch = report.name && report.name.includes(stockName);
+                    const contentMatch = report.content && report.content.includes(stockName);
+                    return nameMatch || contentMatch;
+                });
+
+                fullContentReports.push(...matchedBatch);
+            }
+
+            // 排序：置顶优先 → 按文件夹日期倒序 → 重点标记优先
+            fullContentReports.sort((a, b) => {
+                // 置顶优先级最高
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+
+                // 从文件夹路径提取日期（格式如 "20260731" 或 "20260731 / xxx"）
+                const extractDate = (folderPath) => {
+                    if (!folderPath) return '00000000';
+                    const match = folderPath.match(/(\d{8})/);
+                    return match ? match[1] : '00000000';
+                };
+
+                const dateA = extractDate(a.folderPath);
+                const dateB = extractDate(b.folderPath);
+
+                if (dateA !== dateB) {
+                    return dateB.localeCompare(dateA); // 日期倒序（新的在前）
+                }
+
+                // 同一日期下，重点标记的排前面
+                if (a.isImportant && !b.isImportant) return -1;
+                if (!a.isImportant && b.isImportant) return 1;
+
+                return 0;
+            });
+
+            setResearchMatchedReports(fullContentReports);
+        } catch (error) {
+            console.error('逻辑探查数据获取失败:', error);
+            message.error('获取逻辑探查数据失败');
+        } finally {
+            setLogicExploreLoading(false);
+        }
+    };
+
     // 资金与成交量趋势监控相关
     const [amountHistory, setAmountHistory] = useState([]);
     const [mainMoneyHistory, setMainMoneyHistory] = useState([]); // 记录主力资金历史，用于趋势预警
     const [defensiveBlockHistory, setDefensiveBlockHistory] = useState([]); // 记录防御板块历史，用于趋势预警
     const [alerts, setAlerts] = useState([]); // 存储当前显示的顶部告警信息列表
     const [techIndexData, setTechIndexData] = useState([]); // 科技情绪数据
+    const [rihanData, setRihanData] = useState([]); // 日韩指数数据
     const [jisuYidongUpList, setJisuYidongUpList] = useState([]); // 急速异动上涨排名
     const [jisuYidongDownList, setJisuYidongDownList] = useState([]); // 急速异动下跌排名
     const [showJingJiaQiangChou, setShowJingJiaQiangChou] = useState(true); // 控制竞价抢筹模块显示
     const [showKaiPanZhuDong, setShowKaiPanZhuDong] = useState(true); // 控制开盘主动拉升模块显示
     const [showKaiPanXiaCuo, setShowKaiPanXiaCuo] = useState(true); // 控制开盘持续下挫模块显示
-    const [hotBlocks, setHotBlocks] = useState([]); // 当日热门板块
 
     // 主力资金趋势图相关
     const [historyData, setHistoryData] = useState([]);
     const mainMoneyContainerRef = useRef(null);
     const mainMoneyChartRef = useRef(null);
+    const [isMainMoneyExpanded, setIsMainMoneyExpanded] = useState(false);
+    const [copyContextLoading, setCopyContextLoading] = useState(false);
+
+    // 自选股全量监控折叠状态
+    // 交易日（周一至周五）9:00-15:00 默认折叠，其他时间默认展开
+    const [isWatchlistCollapsed, setIsWatchlistCollapsed] = useState(() => {
+        const now = new Date();
+        const day = now.getDay();
+        const hour = now.getHours();
+        const isTradingTime = day >= 1 && day <= 5 && hour >= 9 && hour < 15;
+        return isTradingTime;
+    });
+    const isWatchlistCollapseInitialized = useRef(false);
+
+    // 指数叠加分时全屏弹窗状态
+    const [indexOverlayFullscreenVisible, setIndexOverlayFullscreenVisible] = useState(false);
+
+    // 成交量趋势图相关
+    const volumeContainerRef = useRef(null);
+    const volumeChartRef = useRef(null);
 
     // 板块异动监控相关
     const [blockHistoryData, setBlockHistoryData] = useState([]);
@@ -148,12 +529,14 @@ const DingPan = () => {
     const [blockMoneyData, setBlockMoneyData] = useState([]);
     const [blockMoneyAlerts, setBlockMoneyAlerts] = useState([]);
     const prevBlockMoneyRef = useRef(null);
+    const overlayTimelineSectionRef = useRef(null);
+    const rihanSectionRef = useRef(null); // 日韩涨跌监控区域，用于双击定位
     const targetBlocks = [
         '光通信模块',
         '创新药',
         '半导体概念',
         '银行Ⅱ',
-        '液冷概念',
+        '液冷',
         '保险Ⅱ',
         '证券Ⅱ',
         'PCB',
@@ -162,11 +545,12 @@ const DingPan = () => {
         '商业航天',
         '机器人概念',
         '锂电池概念',
-        '存储芯片'
+        '存储芯片',
+        '黄金概念'
     ];
     const BLOCK_MONEY_BIG_CHANGE_THRESHOLD = 500000000; // 5 亿
     // 卡片中只展示这 4 个板块（监控告警仍覆盖全部 targetBlocks）
-    const displayBlocks = ['创新药', '银行Ⅱ', '光通信模块', '半导体概念', '存储芯片', '中证500',];
+    const displayBlocks = ['创新药', '银行Ⅱ', '光通信模块', '半导体概念', '存储芯片', '黄金概念',];
 
     // 打开 K 线弹窗
     const showKLine = (stock) => {
@@ -174,9 +558,115 @@ const DingPan = () => {
         setKlineModalVisible(true);
     };
 
+    // 把股票加入首页常驻叠加分时模块，并自动滚动到该区域
+    const handleOpenOverlayTimeLine = (stock) => {
+        setOverlayInlineAddStock({
+            code: stock.code,
+            stockName: stock.stockName,
+            change: stock.change,
+            _ts: Date.now(),
+        });
+        message.success(`已将 ${stock.stockName || stock.code} 加入叠加分时`);
+        window.setTimeout(() => {
+            overlayTimelineSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 80);
+    };
+
+    // 鼠标左键双击页面时自动滚动到日韩涨跌监控区域
+    // 叠加分时观察中的 tag 自带双击移除股票逻辑，双击 tag 时不触发滚动，避免冲突
+    const handlePageDoubleClick = (e) => {
+        if (e.button !== 0) return;
+        if (e.target.closest && e.target.closest('.mtlm-tag-item')) return;
+        rihanSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    // 连续两次按空格键滚动到日韩涨跌监控区域（与双击页面功能一致）
+    useEffect(() => {
+        let lastSpaceTime = 0;
+        const handleKeyDown = (e) => {
+            // 输入框/文本域/可编辑元素中不触发，避免影响输入
+            const target = e.target;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+            if (e.code !== 'Space') return;
+            const now = Date.now();
+            if (now - lastSpaceTime <= 500) {
+                e.preventDefault();
+                rihanSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                lastSpaceTime = 0;
+            } else {
+                lastSpaceTime = now;
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     // 跳转到重点板块并定位
     const jumpToBlock = (blockName) => {
         navigate(`/block?blockName=${encodeURIComponent(blockName)}`);
+    };
+
+    // 打开个股买点诊断弹窗
+    const handleBuyPointDiagnosis = async (stock) => {
+        if (!stock || !stock.code) return;
+        setBuyPointDiagnosisStock(stock);
+        setShowBuyPointDiagnosisModal(true);
+        setBuyPointDiagnosisData(null);
+        setBuyPointDiagnosisLoading(true);
+        try {
+            const response = await axios.post(`http://${local_ip}:3000/buy_point_single_stock_diagnosis`, {
+                code: stock.code,
+                refresh: 1,
+            });
+            setBuyPointDiagnosisData(response.data);
+        } catch (error) {
+            console.error('个股买点诊断失败:', error);
+            message.error('买点诊断失败，请稍后重试');
+        } finally {
+            setBuyPointDiagnosisLoading(false);
+        }
+    };
+
+    // 刷新个股买点诊断
+    const handleRefreshBuyPointDiagnosis = async () => {
+        if (!buyPointDiagnosisStock?.code) return;
+        setBuyPointDiagnosisLoading(true);
+        try {
+            const response = await axios.post(`http://${local_ip}:3000/buy_point_single_stock_diagnosis`, {
+                code: buyPointDiagnosisStock.code,
+                refresh: 1,
+            });
+            setBuyPointDiagnosisData(response.data);
+        } catch (error) {
+            console.error('刷新买点诊断失败:', error);
+            message.error('刷新失败，请稍后重试');
+        } finally {
+            setBuyPointDiagnosisLoading(false);
+        }
+    };
+
+    // 渲染板块内部股票涨跌幅列表（悬浮窗内容）
+    const renderBlockStockList = (blockData) => {
+        if (!blockData || !blockData.data || blockData.data.length === 0) {
+            return <div style={{ padding: '8px', color: '#999' }}>暂无数据</div>;
+        }
+        return (
+            <div className="block-stock-list">
+                {blockData.data.map((stock, idx) => (
+                    <div
+                        key={idx}
+                        className="block-stock-item"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => showKLine({ name: stock.name, code: stock.code, change: stock.change })}
+                    >
+                        <span className="block-stock-name">{stock.name}</span>
+                        <span className={`block-stock-change ${stock.change >= 0 ? 'up' : 'down'}`}>
+                            {stock.change > 0 ? '+' : ''}{stock.change}%
+                        </span>
+                    </div>
+                ))}
+            </div>
+        );
     };
 
     // 请求通知权限
@@ -186,6 +676,63 @@ const DingPan = () => {
                 Notification.requestPermission();
             }
         }
+    }, []);
+
+    // 监听来自技术诊断页面的叠加分时添加请求
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'dingpan_overlay_add_stock_ts') {
+                try {
+                    const stockStr = localStorage.getItem('dingpan_overlay_add_stock');
+                    if (stockStr) {
+                        const stock = JSON.parse(stockStr);
+                        if (stock.code) {
+                            setOverlayInlineAddStock({
+                                code: stock.code,
+                                stockName: stock.stockName,
+                                change: stock.change,
+                                _ts: Date.now(),
+                            });
+                            message.success(`已将 ${stock.stockName || stock.code} 加入叠加分时`);
+                            window.setTimeout(() => {
+                                overlayTimelineSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 80);
+                            localStorage.removeItem('dingpan_overlay_add_stock');
+                            localStorage.removeItem('dingpan_overlay_add_stock_ts');
+                        }
+                    }
+                } catch (error) {
+                    console.error('读取叠加分时数据失败:', error);
+                }
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+
+        // 检查是否有未处理的叠加请求（页面刚打开时）
+        try {
+            const stockStr = localStorage.getItem('dingpan_overlay_add_stock');
+            if (stockStr) {
+                const stock = JSON.parse(stockStr);
+                if (stock.code) {
+                    setOverlayInlineAddStock({
+                        code: stock.code,
+                        stockName: stock.stockName,
+                        change: stock.change,
+                        _ts: Date.now(),
+                    });
+                    message.success(`已将 ${stock.stockName || stock.code} 加入叠加分时`);
+                    localStorage.removeItem('dingpan_overlay_add_stock');
+                    localStorage.removeItem('dingpan_overlay_add_stock_ts');
+                }
+            }
+        } catch (error) {
+            console.error('读取叠加分时数据失败:', error);
+        }
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
     }, []);
 
     const sendDesktopNotification = (stockName, label, changeDiff, stockCode, desc) => {
@@ -223,10 +770,11 @@ const DingPan = () => {
         const notifyKey = `${stockName}-${label}-${time}`;
         if (notifiedStocks.current.has(notifyKey)) return;
 
-        new Notification("📈 盯盘异动提醒", {
-            body: `【${stockName}】发生急速波动！\n类型：${label}\n幅度：${changeDiff}\n时间：${dayjs().format('HH:mm:ss')}`,
-            icon: '/favicon.svg'
-        });
+        // TODO: 先注销通知，不然太频繁了，影响注意力
+        // new Notification("📈 盯盘异动提醒", {
+        //     body: `【${stockName}】发生急速波动！\n类型：${label}\n幅度：${changeDiff}\n时间：${dayjs().format('HH:mm:ss')}`,
+        //     icon: '/favicon.svg'
+        // });
 
         notifiedStocks.current.add(notifyKey);
 
@@ -237,15 +785,53 @@ const DingPan = () => {
         }, 10 * 60 * 1000);
     };
 
+    // 量价背离浏览器通知（诱多/诱空），使用 localStorage 进行 10 分钟频控
+    const checkAndSendDivergenceNotification = (divergenceType, boards) => {
+        if (!isWithinTradingHours()) return; // 周末和非交易时段不提醒
+
+        const localStorageKey = 'dingpan_divergence_last_notify_time';
+        const lastNotifyTime = parseInt(localStorage.getItem(localStorageKey) || '0', 10);
+        const now = Date.now();
+
+        // 至少相隔 10 分钟才能进行下一次提示
+        if (now - lastNotifyTime < 10 * 60 * 1000) return;
+
+        if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+        const boardText = boards.length === 2 ? '科创板和创业板' : boards[0];
+        const timeStr = dayjs().format('HH:mm:ss');
+
+        let title, body;
+        if (divergenceType === 'bullTrap') {
+            title = '⚠️ 量价背离提醒（诱多）';
+            body = `主力资金持续净流出，但${boardText}分时上涨，疑似诱多，请谨慎追高！\n时间：${timeStr}`;
+        } else {
+            title = '⚠️ 量价背离提醒（诱空）';
+            body = `主力资金持续净流入，但${boardText}分时下跌，疑似诱空，请勿盲目杀跌！\n时间：${timeStr}`;
+        }
+
+        new Notification(title, {
+            body,
+            icon: '/favicon.svg'
+        });
+
+        localStorage.setItem(localStorageKey, String(now));
+    };
+
     const filteredAllStockData = useMemo(() => {
         let stocks = Array.isArray(data.allStockData) ? data.allStockData : [];
-        
+
         // 1. 重点筛选
         if (showOnlyImportant) {
             stocks = stocks.filter(stock => stock.isImportant);
         }
 
-        // 2. 搜索关键词筛选
+        // 2. 利好消息筛选
+        if (showOnlyGoodNews) {
+            stocks = stocks.filter(stock => hasGoodNews(stock.stockName));
+        }
+
+        // 3. 搜索关键词筛选
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             stocks = stocks.filter(stock =>
@@ -254,17 +840,117 @@ const DingPan = () => {
             );
         }
 
-        // 3. 排序逻辑
+        // 4. 排序逻辑：置顶股票始终排在最前面，然后按当前排序字段(涨幅/主力资金)排序
         if (sortOrder !== 'none') {
             stocks = [...stocks].sort((a, b) => {
-                const changeA = a.change || 0;
-                const changeB = b.change || 0;
-                return sortOrder === 'asc' ? changeA - changeB : changeB - changeA;
+                if (a.isTop && !b.isTop) return -1;
+                if (!a.isTop && b.isTop) return 1;
+                let valA, valB;
+                if (sortField === 'mainFund') {
+                    const fa = watchlistMainFund?.[a.code];
+                    const fb = watchlistMainFund?.[b.code];
+                    valA = (fa !== undefined && fa !== null) ? Number(fa) : null;
+                    valB = (fb !== undefined && fb !== null) ? Number(fb) : null;
+                } else {
+                    valA = a.change || 0;
+                    valB = b.change || 0;
+                }
+                // 无主力资金数据的股票始终排在最后
+                if (valA === null && valB === null) return 0;
+                if (valA === null) return 1;
+                if (valB === null) return -1;
+                return sortOrder === 'asc' ? valA - valB : valB - valA;
+            });
+        } else {
+            stocks = [...stocks].sort((a, b) => {
+                if (a.isTop && !b.isTop) return -1;
+                if (!a.isTop && b.isTop) return 1;
+                return 0;
             });
         }
 
         return stocks;
-    }, [data.allStockData, searchQuery, showOnlyImportant, sortOrder]);
+    }, [data.allStockData, searchQuery, showOnlyImportant, showOnlyGoodNews, sortOrder, sortField, watchlistMainFund, jigouReports]);
+
+    const allStockOverview = useMemo(() => {
+        const allStocks = Array.isArray(data.allStockData) ? data.allStockData : [];
+        const risingCount = filteredAllStockData.filter(stock => (stock.change || 0) >= 0).length;
+        const fallingCount = filteredAllStockData.length - risingCount;
+
+        return {
+            totalCount: allStocks.length,
+            filteredCount: filteredAllStockData.length,
+            importantCount: allStocks.filter(stock => stock.isImportant).length,
+            risingCount,
+            fallingCount
+        };
+    }, [data.allStockData, filteredAllStockData]);
+
+    // 研报视图：基于自选股 + 机构研报 + 近期研报，计算涨幅Top10、覆盖Top10及交集
+    const reportStockData = useMemo(() => {
+        if (!researchReportsLoaded) return { topGain: [], topCoverage: [], intersection: [] };
+
+        const allStocks = Array.isArray(data.allStockData) ? data.allStockData : [];
+
+        const fiveDaysAgo = dayjs().subtract(5, 'day');
+        const recentJigouReports = jigouReports.filter(report => {
+            if (!report.createTime) return false;
+            return dayjs(report.createTime).isAfter(fiveDaysAgo);
+        });
+
+        const stockReports = allStocks.map(stock => {
+            const stockName = stock.stockName;
+            if (!stockName) return null;
+
+            const jigouMatched = recentJigouReports.filter(report => {
+                return (report.title && report.title.includes(stockName)) ||
+                       (report.text && report.text.includes(stockName));
+            }).sort((a, b) => {
+                const timeA = a.createTime ? new Date(a.createTime).getTime() : 0;
+                const timeB = b.createTime ? new Date(b.createTime).getTime() : 0;
+                return timeB - timeA;
+            });
+
+            const researchMatched = recentResearchReports.filter(report => {
+                return (report.name && report.name.includes(stockName)) ||
+                       (report.content && report.content.includes(stockName));
+            }).sort((a, b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                const extractDate = (folderPath) => {
+                    if (!folderPath) return '00000000';
+                    const match = folderPath.match(/(\d{8})/);
+                    return match ? match[1] : '00000000';
+                };
+                const dateA = extractDate(a.folderPath);
+                const dateB = extractDate(b.folderPath);
+                if (dateA !== dateB) return dateB.localeCompare(dateA);
+                if (a.isImportant && !b.isImportant) return -1;
+                if (!a.isImportant && b.isImportant) return 1;
+                return 0;
+            });
+
+            return {
+                ...stock,
+                jigouCount: jigouMatched.length,
+                researchCount: researchMatched.length,
+                totalCount: jigouMatched.length + researchMatched.length,
+                change: stock.change || 0,
+                jigouReports: jigouMatched,
+                researchReports: researchMatched
+            };
+        }).filter(item => item !== null && item.totalCount > 0);
+
+        const topGain = [...stockReports].sort((a, b) => b.change - a.change).slice(0, 10);
+        const topCoverage = [...stockReports].sort((a, b) => {
+            if (b.totalCount !== a.totalCount) return b.totalCount - a.totalCount;
+            return b.change - a.change;
+        }).slice(0, 10);
+        const topGainCodes = new Set(topGain.map(s => s.code));
+        const intersection = topCoverage.filter(s => topGainCodes.has(s.code));
+
+        return { topGain, topCoverage, intersection };
+    }, [data.allStockData, jigouReports, recentResearchReports, researchReportsLoaded]);
 
     const moneyStatus = useMemo(() => {
         if (historyData.length < 2) return null;
@@ -282,6 +968,46 @@ const DingPan = () => {
         }
         // 等于的时候返回 null，什么都不展示
         return null;
+    }, [historyData]);
+
+    const volumeStatus = useMemo(() => {
+        if (historyData.length < 2) return null;
+
+        const latest = historyData[historyData.length - 1][1];
+        const prev = historyData[historyData.length - 2][1];
+
+        const curVolume = parseFloat(latest.amountChangeDiff) || 0;
+        const preVolume = parseFloat(prev.amountChangeDiff) || 0;
+
+        if (curVolume > preVolume) {
+            return { label: '持续放量', color: getThemeColor(), icon: <ArrowUpOutlined /> };
+        } else if (curVolume < preVolume) {
+            return { label: '持续缩量', color: '#52c41a', icon: <ArrowDownOutlined /> };
+        }
+        return null;
+    }, [historyData]);
+
+    // 表头展示主力资金相邻时间桶的 diff 变化值（如 +2.3亿 / -1.8亿），而非净流入绝对值
+    const latestMoneyValue = useMemo(() => {
+        if (historyData.length < 2) return null;
+        const latest = historyData[historyData.length - 1][1];
+        const prev = historyData[historyData.length - 2][1];
+        return (parseFloat(latest.mainMoney) || 0) - (parseFloat(prev.mainMoney) || 0);
+    }, [historyData]);
+
+    // 成交量（展开主力资金时成交量图被隐藏，需在表头补充显示）真实数值与 diff 值，单位亿
+    const latestVolumeValue = useMemo(() => {
+        if (historyData.length === 0) return null;
+        const last = historyData[historyData.length - 1][1];
+        const v = last.amountChangeDiff;
+        return v != null && v !== '' ? parseFloat(v) : null;
+    }, [historyData]);
+
+    const volumeDiffValue = useMemo(() => {
+        if (historyData.length < 2) return null;
+        const latest = historyData[historyData.length - 1][1];
+        const prev = historyData[historyData.length - 2][1];
+        return (parseFloat(latest.amountChangeDiff) || 0) - (parseFloat(prev.amountChangeDiff) || 0);
     }, [historyData]);
 
     const stockData = useMemo(() => {
@@ -321,7 +1047,10 @@ const DingPan = () => {
                     change: `${change > 0 ? '+' : ''}${change}%`,
                     label: change > 0 ? '幅度大涨' : '幅度大跌',
                     desc: item.desc,
-                    type: 'change'
+                    type: 'change',
+                    aboveOpening: item.above_opening,
+                    openPx: item.open_px,
+                    closePx: item.close_px
                 });
             }
 
@@ -358,6 +1087,10 @@ const DingPan = () => {
         // 按 change 从大到小排序
         changeList.sort((a, b) => b.changeValue - a.changeValue);
 
+        // 按开盘价分组
+        const aboveOpeningList = changeList.filter(item => item.aboveOpening === true);
+        const belowOpeningList = changeList.filter(item => item.aboveOpening !== true);
+
         // Calculate total change value
         const totalChangeValue = changeList.reduce((sum, item) => sum + item.changeValue, 0);
 
@@ -368,8 +1101,65 @@ const DingPan = () => {
             return Math.abs(bVal) - Math.abs(aVal);
         });
 
-        return { waveList, changeList, upCount, downCount, totalChangeValue };
+        return { waveList, changeList, aboveOpeningList, belowOpeningList, upCount, downCount, totalChangeValue };
     }, [data.unNormalStockList]);
+
+    // 全量自选股数据（用于分区/合并/统计视图）
+    const fullStockData = useMemo(() => {
+        const allStocks = Array.isArray(data.allStockData) ? data.allStockData : [];
+        const changeList = [];
+        let upCount = 0;
+        let downCount = 0;
+
+        allStocks.forEach(item => {
+            const change = item.change;
+            const name = item.stockName || item.name;
+
+            let statusKey = '';
+            if (change < 0) {
+                if (change > -2) statusKey = 'lowGreen';
+                else if (change > -5) statusKey = 'mediumGreen';
+                else statusKey = 'highGreen';
+                downCount++;
+            } else if (change > 0) {
+                if (change < 2) statusKey = 'lowRed';
+                else if (change < 5) statusKey = 'mediumRed';
+                else statusKey = 'highRed';
+                upCount++;
+            }
+
+            if (statusKey) {
+                const aboveOpening = parseFloat(item.open_px) > 0 && parseFloat(item.close_px) >= parseFloat(item.open_px);
+                changeList.push({
+                    name,
+                    code: item.code,
+                    isImportant: item.isImportant,
+                    color: colorMap[statusKey],
+                    bgColor: bgMap[statusKey],
+                    statusKey,
+                    changeValue: change,
+                    change: `${change > 0 ? '+' : ''}${change}%`,
+                    label: change > 0 ? '幅度大涨' : '幅度大跌',
+                    desc: item.desc,
+                    type: 'change',
+                    aboveOpening,
+                    openPx: item.open_px,
+                    closePx: item.close_px,
+                });
+            }
+        });
+
+        changeList.sort((a, b) => b.changeValue - a.changeValue);
+
+        const aboveOpeningList = changeList.filter(item => item.aboveOpening === true);
+        const belowOpeningList = changeList.filter(item => item.aboveOpening !== true);
+        // 小于开盘价分组按跌幅从高到低排序
+        belowOpeningList.sort((a, b) => a.changeValue - b.changeValue);
+
+        const totalChangeValue = changeList.reduce((sum, item) => sum + item.changeValue, 0);
+
+        return { changeList, aboveOpeningList, belowOpeningList, upCount, downCount, totalChangeValue };
+    }, [data.allStockData]);
 
     const fetchData = async () => {
         try {
@@ -444,6 +1234,20 @@ const DingPan = () => {
         }
     };
 
+    const handleRefreshStockData = async () => {
+        setRefreshingStockData(true);
+        try {
+            await axios.post(`http://${local_ip}:3000/refresh_monitor_stock_data`);
+            await fetchData();
+            message.success('自选股数据已刷新');
+        } catch (error) {
+            console.error('Refresh stock data failed:', error);
+            message.error('刷新失败，请稍后重试');
+        } finally {
+            setRefreshingStockData(false);
+        }
+    };
+
     const fetchEmotionData = async () => {
         try {
             const response = await axios.get(`http://${local_ip}:3000/emotion_data`);
@@ -455,15 +1259,115 @@ const DingPan = () => {
         }
     };
 
-    const fetchHotBlocks = async () => {
+    // 获取自选股主力资金净流入：10:00 前每 10s 轮询，10:00 后每 1min 轮询，收盘/周末停止
+    const fetchWatchlistMainFund = async () => {
         try {
-            const response = await axios.get(`http://${local_ip}:3000/current_day_hot_block`);
+            const response = await axios.get(`http://${local_ip}:3000/get_watchlist_main_fund`);
+            const list = response.data || [];
+            const map = {};
+            list.forEach(item => {
+                if (item && item.code) map[item.code] = item.mainFund;
+            });
+            setWatchlistMainFund(map);
+        } catch (error) {
+            console.error('Fetch watchlist main fund failed:', error);
+        }
+    };
+
+    const fetchRiHanData = async () => {
+        try {
+            const response = await axios.get(`http://${local_ip}:3000/rihan_data`);
             if (response.data && Array.isArray(response.data)) {
-                setHotBlocks(response.data);
+                setRihanData(response.data);
             }
         } catch (error) {
-            console.error('Fetch hot blocks failed:', error);
+            console.error('Fetch rihan data failed:', error);
         }
+    };
+
+    const refreshRihanData = async () => {
+        try {
+            await axios.post(`http://${local_ip}:3000/refresh_rihan_data`);
+            await fetchRiHanData();
+        } catch (error) {
+            console.error('Refresh rihan data failed:', error);
+        }
+    };
+
+    const fetchJigouReports = async () => {
+        try {
+            const response = await axios.get(`http://${local_ip}:3000/get_jigou_reports`);
+            if (response.data && response.data.reports) {
+                setJigouReports(response.data.reports);
+            }
+        } catch (error) {
+            console.error('Fetch jigou reports failed:', error);
+        }
+    };
+
+    // 拉取近期研报（近5天），用于研报视图展示
+    const fetchRecentResearchReports = async () => {
+        if (researchReportsLoading || researchReportsLoaded) return;
+        setResearchReportsLoading(true);
+        try {
+            const researchResponse = await axios.get(`http://${local_ip}:3000/get_research_reports`);
+            const researchTree = researchResponse.data || [];
+            const allReports = collectAllResearchReports(researchTree);
+
+            const fiveDaysAgo = dayjs().subtract(5, 'day');
+            const recentReports = allReports.filter(report => {
+                const match = report.folderPath?.match(/(\d{8})/);
+                if (!match) return false;
+                const reportDate = dayjs(match[1], 'YYYYMMDD');
+                return reportDate.isAfter(fiveDaysAgo);
+            });
+
+            const batchSize = 10;
+            const fullContentReports = [];
+            for (let i = 0; i < recentReports.length; i += batchSize) {
+                const batch = recentReports.slice(i, i + batchSize);
+                const batchResults = await Promise.all(
+                    batch.map(async (report) => {
+                        try {
+                            const contentResponse = await axios.get(`http://${local_ip}:3000/get_research_report`, {
+                                params: { id: report.id }
+                            });
+                            return { ...report, content: contentResponse.data?.content || '' };
+                        } catch (e) {
+                            return { ...report, content: '' };
+                        }
+                    })
+                );
+                fullContentReports.push(...batchResults);
+            }
+            setRecentResearchReports(fullContentReports);
+            setResearchReportsLoaded(true);
+        } catch (error) {
+            console.error('拉取近期研报失败:', error);
+            message.error('拉取近期研报失败');
+        } finally {
+            setResearchReportsLoading(false);
+        }
+    };
+
+    const getLastNDistinct = (history, field, n = 3) => {
+        const distinct = [];
+        let lastValue = null;
+        let hasFirstValue = false;
+
+        for (let i = history.length - 1; i >= 0 && distinct.length < n; i--) {
+            const currentValue = history[i][field];
+            if (!hasFirstValue) {
+                distinct.unshift(history[i]);
+                lastValue = currentValue;
+                hasFirstValue = true;
+            } else if (currentValue !== lastValue) {
+                distinct.unshift(history[i]);
+                lastValue = currentValue;
+            }
+        }
+
+        return distinct;
     };
 
     const fetchAmountData = async () => {
@@ -510,9 +1414,9 @@ const DingPan = () => {
 
                         if (isContinuousOutflowIncreasing) {
                             // 弹出高级警告
-                            setTimeout(() => {
-                                window.alert('🚨 高级风险预警：主力资金呈现净流出加速态势！\n\n当前净流出：' + mainMoney + ' 亿\n建议：市场承压严重，请操作者适度减仓，并且今天不要再做任何操作，严格控制风险！');
-                            }, 100);
+                            // setTimeout(() => {
+                            //     window.alert('🚨 高级风险预警：主力资金呈现净流出加速态势！\n\n当前净流出：' + mainMoney + ' 亿\n建议：市场承压严重，请操作者适度减仓，并且今天不要再做任何操作，严格控制风险！');
+                            // }, 100);
                         }
                     }
                     return newHistory;
@@ -522,22 +1426,41 @@ const DingPan = () => {
 
                 // 1. 趋势判断
                 setAmountHistory(prev => {
-                    const newHistory = [...prev, normalizedInfo].slice(-3); // 只保留最近3次
+                    const newHistory = [...prev, normalizedInfo].slice(-15); // 保留最近15次供去重使用
 
-                    if (newHistory.length === 3) {
+                    if (newHistory.length >= 3) {
+                        // 获取去重后的最近3个点
+                        const moneyDistinct = getLastNDistinct(newHistory, 'mainMoney', 3);
+                        const amountDistinct = getLastNDistinct(newHistory, 'amountChangeDiff', 3);
+                        const szDistinct = getLastNDistinct(newHistory, 'szPrice', 3);
+                        const kcDistinct = getLastNDistinct(newHistory, 'kcPrice', 3);
+                        const cyDistinct = getLastNDistinct(newHistory, 'cyPrice', 3);
+
                         const [h1, h2, h3] = newHistory;
 
-                        // 资金趋势
-                        const isMainMoneyIncreasing = h3.mainMoney > h2.mainMoney && h2.mainMoney > h1.mainMoney;
-                        const isMainMoneyDecreasing = h3.mainMoney < h2.mainMoney && h2.mainMoney < h1.mainMoney;
+                        // 资金趋势（使用去重后的数据）
+                        const isMainMoneyIncreasing = moneyDistinct.length >= 3 &&
+                            moneyDistinct[2].mainMoney > moneyDistinct[1].mainMoney &&
+                            moneyDistinct[1].mainMoney > moneyDistinct[0].mainMoney;
+                        const isMainMoneyDecreasing = moneyDistinct.length >= 3 &&
+                            moneyDistinct[2].mainMoney < moneyDistinct[1].mainMoney &&
+                            moneyDistinct[1].mainMoney < moneyDistinct[0].mainMoney;
 
-                        // 成交量趋势
-                        const isAmountIncreasing = h3.amountChangeDiff > h2.amountChangeDiff && h2.amountChangeDiff > h1.amountChangeDiff;
-                        const isAmountDecreasing = h3.amountChangeDiff < h2.amountChangeDiff && h2.amountChangeDiff < h1.amountChangeDiff;
+                        // 成交量趋势（使用去重后的数据）
+                        const isAmountIncreasing = amountDistinct.length >= 3 &&
+                            amountDistinct[2].amountChangeDiff > amountDistinct[1].amountChangeDiff &&
+                            amountDistinct[1].amountChangeDiff > amountDistinct[0].amountChangeDiff;
+                        const isAmountDecreasing = amountDistinct.length >= 3 &&
+                            amountDistinct[2].amountChangeDiff < amountDistinct[1].amountChangeDiff &&
+                            amountDistinct[1].amountChangeDiff < amountDistinct[0].amountChangeDiff;
 
-                        // 指数价格趋势 (以上证指数为基准)
-                        const isPriceIncreasing = h3.szPrice > h2.szPrice && h2.szPrice > h1.szPrice;
-                        const isPriceDecreasing = h3.szPrice < h2.szPrice && h2.szPrice < h1.szPrice;
+                        // 指数价格趋势 (以上证指数为基准，使用去重后的数据)
+                        const isPriceIncreasing = szDistinct.length >= 3 &&
+                            szDistinct[2].szPrice > szDistinct[1].szPrice &&
+                            szDistinct[1].szPrice > szDistinct[0].szPrice;
+                        const isPriceDecreasing = szDistinct.length >= 3 &&
+                            szDistinct[2].szPrice < szDistinct[1].szPrice &&
+                            szDistinct[1].szPrice < szDistinct[0].szPrice;
 
                         let trendTitle = '';
                         let alertType = 'warning';
@@ -596,6 +1519,39 @@ const DingPan = () => {
                                 isTrend: true
                             };
                         }
+
+                        // 量价背离检测（诱多/诱空）
+                        // 诱多：资金持续净流出（增加或不变）+ 科创板/创业板分时上涨
+                        const isContinuousOutflow = moneyDistinct.length >= 3 &&
+                            moneyDistinct[2].mainMoney <= moneyDistinct[1].mainMoney &&
+                            moneyDistinct[1].mainMoney <= moneyDistinct[0].mainMoney;
+                        const isKeChuangRising = kcDistinct.length >= 3 &&
+                            kcDistinct[2].kcPrice > kcDistinct[1].kcPrice;
+                        const isChuangYeBanRising = cyDistinct.length >= 3 &&
+                            cyDistinct[2].cyPrice > cyDistinct[1].cyPrice;
+
+                        if (isContinuousOutflow && (isKeChuangRising || isChuangYeBanRising)) {
+                            const risingBoards = [];
+                            if (isKeChuangRising) risingBoards.push('科创板');
+                            if (isChuangYeBanRising) risingBoards.push('创业板');
+                            checkAndSendDivergenceNotification('bullTrap', risingBoards);
+                        }
+
+                        // 诱空：资金持续净流入（增加或不变）+ 科创板/创业板分时下跌
+                        const isContinuousInflow = moneyDistinct.length >= 3 &&
+                            moneyDistinct[2].mainMoney >= moneyDistinct[1].mainMoney &&
+                            moneyDistinct[1].mainMoney >= moneyDistinct[0].mainMoney;
+                        const isKeChuangFalling = kcDistinct.length >= 3 &&
+                            kcDistinct[2].kcPrice < kcDistinct[1].kcPrice;
+                        const isChuangYeBanFalling = cyDistinct.length >= 3 &&
+                            cyDistinct[2].cyPrice < cyDistinct[1].cyPrice;
+
+                        if (isContinuousInflow && (isKeChuangFalling || isChuangYeBanFalling)) {
+                            const fallingBoards = [];
+                            if (isKeChuangFalling) fallingBoards.push('科创板');
+                            if (isChuangYeBanFalling) fallingBoards.push('创业板');
+                            checkAndSendDivergenceNotification('bearTrap', fallingBoards);
+                        }
                     }
 
                     if (triggerAlert) {
@@ -632,6 +1588,30 @@ const DingPan = () => {
             setHistoryData(filterTradingSessionHistoryData(response.data));
         } catch (err) {
             console.error('Fetch history data failed:', err);
+        }
+    };
+
+    const handleCopyContext = async () => {
+        setCopyContextLoading(true);
+        const msgKey = 'copy-context';
+        try {
+            message.loading({ content: '正在拉取历史复盘与分时数据...', key: msgKey, duration: 0 });
+            const { charCount, dateCount } = await fetchAndCopyContext({
+                historyData,
+                onProgress: (done, total) => {
+                    message.loading({ content: `正在拉取历史数据 ${done}/${total}...`, key: msgKey, duration: 0 });
+                },
+            });
+            message.success({
+                content: `已复制复盘上下文（${dateCount} 个历史日期，约 ${(charCount / 1024).toFixed(1)} KB），可直接粘贴给 AI`,
+                key: msgKey,
+                duration: 4,
+            });
+        } catch (e) {
+            console.error('复制上下文失败:', e);
+            message.error({ content: '复制上下文失败：' + (e?.message || '未知错误'), key: msgKey, duration: 4 });
+        } finally {
+            setCopyContextLoading(false);
         }
     };
 
@@ -724,44 +1704,106 @@ const DingPan = () => {
     const createBaseChart = (container) => {
         return createChart(container, {
             layout: {
-                background: { type: ColorType.Solid, color: '#ffffff' },
-                textColor: '#333',
-                fontSize: 10,
+                background: { type: ColorType.Solid, color: 'transparent' },
+                textColor: '#6b7890',
+                fontSize: 11,
             },
             width: container.clientWidth,
-            height: 220, // 增加高度
+            height: container.clientHeight || 220,
             grid: {
-                vertLines: { color: '#f0f0f0' },
-                horzLines: { color: '#f0f0f0' },
+                vertLines: { color: 'rgba(18, 33, 58, 0.05)' },
+                horzLines: { color: 'rgba(18, 33, 58, 0.05)' },
             },
             timeScale: {
                 timeVisible: true,
                 secondsVisible: false,
-                borderColor: '#D1D4DC',
+                borderColor: 'rgba(18, 33, 58, 0.08)',
                 tickMarkFormatter: (time) => {
                     return dayjs.unix(time).format('HH:mm');
                 },
             },
             localization: {
                 timeFormatter: (time) => {
-                    return dayjs.unix(time).format('HH:mm:ss');
+                    return dayjs.unix(time).format('HH:mm');
                 },
             },
             rightPriceScale: {
-                borderColor: '#D1D4DC',
+                borderColor: 'rgba(18, 33, 58, 0.08)',
                 autoScale: true,
+                scaleMargins: { top: 0.12, bottom: 0.12 },
             },
-            handleScroll: true,
-            handleScale: true,
+            handleScroll: false,
+            handleScale: false,
         });
     };
 
-    const renderMainMoneyChart = (data) => {
-        if (!mainMoneyContainerRef.current) return;
+    const aggregateData = (data, field) => {
+        const sortedData = [...data].sort((a, b) => a[0].localeCompare(b[0]));
+        const aggregated = [];
+        const groupSize = 10;
 
-        if (mainMoneyChartRef.current) {
-            mainMoneyChartRef.current.remove();
+        for (let i = 0; i < sortedData.length; i += groupSize) {
+            const group = sortedData.slice(i, i + groupSize);
+            const values = group.map(item => parseFloat(item[1][field]) || 0);
+            const sum = values.reduce((acc, val) => acc + val, 0);
+            const avg = sum / group.length;
+            const firstTime = group[0][0];
+            aggregated.push([firstTime, avg]);
         }
+
+        return aggregated;
+    };
+
+    const mainMoneySeriesRef = useRef(null);
+    const volumeSeriesRef = useRef(null);
+    const cybOverlaySeriesRef = useRef(null);   // 主力资金图上叠加的创业板分时（紫色虚线）
+    const kcbOverlaySeriesRef = useRef(null);   // 主力资金图上叠加的科创板分时（橙色虚线）
+    const indexOverlayRef = useRef({ cyb: [], kcb: [] }); // 今日指数分时 {time, value} 序列
+
+    const buildIndexOverlayData = (tline) => {
+        if (!tline || !Array.isArray(tline.line)) return [];
+        const today = dayjs().format('YYYY-MM-DD');
+        const formatted = tline.line
+            .filter(item => item && item.minute && item.change != null)
+            .map(item => {
+                const minStr = String(item.minute).padStart(4, '0');
+                const hh = minStr.substring(0, 2);
+                const mm = minStr.substring(2, 4);
+                return {
+                    time: dayjs(`${today} ${hh}:${mm}`).unix(),
+                    value: parseFloat(item.change) || 0,
+                };
+            });
+        formatted.sort((a, b) => a.time - b.time);
+        const deduped = [];
+        for (let i = 0; i < formatted.length; i++) {
+            if (i === 0 || formatted[i].time !== deduped[deduped.length - 1].time) {
+                deduped.push(formatted[i]);
+            } else {
+                deduped[deduped.length - 1] = formatted[i];
+            }
+        }
+        return deduped;
+    };
+
+    const fetchIndexOverlay = async () => {
+        try {
+            const res = await axios.get(`http://${local_ip}:3000/fupan/index_tline?date=${dayjs().format('YYYYMMDD')}`);
+            const data = res.data?.data;
+            if (!data) return;
+            indexOverlayRef.current = {
+                cyb: buildIndexOverlayData(data.chuangyeban),
+                kcb: buildIndexOverlayData(data.kechuangban),
+            };
+            cybOverlaySeriesRef.current?.setData(indexOverlayRef.current.cyb);
+            kcbOverlaySeriesRef.current?.setData(indexOverlayRef.current.kcb);
+        } catch (e) {
+            // 忽略指数分时获取失败
+        }
+    };
+
+    const initMainMoneyChart = (data) => {
+        if (!mainMoneyContainerRef.current) return;
 
         const chart = createBaseChart(mainMoneyContainerRef.current);
         mainMoneyChartRef.current = chart;
@@ -775,17 +1817,72 @@ const DingPan = () => {
                 minMove: 1,
             },
         });
+        mainMoneySeriesRef.current = series;
+
+        // 叠加创业板分时（紫色虚线）与科创板分时（橙色虚线），共用顶部独立价格刻度
+        cybOverlaySeriesRef.current = chart.addLineSeries({
+            color: '#722ed1',
+            lineWidth: 2,
+            lineStyle: LineStyle.Dashed,
+            priceScaleId: 'index',
+            priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+        });
+        kcbOverlaySeriesRef.current = chart.addLineSeries({
+            color: '#fa8c16',
+            lineWidth: 2,
+            lineStyle: LineStyle.Dashed,
+            priceScaleId: 'index',
+            priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+        });
+        chart.priceScale('index').applyOptions({ scaleMargins: { top: 0.7, bottom: 0.05 } });
+        cybOverlaySeriesRef.current.setData(indexOverlayRef.current.cyb);
+        kcbOverlaySeriesRef.current.setData(indexOverlayRef.current.kcb);
 
         const today = dayjs().format('YYYY-MM-DD');
-        const sortedData = [...data].sort((a, b) => a[0].localeCompare(b[0]));
+        const aggregatedData = aggregateData(data, 'mainMoney');
 
-        const chartData = sortedData.map(([time, val]) => {
+        const chartData = aggregatedData.map(([time, avg]) => {
             const hh = time.substring(0, 2);
             const mm = time.substring(2, 4);
             const ss = time.substring(4, 6);
             return {
                 time: dayjs(`${today} ${hh}:${mm}:${ss}`).unix(),
-                value: parseFloat(val.mainMoney) || 0,
+                value: avg,
+            };
+        });
+
+        series.setData(chartData);
+        series.createPriceLine({ price: -100, color: 'red', lineStyle: LineStyle.Dashed });
+        chart.timeScale().fitContent();
+    };
+
+    const initVolumeChart = (data) => {
+        if (!volumeContainerRef.current) return;
+
+        const chart = createBaseChart(volumeContainerRef.current);
+        volumeChartRef.current = chart;
+
+        const series = chart.addLineSeries({
+            color: getThemeColor(),
+            lineWidth: 2,
+            priceFormat: {
+                type: 'price',
+                precision: 0,
+                minMove: 1,
+            },
+        });
+        volumeSeriesRef.current = series;
+
+        const today = dayjs().format('YYYY-MM-DD');
+        const aggregatedData = aggregateData(data, 'amountChangeDiff');
+
+        const chartData = aggregatedData.map(([time, avg]) => {
+            const hh = time.substring(0, 2);
+            const mm = time.substring(2, 4);
+            const ss = time.substring(4, 6);
+            return {
+                time: dayjs(`${today} ${hh}:${mm}:${ss}`).unix(),
+                value: avg,
             };
         });
 
@@ -793,23 +1890,140 @@ const DingPan = () => {
         chart.timeScale().fitContent();
     };
 
+    const updateMainMoneyChart = (data) => {
+        if (!mainMoneySeriesRef.current) return;
+
+        const today = dayjs().format('YYYY-MM-DD');
+        const aggregatedData = aggregateData(data, 'mainMoney');
+
+        const chartData = aggregatedData.map(([time, avg]) => {
+            const hh = time.substring(0, 2);
+            const mm = time.substring(2, 4);
+            const ss = time.substring(4, 6);
+            return {
+                time: dayjs(`${today} ${hh}:${mm}:${ss}`).unix(),
+                value: avg,
+            };
+        });
+
+        mainMoneySeriesRef.current.setData(chartData);
+        cybOverlaySeriesRef.current?.setData(indexOverlayRef.current.cyb);
+        kcbOverlaySeriesRef.current?.setData(indexOverlayRef.current.kcb);
+        if (mainMoneyChartRef.current) {
+            mainMoneyChartRef.current.timeScale().fitContent();
+        }
+    };
+
+    const updateVolumeChart = (data) => {
+        if (!volumeSeriesRef.current) return;
+
+        const today = dayjs().format('YYYY-MM-DD');
+        const aggregatedData = aggregateData(data, 'amountChangeDiff');
+
+        const chartData = aggregatedData.map(([time, avg]) => {
+            const hh = time.substring(0, 2);
+            const mm = time.substring(2, 4);
+            const ss = time.substring(4, 6);
+            return {
+                time: dayjs(`${today} ${hh}:${mm}:${ss}`).unix(),
+                value: avg,
+            };
+        });
+
+        volumeSeriesRef.current.setData(chartData);
+        if (volumeChartRef.current) {
+            volumeChartRef.current.timeScale().fitContent();
+        }
+    };
+
     useEffect(() => {
         if (historyData.length > 0) {
-            renderMainMoneyChart(historyData);
+            if (!mainMoneyChartRef.current) {
+                initMainMoneyChart(historyData);
+            } else {
+                updateMainMoneyChart(historyData);
+            }
+            if (!volumeChartRef.current) {
+                initVolumeChart(historyData);
+            } else {
+                updateVolumeChart(historyData);
+            }
         }
     }, [historyData]);
 
-    // 处理窗口缩放
+    // 处理窗口缩放和展开/收起
     useEffect(() => {
         const handleResize = () => {
             if (mainMoneyChartRef.current && mainMoneyContainerRef.current) {
-                mainMoneyChartRef.current.applyOptions({ width: mainMoneyContainerRef.current.clientWidth });
+                mainMoneyChartRef.current.applyOptions({
+                    width: mainMoneyContainerRef.current.clientWidth,
+                    height: mainMoneyContainerRef.current.clientHeight,
+                });
+                mainMoneyChartRef.current.timeScale().fitContent();
+            }
+            if (volumeChartRef.current && volumeContainerRef.current) {
+                volumeChartRef.current.applyOptions({ width: volumeContainerRef.current.clientWidth });
+                volumeChartRef.current.timeScale().fitContent();
             }
         };
 
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+
+        // 展开/收起时也触发 resize
+        const resizeTimer = setTimeout(handleResize, 150);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            clearTimeout(resizeTimer);
+        };
+    }, [isMainMoneyExpanded, isWatchlistCollapsed]);
+
+    // 折叠/展开自选股时，清理并重新初始化图表（因为DOM位置变化）
+    useEffect(() => {
+        // 跳过首次挂载，避免初始化时就清理
+        if (!isWatchlistCollapseInitialized.current) {
+            isWatchlistCollapseInitialized.current = true;
+            return;
+        }
+
+        // 清理旧图表
+        const cleanupCharts = () => {
+            try {
+                if (mainMoneyChartRef.current) {
+                    mainMoneyChartRef.current.remove();
+                    mainMoneyChartRef.current = null;
+                    mainMoneySeriesRef.current = null;
+                    cybOverlaySeriesRef.current = null;
+                    kcbOverlaySeriesRef.current = null;
+                }
+            } catch (e) { /* ignore */ }
+            try {
+                if (volumeChartRef.current) {
+                    volumeChartRef.current.remove();
+                    volumeChartRef.current = null;
+                    volumeSeriesRef.current = null;
+                }
+            } catch (e) { /* ignore */ }
+        };
+
+        cleanupCharts();
+
+        // DOM更新后重新初始化图表
+        const reinitTimer = setTimeout(() => {
+            if (historyData.length > 0) {
+                if (mainMoneyContainerRef.current && !mainMoneyChartRef.current) {
+                    initMainMoneyChart(historyData);
+                }
+                if (volumeContainerRef.current && !volumeChartRef.current) {
+                    initVolumeChart(historyData);
+                }
+            }
+        }, 150);
+
+        return () => {
+            clearTimeout(reinitTimer);
+        };
+    }, [isWatchlistCollapsed]);
 
     useEffect(() => {
         fetchData();
@@ -817,26 +2031,56 @@ const DingPan = () => {
         fetchEmotionData();
         fetchJisuYidongRank();
         fetchHistoryData();
-        fetchHotBlocks();
+        fetchIndexOverlay();
+        fetchRiHanData();
         fetchBlockHistory();
         fetchBlockMoneyChange();
+        fetchJigouReports();
+        fetchRecentResearchReports();
+        fetchWatchlistMainFund();
 
-        const monitorTimer = setInterval(fetchData, 5000);
-        const amountTimer = setInterval(fetchAmountData, 10000); // 10s 轮询一次
-        const jisuYidongRankTimer = setInterval(fetchJisuYidongRank, 3000); // 3s 轮询一次
-        const historyTimer = setInterval(fetchHistoryData, 10000); // 10s 轮询一次
-        const hotBlocksTimer = setInterval(fetchHotBlocks, 10000); // 10s 轮询一次
-        const blockHistoryTimer = setInterval(fetchBlockHistory, 3000); // 30s 轮询一次
-        const blockMoneyTimer = setInterval(fetchBlockMoneyChange, 3000); // 30s 轮询一次
+        const timers = [];
+
+        const schedulePoll = (callback, delay) => {
+            const timer = setTimeout(() => {
+                if (!isAfterMarketClose()) {
+                    callback();
+                    schedulePoll(callback, delay);
+                }
+            }, delay);
+            timers.push(timer);
+            return timer;
+        };
+
+        schedulePoll(fetchData, 5000);
+        schedulePoll(fetchAmountData, 10000);
+        schedulePoll(fetchJisuYidongRank, 3000);
+        schedulePoll(fetchHistoryData, 10000);
+        schedulePoll(fetchIndexOverlay, 30000);
+        schedulePoll(fetchRiHanData, 3000);
+        schedulePoll(fetchBlockHistory, 3000);
+        schedulePoll(fetchBlockMoneyChange, 3000);
+        schedulePoll(fetchJigouReports, 60000);
+
+        // 自选股主力资金：10:00 前每 10s，10:00 后每 1min；收盘(14:59)/周末停止，盘前每分钟探测是否开盘
+        const scheduleMainFundPoll = () => {
+            const t = dayjs();
+            const dayOfWeek = t.day();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const timeVal = t.hour() * 100 + t.minute();
+            if (isWeekend || timeVal >= 1459) return;
+            const inTrading = timeVal >= 915;
+            const delay = inTrading ? (timeVal < 1000 ? 10000 : 60000) : 60000;
+            const timer = setTimeout(() => {
+                if (inTrading) fetchWatchlistMainFund();
+                scheduleMainFundPoll();
+            }, delay);
+            timers.push(timer);
+        };
+        scheduleMainFundPoll();
 
         return () => {
-            clearInterval(monitorTimer);
-            clearInterval(amountTimer);
-            clearInterval(jisuYidongRankTimer);
-            clearInterval(historyTimer);
-            clearInterval(hotBlocksTimer);
-            clearInterval(blockHistoryTimer);
-            clearInterval(blockMoneyTimer);
+            timers.forEach(clearTimeout);
         };
     }, []);
 
@@ -857,87 +2101,26 @@ const DingPan = () => {
         return null;
     }, [data.kaiPanXiaCuoData]);
 
+    const stockUpAlerts = stockData.waveList.filter(item => item.statusKey === 'highRed');
+    const stockDownAlerts = stockData.waveList.filter(item => item.statusKey !== 'highRed');
+    const blockUpAlerts = blockAlerts.filter(item => item.type === 'up');
+    const blockDownAlerts = blockAlerts.filter(item => item.type !== 'up');
+
     return (
-        <div className="dingpan-container">
-            {(alerts.length > 0 || emotionSuggestion || marketRiskWarning || kaiPanXiaCuoWarning) && (
-                <div className="top-global-alerts" style={{ marginBottom: 12 }}>
-                    <Space direction="vertical" style={{ width: '100%' }} size={8}>
-                        {kaiPanXiaCuoWarning && (
-                            <Alert
-                                message={
-                                    <Text>
-                                        <Text strong>🚨 开盘下挫预警</Text>：{kaiPanXiaCuoWarning}
-                                    </Text>
-                                }
-                                type="success"
-                                showIcon
-                                icon={<WarningOutlined />}
-                            />
-                        )}
-                        {marketRiskWarning && (
-                            <Alert
-                                message={
-                                    <Text>
-                                        <Text strong>🚨 极端风险预警</Text>：{marketRiskWarning}
-                                    </Text>
-                                }
-                                type="success"
-                                showIcon
-                                icon={<WarningOutlined />}
-                            />
-                        )}
-                        {emotionSuggestion && (
-                            <Alert
-                                message={
-                                    <Text>
-                                        <Text strong>{emotionSuggestion.message}</Text>：{emotionSuggestion.description}
-                                    </Text>
-                                }
-                                type={emotionSuggestion.type}
-                                showIcon
-                                icon={<ThunderboltOutlined />}
-                            />
-                        )}
-                        {alerts.map(alert => (
-                            <Alert
-                                key={alert.id}
-                                message={
-                                    <Text>
-                                        <Text strong>{alert.title}</Text>：{alert.isDefensive ? alert.description : `[${alert.time}] 主力资金${alert.moneyTrend}(${alert.mainMoney > 0 ? '+' : ''}${alert.mainMoney}亿)，成交量变化${alert.amountChangeDiff}亿`}
-                                    </Text>
-                                }
-                                type={alert.type}
-                                showIcon
-                                closable
-                                onClose={() => setAlerts(prev => prev.filter(a => a.id !== alert.id))}
-                                icon={<WarningOutlined />}
-                            />
-                        ))}
-                    </Space>
-                </div>
-            )}
-            <div className="page-header">
-                <div className="header-left">
-                    <Title level={4}>实时监控面板</Title>
-                    {lastUpdated && (
-                        <Text type="secondary">
-                            <ClockCircleOutlined /> 最后更新: {lastUpdated}
-                        </Text>
-                    )}
-                </div>
-                <div className="header-right">
-                    <Badge count={history.length} overflowCount={99} size="small" offset={[0, 0]}>
-                        <Button
-                            type="primary"
-                            icon={<HistoryOutlined />}
-                            onClick={() => setIsModalOpen(true)}
-                            className="history-btn"
-                        >
-                            异动历史记录
-                        </Button>
-                    </Badge>
-                </div>
-            </div>
+        <div className="dingpan-container" onDoubleClick={handlePageDoubleClick}>
+            <TopGlobalAlerts
+                alerts={alerts}
+                marketRiskWarning={marketRiskWarning}
+                kaiPanXiaCuoWarning={kaiPanXiaCuoWarning}
+                onCloseAlert={(id) => setAlerts(prev => prev.filter(a => a.id !== id))}
+                themeColor={themeColor}
+            />
+            <PageMeta
+                lastUpdated={lastUpdated}
+                historyCount={history.length}
+                onHistoryClick={() => setIsModalOpen(true)}
+                onOpenThemeColor={() => setThemeColorModalVisible(true)}
+            />
 
             {loading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
@@ -945,932 +2128,208 @@ const DingPan = () => {
                 </div>
             ) : (
                 <>
-                    <Row gutter={16} style={{ marginBottom: 16 }}>
-                        {/* 个股异动监控 */}
-                        <Col xs={24} lg={12}>
-                            <Card
-                                title={<><StockOutlined style={{ color: '#1890ff', marginRight: 8 }} /> 个股异动监控</>}
-                                className="monitor-card stock-alert-card"
-                                variant="borderless"
-                                bodyStyle={{ maxHeight: '400px', overflowY: 'auto' }}
-                            >
-                                <Row gutter={16}>
-                                    {/* 上涨个股 */}
-                                    <Col xs={24} lg={12}>
-                                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                                            <CaretUpOutlined style={{ color: '#f5222d', marginRight: 8 }} />
-                                            <Text strong style={{ color: '#f5222d' }}>上涨异动</Text>
-                                        </div>
-                                        <List
-                                            size="small"
-                                            dataSource={stockData.waveList.filter(a => a.statusKey === 'highRed')}
-                                            renderItem={(item) => (
-                                                <List.Item
-                                                    style={{ cursor: 'pointer' }}
-                                                    onClick={() => showKLine(item)}
-                                                >
-                                                    <List.Item.Meta
-                                                        title={
-                                                            <Space>
-                                                                <Text strong>{item.name}</Text>
-                                                                <Tag color="error">
-                                                                    {item.change}
-                                                                </Tag>
-                                                            </Space>
-                                                        }
-                                                        description={
-                                                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                                急速变动 · {item.change_diff} · {item.time}
-                                                            </Text>
-                                                        }
-                                                    />
-                                                </List.Item>
-                                            )}
-                                        />
-                                    </Col>
-                                    {/* 下跌个股 */}
-                                    <Col xs={24} lg={12}>
-                                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                                            <CaretDownOutlined style={{ color: '#52c41a', marginRight: 8 }} />
-                                            <Text strong style={{ color: '#52c41a' }}>下跌异动</Text>
-                                        </div>
-                                        <List
-                                            size="small"
-                                            dataSource={stockData.waveList.filter(a => a.statusKey === 'highGreen')}
-                                            renderItem={(item) => (
-                                                <List.Item
-                                                    style={{ cursor: 'pointer' }}
-                                                    onClick={() => showKLine(item)}
-                                                >
-                                                    <List.Item.Meta
-                                                        title={
-                                                            <Space>
-                                                                <Text strong>{item.name}</Text>
-                                                                <Tag color="success">
-                                                                    {item.change}
-                                                                </Tag>
-                                                            </Space>
-                                                        }
-                                                        description={
-                                                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                                急速变动 · {item.change_diff} · {item.time}
-                                                            </Text>
-                                                        }
-                                                    />
-                                                </List.Item>
-                                            )}
-                                        />
-                                    </Col>
-                                </Row>
-                            </Card>
-                        </Col>
-
-                        {/* 板块异动监控 */}
-                        <Col xs={24} lg={12}>
-                            <Card
-                                title={<><AlertOutlined style={{ color: '#faad14', marginRight: 8 }} /> 板块异动监控</>}
-                                className="monitor-card block-alert-card"
-                                variant="borderless"
-                                bodyStyle={{ maxHeight: '400px', overflowY: 'auto' }}
-                            >
-                                <Row gutter={16}>
-                                    {/* 上涨板块 */}
-                                    <Col xs={24} lg={12}>
-                                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                                            <CaretUpOutlined style={{ color: '#f5222d', marginRight: 8 }} />
-                                            <Text strong style={{ color: '#f5222d' }}>上涨异动</Text>
-                                        </div>
-                                        <List
-                                            size="small"
-                                            dataSource={blockAlerts.filter(a => a.type === 'up')}
-                                            renderItem={(item) => (
-                                                <List.Item
-                                                    style={{ cursor: 'pointer' }}
-                                                    onClick={() => jumpToBlock(item.blockName)}
-                                                >
-                                                    <List.Item.Meta
-                                                        title={
-                                                            <Space>
-                                                                <Text strong>{item.blockName}</Text>
-                                                                <Tag color="error">
-                                                                    {item.changeDiff > 0 ? '+' : ''}{item.changeDiff.toFixed(2)}%
-                                                                </Tag>
-                                                            </Space>
-                                                        }
-                                                        description={
-                                                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                                {item.prevChange.toFixed(2)}% → {item.newChange.toFixed(2)}% · {item.time}
-                                                            </Text>
-                                                        }
-                                                    />
-                                                </List.Item>
-                                            )}
-                                        />
-                                    </Col>
-                                    {/* 下跌板块 */}
-                                    <Col xs={24} lg={12}>
-                                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                                            <CaretDownOutlined style={{ color: '#52c41a', marginRight: 8 }} />
-                                            <Text strong style={{ color: '#52c41a' }}>下跌异动</Text>
-                                        </div>
-                                        <List
-                                            size="small"
-                                            dataSource={blockAlerts.filter(a => a.type === 'down')}
-                                            renderItem={(item) => (
-                                                <List.Item
-                                                    style={{ cursor: 'pointer' }}
-                                                    onClick={() => jumpToBlock(item.blockName)}
-                                                >
-                                                    <List.Item.Meta
-                                                        title={
-                                                            <Space>
-                                                                <Text strong>{item.blockName}</Text>
-                                                                <Tag color="success">
-                                                                    {item.changeDiff > 0 ? '+' : ''}{item.changeDiff.toFixed(2)}%
-                                                                </Tag>
-                                                            </Space>
-                                                        }
-                                                        description={
-                                                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                                {item.prevChange.toFixed(2)}% → {item.newChange.toFixed(2)}% · {item.time}
-                                                            </Text>
-                                                        }
-                                                    />
-                                                </List.Item>
-                                            )}
-                                        />
-                                    </Col>
-                                </Row>
-                            </Card>
-                        </Col>
-                    </Row>
                     <Row gutter={[24, 24]}>
                         {/* 左侧主要监控区 */}
                         <Col xs={24} lg={17}>
                             {/* 抢筹与拉升模块 */}
-                            {((showJingJiaQiangChou && data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0) || (showKaiPanZhuDong && data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0)) && (
-                                <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
-                                    {showJingJiaQiangChou && data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0 && (
-                                        <Col span={showKaiPanZhuDong && data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0 ? 12 : 24}>
-                                            <Card
-                                                title={
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                                        <span><RiseOutlined style={{ color: '#ff4d4f' }} /> 竞价抢筹监控</span>
-                                                        {emotionSuggestion?.canTrade && (
-                                                            <span style={{ fontSize: 12, color: '#faad14', fontWeight: 'normal' }}>
-                                                                {emotionSuggestion.message}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                }
-                                                className="monitor-card jingjia-card"
-                                                variant="borderless"
-                                                extra={
-                                                    <CloseOutlined
-                                                        style={{ cursor: 'pointer', color: '#999' }}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setShowJingJiaQiangChou(false);
-                                                        }}
-                                                    />
-                                                }
-                                            >
-                                                <div className="jingjia-grid">
-                                                    {data.jingJiaQiangChouData.map((item, index) => {
-                                                        const isUp = item.change >= 0;
-                                                        const color = isUp ? '#f5222d' : '#52c41a';
-                                                        return (
-                                                            <div
-                                                                key={index}
-                                                                className="jingjia-item"
-                                                                onClick={() => showKLine({ name: item.stockName, code: item.code, change: item.change })}
-                                                                style={{ cursor: 'pointer' }}
-                                                            >
-                                                                <div className="stock-info">
-                                                                    <Text strong style={{ fontSize: '14px' }}>{item.stockName}</Text>
-                                                                    <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.code?.replace('sh', '').replace('sz', '')}</Text>
-                                                                </div>
-                                                                <div className="stock-values">
-                                                                    <Text strong style={{ color: color, fontSize: '14px' }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
-                                                                    <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.last_px?.toFixed(2)}</Text>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </Card>
-                                        </Col>
-                                    )}
-                                    {showKaiPanZhuDong && data.kaiPanZhuDongData && data.kaiPanZhuDongData.length > 0 && (
-                                        <Col span={showJingJiaQiangChou && data.jingJiaQiangChouData && data.jingJiaQiangChouData.length > 0 ? 12 : 24}>
-                                            <Card
-                                                title={
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                                        <span><ThunderboltOutlined style={{ color: '#faad14' }} /> 开盘主动拉升</span>
-                                                        {emotionSuggestion?.canTrade && (
-                                                            <span style={{ fontSize: 12, color: '#faad14', fontWeight: 'normal' }}>
-                                                                {emotionSuggestion.message}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                }
-                                                className="monitor-card zhudong-card"
-                                                variant="borderless"
-                                                extra={
-                                                    <CloseOutlined
-                                                        style={{ cursor: 'pointer', color: '#999' }}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setShowKaiPanZhuDong(false);
-                                                        }}
-                                                    />
-                                                }
-                                            >
-                                                <div className="jingjia-grid">
-                                                    {data.kaiPanZhuDongData.map((item, index) => {
-                                                        const isUp = item.change >= 0;
-                                                        const color = isUp ? '#f5222d' : '#52c41a';
-                                                        return (
-                                                            <div
-                                                                key={index}
-                                                                className="jingjia-item"
-                                                                onClick={() => showKLine({ name: item.stockName, code: item.code, change: item.change })}
-                                                                style={{ cursor: 'pointer' }}
-                                                            >
-                                                                <div className="stock-info">
-                                                                    <Text strong style={{ fontSize: '14px' }}>{item.stockName}</Text>
-                                                                    <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.code?.replace('sh', '').replace('sz', '')}</Text>
-                                                                </div>
-                                                                <div className="stock-values">
-                                                                    <Text strong style={{ color: color, fontSize: '14px' }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
-                                                                    <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.last_px?.toFixed(2)}</Text>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </Card>
-                                        </Col>
-                                    )}
-                                </Row>
-                            )}
-
-                            {showKaiPanXiaCuo && data.kaiPanXiaCuoData && data.kaiPanXiaCuoData.length > 0 && (
-                                <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
-                                    <Col span={24}>
-                                        <Card
-                                            title={<><FallOutlined style={{ color: '#52c41a' }} /> 开盘持续下挫</>}
-                                            className="monitor-card zhudong-card"
-                                            variant="borderless"
-                                            extra={
-                                                <CloseOutlined
-                                                    style={{ cursor: 'pointer', color: '#999' }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setShowKaiPanXiaCuo(false);
-                                                    }}
-                                                />
-                                            }
-                                        >
-                                            <div className="jingjia-grid">
-                                                {data.kaiPanXiaCuoData.map((item, index) => {
-                                                    const isUp = item.change >= 0;
-                                                    const color = isUp ? '#f5222d' : '#52c41a';
-                                                    return (
-                                                        <div
-                                                            key={index}
-                                                            className="jingjia-item"
-                                                            onClick={() => showKLine({ name: item.stockName, code: item.code, change: item.change })}
-                                                            style={{ cursor: 'pointer' }}
-                                                        >
-                                                            <div className="stock-info">
-                                                                <Text strong style={{ fontSize: '14px' }}>{item.stockName}</Text>
-                                                                <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.code?.replace('sh', '').replace('sz', '')}</Text>
-                                                            </div>
-                                                            <div className="stock-values">
-                                                                <Text strong style={{ color: color, fontSize: '14px' }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
-                                                                <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{item.last_px?.toFixed(2)}</Text>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </Card>
-                                    </Col>
-                                </Row>
-                            )}
-
-                            {/* 当日热门板块 */}
-                            {hotBlocks.length > 0 && (
-                                <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
-                                    <Col span={24}>
-                                        <Card className="hot-blocks-card" variant="borderless">
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                <FireOutlined style={{ color: '#faad14', fontSize: '20px' }} />
-                                                <Title level={5} style={{ margin: 0, fontSize: '14px' }}>当日热门板块</Title>
-                                            </div>
-                                            <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                                                {hotBlocks.map((blockName, index) => (
-                                                    <Tag
-                                                        key={index}
-                                                        color="orange"
-                                                        style={{ fontSize: '14px', padding: '4px 12px', cursor: 'pointer' }}
-                                                        onClick={() => jumpToBlock(blockName)}
-                                                    >
-                                                        {blockName}
-                                                    </Tag>
-                                                ))}
-                                            </div>
-                                        </Card>
-                                    </Col>
-                                </Row>
-                            )}
-
-                            {/* 顶部监控栏：板块涨跌幅 */}
-                            <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
-                                <Col span={24}>
-                                    <div style={{ display: 'flex', gap: '12px' }}>
-                                        <Card className="top-block-card" variant="borderless" style={{ flex: 1 }}>
-                                            <div className="block-card-header">
-                                                <RiseOutlined className="rise-icon" />
-                                                <Title level={5} style={{ margin: 0, fontSize: '13px' }}>涨幅前十</Title>
-                                            </div>
-                                            <div style={{ padding: '0 12px 8px 12px' }}>
-                                                <Alert
-                                                    message={
-                                                        <span style={{ color: '#d4380d' }}>
-                                                            {`[${lastUpdated || dayjs().format('HH:mm:ss')}] 排名提升≥3: `}
-                                                            {data.topAndBottomBlockData?.upRankBlocks?.length > 0 ? (
-                                                                data.topAndBottomBlockData.upRankBlocks.map((b, idx) => (
-                                                                    <span key={b.blockName}>
-                                                                        <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{b.blockName}</span>
-                                                                        {`(↑${b.rankChange})`}
-                                                                        {idx < data.topAndBottomBlockData.upRankBlocks.length - 1 ? '、' : ''}
-                                                                    </span>
-                                                                ))
-                                                            ) : '暂无明显异动'}
-                                                        </span>
-                                                    }
-                                                    type="error"
-                                                    showIcon
-                                                    style={{ padding: '4px 8px', fontSize: '12px' }}
-                                                />
-                                            </div>
-                                            <div className="block-items-container">
-                                                {data.topAndBottomBlockData && data.topAndBottomBlockData.firstNumList.map((item, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className="block-item rise"
-                                                        onClick={() => jumpToBlock(item.blockName)}
-                                                        style={{ cursor: 'pointer' }}
-                                                    >
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                            <span className="block-name">{item.blockName}</span>
-                                                            {item.rankChange !== 0 && (
-                                                                <span style={{
-                                                                    fontSize: '10px',
-                                                                    color: item.rankChange > 0 ? '#f5222d' : '#52c41a',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center'
-                                                                }}>
-                                                                    {item.rankChange > 0 ? '↑' : '↓'}
-                                                                    {Math.abs(item.rankChange)}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <span className="block-change">{item.avgChange > 0 ? '+' : ''}{item.avgChange}%</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </Card>
-                                        <Card className="bottom-block-card" variant="borderless" style={{ flex: 1 }}>
-                                            <div className="block-card-header">
-                                                <FallOutlined className="fall-icon" />
-                                                <Title level={5} style={{ margin: 0, fontSize: '13px' }}>跌幅前十</Title>
-                                            </div>
-                                            <div style={{ padding: '0 12px 8px 12px' }}>
-                                                <Alert
-                                                    message={
-                                                        <span style={{ color: '#389e0d' }}>
-                                                            {`[${lastUpdated || dayjs().format('HH:mm:ss')}] 排名下降≥3: `}
-                                                            {data.topAndBottomBlockData?.downRankBlocks?.length > 0 ? (
-                                                                data.topAndBottomBlockData.downRankBlocks.map((b, idx) => (
-                                                                    <span key={b.blockName}>
-                                                                        <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{b.blockName}</span>
-                                                                        {`(↓${Math.abs(b.rankChange)})`}
-                                                                        {idx < data.topAndBottomBlockData.downRankBlocks.length - 1 ? '、' : ''}
-                                                                    </span>
-                                                                ))
-                                                            ) : '暂无明显异动'}
-                                                        </span>
-                                                    }
-                                                    type="success"
-                                                    showIcon
-                                                    style={{ padding: '4px 8px', fontSize: '12px' }}
-                                                />
-                                            </div>
-                                            <div className="block-items-container">
-                                                {data.topAndBottomBlockData && data.topAndBottomBlockData.lastNumList.map((item, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className="block-item fall"
-                                                        onClick={() => jumpToBlock(item.blockName)}
-                                                        style={{ cursor: 'pointer' }}
-                                                    >
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                            <span className="block-name">{item.blockName}</span>
-                                                            {item.rankChange !== 0 && (
-                                                                <span style={{
-                                                                    fontSize: '10px',
-                                                                    color: item.rankChange > 0 ? '#f5222d' : '#52c41a',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center'
-                                                                }}>
-                                                                    {item.rankChange > 0 ? '↑' : '↓'}
-                                                                    {Math.abs(item.rankChange)}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <span className="block-change">{item.avgChange}%</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </Card>
-                                    </div>
-                                </Col>
-                            </Row>
-
-                            {/* 主力资金趋势监控（全宽，左右结构） */}
+                            <OpeningBattleCards
+                                jingJiaQiangChouData={data.jingJiaQiangChouData}
+                                kaiPanZhuDongData={data.kaiPanZhuDongData}
+                                kaiPanXiaCuoData={data.kaiPanXiaCuoData}
+                                showJingJiaQiangChou={showJingJiaQiangChou}
+                                showKaiPanZhuDong={showKaiPanZhuDong}
+                                showKaiPanXiaCuo={showKaiPanXiaCuo}
+                                emotionSuggestion={emotionSuggestion}
+                                onCloseJingJia={() => setShowJingJiaQiangChou(false)}
+                                onCloseKaiPanZhuDong={() => setShowKaiPanZhuDong(false)}
+                                onCloseKaiPanXiaCuo={() => setShowKaiPanXiaCuo(false)}
+                                onStockClick={showKLine}
+                                themeColor={themeColor}
+                            />
+                            {/* 个股异动监控（含板块异动，置于涨跌幅前十上方） */}
                             <Row gutter={[16, 16]} style={{ marginBottom: 12 }}>
-                                <Col span={24}>
-                                    <Card
-                                        title={<><LineChartOutlined /> 主力资金趋势监控 (亿)</>}
-                                        extra={moneyStatus && (
-                                            <Tag color={moneyStatus.color} icon={moneyStatus.icon}>
-                                                {moneyStatus.label}
-                                            </Tag>
-                                        )}
-                                        className="monitor-card dapan-card"
-                                        variant="borderless"
-                                    >
-                                        <Row gutter={24} align="middle">
-                                            <Col xs={24} md={16}>
-                                                {historyData.length > 0 ? (
-                                                    <div ref={mainMoneyContainerRef} style={{ width: '100%', height: '220px' }} />
-                                                ) : (
-                                                    <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                        <Empty description="暂无主力资金趋势数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                                                    </div>
-                                                )}
-                                            </Col>
-                                            <Col xs={24} md={8}>
-                                                <div className="history-values-side">
-                                                    <div style={{ marginBottom: 12, borderBottom: '1px solid #f0f0f0', paddingBottom: 8 }}>
-                                                        <Text strong type="secondary" style={{ fontSize: '12px' }}>
-                                                            <ClockCircleOutlined /> 最近 5 次资金明细
-                                                        </Text>
-                                                    </div>
-                                                    <List
-                                                        size="small"
-                                                        dataSource={historyData.slice(-5).reverse()}
-                                                        renderItem={([time, val]) => {
-                                                            const amount = parseFloat(val.mainMoney) || 0;
-                                                            const color = amount >= 0 ? '#f5222d' : '#52c41a';
-                                                            return (
-                                                                <List.Item style={{ padding: '8px 0', borderBottom: '1px dashed #f0f0f0' }}>
-                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                                                                        <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                                            {time.substring(0, 2)}:{time.substring(2, 4)}:{time.substring(4, 6)}
-                                                                        </Text>
-                                                                        <Text strong style={{ color: color, fontSize: '14px' }}>
-                                                                            {amount > 0 ? '+' : ''}{amount} 亿
-                                                                        </Text>
-                                                                    </div>
-                                                                </List.Item>
-                                                            );
-                                                        }}
-                                                    />
-                                                </div>
-                                            </Col>
-                                        </Row>
-                                    </Card>
+                                <Col xs={24} lg={SHOW_BLOCK_ALERT_MONITOR ? 12 : 24}>
+                                    <StockAlertCard
+                                        stockUpAlerts={stockUpAlerts}
+                                        stockDownAlerts={stockDownAlerts}
+                                        waveList={stockData.waveList}
+                                        onStockClick={showKLine}
+                                        bodyHeight="200px"
+                                        itemsPerRow={SHOW_BLOCK_ALERT_MONITOR ? 1 : 2}
+                                        themeColor={themeColor}
+                                    />
                                 </Col>
+                                {/* 板块异动监控 */}
+                                {SHOW_BLOCK_ALERT_MONITOR && (
+                                <Col xs={24} lg={12}>
+                                    <BlockAlertCard
+                                        blockAlerts={blockAlerts}
+                                        blockUpAlerts={blockUpAlerts}
+                                        blockDownAlerts={blockDownAlerts}
+                                        onBlockClick={jumpToBlock}
+                                        themeColor={themeColor}
+                                    />
+                                </Col>
+                                )}
                             </Row>
+
+                            {/* 板块涨跌幅前十 - 左右布局（展开时在左侧，折叠时移动到右侧自选股监控下方） */}
+                            {!isWatchlistCollapsed && (
+                            <BlockRankingCards
+                                topAndBottomBlockData={data.topAndBottomBlockData}
+                                onBlockClick={jumpToBlock}
+                                renderBlockStockList={renderBlockStockList}
+                                themeColor={themeColor}
+                            />
+                            )}
+
+                            {/* 首页常驻叠加分时模块 */}
+                            <OverlayTimelineSection
+                                overlayInlineAddStock={overlayInlineAddStock}
+                                onStockClick={showKLine}
+                                sectionRef={overlayTimelineSectionRef}
+                                themeColor={themeColor}
+                            />
+
+                            {/* 主力资金趋势监控（全宽，左右结构） - 置于叠加分时图下方、个股幅度异动上方 */}
+                            <MainMoneyCharts
+                                isMainMoneyExpanded={isMainMoneyExpanded}
+                                onToggleExpand={() => setIsMainMoneyExpanded(!isMainMoneyExpanded)}
+                                moneyStatus={moneyStatus}
+                                volumeStatus={volumeStatus}
+                                latestMoneyValue={latestMoneyValue}
+                                latestVolumeValue={latestVolumeValue}
+                                volumeDiffValue={volumeDiffValue}
+                                mainMoneyContainerRef={mainMoneyContainerRef}
+                                volumeContainerRef={volumeContainerRef}
+                                themeColor={themeColor}
+                                historyData={historyData}
+                                onCopyContext={handleCopyContext}
+                                copyContextLoading={copyContextLoading}
+                                style={{ marginTop: 12 }}
+                            />
 
                             {/* 个股异动监控区 */}
-                            <Card
-                                title={<span><StockOutlined /> 个股幅度异动</span>}
-                                className="monitor-card stock-card"
-                                variant="borderless"
-                            >
-                                {stockData.changeList.length > 0 ? (
-                                    <div className="stock-grid">
-                                        {stockData.changeList.map((item, index) => {
-                                            const isRedStock = item.statusKey?.includes('Red');
-                                            const showRiskOverlay = marketRiskWarning && isRedStock;
+                            <StockChangeMonitor
+                                stockViewMode={stockViewMode}
+                                onStockViewModeChange={(mode) => { setStockViewMode(mode); localStorage.setItem('dingpan_stockViewMode', mode); }}
+                                stockData={stockData}
+                                fullStockData={fullStockData}
+                                marketRiskWarning={marketRiskWarning}
+                                reportStockData={reportStockData}
+                                researchReportsLoading={researchReportsLoading}
+                                researchReportsLoaded={researchReportsLoaded}
+                                allStockData={data.allStockData}
+                                watchlistMainFund={watchlistMainFund}
+                                onStockClick={showKLine}
+                                onViewYanbaoDetail={handleViewYanbaoDetail}
+                                onRefresh={handleRefreshStockData}
+                                refreshing={refreshingStockData}
+                                themeColor={themeColor}
+                            />
 
-                                            // 判断是否为重点监控股票且涨跌幅度达标
-                                            const isKeyStock = item.isImportant;
-                                            const changeValue = item.changeValue;
-                                            const isGold = isKeyStock && changeValue > 4;
-                                            const isPurple = isKeyStock && changeValue < -4;
-
-                                            // 确定文字颜色
-                                            const textColor = isGold ? '#B8860B' : isPurple ? '#8B008B' : item.color;
-
-                                            const stockItemContent = (
-                                                <div
-                                                    key={index}
-                                                    className={`stock-item ${item.type} ${item.statusKey} ${showRiskOverlay ? 'has-risk-overlay' : ''} ${isGold ? 'key-stock-gold' : ''} ${isPurple ? 'key-stock-purple' : ''}`}
-                                                    style={{
-                                                        backgroundColor: isGold || isPurple ? 'transparent' : item.bgColor,
-                                                        borderColor: isGold || isPurple ? 'transparent' : item.color,
-                                                        cursor: 'pointer',
-                                                        position: 'relative'
-                                                    }}
-                                                    onClick={() => showKLine(item)}
-                                                >
-                                                    <div className="stock-info">
-                                                        <Text strong style={{ color: textColor, fontSize: '12px' }}>{item.name}</Text>
-                                                    </div>
-                                                    <Text strong style={{ color: textColor, fontSize: '13px' }}>{item.change}</Text>
-                                                    {showRiskOverlay && (
-                                                        <div className="risk-overlay">
-                                                            <CloseOutlined className="risk-cross-icon" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-
-                                            if (showRiskOverlay) {
-                                                return (
-                                                    <Tooltip
-                                                        key={index}
-                                                        title="当日情绪不佳，该股票不建议购买，谨慎出手"
-                                                        color="#ff4d4f"
-                                                        placement="top"
-                                                    >
-                                                        {stockItemContent}
-                                                    </Tooltip>
-                                                );
-                                            }
-
-                                            return stockItemContent;
-                                        })}
-                                    </div>
-                                ) : (
-                                    <Empty description="暂无个股异动数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                                )}
-                            </Card>
-
-                            {/* 近期操作方案 (同步市场调研数据) */}
-                            <div style={{ marginTop: 16 }}>
-                                <CustomGantt 
-                                    title="近期操作方案"
-                                    fetchUrl={`http://${local_ip}:3000/get_recent_operation_gantt`}
-                                    saveUrl={`http://${local_ip}:3000/update_recent_operation_gantt`}
-                                    syncUrl={`http://${local_ip}:3000/get_market_rhythm_gantt`}
-                                />
-                            </div>
                         </Col>
 
                         {/* 右侧独立列：自选股全量监控 */}
                         <Col xs={24} lg={7}>
                             {/* 板块资金监控 */}
-                            <Card
-                                title={<><DollarOutlined style={{ color: '#1890ff', marginRight: 8 }} /> 板块资金监控</>}
-                                className="monitor-card block-money-card"
-                                variant="borderless"
-                                bodyStyle={{ maxHeight: '400px', overflowY: 'auto' }}
-                                extra={
-                                    <Button
-                                        type="link"
-                                        size="small"
-                                        onClick={() => navigate('/block_money_change')}
-                                    >
-                                        查看更多
-                                    </Button>
-                                }
-                                style={{ marginBottom: 16, maxHeight: '500px',height: 'auto' }}
-                            >
-                                {blockMoneyAlerts.length > 0 && (
-                                    <div style={{ marginBottom: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                                        {blockMoneyAlerts.map((alert, idx) => {
-                                            const isBigInflow = alert.type === 'inflow';
-                                            const yiValue = Math.abs(alert.diff) / 100000000;
-                                            return (
-                                                <span
-                                                    key={idx}
-                                                    style={{
-                                                        fontSize: 12,
-                                                        padding: '2px 6px',
-                                                        borderRadius: 4,
-                                                        color: '#fff',
-                                                        background: isBigInflow ? '#ff4d4f' : '#52c41a',
-                                                        fontWeight: 'bold',
-                                                    }}
-                                                >
-                                                    {alert.block} {isBigInflow ? '大幅流入' : '大幅流出'} {isBigInflow ? '+' : '-'}{yiValue.toFixed(1)}亿
-                                                </span>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                                <Row gutter={[8, 8]}>
-                                    {blockMoneyData.filter(item => displayBlocks.includes(item.block)).map((item, index) => {
-                                        const isInflow = item.money >= 0;
-                                        return (
-                                            <Col xs={12} key={index}>
-                                                <div className="block-money-item">
-                                                    <Text strong className="block-name">{item.block}</Text>
-                                                    <Text strong className={`block-money ${isInflow ? 'inflow' : 'outflow'}`}>
-                                                        {isInflow ? '+' : ''}{(item.money / 100000000).toFixed(2)}亿
-                                                    </Text>
-                                                </div>
-                                            </Col>
-                                        );
-                                    })}
-                                </Row>
-                                {blockMoneyData.filter(item => displayBlocks.includes(item.block)).length === 0 && (
-                                    <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                                )}
-                            </Card>
+                            <BlockMoneyMonitor
+                                blockMoneyData={blockMoneyData}
+                                blockMoneyAlerts={blockMoneyAlerts}
+                                displayBlocks={displayBlocks}
+                                onBlockClick={jumpToBlock}
+                                onViewMore={() => navigate('/block?tab=money')}
+                                themeColor={themeColor}
+                            />
+
+                            {/* 日韩涨跌监控（自选股展开时在其上方，折叠时移到自选股下方） */}
+                            {!isWatchlistCollapsed && (
+                                <div ref={rihanSectionRef}>
+                                    <RihanMonitor rihanData={rihanData} themeColor={themeColor} onRefresh={refreshRihanData} />
+                                </div>
+                            )}
+
                             {/* 自选股全量监控 */}
-                            <Card
-                                title={<><AreaChartOutlined /> 自选股全量监控</>}
-                                className="monitor-card all-stock-card"
-                                variant="borderless"
-                                bodyStyle={{ padding: '0 8px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
-                                style={{ maxHeight: '900px', display: 'flex', flexDirection: 'column' }}
-                            >
-                                <div style={{ padding: '8px 4px', borderBottom: '1px solid #f0f0f0' }}>
-                                    <Space direction="vertical" style={{ width: '100%' }} size={8}>
-                                        <div style={{ display: 'flex', gap: '4px' }}>
-                                            <Input
-                                                placeholder="代码(sh/sz)"
-                                                value={newStockCode}
-                                                onChange={e => setNewStockCode(e.target.value)}
-                                                size="small"
-                                                style={{ flex: 1 }}
-                                            />
-                                            <Input
-                                                placeholder="名称"
-                                                value={newStockName}
-                                                onChange={e => setNewStockName(e.target.value)}
-                                                size="small"
-                                                style={{ flex: 1 }}
-                                            />
-                                            <Button 
-                                                type="primary" 
-                                                icon={<PlusOutlined />} 
-                                                size="small" 
-                                                onClick={handleAddStock}
-                                            />
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                            <Input
-                                                placeholder="搜索股票名称/代码"
-                                                prefix={<SearchOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
-                                                value={searchQuery}
-                                                onChange={e => setSearchQuery(e.target.value)}
-                                                allowClear
-                                                size="small"
-                                                style={{ borderRadius: '4px', flex: 1 }}
-                                            />
-                                            <Tooltip title={showOnlyImportant ? "取消重点筛选" : "只看重点"}>
-                                                <Button
-                                                    size="small"
-                                                    type={showOnlyImportant ? "primary" : "default"}
-                                                    icon={showOnlyImportant ? <StarFilled /> : <StarOutlined />}
-                                                    onClick={() => setShowOnlyImportant(!showOnlyImportant)}
-                                                    style={{ 
-                                                        borderColor: showOnlyImportant ? '#faad14' : undefined,
-                                                        backgroundColor: showOnlyImportant ? '#faad14' : undefined,
-                                                        color: showOnlyImportant ? '#fff' : undefined
-                                                    }}
-                                                />
-                                            </Tooltip>
-                                            <Tooltip title={sortOrder === 'none' ? "按涨幅正序" : sortOrder === 'asc' ? "按涨幅倒序" : "取消排序"}>
-                                                <Button
-                                                    size="small"
-                                                    type={sortOrder !== 'none' ? "primary" : "default"}
-                                                    icon={sortOrder === 'asc' ? <ArrowUpOutlined /> : sortOrder === 'desc' ? <ArrowDownOutlined /> : <ThunderboltOutlined />}
-                                                    onClick={() => {
-                                                        if (sortOrder === 'none') setSortOrder('asc');
-                                                        else if (sortOrder === 'asc') setSortOrder('desc');
-                                                        else setSortOrder('none');
-                                                    }}
-                                                />
-                                            </Tooltip>
-                                        </div>
-                                    </Space>
+                            <WatchlistMonitor
+                                isWatchlistCollapsed={isWatchlistCollapsed}
+                                onToggleCollapse={setIsWatchlistCollapsed}
+                                allStockOverview={allStockOverview}
+                                searchQuery={searchQuery}
+                                setSearchQuery={setSearchQuery}
+                                refreshingStockData={refreshingStockData}
+                                onRefresh={handleRefreshStockData}
+                                onAddStock={() => setAddStockModalVisible(true)}
+                                showOnlyImportant={showOnlyImportant}
+                                setShowOnlyImportant={setShowOnlyImportant}
+                                sortOrder={sortOrder}
+                                sortField={sortField}
+                                onSortChange={handleSortChange}
+                                showOnlyGoodNews={showOnlyGoodNews}
+                                setShowOnlyGoodNews={setShowOnlyGoodNews}
+                                filteredAllStockData={filteredAllStockData}
+                                watchlistMainFund={watchlistMainFund}
+                                hasGoodNews={hasGoodNews}
+                                onViewGoodNews={handleViewGoodNews}
+                                onStockClick={showKLine}
+                                onToggleImportant={handleToggleImportant}
+                                onDeleteStock={handleDeleteStock}
+                                onToggleStockTop={handleToggleStockTop}
+                                onBuyPointDiagnosis={handleBuyPointDiagnosis}
+                                onLogicExplore={handleLogicExplore}
+                                onOpenOverlayTimeLine={handleOpenOverlayTimeLine}
+                                onBacktest={(stock) => navigate(`/stock_diagnosis?backtest=1&code=${encodeURIComponent(stock.code)}&name=${encodeURIComponent(stock.stockName || '')}`)}
+                                onRename={handleOpenRenameModal}
+                                themeColor={themeColor}
+                            />
+                            {isWatchlistCollapsed && (
+                                <div ref={rihanSectionRef}>
+                                    <RihanMonitor rihanData={rihanData} themeColor={themeColor} onRefresh={refreshRihanData} />
                                 </div>
-                                <div className="all-stock-list" style={{ overflowY: 'auto', flex: 1 }}>
-                                    {filteredAllStockData && filteredAllStockData.length > 0 ? (
-                                        filteredAllStockData.map((stock, index) => {
-                                            const kline = stock || {};
-                                            const isUp = kline.change >= 0;
-                                            const color = isUp ? '#f5222d' : '#52c41a';
-
-                                            // 涨幅趋势判断
-                                            const currentChange = kline.change || 0;
-                                            const prevChange = kline.prevChange || 0;
-                                            const isTrendingUp = currentChange > prevChange;
-                                            const isTrendingDown = currentChange < prevChange;
-
-                                            return (
-                                                <div
-                                                    key={stock.code || index}
-                                                    className={`all-stock-item ${stock.isImportant ? 'important' : ''}`}
-                                                    style={{
-                                                        display: 'flex',
-                                                        justifyContent: 'space-between',
-                                                        alignItems: 'center',
-                                                        padding: '8px 6px',
-                                                        borderBottom: '1px solid #f0f0f0',
-                                                        backgroundColor: stock.isImportant ? '#fff7e6' : (index % 2 === 0 ? '#fafafa' : '#fff'),
-                                                        cursor: 'pointer',
-                                                        position: 'relative'
-                                                    }}
-                                                    onClick={() => showKLine({ name: stock.stockName, code: stock.code, change: kline.change })}
-                                                >
-                                                    <div 
-                                                        style={{ 
-                                                            width: '32px', 
-                                                            height: '100%', 
-                                                            display: 'flex', 
-                                                            alignItems: 'center', 
-                                                            justifyContent: 'center',
-                                                            cursor: 'pointer',
-                                                            zIndex: 2
-                                                        }} 
-                                                        onClick={(e) => handleToggleImportant(e, stock.code)}
-                                                    >
-                                                        {stock.isImportant ? 
-                                                            <StarFilled style={{ color: '#faad14', fontSize: '16px' }} /> : 
-                                                            <StarOutlined style={{ color: '#bfbfbf', fontSize: '16px' }} />
-                                                        }
-                                                    </div>
-                                                    <div style={{ width: '80px', minWidth: 0 }}>
-                                                        <Text strong={stock.isImportant} style={{ fontSize: '12px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: stock.isImportant ? '#d48806' : 'inherit' }}>{stock.stockName}</Text>
-                                                        <div style={{ fontSize: '10px', color: '#999' }}>{stock.code?.replace('sh', '').replace('sz', '')}</div>
-                                                    </div>
-                                                    <div style={{ width: '65px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                                                        <Text strong style={{ color: color, fontSize: '12px' }}>{kline.close_px?.toFixed(2)}</Text>
-                                                    </div>
-                                                    <div style={{ flex: 1, textAlign: 'right', paddingRight: '4px', whiteSpace: 'nowrap' }}>
-                                                        <Space size={2} style={{ fontSize: '11px' }}>
-                                                            <Text type="secondary" style={{ fontSize: '9px' }}>{prevChange.toFixed(2)}%</Text>
-                                                            <Text type="secondary" style={{ fontSize: '9px' }}>→</Text>
-                                                            <Text strong style={{ color: color, fontSize: '11px' }}>{currentChange.toFixed(2)}%</Text>
-                                                        </Space>
-                                                    </div>
-                                                    <div style={{ width: '20px', textAlign: 'center' }}>
-                                                        {isTrendingUp && <CaretUpOutlined style={{ color: '#f5222d', fontSize: '12px' }} />}
-                                                        {isTrendingDown && <CaretDownOutlined style={{ color: '#52c41a', fontSize: '12px' }} />}
-                                                    </div>
-                                                    <div 
-                                                        className="delete-btn"
-                                                        style={{ width: '30px', textAlign: 'right' }} 
-                                                        onClick={(e) => handleDeleteStock(e, stock.code)}
-                                                    >
-                                                        <DeleteOutlined style={{ color: '#ff4d4f', fontSize: '14px' }} />
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                    ) : (
-                                        <div style={{ padding: '40px 0' }}>
-                                            <Empty description="暂无股票数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                                        </div>
-                                    )}
+                            )}
+                            {isWatchlistCollapsed && (
+                                <div style={{ marginBottom: 24 }}>
+                                    <BlockRankingCards
+                                        topAndBottomBlockData={data.topAndBottomBlockData}
+                                        onBlockClick={jumpToBlock}
+                                        renderBlockStockList={renderBlockStockList}
+                                        themeColor={themeColor}
+                                        vertical
+                                    />
                                 </div>
-                            </Card>
+                            )}
+
+                            {/* 当前自选股个股涨跌幅前十：位于涨跌幅前十与指数叠加分时之间 */}
+                            {isWatchlistCollapsed && (
+                                <div style={{ marginBottom: 16 }}>
+                                    <WatchlistTopRanking
+                                        stocks={data.allStockData}
+                                        onStockClick={showKLine}
+                                        themeColor={themeColor}
+                                    />
+                                </div>
+                            )}
+
+                            {/* 指数叠加分时模块 */}
+                            <div style={{ marginTop: 16 }}>
+                                <IndexOverlayTline 
+                                    onTitleClick={() => setIndexOverlayFullscreenVisible(true)}
+                                />
+                            </div>
                         </Col>
                     </Row>
-                </> // Closing fragment tag added here
+                </>
             )}
 
             {/* 异动历史弹窗 */}
-            <Modal
-                title={<span><HistoryOutlined /> 异动历史记录汇总</span>}
+            <HistoryModal
                 open={isModalOpen}
                 onCancel={() => setIsModalOpen(false)}
-                footer={null}
-                width={1000}
-                className="history-modal"
-            >
-                <Tabs defaultActiveKey="1" style={{ marginTop: -16 }}>
-                    <TabPane tab="最新异动" key="1">
-                        <List
-                            itemLayout="horizontal"
-                            dataSource={history}
-                            locale={{ emptyText: <Empty description="今日暂无历史异动记录" /> }}
-                            renderItem={(item) => (
-                                <List.Item
-                                    className={`history-item ${item.type}`}
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() => showKLine({ name: item.name, code: item.code, change: item.changeValue || 0 })}
-                                >
-                                    <List.Item.Meta
-                                        avatar={
-                                            <div className={`history-avatar ${item.type}`}>
-                                                {item.type === 'up' ? '🚀' : '📉'}
-                                            </div>
-                                        }
-                                        title={
-                                            <div className="history-title">
-                                                <Text strong>{item.name}</Text>
-                                                <Tag color={item.type === 'up' ? 'error' : 'success'} borderless className="history-tag">
-                                                    {item.label}
-                                                </Tag>
-                                            </div>
-                                        }
-                                        description={
-                                            <div className="history-desc">
-                                                <Space split={<Divider type="vertical" />} wrap>
-                                                    <Text type="secondary"><ClockCircleOutlined /> {item.time}</Text>
-                                                    <Text strong style={{ color: item.type === 'up' ? '#cf1322' : '#389e0d' }}>
-                                                        异动幅度: {item.changeDiff}
-                                                    </Text>
-                                                </Space>
-                                            </div>
-                                        }
-                                    />
-                                </List.Item>
-                            )}
-                        />
-                    </TabPane>
-                    <TabPane tab="急速异动排名" key="2">
-                        <Row gutter={[16, 16]}>
-                            <Col span={12}>
-                                <Card title="📈 急速拉升榜" size="small" headStyle={{ backgroundColor: '#f6ffed', borderBottom: '1px solid #b7eb8f' }}>
-                                    {jisuYidongUpList.length > 0 ? (
-                                        <List
-                                            itemLayout="horizontal"
-                                            dataSource={jisuYidongUpList}
-                                            renderItem={(item, index) => (
-                                                <List.Item onClick={() => showKLine({ name: item.name, code: item.code, change: item.change })}
-                                                    style={{ cursor: 'pointer' }}>
-                                                    <List.Item.Meta
-                                                        avatar={<Text type="secondary">{index + 1}.</Text>}
-                                                        title={
-                                                            <Space>
-                                                                <Text strong style={{ color: '#f5222d' }}>{item.stockName} ({item.code?.replace('sh', '').replace('sz', '')})</Text>
-                                                                <Tag color="error" bordered={false}>{item.change}%</Tag>
-                                                            </Space>
-                                                        }
-                                                        description={
-                                                            <Space>
-                                                                <Text type="secondary">上涨次数: {item.up}</Text>
-                                                                <Text type="secondary">下跌次数: {item.down}</Text>
-                                                            </Space>
-                                                        }
-                                                    />
-                                                </List.Item>
-                                            )}
-                                        />
-                                    ) : (
-                                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无急速拉升数据" />
-                                    )}
-                                </Card>
-                            </Col>
-                            <Col span={12}>
-                                <Card title="📉 急速下跌榜" size="small" headStyle={{ backgroundColor: '#fff1f0', borderBottom: '1px solid #ffa39e' }}>
-                                    {jisuYidongDownList.length > 0 ? (
-                                        <List
-                                            itemLayout="horizontal"
-                                            dataSource={jisuYidongDownList}
-                                            renderItem={(item, index) => (
-                                                <List.Item onClick={() => showKLine({ name: item.name, code: item.code, change: item.change })}
-                                                    style={{ cursor: 'pointer' }}>
-                                                    <List.Item.Meta
-                                                        avatar={<Text type="secondary">{index + 1}.</Text>}
-                                                        title={
-                                                            <Space>
-                                                                <Text strong style={{ color: '#52c41a' }}>{item.stockName} ({item.code?.replace('sh', '').replace('sz', '')})</Text>
-                                                                <Tag color="success" bordered={false}>{item.change}%</Tag>
-                                                            </Space>
-                                                        }
-                                                        description={
-                                                            <Space>
-                                                                <Text type="secondary">上涨次数: {item.up}</Text>
-                                                                <Text type="secondary">下跌次数: {item.down}</Text>
-                                                            </Space>
-                                                        }
-                                                    />
-                                                </List.Item>
-                                            )}
-                                        />
-                                    ) : (
-                                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无急速下跌数据" />
-                                    )}
-                                </Card>
-                            </Col>
-                        </Row>
-                    </TabPane>
-                </Tabs>
-            </Modal>
+                history={history}
+                jisuYidongUpList={jisuYidongUpList}
+                jisuYidongDownList={jisuYidongDownList}
+                onStockClick={showKLine}
+                themeColor={themeColor}
+            />
 
             {/* K 线图弹窗 */}
             <StockKLineModal
@@ -1882,6 +2341,129 @@ const DingPan = () => {
                     change: selectedStock?.change || selectedStock?.changeValue
                 }}
             />
+
+            {/* 利好消息弹窗 */}
+            <GoodNewsModal
+                open={showGoodNewsModal}
+                onCancel={() => setShowGoodNewsModal(false)}
+                currentGoodNewsStock={currentGoodNewsStock}
+                matchedReports={matchedReports}
+                highlightStockName={highlightStockName}
+                themeColor={themeColor}
+            />
+
+            {/* 逻辑探查弹窗 */}
+            <LogicExploreModal
+                open={showLogicExploreModal}
+                onCancel={() => setShowLogicExploreModal(false)}
+                logicExploreStock={logicExploreStock}
+                logicExploreLoading={logicExploreLoading}
+                jigouMatchedReports={jigouMatchedReports}
+                researchMatchedReports={researchMatchedReports}
+                highlightStockName={highlightStockName}
+                themeColor={themeColor}
+            />
+
+            {/* 新增股票弹窗 */}
+            <AddStockModal
+                open={addStockModalVisible}
+                onCancel={() => setAddStockModalVisible(false)}
+                onOk={handleAddStock}
+                newStockCode={newStockCode}
+                setNewStockCode={setNewStockCode}
+                newStockName={newStockName}
+                setNewStockName={setNewStockName}
+                newStockBlockName={newStockBlockName}
+                setNewStockBlockName={setNewStockBlockName}
+                newStockRiskScore={newStockRiskScore}
+                setNewStockRiskScore={setNewStockRiskScore}
+                newStockIsTech={newStockIsTech}
+                setNewStockIsTech={setNewStockIsTech}
+                themeColor={themeColor}
+            />
+
+            {/* 重命名股票弹窗 */}
+            <RenameStockModal
+                open={renameModalVisible}
+                onCancel={() => setRenameModalVisible(false)}
+                onOk={handleConfirmRename}
+                renameStockCode={renameStockCode}
+                renameStockName={renameStockName}
+                setRenameStockName={setRenameStockName}
+                themeColor={themeColor}
+            />
+
+            {/* 指数叠加分时全屏弹窗 */}
+            <IndexOverlayFullscreenModal
+                open={indexOverlayFullscreenVisible}
+                onCancel={() => setIndexOverlayFullscreenVisible(false)}
+                themeColor={themeColor}
+            />
+
+            {/* 个股买点诊断弹窗 */}
+            <BuyPointDiagnosisModal
+                open={showBuyPointDiagnosisModal}
+                onCancel={() => setShowBuyPointDiagnosisModal(false)}
+                buyPointDiagnosisStock={buyPointDiagnosisStock}
+                buyPointDiagnosisData={buyPointDiagnosisData}
+                buyPointDiagnosisLoading={buyPointDiagnosisLoading}
+                onRefresh={handleRefreshBuyPointDiagnosis}
+                themeColor={themeColor}
+            />
+
+            {/* DIY 主题色设置弹窗 */}
+            <ThemeColorModal
+                open={themeColorModalVisible}
+                onCancel={() => setThemeColorModalVisible(false)}
+                onOk={handleSaveThemeColor}
+                value={themeColor}
+            />
+
+            {/* 交易纪律悬浮组件（每个交易日 9:30-9:40 自动显示，fixed 布局，屏幕正中间，9:40 后自动隐藏） */}
+            {/* 通过 Portal 挂载到 body，避免祖先 backdrop-filter 破坏 fixed 包含块导致跟随滚动 */}
+            {disciplineModalVisible && false && createPortal(
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 620,
+                        zIndex: 1500,
+                        background: '#ffffff',
+                        border: '1px solid #ffa39e',
+                        borderRadius: 12,
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                        overflow: 'hidden',
+                    }}
+                >
+                    <div style={{ background: '#fff1f0', padding: '12px 20px', borderBottom: '1px solid #ffa39e' }}>
+                        <span style={{ color: '#cf1322', fontWeight: 700, fontSize: 16 }}>⚠️ 交易严格纪律（9:30 - 9:40）</span>
+                    </div>
+                    <div style={{ padding: '16px 20px', color: '#262626', fontSize: 14, lineHeight: 1.9 }}>
+                        <div style={{ marginBottom: 12, color: '#8c8c8c', fontSize: 13 }}>
+                            每个交易日 9:30 - 9:40 强制提醒，9:40 后自动关闭。
+                        </div>
+                        <div style={{ border: '1px solid #ffd666', borderRadius: 8, padding: '12px 16px', marginBottom: 10, background: '#fffbe6' }}>
+                            <span style={{ color: '#cf1322', fontWeight: 700 }}>1. </span>
+                            绝对不能在 9:40 之前买股票，一定要等到 9:40 之后看资金净流入 + 成交量放量再买。
+                        </div>
+                        <div style={{ border: '1px solid #ffd666', borderRadius: 8, padding: '12px 16px', marginBottom: 10, background: '#fffbe6' }}>
+                            <span style={{ color: '#cf1322', fontWeight: 700 }}>2. </span>
+                            新情绪周期的第一天大涨最好不要做，就算要做只能等待资金净流入 + 成交量放量的确认，第一天打一个底仓 1/3。
+                        </div>
+                        <div style={{ border: '1px solid #ffd666', borderRadius: 8, padding: '12px 16px', background: '#fffbe6' }}>
+                            <span style={{ color: '#cf1322', fontWeight: 700 }}>3. </span>
+                            实体大阴线之后，次日直接反弹的概率非常低，大概率是冲高回落/高开低走，不要参与。
+                        </div>
+                        <div style={{ border: '1px solid #ffd666', borderRadius: 8, padding: '12px 16px', background: '#fffbe6' }}>
+                            <span style={{ color: '#cf1322', fontWeight: 700 }}>4. </span>
+                            一定要买资金净流入的股票，不要光顾着看涨幅，而不顾资金当天是否为净流入的。
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };

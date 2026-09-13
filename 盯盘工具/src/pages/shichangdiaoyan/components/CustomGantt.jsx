@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Button, Modal, Form, Input, DatePicker, Select, Space, Tooltip, Empty, Popconfirm, message, Spin, Checkbox, Switch } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, HolderOutlined, CompressOutlined, ExpandOutlined, SortAscendingOutlined, SyncOutlined } from '@ant-design/icons';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import axios from 'axios';
 import { local_ip } from '../../../constant';
 import dayjs from 'dayjs';
@@ -18,10 +20,92 @@ const IMPACT_LEVELS = {
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
-const CustomGantt = ({ 
-  fetchUrl = `http://${local_ip}:3000/get_market_rhythm_gantt`, 
+// 可排序的甘特图行组件
+const SortableGanttBar = ({ event, isThumbnail, totalContentWidth, cellWidth, timelineRange, onEdit, onDelete, onHoverEnter, onHoverLeave }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(event.id) });
+
+  const start = dayjs(event.startDate);
+  const end = dayjs(event.endDate);
+
+  const startOffset = Math.max(0, start.diff(timelineRange.start, 'day'));
+  const duration = end.diff(start.isBefore(timelineRange.start) ? timelineRange.start : start, 'day') + 1;
+
+  const left = startOffset * cellWidth;
+  const width = duration * cellWidth;
+
+  const levelInfo = IMPACT_LEVELS[event.level];
+  const isExpired = dayjs().isAfter(dayjs(event.endDate).endOf('day'));
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1000 : undefined,
+    opacity: isDragging ? 0.85 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className={`gantt-bar-row ${isDragging ? 'dragging' : ''} ${isExpired ? 'expired' : ''} ${isThumbnail ? 'thumbnail' : ''} ${event.isImportant ? 'important' : ''}`}
+      onMouseEnter={onHoverEnter}
+      onMouseLeave={onHoverLeave}
+    >
+      <div className="event-info-label">
+        <div className="label-left">
+          <div className="drag-handle" {...listeners}>
+            <HolderOutlined />
+          </div>
+          <span className="title" title={event.title}>{event.title}</span>
+        </div>
+        <Space size={4}>
+          {!isThumbnail && (
+            <>
+              <Button type="text" size="small" icon={<EditOutlined />} onClick={(e) => { e.stopPropagation(); onEdit(event); }} />
+              <Popconfirm title="确定删除吗？" onConfirm={() => onDelete(event.id)}>
+                <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={(e) => e.stopPropagation()} />
+              </Popconfirm>
+            </>
+          )}
+        </Space>
+      </div>
+      <div className="bar-container" style={{ width: isThumbnail ? '100%' : totalContentWidth }}>
+        <Tooltip placement='bottom' title={isThumbnail ? `${event.title}: ${levelInfo.label}${event.description ? ` - ${event.description}` : ''}` : ''}>
+          <div
+            className={`bar ${event.descInline ? 'desc-inline' : ''}`}
+            onClick={() => onEdit(event)}
+            style={{
+              left: `${left}px`,
+              width: `${width}px`,
+              backgroundColor: levelInfo.color,
+              boxShadow: `0 2px 6px ${levelInfo.bgColor}`
+            }}
+          >
+            {!isThumbnail && <span className="bar-text">{levelInfo.label}</span>}
+            {!isThumbnail && event.descInline && event.description && (
+              <span className="bar-inline-desc">{event.description}</span>
+            )}
+          </div>
+        </Tooltip>
+        {!isThumbnail && !event.descInline && event.description && (
+          <div
+            className="bar-description"
+            style={{ left: `${left + width + 8}px` }}
+          >
+            {event.description}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const CustomGantt = ({
+  fetchUrl = `http://${local_ip}:3000/get_market_rhythm_gantt`,
   saveUrl = `http://${local_ip}:3000/update_market_rhythm_gantt`,
   syncUrl = null,
+  syncTimelineUrl = null,
   title = "节奏推演甘特图"
 }) => {
   const [events, setEvents] = useState([]);
@@ -30,6 +114,12 @@ const CustomGantt = ({
   const [containerWidth, setContainerWidth] = useState(0);
   const [hoveredEventRange, setHoveredEventRange] = useState(null);
   const chartWrapperRef = useRef(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    })
+  );
 
   useEffect(() => {
     if (chartWrapperRef.current) {
@@ -68,14 +158,17 @@ const CustomGantt = ({
     }
   };
 
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-    const { source, destination } = result;
-    if (destination.index === source.index) return;
-    
-    const sourceItem = visibleEvents[source.index];
-    const destItem = visibleEvents[destination.index];
-    if (!sourceItem || !destItem) return;
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = visibleEvents.findIndex(e => String(e.id) === active.id);
+    const newIndex = visibleEvents.findIndex(e => String(e.id) === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const sourceItem = visibleEvents[oldIndex];
+    const destItem = visibleEvents[newIndex];
 
     const newEvents = Array.from(events);
     const sourceIndexInFull = newEvents.findIndex(e => e.id === sourceItem.id);
@@ -83,19 +176,19 @@ const CustomGantt = ({
 
     // 先从全量数组中移除源条目
     const [reorderedItem] = newEvents.splice(sourceIndexInFull, 1);
-    
+
     // 在移除后的数组中找到目标条目的新索引
     const destIndexInFullAfterRemove = newEvents.findIndex(e => e.id === destItem.id);
     if (destIndexInFullAfterRemove === -1) return;
 
-    // 如果是向下拖拽 (source.index < destination.index)，则插入到目标条目之后
-    // 如果是向上拖拽 (source.index > destination.index)，则插入到目标条目之前
-    const insertIndex = destination.index > source.index 
-      ? destIndexInFullAfterRemove + 1 
+    // 如果是向下拖拽 (oldIndex < newIndex)，则插入到目标条目之后
+    // 如果是向上拖拽 (oldIndex > newIndex)，则插入到目标条目之前
+    const insertIndex = newIndex > oldIndex
+      ? destIndexInFullAfterRemove + 1
       : destIndexInFullAfterRemove;
 
     newEvents.splice(insertIndex, 0, reorderedItem);
-    
+
     setEvents(newEvents);
     saveGanttData(newEvents);
   };
@@ -108,7 +201,7 @@ const CustomGantt = ({
       if (dateA.isAfter(dateB)) return 1;
       return 0;
     });
-    
+
     setEvents(sortedEvents);
     saveGanttData(sortedEvents);
     message.success('已按起始时间排序');
@@ -120,14 +213,13 @@ const CustomGantt = ({
       setLoading(true);
       const res = await axios.get(syncUrl);
       const sourceEvents = res.data || [];
-      
-      // 过滤出起始时间在最近 10 天之内的数据（包括过去 10 天和未来 10 天，以覆盖当前和即将到来的节奏）
+
       const tenDaysAgo = dayjs().subtract(10, 'day').startOf('day');
       const tenDaysLater = dayjs().add(10, 'day').endOf('day');
-      
+
       const filteredEvents = sourceEvents.filter(event => {
         const startDate = dayjs(event.startDate);
-        return (startDate.isAfter(tenDaysAgo) || startDate.isSame(tenDaysAgo, 'day')) && 
+        return (startDate.isAfter(tenDaysAgo) || startDate.isSame(tenDaysAgo, 'day')) &&
                (startDate.isBefore(tenDaysLater) || startDate.isSame(tenDaysLater, 'day'));
       });
 
@@ -136,11 +228,10 @@ const CustomGantt = ({
         return;
       }
 
-      // 合并数据，通过标题去重（如果标题已存在则不再同步）
       const existingTitles = new Set(events.map(e => e.title));
       const newItems = filteredEvents
         .filter(e => !existingTitles.has(e.title))
-        .map(e => ({ ...e, id: Date.now() + Math.random() })); // 重新生成 ID 以防冲突
+        .map(e => ({ ...e, id: Date.now() + Math.random() }));
 
       if (newItems.length === 0) {
         message.info('所选数据已在列表中，无需同步');
@@ -159,6 +250,58 @@ const CustomGantt = ({
     }
   };
 
+  const handleSyncFromTimeline = async () => {
+    if (!syncTimelineUrl) return;
+    try {
+      setLoading(true);
+      const res = await axios.get(syncTimelineUrl);
+      const timelineEvents = res.data || [];
+
+      const today = dayjs().startOf('day');
+      const nextMonthEnd = dayjs().add(1, 'month').endOf('month');
+
+      const filteredEvents = timelineEvents.filter(event => {
+        const eventDate = dayjs(event.date);
+        return !eventDate.isBefore(today) && !eventDate.isAfter(nextMonthEnd);
+      });
+
+      if (filteredEvents.length === 0) {
+        message.info('下个月月底之前没有可同步的时间线事件');
+        return;
+      }
+
+      const existingTitles = new Set(events.map(e => e.title));
+      const newItems = filteredEvents
+        .filter(e => !existingTitles.has(e.title))
+        .map(e => ({
+          id: Date.now() + Math.random(),
+          title: e.title,
+          description: e.description || '',
+          startDate: e.date,
+          endDate: e.date,
+          level: e.type === 'milestone' ? 'positive' : e.type === 'incident' ? 'negative' : 'neutral',
+          descInline: false,
+          isImportant: false,
+          notify: false,
+        }));
+
+      if (newItems.length === 0) {
+        message.info('所选数据已在列表中，无需同步');
+        return;
+      }
+
+      const mergedEvents = [...events, ...newItems];
+      setEvents(mergedEvents);
+      await saveGanttData(mergedEvents);
+      message.success(`成功同步 ${newItems.length} 条时间线事件`);
+    } catch (error) {
+      console.error('同步时间线失败:', error);
+      message.error('同步时间线失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchGanttData();
   }, []);
@@ -170,7 +313,7 @@ const CustomGantt = ({
   // 计算时间轴范围（确保覆盖所有事件，且至少到下个月月底）
   const timelineRange = useMemo(() => {
     let start = dayjs().startOf('day');
-    
+
     // 如果有事件的开始时间在今天之前，则从最早的事件开始
     events.forEach(event => {
       const eventStart = dayjs(event.startDate).startOf('day');
@@ -203,7 +346,7 @@ const CustomGantt = ({
   const handleAdd = () => {
     setEditingEvent(null);
     form.resetFields();
-    form.setFieldsValue({ dates: [dayjs(), dayjs().add(1, 'day')], level: 'neutral', descInline: false, isImportant: false });
+    form.setFieldsValue({ dates: [dayjs(), dayjs().add(1, 'day')], level: 'neutral', descInline: false, isImportant: false, notify: false });
     setIsModalOpen(true);
   };
 
@@ -216,6 +359,7 @@ const CustomGantt = ({
       level: event.level,
       descInline: event.descInline || false,
       isImportant: event.isImportant || false,
+      notify: event.notify || false,
     });
     setIsModalOpen(true);
   };
@@ -237,6 +381,7 @@ const CustomGantt = ({
         level: values.level,
         descInline: values.descInline || false,
         isImportant: values.isImportant || false,
+        notify: values.notify || false,
       };
 
       let newEvents;
@@ -249,80 +394,6 @@ const CustomGantt = ({
       saveGanttData(newEvents);
       setIsModalOpen(false);
     });
-  };
-
-  const renderGanttBar = (event, index, provided, snapshot) => {
-    const start = dayjs(event.startDate);
-    const end = dayjs(event.endDate);
-    
-    // 计算位置和宽度
-    const startOffset = Math.max(0, start.diff(timelineRange.start, 'day'));
-    const duration = end.diff(start.isBefore(timelineRange.start) ? timelineRange.start : start, 'day') + 1;
-    
-    const left = startOffset * cellWidth;
-    const width = duration * cellWidth;
-
-    const levelInfo = IMPACT_LEVELS[event.level];
-    const isExpired = dayjs().isAfter(dayjs(event.endDate).endOf('day'));
-
-    return (
-      <div 
-        ref={provided.innerRef}
-        {...provided.draggableProps}
-        className={`gantt-bar-row ${snapshot.isDragging ? 'dragging' : ''} ${isExpired ? 'expired' : ''} ${isThumbnail ? 'thumbnail' : ''} ${event.isImportant ? 'important' : ''}`}
-        style={{
-          ...provided.draggableProps.style,
-        }}
-        onMouseEnter={() => setHoveredEventRange({ start: event.startDate, end: event.endDate })}
-        onMouseLeave={() => setHoveredEventRange(null)}
-      >
-        <div className="event-info-label">
-          <div className="label-left">
-            <div className="drag-handle" {...provided.dragHandleProps}>
-              <HolderOutlined />
-            </div>
-            <span className="title" title={event.title}>{event.title}</span>
-          </div>
-          <Space size={4}>
-            {!isThumbnail && (
-              <>
-                <Button type="text" size="small" icon={<EditOutlined />} onClick={(e) => { e.stopPropagation(); handleEdit(event); }} />
-                <Popconfirm title="确定删除吗？" onConfirm={() => handleDelete(event.id)}>
-                  <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={(e) => e.stopPropagation()} />
-                </Popconfirm>
-              </>
-            )}
-          </Space>
-        </div>
-        <div className="bar-container" style={{ width: isThumbnail ? '100%' : totalContentWidth }}>
-          <Tooltip placement='bottom' title={isThumbnail ? `${event.title}: ${levelInfo.label}${event.description ? ` - ${event.description}` : ''}` : ''}>
-            <div 
-              className={`bar ${event.descInline ? 'desc-inline' : ''}`}
-              onClick={() => handleEdit(event)}
-              style={{ 
-                left: `${left}px`, 
-                width: `${width}px`,
-                backgroundColor: levelInfo.color,
-                boxShadow: `0 2px 6px ${levelInfo.bgColor}`
-              }}
-            >
-              {!isThumbnail && <span className="bar-text">{levelInfo.label}</span>}
-              {!isThumbnail && event.descInline && event.description && (
-                <span className="bar-inline-desc">{event.description}</span>
-              )}
-            </div>
-          </Tooltip>
-          {!isThumbnail && !event.descInline && event.description && (
-            <div 
-              className="bar-description"
-              style={{ left: `${left + width + 8}px` }}
-            >
-              {event.description}
-            </div>
-          )}
-        </div>
-      </div>
-    );
   };
 
   // 过滤出在当前时间轴范围内可见的事件
@@ -341,9 +412,9 @@ const CustomGantt = ({
           <span className="gantt-title">{title}</span>
           <Space style={{ marginLeft: 24 }}>
             <span style={{ fontSize: '13px', color: '#8c8c8c' }}>缩略展示</span>
-            <Switch 
-              size="small" 
-              checked={isThumbnail} 
+            <Switch
+              size="small"
+              checked={isThumbnail}
               onChange={setIsThumbnail}
               checkedChildren={<CompressOutlined />}
               unCheckedChildren={<ExpandOutlined />}
@@ -352,16 +423,25 @@ const CustomGantt = ({
         </div>
         <Space>
           {syncUrl && (
-            <Button 
-              icon={<SyncOutlined />} 
+            <Button
+              icon={<SyncOutlined />}
               onClick={handleSyncFromMarketRhythm}
               loading={loading}
             >
               同步近期市场节奏
             </Button>
           )}
-          <Button 
-            icon={<SortAscendingOutlined />} 
+          {syncTimelineUrl && (
+            <Button
+              icon={<SyncOutlined />}
+              onClick={handleSyncFromTimeline}
+              loading={loading}
+            >
+              同步时间线事件
+            </Button>
+          )}
+          <Button
+            icon={<SortAscendingOutlined />}
             onClick={handleSortByDate}
             title="按起始时间自动排序"
           >
@@ -380,12 +460,12 @@ const CustomGantt = ({
               <div className="days-header" style={{ flexGrow: isThumbnail ? 1 : 0 }}>
                 {timelineRange.days.map(day => {
                   const dayStr = day.format('YYYY-MM-DD');
-                  const isHighlighted = hoveredEventRange && 
+                  const isHighlighted = hoveredEventRange &&
                     (dayStr >= hoveredEventRange.start && dayStr <= hoveredEventRange.end);
-                  
+
                   return (
-                    <div 
-                      key={dayStr} 
+                    <div
+                      key={dayStr}
                       className={`day-cell ${day.isSame(dayjs(), 'day') ? 'today' : ''} ${day.day() === 0 || day.day() === 6 ? 'weekend' : ''} ${isHighlighted ? 'highlight-purple' : ''}`}
                       style={{ width: cellWidth, flexGrow: isThumbnail ? 1 : 0 }}
                     >
@@ -400,13 +480,13 @@ const CustomGantt = ({
 
             {/* 甘特图主体区域 */}
             <div className="gantt-main-area" style={{ width: isThumbnail ? '100%' : 'fit-content' }}>
-              {/* 网格背景层 - 放在 Droppable 同级但 z-index 较低 */}
+              {/* 网格背景层 */}
               <div className="grid-background">
                 <div className="label-spacer" />
                 <div className="grid-lines" style={{ width: isThumbnail ? '100%' : totalContentWidth, flexGrow: isThumbnail ? 1 : 0 }}>
                   {timelineRange.days.map(day => (
-                    <div 
-                      key={`grid-${day.format('YYYY-MM-DD')}`} 
+                    <div
+                      key={`grid-${day.format('YYYY-MM-DD')}`}
                       className={`grid-line ${day.isSame(dayjs(), 'day') ? 'today' : ''} ${day.day() === 0 || day.day() === 6 ? 'weekend' : ''}`}
                       style={{ width: cellWidth, flexGrow: isThumbnail ? 1 : 0 }}
                     />
@@ -415,29 +495,33 @@ const CustomGantt = ({
               </div>
 
               {/* 拖拽层 */}
-              <DragDropContext onDragEnd={onDragEnd}>
-                <Droppable droppableId="gantt-events">
-                  {(provided) => (
-                    <div 
-                      className="gantt-body"
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      style={{ width: isThumbnail ? '100%' : 'fit-content' }}
-                    >
-                      {visibleEvents.length === 0 && !loading ? (
-                        <Empty description="暂无推演事件" style={{ margin: '40px 0' }} />
-                      ) : (
-                        visibleEvents.map((event, index) => (
-                          <Draggable key={String(event.id)} draggableId={String(event.id)} index={index}>
-                            {(provided, snapshot) => renderGanttBar(event, index, provided, snapshot)}
-                          </Draggable>
-                        ))
-                      )}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={visibleEvents.map(e => String(e.id))} strategy={verticalListSortingStrategy}>
+                  <div
+                    className="gantt-body"
+                    style={{ width: isThumbnail ? '100%' : 'fit-content' }}
+                  >
+                    {visibleEvents.length === 0 && !loading ? (
+                      <Empty description="暂无推演事件" style={{ margin: '40px 0' }} />
+                    ) : (
+                      visibleEvents.map((event) => (
+                        <SortableGanttBar
+                          key={String(event.id)}
+                          event={event}
+                          isThumbnail={isThumbnail}
+                          totalContentWidth={totalContentWidth}
+                          cellWidth={cellWidth}
+                          timelineRange={timelineRange}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onHoverEnter={() => setHoveredEventRange({ start: event.startDate, end: event.endDate })}
+                          onHoverLeave={() => setHoveredEventRange(null)}
+                        />
+                      ))
+                    )}
+                  </div>
+                </SortableContext>
+              </DndContext>
             </div>
           </div>
         </div>
@@ -469,6 +553,9 @@ const CustomGantt = ({
           </Form.Item>
           <Form.Item name="isImportant" valuePropName="checked">
             <Checkbox>标记为重点（突出显示）</Checkbox>
+          </Form.Item>
+          <Form.Item name="notify" valuePropName="checked">
+            <Checkbox>加入大事提醒（在顶部"大事提醒"弹窗中展示）</Checkbox>
           </Form.Item>
           <Form.Item name="description" label="详细描述">
             <Input.TextArea rows={3} placeholder="输入事件的详细逻辑推演..." />

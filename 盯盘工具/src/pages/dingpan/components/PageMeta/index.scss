@@ -1,0 +1,97 @@
+.page-meta {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 18px 46px rgba(71, 96, 139, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(22px);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+
+  .title-block {
+    min-width: 0;
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+      color: #12213a;
+    }
+
+    .theme-color-icon {
+      font-size: 18px;
+      color: #6366f1;
+      cursor: pointer;
+      transition: all 0.22s ease;
+
+      &:hover {
+        color: #4f46e5;
+        transform: rotate(15deg) scale(1.1);
+      }
+    }
+
+    .update-time {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #71809c;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+
+  .history-btn {
+    border-radius: 12px;
+    height: 40px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    background: linear-gradient(135deg, var(--theme-color, #6366f1), var(--theme-color-dark, #4f46e5));
+    box-shadow:
+      0 4px 14px rgba(var(--theme-color-rgb, 99, 102, 241), 0.35),
+      0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      background: linear-gradient(135deg, var(--theme-color-dark, #4f46e5), var(--theme-color-darker, #4338ca));
+      box-shadow:
+        0 6px 20px rgba(var(--theme-color-rgb, 99, 102, 241), 0.45),
+        0 1px 0 rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .gradient-btn {
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .dingpan-diagnosis-stock-name:hover {
+    color: #7ec8e3 !important;
+  }
+}

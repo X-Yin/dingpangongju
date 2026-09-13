@@ -1,6 +1,9 @@
-import React, { useRef } from 'react';
-import { Typography, Card, Tag, Space, Divider, Alert, Image, Anchor, Row, Col, Tooltip } from 'antd';
-import { BookOutlined, InfoCircleOutlined, CheckCircleOutlined, WarningOutlined, BulbOutlined, UnorderedListOutlined, RiseOutlined } from '@ant-design/icons';
+import React, { useRef, useState } from 'react';
+import { Typography, Card, Tag, Space, Divider, Alert, Image, Anchor, Row, Col, Tooltip, Button, message } from 'antd';
+import { BookOutlined, InfoCircleOutlined, CheckCircleOutlined, WarningOutlined, BulbOutlined, UnorderedListOutlined, RiseOutlined, AlertOutlined, CopyOutlined } from '@ant-design/icons';
+import axios from 'axios';
+import { local_ip } from '../../constant';
+import { getThemeColor } from '../../utils/theme';
 import guzhiqihuojiaoge from '../../assets/guzhiqihuojiaoge.png';
 import zhongxinCase from '../../assets/20260529-中芯国际.png';
 import zhongxinFenshi from '../../assets/20260529-中芯国际分时.png';
@@ -34,38 +37,87 @@ import xinyisheng0612 from '../../assets/20260612-新易盛.png';
 import dapangailan0618 from '../../assets/20260618-大盘概览.png';
 import zhaoyichuangxin0623 from '../../assets/20260623-兆易创新.png';
 import chuangyebanzhi0623 from '../../assets/20260623-创业板指.png';
+import zhaoyichuangxin0708 from '../../assets/20260708-兆易创新.png';
+import zhulizijin0713 from '../../assets/20260713-主力资金.png';
+import zhishuhezhaoyichuangxin0713 from '../../assets/20260713-指数&兆易创新.png';
+import zhulizijin20260819 from '../../assets/主力资金净流入-20260819.png'; 
+import guojifucai20260819 from '../../assets/国际复材分时-20260819.png'; 
+import chuangyebanzhi20260819 from '../../assets/创业板指-20260819.png'; 
+import guojifucai20260820 from '../../assets/20260820-国际复材.png'; 
+import dingtaigaoke20260820 from '../../assets/20260820-鼎泰高科.png';
 import './index.scss';
 
 const { Title, Paragraph, Text } = Typography;
 
 const PreMarketReading = () => {
   const scrollContainerRef = useRef(null);
+  const contentRef = useRef(null);
+  const [copyLoading, setCopyLoading] = useState(false);
+
+  const handleCopyData = async () => {
+    setCopyLoading(true);
+    try {
+      const [chuangyebanRes, kechuangbanRes, emotionRes, amountRes] = await Promise.all([
+        axios.get(`http://${local_ip}:3000/stock_data?code=sz399006&limit=100`),
+        axios.get(`http://${local_ip}:3000/stock_data?code=sh000688&limit=100`),
+        axios.get(`http://${local_ip}:3000/emotion_data`),
+        axios.get(`http://${local_ip}:3000/amount_history`),
+      ]);
+
+      const historicalExperience = contentRef.current ? contentRef.current.innerText : '';
+
+      const result = {
+        '创业板 k 线数据': chuangyebanRes.data,
+        '科创板 k 线数据': kechuangbanRes.data,
+        '科技情绪指数数据': emotionRes.data.techIndexData || [],
+        '主力资金流入流出分时数据': amountRes.data || {},
+        '历史经验总结教训事项': historicalExperience,
+      };
+
+      const jsonStr = JSON.stringify(result, null, 2);
+      await navigator.clipboard.writeText(jsonStr);
+      message.success('数据已复制到粘贴板');
+    } catch (error) {
+      console.error('复制数据失败:', error);
+      message.error('复制数据失败，请重试');
+    } finally {
+      setCopyLoading(false);
+    }
+  };
 
   const menuItems = [
-    { key: 'trend-following', href: '#trend-following', title: '跟随趋势，拥抱确定性' },
-    { key: 'weak-shock', href: '#weak-shock', title: '弱势震荡期的操作策略' },
-    { key: 'high-volume-yin', href: '#high-volume-yin', title: '高位放量大阴线信号' },
-    { key: 'outflow-rebound-0610', href: '#outflow-rebound-0610', title: '操他妈了个逼！' },
-    { key: 'case-zhongxin', href: '#case-zhongxin', title: '高位票竞价和开盘不及预期直接卖' },
+    { key: 'weak-shock', href: '#weak-shock', title: '指数猛跌之后必然要筑底 1-2 周，不要着急猛冲', strong: true },
+    { key: 'high-volume-yin', href: '#high-volume-yin', title: '高位放量大阴线信号', strong: true },
+    { key: 'outflow-rebound-0610', href: '#outflow-rebound-0610', title: '大盘资金净流出，个股容易冲高回落', strong: true },
+    { key: 'case-zhongxin', href: '#case-zhongxin', title: '高位票竞价和开盘不及预期直接卖', strong: true },
     { key: 'case-hanwuji', href: '#case-hanwuji', title: '清仓之后不操作' },
-    { key: 'case-inducement', href: '#case-inducement', title: '退潮期的冲高诱多' },
-    { key: 'rebound-strategy', href: '#rebound-strategy', title: '退潮期超跌反弹博弈' },
-    { key: 'outflow-warning', href: '#outflow-warning', title: '资金净流出加速风险' },
+    { key: 'case-inducement', href: '#case-inducement', title: '未到情绪冰点不出手', strong: true },
+    { key: 'rebound-strategy', href: '#rebound-strategy', title: '指数过于高开必低走-祖训', strong: true },
+    { key: 'outflow-warning', href: '#outflow-warning', title: '资金净流出加速风险', strong: true },
     { key: 'case-0605', href: '#case-0605', title: '一周期一次出手纪律' },
     { key: 'timing-selection', href: '#timing-selection', title: '择时大于选股' },
-    { key: 'rebound-dip', href: '#rebound-dip', title: '情绪反弹龙头表现不如小弟' },
-    { key: 'tech-main-rise', href: '#tech-main-rise', title: '科技主升浪行情中的各个阶段' },
+    { key: 'rebound-dip', href: '#rebound-dip', title: '大家都跌你不跌，那你就会补跌', strong: true},
     { key: 'capital-flow-index', href: '#capital-flow-index', title: '大盘资金净流出而指数红盘的原因' },
-    { key: 'handle-pullback', href: '#handle-pullback', title: '指数大涨后的深度回调处理' },
+    { key: 'handle-pullback', href: '#handle-pullback', title: '指数大涨后的深度回调处理', strong: true },
+    { key: 'subjective-objective', href: '#subjective-objective', title: '主观逻辑->情绪周期->主力资金流入流出', strong: true },
+    { key: 'outflow-deception-0713', href: '#outflow-deception-0713', title: '主力资金持续流出的诱多陷阱', strong: true },
+    { key: 'overnight-crisis-rebound', href: '#overnight-crisis-rebound', title: '隔夜利空开盘大跌等 10 点拉升再走', strong: true },
+    { key: 'no-financial-report', href: '#no-financial-report', title: '刚发完财报的股票不能买', strong: true },
   ].map(item => ({
     ...item,
-    title: <Tooltip title={item.title} placement="top"><span>{item.title}</span></Tooltip>
+    title: (
+      <Tooltip title={item.title} placement="top">
+        <span className={item.strong ? 'anchor-item-strong' : ''}>
+          {item.title}
+        </span>
+      </Tooltip>
+    )
   }));
 
   return (
     <div className="pre-market-reading-wrapper" ref={scrollContainerRef}>
       <Row gutter={24} style={{ margin: 0 }}>
-        <Col span={4} className="sidebar-col">
+        <Col span={6} className="sidebar-col">
           <Card className="anchor-card" variant="borderless">
             <div className="anchor-header">
               <UnorderedListOutlined /> <Text strong>文章目录</Text>
@@ -78,53 +130,25 @@ const PreMarketReading = () => {
             />
           </Card>
         </Col>
-        <Col span={20} className="content-col">
-          <div className="pre-market-reading">
+        <Col span={18} className="content-col">
+          <div className="content-wrapper">
+            <Button
+              className="copy-data-btn"
+              type="primary"
+              icon={<CopyOutlined />}
+              loading={copyLoading}
+              onClick={handleCopyData}
+            >
+              复制盘前阅读数据
+            </Button>
+          </div>
+          <div className="pre-market-reading" ref={contentRef}>
             <Image 
               src={guzhiqihuojiaoge} 
               className="main-image"
               preview={false}
               style={{ width: 500 }}
             /> 
-
-            <Card
-              id="trend-following"
-              className="section-card"
-              title={<><RiseOutlined style={{ color: '#52c41a' }} /> 跟随趋势，拥抱确定性</>}
-              variant="borderless"
-            >
-              <Alert
-                className="lesson-alert"
-                message="核心理念：趋势大于波动"
-                description="做短线不是简单的今天买明天卖。追逐热点若无大盘情绪配合，极易遭遇冲高回落。最重要的并非日内波动，而是趋势的跟随。"
-                type="success"
-                showIcon
-                icon={<CheckCircleOutlined />}
-              />
-
-              <div className="principle-content" style={{ marginTop: 16 }}>
-                <Paragraph>
-                  <Text strong>1. 仓位配比策略：</Text>
-                  找好主线与支线。一般采用 <Text type="danger">主线:支线 = 7:3</Text>，或 <Text type="danger">主线:支线1:支线2 = 6:2:2</Text>。
-                </Paragraph>
-
-                <Paragraph>
-                  <Text strong>2. 止损与跟随准则：</Text>
-                  只要没有 <Text type="success" strong>开盘砸破 -4%</Text> 或 <Text type="success" strong>跌破 10 日线</Text>，就坚持跟随趋势高抛低吸。
-                  涨了适度止盈，回调企稳反弹时顺势加仓，<Text underline>严禁提前盲目抄底</Text>。
-                </Paragraph>
-
-                <Paragraph>
-                  <Text strong>3. 减少无谓调仓：</Text>
-                  趋势未坏，不要随便换股。忽略日内震荡，只要未达止损位，保持定力。回调是暂时的，趋势会修复价格。
-                </Paragraph>
-
-                <Paragraph>
-                  <Text strong>4. 确定性是盈利之本：</Text>
-                  跟随趋势最大的好处是<Text strong>确定性</Text>。强势股在回调时抗跌，上涨时领涨，因为资金主动性强，趋势力量大。
-                </Paragraph>
-              </div>
-            </Card>
 
             <Card 
               id="case-zhongxin"
@@ -212,7 +236,7 @@ const PreMarketReading = () => {
             <Card 
               id="case-inducement"
               className="section-card" 
-              title={<><WarningOutlined style={{ color: '#faad14' }} /> 实战案例复盘: 退潮期的冲高诱多 (20260601)</>}
+              title={<><WarningOutlined style={{ color: '#faad14' }} /> 实战案例复盘: 未到情绪冰点不出手 (20260601)</>}
               variant="borderless"
             >
               <Paragraph>
@@ -224,7 +248,7 @@ const PreMarketReading = () => {
                 message="博弈逻辑"
                 description={
                   <>
-                    <div>只能在冰点（情绪指数-100以下）博弈</div>
+                    <div>只能在冰点（情绪指数-30以下）博弈</div>
                     <Text strong style={{ color: '#cf1322' }}>
                       大盘非冰点的时候，最多只能半仓操作，不能全仓，随时会<span style={{color: 'red', fontWeight: 'bold'}}>冲高回落</span>
                     </Text>
@@ -255,7 +279,7 @@ const PreMarketReading = () => {
             <Card 
               id="rebound-strategy"
               className="section-card" 
-              title={<><BulbOutlined style={{ color: '#52c41a' }} /> 超跌反弹的博弈方法(20260602)</>}
+              title={<><BulbOutlined style={{ color: '#52c41a' }} /> 指数过于高开必低走(20260602)</>}
               variant="borderless"
             >
               <Paragraph>
@@ -354,7 +378,7 @@ const PreMarketReading = () => {
             >
               <Paragraph>
                 <Text type="secondary">背景回顾：</Text>
-                2026-06-02 至 06-04，科技情绪指数已连续 <Text strong style={{ color: '#cf1322' }}>三天超过 100</Text>。市场处于明显的情绪过热阶段，风险极大。
+                2026-06-02 至 06-04，科技情绪指数已连续 <Text strong style={{ color: '#cf1322' }}>三天超过 100</Text>。市场处于明显的情绪过热阶段，风险极大。<span style={{ color: '#cf1322' }}>自己的纪律也是未到情绪冰点不出手</span>
               </Paragraph>
 
               <Alert
@@ -381,7 +405,7 @@ const PreMarketReading = () => {
                 message="核心策略 (必须死守)"
                 description={
                   <>
-                    <div>1. <Text strong>出手时机</Text>：真正适合全仓出手的机会，一个星期通常只有一次。即科技指数情绪 <Text strong style={{ color: '#cf1322' }}>低于 -100</Text> 或 <Text strong style={{ color: '#cf1322' }}>连续多日为负</Text> 后的次日。</div>
+                    <div>1. <Text strong>出手时机</Text>：真正适合全仓出手的机会，一个星期通常只有一次。即科技指数情绪 <Text strong style={{ color: '#cf1322' }}>低于 -30</Text> 或 <Text strong style={{ color: '#cf1322' }}>连续多日为负</Text> 后的次日。</div>
                     <div>2. <Text strong>识别诱多</Text>：非冰点后的早盘冲高，大概率是冲高回落套人。</div>
                     <div>3. <Text strong>仓位管理</Text>：冰点次日可全仓+追高；其他时间要么空仓，要么持股，最多 <Text strong>半仓</Text> 博弈。</div>
                     <Text strong style={{ color: '#cf1322', marginTop: 8, display: 'block' }}>
@@ -463,7 +487,7 @@ const PreMarketReading = () => {
             <Card
               id="rebound-dip"
               className="section-card"
-              title={<><InfoCircleOutlined style={{ color: '#1890ff' }} /> 退潮期强势个股，在反弹第一天往往会补跌(0609)</>}
+              title={<><InfoCircleOutlined style={{ color: getThemeColor() }} /> 退潮期强势个股，在反弹第一天往往会补跌(0609)</>}
               variant="borderless"
             >
               <Paragraph>
@@ -561,7 +585,7 @@ const PreMarketReading = () => {
             <Card
               id="weak-shock"
               className="section-card"
-              title={<><WarningOutlined style={{ color: '#faad14' }} /> 弱势震荡期的操作策略(20260611)</>}
+              title={<><WarningOutlined style={{ color: '#faad14' }} /> 指数猛跌之后必然要筑底 1-2 周，不要着急猛冲(20260611)</>}
               variant="borderless"
             >
               <Alert
@@ -691,97 +715,9 @@ const PreMarketReading = () => {
             </Card>
 
             <Card
-              id="tech-main-rise"
-              className="section-card"
-              title={<><RiseOutlined style={{ color: '#52c41a' }} /> 科技主升浪行情中的各个阶段 (0618)</>}
-              variant="borderless"
-            >
-              <Alert
-                className="lesson-alert"
-                message="行情阶段概述"
-                description="科技主升浪行情分为两个关键阶段，不同阶段的操作策略完全不同。"
-                type="info"
-                showIcon
-                icon={<InfoCircleOutlined />}
-              />
-
-              <div style={{ marginTop: 16 }}>
-                <Alert
-                  className="lesson-alert"
-                  message="第一个阶段：主线确定性确立"
-                  description="在科技板块第一天反弹大阳线的时候，和板块共振走强的是资金最看好、确定性最强的主线。比如 6.15 科技反弹的第一天，资金去了半年报业绩兑现度最高的光通信和 PCB 上游原材料。但其他确定性没有那么高的票（如寒武纪、工业富联）不会被资金关注，因为弹性不如光通信和 PCB 涨价原材料那么性感。"
-                  type="success"
-                  showIcon
-                  icon={<CheckCircleOutlined />}
-                />
-
-                <Alert
-                  className="lesson-alert"
-                  style={{ marginTop: 16 }}
-                  message="第二个阶段：获利盘消化与补涨轮动"
-                  description={
-                    <>
-                      <Paragraph>在光通信和 PCB 经过连续两天的大阳线上涨之后，积累了天量的获利盘，场内资金有兑现出来去其他低位方向做补涨的需求。此时场外踏空资金也会开始着急，但不敢去高位接盘，因此只能选择去低位的寒武纪、兆易创新、工业富联等前期没有大涨过但同样有一定业绩兑现度的股票。</Paragraph>
-                    </>
-                  }
-                  type="warning"
-                  showIcon
-                  icon={<BulbOutlined />}
-                />
-
-                <Alert
-                  className="lesson-alert"
-                  style={{ marginTop: 16 }}
-                  message="踏空资金来源分析"
-                  description={
-                    <>
-                      <div>1. 在 6.15-6.16 科技反弹前两天就提前下车的资金</div>
-                      <div>2. 前期科技深度回调时，为了避险而去了银行、证券等红利板块的资金</div>
-                    </>
-                  }
-                  type="info"
-                  showIcon
-                  icon={<InfoCircleOutlined />}
-                />
-
-                <Alert
-                  className="lesson-alert"
-                  style={{ marginTop: 16 }}
-                  message="主升浪轮动与弱势震荡的本质区别"
-                  description={
-                    <>
-                      <Paragraph>第二个阶段会出现热点轮动极快的情况(比如在 6.17，半导体设备突然大涨。在 6.18 机器人、寒武纪、兆易创新、工业富联等全都在拉，盘面非常乱，并且轮动极快)，看起来像弱势震荡期盘面，但两者有本质不同：</Paragraph>
-                      <div style={{ marginTop: 8 }}>
-                        <div><Text strong>弱势震荡期</Text>：市场没有统一共识主线，资金随便找有利好的板块拉一下</div>
-                        <div><Text strong>主升浪期</Text>：主线位置太高，踏空资金不敢上，只能去低位找补涨；一旦主线获利盘消化完毕，主线会再次爆发，且这次爆发会受之前踏空资金强烈追捧，涨幅更大、加速更快</div>
-                      </div>
-                    </>
-                  }
-                  type="warning"
-                  showIcon
-                  icon={<WarningOutlined />}
-                />
-
-                <Alert
-                  className="lesson-alert"
-                  style={{ marginTop: 16 }}
-                  message="第二阶段操作核心（必须牢记）"
-                  description={
-                    <Text strong style={{ color: '#cf1322', fontSize: '16px' }}>
-                      不能追热点，一定要坚守自己的主线。主升浪行情中消化获利盘速度很快，可能一两天就结束；如果在高速轮动期去追热点，反而会到处挨打！
-                    </Text>
-                  }
-                  type="error"
-                  showIcon
-                  icon={<WarningOutlined />}
-                />
-              </div>
-            </Card>
-
-            <Card
               id="capital-flow-index"
               className="section-card"
-              title={<><InfoCircleOutlined style={{ color: '#1890ff' }} /> 大盘资金净流出而指数红盘的原因（20260618）</>}
+              title={<><InfoCircleOutlined style={{ color: getThemeColor() }} /> 大盘资金净流出而指数红盘的原因（20260618）</>}
               variant="borderless"
             >
               <Alert
@@ -928,6 +864,283 @@ const PreMarketReading = () => {
                 icon={<WarningOutlined />}
               />
               
+            </Card>
+
+            <Card
+              id="subjective-objective"
+              className="section-card"
+              title={<><BulbOutlined style={{ color: getThemeColor() }} /> 主观逻辑-情绪周期-主力资金流入流出（20260702）</>}
+              variant="borderless"
+            >
+              <Paragraph>
+                有时候自己埋伏一个有主观逻辑的股票，比如 <Text strong type="danger">兆易创新</Text> 未来的长鑫 IPO 上市预期，这个本来是很稳的。但是如果中间受到一些客观因素的影响，比如大盘指数持续下跌，或者是监管问询等因素。然后股价 <Text strong type="success">低开 + 开盘下挫</Text><Text type='warning'>（如果低开，但是开盘持续上拉这个还可以再观察看看）</Text>，那么这个时候就是客观 K 线已经走坏了，这个时候就不要犟了，你得先出来。
+              </Paragraph>
+
+              <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ 
+                  padding: '12px 16px', 
+                  background: '#e6f7ff', 
+                  borderRadius: 8,
+                  borderLeft: `4px solid ${getThemeColor()}`
+                }}>
+                  <span style={{ fontWeight: 600, color: '#0050b3', marginRight: 8 }}>🎯 主观逻辑：</span>
+                  <span style={{ color: '#333' }}>决定了自己对中长期主线的判断，自己可以反复在这个股票上做操作，锚定主线不放松这个是对的</span>
+                </div>
+                
+                <div style={{ 
+                  padding: '12px 16px', 
+                  background: '#fffbe6', 
+                  borderRadius: 8,
+                  borderLeft: '4px solid #faad14'
+                }}>
+                  <span style={{ fontWeight: 600, color: '#d46b08', marginRight: 8 }}>📊 情绪周期：</span>
+                  <span style={{ color: '#333' }}>根据情绪周期来决定三五天内的短线操作，高抛低吸</span>
+                </div>
+                
+                <div style={{ 
+                  padding: '12px 16px', 
+                  background: '#fff1f0', 
+                  borderRadius: 8,
+                  borderLeft: '4px solid #ff4d4f'
+                }}>
+                  <span style={{ fontWeight: 600, color: '#cf1322', marginRight: 8 }}>💰 主力资金流入流出：</span>
+                  <span style={{ color: '#333' }}>根据当日的主力资金净流入流出的情况来做分时的操作。</span>
+                  <span style={{ color: '#cf1322', fontWeight: 600 }}>切记：当主力资金开始突然大幅流出的时候，短期趋势不可逆转，大概率延续到收盘，很难 V 形反转，这个时候一定要卖，想要买回来只能在尾盘</span>
+                </div>
+              </div>
+
+              <Paragraph>
+                <Alert
+                  className="lesson-alert"
+                  message={<Text strong style={{ fontSize: '16px' }}>客观走势走坏，必须果断离场</Text>}
+                  description={
+                    <Space direction="vertical" size="small">
+                      <Paragraph style={{ margin: 0 }}>
+                        不管资金是出于什么原因在卖，总而言之一旦客观走势出现了这种<Text strong type="danger">兑现猛烈</Text>的情况，那调整就<Text strong type="warning">不是一两天能结束</Text>的事情。
+                      </Paragraph>
+                      <Paragraph style={{ margin: 0, padding: '8px 12px', background: '#fff1f0', borderLeft: '4px solid #ff4d4f' }}>
+                        <Text strong type="danger">核心逻辑：</Text>
+                        <br/>
+                        你虽然可能现在出来会亏钱，<Text strong>但是如果你现在不出来，你未来会亏更多的钱！</Text>
+                      </Paragraph>
+                    </Space>
+                  }
+                  type="error"
+                  showIcon
+                  icon={<WarningOutlined />}
+                />
+              </Paragraph>
+
+              <Alert
+                className="lesson-alert"
+                message="核心教训"
+                description={
+                  <>
+                    <div>客观走势一旦走坏，就一定要先出来，不要死扛。</div>
+                    <Text strong style={{ color: '#cf1322' }}>
+                      主观逻辑没坏可能确实是没坏，但是这是一个中长期的事情，不是现在短期的事情。你现在短期明明能通过技术分析和经验判断避开未来一二十个点的调整，那为什么不这么做呢？
+                    </Text>
+                  </>
+                }
+                type="warning"
+                showIcon
+                icon={<WarningOutlined />}
+              />
+
+              <div className="case-image-container single">
+                <Image 
+                  src={zhaoyichuangxin0708} 
+                  className="case-image"
+                  placeholder={<div style={{ background: '#f5f5f5', height: 200 }} />}
+                />
+              </div>
+            </Card>
+
+            <Card
+              id="outflow-deception-0713"
+              className="section-card"
+              title={<><AlertOutlined style={{ color: '#f5222d' }} /> 主力资金持续流出的诱多陷阱 (20260713)</>}
+              variant="borderless"
+            >
+              <Alert
+                className="lesson-alert"
+                message="核心观点"
+                description="主力资金持续流出，只有卖点没有买点，不要被分时图上涨迷惑"
+                type="error"
+                showIcon
+                icon={<AlertOutlined />}
+              />
+
+              <Paragraph style={{ marginTop: 16 }}>
+                当主力资金在持续流出的情况下，这个时候指数分时图或许会有上涨的情况发生，个股也会跟着指数一起上涨，但是这些都是诱多，当主力资金持续流出的情况下，分时的个别上涨后面都会被带下去的。
+              </Paragraph>
+
+              <Alert
+                className="lesson-alert"
+                style={{ marginTop: 16 }}
+                message="正确做法"
+                description="当看见主力资金持续流出的时候，逮着某一次分时图的上涨然后赶快兑现卖出，这个时候千万不能在盘中的某次分时追高冲进去。而是应该等到尾盘的时候再说"
+                type="warning"
+                showIcon
+                icon={<BulbOutlined />}
+              />
+
+              <Alert
+                className="lesson-alert"
+                style={{ marginTop: 16 }}
+                message="V形反转确认条件"
+                description="当然有几个别的情况下，确实是盘中主力资金会突然开始大幅度流入，指数出现 V 形反转，但是这个一定要至少确认 <Text strong>15分钟</Text>，千万不能冲动！"
+                type="success"
+                showIcon
+                icon={<CheckCircleOutlined />}
+              />
+
+              <Alert
+                className="lesson-alert"
+                style={{ marginTop: 16 }}
+                message="心理障碍突破"
+                description={
+                  <>
+                    <div>这个时候最大的心理障碍就是<Text strong type="danger">害怕踏空</Text>！</div>
+                    <div style={{ marginTop: 8 }}>分时图一开始上涨，然后自己就以为大盘要 V 形反转了。个股要开始修复了。自己再不买进去就踏空了。</div>
+                    <div style={{ marginTop: 8 }}>
+                      <Text strong style={{ color: '#cf1322' }}>每当自己有这种冲动的时候就应该看看主力资金的流出情况，只要主力资金的实时流入流出分时图没有出现明确的 V 形反转，那指数和个股分时的 V 形反转全都是诱多。</Text>
+                    </div>
+                  </>
+                }
+                type="info"
+                showIcon
+                icon={<InfoCircleOutlined />}
+              />
+
+              <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>主力资金持续流出</Text></Divider>
+              <div className="case-image-container single">
+                <Image src={zhulizijin0713} className="case-image" />
+              </div>
+
+              <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>指数与个股分时图对比</Text></Divider>
+              <div className="case-image-container single">
+                <Image src={zhishuhezhaoyichuangxin0713} className="case-image" />
+              </div>
+            </Card>
+
+            <Card
+              id="overnight-crisis-rebound"
+              className="section-card"
+              title={<><BulbOutlined style={{ color: '#faad14' }} /> 隔夜利空竞价开盘大跌不用担心，等 10 点拉升之后再走不迟（20260819）</>}
+              variant="borderless"
+            >
+              <Alert
+                className="lesson-alert"
+                message="核心逻辑：主力被迫逆势拉升"
+                description={
+                  <>
+                    <div>
+                      当大部分的个股都以接近跌停价格开盘的时候，那么主力开盘就只能<Text strong type="danger">向上拉升</Text>，不然散户跑的比自己快，自己就出不来了。
+                    </div>
+                    <div style={{ marginTop: 8 }}>
+                      因此开盘主力必须逆势拉升，当逆势拉升到一定程度之后，此时内部还没有卖的散户就会开始犹豫，甚至有一些场外的散户还会抱着抄底的思维进来抬轿子。而这个时候主力再顺势<Text strong type="warning">横盘震荡出货</Text>。
+                    </div>
+                  </>
+                }
+                type="info"
+                showIcon
+                icon={<InfoCircleOutlined />}
+              />
+
+              <Alert
+                className="lesson-alert"
+                style={{ marginTop: 16 }}
+                message="操作策略：等到 10 点附近再卖"
+                description={
+                  <>
+                    <div>
+                      所以当遇到隔夜大利空的时候，不要慌，竞价开盘就算价格再低也不用担心，开盘往往会向上拉升，等到了 <Text strong style={{ color: '#cf1322' }}>10 点左右附近</Text> 的时候再卖也不迟。
+                    </div>
+                    <Text strong style={{ color: '#137722', marginTop: 8, display: 'block' }}>
+                      核心要点：开盘不要恐慌抛售，等待主力逆势拉升后再兑现。
+                    </Text>
+                  </>
+                }
+                type="success"
+                showIcon
+                icon={<CheckCircleOutlined />}
+              />
+
+              <Alert
+                className="lesson-alert"
+                style={{ marginTop: 16 }}
+                message="风险信号：资金持续净流出时必须离场"
+                description={
+                  <>
+                    <div>
+                      但是这个时候如果看到资金在<Text strong type="danger">持续净流出</Text>，那么等到 10 点之后一定要走了，不要抱有侥幸心理今天会低开高走。这是不切实际的。
+                    </div>
+                    <div style={{ marginTop: 8 }}>
+                      <Text strong style={{ color: '#cf1322' }}>除非能看到资金在持续净流入，否则 10 点之后必须果断清仓避险。</Text>
+                    </div>
+                  </>
+                }
+                type="warning"
+                showIcon
+                icon={<WarningOutlined />}
+              />
+
+              <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>大盘主力资金分时</Text></Divider>
+              <div className="case-image-container single">
+                <Image src={zhulizijin20260819} className="case-image" />
+              </div>
+
+              <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>国际复材分时</Text></Divider>
+              <div className="case-image-container single">
+                <Image src={guojifucai20260819} className="case-image" />
+              </div>
+
+              <Divider orientation="left" plain><Text type="secondary" style={{ fontSize: '12px' }}>创业板指分时</Text></Divider>
+              <div className="case-image-container single">
+                <Image src={chuangyebanzhi20260819} className="case-image" />
+              </div>
+            </Card>
+
+            <Card
+              id="no-financial-report"
+              className="section-card"
+              title={<><BookOutlined style={{ color: '#ff4d4f' }} /> 刚发完财报的股票不能买</>}
+              variant="borderless"
+            >
+              <Alert
+                className="lesson-alert"
+                message="核心教训"
+                description={
+                  <>
+                    <div>刚发完财报的股票不能买，哪怕净利润显示增长了百分之几百，看起来很好也不能买。因为你不知道机构的目标心理预期是多少。甚至第二天冲高你也不能买。</div>
+                    <Text strong style={{ color: '#cf1322' }}>
+                      刚刚发完财报，哪怕财报再好，第二天不管怎么样，都不能买！！！只能买那些已经发完财报很久的股票。
+                    </Text>
+                  </>
+                }
+                type="error"
+                showIcon
+                icon={<WarningOutlined />}
+              />
+
+              <Paragraph>
+                <Text type="secondary">实战案例：</Text>
+                例如 <Text strong>20260819</Text> 这一天收盘之后，国际复材和鼎泰高科两个都发了半年报，净利润分别都增长了百分之两三百，但是第二天其他很多股票都在上涨，这两个早上竞价高开，冲高回落，自己这一天就中招了！早上国际复材冲高 <Text type="success" strong>3%</Text> 的时候以为没事儿，然后买进去，结果尾盘回落到了 <Text type="danger" strong>-3.8%</Text>。
+              </Paragraph>
+
+              <div className="case-image-container">
+                <Image
+                  src={guojifucai20260820}
+                  className="case-image"
+                  placeholder={<div style={{ background: '#f5f5f5', height: 200 }} />}
+                />
+                <Image
+                  src={dingtaigaoke20260820}
+                  className="case-image"
+                  placeholder={<div style={{ background: '#f5f5f5', height: 200 }} />}
+                />
+              </div>
             </Card>
 
             <Divider>
