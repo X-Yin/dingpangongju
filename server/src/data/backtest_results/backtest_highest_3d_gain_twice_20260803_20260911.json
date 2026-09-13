@@ -2,9 +2,9 @@
   "success": true,
   "type": "single",
   "strategy": {
-    "id": "highest_6d_gain",
-    "name": "6日涨幅最大",
-    "desc": "买点命中时只买入最近 6 个交易日涨幅最大的股票"
+    "id": "highest_3d_gain_twice",
+    "name": "3日涨幅两次买入",
+    "desc": "买点命中时先买入 5 成仓位，剩余 5 成等当天收盘再买入，成本价为两次买入价格平均值（选股逻辑同 3 日涨幅最大）"
   },
   "range": {
     "startDate": "20260803",
@@ -350,51 +350,51 @@
       "buyDate": "20260804",
       "buyDateDisplay": "2026-08-04",
       "buyTime": "09:40",
-      "buyPrice": 105.66,
-      "buyChange": 9.19,
+      "buyPrice": 109.68,
+      "buyChange": 17.5,
       "sellDate": "20260819",
       "sellDateDisplay": "2026-08-19",
       "sellTime": "10:30",
       "sellPrice": 155.1,
       "sellChange": -4.44,
       "sellReason": "科技板块情绪退潮",
-      "returnRate": 46.79
+      "returnRate": 41.41
     },
     {
       "seq": 2,
-      "metric": 34.2775,
+      "metric": 3.7652,
       "code": "sz300570",
       "stockName": "太辰光",
       "buyDate": "20260820",
       "buyDateDisplay": "2026-08-20",
       "buyTime": "10:05",
-      "buyPrice": 201.1,
-      "buyChange": 11.55,
+      "buyPrice": 207.25,
+      "buyChange": 18.38,
       "sellDate": "20260824",
       "sellDateDisplay": "2026-08-24",
       "sellTime": "13:05",
       "sellPrice": 197.11,
       "sellChange": -8.09,
       "sellReason": "科技板块情绪退潮",
-      "returnRate": -1.98
+      "returnRate": -4.89
     },
     {
       "seq": 3,
-      "metric": 6.5765,
+      "metric": 15.09,
       "code": "sz002536",
       "stockName": "飞龙股份",
       "buyDate": "20260825",
       "buyDateDisplay": "2026-08-25",
       "buyTime": "10:05",
-      "buyPrice": 49.14,
-      "buyChange": 0.7,
+      "buyPrice": 50.35,
+      "buyChange": 5.66,
       "sellDate": "20260904",
       "sellDateDisplay": "2026-09-04",
       "sellTime": "14:30",
       "sellPrice": 58.19,
       "sellChange": -7.68,
       "sellReason": "科技板块情绪退潮",
-      "returnRate": 18.42
+      "returnRate": 15.57
     }
   ],
   "currentHolding": {
@@ -403,16 +403,16 @@
     "buyDate": "20260907",
     "buyDateDisplay": "2026-09-07",
     "buyTime": "09:35",
-    "buyPrice": 103.93,
-    "buyChange": 7.88,
-    "metric": 10.6874,
-    "buyReturn": 7.32
+    "buyPrice": 104.95,
+    "buyChange": 10,
+    "metric": 17.0288,
+    "buyReturn": 6.28
   },
   "summary": {
     "tradeCount": 3,
     "winCount": 2,
     "winRate": 66.67,
-    "overallReturn": 82.86,
+    "overallReturn": 65.2,
     "holding": true
   }
 }
