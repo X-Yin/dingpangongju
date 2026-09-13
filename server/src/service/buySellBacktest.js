@@ -20,6 +20,7 @@ const STRATEGIES = {
   highest_gain: { id: 'highest_gain', name: '买入最高涨幅', desc: '买点命中时只买入回测起始日至当前整体涨幅最大的股票' },
   highest_5d_gain: { id: 'highest_5d_gain', name: '5日涨幅最大', desc: '买点命中时只买入最近 5 个交易日涨幅最大的股票' },
   highest_3d_gain: { id: 'highest_3d_gain', name: '3日涨幅最大', desc: '买点命中时只买入最近 3 个交易日涨幅最大的股票' },
+  highest_3d_gain_switch: { id: 'highest_3d_gain_switch', name: '连续切换三日涨幅', desc: '触发买点时，买入当前所有自选股三日涨幅最大值。若空仓则全仓买入；若已持仓且最大涨幅股票变化，则卖掉旧的并全仓买入新的；若持仓未变则不操作' },
   highest_4d_gain: { id: 'highest_4d_gain', name: '4日涨幅最大', desc: '买点命中时只买入最近 4 个交易日涨幅最大的股票' },
   highest_2d_gain: { id: 'highest_2d_gain', name: '2日涨幅最大', desc: '买点命中时只买入最近 2 个交易日涨幅最大的股票' },
   highest_10d_gain: { id: 'highest_10d_gain', name: '10日涨幅最大', desc: '买点命中时只买入最近 10 个交易日涨幅最大的股票' },
@@ -1245,9 +1246,67 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
       const buyResult = runBuyPointDiagnosis(timeBuckets, bi, campData);
       if (buyResult?.data?.allPassed === true) {
         const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
-        // 单股策略：同一时刻仅持有一只，未持仓时按指标选最优的一只买入
-        if (!singlePosition && !pendingHalfBuy) {
-          // 选股前无持仓（仅单股持仓，且未持仓才会进入这里），持仓 Map 传空即可
+
+        // 策略切换逻辑：连续切换三日涨幅
+        if (strategy.id === 'highest_3d_gain_switch') {
+          const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, 'highest_3d_gain');
+          if (picked) {
+            const sc = picked.stock;
+            const buyPx = parseFloat(Number(sc.lastPx).toFixed(2));
+            const buyChange = sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null;
+
+            if (!singlePosition) {
+              // 情况1：空仓，直接全仓买入
+              singlePosition = {
+                code: sc.code,
+                stockName: sc.name || sc.code,
+                buyDate: dateStr,
+                buyDateDisplay: dateDisplay,
+                buyTime,
+                buyPrice: buyPx,
+                buyChange,
+                metric: picked.metric,
+              };
+            } else if (singlePosition.code !== sc.code) {
+              // 情况2：已持仓且目标股票已变，卖旧买新
+              const oldStock = (bucket.stockChanges || []).find(s => s.code === singlePosition.code);
+              const sellPx = oldStock?.lastPx != null && oldStock.lastPx > 0 ? parseFloat(Number(oldStock.lastPx).toFixed(2)) : buyPx;
+              const sellChange = oldStock?.changePct != null ? parseFloat(Number(oldStock.changePct).toFixed(2)) : null;
+              const returnRate = singlePosition.buyPrice > 0 ? parseFloat((((sellPx - singlePosition.buyPrice) / singlePosition.buyPrice) * 100).toFixed(2)) : null;
+
+              singleTrades.push({
+                seq: singleTrades.length + 1,
+                metric: singlePosition.metric,
+                code: singlePosition.code,
+                stockName: singlePosition.stockName,
+                buyDate: singlePosition.buyDate,
+                buyDateDisplay: singlePosition.buyDateDisplay,
+                buyTime: singlePosition.buyTime,
+                buyPrice: singlePosition.buyPrice,
+                buyChange: singlePosition.buyChange,
+                sellDate: dateStr,
+                sellDateDisplay: dateDisplay,
+                sellTime: buyTime,
+                sellPrice: sellPx,
+                sellChange,
+                sellReason: '策略切换：买入三日涨幅更优品种',
+                returnRate,
+              });
+
+              singlePosition = {
+                code: sc.code,
+                stockName: sc.name || sc.code,
+                buyDate: dateStr,
+                buyDateDisplay: dateDisplay,
+                buyTime,
+                buyPrice: buyPx,
+                buyChange,
+                metric: picked.metric,
+              };
+            }
+          }
+        } else if (!singlePosition && !pendingHalfBuy) {
+          // 原有单股策略逻辑：同一时刻仅持有一只，未持仓时按指标选最优的一只买入
           const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, isTwice ? 'highest_3d_gain' : strategy.id);
           if (picked) {
             const sc = picked.stock;
@@ -1445,9 +1504,67 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
         const buyResult = runBuyPointDiagnosis(timeBuckets, bi, campData);
         if (buyResult?.data?.allPassed === true) {
           const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
-          // 单股策略：同一时刻仅持有一只，未持仓时按指标选最优的一只买入
-          if (!st.singlePosition && !st.pendingHalfBuy) {
-            // 选股前无持仓（仅单股持仓，且未持仓才会进入这里），持仓 Map 传空即可
+
+          // 策略切换逻辑：连续切换三日涨幅
+          if (strategy.id === 'highest_3d_gain_switch') {
+            const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, 'highest_3d_gain');
+            if (picked) {
+              const sc = picked.stock;
+              const buyPx = parseFloat(Number(sc.lastPx).toFixed(2));
+              const buyChange = sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null;
+
+              if (!st.singlePosition) {
+                // 情况1：空仓，直接全仓买入
+                st.singlePosition = {
+                  code: sc.code,
+                  stockName: sc.name || sc.code,
+                  buyDate: dateStr,
+                  buyDateDisplay: dateDisplay,
+                  buyTime,
+                  buyPrice: buyPx,
+                  buyChange,
+                  metric: picked.metric,
+                };
+              } else if (st.singlePosition.code !== sc.code) {
+                // 情况2：已持仓且目标股票已变，卖旧买新
+                const oldStock = (bucket.stockChanges || []).find(s => s.code === st.singlePosition.code);
+                const sellPx = oldStock?.lastPx != null && oldStock.lastPx > 0 ? parseFloat(Number(oldStock.lastPx).toFixed(2)) : buyPx;
+                const sellChange = oldStock?.changePct != null ? parseFloat(Number(oldStock.changePct).toFixed(2)) : null;
+                const returnRate = st.singlePosition.buyPrice > 0 ? parseFloat((((sellPx - st.singlePosition.buyPrice) / st.singlePosition.buyPrice) * 100).toFixed(2)) : null;
+
+                singleTrades.push({
+                  seq: singleTrades.length + 1,
+                  metric: st.singlePosition.metric,
+                  code: st.singlePosition.code,
+                  stockName: st.singlePosition.stockName,
+                  buyDate: st.singlePosition.buyDate,
+                  buyDateDisplay: st.singlePosition.buyDateDisplay,
+                  buyTime: st.singlePosition.buyTime,
+                  buyPrice: st.singlePosition.buyPrice,
+                  buyChange: st.singlePosition.buyChange,
+                  sellDate: dateStr,
+                  sellDateDisplay: dateDisplay,
+                  sellTime: buyTime,
+                  sellPrice: sellPx,
+                  sellChange,
+                  sellReason: '策略切换：买入三日涨幅更优品种',
+                  returnRate,
+                });
+
+                st.singlePosition = {
+                  code: sc.code,
+                  stockName: sc.name || sc.code,
+                  buyDate: dateStr,
+                  buyDateDisplay: dateDisplay,
+                  buyTime,
+                  buyPrice: buyPx,
+                  buyChange,
+                  metric: picked.metric,
+                };
+              }
+            }
+          } else if (!st.singlePosition && !st.pendingHalfBuy) {
+            // 原有单股策略逻辑：同一时刻仅持有一只，未持仓时按指标选最优的一只买入
             const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, isTwice ? 'highest_3d_gain' : strategy.id);
             if (picked) {
               const sc = picked.stock;

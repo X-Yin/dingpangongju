@@ -44,6 +44,7 @@ const STRATEGY_OPTIONS = [
   { value: 'highest_gain', label: '买入最高涨幅' },
   { value: 'highest_5d_gain', label: '5日涨幅最大' },
   { value: 'highest_3d_gain', label: '3日涨幅最大' },
+  { value: 'highest_3d_gain_switch', label: '连续切换三日涨幅' },
   { value: 'highest_4d_gain', label: '4日涨幅最大' },
   { value: 'highest_2d_gain', label: '2日涨幅最大' },
   { value: 'highest_10d_gain', label: '10日涨幅最大' },
