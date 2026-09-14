@@ -3,7 +3,7 @@ import { Spin, Modal, Empty, Switch as AntSwitch } from 'antd';
 import {
   ThunderboltOutlined, RocketOutlined, RiseOutlined, FallOutlined, StockOutlined,
   AreaChartOutlined, CrownOutlined, RadarChartOutlined, WarningOutlined,
-  CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, ReloadOutlined,
+  CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, ReloadOutlined, LockOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -840,7 +840,7 @@ const PositionIntradayModule = () => {
 };
 
 // ==================== 全量自选股 3 日涨幅排行榜（前5） ====================
-const TopChange3dModule = () => {
+const TopChange3dModule = ({ buyPointHit }) => {
   const [stocks, setStocks] = useState([]);
 
   const fetchStocks = useCallback(async () => {
@@ -853,7 +853,9 @@ const TopChange3dModule = () => {
     }
   }, []);
 
+  // 仅在买点条件满足时拉取数据：命中瞬间立即刷新一次，随后每隔 5s 轮询，直至买点条件不再满足
   useEffect(() => {
+    if (!buyPointHit) return;
     fetchStocks();
     const timers = [];
     const schedulePoll = (callback, delay) => {
@@ -868,7 +870,7 @@ const TopChange3dModule = () => {
     };
     if (!isAfterMarketClose()) schedulePoll(fetchStocks, 5000);
     return () => timers.forEach(clearTimeout);
-  }, [fetchStocks]);
+  }, [buyPointHit, fetchStocks]);
 
   return (
     <div className="ob-module ob-rank3-module">
@@ -880,34 +882,44 @@ const TopChange3dModule = () => {
         <span className="ob-total-tag">前 5 名</span>
       </div>
       <div className="ob-rank3-body">
-        <div className="ob-rank3-head">
-          <span>#</span>
-          <span>股票</span>
-          <span>3日涨幅</span>
-          <span>当日</span>
-        </div>
-        {stocks.length === 0 ? (
-          <div className="ob-empty-mini">暂无数据</div>
-        ) : stocks.map((s, idx) => (
-          <div className="ob-rank3-row" key={`${s.code}-${idx}`}>
-            <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
-            <span className="ob-stock-name">{s.stockName}</span>
-            <span className={`ob-change-cell ${s.change3d >= 0 ? 'ob-up' : 'ob-down'}`}>
-              {s.change3d !== null && s.change3d !== undefined ? `${s.change3d >= 0 ? '+' : ''}${Number(s.change3d).toFixed(2)}%` : '--'}
-            </span>
-            <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
-              {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
-            </span>
+        {!buyPointHit ? (
+          <div className="ob-buy-not-ready">
+            <span className="ob-buy-not-ready-icon"><LockOutlined /></span>
+            当前买点条件不满足，暂不提供数据，以免影响情绪
           </div>
-        ))}
+        ) : (
+          <>
+            <div className="ob-rank3-head">
+              <span>#</span>
+              <span>股票</span>
+              <span>3日涨幅</span>
+              <span>当日</span>
+            </div>
+            {stocks.length === 0 ? (
+              <div className="ob-empty-mini">暂无数据</div>
+            ) : stocks.map((s, idx) => (
+              <div className="ob-rank3-row" key={`${s.code}-${idx}`}>
+                <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
+                <span className="ob-stock-name">{s.stockName}</span>
+                <span className={`ob-change-cell ${s.change3d >= 0 ? 'ob-up' : 'ob-down'}`}>
+                  {s.change3d !== null && s.change3d !== undefined ? `${s.change3d >= 0 ? '+' : ''}${Number(s.change3d).toFixed(2)}%` : '--'}
+                </span>
+                <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
+                  {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
+                </span>
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </div>
   );
 };
 
 // ==================== 买点诊断卡片（自动运行） ====================
-const BuyPointDiagnosisCard = () => {
+const BuyPointDiagnosisCard = ({ onResultChange }) => {
   const [data, setData] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [popupVisible, setPopupVisible] = useState(false);
   // 弹窗频控：命中后 5 分钟内不重复弹出（仅内存，刷新页面即重置）
   const lastPopupRef = useRef(0);
@@ -918,8 +930,11 @@ const BuyPointDiagnosisCard = () => {
       const result = res.data?.data;
       if (!result) return;
       setData(result);
+      const hit = result.allPassed === true || result.tailDipBuyingHit === true;
+      // 向上层汇报买点是否命中，供 3 日涨幅榜决定是否展示数据
+      onResultChange?.(hit);
       // 触发条件：其它前置检查全部通过（allPassed），或尾盘抄底命中（tailDipBuyingHit）
-      if (result.allPassed === true || result.tailDipBuyingHit === true) {
+      if (hit) {
         const now = Date.now();
         if (now - lastPopupRef.current >= 5 * 60 * 1000) {
           lastPopupRef.current = now;
@@ -929,7 +944,12 @@ const BuyPointDiagnosisCard = () => {
     } catch (err) {
       console.error('自动买点诊断失败:', err);
     }
-  }, []);
+  }, [onResultChange]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await run(); } finally { setRefreshing(false); }
+  }, [run]);
 
   // 买点诊断自动轮询调度：
   // 1. 首次挂载无条件立即执行一次（非交易时间也基于最近交易日数据展示诊断结果）
@@ -993,6 +1013,11 @@ const BuyPointDiagnosisCard = () => {
 
   return (
     <div className="ob-diagnosis-card ob-buy-card">
+      {refreshing && (
+        <div className="ob-refresh-mask">
+          <Spin size="large" />
+        </div>
+      )}
       <div className="ob-diagnosis-header">
         <div className="ob-module-title">
           <RadarChartOutlined className="ob-module-icon" />
@@ -1002,7 +1027,7 @@ const BuyPointDiagnosisCard = () => {
           <span className={`ob-status-badge ${hit ? 'hit' : ''}`}>
             {!data ? '诊断中...' : hit ? '🎯 已命中' : `未满足 ${data.passedCount}/${data.totalCheckCount}`}
           </span>
-          <button className="ob-refresh-btn" onClick={run} title="手动刷新">
+          <button className="ob-refresh-btn" onClick={handleRefresh} title="手动刷新">
             <ReloadOutlined />
           </button>
         </div>
@@ -1064,6 +1089,7 @@ const BuyPointDiagnosisCard = () => {
 // ==================== 卖点诊断卡片（自动运行） ====================
 const SellPointDiagnosisCard = () => {
   const [results, setResults] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [popupVisible, setPopupVisible] = useState(false);
   // 弹窗频控：命中后 5 分钟内不重复弹出（仅内存，刷新页面即重置）
   const lastPopupRef = useRef(0);
@@ -1101,6 +1127,11 @@ const SellPointDiagnosisCard = () => {
     }
   }, []);
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await run(); } finally { setRefreshing(false); }
+  }, [run]);
+
   useEffect(() => {
     run();
     const timers = [];
@@ -1121,6 +1152,11 @@ const SellPointDiagnosisCard = () => {
 
   return (
     <div className="ob-diagnosis-card ob-sell-card">
+      {refreshing && (
+        <div className="ob-refresh-mask">
+          <Spin size="large" />
+        </div>
+      )}
       <div className="ob-diagnosis-header">
         <div className="ob-module-title">
           <WarningOutlined className="ob-module-icon" />
@@ -1130,7 +1166,7 @@ const SellPointDiagnosisCard = () => {
           <span className={`ob-status-badge ${hitStocks.length > 0 ? 'hit' : ''}`}>
             {results.length === 0 ? '暂无持仓' : hitStocks.length > 0 ? `⚠️ ${hitStocks.length} 只命中` : `${results.length} 只持仓 · 未触发`}
           </span>
-          <button className="ob-refresh-btn" onClick={run} title="手动刷新">
+          <button className="ob-refresh-btn" onClick={handleRefresh} title="手动刷新">
             <ReloadOutlined />
           </button>
         </div>
@@ -1208,6 +1244,8 @@ const SellPointDiagnosisCard = () => {
 
 // ==================== 主页面 ====================
 const OpeningBattle = () => {
+  const [buyPointHit, setBuyPointHit] = useState(false);
+
   return (
     <div className="opening-battle-container">
       <div className="ob-page-title">
@@ -1221,12 +1259,12 @@ const OpeningBattle = () => {
               <PositionIntradayModule />
             </div>
             <div className="ob-bottom-col-rank">
-              <TopChange3dModule />
+              <TopChange3dModule buyPointHit={buyPointHit} />
             </div>
           </div>
         </div>
         <div className="ob-right-col">
-          <BuyPointDiagnosisCard />
+          <BuyPointDiagnosisCard onResultChange={setBuyPointHit} />
           <SellPointDiagnosisCard />
         </div>
       </div>
