@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-09-14",
+    "operations": [
+      {
+        "id": "1789362848002_cum2",
+        "action": "sell",
+        "stockName": "景旺电子",
+        "stockCode": "sh603228",
+        "position": "",
+        "time": "13:14"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-09-14T05:14:08.613Z",
+    "updatedAt": "2026-09-14T05:14:08.613Z"
+  },
+  {
     "date": "2026-09-11",
     "operations": [
       {

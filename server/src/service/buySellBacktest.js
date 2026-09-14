@@ -25,6 +25,7 @@ const STRATEGIES = {
   highest_2d_gain: { id: 'highest_2d_gain', name: '2日涨幅最大', desc: '买点命中时只买入最近 2 个交易日涨幅最大的股票' },
   highest_10d_gain: { id: 'highest_10d_gain', name: '10日涨幅最大', desc: '买点命中时只买入最近 10 个交易日涨幅最大的股票' },
   highest_3d_gain_twice: { id: 'highest_3d_gain_twice', name: '3日涨幅两次买入', desc: '买点命中时先买入 5 成仓位，剩余 5 成等当天收盘再买入，成本价为两次买入价格平均值（选股逻辑同 3 日涨幅最大）' },
+  highest_3d_gain_quarter: { id: 'highest_3d_gain_quarter', name: '三日涨幅四份仓位', desc: '买点触发时把仓位分成四份，分别买入最近 3 个交易日涨幅排名前四的股票（各占 1/4）。任一只触发卖点即独立卖出；仅当四份全部清仓（彻底空仓）后，下一次买点才重新按四份建仓' },
   highest_5d_gain_2nd: { id: 'highest_5d_gain_2nd', name: '5日涨幅第二名', desc: '买点命中时只买入最近 5 个交易日涨幅第二大的股票' },
   highest_3d_gain_2nd: { id: 'highest_3d_gain_2nd', name: '3日涨幅第二名', desc: '买点命中时只买入最近 3 个交易日涨幅第二大的股票' },
   highest_3d_ma_slope: { id: 'highest_3d_ma_slope', name: '3日线斜率最陡峭', desc: '买点命中时只买入 3 日涨幅均线斜率角度最大的股票' },
@@ -1126,9 +1127,200 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
 };
 
 // ============================================================
+// 三日涨幅四份仓位策略选股：买点命中时取最近 3 个交易日涨幅排名前 4 的股票（各占 1/4）
+// ============================================================
+const pickQuarterStocks = (bucket, rangeDates, di, dailyInfos, heldCodes) => {
+  const winDates = rangeDates.slice(Math.max(0, di - 2), di + 1); // 最近 3 个交易日
+  const candidates = [];
+  for (const sc of bucket.stockChanges) {
+    if (EXCLUDED_CODES.has(sc.code)) continue;
+    if (sc.lastPx == null || sc.lastPx <= 0) continue;
+    if (heldCodes.has(sc.code)) continue;
+    const gain = computeWindowGain(sc.code, winDates, dailyInfos, sc.changePct);
+    if (gain == null || !Number.isFinite(gain)) continue;
+    candidates.push({ sc, gain });
+  }
+  candidates.sort((a, b) => b.gain - a.gain);
+  return candidates.slice(0, 4);
+};
+
+// ============================================================
+// 三日涨幅四份仓位回测主循环：
+//   买点触发且彻底空仓时把仓位分成四份，买入三日涨幅排名前四的股票（各 1/4）。
+//   任一只触发卖点即独立卖出；仅当四份全部清仓后才允许下一次买点重新四份建仓。
+//   结果结构兼容单股策略（type: 'single'：trades 为每份独立卖出成交，currentHolding 为期末首笔持仓）。
+// ============================================================
+const runQuarterBacktest = async (startDate, endDate, strategyId, onProgress) => {
+  const allDates = getTrainingCampDates();
+  // 升序处理（按时间先后）
+  const rangeDates = allDates.filter(d => d >= startDate && d <= endDate).sort();
+  const total = rangeDates.length;
+  if (total === 0) {
+    return { success: false, message: '所选日期范围内无可回测交易日' };
+  }
+  const strategy = STRATEGIES[strategyId];
+
+  let positions = []; // 最多 4 份持仓：{ code, stockName, buyDate, buyDateDisplay, buyTime, buyPrice, buyChange, metric }
+  const trades = [];
+  const skippedDates = [];
+
+  // 历史每日 EOD 信息与回测期间出现过的自选股
+  const dailyInfos = new Map();
+  const seenStocks = new Map(); // code -> { code, name }
+
+  for (let di = 0; di < total; di++) {
+    const dateStr = rangeDates[di];
+    if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'loading' });
+    let campData;
+    try {
+      campData = await loadTrainingCampData(dateStr);
+    } catch (e) {
+      skippedDates.push({ date: dateStr, message: e.message || '加载失败' });
+      continue;
+    }
+    if (!campData || campData.success === false) {
+      skippedDates.push({ date: dateStr, message: campData?.message || '无回放数据' });
+      continue;
+    }
+
+    const timeBuckets = campData.timeBuckets || [];
+    if (timeBuckets.length === 0) {
+      skippedDates.push({ date: dateStr, message: '无时间桶数据' });
+      continue;
+    }
+    const replayStocks = buildReplayStocks(campData);
+    const dateDisplay = campData.dateDisplay || dateStr;
+    dailyInfos.set(dateStr, extractDailyInfo(campData));
+    for (const bucket of timeBuckets) {
+      for (const sc of bucket.stockChanges) {
+        if (EXCLUDED_CODES.has(sc.code)) continue;
+        if (!seenStocks.has(sc.code)) seenStocks.set(sc.code, { code: sc.code, name: sc.name || sc.code });
+      }
+    }
+
+    if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
+
+    // 卖出：对每只持仓独立诊断，任一只触发卖点即独立卖出（同日买入不可同日卖出）
+    const soldCodes = new Set();
+    for (const pos of positions) {
+      if (soldCodes.has(pos.code)) continue;
+      if (dateStr <= pos.buyDate) continue;
+      const position = { code: pos.code, stockName: pos.stockName, buyPrice: pos.buyPrice, buyDate: pos.buyDate };
+      for (let bi = 0; bi < timeBuckets.length; bi++) {
+        const bucket = timeBuckets[bi];
+        const result = runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi);
+        if (result.isSell && result.closePrice != null) {
+          const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
+          trades.push({
+            seq: trades.length + 1,
+            metric: pos.metric,
+            code: pos.code,
+            stockName: pos.stockName,
+            buyDate: pos.buyDate,
+            buyDateDisplay: pos.buyDateDisplay,
+            buyTime: pos.buyTime,
+            buyPrice: pos.buyPrice,
+            buyChange: pos.buyChange,
+            sellDate: dateStr,
+            sellDateDisplay: dateDisplay,
+            sellTime: result.displayTime,
+            sellPrice: result.closePrice,
+            sellChange: result.change,
+            sellReason: satisfiedNames || '卖出条件触发',
+            returnRate: result.returnRate,
+          });
+          soldCodes.add(pos.code);
+          break;
+        }
+      }
+    }
+    positions = positions.filter(p => !soldCodes.has(p.code));
+
+    // 买入：仅当四份全部清仓（彻底空仓）时，买点触发才重新四份建仓
+    if (positions.length === 0) {
+      const heldCodes = new Set();
+      for (let bi = 0; bi < timeBuckets.length; bi++) {
+        const bucket = timeBuckets[bi];
+        const buyResult = runBuyPointDiagnosis(timeBuckets, bi, campData);
+        if (buyResult?.data?.allPassed === true) {
+          const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
+          const picks = pickQuarterStocks(bucket, rangeDates, di, dailyInfos, heldCodes);
+          for (const pick of picks) {
+            const sc = pick.sc;
+            positions.push({
+              code: sc.code,
+              stockName: sc.name || sc.code,
+              buyDate: dateStr,
+              buyDateDisplay: dateDisplay,
+              buyTime,
+              buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
+              buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
+              metric: parseFloat(pick.gain.toFixed(4)),
+            });
+            heldCodes.add(sc.code);
+          }
+          break; // 同一个买点触发仅建仓一次（四份）
+        }
+      }
+    }
+  }
+
+  // 组装结果：整体收益率按仓位权重计算（每份仓位占总额的 1/4，单笔收益率 × 0.25 后加总）。
+  // 期末仍有多份持仓时，整体收益率计入相应权重，展示取首笔持仓
+  const QUARTER_WEIGHT = 0.25; // 每份仓位权重（四份均分）
+  let overallReturn = 0;
+  for (const t of trades) {
+    if (t.returnRate != null && Number.isFinite(t.returnRate)) {
+      overallReturn += QUARTER_WEIGHT * t.returnRate;
+    }
+  }
+  let holding = null;
+  if (positions.length > 0) {
+    const first = positions[0];
+    holding = { ...first };
+    for (let i = rangeDates.length - 1; i >= 0; i--) {
+      const info = dailyInfos.get(rangeDates[i])?.get(first.code);
+      if (info && info.closePx != null && info.closePx > 0) {
+        holding.buyReturn = first.buyPrice > 0
+          ? parseFloat((((info.closePx - first.buyPrice) / first.buyPrice) * 100).toFixed(2))
+          : null;
+        break;
+      }
+    }
+    if (holding.buyReturn != null && Number.isFinite(holding.buyReturn)) {
+      overallReturn += QUARTER_WEIGHT * holding.buyReturn;
+    }
+  }
+  overallReturn = parseFloat(overallReturn.toFixed(2));
+  const validTrades = trades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
+  const winCount = validTrades.filter(t => t.returnRate > 0).length;
+  return {
+    success: true,
+    type: 'single',
+    strategy: { id: strategy.id, name: strategy.name, desc: strategy.desc },
+    range: { startDate, endDate },
+    skippedDates,
+    seenStocks: Array.from(seenStocks.values()),
+    trades,
+    currentHolding: holding,
+    summary: {
+      tradeCount: trades.length,
+      winCount,
+      winRate: validTrades.length > 0 ? parseFloat((winCount / validTrades.length * 100).toFixed(2)) : null,
+      overallReturn,
+      holding: positions.length > 0,
+    },
+  };
+};
+
+// ============================================================
 // 多日回测主循环
 // ============================================================
 const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain', onProgress) => {
+  // 三日涨幅四份仓位策略走独立的多持仓回测逻辑
+  if (strategyId === 'highest_3d_gain_quarter') {
+    return runQuarterBacktest(startDate, endDate, strategyId, onProgress);
+  }
   const allDates = getTrainingCampDates();
   // 升序处理（按时间先后）
   const rangeDates = allDates.filter(d => d >= startDate && d <= endDate).sort();

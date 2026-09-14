@@ -1,5 +1,16 @@
 [
   {
+    "id": "1789362848000_dtggb9",
+    "type": "delete",
+    "code": "sh603228",
+    "name": "景旺电子",
+    "date": "2026-09-14",
+    "time": "13:14:08",
+    "detail": "删除持仓：景旺电子（sh603228）",
+    "pipelineStage": null,
+    "createdAt": "2026-09-14T05:14:08.000Z"
+  },
+  {
     "id": "1789104662734_6z4bxn",
     "type": "pipeline",
     "code": "sh603228",

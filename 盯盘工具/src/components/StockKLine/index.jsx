@@ -14,8 +14,15 @@ export default function KLine({ data = [], height = 500, showResilience = false,
   const chartInitializedRef = useRef(false);
   const resilienceScoreMapRef = useRef({});
   const changeMapRef = useRef({});
+  // tooltip 回调只在图表初始化时注册一次，需用 ref 读取实时 showResilience，避免闭包捕获初始值
+  const showResilienceRef = useRef(showResilience);
   const [resilienceData, setResilienceData] = useState(null);
   const [resilienceLoading, setResilienceLoading] = useState(false);
+
+  // 跟随 showResilience 实时同步，供已注册一次的 tooltip 回调读取
+  useEffect(() => {
+    showResilienceRef.current = showResilience;
+  }, [showResilience]);
 
   useEffect(() => {
     if (showResilience && onFetchResilience && !resilienceData && !resilienceLoading) {
@@ -188,7 +195,7 @@ export default function KLine({ data = [], height = 500, showResilience = false,
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>收盘:</span><span style="font-weight: bold; color: ${changeColor}">${kData.close.toFixed(2)}</span></div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>成交额:</span><span style="font-weight: bold;">${volDisplay}</span></div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>涨跌:</span><span style="font-weight: bold; color: ${changeColor}">${changeVal !== undefined ? (changeVal > 0 ? '+' : '') + changeVal.toFixed(2) + '%' : '-'}</span></div>
-            ${showResilience ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>抗分歧:</span><span style="font-weight: bold; color: ${resilienceColor}">${resilienceDisplay}</span></div>` : ''}
+            ${showResilienceRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>抗分歧:</span><span style="font-weight: bold; color: ${resilienceColor}">${resilienceDisplay}</span></div>` : ''}
           `;
 
           const coordinate = candlestick.priceToCoordinate(kData.close);

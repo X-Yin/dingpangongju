@@ -119,21 +119,21 @@ const startPolling = (force = false) => {
 
   // force 模式（--all）：任何时间都直接执行轮询，跳过交易时段检查
   if (!force) {
-    检查是否为周末
+    // 检查是否为周末
     if (isWeekend(now)) {
       console.log('今天是周末，不启动轮询服务');
       waitForNextSessionAndStart();
       return;
     }
 
-    检查是否已收盘
+     // 检查是否已收盘
     if (isAfterMarketClose(now)) {
       console.log('今日已收盘，不启动轮询服务');
       waitForNextSessionAndStart();
       return;
     }
 
-    检查是否在午休时段
+    // 检查是否在午休时段
     if (isMiddayBreak(now)) {
       console.log('当前处于午休时段(11:30-13:00)，不启动轮询服务');
       waitForNextSessionAndStart();

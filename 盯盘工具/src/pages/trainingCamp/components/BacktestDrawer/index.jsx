@@ -49,6 +49,7 @@ const STRATEGY_OPTIONS = [
   { value: 'highest_2d_gain', label: '2日涨幅最大' },
   { value: 'highest_10d_gain', label: '10日涨幅最大' },
   { value: 'highest_3d_gain_twice', label: '3日涨幅两次买入' },
+  { value: 'highest_3d_gain_quarter', label: '三日涨幅四份仓位' },
   { value: 'highest_5d_gain_2nd', label: '5日涨幅第二名' },
   { value: 'highest_3d_gain_2nd', label: '3日涨幅第二名' },
   { value: 'highest_3d_ma_slope', label: '3日线斜率最陡峭' },

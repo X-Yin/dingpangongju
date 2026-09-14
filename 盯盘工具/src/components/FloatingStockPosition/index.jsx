@@ -879,6 +879,12 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         if (now - lastAutoBuyPointOpenRef.current >= 5 * 60 * 1000) {
           lastAutoBuyPointOpenRef.current = now;
           setBuyPointDrawerOpen(true);
+          // 发送买点诊断飞书卡片（前三日涨幅最大前三名由后端拉取并附在卡片中）
+          try {
+            await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'buy_point' });
+          } catch (err) {
+            console.error('发送买点飞书卡片失败:', err);
+          }
         }
       }
     } catch (error) {
@@ -958,12 +964,24 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       );
       setSellDrawerResults(results);
       // 任一持仓命中卖点则自动打开抽屉，并应用频控避免反复弹出
-      const hit = results.some((r) => r.isSell === true);
-      if (hit) {
+      const hitResults = results.filter((r) => r.isSell === true);
+      if (hitResults.length > 0) {
         const now = Date.now();
         if (now - lastAutoSellOpenRef.current >= 5 * 60 * 1000) {
           lastAutoSellOpenRef.current = now;
           setSellDrawerOpen(true);
+          // 发送卖点诊断飞书卡片（携带触发卖点的持仓股名称及具体触发原因）
+          try {
+            const sellStocks = hitResults.map((r) => ({
+              stockName: r.stockName,
+              code: r.code,
+              reasons: r.reasons || [],
+              closePrice: r.detail?.closePrice,
+            }));
+            await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'sell_point', sellStocks });
+          } catch (err) {
+            console.error('发送卖点飞书卡片失败:', err);
+          }
         }
       }
     } catch (error) {

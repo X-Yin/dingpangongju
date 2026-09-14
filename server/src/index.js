@@ -41,8 +41,9 @@ const {
   deleteResearchReports,
   moveResearchReport,
   pinResearchReport,
-  getRecentFoldersReports
+  getRecentFoldersReports,
 } = require('./service/researchReport');
+const dayjs = require('dayjs');
 const { getBlockMoneyChangeList, getBlockMoneyChangeTimeList, getBlockMoneyChangeDayHistory, updateBlockMoneyChangeDayHistory, getTechBlockRatio } = require('./service/blockMoney');
 const { buildIntradayIntervalAnalysis } = require('./service/quantAnalysis');
 const {
@@ -101,6 +102,7 @@ const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveT
 const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest } = require('./service/buySellBacktest');
 const { generateReport, ensureLatestReport, getReportById, listReports } = require('./service/backtestReport');
 const { getAttackDefenseScore } = require('./service/attackDefenseScore');
+const feishuNotify = require('./service/feishuNotify');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
 
@@ -853,6 +855,60 @@ app.post('/buy_point_single_stock_diagnosis', async (req, res) => {
   } catch (error) {
     console.error('个股买点诊断失败:', error);
     res.status(500).json({ success: false, message: error.message || '诊断失败' });
+  }
+});
+
+// 发送飞书卡片消息（供前端调用）
+// body: {
+//   type: 'buy_point' | 'sell_point',
+//   sellStocks?: [             // type='sell_point' 时必填：触发卖点的持仓股
+//     { stockName, code, reasons: string[], closePrice? }
+//   ]
+//   topStocks?: [              // type='buy_point' 时可传，mock 前三日涨幅前三名；缺省则后端真实拉取
+//     { stockName, code, change3d }
+//   ]
+// }
+app.post('/send_feishu_card', async (req, res) => {
+  try {
+    const { type, sellStocks, topStocks } = req.body || {};
+    if (type !== 'buy_point' && type !== 'sell_point') {
+      return res.status(400).json({ success: false, message: 'type 必须是 buy_point 或 sell_point' });
+    }
+
+    let card;
+    if (type === 'buy_point') {
+      // 买点卡片：默认后端自行拉取前三日涨幅最大的前三名股票附在卡片中；也可由 topStocks 显式传入（mock）
+      let resultTopStocks = topStocks;
+      let recommendation = '';
+      if (!Array.isArray(topStocks)) {
+        const { getBuyPointStocks } = require('./service/buySellDiagnose');
+        const stocksRes = await getBuyPointStocks(null, 'change');
+        const matched = stocksRes?.data?.matchedStocks || [];
+        resultTopStocks = matched.slice(0, 3).map((s) => ({
+          stockName: s.stockName,
+          code: s.code,
+          change3d: s.change3d,
+        }));
+        recommendation = stocksRes?.data?.backtestRecommendation || '';
+      }
+      card = feishuNotify.buildBuyPointCard({
+        topStocks: resultTopStocks,
+        conclusion: recommendation,
+        timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+      });
+    } else {
+      // 卖点卡片：使用前端传入的持仓股及其触发原因
+      card = feishuNotify.buildSellPointCard({
+        sellStocks: Array.isArray(sellStocks) ? sellStocks : [],
+        timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+      });
+    }
+
+    const result = await feishuNotify.sendFeishuCard(card);
+    res.json({ success: result.success, data: result.data, error: result.error });
+  } catch (error) {
+    console.error('发送飞书卡片失败:', error);
+    res.status(500).json({ success: false, message: error.message || '发送失败' });
   }
 });
 
