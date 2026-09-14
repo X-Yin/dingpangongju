@@ -2,13 +2,13 @@
   "success": true,
   "type": "single",
   "strategy": {
-    "id": "highest_3d_reports",
-    "name": "3日研报覆盖数最多",
-    "desc": "买点命中时只买入过去 3 个交易日研报覆盖数最多的股票（覆盖数相同取 3 日涨幅最大）"
+    "id": "highest_4d_gain",
+    "name": "4日涨幅最大",
+    "desc": "买点命中时只买入最近 4 个交易日涨幅最大的股票"
   },
   "range": {
-    "startDate": "20260803",
-    "endDate": "20260911"
+    "startDate": "20260804",
+    "endDate": "20260914"
   },
   "skippedDates": [],
   "seenStocks": [
@@ -344,43 +344,61 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 1,
-      "code": "sh688313",
-      "stockName": "仕佳光子",
+      "metric": 10.01,
+      "code": "sz002428",
+      "stockName": "云南锗业",
       "buyDate": "20260804",
       "buyDateDisplay": "2026-08-04",
       "buyTime": "09:40",
-      "buyPrice": 105.66,
-      "buyChange": 9.19,
-      "sellDate": "20260819",
-      "sellDateDisplay": "2026-08-19",
-      "sellTime": "10:30",
-      "sellPrice": 155.1,
-      "sellChange": -4.44,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": 46.79
+      "buyPrice": 75.19,
+      "buyChange": 10.01,
+      "sellDate": "20260813",
+      "sellDateDisplay": "2026-08-13",
+      "sellTime": "14:50",
+      "sellPrice": 100.48,
+      "sellChange": -5.19,
+      "sellReason": "抗分歧指数弱势",
+      "returnRate": 33.63
     },
     {
       "seq": 2,
-      "metric": 3,
-      "code": "sh688630",
-      "stockName": "芯基微装",
-      "buyDate": "20260820",
-      "buyDateDisplay": "2026-08-20",
-      "buyTime": "10:05",
-      "buyPrice": 457.93,
-      "buyChange": 5.51,
-      "sellDate": "20260821",
-      "sellDateDisplay": "2026-08-21",
-      "sellTime": "14:50",
-      "sellPrice": 429.13,
-      "sellChange": -0.89,
-      "sellReason": "均线破位",
-      "returnRate": -6.29
+      "metric": 37.9847,
+      "code": "sz300570",
+      "stockName": "太辰光",
+      "buyDate": "20260817",
+      "buyDateDisplay": "2026-08-17",
+      "buyTime": "11:00",
+      "buyPrice": 193.8,
+      "buyChange": 20,
+      "sellDate": "20260819",
+      "sellDateDisplay": "2026-08-19",
+      "sellTime": "10:30",
+      "sellPrice": 188.36,
+      "sellChange": -5.47,
+      "sellReason": "科技板块情绪退潮",
+      "returnRate": -2.81
     },
     {
       "seq": 3,
-      "metric": 7,
+      "metric": 24.5183,
+      "code": "sz300570",
+      "stockName": "太辰光",
+      "buyDate": "20260820",
+      "buyDateDisplay": "2026-08-20",
+      "buyTime": "10:05",
+      "buyPrice": 201.1,
+      "buyChange": 11.55,
+      "sellDate": "20260824",
+      "sellDateDisplay": "2026-08-24",
+      "sellTime": "13:05",
+      "sellPrice": 197.11,
+      "sellChange": -8.09,
+      "sellReason": "科技板块情绪退潮",
+      "returnRate": -1.98
+    },
+    {
+      "seq": 4,
+      "metric": 17.5645,
       "code": "sz002536",
       "stockName": "飞龙股份",
       "buyDate": "20260825",
@@ -398,21 +416,21 @@
     }
   ],
   "currentHolding": {
-    "code": "sz002916",
-    "stockName": "深南电路",
+    "code": "sh603228",
+    "stockName": "景旺电子",
     "buyDate": "20260907",
     "buyDateDisplay": "2026-09-07",
     "buyTime": "09:35",
-    "buyPrice": 351.99,
-    "buyChange": 6.08,
-    "metric": 6,
-    "buyReturn": 12.7
+    "buyPrice": 103.93,
+    "buyChange": 7.88,
+    "metric": 16.3852,
+    "buyReturn": 4.12
   },
   "summary": {
-    "tradeCount": 3,
+    "tradeCount": 4,
     "winCount": 2,
-    "winRate": 66.67,
-    "overallReturn": 83.58,
+    "winRate": 50,
+    "overallReturn": 56.96,
     "holding": true
   }
 }

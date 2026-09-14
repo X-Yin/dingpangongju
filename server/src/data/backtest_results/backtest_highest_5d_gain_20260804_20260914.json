@@ -7,8 +7,8 @@
     "desc": "买点命中时只买入最近 5 个交易日涨幅最大的股票"
   },
   "range": {
-    "startDate": "20260803",
-    "endDate": "20260911"
+    "startDate": "20260804",
+    "endDate": "20260914"
   },
   "skippedDates": [],
   "seenStocks": [
@@ -344,24 +344,42 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 17.3465,
-      "code": "sh688313",
-      "stockName": "仕佳光子",
+      "metric": 10.01,
+      "code": "sz002428",
+      "stockName": "云南锗业",
       "buyDate": "20260804",
       "buyDateDisplay": "2026-08-04",
       "buyTime": "09:40",
-      "buyPrice": 105.66,
-      "buyChange": 9.19,
-      "sellDate": "20260819",
-      "sellDateDisplay": "2026-08-19",
-      "sellTime": "10:30",
-      "sellPrice": 155.1,
-      "sellChange": -4.44,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": 46.79
+      "buyPrice": 75.19,
+      "buyChange": 10.01,
+      "sellDate": "20260813",
+      "sellDateDisplay": "2026-08-13",
+      "sellTime": "14:50",
+      "sellPrice": 100.48,
+      "sellChange": -5.19,
+      "sellReason": "抗分歧指数弱势",
+      "returnRate": 33.63
     },
     {
       "seq": 2,
+      "metric": 36.4945,
+      "code": "sz300570",
+      "stockName": "太辰光",
+      "buyDate": "20260817",
+      "buyDateDisplay": "2026-08-17",
+      "buyTime": "11:00",
+      "buyPrice": 193.8,
+      "buyChange": 20,
+      "sellDate": "20260819",
+      "sellDateDisplay": "2026-08-19",
+      "sellTime": "10:30",
+      "sellPrice": 188.36,
+      "sellChange": -5.47,
+      "sellReason": "科技板块情绪退潮",
+      "returnRate": -2.81
+    },
+    {
+      "seq": 3,
       "metric": 34.3178,
       "code": "sz300570",
       "stockName": "太辰光",
@@ -379,7 +397,7 @@
       "returnRate": -1.98
     },
     {
-      "seq": 3,
+      "seq": 4,
       "metric": 6.8543,
       "code": "sz002536",
       "stockName": "飞龙股份",
@@ -406,13 +424,13 @@
     "buyPrice": 207.21,
     "buyChange": 10,
     "metric": 10.4625,
-    "buyReturn": 8.32
+    "buyReturn": 5.63
   },
   "summary": {
-    "tradeCount": 3,
+    "tradeCount": 4,
     "winCount": 2,
-    "winRate": 66.67,
-    "overallReturn": 84.56,
+    "winRate": 50,
+    "overallReturn": 59.24,
     "holding": true
   }
 }

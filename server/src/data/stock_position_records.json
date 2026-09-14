@@ -1,5 +1,38 @@
 [
   {
+    "id": "1789367596849_2ah7sw",
+    "type": "pipeline",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-14",
+    "time": "14:33:16",
+    "detail": "流水线推进至 50%（50%）",
+    "pipelineStage": 2,
+    "createdAt": "2026-09-14T06:33:16.849Z"
+  },
+  {
+    "id": "1789367596040_5r0o9s",
+    "type": "pipeline",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-14",
+    "time": "14:33:16",
+    "detail": "流水线推进至 30%（30%）",
+    "pipelineStage": 1,
+    "createdAt": "2026-09-14T06:33:16.040Z"
+  },
+  {
+    "id": "1789367593513_220wdn",
+    "type": "buy",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-14",
+    "time": "14:33:13",
+    "detail": "新增持仓：金安国纪（sz002636）",
+    "pipelineStage": 0,
+    "createdAt": "2026-09-14T06:33:13.513Z"
+  },
+  {
     "id": "1789362848000_dtggb9",
     "type": "delete",
     "code": "sh603228",

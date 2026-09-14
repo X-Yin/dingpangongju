@@ -31,9 +31,9 @@
   },
   "sh688798": {
     "stockName": "艾为电子",
-    "change": -2.52,
+    "change": -2.83,
     "up": 25,
-    "down": 16
+    "down": 18
   },
   "sh688017": {
     "stockName": "绿的谐波",
@@ -55,9 +55,9 @@
   },
   "sh601869": {
     "stockName": "长飞光纤",
-    "change": -3.82,
+    "change": -3.26,
     "up": 44,
-    "down": 46
+    "down": 48
   },
   "sz000977": {
     "stockName": "浪潮信息",
@@ -73,9 +73,9 @@
   },
   "sh688668": {
     "stockName": "鼎通科技",
-    "change": -0.8,
-    "up": 45,
-    "down": 57
+    "change": -0.16,
+    "up": 51,
+    "down": 59
   },
   "sh688072": {
     "stockName": "拓荆科技",
@@ -91,8 +91,8 @@
   },
   "sh688048": {
     "stockName": "长光华芯",
-    "change": -1.38,
-    "up": 36,
+    "change": -1.59,
+    "up": 38,
     "down": 29
   },
   "sz300476": {
@@ -127,9 +127,9 @@
   },
   "sh603228": {
     "stockName": "景旺电子",
-    "change": -5.59,
-    "up": 35,
-    "down": 20
+    "change": -2.1,
+    "up": 37,
+    "down": 23
   },
   "sz300308": {
     "stockName": "中际旭创",
@@ -169,15 +169,15 @@
   },
   "sz000636": {
     "stockName": "风华高科",
-    "change": 5.02,
-    "up": 50,
+    "change": 5.36,
+    "up": 52,
     "down": 47
   },
   "sh688809": {
     "stockName": "强一股份",
-    "change": 5.3,
-    "up": 258,
-    "down": 106
+    "change": 6.06,
+    "up": 268,
+    "down": 119
   },
   "sh688347": {
     "stockName": "华虹",
@@ -223,9 +223,9 @@
   },
   "sh688629": {
     "stockName": "华丰科技",
-    "change": 1.29,
-    "up": 10,
-    "down": 17
+    "change": 4.13,
+    "up": 12,
+    "down": 19
   },
   "sz002475": {
     "stockName": "立讯精密",
@@ -235,9 +235,9 @@
   },
   "sh688200": {
     "stockName": "华峰测控",
-    "change": -0.07,
+    "change": -1.46,
     "up": 20,
-    "down": 13
+    "down": 15
   },
   "sh688825": {
     "stockName": "长鑫科技",
@@ -247,9 +247,9 @@
   },
   "sh688082": {
     "stockName": "盛美上海",
-    "change": -1.19,
-    "up": 16,
-    "down": 14
+    "change": -1.57,
+    "up": 21,
+    "down": 15
   },
   "sh688256": {
     "stockName": "寒武纪",
@@ -283,15 +283,15 @@
   },
   "sz300602": {
     "stockName": "飞荣达",
-    "change": 0.95,
-    "up": 14,
+    "change": 2.37,
+    "up": 19,
     "down": 17
   },
   "sh688498": {
     "stockName": "源杰科技",
-    "change": -0.52,
-    "up": 30,
-    "down": 32
+    "change": -0.27,
+    "up": 32,
+    "down": 36
   },
   "sz002371": {
     "stockName": "北方华创",
@@ -301,8 +301,8 @@
   },
   "sh600176": {
     "stockName": "中国巨石",
-    "change": 0.31,
-    "up": 25,
+    "change": 1.1,
+    "up": 27,
     "down": 27
   },
   "sh603256": {
@@ -313,9 +313,9 @@
   },
   "sh688519": {
     "stockName": "南亚新材",
-    "change": -0.02,
-    "up": 99,
-    "down": 92
+    "change": 0.59,
+    "up": 106,
+    "down": 100
   },
   "sz002428": {
     "stockName": "云南锗业",
@@ -355,9 +355,9 @@
   },
   "sh688808": {
     "stockName": "联讯仪器",
-    "change": -2.63,
-    "up": 111,
-    "down": 111
+    "change": -2.07,
+    "up": 128,
+    "down": 125
   },
   "sz002636": {
     "stockName": "金安国纪",
@@ -367,8 +367,8 @@
   },
   "sh688702": {
     "stockName": "盛科通信",
-    "change": -0.81,
-    "up": 29,
+    "change": -0.03,
+    "up": 35,
     "down": 31
   },
   "sz300570": {
@@ -403,8 +403,8 @@
   },
   "sh603083": {
     "stockName": "剑桥科技",
-    "change": -3.06,
-    "up": 39,
+    "change": -1.81,
+    "up": 41,
     "down": 38
   },
   "sz002916": {
@@ -439,15 +439,15 @@
   },
   "sh688025": {
     "stockName": "杰普特",
-    "change": -0.34,
-    "up": 51,
-    "down": 43
+    "change": 0.32,
+    "up": 55,
+    "down": 49
   },
   "sh688630": {
     "stockName": "芯基微装",
-    "change": -1,
+    "change": -1.31,
     "up": 39,
-    "down": 32
+    "down": 34
   },
   "sz002384": {
     "stockName": "东山精密",
@@ -469,15 +469,15 @@
   },
   "sh603119": {
     "stockName": "浙江荣泰",
-    "change": 4.37,
-    "up": 67,
+    "change": 6.47,
+    "up": 71,
     "down": 26
   },
   "sh603186": {
     "stockName": "华正新材",
-    "change": 0.78,
+    "change": 0.77,
     "up": 55,
-    "down": 73
+    "down": 75
   },
   "sz001309": {
     "stockName": "德明利",

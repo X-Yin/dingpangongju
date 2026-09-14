@@ -9,6 +9,22 @@
         "stockCode": "sh603228",
         "position": "",
         "time": "13:14"
+      },
+      {
+        "id": "1789367593521_kiwx",
+        "action": "buy",
+        "stockName": "金安国纪",
+        "stockCode": "sz002636",
+        "position": "",
+        "time": "14:33"
+      },
+      {
+        "id": "1789367596868_6wm2",
+        "action": "pipeline",
+        "stockName": "金安国纪",
+        "stockCode": "sz002636",
+        "position": 50,
+        "time": "14:33"
       }
     ],
     "totalReturn": null,
@@ -16,7 +32,7 @@
     "score": null,
     "review": "",
     "createdAt": "2026-09-14T05:14:08.613Z",
-    "updatedAt": "2026-09-14T05:14:08.613Z"
+    "updatedAt": "2026-09-14T06:33:16.892Z"
   },
   {
     "date": "2026-09-11",

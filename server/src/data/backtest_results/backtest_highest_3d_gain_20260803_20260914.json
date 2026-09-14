@@ -8,7 +8,7 @@
   },
   "range": {
     "startDate": "20260803",
-    "endDate": "20260911"
+    "endDate": "20260914"
   },
   "skippedDates": [],
   "seenStocks": [
@@ -406,13 +406,13 @@
     "buyPrice": 103.93,
     "buyChange": 7.88,
     "metric": 17.0288,
-    "buyReturn": 7.32
+    "buyReturn": 4.12
   },
   "summary": {
     "tradeCount": 3,
     "winCount": 2,
     "winRate": 66.67,
-    "overallReturn": 82.86,
+    "overallReturn": 77.41,
     "holding": true
   }
 }

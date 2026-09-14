@@ -2,13 +2,13 @@
   "success": true,
   "type": "single",
   "strategy": {
-    "id": "highest_2d_gain",
-    "name": "2日涨幅最大",
-    "desc": "买点命中时只买入最近 2 个交易日涨幅最大的股票"
+    "id": "highest_3d_resilience",
+    "name": "3日抗分歧分数最大",
+    "desc": "买点命中时只买入最近 3 个交易日抗分歧分数汇总最大的股票"
   },
   "range": {
-    "startDate": "20260803",
-    "endDate": "20260911"
+    "startDate": "20260804",
+    "endDate": "20260914"
   },
   "skippedDates": [],
   "seenStocks": [
@@ -344,57 +344,75 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 17.3465,
-      "code": "sh688313",
-      "stockName": "仕佳光子",
+      "metric": 18.39,
+      "code": "sh603629",
+      "stockName": "利通电子",
       "buyDate": "20260804",
       "buyDateDisplay": "2026-08-04",
-      "buyTime": "09:40",
-      "buyPrice": 105.66,
-      "buyChange": 9.19,
-      "sellDate": "20260819",
-      "sellDateDisplay": "2026-08-19",
-      "sellTime": "10:30",
-      "sellPrice": 155.1,
-      "sellChange": -4.44,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": 46.79
+      "buyTime": "09:50",
+      "buyPrice": 102.41,
+      "buyChange": 10,
+      "sellDate": "20260811",
+      "sellDateDisplay": "2026-08-11",
+      "sellTime": "09:30",
+      "sellPrice": 125.81,
+      "sellChange": 0,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": 22.85
     },
     {
       "seq": 2,
-      "metric": 0.9193,
+      "metric": 56.43,
+      "code": "sh603186",
+      "stockName": "华正新材",
+      "buyDate": "20260817",
+      "buyDateDisplay": "2026-08-17",
+      "buyTime": "11:00",
+      "buyPrice": 184.31,
+      "buyChange": 10,
+      "sellDate": "20260818",
+      "sellDateDisplay": "2026-08-18",
+      "sellTime": "11:05",
+      "sellPrice": 184.69,
+      "sellChange": 0.21,
+      "sellReason": "高位放量大阴线",
+      "returnRate": 0.21
+    },
+    {
+      "seq": 3,
+      "metric": 46.39,
       "code": "sz300570",
       "stockName": "太辰光",
-      "buyDate": "20260820",
-      "buyDateDisplay": "2026-08-20",
-      "buyTime": "10:05",
-      "buyPrice": 201.1,
-      "buyChange": 11.55,
+      "buyDate": "20260819",
+      "buyDateDisplay": "2026-08-19",
+      "buyTime": "10:20",
+      "buyPrice": 190.33,
+      "buyChange": -4.49,
       "sellDate": "20260824",
       "sellDateDisplay": "2026-08-24",
       "sellTime": "13:05",
       "sellPrice": 197.11,
       "sellChange": -8.09,
       "sellReason": "科技板块情绪退潮",
-      "returnRate": -1.98
+      "returnRate": 3.56
     },
     {
-      "seq": 3,
-      "metric": 10.4364,
-      "code": "sz002837",
-      "stockName": "英维克",
+      "seq": 4,
+      "metric": 60.28,
+      "code": "sz002536",
+      "stockName": "飞龙股份",
       "buyDate": "20260825",
       "buyDateDisplay": "2026-08-25",
-      "buyTime": "10:05",
-      "buyPrice": 59.77,
-      "buyChange": 9.17,
+      "buyTime": "13:10",
+      "buyPrice": 52,
+      "buyChange": 6.56,
       "sellDate": "20260904",
       "sellDateDisplay": "2026-09-04",
-      "sellTime": "13:55",
-      "sellPrice": 63.75,
-      "sellChange": -6.92,
-      "sellReason": "均线破位",
-      "returnRate": 6.66
+      "sellTime": "14:30",
+      "sellPrice": 58.19,
+      "sellChange": -7.68,
+      "sellReason": "科技板块情绪退潮",
+      "returnRate": 11.9
     }
   ],
   "currentHolding": {
@@ -402,17 +420,17 @@
     "stockName": "景旺电子",
     "buyDate": "20260907",
     "buyDateDisplay": "2026-09-07",
-    "buyTime": "09:35",
-    "buyPrice": 103.93,
-    "buyChange": 7.88,
-    "metric": 17.546,
-    "buyReturn": 7.32
+    "buyTime": "10:15",
+    "buyPrice": 105.97,
+    "buyChange": 10,
+    "metric": 47.4,
+    "buyReturn": 2.11
   },
   "summary": {
-    "tradeCount": 3,
-    "winCount": 2,
-    "winRate": 66.67,
-    "overallReturn": 64.7,
+    "tradeCount": 4,
+    "winCount": 4,
+    "winRate": 100,
+    "overallReturn": 45.67,
     "holding": true
   }
 }

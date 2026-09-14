@@ -1,5 +1,127 @@
 [
   {
+    "date": "20260914",
+    "blocks": {
+      "PPE树脂": {
+        "avgChange": 4.59
+      },
+      "医药": {
+        "avgChange": 4.31
+      },
+      "MLCC": {
+        "avgChange": 4.04
+      },
+      "玻璃基板": {
+        "avgChange": 2.04
+      },
+      "机器人": {
+        "avgChange": 1.68
+      },
+      "电子布": {
+        "avgChange": 1.27
+      },
+      "液冷": {
+        "avgChange": 1.14
+      },
+      "银行": {
+        "avgChange": 0.95
+      },
+      "锂电": {
+        "avgChange": 0.76
+      },
+      "钨": {
+        "avgChange": 0.32
+      },
+      "半导体材料": {
+        "avgChange": 0.28
+      },
+      "功率半导体": {
+        "avgChange": 0.06
+      },
+      "国产超节点": {
+        "avgChange": -0.07
+      },
+      "铜箔": {
+        "avgChange": -0.2
+      },
+      "CCL": {
+        "avgChange": -0.39
+      },
+      "证券": {
+        "avgChange": -0.51
+      },
+      "特高压": {
+        "avgChange": -0.52
+      },
+      "房地产": {
+        "avgChange": -0.71
+      },
+      "化工": {
+        "avgChange": -0.76
+      },
+      "AI 应用": {
+        "avgChange": -0.9
+      },
+      "商业航天": {
+        "avgChange": -0.93
+      },
+      "MPO": {
+        "avgChange": -1.23
+      },
+      "贵金属": {
+        "avgChange": -1.26
+      },
+      "煤炭": {
+        "avgChange": -1.48
+      },
+      "北美缺电": {
+        "avgChange": -1.56
+      },
+      "电力": {
+        "avgChange": -1.7
+      },
+      "先进封装": {
+        "avgChange": -1.79
+      },
+      "光芯片": {
+        "avgChange": -1.92
+      },
+      "pcb": {
+        "avgChange": -2.2
+      },
+      "半导体": {
+        "avgChange": -2.24
+      },
+      "cpu": {
+        "avgChange": -2.24
+      },
+      "消费": {
+        "avgChange": -2.63
+      },
+      "AI电源": {
+        "avgChange": -2.69
+      },
+      "cpo": {
+        "avgChange": -2.87
+      },
+      "光纤": {
+        "avgChange": -2.94
+      },
+      "粮食": {
+        "avgChange": -3.34
+      },
+      "存储": {
+        "avgChange": -3.36
+      },
+      "光模块": {
+        "avgChange": -3.68
+      },
+      "军工": {
+        "avgChange": -4.96
+      }
+    }
+  },
+  {
     "date": "20260911",
     "blocks": {
       "MLCC": {
