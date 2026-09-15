@@ -808,5 +808,25 @@ exports.default = [
         "blockName": "粮食",
         "code": "sh600127",
         "name": "金健米业"
+    },
+    {
+        "blockName": "CCL",
+        "code": "sz000823",
+        "name": "超声电子"
+    },
+    {
+        "blockName": "电子布",
+        "code": "sz300395",
+        "name": "菲利华"
+    },
+    {
+        "blockName": "MFC",
+        "code": "sz300568",
+        "name": "星源材质"
+    },
+    {
+        "blockName": "MFC",
+        "code": "sh688835",
+        "name": "高凯技术"
     }
 ]

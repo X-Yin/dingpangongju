@@ -2,13 +2,13 @@
   {
     "name": "日经225",
     "code": "N225",
-    "change": "--",
-    "value": "--"
+    "change": "0.28%",
+    "value": "63668.78"
   },
   {
     "name": "韩国KOSPI",
     "code": "KS11",
-    "change": "--",
-    "value": "--"
+    "change": "-0.99%",
+    "value": "6618.34"
   }
 ]

@@ -554,14 +554,6 @@
     "isTop": true
   },
   {
-    "code": "sz301171",
-    "name": "易点天下",
-    "isImportant": false,
-    "blockName": "AI 应用",
-    "riskScore": "8",
-    "isTech": true
-  },
-  {
     "code": "sh603228",
     "name": "景旺电子",
     "isImportant": true,
@@ -679,6 +671,14 @@
     "isImportant": false,
     "blockName": "MPO",
     "riskScore": "6",
+    "isTech": true
+  },
+  {
+    "code": "sz300568",
+    "name": "星源材质",
+    "isImportant": false,
+    "blockName": "MFC",
+    "riskScore": "7",
     "isTech": true
   }
 ]

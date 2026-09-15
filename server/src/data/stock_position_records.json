@@ -1,5 +1,82 @@
 [
   {
+    "id": "1789438730065_g8ftwo",
+    "type": "pipeline",
+    "code": "sz301526",
+    "name": "国际复材",
+    "date": "2026-09-15",
+    "time": "10:18:50",
+    "detail": "流水线推进至 50%（50%）",
+    "pipelineStage": 2,
+    "createdAt": "2026-09-15T02:18:50.065Z"
+  },
+  {
+    "id": "1789438728258_biy7rn",
+    "type": "pipeline",
+    "code": "sz301526",
+    "name": "国际复材",
+    "date": "2026-09-15",
+    "time": "10:18:48",
+    "detail": "流水线推进至 30%（30%）",
+    "pipelineStage": 1,
+    "createdAt": "2026-09-15T02:18:48.258Z"
+  },
+  {
+    "id": "1789438726694_6y7rt1",
+    "type": "buy",
+    "code": "sz301526",
+    "name": "国际复材",
+    "date": "2026-09-15",
+    "time": "10:18:46",
+    "detail": "新增持仓：国际复材（sz301526）",
+    "pipelineStage": 0,
+    "createdAt": "2026-09-15T02:18:46.694Z"
+  },
+  {
+    "id": "1789438719764_hm11cl",
+    "type": "delete",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-15",
+    "time": "10:18:39",
+    "detail": "删除持仓：金安国纪（sz002636）",
+    "pipelineStage": null,
+    "createdAt": "2026-09-15T02:18:39.764Z"
+  },
+  {
+    "id": "1789435878682_10hza8",
+    "type": "pipeline",
+    "code": "sz301511",
+    "name": "德福科技",
+    "date": "2026-09-15",
+    "time": "09:31:18",
+    "detail": "流水线推进至 50%（50%）",
+    "pipelineStage": 2,
+    "createdAt": "2026-09-15T01:31:18.682Z"
+  },
+  {
+    "id": "1789435878414_nd27ts",
+    "type": "pipeline",
+    "code": "sz301511",
+    "name": "德福科技",
+    "date": "2026-09-15",
+    "time": "09:31:18",
+    "detail": "流水线推进至 30%（30%）",
+    "pipelineStage": 1,
+    "createdAt": "2026-09-15T01:31:18.414Z"
+  },
+  {
+    "id": "1789435877288_1csqmz",
+    "type": "buy",
+    "code": "sz301511",
+    "name": "德福科技",
+    "date": "2026-09-15",
+    "time": "09:31:17",
+    "detail": "新增持仓：德福科技（sz301511）",
+    "pipelineStage": 0,
+    "createdAt": "2026-09-15T01:31:17.288Z"
+  },
+  {
     "id": "1789367596849_2ah7sw",
     "type": "pipeline",
     "code": "sz002636",

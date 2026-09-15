@@ -340,11 +340,6 @@
     "TotalShares": 67884099077
   },
   {
-    "secu_code": "sz301171",
-    "secu_name": "易点天下",
-    "TotalShares": 618520992
-  },
-  {
     "secu_code": "sh603228",
     "secu_name": "景旺电子",
     "TotalShares": 1001293217
@@ -418,5 +413,10 @@
     "secu_code": "sz300570",
     "secu_name": "太辰光",
     "TotalShares": 227126867
+  },
+  {
+    "secu_code": "sz300568",
+    "secu_name": "星源材质",
+    "TotalShares": 1495234139
   }
 ]

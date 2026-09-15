@@ -1,5 +1,56 @@
 [
   {
+    "date": "2026-09-15",
+    "operations": [
+      {
+        "id": "1789435877297_xgcg",
+        "action": "buy",
+        "stockName": "德福科技",
+        "stockCode": "sz301511",
+        "position": "",
+        "time": "09:31"
+      },
+      {
+        "id": "1789435878704_7ksb",
+        "action": "pipeline",
+        "stockName": "德福科技",
+        "stockCode": "sz301511",
+        "position": 50,
+        "time": "09:31"
+      },
+      {
+        "id": "1789438719776_3nom",
+        "action": "sell",
+        "stockName": "金安国纪",
+        "stockCode": "sz002636",
+        "position": "",
+        "time": "10:18"
+      },
+      {
+        "id": "1789438726696_51q8",
+        "action": "buy",
+        "stockName": "国际复材",
+        "stockCode": "sz301526",
+        "position": "",
+        "time": "10:18"
+      },
+      {
+        "id": "1789438730068_ifr0",
+        "action": "pipeline",
+        "stockName": "国际复材",
+        "stockCode": "sz301526",
+        "position": 50,
+        "time": "10:18"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-09-15T01:31:17.311Z",
+    "updatedAt": "2026-09-15T02:18:50.094Z"
+  },
+  {
     "date": "2026-09-14",
     "operations": [
       {

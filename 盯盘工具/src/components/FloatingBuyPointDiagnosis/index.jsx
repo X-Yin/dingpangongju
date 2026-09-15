@@ -621,6 +621,37 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick }) => {
                   </div>
                 </div>
 
+                {/* 隔夜重大利空策略卡片（前端固定提示，无需后端） */}
+                <div className="fbd-check-card fbd-strategy-card" style={{ marginTop: '8px' }}>
+                  <div className="fbd-card-header">
+                    <div className="fbd-title-row">
+                      <span className="fbd-num strategy-num">💡</span>
+                      <span className="fbd-title strategy-title">隔夜重大利空 · 竞价冲高策略</span>
+                    </div>
+                    <span className="fbd-strategy-tag">策略提示</span>
+                  </div>
+                  <div className="fbd-card-body">
+                    <div className="fbd-strategy-conditions">
+                      <div className="fbd-strategy-item">
+                        <span className="fbd-strategy-icon">①</span>
+                        <span>隔夜有重大利空事件，尤其是美股大幅下跌之后</span>
+                      </div>
+                      <div className="fbd-strategy-item">
+                        <span className="fbd-strategy-icon">②</span>
+                        <span>今日开盘个股竞价 <b className="warn">平开</b></span>
+                      </div>
+                      <div className="fbd-strategy-item">
+                        <span className="fbd-strategy-icon">③</span>
+                        <span>开盘后股价 <b className="warn">直线往上冲</b>，无视前日美股利空</span>
+                      </div>
+                      <div className="fbd-strategy-item">
+                        <span className="fbd-strategy-icon">④</span>
+                        <span>这种情况下竞价冲高的时候，往往是一个 <b className="warn">买点</b></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className={`fbd-conclusion ${allPassed ? 'conclusion-pass' : 'conclusion-fail'}`}>
                   <div className={`fbd-conclusion-title ${allPassed ? 'title-pass' : 'title-fail'}`}>
                     {allPassed ? '🚀 诊断结果：可以出手' : '⚠️ 诊断结果：暂不可出手'}
