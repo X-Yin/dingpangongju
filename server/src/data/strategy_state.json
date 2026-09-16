@@ -1,6 +1,6 @@
 {
   "overnight_crisis_escape": {
-    "lastCheckedTime": "2026-09-16 09:46:41",
+    "lastCheckedTime": "2026-09-16 10:00:46",
     "lastTriggeredTime": "2026-09-16 09:36:36"
   },
   "high_open_high_walk": {
@@ -15,5 +15,8 @@
   },
   "opening_net_inflow": {
     "triggeredToday": "2026-09-16"
+  },
+  "volume_price_surge": {
+    "lastTriggeredTime": "2026-09-16 10:35:37"
   }
 }

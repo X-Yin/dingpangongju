@@ -1,5 +1,82 @@
 [
   {
+    "id": "1789524785918_qqnr50",
+    "type": "pipeline",
+    "code": "sz301183",
+    "name": "东田微",
+    "date": "2026-09-16",
+    "time": "10:13:05",
+    "detail": "流水线推进至 100%（100%）",
+    "pipelineStage": 4,
+    "createdAt": "2026-09-16T02:13:05.918Z"
+  },
+  {
+    "id": "1789524784859_2zgrv0",
+    "type": "pipeline",
+    "code": "sz301183",
+    "name": "东田微",
+    "date": "2026-09-16",
+    "time": "10:13:04",
+    "detail": "流水线推进至 75%（75%）",
+    "pipelineStage": 3,
+    "createdAt": "2026-09-16T02:13:04.859Z"
+  },
+  {
+    "id": "1789524784658_d2vitw",
+    "type": "pipeline",
+    "code": "sz301183",
+    "name": "东田微",
+    "date": "2026-09-16",
+    "time": "10:13:04",
+    "detail": "流水线推进至 50%（50%）",
+    "pipelineStage": 2,
+    "createdAt": "2026-09-16T02:13:04.658Z"
+  },
+  {
+    "id": "1789524784471_nmpjin",
+    "type": "pipeline",
+    "code": "sz301183",
+    "name": "东田微",
+    "date": "2026-09-16",
+    "time": "10:13:04",
+    "detail": "流水线推进至 30%（30%）",
+    "pipelineStage": 1,
+    "createdAt": "2026-09-16T02:13:04.471Z"
+  },
+  {
+    "id": "1789524783271_9m3m6b",
+    "type": "buy",
+    "code": "sz301183",
+    "name": "东田微",
+    "date": "2026-09-16",
+    "time": "10:13:03",
+    "detail": "新增持仓：东田微（sz301183）",
+    "pipelineStage": 0,
+    "createdAt": "2026-09-16T02:13:03.271Z"
+  },
+  {
+    "id": "1789524777274_vzcwoz",
+    "type": "delete",
+    "code": "sz301526",
+    "name": "国际复材",
+    "date": "2026-09-16",
+    "time": "10:12:57",
+    "detail": "删除持仓：国际复材（sz301526）",
+    "pipelineStage": null,
+    "createdAt": "2026-09-16T02:12:57.274Z"
+  },
+  {
+    "id": "1789524775919_zotq4z",
+    "type": "delete",
+    "code": "sz301511",
+    "name": "德福科技",
+    "date": "2026-09-16",
+    "time": "10:12:55",
+    "detail": "删除持仓：德福科技（sz301511）",
+    "pipelineStage": null,
+    "createdAt": "2026-09-16T02:12:55.919Z"
+  },
+  {
     "id": "1789438730065_g8ftwo",
     "type": "pipeline",
     "code": "sz301526",

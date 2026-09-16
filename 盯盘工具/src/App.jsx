@@ -803,9 +803,10 @@ function App() {
 
     const sendMarketSnapshot = async () => {
       try {
-        // 并行获取：大盘资金净流入/成交量 + 创业板/科创板指数 + 触发科技情绪重新计算
-        const [dapanRes, indexRes, emotionRes] = await Promise.all([
+        // 并行获取：大盘资金/成交量 + 盘中资金分时序列 + 创业板/科创板指数 + 触发科技情绪重新计算
+        const [dapanRes, amountRes, indexRes, emotionRes] = await Promise.all([
           axios.get(`http://${local_ip}:3000/dapan_data`),
+          axios.get(`http://${local_ip}:3000/amount_history`),
           axios.get(`http://${local_ip}:3000/get_index_kline_data`),
           axios.post(`http://${local_ip}:3000/update_emotion_data`),
         ]);
@@ -816,10 +817,46 @@ function App() {
         const cybArr = indexKlineData.chuangyebanData || [];
         const kcbArr = indexKlineData.kechuangbanData || [];
 
+        // 资金净流入：取最近 5 分钟的净流入增量 = 最新累计值 - 5分钟前的累计值
+        const calcMainMoney5minDiff = () => {
+          const src = Array.isArray(amountRes.data) ? amountRes.data : [];
+          const sorted = src
+            .filter((a) => Array.isArray(a) && a[0] && a[1] && Number.isFinite(Number(a[1].mainMoney)))
+            .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+            .map((a) => ({ t: String(a[0]), money: Number(a[1].mainMoney) }));
+          if (sorted.length < 2) return null;
+
+          // 从 HHmmss 时间往前推 minutes 分钟
+          const subMinutes = (hhmmss, minutes) => {
+            const hh = parseInt(hhmmss.slice(0, 2), 10);
+            const mm = parseInt(hhmmss.slice(2, 4), 10);
+            const total = hh * 60 + mm - minutes;
+            if (total < 0) return null;
+            const h = String(Math.floor(total / 60)).padStart(2, '0');
+            const m = String(total % 60).padStart(2, '0');
+            const ss = hhmmss.length >= 6 ? hhmmss.slice(4, 6) : '00';
+            return `${h}${m}${ss}`;
+          };
+
+          const last = sorted[sorted.length - 1];
+          const target = subMinutes(last.t, 5);
+          if (!target) return null;
+          // 找时间 <= target 的最近一条快照
+          let prev = null;
+          for (let i = sorted.length - 2; i >= 0; i--) {
+            if (sorted[i].t <= target) { prev = sorted[i]; break; }
+          }
+          if (!prev) return null;
+          const diff = last.money - prev.money;
+          return `${diff > 0 ? '+' : ''}${diff.toFixed(2)}`;
+        };
+
+        const mainMoney5min = calcMainMoney5minDiff();
+
         await axios.post(`http://${local_ip}:3000/send_feishu_card`, {
           type: 'market_snapshot',
           data: {
-            mainMoney: dapanData.mainMoney,
+            mainMoney: mainMoney5min || dapanData.mainMoney,
             amountChangeDiff: dapanData.amountChangeDiff,
             totalAmount: dapanData.totalAmount,
             chuangyeban: cybArr[cybArr.length - 1] || null,

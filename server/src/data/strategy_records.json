@@ -8,5 +8,15 @@
     "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-18.2亿</strong>（净流出）<br/>• 科技分时情绪 -13.8 → 4.1（上升 17.9）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
     "severity": "high",
     "isBullish": false
+  },
+  {
+    "id": "32ab67c680307905",
+    "time": "2026-09-16 10:35:37",
+    "read": true,
+    "strategyId": "volume_price_surge",
+    "title": "✅ 量价齐升",
+    "description": "成交量放大 <strong>203亿</strong>（≥100亿），资金净流入-8.5→20.8亿（≥10亿，流入增加），创业板5分钟上涨1.04%。量价资金三者共振，多方占优。",
+    "severity": "medium",
+    "isBullish": true
   }
 ]

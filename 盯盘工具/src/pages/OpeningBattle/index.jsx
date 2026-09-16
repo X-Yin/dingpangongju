@@ -809,7 +809,7 @@ const PositionIntradayModule = () => {
       }, delay);
       timers.push(timer);
     };
-    if (!isAfterMarketClose()) schedulePoll(fetchTlines, 10000);
+    if (!isAfterMarketClose()) schedulePoll(fetchTlines, 1000);
     return () => { cancelled = true; timers.forEach(clearTimeout); };
   }, [positions]);
 
