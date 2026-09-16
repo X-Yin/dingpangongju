@@ -680,5 +680,21 @@
     "blockName": "MFC",
     "riskScore": "7",
     "isTech": true
+  },
+  {
+    "code": "sz301183",
+    "name": "东田微",
+    "isImportant": false,
+    "blockName": "光通信",
+    "riskScore": "7",
+    "isTech": true
+  },
+  {
+    "code": "sz301021",
+    "name": "英诺激光",
+    "isImportant": false,
+    "blockName": "半导体",
+    "riskScore": "7",
+    "isTech": true
   }
 ]

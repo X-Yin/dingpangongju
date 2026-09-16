@@ -773,6 +773,86 @@ function App() {
     }
   }, [globalAnalysisVisible]);
 
+  // 盘中市场快照飞书播报：9:30 起每 5 分钟一次，午休（11:30-13:00）、收盘后及非交易日不运行
+  useEffect(() => {
+    let timer = null;
+    let cancelled = false;
+    const POLL_INTERVAL = 5 * 60 * 1000;
+
+    // 距下一个可播报时段的毫秒数；当前已在时段内返回 0
+    const msToNextSlot = () => {
+      const now = dayjs();
+      const totalMinutes = now.hour() * 60 + now.minute();
+      if (totalMinutes < 570) {
+        // 未到 9:30，等待今天 9:30
+        return now.hour(9).minute(30).second(0).millisecond(0).diff(now);
+      }
+      if (totalMinutes < 690) return 0; // 上午盘中
+      if (totalMinutes < 780) {
+        // 午休，等待 13:00
+        return now.hour(13).minute(0).second(0).millisecond(0).diff(now);
+      }
+      if (totalMinutes < 900) return 0; // 下午盘中
+      // 已收盘或周末，等待下一交易日 9:30
+      let nextDay = now.add(1, 'day');
+      while (nextDay.day() === 0 || nextDay.day() === 6) {
+        nextDay = nextDay.add(1, 'day');
+      }
+      return nextDay.hour(9).minute(30).second(0).millisecond(0).diff(now);
+    };
+
+    const sendMarketSnapshot = async () => {
+      try {
+        // 并行获取：大盘资金净流入/成交量 + 创业板/科创板指数 + 触发科技情绪重新计算
+        const [dapanRes, indexRes, emotionRes] = await Promise.all([
+          axios.get(`http://${local_ip}:3000/dapan_data`),
+          axios.get(`http://${local_ip}:3000/get_index_kline_data`),
+          axios.post(`http://${local_ip}:3000/update_emotion_data`),
+        ]);
+
+        const dapanData = dapanRes.data || {};
+        const indexKlineData = indexRes.data || {};
+        // K线数据按日期升序排列（最旧在前），最新一条在数组末尾
+        const cybArr = indexKlineData.chuangyebanData || [];
+        const kcbArr = indexKlineData.kechuangbanData || [];
+
+        await axios.post(`http://${local_ip}:3000/send_feishu_card`, {
+          type: 'market_snapshot',
+          data: {
+            mainMoney: dapanData.mainMoney,
+            amountChangeDiff: dapanData.amountChangeDiff,
+            totalAmount: dapanData.totalAmount,
+            chuangyeban: cybArr[cybArr.length - 1] || null,
+            kechuangban: kcbArr[kcbArr.length - 1] || null,
+            techEmotion: emotionRes.data?.data ?? null,
+          },
+        });
+      } catch (error) {
+        console.error('发送飞书盘中市场快照失败:', error);
+      }
+    };
+
+    const loop = async () => {
+      if (cancelled) return;
+      const waitMs = msToNextSlot();
+      if (waitMs > 0) {
+        // 未到可播报时段，等待到点后再继续
+        timer = setTimeout(loop, waitMs);
+        return;
+      }
+      await sendMarketSnapshot();
+      if (cancelled) return;
+      timer = setTimeout(loop, POLL_INTERVAL);
+    };
+
+    loop();
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+
   // 主力资金流出趋势检测
   useEffect(() => {
     if (mainMoneyHistory.length < 4) return;

@@ -870,16 +870,15 @@ app.post('/buy_point_single_stock_diagnosis', async (req, res) => {
 // }
 app.post('/send_feishu_card', async (req, res) => {
   try {
-    const { type, sellStocks, topStocks } = req.body || {};
-    if (type !== 'buy_point' && type !== 'sell_point') {
-      return res.status(400).json({ success: false, message: 'type 必须是 buy_point 或 sell_point' });
+    const { type, sellStocks, topStocks, data } = req.body || {};
+    if (type !== 'buy_point' && type !== 'sell_point' && type !== 'market_snapshot') {
+      return res.status(400).json({ success: false, message: 'type 必须是 buy_point、sell_point 或 market_snapshot' });
     }
 
     let card;
     if (type === 'buy_point') {
-      // 买点卡片：默认后端自行拉取前三日涨幅最大的前三名股票附在卡片中；也可由 topStocks 显式传入（mock）
+      // 买点卡片：直接推荐近3日涨幅排名前三的股票，不做历史回测推荐
       let resultTopStocks = topStocks;
-      let recommendation = '';
       if (!Array.isArray(topStocks)) {
         const { getBuyPointStocks } = require('./service/buySellDiagnose');
         const stocksRes = await getBuyPointStocks(null, 'change');
@@ -889,19 +888,28 @@ app.post('/send_feishu_card', async (req, res) => {
           code: s.code,
           change3d: s.change3d,
         }));
-        recommendation = stocksRes?.data?.backtestRecommendation || '';
       }
       card = feishuNotify.buildBuyPointCard({
         topStocks: resultTopStocks,
-        conclusion: recommendation,
         timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       });
-    } else {
+    } else if (type === 'sell_point') {
       // 卖点卡片：使用前端传入的持仓股及其触发原因
       card = feishuNotify.buildSellPointCard({
         sellStocks: Array.isArray(sellStocks) ? sellStocks : [],
         timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       });
+    } else {
+      // 盘中市场快照：纯文本罗列数据（资金/成交量/创业指数/科创指数/科技情绪）
+      const textContent = feishuNotify.buildMarketSnapshotText({
+        mainMoney: data?.mainMoney,
+        amountChangeDiff: data?.amountChangeDiff,
+        chuangyeban: data?.chuangyeban,
+        kechuangban: data?.kechuangban,
+        techEmotion: data?.techEmotion,
+      });
+      const sendResult = await feishuNotify.sendFeishuText(textContent);
+      return res.json({ success: sendResult.success, data: sendResult.data, error: sendResult.error });
     }
 
     const result = await feishuNotify.sendFeishuCard(card);

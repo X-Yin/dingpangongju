@@ -1,5 +1,14 @@
 [
   {
+    "date": "20260915",
+    "mainMoney": -260.61,
+    "amountChangeDiff": -177.61,
+    "mainMoneyRaw": "-260.61",
+    "amountChangeDiffRaw": "-177.61",
+    "totalAmount": 16299.999999999998,
+    "totalAmountRaw": "16299.999999999998亿"
+  },
+  {
     "date": "20260914",
     "mainMoney": -154.13,
     "amountChangeDiff": -3440.64,

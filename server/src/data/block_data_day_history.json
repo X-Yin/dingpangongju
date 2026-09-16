@@ -1,5 +1,130 @@
 [
   {
+    "date": "20260915",
+    "blocks": {
+      "CCL": {
+        "avgChange": 5.08
+      },
+      "钨": {
+        "avgChange": 4.42
+      },
+      "半导体材料": {
+        "avgChange": 3.33
+      },
+      "电子布": {
+        "avgChange": 3.25
+      },
+      "半导体": {
+        "avgChange": 3.13
+      },
+      "PPE树脂": {
+        "avgChange": 2.73
+      },
+      "铜箔": {
+        "avgChange": 2.38
+      },
+      "北美缺电": {
+        "avgChange": 2.04
+      },
+      "先进封装": {
+        "avgChange": 1.4
+      },
+      "功率半导体": {
+        "avgChange": 1.16
+      },
+      "国产超节点": {
+        "avgChange": 0.62
+      },
+      "cpu": {
+        "avgChange": 0.57
+      },
+      "化工": {
+        "avgChange": 0.24
+      },
+      "玻璃基板": {
+        "avgChange": 0.11
+      },
+      "液冷": {
+        "avgChange": 0.08
+      },
+      "MPO": {
+        "avgChange": -0.04
+      },
+      "存储": {
+        "avgChange": -0.11
+      },
+      "AI电源": {
+        "avgChange": -0.21
+      },
+      "证券": {
+        "avgChange": -0.36
+      },
+      "商业航天": {
+        "avgChange": -0.57
+      },
+      "MLCC": {
+        "avgChange": -0.58
+      },
+      "pcb": {
+        "avgChange": -0.66
+      },
+      "光芯片": {
+        "avgChange": -0.71
+      },
+      "AI 应用": {
+        "avgChange": -0.8
+      },
+      "特高压": {
+        "avgChange": -0.91
+      },
+      "煤炭": {
+        "avgChange": -0.92
+      },
+      "贵金属": {
+        "avgChange": -0.92
+      },
+      "光模块": {
+        "avgChange": -0.97
+      },
+      "cpo": {
+        "avgChange": -0.97
+      },
+      "银行": {
+        "avgChange": -1.19
+      },
+      "医药": {
+        "avgChange": -1.22
+      },
+      "机器人": {
+        "avgChange": -1.29
+      },
+      "MFC": {
+        "avgChange": -1.76
+      },
+      "房地产": {
+        "avgChange": -1.84
+      },
+      "锂电": {
+        "avgChange": -1.95
+      },
+      "光纤": {
+        "avgChange": -2.22
+      },
+      "军工": {
+        "avgChange": -4.29
+      },
+      "电力": {
+        "avgChange": -4.43
+      },
+      "消费": {
+        "avgChange": -5.56
+      },
+      "粮食": {
+        "avgChange": -8.02
+      }
+    }
+  },
+  {
     "date": "20260914",
     "blocks": {
       "PPE树脂": {

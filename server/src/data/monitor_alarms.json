@@ -1,104 +1,39 @@
 [
   {
-    "id": "c1079a0518767b39",
-    "time": "2026-09-15 13:34:34",
+    "id": "d89558b33cbbb0a6",
+    "time": "2026-09-16 09:15:33",
     "read": true,
     "alarms": [
       {
-        "time": "2026-09-15 13:34:34",
+        "time": "2026-09-16 09:15:33",
         "title": "板块排名变化",
-        "description": "<b>AI 应用</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">23/40</span><br/><b>煤炭</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">26/40</span>",
+        "description": "<b>MFC</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">27名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">6/40</span><br/><b>房地产</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">18名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">16/40</span><br/><b>特高压</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">12名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">13/40</span><br/><b>AI电源</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">6名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">12/40</span><br/><b>贵金属</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">6名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">21/40</span><br/><b>铜箔</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">3/40</span><br/><b>北美缺电</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">4/40</span><br/><b>电子布</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">1/40</span><br/><b>半导体</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">2/40</span><br/><b>国产超节点</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">8/40</span><br/><b>cpu</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">9/40</span><br/><b>钨</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">18名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">20/40</span><br/><b>功率半导体</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">15名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">25/40</span><br/><b>CCL</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">13名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">14/40</span><br/><b>AI 应用</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">10名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">34/40</span><br/><b>玻璃基板</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">19/40</span><br/><b>PPE树脂</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">10/40</span><br/><b>pcb</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">26/40</span><br/><b>光芯片</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">27/40</span><br/><b>证券</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">22/40</span><br/><b>商业航天</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">23/40</span><br/><b>MLCC</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">24/40</span>",
         "path": "/block"
       }
     ]
   },
   {
-    "id": "5de71ecfd71e791b",
-    "time": "2026-09-15 13:40:34",
+    "id": "c12393f02e238216",
+    "time": "2026-09-16 09:16:33",
     "read": true,
     "alarms": [
       {
-        "time": "2026-09-15 13:40:34",
+        "time": "2026-09-16 09:16:33",
         "title": "板块排名变化",
-        "description": "<b>证券</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">20/40</span><br/><b>煤炭</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">27/40</span>",
+        "description": "<b>电力</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">18名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">20/40</span><br/><b>煤炭</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">15名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">13/40</span><br/><b>MPO</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">14名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">3/40</span><br/><b>MLCC</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">14名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">10/40</span><br/><b>pcb</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">14名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">12/40</span><br/><b>CCL</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">13名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">1/40</span><br/><b>cpo</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">13名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">17/40</span><br/><b>医药</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">13名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">19/40</span><br/><b>军工</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">13名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">22/40</span><br/><b>光芯片</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">11名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">16/40</span><br/><b>液冷</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">10名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">5/40</span><br/><b>存储</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">10名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">8/40</span><br/><b>银行</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">8名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">23/40</span><br/><b>锂电</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">6名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">30/40</span><br/><b>先进封装</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">2/40</span><br/><b>PPE树脂</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">6/40</span><br/><b>光模块</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">26/40</span><br/><b>消费</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">37/40</span><br/><b>半导体</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">34名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">36/40</span><br/><b>铜箔</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">32名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">35/40</span><br/><b>AI电源</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">17名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">29/40</span><br/><b>半导体材料</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">16名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">21/40</span><br/><b>房地产</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">12名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">28/40</span><br/><b>特高压</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">11名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">24/40</span><br/><b>商业航天</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">11名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">34/40</span><br/><b>贵金属</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">10名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">31/40</span><br/><b>功率半导体</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">7名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">32/40</span><br/><b>北美缺电</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">9/40</span><br/><b>MFC</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">11/40</span><br/><b>cpu</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">14/40</span><br/><b>钨</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">25/40</span><br/><b>证券</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">27/40</span><br/><b>AI 应用</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">39/40</span><br/><b>化工</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">15/40</span><br/><b>电子布</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">4/40</span>",
         "path": "/block"
       }
     ]
   },
   {
-    "id": "d4c700f2aeae0f4c",
-    "time": "2026-09-15 13:42:34",
+    "id": "b68c55d0e87b3dd4",
+    "time": "2026-09-16 09:17:33",
     "read": true,
     "alarms": [
       {
-        "time": "2026-09-15 13:42:34",
+        "time": "2026-09-16 09:17:33",
         "title": "板块排名变化",
-        "description": "<b>cpo</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">22/40</span>",
-        "path": "/block"
-      }
-    ]
-  },
-  {
-    "id": "d800c06b246e04f9",
-    "time": "2026-09-15 13:47:35",
-    "read": false,
-    "alarms": [
-      {
-        "time": "2026-09-15 13:47:35",
-        "title": "板块排名变化",
-        "description": "<b>MLCC</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">20/40</span>",
-        "path": "/block"
-      }
-    ]
-  },
-  {
-    "id": "3566c53230db33b2",
-    "time": "2026-09-15 13:48:35",
-    "read": false,
-    "alarms": [
-      {
-        "time": "2026-09-15 13:48:35",
-        "title": "板块排名变化",
-        "description": "<b>光芯片</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">20/40</span>",
-        "path": "/block"
-      }
-    ]
-  },
-  {
-    "id": "29f39c04fa8964bb",
-    "time": "2026-09-15 13:52:33",
-    "read": false,
-    "alarms": [
-      {
-        "time": "2026-09-15 13:52:33",
-        "title": "板块排名变化",
-        "description": "<b>证券</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">24/40</span>",
-        "path": "/block"
-      }
-    ]
-  },
-  {
-    "id": "21c8473d4b7bbf99",
-    "time": "2026-09-15 13:55:34",
-    "read": false,
-    "alarms": [
-      {
-        "time": "2026-09-15 13:55:34",
-        "title": "板块排名变化",
-        "description": "<b>光模块</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">21/40</span><br/><b>MLCC</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">24/40</span>",
-        "path": "/block"
-      }
-    ]
-  },
-  {
-    "id": "a71dd2cb9b3e2b7a",
-    "time": "2026-09-15 14:01:34",
-    "read": false,
-    "alarms": [
-      {
-        "time": "2026-09-15 14:01:34",
-        "title": "板块排名变化",
-        "description": "<b>cpo</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">21/40</span>",
+        "description": "<b>机器人</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">14名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">19/40</span><br/><b>光模块</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">12名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">14/40</span><br/><b>玻璃基板</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">11名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">7/40</span><br/><b>贵金属</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">11名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">20/40</span><br/><b>医药</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">8名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">11/40</span><br/><b>cpu</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">6名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">8/40</span><br/><b>MFC</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">6/40</span><br/><b>锂电</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">25/40</span><br/><b>存储</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">4/40</span><br/><b>半导体材料</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">17/40</span><br/><b>军工</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">18/40</span><br/><b>煤炭</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">10/40</span><br/><b>光芯片</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">13/40</span><br/><b>PPE树脂</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">29名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">35/40</span><br/><b>pcb</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">14名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">26/40</span><br/><b>cpo</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">14名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">31/40</span><br/><b>电力</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">14名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">34/40</span><br/><b>MPO</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">12名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">15/40</span><br/><b>液冷</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">11名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">16/40</span><br/><b>化工</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">8名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">23/40</span>",
         "path": "/block"
       }
     ]
