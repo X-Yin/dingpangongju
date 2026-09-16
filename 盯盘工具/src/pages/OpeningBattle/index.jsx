@@ -939,10 +939,10 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
       const result = res.data?.data;
       if (!result) return;
       setData(result);
-      const hit = result.allPassed === true || result.tailDipBuyingHit === true;
+      const hit = result.allPassed === true;
       // 向上层汇报买点是否命中，供 3 日涨幅榜决定是否展示数据
       onResultChange?.(hit);
-      // 触发条件：其它前置检查全部通过（allPassed），或尾盘抄底命中（tailDipBuyingHit）
+      // 触发条件：其它前置检查全部通过（allPassed）
       if (hit) {
         const now = Date.now();
         if (now - lastPopupRef.current >= 5 * 60 * 1000) {
@@ -1015,10 +1015,14 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
     };
   }, [run]);
 
-  const checks = data?.checks || [];
+  // 过滤掉「尾盘抄底」检查项（或逻辑分支，已从买点诊断移除），并同步修正计数与结论文案
+  const checks = (data?.checks || []).filter(c => c.id !== 'tail_dip_buying');
   const allPassed = data?.allPassed === true;
-  const tailDipHit = data?.tailDipBuyingHit === true;
-  const hit = allPassed || tailDipHit;
+  const hit = allPassed;
+  const passedCount = checks.filter(c => c.passed).length;
+  const conclusionText = !allPassed && typeof data?.conclusion === 'string' && data.conclusion.includes('尾盘抄底')
+    ? '当前前置条件未全部满足，请耐心等待，不要盲目出手。'
+    : data?.conclusion;
 
   return (
     <div className="ob-diagnosis-card ob-buy-card">
@@ -1034,7 +1038,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
         </div>
         <div className="ob-diagnosis-actions">
           <span className={`ob-status-badge ${hit ? 'hit' : ''}`}>
-            {!data ? '诊断中...' : hit ? '🎯 已命中' : `未满足 ${data.passedCount}/${data.totalCheckCount}`}
+            {!data ? '诊断中...' : hit ? '🎯 已命中' : `未满足 ${passedCount}/${checks.length}`}
           </span>
           <button className="ob-refresh-btn" onClick={handleRefresh} title="手动刷新">
             <ReloadOutlined />
@@ -1064,7 +1068,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
               </div>
             ))}
             <div className={`ob-conclusion ${hit ? 'hit' : ''}`}>
-              {data.conclusion}
+              {conclusionText}
             </div>
           </>
         )}
@@ -1081,12 +1085,10 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
       >
         <div className="ob-alert-content">
           <div className="ob-alert-big">🎯 买点信号触发，可以关注买入时机</div>
-          <div className="ob-alert-reason">{data?.conclusion}</div>
+          <div className="ob-alert-reason">{conclusionText}</div>
           <div className="ob-alert-sub">
             命中类型：
             {allPassed && '全部前置条件通过'}
-            {allPassed && tailDipHit && ' + '}
-            {tailDipHit && '尾盘抄底命中'}
           </div>
           <div className="ob-alert-time">诊断时间：{data?.timestamp}</div>
         </div>
