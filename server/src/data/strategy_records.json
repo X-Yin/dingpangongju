@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": "6959d99581fbb7d6",
+    "time": "2026-09-16 09:36:35",
+    "read": true,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-18.2亿</strong>（净流出）<br/>• 科技分时情绪 -13.8 → 4.1（上升 17.9）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  }
+]

@@ -42,19 +42,19 @@
     gap: 14px;
   }
 
-  // 左列底部：持仓分时图 60% + 3日涨幅榜 40%
+  // 左列第三/四行：持仓分时图、3日涨幅榜各自独占整行
   .ob-bottom-row {
     display: flex;
     gap: 14px;
     align-items: flex-start;
   }
 
-  .ob-bottom-col-intraday {
-    flex: 0 0 60%;
-    min-width: 0;
+  // 第四行（3日涨幅榜）与上一行之间留间距
+  .ob-bottom-row-rank {
+    margin-top: 14px;
   }
 
-  .ob-bottom-col-rank {
+  .ob-bottom-col-intraday {
     flex: 1;
     min-width: 0;
   }

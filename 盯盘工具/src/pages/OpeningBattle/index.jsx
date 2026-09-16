@@ -8,6 +8,7 @@ import {
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
+import { getThemeColor } from '../../utils/theme';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import './index.scss';
 
@@ -686,7 +687,8 @@ const PositionIntradayChart = ({ name, code, preclose, line }) => {
     });
 
     const lastVal = data[data.length - 1].value;
-    const lineColor = preclose > 0 && lastVal >= preclose ? '#e11d48' : '#059669';
+    // 持仓股分时图线条统一使用主题色
+    const lineColor = getThemeColor();
     const lineSeries = chart.addLineSeries({
       color: lineColor,
       lineWidth: 2,
@@ -732,7 +734,7 @@ const PositionIntradayChart = ({ name, code, preclose, line }) => {
       <div className="ob-intraday-chart-header">
         <span className="ob-intraday-chart-name">{name}</span>
         <span className="ob-intraday-chart-code">{code}</span>
-        <span className={`ob-intraday-chart-change ${changePct !== null && changePct >= 0 ? 'ob-up' : 'ob-down'}`}>
+        <span className="ob-intraday-chart-change" style={{ color: getThemeColor() }}>
           {formatSignedPercent(changePct)}
         </span>
       </div>
@@ -1254,11 +1256,15 @@ const OpeningBattle = () => {
       <div className="ob-layout">
         <div className="ob-left-col">
           <FundChartModule />
+          {/* 第三行：持仓股分时图（独占一行） */}
           <div className="ob-bottom-row">
             <div className="ob-bottom-col-intraday">
               <PositionIntradayModule />
             </div>
-            <div className="ob-bottom-col-rank">
+          </div>
+          {/* 第四行：自选股 3 日涨幅榜（独占一行） */}
+          <div className="ob-bottom-row ob-bottom-row-rank">
+            <div className="ob-bottom-col-intraday">
               <TopChange3dModule buyPointHit={buyPointHit} />
             </div>
           </div>

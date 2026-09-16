@@ -1,1 +1,19 @@
-{}
+{
+  "overnight_crisis_escape": {
+    "lastCheckedTime": "2026-09-16 09:46:41",
+    "lastTriggeredTime": "2026-09-16 09:36:36"
+  },
+  "high_open_high_walk": {
+    "advisoryToday": "2026-09-16",
+    "preconditionMet": false,
+    "triggerIndexCode": null,
+    "triggerIndexName": null,
+    "checkedToday": "2026-09-16"
+  },
+  "high_open_max_half_position": {
+    "triggeredToday": "2026-09-16"
+  },
+  "opening_net_inflow": {
+    "triggeredToday": "2026-09-16"
+  }
+}
