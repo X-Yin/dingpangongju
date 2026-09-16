@@ -4,6 +4,7 @@ import {
   ThunderboltOutlined, RocketOutlined, RiseOutlined, FallOutlined, StockOutlined,
   AreaChartOutlined, CrownOutlined, RadarChartOutlined, WarningOutlined,
   CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, ReloadOutlined, LockOutlined,
+  ArrowUpOutlined, ArrowDownOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -743,7 +744,7 @@ const PositionIntradayChart = ({ name, code, preclose, line }) => {
   );
 };
 
-const PositionIntradayModule = () => {
+const PositionIntradayModule = ({ expanded, onToggleExpanded }) => {
   const [positions, setPositions] = useState([]);
   const [tlineMap, setTlineMap] = useState({});
 
@@ -820,7 +821,13 @@ const PositionIntradayModule = () => {
           <AreaChartOutlined className="ob-module-icon" />
           <span>持仓股分时图</span>
         </div>
-        <span className="ob-total-tag">{positions.length} 只持仓</span>
+        <div className="ob-intraday-header-actions">
+          <span className="ob-total-tag">{positions.length} 只持仓</span>
+          <button className={`ob-fold-btn ${expanded ? 'is-expanded' : ''}`} onClick={onToggleExpanded}>
+            {expanded ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
+            {expanded ? '折叠' : '展开'}
+          </button>
+        </div>
       </div>
       {positions.length === 0 ? (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无持仓" style={{ padding: '18px 0' }} />
@@ -1247,27 +1254,47 @@ const SellPointDiagnosisCard = () => {
 // ==================== 主页面 ====================
 const OpeningBattle = () => {
   const [buyPointHit, setBuyPointHit] = useState(false);
+  // 持仓分时图展开状态：默认折叠（3日涨幅榜与持仓分时图同处第三行），状态持久化到 localStorage
+  const [rankExpanded, setRankExpanded] = useState(() => {
+    try {
+      return localStorage.getItem('ob_rank_expanded') === '1';
+    } catch (e) {
+      return false;
+    }
+  });
+
+  const toggleRankExpanded = useCallback(() => {
+    setRankExpanded((prev) => {
+      const next = !prev;
+      try { localStorage.setItem('ob_rank_expanded', next ? '1' : '0'); } catch (e) {}
+      return next;
+    });
+  }, []);
 
   return (
     <div className="opening-battle-container">
-      <div className="ob-page-title">
-        <ThunderboltOutlined /> 开盘攻防
-      </div>
       <div className="ob-layout">
         <div className="ob-left-col">
           <FundChartModule />
-          {/* 第三行：持仓股分时图（独占一行） */}
+          {/* 第三行：折叠时 持仓分时图 + 3日涨幅榜(固定250px)；展开时仅持仓分时图 */}
           <div className="ob-bottom-row">
             <div className="ob-bottom-col-intraday">
-              <PositionIntradayModule />
+              <PositionIntradayModule expanded={rankExpanded} onToggleExpanded={toggleRankExpanded} />
             </div>
+            {!rankExpanded && (
+              <div className="ob-bottom-col-rank">
+                <TopChange3dModule buyPointHit={buyPointHit} />
+              </div>
+            )}
           </div>
-          {/* 第四行：自选股 3 日涨幅榜（独占一行） */}
-          <div className="ob-bottom-row ob-bottom-row-rank">
-            <div className="ob-bottom-col-intraday">
-              <TopChange3dModule buyPointHit={buyPointHit} />
+          {/* 第四行：展开时 3 日涨幅榜独占一行 */}
+          {rankExpanded && (
+            <div className="ob-bottom-row ob-bottom-row-rank">
+              <div className="ob-bottom-col-intraday">
+                <TopChange3dModule buyPointHit={buyPointHit} />
+              </div>
             </div>
-          </div>
+          )}
         </div>
         <div className="ob-right-col">
           <BuyPointDiagnosisCard onResultChange={setBuyPointHit} />

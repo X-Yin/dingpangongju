@@ -9,7 +9,7 @@ import './index.scss';
 
 const { TextArea } = Input;
 
-const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick }) => {
+const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck = false }) => {
   const navigate = useNavigate();
 
   const [checksData, setChecksData] = useState(null);
@@ -251,10 +251,14 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick }) => {
     matchedStocks = matchedStocks.filter(stock => hasGoodNews(stock.stockName));
   }
 
-  const passedCount = checksResult?.passedCount || 0;
-  const totalCheckCount = checksResult?.totalCheckCount || 5;
   const allPassed = checksResult?.allPassed === true;
-  const checksList = checksResult?.checks || [];
+  // hideTailDipCheck：隐藏「尾盘抄底」检查项（或逻辑分支），并同步修正计数与结论文案
+  let checksList = (checksResult?.checks || []).filter(check => !(hideTailDipCheck && check.id === 'tail_dip_buying'));
+  let passedCount = checksList.filter(c => c.passed).length;
+  let totalCheckCount = checksList.length;
+  if (hideTailDipCheck && !allPassed && typeof checksResult?.conclusion === 'string' && checksResult.conclusion.includes('尾盘抄底')) {
+    checksResult.conclusion = '当前前置条件未全部满足，请耐心等待，不要盲目出手。';
+  }
 
   const handleStockItemClick = (item) => {
     if (onStockClick) {

@@ -16,6 +16,8 @@ import BacktestReportModal from '../BacktestReportModal';
 
 // 回测最早支持日期（早于此日期无回放数据）
 const EARLIEST_DATE = '20260803';
+// 默认回测范围窗口（最近 N 个交易日），与后端 backtestReport.js 的 REPORT_DAYS 口径一致
+const REPORT_DAYS = 30;
 const fmtDate = (d) => `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}`;
 const fmtPct = (v) => {
   if (v == null || Number.isNaN(Number(v))) return '--';
@@ -64,6 +66,10 @@ const STRATEGY_OPTIONS = [
   { value: 'highest_5d_reports_2nd', label: '5日研报覆盖数第二名' },
   { value: 'highest_3d_reports_top5_gain', label: '3日研报前五&涨幅最大' },
   { value: 'highest_5d_reports_top5_gain', label: '5日研报前五&涨幅最大' },
+  { value: 'tail_dip_1d_gain', label: '尾盘抄底-当日涨幅最大' },
+  { value: 'tail_dip_3d_gain', label: '尾盘抄底-3日涨幅最大' },
+  { value: 'tail_dip_1d_resilience', label: '尾盘抄底-当日抗分歧最大' },
+  { value: 'tail_dip_3d_resilience', label: '尾盘抄底-3日抗分歧最大' },
 ];
 
 // 计算回测汇总指标（兼容全量策略 stocks 与单股策略 summary 两种结果结构）
@@ -122,8 +128,15 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
 
   const availableDates = useMemo(() => (Array.isArray(dates) ? dates : []), [dates]);
   const maxDateStr = availableDates.length > 0 ? availableDates[0] : dayjs().format('YYYYMMDD');
-  // 未手动选择时默认取最早支持日期 ~ 最新可用日期
-  const defaultRange = [dayjs(EARLIEST_DATE, 'YYYYMMDD'), dayjs(maxDateStr, 'YYYYMMDD')];
+  // 未手动选择时默认取「最近 30 个可用交易日」，与后端回测报告/worker 预生成缓存的日期范围口径一致，
+  // 保证 worker 跑完后打开抽屉能直接命中缓存（此前写死最早日期会因范围不一致查不到缓存而空白）
+  const defaultRange = useMemo(() => {
+    if (availableDates.length === 0) return [dayjs(EARLIEST_DATE, 'YYYYMMDD'), dayjs(maxDateStr, 'YYYYMMDD')];
+    const sortedAsc = [...availableDates].sort();
+    const start = sortedAsc[Math.max(0, sortedAsc.length - REPORT_DAYS)];
+    const end = sortedAsc[sortedAsc.length - 1];
+    return [dayjs(start, 'YYYYMMDD'), dayjs(end, 'YYYYMMDD')];
+  }, [availableDates, maxDateStr]);
   const effectiveRange = range || defaultRange;
 
   // 组件卸载时停止轮询

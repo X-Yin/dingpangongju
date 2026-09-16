@@ -1,5 +1,130 @@
 [
   {
+    "date": "20260916",
+    "blocks": {
+      "MPO": {
+        "avgChange": 12.28
+      },
+      "光模块": {
+        "avgChange": 5.86
+      },
+      "功率半导体": {
+        "avgChange": 4.85
+      },
+      "PPE树脂": {
+        "avgChange": 4.46
+      },
+      "cpu": {
+        "avgChange": 4.39
+      },
+      "先进封装": {
+        "avgChange": 4.34
+      },
+      "半导体": {
+        "avgChange": 4.3
+      },
+      "光芯片": {
+        "avgChange": 4.27
+      },
+      "玻璃基板": {
+        "avgChange": 4.23
+      },
+      "国产超节点": {
+        "avgChange": 4.17
+      },
+      "MFC": {
+        "avgChange": 3.79
+      },
+      "半导体材料": {
+        "avgChange": 3.56
+      },
+      "液冷": {
+        "avgChange": 3.4
+      },
+      "AI电源": {
+        "avgChange": 3.08
+      },
+      "存储": {
+        "avgChange": 3.03
+      },
+      "cpo": {
+        "avgChange": 3
+      },
+      "贵金属": {
+        "avgChange": 2.88
+      },
+      "MLCC": {
+        "avgChange": 2.45
+      },
+      "电子布": {
+        "avgChange": 2.22
+      },
+      "商业航天": {
+        "avgChange": 2.16
+      },
+      "CCL": {
+        "avgChange": 1.75
+      },
+      "光纤": {
+        "avgChange": 1.55
+      },
+      "pcb": {
+        "avgChange": 1.48
+      },
+      "电力": {
+        "avgChange": 1.19
+      },
+      "房地产": {
+        "avgChange": 0.82
+      },
+      "煤炭": {
+        "avgChange": 0.79
+      },
+      "机器人": {
+        "avgChange": 0.35
+      },
+      "证券": {
+        "avgChange": 0.35
+      },
+      "军工": {
+        "avgChange": 0.14
+      },
+      "钨": {
+        "avgChange": 0.08
+      },
+      "AI 应用": {
+        "avgChange": 0.04
+      },
+      "医药": {
+        "avgChange": 0.01
+      },
+      "铜箔": {
+        "avgChange": 0
+      },
+      "锂电": {
+        "avgChange": -0.08
+      },
+      "特高压": {
+        "avgChange": -0.11
+      },
+      "银行": {
+        "avgChange": -0.23
+      },
+      "消费": {
+        "avgChange": -0.72
+      },
+      "北美缺电": {
+        "avgChange": -1.15
+      },
+      "化工": {
+        "avgChange": -1.31
+      },
+      "粮食": {
+        "avgChange": -1.53
+      }
+    }
+  },
+  {
     "date": "20260915",
     "blocks": {
       "CCL": {

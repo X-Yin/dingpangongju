@@ -7,6 +7,7 @@
 // 诊断逻辑与前端 src/pages/trainingCamp/utils/buyPointChecks.js、sellPointChecks.js、
 // src/utils/replayResilience.js 保持一致（两处同步）。
 const { loadTrainingCampData, getTrainingCampDates } = require('./trainingCamp');
+const { getSingleStockTlineDataByDate } = require('./stock');
 const fs = require('fs');
 const path = require('path');
 
@@ -40,6 +41,11 @@ const STRATEGIES = {
   highest_5d_reports_2nd: { id: 'highest_5d_reports_2nd', name: '5日研报覆盖数第二名', desc: '买点命中时只买入过去 5 个交易日研报覆盖数第二多的股票（覆盖数相同取 5 日涨幅最大）' },
   highest_3d_reports_top5_gain: { id: 'highest_3d_reports_top5_gain', name: '3日研报前五&涨幅最大', desc: '买点命中时在最近 3 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 3 日涨幅最大的一只' },
   highest_5d_reports_top5_gain: { id: 'highest_5d_reports_top5_gain', name: '5日研报前五&涨幅最大', desc: '买点命中时在最近 5 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 5 日涨幅最大的一只' },
+  // 尾盘抄底系列（tailDip: true → 买入信号仅取尾盘抄底命中，不走买点诊断 allPassed）
+  tail_dip_1d_gain: { id: 'tail_dip_1d_gain', name: '尾盘抄底-当日涨幅最大', desc: '仅在尾盘抄底命中时买入（14:10-15:00 生效：科技情绪 -70≤情绪<0、量能较 14:00 放大≥50亿、创业板指涨幅较 14:00 回落），买入当日涨幅最大的股票', tailDip: true },
+  tail_dip_3d_gain: { id: 'tail_dip_3d_gain', name: '尾盘抄底-3日涨幅最大', desc: '仅在尾盘抄底命中时买入（14:10-15:00 生效：科技情绪 -70≤情绪<0、量能较 14:00 放大≥50亿、创业板指涨幅较 14:00 回落），买入最近 3 个交易日涨幅最大的股票', tailDip: true },
+  tail_dip_1d_resilience: { id: 'tail_dip_1d_resilience', name: '尾盘抄底-当日抗分歧最大', desc: '仅在尾盘抄底命中时买入（14:10-15:00 生效：科技情绪 -70≤情绪<0、量能较 14:00 放大≥50亿、创业板指涨幅较 14:00 回落），买入当日抗分歧分数最大的股票', tailDip: true },
+  tail_dip_3d_resilience: { id: 'tail_dip_3d_resilience', name: '尾盘抄底-3日抗分歧最大', desc: '仅在尾盘抄底命中时买入（14:10-15:00 生效：科技情绪 -70≤情绪<0、量能较 14:00 放大≥50亿、创业板指涨幅较 14:00 回落），买入最近 3 个交易日抗分歧分数汇总最大的股票', tailDip: true },
 };
 
 // 回测结果缓存文件（按 策略+日期范围 存储，避免重复回测）
@@ -379,6 +385,43 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
   };
 };
 
+// 尾盘抄底命中检查（对齐线上 buySellDiagnose.js 的 tail_dip_buying 或逻辑分支）：
+// 仅在 14:10-15:00 生效，条件（均为当前时刻相较 14:00 的比较，窗口内任一时间桶满足即可）：
+// ① 当前科技情绪指数 ≥ -70 且 < 0（全天弱势但未极端冰点）
+// ② 创业板指当前涨幅 < 14:00 涨幅（尾盘涨幅回落）
+// ③ 当前量能（amountChangeDiff = 今日累计成交额 − 昨日全天成交额）相较 14:00 放大 ≥ 50亿（尾盘放量）
+const checkTailDipHit = (timeBuckets, currentIndex) => {
+  const buckets = timeBuckets || [];
+  if (buckets.length === 0 || currentIndex < 0 || currentIndex >= buckets.length) return false;
+  const current = buckets[currentIndex];
+  // 注意：回放桶的 minute 为 HHMM 整数（如 1410），与 runBuyPointDiagnosis 开盘窗口（930-1000）口径一致
+  const minute = Number(current.minute);
+  if (!(minute >= 1410 && minute <= 1500)) return false;
+
+  // ① 科技情绪：-70 ≤ 情绪 < 0
+  const emotion = current.techEmotion == null ? null : Number(current.techEmotion);
+  const emotionOk = emotion != null && !Number.isNaN(emotion) && emotion >= -70 && emotion < 0;
+
+  // ② ③ 的 14:00 基准：当日最后一个 minute ≤ 14:00 的时间桶
+  let base = null;
+  for (const b of buckets) {
+    if (Number(b.minute) <= 1400) base = b;
+    else break;
+  }
+
+  // ③ 量能较 14:00 放大 ≥ 50亿
+  const volNow = current.volume == null ? null : Number(current.volume);
+  const volBase = base && base.volume != null ? Number(base.volume) : null;
+  const volumeOk = volNow != null && !Number.isNaN(volNow) && volBase != null && !Number.isNaN(volBase) && volNow - volBase >= 50;
+
+  // ② 创业板指当前涨幅 < 14:00 涨幅（尾盘涨幅回落）
+  const cybNow = current.indexTline?.cyb?.changePct == null ? null : Number(current.indexTline.cyb.changePct);
+  const cybBase = base?.indexTline?.cyb?.changePct == null ? null : Number(base.indexTline.cyb.changePct);
+  const cybOk = cybNow != null && cybBase != null && cybNow < cybBase;
+
+  return emotionOk && volumeOk && cybOk;
+};
+
 // ============================================================
 // 以下为抗分歧指数移植（对齐 src/utils/replayResilience.js）
 // ============================================================
@@ -629,8 +672,63 @@ const checkBuyDayLowPersist = (replayStocks, code, currentMinute, buyDayLow) => 
   return { satisfied: true, checkedMin: recent.length };
 };
 
+// 尾盘抄底专属卖点检查（1 分钟维度）：
+//   1) 竞价（开盘首分钟）涨幅为正 → 开盘即卖，不再等待冲高回落
+//   2) 竞价涨幅非正 → 自开盘起逐分钟跟踪涨幅峰值，某分钟涨幅较此前峰值回落超过 0.5 个百分点即在该分钟卖出
+// 数据源：getSingleStockTlineDataByDate 分钟级分时（磁盘/内存缓存）；拉取失败时回退用 5min 桶回放点近似
+const checkOpenRetraceSell = async (replayStocks, code, currentMinute, dateStr) => {
+  const RETRACE_PCT = 0.5;
+  let points = [];
+  try {
+    const tline = await getSingleStockTlineDataByDate(code, parseInt(dateStr));
+    points = (tline?.line || [])
+      .filter(p => p.minute != null && Number(p.minute) <= currentMinute
+        && p.change != null && !Number.isNaN(Number(p.change))
+        && p.last_px != null && Number(p.last_px) > 0)
+      .map(p => ({ minute: Number(p.minute), change: Number(p.change), lastPx: Number(p.last_px) }));
+  } catch (e) { /* 拉取失败走回退 */ }
+  if (points.length === 0) {
+    points = getTlinePoints(replayStocks, code, currentMinute)
+      .filter(p => p.change != null && !Number.isNaN(Number(p.change)) && p.lastPx != null && p.lastPx > 0);
+  }
+  // 竞价涨幅为正：开盘首分钟直接卖出（按开盘价成交）
+  if (points.length > 0 && points[0].change > 0) {
+    return {
+      satisfied: true,
+      sellAtOpen: true,
+      triggerMinute: points[0].minute,
+      triggerPrice: points[0].lastPx,
+      peakChange: points[0].change,
+      currentChange: points[0].change,
+      retrace: 0,
+    };
+  }
+  // 竞价涨幅非正：逐分钟推进，创新高则更新峰值；否则检查自峰值回落是否超过 0.5 个百分点，首个触发分钟即卖点
+  let peakChange = null;
+  for (const pt of points) {
+    if (peakChange === null || pt.change > peakChange) {
+      peakChange = pt.change;
+      continue;
+    }
+    const retrace = peakChange - pt.change;
+    if (retrace > RETRACE_PCT) {
+      return { satisfied: true, sellAtOpen: false, triggerMinute: pt.minute, triggerPrice: pt.lastPx, peakChange, currentChange: pt.change, retrace };
+    }
+  }
+  const last = points.length > 0 ? points[points.length - 1] : null;
+  return {
+    satisfied: false,
+    sellAtOpen: false,
+    triggerMinute: null,
+    triggerPrice: null,
+    peakChange,
+    currentChange: last ? last.change : null,
+    retrace: peakChange != null && last ? peakChange - last.change : null,
+  };
+};
+
 // 训练营回放模拟持仓卖点诊断（对齐前端 sellPointChecks.js）
-const runSellPointDiagnosis = (position, currentBucket, replayStocks, timeBuckets, currentIndex) => {
+const runSellPointDiagnosis = async (position, currentBucket, replayStocks, timeBuckets, currentIndex, dateStr) => {
   const code = position?.code;
   const stockName = position?.stockName || position?.name || code;
   const buyPrice = toNumber(position?.buyPrice);
@@ -662,6 +760,50 @@ const runSellPointDiagnosis = (position, currentBucket, replayStocks, timeBucket
   const stockPoints = getTlinePoints(replayStocks, code, minute).filter(p => p.lastPx != null && p.lastPx > 0);
   const dayHigh = stockPoints.reduce((mx, p) => Math.max(mx, p.lastPx), 0);
   const openPrice = stockPoints.length > 0 ? stockPoints[0].lastPx : null;
+
+  // ===== 尾盘抄底策略专属卖点：开盘后涨幅自当日高点回落 >0.5% 即卖出（1 分钟维度，独立于下方 6 项通用条件） =====
+  if (position?.tailDipSell === true) {
+    const retraceCheck = await checkOpenRetraceSell(replayStocks, code, minute, dateStr);
+    // 卖出价/卖出时间用分钟级触发点（精确到触发分钟），而非当前 5min 桶
+    const sellPrice = retraceCheck.satisfied && retraceCheck.triggerPrice != null ? retraceCheck.triggerPrice : closePrice;
+    const sellDisplayTime = retraceCheck.satisfied && retraceCheck.triggerMinute != null
+      ? fmtTime(String(retraceCheck.triggerMinute).padStart(4, '0') + '00').substring(0, 5)
+      : displayTime;
+    const tailReturnRate = buyPrice !== null && buyPrice > 0 && sellPrice > 0
+      ? parseFloat((((sellPrice - buyPrice) / buyPrice) * 100).toFixed(2))
+      : null;
+    const condition = {
+      name: retraceCheck.sellAtOpen ? '竞价涨幅为正开盘即卖' : '开盘后涨幅回落超0.5%',
+      satisfied: retraceCheck.satisfied,
+      detail: retraceCheck.peakChange == null
+        ? '当前涨幅数据缺失，无法判断'
+        : retraceCheck.satisfied
+          ? retraceCheck.sellAtOpen
+            ? `开盘竞价涨幅 ${retraceCheck.currentChange.toFixed(2)}% 为正，${sellDisplayTime} 按开盘价直接卖出`
+            : `${sellDisplayTime} 涨幅 ${retraceCheck.currentChange.toFixed(2)}%，较当日最高涨幅 ${retraceCheck.peakChange.toFixed(2)}% 回落 ${retraceCheck.retrace.toFixed(2)} 个百分点（>0.5%），按触发分钟价格卖出锁定冲高收益`
+          : `当日最高涨幅 ${retraceCheck.peakChange != null ? retraceCheck.peakChange.toFixed(2) : '--'}%，当前涨幅 ${retraceCheck.currentChange != null ? retraceCheck.currentChange.toFixed(2) : '--'}%，回落 ${retraceCheck.retrace != null ? retraceCheck.retrace.toFixed(2) : '--'} 个百分点（≤0.5%），继续持有`,
+      subConditions: [],
+    };
+    const conditions = [condition];
+    return {
+      isSell: condition.satisfied,
+      code,
+      stockName,
+      closePrice: parseFloat(sellPrice.toFixed(2)),
+      change: change !== null ? parseFloat(change.toFixed(2)) : null,
+      returnRate: tailReturnRate,
+      dayHigh: dayHigh > 0 ? parseFloat(dayHigh.toFixed(2)) : null,
+      techEmotion: currentBucket?.techEmotion != null ? toNumber(currentBucket.techEmotion) : null,
+      resilienceScore: null,
+      conditions,
+      conclusion: condition.satisfied
+        ? (retraceCheck.sellAtOpen
+          ? `尾盘抄底专属卖点：竞价涨幅为正，${sellDisplayTime} 开盘即卖`
+          : `尾盘抄底专属卖点：${sellDisplayTime} 涨幅自当日高点回落超过 0.5%，卖出离场`)
+        : '尾盘抄底专属卖点未触发（竞价涨幅非正且涨幅回落未超过 0.5%），继续持有',
+      displayTime: sellDisplayTime,
+    };
+  }
 
   // ===== 条件1：均线破位 =====
   const ma5 = stock?.dailyMa5 != null ? toNumber(stock.dailyMa5) : null;
@@ -1274,7 +1416,7 @@ const runQuarterBacktest = async (startDate, endDate, strategyId, onProgress) =>
       const position = { code: pos.code, stockName: pos.stockName, buyPrice: pos.buyPrice, buyDate: pos.buyDate };
       for (let bi = 0; bi < timeBuckets.length; bi++) {
         const bucket = timeBuckets[bi];
-        const result = runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi);
+        const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
         if (result.isSell && result.closePrice != null) {
           const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
           trades.push({
@@ -1443,7 +1585,7 @@ const runTwoBacktest = async (startDate, endDate, strategyId, onProgress) => {
       const position = { code: pos.code, stockName: pos.stockName, buyPrice: pos.buyPrice, buyDate: pos.buyDate };
       for (let bi = 0; bi < timeBuckets.length; bi++) {
         const bucket = timeBuckets[bi];
-        const result = runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi);
+        const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
         if (result.isSell && result.closePrice != null) {
           const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
           trades.push({
@@ -1618,13 +1760,13 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
 
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
 
-    const sellPositions = (bi) => {
+    const sellPositions = async (bi) => {
       const bucket = timeBuckets[bi];
-      // 单股策略：仅诊断唯一持仓
+      // 单股策略：仅诊断唯一持仓（尾盘抄底策略走专属卖点）
       if (!singlePosition) return;
       if (dateStr <= singlePosition.buyDate) return;
-      const position = { code: singlePosition.code, stockName: singlePosition.stockName, buyPrice: singlePosition.buyPrice, buyDate: singlePosition.buyDate };
-      const result = runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi);
+      const position = { code: singlePosition.code, stockName: singlePosition.stockName, buyPrice: singlePosition.buyPrice, buyDate: singlePosition.buyDate, tailDipSell: strategy.tailDip === true };
+      const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
       if (result.isSell && result.closePrice != null) {
         const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
         singleTrades.push({
@@ -1676,9 +1818,11 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
         pendingHalfBuy = null;
       }
 
-      // 买入信号
-      const buyResult = runBuyPointDiagnosis(timeBuckets, bi, campData);
-      if (buyResult?.data?.allPassed === true) {
+      // 买入信号：尾盘抄底策略仅以尾盘抄底命中为买入前提（不跑买点诊断），其余策略沿用买点诊断 allPassed
+      const buyHit = strategy.tailDip === true
+        ? checkTailDipHit(timeBuckets, bi)
+        : runBuyPointDiagnosis(timeBuckets, bi, campData)?.data?.allPassed === true;
+      if (buyHit) {
         const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
 
         // 策略切换逻辑：连续切换三日涨幅
@@ -1789,7 +1933,7 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
       }
 
       // 卖出信号
-      sellPositions(bi);
+      await sellPositions(bi);
     }
 
     // 两次买入策略：当日尾盘仍有挂起半仓（买点触发但收盘桶无该股报价）→ 次日自动取消，不产生持仓
@@ -1934,9 +2078,11 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           st.pendingHalfBuy = null;
         }
 
-        // 买入信号
-        const buyResult = runBuyPointDiagnosis(timeBuckets, bi, campData);
-        if (buyResult?.data?.allPassed === true) {
+        // 买入信号：尾盘抄底策略仅以尾盘抄底命中为买入前提（不跑买点诊断），其余策略沿用买点诊断 allPassed
+        const buyHit = strategy.tailDip === true
+          ? checkTailDipHit(timeBuckets, bi)
+          : runBuyPointDiagnosis(timeBuckets, bi, campData)?.data?.allPassed === true;
+        if (buyHit) {
           const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
 
           // 策略切换逻辑：连续切换三日涨幅
@@ -2046,10 +2192,10 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           }
         }
 
-        // 卖出信号（同日买入不可同日卖出）
+        // 卖出信号（同日买入不可同日卖出；尾盘抄底策略走专属卖点）
         if (st.singlePosition && dateStr > st.singlePosition.buyDate) {
-          const position = { code: st.singlePosition.code, stockName: st.singlePosition.stockName, buyPrice: st.singlePosition.buyPrice, buyDate: st.singlePosition.buyDate };
-          const result = runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi);
+          const position = { code: st.singlePosition.code, stockName: st.singlePosition.stockName, buyPrice: st.singlePosition.buyPrice, buyDate: st.singlePosition.buyDate, tailDipSell: strategy.tailDip === true };
+          const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
           if (result.isSell && result.closePrice != null) {
             const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
             singleTrades.push({

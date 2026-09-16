@@ -22,6 +22,12 @@ const isAfterMarketClose = () => {
   return currentHour < 9 || (currentHour === 9 && currentMinute < 15) || currentHour >= 15 || (currentHour === 14 && currentMinute >= 59);
 };
 
+// 是否处于午休时间（11:30 - 13:00），此时暂停买点/卖点自动诊断
+const isInLunchBreak = (d) => {
+  const minutes = d.hour() * 60 + d.minute();
+  return minutes >= 11 * 60 + 30 && minutes < 13 * 60;
+};
+
 const formatSignedPercent = (value) => {
   if (value === undefined || value === null || Number.isNaN(Number(value))) return '--';
   const num = Number(value);
@@ -872,8 +878,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1 });
       const result = res.data?.data;
       // 触发条件：其它前置检查全部通过（allPassed，与逻辑）
-      //          或尾盘抄底命中（tailDipBuyingHit，或逻辑分支，14:30-15:00 内任一时刻满足即可）
-      if (result?.allPassed === true || result?.tailDipBuyingHit === true) {
+      if (result?.allPassed === true) {
         // 频控：自动打开抽屉间隔至少 5 分钟，避免重复弹出（仅内存时间戳，刷新页面即重置）
         const now = Date.now();
         if (now - lastAutoBuyPointOpenRef.current >= 5 * 60 * 1000) {
@@ -911,6 +916,18 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       if (stopped) return;
       const now = dayjs();
       if (isAfterMarketClose()) return; // 收盘/周末停止轮询
+
+      // 午休(11:30-13:00)暂停买点诊断，等到 13:00 再恢复
+      if (isInLunchBreak(now)) {
+        const waitMs = Math.max(dayjs().hour(13).minute(0).second(0).millisecond(0).diff(now), 0);
+        const lunchTimer = setTimeout(() => {
+          if (stopped || isAfterMarketClose()) return;
+          autoRunBuyPointDiagnosis();
+          scheduleNext(false);
+        }, waitMs);
+        timers.push(lunchTimer);
+        return;
+      }
 
       let delay;
       if (isInOpeningGraceWindow(now)) {
@@ -993,10 +1010,12 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     const timers = [];
     const schedulePoll = (callback, delay) => {
       const timer = setTimeout(() => {
-        if (!isAfterMarketClose()) {
+        if (isAfterMarketClose()) return; // 收盘/周末停止轮询
+        // 午休(11:30-13:00)暂停卖点诊断，但不终止轮询，13:00 后自动恢复
+        if (!isInLunchBreak(dayjs())) {
           callback();
-          schedulePoll(callback, delay);
         }
+        schedulePoll(callback, delay);
       }, delay);
       timers.push(timer);
       return timer;
@@ -1480,6 +1499,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         open={buyPointDrawerOpen}
         onClose={() => setBuyPointDrawerOpen(false)}
         onStockClick={(stock) => { handleStockClick(stock); }}
+        hideTailDipCheck
       />
 
       {/* 持仓管理抽屉 */}

@@ -5,16 +5,16 @@
       {
         "trade_date": 20260916,
         "open_px": 114.86,
-        "high_px": 117.89,
+        "high_px": 120.99,
         "low_px": 114.6,
-        "close_px": 117.77,
-        "business_amount": 15741491,
-        "business_balance": 1833529600,
-        "change": 2.53,
-        "ma5_px": 116.66,
-        "ma10_px": 119.44,
-        "ma20_px": 121.95,
-        "change_diff": -0.050000000000000266
+        "close_px": 120.9,
+        "business_amount": 39436472,
+        "business_balance": 4675964000,
+        "change": 5.26,
+        "ma5_px": 117.28,
+        "ma10_px": 119.76,
+        "ma20_px": 122.11,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -25,16 +25,16 @@
       {
         "trade_date": 20260916,
         "open_px": 216.66,
-        "high_px": 221.61,
+        "high_px": 227,
         "low_px": 212.66,
-        "close_px": 220.46,
-        "business_amount": 6945966,
-        "business_balance": 1509906300,
-        "change": 2.73,
-        "ma5_px": 217.79,
-        "ma10_px": 223.53,
-        "ma20_px": 232.55,
-        "change_diff": -0.10999999999999988
+        "close_px": 224.08,
+        "business_amount": 16219826,
+        "business_balance": 3582787800,
+        "change": 4.42,
+        "ma5_px": 218.52,
+        "ma10_px": 223.89,
+        "ma20_px": 232.73,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -45,16 +45,16 @@
       {
         "trade_date": 20260916,
         "open_px": 653.94,
-        "high_px": 677.66,
+        "high_px": 685.77,
         "low_px": 650.03,
-        "close_px": 676.22,
-        "business_amount": 3873863,
-        "business_balance": 2579344700,
-        "change": 4.19,
-        "ma5_px": 635.61,
-        "ma10_px": 635.61,
-        "ma20_px": 652.5,
-        "change_diff": 0.10000000000000053
+        "close_px": 679.54,
+        "business_amount": 7043182,
+        "business_balance": 4730423300,
+        "change": 4.71,
+        "ma5_px": 636.27,
+        "ma10_px": 635.94,
+        "ma20_px": 652.67,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -65,16 +65,16 @@
       {
         "trade_date": 20260916,
         "open_px": 638.2,
-        "high_px": 655.2,
+        "high_px": 673.33,
         "low_px": 635.01,
-        "close_px": 654.34,
-        "business_amount": 3554892,
-        "business_balance": 2297963700,
-        "change": 2.54,
-        "ma5_px": 638.23,
-        "ma10_px": 644.01,
-        "ma20_px": 671.3,
-        "change_diff": 0.04999999999999982
+        "close_px": 662.89,
+        "business_amount": 9836425,
+        "business_balance": 6463950900,
+        "change": 3.88,
+        "ma5_px": 639.94,
+        "ma10_px": 644.86,
+        "ma20_px": 671.73,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -85,16 +85,16 @@
       {
         "trade_date": 20260916,
         "open_px": 1088,
-        "high_px": 1138.99,
+        "high_px": 1148.88,
         "low_px": 1076.2,
-        "close_px": 1134.22,
-        "business_amount": 7680017,
-        "business_balance": 8566123700,
-        "change": 5.43,
-        "ma5_px": 1066.77,
-        "ma10_px": 1071.22,
-        "ma20_px": 1059.07,
-        "change_diff": -0.03000000000000025
+        "close_px": 1136.01,
+        "business_amount": 13304942,
+        "business_balance": 14966584000,
+        "change": 5.6,
+        "ma5_px": 1067.13,
+        "ma10_px": 1071.4,
+        "ma20_px": 1059.16,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -105,16 +105,16 @@
       {
         "trade_date": 20260916,
         "open_px": 59.86,
-        "high_px": 60.88,
+        "high_px": 62.22,
         "low_px": 59.09,
-        "close_px": 60.76,
-        "business_amount": 12879556,
-        "business_balance": 773934780,
-        "change": 1.54,
-        "ma5_px": 60.45,
-        "ma10_px": 62.45,
-        "ma20_px": 61.97,
-        "change_diff": -0.050000000000000044
+        "close_px": 62.03,
+        "business_amount": 36120594,
+        "business_balance": 2208428400,
+        "change": 3.66,
+        "ma5_px": 60.7,
+        "ma10_px": 62.58,
+        "ma20_px": 62.04,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -125,15 +125,15 @@
       {
         "trade_date": 20260916,
         "open_px": 98.28,
-        "high_px": 98.93,
+        "high_px": 103,
         "low_px": 96.01,
-        "close_px": 98.38,
-        "business_amount": 4522568,
-        "business_balance": 441976750,
-        "change": 1.36,
-        "ma5_px": 97.18,
-        "ma10_px": 101.02,
-        "ma20_px": 100.75,
+        "close_px": 101.32,
+        "business_amount": 13314748,
+        "business_balance": 1325956070,
+        "change": 4.39,
+        "ma5_px": 97.77,
+        "ma10_px": 101.32,
+        "ma20_px": 100.89,
         "change_diff": 0
       }
     ],
@@ -145,16 +145,16 @@
       {
         "trade_date": 20260916,
         "open_px": 60.79,
-        "high_px": 61.6,
+        "high_px": 62.98,
         "low_px": 60.4,
-        "close_px": 61.5,
-        "business_amount": 23710926,
-        "business_balance": 1447034900,
-        "change": 1.15,
-        "ma5_px": 62.37,
-        "ma10_px": 63.53,
-        "ma20_px": 62.94,
-        "change_diff": -0.020000000000000018
+        "close_px": 62.33,
+        "business_amount": 69668519,
+        "business_balance": 4311818100,
+        "change": 2.52,
+        "ma5_px": 62.54,
+        "ma10_px": 63.61,
+        "ma20_px": 62.98,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -165,15 +165,15 @@
       {
         "trade_date": 20260916,
         "open_px": 605.17,
-        "high_px": 615.77,
+        "high_px": 621.9,
         "low_px": 602,
-        "close_px": 612.66,
-        "business_amount": 2578152,
-        "business_balance": 1567583000,
-        "change": 1.91,
-        "ma5_px": 618.93,
-        "ma10_px": 617.22,
-        "ma20_px": 575.05,
+        "close_px": 612.98,
+        "business_amount": 5111019,
+        "business_balance": 3122992500,
+        "change": 1.96,
+        "ma5_px": 618.99,
+        "ma10_px": 617.25,
+        "ma20_px": 575.07,
         "change_diff": 0
       }
     ],
@@ -185,16 +185,16 @@
       {
         "trade_date": 20260916,
         "open_px": 258.61,
-        "high_px": 271.88,
+        "high_px": 273.95,
         "low_px": 256.93,
-        "close_px": 268.65,
-        "business_amount": 24207520,
-        "business_balance": 6423744400,
-        "change": 4.38,
-        "ma5_px": 262.79,
-        "ma10_px": 259.5,
-        "ma20_px": 260,
-        "change_diff": -0.0600000000000005
+        "close_px": 268.99,
+        "business_amount": 42987747,
+        "business_balance": 11499355000,
+        "change": 4.51,
+        "ma5_px": 262.86,
+        "ma10_px": 259.53,
+        "ma20_px": 260.02,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -205,16 +205,16 @@
       {
         "trade_date": 20260916,
         "open_px": 399.1,
-        "high_px": 417.75,
+        "high_px": 431.3,
         "low_px": 399,
-        "close_px": 415.5,
-        "business_amount": 16536147,
-        "business_balance": 6750133100,
-        "change": 4.66,
-        "ma5_px": 409.66,
-        "ma10_px": 406.75,
-        "ma20_px": 406.73,
-        "change_diff": -0.08000000000000007
+        "close_px": 423.69,
+        "business_amount": 38152908,
+        "business_balance": 15905780000,
+        "change": 6.72,
+        "ma5_px": 411.3,
+        "ma10_px": 407.57,
+        "ma20_px": 407.14,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -225,16 +225,16 @@
       {
         "trade_date": 20260916,
         "open_px": 869.02,
-        "high_px": 898.32,
+        "high_px": 918.38,
         "low_px": 866,
-        "close_px": 891.2,
-        "business_amount": 11798633,
-        "business_balance": 10398198200,
-        "change": 3.15,
-        "ma5_px": 888.86,
-        "ma10_px": 878.1,
-        "ma20_px": 872.67,
-        "change_diff": -0.07000000000000028
+        "close_px": 907.8,
+        "business_amount": 24021846,
+        "business_balance": 21471490000,
+        "change": 5.07,
+        "ma5_px": 892.18,
+        "ma10_px": 879.76,
+        "ma20_px": 873.5,
+        "change_diff": 0
       }
     ],
     "isImportant": true
@@ -245,16 +245,16 @@
       {
         "trade_date": 20260916,
         "open_px": 308.3,
-        "high_px": 332.96,
+        "high_px": 339.59,
         "low_px": 303.01,
-        "close_px": 328,
-        "business_amount": 7573361,
-        "business_balance": 2418195600,
-        "change": 8.28,
-        "ma5_px": 304.64,
-        "ma10_px": 299.7,
-        "ma20_px": 296.41,
-        "change_diff": -0.07000000000000028
+        "close_px": 332.19,
+        "business_amount": 12687000,
+        "business_balance": 4119606400,
+        "change": 9.66,
+        "ma5_px": 305.47,
+        "ma10_px": 300.12,
+        "ma20_px": 296.62,
+        "change_diff": 0
       }
     ],
     "isImportant": true
@@ -267,14 +267,14 @@
         "open_px": 112.4,
         "high_px": 113.89,
         "low_px": 108.68,
-        "close_px": 111.25,
-        "business_amount": 17052480,
-        "business_balance": 1886355000,
-        "change": -0.76,
-        "ma5_px": 109.49,
-        "ma10_px": 103.03,
-        "ma20_px": 95.52,
-        "change_diff": -0.040000000000000036
+        "close_px": 111.74,
+        "business_amount": 31302354,
+        "business_balance": 3482374600,
+        "change": -0.32,
+        "ma5_px": 109.59,
+        "ma10_px": 103.08,
+        "ma20_px": 95.55,
+        "change_diff": 0
       }
     ],
     "isImportant": true
@@ -285,16 +285,16 @@
       {
         "trade_date": 20260916,
         "open_px": 113.52,
-        "high_px": 115.48,
+        "high_px": 116.6,
         "low_px": 110.3,
-        "close_px": 114.54,
-        "business_amount": 16746422,
-        "business_balance": 1885867000,
-        "change": 0.82,
+        "close_px": 114.56,
+        "business_amount": 34616180,
+        "business_balance": 3941811300,
+        "change": 0.84,
         "ma5_px": 110.51,
         "ma10_px": 107.8,
         "ma20_px": 110.57,
-        "change_diff": -0.06000000000000005
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -305,16 +305,16 @@
       {
         "trade_date": 20260916,
         "open_px": 188.3,
-        "high_px": 192.35,
+        "high_px": 200.46,
         "low_px": 187.38,
-        "close_px": 192.26,
-        "business_amount": 10296349,
-        "business_balance": 1953433100,
-        "change": 2.36,
-        "ma5_px": 190.41,
-        "ma10_px": 191.85,
-        "ma20_px": 196.8,
-        "change_diff": 0.009999999999999787
+        "close_px": 199.89,
+        "business_amount": 35064294,
+        "business_balance": 6828993500,
+        "change": 6.42,
+        "ma5_px": 191.93,
+        "ma10_px": 192.61,
+        "ma20_px": 197.18,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -325,16 +325,16 @@
       {
         "trade_date": 20260916,
         "open_px": 224.98,
-        "high_px": 232.82,
+        "high_px": 237.51,
         "low_px": 224,
-        "close_px": 231.85,
-        "business_amount": 9238694,
-        "business_balance": 2118741900,
-        "change": 3.23,
-        "ma5_px": 228.68,
-        "ma10_px": 234.87,
-        "ma20_px": 238.9,
-        "change_diff": -0.06000000000000005
+        "close_px": 235.09,
+        "business_amount": 19400342,
+        "business_balance": 4503004500,
+        "change": 4.67,
+        "ma5_px": 229.33,
+        "ma10_px": 235.19,
+        "ma20_px": 239.06,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -345,16 +345,16 @@
       {
         "trade_date": 20260916,
         "open_px": 51.6,
-        "high_px": 52.37,
+        "high_px": 53.18,
         "low_px": 51,
-        "close_px": 52.12,
-        "business_amount": 32755668,
-        "business_balance": 1695860400,
-        "change": 0.95,
-        "ma5_px": 53.27,
-        "ma10_px": 54.37,
-        "ma20_px": 55.14,
-        "change_diff": 0.019999999999999907
+        "close_px": 52.89,
+        "business_amount": 81201524,
+        "business_balance": 4254564400,
+        "change": 2.44,
+        "ma5_px": 53.43,
+        "ma10_px": 54.45,
+        "ma20_px": 55.18,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -365,16 +365,16 @@
       {
         "trade_date": 20260916,
         "open_px": 151,
-        "high_px": 153.76,
+        "high_px": 157.5,
         "low_px": 147.33,
-        "close_px": 153.32,
-        "business_amount": 28030081,
-        "business_balance": 4218705700,
-        "change": 2.04,
-        "ma5_px": 148.99,
-        "ma10_px": 146.82,
-        "ma20_px": 142.1,
-        "change_diff": -0.20000000000000018
+        "close_px": 154.48,
+        "business_amount": 64550860,
+        "business_balance": 9871775100,
+        "change": 2.82,
+        "ma5_px": 149.22,
+        "ma10_px": 146.94,
+        "ma20_px": 142.16,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -385,16 +385,16 @@
       {
         "trade_date": 20260916,
         "open_px": 366.11,
-        "high_px": 367.7,
+        "high_px": 374.38,
         "low_px": 360.96,
-        "close_px": 365.45,
-        "business_amount": 9360723,
-        "business_balance": 3406966100,
-        "change": 0.64,
-        "ma5_px": 367.48,
-        "ma10_px": 374.57,
-        "ma20_px": 386.19,
-        "change_diff": -0.04999999999999993
+        "close_px": 373.14,
+        "business_amount": 26870695,
+        "business_balance": 9915793000,
+        "change": 2.76,
+        "ma5_px": 369.02,
+        "ma10_px": 375.34,
+        "ma20_px": 386.58,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -405,16 +405,16 @@
       {
         "trade_date": 20260916,
         "open_px": 147.7,
-        "high_px": 161.8,
+        "high_px": 162.8,
         "low_px": 146.1,
-        "close_px": 159,
-        "business_amount": 16715421,
-        "business_balance": 2587742900,
-        "change": 8.27,
-        "ma5_px": 149.83,
-        "ma10_px": 149.09,
-        "ma20_px": 151.96,
-        "change_diff": -0.05000000000000071
+        "close_px": 160.78,
+        "business_amount": 26274128,
+        "business_balance": 4123066600,
+        "change": 9.49,
+        "ma5_px": 150.18,
+        "ma10_px": 149.27,
+        "ma20_px": 152.05,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -425,15 +425,15 @@
       {
         "trade_date": 20260916,
         "open_px": 1690,
-        "high_px": 1772,
+        "high_px": 1786.68,
         "low_px": 1680,
-        "close_px": 1742.08,
-        "business_amount": 1459138,
-        "business_balance": 2513489900,
-        "change": 3.38,
-        "ma5_px": 1707.98,
-        "ma10_px": 1664.89,
-        "ma20_px": 1604.01,
+        "close_px": 1750.94,
+        "business_amount": 2856187,
+        "business_balance": 4968444500,
+        "change": 3.9,
+        "ma5_px": 1709.75,
+        "ma10_px": 1665.78,
+        "ma20_px": 1604.45,
         "change_diff": 0
       }
     ],
@@ -445,16 +445,16 @@
       {
         "trade_date": 20260916,
         "open_px": 183.01,
-        "high_px": 190.98,
+        "high_px": 195.26,
         "low_px": 182.5,
-        "close_px": 189.81,
-        "business_amount": 32068819,
-        "business_balance": 5982690300,
-        "change": 3.82,
-        "ma5_px": 189.18,
-        "ma10_px": 187.68,
-        "ma20_px": 191.03,
-        "change_diff": -0.050000000000000266
+        "close_px": 192,
+        "business_amount": 61496074,
+        "business_balance": 11639687800,
+        "change": 5.02,
+        "ma5_px": 189.62,
+        "ma10_px": 187.9,
+        "ma20_px": 191.14,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -465,16 +465,16 @@
       {
         "trade_date": 20260916,
         "open_px": 391.84,
-        "high_px": 394.49,
+        "high_px": 400.51,
         "low_px": 384.57,
-        "close_px": 392.56,
-        "business_amount": 3489393,
-        "business_balance": 1358856900,
-        "change": 0.73,
-        "ma5_px": 392.08,
+        "close_px": 392.5,
+        "business_amount": 7472317,
+        "business_balance": 2927750700,
+        "change": 0.71,
+        "ma5_px": 392.07,
         "ma10_px": 376.45,
-        "ma20_px": 364.99,
-        "change_diff": -0.13
+        "ma20_px": 364.98,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -485,15 +485,15 @@
       {
         "trade_date": 20260916,
         "open_px": 126.49,
-        "high_px": 127.21,
+        "high_px": 129.9,
         "low_px": 124.06,
-        "close_px": 126.57,
-        "business_amount": 19037682,
-        "business_balance": 2387136200,
-        "change": 0.6,
-        "ma5_px": 126.85,
-        "ma10_px": 123.73,
-        "ma20_px": 121.48,
+        "close_px": 127.8,
+        "business_amount": 43541332,
+        "business_balance": 5521985600,
+        "change": 1.57,
+        "ma5_px": 127.1,
+        "ma10_px": 123.85,
+        "ma20_px": 121.54,
         "change_diff": 0
       }
     ],
@@ -505,16 +505,16 @@
       {
         "trade_date": 20260916,
         "open_px": 228,
-        "high_px": 228.8,
+        "high_px": 233,
         "low_px": 223.17,
-        "close_px": 228.21,
-        "business_amount": 12091745,
-        "business_balance": 2725756500,
-        "change": 0.95,
-        "ma5_px": 227.64,
-        "ma10_px": 227.62,
-        "ma20_px": 236.44,
-        "change_diff": -0.06000000000000005
+        "close_px": 230.36,
+        "business_amount": 27434971,
+        "business_balance": 6259121400,
+        "change": 1.9,
+        "ma5_px": 228.07,
+        "ma10_px": 227.83,
+        "ma20_px": 236.55,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -525,15 +525,15 @@
       {
         "trade_date": 20260916,
         "open_px": 453.03,
-        "high_px": 473.04,
+        "high_px": 478,
         "low_px": 453.03,
-        "close_px": 470.22,
-        "business_amount": 6040632,
-        "business_balance": 2808497500,
-        "change": 1.78,
-        "ma5_px": 460.32,
-        "ma10_px": 433.33,
-        "ma20_px": 414.59,
+        "close_px": 461,
+        "business_amount": 12947260,
+        "business_balance": 6055233400,
+        "change": -0.22,
+        "ma5_px": 458.48,
+        "ma10_px": 432.4,
+        "ma20_px": 414.13,
         "change_diff": 0
       }
     ],
@@ -545,16 +545,16 @@
       {
         "trade_date": 20260916,
         "open_px": 62.29,
-        "high_px": 65.09,
+        "high_px": 66.2,
         "low_px": 62.09,
-        "close_px": 64.71,
-        "business_amount": 80962356,
-        "business_balance": 5156037700,
-        "change": 3.67,
-        "ma5_px": 63.9,
-        "ma10_px": 64.07,
-        "ma20_px": 64.82,
-        "change_diff": -0.010000000000000231
+        "close_px": 65.4,
+        "business_amount": 164175130,
+        "business_balance": 10601875700,
+        "change": 4.77,
+        "ma5_px": 64.03,
+        "ma10_px": 64.14,
+        "ma20_px": 64.85,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -565,16 +565,16 @@
       {
         "trade_date": 20260916,
         "open_px": 139.84,
-        "high_px": 142.1,
+        "high_px": 143.5,
         "low_px": 134.6,
-        "close_px": 140.28,
-        "business_amount": 16319630,
-        "business_balance": 2264066200,
-        "change": 1.48,
-        "ma5_px": 133.62,
-        "ma10_px": 130.17,
-        "ma20_px": 134.14,
-        "change_diff": 0.010000000000000009
+        "close_px": 143.28,
+        "business_amount": 32617164,
+        "business_balance": 4569123100,
+        "change": 3.65,
+        "ma5_px": 134.22,
+        "ma10_px": 130.47,
+        "ma20_px": 134.29,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -585,16 +585,16 @@
       {
         "trade_date": 20260916,
         "open_px": 229.1,
-        "high_px": 234.63,
+        "high_px": 238.5,
         "low_px": 223.1,
-        "close_px": 234.27,
-        "business_amount": 6611677,
-        "business_balance": 1513656000,
-        "change": 2.75,
-        "ma5_px": 226.31,
-        "ma10_px": 227.86,
-        "ma20_px": 238.91,
-        "change_diff": -0.040000000000000036
+        "close_px": 235.58,
+        "business_amount": 14187063,
+        "business_balance": 3298801500,
+        "change": 3.33,
+        "ma5_px": 226.57,
+        "ma10_px": 227.99,
+        "ma20_px": 238.98,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -605,16 +605,16 @@
       {
         "trade_date": 20260916,
         "open_px": 126.25,
-        "high_px": 130.8,
+        "high_px": 131,
         "low_px": 126.25,
-        "close_px": 128.54,
-        "business_amount": 24329893,
-        "business_balance": 3137341700,
-        "change": 1.85,
-        "ma5_px": 124.53,
-        "ma10_px": 118.98,
-        "ma20_px": 114.94,
-        "change_diff": -0.04999999999999982
+        "close_px": 129.88,
+        "business_amount": 47059675,
+        "business_balance": 6083299500,
+        "change": 2.91,
+        "ma5_px": 124.8,
+        "ma10_px": 119.12,
+        "ma20_px": 115.01,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -625,16 +625,16 @@
       {
         "trade_date": 20260916,
         "open_px": 57.51,
-        "high_px": 58.38,
+        "high_px": 58.77,
         "low_px": 57.38,
-        "close_px": 57.88,
-        "business_amount": 9337618,
-        "business_balance": 540968880,
-        "change": 0.85,
-        "ma5_px": 57.85,
-        "ma10_px": 57.87,
-        "ma20_px": 59.12,
-        "change_diff": -0.020000000000000018
+        "close_px": 58.24,
+        "business_amount": 21832193,
+        "business_balance": 1269294540,
+        "change": 1.48,
+        "ma5_px": 57.92,
+        "ma10_px": 57.91,
+        "ma20_px": 59.14,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -645,16 +645,16 @@
       {
         "trade_date": 20260916,
         "open_px": 60.78,
-        "high_px": 61.76,
+        "high_px": 62.75,
         "low_px": 59.7,
-        "close_px": 61.57,
-        "business_amount": 44566442,
-        "business_balance": 2692299800,
-        "change": -1.06,
-        "ma5_px": 60.18,
-        "ma10_px": 59.89,
-        "ma20_px": 62.36,
-        "change_diff": 0.050000000000000044
+        "close_px": 62.04,
+        "business_amount": 79182079,
+        "business_balance": 4840190000,
+        "change": -0.31,
+        "ma5_px": 60.28,
+        "ma10_px": 59.94,
+        "ma20_px": 62.39,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -665,16 +665,16 @@
       {
         "trade_date": 20260916,
         "open_px": 279.17,
-        "high_px": 286.39,
+        "high_px": 291.41,
         "low_px": 275.84,
-        "close_px": 285.14,
-        "business_amount": 2248839,
-        "business_balance": 632654740,
-        "change": 2.88,
-        "ma5_px": 277.04,
-        "ma10_px": 277.58,
-        "ma20_px": 286.65,
-        "change_diff": -0.010000000000000231
+        "close_px": 286.18,
+        "business_amount": 5011882,
+        "business_balance": 1424648900,
+        "change": 3.25,
+        "ma5_px": 277.24,
+        "ma10_px": 277.68,
+        "ma20_px": 286.7,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -685,16 +685,16 @@
       {
         "trade_date": 20260916,
         "open_px": 2308,
-        "high_px": 2327,
+        "high_px": 2370,
         "low_px": 2272.88,
-        "close_px": 2318.94,
-        "business_amount": 412400,
-        "business_balance": 946644870,
-        "change": 0.48,
-        "ma5_px": 2386.92,
-        "ma10_px": 2470.85,
-        "ma20_px": 2395.87,
-        "change_diff": 0.21999999999999997
+        "close_px": 2322.88,
+        "business_amount": 1008216,
+        "business_balance": 2333469500,
+        "change": 0.65,
+        "ma5_px": 2387.71,
+        "ma10_px": 2471.24,
+        "ma20_px": 2396.07,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -705,16 +705,16 @@
       {
         "trade_date": 20260916,
         "open_px": 119.07,
-        "high_px": 121.11,
+        "high_px": 122.6,
         "low_px": 116.16,
-        "close_px": 119.77,
-        "business_amount": 12004425,
-        "business_balance": 1421305800,
-        "change": 0.88,
-        "ma5_px": 122.28,
-        "ma10_px": 124.74,
-        "ma20_px": 124.25,
-        "change_diff": -0.010000000000000009
+        "close_px": 121.64,
+        "business_amount": 25907563,
+        "business_balance": 3108449400,
+        "change": 2.45,
+        "ma5_px": 122.66,
+        "ma10_px": 124.93,
+        "ma20_px": 124.35,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -727,14 +727,14 @@
         "open_px": 82.53,
         "high_px": 83.86,
         "low_px": 80,
-        "close_px": 81.2,
-        "business_amount": 41154988,
-        "business_balance": 3349371700,
-        "change": -3.32,
-        "ma5_px": 81.32,
-        "ma10_px": 74.6,
-        "ma20_px": 71.03,
-        "change_diff": -0.25
+        "close_px": 82.42,
+        "business_amount": 73926162,
+        "business_balance": 6044827600,
+        "change": -1.87,
+        "ma5_px": 81.56,
+        "ma10_px": 74.72,
+        "ma20_px": 71.1,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -745,15 +745,15 @@
       {
         "trade_date": 20260916,
         "open_px": 31.42,
-        "high_px": 31.8,
+        "high_px": 32.5,
         "low_px": 30.65,
-        "close_px": 31.36,
-        "business_amount": 89239655,
-        "business_balance": 2774024600,
-        "change": -1.38,
-        "ma5_px": 30.82,
-        "ma10_px": 28.99,
-        "ma20_px": 29.65,
+        "close_px": 32.05,
+        "business_amount": 178209380,
+        "business_balance": 5616575300,
+        "change": 0.79,
+        "ma5_px": 30.96,
+        "ma10_px": 29.06,
+        "ma20_px": 29.69,
         "change_diff": 0
       }
     ],
@@ -765,15 +765,15 @@
       {
         "trade_date": 20260916,
         "open_px": 415,
-        "high_px": 432.2,
+        "high_px": 438.88,
         "low_px": 407.77,
-        "close_px": 425.84,
-        "business_amount": 2270614,
-        "business_balance": 951980840,
-        "change": 3.17,
-        "ma5_px": 410.38,
-        "ma10_px": 403.85,
-        "ma20_px": 412.12,
+        "close_px": 433,
+        "business_amount": 4919125,
+        "business_balance": 2099675200,
+        "change": 4.9,
+        "ma5_px": 411.81,
+        "ma10_px": 404.57,
+        "ma20_px": 412.48,
         "change_diff": 0
       }
     ],
@@ -785,15 +785,15 @@
       {
         "trade_date": 20260916,
         "open_px": 108.26,
-        "high_px": 108.62,
+        "high_px": 110,
         "low_px": 105.6,
-        "close_px": 107.97,
-        "business_amount": 11297459,
-        "business_balance": 1204946850,
-        "change": -0.21,
-        "ma5_px": 106.92,
-        "ma10_px": 108.42,
-        "ma20_px": 114.76,
+        "close_px": 109.58,
+        "business_amount": 25840418,
+        "business_balance": 2793531100,
+        "change": 1.28,
+        "ma5_px": 107.24,
+        "ma10_px": 108.58,
+        "ma20_px": 114.84,
         "change_diff": 0
       }
     ],
@@ -805,16 +805,16 @@
       {
         "trade_date": 20260916,
         "open_px": 404.21,
-        "high_px": 412,
+        "high_px": 412.95,
         "low_px": 396,
-        "close_px": 406.58,
-        "business_amount": 1265092,
-        "business_balance": 506739920,
-        "change": 1.04,
-        "ma5_px": 395.12,
-        "ma10_px": 392.96,
-        "ma20_px": 397.88,
-        "change_diff": -0.07000000000000006
+        "close_px": 408.88,
+        "business_amount": 2825772,
+        "business_balance": 1144355000,
+        "change": 1.61,
+        "ma5_px": 395.58,
+        "ma10_px": 393.19,
+        "ma20_px": 397.99,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -825,16 +825,16 @@
       {
         "trade_date": 20260916,
         "open_px": 355,
-        "high_px": 364,
+        "high_px": 369.82,
         "low_px": 348.27,
-        "close_px": 361,
-        "business_amount": 2020306,
-        "business_balance": 718503630,
-        "change": 1.78,
-        "ma5_px": 353.38,
-        "ma10_px": 358.9,
-        "ma20_px": 377.13,
-        "change_diff": -0.10999999999999988
+        "close_px": 362,
+        "business_amount": 5050441,
+        "business_balance": 1818522000,
+        "change": 2.06,
+        "ma5_px": 353.58,
+        "ma10_px": 359,
+        "ma20_px": 377.18,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -845,16 +845,16 @@
       {
         "trade_date": 20260916,
         "open_px": 41,
-        "high_px": 41.4,
+        "high_px": 43.45,
         "low_px": 40.5,
-        "close_px": 41.14,
-        "business_amount": 57581125,
-        "business_balance": 2354753100,
-        "change": 0.69,
-        "ma5_px": 40.22,
-        "ma10_px": 38.6,
-        "ma20_px": 36.55,
-        "change_diff": -0.040000000000000036
+        "close_px": 42.8,
+        "business_amount": 148016810,
+        "business_balance": 6191962200,
+        "change": 4.75,
+        "ma5_px": 40.55,
+        "ma10_px": 38.77,
+        "ma20_px": 36.64,
+        "change_diff": 0
       }
     ],
     "isImportant": true
@@ -865,16 +865,16 @@
       {
         "trade_date": 20260916,
         "open_px": 102.13,
-        "high_px": 107.5,
+        "high_px": 108.88,
         "low_px": 99.07,
-        "close_px": 106.44,
-        "business_amount": 6492272,
-        "business_balance": 668013730,
-        "change": 5.76,
-        "ma5_px": 101.52,
-        "ma10_px": 102.81,
-        "ma20_px": 110.51,
-        "change_diff": -0.1299999999999999
+        "close_px": 106.8,
+        "business_amount": 12673180,
+        "business_balance": 1329778380,
+        "change": 6.12,
+        "ma5_px": 101.59,
+        "ma10_px": 102.84,
+        "ma20_px": 110.53,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -885,16 +885,16 @@
       {
         "trade_date": 20260916,
         "open_px": 193.37,
-        "high_px": 208,
+        "high_px": 210.77,
         "low_px": 193.37,
-        "close_px": 206.59,
-        "business_amount": 5431744,
-        "business_balance": 1093560000,
-        "change": 6.88,
-        "ma5_px": 194.49,
-        "ma10_px": 194.36,
-        "ma20_px": 203.08,
-        "change_diff": 0.05999999999999961
+        "close_px": 206.25,
+        "business_amount": 10037785,
+        "business_balance": 2048387900,
+        "change": 6.7,
+        "ma5_px": 194.42,
+        "ma10_px": 194.33,
+        "ma20_px": 203.06,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -905,16 +905,16 @@
       {
         "trade_date": 20260916,
         "open_px": 59.18,
-        "high_px": 61.78,
+        "high_px": 62.99,
         "low_px": 58.81,
-        "close_px": 61.67,
-        "business_amount": 9208377,
-        "business_balance": 555936050,
-        "change": 4.7,
-        "ma5_px": 58.92,
-        "ma10_px": 59.56,
-        "ma20_px": 61.15,
-        "change_diff": -0.04999999999999982
+        "close_px": 62.7,
+        "business_amount": 20304075,
+        "business_balance": 1247996670,
+        "change": 6.45,
+        "ma5_px": 59.13,
+        "ma10_px": 59.66,
+        "ma20_px": 61.21,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -925,16 +925,16 @@
       {
         "trade_date": 20260916,
         "open_px": 66.91,
-        "high_px": 68.1,
+        "high_px": 69.8,
         "low_px": 66.66,
-        "close_px": 67.95,
-        "business_amount": 26406008,
-        "business_balance": 1781879000,
-        "change": 1.63,
-        "ma5_px": 67.4,
-        "ma10_px": 68.19,
-        "ma20_px": 71.66,
-        "change_diff": -0.020000000000000018
+        "close_px": 69.55,
+        "business_amount": 82562763,
+        "business_balance": 5667973800,
+        "change": 4.02,
+        "ma5_px": 67.72,
+        "ma10_px": 68.35,
+        "ma20_px": 71.74,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -945,16 +945,16 @@
       {
         "trade_date": 20260916,
         "open_px": 57.38,
-        "high_px": 58.33,
+        "high_px": 59.75,
         "low_px": 56.91,
-        "close_px": 58.23,
-        "business_amount": 21106283,
-        "business_balance": 1219387890,
-        "change": 1.61,
-        "ma5_px": 57.73,
-        "ma10_px": 58.09,
-        "ma20_px": 60.22,
-        "change_diff": -0.010000000000000009
+        "close_px": 59.21,
+        "business_amount": 67735507,
+        "business_balance": 3976653100,
+        "change": 3.32,
+        "ma5_px": 57.93,
+        "ma10_px": 58.19,
+        "ma20_px": 60.27,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -965,15 +965,15 @@
       {
         "trade_date": 20260916,
         "open_px": 63,
-        "high_px": 64.68,
+        "high_px": 64.9,
         "low_px": 63,
-        "close_px": 63.87,
-        "business_amount": 2253500,
-        "business_balance": 143299260,
-        "change": 0.9,
-        "ma5_px": 63.93,
-        "ma10_px": 68.34,
-        "ma20_px": 67.07,
+        "close_px": 64.22,
+        "business_amount": 5621600,
+        "business_balance": 359944670,
+        "change": 1.45,
+        "ma5_px": 64,
+        "ma10_px": 68.37,
+        "ma20_px": 67.09,
         "change_diff": 0
       }
     ],
@@ -985,16 +985,16 @@
       {
         "trade_date": 20260916,
         "open_px": 52.65,
-        "high_px": 53.94,
+        "high_px": 55.11,
         "low_px": 51.56,
-        "close_px": 53.6,
-        "business_amount": 24986167,
-        "business_balance": 1318215610,
-        "change": 0.45,
-        "ma5_px": 53.45,
-        "ma10_px": 56.13,
-        "ma20_px": 53.7,
-        "change_diff": 0.10999999999999999
+        "close_px": 54.42,
+        "business_amount": 47909056,
+        "business_balance": 2563534700,
+        "change": 1.99,
+        "ma5_px": 53.62,
+        "ma10_px": 56.21,
+        "ma20_px": 53.74,
+        "change_diff": 0
       }
     ],
     "isImportant": true
@@ -1005,16 +1005,16 @@
       {
         "trade_date": 20260916,
         "open_px": 47.09,
-        "high_px": 47.16,
+        "high_px": 48.07,
         "low_px": 45.6,
-        "close_px": 46.75,
-        "business_amount": 131445193,
-        "business_balance": 6083153000,
-        "change": -0.72,
-        "ma5_px": 45.45,
-        "ma10_px": 43.58,
-        "ma20_px": 42.77,
-        "change_diff": -0.039999999999999925
+        "close_px": 47.39,
+        "business_amount": 273028810,
+        "business_balance": 12776319900,
+        "change": 0.64,
+        "ma5_px": 45.58,
+        "ma10_px": 43.65,
+        "ma20_px": 42.8,
+        "change_diff": 0
       }
     ],
     "isImportant": true
@@ -1025,16 +1025,16 @@
       {
         "trade_date": 20260916,
         "open_px": 257,
-        "high_px": 265.18,
+        "high_px": 268,
         "low_px": 255.57,
-        "close_px": 259.78,
-        "business_amount": 5921467,
-        "business_balance": 1539113100,
-        "change": 1.68,
-        "ma5_px": 246.26,
-        "ma10_px": 245.36,
-        "ma20_px": 254.48,
-        "change_diff": -0.07000000000000006
+        "close_px": 266.47,
+        "business_amount": 11886621,
+        "business_balance": 3121293800,
+        "change": 4.29,
+        "ma5_px": 247.6,
+        "ma10_px": 246.03,
+        "ma20_px": 254.82,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1045,15 +1045,15 @@
       {
         "trade_date": 20260916,
         "open_px": 127,
-        "high_px": 134.66,
+        "high_px": 136.24,
         "low_px": 126.99,
-        "close_px": 133.33,
-        "business_amount": 10643911,
-        "business_balance": 1401669900,
-        "change": 5.07,
-        "ma5_px": 126,
-        "ma10_px": 125.72,
-        "ma20_px": 129.66,
+        "close_px": 132.39,
+        "business_amount": 18825905,
+        "business_balance": 2492052100,
+        "change": 4.33,
+        "ma5_px": 125.82,
+        "ma10_px": 125.63,
+        "ma20_px": 129.61,
         "change_diff": 0
       }
     ],
@@ -1065,16 +1065,16 @@
       {
         "trade_date": 20260916,
         "open_px": 383.55,
-        "high_px": 393.88,
+        "high_px": 402.33,
         "low_px": 382.01,
-        "close_px": 391.91,
-        "business_amount": 4482186,
-        "business_balance": 1738791500,
-        "change": 1.54,
-        "ma5_px": 397.35,
-        "ma10_px": 401.36,
-        "ma20_px": 407.06,
-        "change_diff": -0.020000000000000018
+        "close_px": 401,
+        "business_amount": 11432722,
+        "business_balance": 4512862400,
+        "change": 3.89,
+        "ma5_px": 399.17,
+        "ma10_px": 402.26,
+        "ma20_px": 407.51,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1085,16 +1085,16 @@
       {
         "trade_date": 20260916,
         "open_px": 67,
-        "high_px": 69.05,
+        "high_px": 69.39,
         "low_px": 65.66,
-        "close_px": 68.59,
-        "business_amount": 49641461,
-        "business_balance": 3348090700,
-        "change": 2.99,
-        "ma5_px": 64.82,
-        "ma10_px": 63.11,
-        "ma20_px": 64.45,
-        "change_diff": 0.1200000000000001
+        "close_px": 68.27,
+        "business_amount": 90692602,
+        "business_balance": 6155599800,
+        "change": 2.51,
+        "ma5_px": 64.76,
+        "ma10_px": 63.08,
+        "ma20_px": 64.43,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1107,14 +1107,14 @@
         "open_px": 57.54,
         "high_px": 59.5,
         "low_px": 57.2,
-        "close_px": 58.22,
-        "business_amount": 82289705,
-        "business_balance": 4804804100,
-        "change": 1.23,
-        "ma5_px": 56.3,
-        "ma10_px": 53.05,
-        "ma20_px": 52.98,
-        "change_diff": -0.020000000000000018
+        "close_px": 58.58,
+        "business_amount": 140607170,
+        "business_balance": 8223142700,
+        "change": 1.86,
+        "ma5_px": 56.38,
+        "ma10_px": 53.09,
+        "ma20_px": 53,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1125,16 +1125,16 @@
       {
         "trade_date": 20260916,
         "open_px": 307.7,
-        "high_px": 316.68,
+        "high_px": 322.28,
         "low_px": 301.44,
-        "close_px": 315,
-        "business_amount": 3174890,
-        "business_balance": 984023320,
-        "change": 2.84,
-        "ma5_px": 306.14,
-        "ma10_px": 315.5,
-        "ma20_px": 342.37,
-        "change_diff": 0.040000000000000036
+        "close_px": 318.5,
+        "business_amount": 6873444,
+        "business_balance": 2161613500,
+        "change": 3.98,
+        "ma5_px": 306.84,
+        "ma10_px": 315.86,
+        "ma20_px": 342.54,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1145,16 +1145,16 @@
       {
         "trade_date": 20260916,
         "open_px": 106.85,
-        "high_px": 108.88,
+        "high_px": 113.39,
         "low_px": 105.2,
-        "close_px": 108.59,
-        "business_amount": 6034249,
-        "business_balance": 648361920,
-        "change": 2.35,
-        "ma5_px": 107.24,
-        "ma10_px": 109.52,
-        "ma20_px": 114.97,
-        "change_diff": 0.03000000000000025
+        "close_px": 112.73,
+        "business_amount": 19362232,
+        "business_balance": 2136581100,
+        "change": 6.25,
+        "ma5_px": 108.07,
+        "ma10_px": 109.94,
+        "ma20_px": 115.18,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1165,15 +1165,15 @@
       {
         "trade_date": 20260916,
         "open_px": 398.82,
-        "high_px": 448.2,
+        "high_px": 454.97,
         "low_px": 395,
-        "close_px": 439.55,
-        "business_amount": 3048311,
-        "business_balance": 1300167060,
-        "change": 11.59,
-        "ma5_px": 405.24,
-        "ma10_px": 395.64,
-        "ma20_px": 398.67,
+        "close_px": 444.35,
+        "business_amount": 5140202,
+        "business_balance": 2230061300,
+        "change": 12.81,
+        "ma5_px": 406.2,
+        "ma10_px": 396.12,
+        "ma20_px": 398.91,
         "change_diff": 0
       }
     ],
@@ -1185,16 +1185,16 @@
       {
         "trade_date": 20260916,
         "open_px": 128.64,
-        "high_px": 130.55,
+        "high_px": 134.97,
         "low_px": 127.2,
-        "close_px": 129.97,
-        "business_amount": 4050034,
-        "business_balance": 522077230,
-        "change": 1.67,
-        "ma5_px": 128.53,
-        "ma10_px": 127.91,
-        "ma20_px": 127.45,
-        "change_diff": -0.010000000000000009
+        "close_px": 134.11,
+        "business_amount": 12410598,
+        "business_balance": 1633042600,
+        "change": 4.91,
+        "ma5_px": 129.36,
+        "ma10_px": 128.33,
+        "ma20_px": 127.66,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1205,16 +1205,16 @@
       {
         "trade_date": 20260916,
         "open_px": 68.76,
-        "high_px": 70.47,
+        "high_px": 72,
         "low_px": 68.65,
-        "close_px": 70.09,
-        "business_amount": 28269988,
-        "business_balance": 1970886000,
-        "change": 1.93,
-        "ma5_px": 69.73,
-        "ma10_px": 73.11,
-        "ma20_px": 75.79,
-        "change_diff": 0.010000000000000009
+        "close_px": 71.15,
+        "business_amount": 70013714,
+        "business_balance": 4939472100,
+        "change": 3.48,
+        "ma5_px": 69.94,
+        "ma10_px": 73.22,
+        "ma20_px": 75.85,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1225,15 +1225,15 @@
       {
         "trade_date": 20260916,
         "open_px": 310.08,
-        "high_px": 333.6,
+        "high_px": 342,
         "low_px": 309.65,
-        "close_px": 332,
-        "business_amount": 5592079,
-        "business_balance": 1809654000,
-        "change": 7.17,
-        "ma5_px": 311.85,
-        "ma10_px": 311.88,
-        "ma20_px": 333.17,
+        "close_px": 338,
+        "business_amount": 10736232,
+        "business_balance": 3541916400,
+        "change": 9.11,
+        "ma5_px": 313.05,
+        "ma10_px": 312.48,
+        "ma20_px": 333.47,
         "change_diff": 0
       }
     ],
@@ -1245,16 +1245,16 @@
       {
         "trade_date": 20260916,
         "open_px": 96.72,
-        "high_px": 97.75,
+        "high_px": 99.99,
         "low_px": 95.18,
-        "close_px": 97.1,
-        "business_amount": 7729279,
-        "business_balance": 744734500,
-        "change": 0.64,
-        "ma5_px": 97.03,
-        "ma10_px": 95.4,
-        "ma20_px": 92.51,
-        "change_diff": 0.06000000000000005
+        "close_px": 98.51,
+        "business_amount": 20146763,
+        "business_balance": 1967182300,
+        "change": 2.1,
+        "ma5_px": 97.31,
+        "ma10_px": 95.54,
+        "ma20_px": 92.58,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1265,15 +1265,15 @@
       {
         "trade_date": 20260916,
         "open_px": 38.5,
-        "high_px": 38.68,
+        "high_px": 38.93,
         "low_px": 37.81,
-        "close_px": 38.32,
-        "business_amount": 4452657,
-        "business_balance": 169818310,
-        "change": -0.29,
-        "ma5_px": 38.78,
-        "ma10_px": 40.25,
-        "ma20_px": 40.64,
+        "close_px": 38.43,
+        "business_amount": 11889926,
+        "business_balance": 456221450,
+        "change": 0,
+        "ma5_px": 38.8,
+        "ma10_px": 40.26,
+        "ma20_px": 40.65,
         "change_diff": 0
       }
     ],
@@ -1288,8 +1288,8 @@
         "high_px": 45.22,
         "low_px": 40.9,
         "close_px": 45.22,
-        "business_amount": 143002520,
-        "business_balance": 6317879000,
+        "business_amount": 149407310,
+        "business_balance": 6607503900,
         "change": 10,
         "ma5_px": 42.02,
         "ma10_px": 40.61,
@@ -1305,16 +1305,16 @@
       {
         "trade_date": 20260916,
         "open_px": 334.19,
-        "high_px": 345.89,
+        "high_px": 358.34,
         "low_px": 329.1,
-        "close_px": 343.83,
-        "business_amount": 9401350,
-        "business_balance": 3177264900,
-        "change": 4,
-        "ma5_px": 333.37,
-        "ma10_px": 335.63,
-        "ma20_px": 348.17,
-        "change_diff": 0.029999999999999805
+        "close_px": 352.6,
+        "business_amount": 21621295,
+        "business_balance": 7476570100,
+        "change": 6.65,
+        "ma5_px": 335.12,
+        "ma10_px": 336.5,
+        "ma20_px": 348.61,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1325,15 +1325,15 @@
       {
         "trade_date": 20260916,
         "open_px": 24.6,
-        "high_px": 25.93,
+        "high_px": 26.33,
         "low_px": 24.41,
-        "close_px": 25.75,
-        "business_amount": 25051492,
-        "business_balance": 632441030,
-        "change": 3.83,
-        "ma5_px": 24.71,
-        "ma10_px": 24.95,
-        "ma20_px": 24.39,
+        "close_px": 26.01,
+        "business_amount": 54188752,
+        "business_balance": 1389883500,
+        "change": 4.88,
+        "ma5_px": 24.76,
+        "ma10_px": 24.98,
+        "ma20_px": 24.4,
         "change_diff": 0
       }
     ],
@@ -1345,16 +1345,16 @@
       {
         "trade_date": 20260916,
         "open_px": 54.4,
-        "high_px": 54.95,
+        "high_px": 55.8,
         "low_px": 53.51,
-        "close_px": 54.54,
-        "business_amount": 90735996,
-        "business_balance": 4914133500,
-        "change": 0.59,
-        "ma5_px": 55.44,
-        "ma10_px": 56.13,
-        "ma20_px": 56.63,
-        "change_diff": -0.040000000000000036
+        "close_px": 55.1,
+        "business_amount": 213245390,
+        "business_balance": 11669203200,
+        "change": 1.62,
+        "ma5_px": 55.55,
+        "ma10_px": 56.18,
+        "ma20_px": 56.66,
+        "change_diff": 0
       }
     ],
     "isImportant": true
@@ -1365,16 +1365,16 @@
       {
         "trade_date": 20260916,
         "open_px": 106,
-        "high_px": 107.5,
+        "high_px": 108,
         "low_px": 104.22,
-        "close_px": 105.55,
-        "business_amount": 15493108,
-        "business_balance": 1638849500,
-        "change": 0.94,
-        "ma5_px": 108.02,
-        "ma10_px": 104.74,
-        "ma20_px": 98.47,
-        "change_diff": 0.04999999999999993
+        "close_px": 106.41,
+        "business_amount": 33243640,
+        "business_balance": 3518870800,
+        "change": 1.76,
+        "ma5_px": 108.19,
+        "ma10_px": 104.82,
+        "ma20_px": 98.52,
+        "change_diff": 0
       }
     ],
     "isImportant": true
@@ -1385,16 +1385,16 @@
       {
         "trade_date": 20260916,
         "open_px": 90.3,
-        "high_px": 94.28,
+        "high_px": 95.55,
         "low_px": 89.9,
-        "close_px": 93.98,
-        "business_amount": 36253316,
-        "business_balance": 3362929300,
-        "change": 4.11,
-        "ma5_px": 90.59,
-        "ma10_px": 90.51,
-        "ma20_px": 94.08,
-        "change_diff": -0.040000000000000036
+        "close_px": 94.59,
+        "business_amount": 64597788,
+        "business_balance": 6045718000,
+        "change": 4.79,
+        "ma5_px": 90.72,
+        "ma10_px": 90.58,
+        "ma20_px": 94.11,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1407,14 +1407,14 @@
         "open_px": 219.86,
         "high_px": 229.09,
         "low_px": 215.44,
-        "close_px": 224.96,
-        "business_amount": 14834604,
-        "business_balance": 3283624900,
-        "change": 3.96,
-        "ma5_px": 223.83,
-        "ma10_px": 214.2,
-        "ma20_px": 199.16,
-        "change_diff": -0.010000000000000231
+        "close_px": 223.63,
+        "business_amount": 26060950,
+        "business_balance": 5806375800,
+        "change": 3.34,
+        "ma5_px": 223.56,
+        "ma10_px": 214.07,
+        "ma20_px": 199.09,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1425,16 +1425,16 @@
       {
         "trade_date": 20260916,
         "open_px": 344.52,
-        "high_px": 348.97,
+        "high_px": 349,
         "low_px": 333.33,
-        "close_px": 343.55,
-        "business_amount": 3036273,
-        "business_balance": 1033350180,
-        "change": -0.22,
-        "ma5_px": 330.77,
-        "ma10_px": 306.82,
-        "ma20_px": 298.83,
-        "change_diff": -0.09
+        "close_px": 346.6,
+        "business_amount": 5515517,
+        "business_balance": 1887959700,
+        "change": 0.67,
+        "ma5_px": 331.38,
+        "ma10_px": 307.13,
+        "ma20_px": 298.99,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1445,16 +1445,16 @@
       {
         "trade_date": 20260916,
         "open_px": 53.5,
-        "high_px": 55.43,
+        "high_px": 56.17,
         "low_px": 52.29,
-        "close_px": 54.76,
-        "business_amount": 30223808,
-        "business_balance": 1627615300,
-        "change": 1.84,
-        "ma5_px": 52.74,
-        "ma10_px": 51.15,
-        "ma20_px": 51.36,
-        "change_diff": -0.08999999999999986
+        "close_px": 55.88,
+        "business_amount": 64503734,
+        "business_balance": 3534296900,
+        "change": 3.92,
+        "ma5_px": 52.96,
+        "ma10_px": 51.26,
+        "ma20_px": 51.42,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1467,14 +1467,14 @@
         "open_px": 260,
         "high_px": 264,
         "low_px": 241,
-        "close_px": 244.25,
-        "business_amount": 18755974,
-        "business_balance": 4693546400,
-        "change": -2.91,
-        "ma5_px": 234.05,
-        "ma10_px": 211.07,
-        "ma20_px": 193.21,
-        "change_diff": 0.009999999999999787
+        "close_px": 253.99,
+        "business_amount": 27477374,
+        "business_balance": 6868848800,
+        "change": 0.96,
+        "ma5_px": 236,
+        "ma10_px": 212.04,
+        "ma20_px": 193.7,
+        "change_diff": 0
       }
     ],
     "isImportant": true
@@ -1485,16 +1485,16 @@
       {
         "trade_date": 20260916,
         "open_px": 37.45,
-        "high_px": 37.95,
+        "high_px": 39.17,
         "low_px": 36.73,
-        "close_px": 37.76,
-        "business_amount": 6764757,
-        "business_balance": 252807460,
-        "change": 1.42,
-        "ma5_px": 37.54,
-        "ma10_px": 39.8,
-        "ma20_px": 41.85,
-        "change_diff": -0.08000000000000007
+        "close_px": 38.75,
+        "business_amount": 19817928,
+        "business_balance": 755602750,
+        "change": 4.08,
+        "ma5_px": 37.74,
+        "ma10_px": 39.9,
+        "ma20_px": 41.9,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1505,16 +1505,16 @@
       {
         "trade_date": 20260916,
         "open_px": 52.07,
-        "high_px": 52.7,
+        "high_px": 54.11,
         "low_px": 51.65,
-        "close_px": 52.53,
-        "business_amount": 1264323,
-        "business_balance": 66019432,
-        "change": 0.75,
-        "ma5_px": 53.27,
-        "ma10_px": 57.54,
-        "ma20_px": 58.41,
-        "change_diff": -0.08999999999999997
+        "close_px": 53.6,
+        "business_amount": 3451126,
+        "business_balance": 183214360,
+        "change": 2.8,
+        "ma5_px": 53.48,
+        "ma10_px": 57.65,
+        "ma20_px": 58.46,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1525,16 +1525,16 @@
       {
         "trade_date": 20260916,
         "open_px": 13.4,
-        "high_px": 13.72,
+        "high_px": 14.2,
         "low_px": 13.27,
-        "close_px": 13.69,
-        "business_amount": 14291676,
-        "business_balance": 192664530,
-        "change": 1.71,
-        "ma5_px": 13.54,
-        "ma10_px": 13.66,
-        "ma20_px": 13.67,
-        "change_diff": -0.07000000000000006
+        "close_px": 14.15,
+        "business_amount": 49676604,
+        "business_balance": 688090480,
+        "change": 5.13,
+        "ma5_px": 13.64,
+        "ma10_px": 13.7,
+        "ma20_px": 13.69,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1545,15 +1545,15 @@
       {
         "trade_date": 20260916,
         "open_px": 279.43,
-        "high_px": 284.81,
+        "high_px": 293,
         "low_px": 277.2,
-        "close_px": 282.87,
-        "business_amount": 1469766,
-        "business_balance": 413170260,
-        "change": 1.24,
-        "ma5_px": 281.48,
-        "ma10_px": 285.56,
-        "ma20_px": 291.83,
+        "close_px": 287.93,
+        "business_amount": 4165312,
+        "business_balance": 1189210960,
+        "change": 3.05,
+        "ma5_px": 282.49,
+        "ma10_px": 286.07,
+        "ma20_px": 292.08,
         "change_diff": 0
       }
     ],
@@ -1565,16 +1565,16 @@
       {
         "trade_date": 20260916,
         "open_px": 33.7,
-        "high_px": 33.76,
+        "high_px": 34,
         "low_px": 33.28,
-        "close_px": 33.56,
-        "business_amount": 16979178,
-        "business_balance": 568084240,
-        "change": -0.71,
-        "ma5_px": 34.48,
-        "ma10_px": 35.31,
-        "ma20_px": 35.73,
-        "change_diff": -0.029999999999999916
+        "close_px": 33.73,
+        "business_amount": 36760555,
+        "business_balance": 1236551190,
+        "change": -0.21,
+        "ma5_px": 34.51,
+        "ma10_px": 35.32,
+        "ma20_px": 35.74,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1585,16 +1585,16 @@
       {
         "trade_date": 20260916,
         "open_px": 53.05,
-        "high_px": 53.31,
+        "high_px": 54.16,
         "low_px": 51.56,
-        "close_px": 51.97,
-        "business_amount": 3442520,
-        "business_balance": 179244280,
-        "change": -2.04,
-        "ma5_px": 52.28,
-        "ma10_px": 51.64,
-        "ma20_px": 51,
-        "change_diff": 0.06999999999999984
+        "close_px": 53.33,
+        "business_amount": 8389834,
+        "business_balance": 442180680,
+        "change": 0.53,
+        "ma5_px": 52.55,
+        "ma10_px": 51.77,
+        "ma20_px": 51.07,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1605,15 +1605,15 @@
       {
         "trade_date": 20260916,
         "open_px": 530,
-        "high_px": 534.96,
+        "high_px": 547.72,
         "low_px": 516,
-        "close_px": 527.85,
-        "business_amount": 647415,
-        "business_balance": 340479730,
-        "change": -0.31,
-        "ma5_px": 515.03,
-        "ma10_px": 480.74,
-        "ma20_px": 464.55,
+        "close_px": 538.82,
+        "business_amount": 1627263,
+        "business_balance": 867447040,
+        "change": 1.76,
+        "ma5_px": 517.23,
+        "ma10_px": 481.84,
+        "ma20_px": 465.1,
         "change_diff": 0
       }
     ],
@@ -1625,16 +1625,16 @@
       {
         "trade_date": 20260916,
         "open_px": 193.97,
-        "high_px": 208,
+        "high_px": 209.5,
         "low_px": 193.36,
-        "close_px": 205.8,
-        "business_amount": 13049336,
-        "business_balance": 2638272900,
-        "change": 5.87,
-        "ma5_px": 200.52,
-        "ma10_px": 198.04,
-        "ma20_px": 200.36,
-        "change_diff": -0.09999999999999964
+        "close_px": 206.39,
+        "business_amount": 20974439,
+        "business_balance": 4275081400,
+        "change": 6.17,
+        "ma5_px": 200.64,
+        "ma10_px": 198.1,
+        "ma20_px": 200.39,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1647,14 +1647,14 @@
         "open_px": 15.6,
         "high_px": 15.74,
         "low_px": 14.86,
-        "close_px": 15.32,
-        "business_amount": 44687005,
-        "business_balance": 678955020,
-        "change": -1.54,
-        "ma5_px": 15.07,
-        "ma10_px": 14.68,
-        "ma20_px": 14.68,
-        "change_diff": -0.13000000000000012
+        "close_px": 15.47,
+        "business_amount": 75934722,
+        "business_balance": 1161684140,
+        "change": -0.58,
+        "ma5_px": 15.1,
+        "ma10_px": 14.69,
+        "ma20_px": 14.69,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1665,16 +1665,16 @@
       {
         "trade_date": 20260916,
         "open_px": 262.99,
-        "high_px": 297.77,
+        "high_px": 308,
         "low_px": 262.03,
-        "close_px": 294.01,
-        "business_amount": 4436116,
-        "business_balance": 1253426060,
-        "change": 11.08,
-        "ma5_px": 259.69,
-        "ma10_px": 244.16,
-        "ma20_px": 237.28,
-        "change_diff": -0.3800000000000008
+        "close_px": 302.41,
+        "business_amount": 7808662,
+        "business_balance": 2270060400,
+        "change": 14.25,
+        "ma5_px": 261.37,
+        "ma10_px": 245,
+        "ma20_px": 237.7,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1685,16 +1685,16 @@
       {
         "trade_date": 20260916,
         "open_px": 83.19,
-        "high_px": 84.56,
+        "high_px": 91.48,
         "low_px": 82,
-        "close_px": 84.11,
-        "business_amount": 4616629,
-        "business_balance": 385581340,
-        "change": 0.97,
-        "ma5_px": 81.26,
-        "ma10_px": 77.47,
-        "ma20_px": 77.03,
-        "change_diff": -0.16999999999999993
+        "close_px": 91.06,
+        "business_amount": 14654142,
+        "business_balance": 1274539060,
+        "change": 9.32,
+        "ma5_px": 82.65,
+        "ma10_px": 78.16,
+        "ma20_px": 77.37,
+        "change_diff": 0
       }
     ],
     "isImportant": false
