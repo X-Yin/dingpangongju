@@ -531,6 +531,7 @@ const DingPan = () => {
     const prevBlockMoneyRef = useRef(null);
     const overlayTimelineSectionRef = useRef(null);
     const rihanSectionRef = useRef(null); // 日韩涨跌监控区域，用于双击定位
+    const hasAutoScrolledToRihanRef = useRef(false); // 进入页面自动滚动到日韩区域只执行一次的标记
     const targetBlocks = [
         '光通信模块',
         '创新药',
@@ -599,6 +600,27 @@ const DingPan = () => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+    // 自动滚动到日韩涨跌监控区域（进入页面后仅执行一次）
+    const autoScrollToRihanOnce = () => {
+        if (hasAutoScrolledToRihanRef.current) return;
+        hasAutoScrolledToRihanRef.current = true;
+        rihanSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    // 进入页面等日韩数据加载完成后自动滚动到日韩涨跌监控区域；刷新页面或切走路由再回来会重新触发
+    useEffect(() => {
+        if (!rihanData || rihanData.length === 0) return;
+        // 稍等页面渲染稳定后再滚动
+        const timer = window.setTimeout(autoScrollToRihanOnce, 500);
+        return () => window.clearTimeout(timer);
+    }, [rihanData]);
+
+    // 兜底：日韩数据长时间未加载时也自动滚动一次
+    useEffect(() => {
+        const timer = window.setTimeout(autoScrollToRihanOnce, 5000);
+        return () => window.clearTimeout(timer);
     }, []);
 
     // 跳转到重点板块并定位

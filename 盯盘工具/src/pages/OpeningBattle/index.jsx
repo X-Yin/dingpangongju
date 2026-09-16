@@ -1256,6 +1256,12 @@ const SellPointDiagnosisCard = () => {
 // ==================== 主页面 ====================
 const OpeningBattle = () => {
   const [buyPointHit, setBuyPointHit] = useState(false);
+
+  // 进入页面时回到顶部，避免沿用上一页面遗留的滚动位置（路由切换或刷新都会重新触发）
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // 持仓分时图展开状态：默认折叠（3日涨幅榜与持仓分时图同处第三行），状态持久化到 localStorage
   const [rankExpanded, setRankExpanded] = useState(() => {
     try {
