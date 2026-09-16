@@ -1,25 +1,5 @@
 [
   {
-    "id": "32b269da3c4fb699",
-    "time": "2026-09-16 13:00:00",
-    "read": true,
-    "strategyId": "straight_rise_no_volume",
-    "title": "⚠️ 无量拉升警惕回落",
-    "description": "创业板5分钟上涨2.39%，但成交量仅增加 <strong>0亿</strong>（不足100亿），无量上涨持续性存疑，容易回落。",
-    "severity": "medium",
-    "isBullish": false
-  },
-  {
-    "id": "a4186c4dc0e79d56",
-    "time": "2026-09-16 13:03:07",
-    "read": true,
-    "strategyId": "volume_price_surge",
-    "title": "✅ 量价齐升",
-    "description": "成交量放大 <strong>126亿</strong>（≥100亿），资金净流入224.0→250.4亿（≥10亿，流入增加），创业板5分钟上涨2.13%。量价资金三者共振，多方占优。",
-    "severity": "medium",
-    "isBullish": true
-  },
-  {
     "id": "dd7150e190e4e2ce",
     "time": "2026-09-16 14:51:07",
     "read": true,

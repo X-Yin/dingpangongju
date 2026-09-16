@@ -70,6 +70,9 @@ const STRATEGY_OPTIONS = [
   { value: 'tail_dip_3d_gain', label: '尾盘抄底-3日涨幅最大' },
   { value: 'tail_dip_1d_resilience', label: '尾盘抄底-当日抗分歧最大' },
   { value: 'tail_dip_3d_resilience', label: '尾盘抄底-3日抗分歧最大' },
+  { value: 'tail_dip_1d_fall', label: '尾盘抄底-当日跌幅最大' },
+  { value: 'tail_dip_3d_fall', label: '尾盘抄底-3日跌幅最大' },
+  { value: 'tail_dip_1d_resilience_low', label: '尾盘抄底-当日抗分歧分数最低' },
 ];
 
 // 计算回测汇总指标（兼容全量策略 stocks 与单股策略 summary 两种结果结构）

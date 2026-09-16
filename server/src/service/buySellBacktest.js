@@ -41,11 +41,14 @@ const STRATEGIES = {
   highest_5d_reports_2nd: { id: 'highest_5d_reports_2nd', name: '5日研报覆盖数第二名', desc: '买点命中时只买入过去 5 个交易日研报覆盖数第二多的股票（覆盖数相同取 5 日涨幅最大）' },
   highest_3d_reports_top5_gain: { id: 'highest_3d_reports_top5_gain', name: '3日研报前五&涨幅最大', desc: '买点命中时在最近 3 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 3 日涨幅最大的一只' },
   highest_5d_reports_top5_gain: { id: 'highest_5d_reports_top5_gain', name: '5日研报前五&涨幅最大', desc: '买点命中时在最近 5 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 5 日涨幅最大的一只' },
-  // 尾盘抄底系列（tailDip: true → 买入信号仅取尾盘抄底命中，不走买点诊断 allPassed）
-  tail_dip_1d_gain: { id: 'tail_dip_1d_gain', name: '尾盘抄底-当日涨幅最大', desc: '仅在尾盘抄底命中时买入（14:10-15:00 生效：科技情绪 -70≤情绪<0、量能较 14:00 放大≥50亿、创业板指涨幅较 14:00 回落），买入当日涨幅最大的股票', tailDip: true },
-  tail_dip_3d_gain: { id: 'tail_dip_3d_gain', name: '尾盘抄底-3日涨幅最大', desc: '仅在尾盘抄底命中时买入（14:10-15:00 生效：科技情绪 -70≤情绪<0、量能较 14:00 放大≥50亿、创业板指涨幅较 14:00 回落），买入最近 3 个交易日涨幅最大的股票', tailDip: true },
-  tail_dip_1d_resilience: { id: 'tail_dip_1d_resilience', name: '尾盘抄底-当日抗分歧最大', desc: '仅在尾盘抄底命中时买入（14:10-15:00 生效：科技情绪 -70≤情绪<0、量能较 14:00 放大≥50亿、创业板指涨幅较 14:00 回落），买入当日抗分歧分数最大的股票', tailDip: true },
-  tail_dip_3d_resilience: { id: 'tail_dip_3d_resilience', name: '尾盘抄底-3日抗分歧最大', desc: '仅在尾盘抄底命中时买入（14:10-15:00 生效：科技情绪 -70≤情绪<0、量能较 14:00 放大≥50亿、创业板指涨幅较 14:00 回落），买入最近 3 个交易日抗分歧分数汇总最大的股票', tailDip: true },
+  // 尾盘抄底系列（tailDip: true → 买入信号仅取尾盘抄底命中，不走买点诊断 allPassed；卖点走专属逐分钟环比规则）
+  tail_dip_1d_gain: { id: 'tail_dip_1d_gain', name: '尾盘抄底-当日涨幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日涨幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
+  tail_dip_3d_gain: { id: 'tail_dip_3d_gain', name: '尾盘抄底-3日涨幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入最近 3 个交易日涨幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
+  tail_dip_1d_resilience: { id: 'tail_dip_1d_resilience', name: '尾盘抄底-当日抗分歧最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日抗分歧分数最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
+  tail_dip_3d_resilience: { id: 'tail_dip_3d_resilience', name: '尾盘抄底-3日抗分歧最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入最近 3 个交易日抗分歧分数汇总最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
+  tail_dip_1d_fall: { id: 'tail_dip_1d_fall', name: '尾盘抄底-当日跌幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日跌幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
+  tail_dip_3d_fall: { id: 'tail_dip_3d_fall', name: '尾盘抄底-3日跌幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入最近 3 个交易日跌幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
+  tail_dip_1d_resilience_low: { id: 'tail_dip_1d_resilience_low', name: '尾盘抄底-当日抗分歧分数最低', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日抗分歧分数最低的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
 };
 
 // 回测结果缓存文件（按 策略+日期范围 存储，避免重复回测）
@@ -385,41 +388,27 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
   };
 };
 
-// 尾盘抄底命中检查（对齐线上 buySellDiagnose.js 的 tail_dip_buying 或逻辑分支）：
-// 仅在 14:10-15:00 生效，条件（均为当前时刻相较 14:00 的比较，窗口内任一时间桶满足即可）：
-// ① 当前科技情绪指数 ≥ -70 且 < 0（全天弱势但未极端冰点）
-// ② 创业板指当前涨幅 < 14:00 涨幅（尾盘涨幅回落）
-// ③ 当前量能（amountChangeDiff = 今日累计成交额 − 昨日全天成交额）相较 14:00 放大 ≥ 50亿（尾盘放量）
+// 尾盘抄底命中检查（买卖点回测专用）：
+// 抄底时机固定在尾盘 14:57（收盘集合竞价挂单，按触发桶价格成交，价格≈当日收盘价）：
+// 判断点取当日第一个 minute ≥ 1457 的回放桶（通常即 1500 收盘桶）；
+// 若当日分时数据未覆盖 14:57（如最后一桶为 1455），回退用当日最后一个桶，其余桶一律不触发。
+// 命中条件（唯一）：当日科技情绪分时曾触及 -100 退潮冰点（等价于当日科技情绪指数 hasIce: true）
 const checkTailDipHit = (timeBuckets, currentIndex) => {
   const buckets = timeBuckets || [];
   if (buckets.length === 0 || currentIndex < 0 || currentIndex >= buckets.length) return false;
-  const current = buckets[currentIndex];
-  // 注意：回放桶的 minute 为 HHMM 整数（如 1410），与 runBuyPointDiagnosis 开盘窗口（930-1000）口径一致
-  const minute = Number(current.minute);
-  if (!(minute >= 1410 && minute <= 1500)) return false;
-
-  // ① 科技情绪：-70 ≤ 情绪 < 0
-  const emotion = current.techEmotion == null ? null : Number(current.techEmotion);
-  const emotionOk = emotion != null && !Number.isNaN(emotion) && emotion >= -70 && emotion < 0;
-
-  // ② ③ 的 14:00 基准：当日最后一个 minute ≤ 14:00 的时间桶
-  let base = null;
-  for (const b of buckets) {
-    if (Number(b.minute) <= 1400) base = b;
-    else break;
+  // 注意：回放桶的 minute 为 HHMM 整数（如 1457 表示 14:57），与 runBuyPointDiagnosis 开盘窗口（930-1000）口径一致
+  let triggerIdx = -1;
+  for (let i = 0; i < buckets.length; i++) {
+    if (Number(buckets[i].minute) >= 1457) { triggerIdx = i; break; }
   }
+  if (triggerIdx === -1) triggerIdx = buckets.length - 1; // 数据未覆盖 14:57 时回退最后一个桶，避免条件永不命中
+  if (currentIndex !== triggerIdx) return false;
 
-  // ③ 量能较 14:00 放大 ≥ 50亿
-  const volNow = current.volume == null ? null : Number(current.volume);
-  const volBase = base && base.volume != null ? Number(base.volume) : null;
-  const volumeOk = volNow != null && !Number.isNaN(volNow) && volBase != null && !Number.isNaN(volBase) && volNow - volBase >= 50;
-
-  // ② 创业板指当前涨幅 < 14:00 涨幅（尾盘涨幅回落）
-  const cybNow = current.indexTline?.cyb?.changePct == null ? null : Number(current.indexTline.cyb.changePct);
-  const cybBase = base?.indexTline?.cyb?.changePct == null ? null : Number(base.indexTline.cyb.changePct);
-  const cybOk = cybNow != null && cybBase != null && cybNow < cybBase;
-
-  return emotionOk && volumeOk && cybOk;
+  // 当日科技情绪分时曾触及 -100（hasIce）；仅统计截至当前时点的分时，避免使用未来数据
+  return buckets.slice(0, currentIndex + 1).some((b) => {
+    const e = b.techEmotion == null ? null : Number(b.techEmotion);
+    return e != null && !Number.isNaN(e) && e <= -100;
+  });
 };
 
 // ============================================================
@@ -673,11 +662,12 @@ const checkBuyDayLowPersist = (replayStocks, code, currentMinute, buyDayLow) => 
 };
 
 // 尾盘抄底专属卖点检查（1 分钟维度）：
-//   1) 竞价（开盘首分钟）涨幅为正 → 开盘即卖，不再等待冲高回落
-//   2) 竞价涨幅非正 → 自开盘起逐分钟跟踪涨幅峰值，某分钟涨幅较此前峰值回落超过 0.5 个百分点即在该分钟卖出
+//   开盘后逐分钟环比跟踪：当前分钟涨幅（相对昨收）与上一分钟涨幅比较——
+//   一直在上涨（ curr > prev ）→ 先不卖出继续持有；首次开始下降（ curr < prev ）→ 在该分钟卖出。
+//   涨幅持平视为尚未开始下降，继续持有；开盘首分钟无上一分钟可比，仅作为基准；
+//   若全天持续上涨未出现下降则当日不卖，次日继续跟踪。
 // 数据源：getSingleStockTlineDataByDate 分钟级分时（磁盘/内存缓存）；拉取失败时回退用 5min 桶回放点近似
 const checkOpenRetraceSell = async (replayStocks, code, currentMinute, dateStr) => {
-  const RETRACE_PCT = 0.5;
   let points = [];
   try {
     const tline = await getSingleStockTlineDataByDate(code, parseInt(dateStr));
@@ -691,39 +681,27 @@ const checkOpenRetraceSell = async (replayStocks, code, currentMinute, dateStr) 
     points = getTlinePoints(replayStocks, code, currentMinute)
       .filter(p => p.change != null && !Number.isNaN(Number(p.change)) && p.lastPx != null && p.lastPx > 0);
   }
-  // 竞价涨幅为正：开盘首分钟直接卖出（按开盘价成交）
-  if (points.length > 0 && points[0].change > 0) {
-    return {
-      satisfied: true,
-      sellAtOpen: true,
-      triggerMinute: points[0].minute,
-      triggerPrice: points[0].lastPx,
-      peakChange: points[0].change,
-      currentChange: points[0].change,
-      retrace: 0,
-    };
-  }
-  // 竞价涨幅非正：逐分钟推进，创新高则更新峰值；否则检查自峰值回落是否超过 0.5 个百分点，首个触发分钟即卖点
-  let peakChange = null;
-  for (const pt of points) {
-    if (peakChange === null || pt.change > peakChange) {
-      peakChange = pt.change;
-      continue;
-    }
-    const retrace = peakChange - pt.change;
-    if (retrace > RETRACE_PCT) {
-      return { satisfied: true, sellAtOpen: false, triggerMinute: pt.minute, triggerPrice: pt.lastPx, peakChange, currentChange: pt.change, retrace };
+  // 逐分钟环比：首个较上一分钟开始下降的分钟即卖点（首分钟仅作基准）
+  for (let i = 1; i < points.length; i++) {
+    if (points[i].change < points[i - 1].change) {
+      return {
+        satisfied: true,
+        triggerMinute: points[i].minute,
+        triggerPrice: points[i].lastPx,
+        prevChange: points[i - 1].change,
+        currentChange: points[i].change,
+        retrace: points[i - 1].change - points[i].change,
+      };
     }
   }
   const last = points.length > 0 ? points[points.length - 1] : null;
   return {
     satisfied: false,
-    sellAtOpen: false,
     triggerMinute: null,
     triggerPrice: null,
-    peakChange,
+    prevChange: points.length > 1 ? points[points.length - 2].change : null,
     currentChange: last ? last.change : null,
-    retrace: peakChange != null && last ? peakChange - last.change : null,
+    retrace: null,
   };
 };
 
@@ -761,7 +739,7 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
   const dayHigh = stockPoints.reduce((mx, p) => Math.max(mx, p.lastPx), 0);
   const openPrice = stockPoints.length > 0 ? stockPoints[0].lastPx : null;
 
-  // ===== 尾盘抄底策略专属卖点：开盘后涨幅自当日高点回落 >0.5% 即卖出（1 分钟维度，独立于下方 6 项通用条件） =====
+  // ===== 尾盘抄底策略专属卖点：开盘后逐分钟环比跟踪，涨幅开始下降（较上一分钟回落）即卖出（1 分钟维度，独立于下方 6 项通用条件） =====
   if (position?.tailDipSell === true) {
     const retraceCheck = await checkOpenRetraceSell(replayStocks, code, minute, dateStr);
     // 卖出价/卖出时间用分钟级触发点（精确到触发分钟），而非当前 5min 桶
@@ -773,15 +751,13 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
       ? parseFloat((((sellPrice - buyPrice) / buyPrice) * 100).toFixed(2))
       : null;
     const condition = {
-      name: retraceCheck.sellAtOpen ? '竞价涨幅为正开盘即卖' : '开盘后涨幅回落超0.5%',
+      name: '开盘后涨幅开始下降即卖出',
       satisfied: retraceCheck.satisfied,
-      detail: retraceCheck.peakChange == null
+      detail: retraceCheck.currentChange == null
         ? '当前涨幅数据缺失，无法判断'
         : retraceCheck.satisfied
-          ? retraceCheck.sellAtOpen
-            ? `开盘竞价涨幅 ${retraceCheck.currentChange.toFixed(2)}% 为正，${sellDisplayTime} 按开盘价直接卖出`
-            : `${sellDisplayTime} 涨幅 ${retraceCheck.currentChange.toFixed(2)}%，较当日最高涨幅 ${retraceCheck.peakChange.toFixed(2)}% 回落 ${retraceCheck.retrace.toFixed(2)} 个百分点（>0.5%），按触发分钟价格卖出锁定冲高收益`
-          : `当日最高涨幅 ${retraceCheck.peakChange != null ? retraceCheck.peakChange.toFixed(2) : '--'}%，当前涨幅 ${retraceCheck.currentChange != null ? retraceCheck.currentChange.toFixed(2) : '--'}%，回落 ${retraceCheck.retrace != null ? retraceCheck.retrace.toFixed(2) : '--'} 个百分点（≤0.5%），继续持有`,
+          ? `${sellDisplayTime} 涨幅 ${retraceCheck.currentChange.toFixed(2)}%，较上一分钟 ${retraceCheck.prevChange != null ? retraceCheck.prevChange.toFixed(2) : '--'}% 开始下降（回落 ${retraceCheck.retrace != null ? retraceCheck.retrace.toFixed(2) : '--'} 个百分点），按触发分钟价格卖出`
+          : `开盘后涨幅持续上涨未开始下降（当前 ${retraceCheck.currentChange.toFixed(2)}%），继续持有`,
       subConditions: [],
     };
     const conditions = [condition];
@@ -797,10 +773,8 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
       resilienceScore: null,
       conditions,
       conclusion: condition.satisfied
-        ? (retraceCheck.sellAtOpen
-          ? `尾盘抄底专属卖点：竞价涨幅为正，${sellDisplayTime} 开盘即卖`
-          : `尾盘抄底专属卖点：${sellDisplayTime} 涨幅自当日高点回落超过 0.5%，卖出离场`)
-        : '尾盘抄底专属卖点未触发（竞价涨幅非正且涨幅回落未超过 0.5%），继续持有',
+        ? `尾盘抄底专属卖点：${sellDisplayTime} 涨幅开始下降（较上一分钟回落），卖出离场`
+        : '尾盘抄底专属卖点未触发（开盘后涨幅持续上涨尚未开始下降），继续持有',
       displayTime: sellDisplayTime,
     };
   }
@@ -1213,6 +1187,8 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   const isPureReportMode = isReportStrategy && !isTop5ReportGainMode; // 研报覆盖数最多/第二多
   const isMaSlopeMode = strategyId.includes('ma_slope'); // 均线斜率最陡峭（3日/5日）
   const useSecond = strategyId.includes('_2nd');
+  // 尾盘抄底反向选股：跌幅最大/抗分歧分数最低（取窗口指标最小值而非最大值）
+  const lowMode = strategyId.includes('_fall') || strategyId.includes('_resilience_low');
   const dayMatch = strategyId.match(/(\d+)d/);
   const days = dayMatch ? Number(dayMatch[1]) : null;
 
@@ -1235,13 +1211,14 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   if (isReportStrategy && days) {
     reportWinDates = winDates;
   }
-  const gainMode = strategyId === 'highest_gain' || strategyId.includes('_gain');
+  // 跌幅最大（_fall）与涨幅共用窗口涨幅指标，仅取最小值；其余照旧
+  const gainMode = strategyId === 'highest_gain' || strategyId.includes('_gain') || strategyId.includes('_fall');
 
   let best = null;
-  let bestVal = -Infinity;
+  let bestVal = lowMode ? Infinity : -Infinity;
   let bestMetric = null;
   let second = null;
-  let secondVal = -Infinity;
+  let secondVal = lowMode ? Infinity : -Infinity;
   let secondMetric = null;
   const top5Candidates = isTop5ReportGainMode ? [] : null;
   const reportIndex = isReportStrategy ? loadReportIndex() : null;
@@ -1279,14 +1256,14 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       val = computeWindowResilience(sc.code, winDates, dailyInfos, intradayResilience);
     }
     if (val == null || !Number.isFinite(val)) continue;
-    if (val > bestVal) {
+    if (lowMode ? val < bestVal : val > bestVal) {
       second = best;
       secondVal = bestVal;
       secondMetric = bestMetric;
       bestVal = val;
       best = sc;
       bestMetric = metric;
-    } else if (val > secondVal) {
+    } else if (lowMode ? val < secondVal : val > secondVal) {
       secondVal = val;
       second = sc;
       secondMetric = metric;
@@ -1823,7 +1800,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
         ? checkTailDipHit(timeBuckets, bi)
         : runBuyPointDiagnosis(timeBuckets, bi, campData)?.data?.allPassed === true;
       if (buyHit) {
-        const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
+        // 尾盘抄底策略 14:57 尾盘挂单买入（收盘集合竞价成交，价格取触发桶价），按挂单时间显示；其余策略按桶时间
+        const buyTime = strategy.tailDip === true ? '14:57' : fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
 
         // 策略切换逻辑：连续切换三日涨幅
         if (strategy.id === 'highest_3d_gain_switch') {
@@ -2083,7 +2061,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           ? checkTailDipHit(timeBuckets, bi)
           : runBuyPointDiagnosis(timeBuckets, bi, campData)?.data?.allPassed === true;
         if (buyHit) {
-          const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
+          // 尾盘抄底策略 14:57 尾盘挂单买入（收盘集合竞价成交，价格取触发桶价），按挂单时间显示；其余策略按桶时间
+          const buyTime = strategy.tailDip === true ? '14:57' : fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
 
           // 策略切换逻辑：连续切换三日涨幅
           if (strategy.id === 'highest_3d_gain_switch') {
