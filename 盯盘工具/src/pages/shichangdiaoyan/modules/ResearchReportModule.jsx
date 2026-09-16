@@ -24,6 +24,16 @@ import './ResearchReportModule.scss';
 const { Sider, Content } = Layout;
 const { Text } = Typography;
 
+// 如果第一行包含 markdown 单词（如 AI 生成的 ```markdown 标记行），自动删除第一行
+const removeMarkdownFirstLine = (content) => {
+  if (!content) return content;
+  const lines = content.split('\n');
+  if (lines.length > 0 && /markdown/i.test(lines[0])) {
+    return lines.slice(1).join('\n').replace(/^\s*\n+/, '');
+  }
+  return content;
+};
+
 const ResearchReportModule = () => {
   const [treeData, setTreeData] = useState([]);
   const [selectedKey, setSelectedKey] = useState(null);
@@ -569,11 +579,12 @@ const ResearchReportModule = () => {
         });
         const fullReport = response.data;
         setCurrentItem(fullReport);
-        setCurrentContent(fullReport.content || '');
+        const content = removeMarkdownFirstLine(fullReport.content || '');
+        setCurrentContent(content);
         setIsModified(false);
         
         if (editorInstance.current) {
-          editorInstance.current.setValue(fullReport.content || '');
+          editorInstance.current.setValue(content);
         }
       } catch (error) {
         console.error('获取研报内容失败', error);
@@ -834,7 +845,7 @@ const ResearchReportModule = () => {
                 params: { id: selectedKey }
               });
               setCurrentItem(reportResponse.data);
-              setCurrentContent(reportResponse.data.content || '');
+              setCurrentContent(removeMarkdownFirstLine(reportResponse.data.content || ''));
             } catch (error) {
               console.error('重新获取研报内容失败', error);
               setCurrentItem(updatedItem);
@@ -923,8 +934,15 @@ const ResearchReportModule = () => {
               'help'
             ],
             input: (value) => {
-              setCurrentContent(value);
+              const filtered = removeMarkdownFirstLine(value);
+              setCurrentContent(filtered);
               setIsModified(true);
+              // 内容更新时若首行包含 markdown 单词，立即重设编辑器内容以自动删除首行
+              if (filtered !== value) {
+                setTimeout(() => {
+                  editorInstance.current?.setValue(filtered);
+                }, 0);
+              }
             },
             after: () => {
               if (shouldFocusEditor) {
