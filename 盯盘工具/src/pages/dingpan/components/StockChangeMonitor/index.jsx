@@ -32,7 +32,7 @@ const StockChangeMonitor = ({
         padding: '2px 8px',
         borderRadius: 4,
         background: active ? 'var(--theme-color, #1677ff)' : 'transparent',
-        color: active ? '#fff' : 'var(--ios-gray, #8e8e93)',
+        color: active ? '#fff' : '#8e8e93',
         fontSize: 12,
     });
 
@@ -90,13 +90,13 @@ const StockChangeMonitor = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <span><StockOutlined /> 个股幅度异动</span>
                         <span style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <span style={{ color: 'var(--ios-red)', fontWeight: 600 }}>涨: {fullStockData.upCount}</span>
-                            <span style={{ color: 'var(--ios-gray)' }}>vs</span>
-                            <span style={{ color: 'var(--ios-green)', fontWeight: 600 }}>跌: {fullStockData.downCount}</span>
+                            <span style={{ fontWeight: 600, color: '#e11d48' }}>涨: {fullStockData.upCount}</span>
+                            <span style={{ color: '#64748b' }}>vs</span>
+                            <span style={{ fontWeight: 600, color: '#059669' }}>跌: {fullStockData.downCount}</span>
                         </span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
-                        <span style={{ color: 'var(--ios-gray)' }}>视图:</span>
+                        <span>视图:</span>
                         {viewModes.includes('grouped') && <span onClick={() => onStockViewModeChange('grouped')} style={viewBtnStyle(stockViewMode === 'grouped')}>分区</span>}
                         {viewModes.includes('merged') && <span onClick={() => onStockViewModeChange('merged')} style={viewBtnStyle(stockViewMode === 'merged')}>合并</span>}
                         {viewModes.includes('statistics') && <span onClick={() => onStockViewModeChange('statistics')} style={viewBtnStyle(stockViewMode === 'statistics')}>统计</span>}
@@ -123,7 +123,7 @@ const StockChangeMonitor = ({
                         <div className="yanbao-view">
                             <div className="yanbao-module">
                                 <div className="yanbao-module-title">
-                                    <RiseOutlined style={{ color: 'var(--ios-red)' }} /> 涨幅最大 Top 10
+                                    <RiseOutlined /> 涨幅最大 Top 10
                                 </div>
                                 {reportStockData.topGain.length > 0 ? (
                                     <div className="yanbao-stock-grid">
@@ -154,7 +154,7 @@ const StockChangeMonitor = ({
                             </div>
                             <div className="yanbao-module">
                                 <div className="yanbao-module-title">
-                                    <BookOutlined style={{ color: 'var(--ios-blue)' }} /> 研报覆盖最多 Top 10
+                                    <BookOutlined /> 研报覆盖最多 Top 10
                                 </div>
                                 {reportStockData.topCoverage.length > 0 ? (
                                     <div className="yanbao-stock-grid">
@@ -183,7 +183,7 @@ const StockChangeMonitor = ({
                             </div>
                             <div className="yanbao-module yanbao-intersection">
                                 <div className="yanbao-module-title">
-                                    <FireOutlined style={{ color: 'var(--ios-orange)' }} /> 涨幅 & 覆盖交集
+                                    <FireOutlined /> 涨幅 & 覆盖交集
                                     <span className="yanbao-module-subtitle">（同时出现在涨幅Top10和覆盖Top10中）</span>
                                 </div>
                                 {reportStockData.intersection.length > 0 ? (
@@ -249,8 +249,8 @@ const StockChangeMonitor = ({
                                 paddingBottom: 4,
                                 borderBottom: '1px solid rgba(60, 60, 67, 0.1)'
                             }}>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ios-blue)' }}>大于等于开盘价</span>
-                                <span style={{ fontSize: 12, color: 'var(--ios-gray)' }}>
+                                <span style={{ fontSize: 13, fontWeight: 600 }}>大于等于开盘价</span>
+                                <span style={{ fontSize: 12 }}>
                                     {fullStockData.aboveOpeningList.length} 只 · 涨 {fullStockData.aboveOpeningList.filter(s => s.changeValue > 0).length} / 跌 {fullStockData.aboveOpeningList.filter(s => s.changeValue < 0).length}
                                 </span>
                             </div>
@@ -270,8 +270,8 @@ const StockChangeMonitor = ({
                                 paddingBottom: 4,
                                 borderBottom: '1px solid rgba(60, 60, 67, 0.1)'
                             }}>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ios-orange)' }}>小于开盘价</span>
-                                <span style={{ fontSize: 12, color: 'var(--ios-gray)' }}>
+                                <span style={{ fontSize: 13, fontWeight: 600 }}>小于开盘价</span>
+                                <span style={{ fontSize: 12 }}>
                                     {fullStockData.belowOpeningList.length} 只 · 涨 {fullStockData.belowOpeningList.filter(s => s.changeValue > 0).length} / 跌 {fullStockData.belowOpeningList.filter(s => s.changeValue < 0).length}
                                 </span>
                             </div>

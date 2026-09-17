@@ -44,7 +44,7 @@ const LogicExploreModal = ({ open, onCancel, logicExploreStock, logicExploreLoad
                                 description={
                                     <div>
                                         <div style={{ marginBottom: 8 }}>暂无匹配的机构研报</div>
-                                        <div style={{ fontSize: 12, color: 'var(--ios-gray)' }}>可在「机构研报」页面查看最新研报</div>
+                                        <div style={{ fontSize: 12 }}>可在「机构研报」页面查看最新研报</div>
                                     </div>
                                 }
                             />
@@ -66,7 +66,7 @@ const LogicExploreModal = ({ open, onCancel, logicExploreStock, logicExploreLoad
                                                 {report.folderPath}
                                             </Tag>
                                         )}
-                                        {report.isImportant && <StarFilled style={{ color: 'var(--ios-orange)', fontSize: 12 }} />}
+                                        {report.isImportant && <StarFilled style={{ fontSize: 12 }} />}
                                         {report.isPinned && <PushpinOutlined style={{ color: getThemeColor(), fontSize: 12 }} />}
                                     </div>
                                     {report.content ? (
@@ -80,7 +80,7 @@ const LogicExploreModal = ({ open, onCancel, logicExploreStock, logicExploreLoad
                                             }}
                                         />
                                     ) : (
-                                        <div className="logic-explore-content" style={{ color: 'var(--ios-gray)', fontStyle: 'italic' }}>
+                                        <div className="logic-explore-content" style={{ fontStyle: 'italic' }}>
                                             暂无内容
                                         </div>
                                     )}
@@ -94,7 +94,7 @@ const LogicExploreModal = ({ open, onCancel, logicExploreStock, logicExploreLoad
                                 description={
                                     <div>
                                         <div style={{ marginBottom: 8 }}>暂无匹配的近期研报</div>
-                                        <div style={{ fontSize: 12, color: 'var(--ios-gray)' }}>可在「市场调研 → 近期研报」页面添加相关研报</div>
+                                        <div style={{ fontSize: 12 }}>可在「市场调研 → 近期研报」页面添加相关研报</div>
                                     </div>
                                 }
                             />

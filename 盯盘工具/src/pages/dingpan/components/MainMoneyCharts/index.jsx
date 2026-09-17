@@ -96,7 +96,7 @@ const formatMoneyYi = (v) => {
 };
 
 const MainMoneyCharts = ({ isMainMoneyExpanded, onToggleExpand, moneyStatus, volumeStatus, mainMoneyContainerRef, volumeContainerRef, themeColor, historyData, onCopyContext, copyContextLoading, fillContainer = false, latestMoneyValue, latestVolumeValue, volumeDiffValue, onVolumeRefresh, style, mainMoneyDetailWidth = 260 }) => {
-    const [fiveMinAgg, setFiveMinAgg] = useState(false);
+    const [fiveMinAgg, setFiveMinAgg] = useState(true);
 
     const detailData = useMemo(() => {
         if (!historyData || historyData.length === 0) return [];
@@ -150,18 +150,18 @@ const MainMoneyCharts = ({ isMainMoneyExpanded, onToggleExpand, moneyStatus, vol
                             </div>
                         )}
                         {latestMoneyValue !== undefined && latestMoneyValue !== null && (
-                            <div className="chart-latest-money" style={{ color: latestMoneyValue >= 0 ? 'var(--ios-red)' : 'var(--ios-green)' }}>
+                            <div className="chart-latest-money" style={{ color: latestMoneyValue > 0 ? '#e11d48' : latestMoneyValue < 0 ? '#059669' : '#12213a' }}>
                                 {formatMoneyYi(latestMoneyValue)}
                             </div>
                         )}
                         {isMainMoneyExpanded && latestVolumeValue !== undefined && latestVolumeValue !== null && (
                             <div className="chart-volume-inline" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ios-gray)' }}>成交量</span>
-                                <span className="chart-latest-money" style={{ color: latestVolumeValue >= 0 ? 'var(--ios-blue)' : 'var(--ios-green)' }}>
+                                <span style={{ fontSize: 11, fontWeight: 600, color: '#12213a' }}>成交量</span>
+                                <span className="chart-latest-money" style={{ color: parseFloat(latestVolumeValue) > 0 ? '#e11d48' : latestVolumeValue < 0 ? '#059669' : '#12213a' }}>
                                     {formatMoneyYi(latestVolumeValue)}
                                 </span>
-                                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ios-gray)' }}>diff</span>
-                                <span className="chart-latest-money" style={{ color: volumeDiffValue != null && volumeDiffValue >= 0 ? 'var(--ios-blue)' : 'var(--ios-green)' }}>
+                                <span style={{ fontSize: 11, fontWeight: 600, color: '#12213a' }}>diff</span>
+                                <span className="chart-latest-money" style={{ color: (volumeDiffValue != null && parseFloat(volumeDiffValue) > 0) ? '#e11d48' : (volumeDiffValue != null && volumeDiffValue < 0) ? '#059669' : '#12213a' }}>
                                     {formatMoneyYi(volumeDiffValue != null ? volumeDiffValue : null)}
                                 </span>
                             </div>

@@ -20,7 +20,6 @@ const IndexOverlayFullscreenModal = ({ open, onCancel, themeColor }) => (
         bodyStyle={{
             padding: '20px 24px',
             minHeight: 'calc(100vh - 120px)',
-            background: 'linear-gradient(180deg, var(--ios-gray-6) 0%, var(--ios-secondary-system-bg) 100%)',
             height: 'calc(100vh - 120px)',
             display: 'flex',
             flexDirection: 'column'

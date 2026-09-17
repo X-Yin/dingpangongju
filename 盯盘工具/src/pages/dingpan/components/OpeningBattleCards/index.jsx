@@ -39,12 +39,10 @@ const OpeningBattleCards = ({
                     <div key={blockName} className="jingjia-block-item">
                         <div className="jingjia-block-header">
                             <Tag color={tagColor} style={{ fontSize: '11px', fontWeight: 600 }}>{blockName}</Tag>
-                            <span style={{ fontSize: '11px', color: 'var(--ios-gray)' }}>{grouped[blockName].length}只</span>
+                            <span style={{ fontSize: '11px' }}>{grouped[blockName].length}只</span>
                         </div>
                         <div className="jingjia-grid">
                             {grouped[blockName].map((item, idx) => {
-                                const isUp = item.change >= 0;
-                                const color = isUp ? 'var(--ios-red)' : 'var(--ios-green)';
                                 return (
                                     <div
                                         key={idx}
@@ -52,8 +50,8 @@ const OpeningBattleCards = ({
                                         onClick={() => onStockClick({ name: item.stockName, code: item.code, change: item.change })}
                                         style={{ cursor: 'pointer', ...borderStyle(themeColor) }}
                                     >
-                                        <Text strong style={{ fontSize: '13px', ...titleStyle(themeColor) }}>{item.stockName}</Text>
-                                        <Text strong style={{ color: color, fontSize: '13px', ...numberStyle(themeColor) }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
+                                        <Text strong style={{ fontSize: '13px', color: '#12213a', ...titleStyle(themeColor) }}>{item.stockName}</Text>
+                                        <Text strong style={{ fontSize: '13px', color: item.change > 0 ? '#e11d48' : item.change < 0 ? '#059669' : '#12213a', ...numberStyle(themeColor) }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
                                     </div>
                                 );
                             })}
@@ -73,9 +71,9 @@ const OpeningBattleCards = ({
                             <Card
                                 title={
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                        <span><RiseOutlined style={{ color: 'var(--ios-red)' }} /> 竞价抢筹监控</span>
+                                        <span><RiseOutlined /> 竞价抢筹监控</span>
                                         {emotionSuggestion?.canTrade && (
-                                            <span style={{ fontSize: 12, color: 'var(--ios-orange)', fontWeight: 'normal' }}>
+                                            <span style={{ fontSize: 12, fontWeight: 'normal' }}>
                                                 {emotionSuggestion.message}
                                             </span>
                                         )}
@@ -85,7 +83,7 @@ const OpeningBattleCards = ({
                                 variant="borderless"
                                 extra={
                                     <CloseOutlined
-                                        style={{ cursor: 'pointer', color: 'var(--ios-gray)' }}
+                                        style={{ cursor: 'pointer' }}
                                         onClick={(e) => { e.stopPropagation(); onCloseJingJia(); }}
                                     />
                                 }
@@ -99,9 +97,9 @@ const OpeningBattleCards = ({
                             <Card
                                 title={
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                        <span><ThunderboltOutlined style={{ color: 'var(--ios-orange)' }} /> 开盘主动拉升</span>
+                                        <span><ThunderboltOutlined /> 开盘主动拉升</span>
                                         {emotionSuggestion?.canTrade && (
-                                            <span style={{ fontSize: 12, color: 'var(--ios-orange)', fontWeight: 'normal' }}>
+                                            <span style={{ fontSize: 12, fontWeight: 'normal' }}>
                                                 {emotionSuggestion.message}
                                             </span>
                                         )}
@@ -111,7 +109,7 @@ const OpeningBattleCards = ({
                                 variant="borderless"
                                 extra={
                                     <CloseOutlined
-                                        style={{ cursor: 'pointer', color: 'var(--ios-gray)' }}
+                                        style={{ cursor: 'pointer' }}
                                         onClick={(e) => { e.stopPropagation(); onCloseKaiPanZhuDong(); }}
                                     />
                                 }
@@ -127,12 +125,12 @@ const OpeningBattleCards = ({
                 <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
                     <Col span={24}>
                         <Card
-                            title={<><FallOutlined style={{ color: 'var(--ios-green)' }} /> 开盘持续下挫</>}
+                            title={<><FallOutlined /> 开盘持续下挫</>}
                             className="monitor-card zhudong-card"
                             variant="borderless"
                             extra={
                                 <CloseOutlined
-                                    style={{ cursor: 'pointer', color: 'var(--ios-gray)' }}
+                                    style={{ cursor: 'pointer' }}
                                     onClick={(e) => { e.stopPropagation(); onCloseKaiPanXiaCuo(); }}
                                 />
                             }

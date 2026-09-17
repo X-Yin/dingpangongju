@@ -472,6 +472,7 @@ const MultiStockTimeLineModal = ({
   compactHeader = false,
 }) => {
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false); // 手动刷新蒙层
   const [stockInfoList, setStockInfoList] = useState([]);
   const [currentStocks, setCurrentStocks] = useState(() => readPersistedStocks(storageKey, stocks || [], includeDefaultIndex));
   const [showBatchPanel, setShowBatchPanel] = useState(false);
@@ -483,6 +484,7 @@ const MultiStockTimeLineModal = ({
   const [rightAxisLabels, setRightAxisLabels] = useState([]);
   const [replayVersion, setReplayVersion] = useState(0);
   const fetchIdRef = useRef(0);
+  const refreshingRef = useRef(false); // 手动刷新进行中标记，防止重复触发
   const chartRef = useRef(null);
   const containerRef = useRef(null);
   const tooltipRef = useRef(null);
@@ -922,19 +924,30 @@ const MultiStockTimeLineModal = ({
   }, [currentStocks]);
 
   // 手动刷新：重新拉取当前分组所有股票的分时数据并重绘图表，同时刷新自选股涨幅与主力资金
-  const handleRefresh = useCallback(() => {
-    fetchMainFund();
-    axios
-      .get(`http://${local_ip}:3000/get_all_stock_data`)
-      .then((res) => {
-        const map = {};
-        (res.data || []).forEach((s) => {
-          if (s.code) map[s.code] = s.change;
-        });
-        setStockChangeMap(map);
-      })
-      .catch((error) => console.error('获取自选股涨幅失败:', error));
-    fetchTimeLineData(currentStocks);
+  // 刷新期间在组件内容上显示蒙层，避免重复点击
+  const handleRefresh = useCallback(async () => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        fetchMainFund(),
+        axios
+          .get(`http://${local_ip}:3000/get_all_stock_data`)
+          .then((res) => {
+            const map = {};
+            (res.data || []).forEach((s) => {
+              if (s.code) map[s.code] = s.change;
+            });
+            setStockChangeMap(map);
+          })
+          .catch((error) => console.error('获取自选股涨幅失败:', error)),
+        fetchTimeLineData(currentStocks),
+      ]);
+    } finally {
+      refreshingRef.current = false;
+      setRefreshing(false);
+    }
   }, [currentStocks, fetchMainFund, fetchTimeLineData]);
 
   const updateRightAxisLabels = useCallback(() => {
@@ -986,7 +999,6 @@ const MultiStockTimeLineModal = ({
       label.y = Math.max(10, Math.min(containerHeight - 10, label.y));
     });
 
-    console.log('>> label is', labels);
     const visibleLabels = labels.filter(i => i.name !== '科创指数' && i.name !== '创业板指数');
     // 统计过去一分钟内涨幅最高的前三名股票，标注 1/2/3 序号
     visibleLabels
@@ -1317,6 +1329,11 @@ const MultiStockTimeLineModal = ({
       : stockInfoList;
     return (
     <div className="multi-stock-timeline-modal">
+      {refreshing && (
+        <div className="mtlm-refresh-mask">
+          <Spin size="large" tip="刷新中..." />
+        </div>
+      )}
       <div className="mtlm-stock-tags-wrapper">
         {!tagsCollapsed && (
           <div className="mtlm-stock-tags">

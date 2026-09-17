@@ -44,7 +44,7 @@ const HistoryModal = ({ open, onCancel, history, jisuYidongUpList, jisuYidongDow
                                     <div className="history-desc">
                                         <Space split={<Divider type="vertical" />} wrap>
                                             <Text type="secondary"><ClockCircleOutlined /> {item.time}</Text>
-                                            <Text strong style={{ color: item.type === 'up' ? 'var(--ios-red)' : 'var(--ios-green)' }}>
+                                            <Text strong>
                                                 异动幅度: {item.changeDiff}
                                             </Text>
                                         </Space>
@@ -70,7 +70,7 @@ const HistoryModal = ({ open, onCancel, history, jisuYidongUpList, jisuYidongDow
                                                 avatar={<Text type="secondary">{index + 1}.</Text>}
                                                 title={
                                                     <Space>
-                                                        <Text strong style={{ color: 'var(--ios-red)' }}>{item.stockName} ({item.code?.replace('sh', '').replace('sz', '')})</Text>
+                                                        <Text strong>{item.stockName} ({item.code?.replace('sh', '').replace('sz', '')})</Text>
                                                         <Tag color="error" bordered={false}>{item.change}%</Tag>
                                                     </Space>
                                                 }
@@ -102,7 +102,7 @@ const HistoryModal = ({ open, onCancel, history, jisuYidongUpList, jisuYidongDow
                                                 avatar={<Text type="secondary">{index + 1}.</Text>}
                                                 title={
                                                     <Space>
-                                                        <Text strong style={{ color: 'var(--ios-green)' }}>{item.stockName} ({item.code?.replace('sh', '').replace('sz', '')})</Text>
+                                                        <Text strong>{item.stockName} ({item.code?.replace('sh', '').replace('sz', '')})</Text>
                                                         <Tag color="success" bordered={false}>{item.change}%</Tag>
                                                     </Space>
                                                 }

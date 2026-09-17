@@ -21,7 +21,7 @@ const AddStockModal = ({
     themeColor,
 }) => (
     <Modal
-        title={<span><PlusOutlined style={{ color: 'var(--ios-blue)', marginRight: '8px' }} />新增监控股票</span>}
+        title={<span><PlusOutlined style={{ marginRight: '8px' }} />新增监控股票</span>}
         open={open}
         onCancel={onCancel}
         onOk={onOk}
@@ -64,7 +64,7 @@ const AddStockModal = ({
                     <Tooltip title="复制风险偏好系数定义">
                         <Button
                             type="text"
-                            icon={<CopyOutlined style={{ fontSize: '14px', color: 'var(--ios-blue)' }} />}
+                            icon={<CopyOutlined style={{ fontSize: '14px' }} />}
                             onClick={() => {
                                 const text = `风险偏好系数定义：用半年甚至一年以后的远期叙事来为当下的股票定价是风险偏好高的股票。用该季度或者是下个季度的业绩叙事来为当下的股票定价是风险偏好低的股票，从 1-10 进行打分。${newStockName || '该股票'} 的风险偏好系数是多少。`;
                                 navigator.clipboard.writeText(text).then(() => {

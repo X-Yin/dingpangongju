@@ -47,7 +47,7 @@ const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockSto
                 </Card>
             ) : (
                 <Card
-                    title={<><RiseOutlined style={{ color: 'var(--ios-red)', marginRight: 8 }} /> 涨幅前十</>}
+                    title={<><RiseOutlined style={{ marginRight: 8 }} /> 涨幅前十</>}
                     className="monitor-card"
                     variant="borderless"
                     bodyStyle={{ padding: '12px 14px' }}
@@ -129,7 +129,7 @@ const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockSto
                 </Card>
             ) : (
                 <Card
-                    title={<><FallOutlined style={{ color: 'var(--ios-green)', marginRight: 8 }} /> 跌幅前十</>}
+                    title={<><FallOutlined style={{ marginRight: 8 }} /> 跌幅前十</>}
                     className="monitor-card"
                     variant="borderless"
                     bodyStyle={{ padding: '12px 14px' }}

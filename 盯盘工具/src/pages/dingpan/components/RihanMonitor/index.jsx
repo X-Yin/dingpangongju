@@ -55,7 +55,7 @@ const RihanMonitor = ({ rihanData, themeColor, onRefresh }) => {
                                 <span className={`item-value ${isUp ? 'up' : 'down'}`} style={numberStyle(themeColor)}>
                                     {item.change}
                                 </span>
-                                {isUp ? <CaretUpOutlined style={{ fontSize: '10px', color: 'var(--ios-red)' }} /> : <CaretDownOutlined style={{ fontSize: '10px', color: 'var(--ios-green)' }} />}
+                                {isUp ? <CaretUpOutlined style={{ fontSize: '10px' }} /> : <CaretDownOutlined style={{ fontSize: '10px' }} />}
                             </div>
                         </div>
                     );

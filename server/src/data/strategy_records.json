@@ -1,12 +1,62 @@
 [
   {
-    "id": "dd7150e190e4e2ce",
-    "time": "2026-09-16 14:51:07",
+    "id": "496a0b935db39fe1",
+    "time": "2026-09-17 09:35:57",
     "read": true,
     "strategyId": "volume_price_surge",
     "title": "✅ 量价齐升",
-    "description": "成交量放大 <strong>118亿</strong>（≥100亿），资金净流入294.9→304.3亿（≥10亿，流入增加），创业板5分钟上涨1.97%。量价资金三者共振，多方占优。",
+    "description": "成交量放大 <strong>496亿</strong>（≥100亿），资金净流入15.0→25.8亿（≥10亿，流入增加），创业板5分钟上涨1.16%。量价资金三者共振，多方占优。",
     "severity": "medium",
     "isBullish": true
+  },
+  {
+    "id": "f6145c342cda24c1",
+    "time": "2026-09-17 09:35:57",
+    "read": true,
+    "strategyId": "opening_net_inflow",
+    "title": "✅ 开盘资金未明显流出-市场或有回暖",
+    "description": "开盘 5min 资金净流入 <strong>+16.4亿</strong>，按照历史规律，当天大概率大盘会回暖，可以适当出手。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "20ddd80e2d8c62a1",
+    "time": "2026-09-17 09:54:02",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>866亿</strong>（≥100亿），主力资金净流出加速（20.3→-27.8亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "e0f1cfd8e099184c",
+    "time": "2026-09-17 09:55:03",
+    "read": true,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-29.4亿</strong>（净流出）<br/>• 科技分时情绪 -20.9 → -13.5（上升 7.4）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "34e3628fd0622b8a",
+    "time": "2026-09-17 09:59:03",
+    "read": true,
+    "strategyId": "outflow_fake_rally",
+    "title": "⚠️ 资金流出但指数上涨-诱多信号",
+    "description": "主力资金净流出扩大（-63.9亿 → -69.7亿），但创业板/科创板指数仍在上涨，可能是诱多信号，注意风险。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "08e1637b4b8b8b6c",
+    "time": "2026-09-17 10:22:30",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>123亿</strong>（≥100亿），主力资金净流出加速（-120.3→-189.7亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
   }
 ]

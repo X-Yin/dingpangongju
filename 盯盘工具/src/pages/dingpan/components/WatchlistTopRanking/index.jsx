@@ -40,18 +40,20 @@ const WatchlistTopRanking = ({ stocks = [], onStockClick, themeColor }) => {
     const avgDeclineText = declineCount > 0 ? `${avgDecline.toFixed(2)}%` : '--';
 
     // tag 背景跟随全局主题色（App.jsx 通过 --theme-color-rgb 注入），带透明度，未设置时回退默认浅灰
-    const tagStyle = { fontSize: 11, fontWeight: 500, color: 'var(--ios-label)', background: 'rgba(var(--theme-color-rgb, 22, 119, 255), 0.15)', borderRadius: 4, padding: '1px 6px', whiteSpace: 'nowrap' };
+    const tagStyle = { fontSize: 11, fontWeight: 500, color: '#12213a', background: 'rgba(var(--theme-color-rgb, 22, 119, 255), 0.15)', borderRadius: 4, padding: '1px 6px', whiteSpace: 'nowrap' };
+    const upColorStyle = { color: '#e11d48' };
+    const downColorStyle = { color: '#059669' };
 
     const statsTags = (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
             <span style={tagStyle}>
-                上涨 vs 下跌：<span style={{ color: 'var(--ios-red)' }}>{upCount}</span> : <span style={{ color: 'var(--ios-green)' }}>{downCount}</span>
+                上涨 vs 下跌：<span style={upColorStyle}>{upCount}</span> : <span style={downColorStyle}>{downCount}</span>
             </span>
             <span style={tagStyle}>
-                大于开盘价：<span style={{ color: 'var(--ios-red)' }}>{aboveOpenCount}</span> : <span style={{ color: 'var(--ios-green)' }}>{belowOpenCount}</span>
+                大于开盘价：<span style={upColorStyle}>{aboveOpenCount}</span> : <span style={downColorStyle}>{belowOpenCount}</span>
             </span>
             <span style={tagStyle}>
-                平均拉升：<span style={{ color: 'var(--ios-red)' }}>{avgSurgeText}</span> : <span style={{ color: 'var(--ios-green)' }}>{avgDeclineText}</span>
+                平均拉升：<span style={surgeCount > 0 ? upColorStyle : undefined}>{avgSurgeText}</span> : <span style={declineCount > 0 ? downColorStyle : undefined}>{avgDeclineText}</span>
             </span>
         </div>
     );
@@ -89,7 +91,7 @@ const WatchlistTopRanking = ({ stocks = [], onStockClick, themeColor }) => {
         <Card
             title={
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <RiseOutlined style={{ color: 'var(--ios-red)' }} />
+                    <RiseOutlined />
                     <span style={{ fontSize: 15, fontWeight: 600 }}>自选股涨跌幅前十</span>
                 </div>
             }

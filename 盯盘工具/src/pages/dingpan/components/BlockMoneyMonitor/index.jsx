@@ -30,7 +30,7 @@ const BlockMoneyMonitor = ({ blockMoneyData, blockMoneyAlerts, displayBlocks, on
                             <span
                                 key={idx}
                                 className="block-money-alert-tag"
-                                style={{ background: isBigInflow ? 'var(--ios-red)' : 'var(--ios-green)', ...numberStyle(themeColor) }}
+                                style={{ ...numberStyle(themeColor) }}
                             >
                                 {alert.block} {isBigInflow ? '流入' : '流出'} {isBigInflow ? '+' : '-'}{yiValue.toFixed(1)}亿
                             </span>

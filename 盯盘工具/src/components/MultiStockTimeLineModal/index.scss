@@ -75,6 +75,25 @@
 }
 
 .multi-stock-timeline-modal {
+  position: relative;
+
+  /* 手动刷新蒙层：覆盖组件内容区，阻止交互 */
+  .mtlm-refresh-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(2px);
+    border-radius: inherit;
+    cursor: wait;
+  }
+
   .mtlm-add-btn {
     height: 40px;
     padding: 0 20px;

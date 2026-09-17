@@ -32,7 +32,7 @@ const StockAlertCard = ({ stockUpAlerts, stockDownAlerts, waveList, onStockClick
             title={
                 <div className="all-stock-card-title">
                     <div className="all-stock-card-title-icon" style={{ background: 'linear-gradient(135deg, rgba(245, 34, 45, 0.18), rgba(250, 173, 20, 0.12)), rgba(255, 255, 255, 0.65)' }}>
-                        <StockOutlined style={{ color: 'var(--ios-red)' }} />
+                        <StockOutlined />
                     </div>
                     <div className="all-stock-card-title-content">
                         <span>个股异动监控</span>
@@ -46,10 +46,10 @@ const StockAlertCard = ({ stockUpAlerts, stockDownAlerts, waveList, onStockClick
             style={{ height: 'auto' }}
             extra={
                 <div className="all-stock-card-extra">
-                    <span className="all-stock-extra-dot" style={{ background: 'var(--ios-red)', boxShadow: '0 0 10px rgba(245, 34, 45, 0.8)' }} />
+                    <span className="all-stock-extra-dot" style={{ boxShadow: '0 0 10px rgba(245, 34, 45, 0.8)' }} />
                     <Text>涨 {stockUpAlerts.length}</Text>
                     <Text style={{ color: 'rgba(71, 85, 105, 0.5)', margin: '0 2px' }}>/</Text>
-                    <Text style={{ color: 'var(--ios-green)' }}>跌 {stockDownAlerts.length}</Text>
+                    <Text>跌 {stockDownAlerts.length}</Text>
                 </div>
             }
         >
@@ -57,7 +57,7 @@ const StockAlertCard = ({ stockUpAlerts, stockDownAlerts, waveList, onStockClick
                 <Row gutter={[8, 8]}>
                     <Col span={12}>
                         <div style={{ marginBottom: 6 }}>
-                            <Text strong style={{ fontSize: '11px', color: 'var(--ios-red)' }}>上涨</Text>
+                            <Text strong style={{ fontSize: '11px' }}>上涨</Text>
                         </div>
                         {stockUpAlerts.length > 0 ? (
                             <div className="alert-items-grid" style={{ gridTemplateColumns: gridCols }}>
@@ -69,7 +69,7 @@ const StockAlertCard = ({ stockUpAlerts, stockDownAlerts, waveList, onStockClick
                     </Col>
                     <Col span={12}>
                         <div style={{ marginBottom: 6 }}>
-                            <Text strong style={{ fontSize: '11px', color: 'var(--ios-green)' }}>下跌</Text>
+                            <Text strong style={{ fontSize: '11px' }}>下跌</Text>
                         </div>
                         {stockDownAlerts.length > 0 ? (
                             <div className="alert-items-grid" style={{ gridTemplateColumns: gridCols }}>

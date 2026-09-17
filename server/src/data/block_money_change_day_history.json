@@ -1,5 +1,373 @@
 [
   {
+    "date": "20260917",
+    "data": [
+      {
+        "money": 2445753856,
+        "block": "海工装备",
+        "blockCode": "90.BK0601",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0601"
+      },
+      {
+        "money": 2387449856,
+        "block": "新零售",
+        "blockCode": "90.BK0825",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0825"
+      },
+      {
+        "money": 1830718944,
+        "block": "CRO",
+        "blockCode": "90.BK0899",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0899"
+      },
+      {
+        "money": 1535013120,
+        "block": "海洋经济",
+        "blockCode": "90.BK0623",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0623"
+      },
+      {
+        "money": 1463108960,
+        "block": "减速器",
+        "blockCode": "90.BK1100",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1100"
+      },
+      {
+        "money": 1125202288,
+        "block": "创新医疗服务",
+        "blockCode": "90.BK1658",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1658"
+      },
+      {
+        "money": 819952128,
+        "block": "玻璃基板",
+        "blockCode": "90.BK1175",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1175"
+      },
+      {
+        "money": 789119488,
+        "block": "创新药",
+        "blockCode": "90.BK1106",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1106"
+      },
+      {
+        "money": 775979808,
+        "block": "汽车整车",
+        "blockCode": "90.BK1029",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1029"
+      },
+      {
+        "money": 355421696,
+        "block": "特高压",
+        "blockCode": "90.BK0918",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0918"
+      },
+      {
+        "money": 305363200,
+        "block": "冰雪经济",
+        "blockCode": "90.BK1185",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1185"
+      },
+      {
+        "money": 286493984,
+        "block": "农业种植",
+        "blockCode": "90.BK0888",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0888"
+      },
+      {
+        "money": 109713600,
+        "block": "第四代半导体",
+        "blockCode": "90.BK1121",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1121"
+      },
+      {
+        "money": 77796608,
+        "block": "人形机器人",
+        "blockCode": "90.BK1184",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1184"
+      },
+      {
+        "money": 76099328,
+        "block": "先进封装",
+        "blockCode": "90.BK1101",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1101"
+      },
+      {
+        "money": -15467664,
+        "block": "油气资源",
+        "blockCode": "90.BK1649",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1649"
+      },
+      {
+        "money": -98806640,
+        "block": "煤化工概念",
+        "blockCode": "90.BK0492",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0492"
+      },
+      {
+        "money": -119284848,
+        "block": "旅游概念",
+        "blockCode": "90.BK0692",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0692"
+      },
+      {
+        "money": -123365417,
+        "block": "华为欧拉",
+        "blockCode": "90.BK1013",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1013"
+      },
+      {
+        "money": -129097408,
+        "block": "短剧互动游戏",
+        "blockCode": "90.BK1151",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1151"
+      },
+      {
+        "money": -219253104,
+        "block": "培育钻石",
+        "blockCode": "90.BK1023",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1023"
+      },
+      {
+        "money": -261631232,
+        "block": "光刻机",
+        "blockCode": "90.BK0884",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0884"
+      },
+      {
+        "money": -286378864,
+        "block": "飞行汽车(eVTOL)",
+        "blockCode": "90.BK1157",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1157"
+      },
+      {
+        "money": -348400816,
+        "block": "华为昇腾",
+        "blockCode": "90.BK0995",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0995"
+      },
+      {
+        "money": -361598560,
+        "block": "虚拟电厂",
+        "blockCode": "90.BK0958",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0958"
+      },
+      {
+        "money": -367940496,
+        "block": "白酒",
+        "blockCode": "90.BK0896",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0896"
+      },
+      {
+        "money": -404576512,
+        "block": "碳化硅",
+        "blockCode": "90.BK0977",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0977"
+      },
+      {
+        "money": -634631424,
+        "block": "光纤概念",
+        "blockCode": "90.BK1660",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1660"
+      },
+      {
+        "money": -666863360,
+        "block": "铜缆高速连接",
+        "blockCode": "90.BK1168",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1168"
+      },
+      {
+        "money": -718213824,
+        "block": "航天航空",
+        "blockCode": "90.BK0480",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0480"
+      },
+      {
+        "money": -744481520,
+        "block": "跨境支付",
+        "blockCode": "90.BK1071",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1071"
+      },
+      {
+        "money": -830015488,
+        "block": "智能驾驶",
+        "blockCode": "90.BK0802",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0802"
+      },
+      {
+        "money": -830610656,
+        "block": "小红书概念",
+        "blockCode": "90.BK1187",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1187"
+      },
+      {
+        "money": -857912336,
+        "block": "氟化工概念",
+        "blockCode": "90.BK0690",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0690"
+      },
+      {
+        "money": -996768768,
+        "block": "第三代半导体",
+        "blockCode": "90.BK0952",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0952"
+      },
+      {
+        "money": -1194301696,
+        "block": "绿色电力",
+        "blockCode": "90.BK1024",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1024"
+      },
+      {
+        "money": -1293012224,
+        "block": "超级电容",
+        "blockCode": "90.BK0703",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0703"
+      },
+      {
+        "money": -1482294464,
+        "block": "大飞机",
+        "blockCode": "90.BK0814",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0814"
+      },
+      {
+        "money": -1806630912,
+        "block": "光伏概念",
+        "blockCode": "90.BK0588",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0588"
+      },
+      {
+        "money": -1972390656,
+        "block": "可控核聚变",
+        "blockCode": "90.BK1163",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1163"
+      },
+      {
+        "money": -2088961344,
+        "block": "稀土永磁",
+        "blockCode": "90.BK0578",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0578"
+      },
+      {
+        "money": -2106134304,
+        "block": "华为海思",
+        "blockCode": "90.BK1180",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1180"
+      },
+      {
+        "money": -2224298496,
+        "block": "军工",
+        "blockCode": "90.BK0490",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0490"
+      },
+      {
+        "money": -2568440832,
+        "block": "卫星互联网",
+        "blockCode": "90.BK0921",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0921"
+      },
+      {
+        "money": -3029829120,
+        "block": "CPO概念",
+        "blockCode": "90.BK1128",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1128"
+      },
+      {
+        "money": -3208531456,
+        "block": "MLCC",
+        "blockCode": "90.BK0890",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0890"
+      },
+      {
+        "money": -3260463360,
+        "block": "液冷服务器",
+        "blockCode": "90.BK1138",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1138"
+      },
+      {
+        "money": -3494857472,
+        "block": "机器人概念",
+        "blockCode": "90.BK1090",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1090"
+      },
+      {
+        "money": -3621162240,
+        "block": "光通信模块",
+        "blockCode": "90.BK1136",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1136"
+      },
+      {
+        "money": -3661479424,
+        "block": "抖音概念(字节概念)",
+        "blockCode": "90.BK0923",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0923"
+      },
+      {
+        "money": -4764497920,
+        "block": "商业航天",
+        "blockCode": "90.BK0963",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0963"
+      },
+      {
+        "money": -4914645760,
+        "block": "黄金概念",
+        "blockCode": "90.BK0547",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0547"
+      },
+      {
+        "money": -5842472704,
+        "block": "锂电池概念",
+        "blockCode": "90.BK0574",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0574"
+      },
+      {
+        "money": -6876855040,
+        "block": "中证500",
+        "blockCode": "90.BK0701",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0701"
+      },
+      {
+        "money": -7364721664,
+        "block": "半导体概念",
+        "blockCode": "90.BK0917",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0917"
+      },
+      {
+        "money": -9633668096,
+        "block": "PCB",
+        "blockCode": "90.BK0877",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0877"
+      },
+      {
+        "money": -10364862720,
+        "block": "存储芯片",
+        "blockCode": "90.BK1137",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK1137"
+      },
+      {
+        "money": -13458928,
+        "block": "保险Ⅱ",
+        "blockCode": "90.BK0474",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0474"
+      },
+      {
+        "money": -974575392,
+        "block": "银行Ⅱ",
+        "blockCode": "90.BK0475",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0475"
+      },
+      {
+        "money": -1525700304,
+        "block": "证券Ⅱ",
+        "blockCode": "90.BK0473",
+        "jumpUrl": "https://quote.eastmoney.com/center/gridlist.html#boards2-90.BK0473"
+      }
+    ],
+    "techRatio": 5.26,
+    "totalMoney": 884485632298,
+    "techBlockMoney": 46503433616
+  },
+  {
     "date": "20260916",
     "data": [
       {

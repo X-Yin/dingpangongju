@@ -1,23 +1,10 @@
 .logic-explore-modal {
-  .ant-modal-content {
-    border-radius: var(--ios-r-lg);
-    background: var(--ios-glass);
-    box-shadow: var(--ios-shadow-3);
-    backdrop-filter: var(--ios-blur);
-    font-family: var(--ios-font);
-  }
-
   .ant-modal-header {
     padding: 16px 24px;
-    border-bottom: 1px solid var(--ios-separator);
-    background: var(--ios-glass);
-    backdrop-filter: var(--ios-blur);
-    border-radius: var(--ios-r-lg) var(--ios-r-lg) 0 0;
 
     .ant-modal-title {
       font-size: 16px;
       font-weight: 600;
-      color: var(--ios-label);
       display: flex;
       align-items: center;
       gap: 8px;

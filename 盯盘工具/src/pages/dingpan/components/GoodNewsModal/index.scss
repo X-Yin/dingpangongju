@@ -47,21 +47,18 @@
   .good-news-title {
     font-size: 14px;
     font-weight: 600;
-    color: var(--ios-label);
     margin-bottom: 6px;
     line-height: 1.5;
   }
 
   .good-news-time {
     font-size: 12px;
-    color: var(--ios-label-2);
     font-variant-numeric: tabular-nums;
     margin-bottom: 10px;
   }
 
   .good-news-content {
     font-size: 13px;
-    color: var(--ios-label-2);
     line-height: 1.8;
     white-space: pre-wrap;
     word-break: break-word;

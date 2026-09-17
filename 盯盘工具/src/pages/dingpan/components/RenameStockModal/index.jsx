@@ -6,7 +6,7 @@ const { Text } = Typography;
 
 const RenameStockModal = ({ open, onCancel, onOk, renameStockCode, renameStockName, setRenameStockName, themeColor }) => (
     <Modal
-        title={<span><EditOutlined style={{ color: 'var(--ios-blue)', marginRight: '8px' }} />重命名股票</span>}
+        title={<span><EditOutlined style={{ marginRight: '8px' }} />重命名股票</span>}
         open={open}
         onCancel={onCancel}
         onOk={onOk}

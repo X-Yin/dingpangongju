@@ -27,7 +27,7 @@ const BlockAlertCard = ({ blockAlerts, blockUpAlerts, blockDownAlerts, onBlockCl
             title={
                 <div className="all-stock-card-title">
                     <div className="all-stock-card-title-icon" style={{ background: 'linear-gradient(135deg, rgba(250, 173, 20, 0.18), rgba(245, 34, 45, 0.12)), rgba(255, 255, 255, 0.65)' }}>
-                        <AlertOutlined style={{ color: 'var(--ios-orange)' }} />
+                        <AlertOutlined />
                     </div>
                     <div className="all-stock-card-title-content">
                         <span>板块异动监控</span>
@@ -41,10 +41,10 @@ const BlockAlertCard = ({ blockAlerts, blockUpAlerts, blockDownAlerts, onBlockCl
             style={{ height: 'auto' }}
             extra={
                 <div className="all-stock-card-extra">
-                    <span className="all-stock-extra-dot" style={{ background: 'var(--ios-orange)', boxShadow: '0 0 10px rgba(250, 173, 20, 0.8)' }} />
+                    <span className="all-stock-extra-dot" style={{ boxShadow: '0 0 10px rgba(250, 173, 20, 0.8)' }} />
                     <Text>涨 {blockUpAlerts.length}</Text>
                     <Text style={{ color: 'rgba(71, 85, 105, 0.5)', margin: '0 2px' }}>/</Text>
-                    <Text style={{ color: 'var(--ios-green)' }}>跌 {blockDownAlerts.length}</Text>
+                    <Text>跌 {blockDownAlerts.length}</Text>
                 </div>
             }
         >
@@ -52,7 +52,7 @@ const BlockAlertCard = ({ blockAlerts, blockUpAlerts, blockDownAlerts, onBlockCl
                 <Row gutter={[8, 8]}>
                     <Col span={12}>
                         <div style={{ marginBottom: 6 }}>
-                            <Text strong style={{ fontSize: '11px', color: 'var(--ios-red)' }}>上涨</Text>
+                            <Text strong style={{ fontSize: '11px' }}>上涨</Text>
                         </div>
                         {blockUpAlerts.length > 0 ? (
                             <div className="alert-items-grid" style={{ gridTemplateColumns: '1fr' }}>
@@ -64,7 +64,7 @@ const BlockAlertCard = ({ blockAlerts, blockUpAlerts, blockDownAlerts, onBlockCl
                     </Col>
                     <Col span={12}>
                         <div style={{ marginBottom: 6 }}>
-                            <Text strong style={{ fontSize: '11px', color: 'var(--ios-green)' }}>下跌</Text>
+                            <Text strong style={{ fontSize: '11px' }}>下跌</Text>
                         </div>
                         {blockDownAlerts.length > 0 ? (
                             <div className="alert-items-grid" style={{ gridTemplateColumns: '1fr' }}>

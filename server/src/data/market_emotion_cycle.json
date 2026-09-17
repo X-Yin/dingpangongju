@@ -1,34 +1,5 @@
 [
   {
-    "tradeDate": 20260415,
-    "statusCode": "CONSOLIDATION_STRONG",
-    "phase": "【震荡整理期】虚假繁荣 / 动能不足",
-    "stats": {
-      "avgMarketSlope": "0.33%",
-      "avgLeaderSlope": "0.33%",
-      "upRatio": "100.0%",
-      "flatRatio": "0.0%",
-      "downRatio": "0.0%"
-    },
-    "trueLeaders": [
-      {
-        "stockName": "拓荆科技",
-        "stockCode": "sh688072",
-        "return15d": "0.99%",
-        "slope": "0.33%"
-      }
-    ],
-    "strongStocks": [
-      {
-        "stockName": "拓荆科技",
-        "stockCode": "sh688072",
-        "slope": "0.33"
-      }
-    ],
-    "weakStocks": [],
-    "reasoning": "虽然有 100% 股票 3 日线转正，但全市场平均斜率仅为 0.33%，属于横盘震荡而非强势主升。"
-  },
-  {
     "tradeDate": 20260416,
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
@@ -43,7 +14,7 @@
       {
         "stockName": "拓荆科技",
         "stockCode": "sh688072",
-        "return15d": "1.21%",
+        "return15d": "1.87%",
         "slope": "0.61%"
       }
     ],
@@ -72,7 +43,7 @@
       {
         "stockName": "拓荆科技",
         "stockCode": "sh688072",
-        "return15d": "-1.94%",
+        "return15d": "-1.31%",
         "slope": "-1.51%"
       }
     ],
@@ -101,7 +72,7 @@
       {
         "stockName": "拓荆科技",
         "stockCode": "sh688072",
-        "return15d": "0.10%",
+        "return15d": "0.74%",
         "slope": "-0.30%"
       }
     ],
@@ -130,7 +101,7 @@
       {
         "stockName": "拓荆科技",
         "stockCode": "sh688072",
-        "return15d": "-2.41%",
+        "return15d": "-1.78%",
         "slope": "-1.21%"
       }
     ],
@@ -149,26 +120,21 @@
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "1.41%",
-      "avgLeaderSlope": "2.43%",
+      "avgMarketSlope": "0.39%",
+      "avgLeaderSlope": "0.39%",
       "upRatio": "100.0%",
       "flatRatio": "0.0%",
       "downRatio": "0.0%"
     },
     "trueLeaders": [
       {
-        "stockName": "精测电子",
-        "stockCode": "sz300567",
-        "return15d": "7.27%",
-        "slope": "2.43%"
+        "stockName": "拓荆科技",
+        "stockCode": "sh688072",
+        "return15d": "-0.14%",
+        "slope": "0.39%"
       }
     ],
     "strongStocks": [
-      {
-        "stockName": "精测电子",
-        "stockCode": "sz300567",
-        "slope": "2.43"
-      },
       {
         "stockName": "拓荆科技",
         "stockCode": "sh688072",
@@ -176,7 +142,7 @@
       }
     ],
     "weakStocks": [],
-    "reasoning": "虽然有 100% 股票 3 日线转正，但全市场平均斜率仅为 1.41%，属于横盘震荡而非强势主升。"
+    "reasoning": "虽然有 100% 股票 3 日线转正，但全市场平均斜率仅为 0.39%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260423,
@@ -193,7 +159,7 @@
       {
         "stockName": "精测电子",
         "stockCode": "sz300567",
-        "return15d": "3.86%",
+        "return15d": "2.81%",
         "slope": "0.93%"
       }
     ],
@@ -215,29 +181,24 @@
   },
   {
     "tradeDate": 20260424,
-    "statusCode": "CONSOLIDATION",
-    "phase": "【震荡整理期】强弱方向不明显",
+    "statusCode": "EARLY_DOWNTREND",
+    "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "1.05%",
-      "avgLeaderSlope": "1.80%",
-      "upRatio": "66.7%",
+      "avgMarketSlope": "0.67%",
+      "avgLeaderSlope": "1.68%",
+      "upRatio": "50.0%",
       "flatRatio": "0.0%",
-      "downRatio": "33.3%"
+      "downRatio": "50.0%"
     },
     "trueLeaders": [
       {
-        "stockName": "中船特气",
-        "stockCode": "sh688146",
-        "return15d": "5.47%",
-        "slope": "1.80%"
+        "stockName": "精测电子",
+        "stockCode": "sz300567",
+        "return15d": "2.42%",
+        "slope": "1.68%"
       }
     ],
     "strongStocks": [
-      {
-        "stockName": "中船特气",
-        "stockCode": "sh688146",
-        "slope": "1.80"
-      },
       {
         "stockName": "精测电子",
         "stockCode": "sz300567",
@@ -251,7 +212,7 @@
         "slope": "-0.33"
       }
     ],
-    "reasoning": "多空双方均无明显加速度，处于多空平衡的震荡期。"
+    "reasoning": "大部分股票（50%）已转负走弱，但近15日龙头（如：精测电子）仍在强行死扛（平均斜率 1.68%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260427,
@@ -268,7 +229,7 @@
       {
         "stockName": "精测电子",
         "stockCode": "sz300567",
-        "return15d": "9.55%",
+        "return15d": "8.45%",
         "slope": "0.73%"
       }
     ],
@@ -298,17 +259,17 @@
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
       "avgMarketSlope": "2.16%",
-      "avgLeaderSlope": "1.30%",
+      "avgLeaderSlope": "3.69%",
       "upRatio": "100.0%",
       "flatRatio": "0.0%",
       "downRatio": "0.0%"
     },
     "trueLeaders": [
       {
-        "stockName": "精测电子",
-        "stockCode": "sz300567",
-        "return15d": "7.98%",
-        "slope": "1.30%"
+        "stockName": "拓荆科技",
+        "stockCode": "sh688072",
+        "return15d": "7.09%",
+        "slope": "3.69%"
       }
     ],
     "strongStocks": [
@@ -333,217 +294,28 @@
   },
   {
     "tradeDate": 20260429,
-    "statusCode": "TOPPING",
-    "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
+    "statusCode": "CONSOLIDATION_STRONG",
+    "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "1.08%",
-      "avgLeaderSlope": "7.90%",
-      "upRatio": "61.4%",
-      "flatRatio": "8.4%",
-      "downRatio": "30.1%"
+      "avgMarketSlope": "1.86%",
+      "avgLeaderSlope": "1.39%",
+      "upRatio": "100.0%",
+      "flatRatio": "0.0%",
+      "downRatio": "0.0%"
     },
     "trueLeaders": [
       {
-        "stockName": "铜冠铜箔",
-        "stockCode": "sz301217",
-        "return15d": "51.02%",
-        "slope": "15.23%"
-      },
-      {
-        "stockName": "盛科通信",
-        "stockCode": "sh688702",
-        "return15d": "21.26%",
-        "slope": "6.74%"
-      },
-      {
-        "stockName": "利通电子",
-        "stockCode": "sh603629",
-        "return15d": "20.05%",
-        "slope": "6.51%"
-      },
-      {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "return15d": "19.55%",
-        "slope": "6.03%"
-      },
-      {
-        "stockName": "国际复材",
-        "stockCode": "sz301526",
-        "return15d": "15.62%",
-        "slope": "5.00%"
+        "stockName": "中船特气",
+        "stockCode": "sh688146",
+        "return15d": "8.60%",
+        "slope": "1.39%"
       }
     ],
     "strongStocks": [
       {
-        "stockName": "铜冠铜箔",
-        "stockCode": "sz301217",
-        "slope": "15.23"
-      },
-      {
-        "stockName": "盛科通信",
-        "stockCode": "sh688702",
-        "slope": "6.74"
-      },
-      {
-        "stockName": "利通电子",
-        "stockCode": "sh603629",
-        "slope": "6.51"
-      },
-      {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "slope": "6.03"
-      },
-      {
-        "stockName": "国际复材",
-        "stockCode": "sz301526",
-        "slope": "5.00"
-      },
-      {
-        "stockName": "微导纳米",
-        "stockCode": "sh688147",
-        "slope": "4.44"
-      },
-      {
-        "stockName": "宏和科技",
-        "stockCode": "sh603256",
-        "slope": "4.22"
-      },
-      {
-        "stockName": "中科飞测",
-        "stockCode": "sh688361",
-        "slope": "3.72"
-      },
-      {
-        "stockName": "剑桥科技",
-        "stockCode": "sh603083",
-        "slope": "3.70"
-      },
-      {
-        "stockName": "风华高科",
-        "stockCode": "sz000636",
-        "slope": "3.63"
-      },
-      {
-        "stockName": "中微公司",
-        "stockCode": "sh688012",
-        "slope": "3.51"
-      },
-      {
-        "stockName": "麦格米特",
-        "stockCode": "sz002851",
-        "slope": "3.49"
-      },
-      {
-        "stockName": "杰普特",
-        "stockCode": "sh688025",
-        "slope": "3.32"
-      },
-      {
         "stockName": "拓荆科技",
         "stockCode": "sh688072",
         "slope": "3.20"
-      },
-      {
-        "stockName": "华正新材",
-        "stockCode": "sh603186",
-        "slope": "3.12"
-      },
-      {
-        "stockName": "金安国纪",
-        "stockCode": "sz002636",
-        "slope": "3.05"
-      },
-      {
-        "stockName": "三环集团",
-        "stockCode": "sz300408",
-        "slope": "3.04"
-      },
-      {
-        "stockName": "南亚新材",
-        "stockCode": "sh688519",
-        "slope": "2.82"
-      },
-      {
-        "stockName": "源杰科技",
-        "stockCode": "sh688498",
-        "slope": "2.82"
-      },
-      {
-        "stockName": "中材科技",
-        "stockCode": "sz002080",
-        "slope": "2.80"
-      },
-      {
-        "stockName": "华峰测控",
-        "stockCode": "sh688200",
-        "slope": "2.79"
-      },
-      {
-        "stockName": "中国巨石",
-        "stockCode": "sh600176",
-        "slope": "2.69"
-      },
-      {
-        "stockName": "北方华创",
-        "stockCode": "sz002371",
-        "slope": "2.53"
-      },
-      {
-        "stockName": "生益科技",
-        "stockCode": "sh600183",
-        "slope": "2.40"
-      },
-      {
-        "stockName": "德明利",
-        "stockCode": "sz001309",
-        "slope": "2.24"
-      },
-      {
-        "stockName": "飞荣达",
-        "stockCode": "sz300602",
-        "slope": "2.16"
-      },
-      {
-        "stockName": "景旺电子",
-        "stockCode": "sh603228",
-        "slope": "2.02"
-      },
-      {
-        "stockName": "胜宏科技",
-        "stockCode": "sz300476",
-        "slope": "1.93"
-      },
-      {
-        "stockName": "鼎泰高科",
-        "stockCode": "sz301377",
-        "slope": "1.77"
-      },
-      {
-        "stockName": "华海清科",
-        "stockCode": "sh688120",
-        "slope": "1.71"
-      },
-      {
-        "stockName": "寒武纪",
-        "stockCode": "sh688256",
-        "slope": "1.57"
-      },
-      {
-        "stockName": "绿的谐波",
-        "stockCode": "sh688017",
-        "slope": "1.56"
-      },
-      {
-        "stockName": "芯基微装",
-        "stockCode": "sh688630",
-        "slope": "1.54"
-      },
-      {
-        "stockName": "深南电路",
-        "stockCode": "sz002916",
-        "slope": "1.41"
       },
       {
         "stockName": "中船特气",
@@ -551,214 +323,13 @@
         "slope": "1.39"
       },
       {
-        "stockName": "国瓷材料",
-        "stockCode": "sz300285",
-        "slope": "1.37"
-      },
-      {
-        "stockName": "中钨高新",
-        "stockCode": "sz000657",
-        "slope": "1.33"
-      },
-      {
-        "stockName": "星源材质",
-        "stockCode": "sz300568",
-        "slope": "1.28"
-      },
-      {
-        "stockName": "立讯精密",
-        "stockCode": "sz002475",
-        "slope": "1.27"
-      },
-      {
-        "stockName": "澜起科技",
-        "stockCode": "sh688008",
-        "slope": "1.25"
-      },
-      {
-        "stockName": "兆易创新",
-        "stockCode": "sh603986",
-        "slope": "1.23"
-      },
-      {
-        "stockName": "菲利华",
-        "stockCode": "sz300395",
-        "slope": "1.09"
-      },
-      {
-        "stockName": "太辰光",
-        "stockCode": "sz300570",
-        "slope": "0.98"
-      },
-      {
         "stockName": "精测电子",
         "stockCode": "sz300567",
         "slope": "0.98"
-      },
-      {
-        "stockName": "通富微电",
-        "stockCode": "sz002156",
-        "slope": "0.72"
-      },
-      {
-        "stockName": "工业富联",
-        "stockCode": "sh601138",
-        "slope": "0.63"
-      },
-      {
-        "stockName": "中国卫星",
-        "stockCode": "sh600118",
-        "slope": "0.56"
-      },
-      {
-        "stockName": "中芯国际",
-        "stockCode": "sh688981",
-        "slope": "0.44"
-      },
-      {
-        "stockName": "汇成股份",
-        "stockCode": "sh688403",
-        "slope": "0.31"
-      },
-      {
-        "stockName": "大元泵业",
-        "stockCode": "sh603757",
-        "slope": "0.25"
-      },
-      {
-        "stockName": "长飞光纤",
-        "stockCode": "sh601869",
-        "slope": "0.21"
       }
     ],
-    "weakStocks": [
-      {
-        "stockName": "永鼎股份",
-        "stockCode": "sh600105",
-        "slope": "-4.00"
-      },
-      {
-        "stockName": "云南锗业",
-        "stockCode": "sz002428",
-        "slope": "-3.60"
-      },
-      {
-        "stockName": "华丰科技",
-        "stockCode": "sh688629",
-        "slope": "-3.57"
-      },
-      {
-        "stockName": "锐捷网络",
-        "stockCode": "sz301165",
-        "slope": "-3.11"
-      },
-      {
-        "stockName": "长光华芯",
-        "stockCode": "sh688048",
-        "slope": "-3.04"
-      },
-      {
-        "stockName": "仕佳光子",
-        "stockCode": "sh688313",
-        "slope": "-2.92"
-      },
-      {
-        "stockName": "艾为电子",
-        "stockCode": "sh688798",
-        "slope": "-2.32"
-      },
-      {
-        "stockName": "申菱环境",
-        "stockCode": "sz301018",
-        "slope": "-1.96"
-      },
-      {
-        "stockName": "盛美上海",
-        "stockCode": "sh688082",
-        "slope": "-1.91"
-      },
-      {
-        "stockName": "飞龙股份",
-        "stockCode": "sz002536",
-        "slope": "-1.85"
-      },
-      {
-        "stockName": "中际旭创",
-        "stockCode": "sz300308",
-        "slope": "-1.60"
-      },
-      {
-        "stockName": "华虹",
-        "stockCode": "sh688347",
-        "slope": "-1.58"
-      },
-      {
-        "stockName": "万润科技",
-        "stockCode": "sz002654",
-        "slope": "-1.57"
-      },
-      {
-        "stockName": "东田微",
-        "stockCode": "sz301183",
-        "slope": "-1.43"
-      },
-      {
-        "stockName": "浙江荣泰",
-        "stockCode": "sh603119",
-        "slope": "-1.40"
-      },
-      {
-        "stockName": "天孚通信",
-        "stockCode": "sz300394",
-        "slope": "-1.34"
-      },
-      {
-        "stockName": "兴森科技",
-        "stockCode": "sz002436",
-        "slope": "-1.24"
-      },
-      {
-        "stockName": "浪潮信息",
-        "stockCode": "sz000977",
-        "slope": "-1.18"
-      },
-      {
-        "stockName": "亨通光电",
-        "stockCode": "sh600487",
-        "slope": "-1.04"
-      },
-      {
-        "stockName": "罗博特科",
-        "stockCode": "sz300757",
-        "slope": "-0.86"
-      },
-      {
-        "stockName": "海光信息",
-        "stockCode": "sh688041",
-        "slope": "-0.72"
-      },
-      {
-        "stockName": "东山精密",
-        "stockCode": "sz002384",
-        "slope": "-0.65"
-      },
-      {
-        "stockName": "盛合晶微",
-        "stockCode": "sh688820",
-        "slope": "-0.46"
-      },
-      {
-        "stockName": "长电科技",
-        "stockCode": "sh600584",
-        "slope": "-0.39"
-      },
-      {
-        "stockName": "英维克",
-        "stockCode": "sz002837",
-        "slope": "-0.25"
-      }
-    ],
-    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：铜冠铜箔、盛科通信、利通电子、德福科技、国际复材）仍在极端加速飙车（平均斜率高达 7.90%）。资金极端抱团，随时可能见顶变盘。"
+    "weakStocks": [],
+    "reasoning": "虽然有 100% 股票 3 日线转正，但全市场平均斜率仅为 1.86%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260430,
@@ -766,7 +337,7 @@
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
       "avgMarketSlope": "0.77%",
-      "avgLeaderSlope": "8.39%",
+      "avgLeaderSlope": "8.79%",
       "upRatio": "52.4%",
       "flatRatio": "8.3%",
       "downRatio": "39.3%"
@@ -775,31 +346,31 @@
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "66.68%",
+        "return15d": "52.68%",
         "slope": "14.90%"
       },
       {
         "stockName": "利通电子",
         "stockCode": "sh603629",
-        "return15d": "32.09%",
+        "return15d": "33.21%",
         "slope": "10.03%"
       },
       {
         "stockName": "寒武纪",
         "stockCode": "sh688256",
-        "return15d": "25.72%",
+        "return15d": "25.33%",
         "slope": "8.28%"
       },
       {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "return15d": "24.88%",
-        "slope": "3.73%"
+        "stockName": "联讯仪器",
+        "stockCode": "sh688808",
+        "return15d": "17.42%",
+        "slope": "5.74%"
       },
       {
         "stockName": "微导纳米",
         "stockCode": "sh688147",
-        "return15d": "23.86%",
+        "return15d": "15.38%",
         "slope": "5.01%"
       }
     ],
@@ -1192,7 +763,7 @@
         "slope": "-0.18"
       }
     ],
-    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：铜冠铜箔、利通电子、寒武纪、德福科技、微导纳米）仍在极端加速飙车（平均斜率高达 8.39%）。资金极端抱团，随时可能见顶变盘。"
+    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：铜冠铜箔、利通电子、寒武纪、联讯仪器、微导纳米）仍在极端加速飙车（平均斜率高达 8.79%）。资金极端抱团，随时可能见顶变盘。"
   },
   {
     "tradeDate": 20260506,
@@ -1200,7 +771,7 @@
     "phase": "【主升期】全盘普涨 / 多头大面积共振",
     "stats": {
       "avgMarketSlope": "2.55%",
-      "avgLeaderSlope": "10.18%",
+      "avgLeaderSlope": "10.16%",
       "upRatio": "86.9%",
       "flatRatio": "1.2%",
       "downRatio": "11.9%"
@@ -1209,32 +780,32 @@
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "88.40%",
+        "return15d": "72.58%",
         "slope": "14.10%"
-      },
-      {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "return15d": "49.92%",
-        "slope": "10.52%"
       },
       {
         "stockName": "利通电子",
         "stockCode": "sh603629",
-        "return15d": "45.33%",
+        "return15d": "46.56%",
         "slope": "10.03%"
       },
       {
         "stockName": "寒武纪",
         "stockCode": "sh688256",
-        "return15d": "34.97%",
+        "return15d": "34.55%",
         "slope": "10.04%"
       },
       {
-        "stockName": "国际复材",
-        "stockCode": "sz301526",
-        "return15d": "28.74%",
-        "slope": "6.23%"
+        "stockName": "德福科技",
+        "stockCode": "sz301511",
+        "return15d": "33.79%",
+        "slope": "10.52%"
+      },
+      {
+        "stockName": "宏和科技",
+        "stockCode": "sh603256",
+        "return15d": "23.13%",
+        "slope": "6.12%"
       }
     ],
     "strongStocks": [
@@ -1673,31 +1244,31 @@
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "84.68%",
+        "return15d": "69.17%",
         "slope": "6.65%"
-      },
-      {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "return15d": "54.08%",
-        "slope": "8.76%"
       },
       {
         "stockName": "利通电子",
         "stockCode": "sh603629",
-        "return15d": "44.81%",
+        "return15d": "46.04%",
         "slope": "6.23%"
       },
       {
         "stockName": "寒武纪",
         "stockCode": "sh688256",
-        "return15d": "38.16%",
+        "return15d": "37.73%",
         "slope": "9.14%"
+      },
+      {
+        "stockName": "德福科技",
+        "stockCode": "sz301511",
+        "return15d": "37.50%",
+        "slope": "8.76%"
       },
       {
         "stockName": "宏和科技",
         "stockCode": "sh603256",
-        "return15d": "34.70%",
+        "return15d": "35.45%",
         "slope": "6.34%"
       }
     ],
@@ -2133,7 +1704,7 @@
     "phase": "【主升期】全盘普涨 / 多头大面积共振",
     "stats": {
       "avgMarketSlope": "2.75%",
-      "avgLeaderSlope": "6.29%",
+      "avgLeaderSlope": "5.06%",
       "upRatio": "86.9%",
       "flatRatio": "2.4%",
       "downRatio": "10.7%"
@@ -2142,32 +1713,32 @@
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "88.38%",
+        "return15d": "72.56%",
         "slope": "4.02%"
-      },
-      {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "return15d": "57.18%",
-        "slope": "7.53%"
       },
       {
         "stockName": "利通电子",
         "stockCode": "sh603629",
-        "return15d": "53.34%",
+        "return15d": "54.65%",
         "slope": "5.03%"
+      },
+      {
+        "stockName": "德福科技",
+        "stockCode": "sz301511",
+        "return15d": "40.27%",
+        "slope": "7.53%"
       },
       {
         "stockName": "宏和科技",
         "stockCode": "sh603256",
-        "return15d": "39.16%",
+        "return15d": "39.93%",
         "slope": "7.56%"
       },
       {
-        "stockName": "盛合晶微",
-        "stockCode": "sh688820",
-        "return15d": "35.37%",
-        "slope": "7.29%"
+        "stockName": "寒武纪",
+        "stockCode": "sh688256",
+        "return15d": "30.01%",
+        "slope": "1.18%"
       }
     ],
     "strongStocks": [
@@ -2592,7 +2163,7 @@
     "phase": "【主升期】全盘普涨 / 多头大面积共振",
     "stats": {
       "avgMarketSlope": "2.53%",
-      "avgLeaderSlope": "3.99%",
+      "avgLeaderSlope": "4.69%",
       "upRatio": "84.5%",
       "flatRatio": "7.1%",
       "downRatio": "8.3%"
@@ -2601,32 +2172,32 @@
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "85.32%",
+        "return15d": "69.75%",
         "slope": "-0.55%"
-      },
-      {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "return15d": "54.30%",
-        "slope": "0.95%"
-      },
-      {
-        "stockName": "盛合晶微",
-        "stockCode": "sh688820",
-        "return15d": "54.02%",
-        "slope": "10.59%"
-      },
-      {
-        "stockName": "澜起科技",
-        "stockCode": "sh688008",
-        "return15d": "52.55%",
-        "slope": "8.13%"
       },
       {
         "stockName": "利通电子",
         "stockCode": "sh603629",
-        "return15d": "48.97%",
+        "return15d": "50.24%",
         "slope": "0.82%"
+      },
+      {
+        "stockName": "盛合晶微",
+        "stockCode": "sh688820",
+        "return15d": "42.93%",
+        "slope": "10.59%"
+      },
+      {
+        "stockName": "宏和科技",
+        "stockCode": "sh603256",
+        "return15d": "40.97%",
+        "slope": "4.48%"
+      },
+      {
+        "stockName": "澜起科技",
+        "stockCode": "sh688008",
+        "return15d": "40.03%",
+        "slope": "8.13%"
       }
     ],
     "strongStocks": [
@@ -3031,7 +2602,7 @@
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
       "avgMarketSlope": "1.59%",
-      "avgLeaderSlope": "2.48%",
+      "avgLeaderSlope": "2.44%",
       "upRatio": "75.0%",
       "flatRatio": "7.1%",
       "downRatio": "17.9%"
@@ -3040,32 +2611,32 @@
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "101.09%",
+        "return15d": "84.19%",
         "slope": "2.94%"
-      },
-      {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "return15d": "55.98%",
-        "slope": "0.41%"
-      },
-      {
-        "stockName": "澜起科技",
-        "stockCode": "sh688008",
-        "return15d": "47.33%",
-        "slope": "4.61%"
-      },
-      {
-        "stockName": "盛合晶微",
-        "stockCode": "sh688820",
-        "return15d": "46.34%",
-        "slope": "4.69%"
       },
       {
         "stockName": "利通电子",
         "stockCode": "sh603629",
-        "return15d": "43.64%",
+        "return15d": "44.86%",
         "slope": "-0.26%"
+      },
+      {
+        "stockName": "寒武纪",
+        "stockCode": "sh688256",
+        "return15d": "40.50%",
+        "slope": "0.69%"
+      },
+      {
+        "stockName": "中船特气",
+        "stockCode": "sh688146",
+        "return15d": "39.91%",
+        "slope": "7.90%"
+      },
+      {
+        "stockName": "宏和科技",
+        "stockCode": "sh603256",
+        "return15d": "39.40%",
+        "slope": "0.95%"
       }
     ],
     "strongStocks": [
@@ -3237,7 +2808,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "1.45"
+        "slope": "1.46"
       },
       {
         "stockName": "南亚新材",
@@ -3470,7 +3041,7 @@
     "phase": "【主升期】全盘普涨 / 多头大面积共振",
     "stats": {
       "avgMarketSlope": "2.64%",
-      "avgLeaderSlope": "6.86%",
+      "avgLeaderSlope": "5.68%",
       "upRatio": "85.7%",
       "flatRatio": "6.0%",
       "downRatio": "8.3%"
@@ -3479,32 +3050,32 @@
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "110.66%",
+        "return15d": "92.96%",
         "slope": "3.88%"
       },
       {
         "stockName": "中船特气",
         "stockCode": "sh688146",
-        "return15d": "69.89%",
+        "return15d": "67.95%",
         "slope": "13.83%"
       },
       {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "return15d": "69.76%",
-        "slope": "2.69%"
+        "stockName": "利通电子",
+        "stockCode": "sh603629",
+        "return15d": "59.38%",
+        "slope": "1.05%"
       },
       {
         "stockName": "盛合晶微",
         "stockCode": "sh688820",
-        "return15d": "65.69%",
+        "return15d": "53.76%",
         "slope": "6.96%"
       },
       {
-        "stockName": "澜起科技",
-        "stockCode": "sh688008",
-        "return15d": "58.43%",
-        "slope": "6.94%"
+        "stockName": "德福科技",
+        "stockCode": "sz301511",
+        "return15d": "51.50%",
+        "slope": "2.69%"
       }
     ],
     "strongStocks": [
@@ -3556,7 +3127,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "5.20"
+        "slope": "5.21"
       },
       {
         "stockName": "菲利华",
@@ -3914,7 +3485,7 @@
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
       "avgMarketSlope": "0.62%",
-      "avgLeaderSlope": "3.79%",
+      "avgLeaderSlope": "4.03%",
       "upRatio": "46.4%",
       "flatRatio": "7.1%",
       "downRatio": "46.4%"
@@ -3923,32 +3494,32 @@
       {
         "stockName": "中船特气",
         "stockCode": "sh688146",
-        "return15d": "103.93%",
+        "return15d": "101.60%",
         "slope": "14.58%"
       },
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "82.72%",
+        "return15d": "67.37%",
         "slope": "-0.43%"
+      },
+      {
+        "stockName": "利通电子",
+        "stockCode": "sh603629",
+        "return15d": "57.25%",
+        "slope": "1.54%"
       },
       {
         "stockName": "盛合晶微",
         "stockCode": "sh688820",
-        "return15d": "65.00%",
+        "return15d": "53.12%",
         "slope": "2.36%"
       },
       {
         "stockName": "澜起科技",
         "stockCode": "sh688008",
-        "return15d": "62.28%",
+        "return15d": "48.95%",
         "slope": "2.12%"
-      },
-      {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "return15d": "55.98%",
-        "slope": "0.35%"
       }
     ],
     "strongStocks": [
@@ -3970,7 +3541,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "5.72"
+        "slope": "5.73"
       },
       {
         "stockName": "罗博特科",
@@ -4345,7 +3916,7 @@
         "slope": "-0.22"
       }
     ],
-    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：中船特气、铜冠铜箔、盛合晶微、澜起科技、德福科技）仍在极端加速飙车（平均斜率高达 3.79%）。资金极端抱团，随时可能见顶变盘。"
+    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：中船特气、铜冠铜箔、利通电子、盛合晶微、澜起科技）仍在极端加速飙车（平均斜率高达 4.03%）。资金极端抱团，随时可能见顶变盘。"
   },
   {
     "tradeDate": 20260515,
@@ -4353,7 +3924,7 @@
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
       "avgMarketSlope": "0.06%",
-      "avgLeaderSlope": "4.31%",
+      "avgLeaderSlope": "5.39%",
       "upRatio": "46.4%",
       "flatRatio": "1.2%",
       "downRatio": "52.4%"
@@ -4368,26 +3939,26 @@
       {
         "stockName": "盛合晶微",
         "stockCode": "sh688820",
-        "return15d": "95.95%",
+        "return15d": "81.84%",
         "slope": "10.40%"
       },
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "77.02%",
+        "return15d": "62.15%",
         "slope": "-4.05%"
       },
       {
         "stockName": "利通电子",
         "stockCode": "sh603629",
-        "return15d": "55.55%",
+        "return15d": "56.88%",
         "slope": "2.60%"
       },
       {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "return15d": "52.36%",
-        "slope": "-0.75%"
+        "stockName": "德明利",
+        "stockCode": "sz001309",
+        "return15d": "45.87%",
+        "slope": "4.66%"
       }
     ],
     "strongStocks": [
@@ -4404,7 +3975,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "5.18"
+        "slope": "5.19"
       },
       {
         "stockName": "罗博特科",
@@ -4809,7 +4380,7 @@
         "slope": "-0.19"
       }
     ],
-    "reasoning": "大部分股票（52%）已转负走弱，但近15日龙头（如：中船特气、盛合晶微、铜冠铜箔、利通电子、德福科技）仍在强行死扛（平均斜率 4.31%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（52%）已转负走弱，但近15日龙头（如：中船特气、盛合晶微、铜冠铜箔、利通电子、德明利）仍在强行死扛（平均斜率 5.39%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260518,
@@ -4817,18 +4388,12 @@
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
       "avgMarketSlope": "-0.64%",
-      "avgLeaderSlope": "1.04%",
+      "avgLeaderSlope": "2.61%",
       "upRatio": "32.1%",
       "flatRatio": "2.4%",
       "downRatio": "65.5%"
     },
     "trueLeaders": [
-      {
-        "stockName": "盛合晶微",
-        "stockCode": "sh688820",
-        "return15d": "100.49%",
-        "slope": "6.61%"
-      },
       {
         "stockName": "中船特气",
         "stockCode": "sh688146",
@@ -4836,22 +4401,28 @@
         "slope": "4.53%"
       },
       {
-        "stockName": "铜冠铜箔",
-        "stockCode": "sz301217",
-        "return15d": "85.34%",
-        "slope": "-4.44%"
+        "stockName": "盛合晶微",
+        "stockCode": "sh688820",
+        "return15d": "86.05%",
+        "slope": "6.61%"
       },
       {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "return15d": "60.86%",
-        "slope": "-1.86%"
+        "stockName": "铜冠铜箔",
+        "stockCode": "sz301217",
+        "return15d": "69.77%",
+        "slope": "-4.44%"
       },
       {
         "stockName": "利通电子",
         "stockCode": "sh603629",
-        "return15d": "59.75%",
+        "return15d": "61.11%",
         "slope": "0.37%"
+      },
+      {
+        "stockName": "联讯仪器",
+        "stockCode": "sh688808",
+        "return15d": "52.84%",
+        "slope": "5.99%"
       }
     ],
     "strongStocks": [
@@ -5268,7 +4839,7 @@
         "slope": "-0.17"
       }
     ],
-    "reasoning": "大部分股票（65%）已转负走弱，但近15日龙头（如：盛合晶微、中船特气、铜冠铜箔、德福科技、利通电子）仍在强行死扛（平均斜率 1.04%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（65%）已转负走弱，但近15日龙头（如：中船特气、盛合晶微、铜冠铜箔、利通电子、联讯仪器）仍在强行死扛（平均斜率 2.61%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260519,
@@ -5276,7 +4847,7 @@
     "phase": "【震荡整理期】强弱方向不明显",
     "stats": {
       "avgMarketSlope": "0.86%",
-      "avgLeaderSlope": "1.09%",
+      "avgLeaderSlope": "2.32%",
       "upRatio": "58.3%",
       "flatRatio": "4.8%",
       "downRatio": "36.9%"
@@ -5285,14 +4856,8 @@
       {
         "stockName": "盛合晶微",
         "stockCode": "sh688820",
-        "return15d": "94.70%",
+        "return15d": "80.68%",
         "slope": "5.29%"
-      },
-      {
-        "stockName": "铜冠铜箔",
-        "stockCode": "sz301217",
-        "return15d": "86.23%",
-        "slope": "0.64%"
       },
       {
         "stockName": "中船特气",
@@ -5301,16 +4866,22 @@
         "slope": "-3.55%"
       },
       {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "return15d": "66.82%",
-        "slope": "2.31%"
+        "stockName": "铜冠铜箔",
+        "stockCode": "sz301217",
+        "return15d": "70.59%",
+        "slope": "0.64%"
       },
       {
         "stockName": "利通电子",
         "stockCode": "sh603629",
-        "return15d": "59.50%",
+        "return15d": "60.85%",
         "slope": "0.76%"
+      },
+      {
+        "stockName": "联讯仪器",
+        "stockCode": "sh688808",
+        "return15d": "59.09%",
+        "slope": "8.45%"
       }
     ],
     "strongStocks": [
@@ -6422,7 +5993,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-4.32"
+        "slope": "-4.33"
       },
       {
         "stockName": "中国卫星",
@@ -7278,7 +6849,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "3.54"
+        "slope": "3.55"
       },
       {
         "stockName": "澜起科技",
@@ -7672,7 +7243,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "6.30"
+        "slope": "6.31"
       },
       {
         "stockName": "中钨高新",
@@ -8061,7 +7632,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "4.78"
+        "slope": "4.79"
       },
       {
         "stockName": "罗博特科",
@@ -8545,7 +8116,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "4.13"
+        "slope": "4.14"
       },
       {
         "stockName": "中国巨石",
@@ -8994,7 +8565,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "3.78"
+        "slope": "3.79"
       },
       {
         "stockName": "亨通光电",
@@ -10391,7 +9962,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "3.15"
+        "slope": "3.16"
       },
       {
         "stockName": "芯基微装",
@@ -10925,7 +10496,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "3.73"
+        "slope": "3.74"
       },
       {
         "stockName": "强一股份",
@@ -11735,7 +11306,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-5.04"
+        "slope": "-5.05"
       },
       {
         "stockName": "剑桥科技",
@@ -13646,7 +13217,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-3.94"
+        "slope": "-3.95"
       },
       {
         "stockName": "通富微电",
@@ -14562,7 +14133,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "3.49"
+        "slope": "3.50"
       },
       {
         "stockName": "风华高科",
@@ -14999,13 +14570,13 @@
         "slope": "5.34"
       },
       {
-        "stockName": "澜起科技",
-        "stockCode": "sh688008",
-        "slope": "5.31"
-      },
-      {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
+        "slope": "5.32"
+      },
+      {
+        "stockName": "澜起科技",
+        "stockCode": "sh688008",
         "slope": "5.31"
       },
       {
@@ -15505,7 +15076,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "3.29"
+        "slope": "3.30"
       },
       {
         "stockName": "中际旭创",
@@ -18670,7 +18241,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-4.11"
+        "slope": "-4.12"
       },
       {
         "stockName": "亨通光电",
@@ -19114,7 +18685,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-3.60"
+        "slope": "-3.61"
       },
       {
         "stockName": "菲利华",
@@ -19473,7 +19044,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-5.03"
+        "slope": "-5.04"
       },
       {
         "stockName": "芯基微装",
@@ -19907,7 +19478,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-6.27"
+        "slope": "-6.28"
       },
       {
         "stockName": "罗博特科",
@@ -20386,7 +19957,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-6.11"
+        "slope": "-6.12"
       },
       {
         "stockName": "亨通光电",
@@ -21539,7 +21110,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-0.60"
+        "slope": "-0.61"
       },
       {
         "stockName": "麦格米特",
@@ -21671,7 +21242,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "4.75"
+        "slope": "4.76"
       },
       {
         "stockName": "强一股份",
@@ -22080,7 +21651,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "3.55"
+        "slope": "3.56"
       },
       {
         "stockName": "锐捷网络",
@@ -24362,7 +23933,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-8.00"
+        "slope": "-8.01"
       },
       {
         "stockName": "宏和科技",
@@ -24999,14 +24570,14 @@
         "slope": "-6.55"
       },
       {
+        "stockName": "天孚通信",
+        "stockCode": "sz300394",
+        "slope": "-6.43"
+      },
+      {
         "stockName": "东田微",
         "stockCode": "sz301183",
         "slope": "-6.42"
-      },
-      {
-        "stockName": "天孚通信",
-        "stockCode": "sz300394",
-        "slope": "-6.41"
       },
       {
         "stockName": "联讯仪器",
@@ -25600,7 +25171,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-1.96"
+        "slope": "-1.97"
       },
       {
         "stockName": "星源材质",
@@ -25852,7 +25423,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "0.95"
+        "slope": "0.96"
       },
       {
         "stockName": "立讯精密",
@@ -26722,7 +26293,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-4.18"
+        "slope": "-4.19"
       },
       {
         "stockName": "中材科技",
@@ -27351,7 +26922,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-1.33"
+        "slope": "-1.34"
       },
       {
         "stockName": "新易盛",
@@ -27560,7 +27131,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-4.89"
+        "slope": "-4.90"
       },
       {
         "stockName": "兆易创新",
@@ -28164,7 +27735,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-3.59"
+        "slope": "-3.60"
       },
       {
         "stockName": "利通电子",
@@ -28543,7 +28114,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-8.57"
+        "slope": "-8.59"
       },
       {
         "stockName": "英维克",
@@ -29177,7 +28748,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-2.01"
+        "slope": "-2.02"
       },
       {
         "stockName": "铜冠铜箔",
@@ -29808,7 +29379,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "10.14"
+        "slope": "10.17"
       },
       {
         "stockName": "源杰科技",
@@ -30277,7 +29848,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "8.13"
+        "slope": "8.16"
       },
       {
         "stockName": "胜宏科技",
@@ -30846,7 +30417,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "7.35"
+        "slope": "7.37"
       },
       {
         "stockName": "华峰测控",
@@ -33006,7 +32577,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "4.98"
+        "slope": "4.99"
       },
       {
         "stockName": "剑桥科技",
@@ -33431,8 +33002,8 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "return15d": "27.97%",
-        "slope": "6.28%"
+        "return15d": "28.04%",
+        "slope": "6.30%"
       },
       {
         "stockName": "铜冠铜箔",
@@ -33450,7 +33021,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "6.28"
+        "slope": "6.30"
       },
       {
         "stockName": "杰普特",
@@ -33843,8 +33414,8 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "return15d": "57.83%",
-        "slope": "6.08%"
+        "return15d": "57.99%",
+        "slope": "6.09%"
       },
       {
         "stockName": "太辰光",
@@ -33879,7 +33450,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "6.08"
+        "slope": "6.09"
       },
       {
         "stockName": "华正新材",
@@ -34310,8 +33881,8 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "return15d": "60.05%",
-        "slope": "4.22%"
+        "return15d": "60.22%",
+        "slope": "4.23%"
       }
     ],
     "strongStocks": [
@@ -34363,7 +33934,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "4.22"
+        "slope": "4.23"
       },
       {
         "stockName": "芯基微装",
@@ -34761,7 +34332,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "return15d": "73.27%",
+        "return15d": "73.50%",
         "slope": "1.15%"
       },
       {
@@ -35216,7 +34787,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "return15d": "61.54%",
+        "return15d": "61.72%",
         "slope": "-1.21%"
       },
       {
@@ -35972,7 +35543,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-2.17"
+        "slope": "-2.18"
       },
       {
         "stockName": "英诺激光",
@@ -36341,7 +35912,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-3.37"
+        "slope": "-3.38"
       },
       {
         "stockName": "利通电子",
@@ -37204,7 +36775,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-2.50"
+        "slope": "-2.51"
       },
       {
         "stockName": "绿的谐波",
@@ -37629,13 +37200,13 @@
         "slope": "2.44"
       },
       {
-        "stockName": "中国巨石",
-        "stockCode": "sh600176",
-        "slope": "2.32"
-      },
-      {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
+        "slope": "2.33"
+      },
+      {
+        "stockName": "中国巨石",
+        "stockCode": "sh600176",
         "slope": "2.32"
       },
       {
@@ -38223,13 +37794,13 @@
         "slope": "0.95"
       },
       {
-        "stockName": "盛科通信",
-        "stockCode": "sh688702",
+        "stockName": "天孚通信",
+        "stockCode": "sz300394",
         "slope": "0.83"
       },
       {
-        "stockName": "天孚通信",
-        "stockCode": "sz300394",
+        "stockName": "盛科通信",
+        "stockCode": "sh688702",
         "slope": "0.83"
       },
       {
@@ -39534,7 +39105,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-1.74"
+        "slope": "-1.75"
       },
       {
         "stockName": "兴森科技",
@@ -40799,7 +40370,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "2.27"
+        "slope": "2.28"
       },
       {
         "stockName": "三环集团",
@@ -41815,13 +41386,13 @@
         "slope": "1.23"
       },
       {
-        "stockName": "长鑫科技",
-        "stockCode": "sh688825",
+        "stockName": "天孚通信",
+        "stockCode": "sz300394",
         "slope": "1.21"
       },
       {
-        "stockName": "天孚通信",
-        "stockCode": "sz300394",
+        "stockName": "长鑫科技",
+        "stockCode": "sh688825",
         "slope": "1.21"
       },
       {
@@ -43645,7 +43216,7 @@
       {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
-        "slope": "-1.47"
+        "slope": "-1.48"
       },
       {
         "stockName": "太辰光",
@@ -44248,5 +43819,449 @@
       }
     ],
     "reasoning": "虽然有 76% 股票 3 日线转正，但全市场平均斜率仅为 1.39%，属于横盘震荡而非强势主升。"
+  },
+  {
+    "tradeDate": 20260917,
+    "statusCode": "CONSOLIDATION_STRONG",
+    "phase": "【震荡整理期】虚假繁荣 / 动能不足",
+    "stats": {
+      "avgMarketSlope": "1.31%",
+      "avgLeaderSlope": "1.44%",
+      "upRatio": "76.5%",
+      "flatRatio": "7.1%",
+      "downRatio": "16.5%"
+    },
+    "trueLeaders": [
+      {
+        "stockName": "东田微",
+        "stockCode": "sz301183",
+        "return15d": "28.67%",
+        "slope": "4.82%"
+      },
+      {
+        "stockName": "华正新材",
+        "stockCode": "sh603186",
+        "return15d": "25.27%",
+        "slope": "0.18%"
+      },
+      {
+        "stockName": "德福科技",
+        "stockCode": "sz301511",
+        "return15d": "18.27%",
+        "slope": "-0.63%"
+      },
+      {
+        "stockName": "英诺激光",
+        "stockCode": "sz301021",
+        "return15d": "17.27%",
+        "slope": "2.49%"
+      },
+      {
+        "stockName": "强一股份",
+        "stockCode": "sh688809",
+        "return15d": "16.59%",
+        "slope": "0.35%"
+      }
+    ],
+    "strongStocks": [
+      {
+        "stockName": "中科飞测",
+        "stockCode": "sh688361",
+        "slope": "5.75"
+      },
+      {
+        "stockName": "微导纳米",
+        "stockCode": "sh688147",
+        "slope": "5.43"
+      },
+      {
+        "stockName": "东田微",
+        "stockCode": "sz301183",
+        "slope": "4.82"
+      },
+      {
+        "stockName": "拓荆科技",
+        "stockCode": "sh688072",
+        "slope": "4.82"
+      },
+      {
+        "stockName": "长光华芯",
+        "stockCode": "sh688048",
+        "slope": "4.05"
+      },
+      {
+        "stockName": "华海清科",
+        "stockCode": "sh688120",
+        "slope": "3.94"
+      },
+      {
+        "stockName": "中材科技",
+        "stockCode": "sz002080",
+        "slope": "3.63"
+      },
+      {
+        "stockName": "宏和科技",
+        "stockCode": "sh603256",
+        "slope": "3.52"
+      },
+      {
+        "stockName": "仕佳光子",
+        "stockCode": "sh688313",
+        "slope": "3.44"
+      },
+      {
+        "stockName": "杰普特",
+        "stockCode": "sh688025",
+        "slope": "3.41"
+      },
+      {
+        "stockName": "永鼎股份",
+        "stockCode": "sh600105",
+        "slope": "3.11"
+      },
+      {
+        "stockName": "锐捷网络",
+        "stockCode": "sz301165",
+        "slope": "3.10"
+      },
+      {
+        "stockName": "太辰光",
+        "stockCode": "sz300570",
+        "slope": "2.95"
+      },
+      {
+        "stockName": "亨通光电",
+        "stockCode": "sh600487",
+        "slope": "2.77"
+      },
+      {
+        "stockName": "天孚通信",
+        "stockCode": "sz300394",
+        "slope": "2.71"
+      },
+      {
+        "stockName": "中微公司",
+        "stockCode": "sh688012",
+        "slope": "2.64"
+      },
+      {
+        "stockName": "精测电子",
+        "stockCode": "sz300567",
+        "slope": "2.53"
+      },
+      {
+        "stockName": "英诺激光",
+        "stockCode": "sz301021",
+        "slope": "2.49"
+      },
+      {
+        "stockName": "芯基微装",
+        "stockCode": "sh688630",
+        "slope": "2.36"
+      },
+      {
+        "stockName": "申菱环境",
+        "stockCode": "sz301018",
+        "slope": "2.34"
+      },
+      {
+        "stockName": "利通电子",
+        "stockCode": "sh603629",
+        "slope": "2.18"
+      },
+      {
+        "stockName": "甬矽电子",
+        "stockCode": "sh688362",
+        "slope": "2.11"
+      },
+      {
+        "stockName": "北方华创",
+        "stockCode": "sz002371",
+        "slope": "2.05"
+      },
+      {
+        "stockName": "寒武纪",
+        "stockCode": "sh688256",
+        "slope": "2.03"
+      },
+      {
+        "stockName": "新易盛",
+        "stockCode": "sz300502",
+        "slope": "1.84"
+      },
+      {
+        "stockName": "源杰科技",
+        "stockCode": "sh688498",
+        "slope": "1.79"
+      },
+      {
+        "stockName": "汇成股份",
+        "stockCode": "sh688403",
+        "slope": "1.79"
+      },
+      {
+        "stockName": "盛科通信",
+        "stockCode": "sh688702",
+        "slope": "1.77"
+      },
+      {
+        "stockName": "盛合晶微",
+        "stockCode": "sh688820",
+        "slope": "1.70"
+      },
+      {
+        "stockName": "澜起科技",
+        "stockCode": "sh688008",
+        "slope": "1.69"
+      },
+      {
+        "stockName": "华丰科技",
+        "stockCode": "sh688629",
+        "slope": "1.59"
+      },
+      {
+        "stockName": "华虹",
+        "stockCode": "sh688347",
+        "slope": "1.57"
+      },
+      {
+        "stockName": "东山精密",
+        "stockCode": "sz002384",
+        "slope": "1.50"
+      },
+      {
+        "stockName": "盛美上海",
+        "stockCode": "sh688082",
+        "slope": "1.44"
+      },
+      {
+        "stockName": "国际复材",
+        "stockCode": "sz301526",
+        "slope": "1.38"
+      },
+      {
+        "stockName": "中国巨石",
+        "stockCode": "sh600176",
+        "slope": "1.33"
+      },
+      {
+        "stockName": "绿的谐波",
+        "stockCode": "sh688017",
+        "slope": "1.33"
+      },
+      {
+        "stockName": "中芯国际",
+        "stockCode": "sh688981",
+        "slope": "1.30"
+      },
+      {
+        "stockName": "万润科技",
+        "stockCode": "sz002654",
+        "slope": "1.24"
+      },
+      {
+        "stockName": "海光信息",
+        "stockCode": "sh688041",
+        "slope": "1.22"
+      },
+      {
+        "stockName": "大元泵业",
+        "stockCode": "sh603757",
+        "slope": "1.19"
+      },
+      {
+        "stockName": "兆易创新",
+        "stockCode": "sh603986",
+        "slope": "1.19"
+      },
+      {
+        "stockName": "鼎泰高科",
+        "stockCode": "sz301377",
+        "slope": "1.19"
+      },
+      {
+        "stockName": "中船特气",
+        "stockCode": "sh688146",
+        "slope": "1.14"
+      },
+      {
+        "stockName": "云南锗业",
+        "stockCode": "sz002428",
+        "slope": "0.98"
+      },
+      {
+        "stockName": "华峰测控",
+        "stockCode": "sh688200",
+        "slope": "0.96"
+      },
+      {
+        "stockName": "英维克",
+        "stockCode": "sz002837",
+        "slope": "0.96"
+      },
+      {
+        "stockName": "中钨高新",
+        "stockCode": "sz000657",
+        "slope": "0.94"
+      },
+      {
+        "stockName": "铜冠铜箔",
+        "stockCode": "sz301217",
+        "slope": "0.94"
+      },
+      {
+        "stockName": "兴森科技",
+        "stockCode": "sz002436",
+        "slope": "0.92"
+      },
+      {
+        "stockName": "通富微电",
+        "stockCode": "sz002156",
+        "slope": "0.88"
+      },
+      {
+        "stockName": "中际旭创",
+        "stockCode": "sz300308",
+        "slope": "0.87"
+      },
+      {
+        "stockName": "飞荣达",
+        "stockCode": "sz300602",
+        "slope": "0.78"
+      },
+      {
+        "stockName": "德明利",
+        "stockCode": "sz001309",
+        "slope": "0.77"
+      },
+      {
+        "stockName": "长电科技",
+        "stockCode": "sh600584",
+        "slope": "0.70"
+      },
+      {
+        "stockName": "三环集团",
+        "stockCode": "sz300408",
+        "slope": "0.57"
+      },
+      {
+        "stockName": "长飞光纤",
+        "stockCode": "sh601869",
+        "slope": "0.53"
+      },
+      {
+        "stockName": "麦格米特",
+        "stockCode": "sz002851",
+        "slope": "0.49"
+      },
+      {
+        "stockName": "浪潮信息",
+        "stockCode": "sz000977",
+        "slope": "0.47"
+      },
+      {
+        "stockName": "艾为电子",
+        "stockCode": "sh688798",
+        "slope": "0.45"
+      },
+      {
+        "stockName": "浙江荣泰",
+        "stockCode": "sh603119",
+        "slope": "0.42"
+      },
+      {
+        "stockName": "强一股份",
+        "stockCode": "sh688809",
+        "slope": "0.35"
+      },
+      {
+        "stockName": "菲利华",
+        "stockCode": "sz300395",
+        "slope": "0.33"
+      },
+      {
+        "stockName": "华正新材",
+        "stockCode": "sh603186",
+        "slope": "0.18"
+      },
+      {
+        "stockName": "国瓷材料",
+        "stockCode": "sz300285",
+        "slope": "0.15"
+      }
+    ],
+    "weakStocks": [
+      {
+        "stockName": "风华高科",
+        "stockCode": "sz000636",
+        "slope": "-1.29"
+      },
+      {
+        "stockName": "金安国纪",
+        "stockCode": "sz002636",
+        "slope": "-1.25"
+      },
+      {
+        "stockName": "景旺电子",
+        "stockCode": "sh603228",
+        "slope": "-1.24"
+      },
+      {
+        "stockName": "南亚新材",
+        "stockCode": "sh688519",
+        "slope": "-1.17"
+      },
+      {
+        "stockName": "德福科技",
+        "stockCode": "sz301511",
+        "slope": "-0.63"
+      },
+      {
+        "stockName": "长鑫科技",
+        "stockCode": "sh688825",
+        "slope": "-0.62"
+      },
+      {
+        "stockName": "沪电股份",
+        "stockCode": "sz002463",
+        "slope": "-0.59"
+      },
+      {
+        "stockName": "联讯仪器",
+        "stockCode": "sh688808",
+        "slope": "-0.58"
+      },
+      {
+        "stockName": "深南电路",
+        "stockCode": "sz002916",
+        "slope": "-0.47"
+      },
+      {
+        "stockName": "立讯精密",
+        "stockCode": "sz002475",
+        "slope": "-0.41"
+      },
+      {
+        "stockName": "银轮股份",
+        "stockCode": "sz002126",
+        "slope": "-0.35"
+      },
+      {
+        "stockName": "胜宏科技",
+        "stockCode": "sz300476",
+        "slope": "-0.31"
+      },
+      {
+        "stockName": "罗博特科",
+        "stockCode": "sz300757",
+        "slope": "-0.24"
+      },
+      {
+        "stockName": "工业富联",
+        "stockCode": "sh601138",
+        "slope": "-0.16"
+      }
+    ],
+    "reasoning": "虽然有 76% 股票 3 日线转正，但全市场平均斜率仅为 1.31%，属于横盘震荡而非强势主升。"
   }
 ]

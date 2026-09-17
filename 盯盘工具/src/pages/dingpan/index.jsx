@@ -499,7 +499,7 @@ const DingPan = () => {
     const [historyData, setHistoryData] = useState([]);
     const mainMoneyContainerRef = useRef(null);
     const mainMoneyChartRef = useRef(null);
-    const [isMainMoneyExpanded, setIsMainMoneyExpanded] = useState(false);
+    const [isMainMoneyExpanded, setIsMainMoneyExpanded] = useState(true);
     const [copyContextLoading, setCopyContextLoading] = useState(false);
 
     // 自选股全量监控折叠状态

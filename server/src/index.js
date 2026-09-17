@@ -870,9 +870,9 @@ app.post('/buy_point_single_stock_diagnosis', async (req, res) => {
 // }
 app.post('/send_feishu_card', async (req, res) => {
   try {
-    const { type, sellStocks, topStocks, data } = req.body || {};
-    if (type !== 'buy_point' && type !== 'sell_point' && type !== 'market_snapshot') {
-      return res.status(400).json({ success: false, message: 'type 必须是 buy_point、sell_point 或 market_snapshot' });
+    const { type, sellStocks, topStocks } = req.body || {};
+    if (type !== 'buy_point' && type !== 'sell_point') {
+      return res.status(400).json({ success: false, message: 'type 必须是 buy_point 或 sell_point' });
     }
 
     let card;
@@ -893,23 +893,12 @@ app.post('/send_feishu_card', async (req, res) => {
         topStocks: resultTopStocks,
         timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       });
-    } else if (type === 'sell_point') {
+    } else {
       // 卖点卡片：使用前端传入的持仓股及其触发原因
       card = feishuNotify.buildSellPointCard({
         sellStocks: Array.isArray(sellStocks) ? sellStocks : [],
         timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       });
-    } else {
-      // 盘中市场快照：纯文本罗列数据（资金/成交量/创业指数/科创指数/科技情绪）
-      const textContent = feishuNotify.buildMarketSnapshotText({
-        mainMoney: data?.mainMoney,
-        amountChangeDiff: data?.amountChangeDiff,
-        chuangyeban: data?.chuangyeban,
-        kechuangban: data?.kechuangban,
-        techEmotion: data?.techEmotion,
-      });
-      const sendResult = await feishuNotify.sendFeishuText(textContent);
-      return res.json({ success: sendResult.success, data: sendResult.data, error: sendResult.error });
     }
 
     const result = await feishuNotify.sendFeishuCard(card);
@@ -3051,6 +3040,125 @@ app.get('/overnight_meigu', async (req, res) => {
     res.status(500).json({ success: false, message: error.message || '获取隔夜美股数据失败' });
   }
 });
+
+// ==================== 盘中市场快照飞书播报（后端自主调度，前端零逻辑）====================
+// 交易时段（工作日 9:30-11:30、13:00-15:00）内每 5 分钟播报一次；
+// 时间戳持久化在 data/feishu_market_snapshot_state.json，服务重启/多页面打开均不会重复发送
+const MARKET_SNAPSHOT_STATE_FILE = path.join(__dirname, 'data/feishu_market_snapshot_state.json');
+const MARKET_SNAPSHOT_MIN_INTERVAL = 5 * 60 * 1000;
+
+const readMarketSnapshotLastSentAt = () => {
+  try {
+    if (!fs.existsSync(MARKET_SNAPSHOT_STATE_FILE)) return 0;
+    const state = JSON.parse(fs.readFileSync(MARKET_SNAPSHOT_STATE_FILE, 'utf8'));
+    return Number(state.lastSentAt) || 0;
+  } catch (error) {
+    console.error('读取市场快照发送时间戳失败:', error);
+    return 0;
+  }
+};
+
+const writeMarketSnapshotLastSentAt = (ts) => {
+  try {
+    fs.writeFileSync(MARKET_SNAPSHOT_STATE_FILE, JSON.stringify({ lastSentAt: ts }, null, 2));
+  } catch (error) {
+    console.error('写入市场快照发送时间戳失败:', error);
+  }
+};
+
+// 是否处于可播报时段：非周末且在 9:30-11:30 或 13:00-15:00 内
+const isInMarketSnapshotWindow = () => {
+  const now = dayjs();
+  if (now.day() === 0 || now.day() === 6) return false;
+  const totalMinutes = now.hour() * 60 + now.minute();
+  return (totalMinutes >= 570 && totalMinutes < 690) || (totalMinutes >= 780 && totalMinutes < 900);
+};
+
+// 发送盘中市场快照：拉取大盘/成交额/指数/情绪数据 → 计算近5分钟主力净流入 → 发飞书文本
+const runMarketSnapshotJob = async () => {
+  const lastSentAt = readMarketSnapshotLastSentAt();
+  // 距上次发送不足 5 分钟直接跳过
+  if (Date.now() - lastSentAt < MARKET_SNAPSHOT_MIN_INTERVAL) return;
+  // 先同步写入占坑，避免多个检查周期并发通过冷却检查导致重复发送
+  writeMarketSnapshotLastSentAt(Date.now());
+  try {
+    // 并行获取：大盘资金/成交量 + 盘中资金分时序列 + 创业板/科创板指数 + 触发科技情绪重新计算
+    const [dapanData, amountHistory, indexKlineData, emotionData] = await Promise.all([
+      getAllDaPanData(),
+      getAmountHistory(),
+      getAllIndexKlineData(),
+      updateCurrentTechIndexData(),
+    ]);
+    // 同步写入情绪分时数据（与原 /update_emotion_data 接口行为保持一致）
+    try {
+      await forceRecordTechEmotionIntraday(emotionData);
+    } catch (e) {
+      console.error('市场快照写入情绪分时数据失败:', e.message);
+    }
+
+    // K线数据按日期升序排列（最旧在前），最新一条在数组末尾
+    const cybArr = indexKlineData?.chuangyebanData || [];
+    const kcbArr = indexKlineData?.kechuangbanData || [];
+
+    // 资金净流入：取最近 5 分钟的净流入增量 = 最新累计值 - 5分钟前的累计值
+    const calcMainMoney5minDiff = () => {
+      const src = Array.isArray(amountHistory) ? amountHistory : [];
+      const sorted = src
+        .filter((a) => Array.isArray(a) && a[0] && a[1] && Number.isFinite(Number(a[1].mainMoney)))
+        .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+        .map((a) => ({ t: String(a[0]), money: Number(a[1].mainMoney) }));
+      if (sorted.length < 2) return null;
+
+      // 从 HHmmss 时间往前推 minutes 分钟
+      const subMinutes = (hhmmss, minutes) => {
+        const hh = parseInt(hhmmss.slice(0, 2), 10);
+        const mm = parseInt(hhmmss.slice(2, 4), 10);
+        const total = hh * 60 + mm - minutes;
+        if (total < 0) return null;
+        const h = String(Math.floor(total / 60)).padStart(2, '0');
+        const m = String(total % 60).padStart(2, '0');
+        const ss = hhmmss.length >= 6 ? hhmmss.slice(4, 6) : '00';
+        return `${h}${m}${ss}`;
+      };
+
+      const last = sorted[sorted.length - 1];
+      const target = subMinutes(last.t, 5);
+      if (!target) return null;
+      // 找时间 <= target 的最近一条快照
+      let prev = null;
+      for (let i = sorted.length - 2; i >= 0; i--) {
+        if (sorted[i].t <= target) { prev = sorted[i]; break; }
+      }
+      if (!prev) return null;
+      const diff = last.money - prev.money;
+      return `${diff > 0 ? '+' : ''}${diff.toFixed(2)}`;
+    };
+
+    const textContent = feishuNotify.buildMarketSnapshotText({
+      mainMoney: calcMainMoney5minDiff() || dapanData?.mainMoney,
+      amountChangeDiff: dapanData?.amountChangeDiff,
+      chuangyeban: cybArr[cybArr.length - 1] || null,
+      kechuangban: kcbArr[kcbArr.length - 1] || null,
+      techEmotion: emotionData ?? null,
+    });
+    const sendResult = await feishuNotify.sendFeishuText(textContent);
+    if (!sendResult.success) {
+      // 发送失败回滚占坑时间戳，下一轮检查可立即重试
+      writeMarketSnapshotLastSentAt(lastSentAt);
+      console.error('发送盘中市场快照失败:', sendResult.error);
+    } else {
+      console.log('盘中市场快照已发送');
+    }
+  } catch (error) {
+    writeMarketSnapshotLastSentAt(lastSentAt);
+    console.error('发送盘中市场快照失败:', error);
+  }
+};
+
+// 每分钟检查一次：处于可播报时段才执行，冷却由时间戳文件控制
+setInterval(() => {
+  if (isInMarketSnapshotWindow()) runMarketSnapshotJob();
+}, 60 * 1000);
 
 // 启动服务
 app.listen(port, () => {

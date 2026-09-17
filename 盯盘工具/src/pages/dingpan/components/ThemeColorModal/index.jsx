@@ -30,7 +30,7 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
 
     const renderColorField = (field, label) => {
         const enabled = !!draft[field];
-        const colorValue = draft[field] || 'var(--ios-blue)';
+        const colorValue = draft[field];
         return (
             <div className="theme-color-field">
                 <div className="theme-color-field-header">
@@ -40,7 +40,7 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
                         <Switch
                             size="small"
                             checked={enabled}
-                            onChange={(checked) => updateField(field, checked ? (draft[field] || 'var(--ios-blue)') : '')}
+                            onChange={(checked) => updateField(field, checked ? (draft[field] || '#007AFF') : '')}
                         />
                     </Space>
                 </div>
