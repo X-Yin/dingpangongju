@@ -1,45 +1,5 @@
 [
   {
-    "id": "198e9503ca795ad9",
-    "time": "2026-09-18 11:03:20",
-    "read": true,
-    "strategyId": "volume_price_surge",
-    "title": "✅ 量价齐升",
-    "description": "成交量放大 <strong>120亿</strong>（≥100亿），资金净流入101.8→114.8亿（≥10亿，流入增加），科创板5分钟上涨1.56%。量价资金三者共振，多方占优。",
-    "severity": "medium",
-    "isBullish": true
-  },
-  {
-    "id": "e7dd007de0ed9f69",
-    "time": "2026-09-18 11:27:11",
-    "read": true,
-    "strategyId": "volume_price_surge",
-    "title": "✅ 量价齐升",
-    "description": "成交量放大 <strong>126亿</strong>（≥100亿），资金净流入204.6→216.7亿（≥10亿，流入增加），创业板5分钟上涨0.34%。量价资金三者共振，多方占优。",
-    "severity": "medium",
-    "isBullish": true
-  },
-  {
-    "id": "df6925f05259619f",
-    "time": "2026-09-18 13:00:00",
-    "read": true,
-    "strategyId": "straight_rise_no_volume",
-    "title": "⚠️ 无量拉升警惕回落",
-    "description": "创业板5分钟上涨0.55%，但成交量仅增加 <strong>0亿</strong>（不足100亿），无量上涨持续性存疑，容易回落。",
-    "severity": "medium",
-    "isBullish": false
-  },
-  {
-    "id": "68306512f76e3cab",
-    "time": "2026-09-18 13:03:35",
-    "read": true,
-    "strategyId": "volume_price_surge",
-    "title": "✅ 量价齐升",
-    "description": "成交量放大 <strong>134亿</strong>（≥100亿），资金净流入232.6→262.4亿（≥10亿，流入增加），创业板5分钟上涨0.54%。量价资金三者共振，多方占优。",
-    "severity": "medium",
-    "isBullish": true
-  },
-  {
     "id": "00e1dc0709ab95da",
     "time": "2026-09-18 13:33:04",
     "read": true,
