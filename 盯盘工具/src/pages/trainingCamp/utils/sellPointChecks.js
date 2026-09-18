@@ -6,9 +6,10 @@
 //   2. 高位放量大阴线（日内最高价到现价回落超过 8%，且现价低于日内开盘价）—— 需持续 ≥5 分钟才触发
 //   3. 科技板块情绪退潮 == -100 且自选股中跌幅 <-9% 的个股 >= 5 个 —— 需持续 ≥5 分钟才触发
 //   4. 抗分歧指数 < 6 且 当前涨幅 ≤ -5%
-//   5. 连续三日（含当日）抗分歧指数均 < 10（后端预计算下发 resilience3dAllBelow10 标志），仅 9:40 后生效
+//   5. 连续三日（含当日）抗分歧指数均 < 10：前两日用后端预计算的全天分数（resilience3dScores 前 2 位），
+//      当日为实时口径（分钟级/桶级分时截至当前分钟现算，与叠加分时 tag 同口径），仅 9:40 后生效
 //   6. 现价跌破最迟一天买入（模拟持仓买入日 buyDate）当日的最低点（后端下发 dailyLowMap，按 buyDate 取低点）—— 需持续 ≥5 分钟才触发
-import { calculateReplayResilience } from '../../../utils/replayResilience';
+import { calculateReplayResilience, getReplayMinuteTlineByDate } from '../../../utils/replayResilience';
 
 const SELL_CONDITION_PERSIST_MIN = 5; // 持续满足分钟数
 
@@ -125,7 +126,7 @@ const checkBuyDayLowPersist = (replayStocks, code, currentMinute, buyDayLow) => 
   return { satisfied: true, checkedMin: recent.length };
 };
 
-const runSellPointDiagnosis = (position, currentBucket, replayStocks, timeBuckets, currentIndex) => {
+const runSellPointDiagnosis = (position, currentBucket, replayStocks, timeBuckets, currentIndex, dateStr = '') => {
   const code = position?.code;
   const stockName = position?.stockName || position?.name || code;
   const buyPrice = toNumber(position?.buyPrice);
@@ -392,23 +393,51 @@ const runSellPointDiagnosis = (position, currentBucket, replayStocks, timeBucket
   };
 
   // ===== 条件5：连续三日（含当日）抗分歧指数均 < 10（个股连续弱势，资金持续分歧），仅 9:40 后生效 =====
-  // 后端 loadTrainingCampData 已预计算，随 stockChanges 下发 resilience3dAllBelow10 / resilience3dScores / resilience3dValid
-  const r3dValid = stock?.resilience3dValid === true;
-  const r3dAllBelow10 = stock?.resilience3dAllBelow10 === true;
+  // 前两日用后端预计算的全天分数（resilience3dScores 前 2 位，历史数据）；当日为实时口径：
+  // 优先用分钟级分时截至当前分钟现算（与叠加分时 tag 同源缓存），回退桶级 tlinePoints 现算；
+  // 不再使用预计算的收盘口径 resilience3dAllBelow10（当日全天分数在回放时点属于未来数据）
   const r3dScores = Array.isArray(stock?.resilience3dScores) ? stock.resilience3dScores : [];
+  const prev1C5 = r3dScores.length > 0 ? r3dScores[0] : null;
+  const prev2C5 = r3dScores.length > 1 ? r3dScores[1] : null;
+  const prevOkC5 = prev1C5 != null && prev2C5 != null && prev1C5 < 10 && prev2C5 < 10;
   const isAfter940C5 = minute != null && minute >= 940;
+  const benchmarkCodeC5 = String(code).startsWith('sh688') ? 'sh000688' : 'sz399006';
+  const stockMinuteC5 = dateStr ? getReplayMinuteTlineByDate(code, dateStr) : null;
+  const indexMinuteC5 = dateStr ? getReplayMinuteTlineByDate(benchmarkCodeC5, dateStr) : null;
+  let todayScoreC5 = null;
+  if (minute != null && Array.isArray(stockMinuteC5) && Array.isArray(indexMinuteC5)) {
+    todayScoreC5 = calculateReplayResilience(
+      stockMinuteC5.filter(p => p.minute <= minute),
+      indexMinuteC5.filter(p => p.minute <= minute),
+      code
+    );
+  }
+  if (todayScoreC5 == null && minute != null) {
+    todayScoreC5 = calculateReplayResilience(
+      getTlinePoints(replayStocks, code, minute),
+      getTlinePoints(replayStocks, benchmarkCodeC5, minute),
+      code
+    );
+  }
+  const todayOkC5 = todayScoreC5 != null && todayScoreC5 < 10;
+  const allBelow10C5 = prevOkC5 && todayOkC5;
+  const prevDisplayC5 = [prev1C5, prev2C5].map(s => (s != null ? Number(s).toFixed(2) : '--')).join('、');
+  const todayDisplayC5 = todayScoreC5 != null ? todayScoreC5.toFixed(2) : '--';
   const condition5 = {
     name: '连续三日抗分歧弱势',
-    satisfied: r3dAllBelow10 && isAfter940C5,
-    detail: !r3dValid
-      ? '历史分时数据不足，无法判断连续三日弱势'
+    satisfied: allBelow10C5 && isAfter940C5,
+    detail: !prevOkC5
+      ? `前两日抗分歧指数未全部 < 10（${prevDisplayC5}）或历史数据不足，无法判断连续三日弱势`
       : !isAfter940C5
-        ? `近三日抗分歧指数均 < 10（${r3dScores.join('、')}），但当前时间未到 9:40，条件暂不生效`
-        : r3dAllBelow10
-          ? `近三日抗分歧指数均 < 10（${r3dScores.join('、')}），个股连续弱势，资金持续分歧，触发卖点`
-          : `近三日抗分歧指数未全部 < 10（${r3dScores.join('、')}），未触发`,
+        ? `前两日抗分歧指数均 < 10（${prevDisplayC5}），当日实时 ${todayDisplayC5}，但当前时间未到 9:40，条件暂不生效`
+        : allBelow10C5
+          ? `前两日抗分歧指数均 < 10（${prevDisplayC5}），当日实时 ${todayDisplayC5} < 10（截至 ${displayTime}），个股连续弱势，资金持续分歧，触发卖点`
+          : todayScoreC5 == null
+            ? `当日实时抗分歧分数数据不足（截至 ${displayTime}），未触发`
+            : `前两日均 < 10（${prevDisplayC5}），但当日实时 ${todayDisplayC5} ≥ 10（截至 ${displayTime}），未触发`,
     subConditions: [
-      { label: '近3日抗分歧', value: r3dValid ? r3dScores.join('、') : '--' },
+      { label: '前两日抗分歧（全天）', value: prevDisplayC5 },
+      { label: '当日实时抗分歧', value: `${todayDisplayC5}（截至 ${displayTime}）` },
       { label: '当前时间', value: displayTime || '--' },
       { label: '生效时间', value: '9:40 后' },
       { label: '阈值', value: '连续3日均 < 10' },

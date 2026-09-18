@@ -591,11 +591,11 @@
       ],
       "sellDate": "20260916",
       "sellDateDisplay": "2026-09-16",
-      "sellTime": "09:40",
-      "sellPrice": 106.8,
-      "sellChange": 2.13,
+      "sellTime": "10:05",
+      "sellPrice": 105.35,
+      "sellChange": 0.75,
       "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 0.78
+      "returnRate": -0.59
     }
   ],
   "currentHolding": {
@@ -647,9 +647,9 @@
   },
   "summary": {
     "tradeCount": 5,
-    "winCount": 5,
-    "winRate": 100,
-    "overallReturn": 66.95,
+    "winCount": 4,
+    "winRate": 80,
+    "overallReturn": 64.68,
     "holding": true
   }
 }

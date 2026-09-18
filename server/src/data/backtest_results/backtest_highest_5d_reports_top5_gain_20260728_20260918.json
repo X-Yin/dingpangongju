@@ -428,16 +428,70 @@
           "reason": "9:30 竞价科技情绪 44.19 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260819",
-      "sellDateDisplay": "2026-08-19",
-      "sellTime": "10:30",
-      "sellPrice": 504.57,
-      "sellChange": -7.67,
-      "sellReason": "均线破位、科技板块情绪退潮",
-      "returnRate": 18.16
+      "sellDate": "20260812",
+      "sellDateDisplay": "2026-08-12",
+      "sellTime": "09:40",
+      "sellPrice": 495,
+      "sellChange": 1.27,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": 15.91
     },
     {
       "seq": 3,
+      "metric": 5,
+      "code": "sz300394",
+      "stockName": "天孚通信",
+      "buyDate": "20260817",
+      "buyDateDisplay": "2026-08-17",
+      "buyTime": "11:00",
+      "buyPrice": 284.9,
+      "buyChange": 6.42,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 907.58亿，较 5min 前 +115.15亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+25.10亿",
+          "reason": "最近 5 分钟资金净流入 25.10 亿（10:55:00→11:00:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 115.15亿",
+          "reason": "当前量能 907.58 亿为正，较 5min 前的 792.43 亿+ 115.15 亿，持续放量",
+          "volumeText": "当前量能 907.58亿，较 5min 前 +115.15亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 24.88 / 当前 76.57",
+          "reason": "9:30 竞价科技情绪 24.88 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260819",
+      "sellDateDisplay": "2026-08-19",
+      "sellTime": "10:30",
+      "sellPrice": 279.91,
+      "sellChange": -3.96,
+      "sellReason": "科技板块情绪退潮",
+      "returnRate": -1.75
+    },
+    {
+      "seq": 4,
       "metric": 3,
       "code": "sz300570",
       "stockName": "太辰光",
@@ -490,7 +544,7 @@
       "returnRate": -1.44
     },
     {
-      "seq": 4,
+      "seq": 5,
       "metric": 7,
       "code": "sz002536",
       "stockName": "飞龙股份",
@@ -543,7 +597,7 @@
       "returnRate": 18.42
     },
     {
-      "seq": 5,
+      "seq": 6,
       "metric": 6,
       "code": "sz002436",
       "stockName": "兴森科技",
@@ -597,7 +651,7 @@
       "returnRate": 11.16
     },
     {
-      "seq": 6,
+      "seq": 7,
       "metric": 11,
       "code": "sh603186",
       "stockName": "华正新材",
@@ -699,10 +753,10 @@
     "buyReturn": 1.52
   },
   "summary": {
-    "tradeCount": 6,
+    "tradeCount": 7,
     "winCount": 5,
-    "winRate": 83.33,
-    "overallReturn": 78.4,
+    "winRate": 71.43,
+    "overallReturn": 71.94,
     "holding": true
   }
 }

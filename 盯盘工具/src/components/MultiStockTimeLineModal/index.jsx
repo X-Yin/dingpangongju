@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import axios from 'axios';
 import { local_ip } from '../../constant';
 import { getThemeColor, getThemeColorRgba } from '../../utils/theme';
-import { calculateReplayResilience } from '../../utils/replayResilience';
+import { calculateReplayResilience, ensureReplayMinuteTlineByDate, getReplayMinuteTlineByDate, subscribeMinuteTlineUpdate } from '../../utils/replayResilience';
 import './index.scss';
 
 const hexToRgba = (hex, alpha = 1) => {
@@ -53,8 +53,10 @@ const readReplayOverlayCodes = () => {
 };
 
 const writeReplayOverlayCodes = (codes) => {
-  try { localStorage.setItem(REPLAY_STORAGE_KEY, JSON.stringify(codes)); } catch { /* noop */ }
+  try { localStorage.setItem(REPLAY_STORAGE_KEY, JSON.stringify(codes)) } catch { /* noop */ }
 };
+
+// 回放模式分钟级分时缓存与拉取工具（与训练营卖点诊断共用，定义在 src/utils/replayResilience.js）
 
 const mergeUniqueStocks = (...stockGroups) => {
   const map = new Map();
@@ -467,6 +469,7 @@ const MultiStockTimeLineModal = ({
   replayMode = false,
   replayStocks,
   replayCurrentTimeKey,
+  replayDate = '',
   hideIndexTags = false,
   includeDefaultIndex = true,
   compactHeader = false,
@@ -483,6 +486,8 @@ const MultiStockTimeLineModal = ({
   const [chartData, setChartData] = useState(null);
   const [rightAxisLabels, setRightAxisLabels] = useState([]);
   const [replayVersion, setReplayVersion] = useState(0);
+  const [minuteTlineVersion, setMinuteTlineVersion] = useState(0); // 分钟级分时缓存更新版本号，拉取完成后触发回放重算
+  useEffect(() => subscribeMinuteTlineUpdate(() => setMinuteTlineVersion(v => v + 1)), []);
   const fetchIdRef = useRef(0);
   const refreshingRef = useRef(false); // 手动刷新进行中标记，防止重复触发
   const chartRef = useRef(null);
@@ -760,6 +765,10 @@ const MultiStockTimeLineModal = ({
       return;
     }
     setCurrentStocks(filtered.map(s => ({ code: s.code, stockName: s.stockName })));
+    // 预拉取叠加股票与基准指数的分钟级分时（每日期每代码仅拉一次，命中缓存后抗分歧分数按分钟精度重算）
+    if (replayDate) {
+      ensureReplayMinuteTlineByDate([...new Set([...filtered.map(s => s.code), ...INDEX_CODE_SET])], replayDate);
+    }
     const currentMinute = replayCurrentTimeKey
       ? parseInt(String(replayCurrentTimeKey).padStart(6, '0').substring(0, 4))
       : 9999;
@@ -789,11 +798,24 @@ const MultiStockTimeLineModal = ({
       let benchmarkName = isIndex ? (s.stockName || s.code) : '--';
       if (!isIndex) {
         const benchmarkCode = String(s.code).startsWith('sh688') ? 'sh000688' : 'sz399006';
-        const indexPoints = indexSeriesMap.get(benchmarkCode);
-        const fullStockPoints = (s.tlinePoints || [])
-          .filter(p => p.minute != null && p.minute <= currentMinute)
-          .sort((a, b) => a.minute - b.minute);
-        const score = calculateReplayResilience(fullStockPoints, indexPoints, s.code);
+        // 优先用分钟级分时按回放当前分钟切片计算（出分早、随回放平滑更新），未拉到时回退桶级数据
+        const stockMinutePoints = replayDate ? getReplayMinuteTlineByDate(s.code, replayDate) : null;
+        const indexMinutePoints = replayDate ? getReplayMinuteTlineByDate(benchmarkCode, replayDate) : null;
+        let score = null;
+        if (Array.isArray(stockMinutePoints) && Array.isArray(indexMinutePoints)) {
+          score = calculateReplayResilience(
+            stockMinutePoints.filter(p => p.minute <= currentMinute),
+            indexMinutePoints.filter(p => p.minute <= currentMinute),
+            s.code
+          );
+        }
+        if (score == null) {
+          const indexPoints = indexSeriesMap.get(benchmarkCode);
+          const fullStockPoints = (s.tlinePoints || [])
+            .filter(p => p.minute != null && p.minute <= currentMinute)
+            .sort((a, b) => a.minute - b.minute);
+          score = calculateReplayResilience(fullStockPoints, indexPoints, s.code);
+        }
         if (score != null) {
           const meta = getResilienceMeta(score);
           resilienceScore = score;
@@ -817,7 +839,7 @@ const MultiStockTimeLineModal = ({
     });
     setStockInfoList(infoList);
     setChartData({ alignedLines, infoList });
-  }, [replayMode, replayStocks, replayCurrentTimeKey, replayVersion]);
+  }, [replayMode, replayStocks, replayCurrentTimeKey, replayVersion, replayDate, minuteTlineVersion]);
 
   const fetchTimeLineData = useCallback(async (stocksToFetch = currentStocks) => {
     if (!stocksToFetch.length) {

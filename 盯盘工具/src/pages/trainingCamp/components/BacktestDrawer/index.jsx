@@ -2,12 +2,12 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Drawer, Button, DatePicker, message, Progress, Tag, Empty, Alert, Select, Tooltip } from 'antd';
 import {
   CopyOutlined,
-  PlayCircleOutlined,
   StopOutlined,
   BarChartOutlined,
   RiseOutlined,
   FallOutlined,
   ThunderboltOutlined,
+  RocketOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -155,6 +155,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const [copying, setCopying] = useState(false);
   const pollRef = useRef(null);
   const taskIdRef = useRef(null);
+  const [workerRunning, setWorkerRunning] = useState(false); // 全量回测（backtest-worker.js）后台执行中
+  const [workerLog, setWorkerLog] = useState(''); // worker 最近一条日志
+  const workerPollRef = useRef(null);
 
   const availableDates = useMemo(() => (Array.isArray(dates) ? dates : []), [dates]);
   const maxDateStr = availableDates.length > 0 ? availableDates[0] : dayjs().format('YYYYMMDD');
@@ -174,6 +177,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   useEffect(() => {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
+      if (workerPollRef.current) clearInterval(workerPollRef.current);
     };
   }, []);
 
@@ -276,6 +280,83 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       setError('创建回测任务失败，请检查后端服务');
     }
   };
+
+  const stopWorkerPolling = () => {
+    if (workerPollRef.current) {
+      clearInterval(workerPollRef.current);
+      workerPollRef.current = null;
+    }
+  };
+
+  const startWorkerPolling = () => {
+    stopWorkerPolling();
+    workerPollRef.current = setInterval(async () => {
+      try {
+        const r = await axios.get(`http://${local_ip}:3000/training_camp/backtest/worker/status`);
+        const s = r.data || {};
+        const logs = Array.isArray(s.logs) ? s.logs : [];
+        setWorkerLog(logs[logs.length - 1] || '');
+        if (s.status !== 'running') {
+          stopWorkerPolling();
+          setWorkerRunning(false);
+          if (s.status === 'done') {
+            message.success('全量回测完成，回测报告已重新生成');
+            setTimeout(checkCache, 0); // 拉取重跑后的最新缓存结果
+          } else {
+            message.error('全量回测失败，详情见服务端日志');
+          }
+        }
+      } catch {
+        // 忽略单次轮询失败，继续等待
+      }
+    }, 3000);
+  };
+
+  // 回测全部：后台执行 backtest-worker.js（清空回测缓存 → 预热日K → 并行预构建 → 全部策略并行回测 → 自动汇总生成回测报告）
+  const handleRunAll = async () => {
+    const pick = effectiveRange;
+    if (!pick || !pick[0] || !pick[1]) {
+      message.warning('请选择回测日期范围');
+      return;
+    }
+    const startDate = pick[0].format('YYYYMMDD');
+    const endDate = pick[1].format('YYYYMMDD');
+    if (startDate > endDate) {
+      message.warning('开始日期不能晚于结束日期');
+      return;
+    }
+    try {
+      const r = await axios.post(`http://${local_ip}:3000/training_camp/backtest/worker`, { startDate, endDate });
+      if (r.data?.success) {
+        setWorkerRunning(true);
+        setWorkerLog('全量回测已启动：清空回测缓存 → 预热日K线 → 预构建回放数据…');
+        startWorkerPolling();
+        message.info('全量回测已启动（全部策略强制重跑），完成后结果与报告自动刷新');
+      } else {
+        message.error(r.data?.message || '启动全量回测失败');
+      }
+    } catch {
+      message.error('启动全量回测失败，请检查后端服务');
+    }
+  };
+
+  // 打开抽屉时同步一次全量回测状态（worker 正在后台跑时恢复按钮态与轮询）
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    axios.get(`http://${local_ip}:3000/training_camp/backtest/worker/status`).then((r) => {
+      if (cancelled) return;
+      const s = r.data || {};
+      if (s.status === 'running') {
+        const logs = Array.isArray(s.logs) ? s.logs : [];
+        setWorkerRunning(true);
+        setWorkerLog(logs[logs.length - 1] || '全量回测进行中…');
+        startWorkerPolling();
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleCopy = async () => {
     if (!result) return;
@@ -450,25 +531,27 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
             disabledDate={disabledDate}
             allowClear={false}
             format="YYYY-MM-DD"
-            disabled={running}
+            disabled={running || workerRunning}
             style={{ flex: 1, minWidth: 280, maxWidth: 380 }}
           />
           <Button
             type="primary"
-            icon={running ? <StopOutlined /> : <PlayCircleOutlined />}
-            onClick={() => handleStart(false)}
+            icon={running ? <StopOutlined /> : <ThunderboltOutlined />}
+            onClick={() => handleStart(true)}
             loading={running}
+            disabled={workerRunning}
             style={{ borderRadius: 999, padding: '0 24px' }}
           >
-            {running ? '回测中' : '开始回测'}
+            {running ? '回测中' : '强制回测'}
           </Button>
           <Button
-            icon={<ThunderboltOutlined />}
-            onClick={() => handleStart(true)}
+            icon={<RocketOutlined />}
+            onClick={handleRunAll}
+            loading={workerRunning}
             disabled={running}
             style={{ borderRadius: 999 }}
           >
-            强制回测
+            {workerRunning ? '全量回测中' : '回测全部'}
           </Button>
         </div>
 
@@ -502,6 +585,16 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                 : '正在初始化回测任务……'}
             </div>
           </div>
+        )}
+        {/* 全量回测进行中提示 */}
+        {workerRunning && (
+          <Alert
+            type="info"
+            showIcon
+            style={{ marginTop: 14 }}
+            message="全量回测进行中（清空回测缓存 → 预热日K线 → 并行预构建 → 全部策略并行回测 → 自动生成回测报告）"
+            description={workerLog || '正在启动 worker 进程…'}
+          />
         )}
       </div>
 

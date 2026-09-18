@@ -428,24 +428,78 @@
           "reason": "9:30 竞价科技情绪 44.19 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260819",
-      "sellDateDisplay": "2026-08-19",
-      "sellTime": "10:30",
-      "sellPrice": 504.57,
-      "sellChange": -7.67,
-      "sellReason": "均线破位、科技板块情绪退潮",
-      "returnRate": 18.16
+      "sellDate": "20260812",
+      "sellDateDisplay": "2026-08-12",
+      "sellTime": "09:40",
+      "sellPrice": 495,
+      "sellChange": 1.27,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": 15.91
     },
     {
       "seq": 3,
-      "metric": 45.0575,
-      "code": "sz300570",
-      "stockName": "太辰光",
-      "buyDate": "20260820",
-      "buyDateDisplay": "2026-08-20",
-      "buyTime": "10:00",
-      "buyPrice": 199.98,
-      "buyChange": 10.93,
+      "metric": 86.9095,
+      "code": "sh603186",
+      "stockName": "华正新材",
+      "buyDate": "20260817",
+      "buyDateDisplay": "2026-08-17",
+      "buyTime": "11:00",
+      "buyPrice": 184.31,
+      "buyChange": 10,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 907.58亿，较 5min 前 +115.15亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+25.10亿",
+          "reason": "最近 5 分钟资金净流入 25.10 亿（10:55:00→11:00:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 115.15亿",
+          "reason": "当前量能 907.58 亿为正，较 5min 前的 792.43 亿+ 115.15 亿，持续放量",
+          "volumeText": "当前量能 907.58亿，较 5min 前 +115.15亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 24.88 / 当前 76.57",
+          "reason": "9:30 竞价科技情绪 24.88 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260818",
+      "sellDateDisplay": "2026-08-18",
+      "sellTime": "11:05",
+      "sellPrice": 184.69,
+      "sellChange": 0.21,
+      "sellReason": "高位放量大阴线",
+      "returnRate": 0.21
+    },
+    {
+      "seq": 4,
+      "metric": 51.0743,
+      "code": "sh603186",
+      "stockName": "华正新材",
+      "buyDate": "20260819",
+      "buyDateDisplay": "2026-08-19",
+      "buyTime": "10:20",
+      "buyPrice": 180.25,
+      "buyChange": -2.14,
       "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -453,44 +507,44 @@
           "title": "最近 5min 资金净流入大于 20 亿",
           "passed": true,
           "exempted": false,
-          "value": "+23.96亿",
-          "reason": "最近 5 分钟资金净流入 23.96 亿（09:55:00→10:00:00），超过 20 亿阈值"
+          "value": "+174.52亿",
+          "reason": "最近 5 分钟资金净流入 174.52 亿（10:15:00→10:20:00），超过 20 亿阈值"
         },
         {
           "id": "volume_expansion",
           "title": "当前量能为正（今日累计成交额超昨日全天）",
           "passed": true,
           "exempted": true,
-          "value": "减少 122.26亿（已豁免）",
-          "reason": "前一交易日盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
+          "value": "减少 13.08亿（已豁免）",
+          "reason": "今日(08-19)盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
         },
         {
           "id": "opening_below",
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "30 / 81只",
-          "reason": "开盘后自选股共 81 只，30 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 32.99 / 当前 47.81",
-          "reason": "9:30 竞价科技情绪 32.99 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -73.86 / 当前 -100.00",
+          "reason": "9:30 竞价科技情绪 -73.86 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260824",
-      "sellDateDisplay": "2026-08-24",
-      "sellTime": "13:05",
-      "sellPrice": 197.11,
-      "sellChange": -8.09,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": -1.44
+      "sellDate": "20260820",
+      "sellDateDisplay": "2026-08-20",
+      "sellTime": "14:15",
+      "sellPrice": 163.85,
+      "sellChange": -6.37,
+      "sellReason": "跌破最迟买入日低点",
+      "returnRate": -9.1
     },
     {
-      "seq": 4,
+      "seq": 5,
       "metric": 43.2332,
       "code": "sz300570",
       "stockName": "太辰光",
@@ -543,7 +597,7 @@
       "returnRate": -3.9
     },
     {
-      "seq": 5,
+      "seq": 6,
       "metric": 31.5535,
       "code": "sz300570",
       "stockName": "太辰光",
@@ -597,7 +651,7 @@
       "returnRate": -0.29
     },
     {
-      "seq": 6,
+      "seq": 7,
       "metric": 18.5716,
       "code": "sz002536",
       "stockName": "飞龙股份",
@@ -651,7 +705,7 @@
       "returnRate": 6.44
     },
     {
-      "seq": 7,
+      "seq": 8,
       "metric": 19.1009,
       "code": "sz300757",
       "stockName": "罗博特科",
@@ -698,14 +752,14 @@
       ],
       "sellDate": "20260911",
       "sellDateDisplay": "2026-09-11",
-      "sellTime": "09:40",
-      "sellPrice": 633.97,
-      "sellChange": -0.71,
+      "sellTime": "10:05",
+      "sellPrice": 631,
+      "sellChange": -1.17,
       "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 7.23
+      "returnRate": 6.73
     },
     {
-      "seq": 8,
+      "seq": 9,
       "metric": 18.6929,
       "code": "sh603228",
       "stockName": "景旺电子",
@@ -759,7 +813,7 @@
       "returnRate": -4.81
     },
     {
-      "seq": 9,
+      "seq": 10,
       "metric": 47.0775,
       "code": "sh603186",
       "stockName": "华正新材",
@@ -861,10 +915,10 @@
     "buyReturn": 0.55
   },
   "summary": {
-    "tradeCount": 9,
-    "winCount": 4,
-    "winRate": 44.44,
-    "overallReturn": 24.1,
+    "tradeCount": 10,
+    "winCount": 5,
+    "winRate": 50,
+    "overallReturn": 11.99,
     "holding": true
   }
 }

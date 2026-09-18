@@ -1,4 +1,4 @@
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const net = require('net');
 
 const { setConfig } = require('./config');
@@ -2365,6 +2365,86 @@ app.get('/training_camp/backtest/cache', (req, res) => {
     console.error('查询回测缓存失败:', error);
     res.status(500).json({ success: false, message: error.message || '查询缓存失败' });
   }
+});
+
+// ---------- 买卖点回测 - 全量回测（后台执行 script/backtest-worker.js：清空回测缓存 → 预热日K → 并行预构建 → 并行跑全部策略 → 自动汇总生成回测报告）----------
+// 单例任务：同一时刻只允许一个 worker 进程；进度经 stdout/stderr 捕获为日志尾部的环形缓冲
+const backtestWorkerJob = { status: 'idle', startedAt: null, endedAt: null, exitCode: null, logTail: [] };
+const BACKTEST_WORKER_LOG_MAX = 120;
+
+app.post('/training_camp/backtest/worker', (req, res) => {
+  try {
+    if (backtestWorkerJob.status === 'running') {
+      return res.json({ success: true, running: true, startedAt: backtestWorkerJob.startedAt, message: '全量回测已在进行中' });
+    }
+    const { startDate, endDate } = req.body || {};
+    const args = [path.join(__dirname, '../script/backtest-worker.js')];
+    if (startDate && endDate) {
+      if (!/^\d{8}$/.test(String(startDate)) || !/^\d{8}$/.test(String(endDate))) {
+        return res.status(400).json({ success: false, message: '参数错误：startDate/endDate 需为 YYYYMMDD' });
+      }
+      if (startDate > endDate) {
+        return res.status(400).json({ success: false, message: '开始日期不能晚于结束日期' });
+      }
+      args.push('--start', String(startDate), '--end', String(endDate));
+    }
+    backtestWorkerJob.status = 'running';
+    backtestWorkerJob.startedAt = Date.now();
+    backtestWorkerJob.endedAt = null;
+    backtestWorkerJob.exitCode = null;
+    backtestWorkerJob.logTail = [];
+    const child = spawn(process.execPath, args, { cwd: path.join(__dirname, '..'), stdio: ['ignore', 'pipe', 'pipe'] });
+    const pushLog = (line) => {
+      const t = String(line || '').trim();
+      if (!t) return;
+      backtestWorkerJob.logTail.push(`[${new Date().toLocaleTimeString('zh-CN', { hour12: false })}] ${t}`);
+      if (backtestWorkerJob.logTail.length > BACKTEST_WORKER_LOG_MAX) backtestWorkerJob.logTail.shift();
+    };
+    let outBuf = '';
+    let errBuf = '';
+    child.stdout.on('data', (d) => {
+      outBuf += String(d);
+      const lines = outBuf.split('\n');
+      outBuf = lines.pop() || '';
+      lines.forEach(pushLog);
+    });
+    child.stderr.on('data', (d) => {
+      errBuf += String(d);
+      const lines = errBuf.split('\n');
+      errBuf = lines.pop() || '';
+      lines.forEach(pushLog);
+    });
+    child.on('error', (err) => {
+      backtestWorkerJob.status = 'error';
+      backtestWorkerJob.endedAt = Date.now();
+      backtestWorkerJob.exitCode = -1;
+      pushLog(`全量回测 worker 启动失败: ${err.message}`);
+    });
+    child.on('exit', (code) => {
+      if (outBuf.trim()) pushLog(outBuf);
+      if (errBuf.trim()) pushLog(errBuf);
+      backtestWorkerJob.status = code === 0 ? 'done' : 'error';
+      backtestWorkerJob.endedAt = Date.now();
+      backtestWorkerJob.exitCode = code;
+      console.log(`全量回测 worker 结束（code=${code}，耗时 ${((Date.now() - backtestWorkerJob.startedAt) / 1000).toFixed(1)}s）`);
+    });
+    console.log(`全量回测 worker 已启动: node script/backtest-worker.js${startDate ? ` --start ${startDate} --end ${endDate}` : ''}`);
+    res.json({ success: true, running: true, startedAt: backtestWorkerJob.startedAt });
+  } catch (error) {
+    console.error('启动全量回测失败:', error);
+    res.status(500).json({ success: false, message: error.message || '启动全量回测失败' });
+  }
+});
+
+app.get('/training_camp/backtest/worker/status', (req, res) => {
+  res.json({
+    success: true,
+    status: backtestWorkerJob.status, // idle | running | done | error
+    startedAt: backtestWorkerJob.startedAt,
+    endedAt: backtestWorkerJob.endedAt,
+    exitCode: backtestWorkerJob.exitCode,
+    logs: backtestWorkerJob.logTail.slice(-30),
+  });
 });
 
 // ---------- 买卖点回测报告 ----------

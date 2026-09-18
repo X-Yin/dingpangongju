@@ -2,6 +2,56 @@
 // 供训练营回放复用（叠加分时、模拟持仓卖点诊断）
 // 入参均为 { minute, change, lastPx } 数组，按分钟对齐后计算涨跌弹性与超额收益
 
+import axios from 'axios';
+import { local_ip } from '../constant';
+
+// ===== 回放模式分钟级分时缓存（key: `${date}_${code}`）=====
+// MultiStockTimeLineModal（叠加分时 tag）与训练营卖点诊断（条件5当日实时分数）共用
+// value 为 [{minute, change, lastPx}] 升序数组，null 表示拉取失败（不重试，走桶级回退）
+const minuteTlineCache = new Map();
+const minuteTlineFetching = new Set();
+const minuteTlineListeners = new Set();
+
+const mapTlineLineToPoints = (line) => (line || [])
+  .filter(p => p && p.minute != null && p.last_px != null)
+  .map(p => ({ minute: parseInt(p.minute), change: parseFloat(p.change || 0), lastPx: parseFloat(p.last_px) }))
+  .sort((a, b) => a.minute - b.minute);
+
+// 同步读取分钟级分时缓存（未拉到返回 null）
+export const getReplayMinuteTlineByDate = (code, date) => {
+  if (!code || !date) return null;
+  const key = `${date}_${code}`;
+  return minuteTlineCache.has(key) ? minuteTlineCache.get(key) : null;
+};
+
+// 拉取缺失的分钟级分时（每日期每代码仅拉一次，复用服务端磁盘缓存接口 /stock_tline_data）
+export const ensureReplayMinuteTlineByDate = (codes, date) => {
+  if (!date || !Array.isArray(codes)) return;
+  codes.forEach((code) => {
+    if (!code) return;
+    const key = `${date}_${code}`;
+    if (minuteTlineCache.has(key) || minuteTlineFetching.has(key)) return;
+    minuteTlineFetching.add(key);
+    axios.get(`http://${local_ip}:3000/stock_tline_data`, { params: { code, date } })
+      .then((res) => {
+        minuteTlineCache.set(key, mapTlineLineToPoints(res.data?.line));
+      })
+      .catch(() => {
+        minuteTlineCache.set(key, null);
+      })
+      .finally(() => {
+        minuteTlineFetching.delete(key);
+        minuteTlineListeners.forEach((cb) => { try { cb() } catch { /* noop */ } });
+      });
+  });
+};
+
+// 订阅缓存更新（任一拉取完成/失败后触发）；返回取消订阅函数
+export const subscribeMinuteTlineUpdate = (cb) => {
+  minuteTlineListeners.add(cb);
+  return () => minuteTlineListeners.delete(cb);
+};
+
 const getReplayLimitType = (code) => {
   const c = String(code || '').toUpperCase();
   if (c.startsWith('SH688') || c.startsWith('688')) return 'STAR';

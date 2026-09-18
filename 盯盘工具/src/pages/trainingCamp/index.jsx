@@ -19,6 +19,7 @@ import SellPointCheckModal from './components/SellPointCheckModal';
 import SimPositionsModal from './components/SimPositionsModal';
 import runBuyPointDiagnosis from './utils/buyPointChecks';
 import runSellPointDiagnosis from './utils/sellPointChecks';
+import { ensureReplayMinuteTlineByDate, subscribeMinuteTlineUpdate } from '../../utils/replayResilience';
 import './index.scss';
 
 const SIM_POSITIONS_KEY = 'trainingCamp_simPositions';
@@ -265,9 +266,9 @@ const TrainingCamp = () => {
 
   // 手动触发卖点诊断（查看模拟持仓弹窗中点击）
   const handleManualSellDiagnosis = useCallback((position) => {
-    const result = runSellPointDiagnosis(position, currentBucket, replayStocksRef.current, timeBuckets, currentIndex);
+    const result = runSellPointDiagnosis(position, currentBucket, replayStocksRef.current, timeBuckets, currentIndex, String(campData?.date || ''));
     setSellPointModal({ open: true, results: [{ ...result, positionId: position.id }] });
-  }, [currentBucket, timeBuckets, currentIndex]);
+  }, [currentBucket, timeBuckets, currentIndex, campData]);
 
   // 确认卖出：标记对应持仓为已卖出并记录卖出价与收益率，弹窗内移除该股票卡片；
   // 全部卡片处理完后关闭弹窗并恢复播放
@@ -599,6 +600,10 @@ const TrainingCamp = () => {
 
   // 每切换到一个时间桶自动运行模拟持仓卖点诊断，命中则弹出卖点诊断弹窗并暂停播放
   // 规则：添加持仓的当天不运行卖点诊断，仅当回放日期晚于买入日期时才自动诊断
+  // 条件5当日实时分数依赖分钟级分时（与叠加分时 tag 同源缓存），先确保持仓股票及基准指数已拉取，
+  // 拉取完成触发 minuteTlineVersion 变化后本 effect 会重算
+  const [minuteTlineVersion, setMinuteTlineVersion] = useState(0);
+  useEffect(() => subscribeMinuteTlineUpdate(() => setMinuteTlineVersion(v => v + 1)), []);
   useEffect(() => {
     if (!campData || timeBuckets.length === 0 || currentIndex < 1) return;
     const replayDate = String(campData.date || '');
@@ -608,11 +613,14 @@ const TrainingCamp = () => {
       return buyDate !== '' && replayDate !== '' && buyDate < replayDate;
     });
     if (holdings.length === 0) return;
+    if (replayDate) {
+      ensureReplayMinuteTlineByDate([...new Set([...holdings.map(p => p.code), 'sh000688', 'sz399006'])], replayDate);
+    }
     const updated = simPositionsRef.current.map(p => ({ ...p }));
     const posById = new Map(updated.map(p => [p.id, p]));
     const triggered = [];
     for (const pos of holdings) {
-      const diagnosis = runSellPointDiagnosis(pos, currentBucket, replayStocksRef.current, timeBuckets, currentIndex);
+      const diagnosis = runSellPointDiagnosis(pos, currentBucket, replayStocksRef.current, timeBuckets, currentIndex, replayDate);
       const cur = posById.get(pos.id);
       if (!cur) continue;
       if (diagnosis.isSell) {
@@ -633,7 +641,7 @@ const TrainingCamp = () => {
       setSellPointModal(sellPointModalRef.current);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, campData, timeBuckets, currentBucket, pause]);
+  }, [currentIndex, campData, timeBuckets, currentBucket, pause, minuteTlineVersion]);
 
   // 买点弹窗内可选择的模拟持仓股票列表（当前时间桶自选股）
   const availableStocks = useMemo(() => {
@@ -679,6 +687,7 @@ const TrainingCamp = () => {
                       replayMode
                       replayStocks={replayStocks}
                       replayCurrentTimeKey={currentBucket?.timeKey}
+                      replayDate={campData?.date || ''}
                       onStockClick={handleStockClick}
                       embedded
                       title="叠加分时回放"
