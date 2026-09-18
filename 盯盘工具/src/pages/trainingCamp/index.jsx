@@ -182,9 +182,8 @@ const TrainingCamp = () => {
   useEffect(() => {
     if (!campData || timeBuckets.length === 0 || currentIndex < 1) return;
     const result = runBuyPointDiagnosis(timeBuckets, currentIndex, campData);
-    // 触发条件：其它前置检查全部通过（allPassed，与逻辑）
-    //          或尾盘抄底命中（tailDipBuyingHit，或逻辑分支，14:10-15:00 内任一时刻满足即可）
-    if (result?.data?.allPassed === true || result?.data?.tailDipBuyingHit === true) {
+    // 触发条件：前置检查全部通过（allPassed，与逻辑）；尾盘抄底或逻辑分支已移除
+    if (result?.data?.allPassed === true) {
       buyPointWasPlayingRef.current = isPlayingRef.current;
       if (isPlayingRef.current) pause();
       setBuyPointModal({ open: true, result: result.data });

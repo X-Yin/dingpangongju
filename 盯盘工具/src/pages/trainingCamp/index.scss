@@ -258,6 +258,7 @@
     color: #4b5563;
     white-space: nowrap;
     transition: all 0.2s;
+    user-select: none;
 
     &:hover {
       background: #f3f4f6;

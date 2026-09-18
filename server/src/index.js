@@ -837,7 +837,8 @@ app.post('/buy_point_stocks', async (req, res) => {
   try {
     const targetDate = req.body?.targetDate;
     const sortBy = req.body?.sortBy || 'resilience';
-    const result = await getBuyPointStocks(targetDate, sortBy);
+    const days = req.body?.days || 3; // 研报模式窗口天数：3 或 5
+    const result = await getBuyPointStocks(targetDate, sortBy, days);
     res.json(result);
   } catch (error) {
     console.error('筛选买点个股失败:', error);

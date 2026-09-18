@@ -24,6 +24,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
   const [showOnlyGoodNews, setShowOnlyGoodNews] = useState(false);
   const [techEmotion, setTechEmotion] = useState(null);
   const [activeTab, setActiveTab] = useState('change');
+  const [reportDays, setReportDays] = useState(3); // 研报覆盖窗口天数：3 或 5
 
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResults, setAiResults] = useState(null);
@@ -44,10 +45,10 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
     }
   }, []);
 
-  const fetchStocks = useCallback(async (sort) => {
+  const fetchStocks = useCallback(async (sort, days = 3) => {
     setStocksLoading(true);
     try {
-      const response = await axios.post(`http://${local_ip}:3000/buy_point_stocks`, { sortBy: sort });
+      const response = await axios.post(`http://${local_ip}:3000/buy_point_stocks`, { sortBy: sort, days: sort === 'reports' ? days : undefined });
       setStocksData(response.data);
     } catch (error) {
       console.error('Fetch buy point stocks failed:', error);
@@ -210,12 +211,12 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
   const refreshAll = useCallback(() => {
     fetchChecks(true);
     if (activeTab === 'change' || activeTab === 'resilience' || activeTab === 'reports') {
-      fetchStocks(activeTab);
+      fetchStocks(activeTab, reportDays);
     } else if (activeTab === 'ai') {
       fetchAiScreen();
     }
     fetchTechEmotion();
-  }, [fetchChecks, fetchStocks, fetchAiScreen, fetchTechEmotion, activeTab]);
+  }, [fetchChecks, fetchStocks, fetchAiScreen, fetchTechEmotion, activeTab, reportDays]);
 
   useEffect(() => {
     if (open) {
@@ -225,6 +226,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
       setShowOnlyGoodNews(false);
       setTechEmotion(null);
       setActiveTab('change');
+      setReportDays(3);
       setAiResults(null);
       setAiContext(null);
       fetchChecks(false);
@@ -294,19 +296,35 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
       ) : stocksResult ? (
         matchedStocks.length > 0 ? (
           <>
+            {isReportMode && (
+              <div style={{ marginBottom: 10 }}>
+                <Segmented
+                  size="small"
+                  value={reportDays}
+                  onChange={(val) => {
+                    setReportDays(val);
+                    fetchStocks('reports', val);
+                  }}
+                  options={[
+                    { value: 3, label: '3日研报覆盖&3日涨幅' },
+                    { value: 5, label: '5日研报覆盖&5日涨幅' },
+                  ]}
+                />
+              </div>
+            )}
             <div className="fbd-stock-list">
               <div className={`fbd-list-header ${isChangeMode ? 'change-mode' : ''}`}>
                 <div className="col-rank">#</div>
                 <div className="col-name">股票名称</div>
-                {isReportMode && <div className="col-resilience">研报覆盖</div>}
+                {isReportMode && <div className="col-resilience" style={{ textAlign: 'center' }}>{reportDays}日研报覆盖</div>}
                 {!isChangeMode && !isReportMode && <div className="col-resilience">抗分歧</div>}
-                <div className="col-change">{isChangeMode || isReportMode ? '3日涨幅' : '涨跌幅'}</div>
+                <div className="col-change" style={{ textAlign: 'center' }}>{isChangeMode ? '3日涨幅' : isReportMode ? `${reportDays}日涨幅` : '涨跌幅'}</div>
               </div>
               {matchedStocks.map((item, idx) => {
                 const rankColors = ['#f5222d', '#fa8c16', '#faad14'];
                 const rankStyle = idx < 3 ? { background: rankColors[idx], color: '#fff' } : {};
                 const stockHasGoodNews = hasGoodNews(item.stockName);
-                const displayChange = isChangeMode || isReportMode ? item.change3d : item.change;
+                const displayChange = isChangeMode ? item.change3d : isReportMode ? item.changeNd : item.change;
                 return (
                   <div
                     key={item.code}
@@ -345,7 +363,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
                         </span>
                       </div>
                     )}
-                    <div className="col-change">
+                    <div className="col-change" style={{ textAlign: 'center' }}>
                       <span className={`change-value ${displayChange > 0 ? 'up' : displayChange < 0 ? 'down' : ''}`}>
                         {displayChange != null ? `${(displayChange > 0 ? '+' : '')}${displayChange.toFixed(2)}%` : '-'}
                       </span>
@@ -700,7 +718,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
                   onChange={(val) => {
                     setActiveTab(val);
                     if (val === 'change' || val === 'resilience' || val === 'reports') {
-                      fetchStocks(val);
+                      fetchStocks(val, reportDays);
                     } else if (val === 'ai') {
                       setAiResults(null);
                     }
@@ -712,22 +730,6 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
                     { value: 'ai', label: <span><RobotOutlined /> AI筛选</span> },
                   ]}
                 />
-                {/* {(activeTab === 'change' || activeTab === 'resilience' || activeTab === 'reports') && (
-                  <>
-                    <Tooltip title={showOnlyGoodNews ? "取消研报筛选" : "只看当日有研报"}>
-                      <Button
-                        size="small"
-                        type={showOnlyGoodNews ? "primary" : "default"}
-                        icon={<InfoCircleOutlined />}
-                        onClick={() => setShowOnlyGoodNews(!showOnlyGoodNews)}
-                        className={`fbd-filter-btn good-news-filter-btn ${showOnlyGoodNews ? 'active' : ''}`}
-                      />
-                    </Tooltip>
-                    {stocksResult && (
-                      <span className="panel-badge neutral">{matchedStocks.length} 只</span>
-                    )}
-                  </>
-                )} */}
                 {activeTab === 'ai' && aiResults && (
                   <span className="panel-badge neutral">{aiResults.totalCount} 只</span>
                 )}

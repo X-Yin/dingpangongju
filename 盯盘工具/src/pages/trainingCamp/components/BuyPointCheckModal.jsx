@@ -10,9 +10,9 @@ const BuyPointCheckModal = ({ open, result, onClose, availableStocks = [], onAdd
   const [addedList, setAddedList] = useState([]);
 
   if (!result) return null;
-  const { checks = [], allPassed = false, tailDipBuyingHit = false, passedCount = 0, totalCheckCount = 0, conclusion = '', displayTime = '' } = result;
-  // 可出手判定：其它前置检查全部通过（与逻辑）或尾盘抄底命中（或逻辑分支）
-  const buyable = allPassed || tailDipBuyingHit;
+  const { checks = [], allPassed = false, passedCount = 0, totalCheckCount = 0, conclusion = '', displayTime = '' } = result;
+  // 可出手判定：前置检查全部通过（与逻辑）；尾盘抄底或逻辑分支已移除
+  const buyable = allPassed;
 
   const stockOptions = (availableStocks || []).map(s => ({
     label: `${s.name} ${s.code}`,

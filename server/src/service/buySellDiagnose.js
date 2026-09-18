@@ -2188,7 +2188,7 @@ const getBuyPointChecks = async (targetDate = null, refresh = false) => {
 // 买点诊断涨跌幅排名排除的股票（不参与 3 日涨幅排名）
 const BUY_POINT_EXCLUDED_CODES = new Set(['sh688498', 'sh688808']); // 源杰科技、联讯仪器
 
-const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience') => {
+const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', reportDays = 3) => {
   let targetDay;
   if (targetDate) {
     const dateStr = String(targetDate).replace(/-/g, '');
@@ -2220,9 +2220,10 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience') => {
 
   // 研报覆盖索引（日期 → 股票名 → 覆盖数），与训练营回测研报策略共用
   const reportIndex = isReportMode ? loadReportIndex() : null;
-  // 3日研报覆盖窗口：研报目录中 ≤ 今日的最近 3 个报告日期（研报可发布于周末，故以真实日期而非回退后的交易日为界）
+  // 研报覆盖窗口：研报目录中 ≤ 今日的最近 N 个报告日期（N=3/5，研报可发布于周末，故以真实日期而非回退后的交易日为界）
+  const ndays = reportDays === 5 ? 5 : 3;
   const reportWinDates = isReportMode
-    ? Object.keys(reportIndex).filter(d => d <= dayjs().format('YYYYMMDD')).sort().slice(-3)
+    ? Object.keys(reportIndex).filter(d => d <= dayjs().format('YYYYMMDD')).sort().slice(-ndays)
     : [];
 
   // 阶段1：并行拉取所有股票的K线数据（10并发）
@@ -2252,7 +2253,7 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience') => {
       passedStocks.push({
         stock,
         openPrice: null, prevClose: null, openChange: null,
-        change: null, change3d: null, buyPrice: null,
+        change: null, change3d: null, changeNd: null, buyPrice: null,
         reportCount: sumReportCount(stock.name, reportWinDates, reportIndex),
         noData: true,
       });
@@ -2317,7 +2318,7 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience') => {
       if (ma10 !== null && closePrice < ma10) { checkedCount++; continue; }
     }
 
-    // 3日涨幅（涨跌幅/研报模式排序依据）：当前收盘较 3 个交易日前收盘的累计涨幅，数据不足时回退当日涨幅
+    // 3日涨幅（涨跌幅模式排序依据）：当前收盘较 3 个交易日前收盘的累计涨幅，数据不足时回退当日涨幅
     let change3d = change;
     if (targetIdx >= 3) {
       const close3Ago = parseFloat(sortedKline[targetIdx - 3].close_px);
@@ -2326,7 +2327,19 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience') => {
       }
     }
 
-    // 3日研报覆盖数（研报模式排序依据）：最近 3 个报告日内标题或正文命中股票名的数量
+    // N日涨幅（研报模式排序依据，N=3/5 筛选窗口）：同口径按窗口计算，数据不足时回退当日涨幅
+    let changeNd = null;
+    if (isReportMode) {
+      changeNd = change;
+      if (targetIdx >= ndays) {
+        const closeNAgo = parseFloat(sortedKline[targetIdx - ndays].close_px);
+        if (closeNAgo > 0) {
+          changeNd = parseFloat(((closePrice - closeNAgo) / closeNAgo * 100).toFixed(2));
+        }
+      }
+    }
+
+    // N日研报覆盖数（研报模式排序依据）：最近 N 个报告日内标题或正文命中股票名的数量
     let reportCount = 0;
     if (isReportMode) {
       reportCount = sumReportCount(stock.name, reportWinDates, reportIndex);
@@ -2337,13 +2350,13 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience') => {
     passedStocks.push({
       stock,
       openPrice, closePrice, change, prevClose, openChange, buyPrice,
-      change3d, reportCount,
+      change3d, changeNd, reportCount,
       isSh688: stock.code.startsWith('sh688') || stock.code.startsWith('688'),
     });
   }
 
   if (isChangeMode || isReportMode) {
-    // 涨跌幅模式：全量自选股按 3 日涨幅从高到低排序；研报模式：按 3 日研报覆盖数从高到低，覆盖数相同取 3 日涨幅大者优先
+    // 涨跌幅模式：全量自选股按 3 日涨幅从高到低排序；研报模式：按 N 日研报覆盖数从高到低，覆盖数相同取 N 日涨幅大者优先
     // 不做任何过滤、不截断（数据缺失的排最后）
     const sorted = passedStocks.sort((a, b) => {
       if (isReportMode) {
@@ -2351,8 +2364,8 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience') => {
         const rb = b.reportCount == null ? -Infinity : b.reportCount;
         if (ra !== rb) return rb - ra;
       }
-      const va = a.change3d == null ? -Infinity : a.change3d;
-      const vb = b.change3d == null ? -Infinity : b.change3d;
+      const va = (isReportMode ? a.changeNd : a.change3d) == null ? -Infinity : (isReportMode ? a.changeNd : a.change3d);
+      const vb = (isReportMode ? b.changeNd : b.change3d) == null ? -Infinity : (isReportMode ? b.changeNd : b.change3d);
       return vb - va;
     });
     const matched = sorted
@@ -2363,7 +2376,7 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience') => {
       blockName: s.stock.blockName,
       isImportant: s.stock.isImportant || false,
       openPrice: s.openPrice, prevClose: s.prevClose, openChange: s.openChange,
-      change: s.change, change3d: s.change3d, buyPrice: s.buyPrice,
+      change: s.change, change3d: s.change3d, changeNd: s.changeNd, buyPrice: s.buyPrice,
       reportCount: s.reportCount,
     }));
 
@@ -2379,6 +2392,7 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience') => {
         matchedStocks: matched,
         checkedCount,
         sortBy: isChangeMode ? 'change' : 'reports',
+        reportDays: isReportMode ? ndays : null,
         backtestRecommendation,
       },
     };

@@ -276,82 +276,15 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
   if (!checkEmotionRetracePassed) allPassed = false;
 
   // ============================================================
-  // 检查（或逻辑分支）：尾盘抄底（交易日 14:10-15:00 生效）
-  // 与其它检查相互独立：其它检查全部通过（allPassed）或本检查命中，均可触发买点诊断
-  // 条件（均为当前回放时刻相较 14:00 的比较，14:10-15:00 任一时刻满足即可）：
-  // ① 当前科技情绪指数 ≥ -70 且 < 0（全天弱势但未极端冰点）
-  // ② 当前创业板指涨幅 < 14:00 涨幅（尾盘涨幅回落）
-  // ③ 当前量能 amountChangeDiff 相较 14:00 放大 ≥ 50亿（尾盘放量）
+  // 尾盘抄底（或逻辑分支）已移除：买点诊断仅看前置检查全部通过（allPassed），
+  // 尾盘抄底仅保留在回测策略（buySellBacktest.js tail_dip_* 系列）中
   // ============================================================
-  const curMinute = Number(current.minute);
-  const inTailWindow = curMinute >= 1410 && curMinute <= 1500;
-  let tailDipHit = false;
-  let tailDipValue = '未生效';
-  let tailDipReason = '尾盘抄底检查仅在交易日 14:10-15:00 生效，当前时段未生效';
-  try {
-    if (inTailWindow) {
-      // 基准：14:00 桶（找不到精确 14:00 时向前取最近 ≤14:00 的桶）
-      let baseBucket = null;
-      for (let i = timeBuckets.length - 1; i >= 0; i--) {
-        if (Number(timeBuckets[i].minute) <= 1400) { baseBucket = timeBuckets[i]; break; }
-      }
-
-      // ① 当前科技情绪（-70 ≤ 情绪 < 0）
-      const emotionNow = current.techEmotion !== null && current.techEmotion !== undefined && !Number.isNaN(Number(current.techEmotion))
-        ? Number(current.techEmotion)
-        : null;
-      const emotionOk = emotionNow !== null && emotionNow >= -70 && emotionNow < 0;
-
-      // ③ 当前量能相较 14:00 放大 ≥ 50亿（volume 为 amountChangeDiff 累计值）
-      const volNow = current.volume !== null && current.volume !== undefined && !Number.isNaN(Number(current.volume))
-        ? Number(current.volume)
-        : null;
-      const volBase = baseBucket && baseBucket.volume !== null && baseBucket.volume !== undefined && !Number.isNaN(Number(baseBucket.volume))
-        ? Number(baseBucket.volume)
-        : null;
-      const tailSurge = (volNow !== null && volBase !== null) ? volNow - volBase : null;
-      const volumeOk = tailSurge !== null && tailSurge >= 50;
-
-      // ② 创业板指当前涨幅 < 14:00 涨幅（indexTline.cyb.changePct）
-      const cybChangeNow = current.indexTline?.cyb?.changePct != null ? Number(current.indexTline.cyb.changePct) : null;
-      const cybChange1400 = baseBucket?.indexTline?.cyb?.changePct != null ? Number(baseBucket.indexTline.cyb.changePct) : null;
-      const cybOk = cybChangeNow !== null && cybChange1400 !== null && cybChangeNow < cybChange1400;
-
-      tailDipHit = emotionOk && volumeOk && cybOk;
-
-      const fmtPct = (v) => (v === null || v === undefined) ? '--' : `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
-      const fmtEmotion = (v) => (v === null || v === undefined) ? '--' : v.toFixed(1);
-      const fmtSurge = (v) => v === null ? '--' : `${v >= 0 ? '+' : ''}${v.toFixed(0)}亿`;
-      tailDipValue = `情绪 ${fmtEmotion(emotionNow)} / 量能 ${fmtSurge(tailSurge)} / 涨幅 ${fmtPct(cybChange1400)}→${fmtPct(cybChangeNow)}`;
-
-      if (tailDipHit) {
-        tailDipReason = `尾盘抄底条件全部满足：科技情绪 ${fmtEmotion(emotionNow)}（-70 ≤ 情绪 < 0），量能较 14:00 放大 ${fmtSurge(tailSurge)}（≥50亿），创业板指涨幅回落（14:00 ${fmtPct(cybChange1400)} → 当前 ${fmtPct(cybChangeNow)}），命中尾盘抄底，可触发买点诊断`;
-      } else {
-        const failed = [];
-        if (!emotionOk) failed.push(`科技情绪 ${fmtEmotion(emotionNow)}（需 -70 ≤ 情绪 < 0）`);
-        if (!volumeOk) failed.push(`量能较 14:00 ${fmtSurge(tailSurge)}（需放大 ≥50亿）`);
-        if (!cybOk) failed.push(`创业板指涨幅 14:00 ${fmtPct(cybChange1400)} → 当前 ${fmtPct(cybChangeNow)}（需涨幅回落）`);
-        tailDipReason = `尾盘抄底条件未全部满足：${failed.join('；')}（14:10-15:00 内任一时刻满足即可触发）`;
-      }
-    }
-  } catch (e) {
-    tailDipValue = '检查异常';
-    tailDipReason = `尾盘抄底检查异常：${e.message}`;
-  }
-  checks.push({
-    id: 'tail_dip_buying', title: '尾盘抄底（14:10-15:00，或逻辑：命中即可触发）', passed: tailDipHit,
-    value: tailDipValue,
-    reason: tailDipReason,
-  });
-  // 注意：尾盘抄底为或分支，计入 tailDipBuyingHit（供前端 allPassed || tailDipBuyingHit 触发），不计入 allPassed
 
   const passedCount = checks.filter(c => c.passed).length;
   const totalCheckCount = checks.length;
   const conclusion = allPassed
     ? '全部前置条件已满足，可以出手买入，但是请分仓 1/3，随后逐步分批买入，分仓管理是最后一道防火墙，谨防尾盘大盘跳水！'
-    : tailDipHit
-      ? '尾盘抄底条件命中（或逻辑分支），适合尾盘抄底，博弈次日的反弹。可以出手买入，但是请分仓 1/3，随后逐步分批买入，分仓管理是最后一道防火墙，谨防尾盘大盘跳水！'
-      : '当前前置条件未全部满足，请耐心等待，不要盲目出手。';
+    : '当前前置条件未全部满足，请耐心等待，不要盲目出手。';
 
   return {
     success: true,
@@ -361,7 +294,6 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
       displayTime: current.displayTime || fmtTime(current.timeKey),
       checks,
       allPassed,
-      tailDipBuyingHit: tailDipHit,
       passedCount,
       totalCheckCount,
       isFreezingDay: false, // 情绪冰点检查已注释停用，固定返回 false
