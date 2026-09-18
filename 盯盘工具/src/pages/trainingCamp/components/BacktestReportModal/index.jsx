@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Modal, Button, Tag, Empty, Spin, Progress, Popover, Collapse, message, Alert } from 'antd';
+import { Modal, Button, Tag, Empty, Spin, Progress, Popover, Collapse, message, Alert, Tooltip } from 'antd';
 import {
   ReloadOutlined,
   HistoryOutlined,
@@ -20,6 +20,32 @@ const fmtPct = (v) => {
 const fmtPctColor = (v) => (v == null || Number.isNaN(Number(v)) ? undefined : (Number(v) >= 0 ? '#f5222d' : '#52c41a'));
 
 const BASE = `http://${local_ip}:3000`;
+
+// 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
+const BuyReasonTag = ({ reason, checks }) => {
+  if (!reason) return null;
+  const hasDetail = Array.isArray(checks) && checks.length > 0;
+  const detail = hasDetail ? (
+    <div style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {checks.map((c, i) => (
+        <div key={c.id || i}>
+          <div style={{ fontSize: 12, fontWeight: 600 }}>
+            {c.passed ? '✓' : '✗'} {c.title}
+            {c.value ? `（${c.value}）` : ''}
+          </div>
+          {c.reason && <div style={{ fontSize: 11, opacity: 0.75 }}>{c.reason}</div>}
+        </div>
+      ))}
+    </div>
+  ) : undefined;
+  return (
+    <Tooltip title={detail} placement="topLeft">
+      <Tag color="volcano" style={{ marginInlineEnd: 0, whiteSpace: 'normal', height: 'auto', cursor: hasDetail ? 'help' : 'default' }}>
+        {reason}
+      </Tag>
+    </Tooltip>
+  );
+};
 
 // 单个策略卡片：概览汇总 + 每一笔交易明细
 const StrategyCard = ({ strategy, rank }) => {
@@ -50,6 +76,12 @@ const StrategyCard = ({ strategy, rank }) => {
               卖出价 <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{t.sellPrice != null ? Number(t.sellPrice).toFixed(2) : '--'}</b>（涨幅 <b style={{ color: fmtPctColor(t.sellChange) }}>{fmtPct(t.sellChange)}</b>）
             </span>
         </div>
+        {t.buyReason && (
+          <div style={{ color: '#6b7890', display: 'flex', alignItems: 'flex-start', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ lineHeight: '22px' }}>买入原因：</span>
+            <BuyReasonTag reason={t.buyReason} checks={t.buyChecks} />
+          </div>
+        )}
         <div style={{ color: '#6b7890' }}>
           卖出原因：<Tag color="geekblue" style={{ marginInlineEnd: 0 }}>{t.sellReason || '卖出条件触发'}</Tag>
         </div>
@@ -70,9 +102,16 @@ const StrategyCard = ({ strategy, rank }) => {
         </div>
       ),
       children: (
-        <div style={{ fontSize: 12, color: '#6b7890' }}>
-          买入 {fmtDate(h.buyDate)} {fmtTime(h.buyTime)} 价格 <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(h.buyPrice).toFixed(2)}</b>
-          {h.buyChange != null && <>（涨幅 <b style={{ color: fmtPctColor(h.buyChange) }}>{fmtPct(h.buyChange)}</b>）</>}
+        <div style={{ fontSize: 12, color: '#6b7890', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span>
+            买入 {fmtDate(h.buyDate)} {fmtTime(h.buyTime)} 价格 <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(h.buyPrice).toFixed(2)}</b>
+            {h.buyChange != null && <>（涨幅 <b style={{ color: fmtPctColor(h.buyChange) }}>{fmtPct(h.buyChange)}</b>）</>}
+          </span>
+          {h.buyReason && (
+            <span style={{ display: 'flex', alignItems: 'flex-start', gap: 6, flexWrap: 'wrap' }}>
+              买入原因：<BuyReasonTag reason={h.buyReason} checks={h.buyChecks} />
+            </span>
+          )}
         </div>
       ),
     });

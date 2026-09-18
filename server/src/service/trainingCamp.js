@@ -29,7 +29,7 @@ const groupsFile = path.resolve(__dirname, '../data/training_camp_groups.json');
 const CAMP_BUILT_DIR = path.resolve(__dirname, '../data/backtest_camp_cache');
 // 构建逻辑版本：修改 loadTrainingCampData 的构建逻辑（如为 campData 新增预计算字段）时必须 +1，
 // 使全部旧缓存自动失效重建；仅新增策略或调整买卖点条件无需动它（条件在回测阶段实时应用，不依赖此缓存失效）
-const CAMP_BUILDER_VERSION = 1;
+const CAMP_BUILDER_VERSION = 3;
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
 const campBuiltSignature = (monitorStocks) => crypto.createHash('md5')
   .update(JSON.stringify([
@@ -315,7 +315,7 @@ const loadTrainingCampData = async (dateStr) => {
     }
   }
 
-  // 预计算每只股票最近 3 个交易日（含当日）的抗分歧指数，用于卖点诊断条件5
+  // 预计算每只股票最近 3 个交易日（含当日）的抗分歧指数，用于卖点诊断条件5（仅 9:40 后生效）；当日分数另供策略选股 extractDailyInfo 使用
   const resilience3dMap = new Map();
   await batchParallel(klineCodes, async (code) => {
     try {

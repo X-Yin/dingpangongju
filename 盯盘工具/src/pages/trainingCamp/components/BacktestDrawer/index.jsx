@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Drawer, Button, DatePicker, message, Progress, Tag, Empty, Alert, Select } from 'antd';
+import { Drawer, Button, DatePicker, message, Progress, Tag, Empty, Alert, Select, Tooltip } from 'antd';
 import {
   CopyOutlined,
   PlayCircleOutlined,
@@ -16,8 +16,9 @@ import BacktestReportModal from '../BacktestReportModal';
 
 // 回测最早支持日期（早于此日期无回放数据）
 const EARLIEST_DATE = '20260803';
-// 默认回测范围窗口（最近 N 个交易日），与后端 backtestReport.js 的 REPORT_DAYS 口径一致
-const REPORT_DAYS = 30;
+// 默认回测范围窗口（最近 N 个交易日），与后端 backtestReport.js 的 getDefaultReportRange /
+// backtest-worker.js 的回测时间口径一致；可用交易日不足 N 个时自动取最早的一个日期
+const REPORT_DAYS = 60;
 const fmtDate = (d) => `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}`;
 const fmtPct = (v) => {
   if (v == null || Number.isNaN(Number(v))) return '--';
@@ -37,7 +38,7 @@ const SELL_RULES = [
   { key: 'condition2', title: '高位放量大阴线', desc: '日内最高价到现价回落超过 8%，且现价低于日内开盘价，需持续 ≥5 分钟才触发' },
   { key: 'condition3', title: '科技板块情绪退潮', desc: '科技情绪指数 = -100 且自选股中跌幅 <-9% 的个股 ≥5 个，需持续 ≥5 分钟才触发' },
   { key: 'condition4', title: '抗分歧指数弱势', desc: '抗分歧指数 < 6 且当前涨幅 ≤ -5%，仅 14:50 后生效' },
-  { key: 'condition5', title: '连续三日抗分歧弱势', desc: '近三日（含当日）抗分歧指数均 < 10' },
+  { key: 'condition5', title: '连续三日抗分歧弱势', desc: '近三日（含当日）抗分歧指数均 < 10，仅 9:40 后生效' },
   { key: 'condition6', title: '跌破最迟买入日低点', desc: '现价跌破买入当日最低点，需持续 ≥5 分钟才触发' },
 ];
 
@@ -74,6 +75,32 @@ const STRATEGY_OPTIONS = [
   { value: 'tail_dip_3d_fall', label: '尾盘抄底-3日跌幅最大' },
   { value: 'tail_dip_1d_resilience_low', label: '尾盘抄底-当日抗分歧分数最低' },
 ];
+
+// 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
+const BuyReasonTag = ({ reason, checks }) => {
+  if (!reason) return null;
+  const hasDetail = Array.isArray(checks) && checks.length > 0;
+  const detail = hasDetail ? (
+    <div style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {checks.map((c, i) => (
+        <div key={c.id || i}>
+          <div style={{ fontSize: 12, fontWeight: 600 }}>
+            {c.passed ? '✓' : '✗'} {c.title}
+            {c.value ? `（${c.value}）` : ''}
+          </div>
+          {c.reason && <div style={{ fontSize: 11, opacity: 0.75 }}>{c.reason}</div>}
+        </div>
+      ))}
+    </div>
+  ) : undefined;
+  return (
+    <Tooltip title={detail} placement="topLeft">
+      <Tag color="volcano" style={{ marginInlineEnd: 0, whiteSpace: 'normal', height: 'auto', cursor: hasDetail ? 'help' : 'default' }}>
+        {reason}
+      </Tag>
+    </Tooltip>
+  );
+};
 
 // 计算回测汇总指标（兼容全量策略 stocks 与单股策略 summary 两种结果结构）
 const buildSummary = (result) => {
@@ -131,7 +158,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
 
   const availableDates = useMemo(() => (Array.isArray(dates) ? dates : []), [dates]);
   const maxDateStr = availableDates.length > 0 ? availableDates[0] : dayjs().format('YYYYMMDD');
-  // 未手动选择时默认取「最近 30 个可用交易日」，与后端回测报告/worker 预生成缓存的日期范围口径一致，
+  // 未手动选择时默认取「最近 60 个可用交易日」（不足 60 个时取最早的一个日期），与后端回测报告 /
+  // worker 预生成缓存的日期范围口径一致，
   // 保证 worker 跑完后打开抽屉能直接命中缓存（此前写死最早日期会因范围不一致查不到缓存而空白）
   const defaultRange = useMemo(() => {
     if (availableDates.length === 0) return [dayjs(EARLIEST_DATE, 'YYYYMMDD'), dayjs(maxDateStr, 'YYYYMMDD')];
@@ -310,6 +338,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
               buyTime: t.buyTime,
               buyPrice: t.buyPrice,
               buyChange: t.buyChange,
+              buyReason: t.buyReason ?? null,
+              buyChecks: t.buyChecks ?? null,
               sellDate: t.sellDate,
               sellTime: t.sellTime,
               sellPrice: t.sellPrice,
@@ -548,6 +578,12 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                             涨幅 <b style={{ color: t.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(t.buyChange)}</b>
                           </span>
                         </div>
+                        {t.buyReason && (
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+                            <span style={{ fontSize: 12, color: '#6b7890', lineHeight: '22px' }}>买入原因</span>
+                            <BuyReasonTag reason={t.buyReason} checks={t.buyChecks} />
+                          </div>
+                        )}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
                           <FallOutlined style={{ color: '#52c41a', fontSize: 12 }} />
                           <span style={{ fontSize: 12, color: '#6b7890' }}>
@@ -594,6 +630,12 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                       <span style={{ fontSize: 12, marginLeft: 10 }}>
                         涨幅 <b style={{ color: result.currentHolding.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(result.currentHolding.buyChange)}</b>
                       </span>
+                      {result.currentHolding.buyReason && (
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+                          <span style={{ fontSize: 12, color: '#6b7890', lineHeight: '22px' }}>买入原因</span>
+                          <BuyReasonTag reason={result.currentHolding.buyReason} checks={result.currentHolding.buyChecks} />
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -646,6 +688,12 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                                 涨幅 <b style={{ color: t.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(t.buyChange)}</b>
                               </span>
                             </div>
+                            {t.buyReason && (
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+                                <span style={{ fontSize: 12, color: '#6b7890', lineHeight: '22px' }}>买入原因</span>
+                                <BuyReasonTag reason={t.buyReason} checks={t.buyChecks} />
+                              </div>
+                            )}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
                               <FallOutlined style={{ color: '#52c41a', fontSize: 12 }} />
                               <span style={{ fontSize: 12, color: '#6b7890' }}>
@@ -678,6 +726,12 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                             <span style={{ fontSize: 12, marginLeft: 10 }}>
                               涨幅 <b style={{ color: stock.holding.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(stock.holding.buyChange)}</b>
                             </span>
+                            {stock.holding.buyReason && (
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+                                <span style={{ fontSize: 12, color: '#6b7890', lineHeight: '22px' }}>买入原因</span>
+                                <BuyReasonTag reason={stock.holding.buyReason} checks={stock.holding.buyChecks} />
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

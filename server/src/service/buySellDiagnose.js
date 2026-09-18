@@ -24,7 +24,7 @@
  *   2. 高位阴线（收盘跌幅超过 -5%，主力出货信号）
  *   3. 科技板块情绪退潮 == -100（市场整体情绪极度低迷，避险卖出）
  *   4. 抗分歧指数 < 6 且 涨幅 ≤ -5%（14:50后生效，个股抗跌性弱且正在下跌）
- *   5. 连续三天（含当日）抗分歧指数均 < 10（个股连续弱势，资金持续分歧）
+ *   5. 连续三天（含当日）抗分歧指数均 < 10（个股连续弱势，资金持续分歧），仅 9:40 后生效
  *   6. 现价跌破最迟一天买入（最近一次加仓）当日的最低点，且持续 ≥5 分钟（买入成本线告破）
  *   7. 现价跌破持仓成本线（用户在持仓中自定义的成本价）
  */
@@ -1373,7 +1373,7 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
     condition3.subConditions = [{ label: '状态', value: '无数据' }];
   }
 
-  // 条件5：连续三天（含当日）抗分歧指数均 < 10（个股连续弱势，资金持续分歧）
+  // 条件5：连续三天（含当日）抗分歧指数均 < 10（个股连续弱势，资金持续分歧），仅 9:40 后生效
   let condition5 = {
     name: '连续三日抗分歧弱势',
     satisfied: false,
@@ -1433,16 +1433,20 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
         ];
       } else {
         const allBelow10 = resilience3d.every(r => r.score < 10);
-        condition5.satisfied = allBelow10;
+        const isAfter940 = dayjs().format('HHmm') >= '0940';
+        condition5.satisfied = allBelow10 && isAfter940;
         const dateDesc = resilience3d.map(r => `${formatDateStr(r.date)}: ${r.score}`).join('、');
-        if (allBelow10) {
-          condition5.detail = `近三日抗分歧指数均 < 10（${dateDesc}），个股连续弱势，资金持续分歧`;
+        if (!isAfter940) {
+          condition5.detail = `近三日抗分歧指数均 < 10（${dateDesc}），但当前时间未到 9:40，条件暂不生效`;
+        } else if (allBelow10) {
+          condition5.detail = `近三日抗分歧指数均 < 10（${dateDesc}），个股连续弱势，资金持续分歧，触发卖点`;
         } else {
           condition5.detail = `近三日抗分歧指数未全部 < 10（${dateDesc}），未触发`;
         }
         condition5.subConditions = [
           { label: '近3日抗分歧', value: dateDesc },
           { label: '跟踪指数', value: isSh688ForC5 ? '科创板' : '创业板' },
+          { label: '生效时间', value: '9:40 后' },
           { label: '阈值', value: '连续3日均 < 10' },
         ];
       }

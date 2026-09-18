@@ -279,11 +279,16 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
       reason: `${iceSource}盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免`,
     });
   } else {
+    // 量能明细文案（随买入原因汇总展示）：当前量能值 + 最近 5min 变化量
+    const volumeText = volumeResult.hasData
+      ? `当前量能 ${volumeResult.last5minVol.toFixed(2)}亿，较 5min 前 ${volDiff >= 0 ? '+' : '-'}${Math.abs(volDiff).toFixed(2)}亿`
+      : null;
     checks.push({
       id: 'volume_expansion',
       title: '量能较 5min 前增加（负值需增加超 100 亿）',
       passed: checkVolumePassed,
       value: volumeResult.hasData ? `${volDiff >= 0 ? '+' : '-'} ${Math.abs(volDiff).toFixed(2)}亿` : '数据不足',
+      volumeText,
       reason: !volumeResult.hasData
         ? '量能数据不足，无法判断当前量能'
         : (() => {
@@ -409,6 +414,43 @@ const checkTailDipHit = (timeBuckets, currentIndex) => {
     const e = b.techEmotion == null ? null : Number(b.techEmotion);
     return e != null && !Number.isNaN(e) && e <= -100;
   });
+};
+
+// ===== 买入原因构建（随成交记录/缓存/回测报告落盘，供前端与报告展示命中了哪些买入条件） =====
+// 尾盘抄底策略的固定买入原因（命中条件唯一：当日科技情绪分时曾触及 -100 退潮冰点）
+const TAIL_DIP_BUY_INFO = {
+  buyReason: '尾盘抄底命中：当日科技情绪曾触及-100退潮冰点',
+  buyChecks: [{
+    id: 'tail_dip',
+    title: '尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）',
+    passed: true,
+    value: '14:57',
+    reason: '当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）',
+  }],
+};
+
+// 由买点诊断结果构建买入原因：buyReason 为全部命中条件标题汇总（与 sellReason 命中卖出条件名口径一致），
+// 量能项额外附带当前量能值与最近 5min 变化量；buyChecks 为逐项明细（含数值与判定理由），
+// allPassed !== true 时返回空
+const buildBuyReasonFromDiag = (diagData) => {
+  if (!diagData || diagData.allPassed !== true) return { buyReason: '', buyChecks: [] };
+  const passedChecks = (diagData.checks || []).filter(c => c.passed);
+  return {
+    buyReason: passedChecks.map(c => (
+      c.id === 'volume_expansion' && c.volumeText
+        ? `${c.title}：${c.volumeText}`
+        : c.title
+    )).join('、') || '买点诊断全部通过',
+    buyChecks: (diagData.checks || []).map(c => ({
+      id: c.id,
+      title: c.title,
+      passed: !!c.passed,
+      exempted: !!c.exempted,
+      value: c.value,
+      reason: c.reason,
+      ...(c.volumeText ? { volumeText: c.volumeText } : {}),
+    })),
+  };
 };
 
 // ============================================================
@@ -929,18 +971,21 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
     subConditions: [],
   };
 
-  // ===== 条件5：连续三日（含当日）抗分歧指数均 < 10 =====
+  // ===== 条件5：连续三日（含当日）抗分歧指数均 < 10（个股连续弱势，资金持续分歧），仅 9:40 后生效 =====
   const r3dValid = stock?.resilience3dValid === true;
   const r3dAllBelow10 = stock?.resilience3dAllBelow10 === true;
   const r3dScores = Array.isArray(stock?.resilience3dScores) ? stock.resilience3dScores : [];
+  const isAfter940C5 = minute != null && minute >= 940;
   const condition5 = {
     name: '连续三日抗分歧弱势',
-    satisfied: r3dAllBelow10,
+    satisfied: r3dAllBelow10 && isAfter940C5,
     detail: !r3dValid
       ? '历史分时数据不足，无法判断连续三日弱势'
-      : r3dAllBelow10
-        ? `近三日抗分歧指数均 < 10（${r3dScores.join('、')}），个股连续弱势，资金持续分歧`
-        : `近三日抗分歧指数未全部 < 10（${r3dScores.join('、')}），未触发`,
+      : !isAfter940C5
+        ? `近三日抗分歧指数均 < 10（${r3dScores.join('、')}），但当前时间未到 9:40，条件暂不生效`
+        : r3dAllBelow10
+          ? `近三日抗分歧指数均 < 10（${r3dScores.join('、')}），个股连续弱势，资金持续分歧，触发卖点`
+          : `近三日抗分歧指数未全部 < 10（${r3dScores.join('、')}），未触发`,
     subConditions: [],
   };
 
@@ -1406,6 +1451,8 @@ const runQuarterBacktest = async (startDate, endDate, strategyId, onProgress) =>
             buyTime: pos.buyTime,
             buyPrice: pos.buyPrice,
             buyChange: pos.buyChange,
+            buyReason: pos.buyReason,
+            buyChecks: pos.buyChecks,
             sellDate: dateStr,
             sellDateDisplay: dateDisplay,
             sellTime: result.displayTime,
@@ -1428,6 +1475,7 @@ const runQuarterBacktest = async (startDate, endDate, strategyId, onProgress) =>
         const bucket = timeBuckets[bi];
         const buyResult = runBuyPointDiagnosis(timeBuckets, bi, campData);
         if (buyResult?.data?.allPassed === true) {
+          const buyInfo = buildBuyReasonFromDiag(buyResult.data);
           const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
           const picks = pickQuarterStocks(bucket, rangeDates, di, dailyInfos, heldCodes);
           for (const pick of picks) {
@@ -1441,6 +1489,8 @@ const runQuarterBacktest = async (startDate, endDate, strategyId, onProgress) =>
               buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
               buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
               metric: parseFloat(pick.gain.toFixed(4)),
+              buyReason: buyInfo.buyReason,
+              buyChecks: buyInfo.buyChecks,
             });
             heldCodes.add(sc.code);
           }
@@ -1575,6 +1625,8 @@ const runTwoBacktest = async (startDate, endDate, strategyId, onProgress) => {
             buyTime: pos.buyTime,
             buyPrice: pos.buyPrice,
             buyChange: pos.buyChange,
+            buyReason: pos.buyReason,
+            buyChecks: pos.buyChecks,
             sellDate: dateStr,
             sellDateDisplay: dateDisplay,
             sellTime: result.displayTime,
@@ -1600,6 +1652,7 @@ const runTwoBacktest = async (startDate, endDate, strategyId, onProgress) => {
         const bucket = timeBuckets[bi];
         const buyResult = runBuyPointDiagnosis(timeBuckets, bi, campData);
         if (buyResult?.data?.allPassed === true) {
+          const buyInfo = buildBuyReasonFromDiag(buyResult.data);
           const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
           const picks = pickTwoStocks(bucket, rangeDates, di, dailyInfos, heldCodes, idleSlots);
           for (const pick of picks) {
@@ -1613,6 +1666,8 @@ const runTwoBacktest = async (startDate, endDate, strategyId, onProgress) => {
               buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
               buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
               metric: parseFloat(pick.gain.toFixed(4)),
+              buyReason: buyInfo.buyReason,
+              buyChecks: buyInfo.buyChecks,
             });
             heldCodes.add(sc.code);
           }
@@ -1756,6 +1811,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
           buyTime: singlePosition.buyTime,
           buyPrice: singlePosition.buyPrice,
           buyChange: singlePosition.buyChange,
+          buyReason: singlePosition.buyReason,
+          buyChecks: singlePosition.buyChecks,
           sellDate: dateStr,
           sellDateDisplay: dateDisplay,
           sellTime: result.displayTime,
@@ -1790,15 +1847,18 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
             buyPrice: avgPrice,
             buyChange: closeChange,
             metric: pendingHalfBuy.metric,
+            buyReason: pendingHalfBuy.buyReason,
+            buyChecks: pendingHalfBuy.buyChecks,
           };
         }
         pendingHalfBuy = null;
       }
 
       // 买入信号：尾盘抄底策略仅以尾盘抄底命中为买入前提（不跑买点诊断），其余策略沿用买点诊断 allPassed
-      const buyHit = strategy.tailDip === true
-        ? checkTailDipHit(timeBuckets, bi)
-        : runBuyPointDiagnosis(timeBuckets, bi, campData)?.data?.allPassed === true;
+      const buyDiag = strategy.tailDip === true ? null : runBuyPointDiagnosis(timeBuckets, bi, campData)?.data;
+      const buyHit = strategy.tailDip === true ? checkTailDipHit(timeBuckets, bi) : buyDiag?.allPassed === true;
+      // 买入原因：命中了哪些买入条件（尾盘抄底为固定命中原因，其余取买点诊断全部通过项汇总）
+      const buyInfo = buyHit ? (strategy.tailDip === true ? TAIL_DIP_BUY_INFO : buildBuyReasonFromDiag(buyDiag)) : null;
       if (buyHit) {
         // 尾盘抄底策略 14:57 尾盘挂单买入（收盘集合竞价成交，价格取触发桶价），按挂单时间显示；其余策略按桶时间
         const buyTime = strategy.tailDip === true ? '14:57' : fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
@@ -1822,6 +1882,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
                 buyPrice: buyPx,
                 buyChange,
                 metric: picked.metric,
+                buyReason: buyInfo.buyReason,
+                buyChecks: buyInfo.buyChecks,
               };
             } else if (singlePosition.code !== sc.code) {
               // 情况2：已持仓且目标股票已变，卖旧买新
@@ -1840,6 +1902,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
                 buyTime: singlePosition.buyTime,
                 buyPrice: singlePosition.buyPrice,
                 buyChange: singlePosition.buyChange,
+                buyReason: singlePosition.buyReason,
+                buyChecks: singlePosition.buyChecks,
                 sellDate: dateStr,
                 sellDateDisplay: dateDisplay,
                 sellTime: buyTime,
@@ -1858,6 +1922,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
                 buyPrice: buyPx,
                 buyChange,
                 metric: picked.metric,
+                buyReason: buyInfo.buyReason,
+                buyChecks: buyInfo.buyChecks,
               };
             }
           }
@@ -1881,6 +1947,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
                   buyPrice: closePx,
                   buyChange: closeStock?.changePct != null ? parseFloat(Number(closeStock.changePct).toFixed(2)) : (sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null),
                   metric: picked.metric,
+                  buyReason: buyInfo.buyReason,
+                  buyChecks: buyInfo.buyChecks,
                 };
               } else {
                 pendingHalfBuy = {
@@ -1892,6 +1960,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
                   buyPrice1: parseFloat(Number(sc.lastPx).toFixed(2)),
                   buyChange1: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
                   metric: picked.metric,
+                  buyReason: buyInfo.buyReason,
+                  buyChecks: buyInfo.buyChecks,
                 };
               }
             } else {
@@ -1904,6 +1974,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
                 buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
                 buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
                 metric: picked.metric,
+                buyReason: buyInfo.buyReason,
+                buyChecks: buyInfo.buyChecks,
               };
             }
           }
@@ -2051,15 +2123,18 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
               buyPrice: avgPrice,
               buyChange: closeChange,
               metric: st.pendingHalfBuy.metric,
+              buyReason: st.pendingHalfBuy.buyReason,
+              buyChecks: st.pendingHalfBuy.buyChecks,
             };
           }
           st.pendingHalfBuy = null;
         }
 
         // 买入信号：尾盘抄底策略仅以尾盘抄底命中为买入前提（不跑买点诊断），其余策略沿用买点诊断 allPassed
-        const buyHit = strategy.tailDip === true
-          ? checkTailDipHit(timeBuckets, bi)
-          : runBuyPointDiagnosis(timeBuckets, bi, campData)?.data?.allPassed === true;
+        const buyDiag = strategy.tailDip === true ? null : runBuyPointDiagnosis(timeBuckets, bi, campData)?.data;
+        const buyHit = strategy.tailDip === true ? checkTailDipHit(timeBuckets, bi) : buyDiag?.allPassed === true;
+        // 买入原因：命中了哪些买入条件（尾盘抄底为固定命中原因，其余取买点诊断全部通过项汇总）
+        const buyInfo = buyHit ? (strategy.tailDip === true ? TAIL_DIP_BUY_INFO : buildBuyReasonFromDiag(buyDiag)) : null;
         if (buyHit) {
           // 尾盘抄底策略 14:57 尾盘挂单买入（收盘集合竞价成交，价格取触发桶价），按挂单时间显示；其余策略按桶时间
           const buyTime = strategy.tailDip === true ? '14:57' : fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
@@ -2083,6 +2158,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                   buyPrice: buyPx,
                   buyChange,
                   metric: picked.metric,
+                  buyReason: buyInfo.buyReason,
+                  buyChecks: buyInfo.buyChecks,
                 };
               } else if (st.singlePosition.code !== sc.code) {
                 // 情况2：已持仓且目标股票已变，卖旧买新
@@ -2101,6 +2178,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                   buyTime: st.singlePosition.buyTime,
                   buyPrice: st.singlePosition.buyPrice,
                   buyChange: st.singlePosition.buyChange,
+                  buyReason: st.singlePosition.buyReason,
+                  buyChecks: st.singlePosition.buyChecks,
                   sellDate: dateStr,
                   sellDateDisplay: dateDisplay,
                   sellTime: buyTime,
@@ -2119,6 +2198,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                   buyPrice: buyPx,
                   buyChange,
                   metric: picked.metric,
+                  buyReason: buyInfo.buyReason,
+                  buyChecks: buyInfo.buyChecks,
                 };
               }
             }
@@ -2142,6 +2223,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                     buyPrice: closePx,
                     buyChange: closeStock?.changePct != null ? parseFloat(Number(closeStock.changePct).toFixed(2)) : (sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null),
                     metric: picked.metric,
+                    buyReason: buyInfo.buyReason,
+                    buyChecks: buyInfo.buyChecks,
                   };
                 } else {
                   st.pendingHalfBuy = {
@@ -2153,6 +2236,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                     buyPrice1: parseFloat(Number(sc.lastPx).toFixed(2)),
                     buyChange1: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
                     metric: picked.metric,
+                    buyReason: buyInfo.buyReason,
+                    buyChecks: buyInfo.buyChecks,
                   };
                 }
               } else {
@@ -2165,6 +2250,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                   buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
                   buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
                   metric: picked.metric,
+                  buyReason: buyInfo.buyReason,
+                  buyChecks: buyInfo.buyChecks,
                 };
               }
             }
@@ -2187,6 +2274,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
               buyTime: st.singlePosition.buyTime,
               buyPrice: st.singlePosition.buyPrice,
               buyChange: st.singlePosition.buyChange,
+              buyReason: st.singlePosition.buyReason,
+              buyChecks: st.singlePosition.buyChecks,
               sellDate: dateStr,
               sellDateDisplay: dateDisplay,
               sellTime: result.displayTime,

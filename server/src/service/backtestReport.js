@@ -12,7 +12,7 @@ const { STRATEGIES, readCachedBacktest, runRangeBacktest } = require('./buySellB
 const reportsDir = path.join(__dirname, '../data/backtest_reports');
 const backtestCacheDir = path.join(__dirname, '../data/backtest_results');
 const MAX_REPORTS = 5;
-const REPORT_DAYS = 30; // 过去 30 个交易日
+const REPORT_DAYS = 60; // 过去 60 个交易日
 
 // 过去 REPORT_DAYS 个交易日的日期范围（以最新可用回放交易日为 endDate）
 const getDefaultReportRange = () => {
@@ -106,6 +106,8 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         buyTime: t.buyTime,
         buyPrice: t.buyPrice,
         buyChange: t.buyChange,
+        buyReason: t.buyReason ?? null,
+        buyChecks: t.buyChecks ?? null,
         sellDate: t.sellDate,
         sellDateDisplay: t.sellDateDisplay,
         sellTime: t.sellTime,
@@ -123,6 +125,8 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         buyPrice: result.currentHolding.buyPrice,
         buyChange: result.currentHolding.buyChange,
         buyReturn: result.currentHolding.buyReturn,
+        buyReason: result.currentHolding.buyReason ?? null,
+        buyChecks: result.currentHolding.buyChecks ?? null,
       } : null,
     });
   }
