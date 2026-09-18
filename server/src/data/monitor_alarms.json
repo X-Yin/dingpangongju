@@ -1,1 +1,80 @@
-[]
+[
+  {
+    "id": "e2bd6a8c37e1edcf",
+    "time": "2026-09-18 14:52:56",
+    "read": true,
+    "alarms": [
+      {
+        "time": "2026-09-18 14:52:56",
+        "title": "板块排名变化",
+        "description": "<b>粮食</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">10/40</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "a3a0d2953bc8fe84",
+    "time": "2026-09-18 14:53:56",
+    "read": true,
+    "alarms": [
+      {
+        "time": "2026-09-18 14:53:56",
+        "title": "板块排名变化",
+        "description": "<b>商业航天</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">10/40</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "ddc082607dd80dff",
+    "time": "2026-09-18 14:54:53",
+    "read": true,
+    "alarms": [
+      {
+        "time": "2026-09-18 14:54:53",
+        "title": "板块排名变化",
+        "description": "<b>商业航天</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">13/40</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "84f1a6551b9aaee6",
+    "time": "2026-09-18 15:00:26",
+    "read": true,
+    "alarms": [
+      {
+        "time": "2026-09-18 15:00:26",
+        "title": "大盘主力资金变化",
+        "description": "成交量变化 <span style=\"color: #ff4d4f; font-weight: bold;\">+304.29亿</span>",
+        "path": "/volume"
+      }
+    ]
+  },
+  {
+    "id": "744f3b44daea7b17",
+    "time": "2026-09-18 15:00:44",
+    "read": true,
+    "alarms": [
+      {
+        "time": "2026-09-18 15:00:44",
+        "title": "大盘主力资金变化",
+        "description": "主力资金变化 <span style=\"color: #ff4d4f; font-weight: bold;\">+13.07亿</span>",
+        "path": "/volume"
+      }
+    ]
+  },
+  {
+    "id": "ea68f6a8e9ce6ada",
+    "time": "2026-09-18 15:01:55",
+    "read": true,
+    "alarms": [
+      {
+        "time": "2026-09-18 15:01:55",
+        "title": "板块排名变化",
+        "description": "<b>MLCC</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">20/40</span><br/><b>证券</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">28/40</span>",
+        "path": "/block"
+      }
+    ]
+  }
+]

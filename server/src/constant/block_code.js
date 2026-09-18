@@ -346,11 +346,6 @@ exports.default = [
     },
     {
         "blockName": "消费",
-        "code": "sz002251",
-        "name": "步步高"
-    },
-    {
-        "blockName": "消费",
         "code": "sh600693",
         "name": "东百集团"
     },
@@ -363,11 +358,6 @@ exports.default = [
         "blockName": "消费",
         "code": "sh605179",
         "name": "一鸣食品"
-    },
-    {
-        "blockName": "消费",
-        "code": "sh601933",
-        "name": "永辉超市"
     },
     {
         "blockName": "医药",
@@ -581,11 +571,6 @@ exports.default = [
     },
     {
         "blockName": "贵金属",
-        "code": "sz000630",
-        "name": "铜陵有色"
-    },
-    {
-        "blockName": "贵金属",
         "code": "sh601600",
         "name": "中国铝业"
     },
@@ -691,11 +676,6 @@ exports.default = [
     },
     {
         "blockName": "AI 应用",
-        "code": "sh601360",
-        "name": "三六零"
-    },
-    {
-        "blockName": "AI 应用",
         "code": "sh688111",
         "name": "金山办公"
     },
@@ -758,11 +738,6 @@ exports.default = [
         "blockName": "贵金属",
         "code": "sz300139",
         "name": "晓程科技"
-    },
-    {
-        "blockName": "贵金属",
-        "code": "sz000506",
-        "name": "招金黄金"
     },
     {
         "blockName": "房地产",
@@ -828,5 +803,10 @@ exports.default = [
         "blockName": "MFC",
         "code": "sh688835",
         "name": "高凯技术"
+    },
+    {
+        "blockName": "CCL",
+        "code": "sh688519",
+        "name": "南亚新材"
     }
 ]

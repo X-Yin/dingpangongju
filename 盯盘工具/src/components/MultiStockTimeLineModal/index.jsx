@@ -496,6 +496,20 @@ const MultiStockTimeLineModal = ({
   const importantCodesRef = useRef(new Set()); // 全量自选股中被标记为重点的股票代码集合
   const isActive = embedded || visible;
 
+  // 刷新中状态：叠加分时模块任一数据请求（分时/主力资金/自选股涨幅）进行中时，顶部刷新按钮跟随转动，全部返回后恢复静止
+  const [timelineRefreshing, setTimelineRefreshing] = useState(false);
+  const timelineRefreshCountRef = useRef(0);
+  const beginTimelineRefresh = useCallback(() => {
+    timelineRefreshCountRef.current += 1;
+    setTimelineRefreshing(true);
+  }, []);
+  const endTimelineRefresh = useCallback(() => {
+    timelineRefreshCountRef.current = Math.max(0, timelineRefreshCountRef.current - 1);
+    if (timelineRefreshCountRef.current === 0) {
+      setTimelineRefreshing(false);
+    }
+  }, []);
+
   // 分组相关状态
   const [groups, setGroups] = useState([]);
   const [activeGroupId, setActiveGroupId] = useState('basic');
@@ -581,6 +595,7 @@ const MultiStockTimeLineModal = ({
 
   // 主力资金净流入：交易时段轮询，用于右侧标签展示
   const fetchMainFund = useCallback(() => {
+    beginTimelineRefresh();
     axios
       .get(`http://${local_ip}:3000/get_watchlist_main_fund`)
       .then((res) => {
@@ -591,8 +606,9 @@ const MultiStockTimeLineModal = ({
         mainFundMapRef.current = map;
         requestAnimationFrame(() => updateRightAxisLabels());
       })
-      .catch((error) => console.error('获取主力资金净流入失败:', error));
-  }, []);
+      .catch((error) => console.error('获取主力资金净流入失败:', error))
+      .finally(() => endTimelineRefresh());
+  }, [beginTimelineRefresh, endTimelineRefresh]);
 
   useEffect(() => {
     if (!isActive) return undefined;
@@ -810,6 +826,7 @@ const MultiStockTimeLineModal = ({
       return;
     }
 
+    beginTimelineRefresh();
     const fetchId = ++fetchIdRef.current;
     const shouldShowLoading = !seriesRef.current.length;
     if (shouldShowLoading) {
@@ -919,9 +936,10 @@ const MultiStockTimeLineModal = ({
         }
       }
     } finally {
+      endTimelineRefresh();
       if (fetchId === fetchIdRef.current && shouldShowLoading) setLoading(false);
     }
-  }, [currentStocks]);
+  }, [currentStocks, beginTimelineRefresh, endTimelineRefresh]);
 
   // 手动刷新：重新拉取当前分组所有股票的分时数据并重绘图表，同时刷新自选股涨幅与主力资金
   // 刷新期间在组件内容上显示蒙层，避免重复点击
@@ -930,6 +948,7 @@ const MultiStockTimeLineModal = ({
     refreshingRef.current = true;
     setRefreshing(true);
     try {
+      beginTimelineRefresh();
       await Promise.all([
         fetchMainFund(),
         axios
@@ -941,14 +960,15 @@ const MultiStockTimeLineModal = ({
             });
             setStockChangeMap(map);
           })
-          .catch((error) => console.error('获取自选股涨幅失败:', error)),
+          .catch((error) => console.error('获取自选股涨幅失败:', error))
+          .finally(() => endTimelineRefresh()),
         fetchTimeLineData(currentStocks),
       ]);
     } finally {
       refreshingRef.current = false;
       setRefreshing(false);
     }
-  }, [currentStocks, fetchMainFund, fetchTimeLineData]);
+  }, [currentStocks, fetchMainFund, fetchTimeLineData, beginTimelineRefresh, endTimelineRefresh]);
 
   const updateRightAxisLabels = useCallback(() => {
     if (!chartRef.current || !containerRef.current) return;
@@ -1672,7 +1692,7 @@ const MultiStockTimeLineModal = ({
               <span><LineChartOutlined style={{ color: getThemeColor(), marginRight: '8px' }} />{title}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Button
-                  icon={<ReloadOutlined />}
+                  icon={<ReloadOutlined spin={timelineRefreshing} />}
                   title="刷新全部叠加分时数据"
                   onClick={handleRefresh}
                   className="mtlm-refresh-btn"

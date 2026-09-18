@@ -249,6 +249,9 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   const containerRef = useRef(null);
   const positionsRef = useRef([]);
   const backtestTriggeredRef = useRef(false);
+  // 持仓数据刷新中：任一轮询/手动请求进行中时为 true，刷新按钮跟随转动，全部数据返回后恢复静止
+  const [dataRefreshing, setDataRefreshing] = useState(false);
+  const dataRefreshCountRef = useRef(0);
 
   // 持仓管理弹窗
   const [positionManageModalVisible, setPositionManageModalVisible] = useState(false);
@@ -652,7 +655,20 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     };
   }, []);
 
+  // 刷新中计数：任一持仓数据请求开始 +1、结束 -1，归零后按钮恢复静止
+  const beginDataRefresh = useCallback(() => {
+    dataRefreshCountRef.current += 1;
+    setDataRefreshing(true);
+  }, []);
+  const endDataRefresh = useCallback(() => {
+    dataRefreshCountRef.current = Math.max(0, dataRefreshCountRef.current - 1);
+    if (dataRefreshCountRef.current === 0) {
+      setDataRefreshing(false);
+    }
+  }, []);
+
   const fetchPositions = useCallback(async () => {
+    beginDataRefresh();
     try {
       setLoading(true);
       const res = await axios.get(`http://${local_ip}:3000/get_stock_position`);
@@ -662,12 +678,14 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       console.error('获取持仓失败:', error);
     } finally {
       setLoading(false);
+      endDataRefresh();
     }
-  }, []);
+  }, [beginDataRefresh, endDataRefresh]);
 
   const fetchStockChanges = useCallback(async () => {
     const currentPositions = positionsRef.current;
     if (currentPositions.length === 0) return;
+    beginDataRefresh();
     try {
       const results = await Promise.all(
         currentPositions.map(async (stock) => {
@@ -693,11 +711,14 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       setChangeMap(newChangeMap);
     } catch (error) {
       console.error('获取涨幅失败:', error);
+    } finally {
+      endDataRefresh();
     }
-  }, []);
+  }, [beginDataRefresh, endDataRefresh]);
 
   const fetchVolumeDiff = useCallback(async () => {
     if (positionsRef.current.length === 0) return;
+    beginDataRefresh();
     try {
       const res = await axios.get(`http://${local_ip}:3000/diff2_day_stock_tline`);
       const list = res.data || [];
@@ -710,8 +731,17 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       setVolumeDiffPercentMap(map);
     } catch (error) {
       console.error('获取量能差失败:', error);
+    } finally {
+      endDataRefresh();
     }
-  }, []);
+  }, [beginDataRefresh, endDataRefresh]);
+
+  // 手动刷新：立刻重新拉取持仓列表、涨幅与量能差数据
+  const handleRefreshPositionData = useCallback(() => {
+    fetchPositions();
+    fetchStockChanges();
+    fetchVolumeDiff();
+  }, [fetchPositions, fetchStockChanges, fetchVolumeDiff]);
 
   // 拉取全部持仓股的卖点诊断结果（抽屉内容数据）
   const fetchAllSellDiagnosis = async () => {
@@ -1282,12 +1312,12 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                 <span className={`fsp-collapsed-change ${changeClass}`} onClick={() => handleStockClick(stock)}>
                   {formatSignedPercent(changeNum)}
                 </span>
-                <Tooltip title="回测诊断" placement="top">
+                <Tooltip title="刷新持仓数据" placement="top">
                   <span
                     className="fsp-icon-btn fsp-backtest-icon-btn"
-                    onClick={(e) => { e.stopPropagation(); handleBacktestDiagnosis(stock.code, stock.name); }}
+                    onClick={(e) => { e.stopPropagation(); handleRefreshPositionData(); }}
                   >
-                    <ExperimentOutlined />
+                    <ReloadOutlined spin={dataRefreshing} />
                   </span>
                 </Tooltip>
               </div>

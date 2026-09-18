@@ -1,5 +1,130 @@
 [
   {
+    "date": "20260918",
+    "blocks": {
+      "先进封装": {
+        "avgChange": 7.12
+      },
+      "房地产": {
+        "avgChange": 6.11
+      },
+      "半导体材料": {
+        "avgChange": 4.74
+      },
+      "功率半导体": {
+        "avgChange": 4.41
+      },
+      "存储": {
+        "avgChange": 4.11
+      },
+      "光模块": {
+        "avgChange": 3.81
+      },
+      "MFC": {
+        "avgChange": 3.64
+      },
+      "半导体": {
+        "avgChange": 3.63
+      },
+      "cpu": {
+        "avgChange": 3.35
+      },
+      "MPO": {
+        "avgChange": 3.26
+      },
+      "粮食": {
+        "avgChange": 3.25
+      },
+      "AI电源": {
+        "avgChange": 3.19
+      },
+      "商业航天": {
+        "avgChange": 3.16
+      },
+      "电力": {
+        "avgChange": 3.1
+      },
+      "消费": {
+        "avgChange": 2.78
+      },
+      "北美缺电": {
+        "avgChange": 2.72
+      },
+      "国产超节点": {
+        "avgChange": 2.4
+      },
+      "光芯片": {
+        "avgChange": 2.33
+      },
+      "cpo": {
+        "avgChange": 2.32
+      },
+      "MLCC": {
+        "avgChange": 2.26
+      },
+      "机器人": {
+        "avgChange": 1.92
+      },
+      "液冷": {
+        "avgChange": 1.91
+      },
+      "贵金属": {
+        "avgChange": 1.81
+      },
+      "钨": {
+        "avgChange": 1.8
+      },
+      "玻璃基板": {
+        "avgChange": 1.63
+      },
+      "铜箔": {
+        "avgChange": 1.58
+      },
+      "煤炭": {
+        "avgChange": 1.51
+      },
+      "证券": {
+        "avgChange": 1.45
+      },
+      "特高压": {
+        "avgChange": 1.14
+      },
+      "AI 应用": {
+        "avgChange": 1.02
+      },
+      "军工": {
+        "avgChange": 1.02
+      },
+      "医药": {
+        "avgChange": 0.85
+      },
+      "锂电": {
+        "avgChange": 0.65
+      },
+      "化工": {
+        "avgChange": 0.58
+      },
+      "pcb": {
+        "avgChange": 0.57
+      },
+      "PPE树脂": {
+        "avgChange": -0.19
+      },
+      "光纤": {
+        "avgChange": -0.43
+      },
+      "银行": {
+        "avgChange": -0.88
+      },
+      "CCL": {
+        "avgChange": -0.96
+      },
+      "电子布": {
+        "avgChange": -1.03
+      }
+    }
+  },
+  {
     "date": "20260917",
     "blocks": {
       "粮食": {

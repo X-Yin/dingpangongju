@@ -218,7 +218,7 @@ const PersonalFeelingModal = ({
   const themeColor = getThemeColor();
 
   // 点击时间：拉取当前市场快照，把「创业板：xx，科创板：xx，…」文案填入右侧感受输入框
-  // 已有内容时追加到下一行，不覆盖用户输入
+  // 「当下行情」独占一行：前面有内容时先换行再填入，行尾再补一个换行，让后续输入/标签从下一行开始，不覆盖用户输入
   const handleTimeClick = async (record) => {
     if (record.time > nowStr) return; // 未到时段不可填
     if (fillingTime) return;
@@ -239,7 +239,8 @@ const PersonalFeelingModal = ({
       }
       const line = parts.join('，');
       const prev = record.feeling || '';
-      onFeelingChange(record.time, prev ? `${prev}\n${line}` : line);
+      const prefix = prev && !prev.endsWith('\n') ? `${prev}\n` : prev;
+      onFeelingChange(record.time, `${prefix}${line}\n`);
     } catch (err) {
       console.error('自动填充市场数据失败:', err);
       message.error('获取市场数据失败');
@@ -255,14 +256,24 @@ const PersonalFeelingModal = ({
     runFundSummary();
   };
 
-  // 点击输入框上方快捷 tag：当前行情回填市场数据，其余在输入框新起一行追加文案
+  // 点击输入框上方快捷 tag：「当下行情」回填市场数据并在 textarea 新开一行，其余 tag 追加在最后一行末尾（与前面内容用逗号分隔）
   const handleFeelingTagClick = (tag, record) => {
     if (record.time > nowStr) return; // 未到时段不可操作
     if (tag.key === 'current') {
       handleTimeClick(record);
     } else {
       const prev = record.feeling || '';
-      onFeelingChange(record.time, prev ? `${prev}\n${tag.label}` : tag.label);
+      let next;
+      if (!prev) {
+        next = tag.label;
+      } else if (prev.endsWith('\n')) {
+        // 已有内容以换行结尾，直接在新行追加，无需逗号
+        next = `${prev}${tag.label}`;
+      } else {
+        // 追加在最后一行末尾，用逗号分隔
+        next = `${prev}，${tag.label}`;
+      }
+      onFeelingChange(record.time, next);
     }
   };
 

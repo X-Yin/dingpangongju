@@ -7,7 +7,6 @@ const { getBrowser, getOrCreatePage } = require('../utils/browser');
 
 const amountPath = path.resolve(__dirname, '../data/amount.json');
 const amountDayHistoryPath = path.resolve(__dirname, '../data/amount_day_history.json');
-const currentDayHotBlockPath = path.resolve(__dirname, '../data/current_day_hot_block.json');
 
 // 持久化页面引用：所有轮询共用同一个 Chrome tab，避免反复启动/关闭浏览器
 let _page = null;
@@ -106,31 +105,6 @@ const fetchAmountDiffFromApi = async () => {
     };
 };
 
-// 获取当日热门板块（仍通过 Puppeteer 抓取，接口暂无对应数据源）
-const fetchCurrentDayHotBlock = async () => {
-    let page;
-    try {
-        page = await ensureSinaPage();
-        await page.goto(SINA_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await page.waitForSelector('.hq-stock-section .hq-topthree-item', { timeout: 30000 });
-        await sleep(1000);
-        return await page.evaluate(() => {
-            const elements = document.querySelectorAll('.hq-stock-section .hq-topthree-item.block a h3');
-            const result = [];
-            elements.forEach((item) => {
-                result.push(item.innerText);
-            });
-            return result.slice(0, 6);
-        });
-    } catch (error) {
-        console.error('抓取当日热门板块失败:', error.message);
-        if (page && page.isClosed()) {
-            _page = null;
-        }
-        return [];
-    }
-};
-
 // 从带单位的字符串（如 "-873.55亿" / "+3216.55亿" / "2.68万亿" / "1234.56万"）中解析出数值（单位：亿）
 const parseAmountToYi = (str) => {
     if (!str) return 0;
@@ -172,20 +146,17 @@ const formatAmountToYi = (str) => {
     return `${sign}${yi}亿`;
 };
 
-// 通过接口获取成交量信息（主力资金 + 成交量走接口，热门板块仍通过 Puppeteer 抓取）
+// 通过接口获取成交量信息（主力资金 + 成交量均走接口，无需 Puppeteer）
 const fetchAmountInfoFromApi = async () => {
-    // 并行获取：接口数据（主力资金 + 成交量） + Puppeteer（热门板块）
-    const [mainMoney, amountData, currentDayHotBlock] = await Promise.all([
+    const [mainMoney, amountData] = await Promise.all([
         fetchMainMoneyFromApi(),
         fetchAmountDiffFromApi(),
-        fetchCurrentDayHotBlock(),
     ]);
 
     const result = {
         mainMoney,
         amountChangeDiff: amountData.amountChangeDiff,
         totalAmount: amountData.totalAmount,
-        currentDayHotBlock,
     };
 
     if (Math.abs(Number(parseFloat(result.mainMoney))) > 0 && Math.abs(Number(parseFloat(result.amountChangeDiff))) > 0) {
@@ -211,19 +182,11 @@ const fetchAmountInfoFromBrowser = async () => {
             const element1 = document.querySelector('.hq-stock-money span.zhulivalue');
             const element2 = document.querySelector('.hq-stock-amount span.valfont');
 
-            // 把页面上所有类名是 hot-topthree-item 并且内部有 h3 标签的元素都取出来
-            const element3 = document.querySelectorAll('.hq-stock-section .hq-topthree-item.block a h3');
-            const currentDayHotBlock = [];
-            element3.forEach((item) => {
-                currentDayHotBlock.push(item.innerText);
-            });
-
             const element4 = document.querySelector('.hq-stock-amount span.val');
 
             return {
                 'mainMoney': element1 ? element1.innerText.trim() : null,
                 'amountChangeDiff': element2 ? element2.innerText.trim() : null,
-                'currentDayHotBlock': currentDayHotBlock.slice(0, 6),
                 'totalAmount': element4 ? element4.innerText.trim() : null,
             }
         });
@@ -288,19 +251,17 @@ const fetchMainMoneyFromDFCF = async () => {
     }
 };
 
-// 通过东方财富浏览器方式获取成交量信息（主力资金走东方财富 Puppeteer，成交量走新浪接口，热门板块走新浪 Puppeteer）
+// 通过东方财富浏览器方式获取成交量信息（主力资金走东方财富 Puppeteer，成交量走新浪接口）
 const fetchAmountInfoFromDFCFBrowser = async () => {
-    const [mainMoney, amountData, currentDayHotBlock] = await Promise.all([
+    const [mainMoney, amountData] = await Promise.all([
         fetchMainMoneyFromDFCF(),
         fetchAmountDiffFromApi(),
-        fetchCurrentDayHotBlock(),
     ]);
 
     const result = {
         mainMoney,
         amountChangeDiff: amountData.amountChangeDiff,
         totalAmount: amountData.totalAmount,
-        currentDayHotBlock,
     };
 
     if (Math.abs(Number(parseFloat(result.mainMoney))) > 0 && Math.abs(Number(parseFloat(result.amountChangeDiff))) > 0) {
@@ -335,12 +296,10 @@ const pollAmountInfo = async (interval = 1000 * 10, type = 'api') => {
             const amountInfo = await fetchFn();
             // 先把文件中的内容读取出来，然后将当前的内容合并到文件中，文件中的内容是一个二维数组，数组中的每一项也是一个数组，第一个值 是当前的时间 DD:MM:SS，第二个值 是当前的成交量信息
             const amountData = fs.existsSync(amountPath) ? JSON.parse(fs.readFileSync(amountPath, 'utf8') || '[]') : [];
-            const { currentDayHotBlock, ...amountDataToSave } = amountInfo;
-            amountData.push([dayjs().format('HHmmss'), { ...amountDataToSave, date: dayjs().format('YYYYMMDD') }]);
+            amountData.push([dayjs().format('HHmmss'), { ...amountInfo, date: dayjs().format('YYYYMMDD') }]);
 
             // 保存到文件
             fs.writeFileSync(amountPath, JSON.stringify(amountData, null, 2));
-            fs.writeFileSync(currentDayHotBlockPath, JSON.stringify(currentDayHotBlock, null, 2));
         } catch (error) {
             console.error('轮询获取成交量信息失败，等待下一次轮询:', error.message);
         }
