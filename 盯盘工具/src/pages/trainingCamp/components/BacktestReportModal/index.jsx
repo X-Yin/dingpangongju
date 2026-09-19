@@ -18,6 +18,14 @@ const fmtPct = (v) => {
   return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 };
 const fmtPctColor = (v) => (v == null || Number.isNaN(Number(v)) ? undefined : (Number(v) >= 0 ? '#f5222d' : '#52c41a'));
+// 新报告 createdAt 已是北京时间字符串（YYYY-MM-DD-HH:mm）直接展示；旧报告 ISO 串转换为北京时间
+const fmtReportTime = (t) => {
+  if (!t) return '--';
+  if (/^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}$/.test(t)) return t;
+  const d = new Date(t);
+  if (Number.isNaN(d.getTime())) return t;
+  return d.toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' });
+};
 
 const BASE = `http://${local_ip}:3000`;
 
@@ -295,7 +303,7 @@ const BacktestReportModal = ({ open, onClose }) => {
               </Tag>
             </div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
-              生成于 {new Date(h.createdAt).toLocaleString('zh-CN', { hour12: false })}
+              生成于 {fmtReportTime(h.createdAt)}
             </div>
           </div>
         ))

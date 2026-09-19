@@ -652,14 +652,14 @@
     }
   ],
   "currentHolding": {
-    "code": "sz301526",
-    "stockName": "国际复材",
+    "code": "sh600183",
+    "stockName": "生益科技",
     "buyDate": "20260918",
     "buyDateDisplay": "2026-09-18",
     "buyTime": "10:05",
-    "buyPrice": 31.15,
-    "buyChange": -3.14,
-    "metric": 5,
+    "buyPrice": 141.34,
+    "buyChange": -3.21,
+    "metric": 6,
     "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 52.63亿，较 5min 前 +11.83亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
     "buyChecks": [
       {
@@ -696,13 +696,13 @@
         "reason": "9:30 竞价科技情绪 53.26 未超过 80，当前情绪须低于 40 的限制不生效"
       }
     ],
-    "buyReturn": 0.1
+    "buyReturn": 1.83
   },
   "summary": {
     "tradeCount": 6,
     "winCount": 5,
     "winRate": 83.33,
-    "overallReturn": 66.94,
+    "overallReturn": 69.83,
     "holding": true
   }
 }

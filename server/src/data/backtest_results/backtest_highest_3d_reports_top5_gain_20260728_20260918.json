@@ -652,13 +652,13 @@
     }
   ],
   "currentHolding": {
-    "code": "sz002080",
-    "stockName": "中材科技",
+    "code": "sh688147",
+    "stockName": "微导纳米",
     "buyDate": "20260918",
     "buyDateDisplay": "2026-09-18",
     "buyTime": "10:05",
-    "buyPrice": 59.32,
-    "buyChange": 1.07,
+    "buyPrice": 117.02,
+    "buyChange": 1.16,
     "metric": 5,
     "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 52.63亿，较 5min 前 +11.83亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
     "buyChecks": [
@@ -696,13 +696,13 @@
         "reason": "9:30 竞价科技情绪 53.26 未超过 80，当前情绪须低于 40 的限制不生效"
       }
     ],
-    "buyReturn": 1.52
+    "buyReturn": 4.26
   },
   "summary": {
     "tradeCount": 6,
     "winCount": 5,
     "winRate": 83.33,
-    "overallReturn": 106.9,
+    "overallReturn": 112.48,
     "holding": true
   }
 }

@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { Select, Button, Tag, message, Popconfirm } from 'antd';
-import { CalendarOutlined, WalletOutlined, ApartmentOutlined, ReloadOutlined, BarChartOutlined } from '@ant-design/icons';
+import { CalendarOutlined, WalletOutlined, ApartmentOutlined, ReloadOutlined, BarChartOutlined, SwapOutlined } from '@ant-design/icons';
 import TrainingCampGroupModal from '../TrainingCampGroupModal';
 import BacktestDrawer from '../BacktestDrawer';
+import StockIndexCompareDrawer from '../StockIndexCompareDrawer';
 
 const formatDateDisplay = (d) => {
   if (!d || d.length !== 8) return d;
   return `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}`;
 };
 
-const TopBar = ({ dates, groups, selectedDate, onDateChange, onGroupsChange, simPositionCount = 0, onOpenSimPositions, onReset }) => {
+const TopBar = ({ dates, groups, selectedDate, onDateChange, onGroupsChange, simPositionCount = 0, onOpenSimPositions, onReset, watchlistOptions = [] }) => {
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [backtestOpen, setBacktestOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
   // 当前应用的分组：应用后下拉列表仅显示该分组日期
   const [appliedGroup, setAppliedGroup] = useState(null);
 
@@ -95,6 +97,14 @@ const TopBar = ({ dates, groups, selectedDate, onDateChange, onGroupsChange, sim
         >
           买卖点回测
         </Button>
+        <Button
+          type="primary"
+          icon={<SwapOutlined />}
+          onClick={() => setCompareOpen(true)}
+          style={{ background: '#1677ff', borderColor: '#1677ff' }}
+        >
+          个股指数对照
+        </Button>
       </div>
 
       <TrainingCampGroupModal
@@ -110,6 +120,12 @@ const TopBar = ({ dates, groups, selectedDate, onDateChange, onGroupsChange, sim
         open={backtestOpen}
         onClose={() => setBacktestOpen(false)}
         dates={dates}
+      />
+
+      <StockIndexCompareDrawer
+        open={compareOpen}
+        onClose={() => setCompareOpen(false)}
+        stockOptions={watchlistOptions}
       />
     </div>
   );

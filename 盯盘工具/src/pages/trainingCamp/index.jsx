@@ -648,6 +648,18 @@ const TrainingCamp = () => {
     return list.map(s => ({ code: s.code, name: s.name, lastPx: s.lastPx }));
   }, [currentBucket]);
 
+  // 自选股全量列表（全部时间桶内出现过的股票去重，按出现顺序），供「个股指数对照」抽屉多选
+  const watchlistOptions = useMemo(() => {
+    if (!campData) return [];
+    const map = new Map();
+    (campData.timeBuckets || []).forEach(bucket => {
+      (bucket.stockChanges || []).forEach(s => {
+        if (s.code && !map.has(s.code)) map.set(s.code, { code: s.code, name: s.name });
+      });
+    });
+    return Array.from(map.values());
+  }, [campData]);
+
   const handleStockClick = useCallback((stock) => {
     if (stock?.code) message.info(`查看 ${stock.name || stock.code}（回放模式暂不支持K线跳转）`);
   }, []);
@@ -665,6 +677,7 @@ const TrainingCamp = () => {
         simPositionCount={simPositions.length}
         onOpenSimPositions={() => setSimPositionsModalOpen(true)}
         onReset={handleResetAll}
+        watchlistOptions={watchlistOptions}
       />
 
       {loading ? (

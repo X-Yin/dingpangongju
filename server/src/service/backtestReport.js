@@ -14,6 +14,19 @@ const backtestCacheDir = path.join(__dirname, '../data/backtest_results');
 const MAX_REPORTS = 5;
 const REPORT_DAYS = 60; // 过去 60 个交易日
 
+// 北京时间格式化（报告 id 用 YYYYMMDDHHmm，createdAt 用 YYYY-MM-DD-HH:mm）
+const getBeijingNowParts = () => {
+  const parts = new Intl.DateTimeFormat('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(new Date());
+  const get = (type) => parts.find(p => p.type === type)?.value || '';
+  // 部分环境下 hour12:false 的午夜会返回 '24'，归一为 '00'
+  const hour = get('hour') === '24' ? '00' : get('hour');
+  return { date: `${get('year')}${get('month')}${get('day')}`, time: `${hour}${get('minute')}` };
+};
+
 // 过去 REPORT_DAYS 个交易日的日期范围（以最新可用回放交易日为 endDate）
 const getDefaultReportRange = () => {
   const sorted = [...getTrainingCampDates()].sort(); // 升序
@@ -139,9 +152,10 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
   });
   strategies.forEach((s, idx) => { s.rank = idx + 1; });
 
+  const bj = getBeijingNowParts();
   const report = {
-    id: `report_${Date.now()}`,
-    createdAt: new Date().toISOString(),
+    id: `report_${bj.date}${bj.time}`,
+    createdAt: `${bj.date.slice(0, 4)}-${bj.date.slice(4, 6)}-${bj.date.slice(6, 8)}-${bj.time.slice(0, 2)}:${bj.time.slice(2, 4)}`,
     range: { startDate: range.startDate, endDate: range.endDate },
     strategyCount: strategies.length,
     skipped,
@@ -181,7 +195,7 @@ const listReports = () => {
         }
       })
       .filter(Boolean)
-      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+      .sort((a, b) => (a.id < b.id ? 1 : -1)); // id 含北京时间 YYYYMMDDHHmm，可直接字典序比较
   } catch {
     return [];
   }
