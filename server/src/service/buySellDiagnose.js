@@ -26,7 +26,7 @@
  *   4. 抗分歧指数 < 6 且 涨幅 ≤ -5%（14:50后生效，个股抗跌性弱且正在下跌）
  *   5. 连续三天（含当日）抗分歧指数均 < 10（个股连续弱势，资金持续分歧），仅 9:40 后生效
  *   6. 现价跌破最迟一天买入（最近一次加仓）当日的最低点，且持续 ≥5 分钟（买入成本线告破）
- *   7. 现价跌破持仓成本线（用户在持仓中自定义的成本价）
+ *   7. 现价跌破持仓成本线的 -2%（现价 < 成本价 × 0.98 即触发，成本价取用户在持仓管理中自定义的成本价）
  */
 const fs = require('fs');
 const path = require('path');
@@ -1555,7 +1555,30 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
     }
   }
 
-  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6];
+  // ===== 条件7：现价跌破持仓成本线 -2%（即时触发，无需持续分钟） =====
+  // 成本价：请求传入值优先，缺省时 checkSingleStockSellPoint 已回退到持仓管理中用户自定义的成本价
+  const costPriceNum = costPrice != null && Number.isFinite(Number(costPrice)) && Number(costPrice) > 0 ? Number(costPrice) : null;
+  const costLineThreshold = costPriceNum !== null ? costPriceNum * 0.98 : null;
+  const brokenCostLine = costLineThreshold !== null && closePrice < costLineThreshold;
+  const condition7 = {
+    name: '跌破成本线-2%',
+    satisfied: brokenCostLine,
+    pending: false,
+    pendingMinutes: 0,
+    detail: costPriceNum === null
+      ? '未设置持仓成本价（可在持仓管理弹窗中设置），无法判断是否跌破成本线 -2%'
+      : brokenCostLine
+        ? `现价 ${closePrice.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），触发卖点`
+        : `现价 ${closePrice.toFixed(2)} 未跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），未触发`,
+    subConditions: [
+      { label: '成本价', value: costPriceNum !== null ? costPriceNum.toFixed(2) : '--' },
+      { label: '阈值（成本价-2%）', value: costLineThreshold !== null ? costLineThreshold.toFixed(2) : '--' },
+      { label: '现价', value: closePrice.toFixed(2) },
+      { label: '判断规则', value: '现价 < 成本价 × 0.98 即触发' },
+    ],
+  };
+
+  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6, condition7];
   const satisfiedCount = conditions.filter(c => c.satisfied).length;
   const isSell = satisfiedCount > 0;
 

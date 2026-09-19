@@ -782,7 +782,7 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
   const dayHigh = stockPoints.reduce((mx, p) => Math.max(mx, p.lastPx), 0);
   const openPrice = stockPoints.length > 0 ? stockPoints[0].lastPx : null;
 
-  // ===== 尾盘抄底策略专属卖点：开盘后逐分钟环比跟踪，涨幅开始下降（较上一分钟回落）即卖出（1 分钟维度，独立于下方 6 项通用条件） =====
+  // ===== 尾盘抄底策略专属卖点：开盘后逐分钟环比跟踪，涨幅开始下降（较上一分钟回落）即卖出（1 分钟维度，独立于下方 7 项通用条件） =====
   if (position?.tailDipSell === true) {
     const retraceCheck = await checkOpenRetraceSell(replayStocks, code, minute, dateStr);
     // 卖出价/卖出时间用分钟级触发点（精确到触发分钟），而非当前 5min 桶
@@ -1062,7 +1062,26 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
     }
   }
 
-  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6];
+  // ===== 条件7：现价跌破持仓成本线 -2%（即时触发，无需持续分钟；成本线 = 模拟持仓买入价 buyPrice） =====
+  const costLineThreshold = buyPrice !== null && buyPrice > 0 ? buyPrice * 0.98 : null;
+  const brokenCostLine = costLineThreshold !== null && closePrice < costLineThreshold;
+  const condition7 = {
+    name: '跌破成本线-2%',
+    satisfied: brokenCostLine,
+    detail: costLineThreshold === null
+      ? '该模拟持仓无买入价格，无法判断是否跌破成本线 -2%'
+      : brokenCostLine
+        ? `现价 ${closePrice.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），触发卖点`
+        : `现价 ${closePrice.toFixed(2)} 未跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），未触发`,
+    subConditions: [
+      { label: '买入价（成本线）', value: buyPrice !== null && buyPrice > 0 ? buyPrice.toFixed(2) : '--' },
+      { label: '阈值（成本价-2%）', value: costLineThreshold !== null ? costLineThreshold.toFixed(2) : '--' },
+      { label: '现价', value: closePrice.toFixed(2) },
+      { label: '判断规则', value: '现价 < 成本价 × 0.98 即触发' },
+    ],
+  };
+
+  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6, condition7];
   const satisfiedCount = conditions.filter(c => c.satisfied).length;
   const isSell = satisfiedCount > 0;
   const returnRate = buyPrice !== null && buyPrice > 0

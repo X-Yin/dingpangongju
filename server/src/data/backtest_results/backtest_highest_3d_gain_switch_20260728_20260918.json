@@ -590,13 +590,13 @@
           "reason": "9:30 竞价科技情绪 12.55 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260813",
-      "sellDateDisplay": "2026-08-13",
-      "sellTime": "09:40",
-      "sellPrice": 280.36,
-      "sellChange": 0.35,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 0.24
+      "sellDate": "20260811",
+      "sellDateDisplay": "2026-08-11",
+      "sellTime": "14:55",
+      "sellPrice": 273.9,
+      "sellChange": -4.23,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.07
     },
     {
       "seq": 6,
@@ -646,11 +646,11 @@
       ],
       "sellDate": "20260819",
       "sellDateDisplay": "2026-08-19",
-      "sellTime": "10:30",
-      "sellPrice": 188.36,
-      "sellChange": -5.47,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": -2.81
+      "sellTime": "10:25",
+      "sellPrice": 189.87,
+      "sellChange": -4.72,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.03
     },
     {
       "seq": 7,
@@ -1076,11 +1076,11 @@
       ],
       "sellDate": "20260901",
       "sellDateDisplay": "2026-09-01",
-      "sellTime": "13:10",
-      "sellPrice": 93.91,
-      "sellChange": -3.77,
-      "sellReason": "策略切换：买入三日涨幅更优品种",
-      "returnRate": -1.71
+      "sellTime": "09:45",
+      "sellPrice": 93.45,
+      "sellChange": -4.24,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.19
     },
     {
       "seq": 15,
@@ -1127,13 +1127,13 @@
           "reason": "9:30 竞价科技情绪 1.60 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260903",
-      "sellDateDisplay": "2026-09-03",
-      "sellTime": "14:00",
-      "sellPrice": 86.58,
-      "sellChange": 1.04,
-      "sellReason": "策略切换：买入三日涨幅更优品种",
-      "returnRate": -0.21
+      "sellDate": "20260902",
+      "sellDateDisplay": "2026-09-02",
+      "sellTime": "10:15",
+      "sellPrice": 84.97,
+      "sellChange": -0.74,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.06
     },
     {
       "seq": 16,
@@ -1183,14 +1183,67 @@
       ],
       "sellDate": "20260904",
       "sellDateDisplay": "2026-09-04",
-      "sellTime": "14:30",
-      "sellPrice": 58.19,
-      "sellChange": -7.68,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": -8.91
+      "sellTime": "09:40",
+      "sellPrice": 62.2,
+      "sellChange": -1.32,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.63
     },
     {
       "seq": 17,
+      "metric": 14.6421,
+      "code": "sz002536",
+      "stockName": "飞龙股份",
+      "buyDate": "20260904",
+      "buyDateDisplay": "2026-09-04",
+      "buyTime": "10:05",
+      "buyPrice": 60.52,
+      "buyChange": -3.98,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+24.00亿",
+          "reason": "最近 5 分钟资金净流入 24.00 亿（10:00:00→10:05:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "当前量能为正（今日累计成交额超昨日全天）",
+          "passed": true,
+          "exempted": true,
+          "value": "增加 91.00亿（已豁免）",
+          "reason": "今日(09-04)盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 36.52 / 当前 -18.84",
+          "reason": "9:30 竞价科技情绪 36.52 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260907",
+      "sellDateDisplay": "2026-09-07",
+      "sellTime": "09:30",
+      "sellPrice": 57.68,
+      "sellChange": -1,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -4.69
+    },
+    {
+      "seq": 18,
       "metric": 17.0288,
       "code": "sh603228",
       "stockName": "景旺电子",
@@ -1244,7 +1297,7 @@
       "returnRate": 7.24
     },
     {
-      "seq": 18,
+      "seq": 19,
       "metric": 17.4115,
       "code": "sz002636",
       "stockName": "金安国纪",
@@ -1298,7 +1351,7 @@
       "returnRate": 2.64
     },
     {
-      "seq": 19,
+      "seq": 20,
       "metric": 22.4317,
       "code": "sh603186",
       "stockName": "华正新材",
@@ -1343,16 +1396,70 @@
           "reason": "9:30 竞价科技情绪 -40.07 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260916",
-      "sellDateDisplay": "2026-09-16",
-      "sellTime": "10:10",
-      "sellPrice": 249.99,
-      "sellChange": -0.63,
-      "sellReason": "策略切换：买入三日涨幅更优品种",
-      "returnRate": 5.92
+      "sellDate": "20260914",
+      "sellDateDisplay": "2026-09-14",
+      "sellTime": "09:30",
+      "sellPrice": 221.74,
+      "sellChange": -2.63,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -6.05
     },
     {
-      "seq": 20,
+      "seq": 21,
+      "metric": 15.3997,
+      "code": "sh603186",
+      "stockName": "华正新材",
+      "buyDate": "20260915",
+      "buyDateDisplay": "2026-09-15",
+      "buyTime": "10:20",
+      "buyPrice": 251.57,
+      "buyChange": 10,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -453.40亿，较 5min 前 +105.35亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+21.82亿",
+          "reason": "最近 5 分钟资金净流入 21.82 亿（10:15:00→10:20:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 105.35亿",
+          "reason": "当前量能 -453.40 亿为负，但较 5min 前的 -558.75 亿+ 105.35 亿，达到 100 亿阈值",
+          "volumeText": "当前量能 -453.40亿，较 5min 前 +105.35亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 -5.76 / 当前 62.36",
+          "reason": "9:30 竞价科技情绪 -5.76 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260916",
+      "sellDateDisplay": "2026-09-16",
+      "sellTime": "10:00",
+      "sellPrice": 245.04,
+      "sellChange": -2.6,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.6
+    },
+    {
+      "seq": 22,
       "metric": 14.939,
       "code": "sz301183",
       "stockName": "东田微",
@@ -1454,10 +1561,10 @@
     "buyReturn": 1.66
   },
   "summary": {
-    "tradeCount": 20,
-    "winCount": 11,
-    "winRate": 55,
-    "overallReturn": 38.12,
+    "tradeCount": 22,
+    "winCount": 9,
+    "winRate": 40.91,
+    "overallReturn": 16.93,
     "holding": true
   }
 }

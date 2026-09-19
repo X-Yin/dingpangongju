@@ -484,14 +484,67 @@
       ],
       "sellDate": "20260819",
       "sellDateDisplay": "2026-08-19",
-      "sellTime": "10:30",
-      "sellPrice": 155.1,
-      "sellChange": -4.44,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": -1.44
+      "sellTime": "09:45",
+      "sellPrice": 152.98,
+      "sellChange": -5.74,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.78
     },
     {
       "seq": 4,
+      "metric": 54.2019,
+      "code": "sh688313",
+      "stockName": "仕佳光子",
+      "buyDate": "20260819",
+      "buyDateDisplay": "2026-08-19",
+      "buyTime": "10:20",
+      "buyPrice": 154.97,
+      "buyChange": -4.52,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+174.52亿",
+          "reason": "最近 5 分钟资金净流入 174.52 亿（10:15:00→10:20:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "当前量能为正（今日累计成交额超昨日全天）",
+          "passed": true,
+          "exempted": true,
+          "value": "减少 13.08亿（已豁免）",
+          "reason": "今日(08-19)盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 -73.86 / 当前 -100.00",
+          "reason": "9:30 竞价科技情绪 -73.86 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260820",
+      "sellDateDisplay": "2026-08-20",
+      "sellTime": "09:35",
+      "sellPrice": 150,
+      "sellChange": -0.93,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -3.21
+    },
+    {
+      "seq": 5,
       "metric": 62.7183,
       "code": "sh688313",
       "stockName": "仕佳光子",
@@ -535,16 +588,16 @@
           "reason": "9:30 竞价科技情绪 32.99 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260824",
-      "sellDateDisplay": "2026-08-24",
-      "sellTime": "13:05",
-      "sellPrice": 150.47,
-      "sellChange": -4.77,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": -7.99
+      "sellDate": "20260821",
+      "sellDateDisplay": "2026-08-21",
+      "sellTime": "11:20",
+      "sellPrice": 160.09,
+      "sellChange": -2.38,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.1
     },
     {
-      "seq": 5,
+      "seq": 6,
       "metric": 61.6839,
       "code": "sz300570",
       "stockName": "太辰光",
@@ -590,14 +643,14 @@
       ],
       "sellDate": "20260826",
       "sellDateDisplay": "2026-08-26",
-      "sellTime": "10:10",
-      "sellPrice": 193.32,
-      "sellChange": -4.63,
-      "sellReason": "跌破最迟买入日低点",
-      "returnRate": -3.9
+      "sellTime": "09:40",
+      "sellPrice": 195.9,
+      "sellChange": -3.35,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.61
     },
     {
-      "seq": 6,
+      "seq": 7,
       "metric": 58.3452,
       "code": "sz300570",
       "stockName": "太辰光",
@@ -651,7 +704,7 @@
       "returnRate": -0.29
     },
     {
-      "seq": 7,
+      "seq": 8,
       "metric": 59.1167,
       "code": "sz300570",
       "stockName": "太辰光",
@@ -705,7 +758,7 @@
       "returnRate": -0.38
     },
     {
-      "seq": 8,
+      "seq": 9,
       "metric": 57.5742,
       "code": "sz300570",
       "stockName": "太辰光",
@@ -751,14 +804,14 @@
       ],
       "sellDate": "20260902",
       "sellDateDisplay": "2026-09-02",
-      "sellTime": "09:40",
-      "sellPrice": 190.2,
-      "sellChange": -1.86,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": -2.98
+      "sellTime": "09:30",
+      "sellPrice": 191.02,
+      "sellChange": -1.44,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.56
     },
     {
-      "seq": 9,
+      "seq": 10,
       "metric": 57.9897,
       "code": "sz300757",
       "stockName": "罗博特科",
@@ -805,14 +858,14 @@
       ],
       "sellDate": "20260904",
       "sellDateDisplay": "2026-09-04",
-      "sellTime": "13:50",
-      "sellPrice": 577.5,
-      "sellChange": -1.32,
-      "sellReason": "跌破最迟买入日低点",
-      "returnRate": -2.12
+      "sellTime": "13:15",
+      "sellPrice": 577.13,
+      "sellChange": -1.38,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.18
     },
     {
-      "seq": 10,
+      "seq": 11,
       "metric": 58.3124,
       "code": "sz300757",
       "stockName": "罗博特科",
@@ -866,7 +919,7 @@
       "returnRate": 6.73
     },
     {
-      "seq": 11,
+      "seq": 12,
       "metric": 77.5858,
       "code": "sh603186",
       "stockName": "华正新材",
@@ -968,10 +1021,10 @@
     "buyReturn": 0.55
   },
   "summary": {
-    "tradeCount": 11,
+    "tradeCount": 12,
     "winCount": 4,
-    "winRate": 36.36,
-    "overallReturn": 17.22,
+    "winRate": 33.33,
+    "overallReturn": 21.12,
     "holding": true
   }
 }

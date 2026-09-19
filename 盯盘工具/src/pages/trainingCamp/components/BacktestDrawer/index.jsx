@@ -40,6 +40,7 @@ const SELL_RULES = [
   { key: 'condition4', title: '抗分歧指数弱势', desc: '抗分歧指数 < 6 且当前涨幅 ≤ -5%，仅 14:50 后生效' },
   { key: 'condition5', title: '连续三日抗分歧弱势', desc: '近三日（含当日）抗分歧指数均 < 10，仅 9:40 后生效' },
   { key: 'condition6', title: '跌破最迟买入日低点', desc: '现价跌破买入当日最低点，需持续 ≥5 分钟才触发' },
+  { key: 'condition7', title: '跌破成本线-2%', desc: '现价跌破持仓成本线的 -2%（成本价 × 0.98）即触发卖出，线上为持仓管理设置的成本价，回测为买入价' },
 ];
 
 // 回测策略选项（与后端 buySellBacktest.STRATEGIES 保持一致；全量自选股策略已移除）

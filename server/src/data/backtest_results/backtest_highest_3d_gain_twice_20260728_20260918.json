@@ -483,11 +483,11 @@
       ],
       "sellDate": "20260824",
       "sellDateDisplay": "2026-08-24",
-      "sellTime": "13:05",
-      "sellPrice": 197.11,
-      "sellChange": -8.09,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": -4.63
+      "sellTime": "10:00",
+      "sellPrice": 202.52,
+      "sellChange": -5.57,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.02
     },
     {
       "seq": 4,
@@ -534,16 +534,70 @@
           "reason": "9:30 竞价科技情绪 -46.81 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260904",
-      "sellDateDisplay": "2026-09-04",
-      "sellTime": "14:30",
-      "sellPrice": 58.19,
-      "sellChange": -7.68,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": 15.57
+      "sellDate": "20260826",
+      "sellDateDisplay": "2026-08-26",
+      "sellTime": "09:55",
+      "sellPrice": 49.1,
+      "sellChange": -4.77,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.48
     },
     {
       "seq": 5,
+      "metric": 15.1144,
+      "code": "sz002837",
+      "stockName": "英维克",
+      "buyDate": "20260826",
+      "buyDateDisplay": "2026-08-26",
+      "buyTime": "10:40",
+      "buyPrice": 62.19,
+      "buyChange": 3.05,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 405.79亿，较 5min 前 +348.13亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+31.06亿",
+          "reason": "最近 5 分钟资金净流入 31.06 亿（10:35:00→10:40:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 348.13亿",
+          "reason": "当前量能 405.79 亿为正，较 5min 前的 57.66 亿+ 348.13 亿，持续放量",
+          "volumeText": "当前量能 405.79亿，较 5min 前 +348.13亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 13.86 / 当前 24.74",
+          "reason": "9:30 竞价科技情绪 13.86 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260904",
+      "sellDateDisplay": "2026-09-04",
+      "sellTime": "13:55",
+      "sellPrice": 63.75,
+      "sellChange": -6.92,
+      "sellReason": "均线破位",
+      "returnRate": 2.51
+    },
+    {
+      "seq": 6,
       "metric": 17.0288,
       "code": "sh603228",
       "stockName": "景旺电子",
@@ -645,10 +699,10 @@
     "buyReturn": 3.37
   },
   "summary": {
-    "tradeCount": 5,
+    "tradeCount": 6,
     "winCount": 4,
-    "winRate": 80,
-    "overallReturn": 73.31,
+    "winRate": 66.67,
+    "overallReturn": 54.01,
     "holding": true
   }
 }

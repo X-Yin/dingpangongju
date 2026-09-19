@@ -1,6 +1,6 @@
 // 训练营回放 - 模拟持仓卖点诊断
-// 基于回放时间桶数据计算 6 项卖出条件（满足任一即触发卖点），完全对齐后端
-// server/src/service/buySellDiagnose.js 的 checkSellPointDetailed 逻辑（均线破位 / 高位放量大阴线 / 科技板块情绪退潮 / 抗分歧指数弱势 / 连续三日抗分歧弱势 / 跌破最迟买入日低点）：
+// 基于回放时间桶数据计算 7 项卖出条件（满足任一即触发卖点），完全对齐后端
+// server/src/service/buySellDiagnose.js 的 checkSellPointDetailed 逻辑（均线破位 / 高位放量大阴线 / 科技板块情绪退潮 / 抗分歧指数弱势 / 连续三日抗分歧弱势 / 跌破最迟买入日低点 / 跌破成本线-2%）：
 //   1. 均线破位（真实日K线 MA10，由后端按回放日期计算下发；10日线斜率为负时屏蔽跌破10日线条件，
 //      改用「现价不跌破前一交易日最低价」判断；斜率非负时 9:30-14:50 需跌破10日线且涨幅<-3%，14:50后跌破即触发）
 //   2. 高位放量大阴线（日内最高价到现价回落超过 8%，且现价低于日内开盘价）—— 需持续 ≥5 分钟才触发
@@ -9,6 +9,7 @@
 //   5. 连续三日（含当日）抗分歧指数均 < 10：前两日用后端预计算的全天分数（resilience3dScores 前 2 位），
 //      当日为实时口径（分钟级/桶级分时截至当前分钟现算，与叠加分时 tag 同口径），仅 9:40 后生效
 //   6. 现价跌破最迟一天买入（模拟持仓买入日 buyDate）当日的最低点（后端下发 dailyLowMap，按 buyDate 取低点）—— 需持续 ≥5 分钟才触发
+//   7. 现价跌破持仓成本线的 -2%（成本线 = 模拟持仓买入价 buyPrice，现价 < buyPrice × 0.98 即触发）
 import { calculateReplayResilience, getReplayMinuteTlineByDate } from '../../../utils/replayResilience';
 
 const SELL_CONDITION_PERSIST_MIN = 5; // 持续满足分钟数
@@ -493,7 +494,26 @@ const runSellPointDiagnosis = (position, currentBucket, replayStocks, timeBucket
     }
   }
 
-  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6];
+  // ===== 条件7：现价跌破持仓成本线 -2%（即时触发，无需持续分钟；成本线 = 模拟持仓买入价 buyPrice） =====
+  const costLineThreshold = buyPrice !== null && buyPrice > 0 ? buyPrice * 0.98 : null;
+  const brokenCostLine = costLineThreshold !== null && closePrice < costLineThreshold;
+  const condition7 = {
+    name: '跌破成本线-2%',
+    satisfied: brokenCostLine,
+    detail: costLineThreshold === null
+      ? '该模拟持仓无买入价格，无法判断是否跌破成本线 -2%'
+      : brokenCostLine
+        ? `现价 ${closePrice.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），触发卖点`
+        : `现价 ${closePrice.toFixed(2)} 未跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），未触发`,
+    subConditions: [
+      { label: '买入价（成本线）', value: buyPrice !== null && buyPrice > 0 ? buyPrice.toFixed(2) : '--' },
+      { label: '阈值（成本价-2%）', value: costLineThreshold !== null ? costLineThreshold.toFixed(2) : '--' },
+      { label: '现价', value: closePrice.toFixed(2) },
+      { label: '判断规则', value: '现价 < 成本价 × 0.98 即触发' },
+    ],
+  };
+
+  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6, condition7];
   const satisfiedCount = conditions.filter(c => c.satisfied).length;
   const isSell = satisfiedCount > 0;
   const returnRate = buyPrice !== null && buyPrice > 0

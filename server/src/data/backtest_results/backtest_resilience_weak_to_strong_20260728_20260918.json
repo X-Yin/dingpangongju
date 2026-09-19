@@ -430,11 +430,11 @@
       ],
       "sellDate": "20260821",
       "sellDateDisplay": "2026-08-21",
-      "sellTime": "14:50",
-      "sellPrice": 411.8,
-      "sellChange": -0.91,
-      "sellReason": "均线破位",
-      "returnRate": -3.12
+      "sellTime": "09:35",
+      "sellPrice": 407.67,
+      "sellChange": -1.91,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -4.1
     },
     {
       "seq": 3,
@@ -595,7 +595,7 @@
     "tradeCount": 4,
     "winCount": 2,
     "winRate": 50,
-    "overallReturn": 55.84,
+    "overallReturn": 54.26,
     "holding": true
   }
 }

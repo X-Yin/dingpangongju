@@ -484,11 +484,11 @@
       ],
       "sellDate": "20260819",
       "sellDateDisplay": "2026-08-19",
-      "sellTime": "10:30",
-      "sellPrice": 188.36,
-      "sellChange": -5.47,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": -2.81
+      "sellTime": "10:25",
+      "sellPrice": 189.87,
+      "sellChange": -4.72,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.03
     },
     {
       "seq": 4,
@@ -588,42 +588,42 @@
           "reason": "9:30 竞价科技情绪 -46.81 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260828",
-      "sellDateDisplay": "2026-08-28",
-      "sellTime": "09:40",
-      "sellPrice": 235.82,
-      "sellChange": -0.08,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": -0.27
+      "sellDate": "20260826",
+      "sellDateDisplay": "2026-08-26",
+      "sellTime": "09:35",
+      "sellPrice": 229.33,
+      "sellChange": -1.72,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -3.02
     },
     {
       "seq": 6,
-      "metric": 24.1562,
-      "code": "sz002837",
-      "stockName": "英维克",
-      "buyDate": "20260831",
-      "buyDateDisplay": "2026-08-31",
-      "buyTime": "13:30",
-      "buyPrice": 67.98,
-      "buyChange": 5.43,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -776.68亿，较 5min 前 +170.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "metric": 19.6175,
+      "code": "sz002536",
+      "stockName": "飞龙股份",
+      "buyDate": "20260826",
+      "buyDateDisplay": "2026-08-26",
+      "buyTime": "10:40",
+      "buyPrice": 50,
+      "buyChange": -3.03,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 405.79亿，较 5min 前 +348.13亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
           "id": "fund_inflow",
           "title": "最近 5min 资金净流入大于 20 亿",
           "passed": true,
           "exempted": false,
-          "value": "+21.66亿",
-          "reason": "最近 5 分钟资金净流入 21.66 亿（13:25:00→13:30:00），超过 20 亿阈值"
+          "value": "+31.06亿",
+          "reason": "最近 5 分钟资金净流入 31.06 亿（10:35:00→10:40:00），超过 20 亿阈值"
         },
         {
           "id": "volume_expansion",
           "title": "量能较 5min 前增加（负值需增加超 100 亿）",
           "passed": true,
           "exempted": false,
-          "value": "+ 170.23亿",
-          "reason": "当前量能 -776.68 亿为负，但较 5min 前的 -946.91 亿+ 170.23 亿，达到 100 亿阈值",
-          "volumeText": "当前量能 -776.68亿，较 5min 前 +170.23亿"
+          "value": "+ 348.13亿",
+          "reason": "当前量能 405.79 亿为正，较 5min 前的 57.66 亿+ 348.13 亿，持续放量",
+          "volumeText": "当前量能 405.79亿，较 5min 前 +348.13亿"
         },
         {
           "id": "opening_below",
@@ -638,17 +638,17 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -64.39 / 当前 21.00",
-          "reason": "9:30 竞价科技情绪 -64.39 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 13.86 / 当前 24.74",
+          "reason": "9:30 竞价科技情绪 13.86 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260904",
       "sellDateDisplay": "2026-09-04",
-      "sellTime": "13:55",
-      "sellPrice": 63.75,
-      "sellChange": -6.92,
-      "sellReason": "均线破位",
-      "returnRate": -6.22
+      "sellTime": "14:30",
+      "sellPrice": 58.19,
+      "sellChange": -7.68,
+      "sellReason": "科技板块情绪退潮",
+      "returnRate": 16.38
     },
     {
       "seq": 7,
@@ -750,42 +750,42 @@
           "reason": "9:30 竞价科技情绪 -5.76 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260917",
-      "sellDateDisplay": "2026-09-17",
-      "sellTime": "13:00",
-      "sellPrice": 238.98,
-      "sellChange": -5.91,
-      "sellReason": "跌破最迟买入日低点",
-      "returnRate": -5
+      "sellDate": "20260916",
+      "sellDateDisplay": "2026-09-16",
+      "sellTime": "10:00",
+      "sellPrice": 245.04,
+      "sellChange": -2.6,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.6
     }
   ],
   "currentHolding": {
-    "code": "sh688361",
-    "stockName": "中科飞测",
-    "buyDate": "20260918",
-    "buyDateDisplay": "2026-09-18",
-    "buyTime": "10:05",
-    "buyPrice": 380.06,
-    "buyChange": 5.95,
-    "metric": 24.7445,
-    "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 52.63亿，较 5min 前 +11.83亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+    "code": "sz301183",
+    "stockName": "东田微",
+    "buyDate": "20260916",
+    "buyDateDisplay": "2026-09-16",
+    "buyTime": "10:10",
+    "buyPrice": 283.89,
+    "buyChange": 7.26,
+    "metric": 21.3171,
+    "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -258.76亿，较 5min 前 +103.58亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
     "buyChecks": [
       {
         "id": "fund_inflow",
         "title": "最近 5min 资金净流入大于 20 亿",
         "passed": true,
         "exempted": false,
-        "value": "+20.25亿",
-        "reason": "最近 5 分钟资金净流入 20.25 亿（10:00:00→10:05:00），超过 20 亿阈值"
+        "value": "+24.76亿",
+        "reason": "最近 5 分钟资金净流入 24.76 亿（10:05:00→10:10:00），超过 20 亿阈值"
       },
       {
         "id": "volume_expansion",
         "title": "量能较 5min 前增加（负值需增加超 100 亿）",
         "passed": true,
         "exempted": false,
-        "value": "+ 11.83亿",
-        "reason": "当前量能 52.63 亿为正，较 5min 前的 40.80 亿+ 11.83 亿，持续放量",
-        "volumeText": "当前量能 52.63亿，较 5min 前 +11.83亿"
+        "value": "+ 103.58亿",
+        "reason": "当前量能 -258.76 亿为负，但较 5min 前的 -362.34 亿+ 103.58 亿，达到 100 亿阈值",
+        "volumeText": "当前量能 -258.76亿，较 5min 前 +103.58亿"
       },
       {
         "id": "opening_below",
@@ -800,17 +800,17 @@
         "title": "竞价情绪超 80 时当前情绪须低于 40",
         "passed": true,
         "exempted": false,
-        "value": "开盘 53.26 / 当前 17.41",
-        "reason": "9:30 竞价科技情绪 53.26 未超过 80，当前情绪须低于 40 的限制不生效"
+        "value": "开盘 6.35 / 当前 43.37",
+        "reason": "9:30 竞价科技情绪 6.35 未超过 80，当前情绪须低于 40 的限制不生效"
       }
     ],
-    "buyReturn": 1.66
+    "buyReturn": 6.75
   },
   "summary": {
     "tradeCount": 8,
-    "winCount": 3,
-    "winRate": 37.5,
-    "overallReturn": 11.74,
+    "winCount": 4,
+    "winRate": 50,
+    "overallReturn": 46.33,
     "holding": true
   }
 }
