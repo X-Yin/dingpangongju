@@ -7,7 +7,7 @@
     "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入最近 3 个交易日跌幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出"
   },
   "range": {
-    "startDate": "20260728",
+    "startDate": "20260810",
     "endDate": "20260918"
   },
   "skippedDates": [],
@@ -332,90 +332,6 @@
   "trades": [
     {
       "seq": 1,
-      "metric": -17.13,
-      "code": "sz300502",
-      "stockName": "新易盛",
-      "buyDate": "20260728",
-      "buyDateDisplay": "2026-07-28",
-      "buyTime": "14:57",
-      "buyPrice": 406.9,
-      "buyChange": -17.13,
-      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
-      "buyChecks": [
-        {
-          "id": "tail_dip",
-          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
-          "passed": true,
-          "value": "14:57",
-          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
-        }
-      ],
-      "sellDate": "20260729",
-      "sellDateDisplay": "2026-07-29",
-      "sellTime": "09:33",
-      "sellPrice": 411.7,
-      "sellChange": 1.25,
-      "sellReason": "开盘后涨幅开始下降即卖出",
-      "returnRate": 1.18
-    },
-    {
-      "seq": 2,
-      "metric": -19.6285,
-      "code": "sz301165",
-      "stockName": "锐捷网络",
-      "buyDate": "20260729",
-      "buyDateDisplay": "2026-07-29",
-      "buyTime": "14:57",
-      "buyPrice": 105,
-      "buyChange": -9.01,
-      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
-      "buyChecks": [
-        {
-          "id": "tail_dip",
-          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
-          "passed": true,
-          "value": "14:57",
-          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
-        }
-      ],
-      "sellDate": "20260731",
-      "sellDateDisplay": "2026-07-31",
-      "sellTime": "09:31",
-      "sellPrice": 108.38,
-      "sellChange": 5.88,
-      "sellReason": "开盘后涨幅开始下降即卖出",
-      "returnRate": 3.22
-    },
-    {
-      "seq": 3,
-      "metric": -22.0547,
-      "code": "sz002536",
-      "stockName": "飞龙股份",
-      "buyDate": "20260803",
-      "buyDateDisplay": "2026-08-03",
-      "buyTime": "14:57",
-      "buyPrice": 31.55,
-      "buyChange": -8.82,
-      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
-      "buyChecks": [
-        {
-          "id": "tail_dip",
-          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
-          "passed": true,
-          "value": "14:57",
-          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
-        }
-      ],
-      "sellDate": "20260804",
-      "sellDateDisplay": "2026-08-04",
-      "sellTime": "09:31",
-      "sellPrice": 31.02,
-      "sellChange": 1.33,
-      "sellReason": "开盘后涨幅开始下降即卖出",
-      "returnRate": -1.68
-    },
-    {
-      "seq": 4,
       "metric": -15.3405,
       "code": "sz301165",
       "stockName": "锐捷网络",
@@ -443,7 +359,7 @@
       "returnRate": -0.09
     },
     {
-      "seq": 5,
+      "seq": 2,
       "metric": -13.1648,
       "code": "sh688820",
       "stockName": "盛合晶微",
@@ -471,7 +387,7 @@
       "returnRate": -1.83
     },
     {
-      "seq": 6,
+      "seq": 3,
       "metric": -11.4261,
       "code": "sz300476",
       "stockName": "胜宏科技",
@@ -499,7 +415,7 @@
       "returnRate": -1.67
     },
     {
-      "seq": 7,
+      "seq": 4,
       "metric": -16.3981,
       "code": "sh688147",
       "stockName": "微导纳米",
@@ -527,7 +443,7 @@
       "returnRate": 1.89
     },
     {
-      "seq": 8,
+      "seq": 5,
       "metric": -10.7847,
       "code": "sh603757",
       "stockName": "大元泵业",
@@ -557,10 +473,10 @@
   ],
   "currentHolding": null,
   "summary": {
-    "tradeCount": 8,
-    "winCount": 3,
-    "winRate": 37.5,
-    "overallReturn": -1.53,
+    "tradeCount": 5,
+    "winCount": 1,
+    "winRate": 20,
+    "overallReturn": -4.1,
     "holding": false
   }
 }

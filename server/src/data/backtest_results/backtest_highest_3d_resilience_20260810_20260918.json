@@ -2,12 +2,12 @@
   "success": true,
   "type": "single",
   "strategy": {
-    "id": "resilience_weak_to_strong",
-    "name": "抗分歧弱转强",
-    "desc": "买点命中时先筛选出当日抗分歧分数>11 的股票，再从中计算最近 4 个交易日「前两天均值」与「最近两天均值」的差值（差值越大=抗分歧由弱转强越明显），全仓买入差值最大的股票；差值相同则买入当日涨幅最大的一只"
+    "id": "highest_3d_resilience",
+    "name": "3日抗分歧分数最大",
+    "desc": "买点命中时只买入最近 3 个交易日抗分歧分数汇总最大的股票"
   },
   "range": {
-    "startDate": "20260728",
+    "startDate": "20260810",
     "endDate": "20260918"
   },
   "skippedDates": [],
@@ -332,14 +332,68 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 6.035,
-      "code": "sh688313",
-      "stockName": "仕佳光子",
-      "buyDate": "20260804",
-      "buyDateDisplay": "2026-08-04",
-      "buyTime": "09:50",
-      "buyPrice": 108.65,
-      "buyChange": 12.28,
+      "metric": 56.43,
+      "code": "sh603186",
+      "stockName": "华正新材",
+      "buyDate": "20260817",
+      "buyDateDisplay": "2026-08-17",
+      "buyTime": "11:00",
+      "buyPrice": 184.31,
+      "buyChange": 10,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 907.58亿，较 5min 前 +115.15亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+25.10亿",
+          "reason": "最近 5 分钟资金净流入 25.10 亿（10:55:00→11:00:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 115.15亿",
+          "reason": "当前量能 907.58 亿为正，较 5min 前的 792.43 亿+ 115.15 亿，持续放量",
+          "volumeText": "当前量能 907.58亿，较 5min 前 +115.15亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 24.88 / 当前 76.57",
+          "reason": "9:30 竞价科技情绪 24.88 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260818",
+      "sellDateDisplay": "2026-08-18",
+      "sellTime": "11:05",
+      "sellPrice": 184.69,
+      "sellChange": 0.21,
+      "sellReason": "高位放量大阴线",
+      "returnRate": 0.21
+    },
+    {
+      "seq": 2,
+      "metric": 46.39,
+      "code": "sz300570",
+      "stockName": "太辰光",
+      "buyDate": "20260819",
+      "buyDateDisplay": "2026-08-19",
+      "buyTime": "10:20",
+      "buyPrice": 190.33,
+      "buyChange": -4.49,
       "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -347,52 +401,52 @@
           "title": "最近 5min 资金净流入大于 20 亿",
           "passed": true,
           "exempted": false,
-          "value": "+55.40亿",
-          "reason": "最近 5 分钟资金净流入 55.40 亿（09:45:00→09:50:00），超过 20 亿阈值"
+          "value": "+174.52亿",
+          "reason": "最近 5 分钟资金净流入 174.52 亿（10:15:00→10:20:00），超过 20 亿阈值"
         },
         {
           "id": "volume_expansion",
           "title": "当前量能为正（今日累计成交额超昨日全天）",
           "passed": true,
           "exempted": true,
-          "value": "增加 70.72亿（已豁免）",
-          "reason": "前一交易日盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
+          "value": "减少 13.08亿（已豁免）",
+          "reason": "今日(08-19)盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
         },
         {
           "id": "opening_below",
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "6 / 81只",
-          "reason": "开盘后自选股共 81 只，6 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 44.19 / 当前 84.58",
-          "reason": "9:30 竞价科技情绪 44.19 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -73.86 / 当前 -100.00",
+          "reason": "9:30 竞价科技情绪 -73.86 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260819",
-      "sellDateDisplay": "2026-08-19",
-      "sellTime": "10:30",
-      "sellPrice": 155.1,
-      "sellChange": -4.44,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": 42.75
+      "sellDate": "20260820",
+      "sellDateDisplay": "2026-08-20",
+      "sellTime": "09:30",
+      "sellPrice": 184.12,
+      "sellChange": 2.14,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -3.26
     },
     {
-      "seq": 2,
-      "metric": 3.405,
-      "code": "sh688200",
-      "stockName": "华峰测控",
+      "seq": 3,
+      "metric": 36.97,
+      "code": "sh688120",
+      "stockName": "华海清科",
       "buyDate": "20260820",
       "buyDateDisplay": "2026-08-20",
       "buyTime": "10:00",
-      "buyPrice": 425.08,
-      "buyChange": 4.46,
+      "buyPrice": 282.08,
+      "buyChange": 3.88,
       "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -431,21 +485,21 @@
       "sellDate": "20260821",
       "sellDateDisplay": "2026-08-21",
       "sellTime": "09:35",
-      "sellPrice": 407.67,
-      "sellChange": -1.91,
+      "sellPrice": 275.38,
+      "sellChange": -1.83,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -4.1
+      "returnRate": -2.38
     },
     {
-      "seq": 3,
-      "metric": 8.545,
-      "code": "sz002837",
-      "stockName": "英维克",
+      "seq": 4,
+      "metric": 60.28,
+      "code": "sz002536",
+      "stockName": "飞龙股份",
       "buyDate": "20260825",
       "buyDateDisplay": "2026-08-25",
       "buyTime": "13:10",
-      "buyPrice": 60.23,
-      "buyChange": 10.01,
+      "buyPrice": 52,
+      "buyChange": 6.56,
       "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -481,17 +535,71 @@
           "reason": "9:30 竞价科技情绪 -46.81 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
+      "sellDate": "20260826",
+      "sellDateDisplay": "2026-08-26",
+      "sellTime": "09:35",
+      "sellPrice": 50.42,
+      "sellChange": -2.21,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -3.04
+    },
+    {
+      "seq": 5,
+      "metric": 50.85,
+      "code": "sz002837",
+      "stockName": "英维克",
+      "buyDate": "20260826",
+      "buyDateDisplay": "2026-08-26",
+      "buyTime": "10:40",
+      "buyPrice": 62.3,
+      "buyChange": 3.44,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 405.79亿，较 5min 前 +348.13亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+31.06亿",
+          "reason": "最近 5 分钟资金净流入 31.06 亿（10:35:00→10:40:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 348.13亿",
+          "reason": "当前量能 405.79 亿为正，较 5min 前的 57.66 亿+ 348.13 亿，持续放量",
+          "volumeText": "当前量能 405.79亿，较 5min 前 +348.13亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 13.86 / 当前 24.74",
+          "reason": "9:30 竞价科技情绪 13.86 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
       "sellDate": "20260904",
       "sellDateDisplay": "2026-09-04",
       "sellTime": "13:55",
       "sellPrice": 63.75,
       "sellChange": -6.92,
       "sellReason": "均线破位",
-      "returnRate": 5.84
+      "returnRate": 2.33
     },
     {
-      "seq": 4,
-      "metric": 10.175,
+      "seq": 6,
+      "metric": 47.4,
       "code": "sh603228",
       "stockName": "景旺电子",
       "buyDate": "20260907",
@@ -545,14 +653,14 @@
     }
   ],
   "currentHolding": {
-    "code": "sz300567",
-    "stockName": "精测电子",
+    "code": "sz301183",
+    "stockName": "东田微",
     "buyDate": "20260916",
     "buyDateDisplay": "2026-09-16",
     "buyTime": "10:10",
-    "buyPrice": 204.63,
-    "buyChange": 5.86,
-    "metric": 8.825,
+    "buyPrice": 283.89,
+    "buyChange": 7.26,
+    "metric": 54.16,
     "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -258.76亿，较 5min 前 +103.58亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
     "buyChecks": [
       {
@@ -589,13 +697,13 @@
         "reason": "9:30 竞价科技情绪 6.35 未超过 80，当前情绪须低于 40 的限制不生效"
       }
     ],
-    "buyReturn": 7.1
+    "buyReturn": 6.75
   },
   "summary": {
-    "tradeCount": 4,
+    "tradeCount": 6,
     "winCount": 2,
-    "winRate": 50,
-    "overallReturn": 54.26,
+    "winRate": 33.33,
+    "overallReturn": -0.36,
     "holding": true
   }
 }
