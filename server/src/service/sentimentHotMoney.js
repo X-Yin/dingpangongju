@@ -2,21 +2,26 @@
 // 与自选股系列策略不同：不依赖后端资金快照/回放缓存数据，直接用日K线 + 分钟级分时回测，
 // 日期范围不受 fundSnapshot 交易日限制（交易日历来自创业板指日K线）。
 // 选股（每日用前一交易日数据判定）：
-//   前提1：前一交易日登上同花顺龙虎榜（data.10jqka.com.cn/ifmarket/lhbtable）
+//   前提1：回测起始日至前一交易日（含）期间任一交易日登上同花顺龙虎榜（累计池逐日累加，起始日当天池为空）
+//          （data.10jqka.com.cn/ifmarket/lhbtable）
 //   前提2：主板股票（60/00 开头）且非 ST（名称含 ST/退 的剔除）
 //   前提3：与东方财富板块成分股（电力/农业/医药/消费 四份名单）代码重合，其余龙虎榜股票不可买
 //   策略标的：
 //     - hot_money_3d/5d/10d_gain：截至前一交易日收盘，最近 N 个交易日累计涨幅最大的候选股
 //     - hot_money_first_board：最近 5 个交易日内，昨日为第一个涨停板（涨幅 >= 9.5%）
-//     - hot_money_second_board：前日与昨日均为涨停板（首板/二板多只候选时取当日最先触发买入的）
+//     - hot_money_second_board：昨日恰好第 2 个涨停板（昨日与前日均涨停、大前日未涨停，多连板股剔除）
+//     - hot_money_leader（龙头战法）：截至昨日收盘过去 20 个交易日累计涨幅最高的一只
 // 买点（环境条件按前一交易日收盘数据计算）：
 //   创业板指 5 日线斜率 < 0 且 10 日线斜率 < 0，且银行板块（同花顺 881155）5 日线斜率 > 0
 //   （斜率口径与 calcDailyMaInfo 一致：当前 MA − 5 日前 MA）
 //   满足环境条件时，候选股盘中涨幅超过 8% 即买入（按触发分钟价格成交）
-// 卖点（买入次日起生效，按分钟时序先到先卖）：
-//   1) 当日触及跌停价（前收 × 0.90）→ 按触发分钟价格卖出
-//   2) 现价跌破成本线-5%（低于买入价 × 0.95）→ 按触发分钟价格止损卖出
-//   3) 14:57 价格跌破 5 日线（按前一交易日收盘口径的 MA5）→ 按 14:57 价格卖出
+//   龙头战法例外：仅需银行板块 10 日线斜率 > 0，且 9:30 开盘按开盘价直接买入（不等 8% 触发）
+// 卖点（2026-09-20 统一：所有情绪游资策略仅两个卖点，满足其一即卖；买入次日起生效）：
+//   1) 该股十日线斜率（昨日收盘口径，斜率=当前MA10−5日前MA10）转为负数 → 当日开盘第一分钟卖出
+//   2) 现价跌破成本线-5%（低于买入价 × 0.95，逐分钟监控）→ 按触发分钟价格止损卖出
+//   （当日跌停价 / 14:57 跌破 5 日线卖点已删除）
+//   首板/二板专属第 3 卖点：仅限买入次日的尾盘判定（过了次日该卖点失效，回归两个通用卖点）——
+//   当日首个 >=14:57 分钟（未覆盖回退最后一分钟）现价低于当日开盘价（收阴线）→ 按该分钟价格卖出
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
@@ -35,7 +40,7 @@ const CYB_CODE = '399006'; // 创业板指（同花顺市场代码 32）
 const GAIN_BUY_TRIGGER_PCT = 8; // 盘中涨幅超过 8% 买入
 const ONE_WORD_BOARD_OPEN_PCT = 9.6; // 9:30 竞价开盘涨幅达到此值视为一字板（开盘即封板买不进去），剔除不参与买入
 const WAVE_MIN_20D_GAIN = 60; // 龙二波：前期 20 个交易日累计涨幅必须 > 60%
-const WAVE_MAX_5D_FLUCTUATION = 20; // 龙二波：最近 5 个交易日收盘价上下波动幅度必须 < 20%
+const WAVE_MAX_3D_FLUCTUATION = 10; // 龙二波：过去 3 个交易日收盘价最高/最低波动幅度必须 <= 10%（"10 个点以内"含边界）
 const WEAK_STRONG_MIN_VOLUME_RATIO = 1.4; // 弱转强：昨日量能 >= 前日量能 × 1.4（放大 40% 以上）
 const WEAK_STRONG_MIN_GAP_PCT = 2; // 弱转强：当日高开 2% 以上（分时第一分钟涨幅）
 const WEAK_STRONG_LOOKBACK = 20; // 弱转强：前期涨停板统计窗口（截至昨日的最近 20 个交易日）
@@ -52,39 +57,43 @@ const BOARD_FILES = ['电力.json', '农业.json', '医药.json', '消费.json']
 const SENTIMENT_STRATEGIES = {
   hot_money_3d_gain: {
     id: 'hot_money_3d_gain', name: '情绪游资-3日涨幅最大', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，截至前一交易日收盘最近3个交易日累计涨幅最大的一只；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正（按前一交易日收盘数据计算）时，该股盘中涨幅超过8%即买入；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）、14:57价格跌破5日线（前收口径）或当日触及跌停价',
+    desc: '选股：回测起始日至前一交易日期间任一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，截至前一交易日收盘最近3个交易日累计涨幅最大的一只；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正（按前一交易日收盘数据计算）时，该股盘中涨幅超过8%即买入；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）或该股十日线斜率（昨日收盘口径，斜率=当前MA10−5日前MA10）转为负数，两者满足其一即卖',
   },
   hot_money_5d_gain: {
     id: 'hot_money_5d_gain', name: '情绪游资-5日涨幅最大', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，截至前一交易日收盘最近5个交易日累计涨幅最大的一只；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正（按前一交易日收盘数据计算）时，该股盘中涨幅超过8%即买入；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）、14:57价格跌破5日线（前收口径）或当日触及跌停价',
+    desc: '选股：回测起始日至前一交易日期间任一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，截至前一交易日收盘最近5个交易日累计涨幅最大的一只；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正（按前一交易日收盘数据计算）时，该股盘中涨幅超过8%即买入；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）或该股十日线斜率（昨日收盘口径，斜率=当前MA10−5日前MA10）转为负数，两者满足其一即卖',
   },
   hot_money_10d_gain: {
     id: 'hot_money_10d_gain', name: '情绪游资-10日涨幅最大', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，截至前一交易日收盘最近10个交易日累计涨幅最大的一只；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正（按前一交易日收盘数据计算）时，该股盘中涨幅超过8%即买入；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）、14:57价格跌破5日线（前收口径）或当日触及跌停价',
+    desc: '选股：回测起始日至前一交易日期间任一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，截至前一交易日收盘最近10个交易日累计涨幅最大的一只；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正（按前一交易日收盘数据计算）时，该股盘中涨幅超过8%即买入；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）或该股十日线斜率（昨日收盘口径，斜率=当前MA10−5日前MA10）转为负数，两者满足其一即卖',
   },
   hot_money_first_board: {
     id: 'hot_money_first_board', name: '情绪游资-昨日首板', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，最近5个交易日内昨日为第一个涨停板（涨幅>=9.5%）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，候选股盘中涨幅超过8%即买入（多只候选取当日最先触发的一只）；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）、14:57价格跌破5日线（前收口径）或当日触及跌停价',
+    desc: '选股：回测起始日至前一交易日期间任一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，最近5个交易日内昨日为第一个涨停板（涨幅>=9.5%）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，候选股盘中涨幅超过8%即买入（多只候选取当日最先触发的一只）；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）或该股十日线斜率（昨日收盘口径，斜率=当前MA10−5日前MA10）转为负数，两者满足其一即卖；另仅限买入次日：尾盘（首个>=14:57分钟，未覆盖14:57时用当日最后一分钟）现价低于当日开盘价（收阴线）即按该分钟价格卖出，过了次日该卖点失效',
   },
   hot_money_second_board: {
     id: 'hot_money_second_board', name: '情绪游资-昨日二板', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，前日与昨日均为涨停板（涨幅>=9.5%）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，候选股盘中涨幅超过8%即买入（多只候选取当日最先触发的一只）；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）、14:57价格跌破5日线（前收口径）或当日触及跌停价',
+    desc: '选股：回测起始日至前一交易日期间任一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，昨日恰好第 2 个涨停板（昨日与前日均涨停（涨幅>=9.5%），且大前日未涨停，多连板股剔除）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，候选股盘中涨幅超过8%即买入（多只候选取当日最先触发的一只）；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）或该股十日线斜率（昨日收盘口径，斜率=当前MA10−5日前MA10）转为负数，两者满足其一即卖；另仅限买入次日：尾盘（首个>=14:57分钟，未覆盖14:57时用当日最后一分钟）现价低于当日开盘价（收阴线）即按该分钟价格卖出，过了次日该卖点失效',
   },
   hot_money_3d_slope: {
     id: 'hot_money_3d_slope', name: '情绪游资-3日线斜率最陡峭', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，3日涨幅均线斜率（角度，口径同常规策略：最近3个交易日日涨幅均值与前3个交易日均值之差转角度，按前一交易日收盘数据）最陡峭的一只，最陡峭的若竞价一字板开盘（>=9.6% 买不进）则顺延买第二陡峭的，以此类推；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，标的盘中涨幅超过8%即买入；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）、当日触及跌停价或14:57价格跌破5日线（前收口径）',
+    desc: '选股：回测起始日至前一交易日期间任一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，3日涨幅均线斜率（角度，口径同常规策略：最近3个交易日日涨幅均值与前3个交易日均值之差转角度，按前一交易日收盘数据）最陡峭的一只，最陡峭的若竞价一字板开盘（>=9.6% 买不进）则顺延买第二陡峭的，以此类推；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，标的盘中涨幅超过8%即买入；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）或该股十日线斜率（昨日收盘口径，斜率=当前MA10−5日前MA10）转为负数，两者满足其一即卖',
   },
   hot_money_5d_slope: {
     id: 'hot_money_5d_slope', name: '情绪游资-5日线斜率最陡峭', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，5日涨幅均线斜率（角度，口径同常规策略：最近5个交易日日涨幅均值与前5个交易日均值之差转角度，按前一交易日收盘数据）最陡峭的一只，最陡峭的若竞价一字板开盘（>=9.6% 买不进）则顺延买第二陡峭的，以此类推；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，标的盘中涨幅超过8%即买入；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）、当日触及跌停价或14:57价格跌破5日线（前收口径）',
+    desc: '选股：回测起始日至前一交易日期间任一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，5日涨幅均线斜率（角度，口径同常规策略：最近5个交易日日涨幅均值与前5个交易日均值之差转角度，按前一交易日收盘数据）最陡峭的一只，最陡峭的若竞价一字板开盘（>=9.6% 买不进）则顺延买第二陡峭的，以此类推；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，标的盘中涨幅超过8%即买入；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）或该股十日线斜率（昨日收盘口径，斜率=当前MA10−5日前MA10）转为负数，两者满足其一即卖',
   },
   hot_money_2nd_wave: {
     id: 'hot_money_2nd_wave', name: '情绪游资-龙二波', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，截至昨日收盘过去20个交易日累计涨幅>60%，且最近5个交易日收盘价上下波动幅度<20%、最近5个交易日内无涨停板（日涨幅>=9.5%，前期大涨后横盘整理）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，候选股盘中涨幅冲击8%即买入（多候选取当日最先触发的一只，一字板剔除；当日无触发则不买）；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）、当日触及跌停价或14:57价格跌破5日线（前收口径）',
+    desc: '选股：回测起始日至前一交易日期间任一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，截至昨日收盘过去20个交易日累计涨幅>60%，且过去3个交易日收盘价最高值与最低值波动幅度<=10%（收盘价始终在10个点以内波动）、最近5个交易日内无涨停板（日涨幅>=9.5%，前期大涨后横盘整理）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，候选股盘中涨幅冲击8%即买入（多候选取当日最先触发的一只，一字板剔除；当日无触发则不买）；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）或该股十日线斜率（昨日收盘口径，斜率=当前MA10−5日前MA10）转为负数，两者满足其一即卖',
   },
   hot_money_weak_to_strong: {
     id: 'hot_money_weak_to_strong', name: '情绪游资-弱转强', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，昨日量能放大至前日量能的1.4倍以上（放大40%以上），且前期（截至昨日的最近20个交易日）至少出现过2个涨停板（日涨幅>=9.5%，不要求连续）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正，且今日高开2%以上（分时第一分钟涨幅过滤）时，候选股盘中涨幅冲击8%即买入（多候选取当日最先触发的一只，一字板剔除；当日无触发则不买）；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）、当日触及跌停价或14:57价格跌破5日线（前收口径）',
+    desc: '选股：回测起始日至前一交易日期间任一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，昨日量能放大至前日量能的1.4倍以上（放大40%以上），且前期（截至昨日的最近20个交易日）至少出现过2个涨停板（日涨幅>=9.5%，不要求连续）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正，且今日高开2%以上（分时第一分钟涨幅过滤）时，候选股盘中涨幅冲击8%即买入（多候选取当日最先触发的一只，一字板剔除；当日无触发则不买）；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）或该股十日线斜率（昨日收盘口径，斜率=当前MA10−5日前MA10）转为负数，两者满足其一即卖',
+  },
+  hot_money_leader: {
+    id: 'hot_money_leader', name: '情绪游资-龙头战法', hotMoney: true,
+    desc: '选股：回测起始日至前一交易日期间任一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，截至前一交易日收盘过去20个交易日累计涨幅最高的一只；买点：银行板块10日线斜率为正（按前一交易日收盘数据计算，斜率=当前MA−5日前MA，不看创业板指）时，9:30开盘按开盘第一分钟价格直接买入；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）或该股十日线斜率（昨日收盘口径，斜率=当前MA10−5日前MA10）转为负数，两者满足其一即卖',
   },
 };
 
@@ -331,19 +340,20 @@ const buildMarketGates = async (rangeDates) => {
     const cybMa5Slope = maSlope(cybCloses, 5);
     const cybMa10Slope = maSlope(cybCloses, 10);
     const bankMa5Slope = maSlope(bankCloses, 5);
+    const bankMa10Slope = maSlope(bankCloses, 10);
     const bankMa5SlopePrev = maSlope(bankCloses.slice(0, -1), 5);
     const hit = cybMa5Slope != null && cybMa5Slope < 0
       && cybMa10Slope != null && cybMa10Slope < 0
       && bankMa5Slope != null && bankMa5Slope > 0
       && bankMa5SlopePrev != null && bankMa5Slope > bankMa5SlopePrev;
-    gates.set(d, { hit, cybMa5Slope, cybMa10Slope, bankMa5Slope, bankMa5SlopePrev });
+    gates.set(d, { hit, cybMa5Slope, cybMa10Slope, bankMa5Slope, bankMa10Slope, bankMa5SlopePrev });
   }
   return gates;
 };
 
 // ============================================================
-// 选股：前一交易日龙虎榜 → 主板非ST → 按策略筛选候选
-// 返回 { candidates: [{ code6, code, name, metric }], lhbCount }
+// 选股：累计龙虎榜池（回测起始日至前一交易日全部上榜个股） → 主板非ST → 板块重合 → 按策略筛选候选
+// poolStocks 为累计池原始个股 [{ code, name }]；各项指标一律按截至 prevDate（昨日）收盘数据计算
 // ============================================================
 const toThsStockCode = (code6) => (/^6/.test(code6) ? `sh${code6}` : `sz${code6}`);
 const isMainBoardCode = (code6) => /^60/.test(code6) || /^00/.test(code6);
@@ -379,12 +389,10 @@ const getBoardStockMap = () => {
 const dailyChangeAt = (bars, idx) =>
   idx >= 1 && bars[idx - 1].c > 0 ? (bars[idx].c / bars[idx - 1].c - 1) * 100 : null;
 
-const selectCandidates = async (prevDate, strategyId, calendar) => {
-  const lhb = await getLhbStocks(prevDate);
-  const lhbCount = lhb.length;
-  // 龙虎榜 → 主板非ST → 板块重合过滤：必须属电力/农业/医药/消费四份名单之一才可买
+const selectCandidates = async (poolStocks, prevDate, strategyId, calendar) => {
+  // 累计池 → 主板非ST → 板块重合过滤：必须属电力/农业/医药/消费四份名单之一才可买
   const boardMap = getBoardStockMap();
-  const pool = lhb.filter(s => isMainBoardCode(s.code) && !isExcludedName(s.name) && boardMap.has(s.code));
+  const pool = poolStocks.filter(s => isMainBoardCode(s.code) && !isExcludedName(s.name) && boardMap.has(s.code));
   const gainMatch = strategyId.match(/_(\d{1,2})d_gain$/);
   const slopeMatch = strategyId.match(/_(\d{1,2})d_slope$/);
   const calIdx = calendar.indexOf(prevDate);
@@ -443,24 +451,26 @@ const selectCandidates = async (prevDate, strategyId, calendar) => {
       if (earlierLimitUp) continue;
       candidates.push({ code6: s.code, code: toThsStockCode(s.code), name: s.name, metric: chgYest });
     } else if (strategyId === 'hot_money_second_board') {
-      // 前日与昨日均为涨停板
+      // 昨日恰好第 2 个涨停板：昨日与前日均涨停，且大前日未涨停（多连板股剔除）
       const chgYest = dailyChangeAt(bars, idx);
       const chgPrev = dailyChangeAt(bars, idx - 1);
+      const chgPrev2 = dailyChangeAt(bars, idx - 2);
       if (chgYest == null || chgYest < LIMIT_UP_PCT) continue;
       if (chgPrev == null || chgPrev < LIMIT_UP_PCT) continue;
+      if (idx < 3 || chgPrev2 == null || chgPrev2 >= LIMIT_UP_PCT) continue;
       candidates.push({ code6: s.code, code: toThsStockCode(s.code), name: s.name, metric: chgYest });
     } else if (strategyId === 'hot_money_2nd_wave') {
-      // 龙二波：过去 20 个交易日累计涨幅 > 60%，且最近 5 个交易日收盘价上下波动幅度 < 20%、
-      // 最近 5 个交易日内不能有涨停板（日涨幅 >=9.5%）
+      // 龙二波：过去 20 个交易日累计涨幅 > 60%，且过去 3 个交易日收盘价最高值与最低值
+      // 波动幅度 <= 10%（收盘价始终在 10 个点以内波动）、最近 5 个交易日内不能有涨停板（日涨幅 >=9.5%）
       if (idx < 19) continue;
       const gain20d = (bars[idx].c / bars[idx - 19].c - 1) * 100;
       if (!Number.isFinite(gain20d) || !(gain20d > WAVE_MIN_20D_GAIN)) continue;
-      const recent5 = [bars[idx].c, bars[idx - 1].c, bars[idx - 2].c, bars[idx - 3].c, bars[idx - 4].c];
-      const hi = Math.max(...recent5);
-      const lo = Math.min(...recent5);
+      const recent3 = [bars[idx].c, bars[idx - 1].c, bars[idx - 2].c];
+      const hi = Math.max(...recent3);
+      const lo = Math.min(...recent3);
       if (!(lo > 0)) continue;
       const fluctuation = (hi - lo) / lo * 100;
-      if (!Number.isFinite(fluctuation) || fluctuation >= WAVE_MAX_5D_FLUCTUATION) continue;
+      if (!Number.isFinite(fluctuation) || fluctuation > WAVE_MAX_3D_FLUCTUATION) continue;
       let hasLimitUp = false;
       for (let i = idx - 4; i <= idx; i++) {
         const chg = dailyChangeAt(bars, i);
@@ -484,6 +494,12 @@ const selectCandidates = async (prevDate, strategyId, calendar) => {
       }
       if (limitUpCount < WEAK_STRONG_MIN_LIMIT_UPS) continue;
       candidates.push({ code6: s.code, code: toThsStockCode(s.code), name: s.name, metric: ratio, limitUpCount });
+    } else if (strategyId === 'hot_money_leader') {
+      // 龙头战法：截至昨日收盘，过去 20 个交易日累计涨幅最高（在龙虎榜×板块重合池内取）
+      if (idx < 19) continue;
+      const gain20d = (bars[idx].c / bars[idx - 19].c - 1) * 100;
+      if (!Number.isFinite(gain20d)) continue;
+      candidates.push({ code6: s.code, code: toThsStockCode(s.code), name: s.name, metric: gain20d });
     }
   }
 
@@ -491,18 +507,18 @@ const selectCandidates = async (prevDate, strategyId, calendar) => {
   // 斜率类策略返回全部候选按斜率降序（买入时跳过一字板顺延取下一陡峭）
   // 标注所属板块（电力/农业/医药/消费，用于买入原因展示）
   for (const c of candidates) c.boards = boardMap.get(c.code6) || [];
-  if (gainMatch) {
+  if (gainMatch || strategyId === 'hot_money_leader') {
     let best = null;
     for (const c of candidates) {
       if (!best || c.metric > best.metric) best = c;
     }
-    return { candidates: best ? [best] : [], lhbCount };
+    return best ? [best] : [];
   }
   if (slopeMatch || strategyId === 'hot_money_2nd_wave' || strategyId === 'hot_money_weak_to_strong') {
     candidates.sort((a, b) => b.metric - a.metric);
-    return { candidates, lhbCount };
+    return candidates;
   }
-  return { candidates, lhbCount };
+  return candidates;
 };
 
 // ============================================================
@@ -545,38 +561,9 @@ const findBuyTrigger = (candidates, tlineMap) => {
   return null;
 };
 
-// ============================================================
-// 卖出触发（按分钟时序）：当日触及跌停价 / 现价跌破成本线-5% / 首个 >=14:57 分钟跌破 5 日线
-// 数据未覆盖 14:57 时回退用当日最后一分钟判断
-// ============================================================
-const findSellTrigger = (tline, ma5, buyPrice) => {
-  const preclose = tline.preclose;
-  const limitDownPx = preclose > 0 ? Math.round(preclose * 0.9 * 100) / 100 : null;
-  const stopLossPx = Number.isFinite(Number(buyPrice)) && Number(buyPrice) > 0
-    ? Math.round(Number(buyPrice) * 0.95 * 100) / 100
-    : null; // 成本线-5%：现价低于买入价 × 0.95 即止损
-  const line = tline.line;
-  for (const p of line) {
-    if (limitDownPx != null && p.lastPx <= limitDownPx + 0.001) {
-      return { reason: '当日跌停', minute: p.minute, price: p.lastPx, change: p.change };
-    }
-    if (stopLossPx != null && p.lastPx < stopLossPx) {
-      return { reason: '跌破成本线-5%', minute: p.minute, price: p.lastPx, change: p.change };
-    }
-    if (p.minute >= 1457 && ma5 != null && p.lastPx < ma5) {
-      return { reason: '14:57跌破5日线', minute: p.minute, price: p.lastPx, change: p.change };
-    }
-  }
-  // 回退：分时未覆盖 14:57（最后一分钟 < 1457）时用最后一分钟判断 5 日线
-  const last = line[line.length - 1];
-  if (ma5 != null && last && last.minute < 1457 && last.lastPx < ma5) {
-    return { reason: '14:57跌破5日线', minute: last.minute, price: last.lastPx, change: last.change };
-  }
-  return null;
-};
-
-// 昨日收盘口径的 MA5（截至 dateStr 前一交易日收盘，5 根日K收盘均值）
-const getMa5Before = async (code6, prevDate) => {
+// 个股十日线斜率（昨日收盘口径，斜率口径同 maSlope：MA10(昨日) − MA10(5 个交易日前)）
+// 用于所有情绪游资策略的统一卖点：斜率转为负数即卖
+const getStockMa10SlopeBefore = async (code6, prevDate) => {
   if (!prevDate) return null;
   const bars = await getStockBars(code6);
   let idx = -1;
@@ -584,8 +571,9 @@ const getMa5Before = async (code6, prevDate) => {
     if (bars[i].d === Number(prevDate)) { idx = i; break; }
     if (bars[i].d < Number(prevDate)) break;
   }
-  if (idx < 4) return null;
-  return (bars[idx - 4].c + bars[idx - 3].c + bars[idx - 2].c + bars[idx - 1].c + bars[idx].c) / 5;
+  if (idx < 14) return null; // 需要 10 + 5 根日K
+  const closes = bars.slice(0, idx + 1).map(b => b.c);
+  return maSlope(closes, 10);
 };
 
 // ============================================================
@@ -595,7 +583,7 @@ const fmtSlope = (v) => (v == null ? '--' : v.toFixed(2));
 const fmtMinute = (minute) => `${String(Math.floor(minute / 100)).padStart(2, '0')}:${String(minute % 100).padStart(2, '0')}`;
 const fmtDateDisplay = (dateStr) => `${String(dateStr).slice(0, 4)}-${String(dateStr).slice(4, 6)}-${String(dateStr).slice(6, 8)}`;
 
-const buildBuyInfo = (cand, trigger, gate, prevDate, strategyId) => {
+const buildBuyInfo = (cand, trigger, gate, prevDate, strategyId, startDate) => {
   const gainMatch = strategyId.match(/_(\d{1,2})d_gain$/);
   const slopeMatch = strategyId.match(/_(\d{1,2})d_slope$/);
   let selection;
@@ -604,19 +592,25 @@ const buildBuyInfo = (cand, trigger, gate, prevDate, strategyId) => {
     selection = {
       title: `最近${n}个交易日累计涨幅最大`,
       value: `+${cand.metric.toFixed(2)}%`,
-      reason: `截至前一交易日（${prevDate}）收盘，最近${n}个交易日累计涨幅 ${cand.metric.toFixed(2)}%，为当日龙虎榜主板非ST股（且属电力/农业/医药/消费板块成分股）中最高`,
+      reason: `截至前一交易日（${prevDate}）收盘，最近${n}个交易日累计涨幅 ${cand.metric.toFixed(2)}%，为累计龙虎榜池（回测起始日至前一交易日）主板非ST股（且属电力/农业/医药/消费板块成分股）中最高`,
     };
   } else if (strategyId === 'hot_money_2nd_wave') {
     selection = {
-      title: '龙二波（20日涨幅>60%且5日收盘波动<20%无涨停）',
-      value: `20日 +${cand.metric.toFixed(2)}% / 5日波动 ${(cand.fluctuation != null ? cand.fluctuation : 0).toFixed(2)}%`,
-      reason: `截至前一交易日（${prevDate}）收盘：过去20个交易日累计涨幅 ${cand.metric.toFixed(2)}% > 60%，最近5个交易日收盘价上下波动幅度 ${(cand.fluctuation != null ? cand.fluctuation : 0).toFixed(2)}% < 20%，且最近5个交易日内无涨停板（日涨幅 >=9.5%）（前期大涨后横盘整理，等待二波启动）`,
+      title: '龙二波（20日涨幅>60%且3日收盘波动≤10%无涨停）',
+      value: `20日 +${cand.metric.toFixed(2)}% / 3日波动 ${(cand.fluctuation != null ? cand.fluctuation : 0).toFixed(2)}%`,
+      reason: `截至前一交易日（${prevDate}）收盘：过去20个交易日累计涨幅 ${cand.metric.toFixed(2)}% > 60%，过去3个交易日收盘价最高值与最低值波动幅度 ${(cand.fluctuation != null ? cand.fluctuation : 0).toFixed(2)}% <= 10%（收盘价始终在10个点以内波动），且最近5个交易日内无涨停板（日涨幅 >=9.5%）（前期大涨后横盘整理，等待二波启动）`,
     };
   } else if (strategyId === 'hot_money_weak_to_strong') {
     selection = {
       title: '弱转强（昨日量能放大40%以上、今日高开2%以上且前期至少2板）',
       value: `量比 ${(cand.metric != null ? cand.metric : 0).toFixed(2)} / 前期涨停 ${cand.limitUpCount != null ? cand.limitUpCount : '--'} 个`,
       reason: `前一交易日（${prevDate}）登龙虎榜的主板非ST股：昨日成交量放大至前日的 ${(cand.metric != null ? cand.metric : 0).toFixed(2)} 倍（>=1.4 倍即放大 40% 以上），前期（最近20个交易日）出现过 ${cand.limitUpCount != null ? cand.limitUpCount : '--'} 个涨停板（>=2 个，不要求连续），且今日开盘高开 >=2%（按分时第一分钟涨幅过滤）`,
+    };
+  } else if (strategyId === 'hot_money_leader') {
+    selection = {
+      title: '龙头战法（过去20个交易日涨幅最高）',
+      value: `20日 +${cand.metric.toFixed(2)}%`,
+      reason: `截至前一交易日（${prevDate}）收盘，过去20个交易日累计涨幅 ${cand.metric.toFixed(2)}%，为累计龙虎榜池（回测起始日至前一交易日）主板非ST股（且属电力/农业/医药/消费板块成分股）中最高`,
     };
   } else if (slopeMatch) {
     const n = Number(slopeMatch[1]);
@@ -633,9 +627,9 @@ const buildBuyInfo = (cand, trigger, gate, prevDate, strategyId) => {
     };
   } else {
     selection = {
-      title: '昨日二板（前日与昨日均涨停）',
+      title: '昨日二板（恰好第 2 板）',
       value: `昨日 +${cand.metric.toFixed(2)}%`,
-      reason: `前日与昨日（${prevDate}）均为涨停板（涨幅 >= 9.5%）`,
+      reason: `昨日（${prevDate}）为第 2 个涨停板：昨日与前日均为涨停（涨幅 >= 9.5%），且大前日未涨停（多连板股剔除）`,
     };
   }
   const boards = (cand.boards && cand.boards.length > 0)
@@ -644,10 +638,10 @@ const buildBuyInfo = (cand, trigger, gate, prevDate, strategyId) => {
   const checks = [
     {
       id: 'lhb',
-      title: `前一交易日（${prevDate}）登龙虎榜`,
+      title: `${startDate}至${prevDate}期间登龙虎榜`,
       passed: true,
       value: cand.code6,
-      reason: `同花顺龙虎榜 ${prevDate} 上榜个股，且为主板（60/00 开头）非 ST 股`,
+      reason: `同花顺龙虎榜（${startDate}至${prevDate}期间任一交易日，累计池）上榜个股，且为主板（60/00 开头）非 ST 股`,
     },
     {
       id: 'board_overlap',
@@ -664,20 +658,37 @@ const buildBuyInfo = (cand, trigger, gate, prevDate, strategyId) => {
       reason: selection.reason,
     },
   ];
-  checks.push({
-    id: 'market_gate',
-    title: '创业板指5/10日线斜率均为负、银行板块5日线斜率为正且较前一日更陡峭',
-    passed: true,
-    value: `创业5日 ${fmtSlope(gate.cybMa5Slope)} / 创业10日 ${fmtSlope(gate.cybMa10Slope)} / 银行5日 ${fmtSlope(gate.bankMa5SlopePrev)} → ${fmtSlope(gate.bankMa5Slope)}`,
-    reason: '按前一交易日收盘数据计算（斜率=当前MA−5日前MA），情绪游资买点环境条件满足：创业板指 5/10 日线斜率均为负，银行板块 5 日线斜率为正且较前一交易日更陡峭（斜率值增大）',
-  });
-  checks.push({
-    id: 'trigger',
-    title: '盘中涨幅超过8%',
-    passed: true,
-    value: `${fmtMinute(trigger.minute)} +${trigger.change.toFixed(2)}%`,
-    reason: `${fmtMinute(trigger.minute)} 盘中涨幅 ${trigger.change.toFixed(2)}% 超过 8%，按该分钟价格买入`,
-  });
+  if (strategyId === 'hot_money_leader') {
+    checks.push({
+      id: 'market_gate',
+      title: '银行板块10日线斜率为正',
+      passed: true,
+      value: `银行10日 ${fmtSlope(gate.bankMa10Slope)}`,
+      reason: '按前一交易日收盘数据计算（斜率=当前MA−5日前MA），龙头战法买点环境条件满足：银行板块 10 日线斜率为正（不看创业板指）',
+    });
+    checks.push({
+      id: 'trigger',
+      title: '9:30开盘买入',
+      passed: true,
+      value: `${fmtMinute(trigger.minute)} ${trigger.price.toFixed(2)}`,
+      reason: `${fmtMinute(trigger.minute)} 按开盘第一分钟价格直接买入（不等盘中涨幅触发）`,
+    });
+  } else {
+    checks.push({
+      id: 'market_gate',
+      title: '创业板指5/10日线斜率均为负、银行板块5日线斜率为正且较前一日更陡峭',
+      passed: true,
+      value: `创业5日 ${fmtSlope(gate.cybMa5Slope)} / 创业10日 ${fmtSlope(gate.cybMa10Slope)} / 银行5日 ${fmtSlope(gate.bankMa5SlopePrev)} → ${fmtSlope(gate.bankMa5Slope)}`,
+      reason: '按前一交易日收盘数据计算（斜率=当前MA−5日前MA），情绪游资买点环境条件满足：创业板指 5/10 日线斜率均为负，银行板块 5 日线斜率为正且较前一交易日更陡峭（斜率值增大）',
+    });
+    checks.push({
+      id: 'trigger',
+      title: '盘中涨幅超过8%',
+      passed: true,
+      value: `${fmtMinute(trigger.minute)} +${trigger.change.toFixed(2)}%`,
+      reason: `${fmtMinute(trigger.minute)} 盘中涨幅 ${trigger.change.toFixed(2)}% 超过 8%，按该分钟价格买入`,
+    });
+  }
   return { buyReason: checks.map(c => c.title).join('、'), buyChecks: checks };
 };
 
@@ -700,10 +711,20 @@ const runSentimentBacktest = async (startDate, endDate, strategyId, onProgress) 
 
   const gates = await buildMarketGates(rangeDates);
 
+  // 预热回测范围内所有交易日的龙虎榜缓存（累计池需要逐日上榜数据，文件缓存命中则无 HTTP）
+  const warmDates = rangeDates.slice(0, -1);
+  if (warmDates.length > 0) {
+    if (onProgress) onProgress({ current: 0, total, date: warmDates[0], status: 'loading' });
+    await batchParallel(warmDates, async (d) => { try { await getLhbStocks(d); } catch (e) { /* 单日失败忽略 */ } }, 6);
+  }
+
   let position = null; // { code, code6, stockName, buyDate, buyDateDisplay, buyTime, buyPrice, buyChange, metric, buyReason, buyChecks }
   const trades = [];
   const skippedDates = [];
   const seenStocks = new Map(); // code -> { code, name }
+  // 累计龙虎榜池：code -> { code, name }，为回测起始日至前一交易日（含）期间全部上榜个股的并集，
+  // 随回测推进逐日并入（处理第 di 天前先并入 rangeDates[di-1] 的上榜股；起始日当天池为空）
+  const lhbCumPool = new Map();
 
   for (let di = 0; di < total; di++) {
     const dateStr = rangeDates[di];
@@ -711,6 +732,11 @@ const runSentimentBacktest = async (startDate, endDate, strategyId, onProgress) 
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'loading' });
     const calIdx = calendar.indexOf(dateStr);
     const prevDate = calIdx > 0 ? calendar[calIdx - 1] : null;
+    if (di >= 1) {
+      for (const s of await getLhbStocks(rangeDates[di - 1])) {
+        if (!lhbCumPool.has(s.code)) lhbCumPool.set(s.code, s);
+      }
+    }
 
     // ===== 卖出（买入次日起生效；同日买入不可同日卖出） =====
     const soldTodayCodes = new Set();
@@ -718,8 +744,34 @@ const runSentimentBacktest = async (startDate, endDate, strategyId, onProgress) 
       if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
       const tline = await getStockMinuteTline(position.code, dateStr);
       if (tline) {
-        const ma5 = await getMa5Before(position.code6, prevDate);
-        const trigger = findSellTrigger(tline, ma5, position.buyPrice);
+        // 统一卖点（2026-09-20 起所有情绪游资策略一致，满足其一即卖，按分钟时序）：
+        // ① 该股十日线斜率（昨日收盘口径）转为负数 → 当日开盘（第一分钟）卖出
+        // ② 现价跌破成本线-5%（逐分钟监控）
+        let trigger = null;
+        const slope10 = await getStockMa10SlopeBefore(position.code6, prevDate);
+        if (slope10 != null && slope10 < 0) {
+          const first = tline.line[0];
+          trigger = { reason: '十日线斜率转负', minute: first.minute, price: first.lastPx, change: first.change };
+        } else {
+          const bp = Number(position.buyPrice);
+          const stopLossPx = Number.isFinite(bp) && bp > 0 ? Math.round(bp * 0.95 * 100) / 100 : null;
+          for (const p of tline.line) {
+            if (stopLossPx != null && p.lastPx < stopLossPx) {
+              trigger = { reason: '跌破成本线-5%', minute: p.minute, price: p.lastPx, change: p.change };
+              break;
+            }
+          }
+          // 首板/二板专属第 3 卖点：仅限买入次日的尾盘判定（过了次日该卖点失效，回归两个通用卖点）
+          // 当日首个 >=14:57 分钟现价低于当日开盘价（即当日收阴线）→ 按该分钟价格卖出
+          if (!trigger && position.buyDate === prevDate
+              && (strategyId === 'hot_money_first_board' || strategyId === 'hot_money_second_board')) {
+            const openPx = tline.line[0] ? tline.line[0].lastPx : null;
+            const tail = tline.line.find(p => p.minute >= 1457) || tline.line[tline.line.length - 1];
+            if (openPx != null && tail && tail.lastPx < openPx) {
+              trigger = { reason: '尾盘收阴线', minute: tail.minute, price: tail.lastPx, change: tail.change };
+            }
+          }
+        }
         if (trigger) {
           const returnRate = position.buyPrice > 0
             ? parseFloat((((trigger.price - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
@@ -753,14 +805,18 @@ const runSentimentBacktest = async (startDate, endDate, strategyId, onProgress) 
     // ===== 买入（空仓时；环境条件 + 候选股盘中涨幅超过 8%） =====
     if (!position && prevDate) {
       const gate = gates.get(dateStr);
-      if (gate && gate.hit) {
-        const { candidates, lhbCount } = await selectCandidates(prevDate, strategyId, calendar);
+      // 龙头战法买点环境条件不同：仅需银行板块 10 日线斜率为正（不看创业板指、不要求更陡峭）
+      const gateHit = strategyId === 'hot_money_leader'
+        ? (gate && gate.bankMa10Slope != null && gate.bankMa10Slope > 0)
+        : (gate && gate.hit);
+      if (gateHit) {
+        const candidates = await selectCandidates(Array.from(lhbCumPool.values()), prevDate, strategyId, calendar);
         const buyable = candidates.filter(c => !soldTodayCodes.has(c.code));
         for (const c of buyable) {
           if (!seenStocks.has(c.code)) seenStocks.set(c.code, { code: c.code, name: c.name });
         }
-        if (lhbCount === 0) {
-          skippedDates.push({ date: dateStr, message: `前一交易日（${prevDate}）龙虎榜数据为空` });
+        if (lhbCumPool.size === 0) {
+          skippedDates.push({ date: dateStr, message: `回测起始日（${rangeDates[0]}）至前一交易日（${prevDate}）累计龙虎榜池为空` });
         } else if (buyable.length > 0) {
           if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
           const tlineMap = new Map();
@@ -787,9 +843,20 @@ const runSentimentBacktest = async (startDate, endDate, strategyId, onProgress) 
               return !!(first && first.change != null && first.change >= WEAK_STRONG_MIN_GAP_PCT);
             });
           }
-          const trigger = triggerCandidates.length > 0 ? findBuyTrigger(triggerCandidates, tlineMap) : null;
+          let trigger = null;
+          if (strategyId === 'hot_money_leader') {
+            // 龙头战法：9:30 开盘直接买入（按开盘第一分钟价格成交，不等 8% 盘中触发）
+            const c = buyable[0];
+            const t = c ? tlineMap.get(c.code) : null;
+            const first = t && Array.isArray(t.line) && t.line.length > 0 ? t.line[0] : null;
+            if (first) {
+              trigger = { cand: c, minute: first.minute, price: first.lastPx, change: first.change };
+            }
+          } else {
+            trigger = triggerCandidates.length > 0 ? findBuyTrigger(triggerCandidates, tlineMap) : null;
+          }
           if (trigger) {
-            const buyInfo = buildBuyInfo(trigger.cand, trigger, gate, prevDate, strategyId);
+            const buyInfo = buildBuyInfo(trigger.cand, trigger, gate, prevDate, strategyId, rangeDates[0]);
             position = {
               code: trigger.cand.code,
               code6: trigger.cand.code6,

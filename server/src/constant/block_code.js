@@ -160,11 +160,6 @@ exports.default = [
         "name": "飞龙股份"
     },
     {
-        "blockName": "液冷",
-        "code": "sz002272",
-        "name": "川润股份"
-    },
-    {
         "blockName": "电子布",
         "code": "sh603256",
         "name": "宏和科技"
@@ -808,5 +803,15 @@ exports.default = [
         "blockName": "CCL",
         "code": "sh688519",
         "name": "南亚新材"
+    },
+    {
+        "blockName": "液冷",
+        "code": "sz003018",
+        "name": "金富科技"
+    },
+    {
+        "blockName": "液冷",
+        "code": "sz300420",
+        "name": "五洋自控"
     }
 ]
