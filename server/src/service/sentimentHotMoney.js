@@ -58,23 +58,23 @@ const SENTIMENT_STRATEGIES = {
   },
   hot_money_first_board: {
     id: 'hot_money_first_board', name: '情绪游资-昨日首板', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股中，最近5个交易日内昨日为第一个涨停板（涨幅>=9.5%）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正时，候选股盘中涨幅超过8%即买入（多只候选取当日最先触发的一只）；卖点：14:57价格跌破5日线（前收口径）或当日触及跌停价',
+    desc: '选股：前一交易日登龙虎榜的主板非ST股中，最近5个交易日内昨日为第一个涨停板（涨幅>=9.5%）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，候选股盘中涨幅超过8%即买入（多只候选取当日最先触发的一只）；卖点：14:57价格跌破5日线（前收口径）或当日触及跌停价',
   },
   hot_money_second_board: {
     id: 'hot_money_second_board', name: '情绪游资-昨日二板', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股中，前日与昨日均为涨停板（涨幅>=9.5%）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正时，候选股盘中涨幅超过8%即买入（多只候选取当日最先触发的一只）；卖点：14:57价格跌破5日线（前收口径）或当日触及跌停价',
+    desc: '选股：前一交易日登龙虎榜的主板非ST股中，前日与昨日均为涨停板（涨幅>=9.5%）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，候选股盘中涨幅超过8%即买入（多只候选取当日最先触发的一只）；卖点：14:57价格跌破5日线（前收口径）或当日触及跌停价',
   },
   hot_money_3d_slope: {
     id: 'hot_money_3d_slope', name: '情绪游资-3日线斜率最陡峭', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股中，3日涨幅均线斜率（角度，口径同常规策略：最近3个交易日日涨幅均值与前3个交易日均值之差转角度，按前一交易日收盘数据）最陡峭的一只，最陡峭的若竞价一字板开盘（>=9.6% 买不进）则顺延买第二陡峭的，以此类推；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正时，标的盘中涨幅超过8%即买入；卖点：当日触及跌停价或14:57价格跌破5日线（前收口径）',
+    desc: '选股：前一交易日登龙虎榜的主板非ST股中，3日涨幅均线斜率（角度，口径同常规策略：最近3个交易日日涨幅均值与前3个交易日均值之差转角度，按前一交易日收盘数据）最陡峭的一只，最陡峭的若竞价一字板开盘（>=9.6% 买不进）则顺延买第二陡峭的，以此类推；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，标的盘中涨幅超过8%即买入；卖点：当日触及跌停价或14:57价格跌破5日线（前收口径）',
   },
   hot_money_5d_slope: {
     id: 'hot_money_5d_slope', name: '情绪游资-5日线斜率最陡峭', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股中，5日涨幅均线斜率（角度，口径同常规策略：最近5个交易日日涨幅均值与前5个交易日均值之差转角度，按前一交易日收盘数据）最陡峭的一只，最陡峭的若竞价一字板开盘（>=9.6% 买不进）则顺延买第二陡峭的，以此类推；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正时，标的盘中涨幅超过8%即买入；卖点：当日触及跌停价或14:57价格跌破5日线（前收口径）',
+    desc: '选股：前一交易日登龙虎榜的主板非ST股中，5日涨幅均线斜率（角度，口径同常规策略：最近5个交易日日涨幅均值与前5个交易日均值之差转角度，按前一交易日收盘数据）最陡峭的一只，最陡峭的若竞价一字板开盘（>=9.6% 买不进）则顺延买第二陡峭的，以此类推；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，标的盘中涨幅超过8%即买入；卖点：当日触及跌停价或14:57价格跌破5日线（前收口径）',
   },
   hot_money_2nd_wave: {
     id: 'hot_money_2nd_wave', name: '情绪游资-龙二波', hotMoney: true,
-    desc: '选股：前一交易日登龙虎榜的主板非ST股中，截至昨日收盘过去20个交易日累计涨幅>60%，且最近5个交易日收盘价上下波动幅度<20%、最近5个交易日内无涨停板（日涨幅>=9.5%，前期大涨后横盘整理）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正时，候选股盘中涨幅冲击8%即买入（多候选取当日最先触发的一只，一字板剔除；当日无触发则不买）；卖点：当日触及跌停价或14:57价格跌破5日线（前收口径）',
+    desc: '选股：前一交易日登龙虎榜的主板非ST股中，截至昨日收盘过去20个交易日累计涨幅>60%，且最近5个交易日收盘价上下波动幅度<20%、最近5个交易日内无涨停板（日涨幅>=9.5%，前期大涨后横盘整理）的股票；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正且较前一交易日更陡峭时，候选股盘中涨幅冲击8%即买入（多候选取当日最先触发的一只，一字板剔除；当日无触发则不买）；卖点：当日触及跌停价或14:57价格跌破5日线（前收口径）',
   },
   hot_money_weak_to_strong: {
     id: 'hot_money_weak_to_strong', name: '情绪游资-弱转强', hotMoney: true,
@@ -303,6 +303,8 @@ const maSlope = (closes, period) => {
   return now - prev;
 };
 
+// gate 判定（按前一交易日收盘数据）：创业板指 5/10 日线斜率均 <0，银行板块 5 日线斜率 >0，
+// 且银行板块 5 日线斜率较前一交易日更陡峭（斜率值增大；前一交易日收盘口径 = 去掉最后一根收盘后重算）
 const buildMarketGates = async (rangeDates) => {
   const [bankKline, cybKline] = await Promise.all([getBankKline(), getCybKline()]);
   const toBars = (kline) => (kline || [])
@@ -323,10 +325,12 @@ const buildMarketGates = async (rangeDates) => {
     const cybMa5Slope = maSlope(cybCloses, 5);
     const cybMa10Slope = maSlope(cybCloses, 10);
     const bankMa5Slope = maSlope(bankCloses, 5);
+    const bankMa5SlopePrev = maSlope(bankCloses.slice(0, -1), 5);
     const hit = cybMa5Slope != null && cybMa5Slope < 0
       && cybMa10Slope != null && cybMa10Slope < 0
-      && bankMa5Slope != null && bankMa5Slope > 0;
-    gates.set(d, { hit, cybMa5Slope, cybMa10Slope, bankMa5Slope });
+      && bankMa5Slope != null && bankMa5Slope > 0
+      && bankMa5SlopePrev != null && bankMa5Slope > bankMa5SlopePrev;
+    gates.set(d, { hit, cybMa5Slope, cybMa10Slope, bankMa5Slope, bankMa5SlopePrev });
   }
   return gates;
 };
@@ -610,10 +614,10 @@ const buildBuyInfo = (cand, trigger, gate, prevDate, strategyId) => {
   ];
   checks.push({
     id: 'market_gate',
-    title: '创业板指5/10日线斜率均为负且银行板块5日线斜率为正',
+    title: '创业板指5/10日线斜率均为负、银行板块5日线斜率为正且较前一日更陡峭',
     passed: true,
-    value: `创业5日 ${fmtSlope(gate.cybMa5Slope)} / 创业10日 ${fmtSlope(gate.cybMa10Slope)} / 银行5日 ${fmtSlope(gate.bankMa5Slope)}`,
-    reason: '按前一交易日收盘数据计算（斜率=当前MA−5日前MA），情绪游资买点环境条件满足',
+    value: `创业5日 ${fmtSlope(gate.cybMa5Slope)} / 创业10日 ${fmtSlope(gate.cybMa10Slope)} / 银行5日 ${fmtSlope(gate.bankMa5SlopePrev)} → ${fmtSlope(gate.bankMa5Slope)}`,
+    reason: '按前一交易日收盘数据计算（斜率=当前MA−5日前MA），情绪游资买点环境条件满足：创业板指 5/10 日线斜率均为负，银行板块 5 日线斜率为正且较前一交易日更陡峭（斜率值增大）',
   });
   checks.push({
     id: 'trigger',
