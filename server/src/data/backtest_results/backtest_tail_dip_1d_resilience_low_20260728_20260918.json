@@ -2,12 +2,12 @@
   "success": true,
   "type": "single",
   "strategy": {
-    "id": "tail_dip_3d_gain",
-    "name": "尾盘抄底-3日涨幅最大",
-    "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入最近 3 个交易日涨幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出"
+    "id": "tail_dip_1d_resilience_low",
+    "name": "尾盘抄底-当日抗分歧分数最低",
+    "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日抗分歧分数最低的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出"
   },
   "range": {
-    "startDate": "20260810",
+    "startDate": "20260728",
     "endDate": "20260918"
   },
   "skippedDates": [],
@@ -332,14 +332,98 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 11.6255,
-      "code": "sz300570",
-      "stockName": "太辰光",
+      "metric": 0,
+      "code": "sh603986",
+      "stockName": "兆易创新",
+      "buyDate": "20260728",
+      "buyDateDisplay": "2026-07-28",
+      "buyTime": "14:57",
+      "buyPrice": 390.63,
+      "buyChange": -10,
+      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+      "buyChecks": [
+        {
+          "id": "tail_dip",
+          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+          "passed": true,
+          "value": "14:57",
+          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+        }
+      ],
+      "sellDate": "20260729",
+      "sellDateDisplay": "2026-07-29",
+      "sellTime": "09:31",
+      "sellPrice": 370.47,
+      "sellChange": -6.82,
+      "sellReason": "开盘后涨幅开始下降即卖出",
+      "returnRate": -5.16
+    },
+    {
+      "seq": 2,
+      "metric": 0.96,
+      "code": "sz002851",
+      "stockName": "麦格米特",
+      "buyDate": "20260729",
+      "buyDateDisplay": "2026-07-29",
+      "buyTime": "14:57",
+      "buyPrice": 107.52,
+      "buyChange": -8.55,
+      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+      "buyChecks": [
+        {
+          "id": "tail_dip",
+          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+          "passed": true,
+          "value": "14:57",
+          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+        }
+      ],
+      "sellDate": "20260731",
+      "sellDateDisplay": "2026-07-31",
+      "sellTime": "09:31",
+      "sellPrice": 104.38,
+      "sellChange": 9.07,
+      "sellReason": "开盘后涨幅开始下降即卖出",
+      "returnRate": -2.92
+    },
+    {
+      "seq": 3,
+      "metric": 4.27,
+      "code": "sh603256",
+      "stockName": "宏和科技",
+      "buyDate": "20260803",
+      "buyDateDisplay": "2026-08-03",
+      "buyTime": "14:57",
+      "buyPrice": 115.32,
+      "buyChange": -10,
+      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+      "buyChecks": [
+        {
+          "id": "tail_dip",
+          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+          "passed": true,
+          "value": "14:57",
+          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+        }
+      ],
+      "sellDate": "20260804",
+      "sellDateDisplay": "2026-08-04",
+      "sellTime": "09:31",
+      "sellPrice": 114.85,
+      "sellChange": -0.03,
+      "sellReason": "开盘后涨幅开始下降即卖出",
+      "returnRate": -0.41
+    },
+    {
+      "seq": 4,
+      "metric": 0,
+      "code": "sz002080",
+      "stockName": "中材科技",
       "buyDate": "20260819",
       "buyDateDisplay": "2026-08-19",
       "buyTime": "14:57",
-      "buyPrice": 180.27,
-      "buyChange": -9.53,
+      "buyPrice": 54.09,
+      "buyChange": -10,
       "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
       "buyChecks": [
         {
@@ -352,22 +436,22 @@
       ],
       "sellDate": "20260820",
       "sellDateDisplay": "2026-08-20",
-      "sellTime": "09:31",
-      "sellPrice": 182.2,
-      "sellChange": 3.16,
+      "sellTime": "09:32",
+      "sellPrice": 52.5,
+      "sellChange": -2.18,
       "sellReason": "开盘后涨幅开始下降即卖出",
-      "returnRate": 1.07
+      "returnRate": -2.94
     },
     {
-      "seq": 2,
-      "metric": 16.7472,
-      "code": "sz002536",
-      "stockName": "飞龙股份",
+      "seq": 5,
+      "metric": 4.49,
+      "code": "sz002080",
+      "stockName": "中材科技",
       "buyDate": "20260824",
       "buyDateDisplay": "2026-08-24",
       "buyTime": "14:57",
-      "buyPrice": 48.8,
-      "buyChange": 3.9,
+      "buyPrice": 49.43,
+      "buyChange": -8.31,
       "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
       "buyChecks": [
         {
@@ -381,21 +465,21 @@
       "sellDate": "20260825",
       "sellDateDisplay": "2026-08-25",
       "sellTime": "09:31",
-      "sellPrice": 47.84,
-      "sellChange": -2.01,
+      "sellPrice": 48.04,
+      "sellChange": -2.99,
       "sellReason": "开盘后涨幅开始下降即卖出",
-      "returnRate": -1.97
+      "returnRate": -2.81
     },
     {
-      "seq": 3,
-      "metric": 9.3573,
-      "code": "sz000977",
-      "stockName": "浪潮信息",
+      "seq": 6,
+      "metric": 4.05,
+      "code": "sz301526",
+      "stockName": "国际复材",
       "buyDate": "20260901",
       "buyDateDisplay": "2026-09-01",
       "buyTime": "14:57",
-      "buyPrice": 85.6,
-      "buyChange": 0.49,
+      "buyPrice": 28.15,
+      "buyChange": -9.19,
       "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
       "buyChecks": [
         {
@@ -408,22 +492,22 @@
       ],
       "sellDate": "20260902",
       "sellDateDisplay": "2026-09-02",
-      "sellTime": "09:31",
-      "sellPrice": 85.39,
-      "sellChange": -0.23,
+      "sellTime": "09:32",
+      "sellPrice": 27.65,
+      "sellChange": -1.85,
       "sellReason": "开盘后涨幅开始下降即卖出",
-      "returnRate": -0.25
+      "returnRate": -1.78
     },
     {
-      "seq": 4,
-      "metric": 10.3559,
-      "code": "sz002536",
-      "stockName": "飞龙股份",
+      "seq": 7,
+      "metric": 2.05,
+      "code": "sh603256",
+      "stockName": "宏和科技",
       "buyDate": "20260904",
       "buyDateDisplay": "2026-09-04",
       "buyTime": "14:57",
-      "buyPrice": 58.26,
-      "buyChange": -7.57,
+      "buyPrice": 120.69,
+      "buyChange": -10,
       "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
       "buyChecks": [
         {
@@ -436,22 +520,22 @@
       ],
       "sellDate": "20260907",
       "sellDateDisplay": "2026-09-07",
-      "sellTime": "09:31",
-      "sellPrice": 55.9,
-      "sellChange": -3.84,
+      "sellTime": "09:36",
+      "sellPrice": 121.88,
+      "sellChange": 1.4,
       "sellReason": "开盘后涨幅开始下降即卖出",
-      "returnRate": -4.05
+      "returnRate": 0.99
     },
     {
-      "seq": 5,
-      "metric": 20.1291,
-      "code": "sz002636",
-      "stockName": "金安国纪",
+      "seq": 8,
+      "metric": 5.76,
+      "code": "sh603083",
+      "stockName": "剑桥科技",
       "buyDate": "20260911",
       "buyDateDisplay": "2026-09-11",
       "buyTime": "14:57",
-      "buyPrice": 82.46,
-      "buyChange": 7.86,
+      "buyPrice": 224.46,
+      "buyChange": -4.25,
       "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
       "buyChecks": [
         {
@@ -465,18 +549,18 @@
       "sellDate": "20260914",
       "sellDateDisplay": "2026-09-14",
       "sellTime": "09:31",
-      "sellPrice": 77.8,
-      "sellChange": -3.3,
+      "sellPrice": 210,
+      "sellChange": -4.74,
       "sellReason": "开盘后涨幅开始下降即卖出",
-      "returnRate": -5.65
+      "returnRate": -6.44
     }
   ],
   "currentHolding": null,
   "summary": {
-    "tradeCount": 5,
+    "tradeCount": 8,
     "winCount": 1,
-    "winRate": 20,
-    "overallReturn": -10.53,
+    "winRate": 12.5,
+    "overallReturn": -19.73,
     "holding": false
   }
 }

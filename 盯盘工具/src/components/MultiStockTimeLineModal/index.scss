@@ -67,6 +67,12 @@
     width: 28px;
     font-size: 14px;
   }
+
+  .ant-card-head .mtlm-fullscreen-btn {
+    height: 28px;
+    width: 28px;
+    font-size: 14px;
+  }
 }
 
 /* 折叠 tag 区域时撑高分时图：需覆盖 .mtlm-embedded-card .mtlm-chart-inner 的 height:100%!important */
@@ -291,6 +297,12 @@
     white-space: nowrap;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
     transition: opacity 0.2s ease;
+    // 容器整体 pointer-events: none 让空白区域事件穿透到图表，
+    // label 本身恢复 auto 才能接收按住高亮折线的 mousedown 事件
+    pointer-events: auto;
+    user-select: none; // 按住 label 高亮折线时防止选中文字
+    -webkit-user-select: none;
+    cursor: grab;
 
     &.label-dimmed {
       opacity: 0.3;
@@ -1286,4 +1298,43 @@
       margin-top: 16px;
     }
   }
+}
+
+/* 放大查看弹窗：分时图填满弹窗内容区（需在 collapsed 规则之后定义，保证 !important 覆盖生效） */
+.multi-stock-timeline-modal .mtlm-chart-inner.fullscreen {
+  height: 100% !important;
+}
+
+.mtlm-fullscreen-body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .multi-stock-timeline-modal {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mtlm-body {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .mtlm-chart-area {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+}
+
+/* 放大期间卡片内的占位提示 */
+.mtlm-fullscreen-placeholder {
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

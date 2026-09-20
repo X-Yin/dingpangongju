@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Modal, Spin, Tag, Button, Input, Checkbox, Empty, Card, Tooltip, Popconfirm, message } from 'antd';
-import { LineChartOutlined, PlusOutlined, SearchOutlined, CloseOutlined, GroupOutlined, EditOutlined, DeleteOutlined, StarOutlined, ApiOutlined, CaretUpOutlined, CaretDownOutlined, ReloadOutlined } from '@ant-design/icons';
+import { LineChartOutlined, PlusOutlined, SearchOutlined, CloseOutlined, GroupOutlined, EditOutlined, DeleteOutlined, StarOutlined, ApiOutlined, CaretUpOutlined, CaretDownOutlined, ReloadOutlined, FullscreenOutlined } from '@ant-design/icons';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -499,6 +499,7 @@ const MultiStockTimeLineModal = ({
   const minuteDeltaRef = useRef([]); // 每只股票过去一分钟的涨幅（最新价 - 上一分钟价）
   const mainFundMapRef = useRef({});
   const importantCodesRef = useRef(new Set()); // 全量自选股中被标记为重点的股票代码集合
+  const chartPausedRef = useRef(false); // 鼠标按住右侧 label 期间冻结分时图更新（轮询继续但不应用新数据）
   const isActive = embedded || visible;
 
   // 刷新中状态：叠加分时模块任一数据请求（分时/主力资金/自选股涨幅）进行中时，顶部刷新按钮跟随转动，全部返回后恢复静止
@@ -533,6 +534,9 @@ const MultiStockTimeLineModal = ({
   // tag 区域折叠相关：折叠时分时图高度固定增加 100px，并整体重建图表
   const [tagsCollapsed, setTagsCollapsed] = useState(true);
   const [chartReloadVersion, setChartReloadVersion] = useState(0);
+
+  // 放大查看：打开后分时图整体移入 90% 宽高的大弹窗展示，关闭后移回卡片
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   // 悬浮 tag 时高亮对应股票曲线，其他曲线虚化
   const applyHoverHighlight = useCallback((code) => {
@@ -837,6 +841,8 @@ const MultiStockTimeLineModal = ({
         benchmarkName,
       };
     });
+    // 鼠标按住右侧 label 期间冻结回放图更新，松开后由 release 逻辑触发重算
+    if (chartPausedRef.current) return;
     setStockInfoList(infoList);
     setChartData({ alignedLines, infoList });
   }, [replayMode, replayStocks, replayCurrentTimeKey, replayVersion, replayDate, minuteTlineVersion]);
@@ -947,6 +953,8 @@ const MultiStockTimeLineModal = ({
           benchmarkName: resilience?.benchmarkName || (isIndex ? (s.stockName || s.code) : '--'),
         };
       });
+      // 鼠标按住右侧 label 期间冻结分时图：轮询继续，但暂不应用新数据，避免 label 随涨幅变化乱跑
+      if (chartPausedRef.current) return;
       setStockInfoList(infoList);
       setChartData({ alignedLines, infoList });
 
@@ -991,6 +999,32 @@ const MultiStockTimeLineModal = ({
       setRefreshing(false);
     }
   }, [currentStocks, fetchMainFund, fetchTimeLineData, beginTimelineRefresh, endTimelineRefresh]);
+
+  // 按住右侧 label：高亮对应折线（效果同悬浮 tag），并冻结分时图更新，避免 label 随涨幅变化乱跑；松开后恢复
+  const handleLabelMouseDown = (e, code) => {
+    if (e.button !== 0) return;
+    e.preventDefault(); // 防止按住拖动时选中文字
+    chartPausedRef.current = true;
+    hoveredCodeRef.current = code;
+    setHoveredCode(code);
+    applyHoverHighlight(code);
+    const release = () => {
+      window.removeEventListener('mouseup', release);
+      window.removeEventListener('blur', release);
+      chartPausedRef.current = false;
+      hoveredCodeRef.current = null;
+      setHoveredCode(null);
+      applyHoverHighlight(null);
+      // 松开后立即恢复正常刷新分时图数据
+      if (replayMode) {
+        setReplayVersion(v => v + 1);
+      } else if (currentStocks.length > 0) {
+        fetchTimeLineData();
+      }
+    };
+    window.addEventListener('mouseup', release);
+    window.addEventListener('blur', release);
+  };
 
   const updateRightAxisLabels = useCallback(() => {
     if (!chartRef.current || !containerRef.current) return;
@@ -1365,7 +1399,7 @@ const MultiStockTimeLineModal = ({
     return 'neutral';
   };
 
-  const renderBody = () => {
+  const renderBody = (isFullscreen = false) => {
     const displayInfoList = hideIndexTags
       ? stockInfoList.filter((item) => !INDEX_CODE_SET.has(item.code))
       : stockInfoList;
@@ -1459,7 +1493,7 @@ const MultiStockTimeLineModal = ({
 
       <div className="mtlm-body">
         <div className="mtlm-chart-area">
-          <div className={`mtlm-chart-inner ${tagsCollapsed ? 'collapsed' : ''}`}>
+          <div className={`mtlm-chart-inner ${tagsCollapsed ? 'collapsed' : ''} ${isFullscreen ? 'fullscreen' : ''}`}>
             <div className="mtlm-lw-chart-container">
               <div ref={containerRef} className="mtlm-lw-chart" />
               <div ref={tooltipRef} className="mtlm-lw-tooltip" />
@@ -1469,6 +1503,7 @@ const MultiStockTimeLineModal = ({
                     key={label.key}
                     className={`mtlm-right-label ${label.isImportant ? 'label-important' : ''} ${hoveredCode && hoveredCode !== label.key ? 'label-dimmed' : ''} ${hoveredCode === label.key ? 'label-highlighted' : ''}`}
                     style={{ top: `${label.y}px`, borderColor: label.color }}
+                    onMouseDown={(e) => handleLabelMouseDown(e, label.key)}
                   >
                     <span className="mtlm-right-label-name" style={label.isImportant ? { color: '#ffffff', background: label.color } : { color: label.color }}>
                       {label.rank && <span className={`mtlm-right-label-rank rank-${label.rank}`}>{label.rank}</span>}
@@ -1604,6 +1639,39 @@ const MultiStockTimeLineModal = ({
     />
   );
 
+  // 放大查看弹窗：宽高各占屏幕 90%，分时图填满弹窗内容区
+  // 注意 renderBody（含图表容器 ref）同一时间只能渲染一处：弹窗打开时渲染在弹窗内，卡片显示占位
+  // 弹窗内容由 rc-motion 延迟挂载，打开动画结束后（容器已可见）再触发图表在新容器重建；
+  // 关闭时在 onCancel 里立即触发图表移回卡片容器重建
+  const handleCloseFullscreen = () => {
+    setFullscreenOpen(false);
+    setChartReloadVersion(v => v + 1);
+  };
+  const renderFullscreenModal = () => (
+    <Modal
+      title={
+        <span>
+          <FullscreenOutlined style={{ color: getThemeColor(), marginRight: '8px' }} />
+          {title}（放大视图）
+        </span>
+      }
+      open={fullscreenOpen}
+      onCancel={handleCloseFullscreen}
+      afterOpenChange={(open) => {
+        if (open) setChartReloadVersion(v => v + 1);
+      }}
+      footer={null}
+      width="90vw"
+      centered
+      zIndex={10000}
+      styles={{ body: { height: 'calc(90vh - 56px)', padding: 12, overflow: 'hidden' } }}
+    >
+      <div className="mtlm-fullscreen-body">
+        {fullscreenOpen && renderBody(true)}
+      </div>
+    </Modal>
+  );
+
   const openGroupDropdown = () => {
     clearTimeout(hoverTimerRef.current);
     const el = groupBtnRef.current;
@@ -1714,6 +1782,12 @@ const MultiStockTimeLineModal = ({
               <span><LineChartOutlined style={{ color: getThemeColor(), marginRight: '8px' }} />{title}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Button
+                  icon={<FullscreenOutlined />}
+                  title="放大查看分时图"
+                  onClick={() => setFullscreenOpen(true)}
+                  className="mtlm-fullscreen-btn"
+                />
+                <Button
                   icon={<ReloadOutlined spin={timelineRefreshing} />}
                   title="刷新全部叠加分时数据"
                   onClick={handleRefresh}
@@ -1736,9 +1810,14 @@ const MultiStockTimeLineModal = ({
           variant="borderless"
           bodyStyle={{ padding: '16px 20px' }}
         >
-          {renderBody()}
+          {fullscreenOpen ? (
+            <div className="mtlm-fullscreen-placeholder">
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="分时图已在放大弹窗中显示，关闭弹窗后恢复" />
+            </div>
+          ) : renderBody()}
         </Card>
         {renderGroupModal()}
+        {renderFullscreenModal()}
       </>
     );
   }
