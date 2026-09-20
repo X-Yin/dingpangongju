@@ -75,6 +75,44 @@ const STRATEGY_OPTIONS = [
   { value: 'tail_dip_1d_fall', label: '尾盘抄底-当日跌幅最大' },
   { value: 'tail_dip_3d_fall', label: '尾盘抄底-3日跌幅最大' },
   { value: 'tail_dip_1d_resilience_low', label: '尾盘抄底-当日抗分歧分数最低' },
+  { value: 'hot_money_3d_gain', label: '情绪游资-3日涨幅最大' },
+  { value: 'hot_money_5d_gain', label: '情绪游资-5日涨幅最大' },
+  { value: 'hot_money_10d_gain', label: '情绪游资-10日涨幅最大' },
+  { value: 'hot_money_first_board', label: '情绪游资-昨日首板' },
+  { value: 'hot_money_second_board', label: '情绪游资-昨日二板' },
+  { value: 'hot_money_3d_slope', label: '情绪游资-3日线斜率最陡峭' },
+  { value: 'hot_money_5d_slope', label: '情绪游资-5日线斜率最陡峭' },
+  { value: 'hot_money_2nd_wave', label: '情绪游资-龙二波' },
+  { value: 'hot_money_weak_to_strong', label: '情绪游资-弱转强' },
+];
+
+// 情绪游资系列策略（与后端 sentimentHotMoney.SENTIMENT_HOT_MONEY_IDS 保持一致）：
+// 买卖点规则与常规策略不同，日期范围独立（不依赖后端回放缓存，默认最近 60 个已完结交易日）
+const SENTIMENT_HOT_MONEY_IDS = [
+  'hot_money_3d_gain',
+  'hot_money_5d_gain',
+  'hot_money_10d_gain',
+  'hot_money_first_board',
+  'hot_money_second_board',
+  'hot_money_3d_slope',
+  'hot_money_5d_slope',
+  'hot_money_2nd_wave',
+  'hot_money_weak_to_strong',
+];
+const isSentimentStrategy = (id) => SENTIMENT_HOT_MONEY_IDS.includes(id);
+// 情绪游资策略可选日期下限（不依赖回放缓存，仅受数据源覆盖范围限制）
+const SENTIMENT_EARLIEST_DATE = '20250101';
+
+// 情绪游资策略专属规则说明（与后端 sentimentHotMoney 逻辑保持一致，供复制到外部分析）
+const SENTIMENT_BUY_RULES = [
+  { key: 'lhb', title: '前一交易日登龙虎榜', desc: '候选股前一交易日必须登上同花顺龙虎榜，且为主板（60/00 开头）非 ST 股（名称含 ST/退 的剔除）' },
+  { key: 'selection', title: '策略选股', desc: '3/5/10日涨幅最大：截至前一交易日收盘最近 N 个交易日累计涨幅最大的候选股；昨日首板：最近 5 个交易日内昨日为第一个涨停板（涨幅 ≥9.5%）；昨日二板：前日与昨日均为涨停板（涨幅 ≥9.5%）；3/5日线斜率最陡峭：N 个日涨幅均线斜率角度最陡峭（一字板顺延）；龙二波：过去 20 个交易日累计涨幅 >60% 且最近 5 个交易日收盘价上下波动幅度 <20%、最近 5 个交易日内无涨停板（前期大涨后横盘整理）；弱转强：昨日量能放大至前日量能的 1.4 倍以上（放大 40% 以上），且前期（最近 20 个交易日）至少出现过 2 个涨停板（不要求连续）' },
+  { key: 'market_gate', title: '大盘环境条件', desc: '创业板指 5 日线斜率 < 0 且 10 日线斜率 < 0，且银行板块（同花顺 881155）5 日线斜率 > 0（按前一交易日收盘数据计算，斜率 = 当前 MA − 5 日前 MA）' },
+  { key: 'trigger', title: '盘中涨幅超过 8%', desc: '环境条件满足时，候选股盘中涨幅超过 8% 即按该分钟价格买入（多只候选取当日最先触发的一只，同分钟取涨幅最大）；9:30 竞价开盘涨幅 ≥9.6% 的一字板买不进去，直接剔除不参与买入；弱转强策略还要求今日高开 2% 以上（按分时第一分钟涨幅过滤）才参与买入' },
+];
+const SENTIMENT_SELL_RULES = [
+  { key: 'sentiment_limit_down', title: '当日跌停', desc: '当日触及跌停价（前收 × 0.90）即按触发分钟价格卖出' },
+  { key: 'sentiment_break_ma5', title: '14:57 跌破 5 日线', desc: '14:57 后价格跌破 5 日线（按前一交易日收盘口径的 MA5）即卖出；分时未覆盖 14:57 时用当日最后一分钟判断；两者按分钟时序先到先卖' },
 ];
 
 // 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
@@ -148,6 +186,7 @@ const buildSummary = (result) => {
 const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const [range, setRange] = useState(null);
   const [strategy, setStrategy] = useState('highest_gain');
+  const [sentimentRange, setSentimentRange] = useState(null); // 情绪游资默认日期范围 [dayjs, dayjs]（最近 60 个已完结交易日）
   const [reportOpen, setReportOpen] = useState(false);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(null); // { current, total, date, status }
@@ -162,7 +201,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
 
   const availableDates = useMemo(() => (Array.isArray(dates) ? dates : []), [dates]);
   const maxDateStr = availableDates.length > 0 ? availableDates[0] : dayjs().format('YYYYMMDD');
-  // 未手动选择时默认取「最近 60 个可用交易日」（不足 60 个时取最早的一个日期），与后端回测报告 /
+  // 情绪游资策略不依赖后端回放缓存，默认范围用独立的 sentiment_range（最近 60 个已完结交易日）；
+  // 未手动选择时常规策略默认取「最近 60 个可用交易日」（不足 60 个时取最早的一个日期），与后端回测报告 /
   // worker 预生成缓存的日期范围口径一致，
   // 保证 worker 跑完后打开抽屉能直接命中缓存（此前写死最早日期会因范围不一致查不到缓存而空白）
   const defaultRange = useMemo(() => {
@@ -172,7 +212,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     const end = sortedAsc[sortedAsc.length - 1];
     return [dayjs(start, 'YYYYMMDD'), dayjs(end, 'YYYYMMDD')];
   }, [availableDates, maxDateStr]);
-  const effectiveRange = range || defaultRange;
+  const curIsSentiment = isSentimentStrategy(strategy);
+  const effectiveRange = range || (curIsSentiment ? (sentimentRange || defaultRange) : defaultRange);
 
   // 组件卸载时停止轮询
   useEffect(() => {
@@ -191,7 +232,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
 
   // 查询当前 策略+日期范围 是否已有缓存结果：有则直接展示，无需重新回测
   const checkCache = async () => {
-    const pick = range || defaultRange;
+    const pick = effectiveRange;
     if (!pick || !pick[0] || !pick[1] || running) return;
     const startDate = pick[0].format('YYYYMMDD');
     const endDate = pick[1].format('YYYYMMDD');
@@ -218,7 +259,30 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     const id = setTimeout(checkCache, 0);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, strategy, range]);
+  }, [open, strategy, range, sentimentRange]);
+
+  // 选中情绪游资策略且尚无默认范围时拉取（最近 60 个已完结交易日，不依赖回放缓存）
+  useEffect(() => {
+    if (!open || !curIsSentiment || sentimentRange) return;
+    let cancelled = false;
+    axios.get(`http://${local_ip}:3000/training_camp/backtest/sentiment_range`).then((r) => {
+      if (cancelled) return;
+      if (r.data?.success && r.data.startDate && r.data.endDate) {
+        setSentimentRange([dayjs(String(r.data.startDate), 'YYYYMMDD'), dayjs(String(r.data.endDate), 'YYYYMMDD')]);
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, curIsSentiment, sentimentRange]);
+
+  // 切换策略：情绪游资 ↔ 常规类别变化时重置手动日期，回退到该类别的默认范围
+  const handleStrategyChange = (v) => {
+    if (isSentimentStrategy(v) !== isSentimentStrategy(strategy)) {
+      setRange(null);
+      setResult(null);
+    }
+    setStrategy(v);
+  };
 
   const startPolling = (taskId) => {
     stopPolling();
@@ -364,9 +428,12 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     if (copying) return;
     setCopying(true);
     try {
-      const pick = range || defaultRange;
+      const pick = effectiveRange;
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
+      // 情绪游资策略使用专属买卖规则文案（选股/环境/触发与常规策略不同）
+      const buyRules = curIsSentiment ? SENTIMENT_BUY_RULES : BUY_RULES;
+      const sellRules = curIsSentiment ? SENTIMENT_SELL_RULES : SELL_RULES;
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);
@@ -386,8 +453,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       }
 
       // 2) 规则文本描述
-      const buyRulesText = BUY_RULES.map(r => `- ${r.title}：${r.desc}`).join('\n');
-      const sellRulesText = SELL_RULES.map(r => `- ${r.title}：${r.desc}`).join('\n');
+      const buyRulesText = buyRules.map(r => `- ${r.title}：${r.desc}`).join('\n');
+      const sellRulesText = sellRules.map(r => `- ${r.title}：${r.desc}`).join('\n');
       const rulesText = `【买入规则】\n${buyRulesText}\n\n【卖出规则】\n${sellRulesText}`;
 
       // 3) 拉取除「全量自选股」外所有策略的回测结果（优先命中缓存，未运行的策略跳过）
@@ -438,8 +505,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       const payload = JSON.stringify({
         strategies,
         rules: {
-          buy: BUY_RULES,
-          sell: SELL_RULES,
+          buy: buyRules,
+          sell: sellRules,
         },
         rulesText,
         kline,
@@ -484,6 +551,10 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const disabledDate = (current) => {
     if (!current) return false;
     const ds = current.format('YYYYMMDD');
+    // 情绪游资策略不依赖回放缓存，日期可选范围放开（仅受数据源覆盖限制）
+    if (curIsSentiment) {
+      return ds < SENTIMENT_EARLIEST_DATE || ds > dayjs().format('YYYYMMDD');
+    }
     return ds < EARLIEST_DATE || ds > maxDateStr;
   };
 
@@ -561,13 +632,15 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
           <span style={{ fontSize: 13, fontWeight: 600, color: '#12213a' }}>回测策略</span>
           <Select
             value={strategy}
-            onChange={setStrategy}
+            onChange={handleStrategyChange}
             disabled={running}
             style={{ flex: 1, minWidth: 240, maxWidth: 360 }}
             options={STRATEGY_OPTIONS}
           />
           <span style={{ fontSize: 12, color: '#9ca3af' }}>
-            切换策略或日期后自动匹配缓存，无需重复回测
+            {curIsSentiment
+              ? '情绪游资策略不依赖回放缓存，可选时间不限（默认最近 60 个交易日）'
+              : '切换策略或日期后自动匹配缓存，无需重复回测'}
           </span>
         </div>
 

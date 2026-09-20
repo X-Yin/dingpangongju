@@ -9,6 +9,12 @@
 const { loadTrainingCampData, getTrainingCampDates } = require('./trainingCamp');
 const { getSingleStockTlineDataByDate } = require('./stock');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
+const {
+  SENTIMENT_STRATEGIES,
+  isSentimentStrategy,
+  getSentimentDefaultRange,
+  runSentimentBacktest,
+} = require('./sentimentHotMoney');
 const fs = require('fs');
 const path = require('path');
 
@@ -50,6 +56,8 @@ const STRATEGIES = {
   tail_dip_1d_fall: { id: 'tail_dip_1d_fall', name: '尾盘抄底-当日跌幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日跌幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
   tail_dip_3d_fall: { id: 'tail_dip_3d_fall', name: '尾盘抄底-3日跌幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入最近 3 个交易日跌幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
   tail_dip_1d_resilience_low: { id: 'tail_dip_1d_resilience_low', name: '尾盘抄底-当日抗分歧分数最低', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日抗分歧分数最低的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
+  // 情绪游资系列（独立回测逻辑，日期范围不受 fundSnapshot 限制，默认最近 60 个交易日）
+  ...SENTIMENT_STRATEGIES,
 };
 
 // 回测结果缓存文件（按 策略+日期范围 存储，避免重复回测）
@@ -1781,6 +1789,10 @@ const runTwoBacktest = async (startDate, endDate, strategyId, onProgress) => {
 // 多日回测主循环
 // ============================================================
 const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain', onProgress) => {
+  // 情绪游资系列策略走独立回测逻辑（不依赖后端回放缓存，日期范围不受 fundSnapshot 限制）
+  if (isSentimentStrategy(strategyId)) {
+    return runSentimentBacktest(startDate, endDate, strategyId, onProgress);
+  }
   // 三日涨幅四份仓位策略走独立的多持仓回测逻辑
   if (strategyId === 'highest_3d_gain_quarter') {
     return runQuarterBacktest(startDate, endDate, strategyId, onProgress);
@@ -2094,16 +2106,26 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
 const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress) => {
   const ids = (Array.isArray(strategyIds) ? strategyIds : []).filter(id => STRATEGIES[id]);
   if (ids.length === 0) return [];
+  // 混合策略组拆分：情绪游资走独立回测（不依赖回放缓存，先独立跑完），其余走共享数据的原逻辑
+  const sentimentIds = ids.filter(id => isSentimentStrategy(id));
+  const regularIds = ids.filter(id => !isSentimentStrategy(id));
+  const results = [];
+  for (const strategyId of sentimentIds) {
+    const result = await runSentimentBacktest(startDate, endDate, strategyId, onProgress);
+    results.push({ strategyId, result });
+  }
+  if (regularIds.length === 0) return results;
+
   const allDates = getTrainingCampDates();
   // 升序处理（按时间先后）
   const rangeDates = allDates.filter(d => d >= startDate && d <= endDate).sort();
   const total = rangeDates.length;
   if (total === 0) {
-    return ids.map(strategyId => ({ strategyId, result: { success: false, message: '所选日期范围内无可回测交易日' } }));
+    return results.concat(regularIds.map(strategyId => ({ strategyId, result: { success: false, message: '所选日期范围内无可回测交易日' } })));
   }
 
   // 每个策略独立的持仓状态与成交流水
-  const states = ids.map(strategyId => ({
+  const states = regularIds.map(strategyId => ({
     strategy: STRATEGIES[strategyId],
     singlePosition: null, // { code, stockName, buyDate, buyDateDisplay, buyTime, buyPrice, buyChange, metric }
     // 两次买入策略挂起的首笔半仓（买点触发当日先买 5 成，等收盘补足剩余 5 成后再建立正式持仓）
@@ -2405,4 +2427,6 @@ module.exports = {
   writeCachedBacktest,
   loadReportIndex,
   sumReportCount,
+  isSentimentStrategy,
+  getSentimentDefaultRange,
 };

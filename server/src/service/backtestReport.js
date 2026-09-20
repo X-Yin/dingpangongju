@@ -7,7 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getTrainingCampDates } = require('./trainingCamp');
-const { STRATEGIES, readCachedBacktest, runRangeBacktest } = require('./buySellBacktest');
+const { STRATEGIES, readCachedBacktest, runRangeBacktest, isSentimentStrategy, getSentimentDefaultRange } = require('./buySellBacktest');
 
 const reportsDir = path.join(__dirname, '../data/backtest_reports');
 const backtestCacheDir = path.join(__dirname, '../data/backtest_results');
@@ -41,14 +41,14 @@ const getCommonCachedRange = () => {
   try {
     if (!fs.existsSync(backtestCacheDir)) return null;
     const files = fs.readdirSync(backtestCacheDir);
-    const ids = Object.keys(STRATEGIES);
-    // 对每个策略，收集其缓存文件对应的 (startDate, endDate)
+    const ids = Object.keys(STRATEGIES).filter(id => !isSentimentStrategy(id));
+    // 对每个策略，收集其缓存文件对应的 (startDate, endDate)（情绪游资日期范围独立，不参与统计）
     const rangeMap = new Map(); // `${start}_${end}` -> { start, end, count }
     for (const f of files) {
       const m = String(f).match(/^backtest_(.+)_(\d{8})_(\d{8})\.json$/);
       if (!m) continue;
       const sid = m[1];
-      if (!STRATEGIES[sid]) continue;
+      if (!STRATEGIES[sid] || isSentimentStrategy(sid)) continue;
       const key = `${m[2]}_${m[3]}`;
       const entry = rangeMap.get(key) || { start: m[2], end: m[3], count: 0 };
       entry.count += 1;
@@ -82,12 +82,19 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
   const strategies = [];
   const skipped = [];
 
+  // 情绪游资策略不依赖后端回放缓存，固定回测最近 60 个已完结交易日（与其他策略日期范围解耦）
+  let sentimentRange = null;
+  if (ids.some(id => isSentimentStrategy(id))) {
+    try { sentimentRange = await getSentimentDefaultRange(); } catch { sentimentRange = null; }
+  }
+
   for (let i = 0; i < total; i++) {
     const id = ids[i];
+    const stRange = (isSentimentStrategy(id) && sentimentRange) ? sentimentRange : range;
     if (onProgress) onProgress({ current: i, total, strategy: STRATEGIES[id].name, status: 'running' });
     let result;
     try {
-      result = await getStrategyResult(id, range.startDate, range.endDate, fromCacheOnly);
+      result = await getStrategyResult(id, stRange.startDate, stRange.endDate, fromCacheOnly);
     } catch (e) {
       skipped.push({ strategy: id, message: e.message || '回测失败' });
       continue;
@@ -102,6 +109,7 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
       id: result.strategy?.id || id,
       name: result.strategy?.name || STRATEGIES[id].name,
       desc: result.strategy?.desc || STRATEGIES[id].desc,
+      range: { startDate: stRange.startDate, endDate: stRange.endDate },
       summary: {
         tradeCount: sum.tradeCount || 0,
         winCount: sum.winCount || 0,

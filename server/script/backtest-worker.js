@@ -1,6 +1,7 @@
 // 训练营 - 买卖点回测并行 worker
 // 用途：直接 node script/backtest-worker.js 即自动清空回测缓存 → 预热日K线文件缓存 → 并行预构建各日期回放数据缓存
-//       （data/backtest_camp_cache，只构建一次全进程共享，策略阶段只读文件）→ fork 8 个子进程并行回测全部策略 → 自动汇总生成回测报告。
+//       （data/backtest_camp_cache，只构建一次全进程共享，策略阶段只读文件）→ fork 8 个子进程并行回测常规策略
+//       → 再以最近 60 个已完结交易日的独立日期范围并行回测情绪游资策略 → 自动汇总生成回测报告。
 // 分组规则：按进程数尽量平均分配（大组在前），如 20 个策略 8 进程 → 3/3/3/3/2/2/2/2。
 // 用法：
 //   node script/backtest-worker.js                 默认：清空缓存 → 预热K线 → 8 进程强制并行跑全部策略 → 自动汇总生成回测报告（实时进度看板）
@@ -8,15 +9,15 @@
 //   node script/backtest-worker.js --aggregate     仅按当前缓存汇总生成回测报告（不清缓存、不回测）
 //   node script/backtest-worker.js --workers 3     指定并行进程数（默认 8）
 // 可选参数：
-//   --start YYYYMMDD --end YYYYMMDD   指定日期范围（默认为最近 30 个交易日，与回测报告一致）
+//   --start YYYYMMDD --end YYYYMMDD   指定日期范围（常规策略默认最近 60 个交易日；情绪游资策略未显式指定时固定用最近 60 个已完结交易日）
 //   --strategies id1,id2              单进程串行强制重跑指定策略（调试用）
-//   --group N                         单进程串行强制重跑第 N 组（调试用，兼容旧的分终端模式）
+//   --group N                         单进程串行强制重跑第 N 组（调试用，兼容旧的分终端模式，组只含常规策略）
 //   --run-missing                     汇总时对缺失缓存的策略现场串行回测补齐（默认仅汇总已有缓存）
 //   --build-dates d1,d2,...           内部参数：预构建子进程，逐日构建回放数据并落盘，请勿手动使用
 //   --child --strategies ...          内部参数：由父进程 fork 调用，进度经 IPC 上报，请勿手动使用
 const fs = require('fs');
 const path = require('path');
-const { STRATEGIES, runRangeBacktestMulti, writeCachedBacktest } = require('../src/service/buySellBacktest');
+const { STRATEGIES, runRangeBacktestMulti, writeCachedBacktest, isSentimentStrategy, getSentimentDefaultRange } = require('../src/service/buySellBacktest');
 const { loadTrainingCampData, getTrainingCampDates, beijingToday, prewarmKlineCache } = require('../src/service/trainingCamp');
 const { generateReport, getDefaultReportRange } = require('../src/service/backtestReport');
 const { fork } = require('child_process');
@@ -418,18 +419,39 @@ const main = async () => {
     console.error('参数错误：开始日期不能晚于结束日期');
     process.exit(1);
   }
+  const explicitRange = !!(args.start || args.end);
 
   const allIds = Object.keys(STRATEGIES);
+  // 情绪游资策略与常规策略拆分：日期范围独立（情绪游资不依赖回放缓存，固定最近 60 个已完结交易日）
+  const regularIds = allIds.filter(id => !isSentimentStrategy(id));
+  const sentimentIds = allIds.filter(id => isSentimentStrategy(id));
+  let sentimentRange = null;
+  if (sentimentIds.length > 0) {
+    try { sentimentRange = await getSentimentDefaultRange(); } catch (e) { sentimentRange = null; }
+  }
+  // 全组均为情绪游资且未显式指定日期时，改用情绪游资默认范围（60 个已完结交易日）
+  const pickRange = (ids) => (!explicitRange && ids.length > 0 && ids.every(id => isSentimentStrategy(id)) && sentimentRange)
+    ? sentimentRange
+    : { startDate, endDate };
   const workerCount = Math.max(1, args.workers || 8);
 
   if (args.list) {
-    const groups = buildGroups(allIds, workerCount);
-    console.log(`日期范围: ${startDate} ~ ${endDate}（默认最近 30 个交易日，可用 --start/--end 覆盖）`);
-    console.log(`策略共 ${allIds.length} 个，${workerCount} 进程分组: ${groups.map(g => g.length).join(' / ')}`);
+    const groups = buildGroups(regularIds, workerCount);
+    console.log(`常规策略日期范围: ${startDate} ~ ${endDate}（默认最近 60 个交易日，可用 --start/--end 覆盖）`);
+    if (sentimentRange) console.log(`情绪游资日期范围: ${sentimentRange.startDate} ~ ${sentimentRange.endDate}（最近 60 个已完结交易日，不依赖回放缓存）`);
+    console.log(`常规策略共 ${regularIds.length} 个，${workerCount} 进程分组: ${groups.map(g => g.length).join(' / ')}`);
     groups.forEach((ids, i) => {
       console.log(`\n线程 ${i + 1}（${ids.length} 个）:`);
       ids.forEach(id => console.log(`  - ${id}  ${STRATEGIES[id].name}`));
     });
+    if (sentimentIds.length > 0) {
+      const sGroups = buildGroups(sentimentIds, workerCount);
+      console.log(`\n情绪游资策略共 ${sentimentIds.length} 个，${sGroups.length} 进程分组: ${sGroups.map(g => g.length).join(' / ')}（日期 ${sentimentRange ? `${sentimentRange.startDate} ~ ${sentimentRange.endDate}` : '获取失败'}）`);
+      sGroups.forEach((ids, i) => {
+        console.log(`\n情绪线程 ${i + 1}（${ids.length} 个）:`);
+        ids.forEach(id => console.log(`  - ${id}  ${STRATEGIES[id].name}`));
+      });
+    }
     return;
   }
 
@@ -446,7 +468,9 @@ const main = async () => {
 
   // 子进程模式（由父进程 fork 调用）
   if (args.child) {
-    await runAsChild(args.strategies || [], startDate, endDate);
+    const ids = args.strategies || [];
+    const r = pickRange(ids);
+    await runAsChild(ids, r.startDate, r.endDate);
     return;
   }
 
@@ -461,21 +485,25 @@ const main = async () => {
       }
       strategyIds = args.strategies;
     } else {
-      const groups = buildGroups(allIds, workerCount);
+      const groups = buildGroups(regularIds, workerCount);
       if (args.group < 1 || args.group > groups.length) {
         console.error(`参数错误：--group 取值 1~${groups.length}`);
         process.exit(1);
       }
       strategyIds = groups[args.group - 1];
     }
-    await runStandalone(strategyIds, startDate, endDate);
+    const r = pickRange(strategyIds);
+    await runStandalone(strategyIds, r.startDate, r.endDate);
     return;
   }
 
   // 默认：清空回测缓存 → 预热日K线文件缓存 → 并行预构建回放数据缓存 → 多进程并行强制重跑全部策略 → 自动汇总生成回测报告
-  const groups = buildGroups(allIds, workerCount);
+  const groups = buildGroups(regularIds, workerCount);
   const removed = clearBacktestCache();
-  console.log(`策略 ${allIds.length} 个 → ${groups.length} 进程并行（${groups.map(g => g.length).join(' / ')}），日期 ${startDate} ~ ${endDate}`);
+  console.log(`常规策略 ${regularIds.length} 个 → ${groups.length} 进程并行（${groups.map(g => g.length).join(' / ')}），日期 ${startDate} ~ ${endDate}`);
+  if (sentimentIds.length > 0) {
+    console.log(`情绪游资策略 ${sentimentIds.length} 个${sentimentRange ? `，日期 ${sentimentRange.startDate} ~ ${sentimentRange.endDate}（最近 60 个已完结交易日）` : '，默认日期范围获取失败将跳过'}`);
+  }
   console.log(`已清空回测缓存 ${removed} 个文件，全部策略强制重跑`);
   // 预热日K线文件缓存（跨进程共享）：一次性并发拉取全部自选股日K落盘，
   // 避免每个预构建/回测子进程各自重复拉取（原 5 进程 × 84 次 HTTP → 一次性 84 次）
@@ -491,9 +519,21 @@ const main = async () => {
   await runPrebuild(buildDates, workerCount);
   console.log('Ctrl+C 可随时终止全部线程\n');
   const exitCode = await runParallel(groups, startDate, endDate);
+
+  // 情绪游资阶段：独立日期范围并行回测（不依赖回放预构建数据，无需 runPrebuild）
+  let sentimentExit = 0;
+  if (sentimentIds.length > 0) {
+    if (sentimentRange) {
+      console.log(`\n[${ts()}] 常规策略完成，开始情绪游资策略回测（${sentimentRange.startDate} ~ ${sentimentRange.endDate}）...`);
+      sentimentExit = await runParallel(buildGroups(sentimentIds, workerCount), sentimentRange.startDate, sentimentRange.endDate);
+    } else {
+      console.error(`\n[${ts()}] 情绪游资默认日期范围获取失败，跳过 ${sentimentIds.length} 个情绪游资策略`);
+    }
+  }
+
   console.log(`\n[${ts()}] 全部线程结束，自动汇总生成回测报告...`);
   await aggregate(startDate, endDate, false);
-  process.exitCode = exitCode;
+  process.exitCode = exitCode || sentimentExit;
 };
 
 process.on('exit', () => {

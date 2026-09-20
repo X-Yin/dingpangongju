@@ -99,7 +99,7 @@ const aiSettings = require('./service/aiSettings');
 const { getMainFundAiSummary, getMainFundAiContext } = require('./service/mainFundAi');
 const { getAllGroups: getAllIndexOverlayGroups, saveGroup: saveIndexOverlayGroup, deleteGroup: deleteIndexOverlayGroup } = require('./service/indexOverlayGroup');
 const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup } = require('./service/trainingCamp');
-const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest } = require('./service/buySellBacktest');
+const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, getSentimentDefaultRange } = require('./service/buySellBacktest');
 const { generateReport, ensureLatestReport, getReportById, listReports } = require('./service/backtestReport');
 const { getAttackDefenseScore } = require('./service/attackDefenseScore');
 const feishuNotify = require('./service/feishuNotify');
@@ -2365,6 +2365,20 @@ app.get('/training_camp/backtest/cache', (req, res) => {
   } catch (error) {
     console.error('查询回测缓存失败:', error);
     res.status(500).json({ success: false, message: error.message || '查询缓存失败' });
+  }
+});
+
+// ---------- 买卖点回测 - 情绪游资默认日期范围（最近 60 个已完结交易日，不依赖回放缓存）----------
+app.get('/training_camp/backtest/sentiment_range', async (req, res) => {
+  try {
+    const range = await getSentimentDefaultRange();
+    if (!range) {
+      return res.status(500).json({ success: false, message: '情绪游资默认日期范围获取失败（交易日历不可用）' });
+    }
+    res.json({ success: true, ...range });
+  } catch (error) {
+    console.error('获取情绪游资默认日期范围失败:', error);
+    res.status(500).json({ success: false, message: error.message || '获取默认日期范围失败' });
   }
 });
 

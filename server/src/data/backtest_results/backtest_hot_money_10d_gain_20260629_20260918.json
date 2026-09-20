@@ -1,0 +1,490 @@
+{
+  "success": true,
+  "type": "single",
+  "strategy": {
+    "id": "hot_money_10d_gain",
+    "name": "情绪游资-10日涨幅最大",
+    "desc": "选股：前一交易日登龙虎榜的主板非ST股中，截至前一交易日收盘最近10个交易日累计涨幅最大的一只；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正（按前一交易日收盘数据计算）时，该股盘中涨幅超过8%即买入；卖点：14:57价格跌破5日线（前收口径）或当日触及跌停价"
+  },
+  "range": {
+    "startDate": "20260629",
+    "endDate": "20260918"
+  },
+  "skippedDates": [],
+  "seenStocks": [
+    {
+      "code": "sh603903",
+      "name": "中持股份"
+    },
+    {
+      "code": "sh603137",
+      "name": "恒尚节能"
+    },
+    {
+      "code": "sh600664",
+      "name": "哈药股份"
+    },
+    {
+      "code": "sh603580",
+      "name": "艾艾精工"
+    },
+    {
+      "code": "sz001258",
+      "name": "立新能源"
+    },
+    {
+      "code": "sz002879",
+      "name": "长缆科技"
+    },
+    {
+      "code": "sh603221",
+      "name": "爱丽家居"
+    },
+    {
+      "code": "sz003032",
+      "name": "传智教育"
+    },
+    {
+      "code": "sh605179",
+      "name": "一鸣食品"
+    },
+    {
+      "code": "sz000820",
+      "name": "神雾节能"
+    },
+    {
+      "code": "sh600613",
+      "name": "神奇制药"
+    },
+    {
+      "code": "sz002412",
+      "name": "汉森制药"
+    },
+    {
+      "code": "sz000017",
+      "name": "深中华A"
+    },
+    {
+      "code": "sh600127",
+      "name": "金健米业"
+    },
+    {
+      "code": "sz002084",
+      "name": "海鸥住工"
+    },
+    {
+      "code": "sz002855",
+      "name": "捷荣技术"
+    },
+    {
+      "code": "sh601086",
+      "name": "国芳集团"
+    },
+    {
+      "code": "sz000993",
+      "name": "闽东电力"
+    }
+  ],
+  "trades": [
+    {
+      "seq": 1,
+      "metric": 98.355,
+      "code": "sh603137",
+      "stockName": "恒尚节能",
+      "buyDate": "20260709",
+      "buyDateDisplay": "2026-07-09",
+      "buyTime": "09:31",
+      "buyPrice": 25.2,
+      "buyChange": 10,
+      "buyReason": "前一交易日（20260708）登龙虎榜、最近10个交易日累计涨幅最大、创业板指5/10日线斜率均为负且银行板块5日线斜率为正、盘中涨幅超过8%",
+      "buyChecks": [
+        {
+          "id": "lhb",
+          "title": "前一交易日（20260708）登龙虎榜",
+          "passed": true,
+          "value": "603137",
+          "reason": "同花顺龙虎榜 20260708 上榜个股，且为主板（60/00 开头）非 ST 股"
+        },
+        {
+          "id": "selection",
+          "title": "最近10个交易日累计涨幅最大",
+          "passed": true,
+          "value": "+98.35%",
+          "reason": "截至前一交易日（20260708）收盘，最近10个交易日累计涨幅 98.35%，为当日龙虎榜主板非ST股中最高"
+        },
+        {
+          "id": "market_gate",
+          "title": "创业板指5/10日线斜率均为负且银行板块5日线斜率为正",
+          "passed": true,
+          "value": "创业5日 -328.60 / 创业10日 -147.91 / 银行5日 20.91",
+          "reason": "按前一交易日收盘数据计算（斜率=当前MA−5日前MA），情绪游资买点环境条件满足"
+        },
+        {
+          "id": "trigger",
+          "title": "盘中涨幅超过8%",
+          "passed": true,
+          "value": "09:31 +10.00%",
+          "reason": "09:31 盘中涨幅 10.00% 超过 8%，按该分钟价格买入"
+        }
+      ],
+      "sellDate": "20260716",
+      "sellDateDisplay": "2026-07-16",
+      "sellTime": "09:30",
+      "sellPrice": 32.05,
+      "sellChange": -10,
+      "sellReason": "当日跌停",
+      "returnRate": 27.18
+    },
+    {
+      "seq": 2,
+      "metric": 72.9642,
+      "code": "sh600664",
+      "stockName": "哈药股份",
+      "buyDate": "20260721",
+      "buyDateDisplay": "2026-07-21",
+      "buyTime": "13:19",
+      "buyPrice": 5.74,
+      "buyChange": 8.1,
+      "buyReason": "前一交易日（20260720）登龙虎榜、最近10个交易日累计涨幅最大、创业板指5/10日线斜率均为负且银行板块5日线斜率为正、盘中涨幅超过8%",
+      "buyChecks": [
+        {
+          "id": "lhb",
+          "title": "前一交易日（20260720）登龙虎榜",
+          "passed": true,
+          "value": "600664",
+          "reason": "同花顺龙虎榜 20260720 上榜个股，且为主板（60/00 开头）非 ST 股"
+        },
+        {
+          "id": "selection",
+          "title": "最近10个交易日累计涨幅最大",
+          "passed": true,
+          "value": "+72.96%",
+          "reason": "截至前一交易日（20260720）收盘，最近10个交易日累计涨幅 72.96%，为当日龙虎榜主板非ST股中最高"
+        },
+        {
+          "id": "market_gate",
+          "title": "创业板指5/10日线斜率均为负且银行板块5日线斜率为正",
+          "passed": true,
+          "value": "创业5日 -224.33 / 创业10日 -236.95 / 银行5日 44.71",
+          "reason": "按前一交易日收盘数据计算（斜率=当前MA−5日前MA），情绪游资买点环境条件满足"
+        },
+        {
+          "id": "trigger",
+          "title": "盘中涨幅超过8%",
+          "passed": true,
+          "value": "13:19 +8.10%",
+          "reason": "13:19 盘中涨幅 8.10% 超过 8%，按该分钟价格买入"
+        }
+      ],
+      "sellDate": "20260724",
+      "sellDateDisplay": "2026-07-24",
+      "sellTime": "09:30",
+      "sellPrice": 5.54,
+      "sellChange": -7.67,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -3.48
+    },
+    {
+      "seq": 3,
+      "metric": 81.2874,
+      "code": "sz001258",
+      "stockName": "立新能源",
+      "buyDate": "20260724",
+      "buyDateDisplay": "2026-07-24",
+      "buyTime": "09:31",
+      "buyPrice": 13.21,
+      "buyChange": 9.08,
+      "buyReason": "前一交易日（20260723）登龙虎榜、最近10个交易日累计涨幅最大、创业板指5/10日线斜率均为负且银行板块5日线斜率为正、盘中涨幅超过8%",
+      "buyChecks": [
+        {
+          "id": "lhb",
+          "title": "前一交易日（20260723）登龙虎榜",
+          "passed": true,
+          "value": "001258",
+          "reason": "同花顺龙虎榜 20260723 上榜个股，且为主板（60/00 开头）非 ST 股"
+        },
+        {
+          "id": "selection",
+          "title": "最近10个交易日累计涨幅最大",
+          "passed": true,
+          "value": "+81.29%",
+          "reason": "截至前一交易日（20260723）收盘，最近10个交易日累计涨幅 81.29%，为当日龙虎榜主板非ST股中最高"
+        },
+        {
+          "id": "market_gate",
+          "title": "创业板指5/10日线斜率均为负且银行板块5日线斜率为正",
+          "passed": true,
+          "value": "创业5日 -242.92 / 创业10日 -204.43 / 银行5日 27.98",
+          "reason": "按前一交易日收盘数据计算（斜率=当前MA−5日前MA），情绪游资买点环境条件满足"
+        },
+        {
+          "id": "trigger",
+          "title": "盘中涨幅超过8%",
+          "passed": true,
+          "value": "09:31 +9.08%",
+          "reason": "09:31 盘中涨幅 9.08% 超过 8%，按该分钟价格买入"
+        }
+      ],
+      "sellDate": "20260728",
+      "sellDateDisplay": "2026-07-28",
+      "sellTime": "14:00",
+      "sellPrice": 12.92,
+      "sellChange": -9.84,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.2
+    },
+    {
+      "seq": 4,
+      "metric": 48.5017,
+      "code": "sh605179",
+      "stockName": "一鸣食品",
+      "buyDate": "20260804",
+      "buyDateDisplay": "2026-08-04",
+      "buyTime": "14:01",
+      "buyPrice": 23.14,
+      "buyChange": 8.59,
+      "buyReason": "前一交易日（20260803）登龙虎榜、最近10个交易日累计涨幅最大、创业板指5/10日线斜率均为负且银行板块5日线斜率为正、盘中涨幅超过8%",
+      "buyChecks": [
+        {
+          "id": "lhb",
+          "title": "前一交易日（20260803）登龙虎榜",
+          "passed": true,
+          "value": "605179",
+          "reason": "同花顺龙虎榜 20260803 上榜个股，且为主板（60/00 开头）非 ST 股"
+        },
+        {
+          "id": "selection",
+          "title": "最近10个交易日累计涨幅最大",
+          "passed": true,
+          "value": "+48.50%",
+          "reason": "截至前一交易日（20260803）收盘，最近10个交易日累计涨幅 48.50%，为当日龙虎榜主板非ST股中最高"
+        },
+        {
+          "id": "market_gate",
+          "title": "创业板指5/10日线斜率均为负且银行板块5日线斜率为正",
+          "passed": true,
+          "value": "创业5日 -260.60 / 创业10日 -162.32 / 银行5日 45.16",
+          "reason": "按前一交易日收盘数据计算（斜率=当前MA−5日前MA），情绪游资买点环境条件满足"
+        },
+        {
+          "id": "trigger",
+          "title": "盘中涨幅超过8%",
+          "passed": true,
+          "value": "14:01 +8.59%",
+          "reason": "14:01 盘中涨幅 8.59% 超过 8%，按该分钟价格买入"
+        }
+      ],
+      "sellDate": "20260805",
+      "sellDateDisplay": "2026-08-05",
+      "sellTime": "09:30",
+      "sellPrice": 22.03,
+      "sellChange": 1.57,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -4.8
+    },
+    {
+      "seq": 5,
+      "metric": 69.339,
+      "code": "sh600127",
+      "stockName": "金健米业",
+      "buyDate": "20260901",
+      "buyDateDisplay": "2026-09-01",
+      "buyTime": "09:38",
+      "buyPrice": 13.14,
+      "buyChange": 9.14,
+      "buyReason": "前一交易日（20260831）登龙虎榜、最近10个交易日累计涨幅最大、创业板指5/10日线斜率均为负且银行板块5日线斜率为正、盘中涨幅超过8%",
+      "buyChecks": [
+        {
+          "id": "lhb",
+          "title": "前一交易日（20260831）登龙虎榜",
+          "passed": true,
+          "value": "600127",
+          "reason": "同花顺龙虎榜 20260831 上榜个股，且为主板（60/00 开头）非 ST 股"
+        },
+        {
+          "id": "selection",
+          "title": "最近10个交易日累计涨幅最大",
+          "passed": true,
+          "value": "+69.34%",
+          "reason": "截至前一交易日（20260831）收盘，最近10个交易日累计涨幅 69.34%，为当日龙虎榜主板非ST股中最高"
+        },
+        {
+          "id": "market_gate",
+          "title": "创业板指5/10日线斜率均为负且银行板块5日线斜率为正",
+          "passed": true,
+          "value": "创业5日 -100.66 / 创业10日 -95.49 / 银行5日 13.18",
+          "reason": "按前一交易日收盘数据计算（斜率=当前MA−5日前MA），情绪游资买点环境条件满足"
+        },
+        {
+          "id": "trigger",
+          "title": "盘中涨幅超过8%",
+          "passed": true,
+          "value": "09:38 +9.14%",
+          "reason": "09:38 盘中涨幅 9.14% 超过 8%，按该分钟价格买入"
+        }
+      ],
+      "sellDate": "20260902",
+      "sellDateDisplay": "2026-09-02",
+      "sellTime": "09:31",
+      "sellPrice": 12.86,
+      "sellChange": -2.87,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.13
+    },
+    {
+      "seq": 6,
+      "metric": 68.5714,
+      "code": "sz002855",
+      "stockName": "捷荣技术",
+      "buyDate": "20260904",
+      "buyDateDisplay": "2026-09-04",
+      "buyTime": "09:44",
+      "buyPrice": 18.66,
+      "buyChange": 9.06,
+      "buyReason": "前一交易日（20260903）登龙虎榜、最近10个交易日累计涨幅最大、创业板指5/10日线斜率均为负且银行板块5日线斜率为正、盘中涨幅超过8%",
+      "buyChecks": [
+        {
+          "id": "lhb",
+          "title": "前一交易日（20260903）登龙虎榜",
+          "passed": true,
+          "value": "002855",
+          "reason": "同花顺龙虎榜 20260903 上榜个股，且为主板（60/00 开头）非 ST 股"
+        },
+        {
+          "id": "selection",
+          "title": "最近10个交易日累计涨幅最大",
+          "passed": true,
+          "value": "+68.57%",
+          "reason": "截至前一交易日（20260903）收盘，最近10个交易日累计涨幅 68.57%，为当日龙虎榜主板非ST股中最高"
+        },
+        {
+          "id": "market_gate",
+          "title": "创业板指5/10日线斜率均为负且银行板块5日线斜率为正",
+          "passed": true,
+          "value": "创业5日 -76.39 / 创业10日 -115.98 / 银行5日 20.92",
+          "reason": "按前一交易日收盘数据计算（斜率=当前MA−5日前MA），情绪游资买点环境条件满足"
+        },
+        {
+          "id": "trigger",
+          "title": "盘中涨幅超过8%",
+          "passed": true,
+          "value": "09:44 +9.06%",
+          "reason": "09:44 盘中涨幅 9.06% 超过 8%，按该分钟价格买入"
+        }
+      ],
+      "sellDate": "20260907",
+      "sellDateDisplay": "2026-09-07",
+      "sellTime": "09:44",
+      "sellPrice": 18.13,
+      "sellChange": 1,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.84
+    },
+    {
+      "seq": 7,
+      "metric": 70.0269,
+      "code": "sh601086",
+      "stockName": "国芳集团",
+      "buyDate": "20260907",
+      "buyDateDisplay": "2026-09-07",
+      "buyTime": "09:32",
+      "buyPrice": 13.92,
+      "buyChange": 10.04,
+      "buyReason": "前一交易日（20260904）登龙虎榜、最近10个交易日累计涨幅最大、创业板指5/10日线斜率均为负且银行板块5日线斜率为正、盘中涨幅超过8%",
+      "buyChecks": [
+        {
+          "id": "lhb",
+          "title": "前一交易日（20260904）登龙虎榜",
+          "passed": true,
+          "value": "601086",
+          "reason": "同花顺龙虎榜 20260904 上榜个股，且为主板（60/00 开头）非 ST 股"
+        },
+        {
+          "id": "selection",
+          "title": "最近10个交易日累计涨幅最大",
+          "passed": true,
+          "value": "+70.03%",
+          "reason": "截至前一交易日（20260904）收盘，最近10个交易日累计涨幅 70.03%，为当日龙虎榜主板非ST股中最高"
+        },
+        {
+          "id": "market_gate",
+          "title": "创业板指5/10日线斜率均为负且银行板块5日线斜率为正",
+          "passed": true,
+          "value": "创业5日 -79.72 / 创业10日 -121.69 / 银行5日 30.45",
+          "reason": "按前一交易日收盘数据计算（斜率=当前MA−5日前MA），情绪游资买点环境条件满足"
+        },
+        {
+          "id": "trigger",
+          "title": "盘中涨幅超过8%",
+          "passed": true,
+          "value": "09:32 +10.04%",
+          "reason": "09:32 盘中涨幅 10.04% 超过 8%，按该分钟价格买入"
+        }
+      ],
+      "sellDate": "20260915",
+      "sellDateDisplay": "2026-09-15",
+      "sellTime": "09:40",
+      "sellPrice": 16.19,
+      "sellChange": -10.01,
+      "sellReason": "当日跌停",
+      "returnRate": 16.31
+    },
+    {
+      "seq": 8,
+      "metric": 63.7427,
+      "code": "sz000993",
+      "stockName": "闽东电力",
+      "buyDate": "20260916",
+      "buyDateDisplay": "2026-09-16",
+      "buyTime": "09:32",
+      "buyPrice": 18.23,
+      "buyChange": 8.51,
+      "buyReason": "前一交易日（20260915）登龙虎榜、最近10个交易日累计涨幅最大、创业板指5/10日线斜率均为负且银行板块5日线斜率为正、盘中涨幅超过8%",
+      "buyChecks": [
+        {
+          "id": "lhb",
+          "title": "前一交易日（20260915）登龙虎榜",
+          "passed": true,
+          "value": "000993",
+          "reason": "同花顺龙虎榜 20260915 上榜个股，且为主板（60/00 开头）非 ST 股"
+        },
+        {
+          "id": "selection",
+          "title": "最近10个交易日累计涨幅最大",
+          "passed": true,
+          "value": "+63.74%",
+          "reason": "截至前一交易日（20260915）收盘，最近10个交易日累计涨幅 63.74%，为当日龙虎榜主板非ST股中最高"
+        },
+        {
+          "id": "market_gate",
+          "title": "创业板指5/10日线斜率均为负且银行板块5日线斜率为正",
+          "passed": true,
+          "value": "创业5日 -24.16 / 创业10日 -59.58 / 银行5日 11.97",
+          "reason": "按前一交易日收盘数据计算（斜率=当前MA−5日前MA），情绪游资买点环境条件满足"
+        },
+        {
+          "id": "trigger",
+          "title": "盘中涨幅超过8%",
+          "passed": true,
+          "value": "09:32 +8.51%",
+          "reason": "09:32 盘中涨幅 8.51% 超过 8%，按该分钟价格买入"
+        }
+      ],
+      "sellDate": "20260917",
+      "sellDateDisplay": "2026-09-17",
+      "sellTime": "09:30",
+      "sellPrice": 16.64,
+      "sellChange": -9.96,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -8.72
+    }
+  ],
+  "currentHolding": null,
+  "summary": {
+    "tradeCount": 8,
+    "winCount": 2,
+    "winRate": 25,
+    "overallReturn": 15.38,
+    "holding": false
+  }
+}
