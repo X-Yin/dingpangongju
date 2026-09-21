@@ -1618,5 +1618,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sh688090": {
+    "stockName": "瑞松科技",
+    "kline": [
+      {
+        "trade_date": 20260918,
+        "open_px": 81,
+        "high_px": 88.14,
+        "low_px": 78.61,
+        "close_px": 86.61,
+        "business_amount": 12806579,
+        "business_balance": 1062058730,
+        "change": 10.25,
+        "ma5_px": 79.04,
+        "ma10_px": 75.1,
+        "ma20_px": 72.28,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

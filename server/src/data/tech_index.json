@@ -731,5 +731,13 @@
     "baseEmotion": 65.72,
     "pullbackPenalty": -43.82,
     "marketCapWeighted": true
+  },
+  {
+    "date": 20260920,
+    "changeSumResult": 48.19,
+    "rawSum": 236.35,
+    "baseEmotion": 65.72,
+    "pullbackPenalty": -43.82,
+    "marketCapWeighted": true
   }
 ]

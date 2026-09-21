@@ -656,5 +656,13 @@
     "blockName": "半导体",
     "riskScore": "7",
     "isTech": true
+  },
+  {
+    "code": "sh688090",
+    "name": "瑞松科技",
+    "isImportant": false,
+    "blockName": "光通信",
+    "riskScore": "7",
+    "isTech": true
   }
 ]
