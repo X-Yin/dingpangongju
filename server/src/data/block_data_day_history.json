@@ -1,5 +1,130 @@
 [
   {
+    "date": "20260921",
+    "blocks": {
+      "房地产": {
+        "avgChange": 8.9
+      },
+      "医药": {
+        "avgChange": 6.69
+      },
+      "粮食": {
+        "avgChange": 5.91
+      },
+      "消费": {
+        "avgChange": 4.96
+      },
+      "pcb": {
+        "avgChange": 4.87
+      },
+      "MFC": {
+        "avgChange": 3.92
+      },
+      "cpu": {
+        "avgChange": 3.65
+      },
+      "光纤": {
+        "avgChange": 3.5
+      },
+      "煤炭": {
+        "avgChange": 2.95
+      },
+      "CCL": {
+        "avgChange": 2.86
+      },
+      "电子布": {
+        "avgChange": 2.7
+      },
+      "PPE树脂": {
+        "avgChange": 2.59
+      },
+      "军工": {
+        "avgChange": 2.07
+      },
+      "机器人": {
+        "avgChange": 1.86
+      },
+      "光模块": {
+        "avgChange": 1.69
+      },
+      "化工": {
+        "avgChange": 1.59
+      },
+      "玻璃基板": {
+        "avgChange": 1.4
+      },
+      "银行": {
+        "avgChange": 1.12
+      },
+      "存储": {
+        "avgChange": 0.87
+      },
+      "MPO": {
+        "avgChange": 0.76
+      },
+      "证券": {
+        "avgChange": 0.74
+      },
+      "电力": {
+        "avgChange": 0.59
+      },
+      "AI 应用": {
+        "avgChange": 0.55
+      },
+      "特高压": {
+        "avgChange": 0.53
+      },
+      "液冷": {
+        "avgChange": 0.47
+      },
+      "功率半导体": {
+        "avgChange": 0.22
+      },
+      "MLCC": {
+        "avgChange": 0.21
+      },
+      "光芯片": {
+        "avgChange": -0.07
+      },
+      "半导体": {
+        "avgChange": -0.13
+      },
+      "cpo": {
+        "avgChange": -0.15
+      },
+      "锂电": {
+        "avgChange": -0.22
+      },
+      "商业航天": {
+        "avgChange": -0.26
+      },
+      "先进封装": {
+        "avgChange": -0.61
+      },
+      "贵金属": {
+        "avgChange": -0.81
+      },
+      "铜箔": {
+        "avgChange": -0.88
+      },
+      "半导体材料": {
+        "avgChange": -0.89
+      },
+      "AI电源": {
+        "avgChange": -0.94
+      },
+      "北美缺电": {
+        "avgChange": -1.09
+      },
+      "国产超节点": {
+        "avgChange": -1.45
+      },
+      "钨": {
+        "avgChange": -1.61
+      }
+    }
+  },
+  {
     "date": "20260918",
     "blocks": {
       "先进封装": {

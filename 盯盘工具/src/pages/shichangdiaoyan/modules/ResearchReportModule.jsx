@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Menu, Button, Input, Modal, message, Space, Dropdown, Typography, Tooltip, Checkbox } from 'antd';
-import { 
-  FolderOutlined, 
-  FileTextOutlined, 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
-  MoreOutlined, 
+import {
+  FolderOutlined,
+  FileTextOutlined,
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  MoreOutlined,
   SaveOutlined,
   SearchOutlined,
   StarOutlined,
@@ -66,7 +66,7 @@ const ResearchReportModule = () => {
 
   const handleToggleSelect = (item) => {
     if (item.type !== 'folder') return;
-    
+
     setSelectedFolders(prev => {
       if (prev.includes(item.id)) {
         return prev.filter(id => id !== item.id);
@@ -85,12 +85,12 @@ const ResearchReportModule = () => {
       }
       return;
     }
-    
+
     const folderNames = selectedFolders.map(id => {
       const item = findItemById(treeData, id);
       return item?.name || '未知文件夹';
     }).join('、');
-    
+
     Modal.confirm({
       title: '确认批量删除',
       content: `确定要删除以下 ${selectedFolders.length} 个文件夹吗？这将删除文件夹内的所有内容。\n\n${folderNames}`,
@@ -100,23 +100,23 @@ const ResearchReportModule = () => {
       onOk: async () => {
         try {
           isRefreshingRef.current = true;
-          
+
           await axios.post(`http://${local_ip}:3000/delete_research_reports`, {
             ids: selectedFolders
           });
-          
+
           message.success(`成功删除 ${selectedFolders.length} 个文件夹`);
-          
+
           if (selectedFolders.includes(selectedKey)) {
             setSelectedKey(null);
             setCurrentItem(null);
             setCurrentContent('');
           }
-          
+
           setSelectedFolders([]);
           setShowCheckboxes(false);
           await fetchReports(false);
-          
+
           setTimeout(() => {
             isRefreshingRef.current = false;
           }, 100);
@@ -161,11 +161,11 @@ const ResearchReportModule = () => {
     try {
       // 如果需要保持 openKeys，先保存下来
       const savedOpenKeys = keepOpenKeys ? [...openKeys] : [];
-      
+
       setLoading(true);
       const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
       setTreeData(response.data);
-      
+
       // 恢复之前的展开状态
       if (keepOpenKeys && savedOpenKeys.length > 0) {
         setTimeout(() => {
@@ -196,27 +196,27 @@ const ResearchReportModule = () => {
       // 1. 过滤逻辑
       let filtered = items.filter(item => {
         let match = true;
-        
+
         if (item.type === 'folder' && item.isHidden && !showHidden) {
           return false;
         }
-        
+
         if (keyword.trim()) {
           const lowerKeyword = keyword.toLowerCase();
           match = item.name.toLowerCase().includes(lowerKeyword);
         }
-        
+
         if (onlyImportant) {
           match = match && (item.type === 'folder' || item.isImportant);
         }
-        
+
         if (item.type === 'folder' && item.children && item.children.length > 0) {
           const filteredChildren = filterAndSortItems(item.children);
           if (filteredChildren.length > 0) {
             return true;
           }
         }
-        
+
         return match;
       });
 
@@ -237,16 +237,16 @@ const ResearchReportModule = () => {
         return item;
       });
     };
-    
+
     return filterAndSortItems(items);
   };
 
   const getOpenKeysFromTree = (items, keyword, onlyImportant = false, showHidden = false) => {
     if (!keyword.trim() && !onlyImportant) return [];
-    
+
     const lowerKeyword = keyword.toLowerCase();
     const newOpenKeys = [];
-    
+
     const collectOpenKeys = (items) => {
       items.forEach(item => {
         if (item.type === 'folder' && item.children && item.children.length > 0) {
@@ -258,7 +258,7 @@ const ResearchReportModule = () => {
         }
       });
     };
-    
+
     collectOpenKeys(items);
     return newOpenKeys;
   };
@@ -266,24 +266,24 @@ const ResearchReportModule = () => {
   const handleToggleImportant = async (item) => {
     // 保存当前的 openKeys
     const savedOpenKeys = [...openKeys];
-    
+
     try {
       // 标记正在刷新
       isRefreshingRef.current = true;
-      
+
       await axios.post(`http://${local_ip}:3000/toggle_research_report_important`, {
         id: item.id
       });
       message.success(item.isImportant ? '已取消重点标记' : '已标记为重点');
-      
+
       const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
       setTreeData(response.data);
-      
+
       // 使用 setTimeout 确保 state 更新后再处理
       setTimeout(() => {
         // 恢复之前的展开状态
         setOpenKeys(savedOpenKeys);
-        
+
         // 延迟后解除刷新标记
         setTimeout(() => {
           isRefreshingRef.current = false;
@@ -299,24 +299,24 @@ const ResearchReportModule = () => {
   const handlePinReport = async (item) => {
     // 保存当前的 openKeys
     const savedOpenKeys = [...openKeys];
-    
+
     try {
       // 标记正在刷新
       isRefreshingRef.current = true;
-      
+
       await axios.post(`http://${local_ip}:3000/pin_research_report`, {
         id: item.id
       });
       message.success(item.isPinned ? '已取消置顶' : '置顶成功');
-      
+
       const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
       setTreeData(response.data);
-      
+
       // 使用 setTimeout 确保 state 更新后再处理
       setTimeout(() => {
         // 恢复之前的展开状态
         setOpenKeys(savedOpenKeys);
-        
+
         // 延迟后解除刷新标记
         setTimeout(() => {
           isRefreshingRef.current = false;
@@ -331,21 +331,21 @@ const ResearchReportModule = () => {
 
   const handleToggleHidden = async (item) => {
     const savedOpenKeys = [...openKeys];
-    
+
     try {
       isRefreshingRef.current = true;
-      
+
       await axios.post(`http://${local_ip}:3000/toggle_research_report_hidden`, {
         id: item.id
       });
       message.success(item.isHidden ? '已取消隐藏' : '已隐藏文件夹');
-      
+
       const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
       setTreeData(response.data);
-      
+
       setTimeout(() => {
         setOpenKeys(savedOpenKeys);
-        
+
         setTimeout(() => {
           isRefreshingRef.current = false;
         }, 100);
@@ -359,7 +359,7 @@ const ResearchReportModule = () => {
 
   const getParentKeys = (items, targetId) => {
     const parentKeys = [];
-    
+
     const findParent = (items, targetId, currentParents = []) => {
       for (const item of items) {
         if (item.id === targetId) {
@@ -374,7 +374,7 @@ const ResearchReportModule = () => {
       }
       return null;
     };
-    
+
     return findParent(items, targetId) || [];
   };
 
@@ -382,7 +382,7 @@ const ResearchReportModule = () => {
     return items.map(item => {
       // 构建菜单项
       const menuOptions = [];
-      
+
       // 如果是研报，添加标记重点和置顶选项
       if (item.type === 'report') {
         menuOptions.push(
@@ -395,19 +395,29 @@ const ResearchReportModule = () => {
               handlePinReport(item);
             }
           },
-          {
-            key: 'toggle-important',
-            icon: <StarOutlined />,
-            label: item.isImportant ? '取消重点' : '标记重点',
-            onClick: (e) => {
-              e.domEvent.stopPropagation();
-              handleToggleImportant(item);
-            }
-          },
+                  {
+          key: 'rename',
+          icon: <EditOutlined />,
+          label: '重命名',
+          onClick: (e) => {
+            e.domEvent.stopPropagation();
+            handleRename(item);
+          }
+        },
+          // {
+          //   key: 'toggle-important',
+          //   icon: <StarOutlined />,
+          //   label: item.isImportant ? '取消重点' : '标记重点',
+          //   onClick: (e) => {
+          //     e.domEvent.stopPropagation();
+          //     handleToggleImportant(item);
+          //   }
+          // },
+
           { type: 'divider' }
         );
       }
-      
+
       // 如果是文件夹，添加新增子项选项
       if (item.type === 'folder') {
         menuOptions.push(
@@ -441,34 +451,44 @@ const ResearchReportModule = () => {
           { type: 'divider' }
         );
       }
-      
+
       // 添加通用的重命名和删除选项
       menuOptions.push(
-        {
-          key: 'rename',
-          icon: <EditOutlined />,
-          label: '重命名',
-          onClick: (e) => {
-            e.domEvent.stopPropagation();
-            handleRename(item);
-          }
-        },
-        {
-          key: 'delete',
-          icon: <DeleteOutlined />,
-          label: '删除',
-          danger: true,
-          onClick: (e) => {
-            e.domEvent.stopPropagation();
-            handleDelete(item);
-          }
-        }
+                  {
+            key: 'toggle-important',
+            icon: <StarOutlined />,
+            label: item.isImportant ? '取消重点' : '标记重点',
+            onClick: (e) => {
+              e.domEvent.stopPropagation();
+              handleToggleImportant(item);
+            }
+          },
+                    {
+            key: 'delete',
+            icon: <DeleteOutlined />,
+            label: '删除',
+            danger: true,
+            onClick: (e) => {
+              e.domEvent.stopPropagation();
+              handleDelete(item);
+            }
+          },
+        // {
+        //   key: 'delete',
+        //   icon: <DeleteOutlined />,
+        //   label: '删除',
+        //   danger: true,
+        //   onClick: (e) => {
+        //     e.domEvent.stopPropagation();
+        //     handleDelete(item);
+        //   }
+        // }
       );
-      
+
       const menuItem = {
-      key: item.id,
-      className: item.isHidden ? 'hidden-folder-item-container' : '',
-      label: (
+        key: item.id,
+        className: item.isHidden ? 'hidden-folder-item-container' : '',
+        label: (
           <Dropdown
             menu={{ items: menuOptions }}
             trigger={['contextMenu']}
@@ -478,7 +498,7 @@ const ResearchReportModule = () => {
               overflowY: 'auto'
             }}
           >
-            <div 
+            <div
               style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
               className={item.isHidden ? 'hidden-folder-item' : ''}
             >
@@ -505,8 +525,8 @@ const ResearchReportModule = () => {
                   </Space>
                 )}
                 <Tooltip title={item.name} placement="left">
-                  <span 
-                    style={{ 
+                  <span
+                    style={{
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -523,7 +543,7 @@ const ResearchReportModule = () => {
                   </span>
                 </Tooltip>
               </Space>
-              <Dropdown 
+              <Dropdown
                 menu={{ items: menuOptions }}
                 trigger={['click']}
                 dropdownStyle={{
@@ -531,12 +551,12 @@ const ResearchReportModule = () => {
                   overflowY: 'auto'
                 }}
               >
-                <Button 
+                <Button
                   className={`more-options-btn-${item.id}`}
-                  type="text" 
-                  size="small" 
-                  icon={<MoreOutlined />} 
-                  onClick={(e) => e.stopPropagation()} 
+                  type="text"
+                  size="small"
+                  icon={<MoreOutlined />}
+                  onClick={(e) => e.stopPropagation()}
                 />
               </Dropdown>
             </div>
@@ -563,14 +583,14 @@ const ResearchReportModule = () => {
     if (selectedFolders.includes(key)) {
       return;
     }
-    
+
     setSelectedKey(key);
     // 保存当前的 openKeys，防止后续操作影响展开状态
     previousOpenKeysRef.current = [...openKeys];
-    
+
     // 直接从当前的 treeData 获取 item，不使用 setTimeout
     const item = findItemById(treeData, key);
-    
+
     if (item && item.type === 'report') {
       // 研报需要单独获取完整内容
       try {
@@ -582,7 +602,7 @@ const ResearchReportModule = () => {
         const content = removeMarkdownFirstLine(fullReport.content || '');
         setCurrentContent(content);
         setIsModified(false);
-        
+
         if (editorInstance.current) {
           editorInstance.current.setValue(content);
         }
@@ -632,15 +652,15 @@ const ResearchReportModule = () => {
         type: 'folder',
         content: ''
       });
-      
+
       const newItem = response.data.data;
       message.success(`已创建当日文件夹: ${folderName}`);
-      
+
       // 刷新数据并保持状态
       const reportsResponse = await axios.get(`http://${local_ip}:3000/get_research_reports`);
       const newTreeData = reportsResponse.data;
       setTreeData(newTreeData);
-      
+
       // 自动选中并滚动
       setTimeout(() => {
         const itemFromNewData = findItemById(newTreeData, newItem.id);
@@ -654,7 +674,7 @@ const ResearchReportModule = () => {
           const menuElement = document.querySelector(`[data-menu-id*="${newItem.id}"]`);
           if (menuElement) {
             menuElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
+
             // 延迟触发点击，等待滚动完成
             setTimeout(() => {
               const moreBtn = document.querySelector(`.more-options-btn-${newItem.id}`);
@@ -678,31 +698,31 @@ const ResearchReportModule = () => {
       message.error('请输入名称');
       return;
     }
-    
+
     // 保存当前的 openKeys 和 contextMenuParentId
     const savedOpenKeys = [...openKeys];
     const parentIdToKeep = contextMenuParentId;
-    
+
     try {
       // 标记正在刷新，防止菜单自动收起
       isRefreshingRef.current = true;
-      
+
       const response = await axios.post(`http://${local_ip}:3000/create_research_report`, {
         parentId: parentIdToKeep,
         name: newItemName,
         type: newItemType,
         content: ''
       });
-      
+
       const newItem = response.data.data;
       message.success('创建成功');
       setCreateModalVisible(false);
-      
+
       // 刷新数据
       const reportsResponse = await axios.get(`http://${local_ip}:3000/get_research_reports`);
       const newTreeData = reportsResponse.data;
       setTreeData(newTreeData);
-      
+
       // 刷新后重新展开之前展开的菜单，并确保父文件夹也展开
       setTimeout(() => {
         const keysToKeep = [...savedOpenKeys];
@@ -710,7 +730,7 @@ const ResearchReportModule = () => {
           keysToKeep.push(parentIdToKeep);
         }
         setOpenKeys(keysToKeep);
-        
+
         // 如果是新创建的研报，就选中它
         if (newItem.type === 'report') {
           setShouldFocusEditor(true);
@@ -720,16 +740,16 @@ const ResearchReportModule = () => {
           if (editorInstance.current) {
             editorInstance.current.setValue('');
           }
-          
+
           // 从新获取的数据中找到完整的 item
           const itemFromNewData = findItemById(newTreeData, newItem.id);
-          
+
           // 然后选中并设置当前项
           currentEditingIdRef.current = newItem.id;
           setCurrentItem(itemFromNewData || newItem);
           setSelectedKey(newItem.id);
         }
-        
+
         // 延迟一段时间后再解除刷新标记
         setTimeout(() => {
           isRefreshingRef.current = false;
@@ -753,7 +773,7 @@ const ResearchReportModule = () => {
       message.error('请输入名称');
       return;
     }
-    
+
     try {
       // 使用 handleRename 中设置的 item 的 id（通过 selectedKey 保存）
       await axios.post(`http://${local_ip}:3000/update_research_report`, {
@@ -772,7 +792,7 @@ const ResearchReportModule = () => {
   const handleDelete = (item) => {
     Modal.confirm({
       title: '确认删除',
-      content: item.type === 'folder' 
+      content: item.type === 'folder'
         ? `确定要删除文件夹"${item.name}"吗？这将删除文件夹内的所有内容。`
         : `确定要删除研报"${item.name}"吗？`,
       okText: '确认',
@@ -781,11 +801,11 @@ const ResearchReportModule = () => {
       onOk: async () => {
         // 保存当前的 openKeys，删除后需要过滤掉被删除的项
         const savedOpenKeys = [...openKeys];
-        
+
         try {
           // 标记正在刷新
           isRefreshingRef.current = true;
-          
+
           await axios.post(`http://${local_ip}:3000/delete_research_report`, {
             id: item.id
           });
@@ -795,17 +815,17 @@ const ResearchReportModule = () => {
             setCurrentItem(null);
             setCurrentContent('');
           }
-          
+
           setSelectedFolders(prev => prev.filter(id => id !== item.id));
-          
+
           // 刷新数据并重新设置 openKeys，过滤掉被删除的文件夹
           await fetchReports(false);
-          
+
           setTimeout(() => {
             // 过滤掉被删除的项及其子项
             const filteredOpenKeys = savedOpenKeys.filter(key => key !== item.id);
             setOpenKeys(filteredOpenKeys);
-            
+
             // 延迟后解除刷新标记
             setTimeout(() => {
               isRefreshingRef.current = false;
@@ -823,19 +843,19 @@ const ResearchReportModule = () => {
   const refreshAndKeepSelection = async () => {
     // 保存当前的 openKeys
     const savedOpenKeys = [...openKeys];
-    
+
     try {
       // 标记正在刷新
       isRefreshingRef.current = true;
-      
+
       const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
       setTreeData(response.data);
-      
+
       // 使用 setTimeout 确保 state 更新后再处理
       setTimeout(async () => {
         // 恢复之前的展开状态
         setOpenKeys(savedOpenKeys);
-        
+
         if (selectedKey) {
           const updatedItem = findItemById(response.data, selectedKey);
           if (updatedItem?.type === 'report') {
@@ -854,7 +874,7 @@ const ResearchReportModule = () => {
             setCurrentItem(updatedItem);
           }
         }
-        
+
         // 延迟后解除刷新标记
         setTimeout(() => {
           isRefreshingRef.current = false;
@@ -898,10 +918,10 @@ const ResearchReportModule = () => {
 
     const initEditor = () => {
       if (!vditorRef.current || editorInstance.current) return;
-      
+
       setTimeout(() => {
         if (!vditorRef.current) return;
-        
+
         try {
           editorInstance.current = new Vditor(vditorRef.current, {
             minHeight: 500,
@@ -975,7 +995,7 @@ const ResearchReportModule = () => {
     // 当选中的项目变化时，更新跟踪的 id 并设置编辑器内容
     if (currentItem?.type === 'report') {
       currentEditingIdRef.current = currentItem.id;
-      
+
       if (editorInstance.current) {
         setTimeout(() => {
           // 确保当前的 currentItem 没有在延迟期间变化
@@ -1023,7 +1043,7 @@ const ResearchReportModule = () => {
                     }, 150);
                   }}
                 />
-                <Button 
+                <Button
                   type={filterImportant ? 'primary' : 'default'}
                   icon={<StarOutlined />}
                   onClick={() => {
@@ -1036,7 +1056,7 @@ const ResearchReportModule = () => {
                 >
                   <span className={`btn-label ${searchFocused ? 'hidden' : ''}`}>重点</span>
                 </Button>
-                <Button 
+                <Button
                   type={showHiddenFolders ? 'primary' : 'default'}
                   icon={showHiddenFolders ? <EyeOutlined /> : <EyeInvisibleOutlined />}
                   onClick={() => setShowHiddenFolders(!showHiddenFolders)}
@@ -1047,16 +1067,16 @@ const ResearchReportModule = () => {
               </div>
             </div>
             <div className="action-buttons">
-              <Button 
-                type="primary" 
+              <Button
+                type="primary"
                 onClick={handleCreateTodayFolder}
                 style={{ flex: 1.5 }}
               >
                 今日
               </Button>
-              <Button 
-                danger 
-                icon={<DeleteOutlined />} 
+              <Button
+                danger
+                icon={<DeleteOutlined />}
                 onClick={handleBatchDelete}
                 style={{ flex: 1 }}
               >
@@ -1091,9 +1111,9 @@ const ResearchReportModule = () => {
                 <Text strong className="report-title">{currentItem.name}</Text>
                 {isModified && <span className="modified-tag">有未保存的修改</span>}
               </div>
-              <Button 
-                type="primary" 
-                icon={<SaveOutlined />} 
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
                 onClick={handleSave}
                 disabled={!isModified}
                 className="save-btn"
@@ -1101,9 +1121,9 @@ const ResearchReportModule = () => {
                 保存
               </Button>
             </div>
-            <div 
-              ref={vditorRef} 
-              className="vditor-container" 
+            <div
+              ref={vditorRef}
+              className="vditor-container"
             />
           </>
         ) : currentItem?.type === 'folder' ? (

@@ -1,5 +1,71 @@
 [
   {
+    "id": "1789966847053_28aqmw",
+    "type": "pipeline",
+    "code": "sh603757",
+    "name": "大元泵业",
+    "date": "2026-09-21",
+    "time": "13:00:47",
+    "detail": "流水线推进至 100%（100%）",
+    "pipelineStage": 4,
+    "createdAt": "2026-09-21T05:00:47.053Z"
+  },
+  {
+    "id": "1789966845954_5730ln",
+    "type": "pipeline",
+    "code": "sh603757",
+    "name": "大元泵业",
+    "date": "2026-09-21",
+    "time": "13:00:45",
+    "detail": "流水线推进至 75%（75%）",
+    "pipelineStage": 3,
+    "createdAt": "2026-09-21T05:00:45.954Z"
+  },
+  {
+    "id": "1789966845797_eafrdq",
+    "type": "pipeline",
+    "code": "sh603757",
+    "name": "大元泵业",
+    "date": "2026-09-21",
+    "time": "13:00:45",
+    "detail": "流水线推进至 50%（50%）",
+    "pipelineStage": 2,
+    "createdAt": "2026-09-21T05:00:45.797Z"
+  },
+  {
+    "id": "1789966845645_x9q1gc",
+    "type": "pipeline",
+    "code": "sh603757",
+    "name": "大元泵业",
+    "date": "2026-09-21",
+    "time": "13:00:45",
+    "detail": "流水线推进至 30%（30%）",
+    "pipelineStage": 1,
+    "createdAt": "2026-09-21T05:00:45.645Z"
+  },
+  {
+    "id": "1789966844792_ll4dzm",
+    "type": "buy",
+    "code": "sh603757",
+    "name": "大元泵业",
+    "date": "2026-09-21",
+    "time": "13:00:44",
+    "detail": "新增持仓：大元泵业（sh603757）",
+    "pipelineStage": 0,
+    "createdAt": "2026-09-21T05:00:44.792Z"
+  },
+  {
+    "id": "1789954857829_9k90ie",
+    "type": "delete",
+    "code": "sz301183",
+    "name": "东田微",
+    "date": "2026-09-21",
+    "time": "09:40:57",
+    "detail": "删除持仓：东田微（sz301183）",
+    "pipelineStage": null,
+    "createdAt": "2026-09-21T01:40:57.829Z"
+  },
+  {
     "id": "1789524785918_qqnr50",
     "type": "pipeline",
     "code": "sz301183",
