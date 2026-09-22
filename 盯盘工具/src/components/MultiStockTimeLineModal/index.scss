@@ -73,6 +73,19 @@
     width: 28px;
     font-size: 14px;
   }
+
+  /* 坐标轴缩放按钮（位于放大查看按钮左侧），放大激活时高亮提示当前处于固定涨幅范围模式 */
+  .ant-card-head .mtlm-axis-zoom-btn {
+    height: 28px;
+    width: 28px;
+    font-size: 14px;
+
+    &.active {
+      color: #1677ff;
+      border-color: #1677ff;
+      background: #e6f4ff;
+    }
+  }
 }
 
 /* 折叠 tag 区域时撑高分时图：需覆盖 .mtlm-embedded-card .mtlm-chart-inner 的 height:100%!important */

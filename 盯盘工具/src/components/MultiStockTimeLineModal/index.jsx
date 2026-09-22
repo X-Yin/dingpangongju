@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Modal, Spin, Tag, Button, Input, Checkbox, Empty, Card, Tooltip, Popconfirm, message } from 'antd';
-import { LineChartOutlined, PlusOutlined, SearchOutlined, CloseOutlined, GroupOutlined, EditOutlined, DeleteOutlined, StarOutlined, ApiOutlined, CaretUpOutlined, CaretDownOutlined, ReloadOutlined, FullscreenOutlined } from '@ant-design/icons';
+import { LineChartOutlined, PlusOutlined, SearchOutlined, CloseOutlined, GroupOutlined, EditOutlined, DeleteOutlined, StarOutlined, ApiOutlined, CaretUpOutlined, CaretDownOutlined, ReloadOutlined, FullscreenOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { local_ip } from '../../constant';
-import { getThemeColor, getThemeColorRgba } from '../../utils/theme';
+import { getThemeColor } from '../../utils/theme';
 import { calculateReplayResilience, ensureReplayMinuteTlineByDate, getReplayMinuteTlineByDate, subscribeMinuteTlineUpdate } from '../../utils/replayResilience';
 import './index.scss';
 
@@ -18,19 +18,32 @@ const hexToRgba = (hex, alpha = 1) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-// 15 种高区分度颜色：按色相均匀分布，覆盖红/橙/黄/绿/青/蓝/紫/玫红等色系，避免相邻颜色混淆
+// 7 种基础颜色：红/橙/黄/青/蓝/紫/粉，按此顺序与涨幅排名对应（第 1 名红色、第 2 名橙色……）
 const colors = [
-  { border: getThemeColor(), bg: getThemeColorRgba(0.1) },
-  { border: '#e11d48', bg: 'rgba(225, 29, 72, 0.1)' },
+  { border: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
   { border: '#f97316', bg: 'rgba(249, 115, 22, 0.1)' },
   { border: '#facc15', bg: 'rgba(250, 204, 21, 0.1)' },
   { border: '#06b6d4', bg: 'rgba(6, 182, 212, 0.1)' },
+  { border: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
   { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
   { border: '#ec4899', bg: 'rgba(236, 72, 153, 0.1)' },
-  { border: '#14b8a6', bg: 'rgba(20, 184, 166, 0.1)' },
-  { border: '#f43f5e', bg: 'rgba(244, 63, 94, 0.1)' },
-  { border: '#d946ef', bg: 'rgba(217, 70, 239, 0.1)' },
 ];
+
+// 按涨幅从高到低排名分配颜色：折线纵向位置由涨幅决定，涨幅相近的股票折线位置也相近，
+// 若按添加顺序取色，相近色相的两条折线（如红色 #ef4444 与粉色 #ec4899）叠在相近位置难以区分；
+// 按排名取色保证相邻位置的折线取到相邻排名色（红/橙/黄/青/蓝/紫/粉 依次轮转），且每次轮询后动态重排
+// 涨幅缺失（NaN）的股票排在最后
+const buildColorsByChangeRank = (changeList) => {
+  const list = changeList || [];
+  const order = list
+    .map((change, idx) => ({ idx, change: Number.isFinite(Number(change)) ? Number(change) : -Infinity }))
+    .sort((a, b) => b.change - a.change || a.idx - b.idx);
+  const colorList = list.map(() => colors[0].border);
+  order.forEach((item, rank) => {
+    colorList[item.idx] = colors[rank % colors.length].border;
+  });
+  return colorList;
+};
 
 const DEFAULT_INDEX_STOCKS = [
   // { code: 'sh000688', stockName: '科创指数', isDefaultIndex: true },
@@ -97,17 +110,20 @@ const readPersistedStocks = (storageKey, fallbackStocks = [], includeDefaultInde
   }
 };
 
-const buildFallbackInfoList = (stocks = []) => stocks.map((stock, idx) => ({
-  code: stock.code,
-  stockName: stock.stockName || stock.code,
-  color: colors[idx % colors.length].border,
-  finalChange: stock.change != null ? Number(stock.change).toFixed(2) : '0.00',
-  resilienceScore: INDEX_CODE_SET.has(stock.code) ? 0 : null,
-  resilienceLabel: INDEX_CODE_SET.has(stock.code) ? '基准指数' : '--',
-  resilienceColor: '#8c8c8c',
-  resilienceBg: '#fafafa',
-  benchmarkName: INDEX_CODE_SET.has(stock.code) ? stock.stockName || stock.code : '--',
-}));
+const buildFallbackInfoList = (stocks = []) => {
+  const rankColorList = buildColorsByChangeRank(stocks.map(stock => stock.change));
+  return stocks.map((stock, idx) => ({
+    code: stock.code,
+    stockName: stock.stockName || stock.code,
+    color: rankColorList[idx],
+    finalChange: stock.change != null ? Number(stock.change).toFixed(2) : '0.00',
+    resilienceScore: INDEX_CODE_SET.has(stock.code) ? 0 : null,
+    resilienceLabel: INDEX_CODE_SET.has(stock.code) ? '基准指数' : '--',
+    resilienceColor: '#8c8c8c',
+    resilienceBg: '#fafafa',
+    benchmarkName: INDEX_CODE_SET.has(stock.code) ? stock.stockName || stock.code : '--',
+  }));
+};
 
 const getResilienceMeta = (score) => {
   if (score >= 15) return { label: '极强抗跌', color: '#cf1322', bg: '#fff1f0' };
@@ -538,6 +554,11 @@ const MultiStockTimeLineModal = ({
   // 放大查看：打开后分时图整体移入 90% 宽高的大弹窗展示，关闭后移回卡片
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
+  // 坐标轴缩放：默认缩小（自动缩放，展示完整历史区间）；
+  // 放大时右侧价格轴范围固定为各股票「当前涨幅」的最小值~最大值（非历史极值），
+  // 让涨幅相近的股票最大限度在可视区纵向展开，历史高低点超出范围的部分允许被裁掉
+  const [axisZoomIn, setAxisZoomIn] = useState(false);
+
   // 悬浮 tag 时高亮对应股票曲线，其他曲线虚化
   const applyHoverHighlight = useCallback((code) => {
     seriesRef.current.forEach((series, idx) => {
@@ -791,6 +812,10 @@ const MultiStockTimeLineModal = ({
           .sort((a, b) => a.minute - b.minute));
       }
     });
+    // 按涨幅从高到低排名分配颜色（每次回放推进动态重排）
+    const rankColorList = buildColorsByChangeRank(
+      alignedLines.map((line) => (line && line.length > 0 ? line[line.length - 1].change : 0))
+    );
     const infoList = filtered.map((s, idx) => {
       const points = alignedLines[idx] || [];
       const finalChange = points.length > 0 ? points[points.length - 1].change : 0;
@@ -832,7 +857,7 @@ const MultiStockTimeLineModal = ({
       return {
         code: s.code,
         stockName: s.stockName || s.code,
-        color: colors[idx % colors.length].border,
+        color: rankColorList[idx],
         finalChange: finalChange != null ? Number(finalChange).toFixed(2) : '0.00',
         resilienceScore,
         resilienceLabel,
@@ -930,6 +955,13 @@ const MultiStockTimeLineModal = ({
         (resilienceRes.data?.data || []).map((item) => [item.code, item])
       );
 
+      // 按涨幅从高到低排名分配颜色（每次轮询后动态重排，涨幅相近的股票取到相邻色相而非相近颜色）
+      const rankColorList = buildColorsByChangeRank(stocksToFetch.map((s, idx) => {
+        const line = alignedLines[idx];
+        if (line && line.length > 0) return Number(line[line.length - 1].change || 0);
+        return s.change != null ? Number(s.change) : NaN;
+      }));
+
       const infoList = stocksToFetch.map((s, idx) => {
         const line = alignedLines[idx];
         const finalChange = line && line.length > 0
@@ -944,7 +976,7 @@ const MultiStockTimeLineModal = ({
         return {
           code: s.code,
           stockName: s.stockName || timeLineData[idx]?.stockName || s.code,
-          color: colors[idx % colors.length].border,
+          color: rankColorList[idx],
           finalChange,
           resilienceScore: hasValidResilience ? resilience.resilienceScore : (isIndex ? 0 : null),
           resilienceLabel: resilience?.status || meta.label,
@@ -1097,6 +1129,22 @@ const MultiStockTimeLineModal = ({
     seriesRef.current = [];
     setRightAxisLabels([]);
 
+    // 坐标轴放大模式：右侧价格轴固定为各股票当前（最新分时点）涨幅的最小值~最大值，
+    // 使涨幅相近的股票最大限度在可视区纵向展开；随每次轮询重算，历史高低点超出范围即被裁掉。
+    // 全部涨幅相同时向两侧各扩 0.5%，避免 min===max 的无效区间
+    let forcedPriceRange = null;
+    if (axisZoomIn) {
+      const lastChanges = alignedLines
+        .map(line => (line && line.length > 0 ? Number(line[line.length - 1].change) : null))
+        .filter(v => v != null && Number.isFinite(v));
+      if (lastChanges.length > 0) {
+        const maxChange = Math.max(...lastChanges);
+        const minChange = Math.min(...lastChanges);
+        const pad = (maxChange - minChange) < 1e-9 ? 0.5 : 0;
+        forcedPriceRange = { minValue: minChange - pad, maxValue: maxChange + pad };
+      }
+    }
+
     const chart = createChart(containerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: '#ffffff' },
@@ -1173,6 +1221,10 @@ const MultiStockTimeLineModal = ({
           formatter: (value) => `${value > 0 ? '+' : ''}${value.toFixed(2)}%`,
         },
         lastValueVisible: false,
+        // 坐标轴放大模式：每条序列都返回同一固定范围，图表取并集后即为该范围
+        ...(forcedPriceRange
+          ? { autoscaleInfoProvider: () => ({ priceRange: { minValue: forcedPriceRange.minValue, maxValue: forcedPriceRange.maxValue } }) }
+          : {}),
       });
 
       let formattedData = line.map(item => ({
@@ -1781,6 +1833,18 @@ const MultiStockTimeLineModal = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
               <span><LineChartOutlined style={{ color: getThemeColor(), marginRight: '8px' }} />{title}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Button
+                  icon={axisZoomIn ? <ZoomOutOutlined /> : <ZoomInOutlined />}
+                  title={axisZoomIn
+                    ? '坐标轴已放大（按当前涨幅范围展开，点击恢复自动缩放）'
+                    : '坐标轴放大：Y轴范围固定为当前涨幅最小~最大，便于区分涨幅相近的股票'}
+                  onClick={() => {
+                    setAxisZoomIn((v) => !v);
+                    // 切换后重建图表以应用/取消固定坐标轴范围
+                    setChartReloadVersion((v) => v + 1);
+                  }}
+                  className={`mtlm-axis-zoom-btn${axisZoomIn ? ' active' : ''}`}
+                />
                 <Button
                   icon={<FullscreenOutlined />}
                   title="放大查看分时图"
