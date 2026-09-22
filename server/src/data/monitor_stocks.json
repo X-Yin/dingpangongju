@@ -656,5 +656,37 @@
     "blockName": "半导体",
     "riskScore": "7",
     "isTech": true
+  },
+  {
+    "code": "sz000725",
+    "name": "京东方",
+    "isImportant": false,
+    "blockName": "玻璃基板",
+    "riskScore": "6",
+    "isTech": true
+  },
+  {
+    "code": "sh600601",
+    "name": "方正科技",
+    "isImportant": false,
+    "blockName": "pcb",
+    "riskScore": "7",
+    "isTech": true
+  },
+  {
+    "code": "sz300059",
+    "name": "东方财富",
+    "isImportant": false,
+    "blockName": "证券",
+    "riskScore": " 5",
+    "isTech": false
+  },
+  {
+    "code": "sz300085",
+    "name": "银之杰",
+    "isImportant": false,
+    "blockName": "证券",
+    "riskScore": " 5",
+    "isTech": false
   }
 ]

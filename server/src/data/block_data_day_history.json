@@ -1,5 +1,130 @@
 [
   {
+    "date": "20260922",
+    "blocks": {
+      "cpu": {
+        "avgChange": 5.47
+      },
+      "房地产": {
+        "avgChange": 4.8
+      },
+      "AI 应用": {
+        "avgChange": 4.32
+      },
+      "粮食": {
+        "avgChange": 3.77
+      },
+      "医药": {
+        "avgChange": 3.38
+      },
+      "消费": {
+        "avgChange": 2.44
+      },
+      "煤炭": {
+        "avgChange": 0.91
+      },
+      "铜箔": {
+        "avgChange": 0.88
+      },
+      "存储": {
+        "avgChange": 0.7
+      },
+      "电子布": {
+        "avgChange": 0.48
+      },
+      "证券": {
+        "avgChange": 0.31
+      },
+      "AI电源": {
+        "avgChange": 0.05
+      },
+      "银行": {
+        "avgChange": 0
+      },
+      "电力": {
+        "avgChange": -0.01
+      },
+      "锂电": {
+        "avgChange": -0.06
+      },
+      "先进封装": {
+        "avgChange": -0.19
+      },
+      "半导体": {
+        "avgChange": -0.24
+      },
+      "贵金属": {
+        "avgChange": -0.35
+      },
+      "CCL": {
+        "avgChange": -0.41
+      },
+      "特高压": {
+        "avgChange": -0.62
+      },
+      "商业航天": {
+        "avgChange": -0.64
+      },
+      "化工": {
+        "avgChange": -0.66
+      },
+      "液冷": {
+        "avgChange": -0.74
+      },
+      "光纤": {
+        "avgChange": -0.74
+      },
+      "机器人": {
+        "avgChange": -0.81
+      },
+      "钨": {
+        "avgChange": -0.85
+      },
+      "功率半导体": {
+        "avgChange": -0.85
+      },
+      "国产超节点": {
+        "avgChange": -0.89
+      },
+      "pcb": {
+        "avgChange": -0.95
+      },
+      "光模块": {
+        "avgChange": -1.29
+      },
+      "军工": {
+        "avgChange": -1.33
+      },
+      "cpo": {
+        "avgChange": -1.36
+      },
+      "玻璃基板": {
+        "avgChange": -1.37
+      },
+      "MPO": {
+        "avgChange": -1.43
+      },
+      "MFC": {
+        "avgChange": -1.46
+      },
+      "MLCC": {
+        "avgChange": -1.56
+      },
+      "PPE树脂": {
+        "avgChange": -1.8
+      },
+      "北美缺电": {
+        "avgChange": -1.89
+      },
+      "光芯片": {
+        "avgChange": -2.57
+      },
+      "半导体材料": {
+        "avgChange": -3.57
+      }
+    }
+  },
+  {
     "date": "20260921",
     "blocks": {
       "房地产": {

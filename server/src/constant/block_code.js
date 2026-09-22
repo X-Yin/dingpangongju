@@ -813,5 +813,10 @@ exports.default = [
         "blockName": "液冷",
         "code": "sz300420",
         "name": "五洋自控"
+    },
+    {
+        "blockName": "pcb",
+        "code": "sh600601",
+        "name": "方正科技"
     }
 ]

@@ -403,5 +403,25 @@
     "secu_code": "sz301021",
     "secu_name": "英诺激光",
     "TotalShares": 152869941
+  },
+  {
+    "secu_code": "sz000725",
+    "secu_name": "京东方Ａ",
+    "TotalShares": 37044328064
+  },
+  {
+    "secu_code": "sh600601",
+    "secu_name": "方正科技",
+    "TotalShares": 4273742887
+  },
+  {
+    "secu_code": "sz300059",
+    "secu_name": "东方财富",
+    "TotalShares": 15822199875
+  },
+  {
+    "secu_code": "sz300085",
+    "secu_name": "银之杰",
+    "TotalShares": 706640535
   }
 ]

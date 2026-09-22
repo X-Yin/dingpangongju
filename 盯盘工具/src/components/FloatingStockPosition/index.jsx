@@ -750,11 +750,16 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       message.warning('暂无持仓股票');
       return;
     }
+    const todayStr = dayjs().format('YYYY-MM-DD');
     setSellDrawerLoading(true);
     setSellDrawerResults([]);
     try {
       const results = await Promise.all(
         currentPositions.map(async (stock) => {
+          // 买入当日卖点诊断不生效，次日起生效
+          if (stock.buyDate === todayStr) {
+            return { code: stock.code, stockName: stock.name, buyToday: true };
+          }
           try {
             const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, { code: stock.code, costPrice: stock.costPrice });
             return { ...res.data, stockName: stock.name, code: stock.code };
@@ -998,9 +1003,14 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   const autoRunSellDiagnosis = useCallback(async () => {
     const currentPositions = positionsRef.current;
     if (currentPositions.length === 0) return;
+    const todayStr = dayjs().format('YYYY-MM-DD');
     try {
       const results = await Promise.all(
         currentPositions.map(async (stock) => {
+          // 买入当日卖点诊断不生效，次日起生效
+          if (stock.buyDate === todayStr) {
+            return { code: stock.code, stockName: stock.name, buyToday: true };
+          }
           try {
             const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, { code: stock.code, costPrice: stock.costPrice });
             return { ...res.data, stockName: stock.name, code: stock.code };
@@ -1382,7 +1392,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                 style={{
                   background: '#fff',
                   borderRadius: 14,
-                  border: `1px solid ${result.error ? '#ffd591' : result.isSell ? '#ffa39e' : '#91caff'}`,
+                  border: `1px solid ${result.error ? '#ffd591' : result.buyToday ? '#d9d9d9' : result.isSell ? '#ffa39e' : '#91caff'}`,
                   boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
                   overflow: 'hidden',
                   flexShrink: 0,
@@ -1392,8 +1402,8 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                 <div
                   style={{
                     padding: '12px 16px',
-                    background: result.error ? '#fff7e6' : result.isSell ? '#fff1f0' : '#f0f9ff',
-                    borderBottom: `1px solid ${result.error ? '#ffd591' : result.isSell ? '#ffa39e' : '#91caff'}`,
+                    background: result.error ? '#fff7e6' : result.buyToday ? '#fafafa' : result.isSell ? '#fff1f0' : '#f0f9ff',
+                    borderBottom: `1px solid ${result.error ? '#ffd591' : result.buyToday ? '#d9d9d9' : result.isSell ? '#ffa39e' : '#91caff'}`,
                     display: 'flex',
                     alignItems: 'center',
                     gap: 10,
@@ -1412,6 +1422,8 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                   )}
                   {result.error ? (
                     <Tag color="warning" style={{ marginLeft: 'auto' }}>诊断失败</Tag>
+                  ) : result.buyToday ? (
+                    <Tag color="default" style={{ marginLeft: 'auto' }}>买入当日</Tag>
                   ) : result.isSell ? (
                     <Tag color="error" style={{ marginLeft: 'auto' }}>建议卖出</Tag>
                   ) : (
@@ -1423,6 +1435,10 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                 <div style={{ padding: '14px 16px' }}>
                   {result.error ? (
                     <div style={{ fontSize: 13, color: '#ad8b00' }}>{result.error}</div>
+                  ) : result.buyToday ? (
+                    <div style={{ fontSize: 13, color: '#8c8c8c' }}>
+                      买入当日卖点诊断不生效，次日起生效
+                    </div>
                   ) : (
                     <>
                       {/* 条件卡片 */}

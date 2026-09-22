@@ -657,7 +657,8 @@ const addStockPosition = (code, name) => {
         if (stock_positions.some((item) => item.code === code)) {
             return false;
         }
-        stock_positions.push({ code, name });
+        // 记录买入日期：卖点诊断买入当日不生效，次日起生效
+        stock_positions.push({ code, name, buyDate: dayjs().format('YYYY-MM-DD') });
         writeJsonFile(stock_position_path, stock_positions);
         return true;
     } catch (error) {
@@ -707,6 +708,7 @@ const getStockPositionMainFund = async () => {
                 code: item.code,
                 name: item.name,
                 costPrice: item.costPrice != null ? round(item.costPrice, 2) : null,
+                buyDate: item.buyDate || null,
                 mainFund: round(toNumber(mainFundDiff) / 100000000),
             });
         } catch (error) {
@@ -715,6 +717,7 @@ const getStockPositionMainFund = async () => {
                 code: item.code,
                 name: item.name,
                 costPrice: item.costPrice != null ? round(item.costPrice, 2) : null,
+                buyDate: item.buyDate || null,
                 mainFund: null,
             });
         }

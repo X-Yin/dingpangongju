@@ -1,5 +1,137 @@
 [
   {
+    "id": "1790053426019_v3kmzd",
+    "type": "pipeline",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-22",
+    "time": "13:03:46",
+    "detail": "流水线推进至 100%（100%）",
+    "pipelineStage": 4,
+    "createdAt": "2026-09-22T05:03:46.019Z"
+  },
+  {
+    "id": "1790053425387_02k8al",
+    "type": "pipeline",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-22",
+    "time": "13:03:45",
+    "detail": "流水线推进至 75%（75%）",
+    "pipelineStage": 3,
+    "createdAt": "2026-09-22T05:03:45.387Z"
+  },
+  {
+    "id": "1790053424094_ilzxeg",
+    "type": "pipeline",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-22",
+    "time": "13:03:44",
+    "detail": "流水线推进至 50%（50%）",
+    "pipelineStage": 2,
+    "createdAt": "2026-09-22T05:03:44.094Z"
+  },
+  {
+    "id": "1790053421264_8eavdw",
+    "type": "pipeline",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-22",
+    "time": "13:03:41",
+    "detail": "流水线推进至 30%（30%）",
+    "pipelineStage": 1,
+    "createdAt": "2026-09-22T05:03:41.264Z"
+  },
+  {
+    "id": "1790053406879_im9y0c",
+    "type": "buy",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-22",
+    "time": "13:03:26",
+    "detail": "新增持仓：金安国纪（sz002636）",
+    "pipelineStage": 0,
+    "createdAt": "2026-09-22T05:03:26.879Z"
+  },
+  {
+    "id": "1790053398508_8jirg8",
+    "type": "delete",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-22",
+    "time": "13:03:18",
+    "detail": "删除持仓：金安国纪（sz002636）",
+    "pipelineStage": null,
+    "createdAt": "2026-09-22T05:03:18.508Z"
+  },
+  {
+    "id": "1790047687740_c6r4bu",
+    "type": "pipeline",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-22",
+    "time": "11:28:07",
+    "detail": "流水线推进至 100%（100%）",
+    "pipelineStage": 4,
+    "createdAt": "2026-09-22T03:28:07.740Z"
+  },
+  {
+    "id": "1790047687214_hn6aaq",
+    "type": "pipeline",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-22",
+    "time": "11:28:07",
+    "detail": "流水线推进至 75%（75%）",
+    "pipelineStage": 3,
+    "createdAt": "2026-09-22T03:28:07.214Z"
+  },
+  {
+    "id": "1790047686943_veuxpd",
+    "type": "pipeline",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-22",
+    "time": "11:28:06",
+    "detail": "流水线推进至 50%（50%）",
+    "pipelineStage": 2,
+    "createdAt": "2026-09-22T03:28:06.943Z"
+  },
+  {
+    "id": "1790047686777_lx688p",
+    "type": "pipeline",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-22",
+    "time": "11:28:06",
+    "detail": "流水线推进至 30%（30%）",
+    "pipelineStage": 1,
+    "createdAt": "2026-09-22T03:28:06.777Z"
+  },
+  {
+    "id": "1790047677595_8uexgq",
+    "type": "buy",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-22",
+    "time": "11:27:57",
+    "detail": "新增持仓：金安国纪（sz002636）",
+    "pipelineStage": 0,
+    "createdAt": "2026-09-22T03:27:57.595Z"
+  },
+  {
+    "id": "1790041506938_s7rcur",
+    "type": "delete",
+    "code": "sh603757",
+    "name": "大元泵业",
+    "date": "2026-09-22",
+    "time": "09:45:06",
+    "detail": "删除持仓：大元泵业（sh603757）",
+    "pipelineStage": null,
+    "createdAt": "2026-09-22T01:45:06.938Z"
+  },
+  {
     "id": "1789966847053_28aqmw",
     "type": "pipeline",
     "code": "sh603757",

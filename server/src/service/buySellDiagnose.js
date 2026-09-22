@@ -24,7 +24,8 @@
  *   2. 高位阴线（收盘跌幅超过 -5%，主力出货信号）
  *   3. 科技板块情绪退潮 == -100（市场整体情绪极度低迷，避险卖出）
  *   4. 抗分歧指数 < 6 且 涨幅 ≤ -5%（14:50后生效，个股抗跌性弱且正在下跌）
- *   5. 连续三天（含当日）抗分歧指数均 < 10（个股连续弱势，资金持续分歧），仅 9:40 后生效
+ *   5. 连续三天（含当日）抗分歧指数均 < 10（个股连续弱势，资金持续分歧），仅 9:40 后生效；
+ *      且上一交易日距「最近5个交易日（不含当日）收盘价最高点」需 >= 2 个交易日（收盘价仍创新高说明趋势未破，不算卖点）
  *   6. 现价跌破最迟一天买入（最近一次加仓）当日的最低点，且持续 ≥5 分钟（买入成本线告破）
  *   7. 现价跌破持仓成本线的 -2%（现价 < 成本价 × 0.98 即触发，成本价取用户在持仓管理中自定义的成本价）
  */
@@ -1391,6 +1392,24 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
   }
   recent3Dates.reverse(); // 升序：[day-2, day-1, day]
 
+  // 附加限制：上一交易日（T-1）距「最近 5 个交易日（不含当日，T-5..T-1）收盘价最高点」需 >= 2 个交易日（高点取最近一次触及）。
+  // 目的：收盘价仍在持续创新高说明股价仍按趋势行走，即便连续三日抗分歧弱势也不算卖点
+  let highGapDaysC5 = null;
+  let highGapDateC5 = null;
+  let highGapCloseC5 = null;
+  if (targetIdx >= 5) {
+    let maxC = -Infinity;
+    let hi = -1;
+    for (let i = targetIdx - 5; i < targetIdx; i++) {
+      const c = parseFloat(sortedKline[i].close_px);
+      if (c >= maxC) { maxC = c; hi = i; } // >= 保证取最近一次触及最高收盘的日期
+    }
+    highGapDaysC5 = (targetIdx - 1) - hi;
+    highGapDateC5 = parseInt(sortedKline[hi].trade_date);
+    highGapCloseC5 = parseFloat(maxC.toFixed(2));
+  }
+  const highGapOkC5 = highGapDaysC5 != null && highGapDaysC5 >= 2;
+
   try {
     if (recent3Dates.length < 3) {
       condition5.detail = `历史交易日不足 3 天（仅 ${recent3Dates.length} 天），无法判断连续三日弱势`;
@@ -1434,20 +1453,28 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
       } else {
         const allBelow10 = resilience3d.every(r => r.score < 10);
         const isAfter940 = dayjs().format('HHmm') >= '0940';
-        condition5.satisfied = allBelow10 && isAfter940;
+        condition5.satisfied = allBelow10 && isAfter940 && highGapOkC5;
         const dateDesc = resilience3d.map(r => `${formatDateStr(r.date)}: ${r.score}`).join('、');
+        const highGapDescC5 = highGapDaysC5 != null
+          ? `${highGapDaysC5} 个交易日（高点 ${formatDateStr(highGapDateC5)} ${highGapCloseC5}）`
+          : '历史不足 5 日';
         if (!isAfter940) {
           condition5.detail = `近三日抗分歧指数均 < 10（${dateDesc}），但当前时间未到 9:40，条件暂不生效`;
+        } else if (allBelow10 && highGapOkC5) {
+          condition5.detail = `近三日抗分歧指数均 < 10（${dateDesc}），且上一交易日距最近5日收盘新高 ${highGapDescC5}（需>=2），个股连续弱势且已离高点，触发卖点`;
         } else if (allBelow10) {
-          condition5.detail = `近三日抗分歧指数均 < 10（${dateDesc}），个股连续弱势，资金持续分歧，触发卖点`;
+          condition5.detail = highGapDaysC5 == null
+            ? `近三日抗分歧指数均 < 10（${dateDesc}），但历史交易日不足 5 日，无法判断收盘新高距离，不触发`
+            : `近三日抗分歧指数均 < 10（${dateDesc}），但上一交易日距最近5日收盘新高仅 ${highGapDescC5}（需>=2），收盘价仍处新高附近趋势未破，不触发`;
         } else {
           condition5.detail = `近三日抗分歧指数未全部 < 10（${dateDesc}），未触发`;
         }
         condition5.subConditions = [
           { label: '近3日抗分歧', value: dateDesc },
+          { label: '距5日收盘新高', value: `${highGapDescC5}，需>=2` },
           { label: '跟踪指数', value: isSh688ForC5 ? '科创板' : '创业板' },
           { label: '生效时间', value: '9:40 后' },
-          { label: '阈值', value: '连续3日均 < 10' },
+          { label: '阈值', value: '连续3日均 < 10 且距新高>=2日' },
         ];
       }
     }

@@ -1,9 +1,9 @@
-import { Card, Row, Col, Empty } from 'antd';
-import { RiseOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Empty, Dropdown } from 'antd';
+import { RiseOutlined, LineChartOutlined } from '@ant-design/icons';
 import { titleStyle, borderStyle, numberStyle } from '../../utils/themeColor';
 
 // 当前自选股个股涨跌幅前十：展示自选股中涨幅前十与跌幅前十
-const WatchlistTopRanking = ({ stocks = [], onStockClick, themeColor }) => {
+const WatchlistTopRanking = ({ stocks = [], onStockClick, onOpenOverlayTimeLine, themeColor }) => {
     const valid = Array.isArray(stocks)
         ? stocks.filter((s) => s && s.change != null)
         : [];
@@ -65,9 +65,8 @@ const WatchlistTopRanking = ({ stocks = [], onStockClick, themeColor }) => {
             ) : (
                 list.map((s) => {
                     const value = Number(s.change);
-                    return (
+                    const itemContent = (
                         <div
-                            key={s.code}
                             className="unified-list-item"
                             onClick={() => onStockClick && onStockClick(s)}
                             style={{ cursor: onStockClick ? 'pointer' : 'default', ...borderStyle(themeColor) }}
@@ -81,6 +80,26 @@ const WatchlistTopRanking = ({ stocks = [], onStockClick, themeColor }) => {
                                 {value > 0 ? '+' : ''}{value.toFixed(2)}%
                             </span>
                         </div>
+                    );
+                    // 右键菜单：叠加分时（与自选股全量监控保持一致）
+                    if (!onOpenOverlayTimeLine) return itemContent;
+                    return (
+                        <Dropdown
+                            key={s.code}
+                            trigger={['contextMenu']}
+                            menu={{
+                                items: [
+                                    {
+                                        key: 'overlay-timeline',
+                                        label: '叠加分时',
+                                        icon: <LineChartOutlined />,
+                                        onClick: () => onOpenOverlayTimeLine(s),
+                                    },
+                                ],
+                            }}
+                        >
+                            {itemContent}
+                        </Dropdown>
                     );
                 })
             )}

@@ -29,7 +29,7 @@ const groupsFile = path.resolve(__dirname, '../data/training_camp_groups.json');
 const CAMP_BUILT_DIR = path.resolve(__dirname, '../data/backtest_camp_cache');
 // 构建逻辑版本：修改 loadTrainingCampData 的构建逻辑（如为 campData 新增预计算字段）时必须 +1，
 // 使全部旧缓存自动失效重建；仅新增策略或调整买卖点条件无需动它（条件在回测阶段实时应用，不依赖此缓存失效）
-const CAMP_BUILDER_VERSION = 3;
+const CAMP_BUILDER_VERSION = 4;
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
 const campBuiltSignature = (monitorStocks) => crypto.createHash('md5')
   .update(JSON.stringify([
@@ -154,6 +154,22 @@ const calcDailyMaInfo = (kline, dateStr) => {
   for (const b of lowBars) {
     if (Number.isFinite(b.low) && b.low > 0) dailyLowMap[b.d] = parseFloat(b.low.toFixed(2));
   }
+  // 上一交易日（T-1）距离「最近 5 个交易日（不含当日，T-5..T-1）收盘价最高点」的交易日数（高点取最近一次触及）。
+  // 供卖点诊断条件5附加限制：连续三日抗分歧弱势需该距离 >= 2 才生效（收盘价仍在创新高说明趋势未破，不算卖点）
+  let highGapDays = null;
+  let highGapDate = null;
+  let highGapClose = null;
+  if (bars.length >= 6) {
+    const win = bars.slice(-6, -1); // [T-5, T-4, T-3, T-2, T-1]
+    let maxC = -Infinity;
+    let hi = -1;
+    for (let i = 0; i < win.length; i++) {
+      if (win[i].c >= maxC) { maxC = win[i].c; hi = i; } // >= 保证取最近一次触及最高收盘的日期
+    }
+    highGapDays = (win.length - 1) - hi;
+    highGapDate = win[hi].d;
+    highGapClose = parseFloat(win[hi].c.toFixed(2));
+  }
   return {
     ma5: ma5 !== null ? parseFloat(ma5.toFixed(2)) : null,
     ma5Slope: ma5Slope !== null && Number.isFinite(ma5Slope) ? parseFloat(ma5Slope.toFixed(2)) : null,
@@ -161,6 +177,9 @@ const calcDailyMaInfo = (kline, dateStr) => {
     ma10Slope: ma10Slope !== null && Number.isFinite(ma10Slope) ? parseFloat(ma10Slope.toFixed(2)) : null,
     prevLow: prevLow !== null ? parseFloat(prevLow.toFixed(2)) : null,
     dailyLowMap,
+    highGapDays,
+    highGapDate,
+    highGapClose,
   };
 };
 
@@ -429,9 +448,10 @@ const loadTrainingCampData = async (dateStr) => {
       const dailyMa10Slope = ma.ma10Slope != null ? ma.ma10Slope : null;
       const dailyPrevLow = ma.prevLow != null ? ma.prevLow : null;
       const r3d = resilience3dMap.get(st.code) || {};
+      const maHighGap = { highGapDays: ma.highGapDays ?? null, highGapDate: ma.highGapDate ?? null, highGapClose: ma.highGapClose ?? null };
       return p
-        ? { code: st.code, name: st.name, changePct: p.changePct, lastPx: p.lastPx, dailyMa5, dailyMa5Slope, dailyMa10, dailyMa10Slope, dailyPrevLow, resilience3dAllBelow10: r3d.allBelow10 === true, resilience3dScores: r3d.scores || [], resilience3dValid: r3d.valid === true }
-        : { code: st.code, name: st.name, changePct: null, lastPx: null, dailyMa5, dailyMa5Slope, dailyMa10, dailyMa10Slope, dailyPrevLow, resilience3dAllBelow10: r3d.allBelow10 === true, resilience3dScores: r3d.scores || [], resilience3dValid: r3d.valid === true };
+        ? { code: st.code, name: st.name, changePct: p.changePct, lastPx: p.lastPx, dailyMa5, dailyMa5Slope, dailyMa10, dailyMa10Slope, dailyPrevLow, dailyHighGapDays: maHighGap.highGapDays, dailyHighGapDate: maHighGap.highGapDate, dailyHighGapClose: maHighGap.highGapClose, resilience3dAllBelow10: r3d.allBelow10 === true, resilience3dScores: r3d.scores || [], resilience3dValid: r3d.valid === true }
+        : { code: st.code, name: st.name, changePct: null, lastPx: null, dailyMa5, dailyMa5Slope, dailyMa10, dailyMa10Slope, dailyPrevLow, dailyHighGapDays: maHighGap.highGapDays, dailyHighGapDate: maHighGap.highGapDate, dailyHighGapClose: maHighGap.highGapClose, resilience3dAllBelow10: r3d.allBelow10 === true, resilience3dScores: r3d.scores || [], resilience3dValid: r3d.valid === true };
     }).filter(s => s.changePct !== null);
 
     const cybPoint = findIndexPoint(cybMap.sortedLine, cybMap.preclose, minute);

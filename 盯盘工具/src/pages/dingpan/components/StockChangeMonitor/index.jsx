@@ -1,5 +1,5 @@
-import { Card, Empty, Spin, Tooltip, Typography, Button } from 'antd';
-import { StockOutlined, RiseOutlined, FireOutlined, BookOutlined, FileSearchOutlined, CloseOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Card, Empty, Spin, Tooltip, Typography, Button, Dropdown } from 'antd';
+import { StockOutlined, RiseOutlined, FireOutlined, BookOutlined, FileSearchOutlined, CloseOutlined, ReloadOutlined, LineChartOutlined } from '@ant-design/icons';
 import { OpeningSurgeModule, WatchlistUpDownModule } from '../../../OpeningBattle/index.jsx';
 import StockStatisticsPanel from '../../../../components/StockStatisticsPanel';
 import { titleStyle, borderStyle, numberStyle } from '../../utils/themeColor';
@@ -19,6 +19,7 @@ const StockChangeMonitor = ({
     allStockData,
     watchlistMainFund,
     onStockClick,
+    onOpenOverlayTimeLine,
     onViewYanbaoDetail,
     onRefresh,
     refreshing = false,
@@ -75,11 +76,29 @@ const StockChangeMonitor = ({
             </div>
         );
 
-        if (showRiskOverlay) {
-            return stockItemContent
+        // 右键菜单：叠加分时（与自选股全量监控保持一致）；未传回调时（如训练营页）不启用
+        if (!onOpenOverlayTimeLine) {
+            return stockItemContent;
         }
 
-        return stockItemContent;
+        return (
+            <Dropdown
+                key={`${keyPrefix}-${item.code}-${index}`}
+                trigger={['contextMenu']}
+                menu={{
+                    items: [
+                        {
+                            key: 'overlay-timeline',
+                            label: '叠加分时',
+                            icon: <LineChartOutlined />,
+                            onClick: () => onOpenOverlayTimeLine({ code: item.code, stockName: item.name, change: item.changeValue }),
+                        },
+                    ],
+                }}
+            >
+                {stockItemContent}
+            </Dropdown>
+        );
     };
 
     return (

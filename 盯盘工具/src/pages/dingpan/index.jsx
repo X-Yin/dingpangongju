@@ -2244,6 +2244,7 @@ const DingPan = () => {
                                 allStockData={data.allStockData}
                                 watchlistMainFund={watchlistMainFund}
                                 onStockClick={showKLine}
+                                onOpenOverlayTimeLine={handleOpenOverlayTimeLine}
                                 onViewYanbaoDetail={handleViewYanbaoDetail}
                                 onRefresh={handleRefreshStockData}
                                 refreshing={refreshingStockData}
@@ -2326,6 +2327,7 @@ const DingPan = () => {
                                     <WatchlistTopRanking
                                         stocks={data.allStockData}
                                         onStockClick={showKLine}
+                                        onOpenOverlayTimeLine={handleOpenOverlayTimeLine}
                                         themeColor={themeColor}
                                     />
                                 </div>
