@@ -92,7 +92,7 @@
   {
     "code": "sz300308",
     "name": "中际旭创",
-    "isImportant": true,
+    "isImportant": false,
     "blockName": "光模块",
     "riskScore": 2,
     "isTech": true,
@@ -101,7 +101,7 @@
   {
     "code": "sh688048",
     "name": "长光华芯",
-    "isImportant": true,
+    "isImportant": false,
     "blockName": "光芯片",
     "riskScore": 7,
     "isTech": true
@@ -109,7 +109,7 @@
   {
     "code": "sz301511",
     "name": "德福科技",
-    "isImportant": true,
+    "isImportant": false,
     "blockName": "铜箔",
     "riskScore": 6,
     "isTech": true
@@ -217,7 +217,7 @@
   {
     "code": "sh601869",
     "name": "长飞光纤",
-    "isImportant": true,
+    "isImportant": false,
     "blockName": "光纤",
     "riskScore": 6,
     "isTech": true
@@ -305,7 +305,7 @@
   {
     "code": "sz301526",
     "name": "国际复材",
-    "isImportant": true,
+    "isImportant": false,
     "blockName": "电子布",
     "riskScore": 6,
     "isTop": false,
@@ -346,7 +346,7 @@
   {
     "code": "sz002436",
     "name": "兴森科技",
-    "isImportant": true,
+    "isImportant": false,
     "blockName": "pcb",
     "riskScore": 6,
     "isTech": true
@@ -402,7 +402,7 @@
   {
     "code": "sz002536",
     "name": "飞龙股份",
-    "isImportant": true,
+    "isImportant": false,
     "blockName": "液冷",
     "riskScore": 5,
     "isTech": true
@@ -410,7 +410,7 @@
   {
     "code": "sh600176",
     "name": "中国巨石",
-    "isImportant": true,
+    "isImportant": false,
     "blockName": "电子布",
     "riskScore": 4,
     "isTech": true
@@ -547,7 +547,7 @@
   {
     "code": "sh688825",
     "name": "长鑫科技",
-    "isImportant": true,
+    "isImportant": false,
     "blockName": "存储",
     "riskScore": "2",
     "isTech": true,
@@ -556,7 +556,7 @@
   {
     "code": "sh603228",
     "name": "景旺电子",
-    "isImportant": true,
+    "isImportant": false,
     "blockName": "pcb",
     "riskScore": "5",
     "isTech": true
@@ -596,7 +596,7 @@
   {
     "code": "sh603186",
     "name": "华正新材",
-    "isImportant": true,
+    "isImportant": false,
     "blockName": "ccl",
     "riskScore": "7",
     "isTech": true
@@ -688,5 +688,21 @@
     "blockName": "证券",
     "riskScore": " 5",
     "isTech": false
+  },
+  {
+    "code": "sz300548",
+    "name": "长芯博创",
+    "isImportant": false,
+    "blockName": "MPO",
+    "riskScore": "7",
+    "isTech": true
+  },
+  {
+    "code": "sh603319",
+    "name": "美湖股份",
+    "isImportant": false,
+    "blockName": "液冷",
+    "riskScore": "7",
+    "isTech": true
   }
 ]

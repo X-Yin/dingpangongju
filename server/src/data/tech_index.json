@@ -725,22 +725,6 @@
     "marketCapWeighted": true
   },
   {
-    "date": 20260919,
-    "changeSumResult": 48.19,
-    "rawSum": 236.35,
-    "baseEmotion": 65.72,
-    "pullbackPenalty": -43.82,
-    "marketCapWeighted": true
-  },
-  {
-    "date": 20260920,
-    "changeSumResult": 48.19,
-    "rawSum": 236.35,
-    "baseEmotion": 65.72,
-    "pullbackPenalty": -43.82,
-    "marketCapWeighted": true
-  },
-  {
     "date": 20260921,
     "changeSumResult": 7.42,
     "rawSum": 80.02,
@@ -754,6 +738,14 @@
     "rawSum": 10.41,
     "baseEmotion": 3.47,
     "pullbackPenalty": -81.61,
+    "marketCapWeighted": true
+  },
+  {
+    "date": 20260923,
+    "changeSumResult": -18.55,
+    "rawSum": -2.35,
+    "baseEmotion": -0.78,
+    "pullbackPenalty": -44.42,
     "marketCapWeighted": true
   }
 ]

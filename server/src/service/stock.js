@@ -489,8 +489,16 @@ const getSingleStockTlineDataByDate = async (code, tradeDate) => {
     if (result && cacheKey) {
         saveTlineToCache(cacheKey, tradeDate, result);
     }
+    // 当日数据仅在覆盖到收盘（15:00）后才写入结果内存缓存
+    // 盘前/午间拿到的不完整当日数据一旦缓存，交易时段（skipCache）内不会刷新，
+    // 收盘后所有请求会一直命中脏缓存（曾导致抗分歧诊断当日指数只有1个点、得分全为0）
     if (result && !skipCache) {
-        tlineResultMemCache.set(memKey, result);
+        const resultLine = Array.isArray(result.line) ? result.line : [];
+        const resultLastMinute = resultLine.length > 0 ? resultLine[resultLine.length - 1]?.minute : null;
+        const todayComplete = !isToday || (resultLastMinute != null && resultLastMinute >= 1500);
+        if (todayComplete) {
+            tlineResultMemCache.set(memKey, result);
+        }
     }
 
     return result;

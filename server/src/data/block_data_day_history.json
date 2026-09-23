@@ -1,5 +1,130 @@
 [
   {
+    "date": "20260923",
+    "blocks": {
+      "玻璃基板": {
+        "avgChange": 4.59
+      },
+      "房地产": {
+        "avgChange": 4.05
+      },
+      "PPE树脂": {
+        "avgChange": 3.59
+      },
+      "MFC": {
+        "avgChange": 2.54
+      },
+      "铜箔": {
+        "avgChange": 2.53
+      },
+      "MLCC": {
+        "avgChange": 2.25
+      },
+      "CCL": {
+        "avgChange": 1.84
+      },
+      "半导体材料": {
+        "avgChange": 1.75
+      },
+      "pcb": {
+        "avgChange": 1.25
+      },
+      "功率半导体": {
+        "avgChange": 0.59
+      },
+      "存储": {
+        "avgChange": 0.41
+      },
+      "MPO": {
+        "avgChange": 0.38
+      },
+      "液冷": {
+        "avgChange": 0.28
+      },
+      "国产超节点": {
+        "avgChange": -0.06
+      },
+      "证券": {
+        "avgChange": -0.34
+      },
+      "半导体": {
+        "avgChange": -0.35
+      },
+      "AI电源": {
+        "avgChange": -0.41
+      },
+      "机器人": {
+        "avgChange": -0.56
+      },
+      "先进封装": {
+        "avgChange": -0.6
+      },
+      "化工": {
+        "avgChange": -0.63
+      },
+      "粮食": {
+        "avgChange": -0.64
+      },
+      "cpo": {
+        "avgChange": -0.66
+      },
+      "银行": {
+        "avgChange": -0.72
+      },
+      "光模块": {
+        "avgChange": -0.89
+      },
+      "贵金属": {
+        "avgChange": -0.89
+      },
+      "电子布": {
+        "avgChange": -0.98
+      },
+      "特高压": {
+        "avgChange": -1.13
+      },
+      "锂电": {
+        "avgChange": -1.34
+      },
+      "钨": {
+        "avgChange": -1.51
+      },
+      "光芯片": {
+        "avgChange": -1.55
+      },
+      "cpu": {
+        "avgChange": -1.87
+      },
+      "商业航天": {
+        "avgChange": -1.97
+      },
+      "煤炭": {
+        "avgChange": -2.44
+      },
+      "北美缺电": {
+        "avgChange": -2.46
+      },
+      "军工": {
+        "avgChange": -2.79
+      },
+      "光纤": {
+        "avgChange": -2.86
+      },
+      "医药": {
+        "avgChange": -4.08
+      },
+      "AI 应用": {
+        "avgChange": -4.1
+      },
+      "电力": {
+        "avgChange": -4.44
+      },
+      "消费": {
+        "avgChange": -5.5
+      }
+    }
+  },
+  {
     "date": "20260922",
     "blocks": {
       "cpu": {

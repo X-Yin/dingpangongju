@@ -423,5 +423,15 @@
     "secu_code": "sz300085",
     "secu_name": "银之杰",
     "TotalShares": 706640535
+  },
+  {
+    "secu_code": "sz300548",
+    "secu_name": "长芯博创",
+    "TotalShares": 294833553
+  },
+  {
+    "secu_code": "sh603319",
+    "secu_name": "美湖股份",
+    "TotalShares": 339149678
   }
 ]
