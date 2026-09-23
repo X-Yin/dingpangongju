@@ -1356,7 +1356,7 @@ const BlockMoneyChange = () => {
           <div class="tooltip-score">拥挤度: <span style="color: ${dataItem.color}; font-weight: bold;">${dataItem.value.toFixed(2)}</span></div>
           <div class="tooltip-level">等级: <span style="color: ${dataItem.color}; font-weight: bold;">${dataItem.level}</span></div>
         `;
-        tooltip.style.left = `${param.point.x}px`;
+        tooltip.style.left = `${param.point.x - 100}px`;
         tooltip.style.top = `${param.point.y - 80}px`;
         tooltip.style.display = 'block';
       }
