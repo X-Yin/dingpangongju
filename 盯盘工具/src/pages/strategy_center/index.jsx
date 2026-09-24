@@ -43,6 +43,10 @@ marked.setOptions({ breaks: true, gfm: true });
 const KLineChart = ({ data, height = 220, title = '' }) => {
   const containerRef = useRef(null);
   const chartRef = useRef(null);
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current || !data || data.length === 0) return;
@@ -133,7 +137,7 @@ const KLineChart = ({ data, height = 220, title = '' }) => {
     return () => {
       window.removeEventListener('resize', handleResize);
       if (chartRef.current) {
-        try { chartRef.current.remove(); } catch (e) {}
+        try { chartRef.current.remove(); } catch (e) { }
         chartRef.current = null;
       }
     };
@@ -271,7 +275,7 @@ const IntradayChart = ({ data, height = 240, title = '', basePrice = 0, isFundFl
     return () => {
       window.removeEventListener('resize', handleResize);
       if (chartRef.current) {
-        try { chartRef.current.remove(); } catch (e) {}
+        try { chartRef.current.remove(); } catch (e) { }
         chartRef.current = null;
       }
     };
@@ -380,7 +384,7 @@ const VolumeChart = ({ data, height = 240, title = '' }) => {
     return () => {
       window.removeEventListener('resize', handleResize);
       if (chartRef.current) {
-        try { chartRef.current.remove(); } catch (e) {}
+        try { chartRef.current.remove(); } catch (e) { }
         chartRef.current = null;
       }
     };
@@ -701,279 +705,279 @@ const StrategyCenter = () => {
             children: (
               <>
                 <Card className="control-card" size="small">
-        <div className="control-row">
-          <div className="control-item">
-            <label className="control-label"><HistoryOutlined /> 回测日期</label>
-            <Select
-              style={{ width: 160 }}
-              placeholder="选择日期"
-              value={selectedDate}
-              onChange={setSelectedDate}
-              showSearch
-              optionFilterProp="children"
-              size="middle"
-            >
-              {availableDates.map(date => (
-                <Select.Option key={date} value={date}>{formatDateDisplay(date)}</Select.Option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="control-item strategy-select">
-            <label className="control-label"><StockOutlined /> 选择策略</label>
-            <div className="strategy-checkboxes">
-              <Space size={[8, 4]} wrap>
-                <Button size="small" type="link" onClick={handleSelectAll} style={{ padding: 0, height: 'auto' }}>
-                  {selectedStrategies.length === strategies.length ? '取消全选' : '全选'}
-                </Button>
-                {strategies.map(strategy => (
-                  <Checkbox
-                    key={strategy.id}
-                    checked={selectedStrategies.includes(strategy.id)}
-                    onChange={e => handleStrategyChange(strategy.id, e.target.checked)}
-                  >
-                    <Tooltip
-                      title={<div style={{ whiteSpace: 'pre-line', fontSize: '12px', lineHeight: '1.6' }}>{strategy.detail || strategy.description}</div>}
-                      placement="top"
-                      overlayStyle={{ maxWidth: 420 }}
-                    >
-                      <Tag
-                        color={strategy.type === 'bullish' ? 'red' : strategy.type === 'bearish' ? 'green' : 'default'}
-                        style={{ cursor: 'help' }}
+                  <div className="control-row">
+                    <div className="control-item">
+                      <label className="control-label"><HistoryOutlined /> 回测日期</label>
+                      <Select
+                        style={{ width: 160 }}
+                        placeholder="选择日期"
+                        value={selectedDate}
+                        onChange={setSelectedDate}
+                        showSearch
+                        optionFilterProp="children"
+                        size="middle"
                       >
-                        {strategy.name} <QuestionCircleOutlined style={{ fontSize: '11px', opacity: 0.7 }} />
-                      </Tag>
-                    </Tooltip>
-                  </Checkbox>
-                ))}
-              </Space>
-            </div>
-          </div>
-        </div>
-
-        <div className="action-row">
-          <Button
-            type="primary"
-            icon={<PlayCircleOutlined />}
-            onClick={runBacktest}
-            loading={loading}
-            disabled={aiLoading}
-            size="middle"
-            className="action-btn"
-          >
-            开始回测
-          </Button>
-          <Button
-            icon={<RobotOutlined />}
-            onClick={runAiDiagnosis}
-            loading={aiLoading}
-            disabled={loading}
-            size="middle"
-            className="action-btn ai-btn"
-          >
-            AI 回测
-          </Button>
-          <Button
-            icon={<CopyOutlined />}
-            onClick={handleCopyContext}
-            loading={contextLoading}
-            disabled={loading || aiLoading}
-            size="middle"
-            className="action-btn"
-          >
-            拷贝上下文
-          </Button>
-          <Button
-            icon={<SnippetsOutlined />}
-            onClick={handleOpenPaste}
-            disabled={loading || aiLoading}
-            size="middle"
-            className="action-btn"
-          >
-            粘贴结果
-          </Button>
-        </div>
-      </Card>
-
-      <Spin spinning={loading} description="回测中...">
-        {backtestResult ? (
-          <>
-            <Row gutter={[16, 16]} className="stats-summary">
-              <Col xs={12} sm={6}>
-                <Card size="small">
-                  <Statistic
-                    title="命中信号"
-                    value={backtestResult.totalSignalCount}
-                    valueStyle={{ color: '#1890ff', fontSize: '22px' }}
-                    prefix={<ThunderboltOutlined />}
-                  />
-                </Card>
-              </Col>
-              <Col xs={12} sm={6}>
-                <Card size="small">
-                  <Statistic title="资金数据点" value={backtestResult.fundDataPoints} valueStyle={{ fontSize: '18px' }} />
-                </Card>
-              </Col>
-              <Col xs={12} sm={6}>
-                <Card size="small">
-                  <Statistic title="成交量数据点" value={backtestResult.amountDataPoints} valueStyle={{ fontSize: '18px' }} />
-                </Card>
-              </Col>
-              <Col xs={12} sm={6}>
-                <Card size="small">
-                  <Statistic
-                    title="指数数据"
-                    value={backtestResult.hasIndexData ? '已加载' : '无数据'}
-                    valueStyle={{ color: backtestResult.hasIndexData ? '#52c41a' : '#faad14', fontSize: '18px' }}
-                  />
-                </Card>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]} className="charts-section">
-              <Col xs={24} lg={12}>
-                <Card size="small" className="chart-card">
-                  <KLineChart data={cybKlineData} height={220} title="📈 创业板指 K线 (近100日)" />
-                </Card>
-              </Col>
-              <Col xs={24} lg={12}>
-                <Card size="small" className="chart-card">
-                  <KLineChart data={kcbKlineData} height={220} title="📈 科创50 K线 (近100日)" />
-                </Card>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]} className="charts-section">
-              <Col xs={24} lg={12}>
-                <Card size="small" className="chart-card">
-                  <IntradayChart
-                    data={cybTlineData}
-                    title="📊 创业板指 分时"
-                    height={240}
-                    basePrice={backtestResult.cybOpenPx}
-                  />
-                </Card>
-              </Col>
-              <Col xs={24} lg={12}>
-                <Card size="small" className="chart-card">
-                  <IntradayChart
-                    data={kcbTlineData}
-                    title="📊 科创50 分时"
-                    height={240}
-                    basePrice={backtestResult.kcbOpenPx}
-                  />
-                </Card>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]} className="charts-section">
-              <Col xs={24} lg={12}>
-                <Card size="small" className="chart-card">
-                  <IntradayChart
-                    data={fundFlowData}
-                    title="💰 主力资金净流入 (亿)"
-                    height={240}
-                    basePrice={0}
-                    isFundFlow
-                  />
-                </Card>
-              </Col>
-              <Col xs={24} lg={12}>
-                <Card size="small" className="chart-card">
-                  <VolumeChart
-                    data={volumeData}
-                    title="📦 两市成交额 (亿)"
-                    height={240}
-                  />
-                </Card>
-              </Col>
-            </Row>
-
-            <Card
-              className="result-card"
-              title={`回测结果 - ${backtestResult.dateDisplay} 信号时间线`}
-              size="small"
-            >
-              {backtestResult.signals.length === 0 ? (
-                <Empty description="当日未命中任何策略信号" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-              ) : (
-                <div className="signal-timeline">
-                  {backtestResult.signals.map((timePoint, idx) => (
-                    <div key={idx} className="time-point-group">
-                      <div className="time-badge">{timePoint.time}</div>
-                      <div className="signals-list">
-                        {timePoint.signals.map((signal, sIdx) => (
-                          <Card
-                            key={sIdx}
-                            size="small"
-                            className={`signal-card ${signal.isBullish ? 'bullish' : 'bearish'}`}
-                          >
-                            <div className="signal-title">
-                              <Tag color={signal.isBullish ? 'red' : 'green'}>
-                                {signal.isBullish ? '利好' : '利空'}
-                              </Tag>
-                              <span className="signal-name">{signal.title}</span>
-                            </div>
-                            <div className="signal-desc">{signal.description}</div>
-                          </Card>
+                        {availableDates.map(date => (
+                          <Select.Option key={date} value={date}>{formatDateDisplay(date)}</Select.Option>
                         ))}
+                      </Select>
+                    </div>
+
+                    <div className="control-item strategy-select">
+                      <label className="control-label"><StockOutlined /> 选择策略</label>
+                      <div className="strategy-checkboxes">
+                        <Space size={[8, 4]} wrap>
+                          <Button size="small" type="link" onClick={handleSelectAll} style={{ padding: 0, height: 'auto' }}>
+                            {selectedStrategies.length === strategies.length ? '取消全选' : '全选'}
+                          </Button>
+                          {strategies.map(strategy => (
+                            <Checkbox
+                              key={strategy.id}
+                              checked={selectedStrategies.includes(strategy.id)}
+                              onChange={e => handleStrategyChange(strategy.id, e.target.checked)}
+                            >
+                              <Tooltip
+                                title={<div style={{ whiteSpace: 'pre-line', fontSize: '12px', lineHeight: '1.6' }}>{strategy.detail || strategy.description}</div>}
+                                placement="top"
+                                overlayStyle={{ maxWidth: 420 }}
+                              >
+                                <Tag
+                                  color={strategy.type === 'bullish' ? 'red' : strategy.type === 'bearish' ? 'green' : 'default'}
+                                  style={{ cursor: 'help' }}
+                                >
+                                  {strategy.name} <QuestionCircleOutlined style={{ fontSize: '11px', opacity: 0.7 }} />
+                                </Tag>
+                              </Tooltip>
+                            </Checkbox>
+                          ))}
+                        </Space>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-          </>
-        ) : (
-          <Card className="placeholder-card">
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="选择日期和策略后点击「开始回测」查看图表和信号"
-            />
-          </Card>
-        )}
-      </Spin>
+                  </div>
 
-      {/* AI 诊断结果 */}
-      {(aiLoading || aiDiagnosisResult) && (
-        <Card
-          className="ai-diagnosis-card"
-          title={
-            <span className="ai-diagnosis-title">
-              <RobotOutlined /> AI 独立诊断
-              {aiDiagnosisResult && (
-                <span className="ai-diagnosis-meta">
-                  {aiDiagnosisResult.dateDisplay} · {aiDiagnosisResult.model === 'zhipu-manual' ? '智谱(手动)' : aiDiagnosisResult.model}
-                </span>
-              )}
-            </span>
-          }
-          size="small"
-        >
-          <AiDiagnosisResult diagnosis={aiDiagnosisResult?.diagnosis} loading={aiLoading} />
-        </Card>
-      )}
+                  <div className="action-row">
+                    <Button
+                      type="primary"
+                      icon={<PlayCircleOutlined />}
+                      onClick={runBacktest}
+                      loading={loading}
+                      disabled={aiLoading}
+                      size="middle"
+                      className="action-btn"
+                    >
+                      开始回测
+                    </Button>
+                    <Button
+                      icon={<RobotOutlined />}
+                      onClick={runAiDiagnosis}
+                      loading={aiLoading}
+                      disabled={loading}
+                      size="middle"
+                      className="action-btn ai-btn"
+                    >
+                      AI 回测
+                    </Button>
+                    <Button
+                      icon={<CopyOutlined />}
+                      onClick={handleCopyContext}
+                      loading={contextLoading}
+                      disabled={loading || aiLoading}
+                      size="middle"
+                      className="action-btn"
+                    >
+                      拷贝上下文
+                    </Button>
+                    <Button
+                      icon={<SnippetsOutlined />}
+                      onClick={handleOpenPaste}
+                      disabled={loading || aiLoading}
+                      size="middle"
+                      className="action-btn"
+                    >
+                      粘贴结果
+                    </Button>
+                  </div>
+                </Card>
 
-      <Modal
-        title="粘贴 AI 返回的 JSON 诊断结果"
-        open={pasteModalOpen}
-        onOk={handleConfirmPaste}
-        onCancel={() => setPasteModalOpen(false)}
-        okText="渲染诊断"
-        cancelText="取消"
-        width={680}
-      >
-        <div style={{ marginBottom: 8, color: '#64748b', fontSize: 13 }}>
-          请将智谱对话返回的完整 JSON 粘贴到下方（包含 diagnosis / strategyDiagnosis / additionalFindings / operationAdvice / outlook 字段），系统将自动解析并与本地代码诊断结果对比渲染。
-        </div>
-        <Input.TextArea
-          value={pasteValue}
-          onChange={(e) => setPasteValue(e.target.value)}
-          rows={12}
-          placeholder='{"diagnosis":{"overallSentiment":"偏空","sentimentScore":-25,"summary":"..."},"strategyDiagnosis":[{"strategyId":"high_open_low_close","strategyName":"高开容易低走","type":"bearish","triggered":true,"triggerTime":"09:35","evidence":"...","analysis":"..."}],"additionalFindings":[...],"operationAdvice":{"action":"减仓","position":"30%","reason":"..."},"outlook":"..."}'
-          style={{ fontFamily: 'monospace', fontSize: 12 }}
-        />
-      </Modal>
+                <Spin spinning={loading} description="回测中...">
+                  {backtestResult ? (
+                    <>
+                      <Row gutter={[16, 16]} className="stats-summary">
+                        <Col xs={12} sm={6}>
+                          <Card size="small">
+                            <Statistic
+                              title="命中信号"
+                              value={backtestResult.totalSignalCount}
+                              valueStyle={{ color: '#1890ff', fontSize: '22px' }}
+                              prefix={<ThunderboltOutlined />}
+                            />
+                          </Card>
+                        </Col>
+                        <Col xs={12} sm={6}>
+                          <Card size="small">
+                            <Statistic title="资金数据点" value={backtestResult.fundDataPoints} valueStyle={{ fontSize: '18px' }} />
+                          </Card>
+                        </Col>
+                        <Col xs={12} sm={6}>
+                          <Card size="small">
+                            <Statistic title="成交量数据点" value={backtestResult.amountDataPoints} valueStyle={{ fontSize: '18px' }} />
+                          </Card>
+                        </Col>
+                        <Col xs={12} sm={6}>
+                          <Card size="small">
+                            <Statistic
+                              title="指数数据"
+                              value={backtestResult.hasIndexData ? '已加载' : '无数据'}
+                              valueStyle={{ color: backtestResult.hasIndexData ? '#52c41a' : '#faad14', fontSize: '18px' }}
+                            />
+                          </Card>
+                        </Col>
+                      </Row>
+
+                      <Row gutter={[16, 16]} className="charts-section">
+                        <Col xs={24} lg={12}>
+                          <Card size="small" className="chart-card">
+                            <KLineChart data={cybKlineData} height={220} title="📈 创业板指 K线 (近100日)" />
+                          </Card>
+                        </Col>
+                        <Col xs={24} lg={12}>
+                          <Card size="small" className="chart-card">
+                            <KLineChart data={kcbKlineData} height={220} title="📈 科创50 K线 (近100日)" />
+                          </Card>
+                        </Col>
+                      </Row>
+
+                      <Row gutter={[16, 16]} className="charts-section">
+                        <Col xs={24} lg={12}>
+                          <Card size="small" className="chart-card">
+                            <IntradayChart
+                              data={cybTlineData}
+                              title="📊 创业板指 分时"
+                              height={240}
+                              basePrice={backtestResult.cybOpenPx}
+                            />
+                          </Card>
+                        </Col>
+                        <Col xs={24} lg={12}>
+                          <Card size="small" className="chart-card">
+                            <IntradayChart
+                              data={kcbTlineData}
+                              title="📊 科创50 分时"
+                              height={240}
+                              basePrice={backtestResult.kcbOpenPx}
+                            />
+                          </Card>
+                        </Col>
+                      </Row>
+
+                      <Row gutter={[16, 16]} className="charts-section">
+                        <Col xs={24} lg={12}>
+                          <Card size="small" className="chart-card">
+                            <IntradayChart
+                              data={fundFlowData}
+                              title="💰 主力资金净流入 (亿)"
+                              height={240}
+                              basePrice={0}
+                              isFundFlow
+                            />
+                          </Card>
+                        </Col>
+                        <Col xs={24} lg={12}>
+                          <Card size="small" className="chart-card">
+                            <VolumeChart
+                              data={volumeData}
+                              title="📦 两市成交额 (亿)"
+                              height={240}
+                            />
+                          </Card>
+                        </Col>
+                      </Row>
+
+                      <Card
+                        className="result-card"
+                        title={`回测结果 - ${backtestResult.dateDisplay} 信号时间线`}
+                        size="small"
+                      >
+                        {backtestResult.signals.length === 0 ? (
+                          <Empty description="当日未命中任何策略信号" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                        ) : (
+                          <div className="signal-timeline">
+                            {backtestResult.signals.map((timePoint, idx) => (
+                              <div key={idx} className="time-point-group">
+                                <div className="time-badge">{timePoint.time}</div>
+                                <div className="signals-list">
+                                  {timePoint.signals.map((signal, sIdx) => (
+                                    <Card
+                                      key={sIdx}
+                                      size="small"
+                                      className={`signal-card ${signal.isBullish ? 'bullish' : 'bearish'}`}
+                                    >
+                                      <div className="signal-title">
+                                        <Tag color={signal.isBullish ? 'red' : 'green'}>
+                                          {signal.isBullish ? '利好' : '利空'}
+                                        </Tag>
+                                        <span className="signal-name">{signal.title}</span>
+                                      </div>
+                                      <div className="signal-desc">{signal.description}</div>
+                                    </Card>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </Card>
+                    </>
+                  ) : (
+                    <Card className="placeholder-card">
+                      <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description="选择日期和策略后点击「开始回测」查看图表和信号"
+                      />
+                    </Card>
+                  )}
+                </Spin>
+
+                {/* AI 诊断结果 */}
+                {(aiLoading || aiDiagnosisResult) && (
+                  <Card
+                    className="ai-diagnosis-card"
+                    title={
+                      <span className="ai-diagnosis-title">
+                        <RobotOutlined /> AI 独立诊断
+                        {aiDiagnosisResult && (
+                          <span className="ai-diagnosis-meta">
+                            {aiDiagnosisResult.dateDisplay} · {aiDiagnosisResult.model === 'zhipu-manual' ? '智谱(手动)' : aiDiagnosisResult.model}
+                          </span>
+                        )}
+                      </span>
+                    }
+                    size="small"
+                  >
+                    <AiDiagnosisResult diagnosis={aiDiagnosisResult?.diagnosis} loading={aiLoading} />
+                  </Card>
+                )}
+
+                <Modal
+                  title="粘贴 AI 返回的 JSON 诊断结果"
+                  open={pasteModalOpen}
+                  onOk={handleConfirmPaste}
+                  onCancel={() => setPasteModalOpen(false)}
+                  okText="渲染诊断"
+                  cancelText="取消"
+                  width={680}
+                >
+                  <div style={{ marginBottom: 8, color: '#64748b', fontSize: 13 }}>
+                    请将智谱对话返回的完整 JSON 粘贴到下方（包含 diagnosis / strategyDiagnosis / additionalFindings / operationAdvice / outlook 字段），系统将自动解析并与本地代码诊断结果对比渲染。
+                  </div>
+                  <Input.TextArea
+                    value={pasteValue}
+                    onChange={(e) => setPasteValue(e.target.value)}
+                    rows={12}
+                    placeholder='{"diagnosis":{"overallSentiment":"偏空","sentimentScore":-25,"summary":"..."},"strategyDiagnosis":[{"strategyId":"high_open_low_close","strategyName":"高开容易低走","type":"bearish","triggered":true,"triggerTime":"09:35","evidence":"...","analysis":"..."}],"additionalFindings":[...],"operationAdvice":{"action":"减仓","position":"30%","reason":"..."},"outlook":"..."}'
+                    style={{ fontFamily: 'monospace', fontSize: 12 }}
+                  />
+                </Modal>
               </>
             ),
           },

@@ -288,7 +288,7 @@ const buildHeatmapItems = (dataList, valueKey = 'money') => {
     });
 };
 
-const BlockMoneyChange = () => {
+const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     const [timeSeriesData, setTimeSeriesData] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedBlocks, setSelectedBlocks] = useState(DEFAULT_SELECTED_BLOCKS);
@@ -296,7 +296,7 @@ const BlockMoneyChange = () => {
     const [historyViewMode, setHistoryViewMode] = useState('line'); // 'line' or 'heatmap'
     const [historyHeatmapTab, setHistoryHeatmapTab] = useState('today'); // 'today' or 'fiveDay'
     const [modalBlock, setModalBlock] = useState(null); // 当前打开折线图弹窗的板块名
-    const [activeTab, setActiveTab] = useState('intraday'); // 'intraday' 当日资金 | 'history' 历史资金 | 'rzrq' 融资余额
+    const [activeTab, setActiveTab] = useState(defaultTab); // 'intraday' 当日资金 | 'history' 历史资金 | 'rzrq' 融资余额 | 'crowd' 拥挤度
     const [dayHistory, setDayHistory] = useState([]); // 按天维度的板块资金历史
     const [rzrqData, setRzrqData] = useState([]);
     const [rzrqLoading, setRzrqLoading] = useState(false);

@@ -348,6 +348,10 @@ const Sentiment = () => {
     fetchEmotionCycle();
   }, []);
 
+    useEffect(() => {
+      window.scrollTo(0, 0);
+    }, []);
+
   useEffect(() => {
     if (!loading) {
       if (data.length > 0 && containerRef.current) {

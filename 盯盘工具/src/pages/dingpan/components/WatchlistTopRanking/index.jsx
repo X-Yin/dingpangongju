@@ -40,7 +40,7 @@ const WatchlistTopRanking = ({ stocks = [], onStockClick, onOpenOverlayTimeLine,
     const avgDeclineText = declineCount > 0 ? `${avgDecline.toFixed(2)}%` : '--';
 
     // tag 背景跟随全局主题色（App.jsx 通过 --theme-color-rgb 注入），带透明度，未设置时回退默认浅灰
-    const tagStyle = { fontSize: 11, fontWeight: 500, color: '#12213a', background: 'rgba(var(--theme-color-rgb, 22, 119, 255), 0.15)', borderRadius: 4, padding: '1px 6px', whiteSpace: 'nowrap' };
+    const tagStyle = { userSelect: 'none', fontSize: 11, fontWeight: 500, color: '#12213a', background: 'rgba(var(--theme-color-rgb, 22, 119, 255), 0.15)', borderRadius: 4, padding: '1px 6px', whiteSpace: 'nowrap' };
     const upColorStyle = { color: '#e11d48' };
     const downColorStyle = { color: '#059669' };
 
@@ -72,11 +72,11 @@ const WatchlistTopRanking = ({ stocks = [], onStockClick, onOpenOverlayTimeLine,
                             style={{ cursor: onStockClick ? 'pointer' : 'default', ...borderStyle(themeColor) }}
                         >
                             <div className="item-name">
-                                <span style={{ fontSize: '12px', ...titleStyle(themeColor) }}>
+                                <span style={{ userSelect: 'none', fontSize: '12px', ...titleStyle(themeColor) }}>
                                     {s.stockName || s.code}
                                 </span>
                             </div>
-                            <span className={`item-value ${value > 0 ? 'up' : 'down'}`} style={{ fontVariantNumeric: 'tabular-nums', ...numberStyle(themeColor) }}>
+                            <span className={`item-value ${value > 0 ? 'up' : 'down'}`} style={{ userSelect: 'none', fontVariantNumeric: 'tabular-nums', ...numberStyle(themeColor) }}>
                                 {value > 0 ? '+' : ''}{value.toFixed(2)}%
                             </span>
                         </div>

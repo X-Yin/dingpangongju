@@ -180,11 +180,6 @@
     "TotalShares": 585010344
   },
   {
-    "secu_code": "sz002636",
-    "secu_name": "金安国纪",
-    "TotalShares": 728000000
-  },
-  {
     "secu_code": "sz301526",
     "secu_name": "国际复材",
     "TotalShares": 3770878048
@@ -433,5 +428,25 @@
     "secu_code": "sh603319",
     "secu_name": "美湖股份",
     "TotalShares": 339149678
+  },
+  {
+    "secu_code": "sh688700",
+    "secu_name": "东威科技",
+    "TotalShares": 298401360
+  },
+  {
+    "secu_code": "sh688028",
+    "secu_name": "沃尔德  ",
+    "TotalShares": 150949000
+  },
+  {
+    "secu_code": "sz300179",
+    "secu_name": "四方达",
+    "TotalShares": 485723930
+  },
+  {
+    "secu_code": "sz002636",
+    "secu_name": "金安国纪",
+    "TotalShares": 728000000
   }
 ]

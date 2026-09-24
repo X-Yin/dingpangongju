@@ -660,6 +660,10 @@ const TrainingCamp = () => {
     return Array.from(map.values());
   }, [campData]);
 
+    useEffect(() => {
+      window.scrollTo(0, 0);
+    }, []);
+
   const handleStockClick = useCallback((stock) => {
     if (stock?.code) message.info(`查看 ${stock.name || stock.code}（回放模式暂不支持K线跳转）`);
   }, []);

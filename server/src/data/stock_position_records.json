@@ -1,5 +1,71 @@
 [
   {
+    "id": "1790228375029_vm65xt",
+    "type": "pipeline",
+    "code": "sz301217",
+    "name": "铜冠铜箔",
+    "date": "2026-09-24",
+    "time": "13:39:35",
+    "detail": "流水线推进至 100%（100%）",
+    "pipelineStage": 4,
+    "createdAt": "2026-09-24T05:39:35.029Z"
+  },
+  {
+    "id": "1790228374362_jrm5jg",
+    "type": "pipeline",
+    "code": "sz301217",
+    "name": "铜冠铜箔",
+    "date": "2026-09-24",
+    "time": "13:39:34",
+    "detail": "流水线推进至 75%（75%）",
+    "pipelineStage": 3,
+    "createdAt": "2026-09-24T05:39:34.362Z"
+  },
+  {
+    "id": "1790228373588_cntjwp",
+    "type": "pipeline",
+    "code": "sz301217",
+    "name": "铜冠铜箔",
+    "date": "2026-09-24",
+    "time": "13:39:33",
+    "detail": "流水线推进至 50%（50%）",
+    "pipelineStage": 2,
+    "createdAt": "2026-09-24T05:39:33.588Z"
+  },
+  {
+    "id": "1790228372824_311ztl",
+    "type": "pipeline",
+    "code": "sz301217",
+    "name": "铜冠铜箔",
+    "date": "2026-09-24",
+    "time": "13:39:32",
+    "detail": "流水线推进至 30%（30%）",
+    "pipelineStage": 1,
+    "createdAt": "2026-09-24T05:39:32.824Z"
+  },
+  {
+    "id": "1790228363139_bodc6p",
+    "type": "buy",
+    "code": "sz301217",
+    "name": "铜冠铜箔",
+    "date": "2026-09-24",
+    "time": "13:39:23",
+    "detail": "新增持仓：铜冠铜箔（sz301217）",
+    "pipelineStage": 0,
+    "createdAt": "2026-09-24T05:39:23.139Z"
+  },
+  {
+    "id": "1790219895100_wffzdd",
+    "type": "delete",
+    "code": "sz002636",
+    "name": "金安国纪",
+    "date": "2026-09-24",
+    "time": "11:18:15",
+    "detail": "删除持仓：金安国纪（sz002636）",
+    "pipelineStage": null,
+    "createdAt": "2026-09-24T03:18:15.100Z"
+  },
+  {
     "id": "1790053426019_v3kmzd",
     "type": "pipeline",
     "code": "sz002636",

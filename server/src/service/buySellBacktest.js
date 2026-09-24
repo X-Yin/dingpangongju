@@ -1009,19 +1009,9 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
   const fmtMinuteC5 = minute != null ? `${String(Math.floor(minute / 100)).padStart(2, '0')}:${String(minute % 100).padStart(2, '0')}` : '--';
   const prevDisplayC5 = [prev1C5, prev2C5].map(s => (s != null ? Number(s).toFixed(2) : '--')).join('、');
   const todayDisplayC5 = todayScoreC5 != null ? todayScoreC5.toFixed(2) : '--';
-  // 附加限制：上一交易日距「最近 5 个交易日（不含当日）收盘价最高点」需 >= 2 个交易日（trainingCamp.js 按回放日期预计算随 stockChanges 下发）。
-  // 收盘价仍在创新高说明股价仍按趋势行走，即便连续三日抗分歧弱势也不算卖点
-  const highGapDaysC5 = stock?.dailyHighGapDays != null ? toNumber(stock.dailyHighGapDays) : null;
-  const highGapDateC5 = stock?.dailyHighGapDate != null ? toNumber(stock.dailyHighGapDate) : null;
-  const highGapCloseC5 = stock?.dailyHighGapClose != null ? toNumber(stock.dailyHighGapClose) : null;
-  const highGapOkC5 = highGapDaysC5 != null && highGapDaysC5 >= 2;
-  const fmtDateC5 = highGapDateC5 != null ? `${String(highGapDateC5).padStart(8, '0').substring(4, 6)}-${String(highGapDateC5).padStart(8, '0').substring(6, 8)}` : '--';
-  const highGapDescC5 = highGapDaysC5 != null
-    ? `${highGapDaysC5} 个交易日（高点 ${fmtDateC5} ${highGapCloseC5}）`
-    : '历史不足 5 日';
   const condition5 = {
     name: '连续三日抗分歧弱势',
-    satisfied: allBelow10C5 && isAfter940C5 && highGapOkC5,
+    satisfied: allBelow10C5 && isAfter940C5,
     detail: !prevOkC5
       ? `前两日抗分歧指数未全部 < 10（${prevDisplayC5}）或历史数据不足，无法判断连续三日弱势`
       : !isAfter940C5
@@ -1030,18 +1020,13 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
           ? (todayScoreC5 == null
             ? `当日实时抗分歧分数数据不足（截至 ${fmtMinuteC5}），未触发`
             : `前两日均 < 10（${prevDisplayC5}），但当日实时 ${todayDisplayC5} ≥ 10（截至 ${fmtMinuteC5}），未触发`)
-          : !highGapOkC5
-            ? (highGapDaysC5 == null
-              ? `连续三日抗分歧均 < 10（${prevDisplayC5}、当日 ${todayDisplayC5}），但历史交易日不足 5 日，无法判断收盘新高距离，不触发`
-              : `连续三日抗分歧均 < 10（${prevDisplayC5}、当日 ${todayDisplayC5}），但上一交易日距最近5日收盘新高仅 ${highGapDescC5}（需>=2），收盘价仍处新高附近趋势未破，不触发`)
-            : `前两日抗分歧指数均 < 10（${prevDisplayC5}），当日实时 ${todayDisplayC5} < 10（截至 ${fmtMinuteC5}），且上一交易日距最近5日收盘新高 ${highGapDescC5}（需>=2），个股连续弱势且已离高点，触发卖点`,
+          : `前两日抗分歧指数均 < 10（${prevDisplayC5}），当日实时 ${todayDisplayC5} < 10（截至 ${fmtMinuteC5}），个股连续弱势，触发卖点`,
     subConditions: [
       { label: '前两日抗分歧（全天）', value: prevDisplayC5 },
       { label: '当日实时抗分歧', value: `${todayDisplayC5}（截至 ${fmtMinuteC5}）` },
-      { label: '距5日收盘新高', value: `${highGapDescC5}，需>=2` },
       { label: '当前时间', value: fmtMinuteC5 },
       { label: '生效时间', value: '9:40 后' },
-      { label: '阈值', value: '连续3日均 < 10 且距新高>=2日' },
+      { label: '阈值', value: '连续3日均 < 10' },
     ],
   };
 

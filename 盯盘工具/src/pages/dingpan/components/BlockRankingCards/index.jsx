@@ -47,7 +47,7 @@ const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockSto
                 </Card>
             ) : (
                 <Card
-                    title={<><RiseOutlined style={{ marginRight: 8 }} /> 涨幅前十</>}
+                    title={<><RiseOutlined style={{ marginRight: 8, userSelect: 'none' }} /> 涨幅前十</>}
                     className="monitor-card"
                     variant="borderless"
                     bodyStyle={{ padding: '12px 14px' }}
@@ -70,14 +70,14 @@ const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockSto
                                     style={borderStyle(themeColor)}
                                 >
                                     <div className="item-name">
-                                        <span style={{ fontSize: '12px', ...titleStyle(themeColor) }}>{item.blockName}</span>
+                                        <span style={{ userSelect: 'none', fontSize: '12px', ...titleStyle(themeColor) }}>{item.blockName}</span>
                                         {item.rankChange !== 0 && (
                                             <span className={`item-rank-change ${item.rankChange > 0 ? 'up' : 'down'}`}>
                                                 {item.rankChange > 0 ? '↑' : '↓'}{Math.abs(item.rankChange)}
                                             </span>
                                         )}
                                     </div>
-                                    <span className={`item-value ${item.avgChange > 0 ? 'up' : 'down'}`} style={numberStyle(themeColor)}>
+                                    <span className={`item-value ${item.avgChange > 0 ? 'up' : 'down'}`} style={{ userSelect: 'none', ...numberStyle(themeColor) }}>
                                         {item.avgChange > 0 ? '+' : ''}{item.avgChange}%
                                     </span>
                                 </div>
@@ -112,7 +112,7 @@ const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockSto
                                     style={borderStyle(themeColor)}
                                 >
                                     <div className="item-name">
-                                        <span style={{ fontSize: '12px', ...titleStyle(themeColor) }}>{item.blockName}</span>
+                                        <span style={{ userSelect: 'none', fontSize: '12px', ...titleStyle(themeColor) }}>{item.blockName}</span>
                                         {item.rankChange !== 0 && (
                                             <span className={`item-rank-change ${item.rankChange > 0 ? 'up' : 'down'}`}>
                                                 {item.rankChange > 0 ? '↑' : '↓'}{Math.abs(item.rankChange)}
@@ -152,14 +152,14 @@ const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockSto
                                     style={borderStyle(themeColor)}
                                 >
                                     <div className="item-name">
-                                        <span style={{ fontSize: '12px', ...titleStyle(themeColor) }}>{item.blockName}</span>
+                                        <span style={{ userSelect: 'none', fontSize: '12px', ...titleStyle(themeColor) }}>{item.blockName}</span>
                                         {item.rankChange !== 0 && (
                                             <span className={`item-rank-change ${item.rankChange > 0 ? 'up' : 'down'}`}>
                                                 {item.rankChange > 0 ? '↑' : '↓'}{Math.abs(item.rankChange)}
                                             </span>
                                         )}
                                     </div>
-                                    <span className={`item-value ${item.avgChange > 0 ? 'up' : 'down'}`} style={numberStyle(themeColor)}>
+                                    <span className={`item-value ${item.avgChange > 0 ? 'up' : 'down'}`} style={{ userSelect: 'none', ...numberStyle(themeColor), }}>
                                         {item.avgChange > 0 ? '+' : ''}{item.avgChange}%
                                     </span>
                                 </div>

@@ -1,5 +1,133 @@
 [
   {
+    "date": "20260924",
+    "blocks": {
+      "MFC": {
+        "avgChange": 5.13
+      },
+      "PPE树脂": {
+        "avgChange": 1.39
+      },
+      "银行": {
+        "avgChange": 0.56
+      },
+      "机器人": {
+        "avgChange": 0.27
+      },
+      "煤炭": {
+        "avgChange": 0.12
+      },
+      "商业航天": {
+        "avgChange": -0.16
+      },
+      "军工": {
+        "avgChange": -0.89
+      },
+      "电力": {
+        "avgChange": -1.19
+      },
+      "特高压": {
+        "avgChange": -1.32
+      },
+      "金刚石散热": {
+        "avgChange": -1.66
+      },
+      "证券": {
+        "avgChange": -1.87
+      },
+      "北美缺电": {
+        "avgChange": -2
+      },
+      "AI电源": {
+        "avgChange": -2.06
+      },
+      "AI 应用": {
+        "avgChange": -2.15
+      },
+      "化工": {
+        "avgChange": -2.2
+      },
+      "玻璃基板": {
+        "avgChange": -2.25
+      },
+      "国产超节点": {
+        "avgChange": -2.43
+      },
+      "半导体": {
+        "avgChange": -2.44
+      },
+      "cpu": {
+        "avgChange": -2.52
+      },
+      "光芯片": {
+        "avgChange": -2.52
+      },
+      "消费": {
+        "avgChange": -3.08
+      },
+      "功率半导体": {
+        "avgChange": -3.13
+      },
+      "半导体材料": {
+        "avgChange": -3.22
+      },
+      "锂电": {
+        "avgChange": -3.26
+      },
+      "MLCC": {
+        "avgChange": -3.26
+      },
+      "液冷": {
+        "avgChange": -3.37
+      },
+      "钨": {
+        "avgChange": -3.41
+      },
+      "MPO": {
+        "avgChange": -3.43
+      },
+      "房地产": {
+        "avgChange": -3.56
+      },
+      "粮食": {
+        "avgChange": -3.63
+      },
+      "先进封装": {
+        "avgChange": -3.73
+      },
+      "cpo": {
+        "avgChange": -3.74
+      },
+      "光模块": {
+        "avgChange": -3.77
+      },
+      "贵金属": {
+        "avgChange": -3.81
+      },
+      "光纤": {
+        "avgChange": -4.11
+      },
+      "电子布": {
+        "avgChange": -4.2
+      },
+      "存储": {
+        "avgChange": -4.22
+      },
+      "pcb": {
+        "avgChange": -4.37
+      },
+      "医药": {
+        "avgChange": -4.6
+      },
+      "铜箔": {
+        "avgChange": -6.06
+      },
+      "CCL": {
+        "avgChange": -6.5
+      }
+    }
+  },
+  {
     "date": "20260923",
     "blocks": {
       "玻璃基板": {

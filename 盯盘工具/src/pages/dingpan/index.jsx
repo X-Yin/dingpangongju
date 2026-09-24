@@ -2,8 +2,8 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Row, Col, Spin, Modal, message } from 'antd';
-import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import { Row, Col, Spin, Modal, message, Input, Button } from 'antd';
+import { ArrowUpOutlined, ArrowDownOutlined, LockOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import { local_ip } from '../../constant';
@@ -29,12 +29,17 @@ import GoodNewsModal from './components/GoodNewsModal';
 import LogicExploreModal from './components/LogicExploreModal';
 import AddStockModal from './components/AddStockModal';
 import RenameStockModal from './components/RenameStockModal';
+import TempHideStockModal from './components/TempHideStockModal';
 import IndexOverlayFullscreenModal from './components/IndexOverlayFullscreenModal';
 import BuyPointDiagnosisModal from './components/BuyPointDiagnosisModal';
 import ThemeColorModal from './components/ThemeColorModal';
 import { DEFAULT_THEME_COLOR } from './utils/themeColor';
+import { hideStock, unhideStock, cleanExpiredHiddenStocks, filterHiddenStocks } from './utils/hiddenStocks';
 import { fetchAndCopyContext } from './utils/copyContext';
 import './index.scss';
+
+// 市场盯盘页访问密码（前端写死，刷新页面后需重新输入）
+const DINGPAN_ACCESS_PASSWORD = '17631540414xY@46728531912341234rR';
 
 const colorMap = {
     lowGreen: '#00B42A',
@@ -89,6 +94,22 @@ const isWithinTradingHours = () => {
 
 const DingPan = () => {
     const navigate = useNavigate();
+
+    // 访问密码门禁状态（不持久化：刷新页面或重新进入菜单后需重新输入）
+    const [unlocked, setUnlocked] = useState(false);
+    const [passwordInput, setPasswordInput] = useState('');
+    const [passwordError, setPasswordError] = useState(false);
+
+    const handleUnlockSubmit = () => {
+        if (passwordInput === DINGPAN_ACCESS_PASSWORD) {
+            setUnlocked(true);
+            setPasswordInput('');
+            setPasswordError(false);
+        } else {
+            setPasswordError(true);
+            setPasswordInput('');
+        }
+    };
 
     // 功能开关：板块异动监控模块（设为true可重新启用）
     const SHOW_BLOCK_ALERT_MONITOR = false;
@@ -161,6 +182,13 @@ const DingPan = () => {
     const [renameModalVisible, setRenameModalVisible] = useState(false);
     const [renameStockCode, setRenameStockCode] = useState('');
     const [renameStockName, setRenameStockName] = useState('');
+
+    // 暂时隐藏股票相关状态（localStorage 持久化，按自然日计）
+    const [hiddenStockMap, setHiddenStockMap] = useState(() => cleanExpiredHiddenStocks());
+    const [tempHideModalVisible, setTempHideModalVisible] = useState(false);
+    const [tempHideStock, setTempHideStock] = useState(null);
+    // 打开弹窗事件中记录的时间戳（事件处理器内可安全调用 Date.now），供弹窗计算剩余天数
+    const [tempHideOpenTs, setTempHideOpenTs] = useState(0);
     const [refreshingStockData, setRefreshingStockData] = useState(false);
     const [watchlistMainFund, setWatchlistMainFund] = useState({});
 
@@ -317,6 +345,29 @@ const DingPan = () => {
         } catch (error) {
             console.error('Rename stock failed:', error);
         }
+    };
+
+    // 打开暂时隐藏弹窗
+    const handleOpenTempHideModal = (stock) => {
+        setTempHideStock(stock);
+        setTempHideOpenTs(Date.now());
+        setTempHideModalVisible(true);
+    };
+
+    // 确认暂时隐藏：n 个自然日后自动恢复显示
+    const handleConfirmTempHide = (days) => {
+        if (!tempHideStock?.code) return;
+        const nextMap = hideStock(tempHideStock.code, tempHideStock.stockName, days);
+        setHiddenStockMap({ ...nextMap });
+        setTempHideModalVisible(false);
+        message.success(`已暂时隐藏 ${tempHideStock.stockName || tempHideStock.code}，到期后自动恢复显示`);
+    };
+
+    // 恢复显示被隐藏的股票
+    const handleUnhideStock = (code) => {
+        const nextMap = unhideStock(code);
+        setHiddenStockMap({ ...nextMap });
+        message.success('已恢复显示');
     };
 
     // 判断股票是否有匹配的利好研报
@@ -840,8 +891,13 @@ const DingPan = () => {
         localStorage.setItem(localStorageKey, String(now));
     };
 
+    // 暂时隐藏过滤：仅作用于自选股全量监控/个股幅度异动/自选股涨跌幅前十三个模块，其他模块与科技情绪指数计算不受影响
+    const visibleAllStockData = useMemo(() => (
+        filterHiddenStocks(data.allStockData, hiddenStockMap)
+    ), [data.allStockData, hiddenStockMap]);
+
     const filteredAllStockData = useMemo(() => {
-        let stocks = Array.isArray(data.allStockData) ? data.allStockData : [];
+        let stocks = Array.isArray(visibleAllStockData) ? visibleAllStockData : [];
 
         // 1. 重点筛选
         if (showOnlyImportant) {
@@ -892,7 +948,7 @@ const DingPan = () => {
         }
 
         return stocks;
-    }, [data.allStockData, searchQuery, showOnlyImportant, showOnlyGoodNews, sortOrder, sortField, watchlistMainFund, jigouReports]);
+    }, [visibleAllStockData, searchQuery, showOnlyImportant, showOnlyGoodNews, sortOrder, sortField, watchlistMainFund, jigouReports]);
 
     const allStockOverview = useMemo(() => {
         const allStocks = Array.isArray(data.allStockData) ? data.allStockData : [];
@@ -912,7 +968,7 @@ const DingPan = () => {
     const reportStockData = useMemo(() => {
         if (!researchReportsLoaded) return { topGain: [], topCoverage: [], intersection: [] };
 
-        const allStocks = Array.isArray(data.allStockData) ? data.allStockData : [];
+        const allStocks = Array.isArray(visibleAllStockData) ? visibleAllStockData : [];
 
         const fiveDaysAgo = dayjs().subtract(5, 'day');
         const recentJigouReports = jigouReports.filter(report => {
@@ -972,7 +1028,7 @@ const DingPan = () => {
         const intersection = topCoverage.filter(s => topGainCodes.has(s.code));
 
         return { topGain, topCoverage, intersection };
-    }, [data.allStockData, jigouReports, recentResearchReports, researchReportsLoaded]);
+    }, [visibleAllStockData, jigouReports, recentResearchReports, researchReportsLoaded]);
 
     const moneyStatus = useMemo(() => {
         if (historyData.length < 2) return null;
@@ -1128,7 +1184,7 @@ const DingPan = () => {
 
     // 全量自选股数据（用于分区/合并/统计视图）
     const fullStockData = useMemo(() => {
-        const allStocks = Array.isArray(data.allStockData) ? data.allStockData : [];
+        const allStocks = Array.isArray(visibleAllStockData) ? visibleAllStockData : [];
         const changeList = [];
         let upCount = 0;
         let downCount = 0;
@@ -1181,7 +1237,7 @@ const DingPan = () => {
         const totalChangeValue = changeList.reduce((sum, item) => sum + item.changeValue, 0);
 
         return { changeList, aboveOpeningList, belowOpeningList, upCount, downCount, totalChangeValue };
-    }, [data.allStockData]);
+    }, [visibleAllStockData]);
 
     const fetchData = async () => {
         try {
@@ -2128,6 +2184,32 @@ const DingPan = () => {
     const blockUpAlerts = blockAlerts.filter(item => item.type === 'up');
     const blockDownAlerts = blockAlerts.filter(item => item.type !== 'up');
 
+    // 密码门禁：仅交易日的交易时段（9:15-11:30、13:00-15:00）需要解锁，其余时间直接放行
+    // （所有 Hook 已在上方执行完毕，早退安全；数据轮询会持续触发重渲染，跨时段后条件自动重新生效）
+    if (!unlocked && isWithinTradingHours()) {
+        return (
+            <div className="dingpan-container">
+                <div className="dingpan-password-gate">
+                    <div className="password-gate-card">
+                        <div className="password-gate-icon"><LockOutlined /></div>
+                        <div className="password-gate-title">市场盯盘</div>
+                        <div className="password-gate-subtitle">请输入访问密码以查看监控内容</div>
+                        <Input.Password
+                            autoFocus
+                            placeholder="请输入密码"
+                            value={passwordInput}
+                            status={passwordError ? 'error' : ''}
+                            onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
+                            onPressEnter={handleUnlockSubmit}
+                        />
+                        {passwordError && <div className="password-gate-error">密码错误，请重新输入</div>}
+                        <Button type="primary" block onClick={handleUnlockSubmit}>解锁</Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="dingpan-container" onDoubleClick={handlePageDoubleClick}>
             <TopGlobalAlerts
@@ -2241,7 +2323,7 @@ const DingPan = () => {
                                 reportStockData={reportStockData}
                                 researchReportsLoading={researchReportsLoading}
                                 researchReportsLoaded={researchReportsLoaded}
-                                allStockData={data.allStockData}
+                                allStockData={visibleAllStockData}
                                 watchlistMainFund={watchlistMainFund}
                                 onStockClick={showKLine}
                                 onOpenOverlayTimeLine={handleOpenOverlayTimeLine}
@@ -2302,6 +2384,7 @@ const DingPan = () => {
                                 onOpenOverlayTimeLine={handleOpenOverlayTimeLine}
                                 onBacktest={(stock) => navigate(`/stock_diagnosis?backtest=1&code=${encodeURIComponent(stock.code)}&name=${encodeURIComponent(stock.stockName || '')}`)}
                                 onRename={handleOpenRenameModal}
+                                onTempHideStock={handleOpenTempHideModal}
                                 themeColor={themeColor}
                             />
                             {isWatchlistCollapsed && (
@@ -2325,7 +2408,7 @@ const DingPan = () => {
                             {isWatchlistCollapsed && (
                                 <div style={{ marginBottom: 16 }}>
                                     <WatchlistTopRanking
-                                        stocks={data.allStockData}
+                                        stocks={visibleAllStockData}
                                         onStockClick={showKLine}
                                         onOpenOverlayTimeLine={handleOpenOverlayTimeLine}
                                         themeColor={themeColor}
@@ -2415,6 +2498,17 @@ const DingPan = () => {
                 renameStockName={renameStockName}
                 setRenameStockName={setRenameStockName}
                 themeColor={themeColor}
+            />
+
+            {/* 暂时隐藏股票弹窗 */}
+            <TempHideStockModal
+                open={tempHideModalVisible}
+                openTs={tempHideOpenTs}
+                onCancel={() => setTempHideModalVisible(false)}
+                onOk={handleConfirmTempHide}
+                stock={tempHideStock}
+                hiddenStockMap={hiddenStockMap}
+                onUnhide={handleUnhideStock}
             />
 
             {/* 指数叠加分时全屏弹窗 */}

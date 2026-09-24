@@ -1166,6 +1166,81 @@
   }
 }
 
+/* 组件标题与列表标题禁止文字选中 */
+.dingpan-container {
+  .ant-card-head-title,
+  .all-stock-card-title,
+  .title-block,
+  .title-row,
+  .chart-title-row,
+  .chart-title,
+  .detail-header,
+  .detail-title,
+  .jingjia-block-header,
+  .yanbao-module-title,
+  .yanbao-module-subtitle,
+  .history-title,
+  .all-stock-list-header {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
+/* 访问密码门禁 */
+.dingpan-password-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 72px);
+
+  .password-gate-card {
+    width: 360px;
+    padding: 36px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 18px;
+    box-shadow:
+      0 18px 46px rgba(71, 96, 139, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(22px);
+  }
+
+  .password-gate-icon {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 22px;
+    color: #475969;
+    background: linear-gradient(135deg, rgba(22, 119, 255, 0.14), rgba(255, 211, 182, 0.18));
+    border: 1px solid rgba(255, 255, 255, 0.8);
+  }
+
+  .password-gate-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #12213a;
+  }
+
+  .password-gate-subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 6px;
+  }
+
+  .password-gate-error {
+    width: 100%;
+    font-size: 12px;
+    color: #e11d48;
+  }
+}
+
 /* 利好标记样式 */
 .good-news-badge {
   display: inline;

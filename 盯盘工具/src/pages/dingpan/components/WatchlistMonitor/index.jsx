@@ -3,7 +3,7 @@ import {
     AreaChartOutlined, CaretDownOutlined, CaretUpOutlined, SearchOutlined, ReloadOutlined,
     PlusOutlined, StarOutlined, StarFilled, ThunderboltOutlined, ArrowUpOutlined, ArrowDownOutlined,
     InfoCircleOutlined, DeleteOutlined, PushpinOutlined, RadarChartOutlined, FileSearchOutlined,
-    EditOutlined, LineChartOutlined, ExperimentOutlined,
+    EditOutlined, LineChartOutlined, ExperimentOutlined, EyeInvisibleOutlined,
 } from '@ant-design/icons';
 import { titleStyle, numberStyle } from '../../utils/themeColor';
 import './index.scss';
@@ -39,6 +39,7 @@ const WatchlistMonitor = ({
     onOpenOverlayTimeLine,
     onBacktest,
     onRename,
+    onTempHideStock,
     themeColor,
 }) => {
     if (isWatchlistCollapsed) {
@@ -270,6 +271,12 @@ const WatchlistMonitor = ({
                                                 onClick: () => onBacktest(stock),
                                             },
                                             { type: 'divider' },
+                                            {
+                                                key: 'temp-hide',
+                                                label: '暂时隐藏',
+                                                icon: <EyeInvisibleOutlined />,
+                                                onClick: () => onTempHideStock(stock),
+                                            },
                                             {
                                                 key: 'delete',
                                                 label: '删除股票',

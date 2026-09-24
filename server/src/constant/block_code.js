@@ -818,5 +818,25 @@ exports.default = [
         "blockName": "pcb",
         "code": "sh600601",
         "name": "方正科技"
+    },
+    {
+        "blockName": "金刚石散热",
+        "code": "sz301071",
+        "name": "力量钻石"
+    },
+    {
+        "blockName": "金刚石散热",
+        "code": "sh600172",
+        "name": "黄河旋风"
+    },
+    {
+        "blockName": "金刚石散热",
+        "code": "sz300179",
+        "name": "四方达"
+    },
+    {
+        "blockName": "金刚石散热",
+        "code": "sh688028",
+        "name": "沃尔德"
     }
 ]

@@ -295,14 +295,6 @@
     "isTech": true
   },
   {
-    "code": "sz002636",
-    "name": "金安国纪",
-    "isImportant": false,
-    "blockName": "电子布",
-    "riskScore": 6,
-    "isTech": true
-  },
-  {
     "code": "sz301526",
     "name": "国际复材",
     "isImportant": false,
@@ -703,6 +695,38 @@
     "isImportant": false,
     "blockName": "液冷",
     "riskScore": "7",
+    "isTech": true
+  },
+  {
+    "code": "sh688700",
+    "name": "东威科技",
+    "isImportant": false,
+    "blockName": "pcb",
+    "riskScore": "8",
+    "isTech": true
+  },
+  {
+    "code": "sh688028",
+    "name": "沃尔德",
+    "isImportant": false,
+    "blockName": "金刚石散热",
+    "riskScore": "8",
+    "isTech": true
+  },
+  {
+    "code": "sz300179",
+    "name": "四方达",
+    "isImportant": false,
+    "blockName": "金刚石散热",
+    "riskScore": "8",
+    "isTech": true
+  },
+  {
+    "code": "sz002636",
+    "name": "金安国纪",
+    "isImportant": false,
+    "blockName": "ccl",
+    "riskScore": "6",
     "isTech": true
   }
 ]

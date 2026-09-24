@@ -57,6 +57,10 @@ const ClassifySection = ({ onBlockClick }) => {
     fetchClassify();
   }, [fetchClassify]);
 
+    useEffect(() => {
+      window.scrollTo(0, 0);
+    }, []);
+
   const toggleExpand = (key) => {
     setExpandedKeys(prev =>
       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
@@ -891,6 +895,13 @@ const KeyBlocks = () => {
     return s === 'ai' ? 'ai' : 'tech';
   }, [location.search]);
 
+  // 板块资金内部子 tab（intraday/history/rzrq/crowd/dayAmount），支持从收盘流水线等外部直达拥挤度
+  const moneySubTab = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const s = params.get('subTab');
+    return ['intraday', 'history', 'rzrq', 'crowd', 'dayAmount'].includes(s) ? s : 'intraday';
+  }, [location.search]);
+
   const handleTabChange = (key) => {
     const params = new URLSearchParams(location.search);
     if (key === 'trend') params.delete('tab');
@@ -934,7 +945,7 @@ const KeyBlocks = () => {
           {
             key: 'money',
             label: '板块资金',
-            children: <BlockMoneyChange />,
+            children: <BlockMoneyChange key={moneySubTab} defaultTab={moneySubTab} />,
           },
           {
             key: 'smart',

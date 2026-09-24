@@ -13,6 +13,7 @@ import FloatingStrategyCenter from './components/FloatingStrategyCenter';
 import GlobalAnalysis from './components/GlobalAnalysis';
 import MajorEventReminder from './components/MajorEventReminder';
 import PersonalFeelingModal from './components/PersonalFeelingModal';
+import ClosePipeline from './components/ClosePipeline';
 import dayjs from 'dayjs';
 import './App.scss';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -1080,33 +1081,15 @@ function App() {
 
   const menuItems = [
     {
-      key: '/dingpan',
-      icon: <DesktopOutlined />,
-      label: '盯盘',
-    },
-    {
       key: '/opening_battle',
       icon: <RocketOutlined />,
-      label: '开盘攻防',
+      label: '专注交易',
     },
     // {
-    //   key: '/quant_analysis',
-    //   icon: <StockOutlined />,
-    //   className: hasUnreadQuantSignal && location.pathname !== '/quant_analysis' ? 'quant-menu-item-breathing' : '',
-    //   label: (
-    //     <span className="menu-label-with-badge">
-    //       量化分析
-    //       {hasUnreadQuantSignal && location.pathname !== '/quant_analysis' && (
-    //         <Badge count={quantSignalState.signalCount} className="quant-signal-badge" offset={[8, -2]} />
-    //       )}
-    //     </span>
-    //   ),
+    //   key: '/volume',
+    //   icon: <AreaChartOutlined />,
+    //   label: '资金成交量',
     // },
-    {
-      key: '/volume',
-      icon: <AreaChartOutlined />,
-      label: '资金成交量',
-    },
     {
       key: '/block',
       icon: <AppstoreOutlined />,
@@ -1122,6 +1105,11 @@ function App() {
       key: '/stock_diagnosis',
       icon: <StockOutlined />,
       label: '个股诊断',
+    },
+    {
+      key: '/dingpan',
+      icon: <DesktopOutlined />,
+      label: '市场盯盘',
     },
     {
       key: '/shichangdiaoyan',
@@ -1340,6 +1328,7 @@ function App() {
       {location.pathname !== '/training_camp' && <FloatingMonitorAlarm />}
       {location.pathname !== '/training_camp' && <FloatingStrategyCenter />}
       <FloatingTechEmotion />
+      <ClosePipeline />
 
       {/* 删除持仓股资金净流出警示弹窗 */}
       {outflowWarningVisible && (

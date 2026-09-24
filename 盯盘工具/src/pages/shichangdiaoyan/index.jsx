@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Menu } from 'antd';
 import { ClockCircleOutlined, BookOutlined, FileTextOutlined, FileSearchOutlined } from '@ant-design/icons';
 import TimelineModule from './modules/TimelineModule';
@@ -32,6 +32,10 @@ const ShiChangDiaoYan = () => {
       label: '个人观点',
     }
   ];
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const renderModule = () => {
     switch (currentModule) {

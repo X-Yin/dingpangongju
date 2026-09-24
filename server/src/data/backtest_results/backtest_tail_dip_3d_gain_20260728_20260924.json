@@ -1,0 +1,650 @@
+{
+  "success": true,
+  "type": "single",
+  "strategy": {
+    "id": "tail_dip_3d_gain",
+    "name": "尾盘抄底-3日涨幅最大",
+    "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入最近 3 个交易日涨幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出"
+  },
+  "range": {
+    "startDate": "20260728",
+    "endDate": "20260924"
+  },
+  "skippedDates": [],
+  "seenStocks": [
+    {
+      "code": "sh688981",
+      "name": "中芯国际"
+    },
+    {
+      "code": "sh688347",
+      "name": "华虹"
+    },
+    {
+      "code": "sh688072",
+      "name": "拓荆科技"
+    },
+    {
+      "code": "sz002371",
+      "name": "北方华创"
+    },
+    {
+      "code": "sh688256",
+      "name": "寒武纪"
+    },
+    {
+      "code": "sz002837",
+      "name": "英维克"
+    },
+    {
+      "code": "sz301018",
+      "name": "申菱环境"
+    },
+    {
+      "code": "sh601138",
+      "name": "工业富联"
+    },
+    {
+      "code": "sz300757",
+      "name": "罗博特科"
+    },
+    {
+      "code": "sz300394",
+      "name": "天孚通信"
+    },
+    {
+      "code": "sz300502",
+      "name": "新易盛"
+    },
+    {
+      "code": "sz300308",
+      "name": "中际旭创"
+    },
+    {
+      "code": "sh688048",
+      "name": "长光华芯"
+    },
+    {
+      "code": "sz301511",
+      "name": "德福科技"
+    },
+    {
+      "code": "sz301217",
+      "name": "铜冠铜箔"
+    },
+    {
+      "code": "sh688008",
+      "name": "澜起科技"
+    },
+    {
+      "code": "sh688041",
+      "name": "海光信息"
+    },
+    {
+      "code": "sz002475",
+      "name": "立讯精密"
+    },
+    {
+      "code": "sh600183",
+      "name": "生益科技"
+    },
+    {
+      "code": "sh603986",
+      "name": "兆易创新"
+    },
+    {
+      "code": "sh688313",
+      "name": "仕佳光子"
+    },
+    {
+      "code": "sz002384",
+      "name": "东山精密"
+    },
+    {
+      "code": "sz002916",
+      "name": "深南电路"
+    },
+    {
+      "code": "sz002463",
+      "name": "沪电股份"
+    },
+    {
+      "code": "sz300476",
+      "name": "胜宏科技"
+    },
+    {
+      "code": "sh601869",
+      "name": "长飞光纤"
+    },
+    {
+      "code": "sh600487",
+      "name": "亨通光电"
+    },
+    {
+      "code": "sh603256",
+      "name": "宏和科技"
+    },
+    {
+      "code": "sh688146",
+      "name": "中船特气"
+    },
+    {
+      "code": "sz300408",
+      "name": "三环集团"
+    },
+    {
+      "code": "sh600118",
+      "name": "中国卫星"
+    },
+    {
+      "code": "sz000657",
+      "name": "中钨高新"
+    },
+    {
+      "code": "sh688082",
+      "name": "盛美上海"
+    },
+    {
+      "code": "sz002851",
+      "name": "麦格米特"
+    },
+    {
+      "code": "sz301526",
+      "name": "国际复材"
+    },
+    {
+      "code": "sh688630",
+      "name": "芯基微装"
+    },
+    {
+      "code": "sh603629",
+      "name": "利通电子"
+    },
+    {
+      "code": "sz301377",
+      "name": "鼎泰高科"
+    },
+    {
+      "code": "sh688200",
+      "name": "华峰测控"
+    },
+    {
+      "code": "sz002436",
+      "name": "兴森科技"
+    },
+    {
+      "code": "sh688147",
+      "name": "微导纳米"
+    },
+    {
+      "code": "sz300567",
+      "name": "精测电子"
+    },
+    {
+      "code": "sh688362",
+      "name": "甬矽电子"
+    },
+    {
+      "code": "sh600584",
+      "name": "长电科技"
+    },
+    {
+      "code": "sz002156",
+      "name": "通富微电"
+    },
+    {
+      "code": "sh603757",
+      "name": "大元泵业"
+    },
+    {
+      "code": "sz002536",
+      "name": "飞龙股份"
+    },
+    {
+      "code": "sh600176",
+      "name": "中国巨石"
+    },
+    {
+      "code": "sh688120",
+      "name": "华海清科"
+    },
+    {
+      "code": "sh688629",
+      "name": "华丰科技"
+    },
+    {
+      "code": "sz001309",
+      "name": "德明利"
+    },
+    {
+      "code": "sz300285",
+      "name": "国瓷材料"
+    },
+    {
+      "code": "sz000636",
+      "name": "风华高科"
+    },
+    {
+      "code": "sh688702",
+      "name": "盛科通信"
+    },
+    {
+      "code": "sz301165",
+      "name": "锐捷网络"
+    },
+    {
+      "code": "sh688025",
+      "name": "杰普特"
+    },
+    {
+      "code": "sh688820",
+      "name": "盛合晶微"
+    },
+    {
+      "code": "sz000977",
+      "name": "浪潮信息"
+    },
+    {
+      "code": "sh688361",
+      "name": "中科飞测"
+    },
+    {
+      "code": "sz300395",
+      "name": "菲利华"
+    },
+    {
+      "code": "sz002126",
+      "name": "银轮股份"
+    },
+    {
+      "code": "sh600105",
+      "name": "永鼎股份"
+    },
+    {
+      "code": "sh688012",
+      "name": "中微公司"
+    },
+    {
+      "code": "sh688403",
+      "name": "汇成股份"
+    },
+    {
+      "code": "sh688825",
+      "name": "长鑫科技"
+    },
+    {
+      "code": "sh603228",
+      "name": "景旺电子"
+    },
+    {
+      "code": "sz002428",
+      "name": "云南锗业"
+    },
+    {
+      "code": "sh603083",
+      "name": "剑桥科技"
+    },
+    {
+      "code": "sh688519",
+      "name": "南亚新材"
+    },
+    {
+      "code": "sz002080",
+      "name": "中材科技"
+    },
+    {
+      "code": "sh603186",
+      "name": "华正新材"
+    },
+    {
+      "code": "sz002654",
+      "name": "万润科技"
+    },
+    {
+      "code": "sz002050",
+      "name": "三花智控"
+    },
+    {
+      "code": "sh603119",
+      "name": "浙江荣泰"
+    },
+    {
+      "code": "sh688809",
+      "name": "强一股份"
+    },
+    {
+      "code": "sz300570",
+      "name": "太辰光"
+    },
+    {
+      "code": "sz301183",
+      "name": "东田微"
+    },
+    {
+      "code": "sz301021",
+      "name": "英诺激光"
+    },
+    {
+      "code": "sz000725",
+      "name": "京东方"
+    },
+    {
+      "code": "sh600601",
+      "name": "方正科技"
+    },
+    {
+      "code": "sz300059",
+      "name": "东方财富"
+    },
+    {
+      "code": "sz300085",
+      "name": "银之杰"
+    },
+    {
+      "code": "sz300548",
+      "name": "长芯博创"
+    },
+    {
+      "code": "sh603319",
+      "name": "美湖股份"
+    },
+    {
+      "code": "sh688700",
+      "name": "东威科技"
+    },
+    {
+      "code": "sh688028",
+      "name": "沃尔德"
+    },
+    {
+      "code": "sz300179",
+      "name": "四方达"
+    },
+    {
+      "code": "sz002636",
+      "name": "金安国纪"
+    }
+  ],
+  "trades": [
+    {
+      "seq": 1,
+      "metric": -0.97,
+      "code": "sz300085",
+      "stockName": "银之杰",
+      "buyDate": "20260728",
+      "buyDateDisplay": "2026-07-28",
+      "buyTime": "14:57",
+      "buyPrice": 27.44,
+      "buyChange": -0.97,
+      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+      "buyChecks": [
+        {
+          "id": "tail_dip",
+          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+          "passed": true,
+          "value": "14:57",
+          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+        }
+      ],
+      "sellDate": "20260729",
+      "sellDateDisplay": "2026-07-29",
+      "sellTime": "09:32",
+      "sellPrice": 27.35,
+      "sellChange": -0.95,
+      "sellReason": "开盘后涨幅开始下降即卖出",
+      "returnRate": -0.33
+    },
+    {
+      "seq": 2,
+      "metric": 8.0635,
+      "code": "sh688825",
+      "stockName": "长鑫科技",
+      "buyDate": "20260729",
+      "buyDateDisplay": "2026-07-29",
+      "buyTime": "14:57",
+      "buyPrice": 52.95,
+      "buyChange": 12.66,
+      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+      "buyChecks": [
+        {
+          "id": "tail_dip",
+          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+          "passed": true,
+          "value": "14:57",
+          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+        }
+      ],
+      "sellDate": "20260731",
+      "sellDateDisplay": "2026-07-31",
+      "sellTime": "09:34",
+      "sellPrice": 58.66,
+      "sellChange": 6.58,
+      "sellReason": "开盘后涨幅开始下降即卖出",
+      "returnRate": 10.78
+    },
+    {
+      "seq": 3,
+      "metric": 17.1769,
+      "code": "sh688825",
+      "stockName": "长鑫科技",
+      "buyDate": "20260803",
+      "buyDateDisplay": "2026-08-03",
+      "buyTime": "14:57",
+      "buyPrice": 54.99,
+      "buyChange": 1.89,
+      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+      "buyChecks": [
+        {
+          "id": "tail_dip",
+          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+          "passed": true,
+          "value": "14:57",
+          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+        }
+      ],
+      "sellDate": "20260804",
+      "sellDateDisplay": "2026-08-04",
+      "sellTime": "09:31",
+      "sellPrice": 53.77,
+      "sellChange": -3.53,
+      "sellReason": "开盘后涨幅开始下降即卖出",
+      "returnRate": -2.22
+    },
+    {
+      "seq": 4,
+      "metric": 27.4884,
+      "code": "sz301217",
+      "stockName": "铜冠铜箔",
+      "buyDate": "20260810",
+      "buyDateDisplay": "2026-08-10",
+      "buyTime": "14:57",
+      "buyPrice": 120.99,
+      "buyChange": 4.47,
+      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+      "buyChecks": [
+        {
+          "id": "tail_dip",
+          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+          "passed": true,
+          "value": "14:57",
+          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+        }
+      ],
+      "sellDate": "20260811",
+      "sellDateDisplay": "2026-08-11",
+      "sellTime": "09:31",
+      "sellPrice": 117,
+      "sellChange": -2.52,
+      "sellReason": "开盘后涨幅开始下降即卖出",
+      "returnRate": -3.3
+    },
+    {
+      "seq": 5,
+      "metric": 11.6255,
+      "code": "sz300570",
+      "stockName": "太辰光",
+      "buyDate": "20260819",
+      "buyDateDisplay": "2026-08-19",
+      "buyTime": "14:57",
+      "buyPrice": 180.27,
+      "buyChange": -9.53,
+      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+      "buyChecks": [
+        {
+          "id": "tail_dip",
+          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+          "passed": true,
+          "value": "14:57",
+          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+        }
+      ],
+      "sellDate": "20260820",
+      "sellDateDisplay": "2026-08-20",
+      "sellTime": "09:31",
+      "sellPrice": 182.2,
+      "sellChange": 3.16,
+      "sellReason": "开盘后涨幅开始下降即卖出",
+      "returnRate": 1.07
+    },
+    {
+      "seq": 6,
+      "metric": 16.7472,
+      "code": "sz002536",
+      "stockName": "飞龙股份",
+      "buyDate": "20260824",
+      "buyDateDisplay": "2026-08-24",
+      "buyTime": "14:57",
+      "buyPrice": 48.8,
+      "buyChange": 3.9,
+      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+      "buyChecks": [
+        {
+          "id": "tail_dip",
+          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+          "passed": true,
+          "value": "14:57",
+          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+        }
+      ],
+      "sellDate": "20260825",
+      "sellDateDisplay": "2026-08-25",
+      "sellTime": "09:31",
+      "sellPrice": 47.84,
+      "sellChange": -2.01,
+      "sellReason": "开盘后涨幅开始下降即卖出",
+      "returnRate": -1.97
+    },
+    {
+      "seq": 7,
+      "metric": 9.3573,
+      "code": "sz000977",
+      "stockName": "浪潮信息",
+      "buyDate": "20260901",
+      "buyDateDisplay": "2026-09-01",
+      "buyTime": "14:57",
+      "buyPrice": 85.6,
+      "buyChange": 0.49,
+      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+      "buyChecks": [
+        {
+          "id": "tail_dip",
+          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+          "passed": true,
+          "value": "14:57",
+          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+        }
+      ],
+      "sellDate": "20260902",
+      "sellDateDisplay": "2026-09-02",
+      "sellTime": "09:31",
+      "sellPrice": 85.39,
+      "sellChange": -0.23,
+      "sellReason": "开盘后涨幅开始下降即卖出",
+      "returnRate": -0.25
+    },
+    {
+      "seq": 8,
+      "metric": 10.3559,
+      "code": "sz002536",
+      "stockName": "飞龙股份",
+      "buyDate": "20260904",
+      "buyDateDisplay": "2026-09-04",
+      "buyTime": "14:57",
+      "buyPrice": 58.26,
+      "buyChange": -7.57,
+      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+      "buyChecks": [
+        {
+          "id": "tail_dip",
+          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+          "passed": true,
+          "value": "14:57",
+          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+        }
+      ],
+      "sellDate": "20260907",
+      "sellDateDisplay": "2026-09-07",
+      "sellTime": "09:31",
+      "sellPrice": 55.9,
+      "sellChange": -3.84,
+      "sellReason": "开盘后涨幅开始下降即卖出",
+      "returnRate": -4.05
+    },
+    {
+      "seq": 9,
+      "metric": 20.1291,
+      "code": "sz002636",
+      "stockName": "金安国纪",
+      "buyDate": "20260911",
+      "buyDateDisplay": "2026-09-11",
+      "buyTime": "14:57",
+      "buyPrice": 82.46,
+      "buyChange": 7.86,
+      "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+      "buyChecks": [
+        {
+          "id": "tail_dip",
+          "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+          "passed": true,
+          "value": "14:57",
+          "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+        }
+      ],
+      "sellDate": "20260914",
+      "sellDateDisplay": "2026-09-14",
+      "sellTime": "09:31",
+      "sellPrice": 77.8,
+      "sellChange": -3.3,
+      "sellReason": "开盘后涨幅开始下降即卖出",
+      "returnRate": -5.65
+    }
+  ],
+  "currentHolding": {
+    "code": "sz300285",
+    "stockName": "国瓷材料",
+    "buyDate": "20260924",
+    "buyDateDisplay": "2026-09-24",
+    "buyTime": "14:57",
+    "buyPrice": 70,
+    "buyChange": 1.45,
+    "metric": 3.8909,
+    "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
+    "buyChecks": [
+      {
+        "id": "tail_dip",
+        "title": "尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）",
+        "passed": true,
+        "value": "14:57",
+        "reason": "当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）"
+      }
+    ],
+    "buyReturn": 0
+  },
+  "summary": {
+    "tradeCount": 9,
+    "winCount": 2,
+    "winRate": 22.22,
+    "overallReturn": -6.59,
+    "holding": true
+  }
+}
