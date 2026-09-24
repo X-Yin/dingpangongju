@@ -368,7 +368,7 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 49.1,
+      "metric": 79.2888,
       "code": "sz002428",
       "stockName": "云南锗业",
       "buyDate": "20260804",
@@ -421,7 +421,7 @@
     },
     {
       "seq": 2,
-      "metric": 56.43,
+      "metric": 58.6787,
       "code": "sh603186",
       "stockName": "华正新材",
       "buyDate": "20260817",
@@ -475,7 +475,7 @@
     },
     {
       "seq": 3,
-      "metric": 46.39,
+      "metric": -76.3571,
       "code": "sz300570",
       "stockName": "太辰光",
       "buyDate": "20260819",
@@ -528,7 +528,7 @@
     },
     {
       "seq": 4,
-      "metric": 40.56,
+      "metric": -70.4536,
       "code": "sz300570",
       "stockName": "太辰光",
       "buyDate": "20260820",
@@ -581,7 +581,7 @@
     },
     {
       "seq": 5,
-      "metric": 60.28,
+      "metric": 55.7736,
       "code": "sz002536",
       "stockName": "飞龙股份",
       "buyDate": "20260825",
@@ -634,7 +634,7 @@
     },
     {
       "seq": 6,
-      "metric": 50.85,
+      "metric": 21.6366,
       "code": "sz002837",
       "stockName": "英维克",
       "buyDate": "20260826",
@@ -688,7 +688,7 @@
     },
     {
       "seq": 7,
-      "metric": 47.4,
+      "metric": 74.1264,
       "code": "sh603228",
       "stockName": "景旺电子",
       "buyDate": "20260907",
@@ -739,60 +739,68 @@
       "sellChange": 0.75,
       "sellReason": "连续三日抗分歧弱势",
       "returnRate": -0.59
+    },
+    {
+      "seq": 8,
+      "metric": 37.8353,
+      "code": "sz301183",
+      "stockName": "东田微",
+      "buyDate": "20260916",
+      "buyDateDisplay": "2026-09-16",
+      "buyTime": "10:10",
+      "buyPrice": 283.89,
+      "buyChange": 7.26,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -258.76亿，较 5min 前 +103.58亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+24.76亿",
+          "reason": "最近 5 分钟资金净流入 24.76 亿（10:05:00→10:10:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 103.58亿",
+          "reason": "当前量能 -258.76 亿为负，但较 5min 前的 -362.34 亿+ 103.58 亿，达到 100 亿阈值",
+          "volumeText": "当前量能 -258.76亿，较 5min 前 +103.58亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 7.46 / 当前 47.95",
+          "reason": "9:30 竞价科技情绪 7.46 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260921",
+      "sellDateDisplay": "2026-09-21",
+      "sellTime": "09:40",
+      "sellPrice": 300.69,
+      "sellChange": -0.8,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": 5.92
     }
   ],
-  "currentHolding": {
-    "code": "sz301183",
-    "stockName": "东田微",
-    "buyDate": "20260916",
-    "buyDateDisplay": "2026-09-16",
-    "buyTime": "10:10",
-    "buyPrice": 283.89,
-    "buyChange": 7.26,
-    "metric": 54.16,
-    "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -258.76亿，较 5min 前 +103.58亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
-    "buyChecks": [
-      {
-        "id": "fund_inflow",
-        "title": "最近 5min 资金净流入大于 20 亿",
-        "passed": true,
-        "exempted": false,
-        "value": "+24.76亿",
-        "reason": "最近 5 分钟资金净流入 24.76 亿（10:05:00→10:10:00），超过 20 亿阈值"
-      },
-      {
-        "id": "volume_expansion",
-        "title": "量能较 5min 前增加（负值需增加超 100 亿）",
-        "passed": true,
-        "exempted": false,
-        "value": "+ 103.58亿",
-        "reason": "当前量能 -258.76 亿为负，但较 5min 前的 -362.34 亿+ 103.58 亿，达到 100 亿阈值",
-        "volumeText": "当前量能 -258.76亿，较 5min 前 +103.58亿"
-      },
-      {
-        "id": "opening_below",
-        "title": "开盘后自选股低于开盘价不超过 30 只",
-        "passed": true,
-        "exempted": false,
-        "value": "非交易时段",
-        "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-      },
-      {
-        "id": "emotion_retrace_after_open",
-        "title": "竞价情绪超 80 时当前情绪须低于 40",
-        "passed": true,
-        "exempted": false,
-        "value": "开盘 7.46 / 当前 47.95",
-        "reason": "9:30 竞价科技情绪 7.46 未超过 80，当前情绪须低于 40 的限制不生效"
-      }
-    ],
-    "buyReturn": 8
-  },
+  "currentHolding": null,
   "summary": {
-    "tradeCount": 7,
-    "winCount": 3,
-    "winRate": 42.86,
-    "overallReturn": 35.26,
-    "holding": true
+    "tradeCount": 8,
+    "winCount": 4,
+    "winRate": 50,
+    "overallReturn": 32.66,
+    "holding": false
   }
 }

@@ -368,7 +368,7 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 89.12,
+      "metric": 75.957,
       "code": "sz002428",
       "stockName": "云南锗业",
       "buyDate": "20260805",
@@ -422,7 +422,7 @@
     },
     {
       "seq": 2,
-      "metric": 74.39,
+      "metric": 36.5754,
       "code": "sh603186",
       "stockName": "华正新材",
       "buyDate": "20260817",
@@ -476,7 +476,7 @@
     },
     {
       "seq": 3,
-      "metric": 81.71,
+      "metric": -55.2594,
       "code": "sh603186",
       "stockName": "华正新材",
       "buyDate": "20260819",
@@ -529,7 +529,7 @@
     },
     {
       "seq": 4,
-      "metric": 82.27,
+      "metric": 66.6463,
       "code": "sz300570",
       "stockName": "太辰光",
       "buyDate": "20260820",
@@ -582,7 +582,7 @@
     },
     {
       "seq": 5,
-      "metric": 77.01,
+      "metric": 53.7534,
       "code": "sz002536",
       "stockName": "飞龙股份",
       "buyDate": "20260825",
@@ -635,7 +635,7 @@
     },
     {
       "seq": 6,
-      "metric": 75.05,
+      "metric": 50.5672,
       "code": "sz002536",
       "stockName": "飞龙股份",
       "buyDate": "20260826",
@@ -689,7 +689,7 @@
     },
     {
       "seq": 7,
-      "metric": 66.59,
+      "metric": -36.8699,
       "code": "sz002536",
       "stockName": "飞龙股份",
       "buyDate": "20260907",
@@ -743,7 +743,7 @@
     },
     {
       "seq": 8,
-      "metric": 81.87,
+      "metric": 66.7539,
       "code": "sh603083",
       "stockName": "剑桥科技",
       "buyDate": "20260908",
@@ -797,7 +797,7 @@
     },
     {
       "seq": 9,
-      "metric": 83.57,
+      "metric": 49.911,
       "code": "sh603186",
       "stockName": "华正新材",
       "buyDate": "20260911",
@@ -851,7 +851,7 @@
     },
     {
       "seq": 10,
-      "metric": 69.34,
+      "metric": -4.9153,
       "code": "sh600105",
       "stockName": "永鼎股份",
       "buyDate": "20260918",
@@ -897,19 +897,19 @@
       ],
       "sellDate": "20260922",
       "sellDateDisplay": "2026-09-22",
-      "sellTime": "13:05",
-      "sellPrice": 46.01,
-      "sellChange": -1.52,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -2.06
+      "sellTime": "09:40",
+      "sellPrice": 47.05,
+      "sellChange": 0.71,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": 0.15
     }
   ],
   "currentHolding": null,
   "summary": {
     "tradeCount": 10,
-    "winCount": 4,
-    "winRate": 40,
-    "overallReturn": 28.71,
+    "winCount": 5,
+    "winRate": 50,
+    "overallReturn": 31.62,
     "holding": false
   }
 }

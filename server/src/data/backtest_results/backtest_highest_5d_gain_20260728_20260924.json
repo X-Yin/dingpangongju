@@ -793,60 +793,68 @@
       "sellChange": -2.6,
       "sellReason": "跌破成本线-2%",
       "returnRate": -2.6
+    },
+    {
+      "seq": 9,
+      "metric": 21.3171,
+      "code": "sz301183",
+      "stockName": "东田微",
+      "buyDate": "20260916",
+      "buyDateDisplay": "2026-09-16",
+      "buyTime": "10:10",
+      "buyPrice": 283.89,
+      "buyChange": 7.26,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -258.76亿，较 5min 前 +103.58亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+24.76亿",
+          "reason": "最近 5 分钟资金净流入 24.76 亿（10:05:00→10:10:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 103.58亿",
+          "reason": "当前量能 -258.76 亿为负，但较 5min 前的 -362.34 亿+ 103.58 亿，达到 100 亿阈值",
+          "volumeText": "当前量能 -258.76亿，较 5min 前 +103.58亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 7.46 / 当前 47.95",
+          "reason": "9:30 竞价科技情绪 7.46 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260921",
+      "sellDateDisplay": "2026-09-21",
+      "sellTime": "09:40",
+      "sellPrice": 300.69,
+      "sellChange": -0.8,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": 5.92
     }
   ],
-  "currentHolding": {
-    "code": "sz301183",
-    "stockName": "东田微",
-    "buyDate": "20260916",
-    "buyDateDisplay": "2026-09-16",
-    "buyTime": "10:10",
-    "buyPrice": 283.89,
-    "buyChange": 7.26,
-    "metric": 21.3171,
-    "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -258.76亿，较 5min 前 +103.58亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
-    "buyChecks": [
-      {
-        "id": "fund_inflow",
-        "title": "最近 5min 资金净流入大于 20 亿",
-        "passed": true,
-        "exempted": false,
-        "value": "+24.76亿",
-        "reason": "最近 5 分钟资金净流入 24.76 亿（10:05:00→10:10:00），超过 20 亿阈值"
-      },
-      {
-        "id": "volume_expansion",
-        "title": "量能较 5min 前增加（负值需增加超 100 亿）",
-        "passed": true,
-        "exempted": false,
-        "value": "+ 103.58亿",
-        "reason": "当前量能 -258.76 亿为负，但较 5min 前的 -362.34 亿+ 103.58 亿，达到 100 亿阈值",
-        "volumeText": "当前量能 -258.76亿，较 5min 前 +103.58亿"
-      },
-      {
-        "id": "opening_below",
-        "title": "开盘后自选股低于开盘价不超过 30 只",
-        "passed": true,
-        "exempted": false,
-        "value": "非交易时段",
-        "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-      },
-      {
-        "id": "emotion_retrace_after_open",
-        "title": "竞价情绪超 80 时当前情绪须低于 40",
-        "passed": true,
-        "exempted": false,
-        "value": "开盘 7.46 / 当前 47.95",
-        "reason": "9:30 竞价科技情绪 7.46 未超过 80，当前情绪须低于 40 的限制不生效"
-      }
-    ],
-    "buyReturn": 8
-  },
+  "currentHolding": null,
   "summary": {
-    "tradeCount": 8,
-    "winCount": 4,
-    "winRate": 50,
-    "overallReturn": 47.24,
-    "holding": true
+    "tradeCount": 9,
+    "winCount": 5,
+    "winRate": 55.56,
+    "overallReturn": 44.4,
+    "holding": false
   }
 }

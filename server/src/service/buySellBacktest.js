@@ -60,6 +60,17 @@ const STRATEGIES = {
   ...SENTIMENT_STRATEGIES,
 };
 
+// 选股抗分歧门槛（仅「买入最高涨幅」与「2日涨幅最大」两个策略启用）：买点触发时要求入选股票
+// 「触发时点当日抗分歧分数 > 11」，不满足则按策略排名依次顺延至下一只满足的股票
+// （买入条件明细中标注是否因前序股票分数≤11 而顺延买入；其余策略不受此限制）
+const RESILIENCE_GATE_MIN = 11;
+const RESILIENCE_GATE_STRATEGY_IDS = new Set(['highest_gain', 'highest_2d_gain']);
+const RESILIENCE_GATE_DESC = '选股门槛：买点触发时要求入选股票触发时点当日抗分歧分数 > 11，不满足则按策略排名依次顺延至下一只满足的股票（全部候选均不满足则不买入），买入条件明细中标注是否因前序股票分数≤11 而顺延';
+for (const s of Object.values(STRATEGIES)) {
+  if (!RESILIENCE_GATE_STRATEGY_IDS.has(s.id)) continue;
+  s.desc = `${s.desc}；${RESILIENCE_GATE_DESC}`;
+}
+
 // 回测结果缓存文件（按 策略+日期范围 存储，避免重复回测）
 const backtestCacheDir = path.join(__dirname, '../data/backtest_results');
 const getBacktestCacheFile = (strategy, startDate, endDate) => path.join(backtestCacheDir, `backtest_${strategy}_${startDate}_${endDate}.json`);
@@ -1285,7 +1296,10 @@ const computeMaSlopeAngle = (code, days, di, rangeDates, dailyInfos, todayIntrad
   return angle;
 };
 
-// 单股策略选股：在买点命中的当前时间桶，按策略指标选择最优的一只股票
+// 单股策略选股：在买点命中的当前时间桶，按策略指标选择最优的一只股票。
+// 抗分歧>11 顺延门槛仅对 RESILIENCE_GATE_STRATEGY_IDS（买入最高涨幅/2日涨幅最大）启用：
+// 排名首位不满足则按策略排名依次顺延至下一只满足的股票，skipped 记录被顺延跳过的前序股票（供买入明细标注）；
+// 其余策略不做抗分歧校验，直接取排名指定名次的第一只
 const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos, strategyId) => {
   const isReportStrategy = strategyId.includes('reports');
   const isTop5ReportGainMode = strategyId.includes('reports_top5_gain'); // 研报覆盖前五（含覆盖数相同）中取窗口涨幅最大
@@ -1297,7 +1311,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   const dayMatch = strategyId.match(/(\d+)d/);
   const days = dayMatch ? Number(dayMatch[1]) : null;
 
-  // 抗分歧弱转强：使用独立的 5 日窗口弱转强选股逻辑
+  // 抗分歧弱转强：使用独立的 5 日窗口弱转强选股逻辑（已内置「当日分数 > 11 参与优选」门槛）
   if (strategyId === 'resilience_weak_to_strong') {
     return pickWeakToStrongStock(bucket, rangeDates, di, replayStocks, dailyInfos);
   }
@@ -1319,12 +1333,8 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   // 跌幅最大（_fall）与涨幅共用窗口涨幅指标，仅取最小值；其余照旧
   const gainMode = strategyId === 'highest_gain' || strategyId.includes('_gain') || strategyId.includes('_fall');
 
-  let best = null;
-  let bestVal = lowMode ? Infinity : -Infinity;
-  let bestMetric = null;
-  let second = null;
-  let secondVal = lowMode ? Infinity : -Infinity;
-  let secondMetric = null;
+  // 收集全部候选（与原 best/second 口径一致：按指标值排序，同值保持自选股原顺序）
+  const candidates = [];
   const top5Candidates = isTop5ReportGainMode ? [] : null;
   const reportIndex = isReportStrategy ? loadReportIndex() : null;
   for (const sc of bucket.stockChanges) {
@@ -1361,39 +1371,72 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       val = computeWindowResilience(sc.code, winDates, dailyInfos, intradayResilience);
     }
     if (val == null || !Number.isFinite(val)) continue;
-    if (lowMode ? val < bestVal : val > bestVal) {
-      second = best;
-      secondVal = bestVal;
-      secondMetric = bestMetric;
-      bestVal = val;
-      best = sc;
-      bestMetric = metric;
-    } else if (lowMode ? val < secondVal : val > secondVal) {
-      secondVal = val;
-      second = sc;
-      secondMetric = metric;
-    }
+    candidates.push({ sc, val, metric: metric != null ? metric : parseFloat(val.toFixed(4)) });
   }
+
+  // 构建策略排名序列
+  let ordered; // [{ sc, metric }]
   if (isTop5ReportGainMode) {
-    // 研报覆盖数降序取前五（覆盖数相同的股票全部纳入），再取 days 天涨幅最大的一只
+    // 研报覆盖数降序取前五（覆盖数相同的股票全部纳入），组内按窗口涨幅降序；
+    // 前五组之后按涨幅降序接在后面（仅在组内全部不满足抗分歧门槛时才会顺延到）
     if (!top5Candidates.length) return null;
     top5Candidates.sort((a, b) => b.reportCount - a.reportCount);
     const threshold = top5Candidates[Math.min(4, top5Candidates.length - 1)].reportCount;
-    let pick = null;
-    for (const c of top5Candidates) {
-      if (c.reportCount < threshold) break; // 已按覆盖数降序
-      if (!pick || c.gain > pick.gain) pick = c;
+    const topGroup = top5Candidates.filter(c => c.reportCount >= threshold).sort((a, b) => b.gain - a.gain);
+    const restGroup = top5Candidates.filter(c => c.reportCount < threshold).sort((a, b) => b.gain - a.gain);
+    ordered = topGroup.concat(restGroup).map(c => ({ sc: c.sc, metric: c.reportCount }));
+  } else {
+    ordered = candidates.slice().sort((a, b) => (lowMode ? a.val - b.val : b.val - a.val))
+      .map(c => ({ sc: c.sc, metric: c.metric }));
+  }
+
+  // 抗分歧>11 门槛：仅最高涨幅/2日涨幅最大策略启用，从策略指定名次（_2nd 策略从第 2 名开始）向后找
+  // 第一只满足的股票；其余策略不做校验，直接取指定名次的第一只（与原逻辑一致）
+  const gateEnabled = RESILIENCE_GATE_STRATEGY_IDS.has(strategyId);
+  const skipped = []; // 因分数≤11（或无法计算）被顺延跳过的前序股票（仅门槛策略使用）
+  for (let i = useSecond ? 1 : 0; i < ordered.length; i++) {
+    const cand = ordered[i];
+    if (gateEnabled) {
+      const score = calcResilienceAtMinute(replayStocks, cand.sc.code, bucket.minute);
+      if (score != null && score > RESILIENCE_GATE_MIN) {
+        return { stock: cand.sc, metric: cand.metric, resilienceScore: score, skipped };
+      }
+      skipped.push({ code: cand.sc.code, name: cand.sc.name || cand.sc.code, resilience: score });
+    } else {
+      return { stock: cand.sc, metric: cand.metric };
     }
-    if (!pick) return null;
-    return { stock: pick.sc, metric: pick.reportCount };
   }
-  if (useSecond) {
-    if (!second) return null;
-    return { stock: second, metric: isPureReportMode ? secondMetric : parseFloat(secondVal.toFixed(4)) };
-  }
-  if (!best) return null;
-  const metric = isPureReportMode ? bestMetric : parseFloat(bestVal.toFixed(4));
-  return { stock: best, metric };
+  return null; // 门槛策略：全部候选均不满足门槛，不买入；其余策略：无候选
+};
+
+// ============================================================
+// 买入条件明细中的选股顺延标注（抗分歧>11 门槛）
+// ============================================================
+// 抗分歧门槛明细项（passed 恒为 true：能入选即代表满足门槛），reason 标明是否因前序股票分数≤11 而顺延
+const buildResilienceGateCheck = (resilienceScore, skipped) => {
+  const skipText = (skipped || []).map(s => `${s.name}（${s.resilience != null ? s.resilience : '无法计算'}）`).join('、');
+  return {
+    id: 'resilience_gate',
+    title: '触发时点抗分歧分数>11',
+    passed: true,
+    value: resilienceScore != null ? `${resilienceScore}` : '--',
+    reason: skipped && skipped.length > 0
+      ? `因前序股票 ${skipText} 触发时点抗分歧分数≤11 依次顺延，轮到本股买入（本股触发时点抗分歧分数 ${resilienceScore}）`
+      : `按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 ${resilienceScore}）`,
+  };
+};
+
+// 将选股顺延信息追加到买入原因/明细：发生顺延时在 buyReason 尾部标注，buyChecks 追加 resilience_gate 明细项。
+// 仅 RESILIENCE_GATE_STRATEGY_IDS 两个策略的选股结果带 resilienceScore/skipped，其余策略（含抗分歧弱转强）
+// 返回结构不含该字段，此处自动跳过标注（买入原因/明细保持原样）
+const withResilienceGateInfo = (buyInfo, picked) => {
+  if (!buyInfo || !picked || picked.resilienceScore == null) return buyInfo;
+  return {
+    buyReason: picked.skipped && picked.skipped.length > 0
+      ? `${buyInfo.buyReason}（因前序股票抗分歧≤11顺延买入）`
+      : buyInfo.buyReason,
+    buyChecks: [...(buyInfo.buyChecks || []), buildResilienceGateCheck(picked.resilienceScore, picked.skipped)],
+  };
 };
 
 // ============================================================
@@ -1931,6 +1974,7 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
         if (strategy.id === 'highest_3d_gain_switch') {
           const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, 'highest_3d_gain');
           if (picked) {
+            const gatedBuyInfo = withResilienceGateInfo(buyInfo, picked);
             const sc = picked.stock;
             const buyPx = parseFloat(Number(sc.lastPx).toFixed(2));
             const buyChange = sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null;
@@ -1946,8 +1990,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
                 buyPrice: buyPx,
                 buyChange,
                 metric: picked.metric,
-                buyReason: buyInfo.buyReason,
-                buyChecks: buyInfo.buyChecks,
+                buyReason: gatedBuyInfo.buyReason,
+                buyChecks: gatedBuyInfo.buyChecks,
               };
             } else if (singlePosition.code !== sc.code) {
               // 情况2：已持仓且目标股票已变，卖旧买新
@@ -1986,8 +2030,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
                 buyPrice: buyPx,
                 buyChange,
                 metric: picked.metric,
-                buyReason: buyInfo.buyReason,
-                buyChecks: buyInfo.buyChecks,
+                buyReason: gatedBuyInfo.buyReason,
+                buyChecks: gatedBuyInfo.buyChecks,
               };
             }
           }
@@ -1995,6 +2039,7 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
           // 原有单股策略逻辑：同一时刻仅持有一只，未持仓时按指标选最优的一只买入
           const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, isTwice ? 'highest_3d_gain' : strategy.id);
           if (picked) {
+            const gatedBuyInfo = withResilienceGateInfo(buyInfo, picked);
             const sc = picked.stock;
             if (isTwice) {
               // 两次买入：买点触发当日先把首笔半仓挂起，留待收盘补足另 5 成
@@ -2011,8 +2056,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
                   buyPrice: closePx,
                   buyChange: closeStock?.changePct != null ? parseFloat(Number(closeStock.changePct).toFixed(2)) : (sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null),
                   metric: picked.metric,
-                  buyReason: buyInfo.buyReason,
-                  buyChecks: buyInfo.buyChecks,
+                  buyReason: gatedBuyInfo.buyReason,
+                  buyChecks: gatedBuyInfo.buyChecks,
                 };
               } else {
                 pendingHalfBuy = {
@@ -2024,8 +2069,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
                   buyPrice1: parseFloat(Number(sc.lastPx).toFixed(2)),
                   buyChange1: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
                   metric: picked.metric,
-                  buyReason: buyInfo.buyReason,
-                  buyChecks: buyInfo.buyChecks,
+                  buyReason: gatedBuyInfo.buyReason,
+                  buyChecks: gatedBuyInfo.buyChecks,
                 };
               }
             } else {
@@ -2038,8 +2083,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
                 buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
                 buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
                 metric: picked.metric,
-                buyReason: buyInfo.buyReason,
-                buyChecks: buyInfo.buyChecks,
+                buyReason: gatedBuyInfo.buyReason,
+                buyChecks: gatedBuyInfo.buyChecks,
               };
             }
           }
@@ -2217,6 +2262,7 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           if (strategy.id === 'highest_3d_gain_switch') {
             const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, 'highest_3d_gain');
             if (picked) {
+              const gatedBuyInfo = withResilienceGateInfo(buyInfo, picked);
               const sc = picked.stock;
               const buyPx = parseFloat(Number(sc.lastPx).toFixed(2));
               const buyChange = sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null;
@@ -2232,8 +2278,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                   buyPrice: buyPx,
                   buyChange,
                   metric: picked.metric,
-                  buyReason: buyInfo.buyReason,
-                  buyChecks: buyInfo.buyChecks,
+                  buyReason: gatedBuyInfo.buyReason,
+                  buyChecks: gatedBuyInfo.buyChecks,
                 };
               } else if (st.singlePosition.code !== sc.code) {
                 // 情况2：已持仓且目标股票已变，卖旧买新
@@ -2272,8 +2318,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                   buyPrice: buyPx,
                   buyChange,
                   metric: picked.metric,
-                  buyReason: buyInfo.buyReason,
-                  buyChecks: buyInfo.buyChecks,
+                  buyReason: gatedBuyInfo.buyReason,
+                  buyChecks: gatedBuyInfo.buyChecks,
                 };
               }
             }
@@ -2281,6 +2327,7 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
             // 原有单股策略逻辑：同一时刻仅持有一只，未持仓时按指标选最优的一只买入
             const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, isTwice ? 'highest_3d_gain' : strategy.id);
             if (picked) {
+              const gatedBuyInfo = withResilienceGateInfo(buyInfo, picked);
               const sc = picked.stock;
               if (isTwice) {
                 // 两次买入：买点触发当日先把首笔半仓挂起，留待收盘补足另 5 成
@@ -2297,8 +2344,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                     buyPrice: closePx,
                     buyChange: closeStock?.changePct != null ? parseFloat(Number(closeStock.changePct).toFixed(2)) : (sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null),
                     metric: picked.metric,
-                    buyReason: buyInfo.buyReason,
-                    buyChecks: buyInfo.buyChecks,
+                    buyReason: gatedBuyInfo.buyReason,
+                    buyChecks: gatedBuyInfo.buyChecks,
                   };
                 } else {
                   st.pendingHalfBuy = {
@@ -2310,8 +2357,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                     buyPrice1: parseFloat(Number(sc.lastPx).toFixed(2)),
                     buyChange1: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
                     metric: picked.metric,
-                    buyReason: buyInfo.buyReason,
-                    buyChecks: buyInfo.buyChecks,
+                    buyReason: gatedBuyInfo.buyReason,
+                    buyChecks: gatedBuyInfo.buyChecks,
                   };
                 }
               } else {
@@ -2324,8 +2371,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                   buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
                   buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
                   metric: picked.metric,
-                  buyReason: buyInfo.buyReason,
-                  buyChecks: buyInfo.buyChecks,
+                  buyReason: gatedBuyInfo.buyReason,
+                  buyChecks: gatedBuyInfo.buyChecks,
                 };
               }
             }

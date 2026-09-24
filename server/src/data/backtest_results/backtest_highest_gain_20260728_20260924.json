@@ -4,7 +4,7 @@
   "strategy": {
     "id": "highest_gain",
     "name": "买入最高涨幅",
-    "desc": "买点命中时只买入回测起始日至当前整体涨幅最大的股票"
+    "desc": "买点命中时只买入回测起始日至当前整体涨幅最大的股票；选股门槛：买点触发时要求入选股票触发时点当日抗分歧分数 > 11，不满足则按策略排名依次顺延至下一只满足的股票（全部候选均不满足则不买入），买入条件明细中标注是否因前序股票分数≤11 而顺延"
   },
   "range": {
     "startDate": "20260728",
@@ -409,6 +409,13 @@
           "exempted": false,
           "value": "开盘 -12.68 / 当前 -93.23",
           "reason": "9:30 竞价科技情绪 -12.68 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
+          "passed": true,
+          "value": "25.57",
+          "reason": "按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 25.57）"
         }
       ],
       "sellDate": "20260731",
@@ -421,30 +428,30 @@
     },
     {
       "seq": 2,
-      "metric": 14.3379,
-      "code": "sz300757",
-      "stockName": "罗博特科",
+      "metric": 8.1143,
+      "code": "sh688313",
+      "stockName": "仕佳光子",
       "buyDate": "20260804",
       "buyDateDisplay": "2026-08-04",
-      "buyTime": "09:40",
-      "buyPrice": 427.04,
-      "buyChange": 3.95,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyTime": "09:50",
+      "buyPrice": 108.65,
+      "buyChange": 12.28,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票抗分歧≤11顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
           "title": "最近 5min 资金净流入大于 20 亿",
           "passed": true,
           "exempted": false,
-          "value": "+30.23亿",
-          "reason": "最近 5 分钟资金净流入 30.23 亿（09:35:00→09:40:00），超过 20 亿阈值"
+          "value": "+55.40亿",
+          "reason": "最近 5 分钟资金净流入 55.40 亿（09:45:00→09:50:00），超过 20 亿阈值"
         },
         {
           "id": "volume_expansion",
           "title": "当前量能为正（今日累计成交额超昨日全天）",
           "passed": true,
           "exempted": true,
-          "value": "减少 161.98亿（已豁免）",
+          "value": "增加 70.72亿（已豁免）",
           "reason": "前一交易日盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
         },
         {
@@ -452,135 +459,35 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "19 / 90只",
-          "reason": "开盘后自选股共 90 只，19 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "8 / 90只",
+          "reason": "开盘后自选股共 90 只，8 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 46.68 / 当前 71.50",
+          "value": "开盘 46.68 / 当前 86.96",
           "reason": "9:30 竞价科技情绪 46.68 未超过 80，当前情绪须低于 40 的限制不生效"
-        }
-      ],
-      "sellDate": "20260812",
-      "sellDateDisplay": "2026-08-12",
-      "sellTime": "09:40",
-      "sellPrice": 495,
-      "sellChange": 1.27,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 15.91
-    },
-    {
-      "seq": 3,
-      "metric": 56.576,
-      "code": "sh688313",
-      "stockName": "仕佳光子",
-      "buyDate": "20260817",
-      "buyDateDisplay": "2026-08-17",
-      "buyTime": "11:00",
-      "buyPrice": 157.36,
-      "buyChange": 11.79,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 907.58亿，较 5min 前 +115.15亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+25.10亿",
-          "reason": "最近 5 分钟资金净流入 25.10 亿（10:55:00→11:00:00），超过 20 亿阈值"
         },
         {
-          "id": "volume_expansion",
-          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
           "passed": true,
-          "exempted": false,
-          "value": "+ 115.15亿",
-          "reason": "当前量能 907.58 亿为正，较 5min 前的 792.43 亿+ 115.15 亿，持续放量",
-          "volumeText": "当前量能 907.58亿，较 5min 前 +115.15亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 27.30 / 当前 80.43",
-          "reason": "9:30 竞价科技情绪 27.30 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "13.5",
+          "reason": "因前序股票 罗博特科（10.12）、浙江荣泰（10.98）、长鑫科技（8.94）、风华高科（9.84）、银之杰（7.29） 触发时点抗分歧分数≤11 依次顺延，轮到本股买入（本股触发时点抗分歧分数 13.5）"
         }
       ],
       "sellDate": "20260819",
       "sellDateDisplay": "2026-08-19",
-      "sellTime": "09:45",
-      "sellPrice": 152.98,
-      "sellChange": -5.74,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -2.78
+      "sellTime": "10:30",
+      "sellPrice": 155.1,
+      "sellChange": -4.44,
+      "sellReason": "科技板块情绪退潮",
+      "returnRate": 42.75
     },
     {
-      "seq": 4,
-      "metric": 54.2019,
-      "code": "sh688313",
-      "stockName": "仕佳光子",
-      "buyDate": "20260819",
-      "buyDateDisplay": "2026-08-19",
-      "buyTime": "10:20",
-      "buyPrice": 154.97,
-      "buyChange": -4.52,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+174.52亿",
-          "reason": "最近 5 分钟资金净流入 174.52 亿（10:15:00→10:20:00），超过 20 亿阈值"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "当前量能为正（今日累计成交额超昨日全天）",
-          "passed": true,
-          "exempted": true,
-          "value": "减少 13.08亿（已豁免）",
-          "reason": "今日(08-19)盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 -78.00 / 当前 -100.00",
-          "reason": "9:30 竞价科技情绪 -78.00 未超过 80，当前情绪须低于 40 的限制不生效"
-        }
-      ],
-      "sellDate": "20260820",
-      "sellDateDisplay": "2026-08-20",
-      "sellTime": "09:35",
-      "sellPrice": 150,
-      "sellChange": -0.93,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -3.21
-    },
-    {
-      "seq": 5,
+      "seq": 3,
       "metric": 61.6241,
       "code": "sz300570",
       "stockName": "太辰光",
@@ -622,6 +529,13 @@
           "exempted": false,
           "value": "开盘 35.78 / 当前 46.79",
           "reason": "9:30 竞价科技情绪 35.78 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
+          "passed": true,
+          "value": "19.43",
+          "reason": "按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 19.43）"
         }
       ],
       "sellDate": "20260824",
@@ -633,31 +547,31 @@
       "returnRate": -1.98
     },
     {
-      "seq": 6,
-      "metric": 61.6839,
-      "code": "sz300570",
-      "stockName": "太辰光",
+      "seq": 4,
+      "metric": 40.2293,
+      "code": "sz300394",
+      "stockName": "天孚通信",
       "buyDate": "20260825",
       "buyDateDisplay": "2026-08-25",
-      "buyTime": "10:05",
-      "buyPrice": 201.16,
-      "buyChange": -0.86,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyTime": "13:10",
+      "buyPrice": 257.93,
+      "buyChange": 3.38,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票抗分歧≤11顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
           "title": "最近 5min 资金净流入大于 20 亿",
           "passed": true,
           "exempted": false,
-          "value": "+22.90亿",
-          "reason": "最近 5 分钟资金净流入 22.90 亿（10:00:00→10:05:00），超过 20 亿阈值"
+          "value": "+32.60亿",
+          "reason": "最近 5 分钟资金净流入 32.60 亿（13:05:00→13:10:00），超过 20 亿阈值"
         },
         {
           "id": "volume_expansion",
           "title": "当前量能为正（今日累计成交额超昨日全天）",
           "passed": true,
           "exempted": true,
-          "value": "增加 0.00亿（已豁免）",
+          "value": "增加 353.34亿（已豁免）",
           "reason": "前一交易日盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
         },
         {
@@ -673,29 +587,36 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -51.64 / 当前 -26.27",
+          "value": "开盘 -51.64 / 当前 28.82",
           "reason": "9:30 竞价科技情绪 -51.64 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
+          "passed": true,
+          "value": "12.51",
+          "reason": "因前序股票 太辰光（9.94）、仕佳光子（7.67）、东田微（10.44）、杰普特（10.5）、华正新材（10.74） 触发时点抗分歧分数≤11 依次顺延，轮到本股买入（本股触发时点抗分歧分数 12.51）"
         }
       ],
       "sellDate": "20260826",
       "sellDateDisplay": "2026-08-26",
-      "sellTime": "09:40",
-      "sellPrice": 195.9,
-      "sellChange": -3.35,
+      "sellTime": "09:45",
+      "sellPrice": 252.61,
+      "sellChange": -1.75,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.61
+      "returnRate": -2.06
     },
     {
-      "seq": 7,
-      "metric": 58.3452,
-      "code": "sz300570",
-      "stockName": "太辰光",
+      "seq": 5,
+      "metric": 39.9896,
+      "code": "sz300757",
+      "stockName": "罗博特科",
       "buyDate": "20260826",
       "buyDateDisplay": "2026-08-26",
       "buyTime": "10:40",
-      "buyPrice": 197,
-      "buyChange": -2.81,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 405.79亿，较 5min 前 +348.13亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyPrice": 522.8,
+      "buyChange": 6.23,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 405.79亿，较 5min 前 +348.13亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票抗分歧≤11顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -729,221 +650,74 @@
           "exempted": false,
           "value": "开盘 15.18 / 当前 24.48",
           "reason": "9:30 竞价科技情绪 15.18 未超过 80，当前情绪须低于 40 的限制不生效"
-        }
-      ],
-      "sellDate": "20260831",
-      "sellDateDisplay": "2026-08-31",
-      "sellTime": "09:30",
-      "sellPrice": 196.43,
-      "sellChange": -3.85,
-      "sellReason": "均线破位",
-      "returnRate": -0.29
-    },
-    {
-      "seq": 8,
-      "metric": 59.1167,
-      "code": "sz300570",
-      "stockName": "太辰光",
-      "buyDate": "20260831",
-      "buyDateDisplay": "2026-08-31",
-      "buyTime": "13:30",
-      "buyPrice": 197.97,
-      "buyChange": -3.1,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -776.68亿，较 5min 前 +170.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+21.66亿",
-          "reason": "最近 5 分钟资金净流入 21.66 亿（13:25:00→13:30:00），超过 20 亿阈值"
         },
         {
-          "id": "volume_expansion",
-          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
           "passed": true,
-          "exempted": false,
-          "value": "+ 170.23亿",
-          "reason": "当前量能 -776.68 亿为负，但较 5min 前的 -946.91 亿+ 170.23 亿，达到 100 亿阈值",
-          "volumeText": "当前量能 -776.68亿，较 5min 前 +170.23亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 -67.60 / 当前 25.31",
-          "reason": "9:30 竞价科技情绪 -67.60 未超过 80，当前情绪须低于 40 的限制不生效"
-        }
-      ],
-      "sellDate": "20260901",
-      "sellDateDisplay": "2026-09-01",
-      "sellTime": "09:40",
-      "sellPrice": 197.22,
-      "sellChange": -1.14,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": -0.38
-    },
-    {
-      "seq": 9,
-      "metric": 57.5742,
-      "code": "sz300570",
-      "stockName": "太辰光",
-      "buyDate": "20260901",
-      "buyDateDisplay": "2026-09-01",
-      "buyTime": "13:10",
-      "buyPrice": 196.04,
-      "buyChange": -1.73,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+21.79亿",
-          "reason": "最近 5 分钟资金净流入 21.79 亿（13:05:00→13:10:00），超过 20 亿阈值"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "当前量能为正（今日累计成交额超昨日全天）",
-          "passed": true,
-          "exempted": true,
-          "value": "增加 208.51亿（已豁免）",
-          "reason": "今日(09-01)盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 2.24 / 当前 -68.66",
-          "reason": "9:30 竞价科技情绪 2.24 未超过 80，当前情绪须低于 40 的限制不生效"
-        }
-      ],
-      "sellDate": "20260902",
-      "sellDateDisplay": "2026-09-02",
-      "sellTime": "09:30",
-      "sellPrice": 191.02,
-      "sellChange": -1.44,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -2.56
-    },
-    {
-      "seq": 10,
-      "metric": 57.9897,
-      "code": "sz300757",
-      "stockName": "罗博特科",
-      "buyDate": "20260903",
-      "buyDateDisplay": "2026-09-03",
-      "buyTime": "14:00",
-      "buyPrice": 590,
-      "buyChange": 1.25,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -506.69亿，较 5min 前 +156.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+20.56亿",
-          "reason": "最近 5 分钟资金净流入 20.56 亿（13:55:00→14:00:00），超过 20 亿阈值"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
-          "passed": true,
-          "exempted": false,
-          "value": "+ 156.23亿",
-          "reason": "当前量能 -506.69 亿为负，但较 5min 前的 -662.92 亿+ 156.23 亿，达到 100 亿阈值",
-          "volumeText": "当前量能 -506.69亿，较 5min 前 +156.23亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 34.22 / 当前 -1.97",
-          "reason": "9:30 竞价科技情绪 34.22 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "13.81",
+          "reason": "因前序股票 太辰光（2.95）、仕佳光子（5.1）、东田微（3.2）、华正新材（4.39） 触发时点抗分歧分数≤11 依次顺延，轮到本股买入（本股触发时点抗分歧分数 13.81）"
         }
       ],
       "sellDate": "20260904",
       "sellDateDisplay": "2026-09-04",
-      "sellTime": "13:15",
-      "sellPrice": 577.13,
-      "sellChange": -1.38,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -2.18
+      "sellTime": "14:30",
+      "sellPrice": 572.81,
+      "sellChange": -2.12,
+      "sellReason": "科技板块情绪退潮",
+      "returnRate": 9.57
     },
     {
-      "seq": 11,
-      "metric": 58.3124,
+      "seq": 6,
+      "metric": 64.9369,
       "code": "sz300757",
       "stockName": "罗博特科",
       "buyDate": "20260907",
       "buyDateDisplay": "2026-09-07",
-      "buyTime": "09:35",
-      "buyPrice": 591.21,
-      "buyChange": 3,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 226.09亿，较 5min 前 +116.71亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyTime": "10:15",
+      "buyPrice": 615.96,
+      "buyChange": 7.31,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -80.74亿，较 5min 前 +128.88亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
           "id": "fund_inflow",
           "title": "最近 5min 资金净流入大于 20 亿",
           "passed": true,
           "exempted": false,
-          "value": "+30.78亿",
-          "reason": "最近 5 分钟资金净流入 30.78 亿（09:30:00→09:35:00），超过 20 亿阈值"
+          "value": "+25.11亿",
+          "reason": "最近 5 分钟资金净流入 25.11 亿（10:10:00→10:15:00），超过 20 亿阈值"
         },
         {
           "id": "volume_expansion",
           "title": "量能较 5min 前增加（负值需增加超 100 亿）",
           "passed": true,
           "exempted": false,
-          "value": "+ 116.71亿",
-          "reason": "当前量能 226.09 亿为正，较 5min 前的 109.38 亿+ 116.71 亿，持续放量",
-          "volumeText": "当前量能 226.09亿，较 5min 前 +116.71亿"
+          "value": "+ 128.88亿",
+          "reason": "当前量能 -80.74 亿为负，但较 5min 前的 -209.62 亿+ 128.88 亿，达到 100 亿阈值",
+          "volumeText": "当前量能 -80.74亿，较 5min 前 +128.88亿"
         },
         {
           "id": "opening_below",
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "26 / 90只",
-          "reason": "开盘后自选股共 90 只，26 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 43.99 / 当前 58.36",
+          "value": "开盘 43.99 / 当前 85.41",
           "reason": "9:30 竞价科技情绪 43.99 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
+          "passed": true,
+          "value": "17.56",
+          "reason": "按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 17.56）"
         }
       ],
       "sellDate": "20260911",
@@ -952,19 +726,19 @@
       "sellPrice": 631,
       "sellChange": -1.17,
       "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 6.73
+      "returnRate": 2.44
     },
     {
-      "seq": 12,
-      "metric": 77.5858,
-      "code": "sh603186",
-      "stockName": "华正新材",
+      "seq": 7,
+      "metric": 55.8123,
+      "code": "sz301183",
+      "stockName": "东田微",
       "buyDate": "20260911",
       "buyDateDisplay": "2026-09-11",
       "buyTime": "13:40",
-      "buyPrice": 217.42,
-      "buyChange": -0.26,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 2373.67亿，较 5min 前 +152.33亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyPrice": 246.37,
+      "buyChange": 4.66,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 2373.67亿，较 5min 前 +152.33亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票抗分歧≤11顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -998,69 +772,30 @@
           "exempted": false,
           "value": "开盘 -43.69 / 当前 -27.03",
           "reason": "9:30 竞价科技情绪 -43.69 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
+          "passed": true,
+          "value": "16.92",
+          "reason": "因前序股票 华正新材（9.98）、罗博特科（9.16）、沃尔德（8.69）、太辰光（8.89）、方正科技（10.34） 触发时点抗分歧分数≤11 依次顺延，轮到本股买入（本股触发时点抗分歧分数 16.92）"
         }
       ],
-      "sellDate": "20260917",
-      "sellDateDisplay": "2026-09-17",
-      "sellTime": "14:50",
-      "sellPrice": 232.57,
-      "sellChange": -8.43,
-      "sellReason": "抗分歧指数弱势",
-      "returnRate": 6.97
+      "sellDate": "20260921",
+      "sellDateDisplay": "2026-09-21",
+      "sellTime": "09:40",
+      "sellPrice": 300.69,
+      "sellChange": -0.8,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": 22.05
     }
   ],
-  "currentHolding": {
-    "code": "sz301183",
-    "stockName": "东田微",
-    "buyDate": "20260918",
-    "buyDateDisplay": "2026-09-18",
-    "buyTime": "10:05",
-    "buyPrice": 301.38,
-    "buyChange": 1.44,
-    "metric": 90.5919,
-    "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 52.63亿，较 5min 前 +11.83亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
-    "buyChecks": [
-      {
-        "id": "fund_inflow",
-        "title": "最近 5min 资金净流入大于 20 亿",
-        "passed": true,
-        "exempted": false,
-        "value": "+20.25亿",
-        "reason": "最近 5 分钟资金净流入 20.25 亿（10:00:00→10:05:00），超过 20 亿阈值"
-      },
-      {
-        "id": "volume_expansion",
-        "title": "量能较 5min 前增加（负值需增加超 100 亿）",
-        "passed": true,
-        "exempted": false,
-        "value": "+ 11.83亿",
-        "reason": "当前量能 52.63 亿为正，较 5min 前的 40.80 亿+ 11.83 亿，持续放量",
-        "volumeText": "当前量能 52.63亿，较 5min 前 +11.83亿"
-      },
-      {
-        "id": "opening_below",
-        "title": "开盘后自选股低于开盘价不超过 30 只",
-        "passed": true,
-        "exempted": false,
-        "value": "非交易时段",
-        "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-      },
-      {
-        "id": "emotion_retrace_after_open",
-        "title": "竞价情绪超 80 时当前情绪须低于 40",
-        "passed": true,
-        "exempted": false,
-        "value": "开盘 55.95 / 当前 19.38",
-        "reason": "9:30 竞价科技情绪 55.95 未超过 80，当前情绪须低于 40 的限制不生效"
-      }
-    ],
-    "buyReturn": 1.73
-  },
+  "currentHolding": null,
   "summary": {
-    "tradeCount": 12,
-    "winCount": 4,
-    "winRate": 33.33,
-    "overallReturn": 22.69,
-    "holding": true
+    "tradeCount": 7,
+    "winCount": 5,
+    "winRate": 71.43,
+    "overallReturn": 101.18,
+    "holding": false
   }
 }

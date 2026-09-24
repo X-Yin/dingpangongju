@@ -1058,11 +1058,11 @@
       ],
       "sellDate": "20260828",
       "sellDateDisplay": "2026-08-28",
-      "sellTime": "10:40",
-      "sellPrice": 104.87,
-      "sellChange": -2.79,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -2.23
+      "sellTime": "09:40",
+      "sellPrice": 106.53,
+      "sellChange": -1.25,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": -0.68
     },
     {
       "seq": 14,
@@ -1594,21 +1594,21 @@
           "reason": "9:30 竞价科技情绪 55.95 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260924",
-      "sellDateDisplay": "2026-09-24",
-      "sellTime": "13:35",
-      "sellPrice": 372.38,
-      "sellChange": -2.34,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -2.02
+      "sellDate": "20260923",
+      "sellDateDisplay": "2026-09-23",
+      "sellTime": "09:45",
+      "sellPrice": 381.54,
+      "sellChange": 0.71,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": 0.39
     }
   ],
   "currentHolding": null,
   "summary": {
     "tradeCount": 23,
-    "winCount": 9,
-    "winRate": 39.13,
-    "overallReturn": 10.33,
+    "winCount": 10,
+    "winRate": 43.48,
+    "overallReturn": 14.84,
     "holding": false
   }
 }
