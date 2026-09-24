@@ -116,6 +116,8 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         winRate: sum.winRate != null ? Number(sum.winRate) : null,
         overallReturn: sum.overallReturn != null ? Number(sum.overallReturn) : null,
         holding: !!sum.holding,
+        avgHoldingDays: sum.avgHoldingDays ?? null,
+        avgHoldingDaysApprox: sum.avgHoldingDaysApprox ?? false,
       },
       trades: (result.trades || []).map((t, idx) => ({
         seq: t.seq != null ? t.seq : idx + 1,
@@ -136,6 +138,8 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         sellChange: t.sellChange,
         sellReason: t.sellReason,
         returnRate: t.returnRate,
+        holdingDays: t.holdingDays ?? null,
+        holdingDaysApprox: t.holdingDaysApprox ?? false,
       })),
       currentHolding: result.currentHolding ? {
         code: result.currentHolding.code,
@@ -148,6 +152,8 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         buyReturn: result.currentHolding.buyReturn,
         buyReason: result.currentHolding.buyReason ?? null,
         buyChecks: result.currentHolding.buyChecks ?? null,
+        holdingDays: result.currentHolding.holdingDays ?? null,
+        holdingDaysApprox: result.currentHolding.holdingDaysApprox ?? false,
       } : null,
     });
   }

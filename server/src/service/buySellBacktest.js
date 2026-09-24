@@ -25,12 +25,12 @@ const EXCLUDED_CODES = new Set(['sh688498', 'sh688808']); // 源杰科技、联�
 
 // 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
 const STRATEGIES = {
-  highest_gain: { id: 'highest_gain', name: '买入最高涨幅', desc: '买点命中时只买入回测起始日至当前整体涨幅最大的股票' },
+  highest_gain: { id: 'highest_gain', name: '买入最高涨幅', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票' },
   highest_5d_gain: { id: 'highest_5d_gain', name: '5日涨幅最大', desc: '买点命中时只买入最近 5 个交易日涨幅最大的股票' },
   highest_3d_gain: { id: 'highest_3d_gain', name: '3日涨幅最大', desc: '买点命中时只买入最近 3 个交易日涨幅最大的股票' },
   highest_3d_gain_switch: { id: 'highest_3d_gain_switch', name: '连续切换三日涨幅', desc: '触发买点时，买入当前所有自选股三日涨幅最大值。若空仓则全仓买入；若已持仓且最大涨幅股票变化，则卖掉旧的并全仓买入新的；若持仓未变则不操作' },
   highest_4d_gain: { id: 'highest_4d_gain', name: '4日涨幅最大', desc: '买点命中时只买入最近 4 个交易日涨幅最大的股票' },
-  highest_2d_gain: { id: 'highest_2d_gain', name: '2日涨幅最大', desc: '买点命中时只买入最近 2 个交易日涨幅最大的股票' },
+  highest_2d_gain: { id: 'highest_2d_gain', name: '2日涨幅最大', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票（按用户定义排序依据为触发时点当日盘中涨幅，非 2 日窗口累计涨幅）' },
   highest_10d_gain: { id: 'highest_10d_gain', name: '10日涨幅最大', desc: '买点命中时只买入最近 10 个交易日涨幅最大的股票' },
   highest_3d_gain_twice: { id: 'highest_3d_gain_twice', name: '3日涨幅两次买入', desc: '买点命中时先买入 5 成仓位，剩余 5 成等当天收盘再买入，成本价为两次买入价格平均值（选股逻辑同 3 日涨幅最大）' },
   highest_3d_gain_quarter: { id: 'highest_3d_gain_quarter', name: '三日涨幅四份仓位', desc: '买点触发时把仓位分成四份，分别买入最近 3 个交易日涨幅排名前四的股票（各占 1/4）。任一只触发卖点即独立卖出；仅当四份全部清仓（彻底空仓）后，下一次买点才重新按四份建仓' },
@@ -60,12 +60,12 @@ const STRATEGIES = {
   ...SENTIMENT_STRATEGIES,
 };
 
-// 选股抗分歧门槛（仅「买入最高涨幅」与「2日涨幅最大」两个策略启用）：买点触发时要求入选股票
-// 「触发时点当日抗分歧分数 > 11」，不满足则按策略排名依次顺延至下一只满足的股票
-// （买入条件明细中标注是否因前序股票分数≤11 而顺延买入；其余策略不受此限制）
+// 选股抗分歧门槛（仅「买入最高涨幅」与「2日涨幅最大」两个策略启用）：这两个策略按「买点触发时点
+// 当日盘中涨幅」从高到低排序，从最高者起依次要求「触发时点当日抗分歧分数 > 11」，不满足则顺延至
+// 下一只满足的股票（买入条件明细中标注顺延原因；其余策略不受此限制、排序口径也不变）
 const RESILIENCE_GATE_MIN = 11;
 const RESILIENCE_GATE_STRATEGY_IDS = new Set(['highest_gain', 'highest_2d_gain']);
-const RESILIENCE_GATE_DESC = '选股门槛：买点触发时要求入选股票触发时点当日抗分歧分数 > 11，不满足则按策略排名依次顺延至下一只满足的股票（全部候选均不满足则不买入），买入条件明细中标注是否因前序股票分数≤11 而顺延';
+const RESILIENCE_GATE_DESC = '选股门槛：按买点触发时点当日盘中涨幅从高到低排序，从最高者起依次要求「触发时点当日抗分歧分数 > 11」，不满足则顺延至下一只满足的股票（全部候选均不满足则当日不买入），买入条件明细中标注是否因前序股票分数≤11 而顺延';
 for (const s of Object.values(STRATEGIES)) {
   if (!RESILIENCE_GATE_STRATEGY_IDS.has(s.id)) continue;
   s.desc = `${s.desc}；${RESILIENCE_GATE_DESC}`;
@@ -75,13 +75,98 @@ for (const s of Object.values(STRATEGIES)) {
 const backtestCacheDir = path.join(__dirname, '../data/backtest_results');
 const getBacktestCacheFile = (strategy, startDate, endDate) => path.join(backtestCacheDir, `backtest_${strategy}_${startDate}_${endDate}.json`);
 
+// ---------- 持仓交易日数（以 server/src/data/amountSnapshot 的日期文件为交易日历）----------
+// amountSnapshot 每个交易日生成一份 YYYYMMDD.json，文件名集合即交易日历（严格按交易日维度，
+// 自动剔除周末/节假日）；持仓天数 = 卖出日与买入日之间的交易日跨度（当日卖出为 0）；
+// 买卖日期超出日历覆盖范围时（如情绪游资更早区间）退化为按周一~周五计数（不剔除法定节假日）
+let amountSnapshotDatesCache = { list: null, at: 0 };
+const getAmountSnapshotTradingDates = () => {
+  const now = Date.now();
+  if (amountSnapshotDatesCache.list && now - amountSnapshotDatesCache.at < 60000) return amountSnapshotDatesCache.list;
+  let list = [];
+  try {
+    list = fs.readdirSync(path.join(__dirname, '../data/amountSnapshot'))
+      .filter(f => /^\d{8}\.json$/.test(f))
+      .map(f => f.slice(0, 8))
+      .sort();
+  } catch (e) {
+    list = [];
+  }
+  amountSnapshotDatesCache = { list, at: now };
+  return list;
+};
+
+// 退化口径：a→b 之间按自然日逐日扫描并剔除周六周日（不剔除法定节假日）
+const weekdayCountBetween = (a, b) => {
+  const pa = [Number(a.slice(0, 4)), Number(a.slice(4, 6)), Number(a.slice(6, 8))];
+  const pb = [Number(b.slice(0, 4)), Number(b.slice(4, 6)), Number(b.slice(6, 8))];
+  let cur = Date.UTC(pa[0], pa[1] - 1, pa[2]);
+  const end = Date.UTC(pb[0], pb[1] - 1, pb[2]);
+  let n = 0;
+  while (cur < end) {
+    const dow = new Date(cur).getUTCDay();
+    if (dow !== 0 && dow !== 6) n += 1;
+    cur += 86400000;
+  }
+  return n;
+};
+
+// 为回测结果就地补充持仓交易日数（trades / currentHolding / stocks[].trades / stocks[].holding）：
+// holdingDays = 卖出日 - 买入日的交易日跨度；期末仍持仓的统计买入日至日历最新交易日；
+// holdingDaysApprox = true 表示买卖日期超出 amountSnapshot 覆盖范围、按周一~周五退化估算
+const attachHoldingDays = (result) => {
+  if (!result || typeof result !== 'object') return result;
+  const calendar = getAmountSnapshotTradingDates();
+  const idxMap = new Map(calendar.map((d, i) => [d, i]));
+  const norm = s => String(s == null ? '' : s).replace(/-/g, '');
+  const calc = (buyDate, sellDate) => {
+    const a = norm(buyDate);
+    const b = norm(sellDate);
+    if (!/^\d{8}$/.test(a) || !/^\d{8}$/.test(b) || b < a) return null;
+    const ia = idxMap.get(a);
+    const ib = idxMap.get(b);
+    if (ia != null && ib != null) return { days: ib - ia, approx: false };
+    return { days: weekdayCountBetween(a, b), approx: true };
+  };
+  const apply = (pos, open) => {
+    if (!pos || !pos.buyDate) return;
+    const r = open ? calc(pos.buyDate, calendar[calendar.length - 1]) : calc(pos.buyDate, pos.sellDate);
+    if (!r) return;
+    pos.holdingDays = r.days;
+    pos.holdingDaysApprox = r.approx;
+  };
+  (result.trades || []).forEach(t => apply(t, false));
+  apply(result.currentHolding, true);
+  (result.stocks || []).forEach(st => {
+    (st.trades || []).forEach(t => apply(t, false));
+    apply(st.holding, true);
+  });
+  // 平均持仓时间：仅统计已卖出成交（holdingDays 非空，不含期末仍持仓），保留 1 位小数；
+  // 含退化估算（≈）的交易时在 summary.avgHoldingDaysApprox 标记
+  const closedDays = [];
+  let anyApprox = false;
+  const collectClosed = (t) => {
+    if (t && t.holdingDays != null) {
+      closedDays.push(t.holdingDays);
+      if (t.holdingDaysApprox) anyApprox = true;
+    }
+  };
+  (result.trades || []).forEach(collectClosed);
+  (result.stocks || []).forEach(st => (st.trades || []).forEach(collectClosed));
+  if (result.summary && closedDays.length > 0) {
+    result.summary.avgHoldingDays = Math.round((closedDays.reduce((a, b) => a + b, 0) / closedDays.length) * 10) / 10;
+    result.summary.avgHoldingDaysApprox = anyApprox;
+  }
+  return result;
+};
+
 const readCachedBacktest = (strategy, startDate, endDate) => {
   try {
     const file = getBacktestCacheFile(strategy, startDate, endDate);
     if (!fs.existsSync(file)) return null;
     const data = JSON.parse(fs.readFileSync(file, 'utf-8'));
     if (!data || data.range?.startDate !== startDate || data.range?.endDate !== endDate) return null;
-    return data;
+    return attachHoldingDays(data); // 读取时统一注入持仓交易日数（缓存文件本身不落盘该字段，兼容旧缓存）
   } catch {
     return null;
   }
@@ -1332,6 +1417,9 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   }
   // 跌幅最大（_fall）与涨幅共用窗口涨幅指标，仅取最小值；其余照旧
   const gainMode = strategyId === 'highest_gain' || strategyId.includes('_gain') || strategyId.includes('_fall');
+  // 抗分歧门槛策略（买入最高涨幅/2日涨幅最大）：选股排序依据 = 买点触发时点当日盘中涨幅（用户定义，
+  // 非窗口累计涨幅），从高到低排序后从最高者起依次用触发时点抗分歧分数>11 过滤
+  const gateEnabled = RESILIENCE_GATE_STRATEGY_IDS.has(strategyId);
 
   // 收集全部候选（与原 best/second 口径一致：按指标值排序，同值保持自选股原顺序）
   const candidates = [];
@@ -1341,6 +1429,13 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     if (EXCLUDED_CODES.has(sc.code)) continue;
     if (sc.lastPx == null || sc.lastPx <= 0) continue;
     if (stocks.has(sc.code) && stocks.get(sc.code).holding) continue;
+    if (gateEnabled) {
+      // 门槛策略：按触发时点当日盘中涨幅排序（如买点触发在 13:10，即看 13:10 时谁的涨幅最大）
+      const chg = sc.changePct != null ? Number(sc.changePct) : null;
+      if (chg == null || !Number.isFinite(chg)) continue;
+      candidates.push({ sc, val: chg, metric: parseFloat(chg.toFixed(4)) });
+      continue;
+    }
     let val;
     let metric = null;
     if (isMaSlopeMode) {
@@ -1390,9 +1485,8 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       .map(c => ({ sc: c.sc, metric: c.metric }));
   }
 
-  // 抗分歧>11 门槛：仅最高涨幅/2日涨幅最大策略启用，从策略指定名次（_2nd 策略从第 2 名开始）向后找
-  // 第一只满足的股票；其余策略不做校验，直接取指定名次的第一只（与原逻辑一致）
-  const gateEnabled = RESILIENCE_GATE_STRATEGY_IDS.has(strategyId);
+  // 抗分歧>11 门槛：门槛策略从涨幅最高者起向后找第一只满足的股票；其余策略不做校验，
+  // 直接取策略排名指定名次的第一只（与原逻辑一致）
   const skipped = []; // 因分数≤11（或无法计算）被顺延跳过的前序股票（仅门槛策略使用）
   for (let i = useSecond ? 1 : 0; i < ordered.length; i++) {
     const cand = ordered[i];
@@ -1401,7 +1495,12 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       if (score != null && score > RESILIENCE_GATE_MIN) {
         return { stock: cand.sc, metric: cand.metric, resilienceScore: score, skipped };
       }
-      skipped.push({ code: cand.sc.code, name: cand.sc.name || cand.sc.code, resilience: score });
+      skipped.push({
+        code: cand.sc.code,
+        name: cand.sc.name || cand.sc.code,
+        change: cand.sc.changePct != null ? Number(cand.sc.changePct) : null, // 触发时间点涨幅（即排序依据）
+        resilience: score,
+      });
     } else {
       return { stock: cand.sc, metric: cand.metric };
     }
@@ -1414,12 +1513,20 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
 // ============================================================
 // 抗分歧门槛明细项（passed 恒为 true：能入选即代表满足门槛），reason 标明是否因前序股票分数≤11 而顺延
 const buildResilienceGateCheck = (resilienceScore, skipped) => {
-  const skipText = (skipped || []).map(s => `${s.name}（${s.resilience != null ? s.resilience : '无法计算'}）`).join('、');
+  const fmtChangePct = v => (v != null ? `${v > 0 ? '+' : ''}${Number(v).toFixed(2)}%` : '无法计算');
+  const skippedStocks = (skipped || []).map(s => ({
+    code: s.code,
+    name: s.name,
+    change: s.change != null ? Number(s.change) : null, // 触发时间点涨幅（即排序依据）
+    resilience: s.resilience,
+  }));
+  const skipText = skippedStocks.map(s => `${s.name}（触发时涨幅 ${fmtChangePct(s.change)}、抗分歧 ${s.resilience != null ? s.resilience : '无法计算'}）`).join('、');
   return {
     id: 'resilience_gate',
     title: '触发时点抗分歧分数>11',
     passed: true,
     value: resilienceScore != null ? `${resilienceScore}` : '--',
+    skippedStocks, // 结构化顺延明细（前端抽屉/报告悬停展示为表格）
     reason: skipped && skipped.length > 0
       ? `因前序股票 ${skipText} 触发时点抗分歧分数≤11 依次顺延，轮到本股买入（本股触发时点抗分歧分数 ${resilienceScore}）`
       : `按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 ${resilienceScore}）`,
@@ -2472,6 +2579,7 @@ module.exports = {
   STRATEGIES,
   readCachedBacktest,
   writeCachedBacktest,
+  attachHoldingDays,
   loadReportIndex,
   sumReportCount,
   isSentimentStrategy,

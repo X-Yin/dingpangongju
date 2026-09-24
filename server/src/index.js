@@ -99,7 +99,7 @@ const aiSettings = require('./service/aiSettings');
 const { getMainFundAiSummary, getMainFundAiContext } = require('./service/mainFundAi');
 const { getAllGroups: getAllIndexOverlayGroups, saveGroup: saveIndexOverlayGroup, deleteGroup: deleteIndexOverlayGroup } = require('./service/indexOverlayGroup');
 const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup } = require('./service/trainingCamp');
-const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, getSentimentDefaultRange } = require('./service/buySellBacktest');
+const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, getSentimentDefaultRange, attachHoldingDays } = require('./service/buySellBacktest');
 const { generateReport, ensureLatestReport, getReportById, listReports } = require('./service/backtestReport');
 const { getAttackDefenseScore } = require('./service/attackDefenseScore');
 const feishuNotify = require('./service/feishuNotify');
@@ -2342,7 +2342,7 @@ app.get('/training_camp/backtest/status/:taskId', (req, res) => {
     if (!task) {
       return res.status(404).json({ success: false, message: '回测任务不存在或已过期' });
     }
-    res.json({ success: true, status: task.status, progress: task.progress, result: task.result, error: task.error });
+    res.json({ success: true, status: task.status, progress: task.progress, result: task.result ? attachHoldingDays(task.result) : null, error: task.error });
   } catch (error) {
     console.error('查询买卖点回测任务失败:', error);
     res.status(500).json({ success: false, message: error.message || '查询任务状态失败' });

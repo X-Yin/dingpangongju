@@ -18,6 +18,8 @@ const fmtPct = (v) => {
   return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 };
 const fmtPctColor = (v) => (v == null || Number.isNaN(Number(v)) ? undefined : (Number(v) >= 0 ? '#f5222d' : '#52c41a'));
+// 持仓交易日数展示（服务端按 amountSnapshot 交易日历计算；≈ 表示日期超出日历覆盖、按周一~周五退化估算）
+const fmtHoldingDays = (t) => (t && t.holdingDays != null ? `${t.holdingDaysApprox ? '≈' : ''}${t.holdingDays} 交易日` : '--');
 // 新报告 createdAt 已是北京时间字符串（YYYY-MM-DD-HH:mm）直接展示；旧报告 ISO 串转换为北京时间
 const fmtReportTime = (t) => {
   if (!t) return '--';
@@ -32,6 +34,8 @@ const BASE = `http://${local_ip}:3000`;
 // 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
 const BuyReasonTag = ({ reason, checks }) => {
   if (!reason) return null;
+  // 顺延明细表格单元格样式（Tooltip 深色底：白边框、涨红/跌绿）
+  const gateCellStyle = { border: '1px solid rgba(255,255,255,0.3)', padding: '1px 8px', whiteSpace: 'nowrap' };
   const hasDetail = Array.isArray(checks) && checks.length > 0;
   const detail = hasDetail ? (
     <div style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -42,6 +46,31 @@ const BuyReasonTag = ({ reason, checks }) => {
             {c.value ? `（${c.value}）` : ''}
           </div>
           {c.reason && <div style={{ fontSize: 11, opacity: 0.75 }}>{c.reason}</div>}
+          {Array.isArray(c.skippedStocks) && c.skippedStocks.length > 0 && (
+            <table style={{ borderCollapse: 'collapse', marginTop: 3, fontSize: 11 }}>
+              <thead>
+                <tr>
+                  {['顺延前序股票', '窗口涨幅(排序依据)', '触发时涨幅', '抗分歧分数'].map(h => (
+                    <th key={h} style={{ ...gateCellStyle, fontWeight: 600, opacity: 0.75 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {c.skippedStocks.map((s, j) => (
+                  <tr key={s.code || j}>
+                    <td style={gateCellStyle}>{s.name || s.code}</td>
+                    <td style={{ ...gateCellStyle, color: s.metric != null ? (s.metric > 0 ? '#ff7875' : s.metric < 0 ? '#95de64' : undefined) : undefined }}>
+                      {s.metric != null ? `${s.metric > 0 ? '+' : ''}${Number(s.metric).toFixed(2)}%` : '--'}
+                    </td>
+                    <td style={{ ...gateCellStyle, color: s.change != null ? (s.change > 0 ? '#ff7875' : s.change < 0 ? '#95de64' : undefined) : undefined }}>
+                      {s.change != null ? `${s.change > 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
+                    </td>
+                    <td style={gateCellStyle}>{s.resilience != null ? Number(s.resilience).toFixed(1) : '--'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       ))}
     </div>
@@ -70,6 +99,7 @@ const StrategyCard = ({ strategy, rank }) => {
         {t.metric != null && <Tag color="purple" style={{ marginInlineEnd: 0 }}>选股指标 {Number(t.metric).toFixed(4)}</Tag>}
         <Tag color={fmtPctColor(t.returnRate)} style={{ marginInlineEnd: 0 }}>收益 {fmtPct(t.returnRate)}</Tag>
         <span style={{ fontSize: 11, color: '#9ca3af' }}>{fmtDate(t.buyDate)} {fmtTime(t.buyTime)} 买 → {fmtDate(t.sellDate)} {fmtTime(t.sellTime)} 卖</span>
+        <span style={{ fontSize: 11, color: '#9ca3af' }}>持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(t)}</b></span>
       </div>
     ),
     children: (
@@ -104,6 +134,7 @@ const StrategyCard = ({ strategy, rank }) => {
       label: (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#ad6800' }}>持仓中（未卖出）</span>
+          {h.holdingDays != null && <span style={{ fontSize: 11, color: '#9ca3af' }}>已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(h)}</b></span>}
           <span style={{ fontSize: 13, fontWeight: 700, color: '#12213a' }}>{h.stockName}</span>
           <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{h.code}</span>
           {h.buyReturn != null && <Tag color={fmtPctColor(h.buyReturn)} style={{ marginInlineEnd: 0 }}>浮盈 {fmtPct(h.buyReturn)}</Tag>}
@@ -130,6 +161,7 @@ const StrategyCard = ({ strategy, rank }) => {
     { label: '胜率', value: s.winRate != null ? `${s.winRate.toFixed(1)}%` : '--', color: s.winRate != null && s.winRate >= 50 ? '#f5222d' : '#52c41a' },
     { label: '成交笔数', value: `${s.tradeCount || 0} 笔` },
     { label: '盈利笔数', value: `${s.winCount || 0} 笔` },
+    { label: '平均持仓', value: s.avgHoldingDays != null ? `${s.avgHoldingDaysApprox ? '≈' : ''}${Number(s.avgHoldingDays).toFixed(1)} 交易日` : '--' },
     { label: '期末持仓', value: s.holding ? '1 只' : '0 只' },
   ];
 

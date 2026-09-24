@@ -25,6 +25,8 @@ const fmtPct = (v) => {
   const n = Number(v);
   return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 };
+// 持仓交易日数展示（服务端按 amountSnapshot 交易日历计算；≈ 表示日期超出日历覆盖、按周一~周五退化估算）
+const fmtHoldingDays = (t) => (t && t.holdingDays != null ? `${t.holdingDaysApprox ? '≈' : ''}${t.holdingDays} 交易日` : '--');
 
 // 当前买卖点诊断规则说明（与训练营回放 / buySellBacktest 后端逻辑保持一致，供复制到外部分析）
 const BUY_RULES = [
@@ -32,7 +34,7 @@ const BUY_RULES = [
   { key: 'volume_expansion', title: '量能变化', desc: '当前量能（今日累计成交额-昨日全天）为 0 以上：较 5min 前增加即可；量能为负：需较 5min 前增加不小于 100 亿。若今日或前一交易日科技情绪触及 -100 退潮冰点（hasIce）则此项自动豁免' },
   { key: 'opening_below', title: '开盘后自选股低于开盘价数量', desc: '仅 9:30-10:00 生效：现价低于 9:30 开盘价的自选股数量不超过 30 只' },
   { key: 'emotion_retrace_after_open', title: '竞价情绪回落', desc: '9:30 竞价科技情绪 > 80 时，需当前科技情绪 < 40 才允许买入；开盘情绪 ≤80 或无线数据时该项不限制' },
-  { key: 'resilience_gate', title: '选股抗分歧门槛（仅买入最高涨幅/2日涨幅最大）', desc: '仅「买入最高涨幅」「2日涨幅最大」两个策略：买点触发时要求入选股票「触发时点当日抗分歧分数 > 11」，排名首位不满足则按策略排名依次顺延至下一只满足的股票（全部候选均不满足则当日不买入），买入条件明细中标注入选股是否因前序股票分数≤11 而顺延买入；其余策略不受此限制' },
+  { key: 'resilience_gate', title: '选股抗分歧门槛（仅买入最高涨幅/2日涨幅最大）', desc: '仅「买入最高涨幅」「2日涨幅最大」两个策略：按买点触发时点当日盘中涨幅从高到低排序（如 13:10 触发就看 13:10 时谁的涨幅最大），从最高者起依次要求「触发时点当日抗分歧分数 > 11」，不满足则顺延至下一只满足的股票（全部候选均不满足则当日不买入）；买入条件明细中标注是否因前序股票分数≤11 而顺延（含前序股票触发时涨幅与抗分歧分数）；其余策略不受此限制' },
 ];
 const SELL_RULES = [
   { key: 'condition1', title: '均线破位', desc: '根据 MA5/MA10 斜率与开盘价位置分四种规则，跌破对应均线或前一交易日最低价触发卖点' },
@@ -123,6 +125,8 @@ const SENTIMENT_SELL_RULES = [
 // 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
 const BuyReasonTag = ({ reason, checks }) => {
   if (!reason) return null;
+  // 顺延明细表格单元格样式（Tooltip 深色底：白边框、涨红/跌绿）
+  const gateCellStyle = { border: '1px solid rgba(255,255,255,0.3)', padding: '1px 8px', whiteSpace: 'nowrap' };
   const hasDetail = Array.isArray(checks) && checks.length > 0;
   const detail = hasDetail ? (
     <div style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -133,6 +137,31 @@ const BuyReasonTag = ({ reason, checks }) => {
             {c.value ? `（${c.value}）` : ''}
           </div>
           {c.reason && <div style={{ fontSize: 11, opacity: 0.75 }}>{c.reason}</div>}
+          {Array.isArray(c.skippedStocks) && c.skippedStocks.length > 0 && (
+            <table style={{ borderCollapse: 'collapse', marginTop: 3, fontSize: 11 }}>
+              <thead>
+                <tr>
+                  {['顺延前序股票', '窗口涨幅(排序依据)', '触发时涨幅', '抗分歧分数'].map(h => (
+                    <th key={h} style={{ ...gateCellStyle, fontWeight: 600, opacity: 0.75 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {c.skippedStocks.map((s, j) => (
+                  <tr key={s.code || j}>
+                    <td style={gateCellStyle}>{s.name || s.code}</td>
+                    <td style={{ ...gateCellStyle, color: s.metric != null ? (s.metric > 0 ? '#ff7875' : s.metric < 0 ? '#95de64' : undefined) : undefined }}>
+                      {s.metric != null ? `${s.metric > 0 ? '+' : ''}${Number(s.metric).toFixed(2)}%` : '--'}
+                    </td>
+                    <td style={{ ...gateCellStyle, color: s.change != null ? (s.change > 0 ? '#ff7875' : s.change < 0 ? '#95de64' : undefined) : undefined }}>
+                      {s.change != null ? `${s.change > 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
+                    </td>
+                    <td style={gateCellStyle}>{s.resilience != null ? Number(s.resilience).toFixed(1) : '--'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       ))}
     </div>
@@ -158,6 +187,8 @@ const buildSummary = (result) => {
       avgReturn: null,
       overallReturn: sum.overallReturn != null ? Number(sum.overallReturn) : null,
       holdingCount: sum.holding ? 1 : 0,
+      avgHoldingDays: sum.avgHoldingDays ?? null,
+      avgHoldingDaysApprox: sum.avgHoldingDaysApprox ?? false,
     };
   }
   const stocks = result?.stocks || [];
@@ -166,6 +197,8 @@ const buildSummary = (result) => {
   let returnSum = 0;
   let validReturns = 0;
   let holdingCount = 0;
+  const closedDays = []; // 已卖出成交的持仓交易日数（含退化估算时标记 ≈）
+  let anyApprox = false;
   stocks.forEach(s => {
     s.trades.forEach(t => {
       totalTrades++;
@@ -173,6 +206,10 @@ const buildSummary = (result) => {
         returnSum += Number(t.returnRate);
         validReturns++;
         if (Number(t.returnRate) > 0) winTrades++;
+      }
+      if (t.holdingDays != null) {
+        closedDays.push(t.holdingDays);
+        if (t.holdingDaysApprox) anyApprox = true;
       }
     });
     if (s.holding) holdingCount++;
@@ -185,6 +222,8 @@ const buildSummary = (result) => {
     avgReturn: validReturns > 0 ? returnSum / validReturns : null,
     overallReturn: null,
     holdingCount,
+    avgHoldingDays: closedDays.length > 0 ? Math.round((closedDays.reduce((a, b) => a + b, 0) / closedDays.length) * 10) / 10 : null,
+    avgHoldingDaysApprox: anyApprox,
   };
 };
 
@@ -693,6 +732,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                 { label: '成交笔数', value: `${summary.totalTrades} 笔` },
                 { label: '盈利笔数', value: `${summary.winTrades} 笔` },
                 { label: '胜率', value: summary.winRate != null ? `${summary.winRate.toFixed(1)}%` : '--', color: summary.winRate != null && summary.winRate >= 50 ? '#f5222d' : '#52c41a' },
+                { label: '平均持仓', value: summary.avgHoldingDays != null ? `${summary.avgHoldingDaysApprox ? '≈' : ''}${Number(summary.avgHoldingDays).toFixed(1)} 交易日` : '--' },
                 result.type === 'single'
                   ? { label: '整体收益', value: summary.overallReturn != null ? fmtPct(summary.overallReturn) : '--', color: summary.overallReturn != null ? (summary.overallReturn >= 0 ? '#f5222d' : '#52c41a') : undefined }
                   : { label: '平均单笔收益', value: summary.avgReturn != null ? fmtPct(summary.avgReturn) : '--', color: summary.avgReturn != null ? (summary.avgReturn >= 0 ? '#f5222d' : '#52c41a') : undefined },
@@ -768,6 +808,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                             涨幅 <b style={{ color: t.sellChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(t.sellChange)}</b>
                           </span>
                           <span style={{ fontSize: 12, color: '#6b7890' }}>
+                            持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(t)}</b>
+                          </span>
+                          <span style={{ fontSize: 12, color: '#6b7890' }}>
                             卖出原因 <Tag color="geekblue" style={{ marginInlineEnd: 0 }}>{t.sellReason}</Tag>
                           </span>
                         </div>
@@ -801,6 +844,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                       </span>
                       <span style={{ fontSize: 12, marginLeft: 10 }}>
                         涨幅 <b style={{ color: result.currentHolding.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(result.currentHolding.buyChange)}</b>
+                      </span>
+                      <span style={{ fontSize: 12, marginLeft: 10, color: '#6b7890' }}>
+                        已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(result.currentHolding)}</b>
                       </span>
                       {result.currentHolding.buyReason && (
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
@@ -878,6 +924,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                                 涨幅 <b style={{ color: t.sellChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(t.sellChange)}</b>
                               </span>
                               <span style={{ fontSize: 12, color: '#6b7890' }}>
+                                持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(t)}</b>
+                              </span>
+                              <span style={{ fontSize: 12, color: '#6b7890' }}>
                                 卖出原因 <Tag color="geekblue" style={{ marginInlineEnd: 0 }}>{t.sellReason}</Tag>
                               </span>
                               <span style={{ fontSize: 13, fontWeight: 700, color: t.returnRate >= 0 ? '#f5222d' : '#52c41a' }}>
@@ -897,6 +946,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                             </span>
                             <span style={{ fontSize: 12, marginLeft: 10 }}>
                               涨幅 <b style={{ color: stock.holding.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(stock.holding.buyChange)}</b>
+                            </span>
+                            <span style={{ fontSize: 12, marginLeft: 10, color: '#6b7890' }}>
+                              已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(stock.holding)}</b>
                             </span>
                             {stock.holding.buyReason && (
                               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
