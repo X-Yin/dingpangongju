@@ -3,7 +3,7 @@
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours } = require('../utils');
+const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay } = require('../utils');
 const { getMonitorStocks } = require('./monitorStock');
 const { useCLS } = require('../config');
 
@@ -12,11 +12,10 @@ const jisuyidongPath = path.resolve(__dirname, '../data/jisuyidong.json');
 const openingPricesPath = path.resolve(__dirname, '../data/openingPrices.json');
 const tlineCacheDir = '/Users/xieyin/Desktop/盯盘工具/自选股全量股票过去分时数据';
 
-// 保存当日开盘价（9:25 竞价结束后执行）
+// 保存当日开盘价（9:25 竞价结束后执行，非交易日不保存）
 function saveOpeningPricesIfNeeded() {
     const now = new Date();
-    const dayOfWeek = now.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) return;
+    if (!isTradingDay(now)) return;
 
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();

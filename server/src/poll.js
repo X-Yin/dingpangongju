@@ -1,5 +1,5 @@
 const { setConfig } = require('./config');
-const { isTradingHours, isMiddayBreak, isAfterMarketClose, isWeekend, getMsToNextTradingSession } = require('./utils');
+const { isTradingHours, isMiddayBreak, isAfterMarketClose, isTradingDay, getMsToNextTradingSession } = require('./utils');
 const fs = require('fs');
 const path = require('path');
 
@@ -56,14 +56,14 @@ const POLL_CONFIG = {
 let middayBreakNotified = false;
 let afternoonResumeScheduled = false;
 
-// 收盘后（15:01）自动执行的定时任务，每天只执行一次，周末不执行
+// 收盘后（15:01）自动执行的定时任务，每天只执行一次，非交易日（周末/节假日）不执行
 const scheduleAfterCloseTasks = (hour = 15, minute = 1) => {
   let executedDates = new Set();
 
   const task = () => {
     const now = new Date();
-    const dayOfWeek = now.getDay(); // 0 周日, 6 周六
-    if (dayOfWeek === 0 || dayOfWeek === 6) return;
+    // 非交易日（周末/节假日，以交易日历为准）不执行
+    if (!isTradingDay(now)) return;
 
     const today = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
     if (executedDates.has(today)) return;
@@ -96,7 +96,7 @@ const scheduleAfterCloseTasks = (hour = 15, minute = 1) => {
 
 const checkMarketClose = () => {
   const now = new Date();
-  if (isWeekend(now)) return false;
+  if (!isTradingDay(now)) return false;
   return isAfterMarketClose(now);
 };
 
@@ -119,9 +119,9 @@ const startPolling = (force = false) => {
 
   // force 模式（--all）：任何时间都直接执行轮询，跳过交易时段检查
   if (!force) {
-    // 检查是否为周末
-    if (isWeekend(now)) {
-      console.log('今天是周末，不启动轮询服务');
+    // 检查是否为非交易日（周末/节假日，以交易日历为准）
+    if (!isTradingDay(now)) {
+      console.log('今天是非交易日（周末/节假日），不启动轮询服务');
       waitForNextSessionAndStart();
       return;
     }

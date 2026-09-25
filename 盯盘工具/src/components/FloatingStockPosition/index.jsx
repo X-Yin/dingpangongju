@@ -4,6 +4,7 @@ import { PlusOutlined, DeleteOutlined, FolderOpenOutlined, WarningOutlined, Rada
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import { isTradingDay, isAfterMarketClose } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
 import StockKLineModal from '../StockKLineModal';
 import StockFundFlowModal from '../StockFundFlowModal';
@@ -12,14 +13,7 @@ import './index.scss';
 
 const ALERT_THRESHOLD = 0.15;
 
-const isAfterMarketClose = () => {
-  const now = dayjs();
-  const dayOfWeek = now.day();
-  if (dayOfWeek === 0 || dayOfWeek === 6) return true;
-  const currentHour = now.hour();
-  const currentMinute = now.minute();
-  return currentHour < 9 || (currentHour === 9 && currentMinute < 15) || currentHour >= 15 || (currentHour === 14 && currentMinute >= 59);
-};
+// 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
 
 // 是否处于午休时间（11:30 - 13:00），此时暂停买点/卖点自动诊断
 const isInLunchBreak = (d) => {
@@ -353,12 +347,11 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   }, [navigate]);
 
   // 14:50 自动回测定时检测
-  useEffect(() => {
+    useEffect(() => {
     const checkTime = () => {
       const now = dayjs();
-      const dayOfWeek = now.day();
-      // 周末不触发
-      if (dayOfWeek === 0 || dayOfWeek === 6) return;
+      // 非交易日（周末/节假日，以交易日历为准）不触发
+      if (!isTradingDay(now)) return;
       const hour = now.hour();
       const minute = now.minute();
       // 14:50 触发

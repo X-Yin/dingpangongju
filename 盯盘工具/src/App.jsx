@@ -4,6 +4,7 @@ import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined
 import axios from 'axios';
 import { local_ip } from './constant';
 import { getThemeColor } from './utils/theme';
+import { isTradingDay, isAfterMarketClose, getNextTradingDay } from './utils/tradingDay';
 import PreMarketReading from './components/PreMarketReading';
 import TodayPlan from './components/TodayPlan';
 import FloatingStockPosition from './components/FloatingStockPosition';
@@ -454,16 +455,7 @@ const getInitialTheme = () => {
   }
 };
 
-const isAfterMarketClose = () => {
-  const now = dayjs();
-  const dayOfWeek = now.day();
-  // 周末（周六日）
-  if (dayOfWeek === 0 || dayOfWeek === 6) return true;
-  const currentHour = now.hour();
-  const currentMinute = now.minute();
-  // 非交易时间：9:15 之前或 15:00 之后
-  return currentHour < 9 || (currentHour === 9 && currentMinute < 15) || currentHour >= 15 || (currentHour === 14 && currentMinute >= 59);
-};
+// 是否已收盘（非交易日视为已收盘，交易日 9:15 前或 14:59 及以后），统一来自 utils/tradingDay（以交易日历为准）
 
 // 个人感受记录触发时间点：9:40 起每隔 20 分钟，午休（11:30-13:00）和收盘后不执行
 const PERSONAL_FEELING_TIMES = [
@@ -850,8 +842,8 @@ function App() {
 
     const checkBuyRecommendation = async () => {
       try {
-        const dayOfWeek = now.day();
-        if (dayOfWeek === 0 || dayOfWeek === 6) {
+        // 非交易日（周末/节假日，以交易日历为准）不推送
+        if (!isTradingDay(now)) {
           return;
         }
 
@@ -979,12 +971,9 @@ function App() {
       if (cancelled || PERSONAL_FEELING_TIMES.length === 0) return;
       const now = dayjs();
 
-      // 周末不弹出，直接跳到下一个交易日的第一个时段
-      if (now.day() === 0 || now.day() === 6) {
-        let nextDay = now.add(1, 'day');
-        while (nextDay.day() === 0 || nextDay.day() === 6) {
-          nextDay = nextDay.add(1, 'day');
-        }
+      // 非交易日（周末/节假日）不弹出，直接跳到下一个交易日的第一个时段
+      if (!isTradingDay(now)) {
+        const nextDay = getNextTradingDay(now);
         const [firstH, firstM] = PERSONAL_FEELING_TIMES[0].split(':').map(Number);
         const nextTarget = nextDay.hour(firstH).minute(firstM).second(0).millisecond(0);
         const nextDiff = nextTarget.diff(now);
@@ -1012,10 +1001,7 @@ function App() {
       }
 
       // 当天所有时段已过，找下一个交易日的第一个时段
-      let nextDay = now.add(1, 'day');
-      while (nextDay.day() === 0 || nextDay.day() === 6) {
-        nextDay = nextDay.add(1, 'day');
-      }
+      const nextDay = getNextTradingDay(now);
       const [firstH, firstM] = PERSONAL_FEELING_TIMES[0].split(':').map(Number);
       const nextTarget = nextDay.hour(firstH).minute(firstM).second(0).millisecond(0);
       const nextDiff = nextTarget.diff(now);
@@ -1325,8 +1311,8 @@ function App() {
       </Modal>
 
       {location.pathname !== '/training_camp' && <FloatingStockPosition onOutflowDetected={handleOutflowDetected} />}
-      {location.pathname !== '/training_camp' && <FloatingMonitorAlarm />}
-      {location.pathname !== '/training_camp' && <FloatingStrategyCenter />}
+      {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingMonitorAlarm />}
+      {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStrategyCenter />}
       <FloatingTechEmotion />
       <ClosePipeline />
 

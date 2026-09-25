@@ -380,10 +380,9 @@ const getCurrentTechEmotion = async () => {
 // 记录当前时刻的科技情绪指数到分时文件
 const recordTechEmotionIntraday = async () => {
     const now = dayjs();
-    const dayOfWeek = now.day();
 
-    // 周末不记录
-    if (dayOfWeek === 0 || dayOfWeek === 6) return null;
+    // 非交易日（周末/节假日，以交易日历为准）不记录
+    if (tradingDayUtil.isNonTradingDay(now.toDate())) return null;
 
     // 只在交易时段记录 (9:25 - 11:30, 13:00 - 15:00)
     const timeStr = now.format('HHmm');
@@ -501,8 +500,8 @@ const getTechEmotionIntraday = () => {
 // 读取 tech_index_intraday.json 中今日数据，合并写入 5day 文件，按日期升序保留最近5天
 const cacheTechEmotionIntradayTo5Day = () => {
     const today = dayjs().format('YYYYMMDD');
-    const dayOfWeek = dayjs().day();
-    if (dayOfWeek === 0 || dayOfWeek === 6) return null;
+    // 非交易日（周末/节假日，以交易日历为准）不缓存
+    if (tradingDayUtil.isNonTradingDay(dayjs().toDate())) return null;
 
     // 读取当日分时数据
     let todayRecords = [];
@@ -542,18 +541,17 @@ const cacheTechEmotionIntradayTo5Day = () => {
     return trimmed;
 };
 
-// 判断日期 key（YYYYMMDD）是否为周末
-const isWeekendDateKey = (dateKey) => {
+// 判断日期 key（YYYYMMDD）是否为非交易日（周末或法定节假日，以交易日历为准）
+const tradingDayUtil = require('../utils/tradingDay');
+const isNonTradingDateKey = (dateKey) => {
     const str = String(dateKey);
     if (str.length !== 8) return false;
-    const d = dayjs(`${str.substring(0, 4)}-${str.substring(4, 6)}-${str.substring(6, 8)}`);
-    const dow = d.day();
-    return dow === 0 || dow === 6;
+    return !tradingDayUtil.isTradingDateNum(str);
 };
 
 // 获取最近5日科技情绪分时数据（合并当日实时数据）
 // 读取5日缓存文件，再用当日实时分时数据覆盖今日，保证交易时段内5日视图也能实时刷新
-// 周末不计入：剔除缓存中的周末 key，周末也不合并当日数据，保证始终是最近5个交易日
+// 非交易日不计入：剔除缓存中的非交易日 key，非交易日也不合并当日数据，保证始终是最近5个交易日
 const getTechEmotionIntraday5Day = () => {
     let cacheData = {};
     if (fs.existsSync(techIndexIntraday5DayPath)) {
@@ -563,14 +561,14 @@ const getTechEmotionIntraday5Day = () => {
         } catch { cacheData = {}; }
     }
 
-    // 剔除周末日期 key，只保留交易日
+    // 剔除非交易日日期 key（周末/节假日），只保留交易日
     Object.keys(cacheData).forEach(dateKey => {
-        if (isWeekendDateKey(dateKey)) delete cacheData[dateKey];
+        if (isNonTradingDateKey(dateKey)) delete cacheData[dateKey];
     });
 
-    // 合并当日实时分时数据（周末不合并，避免刷新按钮把周末数据带进5日视图）
+    // 合并当日实时分时数据（非交易日不合并，避免刷新按钮把非交易日数据带进5日视图）
     const today = dayjs().format('YYYYMMDD');
-    if (!isWeekendDateKey(today)) {
+    if (!isNonTradingDateKey(today)) {
         const { data: intradayData } = getTechEmotionIntraday();
         if (intradayData[today] && intradayData[today].length > 0) {
             cacheData[today] = intradayData[today];
@@ -594,9 +592,9 @@ const scheduleTechEmotionIntraday5DayCache = (hour = 15, minute = 1) => {
     const task = () => {
         const now = dayjs();
         const today = now.format('YYYYMMDD');
-        const dayOfWeek = now.day();
 
-        if (dayOfWeek === 0 || dayOfWeek === 6) return;
+        // 非交易日（周末/节假日，以交易日历为准）不执行
+        if (tradingDayUtil.isNonTradingDay(now.toDate())) return;
         if (executedDates.has(today)) return;
 
         const targetTime = now.hour(hour).minute(minute).second(0).millisecond(0);

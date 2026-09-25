@@ -3161,10 +3161,11 @@ const writeMarketSnapshotLastSentAt = (ts) => {
   }
 };
 
-// 是否处于可播报时段：非周末且在 9:30-11:30 或 13:00-15:00 内
+// 是否处于可播报时段：交易日（以交易日历为准，自动剔除周末与法定节假日）且在 9:30-11:30 或 13:00-15:00 内
 const isInMarketSnapshotWindow = () => {
+  const { isTradingDay } = require('./utils/tradingDay');
   const now = dayjs();
-  if (now.day() === 0 || now.day() === 6) return false;
+  if (!isTradingDay(now.toDate())) return false;
   const totalMinutes = now.hour() * 60 + now.minute();
   return (totalMinutes >= 570 && totalMinutes < 690) || (totalMinutes >= 780 && totalMinutes < 900);
 };

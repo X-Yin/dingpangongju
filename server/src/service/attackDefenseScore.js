@@ -49,11 +49,11 @@ const saveSnapshots = () => {
 
 const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
 
-// 判断当前是否在交易时段内（9:15-11:30, 13:00-15:00，非周末）
+// 判断当前是否在交易时段内（9:15-11:30, 13:00-15:00，非交易日不在线：以交易日历为准，自动剔除周末与法定节假日）
 const isMarketOpen = () => {
+  const { isTradingDay } = require('../utils/tradingDay');
   const now = new Date();
-  const day = now.getDay();
-  if (day === 0 || day === 6) return false;
+  if (!isTradingDay(now)) return false;
   const timeVal = now.getHours() * 60 + now.getMinutes();
   return (timeVal >= 555 && timeVal < 690) || (timeVal >= 780 && timeVal < 900);
 };

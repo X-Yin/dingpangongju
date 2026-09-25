@@ -68,13 +68,11 @@ function aggregateTlineTo5Min(line, dateStr) {
   });
 }
 
-// 计算下一个工作日（仅跳过周末，不含节假日）
+// 计算下一个交易日（以交易日历为准，自动跳过周末与法定节假日；未覆盖年份回退为跳过周末）
+const tradingDayUtil = require('../utils/tradingDay');
 function nextWeekday(dateStr) {
-  let d = dayjs(dateStr, 'YYYYMMDD').add(1, 'day');
-  while (d.day() === 0 || d.day() === 6) {
-    d = d.add(1, 'day');
-  }
-  return d.format('YYYYMMDD');
+  const d = dayjs(dateStr, 'YYYYMMDD').toDate();
+  return dayjs(tradingDayUtil.getNextTradingDay(d)).format('YYYYMMDD');
 }
 
 // 全天 48 个 5 分钟分时桶的 "HH:MM" 标签

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { List, Card, Typography, Spin, Empty, message, Badge, Tag, Button, Modal, Input, Switch, Space } from 'antd';
 import { BookOutlined, SyncOutlined, ClockCircleOutlined, ReloadOutlined, FileAddOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import dayjs from 'dayjs';
+import { isAfterMarketClose } from '../../utils/tradingDay';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
 import { local_ip } from '../../constant';
@@ -10,12 +10,7 @@ import './index.scss';
 
 const { Title, Text, Paragraph } = Typography;
 
-const isAfterMarketClose = () => {
-  const now = dayjs();
-  const currentHour = now.hour();
-  const currentMinute = now.minute();
-  return currentHour < 9 || (currentHour === 9 && currentMinute < 15) || currentHour >= 15 || (currentHour === 14 && currentMinute >= 59);
-};
+// 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
 
 // 将纯文本研报内容转换为 markdown 格式
 const convertTextToMarkdown = (text) => {

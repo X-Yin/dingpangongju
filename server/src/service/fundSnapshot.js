@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const dayjs = require('dayjs');
+const { isTradingDay } = require('../utils/tradingDay');
 const { getAmountHistory } = require('./amount');
 
 const fundSnapshotDir = path.resolve(__dirname, '../data/fundSnapshot');
@@ -171,9 +172,9 @@ const scheduleDailySnapshot = (hour = 15, minute = 1) => {
   const task = () => {
     const now = dayjs();
     const today = now.format('YYYYMMDD');
-    const dayOfWeek = now.day();
 
-    if (dayOfWeek === 0 || dayOfWeek === 6) return;
+    // 非交易日（周末/节假日，以交易日历为准）不执行
+    if (!isTradingDay(now.toDate())) return;
     if (executedDates.has(today)) return;
 
     const targetTime = now.hour(hour).minute(minute).second(0).millisecond(0);

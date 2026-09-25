@@ -4,6 +4,7 @@ import { Modal, Spin, Tag, Button, Input, Checkbox, Empty, Card, Tooltip, Popcon
 import { LineChartOutlined, PlusOutlined, SearchOutlined, CloseOutlined, GroupOutlined, EditOutlined, DeleteOutlined, StarOutlined, ApiOutlined, CaretUpOutlined, CaretDownOutlined, ReloadOutlined, FullscreenOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import dayjs from 'dayjs';
+import { isTradingDay } from '../../utils/tradingDay';
 import axios from 'axios';
 import { local_ip } from '../../constant';
 import { getThemeColor } from '../../utils/theme';
@@ -645,10 +646,10 @@ const MultiStockTimeLineModal = ({
     fetchMainFund();
     const timer = window.setInterval(() => {
       const now = new Date();
-      const day = now.getDay();
       const hour = now.getHours();
       const minute = now.getMinutes();
-      if (day === 0 || day === 6) return;
+      // 非交易日（周末/节假日，以交易日历为准）与交易日的非交易时间不发请求
+      if (!isTradingDay(now)) return;
       if (hour < 9 || (hour === 9 && minute < 25) || hour >= 15) return;
       fetchMainFund();
     }, 10000);
@@ -749,10 +750,10 @@ const MultiStockTimeLineModal = ({
     fetchTimeLineData(currentStocks);
     const timer = window.setInterval(() => {
       const now = new Date();
-      const day = now.getDay();
       const hour = now.getHours();
       const minute = now.getMinutes();
-      if (day === 0 || day === 6) return;
+      // 非交易日（周末/节假日，以交易日历为准）与交易日的非交易时间不发请求
+      if (!isTradingDay(now)) return;
       if (hour < 9 || (hour === 9 && minute < 15) || hour >= 15) return;
       fetchTimeLineData(currentStocks);
     }, 3000);

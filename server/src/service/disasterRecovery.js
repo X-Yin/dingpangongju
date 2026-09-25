@@ -20,7 +20,7 @@ const { isEmotionFreezing } = require('./buySellDiagnose');
 const { getAmountHistory } = require('./amount');
 const { getDaPanData } = require('./dapan');
 const { getMonitorStocks } = require('./monitorStock');
-const { getClsReqUrl, getClsReqStockTlineUrl, batchParallel } = require('../utils');
+const { getClsReqUrl, getClsReqStockTlineUrl, batchParallel, isTradingDay } = require('../utils');
 const { useCLS } = require('../config');
 
 const dapanDataPath = path.resolve(__dirname, '../data/dapanData.json');
@@ -182,11 +182,10 @@ function getMonitorStocksChangeFromCache() {
   }
 }
 
-// 是否处于交易时段 9:30-10:00 且为工作日
+// 是否处于交易时段 9:30-10:00 且为交易日（以交易日历为准）
 function isInOpeningCheckWindow() {
   const now = dayjs();
-  const dayOfWeek = now.day();
-  if (dayOfWeek === 0 || dayOfWeek === 6) return false;
+  if (!isTradingDay(now.toDate())) return false;
   const hour = now.hour();
   const minute = now.minute();
   const minutesSinceMidnight = hour * 60 + minute;

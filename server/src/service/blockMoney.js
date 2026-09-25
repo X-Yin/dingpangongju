@@ -1,6 +1,6 @@
 // 东方财富的概念资金流入流出板块
 
-const { getDFCFBlockMoneyUrl, sleep, getDFCFBlockMoneyIndustryUrl } = require('../utils');
+const { getDFCFBlockMoneyUrl, sleep, getDFCFBlockMoneyIndustryUrl, isTradingDay } = require('../utils');
 const axios = require('axios');
 const blockMoneyConfig = require('../constant/block_money');
 const blockMoneyList = blockMoneyConfig.default;
@@ -173,11 +173,10 @@ const scheduleBlockMoneyChangeDayHistory = (hour = 15, minute = 5) => {
     const task = () => {
         const now = dayjs();
         const today = now.format('YYYYMMDD');
-        const dayOfWeek = now.day(); // 0 周日, 6 周六
-        
-        // 检查是否是周末
-        if (dayOfWeek === 0 || dayOfWeek === 6) return;
-        
+
+        // 非交易日（周末/节假日，以交易日历为准）不执行
+        if (!isTradingDay(now.toDate())) return;
+
         // 检查今天是否已经执行过
         if (executedDates.has(today)) return;
         

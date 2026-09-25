@@ -291,7 +291,7 @@ exports.getLimitTypeByCode = getLimitTypeByCode;
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const { getClsReqStockTlineUrl } = require('../utils');
+const { getClsReqStockTlineUrl, getRecentTradingDays, isTradingDay } = require('../utils');
 const { getMonitorStocks } = require('./monitorStock');
 const { getSingleStockTlineDataByDate, getSingleStockData } = require('./stock');
 
@@ -377,34 +377,19 @@ exports.diagnoseResilience = diagnoseResilience;
 
 const resilienceCachePath = path.resolve(__dirname, '../data/resilience_multi_day.json');
 
-// 获取最近N个交易日期（跳过周末，多取2天以防节假日）
+// 获取最近N个交易日期（以交易日历为准，自动跳过周末与法定节假日；多取2天以防数据缺失）
 const getRecentTradingDates = (days = 5) => {
-    const dates = [];
-    const today = new Date();
-    let date = new Date(today);
-
-    const dayOfWeek = today.getDay();
-    // 周末（周六/周日）从昨天开始取（会自动跳过周末到上周五）
-    // 工作日（含交易时段和收盘后）都从今天开始取：
+    const toDateNum = (d) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return parseInt(`${year}${month}${day}`);
+    };
+    // 交易日历已自动跳过周末/节假日，无需再往前多取：
     //   - 交易时段内：当日分时数据实时更新
     //   - 收盘后：当日分时数据已最终确定，同样可用
     //   - 盘前（9:25 前）：当日尚无分时数据，下面的 validDates 过滤会自动跳过
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-        date.setDate(date.getDate() - 1);
-    }
-
-    while (dates.length < days + 2) {
-        const dow = date.getDay();
-        if (dow !== 0 && dow !== 6) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            dates.push(parseInt(`${year}${month}${day}`));
-        }
-        date.setDate(date.getDate() - 1);
-    }
-
-    return dates;
+    return getRecentTradingDays(days + 2).map(toDateNum).sort((a, b) => b - a);
 };
 
 // 读取缓存
@@ -730,8 +715,8 @@ const diagnoseSingleStockResilience = async (code, startDate, endDate) => {
         const endDateObj = new Date(endDate);
 
         while (current <= endDateObj) {
-            const dow = current.getDay();
-            if (dow !== 0 && dow !== 6) {
+            // 以交易日历为准，仅保留交易日（自动跳过周末与法定节假日）
+            if (isTradingDay(current)) {
                 const year = current.getFullYear();
                 const month = String(current.getMonth() + 1).padStart(2, '0');
                 const day = String(current.getDate()).padStart(2, '0');

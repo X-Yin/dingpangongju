@@ -49,28 +49,29 @@ const SELL_RULES = [
 // 回测策略选项（与后端 buySellBacktest.STRATEGIES 保持一致；全量自选股策略已移除）
 const STRATEGY_OPTIONS = [
   { value: 'highest_gain', label: '买入最高涨幅' },
-  { value: 'highest_5d_gain', label: '5日涨幅最大' },
-  { value: 'highest_3d_gain', label: '3日涨幅最大' },
-  { value: 'highest_3d_gain_switch', label: '连续切换三日涨幅' },
-  { value: 'highest_4d_gain', label: '4日涨幅最大' },
   { value: 'highest_2d_gain', label: '2日涨幅最大' },
+  { value: 'highest_3d_gain', label: '3日涨幅最大' },
+  { value: 'highest_4d_gain', label: '4日涨幅最大' },
+  { value: 'highest_5d_gain', label: '5日涨幅最大' },
   { value: 'highest_10d_gain', label: '10日涨幅最大' },
+  { value: 'highest_3d_gain_switch', label: '3日涨幅连续切换' },
   { value: 'highest_3d_gain_twice', label: '3日涨幅两次买入' },
-  { value: 'highest_3d_gain_quarter', label: '三日涨幅四份仓位' },
-  { value: 'highest_3d_gain_two', label: '三日涨幅两个股票' },
+  { value: 'highest_3d_gain_quarter', label: '3日涨幅四份仓位' },
+  { value: 'highest_3d_gain_two', label: '3日涨幅两个股票' },
   { value: 'highest_5d_gain_2nd', label: '5日涨幅第二名' },
   { value: 'highest_3d_gain_2nd', label: '3日涨幅第二名' },
-  { value: 'highest_3d_ma_slope', label: '3日线斜率最陡峭' },
-  { value: 'highest_5d_ma_slope', label: '5日线斜率最陡峭' },
-  { value: 'highest_5d_resilience', label: '5日抗分歧分数最大' },
-  { value: 'highest_3d_resilience', label: '3日抗分歧分数最大' },
-  { value: 'resilience_weak_to_strong', label: '抗分歧弱转强' },
   { value: 'highest_3d_reports', label: '3日研报覆盖数最多' },
   { value: 'highest_5d_reports', label: '5日研报覆盖数最多' },
   { value: 'highest_3d_reports_2nd', label: '3日研报覆盖数第二名' },
   { value: 'highest_5d_reports_2nd', label: '5日研报覆盖数第二名' },
   { value: 'highest_3d_reports_top5_gain', label: '3日研报前五&涨幅最大' },
   { value: 'highest_5d_reports_top5_gain', label: '5日研报前五&涨幅最大' },
+  { value: 'highest_3d_ma_slope', label: '3日线斜率最陡峭' },
+  { value: 'highest_5d_ma_slope', label: '5日线斜率最陡峭' },
+  { value: 'highest_5d_resilience', label: '5日抗分歧分数最大' },
+  { value: 'highest_3d_resilience', label: '3日抗分歧分数最大' },
+  { value: 'resilience_weak_to_strong', label: '抗分歧弱转强' },
+
   { value: 'tail_dip_1d_gain', label: '尾盘抄底-当日涨幅最大' },
   { value: 'tail_dip_3d_gain', label: '尾盘抄底-3日涨幅最大' },
   { value: 'tail_dip_1d_resilience', label: '尾盘抄底-当日抗分歧最大' },
@@ -314,7 +315,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       if (r.data?.success && r.data.startDate && r.data.endDate) {
         setSentimentRange([dayjs(String(r.data.startDate), 'YYYYMMDD'), dayjs(String(r.data.endDate), 'YYYYMMDD')]);
       }
-    }).catch(() => {});
+    }).catch(() => { });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, curIsSentiment, sentimentRange]);
@@ -462,7 +463,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
         setWorkerLog(logs[logs.length - 1] || '全量回测进行中…');
         startWorkerPolling();
       }
-    }).catch(() => {});
+    }).catch(() => { });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -728,14 +729,14 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
           <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               {[
-                { label: '覆盖自选股', value: `${summary.stockCount} 只` },
-                { label: '成交笔数', value: `${summary.totalTrades} 笔` },
-                { label: '盈利笔数', value: `${summary.winTrades} 笔` },
-                { label: '胜率', value: summary.winRate != null ? `${summary.winRate.toFixed(1)}%` : '--', color: summary.winRate != null && summary.winRate >= 50 ? '#f5222d' : '#52c41a' },
-                { label: '平均持仓', value: summary.avgHoldingDays != null ? `${summary.avgHoldingDaysApprox ? '≈' : ''}${Number(summary.avgHoldingDays).toFixed(1)} 交易日` : '--' },
                 result.type === 'single'
                   ? { label: '整体收益', value: summary.overallReturn != null ? fmtPct(summary.overallReturn) : '--', color: summary.overallReturn != null ? (summary.overallReturn >= 0 ? '#f5222d' : '#52c41a') : undefined }
                   : { label: '平均单笔收益', value: summary.avgReturn != null ? fmtPct(summary.avgReturn) : '--', color: summary.avgReturn != null ? (summary.avgReturn >= 0 ? '#f5222d' : '#52c41a') : undefined },
+                { label: '胜率', value: summary.winRate != null ? `${summary.winRate.toFixed(1)}%` : '--', color: summary.winRate != null && summary.winRate >= 50 ? '#f5222d' : '#52c41a' },
+                { label: '平均持仓', value: summary.avgHoldingDays != null ? `${summary.avgHoldingDaysApprox ? '≈' : ''}${Number(summary.avgHoldingDays).toFixed(1)} 交易日` : '--' },
+                { label: '覆盖自选股', value: `${summary.stockCount} 只` },
+                { label: '成交笔数', value: `${summary.totalTrades} 笔` },
+                { label: '盈利笔数', value: `${summary.winTrades} 笔` },
                 { label: '期末仍持仓', value: result.type === 'single' ? (summary.holdingCount > 0 ? '1 只' : '0 只') : `${summary.holdingCount} 只` },
               ].map(item => (
                 <div key={item.label} style={{ flex: 1, minWidth: 110, background: '#f7f9fc', borderRadius: 10, padding: '10px 12px' }}>
@@ -860,111 +861,111 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
               </div>
             )
           ) : (
-          /* 全量策略：每只股票一张卡片 */
-          result.stocks.length === 0 ? (
-            <Empty description="所选范围内未产生任何成交" />
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {result.stocks.map(stock => {
-                const stockTotalReturn = stock.trades.reduce((s, t) => s + (Number(t.returnRate) || 0), 0);
-                return (
-                  <div key={stock.code} style={{ background: '#fff', borderRadius: 12, padding: 14, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
-                    {/* 卡片头部 */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#12213a' }}>{stock.stockName}</span>
-                      <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{stock.code}</span>
-                      <Tag color="blue" style={{ marginInlineEnd: 0 }}>{stock.trades.length} 笔成交</Tag>
-                      {stock.trades.length > 0 && (
-                        <Tag color={stockTotalReturn >= 0 ? 'red' : 'green'} style={{ marginInlineEnd: 0 }}>
-                          累计收益 {fmtPct(stockTotalReturn)}
-                        </Tag>
-                      )}
-                      {stock.holding && (
-                        <Tag color="gold" style={{ marginInlineEnd: 0 }}>期末持仓中</Tag>
-                      )}
-                    </div>
-
-                    {/* 成交明细 */}
-                    {stock.trades.length === 0 && !stock.holding ? (
-                      <div style={{ fontSize: 12, color: '#9ca3af' }}>所选范围内无买入信号触发</div>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        {stock.trades.map((t, idx) => (
-                          <div key={idx} style={{ border: '1px solid #eef1f6', borderRadius: 8, padding: '8px 10px', background: '#fafbfd' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                              <RiseOutlined style={{ color: '#f5222d', fontSize: 12 }} />
-                              <span style={{ fontSize: 12, fontWeight: 600, color: '#12213a' }}>
-                                第{idx + 1}笔
-                              </span>
-                              <span style={{ fontSize: 12, color: '#6b7890' }}>
-                                买入 <b>{fmtDate(t.buyDate)} {t.buyTime}</b>
-                              </span>
-                              <span style={{ fontSize: 12, color: '#6b7890' }}>
-                                价格 <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(t.buyPrice).toFixed(2)}</b>
-                              </span>
-                              <span style={{ fontSize: 12 }}>
-                                涨幅 <b style={{ color: t.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(t.buyChange)}</b>
-                              </span>
-                            </div>
-                            {t.buyReason && (
-                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
-                                <span style={{ fontSize: 12, color: '#6b7890', lineHeight: '22px' }}>买入原因</span>
-                                <BuyReasonTag reason={t.buyReason} checks={t.buyChecks} />
-                              </div>
-                            )}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
-                              <FallOutlined style={{ color: '#52c41a', fontSize: 12 }} />
-                              <span style={{ fontSize: 12, color: '#6b7890' }}>
-                                卖出 <b>{fmtDate(t.sellDate)} {t.sellTime}</b>
-                              </span>
-                              <span style={{ fontSize: 12, color: '#6b7890' }}>
-                                价格 <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(t.sellPrice).toFixed(2)}</b>
-                              </span>
-                              <span style={{ fontSize: 12 }}>
-                                涨幅 <b style={{ color: t.sellChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(t.sellChange)}</b>
-                              </span>
-                              <span style={{ fontSize: 12, color: '#6b7890' }}>
-                                持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(t)}</b>
-                              </span>
-                              <span style={{ fontSize: 12, color: '#6b7890' }}>
-                                卖出原因 <Tag color="geekblue" style={{ marginInlineEnd: 0 }}>{t.sellReason}</Tag>
-                              </span>
-                              <span style={{ fontSize: 13, fontWeight: 700, color: t.returnRate >= 0 ? '#f5222d' : '#52c41a' }}>
-                                收益 {fmtPct(t.returnRate)}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-
-                        {/* 期末持仓 */}
+            /* 全量策略：每只股票一张卡片 */
+            result.stocks.length === 0 ? (
+              <Empty description="所选范围内未产生任何成交" />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {result.stocks.map(stock => {
+                  const stockTotalReturn = stock.trades.reduce((s, t) => s + (Number(t.returnRate) || 0), 0);
+                  return (
+                    <div key={stock.code} style={{ background: '#fff', borderRadius: 12, padding: 14, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
+                      {/* 卡片头部 */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: '#12213a' }}>{stock.stockName}</span>
+                        <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{stock.code}</span>
+                        <Tag color="blue" style={{ marginInlineEnd: 0 }}>{stock.trades.length} 笔成交</Tag>
+                        {stock.trades.length > 0 && (
+                          <Tag color={stockTotalReturn >= 0 ? 'red' : 'green'} style={{ marginInlineEnd: 0 }}>
+                            累计收益 {fmtPct(stockTotalReturn)}
+                          </Tag>
+                        )}
                         {stock.holding && (
-                          <div style={{ border: '1px dashed #f5c96b', borderRadius: 8, padding: '8px 10px', background: '#fffbea' }}>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: '#ad6800' }}>持仓中（未卖出）</span>
-                            <span style={{ fontSize: 12, color: '#6b7890', marginLeft: 10 }}>
-                              买入 {fmtDate(stock.holding.buyDate)} {stock.holding.buyTime} 价格{' '}
-                              <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(stock.holding.buyPrice).toFixed(2)}</b>
-                            </span>
-                            <span style={{ fontSize: 12, marginLeft: 10 }}>
-                              涨幅 <b style={{ color: stock.holding.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(stock.holding.buyChange)}</b>
-                            </span>
-                            <span style={{ fontSize: 12, marginLeft: 10, color: '#6b7890' }}>
-                              已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(stock.holding)}</b>
-                            </span>
-                            {stock.holding.buyReason && (
-                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
-                                <span style={{ fontSize: 12, color: '#6b7890', lineHeight: '22px' }}>买入原因</span>
-                                <BuyReasonTag reason={stock.holding.buyReason} checks={stock.holding.buyChecks} />
-                              </div>
-                            )}
-                          </div>
+                          <Tag color="gold" style={{ marginInlineEnd: 0 }}>期末持仓中</Tag>
                         )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+
+                      {/* 成交明细 */}
+                      {stock.trades.length === 0 && !stock.holding ? (
+                        <div style={{ fontSize: 12, color: '#9ca3af' }}>所选范围内无买入信号触发</div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {stock.trades.map((t, idx) => (
+                            <div key={idx} style={{ border: '1px solid #eef1f6', borderRadius: 8, padding: '8px 10px', background: '#fafbfd' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                                <RiseOutlined style={{ color: '#f5222d', fontSize: 12 }} />
+                                <span style={{ fontSize: 12, fontWeight: 600, color: '#12213a' }}>
+                                  第{idx + 1}笔
+                                </span>
+                                <span style={{ fontSize: 12, color: '#6b7890' }}>
+                                  买入 <b>{fmtDate(t.buyDate)} {t.buyTime}</b>
+                                </span>
+                                <span style={{ fontSize: 12, color: '#6b7890' }}>
+                                  价格 <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(t.buyPrice).toFixed(2)}</b>
+                                </span>
+                                <span style={{ fontSize: 12 }}>
+                                  涨幅 <b style={{ color: t.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(t.buyChange)}</b>
+                                </span>
+                              </div>
+                              {t.buyReason && (
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+                                  <span style={{ fontSize: 12, color: '#6b7890', lineHeight: '22px' }}>买入原因</span>
+                                  <BuyReasonTag reason={t.buyReason} checks={t.buyChecks} />
+                                </div>
+                              )}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+                                <FallOutlined style={{ color: '#52c41a', fontSize: 12 }} />
+                                <span style={{ fontSize: 12, color: '#6b7890' }}>
+                                  卖出 <b>{fmtDate(t.sellDate)} {t.sellTime}</b>
+                                </span>
+                                <span style={{ fontSize: 12, color: '#6b7890' }}>
+                                  价格 <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(t.sellPrice).toFixed(2)}</b>
+                                </span>
+                                <span style={{ fontSize: 12 }}>
+                                  涨幅 <b style={{ color: t.sellChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(t.sellChange)}</b>
+                                </span>
+                                <span style={{ fontSize: 12, color: '#6b7890' }}>
+                                  持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(t)}</b>
+                                </span>
+                                <span style={{ fontSize: 12, color: '#6b7890' }}>
+                                  卖出原因 <Tag color="geekblue" style={{ marginInlineEnd: 0 }}>{t.sellReason}</Tag>
+                                </span>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: t.returnRate >= 0 ? '#f5222d' : '#52c41a' }}>
+                                  收益 {fmtPct(t.returnRate)}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+
+                          {/* 期末持仓 */}
+                          {stock.holding && (
+                            <div style={{ border: '1px dashed #f5c96b', borderRadius: 8, padding: '8px 10px', background: '#fffbea' }}>
+                              <span style={{ fontSize: 12, fontWeight: 600, color: '#ad6800' }}>持仓中（未卖出）</span>
+                              <span style={{ fontSize: 12, color: '#6b7890', marginLeft: 10 }}>
+                                买入 {fmtDate(stock.holding.buyDate)} {stock.holding.buyTime} 价格{' '}
+                                <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(stock.holding.buyPrice).toFixed(2)}</b>
+                              </span>
+                              <span style={{ fontSize: 12, marginLeft: 10 }}>
+                                涨幅 <b style={{ color: stock.holding.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(stock.holding.buyChange)}</b>
+                              </span>
+                              <span style={{ fontSize: 12, marginLeft: 10, color: '#6b7890' }}>
+                                已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(stock.holding)}</b>
+                              </span>
+                              {stock.holding.buyReason && (
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+                                  <span style={{ fontSize: 12, color: '#6b7890', lineHeight: '22px' }}>买入原因</span>
+                                  <BuyReasonTag reason={stock.holding.buyReason} checks={stock.holding.buyChecks} />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
         </>
       ) : null}
 

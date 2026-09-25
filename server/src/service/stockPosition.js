@@ -1,5 +1,5 @@
 // 股票持仓服务
-const { getClsReqMainFundUrl, getClsReqStockTlineDay5Url, getClsReqStockTlineUrl, batchParallel } = require('../utils');
+const { getClsReqMainFundUrl, getClsReqStockTlineDay5Url, getClsReqStockTlineUrl, batchParallel, isTradingDay } = require('../utils');
 const { getMonitorStocks } = require('./monitorStock');
 const axios = require('axios');
 const fs = require('fs');
@@ -58,11 +58,10 @@ const writeJsonFile = (filePath, data) => {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
 };
 
-// 检查当前是否为交易时间（周一至周五 9:15 - 15:05）
+// 检查当前是否为交易时间（交易日 9:15 - 15:05，交易日以交易日历为准）
 const isTradingTime = () => {
     const now = dayjs();
-    const day = now.day();
-    if (day === 0 || day === 6) return false;
+    if (!isTradingDay(now.toDate())) return false;
     const cur = now.hour() * 60 + now.minute();
     return cur >= 9 * 60 + 15 && cur <= 15 * 60 + 5;
 };

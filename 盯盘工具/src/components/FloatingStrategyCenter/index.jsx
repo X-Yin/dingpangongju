@@ -2,21 +2,14 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Drawer, Empty, Badge, Button, Space, Tabs, Tag, Modal, Input, Select } from 'antd';
 import { BulbOutlined, CheckOutlined, InfoCircleOutlined, WarningOutlined, ArrowUpOutlined, ArrowDownOutlined, RobotOutlined, CopyOutlined, SnippetsOutlined, HistoryOutlined, ThunderboltOutlined, SwapOutlined, RiseOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import dayjs from 'dayjs';
+import { isAfterMarketClose } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
 import AiDiagnosisResult from '../AiDiagnosisResult';
 import './index.scss';
 
 const POLL_INTERVAL = 3000;
 
-const isAfterMarketClose = () => {
-  const now = dayjs();
-  const dayOfWeek = now.day();
-  if (dayOfWeek === 0 || dayOfWeek === 6) return true;
-  const currentHour = now.hour();
-  const currentMinute = now.minute();
-  return currentHour < 9 || (currentHour === 9 && currentMinute < 15) || currentHour >= 15 || (currentHour === 14 && currentMinute >= 59);
-};
+// 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
 
 const STRATEGY_ICONS = {
   high_open_low_close: <WarningOutlined />,

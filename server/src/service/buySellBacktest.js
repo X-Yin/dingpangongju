@@ -26,28 +26,29 @@ const EXCLUDED_CODES = new Set(['sh688498', 'sh688808']); // 源杰科技、联�
 // 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
 const STRATEGIES = {
   highest_gain: { id: 'highest_gain', name: '买入最高涨幅', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票' },
-  highest_5d_gain: { id: 'highest_5d_gain', name: '5日涨幅最大', desc: '买点命中时只买入最近 5 个交易日涨幅最大的股票' },
-  highest_3d_gain: { id: 'highest_3d_gain', name: '3日涨幅最大', desc: '买点命中时只买入最近 3 个交易日涨幅最大的股票' },
-  highest_3d_gain_switch: { id: 'highest_3d_gain_switch', name: '连续切换三日涨幅', desc: '触发买点时，买入当前所有自选股三日涨幅最大值。若空仓则全仓买入；若已持仓且最大涨幅股票变化，则卖掉旧的并全仓买入新的；若持仓未变则不操作' },
+   highest_2d_gain: { id: 'highest_2d_gain', name: '2日涨幅最大', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票（按用户定义排序依据为触发时点当日盘中涨幅，非 2 日窗口累计涨幅）' },
+   highest_3d_gain: { id: 'highest_3d_gain', name: '3日涨幅最大', desc: '买点命中时只买入最近 3 个交易日涨幅最大的股票' },
   highest_4d_gain: { id: 'highest_4d_gain', name: '4日涨幅最大', desc: '买点命中时只买入最近 4 个交易日涨幅最大的股票' },
-  highest_2d_gain: { id: 'highest_2d_gain', name: '2日涨幅最大', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票（按用户定义排序依据为触发时点当日盘中涨幅，非 2 日窗口累计涨幅）' },
+   highest_5d_gain: { id: 'highest_5d_gain', name: '5日涨幅最大', desc: '买点命中时只买入最近 5 个交易日涨幅最大的股票' },
   highest_10d_gain: { id: 'highest_10d_gain', name: '10日涨幅最大', desc: '买点命中时只买入最近 10 个交易日涨幅最大的股票' },
+  highest_3d_gain_switch: { id: 'highest_3d_gain_switch', name: '3日涨幅连续切换', desc: '触发买点时，买入当前所有自选股三日涨幅最大值。若空仓则全仓买入；若已持仓且最大涨幅股票变化，则卖掉旧的并全仓买入新的；若持仓未变则不操作' },
   highest_3d_gain_twice: { id: 'highest_3d_gain_twice', name: '3日涨幅两次买入', desc: '买点命中时先买入 5 成仓位，剩余 5 成等当天收盘再买入，成本价为两次买入价格平均值（选股逻辑同 3 日涨幅最大）' },
-  highest_3d_gain_quarter: { id: 'highest_3d_gain_quarter', name: '三日涨幅四份仓位', desc: '买点触发时把仓位分成四份，分别买入最近 3 个交易日涨幅排名前四的股票（各占 1/4）。任一只触发卖点即独立卖出；仅当四份全部清仓（彻底空仓）后，下一次买点才重新按四份建仓' },
-  highest_3d_gain_two: { id: 'highest_3d_gain_two', name: '三日涨幅两个股票', desc: '买点触发时把仓位分成两份（各占 1/2）。两份均空仓时买入最近 3 个交易日涨幅最大和第二大的股票；仅一份空仓时只买入涨幅最大的股票。任一只触发卖点即独立卖出' },
+  highest_3d_gain_quarter: { id: 'highest_3d_gain_quarter', name: '3日涨幅四份仓位', desc: '买点触发时把仓位分成四份，分别买入最近 3 个交易日涨幅排名前四的股票（各占 1/4）。任一只触发卖点即独立卖出；仅当四份全部清仓（彻底空仓）后，下一次买点才重新按四份建仓' },
+  highest_3d_gain_two: { id: 'highest_3d_gain_two', name: '3日涨幅两个股票', desc: '买点触发时把仓位分成两份（各占 1/2）。两份均空仓时买入最近 3 个交易日涨幅最大和第二大的股票；仅一份空仓时只买入涨幅最大的股票。任一只触发卖点即独立卖出' },
   highest_5d_gain_2nd: { id: 'highest_5d_gain_2nd', name: '5日涨幅第二名', desc: '买点命中时只买入最近 5 个交易日涨幅第二大的股票' },
   highest_3d_gain_2nd: { id: 'highest_3d_gain_2nd', name: '3日涨幅第二名', desc: '买点命中时只买入最近 3 个交易日涨幅第二大的股票' },
   highest_3d_ma_slope: { id: 'highest_3d_ma_slope', name: '3日线斜率最陡峭', desc: '买点命中时只买入 3 日涨幅均线斜率角度最大的股票' },
   highest_5d_ma_slope: { id: 'highest_5d_ma_slope', name: '5日线斜率最陡峭', desc: '买点命中时只买入 5 日涨幅均线斜率角度最大的股票' },
-  highest_5d_resilience: { id: 'highest_5d_resilience', name: '5日抗分歧分数最大', desc: '买点命中时只买入最近 5 个交易日抗分歧分数汇总最大的股票' },
-  highest_3d_resilience: { id: 'highest_3d_resilience', name: '3日抗分歧分数最大', desc: '买点命中时只买入最近 3 个交易日抗分歧分数汇总最大的股票' },
-  resilience_weak_to_strong: { id: 'resilience_weak_to_strong', name: '抗分歧弱转强', desc: '买点命中时先筛选出当日抗分歧分数>11 的股票，再从中计算最近 4 个交易日「前两天均值」与「最近两天均值」的差值（差值越大=抗分歧由弱转强越明显），全仓买入差值最大的股票；差值相同则买入当日涨幅最大的一只' },
   highest_3d_reports: { id: 'highest_3d_reports', name: '3日研报覆盖数最多', desc: '买点命中时只买入过去 3 个交易日研报覆盖数最多的股票（覆盖数相同取 3 日涨幅最大）' },
   highest_5d_reports: { id: 'highest_5d_reports', name: '5日研报覆盖数最多', desc: '买点命中时只买入过去 5 个交易日研报覆盖数最多的股票（覆盖数相同取 5 日涨幅最大）' },
   highest_3d_reports_2nd: { id: 'highest_3d_reports_2nd', name: '3日研报覆盖数第二名', desc: '买点命中时只买入过去 3 个交易日研报覆盖数第二多的股票（覆盖数相同取 3 日涨幅最大）' },
   highest_5d_reports_2nd: { id: 'highest_5d_reports_2nd', name: '5日研报覆盖数第二名', desc: '买点命中时只买入过去 5 个交易日研报覆盖数第二多的股票（覆盖数相同取 5 日涨幅最大）' },
   highest_3d_reports_top5_gain: { id: 'highest_3d_reports_top5_gain', name: '3日研报前五&涨幅最大', desc: '买点命中时在最近 3 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 3 日涨幅最大的一只' },
   highest_5d_reports_top5_gain: { id: 'highest_5d_reports_top5_gain', name: '5日研报前五&涨幅最大', desc: '买点命中时在最近 5 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 5 日涨幅最大的一只' },
+  highest_5d_resilience: { id: 'highest_5d_resilience', name: '5日抗分歧分数最大', desc: '买点命中时只买入最近 5 个交易日抗分歧分数汇总最大的股票' },
+  highest_3d_resilience: { id: 'highest_3d_resilience', name: '3日抗分歧分数最大', desc: '买点命中时只买入最近 3 个交易日抗分歧分数汇总最大的股票' },
+  resilience_weak_to_strong: { id: 'resilience_weak_to_strong', name: '抗分歧弱转强', desc: '买点命中时先筛选出当日抗分歧分数>11 的股票，再从中计算最近 4 个交易日「前两天均值」与「最近两天均值」的差值（差值越大=抗分歧由弱转强越明显），全仓买入差值最大的股票；差值相同则买入当日涨幅最大的一只' },
+  
   // 尾盘抄底系列（tailDip: true → 买入信号仅取尾盘抄底命中，不走买点诊断 allPassed；卖点走专属逐分钟环比规则）
   tail_dip_1d_gain: { id: 'tail_dip_1d_gain', name: '尾盘抄底-当日涨幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日涨幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
   tail_dip_3d_gain: { id: 'tail_dip_3d_gain', name: '尾盘抄底-3日涨幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入最近 3 个交易日涨幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
@@ -75,62 +76,33 @@ for (const s of Object.values(STRATEGIES)) {
 const backtestCacheDir = path.join(__dirname, '../data/backtest_results');
 const getBacktestCacheFile = (strategy, startDate, endDate) => path.join(backtestCacheDir, `backtest_${strategy}_${startDate}_${endDate}.json`);
 
-// ---------- 持仓交易日数（以 server/src/data/amountSnapshot 的日期文件为交易日历）----------
-// amountSnapshot 每个交易日生成一份 YYYYMMDD.json，文件名集合即交易日历（严格按交易日维度，
-// 自动剔除周末/节假日）；持仓天数 = 卖出日与买入日之间的交易日跨度（当日卖出为 0）；
-// 买卖日期超出日历覆盖范围时（如情绪游资更早区间）退化为按周一~周五计数（不剔除法定节假日）
-let amountSnapshotDatesCache = { list: null, at: 0 };
-const getAmountSnapshotTradingDates = () => {
-  const now = Date.now();
-  if (amountSnapshotDatesCache.list && now - amountSnapshotDatesCache.at < 60000) return amountSnapshotDatesCache.list;
-  let list = [];
-  try {
-    list = fs.readdirSync(path.join(__dirname, '../data/amountSnapshot'))
-      .filter(f => /^\d{8}\.json$/.test(f))
-      .map(f => f.slice(0, 8))
-      .sort();
-  } catch (e) {
-    list = [];
-  }
-  amountSnapshotDatesCache = { list, at: now };
-  return list;
-};
-
-// 退化口径：a→b 之间按自然日逐日扫描并剔除周六周日（不剔除法定节假日）
-const weekdayCountBetween = (a, b) => {
-  const pa = [Number(a.slice(0, 4)), Number(a.slice(4, 6)), Number(a.slice(6, 8))];
-  const pb = [Number(b.slice(0, 4)), Number(b.slice(4, 6)), Number(b.slice(6, 8))];
-  let cur = Date.UTC(pa[0], pa[1] - 1, pa[2]);
-  const end = Date.UTC(pb[0], pb[1] - 1, pb[2]);
-  let n = 0;
-  while (cur < end) {
-    const dow = new Date(cur).getUTCDay();
-    if (dow !== 0 && dow !== 6) n += 1;
-    cur += 86400000;
-  }
-  return n;
-};
+// ---------- 持仓交易日数（以项目根目录 YYYY交易日.json 交易日历为准）----------
+// 持仓天数 = 卖出日相对买入日的交易日跨度（当日卖出为 0），自动剔除周末/法定节假日；
+// 买卖日期所在年份超出日历覆盖范围时（如更早的历史区间）按周一~周五回退计数，
+// 并以 holdingDaysApprox = true 标记为退化估算（前端显示 ≈）
+const tradingDayUtil = require('../utils/tradingDay');
+const normDateNum = (s) => String(s == null ? '' : s).replace(/-/g, '');
 
 // 为回测结果就地补充持仓交易日数（trades / currentHolding / stocks[].trades / stocks[].holding）：
-// holdingDays = 卖出日 - 买入日的交易日跨度；期末仍持仓的统计买入日至日历最新交易日；
-// holdingDaysApprox = true 表示买卖日期超出 amountSnapshot 覆盖范围、按周一~周五退化估算
+// holdingDays = 卖出日 - 买入日的交易日跨度；期末仍持仓的统计买入日至最近一个交易日（今日为交易日则含今日）；
+// holdingDaysApprox = true 表示买卖日期所在年份未被交易日历覆盖、按周一~周五退化估算
 const attachHoldingDays = (result) => {
   if (!result || typeof result !== 'object') return result;
-  const calendar = getAmountSnapshotTradingDates();
-  const idxMap = new Map(calendar.map((d, i) => [d, i]));
-  const norm = s => String(s == null ? '' : s).replace(/-/g, '');
+  const now = new Date();
+  const latest = tradingDayUtil.isTradingDay(now) ? now : tradingDayUtil.getPrevTradingDay(now);
+  const latestTradingDayNum = Number(`${latest.getFullYear()}${String(latest.getMonth() + 1).padStart(2, '0')}${String(latest.getDate()).padStart(2, '0')}`);
   const calc = (buyDate, sellDate) => {
-    const a = norm(buyDate);
-    const b = norm(sellDate);
+    const a = normDateNum(buyDate);
+    const b = normDateNum(sellDate);
     if (!/^\d{8}$/.test(a) || !/^\d{8}$/.test(b) || b < a) return null;
-    const ia = idxMap.get(a);
-    const ib = idxMap.get(b);
-    if (ia != null && ib != null) return { days: ib - ia, approx: false };
-    return { days: weekdayCountBetween(a, b), approx: true };
+    const days = tradingDayUtil.countTradingDaysBetween(a, b);
+    if (days == null) return null;
+    const approx = !tradingDayUtil.isYearCovered(a) || !tradingDayUtil.isYearCovered(b);
+    return { days, approx };
   };
   const apply = (pos, open) => {
     if (!pos || !pos.buyDate) return;
-    const r = open ? calc(pos.buyDate, calendar[calendar.length - 1]) : calc(pos.buyDate, pos.sellDate);
+    const r = open ? calc(pos.buyDate, latestTradingDayNum) : calc(pos.buyDate, pos.sellDate);
     if (!r) return;
     pos.holdingDays = r.days;
     pos.holdingDaysApprox = r.approx;
@@ -314,13 +286,13 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
   const pastFundHit = findBucketMinutesAgo(buckets, currentIndex, 5);
   const fundResult = pastFundHit
     ? {
-        hasData: true,
-        diff: currentFund - (Number(pastFundHit.bucket.fundFlow) || 0),
-        currentValue: currentFund,
-        pastValue: Number(pastFundHit.bucket.fundFlow) || 0,
-        currentTime: fmtTime(current.timeKey),
-        pastTime: fmtTime(pastFundHit.bucket.timeKey),
-      }
+      hasData: true,
+      diff: currentFund - (Number(pastFundHit.bucket.fundFlow) || 0),
+      currentValue: currentFund,
+      pastValue: Number(pastFundHit.bucket.fundFlow) || 0,
+      currentTime: fmtTime(current.timeKey),
+      pastTime: fmtTime(pastFundHit.bucket.timeKey),
+    }
     : { hasData: false, diff: 0, currentValue: currentFund, pastValue: 0, currentTime: fmtTime(current.timeKey), pastTime: null };
   const fundDiff = parseFloat(fundResult.diff.toFixed(2));
   const checkFundPassed = fundResult.hasData && fundDiff > 20;
@@ -397,15 +369,15 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
       reason: !volumeResult.hasData
         ? '量能数据不足，无法判断当前量能'
         : (() => {
-            const volChangeText = volDiff >= 0 ? `+ ${volDiff.toFixed(2)} 亿` : `- ${Math.abs(volDiff).toFixed(2)} 亿`;
-            return volumeResult.last5minVol > 0
-              ? checkVolumePassed
-                ? `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为正，较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}，持续放量`
-                : `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿虽为正，但较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}`
-              : checkVolumePassed
-                ? `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为负，但较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}，达到 100 亿阈值`
-                : `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为负，较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿仅${volChangeText}，未达到增加 100 亿的阈值`;
-          })(),
+          const volChangeText = volDiff >= 0 ? `+ ${volDiff.toFixed(2)} 亿` : `- ${Math.abs(volDiff).toFixed(2)} 亿`;
+          return volumeResult.last5minVol > 0
+            ? checkVolumePassed
+              ? `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为正，较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}，持续放量`
+              : `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿虽为正，但较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}`
+            : checkVolumePassed
+              ? `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为负，但较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}，达到 100 亿阈值`
+              : `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为负，较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿仅${volChangeText}，未达到增加 100 亿的阈值`;
+        })(),
     });
     if (!checkVolumePassed) allPassed = false;
   }

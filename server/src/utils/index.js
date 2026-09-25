@@ -191,11 +191,20 @@ exports.batchParallel = async (items, fn, batchSize = 10) => {
     return results;
 };
 
-// 判断是否为周末
+// 判断是否为周末（仅周六/周日；交易日判断请用 isTradingDay，以交易日历为准）
 exports.isWeekend = (date = new Date()) => {
     const day = date.getDay();
     return day === 0 || day === 6;
 };
+
+// ---------- 交易日历（以 2026交易日.json 为准） ----------
+const tradingDay = require('./tradingDay');
+exports.isTradingDay = tradingDay.isTradingDay;
+exports.isNonTradingDay = tradingDay.isNonTradingDay;
+exports.getPrevTradingDay = tradingDay.getPrevTradingDay;
+exports.getNextTradingDay = tradingDay.getNextTradingDay;
+exports.getRecentTradingDays = tradingDay.getRecentTradingDays;
+exports.isTradingDateNum = tradingDay.isTradingDateNum;
 
 // 判断是否在午休时段（11:30-13:00）
 exports.isMiddayBreak = (date = new Date()) => {
@@ -213,9 +222,9 @@ exports.isAfterMarketClose = (date = new Date()) => {
     return hours > 15 || (hours === 15 && minutes >= 5)
 };
 
-// 判断是否在交易时段内（9:15-11:30, 13:00-15:05，非周末）
+// 判断是否在交易时段内（9:15-11:30, 13:00-15:05，非交易日不在线：以交易日历为准，自动剔除周末与法定节假日）
 exports.isTradingHours = (date = new Date()) => {
-    if (exports.isWeekend(date)) return false;
+    if (!exports.isTradingDay(date)) return false;
     if (exports.isMiddayBreak(date)) return false;
     if (exports.isAfterMarketClose(date)) return false;
     
@@ -240,14 +249,13 @@ exports.getMsToNextTradingSession = (date = new Date()) => {
         return next.getTime() - now.getTime();
     }
     
-    // 如果在收盘后或周末，返回距离明天9:15的时间（简化处理）
+    // 如果在收盘后或非交易日，返回距离下一个交易日9:15的时间（简化处理）
     // 实际使用中通常由外部进程管理器负责重启
     const next = new Date(now);
-    if (exports.isWeekend(now) || timeVal >= 900 /* 15:00 */) {
-        // 找下一个工作日
-        do {
-            next.setDate(next.getDate() + 1);
-        } while (exports.isWeekend(next));
+    if (!exports.isTradingDay(now) || timeVal >= 900 /* 15:00 */) {
+        // 找下一个交易日
+        const nextTradingDay = exports.getNextTradingDay(now);
+        next.setTime(nextTradingDay.getTime());
         next.setHours(9, 15, 0, 0);
     }
     

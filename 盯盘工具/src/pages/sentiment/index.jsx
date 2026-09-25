@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { createChart, ColorType } from 'lightweight-charts';
 import dayjs from 'dayjs';
+import { isAfterMarketClose } from '../../utils/tradingDay';
 import { local_ip, statusCodeColorMap, statusCodeLabelMap } from '../../constant';
 import StockKLine from '../../components/StockKLine';
 import { getThemeColor } from '../../utils/theme';
@@ -14,12 +15,7 @@ import './index.scss';
 
 const { Title, Text } = Typography;
 
-const isAfterMarketClose = () => {
-  const now = dayjs();
-  const currentHour = now.hour();
-  const currentMinute = now.minute();
-  return currentHour < 9 || (currentHour === 9 && currentMinute < 15) || currentHour >= 15 || (currentHour === 14 && currentMinute >= 59);
-};
+// 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
 
 const formatDateStr = (dateStr) => {
   const str = String(dateStr);

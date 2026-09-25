@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const dayjs = require('dayjs');
 const axios = require('axios');
-const { sleep } = require('../utils/index');
+const { sleep, isTradingDay } = require('../utils/index');
 const { getBrowser, getOrCreatePage } = require('../utils/browser');
 
 const amountPath = path.resolve(__dirname, '../data/amount.json');
@@ -425,10 +425,9 @@ const scheduleAmountDayHistory = (hour = 15, minute = 1) => {
     const task = () => {
         const now = dayjs();
         const today = now.format('YYYYMMDD');
-        const dayOfWeek = now.day(); // 0 周日, 6 周六
 
-        // 检查是否是周末
-        if (dayOfWeek === 0 || dayOfWeek === 6) return;
+        // 非交易日（周末/节假日，以交易日历为准）不执行
+        if (!isTradingDay(now.toDate())) return;
 
         // 检查今天是否已经执行过
         if (executedDates.has(today)) return;

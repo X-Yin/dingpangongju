@@ -11,6 +11,7 @@ import StockKLineModal from '../../components/StockKLineModal';
 import IndexOverlayTline from '../../components/IndexOverlayTline';
 import { useEmotionSuggestion } from '../../hooks/emotion';
 import { getThemeColor } from '../../utils/theme';
+import { isTradingDay, isAfterMarketClose } from '../../utils/tradingDay';
 import TopGlobalAlerts from './components/TopGlobalAlerts';
 import PageMeta from './components/PageMeta';
 import MainMoneyCharts from './components/MainMoneyCharts';
@@ -70,20 +71,12 @@ const filterTradingSessionHistoryData = (records) => {
     return records.filter(([time]) => !isInMiddayBreak(time));
 };
 
-const isAfterMarketClose = () => {
-    const now = dayjs();
-    const dayOfWeek = now.day();
-    if (dayOfWeek === 0 || dayOfWeek === 6) return true;
-    const currentHour = now.hour();
-    const currentMinute = now.minute();
-    return currentHour < 9 || (currentHour === 9 && currentMinute < 15) || currentHour >= 15 || (currentHour === 14 && currentMinute >= 59);
-};
+// 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
 
-// 判断当前是否在交易时段内（周末和非交易时间不提醒）
+// 判断当前是否在交易时段内（非交易日（周末/节假日，以交易日历为准）和非交易时间不提醒）
 const isWithinTradingHours = () => {
     const now = dayjs();
-    const dayOfWeek = now.day(); // 0 (周日) 到 6 (周六)
-    if (dayOfWeek === 0 || dayOfWeek === 6) return false; // 周末不提醒
+    if (!isTradingDay(now)) return false; // 非交易日不提醒
 
     const timeMinutes = now.hour() * 60 + now.minute();
     // 交易时段：9:15-11:30, 13:00-15:00
@@ -237,12 +230,11 @@ const DingPan = () => {
         localStorage.setItem('dingpan_themeColor', JSON.stringify(themeColor));
     }, [themeColor]);
 
-    // 交易纪律弹窗：每个交易日 9:30:00-9:40:00 显示，周末与午休/收盘后不显示
+    // 交易纪律弹窗：每个交易日 9:30:00-9:40:00 显示，非交易日（周末/节假日，以交易日历为准）与午休/收盘后不显示
     useEffect(() => {
         const updateVisibility = () => {
             const now = dayjs();
-            const dayOfWeek = now.day();
-            if (dayOfWeek === 0 || dayOfWeek === 6) {
+            if (!isTradingDay(now)) {
                 setDisciplineModalVisible(prev => (prev ? false : prev));
                 return;
             }
@@ -554,12 +546,11 @@ const DingPan = () => {
     const [copyContextLoading, setCopyContextLoading] = useState(false);
 
     // 自选股全量监控折叠状态
-    // 交易日（周一至周五）9:00-15:00 默认折叠，其他时间默认展开
+    // 交易日（以交易日历为准）9:00-15:00 默认折叠，其他时间默认展开
     const [isWatchlistCollapsed, setIsWatchlistCollapsed] = useState(() => {
         const now = new Date();
-        const day = now.getDay();
         const hour = now.getHours();
-        const isTradingTime = day >= 1 && day <= 5 && hour >= 9 && hour < 15;
+        const isTradingTime = isTradingDay(now) && hour >= 9 && hour < 15;
         return isTradingTime;
     });
     const isWatchlistCollapseInitialized = useRef(false);
@@ -2140,13 +2131,12 @@ const DingPan = () => {
         schedulePoll(fetchBlockMoneyChange, 3000);
         schedulePoll(fetchJigouReports, 60000);
 
-        // 自选股主力资金：10:00 前每 10s，10:00 后每 1min；收盘(14:59)/周末停止，盘前每分钟探测是否开盘
+        // 自选股主力资金：10:00 前每 10s，10:00 后每 1min；收盘(14:59)/非交易日（周末/节假日，以交易日历为准）停止，盘前每分钟探测是否开盘
         const scheduleMainFundPoll = () => {
             const t = dayjs();
-            const dayOfWeek = t.day();
-            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            if (!isTradingDay(t)) return;
             const timeVal = t.hour() * 100 + t.minute();
-            if (isWeekend || timeVal >= 1459) return;
+            if (timeVal >= 1459) return;
             const inTrading = timeVal >= 915;
             const delay = inTrading ? (timeVal < 1000 ? 10000 : 60000) : 60000;
             const timer = setTimeout(() => {

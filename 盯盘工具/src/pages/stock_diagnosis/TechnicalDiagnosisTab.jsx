@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Alert, Button, Card, Collapse, Empty, Radio, Space, Spin, Table, Tag, Typography, Tabs, message } from 'antd';
 import { LineChartOutlined, RadarChartOutlined, ReloadOutlined, RiseOutlined, BarChartOutlined, UnorderedListOutlined, StarOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import { isTradingDay } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
 import StockKLine from '../../components/StockKLine';
 import StockTimeLine from '../../components/StockTimeLine';
@@ -47,8 +48,8 @@ const TechnicalDiagnosisTab = ({
 
   const checkMarketClose = useCallback(() => {
     const now = new Date();
-    const day = now.getDay();
-    if (day === 0 || day === 6) return true;
+    // 非交易日（周末/节假日，以交易日历为准）视为已收盘
+    if (!isTradingDay(now)) return true;
     const hour = now.getHours();
     const minute = now.getMinutes();
     return hour >= 15 || (hour === 14 && minute >= 59);

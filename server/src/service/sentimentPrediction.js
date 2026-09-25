@@ -83,15 +83,12 @@ const computeMA3 = (values) => {
   return ma;
 };
 
-// 计算下一个交易日（跳过周末）
+// 计算下一个交易日（以交易日历为准，自动跳过周末与法定节假日）
+const tradingDayUtil = require('../utils/tradingDay');
 const getNextTradingDay = (dateNum) => {
   const str = String(dateNum);
-  const d = dayjs(`${str.substring(0, 4)}-${str.substring(4, 6)}-${str.substring(6, 8)}`);
-  let next = d.add(1, 'day');
-  while (next.day() === 0 || next.day() === 6) {
-    next = next.add(1, 'day');
-  }
-  return Number(next.format('YYYYMMDD'));
+  const d = dayjs(`${str.substring(0, 4)}-${str.substring(4, 6)}-${str.substring(6, 8)}`).toDate();
+  return Number(dayjs(tradingDayUtil.getNextTradingDay(d)).format('YYYYMMDD'));
 };
 
 // ============ 周期判定与识别 ============

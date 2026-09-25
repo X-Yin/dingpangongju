@@ -3,6 +3,7 @@ import { Modal, Typography, Space, Tag, Spin, Empty, Segmented, Button, message,
 import { LineChartOutlined, BarChartOutlined, AreaChartOutlined, HistoryOutlined, RadarChartOutlined, StarOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import { isTradingDay, getPrevTradingDay } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
 import StockKLine from '../StockKLine';
 import StockTimeLine from '../StockTimeLine';
@@ -147,12 +148,10 @@ const StockKLineModal = ({
     setResilienceLoading(true);
     try {
       const today = dayjs();
+      // 非交易日（周末/节假日，以交易日历为准）回退到最近一个交易日
       let targetDate = today;
-      
-      const dayOfWeek = today.day();
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        const diff = dayOfWeek === 0 ? 2 : 1;
-        targetDate = today.subtract(diff, 'day');
+      if (!isTradingDay(today)) {
+        targetDate = getPrevTradingDay(today);
       }
 
       const dateStr = targetDate.format('YYYY-MM-DD');

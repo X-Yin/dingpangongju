@@ -3,16 +3,12 @@ import { ArrowUpOutlined, ArrowDownOutlined, ReloadOutlined } from '@ant-design/
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import { isAfterMarketClose } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
 import { replayTechEmotionStore } from '../../utils/replayTechEmotion';
 import './index.scss';
 
-const isAfterMarketClose = () => {
-  const now = dayjs();
-  const currentHour = now.hour();
-  const currentMinute = now.minute();
-  return currentHour < 9 || (currentHour === 9 && currentMinute < 15) || currentHour >= 15 || (currentHour === 14 && currentMinute >= 59);
-};
+// 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
 
 const FloatingTechEmotion = () => {
   const navigate = useNavigate();

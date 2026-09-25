@@ -8,19 +8,13 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import { isAfterMarketClose } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
 import { getThemeColor } from '../../utils/theme';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import './index.scss';
 
-const isAfterMarketClose = () => {
-  const now = dayjs();
-  const dayOfWeek = now.day();
-  if (dayOfWeek === 0 || dayOfWeek === 6) return true;
-  const currentHour = now.hour();
-  const currentMinute = now.minute();
-  return currentHour < 9 || (currentHour === 9 && currentMinute < 15) || currentHour >= 15 || (currentHour === 14 && currentMinute >= 59);
-};
+// 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
 
 // 解析资金数值，统一成「亿」为单位
 const parseMoneyValue = (val) => {

@@ -96,11 +96,12 @@ function runDev() {
 async function main() {
   const lastDate = getLastClearDate();
   const lastMeiguDate = getLastMeiguDate();
-  const dayOfWeek = new Date().getDay(); // 0=周日, 6=周六
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  // 以交易日历为准判断今天是否为交易日（自动跳过周末与法定节假日）
+  const { isTradingDay } = require('../src/utils/tradingDay');
+  const isTradingDayToday = isTradingDay(new Date());
 
-  if (isWeekend) {
-    console.log(`[dev] 今日是周末（${today}），跳过清理直接启动`);
+  if (!isTradingDayToday) {
+    console.log(`[dev] 今日是非交易日（周末/节假日，${today}），跳过清理直接启动`);
   } else if (lastDate !== today) {
     runClear();
   } else {

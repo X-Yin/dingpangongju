@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { getBlocksConfig } = require('./blockConfig');
 const { getSingleStockData } = require('./stock');
-const { sleep, batchParallel } = require('../utils/index.js');
+const { sleep, batchParallel, isTradingDay } = require('../utils/index.js');
 const { useCLS } = require('../config');
 const dayjs = require('dayjs');
 
@@ -378,9 +378,9 @@ const scheduleBlockDayHistory = (hour = 15, minute = 1) => {
   const task = () => {
     const now = dayjs();
     const today = now.format('YYYYMMDD');
-    const dayOfWeek = now.day();
 
-    if (dayOfWeek === 0 || dayOfWeek === 6) return;
+    // 非交易日（周末/节假日，以交易日历为准）不执行
+    if (!isTradingDay(now.toDate())) return;
 
     if (executedDates.has(today)) return;
 

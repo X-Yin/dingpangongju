@@ -4,6 +4,7 @@ import { LineChartOutlined } from '@ant-design/icons';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import dayjs from 'dayjs';
 import axios from 'axios';
+import { isTradingDay, isNonTradingDay } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
 import './index.scss';
 
@@ -133,16 +134,14 @@ const formatTimestamp = (minute) => {
     return dayjs(`${today} ${hh}:${mm}`).unix();
 };
 
-const isWeekendDay = (date) => {
-    const day = dayjs(date).day();
-    return day === 0 || day === 6;
-};
+// 是否非交易日（周末/节假日，以交易日历为准）
+const isWeekendDay = (date) => isNonTradingDay(date);
 
-// 是否交易时段（工作日 9:30-11:30 / 13:00-15:00，含收盘分钟点边界）
+// 是否交易时段（交易日 9:30-11:30 / 13:00-15:00，含收盘分钟点边界）
 // 所有轮询（实时线 10s、相似度对比 5min）仅在该时段内发请求
 const isTradingSession = () => {
     const now = dayjs();
-    if (isWeekendDay(now)) return false;
+    if (!isTradingDay(now)) return false;
     const t = now.hour() * 100 + now.minute();
     return (t >= 930 && t <= 1130) || (t >= 1300 && t <= 1500);
 };

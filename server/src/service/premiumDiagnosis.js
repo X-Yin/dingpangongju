@@ -1,7 +1,7 @@
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const { getClsReqUrl, getClsReqIndexUrl, sleep, batchParallel } = require('../utils');
+const { getClsReqUrl, getClsReqIndexUrl, sleep, batchParallel, getRecentTradingDays } = require('../utils');
 const { getMonitorStocks } = require('./monitorStock');
 const { useCLS } = require('../config');
 
@@ -27,26 +27,14 @@ const writePremiumCache = (data) => {
     }
 };
 
+// 取最近 N 个交易日（以交易日历为准，自动跳过周末与法定节假日）
 const getRecentTradingDates = (days = 60) => {
-    const dates = [];
-    const today = new Date();
-    let date = new Date(today);
-
-    const dayOfWeek = today.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-        date.setDate(date.getDate() - 1);
-    }
-
-    while (dates.length < days) {
-        const dow = date.getDay();
-        if (dow !== 0 && dow !== 6) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            dates.push(parseInt(`${year}${month}${day}`));
-        }
-        date.setDate(date.getDate() - 1);
-    }
+    const dates = getRecentTradingDays(days).map(d => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return parseInt(`${year}${month}${day}`);
+    });
 
     return dates.sort((a, b) => a - b);
 };

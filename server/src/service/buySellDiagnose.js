@@ -33,6 +33,7 @@ const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
 const axios = require('axios');
+const { isTradingDay, getPrevTradingDay } = require('../utils/tradingDay');
 const { getSingleStockData, getSingleStockTlineData, getSingleStockTlineDataByDate, getAllStockData } = require('./stock');
 const { getAllTechIndexData, updateCurrentTechIndexData, getCurrentTechEmotion, getTechEmotionIntraday, getLatestTechEmotion } = require('./emotion');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
@@ -493,8 +494,8 @@ function getMonitorStocksChangeFromCache() {
 
 function isInOpeningCheckWindow() {
   const now = dayjs();
-  const dayOfWeek = now.day();
-  if (dayOfWeek === 0 || dayOfWeek === 6) return false;
+  // 非交易日（周末/节假日，以交易日历为准）不处于开盘检查窗口
+  if (!isTradingDay(now.toDate())) return false;
   const hour = now.hour();
   const minute = now.minute();
   const minutesSinceMidnight = hour * 60 + minute;
@@ -1874,10 +1875,10 @@ const getBuyPointChecks = async (targetDate = null, refresh = false) => {
     targetDay = dayjs(dateStr, 'YYYYMMDD');
   } else {
     targetDay = dayjs();
-    // 周末回退到上周五
-    const dow = targetDay.day();
-    if (dow === 0) targetDay = targetDay.subtract(2, 'day');
-    else if (dow === 6) targetDay = targetDay.subtract(1, 'day');
+    // 非交易日（周末/节假日，以交易日历为准）回退到最近一个交易日
+    if (!isTradingDay(targetDay.toDate())) {
+      targetDay = dayjs(getPrevTradingDay());
+    }
   }
 
   const targetDateStr = targetDay.format('YYYYMMDD');
@@ -2485,10 +2486,10 @@ const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh 
     targetDay = dayjs(dateStr, 'YYYYMMDD');
   } else {
     targetDay = dayjs();
-    // 周末回退到上周五
-    const dow = targetDay.day();
-    if (dow === 0) targetDay = targetDay.subtract(2, 'day');
-    else if (dow === 6) targetDay = targetDay.subtract(1, 'day');
+    // 非交易日（周末/节假日，以交易日历为准）回退到最近一个交易日
+    if (!isTradingDay(targetDay.toDate())) {
+      targetDay = dayjs(getPrevTradingDay());
+    }
   }
   const targetDateStr = targetDay.format('YYYYMMDD');
 
