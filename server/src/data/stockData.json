@@ -1798,5 +1798,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sh688143": {
+    "stockName": "长盈通",
+    "kline": [
+      {
+        "trade_date": 20260924,
+        "open_px": 191.91,
+        "high_px": 200.15,
+        "low_px": 185.3,
+        "close_px": 191.35,
+        "business_amount": 9103175,
+        "business_balance": 1759271800,
+        "change": -1.16,
+        "ma5_px": 196.51,
+        "ma10_px": 194.99,
+        "ma20_px": 182.29,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

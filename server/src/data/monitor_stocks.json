@@ -728,5 +728,13 @@
     "blockName": "ccl",
     "riskScore": "6",
     "isTech": true
+  },
+  {
+    "code": "sh688143",
+    "name": "长盈通",
+    "isImportant": false,
+    "blockName": "光纤",
+    "riskScore": " 6",
+    "isTech": true
   }
 ]
