@@ -481,6 +481,7 @@ const MultiStockTimeLineModal = ({
   embedded = false,
   storageKey,
   title = '叠加分时对比',
+  desc = '',
   externalAddStock,
   onStockClick,
   replayMode = false,
@@ -1832,7 +1833,11 @@ const MultiStockTimeLineModal = ({
         <Card
           title={
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-              <span><LineChartOutlined style={{ color: getThemeColor(), marginRight: '8px' }} />{title}</span>
+              <span>
+                <LineChartOutlined style={{ color: getThemeColor(), marginRight: '8px' }} />
+                {title}
+                <span style={{ fontSize: 13, color: 'red', fontWeight: 'bold' }}>&nbsp;{desc}</span>
+              </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Button
                   icon={axisZoomIn ? <ZoomOutOutlined /> : <ZoomInOutlined />}

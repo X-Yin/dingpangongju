@@ -2176,7 +2176,7 @@ const DingPan = () => {
 
     // 密码门禁：仅交易日的交易时段（9:15-11:30、13:00-15:00）需要解锁，其余时间直接放行
     // （所有 Hook 已在上方执行完毕，早退安全；数据轮询会持续触发重渲染，跨时段后条件自动重新生效）
-    if (!unlocked && isWithinTradingHours()) {
+    if ((!unlocked && isWithinTradingHours()) && false) {
         return (
             <div className="dingpan-container">
                 <div className="dingpan-password-gate">

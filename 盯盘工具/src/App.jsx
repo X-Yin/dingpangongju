@@ -272,9 +272,9 @@ const THEME_GRADIENTS = [
   { key: 'g3', name: '紫黄暗夜', colors: ['#690DAD', '#0F0F0F', '#FFFF00'], primary: '#690DAD' },
   { key: 'g4', name: '暖橙夜空', colors: ['#EB6127', '#152639', '#F1DDBC'], primary: '#EB6127' },
   { key: 'g5', name: '米黄赤焰', colors: ['#182876', '#EB4743'], primary: '#EB4743' },
-  { key: 'g6', name: '晴空金阳', colors: [ '#3DBAFD', '#F8E448'], primary: '#3DBAFD' },
+  { key: 'g6', name: '晴空金阳', colors: ['#3DBAFD', '#F8E448'], primary: '#3DBAFD' },
   { key: 'g7', name: '雪绒紫粉', colors: ['#FE4D8E', '#7B2BBD'], primary: '#7B2BBD' },
-  { key: 'g8', name: '青柠香草', colors: [ '#26C6C3', '#FEDB7C'], primary: '#26C6C3' },
+  { key: 'g8', name: '青柠香草', colors: ['#26C6C3', '#FEDB7C'], primary: '#26C6C3' },
   { key: 'g9', name: '玫瑰金辉', colors: ['#B62B6C', '#FCBA32'], primary: '#B62B6C' },
   { key: 'g10', name: '暗夜烈焰', colors: ['#1D2236', '#F34F1C'], primary: '#F34F1C' },
   { key: 'g11', name: '暮色胭脂', colors: ['#423F76', '#D86E84'], primary: '#D86E84' },
@@ -1062,10 +1062,15 @@ function App() {
     setPersonalFeelingDate(todayStr);
     setPersonalFeelingVisible(true);
     setGlobalAnalysisVisible(false);
-    
+
   };
 
   const menuItems = [
+    {
+      key: '/dingpan',
+      icon: <DesktopOutlined />,
+      label: '市场盯盘',
+    },
     {
       key: '/opening_battle',
       icon: <RocketOutlined />,
@@ -1091,11 +1096,6 @@ function App() {
       key: '/stock_diagnosis',
       icon: <StockOutlined />,
       label: '个股诊断',
-    },
-    {
-      key: '/dingpan',
-      icon: <DesktopOutlined />,
-      label: '市场盯盘',
     },
     {
       key: '/shichangdiaoyan',
@@ -1167,66 +1167,66 @@ function App() {
         >
           <div className="header-hover-strip" />
           <Header className={`app-header${headerVisible ? ' app-header-visible' : ''}`}>
-          <Button
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
-            className="collapse-btn"
-          />
-          <div className="header-right-actions">
-            <div className="ai-provider-switcher">
-              <Select
-                value={currentAIProvider}
-                onChange={handleAIProviderChange}
-                loading={aiProviderLoading}
-                size="middle"
-                className="ai-provider-select"
-                popupMatchSelectWidth={false}
+            <Button
+              type="text"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed(!collapsed)}
+              className="collapse-btn"
+            />
+            <div className="header-right-actions">
+              <div className="ai-provider-switcher">
+                <Select
+                  value={currentAIProvider}
+                  onChange={handleAIProviderChange}
+                  loading={aiProviderLoading}
+                  size="middle"
+                  className="ai-provider-select"
+                  popupMatchSelectWidth={false}
+                >
+                  {aiProviders.map(p => (
+                    <Select.Option key={p.key} value={p.key}>
+                      <span className="ai-provider-option">
+                        {p.name}
+                        {p.active && <CheckOutlined style={{ marginLeft: 4, color: '#52c41a' }} />}
+                      </span>
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+              <Button
+                type="primary"
+                icon={<GlobalOutlined />}
+                onClick={() => setGlobalAnalysisVisible(true)}
+                className={`global-analysis-btn${globalAnalysisBlinking ? ' global-analysis-btn-blinking' : ''}`}
               >
-                {aiProviders.map(p => (
-                  <Select.Option key={p.key} value={p.key}>
-                    <span className="ai-provider-option">
-                      {p.name}
-                      {p.active && <CheckOutlined style={{ marginLeft: 4, color: '#52c41a' }} />}
-                    </span>
-                  </Select.Option>
-                ))}
-              </Select>
+                全局分析
+              </Button>
+              <Button
+                type="primary"
+                icon={<BookOutlined />}
+                onClick={() => setPreMarketVisible(true)}
+                className="pre-market-btn"
+              >
+                盘前必读
+              </Button>
+              <Button
+                type="primary"
+                icon={<CalendarOutlined />}
+                onClick={() => setTodayPlanVisible(true)}
+                className="today-plan-btn"
+              >
+                今日计划
+              </Button>
+              <Button
+                type="primary"
+                icon={<BellOutlined />}
+                onClick={() => setMajorEventReminderVisible(true)}
+                className="major-event-btn"
+              >
+                大事提醒
+              </Button>
             </div>
-            <Button
-              type="primary"
-              icon={<GlobalOutlined />}
-              onClick={() => setGlobalAnalysisVisible(true)}
-              className={`global-analysis-btn${globalAnalysisBlinking ? ' global-analysis-btn-blinking' : ''}`}
-            >
-              全局分析
-            </Button>
-            <Button
-              type="primary"
-              icon={<BookOutlined />}
-              onClick={() => setPreMarketVisible(true)}
-              className="pre-market-btn"
-            >
-              盘前必读
-            </Button>
-            <Button
-              type="primary"
-              icon={<CalendarOutlined />}
-              onClick={() => setTodayPlanVisible(true)}
-              className="today-plan-btn"
-            >
-              今日计划
-            </Button>
-            <Button
-              type="primary"
-              icon={<BellOutlined />}
-              onClick={() => setMajorEventReminderVisible(true)}
-              className="major-event-btn"
-            >
-              大事提醒
-            </Button>
-          </div>
-        </Header>
+          </Header>
         </div>
         <Content className="app-content">
           <div className="content-inner">

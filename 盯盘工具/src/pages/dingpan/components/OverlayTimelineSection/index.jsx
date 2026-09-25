@@ -6,6 +6,7 @@ const OverlayTimelineSection = ({ overlayInlineAddStock, onStockClick, sectionRe
         <MultiStockTimeLineModal
             embedded
             title="叠加分时观察"
+            desc='违反纪律当天不准吃饭!'
             storageKey="dingpan_multi_stock_timeline"
             externalAddStock={overlayInlineAddStock}
             onStockClick={onStockClick}
