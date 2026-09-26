@@ -363,6 +363,10 @@
     {
       "code": "sz002636",
       "name": "金安国纪"
+    },
+    {
+      "code": "sh688143",
+      "name": "长盈通"
     }
   ],
   "trades": [
@@ -407,8 +411,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -12.68 / 当前 -93.23",
-          "reason": "9:30 竞价科技情绪 -12.68 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -12.76 / 当前 -93.47",
+          "reason": "9:30 竞价科技情绪 -12.76 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "resilience_gate",
@@ -460,16 +464,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "8 / 90只",
-          "reason": "开盘后自选股共 90 只，8 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "8 / 91只",
+          "reason": "开盘后自选股共 91 只，8 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 46.68 / 当前 86.96",
-          "reason": "9:30 竞价科技情绪 46.68 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 47.56 / 当前 87.36",
+          "reason": "9:30 竞价科技情绪 47.56 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "resilience_gate",
@@ -490,14 +494,14 @@
     },
     {
       "seq": 3,
-      "metric": 11.55,
-      "code": "sz300570",
-      "stockName": "太辰光",
+      "metric": 14.57,
+      "code": "sh688143",
+      "stockName": "长盈通",
       "buyDate": "20260820",
       "buyDateDisplay": "2026-08-20",
       "buyTime": "10:05",
-      "buyPrice": 201.1,
-      "buyChange": 11.55,
+      "buyPrice": 144.66,
+      "buyChange": 14.57,
       "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -529,25 +533,25 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 35.78 / 当前 46.79",
-          "reason": "9:30 竞价科技情绪 35.78 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 36.48 / 当前 50.38",
+          "reason": "9:30 竞价科技情绪 36.48 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数>11",
           "passed": true,
-          "value": "19.43",
+          "value": "19.79",
           "skippedStocks": [],
-          "reason": "按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 19.43）"
+          "reason": "按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 19.79）"
         }
       ],
       "sellDate": "20260824",
       "sellDateDisplay": "2026-08-24",
       "sellTime": "13:05",
-      "sellPrice": 197.11,
-      "sellChange": -8.09,
+      "sellPrice": 146.88,
+      "sellChange": -7.51,
       "sellReason": "科技板块情绪退潮",
-      "returnRate": -1.98
+      "returnRate": 1.53
     },
     {
       "seq": 4,
@@ -590,8 +594,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -51.64 / 当前 28.82",
-          "reason": "9:30 竞价科技情绪 -51.64 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -50.54 / 当前 32.21",
+          "reason": "9:30 竞价科技情绪 -50.54 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "resilience_gate",
@@ -652,8 +656,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -67.60 / 当前 25.31",
-          "reason": "9:30 竞价科技情绪 -67.60 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -68.10 / 当前 25.12",
+          "reason": "9:30 竞价科技情绪 -68.10 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "resilience_gate",
@@ -713,8 +717,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 42.26 / 当前 -19.13",
-          "reason": "9:30 竞价科技情绪 42.26 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 41.47 / 当前 -21.01",
+          "reason": "9:30 竞价科技情绪 41.47 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "resilience_gate",
@@ -775,8 +779,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 43.99 / 当前 85.41",
-          "reason": "9:30 竞价科技情绪 43.99 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 43.72 / 当前 85.89",
+          "reason": "9:30 竞价科技情绪 43.72 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "resilience_gate",
@@ -837,8 +841,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 55.95 / 当前 19.38",
-          "reason": "9:30 竞价科技情绪 55.95 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 56.05 / 当前 18.64",
+          "reason": "9:30 竞价科技情绪 56.05 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "resilience_gate",
@@ -861,9 +865,9 @@
   "currentHolding": null,
   "summary": {
     "tradeCount": 8,
-    "winCount": 4,
-    "winRate": 50,
-    "overallReturn": 58.4,
+    "winCount": 5,
+    "winRate": 62.5,
+    "overallReturn": 64.07,
     "holding": false
   }
 }

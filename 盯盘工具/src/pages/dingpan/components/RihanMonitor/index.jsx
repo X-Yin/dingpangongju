@@ -36,6 +36,7 @@ const RihanMonitor = ({ rihanData, themeColor, onRefresh }) => {
             <div className="rihan-simple-grid">
                 {rihanData.map((item, index) => {
                     const isUp = !item.change.startsWith('-');
+                    const titleColor = titleStyle(themeColor);
                     return (
                         <div
                             key={index}
@@ -49,13 +50,12 @@ const RihanMonitor = ({ rihanData, themeColor, onRefresh }) => {
                             style={borderStyle(themeColor)}
                         >
                             <div className="item-name">
-                                <span style={{ fontSize: '12px', ...titleStyle(themeColor) }}>{item.name}</span>
+                                <span style={{ fontSize: '12px', ...titleColor }}>{item.name}</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                                 <span className={`item-value ${isUp ? 'up' : 'down'}`} style={numberStyle(themeColor)}>
                                     {item.change}
                                 </span>
-                                {isUp ? <CaretUpOutlined style={{ fontSize: '10px' }} /> : <CaretDownOutlined style={{ fontSize: '10px' }} />}
                             </div>
                         </div>
                     );

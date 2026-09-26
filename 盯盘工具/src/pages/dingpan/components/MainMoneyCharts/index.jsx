@@ -156,11 +156,11 @@ const MainMoneyCharts = ({ isMainMoneyExpanded, onToggleExpand, moneyStatus, vol
                         )}
                         {isMainMoneyExpanded && latestVolumeValue !== undefined && latestVolumeValue !== null && (
                             <div className="chart-volume-inline" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                                <span style={{ fontSize: 11, fontWeight: 600, color: '#12213a' }}>成交量</span>
+                                <span className="chart-inline-label" style={{ fontSize: 11, fontWeight: 600, color: '#12213a' }}>成交量</span>
                                 <span className="chart-latest-money" style={{ color: parseFloat(latestVolumeValue) > 0 ? '#e11d48' : latestVolumeValue < 0 ? '#059669' : '#12213a' }}>
                                     {formatMoneyYi(latestVolumeValue)}
                                 </span>
-                                <span style={{ fontSize: 11, fontWeight: 600, color: '#12213a' }}>diff</span>
+                                <span className="chart-inline-label" style={{ fontSize: 11, fontWeight: 600, color: '#12213a' }}>diff</span>
                                 <span className="chart-latest-money" style={{ color: (volumeDiffValue != null && parseFloat(volumeDiffValue) > 0) ? '#e11d48' : (volumeDiffValue != null && volumeDiffValue < 0) ? '#059669' : '#12213a' }}>
                                     {formatMoneyYi(volumeDiffValue != null ? volumeDiffValue : null)}
                                 </span>

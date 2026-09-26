@@ -363,6 +363,10 @@
     {
       "code": "sz002636",
       "name": "金安国纪"
+    },
+    {
+      "code": "sh688143",
+      "name": "长盈通"
     }
   ],
   "trades": [
@@ -407,8 +411,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -12.68 / 当前 -93.23",
-          "reason": "9:30 竞价科技情绪 -12.68 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -12.76 / 当前 -93.47",
+          "reason": "9:30 竞价科技情绪 -12.76 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260731",
@@ -452,16 +456,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "19 / 90只",
-          "reason": "开盘后自选股共 90 只，19 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "19 / 91只",
+          "reason": "开盘后自选股共 91 只，19 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 46.68 / 当前 71.50",
-          "reason": "9:30 竞价科技情绪 46.68 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 47.56 / 当前 72.20",
+          "reason": "9:30 竞价科技情绪 47.56 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260812",
@@ -514,8 +518,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 27.30 / 当前 80.43",
-          "reason": "9:30 竞价科技情绪 27.30 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 27.76 / 当前 80.64",
+          "reason": "9:30 竞价科技情绪 27.76 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260818",
@@ -567,8 +571,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -78.00 / 当前 -100.00",
-          "reason": "9:30 竞价科技情绪 -78.00 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -78.79 / 当前 -100.00",
+          "reason": "9:30 竞价科技情绪 -78.79 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260820",
@@ -620,8 +624,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 35.78 / 当前 46.79",
-          "reason": "9:30 竞价科技情绪 35.78 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 36.48 / 当前 50.38",
+          "reason": "9:30 竞价科技情绪 36.48 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260824",
@@ -634,14 +638,14 @@
     },
     {
       "seq": 6,
-      "metric": 43.2332,
-      "code": "sz300570",
-      "stockName": "太辰光",
+      "metric": 51.6272,
+      "code": "sh688143",
+      "stockName": "长盈通",
       "buyDate": "20260825",
       "buyDateDisplay": "2026-08-25",
       "buyTime": "10:05",
-      "buyPrice": 201.16,
-      "buyChange": -0.86,
+      "buyPrice": 158.21,
+      "buyChange": 5.32,
       "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -673,74 +677,20 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -51.64 / 当前 -26.27",
-          "reason": "9:30 竞价科技情绪 -51.64 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -50.54 / 当前 -24.61",
+          "reason": "9:30 竞价科技情绪 -50.54 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260826",
-      "sellDateDisplay": "2026-08-26",
-      "sellTime": "09:40",
-      "sellPrice": 195.9,
-      "sellChange": -3.35,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -2.61
+      "sellDate": "20260828",
+      "sellDateDisplay": "2026-08-28",
+      "sellTime": "14:50",
+      "sellPrice": 163,
+      "sellChange": -5.94,
+      "sellReason": "抗分歧指数弱势",
+      "returnRate": 3.03
     },
     {
       "seq": 7,
-      "metric": 31.5535,
-      "code": "sz300570",
-      "stockName": "太辰光",
-      "buyDate": "20260826",
-      "buyDateDisplay": "2026-08-26",
-      "buyTime": "10:40",
-      "buyPrice": 197,
-      "buyChange": -2.81,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 405.79亿，较 5min 前 +348.13亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+31.06亿",
-          "reason": "最近 5 分钟资金净流入 31.06 亿（10:35:00→10:40:00），超过 20 亿阈值"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
-          "passed": true,
-          "exempted": false,
-          "value": "+ 348.13亿",
-          "reason": "当前量能 405.79 亿为正，较 5min 前的 57.66 亿+ 348.13 亿，持续放量",
-          "volumeText": "当前量能 405.79亿，较 5min 前 +348.13亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 15.18 / 当前 24.48",
-          "reason": "9:30 竞价科技情绪 15.18 未超过 80，当前情绪须低于 40 的限制不生效"
-        }
-      ],
-      "sellDate": "20260831",
-      "sellDateDisplay": "2026-08-31",
-      "sellTime": "09:30",
-      "sellPrice": 196.43,
-      "sellChange": -3.85,
-      "sellReason": "均线破位",
-      "returnRate": -0.29
-    },
-    {
-      "seq": 8,
       "metric": 18.5716,
       "code": "sz002536",
       "stockName": "飞龙股份",
@@ -781,8 +731,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -67.60 / 当前 25.31",
-          "reason": "9:30 竞价科技情绪 -67.60 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -68.10 / 当前 25.12",
+          "reason": "9:30 竞价科技情绪 -68.10 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260901",
@@ -794,15 +744,15 @@
       "returnRate": -2.12
     },
     {
-      "seq": 9,
-      "metric": 16.8604,
-      "code": "sz002536",
-      "stockName": "飞龙股份",
+      "seq": 8,
+      "metric": 18.1819,
+      "code": "sh688143",
+      "stockName": "长盈通",
       "buyDate": "20260901",
       "buyDateDisplay": "2026-09-01",
       "buyTime": "13:10",
-      "buyPrice": 53.74,
-      "buyChange": -2.11,
+      "buyPrice": 172.3,
+      "buyChange": 7.03,
       "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -834,20 +784,20 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 2.24 / 当前 -68.66",
-          "reason": "9:30 竞价科技情绪 2.24 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 2.97 / 当前 -67.15",
+          "reason": "9:30 竞价科技情绪 2.97 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260902",
       "sellDateDisplay": "2026-09-02",
       "sellTime": "09:30",
-      "sellPrice": 51.51,
-      "sellChange": -2.42,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -4.15
+      "sellPrice": 161.01,
+      "sellChange": -3.59,
+      "sellReason": "均线破位、跌破成本线-2%",
+      "returnRate": -6.55
     },
     {
-      "seq": 10,
+      "seq": 9,
       "metric": 49.6215,
       "code": "sz002536",
       "stockName": "飞龙股份",
@@ -888,8 +838,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 34.22 / 当前 -1.97",
-          "reason": "9:30 竞价科技情绪 34.22 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 34.67 / 当前 -0.71",
+          "reason": "9:30 竞价科技情绪 34.67 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260904",
@@ -901,7 +851,7 @@
       "returnRate": -2.63
     },
     {
-      "seq": 11,
+      "seq": 10,
       "metric": 28.8607,
       "code": "sz002536",
       "stockName": "飞龙股份",
@@ -941,8 +891,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 42.26 / 当前 -19.13",
-          "reason": "9:30 竞价科技情绪 42.26 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 41.47 / 当前 -21.01",
+          "reason": "9:30 竞价科技情绪 41.47 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260907",
@@ -954,7 +904,7 @@
       "returnRate": -4.69
     },
     {
-      "seq": 12,
+      "seq": 11,
       "metric": 19.1009,
       "code": "sz300757",
       "stockName": "罗博特科",
@@ -987,16 +937,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "26 / 90只",
-          "reason": "开盘后自选股共 90 只，26 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "26 / 91只",
+          "reason": "开盘后自选股共 91 只，26 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 43.99 / 当前 58.36",
-          "reason": "9:30 竞价科技情绪 43.99 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 43.72 / 当前 58.89",
+          "reason": "9:30 竞价科技情绪 43.72 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260911",
@@ -1008,7 +958,7 @@
       "returnRate": 6.73
     },
     {
-      "seq": 13,
+      "seq": 12,
       "metric": 25.8606,
       "code": "sh688028",
       "stockName": "沃尔德",
@@ -1049,8 +999,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -43.69 / 当前 -27.03",
-          "reason": "9:30 竞价科技情绪 -43.69 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -44.46 / 当前 -24.56",
+          "reason": "9:30 竞价科技情绪 -44.46 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260915",
@@ -1062,7 +1012,7 @@
       "returnRate": -2.51
     },
     {
-      "seq": 14,
+      "seq": 13,
       "metric": 47.0775,
       "code": "sh603186",
       "stockName": "华正新材",
@@ -1103,8 +1053,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -7.39 / 当前 63.22",
-          "reason": "9:30 竞价科技情绪 -7.39 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -8.48 / 当前 62.69",
+          "reason": "9:30 竞价科技情绪 -8.48 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260916",
@@ -1116,7 +1066,7 @@
       "returnRate": -2.6
     },
     {
-      "seq": 15,
+      "seq": 14,
       "metric": 37.8912,
       "code": "sh603186",
       "stockName": "华正新材",
@@ -1157,7 +1107,7 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 7.46 / 当前 47.95",
+          "value": "开盘 7.46 / 当前 48.30",
           "reason": "9:30 竞价科技情绪 7.46 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
@@ -1170,7 +1120,7 @@
       "returnRate": -2.09
     },
     {
-      "seq": 16,
+      "seq": 15,
       "metric": 42.0412,
       "code": "sz301183",
       "stockName": "东田微",
@@ -1211,8 +1161,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 55.95 / 当前 19.38",
-          "reason": "9:30 竞价科技情绪 55.95 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 56.05 / 当前 18.64",
+          "reason": "9:30 竞价科技情绪 56.05 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
       "sellDate": "20260921",
@@ -1226,10 +1176,10 @@
   ],
   "currentHolding": null,
   "summary": {
-    "tradeCount": 16,
-    "winCount": 4,
-    "winRate": 25,
-    "overallReturn": -1.72,
+    "tradeCount": 15,
+    "winCount": 5,
+    "winRate": 33.33,
+    "overallReturn": 1.66,
     "holding": false
   }
 }

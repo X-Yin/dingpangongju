@@ -363,6 +363,10 @@
     {
       "code": "sz002636",
       "name": "金安国纪"
+    },
+    {
+      "code": "sh688143",
+      "name": "长盈通"
     }
   ],
   "trades": [
@@ -536,14 +540,14 @@
     },
     {
       "seq": 7,
-      "metric": 2.02,
-      "code": "sz300085",
-      "stockName": "银之杰",
+      "metric": 3.74,
+      "code": "sh688143",
+      "stockName": "长盈通",
       "buyDate": "20260901",
       "buyDateDisplay": "2026-09-01",
       "buyTime": "14:57",
-      "buyPrice": 32.84,
-      "buyChange": 2.02,
+      "buyPrice": 167,
+      "buyChange": 3.74,
       "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
       "buyChecks": [
         {
@@ -556,11 +560,11 @@
       ],
       "sellDate": "20260902",
       "sellDateDisplay": "2026-09-02",
-      "sellTime": "09:32",
-      "sellPrice": 32.05,
-      "sellChange": -2.53,
+      "sellTime": "09:33",
+      "sellPrice": 164,
+      "sellChange": -1.77,
       "sellReason": "开盘后涨幅开始下降即卖出",
-      "returnRate": -2.41
+      "returnRate": -1.8
     },
     {
       "seq": 8,
@@ -592,14 +596,14 @@
     },
     {
       "seq": 9,
-      "metric": 10,
-      "code": "sz000636",
-      "stockName": "风华高科",
+      "metric": 15.49,
+      "code": "sh688143",
+      "stockName": "长盈通",
       "buyDate": "20260911",
       "buyDateDisplay": "2026-09-11",
       "buyTime": "14:57",
-      "buyPrice": 55.99,
-      "buyChange": 10,
+      "buyPrice": 195,
+      "buyChange": 15.49,
       "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
       "buyChecks": [
         {
@@ -612,11 +616,11 @@
       ],
       "sellDate": "20260914",
       "sellDateDisplay": "2026-09-14",
-      "sellTime": "09:35",
-      "sellPrice": 57.45,
-      "sellChange": 2.61,
+      "sellTime": "09:32",
+      "sellPrice": 188.66,
+      "sellChange": -3.08,
       "sellReason": "开盘后涨幅开始下降即卖出",
-      "returnRate": 2.61
+      "returnRate": -3.25
     }
   ],
   "currentHolding": {
@@ -642,9 +646,9 @@
   },
   "summary": {
     "tradeCount": 9,
-    "winCount": 4,
-    "winRate": 44.44,
-    "overallReturn": 10.03,
+    "winCount": 3,
+    "winRate": 33.33,
+    "overallReturn": 4.4,
     "holding": true
   }
 }

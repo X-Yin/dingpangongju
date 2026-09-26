@@ -35,6 +35,7 @@ import IndexOverlayFullscreenModal from './components/IndexOverlayFullscreenModa
 import BuyPointDiagnosisModal from './components/BuyPointDiagnosisModal';
 import ThemeColorModal from './components/ThemeColorModal';
 import { DEFAULT_THEME_COLOR } from './utils/themeColor';
+import { getThemePack, buildPackVars } from './utils/themePacks';
 import { hideStock, unhideStock, cleanExpiredHiddenStocks, filterHiddenStocks } from './utils/hiddenStocks';
 import { fetchAndCopyContext } from './utils/copyContext';
 import './index.scss';
@@ -142,7 +143,8 @@ const DingPan = () => {
         return valid.includes(saved) ? saved : 'grouped';
     }); // 个股幅度异动视图模式
 
-    // DIY 主题色配置：{ itemTitleColor, itemBorderColor, numberFontFamily }
+    // DIY 主题色配置：{ pack, itemTitleColor, itemBorderColor, numberFontFamily, numberFontSize }
+    // pack: 主题包 id（'' 为默认样式），生效时 DIY 字段禁用，样式由主题包 CSS 变量接管
     const [themeColor, setThemeColor] = useState(() => {
         try {
             const saved = localStorage.getItem('dingpan_themeColor');
@@ -152,6 +154,19 @@ const DingPan = () => {
         }
     });
     const [themeColorModalVisible, setThemeColorModalVisible] = useState(false);
+
+    // 当前生效的主题包（null 表示默认样式）
+    const activeThemePack = getThemePack(themeColor.pack);
+    // 主题包 CSS 变量（挂到 .dingpan-container 上，仅外层组件消费）
+    const packVars = useMemo(
+        () => (activeThemePack ? buildPackVars(activeThemePack) : undefined),
+        [activeThemePack]
+    );
+    // 主题包生效时传给组件的 themeColor 清空，避免 DIY 内联样式与主题包冲突
+    const effThemeColor = useMemo(
+        () => (activeThemePack ? { ...DEFAULT_THEME_COLOR } : themeColor),
+        [activeThemePack, themeColor]
+    );
 
     // 研报数据相关状态
     const [jigouReports, setJigouReports] = useState([]);
@@ -2178,8 +2193,8 @@ const DingPan = () => {
     // （所有 Hook 已在上方执行完毕，早退安全；数据轮询会持续触发重渲染，跨时段后条件自动重新生效）
     if ((!unlocked && isWithinTradingHours()) && false) {
         return (
-            <div className="dingpan-container">
-                <div className="dingpan-password-gate">
+            <div className={`dingpan-container${activeThemePack ? ' pack-active' : ''}`} style={packVars}>
+            <div className="dingpan-password-gate">
                     <div className="password-gate-card">
                         <div className="password-gate-icon"><LockOutlined /></div>
                         <div className="password-gate-title">市场盯盘</div>
@@ -2201,13 +2216,18 @@ const DingPan = () => {
     }
 
     return (
-        <div className="dingpan-container" onDoubleClick={handlePageDoubleClick}>
+        <div
+            className={`dingpan-container${activeThemePack ? ' pack-active' : ''}`}
+            style={packVars}
+            data-theme-pack={activeThemePack?.id || 'default'}
+            onDoubleClick={handlePageDoubleClick}
+        >
             <TopGlobalAlerts
                 alerts={alerts}
                 marketRiskWarning={marketRiskWarning}
                 kaiPanXiaCuoWarning={kaiPanXiaCuoWarning}
                 onCloseAlert={(id) => setAlerts(prev => prev.filter(a => a.id !== id))}
-                themeColor={themeColor}
+                themeColor={effThemeColor}
             />
             <PageMeta
                 lastUpdated={lastUpdated}
@@ -2238,7 +2258,7 @@ const DingPan = () => {
                                 onCloseKaiPanZhuDong={() => setShowKaiPanZhuDong(false)}
                                 onCloseKaiPanXiaCuo={() => setShowKaiPanXiaCuo(false)}
                                 onStockClick={showKLine}
-                                themeColor={themeColor}
+                                themeColor={effThemeColor}
                             />
                             {/* 个股异动监控（含板块异动，置于涨跌幅前十上方） */}
                             <Row gutter={[16, 16]} style={{ marginBottom: 12 }}>
@@ -2250,7 +2270,7 @@ const DingPan = () => {
                                         onStockClick={showKLine}
                                         bodyHeight="200px"
                                         itemsPerRow={SHOW_BLOCK_ALERT_MONITOR ? 1 : 2}
-                                        themeColor={themeColor}
+                                        themeColor={effThemeColor}
                                     />
                                 </Col>
                                 {/* 板块异动监控 */}
@@ -2261,7 +2281,7 @@ const DingPan = () => {
                                         blockUpAlerts={blockUpAlerts}
                                         blockDownAlerts={blockDownAlerts}
                                         onBlockClick={jumpToBlock}
-                                        themeColor={themeColor}
+                                        themeColor={effThemeColor}
                                     />
                                 </Col>
                                 )}
@@ -2273,7 +2293,7 @@ const DingPan = () => {
                                 topAndBottomBlockData={data.topAndBottomBlockData}
                                 onBlockClick={jumpToBlock}
                                 renderBlockStockList={renderBlockStockList}
-                                themeColor={themeColor}
+                                themeColor={effThemeColor}
                             />
                             )}
 
@@ -2282,7 +2302,7 @@ const DingPan = () => {
                                 overlayInlineAddStock={overlayInlineAddStock}
                                 onStockClick={showKLine}
                                 sectionRef={overlayTimelineSectionRef}
-                                themeColor={themeColor}
+                                themeColor={effThemeColor}
                             />
 
                             {/* 主力资金趋势监控（全宽，左右结构） - 置于叠加分时图下方、个股幅度异动上方 */}
@@ -2296,7 +2316,7 @@ const DingPan = () => {
                                 volumeDiffValue={volumeDiffValue}
                                 mainMoneyContainerRef={mainMoneyContainerRef}
                                 volumeContainerRef={volumeContainerRef}
-                                themeColor={themeColor}
+                                themeColor={effThemeColor}
                                 historyData={historyData}
                                 onCopyContext={handleCopyContext}
                                 copyContextLoading={copyContextLoading}
@@ -2320,7 +2340,7 @@ const DingPan = () => {
                                 onViewYanbaoDetail={handleViewYanbaoDetail}
                                 onRefresh={handleRefreshStockData}
                                 refreshing={refreshingStockData}
-                                themeColor={themeColor}
+                                themeColor={effThemeColor}
                             />
 
                         </Col>
@@ -2334,13 +2354,13 @@ const DingPan = () => {
                                 displayBlocks={displayBlocks}
                                 onBlockClick={jumpToBlock}
                                 onViewMore={() => navigate('/block?tab=money')}
-                                themeColor={themeColor}
+                                themeColor={effThemeColor}
                             />
 
                             {/* 日韩涨跌监控（自选股展开时在其上方，折叠时移到自选股下方） */}
                             {!isWatchlistCollapsed && (
                                 <div ref={rihanSectionRef}>
-                                    <RihanMonitor rihanData={rihanData} themeColor={themeColor} onRefresh={refreshRihanData} />
+                                    <RihanMonitor rihanData={rihanData} themeColor={effThemeColor} onRefresh={refreshRihanData} />
                                 </div>
                             )}
 
@@ -2375,11 +2395,11 @@ const DingPan = () => {
                                 onBacktest={(stock) => navigate(`/stock_diagnosis?backtest=1&code=${encodeURIComponent(stock.code)}&name=${encodeURIComponent(stock.stockName || '')}`)}
                                 onRename={handleOpenRenameModal}
                                 onTempHideStock={handleOpenTempHideModal}
-                                themeColor={themeColor}
+                                themeColor={effThemeColor}
                             />
                             {isWatchlistCollapsed && (
                                 <div ref={rihanSectionRef}>
-                                    <RihanMonitor rihanData={rihanData} themeColor={themeColor} onRefresh={refreshRihanData} />
+                                    <RihanMonitor rihanData={rihanData} themeColor={effThemeColor} onRefresh={refreshRihanData} />
                                 </div>
                             )}
                             {isWatchlistCollapsed && (
@@ -2388,7 +2408,7 @@ const DingPan = () => {
                                         topAndBottomBlockData={data.topAndBottomBlockData}
                                         onBlockClick={jumpToBlock}
                                         renderBlockStockList={renderBlockStockList}
-                                        themeColor={themeColor}
+                                        themeColor={effThemeColor}
                                         vertical
                                     />
                                 </div>
@@ -2401,7 +2421,7 @@ const DingPan = () => {
                                         stocks={visibleAllStockData}
                                         onStockClick={showKLine}
                                         onOpenOverlayTimeLine={handleOpenOverlayTimeLine}
-                                        themeColor={themeColor}
+                                        themeColor={effThemeColor}
                                     />
                                 </div>
                             )}
@@ -2425,7 +2445,7 @@ const DingPan = () => {
                 jisuYidongUpList={jisuYidongUpList}
                 jisuYidongDownList={jisuYidongDownList}
                 onStockClick={showKLine}
-                themeColor={themeColor}
+                themeColor={effThemeColor}
             />
 
             {/* K 线图弹窗 */}
@@ -2446,7 +2466,7 @@ const DingPan = () => {
                 currentGoodNewsStock={currentGoodNewsStock}
                 matchedReports={matchedReports}
                 highlightStockName={highlightStockName}
-                themeColor={themeColor}
+                themeColor={effThemeColor}
             />
 
             {/* 逻辑探查弹窗 */}
@@ -2458,7 +2478,7 @@ const DingPan = () => {
                 jigouMatchedReports={jigouMatchedReports}
                 researchMatchedReports={researchMatchedReports}
                 highlightStockName={highlightStockName}
-                themeColor={themeColor}
+                themeColor={effThemeColor}
             />
 
             {/* 新增股票弹窗 */}
@@ -2476,7 +2496,7 @@ const DingPan = () => {
                 setNewStockRiskScore={setNewStockRiskScore}
                 newStockIsTech={newStockIsTech}
                 setNewStockIsTech={setNewStockIsTech}
-                themeColor={themeColor}
+                themeColor={effThemeColor}
             />
 
             {/* 重命名股票弹窗 */}
@@ -2487,7 +2507,7 @@ const DingPan = () => {
                 renameStockCode={renameStockCode}
                 renameStockName={renameStockName}
                 setRenameStockName={setRenameStockName}
-                themeColor={themeColor}
+                themeColor={effThemeColor}
             />
 
             {/* 暂时隐藏股票弹窗 */}
@@ -2505,7 +2525,7 @@ const DingPan = () => {
             <IndexOverlayFullscreenModal
                 open={indexOverlayFullscreenVisible}
                 onCancel={() => setIndexOverlayFullscreenVisible(false)}
-                themeColor={themeColor}
+                themeColor={effThemeColor}
             />
 
             {/* 个股买点诊断弹窗 */}
@@ -2516,7 +2536,7 @@ const DingPan = () => {
                 buyPointDiagnosisData={buyPointDiagnosisData}
                 buyPointDiagnosisLoading={buyPointDiagnosisLoading}
                 onRefresh={handleRefreshBuyPointDiagnosis}
-                themeColor={themeColor}
+                themeColor={effThemeColor}
             />
 
             {/* DIY 主题色设置弹窗 */}

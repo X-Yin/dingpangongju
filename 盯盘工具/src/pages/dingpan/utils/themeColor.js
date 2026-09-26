@@ -1,5 +1,6 @@
 // themeColor 工具函数：根据 themeColor 配置生成内联样式对象
-// themeColor 结构: { itemTitleColor, itemBorderColor, numberFontFamily, numberFontSize }
+// themeColor 结构: { pack, itemTitleColor, itemBorderColor, numberFontFamily, numberFontSize }
+// pack: 主题包 id（'' 表示默认样式；设置后 DIY 字段禁用，样式由主题包 CSS 变量接管）
 // 若字段未设置（undefined / 空字符串），则返回 undefined，保留 css 默认样式
 
 // 小卡片标题颜色（覆盖 css 中的黑色标题）
@@ -34,6 +35,7 @@ export const cardBorderStyle = (themeColor) => {
 };
 
 export const DEFAULT_THEME_COLOR = {
+    pack: '',
     itemTitleColor: '',
     itemBorderColor: '',
     numberFontFamily: '',

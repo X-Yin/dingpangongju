@@ -1150,7 +1150,7 @@ const MultiStockTimeLineModal = ({
     const chart = createChart(containerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: '#ffffff' },
-        textColor: '#64748b',
+        textColor: '#6b7890',
         fontSize: 11,
       },
       width: containerRef.current.clientWidth || 800,

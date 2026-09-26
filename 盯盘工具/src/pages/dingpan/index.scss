@@ -1258,3 +1258,391 @@
   }
 }
 
+/* ==================== 主题包覆盖层（Theme Pack） ====================
+   仅当容器挂载 .pack-active 且通过 style 注入 --dp-* CSS 变量时生效。
+   作用范围：盯盘页最外层组件（容器卡片 / 子 item / 按钮 / 标签 / 涨跌色）。
+   弹窗与 Tooltip 由 antd Portal 渲染在 body 下，不在本作用域内，保持原样式。 */
+.dingpan-container.pack-active {
+  /* 页面背景 + 全局字体 */
+  background: var(--dp-page-bg, #f6f9ff) !important;
+  font-family: var(--dp-font-family, inherit);
+
+  /* ---------- 容器卡片 ---------- */
+  .monitor-card.ant-card,
+  .page-meta,
+  .decision-chart-card {
+    background: var(--dp-card-bg, rgba(255, 255, 255, 0.78)) !important;
+    border: var(--dp-card-border-width, 1px) solid var(--dp-card-border-color, rgba(255, 255, 255, 0.7)) !important;
+    border-radius: var(--dp-card-radius, 18px);
+    box-shadow: var(--dp-card-shadow, none) !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* 卡片标题（含标题图标，图标存在内联 color，需 !important 覆盖） */
+  .monitor-card .ant-card-head-title,
+  .page-meta h1,
+  .all-stock-card-title,
+  .chart-title,
+  .detail-title,
+  .jingjia-block-header .jingjia-block-name {
+    color: var(--dp-title-color, #12213a) !important;
+  }
+
+  /* 标题图标（排除按钮内 icon，按钮 icon 跟随按钮字体色 --dp-btn-color） */
+  .monitor-card .ant-card-head-title .anticon:not(.ant-btn .anticon),
+  .all-stock-card-title-icon .anticon,
+  .chart-title .anticon {
+    color: var(--dp-title-color, #12213a) !important;
+  }
+
+  .monitor-card .ant-card-head {
+    border-bottom-color: var(--dp-item-border-color, rgba(18, 33, 58, 0.06));
+  }
+
+  /* 自选股全量监控 / 个股异动监控：卡片头部背景与其他模块统一（透出卡片背景色） */
+  .all-stock-card .ant-card-head {
+    background: transparent !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* ---------- 描述文字 ---------- */
+  .all-stock-card-title-subtext,
+  .chart-subtitle,
+  .alert-item-sub,
+  .update-time,
+  .stock-code,
+  .summary-label,
+  .monitor-card .ant-card-extra,
+  .detail-empty {
+    color: var(--dp-desc-color, #71809c) !important;
+  }
+
+  /* ---------- 子 item（列表项） ---------- */
+  .unified-list-item,
+  .stock-change-item,
+  .alert-item,
+  .jingjia-item,
+  .jingjia-block-header,
+  .rihan-index-card,
+  .all-stock-item {
+    background: var(--dp-item-bg, rgba(255, 255, 255, 0.88)) !important;
+    border: var(--dp-item-border-width, 1px) var(--dp-item-border-style, solid) var(--dp-item-border-color, rgba(18, 33, 58, 0.06)) !important;
+    border-radius: var(--dp-item-radius, 10px) !important;
+    box-shadow: none !important;
+
+    &:hover {
+      background: var(--dp-item-bg, rgba(255, 255, 255, 0.98)) !important;
+      box-shadow: var(--dp-card-shadow, none) !important;
+    }
+  }
+
+  /* 涨跌卡片自身的渐变底/描边回归统一 item 样式 */
+  .alert-item.up,
+  .alert-item.down {
+    background: var(--dp-item-bg, rgba(255, 255, 255, 0.88)) !important;
+    border-color: var(--dp-item-border-color, rgba(18, 33, 58, 0.06)) !important;
+  }
+
+  /* ---------- 列表表头（与子 item 背景/字体色保持一致） ---------- */
+  .all-stock-list-header {
+    background: var(--dp-item-bg, rgba(255, 255, 255, 0.88)) !important;
+    border: var(--dp-item-border-width, 1px) var(--dp-item-border-style, solid) var(--dp-item-border-color, rgba(18, 33, 58, 0.06)) !important;
+    border-radius: var(--dp-item-radius, 10px) !important;
+    box-shadow: none !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: var(--dp-item-title-color, #12213a) !important;
+
+    .sortable {
+      &:hover,
+      &.active {
+        color: var(--dp-item-title-color, #12213a) !important;
+      }
+    }
+  }
+
+  /* ---------- 搜索栏输入框（背景同子 item，输入框本体复用 antd 原始样式 + 主题色点缀） ---------- */
+  .all-stock-input.ant-input-affix-wrapper {
+    background: var(--dp-item-bg, rgba(255, 255, 255, 0.88)) !important;
+    border: var(--dp-item-border-width, 1px) var(--dp-item-border-style, solid) var(--dp-item-border-color, rgba(18, 33, 58, 0.06)) !important;
+    border-radius: var(--dp-item-radius, 10px) !important;
+    box-shadow: none !important;
+    font-family: var(--dp-font-family, inherit);
+
+    .ant-input {
+      background: transparent !important;
+      box-shadow: none !important;
+      padding-left: 0;
+      color: var(--dp-item-title-color, #12213a) !important;
+      caret-color: var(--dp-title-color, #4f46e5);
+      font-family: var(--dp-font-family, inherit);
+
+      &::placeholder {
+        color: var(--dp-desc-color, #94a3b8) !important;
+      }
+    }
+
+    .all-stock-search-icon {
+      color: var(--dp-desc-color, #94a3b8) !important;
+    }
+
+    .ant-input-clear-icon {
+      color: var(--dp-desc-color, #94a3b8) !important;
+    }
+
+    &:hover {
+      border-color: var(--dp-title-color, #4f46e5) !important;
+    }
+
+    &:focus-within,
+    &.ant-input-affix-wrapper-focused {
+      border-color: var(--dp-title-color, #4f46e5) !important;
+      box-shadow: none !important;
+      background: var(--dp-item-bg, rgba(255, 255, 255, 0.88)) !important;
+    }
+  }
+
+  /* 子 item 标题颜色 */
+  .unified-list-item .item-name,
+  .stock-change-item .stock-change-name,
+  .alert-item-name,
+  .jingjia-item .stock-info .ant-typography,
+  .jingjia-item .stock-info,
+  .rihan-index-card .rihan-index-name,
+  .all-stock-item .stock-name {
+    color: var(--dp-item-title-color, #12213a) !important;
+  }
+
+  /* 子 item 描述颜色 */
+  .jingjia-item .stock-sub-text,
+  .all-stock-item .stock-info-cell .ant-typography {
+    color: var(--dp-item-desc-color, #8a97ae) !important;
+  }
+
+  /* ---------- 涨幅红 / 跌幅绿 ---------- */
+  .up {
+    color: var(--dp-up-color, #e11d48) !important;
+  }
+
+  .down {
+    color: var(--dp-down-color, #059669) !important;
+  }
+
+  .all-stock-item[data-is-up="true"] .current-change {
+    color: var(--dp-up-color, #e11d48) !important;
+  }
+
+  .all-stock-item[data-is-up="false"] .current-change {
+    color: var(--dp-down-color, #059669) !important;
+  }
+
+  .all-stock-list-header .sortable.asc .sort-caret.ascending {
+    color: var(--dp-up-color, #e11d48) !important;
+  }
+
+  .all-stock-list-header .sortable.desc .sort-caret.descending {
+    color: var(--dp-down-color, #059669) !important;
+  }
+
+  /* 涨跌底色 pill（资金/涨跌徽标等） */
+  .stock-change-fund.up,
+  .alert-item-change.up,
+  .chart-value.up {
+    background: var(--dp-up-bg, rgba(225, 29, 72, 0.1)) !important;
+  }
+
+  .stock-change-fund.down,
+  .alert-item-change.down,
+  .chart-value.down {
+    background: var(--dp-down-bg, rgba(5, 150, 105, 0.1)) !important;
+  }
+
+  .chart-value {
+    background: var(--dp-item-bg, rgba(54, 87, 214, 0.08)) !important;
+  }
+
+  /* ---------- 数字字体 ---------- */
+  .item-value,
+  .stock-change-value,
+  .stock-change-fund,
+  .current-change,
+  .main-fund-value,
+  .stock-price,
+  .stock-code,
+  .rihan-change-value,
+  .chart-latest-money,
+  .alert-item-change,
+  .chart-value,
+  .summary-value {
+    font-family: var(--dp-number-font-family, 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace) !important;
+  }
+
+  /* ---------- 按钮 ---------- */
+  .ant-btn,
+  .all-stock-filter-btn,
+  .chart-expand-btn,
+  .chart-refresh-btn,
+  .copy-context-btn {
+    background: var(--dp-btn-bg, transparent) !important;
+    color: var(--dp-btn-color, inherit) !important;
+    border: var(--dp-btn-border-width, 1px) var(--dp-btn-border-style, solid) var(--dp-btn-border-color, transparent) !important;
+    border-radius: var(--dp-btn-radius, 8px) !important;
+    font-family: var(--dp-btn-font-family, var(--dp-font-family, inherit)) !important;
+    box-shadow: var(--dp-btn-shadow, none) !important;
+  }
+
+  /* antd 按钮主类型 hover/active 不再变回默认蓝色底 */
+  .ant-btn:not(:disabled):not(.ant-btn-disabled):hover,
+  .ant-btn:not(:disabled):not(.ant-btn-disabled):active,
+  .ant-btn-primary:not(:disabled):not(.ant-btn-disabled):hover,
+  .ant-btn-primary:not(:disabled):not(.ant-btn-disabled):active {
+    background: var(--dp-btn-bg, transparent) !important;
+    color: var(--dp-btn-color, inherit) !important;
+    border-color: var(--dp-btn-border-color, transparent) !important;
+    opacity: 0.85;
+  }
+
+  /* ---------- 标签 Tag ---------- */
+  .ant-tag,
+  .stock-block-tag,
+  .block-money-alert-tag,
+  .good-news-badge {
+    background: var(--dp-tag-bg, transparent) !important;
+    color: var(--dp-tag-color, inherit) !important;
+    border: var(--dp-tag-border-width, 1px) var(--dp-tag-border-style, solid) var(--dp-tag-border-color, transparent) !important;
+    border-radius: var(--dp-tag-radius, 6px) !important;
+    font-family: var(--dp-tag-font-family, var(--dp-font-family, inherit));
+  }
+
+  .good-news-badge:hover {
+    color: var(--dp-tag-color, #ff4d4f) !important;
+  }
+
+  /* ---------- 辅助文字统一跟随子 item 字体色 ---------- */
+  /* 主力资金明细的时间文案 */
+  .main-money-detail .detail-item .item-time {
+    color: var(--dp-item-title-color, #12213a) !important;
+  }
+
+  /* 主力资金/成交量图表容器：统一白色背景 */
+  .decision-chart-shell {
+    background: #ffffff !important;
+    border-color: var(--dp-item-border-color, rgba(18, 33, 58, 0.06)) !important;
+  }
+
+  /* 主力资金流入流出标题栏右侧：速度状态 / 最新资金 / 成交量 / diff */
+  .chart-speed-status,
+  .chart-latest-money,
+  .chart-inline-label {
+    color: var(--dp-item-title-color, #12213a) !important;
+  }
+
+  /* 主力资金流入流出「5分钟聚合」文字：跟随描述色 */
+  .five-min-switch .switch-text {
+    color: var(--dp-desc-color, #71809c) !important;
+  }
+
+  /* chart-value 中性（无涨跌）文字色 */
+  .chart-value:not(.up):not(.down) {
+    color: var(--dp-item-title-color, #12213a) !important;
+  }
+
+  /* ---------- 自选股涨跌幅前十统计 tag：整体按钮化，涨跌数字用主题包涨跌色 ---------- */
+  .watchlist-stat-tag {
+    color: var(--dp-btn-color, #12213a) !important;
+    background: var(--dp-btn-bg, rgba(22, 119, 255, 0.15)) !important;
+    border: var(--dp-btn-border-width, 1px) var(--dp-btn-border-style, solid) var(--dp-btn-border-color, transparent) !important;
+    border-radius: var(--dp-btn-radius, 6px) !important;
+    font-family: var(--dp-btn-font-family, inherit) !important;
+    box-shadow: var(--dp-btn-shadow, none) !important;
+
+    .up {
+      color: var(--dp-up-color, #e11d48) !important;
+    }
+
+    .down {
+      color: var(--dp-down-color, #059669) !important;
+    }
+  }
+
+  /* ---------- 指数叠加分时"相似度 Top3"日期 tag：整体按钮化 ---------- */
+  .index-overlay-card .iot-date-tag {
+    color: var(--dp-btn-color, #12213a) !important;
+    background: var(--dp-btn-bg, rgba(22, 119, 255, 0.15)) !important;
+    border: var(--dp-btn-border-width, 1px) var(--dp-btn-border-style, solid) var(--dp-btn-border-color, transparent) !important;
+    border-radius: var(--dp-btn-radius, 6px) !important;
+    font-family: var(--dp-btn-font-family, inherit) !important;
+    box-shadow: var(--dp-btn-shadow, none) !important;
+
+    .iot-match-score {
+      color: var(--dp-btn-color, #12213a) !important;
+    }
+  }
+
+  /* ---------- 指数叠加分时图表容器：跟随主题包圆角 ---------- */
+  .index-overlay-card .iot-lw-chart {
+    border-radius: var(--dp-card-radius, 14px) !important;
+    overflow: hidden !important;
+  }
+
+  /* ---------- 自选股全量监控搜索栏小模块：跟随主题包圆角 ---------- */
+  .all-stock-toolbar {
+    border-radius: var(--dp-card-radius, 18px) !important;
+  }
+
+  /* ---------- 指数叠加分时：标题栏背景/颜色与其他模块统一 ---------- */
+  .index-overlay-card .ant-card-head {
+    background: transparent !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .index-overlay-card .iot-card-title-content > span:first-child,
+  .index-overlay-card .iot-card-title-icon .anticon {
+    color: var(--dp-title-color, #12213a) !important;
+  }
+
+  .index-overlay-card .iot-card-title-subtext {
+    color: var(--dp-desc-color, #71809c) !important;
+  }
+
+  /* ---------- 个股幅度异动右侧视图 tab（非激活态跟随子 item 字体色） ---------- */
+  .stock-view-tab {
+    color: var(--dp-item-title-color, #12213a) !important;
+    font-family: var(--dp-font-family, inherit);
+  }
+
+  /* ---------- 指数叠加分时：创业板/科创板 Segmented tab 重写为与幅度异动 tab 一致 ---------- */
+  .index-overlay-card .ant-segmented {
+    background: transparent !important;
+    padding: 0 !important;
+    border-radius: 4px;
+    font-family: var(--dp-font-family, inherit);
+
+    .ant-segmented-group {
+      gap: 2px;
+    }
+
+    .ant-segmented-item {
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--dp-item-title-color, #12213a) !important;
+
+      .ant-segmented-item-label {
+        padding: 2px 8px !important;
+        min-height: 24px !important;
+        line-height: 20px !important;
+      }
+    }
+
+    .ant-segmented-item-selected,
+    .ant-segmented-item-selected:hover,
+    .ant-segmented-item-selected:focus {
+      background: var(--theme-color, #1677ff) !important;
+      color: #fff !important;
+    }
+  }
+}
+

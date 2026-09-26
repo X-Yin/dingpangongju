@@ -363,6 +363,10 @@
     {
       "code": "sz002636",
       "name": "金安国纪"
+    },
+    {
+      "code": "sh688143",
+      "name": "长盈通"
     }
   ],
   "trades": [
@@ -452,14 +456,14 @@
     },
     {
       "seq": 4,
-      "metric": -6.33,
-      "code": "sh688256",
-      "stockName": "寒武纪",
+      "metric": -8.27,
+      "code": "sh688143",
+      "stockName": "长盈通",
       "buyDate": "20260810",
       "buyDateDisplay": "2026-08-10",
       "buyTime": "14:57",
-      "buyPrice": 1124,
-      "buyChange": -6.33,
+      "buyPrice": 103,
+      "buyChange": -8.27,
       "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
       "buyChecks": [
         {
@@ -472,11 +476,11 @@
       ],
       "sellDate": "20260811",
       "sellDateDisplay": "2026-08-11",
-      "sellTime": "09:34",
-      "sellPrice": 1115,
-      "sellChange": -1.22,
+      "sellTime": "09:33",
+      "sellPrice": 99.66,
+      "sellChange": -4.08,
       "sellReason": "开盘后涨幅开始下降即卖出",
-      "returnRate": -0.8
+      "returnRate": -3.24
     },
     {
       "seq": 5,
@@ -644,7 +648,7 @@
     "tradeCount": 9,
     "winCount": 2,
     "winRate": 22.22,
-    "overallReturn": -9.27,
+    "overallReturn": -11.5,
     "holding": true
   }
 }

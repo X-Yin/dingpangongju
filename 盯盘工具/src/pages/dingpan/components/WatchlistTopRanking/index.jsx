@@ -46,14 +46,14 @@ const WatchlistTopRanking = ({ stocks = [], onStockClick, onOpenOverlayTimeLine,
 
     const statsTags = (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
-            <span style={tagStyle}>
-                上涨 vs 下跌：<span style={upColorStyle}>{upCount}</span> : <span style={downColorStyle}>{downCount}</span>
+            <span className="watchlist-stat-tag" style={tagStyle}>
+                上涨 vs 下跌：<span className="up" style={upColorStyle}>{upCount}</span> : <span className="down" style={downColorStyle}>{downCount}</span>
             </span>
-            <span style={tagStyle}>
-                大于开盘价：<span style={upColorStyle}>{aboveOpenCount}</span> : <span style={downColorStyle}>{belowOpenCount}</span>
+            <span className="watchlist-stat-tag" style={tagStyle}>
+                大于开盘价：<span className="up" style={upColorStyle}>{aboveOpenCount}</span> : <span className="down" style={downColorStyle}>{belowOpenCount}</span>
             </span>
-            <span style={tagStyle}>
-                平均拉升：<span style={surgeCount > 0 ? upColorStyle : undefined}>{avgSurgeText}</span> : <span style={declineCount > 0 ? downColorStyle : undefined}>{avgDeclineText}</span>
+            <span className="watchlist-stat-tag" style={tagStyle}>
+                平均拉升：<span className={surgeCount > 0 ? 'up' : undefined} style={surgeCount > 0 ? upColorStyle : undefined}>{avgSurgeText}</span> : <span className={declineCount > 0 ? 'down' : undefined} style={declineCount > 0 ? downColorStyle : undefined}>{avgDeclineText}</span>
             </span>
         </div>
     );

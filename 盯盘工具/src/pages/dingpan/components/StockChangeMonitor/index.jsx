@@ -116,10 +116,10 @@ const StockChangeMonitor = ({
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
                         <span>视图:</span>
-                        {viewModes.includes('grouped') && <span onClick={() => onStockViewModeChange('grouped')} style={viewBtnStyle(stockViewMode === 'grouped')}>分区</span>}
-                        {viewModes.includes('merged') && <span onClick={() => onStockViewModeChange('merged')} style={viewBtnStyle(stockViewMode === 'merged')}>合并</span>}
-                        {viewModes.includes('statistics') && <span onClick={() => onStockViewModeChange('statistics')} style={viewBtnStyle(stockViewMode === 'statistics')}>统计</span>}
-                        {viewModes.includes('research') && <span onClick={() => onStockViewModeChange('research')} style={viewBtnStyle(stockViewMode === 'research')}>研报</span>}
+                        {viewModes.includes('grouped') && <span className="stock-view-tab" onClick={() => onStockViewModeChange('grouped')} style={viewBtnStyle(stockViewMode === 'grouped')}>分区</span>}
+                        {viewModes.includes('merged') && <span className="stock-view-tab" onClick={() => onStockViewModeChange('merged')} style={viewBtnStyle(stockViewMode === 'merged')}>合并</span>}
+                        {viewModes.includes('statistics') && <span className="stock-view-tab" onClick={() => onStockViewModeChange('statistics')} style={viewBtnStyle(stockViewMode === 'statistics')}>统计</span>}
+                        {viewModes.includes('research') && <span className="stock-view-tab" onClick={() => onStockViewModeChange('research')} style={viewBtnStyle(stockViewMode === 'research')}>研报</span>}
                         <Tooltip title="刷新股票数据">
                             <Button
                                 size="small"

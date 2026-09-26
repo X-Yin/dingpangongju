@@ -48,3 +48,145 @@
   flex-wrap: wrap;
   margin-top: 4px;
 }
+
+/* ================= 主题包选择区 ================= */
+.theme-pack-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.theme-pack-section-header {
+  display: flex;
+  align-items: center;
+}
+
+.theme-pack-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.theme-pack-option {
+  position: relative;
+  border: 1px solid rgba(18, 33, 58, 0.1);
+  border-radius: 12px;
+  padding: 8px;
+  cursor: pointer;
+  background: rgba(247, 250, 255, 0.6);
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #6366f1;
+    transform: translateY(-2px);
+  }
+
+  &.selected {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+    background: rgba(99, 102, 241, 0.06);
+  }
+
+  .theme-pack-check {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #6366f1;
+    color: #fff;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+    font-weight: 700;
+  }
+}
+
+.theme-pack-preview {
+  height: 56px;
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.theme-pack-preview-card {
+  width: 100%;
+  height: 100%;
+  border-style: solid;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+
+  .theme-pack-preview-title {
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .theme-pack-preview-bars {
+    display: flex;
+    gap: 3px;
+
+    span {
+      width: 12px;
+      height: 5px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+  }
+}
+
+.theme-pack-option-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #12213a;
+  line-height: 1.3;
+}
+
+.theme-pack-source {
+  display: inline-block;
+  font-size: 9px;
+  color: #8a97ae;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.theme-pack-option-desc {
+  font-size: 10px;
+  color: #8a97ae;
+  line-height: 1.3;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* DIY 区（主题包生效时置灰） */
+.theme-diy-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .theme-diy-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &.disabled {
+    opacity: 0.75;
+  }
+}
+
+.theme-color-field.disabled {
+  opacity: 0.72;
+}
