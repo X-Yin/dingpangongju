@@ -838,5 +838,15 @@ exports.default = [
         "blockName": "金刚石散热",
         "code": "sh688028",
         "name": "沃尔德"
+    },
+    {
+        "blockName": "金刚石散热",
+        "code": "sh688485",
+        "name": "九州一轨"
+    },
+    {
+        "blockName": "金刚石散热",
+        "code": "sz002046",
+        "name": "国机精工"
     }
 ]

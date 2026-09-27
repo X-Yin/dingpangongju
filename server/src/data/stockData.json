@@ -1818,5 +1818,65 @@
       }
     ],
     "isImportant": false
+  },
+  "sz002046": {
+    "stockName": "国机精工",
+    "kline": [
+      {
+        "trade_date": 20260924,
+        "open_px": 65.5,
+        "high_px": 66.5,
+        "low_px": 63.86,
+        "close_px": 63.9,
+        "business_amount": 12870422,
+        "business_balance": 834117190,
+        "change": -3.33,
+        "ma5_px": 64.63,
+        "ma10_px": 62.5,
+        "ma20_px": 58.09,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz301071": {
+    "stockName": "力量钻石",
+    "kline": [
+      {
+        "trade_date": 20260924,
+        "open_px": 70.5,
+        "high_px": 71.66,
+        "low_px": 68.72,
+        "close_px": 69.04,
+        "business_amount": 15814960,
+        "business_balance": 1106757070,
+        "change": -2.82,
+        "ma5_px": 69.95,
+        "ma10_px": 68.26,
+        "ma20_px": 64.94,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz300776": {
+    "stockName": "帝尔激光",
+    "kline": [
+      {
+        "trade_date": 20260924,
+        "open_px": 127.95,
+        "high_px": 135.5,
+        "low_px": 125,
+        "close_px": 129.97,
+        "business_amount": 14376997,
+        "business_balance": 1882699300,
+        "change": 0.45,
+        "ma5_px": 126.54,
+        "ma10_px": 119.81,
+        "ma20_px": 115.64,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

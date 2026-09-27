@@ -453,5 +453,20 @@
     "secu_code": "sh688143",
     "secu_name": "长盈通  ",
     "TotalShares": 128780802
+  },
+  {
+    "secu_code": "sz002046",
+    "secu_name": "国机精工",
+    "TotalShares": 536190854
+  },
+  {
+    "secu_code": "sz301071",
+    "secu_name": "力量钻石",
+    "TotalShares": 254450293
+  },
+  {
+    "secu_code": "sz300776",
+    "secu_name": "帝尔激光",
+    "TotalShares": 285234456
   }
 ]

@@ -66,6 +66,7 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
     const handleOk = () => {
         onOk({
             pack: draft.pack || '',
+            randomPlay: !!draft.randomPlay,
             // 主题包生效时 DIY 字段不参与生效，保存时清空避免残留
             itemTitleColor: packActive ? '' : (draft.itemTitleColor || ''),
             itemBorderColor: packActive ? '' : (draft.itemBorderColor || ''),
@@ -105,7 +106,7 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
                     {option.id ? <span className="theme-pack-source">{option.source}</span> : null}
                     {option.name}
                 </div>
-                <div className="theme-pack-option-desc">{option.desc}</div>
+                <div className="theme-pack-option-desc">{option.desc.slice(0, 30)}{option.desc.length > 30 ? '...' : ''}</div>
                 {selected && <div className="theme-pack-check">✓</div>}
             </div>
         );
@@ -178,6 +179,30 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
                     </div>
                     <div className="theme-pack-grid">
                         {[DEFAULT_PACK_OPTION, ...THEME_PACKS.map(buildPackOption)].map(renderPackOption)}
+                    </div>
+                    {/* 随机播放：每隔 5 分钟自动随机切换一个主题包 */}
+                    <div
+                        className="theme-shuffle-row"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginTop: 10,
+                            padding: '8px 12px',
+                            background: draft.randomPlay ? 'rgba(22, 119, 255, 0.08)' : 'rgba(0, 0, 0, 0.03)',
+                            borderRadius: 8,
+                        }}
+                    >
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <Text strong style={{ fontSize: 13 }}>随机播放</Text>
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                开启后每隔 5 分钟自动随机切换一个主题包（仅在主题包之间轮换，不会切回默认主题）
+                            </Text>
+                        </div>
+                        <Switch
+                            checked={!!draft.randomPlay}
+                            onChange={(checked) => updateField('randomPlay', checked)}
+                        />
                     </div>
                     {packActive && (
                         <div className="theme-color-tip" style={{ marginTop: 10 }}>

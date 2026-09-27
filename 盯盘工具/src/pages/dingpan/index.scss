@@ -1549,7 +1549,7 @@
     color: var(--dp-item-title-color, #12213a) !important;
   }
 
-  /* ---------- 自选股涨跌幅前十统计 tag：整体按钮化，涨跌数字用主题包涨跌色 ---------- */
+  /* ---------- 自选股涨跌幅前十统计 tag：整体按钮化，主题包下涨跌数字跟随 label 文字色 ---------- */
   .watchlist-stat-tag {
     color: var(--dp-btn-color, #12213a) !important;
     background: var(--dp-btn-bg, rgba(22, 119, 255, 0.15)) !important;
@@ -1558,12 +1558,32 @@
     font-family: var(--dp-btn-font-family, inherit) !important;
     box-shadow: var(--dp-btn-shadow, none) !important;
 
+    .up,
+    .down {
+      color: inherit !important;
+    }
+  }
+
+  /* maximalism 主题：涨跌幅前十 tag 自定义黄底样式，无边框无阴影，数字继承 label 黑色 */
+  &[data-theme-pack='maximalism'] .watchlist-stat-tag {
+    color: #000000 !important;
+    background: #ffbe0b !important;
+    border: none !important;
+    border-radius: var(--dp-tag-radius, 4px) !important;
+    font-family: var(--dp-tag-font-family, inherit) !important;
+    box-shadow: none !important;
+  }
+
+  /* genz-chaos 主题：涨跌幅前十 tag 内部文字全部白色（含涨跌数字） */
+  &[data-theme-pack='genz-chaos'] .watchlist-stat-tag {
+    color: #ffffff !important;
+
     .up {
-      color: var(--dp-up-color, #e11d48) !important;
+      color: #ffffff !important;
     }
 
     .down {
-      color: var(--dp-down-color, #059669) !important;
+      color: #ffffff !important;
     }
   }
 

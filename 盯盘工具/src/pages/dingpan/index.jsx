@@ -35,7 +35,7 @@ import IndexOverlayFullscreenModal from './components/IndexOverlayFullscreenModa
 import BuyPointDiagnosisModal from './components/BuyPointDiagnosisModal';
 import ThemeColorModal from './components/ThemeColorModal';
 import { DEFAULT_THEME_COLOR } from './utils/themeColor';
-import { getThemePack, buildPackVars } from './utils/themePacks';
+import { getThemePack, buildPackVars, THEME_PACKS } from './utils/themePacks';
 import { hideStock, unhideStock, cleanExpiredHiddenStocks, filterHiddenStocks } from './utils/hiddenStocks';
 import { fetchAndCopyContext } from './utils/copyContext';
 import './index.scss';
@@ -244,6 +244,24 @@ const DingPan = () => {
     useEffect(() => {
         localStorage.setItem('dingpan_themeColor', JSON.stringify(themeColor));
     }, [themeColor]);
+
+    // 主题随机播放：开启后每隔 5 分钟随机切换一个主题包（不会切到当前包）
+    useEffect(() => {
+        if (!themeColor.randomPlay) return undefined;
+        const timer = setInterval(() => {
+            setThemeColor(prev => {
+                const ids = THEME_PACKS.map(p => p.id);
+                if (!ids.length) return prev;
+                let next = prev.pack;
+                while (next === prev.pack && ids.length > 1) {
+                    next = ids[Math.floor(Math.random() * ids.length)];
+                }
+                if (next === prev.pack) return prev;
+                return { ...prev, pack: next };
+            });
+        }, 5 * 60 * 1000);
+        return () => clearInterval(timer);
+    }, [themeColor.randomPlay]);
 
     // 交易纪律弹窗：每个交易日 9:30:00-9:40:00 显示，非交易日（周末/节假日，以交易日历为准）与午休/收盘后不显示
     useEffect(() => {

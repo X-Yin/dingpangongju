@@ -736,5 +736,29 @@
     "blockName": "光纤",
     "riskScore": " 6",
     "isTech": true
+  },
+  {
+    "code": "sz002046",
+    "name": "国机精工",
+    "isImportant": false,
+    "blockName": "金刚石",
+    "riskScore": "8",
+    "isTech": true
+  },
+  {
+    "code": "sz301071",
+    "name": "力量钻石",
+    "isImportant": false,
+    "blockName": "金刚石",
+    "riskScore": " 6",
+    "isTech": true
+  },
+  {
+    "code": "sz300776",
+    "name": "帝尔激光",
+    "isImportant": false,
+    "blockName": "陶瓷基板",
+    "riskScore": "6",
+    "isTech": true
   }
 ]
