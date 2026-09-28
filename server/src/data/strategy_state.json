@@ -1,23 +1,23 @@
 {
   "overnight_crisis_escape": {
-    "lastCheckedTime": "2026-09-24 10:00:31",
+    "lastCheckedTime": "2026-09-28 09:36:58",
     "lastTriggeredTime": "2026-09-24 09:46:28"
   },
   "high_open_high_walk": {
-    "advisoryToday": "2026-09-24",
+    "advisoryToday": "2026-09-28",
     "preconditionMet": false,
     "triggerIndexCode": null,
     "triggerIndexName": null,
     "checkedToday": "2026-09-24"
   },
   "high_open_max_half_position": {
-    "triggeredToday": "2026-09-24"
+    "triggeredToday": "2026-09-28"
   },
   "volume_shrink_stagnation": {
-    "lastTriggeredTime": "2026-09-24 09:34:25"
+    "lastTriggeredTime": "2026-09-28 09:34:31"
   },
   "opening_net_inflow": {
-    "triggeredToday": "2026-09-24"
+    "triggeredToday": "2026-09-28"
   },
   "panic_outflow": {
     "lastTriggeredTime": "2026-09-24 11:25:52"
@@ -27,5 +27,14 @@
   },
   "tail_dip_buying": {
     "checkedToday": "2026-09-24"
+  },
+  "prev_day_volume_price_bottom": {
+    "triggeredToday": "2026-09-28"
+  },
+  "ebb_tide_direct_reversal": {
+    "triggeredToday": "2026-09-28"
+  },
+  "outflow_fake_rally": {
+    "lastTriggeredTime": "2026-09-28 09:37:59"
   }
 }

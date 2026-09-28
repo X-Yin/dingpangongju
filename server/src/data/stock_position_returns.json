@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-09-28",
+    "operations": [
+      {
+        "id": "1790559024251_qatf",
+        "action": "sell",
+        "stockName": "铜冠铜箔",
+        "stockCode": "sz301217",
+        "position": "",
+        "time": "09:30"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-09-28T01:30:24.898Z",
+    "updatedAt": "2026-09-28T01:30:24.898Z"
+  },
+  {
     "date": "2026-09-24",
     "operations": [
       {

@@ -1,1 +1,42 @@
-[]
+[
+  {
+    "id": "e43ee2677f355dac",
+    "time": "2026-09-28 09:30:10",
+    "read": true,
+    "strategyId": "prev_day_volume_price_bottom",
+    "title": "⚠️ 前日地量地价，今日低开继续下跌",
+    "description": "前一日创业板指地量地价：涨跌幅-2.68%（<-1%大幅下跌）、缩量-11.5%（>5%缩量）。今日竞价低开-0.65%（开盘价3267.60 < 前日收盘3288.95），可能受外围利空拖累，当日大概率继续下跌。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "23f784c8ae79f0f8",
+    "time": "2026-09-28 09:30:10",
+    "read": true,
+    "strategyId": "ebb_tide_direct_reversal",
+    "title": "⚠️ 退潮直接反转概率低，切勿追涨",
+    "description": "创业板指前一日涨跌幅 -2.68%，科创50前一日涨跌幅 -2.35%。<br/>创业板指/科创50前一个交易日大跌超过-2%，次日直接反转的概率只有 <strong>23%</strong>，不要追涨！就算参与只能 <strong>1/3 仓位</strong>参与。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "0f3d35b11692fae1",
+    "time": "2026-09-28 09:34:31",
+    "read": true,
+    "strategyId": "volume_shrink_stagnation",
+    "title": "📉 放量后缩量滞涨",
+    "description": "成交量从高位 <strong>57亿</strong> 回落至 <strong>-85亿</strong>，指数开始滞涨，需警惕回落风险。",
+    "severity": "medium",
+    "isBullish": false
+  },
+  {
+    "id": "3a14c82b68c47868",
+    "time": "2026-09-28 09:37:59",
+    "read": false,
+    "strategyId": "outflow_fake_rally",
+    "title": "⚠️ 资金流出但指数上涨-诱多信号",
+    "description": "主力资金净流出扩大（-81.8亿 → -90.5亿），但创业板/科创板指数仍在上涨，可能是诱多信号，注意风险。",
+    "severity": "high",
+    "isBullish": false
+  }
+]

@@ -926,6 +926,22 @@ function App() {
     personalFeelingVisibleRef.current = personalFeelingVisible;
   }, [personalFeelingVisible]);
 
+  // logo 实时时钟：交易日的 9:15 - 15:00（含午休）持续显示当前时分秒
+  // 仅在显示内容变化时 setState，非交易时段 logoTime 为空串、展示默认文字
+  const [logoTime, setLogoTime] = useState('');
+  useEffect(() => {
+    const updateLogoTime = () => {
+      const now = dayjs();
+      const minuteOfDay = now.hour() * 60 + now.minute();
+      const inTradingSession = isTradingDay(now) && minuteOfDay >= 9 * 60 + 15 && minuteOfDay < 15 * 60;
+      const next = inTradingSession ? now.format('HH:mm:ss') : '';
+      setLogoTime((prev) => (prev === next ? prev : next));
+    };
+    updateLogoTime();
+    const timer = setInterval(updateLogoTime, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // 个人感受记录轮询：9:40 起每隔 20 分钟弹出，午休和收盘后不执行
   useEffect(() => {
     let timer = null;
@@ -1143,7 +1159,7 @@ function App() {
       >
         <div className="logo" onClick={() => setThemePickerVisible(true)} title="点击切换主题色">
           <StockOutlined className="logo-icon" />
-          {!collapsed && " 盯盘助手"}
+          {!collapsed && (logoTime ? <span className="logo-time">{logoTime}</span> : ' 盯盘助手')}
           {!collapsed && <BgColorsOutlined className="logo-theme-icon" />}
         </div>
         <Menu

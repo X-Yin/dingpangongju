@@ -1,5 +1,16 @@
 [
   {
+    "id": "1790559024239_2rnsv8",
+    "type": "delete",
+    "code": "sz301217",
+    "name": "铜冠铜箔",
+    "date": "2026-09-28",
+    "time": "09:30:24",
+    "detail": "删除持仓：铜冠铜箔（sz301217）",
+    "pipelineStage": null,
+    "createdAt": "2026-09-28T01:30:24.239Z"
+  },
+  {
     "id": "1790228375029_vm65xt",
     "type": "pipeline",
     "code": "sz301217",

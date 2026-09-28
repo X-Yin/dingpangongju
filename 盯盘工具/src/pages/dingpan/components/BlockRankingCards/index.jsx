@@ -1,9 +1,9 @@
 import { Row, Col, Card, Popover } from 'antd';
-import { RiseOutlined, FallOutlined } from '@ant-design/icons';
+import { RiseOutlined, FallOutlined, ReloadOutlined } from '@ant-design/icons';
 import { titleStyle, borderStyle, numberStyle } from '../../utils/themeColor';
 import './index.scss';
 
-const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockStockList, themeColor, vertical = false, fillContainer = false }) => (
+const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockStockList, themeColor, vertical = false, fillContainer = false, onRefresh, refreshing = false }) => (
     <Row gutter={[12, 12]} style={{ marginBottom: 12, height: fillContainer ? '100%' : undefined, flex: fillContainer ? 1 : undefined }}>
         <Col span={vertical ? 24 : 12} style={{ display: 'flex', flexDirection: 'column' }}>
             {fillContainer ? (
@@ -51,6 +51,13 @@ const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockSto
                     className="monitor-card"
                     variant="borderless"
                     bodyStyle={{ padding: '12px 14px' }}
+                    extra={onRefresh ? (
+                        <ReloadOutlined
+                            spin={refreshing}
+                            style={{ cursor: 'pointer', fontSize: 14 }}
+                            onClick={onRefresh}
+                        />
+                    ) : null}
                 >
                     <div className="blocks-grid">
                         {topAndBottomBlockData && topAndBottomBlockData.firstNumList.map((item, index) => (

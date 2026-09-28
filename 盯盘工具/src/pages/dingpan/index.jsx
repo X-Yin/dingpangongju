@@ -198,6 +198,7 @@ const DingPan = () => {
     // 打开弹窗事件中记录的时间戳（事件处理器内可安全调用 Date.now），供弹窗计算剩余天数
     const [tempHideOpenTs, setTempHideOpenTs] = useState(0);
     const [refreshingStockData, setRefreshingStockData] = useState(false);
+    const [refreshingBlockData, setRefreshingBlockData] = useState(false);
     const [watchlistMainFund, setWatchlistMainFund] = useState({});
 
     // 买点诊断弹窗相关状态
@@ -1350,6 +1351,21 @@ const DingPan = () => {
         }
     };
 
+    // 强制刷新板块数据：请求后端所有板块成分股最新行情（非缓存），再重新拉取看板数据
+    const handleRefreshBlockData = async () => {
+        setRefreshingBlockData(true);
+        try {
+            await axios.post(`http://${local_ip}:3000/api/block/refresh`);
+            await fetchData();
+            message.success('板块数据已强制刷新');
+        } catch (error) {
+            console.error('Refresh block data failed:', error);
+            message.error('板块数据刷新失败，请稍后重试');
+        } finally {
+            setRefreshingBlockData(false);
+        }
+    };
+
     const fetchEmotionData = async () => {
         try {
             const response = await axios.get(`http://${local_ip}:3000/emotion_data`);
@@ -2312,6 +2328,8 @@ const DingPan = () => {
                                 onBlockClick={jumpToBlock}
                                 renderBlockStockList={renderBlockStockList}
                                 themeColor={effThemeColor}
+                                onRefresh={handleRefreshBlockData}
+                                refreshing={refreshingBlockData}
                             />
                             )}
 
@@ -2428,6 +2446,8 @@ const DingPan = () => {
                                         renderBlockStockList={renderBlockStockList}
                                         themeColor={effThemeColor}
                                         vertical
+                                        onRefresh={handleRefreshBlockData}
+                                        refreshing={refreshingBlockData}
                                     />
                                 </div>
                             )}

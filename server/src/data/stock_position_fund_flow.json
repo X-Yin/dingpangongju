@@ -1885,5 +1885,153 @@
         "volumeState": "缩量"
       }
     ]
+  },
+  "20260928": {
+    "sz301217": [
+      {
+        "time": "091517",
+        "minute": "0915",
+        "mainFund": 0,
+        "change": null,
+        "latestPrice": null,
+        "volumeDiffPercent": -31.89,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "091617",
+        "minute": "0916",
+        "mainFund": 0,
+        "change": null,
+        "latestPrice": null,
+        "volumeDiffPercent": -31.89,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "091717",
+        "minute": "0917",
+        "mainFund": 0,
+        "change": null,
+        "latestPrice": null,
+        "volumeDiffPercent": -31.89,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "091817",
+        "minute": "0918",
+        "mainFund": 0,
+        "change": null,
+        "latestPrice": null,
+        "volumeDiffPercent": -31.89,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "091917",
+        "minute": "0919",
+        "mainFund": 0,
+        "change": null,
+        "latestPrice": null,
+        "volumeDiffPercent": -31.89,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "092017",
+        "minute": "0920",
+        "mainFund": 0,
+        "change": null,
+        "latestPrice": null,
+        "volumeDiffPercent": -31.89,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "092117",
+        "minute": "0921",
+        "mainFund": 0,
+        "change": null,
+        "latestPrice": null,
+        "volumeDiffPercent": -31.89,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "092217",
+        "minute": "0922",
+        "mainFund": 0,
+        "change": null,
+        "latestPrice": null,
+        "volumeDiffPercent": -31.89,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "092317",
+        "minute": "0923",
+        "mainFund": 0,
+        "change": null,
+        "latestPrice": null,
+        "volumeDiffPercent": -31.89,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "092417",
+        "minute": "0924",
+        "mainFund": 0,
+        "change": -2.05,
+        "latestPrice": 110,
+        "volumeDiffPercent": -100,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "092517",
+        "minute": "0925",
+        "mainFund": 0,
+        "change": -2.05,
+        "latestPrice": 110,
+        "volumeDiffPercent": -18.2,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "092617",
+        "minute": "0926",
+        "mainFund": 0,
+        "change": -2.05,
+        "latestPrice": 110,
+        "volumeDiffPercent": -18.2,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "092717",
+        "minute": "0927",
+        "mainFund": 0.03,
+        "change": -2.05,
+        "latestPrice": 110,
+        "volumeDiffPercent": -18.2,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "092817",
+        "minute": "0928",
+        "mainFund": 0.03,
+        "change": -2.05,
+        "latestPrice": 110,
+        "volumeDiffPercent": -18.2,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "092917",
+        "minute": "0929",
+        "mainFund": 0.03,
+        "change": -2.05,
+        "latestPrice": 110,
+        "volumeDiffPercent": -18.2,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "093017",
+        "minute": "0930",
+        "mainFund": 0.03,
+        "change": -3.49,
+        "latestPrice": 108.38,
+        "volumeDiffPercent": -54.98,
+        "volumeState": "缩量"
+      }
+    ]
   }
 }
