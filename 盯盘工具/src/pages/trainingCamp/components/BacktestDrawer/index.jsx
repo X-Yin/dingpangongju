@@ -79,6 +79,12 @@ const STRATEGY_OPTIONS = [
   { value: 'tail_dip_1d_fall', label: '尾盘抄底-当日跌幅最大' },
   { value: 'tail_dip_3d_fall', label: '尾盘抄底-3日跌幅最大' },
   { value: 'tail_dip_1d_resilience_low', label: '尾盘抄底-当日抗分歧分数最低' },
+  { value: 'tail_dip_emo3_3d_gain', label: '三日情绪冰点-3日涨幅最大' },
+  { value: 'tail_dip_emo3_3d_fall', label: '三日情绪冰点-3日跌幅最大' },
+  { value: 'tail_dip_emo3_3d_reports_top5_gain', label: '三日情绪冰点-3日研报前五&涨幅最大' },
+  { value: 'tail_dip_emo3_1d_gain', label: '三日情绪冰点-当日涨幅最大' },
+  { value: 'tail_dip_emo3_1d_fall', label: '三日情绪冰点-当日跌幅最大' },
+  { value: 'tail_dip_emo3_1d_resilience', label: '三日情绪冰点-当日抗分歧最大' },
   { value: 'hot_money_3d_gain', label: '情绪游资-3日涨幅最大' },
   { value: 'hot_money_5d_gain', label: '情绪游资-5日涨幅最大' },
   { value: 'hot_money_10d_gain', label: '情绪游资-10日涨幅最大' },
@@ -108,6 +114,22 @@ const SENTIMENT_HOT_MONEY_IDS = [
 const isSentimentStrategy = (id) => SENTIMENT_HOT_MONEY_IDS.includes(id);
 // 情绪游资策略可选日期下限（不依赖回放缓存，仅受数据源覆盖范围限制）
 const SENTIMENT_EARLIEST_DATE = '20250101';
+
+// 三日情绪冰点系列策略（与后端 buySellBacktest.STRATEGIES 的 emoAvgBuy: true 保持一致）：
+// 回测日期范围独立——固定从 2026-07-01 开始回测，与其他策略（最近 60 个交易日滚动窗口）区别开
+const EMO3_STRATEGY_IDS = [
+  'tail_dip_emo3_3d_gain',
+  'tail_dip_emo3_3d_fall',
+  'tail_dip_emo3_3d_reports_top5_gain',
+  'tail_dip_emo3_1d_gain',
+  'tail_dip_emo3_1d_fall',
+  'tail_dip_emo3_1d_resilience',
+];
+const isEmo3Strategy = (id) => EMO3_STRATEGY_IDS.includes(id);
+// 三日情绪冰点系列固定回测起点（与后端 buySellBacktest.EMO3_BACKTEST_START_DATE 保持一致）
+const EMO3_BACKTEST_START_DATE = '20260701';
+// 策略类别：用于切换策略时判断是否需要重置手动日期范围（emo3 / sentiment / regular 各自默认范围不同）
+const strategyCategory = (id) => (isEmo3Strategy(id) ? 'emo3' : isSentimentStrategy(id) ? 'sentiment' : 'regular');
 
 // 情绪游资策略专属规则说明（与后端 sentimentHotMoney 逻辑保持一致，供复制到外部分析）
 const SENTIMENT_BUY_RULES = [
@@ -247,6 +269,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const availableDates = useMemo(() => (Array.isArray(dates) ? dates : []), [dates]);
   const maxDateStr = availableDates.length > 0 ? availableDates[0] : dayjs().format('YYYYMMDD');
   // 情绪游资策略不依赖后端回放缓存，默认范围用独立的 sentiment_range（最近 60 个已完结交易日）；
+  // 三日情绪冰点策略固定从 2026-07-01 开始回测（结束日取最新可用交易日）；
   // 未手动选择时常规策略默认取「最近 60 个可用交易日」（不足 60 个时取最早的一个日期），与后端回测报告 /
   // worker 预生成缓存的日期范围口径一致，
   // 保证 worker 跑完后打开抽屉能直接命中缓存（此前写死最早日期会因范围不一致查不到缓存而空白）
@@ -257,8 +280,15 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     const end = sortedAsc[sortedAsc.length - 1];
     return [dayjs(start, 'YYYYMMDD'), dayjs(end, 'YYYYMMDD')];
   }, [availableDates, maxDateStr]);
+  // 三日情绪冰点默认范围：起点固定 2026-07-01，结束日取最新可用回放交易日（与后端 getEmo3DefaultRange 口径一致）
+  const emo3DefaultRange = useMemo(() => {
+    if (availableDates.length === 0) return [dayjs(EMO3_BACKTEST_START_DATE, 'YYYYMMDD'), dayjs(maxDateStr, 'YYYYMMDD')];
+    const sortedAsc = [...availableDates].sort();
+    return [dayjs(EMO3_BACKTEST_START_DATE, 'YYYYMMDD'), dayjs(sortedAsc[sortedAsc.length - 1], 'YYYYMMDD')];
+  }, [availableDates, maxDateStr]);
   const curIsSentiment = isSentimentStrategy(strategy);
-  const effectiveRange = range || (curIsSentiment ? (sentimentRange || defaultRange) : defaultRange);
+  const curIsEmo3 = isEmo3Strategy(strategy);
+  const effectiveRange = range || (curIsEmo3 ? emo3DefaultRange : curIsSentiment ? (sentimentRange || defaultRange) : defaultRange);
 
   // 组件卸载时停止轮询
   useEffect(() => {
@@ -320,9 +350,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, curIsSentiment, sentimentRange]);
 
-  // 切换策略：情绪游资 ↔ 常规类别变化时重置手动日期，回退到该类别的默认范围
+  // 切换策略：策略类别（三日情绪冰点 / 情绪游资 / 常规）变化时重置手动日期，回退到该类别的默认范围
   const handleStrategyChange = (v) => {
-    if (isSentimentStrategy(v) !== isSentimentStrategy(strategy)) {
+    if (strategyCategory(v) !== strategyCategory(strategy)) {
       setRange(null);
       setResult(null);
     }
@@ -600,6 +630,10 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     if (curIsSentiment) {
       return ds < SENTIMENT_EARLIEST_DATE || ds > dayjs().format('YYYYMMDD');
     }
+    // 三日情绪冰点策略固定从 2026-07-01 开始回测，下限放开至该日（早于回放数据的日期回测时自动跳过）
+    if (curIsEmo3) {
+      return ds < EMO3_BACKTEST_START_DATE || ds > maxDateStr;
+    }
     return ds < EARLIEST_DATE || ds > maxDateStr;
   };
 
@@ -683,7 +717,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
             options={STRATEGY_OPTIONS}
           />
           <span style={{ fontSize: 12, color: '#9ca3af' }}>
-            {curIsSentiment
+            {curIsEmo3
+              ? '三日情绪冰点策略固定从 2026-07-01 开始回测（结束日取最新交易日）'
+              : curIsSentiment
               ? '情绪游资策略不依赖回放缓存，可选时间不限（默认最近 60 个交易日）'
               : '切换策略或日期后自动匹配缓存，无需重复回测'}
           </span>

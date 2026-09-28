@@ -17,7 +17,7 @@
 //   --child --strategies ...          内部参数：由父进程 fork 调用，进度经 IPC 上报，请勿手动使用
 const fs = require('fs');
 const path = require('path');
-const { STRATEGIES, runRangeBacktestMulti, writeCachedBacktest, isSentimentStrategy, getSentimentDefaultRange } = require('../src/service/buySellBacktest');
+const { STRATEGIES, runRangeBacktestMulti, writeCachedBacktest, isSentimentStrategy, getSentimentDefaultRange, isEmo3AvgStrategy, getEmo3DefaultRange } = require('../src/service/buySellBacktest');
 const { loadTrainingCampData, getTrainingCampDates, beijingToday, prewarmKlineCache } = require('../src/service/trainingCamp');
 const { generateReport, getDefaultReportRange } = require('../src/service/backtestReport');
 const { fork } = require('child_process');
@@ -422,28 +422,47 @@ const main = async () => {
   const explicitRange = !!(args.start || args.end);
 
   const allIds = Object.keys(STRATEGIES);
-  // 情绪游资策略与常规策略拆分：日期范围独立（情绪游资不依赖回放缓存，固定最近 60 个已完结交易日）
-  const regularIds = allIds.filter(id => !isSentimentStrategy(id));
+  // 三类策略拆分：常规（最近 60 个交易日）/ 情绪游资（最近 60 个已完结交易日，不依赖回放缓存）/
+  // 三日情绪冰点（固定从 2026-07-01 开始，与其他策略区别开）
+  const regularIds = allIds.filter(id => !isSentimentStrategy(id) && !isEmo3AvgStrategy(id));
+  const emo3Ids = allIds.filter(id => isEmo3AvgStrategy(id));
   const sentimentIds = allIds.filter(id => isSentimentStrategy(id));
   let sentimentRange = null;
   if (sentimentIds.length > 0) {
     try { sentimentRange = await getSentimentDefaultRange(); } catch (e) { sentimentRange = null; }
   }
-  // 全组均为情绪游资且未显式指定日期时，改用情绪游资默认范围（60 个已完结交易日）
-  const pickRange = (ids) => (!explicitRange && ids.length > 0 && ids.every(id => isSentimentStrategy(id)) && sentimentRange)
-    ? sentimentRange
-    : { startDate, endDate };
+  let emo3Range = null;
+  if (emo3Ids.length > 0) {
+    try { emo3Range = getEmo3DefaultRange(); } catch (e) { emo3Range = null; }
+  }
+  // 全组均为情绪游资且未显式指定日期时，改用情绪游资默认范围（60 个已完结交易日）；
+  // 全组均为三日情绪冰点时，改用其固定起点范围（2026-07-01 起）
+  const pickRange = (ids) => {
+    if (explicitRange || ids.length === 0) return { startDate, endDate };
+    if (ids.every(id => isSentimentStrategy(id)) && sentimentRange) return sentimentRange;
+    if (ids.every(id => isEmo3AvgStrategy(id)) && emo3Range) return emo3Range;
+    return { startDate, endDate };
+  };
   const workerCount = Math.max(1, args.workers || 8);
 
   if (args.list) {
     const groups = buildGroups(regularIds, workerCount);
     console.log(`常规策略日期范围: ${startDate} ~ ${endDate}（默认最近 60 个交易日，可用 --start/--end 覆盖）`);
+    if (emo3Range) console.log(`三日情绪冰点日期范围: ${emo3Range.startDate} ~ ${emo3Range.endDate}（固定从 2026-07-01 开始）`);
     if (sentimentRange) console.log(`情绪游资日期范围: ${sentimentRange.startDate} ~ ${sentimentRange.endDate}（最近 60 个已完结交易日，不依赖回放缓存）`);
     console.log(`常规策略共 ${regularIds.length} 个，${workerCount} 进程分组: ${groups.map(g => g.length).join(' / ')}`);
     groups.forEach((ids, i) => {
       console.log(`\n线程 ${i + 1}（${ids.length} 个）:`);
       ids.forEach(id => console.log(`  - ${id}  ${STRATEGIES[id].name}`));
     });
+    if (emo3Ids.length > 0) {
+      const eGroups = buildGroups(emo3Ids, workerCount);
+      console.log(`\n三日情绪冰点策略共 ${emo3Ids.length} 个，${eGroups.length} 进程分组: ${eGroups.map(g => g.length).join(' / ')}（日期 ${emo3Range ? `${emo3Range.startDate} ~ ${emo3Range.endDate}` : '获取失败'}）`);
+      eGroups.forEach((ids, i) => {
+        console.log(`\n情绪冰点线程 ${i + 1}（${ids.length} 个）:`);
+        ids.forEach(id => console.log(`  - ${id}  ${STRATEGIES[id].name}`));
+      });
+    }
     if (sentimentIds.length > 0) {
       const sGroups = buildGroups(sentimentIds, workerCount);
       console.log(`\n情绪游资策略共 ${sentimentIds.length} 个，${sGroups.length} 进程分组: ${sGroups.map(g => g.length).join(' / ')}（日期 ${sentimentRange ? `${sentimentRange.startDate} ~ ${sentimentRange.endDate}` : '获取失败'}）`);
@@ -501,6 +520,9 @@ const main = async () => {
   const groups = buildGroups(regularIds, workerCount);
   const removed = clearBacktestCache();
   console.log(`常规策略 ${regularIds.length} 个 → ${groups.length} 进程并行（${groups.map(g => g.length).join(' / ')}），日期 ${startDate} ~ ${endDate}`);
+  if (emo3Ids.length > 0) {
+    console.log(`三日情绪冰点策略 ${emo3Ids.length} 个${emo3Range ? `，日期 ${emo3Range.startDate} ~ ${emo3Range.endDate}（固定从 2026-07-01 开始）` : '，默认日期范围获取失败将跳过'}`);
+  }
   if (sentimentIds.length > 0) {
     console.log(`情绪游资策略 ${sentimentIds.length} 个${sentimentRange ? `，日期 ${sentimentRange.startDate} ~ ${sentimentRange.endDate}（最近 60 个已完结交易日）` : '，默认日期范围获取失败将跳过'}`);
   }
@@ -515,16 +537,29 @@ const main = async () => {
     console.error(`日K线预热失败（不影响后续流程，子进程将自行拉取）: ${e.message}`);
   }
   // 预构建过去交易日的回放数据缓存（已构建过的日期读缓存秒过；策略线程随后只读文件）
-  const buildDates = getTrainingCampDates().filter(d => d >= startDate && d <= endDate && d < beijingToday()).sort();
+  // 下限取全部回放类策略（常规 + 三日情绪冰点）范围的最早起点
+  const earliestStart = [startDate, emo3Range?.startDate].filter(Boolean).sort()[0];
+  const buildDates = getTrainingCampDates().filter(d => d >= earliestStart && d <= endDate && d < beijingToday()).sort();
   await runPrebuild(buildDates, workerCount);
   console.log('Ctrl+C 可随时终止全部线程\n');
   const exitCode = await runParallel(groups, startDate, endDate);
+
+  // 三日情绪冰点阶段：独立日期范围并行回测（固定从 2026-07-01 开始，与其他策略区别开）
+  let emo3Exit = 0;
+  if (emo3Ids.length > 0) {
+    if (emo3Range) {
+      console.log(`\n[${ts()}] 常规策略完成，开始三日情绪冰点策略回测（${emo3Range.startDate} ~ ${emo3Range.endDate}）...`);
+      emo3Exit = await runParallel(buildGroups(emo3Ids, workerCount), emo3Range.startDate, emo3Range.endDate);
+    } else {
+      console.error(`\n[${ts()}] 三日情绪冰点默认日期范围获取失败，跳过 ${emo3Ids.length} 个策略`);
+    }
+  }
 
   // 情绪游资阶段：独立日期范围并行回测（不依赖回放预构建数据，无需 runPrebuild）
   let sentimentExit = 0;
   if (sentimentIds.length > 0) {
     if (sentimentRange) {
-      console.log(`\n[${ts()}] 常规策略完成，开始情绪游资策略回测（${sentimentRange.startDate} ~ ${sentimentRange.endDate}）...`);
+      console.log(`\n[${ts()}] 开始情绪游资策略回测（${sentimentRange.startDate} ~ ${sentimentRange.endDate}）...`);
       sentimentExit = await runParallel(buildGroups(sentimentIds, workerCount), sentimentRange.startDate, sentimentRange.endDate);
     } else {
       console.error(`\n[${ts()}] 情绪游资默认日期范围获取失败，跳过 ${sentimentIds.length} 个情绪游资策略`);
@@ -533,7 +568,7 @@ const main = async () => {
 
   console.log(`\n[${ts()}] 全部线程结束，自动汇总生成回测报告...`);
   await aggregate(startDate, endDate, false);
-  process.exitCode = exitCode || sentimentExit;
+  process.exitCode = exitCode || emo3Exit || sentimentExit;
 };
 
 process.on('exit', () => {

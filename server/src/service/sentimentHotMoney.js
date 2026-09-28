@@ -923,4 +923,5 @@ module.exports = {
   isSentimentStrategy,
   getSentimentDefaultRange,
   runSentimentBacktest,
+  loadIndexKline, // 指数/板块日K（带当日文件缓存），供 buySellBacktest 三日情绪冰点指数环境门禁复用
 };

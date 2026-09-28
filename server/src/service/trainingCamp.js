@@ -226,10 +226,14 @@ const findIndexPoint = (sortedLine, preclose, minute) => {
   return { price: point.lastPx, changePct };
 };
 
-const loadTrainingCampData = async (dateStr) => {
+const loadTrainingCampData = async (dateStr, opts = {}) => {
   if (!dateStr || !/^\d{8}$/.test(dateStr)) {
     return { success: false, message: '日期格式错误，应为YYYYMMDD' };
   }
+
+  // allowMissingFund: 无资金快照日期（如 20260730）也可构建回放数据 —— 用创业板指分时的时间序列作为桶骨架，
+  // 仅缺 fundFlow/成交量展示字段（成交量缺失时量能条件自然判不通过），供不依赖资金快照的策略回测使用
+  const allowMissingFund = opts.allowMissingFund === true;
 
   const isPastDate = dateStr < beijingToday();
   const builtFile = path.join(CAMP_BUILT_DIR, `${dateStr}.json`);
@@ -250,7 +254,7 @@ const loadTrainingCampData = async (dateStr) => {
     try { await getSingleStockTlineDataByDate(stock.code, parseInt(dateStr)); } catch (e) { /* 单只失败忽略 */ }
   }, 10);
 
-  const backtestResult = await runBacktest(dateStr, null).catch(err => {
+  const backtestResult = await runBacktest(dateStr, null, { allowMissingSnapshot: allowMissingFund }).catch(err => {
     console.error(`runBacktest ${dateStr} 失败:`, err.message);
     return { success: false, message: err.message };
   });
@@ -261,7 +265,7 @@ const loadTrainingCampData = async (dateStr) => {
   const fundData = getFundSnapshot(dateStr) || [];
   const amountData = getAmountSnapshot(dateStr) || [];
 
-  if (fundData.length === 0) {
+  if (fundData.length === 0 && !allowMissingFund) {
     return { success: false, message: `未找到 ${dateStr} 的资金快照数据`, date: dateStr };
   }
 
@@ -415,7 +419,14 @@ const loadTrainingCampData = async (dateStr) => {
   let kcbMaxChange = null;
   const techStockTlines = stockTlines.filter(s => s.isTech !== false);
 
-  const timeBuckets = fundData.map(f => {
+  // 桶骨架来源：优先资金快照（与页面口径一致）；无资金快照时用创业板指分时的 5 分钟时间点合成
+  // （time 为 6 位 hhmmss 语义：minute * 100，mainMoney 置 0，displayTime 由 timeKey 推导；
+  //   指数分时为 1 分钟线，按 5 分钟对齐过滤，与其他日期的桶粒度保持一致）
+  const bucketSource = fundData.length > 0
+    ? fundData
+    : (cybMap.sortedLine || []).filter(p => Number(p.minute) % 5 === 0).map(p => ({ time: p.minute * 100, mainMoney: 0 }));
+
+  const timeBuckets = bucketSource.map(f => {
     const timeKey = padTimeKey(f.time);
     const minute = hhmmssToMinute(f.time);
     const displayTime = f.displayTime ? f.displayTime.substring(0, 5) : `${timeKey.substring(0, 2)}:${timeKey.substring(2, 4)}`;
@@ -505,8 +516,9 @@ const loadTrainingCampData = async (dateStr) => {
     kcbOpenPx: backtestResult.kcbOpenPx ?? null,
   };
 
-  // 过去日期构建结果落盘（tmp + rename 原子写，多进程并发安全）
-  if (isPastDate) {
+  // 过去日期构建结果落盘（tmp + rename 原子写，多进程并发安全）；
+  // 无资金快照的兜底构建不落盘（避免日后资金快照补齐时命中缺少资金字段的旧缓存）
+  if (isPastDate && fundData.length > 0) {
     try {
       if (!fs.existsSync(CAMP_BUILT_DIR)) fs.mkdirSync(CAMP_BUILT_DIR, { recursive: true });
       const tmpFile = `${builtFile}.${process.pid}.tmp`;

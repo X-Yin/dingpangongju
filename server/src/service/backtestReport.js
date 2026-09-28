@@ -7,7 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getTrainingCampDates } = require('./trainingCamp');
-const { STRATEGIES, readCachedBacktest, runRangeBacktest, isSentimentStrategy, getSentimentDefaultRange } = require('./buySellBacktest');
+const { STRATEGIES, readCachedBacktest, runRangeBacktest, isSentimentStrategy, getSentimentDefaultRange, isEmo3AvgStrategy, getEmo3DefaultRange } = require('./buySellBacktest');
 
 const reportsDir = path.join(__dirname, '../data/backtest_reports');
 const backtestCacheDir = path.join(__dirname, '../data/backtest_results');
@@ -36,19 +36,20 @@ const getDefaultReportRange = () => {
   return { startDate, endDate };
 };
 
-// 扫描现有回测缓存，找出被当前所有策略共享的日期范围（用于无报告时从缓存快速生成）
+// 扫描现有回测缓存，找出被当前所有常规策略共享的日期范围（用于无报告时从缓存快速生成）
 const getCommonCachedRange = () => {
   try {
     if (!fs.existsSync(backtestCacheDir)) return null;
     const files = fs.readdirSync(backtestCacheDir);
-    const ids = Object.keys(STRATEGIES).filter(id => !isSentimentStrategy(id));
-    // 对每个策略，收集其缓存文件对应的 (startDate, endDate)（情绪游资日期范围独立，不参与统计）
+    const ids = Object.keys(STRATEGIES).filter(id => !isSentimentStrategy(id) && !isEmo3AvgStrategy(id));
+    // 对每个策略，收集其缓存文件对应的 (startDate, endDate)
+    //（情绪游资与三日情绪冰点系列的日期范围独立，不参与统计）
     const rangeMap = new Map(); // `${start}_${end}` -> { start, end, count }
     for (const f of files) {
       const m = String(f).match(/^backtest_(.+)_(\d{8})_(\d{8})\.json$/);
       if (!m) continue;
       const sid = m[1];
-      if (!STRATEGIES[sid] || isSentimentStrategy(sid)) continue;
+      if (!STRATEGIES[sid] || isSentimentStrategy(sid) || isEmo3AvgStrategy(sid)) continue;
       const key = `${m[2]}_${m[3]}`;
       const entry = rangeMap.get(key) || { start: m[2], end: m[3], count: 0 };
       entry.count += 1;
@@ -87,10 +88,19 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
   if (ids.some(id => isSentimentStrategy(id))) {
     try { sentimentRange = await getSentimentDefaultRange(); } catch { sentimentRange = null; }
   }
+  // 三日情绪冰点系列固定从 2026-07-01 开始回测（与其他策略日期范围解耦）
+  let emo3Range = null;
+  if (ids.some(id => isEmo3AvgStrategy(id))) {
+    try { emo3Range = getEmo3DefaultRange(); } catch { emo3Range = null; }
+  }
 
   for (let i = 0; i < total; i++) {
     const id = ids[i];
-    const stRange = (isSentimentStrategy(id) && sentimentRange) ? sentimentRange : range;
+    const stRange = (isSentimentStrategy(id) && sentimentRange)
+      ? sentimentRange
+      : (isEmo3AvgStrategy(id) && emo3Range)
+        ? emo3Range
+        : range;
     if (onProgress) onProgress({ current: i, total, strategy: STRATEGIES[id].name, status: 'running' });
     let result;
     try {

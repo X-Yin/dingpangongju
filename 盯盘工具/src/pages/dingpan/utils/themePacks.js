@@ -651,8 +651,8 @@ export const THEME_PACKS = [
             "itemBorderStyle": "solid",
             "itemBorderWidth": "1px",
             "itemRadius": "16px",
-            "upColor": "#4ecdc4",
-            "downColor": "#ff2d92",
+            "upColor": "#ff2d92",
+            "downColor": "#4ecdc4",
             "btnBg": "linear-gradient(90deg, #ff2d92, #a855f7)",
             "btnColor": "#ffffff",
             "btnRadius": "20px",
@@ -777,8 +777,8 @@ export const THEME_PACKS = [
             itemBorderStyle: 'solid',
             itemBorderWidth: '2px',
             itemRadius: '16px',
-            upColor: '#06d6a0',
-            downColor: '#ff006e',
+            upColor: '#ff006e',
+            downColor: '#06d6a0',
             btnBg: '#8338ec',
             btnColor: '#ffffff',
             btnRadius: '999px',
@@ -881,675 +881,744 @@ export const THEME_PACKS = [
         },
     },
     {
-    id: 'neon-glass-dark',
-    name: '霓虹玻璃暗夜',
-    desc: 'Neon Glass Dark · 深色玻璃拟态与霓虹渐变',
-    source: '#uploaded-image',
-    tokens: {
-        pageBg: '#0F172A',
-        fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
-        numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-        cardBg: 'rgba(30, 41, 59, 0.6)',
-        cardBorderColor: 'rgba(255, 255, 255, 0.08)',
-        cardBorderWidth: '1px',
-        cardRadius: '16px',
-        cardShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-        titleColor: '#FFFFFF',
-        descColor: 'rgba(255, 255, 255, 0.65)',
-        itemBg: 'rgba(255, 255, 255, 0.04)',
-        itemTitleColor: '#F1F5F9',
-        itemDescColor: 'rgba(255, 255, 255, 0.5)',
-        itemBorderColor: 'rgba(255, 255, 255, 0.06)',
-        itemBorderStyle: 'solid',
-        itemBorderWidth: '1px',
-        itemRadius: '12px',
-        upColor: '#00D2FF',
-        downColor: '#FF6B9D',
-        btnBg: 'linear-gradient(135deg, #6C5CE7 0%, #00D2FF 100%)',
-        btnColor: '#FFFFFF',
-        btnRadius: '12px',
-        btnBorderColor: 'transparent',
-        btnBorderStyle: 'solid',
-        btnBorderWidth: '0px',
-        btnFontFamily: "'Inter', sans-serif",
-        btnShadow: '0 4px 15px rgba(108, 92, 231, 0.4)',
-        tagBg: 'rgba(108, 92, 231, 0.15)',
-        tagColor: '#A78BFA',
-        tagFontFamily: "'Inter', sans-serif",
-        tagBorderColor: 'rgba(108, 92, 231, 0.3)',
-        tagBorderStyle: 'solid',
-        tagBorderWidth: '1px',
-        tagRadius: '8px',
+        id: 'neon-glass-dark',
+        name: '霓虹玻璃暗夜',
+        desc: 'Neon Glass Dark · 深色玻璃拟态与霓虹渐变',
+        source: '#uploaded-image',
+        tokens: {
+            pageBg: '#0F172A',
+            fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
+            numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            cardBg: 'rgba(30, 41, 59, 0.6)',
+            cardBorderColor: 'rgba(255, 255, 255, 0.08)',
+            cardBorderWidth: '1px',
+            cardRadius: '16px',
+            cardShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            titleColor: '#FFFFFF',
+            descColor: 'rgba(255, 255, 255, 0.65)',
+            itemBg: 'rgba(255, 255, 255, 0.04)',
+            itemTitleColor: '#F1F5F9',
+            itemDescColor: 'rgba(255, 255, 255, 0.5)',
+            itemBorderColor: 'rgba(255, 255, 255, 0.06)',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '1px',
+            itemRadius: '12px',
+            upColor: '#00D2FF',
+            downColor: '#FF6B9D',
+            btnBg: 'linear-gradient(135deg, #6C5CE7 0%, #00D2FF 100%)',
+            btnColor: '#FFFFFF',
+            btnRadius: '12px',
+            btnBorderColor: 'transparent',
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '0px',
+            btnFontFamily: "'Inter', sans-serif",
+            btnShadow: '0 4px 15px rgba(108, 92, 231, 0.4)',
+            tagBg: 'rgba(108, 92, 231, 0.15)',
+            tagColor: '#A78BFA',
+            tagFontFamily: "'Inter', sans-serif",
+            tagBorderColor: 'rgba(108, 92, 231, 0.3)',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '1px',
+            tagRadius: '8px',
+        },
     },
-},
-{
-    id: 'pixel-flux-neon',
-    name: '像素流彩霓虹',
-    desc: 'Pixel Flux Neon · 噪点背景 + 像素化渐变爆炸效果',
-    source: '#uploaded-image-3',
+    {
+        id: 'pixel-flux-neon',
+        name: '像素流彩霓虹',
+        desc: 'Pixel Flux Neon · 噪点背景 + 像素化渐变爆炸效果',
+        source: '#uploaded-image-3',
+        tokens: {
+            pageBg: '#0A0508', // 深紫黑带微噪点
+            fontFamily: "'Inter', 'Satoshi', 'Helvetica Neue', sans-serif",
+            numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            cardBg: 'rgba(20, 10, 25, 0.7)',
+            cardBorderColor: 'rgba(255, 255, 255, 0.1)',
+            cardBorderWidth: '1px',
+            cardRadius: '16px',
+            cardShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            titleColor: '#FFFFFF',
+            descColor: 'rgba(255, 255, 255, 0.6)',
+            itemBg: 'rgba(255, 255, 255, 0.05)',
+            itemTitleColor: '#FFFFFF',
+            itemDescColor: 'rgba(255, 255, 255, 0.5)',
+            itemBorderColor: 'rgba(255, 255, 255, 0.08)',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '1px',
+            itemRadius: '12px',
+            upColor: '#FF00FF', // 荧光粉
+            downColor: '#00FFFF', // 荧光青
+            btnBg: 'linear-gradient(135deg, #FF00FF 0%, #00FFFF 50%, #FFD700 100%)',
+            btnColor: '#000000',
+            btnRadius: '999px',
+            btnBorderColor: 'transparent',
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '0px',
+            btnFontFamily: "'Space Grotesk', 'Clash Display', sans-serif",
+            btnShadow: '0 4px 20px rgba(255, 0, 255, 0.4)',
+            tagBg: '#FF00FF',
+            tagColor: '#FFFFFF',
+            tagFontFamily: "'JetBrains Mono', monospace",
+            tagBorderColor: 'transparent',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '0px',
+            tagRadius: '6px',
+            // 特有像素/噪点风格 Tokens
+            pixelSize: '4px',
+            noiseOpacity: '0.08',
+            gradientColors: ['#FF00FF', '#00FFFF', '#FFD700', '#8A2BE2', '#FF4500'],
+            accentGlow: '0 0 20px rgba(255, 0, 255, 0.6)',
+        },
+    },
+    {
+        id: 'vr-commerce-glow',
+        name: 'VR商域光晕',
+        desc: 'VR Commerce Glow · 深色沉浸 + 橙光产品轮廓 + AI助手交互',
+        source: '#uploaded-image-5',
+        tokens: {
+            pageBg: '#0A0A0A',
+            fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
+            numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            cardBg: 'rgba(20, 20, 20, 0.8)',
+            cardBorderColor: 'rgba(255, 140, 0, 0.15)',
+            cardBorderWidth: '1px',
+            cardRadius: '20px',
+            cardShadow: '0 8px 32px rgba(255, 140, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            titleColor: '#FFFFFF',
+            descColor: 'rgba(255, 255, 255, 0.7)',
+            itemBg: 'rgba(255, 255, 255, 0.06)',
+            itemTitleColor: '#FFFFFF',
+            itemDescColor: 'rgba(255, 255, 255, 0.5)',
+            itemBorderColor: 'rgba(255, 140, 0, 0.2)',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '1px',
+            itemRadius: '16px',
+            upColor: '#FF8C00', // 主品牌橙
+            downColor: '#FF4500', // 深橙用于折扣/警告
+            btnBg: '#FF8C00',
+            btnColor: '#000000',
+            btnRadius: '999px',
+            btnBorderColor: 'transparent',
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '0px',
+            btnFontFamily: "'Inter', sans-serif",
+            btnShadow: '0 4px 20px rgba(255, 140, 0, 0.4)',
+            tagBg: '#FF8C00',
+            tagColor: '#000000',
+            tagFontFamily: "'Inter', sans-serif",
+            tagBorderColor: 'transparent',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '0px',
+            tagRadius: '6px',
+            // 特有产品光效 & AI 元素
+            productGlowColor: '#FF8C00',
+            productGlowBlur: '20px',
+            aiAssistantBg: 'rgba(255, 140, 0, 0.1)',
+            aiAssistantBorder: '1px solid rgba(255, 140, 0, 0.3)',
+            aiAssistantRadius: '16px',
+            searchInputBg: 'rgba(255, 255, 255, 0.08)',
+            searchInputColor: '#FFFFFF',
+            searchInputBorder: '1px solid rgba(255, 255, 255, 0.1)',
+            navIconActive: '#FF8C00',
+            navIconInactive: 'rgba(255, 255, 255, 0.4)',
+            priceOriginalColor: 'rgba(255, 255, 255, 0.4)',
+            priceDiscountColor: '#FF4500',
+            ratingStarColor: '#FFD700',
+        },
+    },
+    {
+        id: 'onro-glass-dashboard',
+        name: 'Onro玻璃仪表',
+        desc: 'Onro Glass Dashboard · 磨砂蓝调 + 悬浮卡片 + 建筑透视背景',
+        source: '#uploaded-image-9',
+        tokens: {
+            pageBg: '#E8F4FF', // 浅天蓝背景
+            fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
+            numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            cardBg: 'rgba(255, 255, 255, 0.65)', // 半透明白底
+            cardBorderColor: 'rgba(255, 255, 255, 0.4)',
+            cardBorderWidth: '1px',
+            cardRadius: '20px',
+            cardShadow: '0 8px 32px rgba(31, 38, 135, 0.1)', // 柔和高斯阴影
+            cardBackdropFilter: 'blur(12px) saturate(180%)', // 关键：磨砂玻璃效果
+            titleColor: '#1A237E', // 深蓝标题
+            descColor: '#5C6BC0', // 中蓝描述
+            itemBg: 'rgba(255, 255, 255, 0.4)',
+            itemTitleColor: '#1A237E',
+            itemDescColor: '#5C6BC0',
+            itemBorderColor: 'transparent',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '0px',
+            itemRadius: '16px',
+            upColor: '#FF5252', // 绿色收入/正常
+            downColor: '#4CAF50', // 红色支出/异常
+            btnBg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // 蓝紫渐变按钮
+            btnColor: '#FFFFFF',
+            btnRadius: '999px',
+            btnBorderColor: 'transparent',
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '0px',
+            btnFontFamily: "'Inter', sans-serif",
+            btnShadow: '0 4px 16px rgba(102, 126, 234, 0.3)',
+            tagBg: 'rgba(102, 126, 234, 0.1)',
+            tagColor: '#667eea',
+            tagFontFamily: "'Inter', sans-serif",
+            tagBorderColor: 'transparent',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '0px',
+            tagRadius: '8px',
+            // 特有玻璃拟态 & 数据可视化 Tokens
+            glassOverlay: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0))',
+            chartLineColor: '#667eea',
+            chartGridColor: 'rgba(102, 126, 234, 0.1)',
+            statValueColor: '#1A237E',
+            statLabelColor: '#5C6BC0',
+            navActiveBg: 'rgba(102, 126, 234, 0.15)',
+            navActiveColor: '#667eea',
+            navInactiveColor: '#9FA8DA',
+            floatingCardZIndex: '100',
+            backgroundBlurIntensity: '8px',
+            accentGradientStart: '#667eea',
+            accentGradientEnd: '#764ba2',
+            iconActiveColor: '#667eea',
+            iconInactiveColor: '#9FA8DA',
+            tooltipBg: 'rgba(255, 255, 255, 0.9)',
+            tooltipColor: '#1A237E',
+            tooltipBorder: '1px solid rgba(102, 126, 234, 0.2)',
+        },
+    },
+    {
+        id: 'warm-learning-dashboard',
+        name: '暖橙学术仪表盘',
+        desc: 'Warm Learning Dashboard · 暖橙柔调 + 多彩卡片 + 3D悬浮插图',
+        source: '#uploaded-image-1',
+        tokens: {
+            pageBg: '#FFC8A2', // 暖橙色背景
+            fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
+            numberFontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif",
+            cardBg: '#F8F6F4', // 米白色主主板背景
+            cardBorderColor: 'transparent',
+            cardBorderWidth: '0px',
+            cardRadius: '24px',
+            cardShadow: '0 20px 40px rgba(220, 120, 70, 0.15)',
+            cardBackdropFilter: 'none',
+            titleColor: '#1E1E24', // 深灰/近黑主标题
+            descColor: '#7A7A85', // 中灰次要描述
+            itemBg: '#FFFFFF', // 纯白子卡片背景
+            itemTitleColor: '#1E1E24',
+            itemDescColor: '#7A7A85',
+            itemBorderColor: 'transparent',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '0px',
+            itemRadius: '16px',
+            upColor: '#FF6B50', // 品牌主橙色（高亮/警示/按钮）
+            downColor: '#4ECDC4', // 薄荷绿/辅助色
+            btnBg: '#FF6B50', // 亮橙色主按钮
+            btnColor: '#FFFFFF',
+            btnRadius: '999px',
+            btnBorderColor: 'transparent',
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '0px',
+            btnFontFamily: "'Plus Jakarta Sans', sans-serif",
+            btnShadow: '0 8px 16px rgba(255, 107, 80, 0.25)',
+            tagBg: '#F5F5F7',
+            tagColor: '#7A7A85',
+            tagFontFamily: "'Plus Jakarta Sans', sans-serif",
+            tagBorderColor: 'transparent',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '0px',
+            tagRadius: '8px',
+            // 特有色彩卡片与仪表盘 Tokens
+            primaryAccent: '#FF6B50', // 主色调：珊瑚橙
+            cardPinkBg: '#F9D8D6', // 粉红卡片背景 (Assignments due)
+            cardPinkColor: '#D9534F',
+            cardGreenBg: '#D2F3E0', // 浅绿卡片背景 (Assignments to check)
+            cardGreenColor: '#2E7D32',
+            cardPurpleBg: '#E0DBFF', // 浅紫卡片背景 (Free time slots)
+            cardPurpleColor: '#5C46E5',
+            cardOrangeBg: '#FFE6D2', // 浅橙卡片背景 (Classes this week)
+            cardOrangeColor: '#E66A2C',
+            navActiveBg: '#FF6B50',
+            navActiveColor: '#FFFFFF',
+            navInactiveBg: '#FFFFFF',
+            navInactiveColor: '#9E9EA7',
+            calendarHighlightBg: '#FF8A65',
+            calendarHighlightColor: '#FFFFFF',
+            schedulePurpleBg: '#E8E5FF',
+            scheduleOrangeBg: '#FFF0E5',
+            scheduleGreenBg: '#E1F8ED',
+            iconActiveColor: '#FFFFFF',
+            iconInactiveColor: '#9E9EA7',
+            sidebarBg: '#FFFFFF',
+            sidebarRadius: '20px'
+        },
+    },
+    {
+        id: 'apeluid-electric-purple',
+        name: 'Apeluid 电光紫风格',
+        desc: 'Apeluid Electric Purple · 暗黑高饱和紫 + 极简大圆角卡片 + 多色交互胶囊标签',
+        source: '#uploaded-image',
+        tokens: {
+            pageBg: '#0A0A12', // 极深黑紫背景
+            fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
+            numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            cardBg: '#3B38EE', // 高饱和宝蓝/亮紫主卡片底色
+            cardBorderColor: 'transparent',
+            cardBorderWidth: '0px',
+            cardRadius: '24px', // 大圆角卡片
+            cardShadow: '0 12px 40px rgba(0, 0, 0, 0.35)', // 深邃阴影
+            cardBackdropFilter: 'none',
+            titleColor: '#FFFFFF', // 纯白标题
+            descColor: 'rgba(255, 255, 255, 0.7)', // 半透明白描述文字
+            itemBg: '#12102B', // 卡片内部深色子项/胶囊底色
+            itemTitleColor: '#FFFFFF',
+            itemDescColor: 'rgba(255, 255, 255, 0.6)',
+            itemBorderColor: 'rgba(255, 255, 255, 0.15)',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '1px',
+            itemRadius: '999px',
+            upColor: '#A855F7', // 亮紫色（上升/强调）
+            downColor: '#38BDF8', // 青蓝色（下降/辅助）
+            btnBg: '#0D0B18', // 黑色纯色胶囊按钮
+            btnColor: '#FFFFFF',
+            btnRadius: '999px', // 纯圆角胶囊
+            btnBorderColor: 'transparent',
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '0px',
+            btnFontFamily: "'Inter', sans-serif",
+            btnShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+            tagBg: '#D8B4FE', // 淡紫粉胶囊标签背景
+            tagColor: '#3B38EE', // 主色文字
+            tagFontFamily: "'Inter', sans-serif",
+            tagBorderColor: 'transparent',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '0px',
+            tagRadius: '999px',
+            // 特有视觉 & 渐变 Tokens
+            glassOverlay: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0))',
+            chartLineColor: '#A855F7',
+            chartGridColor: 'rgba(255, 255, 255, 0.1)',
+            statValueColor: '#FFFFFF',
+            statLabelColor: 'rgba(255, 255, 255, 0.7)',
+            navActiveBg: '#3B38EE',
+            navActiveColor: '#FFFFFF',
+            navInactiveColor: 'rgba(255, 255, 255, 0.4)',
+            floatingCardZIndex: '100',
+            backgroundBlurIntensity: '0px',
+            accentGradientStart: '#3B38EE',
+            accentGradientEnd: '#C084FC', // 蓝紫到粉紫渐变
+            iconActiveColor: '#FFFFFF',
+            iconInactiveColor: 'rgba(255, 255, 255, 0.5)',
+            tooltipBg: '#0D0B18',
+            tooltipColor: '#FFFFFF',
+            tooltipBorder: '1px solid rgba(255, 255, 255, 0.1)',
+        },
+    },
+    {
+        id: 'kiddora-playful-kids-learning',
+        name: 'Kiddora 欢快儿童教育风格',
+        desc: 'Kiddora Playful Kids Learning · 暖调奶油渐变底色 + 缤纷彩色高饱和元素 + 柔和通透悬浮卡片',
+        source: '#uploaded-image-6',
+        tokens: {
+            pageBg: 'linear-gradient(180deg, #FFF5EE 0%, #FAF0E6 50%, #F5E6FF 100%)', // 暖粉杏色到柔紫渐变背景[cite: 6]
+            fontFamily: "'Fredoka', 'Quicksand', -apple-system, sans-serif", // 圆润亲和的儿童字体风格[cite: 6]
+            numberFontFamily: "'Fredoka', 'Quicksand', monospace",
+            cardBg: 'rgba(255, 255, 255, 0.85)', // 柔和半透明纯白悬浮卡片[cite: 6]
+            cardBorderColor: 'rgba(255, 255, 255, 0.9)',
+            cardBorderWidth: '1.5px',
+            cardRadius: '32px', // 特大超圆润卡片圆角[cite: 6]
+            cardShadow: '0 16px 40px rgba(108, 92, 231, 0.08)', // 柔和紫调散发阴影
+            cardBackdropFilter: 'blur(10px)',
+            titleColor: '#3A2898', // 浓郁深紫标题[cite: 6]
+            descColor: '#5D6B98', // 柔和蓝灰描述文字[cite: 6]
+            itemBg: '#FFF9E6', // 暖黄子项背景
+            itemTitleColor: '#3A2898',
+            itemDescColor: '#5D6B98',
+            itemBorderColor: 'transparent',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '0px',
+            itemRadius: '20px',
+            upColor: '#FF3D00', // 活力绿
+            downColor: '#00C853', // 活力橙红
+            btnBg: '#6C5CE7', // 鲜亮紫色圆形/胶囊按钮[cite: 6]
+            btnColor: '#FFFFFF', // 纯白按钮文本/图标[cite: 6]
+            btnRadius: '999px', // 纯圆按钮[cite: 6]
+            btnBorderColor: 'transparent',
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '0px',
+            btnFontFamily: "'Fredoka', sans-serif",
+            btnShadow: '0 8px 20px rgba(108, 92, 231, 0.35)', // 亮紫色柔和阴影
+            tagBg: '#FFEAA7', // 明黄标签/装饰色[cite: 6]
+            tagColor: '#D63031',
+            tagFontFamily: "'Fredoka', sans-serif",
+            tagBorderColor: 'transparent',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '0px',
+            tagRadius: '999px',
+            // 儿童教育与多色主题 Tokens
+            glassOverlay: 'none',
+            chartLineColor: '#6C5CE7',
+            chartGridColor: 'rgba(108, 92, 231, 0.05)',
+            statValueColor: '#3A2898',
+            statLabelColor: '#5D6B98',
+            navActiveBg: '#6C5CE7', // 活跃指示点紫色[cite: 6]
+            navActiveColor: '#FFFFFF',
+            navInactiveColor: '#D6D1F8', // 未选中指示点浅灰紫[cite: 6]
+            floatingCardZIndex: '100',
+            backgroundBlurIntensity: '8px',
+            accentGradientStart: '#6C5CE7', // 活力紫[cite: 6]
+            accentGradientEnd: '#FF7675', // 珊瑚粉[cite: 6]
+            iconActiveColor: '#FFFFFF',
+            iconInactiveColor: '#A29BFE',
+            tooltipBg: '#FFFFFF',
+            tooltipColor: '#3A2898',
+            tooltipBorder: '1px solid rgba(108, 92, 231, 0.15)',
+            // Kiddora 缤纷儿童特有色盘 Tokens
+            brandBlue: '#2D52E5', // Logo 蓝[cite: 6]
+            brandOrange: '#FF9F1C', // Logo 橙[cite: 6]
+            brandCyan: '#00CECB', // Logo 青蓝[cite: 6]
+            brandYellow: '#FFD166', // 3D星星暖黄[cite: 6]
+            paginationDotActive: '#6C5CE7', // 分页指示器激活点[cite: 6]
+            paginationDotInactive: '#E0D8F9', // 分页指示器未激活点[cite: 6]
+        },
+    },
+    {
+        id: 'kiddora-discover-3d-clay',
+        name: 'Kiddora 3D立体探究教育风格',
+        desc: 'Kiddora Discover 3D Clay · 梦幻淡紫柔粉底色 + 3D粘土软萌图标 + 高饱和圆角悬浮面板',
+        source: '#uploaded-image-7',
+        tokens: {
+            pageBg: 'linear-gradient(180deg, #F8F3FF 0%, #FAF0F8 50%, #F5ECFF 100%)', // 梦幻极浅紫到粉紫渐变背景[cite: 7]
+            fontFamily: "'Fredoka', 'Quicksand', -apple-system, sans-serif", // 圆润亲和儿童字体[cite: 7]
+            numberFontFamily: "'Fredoka', 'Quicksand', monospace",
+            cardBg: 'rgba(255, 255, 255, 0.9)', // 半透明高亮纯白悬浮面板[cite: 7]
+            cardBorderColor: 'rgba(255, 255, 255, 0.95)',
+            cardBorderWidth: '1.5px',
+            cardRadius: '32px', // 大圆角悬浮卡片[cite: 7]
+            cardShadow: '0 16px 36px rgba(138, 92, 246, 0.08)', // 浅紫弥散柔阴影
+            cardBackdropFilter: 'blur(12px)',
+            titleColor: '#1E1B4B', // 深蓝紫标题[cite: 7]
+            descColor: '#52525B', // 柔和灰紫描述文字[cite: 7]
+            itemBg: '#F5F3FF', // 功能图标浅紫子项底色[cite: 7]
+            itemTitleColor: '#1E1B4B',
+            itemDescColor: '#52525B',
+            itemBorderColor: 'transparent',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '0px',
+            itemRadius: '20px',
+            upColor: '#F43F5E', // 活力绿[cite: 7]
+            downColor: '#10B981', // 活力粉红[cite: 7]
+            btnBg: '#7C3AED', // 鲜亮紫罗兰渐变/纯色按钮[cite: 7]
+            btnColor: '#FFFFFF', // 纯白箭头图标/文本[cite: 7]
+            btnRadius: '999px', // 圆形前进按钮[cite: 7]
+            btnBorderColor: 'transparent',
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '0px',
+            btnFontFamily: "'Fredoka', sans-serif",
+            btnShadow: '0 8px 20px rgba(124, 58, 237, 0.35)', // 紫罗兰发光阴影
+            tagBg: '#EDE9FE', // 浅紫胶囊标签背景[cite: 7]
+            tagColor: '#6D28D9',
+            tagFontFamily: "'Fredoka', sans-serif",
+            tagBorderColor: 'transparent',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '0px',
+            tagRadius: '999px',
+            // 3D粘土 & 多色儿童功能分类 Tokens
+            glassOverlay: 'none',
+            chartLineColor: '#7C3AED',
+            chartGridColor: 'rgba(124, 58, 237, 0.05)',
+            statValueColor: '#1E1B4B',
+            statLabelColor: '#52525B',
+            navActiveBg: '#7C3AED', // 分页激活指示点[cite: 7]
+            navActiveColor: '#FFFFFF',
+            navInactiveColor: '#DDD6FE', // 未激活指示点[cite: 7]
+            floatingCardZIndex: '100',
+            backgroundBlurIntensity: '8px',
+            accentGradientStart: '#7C3AED', // 主紫罗兰色[cite: 7]
+            accentGradientEnd: '#EC4899', // 亮粉红[cite: 7]
+            iconActiveColor: '#FFFFFF',
+            iconInactiveColor: '#A78BFA',
+            tooltipBg: '#FFFFFF',
+            tooltipColor: '#1E1B4B',
+            tooltipBorder: '1px solid rgba(124, 58, 237, 0.15)',
+            // 3D 粘土图标与多元分类特色 Tokens
+            clayPurpleBg: '#C084FC', // 3D书本图标紫底[cite: 7]
+            clayPinkBg: '#FB7185', // 3D画板图标粉红底[cite: 7]
+            clayGreenBg: '#34D399', // 3D烧杯图标薄荷绿底[cite: 7]
+            clayBlueLaptop: '#A5B4FC', // 3D笔记本电脑柔紫蓝[cite: 7]
+            clayYellowAccent: '#FBBF24', // 装饰小线条与星号暖黄[cite: 7]
+        },
+    },
+    {
+        id: 'upfound-emerald-dark-gradient',
+        name: 'UpFound 极光翡翠暗黑渐变',
+        desc: 'UpFound Emerald Dark · 深邃黑绿径向渐变背景 + 宝石绿亮色高光 + 极简现代化文字与胶囊按钮',
+        source: '#uploaded-image-10',
+        tokens: {
+            pageBg: 'radial-gradient(circle at 50% 50%, #0D2D2A 0%, #040A0A 80%)', // 深绿到暗黑渐变背景[cite: 10, 11]
+            fontFamily: "'PP Neue Montreal', 'Inter', -apple-system, sans-serif", // 第二图指定的字体[cite: 11]
+            numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            cardBg: 'rgba(255, 255, 255, 0.05)', // 微透暗色玻璃卡片[cite: 10]
+            cardBorderColor: 'rgba(255, 255, 255, 0.1)',
+            cardBorderWidth: '1px',
+            cardRadius: '24px', // 圆润大卡片[cite: 10]
+            cardShadow: '0 20px 50px rgba(4, 10, 10, 0.8)', // 极深沉浸式阴影[cite: 11]
+            cardBackdropFilter: 'blur(16px)',
+            titleColor: '#FFFFFF', // 纯白高亮标题[cite: 10, 11]
+            descColor: 'rgba(255, 255, 255, 0.7)', // 半透明白次要文字[cite: 10]
+            itemBg: 'rgba(255, 255, 255, 0.08)', // 胶囊导航/次级按钮微透背景[cite: 10]
+            itemTitleColor: '#FFFFFF',
+            itemDescColor: 'rgba(255, 255, 255, 0.6)',
+            itemBorderColor: 'rgba(255, 255, 255, 0.12)',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '1px',
+            itemRadius: '999px',
+            upColor: '#22F2EF', // 第二图色板：荧光绿（涨/成功率）[cite: 10, 11]
+            downColor: '#3EE97D', // 第二图色板：青蓝[cite: 11]
+            btnBg: 'linear-gradient(135deg, #49DC7A 0%, #3EE97D 100%)', // 第二图色板渐变绿行动按钮[cite: 10, 11]
+            btnColor: '#040A0A', // 黑色高对比度按钮文字[cite: 10, 11]
+            btnRadius: '999px', // 纯圆胶囊按钮[cite: 10]
+            btnBorderColor: 'transparent',
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '0px',
+            btnFontFamily: "'PP Neue Montreal', sans-serif", // 指定字体[cite: 11]
+            btnShadow: '0 8px 24px rgba(62, 233, 125, 0.3)', // 荧光绿发光散影[cite: 11]
+            tagBg: 'rgba(73, 220, 122, 0.15)',
+            tagColor: '#49DC7A', // 第二图色板：薄荷绿[cite: 11]
+            tagFontFamily: "'PP Neue Montreal', sans-serif",
+            tagBorderColor: 'transparent',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '0px',
+            tagRadius: '999px',
+            // 图纸特定 & 第二图 Palette 指定 Token
+            glassOverlay: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0))',
+            chartLineColor: '#3EE97D',
+            chartGridColor: 'rgba(255, 255, 255, 0.05)',
+            statValueColor: '#FFFFFF',
+            statLabelColor: 'rgba(255, 255, 255, 0.6)',
+            navActiveBg: 'rgba(255, 255, 255, 0.15)',
+            navActiveColor: '#FFFFFF',
+            navInactiveColor: 'rgba(255, 255, 255, 0.6)',
+            floatingCardZIndex: '100',
+            backgroundBlurIntensity: '16px',
+            accentGradientStart: '#49DC7A', // 色板 1：#49DC7A[cite: 11]
+            accentGradientEnd: '#22F2EF', // 色板 3：#22F2EF[cite: 11]
+            iconActiveColor: '#3EE97D',
+            iconInactiveColor: 'rgba(255, 255, 255, 0.4)',
+            tooltipBg: '#040A0A', // 色板 4：#040A0A[cite: 11]
+            tooltipColor: '#FFFFFF', // 色板 5：#FFFFFF[cite: 11]
+            tooltipBorder: '1px solid rgba(73, 220, 122, 0.2)',
+            // Palette 精确对应色值列表（来自图二）
+            paletteDarkBg: '#040A0A', // 深纯黑背景底色[cite: 11]
+            palettePureWhite: '#FFFFFF', // 纯白文字/元素[cite: 11]
+            paletteMintGreen: '#49DC7A', // 薄荷绿[cite: 11]
+            paletteNeonGreen: '#3EE97D', // 鲜亮荧光绿[cite: 11]
+            paletteElectricCyan: '#22F2EF', // 电光青蓝[cite: 11]
+            typographyFont: 'PP Neue Montreal', // 指定排版字体[cite: 11]
+        },
+    },
+    {
+        id: 'strava-yearly-sport',
+        name: 'Strava年度燃动',
+        desc: 'Strava Yearly Sport · 紫橙流体渐变 + 粗体数据叙事 + 胶囊标签',
+        source: '#uploaded-image-12',
+        tokens: {
+            pageBg: 'linear-gradient(160deg, #4C1D95 0%, #7C3AED 25%, #EC4899 55%, #F97316 85%, #FBBF24 100%)',
+            fontFamily: "'Helvetica Now Display', 'Inter', -apple-system, sans-serif",
+            numberFontFamily: "'DIN Alternate', 'Barlow Condensed', sans-serif",
+            cardBg: 'rgba(255, 255, 255, 0.12)',
+            cardBorderColor: 'rgba(255, 255, 255, 0.2)',
+            cardBorderWidth: '1px',
+            cardRadius: '24px',
+            cardShadow: '0 12px 40px rgba(76, 29, 149, 0.3)',
+            cardBackdropFilter: 'blur(16px) saturate(180%)',
+            titleColor: '#FFFFFF',
+            descColor: 'rgba(255, 255, 255, 0.85)',
+            itemBg: 'rgba(255, 255, 255, 0.08)',
+            itemTitleColor: '#FFFFFF',
+            itemDescColor: 'rgba(255, 255, 255, 0.75)',
+            itemBorderColor: 'transparent',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '0px',
+            itemRadius: '16px',
+            upColor: '#00D4FF',
+            downColor: '#00FFC2', // 冰蓝：在橙黄区靠冷色相+高明度双重跳出，深紫区同样清晰
+            btnBg: '#FFFFFF',
+            btnColor: '#7C3AED',
+            btnRadius: '999px',
+            btnBorderColor: 'transparent',
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '0px',
+            btnFontFamily: "'Helvetica Now Display', sans-serif",
+            btnShadow: '0 4px 16px rgba(255, 255, 255, 0.25)',
+            tagBg: 'rgba(255, 255, 255, 0.2)',
+            tagColor: '#FFFFFF',
+            tagFontFamily: "'Helvetica Now Display', sans-serif",
+            tagBorderColor: 'transparent',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '0px',
+            tagRadius: '999px',
+            activityIconColor: '#FFFFFF',
+            distanceHighlight: '#FBBF24',
+            elevationGradient: 'linear-gradient(to top, rgba(255,255,255,0.1), rgba(255,255,255,0.3))',
+            weeklyChartBar: 'rgba(255, 255, 255, 0.6)',
+            weeklyChartActiveBar: '#FFFFFF',
+            achievementBadgeBg: 'rgba(251, 191, 36, 0.2)',
+            achievementBadgeColor: '#FBBF24',
+            mapOverlay: 'rgba(76, 29, 149, 0.4)',
+            mapRouteLine: '#FFFFFF',
+            statDivider: 'rgba(255, 255, 255, 0.15)',
+            sectionTitleWeight: '800',
+            dataValueWeight: '700',
+            navActiveBg: 'rgba(255, 255, 255, 0.25)',
+            navActiveColor: '#FFFFFF',
+            navInactiveColor: 'rgba(255, 255, 255, 0.6)',
+            tooltipBg: 'rgba(0, 0, 0, 0.7)',
+            tooltipColor: '#FFFFFF',
+            tooltipBorder: 'none',
+            pulseAnimation: 'animation: glow-white 2.5s ease-in-out infinite',
+            gradientText: 'background: linear-gradient(90deg, #FBBF24, #FFFFFF); -webkit-background-clip: text; color: transparent;',
+        },
+    },
+    {
+        id: 'focus-workflow-dashboard',
+        name: 'Focus 工作流',
+        desc: 'Focus Workflow · 深空灰玻璃拟态 + 霓虹数据流 + 圆角任务系统',
+        source: '#uploaded-image-13',
+        tokens: {
+            // ✨ 核心背景：深邃蓝灰渐变，模拟夜空或深海，为霓虹色提供最佳画布
+            pageBg: 'linear-gradient(180deg, #0F172A 0%, #1E293B 100%)',
+            fontFamily: "'Inter', 'SF Pro Text', -apple-system, sans-serif",
+            numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            // 卡片采用高透+强模糊，边框极细，营造悬浮感
+            cardBg: 'rgba(30, 41, 51, 0.65)',
+            cardBorderColor: 'rgba(255, 255, 255, 0.08)',
+            cardBorderWidth: '1px',
+            cardRadius: '20px',
+            cardShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+            cardBackdropFilter: 'blur(24px) saturate(180%)',
+            titleColor: '#FFFFFF',
+            descColor: '#CBD5E1',
+            itemBg: 'rgba(51, 65, 85, 0.4)',
+            itemTitleColor: '#FFFFFF',
+            itemDescColor: '#94A3B8',
+            itemBorderColor: 'transparent',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '0px',
+            itemRadius: '16px',
+            // ✨ 霓虹三色系统：紫（主任务）、粉（紧急/创意）、黄（时间轴/高亮）
+            upColor: '#EC4899',   // 荧光紫：用于进度增长、完成度
+            downColor: '#A855F7', // 荧光粉：用于警告、未完成、创意爆发
+            btnBg: 'linear-gradient(135deg, #EC4899 0%, #A855F7 100%)',
+            btnColor: '#FFFFFF',
+            btnRadius: '999px',
+            btnBorderColor: 'transparent',
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '0px',
+            btnFontFamily: "'Inter', sans-serif",
+            btnShadow: '0 4px 16px rgba(236, 72, 153, 0.3)',
+            tagBg: 'rgba(168, 85, 247, 0.15)',
+            tagColor: '#C084FC',
+            tagFontFamily: "'Inter', sans-serif",
+            tagBorderColor: 'transparent',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '0px',
+            tagRadius: '8px',
+            // 特有工作流 Tokens
+            progressBarBg: 'rgba(51, 65, 85, 0.6)',
+            progressBarFill: '#A855F7',
+            calendarTodayBg: 'rgba(168, 85, 247, 0.2)',
+            calendarTodayColor: '#FFFFFF',
+            calendarWeekendColor: '#64748B',
+            timelineCurrentLine: '#FBBF24', // 黄色垂直线
+            timelineBarBg: 'rgba(51, 65, 85, 0.6)',
+            timelineBarActive: '#A855F7',
+            timelineBarPending: 'rgba(255, 255, 255, 0.1)',
+            chatBubbleUser: 'rgba(168, 85, 247, 0.2)',
+            chatBubbleOther: 'rgba(51, 65, 85, 0.6)',
+            chatTextColor: '#FFFFFF',
+            avatarRingColor: 'rgba(255, 255, 255, 0.2)',
+            notificationBadgeBg: '#A855F7',
+            notificationBadgeColor: '#FFFFFF',
+            searchInputBg: 'rgba(30, 41, 51, 0.4)',
+            searchInputColor: '#FFFFFF',
+            searchInputPlaceholder: '#64748B',
+            navActiveBg: 'rgba(168, 85, 247, 0.15)',
+            navActiveColor: '#C084FC',
+            navInactiveColor: '#64748B',
+            tooltipBg: 'rgba(15, 23, 42, 0.95)',
+            tooltipColor: '#FFFFFF',
+            tooltipBorder: '1px solid rgba(168, 85, 247, 0.3)',
+            pulseAnimation: 'animation: pulse-purple 2s infinite',
+            glowEffect: 'box-shadow: 0 0 20px rgba(168, 85, 247, 0.4)',
+        },
+    },
+    {
+    id: 'vyora-ai-streaming',
+    name: 'Vyora 智能影院',
+    desc: 'Vyora AI Dashboard · 深紫沉浸氛围 + 玻璃拟态卡片 + 霓虹交互',
+    source: '#uploaded-image-14',
     tokens: {
-        pageBg: '#0A0508', // 深紫黑带微噪点
-        fontFamily: "'Inter', 'Satoshi', 'Helvetica Neue', sans-serif",
-        numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-        cardBg: 'rgba(20, 10, 25, 0.7)',
+        // ✨ 核心背景：从上至下的深紫到蓝紫渐变，模拟夜晚影院的静谧感
+        pageBg: 'linear-gradient(180deg, #5B21B6 0%, #3730A3 40%, #1E1B4B 100%)',
+        fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
+        numberFontFamily: "'Inter', sans-serif",
+        // 卡片采用半透明深色玻璃，边缘微光，营造悬浮感
+        cardBg: 'rgba(30, 27, 75, 0.55)',
         cardBorderColor: 'rgba(255, 255, 255, 0.1)',
         cardBorderWidth: '1px',
-        cardRadius: '16px',
-        cardShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-        titleColor: '#FFFFFF',
-        descColor: 'rgba(255, 255, 255, 0.6)',
-        itemBg: 'rgba(255, 255, 255, 0.05)',
-        itemTitleColor: '#FFFFFF',
-        itemDescColor: 'rgba(255, 255, 255, 0.5)',
-        itemBorderColor: 'rgba(255, 255, 255, 0.08)',
-        itemBorderStyle: 'solid',
-        itemBorderWidth: '1px',
-        itemRadius: '12px',
-        upColor: '#FF00FF', // 荧光粉
-        downColor: '#00FFFF', // 荧光青
-        btnBg: 'linear-gradient(135deg, #FF00FF 0%, #00FFFF 50%, #FFD700 100%)',
-        btnColor: '#000000',
-        btnRadius: '999px',
-        btnBorderColor: 'transparent',
-        btnBorderStyle: 'solid',
-        btnBorderWidth: '0px',
-        btnFontFamily: "'Space Grotesk', 'Clash Display', sans-serif",
-        btnShadow: '0 4px 20px rgba(255, 0, 255, 0.4)',
-        tagBg: '#FF00FF',
-        tagColor: '#FFFFFF',
-        tagFontFamily: "'JetBrains Mono', monospace",
-        tagBorderColor: 'transparent',
-        tagBorderStyle: 'solid',
-        tagBorderWidth: '0px',
-        tagRadius: '6px',
-        // 特有像素/噪点风格 Tokens
-        pixelSize: '4px',
-        noiseOpacity: '0.08',
-        gradientColors: ['#FF00FF', '#00FFFF', '#FFD700', '#8A2BE2', '#FF4500'],
-        accentGlow: '0 0 20px rgba(255, 0, 255, 0.6)',
-    },
-},
-{
-    id: 'vr-commerce-glow',
-    name: 'VR商域光晕',
-    desc: 'VR Commerce Glow · 深色沉浸 + 橙光产品轮廓 + AI助手交互',
-    source: '#uploaded-image-5',
-    tokens: {
-        pageBg: '#0A0A0A',
-        fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
-        numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-        cardBg: 'rgba(20, 20, 20, 0.8)',
-        cardBorderColor: 'rgba(255, 140, 0, 0.15)',
-        cardBorderWidth: '1px',
-        cardRadius: '20px',
-        cardShadow: '0 8px 32px rgba(255, 140, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-        titleColor: '#FFFFFF',
-        descColor: 'rgba(255, 255, 255, 0.7)',
-        itemBg: 'rgba(255, 255, 255, 0.06)',
-        itemTitleColor: '#FFFFFF',
-        itemDescColor: 'rgba(255, 255, 255, 0.5)',
-        itemBorderColor: 'rgba(255, 140, 0, 0.2)',
-        itemBorderStyle: 'solid',
-        itemBorderWidth: '1px',
-        itemRadius: '16px',
-        upColor: '#FF8C00', // 主品牌橙
-        downColor: '#FF4500', // 深橙用于折扣/警告
-        btnBg: '#FF8C00',
-        btnColor: '#000000',
-        btnRadius: '999px',
-        btnBorderColor: 'transparent',
-        btnBorderStyle: 'solid',
-        btnBorderWidth: '0px',
-        btnFontFamily: "'Inter', sans-serif",
-        btnShadow: '0 4px 20px rgba(255, 140, 0, 0.4)',
-        tagBg: '#FF8C00',
-        tagColor: '#000000',
-        tagFontFamily: "'Inter', sans-serif",
-        tagBorderColor: 'transparent',
-        tagBorderStyle: 'solid',
-        tagBorderWidth: '0px',
-        tagRadius: '6px',
-        // 特有产品光效 & AI 元素
-        productGlowColor: '#FF8C00',
-        productGlowBlur: '20px',
-        aiAssistantBg: 'rgba(255, 140, 0, 0.1)',
-        aiAssistantBorder: '1px solid rgba(255, 140, 0, 0.3)',
-        aiAssistantRadius: '16px',
-        searchInputBg: 'rgba(255, 255, 255, 0.08)',
-        searchInputColor: '#FFFFFF',
-        searchInputBorder: '1px solid rgba(255, 255, 255, 0.1)',
-        navIconActive: '#FF8C00',
-        navIconInactive: 'rgba(255, 255, 255, 0.4)',
-        priceOriginalColor: 'rgba(255, 255, 255, 0.4)',
-        priceDiscountColor: '#FF4500',
-        ratingStarColor: '#FFD700',
-    },
-},
-{
-    id: 'onro-glass-dashboard',
-    name: 'Onro玻璃仪表',
-    desc: 'Onro Glass Dashboard · 磨砂蓝调 + 悬浮卡片 + 建筑透视背景',
-    source: '#uploaded-image-9',
-    tokens: {
-        pageBg: '#E8F4FF', // 浅天蓝背景
-        fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
-        numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-        cardBg: 'rgba(255, 255, 255, 0.65)', // 半透明白底
-        cardBorderColor: 'rgba(255, 255, 255, 0.4)',
-        cardBorderWidth: '1px',
-        cardRadius: '20px',
-        cardShadow: '0 8px 32px rgba(31, 38, 135, 0.1)', // 柔和高斯阴影
-        cardBackdropFilter: 'blur(12px) saturate(180%)', // 关键：磨砂玻璃效果
-        titleColor: '#1A237E', // 深蓝标题
-        descColor: '#5C6BC0', // 中蓝描述
-        itemBg: 'rgba(255, 255, 255, 0.4)',
-        itemTitleColor: '#1A237E',
-        itemDescColor: '#5C6BC0',
-        itemBorderColor: 'transparent',
-        itemBorderStyle: 'solid',
-        itemBorderWidth: '0px',
-        itemRadius: '16px',
-        upColor: '#FF5252', // 绿色收入/正常
-        downColor: '#4CAF50', // 红色支出/异常
-        btnBg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // 蓝紫渐变按钮
-        btnColor: '#FFFFFF',
-        btnRadius: '999px',
-        btnBorderColor: 'transparent',
-        btnBorderStyle: 'solid',
-        btnBorderWidth: '0px',
-        btnFontFamily: "'Inter', sans-serif",
-        btnShadow: '0 4px 16px rgba(102, 126, 234, 0.3)',
-        tagBg: 'rgba(102, 126, 234, 0.1)',
-        tagColor: '#667eea',
-        tagFontFamily: "'Inter', sans-serif",
-        tagBorderColor: 'transparent',
-        tagBorderStyle: 'solid',
-        tagBorderWidth: '0px',
-        tagRadius: '8px',
-        // 特有玻璃拟态 & 数据可视化 Tokens
-        glassOverlay: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0))',
-        chartLineColor: '#667eea',
-        chartGridColor: 'rgba(102, 126, 234, 0.1)',
-        statValueColor: '#1A237E',
-        statLabelColor: '#5C6BC0',
-        navActiveBg: 'rgba(102, 126, 234, 0.15)',
-        navActiveColor: '#667eea',
-        navInactiveColor: '#9FA8DA',
-        floatingCardZIndex: '100',
-        backgroundBlurIntensity: '8px',
-        accentGradientStart: '#667eea',
-        accentGradientEnd: '#764ba2',
-        iconActiveColor: '#667eea',
-        iconInactiveColor: '#9FA8DA',
-        tooltipBg: 'rgba(255, 255, 255, 0.9)',
-        tooltipColor: '#1A237E',
-        tooltipBorder: '1px solid rgba(102, 126, 234, 0.2)',
-    },
-},
-{
-    id: 'warm-learning-dashboard',
-    name: '暖橙学术仪表盘',
-    desc: 'Warm Learning Dashboard · 暖橙柔调 + 多彩卡片 + 3D悬浮插图',
-    source: '#uploaded-image-1',
-    tokens: {
-        pageBg: '#FFC8A2', // 暖橙色背景
-        fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
-        numberFontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif",
-        cardBg: '#F8F6F4', // 米白色主主板背景
-        cardBorderColor: 'transparent',
-        cardBorderWidth: '0px',
         cardRadius: '24px',
-        cardShadow: '0 20px 40px rgba(220, 120, 70, 0.15)',
-        cardBackdropFilter: 'none',
-        titleColor: '#1E1E24', // 深灰/近黑主标题
-        descColor: '#7A7A85', // 中灰次要描述
-        itemBg: '#FFFFFF', // 纯白子卡片背景
-        itemTitleColor: '#1E1E24',
-        itemDescColor: '#7A7A85',
+        cardShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+        cardBackdropFilter: 'blur(20px) saturate(180%)',
+        titleColor: '#FFFFFF',
+        descColor: '#C4B5FD', // 浅紫灰，比纯白更柔和
+        itemBg: 'rgba(59, 55, 120, 0.4)',
+        itemTitleColor: '#FFFFFF',
+        itemDescColor: '#A78BFA',
         itemBorderColor: 'transparent',
         itemBorderStyle: 'solid',
         itemBorderWidth: '0px',
         itemRadius: '16px',
-        upColor: '#FF6B50', // 品牌主橙色（高亮/警示/按钮）
-        downColor: '#4ECDC4', // 薄荷绿/辅助色
-        btnBg: '#FF6B50', // 亮橙色主按钮
+        // ✨ 霓虹交互色：主色调为电光紫，辅助色为柔粉
+        upColor: '#F472B6',   // 浅紫：用于评分、正向反馈
+        downColor: '#A78BFA', // 柔粉：用于收藏、警告（虽图中未明显体现下降，但预留语义）
+        btnBg: 'linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%)',
         btnColor: '#FFFFFF',
         btnRadius: '999px',
-        btnBorderColor: 'transparent',
+        btnBorderColor: 'rgba(255, 255, 255, 0.2)',
         btnBorderStyle: 'solid',
-        btnBorderWidth: '0px',
-        btnFontFamily: "'Plus Jakarta Sans', sans-serif",
-        btnShadow: '0 8px 16px rgba(255, 107, 80, 0.25)',
-        tagBg: '#F5F5F7',
-        tagColor: '#7A7A85',
-        tagFontFamily: "'Plus Jakarta Sans', sans-serif",
-        tagBorderColor: 'transparent',
-        tagBorderStyle: 'solid',
-        tagBorderWidth: '0px',
-        tagRadius: '8px',
-        // 特有色彩卡片与仪表盘 Tokens
-        primaryAccent: '#FF6B50', // 主色调：珊瑚橙
-        cardPinkBg: '#F9D8D6', // 粉红卡片背景 (Assignments due)
-        cardPinkColor: '#D9534F',
-        cardGreenBg: '#D2F3E0', // 浅绿卡片背景 (Assignments to check)
-        cardGreenColor: '#2E7D32',
-        cardPurpleBg: '#E0DBFF', // 浅紫卡片背景 (Free time slots)
-        cardPurpleColor: '#5C46E5',
-        cardOrangeBg: '#FFE6D2', // 浅橙卡片背景 (Classes this week)
-        cardOrangeColor: '#E66A2C',
-        navActiveBg: '#FF6B50',
-        navActiveColor: '#FFFFFF',
-        navInactiveBg: '#FFFFFF',
-        navInactiveColor: '#9E9EA7',
-        calendarHighlightBg: '#FF8A65',
-        calendarHighlightColor: '#FFFFFF',
-        schedulePurpleBg: '#E8E5FF',
-        scheduleOrangeBg: '#FFF0E5',
-        scheduleGreenBg: '#E1F8ED',
-        iconActiveColor: '#FFFFFF',
-        iconInactiveColor: '#9E9EA7',
-        sidebarBg: '#FFFFFF',
-        sidebarRadius: '20px'
-    },
-},
-{
-    id: 'apeluid-electric-purple',
-    name: 'Apeluid 电光紫风格',
-    desc: 'Apeluid Electric Purple · 暗黑高饱和紫 + 极简大圆角卡片 + 多色交互胶囊标签',
-    source: '#uploaded-image',
-    tokens: {
-        pageBg: '#0A0A12', // 极深黑紫背景
-        fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
-        numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-        cardBg: '#3B38EE', // 高饱和宝蓝/亮紫主卡片底色
-        cardBorderColor: 'transparent',
-        cardBorderWidth: '0px',
-        cardRadius: '24px', // 大圆角卡片
-        cardShadow: '0 12px 40px rgba(0, 0, 0, 0.35)', // 深邃阴影
-        cardBackdropFilter: 'none',
-        titleColor: '#FFFFFF', // 纯白标题
-        descColor: 'rgba(255, 255, 255, 0.7)', // 半透明白描述文字
-        itemBg: '#12102B', // 卡片内部深色子项/胶囊底色
-        itemTitleColor: '#FFFFFF',
-        itemDescColor: 'rgba(255, 255, 255, 0.6)',
-        itemBorderColor: 'rgba(255, 255, 255, 0.15)',
-        itemBorderStyle: 'solid',
-        itemBorderWidth: '1px',
-        itemRadius: '999px',
-        upColor: '#A855F7', // 亮紫色（上升/强调）
-        downColor: '#38BDF8', // 青蓝色（下降/辅助）
-        btnBg: '#0D0B18', // 黑色纯色胶囊按钮
-        btnColor: '#FFFFFF',
-        btnRadius: '999px', // 纯圆角胶囊
-        btnBorderColor: 'transparent',
-        btnBorderStyle: 'solid',
-        btnBorderWidth: '0px',
+        btnBorderWidth: '1px',
         btnFontFamily: "'Inter', sans-serif",
-        btnShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-        tagBg: '#D8B4FE', // 淡紫粉胶囊标签背景
-        tagColor: '#3B38EE', // 主色文字
+        btnShadow: '0 4px 12px rgba(124, 58, 237, 0.4)',
+        tagBg: 'rgba(124, 58, 237, 0.2)',
+        tagColor: '#DDD6FE',
         tagFontFamily: "'Inter', sans-serif",
         tagBorderColor: 'transparent',
         tagBorderStyle: 'solid',
         tagBorderWidth: '0px',
         tagRadius: '999px',
-        // 特有视觉 & 渐变 Tokens
-        glassOverlay: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0))',
-        chartLineColor: '#A855F7',
-        chartGridColor: 'rgba(255, 255, 255, 0.1)',
-        statValueColor: '#FFFFFF',
-        statLabelColor: 'rgba(255, 255, 255, 0.7)',
-        navActiveBg: '#3B38EE',
-        navActiveColor: '#FFFFFF',
-        navInactiveColor: 'rgba(255, 255, 255, 0.4)',
-        floatingCardZIndex: '100',
-        backgroundBlurIntensity: '0px',
-        accentGradientStart: '#3B38EE',
-        accentGradientEnd: '#C084FC', // 蓝紫到粉紫渐变
-        iconActiveColor: '#FFFFFF',
-        iconInactiveColor: 'rgba(255, 255, 255, 0.5)',
-        tooltipBg: '#0D0B18',
-        tooltipColor: '#FFFFFF',
-        tooltipBorder: '1px solid rgba(255, 255, 255, 0.1)',
-    },
-},
-{
-    id: 'kiddora-playful-kids-learning',
-    name: 'Kiddora 欢快儿童教育风格',
-    desc: 'Kiddora Playful Kids Learning · 暖调奶油渐变底色 + 缤纷彩色高饱和元素 + 柔和通透悬浮卡片',
-    source: '#uploaded-image-6',
-    tokens: {
-        pageBg: 'linear-gradient(180deg, #FFF5EE 0%, #FAF0E6 50%, #F5E6FF 100%)', // 暖粉杏色到柔紫渐变背景[cite: 6]
-        fontFamily: "'Fredoka', 'Quicksand', -apple-system, sans-serif", // 圆润亲和的儿童字体风格[cite: 6]
-        numberFontFamily: "'Fredoka', 'Quicksand', monospace",
-        cardBg: 'rgba(255, 255, 255, 0.85)', // 柔和半透明纯白悬浮卡片[cite: 6]
-        cardBorderColor: 'rgba(255, 255, 255, 0.9)',
-        cardBorderWidth: '1.5px',
-        cardRadius: '32px', // 特大超圆润卡片圆角[cite: 6]
-        cardShadow: '0 16px 40px rgba(108, 92, 231, 0.08)', // 柔和紫调散发阴影
-        cardBackdropFilter: 'blur(10px)',
-        titleColor: '#3A2898', // 浓郁深紫标题[cite: 6]
-        descColor: '#5D6B98', // 柔和蓝灰描述文字[cite: 6]
-        itemBg: '#FFF9E6', // 暖黄子项背景
-        itemTitleColor: '#3A2898',
-        itemDescColor: '#5D6B98',
-        itemBorderColor: 'transparent',
-        itemBorderStyle: 'solid',
-        itemBorderWidth: '0px',
-        itemRadius: '20px',
-        upColor: '#FF3D00', // 活力绿
-        downColor: '#00C853', // 活力橙红
-        btnBg: '#6C5CE7', // 鲜亮紫色圆形/胶囊按钮[cite: 6]
-        btnColor: '#FFFFFF', // 纯白按钮文本/图标[cite: 6]
-        btnRadius: '999px', // 纯圆按钮[cite: 6]
-        btnBorderColor: 'transparent',
-        btnBorderStyle: 'solid',
-        btnBorderWidth: '0px',
-        btnFontFamily: "'Fredoka', sans-serif",
-        btnShadow: '0 8px 20px rgba(108, 92, 231, 0.35)', // 亮紫色柔和阴影
-        tagBg: '#FFEAA7', // 明黄标签/装饰色[cite: 6]
-        tagColor: '#D63031',
-        tagFontFamily: "'Fredoka', sans-serif",
-        tagBorderColor: 'transparent',
-        tagBorderStyle: 'solid',
-        tagBorderWidth: '0px',
-        tagRadius: '999px',
-        // 儿童教育与多色主题 Tokens
-        glassOverlay: 'none',
-        chartLineColor: '#6C5CE7',
-        chartGridColor: 'rgba(108, 92, 231, 0.05)',
-        statValueColor: '#3A2898',
-        statLabelColor: '#5D6B98',
-        navActiveBg: '#6C5CE7', // 活跃指示点紫色[cite: 6]
-        navActiveColor: '#FFFFFF',
-        navInactiveColor: '#D6D1F8', // 未选中指示点浅灰紫[cite: 6]
-        floatingCardZIndex: '100',
-        backgroundBlurIntensity: '8px',
-        accentGradientStart: '#6C5CE7', // 活力紫[cite: 6]
-        accentGradientEnd: '#FF7675', // 珊瑚粉[cite: 6]
-        iconActiveColor: '#FFFFFF',
-        iconInactiveColor: '#A29BFE',
-        tooltipBg: '#FFFFFF',
-        tooltipColor: '#3A2898',
-        tooltipBorder: '1px solid rgba(108, 92, 231, 0.15)',
-        // Kiddora 缤纷儿童特有色盘 Tokens
-        brandBlue: '#2D52E5', // Logo 蓝[cite: 6]
-        brandOrange: '#FF9F1C', // Logo 橙[cite: 6]
-        brandCyan: '#00CECB', // Logo 青蓝[cite: 6]
-        brandYellow: '#FFD166', // 3D星星暖黄[cite: 6]
-        paginationDotActive: '#6C5CE7', // 分页指示器激活点[cite: 6]
-        paginationDotInactive: '#E0D8F9', // 分页指示器未激活点[cite: 6]
-    },
-},
-{
-    id: 'kiddora-discover-3d-clay',
-    name: 'Kiddora 3D立体探究教育风格',
-    desc: 'Kiddora Discover 3D Clay · 梦幻淡紫柔粉底色 + 3D粘土软萌图标 + 高饱和圆角悬浮面板',
-    source: '#uploaded-image-7',
-    tokens: {
-        pageBg: 'linear-gradient(180deg, #F8F3FF 0%, #FAF0F8 50%, #F5ECFF 100%)', // 梦幻极浅紫到粉紫渐变背景[cite: 7]
-        fontFamily: "'Fredoka', 'Quicksand', -apple-system, sans-serif", // 圆润亲和儿童字体[cite: 7]
-        numberFontFamily: "'Fredoka', 'Quicksand', monospace",
-        cardBg: 'rgba(255, 255, 255, 0.9)', // 半透明高亮纯白悬浮面板[cite: 7]
-        cardBorderColor: 'rgba(255, 255, 255, 0.95)',
-        cardBorderWidth: '1.5px',
-        cardRadius: '32px', // 大圆角悬浮卡片[cite: 7]
-        cardShadow: '0 16px 36px rgba(138, 92, 246, 0.08)', // 浅紫弥散柔阴影
-        cardBackdropFilter: 'blur(12px)',
-        titleColor: '#1E1B4B', // 深蓝紫标题[cite: 7]
-        descColor: '#52525B', // 柔和灰紫描述文字[cite: 7]
-        itemBg: '#F5F3FF', // 功能图标浅紫子项底色[cite: 7]
-        itemTitleColor: '#1E1B4B',
-        itemDescColor: '#52525B',
-        itemBorderColor: 'transparent',
-        itemBorderStyle: 'solid',
-        itemBorderWidth: '0px',
-        itemRadius: '20px',
-        upColor: '#F43F5E', // 活力绿[cite: 7]
-        downColor: '#10B981', // 活力粉红[cite: 7]
-        btnBg: '#7C3AED', // 鲜亮紫罗兰渐变/纯色按钮[cite: 7]
-        btnColor: '#FFFFFF', // 纯白箭头图标/文本[cite: 7]
-        btnRadius: '999px', // 圆形前进按钮[cite: 7]
-        btnBorderColor: 'transparent',
-        btnBorderStyle: 'solid',
-        btnBorderWidth: '0px',
-        btnFontFamily: "'Fredoka', sans-serif",
-        btnShadow: '0 8px 20px rgba(124, 58, 237, 0.35)', // 紫罗兰发光阴影
-        tagBg: '#EDE9FE', // 浅紫胶囊标签背景[cite: 7]
-        tagColor: '#6D28D9',
-        tagFontFamily: "'Fredoka', sans-serif",
-        tagBorderColor: 'transparent',
-        tagBorderStyle: 'solid',
-        tagBorderWidth: '0px',
-        tagRadius: '999px',
-        // 3D粘土 & 多色儿童功能分类 Tokens
-        glassOverlay: 'none',
-        chartLineColor: '#7C3AED',
-        chartGridColor: 'rgba(124, 58, 237, 0.05)',
-        statValueColor: '#1E1B4B',
-        statLabelColor: '#52525B',
-        navActiveBg: '#7C3AED', // 分页激活指示点[cite: 7]
-        navActiveColor: '#FFFFFF',
-        navInactiveColor: '#DDD6FE', // 未激活指示点[cite: 7]
-        floatingCardZIndex: '100',
-        backgroundBlurIntensity: '8px',
-        accentGradientStart: '#7C3AED', // 主紫罗兰色[cite: 7]
-        accentGradientEnd: '#EC4899', // 亮粉红[cite: 7]
-        iconActiveColor: '#FFFFFF',
-        iconInactiveColor: '#A78BFA',
-        tooltipBg: '#FFFFFF',
-        tooltipColor: '#1E1B4B',
-        tooltipBorder: '1px solid rgba(124, 58, 237, 0.15)',
-        // 3D 粘土图标与多元分类特色 Tokens
-        clayPurpleBg: '#C084FC', // 3D书本图标紫底[cite: 7]
-        clayPinkBg: '#FB7185', // 3D画板图标粉红底[cite: 7]
-        clayGreenBg: '#34D399', // 3D烧杯图标薄荷绿底[cite: 7]
-        clayBlueLaptop: '#A5B4FC', // 3D笔记本电脑柔紫蓝[cite: 7]
-        clayYellowAccent: '#FBBF24', // 装饰小线条与星号暖黄[cite: 7]
-    },
-},
-{
-    id: 'upfound-emerald-dark-gradient',
-    name: 'UpFound 极光翡翠暗黑渐变',
-    desc: 'UpFound Emerald Dark · 深邃黑绿径向渐变背景 + 宝石绿亮色高光 + 极简现代化文字与胶囊按钮',
-    source: '#uploaded-image-10',
-    tokens: {
-        pageBg: 'radial-gradient(circle at 50% 50%, #0D2D2A 0%, #040A0A 80%)', // 深绿到暗黑渐变背景[cite: 10, 11]
-        fontFamily: "'PP Neue Montreal', 'Inter', -apple-system, sans-serif", // 第二图指定的字体[cite: 11]
-        numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-        cardBg: 'rgba(255, 255, 255, 0.05)', // 微透暗色玻璃卡片[cite: 10]
-        cardBorderColor: 'rgba(255, 255, 255, 0.1)',
-        cardBorderWidth: '1px',
-        cardRadius: '24px', // 圆润大卡片[cite: 10]
-        cardShadow: '0 20px 50px rgba(4, 10, 10, 0.8)', // 极深沉浸式阴影[cite: 11]
-        cardBackdropFilter: 'blur(16px)',
-        titleColor: '#FFFFFF', // 纯白高亮标题[cite: 10, 11]
-        descColor: 'rgba(255, 255, 255, 0.7)', // 半透明白次要文字[cite: 10]
-        itemBg: 'rgba(255, 255, 255, 0.08)', // 胶囊导航/次级按钮微透背景[cite: 10]
-        itemTitleColor: '#FFFFFF',
-        itemDescColor: 'rgba(255, 255, 255, 0.6)',
-        itemBorderColor: 'rgba(255, 255, 255, 0.12)',
-        itemBorderStyle: 'solid',
-        itemBorderWidth: '1px',
-        itemRadius: '999px',
-        upColor: '#22F2EF', // 第二图色板：荧光绿（涨/成功率）[cite: 10, 11]
-        downColor: '#3EE97D', // 第二图色板：青蓝[cite: 11]
-        btnBg: 'linear-gradient(135deg, #49DC7A 0%, #3EE97D 100%)', // 第二图色板渐变绿行动按钮[cite: 10, 11]
-        btnColor: '#040A0A', // 黑色高对比度按钮文字[cite: 10, 11]
-        btnRadius: '999px', // 纯圆胶囊按钮[cite: 10]
-        btnBorderColor: 'transparent',
-        btnBorderStyle: 'solid',
-        btnBorderWidth: '0px',
-        btnFontFamily: "'PP Neue Montreal', sans-serif", // 指定字体[cite: 11]
-        btnShadow: '0 8px 24px rgba(62, 233, 125, 0.3)', // 荧光绿发光散影[cite: 11]
-        tagBg: 'rgba(73, 220, 122, 0.15)',
-        tagColor: '#49DC7A', // 第二图色板：薄荷绿[cite: 11]
-        tagFontFamily: "'PP Neue Montreal', sans-serif",
-        tagBorderColor: 'transparent',
-        tagBorderStyle: 'solid',
-        tagBorderWidth: '0px',
-        tagRadius: '999px',
-        // 图纸特定 & 第二图 Palette 指定 Token
-        glassOverlay: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0))',
-        chartLineColor: '#3EE97D',
-        chartGridColor: 'rgba(255, 255, 255, 0.05)',
-        statValueColor: '#FFFFFF',
-        statLabelColor: 'rgba(255, 255, 255, 0.6)',
-        navActiveBg: 'rgba(255, 255, 255, 0.15)',
-        navActiveColor: '#FFFFFF',
-        navInactiveColor: 'rgba(255, 255, 255, 0.6)',
-        floatingCardZIndex: '100',
-        backgroundBlurIntensity: '16px',
-        accentGradientStart: '#49DC7A', // 色板 1：#49DC7A[cite: 11]
-        accentGradientEnd: '#22F2EF', // 色板 3：#22F2EF[cite: 11]
-        iconActiveColor: '#3EE97D',
-        iconInactiveColor: 'rgba(255, 255, 255, 0.4)',
-        tooltipBg: '#040A0A', // 色板 4：#040A0A[cite: 11]
-        tooltipColor: '#FFFFFF', // 色板 5：#FFFFFF[cite: 11]
-        tooltipBorder: '1px solid rgba(73, 220, 122, 0.2)',
-        // Palette 精确对应色值列表（来自图二）
-        paletteDarkBg: '#040A0A', // 深纯黑背景底色[cite: 11]
-        palettePureWhite: '#FFFFFF', // 纯白文字/元素[cite: 11]
-        paletteMintGreen: '#49DC7A', // 薄荷绿[cite: 11]
-        paletteNeonGreen: '#3EE97D', // 鲜亮荧光绿[cite: 11]
-        paletteElectricCyan: '#22F2EF', // 电光青蓝[cite: 11]
-        typographyFont: 'PP Neue Montreal', // 指定排版字体[cite: 11]
-    },
-},
-{
-    id: 'strava-yearly-sport',
-    name: 'Strava年度燃动',
-    desc: 'Strava Yearly Sport · 紫橙流体渐变 + 粗体数据叙事 + 胶囊标签',
-    source: '#uploaded-image-12',
-    tokens: {
-        pageBg: 'linear-gradient(160deg, #4C1D95 0%, #7C3AED 25%, #EC4899 55%, #F97316 85%, #FBBF24 100%)',
-        fontFamily: "'Helvetica Now Display', 'Inter', -apple-system, sans-serif",
-        numberFontFamily: "'DIN Alternate', 'Barlow Condensed', sans-serif",
-        cardBg: 'rgba(255, 255, 255, 0.12)',
-        cardBorderColor: 'rgba(255, 255, 255, 0.2)',
-        cardBorderWidth: '1px',
-        cardRadius: '24px',
-        cardShadow: '0 12px 40px rgba(76, 29, 149, 0.3)',
-        cardBackdropFilter: 'blur(16px) saturate(180%)',
-        titleColor: '#FFFFFF',
-        descColor: 'rgba(255, 255, 255, 0.85)',
-        itemBg: 'rgba(255, 255, 255, 0.08)',
-        itemTitleColor: '#FFFFFF',
-        itemDescColor: 'rgba(255, 255, 255, 0.75)',
-        itemBorderColor: 'transparent',
-        itemBorderStyle: 'solid',
-        itemBorderWidth: '0px',
-        itemRadius: '16px',
-        upColor: '#00D4FF',
-        downColor: '#00FFC2', // 冰蓝：在橙黄区靠冷色相+高明度双重跳出，深紫区同样清晰
-        btnBg: '#FFFFFF',
-        btnColor: '#7C3AED',
-        btnRadius: '999px',
-        btnBorderColor: 'transparent',
-        btnBorderStyle: 'solid',
-        btnBorderWidth: '0px',
-        btnFontFamily: "'Helvetica Now Display', sans-serif",
-        btnShadow: '0 4px 16px rgba(255, 255, 255, 0.25)',
-        tagBg: 'rgba(255, 255, 255, 0.2)',
-        tagColor: '#FFFFFF',
-        tagFontFamily: "'Helvetica Now Display', sans-serif",
-        tagBorderColor: 'transparent',
-        tagBorderStyle: 'solid',
-        tagBorderWidth: '0px',
-        tagRadius: '999px',
-        activityIconColor: '#FFFFFF',
-        distanceHighlight: '#FBBF24',
-        elevationGradient: 'linear-gradient(to top, rgba(255,255,255,0.1), rgba(255,255,255,0.3))',
-        weeklyChartBar: 'rgba(255, 255, 255, 0.6)',
-        weeklyChartActiveBar: '#FFFFFF',
-        achievementBadgeBg: 'rgba(251, 191, 36, 0.2)',
-        achievementBadgeColor: '#FBBF24',
-        mapOverlay: 'rgba(76, 29, 149, 0.4)',
-        mapRouteLine: '#FFFFFF',
-        statDivider: 'rgba(255, 255, 255, 0.15)',
-        sectionTitleWeight: '800',
-        dataValueWeight: '700',
-        navActiveBg: 'rgba(255, 255, 255, 0.25)',
-        navActiveColor: '#FFFFFF',
-        navInactiveColor: 'rgba(255, 255, 255, 0.6)',
-        tooltipBg: 'rgba(0, 0, 0, 0.7)',
-        tooltipColor: '#FFFFFF',
-        tooltipBorder: 'none',
-        pulseAnimation: 'animation: glow-white 2.5s ease-in-out infinite',
-        gradientText: 'background: linear-gradient(90deg, #FBBF24, #FFFFFF); -webkit-background-clip: text; color: transparent;',
-    },
-},
-{
-    id: 'focus-workflow-dashboard',
-    name: 'Focus 工作流',
-    desc: 'Focus Workflow · 深空灰玻璃拟态 + 霓虹数据流 + 圆角任务系统',
-    source: '#uploaded-image-13',
-    tokens: {
-        // ✨ 核心背景：深邃蓝灰渐变，模拟夜空或深海，为霓虹色提供最佳画布
-        pageBg: 'linear-gradient(180deg, #0F172A 0%, #1E293B 100%)',
-        fontFamily: "'Inter', 'SF Pro Text', -apple-system, sans-serif",
-        numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-        // 卡片采用高透+强模糊，边框极细，营造悬浮感
-        cardBg: 'rgba(30, 41, 51, 0.65)',
-        cardBorderColor: 'rgba(255, 255, 255, 0.08)',
-        cardBorderWidth: '1px',
-        cardRadius: '20px',
-        cardShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-        cardBackdropFilter: 'blur(24px) saturate(180%)',
-        titleColor: '#FFFFFF',
-        descColor: '#CBD5E1',
-        itemBg: 'rgba(51, 65, 85, 0.4)',
-        itemTitleColor: '#FFFFFF',
-        itemDescColor: '#94A3B8',
-        itemBorderColor: 'transparent',
-        itemBorderStyle: 'solid',
-        itemBorderWidth: '0px',
-        itemRadius: '16px',
-        // ✨ 霓虹三色系统：紫（主任务）、粉（紧急/创意）、黄（时间轴/高亮）
-        upColor: '#EC4899',   // 荧光紫：用于进度增长、完成度
-        downColor: '#A855F7', // 荧光粉：用于警告、未完成、创意爆发
-        btnBg: 'linear-gradient(135deg, #EC4899 0%, #A855F7 100%)',
-        btnColor: '#FFFFFF',
-        btnRadius: '999px',
-        btnBorderColor: 'transparent',
-        btnBorderStyle: 'solid',
-        btnBorderWidth: '0px',
-        btnFontFamily: "'Inter', sans-serif",
-        btnShadow: '0 4px 16px rgba(236, 72, 153, 0.3)',
-        tagBg: 'rgba(168, 85, 247, 0.15)',
-        tagColor: '#C084FC',
-        tagFontFamily: "'Inter', sans-serif",
-        tagBorderColor: 'transparent',
-        tagBorderStyle: 'solid',
-        tagBorderWidth: '0px',
-        tagRadius: '8px',
-        // 特有工作流 Tokens
-        progressBarBg: 'rgba(51, 65, 85, 0.6)',
-        progressBarFill: '#A855F7',
-        calendarTodayBg: 'rgba(168, 85, 247, 0.2)',
-        calendarTodayColor: '#FFFFFF',
-        calendarWeekendColor: '#64748B',
-        timelineCurrentLine: '#FBBF24', // 黄色垂直线
-        timelineBarBg: 'rgba(51, 65, 85, 0.6)',
-        timelineBarActive: '#A855F7',
-        timelineBarPending: 'rgba(255, 255, 255, 0.1)',
-        chatBubbleUser: 'rgba(168, 85, 247, 0.2)',
-        chatBubbleOther: 'rgba(51, 65, 85, 0.6)',
-        chatTextColor: '#FFFFFF',
-        avatarRingColor: 'rgba(255, 255, 255, 0.2)',
-        notificationBadgeBg: '#A855F7',
-        notificationBadgeColor: '#FFFFFF',
-        searchInputBg: 'rgba(30, 41, 51, 0.4)',
+        // 特有流媒体 Tokens
+        progressBarBg: 'rgba(255, 255, 255, 0.15)',
+        progressBarFill: '#FFFFFF',
+        playButtonBg: 'rgba(255, 255, 255, 0.15)',
+        playButtonIcon: '#FFFFFF',
+        playButtonHoverBg: 'rgba(255, 255, 255, 0.25)',
+        ratingStarColor: '#FBBF24', // 金色星星
+        episodeIconColor: '#C4B5FD',
+        searchInputBg: 'rgba(255, 255, 255, 0.1)',
         searchInputColor: '#FFFFFF',
-        searchInputPlaceholder: '#64748B',
-        navActiveBg: 'rgba(168, 85, 247, 0.15)',
-        navActiveColor: '#C084FC',
-        navInactiveColor: '#64748B',
-        tooltipBg: 'rgba(15, 23, 42, 0.95)',
+        searchInputPlaceholder: '#A78BFA',
+        navActiveBg: 'rgba(124, 58, 237, 0.2)',
+        navActiveColor: '#FFFFFF',
+        navInactiveColor: '#A78BFA',
+        tooltipBg: 'rgba(30, 27, 75, 0.95)',
         tooltipColor: '#FFFFFF',
-        tooltipBorder: '1px solid rgba(168, 85, 247, 0.3)',
-        pulseAnimation: 'animation: pulse-purple 2s infinite',
-        glowEffect: 'box-shadow: 0 0 20px rgba(168, 85, 247, 0.4)',
+        tooltipBorder: '1px solid rgba(167, 139, 250, 0.3)',
+        pulseAnimation: 'animation: glow-purple 2s infinite',
+        heroOverlay: 'linear-gradient(to right, rgba(30, 27, 75, 0.8) 0%, rgba(30, 27, 75, 0.2) 100%)',
+        aiBadgeBg: 'rgba(124, 58, 237, 0.15)',
+        aiBadgeColor: '#DDD6FE',
+        sectionTitleWeight: '700',
+        dataValueWeight: '600',
     },
 }
 

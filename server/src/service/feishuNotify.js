@@ -152,5 +152,4 @@ function buildSellPointCard({ sellStocks, timestamp }) {
   };
 }
 
-// 盘中市场快照卡片：资金净流入与成交量数据放在最前，随后是指数与科技情绪
 module.exports = { sendFeishuCard, sendFeishuText, buildBuyPointCard, buildSellPointCard, buildMarketSnapshotText };

@@ -352,14 +352,16 @@ const getStockLimitTypeName = (code) => {
   return '主板';
 };
 
-const runBacktest = async (dateStr, strategyIds = null) => {
+const runBacktest = async (dateStr, strategyIds = null, opts = {}) => {
   if (!dateStr || !/^\d{8}$/.test(dateStr)) {
     throw new Error('日期格式错误，应为YYYYMMDD');
   }
 
   const { fundData, amountData } = loadSnapshotData(dateStr);
-  
-  if (fundData.length === 0 && amountData.length === 0) {
+
+  // allowMissingSnapshot: 允许无资金/成交额快照的日期继续回测（fundFlow/成交量图表数据为空，
+  // 不影响分时数据驱动的信号计算），供不依赖资金快照的策略回测使用
+  if (fundData.length === 0 && amountData.length === 0 && opts.allowMissingSnapshot !== true) {
     return {
       success: false,
       message: `未找到 ${dateStr} 的快照数据，请选择其他日期`,

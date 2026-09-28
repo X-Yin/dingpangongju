@@ -1,5 +1,133 @@
 [
   {
+    "date": "20260928",
+    "blocks": {
+      "特高压": {
+        "avgChange": 0.59
+      },
+      "医药": {
+        "avgChange": 0.52
+      },
+      "房地产": {
+        "avgChange": 0.31
+      },
+      "银行": {
+        "avgChange": 0.08
+      },
+      "煤炭": {
+        "avgChange": 0
+      },
+      "玻璃基板": {
+        "avgChange": -0.04
+      },
+      "化工": {
+        "avgChange": -0.64
+      },
+      "电力": {
+        "avgChange": -1.31
+      },
+      "军工": {
+        "avgChange": -1.45
+      },
+      "证券": {
+        "avgChange": -1.74
+      },
+      "机器人": {
+        "avgChange": -2.25
+      },
+      "锂电": {
+        "avgChange": -2.92
+      },
+      "粮食": {
+        "avgChange": -3.12
+      },
+      "AI 应用": {
+        "avgChange": -3.27
+      },
+      "cpu": {
+        "avgChange": -3.4
+      },
+      "功率半导体": {
+        "avgChange": -3.4
+      },
+      "消费": {
+        "avgChange": -3.88
+      },
+      "贵金属": {
+        "avgChange": -4.03
+      },
+      "商业航天": {
+        "avgChange": -4.14
+      },
+      "金刚石散热": {
+        "avgChange": -4.14
+      },
+      "半导体": {
+        "avgChange": -4.59
+      },
+      "北美缺电": {
+        "avgChange": -4.65
+      },
+      "先进封装": {
+        "avgChange": -4.76
+      },
+      "CCL": {
+        "avgChange": -5.2
+      },
+      "存储": {
+        "avgChange": -5.75
+      },
+      "半导体材料": {
+        "avgChange": -5.75
+      },
+      "液冷": {
+        "avgChange": -5.93
+      },
+      "cpo": {
+        "avgChange": -6.11
+      },
+      "AI电源": {
+        "avgChange": -6.25
+      },
+      "国产超节点": {
+        "avgChange": -6.64
+      },
+      "MFC": {
+        "avgChange": -6.75
+      },
+      "钨": {
+        "avgChange": -6.95
+      },
+      "电子布": {
+        "avgChange": -7.37
+      },
+      "光芯片": {
+        "avgChange": -7.43
+      },
+      "pcb": {
+        "avgChange": -7.52
+      },
+      "PPE树脂": {
+        "avgChange": -7.52
+      },
+      "铜箔": {
+        "avgChange": -7.86
+      },
+      "MLCC": {
+        "avgChange": -7.99
+      },
+      "光模块": {
+        "avgChange": -8.15
+      },
+      "MPO": {
+        "avgChange": -9.06
+      },
+      "光纤": {
+        "avgChange": -9.69
+      }
+    }
+  },
+  {
     "date": "20260924",
     "blocks": {
       "MFC": {
