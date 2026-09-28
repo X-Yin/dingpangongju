@@ -419,48 +419,6 @@ export const THEME_PACKS = [
         },
     },
     {
-        id: 'y2k',
-        name: '千禧霓虹',
-        desc: 'Y2K · 全息渐变复古未来',
-        source: '自定义',
-        tokens: {
-            pageBg: 'linear-gradient(160deg, #12081f 0%, #26064d 100%)',
-            fontFamily: "'Albert Sans', -apple-system, 'PingFang SC', sans-serif",
-            numberFontFamily: "'Fragment Mono', 'SF Mono', monospace",
-            cardBg: 'rgba(255, 255, 255, 0.07)',
-            cardBorderColor: 'rgba(0, 255, 255, 0.35)',
-            cardBorderWidth: '1px',
-            cardRadius: '18px',
-            cardShadow: '0 0 22px rgba(255, 0, 255, 0.15), inset 0 0 18px rgba(0, 255, 255, 0.06)',
-            titleColor: '#ffffff',
-            descColor: 'rgba(255, 255, 255, 0.65)',
-            itemBg: 'rgba(255, 255, 255, 0.08)',
-            itemTitleColor: '#e9fbff',
-            itemDescColor: 'rgba(255, 255, 255, 0.55)',
-            itemBorderColor: 'rgba(0, 255, 255, 0.3)',
-            itemBorderStyle: 'solid',
-            itemBorderWidth: '1px',
-            itemRadius: '12px',
-            upColor: '#ff69b4',
-            downColor: '#00ffff',
-            btnBg: 'linear-gradient(90deg, #ff00ff, #7c3aed)',
-            btnColor: '#ffffff',
-            btnRadius: '999px',
-            btnBorderColor: 'rgba(255, 255, 255, 0.6)',
-            btnBorderStyle: 'solid',
-            btnBorderWidth: '1px',
-            btnFontFamily: "'Fragment Mono', monospace",
-            btnShadow: '0 0 16px rgba(255, 0, 255, 0.5)',
-            tagBg: 'rgba(0, 255, 255, 0.15)',
-            tagColor: '#00ffff',
-            tagFontFamily: "'Fragment Mono', monospace",
-            tagBorderColor: 'rgba(0, 255, 255, 0.5)',
-            tagBorderStyle: 'solid',
-            tagBorderWidth: '1px',
-            tagRadius: '999px',
-        },
-    },
-    {
         "id": "modern-gradient",
         "name": "现代渐变风",
         "desc": "Modern Gradient · 多彩玻璃态与动态光影",
@@ -833,48 +791,6 @@ export const THEME_PACKS = [
             tagColor: '#7C5CFF',
             tagFontFamily: "'JetBrains Mono', monospace",
             tagBorderColor: 'rgba(124, 92, 255, 0.3)',
-            tagBorderStyle: 'solid',
-            tagBorderWidth: '1px',
-            tagRadius: '999px',
-        },
-    },
-    {
-        id: 'pastel-ui',
-        name: '粉彩应用风',
-        desc: 'Pastel App UI · 暖奶油底色与温润粉彩',
-        source: '自定义',
-        tokens: {
-            pageBg: '#fff8f0',
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-            numberFontFamily: "'JetBrains Mono', monospace",
-            cardBg: 'rgba(255, 255, 255, 0.8)',
-            cardBorderColor: '#66508f',
-            cardBorderWidth: '1px',
-            cardRadius: '24px',
-            cardShadow: '0 8px 24px rgba(102, 80, 143, 0.08)',
-            titleColor: '#66508f',
-            descColor: '#332d3d',
-            itemBg: '#d9c7ff',
-            itemTitleColor: '#66508f',
-            itemDescColor: '#332d3d',
-            itemBorderColor: '#66508f',
-            itemBorderStyle: 'solid',
-            itemBorderWidth: '1px',
-            itemRadius: '16px',
-            upColor: '#f64825ff',
-            downColor: '#2d7553ff',
-            btnBg: '#66508f',
-            btnColor: '#ffffff',
-            btnRadius: '8px',
-            btnBorderColor: '#66508f',
-            btnBorderStyle: 'solid',
-            btnBorderWidth: '1px',
-            btnFontFamily: "'Inter', system-ui, sans-serif",
-            btnShadow: '0 4px 12px rgba(102, 80, 143, 0.15)',
-            tagBg: '#ffe49a',
-            tagColor: '#66508f',
-            tagFontFamily: "'JetBrains Mono', monospace",
-            tagBorderColor: '#66508f',
             tagBorderStyle: 'solid',
             tagBorderWidth: '1px',
             tagRadius: '999px',
@@ -1619,6 +1535,351 @@ export const THEME_PACKS = [
         aiBadgeColor: '#DDD6FE',
         sectionTitleWeight: '700',
         dataValueWeight: '600',
+    },
+},
+{
+    id: 'light-blue-glass-finance',
+    name: '浅蓝琉璃金融',
+    desc: 'Light Blue Glass Finance · 高明度天蓝背景 + 白色磨砂玻璃卡片 + 柔和投影',
+    source: '#uploaded-image-15',
+    tokens: {
+        // ✨ 核心背景：纯净的高明度天蓝色，模拟晴朗天空或清澈水面
+        pageBg: 'linear-gradient(180deg, #60A5FA 0%, #3B82F6 100%)', // 从浅天蓝到标准蓝的微妙渐变
+        
+        fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
+        numberFontFamily: "'DIN Alternate', 'SF Mono', monospace",
+        
+        // ✨ 玻璃卡片系统：关键是用白色低透明度 + 强模糊 + 白色边框高光
+        cardBg: 'rgba(255, 255, 255, 0.65)', // 较高的白色透明度，保证内容清晰
+        cardBorderColor: 'rgba(255, 255, 255, 0.4)', // 明显的白色边框，模拟玻璃边缘反光
+        cardBorderWidth: '1px',
+        cardRadius: '24px',
+        // 阴影要柔和且偏冷色调，模拟自然光下的投影
+        cardShadow: '0 8px 32px rgba(31, 38, 135, 0.15)', 
+        // 关键：强烈的背景模糊，让背后的蓝色晕染开来
+        cardBackdropFilter: 'blur(16px) saturate(180%)', 
+        
+        titleColor: '#1E3A8A', // 深海军蓝，与浅蓝背景形成优雅对比，比纯黑更和谐
+        descColor: '#3B82F6',  // 标准蓝，用于次级信息
+        
+        itemBg: 'rgba(255, 255, 255, 0.4)',
+        itemTitleColor: '#1E40AF',
+        itemDescColor: '#60A5FA',
+        itemBorderColor: 'transparent',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '0px',
+        itemRadius: '16px',
+        
+        // ✨ 语义色：使用高饱和度的纯色，在浅色玻璃上依然清晰可见
+        upColor: '#EF4444',   // 鲜绿
+        downColor: '#10B981', // 鲜红
+        
+        // 按钮系统：实心白色或深蓝色，提供清晰的点击目标
+        btnBg: '#FFFFFF',
+        btnColor: '#2563EB',
+        btnRadius: '999px',
+        btnBorderColor: 'rgba(255, 255, 255, 0.5)',
+        btnBorderStyle: 'solid',
+        btnBorderWidth: '1px',
+        btnFontFamily: "'SF Pro Display', sans-serif",
+        btnShadow: '0 4px 12px rgba(37, 99, 235, 0.2)',
+        
+        tagBg: 'rgba(255, 255, 255, 0.5)',
+        tagColor: '#1E40AF',
+        tagFontFamily: "'SF Pro Display', sans-serif",
+        tagBorderColor: 'rgba(255, 255, 255, 0.3)',
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '1px',
+        tagRadius: '8px',
+        
+        // 特有图表 Tokens
+        chartRingOrange: '#FB923C', // 橙色环
+        chartRingYellow: '#FCD34D', // 黄色环
+        chartRingGreen: '#86EFAC',  // 绿色环
+        chartLineMini: 'rgba(255, 255, 255, 0.6)', // 迷你波形图用半透明白
+        
+        navActiveBg: 'rgba(255, 255, 255, 0.3)',
+        navActiveColor: '#1E3A8A',
+        navInactiveColor: 'rgba(255, 255, 255, 0.6)',
+        
+        tooltipBg: 'rgba(255, 255, 255, 0.9)',
+        tooltipColor: '#1E3A8A',
+        tooltipBorder: '1px solid rgba(255, 255, 255, 0.5)',
+        
+        sectionTitleWeight: '600',
+        dataValueWeight: '700',
+        
+        // 动画：轻微的浮动，模拟失重感
+        pulseAnimation: 'animation: float-glass 3s ease-in-out infinite',
+    },
+},
+{
+    id: 'lumina-wellness-dashboard',
+    name: 'Lumina 暖光健康',
+    desc: 'Lumina Wellness · 奶油蜜桃暖调渐变 + 柔光玻璃卡片 + 治愈系圆角数据流',
+    source: '#uploaded-image-16',
+    tokens: {
+        // ✨ 核心背景：从奶油杏到蜜桃粉的暖调渐变，模拟清晨柔光或肌肤质感
+        pageBg: 'linear-gradient(135deg, #FDE68A 0%, #FCA5A5 50%, #F9A8D4 100%)',
+        
+        fontFamily: "'Nunito', 'Quicksand', 'SF Pro Rounded', sans-serif", // 优先使用圆润字体
+        numberFontFamily: "'DM Sans', 'Inter', sans-serif",
+        
+        // ✨ 柔光玻璃卡片：极高透明度白光 + 柔和投影，像一层薄纱覆盖在暖色背景上
+        cardBg: 'rgba(255, 255, 255, 0.72)',
+        cardBorderColor: 'rgba(255, 255, 255, 0.5)',
+        cardBorderWidth: '1px',
+        cardRadius: '28px',
+        cardShadow: '0 8px 32px rgba(249, 168, 212, 0.2)', // 阴影带粉色环境光
+        cardBackdropFilter: 'blur(20px) saturate(150%)',
+        
+        titleColor: '#78350F', // 深琥珀棕，比黑色更温暖和谐
+        descColor: '#B45309',  // 中琥珀色，用于次级文本
+        
+        itemBg: 'rgba(255, 255, 255, 0.5)',
+        itemTitleColor: '#92400E',
+        itemDescColor: '#D97706',
+        itemBorderColor: 'transparent',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '0px',
+        itemRadius: '20px',
+        
+        // ✨ 治愈系语义色：低饱和度暖色调，避免刺眼的纯红纯绿
+        upColor: '#F43F5E',   // 薄荷绿：正向指标（心率正常、步数达标）
+        downColor: '#10B981', // 玫瑰红：警示指标（睡眠不足、压力过高）
+        
+        // 按钮系统：暖色渐变实心按钮，呼应背景
+        btnBg: 'linear-gradient(135deg, #FB923C 0%, #F472B6 100%)',
+        btnColor: '#FFFFFF',
+        btnRadius: '999px',
+        btnBorderColor: 'rgba(255, 255, 255, 0.3)',
+        btnBorderStyle: 'solid',
+        btnBorderWidth: '1px',
+        btnFontFamily: "'Nunito', sans-serif",
+        btnShadow: '0 4px 16px rgba(244, 114, 182, 0.3)',
+        
+        tagBg: 'rgba(251, 146, 60, 0.15)',
+        tagColor: '#C2410C',
+        tagFontFamily: "'Nunito', sans-serif",
+        tagBorderColor: 'transparent',
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '0px',
+        tagRadius: '12px',
+        
+        // 特有健康数据 Tokens
+        heartRateLine: '#F43F5E',
+        sleepBarDeep: '#6366F1',   // 靛蓝：深度睡眠
+        sleepBarLight: '#A5B4FC',  // 浅靛蓝：浅睡
+        sleepBarRem: '#FDE68A',    // 暖黄：REM睡眠
+        stepProgressFill: '#10B981',
+        stepProgressBg: 'rgba(255, 255, 255, 0.4)',
+        calorieRing: '#FB923C',
+        waterDropColor: '#38BDF8', // 天蓝：水分摄入
+        
+        navActiveBg: 'rgba(255, 255, 255, 0.4)',
+        navActiveColor: '#78350F',
+        navInactiveColor: 'rgba(120, 53, 15, 0.5)',
+        
+        tooltipBg: 'rgba(255, 255, 255, 0.9)',
+        tooltipColor: '#78350F',
+        tooltipBorder: '1px solid rgba(255, 255, 255, 0.6)',
+        
+        sectionTitleWeight: '700',
+        dataValueWeight: '600',
+        
+        // 动画：轻柔的呼吸感，模拟生命律动
+        pulseAnimation: 'animation: breathe-warm 3s ease-in-out infinite',
+    },
+},
+{
+    id: 'dark-industrial-monitor',
+    name: '暗黑工业监控',
+    desc: 'Dark Industrial Monitor · 深空灰蓝背景 + 高亮橙红警示 + 高密度数据网格',
+    source: '#uploaded-image-17',
+    tokens: {
+        // ✨ 核心背景：极深的蓝灰色，模拟夜间控制中心或工业屏幕
+        pageBg: '#0F172A', // 深空灰蓝，比纯黑更有质感
+        
+        fontFamily: "'JetBrains Mono', 'SF Mono', 'Consolas', monospace", // 等宽字体，强调数据精确性
+        numberFontFamily: "'JetBrains Mono', 'DIN Alternate', monospace",
+        
+        // 卡片系统：半透明深色玻璃，边缘有微弱高光
+        cardBg: 'rgba(30, 41, 59, 0.6)',
+        cardBorderColor: 'rgba(255, 255, 255, 0.08)',
+        cardBorderWidth: '1px',
+        cardRadius: '8px', // 小圆角，体现工业严谨感
+        cardShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
+        cardBackdropFilter: 'blur(12px)',
+        
+        titleColor: '#E2E8F0', // 浅灰白，保证可读性
+        descColor: '#94A3B8',  // 中灰，用于次要信息
+        
+        itemBg: 'rgba(15, 23, 42, 0.5)',
+        itemTitleColor: '#F1F5F9',
+        itemDescColor: '#64748B',
+        itemBorderColor: 'rgba(255, 255, 255, 0.05)',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '1px',
+        itemRadius: '6px',
+        
+        // ✨ 核心语义色：高饱和度橙红，用于警示、选中、关键操作
+        upColor: '#F97316',   // 亮橙色：正常但需关注的数据
+        downColor: '#EF4444', // 鲜红色：严重警告、停机、损失
+        
+        // 按钮系统：实心橙红按钮，强烈的行动号召
+        btnBg: '#F97316',
+        btnColor: '#FFFFFF',
+        btnRadius: '6px',
+        btnBorderColor: 'transparent',
+        btnBorderStyle: 'solid',
+        btnBorderWidth: '0px',
+        btnFontFamily: "'Inter', sans-serif",
+        btnShadow: '0 4px 12px rgba(249, 115, 22, 0.4)',
+        
+        tagBg: 'rgba(249, 115, 22, 0.15)',
+        tagColor: '#FB923C',
+        tagFontFamily: "'JetBrains Mono', monospace",
+        tagBorderColor: 'rgba(249, 115, 22, 0.3)',
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '1px',
+        tagRadius: '4px',
+        
+        // 特有工业监控 Tokens
+        heatmapNormal: 'rgba(59, 130, 246, 0.1)', // 蓝色：正常运行
+        heatmapWarning: 'rgba(249, 115, 22, 0.3)', // 橙色：预警
+        heatmapCritical: 'rgba(239, 68, 68, 0.8)', // 红色：故障/停机
+        chartLineOrange: '#F97316',
+        chartGridColor: 'rgba(255, 255, 255, 0.05)',
+        
+        selectionBoxBorder: '#F97316', // 选中区域的边框色
+        selectionBoxFill: 'rgba(249, 115, 22, 0.1)',
+        
+        navActiveBg: 'rgba(249, 115, 22, 0.2)',
+        navActiveColor: '#F97316',
+        navInactiveColor: '#64748B',
+        
+        tooltipBg: 'rgba(15, 23, 42, 0.95)',
+        tooltipColor: '#F1F5F9',
+        tooltipBorder: '1px solid rgba(249, 115, 22, 0.3)',
+        
+        sectionTitleWeight: '600',
+        dataValueWeight: '700',
+        
+        pulseAnimation: 'animation: alert-pulse 1.5s infinite', // 关键警报闪烁
+    },
+},
+{
+    id: 'neon-casino-witch',
+    name: '霓虹魔女赌场',
+    desc: 'Neon Casino Witch · 粉黑渐变 + 金紫橙撞色 + 动漫角色',
+    source: '提取自上传图片',
+    tokens: {
+        // ========== 页面背景 ==========
+        pageBg: '#0A0014', // 深紫黑底，带微粉光晕
+
+        // ========== 字体 ==========
+        fontFamily: "'Bebas Neue', 'Orbitron', 'Noto Sans SC', sans-serif",
+        numberFontFamily: "'Share Tech Mono', monospace",
+
+        // ========== 卡片样式 ==========
+        cardBg: 'rgba(255, 0, 128, 0.08)', // 半透明粉红玻璃感
+        cardBorderColor: 'rgba(255, 0, 128, 0.3)',
+        cardBorderWidth: '1.5px',
+        cardRadius: '16px',
+        cardShadow: '0 0 20px rgba(255, 0, 128, 0.4), inset 0 0 10px rgba(255, 0, 128, 0.1)',
+
+        // ========== 标题/描述 ==========
+        titleColor: '#FFD700', // 金色标题
+        descColor: 'rgba(255, 255, 255, 0.7)',
+
+        // ========== 子项样式 ==========
+        itemBg: 'rgba(138, 43, 226, 0.1)', // 紫色半透明底
+        itemTitleColor: '#FFFFFF',
+        itemDescColor: 'rgba(255, 255, 255, 0.6)',
+        itemBorderColor: 'rgba(255, 0, 128, 0.2)',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '1px',
+        itemRadius: '12px',
+
+        // ========== 涨跌颜色（A股标准：红涨绿跌）==========
+        upColor: '#FF0055', // 霓虹玫红（涨）
+        downColor: '#00FF99', // 荧光青绿（跌）
+
+        // ========== 按钮样式 ==========
+        btnBg: '#FF0080', // 主按钮：亮粉色
+        btnColor: '#FFFFFF',
+        btnRadius: '999px',
+        btnBorderColor: '#FF0080',
+        btnBorderStyle: 'solid',
+        btnBorderWidth: '2px',
+        btnFontFamily: "'Bebas Neue', sans-serif",
+        btnShadow: '0 0 15px rgba(255, 0, 128, 0.6), 0 4px 0 rgba(255, 0, 128, 0.8)',
+
+        // ========== 标签样式 ==========
+        tagBg: 'rgba(255, 215, 0, 0.15)', // 金色半透明
+        tagColor: '#FFD700',
+        tagFontFamily: "'Share Tech Mono', monospace",
+        tagBorderColor: 'rgba(255, 215, 0, 0.4)',
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '1px',
+        tagRadius: '6px',
+    },
+},
+{
+    id: 'royal-night-casino',
+    name: '皇家暗夜赌场',
+    desc: 'Royal Night Casino · 藏青渐变底 + 金紫绿撞色 + 宝石质感',
+    source: '提取自上传图片',
+    tokens: {
+        // ========== 页面背景 ==========
+        pageBg: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #0F172A 100%)', // 藏青→深蓝→藏青渐变
+
+        // ========== 字体 ==========
+        fontFamily: "'Cinzel', 'Playfair Display', 'Noto Sans SC', serif",
+        numberFontFamily: "'Orbitron', monospace",
+
+        // ========== 卡片样式 ==========
+        cardBg: 'rgba(255, 255, 255, 0.04)',
+        cardBorderColor: 'rgba(255, 215, 0, 0.3)',
+        cardBorderWidth: '1.5px',
+        cardRadius: '16px',
+        cardShadow: '0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(255, 215, 0, 0.05)',
+
+        // ========== 标题/描述 ==========
+        titleColor: '#FFD700', // 皇家金
+        descColor: 'rgba(255, 255, 255, 0.65)',
+
+        // ========== 子项样式 ==========
+        itemBg: 'rgba(138, 43, 226, 0.08)', // 紫色半透明底
+        itemTitleColor: '#FFFFFF',
+        itemDescColor: 'rgba(255, 255, 255, 0.55)',
+        itemBorderColor: 'rgba(138, 43, 226, 0.25)',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '1px',
+        itemRadius: '12px',
+
+        // ========== 涨跌颜色（A股标准：红涨绿跌）==========
+        upColor: '#FF4D4D', // 暖红（涨）
+        downColor: '#00E676', // 荧光绿（跌）
+
+        // ========== 按钮样式 ==========
+        btnBg: '#FFD700', // 金色主按钮
+        btnColor: '#0F172A',
+        btnRadius: '999px',
+        btnBorderColor: '#FFD700',
+        btnBorderStyle: 'solid',
+        btnBorderWidth: '2px',
+        btnFontFamily: "'Cinzel', serif",
+        btnShadow: '0 4px 20px rgba(255, 215, 0, 0.4), 0 2px 0 rgba(255, 215, 0, 0.8)',
+
+        // ========== 标签样式 ==========
+        tagBg: 'rgba(0, 255, 136, 0.12)', // 绿色半透明
+        tagColor: '#00E676',
+        tagFontFamily: "'Orbitron', monospace",
+        tagBorderColor: 'rgba(0, 255, 136, 0.3)',
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '1px',
+        tagRadius: '6px',
     },
 }
 
