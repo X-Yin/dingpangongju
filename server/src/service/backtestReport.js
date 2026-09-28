@@ -36,6 +36,26 @@ const getDefaultReportRange = () => {
   return { startDate, endDate };
 };
 
+// 策略趋势诊断三档时间范围（交易日数，均为「最近 N 个可用回放交易日」）：
+// default = 默认范围（与 getDefaultReportRange 口径一致），d30/d15 = 最近 30/15 个交易日
+const TREND_RANGES = [
+  { key: 'default', label: '默认范围', days: REPORT_DAYS },
+  { key: 'd30', label: '30交易日', days: 30 },
+  { key: 'd15', label: '15交易日', days: 15 },
+];
+
+// 策略趋势诊断的具体日期范围列表（以最新可用回放交易日为共同 endDate，回测与报告共用同一口径）
+const getTrendDiagnosisRanges = () => {
+  const sorted = [...getTrainingCampDates()].sort();
+  if (sorted.length === 0) return [];
+  const endDate = sorted[sorted.length - 1];
+  return TREND_RANGES.map(t => ({
+    ...t,
+    startDate: sorted[Math.max(0, sorted.length - t.days)],
+    endDate,
+  }));
+};
+
 // 扫描现有回测缓存，找出被当前所有常规策略共享的日期范围（用于无报告时从缓存快速生成）
 const getCommonCachedRange = () => {
   try {
@@ -74,7 +94,9 @@ const getStrategyResult = async (strategyId, startDate, endDate, fromCacheOnly) 
 };
 
 // 生成一份回测报告（可持久化）
-const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onProgress } = {}) => {
+// forceRange=true 时强制全部策略（含情绪游资/三日情绪冰点）使用传入日期范围（策略趋势诊断用）；
+// save=false 时仅返回报告不写入报告历史（策略趋势诊断的三份报告不入常规报告历史）
+const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onProgress, forceRange = false, save = true } = {}) => {
   const range = (startDate && endDate) ? { startDate, endDate } : getDefaultReportRange();
   if (!range) return { success: false, message: '无可用回放交易日' };
 
@@ -85,20 +107,20 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
 
   // 情绪游资策略不依赖后端回放缓存，固定回测最近 60 个已完结交易日（与其他策略日期范围解耦）
   let sentimentRange = null;
-  if (ids.some(id => isSentimentStrategy(id))) {
+  if (!forceRange && ids.some(id => isSentimentStrategy(id))) {
     try { sentimentRange = await getSentimentDefaultRange(); } catch { sentimentRange = null; }
   }
   // 三日情绪冰点系列固定从 2026-07-01 开始回测（与其他策略日期范围解耦）
   let emo3Range = null;
-  if (ids.some(id => isEmo3AvgStrategy(id))) {
+  if (!forceRange && ids.some(id => isEmo3AvgStrategy(id))) {
     try { emo3Range = getEmo3DefaultRange(); } catch { emo3Range = null; }
   }
 
   for (let i = 0; i < total; i++) {
     const id = ids[i];
-    const stRange = (isSentimentStrategy(id) && sentimentRange)
+    const stRange = !forceRange && (isSentimentStrategy(id) && sentimentRange)
       ? sentimentRange
-      : (isEmo3AvgStrategy(id) && emo3Range)
+      : !forceRange && (isEmo3AvgStrategy(id) && emo3Range)
         ? emo3Range
         : range;
     if (onProgress) onProgress({ current: i, total, strategy: STRATEGIES[id].name, status: 'running' });
@@ -186,7 +208,7 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
     generatedFromCache: fromCacheOnly,
     strategies,
   };
-  saveReport(report);
+  if (save) saveReport(report);
   return { success: true, report };
 };
 
@@ -261,6 +283,7 @@ module.exports = {
   generateReport,
   ensureLatestReport,
   getDefaultReportRange,
+  getTrendDiagnosisRanges,
   getLatestReport,
   getReportById,
   listReports,

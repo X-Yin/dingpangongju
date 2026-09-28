@@ -7,6 +7,7 @@
 //   node script/backtest-worker.js                 默认：清空缓存 → 预热K线 → 8 进程强制并行跑全部策略 → 自动汇总生成回测报告（实时进度看板）
 //   node script/backtest-worker.js --list          查看分组与日期范围
 //   node script/backtest-worker.js --aggregate     仅按当前缓存汇总生成回测报告（不清缓存、不回测）
+//   node script/backtest-worker.js --trend         策略趋势诊断：三档时间范围（默认60/30/15个交易日）依次补测缺失缓存的全部策略（不清缓存）
 //   node script/backtest-worker.js --workers 3     指定并行进程数（默认 8）
 // 可选参数：
 //   --start YYYYMMDD --end YYYYMMDD   指定日期范围（常规策略默认最近 60 个交易日；情绪游资策略未显式指定时固定用最近 60 个已完结交易日）
@@ -17,9 +18,9 @@
 //   --child --strategies ...          内部参数：由父进程 fork 调用，进度经 IPC 上报，请勿手动使用
 const fs = require('fs');
 const path = require('path');
-const { STRATEGIES, runRangeBacktestMulti, writeCachedBacktest, isSentimentStrategy, getSentimentDefaultRange, isEmo3AvgStrategy, getEmo3DefaultRange } = require('../src/service/buySellBacktest');
+const { STRATEGIES, runRangeBacktestMulti, writeCachedBacktest, readCachedBacktest, isSentimentStrategy, getSentimentDefaultRange, isEmo3AvgStrategy, getEmo3DefaultRange } = require('../src/service/buySellBacktest');
 const { loadTrainingCampData, getTrainingCampDates, beijingToday, prewarmKlineCache } = require('../src/service/trainingCamp');
-const { generateReport, getDefaultReportRange } = require('../src/service/backtestReport');
+const { generateReport, getDefaultReportRange, getTrendDiagnosisRanges } = require('../src/service/backtestReport');
 const { fork } = require('child_process');
 
 // 解析命令行参数
@@ -29,6 +30,7 @@ const parseArgs = (argv) => {
     const a = argv[i];
     if (a === '--list') args.list = true;
     else if (a === '--aggregate') args.aggregate = true;
+    else if (a === '--trend') args.trend = true;
     else if (a === '--run-missing') args.runMissing = true;
     else if (a === '--build-dates') args.buildDates = String(argv[++i]).split(',').map(s => s.trim()).filter(Boolean);
     else if (a === '--child') args.child = true;
@@ -239,6 +241,40 @@ const runPrebuild = (dates, workerCount) => new Promise((resolve) => {
     });
   });
 });
+
+// ===== 策略趋势诊断模式（--trend）：按三档固定范围（默认60/30/15个交易日）依次回测全部策略 =====
+// 不清空缓存：已有「策略+精确范围」缓存的策略直接跳过，只补测缺失的；回放数据预构建跨范围共享。
+// 范围口径由 getTrendDiagnosisRanges 统一提供，服务端在 worker 结束后据此从缓存汇总三份报告
+const runTrend = async (workerCount) => {
+  const ranges = getTrendDiagnosisRanges();
+  if (ranges.length === 0) throw new Error('无可用回放交易日，无法确定策略趋势诊断日期范围');
+  const allIds = Object.keys(STRATEGIES);
+  // 预热日K线文件缓存（跨进程共享，多范围回测共用一份）
+  try {
+    const t0 = Date.now();
+    const warmed = await prewarmKlineCache();
+    console.log(`日K线文件缓存预热完成: ${warmed.total - warmed.fetched} 命中 / ${warmed.fetched} 新拉取（${((Date.now() - t0) / 1000).toFixed(1)}s）`);
+  } catch (e) {
+    console.error(`日K线预热失败（不影响后续流程，子进程将自行拉取）: ${e.message}`);
+  }
+  for (const r of ranges) {
+    const missing = allIds.filter(id => !readCachedBacktest(id, r.startDate, r.endDate));
+    console.log(`\n[${ts()}] 策略趋势诊断【${r.label}】${r.startDate} ~ ${r.endDate}（最近 ${r.days} 个交易日）：策略 ${allIds.length} 个，缺失缓存 ${missing.length} 个`);
+    if (missing.length === 0) {
+      console.log(`[${ts()}] 该范围全部策略已有缓存，跳过回测`);
+      continue;
+    }
+    // 常规/三日情绪冰点策略依赖回放数据缓存，先预构建（情绪游资不依赖；全部缺失策略均为情绪游资时跳过）
+    const needReplay = missing.some(id => !isSentimentStrategy(id));
+    if (needReplay) {
+      const buildDates = getTrainingCampDates().filter(d => d >= r.startDate && d <= r.endDate && d < beijingToday()).sort();
+      await runPrebuild(buildDates, workerCount);
+    }
+    const exitCode = await runParallel(buildGroups(missing, workerCount), r.startDate, r.endDate);
+    if (exitCode !== 0) process.exitCode = exitCode;
+  }
+  console.log(`\n[${ts()}] 策略趋势诊断三档范围回测全部完成`);
+};
 
 // ===== 并行模式：fork 多个子进程，终端实时看板展示各线程进度 =====
 const runParallel = (groups, startDate, endDate) => new Promise((resolve) => {
@@ -476,6 +512,13 @@ const main = async () => {
 
   if (args.aggregate) {
     await aggregate(startDate, endDate, args.runMissing);
+    return;
+  }
+
+  // 策略趋势诊断模式：三档时间范围（默认60/30/15个交易日）依次补测缺失缓存的全部策略
+  // （不清缓存、不生成常规报告；服务端在 worker 结束后从缓存汇总三份报告）
+  if (args.trend) {
+    await runTrend(workerCount);
     return;
   }
 

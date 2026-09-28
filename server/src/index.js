@@ -100,7 +100,7 @@ const { getMainFundAiSummary, getMainFundAiContext } = require('./service/mainFu
 const { getAllGroups: getAllIndexOverlayGroups, saveGroup: saveIndexOverlayGroup, deleteGroup: deleteIndexOverlayGroup } = require('./service/indexOverlayGroup');
 const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup } = require('./service/trainingCamp');
 const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, getSentimentDefaultRange, attachHoldingDays } = require('./service/buySellBacktest');
-const { generateReport, ensureLatestReport, getReportById, listReports } = require('./service/backtestReport');
+const { generateReport, ensureLatestReport, getReportById, listReports, getTrendDiagnosisRanges } = require('./service/backtestReport');
 const { getAttackDefenseScore } = require('./service/attackDefenseScore');
 const feishuNotify = require('./service/feishuNotify');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
@@ -2392,6 +2392,9 @@ app.post('/training_camp/backtest/worker', (req, res) => {
     if (backtestWorkerJob.status === 'running') {
       return res.json({ success: true, running: true, startedAt: backtestWorkerJob.startedAt, message: '全量回测已在进行中' });
     }
+    if (trendDiagnosisJob.status === 'running') {
+      return res.json({ success: false, message: '策略趋势诊断正在进行中，请等待其完成后再全量回测' });
+    }
     const { startDate, endDate } = req.body || {};
     const args = [path.join(__dirname, '../script/backtest-worker.js')];
     if (startDate && endDate) {
@@ -2459,6 +2462,117 @@ app.get('/training_camp/backtest/worker/status', (req, res) => {
     endedAt: backtestWorkerJob.endedAt,
     exitCode: backtestWorkerJob.exitCode,
     logs: backtestWorkerJob.logTail.slice(-30),
+  });
+});
+
+// ---------- 买卖点回测 - 策略趋势诊断（三档时间范围[默认60/30/15个交易日] × 全部策略） ----------
+// 复用 backtest-worker.js --trend 模式：不清缓存，逐范围补测缺失缓存的策略；
+// worker 结束后服务端从回测缓存汇总三份报告（generateReport forceRange+fromCacheOnly，不入常规报告历史）
+const trendDiagnosisJob = { status: 'idle', startedAt: null, endedAt: null, exitCode: null, logTail: [], result: null, error: null };
+
+// 从回测缓存汇总三档范围的策略趋势诊断报告（worker 结束后调用）
+const buildTrendDiagnosisResult = async () => {
+  const ranges = getTrendDiagnosisRanges();
+  if (ranges.length === 0) throw new Error('无可用回放交易日，无法汇总策略趋势诊断报告');
+  const out = [];
+  for (const r of ranges) {
+    const res = await generateReport({
+      startDate: r.startDate,
+      endDate: r.endDate,
+      fromCacheOnly: true, // 只读回测缓存（worker 刚补测完成）
+      forceRange: true, // 全部策略（含情绪游资/三日情绪冰点）强制使用同一范围
+      save: false, // 诊断报告不写入常规回测报告历史
+    });
+    out.push({
+      key: r.key,
+      label: r.label,
+      days: r.days,
+      startDate: r.startDate,
+      endDate: r.endDate,
+      report: res.success ? res.report : null,
+      message: res.success ? null : (res.message || '报告生成失败'),
+    });
+  }
+  return { generatedAt: new Date().toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' }), ranges: out };
+};
+
+app.post('/training_camp/backtest/trend_diagnosis', (req, res) => {
+  try {
+    if (trendDiagnosisJob.status === 'running') {
+      return res.json({ success: true, running: true, startedAt: trendDiagnosisJob.startedAt, message: '策略趋势诊断已在进行中' });
+    }
+    if (backtestWorkerJob.status === 'running') {
+      return res.json({ success: false, message: '全量回测正在进行中，请等待其完成后再诊断' });
+    }
+    trendDiagnosisJob.status = 'running';
+    trendDiagnosisJob.startedAt = Date.now();
+    trendDiagnosisJob.endedAt = null;
+    trendDiagnosisJob.exitCode = null;
+    trendDiagnosisJob.logTail = [];
+    trendDiagnosisJob.error = null; // 保留旧 result：重跑期间前端仍可查看上一次诊断结果
+    const args = [path.join(__dirname, '../script/backtest-worker.js'), '--trend'];
+    const child = spawn(process.execPath, args, { cwd: path.join(__dirname, '..'), stdio: ['ignore', 'pipe', 'pipe'] });
+    const pushLog = (line) => {
+      const t = String(line || '').trim();
+      if (!t) return;
+      trendDiagnosisJob.logTail.push(`[${new Date().toLocaleTimeString('zh-CN', { hour12: false })}] ${t}`);
+      if (trendDiagnosisJob.logTail.length > BACKTEST_WORKER_LOG_MAX) trendDiagnosisJob.logTail.shift();
+    };
+    let outBuf = '';
+    let errBuf = '';
+    child.stdout.on('data', (d) => {
+      outBuf += String(d);
+      const lines = outBuf.split('\n');
+      outBuf = lines.pop() || '';
+      lines.forEach(pushLog);
+    });
+    child.stderr.on('data', (d) => {
+      errBuf += String(d);
+      const lines = errBuf.split('\n');
+      errBuf = lines.pop() || '';
+      lines.forEach(pushLog);
+    });
+    child.on('error', (err) => {
+      trendDiagnosisJob.status = 'error';
+      trendDiagnosisJob.endedAt = Date.now();
+      trendDiagnosisJob.exitCode = -1;
+      trendDiagnosisJob.error = `策略趋势诊断 worker 启动失败: ${err.message}`;
+      pushLog(trendDiagnosisJob.error);
+    });
+    child.on('exit', (code) => {
+      if (outBuf.trim()) pushLog(outBuf);
+      if (errBuf.trim()) pushLog(errBuf);
+      trendDiagnosisJob.endedAt = Date.now();
+      trendDiagnosisJob.exitCode = code;
+      console.log(`策略趋势诊断 worker 结束（code=${code}，耗时 ${((Date.now() - trendDiagnosisJob.startedAt) / 1000).toFixed(1)}s）`);
+      // worker 结束后从回测缓存汇总三档范围的报告（构建失败不影响 status error 语义）
+      buildTrendDiagnosisResult().then((result) => {
+        trendDiagnosisJob.result = result;
+        trendDiagnosisJob.status = code === 0 ? 'done' : 'error';
+        if (code !== 0) trendDiagnosisJob.error = `策略趋势诊断部分策略回测失败（code=${code}），已汇总可用的缓存结果`;
+      }).catch((err) => {
+        trendDiagnosisJob.status = 'error';
+        trendDiagnosisJob.error = err.message || String(err);
+      });
+    });
+    console.log('策略趋势诊断 worker 已启动: node script/backtest-worker.js --trend');
+    res.json({ success: true, running: true, startedAt: trendDiagnosisJob.startedAt });
+  } catch (error) {
+    console.error('启动策略趋势诊断失败:', error);
+    res.status(500).json({ success: false, message: error.message || '启动策略趋势诊断失败' });
+  }
+});
+
+app.get('/training_camp/backtest/trend_diagnosis/status', (req, res) => {
+  res.json({
+    success: true,
+    status: trendDiagnosisJob.status, // idle | running | done | error
+    startedAt: trendDiagnosisJob.startedAt,
+    endedAt: trendDiagnosisJob.endedAt,
+    exitCode: trendDiagnosisJob.exitCode,
+    logs: trendDiagnosisJob.logTail.slice(-30),
+    result: trendDiagnosisJob.result,
+    error: trendDiagnosisJob.error,
   });
 });
 

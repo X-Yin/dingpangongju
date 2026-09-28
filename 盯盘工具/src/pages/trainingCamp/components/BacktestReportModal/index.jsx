@@ -84,8 +84,8 @@ const BuyReasonTag = ({ reason, checks }) => {
   );
 };
 
-// 单个策略卡片：概览汇总 + 每一笔交易明细
-const StrategyCard = ({ strategy, rank }) => {
+// 单个策略卡片：概览汇总 + 每一笔交易明细（导出供策略趋势诊断弹窗复用同一报告格式）
+export const StrategyCard = ({ strategy, rank }) => {
   const s = strategy.summary || {};
   const hasTrades = (strategy.trades || []).length > 0 || strategy.currentHolding;
 

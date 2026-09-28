@@ -4,6 +4,7 @@ import {
   CopyOutlined,
   StopOutlined,
   BarChartOutlined,
+  LineChartOutlined,
   RiseOutlined,
   FallOutlined,
   ThunderboltOutlined,
@@ -13,6 +14,7 @@ import dayjs from 'dayjs';
 import axios from 'axios';
 import { local_ip } from '../../../../constant';
 import BacktestReportModal from '../BacktestReportModal';
+import TrendDiagnosisModal from '../TrendDiagnosisModal';
 
 // 回测最早支持日期（早于此日期无回放数据）
 const EARLIEST_DATE = '20260803';
@@ -255,6 +257,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const [strategy, setStrategy] = useState('highest_gain');
   const [sentimentRange, setSentimentRange] = useState(null); // 情绪游资默认日期范围 [dayjs, dayjs]（最近 60 个已完结交易日）
   const [reportOpen, setReportOpen] = useState(false);
+  const [trendOpen, setTrendOpen] = useState(false); // 策略趋势诊断弹窗（三档时间范围 × 全部策略）
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(null); // { current, total, date, status }
   const [result, setResult] = useState(null);
@@ -656,6 +659,14 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
           >
             回测报告
           </Button>
+          <Button
+            size="small"
+            icon={<LineChartOutlined />}
+            onClick={() => setTrendOpen(true)}
+            style={{ marginLeft: 12, borderRadius: 999 }}
+          >
+            策略趋势诊断
+          </Button>
           {result && !running ? (
             <Button
               size="small"
@@ -1006,6 +1017,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       ) : null}
 
       <BacktestReportModal open={reportOpen} onClose={() => setReportOpen(false)} />
+      <TrendDiagnosisModal open={trendOpen} onClose={() => setTrendOpen(false)} />
     </Drawer>
   );
 };
