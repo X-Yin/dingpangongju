@@ -288,6 +288,11 @@ exports.getAllIndexKlineData = getAllIndexKlineData;
 
 // 定义计算科技指数的成分股
 const updateCurrentTechIndexData = async () => {
+    // 非交易日（周末/节假日，以交易日历为准）不写入 tech_index.json，直接返回已有最新值
+    if (tradingDayUtil.isNonTradingDay(new Date())) {
+        console.log('非交易日，跳过科技情绪日数据写入');
+        return getLatestTechEmotion();
+    }
     const monitorStocks = getMonitorStocks();
     const stockCodes = monitorStocks.filter(s => s.isTech !== false).map(s => s.code);
     const changeSumData = [];
@@ -652,6 +657,8 @@ const getLatestTechEmotion = () => {
 // 标记最新科技情绪指数日为冰点（hasIce: true）
 // 由前端分时轮询触发：当盘中分时情绪 <= -100（退潮冰点）时调用
 const markTechIndexIce = () => {
+    // 非交易日（周末/节假日，以交易日历为准）不写入
+    if (tradingDayUtil.isNonTradingDay(new Date())) return false;
     try {
         const raw = fs.readFileSync(techIndexPath, 'utf-8') || '[]';
         let rawData;

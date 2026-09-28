@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "id": "d1ef4a24fa8e0f43",
+    "time": "2026-09-28 08:53:17",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-09-28 08:53:17",
+        "title": "板块排名变化",
+        "description": "<b>金刚石散热</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">10名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">20/41</span>",
+        "path": "/block"
+      }
+    ]
+  }
+]

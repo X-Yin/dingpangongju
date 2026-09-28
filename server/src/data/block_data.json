@@ -772,7 +772,7 @@
       "name": "厦门钨业",
       "blockName": "钨",
       "code": "sh600549",
-      "change": -3.72
+      "change": -3.75
     },
     {
       "name": "鼎泰高科",
@@ -954,7 +954,7 @@
       "name": "许继电气",
       "blockName": "特高压",
       "code": "sz000400",
-      "change": -0.54
+      "change": -0.55
     }
   ],
   "CCL": [
@@ -1087,6 +1087,18 @@
       "blockName": "金刚石散热",
       "code": "sh688028",
       "change": -5.79
+    },
+    {
+      "name": "九州一轨",
+      "blockName": "金刚石散热",
+      "code": "sh688485",
+      "change": -6.31
+    },
+    {
+      "name": "国机精工",
+      "blockName": "金刚石散热",
+      "code": "sz002046",
+      "change": -3.33
     }
   ]
 }
