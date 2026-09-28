@@ -432,6 +432,11 @@ const recordTechEmotionIntraday = async () => {
 //   2. 可接收预设值，避免重复请求成分股数据
 //   3. 同一时间点去重覆盖，与轮询服务互相覆盖（以最新为准）
 const forceRecordTechEmotionIntraday = async (presetValue = null) => {
+    // 非交易日（周末/节假日，以交易日历为准）不写入，手动刷新按钮同样受限
+    if (tradingDayUtil.isNonTradingDay(new Date())) {
+        console.log('非交易日，跳过科技情绪分时数据写入');
+        return null;
+    }
     const now = dayjs();
     const today = now.format('YYYYMMDD');
     const timeLabel = now.format('HHmm');
