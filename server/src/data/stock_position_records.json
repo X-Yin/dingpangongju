@@ -1,5 +1,60 @@
 [
   {
+    "id": "1790652664572_r45916",
+    "type": "pipeline",
+    "code": "sh688082",
+    "name": "盛美上海",
+    "date": "2026-09-29",
+    "time": "11:31:04",
+    "detail": "流水线推进至 100%（100%）",
+    "pipelineStage": 4,
+    "createdAt": "2026-09-29T03:31:04.572Z"
+  },
+  {
+    "id": "1790652664096_38i7kq",
+    "type": "pipeline",
+    "code": "sh688082",
+    "name": "盛美上海",
+    "date": "2026-09-29",
+    "time": "11:31:04",
+    "detail": "流水线推进至 75%（75%）",
+    "pipelineStage": 3,
+    "createdAt": "2026-09-29T03:31:04.096Z"
+  },
+  {
+    "id": "1790652663572_1jesr5",
+    "type": "pipeline",
+    "code": "sh688082",
+    "name": "盛美上海",
+    "date": "2026-09-29",
+    "time": "11:31:03",
+    "detail": "流水线推进至 50%（50%）",
+    "pipelineStage": 2,
+    "createdAt": "2026-09-29T03:31:03.572Z"
+  },
+  {
+    "id": "1790652663186_hje140",
+    "type": "pipeline",
+    "code": "sh688082",
+    "name": "盛美上海",
+    "date": "2026-09-29",
+    "time": "11:31:03",
+    "detail": "流水线推进至 30%（30%）",
+    "pipelineStage": 1,
+    "createdAt": "2026-09-29T03:31:03.186Z"
+  },
+  {
+    "id": "1790652552091_qipxc2",
+    "type": "buy",
+    "code": "sh688082",
+    "name": "盛美上海",
+    "date": "2026-09-29",
+    "time": "11:29:12",
+    "detail": "新增持仓：盛美上海（sh688082）",
+    "pipelineStage": 0,
+    "createdAt": "2026-09-29T03:29:12.091Z"
+  },
+  {
     "id": "1790559024239_2rnsv8",
     "type": "delete",
     "code": "sz301217",

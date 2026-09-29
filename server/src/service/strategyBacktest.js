@@ -1450,7 +1450,7 @@ const runBacktest = async (dateStr, strategyIds = null, opts = {}) => {
         const f940 = findFundAtOrBefore(940);   // 9:40 快照（9:35-9:40 窗口结束）
         const a941 = findAmountAtOrBefore(941); // 9:41 时点量能快照
 
-        if (howPoints.length > 0 && f930 && f935 && f940) {
+        if (howPoints.length > 0 && f935 && f940) {
           // 条件1：指数当前价距当日最高点回落 ≤ 0.5%
           const highPx = Math.max(...howPoints.map(p => p.last_px));
           const currPx = howPoints[howPoints.length - 1].last_px;
@@ -1459,7 +1459,8 @@ const runBacktest = async (dateStr, strategyIds = null, opts = {}) => {
           const currChange = (!isNaN(howPreclose) && howPreclose > 0) ? ((currPx - howPreclose) / howPreclose) * 100 : null;
 
           // 条件2&3：资金持续净流入 + 9:30-9:35、9:35-9:40 两波净流入均≥10亿
-          const flow1 = f935.mainMoney - f930.mainMoney;
+          // 新口径快照无 9:30 桶（与盯盘页 5min 明细对齐，首桶为 9:35）：9:30-9:35 流入以 9:35 桶累计净额近似（开盘累计≈0）
+          const flow1 = f930 ? (f935.mainMoney - f930.mainMoney) : f935.mainMoney;
           const flow2 = f940.mainMoney - f935.mainMoney;
           const currMoney = f940.mainMoney;
           const netInflowOk = currMoney > 0;

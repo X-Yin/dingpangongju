@@ -746,6 +746,7 @@ const TrainingCamp = () => {
                     onVolumeRefresh={handleVolumeRefresh}
                     themeColor={null}
                     historyData={historyData}
+                    preAggregated
                     mainMoneyDetailWidth={200}
                     mainMoneyContainerRef={mainMoneyContainerRef}
                     volumeContainerRef={volumeContainerRef}

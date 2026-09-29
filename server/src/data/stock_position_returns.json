@@ -1,5 +1,32 @@
 [
   {
+    "date": "2026-09-29",
+    "operations": [
+      {
+        "id": "1790652552096_yqzn",
+        "action": "buy",
+        "stockName": "盛美上海",
+        "stockCode": "sh688082",
+        "position": "",
+        "time": "11:29"
+      },
+      {
+        "id": "1790652664581_7un6",
+        "action": "pipeline",
+        "stockName": "盛美上海",
+        "stockCode": "sh688082",
+        "position": 100,
+        "time": "11:31"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-09-29T03:29:12.121Z",
+    "updatedAt": "2026-09-29T03:31:04.595Z"
+  },
+  {
     "date": "2026-09-28",
     "operations": [
       {

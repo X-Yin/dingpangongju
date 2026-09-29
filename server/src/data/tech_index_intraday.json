@@ -1,584 +1,612 @@
 {
-  "20260928": [
+  "20260929": [
     {
-      "time": "0926",
-      "value": -18.49
+      "time": "0916",
+      "value": -36.61
     },
     {
-      "time": "0928",
-      "value": -18.49
+      "time": "0920",
+      "value": -32.29
+    },
+    {
+      "time": "0925",
+      "value": -6.72
+    },
+    {
+      "time": "0927",
+      "value": -6.72
+    },
+    {
+      "time": "0929",
+      "value": -6.72
     },
     {
       "time": "0930",
-      "value": -36.99
+      "value": -2.24
     },
     {
-      "time": "0932",
-      "value": -52.51
+      "time": "0931",
+      "value": 15.21
     },
     {
-      "time": "0934",
-      "value": -49.95
+      "time": "0933",
+      "value": 6.35
     },
     {
       "time": "0935",
-      "value": -67.85
+      "value": -0.74
     },
     {
-      "time": "0936",
-      "value": -58.18
+      "time": "0937",
+      "value": -3.74
     },
     {
-      "time": "0938",
-      "value": -80.66
+      "time": "0939",
+      "value": -4.77
     },
     {
-      "time": "0940",
-      "value": -91.41
+      "time": "0941",
+      "value": 4.71
     },
     {
-      "time": "0942",
-      "value": -86.89
-    },
-    {
-      "time": "0944",
-      "value": -91.58
+      "time": "0943",
+      "value": 3.88
     },
     {
       "time": "0945",
-      "value": -77.09
+      "value": 16.35
     },
     {
       "time": "0946",
-      "value": -90.64
+      "value": 15.83
     },
     {
-      "time": "0948",
-      "value": -90.24
+      "time": "0947",
+      "value": 17.05
     },
     {
-      "time": "0950",
-      "value": -91.86
+      "time": "0949",
+      "value": 4.78
+    },
+    {
+      "time": "0951",
+      "value": -9.05
     },
     {
       "time": "0952",
-      "value": -93.7
+      "value": 1.08
     },
     {
       "time": "0953",
-      "value": -76.4
+      "value": 7.04
     },
     {
-      "time": "0954",
-      "value": -96.94
+      "time": "0955",
+      "value": 4.11
     },
     {
       "time": "0957",
-      "value": -100
+      "value": -6.56
     },
     {
-      "time": "0956",
-      "value": -98.8
+      "time": "0959",
+      "value": -3.76
     },
     {
-      "time": "0958",
-      "value": -100
-    },
-    {
-      "time": "1000",
-      "value": -100
+      "time": "1001",
+      "value": -22.58
     },
     {
       "time": "1002",
-      "value": -100
+      "value": -17.7
     },
     {
-      "time": "1004",
-      "value": -100
+      "time": "1003",
+      "value": -22.55
     },
     {
-      "time": "1006",
-      "value": -100
+      "time": "1005",
+      "value": -25.74
     },
     {
       "time": "1007",
-      "value": -100
+      "value": -29.65
     },
     {
-      "time": "1008",
-      "value": -100
+      "time": "1009",
+      "value": -26.32
     },
     {
-      "time": "1010",
-      "value": -100
+      "time": "1011",
+      "value": -14.18
     },
     {
       "time": "1012",
-      "value": -100
+      "value": -14.32
     },
     {
-      "time": "1014",
-      "value": -100
+      "time": "1013",
+      "value": -7.27
     },
     {
-      "time": "1016",
-      "value": -100
+      "time": "1015",
+      "value": -3.39
     },
     {
-      "time": "1018",
-      "value": -100
+      "time": "1017",
+      "value": -11.14
     },
     {
-      "time": "1020",
-      "value": -100
+      "time": "1019",
+      "value": -2.73
+    },
+    {
+      "time": "1021",
+      "value": -12.73
     },
     {
       "time": "1022",
-      "value": -100
+      "value": -14.36
     },
     {
-      "time": "1024",
-      "value": -100
+      "time": "1023",
+      "value": -11.2
+    },
+    {
+      "time": "1025",
+      "value": -5.54
     },
     {
       "time": "1026",
-      "value": -100
+      "value": -5.36
     },
     {
-      "time": "1028",
-      "value": -100
+      "time": "1027",
+      "value": 3.29
     },
     {
       "time": "1029",
-      "value": -100
+      "value": 8.52
     },
     {
-      "time": "1030",
-      "value": -100
+      "time": "1031",
+      "value": 16.69
     },
     {
       "time": "1032",
-      "value": -100
+      "value": 18.24
     },
     {
-      "time": "1034",
-      "value": -100
+      "time": "1033",
+      "value": 18.14
     },
     {
-      "time": "1036",
-      "value": -100
+      "time": "1035",
+      "value": 17.6
     },
     {
-      "time": "1038",
-      "value": -100
+      "time": "1037",
+      "value": 15.41
     },
     {
       "time": "1039",
-      "value": -100
+      "value": 18.37
     },
     {
-      "time": "1040",
-      "value": -100
+      "time": "1041",
+      "value": 12.96
     },
     {
       "time": "1042",
-      "value": -100
+      "value": 14.84
     },
     {
-      "time": "1044",
-      "value": -100
+      "time": "1043",
+      "value": 18.53
     },
     {
       "time": "1045",
-      "value": -100
+      "value": 26.26
     },
     {
-      "time": "1046",
-      "value": -100
+      "time": "1047",
+      "value": 23.25
     },
     {
       "time": "1048",
-      "value": -100
+      "value": 22.57
     },
     {
-      "time": "1050",
-      "value": -100
+      "time": "1049",
+      "value": 15.57
     },
     {
       "time": "1051",
-      "value": -100
+      "value": 12.37
     },
     {
-      "time": "1052",
-      "value": -100
+      "time": "1053",
+      "value": 2.11
     },
     {
-      "time": "1054",
-      "value": -100
+      "time": "1055",
+      "value": 3.1
     },
     {
-      "time": "1056",
-      "value": -100
+      "time": "1057",
+      "value": -0.68
     },
     {
       "time": "1058",
-      "value": -100
+      "value": 0.98
     },
     {
-      "time": "1100",
-      "value": -100
+      "time": "1059",
+      "value": 2
     },
     {
       "time": "1101",
-      "value": -100
+      "value": -3.74
     },
     {
-      "time": "1102",
-      "value": -100
+      "time": "1103",
+      "value": 3.68
     },
     {
       "time": "1104",
-      "value": -100
+      "value": 4.82
     },
     {
-      "time": "1106",
-      "value": -100
+      "time": "1105",
+      "value": 1.33
     },
     {
-      "time": "1108",
-      "value": -100
+      "time": "1107",
+      "value": 1.78
     },
     {
-      "time": "1110",
-      "value": -100
+      "time": "1109",
+      "value": -3.37
     },
     {
       "time": "1111",
-      "value": -100
+      "value": -2.19
     },
     {
-      "time": "1112",
-      "value": -100
+      "time": "1113",
+      "value": -6.16
     },
     {
       "time": "1114",
-      "value": -100
+      "value": -3.59
     },
     {
-      "time": "1116",
-      "value": -100
+      "time": "1115",
+      "value": -3.18
     },
     {
-      "time": "1118",
-      "value": -100
+      "time": "1117",
+      "value": -0.86
     },
     {
-      "time": "1120",
-      "value": -100
+      "time": "1119",
+      "value": 4.03
     },
     {
       "time": "1121",
-      "value": -100
+      "value": 2.59
     },
     {
-      "time": "1122",
-      "value": -100
+      "time": "1123",
+      "value": 12.82
     },
     {
       "time": "1124",
-      "value": -100
+      "value": 21.07
     },
     {
-      "time": "1126",
-      "value": -100
+      "time": "1125",
+      "value": 28.61
     },
     {
       "time": "1127",
-      "value": -100
+      "value": 29.52
     },
     {
-      "time": "1128",
-      "value": -100
+      "time": "1129",
+      "value": 25.6
     },
     {
       "time": "1300",
-      "value": -100
+      "value": 8.67
     },
     {
       "time": "1302",
-      "value": -100
+      "value": 3.13
     },
     {
       "time": "1304",
-      "value": -100
+      "value": 5.6
+    },
+    {
+      "time": "1305",
+      "value": 4.53
     },
     {
       "time": "1306",
-      "value": -100
+      "value": 5.2
     },
     {
       "time": "1308",
-      "value": -100
+      "value": -0.75
     },
     {
       "time": "1310",
-      "value": -100
+      "value": -8.27
     },
     {
       "time": "1312",
-      "value": -100
+      "value": -6.59
     },
     {
       "time": "1314",
-      "value": -100
+      "value": -7.8
+    },
+    {
+      "time": "1315",
+      "value": -3.62
     },
     {
       "time": "1316",
-      "value": -100
-    },
-    {
-      "time": "1317",
-      "value": -100
+      "value": -6.34
     },
     {
       "time": "1318",
-      "value": -100
+      "value": -4.28
     },
     {
       "time": "1320",
-      "value": -100
+      "value": -2.89
     },
     {
       "time": "1322",
-      "value": -100
+      "value": -6.2
     },
     {
       "time": "1324",
-      "value": -100
+      "value": -6.34
+    },
+    {
+      "time": "1325",
+      "value": -1
     },
     {
       "time": "1326",
-      "value": -100
+      "value": -0.39
     },
     {
       "time": "1328",
-      "value": -100
+      "value": -3.22
     },
     {
       "time": "1330",
-      "value": -100
+      "value": -1.01
     },
     {
       "time": "1332",
-      "value": -100
+      "value": 1.39
     },
     {
       "time": "1334",
-      "value": -100
+      "value": -7.12
+    },
+    {
+      "time": "1335",
+      "value": -11.01
     },
     {
       "time": "1336",
-      "value": -100
+      "value": -12.2
     },
     {
       "time": "1338",
-      "value": -100
+      "value": -16.67
     },
     {
       "time": "1340",
-      "value": -100
+      "value": -15.28
     },
     {
       "time": "1342",
-      "value": -100
+      "value": -17.37
     },
     {
       "time": "1344",
-      "value": -100
+      "value": -11.11
+    },
+    {
+      "time": "1345",
+      "value": -7.12
     },
     {
       "time": "1346",
-      "value": -100
+      "value": -3.31
     },
     {
       "time": "1348",
-      "value": -100
-    },
-    {
-      "time": "1349",
-      "value": -100
+      "value": -0.07
     },
     {
       "time": "1350",
-      "value": -100
+      "value": 4.05
     },
     {
       "time": "1352",
-      "value": -100
+      "value": 2.76
     },
     {
       "time": "1354",
-      "value": -100
+      "value": 1.63
+    },
+    {
+      "time": "1355",
+      "value": 11.24
     },
     {
       "time": "1356",
-      "value": -100
+      "value": 15.06
     },
     {
       "time": "1358",
-      "value": -100
-    },
-    {
-      "time": "1359",
-      "value": -100
+      "value": 7.73
     },
     {
       "time": "1400",
-      "value": -100
+      "value": 4.76
     },
     {
       "time": "1402",
-      "value": -100
+      "value": 10.64
     },
     {
       "time": "1404",
-      "value": -100
+      "value": 6.75
+    },
+    {
+      "time": "1405",
+      "value": 11.86
     },
     {
       "time": "1406",
-      "value": -100
+      "value": 7.22
     },
     {
       "time": "1408",
-      "value": -100
+      "value": 9.07
     },
     {
       "time": "1410",
-      "value": -100
+      "value": 15.26
     },
     {
       "time": "1412",
-      "value": -100
+      "value": 17.28
     },
     {
       "time": "1414",
-      "value": -100
+      "value": 20.08
     },
     {
       "time": "1415",
-      "value": -100
+      "value": 16.27
     },
     {
       "time": "1416",
-      "value": -100
+      "value": 16.46
     },
     {
       "time": "1418",
-      "value": -100
+      "value": 22.34
     },
     {
       "time": "1420",
-      "value": -100
+      "value": 38.53
     },
     {
       "time": "1422",
-      "value": -100
+      "value": 39.12
     },
     {
       "time": "1424",
-      "value": -100
+      "value": 43.77
     },
     {
       "time": "1425",
-      "value": -100
+      "value": 43.94
     },
     {
       "time": "1426",
-      "value": -100
+      "value": 39.89
     },
     {
       "time": "1428",
-      "value": -100
+      "value": 43.08
     },
     {
       "time": "1430",
-      "value": -100
-    },
-    {
-      "time": "1431",
-      "value": -100
+      "value": 40.57
     },
     {
       "time": "1432",
-      "value": -100
+      "value": 41.05
     },
     {
       "time": "1434",
-      "value": -100
+      "value": 44.08
+    },
+    {
+      "time": "1435",
+      "value": 42.95
     },
     {
       "time": "1436",
-      "value": -100
-    },
-    {
-      "time": "1437",
-      "value": -100
+      "value": 42.95
     },
     {
       "time": "1438",
-      "value": -100
+      "value": 35.42
     },
     {
       "time": "1440",
-      "value": -100
+      "value": 37.45
     },
     {
       "time": "1442",
-      "value": -100
-    },
-    {
-      "time": "1443",
-      "value": -100
+      "value": 35.56
     },
     {
       "time": "1444",
-      "value": -100
+      "value": 30.72
     },
     {
-      "time": "1448",
-      "value": -100
+      "time": "1445",
+      "value": 31.75
     },
     {
       "time": "1446",
-      "value": -100
+      "value": 31
+    },
+    {
+      "time": "1448",
+      "value": 27.85
     },
     {
       "time": "1450",
-      "value": -100
+      "value": 27.17
     },
     {
       "time": "1452",
-      "value": -100
+      "value": 25.25
     },
     {
       "time": "1454",
-      "value": -100
+      "value": 26.92
+    },
+    {
+      "time": "1455",
+      "value": 28.15
     },
     {
       "time": "1456",
-      "value": -100
+      "value": 27.4
     },
     {
       "time": "1458",
-      "value": -100
-    },
-    {
-      "time": "1459",
-      "value": -100
+      "value": 28.78
     },
     {
       "time": "1500",
-      "value": -100
+      "value": 27.8
     }
   ]
 }

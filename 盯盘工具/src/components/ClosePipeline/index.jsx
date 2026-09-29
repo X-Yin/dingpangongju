@@ -12,7 +12,6 @@ const TRIGGER_MINUTE = 15 * 60 + 1;
 // 收盘流水线节点定义
 const PIPELINE_NODES = [
   { key: 'crowd', name: '拥挤度计算', desc: '板块资金 / 拥挤度', path: '/block?tab=money&subTab=crowd' },
-  { key: 'dingpan', name: '市场当日概况', desc: '市场盯盘', path: '/dingpan' },
   { key: 'fupan', name: '复盘分析', desc: '复盘分析', path: '/fupan' },
   { key: 'ai', name: '主线 AI 分析', desc: '智能分析 / AI 分析', path: '/block?tab=smart&subTab=ai' },
 ];

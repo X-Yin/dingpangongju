@@ -525,8 +525,8 @@ export const THEME_PACKS = [
             itemBorderStyle: 'solid',
             itemBorderWidth: '0',
             itemRadius: '16px',
-            upColor: '#059669',
-            downColor: '#db2777',
+            upColor: '#db2777',
+            downColor: '#059669',
             btnBg: '#4f46e5',
             btnColor: '#ffffff',
             btnRadius: '16px',
@@ -720,7 +720,7 @@ export const THEME_PACKS = [
         tokens: {
             pageBg: 'linear-gradient(135deg, #fff0f6 0%, #f3e8ff 50%, #e6f0ff 100%)',
             fontFamily: "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-            numberFontFamily: "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                      numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             cardBg: '#ffffff',
             cardBorderColor: 'rgba(255, 0, 110, 0.2)',
             cardBorderWidth: '2px',
@@ -819,8 +819,8 @@ export const THEME_PACKS = [
             itemBorderStyle: 'solid',
             itemBorderWidth: '1px',
             itemRadius: '12px',
-            upColor: '#00D2FF',
-            downColor: '#FF6B9D',
+            upColor: '#FF6B9D',
+            downColor: '#00D2FF',
             btnBg: 'linear-gradient(135deg, #6C5CE7 0%, #00D2FF 100%)',
             btnColor: '#FFFFFF',
             btnRadius: '12px',
@@ -1010,7 +1010,7 @@ export const THEME_PACKS = [
         tokens: {
             pageBg: '#FFC8A2', // 暖橙色背景
             fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
-            numberFontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif",
+                       numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             cardBg: '#F8F6F4', // 米白色主主板背景
             cardBorderColor: 'transparent',
             cardBorderWidth: '0px',
@@ -1137,7 +1137,7 @@ export const THEME_PACKS = [
         tokens: {
             pageBg: 'linear-gradient(180deg, #FFF5EE 0%, #FAF0E6 50%, #F5E6FF 100%)', // 暖粉杏色到柔紫渐变背景[cite: 6]
             fontFamily: "'Fredoka', 'Quicksand', -apple-system, sans-serif", // 圆润亲和的儿童字体风格[cite: 6]
-            numberFontFamily: "'Fredoka', 'Quicksand', monospace",
+                       numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             cardBg: 'rgba(255, 255, 255, 0.85)', // 柔和半透明纯白悬浮卡片[cite: 6]
             cardBorderColor: 'rgba(255, 255, 255, 0.9)',
             cardBorderWidth: '1.5px',
@@ -1205,7 +1205,7 @@ export const THEME_PACKS = [
         tokens: {
             pageBg: 'linear-gradient(180deg, #F8F3FF 0%, #FAF0F8 50%, #F5ECFF 100%)', // 梦幻极浅紫到粉紫渐变背景[cite: 7]
             fontFamily: "'Fredoka', 'Quicksand', -apple-system, sans-serif", // 圆润亲和儿童字体[cite: 7]
-            numberFontFamily: "'Fredoka', 'Quicksand', monospace",
+                       numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             cardBg: 'rgba(255, 255, 255, 0.9)', // 半透明高亮纯白悬浮面板[cite: 7]
             cardBorderColor: 'rgba(255, 255, 255, 0.95)',
             cardBorderWidth: '1.5px',
@@ -1340,7 +1340,7 @@ export const THEME_PACKS = [
         tokens: {
             pageBg: 'linear-gradient(160deg, #4C1D95 0%, #7C3AED 25%, #EC4899 55%, #F97316 85%, #FBBF24 100%)',
             fontFamily: "'Helvetica Now Display', 'Inter', -apple-system, sans-serif",
-            numberFontFamily: "'DIN Alternate', 'Barlow Condensed', sans-serif",
+                       numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             cardBg: 'rgba(255, 255, 255, 0.12)',
             cardBorderColor: 'rgba(255, 255, 255, 0.2)',
             cardBorderWidth: '1px',
@@ -1477,7 +1477,7 @@ export const THEME_PACKS = [
         // ✨ 核心背景：从上至下的深紫到蓝紫渐变，模拟夜晚影院的静谧感
         pageBg: 'linear-gradient(180deg, #5B21B6 0%, #3730A3 40%, #1E1B4B 100%)',
         fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
-        numberFontFamily: "'Inter', sans-serif",
+                  numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
         // 卡片采用半透明深色玻璃，边缘微光，营造悬浮感
         cardBg: 'rgba(30, 27, 75, 0.55)',
         cardBorderColor: 'rgba(255, 255, 255, 0.1)',
@@ -1547,7 +1547,7 @@ export const THEME_PACKS = [
         pageBg: 'linear-gradient(180deg, #60A5FA 0%, #3B82F6 100%)', // 从浅天蓝到标准蓝的微妙渐变
         
         fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
-        numberFontFamily: "'DIN Alternate', 'SF Mono', monospace",
+                   numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
         
         // ✨ 玻璃卡片系统：关键是用白色低透明度 + 强模糊 + 白色边框高光
         cardBg: 'rgba(255, 255, 255, 0.65)', // 较高的白色透明度，保证内容清晰
@@ -1623,7 +1623,7 @@ export const THEME_PACKS = [
         pageBg: 'linear-gradient(135deg, #FDE68A 0%, #FCA5A5 50%, #F9A8D4 100%)',
         
         fontFamily: "'Nunito', 'Quicksand', 'SF Pro Rounded', sans-serif", // 优先使用圆润字体
-        numberFontFamily: "'DM Sans', 'Inter', sans-serif",
+                   numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
         
         // ✨ 柔光玻璃卡片：极高透明度白光 + 柔和投影，像一层薄纱覆盖在暖色背景上
         cardBg: 'rgba(255, 255, 255, 0.72)',
@@ -1779,7 +1779,7 @@ export const THEME_PACKS = [
 
         // ========== 字体 ==========
         fontFamily: "'Bebas Neue', 'Orbitron', 'Noto Sans SC', sans-serif",
-        numberFontFamily: "'Share Tech Mono', monospace",
+                   numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
 
         // ========== 卡片样式 ==========
         cardBg: 'rgba(255, 0, 128, 0.08)', // 半透明粉红玻璃感
@@ -1836,7 +1836,7 @@ export const THEME_PACKS = [
 
         // ========== 字体 ==========
         fontFamily: "'Cinzel', 'Playfair Display', 'Noto Sans SC', serif",
-        numberFontFamily: "'Orbitron', monospace",
+        numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
 
         // ========== 卡片样式 ==========
         cardBg: 'rgba(255, 255, 255, 0.04)',

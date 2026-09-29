@@ -95,11 +95,22 @@ const formatMoneyYi = (v) => {
     return `${sign}${abs.toFixed(decimals)}亿`;
 };
 
-const MainMoneyCharts = ({ isMainMoneyExpanded, onToggleExpand, moneyStatus, volumeStatus, mainMoneyContainerRef, volumeContainerRef, themeColor, historyData, onCopyContext, copyContextLoading, fillContainer = false, latestMoneyValue, latestVolumeValue, volumeDiffValue, onVolumeRefresh, style, mainMoneyDetailWidth = 260 }) => {
+const MainMoneyCharts = ({ isMainMoneyExpanded, onToggleExpand, moneyStatus, volumeStatus, mainMoneyContainerRef, volumeContainerRef, themeColor, historyData, onCopyContext, copyContextLoading, fillContainer = false, latestMoneyValue, latestVolumeValue, volumeDiffValue, onVolumeRefresh, style, mainMoneyDetailWidth = 260, preAggregated = false }) => {
     const [fiveMinAgg, setFiveMinAgg] = useState(true);
 
     const detailData = useMemo(() => {
         if (!historyData || historyData.length === 0) return [];
+        if (preAggregated) {
+            // 回放模式：historyData 已是服务端 5min 快照桶（与盯盘实时口径一致），直接展示服务端标签，不再二次分桶
+            return [...historyData]
+                .sort((a, b) => b[0].localeCompare(a[0]))
+                .map(([timeStr, item]) => ({
+                    time: timeStr,
+                    displayTime: formatDisplayTime(timeStr),
+                    mainMoney: parseMoneyValue(item.mainMoney),
+                    rawTime: timeStr,
+                }));
+        }
         if (fiveMinAgg) {
             return aggregateTo5Min(historyData);
         }
@@ -119,7 +130,7 @@ const MainMoneyCharts = ({ isMainMoneyExpanded, onToggleExpand, moneyStatus, vol
             }
         }
         return result;
-    }, [historyData, fiveMinAgg]);
+    }, [historyData, fiveMinAgg, preAggregated]);
 
     return (
         <div className={`decision-chart-grid ${isMainMoneyExpanded ? 'expanded' : ''}`} style={fillContainer ? { height: '100%', ...style } : style}>
@@ -184,14 +195,16 @@ const MainMoneyCharts = ({ isMainMoneyExpanded, onToggleExpand, moneyStatus, vol
                         <div className="main-money-detail" style={fillContainer ? { width: mainMoneyDetailWidth, height: '100%', flexShrink: 0, display: 'flex', flexDirection: 'column' } : undefined}>
                             <div className="detail-header">
                                 <span className="detail-title">主力资金明细</span>
-                                <label className="five-min-switch">
-                                    <AntSwitch
-                                        size="small"
-                                        checked={fiveMinAgg}
-                                        onChange={setFiveMinAgg}
-                                    />
-                                    <span className="switch-text">5分钟聚合</span>
-                                </label>
+                                {!preAggregated && (
+                                    <label className="five-min-switch">
+                                        <AntSwitch
+                                            size="small"
+                                            checked={fiveMinAgg}
+                                            onChange={setFiveMinAgg}
+                                        />
+                                        <span className="switch-text">5分钟聚合</span>
+                                    </label>
+                                )}
                             </div>
                             <div className="detail-table-wrapper" style={fillContainer ? { flex: 1, minHeight: 0 } : undefined}>
                                 {detailData.length === 0 ? (

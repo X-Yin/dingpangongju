@@ -42,6 +42,9 @@ const formatDisplayTime = (timeStr) => {
   return `${timeStr.substring(0, 2)}:${timeStr.substring(2, 4)}:${timeStr.substring(4, 6)}`;
 };
 
+// 与盯盘页 MainMoneyCharts.aggregateTo5Min 完全同口径的向前归属分桶：
+// 原始点落入 [上一边界, 本边界) 窗口、取窗口内最后一条，标签从 9:35/13:05 开始（无 9:30/13:00 桶），
+// 保证快照 5min 桶与盯盘页实时明细的 5min 桶完全一致
 const aggregateByInterval = (data, intervalMinutes) => {
   if (!data || data.length === 0) return [];
 
@@ -55,26 +58,28 @@ const aggregateByInterval = (data, intervalMinutes) => {
   const afternoonStart = 13 * 60;
   const afternoonEnd = 15 * 60;
 
-  for (let t = morningStart; t <= morningEnd; t += intervalMinutes) {
+  for (let t = morningStart + intervalMinutes; t <= morningEnd; t += intervalMinutes) {
     tradingSlots.push(t);
   }
-  for (let t = afternoonStart; t <= afternoonEnd; t += intervalMinutes) {
+  for (let t = afternoonStart + intervalMinutes; t <= afternoonEnd; t += intervalMinutes) {
     tradingSlots.push(t);
   }
 
   sortedData.forEach(([timeStr, item]) => {
     const totalMin = timeStrToMinutes(timeStr);
     let bucketMin = null;
+    // 归属到「不小于该时间的下一个结束边界」对应的窗口：例如 9:35~9:39 计入标签 9:40
     for (const slot of tradingSlots) {
-      if (totalMin <= slot + intervalMinutes / 2) {
+      if (totalMin < slot) {
         bucketMin = slot;
         break;
       }
     }
-    if (bucketMin === null && totalMin > tradingSlots[tradingSlots.length - 1]) {
+    if (bucketMin === null && tradingSlots.length > 0) {
       bucketMin = tradingSlots[tradingSlots.length - 1];
     }
     if (bucketMin !== null) {
+      // 窗口内后点覆盖前点，取最后一条的累计净流入作为该窗口值；末值相对上一窗口的增量由展示端计算
       buckets[bucketMin] = { timeStr, item };
     }
   });

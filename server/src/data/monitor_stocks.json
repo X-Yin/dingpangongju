@@ -594,14 +594,6 @@
     "isTech": true
   },
   {
-    "code": "sz002654",
-    "name": "万润科技",
-    "isImportant": false,
-    "blockName": "存储",
-    "riskScore": "9",
-    "isTech": true
-  },
-  {
     "code": "sz002050",
     "name": "三花智控",
     "isImportant": false,
@@ -664,22 +656,6 @@
     "blockName": "pcb",
     "riskScore": "7",
     "isTech": true
-  },
-  {
-    "code": "sz300059",
-    "name": "东方财富",
-    "isImportant": false,
-    "blockName": "证券",
-    "riskScore": " 5",
-    "isTech": false
-  },
-  {
-    "code": "sz300085",
-    "name": "银之杰",
-    "isImportant": false,
-    "blockName": "证券",
-    "riskScore": " 5",
-    "isTech": false
   },
   {
     "code": "sz300548",
