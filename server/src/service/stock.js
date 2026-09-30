@@ -437,8 +437,14 @@ const isTlineCacheComplete = (line, tradeDate) => {
     const isToday = String(tradeDate) === todayStr;
     const currentMinute = now.getHours() * 100 + now.getMinutes();
 
-    // 当日尚未收盘（当前时间早于 15:00），当日数据未到 15:00 属正常，直接视为有效，避免重复请求
-    if (isToday && currentMinute < 1500) return true;
+    // 当日尚未收盘（当前时间早于 15:00）：分时缓存必须覆盖到已完结的最近交易时点才视为有效
+    // （盘前按日期拉到的竞价快照只有 1 个点，曾在此被当作有效缓存返回并污染内存缓存，
+    //   导致抗分歧诊断当日指数只有 1 个点、各分段"数据不足"、得分全为 0）
+    if (isToday && currentMinute < 1500) {
+        if (currentMinute < 1130) return lastMinute >= 935;   // 盘前/上午：至少覆盖开盘 5 分钟
+        if (currentMinute < 1300) return lastMinute >= 1130;  // 午休：须覆盖到上午收盘
+        return lastMinute >= 1305;                            // 下午：至少覆盖开盘 5 分钟
+    }
 
     // 收盘后或历史交易日，分时数据必须截止到 15:00 才视为完整
     return lastMinute >= 1500;
@@ -463,7 +469,11 @@ const getSingleStockTlineDataByDate = async (code, tradeDate) => {
     if (!skipCache) {
         const memHit = tlineResultMemCache.get(memKey);
         if (memHit !== undefined) {
-            return memHit ? { ...memHit } : memHit; // 浅拷贝，防止调用方修改污染缓存
+            // 命中时校验完整性，不完整（如盘前竞价快照被误缓存）则剔除自愈，防止脏数据永久驻留
+            if (isTlineCacheComplete(memHit?.line, tradeDate)) {
+                return memHit ? { ...memHit } : memHit; // 浅拷贝，防止调用方修改污染缓存
+            }
+            tlineResultMemCache.delete(memKey);
         }
     }
 

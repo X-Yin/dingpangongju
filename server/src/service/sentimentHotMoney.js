@@ -924,4 +924,5 @@ module.exports = {
   getSentimentDefaultRange,
   runSentimentBacktest,
   loadIndexKline, // 指数/板块日K（带当日文件缓存），供 buySellBacktest 三日情绪冰点指数环境门禁复用
+  getStockBars, // 个股日K收盘序列 [{ d, c, v }]，供 buySellBacktest 重点板块系列回测现算成分股日涨幅复用
 };

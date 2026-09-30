@@ -68,7 +68,7 @@ const {
 } = require('./service/stockPosition');
 const { classifySectorBlocksDaily } = require('./utils/classifySectorBlocks');
 const { getGlobalAnalysisData, generateAIContext, getMarketStyleAnalysis, updateMarketStyleAnalysis } = require('./service/ai');
-const { getBlocksConfig, addBlock, addBlockName, updateBlock, deleteBlock, deleteBlockByName } = require('./service/blockConfig');
+const { getBlocksConfig, addBlock, addBlockName, updateBlockInfo, updateBlock, deleteBlock, deleteBlockByName } = require('./service/blockConfig');
 const { getBlockAiContext, runBlockAiAnalysis } = require('./service/blockAi');
 const { getAiScreenContext, runAiScreen } = require('./service/aiStockScreener');
 const { getJigouReportsData, refreshJigouReports, getPendingNewReports, acknowledgeNewReports } = require('./service/jigouReports');
@@ -2930,8 +2930,8 @@ app.get('/api/blocks_config', (req, res) => {
 app.post('/api/blocks_config', (req, res) => {
   try {
     const { action, block, blockName } = req.body || {};
-    if (!action || !['add', 'addBlock', 'update', 'delete', 'deleteByName'].includes(action)) {
-      return res.status(400).json({ success: false, message: 'action 必须为 add/addBlock/update/delete/deleteByName' });
+    if (!action || !['add', 'addBlock', 'update', 'updateBlock', 'delete', 'deleteByName'].includes(action)) {
+      return res.status(400).json({ success: false, message: 'action 必须为 add/addBlock/update/updateBlock/delete/deleteByName' });
     }
     let data;
     if (action === 'add') {
@@ -2940,11 +2940,17 @@ app.post('/api/blocks_config', (req, res) => {
       }
       data = addBlock(block);
     } else if (action === 'addBlock') {
-      const { blockName, stocks } = req.body || {};
+      const { blockName, stocks, tag } = req.body || {};
       if (!blockName) {
         return res.status(400).json({ success: false, message: 'blockName 不能为空' });
       }
-      data = addBlockName({ blockName, stocks: stocks || [] });
+      data = addBlockName({ blockName, stocks: stocks || [], tag });
+    } else if (action === 'updateBlock') {
+      const { blockName, newBlockName, tag } = req.body || {};
+      if (!blockName) {
+        return res.status(400).json({ success: false, message: 'blockName 不能为空' });
+      }
+      data = updateBlockInfo({ blockName, newBlockName, tag });
     } else if (action === 'update') {
       if (!block?.code) {
         return res.status(400).json({ success: false, message: 'block.code 不能为空' });

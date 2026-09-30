@@ -1700,8 +1700,8 @@ export const THEME_PACKS = [
         // ✨ 核心背景：极深的蓝灰色，模拟夜间控制中心或工业屏幕
         pageBg: '#0F172A', // 深空灰蓝，比纯黑更有质感
         
-        fontFamily: "'JetBrains Mono', 'SF Mono', 'Consolas', monospace", // 等宽字体，强调数据精确性
-        numberFontFamily: "'JetBrains Mono', 'DIN Alternate', monospace",
+        fontFamily: "'Bebas Neue', 'Orbitron', 'Noto Sans SC', sans-serif",
+        numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
         
         // 卡片系统：半透明深色玻璃，边缘有微弱高光
         cardBg: 'rgba(30, 41, 59, 0.6)',
@@ -1723,8 +1723,8 @@ export const THEME_PACKS = [
         itemRadius: '6px',
         
         // ✨ 核心语义色：高饱和度橙红，用于警示、选中、关键操作
-        upColor: '#F97316',   // 亮橙色：正常但需关注的数据
-        downColor: '#EF4444', // 鲜红色：严重警告、停机、损失
+        upColor: '#EF4444',   // 亮橙色：正常但需关注的数据
+        downColor: '#F97316', // 鲜红色：严重警告、停机、损失
         
         // 按钮系统：实心橙红按钮，强烈的行动号召
         btnBg: '#F97316',
@@ -1779,7 +1779,7 @@ export const THEME_PACKS = [
 
         // ========== 字体 ==========
         fontFamily: "'Bebas Neue', 'Orbitron', 'Noto Sans SC', sans-serif",
-                   numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+        numberFontFamily: "'JetBrains Mono', 'Fira Code', monospace",
 
         // ========== 卡片样式 ==========
         cardBg: 'rgba(255, 0, 128, 0.08)', // 半透明粉红玻璃感
@@ -1881,8 +1881,130 @@ export const THEME_PACKS = [
         tagBorderWidth: '1px',
         tagRadius: '6px',
     },
-}
+},
+{
+    id: 'rainbow-tech-minimal',
+    name: '彩虹科技极简',
+    desc: 'Rainbow Tech Minimal · 黑字+彩虹渐变底 + 几何Logo风',
+    source: '提取自上传图片',
+    tokens: {
+        // ========== 页面背景 ==========
+        pageBg: 'linear-gradient(135deg, #FFFFFF 0%, #FFFF00 25%, #FF0055 50%, #FF00FF 75%, #0066FF 100%)', // 白→黄→红→紫→蓝 彩虹对角渐变
 
+        // ========== 字体 ==========
+        fontFamily: "'Inter', 'Sora', 'Noto Sans SC', sans-serif",
+        numberFontFamily: "'JetBrains Mono', monospace",
+
+        // ========== 卡片样式 ==========
+        cardBg: 'rgba(255, 255, 255, 0.85)',
+        cardBorderColor: 'rgba(0, 0, 0, 0.1)',
+        cardBorderWidth: '1px',
+        cardRadius: '12px',
+        cardShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+
+        // ========== 标题/描述 ==========
+        titleColor: '#000000',
+        descColor: 'rgba(0, 0, 0, 0.6)',
+
+        // ========== 子项样式 ==========
+        itemBg: 'rgba(255, 255, 255, 0.7)',
+        itemTitleColor: '#000000',
+        itemDescColor: 'rgba(0, 0, 0, 0.5)',
+        itemBorderColor: 'rgba(0, 0, 0, 0.08)',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '1px',
+        itemRadius: '10px',
+
+        // ========== 涨跌颜色（A股标准：红涨绿跌）==========
+        upColor: '#FF3B30', // 苹果红（涨）
+        downColor: '#34C759', // 苹果绿（跌）
+
+        // ========== 按钮样式 ==========
+        btnBg: '#000000',
+        btnColor: '#FFFFFF',
+        btnRadius: '999px',
+        btnBorderColor: '#000000',
+        btnBorderStyle: 'solid',
+        btnBorderWidth: '2px',
+        btnFontFamily: "'Inter', sans-serif",
+        btnShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+
+        // ========== 标签样式 ==========
+        tagBg: 'rgba(0, 0, 0, 0.06)',
+        tagColor: '#000000',
+        tagFontFamily: "'JetBrains Mono', monospace",
+        tagBorderColor: 'rgba(0, 0, 0, 0.15)',
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '1px',
+        tagRadius: '6px',
+    },
+},
+{
+    id: 'musickit-custom-theme',
+    name: 'MusicKit 自定义主题',
+    desc: 'MusicKit Custom Theme · 深色背景 + 紫色卡片 + 浅灰白字按钮 + 绿色高亮交互',
+    source: '#uploaded-image-16',
+    tokens: {
+        pageBg: '#0A0C14', // 极致深色背景[cite: 6]
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        numberFontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        cardBg: '#1E1B4B', // 紫色卡片背景
+        cardBorderColor: 'rgba(124, 58, 237, 0.2)',
+        cardBorderWidth: '1px',
+        cardRadius: '16px',
+        cardShadow: '0 8px 30px rgba(0, 0, 0, 0.4)',
+        cardBackdropFilter: 'none',
+        titleColor: '#FFFFFF', // 纯白标题[cite: 6]
+        descColor: '#A5B4FC', // 浅紫描述文字
+        itemBg: '#2E2A72', // 暗紫子卡片背景
+        itemTitleColor: '#FFFFFF',
+        itemDescColor: '#C7D2FE',
+        itemBorderColor: 'transparent',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '0px',
+        itemRadius: '10px',
+        upColor: '#EF4444', // 绿色高亮交互/正常状态[cite: 6]
+        downColor: '#10B981', // 红色状态[cite: 6]
+        btnBg: '#374151', // 浅灰色按钮背景
+        btnColor: '#FFFFFF', // 按钮文字白色
+        btnRadius: '8px',
+        btnBorderColor: 'transparent',
+        btnBorderStyle: 'solid',
+        btnBorderWidth: '0px',
+        btnFontFamily: "'Inter', sans-serif",
+        btnShadow: 'none',
+        tagBg: 'rgba(16, 185, 129, 0.15)', // 绿色高亮标签背景[cite: 6]
+        tagColor: '#10B981', // 绿色高亮标签文字[cite: 6]
+        tagFontFamily: "'Inter', sans-serif",
+        tagBorderColor: 'transparent',
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '0px',
+        tagRadius: '6px',
+        // 特有色彩卡片与仪表盘 Tokens
+        primaryAccent: '#10B981', // 主高亮交互色：绿色[cite: 6]
+        cardPinkBg: '#EC4899',
+        cardPinkColor: '#FFFFFF',
+        cardGreenBg: '#10B981',
+        cardGreenColor: '#FFFFFF',
+        cardPurpleBg: '#312E81', // 深紫色卡片底色
+        cardPurpleColor: '#FFFFFF',
+        cardOrangeBg: '#F97316',
+        cardOrangeColor: '#FFFFFF',
+        navActiveBg: 'rgba(16, 185, 129, 0.15)', // 绿色高亮激活背景
+        navActiveColor: '#10B981', // 绿色高亮激活文字
+        navInactiveBg: 'transparent',
+        navInactiveColor: '#8A8F9E',
+        calendarHighlightBg: '#10B981',
+        calendarHighlightColor: '#FFFFFF',
+        schedulePurpleBg: '#4C1D95',
+        scheduleOrangeBg: '#F97316',
+        scheduleGreenBg: '#10B981',
+        iconActiveColor: '#10B981', // 绿色高亮激活图标[cite: 6]
+        iconInactiveColor: '#9CA3AF',
+        sidebarBg: '#0D0F17',
+        sidebarRadius: '0px'
+    },
+}
 ];
 
 // 根据 id 获取主题包；'' / undefined / 'default' 返回 null（默认样式）

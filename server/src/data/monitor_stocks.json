@@ -736,5 +736,75 @@
     "blockName": "陶瓷基板",
     "riskScore": "6",
     "isTech": true
+  },
+  {
+    "code": "sh688603",
+    "name": "天承科技",
+    "isImportant": false,
+    "blockName": "玻璃基板",
+    "riskScore": "8",
+    "isTech": true
+  },
+  {
+    "code": "sh601179",
+    "name": "中国西电",
+    "isImportant": false,
+    "blockName": "特高压",
+    "riskScore": "5",
+    "isTech": true
+  },
+  {
+    "code": "sh600312",
+    "name": "平高电气",
+    "isImportant": false,
+    "blockName": "特高压",
+    "riskScore": "7",
+    "isTech": false,
+    "addedAt": "2026-09-30 15:30:58"
+  },
+  {
+    "code": "sz000400",
+    "name": "许继电气",
+    "isImportant": false,
+    "blockName": "特高压",
+    "riskScore": "7",
+    "isTech": false,
+    "addedAt": "2026-09-30 15:31:17"
+  },
+  {
+    "code": "sz000823",
+    "name": "超声电子",
+    "isImportant": false,
+    "blockName": "CCL",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-09-30 15:31:48"
+  },
+  {
+    "code": "sh600707",
+    "name": "彩虹股份",
+    "isImportant": false,
+    "blockName": "玻璃基板",
+    "riskScore": "7",
+    "isTech": true,
+    "addedAt": "2026-09-30 15:47:16"
+  },
+  {
+    "code": "sz300162",
+    "name": "雷曼光电",
+    "isImportant": false,
+    "blockName": "玻璃基板",
+    "riskScore": " 7",
+    "isTech": true,
+    "addedAt": "2026-09-30 22:32:13"
+  },
+  {
+    "code": "sz301297",
+    "name": "富乐德",
+    "isImportant": false,
+    "blockName": "陶瓷载板",
+    "riskScore": " 8",
+    "isTech": true,
+    "addedAt": "2026-09-30 22:48:29"
   }
 ]

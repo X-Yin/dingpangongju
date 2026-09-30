@@ -1012,10 +1012,12 @@
 
       .stock-block-tag {
         margin: 0;
-        padding: 0 4px;
+        padding: 0px 4px;
         font-size: 10px;
-        height: 16px;
-        line-height: 14px;
+        height: 18px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         border-radius: 4px;
         background: rgba(114, 46, 209, 0.08);
         border: 1px solid rgba(114, 46, 209, 0.2);

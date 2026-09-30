@@ -50,6 +50,10 @@ const SELL_RULES = [
 
 // 回测策略选项（与后端 buySellBacktest.STRATEGIES 保持一致；全量自选股策略已移除）
 const STRATEGY_OPTIONS = [
+  { value: 'key_block_2d_gain', label: '重点板块-2日最高涨幅' },
+  { value: 'key_block_3d_gain', label: '重点板块-3日最高涨幅' },
+  { value: 'key_block_4d_gain', label: '重点板块-4日最高涨幅' },
+  { value: 'key_block_5d_gain', label: '重点板块-5日最高涨幅' },
   { value: 'highest_gain', label: '买入最高涨幅' },
   { value: 'highest_2d_gain', label: '2日涨幅最大' },
   { value: 'highest_3d_gain', label: '3日涨幅最大' },
@@ -145,6 +149,26 @@ const SENTIMENT_SELL_RULES = [
   { key: 'sentiment_stop_loss', title: '跌破成本线-5%', desc: '现价低于买入价 × 0.95（较买入价下跌 5%）即按触发分钟价格止损卖出；所有情绪游资策略统一此口径' },
   { key: 'sentiment_ma10_slope', title: '十日线斜率转负', desc: '该股十日线斜率（昨日收盘口径，斜率 = 当前 MA10 − 5 日前 MA10）转为负数，即按当日开盘第一分钟价格卖出；所有情绪游资策略统一仅这两个卖点，满足其一即卖（买入次日起生效）' },
   { key: 'sentiment_yin_close', title: '尾盘收阴线（仅首板/二板）', desc: '仅限买入次日的尾盘判定：当日首个 ≥14:57 的分钟（分时未覆盖时用最后一分钟）现价低于当日开盘价（即当日收阴线）→ 按该分钟价格卖出；过了次日该卖点失效，卖点回归「跌破成本线-5%」与「十日线斜率转负」两个；仅情绪游资-昨日首板、昨日二板两个策略适用' },
+];
+
+// 重点板块-N日最高涨幅系列策略（与后端 buySellBacktest.STRATEGIES 的 keyBlockDays 保持一致）：
+// 板块驱动的独立买入逻辑（斜率分模式 + tag 板块选股），日期范围与常规策略一致（依赖回放缓存）
+const KEY_BLOCK_STRATEGY_IDS = [
+  'key_block_2d_gain',
+  'key_block_3d_gain',
+  'key_block_4d_gain',
+  'key_block_5d_gain',
+];
+const KEY_BLOCK_BUY_RULES = [
+  { key: 'key_block_cyb_gate', title: '创业板指 3 日线斜率门禁（盘中实时）', desc: '唯一买点开关：盘中实时计算的创业板指 3 日线斜率（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）：斜率 > 0 → 买自选科技股；斜率 ≤ 0 → 买「防御+中性」tag 板块；不看任何资金、量能、情绪条件；斜率数据不足的桶跳过' },
+  { key: 'key_block_watchlist_tech', title: '候选池筛选（正向=自选科技股 / 反向=防御+中性板块）', desc: '斜率为正时候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股（剔除排除股；含自选股添加时间门禁，买点时点未加入自选的股票不参与）；斜率为负时候选 =「防御+中性」tag 板块全部成分股（板块 tag 在 key_blocks 页面维护，未打 tag 的板块不参与，不限自选股）；停牌或无当日分时数据的个股自动跳过' },
+  { key: 'key_block_limit_up', title: '涨停过滤与顺延', desc: '买入时点判断候选股是否涨停：主板股票（60/00 开头）涨幅 > 9.5% 视为涨停，创业板（30）/科创板（68）涨幅 > 19% 视为涨停；涨停股不可买入，顺延到 N 日涨幅排名的下一只非涨停股票（买入明细中标注被顺延的涨停候选）；全部候选涨停则顺延到后续桶重试' },
+  { key: 'key_block_best_stock', title: '候选池内 N 日涨幅最大的股票', desc: '在候选池（正向=自选科技股池；反向=tag 匹配板块成分股）中，按最近 N 个交易日（含触发日）个股涨幅之和取最大的一只买入（个股日涨幅 = 相邻收盘价环比，由回测时重新拉取成分股日K现算）；买入价取触发桶时点的分时价格；当日发生过卖出的，买入桶分钟不早于卖出分钟（同桶允许先卖后买转手）' },
+];
+const KEY_BLOCK_SELL_RULES = [
+  { key: 'key_block_positive_sells', title: '科技股持仓：通用 7 条件卖点（成本线 -2%）', desc: '自选科技股买入的持仓沿用通用 7 条件卖出诊断（跌破10日线/前低/5日线、高位放量大阴线、科技板块情绪退潮、连续三日抗分歧<10、距5日收盘新高、跌停、跌破成本线），满足其一即卖（买入次日起生效）；条件 7「跌破成本线」为 -2%（现价 < 买入价 × 0.98 即触发）；「科技板块情绪退潮」受创业板指 3 日线斜率门禁（见下）' },
+  { key: 'key_block_reverse_sells', title: '防御+中性持仓：仅两条卖点', desc: '①盘中实时创业板指 3 日线斜率 > 0 的首个桶（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替）→ 按该桶时点分时价卖出，同桶可转手买入科技股票；②现价跌破买入价 -10%（买入价 × 0.90）→ 按触发分钟价格止损卖出（逐分钟扫描）；两者取当日先发生者（同分钟斜率卖优先），否则一直持有' },
+  { key: 'key_block_emo_gate', title: '科技板块情绪退潮门禁（仅科技股持仓）', desc: '创业板指 3 日线斜率为正（MA3 − 5个交易日前的MA3，按当日收盘已基本定型口径）时，「科技板块情绪退潮」条件才参与科技股持仓的卖出判定；斜率为负或数据不足时该条件当日不生效（其余 6 项条件不受影响）；防御+中性持仓不走 7 条件卖点，本门禁不适用' },
 ];
 
 // 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
@@ -254,7 +278,7 @@ const buildSummary = (result) => {
 
 const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const [range, setRange] = useState(null);
-  const [strategy, setStrategy] = useState('highest_gain');
+  const [strategy, setStrategy] = useState('key_block_2d_gain');
   const [sentimentRange, setSentimentRange] = useState(null); // 情绪游资默认日期范围 [dayjs, dayjs]（最近 60 个已完结交易日）
   const [reportOpen, setReportOpen] = useState(false);
   const [trendOpen, setTrendOpen] = useState(false); // 策略趋势诊断弹窗（三档时间范围 × 全部策略）
@@ -291,6 +315,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   }, [availableDates, maxDateStr]);
   const curIsSentiment = isSentimentStrategy(strategy);
   const curIsEmo3 = isEmo3Strategy(strategy);
+  const curIsKeyBlock = KEY_BLOCK_STRATEGY_IDS.includes(strategy);
   const effectiveRange = range || (curIsEmo3 ? emo3DefaultRange : curIsSentiment ? (sentimentRange || defaultRange) : defaultRange);
 
   // 组件卸载时停止轮询
@@ -510,8 +535,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
       // 情绪游资策略使用专属买卖规则文案（选股/环境/触发与常规策略不同）
-      const buyRules = curIsSentiment ? SENTIMENT_BUY_RULES : BUY_RULES;
-      const sellRules = curIsSentiment ? SENTIMENT_SELL_RULES : SELL_RULES;
+      const buyRules = curIsSentiment ? SENTIMENT_BUY_RULES : curIsKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES;
+      const sellRules = curIsSentiment ? SENTIMENT_SELL_RULES : curIsKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES;
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);

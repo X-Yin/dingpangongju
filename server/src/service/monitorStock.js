@@ -120,13 +120,71 @@ const saveMonitorStocks = (stocks) => {
     }
 };
 
+// 本地时间格式化 'YYYY-MM-DD HH:mm:ss'
+const fmtLocalDateTime = (d) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
+
 const addMonitorStock = (code, name, blockName = 'xxx', riskScore = null, isTech = true) => {
     const stocks = getMonitorStocks();
     if (stocks.find(s => s.code === code)) {
         return false;
     }
-    stocks.push({ code, name, isImportant: false, blockName, riskScore, isTech });
+    // 记录添加时刻（本地时间）：供买卖点回测判断「买点时刻该股是否已在自选股中」，
+    // 防止后加自选股污染历史回测结果（历史上买的是 A，不能因后加了 B 就改成买 B）
+    const addedAt = fmtLocalDateTime(new Date());
+    stocks.push({ code, name, isImportant: false, blockName, riskScore, isTech, addedAt });
     return saveMonitorStocks(stocks);
+};
+
+// 自选股添加时间索引（按文件 mtime 缓存，避免回测逐候选逐桶查询时反复读文件）：
+// code -> { date: 'YYYYMMDD', minute: HHMM 整数 }；无 addedAt 的存量数据不入表（视为一直在自选股中）
+let addedAtIndexCache = null; // { mtimeMs, map, checkedAt }
+const ADDED_INDEX_CHECK_INTERVAL_MS = 1000; // mtime 检查节流：回测热循环中避免每次调用都 statSync
+const getStockAddedAtIndex = () => {
+    try {
+        const now = Date.now();
+        if (addedAtIndexCache && now - addedAtIndexCache.checkedAt < ADDED_INDEX_CHECK_INTERVAL_MS) {
+            return addedAtIndexCache.map;
+        }
+        const mtimeMs = fs.statSync(DATA_PATH).mtimeMs;
+        if (addedAtIndexCache && addedAtIndexCache.mtimeMs === mtimeMs) {
+            addedAtIndexCache.checkedAt = now;
+            return addedAtIndexCache.map;
+        }
+        const map = new Map();
+        for (const s of getMonitorStocks()) {
+            if (!s || !s.code || !s.addedAt) continue;
+            const m = String(s.addedAt).match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})/);
+            if (!m) {
+                console.error(`自选股 ${s.code} addedAt 格式异常: ${s.addedAt}，按一直存在处理`);
+                continue;
+            }
+            const date = `${m[1]}${String(m[2]).padStart(2, '0')}${String(m[3]).padStart(2, '0')}`;
+            const minute = Number(m[4]) * 100 + Number(m[5]);
+            map.set(s.code, { date, minute });
+        }
+        addedAtIndexCache = { mtimeMs, map, checkedAt: now };
+        return map;
+    } catch (error) {
+        console.error('读取自选股添加时间索引失败:', error.message);
+        return addedAtIndexCache ? addedAtIndexCache.map : new Map();
+    }
+};
+
+// 判断股票在回放日 dateStr（YYYYMMDD）的第 minute（HHMM 整数）分钟买点时刻是否已在自选股中：
+//   无 addedAt（存量数据）→ 视为一直在；
+//   买点日之前添加 → 在；买点日之后添加 → 不在；
+//   买点当日添加 → 添加时刻 ≤ 买点分钟才在（买点分钟未知时保守视为不在，宁可不买）
+const isStockInWatchlistAt = (code, dateStr, minute) => {
+    const added = getStockAddedAtIndex().get(code);
+    if (!added) return true;
+    const d = String(dateStr);
+    if (added.date < d) return true;
+    if (added.date > d) return false;
+    if (minute == null || !Number.isFinite(Number(minute))) return false;
+    return added.minute <= Number(minute);
 };
 
 const deleteMonitorStock = (code) => {
@@ -203,5 +261,6 @@ module.exports = {
     updateMonitorStockName,
     toggleStockTop,
     getTotalSharesData,
-    syncTotalShares
+    syncTotalShares,
+    isStockInWatchlistAt
 };

@@ -645,6 +645,17 @@
           color: #3b82f6;
           font-weight: 600;
         }
+
+        // 板块 tag（进攻/中性/防御）：与 count 胶囊一致的尺寸，颜色由 antd color prop 提供
+        .block-group-tag.ant-tag {
+          margin: 0;
+          padding: 0 8px;
+          font-size: 11px;
+          height: 18px;
+          line-height: 16px;
+          border-radius: 999px;
+          font-weight: 600;
+        }
       }
 
       .block-group-meta-cell {

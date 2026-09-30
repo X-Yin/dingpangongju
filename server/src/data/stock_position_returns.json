@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-09-30",
+    "operations": [
+      {
+        "id": "1790735343661_u3vq",
+        "action": "sell",
+        "stockName": "盛美上海",
+        "stockCode": "sh688082",
+        "position": "",
+        "time": "10:29"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-09-30T02:29:03.744Z",
+    "updatedAt": "2026-09-30T02:29:03.744Z"
+  },
+  {
     "date": "2026-09-29",
     "operations": [
       {

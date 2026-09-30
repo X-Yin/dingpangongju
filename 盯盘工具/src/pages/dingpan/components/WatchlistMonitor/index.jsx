@@ -300,7 +300,7 @@ const WatchlistMonitor = ({
                                             {stock.isImportant ? <StarFilled /> : <StarOutlined />}
                                         </div>
                                         <div className="stock-info-cell">
-                                            <div className="stock-name-row" style={{ flexWrap: 'nowrap' }}>
+                                            <div className="stock-name-row" style={{ flexWrap: 'nowrap', alignItems: 'center' }}>
                                                 <Text className="stock-name" style={titleStyle(themeColor)}>
                                                     {stock.stockName}
                                                     {hasGoodNews(stock.stockName) && (
@@ -311,12 +311,12 @@ const WatchlistMonitor = ({
                                                                 onViewGoodNews(stock.stockName);
                                                             }}
                                                         >
-                                                            (研报)
+                                                            &nbsp;研报&nbsp;
                                                         </span>
                                                     )}
                                                 </Text>
                                                 {stock.blockName && stock.blockName !== 'xxx' && (
-                                                    <Tag size="small" className="stock-block-tag">{stock.blockName}</Tag>
+                                                    <Tag size="small" className="stock-block-tag" style={{ padding: 4 }}>{stock.blockName}</Tag>
                                                 )}
                                             </div>
                                         </div>

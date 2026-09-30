@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Tabs, Button, Card, Tag, Modal, Input, Form, message,
-  Spin, Empty, Typography, InputNumber, Alert, Divider, Tooltip
+  Spin, Empty, Typography, InputNumber, Alert, Divider, Tooltip, Select
 } from 'antd';
 import {
   AppstoreOutlined, CopyOutlined, ThunderboltOutlined, PlusOutlined,
@@ -30,6 +30,10 @@ const formatDateStr = (dateValue) => {
 
 // 红涨绿跌颜色
 const getChangeColor = (change) => change >= 0 ? '#e11d48' : '#059669';
+
+// 板块 tag 选项与展示色（进攻/中性/防御，与后端 blockConfig.BLOCK_TAGS 保持一致）
+const BLOCK_TAG_OPTIONS = ['进攻', '中性', '防御'];
+const BLOCK_TAG_COLORS = { '进攻': 'red', '中性': 'gold', '防御': 'blue' };
 
 // ==================== 板块分类分析（重构为 dingpan 自选股全量监控风格） ====================
 const ClassifySection = ({ onBlockClick }) => {
@@ -247,6 +251,10 @@ const BlockConfigPanel = () => {
   const [modalMode, setModalMode] = useState('stock'); // 'stock' | 'block'
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
+  // 板块编辑弹窗（改名 / 改 tag）
+  const [blockEditOpen, setBlockEditOpen] = useState(false);
+  const [blockEditing, setBlockEditing] = useState(null); // { blockName }
+  const [blockForm] = Form.useForm();
   const [klineModalVisible, setKlineModalVisible] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -308,6 +316,39 @@ const BlockConfigPanel = () => {
     setModalMode('block');
     form.resetFields();
     setModalOpen(true);
+  };
+
+  // 打开板块编辑弹窗（编辑板块名称 / 板块 tag）
+  const handleEditBlock = (block) => {
+    setBlockEditing({ blockName: block.blockName });
+    blockForm.setFieldsValue({ blockName: block.blockName, tag: block.tag || undefined });
+    setBlockEditOpen(true);
+  };
+
+  const handleBlockEditSubmit = async () => {
+    try {
+      const values = await blockForm.validateFields();
+      const res = await axios.post(`http://${local_ip}:3000/api/blocks_config`, {
+        action: 'updateBlock',
+        blockName: blockEditing.blockName,
+        newBlockName: values.blockName,
+        tag: values.tag || '', // 空串 = 清除 tag
+      });
+      if (res.data?.success) {
+        message.success('板块更新成功');
+        setBlockEditOpen(false);
+        // 改名后同步折叠展开态的 key，保持当前板块继续展开
+        if (values.blockName !== blockEditing.blockName) {
+          setExpandedKeys(prev => prev.map(k => (k === blockEditing.blockName ? values.blockName : k)));
+        }
+        fetchBlocks();
+      } else {
+        message.error(res.data?.message || '操作失败');
+      }
+    } catch (err) {
+      if (err.errorFields) return; // 表单校验错误
+      message.error('操作失败: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   const handleEdit = (stock, blockName) => {
@@ -386,6 +427,7 @@ const BlockConfigPanel = () => {
         messageText = '新增板块成功';
         payload = {
           blockName: values.blockName,
+          tag: values.tag || undefined,
           stocks: (values.stocks || []).map(s => ({
             blockName: values.blockName,
             code: s.code,
@@ -525,6 +567,11 @@ const BlockConfigPanel = () => {
                     <div className="block-group-name-cell">
                       <CaretRightOutlined className={`block-group-caret ${expanded ? 'rotated' : ''}`} />
                       <Text strong className="block-group-name">{block.blockName}</Text>
+                      {block.tag && (
+                        <Tag color={BLOCK_TAG_COLORS[block.tag] || 'default'} className="block-group-tag">
+                          {block.tag}
+                        </Tag>
+                      )}
                       <Tag className="block-group-count">{block.data.length} 只</Tag>
                     </div>
                     <div className="block-group-meta-cell">
@@ -544,6 +591,18 @@ const BlockConfigPanel = () => {
                         }}
                       >
                         添加
+                      </Button>
+                      <Button
+                        size="small"
+                        type="text"
+                        icon={<EditOutlined />}
+                        className="block-group-edit-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditBlock(block);
+                        }}
+                      >
+                        编辑
                       </Button>
                       <Button
                         size="small"
@@ -653,7 +712,15 @@ const BlockConfigPanel = () => {
             <Input placeholder="请输入板块名称" />
           </Form.Item>
           {modalMode === 'block' && !editing ? (
-            <Form.List name="stocks">
+            <>
+              <Form.Item name="tag" label="板块 tag">
+                <Select
+                  placeholder="未设置（可选）"
+                  allowClear
+                  options={BLOCK_TAG_OPTIONS.map(t => ({ value: t, label: t }))}
+                />
+              </Form.Item>
+              <Form.List name="stocks">
               {(fields, { add, remove }) => (
                 <>
                   <div style={{ marginBottom: 8, color: '#64748b', fontSize: 13 }}>
@@ -693,7 +760,8 @@ const BlockConfigPanel = () => {
                   </Button>
                 </>
               )}
-            </Form.List>
+              </Form.List>
+            </>
           ) : (
             <>
               <Form.Item name="code" label="股票代码" rules={[{ required: true, message: '请输入股票代码' }]}>
@@ -716,6 +784,29 @@ const BlockConfigPanel = () => {
           change: selectedStock?.change,
         }}
       />
+
+      <Modal
+        title="编辑板块"
+        open={blockEditOpen}
+        onOk={handleBlockEditSubmit}
+        onCancel={() => setBlockEditOpen(false)}
+        okText="保存"
+        cancelText="取消"
+        width={480}
+      >
+        <Form form={blockForm} layout="vertical">
+          <Form.Item name="blockName" label="板块名称" rules={[{ required: true, message: '请输入板块名称' }]}>
+            <Input placeholder="请输入板块名称" />
+          </Form.Item>
+          <Form.Item name="tag" label="板块 tag" extra="清空并保存即清除 tag">
+            <Select
+              placeholder="未设置（可选）"
+              allowClear
+              options={BLOCK_TAG_OPTIONS.map(t => ({ value: t, label: t }))}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </Card>
   );
 };

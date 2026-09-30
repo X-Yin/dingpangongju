@@ -1,5 +1,133 @@
 [
   {
+    "date": "20260930",
+    "blocks": {
+      "医药": {
+        "avgChange": 4.68
+      },
+      "特高压": {
+        "avgChange": 1.8
+      },
+      "化工": {
+        "avgChange": 1.5
+      },
+      "消费": {
+        "avgChange": 1.13
+      },
+      "银行": {
+        "avgChange": 1.03
+      },
+      "cpo": {
+        "avgChange": 0.78
+      },
+      "军工": {
+        "avgChange": 0.59
+      },
+      "贵金属": {
+        "avgChange": 0.57
+      },
+      "房地产": {
+        "avgChange": 0.54
+      },
+      "证券": {
+        "avgChange": 0.52
+      },
+      "电力": {
+        "avgChange": 0.49
+      },
+      "MPO": {
+        "avgChange": 0.26
+      },
+      "煤炭": {
+        "avgChange": 0.16
+      },
+      "锂电": {
+        "avgChange": -0.05
+      },
+      "玻璃基板": {
+        "avgChange": -0.09
+      },
+      "机器人": {
+        "avgChange": -0.18
+      },
+      "粮食": {
+        "avgChange": -0.5
+      },
+      "北美缺电": {
+        "avgChange": -0.59
+      },
+      "钨": {
+        "avgChange": -1.05
+      },
+      "商业航天": {
+        "avgChange": -1.22
+      },
+      "光模块": {
+        "avgChange": -1.42
+      },
+      "光纤": {
+        "avgChange": -1.48
+      },
+      "铜箔": {
+        "avgChange": -1.5
+      },
+      "电子布": {
+        "avgChange": -1.65
+      },
+      "光芯片": {
+        "avgChange": -1.78
+      },
+      "MLCC": {
+        "avgChange": -1.84
+      },
+      "pcb": {
+        "avgChange": -1.88
+      },
+      "AI电源": {
+        "avgChange": -2.18
+      },
+      "AI 应用": {
+        "avgChange": -2.19
+      },
+      "液冷": {
+        "avgChange": -2.21
+      },
+      "CCL": {
+        "avgChange": -2.42
+      },
+      "PPE树脂": {
+        "avgChange": -2.62
+      },
+      "功率半导体": {
+        "avgChange": -2.68
+      },
+      "国产超节点": {
+        "avgChange": -2.87
+      },
+      "存储": {
+        "avgChange": -3.01
+      },
+      "半导体材料": {
+        "avgChange": -3.11
+      },
+      "MFC": {
+        "avgChange": -3.29
+      },
+      "cpu": {
+        "avgChange": -3.64
+      },
+      "先进封装": {
+        "avgChange": -4.05
+      },
+      "半导体": {
+        "avgChange": -4.2
+      },
+      "金刚石散热": {
+        "avgChange": -4.28
+      }
+    }
+  },
+  {
     "date": "20260929",
     "blocks": {
       "房地产": {

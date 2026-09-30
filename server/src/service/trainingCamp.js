@@ -31,11 +31,14 @@ const CAMP_BUILT_DIR = path.resolve(__dirname, '../data/backtest_camp_cache');
 // 使全部旧缓存自动失效重建；仅新增策略或调整买卖点条件无需动它（条件在回测阶段实时应用，不依赖此缓存失效）
 const CAMP_BUILDER_VERSION = 4;
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
-const campBuiltSignature = (monitorStocks) => crypto.createHash('md5')
+// 构建签名：构建器版本 + 自选股清单 + 板块清单；仅无资金快照兜底构建追加 'no-fund' 标记
+// （allowMissingFund=false 时不追加任何元素，常规签名与历史缓存保持一致，避免全量缓存失效）
+const campBuiltSignature = (monitorStocks, allowMissingFund) => crypto.createHash('md5')
   .update(JSON.stringify([
     CAMP_BUILDER_VERSION,
     (monitorStocks || []).map(s => [s.code, s.isTech !== false]),
     blockCodeList.map(b => b.code),
+    ...(allowMissingFund === true ? ['no-fund'] : []),
   ]))
   .digest('hex');
 
@@ -237,12 +240,35 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
 
   const isPastDate = dateStr < beijingToday();
   const builtFile = path.join(CAMP_BUILT_DIR, `${dateStr}.json`);
+  // 无资金快照兜底构建的独立缓存文件与当日失败负缓存标记（与常规缓存隔离，常规调用不读取，
+  // 日后资金快照补齐时常规文件优先命中，兜底旧缓存自然失效）
+  const noFundFile = path.join(CAMP_BUILT_DIR, `${dateStr}.nomfund.json`);
+  const noFundFailFile = path.join(CAMP_BUILT_DIR, `${dateStr}.nomfund.fail.json`);
   if (isPastDate) {
     try {
       if (fs.existsSync(builtFile)) {
         const cached = JSON.parse(fs.readFileSync(builtFile, 'utf-8'));
         if (cached && cached.signature === campBuiltSignature(getMonitorStocks()) && cached.data?.success) {
           return cached.data;
+        }
+      }
+      // 仅兜底模式继续尝试：无资金快照日期的独立缓存 / 当日构建失败负缓存（避免每次回测重复全量 HTTP 重建）
+      if (allowMissingFund) {
+        if (fs.existsSync(noFundFile)) {
+          const cached = JSON.parse(fs.readFileSync(noFundFile, 'utf-8'));
+          if (cached && cached.signature === campBuiltSignature(getMonitorStocks(), true) && cached.data?.success) {
+            return cached.data;
+          }
+        }
+        if (fs.existsSync(noFundFailFile)) {
+          const failed = JSON.parse(fs.readFileSync(noFundFailFile, 'utf-8'));
+          if (failed && failed.failedAt === beijingToday()) {
+            return {
+              success: false,
+              message: `${dateStr} 无资金快照且兜底构建当日曾失败（负缓存跳过，次日自动重试）: ${failed.message || '未知错误'}`,
+              date: dateStr,
+            };
+          }
         }
       }
     } catch (e) { /* 缓存损坏则走重建 */ }
@@ -259,6 +285,16 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
     return { success: false, message: err.message };
   });
   if (!backtestResult.success) {
+    // 兜底模式构建失败：写当日失败负缓存标记（构建结果原本不落盘，导致每次回测都对同一批日期重复
+    // 全量 HTTP 重建；标记仅当日有效，次日自动重试一次）
+    if (isPastDate && allowMissingFund) {
+      try {
+        if (!fs.existsSync(CAMP_BUILT_DIR)) fs.mkdirSync(CAMP_BUILT_DIR, { recursive: true });
+        const tmpFail = `${noFundFailFile}.${process.pid}.tmp`;
+        fs.writeFileSync(tmpFail, JSON.stringify({ date: dateStr, failedAt: beijingToday(), message: backtestResult.message || '未知错误' }));
+        fs.renameSync(tmpFail, noFundFailFile);
+      } catch (e) { /* 标记写失败不影响返回 */ }
+    }
     return { success: false, message: backtestResult.message || '回测数据加载失败', date: dateStr };
   }
 
@@ -516,14 +552,25 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
     kcbOpenPx: backtestResult.kcbOpenPx ?? null,
   };
 
-  // 过去日期构建结果落盘（tmp + rename 原子写，多进程并发安全）；
-  // 无资金快照的兜底构建不落盘（避免日后资金快照补齐时命中缺少资金字段的旧缓存）
-  if (isPastDate && fundData.length > 0) {
+  // 过去日期构建结果落盘（tmp + rename 原子写，多进程并发安全）：
+  // ① 有资金快照 → 常规缓存文件（常规与兜底两类调用共用，兜底读取时常规文件优先命中）
+  // ② 无资金快照且兜底构建 → 独立 .nomfund.json 缓存（原先兜底结果不落盘，导致每次回测各策略进程
+  //    重复全量 HTTP 重建同一批日期，是三日情绪冰点策略回测缓慢的主因；独立命名空间不影响常规缓存语义）
+  if (isPastDate) {
     try {
       if (!fs.existsSync(CAMP_BUILT_DIR)) fs.mkdirSync(CAMP_BUILT_DIR, { recursive: true });
-      const tmpFile = `${builtFile}.${process.pid}.tmp`;
-      fs.writeFileSync(tmpFile, JSON.stringify({ signature: campBuiltSignature(monitorStocks), data: campData }));
-      fs.renameSync(tmpFile, builtFile);
+      if (fundData.length > 0) {
+        const tmpFile = `${builtFile}.${process.pid}.tmp`;
+        fs.writeFileSync(tmpFile, JSON.stringify({ signature: campBuiltSignature(monitorStocks), data: campData }));
+        fs.renameSync(tmpFile, builtFile);
+        // 资金快照已补齐时清理历史兜底缓存与失败标记（后续直接命中常规文件，兜底文件已无意义）
+        try { if (fs.existsSync(noFundFailFile)) fs.unlinkSync(noFundFailFile); } catch (e) { /* 忽略 */ }
+        try { if (fs.existsSync(noFundFile)) fs.unlinkSync(noFundFile); } catch (e) { /* 忽略 */ }
+      } else if (allowMissingFund) {
+        const tmpFile = `${noFundFile}.${process.pid}.tmp`;
+        fs.writeFileSync(tmpFile, JSON.stringify({ signature: campBuiltSignature(monitorStocks, true), data: campData }));
+        fs.renameSync(tmpFile, noFundFile);
+      }
     } catch (e) { /* 写缓存失败不影响返回 */ }
   }
 
@@ -538,4 +585,6 @@ module.exports = {
   saveTrainingCampGroup,
   deleteTrainingCampGroup,
   prewarmKlineCache,
+  calcDailyMaInfo, // 供重点板块策略为非自选股持仓合成卖出诊断所需的日K衍生字段（口径与自选股完全一致）
+  getKlineCached,
 };

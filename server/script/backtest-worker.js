@@ -1,6 +1,8 @@
 // 训练营 - 买卖点回测并行 worker
 // 用途：直接 node script/backtest-worker.js 即自动清空回测缓存 → 预热日K线文件缓存 → 并行预构建各日期回放数据缓存
 //       （data/backtest_camp_cache，只构建一次全进程共享，策略阶段只读文件）→ fork 8 个子进程并行回测常规策略
+//       → 对三日情绪冰点日期范围补一轮兜底预构建（无资金快照日期落盘 .nomfund.json，构建失败写当日负缓存标记，
+//       避免每次回测各策略进程重复全量 HTTP 重建）→ 以 3 进程（每进程 2 策略共享数据加载）回测三日情绪冰点策略
 //       → 再以最近 60 个已完结交易日的独立日期范围并行回测情绪游资策略 → 自动汇总生成回测报告。
 // 分组规则：按进程数尽量平均分配（大组在前），如 20 个策略 8 进程 → 3/3/3/3/2/2/2/2。
 // 用法：
@@ -15,10 +17,11 @@
 //   --group N                         单进程串行强制重跑第 N 组（调试用，兼容旧的分终端模式，组只含常规策略）
 //   --run-missing                     汇总时对缺失缓存的策略现场串行回测补齐（默认仅汇总已有缓存）
 //   --build-dates d1,d2,...           内部参数：预构建子进程，逐日构建回放数据并落盘，请勿手动使用
+//   --allow-missing-fund              内部参数：与 --build-dates 连用，对无资金快照日期构建兜底缓存（三日情绪冰点策略专用），请勿手动使用
 //   --child --strategies ...          内部参数：由父进程 fork 调用，进度经 IPC 上报，请勿手动使用
 const fs = require('fs');
 const path = require('path');
-const { STRATEGIES, runRangeBacktestMulti, writeCachedBacktest, readCachedBacktest, isSentimentStrategy, getSentimentDefaultRange, isEmo3AvgStrategy, getEmo3DefaultRange } = require('../src/service/buySellBacktest');
+const { STRATEGIES, runRangeBacktestMulti, writeCachedBacktest, readCachedBacktest, isSentimentStrategy, getSentimentDefaultRange, isEmo3AvgStrategy, getEmo3DefaultRange, getTechIndexDates } = require('../src/service/buySellBacktest');
 const { loadTrainingCampData, getTrainingCampDates, beijingToday, prewarmKlineCache } = require('../src/service/trainingCamp');
 const { generateReport, getDefaultReportRange, getTrendDiagnosisRanges } = require('../src/service/backtestReport');
 const { fork } = require('child_process');
@@ -33,6 +36,7 @@ const parseArgs = (argv) => {
     else if (a === '--trend') args.trend = true;
     else if (a === '--run-missing') args.runMissing = true;
     else if (a === '--build-dates') args.buildDates = String(argv[++i]).split(',').map(s => s.trim()).filter(Boolean);
+    else if (a === '--allow-missing-fund') args.allowMissingFund = true;
     else if (a === '--child') args.child = true;
     else if (a === '--group') args.group = Number(argv[++i]);
     else if (a === '--workers') args.workers = Number(argv[++i]);
@@ -154,13 +158,18 @@ const runAsChild = async (strategyIds, startDate, endDate) => {
 };
 
 // ===== 预构建子进程：逐日构建回放数据（过去交易日结果自动落盘共享），进度经 IPC 上报 =====
-const runAsBuildChild = async (dates) => {
+// allowMissingFund=true 时对无资金快照日期构建兜底缓存（.nomfund.json，三日情绪冰点策略专用）
+const runAsBuildChild = async (dates, allowMissingFund) => {
   const report = (m) => { if (process.send) process.send(m); };
   let done = 0;
   for (const d of dates) {
     try {
-      await loadTrainingCampData(d);
-      report({ type: 'build-done', date: d, ok: true, done: ++done, total: dates.length });
+      const r = await loadTrainingCampData(d, { allowMissingFund: allowMissingFund === true });
+      if (r && r.success === false) {
+        report({ type: 'build-done', date: d, ok: false, done: ++done, total: dates.length, message: r.message || '构建失败' });
+      } else {
+        report({ type: 'build-done', date: d, ok: true, done: ++done, total: dates.length });
+      }
     } catch (e) {
       report({ type: 'build-done', date: d, ok: false, done: ++done, total: dates.length, message: e.message || String(e) });
     }
@@ -201,21 +210,23 @@ const runStandalone = async (strategyIds, startDate, endDate) => {
 };
 
 // ===== 预构建阶段：按日期切片并行构建回放数据缓存（策略线程随后只读文件，跳过重建与 HTTP 拉取） =====
-const runPrebuild = (dates, workerCount) => new Promise((resolve) => {
+// opts.allowMissingFund=true：对无资金快照日期构建兜底缓存（.nomfund.json），供三日情绪冰点策略阶段命中文件
+const runPrebuild = (dates, workerCount, opts = {}) => new Promise((resolve) => {
   if (!dates || dates.length === 0) { resolve(0); return; }
+  const noFund = opts.allowMissingFund === true;
   const slices = buildGroups(dates, Math.max(1, Math.min(workerCount, dates.length)));
   const children = [];
   let done = 0;
   let failed = 0;
   let remaining = slices.length;
-  console.log(`[${ts()}] 预构建回放数据缓存: ${dates.length} 个交易日 → ${slices.length} 进程（${slices.map(g => g.length).join(' / ')}）`);
+  console.log(`[${ts()}] 预构建${noFund ? '（含无资金快照兜底缓存）' : ''}回放数据缓存: ${dates.length} 个交易日 → ${slices.length} 进程（${slices.map(g => g.length).join(' / ')}）`);
   const onSigint = () => {
     children.forEach((c) => { try { c.kill('SIGTERM'); } catch (e) { /* 忽略 */ } });
     process.exit(130);
   };
   process.on('SIGINT', onSigint);
   slices.forEach((slice) => {
-    const child = fork(__filename, ['--build-dates', slice.join(',')], { silent: true });
+    const child = fork(__filename, ['--build-dates', slice.join(','), ...(noFund ? ['--allow-missing-fund'] : [])], { silent: true });
     children.push(child);
     let errBuf = '';
     child.on('message', (m) => {
@@ -269,6 +280,17 @@ const runTrend = async (workerCount) => {
     if (needReplay) {
       const buildDates = getTrainingCampDates().filter(d => d >= r.startDate && d <= r.endDate && d < beijingToday()).sort();
       await runPrebuild(buildDates, workerCount);
+      // 缺失策略含三日情绪冰点时，对其固定范围（2026-07-01 起，含缺资金快照日期）补一轮兜底预构建；
+      // 已构建过的日期读文件秒过，仅首次会现场构建并落盘 .nomfund.json
+      if (missing.some(id => isEmo3AvgStrategy(id))) {
+        let e3r = null;
+        try { e3r = getEmo3DefaultRange(); } catch (e) { e3r = null; }
+        if (e3r) {
+          const e3Dates = Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]))
+            .filter(d => d >= e3r.startDate && d <= e3r.endDate && d < beijingToday()).sort();
+          await runPrebuild(e3Dates, workerCount, { allowMissingFund: true });
+        }
+      }
     }
     const exitCode = await runParallel(buildGroups(missing, workerCount), r.startDate, r.endDate);
     if (exitCode !== 0) process.exitCode = exitCode;
@@ -480,6 +502,9 @@ const main = async () => {
     return { startDate, endDate };
   };
   const workerCount = Math.max(1, args.workers || 8);
+  // 三日情绪冰点策略分组：每进程至少 2 个策略共享同一天回放数据加载（6 策略 → 3 进程），
+  // 避免单策略单进程各自重复加载同一批日期缓存
+  const emo3WorkerCount = Math.max(1, Math.min(workerCount, Math.ceil(emo3Ids.length / 2)));
 
   if (args.list) {
     const groups = buildGroups(regularIds, workerCount);
@@ -492,7 +517,7 @@ const main = async () => {
       ids.forEach(id => console.log(`  - ${id}  ${STRATEGIES[id].name}`));
     });
     if (emo3Ids.length > 0) {
-      const eGroups = buildGroups(emo3Ids, workerCount);
+      const eGroups = buildGroups(emo3Ids, emo3WorkerCount);
       console.log(`\n三日情绪冰点策略共 ${emo3Ids.length} 个，${eGroups.length} 进程分组: ${eGroups.map(g => g.length).join(' / ')}（日期 ${emo3Range ? `${emo3Range.startDate} ~ ${emo3Range.endDate}` : '获取失败'}）`);
       eGroups.forEach((ids, i) => {
         console.log(`\n情绪冰点线程 ${i + 1}（${ids.length} 个）:`);
@@ -524,7 +549,7 @@ const main = async () => {
 
   // 预构建子进程模式（由父进程 fork 调用）
   if (args.buildDates && args.buildDates.length > 0) {
-    await runAsBuildChild(args.buildDates);
+    await runAsBuildChild(args.buildDates, args.allowMissingFund === true);
     return;
   }
 
@@ -591,8 +616,14 @@ const main = async () => {
   let emo3Exit = 0;
   if (emo3Ids.length > 0) {
     if (emo3Range) {
+      // 先对 emo3 范围全部日期预构建兜底缓存：无资金快照日期（资金快照从 20260728 才开始）原先
+      // 不落盘，每次回测都由各策略进程现场全量 HTTP 重复重建 —— 这是三日情绪冰点回测缓慢的主因；
+      // 此处预构建一次落盘 .nomfund.json（构建失败的日期写当日负缓存标记），策略阶段全部命中文件
+      const emo3BuildDates = Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]))
+        .filter(d => d >= emo3Range.startDate && d <= emo3Range.endDate && d < beijingToday()).sort();
+      await runPrebuild(emo3BuildDates, workerCount, { allowMissingFund: true });
       console.log(`\n[${ts()}] 常规策略完成，开始三日情绪冰点策略回测（${emo3Range.startDate} ~ ${emo3Range.endDate}）...`);
-      emo3Exit = await runParallel(buildGroups(emo3Ids, workerCount), emo3Range.startDate, emo3Range.endDate);
+      emo3Exit = await runParallel(buildGroups(emo3Ids, emo3WorkerCount), emo3Range.startDate, emo3Range.endDate);
     } else {
       console.error(`\n[${ts()}] 三日情绪冰点默认日期范围获取失败，跳过 ${emo3Ids.length} 个策略`);
     }

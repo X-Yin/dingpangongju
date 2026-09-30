@@ -156,6 +156,7 @@ const getBlockData = () => {
     
     blockList.push({
       blockName,
+      tag: blockCodeList.find(item => item.blockName === blockName)?.tag || null, // 板块 tag（进攻/中性/防御）
       avgChange,
       data: mergedData.sort((a, b) => {
         // 有行情数据的排在前面
