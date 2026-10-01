@@ -29,7 +29,7 @@ const EXCLUDED_CODES = new Set(['sh688498', 'sh688808']); // 源杰科技、联�
 
 // 重点板块-N日最高涨幅系列统一描述（keyBlockDays: N；板块 tag = 进攻/中性/防御，在 key_blocks 页面维护；
 // 个股涨幅由回测时重新拉取成分股日K现算）
-const KEY_BLOCK_DESC = (n) => `唯一买卖开关 = 创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）的正负翻转，不需要资金、成交量、情绪等任何条件配合。进攻（自选科技股）：斜率由负转正的桶触发买入，买自选股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁）中最近 ${n} 个交易日（含触发日）个股涨幅之和最大的一只；卖点沿用通用 7 条件卖出诊断（「跌破成本线」为 -2%，即现价 < 买入价 × 0.98）；卖点诊断卖出后若斜率仍为正，当日不再买入，等到次日开盘 10 分钟后（9:40 桶）复测斜率仍为正才再买 ${n} 日涨幅最大的科技股（复测时斜率已为负则改由「由正转负」防御信号驱动）。防御（防御+中性 tag 板块）：斜率由正转负且当前空仓的桶触发买入，买防御+中性 tag 板块成分股中 ${n} 日涨幅最大的一只；防御对应创业板情绪低迷期，按半仓买入，该笔收益率（含期末浮盈）在概览的整体收益与平均/最大回撤统计中一律按半仓（×0.5）折算；唯一卖点 = 斜率由负转正（不对成本线设置任何止损，一直持仓到转正那一刻，同桶可转手买入进攻科技股）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 ${n} 日涨幅排名的下一只；候选全部不可买时在斜率状态不变的后续桶持续重试；买入价取触发桶分时价；同桶允许先卖后买转手。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无翻转则不建仓`;
+const KEY_BLOCK_DESC = (n) => `唯一买卖开关 = 创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）的正负翻转，不需要资金、成交量、情绪等任何条件配合。进攻（自选科技股）：斜率由负转正的桶触发买入，买自选股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁）中最近 ${n} 个交易日（含触发日）个股涨幅之和最大的一只；卖点沿用通用 7 条件卖出诊断（「跌破成本线」为 -2%，即现价 < 买入价 × 0.98）；卖点诊断卖出后若斜率仍为正，当日不再买入，等到次日开盘 10 分钟后（9:40 桶）复测斜率仍为正才再买 ${n} 日涨幅最大的科技股（复测时斜率已为负则改由「由正转负」防御信号驱动）。防御（防御+中性 tag 板块）：斜率由正转负且当前空仓的桶触发买入，买防御+中性 tag 板块成分股中 ${n} 日涨幅最大的一只；防御对应创业板情绪低迷期，按半仓买入，该笔收益率（含期末浮盈）在概览的整体收益与平均/最大回撤统计中一律按半仓（×0.5）折算；唯一卖点 = 斜率由负转正 ∪ 个股分时价跌破成本线 -5% 止损（双卖点任一先触发即卖，同桶可转手买入进攻科技股）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 ${n} 日涨幅排名的下一只；候选全部不可买时在斜率状态不变的后续桶持续重试；买入价取触发桶分时价；同桶允许先卖后买转手。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无翻转则不建仓`;
 
 // 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
 const STRATEGIES = {
@@ -2235,7 +2235,7 @@ const runTwoBacktest = async (startDate, endDate, strategyId, onProgress) => {
 //     卖出后斜率仍为正 → 当日不追买；次日开盘 10 分钟后（9:40 桶）复测仍为正才继续买
 //   防御（mode='defense'，买防御+中性 tag 板块内 n 日涨幅最大者）：
 //     买点：斜率由正转负且当前空仓的当桶
-//     卖点：斜率由负转正当桶（唯一卖点，不设成本线止损，持有至最后一刻，同桶可转手买入进攻股）
+//     卖点：斜率由负转正当桶 ∪ 个股分时价跌破成本线 -5% 止损（双卖点任一先触发即卖，同桶可转手买入进攻股）
 //     仓位：创业板情绪低迷期按半仓买入（weight=0.5），个股实际收益 rawReturnRate × 0.5 记入
 //           returnRate / buyReturn；整体收益与平均/最大回撤均按折算后口径（2026-10-01 用户要求）
 // 斜率符号跨日连续追踪（lastSlopeSign），初值取回测首日前一交易日收盘斜率；null 桶不更新基准；
@@ -2464,6 +2464,8 @@ const fmtKeyBlockSlope = (v) => (v == null || !Number.isFinite(Number(v)) ? '--'
 // 整体收益率与平均/最大回撤均按折算后的收益率计算（2026-10-01 用户要求）
 const KEY_BLOCK_POSITION_WEIGHT = { offense: 1, defense: 0.5 };
 const KEY_BLOCK_MODE_LABEL = { offense: '进攻·全仓', defense: '防御·半仓' };
+// 防御持仓止损线（个股成本线下 -5%，任一卖点先触发即卖出；2026-10-01 用户新增）
+const KEY_BLOCK_DEFENSE_STOP_LOSS_PCT = 5;
 
 const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) => {
   const strategy = STRATEGIES[strategyId];
@@ -2714,7 +2716,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
 
     // 当日隔夜持仓卖出数据预建（当日买入次日才可卖，同日买入不可同日卖出）：
     //   进攻持仓 → 通用 7 条件卖点诊断所需的日收盘斜率门禁（「科技板块情绪退潮」条件）+ 非自选股合成逐桶数据
-    //   防御持仓 → 持仓股当日分时（唯一卖点 = 斜率由负转正当桶的时点价格；不设任何成本线止损）
+    //   防御持仓 → 持仓股当日分时（双卖点：斜率由负转正当桶 ∪ 个股分时价跌破成本线 -5%）
     let sellBuckets = timeBuckets;
     let sellReplayStocks = replayStocks;
     let cybMa3SlopeForGate = null;
@@ -2756,7 +2758,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
 
     // 逐桶状态机（2026-10-01 重构）：
     //   ① 盘中实时斜率（null 桶不参与翻转识别，符号基准跨缺失桶连续）→ 识别由负转正/由正转负
-    //   ② 卖出：防御持仓遇「由负转正」当桶按分时价卖出（无止损）；进攻持仓走通用 7 条件卖点诊断，
+    //   ② 卖出：防御持仓遇「由负转正」或「个股跌破成本线 -5%」即按分时价卖出；进攻持仓走通用 7 条件卖点诊断，
     //          卖出后斜率仍为正则当日不再追买（offenseBlockDate），挂次日 9:40 复测意图
     //   ③ 空仓时翻转事件生成入场意图：由正转负→防御（独立规则，即使刚卖出也生效）；
     //          由负转正→进攻（进攻卖出当日除外）；同桶允许先卖后买转手
@@ -2772,20 +2774,25 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       // ===== ② 卖出（仅隔夜持仓） =====
       if (position && dateStr > position.buyDate) {
         if (position.mode === 'defense' && defensePoints && defensePoints.length > 0) {
-          // 防御唯一卖点：斜率由负转正的当桶，按持仓股分时价卖出（不设成本线止损，持有至斜率转正的最后一刻）
-          if (turnedPositive) {
-            let atPt = null;
-            for (const p of defensePoints) { if (p.minute <= bucketMinute) atPt = p; else break; }
-            if (atPt) {
+          // 防御双卖点：① 斜率由负转正的当桶 ② 个股分时价跌破成本线 -5%（2026-10-01 新增止损）
+          // 任一先触发即卖出；止损在每个桶都会检查（因为不依赖斜率翻转事件）
+          let atPt = null;
+          for (const p of defensePoints) { if (p.minute <= bucketMinute) atPt = p; else break; }
+          if (atPt) {
+            const rawReturnRate = position.buyPrice > 0
+              ? parseFloat((((atPt.lastPx - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
+              : null;
+            const stopLossHit = rawReturnRate != null && rawReturnRate <= -KEY_BLOCK_DEFENSE_STOP_LOSS_PCT;
+            if (turnedPositive || stopLossHit) {
               const sellChange = defensePreclose && defensePreclose > 0
                 ? parseFloat((((atPt.lastPx - defensePreclose) / defensePreclose) * 100).toFixed(2))
-                : null;
-              const rawReturnRate = position.buyPrice > 0
-                ? parseFloat((((atPt.lastPx - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
                 : null;
               // 防御半仓折算：个股实际收益 × 0.5 才是对全仓账户的收益贡献（回撤/整体收益均按折算口径）
               const weight = KEY_BLOCK_POSITION_WEIGHT.defense;
               const returnRate = rawReturnRate != null ? parseFloat((rawReturnRate * weight).toFixed(2)) : null;
+              const sellTrigger = turnedPositive
+                ? `创业板指3日线斜率盘中由负转正（${fmtKeyBlockSlope(lastSlopeValue)} → ${fmtKeyBlockSlope(slopeNow)}）`
+                : `防御持仓个股分时价跌破成本线 -${KEY_BLOCK_DEFENSE_STOP_LOSS_PCT}% 止损（成本 ${position.buyPrice.toFixed(2)} → 现价 ${parseFloat(Number(atPt.lastPx).toFixed(2))}，浮亏 ${rawReturnRate}%）`;
               trades.push({
                 seq: trades.length + 1,
                 metric: position.metric,
@@ -2805,7 +2812,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
                 sellTime: `${String(Math.floor(atPt.minute / 100)).padStart(2, '0')}:${String(atPt.minute % 100).padStart(2, '0')}`,
                 sellPrice: parseFloat(Number(atPt.lastPx).toFixed(2)),
                 sellChange,
-                sellReason: `创业板指3日线斜率盘中由负转正（${fmtKeyBlockSlope(lastSlopeValue)} → ${fmtKeyBlockSlope(slopeNow)}），防御半仓持仓卖出（不设成本线止损，持有至斜率转正的最后一刻；防御为半仓买入，收益率按半仓折算）`,
+                sellReason: `${sellTrigger}，防御半仓持仓卖出（防御为半仓买入，收益率按半仓折算）`,
                 returnRate,
                 rawReturnRate,
               });
