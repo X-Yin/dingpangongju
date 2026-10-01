@@ -1,0 +1,826 @@
+{
+  "success": true,
+  "type": "single",
+  "strategy": {
+    "id": "highest_2d_gain",
+    "name": "2日涨幅最大",
+    "desc": "买点命中时只买入触发时点当日盘中涨幅最大的股票（按用户定义排序依据为触发时点当日盘中涨幅，非 2 日窗口累计涨幅）；选股门槛：按买点触发时点当日盘中涨幅从高到低排序，从最高者起依次要求「触发时点当日抗分歧分数 > 11」，不满足则顺延至下一只满足的股票（全部候选均不满足则当日不买入），买入条件明细中标注是否因前序股票分数≤11 而顺延"
+  },
+  "range": {
+    "startDate": "20260901",
+    "endDate": "20260930"
+  },
+  "skippedDates": [],
+  "seenStocks": [
+    {
+      "code": "sh688981",
+      "name": "中芯国际"
+    },
+    {
+      "code": "sh688347",
+      "name": "华虹"
+    },
+    {
+      "code": "sh688072",
+      "name": "拓荆科技"
+    },
+    {
+      "code": "sz002371",
+      "name": "北方华创"
+    },
+    {
+      "code": "sh688256",
+      "name": "寒武纪"
+    },
+    {
+      "code": "sz002837",
+      "name": "英维克"
+    },
+    {
+      "code": "sz301018",
+      "name": "申菱环境"
+    },
+    {
+      "code": "sh601138",
+      "name": "工业富联"
+    },
+    {
+      "code": "sz300757",
+      "name": "罗博特科"
+    },
+    {
+      "code": "sz300394",
+      "name": "天孚通信"
+    },
+    {
+      "code": "sz300502",
+      "name": "新易盛"
+    },
+    {
+      "code": "sz300308",
+      "name": "中际旭创"
+    },
+    {
+      "code": "sh688048",
+      "name": "长光华芯"
+    },
+    {
+      "code": "sz301511",
+      "name": "德福科技"
+    },
+    {
+      "code": "sz301217",
+      "name": "铜冠铜箔"
+    },
+    {
+      "code": "sh688008",
+      "name": "澜起科技"
+    },
+    {
+      "code": "sh688041",
+      "name": "海光信息"
+    },
+    {
+      "code": "sz002475",
+      "name": "立讯精密"
+    },
+    {
+      "code": "sh600183",
+      "name": "生益科技"
+    },
+    {
+      "code": "sh603986",
+      "name": "兆易创新"
+    },
+    {
+      "code": "sh688313",
+      "name": "仕佳光子"
+    },
+    {
+      "code": "sz002384",
+      "name": "东山精密"
+    },
+    {
+      "code": "sz002916",
+      "name": "深南电路"
+    },
+    {
+      "code": "sz002463",
+      "name": "沪电股份"
+    },
+    {
+      "code": "sz300476",
+      "name": "胜宏科技"
+    },
+    {
+      "code": "sh601869",
+      "name": "长飞光纤"
+    },
+    {
+      "code": "sh600487",
+      "name": "亨通光电"
+    },
+    {
+      "code": "sh603256",
+      "name": "宏和科技"
+    },
+    {
+      "code": "sh688146",
+      "name": "中船特气"
+    },
+    {
+      "code": "sz300408",
+      "name": "三环集团"
+    },
+    {
+      "code": "sh600118",
+      "name": "中国卫星"
+    },
+    {
+      "code": "sz000657",
+      "name": "中钨高新"
+    },
+    {
+      "code": "sh688082",
+      "name": "盛美上海"
+    },
+    {
+      "code": "sz002851",
+      "name": "麦格米特"
+    },
+    {
+      "code": "sz301526",
+      "name": "国际复材"
+    },
+    {
+      "code": "sh688630",
+      "name": "芯基微装"
+    },
+    {
+      "code": "sh603629",
+      "name": "利通电子"
+    },
+    {
+      "code": "sz301377",
+      "name": "鼎泰高科"
+    },
+    {
+      "code": "sh688200",
+      "name": "华峰测控"
+    },
+    {
+      "code": "sz002436",
+      "name": "兴森科技"
+    },
+    {
+      "code": "sh688147",
+      "name": "微导纳米"
+    },
+    {
+      "code": "sz300567",
+      "name": "精测电子"
+    },
+    {
+      "code": "sh688362",
+      "name": "甬矽电子"
+    },
+    {
+      "code": "sh600584",
+      "name": "长电科技"
+    },
+    {
+      "code": "sz002156",
+      "name": "通富微电"
+    },
+    {
+      "code": "sh603757",
+      "name": "大元泵业"
+    },
+    {
+      "code": "sz002536",
+      "name": "飞龙股份"
+    },
+    {
+      "code": "sh600176",
+      "name": "中国巨石"
+    },
+    {
+      "code": "sh688120",
+      "name": "华海清科"
+    },
+    {
+      "code": "sh688629",
+      "name": "华丰科技"
+    },
+    {
+      "code": "sz001309",
+      "name": "德明利"
+    },
+    {
+      "code": "sz300285",
+      "name": "国瓷材料"
+    },
+    {
+      "code": "sz000636",
+      "name": "风华高科"
+    },
+    {
+      "code": "sh688702",
+      "name": "盛科通信"
+    },
+    {
+      "code": "sz301165",
+      "name": "锐捷网络"
+    },
+    {
+      "code": "sh688025",
+      "name": "杰普特"
+    },
+    {
+      "code": "sh688820",
+      "name": "盛合晶微"
+    },
+    {
+      "code": "sz000977",
+      "name": "浪潮信息"
+    },
+    {
+      "code": "sh688361",
+      "name": "中科飞测"
+    },
+    {
+      "code": "sz300395",
+      "name": "菲利华"
+    },
+    {
+      "code": "sz002126",
+      "name": "银轮股份"
+    },
+    {
+      "code": "sh600105",
+      "name": "永鼎股份"
+    },
+    {
+      "code": "sh688012",
+      "name": "中微公司"
+    },
+    {
+      "code": "sh688403",
+      "name": "汇成股份"
+    },
+    {
+      "code": "sh688825",
+      "name": "长鑫科技"
+    },
+    {
+      "code": "sh603228",
+      "name": "景旺电子"
+    },
+    {
+      "code": "sz002428",
+      "name": "云南锗业"
+    },
+    {
+      "code": "sh603083",
+      "name": "剑桥科技"
+    },
+    {
+      "code": "sh688519",
+      "name": "南亚新材"
+    },
+    {
+      "code": "sz002080",
+      "name": "中材科技"
+    },
+    {
+      "code": "sh603186",
+      "name": "华正新材"
+    },
+    {
+      "code": "sz002050",
+      "name": "三花智控"
+    },
+    {
+      "code": "sh603119",
+      "name": "浙江荣泰"
+    },
+    {
+      "code": "sh688809",
+      "name": "强一股份"
+    },
+    {
+      "code": "sz300570",
+      "name": "太辰光"
+    },
+    {
+      "code": "sz301183",
+      "name": "东田微"
+    },
+    {
+      "code": "sz301021",
+      "name": "英诺激光"
+    },
+    {
+      "code": "sz000725",
+      "name": "京东方"
+    },
+    {
+      "code": "sh600601",
+      "name": "方正科技"
+    },
+    {
+      "code": "sz300548",
+      "name": "长芯博创"
+    },
+    {
+      "code": "sh603319",
+      "name": "美湖股份"
+    },
+    {
+      "code": "sh688700",
+      "name": "东威科技"
+    },
+    {
+      "code": "sh688028",
+      "name": "沃尔德"
+    },
+    {
+      "code": "sz300179",
+      "name": "四方达"
+    },
+    {
+      "code": "sz002636",
+      "name": "金安国纪"
+    },
+    {
+      "code": "sh688143",
+      "name": "长盈通"
+    },
+    {
+      "code": "sz002046",
+      "name": "国机精工"
+    },
+    {
+      "code": "sz301071",
+      "name": "力量钻石"
+    },
+    {
+      "code": "sz300776",
+      "name": "帝尔激光"
+    },
+    {
+      "code": "sh688603",
+      "name": "天承科技"
+    },
+    {
+      "code": "sh601179",
+      "name": "中国西电"
+    },
+    {
+      "code": "sh600312",
+      "name": "平高电气"
+    },
+    {
+      "code": "sz000400",
+      "name": "许继电气"
+    },
+    {
+      "code": "sz000823",
+      "name": "超声电子"
+    },
+    {
+      "code": "sh600707",
+      "name": "彩虹股份"
+    },
+    {
+      "code": "sz300162",
+      "name": "雷曼光电"
+    },
+    {
+      "code": "sz301297",
+      "name": "富乐德"
+    },
+    {
+      "code": "sh688099",
+      "name": "晶晨股份"
+    }
+  ],
+  "trades": [
+    {
+      "seq": 1,
+      "metric": 7.03,
+      "code": "sh688143",
+      "stockName": "长盈通",
+      "buyDate": "20260901",
+      "buyDateDisplay": "2026-09-01",
+      "buyTime": "13:10",
+      "buyPrice": 172.3,
+      "buyChange": 7.03,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+21.79亿",
+          "reason": "最近 5 分钟资金净流入 21.79 亿（13:05:00→13:10:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "当前量能为正（今日累计成交额超昨日全天）",
+          "passed": true,
+          "exempted": true,
+          "value": "增加 208.51亿（已豁免）",
+          "reason": "今日(09-01)盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 2.86 / 当前 -70.55",
+          "reason": "9:30 竞价科技情绪 2.86 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
+          "passed": true,
+          "value": "14.32",
+          "skippedStocks": [],
+          "reason": "按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 14.32）"
+        }
+      ],
+      "sellDate": "20260902",
+      "sellDateDisplay": "2026-09-02",
+      "sellTime": "09:30",
+      "sellPrice": 161.01,
+      "sellChange": -3.59,
+      "sellReason": "均线破位、跌破成本线-2%",
+      "returnRate": -6.55
+    },
+    {
+      "seq": 2,
+      "metric": 10.01,
+      "code": "sz002536",
+      "stockName": "飞龙股份",
+      "buyDate": "20260903",
+      "buyDateDisplay": "2026-09-03",
+      "buyTime": "14:00",
+      "buyPrice": 63.88,
+      "buyChange": 10.01,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -506.69亿，较 5min 前 +156.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+20.56亿",
+          "reason": "最近 5 分钟资金净流入 20.56 亿（13:55:00→14:00:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 156.23亿",
+          "reason": "当前量能 -506.69 亿为负，但较 5min 前的 -662.92 亿+ 156.23 亿，达到 100 亿阈值",
+          "volumeText": "当前量能 -506.69亿，较 5min 前 +156.23亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 37.71 / 当前 4.71",
+          "reason": "9:30 竞价科技情绪 37.71 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
+          "passed": true,
+          "value": "18.94",
+          "skippedStocks": [],
+          "reason": "按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 18.94）"
+        }
+      ],
+      "sellDate": "20260904",
+      "sellDateDisplay": "2026-09-04",
+      "sellTime": "09:40",
+      "sellPrice": 62.2,
+      "sellChange": -1.32,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.63
+    },
+    {
+      "seq": 3,
+      "metric": 2.41,
+      "code": "sh601179",
+      "stockName": "中国西电",
+      "buyDate": "20260904",
+      "buyDateDisplay": "2026-09-04",
+      "buyTime": "10:05",
+      "buyPrice": 12.77,
+      "buyChange": 2.41,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票抗分歧≤11顺延买入）",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+24.00亿",
+          "reason": "最近 5 分钟资金净流入 24.00 亿（10:00:00→10:05:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "当前量能为正（今日累计成交额超昨日全天）",
+          "passed": true,
+          "exempted": true,
+          "value": "增加 91.00亿（已豁免）",
+          "reason": "今日(09-04)盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 44.52 / 当前 -21.88",
+          "reason": "9:30 竞价科技情绪 44.52 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
+          "passed": true,
+          "value": "12.49",
+          "skippedStocks": [
+            {
+              "code": "sh603228",
+              "name": "景旺电子",
+              "change": 6.03,
+              "resilience": 8.96
+            },
+            {
+              "code": "sh600601",
+              "name": "方正科技",
+              "change": 5.31,
+              "resilience": 8.54
+            },
+            {
+              "code": "sh688403",
+              "name": "汇成股份",
+              "change": 3.49,
+              "resilience": 8.3
+            },
+            {
+              "code": "sz300394",
+              "name": "天孚通信",
+              "change": 3.2,
+              "resilience": 7.81
+            },
+            {
+              "code": "sh603083",
+              "name": "剑桥科技",
+              "change": 2.52,
+              "resilience": 7.89
+            },
+            {
+              "code": "sh688120",
+              "name": "华海清科",
+              "change": 2.43,
+              "resilience": 8.97
+            }
+          ],
+          "reason": "因前序股票 景旺电子（触发时涨幅 +6.03%、抗分歧 8.96）、方正科技（触发时涨幅 +5.31%、抗分歧 8.54）、汇成股份（触发时涨幅 +3.49%、抗分歧 8.3）、天孚通信（触发时涨幅 +3.20%、抗分歧 7.81）、剑桥科技（触发时涨幅 +2.52%、抗分歧 7.89）、华海清科（触发时涨幅 +2.43%、抗分歧 8.97） 触发时点抗分歧分数≤11 依次顺延，轮到本股买入（本股触发时点抗分歧分数 12.49）"
+        }
+      ],
+      "sellDate": "20260907",
+      "sellDateDisplay": "2026-09-07",
+      "sellTime": "09:45",
+      "sellPrice": 12.48,
+      "sellChange": -0.95,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.27
+    },
+    {
+      "seq": 4,
+      "metric": 13.2,
+      "code": "sz301511",
+      "stockName": "德福科技",
+      "buyDate": "20260907",
+      "buyDateDisplay": "2026-09-07",
+      "buyTime": "10:15",
+      "buyPrice": 96.28,
+      "buyChange": 13.2,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -80.74亿，较 5min 前 +128.88亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+25.11亿",
+          "reason": "最近 5 分钟资金净流入 25.11 亿（10:10:00→10:15:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 128.88亿",
+          "reason": "当前量能 -80.74 亿为负，但较 5min 前的 -209.62 亿+ 128.88 亿，达到 100 亿阈值",
+          "volumeText": "当前量能 -80.74亿，较 5min 前 +128.88亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 45.13 / 当前 87.73",
+          "reason": "9:30 竞价科技情绪 45.13 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
+          "passed": true,
+          "value": "19.95",
+          "skippedStocks": [],
+          "reason": "按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 19.95）"
+        }
+      ],
+      "sellDate": "20260918",
+      "sellDateDisplay": "2026-09-18",
+      "sellTime": "10:00",
+      "sellPrice": 106.39,
+      "sellChange": -0.5,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": 10.5
+    },
+    {
+      "seq": 5,
+      "metric": 7.05,
+      "code": "sz300570",
+      "stockName": "太辰光",
+      "buyDate": "20260918",
+      "buyDateDisplay": "2026-09-18",
+      "buyTime": "10:05",
+      "buyPrice": 231.21,
+      "buyChange": 7.05,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 52.63亿，较 5min 前 +11.83亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+20.25亿",
+          "reason": "最近 5 分钟资金净流入 20.25 亿（10:00:00→10:05:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 11.83亿",
+          "reason": "当前量能 52.63 亿为正，较 5min 前的 40.80 亿+ 11.83 亿，持续放量",
+          "volumeText": "当前量能 52.63亿，较 5min 前 +11.83亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 59.18 / 当前 17.26",
+          "reason": "9:30 竞价科技情绪 59.18 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
+          "passed": true,
+          "value": "12.95",
+          "skippedStocks": [],
+          "reason": "按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 12.95）"
+        }
+      ],
+      "sellDate": "20260921",
+      "sellDateDisplay": "2026-09-21",
+      "sellTime": "09:35",
+      "sellPrice": 223.13,
+      "sellChange": -2.71,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -3.49
+    },
+    {
+      "seq": 6,
+      "metric": 8.75,
+      "code": "sh688143",
+      "stockName": "长盈通",
+      "buyDate": "20260929",
+      "buyDateDisplay": "2026-09-29",
+      "buyTime": "11:30",
+      "buyPrice": 179.5,
+      "buyChange": 8.75,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+20.54亿",
+          "reason": "最近 5 分钟资金净流入 20.54 亿（11:25:00→11:30:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "当前量能为正（今日累计成交额超昨日全天）",
+          "passed": true,
+          "exempted": true,
+          "value": "增加 78.08亿（已豁免）",
+          "reason": "前一交易日盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 -2.49 / 当前 25.72",
+          "reason": "9:30 竞价科技情绪 -2.49 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数>11",
+          "passed": true,
+          "value": "21.97",
+          "skippedStocks": [],
+          "reason": "按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 21.97）"
+        }
+      ],
+      "sellDate": "20260930",
+      "sellDateDisplay": "2026-09-30",
+      "sellTime": "09:35",
+      "sellPrice": 174.08,
+      "sellChange": -3.41,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -3.02
+    }
+  ],
+  "currentHolding": null,
+  "summary": {
+    "tradeCount": 6,
+    "winCount": 1,
+    "winRate": 16.67,
+    "avgDrawdown": -3.59,
+    "maxDrawdown": -6.55,
+    "overallReturn": -8.03,
+    "holding": false
+  }
+}

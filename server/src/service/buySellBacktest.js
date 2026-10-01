@@ -48,12 +48,12 @@ const STRATEGIES = {
   highest_3d_gain_2nd: { id: 'highest_3d_gain_2nd', name: '3日涨幅第二名', desc: '买点命中时只买入最近 3 个交易日涨幅第二大的股票' },
   highest_3d_ma_slope: { id: 'highest_3d_ma_slope', name: '3日线斜率最陡峭', desc: '买点命中时只买入 3 日涨幅均线斜率角度最大的股票' },
   highest_5d_ma_slope: { id: 'highest_5d_ma_slope', name: '5日线斜率最陡峭', desc: '买点命中时只买入 5 日涨幅均线斜率角度最大的股票' },
-  highest_3d_reports: { id: 'highest_3d_reports', name: '3日研报覆盖数最多', desc: '买点命中时只买入过去 3 个交易日研报覆盖数最多的股票（覆盖数相同取 3 日涨幅最大）' },
-  highest_5d_reports: { id: 'highest_5d_reports', name: '5日研报覆盖数最多', desc: '买点命中时只买入过去 5 个交易日研报覆盖数最多的股票（覆盖数相同取 5 日涨幅最大）' },
-  highest_3d_reports_2nd: { id: 'highest_3d_reports_2nd', name: '3日研报覆盖数第二名', desc: '买点命中时只买入过去 3 个交易日研报覆盖数第二多的股票（覆盖数相同取 3 日涨幅最大）' },
-  highest_5d_reports_2nd: { id: 'highest_5d_reports_2nd', name: '5日研报覆盖数第二名', desc: '买点命中时只买入过去 5 个交易日研报覆盖数第二多的股票（覆盖数相同取 5 日涨幅最大）' },
-  highest_3d_reports_top5_gain: { id: 'highest_3d_reports_top5_gain', name: '3日研报前五&涨幅最大', desc: '买点命中时在最近 3 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 3 日涨幅最大的一只' },
-  highest_5d_reports_top5_gain: { id: 'highest_5d_reports_top5_gain', name: '5日研报前五&涨幅最大', desc: '买点命中时在最近 5 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 5 日涨幅最大的一只' },
+  highest_3d_reports: { id: 'highest_3d_reports', name: '3日研报覆盖数最多', desc: '买点命中时只买入过去 3 个交易日（含当日）研报覆盖数最多的股票（覆盖数相同取 3 日涨幅最大）；覆盖仅统计买点前已创建的研报，买点后补录的不计入' },
+  highest_5d_reports: { id: 'highest_5d_reports', name: '5日研报覆盖数最多', desc: '买点命中时只买入过去 5 个交易日（含当日）研报覆盖数最多的股票（覆盖数相同取 5 日涨幅最大）；覆盖仅统计买点前已创建的研报，买点后补录的不计入' },
+  highest_3d_reports_2nd: { id: 'highest_3d_reports_2nd', name: '3日研报覆盖数第二名', desc: '买点命中时只买入过去 3 个交易日（含当日）研报覆盖数第二多的股票（覆盖数相同取 3 日涨幅最大）；覆盖仅统计买点前已创建的研报，买点后补录的不计入' },
+  highest_5d_reports_2nd: { id: 'highest_5d_reports_2nd', name: '5日研报覆盖数第二名', desc: '买点命中时只买入过去 5 个交易日（含当日）研报覆盖数第二多的股票（覆盖数相同取 5 日涨幅最大）；覆盖仅统计买点前已创建的研报，买点后补录的不计入' },
+  highest_3d_reports_top5_gain: { id: 'highest_3d_reports_top5_gain', name: '3日研报前五&涨幅最大', desc: '买点命中时在最近 3 个交易日（含当日）研报覆盖数前五（含覆盖数相同的股票）中买入 3 日涨幅最大的一只；覆盖仅统计买点前已创建的研报，买点后补录的不计入' },
+  highest_5d_reports_top5_gain: { id: 'highest_5d_reports_top5_gain', name: '5日研报前五&涨幅最大', desc: '买点命中时在最近 5 个交易日（含当日）研报覆盖数前五（含覆盖数相同的股票）中买入 5 日涨幅最大的一只；覆盖仅统计买点前已创建的研报，买点后补录的不计入' },
   highest_5d_resilience: { id: 'highest_5d_resilience', name: '5日抗分歧分数最大', desc: '买点命中时只买入最近 5 个交易日抗分歧分数汇总最大的股票' },
   highest_3d_resilience: { id: 'highest_3d_resilience', name: '3日抗分歧分数最大', desc: '买点命中时只买入最近 3 个交易日抗分歧分数汇总最大的股票' },
   resilience_weak_to_strong: { id: 'resilience_weak_to_strong', name: '抗分歧弱转强', desc: '买点命中时先筛选出当日抗分歧分数>11 的股票，再从中计算最近 4 个交易日「前两天均值」与「最近两天均值」的差值（差值越大=抗分歧由弱转强越明显），全仓买入差值最大的股票；差值相同则买入当日涨幅最大的一只' },
@@ -76,7 +76,7 @@ const STRATEGIES = {
   // 卖点为专属的次日竞价开盘规则（emoAvgBuy → 买入条件，nextDayOpenSell → 次日开盘一次性卖出，不走通用/尾盘回落卖点）
   tail_dip_emo3_3d_gain: { id: 'tail_dip_emo3_3d_gain', name: '三日情绪冰点-3日涨幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入最近 3 个交易日涨幅最大的股票；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出', tailDip: true, emoAvgBuy: true, nextDayOpenSell: true },
   tail_dip_emo3_3d_fall: { id: 'tail_dip_emo3_3d_fall', name: '三日情绪冰点-3日跌幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入最近 3 个交易日跌幅最大的股票；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出', tailDip: true, emoAvgBuy: true, nextDayOpenSell: true },
-  tail_dip_emo3_3d_reports_top5_gain: { id: 'tail_dip_emo3_3d_reports_top5_gain', name: '三日情绪冰点-3日研报前五&涨幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，在最近 3 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 3 日涨幅最大的一只；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出', tailDip: true, emoAvgBuy: true, nextDayOpenSell: true },
+  tail_dip_emo3_3d_reports_top5_gain: { id: 'tail_dip_emo3_3d_reports_top5_gain', name: '三日情绪冰点-3日研报前五&涨幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，在最近 3 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 3 日涨幅最大的一只（覆盖仅统计买点前已创建的研报，买点后补录的不计入）；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出', tailDip: true, emoAvgBuy: true, nextDayOpenSell: true },
   tail_dip_emo3_1d_gain: { id: 'tail_dip_emo3_1d_gain', name: '三日情绪冰点-当日涨幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入当日涨幅最大的股票（涨幅相同时取最近 2 个交易日涨幅最大的一只）；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出', tailDip: true, emoAvgBuy: true, nextDayOpenSell: true },
   tail_dip_emo3_1d_fall: { id: 'tail_dip_emo3_1d_fall', name: '三日情绪冰点-当日跌幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入当日跌幅最大的股票（跌幅相同时取最近 2 个交易日跌幅最大的一只）；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出', tailDip: true, emoAvgBuy: true, nextDayOpenSell: true },
   tail_dip_emo3_1d_resilience: { id: 'tail_dip_emo3_1d_resilience', name: '三日情绪冰点-当日抗分歧最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入当日抗分歧分数最大的股票（分数相同时取最近 2 个交易日抗分歧分数汇总最大的一只）；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出', tailDip: true, emoAvgBuy: true, nextDayOpenSell: true },
@@ -214,7 +214,7 @@ const writeCachedBacktest = (strategy, startDate, endDate, result) => {
 // 按自选股名称匹配报告标题或正文，统计每日每只股票的研报覆盖数
 // ============================================================
 const researchReportsDir = path.join(__dirname, '../data/research_reports');
-let reportIndexCache = null; // { YYYYMMDD: { stockName: count } }
+let reportIndexCache = null; // { YYYYMMDD: { stockName: [createdAtMs, ...] } }（每条命中研报记录一次创建时间）
 let reportIndexMtime = 0; // menu.json 修改时间，用于检测新增/编辑研报后自动重建索引
 
 // 读取报告正文内容（id.json 存放 { content }），供正文匹配股票名使用
@@ -258,8 +258,11 @@ const loadReportIndex = () => {
         const matchedNames = stockNames.filter(n => text.includes(n));
         if (matchedNames.length === 0) return;
         if (!index[folderDate]) index[folderDate] = {};
+        // 记录该研报的创建时间（ms，UTC ISO 转绝对时间戳）；缺失/非法按 0（视为始终已存在）
+        const createdAtMs = Date.parse(node.createdAt) || 0;
         for (const n of matchedNames) {
-          index[folderDate][n] = (index[folderDate][n] || 0) + 1;
+          if (!index[folderDate][n]) index[folderDate][n] = [];
+          index[folderDate][n].push(createdAtMs);
         }
       }
     };
@@ -273,12 +276,23 @@ const loadReportIndex = () => {
 };
 
 // 某只股票在 winDates（升序）内的研报覆盖总数
-const sumReportCount = (stockName, winDates, reportIndex) => {
+// beforeTs：买点时间戳（ms）。传入时只统计 createdAt ≤ 买点时间的研报，
+// 排除买点之后才录入（如盘后补录）的研报对历史回测统计的污染；不传则统计全部
+const sumReportCount = (stockName, winDates, reportIndex, beforeTs) => {
   if (!stockName || !reportIndex) return 0;
   let count = 0;
   for (const d of winDates) {
     const day = reportIndex[d];
-    if (day) count += day[stockName] || 0;
+    if (!day) continue;
+    const arr = day[stockName];
+    if (!arr) continue;
+    if (beforeTs == null) {
+      count += arr.length;
+    } else {
+      for (const ts of arr) {
+        if (ts <= beforeTs) count += 1;
+      }
+    }
   }
   return count;
 };
@@ -1749,6 +1763,19 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   const candidates = [];
   const top5Candidates = isTop5ReportGainMode ? [] : null;
   const reportIndex = isReportStrategy ? loadReportIndex() : null;
+  // 研报创建时间门禁：买点时间戳（回测分时为北京时区，menu.json 的 createdAt 为 UTC，统一为绝对时间戳比较）。
+  // 买点之后才创建的研报（如收盘后补录）不计入该买点时点的覆盖统计
+  let reportBuyTs = null;
+  if (isReportStrategy) {
+    const dStr = String(rangeDates[di]);
+    const mNum = Number(bucket.minute);
+    if (/^\d{8}$/.test(dStr) && Number.isFinite(mNum)) {
+      const hh = String(Math.floor(mNum / 100)).padStart(2, '0');
+      const mi = String(mNum % 100).padStart(2, '0');
+      const ts = Date.parse(`${dStr.slice(0, 4)}-${dStr.slice(4, 6)}-${dStr.slice(6, 8)}T${hh}:${mi}:00+08:00`);
+      if (Number.isFinite(ts)) reportBuyTs = ts;
+    }
+  }
   for (const sc of bucket.stockChanges) {
     if (EXCLUDED_CODES.has(sc.code)) continue;
     if (sc.lastPx == null || sc.lastPx <= 0) continue;
@@ -1778,7 +1805,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       metric = parseFloat(angle.toFixed(4));
     } else if (isTop5ReportGainMode) {
       // 收集研报覆盖数与涨幅候选，事后按覆盖数取前五再按涨幅最大选股
-      const reportCount = sumReportCount(sc.name, reportWinDates, reportIndex);
+      const reportCount = sumReportCount(sc.name, reportWinDates, reportIndex, reportBuyTs);
       const gain = computeWindowGain(sc.code, winDates, dailyInfos, sc.changePct);
       if (gain == null || !Number.isFinite(gain)) continue;
       top5Candidates.push({ sc, reportCount, gain });
@@ -1786,7 +1813,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     }
     if (isPureReportMode) {
       // 研报覆盖数最多/第二多（按对应 days 天统计）；覆盖数相同取 days 天涨幅最大
-      const reportCount = sumReportCount(sc.name, reportWinDates, reportIndex);
+      const reportCount = sumReportCount(sc.name, reportWinDates, reportIndex, reportBuyTs);
       const gain = computeWindowGain(sc.code, winDates, dailyInfos, sc.changePct);
       if (gain == null || !Number.isFinite(gain)) continue;
       val = reportCount * 100000 + gain;
