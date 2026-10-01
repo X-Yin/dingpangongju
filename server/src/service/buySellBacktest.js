@@ -29,7 +29,7 @@ const EXCLUDED_CODES = new Set(['sh688498', 'sh688808']); // 源杰科技、联�
 
 // 重点板块-N日最高涨幅系列统一描述（keyBlockDays: N；板块 tag = 进攻/中性/防御，在 key_blocks 页面维护；
 // 个股涨幅由回测时重新拉取成分股日K现算）
-const KEY_BLOCK_DESC = (n) => `唯一买卖开关 = 盘中实时计算的创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）。斜率 > 0 → 买自选科技股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁），买其中最近 ${n} 个交易日（含触发日）个股涨幅之和最大的一只；斜率 ≤ 0 → 买「防御+中性」tag 板块成分股中 n 日涨幅最大的一只。按回放桶顺序逐桶扫描，首个斜率状态可买入的桶触发；买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 n 日涨幅排名的下一只；买入价取触发桶分时价；当日发生过卖出的，买入桶分钟不早于卖出分钟（同桶允许先卖后买转手）。卖点按持仓类别区分：防御+中性持仓两条卖点——盘中实时斜率 > 0 的首个桶卖出（卖价取该桶时点分时价，同桶可转手买入科技股），或现价跌破买入价 -10%（买入价 × 0.90）逐分钟止损，两者取当日先发生者，否则一直持有；科技股持仓沿用通用 7 条件卖出诊断（非自选股持仓由回测按日合成所需的均线/前低/三日抗分歧等数据，口径与自选股一致），「跌破成本线」为 -2%（现价 < 买入价 × 0.98）`;
+const KEY_BLOCK_DESC = (n) => `唯一买卖开关 = 创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）的正负翻转，不需要资金、成交量、情绪等任何条件配合。进攻（自选科技股）：斜率由负转正的桶触发买入，买自选股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁）中最近 ${n} 个交易日（含触发日）个股涨幅之和最大的一只；卖点沿用通用 7 条件卖出诊断（「跌破成本线」为 -2%，即现价 < 买入价 × 0.98）；卖点诊断卖出后若斜率仍为正，当日不再买入，等到次日开盘 10 分钟后（9:40 桶）复测斜率仍为正才再买 ${n} 日涨幅最大的科技股（复测时斜率已为负则改由「由正转负」防御信号驱动）。防御（防御+中性 tag 板块）：斜率由正转负且当前空仓的桶触发买入，买防御+中性 tag 板块成分股中 ${n} 日涨幅最大的一只；唯一卖点 = 斜率由负转正（不对成本线设置任何止损，一直持仓到转正那一刻，同桶可转手买入进攻科技股）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 ${n} 日涨幅排名的下一只；候选全部不可买时在斜率状态不变的后续桶持续重试；买入价取触发桶分时价；同桶允许先卖后买转手。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无翻转则不建仓`;
 
 // 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
 const STRATEGIES = {
@@ -2211,22 +2211,18 @@ const runTwoBacktest = async (startDate, endDate, strategyId, onProgress) => {
 };
 
 // ============================================================
-// 重点板块-N日最高涨幅系列回测（keyBlockDays: 2/3/4/5）
-// 买入：盘中按回放桶顺序扫描，首个触发桶时点买入——
-//   ⓪ 创业板指 3 日线斜率模式门禁：斜率 > 0 → 正向模式；斜率 <= 0 → 反向模式；
-//      斜率数据不足（null）当日不买入
-//   ① 候选池筛选：正向模式 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股（剔除排除股，
-//      含添加时间门禁，不再使用进攻板块全量成分股）；反向模式买「防御+中性」tag 板块
-//      （板块 tag = 防御/中性，key_blocks 页面维护；未打 tag 的板块不参与选股）
-//   ② 触发条件：正向模式 = 首个通过精简买点诊断（仅开盘跳水 + 竞价情绪回落，
-//      不要求资金净流入与量能，2026-09-30 用户要求）的桶；
-//      反向模式 = 首个「5min 资金净流出 ≥ 20 亿」的桶（不检查量能，其余正向条件不适用）
-//   ③ 候选中最近 n 日（含触发日）个股涨幅之和最大者买入；买入时点涨停股不可买
-//      （主板 >9.5%、创业/科创 >19%），顺延排名下一只
+// 重点板块-N日最高涨幅系列回测（keyBlockDays: 2/3/4/5，2026-10-01 完全重构为斜率翻转状态机）
+// 买卖唯一开关 = 创业板指 3 日线斜率（盘中实时口径）的正负翻转，不看资金/量能/情绪：
+//   进攻（mode='offense'，买自选科技股池内 n 日涨幅最大者）：
+//     买点：斜率由负转正当桶（首个翻转桶；状态不变的后续桶只在已生成入场意图但建仓失败时重试）
+//     卖点：通用 7 条件卖出诊断（条件7 跌破成本线 -2%）
+//     卖出后斜率仍为正 → 当日不追买；次日开盘 10 分钟后（9:40 桶）复测仍为正才继续买
+//   防御（mode='defense'，买防御+中性 tag 板块内 n 日涨幅最大者）：
+//     买点：斜率由正转负且当前空仓的当桶
+//     卖点：斜率由负转正当桶（唯一卖点，不设成本线止损，持有至最后一刻，同桶可转手买入进攻股）
+// 斜率符号跨日连续追踪（lastSlopeSign），初值取回测首日前一交易日收盘斜率；null 桶不更新基准；
 // 个股日涨幅由 keyBlockData 从成分股日K现算（相邻收盘环比），不使用服务端缓存的历史涨幅数据；
-// 卖点按买入模式区分：正向模式（自选科技股买入）沿用通用 7 条件（条件7 跌破成本线 -2%，
-// 「科技板块情绪退潮」受创业板指 3 日线斜率门禁，斜率 > 0 才生效，见 getKeyBlockCybMa3Slope）；
-// 反向模式（防御+中性买入）两条卖点：创业板指 3 日线斜率为正当日开盘卖出、跌破成本线 -10%
+// 进攻持仓的「科技板块情绪退潮」卖出条件仍受日收盘斜率 > 0 门禁，见 getKeyBlockCybMa3Slope
 // ============================================================
 
 // 非自选股持仓的合成回放数据（重点板块策略买入板块全部成分股后，卖出诊断所需的逐桶字段）。
@@ -2336,8 +2332,9 @@ const buildKeyBlockSyntheticBucketEntry = (code, stockName, sortedPoints, maInfo
 
 // 创业板指 3 日线斜率（MA3 − 5个交易日前MA3，按当日收盘已基本定型口径，
 // MA 截止口径对齐 calcEmo3IndexGate：日K过滤升序、close_px>0），用途：
-//   - 卖出条件3门禁：斜率 > 0 时「科技板块情绪退潮」条件才参与重点板块科技股持仓卖出判定
-//   - （买入/防御持仓卖出已改用 getKeyBlockCybMa3SlopeIntraday 盘中实时口径）
+//   - 卖出条件3门禁：斜率 > 0 时「科技板块情绪退潮」条件才参与进攻持仓卖出判定
+//   - 斜率翻转状态机初值：回测首日前一交易日的收盘斜率符号（2026-10-01 重构）
+// 盘中实时翻转判定统一走 getKeyBlockCybMa3SlopeIntraday；
 // 一次拉取日K批量计算全序列（历史不可变，进程内缓存），数据不足（<8根）/获取失败返回 null
 const CYB_INDEX_CONF = EMO3_GATE_INDEX_CODES.find(c => c.code === 'sz399006');
 let cybMa3SlopeSeriesPromise = null;
@@ -2441,6 +2438,9 @@ const isKeyBlockLimitUp = (code, changePct) => {
   return Number(changePct) > (growthBoard ? 19 : 9.5);
 };
 
+// 斜率数值格式化（带正负号，2 位小数；null 显示 --）
+const fmtKeyBlockSlope = (v) => (v == null || !Number.isFinite(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}`);
+
 const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) => {
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.keyBlockDays == null) {
@@ -2467,11 +2467,161 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     return { success: false, message: `重点板块成分股日K拉取失败: ${e.message || e}` };
   }
 
-  let position = null; // 单股持仓
+  let position = null; // 单股持仓（mode: 'offense' 进攻=自选科技股 / 'defense' 防御=防御+中性 tag 股）
   const trades = [];
   const skippedDates = [];
   const seenStocks = new Map(); // code -> { code, name }（回测期间出现过的自选股，供复制K线等使用）
   const dailyInfos = new Map(); // date -> Map<code, {changePct, closePx, resilience}>（期末持仓收益率估算用）
+
+  // 斜率符号状态机（2026-10-01 重构：买卖只由斜率正负翻转驱动，不再按斜率正负直接分模式）：
+  //   lastSlopeSign/Value：最近一个有效盘中实时斜率的符号与数值，跨日连续追踪；初值取回测首日前一交易日收盘斜率
+  //   pendingEntry：空仓时的入场意图（斜率翻转事件/次日9:40复测），在后续桶持续尝试直到建仓或被反向翻转覆盖
+  //   offenseBlockDate：进攻持仓卖点诊断卖出且当时斜率仍为正的交易日，当日剩余桶禁止进攻追买（次日9:40复测）
+  let lastSlopeSign = null; // null | 1（正）| -1（非正）
+  let lastSlopeValue = null;
+  let pendingEntry = null; // null | { mode: 'offense'|'defense', trigger, fromValue, toValue }
+  let offenseBlockDate = null;
+  try {
+    const { dates: seedDates, slopes: seedSlopes } = await ensureCybMa3SlopeSeries();
+    for (let i = seedDates.length - 1; i >= 0; i--) {
+      if (seedDates[i] < Number(rangeDates[0])) {
+        const v = seedSlopes.get(seedDates[i]);
+        if (v != null && Number.isFinite(Number(v))) {
+          lastSlopeSign = v > 0 ? 1 : -1;
+          lastSlopeValue = v;
+        }
+        break;
+      }
+    }
+  } catch (e) { /* 无初值时首个有效斜率桶建立基准，当日不触发翻转事件 */ }
+
+  // 候选池（每轮回测固定）：进攻 = 自选股中 isTech ≠ false 的科技股；防御 = 防御+中性 tag 板块全部成分股
+  const { getMonitorStocks } = require('./monitorStock');
+  const techPool = (getMonitorStocks() || [])
+    .filter(s => s && s.code && s.isTech !== false && !EXCLUDED_CODES.has(s.code))
+    .map(s => ({ code: s.code, name: s.name || s.code }));
+  const tagBlocks = [];
+  const tagMap = getKeyBlockTagMap();
+  for (const [blockName, members] of blocks) {
+    const tag = tagMap.get(blockName);
+    if (tag && ['防御', '中性'].includes(tag)) tagBlocks.push({ blockName, tag, members });
+  }
+
+  // 按入场意图在触发桶时点选股建仓（涨停顺延、买入价取桶时点分时价）；成功建仓返回 true 并写入 position
+  // trigger：slope_turn_positive（斜率由负转正=进攻）/ slope_turn_negative（由正转负且空仓=防御）/
+  //          retry_next_day_940（进攻卖出后次日开盘10分钟复测仍为正）
+  const openPosition = async (intent, ctx) => {
+    const { mode, trigger, fromValue, toValue } = intent;
+    const { dateStr, dateDisplay, dateNum, winDates, bucket, bucketMinute } = ctx;
+    const isOffense = mode === 'offense';
+    const allMembers = [];
+    if (isOffense) {
+      for (const m of techPool) allMembers.push(m);
+    } else {
+      for (const tb of tagBlocks) for (const m of tb.members) allMembers.push(m);
+    }
+    if (allMembers.length === 0) return false;
+    // 候选：进攻含自选股添加时间门禁（候选来自当前自选配置，防后加股票污染历史回测）；
+    // 涨停判定取该桶时点当日涨幅；买入价从当日分时线现取（minute ≤ 该桶 minute 的最后一点），停牌/无分时个股自动跳过
+    const candidateList = await batchParallel(allMembers, async (m) => {
+      if (EXCLUDED_CODES.has(m.code)) return null;
+      if (isOffense && !isStockInWatchlistAt(m.code, dateStr, bucketMinute)) return null;
+      const gain = stockWindowGain(m.code, winDates);
+      if (gain == null || !Number.isFinite(gain)) return null;
+      let tline = null;
+      try {
+        tline = await getSingleStockTlineDataByDate(m.code, dateNum);
+      } catch (e) {
+        return null;
+      }
+      const preclose = tline?.preclose_px != null ? parseFloat(tline.preclose_px) : null;
+      const points = (tline?.line || [])
+        .filter(p => p && p.minute != null && p.last_px != null)
+        .map(p => ({ minute: parseInt(p.minute), lastPx: parseFloat(p.last_px) }))
+        .filter(p => p.lastPx > 0 && p.minute <= bucketMinute)
+        .sort((a, b) => a.minute - b.minute);
+      const atBucket = points.length > 0 ? points[points.length - 1] : null;
+      if (!atBucket) return null;
+      const changePct = preclose && preclose > 0
+        ? parseFloat((((atBucket.lastPx - preclose) / preclose) * 100).toFixed(2))
+        : null;
+      return { code: m.code, name: m.name || m.code, gain, lastPx: atBucket.lastPx, changePct, limitUp: isKeyBlockLimitUp(m.code, changePct) };
+    }, 8);
+    const candidates = candidateList.filter(Boolean);
+    candidates.sort((a, b) => b.gain - a.gain); // 并列涨幅保持配置顺序（batchParallel 保序）
+    const best = candidates.find(c => !c.limitUp) || null;
+    if (!best) return false; // 全部候选涨停/无有效候选：调用方在后续桶继续重试
+
+    if (!seenStocks.has(best.code)) seenStocks.set(best.code, { code: best.code, name: best.name });
+    const blocksText = tagBlocks.map(tb => `${tb.blockName}[${tb.tag}]`).join('、');
+    const slopeText = `${toValue > 0 ? '+' : ''}${Number(toValue).toFixed(2)}`;
+    const fromText = fromValue == null ? '无（首值）' : `${fromValue > 0 ? '+' : ''}${Number(fromValue).toFixed(2)}`;
+    const triggerTimeText = fmtTime(bucket.timeKey);
+    const gateReasonMap = {
+      slope_turn_positive: `创业板指 3 日线斜率在 ${triggerTimeText} 由负转正（${fromText} → ${slopeText}）：进攻买点触发，不看资金/量能/情绪等任何配合条件，买入自选科技股中 ${days} 日涨幅最大的一只`,
+      slope_turn_negative: `创业板指 3 日线斜率在 ${triggerTimeText} 由正转负（${fromText} → ${slopeText}）且当前空仓：防御买点触发，买入防御+中性 tag 板块中 ${days} 日涨幅最大的一只`,
+      retry_next_day_940: `进攻持仓按卖点诊断卖出后，卖出当时 3 日线斜率仍为正（${fromText}），当日不继续买；次日开盘 10 分钟后（${triggerTimeText}，9:40 桶）复测斜率仍为正（${slopeText}），继续买入自选科技股中 ${days} 日涨幅最大的一只`,
+    };
+    const modeGateCheck = {
+      id: 'key_block_cyb_gate',
+      title: trigger === 'retry_next_day_940'
+        ? '次日开盘10分钟后斜率复测（进攻买点）'
+        : `创业板指3日线斜率${isOffense ? '由负转正（进攻买点）' : '由正转负且空仓（防御买点）'}`,
+      passed: true,
+      value: `${triggerTimeText} ${slopeText}`,
+      reason: gateReasonMap[trigger] || gateReasonMap.slope_turn_positive,
+    };
+    const poolCheck = isOffense ? {
+      id: 'key_block_watchlist_tech',
+      title: '自选科技股筛选（进攻）',
+      passed: true,
+      value: `${techPool.length} 只`,
+      reason: `进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 ${techPool.length} 只（剔除排除股；含自选股添加时间门禁）`,
+    } : {
+      id: 'key_block_tag_blocks',
+      title: 'Tag板块筛选（防御+中性）',
+      passed: true,
+      value: `${tagBlocks.length} 个板块`,
+      reason: `参与选股的 tag 板块 ${tagBlocks.length} 个：${blocksText}（板块 tag 在 key_blocks 页面维护，未打 tag 的板块不参与选股）`,
+    };
+    const limitUpSkipped = candidates.filter(c => c.limitUp && c.gain > best.gain);
+    const limitUpCheck = {
+      id: 'key_block_limit_up',
+      title: '涨停过滤（主板>9.5%、创业/科创>19%）',
+      passed: true,
+      value: limitUpSkipped.length > 0 ? `顺延 ${limitUpSkipped.length} 只` : '无涨停候选',
+      reason: limitUpSkipped.length > 0
+        ? `买入时点（${triggerTimeText}）涨停候选已剔除并顺延：${limitUpSkipped.map(c => (c.changePct != null ? `${c.name} +${c.changePct}%` : c.name)).join('、')}；${days} 日涨幅排名后延至 ${best.name}`
+        : `买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）`,
+    };
+    const bestCheck = {
+      id: 'key_block_best_stock',
+      title: `${isOffense ? '自选科技股' : '防御+中性Tag板块'}内最近${days}日涨幅最大的股票`,
+      passed: true,
+      value: `${best.gain > 0 ? '+' : ''}${best.gain.toFixed(2)}%`,
+      reason: `在${isOffense ? `自选科技股池共 ${allMembers.length} 只` : `${tagBlocks.length} 个 tag 板块共 ${allMembers.length} 只成分股`}中（有效候选 ${candidates.length} 只），按最近 ${days} 日个股涨幅之和取最大${limitUpSkipped.length > 0 ? '（涨停股顺延后）' : ''}；买入价取 ${triggerTimeText} 分时价`,
+    };
+    const buyReasonMap = {
+      slope_turn_positive: `${triggerTimeText.substring(0, 5)}创业板指3日线斜率由负转正（${fromText}→${slopeText}），买入自选科技股池内${days}日涨幅最大的股票（进攻买点，无需资金/量能配合）`,
+      slope_turn_negative: `${triggerTimeText.substring(0, 5)}创业板指3日线斜率由正转负（${fromText}→${slopeText}）且空仓，买入防御+中性tag板块内${days}日涨幅最大的股票（防御买点）`,
+      retry_next_day_940: `${triggerTimeText.substring(0, 5)}开盘10分钟后复测创业板指3日线斜率仍为正（${slopeText}，卖出当时${fromText}），买入自选科技股池内${days}日涨幅最大的股票（卖点诊断卖出后次日复测继续买）`,
+    };
+    position = {
+      code: best.code,
+      stockName: best.name,
+      mode: isOffense ? 'offense' : 'defense',
+      buyDate: dateStr,
+      buyDateDisplay: dateDisplay,
+      buyTime: triggerTimeText.substring(0, 5),
+      buyPrice: parseFloat(Number(best.lastPx).toFixed(2)),
+      buyChange: best.changePct != null ? parseFloat(Number(best.changePct).toFixed(2)) : null,
+      metric: parseFloat(best.gain.toFixed(4)),
+      costLinePct: Number(strategy.costLinePct) || 2,
+      buyReason: buyReasonMap[trigger] || buyReasonMap.slope_turn_positive,
+      buyChecks: [modeGateCheck, poolCheck, limitUpCheck, bestCheck],
+    };
+    return true;
+  };
 
   for (let di = 0; di < total; di++) {
     const dateStr = rangeDates[di];
@@ -2504,270 +2654,166 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
 
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
 
-    // 卖出：同日买入不可同日卖出。反向模式持仓（防御+中性买入）走专属两条卖点；正向模式持仓走通用 7 条件卖点诊断。
-    // soldMinute：当日卖出发生的分钟（HHMM），供买入段时间衔接（同桶可转手买入，买入桶分钟不得早于卖出分钟）
-    let soldMinute = null;
-    if (position && dateStr > position.buyDate && position.keyBlockReverseMode) {
-      // 反向模式持仓（防御+中性买入）两条卖点（2026-09-30 最终定稿，盘中实时口径，不等收盘）：
-      //   A. 盘中实时创业板指 3 日线斜率 > 0 的首个桶 → 按该桶时点持仓股分时价卖出，同桶可转手买入科技股票
-      //   B. 现价跌破成本线 -10%（买入价 × 0.90）→ 按触发分钟价格止损
-      //   两者取当日先发生者（同分钟斜率卖优先）；斜率分时或持仓股分时拉取失败当日安全跳过卖出（次日重试）
-      const cybPoints = await getKeyBlockCybTlinePoints(dateStr);
-      let tline = null;
-      try {
-        tline = await getSingleStockTlineDataByDate(position.code, parseInt(dateStr, 10));
-      } catch (e) {
-        tline = null; // 分时拉取失败当日安全跳过卖出（次日重试）
-      }
-      const preclose = tline?.preclose_px != null ? parseFloat(tline.preclose_px) : null;
-      const points = (tline?.line || [])
-        .filter(p => p && p.minute != null && p.last_px != null)
-        .map(p => ({ minute: parseInt(p.minute), lastPx: parseFloat(p.last_px) }))
-        .filter(p => p.lastPx > 0)
-        .sort((a, b) => a.minute - b.minute);
-      if (points.length > 0) {
-        // A. 斜率转正卖点：逐桶扫描，首个盘中实时斜率 > 0 的桶即卖出（卖价 = 该桶时点持仓股分时价）
-        let slopeSellPt = null;
-        let slopeSellValue = null;
-        if (cybPoints && cybPoints.length > 0) {
-          for (const bucket of timeBuckets) {
-            const bucketMinute = Number(bucket.minute);
-            const slopeNow = await getKeyBlockCybMa3SlopeIntraday(dateStr, bucketMinute);
-            if (slopeNow != null && slopeNow > 0) {
-              let atPt = null;
-              for (const p of points) { if (p.minute <= bucketMinute) atPt = p; else break; }
-              if (atPt) { slopeSellPt = atPt; slopeSellValue = slopeNow; }
-              break;
-            }
+    // 当日隔夜持仓卖出数据预建（当日买入次日才可卖，同日买入不可同日卖出）：
+    //   进攻持仓 → 通用 7 条件卖点诊断所需的日收盘斜率门禁（「科技板块情绪退潮」条件）+ 非自选股合成逐桶数据
+    //   防御持仓 → 持仓股当日分时（唯一卖点 = 斜率由负转正当桶的时点价格；不设任何成本线止损）
+    let sellBuckets = timeBuckets;
+    let sellReplayStocks = replayStocks;
+    let cybMa3SlopeForGate = null;
+    let defensePoints = null;
+    let defensePreclose = null;
+    if (position && dateStr > position.buyDate) {
+      if (position.mode === 'offense') {
+        cybMa3SlopeForGate = await getKeyBlockCybMa3Slope(dateStr);
+        // 非自选股持仓：回放数据无该股，为卖出诊断合成逐桶 stockChanges 与 replayStocks 条目
+        // （仅浅拷贝桶并追加条目，不改动共享回放缓存；合成失败当日安全跳过，次日重试）
+        const hasRealEntry = timeBuckets.some(b => (b.stockChanges || []).some(sc => sc.code === position.code));
+        if (!hasRealEntry) {
+          const synth = await buildKeyBlockSyntheticDay(position.code, position.stockName, dateStr);
+          if (synth) {
+            sellBuckets = timeBuckets.map(b => {
+              const entry = buildKeyBlockSyntheticBucketEntry(position.code, position.stockName, synth.sortedPoints, synth.maInfo, synth.r3d, Number(b.minute));
+              return entry ? { ...b, stockChanges: [...(b.stockChanges || []), entry] } : b;
+            });
+            sellReplayStocks = [...replayStocks, synth.replayEntry];
           }
         }
-        // B. 止损卖点：逐分钟扫描跌破买入价 -10%
-        const stopThreshold = parseFloat((position.buyPrice * 0.90).toFixed(2));
-        const stopHit = points.find(p => p.lastPx < stopThreshold);
-        // 两者取当日先发生者（同分钟斜率卖优先）
-        let sellPt = null;
-        let sellReason = '';
-        if (slopeSellPt && (!stopHit || slopeSellPt.minute <= stopHit.minute)) {
-          sellPt = slopeSellPt;
-          sellReason = `创业板指 3 日线斜率盘中转正（${slopeSellValue > 0 ? '+' : ''}${slopeSellValue.toFixed(2)} > 0），防御持仓卖出，转手买入科技股票`;
-        } else if (stopHit) {
-          sellPt = stopHit;
-          sellReason = `跌破成本线-10%（阈值 ${stopThreshold.toFixed(2)}），防御持仓止损卖出`;
-        }
-        if (sellPt) {
-          const sellChange = preclose && preclose > 0
-            ? parseFloat((((sellPt.lastPx - preclose) / preclose) * 100).toFixed(2))
-            : null;
-          const returnRate = position.buyPrice > 0
-            ? parseFloat((((sellPt.lastPx - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
-            : null;
-          trades.push({
-            seq: trades.length + 1,
-            metric: position.metric,
-            code: position.code,
-            stockName: position.stockName,
-            buyDate: position.buyDate,
-            buyDateDisplay: position.buyDateDisplay,
-            buyTime: position.buyTime,
-            buyPrice: position.buyPrice,
-            buyChange: position.buyChange,
-            buyReason: position.buyReason,
-            buyChecks: position.buyChecks,
-            sellDate: dateStr,
-            sellDateDisplay: dateDisplay,
-            sellTime: `${String(Math.floor(sellPt.minute / 100)).padStart(2, '0')}:${String(sellPt.minute % 100).padStart(2, '0')}`,
-            sellPrice: parseFloat(Number(sellPt.lastPx).toFixed(2)),
-            sellChange,
-            sellReason,
-            returnRate,
-          });
-          soldMinute = sellPt.minute;
-          position = null;
-        }
-      }
-    } else if (position && dateStr > position.buyDate) {
-      // 正向模式持仓（自选科技股买入）：通用 7 条件卖点诊断（条件7 跌破成本线 -2%）
-      // 重点板块系列专属门禁：创业板指 3 日线斜率 > 0（MA3−5个交易日前MA3，按当日收盘已基本定型口径）
-      // 时「科技板块情绪退潮」条件才参与卖出判定；斜率 ≤ 0 / 数据不足当日该条件不生效
-      const cybMa3Slope = await getKeyBlockCybMa3Slope(dateStr);
-      const pos = { code: position.code, stockName: position.stockName, buyPrice: position.buyPrice, buyDate: position.buyDate, costLinePct: position.costLinePct, keyBlockCybMa3Slope: cybMa3Slope };
-      // 非自选股持仓（板块全部成分股买入）：回放数据无该股，为卖出诊断合成逐桶 stockChanges 与 replayStocks 条目
-      // （仅浅拷贝桶并追加条目，不改动共享的回放缓存数据；合成失败当日安全跳过，次日重试）
-      let sellBuckets = timeBuckets;
-      let sellReplayStocks = replayStocks;
-      const hasRealEntry = timeBuckets.some(b => (b.stockChanges || []).some(sc => sc.code === position.code));
-      if (!hasRealEntry) {
-        const synth = await buildKeyBlockSyntheticDay(position.code, position.stockName, dateStr);
-        if (synth) {
-          sellBuckets = timeBuckets.map(b => {
-            const entry = buildKeyBlockSyntheticBucketEntry(position.code, position.stockName, synth.sortedPoints, synth.maInfo, synth.r3d, Number(b.minute));
-            return entry ? { ...b, stockChanges: [...(b.stockChanges || []), entry] } : b;
-          });
-          sellReplayStocks = [...replayStocks, synth.replayEntry];
-        }
-      }
-      for (let bi = 0; bi < sellBuckets.length; bi++) {
-        const result = await runSellPointDiagnosis(pos, sellBuckets[bi], sellReplayStocks, sellBuckets, bi, dateStr);
-        if (result.isSell && result.closePrice != null) {
-          const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
-          trades.push({
-            seq: trades.length + 1,
-            metric: position.metric,
-            code: position.code,
-            stockName: position.stockName,
-            buyDate: position.buyDate,
-            buyDateDisplay: position.buyDateDisplay,
-            buyTime: position.buyTime,
-            buyPrice: position.buyPrice,
-            buyChange: position.buyChange,
-            buyReason: position.buyReason,
-            buyChecks: position.buyChecks,
-            sellDate: dateStr,
-            sellDateDisplay: dateDisplay,
-            sellTime: result.displayTime,
-            sellPrice: result.closePrice,
-            sellChange: result.change,
-            sellReason: satisfiedNames || '卖出条件触发',
-            returnRate: result.returnRate,
-          });
-          soldMinute = Number(sellBuckets[bi].minute);
-          position = null;
-          break;
+      } else {
+        try {
+          const tline = await getSingleStockTlineDataByDate(position.code, parseInt(dateStr, 10));
+          defensePreclose = tline?.preclose_px != null ? parseFloat(tline.preclose_px) : null;
+          defensePoints = (tline?.line || [])
+            .filter(p => p && p.minute != null && p.last_px != null)
+            .map(p => ({ minute: parseInt(p.minute), lastPx: parseFloat(p.last_px) }))
+            .filter(p => p.lastPx > 0)
+            .sort((a, b) => a.minute - b.minute);
+        } catch (e) {
+          defensePoints = null; // 分时拉取失败当日安全跳过卖出（次日重试）
         }
       }
     }
 
-    // 买入：空仓且交易日数足够（窗口含触发日共 n 日）时，按盘中实时创业板指 3 日线斜率状态买入
-    if (!position && di + 1 >= days) {
-      const winDates = rangeDates.slice(di + 1 - days, di + 1);
-      // 唯一买点（2026-09-30 最终定稿）：盘中实时创业板指 3 日线斜率状态机，不看任何资金/量能/情绪诊断：
-      //   桶实时斜率 > 0 → 买自选科技股（monitor_stocks.json isTech ≠ false）中 n 日涨幅最大的一只
-      //   桶实时斜率 <= 0 → 买「防御+中性」tag 板块成分股中 n 日涨幅最大的一只
-      // 时间衔接：当日已卖出（soldMinute）时，买入桶分钟必须 ≥ 卖出分钟（同桶允许先卖后买转手）；
-      // 斜率数据不足的桶跳过；候选池为空或全部涨停/无有效候选则顺延到后续桶重试
-      const { getMonitorStocks } = require('./monitorStock');
-      const techPool = (getMonitorStocks() || [])
-        .filter(s => s && s.code && s.isTech !== false && !EXCLUDED_CODES.has(s.code))
-        .map(s => ({ code: s.code, name: s.name || s.code }));
-      const tagBlocks = []; // 反向模式 tag 板块（防御+中性，key_blocks 页面维护；未打 tag 的板块不参与）
-      const tagMap = getKeyBlockTagMap();
-      for (const [blockName, members] of blocks) {
-        const tag = tagMap.get(blockName);
-        if (tag && ['防御', '中性'].includes(tag)) tagBlocks.push({ blockName, tag, members });
+    const winDates = di + 1 >= days ? rangeDates.slice(di + 1 - days, di + 1) : [];
+    const dateNum = parseInt(dateStr, 10);
+
+    // 逐桶状态机（2026-10-01 重构）：
+    //   ① 盘中实时斜率（null 桶不参与翻转识别，符号基准跨缺失桶连续）→ 识别由负转正/由正转负
+    //   ② 卖出：防御持仓遇「由负转正」当桶按分时价卖出（无止损）；进攻持仓走通用 7 条件卖点诊断，
+    //          卖出后斜率仍为正则当日不再追买（offenseBlockDate），挂次日 9:40 复测意图
+    //   ③ 空仓时翻转事件生成入场意图：由正转负→防御（独立规则，即使刚卖出也生效）；
+    //          由负转正→进攻（进攻卖出当日除外）；同桶允许先卖后买转手
+    //   ④ 按意图建仓：9:40 复测意图仅在 ≥9:40 且斜率仍为正的桶执行；候选全部不可买时后续桶持续重试
+    for (let bi = 0; bi < timeBuckets.length; bi++) {
+      const bucket = timeBuckets[bi];
+      const bucketMinute = Number(bucket.minute);
+      const slopeNow = await getKeyBlockCybMa3SlopeIntraday(dateStr, bucketMinute);
+      const signNow = slopeNow == null ? null : (slopeNow > 0 ? 1 : -1);
+      const turnedPositive = lastSlopeSign !== null && signNow === 1 && lastSlopeSign === -1;
+      const turnedNegative = lastSlopeSign !== null && signNow === -1 && lastSlopeSign === 1;
+
+      // ===== ② 卖出（仅隔夜持仓） =====
+      if (position && dateStr > position.buyDate) {
+        if (position.mode === 'defense' && turnedPositive && defensePoints && defensePoints.length > 0) {
+          // 防御唯一卖点：斜率由负转正的当桶，按持仓股分时价卖出（不设成本线止损，一直持仓到最后一刻）
+          let atPt = null;
+          for (const p of defensePoints) { if (p.minute <= bucketMinute) atPt = p; else break; }
+          if (atPt) {
+            const sellChange = defensePreclose && defensePreclose > 0
+              ? parseFloat((((atPt.lastPx - defensePreclose) / defensePreclose) * 100).toFixed(2))
+              : null;
+            const returnRate = position.buyPrice > 0
+              ? parseFloat((((atPt.lastPx - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
+              : null;
+            trades.push({
+              seq: trades.length + 1,
+              metric: position.metric,
+              code: position.code,
+              stockName: position.stockName,
+              buyDate: position.buyDate,
+              buyDateDisplay: position.buyDateDisplay,
+              buyTime: position.buyTime,
+              buyPrice: position.buyPrice,
+              buyChange: position.buyChange,
+              buyReason: position.buyReason,
+              buyChecks: position.buyChecks,
+              sellDate: dateStr,
+              sellDateDisplay: dateDisplay,
+              sellTime: `${String(Math.floor(atPt.minute / 100)).padStart(2, '0')}:${String(atPt.minute % 100).padStart(2, '0')}`,
+              sellPrice: parseFloat(Number(atPt.lastPx).toFixed(2)),
+              sellChange,
+              sellReason: `创业板指3日线斜率盘中由负转正（${fmtKeyBlockSlope(lastSlopeValue)} → ${fmtKeyBlockSlope(slopeNow)}），防御持仓卖出（不设成本线止损，持有至斜率转正的最后一刻）`,
+              returnRate,
+            });
+            position = null;
+          }
+        } else if (position.mode === 'offense') {
+          // 进攻卖点：通用 7 条件卖点诊断（条件7 跌破成本线 -2%；「科技板块情绪退潮」受日收盘斜率>0 门禁）
+          const pos = { code: position.code, stockName: position.stockName, buyPrice: position.buyPrice, buyDate: position.buyDate, costLinePct: position.costLinePct, keyBlockCybMa3Slope: cybMa3SlopeForGate };
+          const result = await runSellPointDiagnosis(pos, sellBuckets[bi], sellReplayStocks, sellBuckets, bi, dateStr);
+          if (result.isSell && result.closePrice != null) {
+            const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
+            trades.push({
+              seq: trades.length + 1,
+              metric: position.metric,
+              code: position.code,
+              stockName: position.stockName,
+              buyDate: position.buyDate,
+              buyDateDisplay: position.buyDateDisplay,
+              buyTime: position.buyTime,
+              buyPrice: position.buyPrice,
+              buyChange: position.buyChange,
+              buyReason: position.buyReason,
+              buyChecks: position.buyChecks,
+              sellDate: dateStr,
+              sellDateDisplay: dateDisplay,
+              sellTime: result.displayTime,
+              sellPrice: result.closePrice,
+              sellChange: result.change,
+              sellReason: satisfiedNames || '卖出条件触发',
+              returnRate: result.returnRate,
+            });
+            position = null;
+            // 卖出后斜率仍为正：当日不再继续买，次日开盘 10 分钟后（9:40 桶）复测仍为正才再买
+            // （卖出时斜率为负且本桶由正转负的情形，交由下方③的防御事件处理）
+            if (signNow === 1) {
+              pendingEntry = { mode: 'offense', trigger: 'retry_next_day_940', armDate: dateStr, fromValue: slopeNow, toValue: slopeNow };
+              offenseBlockDate = dateStr;
+            }
+          }
+        }
       }
-      const dateNum = parseInt(dateStr, 10);
-      for (const buyBucket of timeBuckets) {
-        const bucketMinute = Number(buyBucket.minute);
-        // 时间衔接：当日卖出分钟之后的桶才可买入（同桶允许转手）
-        if (soldMinute != null && bucketMinute < soldMinute) continue;
-        const slopeNow = await getKeyBlockCybMa3SlopeIntraday(dateStr, bucketMinute);
-        if (slopeNow == null) continue; // 斜率数据不足，该桶跳过
-        const positiveMode = slopeNow > 0;
-        const allMembers = [];
-        if (positiveMode) {
-          for (const m of techPool) allMembers.push(m);
-        } else {
-          for (const tb of tagBlocks) {
-            for (const m of tb.members) allMembers.push(m);
-          }
+
+      // ===== ③ 空仓时由翻转事件生成/覆盖入场意图 =====
+      if (!position) {
+        if (turnedNegative) {
+          // 防御买点：斜率变成负数且当前空仓（独立于进攻卖出的不追买限制）
+          pendingEntry = { mode: 'defense', trigger: 'slope_turn_negative', fromValue: lastSlopeValue, toValue: slopeNow };
+        } else if (turnedPositive && offenseBlockDate !== dateStr) {
+          // 进攻买点：斜率转为正数（防御持仓当桶卖出后的转手买入同样走这里；进攻卖出当日禁止追买）
+          pendingEntry = { mode: 'offense', trigger: 'slope_turn_positive', fromValue: lastSlopeValue, toValue: slopeNow };
         }
-        if (allMembers.length === 0) continue;
-        // 候选：剔除排除股；正向含自选股添加时间门禁（候选来自当前自选配置，防后加股票污染历史回测）；
-        // 涨停判定取该桶时点当日涨幅；买入价从当日分时线现取（minute ≤ 该桶 minute 的最后一点），停牌/无分时个股自动跳过
-        const candidateList = await batchParallel(allMembers, async (m) => {
-          if (EXCLUDED_CODES.has(m.code)) return null;
-          if (positiveMode && !isStockInWatchlistAt(m.code, dateStr, bucketMinute)) return null;
-          const gain = stockWindowGain(m.code, winDates);
-          if (gain == null || !Number.isFinite(gain)) return null;
-          let tline = null;
-          try {
-            tline = await getSingleStockTlineDataByDate(m.code, dateNum);
-          } catch (e) {
-            return null; // 分时拉取失败：该股当日不参与选股
-          }
-          const preclose = tline?.preclose_px != null ? parseFloat(tline.preclose_px) : null;
-          const points = (tline?.line || [])
-            .filter(p => p && p.minute != null && p.last_px != null)
-            .map(p => ({ minute: parseInt(p.minute), lastPx: parseFloat(p.last_px) }))
-            .filter(p => p.lastPx > 0 && p.minute <= bucketMinute)
-            .sort((a, b) => a.minute - b.minute);
-          const atBucket = points.length > 0 ? points[points.length - 1] : null;
-          if (!atBucket) return null; // 停牌或该桶前无成交分时
-          const changePct = preclose && preclose > 0
-            ? parseFloat((((atBucket.lastPx - preclose) / preclose) * 100).toFixed(2))
-            : null;
-          return { code: m.code, name: m.name || m.code, gain, lastPx: atBucket.lastPx, changePct, limitUp: isKeyBlockLimitUp(m.code, changePct) };
-        }, 8);
-        const candidates = candidateList.filter(Boolean);
-        // batchParallel 保序返回，并列涨幅时稳定排序保持配置顺序靠前优先（与原 > 比较语义一致）
-        candidates.sort((a, b) => b.gain - a.gain);
-        // 涨停股不可买：从涨幅排名最高往下顺延到首个非涨停候选
-        const best = candidates.find(c => !c.limitUp) || null;
-        if (best) {
-          if (!seenStocks.has(best.code)) seenStocks.set(best.code, { code: best.code, name: best.name });
-          const blocksText = tagBlocks.map(tb => `${tb.blockName}[${tb.tag}]`).join('、');
-          const slopeText = `${slopeNow > 0 ? '+' : ''}${slopeNow.toFixed(2)}`;
-          const triggerTimeText = fmtTime(buyBucket.timeKey);
-          const modeGateCheck = {
-            id: 'key_block_cyb_gate',
-            title: '创业板指3日线斜率模式门禁（盘中实时）',
-            passed: true,
-            value: `${triggerTimeText} ${slopeText}`,
-            reason: positiveMode
-              ? `创业板指 3 日线斜率盘中实时值 +${slopeNow.toFixed(2)}（>0，向上）@ ${triggerTimeText}：正向模式，买自选科技股（唯一买点条件，不看资金/量能/情绪）`
-              : `创业板指 3 日线斜率盘中实时值 ${slopeNow.toFixed(2)}（<=0，向下）@ ${triggerTimeText}：反向模式，买「防御+中性」tag 板块`,
-          };
-          const poolCheck = positiveMode ? {
-            id: 'key_block_watchlist_tech',
-            title: '自选科技股筛选（正向模式）',
-            passed: true,
-            value: `${techPool.length} 只`,
-            reason: `正向模式候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 ${techPool.length} 只（剔除排除股；含自选股添加时间门禁）`,
-          } : {
-            id: 'key_block_tag_blocks',
-            title: 'Tag板块筛选（防御+中性）',
-            passed: true,
-            value: `${tagBlocks.length} 个板块`,
-            reason: `参与选股的 tag 板块 ${tagBlocks.length} 个：${blocksText}（板块 tag 在 key_blocks 页面维护，未打 tag 的板块不参与选股）`,
-          };
-          const limitUpSkipped = candidates.filter(c => c.limitUp && c.gain > best.gain);
-          const limitUpCheck = {
-            id: 'key_block_limit_up',
-            title: '涨停过滤（主板>9.5%、创业/科创>19%）',
-            passed: true,
-            value: limitUpSkipped.length > 0 ? `顺延 ${limitUpSkipped.length} 只` : '无涨停候选',
-            reason: limitUpSkipped.length > 0
-              ? `买入时点（${triggerTimeText}）涨停候选已剔除并顺延：${limitUpSkipped.map(c => (c.changePct != null ? `${c.name} +${c.changePct}%` : c.name)).join('、')}；${days} 日涨幅排名后延至 ${best.name}`
-              : `买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）`,
-          };
-          const bestCheck = {
-            id: 'key_block_best_stock',
-            title: `${positiveMode ? '自选科技股' : 'Tag板块'}内最近${days}日涨幅最大的股票`,
-            passed: true,
-            value: `${best.gain > 0 ? '+' : ''}${best.gain.toFixed(2)}%`,
-            reason: positiveMode
-              ? `在自选科技股池共 ${allMembers.length} 只中（剔除排除股、添加时间门禁未到期股与停牌/无分时个股，有效候选 ${candidates.length} 只），按最近 ${days} 日个股涨幅之和取最大${limitUpSkipped.length > 0 ? '（涨停股顺延后）' : ''}；买入价取 ${triggerTimeText} 分时价`
-              : `在 ${tagBlocks.length} 个 tag 板块共 ${allMembers.length} 只成分股中（剔除排除股与停牌/无分时个股，有效候选 ${candidates.length} 只），按最近 ${days} 日个股涨幅之和取最大${limitUpSkipped.length > 0 ? '（涨停股顺延后）' : ''}；买入价取 ${triggerTimeText} 分时价`,
-          };
-          position = {
-            code: best.code,
-            stockName: best.name,
-            buyDate: dateStr,
-            buyDateDisplay: dateDisplay,
-            buyTime: triggerTimeText.substring(0, 5),
-            buyPrice: parseFloat(Number(best.lastPx).toFixed(2)),
-            buyChange: best.changePct != null ? parseFloat(Number(best.changePct).toFixed(2)) : null,
-            metric: parseFloat(best.gain.toFixed(4)),
-            costLinePct: Number(strategy.costLinePct) || 2,
-            keyBlockReverseMode: !positiveMode,
-            buyReason: positiveMode
-              ? `${triggerTimeText.substring(0, 5)}创业板指 3 日线斜率盘中为正（+${slopeNow.toFixed(2)} > 0）买入 自选科技股池内${days}日涨幅最大的股票`
-              : `${triggerTimeText.substring(0, 5)}创业板指 3 日线斜率盘中为负（${slopeNow.toFixed(2)} ≤ 0）买入 防御+中性 tag 板块内${days}日涨幅最大的股票`,
-            buyChecks: [modeGateCheck, poolCheck, limitUpCheck, bestCheck],
-          };
-          break; // 已建仓，当日后续桶不再扫描
+      }
+
+      // ===== ④ 按意图建仓（同桶先卖后买；候选全部涨停/无效时后续桶继续重试） =====
+      if (!position && winDates.length === days && pendingEntry) {
+        let canAttempt = true;
+        if (pendingEntry.trigger === 'retry_next_day_940') {
+          // 仅在卖出的次一交易日生效：9:40 前不买；斜率数据不足等后续桶；复测斜率 ≤ 0 本桶不买
+          // （当日由正转负时③已把意图切为防御；卖出当日一律不执行，落实「当日不要继续买」）
+          if (dateStr <= pendingEntry.armDate || bucketMinute < 940 || slopeNow == null || slopeNow <= 0) canAttempt = false;
         }
-        // 全部候选涨停/无有效候选：顺延到下一桶重试（斜率状态可能翻转、涨停判定随价格变化）
+        if (canAttempt) {
+          // 复测买入：明细中的斜率取复测桶当时值（fromValue 仍为卖出当时值）
+          const intent = pendingEntry.trigger === 'retry_next_day_940' ? { ...pendingEntry, toValue: slopeNow } : pendingEntry;
+          const opened = await openPosition(intent, { dateStr, dateDisplay, dateNum, winDates, bucket, bucketMinute });
+          if (opened) pendingEntry = null;
+        }
+      }
+
+      // 更新斜率符号基准（null 桶不更新，翻转识别跨缺失桶连续）
+      if (signNow !== null) {
+        lastSlopeSign = signNow;
+        lastSlopeValue = slopeNow;
       }
     }
   }

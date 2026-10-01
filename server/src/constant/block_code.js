@@ -1018,5 +1018,10 @@ exports.default = [
         "code": "sh600707",
         "name": "彩虹股份",
         "tag": "进攻"
+    },
+    {
+        "blockName": "粮食",
+        "code": "sh600127",
+        "name": "金健米业"
     }
 ]
