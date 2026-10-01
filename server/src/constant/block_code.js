@@ -930,12 +930,6 @@ exports.default = [
         "tag": "防御"
     },
     {
-        "blockName": "粮食",
-        "code": "sh600127",
-        "name": "金健米业",
-        "tag": "防御"
-    },
-    {
         "blockName": "CCL",
         "code": "sz000823",
         "name": "超声电子",
