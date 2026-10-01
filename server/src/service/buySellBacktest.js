@@ -11,7 +11,7 @@ const { getSingleStockTlineDataByDate } = require('./stock');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 const { isStockInWatchlistAt } = require('./monitorStock');
 const { batchParallel } = require('../utils');
-const { getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, stockWindowGain, getStockCloseOnOrBefore } = require('./keyBlockData');
+const { getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, stockWindowGain, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange } = require('./keyBlockData');
 const {
   SENTIMENT_STRATEGIES,
   isSentimentStrategy,
@@ -2484,9 +2484,14 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     return { success: false, message: '无重点板块配置（block_code.js 为空）' };
   }
   // 预拉取全部重点板块成分股日K（回测时现算板块/个股涨幅；进程内缓存，多策略/多子进程共享磁盘缓存）
+  // 同时预扫描整个回测窗口可能出现的历史涨停板块防御候选股（创业板下跌日的涨停第一板块），一并预拉 bars
   if (onProgress) onProgress({ current: 0, total, date: '', status: 'loading' });
   try {
-    await ensureKeyBlockBars();
+    let extraCodes = new Set();
+    try {
+      extraCodes = await scanAllLianbanCodesInRange(rangeDates);
+    } catch (e) { /* 历史涨停扫描失败忽略，防御池退化为仅 tag 板块成分股 */ }
+    await ensureKeyBlockBars(extraCodes);
   } catch (e) {
     return { success: false, message: `重点板块成分股日K拉取失败: ${e.message || e}` };
   }
@@ -2539,10 +2544,33 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     const { dateStr, dateDisplay, dateNum, winDates, bucket, bucketMinute } = ctx;
     const isOffense = mode === 'offense';
     const allMembers = [];
+    let lianbanAdded = []; // 防御池动态追加的历史涨停候选股（用于日志/文案）
+    let lianbanDownDays = [];
     if (isOffense) {
       for (const m of techPool) allMembers.push(m);
     } else {
       for (const tb of tagBlocks) for (const m of tb.members) allMembers.push(m);
+      // 防御池扩展：往前 20 个交易日中创业板日跌幅 < -1% 的天，取涨停数最多的第一板块的所有股票
+      // 与 tag 板块成分股合并去重后一起做 n 日涨幅最大筛选
+      try {
+        const lbKey = dateStr; // 同一回测日的 openPosition 可能被多次调用（重试），缓存结果
+        if (!openPosition._lianbanCache) openPosition._lianbanCache = new Map();
+        let lbResult;
+        if (openPosition._lianbanCache.has(lbKey)) {
+          lbResult = openPosition._lianbanCache.get(lbKey);
+        } else {
+          lbResult = await getHistoricalLianbanDefenseStocks(dateStr, 20, 1, -1);
+          openPosition._lianbanCache.set(lbKey, lbResult);
+        }
+        lianbanDownDays = lbResult.downDays || [];
+        const tagCodes = new Set(allMembers.map(m => m.code));
+        for (const s of lbResult.stocks || []) {
+          if (!tagCodes.has(s.code)) {
+            allMembers.push(s);
+            lianbanAdded.push(s);
+          }
+        }
+      } catch (e) { /* 历史涨停候选获取失败，退化为仅 tag 板块 */ }
     }
     if (allMembers.length === 0) return false;
     // 候选：进攻含自选股添加时间门禁（候选来自当前自选配置，防后加股票污染历史回测）；
@@ -2583,7 +2611,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     const triggerTimeText = fmtTime(bucket.timeKey);
     const gateReasonMap = {
       slope_turn_positive: `创业板指 3 日线斜率在 ${triggerTimeText} 由负转正（${fromText} → ${slopeText}）：进攻买点触发，不看资金/量能/情绪等任何配合条件，买入自选科技股中 ${days} 日涨幅最大的一只`,
-      slope_turn_negative: `创业板指 3 日线斜率在 ${triggerTimeText} 由正转负（${fromText} → ${slopeText}）且当前空仓：防御买点触发，买入防御+中性 tag 板块中 ${days} 日涨幅最大的一只`,
+      slope_turn_negative: `创业板指 3 日线斜率在 ${triggerTimeText} 由正转负（${fromText} → ${slopeText}）且当前空仓：防御买点触发，买入防御+中性 tag 板块 ∪ 近20交易日创业板下跌日的涨停数最多第一板块中 ${days} 日涨幅最大的一只`,
       retry_next_day_940: `进攻持仓按卖点诊断卖出后，卖出当时 3 日线斜率仍为正（${fromText}），当日不继续买；次日开盘 10 分钟后（${triggerTimeText}，9:40 桶）复测斜率仍为正（${slopeText}），继续买入自选科技股中 ${days} 日涨幅最大的一只`,
     };
     const modeGateCheck = {
@@ -2601,13 +2629,19 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       passed: true,
       value: `${techPool.length} 只`,
       reason: `进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 ${techPool.length} 只（剔除排除股；含自选股添加时间门禁）`,
-    } : {
-      id: 'key_block_tag_blocks',
-      title: 'Tag板块筛选（防御+中性）',
-      passed: true,
-      value: `${tagBlocks.length} 个板块`,
-      reason: `参与选股的 tag 板块 ${tagBlocks.length} 个：${blocksText}（板块 tag 在 key_blocks 页面维护，未打 tag 的板块不参与选股）`,
-    };
+    } : (() => {
+      const tagCount = tagBlocks.reduce((s, tb) => s + tb.members.length, 0);
+      const lbInfo = lianbanAdded.length > 0
+        ? `；历史涨停扩展 = 往前20交易日中创业板日跌幅<-1%的 ${lianbanDownDays.length} 天，涨停数最多第一板块全部股票去重后新增 ${lianbanAdded.length} 只（下跌日：${lianbanDownDays.join('、') || '无'}）`
+        : `；历史涨停扩展 = 往前20交易日中创业板日跌幅<-1%的天数 = ${lianbanDownDays.length}，均已在 tag 板块或无数据，无新增`;
+      return {
+        id: 'key_block_tag_blocks',
+        title: '防御候选池（Tag板块 + 历史涨停扩展）',
+        passed: true,
+        value: `${tagBlocks.length} 个Tag板块 ${tagCount} 只 + 涨停扩展 ${lianbanAdded.length} 只`,
+        reason: `参与选股的防御+中性 tag 板块 ${tagBlocks.length} 个：${blocksText}${lbInfo}；合并去重后共 ${allMembers.length} 只候选`,
+      };
+    })();
     const limitUpSkipped = candidates.filter(c => c.limitUp && c.gain > best.gain);
     const limitUpCheck = {
       id: 'key_block_limit_up',
@@ -2620,14 +2654,14 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     };
     const bestCheck = {
       id: 'key_block_best_stock',
-      title: `${isOffense ? '自选科技股' : '防御+中性Tag板块'}内最近${days}日涨幅最大的股票`,
+      title: `${isOffense ? '自选科技股' : '防御候选池(Tag板块+涨停扩展)'}内最近${days}日涨幅最大的股票`,
       passed: true,
       value: `${best.gain > 0 ? '+' : ''}${best.gain.toFixed(2)}%`,
-      reason: `在${isOffense ? `自选科技股池共 ${allMembers.length} 只` : `${tagBlocks.length} 个 tag 板块共 ${allMembers.length} 只成分股`}中（有效候选 ${candidates.length} 只），按最近 ${days} 日个股涨幅之和取最大${limitUpSkipped.length > 0 ? '（涨停股顺延后）' : ''}；买入价取 ${triggerTimeText} 分时价`,
+      reason: `在${isOffense ? `自选科技股池共 ${allMembers.length} 只` : `防御候选池共 ${allMembers.length} 只（Tag板块 + 历史涨停扩展 ${lianbanAdded.length} 只）`}中（有效候选 ${candidates.length} 只），按最近 ${days} 日个股涨幅之和取最大${limitUpSkipped.length > 0 ? '（涨停股顺延后）' : ''}；买入价取 ${triggerTimeText} 分时价`,
     };
     const buyReasonMap = {
       slope_turn_positive: `${triggerTimeText.substring(0, 5)}创业板指3日线斜率由负转正（${fromText}→${slopeText}），买入自选科技股池内${days}日涨幅最大的股票（进攻买点，无需资金/量能配合）`,
-      slope_turn_negative: `${triggerTimeText.substring(0, 5)}创业板指3日线斜率由正转负（${fromText}→${slopeText}）且空仓，买入防御+中性tag板块内${days}日涨幅最大的股票（防御买点）`,
+      slope_turn_negative: `${triggerTimeText.substring(0, 5)}创业板指3日线斜率由正转负（${fromText}→${slopeText}）且空仓，买入防御候选池（Tag板块 + 近20交易日创业板下跌日涨停数最多第一板块）内${days}日涨幅最大的股票（防御买点）`,
       retry_next_day_940: `${triggerTimeText.substring(0, 5)}开盘10分钟后复测创业板指3日线斜率仍为正（${slopeText}，卖出当时${fromText}），买入自选科技股池内${days}日涨幅最大的股票（卖点诊断卖出后次日复测继续买）`,
     };
     position = {

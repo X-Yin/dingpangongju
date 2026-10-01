@@ -7,10 +7,11 @@
 const fs = require('fs');
 const path = require('path');
 const { getBlocksConfig } = require('./blockConfig');
-const { getStockBars } = require('./sentimentHotMoney');
+const { getStockBars, loadIndexKline } = require('./sentimentHotMoney');
 const { batchParallel } = require('../utils');
 
 const blockCodePath = path.resolve(__dirname, '../constant/block_code.js');
+const lianbanSnapshotDir = path.resolve(__dirname, '../data/lianbanSnapshot');
 
 // blockName -> [{ code: 'shxxxxxx', name }]（保持配置顺序；剔除占位条目；按配置文件 mtime 缓存）
 let constituentsCache = null; // { mtimeMs, map }
@@ -37,26 +38,33 @@ const getKeyBlockConstituents = () => {
 // 个股日K收盘序列进程内缓存：code(完整 shxxxxxx) -> [{ d, c }]（d=YYYYMMDD 数字升序）；拉取失败/无数据存 null 防反复重试
 const barsCache = new Map();
 
+// 预拉取指定 codes（shxxxxxx 完整格式）日K到 barsCache；并发 8；已缓存的跳过，拉取失败存 null
+const ensureBarsForCodes = async (codeSet) => {
+  const codes = Array.from(codeSet).filter(c => !barsCache.has(c));
+  if (codes.length === 0) return { total: 0, fetched: 0 };
+  let fetched = 0;
+  await batchParallel(codes, async (code) => {
+    try {
+      const bars = await getStockBars(code.replace(/^(sh|sz|bj)/i, ''));
+      barsCache.set(code, bars && bars.length > 0 ? bars : null);
+      if (bars && bars.length > 0) fetched++;
+    } catch (e) {
+      barsCache.set(code, null);
+    }
+  }, 8);
+  return { total: codes.length, fetched };
+};
+
 // 预拉取全部重点板块成分股日K（回测启动时调用一次，避免逐桶逐日阻塞；并发 8）
-const ensureKeyBlockBars = async () => {
+const ensureKeyBlockBars = async (extraCodes) => {
   const blocks = getKeyBlockConstituents();
   const codes = new Set();
   for (const members of blocks.values()) {
     for (const m of members) codes.add(m.code);
   }
-  let fetched = 0;
-  await batchParallel(Array.from(codes), async (code) => {
-    if (barsCache.has(code)) return;
-    try {
-      // getStockBars 入参为 6 位纯代码
-      const bars = await getStockBars(code.replace(/^(sh|sz|bj)/i, ''));
-      barsCache.set(code, bars && bars.length > 0 ? bars : null);
-      if (bars && bars.length > 0) fetched++;
-    } catch (e) {
-      barsCache.set(code, null); // 拉取失败：该股不参与板块涨幅均值
-    }
-  }, 8);
-  return { total: codes.size, fetched };
+  if (extraCodes) for (const c of extraCodes) codes.add(c);
+  const r = await ensureBarsForCodes(codes);
+  return r;
 };
 
 // 个股某交易日日涨幅（%）：相邻收盘价环比现算；当日无K线或无前收盘返回 null
@@ -115,11 +123,121 @@ const getStockCloseOnOrBefore = (code, dateStr) => {
   return close;
 };
 
+// ============================================================
+// 历史涨停板块候选股（防御池扩展）
+// 在回测日期 D 往前 lookbackDays 个交易日中，找出创业板当日收盘日涨幅 < cybThresholdPct（默认 -1%）的每一天，
+// 从这些天的 lianbanSnapshot 中取涨停数 Top-N（默认 3）板块的所有股票，去重后作为防御候选池的补充。
+// 用途：防御买点时，在本地防御+中性 tag 板块成分股之外，再加上这些情绪冰点日的热门涨停板块股，
+//       一起做 n 日涨幅最大筛选。
+// ============================================================
+
+// lianbanSnapshot 按日期的文件读取缓存：dateStr -> { themes: [...] }
+const lianbanSnapshotCache = new Map();
+const readLianbanSnapshot = (dateStr) => {
+  if (lianbanSnapshotCache.has(dateStr)) return lianbanSnapshotCache.get(dateStr);
+  const file = path.join(lianbanSnapshotDir, `${dateStr}.json`);
+  let data = null;
+  try {
+    if (fs.existsSync(file)) {
+      const raw = fs.readFileSync(file, 'utf-8');
+      data = JSON.parse(raw);
+    }
+  } catch (e) { /* 读取失败返回 null */ }
+  lianbanSnapshotCache.set(dateStr, data);
+  return data;
+};
+
+// 创业板日K缓存（进程内，首次调用后常驻）
+let cybKlineCache = null;
+const ensureCybKline = async () => {
+  if (cybKlineCache) return cybKlineCache;
+  cybKlineCache = await loadIndexKline('cyb_kline.json', '399006', '32', 500);
+  return cybKlineCache;
+};
+
+// 给定回测日期 D，返回往前 lookbackDays 个交易日（严格不含当日 D）中创业板日涨幅 < thresholdPct 的日期列表
+// dateStr: 'YYYYMMDD'；返回升序的 YYYYMMDD 数字数组
+const getCybDownDays = async (dateStr, lookbackDays = 20, thresholdPct = -1) => {
+  const kline = await ensureCybKline();
+  if (!kline || kline.length < 2) return [];
+  const d = Number(dateStr);
+  // kline 升序，找到 < d 的最后一根下标（严格不含当日 D，避免盘中买点泄露当日收盘信息）
+  let endIdx = -1;
+  for (let i = 0; i < kline.length; i++) {
+    if (kline[i].trade_date >= d) break;
+    endIdx = i;
+  }
+  if (endIdx < 1) return [];
+  // 往前取 lookbackDays 个交易日（含 endIdx 当天）
+  const startIdx = Math.max(1, endIdx - lookbackDays + 1);
+  const result = [];
+  for (let i = startIdx; i <= endIdx; i++) {
+    const prev = kline[i - 1].close_px;
+    const cur = kline[i].close_px;
+    if (!prev || prev <= 0 || !cur) continue;
+    const pct = ((cur - prev) / prev) * 100;
+    if (pct < thresholdPct) result.push(kline[i].trade_date);
+  }
+  return result;
+};
+
+// 从 lianbanSnapshot 某日期中取涨停数 topN 板块的所有股票
+// 返回 [{ code: 'shxxxxxx', name }]
+const getTopLianbanBoardStocks = (dateStr, topN = 1) => {
+  const data = readLianbanSnapshot(dateStr);
+  if (!data || !Array.isArray(data.themes)) return [];
+  // 按 count 降序（同 count 按 rank 升序）
+  const sorted = data.themes
+    .filter(t => t && Array.isArray(t.stocks) && t.stocks.length > 0)
+    .sort((a, b) => (b.count || 0) - (a.count || 0) || (a.rank || 99) - (b.rank || 99));
+  const top = sorted.slice(0, topN);
+  const out = [];
+  for (const theme of top) {
+    for (const st of theme.stocks) {
+      const code = st.marketCode || st.code;
+      if (!code) continue;
+      out.push({ code, name: st.name || st.code || code });
+    }
+  }
+  return out;
+};
+
+// 主入口：给定回测日期，返回 lookbackDays 内创业板下跌日的涨停Top板块股票去重集合
+const getHistoricalLianbanDefenseStocks = async (dateStr, lookbackDays = 20, topN = 1, thresholdPct = -1) => {
+  const downDays = await getCybDownDays(dateStr, lookbackDays, thresholdPct);
+  const seen = new Set();
+  const result = [];
+  for (const d of downDays) {
+    const stocks = getTopLianbanBoardStocks(String(d), topN);
+    for (const s of stocks) {
+      if (!seen.has(s.code)) {
+        seen.add(s.code);
+        result.push(s);
+      }
+    }
+  }
+  return { stocks: result, downDays: downDays.map(d => String(d)) };
+};
+
+// 预扫描整个回测日期范围，收集所有可能用到的 lianban 候选股代码（用于一次性预拉 bars）
+// rangeDates: 回测日期数组 [YYYYMMDD]；返回 Set<code>
+const scanAllLianbanCodesInRange = async (rangeDates, lookbackDays = 20, topN = 1, thresholdPct = -1) => {
+  const all = new Set();
+  for (const dateStr of rangeDates) {
+    const { stocks } = await getHistoricalLianbanDefenseStocks(dateStr, lookbackDays, topN, thresholdPct);
+    for (const s of stocks) all.add(s.code);
+  }
+  return all;
+};
+
 module.exports = {
   getKeyBlockConstituents,
   getKeyBlockTagMap,
   ensureKeyBlockBars,
+  ensureBarsForCodes,
   stockDailyChange,
   stockWindowGain,
   getStockCloseOnOrBefore,
+  getHistoricalLianbanDefenseStocks,
+  scanAllLianbanCodesInRange,
 };
