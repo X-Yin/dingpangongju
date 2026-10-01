@@ -159,6 +159,8 @@ export const StrategyCard = ({ strategy, rank }) => {
   const metricItems = [
     { label: '整体收益率', value: s.overallReturn != null ? fmtPct(s.overallReturn) : '--', color: fmtPctColor(s.overallReturn) },
     { label: '胜率', value: s.winRate != null ? `${s.winRate.toFixed(1)}%` : '--', color: s.winRate != null && s.winRate >= 50 ? '#f5222d' : '#52c41a' },
+    { label: '平均回撤', value: s.avgDrawdown != null ? fmtPct(s.avgDrawdown) : '--', color: '#52c41a' },
+    { label: '单笔最大回撤', value: s.maxDrawdown != null ? fmtPct(s.maxDrawdown) : '--', color: '#52c41a' },
     { label: '成交笔数', value: `${s.tradeCount || 0} 笔` },
     { label: '盈利笔数', value: `${s.winCount || 0} 笔` },
     { label: '平均持仓', value: s.avgHoldingDays != null ? `${s.avgHoldingDaysApprox ? '≈' : ''}${Number(s.avgHoldingDays).toFixed(1)} 交易日` : '--' },

@@ -234,6 +234,8 @@ const buildSummary = (result) => {
       totalTrades: sum.tradeCount || 0,
       winTrades: sum.winCount || 0,
       winRate: sum.winRate != null ? Number(sum.winRate) : null,
+      avgDrawdown: sum.avgDrawdown != null ? Number(sum.avgDrawdown) : null,
+      maxDrawdown: sum.maxDrawdown != null ? Number(sum.maxDrawdown) : null,
       avgReturn: null,
       overallReturn: sum.overallReturn != null ? Number(sum.overallReturn) : null,
       holdingCount: sum.holding ? 1 : 0,
@@ -246,6 +248,9 @@ const buildSummary = (result) => {
   let winTrades = 0;
   let returnSum = 0;
   let validReturns = 0;
+  let lossSum = 0; // 亏损单笔收益之和（负值）
+  let lossCount = 0;
+  let maxDrawdown = null; // 单笔最大回撤（最差一笔，负值）
   let holdingCount = 0;
   const closedDays = []; // 已卖出成交的持仓交易日数（含退化估算时标记 ≈）
   let anyApprox = false;
@@ -253,9 +258,15 @@ const buildSummary = (result) => {
     s.trades.forEach(t => {
       totalTrades++;
       if (t.returnRate != null && !Number.isNaN(Number(t.returnRate))) {
-        returnSum += Number(t.returnRate);
+        const r = Number(t.returnRate);
+        returnSum += r;
         validReturns++;
-        if (Number(t.returnRate) > 0) winTrades++;
+        if (r > 0) winTrades++;
+        if (r < 0) {
+          lossSum += r;
+          lossCount++;
+          if (maxDrawdown == null || r < maxDrawdown) maxDrawdown = r;
+        }
       }
       if (t.holdingDays != null) {
         closedDays.push(t.holdingDays);
@@ -269,6 +280,8 @@ const buildSummary = (result) => {
     totalTrades,
     winTrades,
     winRate: totalTrades > 0 ? (winTrades / totalTrades) * 100 : null,
+    avgDrawdown: lossCount > 0 ? parseFloat((lossSum / lossCount).toFixed(2)) : null,
+    maxDrawdown,
     avgReturn: validReturns > 0 ? returnSum / validReturns : null,
     overallReturn: null,
     holdingCount,
@@ -579,6 +592,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
               tradeCount: sum.tradeCount || 0,
               winCount: sum.winCount || 0,
               winRate: sum.winRate != null ? Number(sum.winRate) : null,
+              avgDrawdown: sum.avgDrawdown != null ? Number(sum.avgDrawdown) : null,
+              maxDrawdown: sum.maxDrawdown != null ? Number(sum.maxDrawdown) : null,
               overallReturn: sum.overallReturn != null ? Number(sum.overallReturn) : null,
               holding: sum.holding ? 1 : 0,
             },
@@ -806,6 +821,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                   ? { label: '整体收益', value: summary.overallReturn != null ? fmtPct(summary.overallReturn) : '--', color: summary.overallReturn != null ? (summary.overallReturn >= 0 ? '#f5222d' : '#52c41a') : undefined }
                   : { label: '平均单笔收益', value: summary.avgReturn != null ? fmtPct(summary.avgReturn) : '--', color: summary.avgReturn != null ? (summary.avgReturn >= 0 ? '#f5222d' : '#52c41a') : undefined },
                 { label: '胜率', value: summary.winRate != null ? `${summary.winRate.toFixed(1)}%` : '--', color: summary.winRate != null && summary.winRate >= 50 ? '#f5222d' : '#52c41a' },
+                { label: '平均回撤', value: summary.avgDrawdown != null ? fmtPct(summary.avgDrawdown) : '--', color: '#52c41a' },
+                { label: '单笔最大回撤', value: summary.maxDrawdown != null ? fmtPct(summary.maxDrawdown) : '--', color: '#52c41a' },
                 { label: '平均持仓', value: summary.avgHoldingDays != null ? `${summary.avgHoldingDaysApprox ? '≈' : ''}${Number(summary.avgHoldingDays).toFixed(1)} 交易日` : '--' },
                 { label: '覆盖自选股', value: `${summary.stockCount} 只` },
                 { label: '成交笔数', value: `${summary.totalTrades} 笔` },

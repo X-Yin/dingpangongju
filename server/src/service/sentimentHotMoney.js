@@ -898,6 +898,12 @@ const runSentimentBacktest = async (startDate, endDate, strategyId, onProgress) 
   overallReturn = parseFloat(((overallReturn - 1) * 100).toFixed(2));
   const validTrades = trades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
   const winCount = validTrades.filter(t => t.returnRate > 0).length;
+  // 回撤统计（口径与 buySellBacktest.calcDrawdownStats 一致）：仅统计收益为负的已卖出成交
+  const lossReturns = validTrades.map(t => Number(t.returnRate)).filter(r => Number.isFinite(r) && r < 0);
+  const avgDrawdown = lossReturns.length > 0
+    ? parseFloat((lossReturns.reduce((a, b) => a + b, 0) / lossReturns.length).toFixed(2))
+    : null;
+  const maxDrawdown = lossReturns.length > 0 ? parseFloat(Math.min(...lossReturns).toFixed(2)) : null;
   return {
     success: true,
     type: 'single',
@@ -911,6 +917,8 @@ const runSentimentBacktest = async (startDate, endDate, strategyId, onProgress) 
       tradeCount: trades.length,
       winCount,
       winRate: validTrades.length > 0 ? parseFloat((winCount / validTrades.length * 100).toFixed(2)) : null,
+      avgDrawdown,
+      maxDrawdown,
       overallReturn,
       holding: !!holding,
     },

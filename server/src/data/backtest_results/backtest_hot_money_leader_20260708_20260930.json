@@ -481,6 +481,8 @@
     "tradeCount": 7,
     "winCount": 2,
     "winRate": 28.57,
+    "avgDrawdown": -9.17,
+    "maxDrawdown": -15.33,
     "overallReturn": 15.76,
     "holding": true
   }

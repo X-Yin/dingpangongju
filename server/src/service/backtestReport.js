@@ -146,6 +146,8 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         tradeCount: sum.tradeCount || 0,
         winCount: sum.winCount || 0,
         winRate: sum.winRate != null ? Number(sum.winRate) : null,
+        avgDrawdown: sum.avgDrawdown != null ? Number(sum.avgDrawdown) : null,
+        maxDrawdown: sum.maxDrawdown != null ? Number(sum.maxDrawdown) : null,
         overallReturn: sum.overallReturn != null ? Number(sum.overallReturn) : null,
         holding: !!sum.holding,
         avgHoldingDays: sum.avgHoldingDays ?? null,

@@ -173,6 +173,20 @@ const attachHoldingDays = (result) => {
   return result;
 };
 
+// 回撤统计（仅统计已卖出成交中收益率为负的单笔，returnRate 为百分数）：
+//   avgDrawdown：亏损单笔的平均收益率（负值）；maxDrawdown：单笔最大回撤（最差一笔，负值）
+// 无亏损成交时两者均为 null（前端展示 --）
+const calcDrawdownStats = (trades) => {
+  const losses = (Array.isArray(trades) ? trades : [])
+    .map(t => Number(t?.returnRate))
+    .filter(r => Number.isFinite(r) && r < 0);
+  if (losses.length === 0) return { avgDrawdown: null, maxDrawdown: null };
+  return {
+    avgDrawdown: parseFloat((losses.reduce((a, b) => a + b, 0) / losses.length).toFixed(2)),
+    maxDrawdown: parseFloat(Math.min(...losses).toFixed(2)),
+  };
+};
+
 const readCachedBacktest = (strategy, startDate, endDate) => {
   try {
     const file = getBacktestCacheFile(strategy, startDate, endDate);
@@ -2027,6 +2041,7 @@ const runQuarterBacktest = async (startDate, endDate, strategyId, onProgress) =>
       tradeCount: trades.length,
       winCount,
       winRate: validTrades.length > 0 ? parseFloat((winCount / validTrades.length * 100).toFixed(2)) : null,
+      ...calcDrawdownStats(validTrades),
       overallReturn,
       holding: positions.length > 0,
     },
@@ -2204,6 +2219,7 @@ const runTwoBacktest = async (startDate, endDate, strategyId, onProgress) => {
       tradeCount: trades.length,
       winCount,
       winRate: validTrades.length > 0 ? parseFloat((winCount / validTrades.length * 100).toFixed(2)) : null,
+      ...calcDrawdownStats(validTrades),
       overallReturn,
       holding: positions.length > 0,
     },
@@ -2862,6 +2878,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       tradeCount: trades.length,
       winCount,
       winRate: validTrades.length > 0 ? parseFloat((winCount / validTrades.length * 100).toFixed(2)) : null,
+      ...calcDrawdownStats(validTrades),
       overallReturn,
       holding: position != null,
     },
@@ -3243,6 +3260,7 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
       tradeCount: singleTrades.length,
       winCount,
       winRate: validTrades.length > 0 ? parseFloat((winCount / validTrades.length * 100).toFixed(2)) : null,
+      ...calcDrawdownStats(validTrades),
       overallReturn,
       holding: !!holding,
     },
@@ -3638,6 +3656,7 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           tradeCount: singleTrades.length,
           winCount,
           winRate: validTrades.length > 0 ? parseFloat((winCount / validTrades.length * 100).toFixed(2)) : null,
+          ...calcDrawdownStats(validTrades),
           overallReturn,
           holding: !!holding,
         },
