@@ -105,6 +105,7 @@ const { getAttackDefenseScore } = require('./service/attackDefenseScore');
 const feishuNotify = require('./service/feishuNotify');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
+const { scheduleLianbanDaily } = require('./service/lianban');
 
 
 
@@ -3375,6 +3376,10 @@ const runMarketSnapshotJob = async () => {
 setInterval(() => {
   if (isInMarketSnapshotWindow()) runMarketSnapshotJob();
 }, 60 * 1000);
+
+// 连板网每日连板数据：交易日 21:00 后自动抓取当日热点题材涨停数据（见 service/lianban.js）
+// 挂在常驻的 Web 服务进程上（poll 进程 15:05 收盘后会自动退出，无法覆盖晚间任务）
+scheduleLianbanDaily(21, 30);
 
 // 启动服务
 app.listen(port, () => {

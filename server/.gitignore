@@ -26,3 +26,6 @@ dist-ssr
 # Dev startup marker
 .dev_last_clear_date
 ./default.profraw
+
+# 连板网登录 cookie（本地私密，不入库）
+.lianban-cookie
