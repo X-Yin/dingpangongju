@@ -2501,6 +2501,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
   const skippedDates = [];
   const seenStocks = new Map(); // code -> { code, name }（回测期间出现过的自选股，供复制K线等使用）
   const dailyInfos = new Map(); // date -> Map<code, {changePct, closePx, resilience}>（期末持仓收益率估算用）
+  let rotatedDefenseCodes = new Set(); // 防御止盈失败轮换期间跳过的股票 code（同一次轮换链内避免立即买回）
 
   // 斜率符号状态机（2026-10-01 重构：买卖只由斜率正负翻转驱动，不再按斜率正负直接分模式）：
   //   lastSlopeSign/Value：最近一个有效盘中实时斜率的符号与数值，跨日连续追踪；初值取回测首日前一交易日收盘斜率
@@ -2559,7 +2560,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
         if (openPosition._lianbanCache.has(lbKey)) {
           lbResult = openPosition._lianbanCache.get(lbKey);
         } else {
-          lbResult = await getHistoricalLianbanDefenseStocks(dateStr);
+          lbResult = await getHistoricalLianbanDefenseStocks(dateStr, 20, 1, -1);
           openPosition._lianbanCache.set(lbKey, lbResult);
         }
         lianbanDownDays = lbResult.downDays || [];
@@ -2572,10 +2573,13 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
         }
       } catch (e) { /* 历史涨停候选获取失败，退化为仅 tag 板块 */ }
     }
-    if (allMembers.length === 0) return false;
+    // 防御轮换期间跳过刚卖出的 code（避免同桶立即买回同一股票）
+    const candidatesFiltered = allMembers.filter(m => !rotatedDefenseCodes.has(m.code));
+    const finalMembers = candidatesFiltered.length > 0 ? candidatesFiltered : allMembers;
+    if (finalMembers.length === 0) return false;
     // 候选：进攻含自选股添加时间门禁（候选来自当前自选配置，防后加股票污染历史回测）；
     // 涨停判定取该桶时点当日涨幅；买入价从当日分时线现取（minute ≤ 该桶 minute 的最后一点），停牌/无分时个股自动跳过
-    const candidateList = await batchParallel(allMembers, async (m) => {
+    const candidateList = await batchParallel(finalMembers, async (m) => {
       if (EXCLUDED_CODES.has(m.code)) return null;
       if (isOffense && !isStockInWatchlistAt(m.code, dateStr, bucketMinute)) return null;
       const gain = stockWindowGain(m.code, winDates);
@@ -2611,7 +2615,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     const triggerTimeText = fmtTime(bucket.timeKey);
     const gateReasonMap = {
       slope_turn_positive: `创业板指 3 日线斜率在 ${triggerTimeText} 由负转正（${fromText} → ${slopeText}）：进攻买点触发，不看资金/量能/情绪等任何配合条件，买入自选科技股中 ${days} 日涨幅最大的一只`,
-      slope_turn_negative: `创业板指 3 日线斜率在 ${triggerTimeText} 由正转负（${fromText} → ${slopeText}）且当前空仓：防御买点触发，买入防御+中性 tag 板块 ∪ 近20交易日创业板下跌日的涨停前3板块 ∩ 20日有≥3连板个股中 ${days} 日涨幅最大的一只`,
+      slope_turn_negative: `创业板指 3 日线斜率在 ${triggerTimeText} 由正转负（${fromText} → ${slopeText}）且当前空仓：防御买点触发，买入防御+中性 tag 板块 ∪ 近20交易日创业板下跌日的涨停数最多第一板块中 ${days} 日涨幅最大的一只`,
       retry_next_day_940: `进攻持仓按卖点诊断卖出后，卖出当时 3 日线斜率仍为正（${fromText}），当日不继续买；次日开盘 10 分钟后（${triggerTimeText}，9:40 桶）复测斜率仍为正（${slopeText}），继续买入自选科技股中 ${days} 日涨幅最大的一只`,
     };
     const modeGateCheck = {
@@ -2632,14 +2636,14 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     } : (() => {
       const tagCount = tagBlocks.reduce((s, tb) => s + tb.members.length, 0);
       const lbInfo = lianbanAdded.length > 0
-        ? `；历史涨停扩展 = 往前20交易日中创业板日跌幅<-1%的 ${lianbanDownDays.length} 天涨停前3板块 ∩ 20日有≥3连板个股，与Tag板块去重后新增 ${lianbanAdded.length} 只（下跌日：${lianbanDownDays.join('、') || '无'}）`
+        ? `；历史涨停扩展 = 往前20交易日中创业板日跌幅<-1%的 ${lianbanDownDays.length} 天，涨停数最多第一板块全部股票去重后新增 ${lianbanAdded.length} 只（下跌日：${lianbanDownDays.join('、') || '无'}）`
         : `；历史涨停扩展 = 往前20交易日中创业板日跌幅<-1%的天数 = ${lianbanDownDays.length}，均已在 tag 板块或无数据，无新增`;
       return {
         id: 'key_block_tag_blocks',
         title: '防御候选池（Tag板块 + 历史涨停扩展）',
         passed: true,
         value: `${tagBlocks.length} 个Tag板块 ${tagCount} 只 + 涨停扩展 ${lianbanAdded.length} 只`,
-        reason: `参与选股的防御+中性 tag 板块 ${tagBlocks.length} 个：${blocksText}${lbInfo}；合并去重后共 ${allMembers.length} 只候选`,
+        reason: `参与选股的防御+中性 tag 板块 ${tagBlocks.length} 个：${blocksText}${lbInfo}；合并去重后共 ${finalMembers.length} 只候选`,
       };
     })();
     const limitUpSkipped = candidates.filter(c => c.limitUp && c.gain > best.gain);
@@ -2657,11 +2661,11 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       title: `${isOffense ? '自选科技股' : '防御候选池(Tag板块+涨停扩展)'}内最近${days}日涨幅最大的股票`,
       passed: true,
       value: `${best.gain > 0 ? '+' : ''}${best.gain.toFixed(2)}%`,
-      reason: `在${isOffense ? `自选科技股池共 ${allMembers.length} 只` : `防御候选池共 ${allMembers.length} 只（Tag板块 + 历史涨停扩展 ${lianbanAdded.length} 只）`}中（有效候选 ${candidates.length} 只），按最近 ${days} 日个股涨幅之和取最大${limitUpSkipped.length > 0 ? '（涨停股顺延后）' : ''}；买入价取 ${triggerTimeText} 分时价`,
+      reason: `在${isOffense ? `自选科技股池共 ${finalMembers.length} 只` : `防御候选池共 ${finalMembers.length} 只（Tag板块 + 历史涨停扩展 ${lianbanAdded.length} 只）`}中（有效候选 ${candidates.length} 只），按最近 ${days} 日个股涨幅之和取最大${limitUpSkipped.length > 0 ? '（涨停股顺延后）' : ''}；买入价取 ${triggerTimeText} 分时价`,
     };
     const buyReasonMap = {
       slope_turn_positive: `${triggerTimeText.substring(0, 5)}创业板指3日线斜率由负转正（${fromText}→${slopeText}），买入自选科技股池内${days}日涨幅最大的股票（进攻买点，无需资金/量能配合）`,
-      slope_turn_negative: `${triggerTimeText.substring(0, 5)}创业板指3日线斜率由正转负（${fromText}→${slopeText}）且空仓，买入防御候选池（Tag板块 + 近20交易日创业板下跌日涨停前3板块 ∩ 20日有≥3连板个股）内${days}日涨幅最大的股票（防御买点）`,
+      slope_turn_negative: `${triggerTimeText.substring(0, 5)}创业板指3日线斜率由正转负（${fromText}→${slopeText}）且空仓，买入防御候选池（Tag板块 + 近20交易日创业板下跌日涨停数最多第一板块）内${days}日涨幅最大的股票（防御买点）`,
       retry_next_day_940: `${triggerTimeText.substring(0, 5)}开盘10分钟后复测创业板指3日线斜率仍为正（${slopeText}，卖出当时${fromText}），买入自选科技股池内${days}日涨幅最大的股票（卖点诊断卖出后次日复测继续买）`,
     };
     position = {
@@ -2677,7 +2681,11 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       costLinePct: Number(strategy.costLinePct) || 2,
       buyReason: buyReasonMap[trigger] || buyReasonMap.slope_turn_positive,
       buyChecks: [modeGateCheck, poolCheck, limitUpCheck, bestCheck],
+      buyDi: Number.isFinite(buyDi) ? buyDi : null, // 买入日在 rangeDates 中的下标（防御止盈轮换用）
+      maxSeenGain: null, // 防御持仓期间见过的最高 raw 收益率（%，由每日 defensePoints 扫描更新）
     };
+    // 成功建仓后清空轮换跳过集合（新持仓开始）
+    if (isOffense) rotatedDefenseCodes = new Set();
     return true;
   };
 
@@ -2745,10 +2753,20 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
             .map(p => ({ minute: parseInt(p.minute), lastPx: parseFloat(p.last_px) }))
             .filter(p => p.lastPx > 0)
             .sort((a, b) => a.minute - b.minute);
-          } catch (e) {
-            defensePoints = null; // 分时拉取失败当日安全跳过卖出（次日重试）
+          // 更新防御持仓期间见过的最高「收盘收益率」（%）：取当日最后一个分时点 vs buyPrice
+          // 注意：用当日收盘（最后分时点）而非盘中最高，因为用户语义是「持仓满 3 日收盘都没拉开 5 个点」才轮换
+          if (defensePoints && defensePoints.length > 0 && position.buyPrice > 0) {
+            const lastPt = defensePoints[defensePoints.length - 1];
+            const closeR = (lastPt.lastPx - position.buyPrice) / position.buyPrice * 100;
+            // 只要任一日收盘收益率 ≥ +5% 就视为"到了"，后续不再轮换；保持历史最高
+            if (position.maxSeenGain == null || closeR > position.maxSeenGain) {
+              position.maxSeenGain = parseFloat(closeR.toFixed(4));
+            }
           }
+        } catch (e) {
+          defensePoints = null; // 分时拉取失败当日安全跳过卖出（次日重试）
         }
+      }
     }
 
     const winDates = di + 1 >= days ? rangeDates.slice(di + 1 - days, di + 1) : [];
@@ -2772,8 +2790,58 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       // ===== ② 卖出（仅隔夜持仓） =====
       if (position && dateStr > position.buyDate) {
         if (position.mode === 'defense' && defensePoints && defensePoints.length > 0) {
-          // 防御唯一卖点：斜率由负转正的当桶，按持仓股分时价卖出（不设成本线止损，持有至斜率转正的最后一刻）
-          if (turnedPositive) {
+          // 防御卖点 1（时间止盈失败轮换）：持仓满 3 个交易日（di - buyDi >= 2），
+          // 期间分时最高收益从未 ≥ 5%，且当前 slope 仍非正 → 卖出并立即换入下一只 n 日涨幅最大的防御股
+          // 只在当日最后一个 bucket 触发（避免盘中前视偏差，匹配「结束的时候」语义）
+          const holdingDays = position.buyDi != null ? (di - position.buyDi) : 0;
+          const canRotateToday = bi === timeBuckets.length - 1 && holdingDays >= 2 && (position.maxSeenGain == null || position.maxSeenGain < 5);
+          const slopeStillDefensive = signNow === -1; // slope 仍为负（允许 ≤ 0 但排除已转正情形）
+          if (canRotateToday && slopeStillDefensive) {
+            let atPt = null;
+            for (const p of defensePoints) { if (p.minute <= bucketMinute) atPt = p; else break; }
+            if (atPt) {
+              const sellChange = defensePreclose && defensePreclose > 0
+                ? parseFloat((((atPt.lastPx - defensePreclose) / defensePreclose) * 100).toFixed(2))
+                : null;
+              const rawReturnRate = position.buyPrice > 0
+                ? parseFloat((((atPt.lastPx - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
+                : null;
+              const weight = KEY_BLOCK_POSITION_WEIGHT.defense;
+              const returnRate = rawReturnRate != null ? parseFloat((rawReturnRate * weight).toFixed(2)) : null;
+              const rotateReason = `防御持仓满 ${holdingDays + 1} 个交易日（含买入日），期间最高收益率仅 ${position.maxSeenGain == null ? '—' : (position.maxSeenGain > 0 ? '+' : '') + position.maxSeenGain.toFixed(2)}%，未达 +5% 止盈线；当前斜率仍为负（${fmtKeyBlockSlope(slopeNow)}），轮换至防御候选池下一只 n 日涨幅最大的股票`;
+              trades.push({
+                seq: trades.length + 1,
+                metric: position.metric,
+                code: position.code,
+                stockName: position.stockName,
+                positionMode: position.mode,
+                weight,
+                buyDate: position.buyDate,
+                buyDateDisplay: position.buyDateDisplay,
+                buyTime: position.buyTime,
+                buyPrice: position.buyPrice,
+                buyChange: position.buyChange,
+                buyReason: position.buyReason,
+                buyChecks: position.buyChecks,
+                sellDate: dateStr,
+                sellDateDisplay: dateDisplay,
+                sellTime: `${String(Math.floor(atPt.minute / 100)).padStart(2, '0')}:${String(atPt.minute % 100).padStart(2, '0')}`,
+                sellPrice: parseFloat(Number(atPt.lastPx).toFixed(2)),
+                sellChange,
+                sellReason: rotateReason,
+                returnRate,
+                rawReturnRate,
+                defenseRotation: true,
+              });
+              // 标记刚卖出的 code 为轮换跳过，同桶立即再买时不会立即买回（累积：同一防御周期内不再买回任何曾经轮换出去的股票）
+              rotatedDefenseCodes.add(position.code);
+              position = null;
+              // 生成防御入场意图，同桶 ④ 立即执行 openPosition
+              pendingEntry = { mode: 'defense', trigger: 'timeout_rotation', fromValue: slopeNow, toValue: slopeNow };
+              // 本次 bucket 卖出 + 设 pendingEntry 后，继续执行后面的 ③（空仓翻转）和 ④（按意图建仓）
+            }
+          } else if (turnedPositive) {
+            // 防御卖点 2（原斜率翻转卖点）：斜率由负转正的当桶，按持仓股分时价卖出（不轮换，等待下一次防御意图）
             let atPt = null;
             for (const p of defensePoints) { if (p.minute <= bucketMinute) atPt = p; else break; }
             if (atPt) {
@@ -2878,9 +2946,25 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
         if (canAttempt) {
           // 复测买入：明细中的斜率取复测桶当时值（fromValue 仍为卖出当时值）
           const intent = pendingEntry.trigger === 'retry_next_day_940' ? { ...pendingEntry, toValue: slopeNow } : pendingEntry;
-          const opened = await openPosition(intent, { dateStr, dateDisplay, dateNum, winDates, bucket, bucketMinute });
+          const opened = await openPosition(intent, { dateStr, dateDisplay, dateNum, winDates, bucket, bucketMinute, buyDi: di });
           if (opened) {
             pendingEntry = null;
+            // 买入日追踪 maxSeenGain：defense 买入后立即拉当日 tline，用 bucketMinute 之后最末一个分时点（当日收盘收益）更新
+            if (position && position.mode === 'defense' && position.buyPrice > 0) {
+              try {
+                const tline = await getSingleStockTlineDataByDate(position.code, parseInt(dateStr, 10));
+                const pts = (tline?.line || [])
+                  .filter(p => p && p.minute != null && p.last_px != null)
+                  .map(p => ({ minute: parseInt(p.minute), lastPx: parseFloat(p.last_px) }))
+                  .filter(p => p.lastPx > 0 && p.minute >= bucketMinute)
+                  .sort((a, b) => a.minute - b.minute);
+                if (pts.length > 0) {
+                  const lastPt = pts[pts.length - 1];
+                  const closeR = (lastPt.lastPx - position.buyPrice) / position.buyPrice * 100;
+                  position.maxSeenGain = parseFloat(closeR.toFixed(4));
+                }
+              } catch (e) { /* 拉取失败忽略，次日正常追踪 */ }
+            }
           }
         }
       }

@@ -155,6 +155,24 @@ const ensureCybKline = async () => {
   return cybKlineCache;
 };
 
+// 给定回测日期 D，返回往前 lookbackDays 个交易日（严格不含当日 D）的完整日期列表
+// dateStr: 'YYYYMMDD'；返回升序的 YYYYMMDD 数字数组
+const getPastTradingDates = async (dateStr, lookbackDays = 20) => {
+  const kline = await ensureCybKline();
+  if (!kline || kline.length < 2) return [];
+  const d = Number(dateStr);
+  let endIdx = -1;
+  for (let i = 0; i < kline.length; i++) {
+    if (kline[i].trade_date >= d) break;
+    endIdx = i;
+  }
+  if (endIdx < 0) return [];
+  const startIdx = Math.max(0, endIdx - lookbackDays + 1);
+  const result = [];
+  for (let i = startIdx; i <= endIdx; i++) result.push(kline[i].trade_date);
+  return result;
+};
+
 // 给定回测日期 D，返回往前 lookbackDays 个交易日（严格不含当日 D）中创业板日涨幅 < thresholdPct 的日期列表
 // dateStr: 'YYYYMMDD'；返回升序的 YYYYMMDD 数字数组
 const getCybDownDays = async (dateStr, lookbackDays = 20, thresholdPct = -1) => {
@@ -202,29 +220,87 @@ const getTopLianbanBoardStocks = (dateStr, topN = 1) => {
   return out;
 };
 
-// 主入口：给定回测日期，返回 lookbackDays 内创业板下跌日的涨停Top板块股票去重集合
-const getHistoricalLianbanDefenseStocks = async (dateStr, lookbackDays = 20, topN = 1, thresholdPct = -1) => {
-  const downDays = await getCybDownDays(dateStr, lookbackDays, thresholdPct);
-  const seen = new Set();
-  const result = [];
-  for (const d of downDays) {
-    const stocks = getTopLianbanBoardStocks(String(d), topN);
-    for (const s of stocks) {
-      if (!seen.has(s.code)) {
-        seen.add(s.code);
-        result.push(s);
+// 从 lianbanSnapshot 某日期中取当日所有 ≥minBoardCount 连板的个股（minBoardCount 默认 3）
+// 返回 [{ code: 'shxxxxxx', name, lianbanCount, board }]
+const getMultiLianbanStocks = (dateStr, minBoardCount = 3) => {
+  const data = readLianbanSnapshot(dateStr);
+  if (!data || !Array.isArray(data.themes)) return [];
+  const out = [];
+  for (const theme of data.themes) {
+    for (const st of theme.stocks || []) {
+      const cnt = parseInt(st.lianbanCount, 10);
+      if (Number.isFinite(cnt) && cnt >= minBoardCount) {
+        const code = st.marketCode || st.code;
+        if (!code) continue;
+        out.push({
+          code,
+          name: st.name || st.code || code,
+          lianbanCount: cnt,
+          board: theme.name || theme.board || '',
+        });
       }
     }
   }
-  return { stocks: result, downDays: downDays.map(d => String(d)) };
+  return out;
+};
+
+// 主入口（新版）：给定回测日期，往前 lookbackDays 个交易日内的科技情绪冰点日
+// → 取这些天涨停数 TopN 板块中的全部股票，**再与** lookbackDays 内所有交易日出现过 ≥minBoardCount 连板的个股**做交集**
+// → 得到候选股扩展集（同时满足"曾被市场抱团 Top 板块" + "曾走出过连板强度"两个条件）
+// getCybDownDays 口径：创业板指当日收盘跌幅 < thresholdPct（默认 -1%，近似科技情绪冰点）
+const getHistoricalLianbanDefenseStocks = async (dateStr, lookbackDays = 20, topN = 3, thresholdPct = -1, minBoardCount = 3) => {
+  const downDays = await getCybDownDays(dateStr, lookbackDays, thresholdPct);
+
+  // 集合 A：冰点日涨停数 TopN 板块中的所有股票 code
+  const topBoardCodes = new Set();
+  for (const d of downDays) {
+    const stocks = getTopLianbanBoardStocks(String(d), topN);
+    for (const s of stocks) topBoardCodes.add(s.code);
+  }
+
+  // 集合 B：lookbackDays 内所有交易日中出现过 ≥minBoardCount 连板的个股 code
+  const multiCodes = new Set();
+  const lookbackAllDates = await getPastTradingDates(dateStr, lookbackDays);
+  for (const d of lookbackAllDates) {
+    const multi = getMultiLianbanStocks(String(d), minBoardCount);
+    for (const s of multi) multiCodes.add(s.code);
+  }
+
+  // A ∩ B：同时在 Top 板块出现过、又走出过连板
+  // 用 lookbackAllDates 扫一遍拿交集里的 name（取最新一次命中时的 name 即可）
+  const intersect = new Set();
+  const seenNames = new Map(); // code -> { name } 去重存一次
+
+  // 用 getTopLianbanBoardStocks 的完整对象做 name 查找
+  for (const d of downDays) {
+    const stocks = getTopLianbanBoardStocks(String(d), topN);
+    for (const s of stocks) {
+      if (topBoardCodes.has(s.code) && multiCodes.has(s.code)) {
+        intersect.add(s.code);
+        if (!seenNames.has(s.code)) seenNames.set(s.code, s.name);
+      }
+    }
+  }
+
+  const result = [];
+  for (const code of intersect) {
+    result.push({ code, name: seenNames.get(code) || code });
+  }
+
+  return {
+    stocks: result,
+    downDays: downDays.map(d => String(d)),
+    topBoardCodes: topBoardCodes.size,
+    multiCodes: multiCodes.size,
+  };
 };
 
 // 预扫描整个回测日期范围，收集所有可能用到的 lianban 候选股代码（用于一次性预拉 bars）
 // rangeDates: 回测日期数组 [YYYYMMDD]；返回 Set<code>
-const scanAllLianbanCodesInRange = async (rangeDates, lookbackDays = 20, topN = 1, thresholdPct = -1) => {
+const scanAllLianbanCodesInRange = async (rangeDates, lookbackDays = 20, topN = 3, thresholdPct = -1, minBoardCount = 3) => {
   const all = new Set();
   for (const dateStr of rangeDates) {
-    const { stocks } = await getHistoricalLianbanDefenseStocks(dateStr, lookbackDays, topN, thresholdPct);
+    const { stocks } = await getHistoricalLianbanDefenseStocks(dateStr, lookbackDays, topN, thresholdPct, minBoardCount);
     for (const s of stocks) all.add(s.code);
   }
   return all;
