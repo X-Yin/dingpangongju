@@ -157,6 +157,9 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         seq: t.seq != null ? t.seq : idx + 1,
         code: t.code,
         stockName: t.stockName,
+        positionMode: t.positionMode ?? null, // 重点板块：offense 进攻·全仓 / defense 防御·半仓
+        weight: t.weight ?? null, // 仓位权重（进攻 1 / 防御 0.5）；null 表示该策略不分仓
+        rawReturnRate: t.rawReturnRate ?? null, // 折算前个股实际收益率（防御笔的 returnRate 已 ×0.5）
         metric: t.metric ?? null,
         buyDate: t.buyDate,
         buyDateDisplay: t.buyDateDisplay,
@@ -178,6 +181,9 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
       currentHolding: result.currentHolding ? {
         code: result.currentHolding.code,
         stockName: result.currentHolding.stockName,
+        positionMode: result.currentHolding.mode ?? result.currentHolding.positionMode ?? null,
+        weight: result.currentHolding.weight ?? null,
+        rawBuyReturn: result.currentHolding.rawBuyReturn ?? null,
         metric: result.currentHolding.metric ?? null,
         buyDate: result.currentHolding.buyDate,
         buyTime: result.currentHolding.buyTime,

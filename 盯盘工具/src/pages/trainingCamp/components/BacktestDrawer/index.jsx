@@ -30,6 +30,32 @@ const fmtPct = (v) => {
 // 持仓交易日数展示（服务端按 amountSnapshot 交易日历计算；≈ 表示日期超出日历覆盖、按周一~周五退化估算）
 const fmtHoldingDays = (t) => (t && t.holdingDays != null ? `${t.holdingDaysApprox ? '≈' : ''}${t.holdingDays} 交易日` : '--');
 
+// 重点板块仓位模式标签：进攻=全仓 / 防御=创业板情绪低迷期半仓（收益率按半仓折算进概览）
+const KEY_BLOCK_MODE_META = {
+  offense: { text: '进攻·全仓', color: 'red' },
+  defense: { text: '防御·半仓', color: 'orange' },
+};
+const KeyBlockModeTag = ({ mode }) => {
+  const meta = KEY_BLOCK_MODE_META[mode];
+  if (!meta) return null;
+  return <Tag color={meta.color} style={{ marginInlineEnd: 0 }}>{meta.text}</Tag>;
+};
+// 收益标签：rate 为计入账户的折算收益率；防御半仓笔（weight<1）展示折算后值并悬停显示个股原始收益
+const WeightedReturnTag = ({ rate, rawRate, weight, label = '收益' }) => {
+  const isHalf = weight != null && Number(weight) < 1;
+  const tag = (
+    <Tag color={Number(rate) >= 0 ? 'red' : 'green'} style={{ marginInlineEnd: 0 }}>
+      {label} {fmtPct(rate)}{isHalf ? '（半仓折算）' : ''}
+    </Tag>
+  );
+  if (!isHalf || rawRate == null) return tag;
+  return (
+    <Tooltip title={`个股实际${label} ${fmtPct(rawRate)}；防御为半仓买入（${Math.round(Number(weight) * 100)}% 仓位），计入账户的${label} = ${fmtPct(rawRate)} × ${Number(weight)} = ${fmtPct(rate)}`}>
+      {tag}
+    </Tooltip>
+  );
+};
+
 // 当前买卖点诊断规则说明（与训练营回放 / buySellBacktest 后端逻辑保持一致，供复制到外部分析）
 const BUY_RULES = [
   { key: 'fund_inflow', title: '最近 5 分钟资金净流入', desc: '最近 5min 大盘主力资金净流入大于 20 亿才触发买入' },
@@ -161,14 +187,14 @@ const KEY_BLOCK_STRATEGY_IDS = [
 ];
 const KEY_BLOCK_BUY_RULES = [
   { key: 'key_block_cyb_gate', title: '唯一买卖开关：3 日线斜率正负翻转（盘中实时）', desc: '盘中实时计算创业板指 3 日线斜率（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定），只在斜率正负翻转的桶触发买卖，不需要资金、成交量、情绪等任何条件配合：斜率由负转正 → 进攻买点（买自选科技股）；斜率由正转负且当前空仓 → 防御买点（买防御+中性 tag 板块）。斜率符号跨日连续追踪，初值取回测首日前一交易日的收盘斜率；斜率数据不足的桶不参与翻转判定；回测首日之前若斜率无翻转则不建仓' },
-  { key: 'key_block_watchlist_tech', title: '候选池筛选（进攻=自选科技股 / 防御=防御+中性板块）', desc: '进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股（剔除排除股；含自选股添加时间门禁，买点时点未加入自选的股票不参与）；防御候选 =「防御+中性」tag 板块全部成分股（板块 tag 在 key_blocks 页面维护，未打 tag 的板块不参与，不限自选股）；停牌或无当日分时数据的个股自动跳过' },
+  { key: 'key_block_watchlist_tech', title: '候选池筛选与仓位（进攻=自选科技股·全仓 / 防御=防御+中性板块·半仓）', desc: '进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股（剔除排除股；含自选股添加时间门禁，买点时点未加入自选的股票不参与），进攻为全仓买入；防御候选 =「防御+中性」tag 板块全部成分股（板块 tag 在 key_blocks 页面维护，未打 tag 的板块不参与，不限自选股），防御对应创业板情绪低迷期，按半仓买入；防御笔的收益率（含期末浮盈）在概览的整体收益、平均回撤、单笔最大回撤中一律按半仓（×0.5）折算；停牌或无当日分时数据的个股自动跳过' },
   { key: 'key_block_retry_940', title: '进攻卖出后当日不追买，次日 9:40 复测', desc: '进攻持仓按卖点诊断卖出后，若当时 3 日线斜率仍为正，当日不再继续买入；等到次日开盘 10 分钟后（9:40 桶）再看盘中实时斜率，仍为正才继续买 N 日涨幅最大的科技股；若复测时斜率已经为负，则不再买科技股，改由「由正转负」防御信号驱动（空仓时买入防御+中性）；防御持仓在斜率转正桶卖出后，同桶即可转手买入进攻科技股，不受此限制' },
   { key: 'key_block_limit_up', title: '涨停过滤与顺延', desc: '买入时点判断候选股是否涨停：主板股票（60/00 开头）涨幅 > 9.5% 视为涨停，创业板（30）/科创板（68）涨幅 > 19% 视为涨停；涨停股不可买入，顺延到 N 日涨幅排名的下一只非涨停股票（买入明细中标注被顺延的涨停候选）；全部候选涨停或无有效候选时，在斜率状态不变的后续桶持续重试' },
   { key: 'key_block_best_stock', title: '候选池内 N 日涨幅最大的股票', desc: '在候选池（进攻=自选科技股池；防御=tag 匹配板块成分股）中，按最近 N 个交易日（含触发日）个股涨幅之和取最大的一只买入（个股日涨幅 = 相邻收盘价环比，由回测时重新拉取成分股日K现算）；买入价取触发桶时点的分时价格；同桶允许先卖后买转手（防御卖出与进攻买入可在同一桶完成）' },
 ];
 const KEY_BLOCK_SELL_RULES = [
   { key: 'key_block_positive_sells', title: '进攻持仓（科技股）：通用 7 条件卖点（成本线 -2%）', desc: '自选科技股买入的进攻持仓沿用通用 7 条件卖出诊断（跌破10日线/前低/5日线、高位放量大阴线、科技板块情绪退潮、连续三日抗分歧<10、距5日收盘新高、跌停、跌破成本线），满足其一即卖（买入次日起生效）；条件 7「跌破成本线」为 -2%（现价 < 买入价 × 0.98 即触发）；卖出后按「当日不追买、次日 9:40 复测」规则处理（见买入规则）；「科技板块情绪退潮」受创业板指 3 日线斜率门禁（见下）' },
-  { key: 'key_block_reverse_sells', title: '防御持仓（防御+中性）：唯一卖点 = 斜率由负转正，不设止损', desc: '防御持仓不设置任何成本线止损（无 -10% 止损），无论浮亏多少都一直持有：仅当盘中实时创业板指 3 日线斜率由负转正的那个桶（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替），按该桶时点持仓股分时价卖出，持有至斜率转正的最后一刻；卖出后同桶即按进攻买点扫描买入科技股；持仓股分时拉取失败当日安全跳过，次日重试' },
+  { key: 'key_block_reverse_sells', title: '防御持仓（防御+中性·半仓）：唯一卖点 = 斜率由负转正，不设止损', desc: '防御持仓按半仓买入（账户收益贡献 = 个股实际收益 × 0.5，概览的整体收益与平均/最大回撤均按折算口径），不设置任何成本线止损（无 -10% 止损），无论浮亏多少都一直持有：仅当盘中实时创业板指 3 日线斜率由负转正的那个桶（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替），按该桶时点持仓股分时价卖出，持有至斜率转正的最后一刻；卖出后同桶即按进攻买点扫描买入科技股；持仓股分时拉取失败当日安全跳过，次日重试' },
   { key: 'key_block_emo_gate', title: '科技板块情绪退潮门禁（仅进攻持仓）', desc: '创业板指 3 日线斜率为正（MA3 − 5个交易日前的MA3，按当日收盘已基本定型口径）时，「科技板块情绪退潮」条件才参与进攻（科技股）持仓的卖出判定；斜率为负或数据不足时该条件当日不生效（其余 6 项条件不受影响）；防御持仓不走 7 条件卖点，本门禁不适用' },
 ];
 
@@ -601,6 +627,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
               seq: t.seq,
               stockName: t.stockName,
               code: t.code,
+              positionMode: t.positionMode ?? null,
+              weight: t.weight ?? null,
+              rawReturnRate: t.rawReturnRate ?? null,
               metric: t.metric ?? null,
               buyDate: t.buyDate,
               buyTime: t.buyTime,
@@ -856,14 +885,13 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                       <span style={{ fontSize: 12, fontWeight: 600, color: '#12213a' }}>第{t.seq}笔</span>
                       <span style={{ fontSize: 14, fontWeight: 700, color: '#12213a' }}>{t.stockName}</span>
                       <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{t.code}</span>
+                      <KeyBlockModeTag mode={t.positionMode} />
                       {t.metric != null && (
                         <Tag color="purple" style={{ marginInlineEnd: 0 }}>
                           选股指标 {Number(t.metric).toFixed(4)}
                         </Tag>
                       )}
-                      <Tag color={Number(t.returnRate) >= 0 ? 'red' : 'green'} style={{ marginInlineEnd: 0 }}>
-                        收益 {fmtPct(t.returnRate)}
-                      </Tag>
+                      <WeightedReturnTag rate={t.returnRate} rawRate={t.rawReturnRate} weight={t.weight} />
                     </div>
 
                     {/* 买卖明细 */}
@@ -905,6 +933,11 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                             卖出原因 <Tag color="geekblue" style={{ marginInlineEnd: 0 }}>{t.sellReason}</Tag>
                           </span>
                         </div>
+                        {t.positionMode === 'defense' && t.rawReturnRate != null && (
+                          <div style={{ fontSize: 12, color: '#d46b08', marginTop: 4 }}>
+                            防御半仓口径：个股实际收益 {fmtPct(t.rawReturnRate)}，按 50% 仓位折算后计入概览（整体收益/平均回撤/单笔最大回撤）的收益为 {fmtPct(t.returnRate)}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -917,15 +950,19 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                       <span style={{ fontSize: 12, fontWeight: 600, color: '#12213a' }}>持仓中（未卖出）</span>
                       <span style={{ fontSize: 14, fontWeight: 700, color: '#12213a' }}>{result.currentHolding.stockName}</span>
                       <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{result.currentHolding.code}</span>
+                      <KeyBlockModeTag mode={result.currentHolding.mode || result.currentHolding.positionMode} />
                       {result.currentHolding.metric != null && (
                         <Tag color="purple" style={{ marginInlineEnd: 0 }}>
                           选股指标 {Number(result.currentHolding.metric).toFixed(4)}
                         </Tag>
                       )}
                       {result.currentHolding.buyReturn != null && (
-                        <Tag color={Number(result.currentHolding.buyReturn) >= 0 ? 'red' : 'green'} style={{ marginInlineEnd: 0 }}>
-                          浮盈 {fmtPct(result.currentHolding.buyReturn)}
-                        </Tag>
+                        <WeightedReturnTag
+                          rate={result.currentHolding.buyReturn}
+                          rawRate={result.currentHolding.rawBuyReturn}
+                          weight={result.currentHolding.weight}
+                          label="浮盈"
+                        />
                       )}
                     </div>
                     <div style={{ border: '1px dashed #f5c96b', borderRadius: 8, padding: '8px 10px', background: '#fffbea' }}>
@@ -943,6 +980,11 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
                           <span style={{ fontSize: 12, color: '#6b7890', lineHeight: '22px' }}>买入原因</span>
                           <BuyReasonTag reason={result.currentHolding.buyReason} checks={result.currentHolding.buyChecks} />
+                        </div>
+                      )}
+                      {(result.currentHolding.mode || result.currentHolding.positionMode) === 'defense' && result.currentHolding.rawBuyReturn != null && (
+                        <div style={{ fontSize: 12, color: '#d46b08', marginTop: 4 }}>
+                          防御半仓口径：个股实际浮盈 {fmtPct(result.currentHolding.rawBuyReturn)}，按 50% 仓位折算后计入概览的浮盈为 {fmtPct(result.currentHolding.buyReturn)}
                         </div>
                       )}
                     </div>

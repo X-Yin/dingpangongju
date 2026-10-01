@@ -4,7 +4,7 @@
   "strategy": {
     "id": "key_block_5d_gain",
     "name": "重点板块-5日最高涨幅",
-    "desc": "唯一买卖开关 = 创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）的正负翻转，不需要资金、成交量、情绪等任何条件配合。进攻（自选科技股）：斜率由负转正的桶触发买入，买自选股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁）中最近 5 个交易日（含触发日）个股涨幅之和最大的一只；卖点沿用通用 7 条件卖出诊断（「跌破成本线」为 -2%，即现价 < 买入价 × 0.98）；卖点诊断卖出后若斜率仍为正，当日不再买入，等到次日开盘 10 分钟后（9:40 桶）复测斜率仍为正才再买 5 日涨幅最大的科技股（复测时斜率已为负则改由「由正转负」防御信号驱动）。防御（防御+中性 tag 板块）：斜率由正转负且当前空仓的桶触发买入，买防御+中性 tag 板块成分股中 5 日涨幅最大的一只；唯一卖点 = 斜率由负转正（不对成本线设置任何止损，一直持仓到转正那一刻，同桶可转手买入进攻科技股）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 5 日涨幅排名的下一只；候选全部不可买时在斜率状态不变的后续桶持续重试；买入价取触发桶分时价；同桶允许先卖后买转手。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无翻转则不建仓"
+    "desc": "唯一买卖开关 = 创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）的正负翻转，不需要资金、成交量、情绪等任何条件配合。进攻（自选科技股）：斜率由负转正的桶触发买入，买自选股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁）中最近 5 个交易日（含触发日）个股涨幅之和最大的一只；卖点沿用通用 7 条件卖出诊断（「跌破成本线」为 -2%，即现价 < 买入价 × 0.98）；卖点诊断卖出后若斜率仍为正，当日不再买入，等到次日开盘 10 分钟后（9:40 桶）复测斜率仍为正才再买 5 日涨幅最大的科技股（复测时斜率已为负则改由「由正转负」防御信号驱动）。防御（防御+中性 tag 板块）：斜率由正转负且当前空仓的桶触发买入，买防御+中性 tag 板块成分股中 5 日涨幅最大的一只；防御对应创业板情绪低迷期，按半仓买入，该笔收益率（含期末浮盈）在概览的整体收益与平均/最大回撤统计中一律按半仓（×0.5）折算；唯一卖点 = 斜率由负转正（不对成本线设置任何止损，一直持仓到转正那一刻，同桶可转手买入进攻科技股）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 5 日涨幅排名的下一只；候选全部不可买时在斜率状态不变的后续桶持续重试；买入价取触发桶分时价；同桶允许先卖后买转手。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无翻转则不建仓"
   },
   "range": {
     "startDate": "20260728",
@@ -419,6 +419,8 @@
       "metric": 41.8047,
       "code": "sh605179",
       "stockName": "一鸣食品",
+      "positionMode": "defense",
+      "weight": 0.5,
       "buyDate": "20260804",
       "buyDateDisplay": "2026-08-04",
       "buyTime": "09:30",
@@ -460,14 +462,17 @@
       "sellTime": "11:15",
       "sellPrice": 22.81,
       "sellChange": 5.16,
-      "sellReason": "创业板指3日线斜率盘中由负转正（-3.29 → +0.47），防御持仓卖出（不设成本线止损，持有至斜率转正的最后一刻）",
-      "returnRate": 14.05
+      "sellReason": "创业板指3日线斜率盘中由负转正（-3.29 → +0.47），防御半仓持仓卖出（不设成本线止损，持有至斜率转正的最后一刻；防御为半仓买入，收益率按半仓折算）",
+      "returnRate": 7.03,
+      "rawReturnRate": 14.05
     },
     {
       "seq": 2,
       "metric": 32.4873,
       "code": "sz300394",
       "stockName": "天孚通信",
+      "positionMode": "offense",
+      "weight": 1,
       "buyDate": "20260805",
       "buyDateDisplay": "2026-08-05",
       "buyTime": "11:15",
@@ -510,13 +515,16 @@
       "sellPrice": 203.33,
       "sellChange": -6.23,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.83
+      "returnRate": -2.83,
+      "rawReturnRate": -2.83
     },
     {
       "seq": 3,
       "metric": 40.9981,
       "code": "sz300476",
       "stockName": "胜宏科技",
+      "positionMode": "offense",
+      "weight": 1,
       "buyDate": "20260807",
       "buyDateDisplay": "2026-08-07",
       "buyTime": "09:40",
@@ -559,13 +567,16 @@
       "sellPrice": 280.36,
       "sellChange": 0.35,
       "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 5.8
+      "returnRate": 5.8,
+      "rawReturnRate": 5.8
     },
     {
       "seq": 4,
       "metric": 20.7176,
       "code": "sz301165",
       "stockName": "锐捷网络",
+      "positionMode": "offense",
+      "weight": 1,
       "buyDate": "20260814",
       "buyDateDisplay": "2026-08-14",
       "buyTime": "09:40",
@@ -608,13 +619,16 @@
       "sellPrice": 141.51,
       "sellChange": -1.66,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.01
+      "returnRate": -2.01,
+      "rawReturnRate": -2.01
     },
     {
       "seq": 5,
       "metric": 37.2925,
       "code": "sz300570",
       "stockName": "太辰光",
+      "positionMode": "offense",
+      "weight": 1,
       "buyDate": "20260818",
       "buyDateDisplay": "2026-08-18",
       "buyTime": "09:40",
@@ -657,13 +671,16 @@
       "sellPrice": 190.14,
       "sellChange": -4.58,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -4.21
+      "returnRate": -4.21,
+      "rawReturnRate": -4.21
     },
     {
       "seq": 6,
       "metric": 37.3758,
       "code": "sh688485",
       "stockName": "九州一轨",
+      "positionMode": "defense",
+      "weight": 0.5,
       "buyDate": "20260820",
       "buyDateDisplay": "2026-08-20",
       "buyTime": "09:30",
@@ -705,14 +722,17 @@
       "sellTime": "09:30",
       "sellPrice": 97,
       "sellChange": 0,
-      "sellReason": "创业板指3日线斜率盘中由负转正（-70.52 → +4.09），防御持仓卖出（不设成本线止损，持有至斜率转正的最后一刻）",
-      "returnRate": 12.16
+      "sellReason": "创业板指3日线斜率盘中由负转正（-70.52 → +4.09），防御半仓持仓卖出（不设成本线止损，持有至斜率转正的最后一刻；防御为半仓买入，收益率按半仓折算）",
+      "returnRate": 6.08,
+      "rawReturnRate": 12.16
     },
     {
       "seq": 7,
       "metric": 30.2739,
       "code": "sh688028",
       "stockName": "沃尔德",
+      "positionMode": "offense",
+      "weight": 1,
       "buyDate": "20260909",
       "buyDateDisplay": "2026-09-09",
       "buyTime": "09:30",
@@ -755,13 +775,16 @@
       "sellPrice": 113.28,
       "sellChange": -5.6,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.34
+      "returnRate": -2.34,
+      "rawReturnRate": -2.34
     },
     {
       "seq": 8,
       "metric": 16.3712,
       "code": "sh688028",
       "stockName": "沃尔德",
+      "positionMode": "defense",
+      "weight": 0.5,
       "buyDate": "20260914",
       "buyDateDisplay": "2026-09-14",
       "buyTime": "09:30",
@@ -803,14 +826,17 @@
       "sellTime": "09:30",
       "sellPrice": 127,
       "sellChange": -0.09,
-      "sellReason": "创业板指3日线斜率盘中由负转正（-10.99 → +42.95），防御持仓卖出（不设成本线止损，持有至斜率转正的最后一刻）",
-      "returnRate": 9.6
+      "sellReason": "创业板指3日线斜率盘中由负转正（-10.99 → +42.95），防御半仓持仓卖出（不设成本线止损，持有至斜率转正的最后一刻；防御为半仓买入，收益率按半仓折算）",
+      "returnRate": 4.8,
+      "rawReturnRate": 9.6
     },
     {
       "seq": 9,
       "metric": 23.4127,
       "code": "sz002080",
       "stockName": "中材科技",
+      "positionMode": "offense",
+      "weight": 1,
       "buyDate": "20260921",
       "buyDateDisplay": "2026-09-21",
       "buyTime": "09:30",
@@ -853,13 +879,16 @@
       "sellPrice": 62.31,
       "sellChange": -5.93,
       "sellReason": "抗分歧指数弱势",
-      "returnRate": 5.59
+      "returnRate": 5.59,
+      "rawReturnRate": 5.59
     },
     {
       "seq": 10,
       "metric": 11.4531,
       "code": "sh688008",
       "stockName": "澜起科技",
+      "positionMode": "offense",
+      "weight": 1,
       "buyDate": "20260923",
       "buyDateDisplay": "2026-09-23",
       "buyTime": "09:40",
@@ -902,7 +931,8 @@
       "sellPrice": 222.06,
       "sellChange": -0.59,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.69
+      "returnRate": -2.69,
+      "rawReturnRate": -2.69
     }
   ],
   "currentHolding": {
@@ -947,7 +977,9 @@
         "reason": "在18 个 tag 板块共 73 只成分股中（有效候选 73 只），按最近 5 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
       }
     ],
-    "buyReturn": -0.27
+    "weight": 0.5,
+    "rawBuyReturn": -0.27,
+    "buyReturn": -0.14
   },
   "summary": {
     "tradeCount": 10,
@@ -955,7 +987,7 @@
     "winRate": 50,
     "avgDrawdown": -2.82,
     "maxDrawdown": -4.21,
-    "overallReturn": 32.85,
+    "overallReturn": 15.08,
     "holding": true
   }
 }

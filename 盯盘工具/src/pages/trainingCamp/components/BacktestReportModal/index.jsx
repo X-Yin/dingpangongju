@@ -31,6 +31,32 @@ const fmtReportTime = (t) => {
 
 const BASE = `http://${local_ip}:3000`;
 
+// 重点板块仓位模式标签：进攻=全仓 / 防御=创业板情绪低迷期半仓（收益率按半仓折算进概览）
+const KEY_BLOCK_MODE_META = {
+  offense: { text: '进攻·全仓', color: 'red' },
+  defense: { text: '防御·半仓', color: 'orange' },
+};
+const ModeTag = ({ mode }) => {
+  const meta = KEY_BLOCK_MODE_META[mode];
+  if (!meta) return null;
+  return <Tag color={meta.color} style={{ marginInlineEnd: 0 }}>{meta.text}</Tag>;
+};
+// 收益标签：防御半仓笔（weight<1）的 rate 已按 ×0.5 折算，悬停展示个股原始收益
+const WeightedReturnTag = ({ rate, rawRate, weight, label = '收益' }) => {
+  const isHalf = weight != null && Number(weight) < 1;
+  const tag = (
+    <Tag color={fmtPctColor(rate)} style={{ marginInlineEnd: 0 }}>
+      {label} {fmtPct(rate)}{isHalf ? '（半仓折算）' : ''}
+    </Tag>
+  );
+  if (!isHalf || rawRate == null) return tag;
+  return (
+    <Tooltip title={`个股实际${label} ${fmtPct(rawRate)}；防御为半仓买入（${Math.round(Number(weight) * 100)}% 仓位），计入账户的${label} = ${fmtPct(rawRate)} × ${Number(weight)} = ${fmtPct(rate)}；概览的整体收益、平均回撤、单笔最大回撤均按折算口径`}>
+      {tag}
+    </Tooltip>
+  );
+};
+
 // 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
 const BuyReasonTag = ({ reason, checks }) => {
   if (!reason) return null;
@@ -96,8 +122,9 @@ export const StrategyCard = ({ strategy, rank }) => {
         <span style={{ fontSize: 13, fontWeight: 600, color: '#12213a' }}>第{t.seq}笔</span>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#12213a' }}>{t.stockName}</span>
         <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{t.code}</span>
+        <ModeTag mode={t.positionMode} />
         {t.metric != null && <Tag color="purple" style={{ marginInlineEnd: 0 }}>选股指标 {Number(t.metric).toFixed(4)}</Tag>}
-        <Tag color={fmtPctColor(t.returnRate)} style={{ marginInlineEnd: 0 }}>收益 {fmtPct(t.returnRate)}</Tag>
+        <WeightedReturnTag rate={t.returnRate} rawRate={t.rawReturnRate} weight={t.weight} />
         <span style={{ fontSize: 11, color: '#9ca3af' }}>{fmtDate(t.buyDate)} {fmtTime(t.buyTime)} 买 → {fmtDate(t.sellDate)} {fmtTime(t.sellTime)} 卖</span>
         <span style={{ fontSize: 11, color: '#9ca3af' }}>持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(t)}</b></span>
       </div>
@@ -123,6 +150,11 @@ export const StrategyCard = ({ strategy, rank }) => {
         <div style={{ color: '#6b7890' }}>
           卖出原因：<Tag color="geekblue" style={{ marginInlineEnd: 0 }}>{t.sellReason || '卖出条件触发'}</Tag>
         </div>
+        {t.positionMode === 'defense' && t.rawReturnRate != null && (
+          <div style={{ color: '#d46b08' }}>
+            防御半仓口径：个股实际收益 {fmtPct(t.rawReturnRate)}，按 50% 仓位折算后计入概览（整体收益/平均回撤/单笔最大回撤）的收益为 {fmtPct(t.returnRate)}
+          </div>
+        )}
       </div>
     ),
   }));
@@ -137,7 +169,10 @@ export const StrategyCard = ({ strategy, rank }) => {
           {h.holdingDays != null && <span style={{ fontSize: 11, color: '#9ca3af' }}>已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(h)}</b></span>}
           <span style={{ fontSize: 13, fontWeight: 700, color: '#12213a' }}>{h.stockName}</span>
           <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{h.code}</span>
-          {h.buyReturn != null && <Tag color={fmtPctColor(h.buyReturn)} style={{ marginInlineEnd: 0 }}>浮盈 {fmtPct(h.buyReturn)}</Tag>}
+          <ModeTag mode={h.positionMode} />
+          {h.buyReturn != null && (
+            <WeightedReturnTag rate={h.buyReturn} rawRate={h.rawBuyReturn} weight={h.weight} label="浮盈" />
+          )}
         </div>
       ),
       children: (
@@ -149,6 +184,11 @@ export const StrategyCard = ({ strategy, rank }) => {
           {h.buyReason && (
             <span style={{ display: 'flex', alignItems: 'flex-start', gap: 6, flexWrap: 'wrap' }}>
               买入原因：<BuyReasonTag reason={h.buyReason} checks={h.buyChecks} />
+            </span>
+          )}
+          {h.positionMode === 'defense' && h.rawBuyReturn != null && (
+            <span style={{ color: '#d46b08' }}>
+              防御半仓口径：个股实际浮盈 {fmtPct(h.rawBuyReturn)}，按 50% 仓位折算后计入概览的浮盈为 {fmtPct(h.buyReturn)}
             </span>
           )}
         </div>

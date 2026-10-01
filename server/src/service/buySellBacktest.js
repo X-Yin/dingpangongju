@@ -29,15 +29,15 @@ const EXCLUDED_CODES = new Set(['sh688498', 'sh688808']); // 源杰科技、联�
 
 // 重点板块-N日最高涨幅系列统一描述（keyBlockDays: N；板块 tag = 进攻/中性/防御，在 key_blocks 页面维护；
 // 个股涨幅由回测时重新拉取成分股日K现算）
-const KEY_BLOCK_DESC = (n) => `唯一买卖开关 = 创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）的正负翻转，不需要资金、成交量、情绪等任何条件配合。进攻（自选科技股）：斜率由负转正的桶触发买入，买自选股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁）中最近 ${n} 个交易日（含触发日）个股涨幅之和最大的一只；卖点沿用通用 7 条件卖出诊断（「跌破成本线」为 -2%，即现价 < 买入价 × 0.98）；卖点诊断卖出后若斜率仍为正，当日不再买入，等到次日开盘 10 分钟后（9:40 桶）复测斜率仍为正才再买 ${n} 日涨幅最大的科技股（复测时斜率已为负则改由「由正转负」防御信号驱动）。防御（防御+中性 tag 板块）：斜率由正转负且当前空仓的桶触发买入，买防御+中性 tag 板块成分股中 ${n} 日涨幅最大的一只；唯一卖点 = 斜率由负转正（不对成本线设置任何止损，一直持仓到转正那一刻，同桶可转手买入进攻科技股）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 ${n} 日涨幅排名的下一只；候选全部不可买时在斜率状态不变的后续桶持续重试；买入价取触发桶分时价；同桶允许先卖后买转手。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无翻转则不建仓`;
+const KEY_BLOCK_DESC = (n) => `唯一买卖开关 = 创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）的正负翻转，不需要资金、成交量、情绪等任何条件配合。进攻（自选科技股）：斜率由负转正的桶触发买入，买自选股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁）中最近 ${n} 个交易日（含触发日）个股涨幅之和最大的一只；卖点沿用通用 7 条件卖出诊断（「跌破成本线」为 -2%，即现价 < 买入价 × 0.98）；卖点诊断卖出后若斜率仍为正，当日不再买入，等到次日开盘 10 分钟后（9:40 桶）复测斜率仍为正才再买 ${n} 日涨幅最大的科技股（复测时斜率已为负则改由「由正转负」防御信号驱动）。防御（防御+中性 tag 板块）：斜率由正转负且当前空仓的桶触发买入，买防御+中性 tag 板块成分股中 ${n} 日涨幅最大的一只；防御对应创业板情绪低迷期，按半仓买入，该笔收益率（含期末浮盈）在概览的整体收益与平均/最大回撤统计中一律按半仓（×0.5）折算；唯一卖点 = 斜率由负转正（不对成本线设置任何止损，一直持仓到转正那一刻，同桶可转手买入进攻科技股）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 ${n} 日涨幅排名的下一只；候选全部不可买时在斜率状态不变的后续桶持续重试；买入价取触发桶分时价；同桶允许先卖后买转手。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无翻转则不建仓`;
 
 // 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
 const STRATEGIES = {
   highest_gain: { id: 'highest_gain', name: '买入最高涨幅', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票' },
-   highest_2d_gain: { id: 'highest_2d_gain', name: '2日涨幅最大', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票（按用户定义排序依据为触发时点当日盘中涨幅，非 2 日窗口累计涨幅）' },
-   highest_3d_gain: { id: 'highest_3d_gain', name: '3日涨幅最大', desc: '买点命中时只买入最近 3 个交易日涨幅最大的股票' },
+  highest_2d_gain: { id: 'highest_2d_gain', name: '2日涨幅最大', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票（按用户定义排序依据为触发时点当日盘中涨幅，非 2 日窗口累计涨幅）' },
+  highest_3d_gain: { id: 'highest_3d_gain', name: '3日涨幅最大', desc: '买点命中时只买入最近 3 个交易日涨幅最大的股票' },
   highest_4d_gain: { id: 'highest_4d_gain', name: '4日涨幅最大', desc: '买点命中时只买入最近 4 个交易日涨幅最大的股票' },
-   highest_5d_gain: { id: 'highest_5d_gain', name: '5日涨幅最大', desc: '买点命中时只买入最近 5 个交易日涨幅最大的股票' },
+  highest_5d_gain: { id: 'highest_5d_gain', name: '5日涨幅最大', desc: '买点命中时只买入最近 5 个交易日涨幅最大的股票' },
   highest_10d_gain: { id: 'highest_10d_gain', name: '10日涨幅最大', desc: '买点命中时只买入最近 10 个交易日涨幅最大的股票' },
   highest_3d_gain_switch: { id: 'highest_3d_gain_switch', name: '3日涨幅连续切换', desc: '触发买点时，买入当前所有自选股三日涨幅最大值。若空仓则全仓买入；若已持仓且最大涨幅股票变化，则卖掉旧的并全仓买入新的；若持仓未变则不操作' },
   highest_3d_gain_twice: { id: 'highest_3d_gain_twice', name: '3日涨幅两次买入', desc: '买点命中时先买入 5 成仓位，剩余 5 成等当天收盘再买入，成本价为两次买入价格平均值（选股逻辑同 3 日涨幅最大）' },
@@ -62,7 +62,7 @@ const STRATEGIES = {
   key_block_3d_gain: { id: 'key_block_3d_gain', name: '重点板块-3日最高涨幅', desc: KEY_BLOCK_DESC(3), keyBlockDays: 3, costLinePct: 2 },
   key_block_4d_gain: { id: 'key_block_4d_gain', name: '重点板块-4日最高涨幅', desc: KEY_BLOCK_DESC(4), keyBlockDays: 4, costLinePct: 2 },
   key_block_5d_gain: { id: 'key_block_5d_gain', name: '重点板块-5日最高涨幅', desc: KEY_BLOCK_DESC(5), keyBlockDays: 5, costLinePct: 2 },
-  
+
   // 尾盘抄底系列（tailDip: true → 买入信号仅取尾盘抄底命中，不走买点诊断 allPassed；卖点走专属逐分钟环比规则）
   tail_dip_1d_gain: { id: 'tail_dip_1d_gain', name: '尾盘抄底-当日涨幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日涨幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
   tail_dip_3d_gain: { id: 'tail_dip_3d_gain', name: '尾盘抄底-3日涨幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入最近 3 个交易日涨幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
@@ -2236,6 +2236,8 @@ const runTwoBacktest = async (startDate, endDate, strategyId, onProgress) => {
 //   防御（mode='defense'，买防御+中性 tag 板块内 n 日涨幅最大者）：
 //     买点：斜率由正转负且当前空仓的当桶
 //     卖点：斜率由负转正当桶（唯一卖点，不设成本线止损，持有至最后一刻，同桶可转手买入进攻股）
+//     仓位：创业板情绪低迷期按半仓买入（weight=0.5），个股实际收益 rawReturnRate × 0.5 记入
+//           returnRate / buyReturn；整体收益与平均/最大回撤均按折算后口径（2026-10-01 用户要求）
 // 斜率符号跨日连续追踪（lastSlopeSign），初值取回测首日前一交易日收盘斜率；null 桶不更新基准；
 // 个股日涨幅由 keyBlockData 从成分股日K现算（相邻收盘环比），不使用服务端缓存的历史涨幅数据；
 // 进攻持仓的「科技板块情绪退潮」卖出条件仍受日收盘斜率 > 0 门禁，见 getKeyBlockCybMa3Slope
@@ -2456,6 +2458,12 @@ const isKeyBlockLimitUp = (code, changePct) => {
 
 // 斜率数值格式化（带正负号，2 位小数；null 显示 --）
 const fmtKeyBlockSlope = (v) => (v == null || !Number.isFinite(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}`);
+
+// 重点板块仓位权重：进攻（斜率为正、市场情绪好）全仓买入；防御（斜率为负、创业板情绪低迷）半仓买入。
+// 防御持仓的个股实际收益率（raw）在汇总口径中按半仓折算：returnRate = rawReturnRate × 0.5，
+// 整体收益率与平均/最大回撤均按折算后的收益率计算（2026-10-01 用户要求）
+const KEY_BLOCK_POSITION_WEIGHT = { offense: 1, defense: 0.5 };
+const KEY_BLOCK_MODE_LABEL = { offense: '进攻·全仓', defense: '防御·半仓' };
 
 const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) => {
   const strategy = STRATEGIES[strategyId];
@@ -2737,14 +2745,19 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
             const sellChange = defensePreclose && defensePreclose > 0
               ? parseFloat((((atPt.lastPx - defensePreclose) / defensePreclose) * 100).toFixed(2))
               : null;
-            const returnRate = position.buyPrice > 0
+            const rawReturnRate = position.buyPrice > 0
               ? parseFloat((((atPt.lastPx - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
               : null;
+            // 防御半仓折算：个股实际收益 × 0.5 才是对全仓账户的收益贡献（回撤/整体收益均按折算口径）
+            const weight = KEY_BLOCK_POSITION_WEIGHT.defense;
+            const returnRate = rawReturnRate != null ? parseFloat((rawReturnRate * weight).toFixed(2)) : null;
             trades.push({
               seq: trades.length + 1,
               metric: position.metric,
               code: position.code,
               stockName: position.stockName,
+              positionMode: position.mode,
+              weight,
               buyDate: position.buyDate,
               buyDateDisplay: position.buyDateDisplay,
               buyTime: position.buyTime,
@@ -2757,8 +2770,9 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
               sellTime: `${String(Math.floor(atPt.minute / 100)).padStart(2, '0')}:${String(atPt.minute % 100).padStart(2, '0')}`,
               sellPrice: parseFloat(Number(atPt.lastPx).toFixed(2)),
               sellChange,
-              sellReason: `创业板指3日线斜率盘中由负转正（${fmtKeyBlockSlope(lastSlopeValue)} → ${fmtKeyBlockSlope(slopeNow)}），防御持仓卖出（不设成本线止损，持有至斜率转正的最后一刻）`,
+              sellReason: `创业板指3日线斜率盘中由负转正（${fmtKeyBlockSlope(lastSlopeValue)} → ${fmtKeyBlockSlope(slopeNow)}），防御半仓持仓卖出（不设成本线止损，持有至斜率转正的最后一刻；防御为半仓买入，收益率按半仓折算）`,
               returnRate,
+              rawReturnRate,
             });
             position = null;
           }
@@ -2768,11 +2782,17 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
           const result = await runSellPointDiagnosis(pos, sellBuckets[bi], sellReplayStocks, sellBuckets, bi, dateStr);
           if (result.isSell && result.closePrice != null) {
             const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
+            const weight = KEY_BLOCK_POSITION_WEIGHT.offense;
+            const rawReturnRate = result.returnRate != null && Number.isFinite(Number(result.returnRate))
+              ? parseFloat(Number(result.returnRate).toFixed(2))
+              : result.returnRate;
             trades.push({
               seq: trades.length + 1,
               metric: position.metric,
               code: position.code,
               stockName: position.stockName,
+              positionMode: position.mode,
+              weight,
               buyDate: position.buyDate,
               buyDateDisplay: position.buyDateDisplay,
               buyTime: position.buyTime,
@@ -2786,7 +2806,8 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
               sellPrice: result.closePrice,
               sellChange: result.change,
               sellReason: satisfiedNames || '卖出条件触发',
-              returnRate: result.returnRate,
+              returnRate: rawReturnRate,
+              rawReturnRate,
             });
             position = null;
             // 卖出后斜率仍为正：当日不再继续买，次日开盘 10 分钟后（9:40 桶）复测仍为正才再买
@@ -2842,22 +2863,27 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
   let holding = null;
   if (position) {
     holding = { ...position };
+    holding.weight = KEY_BLOCK_POSITION_WEIGHT[position.mode] ?? 1;
+    let rawBuyReturn = null; // 期末持仓的个股实际浮盈（未折算）
     for (let i = rangeDates.length - 1; i >= 0; i--) {
       const info = dailyInfos.get(rangeDates[i])?.get(position.code);
       if (info && info.closePx != null && info.closePx > 0) {
-        holding.buyReturn = position.buyPrice > 0
+        rawBuyReturn = position.buyPrice > 0
           ? parseFloat((((info.closePx - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
           : null;
         break;
       }
     }
     // 非自选股持仓（重点板块策略买入板块全部成分股）：回放数据无该股，用成分股日K收盘价兜底估值
-    if (holding.buyReturn == null) {
+    if (rawBuyReturn == null) {
       const closePx = getStockCloseOnOrBefore(position.code, rangeDates[rangeDates.length - 1]);
       if (closePx != null && closePx > 0 && position.buyPrice > 0) {
-        holding.buyReturn = parseFloat((((closePx - position.buyPrice) / position.buyPrice) * 100).toFixed(2));
+        rawBuyReturn = parseFloat((((closePx - position.buyPrice) / position.buyPrice) * 100).toFixed(2));
       }
     }
+    // 防御半仓持仓：浮盈同样按 0.5 折算后计入整体收益
+    holding.rawBuyReturn = rawBuyReturn;
+    holding.buyReturn = rawBuyReturn != null ? parseFloat((rawBuyReturn * holding.weight).toFixed(2)) : null;
     if (holding.buyReturn != null && Number.isFinite(holding.buyReturn)) {
       overallReturn += holding.buyReturn;
     }
