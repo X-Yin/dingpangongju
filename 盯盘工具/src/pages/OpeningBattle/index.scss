@@ -59,9 +59,9 @@
     min-width: 0;
   }
 
-  // 折叠状态下 3 日涨幅榜固定宽度 250px
+  // 折叠状态下 自选股研报&5日涨幅榜固定宽度 420px
   .ob-bottom-col-rank {
-    flex: 0 0 350px;
+    flex: 0 0 420px;
     min-width: 0;
   }
 }
@@ -135,10 +135,14 @@
 }
 
 .ob-empty-mini {
-  font-size: 12px;
+  font-size: 15px;
   color: #cbd5e1;
   text-align: center;
   padding: 20px 0;
+  height: 355px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .ob-rank {
@@ -569,36 +573,33 @@
   }
 }
 
-// ==================== 3日涨幅排行榜 ====================
+// ==================== 自选股 · 研报前五（第 5 名并列全含） ====================
 .ob-rank3-module {
   .ob-rank3-body {
     display: flex;
     flex-direction: column;
-  }
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
 
-  .ob-buy-not-ready {
-    height: 230px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 36px 16px;
-    color: #94a3b8;
-    font-size: 12px;
-    line-height: 1.6;
-    text-align: center;
+    &::-webkit-scrollbar {
+      width: 5px;
+    }
 
-    .ob-buy-not-ready-icon {
-      font-size: 22px;
-      color: #cbd5e1;
+    &::-webkit-scrollbar-thumb {
+      background: rgba(18, 33, 58, 0.14);
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
     }
   }
 
   .ob-rank3-head {
     display: grid;
-    grid-template-columns: 22px 1fr 1fr 1fr;
-    gap: 8px;
+    grid-template-columns: 22px minmax(0, 1fr) 44px 66px 74px;
+    gap: 6px;
     font-size: 10px;
     color: #94a3b8;
     padding: 3px 0;
@@ -606,6 +607,10 @@
     margin-bottom: 3px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 1;
 
     span {
       text-align: right;
@@ -616,10 +621,10 @@
 
   .ob-rank3-row {
     display: grid;
-    grid-template-columns: 22px 1fr 1fr 1fr;
-    gap: 8px;
+    grid-template-columns: 22px minmax(0, 1fr) 44px 66px 74px;
+    gap: 6px;
     font-size: 12px;
-    padding: 10px 0;
+    padding: 8px 0;
     align-items: center;
     border-bottom: 1px solid rgba(18, 33, 58, 0.03);
 
@@ -629,6 +634,164 @@
       background: rgba(18, 33, 58, 0.02);
     }
   }
+
+  .ob-stock-name-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .ob-report-tag {
+    flex-shrink: 0;
+    margin: 0 !important;
+    padding: 0 6px !important;
+    height: 18px;
+    line-height: 16px !important;
+    font-size: 10px !important;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.15s;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+  }
+
+  .ob-report-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: #334155;
+  }
+}
+
+// ==================== 研报详情弹窗 ====================
+.ob-report-modal-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: rgba(18, 33, 58, 0.12); border-radius: 2px; }
+}
+
+.ob-report-modal-item {
+  border: 1px solid rgba(18, 33, 58, 0.06);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fafbfd;
+
+  .ob-report-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .ob-report-modal-date {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1677ff;
+    background: rgba(22, 119, 255, 0.08);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .ob-report-modal-upd {
+    font-size: 10px;
+    color: #94a3b8;
+  }
+
+  .ob-report-modal-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #12213a;
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+
+  .ob-report-modal-content {
+    font-size: 12px;
+    color: #475569;
+    line-height: 1.75;
+    word-break: break-word;
+    max-height: 260px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar { width: 3px; }
+    &::-webkit-scrollbar-thumb { background: rgba(18, 33, 58, 0.1); border-radius: 2px; }
+
+    // markdown 正文排版
+    h1, h2, h3, h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #12213a;
+      margin: 8px 0 4px;
+    }
+    p { margin: 4px 0; }
+    ul, ol { margin: 4px 0; padding-left: 18px; }
+    li { margin: 2px 0; }
+    blockquote {
+      margin: 6px 0;
+      padding: 4px 10px;
+      border-left: 3px solid #cbd5e1;
+      color: #64748b;
+      background: rgba(18, 33, 58, 0.02);
+      border-radius: 0 6px 6px 0;
+    }
+    code {
+      background: rgba(18, 33, 58, 0.05);
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      overflow-x: auto;
+
+      code {
+        background: transparent;
+        padding: 0;
+        color: inherit;
+      }
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 8px 0;
+      font-size: 11px;
+    }
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 4px 8px;
+      text-align: left;
+    }
+    th {
+      background: #f1f5f9;
+      font-weight: 600;
+    }
+    a { color: #1677ff; }
+    hr { border: none; border-top: 1px solid rgba(18, 33, 58, 0.08); margin: 8px 0; }
+  }
+}
+
+// 研报正文中的股票名高亮
+.ob-report-hl {
+  background: #fff1b8;
+  color: #d4380d;
+  font-weight: 600;
+  padding: 0 2px;
+  border-radius: 3px;
 }
 
 // ==================== 买点 / 卖点诊断卡片 ====================

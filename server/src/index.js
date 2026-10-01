@@ -99,7 +99,7 @@ const aiSettings = require('./service/aiSettings');
 const { getMainFundAiSummary, getMainFundAiContext } = require('./service/mainFundAi');
 const { getAllGroups: getAllIndexOverlayGroups, saveGroup: saveIndexOverlayGroup, deleteGroup: deleteIndexOverlayGroup } = require('./service/indexOverlayGroup');
 const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup } = require('./service/trainingCamp');
-const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, getSentimentDefaultRange, attachHoldingDays } = require('./service/buySellBacktest');
+const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, getSentimentDefaultRange, attachHoldingDays, getStockRecentReports } = require('./service/buySellBacktest');
 const { generateReport, ensureLatestReport, getReportById, listReports, getTrendDiagnosisRanges } = require('./service/backtestReport');
 const { getAttackDefenseScore } = require('./service/attackDefenseScore');
 const feishuNotify = require('./service/feishuNotify');
@@ -1033,6 +1033,22 @@ app.get('/research_reports_context', async (req, res) => {
   } catch (error) {
     console.error('获取研报上下文失败:', error);
     res.status(500).json({ success: false, message: error.message || '获取研报上下文失败' });
+  }
+});
+
+// 获取某只股票最近 N 个报告日（默认 5 天）内命中的研报列表（含标题/正文/日期）
+app.get('/research_reports_by_stock', (req, res) => {
+  try {
+    const { stockName } = req.query;
+    if (!stockName) {
+      return res.status(400).json({ success: false, message: '缺少 stockName 参数' });
+    }
+    const days = Math.max(1, Math.min(60, parseInt(req.query?.days) || 5));
+    const reports = getStockRecentReports(stockName, days);
+    res.json({ success: true, data: reports });
+  } catch (error) {
+    console.error('获取股票研报失败:', error);
+    res.status(500).json({ success: false, message: error.message || '获取股票研报失败' });
   }
 });
 

@@ -806,5 +806,14 @@
     "riskScore": " 8",
     "isTech": true,
     "addedAt": "2026-09-30 22:48:29"
+  },
+  {
+    "code": "sh688099",
+    "name": "晶晨股份",
+    "isImportant": false,
+    "blockName": "半导体",
+    "riskScore": "7",
+    "isTech": true,
+    "addedAt": "2026-10-01 21:50:05"
   }
 ]

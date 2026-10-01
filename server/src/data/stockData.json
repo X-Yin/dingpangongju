@@ -1978,5 +1978,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sh688099": {
+    "stockName": "晶晨股份",
+    "kline": [
+      {
+        "trade_date": 20260930,
+        "open_px": 90.19,
+        "high_px": 98,
+        "low_px": 90.16,
+        "close_px": 96.8,
+        "business_amount": 17807379,
+        "business_balance": 1705567700,
+        "change": 7.17,
+        "ma5_px": 91.56,
+        "ma10_px": 90.31,
+        "ma20_px": 89.27,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

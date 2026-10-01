@@ -2220,9 +2220,11 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
     targetDay = dayjs(dateStr, 'YYYYMMDD');
   } else {
     targetDay = dayjs();
-    const dow = targetDay.day();
-    if (dow === 0) targetDay = targetDay.subtract(2, 'day');
-    else if (dow === 6) targetDay = targetDay.subtract(1, 'day');
+    // 周末 / 法定节假日（如国庆、中秋）一律回退到最近一个交易日
+    if (!isTradingDay(targetDay.toDate())) {
+      const prev = getPrevTradingDay(targetDay.toDate());
+      targetDay = dayjs(prev);
+    }
   }
   const targetDateStr = targetDay.format('YYYYMMDD');
 

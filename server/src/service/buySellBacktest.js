@@ -21,6 +21,7 @@ const {
 } = require('./sentimentHotMoney');
 const fs = require('fs');
 const path = require('path');
+const dayjs = require('dayjs');
 
 const SELL_CONDITION_PERSIST_MIN = 5; // 卖出条件持续满足分钟数
 
@@ -280,6 +281,83 @@ const sumReportCount = (stockName, winDates, reportIndex) => {
     if (day) count += day[stockName] || 0;
   }
   return count;
+};
+
+/**
+ * 获取某只股票最近 N 个报告日内（以 menu.json 文件夹名 YYYYMMDD 为报告日）
+ * 标题或正文命中该股票名的全部研报（含 id / 标题 / 正文 / 报告日 / 更新时间）。
+ * 报告日筛选窗口与 loadReportIndex 一致：研报目录中 ≤ 今日 的最近 N 个报告日。
+ * stockNames 按「长名优先」匹配避免短名误配（与 loadReportIndex 保持一致）。
+ */
+const getStockRecentReports = (stockName, days = 5) => {
+  if (!stockName) return [];
+  const menuFile = path.join(researchReportsDir, 'menu.json');
+  let menu;
+  try {
+    menu = JSON.parse(fs.readFileSync(menuFile, 'utf-8'));
+  } catch (e) {
+    return [];
+  }
+
+  // 收集所有 folderDate（只取 8 位数字，视作报告日）
+  const allDates = new Set();
+  const collectDates = (node) => {
+    if (!node) return;
+    if (node.type === 'folder') {
+      const d = String(node.name || '');
+      if (/^\d{8}$/.test(d)) {
+        allDates.add(d);
+      }
+      for (const c of (node.children || [])) collectDates(c);
+    }
+  };
+  for (const root of menu) collectDates(root);
+
+  const today = dayjs().format('YYYYMMDD');
+  const winDates = Array.from(allDates)
+    .filter(d => d <= today)
+    .sort()
+    .slice(-days);
+
+  if (winDates.length === 0) return [];
+  const winSet = new Set(winDates);
+
+  // 构造 stockNames（若只给了一个名字，取它自己即可；长名优先匹配）
+  const stockNames = [stockName].sort((a, b) => b.length - a.length);
+
+  const results = [];
+  const walk = (node, folderDate) => {
+    if (!node) return;
+    if (node.type === 'folder') {
+      const d = String(node.name || '');
+      if (!/^\d{8}$/.test(d)) return;
+      for (const child of (node.children || [])) walk(child, d);
+    } else if (node.type === 'report') {
+      if (!winSet.has(folderDate)) return;
+      const id = String(node.id || '');
+      if (!id) return;
+      const content = readReportContent(id);
+      const text = `${String(node.name || '')}\n${content}`;
+      const matched = stockNames.some(n => n && text.includes(n));
+      if (!matched) return;
+      results.push({
+        id,
+        name: node.name || '',
+        content: content || '',
+        folderDate,
+        updatedAt: node.updatedAt || '',
+        createdAt: node.createdAt || '',
+      });
+    }
+  };
+  for (const root of menu) walk(root, null);
+
+  // 按报告日降序、同一天内按更新时间降序
+  results.sort((a, b) => {
+    if (b.folderDate !== a.folderDate) return b.folderDate.localeCompare(a.folderDate);
+    return String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+  });
+  return results;
 };
 
 // ============================================================
@@ -3745,6 +3823,7 @@ module.exports = {
   attachHoldingDays,
   loadReportIndex,
   sumReportCount,
+  getStockRecentReports,
   isSentimentStrategy,
   getSentimentDefaultRange,
   getTechEmotionEmaMap,
