@@ -39,7 +39,7 @@ const { getAllTechIndexData, updateCurrentTechIndexData, getCurrentTechEmotion, 
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 const { getMonitorStocks } = require('./monitorStock');
 const { getStockPositions } = require('./stockPosition');
-const { loadReportIndex, sumReportCount, queryLiveIndexGate, CYB_INDEX_CODE, STAR_INDEX_CODE, codeToGateIndex, gateIndexName } = require('./buySellBacktest');
+const { loadReportIndex, sumReportCount, queryLiveIndexGate, CYB_INDEX_CODE, STAR_INDEX_CODE, codeToGateIndex, gateIndexName, GLOBAL_RESILIENCE_MIN, BUY_TIME_MAX_MINUTE } = require('./buySellBacktest');
 const { getAmountHistory, parseAmountToYi } = require('./amount');
 const { getDaPanData } = require('./dapan');
 const { getClsReqUrl, getClsReqStockTlineUrl, batchParallel, sleep } = require('../utils');
@@ -2182,6 +2182,61 @@ const getBuyPointChecks = async (targetDate = null, refresh = false) => {
   });
   // 注意：尾盘抄底为或分支，不计入 allPassed（与其它检查的与逻辑无关）
 
+  // ============================================================
+  // 新增：买入时段门禁 + 双指数 3 日线斜率门禁（与回测 pickBestStock 规则一致）
+  // ============================================================
+  // 买点时刻：实时场景取当前分钟（北京时间），历史/空数据回退 1455
+  const isTodayTarget = targetDay.isSame(dayjs(), 'day');
+  const buyMinute = isTodayTarget
+    ? (() => { const now = new Date(Date.now() + 8*3600*1000); return Number(`${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`); })()
+    : 1455;
+  const buyTimePassed = Number.isFinite(buyMinute) && buyMinute <= BUY_TIME_MAX_MINUTE;
+  const fmtBM = (m) => `${String(Math.floor(m/100)).padStart(2,'0')}:${String(m%100).padStart(2,'0')}`;
+  checks.push({
+    id: 'buy_time_gate',
+    title: '买入时段门禁（仅 9:30 – 11:30 / 13:00 – 13:30）',
+    passed: buyTimePassed,
+    value: buyTimePassed ? `买点时刻 ${fmtBM(buyMinute)} 在允许时段内` : `买点时刻 ${fmtBM(buyMinute)} 已过 13:30，不允许买入`,
+    reason: buyTimePassed
+      ? `买点触发时刻 ${fmtBM(buyMinute)} 在允许时段（9:30 – 11:30 或 13:00 – 13:30）内`
+      : `买点触发时刻 ${fmtBM(buyMinute)} 已过 13:30，规则禁止此时段交易`,
+  });
+  if (!buyTimePassed) allPassed = false;
+
+  // 双指数 3 日线斜率门禁（实时查询，无状态）：科创50 + 创业板指两个都需通过
+  try {
+    const gate = await queryLiveIndexGate(null, targetDateStr, buyMinute);
+    const cybGate = gate?.cybGate;
+    const starGate = gate?.starGate;
+    const cybPassed = cybGate?.passed === true;
+    const starPassed = starGate?.passed === true;
+    // "允许出手" 语义：两个指数的整体门禁（规则① 持续负斜率、规则② 转正窗口）至少有一个市场可买；
+    // 全市场级买点前置条件：两个指数**都可买**才算市场整体健康
+    const bothPassed = cybPassed && starPassed;
+    const fmtGate = (g, name) => g?.reason || `${name} 数据不足`;
+    const slopeStr = (g) => g?.slope != null ? `${g.slope >= 0 ? '+' : ''}${g.slope.toFixed(2)}°` : '数据不足';
+    const reasonParts = [];
+    reasonParts.push(`创业板指 ${slopeStr(cybGate)}：${fmtGate(cybGate, '创业板指')}`);
+    reasonParts.push(`科创50 ${slopeStr(starGate)}：${fmtGate(starGate, '科创50')}`);
+    checks.push({
+      id: 'index_ma3_slope_gate',
+      title: '双指数 3 日线斜率门禁',
+      passed: bothPassed,
+      value: bothPassed ? '两个指数均允许出手' : `${cybPassed ? '创业板指✅' : '创业板指❌'} ${starPassed ? '科创50✅' : '科创50❌'}`,
+      reason: reasonParts.join('；'),
+    });
+    if (!bothPassed) allPassed = false;
+  } catch (e) {
+    console.error('双指数 3 日线斜率门禁查询失败:', e.message);
+    checks.push({
+      id: 'index_ma3_slope_gate',
+      title: '双指数 3 日线斜率门禁',
+      passed: true, // 查询失败不阻断，标记为通过但提示数据暂不可用
+      value: '数据暂不可用',
+      reason: `双指数 3 日线斜率门禁查询失败：${e.message}，暂不阻断买入`,
+    });
+  }
+
   const passedCount = checks.filter(c => c.passed).length;
   const totalCheckCount = checks.length;
 
@@ -2213,7 +2268,30 @@ const getBuyPointChecks = async (targetDate = null, refresh = false) => {
 // 买点诊断涨跌幅排名排除的股票（不参与 3 日涨幅排名）
 const BUY_POINT_EXCLUDED_CODES = new Set(['sh688498', 'sh688808']); // 源杰科技、联讯仪器
 
-const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', reportDays = 3) => {
+// 计算个股 MA3 切线正斜率连续天数（与 buySellBacktest.js 里的 countStockPositiveSlopeDays 口径一致）
+// closes 为降序 [{date, close}]；返回正斜率天数（含当日），斜率非正返回 0，数据不足返回 null
+const countStockPositiveSlopeDaysLocal = (sortedKline, targetIdx) => {
+  if (targetIdx < 3) return null;
+  const closes = sortedKline.slice(Math.max(0, targetIdx - 10), targetIdx + 1).map(k => parseFloat(k.close_px)).reverse();
+  if (closes.length < 4) return null;
+  const avg = (i, d) => closes.slice(i, i + d).reduce((s, v) => s + v, 0) / d;
+  const slopeToday = avg(0, 3) - avg(1, 3);
+  if (!Number.isFinite(slopeToday)) return null;
+  if (slopeToday <= 0) return 0;
+  let c = 1;
+  for (let i = 1; i + 3 <= closes.length; i++) {
+    const slope = avg(i, 3) - avg(i + 1, 3);
+    if (!Number.isFinite(slope)) break;
+    if (slope > 0) c++; else break;
+    if (c >= 5) break;
+  }
+  return c;
+};
+
+// 买点候选筛选（加全局门槛过滤可选）
+// filterGate=true 时，对 change / reports 模式也加：①买点时刻 ≤ 1330、②跟踪指数 3 日线斜率门禁通过、
+//   ③抗分歧 ≥ GLOBAL_RESILIENCE_MIN、④指数由负转正当日时个股 MA3 切线正斜率连续天数 ≤ 3
+const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', reportDays = 3, filterGate = false) => {
   let targetDay;
   if (targetDate) {
     const dateStr = String(targetDate).replace(/-/g, '');
@@ -2233,10 +2311,38 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
   const isReportMode = sortBy === 'reports';
   const isResilienceMode = !isChangeMode && !isReportMode;
 
-  // 涨跌幅/研报模式下不需要指数分时数据
+  // filterGate=true 时：计算买点时刻、预查询一次指数 3 日线斜率门禁（所有股票共享同一份结果）
+  let gateBuyMinute = null;       // 买点时刻（数字分钟），历史日回退到 1455
+  let gateIndexResult = null;     // queryLiveIndexGate 返回值（双指数 gate 结果）
+  if (filterGate) {
+    // 买点时刻：当前交易日取当前分钟（北京时间），历史交易日取 1455（尾盘买点典型时点）
+    const isToday = targetDay.isSame(dayjs(), 'day');
+    gateBuyMinute = isToday
+      ? (() => { const now = new Date(Date.now() + 8*3600*1000); return Number(`${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`); })()
+      : 1455;
+    // ① 买入时段门禁：整个请求在 > 1330 时直接返回空（所有股票同过同不过）
+    if (Number.isFinite(gateBuyMinute) && gateBuyMinute > BUY_TIME_MAX_MINUTE) {
+      return {
+        success: true,
+        data: {
+          targetDate: targetDateStr,
+          timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+          matchedStocks: [],
+          checkedCount: monitorStocks.length,
+          sortBy: isChangeMode ? 'change' : (isReportMode ? 'reports' : 'resilience'),
+          reportDays: isReportMode ? ndays : null,
+          gateFilterInfo: { buyTimeBlocked: true, buyMinute: gateBuyMinute, maxAllowed: BUY_TIME_MAX_MINUTE },
+        },
+      };
+    }
+    gateIndexResult = await queryLiveIndexGate(null, targetDateStr, gateBuyMinute);
+  }
+
+  // 涨跌幅/研报模式下，filterGate=true 也需要拉指数分时（算抗分歧）；否则只有抗分歧模式需要
+  const needIndexTline = isResilienceMode || (filterGate && (isChangeMode || isReportMode));
   let kcIndexLine = [];
   let cyIndexLine = [];
-  if (isResilienceMode) {
+  if (needIndexTline) {
     const [kcIndexTline, cyIndexTline] = await Promise.all([
       getSingleStockTlineDataByDate('sh000688', targetDateStr),
       getSingleStockTlineDataByDate('sz399006', targetDateStr),
@@ -2263,12 +2369,28 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
     }
   }, 10);
 
+  // 阶段1.5：filterGate=true 时并行预拉所有股票的当日分时数据（算抗分歧，10并发），避免循环内 N+1 查询
+  let stockTlineCache = new Map(); // code → line[]
+  if (filterGate) {
+    const tlineResults = await batchParallel(monitorStocks, async (stock) => {
+      try {
+        const tline = await getSingleStockTlineDataByDate(stock.code, targetDateStr);
+        return { code: stock.code, line: tline?.line || [] };
+      } catch (e) {
+        return { code: stock.code, line: [] };
+      }
+    }, 10);
+    for (const r of tlineResults) stockTlineCache.set(r.code, r.line);
+  }
+
   // 阶段2：本地处理K线数据（涨跌幅模式不过滤，抗分歧模式筛选通过MA10条件的股票）
   const passedStocks = [];
   let checkedCount = 0;
 
-  // 涨跌幅/研报模式：数据缺失的股票也纳入（涨跌幅 null、研报覆盖按兜底窗口统计），不做任何过滤
+  // 涨跌幅/研报模式：数据缺失的股票也纳入（涨跌幅 null、研报覆盖按兜底窗口统计），不做任何过滤；
+  // 但 filterGate=true 时必须有完整 K 线数据才能算涨幅 + MA3 斜率，noData 直接跳过
   const pushNoDataStock = (stock) => {
+    if (filterGate) { checkedCount++; return; } // filterGate 时 K 线缺失 = 没法过滤，直接跳过
     if (isChangeMode) {
       passedStocks.push({
         stock,
@@ -2372,6 +2494,33 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
       reportCount = sumReportCount(stock.name, reportWinDates, reportIndex);
     }
 
+    // filterGate=true：个股级过滤（②跟踪指数 3 日线斜率门禁、③抗分歧 ≥ GLOBAL_RESILIENCE_MIN、
+    // ④指数由负转正当日时个股 MA3 切线正斜率连续天数 ≤ 3）
+    if (filterGate) {
+      const isSh688 = stock.code.startsWith('sh688') || stock.code.startsWith('688');
+      const trackedIdx = isSh688 ? STAR_INDEX_CODE : CYB_INDEX_CODE;
+      const trackedGate = trackedIdx === STAR_INDEX_CODE ? gateIndexResult?.starGate : gateIndexResult?.cybGate;
+
+      // ② 跟踪的指数 3 日线斜率门禁
+      if (!trackedGate || trackedGate.passed !== true) { checkedCount++; continue; }
+
+      // ③ 抗分歧 ≥ GLOBAL_RESILIENCE_MIN（从阶段1.5预拉的 stockTlineCache 取分时数据）
+      const indexLine = isSh688 ? kcIndexLine : cyIndexLine;
+      const stockLine = stockTlineCache.get(stock.code) || [];
+      let resilienceScore = null;
+      if (indexLine.length > 0 && stockLine.length > 0) {
+        resilienceScore = calculateResilience(indexLine, stockLine, getLimitTypeByCode(stock.code));
+        resilienceScore = Number.isFinite(resilienceScore) ? parseFloat(resilienceScore.toFixed(2)) : null;
+      }
+      if (resilienceScore == null || resilienceScore < GLOBAL_RESILIENCE_MIN) { checkedCount++; continue; }
+
+      // ④ 指数由负转正当日，个股 MA3 切线正斜率连续天数 ≤ 3（否则 skip）
+      if (trackedGate.turnedPosToday === true) {
+        const slopeDays = countStockPositiveSlopeDaysLocal(sortedKline, targetIdx);
+        if (slopeDays != null && slopeDays > 3) { checkedCount++; continue; }
+      }
+    }
+
     checkedCount++;
 
     passedStocks.push({
@@ -2466,6 +2615,150 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
       matchedStocks,
       checkedCount,
       sortBy: 'resilience',
+    },
+  };
+};
+
+// ========== 开盘实战页：自选股 3 日涨幅榜（按市场分列） ==========
+// 每个市场（创业板+主板 / 科创板）各取 3 日涨幅前 5，附实时抗分歧分数、实时涨幅、买点资格与涨停标记；
+// 同时返回两个指数的 3 日线斜率门禁信息（供表头披露）
+const TOP_GAINERS_PER_MARKET = 5;
+
+// 全局最低抗分歧门槛（与 buySellBacktest.GLOBAL_RESILIENCE_MIN=9 对齐；该常量未从其模块导出，故此处显式声明）
+const MIN_RESILIENCE_SCORE = 9;
+
+// 涨跌停阈值：主板 10%，创业板/科创板 20%（与 stockDiagnose.getLimitTypeByCode 口径一致）
+const getLimitUpThresholdByCode = (code) => (getLimitTypeByCode(code) === 'MAIN' ? 10 : 20);
+
+// 是否已封涨停（容差 0.3%，规避收盘价四舍五入导致的 9.98%/19.98%）
+const isLimitUpChange = (code, change) => {
+  const c = Number(change);
+  if (!Number.isFinite(c)) return false;
+  return c >= getLimitUpThresholdByCode(code) - 0.3;
+};
+
+const getTopGainersByMarket = async (targetDate = null) => {
+  let targetDay;
+  if (targetDate) {
+    targetDay = dayjs(String(targetDate).replace(/-/g, ''), 'YYYYMMDD');
+  } else {
+    targetDay = dayjs();
+    if (!isTradingDay(targetDay.toDate())) targetDay = dayjs(getPrevTradingDay(targetDay.toDate()));
+  }
+  const targetDateStr = targetDay.format('YYYYMMDD');
+
+  const isToday = targetDay.isSame(dayjs(), 'day');
+  const buyMinute = isToday
+    ? (() => { const now = new Date(Date.now() + 8 * 3600 * 1000); return Number(`${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`); })()
+    : 1455;
+
+  const monitorStocks = getMonitorStocks();
+  const gate = await queryLiveIndexGate(null, targetDateStr, buyMinute);
+
+  // 两个指数的分时（算个股抗分歧用）
+  const [cybIdxTline, starIdxTline] = await Promise.all([
+    getSingleStockTlineDataByDate(CYB_INDEX_CODE, targetDateStr),
+    getSingleStockTlineDataByDate(STAR_INDEX_CODE, targetDateStr),
+  ]);
+  const cyIndexLine = cybIdxTline?.line || [];
+  const kcIndexLine = starIdxTline?.line || [];
+
+  // 阶段1：并行拉取全部自选股 K 线
+  const klineResults = await batchParallel(monitorStocks, async (stock) => {
+    try {
+      return { stock, klineData: await getSingleStockData(stock.code, 30) };
+    } catch (e) {
+      return { stock, klineData: null };
+    }
+  }, 10);
+
+  const base = [];
+  for (const { stock, klineData } of klineResults) {
+    if (!klineData || klineData.length === 0) continue;
+    const sortedKline = [...klineData].sort((a, b) => a.trade_date - b.trade_date);
+    const targetIdx = sortedKline.findIndex(k => parseInt(k.trade_date) === parseInt(targetDateStr));
+    if (targetIdx < 0) continue;
+    const targetKline = sortedKline[targetIdx];
+    const closePrice = parseFloat(targetKline.close_px);
+    if (!(closePrice > 0)) continue;
+    const change = parseFloat(targetKline.change || 0);
+    // 3 日涨幅：当前收盘较 3 个交易日前收盘的累计涨幅，数据不足时回退当日涨幅
+    let change3d = change;
+    if (targetIdx >= 3) {
+      const close3Ago = parseFloat(sortedKline[targetIdx - 3].close_px);
+      if (close3Ago > 0) change3d = parseFloat(((closePrice - close3Ago) / close3Ago * 100).toFixed(2));
+    }
+    const isSh688 = stock.code.startsWith('sh688') || stock.code.startsWith('688');
+    base.push({ stock, isSh688, sortedKline, targetIdx, change, change3d });
+  }
+
+  const byChange3d = (a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity);
+  const topCybMain = base.filter(s => !s.isSh688).sort(byChange3d).slice(0, TOP_GAINERS_PER_MARKET);
+  const topStar = base.filter(s => s.isSh688).sort(byChange3d).slice(0, TOP_GAINERS_PER_MARKET);
+
+  // 阶段2：对入选个股拉分时，计算实时涨幅、抗分歧分数、涨停与买点资格
+  const enrich = async (s) => {
+    const trackedGate = s.isSh688 ? gate?.starGate : gate?.cybGate;
+    const indexLine = s.isSh688 ? kcIndexLine : cyIndexLine;
+    const tline = await getSingleStockTlineDataByDate(s.stock.code, targetDateStr);
+    const stockLine = tline?.line || [];
+    // 实时涨幅：优先取分时最后一分钟累计涨幅，回退 K 线当日涨幅
+    const lastPoint = stockLine.length > 0 ? stockLine[stockLine.length - 1] : null;
+    const rtChange = lastPoint && Number.isFinite(Number(lastPoint.change))
+      ? parseFloat(Number(lastPoint.change).toFixed(2))
+      : s.change;
+    let resilienceScore = null;
+    if (indexLine.length > 0 && stockLine.length > 0) {
+      const score = calculateResilience(indexLine, stockLine, getLimitTypeByCode(s.stock.code));
+      resilienceScore = Number.isFinite(score) ? parseFloat(score.toFixed(2)) : null;
+    }
+    // 买点资格：跟踪指数门禁通过 + 抗分歧 ≥ 全局门槛 + （指数由负转正当日）个股 MA3 正斜率天数 ≤ 3
+    const indexGatePassed = trackedGate?.passed === true;
+    const resilienceOk = resilienceScore != null && resilienceScore >= MIN_RESILIENCE_SCORE;
+    let slopeOk = true;
+    if (trackedGate?.turnedPosToday === true) {
+      const days = countStockPositiveSlopeDaysLocal(s.sortedKline, s.targetIdx);
+      slopeOk = !(days != null && days > 3);
+    }
+    return {
+      code: s.stock.code,
+      stockName: s.stock.name,
+      blockName: s.stock.blockName,
+      isSh688: s.isSh688,
+      change: rtChange,
+      change3d: s.change3d,
+      resilienceScore,
+      isLimitUp: isLimitUpChange(s.stock.code, rtChange),
+      matchesBuyPoint: indexGatePassed && resilienceOk && slopeOk,
+    };
+  };
+
+  const [cybMainList, starList] = await Promise.all([
+    Promise.all(topCybMain.map(enrich)),
+    Promise.all(topStar.map(enrich)),
+  ]);
+
+  const pickGate = (g) => (g ? {
+    slope: g.slope ?? null,
+    passed: g.passed === true,
+    turnedPosToday: !!g.turnedPosToday,
+    daysSinceTurnPos: g.daysSinceTurnPos ?? null,
+    turnPosDate: g.turnPosDate ?? null,
+    turnedNegToday: !!g.turnedNegToday,
+    daysSinceTurnNeg: g.daysSinceTurnNeg ?? null,
+    turnNegDate: g.turnNegDate ?? null,
+    reason: g.reason || '',
+  } : null);
+
+  return {
+    success: true,
+    data: {
+      targetDate: targetDateStr,
+      timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+      buyMinute,
+      cybGate: pickGate(gate?.cybGate),
+      starGate: pickGate(gate?.starGate),
+      markets: { cybMain: cybMainList, star: starList },
     },
   };
 };
@@ -2794,6 +3087,7 @@ module.exports = {
   diagnoseRealtimeBuyPoints,
   getBuyPointChecks,
   getBuyPointStocks,
+  getTopGainersByMarket,
   getSingleStockBuyPointDiagnosis,
   getBuySellSelectableStocks,
   checkSingleStockSellPoint,

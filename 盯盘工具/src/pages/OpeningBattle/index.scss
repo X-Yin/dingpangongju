@@ -42,26 +42,7 @@
     gap: 14px;
   }
 
-  // 左列第三/四行：持仓分时图、3日涨幅榜各自独占整行
-  .ob-bottom-row {
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-  }
-
-  // 第四行（3日涨幅榜）与上一行之间留间距
-  .ob-bottom-row-rank {
-    margin-top: 14px;
-  }
-
-  .ob-bottom-col-intraday {
-    flex: 1;
-    min-width: 0;
-  }
-
-  // 折叠状态下 自选股研报&5日涨幅榜固定宽度 420px
-  .ob-bottom-col-rank {
-    flex: 0 0 420px;
+  .ob-left-col > .ob-module {
     min-width: 0;
   }
 }
@@ -319,14 +300,14 @@
   }
 }
 
-// ==================== 主力资金 & 成交量（左列三行） ====================
+// ==================== 主力资金 & 资金明细 & 成交量（三列同行） ====================
 .ob-fund-module {
   display: flex;
   flex-direction: column;
   gap: 10px;
 
-  // 第一行：主力资金 + 资金明细
-  .ob-fund-row-top {
+  // 三列同行：主力资金 | 资金明细 | 成交量
+  .ob-fund-row {
     display: flex;
     align-items: stretch;
     gap: 10px;
@@ -338,17 +319,15 @@
     min-width: 0;
   }
 
-  // 第二行：成交量整行
-  .ob-fund-row-bottom {
+  .ob-fund-chart-volume {
+    flex: 1;
     min-width: 0;
   }
 
-  .ob-fund-chart-volume {
-    width: 100%;
-  }
-
-  .ob-fund-chart-body-volume {
-    height: 230px !important;
+  // 三列等高：两侧图表卡片与中间明细统一固定高度，明细内容超出时由内部滚动
+  .ob-fund-chart-card,
+  .ob-fund-detail {
+    height: 270px;
   }
 
   .ob-fund-chart-card {
@@ -381,14 +360,13 @@
   }
 
   .ob-fund-chart-body {
-    height: 230px;
-    flex-shrink: 0;
+    flex: 1;
+    min-height: 0;
     position: relative;
   }
 
   .ob-fund-detail {
-    flex: 0 0 220px;
-    height: 260px;
+    flex: 0 0 190px;
     display: flex;
     flex-direction: column;
     border: 1px solid rgba(18, 33, 58, 0.06);
@@ -429,6 +407,7 @@
 
   .ob-fund-table-wrapper {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: 4px 6px;
 
@@ -573,32 +552,80 @@
   }
 }
 
-// ==================== 自选股 · 研报前五（第 5 名并列全含） ====================
+// ==================== 自选股 · 3日涨幅前五（创业板+主板 / 科创板 分列） ====================
 .ob-rank3-module {
-  .ob-rank3-body {
+  .ob-gainer-body {
+    display: flex;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .ob-gainer-col {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    max-height: 400px;
-    overflow-y: auto;
-    padding-right: 4px;
+  }
 
-    &::-webkit-scrollbar {
-      width: 5px;
+  .ob-gainer-divider {
+    width: 1px;
+    background: rgba(18, 33, 58, 0.06);
+    flex-shrink: 0;
+  }
+
+  .ob-gainer-col-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .ob-gainer-col-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .ob-gainer-gate {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #64748b;
+    flex-wrap: wrap;
+
+    .ob-gainer-gate-slope {
+      font-weight: 600;
+      color: #334155;
+      font-variant-numeric: tabular-nums;
     }
 
-    &::-webkit-scrollbar-thumb {
-      background: rgba(18, 33, 58, 0.14);
-      border-radius: 3px;
+    .ob-gainer-gate-turn {
+      color: #64748b;
     }
 
-    &::-webkit-scrollbar-track {
-      background: transparent;
+    .ob-gainer-gate-badge {
+      font-weight: 600;
+      padding: 1px 8px;
+      border-radius: 999px;
+    }
+
+    &.passed .ob-gainer-gate-badge {
+      color: #0958d9;
+      background: rgba(22, 119, 255, 0.1);
+    }
+
+    &.failed .ob-gainer-gate-badge {
+      color: #cf1322;
+      background: rgba(225, 29, 72, 0.1);
     }
   }
 
-  .ob-rank3-head {
+  .ob-gainer-head {
     display: grid;
-    grid-template-columns: 22px minmax(0, 1fr) 44px 66px 74px;
+    grid-template-columns: 22px minmax(0, 1fr) 62px 54px 72px;
     gap: 6px;
     font-size: 10px;
     color: #94a3b8;
@@ -607,10 +634,6 @@
     margin-bottom: 3px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    position: sticky;
-    top: 0;
-    background: #fff;
-    z-index: 1;
 
     span {
       text-align: right;
@@ -619,23 +642,31 @@
     }
   }
 
-  .ob-rank3-row {
+  .ob-gainer-row {
     display: grid;
-    grid-template-columns: 22px minmax(0, 1fr) 44px 66px 74px;
+    grid-template-columns: 22px minmax(0, 1fr) 62px 54px 72px;
     gap: 6px;
     font-size: 12px;
-    padding: 8px 0;
+    padding: 7px 6px;
     align-items: center;
     border-bottom: 1px solid rgba(18, 33, 58, 0.03);
+    border-radius: 6px;
 
     &:last-child { border-bottom: none; }
 
     &:hover {
       background: rgba(18, 33, 58, 0.02);
     }
+
+    // 命中买点且未封涨停：特殊高亮展示
+    &.ob-gainer-hit {
+      background: linear-gradient(90deg, rgba(225, 29, 72, 0.12), rgba(225, 29, 72, 0.02));
+      border: 1px solid rgba(225, 29, 72, 0.35);
+      box-shadow: 0 0 0 1px rgba(225, 29, 72, 0.06);
+    }
   }
 
-  .ob-stock-name-wrap {
+  .ob-gainer-name-cell {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -643,155 +674,38 @@
     overflow: hidden;
   }
 
-  .ob-report-tag {
-    flex-shrink: 0;
-    margin: 0 !important;
-    padding: 0 6px !important;
-    height: 18px;
-    line-height: 16px !important;
-    font-size: 10px !important;
-    font-weight: 600;
-    cursor: pointer;
-    user-select: none;
-    transition: transform 0.15s;
-
-    &:hover {
-      transform: translateY(-1px);
-    }
-  }
-
-  .ob-report-num {
+  .ob-gainer-resilience {
     text-align: right;
     font-variant-numeric: tabular-nums;
     font-weight: 600;
-    color: #334155;
-  }
-}
-
-// ==================== 研报详情弹窗 ====================
-.ob-report-modal-list {
-  max-height: 60vh;
-  overflow-y: auto;
-  padding-right: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb { background: rgba(18, 33, 58, 0.12); border-radius: 2px; }
-}
-
-.ob-report-modal-item {
-  border: 1px solid rgba(18, 33, 58, 0.06);
-  border-radius: 10px;
-  padding: 12px 14px;
-  background: #fafbfd;
-
-  .ob-report-modal-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
+    color: #7c3aed;
   }
 
-  .ob-report-modal-date {
-    font-size: 11px;
-    font-weight: 600;
-    color: #1677ff;
-    background: rgba(22, 119, 255, 0.08);
-    padding: 2px 8px;
-    border-radius: 999px;
-  }
-
-  .ob-report-modal-upd {
+  .ob-gainer-limitup {
+    flex-shrink: 0;
     font-size: 10px;
-    color: #94a3b8;
+    font-weight: 600;
+    color: #cf1322;
+    background: rgba(225, 29, 72, 0.1);
+    border-radius: 4px;
+    padding: 0 4px;
+    line-height: 16px;
   }
 
-  .ob-report-modal-title {
-    font-size: 14px;
+  .ob-gainer-buyflag {
+    flex-shrink: 0;
+    font-size: 10px;
     font-weight: 700;
-    color: #12213a;
-    margin-bottom: 8px;
-    line-height: 1.5;
+    color: #fff;
+    background: linear-gradient(135deg, #e11d48, #f43f5e);
+    border-radius: 4px;
+    padding: 0 5px;
+    line-height: 16px;
   }
 
-  .ob-report-modal-content {
-    font-size: 12px;
-    color: #475569;
-    line-height: 1.75;
-    word-break: break-word;
-    max-height: 260px;
-    overflow-y: auto;
-
-    &::-webkit-scrollbar { width: 3px; }
-    &::-webkit-scrollbar-thumb { background: rgba(18, 33, 58, 0.1); border-radius: 2px; }
-
-    // markdown 正文排版
-    h1, h2, h3, h4 {
-      font-size: 13px;
-      font-weight: 700;
-      color: #12213a;
-      margin: 8px 0 4px;
-    }
-    p { margin: 4px 0; }
-    ul, ol { margin: 4px 0; padding-left: 18px; }
-    li { margin: 2px 0; }
-    blockquote {
-      margin: 6px 0;
-      padding: 4px 10px;
-      border-left: 3px solid #cbd5e1;
-      color: #64748b;
-      background: rgba(18, 33, 58, 0.02);
-      border-radius: 0 6px 6px 0;
-    }
-    code {
-      background: rgba(18, 33, 58, 0.05);
-      padding: 1px 4px;
-      border-radius: 4px;
-      font-size: 11px;
-    }
-    pre {
-      background: #0f172a;
-      color: #e2e8f0;
-      padding: 8px 10px;
-      border-radius: 8px;
-      overflow-x: auto;
-
-      code {
-        background: transparent;
-        padding: 0;
-        color: inherit;
-      }
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin: 8px 0;
-      font-size: 11px;
-    }
-    th, td {
-      border: 1px solid #e2e8f0;
-      padding: 4px 8px;
-      text-align: left;
-    }
-    th {
-      background: #f1f5f9;
-      font-weight: 600;
-    }
-    a { color: #1677ff; }
-    hr { border: none; border-top: 1px solid rgba(18, 33, 58, 0.08); margin: 8px 0; }
+  .ob-gainer-empty {
+    height: 120px;
   }
-}
-
-// 研报正文中的股票名高亮
-.ob-report-hl {
-  background: #fff1b8;
-  color: #d4380d;
-  font-weight: 600;
-  padding: 0 2px;
-  border-radius: 3px;
 }
 
 // ==================== 买点 / 卖点诊断卡片 ====================
@@ -1098,6 +1012,16 @@
       margin-bottom: 12px;
     }
 
+    .ob-alert-buy-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e11d48;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .ob-alert-stock {
       padding: 10px 12px;
       border-radius: 10px;
@@ -1117,6 +1041,21 @@
         font-size: 12px;
         color: #94a3b8;
         font-family: monospace;
+      }
+
+      .ob-alert-stock-market {
+        font-size: 11px;
+        color: #475569;
+        background: rgba(18, 33, 58, 0.06);
+        border-radius: 100px;
+        padding: 1px 8px;
+        flex-shrink: 0;
+      }
+
+      .ob-alert-stock-meta {
+        font-size: 12px;
+        color: #64748b;
+        font-variant-numeric: tabular-nums;
       }
     }
 
@@ -1169,14 +1108,16 @@
       width: 100%;
     }
 
-    .ob-bottom-row {
+    .ob-fund-row {
       flex-direction: column;
     }
 
-    .ob-bottom-col-intraday,
-    .ob-bottom-col-rank {
-      flex: none;
-      width: 100%;
+    .ob-gainer-body {
+      flex-direction: column;
+    }
+
+    .ob-gainer-divider {
+      display: none;
     }
   }
 }

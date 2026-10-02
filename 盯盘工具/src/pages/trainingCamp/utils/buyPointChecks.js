@@ -52,6 +52,24 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
   let allPassed = true;
   const targetDateStr = String(campData?.date || '').replace(/-/g, '');
 
+  // 买入时段门禁（与后端 pickBestStock 里的 BUY_TIME_MAX_MINUTE=1330 对齐）
+  const maxBuyMinute = 1330;
+  const buyMinute = Number(current.minute);
+  const buyTimePassed = Number.isFinite(buyMinute) && buyMinute <= maxBuyMinute;
+  const fmtM = (m) => `${String(Math.floor(m/100)).padStart(2,'0')}:${String(m%100).padStart(2,'0')}`;
+  checks.push({
+    id: 'buy_time_gate',
+    title: '买入时段门禁（仅 9:30 – 11:30 / 13:00 – 13:30）',
+    passed: buyTimePassed,
+    value: buyTimePassed
+      ? `买点时刻 ${fmtM(buyMinute)} 在允许时段内`
+      : `买点时刻 ${fmtM(buyMinute)} 已过 13:30，不允许买入`,
+    reason: buyTimePassed
+      ? `买点触发时刻 ${fmtM(buyMinute)} 在允许时段（9:30 – 11:30 或 13:00 – 13:30）内`
+      : `买点触发时刻 ${fmtM(buyMinute)} 已过 13:30，规则禁止此时段交易`,
+  });
+  if (!buyTimePassed) allPassed = false;
+
   // ============================================================
   // 检查1：情绪冰点（前一日 < -40 或 当日 hasIce）【已注释停用，保留代码】
   // 暂停该前置条件，不再作为买点必要条件

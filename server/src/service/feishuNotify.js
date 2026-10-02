@@ -58,39 +58,38 @@ function buildMarketSnapshotText({ mainMoney, amountChangeDiff, chuangyeban, kec
   return `资金：${mainMoney || '--'}、成交量：${amountChangeDiff || '--'}、创业指数：${formatIndex(chuangyeban)}、科创指数：${formatIndex(kechuangban)}、科技情绪：${emotionText}`;
 }
 
-// 买点诊断卡片：绿色主题，附前三日涨幅最大前三名股票
-function buildBuyPointCard({ topStocks, timestamp }) {
+// 买点诊断卡片：绿色主题，列出命中买点的可买标的（已按板块过滤涨停板）
+function buildBuyPointCard({ buyStocks, topStocks, timestamp }) {
+  const list = Array.isArray(buyStocks) ? buyStocks : (Array.isArray(topStocks) ? topStocks : []);
   const elements = [
     {
       tag: "markdown",
-      content: `**🎯【买点诊断】近3日涨幅排名前三**\n> ${timestamp || '--'}`,
+      content: `**🎯【买点诊断】命中买点，可买标的（已过滤涨停板）**\n> ${timestamp || '--'}`,
     },
     {
       tag: "hr",
     },
-    {
-      tag: "div",
-      fields: [
-        { is_short: true, text: { tag: "lark_md", content: "**排名**" } },
-        { is_short: true, text: { tag: "lark_md", content: "**近3日涨幅最大个股**" } },
-      ],
-    },
   ];
 
-  const list = (topStocks || []).slice(0, 3).map((s, i) => ({
-    tag: "div",
-    fields: [
-      { is_short: true, text: { tag: "lark_md", content: `**TOP${i + 1}**` } },
-      {
-        is_short: true,
-        text: {
-          tag: "lark_md",
-          content: `**${s.stockName || '--'}**（${s.code || '--'}）\n近3日涨幅：${s.change3d == null ? '--' : `${s.change3d > 0 ? '+' : ''}${Number(s.change3d).toFixed(2)}%`}`,
-        },
-      },
-    ],
-  }));
-  elements.push(...list);
+  if (list.length === 0) {
+    elements.push({ tag: "markdown", content: "当前无满足买点条件且未封涨停的可买标的。" });
+  } else {
+    list.forEach((s, i) => {
+      const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
+      const resilience = (s.resilienceScore == null || isNaN(Number(s.resilienceScore)))
+        ? '--'
+        : Number(s.resilienceScore).toFixed(2);
+      elements.push({
+        tag: "div",
+        fields: [
+          { is_short: true, text: { tag: "lark_md", content: `**${i + 1}. ${s.stockName || '--'}**（${s.code || '--'}）` } },
+          { is_short: true, text: { tag: "lark_md", content: `市场：${s.market || '--'}` } },
+          { is_short: true, text: { tag: "lark_md", content: `当日：${fmtPct(s.change)}` } },
+          { is_short: true, text: { tag: "lark_md", content: `3日：${fmtPct(s.change3d)}　抗分歧：${resilience}` } },
+        ],
+      });
+    });
+  }
 
   elements.push({
     tag: "markdown",

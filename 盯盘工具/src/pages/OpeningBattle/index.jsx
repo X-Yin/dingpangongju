@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Spin, Modal, Empty, Switch as AntSwitch, Tag } from 'antd';
+import { Spin, Modal, Empty, Switch as AntSwitch } from 'antd';
 import {
   RocketOutlined, RiseOutlined, FallOutlined, StockOutlined,
   AreaChartOutlined, CrownOutlined, RadarChartOutlined, WarningOutlined,
   CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, ReloadOutlined,
-  ArrowUpOutlined, ArrowDownOutlined, FileTextOutlined, LoadingOutlined,
+  ArrowUpOutlined, ArrowDownOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { isAfterMarketClose } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
 import { getThemeColor } from '../../utils/theme';
@@ -585,8 +583,8 @@ const FundChartModule = () => {
 
   return (
     <div className="ob-module ob-fund-module">
-      {/* 第一行：主力资金 + 资金明细 */}
-      <div className="ob-fund-row-top">
+      {/* 第一行：主力资金 + 资金明细 + 成交量（三列同行） */}
+      <div className="ob-fund-row">
         <div className="ob-fund-chart-card ob-fund-chart-main">
           <div className="ob-fund-chart-header">
             <span className="ob-fund-chart-title">主力资金</span>
@@ -612,9 +610,6 @@ const FundChartModule = () => {
             {renderTableData()}
           </div>
         </div>
-      </div>
-      {/* 第二行：成交量（整行） */}
-      <div className="ob-fund-row-bottom">
         <div className="ob-fund-chart-card ob-fund-chart-volume">
           <div className="ob-fund-chart-header">
             <span className="ob-fund-chart-title">成交量</span>
@@ -622,7 +617,7 @@ const FundChartModule = () => {
               {latestVolume !== null && latestVolume !== undefined ? `${latestVolume >= 0 ? '+' : ''}${latestVolume.toFixed(2)}` : '-'}
             </span>
           </div>
-          <div className="ob-fund-chart-body ob-fund-chart-body-volume">
+          <div className="ob-fund-chart-body">
             <div ref={volumeChartContainerRef} style={{ width: '100%', height: '100%' }} />
           </div>
         </div>
@@ -844,64 +839,45 @@ const PositionIntradayModule = ({ expanded, onToggleExpanded }) => {
   );
 };
 
-// 将文本中出现的股票名替换为高亮 <mark> 节点
-const highlightStockName = (text, stockName) => {
-  if (!text || !stockName || typeof text !== 'string' || !text.includes(stockName)) return text;
-  const parts = text.split(stockName);
-  const out = [];
-  parts.forEach((p, i) => {
-    if (i > 0) out.push(<mark key={`hl-${i}`} className="ob-report-hl">{stockName}</mark>);
-    if (p) out.push(p);
-  });
-  return out;
+// ==================== 自选股 3 日涨幅前五（创业板+主板 / 科创板 分列） ====================
+const formatSlope = (v) => (
+  v === null || v === undefined || Number.isNaN(Number(v))
+    ? '--'
+    : `${Number(v) >= 0 ? '+' : ''}${Number(v).toFixed(2)}°`
+);
+
+// 指数 3 日线斜率状态文案：正斜率披露由负转正第几天，负斜率披露由正转负第几天
+const slopeTurnText = (gate) => {
+  if (!gate || gate.slope === null || gate.slope === undefined) return '指数 3 日线斜率数据不足';
+  const slope = Number(gate.slope);
+  if (slope >= 0) {
+    if (gate.turnedPosToday) return '指数今日由负转正';
+    const d = gate.daysSinceTurnPos;
+    if (d === null || d === undefined) return '指数处于正斜率区间';
+    return d === 0 ? '指数今日由负转正' : `指数由负转正第 ${d} 天`;
+  }
+  if (gate.turnedNegToday) return '指数今日由正转负';
+  const d = gate.daysSinceTurnNeg;
+  if (d === null || d === undefined) return '指数处于负斜率区间';
+  return d === 0 ? '指数今日由正转负' : `指数由正转负第 ${d} 天`;
 };
 
-// 研报 markdown 渲染组件：对每类承载文本的元素映射其直接字符串子节点以高亮股票名
-const buildReportMarkdownComponents = (stockName) => {
-  const mapText = (children) => {
-    if (typeof children === 'string') return highlightStockName(children, stockName);
-    if (Array.isArray(children)) {
-      return children.map((c) => (typeof c === 'string' ? highlightStockName(c, stockName) : c));
-    }
-    return children;
-  };
-  const wrap = (Tag) => ({ children }) => <Tag>{mapText(children)}</Tag>;
-  return {
-    p: wrap('p'),
-    li: wrap('li'),
-    td: wrap('td'),
-    th: wrap('th'),
-    h1: wrap('h1'),
-    h2: wrap('h2'),
-    h3: wrap('h3'),
-    h4: wrap('h4'),
-    strong: wrap('strong'),
-    em: wrap('em'),
-    del: wrap('del'),
-    code: wrap('code'),
-    blockquote: wrap('blockquote'),
-    a: wrap('a'),
-  };
-};
+const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
+  const [data, setData] = useState(null);
+  const markets = data?.markets || {};
+  const cybMainList = markets.cybMain || [];
+  const starList = markets.star || [];
 
-// ==================== 自选股 3 日涨幅前五 ====================
-const TopChange3dModule = () => {
-  const [stocks, setStocks] = useState([]);
-  const [activeReports, setActiveReports] = useState(null); // { stockName, loading, reports }
-  const [reportModalVisible, setReportModalVisible] = useState(false);
-
+  // 挂载立即拉一次；交易时段每 5s 轮询，收盘后保留最后一次数据
   const fetchStocks = useCallback(async () => {
     try {
-      // 单次请求拿到全量自选股在最近 3 个报告日内的研报数 + 3 日涨幅（changeNd，N=days）+ 当日涨幅
-      const res = await axios.post(`http://${local_ip}:3000/buy_point_stocks`, { sortBy: 'reports', days: 3 });
-      const matched = res.data?.data?.matchedStocks || [];
-      setStocks(matched);
+      const res = await axios.post(`http://${local_ip}:3000/top_gainers_by_market`, {});
+      setData(res.data?.data || null);
     } catch (err) {
-      console.error('获取自选股研报/涨幅排行失败:', err);
+      console.error('获取自选股 3 日涨幅榜失败:', err);
     }
   }, []);
 
-  // 挂载立即拉一次；交易时段每 5s 轮询，收盘后保留最后一次数据
   useEffect(() => {
     fetchStocks();
     const timers = [];
@@ -918,167 +894,109 @@ const TopChange3dModule = () => {
     return () => timers.forEach(clearTimeout);
   }, [fetchStocks]);
 
-  // 3 日涨幅榜：全量自选股按最近 3 日涨幅（changeNd，days=3 口径）从高到低取前 5 名，
-  // 第 5 名涨幅并列的全部纳入（结果 >= 5 只）；涨幅并列时研报覆盖数多者优先
-  const gainStocks = useMemo(() => {
-    const val = (v) => (v === null || v === undefined ? -Infinity : v);
-    const withGain = stocks.filter(s => s.changeNd !== null && s.changeNd !== undefined);
-    if (withGain.length === 0) return [];
-    const sorted = [...withGain].sort((a, b) => {
-      const va = val(a.changeNd);
-      const vb = val(b.changeNd);
-      if (va !== vb) return vb - va;                  // 主排序：3 日涨幅降序
-      return val(b.reportCount) - val(a.reportCount); // 次排序：研报数降序
-    });
-    // 取第 5 名（不足 5 只则取最后一名）的 3 日涨幅作为入选阈值，并列的全部纳入
-    const threshold = sorted[Math.min(4, sorted.length - 1)].changeNd;
-    return sorted.filter(s => s.changeNd >= threshold);
-  }, [stocks]);
+  // 命中买点的可买标的：满足买点资格且未封涨停（主板 10% / 创业板·科创板 20% 由后端判定）
+  const buyableStocks = useMemo(() => {
+    return [...cybMainList, ...starList].filter(s => s.matchesBuyPoint && !s.isLimitUp);
+  }, [cybMainList, starList]);
 
-  // 点击研报 tag：懒加载 /research_reports_by_stock
-  const openStockReports = useCallback(async (stockName) => {
-    setActiveReports({ stockName, loading: true, reports: [] });
-    setReportModalVisible(true);
-    try {
-      const res = await axios.get(`http://${local_ip}:3000/research_reports_by_stock`, { params: { stockName, days: 3 } });
-      const reports = res.data?.data || [];
-      setActiveReports({ stockName, loading: false, reports });
-    } catch (err) {
-      console.error('获取股票研报失败:', err);
-      setActiveReports({ stockName, loading: false, reports: [] });
-    }
-  }, []);
+  useEffect(() => {
+    onBuyableChange?.(buyableStocks);
+  }, [buyableStocks, onBuyableChange]);
 
-  const closeReportModal = useCallback(() => {
-    setReportModalVisible(false);
-  }, []);
-
-  // 涨幅榜渲染：展示研报数 / 当日涨幅 / 3 日涨幅
-  const renderGainersRanking = () => {
-    const list = gainStocks;
-    if (stocks.length === 0) return <div className="ob-empty-mini">暂无数据</div>;
-    return (
-      <>
-        <div className="ob-rank3-head">
-          <span>#</span>
-          <span>股票</span>
-          <span>研报</span>
-          <span>当日</span>
-          <span>3日涨幅</span>
+  const renderColumn = (marketLabel, gate, list) => (
+    <div className="ob-gainer-col">
+      <div className="ob-gainer-col-head">
+        <div className="ob-gainer-col-title">{marketLabel}</div>
+        <div className={`ob-gainer-gate ${gate?.passed ? 'passed' : 'failed'}`}>
+          <span className="ob-gainer-gate-slope">3日线斜率 {formatSlope(gate?.slope)}</span>
+          <span className="ob-gainer-gate-turn">{slopeTurnText(gate)}</span>
+          <span className="ob-gainer-gate-badge">{gate?.passed ? '满足买点门槛' : '不满足买点门槛'}</span>
         </div>
-        {list.length === 0 ? (
-          <div className="ob-empty-mini" style={{ padding: '14px 0' }}>自选股暂无 3 日涨幅数据</div>
-        ) : list.map((s, idx) => (
-          <div className="ob-rank3-row" key={`${s.code}-${idx}`}>
+      </div>
+      <div className="ob-gainer-head">
+        <span>#</span>
+        <span>股票</span>
+        <span>当日</span>
+        <span>抗分歧</span>
+        <span>3日涨幅</span>
+      </div>
+      {list.length === 0 ? (
+        <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
+      ) : list.map((s, idx) => {
+        const isBuyable = buyPointHit && s.matchesBuyPoint && !s.isLimitUp;
+        return (
+          <div className={`ob-gainer-row ${isBuyable ? 'ob-gainer-hit' : ''}`} key={`${s.code}-${idx}`}>
             <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
-            <span className="ob-stock-name-wrap">
+            <span className="ob-gainer-name-cell">
               <span className="ob-stock-name">{s.stockName}</span>
-              {(s.reportCount || 0) > 0 && (
-                <Tag
-                  color="blue"
-                  className="ob-report-tag"
-                  onClick={() => openStockReports(s.stockName)}
-                  title={`点击查看 ${s.stockName} 最近 3 天研报`}
-                >
-                  <FileTextOutlined /> {s.reportCount}
-                </Tag>
-              )}
-            </span>
-            <span className="ob-report-num">
-              {(s.reportCount || 0) > 0 ? s.reportCount : '--'}
+              {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
+              {isBuyable && <span className="ob-gainer-buyflag">买点</span>}
             </span>
             <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
               {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
             </span>
-            <span className={`ob-change-cell ${s.changeNd >= 0 ? 'ob-up' : 'ob-down'}`}>
-              {s.changeNd !== null && s.changeNd !== undefined ? `${s.changeNd >= 0 ? '+' : ''}${Number(s.changeNd).toFixed(2)}%` : '--'}
+            <span className="ob-gainer-resilience">
+              {s.resilienceScore !== null && s.resilienceScore !== undefined ? Number(s.resilienceScore).toFixed(2) : '--'}
+            </span>
+            <span className={`ob-change-cell ${s.change3d >= 0 ? 'ob-up' : 'ob-down'}`}>
+              {s.change3d !== null && s.change3d !== undefined ? `${s.change3d >= 0 ? '+' : ''}${Number(s.change3d).toFixed(2)}%` : '--'}
             </span>
           </div>
-        ))}
-      </>
-    );
-  };
+        );
+      })}
+    </div>
+  );
 
   return (
-    <>
-      <div className="ob-module ob-rank3-module">
-        <div className="ob-module-header">
-          <div className="ob-module-title">
-            <CrownOutlined className="ob-module-icon" />
-            <span>自选股 · 3日涨幅前五</span>
-          </div>
-          <span className="ob-total-tag">共 {gainStocks.length} 只 · 按3日涨幅</span>
+    <div className="ob-module ob-rank3-module">
+      <div className="ob-module-header">
+        <div className="ob-module-title">
+          <CrownOutlined className="ob-module-icon" />
+          <span>自选股 · 3日涨幅前五</span>
         </div>
-        <div className="ob-rank3-body">
-          {renderGainersRanking()}
-        </div>
+        <span className="ob-total-tag">
+          创业板+主板 {cybMainList.length} 只 · 科创板 {starList.length} 只
+        </span>
       </div>
-
-      {/* 研报详情弹窗 */}
-      <Modal
-        open={reportModalVisible}
-        onCancel={closeReportModal}
-        footer={null}
-        width={640}
-        title={
-          <span>
-            <FileTextOutlined style={{ color: '#1677ff', marginRight: 8 }} />
-            {activeReports?.stockName || ''} · 最近 3 天研报
-          </span>
-        }
-      >
-        {!activeReports ? null : activeReports.loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
-            <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
-            <div style={{ marginTop: 10, fontSize: 12 }}>加载研报中...</div>
-          </div>
-        ) : activeReports.reports.length === 0 ? (
-          <Empty description="最近 5 天暂无研报" style={{ padding: '30px 0' }} />
-        ) : (
-          <div className="ob-report-modal-list">
-            {activeReports.reports.map((r) => (
-              <div className="ob-report-modal-item" key={r.id}>
-                <div className="ob-report-modal-head">
-                  <span className="ob-report-modal-date">
-                    {r.folderDate ? `${r.folderDate.slice(0, 4)}-${r.folderDate.slice(4, 6)}-${r.folderDate.slice(6, 8)}` : ''}
-                  </span>
-                  {r.updatedAt && (
-                    <span className="ob-report-modal-upd">
-                      更新 {dayjs(r.updatedAt).format('MM-DD HH:mm')}
-                    </span>
-                  )}
-                </div>
-                <div className="ob-report-modal-title">
-                  {highlightStockName(r.name || '(未命名研报)', activeReports.stockName)}
-                </div>
-                {r.content ? (
-                  <div className="ob-report-modal-content">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={buildReportMarkdownComponents(activeReports.stockName)}
-                    >
-                      {r.content}
-                    </ReactMarkdown>
-                  </div>
-                ) : (
-                  <div className="ob-report-modal-content ob-empty-mini" style={{ padding: '10px 0' }}>无正文</div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </Modal>
-    </>
+      <div className="ob-gainer-body">
+        {renderColumn('创业板 + 主板', data?.cybGate, cybMainList)}
+        <div className="ob-gainer-divider" />
+        {renderColumn('科创板', data?.starGate, starList)}
+      </div>
+    </div>
   );
 };
 
 // ==================== 买点诊断卡片（自动运行） ====================
-const BuyPointDiagnosisCard = ({ onResultChange }) => {
+const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
   const [data, setData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [popupVisible, setPopupVisible] = useState(false);
+  const [popupStocks, setPopupStocks] = useState([]);
   // 弹窗频控：命中后 5 分钟内不重复弹出（仅内存，刷新页面即重置）
   const lastPopupRef = useRef(0);
+  // 可买标的实时快照：命中时刻发送飞书/弹窗时取用，避免闭包拿到旧值
+  const buyableRef = useRef(buyableStocks);
+  useEffect(() => { buyableRef.current = buyableStocks; }, [buyableStocks]);
+
+  // 命中买点时发送飞书通知（后端已按板块过滤涨停板：主板 10% / 创业板·科创板 20%）
+  const sendBuyPointFeishu = useCallback(async (stocks) => {
+    try {
+      await axios.post(`http://${local_ip}:3000/send_feishu_card`, {
+        type: 'buy_point',
+        buyStocks: (stocks || []).map(s => ({
+          stockName: s.stockName,
+          code: s.code,
+          market: s.isSh688 ? '科创板' : '创业板/主板',
+          change: s.change,
+          change3d: s.change3d,
+          resilienceScore: s.resilienceScore,
+        })),
+      });
+    } catch (err) {
+      console.error('发送买点飞书通知失败:', err);
+    }
+  }, []);
 
   const run = useCallback(async () => {
     try {
@@ -1087,20 +1005,23 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
       if (!result) return;
       setData(result);
       const hit = result.allPassed === true;
-      // 向上层汇报买点是否命中，供 3 日涨幅榜决定是否展示数据
+      // 向上层汇报买点是否命中，供 3 日涨幅榜决定是否高亮展示
       onResultChange?.(hit);
       // 触发条件：其它前置检查全部通过（allPassed）
       if (hit) {
         const now = Date.now();
         if (now - lastPopupRef.current >= 5 * 60 * 1000) {
           lastPopupRef.current = now;
+          const stocks = buyableRef.current || [];
+          setPopupStocks(stocks);
           setPopupVisible(true);
+          sendBuyPointFeishu(stocks);
         }
       }
     } catch (err) {
       console.error('自动买点诊断失败:', err);
     }
-  }, [onResultChange]);
+  }, [onResultChange, sendBuyPointFeishu]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -1237,6 +1158,28 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
             命中类型：
             {allPassed && '全部前置条件通过'}
           </div>
+          {popupStocks.length > 0 ? (
+            <>
+              <div className="ob-alert-buy-title">可买标的（已过滤涨停板）</div>
+              {popupStocks.map((s) => (
+                <div key={s.code} className="ob-alert-stock">
+                  <div className="ob-alert-stock-head">
+                    <b>{s.stockName}</b>
+                    <span className="ob-alert-stock-code">{s.code}</span>
+                    <span className="ob-alert-stock-market">{s.isSh688 ? '科创板' : '创业板/主板'}</span>
+                    <span style={{ marginLeft: 'auto', fontWeight: 700, color: s.change3d >= 0 ? '#e11d48' : '#059669' }}>
+                      3日 {formatSignedPercent(s.change3d)}
+                    </span>
+                  </div>
+                  <div className="ob-alert-stock-meta">
+                    当日 {formatSignedPercent(s.change)} · 抗分歧 {s.resilienceScore != null ? Number(s.resilienceScore).toFixed(2) : '--'}
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div className="ob-alert-sub">当前无满足买点条件且未封涨停的可买标的。</div>
+          )}
           <div className="ob-alert-time">诊断时间：{data?.timestamp}</div>
         </div>
       </Modal>
@@ -1407,7 +1350,12 @@ const OpeningBattle = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // 持仓分时图展开状态：默认折叠（自选股研报&5日涨幅榜 与持仓分时图同处第三行），状态持久化到 localStorage
+  // 买点是否命中（由买点诊断卡片回调），命中时高亮 3 日涨幅榜中符合条件的个股
+  const [buyPointHit, setBuyPointHit] = useState(false);
+  // 命中买点的可买标的（3 日涨幅榜提供，供买点弹窗与飞书通知使用）
+  const [buyableStocks, setBuyableStocks] = useState([]);
+
+  // 持仓分时图展开状态，状态持久化到 localStorage
   const [rankExpanded, setRankExpanded] = useState(() => {
     try {
       return localStorage.getItem('ob_rank_expanded') === '1';
@@ -1424,33 +1372,21 @@ const OpeningBattle = () => {
     });
   }, []);
 
+  const handleBuyableChange = useCallback((stocks) => setBuyableStocks(stocks), []);
+
   return (
     <div className="opening-battle-container">
       <div className="ob-layout">
         <div className="ob-left-col">
+          {/* 第一行：主力资金、资金明细、成交量 */}
           <FundChartModule />
-          {/* 第三行：折叠时 持仓分时图 + 自选股研报&5日涨幅榜(固定420px)；展开时仅持仓分时图 */}
-          <div className="ob-bottom-row">
-            <div className="ob-bottom-col-intraday">
-              <PositionIntradayModule expanded={rankExpanded} onToggleExpanded={toggleRankExpanded} />
-            </div>
-            {!rankExpanded && (
-              <div className="ob-bottom-col-rank">
-                <TopChange3dModule />
-              </div>
-            )}
-          </div>
-          {/* 第四行：展开时 自选股研报&5日涨幅榜独占一行 */}
-          {rankExpanded && (
-            <div className="ob-bottom-row ob-bottom-row-rank">
-              <div className="ob-bottom-col-intraday">
-                <TopChange3dModule />
-              </div>
-            </div>
-          )}
+          {/* 第二行：自选股 3 日涨幅前五（创业板+主板 / 科创板 分列） */}
+          <TopChange3dModule buyPointHit={buyPointHit} onBuyableChange={handleBuyableChange} />
+          {/* 第三行：持仓股分时图 */}
+          <PositionIntradayModule expanded={rankExpanded} onToggleExpanded={toggleRankExpanded} />
         </div>
         <div className="ob-right-col">
-          <BuyPointDiagnosisCard />
+          <BuyPointDiagnosisCard onResultChange={setBuyPointHit} buyableStocks={buyableStocks} />
           <SellPointDiagnosisCard />
         </div>
       </div>

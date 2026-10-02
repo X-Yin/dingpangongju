@@ -76,7 +76,7 @@ const { getMonitorAlarms, markAlarmRead, markAllAlarmsRead } = require('./servic
 const { addMonitorStock, deleteMonitorStock, toggleStockImportant, batchSetImportant, updateMonitorStockName, getMonitorStocks, toggleStockTop, syncTotalShares } = require('./service/monitorStock');
 const { diagnoseResilience, diagnoseResilienceMultiDay, calculateRealtimeResilienceBatch, diagnoseSingleStockResilience, diagnoseIntradayResilience, checkPositionSellAlerts } = require('./service/stockDiagnose');
 const { diagnosePremium } = require('./service/premiumDiagnosis');
-const { backtestBuySell, diagnoseRealtimeBuyPoints, getBuyPointChecks, getBuyPointStocks, getSingleStockBuyPointDiagnosis, getBuySellSelectableStocks, checkSingleStockSellPoint } = require('./service/buySellDiagnose');
+const { backtestBuySell, diagnoseRealtimeBuyPoints, getBuyPointChecks, getBuyPointStocks, getTopGainersByMarket, getSingleStockBuyPointDiagnosis, getBuySellSelectableStocks, checkSingleStockSellPoint } = require('./service/buySellDiagnose');
 const { diagnoseTrendStocks } = require('./service/trendDiagnose');
 const { getTechnicalDiagnosis } = require('./service/technicalDiagnosis');
 const { getMaSlopeDiagnosis } = require('./service/maSlopeDiagnosis');
@@ -834,17 +834,29 @@ app.post('/buy_point_checks', async (req, res) => {
   }
 });
 
-// 筛选抗分歧指数>8的个股
+// 筛选买点个股（filterGate=true 时加全局门槛过滤：买入时段 + 跟踪指数 3 日线斜率门禁 + 抗分歧 ≥ 9 + 个股 MA3 斜率 ≤ 3）
 app.post('/buy_point_stocks', async (req, res) => {
   try {
     const targetDate = req.body?.targetDate;
     const sortBy = req.body?.sortBy || 'resilience';
     const days = req.body?.days || 3; // 研报模式窗口天数：3 或 5
-    const result = await getBuyPointStocks(targetDate, sortBy, days);
+    const filterGate = req.body?.filterGate === true;
+    const result = await getBuyPointStocks(targetDate, sortBy, days, filterGate);
     res.json(result);
   } catch (error) {
     console.error('筛选买点个股失败:', error);
     res.status(500).json({ success: false, message: error.message || '筛选失败' });
+  }
+});
+
+// 开盘实战页：自选股 3 日涨幅榜（创业板+主板 / 科创板 分列，含实时抗分歧与买点资格 + 双指数斜率门禁）
+app.post('/top_gainers_by_market', async (req, res) => {
+  try {
+    const result = await getTopGainersByMarket(req.body?.targetDate);
+    res.json(result);
+  } catch (error) {
+    console.error('获取自选股涨幅榜失败:', error);
+    res.status(500).json({ success: false, message: error.message || '获取失败' });
   }
 });
 
@@ -870,30 +882,38 @@ app.post('/buy_point_single_stock_diagnosis', async (req, res) => {
 //   topStocks?: [              // type='buy_point' 时可传，mock 前三日涨幅前三名；缺省则后端真实拉取
 //     { stockName, code, change3d }
 //   ]
+//   buyStocks?: [              // type='buy_point' 时可传，命中买点的可买标的（已过滤涨停），优先于 topStocks
+//     { stockName, code, market, change, change3d, resilienceScore }
+//   ]
 // }
 app.post('/send_feishu_card', async (req, res) => {
   try {
-    const { type, sellStocks, topStocks } = req.body || {};
+    const { type, sellStocks, topStocks, buyStocks } = req.body || {};
     if (type !== 'buy_point' && type !== 'sell_point') {
       return res.status(400).json({ success: false, message: 'type 必须是 buy_point 或 sell_point' });
     }
 
     let card;
     if (type === 'buy_point') {
-      // 买点卡片：直接推荐近3日涨幅排名前三的股票，不做历史回测推荐
-      let resultTopStocks = topStocks;
-      if (!Array.isArray(topStocks)) {
-        const { getBuyPointStocks } = require('./service/buySellDiagnose');
-        const stocksRes = await getBuyPointStocks(null, 'change');
-        const matched = stocksRes?.data?.matchedStocks || [];
-        resultTopStocks = matched.slice(0, 3).map((s) => ({
-          stockName: s.stockName,
-          code: s.code,
-          change3d: s.change3d,
-        }));
+      // 买点卡片：优先使用前端传入的命中买点可买标的（已过滤涨停板）
+      let resultStocks = buyStocks;
+      if (!Array.isArray(resultStocks)) {
+        if (Array.isArray(topStocks)) {
+          resultStocks = topStocks;
+        } else {
+          const { getBuyPointStocks } = require('./service/buySellDiagnose');
+          const stocksRes = await getBuyPointStocks(null, 'change');
+          const matched = stocksRes?.data?.matchedStocks || [];
+          resultStocks = matched.slice(0, 3).map((s) => ({
+            stockName: s.stockName,
+            code: s.code,
+            change: s.change,
+            change3d: s.change3d,
+          }));
+        }
       }
       card = feishuNotify.buildBuyPointCard({
-        topStocks: resultTopStocks,
+        buyStocks: resultStocks,
         timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       });
     } else {
