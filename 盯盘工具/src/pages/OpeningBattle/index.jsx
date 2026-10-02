@@ -894,10 +894,26 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
     return () => timers.forEach(clearTimeout);
   }, [fetchStocks]);
 
-  // 命中买点的可买标的：满足买点资格且未封涨停（主板 10% / 创业板·科创板 20% 由后端判定）
-  const buyableStocks = useMemo(() => {
-    return [...cybMainList, ...starList].filter(s => s.matchesBuyPoint && !s.isLimitUp);
+  // 全局唯一推荐标的：两列各自的候选（满足买点且未封涨停，主板 10% / 创业板·科创板 20% 由后端判定）
+  // 之间再取 3 日涨幅高者，平手看抗分歧，让用户无需二选一
+  const globalPick = useMemo(() => {
+    const better = (a, b) => {
+      if (!a) return b;
+      if (!b) return a;
+      const ca = a.change3d ?? -Infinity;
+      const cb = b.change3d ?? -Infinity;
+      if (ca !== cb) return cb > ca ? b : a;
+      const ra = a.resilienceScore ?? -Infinity;
+      const rb = b.resilienceScore ?? -Infinity;
+      if (ra !== rb) return rb > ra ? b : a;
+      return a;
+    };
+    const pickOf = (list) => list.find(s => s.matchesBuyPoint && !s.isLimitUp) || null;
+    return better(pickOf(cybMainList), pickOf(starList));
   }, [cybMainList, starList]);
+
+  // 供买点弹窗与飞书通知使用：只推唯一一只标的
+  const buyableStocks = useMemo(() => (globalPick ? [globalPick] : []), [globalPick]);
 
   useEffect(() => {
     onBuyableChange?.(buyableStocks);
@@ -923,14 +939,15 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
       {list.length === 0 ? (
         <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
       ) : list.map((s, idx) => {
-        const isBuyable = buyPointHit && s.matchesBuyPoint && !s.isLimitUp;
+        // 全局唯一推荐标的：只在名称旁打一个标签，不做整行高亮
+        const isPick = globalPick != null && s.code === globalPick.code;
         return (
-          <div className={`ob-gainer-row ${isBuyable ? 'ob-gainer-hit' : ''}`} key={`${s.code}-${idx}`}>
+          <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
             <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
             <span className="ob-gainer-name-cell">
               <span className="ob-stock-name">{s.stockName}</span>
               {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
-              {isBuyable && <span className="ob-gainer-buyflag">买点</span>}
+              {isPick && <span className="ob-gainer-buyflag">{buyPointHit ? '买点触发' : '买点候选'}</span>}
             </span>
             <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
               {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
@@ -1350,9 +1367,9 @@ const OpeningBattle = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // 买点是否命中（由买点诊断卡片回调），命中时高亮 3 日涨幅榜中符合条件的个股
+  // 买点是否命中（由买点诊断卡片回调），命中时 3 日涨幅榜中唯一推荐标的的标签改为「买点触发」
   const [buyPointHit, setBuyPointHit] = useState(false);
-  // 命中买点的可买标的（3 日涨幅榜提供，供买点弹窗与飞书通知使用）
+  // 唯一推荐标的（3 日涨幅榜提供，供买点弹窗与飞书通知使用）
   const [buyableStocks, setBuyableStocks] = useState([]);
 
   // 持仓分时图展开状态，状态持久化到 localStorage

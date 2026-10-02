@@ -852,7 +852,8 @@ app.post('/buy_point_stocks', async (req, res) => {
 // 开盘实战页：自选股 3 日涨幅榜（创业板+主板 / 科创板 分列，含实时抗分歧与买点资格 + 双指数斜率门禁）
 app.post('/top_gainers_by_market', async (req, res) => {
   try {
-    const result = await getTopGainersByMarket(req.body?.targetDate);
+    // limit：每市场最大条数，缺省 5（开盘实战页）；优选个股全量展示时传较大的值
+    const result = await getTopGainersByMarket(req.body?.targetDate, req.body?.limit);
     res.json(result);
   } catch (error) {
     console.error('获取自选股涨幅榜失败:', error);

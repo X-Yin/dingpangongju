@@ -476,6 +476,199 @@
     }
   }
 
+  /* 涨跌幅 tab：按市场分列的优选个股（上下两模块，各 400px，内部滚动） */
+  .fbd-market-block {
+    height: 400px;
+    box-sizing: border-box; // 含边框精确 400px
+    flex-shrink: 0; // 父容器为 column flex，避免被压缩导致高度不足 400px
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(157, 176, 207, 0.16);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.68);
+    overflow: hidden;
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .fbd-market-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    background: rgba(110, 126, 162, 0.05);
+    border-bottom: 1px solid rgba(110, 126, 162, 0.08);
+    flex-shrink: 0;
+
+    .fbd-market-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #12213a;
+    }
+
+    .fbd-market-gate {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #6b7890;
+      flex-wrap: wrap;
+
+      .fbd-market-gate-slope {
+        font-weight: 600;
+        color: #334155;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .fbd-market-gate-badge {
+        font-weight: 600;
+        padding: 1px 8px;
+        border-radius: 999px;
+      }
+
+      &.passed .fbd-market-gate-badge {
+        color: #0958d9;
+        background: rgba(22, 119, 255, 0.1);
+      }
+
+      &.failed .fbd-market-gate-badge {
+        color: #cf1322;
+        background: rgba(245, 34, 45, 0.1);
+      }
+    }
+  }
+
+  .fbd-market-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 6px 8px 8px;
+
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.2); border-radius: 999px; }
+  }
+
+  .fbd-market-list-header {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) 54px 60px 70px;
+    gap: 6px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    span {
+      text-align: right;
+      &:first-child { text-align: left; }
+      &:nth-child(2) { text-align: left; }
+    }
+  }
+
+  .fbd-market-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) 54px 60px 70px;
+    gap: 6px;
+    padding: 7px 8px;
+    align-items: center;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: rgba(99, 102, 241, 0.05);
+      border-color: rgba(99, 102, 241, 0.12);
+    }
+
+    .fbd-market-rank {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: #8c8c8c;
+      background: rgba(110, 126, 162, 0.08);
+
+      &.top {
+        background: linear-gradient(135deg, #f5222d, #fa8c16);
+        color: #fff;
+      }
+    }
+
+    .fbd-market-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .fbd-market-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #262626;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fbd-market-tag {
+      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 600;
+      border-radius: 4px;
+      padding: 0 4px;
+      line-height: 16px;
+
+      &.limitup {
+        color: #cf1322;
+        background: rgba(245, 34, 45, 0.1);
+      }
+
+      &.pick {
+        color: #fff;
+        background: var(--theme-color, #1677ff);
+        box-shadow: 0 1px 5px rgba(var(--theme-color-rgb, 22, 119, 255), 0.35);
+      }
+    }
+
+    .fbd-market-resilience {
+      text-align: right;
+      font-weight: 700;
+      color: #7c3aed;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .fbd-market-change {
+      text-align: right;
+      font-weight: 600;
+      color: #8c8c8c;
+      font-variant-numeric: tabular-nums;
+
+      &.up { color: #cf1322; }
+      &.down { color: #389e0d; }
+    }
+  }
+
+  .fbd-market-empty {
+    font-size: 12px;
+    color: #b0b8c4;
+    text-align: center;
+    padding: 40px 0;
+  }
+
   .fbd-warning-tip {
     margin-top: 2px;
     padding: 10px 12px;

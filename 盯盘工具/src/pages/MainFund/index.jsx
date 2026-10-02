@@ -4,7 +4,7 @@ import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import dayjs from 'dayjs';
 import { isAfterMarketClose } from '../../utils/tradingDay';
 import { Tabs, Switch as AntSwitch, Select, Spin, Button, Modal, message, Checkbox, Input, Tag } from 'antd';
-import { RobotOutlined, CopyOutlined, ThunderboltOutlined, LineChartOutlined, AppstoreOutlined, PlusOutlined, SearchOutlined, CloseOutlined, CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
+import { RobotOutlined, CopyOutlined, ThunderboltOutlined, LineChartOutlined, AppstoreOutlined, PlusOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import { marked } from 'marked';
 import { local_ip } from '../../constant';
 import FloatingTechEmotion from '../../components/FloatingTechEmotion';
@@ -374,11 +374,9 @@ export const MainFundContent = () => {
   const [error, setError] = useState(null);
   // 明细数据固定为只看变化，5min 级别可勾选（默认开启）
   const [fiveMinAggEnabled, setFiveMinAggEnabled] = useState(true);
-  // 自动买点诊断：命中后弹窗展示条件卡片，仅当前浏览器 tab 激活时弹出
-  const [buyPointModalOpen, setBuyPointModalOpen] = useState(false);
-  const [buyPointResult, setBuyPointResult] = useState(null);
+  // 自动买点诊断：命中后自动打开买点诊断抽屉（默认涨跌幅 tab），仅当前浏览器 tab 激活时弹出
   const lastAutoBuyPointOpenRef = useRef(0);
-  // 手动买点诊断抽屉：点击控制栏「买点诊断」按钮打开，展示各条件是否符合
+  // 买点诊断抽屉：点击控制栏「买点诊断」按钮手动打开，展示各条件是否符合
   const [buyPointDrawerOpen, setBuyPointDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('today');
   const [availableDates, setAvailableDates] = useState([]);
@@ -543,7 +541,7 @@ export const MainFundContent = () => {
   }, [fetchData]);
 
   // 自动买点诊断：与 FloatingStockPosition 保持一致，交易日交易时段每 10 秒运行一次
-  // 命中后弹窗（频控 5 分钟），且仅当前浏览器 tab 激活（可见）时才弹出
+  // 命中后自动打开买点诊断抽屉（默认落在涨跌幅 tab，直接给出该买哪只个股），频控 5 分钟，且仅当前浏览器 tab 激活（可见）时才弹
   const autoRunBuyPointDiagnosis = useCallback(async () => {
     try {
       const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1 });
@@ -556,8 +554,7 @@ export const MainFundContent = () => {
           // 只有当前浏览器 tab 页被激活（可见）时才能弹出
           if (document.visibilityState === 'visible' && !document.hidden) {
             lastAutoBuyPointOpenRef.current = now;
-            setBuyPointResult(result);
-            setBuyPointModalOpen(true);
+            setBuyPointDrawerOpen(true);
           }
         }
       }
@@ -2051,89 +2048,7 @@ export const MainFundContent = () => {
 
   return (
     <div className="main-fund-content">
-      {/* 自动买点诊断命中弹窗：展示各个买点诊断的条件卡片 */}
-      <Modal
-        open={buyPointModalOpen}
-        onCancel={() => setBuyPointModalOpen(false)}
-        width={680}
-        title={
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#12213a' }}>
-            🎯 买点诊断命中
-            {buyPointResult?.timestamp ? <span style={{ fontSize: 12, fontWeight: 400, color: '#6b7890', marginLeft: 8 }}>{buyPointResult.timestamp}</span> : null}
-          </span>
-        }
-        footer={
-          <Button type="primary" size="large" onClick={() => setBuyPointModalOpen(false)} style={{ borderRadius: 999, padding: '0 28px' }}>
-            知道了
-          </Button>
-        }
-        className="buy-point-check-modal"
-        centered
-        destroyOnClose
-      >
-        {buyPointResult && (
-          <div className="buy-diagnosis-drawer">
-            <div className="panel-header">
-              <span className="panel-title">买点条件诊断</span>
-              <span className={`panel-badge ${buyPointResult.allPassed ? 'pass' : 'fail'}`}>
-                {buyPointResult.passedCount}/{buyPointResult.totalCheckCount}
-              </span>
-            </div>
-            <div className="fbd-checks-list" style={{ maxHeight: 420, overflowY: 'auto' }}>
-              {buyPointResult.checks.map((check, idx) => (
-                <div key={check.id} className={`fbd-check-card ${check.passed ? 'passed' : 'failed'}`}>
-                  <div className="fbd-card-header">
-                    <div className="fbd-title-row">
-                      <span className={`fbd-num ${check.passed ? 'num-pass' : 'num-fail'}`}>{idx + 1}</span>
-                      <span className="fbd-title">{check.title}</span>
-                    </div>
-                    {check.passed ? (
-                      <CheckCircleFilled className="fbd-status-icon pass-icon" />
-                    ) : (
-                      <CloseCircleFilled className="fbd-status-icon fail-icon" />
-                    )}
-                  </div>
-                  <div className="fbd-card-body">
-                    <div className="fbd-value-row">
-                      <span className="fbd-value-label">当前值</span>
-                      <span className={`fbd-value ${check.passed ? 'value-pass' : 'value-fail'}`}>{check.value}</span>
-                    </div>
-                    {check.detail && (
-                      <div className="fbd-detail-row">
-                        {check.id === 'fund_inflow' && check.detail.pastValue != null && check.detail.currentValue != null && (
-                          <span className="fbd-detail-item">
-                            资金 <b>{check.detail.pastValue >= 0 ? '+' : ''}{check.detail.pastValue.toFixed(2)}亿</b>
-                            <span className="fbd-arrow"> → </span>
-                            <b>{check.detail.currentValue >= 0 ? '+' : ''}{check.detail.currentValue.toFixed(2)}亿</b>
-                            <span className="fbd-detail-time">（{check.detail.pastTime} → {check.detail.currentTime}）</span>
-                          </span>
-                        )}
-                        {check.id === 'volume_expansion' && check.detail.prev5minVol != null && check.detail.last5minVol != null && (
-                          <span className="fbd-detail-item">
-                            量能变化 <b>{check.detail.prev5minVol.toFixed(2)}亿</b>
-                            <span className="fbd-arrow"> → </span>
-                            <b>{check.detail.last5minVol.toFixed(2)}亿</b>
-                            <span className="fbd-detail-time">（{check.detail.pastTime} → {check.detail.currentTime}）</span>
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <div className="fbd-reason">{check.reason}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className={`fbd-conclusion ${buyPointResult.allPassed ? 'conclusion-pass' : 'conclusion-fail'}`}>
-              <div className={`fbd-conclusion-title ${buyPointResult.allPassed ? 'title-pass' : 'title-fail'}`}>
-                {buyPointResult.allPassed ? '🚀 诊断结果：可以出手' : '⚠️ 诊断结果：暂不可出手'}
-              </div>
-              <div className="fbd-conclusion-text">{buyPointResult.conclusion}</div>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* 手动买点诊断抽屉：点击控制栏「买点诊断」按钮打开，展示各条件是否符合 */}
+      {/* 买点诊断抽屉：点击控制栏「买点诊断」手动打开，命中买点时自动打开（默认涨跌幅 tab，直接给出该买的个股） */}
       <BuyPointDiagnosisDrawer
         open={buyPointDrawerOpen}
         onClose={() => setBuyPointDrawerOpen(false)}

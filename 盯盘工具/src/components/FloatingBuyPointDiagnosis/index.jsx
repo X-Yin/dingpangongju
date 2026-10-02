@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Drawer, Empty, Button, Space, Spin, Modal, Tooltip, Segmented, message, Input } from 'antd';
 import { ReloadOutlined, HistoryOutlined, CheckCircleFilled, CloseCircleFilled, StarFilled, InfoCircleOutlined, RobotOutlined, CopyOutlined, SnippetsOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,29 @@ import { local_ip } from '../../constant';
 import './index.scss';
 
 const { TextArea } = Input;
+
+// 指数 3 日线斜率格式化（与开盘实战页保持一致）
+const formatSlope = (v) => (
+  v === null || v === undefined || Number.isNaN(Number(v))
+    ? '--'
+    : `${Number(v) >= 0 ? '+' : ''}${Number(v).toFixed(2)}°`
+);
+
+// 指数 3 日线斜率状态文案：正斜率披露由负转正第几天，负斜率披露由正转负第几天
+const slopeTurnText = (gate) => {
+  if (!gate || gate.slope === null || gate.slope === undefined) return '指数 3 日线斜率数据不足';
+  const slope = Number(gate.slope);
+  if (slope >= 0) {
+    if (gate.turnedPosToday) return '指数今日由负转正';
+    const d = gate.daysSinceTurnPos;
+    if (d === null || d === undefined) return '指数处于正斜率区间';
+    return d === 0 ? '指数今日由负转正' : `指数由负转正第 ${d} 天`;
+  }
+  if (gate.turnedNegToday) return '指数今日由正转负';
+  const d = gate.daysSinceTurnNeg;
+  if (d === null || d === undefined) return '指数处于负斜率区间';
+  return d === 0 ? '指数今日由正转负' : `指数由正转负第 ${d} 天`;
+};
 
 const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck = false }) => {
   const navigate = useNavigate();
@@ -25,6 +48,11 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
   const [techEmotion, setTechEmotion] = useState(null);
   const [activeTab, setActiveTab] = useState('change');
   const [reportDays, setReportDays] = useState(3); // 研报覆盖窗口天数：3 或 5
+  // 涨跌幅 tab：按市场分列的优选个股（全量，含实时涨幅/抗分歧/3日涨幅与双指数斜率门禁）
+  const [gainersData, setGainersData] = useState(null);
+  const [gainersLoading, setGainersLoading] = useState(false);
+  // 每个市场「立刻可买」那一行的 DOM 引用，用于数据就绪后滚动到可视区域
+  const pickRefs = useRef({});
 
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResults, setAiResults] = useState(null);
@@ -54,6 +82,19 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
       console.error('Fetch buy point stocks failed:', error);
     } finally {
       setStocksLoading(false);
+    }
+  }, []);
+
+  // 涨跌幅 tab：拉取分市场的优选个股（limit 传大值以覆盖全部自选股）
+  const fetchGainers = useCallback(async () => {
+    setGainersLoading(true);
+    try {
+      const response = await axios.post(`http://${local_ip}:3000/top_gainers_by_market`, { limit: 999 });
+      setGainersData(response.data?.data || null);
+    } catch (error) {
+      console.error('Fetch top gainers by market failed:', error);
+    } finally {
+      setGainersLoading(false);
     }
   }, []);
 
@@ -210,19 +251,22 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
 
   const refreshAll = useCallback(() => {
     fetchChecks(true);
-    if (activeTab === 'change' || activeTab === 'resilience' || activeTab === 'reports') {
+    if (activeTab === 'change') {
+      fetchGainers();
+    } else if (activeTab === 'resilience' || activeTab === 'reports') {
       fetchStocks(activeTab, reportDays);
     } else if (activeTab === 'ai') {
       fetchAiScreen();
     }
     fetchTechEmotion();
-  }, [fetchChecks, fetchStocks, fetchAiScreen, fetchTechEmotion, activeTab, reportDays]);
+  }, [fetchChecks, fetchStocks, fetchGainers, fetchAiScreen, fetchTechEmotion, activeTab, reportDays]);
 
   useEffect(() => {
     if (open) {
       setNow(new Date());
       setChecksData(null);
       setStocksData(null);
+      setGainersData(null);
       setShowOnlyGoodNews(false);
       setTechEmotion(null);
       setActiveTab('change');
@@ -230,17 +274,29 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
       setAiResults(null);
       setAiContext(null);
       fetchChecks(false);
-      fetchStocks('change');
+      fetchGainers();
       fetchTechEmotion();
       fetchJigouReports();
     }
-  }, [open, fetchChecks, fetchStocks, fetchTechEmotion, fetchJigouReports]);
+  }, [open, fetchChecks, fetchGainers, fetchTechEmotion, fetchJigouReports]);
 
   useEffect(() => {
     if (!open) return;
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, [open]);
+
+  // 优选个股数据就绪后，把两个市场的推荐买入行各自滚动到列表中部，打开抽屉即可直接下单
+  useEffect(() => {
+    if (activeTab !== 'change' || !gainersData) return;
+    Object.values(pickRefs.current).forEach((el) => {
+      if (!el) return;
+      const list = el.closest('.fbd-market-list');
+      if (!list) return;
+      const delta = el.getBoundingClientRect().top - list.getBoundingClientRect().top;
+      list.scrollTo({ top: list.scrollTop + delta - (list.clientHeight - el.clientHeight) / 2 });
+    });
+  }, [gainersData, activeTab]);
 
   const checksResult = checksData?.data;
   const stocksResult = stocksData?.data;
@@ -275,7 +331,116 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
     }
   };
 
-  const renderStocksTab = () => (
+  // 涨跌幅 tab：按市场（创业板+主板 / 科创板）分列的优选个股，上下两模块各 400px，内部滚动
+  const renderChangeModeByMarket = () => {
+    const markets = gainersData?.markets || {};
+    const cybMainList = markets.cybMain || [];
+    const starList = markets.star || [];
+    // 买点条件全部满足时标签为「买点触发」，否则为「买点候选」
+    const pickLabel = allPassed ? '买点触发' : '买点候选';
+
+    // 每个市场各自的候选：列表按 3 日涨幅降序，取第一只满足买点且未封涨停的个股
+    const pickOf = (list) => list.find(i => i.matchesBuyPoint && !i.isLimitUp) || null;
+
+    // 两个市场合起来只推荐唯一一只：3 日涨幅高者优先，平手再看抗分歧
+    const betterPick = (a, b) => {
+      if (!a) return b;
+      if (!b) return a;
+      const ca = a.change3d ?? -Infinity;
+      const cb = b.change3d ?? -Infinity;
+      if (ca !== cb) return cb > ca ? b : a;
+      const ra = a.resilienceScore ?? -Infinity;
+      const rb = b.resilienceScore ?? -Infinity;
+      if (ra !== rb) return rb > ra ? b : a;
+      return a;
+    };
+    const globalPick = betterPick(pickOf(cybMainList), pickOf(starList));
+
+    const renderMarketBlock = (label, gate, list) => {
+      // 只有全局最强候选所在的市场才给出推荐，另一市场不再提示，避免二选一
+      const pick = globalPick && list.some(i => i.code === globalPick.code) ? globalPick : null;
+      return (
+      <div className="fbd-market-block">
+        <div className="fbd-market-head">
+          <span className="fbd-market-title">{label}</span>
+          <div className={`fbd-market-gate ${gate?.passed ? 'passed' : 'failed'}`}>
+            <span className="fbd-market-gate-slope">3日线斜率 {formatSlope(gate?.slope)}</span>
+            <span className="fbd-market-gate-turn">{slopeTurnText(gate)}</span>
+            <span className="fbd-market-gate-badge">{gate?.passed ? '满足买点门槛' : '不满足买点门槛'}</span>
+          </div>
+        </div>
+        <div className="fbd-market-list">
+          <div className="fbd-market-list-header">
+            <span>#</span>
+            <span>股票名称</span>
+            <span>抗分歧</span>
+            <span>当日</span>
+            <span>3日涨幅</span>
+          </div>
+          {list.length === 0 ? (
+            <div className="fbd-market-empty">暂无数据</div>
+          ) : list.map((item, idx) => {
+            // 全局唯一推荐标的：只在名称旁打一个标签，不做整行高亮
+            const isPick = pick != null && item.code === pick.code;
+            return (
+              <div
+                key={item.code}
+                ref={isPick ? (el) => { pickRefs.current[label] = el; } : null}
+                className="fbd-market-row"
+                onClick={() => handleStockItemClick(item)}
+              >
+                <span className={`fbd-market-rank ${idx < 3 ? 'top' : ''}`}>{idx + 1}</span>
+                <span className="fbd-market-name-cell">
+                  <span className="fbd-market-name">{item.stockName}</span>
+                  {item.isLimitUp && <span className="fbd-market-tag limitup">涨停</span>}
+                  {isPick && <span className="fbd-market-tag pick">{pickLabel}</span>}
+                </span>
+                <span className="fbd-market-resilience">
+                  {item.resilienceScore != null ? Number(item.resilienceScore).toFixed(2) : '--'}
+                </span>
+                <span className={`fbd-market-change ${item.change > 0 ? 'up' : item.change < 0 ? 'down' : ''}`}>
+                  {item.change != null ? `${item.change > 0 ? '+' : ''}${Number(item.change).toFixed(2)}%` : '--'}
+                </span>
+                <span className={`fbd-market-change ${item.change3d > 0 ? 'up' : item.change3d < 0 ? 'down' : ''}`}>
+                  {item.change3d != null ? `${item.change3d > 0 ? '+' : ''}${Number(item.change3d).toFixed(2)}%` : '--'}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      );
+    };
+
+    return (
+      <>
+        {checksResult && !allPassed && (
+          <div className="fbd-warning-tip" style={{ marginBottom: 10 }}>
+            ⚠️ 前置条件未全部满足，个股列表仅供参考，不建议盲目出手
+          </div>
+        )}
+        {gainersLoading && !gainersData ? (
+          <div className="fbd-panel-loading">
+            <Spin size="small" tip="正在加载个股..." />
+          </div>
+        ) : gainersData ? (
+          <>
+            {renderMarketBlock('创业板 + 主板', gainersData.cybGate, cybMainList)}
+            {renderMarketBlock('科创板', gainersData.starGate, starList)}
+          </>
+        ) : (
+          <div className="fbd-panel-empty">
+            <Empty
+              description={<span style={{ fontSize: 12, color: '#8c8c8c' }}>点击刷新加载个股</span>}
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          </div>
+        )}
+      </>
+    );
+  };
+
+  const renderStocksTab = () => (isChangeMode ? renderChangeModeByMarket() : (
     <>
       {checksResult && !allPassed && matchedStocks.length > 0 && (
         <div className="fbd-warning-tip" style={{ marginBottom: 10 }}>
@@ -390,7 +555,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
         </div>
       )}
     </>
-  );
+  ));
 
   const renderAiTab = () => {
     const recommendations = aiResults?.recommendations || [];
@@ -717,7 +882,9 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
                   value={activeTab}
                   onChange={(val) => {
                     setActiveTab(val);
-                    if (val === 'change' || val === 'resilience' || val === 'reports') {
+                    if (val === 'change') {
+                      fetchGainers();
+                    } else if (val === 'resilience' || val === 'reports') {
                       fetchStocks(val, reportDays);
                     } else if (val === 'ai') {
                       setAiResults(null);

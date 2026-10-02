@@ -2637,7 +2637,11 @@ const isLimitUpChange = (code, change) => {
   return c >= getLimitUpThresholdByCode(code) - 0.3;
 };
 
-const getTopGainersByMarket = async (targetDate = null) => {
+const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_MARKET) => {
+  // limit：每个市场返回的最大条数；传入较大的值（如全部自选股）时用于「优选个股」全量分市场展示
+  const maxPerMarket = Number.isFinite(Number(limit)) && Number(limit) > 0
+    ? Math.floor(Number(limit))
+    : TOP_GAINERS_PER_MARKET;
   let targetDay;
   if (targetDate) {
     targetDay = dayjs(String(targetDate).replace(/-/g, ''), 'YYYYMMDD');
@@ -2693,8 +2697,8 @@ const getTopGainersByMarket = async (targetDate = null) => {
   }
 
   const byChange3d = (a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity);
-  const topCybMain = base.filter(s => !s.isSh688).sort(byChange3d).slice(0, TOP_GAINERS_PER_MARKET);
-  const topStar = base.filter(s => s.isSh688).sort(byChange3d).slice(0, TOP_GAINERS_PER_MARKET);
+  const topCybMain = base.filter(s => !s.isSh688).sort(byChange3d).slice(0, maxPerMarket);
+  const topStar = base.filter(s => s.isSh688).sort(byChange3d).slice(0, maxPerMarket);
 
   // 阶段2：对入选个股拉分时，计算实时涨幅、抗分歧分数、涨停与买点资格
   const enrich = async (s) => {
@@ -2733,9 +2737,10 @@ const getTopGainersByMarket = async (targetDate = null) => {
     };
   };
 
+  // 全量模式下入选数量可达上百只，用 batchParallel 限流并发（保留原顺序），避免瞬间打爆数据源
   const [cybMainList, starList] = await Promise.all([
-    Promise.all(topCybMain.map(enrich)),
-    Promise.all(topStar.map(enrich)),
+    batchParallel(topCybMain, enrich, 8),
+    batchParallel(topStar, enrich, 8),
   ]);
 
   const pickGate = (g) => (g ? {

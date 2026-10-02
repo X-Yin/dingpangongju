@@ -1859,46 +1859,6 @@
     ],
     "isImportant": false
   },
-  "sh600312": {
-    "stockName": "平高电气",
-    "kline": [
-      {
-        "trade_date": 20260930,
-        "open_px": 19.95,
-        "high_px": 20.78,
-        "low_px": 19.88,
-        "close_px": 20.29,
-        "business_amount": 25366380,
-        "business_balance": 517699640,
-        "change": 1.7,
-        "ma5_px": 19.55,
-        "ma10_px": 19.43,
-        "ma20_px": 19.5,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
-  "sz000400": {
-    "stockName": "许继电气",
-    "kline": [
-      {
-        "trade_date": 20260930,
-        "open_px": 21.03,
-        "high_px": 21.78,
-        "low_px": 21,
-        "close_px": 21.61,
-        "business_amount": 20525607,
-        "business_balance": 441469010,
-        "change": 2.76,
-        "ma5_px": 20.68,
-        "ma10_px": 20.44,
-        "ma20_px": 20.74,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
   "sz000823": {
     "stockName": "超声电子",
     "kline": [
@@ -1934,26 +1894,6 @@
         "ma5_px": 9.86,
         "ma10_px": 9.63,
         "ma20_px": 9.15,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
-  "sz300162": {
-    "stockName": "雷曼光电",
-    "kline": [
-      {
-        "trade_date": 20260930,
-        "open_px": 8.5,
-        "high_px": 9.28,
-        "low_px": 8.4,
-        "close_px": 9.13,
-        "business_amount": 89811056,
-        "business_balance": 807774780,
-        "change": 7.92,
-        "ma5_px": 8.41,
-        "ma10_px": 8.1,
-        "ma20_px": 7.85,
         "change_diff": 0
       }
     ],

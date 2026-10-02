@@ -657,13 +657,6 @@
     &:hover {
       background: rgba(18, 33, 58, 0.02);
     }
-
-    // 命中买点且未封涨停：特殊高亮展示
-    &.ob-gainer-hit {
-      background: linear-gradient(90deg, rgba(225, 29, 72, 0.12), rgba(225, 29, 72, 0.02));
-      border: 1px solid rgba(225, 29, 72, 0.35);
-      box-shadow: 0 0 0 1px rgba(225, 29, 72, 0.06);
-    }
   }
 
   .ob-gainer-name-cell {
@@ -697,7 +690,8 @@
     font-size: 10px;
     font-weight: 700;
     color: #fff;
-    background: linear-gradient(135deg, #e11d48, #f43f5e);
+    background: var(--theme-color, #1677ff);
+    box-shadow: 0 1px 5px rgba(var(--theme-color-rgb, 22, 119, 255), 0.35);
     border-radius: 4px;
     padding: 0 5px;
     line-height: 16px;

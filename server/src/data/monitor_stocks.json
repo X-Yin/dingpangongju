@@ -754,24 +754,6 @@
     "isTech": true
   },
   {
-    "code": "sh600312",
-    "name": "平高电气",
-    "isImportant": false,
-    "blockName": "特高压",
-    "riskScore": "7",
-    "isTech": false,
-    "addedAt": "2026-09-30 15:30:58"
-  },
-  {
-    "code": "sz000400",
-    "name": "许继电气",
-    "isImportant": false,
-    "blockName": "特高压",
-    "riskScore": "7",
-    "isTech": false,
-    "addedAt": "2026-09-30 15:31:17"
-  },
-  {
     "code": "sz000823",
     "name": "超声电子",
     "isImportant": false,
@@ -788,15 +770,6 @@
     "riskScore": "7",
     "isTech": true,
     "addedAt": "2026-09-30 15:47:16"
-  },
-  {
-    "code": "sz300162",
-    "name": "雷曼光电",
-    "isImportant": false,
-    "blockName": "玻璃基板",
-    "riskScore": " 7",
-    "isTech": true,
-    "addedAt": "2026-09-30 22:32:13"
   },
   {
     "code": "sz301297",

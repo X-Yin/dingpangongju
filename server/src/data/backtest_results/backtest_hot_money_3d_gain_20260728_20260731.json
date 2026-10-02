@@ -1,0 +1,39 @@
+{
+  "success": true,
+  "type": "single",
+  "strategy": {
+    "id": "hot_money_3d_gain",
+    "name": "情绪游资-3日涨幅最大",
+    "desc": "选股：回测起始日至前一交易日期间任一交易日登龙虎榜的主板非ST股（且属电力/农业/医药/消费板块成分股，代码与四份名单重合）中，截至前一交易日收盘最近3个交易日累计涨幅最大的一只；买点：创业板指5日线斜率与10日线斜率均为负、银行板块5日线斜率为正（按前一交易日收盘数据计算）时，该股盘中涨幅超过8%即买入；卖点：现价跌破成本线-5%（较买入价下跌5%即止损）或该股十日线斜率（昨日收盘口径，斜率=当前MA10−5日前MA10）转为负数，两者满足其一即卖"
+  },
+  "range": {
+    "startDate": "20260728",
+    "endDate": "20260731"
+  },
+  "skippedDates": [],
+  "seenStocks": [
+    {
+      "code": "sz002309",
+      "name": "中利集团"
+    },
+    {
+      "code": "sz002212",
+      "name": "天融信"
+    },
+    {
+      "code": "sh605388",
+      "name": "均瑶健康"
+    }
+  ],
+  "trades": [],
+  "currentHolding": null,
+  "summary": {
+    "tradeCount": 0,
+    "winCount": 0,
+    "winRate": null,
+    "avgDrawdown": null,
+    "maxDrawdown": null,
+    "overallReturn": 0,
+    "holding": false
+  }
+}
