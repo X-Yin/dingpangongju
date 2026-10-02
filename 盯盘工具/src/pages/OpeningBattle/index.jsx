@@ -568,7 +568,7 @@ const FundChartModule = () => {
             {mainMoney >= 0 ? '+' : ''}{mainMoney.toFixed(2)}
             {diff !== 0 && (
               <span className={`item-diff ${diff >= 0 ? 'up' : 'down'} ${isBigOutflow ? 'big-outflow-text' : ''} ${isBigInflow ? 'big-inflow-text' : ''}`}>
-                ({diff >= 0 ? '+' : ''}{diff.toFixed(2)})
+                {diff >= 0 ? '+' : ''}{diff.toFixed(2)}
               </span>
             )}
           </span>
