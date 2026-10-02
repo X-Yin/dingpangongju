@@ -1779,26 +1779,6 @@
     ],
     "isImportant": false
   },
-  "sz301071": {
-    "stockName": "力量钻石",
-    "kline": [
-      {
-        "trade_date": 20260930,
-        "open_px": 64,
-        "high_px": 64.81,
-        "low_px": 61.46,
-        "close_px": 61.62,
-        "business_amount": 11664773,
-        "business_balance": 730781860,
-        "change": -3.39,
-        "ma5_px": 66.29,
-        "ma10_px": 68.19,
-        "ma20_px": 65.36,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
   "sz300776": {
     "stockName": "帝尔激光",
     "kline": [

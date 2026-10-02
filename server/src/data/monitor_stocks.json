@@ -722,14 +722,6 @@
     "isTech": true
   },
   {
-    "code": "sz301071",
-    "name": "力量钻石",
-    "isImportant": false,
-    "blockName": "金刚石",
-    "riskScore": " 6",
-    "isTech": true
-  },
-  {
     "code": "sz300776",
     "name": "帝尔激光",
     "isImportant": false,

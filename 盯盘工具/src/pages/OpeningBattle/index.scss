@@ -366,7 +366,7 @@
   }
 
   .ob-fund-detail {
-    flex: 0 0 190px;
+    flex: 0 0 220px;
     display: flex;
     flex-direction: column;
     border: 1px solid rgba(18, 33, 58, 0.06);
@@ -418,6 +418,7 @@
     .data-item {
       display: flex;
       align-items: center;
+    justify-content: space-between;
       gap: 8px;
       padding: 5px 8px;
       margin-bottom: 4px;

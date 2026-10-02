@@ -1800,7 +1800,7 @@ const countStockPositiveSlopeDays = (code, targetDateStr, dailyInfos) => {
     if (!Number.isFinite(slope)) break;
     if (slope > 0) count++;
     else break;
-    if (count >= 5) break; // 用户关心 ≤3，算到 4 就够了
+    if (count >= 6) break; // 用户关心 ≤4，算到 5 就够了
   }
   return count;
 };
@@ -1976,10 +1976,10 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   const skipped = []; // 因门槛策略抗分歧分数<11 被顺延跳过的前序股票（仅 RESILIENCE_GATE_STRATEGY_IDS 使用）
   const globalResilienceSkipped = []; // 因全局最低抗分歧 < GLOBAL_RESILIENCE_MIN 被顺延跳过（所有策略通用）
   const limitUpSkipped = []; // 因买点时点涨停被顺延跳过的候选（全策略通用，追加 limit_up_defer 买入明细）
-  const stockSlopeSkipped = []; // 因个股 MA3 切线正斜率连续天数 > 3 被顺延跳过
+  const stockSlopeSkipped = []; // 因个股 MA3 切线正斜率连续天数 > 4 被顺延跳过
   // 个股斜率过滤触发条件：**仅指数今日盘中由负转正当日**（turnedPosToday=true）
-  // 过滤规则：个股 MA3 切线正斜率连续天数 > 3 → 顺延下一只（= 3 允许）
-  // 原因：指数刚由负转正，个股如果已经抢先连涨 ≥4 天是提前反应过大盘，不该再追
+  // 过滤规则：个股 MA3 切线正斜率连续天数 > 4 → 顺延下一只（= 4 允许）
+  // 原因：指数刚由负转正，个股如果已经抢先连涨 ≥5 天是提前反应过大盘，不该再追
   const shouldCheckStockSlope = turnedPosInfo && (
     turnedPosInfo.cybTurnedPosToday || turnedPosInfo.starTurnedPosToday
   );
@@ -2004,15 +2004,15 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       });
       continue;
     }
-    // 指数今日由负转正当日，检查个股 MA3 切线正斜率连续天数；> 3 则顺延（= 3 允许）
+    // 指数今日由负转正当日，检查个股 MA3 切线正斜率连续天数；> 4 则顺延（= 4 允许）
     if (shouldCheckStockSlope) {
       const slopeDays = countStockPositiveSlopeDays(cand.sc.code, rangeDates[di], dailyInfos);
-      if (slopeDays != null && slopeDays > 3) {
+      if (slopeDays != null && slopeDays > 4) {
         stockSlopeSkipped.push({
           code: cand.sc.code,
           name: cand.sc.name || cand.sc.code,
           slopeDays,
-          reason: `跟踪指数今日由负转正，个股 MA3 切线正斜率已连续 ${slopeDays} 天（≤ 3 才允许）`,
+          reason: `跟踪指数今日由负转正，个股 MA3 切线正斜率已连续 ${slopeDays} 天（≤ 4 才允许）`,
         });
         continue;
       }
@@ -3186,8 +3186,8 @@ const withDualGateInfo = async (buyInfo, strategyId, dateStr, minute, opts) => {
     gatePassed: !allBlocked,
     gateAllowedMarkets: allowedMarkets,
     // 关键补充：用于下游 pickBestStock 对个股 MA3 切线正斜率连续天数做过滤
-    //   两种指数场景都触发：① 指数今日由负转正当日；② 指数斜率为负（规则① 持续负斜率窗口）
-    //   两种场景的过滤规则相同：个股 MA3 切线正斜率连续天数 > 2 则顺延
+    //   两种场景都触发：① 指数今日由负转正当日；② 指数斜率为负（规则① 持续负斜率窗口）
+    //   两种场景的过滤规则相同：个股 MA3 切线正斜率连续天数 > 4 则顺延
     gateTurnedPosInfo: {
       cybTurnedPosToday: !!cybGate?.turnedPosToday,
       starTurnedPosToday: !!starGate?.turnedPosToday,

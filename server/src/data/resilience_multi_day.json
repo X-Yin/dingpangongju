@@ -8,174 +8,6 @@
   ],
   "stocks": [
     {
-      "code": "sz300162",
-      "stockName": "雷曼光电",
-      "blockName": "玻璃基板",
-      "isImportant": false,
-      "change": 7.92,
-      "dailyResults": [
-        {
-          "date": 20260930,
-          "resilienceScore": 19.8143,
-          "stockChange": 7.92,
-          "indexChange": -0.23,
-          "status": "极强抗跌"
-        },
-        {
-          "date": 20260929,
-          "resilienceScore": 7.0158,
-          "stockChange": -2.42,
-          "indexChange": 0.09,
-          "status": "跟随指数"
-        },
-        {
-          "date": 20260928,
-          "resilienceScore": 17.7026,
-          "stockChange": 12.89,
-          "indexChange": -4.53,
-          "status": "极强抗跌"
-        },
-        {
-          "date": 20260924,
-          "resilienceScore": 6.1558,
-          "stockChange": -5.3,
-          "indexChange": -2.68,
-          "status": "跟随指数"
-        },
-        {
-          "date": 20260923,
-          "resilienceScore": 16.0767,
-          "stockChange": 3.05,
-          "indexChange": -0.6,
-          "status": "极强抗跌"
-        }
-      ],
-      "latestScore": 14.84,
-      "latestSingleScore": 19.81,
-      "latestStatus": "较强抗跌",
-      "trend": "improving",
-      "hasTransition": true,
-      "klineCondition": {
-        "close": 9.13,
-        "ma5": 8.41,
-        "ma10": 8.1,
-        "ma20": 7.85
-      },
-      "isBullishArrangement": true
-    },
-    {
-      "code": "sz000400",
-      "stockName": "许继电气",
-      "blockName": "特高压",
-      "isImportant": false,
-      "change": 2.76,
-      "dailyResults": [
-        {
-          "date": 20260930,
-          "resilienceScore": 12.5024,
-          "stockChange": 2.76,
-          "indexChange": -0.23,
-          "status": "较强抗跌"
-        },
-        {
-          "date": 20260929,
-          "resilienceScore": 13.4716,
-          "stockChange": 2.14,
-          "indexChange": 0.09,
-          "status": "较强抗跌"
-        },
-        {
-          "date": 20260928,
-          "resilienceScore": 13.9897,
-          "stockChange": 2.8,
-          "indexChange": -4.53,
-          "status": "较强抗跌"
-        },
-        {
-          "date": 20260924,
-          "resilienceScore": 10.8335,
-          "stockChange": -0.54,
-          "indexChange": -2.68,
-          "status": "较强抗跌"
-        },
-        {
-          "date": 20260923,
-          "resilienceScore": 10.872,
-          "stockChange": -0.59,
-          "indexChange": -0.6,
-          "status": "较强抗跌"
-        }
-      ],
-      "latestScore": 13.32,
-      "latestSingleScore": 12.5,
-      "latestStatus": "较强抗跌",
-      "trend": "stable",
-      "hasTransition": false,
-      "klineCondition": {
-        "close": 21.61,
-        "ma5": 20.68,
-        "ma10": 20.44,
-        "ma20": 20.74
-      },
-      "isBullishArrangement": false
-    },
-    {
-      "code": "sh600312",
-      "stockName": "平高电气",
-      "blockName": "特高压",
-      "isImportant": false,
-      "change": 1.7,
-      "dailyResults": [
-        {
-          "date": 20260930,
-          "resilienceScore": 12.4746,
-          "stockChange": 1.7,
-          "indexChange": -0.23,
-          "status": "较强抗跌"
-        },
-        {
-          "date": 20260929,
-          "resilienceScore": 12.5458,
-          "stockChange": 1.53,
-          "indexChange": 0.09,
-          "status": "较强抗跌"
-        },
-        {
-          "date": 20260928,
-          "resilienceScore": 14.4535,
-          "stockChange": 3.75,
-          "indexChange": -4.53,
-          "status": "较强抗跌"
-        },
-        {
-          "date": 20260924,
-          "resilienceScore": 10.9398,
-          "stockChange": 0.05,
-          "indexChange": -2.68,
-          "status": "较强抗跌"
-        },
-        {
-          "date": 20260923,
-          "resilienceScore": 7.6008,
-          "stockChange": -1.92,
-          "indexChange": -0.6,
-          "status": "跟随指数"
-        }
-      ],
-      "latestScore": 13.16,
-      "latestSingleScore": 12.47,
-      "latestStatus": "较强抗跌",
-      "trend": "stable",
-      "hasTransition": false,
-      "klineCondition": {
-        "close": 20.29,
-        "ma5": 19.55,
-        "ma10": 19.43,
-        "ma20": 19.5
-      },
-      "isBullishArrangement": false
-    },
-    {
       "code": "sh600707",
       "stockName": "彩虹股份",
       "blockName": "玻璃基板",
@@ -228,6 +60,62 @@
         "ma5": 9.86,
         "ma10": 9.63,
         "ma20": 9.15
+      },
+      "isBullishArrangement": true
+    },
+    {
+      "code": "sh688099",
+      "stockName": "晶晨股份",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": 7.17,
+      "dailyResults": [
+        {
+          "date": 20260930,
+          "resilienceScore": 17.1203,
+          "stockChange": 7.17,
+          "indexChange": -2.51,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260929,
+          "resilienceScore": 9.152,
+          "stockChange": 2.32,
+          "indexChange": 0.86,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260928,
+          "resilienceScore": 10.8238,
+          "stockChange": -1.4,
+          "indexChange": -4.06,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260924,
+          "resilienceScore": 8.0211,
+          "stockChange": -3.63,
+          "indexChange": -2.35,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260923,
+          "resilienceScore": 7.0163,
+          "stockChange": -1.86,
+          "indexChange": -0.25,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 12.37,
+      "latestSingleScore": 17.12,
+      "latestStatus": "较强抗跌",
+      "trend": "improving",
+      "hasTransition": true,
+      "klineCondition": {
+        "close": 96.8,
+        "ma5": 91.56,
+        "ma10": 90.31,
+        "ma20": 89.27
       },
       "isBullishArrangement": true
     },
@@ -5328,62 +5216,6 @@
       "isBullishArrangement": false
     },
     {
-      "code": "sz301071",
-      "stockName": "力量钻石",
-      "blockName": "金刚石",
-      "isImportant": false,
-      "change": -3.39,
-      "dailyResults": [
-        {
-          "date": 20260930,
-          "resilienceScore": 6.2766,
-          "stockChange": -3.39,
-          "indexChange": -0.23,
-          "status": "跟随指数"
-        },
-        {
-          "date": 20260929,
-          "resilienceScore": 5.1116,
-          "stockChange": -3.33,
-          "indexChange": 0.09,
-          "status": "跟随指数"
-        },
-        {
-          "date": 20260928,
-          "resilienceScore": 8.8282,
-          "stockChange": -4.43,
-          "indexChange": -4.53,
-          "status": "跟随指数"
-        },
-        {
-          "date": 20260924,
-          "resilienceScore": 9.3174,
-          "stockChange": -2.82,
-          "indexChange": -2.68,
-          "status": "跟随指数"
-        },
-        {
-          "date": 20260923,
-          "resilienceScore": 13.5611,
-          "stockChange": 3.71,
-          "indexChange": -0.6,
-          "status": "较强抗跌"
-        }
-      ],
-      "latestScore": 6.74,
-      "latestSingleScore": 6.28,
-      "latestStatus": "跟随指数",
-      "trend": "declining",
-      "hasTransition": false,
-      "klineCondition": {
-        "close": 61.62,
-        "ma5": 66.29,
-        "ma10": 68.19,
-        "ma20": 65.36
-      },
-      "isBullishArrangement": false
-    },
-    {
       "code": "sz300179",
       "stockName": "四方达",
       "blockName": "金刚石散热",
@@ -5554,62 +5386,6 @@
   ],
   "transitionedStocks": [
     {
-      "code": "sz300162",
-      "stockName": "雷曼光电",
-      "blockName": "玻璃基板",
-      "isImportant": false,
-      "change": 7.92,
-      "dailyResults": [
-        {
-          "date": 20260930,
-          "resilienceScore": 19.8143,
-          "stockChange": 7.92,
-          "indexChange": -0.23,
-          "status": "极强抗跌"
-        },
-        {
-          "date": 20260929,
-          "resilienceScore": 7.0158,
-          "stockChange": -2.42,
-          "indexChange": 0.09,
-          "status": "跟随指数"
-        },
-        {
-          "date": 20260928,
-          "resilienceScore": 17.7026,
-          "stockChange": 12.89,
-          "indexChange": -4.53,
-          "status": "极强抗跌"
-        },
-        {
-          "date": 20260924,
-          "resilienceScore": 6.1558,
-          "stockChange": -5.3,
-          "indexChange": -2.68,
-          "status": "跟随指数"
-        },
-        {
-          "date": 20260923,
-          "resilienceScore": 16.0767,
-          "stockChange": 3.05,
-          "indexChange": -0.6,
-          "status": "极强抗跌"
-        }
-      ],
-      "latestScore": 14.84,
-      "latestSingleScore": 19.81,
-      "latestStatus": "较强抗跌",
-      "trend": "improving",
-      "hasTransition": true,
-      "klineCondition": {
-        "close": 9.13,
-        "ma5": 8.41,
-        "ma10": 8.1,
-        "ma20": 7.85
-      },
-      "isBullishArrangement": true
-    },
-    {
       "code": "sh600707",
       "stockName": "彩虹股份",
       "blockName": "玻璃基板",
@@ -5664,7 +5440,63 @@
         "ma20": 9.15
       },
       "isBullishArrangement": true
+    },
+    {
+      "code": "sh688099",
+      "stockName": "晶晨股份",
+      "blockName": "半导体",
+      "isImportant": false,
+      "change": 7.17,
+      "dailyResults": [
+        {
+          "date": 20260930,
+          "resilienceScore": 17.1203,
+          "stockChange": 7.17,
+          "indexChange": -2.51,
+          "status": "极强抗跌"
+        },
+        {
+          "date": 20260929,
+          "resilienceScore": 9.152,
+          "stockChange": 2.32,
+          "indexChange": 0.86,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260928,
+          "resilienceScore": 10.8238,
+          "stockChange": -1.4,
+          "indexChange": -4.06,
+          "status": "较强抗跌"
+        },
+        {
+          "date": 20260924,
+          "resilienceScore": 8.0211,
+          "stockChange": -3.63,
+          "indexChange": -2.35,
+          "status": "跟随指数"
+        },
+        {
+          "date": 20260923,
+          "resilienceScore": 7.0163,
+          "stockChange": -1.86,
+          "indexChange": -0.25,
+          "status": "跟随指数"
+        }
+      ],
+      "latestScore": 12.37,
+      "latestSingleScore": 17.12,
+      "latestStatus": "较强抗跌",
+      "trend": "improving",
+      "hasTransition": true,
+      "klineCondition": {
+        "close": 96.8,
+        "ma5": 91.56,
+        "ma10": 90.31,
+        "ma20": 89.27
+      },
+      "isBullishArrangement": true
     }
   ],
-  "updatedAt": "2026-10-01T06:55:39.354Z"
+  "updatedAt": "2026-10-02T10:21:50.209Z"
 }

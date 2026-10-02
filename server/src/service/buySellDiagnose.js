@@ -2283,14 +2283,14 @@ const countStockPositiveSlopeDaysLocal = (sortedKline, targetIdx) => {
     const slope = avg(i, 3) - avg(i + 1, 3);
     if (!Number.isFinite(slope)) break;
     if (slope > 0) c++; else break;
-    if (c >= 5) break;
+    if (c >= 6) break;
   }
   return c;
 };
 
 // 买点候选筛选（加全局门槛过滤可选）
 // filterGate=true 时，对 change / reports 模式也加：①买点时刻 ≤ 1330、②跟踪指数 3 日线斜率门禁通过、
-//   ③抗分歧 ≥ GLOBAL_RESILIENCE_MIN、④指数由负转正当日时个股 MA3 切线正斜率连续天数 ≤ 3
+//   ③抗分歧 ≥ GLOBAL_RESILIENCE_MIN、④指数由负转正当日时个股 MA3 切线正斜率连续天数 ≤ 4
 const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', reportDays = 3, filterGate = false) => {
   let targetDay;
   if (targetDate) {
@@ -2495,7 +2495,7 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
     }
 
     // filterGate=true：个股级过滤（②跟踪指数 3 日线斜率门禁、③抗分歧 ≥ GLOBAL_RESILIENCE_MIN、
-    // ④指数由负转正当日时个股 MA3 切线正斜率连续天数 ≤ 3）
+    // ④指数由负转正当日时个股 MA3 切线正斜率连续天数 ≤ 4）
     if (filterGate) {
       const isSh688 = stock.code.startsWith('sh688') || stock.code.startsWith('688');
       const trackedIdx = isSh688 ? STAR_INDEX_CODE : CYB_INDEX_CODE;
@@ -2514,10 +2514,10 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
       }
       if (resilienceScore == null || resilienceScore < GLOBAL_RESILIENCE_MIN) { checkedCount++; continue; }
 
-      // ④ 指数由负转正当日，个股 MA3 切线正斜率连续天数 ≤ 3（否则 skip）
+      // ④ 指数由负转正当日，个股 MA3 切线正斜率连续天数 ≤ 4（否则 skip）
       if (trackedGate.turnedPosToday === true) {
         const slopeDays = countStockPositiveSlopeDaysLocal(sortedKline, targetIdx);
-        if (slopeDays != null && slopeDays > 3) { checkedCount++; continue; }
+        if (slopeDays != null && slopeDays > 4) { checkedCount++; continue; }
       }
     }
 
@@ -2716,13 +2716,13 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       const score = calculateResilience(indexLine, stockLine, getLimitTypeByCode(s.stock.code));
       resilienceScore = Number.isFinite(score) ? parseFloat(score.toFixed(2)) : null;
     }
-    // 买点资格：跟踪指数门禁通过 + 抗分歧 ≥ 全局门槛 + （指数由负转正当日）个股 MA3 正斜率天数 ≤ 3
+    // 买点资格：跟踪指数门禁通过 + 抗分歧 ≥ 全局门槛 + （指数由负转正当日）个股 MA3 正斜率天数 ≤ 4
     const indexGatePassed = trackedGate?.passed === true;
     const resilienceOk = resilienceScore != null && resilienceScore >= MIN_RESILIENCE_SCORE;
     let slopeOk = true;
     if (trackedGate?.turnedPosToday === true) {
       const days = countStockPositiveSlopeDaysLocal(s.sortedKline, s.targetIdx);
-      slopeOk = !(days != null && days > 3);
+      slopeOk = !(days != null && days > 4);
     }
     return {
       code: s.stock.code,
@@ -2910,8 +2910,8 @@ const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh 
       if (!gatePassed) allPassed = false;
 
       // 个股 MA3 切线正斜率连续天数检查（**仅跟踪的指数今日盘中由负转正当日**触发）：
-      //   过滤规则：连续正 > 3 天 → 禁止出手（= 3 允许）
-      //   原因：指数刚由负转正，个股如果已经抢先连涨 ≥4 天是提前反应过大盘
+      //   过滤规则：连续正 > 4 天 → 禁止出手（= 4 允许）
+      //   原因：指数刚由负转正，个股如果已经抢先连涨 ≥5 天是提前反应过大盘
       const shouldCheckStockSlope = trackedGate?.turnedPosToday === true;
       if (shouldCheckStockSlope && klineData && klineData.length >= 4) {
         const sortedKline = [...klineData].sort((a, b) => a.trade_date - b.trade_date);
@@ -2929,20 +2929,20 @@ const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh 
             const slope = avg(i, 3) - avg(i + 1, 3);
             if (!Number.isFinite(slope)) break;
             if (slope > 0) c++; else break;
-            if (c >= 5) break;
+            if (c >= 6) break;
           }
           return c;
         })();
         if (count != null) {
-          const stockSlopePassed = count <= 3;
+          const stockSlopePassed = count <= 4;
           checks.push({
             id: 'stock_ma3_slope_duration',
             title: '个股 MA3 切线正斜率连续天数',
             passed: stockSlopePassed,
-            value: `${count} 天（≤ 3 才允许）`,
+            value: `${count} 天（≤ 4 才允许）`,
             reason: stockSlopePassed
-              ? `跟踪${trackedName}今日由负转正，个股 MA3 切线正斜率已连续 ${count} 天（≤ 3），允许出手`
-              : `跟踪${trackedName}今日由负转正，个股 MA3 切线正斜率已连续 ${count} 天（> 3），禁止出手`,
+              ? `跟踪${trackedName}今日由负转正，个股 MA3 切线正斜率已连续 ${count} 天（≤ 4），允许出手`
+              : `跟踪${trackedName}今日由负转正，个股 MA3 切线正斜率已连续 ${count} 天（> 4），禁止出手`,
           });
           if (!stockSlopePassed) allPassed = false;
         }

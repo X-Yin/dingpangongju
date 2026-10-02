@@ -834,7 +834,7 @@ app.post('/buy_point_checks', async (req, res) => {
   }
 });
 
-// 筛选买点个股（filterGate=true 时加全局门槛过滤：买入时段 + 跟踪指数 3 日线斜率门禁 + 抗分歧 ≥ 9 + 个股 MA3 斜率 ≤ 3）
+// 筛选买点个股（filterGate=true 时加全局门槛过滤：买入时段 + 跟踪指数 3 日线斜率门禁 + 抗分歧 ≥ 9 + 个股 MA3 斜率 ≤ 4）
 app.post('/buy_point_stocks', async (req, res) => {
   try {
     const targetDate = req.body?.targetDate;
