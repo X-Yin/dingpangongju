@@ -2,9 +2,9 @@
   "success": true,
   "type": "single",
   "strategy": {
-    "id": "highest_3d_gain",
-    "name": "3日涨幅最大",
-    "desc": "买点命中时只买入最近 3 个交易日涨幅最大的股票"
+    "id": "highest_3d_gain_quarter",
+    "name": "3日涨幅四份仓位",
+    "desc": "买点触发时把仓位分成四份，分别买入最近 3 个交易日涨幅排名前四的股票（各占 1/4）。任一只触发卖点即独立卖出；仅当四份全部清仓（彻底空仓）后，下一次买点才重新按四份建仓"
   },
   "range": {
     "startDate": "20260806",

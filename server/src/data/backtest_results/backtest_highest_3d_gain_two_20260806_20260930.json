@@ -2,9 +2,9 @@
   "success": true,
   "type": "single",
   "strategy": {
-    "id": "highest_3d_gain",
-    "name": "3日涨幅最大",
-    "desc": "买点命中时只买入最近 3 个交易日涨幅最大的股票"
+    "id": "highest_3d_gain_two",
+    "name": "3日涨幅两个股票",
+    "desc": "买点触发时把仓位分成两份（各占 1/2）。两份均空仓时买入最近 3 个交易日涨幅最大和第二大的股票；仅一份空仓时只买入涨幅最大的股票。任一只触发卖点即独立卖出"
   },
   "range": {
     "startDate": "20260806",

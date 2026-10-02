@@ -2,9 +2,9 @@
   "success": true,
   "type": "single",
   "strategy": {
-    "id": "highest_3d_gain",
-    "name": "3日涨幅最大",
-    "desc": "买点命中时只买入最近 3 个交易日涨幅最大的股票"
+    "id": "highest_4d_gain",
+    "name": "4日涨幅最大",
+    "desc": "买点命中时只买入最近 4 个交易日涨幅最大的股票"
   },
   "range": {
     "startDate": "20260806",
@@ -408,7 +408,7 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 38.5995,
+      "metric": 47.747,
       "code": "sz300476",
       "stockName": "胜宏科技",
       "buyDate": "20260807",
@@ -463,14 +463,14 @@
     },
     {
       "seq": 2,
-      "metric": 20.9937,
-      "code": "sz300548",
-      "stockName": "长芯博创",
+      "metric": 36.5579,
+      "code": "sh688143",
+      "stockName": "长盈通",
       "buyDate": "20260817",
       "buyDateDisplay": "2026-08-17",
       "buyTime": "11:00",
-      "buyPrice": 218.99,
-      "buyChange": 12.49,
+      "buyPrice": 142.5,
+      "buyChange": 1.79,
       "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 25.10亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 115.15亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票涨停顺延买入）",
       "buyChecks": [
         {
@@ -524,15 +524,15 @@
       ],
       "sellDate": "20260818",
       "sellDateDisplay": "2026-08-18",
-      "sellTime": "10:25",
-      "sellPrice": 214.29,
-      "sellChange": -2.15,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -2.15
+      "sellTime": "14:50",
+      "sellPrice": 145.88,
+      "sellChange": -5.27,
+      "sellReason": "抗分歧指数弱势",
+      "returnRate": 2.37
     },
     {
       "seq": 3,
-      "metric": 17.8441,
+      "metric": 27.1184,
       "code": "sz300570",
       "stockName": "太辰光",
       "buyDate": "20260819",
@@ -587,7 +587,7 @@
     },
     {
       "seq": 4,
-      "metric": 3.7652,
+      "metric": 24.5183,
       "code": "sz300570",
       "stockName": "太辰光",
       "buyDate": "20260820",
@@ -642,14 +642,14 @@
     },
     {
       "seq": 5,
-      "metric": 15.09,
-      "code": "sz002536",
-      "stockName": "飞龙股份",
+      "metric": 25.3132,
+      "code": "sh688143",
+      "stockName": "长盈通",
       "buyDate": "20260825",
       "buyDateDisplay": "2026-08-25",
       "buyTime": "10:05",
-      "buyPrice": 49.14,
-      "buyChange": 0.7,
+      "buyPrice": 158.21,
+      "buyChange": 5.32,
       "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 22.90亿、当前量能为正（今日累计成交额超昨日全天）：冰点期豁免成交量，成交量增加 0.00亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -687,17 +687,256 @@
           "reason": "9:30 竞价科技情绪 -56.36 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260904",
-      "sellDateDisplay": "2026-09-04",
-      "sellTime": "14:20",
-      "sellPrice": 58.48,
-      "sellChange": -7.22,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": 19.01
+      "sellDate": "20260828",
+      "sellDateDisplay": "2026-08-28",
+      "sellTime": "14:50",
+      "sellPrice": 163,
+      "sellChange": -5.94,
+      "sellReason": "抗分歧指数弱势",
+      "returnRate": 3.03
     },
     {
       "seq": 6,
-      "metric": 12.4289,
+      "metric": 17.2614,
+      "code": "sz301511",
+      "stockName": "德福科技",
+      "buyDate": "20260831",
+      "buyDateDisplay": "2026-08-31",
+      "buyTime": "13:30",
+      "buyPrice": 95.54,
+      "buyChange": 5.57,
+      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 21.66亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 170.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+21.66亿",
+          "reason": "最近 5 分钟资金净流入 21.66 亿（13:25:00→13:30:00），超过 20 亿阈值",
+          "fundText": "5min 内资金净流入 21.66亿"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 170.23亿",
+          "reason": "当前量能 -776.68 亿为负，但较 5min 前的 -946.91 亿+ 170.23 亿，达到 100 亿阈值",
+          "volumeText": "成交量增加 170.23亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 -70.62 / 当前 29.05",
+          "reason": "9:30 竞价科技情绪 -70.62 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260901",
+      "sellDateDisplay": "2026-09-01",
+      "sellTime": "09:45",
+      "sellPrice": 93.45,
+      "sellChange": -4.24,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.19
+    },
+    {
+      "seq": 7,
+      "metric": 17.5652,
+      "code": "sz000977",
+      "stockName": "浪潮信息",
+      "buyDate": "20260901",
+      "buyDateDisplay": "2026-09-01",
+      "buyTime": "13:10",
+      "buyPrice": 86.76,
+      "buyChange": 1.85,
+      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 21.79亿、当前量能为正（今日累计成交额超昨日全天）：冰点期豁免成交量，成交量增加 208.51亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+21.79亿",
+          "reason": "最近 5 分钟资金净流入 21.79 亿（13:05:00→13:10:00），超过 20 亿阈值",
+          "fundText": "5min 内资金净流入 21.79亿"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "当前量能为正（今日累计成交额超昨日全天）",
+          "passed": true,
+          "exempted": true,
+          "value": "冰点期豁免成交量，成交量增加 208.51亿",
+          "reason": "今日(09-01)盘中科技情绪触及 -100 退潮冰点（hasIce: true），冰点期豁免成交量，成交量增加 208.51亿",
+          "volumeText": "冰点期豁免成交量，成交量增加 208.51亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 2.86 / 当前 -70.55",
+          "reason": "9:30 竞价科技情绪 2.86 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260902",
+      "sellDateDisplay": "2026-09-02",
+      "sellTime": "10:15",
+      "sellPrice": 84.97,
+      "sellChange": -0.74,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.06
+    },
+    {
+      "seq": 8,
+      "metric": 17.1993,
+      "code": "sh603319",
+      "stockName": "美湖股份",
+      "buyDate": "20260903",
+      "buyDateDisplay": "2026-09-03",
+      "buyTime": "14:00",
+      "buyPrice": 31.07,
+      "buyChange": 4.68,
+      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 20.56亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 156.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票涨停顺延买入）",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+20.56亿",
+          "reason": "最近 5 分钟资金净流入 20.56 亿（13:55:00→14:00:00），超过 20 亿阈值",
+          "fundText": "5min 内资金净流入 20.56亿"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 156.23亿",
+          "reason": "当前量能 -506.69 亿为负，但较 5min 前的 -662.92 亿+ 156.23 亿，达到 100 亿阈值",
+          "volumeText": "成交量增加 156.23亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 37.71 / 当前 4.71",
+          "reason": "9:30 竞价科技情绪 37.71 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "limit_up_defer",
+          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+          "passed": true,
+          "value": "顺延 2 只",
+          "skippedStocks": [
+            {
+              "code": "sh603757",
+              "name": "大元泵业",
+              "change": 10
+            },
+            {
+              "code": "sz002536",
+              "name": "飞龙股份",
+              "change": 10.01
+            }
+          ],
+          "reason": "买入时点涨停候选已剔除并顺延：大元泵业（触发时涨幅 +10.00%）、飞龙股份（触发时涨幅 +10.01%）（涨停股买入不可成交，顺延至排名下一只）"
+        }
+      ],
+      "sellDate": "20260904",
+      "sellDateDisplay": "2026-09-04",
+      "sellTime": "09:40",
+      "sellPrice": 30.35,
+      "sellChange": -0.82,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.32
+    },
+    {
+      "seq": 9,
+      "metric": 10.2399,
+      "code": "sz002536",
+      "stockName": "飞龙股份",
+      "buyDate": "20260904",
+      "buyDateDisplay": "2026-09-04",
+      "buyTime": "10:05",
+      "buyPrice": 60.52,
+      "buyChange": -3.98,
+      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 24.00亿、当前量能为正（今日累计成交额超昨日全天）：冰点期豁免成交量，成交量增加 91.00亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+24.00亿",
+          "reason": "最近 5 分钟资金净流入 24.00 亿（10:00:00→10:05:00），超过 20 亿阈值",
+          "fundText": "5min 内资金净流入 24.00亿"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "当前量能为正（今日累计成交额超昨日全天）",
+          "passed": true,
+          "exempted": true,
+          "value": "冰点期豁免成交量，成交量增加 91.00亿",
+          "reason": "今日(09-04)盘中科技情绪触及 -100 退潮冰点（hasIce: true），冰点期豁免成交量，成交量增加 91.00亿",
+          "volumeText": "冰点期豁免成交量，成交量增加 91.00亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 44.52 / 当前 -21.88",
+          "reason": "9:30 竞价科技情绪 44.52 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260907",
+      "sellDateDisplay": "2026-09-07",
+      "sellTime": "09:30",
+      "sellPrice": 57.68,
+      "sellChange": -1,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -4.69
+    },
+    {
+      "seq": 10,
+      "metric": 10.5064,
       "code": "sh600601",
       "stockName": "方正科技",
       "buyDate": "20260907",
@@ -770,8 +1009,8 @@
       "returnRate": 6.93
     },
     {
-      "seq": 7,
-      "metric": 24.0086,
+      "seq": 11,
+      "metric": 26.3647,
       "code": "sh688361",
       "stockName": "中科飞测",
       "buyDate": "20260918",
@@ -823,71 +1062,63 @@
       "sellChange": -2.74,
       "sellReason": "跌破成本线-2%",
       "returnRate": -2.03
-    },
-    {
-      "seq": 8,
-      "metric": 1.3794,
-      "code": "sh688082",
-      "stockName": "盛美上海",
-      "buyDate": "20260929",
-      "buyDateDisplay": "2026-09-29",
-      "buyTime": "11:30",
-      "buyPrice": 295.32,
-      "buyChange": 3.26,
-      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 20.54亿、当前量能为正（今日累计成交额超昨日全天）：冰点期豁免成交量，成交量增加 78.08亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+20.54亿",
-          "reason": "最近 5 分钟资金净流入 20.54 亿（11:25:00→11:30:00），超过 20 亿阈值",
-          "fundText": "5min 内资金净流入 20.54亿"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "当前量能为正（今日累计成交额超昨日全天）",
-          "passed": true,
-          "exempted": true,
-          "value": "冰点期豁免成交量，成交量增加 78.08亿",
-          "reason": "前一交易日盘中科技情绪触及 -100 退潮冰点（hasIce: true），冰点期豁免成交量，成交量增加 78.08亿",
-          "volumeText": "冰点期豁免成交量，成交量增加 78.08亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 -2.49 / 当前 25.72",
-          "reason": "9:30 竞价科技情绪 -2.49 未超过 80，当前情绪须低于 40 的限制不生效"
-        }
-      ],
-      "sellDate": "20260930",
-      "sellDateDisplay": "2026-09-30",
-      "sellTime": "10:30",
-      "sellPrice": 291.98,
-      "sellChange": -3.78,
-      "sellReason": "均线破位",
-      "returnRate": -1.13
     }
   ],
-  "currentHolding": null,
+  "currentHolding": {
+    "code": "sz300776",
+    "stockName": "帝尔激光",
+    "buyDate": "20260929",
+    "buyDateDisplay": "2026-09-29",
+    "buyTime": "11:30",
+    "buyPrice": 127.53,
+    "buyChange": -1.7,
+    "metric": 2.8325,
+    "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 20.54亿、当前量能为正（今日累计成交额超昨日全天）：冰点期豁免成交量，成交量增加 78.08亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+    "buyChecks": [
+      {
+        "id": "fund_inflow",
+        "title": "最近 5min 资金净流入大于 20 亿",
+        "passed": true,
+        "exempted": false,
+        "value": "+20.54亿",
+        "reason": "最近 5 分钟资金净流入 20.54 亿（11:25:00→11:30:00），超过 20 亿阈值",
+        "fundText": "5min 内资金净流入 20.54亿"
+      },
+      {
+        "id": "volume_expansion",
+        "title": "当前量能为正（今日累计成交额超昨日全天）",
+        "passed": true,
+        "exempted": true,
+        "value": "冰点期豁免成交量，成交量增加 78.08亿",
+        "reason": "前一交易日盘中科技情绪触及 -100 退潮冰点（hasIce: true），冰点期豁免成交量，成交量增加 78.08亿",
+        "volumeText": "冰点期豁免成交量，成交量增加 78.08亿"
+      },
+      {
+        "id": "opening_below",
+        "title": "开盘后自选股低于开盘价不超过 30 只",
+        "passed": true,
+        "exempted": false,
+        "value": "非交易时段",
+        "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+      },
+      {
+        "id": "emotion_retrace_after_open",
+        "title": "竞价情绪超 80 时当前情绪须低于 40",
+        "passed": true,
+        "exempted": false,
+        "value": "开盘 -2.49 / 当前 25.72",
+        "reason": "9:30 竞价科技情绪 -2.49 未超过 80，当前情绪须低于 40 的限制不生效"
+      }
+    ],
+    "buyReturn": 1.08
+  },
   "summary": {
-    "tradeCount": 8,
-    "winCount": 2,
-    "winRate": 25,
-    "avgDrawdown": -2.1,
-    "maxDrawdown": -3.26,
-    "overallReturn": 12.01,
-    "holding": false
+    "tradeCount": 11,
+    "winCount": 3,
+    "winRate": 27.27,
+    "avgDrawdown": -2.58,
+    "maxDrawdown": -4.69,
+    "overallReturn": -7.5,
+    "holding": true
   }
 }

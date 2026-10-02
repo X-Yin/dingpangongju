@@ -442,11 +442,14 @@ const buildFundInflowCheck = (buckets, currentIndex) => {
     : { hasData: false, diff: 0, currentValue: currentFund, pastValue: 0, currentTime: fmtTime(current.timeKey), pastTime: null };
   const fundDiff = parseFloat(fundResult.diff.toFixed(2));
   const checkFundPassed = fundResult.hasData && fundDiff > 20;
+  // 资金明细文案（随买入原因汇总展示）：最近 5min 净流入差值
+  const fundText = fundResult.hasData ? `5min 内资金净流入 ${fundDiff.toFixed(2)}亿` : null;
   const check = {
     id: 'fund_inflow',
     title: '最近 5min 资金净流入大于 20 亿',
     passed: checkFundPassed,
     value: fundResult.hasData ? `${fundDiff >= 0 ? '+' : ''}${fundDiff.toFixed(2)}亿` : '数据不足',
+    fundText,
     reason: checkFundPassed
       ? `最近 5 分钟资金净流入 ${fundDiff.toFixed(2)} 亿（${fundResult.pastTime}→${fundResult.currentTime}），超过 20 亿阈值`
       : !fundResult.hasData
@@ -499,21 +502,28 @@ const buildVolumeExpansionCheck = (buckets, currentIndex, campData) => {
   if (todayHasIceFlag || prevDayHasIceFlag) {
     const targetDateStr = String(campData?.date || '').replace(/-/g, '');
     const iceSource = todayHasIceFlag ? `今日(${targetDateStr.substring(4, 6)}-${targetDateStr.substring(6, 8)})` : '前一交易日';
+    // 豁免文案：明确说明「冰点期豁免成交量」，并带出实际量能变化数值（无数据时仅说明豁免）
+    const exemptVolText = volumeResult.hasData
+      ? `冰点期豁免成交量，成交量${volDiff >= 0 ? '增加' : '减少'} ${Math.abs(volDiff).toFixed(2)}亿`
+      : '冰点期豁免成交量';
     return {
       check: {
         id: 'volume_expansion',
         title: '当前量能为正（今日累计成交额超昨日全天）',
         passed: true,
         exempted: true,
-        value: volumeResult.hasData ? `${volDiff >= 0 ? '增加' : '减少'} ${Math.abs(volDiff).toFixed(2)}亿（已豁免）` : '已豁免',
-        reason: `${iceSource}盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免`,
+        value: exemptVolText,
+        volumeText: exemptVolText,
+        reason: volumeResult.hasData
+          ? `${iceSource}盘中科技情绪触及 -100 退潮冰点（hasIce: true），${exemptVolText}`
+          : `${iceSource}盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免`,
       },
       volumeResult,
     };
   }
-  // 量能明细文案（随买入原因汇总展示）：当前量能值 + 最近 5min 变化量
+  // 量能明细文案（随买入原因汇总展示）：最近 5min 成交量变化量
   const volumeText = volumeResult.hasData
-    ? `当前量能 ${volumeResult.last5minVol.toFixed(2)}亿，较 5min 前 ${volDiff >= 0 ? '+' : '-'}${Math.abs(volDiff).toFixed(2)}亿`
+    ? `成交量${volDiff >= 0 ? '增加' : '减少'} ${Math.abs(volDiff).toFixed(2)}亿`
     : null;
   return {
     check: {
@@ -756,8 +766,8 @@ const EMO_AVG3_BUY_INFO = {
 };
 
 // 由买点诊断结果构建买入原因：buyReason 为全部命中条件标题汇总（与 sellReason 命中卖出条件名口径一致），
-// 量能项额外附带当前量能值与最近 5min 变化量；buyChecks 为逐项明细（含数值与判定理由），
-// allPassed !== true 时返回空
+// 资金净流入/量能项额外附带明细数值（如「5min 内资金净流入 24.00亿」「成交量增加 120.00亿」「冰点期豁免成交量，成交量增加 50.00亿」）；
+// buyChecks 为逐项明细（含数值与判定理由），allPassed !== true 时返回空
 const buildBuyReasonFromDiag = (diagData) => {
   if (!diagData || diagData.allPassed !== true) return { buyReason: '', buyChecks: [] };
   const passedChecks = (diagData.checks || []).filter(c => c.passed);
@@ -765,7 +775,9 @@ const buildBuyReasonFromDiag = (diagData) => {
     buyReason: passedChecks.map(c => (
       c.id === 'volume_expansion' && c.volumeText
         ? `${c.title}：${c.volumeText}`
-        : c.title
+        : c.id === 'fund_inflow' && c.fundText
+          ? `${c.title}：${c.fundText}`
+          : c.title
     )).join('、') || '买点诊断全部通过',
     buyChecks: (diagData.checks || []).map(c => ({
       id: c.id,
@@ -775,6 +787,7 @@ const buildBuyReasonFromDiag = (diagData) => {
       value: c.value,
       reason: c.reason,
       ...(c.volumeText ? { volumeText: c.volumeText } : {}),
+      ...(c.fundText ? { fundText: c.fundText } : {}),
     })),
   };
 };
