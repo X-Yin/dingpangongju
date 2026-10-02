@@ -2471,7 +2471,7 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
 };
 
 // ========== 个股买点诊断：7 项前置检查 + 个股抗分歧指数检查 ==========
-const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh = false) => {
+const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh = false, minute = null) => {
   if (!code) {
     return { success: false, message: '缺少股票代码' };
   }
@@ -2504,6 +2504,7 @@ const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh 
   const stockLine = stockTline?.line || [];
 
   let resilienceScore = null;
+  // 全局最低抗分歧门槛：买点时刻个股抗分歧 ≥ 9（与回测 pickBestStock 的 GLOBAL_RESILIENCE_MIN 对齐）
   let resilienceReason = '未获取到个股或指数分时数据，无法计算抗分歧指数';
   let resilienceValue = '无数据';
 
@@ -2514,16 +2515,16 @@ const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh 
     resilienceValue = resilienceScore != null ? `${resilienceScore.toFixed(2)}` : '无数据';
   }
 
-  const check8Passed = resilienceScore !== null && resilienceScore > 8;
+  const check8Passed = resilienceScore !== null && resilienceScore >= 9;
   if (check8Passed) {
-    resilienceReason = `个股抗分歧指数 ${resilienceScore.toFixed(2)}，大于 8 阈值，个股抗跌性强`;
+    resilienceReason = `个股抗分歧指数 ${resilienceScore.toFixed(2)}，满足全局最低 9 阈值`;
   } else if (resilienceScore !== null) {
-    resilienceReason = `个股抗分歧指数 ${resilienceScore.toFixed(2)}，未达到 8 阈值，个股抗跌性不足`;
+    resilienceReason = `个股抗分歧指数 ${resilienceScore.toFixed(2)}，低于全局最低 9 阈值，个股抗跌性不足`;
   }
 
   checks.push({
     id: 'stock_resilience',
-    title: '个股抗分歧指数大于 8',
+    title: '个股抗分歧指数 ≥ 9',
     passed: check8Passed,
     value: resilienceValue,
     reason: resilienceReason,
@@ -2570,8 +2571,30 @@ const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh 
   if (!ma10CheckPassed) allPassed = false;
 
   // 附加检查：双指数 3 日线斜率门禁（查询失败或数据不足时不影响 allPassed，只标记为"数据暂不可用"）
+  // minute 优先用调用方传入；没传时取目标交易日的 14:55（模拟回测尾盘买点触发的典型时点）
   try {
-    const liveGate = await queryLiveIndexGate(code, targetDateStr);
+    const diagMinute = minute || (targetDay.isSame(dayjs(), 'day')
+      ? (() => { const now = new Date(Date.now() + 8*3600*1000); return `${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`; })()
+      : '1455');
+
+    // 买入时段门禁（与回测 pickBestStock 里的 BUY_TIME_MAX_MINUTE=1330 对齐）
+    const mNum = Number(diagMinute);
+    const buyTimePassed = Number.isFinite(mNum) && mNum <= 1330;
+    const fmtMinute = (m) => `${String(Math.floor(m/100)).padStart(2,'0')}:${String(m%100).padStart(2,'0')}`;
+    checks.push({
+      id: 'buy_time_gate',
+      title: '买入时段门禁（仅 9:30 – 11:30 / 13:00 – 13:30）',
+      passed: buyTimePassed,
+      value: buyTimePassed
+        ? `买点时刻 ${fmtMinute(mNum)} 在允许时段内`
+        : `买点时刻 ${fmtMinute(mNum)} 已过 13:30，不允许买入`,
+      reason: buyTimePassed
+        ? `买点触发时刻 ${fmtMinute(mNum)} 在允许时段（9:30 – 11:30 或 13:00 – 13:30）内`
+        : `买点触发时刻 ${fmtMinute(mNum)} 已过 13:30，规则禁止此时段交易`,
+    });
+    if (!buyTimePassed) allPassed = false;
+
+    const liveGate = await queryLiveIndexGate(code, targetDateStr, diagMinute);
     if (liveGate) {
       const trackedIdx = codeToGateIndex(code);
       const trackedName = gateIndexName(trackedIdx);
@@ -2587,6 +2610,45 @@ const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh 
         reason: trackedGate?.reason || '门禁判定失败',
       });
       if (!gatePassed) allPassed = false;
+
+      // 个股 MA3 切线正斜率连续天数检查（**仅跟踪的指数今日盘中由负转正当日**触发）：
+      //   过滤规则：连续正 > 3 天 → 禁止出手（= 3 允许）
+      //   原因：指数刚由负转正，个股如果已经抢先连涨 ≥4 天是提前反应过大盘
+      const shouldCheckStockSlope = trackedGate?.turnedPosToday === true;
+      if (shouldCheckStockSlope && klineData && klineData.length >= 4) {
+        const sortedKline = [...klineData].sort((a, b) => a.trade_date - b.trade_date);
+        const targetIdx = sortedKline.findIndex(k => parseInt(k.trade_date) === parseInt(targetDateStr));
+        const count = (() => {
+          if (targetIdx < 3) return null;
+          const closes = sortedKline.slice(Math.max(0, targetIdx - 10), targetIdx + 1).map(k => parseFloat(k.close_px)).reverse();
+          if (closes.length < 4) return null;
+          const avg = (i, d) => closes.slice(i, i + d).reduce((s, v) => s + v, 0) / d;
+          const slopeToday = avg(0, 3) - avg(1, 3);
+          if (!Number.isFinite(slopeToday)) return null;
+          if (slopeToday <= 0) return 0;
+          let c = 1;
+          for (let i = 1; i + 3 <= closes.length; i++) {
+            const slope = avg(i, 3) - avg(i + 1, 3);
+            if (!Number.isFinite(slope)) break;
+            if (slope > 0) c++; else break;
+            if (c >= 5) break;
+          }
+          return c;
+        })();
+        if (count != null) {
+          const stockSlopePassed = count <= 3;
+          checks.push({
+            id: 'stock_ma3_slope_duration',
+            title: '个股 MA3 切线正斜率连续天数',
+            passed: stockSlopePassed,
+            value: `${count} 天（≤ 3 才允许）`,
+            reason: stockSlopePassed
+              ? `跟踪${trackedName}今日由负转正，个股 MA3 切线正斜率已连续 ${count} 天（≤ 3），允许出手`
+              : `跟踪${trackedName}今日由负转正，个股 MA3 切线正斜率已连续 ${count} 天（> 3），禁止出手`,
+          });
+          if (!stockSlopePassed) allPassed = false;
+        }
+      }
     }
   } catch (e) {
     checks.push({
