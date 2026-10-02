@@ -100,7 +100,7 @@ const { getMainFundAiSummary, getMainFundAiContext } = require('./service/mainFu
 const { getAllGroups: getAllIndexOverlayGroups, saveGroup: saveIndexOverlayGroup, deleteGroup: deleteIndexOverlayGroup } = require('./service/indexOverlayGroup');
 const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup } = require('./service/trainingCamp');
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, ''); // 北京今天 YYYYMMDD
-const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, getSentimentDefaultRange, attachHoldingDays, getStockRecentReports } = require('./service/buySellBacktest');
+const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, getSentimentDefaultRange, attachHoldingDays, getStockRecentReports, queryLiveIndexGate } = require('./service/buySellBacktest');
 const { generateReport, ensureLatestReport, getReportById, listReports, getTrendDiagnosisRanges } = require('./service/backtestReport');
 const { getAttackDefenseScore } = require('./service/attackDefenseScore');
 const feishuNotify = require('./service/feishuNotify');
@@ -2364,6 +2364,28 @@ app.get('/training_camp/backtest/status/:taskId', (req, res) => {
   } catch (error) {
     console.error('查询买卖点回测任务失败:', error);
     res.status(500).json({ success: false, message: error.message || '查询任务状态失败' });
+  }
+});
+
+// 实时查询某只股票的双指数 3 日线斜率门禁判定结果（前端买点诊断用，无状态）
+// 传参：code=sh688361&date=20260918&minute=1455
+// 返回：{ trackedIndex, cybGate, starGate, gatePassed, allowedMarkets }
+app.get('/api/index-slope-gate', async (req, res) => {
+  try {
+    const { code, date, minute } = req.query || {};
+    if (!code) return res.status(400).json({ success: false, message: '缺少 code 参数' });
+    const dateStr = date || beijingToday();
+    const minuteStr = minute || (() => {
+      const now = new Date(Date.now() + 8 * 3600 * 1000);
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      return `${h}${m}`;
+    })();
+    const result = await queryLiveIndexGate(code, dateStr, minuteStr);
+    res.json({ success: true, date: dateStr, minute: minuteStr, ...result });
+  } catch (error) {
+    console.error('查询双指数斜率门禁失败:', error);
+    res.status(500).json({ success: false, message: error.message || '查询门禁失败' });
   }
 });
 

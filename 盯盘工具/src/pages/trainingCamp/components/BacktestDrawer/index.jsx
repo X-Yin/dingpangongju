@@ -58,6 +58,7 @@ const WeightedReturnTag = ({ rate, rawRate, weight, label = '收益' }) => {
 
 // 当前买卖点诊断规则说明（与训练营回放 / buySellBacktest 后端逻辑保持一致，供复制到外部分析）
 const BUY_RULES = [
+  { key: 'cyb_ma3_slope_gate', title: '跨指数双门禁（创业板指+科创50，仅 N 日涨幅最大系列）', desc: '盘中实时计算两个指数的 3 日线斜率（MA3 − MA3(5 个交易日前)，当日收盘价用盘中实时价代替），三条规则按优先级判定：① slope<0 始终允许；② 由负转正当天+次日允许；③ 由正转负第一天禁止。根据代码前缀分配跟踪指数：主板（60/00）+ 创业板（30）→ 创业板指 sz399006；科创板（68）→ 科创 50 sh000688。两个指数各自独立判定后合并为 allowedMarkets 集合——两个都过→全池选 N 日涨幅最大；只一个过→只从对应市场选；都不过→跳过本次买入。两个指数的 buyChecks 明细都会记录斜率实时值与翻转事件。非 N 日涨幅最大系列策略不受此限制' },
   { key: 'fund_inflow', title: '最近 5 分钟资金净流入', desc: '最近 5min 大盘主力资金净流入大于 20 亿才触发买入' },
   { key: 'volume_expansion', title: '量能变化', desc: '当前量能（今日累计成交额-昨日全天）为 0 以上：较 5min 前增加即可；量能为负：需较 5min 前增加不小于 100 亿。若今日或前一交易日科技情绪触及 -100 退潮冰点（hasIce）则此项自动豁免' },
   { key: 'opening_below', title: '开盘后自选股低于开盘价数量', desc: '仅 9:30-10:00 生效：现价低于 9:30 开盘价的自选股数量不超过 30 只' },
@@ -209,10 +210,11 @@ const BuyReasonTag = ({ reason, checks }) => {
       {checks.map((c, i) => (
         <div key={c.id || i}>
           <div style={{ fontSize: 12, fontWeight: 600 }}>
-            {c.passed ? '✓' : '✗'} {c.title}
-            {c.value ? `（${c.value}）` : ''}
+            {c.passed ? '✓' : '✗'} {c.value || c.title}
           </div>
-          {c.reason && <div style={{ fontSize: 11, opacity: 0.75 }}>{c.reason}</div>}
+          {c.reason && c.reason !== c.value && (
+            <div style={{ fontSize: 11, opacity: 0.75 }}>{c.reason}</div>
+          )}
           {Array.isArray(c.skippedStocks) && c.skippedStocks.length > 0 && (() => {
             // 列按数据存在性渲染：涨停顺延明细（limit_up_defer）无窗口涨幅/抗分歧列
             const hasMetric = c.skippedStocks.some(s => s.metric != null);

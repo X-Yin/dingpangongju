@@ -39,7 +39,7 @@ const { getAllTechIndexData, updateCurrentTechIndexData, getCurrentTechEmotion, 
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 const { getMonitorStocks } = require('./monitorStock');
 const { getStockPositions } = require('./stockPosition');
-const { loadReportIndex, sumReportCount } = require('./buySellBacktest');
+const { loadReportIndex, sumReportCount, queryLiveIndexGate, CYB_INDEX_CODE, STAR_INDEX_CODE, codeToGateIndex, gateIndexName } = require('./buySellBacktest');
 const { getAmountHistory, parseAmountToYi } = require('./amount');
 const { getDaPanData } = require('./dapan');
 const { getClsReqUrl, getClsReqStockTlineUrl, batchParallel, sleep } = require('../utils');
@@ -2568,6 +2568,35 @@ const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh 
     reason: ma10CheckReason,
   });
   if (!ma10CheckPassed) allPassed = false;
+
+  // 附加检查：双指数 3 日线斜率门禁（查询失败或数据不足时不影响 allPassed，只标记为"数据暂不可用"）
+  try {
+    const liveGate = await queryLiveIndexGate(code, targetDateStr);
+    if (liveGate) {
+      const trackedIdx = codeToGateIndex(code);
+      const trackedName = gateIndexName(trackedIdx);
+      const trackedGate = trackedIdx === STAR_INDEX_CODE ? liveGate.starGate : liveGate.cybGate;
+      const slopeStr = trackedGate?.slope != null ? `${trackedGate.slope >= 0 ? '+' : ''}${trackedGate.slope.toFixed(2)}°` : '数据不足';
+      // 只关心该股票**跟踪的那个指数**是否通过，不是两个指数合并的 gatePassed
+      const gatePassed = trackedGate?.passed === true;
+      checks.push({
+        id: 'index_ma3_slope_gate',
+        title: `${trackedName} 3 日线斜率门禁`,
+        passed: gatePassed,
+        value: `跟踪${trackedName}，斜率 ${slopeStr}，${gatePassed ? '允许出手' : '禁止出手'}`,
+        reason: trackedGate?.reason || '门禁判定失败',
+      });
+      if (!gatePassed) allPassed = false;
+    }
+  } catch (e) {
+    checks.push({
+      id: 'index_ma3_slope_gate',
+      title: '双指数 3 日线斜率门禁',
+      passed: true,
+      value: '数据暂不可用',
+      reason: `门禁查询异常：${e.message || String(e)}`,
+    });
+  }
 
   const passedCount = checks.filter(c => c.passed).length;
   const totalCheckCount = checks.length;
