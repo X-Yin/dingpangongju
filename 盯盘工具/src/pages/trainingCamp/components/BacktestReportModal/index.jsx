@@ -72,31 +72,44 @@ const BuyReasonTag = ({ reason, checks }) => {
             {c.value ? `（${c.value}）` : ''}
           </div>
           {c.reason && <div style={{ fontSize: 11, opacity: 0.75 }}>{c.reason}</div>}
-          {Array.isArray(c.skippedStocks) && c.skippedStocks.length > 0 && (
-            <table style={{ borderCollapse: 'collapse', marginTop: 3, fontSize: 11 }}>
-              <thead>
-                <tr>
-                  {['顺延前序股票', '窗口涨幅(排序依据)', '触发时涨幅', '抗分歧分数'].map(h => (
-                    <th key={h} style={{ ...gateCellStyle, fontWeight: 600, opacity: 0.75 }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {c.skippedStocks.map((s, j) => (
-                  <tr key={s.code || j}>
-                    <td style={gateCellStyle}>{s.name || s.code}</td>
-                    <td style={{ ...gateCellStyle, color: s.metric != null ? (s.metric > 0 ? '#ff7875' : s.metric < 0 ? '#95de64' : undefined) : undefined }}>
-                      {s.metric != null ? `${s.metric > 0 ? '+' : ''}${Number(s.metric).toFixed(2)}%` : '--'}
-                    </td>
-                    <td style={{ ...gateCellStyle, color: s.change != null ? (s.change > 0 ? '#ff7875' : s.change < 0 ? '#95de64' : undefined) : undefined }}>
-                      {s.change != null ? `${s.change > 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
-                    </td>
-                    <td style={gateCellStyle}>{s.resilience != null ? Number(s.resilience).toFixed(1) : '--'}</td>
+          {Array.isArray(c.skippedStocks) && c.skippedStocks.length > 0 && (() => {
+            // 列按数据存在性渲染：涨停顺延明细（limit_up_defer）无窗口涨幅/抗分歧列
+            const hasMetric = c.skippedStocks.some(s => s.metric != null);
+            const hasResilience = c.skippedStocks.some(s => s.resilience != null);
+            const heads = ['顺延前序股票'];
+            if (hasMetric) heads.push('窗口涨幅(排序依据)');
+            heads.push('触发时涨幅');
+            if (hasResilience) heads.push('抗分歧分数');
+            return (
+              <table style={{ borderCollapse: 'collapse', marginTop: 3, fontSize: 11 }}>
+                <thead>
+                  <tr>
+                    {heads.map(h => (
+                      <th key={h} style={{ ...gateCellStyle, fontWeight: 600, opacity: 0.75 }}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                </thead>
+                <tbody>
+                  {c.skippedStocks.map((s, j) => (
+                    <tr key={s.code || j}>
+                      <td style={gateCellStyle}>{s.name || s.code}</td>
+                      {hasMetric && (
+                        <td style={{ ...gateCellStyle, color: s.metric != null ? (s.metric > 0 ? '#ff7875' : s.metric < 0 ? '#95de64' : undefined) : undefined }}>
+                          {s.metric != null ? `${s.metric > 0 ? '+' : ''}${Number(s.metric).toFixed(2)}%` : '--'}
+                        </td>
+                      )}
+                      <td style={{ ...gateCellStyle, color: s.change != null ? (s.change > 0 ? '#ff7875' : s.change < 0 ? '#95de64' : undefined) : undefined }}>
+                        {s.change != null ? `${s.change > 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
+                      </td>
+                      {hasResilience && (
+                        <td style={gateCellStyle}>{s.resilience != null ? Number(s.resilience).toFixed(1) : '--'}</td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            );
+          })()}
         </div>
       ))}
     </div>
@@ -211,14 +224,16 @@ export const StrategyCard = ({ strategy, rank }) => {
     <div style={{ background: '#fff', borderRadius: 12, padding: 14, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
       {/* 概览汇总 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          width: 26, height: 26, borderRadius: 8, flexShrink: 0,
-          background: rank === 1 ? '#fff1cc' : '#f0f3f9', color: rank === 1 ? '#d48806' : '#64748b',
-          fontSize: 13, fontWeight: 700,
-        }}>
-          {rank === 1 ? <TrophyOutlined /> : rank}
-        </span>
+        {rank != null && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+            background: rank === 1 ? '#fff1cc' : '#f0f3f9', color: rank === 1 ? '#d48806' : '#64748b',
+            fontSize: 13, fontWeight: 700,
+          }}>
+            {rank === 1 ? <TrophyOutlined /> : rank}
+          </span>
+        )}
         <span style={{ fontSize: 14, fontWeight: 700, color: '#12213a' }}>{strategy.name}</span>
         <span style={{ fontSize: 16, fontWeight: 800, color: fmtPctColor(s.overallReturn) }}>
           {fmtPct(s.overallReturn)}

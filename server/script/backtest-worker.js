@@ -10,6 +10,7 @@
 //   node script/backtest-worker.js --list          查看分组与日期范围
 //   node script/backtest-worker.js --aggregate     仅按当前缓存汇总生成回测报告（不清缓存、不回测）
 //   node script/backtest-worker.js --trend         策略趋势诊断：三档时间范围（默认60/30/15个交易日）依次补测缺失缓存的全部策略（不清缓存）
+//   node script/backtest-worker.js --monthly       历史曲线：把可用回放交易日按自然月拆分，逐月补测全部策略缺失缓存（不清缓存；服务端汇总月度收益画曲线）
 //   node script/backtest-worker.js --workers 3     指定并行进程数（默认 8）
 // 可选参数：
 //   --start YYYYMMDD --end YYYYMMDD   指定日期范围（常规策略默认最近 60 个交易日；情绪游资策略未显式指定时固定用最近 60 个已完结交易日）
@@ -34,6 +35,7 @@ const parseArgs = (argv) => {
     if (a === '--list') args.list = true;
     else if (a === '--aggregate') args.aggregate = true;
     else if (a === '--trend') args.trend = true;
+    else if (a === '--monthly') args.monthly = true;
     else if (a === '--run-missing') args.runMissing = true;
     else if (a === '--build-dates') args.buildDates = String(argv[++i]).split(',').map(s => s.trim()).filter(Boolean);
     else if (a === '--allow-missing-fund') args.allowMissingFund = true;
@@ -298,6 +300,71 @@ const runTrend = async (workerCount) => {
   console.log(`\n[${ts()}] 策略趋势诊断三档范围回测全部完成`);
 };
 
+// ===== 自然月回测模式（--monthly）：把可用回放交易日按自然月拆分，逐月补测全部策略的缺失缓存 =====
+// 服务端「历史曲线」依赖「月 × 策略」粒度的回测缓存（月度整体收益 → 跨月累乘绘制策略累计曲线）
+const buildMonthRanges = () => {
+  const dates = [...getTrainingCampDates()].filter(d => d < beijingToday()).sort();
+  const map = new Map(); // 'YYYYMM' -> { key, label, startDate, endDate, days }
+  for (const d of dates) {
+    const key = d.substring(0, 6);
+    const entry = map.get(key) || {
+      key,
+      label: `${d.substring(0, 4)}-${d.substring(4, 6)}`,
+      startDate: d,
+      endDate: d,
+      days: 0,
+    };
+    entry.endDate = d;
+    entry.days += 1;
+    map.set(key, entry);
+  }
+  return Array.from(map.values());
+};
+
+const runMonthlyTrend = async (workerCount) => {
+  const months = buildMonthRanges();
+  if (months.length === 0) throw new Error('无可用回放交易日，无法按自然月回测');
+  const allIds = Object.keys(STRATEGIES);
+  console.log(`自然月回测：${months.length} 个月（${months.map(m => `${m.label} ${m.days}日`).join('，')}），策略 ${allIds.length} 个`);
+  // 预热日K线文件缓存（跨进程共享，多个月份共用一份）
+  try {
+    const t0 = Date.now();
+    const warmed = await prewarmKlineCache();
+    console.log(`日K线文件缓存预热完成: ${warmed.total - warmed.fetched} 命中 / ${warmed.fetched} 新拉取（${((Date.now() - t0) / 1000).toFixed(1)}s）`);
+  } catch (e) {
+    console.error(`日K线预热失败（不影响后续流程，子进程将自行拉取）: ${e.message}`);
+  }
+  // 预构建全部月度日期的回放数据缓存（已构建过的日期读缓存秒过；月度日期均早于今日且含资金快照）
+  await runPrebuild(months.flatMap(m => [...getTrainingCampDates()].filter(d => d >= m.startDate && d <= m.endDate).sort()), workerCount);
+  // 逐月补测缺失缓存：单进程串行，月内日期数据只加载一次喂给整组缺失策略
+  for (const m of months) {
+    const missing = allIds.filter(id => !readCachedBacktest(id, m.startDate, m.endDate));
+    console.log(`\n[${ts()}] 【${m.label}】${m.startDate} ~ ${m.endDate}（${m.days} 个交易日）：策略 ${allIds.length} 个，缺失缓存 ${missing.length} 个`);
+    if (missing.length === 0) {
+      console.log(`[${ts()}] 该月全部策略已有缓存，跳过回测`);
+      continue;
+    }
+    await runStrategies(missing, m.startDate, m.endDate, {
+      report: (msg) => {
+        if (msg.type === 'progress') {
+          const phase = msg.status === 'loading' ? '加载回放数据' : '跑买卖点';
+          process.stdout.write(`\r[${ts()}] [${msg.name}] (${msg.current}/${msg.total}) ${msg.date} ${phase}   `);
+        } else if (msg.type === 'strategy-start') {
+          process.stdout.write('\n');
+        } else if (msg.type === 'strategy-done') {
+          process.stdout.write('\n');
+          const s = msg.summary;
+          console.log(`[${ts()}] [${msg.name}] 完成: 交易 ${s.tradeCount} 笔, 胜率 ${s.winRate ?? '-'}%, 整体收益 ${s.overallReturn ?? '-'}%（已写入缓存）`);
+        } else if (msg.type === 'strategy-fail') {
+          process.stdout.write('\n');
+          console.log(`[${ts()}] [${msg.name}] 回测失败: ${msg.message}`);
+        }
+      },
+    });
+  }
+  console.log(`\n[${ts()}] 自然月回测全部完成`);
+};
+
 // ===== 并行模式：fork 多个子进程，终端实时看板展示各线程进度 =====
 const runParallel = (groups, startDate, endDate) => new Promise((resolve) => {
   const workerFile = __filename;
@@ -537,6 +604,12 @@ const main = async () => {
 
   if (args.aggregate) {
     await aggregate(startDate, endDate, args.runMissing);
+    return;
+  }
+
+  // 自然月回测模式（历史曲线）：按自然月逐月补测全部策略缺失缓存（不清缓存、不生成常规报告）
+  if (args.monthly) {
+    await runMonthlyTrend(workerCount);
     return;
   }
 

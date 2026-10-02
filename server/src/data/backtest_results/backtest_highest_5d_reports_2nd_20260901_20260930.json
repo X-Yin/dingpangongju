@@ -408,14 +408,14 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 1,
-      "code": "sh603757",
-      "stockName": "大元泵业",
+      "metric": 7,
+      "code": "sz002837",
+      "stockName": "英维克",
       "buyDate": "20260901",
       "buyDateDisplay": "2026-09-01",
       "buyTime": "13:10",
-      "buyPrice": 70.45,
-      "buyChange": 1.54,
+      "buyPrice": 66.71,
+      "buyChange": -2.2,
       "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -454,14 +454,14 @@
       "sellDate": "20260902",
       "sellDateDisplay": "2026-09-02",
       "sellTime": "09:30",
-      "sellPrice": 68.35,
-      "sellChange": -1.78,
+      "sellPrice": 64.51,
+      "sellChange": -2.11,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.98
+      "returnRate": -3.3
     },
     {
       "seq": 2,
-      "metric": 3,
+      "metric": 6,
       "code": "sz002837",
       "stockName": "英维克",
       "buyDate": "20260903",
@@ -515,7 +515,7 @@
     },
     {
       "seq": 3,
-      "metric": 4,
+      "metric": 6,
       "code": "sz002837",
       "stockName": "英维克",
       "buyDate": "20260904",
@@ -623,14 +623,14 @@
     {
       "seq": 5,
       "metric": 6,
-      "code": "sz002436",
-      "stockName": "兴森科技",
+      "code": "sz002916",
+      "stockName": "深南电路",
       "buyDate": "20260908",
       "buyDateDisplay": "2026-09-08",
       "buyTime": "10:25",
-      "buyPrice": 40.43,
-      "buyChange": 10.01,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -111.42亿，较 5min 前 +183.41亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyPrice": 389.13,
+      "buyChange": 6.62,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -111.42亿，较 5min 前 +183.41亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票涨停顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -664,15 +664,29 @@
           "exempted": false,
           "value": "开盘 13.15 / 当前 47.20",
           "reason": "9:30 竞价科技情绪 13.15 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "limit_up_defer",
+          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+          "passed": true,
+          "value": "顺延 1 只",
+          "skippedStocks": [
+            {
+              "code": "sz002436",
+              "name": "兴森科技",
+              "change": 10.01
+            }
+          ],
+          "reason": "买入时点涨停候选已剔除并顺延：兴森科技（触发时涨幅 +10.01%）（涨停股买入不可成交，顺延至排名下一只）"
         }
       ],
       "sellDate": "20260909",
       "sellDateDisplay": "2026-09-09",
-      "sellTime": "13:15",
-      "sellPrice": 39.59,
-      "sellChange": -1.32,
+      "sellTime": "13:20",
+      "sellPrice": 380.72,
+      "sellChange": -0.47,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.08
+      "returnRate": -2.16
     },
     {
       "seq": 6,
@@ -731,14 +745,14 @@
     {
       "seq": 7,
       "metric": 10,
-      "code": "sh603186",
-      "stockName": "华正新材",
+      "code": "sz301526",
+      "stockName": "国际复材",
       "buyDate": "20260915",
       "buyDateDisplay": "2026-09-15",
       "buyTime": "10:20",
-      "buyPrice": 251.57,
-      "buyChange": 10,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -453.40亿，较 5min 前 +105.35亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyPrice": 32.68,
+      "buyChange": 5.93,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -453.40亿，较 5min 前 +105.35亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票涨停顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -772,15 +786,29 @@
           "exempted": false,
           "value": "开盘 -8.55 / 当前 65.18",
           "reason": "9:30 竞价科技情绪 -8.55 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "limit_up_defer",
+          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+          "passed": true,
+          "value": "顺延 1 只",
+          "skippedStocks": [
+            {
+              "code": "sh603186",
+              "name": "华正新材",
+              "change": 10
+            }
+          ],
+          "reason": "买入时点涨停候选已剔除并顺延：华正新材（触发时涨幅 +10.00%）（涨停股买入不可成交，顺延至排名下一只）"
         }
       ],
       "sellDate": "20260916",
       "sellDateDisplay": "2026-09-16",
-      "sellTime": "10:00",
-      "sellPrice": 245.04,
-      "sellChange": -2.6,
+      "sellTime": "09:30",
+      "sellPrice": 31.42,
+      "sellChange": -1.19,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.6
+      "returnRate": -3.86
     },
     {
       "seq": 8,
@@ -949,9 +977,9 @@
     "tradeCount": 10,
     "winCount": 1,
     "winRate": 10,
-    "avgDrawdown": -2.66,
+    "avgDrawdown": -2.84,
     "maxDrawdown": -4.49,
-    "overallReturn": -17.64,
+    "overallReturn": -19.04,
     "holding": false
   }
 }

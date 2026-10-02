@@ -408,14 +408,14 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 7.03,
-      "code": "sh688143",
-      "stockName": "长盈通",
+      "metric": 10.8374,
+      "code": "sz000977",
+      "stockName": "浪潮信息",
       "buyDate": "20260901",
       "buyDateDisplay": "2026-09-01",
       "buyTime": "13:10",
-      "buyPrice": 169.65,
-      "buyChange": 3.74,
+      "buyPrice": 86.18,
+      "buyChange": 0.49,
       "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -451,70 +451,16 @@
           "reason": "9:30 竞价科技情绪 2.86 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260902",
-      "sellDateDisplay": "2026-09-02",
-      "sellTime": "09:30",
-      "sellPrice": 161.01,
-      "sellChange": -3.59,
-      "sellReason": "均线破位、跌破成本线-2%",
-      "returnRate": -5.09
+      "sellDate": "20260904",
+      "sellDateDisplay": "2026-09-04",
+      "sellTime": "09:35",
+      "sellPrice": 82.26,
+      "sellChange": -4.74,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -4.55
     },
     {
       "seq": 2,
-      "metric": 16.3642,
-      "code": "sz002536",
-      "stockName": "飞龙股份",
-      "buyDate": "20260903",
-      "buyDateDisplay": "2026-09-03",
-      "buyTime": "14:00",
-      "buyPrice": 63.45,
-      "buyChange": 8.54,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -506.69亿，较 5min 前 +156.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+20.56亿",
-          "reason": "最近 5 分钟资金净流入 20.56 亿（13:55:00→14:00:00），超过 20 亿阈值"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
-          "passed": true,
-          "exempted": false,
-          "value": "+ 156.23亿",
-          "reason": "当前量能 -506.69 亿为负，但较 5min 前的 -662.92 亿+ 156.23 亿，达到 100 亿阈值",
-          "volumeText": "当前量能 -506.69亿，较 5min 前 +156.23亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 37.71 / 当前 4.71",
-          "reason": "9:30 竞价科技情绪 37.71 未超过 80，当前情绪须低于 40 的限制不生效"
-        }
-      ],
-      "sellDate": "20260904",
-      "sellDateDisplay": "2026-09-04",
-      "sellTime": "09:45",
-      "sellPrice": 61.18,
-      "sellChange": -2.94,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -3.58
-    },
-    {
-      "seq": 3,
       "metric": 14.6421,
       "code": "sz002536",
       "stockName": "飞龙股份",
@@ -567,16 +513,16 @@
       "returnRate": -2.88
     },
     {
-      "seq": 4,
-      "metric": 19.3286,
-      "code": "sh603228",
-      "stockName": "景旺电子",
+      "seq": 3,
+      "metric": 12.4289,
+      "code": "sh600601",
+      "stockName": "方正科技",
       "buyDate": "20260907",
       "buyDateDisplay": "2026-09-07",
       "buyTime": "10:15",
-      "buyPrice": 105.97,
-      "buyChange": 10,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -80.74亿，较 5min 前 +128.88亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyPrice": 13.77,
+      "buyChange": 6.72,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -80.74亿，较 5min 前 +128.88亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票涨停顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -610,44 +556,63 @@
           "exempted": false,
           "value": "开盘 45.13 / 当前 87.73",
           "reason": "9:30 竞价科技情绪 45.13 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "limit_up_defer",
+          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+          "passed": true,
+          "value": "顺延 2 只",
+          "skippedStocks": [
+            {
+              "code": "sh603228",
+              "name": "景旺电子",
+              "change": 10
+            },
+            {
+              "code": "sh603083",
+              "name": "剑桥科技",
+              "change": 10
+            }
+          ],
+          "reason": "买入时点涨停候选已剔除并顺延：景旺电子（触发时涨幅 +10.00%）、剑桥科技（触发时涨幅 +10.00%）（涨停股买入不可成交，顺延至排名下一只）"
         }
       ],
-      "sellDate": "20260916",
-      "sellDateDisplay": "2026-09-16",
-      "sellTime": "10:05",
-      "sellPrice": 105.35,
-      "sellChange": 0.75,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": -0.59
+      "sellDate": "20260918",
+      "sellDateDisplay": "2026-09-18",
+      "sellTime": "14:50",
+      "sellPrice": 14.5,
+      "sellChange": -0.75,
+      "sellReason": "均线破位",
+      "returnRate": 5.3
     },
     {
-      "seq": 5,
-      "metric": 14.939,
-      "code": "sz301183",
-      "stockName": "东田微",
-      "buyDate": "20260916",
-      "buyDateDisplay": "2026-09-16",
-      "buyTime": "10:10",
-      "buyPrice": 293.15,
-      "buyChange": 14.25,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -258.76亿，较 5min 前 +103.58亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "seq": 4,
+      "metric": 24.0086,
+      "code": "sh688361",
+      "stockName": "中科飞测",
+      "buyDate": "20260918",
+      "buyDateDisplay": "2026-09-18",
+      "buyTime": "14:55",
+      "buyPrice": 385.26,
+      "buyChange": 7.71,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 2327.24亿，较 5min 前 +112.96亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
           "id": "fund_inflow",
           "title": "最近 5min 资金净流入大于 20 亿",
           "passed": true,
           "exempted": false,
-          "value": "+24.76亿",
-          "reason": "最近 5 分钟资金净流入 24.76 亿（10:05:00→10:10:00），超过 20 亿阈值"
+          "value": "+20.80亿",
+          "reason": "最近 5 分钟资金净流入 20.80 亿（14:50:00→14:55:00），超过 20 亿阈值"
         },
         {
           "id": "volume_expansion",
           "title": "量能较 5min 前增加（负值需增加超 100 亿）",
           "passed": true,
           "exempted": false,
-          "value": "+ 103.58亿",
-          "reason": "当前量能 -258.76 亿为负，但较 5min 前的 -362.34 亿+ 103.58 亿，达到 100 亿阈值",
-          "volumeText": "当前量能 -258.76亿，较 5min 前 +103.58亿"
+          "value": "+ 112.96亿",
+          "reason": "当前量能 2327.24 亿为正，较 5min 前的 2214.28 亿+ 112.96 亿，持续放量",
+          "volumeText": "当前量能 2327.24亿，较 5min 前 +112.96亿"
         },
         {
           "id": "opening_below",
@@ -662,20 +627,20 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 5.72 / 当前 51.76",
-          "reason": "9:30 竞价科技情绪 5.72 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 59.18 / 当前 48.10",
+          "reason": "9:30 竞价科技情绪 59.18 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260921",
-      "sellDateDisplay": "2026-09-21",
-      "sellTime": "09:40",
-      "sellPrice": 300.69,
-      "sellChange": -0.8,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 2.57
+      "sellDate": "20260922",
+      "sellDateDisplay": "2026-09-22",
+      "sellTime": "14:20",
+      "sellPrice": 376.62,
+      "sellChange": -2.68,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.24
     },
     {
-      "seq": 6,
+      "seq": 5,
       "metric": 1.3794,
       "code": "sh688082",
       "stockName": "盛美上海",
@@ -730,12 +695,12 @@
   ],
   "currentHolding": null,
   "summary": {
-    "tradeCount": 6,
+    "tradeCount": 5,
     "winCount": 1,
-    "winRate": 16.67,
-    "avgDrawdown": -2.92,
-    "maxDrawdown": -5.09,
-    "overallReturn": -11.62,
+    "winRate": 20,
+    "avgDrawdown": -3.04,
+    "maxDrawdown": -4.55,
+    "overallReturn": -6.93,
     "holding": false
   }
 }

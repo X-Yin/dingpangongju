@@ -408,14 +408,14 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 1,
-      "code": "sh603757",
-      "stockName": "大元泵业",
+      "metric": 4,
+      "code": "sz002837",
+      "stockName": "英维克",
       "buyDate": "20260901",
       "buyDateDisplay": "2026-09-01",
       "buyTime": "13:10",
-      "buyPrice": 70.45,
-      "buyChange": 1.54,
+      "buyPrice": 66.71,
+      "buyChange": -2.2,
       "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -454,10 +454,10 @@
       "sellDate": "20260902",
       "sellDateDisplay": "2026-09-02",
       "sellTime": "09:30",
-      "sellPrice": 68.35,
-      "sellChange": -1.78,
+      "sellPrice": 64.51,
+      "sellChange": -2.11,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.98
+      "returnRate": -3.3
     },
     {
       "seq": 2,
@@ -725,9 +725,9 @@
     "tradeCount": 5,
     "winCount": 2,
     "winRate": 40,
-    "avgDrawdown": -2.63,
+    "avgDrawdown": -2.74,
     "maxDrawdown": -4.49,
-    "overallReturn": 1.62,
+    "overallReturn": 1.28,
     "holding": true
   }
 }

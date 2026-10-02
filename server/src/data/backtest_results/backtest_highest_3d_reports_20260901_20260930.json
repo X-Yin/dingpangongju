@@ -408,7 +408,7 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 2,
+      "metric": 5,
       "code": "sz002536",
       "stockName": "飞龙股份",
       "buyDate": "20260901",
@@ -462,14 +462,14 @@
     {
       "seq": 2,
       "metric": 3,
-      "code": "sz002536",
-      "stockName": "飞龙股份",
+      "code": "sz002837",
+      "stockName": "英维克",
       "buyDate": "20260903",
       "buyDateDisplay": "2026-09-03",
       "buyTime": "14:00",
-      "buyPrice": 63.88,
-      "buyChange": 10.01,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -506.69亿，较 5min 前 +156.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyPrice": 69.34,
+      "buyChange": 4.7,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -506.69亿，较 5min 前 +156.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票涨停顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -503,15 +503,29 @@
           "exempted": false,
           "value": "开盘 37.71 / 当前 4.71",
           "reason": "9:30 竞价科技情绪 37.71 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "limit_up_defer",
+          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+          "passed": true,
+          "value": "顺延 1 只",
+          "skippedStocks": [
+            {
+              "code": "sz002536",
+              "name": "飞龙股份",
+              "change": 10.01
+            }
+          ],
+          "reason": "买入时点涨停候选已剔除并顺延：飞龙股份（触发时涨幅 +10.01%）（涨停股买入不可成交，顺延至排名下一只）"
         }
       ],
       "sellDate": "20260904",
       "sellDateDisplay": "2026-09-04",
-      "sellTime": "09:40",
-      "sellPrice": 62.2,
-      "sellChange": -1.32,
+      "sellTime": "09:35",
+      "sellPrice": 66.23,
+      "sellChange": -3.3,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.63
+      "returnRate": -4.49
     },
     {
       "seq": 3,
@@ -623,14 +637,14 @@
     {
       "seq": 5,
       "metric": 5,
-      "code": "sz002436",
-      "stockName": "兴森科技",
+      "code": "sh600183",
+      "stockName": "生益科技",
       "buyDate": "20260908",
       "buyDateDisplay": "2026-09-08",
       "buyTime": "10:25",
-      "buyPrice": 40.43,
-      "buyChange": 10.01,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -111.42亿，较 5min 前 +183.41亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyPrice": 150.65,
+      "buyChange": 1.69,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -111.42亿，较 5min 前 +183.41亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票涨停顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -664,13 +678,27 @@
           "exempted": false,
           "value": "开盘 13.15 / 当前 47.20",
           "reason": "9:30 竞价科技情绪 13.15 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "limit_up_defer",
+          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+          "passed": true,
+          "value": "顺延 1 只",
+          "skippedStocks": [
+            {
+              "code": "sz002436",
+              "name": "兴森科技",
+              "change": 10.01
+            }
+          ],
+          "reason": "买入时点涨停候选已剔除并顺延：兴森科技（触发时涨幅 +10.01%）（涨停股买入不可成交，顺延至排名下一只）"
         }
       ],
       "sellDate": "20260909",
       "sellDateDisplay": "2026-09-09",
-      "sellTime": "13:15",
-      "sellPrice": 39.59,
-      "sellChange": -1.32,
+      "sellTime": "13:30",
+      "sellPrice": 147.52,
+      "sellChange": 0.85,
       "sellReason": "跌破成本线-2%",
       "returnRate": -2.08
     },
@@ -949,9 +977,9 @@
     "tradeCount": 10,
     "winCount": 1,
     "winRate": 10,
-    "avgDrawdown": -2.76,
-    "maxDrawdown": -4.15,
-    "overallReturn": -18.39,
+    "avgDrawdown": -2.97,
+    "maxDrawdown": -4.49,
+    "overallReturn": -19.95,
     "holding": false
   }
 }

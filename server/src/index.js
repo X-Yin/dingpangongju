@@ -99,6 +99,7 @@ const aiSettings = require('./service/aiSettings');
 const { getMainFundAiSummary, getMainFundAiContext } = require('./service/mainFundAi');
 const { getAllGroups: getAllIndexOverlayGroups, saveGroup: saveIndexOverlayGroup, deleteGroup: deleteIndexOverlayGroup } = require('./service/indexOverlayGroup');
 const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup } = require('./service/trainingCamp');
+const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, ''); // 北京今天 YYYYMMDD
 const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, getSentimentDefaultRange, attachHoldingDays, getStockRecentReports } = require('./service/buySellBacktest');
 const { generateReport, ensureLatestReport, getReportById, listReports, getTrendDiagnosisRanges } = require('./service/backtestReport');
 const { getAttackDefenseScore } = require('./service/attackDefenseScore');
@@ -2591,6 +2592,181 @@ app.get('/training_camp/backtest/trend_diagnosis/status', (req, res) => {
     result: trendDiagnosisJob.result,
     error: trendDiagnosisJob.error,
   });
+});
+
+// ---------- 买卖点回测 - 历史曲线（自然月 × 全部策略） ----------
+// 复用 backtest-worker.js --monthly 模式：把可用回放交易日按自然月拆分逐月补测缺失缓存；
+// worker 结束后从回测缓存读取「月 × 策略」的月度整体收益，跨月累乘得到累计收益率曲线
+const monthlyTrendJob = { status: 'idle', startedAt: null, endedAt: null, exitCode: null, logTail: [], result: null, error: null };
+
+// 从回测缓存汇总自然月历史曲线数据（worker 结束后调用）
+const buildMonthlyTrendResult = async () => {
+  const dates = [...getTrainingCampDates()].filter(d => d < beijingToday()).sort();
+  if (dates.length === 0) throw new Error('无可用回放交易日，无法汇总历史曲线');
+  // 按自然月分组（与 worker buildMonthRanges 口径一致）
+  const monthMap = new Map(); // 'YYYYMM' -> { key, label, startDate, endDate, days }
+  for (const d of dates) {
+    const key = d.substring(0, 6);
+    const entry = monthMap.get(key) || { key, label: `${d.substring(0, 4)}-${d.substring(4, 6)}`, startDate: d, endDate: d, days: 0 };
+    entry.endDate = d;
+    entry.days += 1;
+    monthMap.set(key, entry);
+  }
+  const months = Array.from(monthMap.values());
+  const missing = [];
+  const strategies = Object.values(STRATEGIES).map(s => {
+    let cumulative = 1; // 跨月累乘（净值）
+    let broken = false; // 某月缓存缺失后曲线断点，其后累计值不再可信
+    const monthly = months.map(m => {
+      const cached = readCachedBacktest(s.id, m.startDate, m.endDate);
+      const ret = cached?.success && cached.summary?.overallReturn != null ? Number(cached.summary.overallReturn) : null;
+      const tradeCount = cached?.summary?.tradeCount ?? null;
+      if (ret == null) {
+        broken = true;
+        missing.push({ strategy: s.name, month: m.label });
+        return { month: m.label, ret: null, cumulative: null, tradeCount };
+      }
+      cumulative *= 1 + ret / 100;
+      return { month: m.label, ret, cumulative: broken ? null : parseFloat(((cumulative - 1) * 100).toFixed(2)), tradeCount };
+    });
+    const validCum = monthly.filter(p => p.cumulative != null);
+    return {
+      id: s.id,
+      name: s.name,
+      monthly,
+      latestCumulative: validCum.length > 0 ? validCum[validCum.length - 1].cumulative : null, // 期末累计收益率（%）
+      validMonthCount: validCum.length,
+    };
+  });
+  return {
+    generatedAt: new Date().toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' }),
+    months: months.map(m => ({ key: m.key, label: m.label, startDate: m.startDate, endDate: m.endDate, days: m.days })),
+    strategies,
+    missingCount: missing.length,
+  };
+};
+
+// 启动自然月回测（历史曲线）：spawn backtest-worker.js --monthly，结束后从缓存汇总曲线数据
+app.post('/training_camp/backtest/trend_diagnosis/monthly', (req, res) => {
+  try {
+    if (monthlyTrendJob.status === 'running') {
+      return res.json({ success: true, running: true, startedAt: monthlyTrendJob.startedAt, message: '自然月回测已在进行中' });
+    }
+    if (backtestWorkerJob.status === 'running' || trendDiagnosisJob.status === 'running') {
+      return res.json({ success: false, message: '全量回测/策略趋势诊断正在进行中，请等待其完成后再试' });
+    }
+    monthlyTrendJob.status = 'running';
+    monthlyTrendJob.startedAt = Date.now();
+    monthlyTrendJob.endedAt = null;
+    monthlyTrendJob.exitCode = null;
+    monthlyTrendJob.logTail = [];
+    monthlyTrendJob.error = null; // 保留旧 result：重跑期间前端仍可查看上一次曲线
+    const args = [path.join(__dirname, '../script/backtest-worker.js'), '--monthly'];
+    const child = spawn(process.execPath, args, { cwd: path.join(__dirname, '..'), stdio: ['ignore', 'pipe', 'pipe'] });
+    const pushLog = (line) => {
+      const t = String(line || '').trim();
+      if (!t) return;
+      monthlyTrendJob.logTail.push(`[${new Date().toLocaleTimeString('zh-CN', { hour12: false })}] ${t}`);
+      if (monthlyTrendJob.logTail.length > BACKTEST_WORKER_LOG_MAX) monthlyTrendJob.logTail.shift();
+    };
+    let outBuf = '';
+    let errBuf = '';
+    child.stdout.on('data', (d) => {
+      outBuf += String(d);
+      const lines = outBuf.split('\n');
+      outBuf = lines.pop() || '';
+      lines.forEach(pushLog);
+    });
+    child.stderr.on('data', (d) => {
+      errBuf += String(d);
+      const lines = errBuf.split('\n');
+      errBuf = lines.pop() || '';
+      lines.forEach(pushLog);
+    });
+    child.on('error', (err) => {
+      monthlyTrendJob.status = 'error';
+      monthlyTrendJob.endedAt = Date.now();
+      monthlyTrendJob.exitCode = -1;
+      monthlyTrendJob.error = `自然月回测 worker 启动失败: ${err.message}`;
+      pushLog(monthlyTrendJob.error);
+    });
+    child.on('exit', (code) => {
+      if (outBuf.trim()) pushLog(outBuf);
+      if (errBuf.trim()) pushLog(errBuf);
+      monthlyTrendJob.endedAt = Date.now();
+      monthlyTrendJob.exitCode = code;
+      console.log(`自然月回测 worker 结束（code=${code}，耗时 ${((Date.now() - monthlyTrendJob.startedAt) / 1000).toFixed(1)}s）`);
+      // worker 结束后从回测缓存汇总历史曲线数据（个别策略个别月份缺失不影响整体汇总）
+      buildMonthlyTrendResult().then((result) => {
+        monthlyTrendJob.result = result;
+        monthlyTrendJob.status = 'done';
+      }).catch((err) => {
+        monthlyTrendJob.status = 'error';
+        monthlyTrendJob.error = err.message || String(err);
+      });
+    });
+    console.log('自然月回测 worker 已启动: node script/backtest-worker.js --monthly');
+    res.json({ success: true, running: true, startedAt: monthlyTrendJob.startedAt });
+  } catch (error) {
+    console.error('启动自然月回测失败:', error);
+    res.status(500).json({ success: false, message: error.message || '启动自然月回测失败' });
+  }
+});
+
+app.get('/training_camp/backtest/trend_diagnosis/monthly/status', (req, res) => {
+  res.json({
+    success: true,
+    status: monthlyTrendJob.status, // idle | running | done | error
+    startedAt: monthlyTrendJob.startedAt,
+    endedAt: monthlyTrendJob.endedAt,
+    exitCode: monthlyTrendJob.exitCode,
+    logs: monthlyTrendJob.logTail.slice(-30),
+    result: monthlyTrendJob.result,
+    error: monthlyTrendJob.error,
+  });
+});
+
+// 历史曲线月度明细：指定策略在各自然月的完整回测结果（月度概览 + 逐笔交易），
+// 供趋势诊断弹窗在曲线下方按回测报告的 StrategyCard 格式逐月展示。
+// 仅读取已有回测缓存（--monthly worker 结束后缓存即齐备），不做现场回测
+app.get('/training_camp/backtest/trend_diagnosis/monthly/detail', (req, res) => {
+  try {
+    const ids = String(req.query.ids || '').split(',').map(s => s.trim()).filter(id => STRATEGIES[id]);
+    const dates = [...getTrainingCampDates()].filter(d => d < beijingToday()).sort();
+    if (dates.length === 0) return res.json({ success: true, strategies: [] });
+    // 按自然月分组（与 buildMonthlyTrendResult 口径一致）
+    const monthMap = new Map();
+    for (const d of dates) {
+      const key = d.substring(0, 6);
+      const entry = monthMap.get(key) || { key, label: `${d.substring(0, 4)}-${d.substring(4, 6)}`, startDate: d, endDate: d, days: 0 };
+      entry.endDate = d;
+      entry.days += 1;
+      monthMap.set(key, entry);
+    }
+    const months = Array.from(monthMap.values());
+    const strategies = ids.map(id => ({
+      id,
+      name: STRATEGIES[id].name,
+      desc: STRATEGIES[id].desc,
+      months: months.map(m => {
+        const cached = readCachedBacktest(id, m.startDate, m.endDate);
+        return {
+          key: m.key,
+          label: m.label,
+          startDate: m.startDate,
+          endDate: m.endDate,
+          days: m.days,
+          summary: cached?.success ? (cached.summary || null) : null,
+          trades: cached?.success ? (cached.trades || []).map((t, idx) => ({ ...t, seq: t.seq != null ? t.seq : idx + 1 })) : [],
+          currentHolding: cached?.success ? (cached.currentHolding || null) : null,
+        };
+      }),
+    }));
+    res.json({ success: true, strategies });
+  } catch (error) {
+    console.error('获取历史曲线月度明细失败:', error);
+    res.status(500).json({ success: false, message: error.message || '获取历史曲线月度明细失败' });
+  }
 });
 
 // ---------- 买卖点回测报告 ----------

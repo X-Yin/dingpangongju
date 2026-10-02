@@ -96,12 +96,15 @@ const getEmo3DefaultRange = () => {
   return { startDate: EMO3_BACKTEST_START_DATE, endDate: sorted[sorted.length - 1] };
 };
 
-// 选股抗分歧门槛（仅「买入最高涨幅」与「2日涨幅最大」两个策略启用）：这两个策略按「买点触发时点
-// 当日盘中涨幅」从高到低排序，从最高者起依次要求「触发时点当日抗分歧分数 > 11」，不满足则顺延至
-// 下一只满足的股票（买入条件明细中标注顺延原因；其余策略不受此限制、排序口径也不变）
+// 选股抗分歧门槛（当前仅「买入最高涨幅」启用）：买入时从策略排名最高者起依次要求「触发时点当日
+// 抗分歧分数 ≥ 11」，不满足则顺延至下一只满足的股票（买入条件明细中标注顺延原因；其余策略不受此限制）。
+// 历史备注：2/3/4/5/10日涨幅最大系列曾启用该门槛，已按需求移除；如需重新启用，把对应策略 id 加回
+// RESILIENCE_GATE_STRATEGY_IDS（按 N 日窗口涨幅排序）或 RESILIENCE_GATE_INTRADAY_SORT_IDS（按触发时点
+// 当日盘中涨幅排序，两个集合都加才按当日涨幅排序），选股与明细逻辑无需改动
 const RESILIENCE_GATE_MIN = 11;
-const RESILIENCE_GATE_STRATEGY_IDS = new Set(['highest_gain', 'highest_2d_gain']);
-const RESILIENCE_GATE_DESC = '选股门槛：按买点触发时点当日盘中涨幅从高到低排序，从最高者起依次要求「触发时点当日抗分歧分数 > 11」，不满足则顺延至下一只满足的股票（全部候选均不满足则当日不买入），买入条件明细中标注是否因前序股票分数≤11 而顺延';
+const RESILIENCE_GATE_STRATEGY_IDS = new Set(['highest_gain']);
+const RESILIENCE_GATE_INTRADAY_SORT_IDS = new Set(['highest_gain']);
+const RESILIENCE_GATE_DESC = '选股门槛：按策略排名从最高者起依次要求「触发时点当日抗分歧分数 ≥ 11」，不满足则顺延至下一只满足的股票（全部候选均不满足则当日不买入），买入条件明细中标注是否因前序股票分数<11 而顺延';
 for (const s of Object.values(STRATEGIES)) {
   if (!RESILIENCE_GATE_STRATEGY_IDS.has(s.id)) continue;
   s.desc = `${s.desc}；${RESILIENCE_GATE_DESC}`;
@@ -1563,6 +1566,40 @@ const computeWindowResilience = (code, winDates, dailyInfos, todayIntradayResili
   return sum;
 };
 
+// 涨停判定（买入时点，全策略通用）：主板（60/00 开头）当日涨幅 > 9.5% 视为涨停；
+// 创业板（sz30 开头）/科创板（sh68 开头）涨幅 > 19% 视为涨停。涨停股买入不可成交，
+// 各选股路径遇到涨停候选一律剔除并顺延至排名下一只（重点板块系列的涨停过滤同此口径）
+const isLimitUpAtBuy = (code, changePct) => {
+  if (changePct == null || !Number.isFinite(Number(changePct))) return false;
+  const growthBoard = String(code).startsWith('sz30') || String(code).startsWith('sh68');
+  return Number(changePct) > (growthBoard ? 19 : 9.5);
+};
+
+// ============================================================
+// 窗口预热（起点一致性）：把回测起始日之前的 needDays 个交易日的 EOD 数据提前加载进 dailyInfos，
+// 并返回向前扩展的日期轴 dateAxis = [...预热日, ...rangeDates]（axisOffset = 预热日数）。
+// 动机：窗口指标（最近 N 日涨幅/抗分歧）的历史成分来自 dailyInfos（随回测循环逐日填充），
+// 窗口切片又受限于 rangeDates——回测起点附近的窗口被起始日截断，导致「同一交易日、不同回测起点」
+// 得到不同的窗口指标与选股结果（如 8.3 起点与 8.4 起点在 8.4 9:40 选出不同的股票）。
+// 修复后选股函数传入 (dateAxis, di + axisOffset)，窗口切片自然覆盖预热日；
+// highest_gain（买入最高涨幅）的窗口语义固定为「回测起始日至当日」，通过 axisOffset 起切保持不变。
+// 预热日加载失败时跳过该日（窗口相应变短，与旧行为一致）；预热日不产生任何买卖动作。
+// ============================================================
+const buildWindowAxis = async (allDates, rangeDates, startDate, needDays, dailyInfos) => {
+  const preloadDates = allDates.filter(d => d < startDate).sort().slice(-Math.max(0, needDays));
+  const loaded = [];
+  for (const d of preloadDates) {
+    try {
+      const campData = await loadTrainingCampData(d);
+      if (campData && campData.success !== false && (campData.timeBuckets || []).length > 0) {
+        dailyInfos.set(d, extractDailyInfo(campData));
+        loaded.push(d);
+      }
+    } catch { /* 单日预热失败忽略 */ }
+  }
+  return { dateAxis: [...loaded, ...rangeDates], axisOffset: loaded.length };
+};
+
 // 抗分歧弱转强选股：取最近 4 个交易日（最后一位为当日，用盘中过滤后的抗分歧分数）每只股票的抗分歧分数，
 // 先筛选出「买点触发时抗分歧分数 > 11」的股票，再从中计算「前两天均值」与「后两天均值」（第 3 天+当日，即最近两天）的差值
 // diff = 后两天均值 - 前两天均值。diff 越大代表抗分歧由弱转强越明显，选 diff 最大的一只；diff 相同（弱转强过程一致）时，取当日盘中涨幅最大的一只。
@@ -1575,6 +1612,8 @@ const pickWeakToStrongStock = (bucket, rangeDates, di, replayStocks, dailyInfos)
     if (sc.lastPx == null || sc.lastPx <= 0) continue;
     // 自选股添加时间门禁：买点时刻尚未加入自选股的股票不参与选股（防止后加自选股污染历史回测）
     if (!isStockInWatchlistAt(sc.code, rangeDates[di], bucket.minute)) continue;
+    // 涨停顺延：买点触发时点已涨停的股票无法成交，不参与优选
+    if (isLimitUpAtBuy(sc.code, sc.changePct)) continue;
     const scores = [];
     for (let i = 0; i < winDates.length; i++) {
       let r;
@@ -1714,10 +1753,10 @@ const buildEmo3GateCheck = (gate) => {
 };
 
 // 单股策略选股：在买点命中的当前时间桶，按策略指标选择最优的一只股票。
-// 抗分歧>11 顺延门槛仅对 RESILIENCE_GATE_STRATEGY_IDS（买入最高涨幅/2日涨幅最大）启用：
+// 抗分歧≥11 顺延门槛对 RESILIENCE_GATE_STRATEGY_IDS（当前仅买入最高涨幅）启用：
 // 排名首位不满足则按策略排名依次顺延至下一只满足的股票，skipped 记录被顺延跳过的前序股票（供买入明细标注）；
 // 其余策略不做抗分歧校验，直接取排名指定名次的第一只
-const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos, strategyId) => {
+const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos, strategyId, axisOffset = 0) => {
   const isReportStrategy = strategyId.includes('reports');
   const isTop5ReportGainMode = strategyId.includes('reports_top5_gain'); // 研报覆盖前五（含覆盖数相同）中取窗口涨幅最大
   const isPureReportMode = isReportStrategy && !isTop5ReportGainMode; // 研报覆盖数最多/第二多
@@ -1742,7 +1781,9 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   // 涨幅/抗分歧窗口按 days 天
   let winDates;
   if (strategyId === 'highest_gain') {
-    winDates = rangeDates.slice(0, di + 1); // 回测起始日至当日
+    // 买入最高涨幅：窗口固定为「回测起始日至当日」——从 axisOffset（日期轴上预热日的数量）起切，
+    // 避免预热日改变该策略的全期窗口语义；其余策略的最近 N 日窗口可自然覆盖预热日
+    winDates = rangeDates.slice(axisOffset, di + 1);
   } else if (days) {
     winDates = rangeDates.slice(Math.max(0, di - days + 1), di + 1);
   } else {
@@ -1755,9 +1796,11 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   }
   // 跌幅最大（_fall）与涨幅共用窗口涨幅指标，仅取最小值；其余照旧
   const gainMode = strategyId === 'highest_gain' || strategyId.includes('_gain') || strategyId.includes('_fall');
-  // 抗分歧门槛策略（买入最高涨幅/2日涨幅最大）：选股排序依据 = 买点触发时点当日盘中涨幅（用户定义，
-  // 非窗口累计涨幅），从高到低排序后从最高者起依次用触发时点抗分歧分数>11 过滤
+  // 抗分歧门槛策略（当前仅买入最高涨幅）：选股排序依据 = 买点触发时点当日盘中涨幅（用户定义，
+  // 非窗口累计涨幅），从高到低排序后从最高者起依次用触发时点抗分歧分数≥11 过滤；
+  // 若未来加入按 N 日窗口涨幅排序的门槛策略，会走下方窗口涨幅计算分支，仅追加抗分歧顺延校验
   const gateEnabled = RESILIENCE_GATE_STRATEGY_IDS.has(strategyId);
+  const gateIntradaySort = RESILIENCE_GATE_INTRADAY_SORT_IDS.has(strategyId);
 
   // 收集全部候选（与原 best/second 口径一致：按指标值排序，同值保持自选股原顺序）
   const candidates = [];
@@ -1787,8 +1830,8 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       const gate = emo3IndexGateCache.get(`${rangeDates[di]}_${trackedIndexCodeOf(sc.code)}`);
       if (!gate || gate.passed !== true) continue;
     }
-    if (gateEnabled) {
-      // 门槛策略：按触发时点当日盘中涨幅排序（如买点触发在 13:10，即看 13:10 时谁的涨幅最大）
+    if (gateIntradaySort) {
+      // 门槛策略（最高涨幅/2日涨幅最大）：按触发时点当日盘中涨幅排序（如买点触发在 13:10，即看 13:10 时谁的涨幅最大）
       const chg = sc.changePct != null ? Number(sc.changePct) : null;
       if (chg == null || !Number.isFinite(chg)) continue;
       candidates.push({ sc, val: chg, metric: parseFloat(chg.toFixed(4)) });
@@ -1860,26 +1903,39 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     }).map(c => ({ sc: c.sc, metric: c.metric }));
   }
 
-  // 抗分歧>11 门槛：门槛策略从涨幅最高者起向后找第一只满足的股票；其余策略不做校验，
-  // 直接取策略排名指定名次的第一只（与原逻辑一致）
-  const skipped = []; // 因分数≤11（或无法计算）被顺延跳过的前序股票（仅门槛策略使用）
+  // 抗分歧≥11 门槛：门槛策略从排名最高者起向后找第一只满足的股票；其余策略不做校验，
+  // 直接取策略排名指定名次的第一只（与原逻辑一致）。
+  // 涨停顺延（全策略通用）：买点触发时点已涨停的候选（主板涨幅>9.5%、创业/科创>19%）实际无法成交，
+  // 一律剔除并顺延至排名下一只；全部候选均涨停（或无有效候选）时当日不买入
+  const skipped = []; // 因抗分歧分数<11（或无法计算）被顺延跳过的前序股票（仅门槛策略使用）
+  const limitUpSkipped = []; // 因买点时点涨停被顺延跳过的候选（全策略通用，追加 limit_up_defer 买入明细）
   for (let i = useSecond ? 1 : 0; i < ordered.length; i++) {
     const cand = ordered[i];
+    if (isLimitUpAtBuy(cand.sc.code, cand.sc.changePct)) {
+      limitUpSkipped.push({
+        code: cand.sc.code,
+        name: cand.sc.name || cand.sc.code,
+        change: cand.sc.changePct != null ? Number(cand.sc.changePct) : null, // 触发时点涨幅
+      });
+      continue;
+    }
     if (gateEnabled) {
       const score = calcResilienceAtMinute(replayStocks, cand.sc.code, bucket.minute);
-      if (score != null && score > RESILIENCE_GATE_MIN) {
-        return { stock: cand.sc, metric: cand.metric, resilienceScore: score, skipped };
+      if (score != null && score >= RESILIENCE_GATE_MIN) {
+        return { stock: cand.sc, metric: cand.metric, resilienceScore: score, skipped, limitUpSkipped };
       }
       skipped.push({
         code: cand.sc.code,
         name: cand.sc.name || cand.sc.code,
-        change: cand.sc.changePct != null ? Number(cand.sc.changePct) : null, // 触发时间点涨幅（即排序依据）
+        change: cand.sc.changePct != null ? Number(cand.sc.changePct) : null, // 触发时间点涨幅
+        metric: gateIntradaySort ? undefined : cand.metric, // 窗口涨幅（排序依据，仅 N 日窗口涨幅排序的门槛策略输出）
         resilience: score,
       });
     } else {
       return {
         stock: cand.sc,
         metric: cand.metric,
+        limitUpSkipped,
         // 三日情绪冰点：附带命中的跟踪指数环境门禁明细（withResilienceGateInfo 会追加到买入条件明细）
         emo3Gate: isEmo3GateStrategy
           ? emo3IndexGateCache.get(`${rangeDates[di]}_${trackedIndexCodeOf(cand.sc.code)}`)
@@ -1887,51 +1943,81 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       };
     }
   }
-  return null; // 门槛策略：全部候选均不满足门槛，不买入；其余策略：无候选
+  return null; // 门槛策略：全部候选均不满足门槛；其余策略：候选全部涨停或无候选——均不买入
 };
 
 // ============================================================
-// 买入条件明细中的选股顺延标注（抗分歧>11 门槛）
+// 买入条件明细中的选股顺延标注（抗分歧≥11 门槛）
 // ============================================================
-// 抗分歧门槛明细项（passed 恒为 true：能入选即代表满足门槛），reason 标明是否因前序股票分数≤11 而顺延
+// 抗分歧门槛明细项（passed 恒为 true：能入选即代表满足门槛），reason 标明是否因前序股票分数<11 而顺延
 const buildResilienceGateCheck = (resilienceScore, skipped) => {
   const fmtChangePct = v => (v != null ? `${v > 0 ? '+' : ''}${Number(v).toFixed(2)}%` : '无法计算');
   const skippedStocks = (skipped || []).map(s => ({
     code: s.code,
     name: s.name,
-    change: s.change != null ? Number(s.change) : null, // 触发时间点涨幅（即排序依据）
+    change: s.change != null ? Number(s.change) : null, // 触发时间点涨幅
+    metric: s.metric != null ? Number(s.metric) : null, // 窗口涨幅（排序依据，N 日窗口涨幅排序的门槛策略才有值）
     resilience: s.resilience,
   }));
-  const skipText = skippedStocks.map(s => `${s.name}（触发时涨幅 ${fmtChangePct(s.change)}、抗分歧 ${s.resilience != null ? s.resilience : '无法计算'}）`).join('、');
+  const skipText = skippedStocks.map(s => `${s.name}（${s.metric != null ? `窗口涨幅 ${fmtChangePct(s.metric)}、` : ''}触发时涨幅 ${fmtChangePct(s.change)}、抗分歧 ${s.resilience != null ? s.resilience : '无法计算'}）`).join('、');
   return {
     id: 'resilience_gate',
-    title: '触发时点抗分歧分数>11',
+    title: '触发时点抗分歧分数≥11',
     passed: true,
     value: resilienceScore != null ? `${resilienceScore}` : '--',
     skippedStocks, // 结构化顺延明细（前端抽屉/报告悬停展示为表格）
     reason: skipped && skipped.length > 0
-      ? `因前序股票 ${skipText} 触发时点抗分歧分数≤11 依次顺延，轮到本股买入（本股触发时点抗分歧分数 ${resilienceScore}）`
+      ? `因前序股票 ${skipText} 触发时点抗分歧分数<11 依次顺延，轮到本股买入（本股触发时点抗分歧分数 ${resilienceScore}）`
       : `按策略指定名次直接满足，未发生顺延（触发时点抗分歧分数 ${resilienceScore}）`,
   };
 };
 
+// 涨停顺延明细（全策略通用）：买点触发时点已涨停的候选被剔除并顺延至排名下一只时，
+// 在买入条件明细中追加 limit_up_defer 项（口径与重点板块系列的 key_block_limit_up 一致）
+const buildLimitUpDeferCheck = (limitUpSkipped) => {
+  const fmtChangePct = v => (v != null ? `${v > 0 ? '+' : ''}${Number(v).toFixed(2)}%` : '无法计算');
+  const skippedStocks = (limitUpSkipped || []).map(s => ({
+    code: s.code,
+    name: s.name,
+    change: s.change != null ? Number(s.change) : null, // 触发时间点涨幅
+  }));
+  const skipText = skippedStocks.map(s => `${s.name}（触发时涨幅 ${fmtChangePct(s.change)}）`).join('、');
+  return {
+    id: 'limit_up_defer',
+    title: '涨停过滤（主板>9.5%、创业/科创>19%）',
+    passed: true,
+    value: skippedStocks.length > 0 ? `顺延 ${skippedStocks.length} 只` : '无涨停候选',
+    skippedStocks, // 结构化顺延明细（前端抽屉/报告悬停展示为表格）
+    reason: `买入时点涨停候选已剔除并顺延：${skipText}（涨停股买入不可成交，顺延至排名下一只）`,
+  };
+};
+
 // 将选股顺延信息追加到买入原因/明细：发生顺延时在 buyReason 尾部标注，buyChecks 追加 resilience_gate 明细项。
-// 仅 RESILIENCE_GATE_STRATEGY_IDS 两个策略的选股结果带 resilienceScore/skipped，其余策略（含抗分歧弱转强）
-// 返回结构不含该字段，此处自动跳过标注（买入原因/明细保持原样）；
+// 仅 RESILIENCE_GATE_STRATEGY_IDS 门槛策略（当前仅买入最高涨幅）的选股结果带
+// resilienceScore/skipped，其余策略（含抗分歧弱转强）返回结构不含该字段，此处自动跳过标注（买入原因/明细保持原样）；
+// 全部策略的选股结果都可能带 limitUpSkipped（买点时点涨停被顺延的候选），追加 limit_up_defer 明细项并标注买入原因；
 // 三日情绪冰点策略的选股结果带 emo3Gate（跟踪指数环境门禁命中明细），追加 emo3_index_gate 明细项
 const withResilienceGateInfo = (buyInfo, picked) => {
   if (!buyInfo || !picked) return buyInfo;
-  if (picked.resilienceScore == null && !picked.emo3Gate) return buyInfo;
+  const hasLimitUp = Array.isArray(picked.limitUpSkipped) && picked.limitUpSkipped.length > 0;
+  const hasResilienceSkip = picked.resilienceScore != null && picked.skipped && picked.skipped.length > 0;
+  if (picked.resilienceScore == null && !picked.emo3Gate && !hasLimitUp) return buyInfo;
   let buyReason = buyInfo.buyReason;
   const buyChecks = [...(buyInfo.buyChecks || [])];
+  if (hasLimitUp) {
+    buyChecks.push(buildLimitUpDeferCheck(picked.limitUpSkipped));
+  }
   if (picked.resilienceScore != null) {
-    buyReason = picked.skipped && picked.skipped.length > 0
-      ? `${buyInfo.buyReason}（因前序股票抗分歧≤11顺延买入）`
-      : buyInfo.buyReason;
     buyChecks.push(buildResilienceGateCheck(picked.resilienceScore, picked.skipped));
   }
   if (picked.emo3Gate) {
     buyChecks.push(buildEmo3GateCheck(picked.emo3Gate));
+  }
+  if (hasLimitUp || hasResilienceSkip) {
+    const suffix = hasLimitUp && hasResilienceSkip
+      ? '（因前序股票涨停/抗分歧不达标顺延买入）'
+      : (hasLimitUp ? '（因前序股票涨停顺延买入）' : '（因前序股票抗分歧<11顺延买入）');
+    buyReason = `${buyInfo.buyReason}${suffix}`;
   }
   return { buyReason, buyChecks };
 };
@@ -1953,7 +2039,8 @@ const pickQuarterStocks = (bucket, rangeDates, di, dailyInfos, heldCodes) => {
     candidates.push({ sc, gain });
   }
   candidates.sort((a, b) => b.gain - a.gain);
-  return candidates.slice(0, 4);
+  // 涨停顺延：买点触发时点已涨停的股票无法成交，剔除后再取涨幅前 4
+  return candidates.filter(c => !isLimitUpAtBuy(c.sc.code, c.sc.changePct)).slice(0, 4);
 };
 
 // ============================================================
@@ -1975,7 +2062,8 @@ const pickTwoStocks = (bucket, rangeDates, di, dailyInfos, heldCodes, needCount)
     candidates.push({ sc, gain });
   }
   candidates.sort((a, b) => b.gain - a.gain);
-  return candidates.slice(0, needCount).map(c => ({ sc: c.sc, gain: c.gain }));
+  // 涨停顺延：买点触发时点已涨停的股票无法成交，剔除后再取涨幅前 needCount
+  return candidates.filter(c => !isLimitUpAtBuy(c.sc.code, c.sc.changePct)).slice(0, needCount).map(c => ({ sc: c.sc, gain: c.gain }));
 };
 
 // ============================================================
@@ -2001,6 +2089,8 @@ const runQuarterBacktest = async (startDate, endDate, strategyId, onProgress) =>
   // 历史每日 EOD 信息与回测期间出现过的自选股
   const dailyInfos = new Map();
   const seenStocks = new Map(); // code -> { code, name }
+  // 预热起始日前 2 个交易日 EOD，日期轴前移，保证起点附近「最近 N 日」窗口不被起始日截断
+  const { dateAxis, axisOffset } = await buildWindowAxis(allDates, rangeDates, startDate, 2, dailyInfos);
 
   for (let di = 0; di < total; di++) {
     const dateStr = rangeDates[di];
@@ -2081,7 +2171,7 @@ const runQuarterBacktest = async (startDate, endDate, strategyId, onProgress) =>
         if (buyResult?.data?.allPassed === true) {
           const buyInfo = buildBuyReasonFromDiag(buyResult.data);
           const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
-          const picks = pickQuarterStocks(bucket, rangeDates, di, dailyInfos, heldCodes);
+          const picks = pickQuarterStocks(bucket, dateAxis, di + axisOffset, dailyInfos, heldCodes);
           for (const pick of picks) {
             const sc = pick.sc;
             positions.push({
@@ -2176,6 +2266,8 @@ const runTwoBacktest = async (startDate, endDate, strategyId, onProgress) => {
   // 历史每日 EOD 信息与回测期间出现过的自选股
   const dailyInfos = new Map();
   const seenStocks = new Map(); // code -> { code, name }
+  // 预热起始日前 2 个交易日 EOD，日期轴前移，保证起点附近「最近 N 日」窗口不被起始日截断
+  const { dateAxis, axisOffset } = await buildWindowAxis(allDates, rangeDates, startDate, 2, dailyInfos);
 
   for (let di = 0; di < total; di++) {
     const dateStr = rangeDates[di];
@@ -2259,7 +2351,7 @@ const runTwoBacktest = async (startDate, endDate, strategyId, onProgress) => {
         if (buyResult?.data?.allPassed === true) {
           const buyInfo = buildBuyReasonFromDiag(buyResult.data);
           const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
-          const picks = pickTwoStocks(bucket, rangeDates, di, dailyInfos, heldCodes, idleSlots);
+          const picks = pickTwoStocks(bucket, dateAxis, di + axisOffset, dailyInfos, heldCodes, idleSlots);
           for (const pick of picks) {
             const sc = pick.sc;
             positions.push({
@@ -2553,14 +2645,6 @@ const getKeyBlockCybMa3SlopeIntraday = async (dateStr, minute) => {
   }
 };
 
-// 涨停判定（买入时点）：主板（60/00 开头）当日涨幅 > 9.5% 视为涨停；创业板（sz30）/科创板（sh68）涨幅 > 19% 视为涨停。
-// 涨停股买入时不可买，只能顺延找 n 日涨幅排名的下一只
-const isKeyBlockLimitUp = (code, changePct) => {
-  if (changePct == null || !Number.isFinite(Number(changePct))) return false;
-  const growthBoard = String(code).startsWith('sz30') || String(code).startsWith('sh68');
-  return Number(changePct) > (growthBoard ? 19 : 9.5);
-};
-
 // 斜率数值格式化（带正负号，2 位小数；null 显示 --）
 const fmtKeyBlockSlope = (v) => (v == null || !Number.isFinite(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}`);
 
@@ -2608,6 +2692,8 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
   const skippedDates = [];
   const seenStocks = new Map(); // code -> { code, name }（回测期间出现过的自选股，供复制K线等使用）
   const dailyInfos = new Map(); // date -> Map<code, {changePct, closePx, resilience}>（期末持仓收益率估算用）
+  // 预热起始日前 days 个交易日 EOD，日期轴前移，保证起点附近「最近 N 日」窗口不被起始日截断
+  const { dateAxis, axisOffset } = await buildWindowAxis(allDates, rangeDates, startDate, days, dailyInfos);
 
   // 斜率符号状态机（2026-10-01 重构：买卖只由斜率正负翻转驱动，不再按斜率正负直接分模式）：
   //   lastSlopeSign/Value：最近一个有效盘中实时斜率的符号与数值，跨日连续追踪；初值取回测首日前一交易日收盘斜率
@@ -2704,7 +2790,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       const changePct = preclose && preclose > 0
         ? parseFloat((((atBucket.lastPx - preclose) / preclose) * 100).toFixed(2))
         : null;
-      return { code: m.code, name: m.name || m.code, gain, lastPx: atBucket.lastPx, changePct, limitUp: isKeyBlockLimitUp(m.code, changePct) };
+      return { code: m.code, name: m.name || m.code, gain, lastPx: atBucket.lastPx, changePct, limitUp: isLimitUpAtBuy(m.code, changePct) };
     }, 8);
     const candidates = candidateList.filter(Boolean);
     candidates.sort((a, b) => b.gain - a.gain); // 并列涨幅保持配置顺序（batchParallel 保序）
@@ -2858,7 +2944,8 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
         }
     }
 
-    const winDates = di + 1 >= days ? rangeDates.slice(di + 1 - days, di + 1) : [];
+    const diA = di + axisOffset;
+    const winDates = diA + 1 >= days ? dateAxis.slice(diA + 1 - days, diA + 1) : [];
     const dateNum = parseInt(dateStr, 10);
 
     // 逐桶状态机（2026-10-01 重构）：
@@ -3102,6 +3189,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
 
   // 历史每日 EOD 信息：{ date: Map<code, {changePct, closePx, resilience}> }
   const dailyInfos = new Map();
+  // 预热起始日前 10 个交易日 EOD，日期轴前移，保证起点附近「最近 N 日」窗口不被起始日截断
+  const { dateAxis, axisOffset } = await buildWindowAxis(allDates, rangeDates, startDate, 10, dailyInfos);
   // 回测期间出现过的全部自选股（供复制K线等使用）
   const seenStocks = new Map(); // code -> { code, name }
 
@@ -3270,7 +3359,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
 
         // 策略切换逻辑：连续切换三日涨幅
         if (strategy.id === 'highest_3d_gain_switch') {
-          const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, 'highest_3d_gain');
+          // 传真实策略 ID：连续切换不在抗分歧门槛策略之列，避免借用 highest_3d_gain 时被连带加门槛
+          const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset);
           if (picked) {
             const gatedBuyInfo = withResilienceGateInfo(buyInfo, picked);
             const sc = picked.stock;
@@ -3335,7 +3425,8 @@ const runRangeBacktest = async (startDate, endDate, strategyId = 'highest_gain',
           }
         } else if (!singlePosition && !pendingHalfBuy) {
           // 原有单股策略逻辑：同一时刻仅持有一只，未持仓时按指标选最优的一只买入
-          const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, isTwice ? 'highest_3d_gain' : strategy.id);
+          // 传真实策略 ID：两次买入不在抗分歧门槛策略之列，避免借用 highest_3d_gain 时被连带加门槛
+          const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset);
           if (picked) {
             const gatedBuyInfo = withResilienceGateInfo(buyInfo, picked);
             const sc = picked.stock;
@@ -3493,6 +3584,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   // 整组策略共享：每日 EOD 信息与期间出现过的自选股（均由 campData 派生）
   const dailyInfos = new Map();
   const seenStocks = new Map(); // code -> { code, name }
+  // 预热起始日前 10 个交易日 EOD，日期轴前移，保证起点附近「最近 N 日」窗口不被起始日截断
+  const { dateAxis, axisOffset } = await buildWindowAxis(allDates, rangeDates, startDate, 10, dailyInfos);
 
   for (let di = 0; di < total; di++) {
     const dateStr = rangeDates[di];
@@ -3629,7 +3722,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
 
           // 策略切换逻辑：连续切换三日涨幅
           if (strategy.id === 'highest_3d_gain_switch') {
-            const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, 'highest_3d_gain');
+            // 传真实策略 ID：连续切换不在抗分歧门槛策略之列，避免借用 highest_3d_gain 时被连带加门槛
+            const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset);
             if (picked) {
               const gatedBuyInfo = withResilienceGateInfo(buyInfo, picked);
               const sc = picked.stock;
@@ -3694,7 +3788,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
             }
           } else if (!st.singlePosition && !st.pendingHalfBuy) {
             // 原有单股策略逻辑：同一时刻仅持有一只，未持仓时按指标选最优的一只买入
-            const picked = pickBestStock(new Map(), rangeDates, di, bucket, replayStocks, dailyInfos, isTwice ? 'highest_3d_gain' : strategy.id);
+            // 传真实策略 ID：两次买入不在抗分歧门槛策略之列，避免借用 highest_3d_gain 时被连带加门槛
+            const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset);
             if (picked) {
               const gatedBuyInfo = withResilienceGateInfo(buyInfo, picked);
               const sc = picked.stock;

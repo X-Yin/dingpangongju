@@ -408,14 +408,14 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 3.74,
-      "code": "sh688143",
-      "stockName": "长盈通",
+      "metric": 9.3573,
+      "code": "sz000977",
+      "stockName": "浪潮信息",
       "buyDate": "20260901",
       "buyDateDisplay": "2026-09-01",
       "buyTime": "14:57",
-      "buyPrice": 167,
-      "buyChange": 3.74,
+      "buyPrice": 85.6,
+      "buyChange": 0.49,
       "buyReason": "尾盘抄底命中：当日科技情绪曾触及-100退潮冰点",
       "buyChecks": [
         {
@@ -428,11 +428,11 @@
       ],
       "sellDate": "20260902",
       "sellDateDisplay": "2026-09-02",
-      "sellTime": "09:33",
-      "sellPrice": 164,
-      "sellChange": -1.77,
+      "sellTime": "09:31",
+      "sellPrice": 85.39,
+      "sellChange": -0.23,
       "sellReason": "开盘后涨幅开始下降即卖出",
-      "returnRate": -1.8
+      "returnRate": -0.25
     },
     {
       "seq": 2,
@@ -552,9 +552,9 @@
     "tradeCount": 5,
     "winCount": 1,
     "winRate": 20,
-    "avgDrawdown": -4.23,
+    "avgDrawdown": -3.84,
     "maxDrawdown": -5.65,
-    "overallReturn": -12.67,
+    "overallReturn": -11.29,
     "holding": false
   }
 }

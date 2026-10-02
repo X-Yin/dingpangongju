@@ -408,7 +408,7 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 7.03,
+      "metric": 18.1819,
       "code": "sh688143",
       "stockName": "长盈通",
       "buyDate": "20260901",
@@ -461,15 +461,15 @@
     },
     {
       "seq": 2,
-      "metric": 16.3642,
-      "code": "sz002536",
-      "stockName": "飞龙股份",
+      "metric": 34.0471,
+      "code": "sz301018",
+      "stockName": "申菱环境",
       "buyDate": "20260903",
       "buyDateDisplay": "2026-09-03",
       "buyTime": "14:00",
-      "buyPrice": 63.88,
-      "buyChange": 10.01,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -506.69亿，较 5min 前 +156.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyPrice": 115.96,
+      "buyChange": 8.56,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -506.69亿，较 5min 前 +156.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票涨停顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -503,19 +503,38 @@
           "exempted": false,
           "value": "开盘 37.71 / 当前 4.71",
           "reason": "9:30 竞价科技情绪 37.71 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "limit_up_defer",
+          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+          "passed": true,
+          "value": "顺延 2 只",
+          "skippedStocks": [
+            {
+              "code": "sz002536",
+              "name": "飞龙股份",
+              "change": 10.01
+            },
+            {
+              "code": "sh603757",
+              "name": "大元泵业",
+              "change": 10
+            }
+          ],
+          "reason": "买入时点涨停候选已剔除并顺延：飞龙股份（触发时涨幅 +10.01%）、大元泵业（触发时涨幅 +10.00%）（涨停股买入不可成交，顺延至排名下一只）"
         }
       ],
       "sellDate": "20260904",
       "sellDateDisplay": "2026-09-04",
-      "sellTime": "09:40",
-      "sellPrice": 62.2,
-      "sellChange": -1.32,
+      "sellTime": "09:35",
+      "sellPrice": 109.48,
+      "sellChange": -2.89,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.63
+      "returnRate": -5.59
     },
     {
       "seq": 3,
-      "metric": 10.2399,
+      "metric": 28.8607,
       "code": "sz002536",
       "stockName": "飞龙股份",
       "buyDate": "20260904",
@@ -568,14 +587,14 @@
     },
     {
       "seq": 4,
-      "metric": 10.4625,
-      "code": "sh603083",
-      "stockName": "剑桥科技",
+      "metric": 24.0846,
+      "code": "sz300757",
+      "stockName": "罗博特科",
       "buyDate": "20260907",
       "buyDateDisplay": "2026-09-07",
       "buyTime": "10:15",
-      "buyPrice": 207.21,
-      "buyChange": 10,
+      "buyPrice": 615.96,
+      "buyChange": 7.31,
       "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -80.74亿，较 5min 前 +128.88亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -612,25 +631,79 @@
           "reason": "9:30 竞价科技情绪 45.13 未超过 80，当前情绪须低于 40 的限制不生效"
         }
       ],
-      "sellDate": "20260915",
-      "sellDateDisplay": "2026-09-15",
-      "sellTime": "09:40",
-      "sellPrice": 215.43,
-      "sellChange": -1.58,
+      "sellDate": "20260911",
+      "sellDateDisplay": "2026-09-11",
+      "sellTime": "10:05",
+      "sellPrice": 631,
+      "sellChange": -1.17,
       "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 3.97
+      "returnRate": 2.44
     },
     {
       "seq": 5,
-      "metric": 47.0775,
-      "code": "sh603186",
-      "stockName": "华正新材",
+      "metric": 25.8606,
+      "code": "sh688028",
+      "stockName": "沃尔德",
+      "buyDate": "20260911",
+      "buyDateDisplay": "2026-09-11",
+      "buyTime": "13:40",
+      "buyPrice": 117.44,
+      "buyChange": -2.13,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 2373.67亿，较 5min 前 +152.33亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+31.06亿",
+          "reason": "最近 5 分钟资金净流入 31.06 亿（13:35:00→13:40:00），超过 20 亿阈值"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 152.33亿",
+          "reason": "当前量能 2373.67 亿为正，较 5min 前的 2221.34 亿+ 152.33 亿，持续放量",
+          "volumeText": "当前量能 2373.67亿，较 5min 前 +152.33亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 -47.32 / 当前 -26.30",
+          "reason": "9:30 竞价科技情绪 -47.32 未超过 80，当前情绪须低于 40 的限制不生效"
+        }
+      ],
+      "sellDate": "20260915",
+      "sellDateDisplay": "2026-09-15",
+      "sellTime": "09:40",
+      "sellPrice": 114.49,
+      "sellChange": -4.75,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.51
+    },
+    {
+      "seq": 6,
+      "metric": 25.4819,
+      "code": "sh688028",
+      "stockName": "沃尔德",
       "buyDate": "20260915",
       "buyDateDisplay": "2026-09-15",
       "buyTime": "10:20",
-      "buyPrice": 251.57,
-      "buyChange": 10,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -453.40亿，较 5min 前 +105.35亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyPrice": 118.47,
+      "buyChange": -1.44,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -453.40亿，较 5min 前 +105.35亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票涨停顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -664,18 +737,32 @@
           "exempted": false,
           "value": "开盘 -8.55 / 当前 65.18",
           "reason": "9:30 竞价科技情绪 -8.55 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "limit_up_defer",
+          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+          "passed": true,
+          "value": "顺延 1 只",
+          "skippedStocks": [
+            {
+              "code": "sh603186",
+              "name": "华正新材",
+              "change": 10
+            }
+          ],
+          "reason": "买入时点涨停候选已剔除并顺延：华正新材（触发时涨幅 +10.00%）（涨停股买入不可成交，顺延至排名下一只）"
         }
       ],
       "sellDate": "20260916",
       "sellDateDisplay": "2026-09-16",
-      "sellTime": "10:00",
-      "sellPrice": 245.04,
-      "sellChange": -2.6,
+      "sellTime": "09:30",
+      "sellPrice": 116,
+      "sellChange": 1.18,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.6
+      "returnRate": -2.08
     },
     {
-      "seq": 6,
+      "seq": 7,
       "metric": 37.8912,
       "code": "sh603186",
       "stockName": "华正新材",
@@ -729,7 +816,7 @@
       "returnRate": -2.09
     },
     {
-      "seq": 7,
+      "seq": 8,
       "metric": 42.0412,
       "code": "sz301183",
       "stockName": "东田微",
@@ -783,7 +870,7 @@
       "returnRate": -0.23
     },
     {
-      "seq": 8,
+      "seq": 9,
       "metric": 17.8881,
       "code": "sh688361",
       "stockName": "中科飞测",
@@ -838,12 +925,12 @@
   ],
   "currentHolding": null,
   "summary": {
-    "tradeCount": 8,
+    "tradeCount": 9,
     "winCount": 1,
-    "winRate": 12.5,
-    "avgDrawdown": -3.02,
+    "winRate": 11.11,
+    "avgDrawdown": -3.26,
     "maxDrawdown": -6.55,
-    "overallReturn": -16.23,
+    "overallReturn": -21.56,
     "holding": false
   }
 }

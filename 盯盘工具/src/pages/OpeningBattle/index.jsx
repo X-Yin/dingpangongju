@@ -884,7 +884,7 @@ const buildReportMarkdownComponents = (stockName) => {
   };
 };
 
-// ==================== 自选股 研报前五 & 5 日涨幅前五 ====================
+// ==================== 自选股 3 日涨幅前五 ====================
 const TopChange3dModule = () => {
   const [stocks, setStocks] = useState([]);
   const [activeReports, setActiveReports] = useState(null); // { stockName, loading, reports }
@@ -892,8 +892,8 @@ const TopChange3dModule = () => {
 
   const fetchStocks = useCallback(async () => {
     try {
-      // 单次请求拿到全量自选股在最近 5 个报告日内的研报数 + 5 日涨幅 + 当日涨幅
-      const res = await axios.post(`http://${local_ip}:3000/buy_point_stocks`, { sortBy: 'reports', days: 5 });
+      // 单次请求拿到全量自选股在最近 3 个报告日内的研报数 + 3 日涨幅（changeNd，N=days）+ 当日涨幅
+      const res = await axios.post(`http://${local_ip}:3000/buy_point_stocks`, { sortBy: 'reports', days: 3 });
       const matched = res.data?.data?.matchedStocks || [];
       setStocks(matched);
     } catch (err) {
@@ -918,23 +918,21 @@ const TopChange3dModule = () => {
     return () => timers.forEach(clearTimeout);
   }, [fetchStocks]);
 
-  // 研报榜：先按研报数降序取前 5 名，第 5 名研报数并列的全部纳入（结果 >= 5 只），
-  // 再在入选集内按 5 日涨幅降序排序 —— 兼顾研报推荐力度与涨幅力度
-  const reportStocks = useMemo(() => {
+  // 3 日涨幅榜：全量自选股按最近 3 日涨幅（changeNd，days=3 口径）从高到低取前 5 名，
+  // 第 5 名涨幅并列的全部纳入（结果 >= 5 只）；涨幅并列时研报覆盖数多者优先
+  const gainStocks = useMemo(() => {
     const val = (v) => (v === null || v === undefined ? -Infinity : v);
-    const withReports = stocks.filter(s => (s.reportCount || 0) > 0);
-    if (withReports.length === 0) return [];
-    // 按研报数降序，取第 5 名（不足 5 只则取最后一名）的研报数作为入选阈值
-    const byCount = [...withReports].sort((a, b) => (b.reportCount || 0) - (a.reportCount || 0));
-    const threshold = byCount[Math.min(4, byCount.length - 1)].reportCount || 0;
-    return withReports
-      .filter(s => (s.reportCount || 0) >= threshold)
-      .sort((a, b) => {
-        const va = val(a.changeNd);
-        const vb = val(b.changeNd);
-        if (va !== vb) return vb - va;                  // 主排序：5 日涨幅降序
-        return val(b.reportCount) - val(a.reportCount); // 次排序：研报数降序
-      });
+    const withGain = stocks.filter(s => s.changeNd !== null && s.changeNd !== undefined);
+    if (withGain.length === 0) return [];
+    const sorted = [...withGain].sort((a, b) => {
+      const va = val(a.changeNd);
+      const vb = val(b.changeNd);
+      if (va !== vb) return vb - va;                  // 主排序：3 日涨幅降序
+      return val(b.reportCount) - val(a.reportCount); // 次排序：研报数降序
+    });
+    // 取第 5 名（不足 5 只则取最后一名）的 3 日涨幅作为入选阈值，并列的全部纳入
+    const threshold = sorted[Math.min(4, sorted.length - 1)].changeNd;
+    return sorted.filter(s => s.changeNd >= threshold);
   }, [stocks]);
 
   // 点击研报 tag：懒加载 /research_reports_by_stock
@@ -942,7 +940,7 @@ const TopChange3dModule = () => {
     setActiveReports({ stockName, loading: true, reports: [] });
     setReportModalVisible(true);
     try {
-      const res = await axios.get(`http://${local_ip}:3000/research_reports_by_stock`, { params: { stockName, days: 5 } });
+      const res = await axios.get(`http://${local_ip}:3000/research_reports_by_stock`, { params: { stockName, days: 3 } });
       const reports = res.data?.data || [];
       setActiveReports({ stockName, loading: false, reports });
     } catch (err) {
@@ -955,9 +953,9 @@ const TopChange3dModule = () => {
     setReportModalVisible(false);
   }, []);
 
-  // 研报榜渲染：展示研报数 / 当日涨幅 / 5 日涨幅
-  const renderReportsRanking = () => {
-    const list = reportStocks;
+  // 涨幅榜渲染：展示研报数 / 当日涨幅 / 3 日涨幅
+  const renderGainersRanking = () => {
+    const list = gainStocks;
     if (stocks.length === 0) return <div className="ob-empty-mini">暂无数据</div>;
     return (
       <>
@@ -966,10 +964,10 @@ const TopChange3dModule = () => {
           <span>股票</span>
           <span>研报</span>
           <span>当日</span>
-          <span>5日涨幅</span>
+          <span>3日涨幅</span>
         </div>
         {list.length === 0 ? (
-          <div className="ob-empty-mini" style={{ padding: '14px 0' }}>近 5 天自选股暂无研报覆盖</div>
+          <div className="ob-empty-mini" style={{ padding: '14px 0' }}>自选股暂无 3 日涨幅数据</div>
         ) : list.map((s, idx) => (
           <div className="ob-rank3-row" key={`${s.code}-${idx}`}>
             <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
@@ -980,7 +978,7 @@ const TopChange3dModule = () => {
                   color="blue"
                   className="ob-report-tag"
                   onClick={() => openStockReports(s.stockName)}
-                  title={`点击查看 ${s.stockName} 最近 5 天研报`}
+                  title={`点击查看 ${s.stockName} 最近 3 天研报`}
                 >
                   <FileTextOutlined /> {s.reportCount}
                 </Tag>
@@ -1007,12 +1005,12 @@ const TopChange3dModule = () => {
         <div className="ob-module-header">
           <div className="ob-module-title">
             <CrownOutlined className="ob-module-icon" />
-            <span>自选股 · 研报前五</span>
+            <span>自选股 · 3日涨幅前五</span>
           </div>
-          <span className="ob-total-tag">共 {reportStocks.length} 只 · 按5日涨幅</span>
+          <span className="ob-total-tag">共 {gainStocks.length} 只 · 按3日涨幅</span>
         </div>
         <div className="ob-rank3-body">
-          {renderReportsRanking()}
+          {renderGainersRanking()}
         </div>
       </div>
 
@@ -1025,7 +1023,7 @@ const TopChange3dModule = () => {
         title={
           <span>
             <FileTextOutlined style={{ color: '#1677ff', marginRight: 8 }} />
-            {activeReports?.stockName || ''} · 最近 5 天研报
+            {activeReports?.stockName || ''} · 最近 3 天研报
           </span>
         }
       >

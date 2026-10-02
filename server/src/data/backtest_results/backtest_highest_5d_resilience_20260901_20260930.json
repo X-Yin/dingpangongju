@@ -408,14 +408,14 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 14.32,
-      "code": "sh688143",
-      "stockName": "长盈通",
+      "metric": 65.97,
+      "code": "sh601869",
+      "stockName": "长飞光纤",
       "buyDate": "20260901",
       "buyDateDisplay": "2026-09-01",
       "buyTime": "13:10",
-      "buyPrice": 172.3,
-      "buyChange": 7.03,
+      "buyPrice": 407.5,
+      "buyChange": -2.64,
       "buyReason": "最近 5min 资金净流入大于 20 亿、当前量能为正（今日累计成交额超昨日全天）、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
       "buyChecks": [
         {
@@ -454,22 +454,22 @@
       "sellDate": "20260902",
       "sellDateDisplay": "2026-09-02",
       "sellTime": "09:30",
-      "sellPrice": 161.01,
-      "sellChange": -3.59,
-      "sellReason": "均线破位、跌破成本线-2%",
-      "returnRate": -6.55
+      "sellPrice": 392.59,
+      "sellChange": -1.86,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -3.66
     },
     {
       "seq": 2,
-      "metric": 55.27,
-      "code": "sz002536",
-      "stockName": "飞龙股份",
+      "metric": 64.07,
+      "code": "sh688028",
+      "stockName": "沃尔德",
       "buyDate": "20260903",
       "buyDateDisplay": "2026-09-03",
       "buyTime": "14:00",
-      "buyPrice": 63.88,
-      "buyChange": 10.01,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -506.69亿，较 5min 前 +156.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyPrice": 101.08,
+      "buyChange": 8.36,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -506.69亿，较 5min 前 +156.23亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票涨停顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -503,19 +503,38 @@
           "exempted": false,
           "value": "开盘 37.71 / 当前 4.71",
           "reason": "9:30 竞价科技情绪 37.71 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "limit_up_defer",
+          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+          "passed": true,
+          "value": "顺延 2 只",
+          "skippedStocks": [
+            {
+              "code": "sz002536",
+              "name": "飞龙股份",
+              "change": 10.01
+            },
+            {
+              "code": "sh603757",
+              "name": "大元泵业",
+              "change": 10
+            }
+          ],
+          "reason": "买入时点涨停候选已剔除并顺延：飞龙股份（触发时涨幅 +10.01%）、大元泵业（触发时涨幅 +10.00%）（涨停股买入不可成交，顺延至排名下一只）"
         }
       ],
       "sellDate": "20260904",
       "sellDateDisplay": "2026-09-04",
-      "sellTime": "09:40",
-      "sellPrice": 62.2,
-      "sellChange": -1.32,
+      "sellTime": "09:55",
+      "sellPrice": 98.16,
+      "sellChange": -3.4,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.63
+      "returnRate": -2.89
     },
     {
       "seq": 3,
-      "metric": 60.72,
+      "metric": 73.15,
       "code": "sz002536",
       "stockName": "飞龙股份",
       "buyDate": "20260904",
@@ -622,15 +641,15 @@
     },
     {
       "seq": 5,
-      "metric": 81.87,
-      "code": "sh603083",
-      "stockName": "剑桥科技",
+      "metric": 72.45,
+      "code": "sh603228",
+      "stockName": "景旺电子",
       "buyDate": "20260908",
       "buyDateDisplay": "2026-09-08",
       "buyTime": "10:25",
-      "buyPrice": 227.83,
-      "buyChange": 10,
-      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -111.42亿，较 5min 前 +183.41亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40",
+      "buyPrice": 110.96,
+      "buyChange": 4.71,
+      "buyReason": "最近 5min 资金净流入大于 20 亿、量能较 5min 前增加（负值需增加超 100 亿）：当前量能 -111.42亿，较 5min 前 +183.41亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40（因前序股票涨停顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -664,15 +683,34 @@
           "exempted": false,
           "value": "开盘 13.15 / 当前 47.20",
           "reason": "9:30 竞价科技情绪 13.15 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "limit_up_defer",
+          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+          "passed": true,
+          "value": "顺延 2 只",
+          "skippedStocks": [
+            {
+              "code": "sh603083",
+              "name": "剑桥科技",
+              "change": 10
+            },
+            {
+              "code": "sz002436",
+              "name": "兴森科技",
+              "change": 10.01
+            }
+          ],
+          "reason": "买入时点涨停候选已剔除并顺延：剑桥科技（触发时涨幅 +10.00%）、兴森科技（触发时涨幅 +10.01%）（涨停股买入不可成交，顺延至排名下一只）"
         }
       ],
       "sellDate": "20260909",
       "sellDateDisplay": "2026-09-09",
-      "sellTime": "09:50",
-      "sellPrice": 222.5,
-      "sellChange": 0.09,
+      "sellTime": "09:35",
+      "sellPrice": 108.3,
+      "sellChange": 1.24,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.34
+      "returnRate": -2.4
     },
     {
       "seq": 6,
@@ -833,9 +871,9 @@
     "tradeCount": 7,
     "winCount": 2,
     "winRate": 28.57,
-    "avgDrawdown": -3.83,
-    "maxDrawdown": -6.55,
-    "overallReturn": -10.96,
+    "avgDrawdown": -3.31,
+    "maxDrawdown": -4.69,
+    "overallReturn": -8.51,
     "holding": true
   }
 }

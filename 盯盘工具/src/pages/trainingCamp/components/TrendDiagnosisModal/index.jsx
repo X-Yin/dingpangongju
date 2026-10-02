@@ -10,12 +10,14 @@ import dayjs from 'dayjs';
 import axios from 'axios';
 import { local_ip } from '../../../../constant';
 import { StrategyCard } from '../BacktestReportModal';
+import MonthlyCurveTab from './MonthlyCurveTab';
 
 const BASE = `http://${local_ip}:3000`;
 const fmtDate = (d) => (d ? `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}` : '--');
 
 // 策略趋势诊断弹窗：三档时间范围（默认范围 / 30 交易日 / 15 交易日）× 全部策略自动回测，
-// 打开弹窗即自动启动诊断（服务端逐范围补测缺失缓存的策略），完成后按 3 个 tab 展示三份策略报告，
+// 打开弹窗先加载历史曲线（自然月）数据，完成后再自动启动三档范围诊断（服务端逐范围补测缺失缓存的策略），
+// 完成后按 4 个 tab 展示（三份策略报告 + 历史曲线，曲线下方按回测报告格式逐月展示已选策略的每一笔交易），
 // 报告卡片复用回测报告弹窗的 StrategyCard 格式；顶部支持一键下载全部结果 JSON
 const TrendDiagnosisModal = ({ open, onClose }) => {
   const [status, setStatus] = useState('idle'); // idle | running | done | error
@@ -77,14 +79,45 @@ const TrendDiagnosisModal = ({ open, onClose }) => {
     }
   };
 
-  // 打开弹窗：拉取当前状态；非 running 时自动启动一次诊断（已有缓存时补测极快）
+  // 打开弹窗：初始落在历史曲线 tab，先等自然月回测完成（无任务则自动启动），完成后再启动三档时间范围诊断
   useEffect(() => {
     if (!open) {
       stopPoll();
       return;
     }
+    setActiveTab('monthly');
     let cancelled = false;
+    const getMonthlyStatus = () => axios.get(`${BASE}/training_camp/backtest/trend_diagnosis/monthly/status`).then(r => r.data || {});
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
     (async () => {
+      // 先水合三档范围已有结果（若有），页面可立即展示上一次的诊断数据
+      try {
+        const r = await axios.get(`${BASE}/training_camp/backtest/trend_diagnosis/status`);
+        if (cancelled) return;
+        const s = r.data || {};
+        setLogs(Array.isArray(s.logs) ? s.logs : []);
+        if (s.result) setResult(s.result);
+      } catch { /* 忽略：随后启动诊断时再处理 */ }
+
+      // 第一步：历史曲线（自然月）先行加载——无任务则启动，进行中则轮询等待完成（失败/超时不阻塞三档范围诊断）
+      try {
+        let s = await getMonthlyStatus();
+        if (cancelled) return;
+        if (s.status === 'idle') {
+          await axios.post(`${BASE}/training_camp/backtest/trend_diagnosis/monthly`, {}).catch(() => {});
+          s = await getMonthlyStatus();
+          if (cancelled) return;
+        }
+        const startedAt = Date.now();
+        while (s.status === 'running' && !cancelled && Date.now() - startedAt < 10 * 60 * 1000) {
+          await sleep(3000);
+          s = await getMonthlyStatus().catch(() => ({}));
+        }
+      } catch { /* 历史曲线加载失败不阻塞三档范围诊断 */ }
+      if (cancelled) return;
+
+      // 第二步：历史曲线完成后再加载三档时间范围 tab（复用原有诊断启动/轮询逻辑）
       try {
         const r = await axios.get(`${BASE}/training_camp/backtest/trend_diagnosis/status`);
         if (cancelled) return;
@@ -103,6 +136,7 @@ const TrendDiagnosisModal = ({ open, onClose }) => {
         if (!cancelled) setError('获取策略趋势诊断状态失败，请检查后端服务');
       }
     })();
+
     return () => {
       cancelled = true;
       stopPoll();
@@ -142,7 +176,13 @@ const TrendDiagnosisModal = ({ open, onClose }) => {
   const running = status === 'running';
   const ranges = result?.ranges || [];
 
+  // 三档范围的报告未生成前（ranges 为空）activeTab 默认值 'default' 无对应项，回退到历史曲线 tab
+  const effectiveActiveKey = [...ranges.map(r => r.key), 'monthly'].includes(activeTab)
+    ? activeTab
+    : (ranges.length > 0 ? 'default' : 'monthly');
+
   // 单个范围的报告内容（与回测报告弹窗同格式：按整体收益排名的策略卡片列表）
+  // 注意：必须声明在 tabItems 之前——tabItems 构建时 ranges.map 会同步调用本函数
   const renderRangeContent = (r) => {
     const report = r?.report;
     if (!report) {
@@ -170,6 +210,31 @@ const TrendDiagnosisModal = ({ open, onClose }) => {
     );
   };
 
+  // tab 项：三档时间范围报告 + 历史曲线（自然月 × 全部策略，始终展示，首次激活时自动补测）
+  const tabItems = [
+    ...ranges.map(r => ({
+      key: r.key,
+      label: (
+        <span>
+          <TrophyOutlined style={{ color: '#d48806', marginRight: 4 }} />
+          {r.label}
+          {r.startDate && <span style={{ fontSize: 11, color: '#9ca3af', marginLeft: 4 }}>{fmtDate(r.startDate)}~{fmtDate(r.endDate)}</span>}
+        </span>
+      ),
+      children: renderRangeContent(r),
+    })),
+    {
+      key: 'monthly',
+      label: (
+        <span>
+          <LineChartOutlined style={{ color: '#1677ff', marginRight: 4 }} />
+          历史曲线
+        </span>
+      ),
+      children: <MonthlyCurveTab active={effectiveActiveKey === 'monthly'} />,
+    },
+  ];
+
   return (
     <Modal
       open={open}
@@ -178,11 +243,11 @@ const TrendDiagnosisModal = ({ open, onClose }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <LineChartOutlined style={{ color: '#1677ff' }} />
           <span style={{ fontSize: 15, fontWeight: 700, color: '#12213a' }}>策略趋势诊断</span>
-          <span style={{ fontSize: 11, fontWeight: 400, color: '#9ca3af' }}>默认范围 / 30 交易日 / 15 交易日 × 全部策略</span>
+          <span style={{ fontSize: 11, fontWeight: 400, color: '#9ca3af' }}>默认 / 30交易日 / 15交易日 × 全部策略 · 自然月历史曲线</span>
         </div>
       }
       footer={null}
-      width={980}
+      width="80%"
       styles={{ body: { padding: 16, background: '#f7f9fc', maxHeight: '70vh', overflowY: 'auto' } }}
     >
       {/* 顶部操作区：下载 JSON + 重新诊断 */}
@@ -231,30 +296,12 @@ const TrendDiagnosisModal = ({ open, onClose }) => {
         <Alert type="error" showIcon message="策略趋势诊断" description={error} style={{ marginBottom: 16 }} closable onClose={() => setError(null)} />
       )}
 
-      {/* 三档时间范围 tab + 策略报告（复用回测报告弹窗卡片格式） */}
-      {ranges.length === 0 ? (
-        running ? (
-          <Empty description="正在回测，完成后此处将展示三档时间范围的策略报告" />
-        ) : (
-          <Empty description="暂无诊断结果" />
-        )
-      ) : (
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          items={ranges.map(r => ({
-            key: r.key,
-            label: (
-              <span>
-                <TrophyOutlined style={{ color: '#d48806', marginRight: 4 }} />
-                {r.label}
-                {r.startDate && <span style={{ fontSize: 11, color: '#9ca3af', marginLeft: 4 }}>{fmtDate(r.startDate)}~{fmtDate(r.endDate)}</span>}
-              </span>
-            ),
-            children: renderRangeContent(r),
-          }))}
-        />
-      )}
+      {/* 三档时间范围 tab + 历史曲线 tab（策略报告复用回测报告弹窗卡片格式） */}
+      <Tabs
+        activeKey={effectiveActiveKey}
+        onChange={setActiveTab}
+        items={tabItems}
+      />
 
       <div style={{ height: 8 }} />
     </Modal>
