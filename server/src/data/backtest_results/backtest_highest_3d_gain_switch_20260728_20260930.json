@@ -990,15 +990,15 @@
     },
     {
       "seq": 8,
-      "metric": 9.1598,
-      "code": "sh603319",
-      "stockName": "美湖股份",
+      "metric": 15.6638,
+      "code": "sh600487",
+      "stockName": "亨通光电",
       "buyDate": "20260827",
       "buyDateDisplay": "2026-08-27",
       "buyTime": "09:50",
-      "buyPrice": 27.78,
-      "buyChange": 3.77,
-      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 20.02亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 51.45亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票涨停/前序股票买点抗分歧<9顺延买入）",
+      "buyPrice": 69.89,
+      "buyChange": 7.81,
+      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 20.02亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 51.45亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -1036,9 +1036,9 @@
         },
         {
           "id": "cyb_ma3_slope_gate",
-          "title": "美湖股份 跟踪创业板指 3 日线斜率门禁",
+          "title": "亨通光电 跟踪创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "美湖股份 跟踪创业板指，3 日线斜率 +1.23°，今日盘中由负转正，允许出手",
+          "value": "亨通光电 跟踪创业板指，3 日线斜率 +1.23°，今日盘中由负转正，允许出手",
           "reason": "创业板指 斜率 +1.23 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
         },
         {
@@ -1049,63 +1049,33 @@
           "reason": "科创50 斜率 +17.04 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
         },
         {
-          "id": "limit_up_defer",
-          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
-          "passed": true,
-          "value": "顺延 1 只",
-          "skippedStocks": [
-            {
-              "code": "sh601869",
-              "name": "长飞光纤",
-              "change": 10
-            }
-          ],
-          "reason": "买入时点涨停候选已剔除并顺延：长飞光纤（触发时涨幅 +10.00%）（涨停股买入不可成交，顺延至排名下一只）"
-        },
-        {
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "9.12",
-          "skippedStocks": [
-            {
-              "code": "sz002837",
-              "name": "英维克",
-              "resilience": 8.62
-            },
-            {
-              "code": "sz301018",
-              "name": "申菱环境",
-              "resilience": 8.28
-            },
-            {
-              "code": "sz300757",
-              "name": "罗博特科",
-              "resilience": 8.86
-            }
-          ],
-          "reason": "前序股票全局最低抗分歧不足（英维克（抗分歧 8.62）、申菱环境（抗分歧 8.28）、罗博特科（抗分歧 8.86））依次顺延，轮到本股买入（本股触发时点抗分歧 9.12）"
+          "value": "9.95",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 9.95，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260827",
       "sellDateDisplay": "2026-08-27",
       "sellTime": "10:50",
-      "sellPrice": 28.03,
-      "sellChange": 4.71,
+      "sellPrice": 70.46,
+      "sellChange": 8.68,
       "sellReason": "策略切换：买入三日涨幅更优品种",
-      "returnRate": 0.9
+      "returnRate": 0.82
     },
     {
       "seq": 9,
-      "metric": 14.2264,
-      "code": "sh688008",
-      "stockName": "澜起科技",
+      "metric": 19.1976,
+      "code": "sz301018",
+      "stockName": "申菱环境",
       "buyDate": "20260827",
       "buyDateDisplay": "2026-08-27",
       "buyTime": "10:50",
-      "buyPrice": 219.14,
-      "buyChange": 9.02,
-      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 39.53亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 206.04亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票涨停顺延买入）",
+      "buyPrice": 106.93,
+      "buyChange": 4.22,
+      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 39.53亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 206.04亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -1143,48 +1113,34 @@
         },
         {
           "id": "cyb_ma3_slope_gate",
-          "title": "创业板指 3 日线斜率门禁",
+          "title": "申菱环境 跟踪创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "创业板指 3 日线斜率 +7.70°，今日盘中由负转正，允许出手",
+          "value": "申菱环境 跟踪创业板指，3 日线斜率 +7.70°，今日盘中由负转正，允许出手",
           "reason": "创业板指 斜率 +7.70 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
         },
         {
           "id": "star_ma3_slope_gate",
-          "title": "澜起科技 跟踪科创50 3 日线斜率门禁",
+          "title": "科创50 3 日线斜率门禁",
           "passed": true,
-          "value": "澜起科技 跟踪科创50，3 日线斜率 +25.23°，今日盘中由负转正，允许出手",
+          "value": "科创50 3 日线斜率 +25.23°，今日盘中由负转正，允许出手",
           "reason": "科创50 斜率 +25.23 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
-        },
-        {
-          "id": "limit_up_defer",
-          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
-          "passed": true,
-          "value": "顺延 1 只",
-          "skippedStocks": [
-            {
-              "code": "sz002636",
-              "name": "金安国纪",
-              "change": 10
-            }
-          ],
-          "reason": "买入时点涨停候选已剔除并顺延：金安国纪（触发时涨幅 +10.00%）（涨停股买入不可成交，顺延至排名下一只）"
         },
         {
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "14.14",
+          "value": "16.04",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 14.14，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 16.04，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260828",
       "sellDateDisplay": "2026-08-28",
-      "sellTime": "13:45",
-      "sellPrice": 214.4,
-      "sellChange": -3.08,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -2.16
+      "sellTime": "09:40",
+      "sellPrice": 106.53,
+      "sellChange": -1.25,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": -0.37
     },
     {
       "seq": 10,
@@ -1710,170 +1666,16 @@
           "reason": "前序股票全局最低抗分歧不足（风华高科（抗分歧 8.1）、长盈通（抗分歧 4.25））依次顺延，轮到本股买入（本股触发时点抗分歧 14）"
         }
       ],
-      "sellDate": "20260916",
-      "sellDateDisplay": "2026-09-16",
-      "sellTime": "10:10",
-      "sellPrice": 283.89,
-      "sellChange": 7.26,
-      "sellReason": "策略切换：买入三日涨幅更优品种",
-      "returnRate": 6.74
+      "sellDate": "20260921",
+      "sellDateDisplay": "2026-09-21",
+      "sellTime": "09:40",
+      "sellPrice": 300.69,
+      "sellChange": -0.8,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": 13.05
     },
     {
       "seq": 15,
-      "metric": 11.5988,
-      "code": "sh688629",
-      "stockName": "华丰科技",
-      "buyDate": "20260916",
-      "buyDateDisplay": "2026-09-16",
-      "buyTime": "10:10",
-      "buyPrice": 134.5,
-      "buyChange": 5.99,
-      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 24.76亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 103.58亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+24.76亿",
-          "reason": "最近 5 分钟资金净流入 24.76 亿（10:05:00→10:10:00），超过 20 亿阈值",
-          "fundText": "5min 内资金净流入 24.76亿"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
-          "passed": true,
-          "exempted": false,
-          "value": "+ 103.58亿",
-          "reason": "当前量能 -258.76 亿为负，但较 5min 前的 -362.34 亿+ 103.58 亿，达到 100 亿阈值",
-          "volumeText": "成交量增加 103.58亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 5.64 / 当前 50.63",
-          "reason": "9:30 竞价科技情绪 5.64 未超过 80，当前情绪须低于 40 的限制不生效"
-        },
-        {
-          "id": "cyb_ma3_slope_gate",
-          "title": "创业板指 3 日线斜率门禁",
-          "passed": true,
-          "value": "创业板指 3 日线斜率 -21.43°，负斜率允许出手；距上次由正转负 第 4 天（2026-09-10 翻转）",
-          "reason": "创业板指 斜率 -21.43 < 0，负斜率允许出手"
-        },
-        {
-          "id": "star_ma3_slope_gate",
-          "title": "华丰科技 跟踪科创50 3 日线斜率门禁",
-          "passed": true,
-          "value": "华丰科技 跟踪科创50，3 日线斜率 +10.55°，今日盘中由负转正，允许出手",
-          "reason": "科创50 斜率 +10.55 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
-        },
-        {
-          "id": "resilience_gate",
-          "title": "触发时点抗分歧分数≥9",
-          "passed": true,
-          "value": "11.96",
-          "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 11.96，≥ 全局最低 9）"
-        }
-      ],
-      "sellDate": "20260916",
-      "sellDateDisplay": "2026-09-16",
-      "sellTime": "10:35",
-      "sellPrice": 133.49,
-      "sellChange": 5.19,
-      "sellReason": "策略切换：买入三日涨幅更优品种",
-      "returnRate": -0.75
-    },
-    {
-      "seq": 16,
-      "metric": 13.9227,
-      "code": "sh688025",
-      "stockName": "杰普特",
-      "buyDate": "20260916",
-      "buyDateDisplay": "2026-09-16",
-      "buyTime": "10:35",
-      "buyPrice": 446.33,
-      "buyChange": 13.31,
-      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 39.41亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 230.97亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+39.41亿",
-          "reason": "最近 5 分钟资金净流入 39.41 亿（10:30:00→10:35:00），超过 20 亿阈值",
-          "fundText": "5min 内资金净流入 39.41亿"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
-          "passed": true,
-          "exempted": false,
-          "value": "+ 230.97亿",
-          "reason": "当前量能 -149.85 亿为负，但较 5min 前的 -380.82 亿+ 230.97 亿，达到 100 亿阈值",
-          "volumeText": "成交量增加 230.97亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 5.64 / 当前 68.22",
-          "reason": "9:30 竞价科技情绪 5.64 未超过 80，当前情绪须低于 40 的限制不生效"
-        },
-        {
-          "id": "cyb_ma3_slope_gate",
-          "title": "创业板指 3 日线斜率门禁",
-          "passed": true,
-          "value": "创业板指 3 日线斜率 -15.17°，负斜率允许出手；距上次由正转负 第 4 天（2026-09-10 翻转）",
-          "reason": "创业板指 斜率 -15.17 < 0，负斜率允许出手"
-        },
-        {
-          "id": "star_ma3_slope_gate",
-          "title": "杰普特 跟踪科创50 3 日线斜率门禁",
-          "passed": true,
-          "value": "杰普特 跟踪科创50，3 日线斜率 +13.89°，今日盘中由负转正，允许出手",
-          "reason": "科创50 斜率 +13.89 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
-        },
-        {
-          "id": "resilience_gate",
-          "title": "触发时点抗分歧分数≥9",
-          "passed": true,
-          "value": "13.29",
-          "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 13.29，≥ 全局最低 9）"
-        }
-      ],
-      "sellDate": "20260917",
-      "sellDateDisplay": "2026-09-17",
-      "sellTime": "09:55",
-      "sellPrice": 437.15,
-      "sellChange": -1.62,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -2.06
-    },
-    {
-      "seq": 17,
       "metric": 1.3794,
       "code": "sh688082",
       "stockName": "盛美上海",
@@ -1952,12 +1754,12 @@
   ],
   "currentHolding": null,
   "summary": {
-    "tradeCount": 17,
+    "tradeCount": 15,
     "winCount": 10,
-    "winRate": 58.82,
-    "avgDrawdown": -2.09,
+    "winRate": 66.67,
+    "avgDrawdown": -2,
     "maxDrawdown": -4.14,
-    "overallReturn": 13.69,
+    "overallReturn": 26.04,
     "holding": false
   }
 }

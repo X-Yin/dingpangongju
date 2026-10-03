@@ -105,6 +105,31 @@ const STRATEGY_OPTIONS = [
   { value: 'highest_3d_resilience', label: '3日抗分歧分数最大' },
   { value: 'resilience_weak_to_strong', label: '抗分歧弱转强' },
 
+  // 当日实时口径系列（与后端 buySellBacktest.STRATEGIES 保持一致；指标按买点触发时刻分时数据实时计算）
+  { value: 'highest_1d_resilience', label: '当日抗分歧分数最大' },
+  { value: 'score_resilience_gain_37', label: '当日抗分歧+涨幅三七分' },
+  { value: 'score_resilience_gain_73', label: '当日抗分歧+涨幅七三分' },
+  { value: 'score_resilience_3dgain_37', label: '当日抗分歧+3日涨幅三七分' },
+  { value: 'score_resilience_3dgain_73', label: '当日抗分歧+3日涨幅七三分' },
+  { value: 'score_gain_3dgain_37', label: '当日涨幅+3日涨幅三七分' },
+  { value: 'score_gain_3dgain_73', label: '当日涨幅+3日涨幅七三分' },
+
+  // 前N日跌幅前五&当日指标最大系列（与后端 buySellBacktest.STRATEGIES 保持一致；前 N 个交易日不含今日）
+  { value: 'prev3d_fall_top5_day_gain', label: '前三跌幅&当日涨幅最大' },
+  { value: 'prev3d_fall_top5_day_resilience', label: '前三跌幅&当日抗分歧最大' },
+  { value: 'prev2d_fall_top5_day_gain', label: '前二跌幅&当日涨幅最大' },
+  { value: 'prev2d_fall_top5_day_resilience', label: '前二跌幅&当日抗分歧最大' },
+  { value: 'prev1d_fall_top5_day_gain', label: '昨日跌幅&当日涨幅最大' },
+  { value: 'prev1d_fall_top5_day_resilience', label: '昨日跌幅&当日抗分歧最大' },
+
+  // 前N日跌幅最小前五&当日指标最大系列（top5 系列的反转版；仅保留前 N 日总涨幅为负的候选）
+  { value: 'prev3d_fall_low5_day_gain', label: '前三跌幅最小&当日涨幅最大' },
+  { value: 'prev3d_fall_low5_day_resilience', label: '前三跌幅最小&当日抗分歧最大' },
+  { value: 'prev2d_fall_low5_day_gain', label: '前二跌幅最小&当日涨幅最大' },
+  { value: 'prev2d_fall_low5_day_resilience', label: '前二跌幅最小&当日抗分歧最大' },
+  { value: 'prev1d_fall_low5_day_gain', label: '昨日跌幅最小&当日涨幅最大' },
+  { value: 'prev1d_fall_low5_day_resilience', label: '昨日跌幅最小&当日抗分歧最大' },
+
   { value: 'tail_dip_1d_gain', label: '尾盘抄底-当日涨幅最大' },
   { value: 'tail_dip_3d_gain', label: '尾盘抄底-3日涨幅最大' },
   { value: 'tail_dip_1d_resilience', label: '尾盘抄底-当日抗分歧最大' },

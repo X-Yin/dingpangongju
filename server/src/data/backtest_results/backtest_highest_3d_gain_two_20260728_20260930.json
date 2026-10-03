@@ -690,14 +690,14 @@
     },
     {
       "seq": 5,
-      "metric": 11.5988,
-      "code": "sh688629",
-      "stockName": "华丰科技",
+      "metric": 14.939,
+      "code": "sz301183",
+      "stockName": "东田微",
       "buyDate": "20260916",
       "buyDateDisplay": "2026-09-16",
       "buyTime": "10:10",
-      "buyPrice": 134.5,
-      "buyChange": 5.99,
+      "buyPrice": 283.89,
+      "buyChange": 7.26,
       "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 24.76亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 103.58亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）",
       "buyChecks": [
         {
@@ -736,34 +736,34 @@
         },
         {
           "id": "cyb_ma3_slope_gate",
-          "title": "创业板指 3 日线斜率门禁",
+          "title": "东田微 跟踪创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "创业板指 3 日线斜率 -21.43°，负斜率允许出手；距上次由正转负 第 4 天（2026-09-10 翻转）",
+          "value": "东田微 跟踪创业板指，3 日线斜率 -21.43°，负斜率允许出手；距上次由正转负 第 4 天（2026-09-10 翻转）",
           "reason": "创业板指 斜率 -21.43 < 0，负斜率允许出手"
         },
         {
           "id": "star_ma3_slope_gate",
-          "title": "华丰科技 跟踪科创50 3 日线斜率门禁",
+          "title": "科创50 3 日线斜率门禁",
           "passed": true,
-          "value": "华丰科技 跟踪科创50，3 日线斜率 +10.55°，今日盘中由负转正，允许出手",
+          "value": "科创50 3 日线斜率 +10.55°，今日盘中由负转正，允许出手",
           "reason": "科创50 斜率 +10.55 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
         },
         {
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "11.96",
+          "value": "25.23",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 11.96，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 25.23，≥ 全局最低 9）"
         }
       ],
-      "sellDate": "20260917",
-      "sellDateDisplay": "2026-09-17",
-      "sellTime": "09:50",
-      "sellPrice": 133.6,
-      "sellChange": 0.91,
+      "sellDate": "20260921",
+      "sellDateDisplay": "2026-09-21",
+      "sellTime": "09:40",
+      "sellPrice": 300.69,
+      "sellChange": -0.8,
       "sellReason": "连续三日抗分歧弱势",
-      "returnRate": -0.67
+      "returnRate": 5.92
     },
     {
       "seq": 6,
@@ -846,11 +846,11 @@
   "currentHolding": null,
   "summary": {
     "tradeCount": 6,
-    "winCount": 4,
-    "winRate": 66.67,
-    "avgDrawdown": -0.9,
+    "winCount": 5,
+    "winRate": 83.33,
+    "avgDrawdown": -1.13,
     "maxDrawdown": -1.13,
-    "overallReturn": 76.3,
+    "overallReturn": 87.99,
     "holding": false
   }
 }

@@ -32,6 +32,20 @@ const EXCLUDED_CODES = new Set(['sh688498', 'sh688808']); // 源杰科技、联�
 // 个股涨幅由回测时重新拉取成分股日K现算）
 const KEY_BLOCK_DESC = (n) => `唯一买卖开关 = 创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）的正负翻转，不需要资金、成交量、情绪等任何条件配合。进攻（自选科技股）：斜率由负转正的桶触发买入，买自选股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁）中最近 ${n} 个交易日（含触发日）个股涨幅之和最大的一只；卖点沿用通用 7 条件卖出诊断（「跌破成本线」为 -2%，即现价 < 买入价 × 0.98）；卖点诊断卖出后若斜率仍为正，当日不再买入，等到次日开盘 10 分钟后（9:40 桶）复测斜率仍为正才再买 ${n} 日涨幅最大的科技股（复测时斜率已为负则改由「由正转负」防御信号驱动）。防御（防御+中性 tag 板块）：斜率由正转负且当前空仓的桶触发买入，买防御+中性 tag 板块成分股中 ${n} 日涨幅最大的一只；防御对应创业板情绪低迷期，按半仓买入，该笔收益率（含期末浮盈）在概览的整体收益与平均/最大回撤统计中一律按半仓（×0.5）折算；唯一卖点 = 斜率由负转正 ∪ 个股分时价跌破成本线 -5% 止损（双卖点任一先触发即卖，同桶可转手买入进攻科技股）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 ${n} 日涨幅排名的下一只；候选全部不可买时在斜率状态不变的后续桶持续重试；买入价取触发桶分时价；同桶允许先卖后买转手。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无翻转则不建仓`;
 
+// 打分制选股统一描述（score_* 系列，2026-10-03 用户新增）：
+// 总分 0-100 = 各实时指标在当日候选池内 min-max 归一化到 0-100 后按权重加权求和
+const COMPOSITE_SCORE_DESC = (parts) => `买点命中时按总分（0-100）选股：${parts.map(p => `${p.name}占${p.weight}%权重`).join('、')}。所有指标均按买点触发时刻的分时数据实时计算（不取当日收盘状态），各自在当日候选池内做 min-max 归一化到 0-100 后按权重加权求和，买入总分最大的股票；总分相同时取触发时点当日实时涨幅最大的一只。3 日涨幅 = 前 2 个交易日收盘涨幅与当日触发时点实时涨幅的复利累计（历史日为收盘口径，当日为实时口径），抗分歧分数为触发时刻截至当时的日内分时实时分数`;
+
+// 前N日跌幅前五&当日指标最大系列统一描述（prev{N}d_fall_top5_day_* / prev{N}d_fall_low5_day_* 系列，2026-10-03 用户新增）：
+// 两阶段选股——第一阶段按前 N 个交易日（不含今日）累计跌幅取「跌幅最大前五」或「跌幅最小前五」（low5 反转版），
+// 第二阶段在组内选当日实时指标最大
+const PREV_FALL_TOP_DESC = (n, stage2Name, low5 = false) => {
+  const stage1 = low5
+    ? `第一阶段仅保留前 ${n} 个交易日（不含今日，均为历史收盘涨幅复利累计）总涨幅为负（确实下跌，总涨幅 ≥ 0 的全部剔除）的自选股，再按累计涨幅从高到低取前五（= 跌幅最小的五只，与第 5 名并列的全部纳入；历史数据不足 ${n} 日时按实际窗口计；全部候选总涨幅均为非负时当日不买入）`
+    : `第一阶段在自选股中按前 ${n} 个交易日（不含今日，均为历史收盘涨幅复利累计）累计跌幅从大到小取前五（与第 5 名跌幅并列的全部纳入，历史数据不足 ${n} 日时按实际窗口计）`;
+  return `买点命中时两阶段选股：${stage1}；第二阶段在前五中买入${stage2Name}最大的一只（当日涨幅 = 触发时点盘中实时涨幅；当日抗分歧分数 = 触发时刻截至当时的日内分时实时分数，均非收盘口径；组内指标无法计算的候选不参与买入）。触发时点涨停股不可买顺延至组内下一只，全局最低抗分歧门槛（≥9）照常生效`;
+};
+
 // 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
 const STRATEGIES = {
   highest_gain: { id: 'highest_gain', name: '买入最高涨幅', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票' },
@@ -57,6 +71,32 @@ const STRATEGIES = {
   highest_5d_resilience: { id: 'highest_5d_resilience', name: '5日抗分歧分数最大', desc: '买点命中时只买入最近 5 个交易日抗分歧分数汇总最大的股票' },
   highest_3d_resilience: { id: 'highest_3d_resilience', name: '3日抗分歧分数最大', desc: '买点命中时只买入最近 3 个交易日抗分歧分数汇总最大的股票' },
   resilience_weak_to_strong: { id: 'resilience_weak_to_strong', name: '抗分歧弱转强', desc: '买点命中时先筛选出当日抗分歧分数>11 的股票，再从中计算最近 4 个交易日「前两天均值」与「最近两天均值」的差值（差值越大=抗分歧由弱转强越明显），全仓买入差值最大的股票；差值相同则买入当日涨幅最大的一只' },
+
+  // 当日实时口径系列（2026-10-03 用户新增）：抗分歧分数/当日涨幅/3 日涨幅均按买点触发时刻的分时数据实时计算，不取当日收盘状态
+  highest_1d_resilience: { id: 'highest_1d_resilience', name: '当日抗分歧分数最大', desc: '买点命中时只买入触发时点当日实时抗分歧分数最大的股票（抗分歧分数按触发时刻截至当时的日内分时数据实时计算，非收盘口径）；分数相同时取触发时点当日实时涨幅最大的一只' },
+  score_resilience_gain_37: { id: 'score_resilience_gain_37', name: '当日抗分歧+涨幅三七分', desc: COMPOSITE_SCORE_DESC([{ name: '当日抗分歧分数', weight: 30 }, { name: '当日涨幅', weight: 70 }]) },
+  score_resilience_gain_73: { id: 'score_resilience_gain_73', name: '当日抗分歧+涨幅七三分', desc: COMPOSITE_SCORE_DESC([{ name: '当日抗分歧分数', weight: 70 }, { name: '当日涨幅', weight: 30 }]) },
+  score_resilience_3dgain_37: { id: 'score_resilience_3dgain_37', name: '当日抗分歧+3日涨幅三七分', desc: COMPOSITE_SCORE_DESC([{ name: '当日抗分歧分数', weight: 30 }, { name: '3日涨幅', weight: 70 }]) },
+  score_resilience_3dgain_73: { id: 'score_resilience_3dgain_73', name: '当日抗分歧+3日涨幅七三分', desc: COMPOSITE_SCORE_DESC([{ name: '当日抗分歧分数', weight: 70 }, { name: '3日涨幅', weight: 30 }]) },
+  score_gain_3dgain_37: { id: 'score_gain_3dgain_37', name: '当日涨幅+3日涨幅三七分', desc: COMPOSITE_SCORE_DESC([{ name: '当日涨幅', weight: 30 }, { name: '3日涨幅', weight: 70 }]) },
+  score_gain_3dgain_73: { id: 'score_gain_3dgain_73', name: '当日涨幅+3日涨幅七三分', desc: COMPOSITE_SCORE_DESC([{ name: '当日涨幅', weight: 70 }, { name: '3日涨幅', weight: 30 }]) },
+
+  // 前N日跌幅前五&当日指标最大系列（2026-10-03 用户新增）：前 N 个交易日（不含今日）累计跌幅前五 → 组内当日实时指标最大
+  prev3d_fall_top5_day_gain: { id: 'prev3d_fall_top5_day_gain', name: '前三跌幅&当日涨幅最大', desc: PREV_FALL_TOP_DESC(3, '当日涨幅') },
+  prev3d_fall_top5_day_resilience: { id: 'prev3d_fall_top5_day_resilience', name: '前三跌幅&当日抗分歧最大', desc: PREV_FALL_TOP_DESC(3, '当日抗分歧分数') },
+  prev2d_fall_top5_day_gain: { id: 'prev2d_fall_top5_day_gain', name: '前二跌幅&当日涨幅最大', desc: PREV_FALL_TOP_DESC(2, '当日涨幅') },
+  prev2d_fall_top5_day_resilience: { id: 'prev2d_fall_top5_day_resilience', name: '前二跌幅&当日抗分歧最大', desc: PREV_FALL_TOP_DESC(2, '当日抗分歧分数') },
+  prev1d_fall_top5_day_gain: { id: 'prev1d_fall_top5_day_gain', name: '昨日跌幅&当日涨幅最大', desc: PREV_FALL_TOP_DESC(1, '当日涨幅') },
+  prev1d_fall_top5_day_resilience: { id: 'prev1d_fall_top5_day_resilience', name: '昨日跌幅&当日抗分歧最大', desc: PREV_FALL_TOP_DESC(1, '当日抗分歧分数') },
+
+  // 前N日跌幅最小前五&当日指标最大系列（2026-10-03 用户新增，前N日跌幅策略的反转）：
+  // 仅保留前 N 个交易日（不含今日）总涨幅为负（确实下跌）的候选 → 取跌幅最小（累计涨幅最高）前五 → 组内当日实时指标最大
+  prev3d_fall_low5_day_gain: { id: 'prev3d_fall_low5_day_gain', name: '前三跌幅最小&当日涨幅最大', desc: PREV_FALL_TOP_DESC(3, '当日涨幅', true) },
+  prev3d_fall_low5_day_resilience: { id: 'prev3d_fall_low5_day_resilience', name: '前三跌幅最小&当日抗分歧最大', desc: PREV_FALL_TOP_DESC(3, '当日抗分歧分数', true) },
+  prev2d_fall_low5_day_gain: { id: 'prev2d_fall_low5_day_gain', name: '前二跌幅最小&当日涨幅最大', desc: PREV_FALL_TOP_DESC(2, '当日涨幅', true) },
+  prev2d_fall_low5_day_resilience: { id: 'prev2d_fall_low5_day_resilience', name: '前二跌幅最小&当日抗分歧最大', desc: PREV_FALL_TOP_DESC(2, '当日抗分歧分数', true) },
+  prev1d_fall_low5_day_gain: { id: 'prev1d_fall_low5_day_gain', name: '昨日跌幅最小&当日涨幅最大', desc: PREV_FALL_TOP_DESC(1, '当日涨幅', true) },
+  prev1d_fall_low5_day_resilience: { id: 'prev1d_fall_low5_day_resilience', name: '昨日跌幅最小&当日抗分歧最大', desc: PREV_FALL_TOP_DESC(1, '当日抗分歧分数', true) },
 
   // 重点板块-N日最高涨幅系列（keyBlockDays → 独立板块驱动回测 runKeyBlockBacktest：斜率双模式 + tag 板块选股，触发桶买入）
   key_block_2d_gain: { id: 'key_block_2d_gain', name: '重点板块-2日最高涨幅', desc: KEY_BLOCK_DESC(2), keyBlockDays: 2, costLinePct: 2 },
@@ -114,6 +154,19 @@ for (const s of Object.values(STRATEGIES)) {
 // 全部候选均不满足则当日不买入。门槛策略（RESILIENCE_GATE_STRATEGY_IDS）在此基础上叠加 ≥ 11 的专项门槛——
 // 先过 ≥ 9 的全局最低线，再过 ≥ 11 的专项线
 const GLOBAL_RESILIENCE_MIN = 9;
+
+// 打分制选股权重表（score_* 系列，2026-10-03 用户新增）：总分 0-100 = 各实时指标在当日候选池内
+// min-max 归一化到 0-100 后加权求和。指标键：resilience=触发时点当日实时抗分歧分数；
+// dayGain=触发时点当日实时涨幅（%）；gain3d=3 日涨幅（%，前 2 个交易日收盘涨幅 + 当日触发时点
+// 实时涨幅复利累计）。权重为 null 表示该策略不使用该指标；「三七/七三」= 第一个指标三成/七成权重
+const COMPOSITE_SCORE_WEIGHTS = new Map([
+  ['score_resilience_gain_37', { resilience: 0.3, dayGain: 0.7, gain3d: null }],
+  ['score_resilience_gain_73', { resilience: 0.7, dayGain: 0.3, gain3d: null }],
+  ['score_resilience_3dgain_37', { resilience: 0.3, dayGain: null, gain3d: 0.7 }],
+  ['score_resilience_3dgain_73', { resilience: 0.7, dayGain: null, gain3d: 0.3 }],
+  ['score_gain_3dgain_37', { resilience: null, dayGain: 0.3, gain3d: 0.7 }],
+  ['score_gain_3dgain_73', { resilience: null, dayGain: 0.7, gain3d: 0.3 }],
+]);
 
 // 买入时段门禁（所有策略通用）：仅允许 9:30 – 11:30 和 13:00 – 13:30 之间的买点触发买入，
 // 13:30 之后即使满足所有买点条件也不执行买入；bucket.minute 为数字分钟，
@@ -1573,6 +1626,19 @@ const computeWindowGain = (code, winDates, dailyInfos, todayIntradayChange) => {
   return (prod - 1) * 100;
 };
 
+// 纯历史窗口累计涨幅（全部取历史 EOD 涨幅复利相乘，不含任何盘中口径）：
+// 供「前N日跌幅&当日指标」系列（prev{N}d_fall_top5_day_*）第一阶段使用——窗口不含今日，
+// 与 computeWindowGain「最后一位为当日」的约定不同，故独立成函数
+const computeHistoricalWindowGain = (code, winDates, dailyInfos) => {
+  let prod = 1;
+  for (const d of winDates) {
+    const ch = dailyInfos.get(d)?.get(code)?.changePct;
+    if (ch == null || !Number.isFinite(ch)) return null;
+    prod *= 1 + ch / 100;
+  }
+  return (prod - 1) * 100;
+};
+
 // 窗口抗分歧分数汇总：winDates 最后一位为当日（用盘中分数），其余为历史 EOD 分数
 const computeWindowResilience = (code, winDates, dailyInfos, todayIntradayResilience) => {
   let sum = 0;
@@ -1829,6 +1895,18 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   const tiebreakWinDates = isEmo3Tiebreak ? rangeDates.slice(Math.max(0, di - 1), di + 1) : null;
   // 三日情绪冰点系列：候选股按各自跟踪指数的当日环境门禁过滤（满足其一才可买，结果由 ensureEmo3DayGates 按日预计算）
   const isEmo3GateStrategy = /^tail_dip_emo3_/.test(strategyId);
+  // 打分制选股（score_* 系列）：触发时点实时指标在候选池内 min-max 归一化后加权求和（总分 0-100）
+  const compositeWeights = COMPOSITE_SCORE_WEIGHTS.get(strategyId) || null;
+  // 当日抗分歧分数最大：实时抗分歧分数选股，分数相同按触发时点当日实时涨幅决胜
+  const isResilienceMaxToday = strategyId === 'highest_1d_resilience';
+  // 前N日跌幅前五&当日指标最大（prev{N}d_fall_top5_day_* / prev{N}d_fall_low5_day_*）：两阶段选股——
+  // 第一阶段按前 N 个交易日（不含今日）累计涨幅取前五（top5=跌幅最大；low5=反转版，仅保留总涨幅为负
+  // 的候选中跌幅最小的五只），第二阶段组内选当日实时指标最大
+  const prevFallMatch = strategyId.match(/^prev(\d)d_fall_(top|low)5_day_(gain|resilience)$/);
+  const isPrevFall5Mode = prevFallMatch != null;
+  const prevFallLowMode = isPrevFall5Mode && prevFallMatch[2] === 'low';
+  const prevFallWinDays = isPrevFall5Mode ? Number(prevFallMatch[1]) : 0;
+  const prevFallStage2Resilience = isPrevFall5Mode && prevFallMatch[3] === 'resilience';
 
   // 抗分歧弱转强：使用独立的 5 日窗口弱转强选股逻辑（已内置「当日分数 > 11 参与优选」门槛）
   if (strategyId === 'resilience_weak_to_strong') {
@@ -1903,6 +1981,61 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       candidates.push({ sc, val: chg, metric: parseFloat(chg.toFixed(4)) });
       continue;
     }
+    // 当日抗分歧分数最大：取触发时点截至当时的日内实时抗分歧分数（非收盘口径），同分按实时涨幅决胜
+    if (isResilienceMaxToday) {
+      const r = calcResilienceAtMinute(replayStocks, sc.code, bucket.minute);
+      if (r == null || !Number.isFinite(r)) continue;
+      const chg = sc.changePct != null && Number.isFinite(Number(sc.changePct)) ? Number(sc.changePct) : null;
+      candidates.push({
+        sc,
+        val: r,
+        // 分数相同时按触发时点当日实时涨幅决胜（涨幅缺失排同分组末尾）
+        val2: chg != null ? chg : -Infinity,
+        metric: parseFloat(r.toFixed(2)),
+      });
+      continue;
+    }
+    // 打分制策略（score_* 系列）：先收集触发时点实时原始指标（抗分歧/当日涨幅/3日涨幅），
+    // 循环结束后在候选池内 min-max 归一化到 0-100 再按权重加权（见下方构建排名序列前处理）。
+    // 任一所需指标缺失（如抗分歧分时点不足、3日窗口历史数据缺失）该候选不参与
+    if (compositeWeights) {
+      let r = null;
+      if (compositeWeights.resilience != null) {
+        r = calcResilienceAtMinute(replayStocks, sc.code, bucket.minute);
+        if (r == null || !Number.isFinite(r)) continue;
+      }
+      const chg = sc.changePct != null && Number.isFinite(Number(sc.changePct)) ? Number(sc.changePct) : null;
+      if (compositeWeights.dayGain != null && chg == null) continue;
+      let g3 = null;
+      if (compositeWeights.gain3d != null) {
+        const win3 = rangeDates.slice(Math.max(0, di - 2), di + 1); // 最近 3 个交易日（含当日，当日用实时涨幅）
+        g3 = computeWindowGain(sc.code, win3, dailyInfos, sc.changePct);
+        if (g3 == null || !Number.isFinite(g3)) continue;
+      }
+      candidates.push({ sc, raw: { resilience: r, dayGain: chg, gain3d: g3 }, metric: null });
+      continue;
+    }
+    // 前N日跌幅前五&当日指标最大：收集第一阶段指标（前 N 个交易日不含今日的累计涨幅，纯历史收盘口径）
+    // 与第二阶段指标（触发时点当日实时涨幅 / 日内实时抗分歧分数）；循环结束后统一做「前五 → 组内排序」
+    if (isPrevFall5Mode) {
+      const winPrev = rangeDates.slice(Math.max(0, di - prevFallWinDays), di); // 不含今日
+      if (winPrev.length === 0) continue; // 无任何历史交易日（回测最早日），无法构成跌幅窗口
+      const prevGain = computeHistoricalWindowGain(sc.code, winPrev, dailyInfos);
+      if (prevGain == null || !Number.isFinite(prevGain)) continue;
+      let stage2 = null;
+      if (prevFallStage2Resilience) {
+        stage2 = calcResilienceAtMinute(replayStocks, sc.code, bucket.minute);
+      } else {
+        stage2 = sc.changePct != null && Number.isFinite(Number(sc.changePct)) ? Number(sc.changePct) : null;
+      }
+      // 第二阶段指标无法计算的候选保留 prevGain 参与前五筛选，但组内不参与买入排序（见下方 ordered 构建）
+      candidates.push({
+        sc,
+        prevGain,
+        stage2: stage2 != null && Number.isFinite(stage2) ? stage2 : -Infinity,
+      });
+      continue;
+    }
     let val;
     let val2; // 三日情绪冰点 1d 系列的决胜指标（最近 2 个交易日窗口的同向指标）
     let metric = null;
@@ -1948,9 +2081,49 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     });
   }
 
+  // 打分制策略（score_* 系列）：候选池内对各实时指标做 min-max 归一化（0-100），按权重加权得总分。
+  // 某指标候选池内全部相同时（max === min）无区分度，统一记满分 100；权重和为 1，总分落在 0-100
+  if (compositeWeights) {
+    for (const key of ['resilience', 'dayGain', 'gain3d']) {
+      if (compositeWeights[key] == null) continue;
+      const vals = candidates.map(c => c.raw[key]);
+      const min = Math.min(...vals);
+      const max = Math.max(...vals);
+      const span = max - min;
+      for (const c of candidates) {
+        c.raw[`${key}Norm`] = span === 0 ? 100 : ((c.raw[key] - min) / span) * 100;
+      }
+    }
+    for (const c of candidates) {
+      let total = 0;
+      for (const key of ['resilience', 'dayGain', 'gain3d']) {
+        if (compositeWeights[key] != null) total += compositeWeights[key] * c.raw[`${key}Norm`];
+      }
+      c.val = total; // 总分降序取最大
+      c.val2 = c.raw.dayGain != null ? c.raw.dayGain : -Infinity; // 总分相同时按触发时点当日实时涨幅决胜
+      c.metric = parseFloat(total.toFixed(2));
+    }
+  }
+
   // 构建策略排名序列
   let ordered; // [{ sc, metric }]
-  if (isTop5ReportGainMode) {
+  if (isPrevFall5Mode) {
+    // 前N日跌幅前五&当日指标最大（top5=跌幅最大 / low5=跌幅最小反转版）：
+    // 第一阶段：按前 N 日（不含今日）累计涨幅排序取前五（与第 5 名并列的全部纳入）
+    //   top5：升序（跌幅最大在前）；low5：仅保留总涨幅 < 0（确实下跌）的候选后降序（跌幅最小在前）
+    if (candidates.length === 0) return null;
+    const pool = prevFallLowMode ? candidates.filter(c => c.prevGain < 0) : candidates;
+    if (pool.length === 0) return null; // low5：全部候选前 N 日总涨幅为非负 → 当日不买入
+    const byFall = pool.slice().sort((a, b) => (prevFallLowMode ? b.prevGain - a.prevGain : a.prevGain - b.prevGain));
+    const fallThreshold = byFall[Math.min(4, byFall.length - 1)].prevGain;
+    const topGroup = byFall.filter(c => (prevFallLowMode ? c.prevGain >= fallThreshold : c.prevGain <= fallThreshold));
+    // 第二阶段：组内按当日实时指标（触发时点实时涨幅 / 日内实时抗分歧分数）降序；
+    // 指标无法计算（-Infinity 占位）的候选不参与买入排序
+    ordered = topGroup
+      .filter(c => c.stage2 !== -Infinity)
+      .sort((a, b) => b.stage2 - a.stage2)
+      .map(c => ({ sc: c.sc, metric: parseFloat(c.stage2.toFixed(2)) }));
+  } else if (isTop5ReportGainMode) {
     // 研报覆盖数降序取前五（覆盖数相同的股票全部纳入），组内按窗口涨幅降序；
     // 前五组之后按涨幅降序接在后面（仅在组内全部不满足抗分歧门槛时才会顺延到）
     if (!top5Candidates.length) return null;

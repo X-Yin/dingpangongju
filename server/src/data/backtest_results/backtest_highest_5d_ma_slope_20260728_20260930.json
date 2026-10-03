@@ -643,14 +643,14 @@
     },
     {
       "seq": 4,
-      "metric": 59.0867,
-      "code": "sh603319",
-      "stockName": "美湖股份",
+      "metric": 28.1022,
+      "code": "sh603757",
+      "stockName": "大元泵业",
       "buyDate": "20260827",
       "buyDateDisplay": "2026-08-27",
       "buyTime": "09:50",
-      "buyPrice": 27.78,
-      "buyChange": 3.77,
+      "buyPrice": 66,
+      "buyChange": 3.92,
       "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 20.02亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 51.45亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票涨停/前序股票买点抗分歧<9顺延买入）",
       "buyChecks": [
         {
@@ -689,9 +689,9 @@
         },
         {
           "id": "cyb_ma3_slope_gate",
-          "title": "美湖股份 跟踪创业板指 3 日线斜率门禁",
+          "title": "大元泵业 跟踪创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "美湖股份 跟踪创业板指，3 日线斜率 +1.23°，今日盘中由负转正，允许出手",
+          "value": "大元泵业 跟踪创业板指，3 日线斜率 +1.23°，今日盘中由负转正，允许出手",
           "reason": "创业板指 斜率 +1.23 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
         },
         {
@@ -719,7 +719,7 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "9.12",
+          "value": "9.4",
           "skippedStocks": [
             {
               "code": "sz002837",
@@ -730,43 +730,18 @@
               "code": "sh603083",
               "name": "剑桥科技",
               "resilience": 7.93
-            },
-            {
-              "code": "sz301018",
-              "name": "申菱环境",
-              "resilience": 8.28
-            },
-            {
-              "code": "sz300757",
-              "name": "罗博特科",
-              "resilience": 8.86
-            },
-            {
-              "code": "sz301183",
-              "name": "东田微",
-              "resilience": 8.65
-            },
-            {
-              "code": "sz002463",
-              "name": "沪电股份",
-              "resilience": 8.71
-            },
-            {
-              "code": "sh603186",
-              "name": "华正新材",
-              "resilience": 8.51
             }
           ],
-          "reason": "前序股票全局最低抗分歧不足（英维克（抗分歧 8.62）、剑桥科技（抗分歧 7.93）、申菱环境（抗分歧 8.28）、罗博特科（抗分歧 8.86）、东田微（抗分歧 8.65）、沪电股份（抗分歧 8.71）、华正新材（抗分歧 8.51））依次顺延，轮到本股买入（本股触发时点抗分歧 9.12）"
+          "reason": "前序股票全局最低抗分歧不足（英维克（抗分歧 8.62）、剑桥科技（抗分歧 7.93））依次顺延，轮到本股买入（本股触发时点抗分歧 9.4）"
         }
       ],
-      "sellDate": "20260828",
-      "sellDateDisplay": "2026-08-28",
-      "sellTime": "09:40",
-      "sellPrice": 26.72,
-      "sellChange": -9.27,
-      "sellReason": "均线破位、跌破成本线-2%",
-      "returnRate": -3.82
+      "sellDate": "20260831",
+      "sellDateDisplay": "2026-08-31",
+      "sellTime": "09:30",
+      "sellPrice": 63.61,
+      "sellChange": -2.56,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -3.62
     },
     {
       "seq": 5,
@@ -1180,9 +1155,9 @@
     "tradeCount": 7,
     "winCount": 1,
     "winRate": 14.29,
-    "avgDrawdown": -3.14,
+    "avgDrawdown": -3.1,
     "maxDrawdown": -4.22,
-    "overallReturn": -5.24,
+    "overallReturn": -5.04,
     "holding": true
   }
 }

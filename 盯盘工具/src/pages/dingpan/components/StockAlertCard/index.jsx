@@ -81,7 +81,7 @@ const StockAlertCard = ({ stockUpAlerts, stockDownAlerts, waveList, onStockClick
                     </Col>
                 </Row>
             ) : (
-                <Empty description="暂无个股异动数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                <Empty description="" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             )}
         </Card>
     );
