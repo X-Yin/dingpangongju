@@ -464,18 +464,18 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "16.09",
+          "value": "13.74",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 16.09，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 13.74，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260731",
       "sellDateDisplay": "2026-07-31",
-      "sellTime": "11:25",
-      "sellPrice": 296,
-      "sellChange": 3.99,
+      "sellTime": "11:05",
+      "sellPrice": 292.52,
+      "sellChange": 2.77,
       "sellReason": "高位放量大阴线",
-      "returnRate": 1.37
+      "returnRate": 0.18
     },
     {
       "seq": 2,
@@ -536,6 +536,14 @@
           "passed": true,
           "value": "科创50 3 日线斜率 -5.47°，负斜率允许出手；距上次由正转负 第 7 天（2026-07-24 翻转）",
           "reason": "科创50 斜率 -5.47 < 0，负斜率允许出手"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "9.74",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 9.74，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260812",
@@ -605,6 +613,14 @@
           "passed": true,
           "value": "科创50 3 日线斜率 -17.64°，负斜率允许出手；距上次由正转负 第 4 天（2026-08-19 翻转）",
           "reason": "科创50 斜率 -17.64 < 0，负斜率允许出手"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "10.16",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 10.16，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260826",
@@ -679,20 +695,20 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "9.66",
+          "value": "10.6",
           "skippedStocks": [
             {
               "code": "sh688143",
               "name": "长盈通",
-              "resilience": 6.43
+              "resilience": 6.81
             },
             {
               "code": "sz002536",
               "name": "飞龙股份",
-              "resilience": 3.31
+              "resilience": 4.58
             }
           ],
-          "reason": "前序股票全局最低抗分歧不足（长盈通（抗分歧 6.43）、飞龙股份（抗分歧 3.31））依次顺延，轮到本股买入（本股触发时点抗分歧 9.66）"
+          "reason": "前序股票全局最低抗分歧不足（长盈通（抗分歧 6.81）、飞龙股份（抗分歧 4.58））依次顺延，轮到本股买入（本股触发时点抗分歧 10.6）"
         }
       ],
       "sellDate": "20260904",
@@ -776,15 +792,23 @@
             }
           ],
           "reason": "买入时点涨停候选已剔除并顺延：剑桥科技（触发时涨幅 +10.00%）（涨停股买入不可成交，顺延至排名下一只）"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "17.34",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 17.34，≥ 全局最低 9）"
         }
       ],
-      "sellDate": "20260916",
-      "sellDateDisplay": "2026-09-16",
-      "sellTime": "10:05",
-      "sellPrice": 105.35,
-      "sellChange": 0.75,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 1.37
+      "sellDate": "20260915",
+      "sellDateDisplay": "2026-09-15",
+      "sellTime": "14:35",
+      "sellPrice": 104.3,
+      "sellChange": -3.61,
+      "sellReason": "高位放量大阴线",
+      "returnRate": 0.36
     },
     {
       "seq": 6,
@@ -850,9 +874,9 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "25.23",
+          "value": "23.11",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 25.23，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 23.11，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260921",
@@ -927,15 +951,15 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "13.63",
+          "value": "14.06",
           "skippedStocks": [
             {
               "code": "sz300776",
               "name": "帝尔激光",
-              "resilience": 7.43
+              "resilience": 6.49
             }
           ],
-          "reason": "前序股票全局最低抗分歧不足（帝尔激光（抗分歧 7.43））依次顺延，轮到本股买入（本股触发时点抗分歧 13.63）"
+          "reason": "前序股票全局最低抗分歧不足（帝尔激光（抗分歧 6.49））依次顺延，轮到本股买入（本股触发时点抗分歧 14.06）"
         }
       ],
       "sellDate": "20260930",
@@ -954,7 +978,7 @@
     "winRate": 71.43,
     "avgDrawdown": -2.08,
     "maxDrawdown": -3.02,
-    "overallReturn": 23.78,
+    "overallReturn": 21.11,
     "holding": false
   }
 }

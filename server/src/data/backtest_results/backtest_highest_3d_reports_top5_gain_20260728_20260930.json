@@ -464,18 +464,18 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "16.09",
+          "value": "13.74",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 16.09，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 13.74，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260731",
       "sellDateDisplay": "2026-07-31",
-      "sellTime": "11:25",
-      "sellPrice": 296,
-      "sellChange": 3.99,
+      "sellTime": "11:05",
+      "sellPrice": 292.52,
+      "sellChange": 2.77,
       "sellReason": "高位放量大阴线",
-      "returnRate": 1.37
+      "returnRate": 0.18
     },
     {
       "seq": 2,
@@ -536,6 +536,14 @@
           "passed": true,
           "value": "仕佳光子 跟踪科创50，3 日线斜率 -5.47°，负斜率允许出手；距上次由正转负 第 7 天（2026-07-24 翻转）",
           "reason": "科创50 斜率 -5.47 < 0，负斜率允许出手"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "12.82",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 12.82，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260819",
@@ -605,6 +613,14 @@
           "passed": true,
           "value": "科创50 3 日线斜率 -17.64°，负斜率允许出手；距上次由正转负 第 4 天（2026-08-19 翻转）",
           "reason": "科创50 斜率 -17.64 < 0，负斜率允许出手"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "9.85",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 9.85，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260904",
@@ -612,7 +628,7 @@
       "sellTime": "14:20",
       "sellPrice": 58.48,
       "sellChange": -7.22,
-      "sellReason": "科技板块情绪退潮",
+      "sellReason": "高位放量大阴线、科技板块情绪退潮",
       "returnRate": 19.01
     },
     {
@@ -674,6 +690,14 @@
           "passed": true,
           "value": "科创50 3 日线斜率 -7.20°，负斜率允许出手；距上次由正转负 第 4 天（2026-09-01 翻转）",
           "reason": "科创50 斜率 -7.20 < 0，负斜率允许出手"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "9.8",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 9.8，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260918",
@@ -748,9 +772,9 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "9.76",
+          "value": "9.54",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 9.76，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 9.54，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260930",
@@ -769,7 +793,7 @@
     "winRate": 80,
     "avgDrawdown": -1.76,
     "maxDrawdown": -1.76,
-    "overallReturn": 92.19,
+    "overallReturn": 89.93,
     "holding": false
   }
 }

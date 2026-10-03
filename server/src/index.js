@@ -2340,7 +2340,7 @@ app.delete('/training_camp/groups/:id', (req, res) => {
 const buySellBacktestTasks = new Map(); // taskId -> { status, progress, result, error }
 app.post('/training_camp/backtest', (req, res) => {
   try {
-    const { startDate, endDate, strategy, force } = req.body || {};
+    const { startDate, endDate, strategy, force, excludeCodes } = req.body || {};
     if (!startDate || !endDate || !/^\d{8}$/.test(startDate) || !/^\d{8}$/.test(endDate)) {
       return res.status(400).json({ success: false, message: '参数错误：startDate/endDate 需为 YYYYMMDD' });
     }
@@ -2348,8 +2348,13 @@ app.post('/training_camp/backtest', (req, res) => {
       return res.status(400).json({ success: false, message: '开始日期不能晚于结束日期' });
     }
     const strategyId = STRATEGIES[strategy] ? strategy : Object.keys(STRATEGIES)[0];
+    // 震荡测试（前端勾选隐藏个股后重跑）：excludeCodes 非空时跳过缓存读取，且结果不写入缓存（一次性，刷新即失效）
+    const excludeList = Array.isArray(excludeCodes)
+      ? excludeCodes.filter(c => typeof c === 'string' && c.trim()).map(c => c.trim())
+      : [];
+    const isOscTest = excludeList.length > 0;
     // 命中缓存则直接返回，不再重复回测（force=true 时忽略缓存强制重跑）
-    const cached = force ? null : readCachedBacktest(strategyId, startDate, endDate);
+    const cached = (force || isOscTest) ? null : readCachedBacktest(strategyId, startDate, endDate);
     if (cached) {
       return res.json({ success: true, cached: true, strategy: strategyId, taskId: null, result: cached });
     }
@@ -2359,10 +2364,10 @@ app.post('/training_camp/backtest', (req, res) => {
     runRangeBacktest(startDate, endDate, strategyId, (progress) => {
       const task = buySellBacktestTasks.get(taskId);
       if (task) task.progress = progress;
-    }).then(result => {
+    }, { excludeCodes: excludeList }).then(result => {
       const task = buySellBacktestTasks.get(taskId);
       if (task) { task.status = 'done'; task.result = result; }
-      if (result?.success) writeCachedBacktest(strategyId, startDate, endDate, result);
+      if (result?.success && !isOscTest) writeCachedBacktest(strategyId, startDate, endDate, result);
     }).catch(err => {
       const task = buySellBacktestTasks.get(taskId);
       if (task) { task.status = 'error'; task.error = err.message || String(err); }
@@ -3620,17 +3625,4 @@ scheduleLianbanDaily(21, 30);
 app.listen(port, () => {
   console.log(`服务运行在 http://localhost:${port}`);
   console.log('轮询服务已分离到单独脚本，请运行 npm run poll 启动轮询');
-
-  // 每周六首次启动服务时，自动回测全部策略（过去 30 个交易日）并生成最新回测报告
-  const nowDate = new Date();
-  if (nowDate.getDay() === 6) {
-    console.log('今日为周六，开始自动回测全部策略并生成回测报告（过去 30 个交易日）……');
-    generateReport({
-      fromCacheOnly: false,
-      onProgress: (p) => console.log(`周六自动回测进度 ${p.current}/${p.total}｜${p.strategy}`),
-    }).then(r => {
-      if (r.success) console.log(`周六自动回测完成，已生成回测报告：${r.report.id}`);
-      else console.log('周六自动回测未生成报告：', r.message);
-    }).catch(e => console.error('周六自动回测失败：', e.message));
-  }
 });

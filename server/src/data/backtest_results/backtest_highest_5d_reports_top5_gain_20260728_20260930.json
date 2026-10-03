@@ -464,18 +464,18 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "16.09",
+          "value": "13.74",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 16.09，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 13.74，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260731",
       "sellDateDisplay": "2026-07-31",
-      "sellTime": "11:25",
-      "sellPrice": 296,
-      "sellChange": 3.99,
+      "sellTime": "11:05",
+      "sellPrice": 292.52,
+      "sellChange": 2.77,
       "sellReason": "高位放量大阴线",
-      "returnRate": 1.37
+      "returnRate": 0.18
     },
     {
       "seq": 2,
@@ -536,6 +536,14 @@
           "passed": true,
           "value": "科创50 3 日线斜率 -5.47°，负斜率允许出手；距上次由正转负 第 7 天（2026-07-24 翻转）",
           "reason": "科创50 斜率 -5.47 < 0，负斜率允许出手"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "9.74",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 9.74，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260812",
@@ -605,6 +613,14 @@
           "passed": true,
           "value": "科创50 3 日线斜率 -17.64°，负斜率允许出手；距上次由正转负 第 4 天（2026-08-19 翻转）",
           "reason": "科创50 斜率 -17.64 < 0，负斜率允许出手"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "22.59",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 22.59，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260904",
@@ -617,15 +633,15 @@
     },
     {
       "seq": 4,
-      "metric": 4,
-      "code": "sz002536",
-      "stockName": "飞龙股份",
+      "metric": 3,
+      "code": "sz002916",
+      "stockName": "深南电路",
       "buyDate": "20260907",
       "buyDateDisplay": "2026-09-07",
       "buyTime": "09:35",
-      "buyPrice": 56.02,
-      "buyChange": -3.84,
-      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 30.78亿、当前量能为正（今日累计成交额超昨日全天）：冰点期豁免成交量，成交量增加 116.71亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）",
+      "buyPrice": 351.99,
+      "buyChange": 6.08,
+      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 30.78亿、当前量能为正（今日累计成交额超昨日全天）：冰点期豁免成交量，成交量增加 116.71亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票买点抗分歧<9顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -663,9 +679,9 @@
         },
         {
           "id": "cyb_ma3_slope_gate",
-          "title": "飞龙股份 跟踪创业板指 3 日线斜率门禁",
+          "title": "深南电路 跟踪创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "飞龙股份 跟踪创业板指，3 日线斜率 +4.28°，今日盘中由负转正，允许出手",
+          "value": "深南电路 跟踪创业板指，3 日线斜率 +4.28°，今日盘中由负转正，允许出手",
           "reason": "创业板指 斜率 +4.28 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
         },
         {
@@ -674,109 +690,32 @@
           "passed": true,
           "value": "科创50 3 日线斜率 -7.20°，负斜率允许出手；距上次由正转负 第 4 天（2026-09-01 翻转）",
           "reason": "科创50 斜率 -7.20 < 0，负斜率允许出手"
-        }
-      ],
-      "sellDate": "20260908",
-      "sellDateDisplay": "2026-09-08",
-      "sellTime": "09:50",
-      "sellPrice": 56.1,
-      "sellChange": -2.21,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 0.14
-    },
-    {
-      "seq": 5,
-      "metric": 5,
-      "code": "sz301511",
-      "stockName": "德福科技",
-      "buyDate": "20260908",
-      "buyDateDisplay": "2026-09-08",
-      "buyTime": "10:25",
-      "buyPrice": 103.58,
-      "buyChange": 4.12,
-      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 25.18亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 183.41亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票涨停顺延买入）",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+25.18亿",
-          "reason": "最近 5 分钟资金净流入 25.18 亿（10:20:00→10:25:00），超过 20 亿阈值",
-          "fundText": "5min 内资金净流入 25.18亿"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
-          "passed": true,
-          "exempted": false,
-          "value": "+ 183.41亿",
-          "reason": "当前量能 -111.42 亿为负，但较 5min 前的 -294.83 亿+ 183.41 亿，达到 100 亿阈值",
-          "volumeText": "成交量增加 183.41亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 13.18 / 当前 46.67",
-          "reason": "9:30 竞价科技情绪 13.18 未超过 80，当前情绪须低于 40 的限制不生效"
-        },
-        {
-          "id": "cyb_ma3_slope_gate",
-          "title": "德福科技 跟踪创业板指 3 日线斜率门禁",
-          "passed": true,
-          "value": "德福科技 跟踪创业板指，3 日线斜率 +31.68°，由负转正 第 1 天（2026-09-07 翻转），允许出手（T+1 日）",
-          "reason": "创业板指 斜率 +31.68 ≥ 0，但由负转正后第 1 个交易日（2026-09-07 转正），允许出手"
-        },
-        {
-          "id": "star_ma3_slope_gate",
-          "title": "科创50 3 日线斜率门禁",
-          "passed": true,
-          "value": "科创50 3 日线斜率 +3.06°，今日盘中由负转正，允许出手",
-          "reason": "科创50 斜率 +3.06 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
-        },
-        {
-          "id": "limit_up_defer",
-          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
-          "passed": true,
-          "value": "顺延 1 只",
-          "skippedStocks": [
-            {
-              "code": "sz002436",
-              "name": "兴森科技",
-              "change": 10.01
-            }
-          ],
-          "reason": "买入时点涨停候选已剔除并顺延：兴森科技（触发时涨幅 +10.01%）（涨停股买入不可成交，顺延至排名下一只）"
         },
         {
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "13.89",
-          "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 13.89，≥ 全局最低 9）"
+          "value": "9.8",
+          "skippedStocks": [
+            {
+              "code": "sz002536",
+              "name": "飞龙股份",
+              "resilience": 5.81
+            }
+          ],
+          "reason": "前序股票全局最低抗分歧不足（飞龙股份（抗分歧 5.81））依次顺延，轮到本股买入（本股触发时点抗分歧 9.8）"
         }
       ],
       "sellDate": "20260918",
       "sellDateDisplay": "2026-09-18",
-      "sellTime": "10:00",
-      "sellPrice": 106.39,
-      "sellChange": -0.5,
+      "sellTime": "09:40",
+      "sellPrice": 388.83,
+      "sellChange": 1.34,
       "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 2.71
+      "returnRate": 10.47
     },
     {
-      "seq": 6,
+      "seq": 5,
       "metric": 12,
       "code": "sz002436",
       "stockName": "兴森科技",
@@ -839,20 +778,20 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "11.12",
+          "value": "11.19",
           "skippedStocks": [
             {
               "code": "sh688041",
               "name": "海光信息",
-              "resilience": 5.46
+              "resilience": 5.98
             },
             {
               "code": "sz000725",
               "name": "京东方",
-              "resilience": 8.78
+              "resilience": 8.1
             }
           ],
-          "reason": "前序股票全局最低抗分歧不足（海光信息（抗分歧 5.46）、京东方（抗分歧 8.78））依次顺延，轮到本股买入（本股触发时点抗分歧 11.12）"
+          "reason": "前序股票全局最低抗分歧不足（海光信息（抗分歧 5.98）、京东方（抗分歧 8.1））依次顺延，轮到本股买入（本股触发时点抗分歧 11.19）"
         }
       ],
       "sellDate": "20260930",
@@ -866,12 +805,12 @@
   ],
   "currentHolding": null,
   "summary": {
-    "tradeCount": 6,
-    "winCount": 5,
-    "winRate": 83.33,
+    "tradeCount": 5,
+    "winCount": 4,
+    "winRate": 80,
     "avgDrawdown": -2,
     "maxDrawdown": -2,
-    "overallReturn": 26.32,
+    "overallReturn": 34.08,
     "holding": false
   }
 }

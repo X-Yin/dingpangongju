@@ -464,18 +464,18 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "16.09",
+          "value": "13.74",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 16.09，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 13.74，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260731",
       "sellDateDisplay": "2026-07-31",
-      "sellTime": "11:25",
-      "sellPrice": 296,
-      "sellChange": 3.99,
+      "sellTime": "11:05",
+      "sellPrice": 292.52,
+      "sellChange": 2.77,
       "sellReason": "高位放量大阴线",
-      "returnRate": 1.37
+      "returnRate": 0.18
     },
     {
       "seq": 2,
@@ -536,6 +536,14 @@
           "passed": true,
           "value": "科创50 3 日线斜率 -5.47°，负斜率允许出手；距上次由正转负 第 7 天（2026-07-24 翻转）",
           "reason": "科创50 斜率 -5.47 < 0，负斜率允许出手"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "9.74",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 9.74，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260812",
@@ -548,15 +556,15 @@
     },
     {
       "seq": 3,
-      "metric": 7,
-      "code": "sh688313",
-      "stockName": "仕佳光子",
+      "metric": 6,
+      "code": "sz300394",
+      "stockName": "天孚通信",
       "buyDate": "20260825",
       "buyDateDisplay": "2026-08-25",
       "buyTime": "10:05",
-      "buyPrice": 151.22,
-      "buyChange": -1.84,
-      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 22.90亿、当前量能为正（今日累计成交额超昨日全天）：冰点期豁免成交量，成交量增加 0.00亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）",
+      "buyPrice": 249.83,
+      "buyChange": 0.13,
+      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 22.90亿、当前量能为正（今日累计成交额超昨日全天）：冰点期豁免成交量，成交量增加 0.00亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票买点抗分歧<9顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -594,26 +602,40 @@
         },
         {
           "id": "cyb_ma3_slope_gate",
-          "title": "创业板指 3 日线斜率门禁",
+          "title": "天孚通信 跟踪创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "创业板指 3 日线斜率 -28.48°，负斜率允许出手；距上次由正转负 第 4 天（2026-08-19 翻转）",
+          "value": "天孚通信 跟踪创业板指，3 日线斜率 -28.48°，负斜率允许出手；距上次由正转负 第 4 天（2026-08-19 翻转）",
           "reason": "创业板指 斜率 -28.48 < 0，负斜率允许出手"
         },
         {
           "id": "star_ma3_slope_gate",
-          "title": "仕佳光子 跟踪科创50 3 日线斜率门禁",
+          "title": "科创50 3 日线斜率门禁",
           "passed": true,
-          "value": "仕佳光子 跟踪科创50，3 日线斜率 -17.64°，负斜率允许出手；距上次由正转负 第 4 天（2026-08-19 翻转）",
+          "value": "科创50 3 日线斜率 -17.64°，负斜率允许出手；距上次由正转负 第 4 天（2026-08-19 翻转）",
           "reason": "科创50 斜率 -17.64 < 0，负斜率允许出手"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "10.49",
+          "skippedStocks": [
+            {
+              "code": "sh688313",
+              "name": "仕佳光子",
+              "resilience": 8.48
+            }
+          ],
+          "reason": "前序股票全局最低抗分歧不足（仕佳光子（抗分歧 8.48））依次顺延，轮到本股买入（本股触发时点抗分歧 10.49）"
         }
       ],
       "sellDate": "20260826",
       "sellDateDisplay": "2026-08-26",
-      "sellTime": "09:40",
-      "sellPrice": 150.59,
-      "sellChange": -0.73,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": -0.42
+      "sellTime": "09:55",
+      "sellPrice": 249.25,
+      "sellChange": -3.05,
+      "sellReason": "均线破位",
+      "returnRate": -0.23
     },
     {
       "seq": 4,
@@ -679,25 +701,25 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "9.66",
+          "value": "10.6",
           "skippedStocks": [
             {
               "code": "sh688313",
               "name": "仕佳光子",
-              "resilience": 5.1
+              "resilience": 6.36
             },
             {
               "code": "sz002536",
               "name": "飞龙股份",
-              "resilience": 3.31
+              "resilience": 4.58
             },
             {
               "code": "sz300394",
               "name": "天孚通信",
-              "resilience": 3.87
+              "resilience": 5.61
             }
           ],
-          "reason": "前序股票全局最低抗分歧不足（仕佳光子（抗分歧 5.1）、飞龙股份（抗分歧 3.31）、天孚通信（抗分歧 3.87））依次顺延，轮到本股买入（本股触发时点抗分歧 9.66）"
+          "reason": "前序股票全局最低抗分歧不足（仕佳光子（抗分歧 6.36）、飞龙股份（抗分歧 4.58）、天孚通信（抗分歧 5.61））依次顺延，轮到本股买入（本股触发时点抗分歧 10.6）"
         }
       ],
       "sellDate": "20260904",
@@ -711,14 +733,14 @@
     {
       "seq": 5,
       "metric": 4,
-      "code": "sz002536",
-      "stockName": "飞龙股份",
+      "code": "sh688072",
+      "stockName": "拓荆科技",
       "buyDate": "20260907",
       "buyDateDisplay": "2026-09-07",
       "buyTime": "09:35",
-      "buyPrice": 56.02,
-      "buyChange": -3.84,
-      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 30.78亿、当前量能为正（今日累计成交额超昨日全天）：冰点期豁免成交量，成交量增加 116.71亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）",
+      "buyPrice": 642.19,
+      "buyChange": 3.26,
+      "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 30.78亿、当前量能为正（今日累计成交额超昨日全天）：冰点期豁免成交量，成交量增加 116.71亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票买点抗分歧<9顺延买入）",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -756,26 +778,40 @@
         },
         {
           "id": "cyb_ma3_slope_gate",
-          "title": "飞龙股份 跟踪创业板指 3 日线斜率门禁",
+          "title": "创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "飞龙股份 跟踪创业板指，3 日线斜率 +4.28°，今日盘中由负转正，允许出手",
+          "value": "创业板指 3 日线斜率 +4.28°，今日盘中由负转正，允许出手",
           "reason": "创业板指 斜率 +4.28 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
         },
         {
           "id": "star_ma3_slope_gate",
-          "title": "科创50 3 日线斜率门禁",
+          "title": "拓荆科技 跟踪科创50 3 日线斜率门禁",
           "passed": true,
-          "value": "科创50 3 日线斜率 -7.20°，负斜率允许出手；距上次由正转负 第 4 天（2026-09-01 翻转）",
+          "value": "拓荆科技 跟踪科创50，3 日线斜率 -7.20°，负斜率允许出手；距上次由正转负 第 4 天（2026-09-01 翻转）",
           "reason": "科创50 斜率 -7.20 < 0，负斜率允许出手"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "11.2",
+          "skippedStocks": [
+            {
+              "code": "sz002536",
+              "name": "飞龙股份",
+              "resilience": 5.81
+            }
+          ],
+          "reason": "前序股票全局最低抗分歧不足（飞龙股份（抗分歧 5.81））依次顺延，轮到本股买入（本股触发时点抗分歧 11.2）"
         }
       ],
       "sellDate": "20260908",
       "sellDateDisplay": "2026-09-08",
-      "sellTime": "09:50",
-      "sellPrice": 56.1,
-      "sellChange": -2.21,
+      "sellTime": "09:40",
+      "sellPrice": 630.1,
+      "sellChange": -3.35,
       "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 0.14
+      "returnRate": -1.88
     },
     {
       "seq": 6,
@@ -841,9 +877,9 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "10.77",
+          "value": "10.82",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 10.77，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 10.82，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260909",
@@ -918,9 +954,9 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "16.25",
+          "value": "17.46",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 16.25，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 17.46，≥ 全局最低 9）"
         }
       ],
       "sellDate": "20260916",
@@ -933,14 +969,14 @@
     },
     {
       "seq": 8,
-      "metric": 8,
-      "code": "sh603228",
-      "stockName": "景旺电子",
+      "metric": 10,
+      "code": "sh600183",
+      "stockName": "生益科技",
       "buyDate": "20260916",
       "buyDateDisplay": "2026-09-16",
       "buyTime": "10:10",
-      "buyPrice": 106.1,
-      "buyChange": 1.46,
+      "buyPrice": 150.89,
+      "buyChange": 0.43,
       "buyReason": "最近 5min 资金净流入大于 20 亿：5min 内资金净流入 24.76亿、量能较 5min 前增加（负值需增加超 100 亿）：成交量增加 103.58亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票买点抗分歧<9顺延买入）",
       "buyChecks": [
         {
@@ -979,9 +1015,9 @@
         },
         {
           "id": "cyb_ma3_slope_gate",
-          "title": "景旺电子 跟踪创业板指 3 日线斜率门禁",
+          "title": "生益科技 跟踪创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "景旺电子 跟踪创业板指，3 日线斜率 -21.43°，负斜率允许出手；距上次由正转负 第 4 天（2026-09-10 翻转）",
+          "value": "生益科技 跟踪创业板指，3 日线斜率 -21.43°，负斜率允许出手；距上次由正转负 第 4 天（2026-09-10 翻转）",
           "reason": "创业板指 斜率 -21.43 < 0，负斜率允许出手"
         },
         {
@@ -995,49 +1031,29 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "10.38",
+          "value": "9.29",
           "skippedStocks": [
             {
               "code": "sz301526",
               "name": "国际复材",
-              "resilience": 5.94
+              "resilience": 7.44
             },
             {
               "code": "sh600176",
               "name": "中国巨石",
-              "resilience": 5.14
-            },
-            {
-              "code": "sh600183",
-              "name": "生益科技",
-              "resilience": 8.61
-            },
-            {
-              "code": "sh603186",
-              "name": "华正新材",
-              "resilience": 6.21
-            },
-            {
-              "code": "sz301511",
-              "name": "德福科技",
-              "resilience": 7.05
-            },
-            {
-              "code": "sz002916",
-              "name": "深南电路",
-              "resilience": 7.56
+              "resilience": 6.86
             }
           ],
-          "reason": "前序股票全局最低抗分歧不足（国际复材（抗分歧 5.94）、中国巨石（抗分歧 5.14）、生益科技（抗分歧 8.61）、华正新材（抗分歧 6.21）、德福科技（抗分歧 7.05）、深南电路（抗分歧 7.56））依次顺延，轮到本股买入（本股触发时点抗分歧 10.38）"
+          "reason": "前序股票全局最低抗分歧不足（国际复材（抗分歧 7.44）、中国巨石（抗分歧 6.86））依次顺延，轮到本股买入（本股触发时点抗分歧 9.29）"
         }
       ],
       "sellDate": "20260917",
       "sellDateDisplay": "2026-09-17",
-      "sellTime": "09:45",
-      "sellPrice": 107.58,
-      "sellChange": 1.1,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 1.39
+      "sellTime": "13:10",
+      "sellPrice": 147.83,
+      "sellChange": -4.3,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.03
     },
     {
       "seq": 9,
@@ -1103,20 +1119,20 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "11.12",
+          "value": "11.19",
           "skippedStocks": [
             {
               "code": "sz000725",
               "name": "京东方",
-              "resilience": 8.78
+              "resilience": 8.1
             },
             {
               "code": "sh688041",
               "name": "海光信息",
-              "resilience": 5.46
+              "resilience": 5.98
             }
           ],
-          "reason": "前序股票全局最低抗分歧不足（京东方（抗分歧 8.78）、海光信息（抗分歧 5.46））依次顺延，轮到本股买入（本股触发时点抗分歧 11.12）"
+          "reason": "前序股票全局最低抗分歧不足（京东方（抗分歧 8.1）、海光信息（抗分歧 5.98））依次顺延，轮到本股买入（本股触发时点抗分歧 11.19）"
         }
       ],
       "sellDate": "20260930",
@@ -1131,11 +1147,11 @@
   "currentHolding": null,
   "summary": {
     "tradeCount": 9,
-    "winCount": 5,
-    "winRate": 55.56,
-    "avgDrawdown": -1.64,
+    "winCount": 3,
+    "winRate": 33.33,
+    "avgDrawdown": -1.71,
     "maxDrawdown": -2.08,
-    "overallReturn": 14.24,
+    "overallReturn": 7.09,
     "holding": false
   }
 }

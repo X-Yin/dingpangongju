@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Drawer, Button, DatePicker, message, Progress, Tag, Empty, Alert, Select, Tooltip } from 'antd';
+import { Drawer, Button, DatePicker, message, Progress, Tag, Empty, Alert, Select, Tooltip, Checkbox } from 'antd';
 import {
   CopyOutlined,
   StopOutlined,
@@ -9,6 +9,7 @@ import {
   FallOutlined,
   ThunderboltOutlined,
   RocketOutlined,
+  ExperimentOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -77,26 +78,23 @@ const SELL_RULES = [
 
 // 回测策略选项（与后端 buySellBacktest.STRATEGIES 保持一致；全量自选股策略已移除）
 const STRATEGY_OPTIONS = [
-  { value: 'key_block_2d_gain', label: '重点板块-2日最高涨幅' },
-  { value: 'key_block_3d_gain', label: '重点板块-3日最高涨幅' },
-  { value: 'key_block_4d_gain', label: '重点板块-4日最高涨幅' },
-  { value: 'key_block_5d_gain', label: '重点板块-5日最高涨幅' },
+  // 情绪快进快出系列（买点触发均可买入；上一交易日科技情绪 3 日 EMA < -60 的日子买入 → 该笔持仓次日 10:00 强制卖出且强卖当日禁止二次买入，否则走通用卖点）
+  { value: 'highest_2d_gain_emoquick', label: '2日涨幅最大&三日情绪-60快进快出' },
+  { value: 'highest_3d_gain_emoquick', label: '3日涨幅最大&三日情绪-60快进快出' },
+  { value: 'highest_4d_gain_emoquick', label: '4日涨幅最大&三日情绪-60快进快出' },
+  { value: 'highest_5d_gain_emoquick', label: '5日涨幅最大&三日情绪-60快进快出' },
   { value: 'highest_gain', label: '买入最高涨幅' },
   { value: 'highest_2d_gain', label: '2日涨幅最大' },
   { value: 'highest_3d_gain', label: '3日涨幅最大' },
   { value: 'highest_4d_gain', label: '4日涨幅最大' },
   { value: 'highest_5d_gain', label: '5日涨幅最大' },
   { value: 'highest_10d_gain', label: '10日涨幅最大' },
-  { value: 'highest_3d_gain_switch', label: '3日涨幅连续切换' },
-  { value: 'highest_3d_gain_twice', label: '3日涨幅两次买入' },
-  { value: 'highest_3d_gain_quarter', label: '3日涨幅四份仓位' },
-  { value: 'highest_3d_gain_two', label: '3日涨幅两个股票' },
-  { value: 'highest_5d_gain_2nd', label: '5日涨幅第二名' },
-  { value: 'highest_3d_gain_2nd', label: '3日涨幅第二名' },
+  { value: 'key_block_2d_gain', label: '重点板块-2日最高涨幅' },
+  { value: 'key_block_3d_gain', label: '重点板块-3日最高涨幅' },
+  { value: 'key_block_4d_gain', label: '重点板块-4日最高涨幅' },
+  { value: 'key_block_5d_gain', label: '重点板块-5日最高涨幅' },
   { value: 'highest_3d_reports', label: '3日研报覆盖数最多' },
   { value: 'highest_5d_reports', label: '5日研报覆盖数最多' },
-  { value: 'highest_3d_reports_2nd', label: '3日研报覆盖数第二名' },
-  { value: 'highest_5d_reports_2nd', label: '5日研报覆盖数第二名' },
   { value: 'highest_3d_reports_top5_gain', label: '3日研报前五&涨幅最大' },
   { value: 'highest_5d_reports_top5_gain', label: '5日研报前五&涨幅最大' },
   { value: 'highest_3d_ma_slope', label: '3日线斜率最陡峭' },
@@ -107,39 +105,11 @@ const STRATEGY_OPTIONS = [
 
   // 当日实时口径系列（与后端 buySellBacktest.STRATEGIES 保持一致；指标按买点触发时刻分时数据实时计算）
   { value: 'highest_1d_resilience', label: '当日抗分歧分数最大' },
-  { value: 'score_resilience_gain_37', label: '当日抗分歧+涨幅三七分' },
-  { value: 'score_resilience_gain_73', label: '当日抗分歧+涨幅七三分' },
-  { value: 'score_resilience_3dgain_37', label: '当日抗分歧+3日涨幅三七分' },
-  { value: 'score_resilience_3dgain_73', label: '当日抗分歧+3日涨幅七三分' },
-  { value: 'score_gain_3dgain_37', label: '当日涨幅+3日涨幅三七分' },
-  { value: 'score_gain_3dgain_73', label: '当日涨幅+3日涨幅七三分' },
-
-  // 前N日跌幅前五&当日指标最大系列（与后端 buySellBacktest.STRATEGIES 保持一致；前 N 个交易日不含今日）
-  { value: 'prev3d_fall_top5_day_gain', label: '前三跌幅&当日涨幅最大' },
-  { value: 'prev3d_fall_top5_day_resilience', label: '前三跌幅&当日抗分歧最大' },
-  { value: 'prev2d_fall_top5_day_gain', label: '前二跌幅&当日涨幅最大' },
-  { value: 'prev2d_fall_top5_day_resilience', label: '前二跌幅&当日抗分歧最大' },
-  { value: 'prev1d_fall_top5_day_gain', label: '昨日跌幅&当日涨幅最大' },
-  { value: 'prev1d_fall_top5_day_resilience', label: '昨日跌幅&当日抗分歧最大' },
-
-  // 前N日波动最小前五&当日指标最大系列（无论涨跌，按前 N 日累计涨幅绝对值取最小前五）
-  { value: 'prev3d_fall_low5_day_gain', label: '前三波动最小&当日涨幅最大' },
-  { value: 'prev3d_fall_low5_day_resilience', label: '前三波动最小&当日抗分歧最大' },
-  { value: 'prev2d_fall_low5_day_gain', label: '前二波动最小&当日涨幅最大' },
-  { value: 'prev2d_fall_low5_day_resilience', label: '前二波动最小&当日抗分歧最大' },
-  { value: 'prev1d_fall_low5_day_gain', label: '昨日波动最小&当日涨幅最大' },
-  { value: 'prev1d_fall_low5_day_resilience', label: '昨日波动最小&当日抗分歧最大' },
 
   // 情绪开关系列（上一交易日科技情绪 3 日 EMA < -60 → 波动最小策略，否则 → 3日涨幅最大）
   { value: 'prev3d_fall_low5_day_gain_emoswitch', label: '前三波动最小&当日涨最大/3日涨幅开关' },
   { value: 'prev2d_fall_low5_day_gain_emoswitch', label: '前二波动最小&当日涨最大/3日涨幅开关' },
   { value: 'prev1d_fall_low5_day_gain_emoswitch', label: '昨日波动最小&当日涨最大/3日涨幅开关' },
-
-  // 情绪快进快出系列（买点触发均可买入；上一交易日科技情绪 3 日 EMA < -60 的日子买入 → 该笔持仓次日 10:00 强制卖出且强卖当日禁止二次买入，否则走通用卖点）
-  { value: 'highest_2d_gain_emoquick', label: '2日涨幅最大&三日情绪-60快进快出' },
-  { value: 'highest_3d_gain_emoquick', label: '3日涨幅最大&三日情绪-60快进快出' },
-  { value: 'highest_4d_gain_emoquick', label: '4日涨幅最大&三日情绪-60快进快出' },
-  { value: 'highest_5d_gain_emoquick', label: '5日涨幅最大&三日情绪-60快进快出' },
 
   { value: 'tail_dip_1d_gain', label: '尾盘抄底-当日涨幅最大' },
   { value: 'tail_dip_3d_gain', label: '尾盘抄底-3日涨幅最大' },
@@ -242,7 +212,7 @@ const BuyReasonTag = ({ reason, checks }) => {
   const gateCellStyle = { border: '1px solid rgba(255,255,255,0.3)', padding: '1px 8px', whiteSpace: 'nowrap' };
   const hasDetail = Array.isArray(checks) && checks.length > 0;
   const detail = hasDetail ? (
-    <div style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 500, overflowY: 'auto' }}>
       {checks.map((c, i) => (
         <div key={c.id || i}>
           <div style={{ fontSize: 12, fontWeight: 600 }}>
@@ -294,7 +264,13 @@ const BuyReasonTag = ({ reason, checks }) => {
     </div>
   ) : undefined;
   return (
-    <Tooltip title={detail} placement="topLeft">
+    <Tooltip
+      title={detail}
+      placement="topLeft"
+      // 限制 tooltip 气泡最大高度 500px，超出部分内部滚动（买入条件明细可能很长）
+      styles={{ inner: { maxHeight: 500, overflowY: 'auto' } }}
+      className='backtest-drawer-buy-reason-tooltip'
+    >
       <Tag color="volcano" style={{ marginInlineEnd: 0, whiteSpace: 'normal', height: 'auto', cursor: hasDetail ? 'help' : 'default' }}>
         {reason}
       </Tag>
@@ -369,7 +345,7 @@ const buildSummary = (result) => {
 
 const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const [range, setRange] = useState(null);
-  const [strategy, setStrategy] = useState('key_block_2d_gain');
+  const [strategy, setStrategy] = useState('highest_3d_gain_emoquick');
   const [sentimentRange, setSentimentRange] = useState(null); // 情绪游资默认日期范围 [dayjs, dayjs]（最近 60 个已完结交易日）
   const [reportOpen, setReportOpen] = useState(false);
   const [trendOpen, setTrendOpen] = useState(false); // 策略趋势诊断弹窗（三档时间范围 × 全部策略）
@@ -378,6 +354,10 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [copying, setCopying] = useState(false);
+  // 震荡测试：记录右上角勾选「隐藏」的股票代码集合（一次性，不持久化；打开抽屉/切换策略或日期时清空）
+  const [hiddenCodes, setHiddenCodes] = useState(() => new Set());
+  const [oscResult, setOscResult] = useState(null); // 震荡测试结果（不落后端缓存，退出/刷新即失效）
+  const [oscMeta, setOscMeta] = useState(null); // 本次震荡测试实际排除的股票展示文案，如 ['某某(sh688361)']
   const pollRef = useRef(null);
   const taskIdRef = useRef(null);
   const [workerRunning, setWorkerRunning] = useState(false); // 全量回测（backtest-worker.js）后台执行中
@@ -447,10 +427,16 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     }
   };
 
-  // 打开抽屉、切换策略或修改日期范围时检查缓存（延迟到宏任务，避免 effect 内同步 setState）
+  // 打开抽屉、切换策略或修改日期范围时检查缓存（延迟到宏任务，避免 effect 内同步 setState）；
+  // 同时清空上一次震荡测试的隐藏勾选与结果（一次性状态，不持久化，重新打开抽屉即重置）
   useEffect(() => {
     if (!open) return;
-    const id = setTimeout(checkCache, 0);
+    const id = setTimeout(() => {
+      setHiddenCodes(new Set());
+      setOscResult(null);
+      setOscMeta(null);
+      checkCache();
+    }, 0);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, strategy, range, sentimentRange]);
@@ -469,16 +455,47 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, curIsSentiment, sentimentRange]);
 
-  // 切换策略：策略类别（三日情绪冰点 / 情绪游资 / 常规）变化时重置手动日期，回退到该类别的默认范围
-  const handleStrategyChange = (v) => {
+  // 复制文本到剪贴板：优先 clipboard API（需 secure context），失败/不可用时降级 execCommand
+  const copyToClipboard = async (text) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch { /* 降级 */ }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  };
+
+  // 切换策略：策略类别（三日情绪冰点 / 情绪游资 / 常规）变化时重置手动日期，回退到该类别的默认范围；
+  // 选中后自动复制策略名称到剪贴板
+  const handleStrategyChange = async (v) => {
     if (strategyCategory(v) !== strategyCategory(strategy)) {
       setRange(null);
       setResult(null);
     }
     setStrategy(v);
+    // 选中策略后自动把策略名称复制到剪贴板
+    const label = STRATEGY_OPTIONS.find(o => o.value === v)?.label;
+    if (label) {
+      const ok = await copyToClipboard(label);
+      if (ok) message.success('复制名称成功');
+      else message.warning('复制失败，请手动复制');
+    }
   };
 
-  const startPolling = (taskId) => {
+  const startPolling = (taskId, opts = {}) => {
     stopPolling();
     taskIdRef.current = taskId;
     pollRef.current = setInterval(async () => {
@@ -491,8 +508,13 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
           stopPolling();
           setRunning(false);
           if (s.status === 'done' && s.result) {
-            setResult(s.result);
-            message.success('回测完成');
+            if (opts.osc) {
+              setOscResult(s.result); // 震荡测试结果单独存放，不覆盖缓存回测结果
+              message.success('震荡测试完成');
+            } else {
+              setResult(s.result);
+              message.success('回测完成');
+            }
           } else if (s.status === 'error') {
             setError(s.error || '回测失败');
           } else {
@@ -518,6 +540,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       return;
     }
     setResult(null);
+    setOscResult(null);
+    setOscMeta(null);
+    setHiddenCodes(new Set());
     setError(null);
     setProgress({ current: 0, total: 0, date: '', status: '' });
     setRunning(true);
@@ -537,6 +562,64 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     } catch {
       setRunning(false);
       setError('创建回测任务失败，请检查后端服务');
+    }
+  };
+
+  // 勾选/取消勾选某条回测记录的「隐藏」（按股票代码维度：同一股票的所有记录同步勾选）
+  const toggleHiddenCode = (code, checked) => {
+    setHiddenCodes(prev => {
+      const next = new Set(prev);
+      if (checked) next.add(code);
+      else next.delete(code);
+      return next;
+    });
+  };
+
+  // 震荡测试：按当前策略 + 日期范围重跑一次回测，被勾选「隐藏」的股票不参与本次回测，
+  // 用于检验策略收益率是结构性的还是依赖个别牛股；结果不落后端缓存，一次性展示
+  const handleOscTest = async () => {
+    const pick = effectiveRange;
+    if (!pick || !pick[0] || !pick[1]) {
+      message.warning('请选择回测日期范围');
+      return;
+    }
+    const startDate = pick[0].format('YYYYMMDD');
+    const endDate = pick[1].format('YYYYMMDD');
+    if (startDate > endDate) {
+      message.warning('开始日期不能晚于结束日期');
+      return;
+    }
+    if (hiddenCodes.size === 0) {
+      message.warning('请先在回测记录右上角勾选「隐藏」需要排除的股票');
+      return;
+    }
+    // 记录本次排除的股票展示文案（代码 + 名称，名称取自当前回测结果）
+    const nameMap = {};
+    (result?.trades || []).forEach(t => { if (t.code) nameMap[t.code] = t.stockName || t.code; });
+    (result?.stocks || []).forEach(s => { if (s.code) nameMap[s.code] = s.stockName || s.code; });
+    const codes = Array.from(hiddenCodes).map(c => (nameMap[c] ? `${nameMap[c]}(${c})` : c));
+    setOscResult(null);
+    setError(null);
+    setProgress({ current: 0, total: 0, date: '', status: '' });
+    setRunning(true);
+    try {
+      const r = await axios.post(`http://${local_ip}:3000/training_camp/backtest`, {
+        startDate,
+        endDate,
+        strategy,
+        force: true,
+        excludeCodes: Array.from(hiddenCodes),
+      });
+      if (r.data?.success && r.data.taskId) {
+        setOscMeta({ codes });
+        startPolling(r.data.taskId, { osc: true });
+      } else {
+        setRunning(false);
+        setError(r.data?.message || '创建震荡测试任务失败');
+      }
+    } catch {
+      setRunning(false);
+      setError('创建震荡测试任务失败，请检查后端服务');
     }
   };
 
@@ -741,7 +824,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     }
   };
 
-  const summary = result ? buildSummary(result) : null;
+  // 展示用结果：震荡测试结果存在时优先展示（退出震荡测试或刷新后回到缓存回测结果）
+  const displayResult = oscResult || result;
+  const summary = displayResult ? buildSummary(displayResult) : null;
 
   const progressPercent = progress && progress.total > 0
     ? Math.round((progress.current / progress.total) * 100)
@@ -848,13 +933,27 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
             style={{ flex: 1, minWidth: 240, maxWidth: 360 }}
             options={STRATEGY_OPTIONS}
           />
-          <span style={{ fontSize: 12, color: '#9ca3af' }}>
-            {curIsEmo3
-              ? '三日情绪冰点策略固定从 2026-07-01 开始回测（结束日取最新交易日）'
-              : curIsSentiment
-              ? '情绪游资策略不依赖回放缓存，可选时间不限（默认最近 60 个交易日）'
-              : '切换策略或日期后自动匹配缓存，无需重复回测'}
-          </span>
+          {curIsEmo3 ? (
+            <span style={{ fontSize: 12, color: '#9ca3af' }}>
+              三日情绪冰点策略固定从 2026-07-01 开始回测（结束日取最新交易日）
+            </span>
+          ) : curIsSentiment ? (
+            <span style={{ fontSize: 12, color: '#9ca3af' }}>
+              情绪游资策略不依赖回放缓存，可选时间不限（默认最近 60 个交易日）
+            </span>
+          ) : (
+            <Tooltip title="在回测记录右上角勾选「隐藏」排除个别股票后重跑一次回测：被隐藏的股票不参与本次回测，用于检验策略收益率是结构正确带来的，还是单纯依赖个别牛股；结果不落缓存，刷新即失效">
+              <Button
+                size="small"
+                icon={<ExperimentOutlined />}
+                onClick={handleOscTest}
+                disabled={!displayResult || running || workerRunning}
+                style={{ borderRadius: 999 }}
+              >
+                震荡测试
+              </Button>
+            </Tooltip>
+          )}
         </div>
 
         {/* 进度条 */}
@@ -891,13 +990,31 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       )}
 
       {/* 回测结果 */}
-      {result && summary && !running ? (
+      {displayResult && summary && !running ? (
         <>
+          {/* 震荡测试模式提示（结果不落缓存，一次性） */}
+          {oscResult ? (
+            <Alert
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+              message={`震荡测试结果（排除 ${oscMeta?.codes?.length || 0} 只个股｜不落缓存，刷新后失效）`}
+              description={`已排除：${(oscMeta?.codes || []).join('、') || '--'}。被隐藏的个股不参与本次回测，对比上方汇总与原结果即可判断策略收益率是结构性的还是依赖个别牛股。`}
+              action={(
+                <Button
+                  size="small"
+                  onClick={() => { setOscResult(null); setOscMeta(null); }}
+                >
+                  退出震荡测试
+                </Button>
+              )}
+            />
+          ) : null}
           {/* 汇总统计 */}
           <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               {[
-                result.type === 'single'
+                displayResult.type === 'single'
                   ? { label: '整体收益', value: summary.overallReturn != null ? fmtPct(summary.overallReturn) : '--', color: summary.overallReturn != null ? (summary.overallReturn >= 0 ? '#f5222d' : '#52c41a') : undefined }
                   : { label: '平均单笔收益', value: summary.avgReturn != null ? fmtPct(summary.avgReturn) : '--', color: summary.avgReturn != null ? (summary.avgReturn >= 0 ? '#f5222d' : '#52c41a') : undefined },
                 { label: '胜率', value: summary.winRate != null ? `${summary.winRate.toFixed(1)}%` : '--', color: summary.winRate != null && summary.winRate >= 50 ? '#f5222d' : '#52c41a' },
@@ -907,7 +1024,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                 { label: '覆盖自选股', value: `${summary.stockCount} 只` },
                 { label: '成交笔数', value: `${summary.totalTrades} 笔` },
                 { label: '盈利笔数', value: `${summary.winTrades} 笔` },
-                { label: '期末仍持仓', value: result.type === 'single' ? (summary.holdingCount > 0 ? '1 只' : '0 只') : `${summary.holdingCount} 只` },
+                { label: '期末仍持仓', value: displayResult.type === 'single' ? (summary.holdingCount > 0 ? '1 只' : '0 只') : `${summary.holdingCount} 只` },
               ].map(item => (
                 <div key={item.label} style={{ flex: 1, minWidth: 110, background: '#f7f9fc', borderRadius: 10, padding: '10px 12px' }}>
                   <div style={{ fontSize: 12, color: '#9ca3af' }}>{item.label}</div>
@@ -916,20 +1033,20 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
               ))}
             </div>
             <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 10 }}>
-              回测范围：{fmtDate(result.range?.startDate)} ~ {fmtDate(result.range?.endDate)}
-              {result.skippedDates && result.skippedDates.length > 0
-                ? `｜跳过无数据交易日 ${result.skippedDates.length} 天`
+              回测范围：{fmtDate(displayResult.range?.startDate)} ~ {fmtDate(displayResult.range?.endDate)}
+              {displayResult.skippedDates && displayResult.skippedDates.length > 0
+                ? `｜跳过无数据交易日 ${displayResult.skippedDates.length} 天`
                 : ''}
             </div>
           </div>
 
           {/* 单股策略：逐笔交易明细 */}
-          {result.type === 'single' ? (
-            result.trades.length === 0 && !result.currentHolding ? (
+          {displayResult.type === 'single' ? (
+            displayResult.trades.length === 0 && !displayResult.currentHolding ? (
               <Empty description="所选范围内未产生任何成交" />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {result.trades.map(t => (
+                {displayResult.trades.map(t => (
                   <div key={t.seq} style={{ background: '#fff', borderRadius: 12, padding: 14, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
                     {/* 交易头部 */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
@@ -943,6 +1060,13 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                         </Tag>
                       )}
                       <WeightedReturnTag rate={t.returnRate} rawRate={t.rawReturnRate} weight={t.weight} />
+                      <Checkbox
+                        checked={hiddenCodes.has(t.code)}
+                        onChange={(e) => toggleHiddenCode(t.code, e.target.checked)}
+                        style={{ marginLeft: 'auto' }}
+                      >
+                        隐藏
+                      </Checkbox>
                     </div>
 
                     {/* 买卖明细 */}
@@ -995,47 +1119,54 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                 ))}
 
                 {/* 期末持仓 */}
-                {result.currentHolding && (
+                {displayResult.currentHolding && (
                   <div style={{ background: '#fff', borderRadius: 12, padding: 14, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 12, fontWeight: 600, color: '#12213a' }}>持仓中（未卖出）</span>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#12213a' }}>{result.currentHolding.stockName}</span>
-                      <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{result.currentHolding.code}</span>
-                      <KeyBlockModeTag mode={result.currentHolding.mode || result.currentHolding.positionMode} />
-                      {result.currentHolding.metric != null && (
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#12213a' }}>{displayResult.currentHolding.stockName}</span>
+                      <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{displayResult.currentHolding.code}</span>
+                      <KeyBlockModeTag mode={displayResult.currentHolding.mode || displayResult.currentHolding.positionMode} />
+                      {displayResult.currentHolding.metric != null && (
                         <Tag color="purple" style={{ marginInlineEnd: 0 }}>
-                          选股指标 {Number(result.currentHolding.metric).toFixed(4)}
+                          选股指标 {Number(displayResult.currentHolding.metric).toFixed(4)}
                         </Tag>
                       )}
-                      {result.currentHolding.buyReturn != null && (
+                      {displayResult.currentHolding.buyReturn != null && (
                         <WeightedReturnTag
-                          rate={result.currentHolding.buyReturn}
-                          rawRate={result.currentHolding.rawBuyReturn}
-                          weight={result.currentHolding.weight}
+                          rate={displayResult.currentHolding.buyReturn}
+                          rawRate={displayResult.currentHolding.rawBuyReturn}
+                          weight={displayResult.currentHolding.weight}
                           label="浮盈"
                         />
                       )}
+                      <Checkbox
+                        checked={hiddenCodes.has(displayResult.currentHolding.code)}
+                        onChange={(e) => toggleHiddenCode(displayResult.currentHolding.code, e.target.checked)}
+                        style={{ marginLeft: 'auto' }}
+                      >
+                        隐藏
+                      </Checkbox>
                     </div>
                     <div style={{ border: '1px dashed #f5c96b', borderRadius: 8, padding: '8px 10px', background: '#fffbea' }}>
                       <span style={{ fontSize: 12, color: '#6b7890' }}>
-                        买入 {fmtDate(result.currentHolding.buyDate)} {result.currentHolding.buyTime} 价格{' '}
-                        <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(result.currentHolding.buyPrice).toFixed(2)}</b>
+                        买入 {fmtDate(displayResult.currentHolding.buyDate)} {displayResult.currentHolding.buyTime} 价格{' '}
+                        <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(displayResult.currentHolding.buyPrice).toFixed(2)}</b>
                       </span>
                       <span style={{ fontSize: 12, marginLeft: 10 }}>
-                        涨幅 <b style={{ color: result.currentHolding.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(result.currentHolding.buyChange)}</b>
+                        涨幅 <b style={{ color: displayResult.currentHolding.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(displayResult.currentHolding.buyChange)}</b>
                       </span>
                       <span style={{ fontSize: 12, marginLeft: 10, color: '#6b7890' }}>
-                        已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(result.currentHolding)}</b>
+                        已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(displayResult.currentHolding)}</b>
                       </span>
-                      {result.currentHolding.buyReason && (
+                      {displayResult.currentHolding.buyReason && (
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
                           <span style={{ fontSize: 12, color: '#6b7890', lineHeight: '22px' }}>买入原因</span>
-                          <BuyReasonTag reason={result.currentHolding.buyReason} checks={result.currentHolding.buyChecks} />
+                          <BuyReasonTag reason={displayResult.currentHolding.buyReason} checks={displayResult.currentHolding.buyChecks} />
                         </div>
                       )}
-                      {(result.currentHolding.mode || result.currentHolding.positionMode) === 'defense' && result.currentHolding.rawBuyReturn != null && (
+                      {(displayResult.currentHolding.mode || displayResult.currentHolding.positionMode) === 'defense' && displayResult.currentHolding.rawBuyReturn != null && (
                         <div style={{ fontSize: 12, color: '#d46b08', marginTop: 4 }}>
-                          防御半仓口径：个股实际浮盈 {fmtPct(result.currentHolding.rawBuyReturn)}，按 50% 仓位折算后计入概览的浮盈为 {fmtPct(result.currentHolding.buyReturn)}
+                          防御半仓口径：个股实际浮盈 {fmtPct(displayResult.currentHolding.rawBuyReturn)}，按 50% 仓位折算后计入概览的浮盈为 {fmtPct(displayResult.currentHolding.buyReturn)}
                         </div>
                       )}
                     </div>
@@ -1045,11 +1176,11 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
             )
           ) : (
             /* 全量策略：每只股票一张卡片 */
-            result.stocks.length === 0 ? (
+            displayResult.stocks.length === 0 ? (
               <Empty description="所选范围内未产生任何成交" />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {result.stocks.map(stock => {
+                {displayResult.stocks.map(stock => {
                   const stockTotalReturn = stock.trades.reduce((s, t) => s + (Number(t.returnRate) || 0), 0);
                   return (
                     <div key={stock.code} style={{ background: '#fff', borderRadius: 12, padding: 14, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
@@ -1066,6 +1197,13 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                         {stock.holding && (
                           <Tag color="gold" style={{ marginInlineEnd: 0 }}>期末持仓中</Tag>
                         )}
+                        <Checkbox
+                          checked={hiddenCodes.has(stock.code)}
+                          onChange={(e) => toggleHiddenCode(stock.code, e.target.checked)}
+                          style={{ marginLeft: 'auto' }}
+                        >
+                          隐藏
+                        </Checkbox>
                       </div>
 
                       {/* 成交明细 */}

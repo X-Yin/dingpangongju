@@ -643,12 +643,12 @@
       ],
       "sellDate": "20260904",
       "sellDateDisplay": "2026-09-04",
-      "sellTime": "14:50",
-      "sellPrice": 58.12,
-      "sellChange": -7.79,
-      "sellReason": "抗分歧指数弱势",
-      "returnRate": 12.88,
-      "rawReturnRate": 12.88
+      "sellTime": "14:20",
+      "sellPrice": 58.48,
+      "sellChange": -7.22,
+      "sellReason": "高位放量大阴线",
+      "returnRate": 13.58,
+      "rawReturnRate": 13.58
     },
     {
       "seq": 6,
@@ -918,7 +918,7 @@
     "winRate": 30,
     "avgDrawdown": -3.47,
     "maxDrawdown": -7.63,
-    "overallReturn": 12.35,
+    "overallReturn": 13.05,
     "holding": false
   }
 }

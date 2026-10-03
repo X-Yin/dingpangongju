@@ -30,6 +30,7 @@ const { getThsKlineUrl, getThsKlineHeaders, timestampToDateStr } = require('../u
 const { getSingleStockData, getSingleStockTlineDataByDate } = require('./stock');
 const { beijingToday } = require('./trainingCamp');
 const { batchParallel } = require('../utils');
+const { isOscExcluded } = require('./backtestOscContext');
 
 const DATA_DIR = path.resolve(__dirname, '../data/sentiment_hot_money');
 const KLINE_CACHE_DIR = path.resolve(__dirname, '../data/kline_cache'); // 与训练营日K线文件缓存同目录同格式 { fetchedAt, kline }
@@ -810,7 +811,9 @@ const runSentimentBacktest = async (startDate, endDate, strategyId, onProgress) 
         ? (gate && gate.bankMa10Slope != null && gate.bankMa10Slope > 0)
         : (gate && gate.hit);
       if (gateHit) {
-        const candidates = await selectCandidates(Array.from(lhbCumPool.values()), prevDate, strategyId, calendar);
+        // 震荡测试：勾选隐藏的股票不参与候选（isOscExcluded 非震荡测试运行时恒为 false）
+        const lhbPool = Array.from(lhbCumPool.values()).filter(c => !isOscExcluded(c.code));
+        const candidates = await selectCandidates(lhbPool, prevDate, strategyId, calendar);
         const buyable = candidates.filter(c => !soldTodayCodes.has(c.code));
         for (const c of buyable) {
           if (!seenStocks.has(c.code)) seenStocks.set(c.code, { code: c.code, name: c.name });

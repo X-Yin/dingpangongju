@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>科技情绪变化 2026-03-15 ~ 2026-04-15</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; padding: 24px; }
+  .page-header { max-width: 1280px; margin: 0 auto 16px; }
+  .page-header h1 { font-size: 22px; color: #262626; }
+  .page-header .sub { font-size: 13px; color: #8c8c8c; margin-top: 4px; }
+  .chart-card { max-width: 1280px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+  .chart-title { font-size: 16px; font-weight: 600; color: #262626; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+  .chart-title::before { content: ''; width: 3px; height: 14px; background: #722ed1; border-radius: 2px; }
+  .legend { display: flex; gap: 20px; font-size: 12px; color: #666; margin-bottom: 8px; }
+  .legend .item { display: flex; align-items: center; gap: 6px; }
+  .legend .swatch { display: inline-block; width: 18px; height: 3px; border-radius: 2px; }
+  #chart-container { position: relative; width: 100%; height: 500px; }
+  #chart-container svg { display: block; }
+  .chart-tooltip { position: absolute; pointer-events: none; display: none; background: #fff; border: 1px solid #eee; border-radius: 6px; box-shadow: 0 3px 14px rgba(0,0,0,0.15); padding: 10px 12px; font-size: 12px; z-index: 10; min-width: 150px; }
+  .tooltip-title { font-weight: 600; color: #262626; margin-bottom: 6px; }
+  .tooltip-item { display: flex; justify-content: space-between; gap: 16px; line-height: 20px; }
+  .tooltip-item .label { color: #8c8c8c; }
+  .tooltip-item .value.up { color: #f5222d; }
+  .tooltip-item .value.down { color: #52c41a; }
+  .sentiment-sum-module { margin-top: 16px; border-top: 1px solid #f0f0f0; padding-top: 14px; }
+  .sentiment-sum-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .sentiment-sum-header input { border: 1px solid #d9d9d9; border-radius: 6px; padding: 4px 8px; font-size: 13px; width: 110px; }
+  .sentiment-sum-label { font-size: 13px; color: #666; }
+  .sentiment-sum-result { display: flex; gap: 32px; }
+  .sentiment-sum-item { display: flex; flex-direction: column; gap: 2px; }
+  .sentiment-sum-item-label { font-size: 12px; color: #8c8c8c; }
+  .sentiment-sum-item-value { font-size: 20px; font-weight: 600; }
+  .sentiment-sum-item-value.up { color: #f5222d; }
+  .sentiment-sum-item-value.down { color: #52c41a; }
+</style>
+</head>
+<body>
+  <div class="page-header">
+    <h1>科技情绪变化（临时计算）</h1>
+    <div class="sub">区间 2026-03-15 ~ 2026-04-15 · 算法与 emotion.js 科技情绪同源（成分股涨幅市值加权 + 冲高回落惩罚），EMA3 与情绪页「三日均值」同算法</div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">科技板块情绪</div>
+    <div class="legend">
+      <span class="item"><span class="swatch" style="background:#722ed1"></span>科技情绪指数</span>
+      <span class="item"><span class="swatch" style="background:#1890ff; border-top:1px dashed #1890ff; background:transparent; height:0;"></span>EMA 3 日线</span>
+      <span class="item"><span class="swatch" style="background:#ff4d4f; height:1px; border-top:1px dashed #ff4d4f; background:transparent;"></span>0 轴基准</span>
+    </div>
+    <div id="chart-container"><div class="chart-tooltip" id="tooltip"></div></div>
+    <div class="sentiment-sum-module">
+      <div class="sentiment-sum-header">
+        <span class="sentiment-sum-label">时间范围</span>
+        <input type="date" id="range-start" value="2026-03-15">
+        <span class="sentiment-sum-label">~</span>
+        <input type="date" id="range-end" value="2026-04-15">
+      </div>
+      <div class="sentiment-sum-result">
+        <div class="sentiment-sum-item"><span class="sentiment-sum-item-label">数据天数</span><span class="sentiment-sum-item-value" id="sum-count">-</span></div>
+        <div class="sentiment-sum-item"><span class="sentiment-sum-item-label">情绪总和</span><span class="sentiment-sum-item-value" id="sum-total">-</span></div>
+        <div class="sentiment-sum-item"><span class="sentiment-sum-item-label">日均情绪</span><span class="sentiment-sum-item-value" id="sum-avg">-</span></div>
+      </div>
+    </div>
+  </div>
+<script>
+const DATA = [{"date":"20260316","changeSumResult":40.13,"rawSum":135.14,"baseEmotion":42.23,"pullbackPenalty":-5.25,"ema3":0.29},{"date":"20260317","changeSumResult":-100,"rawSum":-319.77,"baseEmotion":-78.79,"pullbackPenalty":-89.78,"ema3":-49.85},{"date":"20260318","changeSumResult":70.88,"rawSum":279.11,"baseEmotion":73.08,"pullbackPenalty":-5.5,"ema3":10.51},{"date":"20260319","changeSumResult":-81.88,"rawSum":-201.09,"baseEmotion":-58.52,"pullbackPenalty":-58.41,"ema3":-35.68},{"date":"20260320","changeSumResult":-30.98,"rawSum":3.32,"baseEmotion":1.11,"pullbackPenalty":-80.22,"ema3":-33.33},{"date":"20260323","changeSumResult":-100,"rawSum":-434.55,"baseEmotion":-89.54,"pullbackPenalty":-91.72,"ema3":-66.67},{"date":"20260324","changeSumResult":56.96,"rawSum":224.9,"baseEmotion":63.5,"pullbackPenalty":-16.36,"ema3":-4.85},{"date":"20260325","changeSumResult":62.2,"rawSum":277.82,"baseEmotion":72.88,"pullbackPenalty":-26.7,"ema3":28.67},{"date":"20260326","changeSumResult":-82.15,"rawSum":-166.13,"baseEmotion":-50.33,"pullbackPenalty":-79.56,"ema3":-26.74},{"date":"20260327","changeSumResult":-13.54,"rawSum":1.49,"baseEmotion":0.5,"pullbackPenalty":-35.09,"ema3":-20.14},{"date":"20260330","changeSumResult":1.77,"rawSum":23.5,"baseEmotion":7.82,"pullbackPenalty":-15.11,"ema3":-9.18},{"date":"20260331","changeSumResult":-91.42,"rawSum":-186.46,"baseEmotion":-55.22,"pullbackPenalty":-90.49,"ema3":-50.3},{"date":"20260401","changeSumResult":75.68,"rawSum":344.58,"baseEmotion":81.73,"pullbackPenalty":-15.11,"ema3":12.69},{"date":"20260402","changeSumResult":-98.8,"rawSum":-247.15,"baseEmotion":-67.71,"pullbackPenalty":-77.73,"ema3":-43.06},{"date":"20260403","changeSumResult":7.15,"rawSum":98.94,"baseEmotion":31.83,"pullbackPenalty":-61.7,"ema3":-17.95},{"date":"20260407","changeSumResult":31.89,"rawSum":154.6,"baseEmotion":47.41,"pullbackPenalty":-38.8,"ema3":6.97},{"date":"20260408","changeSumResult":97.38,"rawSum":660.17,"baseEmotion":97.58,"pullbackPenalty":-0.5,"ema3":52.17},{"date":"20260409","changeSumResult":12.5,"rawSum":91.47,"baseEmotion":29.58,"pullbackPenalty":-42.7,"ema3":32.34},{"date":"20260410","changeSumResult":51.53,"rawSum":259.02,"baseEmotion":69.8,"pullbackPenalty":-45.66,"ema3":41.93},{"date":"20260413","changeSumResult":8.89,"rawSum":80.88,"baseEmotion":26.33,"pullbackPenalty":-43.59,"ema3":25.41},{"date":"20260414","changeSumResult":65.85,"rawSum":259.07,"baseEmotion":69.81,"pullbackPenalty":-9.91,"ema3":45.63},{"date":"20260415","changeSumResult":-52.44,"rawSum":-63.66,"baseEmotion":-20.91,"pullbackPenalty":-78.82,"ema3":-3.4}];
+// EMA 递推与后端/情绪页一致：区间数据直接整体递推（首值=三日简单均值，此后 ema=0.5×值+0.5×ema）
+(() => {
+  const container = document.getElementById('chart-container');
+  const tooltip = document.getElementById('tooltip');
+  const PAD = { top: 20, right: 60, bottom: 30, left: 20 };
+  const COLOR_MAIN = '#722ed1', COLOR_EMA = '#1890ff', COLOR_ZERO = '#ff4d4f';
+  const fmtDate = (d) => d.slice(0,4) + '-' + d.slice(4,6) + '-' + d.slice(6,8);
+  const fmtShort = (d) => d.slice(4,6) + '-' + d.slice(6,8);
+
+  let points = []; // { x, y, date, value, ema }
+
+  const draw = () => {
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    const innerW = width - PAD.left - PAD.right;
+    const innerH = height - PAD.top - PAD.bottom;
+
+    const values = DATA.map(d => d.changeSumResult).concat(DATA.filter(d => d.ema3 != null).map(d => d.ema3));
+    let minV = Math.min(0, ...values), maxV = Math.max(0, ...values);
+    const pad = (maxV - minV) * 0.08 || 5;
+    minV -= pad; maxV += pad;
+    const x = (i) => PAD.left + (DATA.length === 1 ? innerW / 2 : (i / (DATA.length - 1)) * innerW);
+    const y = (v) => PAD.top + (1 - (v - minV) / (maxV - minV)) * innerH;
+
+    const gridVals = [];
+    const step = (maxV - minV) / 5;
+    for (let v = minV; v <= maxV + 1e-9; v += step) gridVals.push(v);
+
+    let svg = '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">';
+    // 网格 + Y 轴刻度（右侧，模仿 rightPriceScale）
+    gridVals.forEach(v => {
+      const yy = y(v);
+      svg += '<line x1="' + PAD.left + '" y1="' + yy + '" x2="' + (width - PAD.right) + '" y2="' + yy + '" stroke="#f0f0f0" stroke-width="1"/>';
+      svg += '<text x="' + (width - PAD.right + 8) + '" y="' + (yy + 4) + '" font-size="11" fill="#333">' + v.toFixed(1) + '</text>';
+    });
+    // 0 轴基准（红色虚线）
+    svg += '<line x1="' + PAD.left + '" y1="' + y(0) + '" x2="' + (width - PAD.right) + '" y2="' + y(0) + '" stroke="' + COLOR_ZERO + '" stroke-width="1" stroke-dasharray="4 4"/>';
+    // X 轴刻度（约每 5 个交易日）
+    const tickEvery = Math.max(1, Math.round(DATA.length / 10));
+    DATA.forEach((d, i) => {
+      if (i % tickEvery !== 0 && i !== DATA.length - 1) return;
+      svg += '<text x="' + x(i) + '" y="' + (height - 8) + '" font-size="11" fill="#333" text-anchor="middle">' + fmtShort(d.date) + '</text>';
+    });
+    // EMA3 虚线
+    const emaPts = DATA.map((d, i) => ({ d, i })).filter(p => p.d.ema3 != null);
+    if (emaPts.length > 1) {
+      const path = emaPts.map((p, idx) => (idx === 0 ? 'M' : 'L') + x(p.i).toFixed(1) + ' ' + y(p.d.ema3).toFixed(1)).join(' ');
+      svg += '<path d="' + path + '" fill="none" stroke="' + COLOR_EMA + '" stroke-width="2" stroke-dasharray="5 4"/>';
+    }
+    // 主线
+    const mainPath = DATA.map((d, i) => (i === 0 ? 'M' : 'L') + x(i).toFixed(1) + ' ' + y(d.changeSumResult).toFixed(1)).join(' ');
+    svg += '<path d="' + mainPath + '" fill="none" stroke="' + COLOR_MAIN + '" stroke-width="3" stroke-linejoin="round"/>';
+    // 悬浮竖线 + 数据点（默认隐藏）
+    svg += '<line id="cross-v" x1="0" y1="' + PAD.top + '" x2="0" y2="' + (height - PAD.bottom) + '" stroke="#d9d9d9" stroke-width="1" style="display:none"/>';
+    svg += '<circle id="dot-main" r="4" fill="' + COLOR_MAIN + '" stroke="#fff" stroke-width="1.5" style="display:none"/>';
+    svg += '<circle id="dot-ema" r="3.5" fill="' + COLOR_EMA + '" stroke="#fff" stroke-width="1.5" style="display:none"/>';
+    svg += '</svg>';
+
+    container.querySelectorAll('svg').forEach(el => el.remove());
+    container.insertBefore(svgToNode(svg), tooltip);
+    points = DATA.map((d, i) => ({ x: x(i), y: y(d.changeSumResult), date: d.date, value: d.changeSumResult, ema: d.ema3, yEma: d.ema3 != null ? y(d.ema3) : null, i }));
+  };
+  const svgToNode = (svgStr) => { const div = document.createElement('div'); div.innerHTML = svgStr; return div.firstChild; };
+
+  container.addEventListener('mousemove', (e) => {
+    if (!points.length) return;
+    const rect = container.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    let nearest = points[0];
+    let minDist = Infinity;
+    points.forEach(p => { const dist = Math.abs(p.x - mx); if (dist < minDist) { minDist = dist; nearest = p; } });
+    const crossV = document.getElementById('cross-v');
+    const dotMain = document.getElementById('dot-main');
+    const dotEma = document.getElementById('dot-ema');
+    if (!crossV) return;
+    crossV.setAttribute('x1', nearest.x); crossV.setAttribute('x2', nearest.x); crossV.style.display = '';
+    dotMain.setAttribute('cx', nearest.x); dotMain.setAttribute('cy', nearest.y); dotMain.style.display = '';
+    if (nearest.ema != null) { dotEma.setAttribute('cx', nearest.x); dotEma.setAttribute('cy', nearest.yEma); dotEma.style.display = ''; } else { dotEma.style.display = 'none'; }
+    tooltip.style.display = 'block';
+    tooltip.innerHTML =
+      '<div class="tooltip-title">' + fmtDate(nearest.date) + '</div>' +
+      '<div class="tooltip-item"><span class="label">科技情绪指数:</span><span class="value ' + (nearest.value >= 0 ? 'up' : 'down') + '">' + nearest.value.toFixed(2) + '</span></div>' +
+      (nearest.ema != null ? '<div class="tooltip-item"><span class="label">三日EMA:</span><span class="value ' + (nearest.ema >= 0 ? 'up' : 'down') + '">' + nearest.ema.toFixed(2) + '</span></div>' : '');
+    let tx = nearest.x + 15;
+    if (tx > container.clientWidth - 180) tx = nearest.x - 195;
+    tooltip.style.left = tx + 'px';
+    tooltip.style.top = (Math.min(nearest.y, nearest.yEma != null ? nearest.yEma : nearest.y) + 15) + 'px';
+  });
+  container.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none';
+    ['cross-v', 'dot-main', 'dot-ema'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  });
+
+  // 统计条（模仿情绪页「时间范围 + 情绪总和/日均」模块，支持改区间）
+  const renderSum = () => {
+    const s = document.getElementById('range-start').value.replace(/-/g, '');
+    const e = document.getElementById('range-end').value.replace(/-/g, '');
+    const filtered = DATA.filter(d => d.date >= s && d.date <= e);
+    const count = filtered.length;
+    const sum = filtered.reduce((a, d) => a + d.changeSumResult, 0);
+    const avg = count > 0 ? sum / count : 0;
+    document.getElementById('sum-count').textContent = count + ' 天';
+    const totalEl = document.getElementById('sum-total');
+    totalEl.textContent = (sum >= 0 ? '+' : '') + sum.toFixed(2);
+    totalEl.className = 'sentiment-sum-item-value ' + (sum >= 0 ? 'up' : 'down');
+    const avgEl = document.getElementById('sum-avg');
+    avgEl.textContent = (avg >= 0 ? '+' : '') + avg.toFixed(2);
+    avgEl.className = 'sentiment-sum-item-value ' + (avg >= 0 ? 'up' : 'down');
+  };
+  document.getElementById('range-start').addEventListener('change', renderSum);
+  document.getElementById('range-end').addEventListener('change', renderSum);
+
+  window.addEventListener('resize', draw);
+  draw();
+  renderSum();
+})();
+</script>
+</body>
+</html>

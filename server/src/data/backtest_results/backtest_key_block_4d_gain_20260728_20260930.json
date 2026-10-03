@@ -649,14 +649,14 @@
           "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 4 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
         }
       ],
-      "sellDate": "20260916",
-      "sellDateDisplay": "2026-09-16",
-      "sellTime": "10:05",
-      "sellPrice": 105.35,
-      "sellChange": 0.75,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 6.44,
-      "rawReturnRate": 6.44
+      "sellDate": "20260915",
+      "sellDateDisplay": "2026-09-15",
+      "sellTime": "14:35",
+      "sellPrice": 104.3,
+      "sellChange": -3.61,
+      "sellReason": "高位放量大阴线",
+      "returnRate": 5.37,
+      "rawReturnRate": 5.37
     },
     {
       "seq": 6,
@@ -874,7 +874,7 @@
     "winRate": 55.56,
     "avgDrawdown": -3.2,
     "maxDrawdown": -6.26,
-    "overallReturn": 37.38,
+    "overallReturn": 36.31,
     "holding": false
   }
 }
