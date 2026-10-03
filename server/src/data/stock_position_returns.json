@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-10-03",
+    "operations": [
+      {
+        "id": "1791020540619_9gbd",
+        "action": "buy",
+        "stockName": "彩虹股份",
+        "stockCode": "sh600707",
+        "position": "",
+        "time": "17:42"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-03T09:42:20.634Z",
+    "updatedAt": "2026-10-03T09:42:20.634Z"
+  },
+  {
     "date": "2026-09-30",
     "operations": [
       {

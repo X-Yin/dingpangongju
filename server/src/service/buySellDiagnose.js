@@ -130,6 +130,8 @@ const checkEmoQuickOutDay = (buyDateStr) => {
   return {
     quickOut: quickByEma || quickByRange,
     trigger: quickByEma ? 'ema_below' : (quickByRange ? 'range_rising' : null),
+    quickByEma,
+    quickByRange,
     ema: ema != null && !Number.isNaN(ema) ? Number(ema.toFixed(2)) : null,
     prevDateStr: prevStr,
     prev2DateStr: prev2Str,
@@ -1669,14 +1671,25 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
     ],
   };
 
-  // ===== 条件8：情绪快进快出强制卖出（次日 10:00 强卖） =====
+  // ===== 条件8A/8B：情绪快进快出强制卖出（次日 10:00 强卖，两个触发口径拆分为独立条件展示） =====
   // 买入日为「快进快出日」且买入时间在上一交易日 → 今日上午 10:00 强制卖出。快进快出日判定走
-  // checkEmoQuickOutDay（与回测 emoquick 策略口径一致）：① 买入日上一交易日科技情绪 3 日 EMA < -60；
-  // ② 买入日上两个交易日的当日科技情绪原始分（tech_index.json 每日收盘情绪分，非 3 日 EMA）均处
-  // (-30, 20) 区间且逐日回升。买入时间取持仓管理中该股的 buyDate（与浮窗「买入当日不生效」同一数据源）。
+  // checkEmoQuickOutDay（与回测 emoquick 策略口径一致），满足任一口径即触发强卖：
+  //   条件8A：买入日上一交易日科技情绪 3 日 EMA < -60；
+  //   条件8B：买入日上两个交易日的当日科技情绪原始分（tech_index.json 每日收盘情绪分，非 3 日 EMA）
+  //           均处 (-30, 20) 区间且逐日回升（情绪温和回升）。
+  // 两条条件分别独立判定与展示（便于区分当前命中的是哪个口径、另一个是否满足），任一命中即走强卖。
+  // 买入时间取持仓管理中该股的 buyDate（与浮窗「买入当日不生效」同一数据源）。
   // 时间型条件：10:00 前为「确认中」等待态（10:00 起触发，不参与 5 分钟持续判定）；判定数据缺失按普通持仓处理
-  const condition8 = {
-    name: '情绪快进快出强卖',
+  const condition8a = {
+    name: '情绪快进快出强卖（3日EMA<-60）',
+    satisfied: false,
+    pending: false,
+    pendingMinutes: 0,
+    detail: '',
+    subConditions: [],
+  };
+  const condition8b = {
+    name: '情绪快进快出强卖（情绪温和回升）',
     satisfied: false,
     pending: false,
     pendingMinutes: 0,
@@ -1692,60 +1705,109 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
     const buyDateStr8 = pos8?.buyDate != null ? String(pos8.buyDate).replace(/-/g, '') : null;
     const boughtPrevTd8 = buyDateStr8 != null && prevTdStr8 != null && parseInt(buyDateStr8, 10) === parseInt(prevTdStr8, 10);
     const quickInfo8 = boughtPrevTd8 ? checkEmoQuickOutDay(buyDateStr8) : null;
-    // 触发来源描述：条件②情绪温和回升（当日原始分）优先展示；条件①按 3 日 EMA 口径展示
-    const triggerDesc8 = quickInfo8?.trigger === 'range_rising'
-      ? `买入日上两交易日当日科技情绪温和回升（${quickInfo8.prev2Raw} → ${quickInfo8.prevRaw}，均在 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间）`
-      : `上上个交易日（${quickInfo8?.prevDateStr ? formatDateStr(parseInt(quickInfo8.prevDateStr, 10)) : '缺失'}）科技情绪 3 日 EMA ${quickInfo8?.ema != null ? quickInfo8.ema : '缺失'} < ${EMO_QUICK_OUT_EMA}`;
     const after10am8 = dayjs().format('HHmm') >= '1000';
+    const buyDateText8 = buyDateStr8 != null ? formatDateStr(parseInt(buyDateStr8, 10)) : '缺失';
+    const emaText8 = quickInfo8?.ema != null ? String(quickInfo8.ema) : '无数据';
+    const rangeText8 = quickInfo8
+      ? `${quickInfo8.prev2Raw != null ? quickInfo8.prev2Raw : '缺失'} / ${quickInfo8.prevRaw != null ? quickInfo8.prevRaw : '缺失'}`
+      : '缺失 / 缺失';
+    const emaDescA8 = `买入日上一交易日（${quickInfo8?.prevDateStr ? formatDateStr(parseInt(quickInfo8.prevDateStr, 10)) : '缺失'}）科技情绪 3 日 EMA ${emaText8} < ${EMO_QUICK_OUT_EMA}`;
+    const rangeDescB8 = `买入日上两交易日当日科技情绪温和回升（${quickInfo8?.prev2Raw != null ? quickInfo8.prev2Raw : '缺失'} → ${quickInfo8?.prevRaw != null ? quickInfo8.prevRaw : '缺失'}，均在 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间）`;
 
     if (!isTradingToday8) {
-      condition8.detail = '今日非交易日，快进快出强卖条件不适用';
-      condition8.subConditions = [{ label: '状态', value: '非交易日' }];
+      const detail8 = '今日非交易日，快进快出强卖条件不适用';
+      condition8a.detail = detail8;
+      condition8a.subConditions = [{ label: '状态', value: '非交易日' }];
+      condition8b.detail = detail8;
+      condition8b.subConditions = [{ label: '状态', value: '非交易日' }];
     } else if (buyDateStr8 == null) {
-      condition8.detail = '持仓记录中未找到该股的买入日期，无法判断快进快出强卖';
-      condition8.subConditions = [{ label: '状态', value: '无买入日期' }];
+      const detail8 = '持仓记录中未找到该股的买入日期，无法判断快进快出强卖';
+      condition8a.detail = detail8;
+      condition8a.subConditions = [{ label: '状态', value: '无买入日期' }];
+      condition8b.detail = detail8;
+      condition8b.subConditions = [{ label: '状态', value: '无买入日期' }];
     } else if (!boughtPrevTd8) {
-      condition8.detail = `买入日 ${formatDateStr(parseInt(buyDateStr8, 10))} 不是上一交易日（${formatDateStr(parseInt(prevTdStr8, 10))}），不适用快进快出强卖`;
-      condition8.subConditions = [
-        { label: '买入日', value: formatDateStr(parseInt(buyDateStr8, 10)) },
+      const detail8 = `买入日 ${buyDateText8} 不是上一交易日（${formatDateStr(parseInt(prevTdStr8, 10))}），不适用快进快出强卖`;
+      const subs8 = [
+        { label: '买入日', value: buyDateText8 },
         { label: '上一交易日', value: formatDateStr(parseInt(prevTdStr8, 10)) },
         { label: '状态', value: '不适用' },
       ];
-    } else if (!quickInfo8.quickOut) {
-      condition8.detail = `买入日非快进快出日：上一交易日科技情绪 3 日 EMA ${quickInfo8.ema != null ? quickInfo8.ema : '无数据'}（不满足 < ${EMO_QUICK_OUT_EMA}），上两交易日当日科技情绪 ${quickInfo8.prev2Raw != null ? quickInfo8.prev2Raw : '缺失'} / ${quickInfo8.prevRaw != null ? quickInfo8.prevRaw : '缺失'}（不满足均处 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且回升），走通用卖点`;
-      condition8.subConditions = [
-        { label: '上一交易日3日EMA', value: quickInfo8.ema != null ? String(quickInfo8.ema) : '无数据' },
-        { label: '上两交易日当日情绪', value: `${quickInfo8.prev2Raw != null ? quickInfo8.prev2Raw : '缺失'} / ${quickInfo8.prevRaw != null ? quickInfo8.prevRaw : '缺失'}` },
-        { label: '状态', value: '非快进快出日' },
-      ];
-    } else if (!after10am8) {
-      condition8.pending = true;
-      condition8.detail = `买入日 ${formatDateStr(parseInt(buyDateStr8, 10))} 为快进快出日（${triggerDesc8}），今日 10:00 强制卖出（当前 ${dayjs().format('HH:mm')}，等待 10:00）`;
-      condition8.subConditions = [
-        { label: '触发规则', value: quickInfo8.trigger === 'range_rising' ? '情绪温和回升' : '3日EMA<-60' },
-        { label: '判定数据', value: quickInfo8.trigger === 'range_rising' ? `当日情绪 ${quickInfo8.prev2Raw} → ${quickInfo8.prevRaw}` : `3日EMA ${quickInfo8.ema}` },
-        { label: '买入日', value: formatDateStr(parseInt(buyDateStr8, 10)) },
-        { label: '强卖时间', value: '今日 10:00' },
-      ];
+      condition8a.detail = detail8;
+      condition8a.subConditions = subs8;
+      condition8b.detail = detail8;
+      condition8b.subConditions = subs8;
     } else {
-      condition8.satisfied = true;
-      condition8.detail = `买入日 ${formatDateStr(parseInt(buyDateStr8, 10))} 为快进快出日（${triggerDesc8}），已到今日 10:00，强制卖出`;
-      condition8.subConditions = [
-        { label: '触发规则', value: quickInfo8.trigger === 'range_rising' ? '情绪温和回升' : '3日EMA<-60' },
-        { label: '判定数据', value: quickInfo8.trigger === 'range_rising' ? `当日情绪 ${quickInfo8.prev2Raw} → ${quickInfo8.prevRaw}` : `3日EMA ${quickInfo8.ema}` },
-        { label: '买入日', value: formatDateStr(parseInt(buyDateStr8, 10)) },
-        { label: '当前时间', value: dayjs().format('HH:mm') },
-      ];
-      // 写入当日强卖记录（幂等）：供买点前置诊断 getBuyPointChecks 判断「强卖当日禁止二次买入」
-      recordQuickOutForceSell(code, pos8?.name, quickInfo8.ema, {
-        trigger: quickInfo8.trigger,
-        prevRaw: quickInfo8.prevRaw,
-        prev2Raw: quickInfo8.prev2Raw,
-      });
+      // ===== 条件8A：3 日 EMA < -60 口径 =====
+      if (quickInfo8.quickByEma) {
+        if (!after10am8) {
+          condition8a.pending = true;
+          condition8a.detail = `买入日 ${buyDateText8} 命中快进快出（${emaDescA8}），今日 10:00 强制卖出（当前 ${dayjs().format('HH:mm')}，等待 10:00）`;
+          condition8a.subConditions = [
+            { label: '上一交易日3日EMA', value: emaText8 },
+            { label: '阈值', value: `< ${EMO_QUICK_OUT_EMA}` },
+            { label: '买入日', value: buyDateText8 },
+            { label: '强卖时间', value: '今日 10:00' },
+          ];
+        } else {
+          condition8a.satisfied = true;
+          condition8a.detail = `买入日 ${buyDateText8} 命中快进快出（${emaDescA8}），已到今日 10:00，强制卖出`;
+          condition8a.subConditions = [
+            { label: '上一交易日3日EMA', value: emaText8 },
+            { label: '阈值', value: `< ${EMO_QUICK_OUT_EMA}` },
+            { label: '买入日', value: buyDateText8 },
+            { label: '当前时间', value: dayjs().format('HH:mm') },
+          ];
+        }
+      } else {
+        condition8a.detail = `买入日未命中 3 日 EMA 口径：上一交易日科技情绪 3 日 EMA ${emaText8}（不满足 < ${EMO_QUICK_OUT_EMA}）`;
+        condition8a.subConditions = [
+          { label: '上一交易日3日EMA', value: emaText8 },
+          { label: '阈值', value: `< ${EMO_QUICK_OUT_EMA}` },
+          { label: '状态', value: '未触发' },
+        ];
+      }
+      // ===== 条件8B：情绪温和回升口径（两日原始分均在 (-30, 20) 且逐日回升） =====
+      if (quickInfo8.quickByRange) {
+        if (!after10am8) {
+          condition8b.pending = true;
+          condition8b.detail = `买入日 ${buyDateText8} 命中快进快出（${rangeDescB8}），今日 10:00 强制卖出（当前 ${dayjs().format('HH:mm')}，等待 10:00）`;
+          condition8b.subConditions = [
+            { label: '上两交易日当日情绪', value: `${quickInfo8.prev2Raw} → ${quickInfo8.prevRaw}` },
+            { label: '区间要求', value: `(${EMO_QUICK_RANGE_LOW}, ${EMO_QUICK_RANGE_HIGH}) 且回升` },
+            { label: '买入日', value: buyDateText8 },
+            { label: '强卖时间', value: '今日 10:00' },
+          ];
+        } else {
+          condition8b.satisfied = true;
+          condition8b.detail = `买入日 ${buyDateText8} 命中快进快出（${rangeDescB8}），已到今日 10:00，强制卖出`;
+          condition8b.subConditions = [
+            { label: '上两交易日当日情绪', value: `${quickInfo8.prev2Raw} → ${quickInfo8.prevRaw}` },
+            { label: '区间要求', value: `(${EMO_QUICK_RANGE_LOW}, ${EMO_QUICK_RANGE_HIGH}) 且回升` },
+            { label: '买入日', value: buyDateText8 },
+            { label: '当前时间', value: dayjs().format('HH:mm') },
+          ];
+        }
+      } else {
+        condition8b.detail = `买入日未命中温和回升口径：上两交易日当日科技情绪 ${rangeText8}（不满足均处 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且回升）`;
+        condition8b.subConditions = [
+          { label: '上两交易日当日情绪', value: rangeText8 },
+          { label: '区间要求', value: `(${EMO_QUICK_RANGE_LOW}, ${EMO_QUICK_RANGE_HIGH}) 且回升` },
+          { label: '状态', value: '未触发' },
+        ];
+      }
+      // 写入当日强卖记录（幂等）：任一口径命中即记录，供买点前置诊断 getBuyPointChecks 判断「强卖当日禁止二次买入」
+      if (condition8a.satisfied || condition8b.satisfied) {
+        recordQuickOutForceSell(code, pos8?.name, quickInfo8.ema, {
+          trigger: quickInfo8.trigger,
+          prevRaw: quickInfo8.prevRaw,
+          prev2Raw: quickInfo8.prev2Raw,
+        });
+      }
     }
   }
 
-  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6, condition7, condition8];
+  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6, condition7, condition8a, condition8b];
   const satisfiedCount = conditions.filter(c => c.satisfied).length;
   const isSell = satisfiedCount > 0;
 
