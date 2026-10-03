@@ -1,5 +1,104 @@
 [
   {
+    "id": "1791022057115_2123p6",
+    "type": "delete",
+    "code": "sh688099",
+    "name": "晶晨股份",
+    "date": "2026-10-03",
+    "time": "18:07:37",
+    "detail": "删除持仓：晶晨股份（sh688099）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-03T10:07:37.115Z"
+  },
+  {
+    "id": "1791021999386_2hp0gg",
+    "type": "buy",
+    "code": "sh688099",
+    "name": "晶晨股份",
+    "date": "2026-10-03",
+    "time": "18:06:39",
+    "detail": "新增持仓：晶晨股份（sh688099）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-03T10:06:39.386Z"
+  },
+  {
+    "id": "1791021899069_l3z3cv",
+    "type": "delete",
+    "code": "sh600487",
+    "name": "亨通光电",
+    "date": "2026-10-03",
+    "time": "18:04:59",
+    "detail": "删除持仓：亨通光电（sh600487）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-03T10:04:59.069Z"
+  },
+  {
+    "id": "1791021883496_8cfrxk",
+    "type": "buy",
+    "code": "sh600487",
+    "name": "亨通光电",
+    "date": "2026-10-03",
+    "time": "18:04:43",
+    "detail": "新增持仓：亨通光电（sh600487）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-03T10:04:43.496Z"
+  },
+  {
+    "id": "1791021679047_sfvc9j",
+    "type": "delete",
+    "code": "sh688082",
+    "name": "盛美上海",
+    "date": "2026-10-03",
+    "time": "18:01:19",
+    "detail": "删除持仓：盛美上海（sh688082）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-03T10:01:19.047Z"
+  },
+  {
+    "id": "1791021560057_6n3xph",
+    "type": "buy",
+    "code": "sh688082",
+    "name": "盛美上海",
+    "date": "2026-10-03",
+    "time": "17:59:20",
+    "detail": "新增持仓：盛美上海（sh688082）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-03T09:59:20.057Z"
+  },
+  {
+    "id": "1791021554564_v6bofq",
+    "type": "delete",
+    "code": "sh600487",
+    "name": "亨通光电",
+    "date": "2026-10-03",
+    "time": "17:59:14",
+    "detail": "删除持仓：亨通光电（sh600487）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-03T09:59:14.564Z"
+  },
+  {
+    "id": "1791021487527_17mzki",
+    "type": "buy",
+    "code": "sh600487",
+    "name": "亨通光电",
+    "date": "2026-10-03",
+    "time": "17:58:07",
+    "detail": "新增持仓：亨通光电（sh600487）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-03T09:58:07.527Z"
+  },
+  {
+    "id": "1791021482570_b9a0hq",
+    "type": "delete",
+    "code": "sh600707",
+    "name": "彩虹股份",
+    "date": "2026-10-03",
+    "time": "17:58:02",
+    "detail": "删除持仓：彩虹股份（sh600707）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-03T09:58:02.570Z"
+  },
+  {
     "id": "1791020540606_q9eu95",
     "type": "buy",
     "code": "sh600707",

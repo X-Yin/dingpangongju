@@ -814,14 +814,14 @@ const PositionIntradayModule = ({ expanded, onToggleExpanded }) => {
         </div>
         <div className="ob-intraday-header-actions">
           <span className="ob-total-tag">{positions.length} 只持仓</span>
-          <button className={`ob-fold-btn ${expanded ? 'is-expanded' : ''}`} onClick={onToggleExpanded}>
+          {/* <button className={`ob-fold-btn ${expanded ? 'is-expanded' : ''}`} onClick={onToggleExpanded}>
             {expanded ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
             {expanded ? '折叠' : '展开'}
-          </button>
+          </button> */}
         </div>
       </div>
       {positions.length === 0 ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无持仓" style={{ padding: '31px 0' }} />
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无持仓" style={{ padding: '55px 0' }} />
       ) : (
         <div className={`ob-intraday-grid ${positions.length >= 2 ? 'two' : 'single'}`}>
           {positions.map((stock) => (
@@ -1135,7 +1135,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
           <div className="ob-diagnosis-loading"><Spin size="small" /></div>
         ) : (
           <>
-            {checks.map((c) => (
+            {checks.sort((a, b) => a.passed - b.passed).map((c) => (
               <div key={c.id} className={`ob-buy-check ${c.exempted ? 'exempted' : c.passed ? 'passed' : 'failed'}`}>
                 <span className="ob-buy-check-icon">
                   {c.exempted ? <ClockCircleOutlined /> : c.passed ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
@@ -1309,7 +1309,7 @@ const SellPointDiagnosisCard = () => {
             <div className="ob-sell-stock-conds">
               {r.error ? (
                 <div className="ob-check-reason">{r.error}</div>
-              ) : (r.conditions && r.conditions.length > 0 ? r.conditions.map((cond, cidx) => (
+              ) : (r.conditions && r.conditions.length > 0 ? r.conditions.sort((a, b) => (b.satisfied ? 2 : b.pending ? 1 : 0) - (a.satisfied ? 2 : a.pending ? 1 : 0)).map((cond, cidx) => (
                 <div key={cidx} className={`ob-sell-cond ${cond.satisfied ? 'hit' : cond.pending ? 'pending' : 'safe'}`}>
                   <span className="ob-sell-cond-icon">
                     {cond.satisfied ? <CloseCircleOutlined /> : cond.pending ? <ClockCircleOutlined /> : <CheckCircleOutlined />}

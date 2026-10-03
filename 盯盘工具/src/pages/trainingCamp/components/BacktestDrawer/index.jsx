@@ -212,7 +212,7 @@ const BuyReasonTag = ({ reason, checks }) => {
   const gateCellStyle = { border: '1px solid rgba(255,255,255,0.3)', padding: '1px 8px', whiteSpace: 'nowrap' };
   const hasDetail = Array.isArray(checks) && checks.length > 0;
   const detail = hasDetail ? (
-    <div style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 500, overflowY: 'auto' }}>
+    <div style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 300, overflowY: 'auto' }}>
       {checks.map((c, i) => (
         <div key={c.id || i}>
           <div style={{ fontSize: 12, fontWeight: 600 }}>
@@ -850,7 +850,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     <Drawer
       open={open}
       onClose={onClose}
-      width={860}
+      width={1060}
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <BarChartOutlined style={{ color: '#1677ff' }} />

@@ -9,6 +9,78 @@
         "stockCode": "sh600707",
         "position": "",
         "time": "17:42"
+      },
+      {
+        "id": "1791021482574_9r3q",
+        "action": "sell",
+        "stockName": "彩虹股份",
+        "stockCode": "sh600707",
+        "position": "",
+        "time": "17:58"
+      },
+      {
+        "id": "1791021487530_qz98",
+        "action": "buy",
+        "stockName": "亨通光电",
+        "stockCode": "sh600487",
+        "position": "",
+        "time": "17:58"
+      },
+      {
+        "id": "1791021554567_s7tp",
+        "action": "sell",
+        "stockName": "亨通光电",
+        "stockCode": "sh600487",
+        "position": "",
+        "time": "17:59"
+      },
+      {
+        "id": "1791021560062_8rho",
+        "action": "buy",
+        "stockName": "盛美上海",
+        "stockCode": "sh688082",
+        "position": "",
+        "time": "17:59"
+      },
+      {
+        "id": "1791021679050_llds",
+        "action": "sell",
+        "stockName": "盛美上海",
+        "stockCode": "sh688082",
+        "position": "",
+        "time": "18:01"
+      },
+      {
+        "id": "1791021883499_zzb6",
+        "action": "buy",
+        "stockName": "亨通光电",
+        "stockCode": "sh600487",
+        "position": "",
+        "time": "18:04"
+      },
+      {
+        "id": "1791021899072_4kva",
+        "action": "sell",
+        "stockName": "亨通光电",
+        "stockCode": "sh600487",
+        "position": "",
+        "time": "18:04"
+      },
+      {
+        "id": "1791021999390_va38",
+        "action": "buy",
+        "stockName": "晶晨股份",
+        "stockCode": "sh688099",
+        "position": "",
+        "time": "18:06"
+      },
+      {
+        "id": "1791022057118_9puj",
+        "action": "sell",
+        "stockName": "晶晨股份",
+        "stockCode": "sh688099",
+        "position": "",
+        "time": "18:07"
       }
     ],
     "totalReturn": null,
@@ -16,7 +88,7 @@
     "score": null,
     "review": "",
     "createdAt": "2026-10-03T09:42:20.634Z",
-    "updatedAt": "2026-10-03T09:42:20.634Z"
+    "updatedAt": "2026-10-03T10:07:37.135Z"
   },
   {
     "date": "2026-09-30",

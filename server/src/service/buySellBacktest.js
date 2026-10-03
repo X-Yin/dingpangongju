@@ -829,9 +829,9 @@ const buildBuyReasonFromDiag = (diagData) => {
   return {
     buyReason: passedChecks.map(c => (
       c.id === 'volume_expansion' && c.volumeText
-        ? `${c.title}：${c.volumeText}`
+        ? `${c.volumeText}`
         : c.id === 'fund_inflow' && c.fundText
-          ? `${c.title}：${c.fundText}`
+          ? `${c.fundText}`
           : c.title
     )).join('、') || '买点诊断全部通过',
     buyChecks: (diagData.checks || []).map(c => ({
