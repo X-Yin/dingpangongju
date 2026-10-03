@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Drawer, Button, DatePicker, message, Progress, Tag, Empty, Alert, Select, Tooltip, Checkbox } from 'antd';
+import { Drawer, Button, DatePicker, message, Progress, Tag, Empty, Alert, Select, Tooltip, Checkbox, Modal, Tabs } from 'antd';
 import {
   CopyOutlined,
   StopOutlined,
@@ -10,6 +10,7 @@ import {
   ThunderboltOutlined,
   RocketOutlined,
   ExperimentOutlined,
+  BookOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -205,6 +206,395 @@ const KEY_BLOCK_SELL_RULES = [
   { key: 'key_block_emo_gate', title: '科技板块情绪退潮门禁（仅进攻持仓）', desc: '创业板指 3 日线斜率为正（MA3 − 5个交易日前的MA3，按当日收盘已基本定型口径）时，「科技板块情绪退潮」条件才参与进攻（科技股）持仓的卖出判定；斜率为负或数据不足时该条件当日不生效（其余 6 项条件不受影响）；防御持仓不走 7 条件卖点，本门禁不适用' },
 ];
 
+// ============ 策略专属说明（不与通用 BUY_RULES / SELL_RULES 重复） ============
+// 每个策略的 id → { 选股口径, 触发时点, 特殊卖点/触发条件, 备注 }
+const STRATEGY_SPECIFIC_NOTES = {
+  // ---- 常规「N日涨幅最大」系列 ----
+  highest_gain: {
+    group: '常规·N日涨幅最大',
+    bullets: [
+      '选股口径：买点触发时，从全量自选科技股中买入**触发时点当日盘中涨幅最大**的一只。',
+      '触发时点：沿用通用买入诊断（BUY_RULES）的 allPassed 时点。',
+      '卖点：通用 SELL_RULES 7 条件（均线破位 / 高位放量大阴线 / 科技情绪退潮 / 抗分歧<6 / 连续3日抗分歧<10 / 跌破买点前低 / 跌破成本线-2%），满足其一即卖。',
+      '跨指数双门禁：创业板指 + 科创50 的 3 日线斜率实时判定后合并（两个都过→全池；只一个过→对应市场）。',
+    ],
+  },
+  highest_2d_gain: {
+    group: '常规·N日涨幅最大',
+    bullets: [
+      '选股口径：买点触发时，从全量自选科技股中买入**触发时点当日盘中涨幅最大**的一只（注意：2 日窗口并不影响排序依据，排序仍按「触发时点当日盘中涨幅」）。',
+      '卖点：通用 SELL_RULES 7 条件，满足其一即卖。',
+      '跨指数双门禁（创业板指 + 科创50 的 3 日线斜率实时判定后合并），抗分歧门槛：触发时点当日抗分歧分数 > 11 才能被选中，不满足则顺延到下一只。',
+    ],
+  },
+  highest_3d_gain: {
+    group: '常规·N日涨幅最大',
+    bullets: [
+      '选股口径：买点触发时，从全量自选科技股中买入**最近 3 个交易日涨幅之和最大**的一只；3 日窗口 = 触发日 + 前 2 个交易日（按日K相邻收盘价环比累加）。',
+      '卖点：通用 SELL_RULES 7 条件，满足其一即卖。',
+      '跨指数双门禁（创业板指 + 科创50 的 3 日线斜率实时判定后合并），抗分歧门槛：触发时点当日抗分歧分数 > 11 才能被选中。',
+    ],
+  },
+  highest_4d_gain: {
+    group: '常规·N日涨幅最大',
+    bullets: [
+      '选股口径：买点触发时，从全量自选科技股中买入**最近 4 个交易日涨幅之和最大**的一只。',
+      '卖点：通用 SELL_RULES 7 条件；跨指数双门禁 + 抗分歧门槛（>11）生效。',
+    ],
+  },
+  highest_5d_gain: {
+    group: '常规·N日涨幅最大',
+    bullets: [
+      '选股口径：买点触发时，从全量自选科技股中买入**最近 5 个交易日涨幅之和最大**的一只。',
+      '卖点：通用 SELL_RULES 7 条件；跨指数双门禁 + 抗分歧门槛（>11）生效。',
+    ],
+  },
+  highest_10d_gain: {
+    group: '常规·N日涨幅最大',
+    bullets: [
+      '选股口径：买点触发时，从全量自选科技股中买入**最近 10 个交易日涨幅之和最大**的一只。',
+      '卖点：通用 SELL_RULES 7 条件。注意：10 日涨幅最大**不受抗分歧门槛**限制（只有「买入最高涨幅」「2日涨幅最大」两个策略才要求抗分歧>11）。',
+    ],
+  },
+
+  // ---- 研报覆盖系列 ----
+  highest_3d_reports: {
+    group: '研报覆盖系列',
+    bullets: [
+      '选股口径：买点触发时，统计自选科技股最近 3 个交易日（含触发日）的研报覆盖数，买入覆盖数最多的一只；**覆盖数相同时取 3 日涨幅最大**。',
+      '研报口径：仅统计买点触发时点之前已创建的研报，买点后补录的不计入。',
+      '卖点：通用 SELL_RULES 7 条件；不适用抗分歧门槛。',
+    ],
+  },
+  highest_5d_reports: {
+    group: '研报覆盖系列',
+    bullets: [
+      '选股口径：最近 5 个交易日研报覆盖数最多的一只；相同时取 5 日涨幅最大。',
+      '卖点：通用 SELL_RULES 7 条件；不适用抗分歧门槛。',
+    ],
+  },
+  highest_3d_reports_top5_gain: {
+    group: '研报覆盖系列',
+    bullets: [
+      '选股口径：先取「最近 3 日研报覆盖数前五（含并列）」形成候选池，再从中选 3 日涨幅最大的一只。',
+      '卖点：通用 SELL_RULES 7 条件。',
+    ],
+  },
+  highest_5d_reports_top5_gain: {
+    group: '研报覆盖系列',
+    bullets: [
+      '选股口径：先取「最近 5 日研报覆盖数前五（含并列）」形成候选池，再从中选 5 日涨幅最大的一只。',
+      '卖点：通用 SELL_RULES 7 条件。',
+    ],
+  },
+
+  // ---- 均线斜率系列 ----
+  highest_3d_ma_slope: {
+    group: '均线斜率系列',
+    bullets: [
+      '选股口径：买点触发时，从全量自选科技股中买入 **3 日涨幅均线斜率最陡峭** 的一只（斜率 = 当前 MA3 − 5 个交易日前的 MA3，斜率越大=近期涨幅越陡峭）。',
+      '卖点：通用 SELL_RULES 7 条件；不适用抗分歧门槛。',
+    ],
+  },
+  highest_5d_ma_slope: {
+    group: '均线斜率系列',
+    bullets: [
+      '选股口径：5 日涨幅均线斜率最陡峭的一只。',
+      '卖点：通用 SELL_RULES 7 条件；不适用抗分歧门槛。',
+    ],
+  },
+
+  // ---- 抗分歧系列 ----
+  highest_3d_resilience: {
+    group: '抗分歧系列',
+    bullets: [
+      '选股口径：买点触发时买入**最近 3 个交易日抗分歧分数之和最大**的一只。',
+      '卖点：通用 SELL_RULES 7 条件。',
+    ],
+  },
+  highest_5d_resilience: {
+    group: '抗分歧系列',
+    bullets: [
+      '选股口径：买点触发时买入**最近 5 个交易日抗分歧分数之和最大**的一只。',
+      '卖点：通用 SELL_RULES 7 条件。',
+    ],
+  },
+  highest_1d_resilience: {
+    group: '抗分歧系列',
+    bullets: [
+      '选股口径：买点触发时，**按触发时点实时分时数据**计算每只自选股的日内抗分歧分数，买入分数最大的一只；分数相同时取触发时点当日实时涨幅最大的一只。',
+      '与 highest_3d/5d_resilience 的区别：这里用的是「当日截至触发时点的实时分数」，不是收盘口径。',
+      '卖点：通用 SELL_RULES 7 条件。',
+    ],
+  },
+  resilience_weak_to_strong: {
+    group: '抗分歧系列',
+    bullets: [
+      '选股口径：两阶段——① 先筛出**当日抗分歧分数 > 11** 的股票；② 在候选池里计算「最近 4 个交易日抗分歧均值」的弱转强差值（前两天均值 vs 最近两天均值，差值越大=由弱转强越明显），全仓买入差值最大的一只；差值相同则取当日涨幅最大的。',
+      '卖点：通用 SELL_RULES 7 条件。',
+    ],
+  },
+
+  // ---- 情绪开关系列（prev{N}d_fall_low5_day_gain_emoswitch）----
+  prev1d_fall_low5_day_gain_emoswitch: {
+    group: '情绪开关系列',
+    bullets: [
+      '选股口径：两阶段 + 情绪开关。① 先按「昨日累计跌幅最大」取前五；② 候选池内选**当日盘中涨幅最大**的一只；但有开关——当「上一交易日科技情绪 3 日 EMA（情绪页三日均值）≥ -60」时，跳过第一步，直接用 **3 日涨幅最大** 选股。',
+      '卖点：通用 SELL_RULES 7 条件。',
+    ],
+  },
+  prev2d_fall_low5_day_gain_emoswitch: {
+    group: '情绪开关系列',
+    bullets: [
+      '选股口径：两阶段 + 情绪开关。① 先按「前 2 个交易日累计跌幅最大」取前五；② 候选池内选**当日盘中涨幅最大**的一只；但当上一交易日科技情绪 3 日 EMA ≥ -60 时，直接用 3 日涨幅最大选股。',
+      '卖点：通用 SELL_RULES 7 条件。',
+    ],
+  },
+  prev3d_fall_low5_day_gain_emoswitch: {
+    group: '情绪开关系列',
+    bullets: [
+      '选股口径：两阶段 + 情绪开关。① 先按「前 3 个交易日累计跌幅最大」取前五；② 候选池内选**当日盘中涨幅最大**的一只；但当上一交易日科技情绪 3 日 EMA ≥ -60 时，直接用 3 日涨幅最大选股。',
+      '卖点：通用 SELL_RULES 7 条件。',
+    ],
+  },
+
+  // ---- 快进快出系列（*_emoquick） ----
+  highest_2d_gain_emoquick: {
+    group: '快进快出系列',
+    bullets: [
+      '选股口径：与「2日涨幅最大」完全相同——买点触发时买入**触发时点当日盘中涨幅最大**的一只，跨指数双门禁 + 抗分歧门槛（>11）生效。',
+      '与常规策略的唯一区别在**卖点**：当上一交易日科技情绪 3 日 EMA < -60 时，该笔持仓**次日 10:00 强制卖出**（不走通用卖点），且强卖当日禁止二次买入；否则仍走通用 SELL_RULES 7 条件。',
+      '快进快出温和回升额外门控：买入日、卖出日（上上个、上个交易日）的当日科技情绪原始分（非 3 日 EMA）必须都落在开区间 (-30, 20) 内且逐日回升，才触发快进快出逻辑；不满足则退化为普通「2日涨幅最大」。',
+    ],
+  },
+  highest_3d_gain_emoquick: {
+    group: '快进快出系列',
+    bullets: [
+      '选股口径：与「3日涨幅最大」完全相同——买点触发时买入**最近 3 个交易日涨幅之和最大**的一只，跨指数双门禁 + 抗分歧门槛（>11）生效。',
+      '特殊卖点：当上一交易日科技情绪 3 日 EMA < -60 → 次日 10:00 强制卖出（不走通用卖点），强卖当日禁止二次买入；否则走通用 SELL_RULES。',
+      '快进快出温和回升门控：近两日当日情绪原始分 ∈ (-30, 20) 且逐日回升才触发；不满足退化为普通 3 日涨幅最大。',
+    ],
+  },
+  highest_4d_gain_emoquick: {
+    group: '快进快出系列',
+    bullets: [
+      '选股口径：最近 4 个交易日涨幅之和最大的一只；跨指数双门禁 + 抗分歧门槛（>11）。',
+      '特殊卖点：上一交易日 3 日 EMA < -60 → 次日 10:00 强卖，否则通用 7 条件卖点。',
+    ],
+  },
+  highest_5d_gain_emoquick: {
+    group: '快进快出系列',
+    bullets: [
+      '选股口径：最近 5 个交易日涨幅之和最大的一只；跨指数双门禁 + 抗分歧门槛（>11）。',
+      '特殊卖点：上一交易日 3 日 EMA < -60 → 次日 10:00 强卖，否则通用 7 条件卖点。',
+    ],
+  },
+
+  // ---- 重点板块系列（key_block_*） ----
+  key_block_2d_gain: {
+    group: '重点板块系列',
+    bullets: [
+      '选股口径：板块驱动，**不走通用 BUY_RULES**。候选池分两种——进攻 = 自选股 monitor_stocks 中 isTech ≠ false 的科技股（全仓）；防御 = 「防御+中性」tag 板块全部成分股（半仓）。',
+      '触发时点：**唯一触发开关 = 创业板指 3 日线斜率正负翻转桶**。斜率由负转正 → 进攻买点，全仓买 N 日涨幅最大科技股；斜率由正转负且空仓 → 防御买点，半仓买防御+中性板块 N 日涨幅最大股。',
+      'N 日窗口：2 个交易日（与其他 key_block_* 同步）。',
+      '进攻卖点：通用 7 条件卖点（成本线 -2%）；但防御卖点 = 斜率由负转正 ∪ 个股跌破买入价 × 0.95，双条件任一触发即卖。',
+      '特殊：进攻卖出后当日不追买，次日 9:40 再复测斜率；涨停股（主板>9.5%、创业板/科创板>19%）顺延到下一只。',
+    ],
+  },
+  key_block_3d_gain: {
+    group: '重点板块系列',
+    bullets: [
+      '与 key_block_2d_gain 完全相同，唯 N 日窗口 = 3 个交易日。',
+    ],
+  },
+  key_block_4d_gain: {
+    group: '重点板块系列',
+    bullets: [
+      '与 key_block_2d_gain 完全相同，唯 N 日窗口 = 4 个交易日。',
+    ],
+  },
+  key_block_5d_gain: {
+    group: '重点板块系列',
+    bullets: [
+      '与 key_block_2d_gain 完全相同，唯 N 日窗口 = 5 个交易日。',
+    ],
+  },
+
+  // ---- 尾盘抄底系列（tail_dip_*） ----
+  tail_dip_1d_gain: {
+    group: '尾盘抄底系列',
+    bullets: [
+      '买入触发条件：仅当**当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）**时命中，不走通用 BUY_RULES 的 allPassed。',
+      '触发时点：固定 14:57（尾盘集合竞价时点）挂单买入，成交价取 14:57 那一分钟的 lastPx（等价于收盘价）。',
+      '选股口径：当日涨幅最大的自选科技股（tail_dip_1d_gain 变体）。',
+      '卖点：**专属逐分钟环比规则**——次日开盘后持续监测：只要当前分钟涨幅比上一分钟回落，就立即按回落那一分钟的价格卖出。不走通用 SELL_RULES。',
+    ],
+  },
+  tail_dip_3d_gain: {
+    group: '尾盘抄底系列',
+    bullets: [
+      '与 tail_dip_1d_gain 相同，但选股口径改为「最近 3 个交易日涨幅之和最大」。',
+      '买入触发条件：当日科技情绪分时曾触及 -100 冰点（hasIce: true）；14:57 挂单买入。',
+      '卖点：次日开盘后逐分钟监测，涨幅开始回落即按回落分钟价格卖出。',
+    ],
+  },
+  tail_dip_1d_resilience: {
+    group: '尾盘抄底系列',
+    bullets: [
+      '选股口径：当日抗分歧分数最大的自选科技股。',
+      '买入触发条件：当日科技情绪曾触及 -100 冰点（hasIce: true）；14:57 挂单买入。',
+      '卖点：次日开盘后逐分钟环比，涨幅回落即卖出。',
+    ],
+  },
+  tail_dip_3d_resilience: {
+    group: '尾盘抄底系列',
+    bullets: [
+      '选股口径：最近 3 个交易日抗分歧分数之和最大。',
+      '其他规则同 tail_dip_1d_resilience。',
+    ],
+  },
+  tail_dip_1d_fall: {
+    group: '尾盘抄底系列',
+    bullets: [
+      '选股口径：当日跌幅最大的自选科技股（「跌深反弹」版本，与 gain 系列对称）。',
+      '买入触发条件：当日科技情绪曾触及 -100 冰点；14:57 挂单。',
+      '卖点：次日开盘后逐分钟环比，涨幅回落即卖。',
+    ],
+  },
+  tail_dip_3d_fall: {
+    group: '尾盘抄底系列',
+    bullets: [
+      '选股口径：最近 3 个交易日跌幅最大。',
+      '其他规则同 tail_dip_1d_fall。',
+    ],
+  },
+  tail_dip_1d_resilience_low: {
+    group: '尾盘抄底系列',
+    bullets: [
+      '选股口径：**当日抗分歧分数最低**的自选科技股（与 resilience 对称，买最「弱」的博弈反弹）。',
+      '其他规则同 tail_dip_1d_resilience。',
+    ],
+  },
+
+  // ---- 三日情绪冰点变体（tail_dip_emo3_*） ----
+  tail_dip_emo3_3d_gain: {
+    group: '三日情绪冰点系列',
+    bullets: [
+      '与尾盘抄底系列基本相同，唯一区别在**触发条件**——不用 hasIce，改用「情绪页三日均值 EMA 当日读数 < -60」作为命中条件；回测固定从 2026-07-01 开始（与其他策略滚动 60 日窗口不同）。',
+      '选股口径：最近 3 个交易日涨幅之和最大；买入时点 14:57，次日开盘后涨幅回落即卖。',
+    ],
+  },
+  tail_dip_emo3_3d_fall: {
+    group: '三日情绪冰点系列',
+    bullets: [
+      '触发条件：情绪页三日均值 EMA < -60；选股口径：最近 3 个交易日跌幅最大；14:57 挂单。',
+      '卖点：次日开盘后逐分钟环比，涨幅回落即卖；回测固定起点 2026-07-01。',
+    ],
+  },
+  tail_dip_emo3_3d_reports_top5_gain: {
+    group: '三日情绪冰点系列',
+    bullets: [
+      '触发条件：情绪页三日均值 EMA < -60。',
+      '选股口径：先取最近 3 日研报覆盖数前五（含并列），候选池内选 3 日涨幅最大。',
+      '回测固定起点 2026-07-01；买点 14:57；卖点次日逐分钟涨幅回落即卖。',
+    ],
+  },
+  tail_dip_emo3_1d_gain: {
+    group: '三日情绪冰点系列',
+    bullets: [
+      '触发条件：情绪页三日均值 EMA < -60；选股口径：当日涨幅最大；14:57 挂单。',
+      '卖点：次日开盘后逐分钟环比，涨幅回落即卖；回测固定起点 2026-07-01。',
+    ],
+  },
+  tail_dip_emo3_1d_fall: {
+    group: '三日情绪冰点系列',
+    bullets: [
+      '触发条件：情绪页三日均值 EMA < -60；选股口径：当日跌幅最大；14:57 挂单。',
+      '卖点：次日开盘后逐分钟环比，涨幅回落即卖；回测固定起点 2026-07-01。',
+    ],
+  },
+  tail_dip_emo3_1d_resilience: {
+    group: '三日情绪冰点系列',
+    bullets: [
+      '触发条件：情绪页三日均值 EMA < -60；选股口径：当日抗分歧分数最大；14:57 挂单。',
+      '卖点：次日开盘后逐分钟环比，涨幅回落即卖；回测固定起点 2026-07-01。',
+    ],
+  },
+
+  // ---- 情绪游资系列（hot_money_*） ----
+  hot_money_3d_gain: {
+    group: '情绪游资系列',
+    bullets: [
+      '候选池：**累计龙虎榜**（回测起始日至前一交易日，同花顺龙虎榜每日累加） ∩「电力/农业/医药/消费」四大东方财富板块成分股 ∩ 主板（60/00）非 ST。',
+      '选股口径：最近 3 个交易日累计涨幅最大的候选股。',
+      '触发时点：大盘环境满足时（创业板指 5/10 日线斜率 < 0 且银行板块 5 日线斜率 > 0 且更陡峭），**盘中涨幅 > 8%** 时按该分钟价格买入（多只同日触发取最先那只，同分钟取涨幅最大）；9:30 一字板（竞价涨幅 ≥9.6%）剔除。',
+      '卖点：统一两条——① 跌破买入价 × 0.95（止损）；② 十日线斜率转负（按昨日收盘口径）。满足任一即卖。',
+      '回测日期范围：默认最近 60 个已完结交易日，不依赖回放缓存；最早可选 2025-01-01。',
+    ],
+  },
+  hot_money_5d_gain: {
+    group: '情绪游资系列',
+    bullets: [
+      '与 hot_money_3d_gain 完全相同，唯选股口径为「最近 5 个交易日累计涨幅最大」。',
+    ],
+  },
+  hot_money_10d_gain: {
+    group: '情绪游资系列',
+    bullets: [
+      '与 hot_money_3d_gain 完全相同，唯选股口径为「最近 10 个交易日累计涨幅最大」。',
+    ],
+  },
+  hot_money_first_board: {
+    group: '情绪游资系列',
+    bullets: [
+      '选股口径：候选池内**昨日恰好第一个涨停板**（昨日涨幅 ≥ 9.5%，且最近 5 个交易日此前未涨停过）。',
+      '触发时点 & 卖点：同 hot_money_3d_gain；首板/二板专属额外卖点——仅限次日尾盘：当日 14:57 现价低于开盘价（收阴线）则按该分钟价格卖出；过了次日失效。',
+    ],
+  },
+  hot_money_second_board: {
+    group: '情绪游资系列',
+    bullets: [
+      '选股口径：候选池内**昨日恰好第 2 个涨停板**（昨日与前日均涨停 ≥ 9.5%，且大前日未涨停，多连板股剔除）。',
+      '触发时点 & 卖点：同 hot_money_3d_gain；同样带「次日尾盘收阴线即卖」的额外卖点（仅次日生效）。',
+    ],
+  },
+  hot_money_3d_slope: {
+    group: '情绪游资系列',
+    bullets: [
+      '选股口径：候选池内 **3 日涨幅均线斜率最陡峭** 的一只（一字板顺延）。',
+      '其他规则同 hot_money_3d_gain（触发 8% / 止损-5% / 十日线斜率转负）。',
+    ],
+  },
+  hot_money_5d_slope: {
+    group: '情绪游资系列',
+    bullets: [
+      '选股口径：候选池内 **5 日涨幅均线斜率最陡峭** 的一只。其他规则同 hot_money_3d_gain。',
+    ],
+  },
+  hot_money_2nd_wave: {
+    group: '情绪游资系列',
+    bullets: [
+      '选股口径：「龙二波」——候选池内同时满足①过去 20 个交易日累计涨幅 > 60%；②过去 3 个交易日收盘价最高值与最低值波动 ≤ 10%（前期大涨后横盘整理）；③最近 5 个交易日内无涨停板。',
+      '其他规则同 hot_money_3d_gain（触发 8% / 止损-5% / 十日线斜率转负）。',
+    ],
+  },
+  hot_money_weak_to_strong: {
+    group: '情绪游资系列',
+    bullets: [
+      '选股口径：「弱转强」——候选池内同时满足①昨日量能放大至前日的 1.4 倍以上；②前期（最近 20 个交易日）至少出现过 2 个涨停板。',
+      '额外买入门禁：今日**高开 2% 以上**（按分时第一分钟涨幅过滤）才参与买入。',
+      '其他规则同 hot_money_3d_gain。',
+    ],
+  },
+  hot_money_leader: {
+    group: '情绪游资系列',
+    bullets: [
+      '选股口径：「龙头战法」——候选池内过去 20 个交易日累计涨幅最高的一只。',
+      '特殊触发与卖点：① 不等 8% 阈值，**9:30 开盘第一分钟价格直接买入**；② 大盘环境只需银行板块 10 日线斜率 > 0，不看创业板指（与其他情绪游资策略独立）；③ 卖点仍为「跌破买入价 × 0.95」与「十日线斜率转负」两条。',
+    ],
+  },
+};
+
 // 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
 const BuyReasonTag = ({ reason, checks }) => {
   if (!reason) return null;
@@ -349,6 +739,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const [sentimentRange, setSentimentRange] = useState(null); // 情绪游资默认日期范围 [dayjs, dayjs]（最近 60 个已完结交易日）
   const [reportOpen, setReportOpen] = useState(false);
   const [trendOpen, setTrendOpen] = useState(false); // 策略趋势诊断弹窗（三档时间范围 × 全部策略）
+  const [ruleOpen, setRuleOpen] = useState(false); // 策略说明弹窗（当前选中策略的买卖规则细节）
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(null); // { current, total, date, status }
   const [result, setResult] = useState(null);
@@ -954,6 +1345,18 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
               </Button>
             </Tooltip>
           )}
+          {/* 策略说明：始终可见，点击打开当前选中策略的买卖规则详情弹窗 */}
+          <Tooltip title="查看当前选中策略的买入触发、选股口径、卖点判定等完整规则细节">
+            <Button
+              size="small"
+              icon={<BookOutlined />}
+              onClick={() => setRuleOpen(true)}
+              disabled={running}
+              style={{ borderRadius: 999 }}
+            >
+              策略说明
+            </Button>
+          </Tooltip>
         </div>
 
         {/* 进度条 */}
@@ -1292,6 +1695,94 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
 
       <BacktestReportModal open={reportOpen} onClose={() => setReportOpen(false)} />
       <TrendDiagnosisModal open={trendOpen} onClose={() => setTrendOpen(false)} />
+      {(() => {
+        const opt = STRATEGY_OPTIONS.find(o => o.value === strategy);
+        const label = opt?.label || strategy;
+        const isKeyBlock = KEY_BLOCK_STRATEGY_IDS.includes(strategy);
+        const isSent = isSentimentStrategy(strategy);
+        const buyRules = isSent ? SENTIMENT_BUY_RULES : isKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES;
+        const sellRules = isSent ? SENTIMENT_SELL_RULES : isKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES;
+        const notes = STRATEGY_SPECIFIC_NOTES[strategy];
+
+        // 将文案中 **xxx** 这种 markdown 粗体标记解析为 React 节点（纯文本不解析）
+        const renderBold = (text, keyPrefix = 'b') => {
+          const parts = String(text).split('**');
+          return parts.map((p, i) => (i % 2 === 1 ? <strong key={`${keyPrefix}-${i}`}>{p}</strong> : <span key={`${keyPrefix}-${i}`}>{p}</span>));
+        };
+
+        const ruleRow = (item, idx) => (
+          <div key={item.key || idx} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px dashed #eef1f6' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#12213a', marginBottom: 4 }}>
+              {idx + 1}. {item.title}
+            </div>
+            <div style={{ fontSize: 12.5, color: '#4b5563', lineHeight: 1.8 }}>
+              {renderBold(item.desc, `rule-${idx}`)}
+            </div>
+          </div>
+        );
+
+        return (
+          <Modal
+            open={ruleOpen}
+            onCancel={() => setRuleOpen(false)}
+            footer={null}
+            width={860}
+            destroyOnHidden
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <BookOutlined style={{ color: '#1677ff' }} />
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#12213a' }}>策略说明</span>
+                <Tag color={isSent ? 'purple' : isKeyBlock ? 'orange' : curIsEmo3 ? 'gold' : 'blue'} style={{ marginLeft: 8 }}>
+                  {(notes?.group) || (isSent ? '情绪游资系列' : isKeyBlock ? '重点板块系列' : curIsEmo3 ? '三日情绪冰点系列' : '常规策略')}
+                </Tag>
+              </div>
+            }
+          >
+            {/* 基本信息卡片 */}
+            <div style={{ background: '#f7f9fc', borderRadius: 10, padding: 14, marginBottom: 16 }}>
+              <div style={{ fontSize: 12, color: '#6b7890', marginBottom: 4 }}>当前选中策略</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#12213a' }}>{label}</div>
+              <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4, fontFamily: "'SF Mono', monospace" }}>{strategy}</div>
+            </div>
+
+            {/* 策略专属说明（选股口径/触发时点等） */}
+            {notes?.bullets && notes.bullets.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#12213a', marginBottom: 10 }}>
+                  🎯 本策略专属说明
+                </div>
+                <div style={{
+                  border: '1px solid #e6f0ff', background: '#f0f6ff', borderRadius: 8,
+                  padding: '12px 14px', fontSize: 12.5, color: '#12213a', lineHeight: 1.9,
+                }}>
+                  {notes.bullets.map((b, i) => (
+                    <div key={i} style={{ marginBottom: i < notes.bullets.length - 1 ? 6 : 0 }}>
+                      • {renderBold(b, `note-${i}`)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 通用买入/卖出规则（Tab 切换） */}
+            <Tabs
+              defaultActiveKey="buy"
+              items={[
+                {
+                  key: 'buy',
+                  label: `买入规则（${buyRules.length} 条）`,
+                  children: (<div style={{ height: 400,overflowY: 'auto' }}>{buyRules.map(ruleRow)}</div>),
+                },
+                {
+                  key: 'sell',
+                  label: `卖出规则（${sellRules.length} 条）`,
+                  children: (<div style={{ height: 400,overflowY: 'auto' }}>{sellRules.map(ruleRow)}</div>),
+                },
+              ]}
+            />
+          </Modal>
+        );
+      })()}
     </Drawer>
   );
 };
