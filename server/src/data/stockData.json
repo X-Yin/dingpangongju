@@ -1639,26 +1639,6 @@
     ],
     "isImportant": false
   },
-  "sh603319": {
-    "stockName": "美湖股份",
-    "kline": [
-      {
-        "trade_date": 20260930,
-        "open_px": 28.62,
-        "high_px": 28.76,
-        "low_px": 27.9,
-        "close_px": 28,
-        "business_amount": 8410600,
-        "business_balance": 237781790,
-        "change": -1.41,
-        "ma5_px": 29.45,
-        "ma10_px": 29.71,
-        "ma20_px": 29.4,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
   "sh688700": {
     "stockName": "东威科技",
     "kline": [

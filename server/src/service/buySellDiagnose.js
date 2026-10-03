@@ -39,7 +39,7 @@ const { getAllTechIndexData, updateCurrentTechIndexData, getCurrentTechEmotion, 
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 const { getMonitorStocks } = require('./monitorStock');
 const { getStockPositions } = require('./stockPosition');
-const { loadReportIndex, sumReportCount, queryLiveIndexGate, CYB_INDEX_CODE, STAR_INDEX_CODE, codeToGateIndex, gateIndexName, GLOBAL_RESILIENCE_MIN, BUY_TIME_MAX_MINUTE } = require('./buySellBacktest');
+const { loadReportIndex, sumReportCount, queryLiveIndexGate, CYB_INDEX_CODE, STAR_INDEX_CODE, codeToGateIndex, gateIndexName, GLOBAL_RESILIENCE_MIN, BUY_TIME_MAX_MINUTE, getTechEmotionEmaMap } = require('./buySellBacktest');
 const { getAmountHistory, parseAmountToYi } = require('./amount');
 const { getDaPanData } = require('./dapan');
 const { getClsReqUrl, getClsReqStockTlineUrl, batchParallel, sleep } = require('../utils');
@@ -48,6 +48,54 @@ const { useCLS } = require('../config');
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
 const monitorAlarmsPath = path.resolve(__dirname, '../data/monitor_alarms.json');
 const dapanDataPath = path.resolve(__dirname, '../data/dapanData.json');
+const quickOutForceSellPath = path.resolve(__dirname, '../data/quick_out_force_sell.json');
+
+// ========== 情绪快进快出「10:00 强制卖出」当日记录（缓存文件） ==========
+// 卖点诊断条件8（上上个交易日科技情绪 3 日 EMA < -60 且买入在上一交易日 → 今日 10:00 强制卖出）
+// 触发时写入一条当日记录；买点前置诊断（getBuyPointChecks）读取该缓存：当日已有强卖记录则买点诊断
+// 不命中（与回测 emoquick 策略「强卖当日禁止二次买入」规则对齐）。文件结构：
+// { "YYYYMMDD": [{ code, name, time, ema }], ... }，读取时自动清理 7 天前的历史记录
+const readQuickOutForceSellCache = () => {
+  try {
+    if (!fs.existsSync(quickOutForceSellPath)) return {};
+    const raw = JSON.parse(fs.readFileSync(quickOutForceSellPath, 'utf8'));
+    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  } catch (e) {
+    console.error('读取快进快出强卖记录缓存失败:', e.message);
+    return {};
+  }
+};
+
+// 记录一次强卖（幂等：同日同股只记一次）；返回是否为新记录
+const recordQuickOutForceSell = (code, name, ema) => {
+  const todayStr = dayjs().format('YYYYMMDD');
+  const cache = readQuickOutForceSellCache();
+  const todayRecords = Array.isArray(cache[todayStr]) ? cache[todayStr] : [];
+  if (todayRecords.some((r) => r && String(r.code) === String(code))) return false;
+  // 清理 7 天前的历史记录，避免文件无限增长
+  const cutoff = dayjs().subtract(7, 'day').format('YYYYMMDD');
+  const pruned = {};
+  for (const [dateKey, records] of Object.entries(cache)) {
+    if (/^\d{8}$/.test(dateKey) && dateKey >= cutoff && Array.isArray(records) && records.length > 0) {
+      pruned[dateKey] = records;
+    }
+  }
+  pruned[todayStr] = [...todayRecords, {
+    code: String(code),
+    name: name != null ? String(name) : null,
+    time: dayjs().format('HH:mm'),
+    ema: ema != null ? Number(ema.toFixed(2)) : null,
+  }];
+  fs.writeFileSync(quickOutForceSellPath, JSON.stringify(pruned, null, 2));
+  return true;
+};
+
+// 查询某日（YYYYMMDD，缺省今日）是否已有强卖记录，返回记录数组（空数组表示无）
+const getQuickOutForceSoldRecords = (dateStr = null) => {
+  const key = dateStr != null ? String(dateStr) : dayjs().format('YYYYMMDD');
+  const cache = readQuickOutForceSellCache();
+  return Array.isArray(cache[key]) ? cache[key] : [];
+};
 
 // ========== 工具函数 ==========
 
@@ -1580,7 +1628,80 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
     ],
   };
 
-  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6, condition7];
+  // ===== 条件8：情绪快进快出强制卖出（三日情绪 EMA<-60 次日 10:00 强卖） =====
+  // 上上个交易日的科技情绪指数三日 EMA < -60（「快进快出」日）且买入时间在上个交易日 → 今日上午 10:00 强制卖出。
+  // 情绪 EMA 与情绪页「三日均值」曲线同源同算法（tech_index.json 每日收盘情绪分，复用 buySellBacktest.getTechEmotionEmaMap）；
+  // 买入时间取持仓管理中该股的 buyDate（与浮窗「买入当日不生效」同一数据源）。时间型条件：10:00 前为
+  // 「确认中」等待态（10:00 起触发，不参与 5 分钟持续判定）；EMA 缺失（数据未覆盖上上个交易日）按普通持仓处理
+  const EMO_QUICK_OUT_EMA = -60;
+  const condition8 = {
+    name: '情绪快进快出强卖',
+    satisfied: false,
+    pending: false,
+    pendingMinutes: 0,
+    detail: '',
+    subConditions: [],
+  };
+  {
+    const today8 = new Date();
+    const isTradingToday8 = isTradingDay(today8);
+    const prevTd8 = isTradingToday8 ? getPrevTradingDay(today8) : null;
+    const prevTdStr8 = prevTd8 ? dayjs(prevTd8).format('YYYYMMDD') : null;
+    const prevPrevTdStr8 = prevTd8 ? dayjs(getPrevTradingDay(prevTd8)).format('YYYYMMDD') : null;
+    const pos8 = (getStockPositions() || []).find((p) => p && String(p.code) === code);
+    const buyDateStr8 = pos8?.buyDate != null ? String(pos8.buyDate).replace(/-/g, '') : null;
+    const ema8 = prevPrevTdStr8 != null ? getTechEmotionEmaMap().get(prevPrevTdStr8) : null;
+    const boughtPrevTd8 = buyDateStr8 != null && prevTdStr8 != null && parseInt(buyDateStr8, 10) === parseInt(prevTdStr8, 10);
+    const quickOutDay8 = ema8 != null && !Number.isNaN(ema8) && ema8 < EMO_QUICK_OUT_EMA;
+    const after10am8 = dayjs().format('HHmm') >= '1000';
+
+    if (!isTradingToday8) {
+      condition8.detail = '今日非交易日，快进快出强卖条件不适用';
+      condition8.subConditions = [{ label: '状态', value: '非交易日' }];
+    } else if (buyDateStr8 == null) {
+      condition8.detail = '持仓记录中未找到该股的买入日期，无法判断快进快出强卖';
+      condition8.subConditions = [{ label: '状态', value: '无买入日期' }];
+    } else if (!boughtPrevTd8) {
+      condition8.detail = `买入日 ${formatDateStr(parseInt(buyDateStr8, 10))} 不是上一交易日（${formatDateStr(parseInt(prevTdStr8, 10))}），不适用快进快出强卖`;
+      condition8.subConditions = [
+        { label: '买入日', value: formatDateStr(parseInt(buyDateStr8, 10)) },
+        { label: '上一交易日', value: formatDateStr(parseInt(prevTdStr8, 10)) },
+        { label: '状态', value: '不适用' },
+      ];
+    } else if (!quickOutDay8) {
+      condition8.detail = ema8 == null
+        ? `上上个交易日（${formatDateStr(parseInt(prevPrevTdStr8, 10))}）科技情绪 3 日 EMA 无数据，按普通持仓处理`
+        : `上上个交易日（${formatDateStr(parseInt(prevPrevTdStr8, 10))}）科技情绪 3 日 EMA ${ema8.toFixed(2)} ≥ -60，非快进快出日，走通用卖点`;
+      condition8.subConditions = [
+        { label: '上上个交易日', value: formatDateStr(parseInt(prevPrevTdStr8, 10)) },
+        { label: '三日EMA', value: ema8 != null ? ema8.toFixed(2) : '无数据' },
+        { label: '阈值', value: '< -60' },
+        { label: '状态', value: '非快进快出日' },
+      ];
+    } else if (!after10am8) {
+      condition8.pending = true;
+      condition8.detail = `买入日 ${formatDateStr(parseInt(buyDateStr8, 10))} 为快进快出日（上上个交易日 ${formatDateStr(parseInt(prevPrevTdStr8, 10))} 科技情绪 3 日 EMA ${ema8.toFixed(2)} < -60），今日 10:00 强制卖出（当前 ${dayjs().format('HH:mm')}，等待 10:00）`;
+      condition8.subConditions = [
+        { label: '上上个交易日', value: formatDateStr(parseInt(prevPrevTdStr8, 10)) },
+        { label: '三日EMA', value: ema8.toFixed(2) },
+        { label: '买入日', value: formatDateStr(parseInt(buyDateStr8, 10)) },
+        { label: '强卖时间', value: '今日 10:00' },
+      ];
+    } else {
+      condition8.satisfied = true;
+      condition8.detail = `买入日 ${formatDateStr(parseInt(buyDateStr8, 10))} 为快进快出日（上上个交易日 ${formatDateStr(parseInt(prevPrevTdStr8, 10))} 科技情绪 3 日 EMA ${ema8.toFixed(2)} < -60），已到今日 10:00，强制卖出`;
+      condition8.subConditions = [
+        { label: '上上个交易日', value: formatDateStr(parseInt(prevPrevTdStr8, 10)) },
+        { label: '三日EMA', value: ema8.toFixed(2) },
+        { label: '买入日', value: formatDateStr(parseInt(buyDateStr8, 10)) },
+        { label: '当前时间', value: dayjs().format('HH:mm') },
+      ];
+      // 写入当日强卖记录（幂等）：供买点前置诊断 getBuyPointChecks 判断「强卖当日禁止二次买入」
+      recordQuickOutForceSell(code, pos8?.name, ema8);
+    }
+  }
+
+  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6, condition7, condition8];
   const satisfiedCount = conditions.filter(c => c.satisfied).length;
   const isSell = satisfiedCount > 0;
 
@@ -2236,6 +2357,24 @@ const getBuyPointChecks = async (targetDate = null, refresh = false) => {
       reason: `双指数 3 日线斜率门禁查询失败：${e.message}，暂不阻断买入`,
     });
   }
+
+  // 快进快出强卖当日禁买：诊断目标日已有「情绪快进快出 10:00 强制卖出」记录（缓存文件
+  // quick_out_force_sell.json，由卖点诊断条件8触发时写入）→ 当日买点诊断不再命中，
+  // 与回测 emoquick 策略「强卖当日禁止二次买入（哪怕买点再次触发）」规则对齐
+  const quickOutSoldRecords = getQuickOutForceSoldRecords(targetDateStr);
+  const quickOutSoldText = quickOutSoldRecords
+    .map((r) => `${r.name || ''}(${r.code}) ${r.time || ''}`.trim())
+    .join('、');
+  checks.push({
+    id: 'quick_out_no_rebuy',
+    title: '快进快出强卖当日禁买',
+    passed: quickOutSoldRecords.length === 0,
+    value: quickOutSoldRecords.length === 0 ? '当日无快进快出强卖记录' : `当日已强卖 ${quickOutSoldRecords.length} 只`,
+    reason: quickOutSoldRecords.length === 0
+      ? '当日无「情绪快进快出 10:00 强制卖出」记录，不影响买入'
+      : `当日已发生情绪快进快出 10:00 强制卖出（${quickOutSoldText}），当日禁止二次买入（哪怕买点再次触发），买点诊断不命中`,
+  });
+  if (quickOutSoldRecords.length > 0) allPassed = false;
 
   const passedCount = checks.filter(c => c.passed).length;
   const totalCheckCount = checks.length;

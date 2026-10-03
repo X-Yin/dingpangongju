@@ -122,13 +122,24 @@ const STRATEGY_OPTIONS = [
   { value: 'prev1d_fall_top5_day_gain', label: '昨日跌幅&当日涨幅最大' },
   { value: 'prev1d_fall_top5_day_resilience', label: '昨日跌幅&当日抗分歧最大' },
 
-  // 前N日跌幅最小前五&当日指标最大系列（top5 系列的反转版；仅保留前 N 日总涨幅为负的候选）
-  { value: 'prev3d_fall_low5_day_gain', label: '前三跌幅最小&当日涨幅最大' },
-  { value: 'prev3d_fall_low5_day_resilience', label: '前三跌幅最小&当日抗分歧最大' },
-  { value: 'prev2d_fall_low5_day_gain', label: '前二跌幅最小&当日涨幅最大' },
-  { value: 'prev2d_fall_low5_day_resilience', label: '前二跌幅最小&当日抗分歧最大' },
-  { value: 'prev1d_fall_low5_day_gain', label: '昨日跌幅最小&当日涨幅最大' },
-  { value: 'prev1d_fall_low5_day_resilience', label: '昨日跌幅最小&当日抗分歧最大' },
+  // 前N日波动最小前五&当日指标最大系列（无论涨跌，按前 N 日累计涨幅绝对值取最小前五）
+  { value: 'prev3d_fall_low5_day_gain', label: '前三波动最小&当日涨幅最大' },
+  { value: 'prev3d_fall_low5_day_resilience', label: '前三波动最小&当日抗分歧最大' },
+  { value: 'prev2d_fall_low5_day_gain', label: '前二波动最小&当日涨幅最大' },
+  { value: 'prev2d_fall_low5_day_resilience', label: '前二波动最小&当日抗分歧最大' },
+  { value: 'prev1d_fall_low5_day_gain', label: '昨日波动最小&当日涨幅最大' },
+  { value: 'prev1d_fall_low5_day_resilience', label: '昨日波动最小&当日抗分歧最大' },
+
+  // 情绪开关系列（上一交易日科技情绪 3 日 EMA < -60 → 波动最小策略，否则 → 3日涨幅最大）
+  { value: 'prev3d_fall_low5_day_gain_emoswitch', label: '前三波动最小&当日涨最大/3日涨幅开关' },
+  { value: 'prev2d_fall_low5_day_gain_emoswitch', label: '前二波动最小&当日涨最大/3日涨幅开关' },
+  { value: 'prev1d_fall_low5_day_gain_emoswitch', label: '昨日波动最小&当日涨最大/3日涨幅开关' },
+
+  // 情绪快进快出系列（买点触发均可买入；上一交易日科技情绪 3 日 EMA < -60 的日子买入 → 该笔持仓次日 10:00 强制卖出且强卖当日禁止二次买入，否则走通用卖点）
+  { value: 'highest_2d_gain_emoquick', label: '2日涨幅最大&三日情绪-60快进快出' },
+  { value: 'highest_3d_gain_emoquick', label: '3日涨幅最大&三日情绪-60快进快出' },
+  { value: 'highest_4d_gain_emoquick', label: '4日涨幅最大&三日情绪-60快进快出' },
+  { value: 'highest_5d_gain_emoquick', label: '5日涨幅最大&三日情绪-60快进快出' },
 
   { value: 'tail_dip_1d_gain', label: '尾盘抄底-当日涨幅最大' },
   { value: 'tail_dip_3d_gain', label: '尾盘抄底-3日涨幅最大' },

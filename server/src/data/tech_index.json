@@ -637,14 +637,6 @@
     "hasIce": true
   },
   {
-    "date": 20260905,
-    "changeSumResult": -93.14,
-    "rawSum": -192.89,
-    "baseEmotion": -56.69,
-    "pullbackPenalty": -91.13,
-    "marketCapWeighted": true
-  },
-  {
     "date": 20260907,
     "changeSumResult": 81.33,
     "rawSum": 453.95,
