@@ -11,7 +11,7 @@ const { getSingleStockTlineDataByDate } = require('./stock');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 const { isStockInWatchlistAt } = require('./monitorStock');
 const { batchParallel } = require('../utils');
-const { getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, stockDailyChange, stockWindowGain, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange } = require('./keyBlockData');
+const { getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, stockWindowGain, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange, getHongliMultiLianbanStocks, scanHongliMultiLianbanCodesInRange } = require('./keyBlockData');
 const { loadIndexKline } = require('./sentimentHotMoney');
 const { isOscExcluded, runWithOscExclude } = require('./backtestOscContext');
 const fs = require('fs');
@@ -29,8 +29,8 @@ const KEY_BLOCK_DESC = (n) => `唯一买卖开关 = 创业板指 3 日线斜率�
 
 // 逆周期情绪游资-N日涨幅最大系列统一描述（iceMode: true；复用重点板块引擎 runKeyBlockBacktest）：
 // 信号指数 = 上证指数 3 日线斜率（与重点板块系列的创业板口径不同、且方向相反）——斜率为正买入、为负卖出；
-// 只用「防御+中性」tag 板块成分股，全仓；转正事件次日 9:40 空仓可补买一次
-const ICE_DESC = (n) => `逆周期情绪游资系列：唯一买卖开关 = 上证指数 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，逐桶实时判定）的正负方向——斜率为正买入、为负卖出，不需要资金/成交量/情绪等任何条件配合。买点：斜率由负转正、且当前空仓、且前一交易日收盘口径斜率为负（即「前一日为负、今日盘中才转正」才算一次出手机会，前一日收盘已为正时今日盘中由负转正不计）时，在转正当日 **9:40 及以后**的桶执行买入（至少等到 9:40，给抗分歧分数留出盘中分时计算窗口），或在同一转正事件的次日开盘 10 分钟后（9:40 桶）空仓补买一次，买入重点板块中 tag 为「防御」「中性」的全部板块成分股（去重、剔除 ST；不做历史涨停扩展）中最近 ${n} 个交易日（不含当日，截至前一交易日收盘）个股涨幅之和最大的一只，全仓买入。卖点：上证指数 3 日线斜率分时由正转负 ∪ 个股分时价跌破成本线 -2% 止损，双卖点任一先触发即卖（买入次日起生效）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 ${n} 日涨幅排名的下一只；候选全部不可买时在后续桶持续重试（转正次日起仅在 9:40 及以后的桶重试）；买入价取触发桶分时价。买入时点抗分歧指数需 ≥ 9（不足者按 ${n} 日涨幅排名顺延至下一只；防御股不跟与科技绑定的创业板指——主板（60/00）跟踪上证指数 sh000001、创业板（30）跟踪创业板指 sz399006、科创板（68）跟踪科创 50 sh000688；分时不足 5 分钟无法计算时放行）。同时要求买入时该股前期连续上涨不超过 1 个交易日（买入日之前最近 1 个交易日可为涨、再往前一日不可为正；不满足者同样按 ${n} 日涨幅顺延至下一只），用以剔除表面逆周期、实则随科技情绪同频上涨的顺周期个股。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无转正则不建仓`;
+// 候选池 = 「防御+中性」tag 板块成分股 ∪ 近20交易日 lianbanSnapshot 中出现过三板及以上连板的红利板块（hongliName.json）个股，全仓；转正事件次日 9:40 空仓可补买一次
+const ICE_DESC = (n) => `逆周期情绪游资系列：唯一买卖开关 = 上证指数 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，逐桶实时判定）的正负方向——斜率为正买入、为负卖出，不需要资金/成交量/情绪等任何条件配合。买点：斜率由负转正、且当前空仓、且前一交易日收盘口径斜率为负（即「前一日为负、今日盘中才转正」才算一次出手机会，前一日收盘已为正时今日盘中由负转正不计）时，在转正当日 **9:40 及以后**的桶执行买入（至少等到 9:40，给抗分歧分数留出盘中分时计算窗口），或在同一转正事件的次日开盘 10 分钟后（9:40 桶）空仓补买一次，买入重点板块中 tag 为「防御」「中性」的全部板块成分股（去重、剔除 ST）**并额外加入**近 20 个交易日 lianbanSnapshot 中属红利板块名单（hongliName.json）的板块内**出现过连板数 ≥ 3（三板及以上）**的个股（即这 20 天内曾走出过三板及以上连板的红利板块个股），两者合并去重后取最近 ${n} 个交易日（不含当日，截至前一交易日收盘）个股涨幅之和最大的一只，全仓买入。卖点：上证指数 3 日线斜率分时由正转负 ∪ 个股分时价跌破成本线 -2% 止损 ∪ 当日 14:55 检查 K 线形态（下影线 ≥ 实体长度 2 倍即 14:55 按分时价强制卖出），任一先触发即卖（买入次日起生效）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 ${n} 日涨幅排名的下一只；候选全部不可买时在后续桶持续重试（转正次日起仅在 9:40 及以后的桶重试）；买入价取触发桶分时价。买入时点抗分歧指数需 ≥ 9（不足者按 ${n} 日涨幅排名顺延至下一只；防御股不跟与科技绑定的创业板指——主板（60/00）跟踪上证指数 sh000001、创业板（30）跟踪创业板指 sz399006、科创板（68）跟踪科创 50 sh000688；分时不足 5 分钟无法计算时放行）。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无转正则不建仓`;
 
 // 情绪开关系列阈值（prev{N}d_fall_low5_day_gain_emoswitch，2026-10-03 用户新增）：
 // 触发买点时取上一交易日科技情绪指数的 3 日 EMA（getTechEmotionEmaMap，与情绪页「三日均值」曲线同源同算法），
@@ -2469,7 +2469,7 @@ const withResilienceGateInfo = (buyInfo, picked) => {
 //   防御（mode='defense'，买防御+中性 tag 板块内 n 日涨幅最大者）：
 //     买点：斜率由正转负且当前空仓的当桶
 //     卖点：斜率由负转正当桶 ∪ 个股分时价跌破成本线 -5% 止损（双卖点任一先触发即卖，同桶可转手买入进攻股）
-//           （逆周期情绪游资 iceMode 方向相反且止损为 -2%，见 ICE_DESC / costLinePct）
+//           （逆周期情绪游资 iceMode 方向相反、止损为 -2%，且额外增加「14:55 下影线 ≥ 实体 2 倍」强卖，见 ICE_DESC / costLinePct）
 //     仓位：创业板情绪低迷期按半仓买入（weight=0.5），个股实际收益 rawReturnRate × 0.5 记入
 //           returnRate / buyReturn；整体收益与平均/最大回撤均按折算后口径（2026-10-01 用户要求）
 // 斜率符号跨日连续追踪（lastSlopeSign），初值取回测首日前一交易日收盘斜率；null 桶不更新基准；
@@ -2771,11 +2771,6 @@ const iceResilienceIndexCode = (code) => {
 const iceIndexName = (indexCode) => indexCode === STAR_INDEX_CODE
   ? STAR_INDEX_NAME
   : (indexCode === CYB_INDEX_CODE ? CYB_INDEX_NAME : ICE_SH_INDEX_NAME);
-
-// 逆周期情绪游资（防御池）选股门禁：买入日 D 之前「连续上涨」的交易日数上限。
-// 例：8.4 触发买点 → 允许 8.3 上涨，但 8.2 不能也为正 → 买入日前连续上涨最多 1 个交易日。
-// 目的：防止表面属逆周期板块、实则随科技情绪同频上涨的顺周期个股被选中。
-const ICE_MAX_PRIOR_UP_DAYS = 1;
 
 // 预计算某个指数 rangeDates 每日收盘口径斜率 + 历史「由负转正 / 由正转负」事件索引（只提供历史初值）
 // 返回 Map<dateNum, { slopeClose, turnPosDate|null, daysSinceTurnPos, turnNegDate|null, daysSinceTurnNeg }>
@@ -3106,7 +3101,11 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
   const days = Number(strategy.keyBlockDays);
   // 逆周期情绪游资：与大盘逆周期（斜率由正转负才买、转正即卖），只用 tag 板块、全仓，转负次日 9:40 可补买
   const iceMode = strategy.iceMode === true;
-  const allDates = getTrainingCampDates();
+  // 逆周期情绪游资（iceMode）不依赖资金快照，日期序列并入 tech_index 覆盖的交易日（补上缺资金快照的日期，如 20260730），
+  // 与三日情绪均值系列口径一致；否则这类日期整日不参与回放，会漏掉当日的斜率翻转/止损等卖点判定
+  const allDates = iceMode
+    ? Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]))
+    : getTrainingCampDates();
   // 升序处理（按时间先后）
   const rangeDates = allDates.filter(d => d >= startDate && d <= endDate).sort();
   const total = rangeDates.length;
@@ -3127,6 +3126,11 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       try {
         extraCodes = await scanAllLianbanCodesInRange(rangeDates);
       } catch (e) { /* 历史涨停扫描失败忽略，防御池退化为仅 tag 板块成分股 */ }
+    } else {
+      // 逆周期情绪游资：预扫描红利板块连板候选股（近20交易日出现三板及以上连板的红利板块个股），一并预拉 bars
+      try {
+        extraCodes = await scanHongliMultiLianbanCodesInRange(rangeDates);
+      } catch (e) { /* 红利连板扫描失败忽略，防御池退化为仅 tag 板块成分股 */ }
     }
     await ensureKeyBlockBars(extraCodes);
   } catch (e) {
@@ -3183,32 +3187,41 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     const { mode, trigger, fromValue, toValue, icePrevCloseSlope } = intent;
     const { dateStr, dateDisplay, dateNum, winDates, bucket, bucketMinute, buyDi } = ctx;
     const isOffense = mode === 'offense';
-    // 逆周期情绪游资专属门禁：买入日之前「连续上涨」的交易日数（日K相邻收盘环比现算）。
-    // 例：8.4 触发买点 → 8.3 可涨、8.2 不可涨，即连续上涨 > 1 天即剔除；日K缺失视为断开（不计入连涨）。
-    const countIcePriorUpDays = (code) => {
-      const diA = dateAxis.indexOf(dateStr);
-      if (diA < 0) return 0;
-      let cnt = 0;
-      for (let k = 1; k <= ICE_MAX_PRIOR_UP_DAYS + 1; k++) {
-        const idx = diA - k;
-        if (idx < 0) break;
-        const chg = stockDailyChange(code, dateAxis[idx]);
-        if (chg == null || !Number.isFinite(chg) || chg <= 0) break;
-        cnt++;
-      }
-      return cnt;
-    };
     const allMembers = [];
     let lianbanAdded = []; // 防御池动态追加的历史涨停候选股（用于日志/文案）
     let lianbanDownDays = [];
+    let hongliAdded = []; // 逆周期情绪游资：防御池追加的红利板块连板候选股（用于日志/文案）
+    let hongliBoards = []; // 命中的红利板块名
     if (isOffense) {
       for (const m of techPool) allMembers.push(m);
     } else {
       for (const tb of tagBlocks) for (const m of tb.members) allMembers.push(m);
-      // 防御池扩展：往前 20 个交易日中创业板日跌幅 < -1% 的天，取涨停数最多的第一板块的所有股票
-      // 与 tag 板块成分股合并去重后一起做 n 日涨幅最大筛选
-      // （逆周期情绪游资 iceMode 只用 tag 板块成分股，不做历史涨停扩展）
-      if (!iceMode) {
+      if (iceMode) {
+        // 逆周期情绪游资防御池扩展（2026-10-04 用户口径）：往前 20 个交易日内，
+        // 属红利板块名单（hongliName.json）的板块中、出现过连板数 ≥ 3（三板及以上）的个股；
+        // 与 tag 板块成分股合并去重后一起做 n 日涨幅最大筛选
+        try {
+          const hlKey = dateStr; // 同一回测日的 openPosition 可能被多次调用（重试），缓存结果
+          if (!openPosition._hongliCache) openPosition._hongliCache = new Map();
+          let hlResult;
+          if (openPosition._hongliCache.has(hlKey)) {
+            hlResult = openPosition._hongliCache.get(hlKey);
+          } else {
+            hlResult = await getHongliMultiLianbanStocks(dateStr);
+            openPosition._hongliCache.set(hlKey, hlResult);
+          }
+          hongliBoards = hlResult.boards || [];
+          const existCodes = new Set(allMembers.map(m => m.code));
+          for (const s of hlResult.stocks || []) {
+            if (!existCodes.has(s.code)) {
+              allMembers.push(s);
+              hongliAdded.push(s);
+            }
+          }
+        } catch (e) { /* 红利连板候选获取失败，退化为仅 tag 板块 */ }
+      } else {
+        // 防御池扩展：往前 20 个交易日中创业板日跌幅 < -1% 的天，取涨停数最多的第一板块的所有股票
+        // 与 tag 板块成分股合并去重后一起做 n 日涨幅最大筛选
         try {
           const lbKey = dateStr; // 同一回测日的 openPosition 可能被多次调用（重试），缓存结果
           if (!openPosition._lianbanCache) openPosition._lianbanCache = new Map();
@@ -3292,25 +3305,17 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
           if (raw != null) iceResilience = parseFloat(Number(raw).toFixed(2));
         }
       }
-      // 逆周期情绪游资：买入日之前的连续上涨天数（用于「前期连涨不超过 1 天」门禁）
-      const priorUpDays = (iceMode && !isOffense) ? countIcePriorUpDays(m.code) : null;
-      return { code: m.code, name: m.name || m.code, gain, lastPx: atBucket.lastPx, changePct, limitUp: isLimitUpAtBuy(m.code, changePct), iceResilience, iceIndexCode, priorUpDays };
+      return { code: m.code, name: m.name || m.code, gain, lastPx: atBucket.lastPx, changePct, limitUp: isLimitUpAtBuy(m.code, changePct), iceResilience, iceIndexCode };
     }, 8);
     const candidates = candidateList.filter(Boolean);
     candidates.sort((a, b) => b.gain - a.gain); // 并列涨幅保持配置顺序（batchParallel 保序）
     // 逆周期情绪游资：叠加抗分歧门槛（≥ GLOBAL_RESILIENCE_MIN）——不满足的按涨幅排名顺延至下一只，
     // 全部候选（涨停或抗分歧不足）均不可买时本桶不买、后续桶继续重试
     const iceResilienceSkipped = [];
-    const iceUpStreakSkipped = [];
     const best = candidates.find(c => {
       if (c.limitUp) return false;
       if (iceMode && c.iceResilience != null && c.iceResilience < GLOBAL_RESILIENCE_MIN) {
         iceResilienceSkipped.push(c);
-        return false;
-      }
-      // 逆周期情绪游资：买入时前期连续上涨 > ICE_MAX_PRIOR_UP_DAYS 天则剔除（防顺周期同频上涨个股），按涨幅顺延
-      if (iceMode && c.priorUpDays != null && c.priorUpDays > ICE_MAX_PRIOR_UP_DAYS) {
-        iceUpStreakSkipped.push(c);
         return false;
       }
       return true;
@@ -3325,9 +3330,9 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     const gateReasonMap = {
       slope_turn_positive: `创业板指 3 日线斜率在 ${triggerTimeText} 由负转正（${fromText} → ${slopeText}）：进攻买点触发，不看资金/量能/情绪等任何配合条件，买入自选科技股中 ${days} 日涨幅最大的一只`,
       slope_turn_negative: `创业板指 3 日线斜率在 ${triggerTimeText} 由正转负（${fromText} → ${slopeText}）且当前空仓：防御买点触发，买入防御+中性 tag 板块 ∪ 近20交易日创业板下跌日的涨停前3板块 ∩ 20日有≥3连板个股中 ${days} 日涨幅最大的一只`,
-      ice_slope_turn_positive: `上证指数 3 日线斜率由负转正（${fromText} → ${slopeText}）且当前空仓、前一交易日收盘口径斜率为负：逆周期情绪游资买点触发，在 ${triggerTimeText} 执行买入（转正当日起至少等 9:40，给抗分歧分数留出分时计算窗口），买入防御+中性 tag 板块中 ${days} 日涨幅最大的一只`,
+      ice_slope_turn_positive: `上证指数 3 日线斜率由负转正（${fromText} → ${slopeText}）且当前空仓、前一交易日收盘口径斜率为负：逆周期情绪游资买点触发，在 ${triggerTimeText} 执行买入（转正当日起至少等 9:40，给抗分歧分数留出分时计算窗口），买入防御+中性 tag 板块 ∪ 近20交易日出现三板及以上连板的红利板块个股中 ${days} 日涨幅最大的一只`,
       retry_next_day_940: `进攻持仓按卖点诊断卖出后，卖出当时 3 日线斜率仍为正（${fromText}），当日不继续买；次日开盘 10 分钟后（${triggerTimeText}，9:40 桶）复测斜率仍为正（${slopeText}），继续买入自选科技股中 ${days} 日涨幅最大的一只`,
-      ice_next_day_940: `前一交易日上证指数 3 日线斜率由负转正，今日开盘 10 分钟后（${triggerTimeText}，9:40 桶）仍空仓补买：逆周期情绪游资买点触发，买入防御+中性 tag 板块中 ${days} 日涨幅最大的一只`,
+      ice_next_day_940: `前一交易日上证指数 3 日线斜率由负转正，今日开盘 10 分钟后（${triggerTimeText}，9:40 桶）仍空仓补买：逆周期情绪游资买点触发，买入防御+中性 tag 板块 ∪ 近20交易日出现三板及以上连板的红利板块个股中 ${days} 日涨幅最大的一只`,
     };
     const modeGateCheck = {
       id: 'key_block_cyb_gate',
@@ -3353,12 +3358,15 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     } : (() => {
       const tagCount = tagBlocks.reduce((s, tb) => s + tb.members.length, 0);
       if (iceMode) {
+        const hongliInfo = hongliAdded.length > 0
+          ? `；红利板块连板扩展 = 往前20交易日出现三板及以上连板的红利板块（${hongliBoards.join('、') || '无'}）个股，与Tag板块去重后新增 ${hongliAdded.length} 只`
+          : `；红利板块连板扩展 = 往前20交易日无符合条件（三板及以上）的红利板块个股（或均已在 tag 板块）`;
         return {
           id: 'key_block_tag_blocks',
-          title: '逆周期情绪游资候选池（防御+中性 Tag板块·全仓）',
+          title: '逆周期情绪游资候选池（防御+中性 Tag板块 ∪ 红利板块三板及以上·全仓）',
           passed: true,
-          value: `${tagBlocks.length} 个Tag板块 ${tagCount} 只`,
-          reason: `参与选股的防御+中性 tag 板块 ${tagBlocks.length} 个：${blocksText}；共 ${allMembers.length} 只候选（逆周期情绪游资只用 tag 板块成分股，不做历史涨停扩展）`,
+          value: `${tagBlocks.length} 个Tag板块 ${tagCount} 只 + 红利板块 ${hongliAdded.length} 只`,
+          reason: `参与选股的防御+中性 tag 板块 ${tagBlocks.length} 个：${blocksText}${hongliInfo}；合并去重后共 ${allMembers.length} 只候选`,
         };
       }
       const lbInfo = lianbanAdded.length > 0
@@ -3390,27 +3398,19 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       value: `${best.iceResilience != null ? Number(best.iceResilience).toFixed(2) : '数据不足'}（${iceIndexName(best.iceIndexCode)}）`,
       reason: `买入时点抗分歧指数需 ≥ ${GLOBAL_RESILIENCE_MIN}：${best.name}(${best.code}) 跟踪${iceIndexName(best.iceIndexCode)}，抗分歧 ${best.iceResilience != null ? Number(best.iceResilience).toFixed(2) : '数据不足（放行）'}${iceResilienceSkipped.length > 0 ? `；前序已顺延抗分歧不足的 ${iceResilienceSkipped.length} 只（${iceResilienceSkipped.map(c => `${c.name} ${Number(c.iceResilience).toFixed(2)}`).join('、')}）` : ''}（防御股不跟科技绑定的创业板指：主板跟踪上证指数 sh000001，创业板跟 sz399006，科创板跟 sh000688）`,
     } : null;
-    // 逆周期情绪游资专属：买入时前期连续上涨 ≤ ICE_MAX_PRIOR_UP_DAYS 天门禁（防顺周期同频上涨个股）
-    const iceUpStreakCheck = iceMode ? {
-      id: 'ice_up_streak_gate',
-      title: `前期连涨门禁（买入前连续上涨 ≤ ${ICE_MAX_PRIOR_UP_DAYS} 天）`,
-      passed: true,
-      value: `买入前连涨 ${best.priorUpDays != null ? best.priorUpDays : 0} 天`,
-      reason: `逆周期情绪游资要求买入时该股前期连续上涨不超过 ${ICE_MAX_PRIOR_UP_DAYS} 天（买入日之前最近 1 个交易日可为涨、再往前一日不可为正）：${best.name}(${best.code}) 买入前连涨 ${best.priorUpDays != null ? best.priorUpDays : 0} 天${iceUpStreakSkipped.length > 0 ? `；前序已顺延前期连涨超限的 ${iceUpStreakSkipped.length} 只（${iceUpStreakSkipped.map(c => `${c.name} 连涨${c.priorUpDays}天`).join('、')}）` : ''}`,
-    } : null;
     const bestCheck = {
       id: 'key_block_best_stock',
-      title: `${isOffense ? '自选科技股' : (iceMode ? '防御+中性 Tag板块' : '防御候选池(Tag板块+涨停扩展)')}内最近${days}日涨幅最大的股票`,
+      title: `${isOffense ? '自选科技股' : (iceMode ? '防御+中性 Tag板块∪红利连板' : '防御候选池(Tag板块+涨停扩展)')}内最近${days}日涨幅最大的股票`,
       passed: true,
       value: `${best.gain > 0 ? '+' : ''}${best.gain.toFixed(2)}%`,
-      reason: `在${isOffense ? `自选科技股池共 ${allMembers.length} 只` : (iceMode ? `防御+中性 tag 板块成分股共 ${allMembers.length} 只` : `防御候选池共 ${allMembers.length} 只（Tag板块 + 历史涨停扩展 ${lianbanAdded.length} 只）`)}中（有效候选 ${candidates.length} 只），按最近 ${days} 日个股涨幅之和取最大${limitUpSkipped.length > 0 ? '（涨停股顺延后）' : ''}${iceResilienceSkipped.length > 0 ? `（抗分歧不足顺延 ${iceResilienceSkipped.length} 只后）` : ''}${iceUpStreakSkipped.length > 0 ? `（前期连涨超限顺延 ${iceUpStreakSkipped.length} 只后）` : ''}；买入价取 ${triggerTimeText} 分时价`,
+      reason: `在${isOffense ? `自选科技股池共 ${allMembers.length} 只` : (iceMode ? `防御+中性 tag 板块 ∪ 红利板块三板及以上候选股共 ${allMembers.length} 只（其中红利板块扩展 ${hongliAdded.length} 只）` : `防御候选池共 ${allMembers.length} 只（Tag板块 + 历史涨停扩展 ${lianbanAdded.length} 只）`)}中（有效候选 ${candidates.length} 只），按最近 ${days} 日个股涨幅之和取最大${limitUpSkipped.length > 0 ? '（涨停股顺延后）' : ''}${iceResilienceSkipped.length > 0 ? `（抗分歧不足顺延 ${iceResilienceSkipped.length} 只后）` : ''}；买入价取 ${triggerTimeText} 分时价`,
     };
     const buyReasonMap = {
       slope_turn_positive: `${triggerTimeText.substring(0, 5)}创业板指3日线斜率由负转正（${fromText}→${slopeText}），买入自选科技股池内${days}日涨幅最大的股票（进攻买点，无需资金/量能配合）`,
       slope_turn_negative: `${triggerTimeText.substring(0, 5)}创业板指3日线斜率由正转负（${fromText}→${slopeText}）且空仓，买入防御候选池（Tag板块 + 近20交易日创业板下跌日涨停前3板块 ∩ 20日有≥3连板个股）内${days}日涨幅最大的股票（防御买点）`,
-      ice_slope_turn_positive: `${triggerTimeText.substring(0, 5)}上证指数3日线斜率由负转正（${fromText}→${slopeText}）且空仓、前一交易日收盘口径斜率为负，买入防御+中性 tag 板块中${days}日涨幅最大的股票（逆周期情绪游资买点，9:40 及以后执行）`,
+      ice_slope_turn_positive: `${triggerTimeText.substring(0, 5)}上证指数3日线斜率由负转正（${fromText}→${slopeText}）且空仓、前一交易日收盘口径斜率为负，买入防御+中性 tag 板块 ∪ 近20交易日出现三板及以上连板的红利板块个股中${days}日涨幅最大的股票（逆周期情绪游资买点，9:40 及以后执行）`,
       retry_next_day_940: `${triggerTimeText.substring(0, 5)}开盘10分钟后复测创业板指3日线斜率仍为正（${slopeText}，卖出当时${fromText}），买入自选科技股池内${days}日涨幅最大的股票（卖点诊断卖出后次日复测继续买）`,
-      ice_next_day_940: `${triggerTimeText.substring(0, 5)}前一交易日上证指数3日线斜率由负转正，今日开盘10分钟后（9:40 桶）仍空仓补买（上证指数3日线斜率 ${slopeText}），买入防御+中性 tag 板块中${days}日涨幅最大的股票（逆周期情绪游资次日9:40补买）`,
+      ice_next_day_940: `${triggerTimeText.substring(0, 5)}前一交易日上证指数3日线斜率由负转正，今日开盘10分钟后（9:40 桶）仍空仓补买（上证指数3日线斜率 ${slopeText}），买入防御+中性 tag 板块 ∪ 近20交易日出现三板及以上连板的红利板块个股中${days}日涨幅最大的股票（逆周期情绪游资次日9:40补买）`,
     };
     position = {
       code: best.code,
@@ -3424,7 +3424,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       metric: parseFloat(best.gain.toFixed(4)),
       costLinePct: Number(strategy.costLinePct) || 2,
       buyReason: buyReasonMap[trigger] || buyReasonMap.slope_turn_positive,
-      buyChecks: [modeGateCheck, poolCheck, limitUpCheck, ...(iceResilienceCheck ? [iceResilienceCheck] : []), ...(iceUpStreakCheck ? [iceUpStreakCheck] : []), bestCheck],
+      buyChecks: [modeGateCheck, poolCheck, limitUpCheck, ...(iceResilienceCheck ? [iceResilienceCheck] : []), bestCheck],
     };
     return true;
   };
@@ -3434,7 +3434,9 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'loading' });
     let campData;
     try {
-      campData = await loadTrainingCampData(dateStr);
+      // 逆周期情绪游资（iceMode）不依赖资金快照：允许缺失资金快照的日期用兜底（.nomfund）回放数据构建，
+      // 否则这类日期（如 20260730）会被整日跳过，导致当日斜率翻转/止损等卖点判定全部漏执行
+      campData = await loadTrainingCampData(dateStr, { allowMissingFund: iceMode });
     } catch (e) {
       skippedDates.push({ date: dateStr, message: e.message || '加载失败' });
       continue;
@@ -3462,7 +3464,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
 
     // 当日隔夜持仓卖出数据预建（当日买入次日才可卖，同日买入不可同日卖出）：
     //   进攻持仓 → 通用 7 条件卖点诊断所需的日收盘斜率门禁（「科技板块情绪退潮」条件）+ 非自选股合成逐桶数据
-    //   防御持仓 → 持仓股当日分时（双卖点：斜率翻转当桶 ∪ 个股分时价跌破成本线止损 -5%/-2%）
+    // 防御持仓 → 持仓股当日分时（卖点：斜率翻转当桶 ∪ 个股分时价跌破成本线止损 -5%/-2% ∪ 情绪游资 14:55 长下影强卖）
     let sellBuckets = timeBuckets;
     let sellReplayStocks = replayStocks;
     let cybMa3SlopeForGate = null;
@@ -3527,7 +3529,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       // ===== ② 卖出（仅隔夜持仓） =====
       if (position && dateStr > position.buyDate) {
         if (position.mode === 'defense' && defensePoints && defensePoints.length > 0) {
-          // 防御双卖点：① 斜率翻转的当桶 ② 个股分时价跌破成本线止损
+          // 防御卖点：① 斜率翻转的当桶 ② 个股分时价跌破成本线止损 ③（情绪游资）14:55 长下影强卖
           //   重点板块防御持仓 → -5%（KEY_BLOCK_DEFENSE_STOP_LOSS_PCT）；逆周期情绪游资 → -2%（策略 costLinePct）
           // 任一先触发即卖出；止损在每个桶都会检查（因为不依赖斜率翻转事件）
           const stopLossPct = iceMode
@@ -3542,7 +3544,31 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
             const stopLossHit = rawReturnRate != null && rawReturnRate <= -stopLossPct;
             // 逆周期情绪游资卖点为「上证 3 日线斜率由正转负」，与创业板口径（由负转正）方向相反
             const slopeSellHit = iceMode ? turnedNegative : turnedPositive;
-            if (slopeSellHit || stopLossHit) {
+            // 情绪游资新增卖点（2026-10-04 用户新增）：当日 14:55 检查 K 线形态——
+            // 下影线 ≥ 实体长度的 2 倍（长下影＝盘中被砸后拉起、上方承压）→ 14:55 强制卖出。
+            // 仅用 minute ≤ 1455 的当日分时点现算（无未来数据）：开=首个分时价，收=14:55 价，低=区间 min。
+            let shadowSellHit = false;
+            let shadowInfo = null;
+            if (iceMode && bucketMinute === 1455) {
+              const pts = defensePoints.filter(p => p.minute <= 1455 && p.lastPx > 0);
+              if (pts.length > 0) {
+                const openPx = pts[0].lastPx;
+                const closePx = pts[pts.length - 1].lastPx;
+                const lowPx = pts.reduce((mn, p) => Math.min(mn, p.lastPx), Infinity);
+                const body = Math.abs(closePx - openPx);
+                const lowerShadow = Math.min(openPx, closePx) - lowPx;
+                if (lowerShadow > 0 && lowerShadow >= 2 * body) {
+                  shadowSellHit = true;
+                  shadowInfo = {
+                    openPx: parseFloat(openPx.toFixed(2)),
+                    closePx: parseFloat(closePx.toFixed(2)),
+                    body: parseFloat(body.toFixed(2)),
+                    lowerShadow: parseFloat(lowerShadow.toFixed(2)),
+                  };
+                }
+              }
+            }
+            if (slopeSellHit || stopLossHit || shadowSellHit) {
               const sellChange = defensePreclose && defensePreclose > 0
                 ? parseFloat((((atPt.lastPx - defensePreclose) / defensePreclose) * 100).toFixed(2))
                 : null;
@@ -3555,7 +3581,9 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
                 : `创业板指3日线斜率盘中由负转正（${fmtKeyBlockSlope(lastSlopeValue)} → ${fmtKeyBlockSlope(slopeNow)}）`;
               const sellTrigger = slopeSellHit
                 ? slopeTurnText
-                : `持仓个股分时价跌破成本线 -${stopLossPct}% 止损（成本 ${position.buyPrice.toFixed(2)} → 现价 ${parseFloat(Number(atPt.lastPx).toFixed(2))}，浮亏 ${rawReturnRate}%）`;
+                : shadowSellHit
+                  ? `当日 14:55 下影线 ${shadowInfo.lowerShadow.toFixed(2)} ≥ 实体长度 ${shadowInfo.body.toFixed(2)} 的 2 倍（开 ${shadowInfo.openPx.toFixed(2)} → 14:55 价 ${shadowInfo.closePx.toFixed(2)}），K 线形态走坏强制卖出`
+                  : `持仓个股分时价跌破成本线 -${stopLossPct}% 止损（成本 ${position.buyPrice.toFixed(2)} → 现价 ${parseFloat(Number(atPt.lastPx).toFixed(2))}，浮亏 ${rawReturnRate}%）`;
               trades.push({
                 seq: trades.length + 1,
                 metric: position.metric,

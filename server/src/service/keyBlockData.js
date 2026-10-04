@@ -244,6 +244,68 @@ const getMultiLianbanStocks = (dateStr, minBoardCount = 3) => {
   return out;
 };
 
+// ============================================================
+// 红利板块连板候选股（逆周期情绪游资防御池扩展）
+// 2026-10-04 用户口径（修订版）：在回测日期 D 往前 lookbackDays（默认 20）个交易日内，
+//   收集所有属红利板块名单（resource/hongliName.json，主题 board 精确匹配）的板块中、
+//   出现过连板数 >= minBoardCount（默认 3，即三板及以上）的个股，去重。
+//   不要求红利板块进入当日涨停家数 TopN —— 凡近 20 日内走出过三板及以上的红利板块个股均纳入。
+// 用途：逆周期情绪游资防御买点时，在「防御+中性」tag 板块成分股之外，再加上近期红利强势板块里的连板股，
+//       一起做 n 日涨幅最大筛选。
+// ============================================================
+const hongliNamePath = path.join(lianbanSnapshotDir, 'resource/hongliName.json');
+let hongliNameCache = null; // Set<string>
+const getHongliNameSet = () => {
+  if (hongliNameCache) return hongliNameCache;
+  let set = new Set();
+  try {
+    const list = JSON.parse(fs.readFileSync(hongliNamePath, 'utf-8'));
+    if (Array.isArray(list)) set = new Set(list.map(n => String(n).trim()).filter(Boolean));
+  } catch (e) {
+    console.warn(`红利板块名单读取失败: ${hongliNamePath}`);
+  }
+  hongliNameCache = set;
+  return set;
+};
+
+// 给定回测日期 D，返回红利板块连板候选股
+// 返回 { stocks: [{ code: 'shxxxxxx', name, board, lianbanCount }], boards: 命中的红利板块名数组, dates: 参与扫描的交易日 }
+const getHongliMultiLianbanStocks = async (dateStr, lookbackDays = 20, minBoardCount = 3) => {
+  const hongliSet = getHongliNameSet();
+  const dates = await getPastTradingDates(dateStr, lookbackDays);
+  const stocks = new Map(); // code -> { code, name, board, lianbanCount }
+  const boards = new Set(); // 近 lookbackDays 天走出过 >= minBoardCount 连板的红利板块
+  for (const d of dates) {
+    const data = readLianbanSnapshot(String(d));
+    const themes = (data && Array.isArray(data.themes)) ? data.themes : [];
+    for (const theme of themes) {
+      const board = String(theme.board || '').trim();
+      if (!hongliSet.has(board)) continue;
+      for (const st of (theme.stocks || [])) {
+        const cnt = parseInt(st.lianbanCount, 10);
+        if (!Number.isFinite(cnt) || cnt < minBoardCount) continue;
+        const code = st.marketCode || st.code;
+        if (!code) continue;
+        boards.add(board);
+        if (stocks.has(code)) continue;
+        stocks.set(code, { code, name: st.name || st.code || code, board, lianbanCount: cnt });
+      }
+    }
+  }
+  return { stocks: Array.from(stocks.values()), boards: Array.from(boards), dates: dates.map(String) };
+};
+
+// 预扫描整个回测日期范围，收集红利板块连板候选股代码（用于一次性预拉 bars）
+// rangeDates: 回测日期数组 [YYYYMMDD]；返回 Set<code>
+const scanHongliMultiLianbanCodesInRange = async (rangeDates, lookbackDays = 20, minBoardCount = 3) => {
+  const all = new Set();
+  for (const dateStr of rangeDates) {
+    const { stocks } = await getHongliMultiLianbanStocks(dateStr, lookbackDays, minBoardCount);
+    for (const s of stocks) all.add(s.code);
+  }
+  return all;
+};
+
 // 主入口（新版）：给定回测日期，往前 lookbackDays 个交易日内的科技情绪冰点日
 // → 取这些天涨停数 TopN 板块中的全部股票，**再与** lookbackDays 内所有交易日出现过 ≥minBoardCount 连板的个股**做交集**
 // → 得到候选股扩展集（同时满足"曾被市场抱团 Top 板块" + "曾走出过连板强度"两个条件）
@@ -316,4 +378,6 @@ module.exports = {
   getStockCloseOnOrBefore,
   getHistoricalLianbanDefenseStocks,
   scanAllLianbanCodesInRange,
+  getHongliMultiLianbanStocks,
+  scanHongliMultiLianbanCodesInRange,
 };
