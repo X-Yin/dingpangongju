@@ -99,7 +99,7 @@ const STRATEGY_OPTIONS = [
   { value: 'key_block_3d_gain', label: '重点板块-3日最高涨幅' },
   { value: 'key_block_4d_gain', label: '重点板块-4日最高涨幅' },
   { value: 'key_block_5d_gain', label: '重点板块-5日最高涨幅' },
-  // 逆周期情绪游资系列（与大盘逆周期：斜率由正转负买入 / 由负转正卖出，全仓）
+  // 逆周期情绪游资系列（信号指数=上证指数，斜率为正买入 / 为负卖出，全仓）
   { value: 'hot_money_ice_2d_gain', label: '逆周期情绪游资-前2日涨幅最大' },
   { value: 'hot_money_ice_3d_gain', label: '逆周期情绪游资-前3日涨幅最大' },
   { value: 'hot_money_ice_4d_gain', label: '逆周期情绪游资-前4日涨幅最大' },
@@ -136,6 +136,83 @@ const STRATEGY_OPTIONS = [
   { value: 'tail_dip_emo3_1d_gain', label: '三日情绪冰点-当日涨幅最大' },
   { value: 'tail_dip_emo3_1d_fall', label: '三日情绪冰点-当日跌幅最大' },
   { value: 'tail_dip_emo3_1d_resilience', label: '三日情绪冰点-当日抗分歧最大' },
+];
+
+// 策略分类（用于「回测全部」旁的分类 Tag，点击只回测该分类下的策略）：
+// 同一策略可归属多个分类（研报覆盖类与快进快出类、三日情绪冰点类存在交叉），并集覆盖全部策略
+const STRATEGY_CATEGORIES = [
+  {
+    key: 'key_block',
+    label: '重点板块类',
+    ids: ['key_block_2d_gain', 'key_block_3d_gain', 'key_block_4d_gain', 'key_block_5d_gain'],
+  },
+  {
+    key: 'emo3',
+    label: '三日情绪冰点类',
+    ids: [
+      'tail_dip_emo3_3d_gain', 'tail_dip_emo3_3d_fall', 'tail_dip_emo3_3d_reports_top5_gain',
+      'tail_dip_emo3_1d_gain', 'tail_dip_emo3_1d_fall', 'tail_dip_emo3_1d_resilience',
+    ],
+  },
+  {
+    key: 'emo_quick',
+    label: '快进快出类',
+    ids: [
+      'highest_2d_gain_emoquick', 'highest_3d_gain_emoquick', 'highest_4d_gain_emoquick',
+      'highest_5d_gain_emoquick', 'highest_3d_reports_top5_gain_emoquick',
+    ],
+  },
+  {
+    key: 'reports',
+    label: '研报覆盖类',
+    ids: [
+      'highest_3d_reports', 'highest_5d_reports', 'highest_3d_reports_top5_gain',
+      'highest_5d_reports_top5_gain', 'highest_3d_reports_top5_gain_emoquick', 'tail_dip_emo3_3d_reports_top5_gain',
+    ],
+  },
+  {
+    key: 'ice_hot_money',
+    label: '情绪游资类',
+    ids: [
+      'hot_money_ice_2d_gain', 'hot_money_ice_3d_gain', 'hot_money_ice_4d_gain',
+      'hot_money_ice_5d_gain', 'hot_money_ice_10d_gain',
+    ],
+  },
+  {
+    key: 'highest_gain',
+    label: 'N日涨幅最大类',
+    ids: ['highest_gain', 'highest_2d_gain', 'highest_3d_gain', 'highest_4d_gain', 'highest_5d_gain', 'highest_10d_gain'],
+  },
+  {
+    key: 'tail_dip',
+    label: '尾盘抄底类',
+    ids: [
+      'tail_dip_1d_gain', 'tail_dip_3d_gain', 'tail_dip_1d_resilience', 'tail_dip_3d_resilience',
+      'tail_dip_1d_fall', 'tail_dip_3d_fall', 'tail_dip_1d_resilience_low',
+    ],
+  },
+  {
+    key: 'resilience_slope',
+    label: '抗分歧/斜率类',
+    ids: [
+      'highest_3d_ma_slope', 'highest_5d_ma_slope', 'highest_5d_resilience',
+      'highest_3d_resilience', 'resilience_weak_to_strong',
+    ],
+  },
+  {
+    key: 'realtime_intraday',
+    label: '当日实时口径',
+    ids: ['highest_1d_resilience'],
+  },
+  {
+    key: 'emo_switch',
+    label: '情绪开关系列',
+    ids: [
+      'prev3d_fall_low5_day_gain_emoswitch',
+      'prev2d_fall_low5_day_gain_emoswitch',
+      'prev1d_fall_low5_day_gain_emoswitch',
+    ],
+  },
 ];
 
 // 三日情绪冰点系列策略（与后端 buySellBacktest.STRATEGIES 的 emoAvgBuy: true 保持一致）：
@@ -176,7 +253,7 @@ const KEY_BLOCK_SELL_RULES = [
 ];
 
 // 逆周期情绪游资-N日涨幅最大系列策略（与后端 buySellBacktest.STRATEGIES 的 iceMode + keyBlockDays 保持一致）：
-// 复用重点板块引擎 runKeyBlockBacktest，但与大盘逆周期——斜率由正转负买入、由负转正卖出，全仓
+// 复用重点板块引擎 runKeyBlockBacktest，但信号指数为上证指数（与重点板块系列的创业板口径相反）——斜率为正买入、为负卖出，全仓
 const ICE_STRATEGY_IDS = [
   'hot_money_ice_2d_gain',
   'hot_money_ice_3d_gain',
@@ -186,14 +263,14 @@ const ICE_STRATEGY_IDS = [
 ];
 const isIceStrategy = (id) => ICE_STRATEGY_IDS.includes(id);
 const ICE_BUY_RULES = [
-  { key: 'ice_cyb_gate', title: '唯一买卖开关：创业板指 3 日线斜率由正转负（盘中实时，与大盘逆周期）', desc: '仅在创业板指 3 日线斜率（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替，逐桶实时判定）**由正转负**时买入，且要求**前一交易日「收盘口径」斜率为正**（即「前一日为正、今日盘中才转负」才算一次出手机会；若前一日收盘已为负，则今日盘中的由正转负**不计**为买点，继续空仓等待）：① 转负当日**至少等到 9:40**（转负桶在 9:40 之前也等到 9:40 才执行，给抗分歧分数留出盘中分时计算窗口）才可买入，若候选无效则在当日后续桶持续重试；② 同一转负事件的**次日开盘 10 分钟后（9:40）**若仍空仓则补买一次，仅限「转负当日 + 次日」，超过次日的未成交买点作废。斜率由正转负只需为空仓即可买入（无需资金/量能/情绪等配合）；斜率符号跨日连续追踪，初值取回测首日前一交易日的收盘斜率' },
+  { key: 'ice_cyb_gate', title: '唯一买卖开关：上证指数 3 日线斜率（为正买入、为负卖出）', desc: '仅在**上证指数** 3 日线斜率（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替，逐桶实时判定）**由负转正**时买入——方向与重点板块系列的创业板口径**相反**：斜率为正买、为负卖。买点还要求**前一交易日「收盘口径」斜率为负**（即「前一日为负、今日盘中才转正」才算一次出手机会；若前一日收盘已为正，则今日盘中的由负转正**不计**为买点，继续空仓等待）：① 转正当日**至少等到 9:40**（转正桶在 9:40 之前也等到 9:40 才执行，给抗分歧分数留出盘中分时计算窗口）才可买入，若候选无效则在当日后续桶持续重试；② 同一转正事件的**次日开盘 10 分钟后（9:40）**若仍空仓则补买一次，仅限「转正当日 + 次日」，超过次日的未成交买点作废。斜率由负转正只需为空仓即可买入（无需资金/量能/情绪等配合）；斜率符号跨日连续追踪，初值取回测首日前一交易日的收盘斜率' },
   { key: 'ice_pool_full', title: '候选池与仓位：防御+中性 tag 板块全部成分股 · 全仓', desc: '候选 =「防御+中性」tag 板块（板块 tag 在 key_blocks 页面维护，未打 tag 的板块不参与）的**全部成分股**，去重并剔除 ST，**不做历史涨停扩展**（与重点板块系列不同）；按最近 N 个交易日（不含当日，截至前一交易日收盘）个股涨幅之和最大的一只**全仓买入**（权重 1，不做半仓折算）；成交价取触发桶时点的分时价' },
   { key: 'ice_no_gain', title: '涨停过滤与顺延', desc: '买入时点判断候选股是否涨停：主板（60/00 开头）涨幅 > 9.5% 视为涨停，创业板（30）/科创板（68）涨幅 > 19% 视为涨停；涨停股不可买入，顺延到 N 日涨幅排名的下一只非涨停股票；全部候选涨停或无有效候选时，在过渡桶持续重试' },
   { key: 'ice_resilience_gate', title: '抗分歧门槛 ≥ 9（主板跟踪上证指数）', desc: '买入时点候选股的抗分歧指数需 **≥ 9**，不足者按 N 日涨幅排名**顺延至下一只**，全部候选均不足则本桶不买、在后续桶继续重试。**跟踪指数按候选市场区分**：因这里是防御性股票，不再统一跟踪与科技绑定的创业板指——主板（60/00）跟踪**上证指数 sh000001**，创业板（30）跟踪创业板指 sz399006，科创板（68）跟踪科创 50 sh000688。抗分歧指数按买入时点截至当时的分时数据现算（与卖点诊断条件4同口径）；因买入已统一延后到 **9:40 及以后**（见上一条），此时分时点数已满足 ≥5 点的计算要求，不再出现 9:30 桶「数据不足」而放行的情况（极端无数据时仍按放行处理）' },
   { key: 'ice_up_streak_gate', title: '前期连涨门禁：买入前连续上涨 ≤ 1 天', desc: '买入时该股**前期连续上涨不能超过 1 个交易日**：若买点为 8.4，则最多 8.3 可以是上涨的，但 8.2 涨幅不能也为正（按日K相邻收盘价环比判定连涨天数）。不满足者按 N 日涨幅排名**顺延至下一只**，全部候选均不满足则本桶不买、在后续桶继续重试。用于剔除表面属逆周期板块、实则随科技情绪同频上涨的顺周期个股' },
 ];
 const ICE_SELL_RULES = [
-  { key: 'ice_sell_reverse', title: '创业板指 3 日线斜率由负转正（卖点）', desc: '盘中实时创业板指 3 日线斜率由负转正的那个桶即卖出（与买入信号相反：逆周期情绪游资买在斜率转负、卖在斜率转正）；按该桶时点持仓股分时价卖出。斜率转正同时也是**作废尚未成交买入意图**的信号（转负后未及买入即转正 → 放弃本次买入）' },
+  { key: 'ice_sell_reverse', title: '上证指数 3 日线斜率由正转负（卖点）', desc: '盘中实时**上证指数** 3 日线斜率由正转负的那个桶即卖出（与买入信号相反：买在斜率转正、卖在斜率转负）；按该桶时点持仓股分时价卖出。斜率转负同时也是**作废尚未成交买入意图**的信号（转正后未及买入即转负 → 放弃本次买入）' },
   { key: 'ice_sell_stop_loss', title: '个股跌破成本线 -5% 止损', desc: '个股分时价跌破买入成本线 -5%（现价 < 买入价 × 0.95）即止损卖出；全仓买入，卖出后收益率不做半仓折算，直接计入概览（整体收益/平均回撤/单笔最大回撤）' },
 ];
 
@@ -422,13 +499,13 @@ const STRATEGY_SPECIFIC_NOTES = {
   hot_money_ice_2d_gain: {
     group: '逆周期情绪游资系列',
     bullets: [
-      '**逆周期前提**：当下情绪游资的情绪周期与创业板大盘反向（跷跷板）。买点与卖点都与重点板块系列相反——**买在斜率由正转负（大盘转弱）、卖在斜率由负转正**。若未来 AI 泡沫破裂、指数不再与科技绑定，情绪周期可能转为顺周期，届时再调整。',
-      '买点：**唯一开关 = 创业板指 3 日线斜率由正转负**，且要求**前一交易日「收盘口径」斜率为正**——前一日为正、今日盘中才转负才算一次出手机会；若前一日收盘已为负，则今日盘中的由正转负**不计**为买点（继续空仓等待）。① 转负当日**至少等到 9:40** 才执行买入（给抗分歧分数留出盘中分时计算窗口）；② 同一转负事件的**次日 9:40 补买**一次（转负当日未成交时，次日开盘 10 分钟后仍空仓才买）；超过次日的未成交买点作废。不走通用 BUY_RULES（无需资金/量能/情绪等配合）。',
+      '**逆周期前提**：当下情绪游资的情绪周期与创业板大盘反向（跷跷板）。信号指数改用**上证指数**——因创业板与上证常呈反向，用「上证 3 日线斜率为正」等价捕捉「创业板转弱」的时刻：**买在斜率由负转正（大盘转强）、卖在斜率由正转负**，方向与重点板块系列的创业板口径**相反**。若未来 AI 泡沫破裂、指数不再与科技绑定，情绪周期可能转为顺周期，届时再调整。',
+      '买点：**唯一开关 = 上证指数 3 日线斜率由负转正**，且要求**前一交易日「收盘口径」斜率为负**——前一日为负、今日盘中才转正才算一次出手机会；若前一日收盘已为正，则今日盘中的由负转正**不计**为买点（继续空仓等待）。① 转正当日**至少等到 9:40** 才执行买入（给抗分歧分数留出盘中分时计算窗口）；② 同一转正事件的**次日 9:40 补买**一次（转正当日未成交时，次日开盘 10 分钟后仍空仓才买）；超过次日的未成交买点作废。不走通用 BUY_RULES（无需资金/量能/情绪等配合）。',
       '选股：从「防御+中性」tag 板块（key_blocks 页面维护）的**全部成分股**（去重、剔除 ST，**不做历史涨停扩展**）中，取最近 **2 个交易日**（不含当日，截至前一交易日收盘）个股涨幅之和最大的一只。',
       '抗分歧门槛：买入时点候选股抗分歧指数需 **≥ 9**，不足者按 N 日涨幅顺延至下一只（全部不足则本桶不买、后续桶重试）。**跟踪指数按市场区分**：主板（60/00）跟踪**上证指数 sh000001**（防御股不跟与科技绑定的创业板指），创业板跟创业板指 sz399006，科创板跟科创 50 sh000688。',
       '前期连涨门禁：买入时该股**前期连续上涨不能超过 1 个交易日**（若买点为 8.4，则最多 8.3 可以是上涨的，但 8.2 涨幅不能也为正；按日K相邻收盘价环比判定连涨天数），不满足者按 N 日涨幅顺延至下一只。**目的**：防止表面属逆周期板块、实则随科技情绪同频上涨的顺周期个股被选中。',
-      '仓位与卖点：**全仓买入（权重 1，不做半仓折算）**；卖点 = 创业板指 3 日线斜率由负转正 ∪ 个股分时跌破成本线 -5% 止损，任一先触发即卖。',
-      '注：重点板块系列的「进攻/防御」双模式在本系列不适用（本系列恒为全仓防御池），买卖信号方向整体反转。',
+      '仓位与卖点：**全仓买入（权重 1，不做半仓折算）**；卖点 = 上证指数 3 日线斜率由正转负 ∪ 个股分时跌破成本线 -5% 止损，任一先触发即卖。',
+      '注：重点板块系列的「进攻/防御」双模式在本系列不适用（本系列恒为全仓防御池）；信号指数为**上证指数**，方向与重点板块系列的创业板口径**相反**（为正买、为负卖）。',
     ],
   },
   hot_money_ice_3d_gain: {
@@ -698,7 +775,9 @@ const buildSummary = (result) => {
   };
 };
 
-const BacktestDrawer = ({ open, onClose, dates = [] }) => {
+const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) => {
+  // embedded=true 时以内嵌页面方式渲染（不套 Drawer 外壳），open 恒视为 true
+  const isOpen = embedded ? true : open;
   const [range, setRange] = useState(null);
   const [strategy, setStrategy] = useState(localStorage.getItem('latest_training_camp_buy_sell_backtest_strategy') || 'highest_3d_gain_emoquick');
   const [reportOpen, setReportOpen] = useState(false);
@@ -719,6 +798,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const [workerRunning, setWorkerRunning] = useState(false); // 全量回测（backtest-worker.js）后台执行中
   const [workerLog, setWorkerLog] = useState(''); // worker 最近一条日志
   const workerPollRef = useRef(null);
+  const [activeCategory, setActiveCategory] = useState(null); // 当前高亮的策略分类 Tag（null=无）
+  const [workerMode, setWorkerMode] = useState('all'); // 'all' | 'category'：worker 回测模式，仅用于文案
 
   const availableDates = useMemo(() => (Array.isArray(dates) ? dates : []), [dates]);
   const maxDateStr = availableDates.length > 0 ? availableDates[0] : dayjs().format('YYYYMMDD');
@@ -785,7 +866,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   // 打开抽屉、切换策略或修改日期范围时检查缓存（延迟到宏任务，避免 effect 内同步 setState）；
   // 同时清空上一次震荡测试的隐藏勾选与结果（一次性状态，不持久化，重新打开抽屉即重置）
   useEffect(() => {
-    if (!open) return;
+    if (!isOpen) return;
     const id = setTimeout(() => {
       setHiddenCodes(new Set());
       setOscResult(null);
@@ -794,7 +875,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     }, 0);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, strategy, range]);
+  }, [isOpen, strategy, range]);
 
   // 复制文本到剪贴板：优先 clipboard API（需 secure context），失败/不可用时降级 execCommand
   const copyToClipboard = async (text) => {
@@ -837,6 +918,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       setRange(null);
       setResult(null);
     }
+    setActiveCategory(null); // 手动切换策略后取消分类 Tag 高亮
     setStrategy(v);
     localStorage.setItem('latest_training_camp_buy_sell_backtest_strategy', v);
   };
@@ -976,7 +1058,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     }
   };
 
-  const startWorkerPolling = () => {
+  const startWorkerPolling = (opts = {}) => {
+    const isCategory = opts.mode === 'category';
+    const label = opts.label || '';
     stopWorkerPolling();
     workerPollRef.current = setInterval(async () => {
       try {
@@ -988,16 +1072,64 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
           stopWorkerPolling();
           setWorkerRunning(false);
           if (s.status === 'done') {
-            message.success('全量回测完成，回测报告已重新生成');
+            message.success(isCategory ? `「${label}」分类回测完成，结果已刷新` : '全量回测完成，回测报告已重新生成');
             setTimeout(checkCache, 0); // 拉取重跑后的最新缓存结果
           } else {
-            message.error('全量回测失败，详情见服务端日志');
+            message.error(isCategory ? `「${label}」分类回测失败，详情见服务端日志` : '全量回测失败，详情见服务端日志');
           }
         }
       } catch {
         // 忽略单次轮询失败，继续等待
       }
     }, 3000);
+  };
+
+  // 取分类下的第一个「存在于下拉可选策略中」的策略
+  const firstStrategyInOptions = (ids) => ids
+    .map(id => STRATEGY_OPTIONS.find(o => o.value === id))
+    .find(Boolean);
+
+  // 分类回测：只强制重跑该分类下的策略（worker 不清空其它缓存、不生成汇总报告）：
+  // 同时把下方 select 自动切到该分类的第一个策略
+  const handleRunCategory = async (cat) => {
+    const first = firstStrategyInOptions(cat.ids);
+    if (!first) {
+      message.warning(`「${cat.label}」下暂无可回测策略`);
+      return;
+    }
+    // 切换策略会按类别重置手动日期范围，这里用与「切换后」一致的生效范围，保证范围口径一致
+    const switching = strategyCategory(first.value) !== strategyCategory(strategy) || !range;
+    const pick = switching ? (isEmo3Strategy(first.value) ? emo3DefaultRange : defaultRange) : range;
+    if (!pick || !pick[0] || !pick[1]) {
+      message.warning('请选择回测日期范围');
+      return;
+    }
+    const startDate = pick[0].format('YYYYMMDD');
+    const endDate = pick[1].format('YYYYMMDD');
+    if (startDate > endDate) {
+      message.warning('开始日期不能晚于结束日期');
+      return;
+    }
+    // 注意：handleStrategyChange 内部会清空 activeCategory（手动切换语义），
+    // 故必须在它之后再置回当前分类，保证 Tag 高亮不被清除
+    handleStrategyChange(first.value);
+    setActiveCategory(cat.key);
+    try {
+      const r = await axios.post(`http://${local_ip}:3000/training_camp/backtest/worker`, {
+        startDate, endDate, strategies: cat.ids,
+      });
+      if (r.data?.success) {
+        setWorkerMode('category');
+        setWorkerRunning(true);
+        setWorkerLog(`分类回测已启动：预热日K线 → 预构建回放数据 → 仅回测「${cat.label}」下 ${cat.ids.length} 个策略…`);
+        startWorkerPolling({ mode: 'category', label: cat.label });
+        message.info(`已启动「${cat.label}」分类回测（${cat.ids.length} 个策略强制重跑）`);
+      } else {
+        message.error(r.data?.message || '启动分类回测失败');
+      }
+    } catch {
+      message.error('启动分类回测失败，请检查后端服务');
+    }
   };
 
   // 回测全部：后台执行 backtest-worker.js（清空回测缓存 → 预热日K → 并行预构建 → 全部策略并行回测 → 自动汇总生成回测报告）
@@ -1016,9 +1148,11 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     try {
       const r = await axios.post(`http://${local_ip}:3000/training_camp/backtest/worker`, { startDate, endDate });
       if (r.data?.success) {
+        setWorkerMode('all');
+        setActiveCategory(null);
         setWorkerRunning(true);
         setWorkerLog('全量回测已启动：清空回测缓存 → 预热日K线 → 预构建回放数据…');
-        startWorkerPolling();
+        startWorkerPolling({ mode: 'all' });
         message.info('全量回测已启动（全部策略强制重跑），完成后结果与报告自动刷新');
       } else {
         message.error(r.data?.message || '启动全量回测失败');
@@ -1030,7 +1164,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
 
   // 打开抽屉时同步一次全量回测状态（worker 正在后台跑时恢复按钮态与轮询）
   useEffect(() => {
-    if (!open) return;
+    if (!isOpen) return;
     let cancelled = false;
     axios.get(`http://${local_ip}:3000/training_camp/backtest/worker/status`).then((r) => {
       if (cancelled) return;
@@ -1044,7 +1178,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     }).catch(() => { });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [isOpen]);
 
   const handleCopy = async () => {
     if (!result) return;
@@ -1187,56 +1321,54 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     return ds < EARLIEST_DATE || ds > maxDateStr;
   };
 
-  return (
-    <Drawer
-      open={open}
-      onClose={onClose}
-      width={1060}
-      title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <BarChartOutlined style={{ color: '#1677ff' }} />
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#12213a' }}>买卖点回测</span>
-          <Button
-            type="primary"
-            ghost
-            size="small"
-            icon={<BarChartOutlined />}
-            onClick={() => setReportOpen(true)}
-            style={{ marginLeft: 12, borderRadius: 999 }}
-          >
-            回测报告
-          </Button>
-          <Button
-            size="small"
-            icon={<LineChartOutlined />}
-            onClick={() => setTrendOpen(true)}
-            style={{ marginLeft: 12, borderRadius: 999 }}
-          >
-            策略趋势诊断
-          </Button>
-          {result && !running ? (
-            <Button
-              size="small"
-              type="primary"
-              icon={<CopyOutlined />}
-              onClick={handleCopy}
-              loading={copying}
-              style={{ marginLeft: 12, borderRadius: 999 }}
-            >
-              {copying ? '正在获取K线…' : '复制结果内容'}
-            </Button>
-          ) : null}
-        </div>
-      }
-      styles={{ body: { padding: 16, paddingBottom: 96, background: '#f7f9fc' } }}
-    >
+  // 标题栏（抽屉标题 / 内嵌页面 sticky 头部共用）
+  const headerNode = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <BarChartOutlined style={{ color: '#1677ff' }} />
+      <span style={{ fontSize: 15, fontWeight: 700, color: '#12213a' }}>买卖点回测</span>
+      <Button
+        type="primary"
+        ghost
+        size="small"
+        icon={<BarChartOutlined />}
+        onClick={() => setReportOpen(true)}
+        style={{ marginLeft: 12, borderRadius: 999 }}
+      >
+        回测报告
+      </Button>
+      <Button
+        size="small"
+        icon={<LineChartOutlined />}
+        onClick={() => setTrendOpen(true)}
+        style={{ marginLeft: 12, borderRadius: 999 }}
+      >
+        策略趋势诊断
+      </Button>
+      {result && !running ? (
+        <Button
+          size="small"
+          type="primary"
+          icon={<CopyOutlined />}
+          onClick={handleCopy}
+          loading={copying}
+          style={{ marginLeft: 12, borderRadius: 999 }}
+        >
+          {copying ? '正在获取K线…' : '复制结果内容'}
+        </Button>
+      ) : null}
+    </div>
+  );
+
+  // 主体内容（抽屉 children / 内嵌页面内容区共用）
+  const content = (
+    <>
       {/* 参数选择区 */}
       <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#12213a' }}>回测日期范围</span>
           <DatePicker.RangePicker
             value={effectiveRange}
-            onChange={setRange}
+            onChange={(v) => { setRange(v); setActiveCategory(null); }}
             disabledDate={disabledDate}
             allowClear={false}
             format="YYYY-MM-DD"
@@ -1260,8 +1392,32 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
             disabled={running}
             style={{ borderRadius: 999 }}
           >
-            {workerRunning ? '全量回测中' : '回测全部'}
+            {workerRunning ? (workerMode === 'category' ? '分类回测中' : '全量回测中') : '回测全部'}
           </Button>
+        </div>
+
+        {/* 策略分类 Tag：点击只回测该分类下的策略，并自动把下方 select 切到该分类的第一个策略 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#12213a' }}>策略分类</span>
+          {STRATEGY_CATEGORIES.map(cat => (
+            <Tag.CheckableTag
+              key={cat.key}
+              checked={activeCategory === cat.key}
+              onChange={() => handleRunCategory(cat)}
+              style={{
+                fontSize: 12,
+                padding: '2px 10px',
+                borderRadius: 999,
+                border: '1px solid ' + (activeCategory === cat.key ? '#722ed1' : '#e5e7eb'),
+                color: activeCategory === cat.key ? '#722ed1' : '#4b5563',
+                background: activeCategory === cat.key ? '#f9f0ff' : '#fafbfd',
+                cursor: workerRunning ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {cat.label}
+            </Tag.CheckableTag>
+          ))}
+          <span style={{ fontSize: 12, color: '#9ca3af' }}>点击分类 Tag 仅回测该类策略（不清空其它缓存、不生成汇总报告）</span>
         </div>
 
         {/* 回测策略选择 */}
@@ -1339,7 +1495,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
             type="info"
             showIcon
             style={{ marginTop: 14 }}
-            message="全量回测进行中（清空回测缓存 → 预热日K线 → 并行预构建 → 全部策略并行回测 → 自动生成回测报告）"
+            message={workerMode === 'category'
+              ? '分类回测进行中（预热日K线 → 预构建回放数据 → 仅回测该分类下的策略，不清空其它缓存）'
+              : '全量回测进行中（清空回测缓存 → 预热日K线 → 并行预构建 → 全部策略并行回测 → 自动生成回测报告）'}
             description={workerLog || '正在启动 worker 进程…'}
           />
         )}
@@ -1749,6 +1907,36 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
           </Modal>
         );
       })()}
+    </>
+  );
+
+  // 内嵌页面模式：不套 Drawer 外壳，渲染为 sticky 标题栏 + 内容区（页面整体滚动）
+  if (embedded) {
+    return (
+      <div style={{ background: '#f7f9fc' }}>
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 5, background: '#fff',
+          borderBottom: '1px solid #eef1f6', padding: '8px 4px 12px',
+          display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8,
+        }}>
+          {headerNode}
+        </div>
+        <div style={{ paddingTop: 16, paddingBottom: 96 }}>
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Drawer
+      open={open}
+      onClose={onClose}
+      width={1060}
+      title={headerNode}
+      styles={{ body: { padding: 16, paddingBottom: 96, background: '#f7f9fc' } }}
+    >
+      {content}
     </Drawer>
   );
 };

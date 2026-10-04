@@ -2447,7 +2447,21 @@ app.post('/training_camp/backtest/worker', (req, res) => {
     if (trendDiagnosisJob.status === 'running') {
       return res.json({ success: false, message: '策略趋势诊断正在进行中，请等待其完成后再全量回测' });
     }
-    const { startDate, endDate } = req.body || {};
+    const { startDate, endDate, strategies } = req.body || {};
+    // 可选 strategies：指定时仅强制重跑这些策略（不清空其它回测缓存、不生成汇总报告）
+    let strategyIds = null;
+    if (strategies != null) {
+      const raw = Array.isArray(strategies) ? strategies : String(strategies).split(',');
+      strategyIds = raw.map(s => String(s).trim()).filter(Boolean);
+      if (strategyIds.length === 0) {
+        return res.status(400).json({ success: false, message: '参数错误：strategies 不能为空' });
+      }
+      const unknown = strategyIds.filter(id => !STRATEGIES[id]);
+      if (unknown.length > 0) {
+        return res.status(400).json({ success: false, message: `未知策略: ${unknown.join(', ')}` });
+      }
+      strategyIds = Array.from(new Set(strategyIds));
+    }
     const args = [path.join(__dirname, '../script/backtest-worker.js')];
     if (startDate && endDate) {
       if (!/^\d{8}$/.test(String(startDate)) || !/^\d{8}$/.test(String(endDate))) {
@@ -2457,6 +2471,11 @@ app.post('/training_camp/backtest/worker', (req, res) => {
         return res.status(400).json({ success: false, message: '开始日期不能晚于结束日期' });
       }
       args.push('--start', String(startDate), '--end', String(endDate));
+    }
+    if (strategyIds) {
+      args.push('--strategies', strategyIds.join(','));
+      // 冷缓存下先预热日K线 + 预构建回放数据，避免分类回测逐日串行重建
+      args.push('--prebuild');
     }
     backtestWorkerJob.status = 'running';
     backtestWorkerJob.startedAt = Date.now();

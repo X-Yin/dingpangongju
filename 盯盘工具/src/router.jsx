@@ -13,6 +13,7 @@ import StrategyCenter from './pages/strategy_center/index.jsx';
 import AiPrediction from './pages/ai_prediction/index.jsx';
 import OpeningBattle from './pages/OpeningBattle/index.jsx';
 import TrainingCamp from './pages/trainingCamp/index.jsx';
+import Backtest from './pages/backtest/index.jsx';
 
 const router = createBrowserRouter([
   {
@@ -70,6 +71,10 @@ const router = createBrowserRouter([
       {
         path: 'opening_battle',
         element: <OpeningBattle />,
+      },
+      {
+        path: 'backtest',
+        element: <Backtest />,
       },
       {
         path: 'training_camp',

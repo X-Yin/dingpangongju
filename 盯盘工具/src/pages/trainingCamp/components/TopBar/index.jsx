@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Select, Button, Tag, message, Popconfirm } from 'antd';
-import { CalendarOutlined, WalletOutlined, ApartmentOutlined, ReloadOutlined, BarChartOutlined, SwapOutlined } from '@ant-design/icons';
+import { CalendarOutlined, WalletOutlined, ApartmentOutlined, ReloadOutlined, SwapOutlined } from '@ant-design/icons';
 import TrainingCampGroupModal from '../TrainingCampGroupModal';
-import BacktestDrawer from '../BacktestDrawer';
 import StockIndexCompareDrawer from '../StockIndexCompareDrawer';
 
 const formatDateDisplay = (d) => {
@@ -12,7 +11,6 @@ const formatDateDisplay = (d) => {
 
 const TopBar = ({ dates, groups, selectedDate, onDateChange, onGroupsChange, simPositionCount = 0, onOpenSimPositions, onReset, watchlistOptions = [] }) => {
   const [groupModalOpen, setGroupModalOpen] = useState(false);
-  const [backtestOpen, setBacktestOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
   // 当前应用的分组：应用后下拉列表仅显示该分组日期
   const [appliedGroup, setAppliedGroup] = useState(null);
@@ -91,14 +89,6 @@ const TopBar = ({ dates, groups, selectedDate, onDateChange, onGroupsChange, sim
         </Button>
         <Button
           type="primary"
-          icon={<BarChartOutlined />}
-          onClick={() => setBacktestOpen(true)}
-          style={{ background: '#722ed1', borderColor: '#722ed1' }}
-        >
-          买卖点回测
-        </Button>
-        <Button
-          type="primary"
           icon={<SwapOutlined />}
           onClick={() => setCompareOpen(true)}
           style={{ background: '#1677ff', borderColor: '#1677ff' }}
@@ -114,12 +104,6 @@ const TopBar = ({ dates, groups, selectedDate, onDateChange, onGroupsChange, sim
         groups={groups}
         onGroupsChange={onGroupsChange}
         onApplyGroup={handleApplyGroup}
-      />
-
-      <BacktestDrawer
-        open={backtestOpen}
-        onClose={() => setBacktestOpen(false)}
-        dates={dates}
       />
 
       <StockIndexCompareDrawer

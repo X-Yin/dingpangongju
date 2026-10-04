@@ -1141,6 +1141,11 @@ function App() {
       label: '策略中心',
     },
     {
+      key: '/backtest',
+      icon: <BarChartOutlined />,
+      label: '买卖点回测',
+    },
+    {
       key: '/training_camp',
       icon: <TrophyOutlined />,
       label: '训练营',

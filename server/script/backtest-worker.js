@@ -14,7 +14,8 @@
 //   node script/backtest-worker.js --workers 3     指定并行进程数（默认 8）
 // 可选参数：
 //   --start YYYYMMDD --end YYYYMMDD   指定日期范围（常规策略默认最近 60 个交易日）
-//   --strategies id1,id2              单进程串行强制重跑指定策略（调试用）
+//   --strategies id1,id2              单进程串行强制重跑指定策略（分类回测用；不清空其它缓存、不生成汇总报告）
+//   --prebuild                        与 --strategies 连用：先预热日K线 + 预构建回放数据再回测
 //   --group N                         单进程串行强制重跑第 N 组（调试用，兼容旧的分终端模式，组只含常规策略）
 //   --run-missing                     汇总时对缺失缓存的策略现场串行回测补齐（默认仅汇总已有缓存）
 //   --build-dates d1,d2,...           内部参数：预构建子进程，逐日构建回放数据并落盘，请勿手动使用
@@ -45,6 +46,7 @@ const parseArgs = (argv) => {
     else if (a === '--start') args.start = argv[++i];
     else if (a === '--end') args.end = argv[++i];
     else if (a === '--strategies') args.strategies = String(argv[++i]).split(',').map(s => s.trim()).filter(Boolean);
+    else if (a === '--prebuild') args.prebuild = true;
   }
   return args;
 };
@@ -636,6 +638,22 @@ const main = async () => {
       strategyIds = groups[args.group - 1];
     }
     const r = pickRange(strategyIds);
+    if (args.prebuild) {
+      // 分类回测：先预热日K线 + 预构建回放数据，避免冷缓存时逐日串行重建
+      try {
+        const t0 = Date.now();
+        const warmed = await prewarmKlineCache();
+        console.log(`日K线文件缓存预热完成: ${warmed.total - warmed.fetched} 命中 / ${warmed.fetched} 新拉取（${((Date.now() - t0) / 1000).toFixed(1)}s）`);
+      } catch (e) {
+        console.error(`日K线预热失败（不影响后续流程，子进程将自行拉取）: ${e.message}`);
+      }
+      const hasEmo3 = strategyIds.some(id => isEmo3AvgStrategy(id));
+      const allDates = hasEmo3
+        ? Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]))
+        : getTrainingCampDates();
+      const buildDates = allDates.filter(d => d >= r.startDate && d <= r.endDate && d < beijingToday()).sort();
+      await runPrebuild(buildDates, workerCount, { allowMissingFund: hasEmo3 });
+    }
     await runStandalone(strategyIds, r.startDate, r.endDate);
     return;
   }
