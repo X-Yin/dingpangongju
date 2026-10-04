@@ -30,7 +30,7 @@ const KEY_BLOCK_DESC = (n) => `唯一买卖开关 = 创业板指 3 日线斜率�
 // 逆周期情绪游资-N日涨幅最大系列统一描述（iceMode: true；复用重点板块引擎 runKeyBlockBacktest）：
 // 信号指数 = 上证指数 3 日线斜率（与重点板块系列的创业板口径不同、且方向相反）——斜率为正买入、为负卖出；
 // 只用「防御+中性」tag 板块成分股，全仓；转正事件次日 9:40 空仓可补买一次
-const ICE_DESC = (n) => `逆周期情绪游资系列：唯一买卖开关 = 上证指数 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，逐桶实时判定）的正负方向——斜率为正买入、为负卖出，不需要资金/成交量/情绪等任何条件配合。买点：斜率由负转正、且当前空仓、且前一交易日收盘口径斜率为负（即「前一日为负、今日盘中才转正」才算一次出手机会，前一日收盘已为正时今日盘中由负转正不计）时，在转正当日 **9:40 及以后**的桶执行买入（至少等到 9:40，给抗分歧分数留出盘中分时计算窗口），或在同一转正事件的次日开盘 10 分钟后（9:40 桶）空仓补买一次，买入重点板块中 tag 为「防御」「中性」的全部板块成分股（去重、剔除 ST；不做历史涨停扩展）中最近 ${n} 个交易日（不含当日，截至前一交易日收盘）个股涨幅之和最大的一只，全仓买入。卖点：上证指数 3 日线斜率分时由正转负 ∪ 个股分时价跌破成本线 -5% 止损，双卖点任一先触发即卖（买入次日起生效）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 ${n} 日涨幅排名的下一只；候选全部不可买时在后续桶持续重试（转正次日起仅在 9:40 及以后的桶重试）；买入价取触发桶分时价。买入时点抗分歧指数需 ≥ 9（不足者按 ${n} 日涨幅排名顺延至下一只；防御股不跟与科技绑定的创业板指——主板（60/00）跟踪上证指数 sh000001、创业板（30）跟踪创业板指 sz399006、科创板（68）跟踪科创 50 sh000688；分时不足 5 分钟无法计算时放行）。同时要求买入时该股前期连续上涨不超过 1 个交易日（买入日之前最近 1 个交易日可为涨、再往前一日不可为正；不满足者同样按 ${n} 日涨幅顺延至下一只），用以剔除表面逆周期、实则随科技情绪同频上涨的顺周期个股。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无转正则不建仓`;
+const ICE_DESC = (n) => `逆周期情绪游资系列：唯一买卖开关 = 上证指数 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，逐桶实时判定）的正负方向——斜率为正买入、为负卖出，不需要资金/成交量/情绪等任何条件配合。买点：斜率由负转正、且当前空仓、且前一交易日收盘口径斜率为负（即「前一日为负、今日盘中才转正」才算一次出手机会，前一日收盘已为正时今日盘中由负转正不计）时，在转正当日 **9:40 及以后**的桶执行买入（至少等到 9:40，给抗分歧分数留出盘中分时计算窗口），或在同一转正事件的次日开盘 10 分钟后（9:40 桶）空仓补买一次，买入重点板块中 tag 为「防御」「中性」的全部板块成分股（去重、剔除 ST；不做历史涨停扩展）中最近 ${n} 个交易日（不含当日，截至前一交易日收盘）个股涨幅之和最大的一只，全仓买入。卖点：上证指数 3 日线斜率分时由正转负 ∪ 个股分时价跌破成本线 -2% 止损，双卖点任一先触发即卖（买入次日起生效）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 ${n} 日涨幅排名的下一只；候选全部不可买时在后续桶持续重试（转正次日起仅在 9:40 及以后的桶重试）；买入价取触发桶分时价。买入时点抗分歧指数需 ≥ 9（不足者按 ${n} 日涨幅排名顺延至下一只；防御股不跟与科技绑定的创业板指——主板（60/00）跟踪上证指数 sh000001、创业板（30）跟踪创业板指 sz399006、科创板（68）跟踪科创 50 sh000688；分时不足 5 分钟无法计算时放行）。同时要求买入时该股前期连续上涨不超过 1 个交易日（买入日之前最近 1 个交易日可为涨、再往前一日不可为正；不满足者同样按 ${n} 日涨幅顺延至下一只），用以剔除表面逆周期、实则随科技情绪同频上涨的顺周期个股。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无转正则不建仓`;
 
 // 情绪开关系列阈值（prev{N}d_fall_low5_day_gain_emoswitch，2026-10-03 用户新增）：
 // 触发买点时取上一交易日科技情绪指数的 3 日 EMA（getTechEmotionEmaMap，与情绪页「三日均值」曲线同源同算法），
@@ -101,12 +101,13 @@ const STRATEGIES = {
   key_block_5d_gain: { id: 'key_block_5d_gain', name: '重点板块-5日最高涨幅', desc: KEY_BLOCK_DESC(5), keyBlockDays: 5, costLinePct: 2 },
 
   // 逆周期情绪游资-N日涨幅最大系列（2026-10-04 用户新增；iceMode: true → 复用 runKeyBlockBacktest，
-  // 但与大盘逆周期：斜率由正转负才买、转正即卖；只用「防御+中性」tag 板块，全仓；转负次日 9:40 可补买）
-  hot_money_ice_2d_gain: { id: 'hot_money_ice_2d_gain', name: '逆周期情绪游资-前2日涨幅最大', desc: ICE_DESC(2), keyBlockDays: 2, iceMode: true, costLinePct: 5 },
-  hot_money_ice_3d_gain: { id: 'hot_money_ice_3d_gain', name: '逆周期情绪游资-前3日涨幅最大', desc: ICE_DESC(3), keyBlockDays: 3, iceMode: true, costLinePct: 5 },
-  hot_money_ice_4d_gain: { id: 'hot_money_ice_4d_gain', name: '逆周期情绪游资-前4日涨幅最大', desc: ICE_DESC(4), keyBlockDays: 4, iceMode: true, costLinePct: 5 },
-  hot_money_ice_5d_gain: { id: 'hot_money_ice_5d_gain', name: '逆周期情绪游资-前5日涨幅最大', desc: ICE_DESC(5), keyBlockDays: 5, iceMode: true, costLinePct: 5 },
-  hot_money_ice_10d_gain: { id: 'hot_money_ice_10d_gain', name: '逆周期情绪游资-前10日涨幅最大', desc: ICE_DESC(10), keyBlockDays: 10, iceMode: true, costLinePct: 5 },
+  // 但与大盘逆周期：斜率由正转负才买、转正即卖；只用「防御+中性」tag 板块，全仓；转负次日 9:40 可补买；
+  // 成本线止损为 -2%（costLinePct: 2，区别于重点板块防御持仓的 -5%））
+  hot_money_ice_2d_gain: { id: 'hot_money_ice_2d_gain', name: '逆周期情绪游资-前2日涨幅最大', desc: ICE_DESC(2), keyBlockDays: 2, iceMode: true, costLinePct: 2 },
+  hot_money_ice_3d_gain: { id: 'hot_money_ice_3d_gain', name: '逆周期情绪游资-前3日涨幅最大', desc: ICE_DESC(3), keyBlockDays: 3, iceMode: true, costLinePct: 2 },
+  hot_money_ice_4d_gain: { id: 'hot_money_ice_4d_gain', name: '逆周期情绪游资-前4日涨幅最大', desc: ICE_DESC(4), keyBlockDays: 4, iceMode: true, costLinePct: 2 },
+  hot_money_ice_5d_gain: { id: 'hot_money_ice_5d_gain', name: '逆周期情绪游资-前5日涨幅最大', desc: ICE_DESC(5), keyBlockDays: 5, iceMode: true, costLinePct: 2 },
+  hot_money_ice_10d_gain: { id: 'hot_money_ice_10d_gain', name: '逆周期情绪游资-前10日涨幅最大', desc: ICE_DESC(10), keyBlockDays: 10, iceMode: true, costLinePct: 2 },
 
   // 尾盘抄底系列（tailDip: true → 买入信号仅取尾盘抄底命中，不走买点诊断 allPassed；卖点走专属逐分钟环比规则）
   tail_dip_1d_gain: { id: 'tail_dip_1d_gain', name: '尾盘抄底-当日涨幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日涨幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出', tailDip: true },
@@ -2468,6 +2469,7 @@ const withResilienceGateInfo = (buyInfo, picked) => {
 //   防御（mode='defense'，买防御+中性 tag 板块内 n 日涨幅最大者）：
 //     买点：斜率由正转负且当前空仓的当桶
 //     卖点：斜率由负转正当桶 ∪ 个股分时价跌破成本线 -5% 止损（双卖点任一先触发即卖，同桶可转手买入进攻股）
+//           （逆周期情绪游资 iceMode 方向相反且止损为 -2%，见 ICE_DESC / costLinePct）
 //     仓位：创业板情绪低迷期按半仓买入（weight=0.5），个股实际收益 rawReturnRate × 0.5 记入
 //           returnRate / buyReturn；整体收益与平均/最大回撤均按折算后口径（2026-10-01 用户要求）
 // 斜率符号跨日连续追踪（lastSlopeSign），初值取回测首日前一交易日收盘斜率；null 桶不更新基准；
@@ -3460,7 +3462,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
 
     // 当日隔夜持仓卖出数据预建（当日买入次日才可卖，同日买入不可同日卖出）：
     //   进攻持仓 → 通用 7 条件卖点诊断所需的日收盘斜率门禁（「科技板块情绪退潮」条件）+ 非自选股合成逐桶数据
-    //   防御持仓 → 持仓股当日分时（双卖点：斜率由负转正当桶 ∪ 个股分时价跌破成本线 -5%）
+    //   防御持仓 → 持仓股当日分时（双卖点：斜率翻转当桶 ∪ 个股分时价跌破成本线止损 -5%/-2%）
     let sellBuckets = timeBuckets;
     let sellReplayStocks = replayStocks;
     let cybMa3SlopeForGate = null;
@@ -3506,7 +3508,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
 
     // 逐桶状态机（2026-10-01 重构）：
     //   ① 盘中实时斜率（null 桶不参与翻转识别，符号基准跨缺失桶连续）→ 识别由负转正/由正转负
-    //   ② 卖出：防御持仓遇「由负转正」或「个股跌破成本线 -5%」即按分时价卖出；进攻持仓走通用 7 条件卖点诊断，
+    //   ② 卖出：防御持仓遇斜率翻转或「个股跌破成本线止损（重点板块 -5% / 情绪游资 -2%）」即按分时价卖出；进攻持仓走通用 7 条件卖点诊断，
     //          卖出后斜率仍为正则当日不再追买（offenseBlockDate），挂次日 9:40 复测意图
     //   ③ 空仓时翻转事件生成入场意图：由正转负→防御（独立规则，即使刚卖出也生效）；
     //          由负转正→进攻（进攻卖出当日除外）；同桶允许先卖后买转手
@@ -3525,15 +3527,19 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       // ===== ② 卖出（仅隔夜持仓） =====
       if (position && dateStr > position.buyDate) {
         if (position.mode === 'defense' && defensePoints && defensePoints.length > 0) {
-          // 防御双卖点：① 斜率由负转正的当桶 ② 个股分时价跌破成本线 -5%（2026-10-01 新增止损）
+          // 防御双卖点：① 斜率翻转的当桶 ② 个股分时价跌破成本线止损
+          //   重点板块防御持仓 → -5%（KEY_BLOCK_DEFENSE_STOP_LOSS_PCT）；逆周期情绪游资 → -2%（策略 costLinePct）
           // 任一先触发即卖出；止损在每个桶都会检查（因为不依赖斜率翻转事件）
+          const stopLossPct = iceMode
+            ? (position.costLinePct != null ? Number(position.costLinePct) : 2)
+            : KEY_BLOCK_DEFENSE_STOP_LOSS_PCT;
           let atPt = null;
           for (const p of defensePoints) { if (p.minute <= bucketMinute) atPt = p; else break; }
           if (atPt) {
             const rawReturnRate = position.buyPrice > 0
               ? parseFloat((((atPt.lastPx - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
               : null;
-            const stopLossHit = rawReturnRate != null && rawReturnRate <= -KEY_BLOCK_DEFENSE_STOP_LOSS_PCT;
+            const stopLossHit = rawReturnRate != null && rawReturnRate <= -stopLossPct;
             // 逆周期情绪游资卖点为「上证 3 日线斜率由正转负」，与创业板口径（由负转正）方向相反
             const slopeSellHit = iceMode ? turnedNegative : turnedPositive;
             if (slopeSellHit || stopLossHit) {
@@ -3549,7 +3555,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
                 : `创业板指3日线斜率盘中由负转正（${fmtKeyBlockSlope(lastSlopeValue)} → ${fmtKeyBlockSlope(slopeNow)}）`;
               const sellTrigger = slopeSellHit
                 ? slopeTurnText
-                : `持仓个股分时价跌破成本线 -${KEY_BLOCK_DEFENSE_STOP_LOSS_PCT}% 止损（成本 ${position.buyPrice.toFixed(2)} → 现价 ${parseFloat(Number(atPt.lastPx).toFixed(2))}，浮亏 ${rawReturnRate}%）`;
+                : `持仓个股分时价跌破成本线 -${stopLossPct}% 止损（成本 ${position.buyPrice.toFixed(2)} → 现价 ${parseFloat(Number(atPt.lastPx).toFixed(2))}，浮亏 ${rawReturnRate}%）`;
               trades.push({
                 seq: trades.length + 1,
                 metric: position.metric,
