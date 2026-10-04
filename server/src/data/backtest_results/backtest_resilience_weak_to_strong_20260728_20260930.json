@@ -723,13 +723,13 @@
           "reason": "科创50 斜率 +10.55 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
         }
       ],
-      "sellDate": "20260928",
-      "sellDateDisplay": "2026-09-28",
-      "sellTime": "09:45",
-      "sellPrice": 223.63,
-      "sellChange": -3.2,
-      "sellReason": "均线破位",
-      "returnRate": -1.47
+      "sellDate": "20260922",
+      "sellDateDisplay": "2026-09-22",
+      "sellTime": "14:55",
+      "sellPrice": 236.34,
+      "sellChange": -3.14,
+      "sellReason": "5日内收益率过低",
+      "returnRate": 4.13
     },
     {
       "seq": 6,
@@ -804,11 +804,11 @@
   "currentHolding": null,
   "summary": {
     "tradeCount": 6,
-    "winCount": 3,
-    "winRate": 50,
-    "avgDrawdown": -3.47,
+    "winCount": 4,
+    "winRate": 66.67,
+    "avgDrawdown": -4.46,
     "maxDrawdown": -5.91,
-    "overallReturn": 1.29,
+    "overallReturn": 7.05,
     "holding": false
   }
 }

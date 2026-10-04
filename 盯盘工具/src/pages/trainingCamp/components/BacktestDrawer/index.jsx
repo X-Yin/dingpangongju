@@ -869,6 +869,16 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     }
   };
 
+  const autoCopyStrategyLabel = async (v) => {
+    // 选中策略后自动把策略名称复制到剪贴板
+    const label = STRATEGY_OPTIONS.find(o => o.value === v)?.label;
+    if (label) {
+      const ok = await copyToClipboard(label);
+      if (ok) message.success('复制名称成功');
+      else message.warning('复制失败，请手动复制');
+    }
+  };
+
   // 切换策略：策略类别（三日情绪冰点 / 情绪游资 / 常规）变化时重置手动日期，回退到该类别的默认范围；
   // 选中后自动复制策略名称到剪贴板
   const handleStrategyChange = async (v) => {
@@ -877,13 +887,6 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       setResult(null);
     }
     setStrategy(v);
-    // 选中策略后自动把策略名称复制到剪贴板
-    const label = STRATEGY_OPTIONS.find(o => o.value === v)?.label;
-    if (label) {
-      const ok = await copyToClipboard(label);
-      if (ok) message.success('复制名称成功');
-      else message.warning('复制失败，请手动复制');
-    }
   };
 
   const startPolling = (taskId, opts = {}) => {
@@ -1320,6 +1323,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
           <Select
             value={strategy}
             onChange={handleStrategyChange}
+            onSelect={autoCopyStrategyLabel}
             disabled={running}
             style={{ flex: 1, minWidth: 240, maxWidth: 360 }}
             options={STRATEGY_OPTIONS}
@@ -1771,12 +1775,12 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                 {
                   key: 'buy',
                   label: `买入规则（${buyRules.length} 条）`,
-                  children: (<div style={{ height: 400,overflowY: 'auto' }}>{buyRules.map(ruleRow)}</div>),
+                  children: (<div style={{ height: 400, overflowY: 'auto' }}>{buyRules.map(ruleRow)}</div>),
                 },
                 {
                   key: 'sell',
                   label: `卖出规则（${sellRules.length} 条）`,
-                  children: (<div style={{ height: 400,overflowY: 'auto' }}>{sellRules.map(ruleRow)}</div>),
+                  children: (<div style={{ height: 400, overflowY: 'auto' }}>{sellRules.map(ruleRow)}</div>),
                 },
               ]}
             />
