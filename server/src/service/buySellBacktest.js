@@ -52,6 +52,12 @@ const EMO_QUICK_RANGE_HIGH = 20;
 //   2) 上上个、上个交易日的当日科技情绪原始分（非 3 日 EMA）均处 (-30, 20) 区间且上个 > 上上个（情绪温和回升）
 const EMO_QUICK_DESC = (n) => `买点命中时按「${n} 日涨幅最大」选股买入${n === 2 ? '（排序依据为触发时点当日盘中涨幅，非 2 日窗口累计涨幅）' : `（最近 ${n} 个交易日涨幅最大）`}，买点触发时均可正常买入、不跳过；买入时先取上一交易日科技情绪指数的 3 日 EMA 与上两个交易日的当日科技情绪原始分（tech_index.json 每日收盘情绪分，与情绪页同源，EMA 不含当日、当日分即当日收盘值），满足以下任一条件则本次买入标记为「快进快出」——该笔持仓不走通用 7 条件卖点，买入次日上午 10:00 强制卖出（取当日第一个 ≥10:00 的分时点价格，分时未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），且强卖当日禁止二次买入（哪怕买点再次触发也不买）：① 上一交易日 3 日 EMA 低于 -60；② 上上个与上个交易日的当日科技情绪均处于 -30~20 区间（不含边界）且上个交易日高于上上个交易日（情绪温和回升）；两条件均不满足（或数据缺失）时为普通持仓，走通用 7 条件卖点。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效`;
 
+// 快进快出 × 研报覆盖双门策略描述（highest_3d_reports_top5_gain_emoquick，2026-10-04 用户新增）：
+// 在 highest_3d_gain_emoquick 的基础上：仅当触发「上一交易日 3 日 EMA < -60」这条快进快出路径时，
+// 选股口径从「3日涨幅最大」改为「最近 3 日研报覆盖数前五（含并列）→ 组内 3 日涨幅最大」；
+// 温和回升快进快出路径 / 非快进快出路径 仍走原 3 日涨幅最大选股
+const EMO_QUICK_REPORTS_DESC = `买点命中时均可正常买入、不跳过；满足以下任一条件则本次买入标记为「快进快出」——该笔持仓不走通用 7 条件卖点，买入次日上午 10:00 强制卖出（取当日第一个 ≥10:00 的分时点价格，分时未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），且强卖当日禁止二次买入（哪怕买点再次触发也不买）：① 上一交易日科技情绪 3 日 EMA < -60；② 上上个与上个交易日的当日科技情绪均处于 -30~20 区间（不含边界）且上个交易日高于上上个交易日（情绪温和回升）。选股口径分三路：走①时先取「最近 3 日研报覆盖数前五（含并列，仅统计买点前已创建的研报）」形成候选池，再从中选 3 日涨幅最大的一只（博弈反弹提胜率）；走②或两条件均不满足时仍按「3 日涨幅最大」选股（最近 3 个交易日涨幅之和最大）。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效`;
+
 // 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
 const STRATEGIES = {
   highest_gain: { id: 'highest_gain', name: '买入最高涨幅', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票' },
@@ -84,6 +90,10 @@ const STRATEGIES = {
   highest_3d_gain_emoquick: { id: 'highest_3d_gain_emoquick', name: '3日涨幅最大&三日情绪-60快进快出', desc: EMO_QUICK_DESC(3), emoQuickOut: true },
   highest_4d_gain_emoquick: { id: 'highest_4d_gain_emoquick', name: '4日涨幅最大&三日情绪-60快进快出', desc: EMO_QUICK_DESC(4), emoQuickOut: true },
   highest_5d_gain_emoquick: { id: 'highest_5d_gain_emoquick', name: '5日涨幅最大&三日情绪-60快进快出', desc: EMO_QUICK_DESC(5), emoQuickOut: true },
+  // 快进快出 × 研报覆盖双门策略：仅当快进快出的触发条件是「上一交易日 3 日 EMA < -60」时，
+  // 选股口径从「3日涨幅最大」改为「最近 3 日研报覆盖数前五（含并列）→ 组内 3 日涨幅最大」；
+  // 温和回升路径 / 非快进快出路径仍走原 3 日涨幅最大；卖出行为与 highest_3d_gain_emoquick 完全一致
+  highest_3d_reports_top5_gain_emoquick: { id: 'highest_3d_reports_top5_gain_emoquick', name: '3日涨幅最大&三日情绪-60快进快出&研报覆盖', desc: EMO_QUICK_REPORTS_DESC, emoQuickOut: true },
 
   // 重点板块-N日最高涨幅系列（keyBlockDays → 独立板块驱动回测 runKeyBlockBacktest：斜率双模式 + tag 板块选股，触发桶买入）
   key_block_2d_gain: { id: 'key_block_2d_gain', name: '重点板块-2日最高涨幅', desc: KEY_BLOCK_DESC(2), keyBlockDays: 2, costLinePct: 2 },
@@ -1989,6 +1999,39 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     return quickPicked;
   }
 
+  // 快进快出 × 研报覆盖双门策略（highest_3d_reports_top5_gain_emoquick，2026-10-04 用户新增）：
+  // 在 highest_3d_gain_emoquick 的基础上，仅当快进快出的触发条件是「上一交易日 3 日 EMA < -60」时，
+  // 选股口径从「3日涨幅最大」改为「最近 3 日研报覆盖数前五（含并列）→ 组内 3 日涨幅最大」
+  // （委托到已有的 highest_3d_reports_top5_gain 策略，天然走 isTop5ReportGainMode 分支）；
+  // 温和回升快进快出路径 / 非快进快出路径 / EMA 缺失时 → 仍委托 highest_3d_gain
+  // 卖出行为（emoQuickOut 标注 + 次日 10:00 强卖）与 highest_3d_gain_emoquick 完全一致
+  if (strategyId === 'highest_3d_reports_top5_gain_emoquick') {
+    const prevDateStr = di > 0 ? String(rangeDates[di - 1]) : null; // 上一交易日
+    const prev2DateStr = di > 1 ? String(rangeDates[di - 2]) : null; // 上上个交易日
+    const prevEma = prevDateStr != null ? getTechEmotionEmaMap().get(prevDateStr) : null;
+    const prevRaw = prevDateStr != null ? getTechEmotionRawMap().get(prevDateStr) : null;
+    const prev2Raw = prev2DateStr != null ? getTechEmotionRawMap().get(prev2DateStr) : null;
+    const quickByEmaBelow = prevEma != null && prevEma < EMO_SWITCH_EMA_THRESHOLD;
+    const quickByRangeRising = prev2Raw != null && prevRaw != null
+      && prev2Raw > EMO_QUICK_RANGE_LOW && prev2Raw < EMO_QUICK_RANGE_HIGH
+      && prevRaw > EMO_QUICK_RANGE_LOW && prevRaw < EMO_QUICK_RANGE_HIGH
+      && prevRaw > prev2Raw;
+    // 关键：只有走「上一交易日 3 日 EMA < -60」这条快进快出路径才切换到研报前五选股；
+    // 温和回升 / 数据缺失 / 非快进快出 都用原 3 日涨幅最大选股
+    const delegateId = quickByEmaBelow ? 'highest_3d_reports_top5_gain' : 'highest_3d_gain';
+    const quickPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, delegateId, axisOffset, allowedMarkets, turnedPosInfo);
+    if (quickPicked) {
+      quickPicked.emoQuickOut = {
+        quickOut: quickByEmaBelow || quickByRangeRising,
+        trigger: quickByEmaBelow ? 'ema_below' : (quickByRangeRising ? 'range_rising' : null),
+        ema: prevEma != null ? Number(prevEma.toFixed(2)) : null,
+        prevRaw: prevRaw != null ? Number(prevRaw.toFixed(2)) : null,
+        prev2Raw: prev2Raw != null ? Number(prev2Raw.toFixed(2)) : null,
+      };
+    }
+    return quickPicked;
+  }
+
   // 涨幅/抗分歧窗口按 days 天
   let winDates;
   if (strategyId === 'highest_gain') {
@@ -2676,7 +2719,8 @@ const fmtCybGateDate = (d) => {
 // N 日涨幅最大系列买入环境门禁（2026-10-02 用户新增；盘中实时口径；跨指数双门禁）：
 //   创业板指 3 日线斜率（sz399006）跟踪 主板（60/00）+ 创业板（30）自选股
 //   科创 50  3 日线斜率（sh000688）跟踪 科创板（68）自选股
-// 三条规则（按优先级）：① slope<0 始终允许；② 由负转正当天+次日允许；③ 由正转负第一天禁止
+// 三条规则（按优先级）：① slope<0 且不在转负两日禁入窗口 → 始终允许；② 由负转正当天+次日允许；
+//   ③a 今日盘中由正转负 → 当日禁止；③b 转负后第 1 天（前一交易日转负且今日 slope<0 盘中未转正）→ 次日也禁止
 // 买入选股时，根据两个指数各自门禁是否允许，过滤出允许的市场集合，
 // 只从允许的集合中选 N 日涨幅最大；两个都允许 → 全池；都禁止 → 跳过买入
 // 仅对常规 N 日涨幅最大策略启用，key_block / tail_dip / sentiment 系列有各自独立门禁

@@ -2817,6 +2817,109 @@ app.get('/training_camp/backtest/trend_diagnosis/monthly/detail', (req, res) => 
   }
 });
 
+// ============================================================
+// 时间伸缩测试（time-flex）：固定结束日，逐日平移回测起始日
+// 前端传入 strategy + endDate；服务端从最早可用交易日遍历到「endDate 前 10 个交易日」，
+// 每个起始日依次回测 strategy→endDate。先查回测缓存，命中则跳过；未命中则现场回测并落缓存。
+// 返回：每个起始日的 summary 指标（overallReturn/tradeCount/avgDrawdown/maxDrawdown/winRate），
+// 供前端绘制收益率折线图；前端点击折线点时再调用 /backtest/cache 拿完整逐笔明细。
+const timeFlexJob = { status: 'idle', startedAt: null, endedAt: null, error: null, total: 0, current: 0, items: [], lastLog: '' };
+
+const TIME_FLEX_MIN_OFFSET = 10; // 距离 endDate 至少保留 10 个交易日作为最小窗口
+app.post('/training_camp/backtest/time_flex', async (req, res) => {
+  try {
+    const { endDate, strategy, maxStartDate } = req.body || {};
+    if (!endDate || !/^\d{8}$/.test(endDate)) {
+      return res.status(400).json({ success: false, message: '参数错误：endDate 需为 YYYYMMDD' });
+    }
+    const strategyId = STRATEGIES[strategy] ? strategy : Object.keys(STRATEGIES)[0];
+    if (timeFlexJob.status === 'running') {
+      return res.json({ success: true, running: true, message: '时间伸缩测试已在进行中' });
+    }
+    const campDates = [...getTrainingCampDates()].sort();
+    if (campDates.length === 0) return res.status(500).json({ success: false, message: '无可回测交易日' });
+    // 可用日期：<= endDate，且严格早于北京今天（回测必须是已完结交易日）
+    const today = beijingToday();
+    const available = campDates.filter(d => d <= endDate && d < today);
+    if (available.length <= TIME_FLEX_MIN_OFFSET) {
+      return res.status(400).json({ success: false, message: `endDate 可用交易日不足 ${TIME_FLEX_MIN_OFFSET + 1} 个` });
+    }
+    const earliest = available[0];
+    // 最大起始日：endDate 往前推 10 个交易日（即 available 数组从后往前第 11 个）
+    const maxStart = available[available.length - TIME_FLEX_MIN_OFFSET - 1];
+    // 如果前端限制了最大起始日（例如手动指定的基准回测范围起点），取两者较晚者
+    const finalMaxStart = (maxStartDate && /^\d{8}$/.test(maxStartDate))
+      ? (maxStartDate > maxStart ? maxStart : maxStartDate)
+      : maxStart;
+    const startDates = available.filter(d => d >= earliest && d <= finalMaxStart);
+
+    timeFlexJob.status = 'running';
+    timeFlexJob.startedAt = Date.now();
+    timeFlexJob.endedAt = null;
+    timeFlexJob.error = null;
+    timeFlexJob.total = startDates.length;
+    timeFlexJob.current = 0;
+    timeFlexJob.items = [];
+    timeFlexJob.lastLog = `策略 ${strategyId}｜共 ${startDates.length} 个起始日｜窗口 ${earliest} → ${endDate}…${finalMaxStart} → ${endDate}`;
+
+    (async () => {
+      for (let i = 0; i < startDates.length; i++) {
+        const s = startDates[i];
+        timeFlexJob.current = i + 1;
+        timeFlexJob.lastLog = `时间伸缩测试：${s} → ${endDate}（${i + 1}/${startDates.length}）`;
+        try {
+          const cached = readCachedBacktest(strategyId, s, endDate);
+          let payload = cached;
+          if (!payload) {
+            const fresh = await runRangeBacktest(s, endDate, strategyId, null);
+            if (fresh?.success) writeCachedBacktest(strategyId, s, endDate, fresh);
+            payload = fresh;
+          }
+          const summary = payload?.summary || null;
+          const item = {
+            startDate: s,
+            endDate,
+            cached: !!(cached && cached.success),
+            summary: summary ? {
+              tradeCount: summary.tradeCount || 0,
+              winCount: summary.winCount || 0,
+              winRate: summary.winRate != null ? Number(summary.winRate) : null,
+              avgDrawdown: summary.avgDrawdown != null ? Number(summary.avgDrawdown) : null,
+              maxDrawdown: summary.maxDrawdown != null ? Number(summary.maxDrawdown) : null,
+              overallReturn: summary.overallReturn != null ? Number(summary.overallReturn) : null,
+              holding: !!summary.holding,
+            } : null,
+          };
+          timeFlexJob.items.push(item);
+        } catch (err) {
+          timeFlexJob.items.push({ startDate: s, endDate, cached: false, error: err.message || String(err), summary: null });
+        }
+      }
+      timeFlexJob.status = 'done';
+      timeFlexJob.endedAt = Date.now();
+      timeFlexJob.lastLog = `时间伸缩测试完成，共 ${timeFlexJob.items.length} 个窗口`;
+    })();
+
+    res.json({ success: true, strategy: strategyId, total: startDates.length, earliest, maxStart: finalMaxStart, endDate });
+  } catch (error) {
+    console.error('创建时间伸缩测试任务失败:', error);
+    res.status(500).json({ success: false, message: error.message || '创建时间伸缩测试任务失败' });
+  }
+});
+
+app.get('/training_camp/backtest/time_flex/status', (req, res) => {
+  res.json({
+    success: true,
+    status: timeFlexJob.status, // idle | running | done | error
+    strategy: STRATEGIES ? Object.keys(STRATEGIES)[0] : null,
+    total: timeFlexJob.total,
+    current: timeFlexJob.current,
+    lastLog: timeFlexJob.lastLog,
+    error: timeFlexJob.error,
+    result: timeFlexJob.items.slice(), // 已完成的项，running 时前端可据此渲染渐进折线
+  });
+});
+
 // ---------- 买卖点回测报告 ----------
 const backtestReportTasks = new Map(); // taskId -> { status, progress, result, error }
 
