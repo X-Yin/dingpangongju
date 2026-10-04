@@ -39,7 +39,9 @@ const KEY_BLOCK_MODE_META = {
   offense: { text: '进攻·全仓', color: 'red' },
   defense: { text: '防御·半仓', color: 'orange' },
 };
-const KeyBlockModeTag = ({ mode }) => {
+const KeyBlockModeTag = ({ mode, ice }) => {
+  // 逆周期情绪游资：复用 key_block 引擎但为全仓买入（权重 1，不做半仓折算）
+  if (ice && mode === 'defense') return <Tag color="purple" style={{ marginInlineEnd: 0 }}>逆周期·全仓</Tag>;
   const meta = KEY_BLOCK_MODE_META[mode];
   if (!meta) return null;
   return <Tag color={meta.color} style={{ marginInlineEnd: 0 }}>{meta.text}</Tag>;
@@ -97,6 +99,12 @@ const STRATEGY_OPTIONS = [
   { value: 'key_block_3d_gain', label: '重点板块-3日最高涨幅' },
   { value: 'key_block_4d_gain', label: '重点板块-4日最高涨幅' },
   { value: 'key_block_5d_gain', label: '重点板块-5日最高涨幅' },
+  // 逆周期情绪游资系列（与大盘逆周期：斜率由正转负买入 / 由负转正卖出，全仓）
+  { value: 'hot_money_ice_2d_gain', label: '逆周期情绪游资-前2日涨幅最大' },
+  { value: 'hot_money_ice_3d_gain', label: '逆周期情绪游资-前3日涨幅最大' },
+  { value: 'hot_money_ice_4d_gain', label: '逆周期情绪游资-前4日涨幅最大' },
+  { value: 'hot_money_ice_5d_gain', label: '逆周期情绪游资-前5日涨幅最大' },
+  { value: 'hot_money_ice_10d_gain', label: '逆周期情绪游资-前10日涨幅最大' },
   { value: 'highest_3d_reports', label: '3日研报覆盖数最多' },
   { value: 'highest_5d_reports', label: '5日研报覆盖数最多' },
   { value: 'highest_3d_reports_top5_gain', label: '3日研报前五&涨幅最大' },
@@ -165,6 +173,28 @@ const KEY_BLOCK_SELL_RULES = [
   { key: 'key_block_positive_sells', title: '进攻持仓（科技股）：通用 7 条件卖点（成本线 -2%）', desc: '自选科技股买入的进攻持仓沿用通用 7 条件卖出诊断（跌破10日线/前低/5日线、高位放量大阴线、科技板块情绪退潮、连续三日抗分歧<10、距5日收盘新高、跌停、跌破成本线），满足其一即卖（买入次日起生效）；条件 7「跌破成本线」为 -2%（现价 < 买入价 × 0.98 即触发）；卖出后按「当日不追买、次日 9:40 复测」规则处理（见买入规则）；「科技板块情绪退潮」受创业板指 3 日线斜率门禁（见下）' },
   { key: 'key_block_reverse_sells', title: '防御持仓（防御+中性·半仓）：双卖点 = 斜率由负转正 ∪ 个股跌破成本线 -5%', desc: '防御持仓按半仓买入（账户收益贡献 = 个股实际收益 × 0.5，概览的整体收益与平均/最大回撤均按折算口径），双卖点任一先触发即卖出：① 盘中实时创业板指 3 日线斜率由负转正的那个桶（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替），按该桶时点持仓股分时价卖出；② 个股分时价跌破买入成本线 -5%（现价 < 买入价 × 0.95）即止损卖出。卖出后同桶即按进攻买点扫描买入科技股；持仓股分时拉取失败当日安全跳过，次日重试' },
   { key: 'key_block_emo_gate', title: '科技板块情绪退潮门禁（仅进攻持仓）', desc: '创业板指 3 日线斜率为正（MA3 − 5个交易日前的MA3，按当日收盘已基本定型口径）时，「科技板块情绪退潮」条件才参与进攻（科技股）持仓的卖出判定；斜率为负或数据不足时该条件当日不生效（其余 6 项条件不受影响）；防御持仓不走 7 条件卖点，本门禁不适用' },
+];
+
+// 逆周期情绪游资-N日涨幅最大系列策略（与后端 buySellBacktest.STRATEGIES 的 iceMode + keyBlockDays 保持一致）：
+// 复用重点板块引擎 runKeyBlockBacktest，但与大盘逆周期——斜率由正转负买入、由负转正卖出，全仓
+const ICE_STRATEGY_IDS = [
+  'hot_money_ice_2d_gain',
+  'hot_money_ice_3d_gain',
+  'hot_money_ice_4d_gain',
+  'hot_money_ice_5d_gain',
+  'hot_money_ice_10d_gain',
+];
+const isIceStrategy = (id) => ICE_STRATEGY_IDS.includes(id);
+const ICE_BUY_RULES = [
+  { key: 'ice_cyb_gate', title: '唯一买卖开关：创业板指 3 日线斜率由正转负（盘中实时，与大盘逆周期）', desc: '仅在创业板指 3 日线斜率（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替，逐桶实时判定）**由正转负**时买入：① 转负当日的转负桶触发买入，若候选无效则在当日后续桶持续重试；② 同一转负事件的**次日开盘 10 分钟后（9:40）**若仍空仓则补买一次，仅限「转负当日 + 次日」，超过次日的未成交买点作废。斜率由正转负只需为空仓即可买入（无需资金/量能/情绪等配合）；斜率符号跨日连续追踪，初值取回测首日前一交易日的收盘斜率' },
+  { key: 'ice_pool_full', title: '候选池与仓位：防御+中性 tag 板块全部成分股 · 全仓', desc: '候选 =「防御+中性」tag 板块（板块 tag 在 key_blocks 页面维护，未打 tag 的板块不参与）的**全部成分股**，去重并剔除 ST，**不做历史涨停扩展**（与重点板块系列不同）；按最近 N 个交易日（不含当日，截至前一交易日收盘）个股涨幅之和最大的一只**全仓买入**（权重 1，不做半仓折算）；成交价取触发桶时点的分时价' },
+  { key: 'ice_no_gain', title: '涨停过滤与顺延', desc: '买入时点判断候选股是否涨停：主板（60/00 开头）涨幅 > 9.5% 视为涨停，创业板（30）/科创板（68）涨幅 > 19% 视为涨停；涨停股不可买入，顺延到 N 日涨幅排名的下一只非涨停股票；全部候选涨停或无有效候选时，在过渡桶持续重试' },
+  { key: 'ice_resilience_gate', title: '抗分歧门槛 ≥ 9（主板跟踪上证指数）', desc: '买入时点候选股的抗分歧指数需 **≥ 9**，不足者按 N 日涨幅排名**顺延至下一只**，全部候选均不足则本桶不买、在后续桶继续重试。**跟踪指数按候选市场区分**：因这里是防御性股票，不再统一跟踪与科技绑定的创业板指——主板（60/00）跟踪**上证指数 sh000001**，创业板（30）跟踪创业板指 sz399006，科创板（68）跟踪科创 50 sh000688。抗分歧指数按买入时点截至当时的分时数据现算（与卖点诊断条件4同口径）；分时不足 5 分钟无法计算时放行' },
+  { key: 'ice_up_streak_gate', title: '前期连涨门禁：买入前连续上涨 ≤ 1 天', desc: '买入时该股**前期连续上涨不能超过 1 个交易日**：若买点为 8.4，则最多 8.3 可以是上涨的，但 8.2 涨幅不能也为正（按日K相邻收盘价环比判定连涨天数）。不满足者按 N 日涨幅排名**顺延至下一只**，全部候选均不满足则本桶不买、在后续桶继续重试。用于剔除表面属逆周期板块、实则随科技情绪同频上涨的顺周期个股' },
+];
+const ICE_SELL_RULES = [
+  { key: 'ice_sell_reverse', title: '创业板指 3 日线斜率由负转正（卖点）', desc: '盘中实时创业板指 3 日线斜率由负转正的那个桶即卖出（与买入信号相反：逆周期情绪游资买在斜率转负、卖在斜率转正）；按该桶时点持仓股分时价卖出。斜率转正同时也是**作废尚未成交买入意图**的信号（转负后未及买入即转正 → 放弃本次买入）' },
+  { key: 'ice_sell_stop_loss', title: '个股跌破成本线 -5% 止损', desc: '个股分时价跌破买入成本线 -5%（现价 < 买入价 × 0.95）即止损卖出；全仓买入，卖出后收益率不做半仓折算，直接计入概览（整体收益/平均回撤/单笔最大回撤）' },
 ];
 
 // ============ 策略专属说明（不与通用 BUY_RULES / SELL_RULES 重复） ============
@@ -385,6 +415,44 @@ const STRATEGY_SPECIFIC_NOTES = {
     group: '重点板块系列',
     bullets: [
       '与 key_block_2d_gain 完全相同，唯 N 日窗口 = 5 个交易日。',
+    ],
+  },
+
+  // ---- 逆周期情绪游资系列（hot_money_ice_*） ----
+  hot_money_ice_2d_gain: {
+    group: '逆周期情绪游资系列',
+    bullets: [
+      '**逆周期前提**：当下情绪游资的情绪周期与创业板大盘反向（跷跷板）。买点与卖点都与重点板块系列相反——**买在斜率由正转负（大盘转弱）、卖在斜率由负转正**。若未来 AI 泡沫破裂、指数不再与科技绑定，情绪周期可能转为顺周期，届时再调整。',
+      '买点：**唯一开关 = 创业板指 3 日线斜率由正转负**。① 转负当日的转负桶触发买入；② 同一转负事件的**次日 9:40 补买**一次（转负当日未成交时，次日开盘 10 分钟后仍空仓才买）；超过次日的未成交买点作废。不走通用 BUY_RULES（无需资金/量能/情绪等配合）。',
+      '选股：从「防御+中性」tag 板块（key_blocks 页面维护）的**全部成分股**（去重、剔除 ST，**不做历史涨停扩展**）中，取最近 **2 个交易日**（不含当日，截至前一交易日收盘）个股涨幅之和最大的一只。',
+      '抗分歧门槛：买入时点候选股抗分歧指数需 **≥ 9**，不足者按 N 日涨幅顺延至下一只（全部不足则本桶不买、后续桶重试）。**跟踪指数按市场区分**：主板（60/00）跟踪**上证指数 sh000001**（防御股不跟与科技绑定的创业板指），创业板跟创业板指 sz399006，科创板跟科创 50 sh000688。',
+      '前期连涨门禁：买入时该股**前期连续上涨不能超过 1 个交易日**（若买点为 8.4，则最多 8.3 可以是上涨的，但 8.2 涨幅不能也为正；按日K相邻收盘价环比判定连涨天数），不满足者按 N 日涨幅顺延至下一只。**目的**：防止表面属逆周期板块、实则随科技情绪同频上涨的顺周期个股被选中。',
+      '仓位与卖点：**全仓买入（权重 1，不做半仓折算）**；卖点 = 创业板指 3 日线斜率由负转正 ∪ 个股分时跌破成本线 -5% 止损，任一先触发即卖。',
+      '注：重点板块系列的「进攻/防御」双模式在本系列不适用（本系列恒为全仓防御池），买卖信号方向整体反转。',
+    ],
+  },
+  hot_money_ice_3d_gain: {
+    group: '逆周期情绪游资系列',
+    bullets: [
+      '与 hot_money_ice_2d_gain 完全相同，唯 N 日窗口 = 3 个交易日。',
+    ],
+  },
+  hot_money_ice_4d_gain: {
+    group: '逆周期情绪游资系列',
+    bullets: [
+      '与 hot_money_ice_2d_gain 完全相同，唯 N 日窗口 = 4 个交易日。',
+    ],
+  },
+  hot_money_ice_5d_gain: {
+    group: '逆周期情绪游资系列',
+    bullets: [
+      '与 hot_money_ice_2d_gain 完全相同，唯 N 日窗口 = 5 个交易日。',
+    ],
+  },
+  hot_money_ice_10d_gain: {
+    group: '逆周期情绪游资系列',
+    bullets: [
+      '与 hot_money_ice_2d_gain 完全相同，唯 N 日窗口 = 10 个交易日。',
     ],
   },
 
@@ -632,7 +700,7 @@ const buildSummary = (result) => {
 
 const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const [range, setRange] = useState(null);
-  const [strategy, setStrategy] = useState('highest_3d_gain_emoquick');
+  const [strategy, setStrategy] = useState(localStorage.getItem('latest_training_camp_buy_sell_backtest_strategy') || 'highest_3d_gain_emoquick');
   const [reportOpen, setReportOpen] = useState(false);
   const [trendOpen, setTrendOpen] = useState(false); // 策略趋势诊断弹窗（三档时间范围 × 全部策略）
   const [timeFlexOpen, setTimeFlexOpen] = useState(false); // 时间伸缩测试弹窗
@@ -673,6 +741,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   }, [availableDates, maxDateStr]);
   const curIsEmo3 = isEmo3Strategy(strategy);
   const curIsKeyBlock = KEY_BLOCK_STRATEGY_IDS.includes(strategy);
+  const curIsIce = isIceStrategy(strategy);
   const effectiveRange = range || (curIsEmo3 ? emo3DefaultRange : defaultRange);
 
   // 组件卸载时停止轮询
@@ -750,6 +819,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     }
   };
 
+
   const autoCopyStrategyLabel = async (v) => {
     // 选中策略后自动把策略名称复制到剪贴板
     const label = STRATEGY_OPTIONS.find(o => o.value === v)?.label;
@@ -768,6 +838,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       setResult(null);
     }
     setStrategy(v);
+    localStorage.setItem('latest_training_camp_buy_sell_backtest_strategy', v);
   };
 
   const startPolling = (taskId, opts = {}) => {
@@ -983,8 +1054,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       const pick = effectiveRange;
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
-      const buyRules = curIsKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES;
-      const sellRules = curIsKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES;
+      const buyRules = curIsIce ? ICE_BUY_RULES : (curIsKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES);
+      const sellRules = curIsIce ? ICE_SELL_RULES : (curIsKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES);
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);
@@ -1343,7 +1414,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                       <span style={{ fontSize: 12, fontWeight: 600, color: '#12213a' }}>第{t.seq}笔</span>
                       <span style={{ fontSize: 14, fontWeight: 700, color: '#12213a' }}>{t.stockName}</span>
                       <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{t.code}</span>
-                      <KeyBlockModeTag mode={t.positionMode} />
+                      <KeyBlockModeTag mode={t.positionMode} ice={curIsIce} />
                       {t.metric != null && (
                         <Tag color="purple" style={{ marginInlineEnd: 0 }}>
                           选股指标 {Number(t.metric).toFixed(4)}
@@ -1398,7 +1469,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                             卖出原因 <Tag color="geekblue" style={{ marginInlineEnd: 0 }}>{t.sellReason}</Tag>
                           </span>
                         </div>
-                        {t.positionMode === 'defense' && t.rawReturnRate != null && (
+                        {t.positionMode === 'defense' && t.rawReturnRate != null && Number(t.weight) < 1 && (
                           <div style={{ fontSize: 12, color: '#d46b08', marginTop: 4 }}>
                             防御半仓口径：个股实际收益 {fmtPct(t.rawReturnRate)}，按 50% 仓位折算后计入概览（整体收益/平均回撤/单笔最大回撤）的收益为 {fmtPct(t.returnRate)}
                           </div>
@@ -1415,7 +1486,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
                       <span style={{ fontSize: 12, fontWeight: 600, color: '#12213a' }}>持仓中（未卖出）</span>
                       <span style={{ fontSize: 14, fontWeight: 700, color: '#12213a' }}>{displayResult.currentHolding.stockName}</span>
                       <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{displayResult.currentHolding.code}</span>
-                      <KeyBlockModeTag mode={displayResult.currentHolding.mode || displayResult.currentHolding.positionMode} />
+                      <KeyBlockModeTag mode={displayResult.currentHolding.mode || displayResult.currentHolding.positionMode} ice={curIsIce} />
                       {displayResult.currentHolding.metric != null && (
                         <Tag color="purple" style={{ marginInlineEnd: 0 }}>
                           选股指标 {Number(displayResult.currentHolding.metric).toFixed(4)}
@@ -1594,8 +1665,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
         const opt = STRATEGY_OPTIONS.find(o => o.value === strategy);
         const label = opt?.label || strategy;
         const isKeyBlock = KEY_BLOCK_STRATEGY_IDS.includes(strategy);
-        const buyRules = isKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES;
-        const sellRules = isKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES;
+        const isIce = isIceStrategy(strategy);
+        const buyRules = isIce ? ICE_BUY_RULES : (isKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES);
+        const sellRules = isIce ? ICE_SELL_RULES : (isKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES);
         const notes = STRATEGY_SPECIFIC_NOTES[strategy];
 
         // 将文案中 **xxx** 这种 markdown 粗体标记解析为 React 节点（纯文本不解析）
@@ -1626,8 +1698,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <BookOutlined style={{ color: '#1677ff' }} />
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#12213a' }}>策略说明</span>
-                <Tag color={isKeyBlock ? 'orange' : curIsEmo3 ? 'gold' : 'blue'} style={{ marginLeft: 8 }}>
-                  {(notes?.group) || (isKeyBlock ? '重点板块系列' : curIsEmo3 ? '三日情绪冰点系列' : '常规策略')}
+                <Tag color={isIce ? 'purple' : isKeyBlock ? 'orange' : curIsEmo3 ? 'gold' : 'blue'} style={{ marginLeft: 8 }}>
+                  {(notes?.group) || (isIce ? '逆周期情绪游资系列' : isKeyBlock ? '重点板块系列' : curIsEmo3 ? '三日情绪冰点系列' : '常规策略')}
                 </Tag>
               </div>
             }

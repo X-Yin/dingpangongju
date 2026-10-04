@@ -981,37 +981,37 @@ exports.default = [
         "blockName": "金刚石散热",
         "code": "sz301071",
         "name": "力量钻石",
-        "tag": "中性"
+        "tag": "进攻"
     },
     {
         "blockName": "金刚石散热",
         "code": "sh600172",
         "name": "黄河旋风",
-        "tag": "中性"
+        "tag": "进攻"
     },
     {
         "blockName": "金刚石散热",
         "code": "sz300179",
         "name": "四方达",
-        "tag": "中性"
+        "tag": "进攻"
     },
     {
         "blockName": "金刚石散热",
         "code": "sh688028",
         "name": "沃尔德",
-        "tag": "中性"
+        "tag": "进攻"
     },
     {
         "blockName": "金刚石散热",
         "code": "sh688485",
         "name": "九州一轨",
-        "tag": "中性"
+        "tag": "进攻"
     },
     {
         "blockName": "金刚石散热",
         "code": "sz002046",
         "name": "国机精工",
-        "tag": "中性"
+        "tag": "进攻"
     },
     {
         "blockName": "玻璃基板",
