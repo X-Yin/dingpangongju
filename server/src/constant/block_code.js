@@ -261,31 +261,31 @@ exports.default = [
         "blockName": "北美缺电",
         "code": "sh603308",
         "name": "应流股份",
-        "tag": "中性"
+        "tag": "进攻"
     },
     {
         "blockName": "北美缺电",
         "code": "sz000338",
         "name": "潍柴动力",
-        "tag": "中性"
+        "tag": "进攻"
     },
     {
         "blockName": "北美缺电",
         "code": "sh600875",
         "name": "东方电气",
-        "tag": "中性"
+        "tag": "进攻"
     },
     {
         "blockName": "北美缺电",
         "code": "sz002353",
         "name": "杰瑞股份",
-        "tag": "中性"
+        "tag": "进攻"
     },
     {
         "blockName": "北美缺电",
         "code": "sz002842",
         "name": "伊戈尔",
-        "tag": "中性"
+        "tag": "进攻"
     },
     {
         "blockName": "锂电",
