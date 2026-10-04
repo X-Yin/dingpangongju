@@ -12,13 +12,7 @@ const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 const { isStockInWatchlistAt } = require('./monitorStock');
 const { batchParallel } = require('../utils');
 const { getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, stockWindowGain, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange } = require('./keyBlockData');
-const {
-  SENTIMENT_STRATEGIES,
-  isSentimentStrategy,
-  getSentimentDefaultRange,
-  runSentimentBacktest,
-  loadIndexKline,
-} = require('./sentimentHotMoney');
+const { loadIndexKline } = require('./sentimentHotMoney');
 const { isOscExcluded, runWithOscExclude } = require('./backtestOscContext');
 const fs = require('fs');
 const path = require('path');
@@ -117,8 +111,6 @@ const STRATEGIES = {
   tail_dip_emo3_1d_gain: { id: 'tail_dip_emo3_1d_gain', name: '三日情绪冰点-当日涨幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入当日涨幅最大的股票（涨幅相同时取最近 2 个交易日涨幅最大的一只）；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出', tailDip: true, emoAvgBuy: true, nextDayOpenSell: true },
   tail_dip_emo3_1d_fall: { id: 'tail_dip_emo3_1d_fall', name: '三日情绪冰点-当日跌幅最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入当日跌幅最大的股票（跌幅相同时取最近 2 个交易日跌幅最大的一只）；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出', tailDip: true, emoAvgBuy: true, nextDayOpenSell: true },
   tail_dip_emo3_1d_resilience: { id: 'tail_dip_emo3_1d_resilience', name: '三日情绪冰点-当日抗分歧最大', desc: '14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入当日抗分歧分数最大的股票（分数相同时取最近 2 个交易日抗分歧分数汇总最大的一只）；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出', tailDip: true, emoAvgBuy: true, nextDayOpenSell: true },
-  // 情绪游资系列（独立回测逻辑，日期范围不受 fundSnapshot 限制，默认最近 60 个交易日）
-  ...SENTIMENT_STRATEGIES,
 };
 
 // 三日情绪冰点系列固定回测起点（与其他策略的「最近 60 个交易日」滚动窗口区别开）：
@@ -2729,10 +2721,9 @@ const fmtCybGateDate = (d) => {
 // 排除以下前缀的策略（它们有独立的情绪/板块门禁，不走指数斜率）：
 //   key_block_*   重点板块
 //   tail_dip_*    尾盘抄底（含 emo3 变体 tail_dip_emo3_*）
-//   hot_money_*   情绪游资
 // 三日情绪冰点策略全部包含在 tail_dip_emo3_* 内，随 tail_dip_* 一起排除。
-// 构建方式：从 STRATEGIES 枚举中排除上述前缀，未来新增策略只要不在这 3 组前缀里自动纳入。
-const CYB_GATE_EXCLUDE_PREFIX = ['key_block_', 'tail_dip_', 'hot_money_'];
+// 构建方式：从 STRATEGIES 枚举中排除上述前缀，未来新增策略只要不在这 2 组前缀里自动纳入。
+const CYB_GATE_EXCLUDE_PREFIX = ['key_block_', 'tail_dip_'];
 const CYB_GATE_STRATEGY_IDS = new Set(Object.keys(STRATEGIES).filter(id => !CYB_GATE_EXCLUDE_PREFIX.some(p => id.startsWith(p))));
 
 // 指数代码
@@ -3573,10 +3564,6 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
 // 多日回测主循环
 // ============================================================
 const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_gain', onProgress) => {
-  // 情绪游资系列策略走独立回测逻辑（不依赖后端回放缓存，日期范围不受 fundSnapshot 限制）
-  if (isSentimentStrategy(strategyId)) {
-    return runSentimentBacktest(startDate, endDate, strategyId, onProgress);
-  }
   // 重点板块-N日最高涨幅系列走独立的板块驱动回测逻辑（尾盘 14:50 买入，不走大盘买点诊断）
   if (STRATEGIES[strategyId]?.keyBlockDays != null) {
     return runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
@@ -3885,7 +3872,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
 
 // 多日回测入口：可选 options.excludeCodes（震荡测试勾选隐藏的股票代码列表）。
 // 排除列表经 AsyncLocalStorage 注入整次回测执行链，候选选股处（pickBestStock / 弱转强 /
-// 四份仓位 / 两个股票 / 重点板块 / 情绪游资）统一过滤，被隐藏的股票不参与选股买入
+// 四份仓位 / 两个股票 / 重点板块）统一过滤，被隐藏的股票不参与选股买入
 const runRangeBacktest = (startDate, endDate, strategyId = 'highest_gain', onProgress, options = {}) => {
   const excludeList = Array.isArray(options.excludeCodes)
     ? options.excludeCodes.filter(c => typeof c === 'string' && c.trim()).map(c => c.trim())
@@ -3901,16 +3888,10 @@ const runRangeBacktest = (startDate, endDate, strategyId = 'highest_gain', onPro
 const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress) => {
   const ids = (Array.isArray(strategyIds) ? strategyIds : []).filter(id => STRATEGIES[id]);
   if (ids.length === 0) return [];
-  // 混合策略组拆分：情绪游资走独立回测（不依赖回放缓存，先独立跑完），其余走共享数据的原逻辑
-  const sentimentIds = ids.filter(id => isSentimentStrategy(id));
-  // 重点板块-N日最高涨幅系列也走独立回测（板块驱动、尾盘 14:50 买入，不走共享数据循环的买点诊断）
-  const keyBlockIds = ids.filter(id => !isSentimentStrategy(id) && STRATEGIES[id]?.keyBlockDays != null);
-  const regularIds = ids.filter(id => !isSentimentStrategy(id) && STRATEGIES[id]?.keyBlockDays == null);
+  // 重点板块-N日最高涨幅系列走独立回测（板块驱动、尾盘 14:50 买入，不走共享数据循环的买点诊断）
+  const keyBlockIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays != null);
+  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null);
   const results = [];
-  for (const strategyId of sentimentIds) {
-    const result = await runSentimentBacktest(startDate, endDate, strategyId, onProgress);
-    results.push({ strategyId, result });
-  }
   for (const strategyId of keyBlockIds) {
     const result = await runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
     results.push({ strategyId, result });
@@ -4179,9 +4160,9 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   }
 
   // 逐策略组装结果（与 runRangeBacktest 单策略版完全一致）
-  // 注意：必须 concat 前面独立回测（重点板块系列/情绪游资）已推入 results 的结果，
+  // 注意：必须 concat 前面独立回测（重点板块系列）已推入 results 的结果，
   // 否则混合组跑常规阶段时这些策略的结果会被静默丢弃（子进程不写缓存、也不报错，
-  // 汇总阶段仅读缓存时即显示为「回测失败」——情绪游资因总在独立阶段跑（regularIds 为空
+  // 汇总阶段仅读缓存时即显示为「回测失败」——重点板块因总在独立阶段跑（regularIds 为空
   // 走上方提前 return results）从未触发此问题）
   return results.concat(states.map(st => {
     const { strategy, singleTrades, skippedDates } = st;
@@ -4242,8 +4223,6 @@ module.exports = {
   loadReportIndex,
   sumReportCount,
   getStockRecentReports,
-  isSentimentStrategy,
-  getSentimentDefaultRange,
   getTechEmotionEmaMap,
   getTechEmotionRawMap, // 供 buySellDiagnose 线上卖点诊断条件8/买点提示按当日科技情绪原始分判定快进快出
   getTechIndexDates, // 供 backtest-worker 对三日情绪冰点日期范围（含缺资金快照日期）做兜底预构建

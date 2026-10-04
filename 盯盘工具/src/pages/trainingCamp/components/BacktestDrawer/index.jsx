@@ -128,35 +128,7 @@ const STRATEGY_OPTIONS = [
   { value: 'tail_dip_emo3_1d_gain', label: '三日情绪冰点-当日涨幅最大' },
   { value: 'tail_dip_emo3_1d_fall', label: '三日情绪冰点-当日跌幅最大' },
   { value: 'tail_dip_emo3_1d_resilience', label: '三日情绪冰点-当日抗分歧最大' },
-  { value: 'hot_money_3d_gain', label: '情绪游资-3日涨幅最大' },
-  { value: 'hot_money_5d_gain', label: '情绪游资-5日涨幅最大' },
-  { value: 'hot_money_10d_gain', label: '情绪游资-10日涨幅最大' },
-  { value: 'hot_money_first_board', label: '情绪游资-昨日首板' },
-  { value: 'hot_money_second_board', label: '情绪游资-昨日二板' },
-  { value: 'hot_money_3d_slope', label: '情绪游资-3日线斜率最陡峭' },
-  { value: 'hot_money_5d_slope', label: '情绪游资-5日线斜率最陡峭' },
-  { value: 'hot_money_2nd_wave', label: '情绪游资-龙二波' },
-  { value: 'hot_money_weak_to_strong', label: '情绪游资-弱转强' },
-  { value: 'hot_money_leader', label: '情绪游资-龙头战法' },
 ];
-
-// 情绪游资系列策略（与后端 sentimentHotMoney.SENTIMENT_HOT_MONEY_IDS 保持一致）：
-// 买卖点规则与常规策略不同，日期范围独立（不依赖后端回放缓存，默认最近 60 个已完结交易日）
-const SENTIMENT_HOT_MONEY_IDS = [
-  'hot_money_3d_gain',
-  'hot_money_5d_gain',
-  'hot_money_10d_gain',
-  'hot_money_first_board',
-  'hot_money_second_board',
-  'hot_money_3d_slope',
-  'hot_money_5d_slope',
-  'hot_money_2nd_wave',
-  'hot_money_weak_to_strong',
-  'hot_money_leader',
-];
-const isSentimentStrategy = (id) => SENTIMENT_HOT_MONEY_IDS.includes(id);
-// 情绪游资策略可选日期下限（不依赖回放缓存，仅受数据源覆盖范围限制）
-const SENTIMENT_EARLIEST_DATE = '20250101';
 
 // 三日情绪冰点系列策略（与后端 buySellBacktest.STRATEGIES 的 emoAvgBuy: true 保持一致）：
 // 回测日期范围独立——固定从 2026-07-01 开始回测，与其他策略（最近 60 个交易日滚动窗口）区别开
@@ -171,22 +143,8 @@ const EMO3_STRATEGY_IDS = [
 const isEmo3Strategy = (id) => EMO3_STRATEGY_IDS.includes(id);
 // 三日情绪冰点系列固定回测起点（与后端 buySellBacktest.EMO3_BACKTEST_START_DATE 保持一致）
 const EMO3_BACKTEST_START_DATE = '20260701';
-// 策略类别：用于切换策略时判断是否需要重置手动日期范围（emo3 / sentiment / regular 各自默认范围不同）
-const strategyCategory = (id) => (isEmo3Strategy(id) ? 'emo3' : isSentimentStrategy(id) ? 'sentiment' : 'regular');
-
-// 情绪游资策略专属规则说明（与后端 sentimentHotMoney 逻辑保持一致，供复制到外部分析）
-const SENTIMENT_BUY_RULES = [
-  { key: 'lhb', title: '登龙虎榜（累计池）', desc: '候选股须在回测起始日至前一交易日（含）期间任一交易日登上同花顺龙虎榜（随回测推进逐日累加的累计池），且为主板（60/00 开头）非 ST 股（名称含 ST/退 的剔除）' },
-  { key: 'board_overlap', title: '属电力/农业/医药/消费板块成分股', desc: '龙虎榜候选股必须与东方财富板块成分股汇总的电力、农业、医药、消费四份名单之一代码重合才可买入，其余龙虎榜股票全部剔除' },
-  { key: 'selection', title: '策略选股', desc: '3/5/10日涨幅最大：截至前一交易日收盘最近 N 个交易日累计涨幅最大的候选股；昨日首板：最近 5 个交易日内昨日为第一个涨停板（涨幅 ≥9.5%）；昨日二板：昨日恰好第 2 个涨停板（昨日与前日均涨停 ≥9.5%，且大前日未涨停，多连板股剔除）；3/5日线斜率最陡峭：N 个日涨幅均线斜率角度最陡峭（一字板顺延）；龙二波：过去 20 个交易日累计涨幅 >60% 且过去 3 个交易日收盘价最高值与最低值波动幅度 ≤10%（收盘价始终在 10 个点以内波动）、最近 5 个交易日内无涨停板（前期大涨后横盘整理）；弱转强：昨日量能放大至前日量能的 1.4 倍以上（放大 40% 以上），且前期（最近 20 个交易日）至少出现过 2 个涨停板（不要求连续）；龙头战法：截至前一交易日收盘过去 20 个交易日累计涨幅最高的一只' },
-  { key: 'market_gate', title: '大盘环境条件', desc: '创业板指 5 日线斜率 < 0 且 10 日线斜率 < 0，且银行板块（同花顺 881155）5 日线斜率 > 0 且较前一交易日更陡峭（斜率值增大；均按前一交易日收盘数据计算，斜率 = 当前 MA − 5 日前 MA）；龙头战法例外：仅需银行板块 10 日线斜率 > 0，不看创业板指' },
-  { key: 'trigger', title: '盘中涨幅超过 8%', desc: '环境条件满足时，候选股盘中涨幅超过 8% 即按该分钟价格买入（多只候选取当日最先触发的一只，同分钟取涨幅最大）；9:30 竞价开盘涨幅 ≥9.6% 的一字板买不进去，直接剔除不参与买入；弱转强策略还要求今日高开 2% 以上（按分时第一分钟涨幅过滤）才参与买入；龙头战法例外：9:30 开盘按开盘第一分钟价格直接买入，不等 8% 触发' },
-];
-const SENTIMENT_SELL_RULES = [
-  { key: 'sentiment_stop_loss', title: '跌破成本线-5%', desc: '现价低于买入价 × 0.95（较买入价下跌 5%）即按触发分钟价格止损卖出；所有情绪游资策略统一此口径' },
-  { key: 'sentiment_ma10_slope', title: '十日线斜率转负', desc: '该股十日线斜率（昨日收盘口径，斜率 = 当前 MA10 − 5 日前 MA10）转为负数，即按当日开盘第一分钟价格卖出；所有情绪游资策略统一仅这两个卖点，满足其一即卖（买入次日起生效）' },
-  { key: 'sentiment_yin_close', title: '尾盘收阴线（仅首板/二板）', desc: '仅限买入次日的尾盘判定：当日首个 ≥14:57 的分钟（分时未覆盖时用最后一分钟）现价低于当日开盘价（即当日收阴线）→ 按该分钟价格卖出；过了次日该卖点失效，卖点回归「跌破成本线-5%」与「十日线斜率转负」两个；仅情绪游资-昨日首板、昨日二板两个策略适用' },
-];
+// 策略类别：用于切换策略时判断是否需要重置手动日期范围（emo3 / regular 各自默认范围不同）
+const strategyCategory = (id) => (isEmo3Strategy(id) ? 'emo3' : 'regular');
 
 // 重点板块-N日最高涨幅系列策略（与后端 buySellBacktest.STRATEGIES 的 keyBlockDays 保持一致）：
 // 板块驱动的独立买入逻辑（斜率分模式 + tag 板块选股），日期范围与常规策略一致（依赖回放缓存）
@@ -532,79 +490,6 @@ const STRATEGY_SPECIFIC_NOTES = {
       '卖点专属：次日竞价开盘涨幅 < 0 → 9:30 开盘直接卖；≥ 0 → 固定次日 10:00 卖；回测固定起点 2026-07-01。',
     ],
   },
-
-  // ---- 情绪游资系列（hot_money_*） ----
-  hot_money_3d_gain: {
-    group: '情绪游资系列',
-    bullets: [
-      '候选池：**累计龙虎榜**（回测起始日至前一交易日，同花顺龙虎榜每日累加） ∩「电力/农业/医药/消费」四大东方财富板块成分股 ∩ 主板（60/00）非 ST。',
-      '选股口径：最近 3 个交易日累计涨幅最大的候选股。',
-      '触发时点：大盘环境满足时（创业板指 5/10 日线斜率 < 0 且银行板块 5 日线斜率 > 0 且更陡峭），**盘中涨幅 > 8%** 时按该分钟价格买入（多只同日触发取最先那只，同分钟取涨幅最大）；9:30 一字板（竞价涨幅 ≥9.6%）剔除。',
-      '卖点：三条统一卖点（2026-09-20 起所有情绪游资策略一致，满足任一即卖，买入次日起生效）——① 该股十日线斜率（昨日收盘口径，MA10 − 5 日前 MA10）转为负数 → 当日开盘第一分钟卖出；② 现价跌破买入价 × 0.95（逐分钟监控）→ 止损卖出；③ 首板/二板专属（仅限买入次日尾盘判定，过了次日失效）——当日首个 ≥14:57 分钟现价低于当日开盘价（收阴线）→ 按该分钟价格卖出。',
-      '回测日期范围：默认最近 60 个已完结交易日，不依赖回放缓存；最早可选 2025-01-01。',
-    ],
-  },
-  hot_money_5d_gain: {
-    group: '情绪游资系列',
-    bullets: [
-      '与 hot_money_3d_gain 完全相同，唯选股口径为「最近 5 个交易日累计涨幅最大」。',
-    ],
-  },
-  hot_money_10d_gain: {
-    group: '情绪游资系列',
-    bullets: [
-      '与 hot_money_3d_gain 完全相同，唯选股口径为「最近 10 个交易日累计涨幅最大」。',
-    ],
-  },
-  hot_money_first_board: {
-    group: '情绪游资系列',
-    bullets: [
-      '选股口径：候选池内**昨日恰好第一个涨停板**（昨日涨幅 ≥ 9.5%，且最近 5 个交易日此前未涨停过）。',
-      '触发时点 & 卖点：同 hot_money_3d_gain；首板/二板专属额外卖点——仅限次日尾盘：当日 14:57 现价低于开盘价（收阴线）则按该分钟价格卖出；过了次日失效。',
-    ],
-  },
-  hot_money_second_board: {
-    group: '情绪游资系列',
-    bullets: [
-      '选股口径：候选池内**昨日恰好第 2 个涨停板**（昨日与前日均涨停 ≥ 9.5%，且大前日未涨停，多连板股剔除）。',
-      '触发时点 & 卖点：同 hot_money_3d_gain；同样带「次日尾盘收阴线即卖」的额外卖点（仅次日生效）。',
-    ],
-  },
-  hot_money_3d_slope: {
-    group: '情绪游资系列',
-    bullets: [
-      '选股口径：候选池内 **3 日涨幅均线斜率最陡峭** 的一只（一字板顺延）。',
-      '其他规则同 hot_money_3d_gain（触发 8% / 止损-5% / 十日线斜率转负）。',
-    ],
-  },
-  hot_money_5d_slope: {
-    group: '情绪游资系列',
-    bullets: [
-      '选股口径：候选池内 **5 日涨幅均线斜率最陡峭** 的一只。其他规则同 hot_money_3d_gain。',
-    ],
-  },
-  hot_money_2nd_wave: {
-    group: '情绪游资系列',
-    bullets: [
-      '选股口径：「龙二波」——候选池内同时满足①过去 20 个交易日累计涨幅 > 60%；②过去 3 个交易日收盘价最高值与最低值波动 ≤ 10%（前期大涨后横盘整理）；③最近 5 个交易日内无涨停板。',
-      '其他规则同 hot_money_3d_gain（触发 8% / 止损-5% / 十日线斜率转负）。',
-    ],
-  },
-  hot_money_weak_to_strong: {
-    group: '情绪游资系列',
-    bullets: [
-      '选股口径：「弱转强」——候选池内同时满足①昨日量能放大至前日的 1.4 倍以上；②前期（最近 20 个交易日）至少出现过 2 个涨停板。',
-      '额外买入门禁：今日**高开 2% 以上**（按分时第一分钟涨幅过滤）才参与买入。',
-      '其他规则同 hot_money_3d_gain。',
-    ],
-  },
-  hot_money_leader: {
-    group: '情绪游资系列',
-    bullets: [
-      '选股口径：「龙头战法」——候选池内过去 20 个交易日累计涨幅最高的一只。',
-      '特殊触发与卖点：① 不等 8% 阈值，**9:30 开盘第一分钟价格直接买入**；② 大盘环境只需银行板块 10 日线斜率 > 0，不看创业板指（与其他情绪游资策略独立）；③ 卖点仍为「跌破买入价 × 0.95」与「十日线斜率转负」两条。',
-    ],
-  },
 };
 
 // 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
@@ -748,7 +633,6 @@ const buildSummary = (result) => {
 const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const [range, setRange] = useState(null);
   const [strategy, setStrategy] = useState('highest_3d_gain_emoquick');
-  const [sentimentRange, setSentimentRange] = useState(null); // 情绪游资默认日期范围 [dayjs, dayjs]（最近 60 个已完结交易日）
   const [reportOpen, setReportOpen] = useState(false);
   const [trendOpen, setTrendOpen] = useState(false); // 策略趋势诊断弹窗（三档时间范围 × 全部策略）
   const [timeFlexOpen, setTimeFlexOpen] = useState(false); // 时间伸缩测试弹窗
@@ -770,7 +654,6 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
 
   const availableDates = useMemo(() => (Array.isArray(dates) ? dates : []), [dates]);
   const maxDateStr = availableDates.length > 0 ? availableDates[0] : dayjs().format('YYYYMMDD');
-  // 情绪游资策略不依赖后端回放缓存，默认范围用独立的 sentiment_range（最近 60 个已完结交易日）；
   // 三日情绪冰点策略固定从 2026-07-01 开始回测（结束日取最新可用交易日）；
   // 未手动选择时常规策略默认取「最近 60 个可用交易日」（不足 60 个时取最早的一个日期），与后端回测报告 /
   // worker 预生成缓存的日期范围口径一致，
@@ -788,10 +671,9 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     const sortedAsc = [...availableDates].sort();
     return [dayjs(EMO3_BACKTEST_START_DATE, 'YYYYMMDD'), dayjs(sortedAsc[sortedAsc.length - 1], 'YYYYMMDD')];
   }, [availableDates, maxDateStr]);
-  const curIsSentiment = isSentimentStrategy(strategy);
   const curIsEmo3 = isEmo3Strategy(strategy);
   const curIsKeyBlock = KEY_BLOCK_STRATEGY_IDS.includes(strategy);
-  const effectiveRange = range || (curIsEmo3 ? emo3DefaultRange : curIsSentiment ? (sentimentRange || defaultRange) : defaultRange);
+  const effectiveRange = range || (curIsEmo3 ? emo3DefaultRange : defaultRange);
 
   // 组件卸载时停止轮询
   useEffect(() => {
@@ -843,21 +725,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     }, 0);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, strategy, range, sentimentRange]);
-
-  // 选中情绪游资策略且尚无默认范围时拉取（最近 60 个已完结交易日，不依赖回放缓存）
-  useEffect(() => {
-    if (!open || !curIsSentiment || sentimentRange) return;
-    let cancelled = false;
-    axios.get(`http://${local_ip}:3000/training_camp/backtest/sentiment_range`).then((r) => {
-      if (cancelled) return;
-      if (r.data?.success && r.data.startDate && r.data.endDate) {
-        setSentimentRange([dayjs(String(r.data.startDate), 'YYYYMMDD'), dayjs(String(r.data.endDate), 'YYYYMMDD')]);
-      }
-    }).catch(() => { });
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, curIsSentiment, sentimentRange]);
+  }, [open, strategy, range]);
 
   // 复制文本到剪贴板：优先 clipboard API（需 secure context），失败/不可用时降级 execCommand
   const copyToClipboard = async (text) => {
@@ -892,7 +760,7 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
     }
   };
 
-  // 切换策略：策略类别（三日情绪冰点 / 情绪游资 / 常规）变化时重置手动日期，回退到该类别的默认范围；
+  // 切换策略：策略类别（三日情绪冰点 / 常规）变化时重置手动日期，回退到该类别的默认范围；
   // 选中后自动复制策略名称到剪贴板
   const handleStrategyChange = async (v) => {
     if (strategyCategory(v) !== strategyCategory(strategy)) {
@@ -1115,9 +983,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
       const pick = effectiveRange;
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
-      // 情绪游资策略使用专属买卖规则文案（选股/环境/触发与常规策略不同）
-      const buyRules = curIsSentiment ? SENTIMENT_BUY_RULES : curIsKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES;
-      const sellRules = curIsSentiment ? SENTIMENT_SELL_RULES : curIsKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES;
+      const buyRules = curIsKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES;
+      const sellRules = curIsKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES;
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);
@@ -1242,10 +1109,6 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
   const disabledDate = (current) => {
     if (!current) return false;
     const ds = current.format('YYYYMMDD');
-    // 情绪游资策略不依赖回放缓存，日期可选范围放开（仅受数据源覆盖限制）
-    if (curIsSentiment) {
-      return ds < SENTIMENT_EARLIEST_DATE || ds > dayjs().format('YYYYMMDD');
-    }
     // 三日情绪冰点策略固定从 2026-07-01 开始回测，下限放开至该日（早于回放数据的日期回测时自动跳过）
     if (curIsEmo3) {
       return ds < EMO3_BACKTEST_START_DATE || ds > maxDateStr;
@@ -1344,10 +1207,6 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
           {curIsEmo3 ? (
             <span style={{ fontSize: 12, color: '#9ca3af' }}>
               三日情绪冰点策略固定从 2026-07-01 开始回测（结束日取最新交易日）
-            </span>
-          ) : curIsSentiment ? (
-            <span style={{ fontSize: 12, color: '#9ca3af' }}>
-              情绪游资策略不依赖回放缓存，可选时间不限（默认最近 60 个交易日）
             </span>
           ) : (
             <Tooltip title="在回测记录右上角勾选「隐藏」排除个别股票后重跑一次回测：被隐藏的股票不参与本次回测，用于检验策略收益率是结构正确带来的，还是单纯依赖个别牛股；结果不落缓存，刷新即失效">
@@ -1735,9 +1594,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
         const opt = STRATEGY_OPTIONS.find(o => o.value === strategy);
         const label = opt?.label || strategy;
         const isKeyBlock = KEY_BLOCK_STRATEGY_IDS.includes(strategy);
-        const isSent = isSentimentStrategy(strategy);
-        const buyRules = isSent ? SENTIMENT_BUY_RULES : isKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES;
-        const sellRules = isSent ? SENTIMENT_SELL_RULES : isKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES;
+        const buyRules = isKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES;
+        const sellRules = isKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES;
         const notes = STRATEGY_SPECIFIC_NOTES[strategy];
 
         // 将文案中 **xxx** 这种 markdown 粗体标记解析为 React 节点（纯文本不解析）
@@ -1768,8 +1626,8 @@ const BacktestDrawer = ({ open, onClose, dates = [] }) => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <BookOutlined style={{ color: '#1677ff' }} />
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#12213a' }}>策略说明</span>
-                <Tag color={isSent ? 'purple' : isKeyBlock ? 'orange' : curIsEmo3 ? 'gold' : 'blue'} style={{ marginLeft: 8 }}>
-                  {(notes?.group) || (isSent ? '情绪游资系列' : isKeyBlock ? '重点板块系列' : curIsEmo3 ? '三日情绪冰点系列' : '常规策略')}
+                <Tag color={isKeyBlock ? 'orange' : curIsEmo3 ? 'gold' : 'blue'} style={{ marginLeft: 8 }}>
+                  {(notes?.group) || (isKeyBlock ? '重点板块系列' : curIsEmo3 ? '三日情绪冰点系列' : '常规策略')}
                 </Tag>
               </div>
             }

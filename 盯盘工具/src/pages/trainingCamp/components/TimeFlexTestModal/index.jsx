@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Modal, Segmented, Button, Progress, Spin, Empty, Tag, message } from 'antd';
+import { Drawer, Segmented, Button, Progress, Spin, Empty, Tag, message } from 'antd';
 import { ReloadOutlined, SearchOutlined, SwapOutlined } from '@ant-design/icons';
 import { createChart, ColorType } from 'lightweight-charts';
 import { Line } from 'react-chartjs-2';
@@ -515,16 +515,15 @@ const TimeFlexTestModal = ({ open, onClose, strategy, endDate, startDate: maxSta
   const summaryValidCount = items.filter((i) => i.summary).length;
 
   return (
-    <Modal
+    <Drawer
       open={open}
-      onCancel={() => {
+      onClose={() => {
         stopPoll();
         onClose?.();
       }}
-      footer={null}
-      width={1100}
+      width={1280}
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingRight: 56 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 16, fontWeight: 700, color: '#12213a' }}>时间伸缩测试</span>
           <Tag color="purple" style={{ marginInlineEnd: 0 }}>{strategyName || strategy || '--'}</Tag>
           <span style={{ fontSize: 12, color: '#6b7890' }}>
@@ -532,7 +531,9 @@ const TimeFlexTestModal = ({ open, onClose, strategy, endDate, startDate: maxSta
           </span>
         </div>
       }
-      style={{ top: 40 }}
+      styles={{ body: { padding: 16, paddingBottom: 96, background: '#f7f9fc' } }}
+      closable
+      placement="right"
     >
       {/* 第一行：指数 K 线（三指数切换） */}
       <div style={{
@@ -542,6 +543,15 @@ const TimeFlexTestModal = ({ open, onClose, strategy, endDate, startDate: maxSta
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
           <SwapOutlined style={{ color: '#1677ff' }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: '#12213a' }}>基准指数日 K（可切换）</span>
+          <div style={{ display: 'flex' }}>
+            {
+              [{color: '#9c27b0', label: '3日线'}, {color: '#2196f3', label: '5日线'}, {color: '#facc15', label: '10日线'}].map(i => (
+                <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 8 }}>
+                  <span style={{ color: i.color, fontSize: 12, fontWeight: 600 }}>{i.label}</span>
+                </div>
+              ))
+            }
+          </div>
           <Segmented
             size="small"
             value={indexType}
@@ -651,7 +661,7 @@ const TimeFlexTestModal = ({ open, onClose, strategy, endDate, startDate: maxSta
           />
         </div>
       )}
-    </Modal>
+    </Drawer>
   );
 };
 

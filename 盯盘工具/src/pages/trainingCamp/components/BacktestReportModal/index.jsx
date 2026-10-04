@@ -64,7 +64,7 @@ const BuyReasonTag = ({ reason, checks }) => {
   const gateCellStyle = { border: '1px solid rgba(255,255,255,0.3)', padding: '1px 8px', whiteSpace: 'nowrap' };
   const hasDetail = Array.isArray(checks) && checks.length > 0;
   const detail = hasDetail ? (
-    <div style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 300, overflowY: 'auto', overflowX: 'hidden' }}>
       {checks.map((c, i) => (
         <div key={c.id || i}>
           <div style={{ fontSize: 12, fontWeight: 600 }}>
@@ -115,7 +115,7 @@ const BuyReasonTag = ({ reason, checks }) => {
     </div>
   ) : undefined;
   return (
-    <Tooltip title={detail} placement="topLeft">
+    <Tooltip title={detail} placement="top">
       <Tag color="volcano" style={{ marginInlineEnd: 0, whiteSpace: 'normal', height: 'auto', cursor: hasDetail ? 'help' : 'default' }}>
         {reason}
       </Tag>

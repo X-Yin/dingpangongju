@@ -7,7 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getTrainingCampDates } = require('./trainingCamp');
-const { STRATEGIES, readCachedBacktest, runRangeBacktest, isSentimentStrategy, getSentimentDefaultRange, isEmo3AvgStrategy, getEmo3DefaultRange } = require('./buySellBacktest');
+const { STRATEGIES, readCachedBacktest, runRangeBacktest, isEmo3AvgStrategy, getEmo3DefaultRange } = require('./buySellBacktest');
 
 const reportsDir = path.join(__dirname, '../data/backtest_reports');
 const backtestCacheDir = path.join(__dirname, '../data/backtest_results');
@@ -61,15 +61,14 @@ const getCommonCachedRange = () => {
   try {
     if (!fs.existsSync(backtestCacheDir)) return null;
     const files = fs.readdirSync(backtestCacheDir);
-    const ids = Object.keys(STRATEGIES).filter(id => !isSentimentStrategy(id) && !isEmo3AvgStrategy(id));
-    // 对每个策略，收集其缓存文件对应的 (startDate, endDate)
-    //（情绪游资与三日情绪冰点系列的日期范围独立，不参与统计）
+    const ids = Object.keys(STRATEGIES).filter(id => !isEmo3AvgStrategy(id));
+    //（三日情绪冰点系列的日期范围独立，不参与统计）
     const rangeMap = new Map(); // `${start}_${end}` -> { start, end, count }
     for (const f of files) {
       const m = String(f).match(/^backtest_(.+)_(\d{8})_(\d{8})\.json$/);
       if (!m) continue;
       const sid = m[1];
-      if (!STRATEGIES[sid] || isSentimentStrategy(sid) || isEmo3AvgStrategy(sid)) continue;
+      if (!STRATEGIES[sid] || isEmo3AvgStrategy(sid)) continue;
       const key = `${m[2]}_${m[3]}`;
       const entry = rangeMap.get(key) || { start: m[2], end: m[3], count: 0 };
       entry.count += 1;
@@ -94,7 +93,7 @@ const getStrategyResult = async (strategyId, startDate, endDate, fromCacheOnly) 
 };
 
 // 生成一份回测报告（可持久化）
-// forceRange=true 时强制全部策略（含情绪游资/三日情绪冰点）使用传入日期范围（策略趋势诊断用）；
+// forceRange=true 时强制全部策略（含三日情绪冰点）使用传入日期范围（策略趋势诊断用）；
 // save=false 时仅返回报告不写入报告历史（策略趋势诊断的三份报告不入常规报告历史）
 const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onProgress, forceRange = false, save = true } = {}) => {
   const range = (startDate && endDate) ? { startDate, endDate } : getDefaultReportRange();
@@ -105,11 +104,6 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
   const strategies = [];
   const skipped = [];
 
-  // 情绪游资策略不依赖后端回放缓存，固定回测最近 60 个已完结交易日（与其他策略日期范围解耦）
-  let sentimentRange = null;
-  if (!forceRange && ids.some(id => isSentimentStrategy(id))) {
-    try { sentimentRange = await getSentimentDefaultRange(); } catch { sentimentRange = null; }
-  }
   // 三日情绪冰点系列固定从 2026-07-01 开始回测（与其他策略日期范围解耦）
   let emo3Range = null;
   if (!forceRange && ids.some(id => isEmo3AvgStrategy(id))) {
@@ -118,11 +112,9 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
 
   for (let i = 0; i < total; i++) {
     const id = ids[i];
-    const stRange = !forceRange && (isSentimentStrategy(id) && sentimentRange)
-      ? sentimentRange
-      : !forceRange && (isEmo3AvgStrategy(id) && emo3Range)
-        ? emo3Range
-        : range;
+    const stRange = !forceRange && (isEmo3AvgStrategy(id) && emo3Range)
+      ? emo3Range
+      : range;
     if (onProgress) onProgress({ current: i, total, strategy: STRATEGIES[id].name, status: 'running' });
     let result;
     try {

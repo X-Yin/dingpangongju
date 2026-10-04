@@ -1,0 +1,42 @@
+// ================================================================
+// 全局极细半透明滚动条（WebKit + Firefox）
+// 轨道完全透明；滑块默认几乎透明、hover/active 时显出淡淡的蓝灰胶囊
+// 宽度 6px / 高度 6px，几乎贴边不占位
+// ================================================================
+
+* {
+  // Firefox：细滚动条 + 透明轨道
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.18) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-button {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.14);
+  border-radius: 999px;
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.38);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: rgba(71, 85, 105, 0.52);
+}

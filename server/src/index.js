@@ -100,7 +100,7 @@ const { getMainFundAiSummary, getMainFundAiContext } = require('./service/mainFu
 const { getAllGroups: getAllIndexOverlayGroups, saveGroup: saveIndexOverlayGroup, deleteGroup: deleteIndexOverlayGroup } = require('./service/indexOverlayGroup');
 const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup } = require('./service/trainingCamp');
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, ''); // 北京今天 YYYYMMDD
-const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, getSentimentDefaultRange, attachHoldingDays, getStockRecentReports, queryLiveIndexGate } = require('./service/buySellBacktest');
+const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, attachHoldingDays, getStockRecentReports, queryLiveIndexGate } = require('./service/buySellBacktest');
 const { generateReport, ensureLatestReport, getReportById, listReports, getTrendDiagnosisRanges } = require('./service/backtestReport');
 const { getAttackDefenseScore } = require('./service/attackDefenseScore');
 const feishuNotify = require('./service/feishuNotify');
@@ -2434,20 +2434,6 @@ app.get('/training_camp/backtest/cache', (req, res) => {
   }
 });
 
-// ---------- 买卖点回测 - 情绪游资默认日期范围（最近 60 个已完结交易日，不依赖回放缓存）----------
-app.get('/training_camp/backtest/sentiment_range', async (req, res) => {
-  try {
-    const range = await getSentimentDefaultRange();
-    if (!range) {
-      return res.status(500).json({ success: false, message: '情绪游资默认日期范围获取失败（交易日历不可用）' });
-    }
-    res.json({ success: true, ...range });
-  } catch (error) {
-    console.error('获取情绪游资默认日期范围失败:', error);
-    res.status(500).json({ success: false, message: error.message || '获取默认日期范围失败' });
-  }
-});
-
 // ---------- 买卖点回测 - 全量回测（后台执行 script/backtest-worker.js：清空回测缓存 → 预热日K → 并行预构建 → 并行跑全部策略 → 自动汇总生成回测报告）----------
 // 单例任务：同一时刻只允许一个 worker 进程；进度经 stdout/stderr 捕获为日志尾部的环形缓冲
 const backtestWorkerJob = { status: 'idle', startedAt: null, endedAt: null, exitCode: null, logTail: [] };
@@ -2546,7 +2532,7 @@ const buildTrendDiagnosisResult = async () => {
       startDate: r.startDate,
       endDate: r.endDate,
       fromCacheOnly: true, // 只读回测缓存（worker 刚补测完成）
-      forceRange: true, // 全部策略（含情绪游资/三日情绪冰点）强制使用同一范围
+      forceRange: true, // 全部策略（含三日情绪冰点）强制使用同一范围
       save: false, // 诊断报告不写入常规回测报告历史
     });
     out.push({

@@ -1,0 +1,956 @@
+{
+  "id": "report_202610041219",
+  "createdAt": "2026-10-04-12:19",
+  "range": {
+    "startDate": "20260728",
+    "endDate": "20260930"
+  },
+  "strategyCount": 41,
+  "skipped": [],
+  "generatedFromCache": true,
+  "strategies": [
+    {
+      "rank": 1,
+      "id": "highest_gain",
+      "name": "买入最高涨幅",
+      "desc": "买点命中时只买入触发时点当日盘中涨幅最大的股票；选股门槛：按策略排名从最高者起依次要求「触发时点当日抗分歧分数 ≥ 11」，不满足则顺延至下一只满足的股票（全部候选均不满足则当日不买入），买入条件明细中标注是否因前序股票分数<11 而顺延",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 2,
+      "id": "highest_2d_gain",
+      "name": "2日涨幅最大",
+      "desc": "买点命中时只买入触发时点当日盘中涨幅最大的股票（按用户定义排序依据为触发时点当日盘中涨幅，非 2 日窗口累计涨幅）",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 3,
+      "id": "highest_3d_gain",
+      "name": "3日涨幅最大",
+      "desc": "买点命中时只买入最近 3 个交易日涨幅最大的股票",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 4,
+      "id": "highest_4d_gain",
+      "name": "4日涨幅最大",
+      "desc": "买点命中时只买入最近 4 个交易日涨幅最大的股票",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 5,
+      "id": "highest_5d_gain",
+      "name": "5日涨幅最大",
+      "desc": "买点命中时只买入最近 5 个交易日涨幅最大的股票",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 6,
+      "id": "highest_10d_gain",
+      "name": "10日涨幅最大",
+      "desc": "买点命中时只买入最近 10 个交易日涨幅最大的股票",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 7,
+      "id": "highest_3d_ma_slope",
+      "name": "3日线斜率最陡峭",
+      "desc": "买点命中时只买入 3 日涨幅均线斜率角度最大的股票",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 8,
+      "id": "highest_5d_ma_slope",
+      "name": "5日线斜率最陡峭",
+      "desc": "买点命中时只买入 5 日涨幅均线斜率角度最大的股票",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 9,
+      "id": "highest_3d_reports",
+      "name": "3日研报覆盖数最多",
+      "desc": "买点命中时只买入过去 3 个交易日（含当日）研报覆盖数最多的股票（覆盖数相同取 3 日涨幅最大）；覆盖仅统计买点前已创建的研报，买点后补录的不计入",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 10,
+      "id": "highest_5d_reports",
+      "name": "5日研报覆盖数最多",
+      "desc": "买点命中时只买入过去 5 个交易日（含当日）研报覆盖数最多的股票（覆盖数相同取 5 日涨幅最大）；覆盖仅统计买点前已创建的研报，买点后补录的不计入",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 11,
+      "id": "highest_3d_reports_top5_gain",
+      "name": "3日研报前五&涨幅最大",
+      "desc": "买点命中时在最近 3 个交易日（含当日）研报覆盖数前五（含覆盖数相同的股票）中买入 3 日涨幅最大的一只；覆盖仅统计买点前已创建的研报，买点后补录的不计入",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 12,
+      "id": "highest_5d_reports_top5_gain",
+      "name": "5日研报前五&涨幅最大",
+      "desc": "买点命中时在最近 5 个交易日（含当日）研报覆盖数前五（含覆盖数相同的股票）中买入 5 日涨幅最大的一只；覆盖仅统计买点前已创建的研报，买点后补录的不计入",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 13,
+      "id": "highest_5d_resilience",
+      "name": "5日抗分歧分数最大",
+      "desc": "买点命中时只买入最近 5 个交易日抗分歧分数汇总最大的股票",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 14,
+      "id": "highest_3d_resilience",
+      "name": "3日抗分歧分数最大",
+      "desc": "买点命中时只买入最近 3 个交易日抗分歧分数汇总最大的股票",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 15,
+      "id": "resilience_weak_to_strong",
+      "name": "抗分歧弱转强",
+      "desc": "买点命中时先筛选出当日抗分歧分数>11 的股票，再从中计算最近 4 个交易日「前两天均值」与「最近两天均值」的差值（差值越大=抗分歧由弱转强越明显），全仓买入差值最大的股票；差值相同则买入当日涨幅最大的一只",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 16,
+      "id": "highest_1d_resilience",
+      "name": "当日抗分歧分数最大",
+      "desc": "买点命中时只买入触发时点当日实时抗分歧分数最大的股票（抗分歧分数按触发时刻截至当时的日内分时数据实时计算，非收盘口径）；分数相同时取触发时点当日实时涨幅最大的一只",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 17,
+      "id": "prev3d_fall_low5_day_gain_emoswitch",
+      "name": "前三波动最小&当日涨最大/3日涨幅开关",
+      "desc": "买点命中时先取上一交易日科技情绪指数的 3 日 EMA（tech_index.json 每日收盘情绪分，与情绪页「三日均值」曲线同源同算法，不含当日）：低于 -60 时按「前 3 个交易日（不含今日）累计涨幅绝对值最小的前五（波动最小，无论涨跌）→ 组内当日实时涨幅最大」选股买入，否则按「3 日涨幅最大（前 2 个交易日收盘涨幅 + 当日触发时点实时涨幅复利累计）」选股买入；EMA 缺失（无上一交易日或数据未覆盖）时按「否则」分支处理。两分支共用通用机制：触发时点涨停股不可买顺延至排名下一只、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 18,
+      "id": "prev2d_fall_low5_day_gain_emoswitch",
+      "name": "前二波动最小&当日涨最大/3日涨幅开关",
+      "desc": "买点命中时先取上一交易日科技情绪指数的 3 日 EMA（tech_index.json 每日收盘情绪分，与情绪页「三日均值」曲线同源同算法，不含当日）：低于 -60 时按「前 2 个交易日（不含今日）累计涨幅绝对值最小的前五（波动最小，无论涨跌）→ 组内当日实时涨幅最大」选股买入，否则按「3 日涨幅最大（前 2 个交易日收盘涨幅 + 当日触发时点实时涨幅复利累计）」选股买入；EMA 缺失（无上一交易日或数据未覆盖）时按「否则」分支处理。两分支共用通用机制：触发时点涨停股不可买顺延至排名下一只、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 19,
+      "id": "prev1d_fall_low5_day_gain_emoswitch",
+      "name": "昨日波动最小&当日涨最大/3日涨幅开关",
+      "desc": "买点命中时先取上一交易日科技情绪指数的 3 日 EMA（tech_index.json 每日收盘情绪分，与情绪页「三日均值」曲线同源同算法，不含当日）：低于 -60 时按「前 1 个交易日（不含今日）累计涨幅绝对值最小的前五（波动最小，无论涨跌）→ 组内当日实时涨幅最大」选股买入，否则按「3 日涨幅最大（前 2 个交易日收盘涨幅 + 当日触发时点实时涨幅复利累计）」选股买入；EMA 缺失（无上一交易日或数据未覆盖）时按「否则」分支处理。两分支共用通用机制：触发时点涨停股不可买顺延至排名下一只、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 20,
+      "id": "highest_2d_gain_emoquick",
+      "name": "2日涨幅最大&三日情绪-60快进快出",
+      "desc": "买点命中时按「2 日涨幅最大」选股买入（排序依据为触发时点当日盘中涨幅，非 2 日窗口累计涨幅），买点触发时均可正常买入、不跳过；买入时先取上一交易日科技情绪指数的 3 日 EMA 与上两个交易日的当日科技情绪原始分（tech_index.json 每日收盘情绪分，与情绪页同源，EMA 不含当日、当日分即当日收盘值），满足以下任一条件则本次买入标记为「快进快出」——该笔持仓不走通用 7 条件卖点，买入次日上午 10:00 强制卖出（取当日第一个 ≥10:00 的分时点价格，分时未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），且强卖当日禁止二次买入（哪怕买点再次触发也不买）：① 上一交易日 3 日 EMA 低于 -60；② 上上个与上个交易日的当日科技情绪均处于 -30~20 区间（不含边界）且上个交易日高于上上个交易日（情绪温和回升）；两条件均不满足（或数据缺失）时为普通持仓，走通用 7 条件卖点。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 21,
+      "id": "highest_3d_gain_emoquick",
+      "name": "3日涨幅最大&三日情绪-60快进快出",
+      "desc": "买点命中时按「3 日涨幅最大」选股买入（最近 3 个交易日涨幅最大），买点触发时均可正常买入、不跳过；买入时先取上一交易日科技情绪指数的 3 日 EMA 与上两个交易日的当日科技情绪原始分（tech_index.json 每日收盘情绪分，与情绪页同源，EMA 不含当日、当日分即当日收盘值），满足以下任一条件则本次买入标记为「快进快出」——该笔持仓不走通用 7 条件卖点，买入次日上午 10:00 强制卖出（取当日第一个 ≥10:00 的分时点价格，分时未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），且强卖当日禁止二次买入（哪怕买点再次触发也不买）：① 上一交易日 3 日 EMA 低于 -60；② 上上个与上个交易日的当日科技情绪均处于 -30~20 区间（不含边界）且上个交易日高于上上个交易日（情绪温和回升）；两条件均不满足（或数据缺失）时为普通持仓，走通用 7 条件卖点。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 22,
+      "id": "highest_4d_gain_emoquick",
+      "name": "4日涨幅最大&三日情绪-60快进快出",
+      "desc": "买点命中时按「4 日涨幅最大」选股买入（最近 4 个交易日涨幅最大），买点触发时均可正常买入、不跳过；买入时先取上一交易日科技情绪指数的 3 日 EMA 与上两个交易日的当日科技情绪原始分（tech_index.json 每日收盘情绪分，与情绪页同源，EMA 不含当日、当日分即当日收盘值），满足以下任一条件则本次买入标记为「快进快出」——该笔持仓不走通用 7 条件卖点，买入次日上午 10:00 强制卖出（取当日第一个 ≥10:00 的分时点价格，分时未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），且强卖当日禁止二次买入（哪怕买点再次触发也不买）：① 上一交易日 3 日 EMA 低于 -60；② 上上个与上个交易日的当日科技情绪均处于 -30~20 区间（不含边界）且上个交易日高于上上个交易日（情绪温和回升）；两条件均不满足（或数据缺失）时为普通持仓，走通用 7 条件卖点。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 23,
+      "id": "highest_5d_gain_emoquick",
+      "name": "5日涨幅最大&三日情绪-60快进快出",
+      "desc": "买点命中时按「5 日涨幅最大」选股买入（最近 5 个交易日涨幅最大），买点触发时均可正常买入、不跳过；买入时先取上一交易日科技情绪指数的 3 日 EMA 与上两个交易日的当日科技情绪原始分（tech_index.json 每日收盘情绪分，与情绪页同源，EMA 不含当日、当日分即当日收盘值），满足以下任一条件则本次买入标记为「快进快出」——该笔持仓不走通用 7 条件卖点，买入次日上午 10:00 强制卖出（取当日第一个 ≥10:00 的分时点价格，分时未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），且强卖当日禁止二次买入（哪怕买点再次触发也不买）：① 上一交易日 3 日 EMA 低于 -60；② 上上个与上个交易日的当日科技情绪均处于 -30~20 区间（不含边界）且上个交易日高于上上个交易日（情绪温和回升）；两条件均不满足（或数据缺失）时为普通持仓，走通用 7 条件卖点。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 24,
+      "id": "highest_3d_reports_top5_gain_emoquick",
+      "name": "3日涨幅最大&三日情绪-60快进快出&研报覆盖",
+      "desc": "买点命中时均可正常买入、不跳过；满足以下任一条件则本次买入标记为「快进快出」——该笔持仓不走通用 7 条件卖点，买入次日上午 10:00 强制卖出（取当日第一个 ≥10:00 的分时点价格，分时未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），且强卖当日禁止二次买入（哪怕买点再次触发也不买）：① 上一交易日科技情绪 3 日 EMA < -60；② 上上个与上个交易日的当日科技情绪均处于 -30~20 区间（不含边界）且上个交易日高于上上个交易日（情绪温和回升）。选股口径分三路：走①时先取「最近 3 日研报覆盖数前五（含并列，仅统计买点前已创建的研报）」形成候选池，再从中选 3 日涨幅最大的一只（博弈反弹提胜率）；走②或两条件均不满足时仍按「3 日涨幅最大」选股（最近 3 个交易日涨幅之和最大）。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 25,
+      "id": "key_block_2d_gain",
+      "name": "重点板块-2日最高涨幅",
+      "desc": "唯一买卖开关 = 创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）的正负翻转，不需要资金、成交量、情绪等任何条件配合。进攻（自选科技股）：斜率由负转正的桶触发买入，买自选股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁）中最近 2 个交易日（含触发日）个股涨幅之和最大的一只；卖点沿用通用 7 条件卖出诊断（「跌破成本线」为 -2%，即现价 < 买入价 × 0.98）；卖点诊断卖出后若斜率仍为正，当日不再买入，等到次日开盘 10 分钟后（9:40 桶）复测斜率仍为正才再买 2 日涨幅最大的科技股（复测时斜率已为负则改由「由正转负」防御信号驱动）。防御（防御+中性 tag 板块）：斜率由正转负且当前空仓的桶触发买入，买防御+中性 tag 板块成分股中 2 日涨幅最大的一只；防御对应创业板情绪低迷期，按半仓买入，该笔收益率（含期末浮盈）在概览的整体收益与平均/最大回撤统计中一律按半仓（×0.5）折算；唯一卖点 = 斜率由负转正 ∪ 个股分时价跌破成本线 -5% 止损（双卖点任一先触发即卖，同桶可转手买入进攻科技股）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 2 日涨幅排名的下一只；候选全部不可买时在斜率状态不变的后续桶持续重试；买入价取触发桶分时价；同桶允许先卖后买转手。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无翻转则不建仓",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 26,
+      "id": "key_block_3d_gain",
+      "name": "重点板块-3日最高涨幅",
+      "desc": "唯一买卖开关 = 创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）的正负翻转，不需要资金、成交量、情绪等任何条件配合。进攻（自选科技股）：斜率由负转正的桶触发买入，买自选股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁）中最近 3 个交易日（含触发日）个股涨幅之和最大的一只；卖点沿用通用 7 条件卖出诊断（「跌破成本线」为 -2%，即现价 < 买入价 × 0.98）；卖点诊断卖出后若斜率仍为正，当日不再买入，等到次日开盘 10 分钟后（9:40 桶）复测斜率仍为正才再买 3 日涨幅最大的科技股（复测时斜率已为负则改由「由正转负」防御信号驱动）。防御（防御+中性 tag 板块）：斜率由正转负且当前空仓的桶触发买入，买防御+中性 tag 板块成分股中 3 日涨幅最大的一只；防御对应创业板情绪低迷期，按半仓买入，该笔收益率（含期末浮盈）在概览的整体收益与平均/最大回撤统计中一律按半仓（×0.5）折算；唯一卖点 = 斜率由负转正 ∪ 个股分时价跌破成本线 -5% 止损（双卖点任一先触发即卖，同桶可转手买入进攻科技股）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 3 日涨幅排名的下一只；候选全部不可买时在斜率状态不变的后续桶持续重试；买入价取触发桶分时价；同桶允许先卖后买转手。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无翻转则不建仓",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 27,
+      "id": "key_block_4d_gain",
+      "name": "重点板块-4日最高涨幅",
+      "desc": "唯一买卖开关 = 创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）的正负翻转，不需要资金、成交量、情绪等任何条件配合。进攻（自选科技股）：斜率由负转正的桶触发买入，买自选股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁）中最近 4 个交易日（含触发日）个股涨幅之和最大的一只；卖点沿用通用 7 条件卖出诊断（「跌破成本线」为 -2%，即现价 < 买入价 × 0.98）；卖点诊断卖出后若斜率仍为正，当日不再买入，等到次日开盘 10 分钟后（9:40 桶）复测斜率仍为正才再买 4 日涨幅最大的科技股（复测时斜率已为负则改由「由正转负」防御信号驱动）。防御（防御+中性 tag 板块）：斜率由正转负且当前空仓的桶触发买入，买防御+中性 tag 板块成分股中 4 日涨幅最大的一只；防御对应创业板情绪低迷期，按半仓买入，该笔收益率（含期末浮盈）在概览的整体收益与平均/最大回撤统计中一律按半仓（×0.5）折算；唯一卖点 = 斜率由负转正 ∪ 个股分时价跌破成本线 -5% 止损（双卖点任一先触发即卖，同桶可转手买入进攻科技股）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 4 日涨幅排名的下一只；候选全部不可买时在斜率状态不变的后续桶持续重试；买入价取触发桶分时价；同桶允许先卖后买转手。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无翻转则不建仓",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 28,
+      "id": "key_block_5d_gain",
+      "name": "重点板块-5日最高涨幅",
+      "desc": "唯一买卖开关 = 创业板指 3 日线斜率（MA3 − 5个交易日前的MA3；当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定）的正负翻转，不需要资金、成交量、情绪等任何条件配合。进攻（自选科技股）：斜率由负转正的桶触发买入，买自选股（monitor_stocks.json 中 isTech ≠ false 的科技股，含添加时间门禁）中最近 5 个交易日（含触发日）个股涨幅之和最大的一只；卖点沿用通用 7 条件卖出诊断（「跌破成本线」为 -2%，即现价 < 买入价 × 0.98）；卖点诊断卖出后若斜率仍为正，当日不再买入，等到次日开盘 10 分钟后（9:40 桶）复测斜率仍为正才再买 5 日涨幅最大的科技股（复测时斜率已为负则改由「由正转负」防御信号驱动）。防御（防御+中性 tag 板块）：斜率由正转负且当前空仓的桶触发买入，买防御+中性 tag 板块成分股中 5 日涨幅最大的一只；防御对应创业板情绪低迷期，按半仓买入，该笔收益率（含期末浮盈）在概览的整体收益与平均/最大回撤统计中一律按半仓（×0.5）折算；唯一卖点 = 斜率由负转正 ∪ 个股分时价跌破成本线 -5% 止损（双卖点任一先触发即卖，同桶可转手买入进攻科技股）。买入时点涨停股不可买（主板涨幅 > 9.5%、创业板/科创板涨幅 > 19% 视为涨停），顺延到 5 日涨幅排名的下一只；候选全部不可买时在斜率状态不变的后续桶持续重试；买入价取触发桶分时价；同桶允许先卖后买转手。回测首个交易日之前的斜率符号取前一交易日收盘口径作为初值，首个交易日无翻转则不建仓",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 29,
+      "id": "tail_dip_1d_gain",
+      "name": "尾盘抄底-当日涨幅最大",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日涨幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 30,
+      "id": "tail_dip_3d_gain",
+      "name": "尾盘抄底-3日涨幅最大",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入最近 3 个交易日涨幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 31,
+      "id": "tail_dip_1d_resilience",
+      "name": "尾盘抄底-当日抗分歧最大",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日抗分歧分数最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 32,
+      "id": "tail_dip_3d_resilience",
+      "name": "尾盘抄底-3日抗分歧最大",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入最近 3 个交易日抗分歧分数汇总最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 33,
+      "id": "tail_dip_1d_fall",
+      "name": "尾盘抄底-当日跌幅最大",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日跌幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 34,
+      "id": "tail_dip_3d_fall",
+      "name": "尾盘抄底-3日跌幅最大",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入最近 3 个交易日跌幅最大的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 35,
+      "id": "tail_dip_1d_resilience_low",
+      "name": "尾盘抄底-当日抗分歧分数最低",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：仅当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）时命中，买入当日抗分歧分数最低的股票；次日开盘后涨幅持续上涨则持有，开始下降（较上一分钟回落）即卖出",
+      "range": {
+        "startDate": "20260728",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 36,
+      "id": "tail_dip_emo3_3d_gain",
+      "name": "三日情绪冰点-3日涨幅最大",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入最近 3 个交易日涨幅最大的股票；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出；买入环境门禁：触发日候选股所跟踪指数（sh688 开头跟踪科创50 sh000688，其余跟踪创业板指 sz399006）满足其一才可买入——①往前数 5 个交易日 20 日线斜率为正（MA20(触发日) − MA20(5个交易日前) > 0，含触发日收盘价，尾盘 14:57 触发按收盘已基本定型口径）；②触发日 30 日线在 60 日线下方（MA30 < MA60）。目的：剔除单边阴跌中段（20日线仍下行且 30 日线未跌破 60 日线）的无溢价环境，仅保留下跌初期/末期；全部候选股均不满足（或指数日K数据不足/获取失败）时当日不买入，买入条件明细中展示命中条件与具体数值",
+      "range": {
+        "startDate": "20260701",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 37,
+      "id": "tail_dip_emo3_3d_fall",
+      "name": "三日情绪冰点-3日跌幅最大",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入最近 3 个交易日跌幅最大的股票；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出；买入环境门禁：触发日候选股所跟踪指数（sh688 开头跟踪科创50 sh000688，其余跟踪创业板指 sz399006）满足其一才可买入——①往前数 5 个交易日 20 日线斜率为正（MA20(触发日) − MA20(5个交易日前) > 0，含触发日收盘价，尾盘 14:57 触发按收盘已基本定型口径）；②触发日 30 日线在 60 日线下方（MA30 < MA60）。目的：剔除单边阴跌中段（20日线仍下行且 30 日线未跌破 60 日线）的无溢价环境，仅保留下跌初期/末期；全部候选股均不满足（或指数日K数据不足/获取失败）时当日不买入，买入条件明细中展示命中条件与具体数值",
+      "range": {
+        "startDate": "20260701",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 38,
+      "id": "tail_dip_emo3_3d_reports_top5_gain",
+      "name": "三日情绪冰点-3日研报前五&涨幅最大",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，在最近 3 个交易日研报覆盖数前五（含覆盖数相同的股票）中买入 3 日涨幅最大的一只（覆盖仅统计买点前已创建的研报，买点后补录的不计入）；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出；买入环境门禁：触发日候选股所跟踪指数（sh688 开头跟踪科创50 sh000688，其余跟踪创业板指 sz399006）满足其一才可买入——①往前数 5 个交易日 20 日线斜率为正（MA20(触发日) − MA20(5个交易日前) > 0，含触发日收盘价，尾盘 14:57 触发按收盘已基本定型口径）；②触发日 30 日线在 60 日线下方（MA30 < MA60）。目的：剔除单边阴跌中段（20日线仍下行且 30 日线未跌破 60 日线）的无溢价环境，仅保留下跌初期/末期；全部候选股均不满足（或指数日K数据不足/获取失败）时当日不买入，买入条件明细中展示命中条件与具体数值",
+      "range": {
+        "startDate": "20260701",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 39,
+      "id": "tail_dip_emo3_1d_gain",
+      "name": "三日情绪冰点-当日涨幅最大",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入当日涨幅最大的股票（涨幅相同时取最近 2 个交易日涨幅最大的一只）；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出；买入环境门禁：触发日候选股所跟踪指数（sh688 开头跟踪科创50 sh000688，其余跟踪创业板指 sz399006）满足其一才可买入——①往前数 5 个交易日 20 日线斜率为正（MA20(触发日) − MA20(5个交易日前) > 0，含触发日收盘价，尾盘 14:57 触发按收盘已基本定型口径）；②触发日 30 日线在 60 日线下方（MA30 < MA60）。目的：剔除单边阴跌中段（20日线仍下行且 30 日线未跌破 60 日线）的无溢价环境，仅保留下跌初期/末期；全部候选股均不满足（或指数日K数据不足/获取失败）时当日不买入，买入条件明细中展示命中条件与具体数值",
+      "range": {
+        "startDate": "20260701",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 40,
+      "id": "tail_dip_emo3_1d_fall",
+      "name": "三日情绪冰点-当日跌幅最大",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入当日跌幅最大的股票（跌幅相同时取最近 2 个交易日跌幅最大的一只）；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出；买入环境门禁：触发日候选股所跟踪指数（sh688 开头跟踪科创50 sh000688，其余跟踪创业板指 sz399006）满足其一才可买入——①往前数 5 个交易日 20 日线斜率为正（MA20(触发日) − MA20(5个交易日前) > 0，含触发日收盘价，尾盘 14:57 触发按收盘已基本定型口径）；②触发日 30 日线在 60 日线下方（MA30 < MA60）。目的：剔除单边阴跌中段（20日线仍下行且 30 日线未跌破 60 日线）的无溢价环境，仅保留下跌初期/末期；全部候选股均不满足（或指数日K数据不足/获取失败）时当日不买入，买入条件明细中展示命中条件与具体数值",
+      "range": {
+        "startDate": "20260701",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    },
+    {
+      "rank": 41,
+      "id": "tail_dip_emo3_1d_resilience",
+      "name": "三日情绪冰点-当日抗分歧最大",
+      "desc": "14:57 尾盘挂单买入（收盘集合竞价成交）：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60 时命中，买入当日抗分歧分数最大的股票（分数相同时取最近 2 个交易日抗分歧分数汇总最大的一只）；专属卖点：次日竞价开盘涨幅为负 → 9:30 开盘直接卖出，开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 卖出；买入环境门禁：触发日候选股所跟踪指数（sh688 开头跟踪科创50 sh000688，其余跟踪创业板指 sz399006）满足其一才可买入——①往前数 5 个交易日 20 日线斜率为正（MA20(触发日) − MA20(5个交易日前) > 0，含触发日收盘价，尾盘 14:57 触发按收盘已基本定型口径）；②触发日 30 日线在 60 日线下方（MA30 < MA60）。目的：剔除单边阴跌中段（20日线仍下行且 30 日线未跌破 60 日线）的无溢价环境，仅保留下跌初期/末期；全部候选股均不满足（或指数日K数据不足/获取失败）时当日不买入，买入条件明细中展示命中条件与具体数值",
+      "range": {
+        "startDate": "20260701",
+        "endDate": "20260930"
+      },
+      "summary": {
+        "tradeCount": 0,
+        "winCount": 0,
+        "winRate": null,
+        "avgDrawdown": null,
+        "maxDrawdown": null,
+        "overallReturn": 0,
+        "holding": false,
+        "avgHoldingDays": null,
+        "avgHoldingDaysApprox": false
+      },
+      "trades": [],
+      "currentHolding": null
+    }
+  ]
+}

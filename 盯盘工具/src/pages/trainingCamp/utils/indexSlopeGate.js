@@ -29,7 +29,7 @@ export const fetchIndexSlopeGate = async (code, date, minute, baseUrl = '') => {
 // 从 fetch 结果里提取某只股票应该显示的诊断文字（短版，适合 tooltip）
 // 返回 { passed, label, detail }
 export const formatGateDiagnosis = (gateResult, isApplicable = true) => {
-  if (!isApplicable) return { passed: true, label: '（该策略不适用指数斜率门禁）', detail: '重点板块/尾盘抄底/情绪游资/三日情绪冰点策略跳过此检查' };
+  if (!isApplicable) return { passed: true, label: '（该策略不适用指数斜率门禁）', detail: '重点板块/尾盘抄底/三日情绪冰点策略跳过此检查' };
   if (!gateResult) return { passed: true, label: '指数斜率门禁数据暂不可用', detail: '可能是实时行情数据尚未就绪，请稍后刷新' };
 
   const { trackedIndex, cybGate, starGate, gatePassed } = gateResult;
