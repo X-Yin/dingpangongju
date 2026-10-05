@@ -1099,7 +1099,10 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         const r = await axios.get(`http://${local_ip}:3000/training_camp/backtest/worker/status`);
         const s = r.data || {};
         const logs = Array.isArray(s.logs) ? s.logs : [];
-        setWorkerLog(logs[logs.length - 1] || '');
+        const rawLog = logs[logs.length - 1] || '';
+        // 后端偶尔会把同一时间戳重复打两次前缀「[HH:mm:ss] [HH:mm:ss] …」，只在真的是两个相同格式紧邻时才去掉一个
+        const dedupedLog = rawLog.replace(/^(\[\d{2}:\d{2}:\d{2}\])\s+\1\s/, '$1 ');
+        setWorkerLog(dedupedLog);
         if (s.status !== 'running') {
           stopWorkerPolling();
           setWorkerRunning(false);
