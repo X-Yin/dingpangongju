@@ -125,10 +125,6 @@
       "name": "宏和科技"
     },
     {
-      "code": "sh688146",
-      "name": "中船特气"
-    },
-    {
       "code": "sz300408",
       "name": "三环集团"
     },
@@ -237,10 +233,6 @@
       "name": "杰普特"
     },
     {
-      "code": "sh688820",
-      "name": "盛合晶微"
-    },
-    {
       "code": "sz000977",
       "name": "浪潮信息"
     },
@@ -341,10 +333,6 @@
       "name": "沃尔德"
     },
     {
-      "code": "sz300179",
-      "name": "四方达"
-    },
-    {
       "code": "sz002636",
       "name": "金安国纪"
     },
@@ -361,14 +349,6 @@
       "name": "帝尔激光"
     },
     {
-      "code": "sh688603",
-      "name": "天承科技"
-    },
-    {
-      "code": "sh601179",
-      "name": "中国西电"
-    },
-    {
       "code": "sz000823",
       "name": "超声电子"
     },
@@ -381,8 +361,16 @@
       "name": "富乐德"
     },
     {
-      "code": "sh688099",
-      "name": "晶晨股份"
+      "code": "sz002008",
+      "name": "大族激光"
+    },
+    {
+      "code": "sh603650",
+      "name": "彤程新材"
+    },
+    {
+      "code": "sz002409",
+      "name": "雅克科技"
     },
     {
       "code": "sh605179",
@@ -391,10 +379,6 @@
     {
       "code": "sz300139",
       "name": "晓程科技"
-    },
-    {
-      "code": "sz002909",
-      "name": "集泰股份"
     }
   ],
   "trades": [
@@ -475,8 +459,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -490,7 +474,7 @@
           "title": "自选科技股内最近4日涨幅最大的股票",
           "passed": true,
           "value": "+30.19%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 4 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 4 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
         }
       ],
       "sellDate": "20260824",
@@ -579,8 +563,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -594,7 +578,7 @@
           "title": "自选科技股内最近4日涨幅最大的股票",
           "passed": true,
           "value": "+20.51%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 4 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 4 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
         }
       ],
       "sellDate": "20260904",
@@ -631,8 +615,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -646,7 +630,7 @@
           "title": "自选科技股内最近4日涨幅最大的股票",
           "passed": true,
           "value": "+17.97%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 4 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 4 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
         }
       ],
       "sellDate": "20260915",
@@ -683,8 +667,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -698,7 +682,7 @@
           "title": "自选科技股内最近4日涨幅最大的股票",
           "passed": true,
           "value": "+15.86%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 4 日个股涨幅之和取最大；买入价取 11:30:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 4 日个股涨幅之和取最大；买入价取 11:30:00 分时价"
         }
       ],
       "sellDate": "20260917",
@@ -735,8 +719,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -750,7 +734,7 @@
           "title": "自选科技股内最近4日涨幅最大的股票",
           "passed": true,
           "value": "+18.58%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 4 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 4 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
         }
       ],
       "sellDate": "20260922",
@@ -787,8 +771,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -802,79 +786,27 @@
           "title": "自选科技股内最近4日涨幅最大的股票",
           "passed": true,
           "value": "+14.23%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 4 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 4 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
         }
       ],
       "sellDate": "20260924",
       "sellDateDisplay": "2026-09-24",
-      "sellTime": "09:30",
-      "sellPrice": 222.06,
-      "sellChange": -0.59,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -2.69,
-      "rawReturnRate": -2.69
-    },
-    {
-      "seq": 9,
-      "metric": 25.584,
-      "code": "sz002909",
-      "stockName": "集泰股份",
-      "positionMode": "defense",
-      "weight": 0.5,
-      "buyDate": "20260924",
-      "buyDateDisplay": "2026-09-24",
-      "buyTime": "09:30",
-      "buyPrice": 7.67,
-      "buyChange": 1.72,
-      "buyReason": "09:30创业板指3日线斜率由正转负（+2.31→-10.90）且空仓，买入防御候选池（Tag板块 + 近20交易日创业板下跌日涨停前3板块 ∩ 20日有≥3连板个股）内4日涨幅最大的股票（防御买点）",
-      "buyChecks": [
-        {
-          "id": "key_block_cyb_gate",
-          "title": "创业板指3日线斜率由正转负且空仓（防御买点）",
-          "passed": true,
-          "value": "09:30:00 -10.90",
-          "reason": "创业板指 3 日线斜率在 09:30:00 由正转负（+2.31 → -10.90）且当前空仓：防御买点触发，买入防御+中性 tag 板块 ∪ 近20交易日创业板下跌日的涨停前3板块 ∩ 20日有≥3连板个股中 4 日涨幅最大的一只"
-        },
-        {
-          "id": "key_block_tag_blocks",
-          "title": "防御候选池（Tag板块 + 历史涨停扩展）",
-          "passed": true,
-          "value": "16 个Tag板块 62 只 + 涨停扩展 26 只",
-          "reason": "参与选股的防御+中性 tag 板块 16 个：锂电[中性]、化工[防御]、商业航天[中性]、机器人[中性]、消费[防御]、医药[防御]、证券[防御]、银行[防御]、电力[中性]、煤炭[防御]、贵金属[中性]、AI 应用[中性]、特高压[中性]、房地产[防御]、军工[中性]、粮食[防御]；历史涨停扩展 = 往前20交易日中创业板日跌幅<-1%的 6 天涨停前3板块 ∩ 20日有≥3连板个股，与Tag板块去重后新增 26 只（下跌日：20260828、20260901、20260902、20260908、20260914、20260915）；合并去重后共 88 只候选"
-        },
-        {
-          "id": "key_block_limit_up",
-          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
-          "passed": true,
-          "value": "无涨停候选",
-          "reason": "买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）"
-        },
-        {
-          "id": "key_block_best_stock",
-          "title": "防御候选池(Tag板块+涨停扩展)内最近4日涨幅最大的股票",
-          "passed": true,
-          "value": "+25.58%",
-          "reason": "在防御候选池共 88 只（Tag板块 + 历史涨停扩展 26 只）中（有效候选 88 只），按最近 4 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
-        }
-      ],
-      "sellDate": "20260929",
-      "sellDateDisplay": "2026-09-29",
       "sellTime": "09:35",
-      "sellPrice": 6.71,
-      "sellChange": -10.05,
-      "sellReason": "持仓个股分时价跌破成本线 -5% 止损（成本 7.67 → 现价 6.71，浮亏 -12.52%），防御半仓持仓卖出（防御为半仓买入，收益率按半仓折算）",
-      "returnRate": -6.26,
-      "rawReturnRate": -12.52
+      "sellPrice": 218.5,
+      "sellChange": -2.18,
+      "sellReason": "跌破最迟买入日低点、跌破成本线-2%",
+      "returnRate": -4.25,
+      "rawReturnRate": -4.25
     }
   ],
   "currentHolding": null,
   "summary": {
-    "tradeCount": 9,
+    "tradeCount": 8,
     "winCount": 5,
-    "winRate": 55.56,
-    "avgDrawdown": -3.2,
-    "maxDrawdown": -6.26,
-    "overallReturn": 36.31,
+    "winRate": 62.5,
+    "avgDrawdown": -2.7,
+    "maxDrawdown": -4.25,
+    "overallReturn": 41.01,
     "holding": false
   }
 }

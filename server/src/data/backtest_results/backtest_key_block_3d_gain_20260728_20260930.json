@@ -125,10 +125,6 @@
       "name": "宏和科技"
     },
     {
-      "code": "sh688146",
-      "name": "中船特气"
-    },
-    {
       "code": "sz300408",
       "name": "三环集团"
     },
@@ -237,10 +233,6 @@
       "name": "杰普特"
     },
     {
-      "code": "sh688820",
-      "name": "盛合晶微"
-    },
-    {
       "code": "sz000977",
       "name": "浪潮信息"
     },
@@ -341,10 +333,6 @@
       "name": "沃尔德"
     },
     {
-      "code": "sz300179",
-      "name": "四方达"
-    },
-    {
       "code": "sz002636",
       "name": "金安国纪"
     },
@@ -361,14 +349,6 @@
       "name": "帝尔激光"
     },
     {
-      "code": "sh688603",
-      "name": "天承科技"
-    },
-    {
-      "code": "sh601179",
-      "name": "中国西电"
-    },
-    {
       "code": "sz000823",
       "name": "超声电子"
     },
@@ -381,8 +361,16 @@
       "name": "富乐德"
     },
     {
-      "code": "sh688099",
-      "name": "晶晨股份"
+      "code": "sz002008",
+      "name": "大族激光"
+    },
+    {
+      "code": "sh603650",
+      "name": "彤程新材"
+    },
+    {
+      "code": "sz002409",
+      "name": "雅克科技"
     },
     {
       "code": "sh605179",
@@ -423,8 +411,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -438,7 +426,7 @@
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+12.00%",
-          "reason": "在自选科技股池共 93 只中（有效候选 68 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 64 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
         }
       ],
       "sellDate": "20260812",
@@ -475,8 +463,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -490,7 +478,7 @@
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+17.73%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 3 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
         }
       ],
       "sellDate": "20260818",
@@ -547,12 +535,12 @@
       ],
       "sellDate": "20260820",
       "sellDateDisplay": "2026-08-20",
-      "sellTime": "09:30",
-      "sellPrice": 31.28,
-      "sellChange": -9.99,
-      "sellReason": "持仓个股分时价跌破成本线 -5% 止损（成本 34.75 → 现价 31.28，浮亏 -9.99%），防御半仓持仓卖出（防御为半仓买入，收益率按半仓折算）",
-      "returnRate": -5,
-      "rawReturnRate": -9.99
+      "sellTime": "10:05",
+      "sellPrice": 33.21,
+      "sellChange": -4.43,
+      "sellReason": "竞价开盘 31.28 已跌破成本线 -5%（阈值 33.01），不在 9:30 直接止损、等待开盘自救拉升；10:05 价 33.21 低于 10:04 价 33.98，自救拉升结束直接卖出（现价 33.21，浮亏 -4.43%），防御半仓持仓卖出（防御为半仓买入，收益率按半仓折算）",
+      "returnRate": -2.21,
+      "rawReturnRate": -4.43
     },
     {
       "seq": 4,
@@ -579,8 +567,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -594,7 +582,7 @@
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+16.05%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
         }
       ],
       "sellDate": "20260825",
@@ -631,8 +619,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -646,7 +634,7 @@
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+19.78%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
         }
       ],
       "sellDate": "20260828",
@@ -735,8 +723,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -750,7 +738,7 @@
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+18.51%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
         }
       ],
       "sellDate": "20260915",
@@ -787,8 +775,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -802,7 +790,7 @@
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+13.35%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 3 日个股涨幅之和取最大；买入价取 11:30:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 11:30:00 分时价"
         }
       ],
       "sellDate": "20260917",
@@ -839,8 +827,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -854,17 +842,17 @@
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+17.01%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 3 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
         }
       ],
       "sellDate": "20260921",
       "sellDateDisplay": "2026-09-21",
-      "sellTime": "09:30",
-      "sellPrice": 228.25,
-      "sellChange": -0.48,
+      "sellTime": "09:35",
+      "sellPrice": 223.13,
+      "sellChange": -2.71,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -4.76,
-      "rawReturnRate": -4.76
+      "returnRate": -6.9,
+      "rawReturnRate": -6.9
     },
     {
       "seq": 10,
@@ -878,21 +866,21 @@
       "buyTime": "09:40",
       "buyPrice": 230.85,
       "buyChange": 9.88,
-      "buyReason": "09:40开盘10分钟后复测创业板指3日线斜率仍为正（+54.96，卖出当时+30.81），买入自选科技股池内3日涨幅最大的股票（卖点诊断卖出后次日复测继续买）",
+      "buyReason": "09:40开盘10分钟后复测创业板指3日线斜率仍为正（+54.96，卖出当时+36.06），买入自选科技股池内3日涨幅最大的股票（卖点诊断卖出后次日复测继续买）",
       "buyChecks": [
         {
           "id": "key_block_cyb_gate",
           "title": "次日开盘10分钟后斜率复测（进攻买点）",
           "passed": true,
           "value": "09:40:00 +54.96",
-          "reason": "进攻持仓按卖点诊断卖出后，卖出当时 3 日线斜率仍为正（+30.81），当日不继续买；次日开盘 10 分钟后（09:40:00，9:40 桶）复测斜率仍为正（+54.96），继续买入自选科技股中 3 日涨幅最大的一只"
+          "reason": "进攻持仓按卖点诊断卖出后，卖出当时 3 日线斜率仍为正（+36.06），当日不继续买；次日开盘 10 分钟后（09:40:00，9:40 桶）复测斜率仍为正（+54.96），继续买入自选科技股中 3 日涨幅最大的一只"
         },
         {
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "93 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 93 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "90 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -906,17 +894,17 @@
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+13.54%",
-          "reason": "在自选科技股池共 93 只中（有效候选 69 只），按最近 3 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
+          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
         }
       ],
       "sellDate": "20260923",
       "sellDateDisplay": "2026-09-23",
-      "sellTime": "09:30",
-      "sellPrice": 225.5,
-      "sellChange": 1.65,
+      "sellTime": "09:35",
+      "sellPrice": 226.47,
+      "sellChange": 2.09,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.32,
-      "rawReturnRate": -2.32
+      "returnRate": -1.9,
+      "rawReturnRate": -1.9
     },
     {
       "seq": 11,
@@ -976,9 +964,9 @@
     "tradeCount": 11,
     "winCount": 4,
     "winRate": 36.36,
-    "avgDrawdown": -3.88,
-    "maxDrawdown": -5.74,
-    "overallReturn": 13.01,
+    "avgDrawdown": -3.73,
+    "maxDrawdown": -6.9,
+    "overallReturn": 14.08,
     "holding": false
   }
 }

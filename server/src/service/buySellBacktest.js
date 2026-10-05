@@ -1506,38 +1506,90 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
 
   // ===== 条件7：现价跌破持仓成本线 -2%（即时触发，无需持续分钟；成本线 = 模拟持仓买入价 buyPrice） =====
   // 阈值可按持仓覆盖（position.costLinePct，百分比数值，默认 2）
+  // 竞价低开自救窗口（2026-10-05 新增）：隔夜持仓当日竞价开盘价（首分钟价）已跌破成本线 -xx% 时，
+  //   不在 9:30 直接止损——大低开往往开盘先直线拉升再二次回落（资金自救），逐分钟跟踪：
+  //   只要未出现「某分钟价低于上一分钟」（如 9:36 < 9:35，即自救拉升结束信号）就继续持有（即使仍在成本线下方）；
+  //   首次出现分钟回落 → 无论此刻是否仍跌破成本线都直接卖出（按当前桶价成交，卖出原因标注回落分钟）。
+  //   若开盘价未跌破成本线、盘中才跌破 → 维持原即时止损（该卖就得卖）。
   const costLinePct = position?.costLinePct != null && Number.isFinite(Number(position.costLinePct)) ? Number(position.costLinePct) : 2;
   const costLineRatio = 1 - costLinePct / 100;
   const costLineThreshold = buyPrice !== null && buyPrice > 0 ? buyPrice * costLineRatio : null;
+  const openBrokeCostLine = costLineThreshold !== null && openPrice != null && openPrice > 0 && openPrice < costLineThreshold;
+  // 自救窗口观察：在截至当前桶的分时点中找首个「分钟价低于上一分钟」的回落点（stockPoints 已按分钟升序、过滤无效价）
+  let costLineFirstDecline = null;
+  if (openBrokeCostLine) {
+    for (let i = 1; i < stockPoints.length; i++) {
+      if (stockPoints[i].lastPx < stockPoints[i - 1].lastPx) {
+        costLineFirstDecline = { minute: stockPoints[i].minute, lastPx: stockPoints[i].lastPx, prevMinute: stockPoints[i - 1].minute, prevPx: stockPoints[i - 1].lastPx };
+        break;
+      }
+    }
+  }
   const brokenCostLine = costLineThreshold !== null && closePrice < costLineThreshold;
+  // 触发判定：开盘已破线 → 只看自救窗口是否结束（首次分钟回落）；开盘未破线 → 原即时止损
+  const condition7Satisfied = openBrokeCostLine ? costLineFirstDecline !== null : brokenCostLine;
+  const fmtMinuteC7 = (m) => (m != null ? `${String(Math.floor(m / 100)).padStart(2, '0')}:${String(m % 100).padStart(2, '0')}` : '--');
+  // 精确分钟回溯（2026-10-05 新增）：回测按 5 分钟桶触发本卖点后，逐分钟回溯定位真实触发分钟并按该分钟分时价成交
+  //（线上环境在触发当分钟即已卖出，桶级成交最多晚 4 分钟，回溯后回测更贴近实盘）：
+  //   - 盘中破线：从桶前一分钟向回逐分钟检查是否仍跌破成本线阈值，直到首次不跌破（或回溯至 9:30 开盘）为止，
+  //     取该段连续跌破区间的最早一分钟为成交分钟；若破线就发生在当前桶（前一分钟未跌破）→ 维持按桶价成交；
+  //   - 开盘破线（自救窗口）：卖出分钟本就是「首次分钟回落」的精确分钟，成交价由桶价改为该回落分钟价
+  //     （与线上在回落当分钟立即卖出一致）。
+  let condition7PreciseSell = null; // { minute, price }
+  if (condition7Satisfied && costLineThreshold !== null) {
+    if (openBrokeCostLine) {
+      if (costLineFirstDecline !== null) {
+        condition7PreciseSell = { minute: costLineFirstDecline.minute, price: costLineFirstDecline.lastPx };
+      }
+    } else if (brokenCostLine) {
+      let walkStart = -1;
+      for (let i = stockPoints.length - 1; i >= 0; i--) {
+        if (stockPoints[i].minute < minute) { walkStart = i; break; }
+      }
+      for (let i = walkStart; i >= 0; i--) {
+        if (!(stockPoints[i].lastPx < costLineThreshold)) break;
+        condition7PreciseSell = { minute: stockPoints[i].minute, price: stockPoints[i].lastPx };
+      }
+    }
+  }
   const condition7 = {
     name: `跌破成本线-${costLinePct}%`,
-    satisfied: brokenCostLine,
+    satisfied: condition7Satisfied,
     detail: costLineThreshold === null
       ? `该模拟持仓无买入价格，无法判断是否跌破成本线 -${costLinePct}%`
-      : brokenCostLine
-        ? `现价 ${closePrice.toFixed(2)} 已跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），触发卖点`
-        : `现价 ${closePrice.toFixed(2)} 未跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），未触发`,
+      : openBrokeCostLine
+        ? (costLineFirstDecline !== null
+          ? `竞价开盘 ${openPrice.toFixed(2)} 已跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），开盘自救拉升已于 ${fmtMinuteC7(costLineFirstDecline.minute)} 结束（${fmtMinuteC7(costLineFirstDecline.minute)} 价 ${costLineFirstDecline.lastPx.toFixed(2)} 低于 ${fmtMinuteC7(costLineFirstDecline.prevMinute)} 价 ${costLineFirstDecline.prevPx.toFixed(2)}），拉升结束直接卖出，按回落分钟 ${fmtMinuteC7(costLineFirstDecline.minute)} 价格 ${costLineFirstDecline.lastPx.toFixed(2)} 成交`
+          : `竞价开盘 ${openPrice.toFixed(2)} 已跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），开盘后资金持续拉升（截至当前未出现分钟回落），自救窗口观察中、暂不卖出`)
+        : brokenCostLine
+          ? `现价 ${closePrice.toFixed(2)} 已跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），触发卖点${condition7PreciseSell !== null ? `；逐分钟回溯：实际于 ${fmtMinuteC7(condition7PreciseSell.minute)} 首次跌破（价 ${condition7PreciseSell.price.toFixed(2)}），按该分钟价格成交（桶级 ${displayTime}）` : '（破线发生在当前桶，按桶价成交）'}`
+          : `现价 ${closePrice.toFixed(2)} 未跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），未触发`,
     subConditions: [
       { label: '买入价（成本线）', value: buyPrice !== null && buyPrice > 0 ? buyPrice.toFixed(2) : '--' },
       { label: `阈值（成本价-${costLinePct}%）`, value: costLineThreshold !== null ? costLineThreshold.toFixed(2) : '--' },
+      { label: '开盘价（首分钟）', value: openPrice != null && openPrice > 0 ? openPrice.toFixed(2) : '--' },
       { label: '现价', value: closePrice.toFixed(2) },
-      { label: '判断规则', value: `现价 < 成本价 × ${costLineRatio.toFixed(2)} 即触发` },
+      ...(openBrokeCostLine ? [{ label: '自救窗口', value: costLineFirstDecline !== null ? `已于 ${fmtMinuteC7(costLineFirstDecline.minute)} 结束（首次分钟回落）` : '进行中（拉升未回落，暂不卖）' }] : []),
+      { label: '判断规则', value: openBrokeCostLine ? '开盘破线 → 等首次分钟回落（自救拉升结束）直接卖；盘中破线 → 现价 < 成本价 × 阈值即时卖' : `现价 < 成本价 × ${costLineRatio.toFixed(2)} 即触发` },
     ],
   };
 
   const conditions = [condition1, condition2, condition3, condition4, condition5, condition6, condition7];
   const satisfiedCount = conditions.filter(c => c.satisfied).length;
   const isSell = satisfiedCount > 0;
+  // 条件7 命中时用回溯出的精确触发分钟价/时间成交（对齐线上在触发当分钟即卖出的行为；尾盘抄底专属卖点同模式）
+  const usePreciseSell = condition7Satisfied && condition7PreciseSell !== null;
+  const finalSellPrice = usePreciseSell ? condition7PreciseSell.price : closePrice;
+  const finalDisplayTime = usePreciseSell ? fmtMinuteC7(condition7PreciseSell.minute) : displayTime;
   const returnRate = buyPrice !== null && buyPrice > 0
-    ? parseFloat((((closePrice - buyPrice) / buyPrice) * 100).toFixed(2))
+    ? parseFloat((((finalSellPrice - buyPrice) / buyPrice) * 100).toFixed(2))
     : null;
 
   return {
     isSell,
     code,
     stockName,
-    closePrice: parseFloat(closePrice.toFixed(2)),
+    closePrice: parseFloat(finalSellPrice.toFixed(2)),
     change: change !== null ? parseFloat(change.toFixed(2)) : null,
     returnRate,
     dayHigh: dayHigh > 0 ? parseFloat(dayHigh.toFixed(2)) : null,
@@ -1545,9 +1597,9 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
     resilienceScore,
     conditions,
     conclusion: isSell
-      ? `共触发 ${satisfiedCount} 个卖出条件（${conditions.filter(c => c.satisfied).map(c => c.name).join('、')}），建议卖出离场`
+      ? `共触发 ${satisfiedCount} 个卖出条件（${conditions.filter(c => c.satisfied).map(c => c.name).join('、')}），建议卖出离场${usePreciseSell ? `；按 ${finalDisplayTime} 分时价 ${finalSellPrice.toFixed(2)} 精确成交` : ''}`
       : '所有卖出条件均未触发，当前可继续持有',
-    displayTime,
+    displayTime: finalDisplayTime,
   };
 };
 
@@ -1699,6 +1751,58 @@ const isLimitUpAtBuy = (code, changePct) => {
 };
 
 // ============================================================
+// 上一交易日一字板过滤（2026-10-05 新增，所有策略选股通用限制；同日放宽阈值）：
+// 一字板定义 = 上一交易日竞价开盘涨幅、收盘涨幅、全天最低价涨幅三者均不低于阈值
+//（主板 8%、创业板/科创板 16%，口径较真实一字板放宽：全天始终维持普涨、无低位上车机会）；
+// 一字板次日常继续一字或大高开，难以低位上车且追高风险大 → 所有策略选股一律剔除该候选并顺延排名下一只。
+// ============================================================
+// klineBars：升序日K（getKlineCached 口径，字段 trade_date/open_px/close_px/low_px）；dateStr：买入日。
+// 返回 true=上一交易日一字板 / false=非一字板 / null=数据不足无法判定（不拦截）
+const isPrevDayOneWordBoard = (code, klineBars, dateStr) => {
+  try {
+    const bars = (klineBars || [])
+      .filter(k => Number.isFinite(Number(k.trade_date)) && Number(k.close_px) > 0)
+      .sort((a, b) => Number(a.trade_date) - Number(b.trade_date));
+    const target = parseInt(dateStr, 10);
+    let idx = -1; // 上一交易日K线位置（trade_date < 买入日的最后一根）
+    for (let i = bars.length - 1; i >= 0; i--) {
+      if (Number(bars[i].trade_date) < target) { idx = i; break; }
+    }
+    if (idx < 1) return null; // 无上一交易日K线或缺上上交易日（无法取昨收）
+    const prevBar = bars[idx];
+    const preclose = Number(bars[idx - 1].close_px);
+    const openPx = Number(prevBar.open_px);
+    const lowPx = prevBar.low_px != null ? Number(prevBar.low_px) : null;
+    const closePx = Number(prevBar.close_px);
+    if (!(preclose > 0) || !(openPx > 0) || !(closePx > 0) || lowPx == null || !(lowPx > 0)) return null;
+    const chg = (px) => ((px - preclose) / preclose) * 100;
+    const growthBoard = String(code).startsWith('sz30') || String(code).startsWith('sh68');
+    const threshold = growthBoard ? 16 : 8;
+    return chg(openPx) >= threshold && chg(closePx) >= threshold && chg(lowPx) >= threshold;
+  } catch (e) {
+    return null;
+  }
+};
+
+// 批量预取候选池「上一交易日一字板」代码集合：返回 Set<code>，供同步选股函数
+// pickBestStock / pickWeakToStrongStock 使用。结果按 `${code}_${dateStr}` 进程内缓存
+//（历史日K不可变，同一回测窗口内重复桶/重复日直接命中）
+const prevOneWordBoardCache = new Map(); // `${code}_${dateStr}` -> true/false/null
+const buildPrevOneWordBoardSet = async (codes, dateStr) => {
+  const set = new Set();
+  await Promise.all([...new Set(codes)].map(async (code) => {
+    const key = `${code}_${dateStr}`;
+    if (!prevOneWordBoardCache.has(key)) {
+      let bars = null;
+      try { bars = await getKlineCached(code, dateStr); } catch (e) { bars = null; }
+      prevOneWordBoardCache.set(key, isPrevDayOneWordBoard(code, bars, dateStr));
+    }
+    if (prevOneWordBoardCache.get(key) === true) set.add(code);
+  }));
+  return set;
+};
+
+// ============================================================
 // 随机模拟注入：把「随机模拟测试」随机抽取的一批真实科技股混入当日回放候选池。
 // 在加载回放数据后、构建 replayStocks / dailyInfos 之前调用：向每个时间桶的 stockChanges
 // 追加这些股票的真实逐桶行情（真实分时 → 桶 minute 取价），并补齐 dailyLowByCode。
@@ -1765,7 +1869,7 @@ const passWatchlistGate = (code, dateStr, minute) => isSimStock(code) || isStock
 // 抗分歧弱转强选股：取最近 4 个交易日（最后一位为当日，用盘中过滤后的抗分歧分数）每只股票的抗分歧分数，
 // 先筛选出「买点触发时抗分歧分数 > 11」的股票，再从中计算「前两天均值」与「后两天均值」（第 3 天+当日，即最近两天）的差值
 // diff = 后两天均值 - 前两天均值。diff 越大代表抗分歧由弱转强越明显，选 diff 最大的一只；diff 相同（弱转强过程一致）时，取当日盘中涨幅最大的一只。
-const pickWeakToStrongStock = (bucket, rangeDates, di, replayStocks, dailyInfos) => {
+const pickWeakToStrongStock = (bucket, rangeDates, di, replayStocks, dailyInfos, prevOneWordSet = null) => {
   const winDates = rangeDates.slice(Math.max(0, di - 3), di + 1); // 最近 4 个交易日
   if (winDates.length < 4) return null; // 4 日窗口不足，不构成弱转强
   let best = null; // { sc, diff, gain }
@@ -1777,6 +1881,8 @@ const pickWeakToStrongStock = (bucket, rangeDates, di, replayStocks, dailyInfos)
     if (!passWatchlistGate(sc.code, rangeDates[di], bucket.minute)) continue;
     // 涨停顺延：买点触发时点已涨停的股票无法成交，不参与优选
     if (isLimitUpAtBuy(sc.code, sc.changePct)) continue;
+    // 上一交易日一字板过滤（全策略通用）：昨日一字板的候选次日不买，不参与优选
+    if (prevOneWordSet && prevOneWordSet.size > 0 && prevOneWordSet.has(sc.code)) continue;
     const scores = [];
     for (let i = 0; i < winDates.length; i++) {
       let r;
@@ -1950,7 +2056,7 @@ const countStockPositiveSlopeDays = (code, targetDateStr, dailyInfos) => {
 // 抗分歧≥11 顺延门槛对 RESILIENCE_GATE_STRATEGY_IDS（当前仅买入最高涨幅）启用：
 // 排名首位不满足则按策略排名依次顺延至下一只满足的股票，skipped 记录被顺延跳过的前序股票（供买入明细标注）；
 // 其余策略不做抗分歧校验，直接取排名指定名次的第一只
-const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos, strategyId, axisOffset = 0, allowedMarkets = null, turnedPosInfo = null) => {
+const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos, strategyId, axisOffset = 0, allowedMarkets = null, turnedPosInfo = null, prevOneWordSet = null) => {
   // 买入时段门禁（所有策略通用）：仅允许 9:30 – 11:30 和 13:00 – 13:30 之间的买点触发买入
   const mNum = Number(bucket.minute);
   if (Number.isFinite(mNum) && mNum > BUY_TIME_MAX_MINUTE) return null;
@@ -1982,7 +2088,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
 
   // 抗分歧弱转强：使用独立的 5 日窗口弱转强选股逻辑（已内置「当日分数 > 11 参与优选」门槛）
   if (strategyId === 'resilience_weak_to_strong') {
-    return pickWeakToStrongStock(bucket, rangeDates, di, replayStocks, dailyInfos);
+    return pickWeakToStrongStock(bucket, rangeDates, di, replayStocks, dailyInfos, prevOneWordSet);
   }
 
   // 情绪开关系列（prev{N}d_fall_low5_day_gain_emoswitch）：触发买点时取上一交易日科技情绪指数的
@@ -1998,7 +2104,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     const delegateId = useLow5
       ? `prev${emoswitchMatch[1]}d_fall_low5_day_gain`
       : 'highest_3d_gain';
-    const emoPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, delegateId, axisOffset, allowedMarkets, turnedPosInfo);
+    const emoPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, delegateId, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet);
     if (emoPicked) {
       // 附带分支标注：经 withResilienceGateInfo 写入买入原因与买入条件明细（emo_switch_branch），
       // 抽屉/报告据此展示本次买入走的是「前N波动最小&当日涨幅最大」还是「3日涨幅最大」分支
@@ -2031,7 +2137,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       && prev2Raw > EMO_QUICK_RANGE_LOW && prev2Raw < EMO_QUICK_RANGE_HIGH
       && prevRaw > EMO_QUICK_RANGE_LOW && prevRaw < EMO_QUICK_RANGE_HIGH
       && prevRaw > prev2Raw;
-    const quickPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, `highest_${emoQuickMatch[1]}d_gain`, axisOffset, allowedMarkets, turnedPosInfo);
+    const quickPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, `highest_${emoQuickMatch[1]}d_gain`, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet);
     if (quickPicked) {
       // 附带快进快出标注：经 withResilienceGateInfo 写入买入原因与买入条件明细（emo_quick_out），
       // 并随持仓（singlePosition.emoQuickOut）传递给卖点侧，决定是否次日 10:00 强制卖出
@@ -2066,7 +2172,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     // 关键：只有走「上一交易日 3 日 EMA < -60」这条快进快出路径才切换到研报前五选股；
     // 温和回升 / 数据缺失 / 非快进快出 都用原 3 日涨幅最大选股
     const delegateId = quickByEmaBelow ? 'highest_3d_reports_top5_gain' : 'highest_3d_gain';
-    const quickPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, delegateId, axisOffset, allowedMarkets, turnedPosInfo);
+    const quickPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, delegateId, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet);
     if (quickPicked) {
       quickPicked.emoQuickOut = {
         quickOut: quickByEmaBelow || quickByRangeRising,
@@ -2277,6 +2383,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   const skipped = []; // 因门槛策略抗分歧分数<11 被顺延跳过的前序股票（仅 RESILIENCE_GATE_STRATEGY_IDS 使用）
   const globalResilienceSkipped = []; // 因全局最低抗分歧 < GLOBAL_RESILIENCE_MIN 被顺延跳过（所有策略通用）
   const limitUpSkipped = []; // 因买点时点涨停被顺延跳过的候选（全策略通用，追加 limit_up_defer 买入明细）
+  const prevOneWordSkipped = []; // 因上一交易日一字板被顺延跳过的候选（全策略通用，追加 one_word_board_defer 买入明细）
   const stockSlopeSkipped = []; // 因个股 MA3 切线正斜率连续天数 > 4 被顺延跳过
   // 个股斜率过滤触发条件：**仅指数今日盘中由负转正当日**（turnedPosToday=true）
   // 过滤规则：个股 MA3 切线正斜率连续天数 > 4 → 顺延下一只（= 4 允许）
@@ -2288,6 +2395,16 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     const cand = ordered[i];
     if (isLimitUpAtBuy(cand.sc.code, cand.sc.changePct)) {
       limitUpSkipped.push({
+        code: cand.sc.code,
+        name: cand.sc.name || cand.sc.code,
+        change: cand.sc.changePct != null ? Number(cand.sc.changePct) : null, // 触发时点涨幅
+      });
+      continue;
+    }
+    // 上一交易日一字板过滤（全策略通用，2026-10-05 新增）：昨日一字板的候选次日不买，
+    // 剔除并顺延至排名下一只（set 为空视为无候选命中，不逐一判定）
+    if (prevOneWordSet && prevOneWordSet.size > 0 && prevOneWordSet.has(cand.sc.code)) {
+      prevOneWordSkipped.push({
         code: cand.sc.code,
         name: cand.sc.name || cand.sc.code,
         change: cand.sc.changePct != null ? Number(cand.sc.changePct) : null, // 触发时点涨幅
@@ -2321,7 +2438,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     if (gateEnabled) {
       // RESILIENCE_GATE_STRATEGY_IDS（仅 highest_gain）：已经过了全局 ≥ 9 的线，这里再叠加 ≥ 11
       if (intradayResilience != null && intradayResilience >= RESILIENCE_GATE_MIN) {
-        return { stock: cand.sc, metric: cand.metric, resilienceScore: intradayResilience, skipped, globalResilienceSkipped, limitUpSkipped, stockSlopeSkipped };
+        return { stock: cand.sc, metric: cand.metric, resilienceScore: intradayResilience, skipped, globalResilienceSkipped, limitUpSkipped, prevOneWordSkipped, stockSlopeSkipped };
       }
       skipped.push({
         code: cand.sc.code,
@@ -2336,6 +2453,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
         metric: cand.metric,
         resilienceScore: intradayResilience,
         limitUpSkipped,
+        prevOneWordSkipped,
         globalResilienceSkipped,
         stockSlopeSkipped,
         // 三日情绪冰点：附带命中的跟踪指数环境门禁明细（withResilienceGateInfo 会追加到买入条件明细）
@@ -2411,6 +2529,26 @@ const buildLimitUpDeferCheck = (limitUpSkipped) => {
   };
 };
 
+// 上一交易日一字板顺延明细（全策略通用，2026-10-05 新增）：上一交易日一字板的候选被剔除并顺延
+// 至排名下一只时，追加 one_word_board_defer 买入明细项（口径与 limit_up_defer 一致）
+const buildOneWordBoardDeferCheck = (prevOneWordSkipped) => {
+  const skippedStocks = (prevOneWordSkipped || []).map(s => ({
+    code: s.code,
+    name: s.name,
+  }));
+  const skipText = skippedStocks.map(s => s.name).join('、');
+  return {
+    id: 'one_word_board_defer',
+    title: '上一交易日一字板过滤（主板≥8%、创业/科创≥16%）',
+    passed: true,
+    value: skippedStocks.length > 0 ? `顺延 ${skippedStocks.length} 只` : '无一字板候选',
+    skippedStocks, // 结构化顺延明细（前端抽屉/报告悬停展示为表格）
+    reason: skippedStocks.length > 0
+      ? `上一交易日一字板候选已剔除并顺延：${skipText}（昨日开盘/收盘/最低涨幅均达涨停阈值，全天封死一字板；一字板次日难以上车且追高风险大，顺延至排名下一只）`
+      : '候选中无上一交易日一字板股（主板开盘/收盘/最低涨幅均≥8%、创业/科创均≥16% 视为一字板）',
+  };
+};
+
 // 情绪开关分支明细项（prev{N}d_fall_low5_day_gain_emoswitch 系列）：
 // 标注本次买入由开关的哪个分支触发——上一交易日科技情绪 3 日 EMA 低于阈值走「前N波动最小&当日涨幅最大」，否则走「3日涨幅最大」
 const buildEmoSwitchBranchCheck = (info) => ({
@@ -2459,14 +2597,19 @@ const buildQuickOutSellReason = (info) => {
 const withResilienceGateInfo = (buyInfo, picked) => {
   if (!buyInfo || !picked) return buyInfo;
   const hasLimitUp = Array.isArray(picked.limitUpSkipped) && picked.limitUpSkipped.length > 0;
+  const hasOneWord = Array.isArray(picked.prevOneWordSkipped) && picked.prevOneWordSkipped.length > 0;
   const hasGlobalSkip = Array.isArray(picked.globalResilienceSkipped) && picked.globalResilienceSkipped.length > 0;
   const hasGateSkip = Array.isArray(picked.skipped) && picked.skipped.length > 0;
   // 早返回：既没有分数也没有任何顺延信息也没有情绪冰点门禁/情绪开关分支/情绪快进快出标注
-  if (picked.resilienceScore == null && !picked.emo3Gate && !picked.emoSwitchBranch && !picked.emoQuickOut && !hasLimitUp && !hasGlobalSkip && !hasGateSkip) return buyInfo;
+  if (picked.resilienceScore == null && !picked.emo3Gate && !picked.emoSwitchBranch && !picked.emoQuickOut && !hasLimitUp && !hasOneWord && !hasGlobalSkip && !hasGateSkip) return buyInfo;
   let buyReason = buyInfo.buyReason;
   const buyChecks = [...(buyInfo.buyChecks || [])];
   if (hasLimitUp) {
     buyChecks.push(buildLimitUpDeferCheck(picked.limitUpSkipped));
+  }
+  if (hasOneWord) {
+    // 上一交易日一字板顺延：追加 one_word_board_defer 明细项（全策略通用）
+    buyChecks.push(buildOneWordBoardDeferCheck(picked.prevOneWordSkipped));
   }
   if (picked.resilienceScore != null) {
     // 全局最低抗分歧 ≥ 9 + 门槛策略专项 ≥ 11（RESILIENCE_GATE_STRATEGY_IDS）
@@ -2490,6 +2633,7 @@ const withResilienceGateInfo = (buyInfo, picked) => {
   }
   const suffixParts = [];
   if (hasLimitUp) suffixParts.push('前序股票涨停');
+  if (hasOneWord) suffixParts.push('前序股票昨日一字板');
   if (hasGlobalSkip) suffixParts.push(`前序股票买点抗分歧<${GLOBAL_RESILIENCE_MIN}`);
   if (hasGateSkip) suffixParts.push(`前序股票抗分歧<${RESILIENCE_GATE_MIN}`);
   if (suffixParts.length > 0) {
@@ -3359,7 +3503,13 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
           if (raw != null) iceResilience = parseFloat(Number(raw).toFixed(2));
         }
       }
-      return { code: m.code, name: m.name || m.code, gain, lastPx: atBucket.lastPx, changePct, limitUp: isLimitUpAtBuy(m.code, changePct), iceResilience, iceIndexCode };
+      // 上一交易日一字板过滤（全策略通用，2026-10-05 新增）：昨日一字板（开盘/收盘/最低涨幅均达阈值，
+      // 主板 9.5%、创业/科创 19.5%）的候选次日不买；数据不足（null）不拦截
+      let prevOneWord = null;
+      try {
+        prevOneWord = isPrevDayOneWordBoard(m.code, await getKlineCached(m.code, dateStr), dateStr);
+      } catch (e) { prevOneWord = null; }
+      return { code: m.code, name: m.name || m.code, gain, lastPx: atBucket.lastPx, changePct, limitUp: isLimitUpAtBuy(m.code, changePct), prevOneWord: prevOneWord === true, iceResilience, iceIndexCode };
     }, 8);
     const candidates = candidateList.filter(Boolean);
     candidates.sort((a, b) => b.gain - a.gain); // 并列涨幅保持配置顺序（batchParallel 保序）
@@ -3368,6 +3518,8 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     const iceResilienceSkipped = [];
     const best = candidates.find(c => {
       if (c.limitUp) return false;
+      // 上一交易日一字板过滤（全策略通用）：昨日一字板的候选次日不买，顺延至排名下一只
+      if (c.prevOneWord) return false;
       if (iceMode && c.iceResilience != null && c.iceResilience < GLOBAL_RESILIENCE_MIN) {
         iceResilienceSkipped.push(c);
         return false;
@@ -3435,6 +3587,18 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       };
     })();
     const limitUpSkipped = candidates.filter(c => c.limitUp && c.gain > best.gain);
+    // 上一交易日一字板过滤明细（全策略通用，2026-10-05 新增）：记录排名高于最终买入的一字板候选
+    const oneWordSkipped = candidates.filter(c => c.prevOneWord && c.gain > best.gain);
+    const oneWordBoardCheck = {
+      id: 'one_word_board_defer',
+      title: '上一交易日一字板过滤（主板≥8%、创业/科创≥16%）',
+      passed: true,
+      value: oneWordSkipped.length > 0 ? `顺延 ${oneWordSkipped.length} 只` : '无一字板候选',
+      skippedStocks: oneWordSkipped.map(c => ({ code: c.code, name: c.name })),
+      reason: oneWordSkipped.length > 0
+        ? `上一交易日一字板候选已剔除并顺延：${oneWordSkipped.map(c => (c.changePct != null ? `${c.name} +${c.changePct}%` : c.name)).join('、')}；${days} 日涨幅排名后延至 ${best.name}（昨日开盘/收盘/最低涨幅均达涨停阈值，全天封死一字板，次日不买）`
+        : `买入时点候选中无上一交易日一字板股（主板开盘/收盘/最低涨幅均≥8%、创业/科创均≥16% 视为一字板；一字板次日不买，顺延排名下一只）`,
+    };
     const limitUpCheck = {
       id: 'key_block_limit_up',
       title: '涨停过滤（主板>9.5%、创业/科创>19%）',
@@ -3478,7 +3642,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       metric: parseFloat(best.gain.toFixed(4)),
       costLinePct: Number(strategy.costLinePct) || 2,
       buyReason: buyReasonMap[trigger] || buyReasonMap.slope_turn_positive,
-      buyChecks: [modeGateCheck, poolCheck, limitUpCheck, ...(iceResilienceCheck ? [iceResilienceCheck] : []), bestCheck],
+      buyChecks: [modeGateCheck, poolCheck, limitUpCheck, oneWordBoardCheck, ...(iceResilienceCheck ? [iceResilienceCheck] : []), bestCheck],
     };
     return true;
   };
@@ -3488,9 +3652,11 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'loading' });
     let campData;
     try {
-      // 逆周期情绪游资（iceMode）不依赖资金快照：允许缺失资金快照的日期用兜底（.nomfund）回放数据构建，
-      // 否则这类日期（如 20260730）会被整日跳过，导致当日斜率翻转/止损等卖点判定全部漏执行
-      campData = await loadTrainingCampData(dateStr, { allowMissingFund: iceMode });
+      // 所有策略统一允许缺失资金快照的日期用兜底（.nomfund）回放数据构建（此前仅 ice/emoAvg 开放）：
+      // 这类日期（如 20260730 快照缺失）整日跳过会导致当日止损/斜率翻转等卖点判定全部漏执行，
+      // 前一日买入的持仓被迫等到下一个有快照的交易日才能卖出；兜底构建仅缺 fundFlow/成交量字段，
+      // 卖出所需分时/情绪数据齐全，买入的量能条件在无成交量数据时自然判不通过（当日不新买入）
+      campData = await loadTrainingCampData(dateStr, { allowMissingFund: true });
     } catch (e) {
       skippedDates.push({ date: dateStr, message: e.message || '加载失败' });
       continue;
@@ -3587,16 +3753,61 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
           // 防御卖点：① 斜率翻转的当桶 ② 个股分时价跌破成本线止损 ③（情绪游资）14:55 长下影强卖
           //   重点板块防御持仓 → -5%（KEY_BLOCK_DEFENSE_STOP_LOSS_PCT）；逆周期情绪游资 → -2%（策略 costLinePct）
           // 任一先触发即卖出；止损在每个桶都会检查（因为不依赖斜率翻转事件）
+          // 竞价低开自救窗口（2026-10-05 新增，仅作用于成本线止损）：当日竞价开盘价（首分钟价）已跌破成本线
+          //   止损线时，不在 9:30 直接止损——大低开往往开盘先直线拉升再二次回落（资金自救），逐分钟跟踪：
+          //   只要未出现「某分钟价低于上一分钟」就继续持有（即使仍在成本线下方）；首次出现分钟回落（拉升结束）
+          //   → 无论此刻是否仍跌破成本线都直接卖出（成交价/时间取首次分钟回落点，精确到分钟）。
+          //   若开盘未破线、盘中才跌破 → 即时止损（桶级触发后逐分钟回溯定位首次跌破分钟，按该分钟分时价成交）。
           const stopLossPct = iceMode
             ? (position.costLinePct != null ? Number(position.costLinePct) : 2)
             : KEY_BLOCK_DEFENSE_STOP_LOSS_PCT;
           let atPt = null;
-          for (const p of defensePoints) { if (p.minute <= bucketMinute) atPt = p; else break; }
+          let atPtIdx = -1;
+          for (let pi = 0; pi < defensePoints.length; pi++) {
+            if (defensePoints[pi].minute <= bucketMinute) { atPt = defensePoints[pi]; atPtIdx = pi; } else break;
+          }
           if (atPt) {
             const rawReturnRate = position.buyPrice > 0
               ? parseFloat((((atPt.lastPx - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
               : null;
-            const stopLossHit = rawReturnRate != null && rawReturnRate <= -stopLossPct;
+            const defenseCostLineThreshold = position.buyPrice > 0 ? position.buyPrice * (1 - stopLossPct / 100) : null;
+            const defenseOpenPx = defensePoints[0].lastPx;
+            const openBrokeCostLine = defenseCostLineThreshold != null && defenseOpenPx != null && defenseOpenPx > 0 && defenseOpenPx < defenseCostLineThreshold;
+            // 自救窗口观察：在 minute ≤ 当前桶的分时点中找首个「分钟价低于上一分钟」的回落点
+            let openBreakFirstDecline = null;
+            let openBreakFirstDeclinePrev = null;
+            if (openBrokeCostLine) {
+              for (let pi = 1; pi < defensePoints.length; pi++) {
+                if (defensePoints[pi].minute > bucketMinute) break;
+                if (defensePoints[pi].lastPx < defensePoints[pi - 1].lastPx) {
+                  openBreakFirstDecline = defensePoints[pi];
+                  openBreakFirstDeclinePrev = defensePoints[pi - 1];
+                  break;
+                }
+              }
+            }
+            const fmtMinuteD = (m) => `${String(Math.floor(m / 100)).padStart(2, '0')}:${String(m % 100).padStart(2, '0')}`;
+            // 开盘已破线 → 成本线止损被自救窗口规则取代（等首次分钟回落）；开盘未破线 → 原即时止损
+            const stopLossHit = !openBrokeCostLine && rawReturnRate != null && rawReturnRate <= -stopLossPct;
+            const openBreakSellHit = openBrokeCostLine && openBreakFirstDecline != null;
+            // 精确分钟回溯（2026-10-05 新增）：桶级触发成本线卖出后，逐分钟回溯定位真实触发分钟并按该分钟分时价成交
+            //（线上环境在触发当分钟即已卖出，桶级成交最多晚 4 分钟，回溯后回测更贴近实盘）：
+            //   - 盘中破线止损：从桶前一分钟向回逐分钟检查是否仍跌破阈值（口径与触发一致：较买入价跌幅 ≤ -stopLossPct%），
+            //     直到首次不跌破（或回溯至 9:30 开盘）为止，取连续跌破区间最早一分钟为成交分钟；
+            //     破线就发生在当前桶（前一分钟未跌破）→ 维持按桶价成交；
+            //   - 开盘破线（自救窗口）：成交价/时间由桶改为首次分钟回落点（与线上在回落当分钟立即卖出一致）；
+            //     斜率翻转 / 14:55 长下影卖点不回溯，仍按当桶分时价成交。
+            let preciseSellPt = null;
+            if (stopLossHit) {
+              for (let pw = atPtIdx - 1; pw >= 0; pw--) {
+                const px = defensePoints[pw].lastPx;
+                if (!(position.buyPrice > 0) || !(((px - position.buyPrice) / position.buyPrice) * 100 <= -stopLossPct)) break;
+                preciseSellPt = defensePoints[pw];
+              }
+            } else if (openBreakSellHit) {
+              preciseSellPt = openBreakFirstDecline;
+            }
+            const sellPtFinal = preciseSellPt || atPt;
             // 逆周期情绪游资卖点为「上证 3 日线斜率由正转负」，与创业板口径（由负转正）方向相反
             const slopeSellHit = iceMode ? turnedNegative : turnedPositive;
             // 情绪游资新增卖点（2026-10-04 用户新增）：当日 14:55 检查 K 线形态——
@@ -3623,14 +3834,17 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
                 }
               }
             }
-            if (slopeSellHit || stopLossHit || shadowSellHit) {
+            if (slopeSellHit || stopLossHit || shadowSellHit || openBreakSellHit) {
+              const finalRawReturnRate = position.buyPrice > 0
+                ? parseFloat((((sellPtFinal.lastPx - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
+                : rawReturnRate;
               const sellChange = defensePreclose && defensePreclose > 0
-                ? parseFloat((((atPt.lastPx - defensePreclose) / defensePreclose) * 100).toFixed(2))
+                ? parseFloat((((sellPtFinal.lastPx - defensePreclose) / defensePreclose) * 100).toFixed(2))
                 : null;
               // 防御半仓折算：个股实际收益 × 0.5 才是对全仓账户的收益贡献（回撤/整体收益均按折算口径）
               // 逆周期情绪游资（iceMode）为全仓买入，不做折算
               const weight = iceMode ? 1 : KEY_BLOCK_POSITION_WEIGHT.defense;
-              const returnRate = rawReturnRate != null ? parseFloat((rawReturnRate * weight).toFixed(2)) : null;
+              const returnRate = finalRawReturnRate != null ? parseFloat((finalRawReturnRate * weight).toFixed(2)) : null;
               const slopeTurnText = iceMode
                 ? `${ICE_SIGNAL_INDEX_NAME}3日线斜率盘中由正转负（${fmtKeyBlockSlope(lastSlopeValue)} → ${fmtKeyBlockSlope(slopeNow)}）`
                 : `创业板指3日线斜率盘中由负转正（${fmtKeyBlockSlope(lastSlopeValue)} → ${fmtKeyBlockSlope(slopeNow)}）`;
@@ -3638,7 +3852,11 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
                 ? slopeTurnText
                 : shadowSellHit
                   ? `当日 14:55 下影线 ${shadowInfo.lowerShadow.toFixed(2)} ≥ 实体长度 ${shadowInfo.body.toFixed(2)} 的 2 倍（开 ${shadowInfo.openPx.toFixed(2)} → 14:55 价 ${shadowInfo.closePx.toFixed(2)}），K 线形态走坏强制卖出`
-                  : `持仓个股分时价跌破成本线 -${stopLossPct}% 止损（成本 ${position.buyPrice.toFixed(2)} → 现价 ${parseFloat(Number(atPt.lastPx).toFixed(2))}，浮亏 ${rawReturnRate}%）`;
+                  : openBreakSellHit
+                    ? `竞价开盘 ${defenseOpenPx.toFixed(2)} 已跌破成本线 -${stopLossPct}%（阈值 ${defenseCostLineThreshold.toFixed(2)}），不在 9:30 直接止损、等待开盘自救拉升；${fmtMinuteD(openBreakFirstDecline.minute)} 价 ${openBreakFirstDecline.lastPx.toFixed(2)} 低于 ${fmtMinuteD(openBreakFirstDeclinePrev.minute)} 价 ${openBreakFirstDeclinePrev.lastPx.toFixed(2)}，自救拉升结束直接卖出，按回落分钟 ${fmtMinuteD(sellPtFinal.minute)} 价格 ${parseFloat(Number(sellPtFinal.lastPx).toFixed(2))} 成交（较成本 ${finalRawReturnRate}%，桶级触发于 ${fmtMinuteD(atPt.minute)}）`
+                    : (preciseSellPt != null
+                      ? `持仓个股分时价跌破成本线 -${stopLossPct}% 止损（成本 ${position.buyPrice.toFixed(2)}，桶级触发现价 ${parseFloat(Number(atPt.lastPx).toFixed(2))}）；逐分钟回溯：实际于 ${fmtMinuteD(preciseSellPt.minute)} 首次跌破（价 ${parseFloat(Number(preciseSellPt.lastPx).toFixed(2))}，较成本 ${finalRawReturnRate}%），按该分钟价格成交`
+                      : `持仓个股分时价跌破成本线 -${stopLossPct}% 止损（成本 ${position.buyPrice.toFixed(2)} → 现价 ${parseFloat(Number(atPt.lastPx).toFixed(2))}，浮亏 ${finalRawReturnRate}%；破线发生在当前桶，按桶价成交）`);
               trades.push({
                 seq: trades.length + 1,
                 metric: position.metric,
@@ -3655,14 +3873,14 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
                 buyChecks: position.buyChecks,
                 sellDate: dateStr,
                 sellDateDisplay: dateDisplay,
-                sellTime: `${String(Math.floor(atPt.minute / 100)).padStart(2, '0')}:${String(atPt.minute % 100).padStart(2, '0')}`,
-                sellPrice: parseFloat(Number(atPt.lastPx).toFixed(2)),
+                sellTime: `${String(Math.floor(sellPtFinal.minute / 100)).padStart(2, '0')}:${String(sellPtFinal.minute % 100).padStart(2, '0')}`,
+                sellPrice: parseFloat(Number(sellPtFinal.lastPx).toFixed(2)),
                 sellChange,
                 sellReason: iceMode
                   ? `${sellTrigger}，逆周期情绪游资持仓卖出（全仓买入）`
                   : `${sellTrigger}，防御半仓持仓卖出（防御为半仓买入，收益率按半仓折算）`,
                 returnRate,
-                rawReturnRate,
+                rawReturnRate: finalRawReturnRate,
               });
               position = null;
             }
@@ -3886,7 +4104,8 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'loading' });
     let campData;
     try {
-      campData = await loadTrainingCampData(dateStr, { allowMissingFund: strategy.emoAvgBuy === true });
+      // 统一允许缺失资金快照的日期兜底构建（见 runKeyBlockBacktest 内说明），避免整日跳过漏执行卖点
+      campData = await loadTrainingCampData(dateStr, { allowMissingFund: true });
     } catch (e) {
       skippedDates.push({ date: dateStr, message: e.message || '加载失败' });
       continue;
@@ -4071,7 +4290,9 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
 
         if (!singlePosition) {
           // 未持仓时按指标选最优的一只买入（同一时刻仅持有一只）
-          const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo);
+          // 上一交易日一字板过滤（全策略通用）：预取候选池昨日一字板集合传入选股（进程内按 股票_日期 缓存）
+          const prevOneWordSet = await buildPrevOneWordBoardSet((bucket.stockChanges || []).map(s => s.code), dateStr);
+          const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet);
           if (picked) {
             const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
             const sc = picked.stock;
@@ -4221,7 +4442,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'loading' });
     let campData;
     try {
-      campData = await loadTrainingCampData(dateStr, { allowMissingFund: hasEmoAvg });
+      // 统一允许缺失资金快照的日期兜底构建（见 runKeyBlockBacktest 内说明），避免整日跳过漏执行卖点
+      campData = await loadTrainingCampData(dateStr, { allowMissingFund: true });
     } catch (e) {
       states.forEach(st => st.skippedDates.push({ date: dateStr, message: e.message || '加载失败' }));
       continue;
@@ -4373,7 +4595,9 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
 
           if (!st.singlePosition) {
             // 单股策略逻辑：同一时刻仅持有一只，未持仓时按指标选最优的一只买入
-            const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo);
+            // 上一交易日一字板过滤（全策略通用）：预取候选池昨日一字板集合传入选股（进程内按 股票_日期 缓存）
+          const prevOneWordSet = await buildPrevOneWordBoardSet((bucket.stockChanges || []).map(s => s.code), dateStr);
+          const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet);
             if (picked) {
               const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
               const sc = picked.stock;

@@ -30,7 +30,7 @@ ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, ChartToo
 
 // 历史曲线 tab：按自然月回测全部策略（月度整体收益跨月累乘），多策略累计收益率曲线叠加在同一条时间轴上；
 // 交互样式模仿盯盘页「叠加分时观察」：彩色策略 tag（悬停高亮对应曲线、双击移除）+ 批量添加面板（搜索/多选/全选）
-const MonthlyCurveTab = ({ active }) => {
+const MonthlyCurveTab = ({ active, onStockClick }) => {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState(null); // { generatedAt, months, strategies, missingCount }
   const [lastLog, setLastLog] = useState('');
@@ -434,6 +434,7 @@ const MonthlyCurveTab = ({ active }) => {
                                 trades: m.trades,
                                 currentHolding: m.currentHolding,
                               }}
+                              onStockClick={onStockClick}
                             />
                           )
                         ))}

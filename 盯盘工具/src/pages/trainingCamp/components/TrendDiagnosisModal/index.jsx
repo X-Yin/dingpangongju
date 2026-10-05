@@ -11,6 +11,7 @@ import axios from 'axios';
 import { local_ip } from '../../../../constant';
 import { StrategyCard } from '../BacktestReportModal';
 import MonthlyCurveTab from './MonthlyCurveTab';
+import StockKLineModal from '../../../../components/StockKLineModal';
 
 const BASE = `http://${local_ip}:3000`;
 const fmtDate = (d) => (d ? `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}` : '--');
@@ -27,6 +28,10 @@ const TrendDiagnosisModal = ({ open, onClose }) => {
   const [starting, setStarting] = useState(false);
   const [activeTab, setActiveTab] = useState('default');
   const pollRef = useRef(null);
+  // 当前查看 K 线的股票（点击交易记录股票名称设置）：{ code, name, trade }
+  const [klineTarget, setKlineTarget] = useState(null);
+  // 点击交易/持仓股票名称打开 K 线弹窗（三档范围报告与历史曲线 tab 共用同一个弹窗实例）
+  const handleStockClick = (code, name, trade) => setKlineTarget({ code, name, trade });
 
   const stopPoll = () => {
     if (pollRef.current) {
@@ -203,7 +208,7 @@ const TrendDiagnosisModal = ({ open, onClose }) => {
           <Empty description="暂无可展示的策略回测数据" />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {(report.strategies || []).map(s => <StrategyCard key={s.id} strategy={s} rank={s.rank} />)}
+            {(report.strategies || []).map(s => <StrategyCard key={s.id} strategy={s} rank={s.rank} onStockClick={handleStockClick} />)}
           </div>
         )}
       </>
@@ -231,7 +236,7 @@ const TrendDiagnosisModal = ({ open, onClose }) => {
           历史曲线
         </span>
       ),
-      children: <MonthlyCurveTab active={effectiveActiveKey === 'monthly'} />,
+      children: <MonthlyCurveTab active={effectiveActiveKey === 'monthly'} onStockClick={handleStockClick} />,
     },
   ];
 
@@ -304,6 +309,15 @@ const TrendDiagnosisModal = ({ open, onClose }) => {
       />
 
       <div style={{ height: 8 }} />
+
+      {/* 股票 K 线弹窗（点击交易/持仓的股票名称打开，带买卖点标注；全部 tab 共用） */}
+      <StockKLineModal
+        visible={!!klineTarget}
+        onCancel={() => setKlineTarget(null)}
+        code={klineTarget?.code}
+        stockInfo={{ code: klineTarget?.code, name: klineTarget?.name }}
+        tradeRecord={klineTarget?.trade || null}
+      />
     </Modal>
   );
 };

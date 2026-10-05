@@ -16,6 +16,7 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import { local_ip } from '../../../../constant';
 import { StrategyCard } from '../BacktestReportModal';
+import StockKLineModal from '../../../../components/StockKLineModal';
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, ChartTooltip, Legend);
 
@@ -94,6 +95,8 @@ const TimeFlexTestModal = ({ open, onClose, strategy, endDate, startDate: maxSta
   const [detail, setDetail] = useState(null); // 选中的回测完整结果（给 StrategyCard 渲染）
   const [detailLoading, setDetailLoading] = useState(false);
   const pollRef = useRef(null);
+  // 当前查看 K 线的股票（点击交易记录股票名称设置）：{ code, name, trade }
+  const [klineTarget, setKlineTarget] = useState(null);
 
   // 指数 K 线图
   const klineContainerRef = useRef(null);
@@ -658,9 +661,19 @@ const TimeFlexTestModal = ({ open, onClose, strategy, endDate, startDate: maxSta
               currentHolding: detail?.currentHolding || null,
             }}
             rank={null}
+            onStockClick={(code, name, trade) => setKlineTarget({ code, name, trade })}
           />
         </div>
       )}
+
+      {/* 股票 K 线弹窗（点击交易/持仓的股票名称打开，带买卖点标注） */}
+      <StockKLineModal
+        visible={!!klineTarget}
+        onCancel={() => setKlineTarget(null)}
+        code={klineTarget?.code}
+        stockInfo={{ code: klineTarget?.code, name: klineTarget?.name }}
+        tradeRecord={klineTarget?.trade || null}
+      />
     </Drawer>
   );
 };

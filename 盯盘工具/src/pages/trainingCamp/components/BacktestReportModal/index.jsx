@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../../../constant';
+import StockKLineModal from '../../../../components/StockKLineModal';
 
 const fmtDate = (d) => (d ? `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}` : '--');
 const fmtTime = (t) => t || '--';
@@ -124,15 +125,16 @@ const BuyReasonTag = ({ reason, checks }) => {
 };
 
 // 单个策略卡片：概览汇总 + 每一笔交易明细（导出供策略趋势诊断弹窗复用同一报告格式）
-// onStockClick：可选。传入后交易/持仓的股票名称变为可点击（如随机模拟测试点击查看合成股票 K 线）
+// onStockClick：可选。传入后交易/持仓的股票名称变为可点击（如随机模拟测试点击查看合成股票 K 线）；
+// 回调签名 (code, name, trade)：第三参为该笔交易/持仓记录对象（含买卖日期/时间/价格），供 K 线弹窗标注买卖点
 export const StrategyCard = ({ strategy, rank, onStockClick }) => {
   const s = strategy.summary || {};
   const hasTrades = (strategy.trades || []).length > 0 || strategy.currentHolding;
-  const renderStockName = (code, name) => (
+  const renderStockName = (code, name, trade) => (
     onStockClick ? (
       <span
-        onClick={() => onStockClick(code, name)}
-        title="点击查看该股票 K 线"
+        onClick={() => onStockClick(code, name, trade)}
+        title="点击查看该股票 K 线（含买卖点标注）"
         style={{ fontSize: 13, fontWeight: 700, color: '#1677ff', cursor: 'pointer', textDecoration: 'underline dotted' }}
       >
         {name}
@@ -147,7 +149,7 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
     label: (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: '#12213a' }}>第{t.seq}笔</span>
-        {renderStockName(t.code, t.stockName)}
+        {renderStockName(t.code, t.stockName, t)}
         <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{t.code}</span>
         <ModeTag mode={t.positionMode} />
         {t.metric != null && <Tag color="purple" style={{ marginInlineEnd: 0 }}>选股指标 {Number(t.metric).toFixed(4)}</Tag>}
@@ -194,7 +196,7 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#ad6800' }}>持仓中（未卖出）</span>
           {h.holdingDays != null && <span style={{ fontSize: 11, color: '#9ca3af' }}>已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(h)}</b></span>}
-          {renderStockName(h.code, h.stockName)}
+          {renderStockName(h.code, h.stockName, h)}
           <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{h.code}</span>
           <ModeTag mode={h.positionMode} />
           {h.buyReturn != null && (
@@ -281,6 +283,8 @@ const BacktestReportModal = ({ open, onClose }) => {
   const [progress, setProgress] = useState(null);
   const [error, setError] = useState(null);
   const pollRef = useRef(null);
+  // 当前查看 K 线的股票（点击交易记录股票名称设置）：{ code, name, trade }
+  const [klineTarget, setKlineTarget] = useState(null);
 
   const stopPoll = () => {
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
@@ -474,7 +478,7 @@ const BacktestReportModal = ({ open, onClose }) => {
           <Empty description="暂无可展示的策略回测数据" />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {(report.strategies || []).map(s => <StrategyCard key={s.id} strategy={s} rank={s.rank} />)}
+            {(report.strategies || []).map(s => <StrategyCard key={s.id} strategy={s} rank={s.rank} onStockClick={(code, name, trade) => setKlineTarget({ code, name, trade })} />)}
           </div>
         )
       ) : (
@@ -482,6 +486,15 @@ const BacktestReportModal = ({ open, onClose }) => {
       )}
 
       <div style={{ height: 8 }} />
+
+      {/* 股票 K 线弹窗（点击交易/持仓的股票名称打开，带买卖点标注） */}
+      <StockKLineModal
+        visible={!!klineTarget}
+        onCancel={() => setKlineTarget(null)}
+        code={klineTarget?.code}
+        stockInfo={{ code: klineTarget?.code, name: klineTarget?.name }}
+        tradeRecord={klineTarget?.trade || null}
+      />
     </Modal>
   );
 };

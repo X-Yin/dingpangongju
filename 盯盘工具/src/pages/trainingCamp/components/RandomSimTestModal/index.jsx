@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Drawer, Button, InputNumber, Progress, Empty, Tag, message, Spin, Modal, Alert } from 'antd';
+import { Drawer, Button, InputNumber, Progress, Empty, Tag, message, Spin, Alert } from 'antd';
 import { ExperimentOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Line } from 'react-chartjs-2';
 import {
@@ -11,11 +11,10 @@ import {
   Tooltip as ChartTooltip,
   Legend,
 } from 'chart.js';
-import { createChart, ColorType } from 'lightweight-charts';
 import axios from 'axios';
-import dayjs from 'dayjs';
 import { local_ip } from '../../../../constant';
 import { StrategyCard } from '../BacktestReportModal';
+import StockKLineModal from '../../../../components/StockKLineModal';
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, ChartTooltip, Legend);
 
@@ -34,110 +33,6 @@ const fmtDrawdown = (v) => {
 const DEFAULT_RUNS = 20;
 const DEFAULT_STOCK_COUNT = 200;
 
-// 把日K数组规范化为 lightweight-charts 蜡烛图（兼容 {trade_date, open_px...} 与 {time, open...} 两种字段）
-const normalizeKlineForLC = (arr) => {
-  if (!Array.isArray(arr) || arr.length === 0) return { candles: [], ma5: [], ma10: [] };
-  const candles = arr
-    .map((d) => {
-      const ts = Number(d.trade_date || d.day || d.time);
-      if (!ts || !Number.isFinite(ts)) return null;
-      const open = Number(d.open_px ?? d.open);
-      const high = Number(d.high_px ?? d.high);
-      const low = Number(d.low_px ?? d.low);
-      const close = Number(d.close_px ?? d.close);
-      if (![open, high, low, close].every(Number.isFinite)) return null;
-      return { time: dayjs(String(ts)).format('YYYY-MM-DD'), open, high, low, close };
-    })
-    .filter(Boolean)
-    .sort((a, b) => a.time.localeCompare(b.time));
-  const calcMA = (n) => {
-    const out = [];
-    let sum = 0;
-    for (let i = 0; i < candles.length; i++) {
-      sum += candles[i].close;
-      if (i >= n) sum -= candles[i - n].close;
-      if (i >= n - 1) out.push({ time: candles[i].time, value: sum / n });
-    }
-    return out;
-  };
-  return { candles, ma5: calcMA(5), ma10: calcMA(10) };
-};
-
-// 股票 K 线弹窗（展示真实个股日K，随机抽取注入的科技股同样走真实行情）
-const StockKlineModal = ({ open, onClose, title, fetchBars }) => {
-  const containerRef = useRef(null);
-  const chartRef = useRef(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [bars, setBars] = useState([]);
-
-  useEffect(() => {
-    if (!open || !fetchBars) return undefined;
-    let cancelled = false;
-    setLoading(true); setError(null); setBars([]);
-    (async () => {
-      try {
-        const arr = await fetchBars();
-        if (!cancelled) setBars(Array.isArray(arr) ? arr : []);
-      } catch (e) {
-        if (!cancelled) setError(e.message || '获取K线失败');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [open, fetchBars]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const container = containerRef.current;
-    if (!container || loading || error) return undefined;
-    const { candles, ma5, ma10 } = normalizeKlineForLC(bars);
-    if (candles.length === 0) return undefined;
-    if (chartRef.current) { try { chartRef.current.remove(); } catch { /* ignore */ } chartRef.current = null; }
-    const chart = createChart(container, {
-      layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: '#6b7890', fontSize: 11 },
-      width: container.clientWidth,
-      height: 360,
-      grid: { vertLines: { color: 'rgba(18,33,58,0.05)' }, horzLines: { color: 'rgba(18,33,58,0.05)' } },
-      timeScale: { timeVisible: false, borderColor: 'rgba(18,33,58,0.08)' },
-      rightPriceScale: { borderColor: 'rgba(18,33,58,0.08)', autoScale: true, scaleMargins: { top: 0.12, bottom: 0.12 } },
-    });
-    const series = chart.addCandlestickSeries({
-      upColor: '#f5222d', downColor: '#52c41a',
-      borderUpColor: '#f5222d', borderDownColor: '#52c41a',
-      wickUpColor: '#f5222d', wickDownColor: '#52c41a',
-    });
-    series.setData(candles);
-    const ma5Series = chart.addLineSeries({ color: '#2196f3', lineWidth: 1, lastValueVisible: false, priceLineVisible: false });
-    ma5Series.setData(ma5);
-    const ma10Series = chart.addLineSeries({ color: '#facc15', lineWidth: 1, lastValueVisible: false, priceLineVisible: false });
-    ma10Series.setData(ma10);
-    chart.timeScale().fitContent();
-    chartRef.current = chart;
-    const handleResize = () => { if (chartRef.current && containerRef.current) chartRef.current.applyOptions({ width: containerRef.current.clientWidth }); };
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (chartRef.current) { try { chartRef.current.remove(); } catch { /* ignore */ } chartRef.current = null; }
-    };
-  }, [open, bars, loading, error]);
-
-  return (
-    <Modal open={open} onCancel={onClose} footer={null} width={900} destroyOnHidden title={title}>
-      {loading ? (
-        <div style={{ height: 360, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spin /></div>
-      ) : error ? (
-        <Empty description={error} />
-      ) : bars.length === 0 ? (
-        <Empty description="暂无K线数据" />
-      ) : (
-        <div ref={containerRef} style={{ width: '100%', height: 360 }} />
-      )}
-    </Modal>
-  );
-};
-
 const RandomSimTestModal = ({ open, onClose, strategy, endDate, startDate: maxStartDate, strategyName }) => {
   const [runs, setRuns] = useState(DEFAULT_RUNS);
   const [stockCount, setStockCount] = useState(DEFAULT_STOCK_COUNT);
@@ -147,9 +42,8 @@ const RandomSimTestModal = ({ open, onClose, strategy, endDate, startDate: maxSt
   const [simError, setSimError] = useState(null);
   const [detail, setDetail] = useState(null); // { runIndex, summary, simCodes, result }
   const [detailLoading, setDetailLoading] = useState(false);
-  const [klineOpen, setKlineOpen] = useState(false);
-  const [klineTitle, setKlineTitle] = useState('');
-  const [klineFetch, setKlineFetch] = useState(null);
+  // 当前查看 K 线的股票（点击交易记录股票名称设置）：{ code, name, trade }
+  const [klineTarget, setKlineTarget] = useState(null);
   const pollRef = useRef(null);
 
   const stopPoll = useCallback(() => {
@@ -342,15 +236,10 @@ const RandomSimTestModal = ({ open, onClose, strategy, endDate, startDate: maxSt
     };
   }, [validItems, handlePointClick]);
 
-  // 所有参与回测的股票（含随机抽取注入的真实科技股）均走真实个股 K 线接口
-  const openStockKline = useCallback((simCodes, code, name) => {
-    const isSim = Array.isArray(simCodes) && simCodes.includes(code);
-    setKlineTitle(`${name || code}${isSim ? '（随机注入）' : ''} 日K线`);
-    setKlineFetch(() => async () => {
-      const r = await axios.post(`${BASE}/data_center/stocks_kline`, { codes: [code], limit: 120 });
-      return (r.data?.data?.[code]) || [];
-    });
-    setKlineOpen(true);
+  // 所有参与回测的股票（含随机抽取注入的真实科技股）均走真实个股 K 线；
+  // 打开共享 StockKLineModal 并带上该笔交易记录，弹窗内标注买卖点/价格线并支持点击日期看当日分时
+  const openStockKline = useCallback((code, name, trade) => {
+    setKlineTarget({ code, name, trade: trade || null });
   }, []);
 
   const didRun = validItems.length > 0 || running;
@@ -483,7 +372,7 @@ const RandomSimTestModal = ({ open, onClose, strategy, endDate, startDate: maxSt
                 currentHolding: detail?.result?.currentHolding || null,
               }}
               rank={null}
-              onStockClick={(code, name) => openStockKline(detail.simCodes, code, name)}
+              onStockClick={openStockKline}
             />
           ) : (
             <Empty description={detail?.summary ? '该次回测无可用明细' : '该次回测失败或无结果'} />
@@ -491,11 +380,13 @@ const RandomSimTestModal = ({ open, onClose, strategy, endDate, startDate: maxSt
         </div>
       )}
 
-      <StockKlineModal
-        open={klineOpen}
-        onClose={() => setKlineOpen(false)}
-        title={klineTitle}
-        fetchBars={klineFetch}
+      {/* 股票 K 线弹窗（点击交易/持仓的股票名称打开，带买卖点标注） */}
+      <StockKLineModal
+        visible={!!klineTarget}
+        onCancel={() => setKlineTarget(null)}
+        code={klineTarget?.code}
+        stockInfo={{ code: klineTarget?.code, name: klineTarget?.name }}
+        tradeRecord={klineTarget?.trade || null}
       />
     </Drawer>
   );

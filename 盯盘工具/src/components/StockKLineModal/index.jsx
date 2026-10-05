@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Modal, Typography, Space, Tag, Spin, Empty, Segmented, Button, message, Switch } from 'antd';
 import { LineChartOutlined, BarChartOutlined, AreaChartOutlined, HistoryOutlined, RadarChartOutlined, StarOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -14,12 +14,15 @@ import { getThemeColor } from '../../utils/theme';
 
 const { Text } = Typography;
 
-const StockKLineModal = ({ 
-  visible, 
-  onCancel, 
-  title = '个股行情图表', 
-  stockInfo = {}, 
-  code 
+const StockKLineModal = ({
+  visible,
+  onCancel,
+  title = '个股行情图表',
+  stockInfo = {},
+  code,
+  // 可选：交易记录（回测报告点击股票名称查看时传入），用于在日K图上标注买卖点与买卖价格虚线，并在 K 线下方内嵌展示当日分时
+  // 结构：{ buyDate, buyTime, buyPrice, sellDate, sellTime, sellPrice }（buyDate/sellDate 为 YYYYMMDD，时间字段可缺省）
+  tradeRecord = null,
 }) => {
   const [kData, setKData] = useState([]);
   const [tData, setTData] = useState([]);
@@ -47,6 +50,57 @@ const StockKLineModal = ({
     return stockInfo.change;
   })();
   const displayName = stockName || stockInfo.name;
+
+  // KLine 组件只在初始化时注册一次点击回调，用 ref 读取最新 tradeRecord 避免闭包捕获旧值
+  const tradeRecordRef = useRef(tradeRecord);
+  useEffect(() => {
+    tradeRecordRef.current = tradeRecord;
+  }, [tradeRecord]);
+
+  // YYYYMMDD → 'YYYY-MM-DD'（K 线图 time 轴格式），非法值返回 null
+  const fmtTradeDay = (d) => {
+    const s = String(d || '');
+    return /^\d{8}$/.test(s) ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` : null;
+  };
+
+  // 日K图买卖点 marker：买入红 B（K线柱下方、向上箭头），卖出蓝 S（K线柱上方、向下箭头）
+  // 同日先卖后买时两个 marker 都画（lightweight-charts 支持同一 time 多个 marker 叠放）
+  const tradeMarkers = useMemo(() => {
+    if (!tradeRecord) return [];
+    const markers = [];
+    const buyDay = fmtTradeDay(tradeRecord.buyDate);
+    const sellDay = tradeRecord.sellDate ? fmtTradeDay(tradeRecord.sellDate) : null;
+    if (buyDay) markers.push({ time: buyDay, position: 'belowBar', color: '#f5222d', shape: 'arrowUp', text: 'B' });
+    if (sellDay) markers.push({ time: sellDay, position: 'aboveBar', color: '#722ed1', shape: 'arrowDown', text: 'S' });
+    return markers;
+  }, [tradeRecord]);
+
+  // 日K图买卖价格虚线：买入价红色、卖出价绿色（仍持仓无 sellPrice 时只画买入线）
+  const tradePriceLines = useMemo(() => {
+    if (!tradeRecord) return [];
+    const lines = [];
+    const buyPrice = Number(tradeRecord.buyPrice);
+    const sellPrice = tradeRecord.sellPrice != null ? Number(tradeRecord.sellPrice) : NaN;
+    if (Number.isFinite(buyPrice) && buyPrice > 0) lines.push({ price: buyPrice, color: '#f5222d', title: '买入' });
+    if (Number.isFinite(sellPrice) && sellPrice > 0) lines.push({ price: sellPrice, color: '#722ed1', title: '卖出' });
+    return lines;
+  }, [tradeRecord]);
+
+  // 分时图时间 marker：点击日期等于买入/卖出日期时，在当日分时图上标注买卖时间点（B/S）
+  const tradeDayMarkers = useMemo(() => {
+    if (!tradeRecord || !selectedDay) return [];
+    const markers = [];
+    const buyDay = fmtTradeDay(tradeRecord.buyDate);
+    const sellDay = tradeRecord.sellDate ? fmtTradeDay(tradeRecord.sellDate) : null;
+    if (tradeRecord.buyTime && selectedDay === buyDay) {
+      markers.push({ time: tradeRecord.buyTime, color: '#f5222d', text: 'B', position: 'belowBar' });
+    }
+    if (tradeRecord.sellTime && sellDay && selectedDay === sellDay) {
+      markers.push({ time: tradeRecord.sellTime, color: '#52c41a', text: 'S', position: 'aboveBar' });
+    }
+    return markers;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tradeRecord, selectedDay]);
 
   const fetchTimelineData = async () => {
     if (!code) return;
@@ -226,19 +280,20 @@ const StockKLineModal = ({
 
   const handleCandleClick = async (dateStr) => {
     if (!code || kData.length === 0) return;
+    const inTradeMode = !!tradeRecordRef.current;
     // 最新一天的日期（kData 按从新到旧排序，index 0 为最新）
     const latestDateStr = String(kData[0].trade_date).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
-    if (dateStr === latestDateStr) {
-      // 点击最新一天，直接切换到量化分时 tab
+    if (!inTradeMode && dateStr === latestDateStr) {
+      // 点击最新一天，直接切换到量化分时 tab（原有行为）
       setChartType('quantTimeline');
       return;
     }
-    // 其他日期：弹出该日分时图弹窗
+    // 其他日期：交易标注模式下在 K 线下方内嵌展示当日分时图；普通模式弹独立分时弹窗
     const dateInt = dateStr.replace(/-/g, '');
     setSelectedDay(dateStr);
-    setDayTlineVisible(true);
     setDayTlineLoading(true);
     setDayTlineData([]);
+    setDayTlineVisible(!inTradeMode);
     try {
       const res = await axios.get(`http://${local_ip}:3000/stock_tline_data`, { params: { code, date: dateInt } });
       setDayTlineData(res.data?.line || []);
@@ -368,13 +423,48 @@ const StockKLineModal = ({
                       unCheckedChildren="关闭"
                     />
                   </div>
-                  <StockKLine 
-                    data={kData} 
-                    height={500} 
+                  <StockKLine
+                    data={kData}
+                    height={500}
                     showResilience={showResilienceKline}
                     onFetchResilience={fetchMultiDayResilienceData}
                     onClickCandle={handleCandleClick}
+                    tradeMarkers={tradeMarkers}
+                    priceLines={tradePriceLines}
                   />
+                  {/* 交易标注模式：点击日K柱后，在 K 线下方内嵌展示该日分时图（买入/卖出日自动标注 B/S 时间点） */}
+                  {tradeRecord && (
+                    <div style={{ marginTop: 12 }}>
+                      <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>
+                        {selectedDay ? (
+                          <Space size={8}>
+                            <AreaChartOutlined style={{ color: getThemeColor() }} />
+                            <Text strong>{selectedDay} 分时图</Text>
+                            {dayTlineData.length > 0 && tradeDayMarkers.length > 0 && (
+                              <Text type="secondary">
+                                （{tradeDayMarkers.map(m => `${m.text} ${m.time}`).join('、')} 已标注）
+                              </Text>
+                            )}
+                          </Space>
+                        ) : (
+                          <Text type="secondary">
+                            点击上方日K线任意交易日的K线柱，可在下方查看当日分时图；买入/卖出日会自动标注 B/S 时间点
+                          </Text>
+                        )}
+                      </div>
+                      {selectedDay && (
+                        dayTlineLoading ? (
+                          <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Spin tip="正在加载分时数据..." size="large" />
+                          </div>
+                        ) : dayTlineData.length > 0 ? (
+                          <StockTimeLine data={dayTlineData} height={300} timeMarkers={tradeDayMarkers} />
+                        ) : (
+                          <Empty description="暂无该日分时数据" />
+                        )
+                      )}
+                    </div>
+                  )}
                 </>
               ) : (
                 <Empty description="暂无 K 线数据" />

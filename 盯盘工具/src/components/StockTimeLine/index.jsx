@@ -8,8 +8,9 @@ import './index.scss';
  * 股票分时图组件 (折线图形式)
  * @param {Array} data 分时数据 [{ date: 20260601, minute: 941, last_px: 437.1, change: -3.98, business_amount: 493800 }]
  * @param {Number} height 图表高度
+ * @param {Array} timeMarkers 可选，交易时间标注 [{ time: 'HH:MM', color, text, position }]（如买入/卖出时间 B/S 标记），不传则不标注
  */
-export default function StockTimeLine({ data = [], height = 450 }) {
+export default function StockTimeLine({ data = [], height = 450, timeMarkers }) {
   const containerRef = useRef(null);
   const chartRef = useRef(null);
   const tooltipRef = useRef(null);
@@ -217,6 +218,33 @@ export default function StockTimeLine({ data = [], height = 450 }) {
       areaSeries.setData(formattedData);
       volumeSeries.setData(volumeData);
 
+      // 交易时间标注：把 "HH:MM" 映射到当日分时数据中最近的一分钟点位（如买入/卖出时间 B/S 标记）
+      // 图表随 effect 重建，无残留风险；未传 timeMarkers 时完全不执行
+      const markerList = Array.isArray(timeMarkers) ? timeMarkers : [];
+      if (markerList.length > 0 && formattedData.length > 0) {
+        const allTs = formattedData.map(d => d.time);
+        // 吸附到最近的可交易分钟（停牌/午休等缺失时段自动取最近点）
+        const snapNearest = (ts) => allTs.reduce((best, t) => (Math.abs(t - ts) < Math.abs(best - ts) ? t : best), allTs[0]);
+        const lcMarkers = [];
+        markerList.forEach((mk) => {
+          if (!mk || !mk.time) return;
+          const parts = String(mk.time).split(':');
+          if (parts.length !== 2) return;
+          const target = dayjs(`${YYYY}-${MM}-${DD} ${parts[0]}:${parts[1]}`).unix();
+          if (!Number.isFinite(target)) return;
+          lcMarkers.push({
+            time: snapNearest(target),
+            position: mk.position || 'belowBar',
+            color: mk.color || '#f5222d',
+            shape: mk.shape || 'circle',
+            text: mk.text || '',
+          });
+        });
+        if (lcMarkers.length > 0) {
+          areaSeries.setMarkers(lcMarkers);
+        }
+      }
+
       // 锁定 X 轴视图：展示全天
       chart.timeScale().fitContent();
 
@@ -299,7 +327,7 @@ export default function StockTimeLine({ data = [], height = 450 }) {
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, [data, height]);
+  }, [data, height, timeMarkers]);
 
   return (
     <div className="stock-timeline-container" style={{ height }}>

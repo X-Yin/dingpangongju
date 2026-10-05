@@ -20,6 +20,7 @@ import BacktestReportModal from '../BacktestReportModal';
 import TrendDiagnosisModal from '../TrendDiagnosisModal';
 import TimeFlexTestModal from '../TimeFlexTestModal';
 import RandomSimTestModal from '../RandomSimTestModal';
+import StockKLineModal from '../../../../components/StockKLineModal';
 
 // 回测最早支持日期（早于此日期无回放数据）
 const EARLIEST_DATE = '20260803';
@@ -73,6 +74,7 @@ const BUY_RULES = [
   { key: 'opening_below', title: '开盘后自选股低于开盘价数量', desc: '仅 9:30-10:00 生效：现价低于 9:30 开盘价的自选股数量不超过 30 只' },
   { key: 'emotion_retrace_after_open', title: '竞价情绪回落', desc: '9:30 竞价科技情绪 > 80 时，需当前科技情绪 < 40 才允许买入；开盘情绪 ≤80 或无线数据时该项不限制' },
   { key: 'resilience_gate', title: '选股抗分歧门槛（仅「买入最高涨幅」策略叠加 ≥ 11；所有策略通用 ≥ 9）', desc: '两层门槛：① 全局最低门槛 ≥ 9（所有策略通用，买点触发时刻个股抗分歧分数 < 9 → 顺延至下一只满足的股票，全部不满足则当日不买入）；② 专项门槛 ≥ 11（仅「买入最高涨幅」一个策略叠加启用，其余策略不走此条）。BUY_RULES 的买入条件明细会在 resiliencScore 字段里返回实际抗分歧分数，并标注是否因前序股票抗分歧不足而顺延（含前序股票触发时涨幅与抗分歧分数）' },
+  { key: 'one_word_board_defer', title: '上一交易日一字板过滤（主板≥8%、创业/科创≥16%，全策略通用）', desc: '选股通用限制：上一交易日一字板的股票次日不买。一字板判定（按上一交易日日K，对上一交易日昨收计算涨幅，口径较真实一字板放宽）：主板（60/00 开头）竞价开盘涨幅 ≥ 8%、收盘涨幅 ≥ 8%、且全天最低价对应涨幅 ≥ 8%（三项同时满足，即全天始终维持普涨、无低位上车机会）；创业板（30）/科创板（68）阈值为 16%。命中者从候选中剔除并顺延到 N 日涨幅排名的下一只，买入明细追加 one_word_board_defer 项标注被剔除的候选（含触发时涨幅）；上一交易日日K数据不足无法判定时不拦截。重点板块/情绪游资系列与弱转强策略同样执行此过滤' },
 ];
 const SELL_RULES = [
   { key: 'condition1', title: '均线破位', desc: '根据 MA5/MA10 斜率与开盘价位置分四种规则，跌破对应均线或前一交易日最低价触发卖点' },
@@ -81,7 +83,7 @@ const SELL_RULES = [
   { key: 'condition4', title: '抗分歧指数弱势', desc: '抗分歧指数 < 6 且当前涨幅 ≤ -5%，仅 14:50 后生效' },
   { key: 'condition5', title: '连续三日抗分歧弱势', desc: '近三日（含当日）抗分歧指数均 < 10，仅 9:40 后生效' },
   { key: 'condition6', title: '跌破最迟买入日低点', desc: '现价跌破买入当日最低点，需持续 ≥5 分钟才触发' },
-  { key: 'condition7', title: '跌破成本线-2%', desc: '现价跌破持仓成本线的 -2%（成本价 × 0.98）即触发卖出，线上为持仓管理设置的成本价，回测为买入价' },
+  { key: 'condition7', title: '跌破成本线-2%', desc: '现价跌破持仓成本线的 -2%（成本价 × 0.98）即触发卖出，线上为持仓管理设置的成本价，回测为买入价。竞价低开自救窗口（例外）：隔夜持仓当日竞价开盘价已跌破成本线 -2% 时，不在 9:30 直接止损——大低开往往开盘先向上直线拉升再二次回落（资金自救行为），逐分钟跟踪：只要股价不低于上一分钟（资金持续拉升）就继续持有（即使仍在成本线下方），直到首次出现某分钟股价低于上一分钟（如 9:36 < 9:35，自救拉升结束）时，无论此刻是否仍跌破成本线都直接卖出；若开盘未破线、盘中才跌破成本线，则维持原即时止损（该卖就得卖）。桶级精确成交（2026-10-05 优化）：回测在 5 分钟桶触发本卖点后，从桶前一分钟起逐分钟回溯当日分时，定位连续跌破区间的最早一分钟，按该分钟的分时价与时间成交（线上环境在首次跌破的当分钟即已卖出，桶级成交最多晚 4 分钟）；9:35 桶触发最早回溯到 9:30；若破线就发生在当前桶，仍按桶价成交；自救路径的成交价/时间同步由桶改为首次回落分钟' },
 ];
 
 // 回测策略选项（与后端 buySellBacktest.STRATEGIES 保持一致；全量自选股策略已移除）
@@ -246,12 +248,12 @@ const KEY_BLOCK_BUY_RULES = [
   { key: 'key_block_cyb_gate', title: '唯一买卖开关：3 日线斜率正负翻转（盘中实时）', desc: '盘中实时计算创业板指 3 日线斜率（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定），只在斜率正负翻转的桶触发买卖，不需要资金、成交量、情绪等任何条件配合：斜率由负转正 → 进攻买点（买自选科技股）；斜率由正转负且当前空仓 → 防御买点（买防御+中性 tag 板块）。斜率符号跨日连续追踪，初值取回测首日前一交易日的收盘斜率；斜率数据不足的桶不参与翻转判定；回测首日之前若斜率无翻转则不建仓' },
   { key: 'key_block_watchlist_tech', title: '候选池筛选与仓位（进攻=自选科技股·全仓 / 防御=防御+中性板块·半仓）', desc: '进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股（剔除排除股；含自选股添加时间门禁，买点时点未加入自选的股票不参与），进攻为全仓买入；防御候选 =「防御+中性」tag 板块全部成分股（板块 tag 在 key_blocks 页面维护，未打 tag 的板块不参与，不限自选股），防御对应创业板情绪低迷期，按半仓买入；防御笔的收益率（含期末浮盈）在概览的整体收益、平均回撤、单笔最大回撤中一律按半仓（×0.5）折算；停牌或无当日分时数据的个股自动跳过' },
   { key: 'key_block_retry_940', title: '进攻卖出后当日不追买，次日 9:40 复测', desc: '进攻持仓按卖点诊断卖出后，若当时 3 日线斜率仍为正，当日不再继续买入；等到次日开盘 10 分钟后（9:40 桶）再看盘中实时斜率，仍为正才继续买 N 日涨幅最大的科技股；若复测时斜率已经为负，则不再买科技股，改由「由正转负」防御信号驱动（空仓时买入防御+中性）；防御持仓在斜率转正桶卖出后，同桶即可转手买入进攻科技股，不受此限制' },
-  { key: 'key_block_limit_up', title: '涨停过滤与顺延', desc: '买入时点判断候选股是否涨停：主板股票（60/00 开头）涨幅 > 9.5% 视为涨停，创业板（30）/科创板（68）涨幅 > 19% 视为涨停；涨停股不可买入，顺延到 N 日涨幅排名的下一只非涨停股票（买入明细中标注被顺延的涨停候选）；全部候选涨停或无有效候选时，在斜率状态不变的后续桶持续重试' },
+  { key: 'key_block_limit_up', title: '涨停过滤与顺延', desc: '买入时点判断候选股是否涨停：主板股票（60/00 开头）涨幅 > 9.5% 视为涨停，创业板（30）/科创板（68）涨幅 > 19% 视为涨停；涨停股不可买入，顺延到 N 日涨幅排名的下一只非涨停股票（买入明细中标注被顺延的涨停候选）；全部候选涨停或无有效候选时，在斜率状态不变的后续桶持续重试。另叠加**上一交易日一字板过滤**：昨日开盘/收盘/全天最低涨幅均不低于阈值（主板 ≥ 8%、创业/科创 ≥ 16%）的一字板候选同样剔除并顺延（买入明细 one_word_board_defer 项标注）' },
   { key: 'key_block_best_stock', title: '候选池内 N 日涨幅最大的股票', desc: '在候选池（进攻=自选科技股池；防御=tag 匹配板块成分股）中，按最近 N 个交易日（含触发日）个股涨幅之和取最大的一只买入（个股日涨幅 = 相邻收盘价环比，由回测时重新拉取成分股日K现算）；买入价取触发桶时点的分时价格；同桶允许先卖后买转手（防御卖出与进攻买入可在同一桶完成）' },
 ];
 const KEY_BLOCK_SELL_RULES = [
-  { key: 'key_block_positive_sells', title: '进攻持仓（科技股）：通用 7 条件卖点（成本线 -2%）', desc: '自选科技股买入的进攻持仓沿用通用 7 条件卖出诊断（跌破10日线/前低/5日线、高位放量大阴线、科技板块情绪退潮、连续三日抗分歧<10、距5日收盘新高、跌停、跌破成本线），满足其一即卖（买入次日起生效）；条件 7「跌破成本线」为 -2%（现价 < 买入价 × 0.98 即触发）；卖出后按「当日不追买、次日 9:40 复测」规则处理（见买入规则）；「科技板块情绪退潮」受创业板指 3 日线斜率门禁（见下）' },
-  { key: 'key_block_reverse_sells', title: '防御持仓（防御+中性·半仓）：双卖点 = 斜率由负转正 ∪ 个股跌破成本线 -5%', desc: '防御持仓按半仓买入（账户收益贡献 = 个股实际收益 × 0.5，概览的整体收益与平均/最大回撤均按折算口径），双卖点任一先触发即卖出：① 盘中实时创业板指 3 日线斜率由负转正的那个桶（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替），按该桶时点持仓股分时价卖出；② 个股分时价跌破买入成本线 -5%（现价 < 买入价 × 0.95）即止损卖出。卖出后同桶即按进攻买点扫描买入科技股；持仓股分时拉取失败当日安全跳过，次日重试' },
+  { key: 'key_block_positive_sells', title: '进攻持仓（科技股）：通用 7 条件卖点（成本线 -2%）', desc: '自选科技股买入的进攻持仓沿用通用 7 条件卖出诊断（跌破10日线/前低/5日线、高位放量大阴线、科技板块情绪退潮、连续三日抗分歧<10、距5日收盘新高、跌停、跌破成本线），满足其一即卖（买入次日起生效）；条件 7「跌破成本线」为 -2%（现价 < 买入价 × 0.98 即触发），并含「竞价低开自救窗口」例外——当日竞价开盘价已跌破该线时不在 9:30 直接止损，等开盘自救拉升结束（首次分钟回落，如 9:36 < 9:35）再直接卖出；卖出后按「当日不追买、次日 9:40 复测」规则处理（见买入规则）；「科技板块情绪退潮」受创业板指 3 日线斜率门禁（见下）' },
+  { key: 'key_block_reverse_sells', title: '防御持仓（防御+中性·半仓）：双卖点 = 斜率由负转正 ∪ 个股跌破成本线 -5%', desc: '防御持仓按半仓买入（账户收益贡献 = 个股实际收益 × 0.5，概览的整体收益与平均/最大回撤均按折算口径），双卖点任一先触发即卖出：① 盘中实时创业板指 3 日线斜率由负转正的那个桶（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替），按该桶时点持仓股分时价卖出；② 个股分时价跌破买入成本线 -5%（现价 < 买入价 × 0.95）即止损卖出——例外：当日竞价开盘价已跌破该线（隔夜大低开）时不在 9:30 直接止损，等开盘自救拉升结束（首次分钟回落）于回落当分钟直接卖出（按回落分钟分时价成交），盘中才跌破则维持即时止损。桶级精确成交（2026-10-05 优化）：止损在 5 分钟桶触发后，从桶前一分钟起逐分钟回溯当日分时，定位连续跌破区间的最早一分钟并按该分钟分时价与时间成交（线上在首次跌破当分钟即已卖出）；9:35 桶最早回溯到 9:30，破线就发生在当前桶时仍按桶价成交。卖出后同桶即按进攻买点扫描买入科技股；持仓股分时拉取失败当日安全跳过，次日重试' },
   { key: 'key_block_emo_gate', title: '科技板块情绪退潮门禁（仅进攻持仓）', desc: '创业板指 3 日线斜率为正（MA3 − 5个交易日前的MA3，按当日收盘已基本定型口径）时，「科技板块情绪退潮」条件才参与进攻（科技股）持仓的卖出判定；斜率为负或数据不足时该条件当日不生效（其余 6 项条件不受影响）；防御持仓不走 7 条件卖点，本门禁不适用' },
 ];
 
@@ -268,12 +270,12 @@ const isIceStrategy = (id) => ICE_STRATEGY_IDS.includes(id);
 const ICE_BUY_RULES = [
   { key: 'ice_cyb_gate', title: '唯一买卖开关：上证指数 3 日线斜率（为正买入、为负卖出）', desc: '仅在**上证指数** 3 日线斜率（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替，逐桶实时判定）**由负转正**时买入——方向与重点板块系列的创业板口径**相反**：斜率为正买、为负卖。买点还要求**前一交易日「收盘口径」斜率为负**（即「前一日为负、今日盘中才转正」才算一次出手机会；若前一日收盘已为正，则今日盘中的由负转正**不计**为买点，继续空仓等待）：① 转正当日**至少等到 9:40**（转正桶在 9:40 之前也等到 9:40 才执行，给抗分歧分数留出盘中分时计算窗口）才可买入，若候选无效则在当日后续桶持续重试；② 同一转正事件的**次日开盘 10 分钟后（9:40）**若仍空仓则补买一次，仅限「转正当日 + 次日」，超过次日的未成交买点作废。斜率由负转正只需为空仓即可买入（无需资金/量能/情绪等配合）；斜率符号跨日连续追踪，初值取回测首日前一交易日的收盘斜率' },
   { key: 'ice_pool_full', title: '候选池与仓位：防御+中性 tag 板块 ∪ 红利板块三板及以上 · 全仓', desc: '候选 =「防御+中性」tag 板块（板块 tag 在 key_blocks 页面维护，未打 tag 的板块不参与）的**全部成分股**（去重并剔除 ST）**∪ 近 20 个交易日 lianbanSnapshot 中属红利板块名单（resource/hongliName.json）的板块内出现过连板数 ≥ 3（三板及以上）的个股**（即这 20 天内曾走出过三板及以上连板的红利板块个股，两者合并去重；与重点板块系列的「创业板下跌日涨停扩展」不同）；按最近 N 个交易日（不含当日，截至前一交易日收盘）个股涨幅之和最大的一只**全仓买入**（权重 1，不做半仓折算）；成交价取触发桶时点的分时价' },
-  { key: 'ice_no_gain', title: '涨停过滤与顺延', desc: '买入时点判断候选股是否涨停：主板（60/00 开头）涨幅 > 9.5% 视为涨停，创业板（30）/科创板（68）涨幅 > 19% 视为涨停；涨停股不可买入，顺延到 N 日涨幅排名的下一只非涨停股票；全部候选涨停或无有效候选时，在过渡桶持续重试' },
+  { key: 'ice_no_gain', title: '涨停过滤与顺延', desc: '买入时点判断候选股是否涨停：主板（60/00 开头）涨幅 > 9.5% 视为涨停，创业板（30）/科创板（68）涨幅 > 19% 视为涨停；涨停股不可买入，顺延到 N 日涨幅排名的下一只非涨停股票；全部候选涨停或无有效候选时，在过渡桶持续重试。另叠加**上一交易日一字板过滤**：昨日开盘/收盘/全天最低涨幅均不低于阈值（主板 ≥ 8%、创业/科创 ≥ 16%）的一字板候选同样剔除并顺延（买入明细 one_word_board_defer 项标注）' },
   { key: 'ice_resilience_gate', title: '抗分歧门槛 ≥ 9（主板跟踪上证指数）', desc: '买入时点候选股的抗分歧指数需 **≥ 9**，不足者按 N 日涨幅排名**顺延至下一只**，全部候选均不足则本桶不买、在后续桶继续重试。**跟踪指数按候选市场区分**：因这里是防御性股票，不再统一跟踪与科技绑定的创业板指——主板（60/00）跟踪**上证指数 sh000001**，创业板（30）跟踪创业板指 sz399006，科创板（68）跟踪科创 50 sh000688。抗分歧指数按买入时点截至当时的分时数据现算（与卖点诊断条件4同口径）；因买入已统一延后到 **9:40 及以后**（见上一条），此时分时点数已满足 ≥5 点的计算要求，不再出现 9:30 桶「数据不足」而放行的情况（极端无数据时仍按放行处理）' },
 ];
 const ICE_SELL_RULES = [
   { key: 'ice_sell_reverse', title: '上证指数 3 日线斜率由正转负（卖点）', desc: '盘中实时**上证指数** 3 日线斜率由正转负的那个桶即卖出（与买入信号相反：买在斜率转正、卖在斜率转负）；按该桶时点持仓股分时价卖出。斜率转负同时也是**作废尚未成交买入意图**的信号（转正后未及买入即转负 → 放弃本次买入）' },
-  { key: 'ice_sell_stop_loss', title: '个股跌破成本线 -2% 止损', desc: '个股分时价跌破买入成本线 -2%（现价 < 买入价 × 0.98）即止损卖出；全仓买入，卖出后收益率不做半仓折算，直接计入概览（整体收益/平均回撤/单笔最大回撤）' },
+  { key: 'ice_sell_stop_loss', title: '个股跌破成本线 -2% 止损', desc: '个股分时价跌破买入成本线 -2%（现价 < 买入价 × 0.98）即止损卖出；全仓买入，卖出后收益率不做半仓折算，直接计入概览（整体收益/平均回撤/单笔最大回撤）。竞价低开自救窗口（例外）：当日竞价开盘价已跌破该线（隔夜大低开）时不在 9:30 直接止损——大低开往往开盘先向上直线拉升再二次回落（资金自救），逐分钟跟踪：只要股价不低于上一分钟就继续持有（即使仍在成本线下方），首次出现分钟回落（如 9:36 < 9:35，拉升结束）时无论是否仍跌破成本线都直接卖出；若开盘未破线、盘中才跌破，则维持原即时止损。桶级精确成交（2026-10-05 优化）：止损在 5 分钟桶触发后，从桶前一分钟起逐分钟回溯当日分时，定位连续跌破区间的最早一分钟并按该分钟分时价与时间成交（线上在首次跌破当分钟即已卖出）；9:35 桶最早回溯到 9:30，破线就发生在当前桶时仍按桶价成交；自救路径成交价/时间同步改为首次回落分钟' },
   { key: 'ice_sell_lower_shadow', title: '14:55 长下影强卖：下影线 ≥ 实体长度 2 倍', desc: '持仓期内（买入次日起）当日 **14:55** 检查该股当日分时 K 线形态：**下影线长度（min(开,收) − 当日最低）≥ 实体长度（|收 − 开|）的 2 倍**（含实体为 0 的纯长下影形态）即判定为「盘中被砸后拉起、上方承压」，于 **14:55 桶按分时价强制卖出**。开/收/低均用 minute ≤ 1455 的当日分时点现算（无未来数据）；与另外两个卖点任一先触发即卖' },
 ];
 
@@ -476,7 +478,7 @@ const STRATEGY_SPECIFIC_NOTES = {
       '触发时点：**唯一触发开关 = 创业板指 3 日线斜率正负翻转桶**。斜率由负转正 → 进攻买点，全仓买 N 日涨幅最大科技股；斜率由正转负且空仓 → 防御买点，半仓买防御+中性板块 N 日涨幅最大股。',
       'N 日窗口：2 个交易日（与其他 key_block_* 同步）。',
       '进攻卖点：通用 7 条件卖点（成本线 -2%）；但防御卖点 = 斜率由负转正 ∪ 个股跌破买入价 × 0.95，双条件任一触发即卖。',
-      '特殊：进攻卖出后当日不追买，次日 9:40 再复测斜率；涨停股（主板>9.5%、创业板/科创板>19%）顺延到下一只。',
+      '特殊：进攻卖出后当日不追买，次日 9:40 再复测斜率；涨停股（主板>9.5%、创业板/科创板>19%）顺延到下一只；上一交易日一字板（开盘/收盘/最低涨幅均≥阈值，主板 8%、创业/科创 16%）的候选同样剔除顺延。',
     ],
   },
   key_block_3d_gain: {
@@ -504,7 +506,7 @@ const STRATEGY_SPECIFIC_NOTES = {
     bullets: [
       '**逆周期前提**：当下情绪游资的情绪周期与创业板大盘反向（跷跷板）。信号指数改用**上证指数**——因创业板与上证常呈反向，用「上证 3 日线斜率为正」等价捕捉「创业板转弱」的时刻：**买在斜率由负转正（大盘转强）、卖在斜率由正转负**，方向与重点板块系列的创业板口径**相反**。若未来 AI 泡沫破裂、指数不再与科技绑定，情绪周期可能转为顺周期，届时再调整。',
       '买点：**唯一开关 = 上证指数 3 日线斜率由负转正**，且要求**前一交易日「收盘口径」斜率为负**——前一日为负、今日盘中才转正才算一次出手机会；若前一日收盘已为正，则今日盘中的由负转正**不计**为买点（继续空仓等待）。① 转正当日**至少等到 9:40** 才执行买入（给抗分歧分数留出盘中分时计算窗口）；② 同一转正事件的**次日 9:40 补买**一次（转正当日未成交时，次日开盘 10 分钟后仍空仓才买）；超过次日的未成交买点作废。不走通用 BUY_RULES（无需资金/量能/情绪等配合）。',
-      '选股：候选池 = 「防御+中性」tag 板块（key_blocks 页面维护）的**全部成分股**（去重、剔除 ST）**∪ 近 20 个交易日 lianbanSnapshot 中属红利板块名单（hongliName.json）的板块内出现过连板数 ≥ 3（三板及以上）的个股**；在合并去重后的候选池中，取最近 **2 个交易日**（不含当日，截至前一交易日收盘）个股涨幅之和最大的一只。',
+      '选股：候选池 = 「防御+中性」tag 板块（key_blocks 页面维护）的**全部成分股**（去重、剔除 ST）**∪ 近 20 个交易日 lianbanSnapshot 中属红利板块名单（hongliName.json）的板块内出现过连板数 ≥ 3（三板及以上）的个股**；在合并去重后的候选池中，取最近 **2 个交易日**（不含当日，截至前一交易日收盘）个股涨幅之和最大的一只；上一交易日一字板（开盘/收盘/最低涨幅均≥阈值，主板 8%、创业/科创 16%）的候选剔除顺延。',
       '抗分歧门槛：买入时点候选股抗分歧指数需 **≥ 9**，不足者按 N 日涨幅顺延至下一只（全部不足则本桶不买、后续桶重试）。**跟踪指数按市场区分**：主板（60/00）跟踪**上证指数 sh000001**（防御股不跟与科技绑定的创业板指），创业板跟创业板指 sz399006，科创板跟科创 50 sh000688。',
       '仓位与卖点：**全仓买入（权重 1，不做半仓折算）**；卖点 = 上证指数 3 日线斜率由正转负 ∪ 个股分时跌破成本线 -2% 止损 ∪ 当日 14:55 检查长下影（**下影线 ≥ 实体长度 2 倍**即 14:55 按分时价强制卖出），任一先触发即卖。',
       '注：重点板块系列的「进攻/防御」双模式在本系列不适用（本系列恒为全仓防御池）；信号指数为**上证指数**，方向与重点板块系列的创业板口径**相反**（为正买、为负卖）。',
@@ -796,6 +798,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const [hiddenCodes, setHiddenCodes] = useState(() => new Set());
   const [oscResult, setOscResult] = useState(null); // 震荡测试结果（不落后端缓存，退出/刷新即失效）
   const [oscMeta, setOscMeta] = useState(null); // 本次震荡测试实际排除的股票展示文案，如 ['某某(sh688361)']
+  // 当前查看 K 线的股票（点击交易记录股票名称设置）：{ code, name, trade }；回测报告/回测全部/震荡测试共用同一弹窗实例
+  const [klineTarget, setKlineTarget] = useState(null);
   const pollRef = useRef(null);
   const taskIdRef = useRef(null);
   const [workerRunning, setWorkerRunning] = useState(false); // 全量回测（backtest-worker.js）后台执行中
@@ -1686,7 +1690,13 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                     {/* 交易头部 */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 12, fontWeight: 600, color: '#12213a' }}>第{t.seq}笔</span>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#12213a' }}>{t.stockName}</span>
+                      <span
+                        onClick={() => setKlineTarget({ code: t.code, name: t.stockName, trade: t })}
+                        title="点击查看该股票 K 线（含买卖点标注）"
+                        style={{ fontSize: 14, fontWeight: 700, color: '#1677ff', cursor: 'pointer', textDecoration: 'underline dotted' }}
+                      >
+                        {t.stockName}
+                      </span>
                       <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{t.code}</span>
                       <KeyBlockModeTag mode={t.positionMode} ice={curIsIce} />
                       {t.metric != null && (
@@ -1758,7 +1768,13 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                   <div style={{ background: '#fff', borderRadius: 12, padding: 14, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 12, fontWeight: 600, color: '#12213a' }}>持仓中（未卖出）</span>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#12213a' }}>{displayResult.currentHolding.stockName}</span>
+                      <span
+                        onClick={() => setKlineTarget({ code: displayResult.currentHolding.code, name: displayResult.currentHolding.stockName, trade: displayResult.currentHolding })}
+                        title="点击查看该股票 K 线（含买点标注）"
+                        style={{ fontSize: 14, fontWeight: 700, color: '#1677ff', cursor: 'pointer', textDecoration: 'underline dotted' }}
+                      >
+                        {displayResult.currentHolding.stockName}
+                      </span>
                       <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{displayResult.currentHolding.code}</span>
                       <KeyBlockModeTag mode={displayResult.currentHolding.mode || displayResult.currentHolding.positionMode} ice={curIsIce} />
                       {displayResult.currentHolding.metric != null && (
@@ -1821,7 +1837,13 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                     <div key={stock.code} style={{ background: '#fff', borderRadius: 12, padding: 14, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
                       {/* 卡片头部 */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: '#12213a' }}>{stock.stockName}</span>
+                        <span
+                          onClick={() => setKlineTarget({ code: stock.code, name: stock.stockName, trade: stock.trades[0] || stock.holding || null })}
+                          title="点击查看该股票 K 线（含买卖点标注）"
+                          style={{ fontSize: 14, fontWeight: 700, color: '#1677ff', cursor: 'pointer', textDecoration: 'underline dotted' }}
+                        >
+                          {stock.stockName}
+                        </span>
                         <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{stock.code}</span>
                         <Tag color="blue" style={{ marginInlineEnd: 0 }}>{stock.trades.length} 笔成交</Tag>
                         {stock.trades.length > 0 && (
@@ -1927,6 +1949,14 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
 
       <BacktestReportModal open={reportOpen} onClose={() => setReportOpen(false)} />
       <TrendDiagnosisModal open={trendOpen} onClose={() => setTrendOpen(false)} />
+      {/* 股票 K 线弹窗（点击交易记录/持仓的股票名称打开，带买卖点标注；回测报告/回测全部/震荡测试共用） */}
+      <StockKLineModal
+        visible={!!klineTarget}
+        onCancel={() => setKlineTarget(null)}
+        code={klineTarget?.code}
+        stockInfo={{ code: klineTarget?.code, name: klineTarget?.name }}
+        tradeRecord={klineTarget?.trade || null}
+      />
       <TimeFlexTestModal
         open={timeFlexOpen}
         onClose={() => setTimeFlexOpen(false)}

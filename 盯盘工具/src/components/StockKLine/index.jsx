@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { createChart, ColorType } from 'lightweight-charts';
+import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 
-export default function KLine({ data = [], height = 500, showResilience = false, onFetchResilience, onClickCandle }) {
+/**
+ * 交易标注相关可选 props（不传时行为与原先完全一致）：
+ * - tradeMarkers: 买卖点标记数组 [{ time: 'YYYY-MM-DD', position, color, shape, text }]
+ * - priceLines: 价格横线数组 [{ price, color, title }]，统一画为红色/绿色虚线由调用方传色
+ */
+export default function KLine({ data = [], height = 500, showResilience = false, onFetchResilience, onClickCandle, tradeMarkers, priceLines }) {
   const container = useRef(null);
   const chartRef = useRef(null);
   const tooltipRef = useRef(null);
@@ -14,6 +19,8 @@ export default function KLine({ data = [], height = 500, showResilience = false,
   const chartInitializedRef = useRef(false);
   const resilienceScoreMapRef = useRef({});
   const changeMapRef = useRef({});
+  // 已创建的价格虚线引用集合（换股/清除时逐条 removePriceLine，避免残留与泄漏）
+  const priceLineRefs = useRef([]);
   // tooltip 回调只在图表初始化时注册一次，需用 ref 读取实时 showResilience，避免闭包捕获初始值
   const showResilienceRef = useRef(showResilience);
   const [resilienceData, setResilienceData] = useState(null);
@@ -388,6 +395,33 @@ export default function KLine({ data = [], height = 500, showResilience = false,
 
     chart.timeScale().fitContent();
   }, [data, showResilience, resilienceData]);
+
+  // 交易标注：买卖点 marker + 买入/卖出价格虚线（只在传入 tradeMarkers/priceLines 时生效；依赖 data 保证 setData 后重画）
+  useEffect(() => {
+    if (!chartInitializedRef.current || !candlestickRef.current) return;
+    const candlestick = candlestickRef.current;
+
+    // markers：未传或传空数组时清空，避免换股后残留上一只股票的标记
+    candlestick.setMarkers(Array.isArray(tradeMarkers) ? tradeMarkers : []);
+
+    // priceLines：先移除旧线再画新线，防止叠加与内存泄漏
+    priceLineRefs.current.forEach((pl) => {
+      try { candlestick.removePriceLine(pl); } catch (e) { /* 图表已销毁时忽略 */ }
+    });
+    priceLineRefs.current = [];
+    (Array.isArray(priceLines) ? priceLines : []).forEach((pl) => {
+      const price = Number(pl && pl.price);
+      if (!Number.isFinite(price)) return;
+      priceLineRefs.current.push(candlestick.createPriceLine({
+        price,
+        color: (pl && pl.color) || '#f5222d',
+        lineWidth: 1,
+        lineStyle: LineStyle.Dashed, // 虚线横线
+        axisLabelVisible: true,
+        title: (pl && pl.title) || '',
+      }));
+    });
+  }, [tradeMarkers, priceLines, data]);
 
   return (
     <div className="stock-kline-container" style={{ position: 'relative', width: '100%' }}>
