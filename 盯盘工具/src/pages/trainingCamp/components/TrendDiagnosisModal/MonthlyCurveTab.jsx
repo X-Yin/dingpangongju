@@ -23,8 +23,8 @@ const hexToRgba = (hex, alpha = 1) => {
 // 与叠加分时观察一致的 7 色循环调色板（红/橙/黄/青/蓝/紫/粉）
 const PALETTE = ['#ef4444', '#f97316', '#facc15', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'];
 
-// 默认展示的三个策略：3日涨幅最大 / 3日研报覆盖数最多 / 5日研报覆盖数最多
-const DEFAULT_SELECTED = ['highest_3d_gain', 'highest_3d_reports', 'highest_5d_reports'];
+// 默认展示的三个策略：3日涨幅最大&三日情绪-60快进快出 / 3日涨幅最大 / 3日研报覆盖数最多 / 5日研报覆盖数最多
+const DEFAULT_SELECTED = ['highest_3d_gain_emoquick', 'highest_3d_gain', 'highest_3d_reports', 'highest_5d_reports'];
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, ChartTooltip);
 

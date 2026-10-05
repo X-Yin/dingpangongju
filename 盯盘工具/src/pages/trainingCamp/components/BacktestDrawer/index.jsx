@@ -902,7 +902,9 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   };
 
   // 打开抽屉、切换策略或修改日期范围时检查缓存（延迟到宏任务，避免 effect 内同步 setState）；
-  // 同时清空上一次震荡测试的隐藏勾选与结果（一次性状态，不持久化，重新打开抽屉即重置）
+  // 同时清空上一次震荡测试的隐藏勾选与结果（一次性状态，不持久化，重新打开抽屉即重置）；
+  // 另：dates 由父组件异步加载，首次渲染时可能为空数组导致 effectiveRange 走 fallback（用 EARLIEST_DATE），
+  // 若不把 dates 纳入依赖则日期加载完后不会重新查缓存，独立回测页面会出现"首次打开无结果、切换策略才出现"的现象
   useEffect(() => {
     if (!isOpen) return;
     const id = setTimeout(() => {
@@ -913,7 +915,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
     }, 0);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, strategy, range]);
+  }, [isOpen, strategy, range, dates]);
 
   // 复制文本到剪贴板：优先 clipboard API（需 secure context），失败/不可用时降级 execCommand
   const copyToClipboard = async (text) => {
