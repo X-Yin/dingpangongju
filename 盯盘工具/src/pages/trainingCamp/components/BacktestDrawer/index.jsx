@@ -1529,17 +1529,65 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
             </div>
           </div>
         )}
-        {/* 全量回测进行中提示 */}
+        {/* 全量/分类回测进行中提示：深色渐变实时状态面板（脉冲状态灯 + 步骤流 + 终端式日志 + 流光进度条） */}
         {workerRunning && (
-          <Alert
-            type="info"
-            showIcon
-            style={{ marginTop: 14 }}
-            message={workerMode === 'category'
-              ? '分类回测进行中（预热日K线 → 预构建回放数据 → 仅回测该分类下的策略，不清空其它缓存）'
-              : '全量回测进行中（清空回测缓存 → 预热日K线 → 并行预构建 → 全部策略并行回测 → 自动生成回测报告）'}
-            description={workerLog || '正在启动 worker 进程…'}
-          />
+          <>
+            <style>{`
+              @keyframes backtestWorkerPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+              @keyframes backtestWorkerShimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(440%)} }
+            `}</style>
+            <div
+              style={{
+                marginTop: 14,
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: 12,
+                padding: '14px 16px 12px',
+                background: 'linear-gradient(135deg, #0f1a3a 0%, #1a2a5e 48%, #26164d 100%)',
+                border: '1px solid rgba(114, 46, 209, 0.4)',
+                boxShadow: '0 8px 24px rgba(15, 26, 58, 0.28)',
+              }}
+            >
+              {/* 柔光晕染层：右上蓝光 / 左下紫光，增强层次感 */}
+              <div style={{ position: 'absolute', top: -50, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(64,169,255,0.16), transparent 70%)', pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', bottom: -60, left: -20, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(114,46,209,0.2), transparent 70%)', pointerEvents: 'none' }} />
+
+              {/* 标题行：脉冲状态灯 + 标题 + 模式徽标 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#5ce27e', boxShadow: '0 0 10px rgba(92,226,126,0.9)', animation: 'backtestWorkerPulse 1.2s ease-in-out infinite' }} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#f0f4ff', letterSpacing: 0.3 }}>
+                  {workerMode === 'category' ? '分类回测进行中' : '全量回测进行中'}
+                </span>
+                <span style={{ fontSize: 11, lineHeight: '18px', padding: '0 10px', borderRadius: 999, color: '#d3bcf7', background: 'rgba(114,46,209,0.28)', border: '1px solid rgba(114,46,209,0.55)' }}>
+                  {workerMode === 'category' ? '仅本分类 · 不清空其它缓存' : '全部策略强制重跑'}
+                </span>
+              </div>
+
+              {/* 步骤流：圆角胶囊 + 箭头，替代原括号长文案 */}
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 10, position: 'relative' }}>
+                {(workerMode === 'category'
+                  ? ['预热日K线', '预构建回放数据', '仅回测本分类策略']
+                  : ['清空回测缓存', '预热日K线', '并行预构建', '全部策略并行回测', '自动生成回测报告']
+                ).map((step, i, arr) => (
+                  <span key={step} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 12, padding: '2px 10px', borderRadius: 999, color: '#c6d4ff', background: 'rgba(122,143,255,0.12)', border: '1px solid rgba(122,143,255,0.3)' }}>{step}</span>
+                    {i < arr.length - 1 && <span style={{ fontSize: 11, color: 'rgba(142,163,232,0.8)' }}>→</span>}
+                  </span>
+                ))}
+              </div>
+
+              {/* 实时日志：等宽字体终端风格 */}
+              <div style={{ marginTop: 10, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', fontSize: 12, color: '#93a7e8', display: 'flex', alignItems: 'baseline', gap: 6, position: 'relative' }}>
+                <span style={{ color: '#40a9ff' }}>›</span>
+                <span style={{ wordBreak: 'break-all' }}>{workerLog || '正在启动 worker 进程…'}</span>
+              </div>
+
+              {/* 底部不定进度条：流光往复，暗示后台持续运转 */}
+              <div style={{ position: 'relative', height: 3, marginTop: 12, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '30%', borderRadius: 999, background: 'linear-gradient(90deg, rgba(64,169,255,0), #40a9ff, rgba(114,46,209,0.9))', animation: 'backtestWorkerShimmer 1.8s ease-in-out infinite' }} />
+              </div>
+            </div>
+          </>
         )}
       </div>
 
