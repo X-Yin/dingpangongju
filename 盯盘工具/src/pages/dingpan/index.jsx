@@ -1991,7 +1991,7 @@ const DingPan = () => {
         volumeChartRef.current = chart;
 
         const series = chart.addLineSeries({
-            color: getThemeColor(),
+            color: '#9333ea',
             lineWidth: 2,
             priceFormat: {
                 type: 'price',

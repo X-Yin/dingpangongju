@@ -732,5 +732,23 @@
     "riskScore": "6",
     "isTech": true,
     "addedAt": "2026-10-05 15:41:42"
+  },
+  {
+    "code": "sh603650",
+    "name": "彤程新材",
+    "isImportant": false,
+    "blockName": "半导体",
+    "riskScore": "7",
+    "isTech": true,
+    "addedAt": "2026-10-05 16:53:20"
+  },
+  {
+    "code": "sz002409",
+    "name": "雅克科技",
+    "isImportant": false,
+    "blockName": "半导体",
+    "riskScore": "7",
+    "isTech": true,
+    "addedAt": "2026-10-05 16:53:39"
   }
 ]

@@ -1798,5 +1798,45 @@
       }
     ],
     "isImportant": false
+  },
+  "sh603650": {
+    "stockName": "彤程新材",
+    "kline": [
+      {
+        "trade_date": 20260930,
+        "open_px": 65.18,
+        "high_px": 65.81,
+        "low_px": 61.82,
+        "close_px": 62.3,
+        "business_amount": 14487885,
+        "business_balance": 921818180,
+        "change": -1.44,
+        "ma5_px": 65.78,
+        "ma10_px": 68.5,
+        "ma20_px": 65.39,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz002409": {
+    "stockName": "雅克科技",
+    "kline": [
+      {
+        "trade_date": 20260930,
+        "open_px": 125.47,
+        "high_px": 125.8,
+        "low_px": 120.51,
+        "close_px": 121,
+        "business_amount": 9151351,
+        "business_balance": 1117917650,
+        "change": -2.85,
+        "ma5_px": 128.03,
+        "ma10_px": 132.23,
+        "ma20_px": 131.38,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }
