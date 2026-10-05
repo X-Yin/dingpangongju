@@ -109,6 +109,7 @@ export const THEME_PACKS = [
         name: '流体玻璃',
         desc: 'Liquid Glass · 流体morphing玻璃质感',
         source: '#14',
+        appThemeColor: '#764ba2',
         tokens: {
             pageBg: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
             fontFamily: "'Inter', sans-serif",
@@ -147,6 +148,7 @@ export const THEME_PACKS = [
         name: '玻璃拟态',
         desc: 'Glassmorphism · 磨砂玻璃层次',
         source: '#03',
+        appThemeColor: '#8b00ff',
         tokens: {
             pageBg: 'linear-gradient(135deg, #0080FF 0%, #8B00FF 50%, #FF1493 100%)',
             fontFamily: "'Inter', sans-serif",
@@ -185,6 +187,7 @@ export const THEME_PACKS = [
         name: '活力色块',
         desc: 'Vibrant Block · 霓虹撞色大色块',
         source: '#06',
+        appThemeColor: '#000000',
         tokens: {
             pageBg: '#000000',
             fontFamily: "'Space Grotesk', sans-serif",
@@ -224,6 +227,7 @@ export const THEME_PACKS = [
         name: '极光渐变',
         desc: 'Aurora UI · 北极光流动渐变',
         source: '#10',
+        appThemeColor: '#f5576c',
         tokens: {
             pageBg: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
             fontFamily: "'Inter', sans-serif",
@@ -263,6 +267,7 @@ export const THEME_PACKS = [
         name: '动效驱动',
         desc: 'Motion-Driven · 深色科技动感',
         source: '#15',
+        appThemeColor: '#0f172a',
         tokens: {
             pageBg: '#0F172A',
             fontFamily: "'Inter', sans-serif",
@@ -301,6 +306,7 @@ export const THEME_PACKS = [
         name: '新粗野主义',
         desc: 'Neubrutalism · 硬阴影黑描边',
         source: '#38',
+        appThemeColor: '#722ed1',
         tokens: {
             pageBg: '#FFF8E7',
             fontFamily: "'Space Grotesk', sans-serif",
@@ -340,6 +346,7 @@ export const THEME_PACKS = [
         name: 'Z世代混乱',
         desc: 'Gen Z Chaos · 倾斜贴纸涂鸦',
         source: '#57',
+        appThemeColor: '#1a1a2e',
         tokens: {
             pageBg: '#1A1A2E',
             fontFamily: "'Clash Display', 'Space Grotesk', sans-serif",
@@ -382,6 +389,7 @@ export const THEME_PACKS = [
         name: '柔光新拟态',
         desc: 'Soft UI · 凸面双影浮雕',
         source: '自定义',
+        appThemeColor: '#722ed1',
         tokens: {
             pageBg: '#dde1e7',
             fontFamily: "'Albert Sans', -apple-system, 'PingFang SC', sans-serif",
@@ -423,6 +431,7 @@ export const THEME_PACKS = [
         "name": "现代渐变风",
         "desc": "Modern Gradient · 多彩玻璃态与动态光影",
         "source": "/styles/modern-gradient",
+        "appThemeColor": "#1e1b4b",
         "tokens": {
             "pageBg": "linear-gradient(135deg, #020617 0%, #1e1b4b 100%)",
             "fontFamily": "'Inter', -apple-system, 'PingFang SC', sans-serif",
@@ -507,6 +516,7 @@ export const THEME_PACKS = [
         name: '柔和界面风',
         desc: 'Soft UI · 柔和圆润友好界面',
         source: 'STYLEKIT_STYLE_REFERENCE',
+        appThemeColor: '#722ed1',
         tokens: {
             pageBg: 'linear-gradient(160deg, #f8fafc 0%, #eef2ff 100%)',
             fontFamily: "'Nunito Sans', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif",
@@ -549,6 +559,7 @@ export const THEME_PACKS = [
         "name": "霓虹渐变",
         "desc": "Neon Gradient · 深色画布与高饱和发光渐变",
         "source": "/styles/neon-gradient",
+        "appThemeColor": "#0f0a1e",
         "tokens": {
             "pageBg": "#0f0a1e",
             "fontFamily": "'Outfit', 'Segoe UI', sans-serif",
@@ -675,6 +686,7 @@ export const THEME_PACKS = [
         name: '极繁主义',
         desc: 'Maximalism · 饱和撞色与多重装饰',
         source: '自定义',
+        appThemeColor: '#1a0a2e',
         tokens: {
             pageBg: '#1a0a2e',
             fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
@@ -717,6 +729,7 @@ export const THEME_PACKS = [
         name: '多巴胺设计',
         desc: 'Dopamine Design · 高饱和霓虹与愉悦能量',
         source: '自定义',
+        appThemeColor: '#722ed1',
         tokens: {
             pageBg: 'linear-gradient(135deg, #fff0f6 0%, #f3e8ff 50%, #e6f0ff 100%)',
             fontFamily: "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
@@ -759,6 +772,7 @@ export const THEME_PACKS = [
         name: '着色器渐变',
         desc: 'Shader Gradient · 实时 WebGL 流动与冻毛玻璃',
         source: '自定义',
+        appThemeColor: '#08090d',
         tokens: {
             pageBg: '#08090D',
             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
@@ -801,6 +815,7 @@ export const THEME_PACKS = [
         name: '霓虹玻璃暗夜',
         desc: 'Neon Glass Dark · 深色玻璃拟态与霓虹渐变',
         source: '#uploaded-image',
+        appThemeColor: '#0f172a',
         tokens: {
             pageBg: '#0F172A',
             fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
@@ -843,6 +858,7 @@ export const THEME_PACKS = [
         name: '像素流彩霓虹',
         desc: 'Pixel Flux Neon · 噪点背景 + 像素化渐变爆炸效果',
         source: '#uploaded-image-3',
+        appThemeColor: '#0a0508',
         tokens: {
             pageBg: '#0A0508', // 深紫黑带微噪点
             fontFamily: "'Inter', 'Satoshi', 'Helvetica Neue', sans-serif",
@@ -890,6 +906,7 @@ export const THEME_PACKS = [
         name: 'VR商域光晕',
         desc: 'VR Commerce Glow · 深色沉浸 + 橙光产品轮廓 + AI助手交互',
         source: '#uploaded-image-5',
+        appThemeColor: '#0a0a0a',
         tokens: {
             pageBg: '#0A0A0A',
             fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
@@ -946,6 +963,7 @@ export const THEME_PACKS = [
         name: 'Onro玻璃仪表',
         desc: 'Onro Glass Dashboard · 磨砂蓝调 + 悬浮卡片 + 建筑透视背景',
         source: '#uploaded-image-9',
+        appThemeColor: '#722ed1',
         tokens: {
             pageBg: '#E8F4FF', // 浅天蓝背景
             fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
@@ -1007,6 +1025,7 @@ export const THEME_PACKS = [
         name: '暖橙学术仪表盘',
         desc: 'Warm Learning Dashboard · 暖橙柔调 + 多彩卡片 + 3D悬浮插图',
         source: '#uploaded-image-1',
+        appThemeColor: '#FFC8A2',
         tokens: {
             pageBg: '#FFC8A2', // 暖橙色背景
             fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
@@ -1073,6 +1092,7 @@ export const THEME_PACKS = [
         name: 'Apeluid 电光紫风格',
         desc: 'Apeluid Electric Purple · 暗黑高饱和紫 + 极简大圆角卡片 + 多色交互胶囊标签',
         source: '#uploaded-image',
+        appThemeColor: '#0a0a12',
         tokens: {
             pageBg: '#0A0A12', // 极深黑紫背景
             fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
@@ -1134,6 +1154,7 @@ export const THEME_PACKS = [
         name: 'Kiddora 欢快儿童教育风格',
         desc: 'Kiddora Playful Kids Learning · 暖调奶油渐变底色 + 缤纷彩色高饱和元素 + 柔和通透悬浮卡片',
         source: '#uploaded-image-6',
+        appThemeColor: '#722ed1',
         tokens: {
             pageBg: 'linear-gradient(180deg, #FFF5EE 0%, #FAF0E6 50%, #F5E6FF 100%)', // 暖粉杏色到柔紫渐变背景[cite: 6]
             fontFamily: "'Fredoka', 'Quicksand', -apple-system, sans-serif", // 圆润亲和的儿童字体风格[cite: 6]
@@ -1202,6 +1223,7 @@ export const THEME_PACKS = [
         name: 'Kiddora 3D立体探究教育风格',
         desc: 'Kiddora Discover 3D Clay · 梦幻淡紫柔粉底色 + 3D粘土软萌图标 + 高饱和圆角悬浮面板',
         source: '#uploaded-image-7',
+        appThemeColor: '#722ed1',
         tokens: {
             pageBg: 'linear-gradient(180deg, #F8F3FF 0%, #FAF0F8 50%, #F5ECFF 100%)', // 梦幻极浅紫到粉紫渐变背景[cite: 7]
             fontFamily: "'Fredoka', 'Quicksand', -apple-system, sans-serif", // 圆润亲和儿童字体[cite: 7]
@@ -1269,6 +1291,7 @@ export const THEME_PACKS = [
         name: 'UpFound 极光翡翠暗黑渐变',
         desc: 'UpFound Emerald Dark · 深邃黑绿径向渐变背景 + 宝石绿亮色高光 + 极简现代化文字与胶囊按钮',
         source: '#uploaded-image-10',
+        appThemeColor: '#040a0a',
         tokens: {
             pageBg: 'radial-gradient(circle at 50% 50%, #0D2D2A 0%, #040A0A 80%)', // 深绿到暗黑渐变背景[cite: 10, 11]
             fontFamily: "'PP Neue Montreal', 'Inter', -apple-system, sans-serif", // 第二图指定的字体[cite: 11]
@@ -1337,6 +1360,7 @@ export const THEME_PACKS = [
         name: 'Strava年度燃动',
         desc: 'Strava Yearly Sport · 紫橙流体渐变 + 粗体数据叙事 + 胶囊标签',
         source: '#uploaded-image-12',
+        appThemeColor: '#f97316',
         tokens: {
             pageBg: 'linear-gradient(160deg, #4C1D95 0%, #7C3AED 25%, #EC4899 55%, #F97316 85%, #FBBF24 100%)',
             fontFamily: "'Helvetica Now Display', 'Inter', -apple-system, sans-serif",
@@ -1400,6 +1424,7 @@ export const THEME_PACKS = [
         name: 'Focus 工作流',
         desc: 'Focus Workflow · 深空灰玻璃拟态 + 霓虹数据流 + 圆角任务系统',
         source: '#uploaded-image-13',
+        appThemeColor: '#1e293b',
         tokens: {
             // ✨ 核心背景：深邃蓝灰渐变，模拟夜空或深海，为霓虹色提供最佳画布
             pageBg: 'linear-gradient(180deg, #0F172A 0%, #1E293B 100%)',
@@ -1473,6 +1498,7 @@ export const THEME_PACKS = [
     name: 'Vyora 智能影院',
     desc: 'Vyora AI Dashboard · 深紫沉浸氛围 + 玻璃拟态卡片 + 霓虹交互',
     source: '#uploaded-image-14',
+    appThemeColor: '#3730a3',
     tokens: {
         // ✨ 核心背景：从上至下的深紫到蓝紫渐变，模拟夜晚影院的静谧感
         pageBg: 'linear-gradient(180deg, #5B21B6 0%, #3730A3 40%, #1E1B4B 100%)',
@@ -1542,6 +1568,7 @@ export const THEME_PACKS = [
     name: '浅蓝琉璃金融',
     desc: 'Light Blue Glass Finance · 高明度天蓝背景 + 白色磨砂玻璃卡片 + 柔和投影',
     source: '#uploaded-image-15',
+    appThemeColor: '#3b82f6',
     tokens: {
         // ✨ 核心背景：纯净的高明度天蓝色，模拟晴朗天空或清澈水面
         pageBg: 'linear-gradient(180deg, #60A5FA 0%, #3B82F6 100%)', // 从浅天蓝到标准蓝的微妙渐变
@@ -1618,6 +1645,7 @@ export const THEME_PACKS = [
     name: 'Lumina 暖光健康',
     desc: 'Lumina Wellness · 奶油蜜桃暖调渐变 + 柔光玻璃卡片 + 治愈系圆角数据流',
     source: '#uploaded-image-16',
+    appThemeColor: '#722ed1',
     tokens: {
         // ✨ 核心背景：从奶油杏到蜜桃粉的暖调渐变，模拟清晨柔光或肌肤质感
         pageBg: 'linear-gradient(135deg, #FDE68A 0%, #FCA5A5 50%, #F9A8D4 100%)',
@@ -1696,6 +1724,7 @@ export const THEME_PACKS = [
     name: '暗黑工业监控',
     desc: 'Dark Industrial Monitor · 深空灰蓝背景 + 高亮橙红警示 + 高密度数据网格',
     source: '#uploaded-image-17',
+    appThemeColor: '#0f172a',
     tokens: {
         // ✨ 核心背景：极深的蓝灰色，模拟夜间控制中心或工业屏幕
         pageBg: '#0F172A', // 深空灰蓝，比纯黑更有质感
@@ -1773,6 +1802,7 @@ export const THEME_PACKS = [
     name: '霓虹魔女赌场',
     desc: 'Neon Casino Witch · 粉黑渐变 + 金紫橙撞色 + 动漫角色',
     source: '提取自上传图片',
+    appThemeColor: '#0a0014',
     tokens: {
         // ========== 页面背景 ==========
         pageBg: '#0A0014', // 深紫黑底，带微粉光晕
@@ -1830,6 +1860,7 @@ export const THEME_PACKS = [
     name: '皇家暗夜赌场',
     desc: 'Royal Night Casino · 藏青渐变底 + 金紫绿撞色 + 宝石质感',
     source: '提取自上传图片',
+    appThemeColor: '#1e3a8a',
     tokens: {
         // ========== 页面背景 ==========
         pageBg: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #0F172A 100%)', // 藏青→深蓝→藏青渐变
@@ -1887,6 +1918,7 @@ export const THEME_PACKS = [
     name: '彩虹科技极简',
     desc: 'Rainbow Tech Minimal · 黑字+彩虹渐变底 + 几何Logo风',
     source: '提取自上传图片',
+    appThemeColor: '#ff00ff',
     tokens: {
         // ========== 页面背景 ==========
         pageBg: 'linear-gradient(135deg, #FFFFFF 0%, #FFFF00 25%, #FF0055 50%, #FF00FF 75%, #0066FF 100%)', // 白→黄→红→紫→蓝 彩虹对角渐变
@@ -1944,6 +1976,7 @@ export const THEME_PACKS = [
     name: 'MusicKit 自定义主题',
     desc: 'MusicKit Custom Theme · 深色背景 + 紫色卡片 + 浅灰白字按钮 + 绿色高亮交互',
     source: '#uploaded-image-16',
+    appThemeColor: '#0a0c14',
     tokens: {
         pageBg: '#0A0C14', // 极致深色背景[cite: 6]
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
@@ -2010,6 +2043,7 @@ export const THEME_PACKS = [
     name: '暗黑极客开发者首页',
     desc: 'Dark Mode Developer Landing · 深蓝黑背景 + 亮蓝微光渐变文字 + 高对比度现代科技卡片',
     source: '#uploaded-image-17',
+    appThemeColor: '#090d16',
     tokens: {
         pageBg: '#090D16', // 深藏青黑页面背景
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
@@ -2076,6 +2110,7 @@ export const THEME_PACKS = [
     name: 'MasonryFlow 霓虹暗黑瀑布流',
     desc: 'MasonryFlow Dark Neon · 暗黑方格网格背景 + 彩色渐变卡片 + 珊瑚红高亮按钮',
     source: '#uploaded-image-19',
+    appThemeColor: '#0f0e17',
     tokens: {
         pageBg: '#0F0E17', // 暗黑紫黑底色（带细微网格纹理）
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
@@ -2142,6 +2177,7 @@ export const THEME_PACKS = [
   name: ' Sketch 手绘风',
   desc: 'Sketch Hand-drawn Style · 米色纸纹底 + 铅笔虚线边框 + 手写字体 + 星号装饰角',
   source: '提取自上传图片',
+  appThemeColor: '#722ed1',
   tokens: {
     // ========== 页面背景 ==========
     pageBg: '#F8F5F0', // 米白色纸张底色，带轻微纹理感
@@ -2229,6 +2265,7 @@ export const THEME_PACKS = [
     name: '柔和新野兽派',
     desc: 'Neo-Brutalist Soft · 浅灰背景 + 无圆角直角卡片 + 粗硬实心位移阴影 (Hard Offset Shadow) + 糖果马卡龙四色撞色顶部边条',
     source: '#uploaded-image-22',
+    appThemeColor: '#722ed1',
     tokens: {
         pageBg: '#F3F3F3', // 浅冷灰背景[cite: 12]
         fontFamily: "'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", // 现代无衬线粗体[cite: 12]
@@ -2295,6 +2332,7 @@ export const THEME_PACKS = [
     name: '俏皮新野兽派',
     desc: 'Neo-Brutalist Playful · 明亮青绿背景 + 粗黑硬边框 + 倾斜卡片组件 (Tilt/Rotation) + 纯黑硬位移阴影',
     source: '#uploaded-image-23',
+    appThemeColor: '#722ed1',
     tokens: {
         pageBg: '#4ECDC4', // 鲜亮青绿背景[cite: 13]
         fontFamily: "'Impact', 'Arial Black', -apple-system, BlinkMacSystemFont, sans-serif", // 超粗体艺术字[cite: 13]
@@ -2361,6 +2399,7 @@ export const THEME_PACKS = [
     name: '复古合成器浪潮',
     desc: 'Synthwave Neon 80s · 极暗紫夜景背景 + 霓虹粉紫发光大字 + 横向扫描线渐变 + 80年代网格与山脊剪影',
     source: '#uploaded-image-24',
+    appThemeColor: '#0d021a',
     tokens: {
         pageBg: '#0D021A', // 深紫黑夜空底色[cite: 14]
         fontFamily: "'Orbitron', 'VT323', 'Arial Black', -apple-system, sans-serif", // 80s 赛博科技感/未来感字体[cite: 14]
@@ -2427,6 +2466,7 @@ export const THEME_PACKS = [
     name: '梦境超现实主义',
     desc: 'Surrealism Dream Dark · 幽暗梦境深紫背景 + 典雅斜体衬线字体 + 金粉彩虹渐变大字 + 柔美流体椭圆按钮',
     source: '#uploaded-image-25',
+    appThemeColor: '#111025',
     tokens: {
         pageBg: '#111025', // 深暗紫梦境夜色背景[cite: 15]
         fontFamily: "'Playfair Display', 'Didot', 'Bodoni MT', 'Georgia', serif", // 高对比度典雅艺术衬线体[cite: 15]
@@ -2493,6 +2533,7 @@ export const THEME_PACKS = [
     name: '酸性平面 90s 迷幻派对',
     desc: 'Acid Graphics 90s Rave · 极致纯黑背景 + 荧光毒液绿/电光青/霓虹粉高饱和撞色 + 霓虹发光边框按钮 + 实验性重影与镂空线条字',
     source: '#uploaded-image-27',
+    appThemeColor: '#0a0a0a',
     tokens: {
         pageBg: '#0A0A0A', // 纯黑暗夜底色[cite: 17]
         fontFamily: "'Impact', 'Arial Black', -apple-system, BlinkMacSystemFont, sans-serif", // 超粗实验艺术字体[cite: 17]
@@ -2559,6 +2600,7 @@ export const THEME_PACKS = [
     name: '魔法阵神秘几何',
     desc: 'Magic Circle Arcane · 沉静深海暗蓝背景 + 炼金金色发光大字 + 星盘魔法阵几何线条 + 细线精密框线组件',
     source: '#uploaded-image-28',
+    appThemeColor: '#0b0c1e',
     tokens: {
         pageBg: '#0B0C1E', // 沉静深海暗蓝/星空夜色背景[cite: 13]
         fontFamily: "'Cinzel', 'Trajan Pro', 'Cinzel Decorative', -apple-system, sans-serif", // 古典神秘学/几何艺术字体[cite: 13]
@@ -2625,6 +2667,7 @@ export const THEME_PACKS = [
     name: '波普艺术 沃霍尔网格',
     desc: 'Pop Art Warhol Style · 经典 CMYK 波普高饱和撞色网格 + 半音阶网点纹理 (Ben-Day Dots) + 粗黑硬边框 + 错位双色位移阴影',
     source: '#uploaded-image-29',
+    appThemeColor: '#722ed1',
     tokens: {
         pageBg: '#FFE600', // 波普柠檬黄主底色
         fontFamily: "'Impact', 'Arial Black', -apple-system, BlinkMacSystemFont, sans-serif", // 超粗波普艺术黑体
@@ -2691,6 +2734,7 @@ export const THEME_PACKS = [
     name: '温润仪表盘',
     desc: 'Warm Dashboard · 珊瑚陶土暖色背景 + 奶油白卡片组件 + 漫反射柔和阴影 + 暖青绿点缀',
     source: '#uploaded-image-30',
+    appThemeColor: '#722ed1',
     tokens: {
         pageBg: '#D29E8B', // 珊瑚陶土暖色背景
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
@@ -2757,6 +2801,7 @@ export const THEME_PACKS = [
     name: '霓虹渐变',
     desc: 'Neon Gradient · 深色暗夜背景 + 高饱和鲜艳渐变卡片 + 粗彩色外框与霓虹强发光阴影 + 电光双色按钮',
     source: '#uploaded-image-31',
+    appThemeColor: '#0f0c1b',
     tokens: {
         pageBg: '#0F0C1B', // 极深紫黑夜色背景[cite: 15]
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", // 现代无衬线字体[cite: 15]
@@ -2823,6 +2868,7 @@ export const THEME_PACKS = [
     name: 'Kawaii Minimal 可爱极简',
     desc: 'Kawaii Minimal · 柔和暖奶油底色 + 马卡龙粉紫蓝低饱和配色 + 极圆胶囊卡片与按钮 + 日式治愈系留白',
     source: '#uploaded-image-33',
+    appThemeColor: '#722ed1',
     tokens: {
         pageBg: '#FFFBF2', // 柔和暖奶油色背景[cite: 16]
         fontFamily: "'Nunito', 'Quicksand', -apple-system, BlinkMacSystemFont, sans-serif", // 圆润治愈无衬线体[cite: 16]
@@ -2889,6 +2935,7 @@ export const THEME_PACKS = [
     name: 'Frutiger Aero 自然科技风',
     desc: 'Frutiger Aero · 晴空天蓝渐变底色 + Vista 拟真水晶毛玻璃卡片 + 上半部分高光反射与极光微光 + 2010 年代清爽自然科技质感',
     source: '#uploaded-image-34',
+    appThemeColor: '#722ed1',
     tokens: {
         pageBg: 'linear-gradient(180deg, #64C8FA 0%, #3DA9F6 100%)', // 晴空天蓝水润渐变背景[cite: 17]
         fontFamily: "'Segoe UI', 'Frutiger', -apple-system, BlinkMacSystemFont, sans-serif", // 经典 Vista / Frutiger 科技无衬线体[cite: 17]
