@@ -145,11 +145,6 @@
     "TotalShares": 904586445
   },
   {
-    "secu_code": "sh688146",
-    "secu_name": "中船特气",
-    "TotalShares": 529411765
-  },
-  {
     "secu_code": "sz300408",
     "secu_name": "三环集团",
     "TotalShares": 1996718571
@@ -290,11 +285,6 @@
     "TotalShares": 95049423
   },
   {
-    "secu_code": "sh688820",
-    "secu_name": "盛合晶微",
-    "TotalShares": 1862774097
-  },
-  {
     "secu_code": "sz000977",
     "secu_name": "浪潮信息",
     "TotalShares": 1468476655
@@ -420,11 +410,6 @@
     "TotalShares": 150949000
   },
   {
-    "secu_code": "sz300179",
-    "secu_name": "四方达",
-    "TotalShares": 485723930
-  },
-  {
     "secu_code": "sz002636",
     "secu_name": "金安国纪",
     "TotalShares": 728000000
@@ -445,16 +430,6 @@
     "TotalShares": 285234456
   },
   {
-    "secu_code": "sh688603",
-    "secu_name": "天承科技",
-    "TotalShares": 124724524
-  },
-  {
-    "secu_code": "sh601179",
-    "secu_name": "中国西电",
-    "TotalShares": 5125882352
-  },
-  {
     "secu_code": "sz000823",
     "secu_name": "超声电子",
     "TotalShares": 594954911
@@ -470,8 +445,8 @@
     "TotalShares": 704760283
   },
   {
-    "secu_code": "sh688099",
-    "secu_name": "晶晨股份",
-    "TotalShares": 423319995
+    "secu_code": "sz002008",
+    "secu_name": "大族激光",
+    "TotalShares": 1029603408
   }
 ]

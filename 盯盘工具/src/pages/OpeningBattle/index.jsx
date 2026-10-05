@@ -360,12 +360,9 @@ const FundChartModule = () => {
   const fetchData = async () => {
     try {
       const response = await axios.get(`http://${local_ip}:3000/amount_history`);
-      const newData = response.data || [];
-      setData(newData);
-      setLoading(false);
+      setData(response.data || []);
     } catch (err) {
       console.error('Fetch main fund data failed:', err);
-      setLoading(false);
     }
   };
 
@@ -821,7 +818,9 @@ const PositionIntradayModule = ({ expanded, onToggleExpanded }) => {
         </div>
       </div>
       {positions.length === 0 ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无持仓" style={{ padding: '55px 0' }} />
+        <div className="ob-intraday-empty">
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无持仓" />
+        </div>
       ) : (
         <div className={`ob-intraday-grid ${positions.length >= 2 ? 'two' : 'single'}`}>
           {positions.map((stock) => (
@@ -839,7 +838,7 @@ const PositionIntradayModule = ({ expanded, onToggleExpanded }) => {
   );
 };
 
-// ==================== 自选股 3 日涨幅前五（创业板+主板 / 科创板 分列） ====================
+// ==================== 自选股 3 日涨幅前五（创业板+主板 / 科创板 上下分行） ====================
 const formatSlope = (v) => (
   v === null || v === undefined || Number.isNaN(Number(v))
     ? '--'
@@ -1291,7 +1290,7 @@ const SellPointDiagnosisCard = () => {
       </div>
       <div className="ob-diagnosis-body">
         {results.length === 0 ? (
-          <div className="ob-empty-mini">暂无持仓</div>
+          <div className="ob-empty-mini" style={{ height: 500, fontSize: 16 }}>暂无持仓</div>
         ) : results.map((r) => (
           <div key={r.code} className={`ob-sell-stock ${r.isSell ? 'hit' : ''}`}>
             <div className="ob-sell-stock-header">
@@ -1394,15 +1393,14 @@ const OpeningBattle = () => {
   return (
     <div className="opening-battle-container">
       <div className="ob-layout">
-        <div className="ob-left-col">
-          {/* 第一行：主力资金、资金明细、成交量 */}
+        {/* 第一行：资金分时图 | 资金明细 | 成交量（左） + 持仓分时图（右，与左侧模块等高） */}
+        <div className="ob-row ob-row-first">
           <FundChartModule />
-          {/* 第二行：自选股 3 日涨幅前五（创业板+主板 / 科创板 分列） */}
-          <TopChange3dModule buyPointHit={buyPointHit} onBuyableChange={handleBuyableChange} />
-          {/* 第三行：持仓股分时图 */}
           <PositionIntradayModule expanded={rankExpanded} onToggleExpanded={toggleRankExpanded} />
         </div>
-        <div className="ob-right-col">
+        {/* 第二行：自选股 3 日涨幅前五（上下分行） | 买点诊断 | 卖点诊断（三列等宽，高度由内容撑开） */}
+        <div className="ob-row ob-row-second">
+          <TopChange3dModule buyPointHit={buyPointHit} onBuyableChange={handleBuyableChange} />
           <BuyPointDiagnosisCard onResultChange={setBuyPointHit} buyableStocks={buyableStocks} />
           <SellPointDiagnosisCard />
         </div>

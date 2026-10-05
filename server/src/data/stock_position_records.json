@@ -1,5 +1,27 @@
 [
   {
+    "id": "1791187497917_3ycfsn",
+    "type": "delete",
+    "code": "sh603083",
+    "name": "剑桥科技",
+    "date": "2026-10-05",
+    "time": "16:04:57",
+    "detail": "删除持仓：剑桥科技（sh603083）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-05T08:04:57.917Z"
+  },
+  {
+    "id": "1791187445710_2flkua",
+    "type": "buy",
+    "code": "sh603083",
+    "name": "剑桥科技",
+    "date": "2026-10-05",
+    "time": "16:04:05",
+    "detail": "新增持仓：剑桥科技（sh603083）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-05T08:04:05.710Z"
+  },
+  {
     "id": "1791022057115_2123p6",
     "type": "delete",
     "code": "sh688099",

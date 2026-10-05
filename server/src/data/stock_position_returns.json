@@ -1,5 +1,32 @@
 [
   {
+    "date": "2026-10-05",
+    "operations": [
+      {
+        "id": "1791187445713_lkcf",
+        "action": "buy",
+        "stockName": "剑桥科技",
+        "stockCode": "sh603083",
+        "position": "",
+        "time": "16:04"
+      },
+      {
+        "id": "1791187497919_nmeg",
+        "action": "sell",
+        "stockName": "剑桥科技",
+        "stockCode": "sh603083",
+        "position": "",
+        "time": "16:04"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-05T08:04:05.734Z",
+    "updatedAt": "2026-10-05T08:04:57.927Z"
+  },
+  {
     "date": "2026-10-03",
     "operations": [
       {
