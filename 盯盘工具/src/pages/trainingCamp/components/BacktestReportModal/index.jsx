@@ -124,16 +124,30 @@ const BuyReasonTag = ({ reason, checks }) => {
 };
 
 // 单个策略卡片：概览汇总 + 每一笔交易明细（导出供策略趋势诊断弹窗复用同一报告格式）
-export const StrategyCard = ({ strategy, rank }) => {
+// onStockClick：可选。传入后交易/持仓的股票名称变为可点击（如随机模拟测试点击查看合成股票 K 线）
+export const StrategyCard = ({ strategy, rank, onStockClick }) => {
   const s = strategy.summary || {};
   const hasTrades = (strategy.trades || []).length > 0 || strategy.currentHolding;
+  const renderStockName = (code, name) => (
+    onStockClick ? (
+      <span
+        onClick={() => onStockClick(code, name)}
+        title="点击查看该股票 K 线"
+        style={{ fontSize: 13, fontWeight: 700, color: '#1677ff', cursor: 'pointer', textDecoration: 'underline dotted' }}
+      >
+        {name}
+      </span>
+    ) : (
+      <span style={{ fontSize: 13, fontWeight: 700, color: '#12213a' }}>{name}</span>
+    )
+  );
 
   const items = (strategy.trades || []).map(t => ({
     key: `T${t.seq}`,
     label: (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: '#12213a' }}>第{t.seq}笔</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#12213a' }}>{t.stockName}</span>
+        {renderStockName(t.code, t.stockName)}
         <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{t.code}</span>
         <ModeTag mode={t.positionMode} />
         {t.metric != null && <Tag color="purple" style={{ marginInlineEnd: 0 }}>选股指标 {Number(t.metric).toFixed(4)}</Tag>}
@@ -180,7 +194,7 @@ export const StrategyCard = ({ strategy, rank }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#ad6800' }}>持仓中（未卖出）</span>
           {h.holdingDays != null && <span style={{ fontSize: 11, color: '#9ca3af' }}>已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(h)}</b></span>}
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#12213a' }}>{h.stockName}</span>
+          {renderStockName(h.code, h.stockName)}
           <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{h.code}</span>
           <ModeTag mode={h.positionMode} />
           {h.buyReturn != null && (

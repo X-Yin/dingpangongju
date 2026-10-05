@@ -11,9 +11,10 @@ const { getSingleStockTlineDataByDate } = require('./stock');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 const { isStockInWatchlistAt } = require('./monitorStock');
 const { batchParallel } = require('../utils');
-const { getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, stockWindowGain, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange, getHongliMultiLianbanStocks, scanHongliMultiLianbanCodesInRange } = require('./keyBlockData');
+const { getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, ensureBarsForCodes, stockWindowGain, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange, getHongliMultiLianbanStocks, scanHongliMultiLianbanCodesInRange } = require('./keyBlockData');
 const { loadIndexKline } = require('./sentimentHotMoney');
 const { isOscExcluded, runWithOscExclude } = require('./backtestOscContext');
+const { getSimContext, isSimStock, runWithSimContext } = require('./backtestSimContext');
 const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
@@ -1595,7 +1596,7 @@ const mapTlineToPoints = (tline) => (tline?.line || [])
 // 目的：消除 5 分钟桶粒度导致的口径偏差 —— 桶数据下抗分歧分数的 offenseScore（upRatio）样本不足会
 // 显著偏低（例：景旺电子 2026-09-04 10:05 桶口径 8.96 vs 真分时口径 11.87，实时回放显示 11.6），
 // 导致回测选股门槛（全局抗分歧 ≥9）与实时回放判定不一致。
-// 单只拉取失败/无数据时保留原桶点回退（不阻塞回测）。
+// 单只拉取失败/无数据时保留原桶点回退（不阻塞回测）。合成股票走 getTlineCompat 的确定性分时。
 const buildReplayStocksWithTline = async (campData, dateStr) => {
   const replayStocks = buildReplayStocks(campData);
   const dateNum = parseInt(dateStr, 10);
@@ -1698,6 +1699,40 @@ const isLimitUpAtBuy = (code, changePct) => {
 };
 
 // ============================================================
+// 随机模拟注入：把「随机模拟测试」随机抽取的一批真实科技股混入当日回放候选池。
+// 在加载回放数据后、构建 replayStocks / dailyInfos 之前调用：向每个时间桶的 stockChanges
+// 追加这些股票的真实逐桶行情（真实分时 → 桶 minute 取价），并补齐 dailyLowByCode。
+// 这些股票是真实 A 股（来自科技股清单），日K/分时/均线/抗分歧全部取自真实行情缓存，
+// 与真实自选股完全同源，因此形态真实（不会出现合成数据的长影线等异常）。
+// 注入股票在候选选股处跳过自选股添加时间门禁（见 passWatchlistGate）。
+// ============================================================
+const injectSimStocksIntoCampData = async (campData, dateStr) => {
+  const sim = getSimContext();
+  if (!sim || !Array.isArray(sim.codes) || sim.codes.length === 0) return;
+  const buckets = campData?.timeBuckets || [];
+  if (buckets.length === 0) return;
+  campData.dailyLowByCode = campData.dailyLowByCode || {};
+
+  // 并发构建每只股票当日真实数据（分时/均线/近 3 日抗分歧），单只失败即跳过该股当日
+  await batchParallel(sim.codes, async (code) => {
+    const name = (sim.nameByCode && sim.nameByCode.get(code)) || code;
+    let synth = null;
+    try {
+      synth = await buildKeyBlockSyntheticDay(code, name, dateStr);
+    } catch (e) {
+      return;
+    }
+    if (!synth) return;
+    const { sortedPoints, maInfo, r3d } = synth;
+    for (const bucket of buckets) {
+      const entry = buildKeyBlockSyntheticBucketEntry(code, name, sortedPoints, maInfo, r3d, Number(bucket.minute));
+      if (entry) bucket.stockChanges.push(entry);
+    }
+    campData.dailyLowByCode[code] = maInfo.dailyLowMap || {};
+  }, 8);
+};
+
+// ============================================================
 // 窗口预热（起点一致性）：把回测起始日之前的 needDays 个交易日的 EOD 数据提前加载进 dailyInfos，
 // 并返回向前扩展的日期轴 dateAxis = [...预热日, ...rangeDates]（axisOffset = 预热日数）。
 // 动机：窗口指标（最近 N 日涨幅/抗分歧）的历史成分来自 dailyInfos（随回测循环逐日填充），
@@ -1714,6 +1749,7 @@ const buildWindowAxis = async (allDates, rangeDates, startDate, needDays, dailyI
     try {
       const campData = await loadTrainingCampData(d);
       if (campData && campData.success !== false && (campData.timeBuckets || []).length > 0) {
+        await injectSimStocksIntoCampData(campData, d); // 随机模拟：预热日同样注入合成股票，保证窗口指标可比
         dailyInfos.set(d, extractDailyInfo(campData));
         loaded.push(d);
       }
@@ -1721,6 +1757,10 @@ const buildWindowAxis = async (allDates, rangeDates, startDate, needDays, dailyI
   }
   return { dateAxis: [...loaded, ...rangeDates], axisOffset: loaded.length };
 };
+
+// 自选股添加时间门禁：随机模拟注入的合成股票不受该门禁约束（它们没有"加入自选股"历史），
+// 其余股票沿用真实自选股加入时间校验，防止后加自选股污染历史回测
+const passWatchlistGate = (code, dateStr, minute) => isSimStock(code) || isStockInWatchlistAt(code, dateStr, minute);
 
 // 抗分歧弱转强选股：取最近 4 个交易日（最后一位为当日，用盘中过滤后的抗分歧分数）每只股票的抗分歧分数，
 // 先筛选出「买点触发时抗分歧分数 > 11」的股票，再从中计算「前两天均值」与「后两天均值」（第 3 天+当日，即最近两天）的差值
@@ -1734,7 +1774,7 @@ const pickWeakToStrongStock = (bucket, rangeDates, di, replayStocks, dailyInfos)
     if (isOscExcluded(sc.code)) continue; // 震荡测试：勾选隐藏的股票不参与选股
     if (sc.lastPx == null || sc.lastPx <= 0) continue;
     // 自选股添加时间门禁：买点时刻尚未加入自选股的股票不参与选股（防止后加自选股污染历史回测）
-    if (!isStockInWatchlistAt(sc.code, rangeDates[di], bucket.minute)) continue;
+    if (!passWatchlistGate(sc.code, rangeDates[di], bucket.minute)) continue;
     // 涨停顺延：买点触发时点已涨停的股票无法成交，不参与优选
     if (isLimitUpAtBuy(sc.code, sc.changePct)) continue;
     const scores = [];
@@ -2095,7 +2135,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       }
     }
     // 自选股添加时间门禁：买点时刻尚未加入自选股的股票不参与选股（防止后加自选股污染历史回测）
-    if (!isStockInWatchlistAt(sc.code, rangeDates[di], bucket.minute)) continue;
+    if (!passWatchlistGate(sc.code, rangeDates[di], bucket.minute)) continue;
     if (isEmo3GateStrategy) {
       // 三日情绪冰点：跟踪指数环境门禁（当日满足其一才可买；未预计算/数据不足按不满足处理）
       const gate = emo3IndexGateCache.get(`${rangeDates[di]}_${trackedIndexCodeOf(sc.code)}`);
@@ -3133,6 +3173,11 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       } catch (e) { /* 红利连板扫描失败忽略，防御池退化为仅 tag 板块成分股 */ }
     }
     await ensureKeyBlockBars(extraCodes);
+    // 随机模拟：预拉随机抽取的真实科技股日K，供 keyBlock 引擎的「N 日涨幅最大」筛选与期末收盘估值现算
+    const simPreload = getSimContext();
+    if (simPreload && Array.isArray(simPreload.codes) && simPreload.codes.length > 0) {
+      try { await ensureBarsForCodes(simPreload.codes); } catch (e) { /* 个别股票拉取失败不影响整体 */ }
+    }
   } catch (e) {
     return { success: false, message: `重点板块成分股日K拉取失败: ${e.message || e}` };
   }
@@ -3241,6 +3286,15 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
             }
           }
         } catch (e) { /* 历史涨停候选获取失败，退化为仅 tag 板块 */ }
+      }
+    }
+    // 随机模拟：把随机抽取的真实科技股并入当前候选池一起参与 N 日涨幅最大筛选（进攻/防御池均注入，
+    // 检验候选池被大量噪声股票稀释/干扰时的稳定性；这些股票日涨幅/分时均取自真实行情缓存）
+    const simCtx = getSimContext();
+    if (simCtx && Array.isArray(simCtx.codes) && simCtx.codes.length > 0) {
+      const existCodes = new Set(allMembers.map(m => m.code));
+      for (const code of simCtx.codes) {
+        if (!existCodes.has(code)) allMembers.push({ code, name: (simCtx.nameByCode && simCtx.nameByCode.get(code)) || code });
       }
     }
     if (allMembers.length === 0) return false;
@@ -3450,6 +3504,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       skippedDates.push({ date: dateStr, message: '无时间桶数据' });
       continue;
     }
+    await injectSimStocksIntoCampData(campData, dateStr); // 随机模拟：把合成股票混入当日候选池（重点板块/情绪游资系列）
     const replayStocks = await buildReplayStocksWithTline(campData, dateStr);
     const dateDisplay = campData.dateDisplay || dateStr;
     dailyInfos.set(dateStr, extractDailyInfo(campData));
@@ -3846,6 +3901,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       skippedDates.push({ date: dateStr, message: '无时间桶数据' });
       continue;
     }
+    await injectSimStocksIntoCampData(campData, dateStr); // 随机模拟：把合成股票混入当日候选池
     const replayStocks = await buildReplayStocksWithTline(campData, dateStr);
     const dateDisplay = campData.dateDisplay || dateStr;
     // 记录当日 EOD 信息（供后续日期选股使用）
@@ -4094,7 +4150,9 @@ const runRangeBacktest = (startDate, endDate, strategyId = 'highest_gain', onPro
     ? options.excludeCodes.filter(c => typeof c === 'string' && c.trim()).map(c => c.trim())
     : [];
   const excludeSet = excludeList.length > 0 ? new Set(excludeList.map(c => c.toLowerCase())) : null;
-  return runWithOscExclude(excludeSet, () => runRangeBacktestInner(startDate, endDate, strategyId, onProgress));
+  // options.sim：随机模拟测试注入的合成股票集合（AsyncLocalStorage 上下文，见 backtestSimContext）
+  const sim = options.sim || null;
+  return runWithSimContext(sim, () => runWithOscExclude(excludeSet, () => runRangeBacktestInner(startDate, endDate, strategyId, onProgress)));
 };
 
 // 多策略共享数据回测：外层日期、内层策略，同一天回放数据只加载一次依次喂给全部策略。

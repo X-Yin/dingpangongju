@@ -101,6 +101,7 @@ const { getAllGroups: getAllIndexOverlayGroups, saveGroup: saveIndexOverlayGroup
 const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup } = require('./service/trainingCamp');
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, ''); // 北京今天 YYYYMMDD
 const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, attachHoldingDays, getStockRecentReports, queryLiveIndexGate } = require('./service/buySellBacktest');
+const { startRandomSim, getRandomSimStatus, getRandomSimDetail } = require('./service/randomSim');
 const { generateReport, ensureLatestReport, getReportById, listReports, getTrendDiagnosisRanges } = require('./service/backtestReport');
 const { getAttackDefenseScore } = require('./service/attackDefenseScore');
 const feishuNotify = require('./service/feishuNotify');
@@ -2923,6 +2924,41 @@ app.get('/training_camp/backtest/time_flex/status', (req, res) => {
     error: timeFlexJob.error,
     result: timeFlexJob.items.slice(), // 已完成的项，running 时前端可据此渲染渐进折线
   });
+});
+
+// ============================================================
+// 随机模拟测试（random_sim）：同一区间/策略下反复生成多批随机股票混入候选池跑回测，
+// 用于检验系统稳定性与鲁棒性。每次回测生成 N 只合成股票（日K+分时，含涨跌停约束），
+// 通过 runRangeBacktest(..., { sim }) 注入候选池；返回每次回测的 summary 供前端绘制折线图。
+app.post('/training_camp/backtest/random_sim', (req, res) => {
+  try {
+    const { strategy, startDate, endDate, runs, stockCount } = req.body || {};
+    const strategyId = STRATEGIES[strategy] ? strategy : Object.keys(STRATEGIES)[0];
+    const r = startRandomSim({ strategy: strategyId, startDate, endDate, runs, stockCount });
+    if (!r.success) return res.status(400).json(r);
+    res.json(r);
+  } catch (error) {
+    console.error('创建随机模拟测试任务失败:', error);
+    res.status(500).json({ success: false, message: error.message || '创建随机模拟测试任务失败' });
+  }
+});
+
+app.get('/training_camp/backtest/random_sim/status', (req, res) => {
+  try {
+    res.json(getRandomSimStatus());
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || '获取随机模拟测试状态失败' });
+  }
+});
+
+app.get('/training_camp/backtest/random_sim/detail', (req, res) => {
+  try {
+    const r = getRandomSimDetail(req.query.run);
+    if (!r.success) return res.status(404).json(r);
+    res.json(r);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || '获取随机模拟回测明细失败' });
+  }
 });
 
 // ---------- 买卖点回测报告 ----------

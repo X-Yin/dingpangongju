@@ -19,6 +19,7 @@ import { local_ip } from '../../../../constant';
 import BacktestReportModal from '../BacktestReportModal';
 import TrendDiagnosisModal from '../TrendDiagnosisModal';
 import TimeFlexTestModal from '../TimeFlexTestModal';
+import RandomSimTestModal from '../RandomSimTestModal';
 
 // 回测最早支持日期（早于此日期无回放数据）
 const EARLIEST_DATE = '20260803';
@@ -784,6 +785,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const [reportOpen, setReportOpen] = useState(false);
   const [trendOpen, setTrendOpen] = useState(false); // 策略趋势诊断弹窗（三档时间范围 × 全部策略）
   const [timeFlexOpen, setTimeFlexOpen] = useState(false); // 时间伸缩测试弹窗
+  const [randomSimOpen, setRandomSimOpen] = useState(false); // 随机模拟测试弹窗
   const [ruleOpen, setRuleOpen] = useState(false); // 策略说明弹窗（当前选中策略的买卖规则细节）
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(null); // { current, total, date, status }
@@ -1474,46 +1476,69 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
             style={{ flex: 1, minWidth: 240, maxWidth: 360 }}
             options={STRATEGY_OPTIONS}
           />
-          {curIsEmo3 ? (
+          {curIsEmo3 && (
             <span style={{ fontSize: 12, color: '#9ca3af' }}>
               三日情绪冰点策略固定从 2026-07-01 开始回测（结束日取最新交易日）
             </span>
-          ) : (
-            <Tooltip title="在回测记录右上角勾选「隐藏」排除个别股票后重跑一次回测：被隐藏的股票不参与本次回测，用于检验策略收益率是结构正确带来的，还是单纯依赖个别牛股；结果不落缓存，刷新即失效">
+          )}
+          <style>{`
+            .bt-action-group { display:inline-flex; align-items:center; border:1px solid #e9ecf1; border-radius:10px; background:#fff; box-shadow:0 1px 2px rgba(16,24,40,.04); overflow:hidden; }
+            .bt-action-group .ant-btn { height:32px; border-radius:0 !important; padding:0 14px !important; color:#334155; font-size:13px; box-shadow:none !important; }
+            .bt-action-group .ant-btn:hover:not(:disabled) { background:#f6f7fb !important; color:#722ed1 !important; }
+            .bt-action-group .ant-btn:disabled { color:#c4cad4; background:transparent !important; }
+            .bt-action-sep { width:1px; height:16px; background:#eef1f5; flex:0 0 auto; }
+          `}</style>
+          <div className="bt-action-group">
+            {!curIsEmo3 && (
+              <>
+                <Tooltip title="在回测记录右上角勾选「隐藏」排除个别股票后重跑一次回测：被隐藏的股票不参与本次回测，用于检验策略收益率是结构正确带来的，还是单纯依赖个别牛股；结果不落缓存，刷新即失效">
+                  <Button
+                    type="text"
+                    icon={<ExperimentOutlined />}
+                    onClick={handleOscTest}
+                    disabled={!displayResult || running || workerRunning}
+                  >
+                    选股震荡测试
+                  </Button>
+                </Tooltip>
+                <span className="bt-action-sep" />
+              </>
+            )}
+            <Tooltip title="固定当前结束日，将回测起始日从最早可用交易日逐日平移至「结束日前 10 个交易日」，观察不同起始日下的整体收益率曲线，用于检验策略收益对起始日是否敏感">
               <Button
-                size="small"
-                icon={<ExperimentOutlined />}
-                onClick={handleOscTest}
-                disabled={!displayResult || running || workerRunning}
-                style={{ borderRadius: 999 }}
+                type="text"
+                icon={<SwapOutlined />}
+                onClick={() => setTimeFlexOpen(true)}
+                disabled={running || workerRunning}
               >
-                选股震荡测试
+                时间伸缩测试
               </Button>
             </Tooltip>
-          )}
-          <Tooltip title="固定当前结束日，将回测起始日从最早可用交易日逐日平移至「结束日前 10 个交易日」，观察不同起始日下的整体收益率曲线，用于检验策略收益对起始日是否敏感">
-            <Button
-              size="small"
-              icon={<SwapOutlined />}
-              onClick={() => setTimeFlexOpen(true)}
-              disabled={running || workerRunning}
-              style={{ borderRadius: 999 }}
-            >
-              时间伸缩测试
-            </Button>
-          </Tooltip>
-          {/* 策略说明：始终可见，点击打开当前选中策略的买卖规则详情弹窗 */}
-          <Tooltip title="查看当前选中策略的买入触发、选股口径、卖点判定等完整规则细节">
-            <Button
-              size="small"
-              icon={<BookOutlined />}
-              onClick={() => setRuleOpen(true)}
-              disabled={running}
-              style={{ borderRadius: 999 }}
-            >
-              策略说明
-            </Button>
-          </Tooltip>
+            <span className="bt-action-sep" />
+            {/* 随机模拟测试：随机抽取大批真实科技股混入候选池反复回测，检验系统鲁棒性 */}
+            <Tooltip title="在同一回测区间/策略下，反复从科技股清单随机抽取多批真实股票混入候选池一起回测，观察收益率与回撤随随机股票注入的波动，用于检验系统稳定性与鲁棒性">
+              <Button
+                type="text"
+                icon={<ThunderboltOutlined />}
+                onClick={() => setRandomSimOpen(true)}
+                disabled={running || workerRunning}
+              >
+                随机模拟测试
+              </Button>
+            </Tooltip>
+            <span className="bt-action-sep" />
+            {/* 策略说明：始终可见，点击打开当前选中策略的买卖规则详情弹窗 */}
+            <Tooltip title="查看当前选中策略的买入触发、选股口径、卖点判定等完整规则细节">
+              <Button
+                type="text"
+                icon={<BookOutlined />}
+                onClick={() => setRuleOpen(true)}
+                disabled={running}
+              >
+                策略说明
+              </Button>
+            </Tooltip>
+          </div>
         </div>
 
         {/* 进度条 */}
@@ -1908,6 +1933,14 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         strategy={strategy}
         endDate={effectiveRange?.[1] ? effectiveRange[1].format('YYYYMMDD') : undefined}
         maxStartDate={effectiveRange?.[0] ? effectiveRange[0].format('YYYYMMDD') : undefined}
+        strategyName={STRATEGY_OPTIONS.find(o => o.value === strategy)?.label || strategy}
+      />
+      <RandomSimTestModal
+        open={randomSimOpen}
+        onClose={() => setRandomSimOpen(false)}
+        strategy={strategy}
+        endDate={effectiveRange?.[1] ? effectiveRange[1].format('YYYYMMDD') : undefined}
+        startDate={effectiveRange?.[0] ? effectiveRange[0].format('YYYYMMDD') : undefined}
         strategyName={STRATEGY_OPTIONS.find(o => o.value === strategy)?.label || strategy}
       />
       {(() => {
