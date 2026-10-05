@@ -22,6 +22,8 @@ import TimeFlexTestModal from '../TimeFlexTestModal';
 
 // 回测最早支持日期（早于此日期无回放数据）
 const EARLIEST_DATE = '20260803';
+// 策略分类「最近点击」顺序缓存键：值为分类 key 数组，最近点击的排首位
+const CATEGORY_ORDER_LS_KEY = 'backtest_drawer_category_order';
 // 默认回测范围窗口（最近 N 个交易日），与后端 backtestReport.js 的 getDefaultReportRange /
 // backtest-worker.js 的回测时间口径一致；可用交易日不足 N 个时自动取最早的一个日期
 const REPORT_DAYS = 60;
@@ -799,6 +801,37 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const workerPollRef = useRef(null);
   const [activeCategory, setActiveCategory] = useState(null); // 当前高亮的策略分类 Tag（null=无）
   const [workerMode, setWorkerMode] = useState('all'); // 'all' | 'category'：worker 回测模式，仅用于文案
+  // 策略分类最近点击顺序：mount 时从 localStorage 读取，点击分类时把该 key 提到最前并持久化
+  const [categoryOrder, setCategoryOrder] = useState(() => {
+    try {
+      const raw = localStorage.getItem(CATEGORY_ORDER_LS_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch { return []; }
+  });
+  // 按最近使用顺序重排 STRATEGY_CATEGORIES：出现在 categoryOrder 里的按顺序放最前，其余按原顺序尾随
+  const orderedCategories = useMemo(() => {
+    const baseKeys = new Set(STRATEGY_CATEGORIES.map(c => c.key));
+    const seen = new Set();
+    const head = [];
+    for (const k of categoryOrder) {
+      if (!baseKeys.has(k) || seen.has(k)) continue;
+      seen.add(k);
+      const cat = STRATEGY_CATEGORIES.find(c => c.key === k);
+      if (cat) head.push(cat);
+    }
+    const tail = STRATEGY_CATEGORIES.filter(c => !seen.has(c.key));
+    return [...head, ...tail];
+  }, [categoryOrder]);
+  // 持久化：categoryOrder 变化时写回 localStorage
+  useEffect(() => {
+    try { localStorage.setItem(CATEGORY_ORDER_LS_KEY, JSON.stringify(categoryOrder)); } catch {}
+  }, [categoryOrder]);
+  // 点击分类时把该 key 推到最前（去重）
+  const pushCategoryOrder = (key) => {
+    setCategoryOrder(prev => [key, ...prev.filter(k => k !== key)]);
+  };
 
   const availableDates = useMemo(() => (Array.isArray(dates) ? dates : []), [dates]);
   const maxDateStr = availableDates.length > 0 ? availableDates[0] : dayjs().format('YYYYMMDD');
@@ -1406,11 +1439,11 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         {/* 策略分类 Tag：点击只回测该分类下的策略，并自动把下方 select 切到该分类的第一个策略 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#12213a' }}>策略分类</span>
-          {STRATEGY_CATEGORIES.map(cat => (
+          {orderedCategories.map(cat => (
             <Tag.CheckableTag
               key={cat.key}
               checked={activeCategory === cat.key}
-              onChange={() => handleRunCategory(cat)}
+              onChange={() => { pushCategoryOrder(cat.key); handleRunCategory(cat); }}
               style={{
                 fontSize: 12,
                 padding: '2px 10px',
