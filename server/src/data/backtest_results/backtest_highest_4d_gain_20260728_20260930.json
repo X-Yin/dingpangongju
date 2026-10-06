@@ -371,6 +371,14 @@
     {
       "code": "sz002409",
       "name": "雅克科技"
+    },
+    {
+      "code": "sh688662",
+      "name": "富信科技"
+    },
+    {
+      "code": "sz300489",
+      "name": "光智科技"
     }
   ],
   "trades": [
@@ -417,8 +425,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -15.39 / 当前 -98.96",
-          "reason": "9:30 竞价科技情绪 -15.39 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -15.75 / 当前 -100.00",
+          "reason": "9:30 竞价科技情绪 -15.75 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -457,24 +465,24 @@
           "reason": "直接入选，未发生顺延（本股触发时点抗分歧 15.7，≥ 全局最低 9）"
         }
       ],
-      "sellDate": "20260731",
-      "sellDateDisplay": "2026-07-31",
-      "sellTime": "14:40",
-      "sellPrice": 54.66,
-      "sellChange": 3.39,
-      "sellReason": "高位放量大阴线",
-      "returnRate": 11.82
+      "sellDate": "20260730",
+      "sellDateDisplay": "2026-07-30",
+      "sellTime": "10:05",
+      "sellPrice": 52.37,
+      "sellChange": -1.1,
+      "sellReason": "科技板块情绪退潮",
+      "returnRate": 7.14
     },
     {
       "seq": 2,
-      "metric": 23.7834,
-      "code": "sz300394",
-      "stockName": "天孚通信",
+      "metric": 13.5265,
+      "code": "sh603119",
+      "stockName": "浙江荣泰",
       "buyDate": "20260804",
       "buyDateDisplay": "2026-08-04",
       "buyTime": "09:40",
-      "buyPrice": 197.61,
-      "buyChange": 9.48,
+      "buyPrice": 50.36,
+      "buyChange": 3.24,
       "buyReason": "5min 内资金净流入 30.23亿、冰点期豁免成交量，成交量减少 161.98亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）",
       "buyChecks": [
         {
@@ -500,22 +508,22 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "19 / 92只",
-          "reason": "开盘后自选股共 92 只，19 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "19 / 94只",
+          "reason": "开盘后自选股共 94 只，19 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 48.41 / 当前 73.47",
-          "reason": "9:30 竞价科技情绪 48.41 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 51.87 / 当前 75.61",
+          "reason": "9:30 竞价科技情绪 51.87 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
-          "title": "天孚通信 跟踪创业板指 3 日线斜率门禁",
+          "title": "浙江荣泰 跟踪创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "天孚通信 跟踪创业板指，3 日线斜率 +45.77°，由正转负 第 1 天（2026-08-03 翻转），但今日盘中又由负转正，允许出手",
+          "value": "浙江荣泰 跟踪创业板指，3 日线斜率 +45.77°，由正转负 第 1 天（2026-08-03 翻转），但今日盘中又由负转正，允许出手",
           "reason": "创业板指 斜率 +45.77 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
         },
         {
@@ -529,18 +537,18 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "11.92",
+          "value": "13.58",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 11.92，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 13.58，≥ 全局最低 9）"
         }
       ],
-      "sellDate": "20260819",
-      "sellDateDisplay": "2026-08-19",
-      "sellTime": "10:30",
-      "sellPrice": 279.91,
-      "sellChange": -3.96,
-      "sellReason": "科技板块情绪退潮",
-      "returnRate": 41.65
+      "sellDate": "20260810",
+      "sellDateDisplay": "2026-08-10",
+      "sellTime": "09:40",
+      "sellPrice": 53.28,
+      "sellChange": -2.22,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": 5.8
     },
     {
       "seq": 3,
@@ -585,8 +593,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -54.91 / 当前 -29.73",
-          "reason": "9:30 竞价科技情绪 -54.91 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -56.51 / 当前 -31.15",
+          "reason": "9:30 竞价科技情绪 -56.51 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -662,8 +670,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 41.66 / 当前 -22.48",
-          "reason": "9:30 竞价科技情绪 41.66 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 41.85 / 当前 -23.96",
+          "reason": "9:30 竞价科技情绪 41.85 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -750,8 +758,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 1.94 / 当前 27.52",
-          "reason": "9:30 竞价科技情绪 1.94 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 3.07 / 当前 27.96",
+          "reason": "9:30 竞价科技情绪 3.07 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -798,7 +806,7 @@
     "winRate": 80,
     "avgDrawdown": -1.13,
     "maxDrawdown": -1.13,
-    "overallReturn": 76.03,
+    "overallReturn": 25.98,
     "holding": false
   }
 }

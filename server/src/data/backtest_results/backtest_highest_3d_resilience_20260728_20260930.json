@@ -371,6 +371,14 @@
     {
       "code": "sz002409",
       "name": "雅克科技"
+    },
+    {
+      "code": "sh688662",
+      "name": "富信科技"
+    },
+    {
+      "code": "sz300489",
+      "name": "光智科技"
     }
   ],
   "trades": [
@@ -417,8 +425,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -15.39 / 当前 -98.96",
-          "reason": "9:30 竞价科技情绪 -15.39 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -15.75 / 当前 -100.00",
+          "reason": "9:30 竞价科技情绪 -15.75 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -457,13 +465,13 @@
           "reason": "直接入选，未发生顺延（本股触发时点抗分歧 15.45，≥ 全局最低 9）"
         }
       ],
-      "sellDate": "20260731",
-      "sellDateDisplay": "2026-07-31",
-      "sellTime": "11:05",
-      "sellPrice": 33.29,
-      "sellChange": 1.09,
-      "sellReason": "高位放量大阴线",
-      "returnRate": 12.43
+      "sellDate": "20260730",
+      "sellDateDisplay": "2026-07-30",
+      "sellTime": "10:05",
+      "sellPrice": 31.31,
+      "sellChange": 3.68,
+      "sellReason": "科技板块情绪退潮",
+      "returnRate": 5.74
     },
     {
       "seq": 2,
@@ -500,16 +508,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "19 / 92只",
-          "reason": "开盘后自选股共 92 只，19 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "19 / 94只",
+          "reason": "开盘后自选股共 94 只，19 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 48.41 / 当前 73.47",
-          "reason": "9:30 竞价科技情绪 48.41 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 51.87 / 当前 75.61",
+          "reason": "9:30 竞价科技情绪 51.87 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -555,11 +563,11 @@
       ],
       "sellDate": "20260805",
       "sellDateDisplay": "2026-08-05",
-      "sellTime": "09:35",
-      "sellPrice": 106.36,
+      "sellTime": "09:33",
+      "sellPrice": 105.79,
       "sellChange": -0.41,
       "sellReason": "跌破成本线-2%",
-      "returnRate": 2.58
+      "returnRate": 2.04
     },
     {
       "seq": 3,
@@ -596,16 +604,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "1 / 92只",
-          "reason": "开盘后自选股共 92 只，1 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "1 / 94只",
+          "reason": "开盘后自选股共 94 只，1 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -48.79 / 当前 53.82",
-          "reason": "9:30 竞价科技情绪 -48.79 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -50.98 / 当前 55.53",
+          "reason": "9:30 竞价科技情绪 -50.98 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -700,8 +708,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -54.91 / 当前 -29.73",
-          "reason": "9:30 竞价科技情绪 -54.91 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -56.51 / 当前 -31.15",
+          "reason": "9:30 竞价科技情绪 -56.51 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -769,16 +777,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "25 / 92只",
-          "reason": "开盘后自选股共 92 只，25 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "25 / 94只",
+          "reason": "开盘后自选股共 94 只，25 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 45.29 / 当前 62.18",
-          "reason": "9:30 竞价科技情绪 45.29 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 46.73 / 当前 63.86",
+          "reason": "9:30 竞价科技情绪 46.73 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -854,8 +862,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 5.21 / 当前 49.04",
-          "reason": "9:30 竞价科技情绪 5.21 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 5.72 / 当前 51.76",
+          "reason": "9:30 竞价科技情绪 5.72 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -931,8 +939,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 1.94 / 当前 27.52",
-          "reason": "9:30 竞价科技情绪 1.94 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 3.07 / 当前 27.96",
+          "reason": "9:30 竞价科技情绪 3.07 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -973,7 +981,7 @@
     "winRate": 85.71,
     "avgDrawdown": -1.13,
     "maxDrawdown": -1.13,
-    "overallReturn": 51.83,
+    "overallReturn": 42.04,
     "holding": false
   }
 }

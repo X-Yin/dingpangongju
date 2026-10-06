@@ -373,8 +373,16 @@
       "name": "雅克科技"
     },
     {
-      "code": "sh605179",
-      "name": "一鸣食品"
+      "code": "sh688662",
+      "name": "富信科技"
+    },
+    {
+      "code": "sz300489",
+      "name": "光智科技"
+    },
+    {
+      "code": "sh600693",
+      "name": "东百集团"
     },
     {
       "code": "sz002942",
@@ -388,187 +396,100 @@
   "trades": [
     {
       "seq": 1,
-      "metric": 12.0045,
-      "code": "sz300757",
-      "stockName": "罗博特科",
-      "positionMode": "offense",
-      "weight": 1,
-      "buyDate": "20260731",
-      "buyDateDisplay": "2026-07-31",
-      "buyTime": "09:30",
-      "buyPrice": 402,
-      "buyChange": 12.28,
-      "buyReason": "09:30创业板指3日线斜率由负转正（-34.06→+28.19），买入自选科技股池内3日涨幅最大的股票（进攻买点，无需资金/量能配合）",
-      "buyChecks": [
-        {
-          "id": "key_block_cyb_gate",
-          "title": "创业板指3日线斜率由负转正（进攻买点）",
-          "passed": true,
-          "value": "09:30:00 +28.19",
-          "reason": "创业板指 3 日线斜率在 09:30:00 由负转正（-34.06 → +28.19）：进攻买点触发，不看资金/量能/情绪等任何配合条件，买入自选科技股中 3 日涨幅最大的一只"
-        },
-        {
-          "id": "key_block_watchlist_tech",
-          "title": "自选科技股筛选（进攻）",
-          "passed": true,
-          "value": "90 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
-        },
-        {
-          "id": "key_block_limit_up",
-          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
-          "passed": true,
-          "value": "无涨停候选",
-          "reason": "买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）"
-        },
-        {
-          "id": "key_block_best_stock",
-          "title": "自选科技股内最近3日涨幅最大的股票",
-          "passed": true,
-          "value": "+12.00%",
-          "reason": "在自选科技股池共 90 只中（有效候选 64 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
-        }
-      ],
-      "sellDate": "20260812",
-      "sellDateDisplay": "2026-08-12",
-      "sellTime": "09:40",
-      "sellPrice": 495,
-      "sellChange": 1.27,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 23.13,
-      "rawReturnRate": 23.13
-    },
-    {
-      "seq": 2,
-      "metric": 17.7348,
-      "code": "sz301165",
-      "stockName": "锐捷网络",
-      "positionMode": "offense",
-      "weight": 1,
-      "buyDate": "20260813",
-      "buyDateDisplay": "2026-08-13",
-      "buyTime": "09:40",
-      "buyPrice": 133.6,
-      "buyChange": 5.84,
-      "buyReason": "09:40开盘10分钟后复测创业板指3日线斜率仍为正（+34.57，卖出当时+3.15），买入自选科技股池内3日涨幅最大的股票（卖点诊断卖出后次日复测继续买）",
-      "buyChecks": [
-        {
-          "id": "key_block_cyb_gate",
-          "title": "次日开盘10分钟后斜率复测（进攻买点）",
-          "passed": true,
-          "value": "09:40:00 +34.57",
-          "reason": "进攻持仓按卖点诊断卖出后，卖出当时 3 日线斜率仍为正（+3.15），当日不继续买；次日开盘 10 分钟后（09:40:00，9:40 桶）复测斜率仍为正（+34.57），继续买入自选科技股中 3 日涨幅最大的一只"
-        },
-        {
-          "id": "key_block_watchlist_tech",
-          "title": "自选科技股筛选（进攻）",
-          "passed": true,
-          "value": "90 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
-        },
-        {
-          "id": "key_block_limit_up",
-          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
-          "passed": true,
-          "value": "无涨停候选",
-          "reason": "买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）"
-        },
-        {
-          "id": "key_block_best_stock",
-          "title": "自选科技股内最近3日涨幅最大的股票",
-          "passed": true,
-          "value": "+17.73%",
-          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
-        }
-      ],
-      "sellDate": "20260818",
-      "sellDateDisplay": "2026-08-18",
-      "sellTime": "09:45",
-      "sellPrice": 145.08,
-      "sellChange": -1.97,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 8.59,
-      "rawReturnRate": 8.59
-    },
-    {
-      "seq": 3,
-      "metric": 9.9995,
-      "code": "sh605179",
-      "stockName": "一鸣食品",
+      "metric": 17.0786,
+      "code": "sh600693",
+      "stockName": "东百集团",
       "positionMode": "defense",
       "weight": 0.5,
-      "buyDate": "20260819",
-      "buyDateDisplay": "2026-08-19",
-      "buyTime": "09:45",
-      "buyPrice": 34.75,
-      "buyChange": -10,
-      "buyReason": "09:45创业板指3日线斜率由正转负（+39.84→-5.71）且空仓，买入防御候选池（Tag板块 + 近20交易日创业板下跌日涨停前3板块 ∩ 20日有≥3连板个股）内3日涨幅最大的股票（防御买点）",
+      "buyDate": "20260730",
+      "buyDateDisplay": "2026-07-30",
+      "buyTime": "09:30",
+      "buyPrice": 9.28,
+      "buyChange": -2.01,
+      "buyReason": "09:30创业板指3日线斜率由正转负（+8.02→-32.22）且空仓，买入防御候选池（Tag板块 + 近20交易日创业板下跌日涨停前3板块 ∩ 20日有≥3连板个股）内3日涨幅最大的股票（防御买点）",
       "buyChecks": [
         {
           "id": "key_block_cyb_gate",
           "title": "创业板指3日线斜率由正转负且空仓（防御买点）",
           "passed": true,
-          "value": "09:45:00 -5.71",
-          "reason": "创业板指 3 日线斜率在 09:45:00 由正转负（+39.84 → -5.71）且当前空仓：防御买点触发，买入防御+中性 tag 板块 ∪ 近20交易日创业板下跌日的涨停前3板块 ∩ 20日有≥3连板个股中 3 日涨幅最大的一只"
+          "value": "09:30:00 -32.22",
+          "reason": "创业板指 3 日线斜率在 09:30:00 由正转负（+8.02 → -32.22）且当前空仓：防御买点触发，买入防御+中性 tag 板块 ∪ 近20交易日创业板下跌日的涨停前3板块 ∩ 20日有≥3连板个股中 3 日涨幅最大的一只"
         },
         {
           "id": "key_block_tag_blocks",
           "title": "防御候选池（Tag板块 + 历史涨停扩展）",
           "passed": true,
-          "value": "16 个Tag板块 62 只 + 涨停扩展 13 只",
-          "reason": "参与选股的防御+中性 tag 板块 16 个：锂电[中性]、化工[防御]、商业航天[中性]、机器人[中性]、消费[防御]、医药[防御]、证券[防御]、银行[防御]、电力[中性]、煤炭[防御]、贵金属[中性]、AI 应用[中性]、特高压[中性]、房地产[防御]、军工[中性]、粮食[防御]；历史涨停扩展 = 往前20交易日中创业板日跌幅<-1%的 5 天涨停前3板块 ∩ 20日有≥3连板个股，与Tag板块去重后新增 13 只（下跌日：20260722、20260724、20260728、20260730、20260803）；合并去重后共 75 只候选"
+          "value": "16 个Tag板块 62 只 + 涨停扩展 19 只",
+          "reason": "参与选股的防御+中性 tag 板块 16 个：锂电[中性]、化工[防御]、商业航天[中性]、机器人[中性]、消费[防御]、医药[防御]、证券[防御]、银行[防御]、电力[中性]、煤炭[防御]、贵金属[中性]、AI 应用[中性]、特高压[中性]、房地产[防御]、军工[中性]、粮食[防御]；历史涨停扩展 = 往前20交易日中创业板日跌幅<-1%的 11 天涨停前3板块 ∩ 20日有≥3连板个股，与Tag板块去重后新增 19 只（下跌日：20260702、20260706、20260708、20260710、20260713、20260715、20260716、20260717、20260722、20260724、20260728）；合并去重后共 81 只候选"
         },
         {
           "id": "key_block_limit_up",
           "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
           "passed": true,
           "value": "顺延 2 只",
-          "reason": "买入时点（09:45:00）涨停候选已剔除并顺延：金健米业 +9.99%、我爱我家 +10.19%；3 日涨幅排名后延至 一鸣食品"
+          "reason": "买入时点（09:30:00）涨停候选已剔除并顺延：爱丽家居 +9.98%、一鸣食品 +9.99%；3 日涨幅排名后延至 东百集团"
+        },
+        {
+          "id": "one_word_board_defer",
+          "title": "上一交易日一字板过滤（主板≥8%、创业/科创≥16%）",
+          "passed": true,
+          "value": "顺延 2 只",
+          "skippedStocks": [
+            {
+              "code": "sh603221",
+              "name": "爱丽家居"
+            },
+            {
+              "code": "sz003032",
+              "name": "传智教育"
+            }
+          ],
+          "reason": "上一交易日一字板候选已剔除并顺延：爱丽家居 +9.98%、传智教育 +7.14%；3 日涨幅排名后延至 东百集团（昨日开盘/收盘/最低涨幅均达涨停阈值，全天封死一字板，次日不买）"
         },
         {
           "id": "key_block_best_stock",
           "title": "防御候选池(Tag板块+涨停扩展)内最近3日涨幅最大的股票",
           "passed": true,
-          "value": "+10.00%",
-          "reason": "在防御候选池共 75 只（Tag板块 + 历史涨停扩展 13 只）中（有效候选 74 只），按最近 3 日个股涨幅之和取最大（涨停股顺延后）；买入价取 09:45:00 分时价"
+          "value": "+17.08%",
+          "reason": "在防御候选池共 81 只（Tag板块 + 历史涨停扩展 19 只）中（有效候选 81 只），按最近 3 日个股涨幅之和取最大（涨停股顺延后）；买入价取 09:30:00 分时价"
         }
       ],
-      "sellDate": "20260820",
-      "sellDateDisplay": "2026-08-20",
-      "sellTime": "10:05",
-      "sellPrice": 33.21,
-      "sellChange": -4.43,
-      "sellReason": "竞价开盘 31.28 已跌破成本线 -5%（阈值 33.01），不在 9:30 直接止损、等待开盘自救拉升；10:05 价 33.21 低于 10:04 价 33.98，自救拉升结束直接卖出（现价 33.21，浮亏 -4.43%），防御半仓持仓卖出（防御为半仓买入，收益率按半仓折算）",
-      "returnRate": -2.21,
-      "rawReturnRate": -4.43
+      "sellDate": "20260731",
+      "sellDateDisplay": "2026-07-31",
+      "sellTime": "09:30",
+      "sellPrice": 8.27,
+      "sellChange": -10.01,
+      "sellReason": "创业板指3日线斜率盘中由负转正（-115.39 → +28.19），防御半仓持仓卖出（防御为半仓买入，收益率按半仓折算）",
+      "returnRate": -5.44,
+      "rawReturnRate": -10.88
     },
     {
-      "seq": 4,
-      "metric": 16.0492,
-      "code": "sz002536",
-      "stockName": "飞龙股份",
+      "seq": 2,
+      "metric": 14.5891,
+      "code": "sh688825",
+      "stockName": "长鑫科技",
       "positionMode": "offense",
       "weight": 1,
-      "buyDate": "20260824",
-      "buyDateDisplay": "2026-08-24",
+      "buyDate": "20260731",
+      "buyDateDisplay": "2026-07-31",
       "buyTime": "09:30",
-      "buyPrice": 50.73,
-      "buyChange": 8.01,
-      "buyReason": "09:30创业板指3日线斜率由负转正（-53.33→+25.59），买入自选科技股池内3日涨幅最大的股票（进攻买点，无需资金/量能配合）",
+      "buyPrice": 58.2,
+      "buyChange": 10.08,
+      "buyReason": "09:30创业板指3日线斜率由负转正（-115.39→+28.19），买入自选科技股池内3日涨幅最大的股票（进攻买点，无需资金/量能配合）",
       "buyChecks": [
         {
           "id": "key_block_cyb_gate",
           "title": "创业板指3日线斜率由负转正（进攻买点）",
           "passed": true,
-          "value": "09:30:00 +25.59",
-          "reason": "创业板指 3 日线斜率在 09:30:00 由负转正（-53.33 → +25.59）：进攻买点触发，不看资金/量能/情绪等任何配合条件，买入自选科技股中 3 日涨幅最大的一只"
+          "value": "09:30:00 +28.19",
+          "reason": "创业板指 3 日线斜率在 09:30:00 由负转正（-115.39 → +28.19）：进攻买点触发，不看资金/量能/情绪等任何配合条件，买入自选科技股中 3 日涨幅最大的一只"
         },
         {
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "90 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "92 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 92 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -578,24 +499,92 @@
           "reason": "买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）"
         },
         {
+          "id": "one_word_board_defer",
+          "title": "上一交易日一字板过滤（主板≥8%、创业/科创≥16%）",
+          "passed": true,
+          "value": "无一字板候选",
+          "skippedStocks": [],
+          "reason": "买入时点候选中无上一交易日一字板股（主板开盘/收盘/最低涨幅均≥8%、创业/科创均≥16% 视为一字板；一字板次日不买，顺延排名下一只）"
+        },
+        {
           "id": "key_block_best_stock",
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
-          "value": "+16.05%",
-          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
+          "value": "+14.59%",
+          "reason": "在自选科技股池共 92 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
         }
       ],
-      "sellDate": "20260825",
-      "sellDateDisplay": "2026-08-25",
-      "sellTime": "09:55",
-      "sellPrice": 47.82,
-      "sellChange": -2.01,
+      "sellDate": "20260803",
+      "sellDateDisplay": "2026-08-03",
+      "sellTime": "09:32",
+      "sellPrice": 53.3,
+      "sellChange": -2.54,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -5.74,
-      "rawReturnRate": -5.74
+      "returnRate": -8.42,
+      "rawReturnRate": -8.42
     },
     {
-      "seq": 5,
+      "seq": 3,
+      "metric": 32.1984,
+      "code": "sh688313",
+      "stockName": "仕佳光子",
+      "positionMode": "offense",
+      "weight": 1,
+      "buyDate": "20260804",
+      "buyDateDisplay": "2026-08-04",
+      "buyTime": "09:30",
+      "buyPrice": 102.38,
+      "buyChange": 5.8,
+      "buyReason": "09:30创业板指3日线斜率由负转正（-25.38→+36.30），买入自选科技股池内3日涨幅最大的股票（进攻买点，无需资金/量能配合）",
+      "buyChecks": [
+        {
+          "id": "key_block_cyb_gate",
+          "title": "创业板指3日线斜率由负转正（进攻买点）",
+          "passed": true,
+          "value": "09:30:00 +36.30",
+          "reason": "创业板指 3 日线斜率在 09:30:00 由负转正（-25.38 → +36.30）：进攻买点触发，不看资金/量能/情绪等任何配合条件，买入自选科技股中 3 日涨幅最大的一只"
+        },
+        {
+          "id": "key_block_watchlist_tech",
+          "title": "自选科技股筛选（进攻）",
+          "passed": true,
+          "value": "92 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 92 只（剔除排除股；含自选股添加时间门禁）"
+        },
+        {
+          "id": "key_block_limit_up",
+          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+          "passed": true,
+          "value": "无涨停候选",
+          "reason": "买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）"
+        },
+        {
+          "id": "one_word_board_defer",
+          "title": "上一交易日一字板过滤（主板≥8%、创业/科创≥16%）",
+          "passed": true,
+          "value": "无一字板候选",
+          "skippedStocks": [],
+          "reason": "买入时点候选中无上一交易日一字板股（主板开盘/收盘/最低涨幅均≥8%、创业/科创均≥16% 视为一字板；一字板次日不买，顺延排名下一只）"
+        },
+        {
+          "id": "key_block_best_stock",
+          "title": "自选科技股内最近3日涨幅最大的股票",
+          "passed": true,
+          "value": "+32.20%",
+          "reason": "在自选科技股池共 92 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
+        }
+      ],
+      "sellDate": "20260824",
+      "sellDateDisplay": "2026-08-24",
+      "sellTime": "13:45",
+      "sellPrice": 149.9,
+      "sellChange": -5.13,
+      "sellReason": "均线破位",
+      "returnRate": 46.42,
+      "rawReturnRate": 46.42
+    },
+    {
+      "seq": 4,
       "metric": 19.7757,
       "code": "sz301018",
       "stockName": "申菱环境",
@@ -619,8 +608,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "90 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "92 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 92 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -630,11 +619,19 @@
           "reason": "买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）"
         },
         {
+          "id": "one_word_board_defer",
+          "title": "上一交易日一字板过滤（主板≥8%、创业/科创≥16%）",
+          "passed": true,
+          "value": "无一字板候选",
+          "skippedStocks": [],
+          "reason": "买入时点候选中无上一交易日一字板股（主板开盘/收盘/最低涨幅均≥8%、创业/科创均≥16% 视为一字板；一字板次日不买，顺延排名下一只）"
+        },
+        {
           "id": "key_block_best_stock",
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+19.78%",
-          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
+          "reason": "在自选科技股池共 92 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
         }
       ],
       "sellDate": "20260828",
@@ -647,7 +644,7 @@
       "rawReturnRate": 3.08
     },
     {
-      "seq": 6,
+      "seq": 5,
       "metric": 25.2191,
       "code": "sz002942",
       "stockName": "新农股份",
@@ -682,6 +679,23 @@
           "reason": "买入时点（09:30:00）涨停候选已剔除并顺延：新赛股份 +10.1%、万向德农 +9.97%；3 日涨幅排名后延至 新农股份"
         },
         {
+          "id": "one_word_board_defer",
+          "title": "上一交易日一字板过滤（主板≥8%、创业/科创≥16%）",
+          "passed": true,
+          "value": "顺延 2 只",
+          "skippedStocks": [
+            {
+              "code": "sh600540",
+              "name": "新赛股份"
+            },
+            {
+              "code": "sh600371",
+              "name": "万向德农"
+            }
+          ],
+          "reason": "上一交易日一字板候选已剔除并顺延：新赛股份 +10.1%、万向德农 +9.97%；3 日涨幅排名后延至 新农股份（昨日开盘/收盘/最低涨幅均达涨停阈值，全天封死一字板，次日不买）"
+        },
+        {
           "id": "key_block_best_stock",
           "title": "防御候选池(Tag板块+涨停扩展)内最近3日涨幅最大的股票",
           "passed": true,
@@ -691,15 +705,15 @@
       ],
       "sellDate": "20260903",
       "sellDateDisplay": "2026-09-03",
-      "sellTime": "09:35",
-      "sellPrice": 18.68,
-      "sellChange": -6.04,
-      "sellReason": "持仓个股分时价跌破成本线 -5% 止损（成本 19.99 → 现价 18.68，浮亏 -6.55%），防御半仓持仓卖出（防御为半仓买入，收益率按半仓折算）",
-      "returnRate": -3.27,
-      "rawReturnRate": -6.55
+      "sellTime": "09:34",
+      "sellPrice": 18.88,
+      "sellChange": -5.03,
+      "sellReason": "持仓个股分时价跌破成本线 -5% 止损（成本 19.99，桶级触发现价 18.68）；逐分钟回溯：实际于 09:34 首次跌破（价 18.88，较成本 -5.55%），按该分钟价格成交，防御半仓持仓卖出（防御为半仓买入，收益率按半仓折算）",
+      "returnRate": -2.77,
+      "rawReturnRate": -5.55
     },
     {
-      "seq": 7,
+      "seq": 6,
       "metric": 18.5139,
       "code": "sh603228",
       "stockName": "景旺电子",
@@ -723,8 +737,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "90 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "92 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 92 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -734,11 +748,19 @@
           "reason": "买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）"
         },
         {
+          "id": "one_word_board_defer",
+          "title": "上一交易日一字板过滤（主板≥8%、创业/科创≥16%）",
+          "passed": true,
+          "value": "无一字板候选",
+          "skippedStocks": [],
+          "reason": "买入时点候选中无上一交易日一字板股（主板开盘/收盘/最低涨幅均≥8%、创业/科创均≥16% 视为一字板；一字板次日不买，顺延排名下一只）"
+        },
+        {
           "id": "key_block_best_stock",
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+18.51%",
-          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
+          "reason": "在自选科技股池共 92 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:30:00 分时价"
         }
       ],
       "sellDate": "20260915",
@@ -751,7 +773,7 @@
       "rawReturnRate": 5.37
     },
     {
-      "seq": 8,
+      "seq": 7,
       "metric": 13.3456,
       "code": "sh688025",
       "stockName": "杰普特",
@@ -775,8 +797,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "90 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "92 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 92 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -786,24 +808,32 @@
           "reason": "买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）"
         },
         {
+          "id": "one_word_board_defer",
+          "title": "上一交易日一字板过滤（主板≥8%、创业/科创≥16%）",
+          "passed": true,
+          "value": "无一字板候选",
+          "skippedStocks": [],
+          "reason": "买入时点候选中无上一交易日一字板股（主板开盘/收盘/最低涨幅均≥8%、创业/科创均≥16% 视为一字板；一字板次日不买，顺延排名下一只）"
+        },
+        {
           "id": "key_block_best_stock",
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+13.35%",
-          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 11:30:00 分时价"
+          "reason": "在自选科技股池共 92 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 11:30:00 分时价"
         }
       ],
       "sellDate": "20260917",
       "sellDateDisplay": "2026-09-17",
-      "sellTime": "09:35",
-      "sellPrice": 439.46,
+      "sellTime": "09:32",
+      "sellPrice": 439.43,
       "sellChange": -1.1,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -2.78,
-      "rawReturnRate": -2.78
+      "returnRate": -2.79,
+      "rawReturnRate": -2.79
     },
     {
-      "seq": 9,
+      "seq": 8,
       "metric": 17.0101,
       "code": "sz300570",
       "stockName": "太辰光",
@@ -827,8 +857,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "90 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "92 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 92 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -838,24 +868,32 @@
           "reason": "买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）"
         },
         {
+          "id": "one_word_board_defer",
+          "title": "上一交易日一字板过滤（主板≥8%、创业/科创≥16%）",
+          "passed": true,
+          "value": "无一字板候选",
+          "skippedStocks": [],
+          "reason": "买入时点候选中无上一交易日一字板股（主板开盘/收盘/最低涨幅均≥8%、创业/科创均≥16% 视为一字板；一字板次日不买，顺延排名下一只）"
+        },
+        {
           "id": "key_block_best_stock",
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+17.01%",
-          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
+          "reason": "在自选科技股池共 92 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
         }
       ],
       "sellDate": "20260921",
       "sellDateDisplay": "2026-09-21",
-      "sellTime": "09:35",
-      "sellPrice": 223.13,
+      "sellTime": "09:31",
+      "sellPrice": 222.63,
       "sellChange": -2.71,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -6.9,
-      "rawReturnRate": -6.9
+      "returnRate": -7.11,
+      "rawReturnRate": -7.11
     },
     {
-      "seq": 10,
+      "seq": 9,
       "metric": 13.5404,
       "code": "sh688008",
       "stockName": "澜起科技",
@@ -879,8 +917,8 @@
           "id": "key_block_watchlist_tech",
           "title": "自选科技股筛选（进攻）",
           "passed": true,
-          "value": "90 只",
-          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 90 只（剔除排除股；含自选股添加时间门禁）"
+          "value": "92 只",
+          "reason": "进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股共 92 只（剔除排除股；含自选股添加时间门禁）"
         },
         {
           "id": "key_block_limit_up",
@@ -890,24 +928,32 @@
           "reason": "买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）"
         },
         {
+          "id": "one_word_board_defer",
+          "title": "上一交易日一字板过滤（主板≥8%、创业/科创≥16%）",
+          "passed": true,
+          "value": "无一字板候选",
+          "skippedStocks": [],
+          "reason": "买入时点候选中无上一交易日一字板股（主板开盘/收盘/最低涨幅均≥8%、创业/科创均≥16% 视为一字板；一字板次日不买，顺延排名下一只）"
+        },
+        {
           "id": "key_block_best_stock",
           "title": "自选科技股内最近3日涨幅最大的股票",
           "passed": true,
           "value": "+13.54%",
-          "reason": "在自选科技股池共 90 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
+          "reason": "在自选科技股池共 92 只中（有效候选 65 只），按最近 3 日个股涨幅之和取最大；买入价取 09:40:00 分时价"
         }
       ],
       "sellDate": "20260923",
       "sellDateDisplay": "2026-09-23",
-      "sellTime": "09:35",
-      "sellPrice": 226.47,
+      "sellTime": "09:32",
+      "sellPrice": 224,
       "sellChange": 2.09,
       "sellReason": "跌破成本线-2%",
-      "returnRate": -1.9,
-      "rawReturnRate": -1.9
+      "returnRate": -2.97,
+      "rawReturnRate": -2.97
     },
     {
-      "seq": 11,
+      "seq": 10,
       "metric": 22.7298,
       "code": "sh605058",
       "stockName": "澳弘电子",
@@ -942,6 +988,14 @@
           "reason": "买入时点候选中无涨停股（主板涨幅 >9.5%、创业板/科创板 >19% 视为涨停；涨停股不可买，顺延排名下一只）"
         },
         {
+          "id": "one_word_board_defer",
+          "title": "上一交易日一字板过滤（主板≥8%、创业/科创≥16%）",
+          "passed": true,
+          "value": "无一字板候选",
+          "skippedStocks": [],
+          "reason": "买入时点候选中无上一交易日一字板股（主板开盘/收盘/最低涨幅均≥8%、创业/科创均≥16% 视为一字板；一字板次日不买，顺延排名下一只）"
+        },
+        {
           "id": "key_block_best_stock",
           "title": "防御候选池(Tag板块+涨停扩展)内最近3日涨幅最大的股票",
           "passed": true,
@@ -951,22 +1005,22 @@
       ],
       "sellDate": "20260928",
       "sellDateDisplay": "2026-09-28",
-      "sellTime": "09:35",
+      "sellTime": "09:33",
       "sellPrice": 54.18,
       "sellChange": -10,
-      "sellReason": "持仓个股分时价跌破成本线 -5% 止损（成本 58.00 → 现价 54.18，浮亏 -6.59%），防御半仓持仓卖出（防御为半仓买入，收益率按半仓折算）",
+      "sellReason": "持仓个股分时价跌破成本线 -5% 止损（成本 58.00，桶级触发现价 54.18）；逐分钟回溯：实际于 09:33 首次跌破（价 54.18，较成本 -6.59%），按该分钟价格成交，防御半仓持仓卖出（防御为半仓买入，收益率按半仓折算）",
       "returnRate": -3.29,
       "rawReturnRate": -6.59
     }
   ],
   "currentHolding": null,
   "summary": {
-    "tradeCount": 11,
-    "winCount": 4,
-    "winRate": 36.36,
-    "avgDrawdown": -3.73,
-    "maxDrawdown": -6.9,
-    "overallReturn": 14.08,
+    "tradeCount": 10,
+    "winCount": 3,
+    "winRate": 30,
+    "avgDrawdown": -4.68,
+    "maxDrawdown": -8.42,
+    "overallReturn": 22.08,
     "holding": false
   }
 }

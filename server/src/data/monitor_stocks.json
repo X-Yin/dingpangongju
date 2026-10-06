@@ -750,5 +750,23 @@
     "riskScore": "7",
     "isTech": true,
     "addedAt": "2026-10-05 16:53:39"
+  },
+  {
+    "code": "sh688662",
+    "name": "富信科技",
+    "isImportant": false,
+    "blockName": "光模块",
+    "riskScore": " 8",
+    "isTech": true,
+    "addedAt": "2026-10-05 22:21:15"
+  },
+  {
+    "code": "sz300489",
+    "name": "光智科技",
+    "isImportant": false,
+    "blockName": "光模块",
+    "riskScore": "9",
+    "isTech": true,
+    "addedAt": "2026-10-05 22:23:38"
   }
 ]

@@ -1838,5 +1838,45 @@
       }
     ],
     "isImportant": false
+  },
+  "sh688662": {
+    "stockName": "富信科技",
+    "kline": [
+      {
+        "trade_date": 20260930,
+        "open_px": 116.03,
+        "high_px": 118.88,
+        "low_px": 110.1,
+        "close_px": 110.5,
+        "business_amount": 11540195,
+        "business_balance": 1314665110,
+        "change": -3.15,
+        "ma5_px": 119.6,
+        "ma10_px": 109.88,
+        "ma20_px": 97.05,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz300489": {
+    "stockName": "光智科技",
+    "kline": [
+      {
+        "trade_date": 20260930,
+        "open_px": 265,
+        "high_px": 292.96,
+        "low_px": 263.08,
+        "close_px": 278.35,
+        "business_amount": 13918337,
+        "business_balance": 3887786500,
+        "change": 8.35,
+        "ma5_px": 265.66,
+        "ma10_px": 247.48,
+        "ma20_px": 231.98,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }
