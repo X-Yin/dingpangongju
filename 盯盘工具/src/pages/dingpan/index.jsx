@@ -168,16 +168,6 @@ const DingPan = () => {
         [activeThemePack, themeColor]
     );
 
-    // 主题包切换时，通知 App.jsx 同步全局主题色（:root 上的 --theme-color 等）
-    // App 侧监听 'theme-pack-changed' 事件后会 deriveThemeFromColor + setCurrentTheme，
-    // 切回默认主题（isDefault=true）时由 App 自行从备份恢复用户之前选的主题色。
-    useEffect(() => {
-        const payload = activeThemePack
-            ? { appThemeColor: activeThemePack.appThemeColor, packId: activeThemePack.id, isDefault: false }
-            : { isDefault: true };
-        window.dispatchEvent(new CustomEvent('theme-pack-changed', { detail: payload }));
-    }, [activeThemePack]);
-
     // 研报数据相关状态
     const [jigouReports, setJigouReports] = useState([]);
     const [recentResearchReports, setRecentResearchReports] = useState([]);

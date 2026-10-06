@@ -4,7 +4,6 @@ import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined
 import axios from 'axios';
 import { local_ip } from './constant';
 import { getThemeColor } from './utils/theme';
-import { getThemePack } from './pages/dingpan/utils/themePacks';
 import { isTradingDay, isAfterMarketClose, getNextTradingDay } from './utils/tradingDay';
 import PreMarketReading from './components/PreMarketReading';
 import TodayPlan from './components/TodayPlan';
@@ -505,51 +504,6 @@ function App() {
     // 通知 ThemeProvider 更新 AntD 主题
     window.dispatchEvent(new CustomEvent('theme-changed'));
   }, [currentTheme]);
-
-  // 盯盘页主题包切换 → 同步 App 全局主题色
-  // 进入主题包时：用 deriveThemeFromColor(appThemeColor) 派生主题并 setCurrentTheme
-  // 切回默认时：恢复到进入主题包前的 App 主题备份
-  // 初始加载：如果 localStorage 里已存主题包（刷新页面），也主动应用
-  const _userAppThemeBackupRef = useRef(null); // 进入主题包前用户自己选的主题
-  useEffect(() => {
-    const handler = (e) => {
-      const { detail } = e;
-      if (!detail) return;
-      if (detail.isDefault) {
-        if (_userAppThemeBackupRef.current) {
-          const backup = _userAppThemeBackupRef.current;
-          _userAppThemeBackupRef.current = null;
-          setCurrentTheme(backup);
-        }
-        return;
-      }
-      if (!_userAppThemeBackupRef.current) {
-        _userAppThemeBackupRef.current = currentTheme;
-      }
-      const derived = deriveThemeFromColor(detail.appThemeColor);
-      derived.key = `pack_${detail.packId || 'theme'}`;
-      setCurrentTheme(derived);
-    };
-    window.addEventListener('theme-pack-changed', handler);
-
-    // 初始挂载：如果 localStorage 里已启用主题包，主动应用（避免刷新后丢失）
-    try {
-      const saved = JSON.parse(localStorage.getItem('dingpan_themeColor') || 'null');
-      if (saved?.pack) {
-        const pack = getThemePack(saved.pack);
-        if (pack) {
-          _userAppThemeBackupRef.current = currentTheme;
-          const derived = deriveThemeFromColor(pack.appThemeColor);
-          derived.key = `pack_${pack.id}`;
-          // 延迟一帧应用，确保 App 的其他初始化 effect 先跑完
-          requestAnimationFrame(() => setCurrentTheme(derived));
-        }
-      }
-    } catch {}
-
-    return () => window.removeEventListener('theme-pack-changed', handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleSelectTheme = (theme) => {
     setCurrentTheme(theme);
