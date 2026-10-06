@@ -850,6 +850,9 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const [workerRunning, setWorkerRunning] = useState(false); // 全量回测（backtest-worker.js）后台执行中
   const [workerLog, setWorkerLog] = useState(''); // worker 最近一条日志
   const workerPollRef = useRef(null);
+  // 始终指向最新一次渲染的 checkCache：分类回测在 handleRunCategory 内启动轮询，
+  // 其闭包捕获的是「切换策略前」的 strategy/range，回测完成后直接调用会拉到旧策略的缓存结果
+  const checkCacheRef = useRef(null);
   const [activeCategory, setActiveCategory] = useState(null); // 当前高亮的策略分类 Tag（null=无）
   const [workerMode, setWorkerMode] = useState('all'); // 'all' | 'category'：worker 回测模式，仅用于文案
   // 策略分类最近点击顺序：mount 时从 localStorage 读取，点击分类时把该 key 提到最前并持久化
@@ -945,6 +948,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
       // 网络异常时保持现状
     }
   };
+  // 每次渲染后同步最新的 checkCache，供 worker 轮询结束时（可能跨越多次渲染）调用
+  useEffect(() => { checkCacheRef.current = checkCache; });
 
   // 打开抽屉、切换策略或修改日期范围时检查缓存（延迟到宏任务，避免 effect 内同步 setState）；
   // 同时清空上一次震荡测试的隐藏勾选与结果（一次性状态，不持久化，重新打开抽屉即重置）；
@@ -1161,7 +1166,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
           setWorkerRunning(false);
           if (s.status === 'done') {
             message.success(isCategory ? `「${label}」分类回测完成，结果已刷新` : '全量回测完成，回测报告已重新生成');
-            setTimeout(checkCache, 0); // 拉取重跑后的最新缓存结果
+            // 用最新一次渲染的 checkCache，避免闭包里的旧 strategy/range 拉到旧策略缓存
+            setTimeout(() => checkCacheRef.current?.(), 0); // 拉取重跑后的最新缓存结果
           } else {
             message.error(isCategory ? `「${label}」分类回测失败，详情见服务端日志` : '全量回测失败，详情见服务端日志');
           }
