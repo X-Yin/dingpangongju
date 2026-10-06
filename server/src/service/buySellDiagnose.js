@@ -3050,6 +3050,12 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       const close3Ago = parseFloat(sortedKline[targetIdx - 3].close_px);
       if (close3Ago > 0) change3d = parseFloat(((closePrice - close3Ago) / close3Ago * 100).toFixed(2));
     }
+    // 上一交易日一字板（开盘/收盘/最低涨幅均≥阈值，主板 8%、创业/科创 16%）不进入涨幅榜；
+    // 数据不足无法判定时不拦截（与 buySellBacktest 口径一致）
+    const prevOneWord = targetIdx >= 2
+      ? isPrevDayOneWordBoardBars(stock.code, sortedKline[targetIdx - 1], sortedKline[targetIdx - 2])
+      : null;
+    if (prevOneWord === true) continue;
     const isSh688 = stock.code.startsWith('sh688') || stock.code.startsWith('688');
     base.push({ stock, isSh688, sortedKline, targetIdx, change, change3d });
   }
@@ -3075,7 +3081,7 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       resilienceScore = Number.isFinite(score) ? parseFloat(score.toFixed(2)) : null;
     }
     // 买点资格：跟踪指数门禁通过 + 抗分歧 ≥ 全局门槛 + （指数由负转正当日）个股 MA3 正斜率天数 ≤ 4
-    // + 非上一交易日一字板（2026-10-05 新增，选股通用限制）
+    // （前一日一字板个股已在组榜阶段剔除，不会进入此处）
     const indexGatePassed = trackedGate?.passed === true;
     const resilienceOk = resilienceScore != null && resilienceScore >= MIN_RESILIENCE_SCORE;
     let slopeOk = true;
@@ -3083,10 +3089,6 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       const days = countStockPositiveSlopeDaysLocal(s.sortedKline, s.targetIdx);
       slopeOk = !(days != null && days > 4);
     }
-    // 上一交易日一字板判定（开盘/收盘/最低涨幅均≥阈值，主板 8%、创业/科创 16%）；数据不足不拦截
-    const prevOneWord = s.targetIdx >= 2
-      ? isPrevDayOneWordBoardBars(s.stock.code, s.sortedKline[s.targetIdx - 1], s.sortedKline[s.targetIdx - 2])
-      : null;
     return {
       code: s.stock.code,
       stockName: s.stock.name,
@@ -3096,8 +3098,7 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       change3d: s.change3d,
       resilienceScore,
       isLimitUp: isLimitUpChange(s.stock.code, rtChange),
-      prevOneWordBoard: prevOneWord === true,
-      matchesBuyPoint: indexGatePassed && resilienceOk && slopeOk && prevOneWord !== true,
+      matchesBuyPoint: indexGatePassed && resilienceOk && slopeOk,
     };
   };
 

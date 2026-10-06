@@ -33,6 +33,22 @@
         "stockCode": "sh603256",
         "position": "",
         "time": "13:17"
+      },
+      {
+        "id": "1791298149515_dfy5",
+        "action": "buy",
+        "stockName": "宏和科技",
+        "stockCode": "sh603256",
+        "position": "",
+        "time": "22:49"
+      },
+      {
+        "id": "1791298169471_4j6x",
+        "action": "sell",
+        "stockName": "宏和科技",
+        "stockCode": "sh603256",
+        "position": "",
+        "time": "22:49"
       }
     ],
     "totalReturn": null,
@@ -40,7 +56,7 @@
     "score": null,
     "review": "",
     "createdAt": "2026-10-06T03:52:55.212Z",
-    "updatedAt": "2026-10-06T05:17:04.297Z"
+    "updatedAt": "2026-10-06T14:49:29.478Z"
   },
   {
     "date": "2026-10-05",

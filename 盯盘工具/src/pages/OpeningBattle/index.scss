@@ -116,14 +116,15 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   box-shadow: 0 3px 10px rgba(217, 119, 6, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
-.ob-buy-card .ob-module-icon {
-  background: #06d6a0;
-  box-shadow: 0 6px 16px -6px rgba(6, 214, 160, 0.65);
-}
-
+// 买点/卖点卡片本身已是紫→青渐变底，图标芯片改用磨砂玻璃白
+.ob-buy-card .ob-module-icon,
 .ob-sell-card .ob-module-icon {
-  background: #ff3d77;
-  box-shadow: 0 6px 16px -6px rgba(255, 61, 119, 0.65);
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 6px 16px -8px rgba(30, 27, 75, 0.55);
 }
 
 .ob-total-tag {
@@ -835,27 +836,24 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   }
 }
 
-// ==================== 买点 / 卖点诊断卡片（扁平高饱和 · 年轻化） ====================
-// 无顶部光带、无左侧光带、无图标：状态直接用高饱和实色块表达，白字强对比
+// ==================== 买点 / 卖点诊断卡片（紫 → 青渐变 · 磨砂玻璃） ====================
+// 参考图效果：整卡使用紫罗兰 → 青蓝渐变底，内部条目统一为半透明磨砂玻璃卡
 .ob-diagnosis-card {
   position: relative;
-  border-radius: 20px;
+  border-radius: 22px;
   border: none;
-  box-shadow: 0 12px 32px -20px rgba(15, 23, 42, 0.3);
   display: flex;
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
-
-  // 买点：薄荷微 tint 底
-  &.ob-buy-card {
-    background: #f1fbf7;
-  }
-
-  // 卖点：蜜桃微 tint 底
-  &.ob-sell-card {
-    background: #fff3f6;
-  }
+  color: #fff;
+  // 左上紫罗兰 → 中部靛蓝 → 右侧青蓝，与参考图渐变保持一致
+  background:
+    radial-gradient(118% 86% at 8% -8%, rgba(162, 124, 255, 0.95) 0%, rgba(162, 124, 255, 0) 62%),
+    radial-gradient(108% 94% at 106% 8%, rgba(48, 197, 210, 0.92) 0%, rgba(48, 197, 210, 0) 58%),
+    radial-gradient(130% 110% at -8% 108%, rgba(132, 94, 255, 0.9) 0%, rgba(132, 94, 255, 0) 64%),
+    linear-gradient(116deg, #7b4dff 0%, #4d55d8 46%, #1ba7c6 100%);
+  box-shadow: 0 22px 48px -26px rgba(49, 46, 129, 0.6);
 
   .ob-refresh-mask {
     position: absolute;
@@ -864,8 +862,9 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.62);
-    backdrop-filter: blur(3px);
+    background: rgba(38, 30, 92, 0.32);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
 
   .ob-diagnosis-header {
@@ -879,8 +878,9 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     .ob-module-title {
       font-size: 16px;
       font-weight: 800;
-      color: #0f172a;
+      color: #fff;
       letter-spacing: 0.01em;
+      text-shadow: 0 1px 2px rgba(30, 27, 75, 0.28);
     }
 
     .ob-module-icon {
@@ -904,18 +904,22 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     justify-content: center;
     width: 30px;
     height: 30px;
+    box-sizing: border-box;
     border-radius: 10px;
-    border: none;
-    background: rgba(255, 255, 255, 0.92);
-    color: #64748b;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #fff;
     font-size: 13px;
     cursor: pointer;
     transition: all 0.25s ease;
     padding: 0;
-    box-shadow: 0 2px 8px -4px rgba(15, 23, 42, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
 
     &:hover {
-      color: #0f172a;
+      background: rgba(255, 255, 255, 0.34);
+      color: #fff;
       transform: rotate(90deg);
     }
   }
@@ -923,13 +927,17 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   .ob-status-badge {
     font-size: 11.5px;
     font-weight: 700;
-    color: #475569;
-    background: rgba(255, 255, 255, 0.92);
+    color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 5px 13px;
     border-radius: 999px;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.01em;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
 
   .ob-diagnosis-body {
@@ -950,23 +958,35 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     height: auto;
     padding: 28px 0;
     font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
   }
 }
 
-// 命中状态徽章：高饱和实色胶囊（白字）
+// 命中状态徽章：亮色实心胶囊 + 语义色文字
 .ob-buy-card .ob-status-badge.hit {
-  color: #fff;
-  background: #06d6a0;
+  color: #04372a;
+  background: #d9fff3;
+  border-color: rgba(255, 255, 255, 0.72);
   animation: ob-glow-buy 2.6s ease-in-out infinite;
 }
 
 .ob-sell-card .ob-status-badge.hit {
-  color: #fff;
-  background: #ff3d77;
+  color: #4a0418;
+  background: #ffe3ec;
+  border-color: rgba(255, 255, 255, 0.72);
   animation: ob-glow-sell 2.6s ease-in-out infinite;
 }
 
-// 买点检查项（状态即底色：高饱和实色卡 + 白字 + 半透明白徽章）
+// 磨砂玻璃质感：半透明底 + 背景模糊 + 玻璃描边 + 顶部高光 + 柔和外阴影
+@mixin ob-glass($bg, $border, $shadow) {
+  background: $bg;
+  border: 1px solid $border;
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), $shadow;
+}
+
+// 买点检查项（状态即底色：磨砂玻璃卡 + 白字 + 半透明白徽章）
 .ob-buy-check {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -975,18 +995,31 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   row-gap: 3px;
   padding: 10px 14px;
   border-radius: 14px;
-  background: #e8edf3;
-  color: #475569;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  color: #fff;
+  transition: transform 0.18s ease, filter 0.18s ease;
+  @include ob-glass(
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.28),
+    0 10px 24px -18px rgba(15, 23, 42, 0.55)
+  );
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 10px 20px -10px rgba(15, 23, 42, 0.4);
+    filter: brightness(1.06);
   }
 
-  &.passed { background: #2d8cff; color: #fff; }
-  &.failed { background: #ff4757; color: #fff; }
-  &.exempted { background: #ffb020; color: #fff; }
+  &.passed {
+    color: #fff;
+    @include ob-glass(rgba(56, 132, 255, 0.62), rgba(255, 255, 255, 0.36), 0 10px 24px -14px rgba(45, 140, 255, 0.55));
+  }
+  &.failed {
+    color: #fff;
+    @include ob-glass(rgba(255, 71, 87, 0.62), rgba(255, 255, 255, 0.36), 0 10px 24px -14px rgba(255, 71, 87, 0.55));
+  }
+  &.exempted {
+    color: #fff;
+    @include ob-glass(rgba(255, 168, 24, 0.62), rgba(255, 255, 255, 0.36), 0 10px 24px -14px rgba(255, 176, 32, 0.55));
+  }
 
   .ob-buy-check-name {
     font-size: 12.5px;
@@ -1000,7 +1033,10 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     font-weight: 700;
     padding: 3px 10px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.24);
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     color: #fff;
     white-space: nowrap;
     letter-spacing: 0.02em;
@@ -1030,28 +1066,44 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   border-radius: 14px;
   font-size: 12.5px;
   line-height: 1.7;
-  color: #0b7a63;
-  background: rgba(6, 214, 160, 0.16);
+  color: #fff;
+  @include ob-glass(
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.28),
+    0 10px 24px -20px rgba(15, 23, 42, 0.5)
+  );
 
   &.hit {
     color: #fff;
-    background: #06d6a0;
     font-weight: 600;
+    @include ob-glass(
+      rgba(6, 214, 160, 0.6),
+      rgba(255, 255, 255, 0.45),
+      0 12px 26px -14px rgba(6, 214, 160, 0.6)
+    );
   }
 }
 
-// 卖点持仓卡片（白卡 + 高饱和实色条件条目）
+// 卖点持仓卡片（磨砂玻璃卡 + 半透明状态色条件条目）
 .ob-sell-stock {
   position: relative;
   border-radius: 16px;
   overflow: hidden;
-  background: #fff;
   flex-shrink: 0;
-  box-shadow: 0 8px 20px -14px rgba(15, 23, 42, 0.32);
+  color: #fff;
   transition: box-shadow 0.2s ease;
+  @include ob-glass(
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.26),
+    0 12px 26px -18px rgba(15, 23, 42, 0.5)
+  );
 
   &.hit {
-    box-shadow: 0 10px 26px -12px rgba(255, 61, 119, 0.55);
+    @include ob-glass(
+      rgba(255, 61, 119, 0.24),
+      rgba(255, 255, 255, 0.42),
+      0 14px 30px -14px rgba(255, 61, 119, 0.55)
+    );
   }
 
   .ob-sell-stock-header {
@@ -1059,23 +1111,23 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     align-items: center;
     gap: 8px;
     padding: 11px 15px;
-    background: #f8fafc;
+    background: rgba(255, 255, 255, 0.1);
   }
 
   &.hit .ob-sell-stock-header {
-    background: #ffeef3;
+    background: rgba(255, 255, 255, 0.16);
   }
 
   .ob-sell-stock-name {
     font-weight: 800;
     font-size: 14.5px;
-    color: #0f172a;
+    color: #fff;
     letter-spacing: 0.01em;
   }
 
   .ob-sell-stock-code {
     font-size: 11px;
-    color: #94a3b8;
+    color: rgba(255, 255, 255, 0.72);
     font-family: $ob-mono;
   }
 
@@ -1084,6 +1136,10 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     font-size: 13px;
     font-variant-numeric: tabular-nums;
     font-family: $ob-mono;
+
+    // 渐变底上提亮涨跌色，保证可读性
+    &.ob-up { color: #ffd2dd; }
+    &.ob-down { color: #9ff2da; }
   }
 
   .ob-sell-stock-tag {
@@ -1107,7 +1163,7 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     gap: 8px;
   }
 
-  // 条件条目（与买点检查项同款：状态即底色）
+  // 条件条目（与买点检查项同款：状态即底色，磨砂玻璃质感）
   .ob-sell-cond {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -1116,18 +1172,31 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     row-gap: 3px;
     padding: 9px 13px;
     border-radius: 12px;
-    background: #e8edf3;
-    color: #475569;
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    color: #fff;
+    transition: transform 0.18s ease, filter 0.18s ease;
+    @include ob-glass(
+      rgba(255, 255, 255, 0.16),
+      rgba(255, 255, 255, 0.28),
+      0 10px 24px -18px rgba(15, 23, 42, 0.55)
+    );
 
     &:hover {
       transform: translateY(-1px);
-      box-shadow: 0 10px 20px -10px rgba(15, 23, 42, 0.4);
+      filter: brightness(1.06);
     }
 
-    &.safe { background: #2d8cff; color: #fff; }
-    &.hit { background: #ff3d77; color: #fff; }
-    &.pending { background: #ffb020; color: #fff; }
+    &.safe {
+      color: #fff;
+      @include ob-glass(rgba(56, 132, 255, 0.62), rgba(255, 255, 255, 0.36), 0 10px 24px -14px rgba(45, 140, 255, 0.55));
+    }
+    &.hit {
+      color: #fff;
+      @include ob-glass(rgba(255, 61, 119, 0.62), rgba(255, 255, 255, 0.38), 0 10px 24px -14px rgba(255, 61, 119, 0.55));
+    }
+    &.pending {
+      color: #fff;
+      @include ob-glass(rgba(255, 168, 24, 0.62), rgba(255, 255, 255, 0.38), 0 10px 24px -14px rgba(255, 176, 32, 0.55));
+    }
 
     .ob-sell-cond-name {
       font-size: 12.5px;
@@ -1141,7 +1210,10 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
       font-weight: 700;
       padding: 3px 10px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.24);
+      border: 1px solid rgba(255, 255, 255, 0.42);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       color: #fff;
       white-space: nowrap;
     }
@@ -1158,11 +1230,15 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 // 卖点诊断：无条件数据时的结论/错误文案
 .ob-check-reason {
   font-size: 11.5px;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.92);
   line-height: 1.65;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.85);
+  @include ob-glass(
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.26),
+    0 8px 18px -16px rgba(15, 23, 42, 0.5)
+  );
 }
 
 // 命中徽章呼吸光晕

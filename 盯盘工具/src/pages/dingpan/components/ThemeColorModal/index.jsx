@@ -162,7 +162,7 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
             onOk={handleOk}
             okText="保存"
             cancelText="取消"
-            width={760}
+            width={860}
             // 内容区最高 500px，超出滚动；footer（保存/取消）固定在弹窗底部
             styles={{ body: { maxHeight: 500, overflowY: 'auto' } }}
             destroyOnClose
@@ -177,7 +177,7 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
                             仅作用于盯盘页外层组件；弹窗、Tooltip 保持原样式
                         </Text>
                     </div>
-                    <div className="theme-pack-grid">
+                    <div className="theme-pack-grid" style={{ marginRight: 10 }}>
                         {[DEFAULT_PACK_OPTION, ...THEME_PACKS.map(buildPackOption)].map(renderPackOption)}
                     </div>
                     {/* 随机播放：每隔 5 分钟自动随机切换一个主题包 */}
