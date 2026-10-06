@@ -95,6 +95,12 @@ const STRATEGY_OPTIONS = [
   { value: 'highest_4d_gain_emoquick', label: '4日涨幅最大&三日情绪-60快进快出' },
   { value: 'highest_5d_gain_emoquick', label: '5日涨幅最大&三日情绪-60快进快出' },
   { value: 'highest_3d_reports_top5_gain_emoquick', label: '3日涨幅最大&三日情绪-60快进快出&研报覆盖' },
+  // 科技板块前三系列（与快进快出类几乎完全一样，唯一区别在选股：先做板块效应筛选——当日 tag=进攻 的重点板块
+  // 按板块当日涨幅取前三，成分股与全量自选科技股取交集，再在交集内选 N 日涨幅最大）
+  { value: 'tech_block_top3_2d_gain_emoquick', label: '科技板块前三&2日涨幅最大&快进快出' },
+  { value: 'tech_block_top3_3d_gain_emoquick', label: '科技板块前三&3日涨幅最大&快进快出' },
+  { value: 'tech_block_top3_4d_gain_emoquick', label: '科技板块前三&4日涨幅最大&快进快出' },
+  { value: 'tech_block_top3_5d_gain_emoquick', label: '科技板块前三&5日涨幅最大&快进快出' },
   { value: 'highest_gain', label: '买入最高涨幅' },
   { value: 'highest_2d_gain', label: '2日涨幅最大' },
   { value: 'highest_3d_gain', label: '3日涨幅最大' },
@@ -166,6 +172,14 @@ const STRATEGY_CATEGORIES = [
     ids: [
       'highest_2d_gain_emoquick', 'highest_3d_gain_emoquick', 'highest_4d_gain_emoquick',
       'highest_5d_gain_emoquick', 'highest_3d_reports_top5_gain_emoquick',
+    ],
+  },
+  {
+    key: 'tech_block_top3',
+    label: '科技板块前三&快进快出类',
+    ids: [
+      'tech_block_top3_2d_gain_emoquick', 'tech_block_top3_3d_gain_emoquick',
+      'tech_block_top3_4d_gain_emoquick', 'tech_block_top3_5d_gain_emoquick',
     ],
   },
   {
@@ -468,6 +482,36 @@ const STRATEGY_SPECIFIC_NOTES = {
     bullets: [
       '选股口径分三路：当触发「上一交易日科技情绪 3 日 EMA < -60」这条快进快出路径时，先取**最近 3 日研报覆盖数前五（含并列，仅统计买点前已创建的研报）**形成候选池，再从中选 3 日涨幅最大的一只（博弈反弹提胜率）；走「温和回升」或数据缺失 / 非快进快出 时仍按普通「3 日涨幅最大」选股。',
       '特殊卖点：与 highest_3d_gain_emoquick 完全相同——上一交易日 3 日 EMA < -60 或温和回升任一触发 → 次日 10:00 强卖（不走通用 7 条件），否则走通用 SELL_RULES。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（首次分钟回落即卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。',
+    ],
+  },
+
+  // ---- 科技板块前三系列（tech_block_top3_*）：与快进快出系列几乎完全一样，唯一区别在选股（增加板块效应筛选） ----
+  tech_block_top3_2d_gain_emoquick: {
+    group: '科技板块前三快进快出系列',
+    bullets: [
+      '选股口径：与快进快出系列的唯一区别在选股——买点触发时先做**板块效应筛选**：① 取当日重点板块（block_code.js，key_blocks 页面维护）中 tag 为**进攻**的板块，按**板块盘中涨幅**（= 该板块成分股在**买点触发时点**的实时涨幅均值，与 key_blocks 页面盘中 avgChange 同口径，不含收盘价前视）降序取**前三个板块**；② 把这 3 个板块的全部成分股与**全量自选股中 isTech ≠ false 的科技股**取交集；③ 在交集内按最近 2 个交易日涨幅之和最大选一只买入（为「2日涨幅最大」口径，排序依据为触发时点当日盘中涨幅）；交集为空则本次不买入。',
+      '与普通快进快出系列的差异：普通快进快出**不看板块效应**，直接在全部自选股里按 N 日涨幅最大选股；本系列相当于在选股前叠加一层「板块效应」筛选（只买当日进攻板块前三的科技股）。',
+      '卖点与 highest_2d_gain_emoquick 完全一致：满足快进快出触发条件（① 上一交易日科技情绪 3 日 EMA < -60；② 上上个、上个交易日当日科技情绪原始分均在 -30~20 区间且回升）→ 次日 10:00 强制卖出（不走通用卖点）、强卖当日禁止二次买入；2026-10-05 起叠加持仓次日盘中跌破成本线 -2% 先到先卖止损；否则走通用 SELL_RULES 7 条件。',
+      '通用机制照常生效：触发时点涨停顺延、全局最低抗分歧门槛 ≥ 9、自选股添加时间门禁、跨指数双门禁（主板/创业板→创业板指、科创板→科创50）。',
+    ],
+  },
+  tech_block_top3_3d_gain_emoquick: {
+    group: '科技板块前三快进快出系列',
+    bullets: [
+      '与 tech_block_top3_2d_gain_emoquick 完全相同，唯 N 日窗口 = 3 个交易日（交集内按最近 3 个交易日涨幅之和最大选股）。',
+      '板块效应筛选、快进快出触发条件与卖点、涨停顺延/抗分歧门槛/时间门禁/跨指数双门禁均与 2 日版一致。',
+    ],
+  },
+  tech_block_top3_4d_gain_emoquick: {
+    group: '科技板块前三快进快出系列',
+    bullets: [
+      '与 tech_block_top3_2d_gain_emoquick 完全相同，唯 N 日窗口 = 4 个交易日（交集内按最近 4 个交易日涨幅之和最大选股）。',
+    ],
+  },
+  tech_block_top3_5d_gain_emoquick: {
+    group: '科技板块前三快进快出系列',
+    bullets: [
+      '与 tech_block_top3_2d_gain_emoquick 完全相同，唯 N 日窗口 = 5 个交易日（交集内按最近 5 个交易日涨幅之和最大选股）。',
     ],
   },
 

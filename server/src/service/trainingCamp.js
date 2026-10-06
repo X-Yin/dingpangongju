@@ -29,7 +29,7 @@ const groupsFile = path.resolve(__dirname, '../data/training_camp_groups.json');
 const CAMP_BUILT_DIR = path.resolve(__dirname, '../data/backtest_camp_cache');
 // 构建逻辑版本：修改 loadTrainingCampData 的构建逻辑（如为 campData 新增预计算字段）时必须 +1，
 // 使全部旧缓存自动失效重建；仅新增策略或调整买卖点条件无需动它（条件在回测阶段实时应用，不依赖此缓存失效）
-const CAMP_BUILDER_VERSION = 4;
+const CAMP_BUILDER_VERSION = 5;
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
 // 构建签名：构建器版本 + 自选股清单 + 板块清单；仅无资金快照兜底构建追加 'no-fund' 标记
 // （allowMissingFund=false 时不追加任何元素，常规签名与历史缓存保持一致，避免全量缓存失效）
@@ -529,6 +529,9 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
       blockRanking: {
         firstNumList: sortedBlocks.slice(0, 10).map(b => ({ blockName: b.blockName, avgChange: Number(b.avgChange.toFixed(2)), rankChange: 0, code: b.blockName })),
         lastNumList: sortedBlocks.slice(-10).reverse().map(b => ({ blockName: b.blockName, avgChange: Number(b.avgChange.toFixed(2)), rankChange: 0, code: b.blockName })),
+        // 全部重点板块在该时点的盘中实时涨幅（按 avgChange 降序，口径与 firstNumList/lastNumList 完全一致）：
+        // 需完整板块排名的策略（如「科技板块前三&快进快出」在买点触发时点取进攻 tag 板块涨幅前三）使用
+        all: sortedBlocks.map(b => ({ blockName: b.blockName, avgChange: Number(b.avgChange.toFixed(2)) })),
       },
       techEmotion,
       signals: signalsMap.get(timeKey) || [],

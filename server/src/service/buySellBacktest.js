@@ -58,6 +58,14 @@ const EMO_QUICK_DESC = (n) => `买点命中时按「${n} 日涨幅最大」选�
 // 温和回升快进快出路径 / 非快进快出路径 仍走原 3 日涨幅最大选股
 const EMO_QUICK_REPORTS_DESC = `买点命中时均可正常买入、不跳过；满足以下任一条件则本次买入标记为「快进快出」——该笔持仓不走通用 7 条件卖点，买入次日上午 10:00 强制卖出（取当日第一个 ≥10:00 的分时点价格，分时未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），且买入次日盘中跌破成本线 -2%（买入价 × 0.98，口径与通用条件7一致：开盘首分钟已破线走竞价自救窗口、首次分钟回落即卖；盘中才破线则即时止损）时先到先卖、提前止损离场，强卖/止损当日禁止二次买入（哪怕买点再次触发也不买）：① 上一交易日科技情绪 3 日 EMA < -60；② 上上个与上个交易日的当日科技情绪均处于 -30~20 区间（不含边界）且上个交易日高于上上个交易日（情绪温和回升）。选股口径分三路：走①时先取「最近 3 日研报覆盖数前五（含并列，仅统计买点前已创建的研报）」形成候选池，再从中选 3 日涨幅最大的一只（博弈反弹提胜率）；走②或两条件均不满足时仍按「3 日涨幅最大」选股（最近 3 个交易日涨幅之和最大）。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效`;
 
+// 科技板块前三 × N日涨幅最大 × 快进快出系列统一描述（tech_block_top3_{N}d_gain_emoquick，2026-10-06 用户新增）：
+// 与 highest_{N}d_gain_emoquick 完全一致（快进快出触发条件、次日 10:00 强卖、盘中 -2% 止损、否则走通用卖点均不变），
+// 唯一区别在选股口径——增加一层板块效应筛选：
+//   买点触发时，取当日重点板块（block_code.js，key_blocks 页面维护）中 tag = 进攻 的板块，
+//   按「板块盘中涨幅」（= 该板块成分股在买点触发时点的实时涨幅均值，与 key_blocks 页面盘中 avgChange 同口径，不含收盘价前视）降序取前三，
+//   把这 3 个板块的全部成分股与「全量自选股中 isTech ≠ false 的科技股」取交集，再在交集内按最近 N 个交易日涨幅之和最大选一只买入
+const TECH_TOP3_BLOCK_DESC = (n) => `与「${n}日涨幅最大&三日情绪-60快进快出」完全一致，唯一区别在选股口径增加一层板块效应筛选：买点触发时，先取当日重点板块（block_code.js，key_blocks 页面维护）中 tag 为「进攻」的板块，按板块盘中涨幅（= 该板块成分股在买点触发时点的实时涨幅均值，与 key_blocks 页面盘中 avgChange 同口径，不含收盘价前视）降序取前三个板块；把这 3 个板块的全部成分股与「全量自选股（monitor_stocks.json）中 isTech ≠ false 的科技股」取交集，再在交集内按最近 ${n} 个交易日涨幅之和最大选一只买入（与常规「${n}日涨幅最大」同口径）。卖点与 highest_${n}d_gain_emoquick 完全一致：满足以下任一快进快出条件则次日 10:00 强制卖出、盘中跌破成本线 -2% 先到先卖（强卖/止损当日禁止二次买入），否则走通用 7 条件卖点——① 上一交易日科技情绪 3 日 EMA < -60；② 上上个与上个交易日当日科技情绪均处于 -30~20 区间（不含边界）且回升。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效`;
+
 // 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
 const STRATEGIES = {
   highest_gain: { id: 'highest_gain', name: '买入最高涨幅', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票' },
@@ -95,6 +103,15 @@ const STRATEGIES = {
   // 选股口径从「3日涨幅最大」改为「最近 3 日研报覆盖数前五（含并列）→ 组内 3 日涨幅最大」；
   // 温和回升路径 / 非快进快出路径仍走原 3 日涨幅最大；卖出行为与 highest_3d_gain_emoquick 完全一致
   highest_3d_reports_top5_gain_emoquick: { id: 'highest_3d_reports_top5_gain_emoquick', name: '3日涨幅最大&三日情绪-60快进快出&研报覆盖', desc: EMO_QUICK_REPORTS_DESC, emoQuickOut: true },
+
+  // 科技板块前三 × N日涨幅最大 × 快进快出系列（tech_block_top3_{N}d_gain_emoquick，2026-10-06 用户新增）：
+  // 与 highest_{N}d_gain_emoquick 几乎完全一样（快进快出触发条件与卖点行为不变），唯一区别在选股策略——
+  // 买点触发时先做板块效应筛选：当日 tag=进攻 的重点板块按板块盘中涨幅取前三，成分股与全量自选科技股取交集，
+  // 再在交集内选 N 日涨幅最大的一只（板块盘中涨幅直接取回放桶 blockRanking.all，无需预拉成分股日K）
+  tech_block_top3_2d_gain_emoquick: { id: 'tech_block_top3_2d_gain_emoquick', name: '科技板块前三&2日涨幅最大&快进快出', desc: TECH_TOP3_BLOCK_DESC(2), emoQuickOut: true },
+  tech_block_top3_3d_gain_emoquick: { id: 'tech_block_top3_3d_gain_emoquick', name: '科技板块前三&3日涨幅最大&快进快出', desc: TECH_TOP3_BLOCK_DESC(3), emoQuickOut: true },
+  tech_block_top3_4d_gain_emoquick: { id: 'tech_block_top3_4d_gain_emoquick', name: '科技板块前三&4日涨幅最大&快进快出', desc: TECH_TOP3_BLOCK_DESC(4), emoQuickOut: true },
+  tech_block_top3_5d_gain_emoquick: { id: 'tech_block_top3_5d_gain_emoquick', name: '科技板块前三&5日涨幅最大&快进快出', desc: TECH_TOP3_BLOCK_DESC(5), emoQuickOut: true },
 
   // 重点板块-N日最高涨幅系列（keyBlockDays → 独立板块驱动回测 runKeyBlockBacktest：斜率双模式 + tag 板块选股，触发桶买入）
   key_block_2d_gain: { id: 'key_block_2d_gain', name: '重点板块-2日最高涨幅', desc: KEY_BLOCK_DESC(2), keyBlockDays: 2, costLinePct: 2 },
@@ -2169,11 +2186,56 @@ const countStockPositiveSlopeDays = (code, targetDateStr, dailyInfos) => {
   return count;
 };
 
+// 科技板块前三系列（tech_block_top3_*）取前几的板块数量
+const TECH_TOP3_BLOCK_N = 3;
+
+// 科技板块前三候选集的记忆化缓存（`dateStr#timeKey` -> { codes, top }），同一交易日同一时点的板块盘中涨幅不变
+const techTop3BlockCache = new Map();
+
+// 科技板块效应候选集（tech_block_top3_* 选股第一步）：以买点触发时点（时间桶 bucket）的盘中实时口径，
+// 取当日重点板块（block_code.js，key_blocks 页面维护）中 tag = 进攻 的板块，按「板块盘中涨幅」
+// （= 该板块成分股在触发时点的实时涨幅均值，直接取回放桶 blockRanking.all，与 key_blocks 页面盘中
+// avgChange 同口径、不含任何收盘价前视）降序取前 TECH_TOP3_BLOCK_N 个，把这些板块的全部成分股与
+// 「全量自选股中 isTech ≠ false 的科技股」取交集，返回交集代码集合（供 pickBestStock 的 restrictCodes
+// 限制候选池）。触发桶无板块盘中数据 / 进攻板块交集为空 → 返回空集（本次不买入）
+const buildTechTop3BlockCodeSet = (bucket, dateStr) => {
+  // 同一（交易日, 时点）的板块盘中涨幅不变，按 dateStr#timeKey 记忆化避免同一天多个买点桶重复计算
+  const timeKey = bucket && bucket.timeKey != null ? String(bucket.timeKey) : '';
+  const cacheKey = `${dateStr}#${timeKey}`;
+  const cached = techTop3BlockCache.get(cacheKey);
+  if (cached) return cached;
+  const allBlocks = (bucket && bucket.blockRanking && Array.isArray(bucket.blockRanking.all))
+    ? bucket.blockRanking.all
+    : [];
+  const tagMap = getKeyBlockTagMap();
+  const constituents = getKeyBlockConstituents();
+  const { getMonitorStocks } = require('./monitorStock');
+  const techCodes = new Set(
+    (getMonitorStocks() || [])
+      .filter(s => s && s.code && s.isTech !== false && !EXCLUDED_CODES.has(s.code))
+      .map(s => s.code)
+  );
+  // 触发时点盘中涨幅前三的进攻板块（allBlocks 已按 avgChange 降序，但显式再排一次以防上游字段顺序变化）
+  const top = allBlocks
+    .filter(b => b && tagMap.get(b.blockName) === '进攻' && b.avgChange != null && Number.isFinite(b.avgChange))
+    .sort((a, b) => b.avgChange - a.avgChange)
+    .slice(0, TECH_TOP3_BLOCK_N);
+  const codes = new Set();
+  for (const tb of top) {
+    for (const m of constituents.get(tb.blockName) || []) {
+      if (techCodes.has(m.code)) codes.add(m.code);
+    }
+  }
+  const result = { codes, top: top.map(tb => ({ blockName: tb.blockName, gain: tb.avgChange })) };
+  techTop3BlockCache.set(cacheKey, result);
+  return result;
+};
+
 // 单股策略选股：在买点命中的当前时间桶，按策略指标选择最优的一只股票。
 // 抗分歧≥11 顺延门槛对 RESILIENCE_GATE_STRATEGY_IDS（当前仅买入最高涨幅）启用：
 // 排名首位不满足则按策略排名依次顺延至下一只满足的股票，skipped 记录被顺延跳过的前序股票（供买入明细标注）；
 // 其余策略不做抗分歧校验，直接取排名指定名次的第一只
-const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos, strategyId, axisOffset = 0, allowedMarkets = null, turnedPosInfo = null, prevOneWordSet = null, emoCycSet = null) => {
+const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos, strategyId, axisOffset = 0, allowedMarkets = null, turnedPosInfo = null, prevOneWordSet = null, emoCycSet = null, restrictCodes = null) => {
   // 买入时段门禁（所有策略通用）：仅允许 9:30 – 11:30 和 13:00 – 13:30 之间的买点触发买入
   const mNum = Number(bucket.minute);
   if (Number.isFinite(mNum) && mNum > BUY_TIME_MAX_MINUTE) return null;
@@ -2303,6 +2365,50 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     return quickPicked;
   }
 
+  // 科技板块前三 × N日涨幅最大 × 快进快出系列（tech_block_top3_{N}d_gain_emoquick，2026-10-06 用户新增）：
+  // 与 highest_{N}d_gain_emoquick 几乎完全一样（快进快出触发条件、次日 10:00 强卖、盘中 -2% 止损、
+  // 否则走通用 7 条件卖点均不变），唯一区别在选股口径——先做一层板块效应筛选：
+  //   ① 取当日重点板块（block_code.js，key_blocks 页面维护）中 tag = 进攻 的板块，按「触发时点盘中涨幅」
+  //      （= 成分股在买点触发时点的实时涨幅均值，取自回放桶 blockRanking.all，与 key_blocks 页面盘中
+  //      avgChange 同口径、不含收盘价前视）降序取前三；
+  //   ② 这 3 个板块的全部成分股与「全量自选股中 isTech ≠ false 的科技股」取交集，得到 restrictCodes；
+  //   ③ 委托「N 日涨幅最大」在交集内选股（restrictCodes 限制候选池），交集为空则本次不买入。
+  // 板块效应只影响买入选股；卖出行为与 highest_{N}d_gain_emoquick 完全一致（emoQuickOut 标注驱动）
+  const techTop3Match = strategyId.match(/^tech_block_top3_(\d)d_gain_emoquick$/);
+  if (techTop3Match) {
+    const prevDateStr = di > 0 ? String(rangeDates[di - 1]) : null; // 上一交易日
+    const prev2DateStr = di > 1 ? String(rangeDates[di - 2]) : null; // 上上个交易日
+    const prevEma = prevDateStr != null ? getTechEmotionEmaMap().get(prevDateStr) : null;
+    const prevRaw = prevDateStr != null ? getTechEmotionRawMap().get(prevDateStr) : null;
+    const prev2Raw = prev2DateStr != null ? getTechEmotionRawMap().get(prev2DateStr) : null;
+    const quickByEmaBelow = prevEma != null && prevEma < EMO_SWITCH_EMA_THRESHOLD;
+    const quickByRangeRising = prev2Raw != null && prevRaw != null
+      && prev2Raw > EMO_QUICK_RANGE_LOW && prev2Raw < EMO_QUICK_RANGE_HIGH
+      && prevRaw > EMO_QUICK_RANGE_LOW && prevRaw < EMO_QUICK_RANGE_HIGH
+      && prevRaw > prev2Raw;
+    const techTop3 = buildTechTop3BlockCodeSet(bucket, String(rangeDates[di]));
+    const quickPicked = techTop3.codes.size > 0
+      ? pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, `highest_${techTop3Match[1]}d_gain`, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet, techTop3.codes)
+      : null;
+    if (quickPicked) {
+      quickPicked.emoQuickOut = {
+        quickOut: quickByEmaBelow || quickByRangeRising,
+        trigger: quickByEmaBelow ? 'ema_below' : (quickByRangeRising ? 'range_rising' : null),
+        ema: prevEma != null ? Number(prevEma.toFixed(2)) : null,
+        prevRaw: prevRaw != null ? Number(prevRaw.toFixed(2)) : null,
+        prev2Raw: prev2Raw != null ? Number(prev2Raw.toFixed(2)) : null,
+      };
+      // 板块效应筛选明细：标注买点触发时点进攻 tag 板块盘中涨幅前三与交集后候选数量（供买入明细展示）
+      quickPicked.techTop3Block = {
+        date: String(rangeDates[di]),
+        time: bucket && bucket.displayTime ? bucket.displayTime : null,
+        blocks: techTop3.top,
+        candidateCount: techTop3.codes.size,
+      };
+    }
+    return quickPicked;
+  }
+
   // 涨幅/抗分歧窗口按 days 天
   let winDates;
   if (strategyId === 'highest_gain') {
@@ -2347,6 +2453,8 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   for (const sc of bucket.stockChanges) {
     if (EXCLUDED_CODES.has(sc.code)) continue;
     if (isOscExcluded(sc.code)) continue; // 震荡测试：勾选隐藏的股票不参与选股
+    // 候选池限制（科技板块前三系列）：只保留「进攻 tag 板块当日涨幅前三 ∩ 全量自选科技股」交集内的股票
+    if (restrictCodes && !restrictCodes.has(sc.code)) continue;
     if (sc.lastPx == null || sc.lastPx <= 0) continue;
     if (stocks.has(sc.code) && stocks.get(sc.code).holding) continue;
     // 跨指数双门禁的市场过滤（allowedMarkets=null 表示不做过滤，默认留空或非适用策略）
@@ -2732,6 +2840,21 @@ const buildEmoQuickOutCheck = (info) => ({
     : `上一交易日科技情绪 3 日 EMA = ${info.ema != null ? info.ema : '缺失'}（不满足 < ${EMO_SWITCH_EMA_THRESHOLD}），上两交易日当日科技情绪 = ${info.prev2Raw != null ? info.prev2Raw : '缺失'} / ${info.prevRaw != null ? info.prevRaw : '缺失'}（不满足均处 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且回升），普通持仓，走通用 7 条件卖点`,
 });
 
+// 科技板块效应筛选明细项（tech_block_top3_* 系列）：标注本次买点触发时点 tag=进攻 板块按板块盘中涨幅
+// （触发时点成分股实时涨幅均值）取前三的结果，以及前三板块成分股与全量自选科技股取交集后的候选数量
+const buildTechTop3BlockCheck = (info) => {
+  const fmt = (b) => `${b.blockName} ${b.gain > 0 ? '+' : ''}${b.gain}%`;
+  const text = (info.blocks || []).map(fmt).join('、') || '无';
+  const at = `${info.date}${info.time ? ' ' + info.time : ''}`;
+  return {
+    id: 'tech_block_top3',
+    title: '科技板块效应筛选（进攻 tag 板块盘中涨幅前三 ∩ 自选科技股）',
+    passed: true,
+    value: text,
+    reason: `${at} 买点触发时点 tag=进攻 的重点板块按板块盘中涨幅（触发时点成分股实时涨幅均值）前三：${text}；前三板块成分股与全量自选科技股（isTech ≠ false）取交集后候选 ${info.candidateCount} 只，在其中选 N 日涨幅最大的一只`,
+  };
+};
+
 // 快进快出持仓强卖的 sellReason（按触发条件区分文案；Inner/Multi 两处强卖点共用）
 const buildQuickOutSellReason = (info) => {
   if (info?.trigger === 'range_rising') {
@@ -2765,7 +2888,7 @@ const withResilienceGateInfo = (buyInfo, picked) => {
   const hasGlobalSkip = Array.isArray(picked.globalResilienceSkipped) && picked.globalResilienceSkipped.length > 0;
   const hasGateSkip = Array.isArray(picked.skipped) && picked.skipped.length > 0;
   // 早返回：既没有分数也没有任何顺延信息也没有情绪冰点门禁/情绪开关分支/情绪快进快出标注
-  if (picked.resilienceScore == null && !picked.emo3Gate && !picked.emoSwitchBranch && !picked.emoQuickOut && !hasLimitUp && !hasOneWord && !hasEmoCyc && !hasGlobalSkip && !hasGateSkip) return buyInfo;
+  if (picked.resilienceScore == null && !picked.emo3Gate && !picked.emoSwitchBranch && !picked.emoQuickOut && !picked.techTop3Block && !hasLimitUp && !hasOneWord && !hasEmoCyc && !hasGlobalSkip && !hasGateSkip) return buyInfo;
   let buyReason = buyInfo.buyReason;
   const buyChecks = [...(buyInfo.buyChecks || [])];
   if (hasLimitUp) {
@@ -2798,6 +2921,10 @@ const withResilienceGateInfo = (buyInfo, picked) => {
       const quickTag = picked.emoQuickOut.trigger === 'range_rising' ? '情绪回升快进快出(次日10:00强卖)' : '情绪-60快进快出(次日10:00强卖)';
       buyReason = `${buyReason}｜${quickTag}`;
     }
+  }
+  if (picked.techTop3Block) {
+    // 科技板块前三系列：标注当日进攻 tag 板块涨幅前三与交集后候选数量
+    buyChecks.push(buildTechTop3BlockCheck(picked.techTop3Block));
   }
   const suffixParts = [];
   if (hasLimitUp) suffixParts.push('前序股票涨停');
