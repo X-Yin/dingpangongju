@@ -117,13 +117,13 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 }
 
 .ob-buy-card .ob-module-icon {
-  background: linear-gradient(135deg, #34d399, #059669);
-  box-shadow: 0 3px 10px rgba(5, 150, 105, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  background: #06d6a0;
+  box-shadow: 0 6px 16px -6px rgba(6, 214, 160, 0.65);
 }
 
 .ob-sell-card .ob-module-icon {
-  background: linear-gradient(135deg, #fb7185, #e11d48);
-  box-shadow: 0 3px 10px rgba(225, 29, 72, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  background: #ff3d77;
+  box-shadow: 0 6px 16px -6px rgba(255, 61, 119, 0.65);
 }
 
 .ob-total-tag {
@@ -835,34 +835,26 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   }
 }
 
-// ==================== 买点 / 卖点诊断卡片（重点样式） ====================
-// 高度不限制，由内容撑开；顶部渐变光带 + 层叠阴影 + 状态色光带条目
+// ==================== 买点 / 卖点诊断卡片（扁平高饱和 · 年轻化） ====================
+// 无顶部光带、无左侧光带、无图标：状态直接用高饱和实色块表达，白字强对比
 .ob-diagnosis-card {
   position: relative;
-  background: #fff;
-  border-radius: 14px;
-  border: 1px solid $ob-border;
-  box-shadow: $ob-shadow-card;
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 12px 32px -20px rgba(15, 23, 42, 0.3);
   display: flex;
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
 
-  // 顶部渐变光带（买点=翠绿）
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    z-index: 1;
-    background: linear-gradient(90deg, #059669, #34d399 45%, rgba(52, 211, 153, 0));
+  // 买点：薄荷微 tint 底
+  &.ob-buy-card {
+    background: #f1fbf7;
   }
 
-  // 卖点=玫瑰
-  &.ob-sell-card::before {
-    background: linear-gradient(90deg, #e11d48, #fb7185 45%, rgba(251, 113, 133, 0));
+  // 卖点：蜜桃微 tint 底
+  &.ob-sell-card {
+    background: #fff3f6;
   }
 
   .ob-refresh-mask {
@@ -872,19 +864,31 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(2px);
+    background: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(3px);
   }
 
   .ob-diagnosis-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 18px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-    background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(248, 250, 252, 0.35));
+    padding: 16px 18px 12px;
     flex-shrink: 0;
     gap: 8px;
+
+    .ob-module-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.01em;
+    }
+
+    .ob-module-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      font-size: 15px;
+    }
   }
 
   .ob-diagnosis-actions {
@@ -898,50 +902,42 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 27px;
-    height: 27px;
-    border-radius: 8px;
-    border: 1px solid rgba(148, 163, 184, 0.28);
-    background: #fff;
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(255, 255, 255, 0.92);
     color: #64748b;
     font-size: 13px;
     cursor: pointer;
     transition: all 0.25s ease;
     padding: 0;
+    box-shadow: 0 2px 8px -4px rgba(15, 23, 42, 0.28);
 
     &:hover {
-      color: #e11d48;
-      border-color: rgba(225, 29, 72, 0.35);
-      background: rgba(225, 29, 72, 0.05);
+      color: #0f172a;
       transform: rotate(90deg);
     }
   }
 
   .ob-status-badge {
-    font-size: 11px;
-    font-weight: 600;
-    color: #64748b;
-    background: rgba(148, 163, 184, 0.12);
-    padding: 4px 12px;
-    border-radius: 100px;
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #475569;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 5px 13px;
+    border-radius: 999px;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
-
-    &.hit {
-      color: #be123c;
-      background: linear-gradient(135deg, rgba(244, 63, 94, 0.12), rgba(225, 29, 72, 0.07));
-      border-color: rgba(244, 63, 94, 0.32);
-      animation: ob-hit-pulse 2.4s ease-in-out infinite;
-    }
+    letter-spacing: 0.01em;
   }
 
   .ob-diagnosis-body {
     flex: 1 1 auto;
-    padding: 14px 16px 16px;
+    padding: 6px 16px 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 9px;
   }
 
   .ob-diagnosis-loading {
@@ -957,108 +953,71 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   }
 }
 
-// 买点检查项（左侧状态光带 + 柔和渐变底色 + 软色徽章）
-.ob-buy-check {
-  position: relative;
-  display: grid;
-  grid-template-columns: 18px auto auto;
-  align-items: center;
-  column-gap: 8px;
-  padding: 9px 12px 9px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+// 命中状态徽章：高饱和实色胶囊（白字）
+.ob-buy-card .ob-status-badge.hit {
+  color: #fff;
+  background: #06d6a0;
+  animation: ob-glow-buy 2.6s ease-in-out infinite;
+}
 
-  // 左侧状态光带
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 7px;
-    bottom: 7px;
-    width: 3px;
-    border-radius: 0 3px 3px 0;
-    background: #cbd5e1;
-  }
+.ob-sell-card .ob-status-badge.hit {
+  color: #fff;
+  background: #ff3d77;
+  animation: ob-glow-sell 2.6s ease-in-out infinite;
+}
+
+// 买点检查项（状态即底色：高饱和实色卡 + 白字 + 半透明白徽章）
+.ob-buy-check {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 3px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #e8edf3;
+  color: #475569;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 5px 14px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 10px 20px -10px rgba(15, 23, 42, 0.4);
   }
 
-  &.passed {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.06), rgba(16, 185, 129, 0.015));
-    border-color: rgba(16, 185, 129, 0.24);
-
-    &::before { background: linear-gradient(180deg, #34d399, #059669); }
-  }
-  &.failed {
-    background: linear-gradient(135deg, rgba(244, 63, 94, 0.06), rgba(244, 63, 94, 0.015));
-    border-color: rgba(244, 63, 94, 0.24);
-
-    &::before { background: linear-gradient(180deg, #fb7185, #e11d48); }
-  }
-  &.exempted {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.07), rgba(245, 158, 11, 0.02));
-    border-color: rgba(245, 158, 11, 0.28);
-
-    &::before { background: linear-gradient(180deg, #fbbf24, #d97706); }
-  }
-
-  .ob-buy-check-icon {
-    font-size: 14px;
-    grid-row: span 2;
-  }
-  &.passed .ob-buy-check-icon { color: #059669; }
-  &.failed .ob-buy-check-icon { color: #e11d48; }
-  &.exempted .ob-buy-check-icon { color: #d97706; }
+  &.passed { background: #2d8cff; color: #fff; }
+  &.failed { background: #ff4757; color: #fff; }
+  &.exempted { background: #ffb020; color: #fff; }
 
   .ob-buy-check-name {
-    font-size: 12px;
-    font-weight: 600;
-    color: #1e293b;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
   }
 
   .ob-buy-check-badge {
     justify-self: end;
     font-size: 10px;
     font-weight: 700;
-    padding: 2px 9px;
+    padding: 3px 10px;
     border-radius: 999px;
+    background: rgba(255, 255, 255, 0.3);
+    color: #fff;
     white-space: nowrap;
     letter-spacing: 0.02em;
-
-    &.passed {
-      color: #047857;
-      background: rgba(16, 185, 129, 0.13);
-      box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.25);
-    }
-    &.failed {
-      color: #be123c;
-      background: rgba(244, 63, 94, 0.11);
-      box-shadow: inset 0 0 0 1px rgba(244, 63, 94, 0.22);
-    }
-    &.exempted {
-      color: #b45309;
-      background: rgba(245, 158, 11, 0.13);
-      box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.25);
-    }
   }
 
   .ob-buy-check-detail {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    grid-column: 2 / -1;
+    gap: 3px;
+    grid-column: 1 / -1;
     font-size: 11px;
-    color: #64748b;
+    color: rgba(255, 255, 255, 0.95);
     line-height: 1.6;
 
     b {
-      color: #0f172a;
-      font-weight: 600;
+      color: #fff;
+      font-weight: 700;
       margin-right: 6px;
       font-variant-numeric: tabular-nums;
     }
@@ -1067,55 +1026,51 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
 .ob-conclusion {
   margin-top: 2px;
-  padding: 12px 14px;
-  border-radius: 10px;
+  padding: 13px 15px;
+  border-radius: 14px;
   font-size: 12.5px;
   line-height: 1.7;
-  background: linear-gradient(135deg, rgba(22, 119, 255, 0.07), rgba(22, 119, 255, 0.02));
-  border: 1px solid rgba(22, 119, 255, 0.22);
-  color: #0958d9;
+  color: #0b7a63;
+  background: rgba(6, 214, 160, 0.16);
 
   &.hit {
-    background: linear-gradient(135deg, rgba(225, 29, 72, 0.08), rgba(225, 29, 72, 0.02));
-    border-color: rgba(225, 29, 72, 0.3);
-    color: #be123c;
+    color: #fff;
+    background: #06d6a0;
     font-weight: 600;
   }
 }
 
-// 卖点持仓卡片（双层卡片：外层股票卡 + 内层条件条目）
+// 卖点持仓卡片（白卡 + 高饱和实色条件条目）
 .ob-sell-stock {
   position: relative;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   background: #fff;
   flex-shrink: 0;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
-
-  &:hover {
-    box-shadow: 0 5px 16px rgba(15, 23, 42, 0.08);
-  }
+  box-shadow: 0 8px 20px -14px rgba(15, 23, 42, 0.32);
+  transition: box-shadow 0.2s ease;
 
   &.hit {
-    border-color: rgba(244, 63, 94, 0.42);
-    box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.1), 0 8px 20px -8px rgba(244, 63, 94, 0.3);
+    box-shadow: 0 10px 26px -12px rgba(255, 61, 119, 0.55);
   }
 
   .ob-sell-stock-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 14px;
-    background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(248, 250, 252, 0.45));
-    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+    padding: 11px 15px;
+    background: #f8fafc;
+  }
+
+  &.hit .ob-sell-stock-header {
+    background: #ffeef3;
   }
 
   .ob-sell-stock-name {
-    font-weight: 700;
-    font-size: 14px;
+    font-weight: 800;
+    font-size: 14.5px;
     color: #0f172a;
+    letter-spacing: 0.01em;
   }
 
   .ob-sell-stock-code {
@@ -1134,121 +1089,67 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   .ob-sell-stock-tag {
     margin-left: auto;
     font-size: 11px;
-    font-weight: 600;
-    padding: 2px 10px;
+    font-weight: 700;
+    padding: 3px 12px;
     border-radius: 999px;
     white-space: nowrap;
     flex-shrink: 0;
+    color: #fff;
 
-    &.safe {
-      color: #1d4ed8;
-      background: rgba(59, 130, 246, 0.09);
-      box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.2);
-    }
-    &.hit {
-      color: #be123c;
-      background: rgba(244, 63, 94, 0.1);
-      box-shadow: inset 0 0 0 1px rgba(244, 63, 94, 0.22);
-    }
+    &.safe { background: #06d6a0; }
+    &.hit { background: #ff3d77; }
   }
 
   .ob-sell-stock-conds {
-    padding: 10px 12px;
+    padding: 11px 12px;
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 8px;
   }
 
-  // 条件条目（与买点检查项同款：状态光带 + 柔和底色 + 软色徽章）
+  // 条件条目（与买点检查项同款：状态即底色）
   .ob-sell-cond {
-    position: relative;
     display: grid;
-    grid-template-columns: 18px auto auto;
+    grid-template-columns: 1fr auto;
     align-items: center;
-    column-gap: 8px;
-    padding: 8px 12px 8px 16px;
-    border-radius: 9px;
-    border: 1px solid rgba(148, 163, 184, 0.16);
-    background: #fff;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 6px;
-      bottom: 6px;
-      width: 3px;
-      border-radius: 0 3px 3px 0;
-      background: #cbd5e1;
-    }
+    column-gap: 10px;
+    row-gap: 3px;
+    padding: 9px 13px;
+    border-radius: 12px;
+    background: #e8edf3;
+    color: #475569;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
 
     &:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.07);
+      box-shadow: 0 10px 20px -10px rgba(15, 23, 42, 0.4);
     }
 
-    &.safe {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.015));
-      border-color: rgba(16, 185, 129, 0.22);
-
-      &::before { background: linear-gradient(180deg, #34d399, #059669); }
-    }
-    &.hit {
-      background: linear-gradient(135deg, rgba(244, 63, 94, 0.06), rgba(244, 63, 94, 0.015));
-      border-color: rgba(244, 63, 94, 0.24);
-
-      &::before { background: linear-gradient(180deg, #fb7185, #e11d48); }
-    }
-    &.pending {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(245, 158, 11, 0.02));
-      border-color: rgba(245, 158, 11, 0.26);
-
-      &::before { background: linear-gradient(180deg, #fbbf24, #d97706); }
-    }
-
-    .ob-sell-cond-icon {
-      font-size: 14px;
-      grid-row: span 2;
-    }
-    &.safe .ob-sell-cond-icon { color: #059669; }
-    &.hit .ob-sell-cond-icon { color: #e11d48; }
-    &.pending .ob-sell-cond-icon { color: #d97706; }
+    &.safe { background: #2d8cff; color: #fff; }
+    &.hit { background: #ff3d77; color: #fff; }
+    &.pending { background: #ffb020; color: #fff; }
 
     .ob-sell-cond-name {
-      font-size: 12px;
-      font-weight: 600;
-      color: #1e293b;
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
     }
 
     .ob-sell-cond-badge {
       justify-self: end;
       font-size: 10px;
       font-weight: 700;
-      padding: 2px 9px;
+      padding: 3px 10px;
       border-radius: 999px;
+      background: rgba(255, 255, 255, 0.3);
+      color: #fff;
       white-space: nowrap;
-    }
-    &.safe .ob-sell-cond-badge {
-      color: #047857;
-      background: rgba(16, 185, 129, 0.13);
-      box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.25);
-    }
-    &.hit .ob-sell-cond-badge {
-      color: #be123c;
-      background: rgba(244, 63, 94, 0.11);
-      box-shadow: inset 0 0 0 1px rgba(244, 63, 94, 0.22);
-    }
-    &.pending .ob-sell-cond-badge {
-      color: #b45309;
-      background: rgba(245, 158, 11, 0.13);
-      box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.25);
     }
 
     .ob-sell-cond-detail {
-      grid-column: 2 / -1;
+      grid-column: 1 / -1;
       font-size: 11px;
-      color: #64748b;
+      color: rgba(255, 255, 255, 0.95);
       line-height: 1.6;
     }
   }
@@ -1259,16 +1160,20 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   font-size: 11.5px;
   color: #64748b;
   line-height: 1.65;
-  padding: 9px 11px;
-  border-radius: 8px;
-  background: rgba(148, 163, 184, 0.08);
-  border: 1px dashed rgba(148, 163, 184, 0.25);
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
 }
 
 // 命中徽章呼吸光晕
-@keyframes ob-hit-pulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.06); }
-  50% { box-shadow: 0 0 0 5px rgba(244, 63, 94, 0.12); }
+@keyframes ob-glow-buy {
+  0%, 100% { box-shadow: 0 4px 14px -4px rgba(6, 214, 160, 0.55); }
+  50% { box-shadow: 0 6px 20px 0 rgba(6, 214, 160, 0.8); }
+}
+
+@keyframes ob-glow-sell {
+  0%, 100% { box-shadow: 0 4px 14px -4px rgba(255, 61, 119, 0.55); }
+  50% { box-shadow: 0 6px 20px 0 rgba(255, 61, 119, 0.8); }
 }
 
 // ==================== 弹窗 ====================

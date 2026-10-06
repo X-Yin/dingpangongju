@@ -3,8 +3,7 @@ import { Spin, Modal, Empty, Switch as AntSwitch } from 'antd';
 import {
   RocketOutlined, RiseOutlined, FallOutlined, StockOutlined,
   AreaChartOutlined, CrownOutlined, RadarChartOutlined, WarningOutlined,
-  CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, ReloadOutlined,
-  ArrowUpOutlined, ArrowDownOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -1136,9 +1135,6 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
           <>
             {checks.sort((a, b) => a.passed - b.passed).map((c) => (
               <div key={c.id} className={`ob-buy-check ${c.exempted ? 'exempted' : c.passed ? 'passed' : 'failed'}`}>
-                <span className="ob-buy-check-icon">
-                  {c.exempted ? <ClockCircleOutlined /> : c.passed ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
-                </span>
                 <span className="ob-buy-check-name">{c.title}</span>
                 <span className={`ob-buy-check-badge ${c.exempted ? 'exempted' : c.passed ? 'passed' : 'failed'}`}>
                   {c.exempted ? '已豁免' : c.passed ? '通过' : '未通过'}
@@ -1310,9 +1306,6 @@ const SellPointDiagnosisCard = () => {
                 <div className="ob-check-reason">{r.error}</div>
               ) : (r.conditions && r.conditions.length > 0 ? r.conditions.sort((a, b) => (b.satisfied ? 2 : b.pending ? 1 : 0) - (a.satisfied ? 2 : a.pending ? 1 : 0)).map((cond, cidx) => (
                 <div key={cidx} className={`ob-sell-cond ${cond.satisfied ? 'hit' : cond.pending ? 'pending' : 'safe'}`}>
-                  <span className="ob-sell-cond-icon">
-                    {cond.satisfied ? <CloseCircleOutlined /> : cond.pending ? <ClockCircleOutlined /> : <CheckCircleOutlined />}
-                  </span>
                   <span className="ob-sell-cond-name">{cond.name}</span>
                   <span className="ob-sell-cond-badge">
                     {cond.satisfied ? '触发' : cond.pending ? `确认中 ${cond.pendingMinutes || 0}/5min` : '未触发'}

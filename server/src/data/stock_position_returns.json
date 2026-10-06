@@ -1,5 +1,40 @@
 [
   {
+    "date": "2026-10-06",
+    "operations": [
+      {
+        "id": "1791258775185_x7ow",
+        "action": "buy",
+        "stockName": "盛美上海",
+        "stockCode": "sh688082",
+        "position": "",
+        "time": "11:52"
+      },
+      {
+        "id": "1791258853104_wf7l",
+        "action": "sell",
+        "stockName": "盛美上海",
+        "stockCode": "sh688082",
+        "position": "",
+        "time": "11:54"
+      },
+      {
+        "id": "1791258862556_ygcp",
+        "action": "buy",
+        "stockName": "宏和科技",
+        "stockCode": "sh603256",
+        "position": "",
+        "time": "11:54"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-06T03:52:55.212Z",
+    "updatedAt": "2026-10-06T03:54:22.570Z"
+  },
+  {
     "date": "2026-10-05",
     "operations": [
       {
