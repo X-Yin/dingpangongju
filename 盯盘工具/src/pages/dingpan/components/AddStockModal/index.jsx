@@ -1,5 +1,6 @@
 import { Modal, Input, Typography, Tooltip, Button, Switch, message } from 'antd';
 import { PlusOutlined, CopyOutlined } from '@ant-design/icons';
+import StockSearchInput from '../../../../components/StockSearchInput';
 import './index.scss';
 
 const { Text } = Typography;
@@ -25,28 +26,23 @@ const AddStockModal = ({
         open={open}
         onCancel={onCancel}
         onOk={onOk}
+        okButtonProps={{ disabled: !newStockCode }} // 未从搜索下拉选定股票（无 code）时不允许提交
         width={400}
         centered
         className="add-stock-modal"
     >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-                <Text type="secondary" style={{ fontSize: '13px' }}>股票代码 (sh/sz开头)</Text>
-                <Input
-                    placeholder="如: sh688981"
-                    value={newStockCode}
-                    onChange={e => setNewStockCode(e.target.value)}
+                <Text type="secondary" style={{ fontSize: '13px' }}>股票名称 (输入后按回车搜索)</Text>
+                <StockSearchInput
+                    value={newStockName}
+                    code={newStockCode}
+                    onChange={(name, code) => {
+                        setNewStockName(name);
+                        setNewStockCode(code);
+                    }}
                     style={{ marginTop: 8 }}
                     autoFocus
-                />
-            </div>
-            <div>
-                <Text type="secondary" style={{ fontSize: '13px' }}>股票名称</Text>
-                <Input
-                    placeholder="请输入股票名称"
-                    value={newStockName}
-                    onChange={e => setNewStockName(e.target.value)}
-                    style={{ marginTop: 8 }}
                 />
             </div>
             <div>

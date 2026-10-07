@@ -777,5 +777,14 @@
     "riskScore": "7",
     "isTech": true,
     "addedAt": "2026-10-07 17:59:33"
+  },
+  {
+    "code": "sh688625",
+    "name": "呈和科技",
+    "isImportant": false,
+    "blockName": "树脂",
+    "riskScore": "7",
+    "isTech": true,
+    "addedAt": "2026-10-07 21:38:28"
   }
 ]

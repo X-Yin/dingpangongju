@@ -18,6 +18,7 @@ import { local_ip } from '../../constant';
 import Block from '../../components/Block';
 import BlockMoneyChange from '../../components/BlockMoneyChange';
 import StockKLineModal from '../../components/StockKLineModal';
+import StockSearchInput from '../../components/StockSearchInput';
 import './index.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -260,6 +261,9 @@ const BlockConfigPanel = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('change'); // 'change' | 'name'
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
+  // 弹窗内通过搜索选择的股票：新增股票为单只，新增板块为多只（均为 { name, code }，code 带 sh/sz 前缀）
+  const [stockPick, setStockPick] = useState({ name: '', code: '' });
+  const [newBlockStocks, setNewBlockStocks] = useState([]);
 
   // 折叠状态：默认全部折叠；URL 携带 blockName 时仅展开该板块
   const [expandedKeys, setExpandedKeys] = useState(() => {
@@ -304,6 +308,7 @@ const BlockConfigPanel = () => {
   const handleAdd = (blockName) => {
     setEditing(null);
     setModalMode('stock');
+    setStockPick({ name: '', code: '' }); // 清空上一次残留，避免带着旧 code 直接提交
     form.resetFields();
     if (blockName) {
       form.setFieldsValue({ blockName });
@@ -314,6 +319,7 @@ const BlockConfigPanel = () => {
   const handleAddBlock = () => {
     setEditing(null);
     setModalMode('block');
+    setNewBlockStocks([]); // 清空上一次残留的股票行
     form.resetFields();
     setModalOpen(true);
   };
@@ -423,12 +429,17 @@ const BlockConfigPanel = () => {
         messageText = '更新成功';
         payload = { block: values };
       } else if (modalMode === 'block') {
+        // 未完成搜索选择的行不提交，避免写入缺 code 的股票
+        if (newBlockStocks.some(s => !s.code || !s.name)) {
+          message.warning('请为每只已添加的股票完成搜索选择');
+          return;
+        }
         action = 'addBlock';
         messageText = '新增板块成功';
         payload = {
           blockName: values.blockName,
           tag: values.tag || undefined,
-          stocks: (values.stocks || []).map(s => ({
+          stocks: newBlockStocks.map(s => ({
             blockName: values.blockName,
             code: s.code,
             name: s.name,
@@ -437,7 +448,7 @@ const BlockConfigPanel = () => {
       } else {
         action = 'add';
         messageText = '添加成功';
-        payload = { block: values };
+        payload = { block: { blockName: values.blockName, code: stockPick.code, name: stockPick.name } };
       }
       const res = await axios.post(`http://${local_ip}:3000/api/blocks_config`, {
         action,
@@ -705,6 +716,7 @@ const BlockConfigPanel = () => {
         onCancel={() => setModalOpen(false)}
         okText="保存"
         cancelText="取消"
+        okButtonProps={{ disabled: !editing && modalMode === 'stock' && !stockPick.code }} // 未选定股票（无 code）时不允许提交
         width={modalMode === 'block' ? 600 : 480}
       >
         <Form form={form} layout="vertical">
@@ -720,57 +732,52 @@ const BlockConfigPanel = () => {
                   options={BLOCK_TAG_OPTIONS.map(t => ({ value: t, label: t }))}
                 />
               </Form.Item>
-              <Form.List name="stocks">
-              {(fields, { add, remove }) => (
-                <>
-                  <div style={{ marginBottom: 8, color: '#64748b', fontSize: 13 }}>
-                    可在此添加多只股票（选填）
-                  </div>
-                  {fields.map(({ key, name, ...restField }) => (
-                    <div key={key} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'code']}
-                        rules={[{ required: true, message: '必填' }]}
-                        style={{ marginBottom: 0, flex: 1 }}
-                      >
-                        <Input placeholder="股票代码，如 sh688981" />
-                      </Form.Item>
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'name']}
-                        rules={[{ required: true, message: '必填' }]}
-                        style={{ marginBottom: 0, flex: 1 }}
-                      >
-                        <Input placeholder="股票名称，如 中芯国际" />
-                      </Form.Item>
-                      <MinusCircleOutlined
-                        onClick={() => remove(name)}
-                        style={{ fontSize: 22, color: '#ff4d4f', marginTop: 4 }}
-                      />
-                    </div>
-                  ))}
-                  <Button
-                    type="dashed"
-                    onClick={() => add()}
-                    block
-                    icon={<PlusOutlined />}
-                  >
-                    添加股票
-                  </Button>
-                </>
-              )}
-              </Form.List>
+              <div style={{ marginBottom: 8, color: '#64748b', fontSize: 13 }}>
+                可在此添加多只股票（选填，输入名称后按回车搜索）
+              </div>
+              {newBlockStocks.map((stock, index) => (
+                <div key={index} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
+                  <StockSearchInput
+                    value={stock.name}
+                    code={stock.code}
+                    onChange={(name, code) => setNewBlockStocks(prev => prev.map((s, i) => (i === index ? { name, code } : s)))}
+                    style={{ flex: 1 }}
+                  />
+                  <MinusCircleOutlined
+                    onClick={() => setNewBlockStocks(prev => prev.filter((_, i) => i !== index))}
+                    style={{ fontSize: 22, color: '#ff4d4f', marginTop: 4 }}
+                  />
+                </div>
+              ))}
+              <Button
+                type="dashed"
+                onClick={() => setNewBlockStocks(prev => [...prev, { name: '', code: '' }])}
+                block
+                icon={<PlusOutlined />}
+              >
+                添加股票
+              </Button>
             </>
-          ) : (
+          ) : editing ? (
             <>
               <Form.Item name="code" label="股票代码" rules={[{ required: true, message: '请输入股票代码' }]}>
-                <Input placeholder="例如：sh688981、sz002371" disabled={!!editing} />
+                <Input placeholder="例如：sh688981、sz002371" disabled />
               </Form.Item>
               <Form.Item name="name" label="股票名称" rules={[{ required: true, message: '请输入股票名称' }]}>
                 <Input placeholder="例如：中芯国际" />
               </Form.Item>
             </>
+          ) : (
+            <div>
+              <Text type="secondary" style={{ fontSize: 13 }}>股票名称 (输入后按回车搜索)</Text>
+              <StockSearchInput
+                value={stockPick.name}
+                code={stockPick.code}
+                onChange={(name, code) => setStockPick({ name, code })}
+                style={{ marginTop: 8 }}
+                autoFocus
+              />
+            </div>
           )}
         </Form>
       </Modal>

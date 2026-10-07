@@ -14,6 +14,8 @@ const CACHE_TTL = {
   board_change: 10 * 1000,
   stock_changes: 10 * 1000,
   stock_changes_all: 10 * 1000,
+  stock_news: 5 * 60 * 1000,
+  stock_zyjs: 60 * 60 * 1000,
   jgcyd: 10 * 60 * 1000,
   sector_spot: 30 * 1000,
   sector_detail: 60 * 1000,
@@ -107,6 +109,10 @@ const getClsNews = (symbol) => getAkData('cls_news', symbol);
 const getBoardChange = () => getAkData('board_change');
 // 盘口异动（全部 18 种异动类型并发抓取后合并，按时间倒序，最多 300 条）
 const getStockChangesAll = () => getAkData('stock_changes_all');
+// 个股新闻（东财，symbol 为 6 位股票代码）
+const getStockNews = (symbol) => getAkData('stock_news', symbol);
+// 主营介绍（同花顺，symbol 为 6 位股票代码）
+const getStockZyjs = (symbol) => getAkData('stock_zyjs', symbol);
 // 东财千股千评-机构参与度（symbol 为 6 位股票代码）
 const getInstitutionParticipation = (symbol) => getAkData('jgcyd', symbol);
 // 新浪行业-板块行情（indicator 可选: 新浪行业/启明星行业/概念/地域/行业）
@@ -118,6 +124,8 @@ module.exports = {
   getClsNews,
   getBoardChange,
   getStockChangesAll,
+  getStockNews,
+  getStockZyjs,
   getInstitutionParticipation,
   getSectorSpot,
   getSectorDetail,

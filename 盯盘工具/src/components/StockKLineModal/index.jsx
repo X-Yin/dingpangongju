@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Modal, Typography, Space, Tag, Spin, Empty, Segmented, Button, message, Switch } from 'antd';
-import { LineChartOutlined, BarChartOutlined, AreaChartOutlined, HistoryOutlined, RadarChartOutlined, StarOutlined } from '@ant-design/icons';
+import { Modal, Typography, Space, Tag, Spin, Empty, Segmented, Button, message, Switch, List } from 'antd';
+import { LineChartOutlined, BarChartOutlined, AreaChartOutlined, HistoryOutlined, RadarChartOutlined, StarOutlined, FileTextOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { isTradingDay, getPrevTradingDay } from '../../utils/tradingDay';
@@ -42,6 +42,10 @@ const StockKLineModal = ({
   const [dayTlineLoading, setDayTlineLoading] = useState(false);
   const [selectedDay, setSelectedDay] = useState('');
   const [stockName, setStockName] = useState('');
+  const [zyjsText, setZyjsText] = useState('');
+  const [newsVisible, setNewsVisible] = useState(false);
+  const [newsData, setNewsData] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(false);
   const pollingRef = useRef(null);
   const klinePollingRef = useRef(null);
 
@@ -131,6 +135,47 @@ const StockKLineModal = ({
     }
   };
 
+  // 主营业务介绍（同花顺）：symbol 需去掉市场前缀
+  const fetchZyjsData = async () => {
+    if (!code) return;
+    const symbol = code.replace(/^(sh|sz|bj)/i, '');
+    try {
+      const res = await axios.get(`http://${local_ip}:3000/api/ak/stock_zyjs`, { params: { code: symbol } });
+      if (res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        setZyjsText(res.data.data[0]['主营业务'] || '');
+      }
+    } catch (error) {
+      console.error('Fetch zyjs data failed:', error);
+    }
+  };
+
+  // 个股新闻（东财）：打开新闻弹窗时懒加载
+  const fetchNewsData = async () => {
+    if (!code) return;
+    const symbol = code.replace(/^(sh|sz|bj)/i, '');
+    setNewsLoading(true);
+    try {
+      const res = await axios.get(`http://${local_ip}:3000/api/ak/stock_news`, { params: { code: symbol } });
+      if (res.data?.success) {
+        setNewsData(res.data.data || []);
+      } else {
+        message.error(res.data?.message || '获取个股新闻失败');
+      }
+    } catch (error) {
+      console.error('Fetch stock news failed:', error);
+      message.error('获取个股新闻失败，请稍后重试');
+    } finally {
+      setNewsLoading(false);
+    }
+  };
+
+  const handleOpenNews = () => {
+    setNewsVisible(true);
+    if (newsData.length === 0 && !newsLoading) {
+      fetchNewsData();
+    }
+  };
+
   useEffect(() => {
     if (visible && code) {
       // 每次打开弹窗按 initialTab 定位 tab（盘口异动点击股票名会传 quantTimeline）
@@ -155,6 +200,7 @@ const StockKLineModal = ({
   useEffect(() => {
     if (visible && code) {
       fetchStockData();
+      fetchZyjsData();
     } else if (!visible) {
       setKData([]);
       setTData([]);
@@ -169,6 +215,10 @@ const StockKLineModal = ({
       setDayTlineData([]);
       setSelectedDay('');
       setStockName('');
+      setZyjsText('');
+      setNewsVisible(false);
+      setNewsData([]);
+      setNewsLoading(false);
     }
   }, [visible, code]);
 
@@ -360,6 +410,14 @@ const StockKLineModal = ({
               >
                 添加重点股票
               </Button>
+              <Button
+                size="small"
+                icon={<FileTextOutlined />}
+                onClick={handleOpenNews}
+                style={{ fontSize: '12px', padding: '2px 8px' }}
+              >
+                个股新闻
+              </Button>
             </Space>
             <Segmented
               options={[
@@ -429,27 +487,46 @@ const StockKLineModal = ({
             ) : (
               kData.length > 0 ? (
                 <>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'flex-end', 
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     marginBottom: '8px',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '12px'
                   }}>
-                    <span style={{ fontSize: '13px', color: showResilienceKline ? '#722ed1' : '#666' }}>抗分歧 K 线</span>
-                    <Switch 
-                      checked={showResilienceKline} 
-                      onChange={(checked) => setShowResilienceKline(checked)}
-                      checkedChildren="开启"
-                      unCheckedChildren="关闭"
-                    />
-                    <span style={{ fontSize: '13px', color: showInstitution ? '#1677ff' : '#666', marginLeft: '8px' }}>机构参与度</span>
-                    <Switch 
-                      checked={showInstitution} 
-                      onChange={(checked) => setShowInstitution(checked)}
-                      checkedChildren="开启"
-                      unCheckedChildren="关闭"
-                    />
+                    {zyjsText && (
+                      <Text
+                        type="secondary"
+                        title={zyjsText}
+                        style={{
+                          fontSize: 12,
+                          flex: 1,
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <Text strong style={{ fontSize: 12, color: getThemeColor() }}>主营业务：</Text>
+                        {zyjsText}
+                      </Text>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                      <span style={{ fontSize: '13px', color: showResilienceKline ? '#722ed1' : '#666' }}>抗分歧 K 线</span>
+                      <Switch
+                        checked={showResilienceKline}
+                        onChange={(checked) => setShowResilienceKline(checked)}
+                        checkedChildren="开启"
+                        unCheckedChildren="关闭"
+                      />
+                      <span style={{ fontSize: '13px', color: showInstitution ? '#1677ff' : '#666', marginLeft: '8px' }}>机构参与度</span>
+                      <Switch
+                        checked={showInstitution}
+                        onChange={(checked) => setShowInstitution(checked)}
+                        checkedChildren="开启"
+                        unCheckedChildren="关闭"
+                      />
+                    </div>
                   </div>
                   <StockKLine
                     data={kData}
@@ -538,6 +615,67 @@ const StockKLineModal = ({
           <StockTimeLine data={dayTlineData} height={450} />
         ) : (
           <Empty description="暂无该日分时数据" />
+        )}
+      </Modal>
+
+      {/* 个股新闻弹窗：叠在主弹窗之上，新闻列表可点击跳转原文 */}
+      <Modal
+        title={
+          <Space>
+            <FileTextOutlined style={{ color: getThemeColor() }} />
+            {displayName && <Text strong>{displayName}</Text>}
+            <Text type="secondary">个股新闻</Text>
+          </Space>
+        }
+        open={newsVisible}
+        onCancel={() => setNewsVisible(false)}
+        footer={null}
+        width={720}
+        centered
+        destroyOnClose
+        zIndex={1100}
+        bodyStyle={{ padding: '8px 24px', maxHeight: '65vh', overflowY: 'auto' }}
+      >
+        {newsLoading ? (
+          <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Spin tip="正在加载个股新闻..." size="large" />
+          </div>
+        ) : newsData.length > 0 ? (
+          <List
+            dataSource={newsData}
+            rowKey={(item, idx) => `${item['新闻链接'] || ''}-${idx}`}
+            renderItem={(item) => (
+              <List.Item style={{ padding: '10px 0' }}>
+                <a
+                  href={item['新闻链接']}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'block', width: '100%', color: 'inherit' }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+                    <Text strong style={{ fontSize: 13, color: 'rgba(0,0,0,0.88)' }}>{item['新闻标题']}</Text>
+                    <Text type="secondary" style={{ fontSize: 12, flexShrink: 0 }}>{item['发布时间']}</Text>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: '#666',
+                      marginTop: 4,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {item['新闻内容']}
+                  </div>
+                  <Text type="secondary" style={{ fontSize: 12 }}>来源：{item['文章来源']}</Text>
+                </a>
+              </List.Item>
+            )}
+          />
+        ) : (
+          <Empty description="暂无个股新闻" />
         )}
       </Modal>
     </>

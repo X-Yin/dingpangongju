@@ -289,6 +289,16 @@ const DingPan = () => {
         setThemeColorModalVisible(false);
     };
 
+    // 打开新增股票弹窗：清空上一次的残留输入，避免带着旧 code 直接提交
+    const handleOpenAddStockModal = () => {
+        setNewStockCode('');
+        setNewStockName('');
+        setNewStockBlockName('');
+        setNewStockRiskScore('');
+        setNewStockIsTech(true);
+        setAddStockModalVisible(true);
+    };
+
     // 新增自选股
     const handleAddStock = async () => {
         if (!newStockCode || !newStockName) {
@@ -2459,7 +2469,7 @@ const DingPan = () => {
                                 setSearchQuery={setSearchQuery}
                                 refreshingStockData={refreshingStockData}
                                 onRefresh={handleRefreshStockData}
-                                onAddStock={() => setAddStockModalVisible(true)}
+                                onAddStock={handleOpenAddStockModal}
                                 showOnlyImportant={showOnlyImportant}
                                 setShowOnlyImportant={setShowOnlyImportant}
                                 sortOrder={sortOrder}

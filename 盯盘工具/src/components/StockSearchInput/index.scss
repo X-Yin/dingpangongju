@@ -1,0 +1,57 @@
+/* 股票搜索输入框：名称输入 + 回车触发的搜索下拉 + 选中后的 code 小灰字 */
+.stock-search-input {
+    position: relative;
+    width: 100%;
+
+    /* 选中后展示在输入框下方的小灰字 code（带 sh/sz 前缀） */
+    .stock-search-input-code {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 16px;
+        color: #999;
+        user-select: all;
+    }
+
+    .stock-search-input-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        margin-top: 2px;
+        max-height: 220px;
+        overflow-y: auto;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .stock-search-input-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 7px 12px;
+        font-size: 13px;
+        cursor: pointer;
+
+        &.active {
+            background: #f5f5f5;
+        }
+
+        .stock-search-input-option-name {
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .stock-search-input-option-code {
+            flex-shrink: 0;
+            font-size: 12px;
+            color: #999;
+            font-family: monospace;
+        }
+    }
+}

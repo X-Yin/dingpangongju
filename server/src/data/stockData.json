@@ -1898,5 +1898,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sh688625": {
+    "stockName": "呈和科技",
+    "kline": [
+      {
+        "trade_date": 20260930,
+        "open_px": 69.32,
+        "high_px": 70.27,
+        "low_px": 66.07,
+        "close_px": 66.58,
+        "business_amount": 5712257,
+        "business_balance": 388243340,
+        "change": -2.25,
+        "ma5_px": 70.15,
+        "ma10_px": 70.05,
+        "ma20_px": 63.87,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

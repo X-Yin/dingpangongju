@@ -1062,5 +1062,10 @@ exports.default = [
         "code": "sz301080",
         "name": "百普赛斯",
         "tag": "防御"
+    },
+    {
+        "blockName": "PPE树脂",
+        "code": "sh688625",
+        "name": "呈和科技"
     }
 ]

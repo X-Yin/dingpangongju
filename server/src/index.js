@@ -110,7 +110,7 @@ const { isTradingDay } = require('./utils/tradingDay');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
 const { scheduleLianbanDaily } = require('./service/lianban');
-const { getClsNews, getBoardChange, getStockChangesAll, getInstitutionParticipation, getSectorSpot, getSectorDetail } = require('./service/akData');
+const { getClsNews, getBoardChange, getStockChangesAll, getStockNews, getStockZyjs, getInstitutionParticipation, getSectorSpot, getSectorDetail } = require('./service/akData');
 const { getThsHotRank } = require('./service/thsHotRank');
 
 
@@ -618,6 +618,40 @@ app.post('/api/run-quant-analysis', async (req, res) => {
 app.get('/jisuyidong_rank', async (req, res) => {
   const jisuyidongRankData = getJiSuYiDongRankData();
   res.json(jisuyidongRankData);
+});
+
+// 股票搜索：代理同花顺 mobi-stockdict 搜索接口，仅返回沪深 A 股，code 自动带上 sh/sz 前缀
+const SEARCH_STOCK_URL = 'https://news.10jqka.com.cn/app/headline/mobi-stockdict/v1/search/';
+const searchStockReqHeaders = {
+  Accept: 'application/json, text/plain, */*',
+  Origin: 'https://www.10jqka.com.cn',
+  Referer: 'https://www.10jqka.com.cn/',
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36',
+};
+app.get('/search_stock', async (req, res) => {
+  const { query } = req.query;
+  if (!query || !String(query).trim()) {
+    res.json({ success: true, data: [] });
+    return;
+  }
+  try {
+    const axios = require('axios');
+    const { data } = await axios.get(SEARCH_STOCK_URL, {
+      params: { isrealcode: 1, associate: 1, json: 1, markettype: 2, query: String(query).trim() },
+      headers: searchStockReqHeaders,
+      timeout: 5000,
+    });
+    const rows = (data && data.data && Array.isArray(data.data.body)) ? data.data.body : [];
+    // 行结构: [hq_code, stock_name, simple_spell, hq_market, function_bit, market_label, securities_code, stock_label]
+    // 仅保留沪深 A 股：hq_market 17=沪A(主板/科创) 33=深A(主板/创业)，其余为指数/基金/港股/权证/板块
+    const list = rows
+      .filter(r => r[3] === '17' || r[3] === '33')
+      .map(r => ({ code: `${r[3] === '17' ? 'sh' : 'sz'}${r[0]}`, name: r[1] }));
+    res.json({ success: true, data: list });
+  } catch (error) {
+    console.error('搜索股票失败:', error.message);
+    res.status(500).json({ success: false, message: error.message || '搜索失败' });
+  }
 });
 
 // 自选股管理接口
@@ -4130,6 +4164,28 @@ app.get('/api/ak/jgcyd', async (req, res) => {
     res.json({ success: true, data });
   } catch (error) {
     console.error('获取机构参与度失败:', error.message);
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// 个股新闻（东财，code 传 6 位股票代码）
+app.get('/api/ak/stock_news', async (req, res) => {
+  try {
+    const data = await getStockNews(req.query.code);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('获取个股新闻失败:', error.message);
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// 主营介绍（同花顺，code 传 6 位股票代码）
+app.get('/api/ak/stock_zyjs', async (req, res) => {
+  try {
+    const data = await getStockZyjs(req.query.code);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('获取主营介绍失败:', error.message);
     res.json({ success: false, message: error.message });
   }
 });

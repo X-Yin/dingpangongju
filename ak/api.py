@@ -141,6 +141,19 @@ def get_hot_rank():
     return pd.DataFrame(rows)
 
 
+def get_stock_news(symbol="603777"):
+    """个股新闻（东财）symbol 为 6 位股票代码
+    返回 关键词/新闻标题/新闻内容/发布时间/文章来源/新闻链接，按发布时间倒序（最新在前）"""
+    df = ak.stock_news_em(symbol=symbol)
+    # 发布时间为 'YYYY-MM-DD HH:MM:SS' 字符串，可直接按字典序倒序
+    return df.sort_values('发布时间', ascending=False) if not df.empty else df
+
+
+def get_stock_zyjs(symbol="000066"):
+    """主营介绍（同花顺）symbol 为 6 位股票代码，返回 股票代码/股票简称/主营业务 等"""
+    return ak.stock_zyjs_ths(symbol=symbol)
+
+
 def get_institution_participation(symbol="600000"):
     """东财千股千评-主力控盘-机构参与度（按交易日）
     symbol 为 6 位股票代码（不带市场前缀），返回 交易日/机构参与度 两列"""
@@ -189,6 +202,8 @@ FETCHERS = {
     'stock_changes': get_stock_changes,
     'stock_changes_all': get_stock_changes_all,
     'hot_rank': get_hot_rank,
+    'stock_news': get_stock_news,
+    'stock_zyjs': get_stock_zyjs,
     'jgcyd': get_institution_participation,
     'sector_spot': get_sector_spot,
     'sector_detail': get_sector_detail,
@@ -198,6 +213,8 @@ FETCHERS = {
 ARG_NAMES = {
     'cls_news': 'symbol',
     'stock_changes': 'symbol',
+    'stock_news': 'symbol',
+    'stock_zyjs': 'symbol',
     'jgcyd': 'symbol',
     'sector_spot': 'indicator',
     'sector_detail': 'sector',
@@ -231,7 +248,7 @@ if __name__ == '__main__':
     if len(sys.argv) < 2 or sys.argv[1] not in FETCHERS:
         print(json.dumps({
             'success': False,
-            'message': '用法: python3 api.py <cls_news|board_change|stock_changes|stock_changes_all|hot_rank|jgcyd|sector_spot|sector_detail> [参数]',
+            'message': '用法: python3 api.py <cls_news|board_change|stock_changes|stock_changes_all|hot_rank|stock_news|stock_zyjs|jgcyd|sector_spot|sector_detail> [参数]',
         }, ensure_ascii=False))
         sys.exit(1)
 
