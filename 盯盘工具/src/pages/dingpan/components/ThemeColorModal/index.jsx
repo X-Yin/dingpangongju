@@ -63,6 +63,18 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
     // 当前是否已选择主题包（默认主题 id 为 ''）
     const packActive = !!draft.pack;
 
+    useEffect(() => {
+        const id = draft.pack;
+        if (id) {
+            setTimeout(() => {
+                const el = document.querySelector(`div.theme-pack-option.selected`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 20);
+        }
+    }, [draft]);
+
     const handleOk = () => {
         onOk({
             pack: draft.pack || '',
