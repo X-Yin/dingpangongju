@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
+import { VDITOR_CDN } from '../../utils/vditorConfig';
 import { Button, message } from 'antd';
 import { SaveOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -104,6 +105,7 @@ const TodayPlan = ({ onModifiedChange }) => {
     if (!vditorRef.current) return;
 
     vditorInstanceRef.current = new Vditor(vditorRef.current, {
+      cdn: VDITOR_CDN,
       height: 600,
       mode: 'wysiwyg',
       theme: 'classic',

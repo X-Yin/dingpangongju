@@ -16,6 +16,7 @@ import {
 } from '@ant-design/icons';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
+import { VDITOR_CDN } from '../../../utils/vditorConfig';
 import axios from 'axios';
 import { local_ip } from '../../../constant';
 import { getThemeColor } from '../../../utils/theme';
@@ -924,6 +925,7 @@ const ResearchReportModule = () => {
 
         try {
           editorInstance.current = new Vditor(vditorRef.current, {
+            cdn: VDITOR_CDN,
             minHeight: 500,
             type: 'markdown',
             value: currentContent,

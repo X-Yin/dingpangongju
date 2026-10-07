@@ -1132,5 +1132,25 @@
       "code": "sh605577",
       "change": 10
     }
+  ],
+  "AI 医药": [
+    {
+      "name": "义翘神州",
+      "blockName": "AI 医药",
+      "code": "sz301047",
+      "change": 10.99
+    },
+    {
+      "name": "近岸蛋白",
+      "blockName": "AI 医药",
+      "code": "sh688137",
+      "change": 13.47
+    },
+    {
+      "name": "百普赛斯",
+      "blockName": "AI 医药",
+      "code": "sz301080",
+      "change": 14.69
+    }
   ]
 }

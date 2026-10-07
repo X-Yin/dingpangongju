@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Input, Button, message } from 'antd';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
+import { VDITOR_CDN } from '../../../utils/vditorConfig';
 
 const MainProblemEditorModal = ({
     visible,
@@ -35,6 +36,7 @@ const MainProblemEditorModal = ({
 
         if (!editorInstance.current) {
             editorInstance.current = new Vditor(vditorRef.current, {
+                    cdn: VDITOR_CDN,
                     minHeight: 300,
                     type: 'markdown',
                     value: initialContent,

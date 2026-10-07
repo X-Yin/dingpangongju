@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, message, Tag, Space } from 'antd';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
+import { VDITOR_CDN } from '../../../utils/vditorConfig';
 
 const PersonalSuggestionEditor = ({
     title,
@@ -22,6 +23,7 @@ const PersonalSuggestionEditor = ({
     useEffect(() => {
         setTimeout(() => {
             const currentVditor = new Vditor(vditorRef.current, {
+                cdn: VDITOR_CDN,
                 minHeight: 200,
                 type: 'markdown',
                 cache: { enable: false },

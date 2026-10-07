@@ -6,6 +6,7 @@ import axios from 'axios';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
+import { VDITOR_CDN } from '../../utils/vditorConfig';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
 import './index.scss';
@@ -1427,6 +1428,7 @@ const Fupan = () => {
       }
 
       const currentVditor = new Vditor(vditorRef.current, {
+        cdn: VDITOR_CDN,
         minHeight: 300,
         height: 400,
         type: 'markdown',

@@ -5,6 +5,7 @@ import axios from 'axios';
 import { isAfterMarketClose } from '../../utils/tradingDay';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
+import { VDITOR_CDN } from '../../utils/vditorConfig';
 import { local_ip } from '../../constant';
 import './index.scss';
 
@@ -166,6 +167,7 @@ const JigouReports = () => {
       }
       try {
         addEditorInstance.current = new Vditor(addVditorRef.current, {
+          cdn: VDITOR_CDN,
           minHeight: 320,
           type: 'markdown',
           value: addModalContentRef.current,

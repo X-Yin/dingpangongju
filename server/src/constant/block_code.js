@@ -1044,5 +1044,23 @@ exports.default = [
         "blockName": "机器人",
         "code": "sz002242",
         "name": "九阳股份"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sz301047",
+        "name": "义翘神州",
+        "tag": "防御"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sh688137",
+        "name": "近岸蛋白",
+        "tag": "防御"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sz301080",
+        "name": "百普赛斯",
+        "tag": "防御"
     }
 ]
