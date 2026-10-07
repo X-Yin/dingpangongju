@@ -108,6 +108,8 @@ const feishuNotify = require('./service/feishuNotify');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
 const { scheduleLianbanDaily } = require('./service/lianban');
+const { getClsNews, getBoardChange, getStockChangesAll, getInstitutionParticipation, getSectorSpot, getSectorDetail } = require('./service/akData');
+const { getThsHotRank } = require('./service/thsHotRank');
 
 
 
@@ -3764,6 +3766,85 @@ setInterval(() => {
 // 连板网每日连板数据：交易日 21:00 后自动抓取当日热点题材涨停数据（见 service/lianban.js）
 // 挂在常驻的 Web 服务进程上（poll 进程 15:05 收盘后会自动退出，无法覆盖晚间任务）
 scheduleLianbanDaily(21, 30);
+
+// ==================== akshare 数据接口（python 脚本数据源，见 service/akData.js） ====================
+
+// 财联社新闻（可选参数 symbol: 全部/重点，默认全部）
+app.get('/api/ak/cls_news', async (req, res) => {
+  try {
+    const data = await getClsNews(req.query.symbol);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('获取财联社新闻失败:', error.message);
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// 板块异动
+app.get('/api/ak/board_change', async (req, res) => {
+  try {
+    const data = await getBoardChange();
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('获取板块异动失败:', error.message);
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// 盘口异动（全部 18 种异动类型合并，按时间倒序，最多 300 条）
+app.get('/api/ak/stock_changes', async (req, res) => {
+  try {
+    const data = await getStockChangesAll();
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('获取盘口异动失败:', error.message);
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// 同花顺个股热度前 100（node 直接请求同花顺热度榜，不再走 python akshare）
+app.get('/api/ak/hot_rank', async (req, res) => {
+  try {
+    const data = await getThsHotRank();
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('获取同花顺热度榜失败:', error.message);
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// 机构参与度（东财千股千评-主力控盘，按交易日；code 传 6 位股票代码）
+app.get('/api/ak/jgcyd', async (req, res) => {
+  try {
+    const data = await getInstitutionParticipation(req.query.code);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('获取机构参与度失败:', error.message);
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// 新浪行业-板块行情（indicator 可选，默认新浪行业）
+app.get('/api/ak/sector_spot', async (req, res) => {
+  try {
+    const data = await getSectorSpot(req.query.indicator);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('获取板块行情失败:', error.message);
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// 新浪行业-板块成分股详情（sector 传板块行情返回的 label）
+app.get('/api/ak/sector_detail', async (req, res) => {
+  try {
+    const data = await getSectorDetail(req.query.sector);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('获取板块成分股失败:', error.message);
+    res.json({ success: false, message: error.message });
+  }
+});
 
 // 启动服务
 app.listen(port, () => {

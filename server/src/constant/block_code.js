@@ -1023,5 +1023,26 @@ exports.default = [
         "blockName": "粮食",
         "code": "sh600127",
         "name": "金健米业"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sz000678",
+        "name": "襄阳轴承"
+    },
+    {
+        "blockName": "传媒",
+        "code": "sh600825",
+        "name": "新华传媒",
+        "tag": "防御"
+    },
+    {
+        "blockName": "传媒",
+        "code": "sh605577",
+        "name": "龙版传媒"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sz002242",
+        "name": "九阳股份"
     }
 ]

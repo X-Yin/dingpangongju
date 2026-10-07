@@ -1,0 +1,110 @@
+.market-pulse-panel {
+
+  :global(.ant-card-body) {
+    margin-bottom: 12px !important;
+  }
+
+  .mp-extra {
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.45);
+    font-weight: normal;
+  }
+
+  .mp-list {
+    font-size: 12px;
+    padding-bottom: 12px;
+    box-sizing: border-box;
+  }
+
+  .mp-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 8px;
+    margin-bottom: 3px;
+    border: 1px solid rgba(18, 33, 58, 0.06);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.88);
+    line-height: 20px;
+    cursor: pointer;
+    transition: all 0.22s ease;
+
+    &:hover {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  .mp-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+  }
+
+  // 异动类型：积极红色、消极绿色（默认色；主题包下由 .pack-active 覆盖为 --dp-up-color/--dp-down-color）
+  .mp-type {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 600;
+
+    &.pos {
+      color: #e11d48;
+    }
+
+    &.neg {
+      color: #059669;
+    }
+  }
+
+  .mp-num {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+
+    &.up {
+      color: #e11d48;
+    }
+
+    &.down {
+      color: #059669;
+    }
+  }
+
+  .mp-rank {
+    flex-shrink: 0;
+    width: 22px;
+    text-align: center;
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.45);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mp-time {
+    flex-shrink: 0;
+    color: rgba(0, 0, 0, 0.45);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mp-news-item {
+    padding: 4px 8px;
+    margin-bottom: 3px;
+    border: 1px solid rgba(18, 33, 58, 0.06);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.88);
+    font-size: 12px;
+    line-height: 18px;
+  }
+
+  .mp-news-text {
+    word-break: break-all;
+  }
+
+  .mp-placeholder {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.4);
+    text-align: center;
+    padding: 12px 0;
+  }
+}

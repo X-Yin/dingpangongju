@@ -6,11 +6,12 @@ import { createChart, ColorType, LineStyle } from 'lightweight-charts';
  * - tradeMarkers: 买卖点标记数组 [{ time: 'YYYY-MM-DD', position, color, shape, text }]
  * - priceLines: 价格横线数组 [{ price, color, title }]，统一画为红色/绿色虚线由调用方传色
  */
-export default function KLine({ data = [], height = 500, showResilience = false, onFetchResilience, onClickCandle, tradeMarkers, priceLines }) {
+export default function KLine({ data = [], height = 500, showResilience = false, onFetchResilience, showInstitution = false, onFetchInstitution, onClickCandle, tradeMarkers, priceLines }) {
   const container = useRef(null);
   const chartRef = useRef(null);
   const tooltipRef = useRef(null);
   const resilienceSeriesRef = useRef(null);
+  const institutionSeriesRef = useRef(null);
   const candlestickRef = useRef(null);
   const volumeSeriesRef = useRef(null);
   const ma5SeriesRef = useRef(null);
@@ -18,18 +19,27 @@ export default function KLine({ data = [], height = 500, showResilience = false,
   const ma20SeriesRef = useRef(null);
   const chartInitializedRef = useRef(false);
   const resilienceScoreMapRef = useRef({});
+  const institutionMapRef = useRef({});
   const changeMapRef = useRef({});
   // 已创建的价格虚线引用集合（换股/清除时逐条 removePriceLine，避免残留与泄漏）
   const priceLineRefs = useRef([]);
-  // tooltip 回调只在图表初始化时注册一次，需用 ref 读取实时 showResilience，避免闭包捕获初始值
+  // tooltip 回调只在图表初始化时注册一次，需用 ref 读取实时 showResilience/showInstitution，避免闭包捕获初始值
   const showResilienceRef = useRef(showResilience);
+  const showInstitutionRef = useRef(showInstitution);
   const [resilienceData, setResilienceData] = useState(null);
   const [resilienceLoading, setResilienceLoading] = useState(false);
+  const [institutionData, setInstitutionData] = useState(null);
+  const [institutionLoading, setInstitutionLoading] = useState(false);
 
   // 跟随 showResilience 实时同步，供已注册一次的 tooltip 回调读取
   useEffect(() => {
     showResilienceRef.current = showResilience;
   }, [showResilience]);
+
+  // 跟随 showInstitution 实时同步，供已注册一次的 tooltip 回调读取
+  useEffect(() => {
+    showInstitutionRef.current = showInstitution;
+  }, [showInstitution]);
 
   useEffect(() => {
     if (showResilience && onFetchResilience && !resilienceData && !resilienceLoading) {
@@ -46,6 +56,22 @@ export default function KLine({ data = [], height = 500, showResilience = false,
       setResilienceData(null);
     }
   }, [showResilience, onFetchResilience, resilienceData, resilienceLoading]);
+
+  useEffect(() => {
+    if (showInstitution && onFetchInstitution && !institutionData && !institutionLoading) {
+      setInstitutionLoading(true);
+      onFetchInstitution().then((data) => {
+        setInstitutionData(data);
+        setInstitutionLoading(false);
+      }).catch((error) => {
+        console.error('Fetch institution data error:', error);
+        setInstitutionLoading(false);
+      });
+    }
+    if (!showInstitution && institutionData) {
+      setInstitutionData(null);
+    }
+  }, [showInstitution, onFetchInstitution, institutionData, institutionLoading]);
 
   // 初始化图表（只执行一次）
   useEffect(() => {
@@ -137,6 +163,27 @@ export default function KLine({ data = [], height = 500, showResilience = false,
       borderColor: '#722ed1',
     });
 
+    // 机构参与度：蓝色折线，独立于抗分歧的中间价格刻度区（50%~80%）
+    const institutionSeries = chart.addLineSeries({
+      color: '#1677ff',
+      lineWidth: 2,
+      lastValueVisible: true,
+      priceLineVisible: false,
+      priceFormat: {
+        type: 'price',
+        precision: 2,
+      },
+      priceScaleId: 'institution',
+    });
+
+    institutionSeries.priceScale().applyOptions({
+      scaleMargins: {
+        top: 0.5,
+        bottom: 0.2,
+      },
+      borderColor: '#1677ff',
+    });
+
     const volumeSeries = chart.addHistogramSeries({
       color: '#26a69a',
       priceFormat: {
@@ -158,6 +205,7 @@ export default function KLine({ data = [], height = 500, showResilience = false,
     ma10SeriesRef.current = ma10Series;
     ma20SeriesRef.current = ma20Series;
     resilienceSeriesRef.current = resilienceSeries;
+    institutionSeriesRef.current = institutionSeries;
     chartRef.current = chart;
 
     // Tooltip 逻辑
@@ -190,6 +238,8 @@ export default function KLine({ data = [], height = 500, showResilience = false,
           const resilienceScore = resilienceScoreMapRef.current[dateStr];
           const resilienceDisplay = resilienceScore !== undefined ? resilienceScore.toFixed(2) : '-';
           const resilienceColor = resilienceScore >= 15 ? '#cf1322' : resilienceScore >= 10 ? '#fa8c16' : resilienceScore >= 5 ? '#722ed1' : '#bfbfbf';
+          const institutionValue = institutionMapRef.current[dateStr];
+          const institutionDisplay = institutionValue !== undefined && institutionValue !== null ? institutionValue.toFixed(2) : '-';
           // 红绿严格按真实涨跌（vs 昨收）：涨红、跌绿、平盘灰
           const changeVal = changeMapRef.current[dateStr];
           const changeColor = changeVal === undefined ? '#333' : changeVal > 0 ? '#f5222d' : changeVal < 0 ? '#52c41a' : '#666';
@@ -203,6 +253,7 @@ export default function KLine({ data = [], height = 500, showResilience = false,
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>成交额:</span><span style="font-weight: bold;">${volDisplay}</span></div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>涨跌:</span><span style="font-weight: bold; color: ${changeColor}">${changeVal !== undefined ? (changeVal > 0 ? '+' : '') + changeVal.toFixed(2) + '%' : '-'}</span></div>
             ${showResilienceRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>抗分歧:</span><span style="font-weight: bold; color: ${resilienceColor}">${resilienceDisplay}</span></div>` : ''}
+            ${showInstitutionRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>机构参与度:</span><span style="font-weight: bold; color: #1677ff">${institutionDisplay}</span></div>` : ''}
           `;
 
           const coordinate = candlestick.priceToCoordinate(kData.close);
@@ -281,6 +332,7 @@ export default function KLine({ data = [], height = 500, showResilience = false,
     const ma10Series = ma10SeriesRef.current;
     const ma20Series = ma20SeriesRef.current;
     const resilienceSeries = resilienceSeriesRef.current;
+    const institutionSeries = institutionSeriesRef.current;
     const chart = chartRef.current;
 
     const klineData = [];
@@ -289,6 +341,7 @@ export default function KLine({ data = [], height = 500, showResilience = false,
     const ma10Data = [];
     const ma20Data = [];
     const resilienceScoreData = [];
+    const institutionValueData = [];
     // 后端已按真实昨收算好的涨跌幅（data 为从新到旧排列，不能直接用相邻项互算）
     const rawChangeMap = {};
 
@@ -348,6 +401,22 @@ export default function KLine({ data = [], height = 500, showResilience = false,
       resilienceScoreMapRef.current = {};
     }
 
+    // 机构参与度：后端返回 [{ '交易日': 'YYYY-MM-DD', '机构参与度': number }]
+    if (showInstitution && Array.isArray(institutionData)) {
+      const map = {};
+      institutionData.forEach(item => {
+        const dateStr = String(item['交易日'] || '');
+        const value = item['机构参与度'];
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr) && typeof value === 'number' && !isNaN(value)) {
+          institutionValueData.push({ time: dateStr, value });
+          map[dateStr] = value;
+        }
+      });
+      institutionMapRef.current = map;
+    } else {
+      institutionMapRef.current = {};
+    }
+
     // 涨跌幅：优先后端 change 字段；缺失的日期按时间升序用收盘价补算
     const changeMap = { ...rawChangeMap };
     const ascending = [...klineData].sort((a, b) => a.time.localeCompare(b.time));
@@ -393,8 +462,12 @@ export default function KLine({ data = [], height = 500, showResilience = false,
       resilienceSeries.setData(deduplicate(resilienceScoreData));
     }
 
+    if (showInstitution && institutionSeries) {
+      institutionSeries.setData(deduplicate(institutionValueData));
+    }
+
     chart.timeScale().fitContent();
-  }, [data, showResilience, resilienceData]);
+  }, [data, showResilience, resilienceData, showInstitution, institutionData]);
 
   // 交易标注：买卖点 marker + 买入/卖出价格虚线（只在传入 tradeMarkers/priceLines 时生效；依赖 data 保证 setData 后重画）
   useEffect(() => {
@@ -426,7 +499,7 @@ export default function KLine({ data = [], height = 500, showResilience = false,
   return (
     <div className="stock-kline-container" style={{ position: 'relative', width: '100%' }}>
       <div ref={container} style={{ height, width: '100%' }} />
-      {showResilience && resilienceLoading && (
+      {((showResilience && resilienceLoading) || (showInstitution && institutionLoading)) && (
         <div 
           style={{
             position: 'absolute',
@@ -448,7 +521,7 @@ export default function KLine({ data = [], height = 500, showResilience = false,
             height="16" 
             viewBox="0 0 24 24" 
             fill="none" 
-            stroke="#722ed1" 
+            stroke={showResilience && resilienceLoading ? '#722ed1' : '#1677ff'} 
             strokeWidth="2" 
             strokeLinecap="round" 
             strokeLinejoin="round"
@@ -457,7 +530,9 @@ export default function KLine({ data = [], height = 500, showResilience = false,
             <circle cx="12" cy="12" r="10" />
             <path d="M12 6v6l4 2" />
           </svg>
-          <span style={{ color: '#722ed1', fontSize: '13px', fontWeight: 500 }}>加载抗分歧数据...</span>
+          <span style={{ color: showResilience && resilienceLoading ? '#722ed1' : '#1677ff', fontSize: '13px', fontWeight: 500 }}>
+            {showResilience && resilienceLoading ? '加载抗分歧数据...' : '加载机构参与度数据...'}
+          </span>
           <style>{`
             @keyframes spin {
               from { transform: rotate(0deg); }

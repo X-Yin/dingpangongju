@@ -759,14 +759,5 @@
     "riskScore": " 8",
     "isTech": true,
     "addedAt": "2026-10-05 22:21:15"
-  },
-  {
-    "code": "sz300489",
-    "name": "光智科技",
-    "isImportant": false,
-    "blockName": "光模块",
-    "riskScore": "9",
-    "isTech": true,
-    "addedAt": "2026-10-05 22:23:38"
   }
 ]

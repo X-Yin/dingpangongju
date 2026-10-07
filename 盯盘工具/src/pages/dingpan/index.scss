@@ -1317,7 +1317,11 @@
   .stock-code,
   .summary-label,
   .monitor-card .ant-card-extra,
-  .detail-empty {
+  .detail-empty,
+  .mp-extra,
+  .mp-time,
+  .mp-rank,
+  .mp-placeholder {
     color: var(--dp-desc-color, #71809c) !important;
   }
 
@@ -1328,7 +1332,9 @@
   .jingjia-item,
   .jingjia-block-header,
   .rihan-index-card,
-  .all-stock-item {
+  .all-stock-item,
+  .mp-row,
+  .mp-news-item {
     background: var(--dp-item-bg, rgba(255, 255, 255, 0.88)) !important;
     border: var(--dp-item-border-width, 1px) var(--dp-item-border-style, solid) var(--dp-item-border-color, rgba(18, 33, 58, 0.06)) !important;
     border-radius: var(--dp-item-radius, 10px) !important;
@@ -1413,22 +1419,28 @@
   .jingjia-item .stock-info .ant-typography,
   .jingjia-item .stock-info,
   .rihan-index-card .rihan-index-name,
-  .all-stock-item .stock-name {
+  .all-stock-item .stock-name,
+  .mp-row .mp-name,
+  .mp-news-item .mp-news-text {
     color: var(--dp-item-title-color, #12213a) !important;
   }
 
   /* 子 item 描述颜色 */
   .jingjia-item .stock-sub-text,
   .all-stock-item .stock-info-cell .ant-typography {
-    color: var(--dp-item-desc-color, #8a97ae) !important;
+    color: var(--dp-item-title-color, #8a97ae) !important;
   }
 
   /* ---------- 涨幅红 / 跌幅绿 ---------- */
-  .up {
+  .up,
+  .mp-type.pos,
+  .mp-num.up {
     color: var(--dp-up-color, #e11d48) !important;
   }
 
-  .down {
+  .down,
+  .mp-type.neg,
+  .mp-num.down {
     color: var(--dp-down-color, #059669) !important;
   }
 
@@ -1477,6 +1489,7 @@
   .chart-latest-money,
   .alert-item-change,
   .chart-value,
+  .mp-num,
   .summary-value {
     font-family: var(--dp-number-font-family, 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace) !important;
   }

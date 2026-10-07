@@ -331,6 +331,18 @@
       "blockName": "机器人",
       "code": "sz000559",
       "change": 1.02
+    },
+    {
+      "name": "襄阳轴承",
+      "blockName": "机器人",
+      "code": "sz000678",
+      "change": 9.98
+    },
+    {
+      "name": "九阳股份",
+      "blockName": "机器人",
+      "code": "sz002242",
+      "change": 10.04
     }
   ],
   "消费": [
@@ -1105,6 +1117,20 @@
       "blockName": "金刚石散热",
       "code": "sz002046",
       "change": -1.16
+    }
+  ],
+  "传媒": [
+    {
+      "name": "新华传媒",
+      "blockName": "传媒",
+      "code": "sh600825",
+      "change": 9.99
+    },
+    {
+      "name": "龙版传媒",
+      "blockName": "传媒",
+      "code": "sh605577",
+      "change": 10
     }
   ]
 }

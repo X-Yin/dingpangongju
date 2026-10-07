@@ -23,6 +23,8 @@ const StockKLineModal = ({
   // 可选：交易记录（回测报告点击股票名称查看时传入），用于在日K图上标注买卖点与买卖价格虚线，并在 K 线下方内嵌展示当日分时
   // 结构：{ buyDate, buyTime, buyPrice, sellDate, sellTime, sellPrice }（buyDate/sellDate 为 YYYYMMDD，时间字段可缺省）
   tradeRecord = null,
+  // 可选：打开弹窗时默认展示的 tab（'kline' | 'quantTimeline' | 'resilienceTimeline'），缺省为 'kline'
+  initialTab = 'kline',
 }) => {
   const [kData, setKData] = useState([]);
   const [tData, setTData] = useState([]);
@@ -34,6 +36,7 @@ const StockKLineModal = ({
   const [resilienceData, setResilienceData] = useState(null);
   const [resilienceLoading, setResilienceLoading] = useState(false);
   const [showResilienceKline, setShowResilienceKline] = useState(false);
+  const [showInstitution, setShowInstitution] = useState(false);
   const [dayTlineVisible, setDayTlineVisible] = useState(false);
   const [dayTlineData, setDayTlineData] = useState([]);
   const [dayTlineLoading, setDayTlineLoading] = useState(false);
@@ -130,6 +133,8 @@ const StockKLineModal = ({
 
   useEffect(() => {
     if (visible && code) {
+      // 每次打开弹窗按 initialTab 定位 tab（盘口异动点击股票名会传 quantTimeline）
+      setChartType(initialTab || 'kline');
       fetchTimelineData();
       fetchKlineData();
       pollingRef.current = setInterval(fetchTimelineData, 3000);
@@ -159,6 +164,7 @@ const StockKLineModal = ({
       setResilienceData(null);
       setResilienceLoading(false);
       setShowResilienceKline(false);
+      setShowInstitution(false);
       setDayTlineVisible(false);
       setDayTlineData([]);
       setSelectedDay('');
@@ -251,6 +257,21 @@ const StockKLineModal = ({
       }
     } catch (error) {
       console.error('Fetch multi-day resilience data failed:', error);
+    }
+    return null;
+  };
+
+  // 机构参与度：东财千股千评（按交易日），symbol 需去掉市场前缀
+  const fetchInstitutionData = async () => {
+    if (!code) return null;
+    const symbol = code.replace(/^(sh|sz|bj)/i, '');
+    try {
+      const res = await axios.get(`http://${local_ip}:3000/api/ak/jgcyd`, { params: { code: symbol } });
+      if (res.data?.success) {
+        return res.data.data;
+      }
+    } catch (error) {
+      console.error('Fetch institution participation data failed:', error);
     }
     return null;
   };
@@ -415,10 +436,17 @@ const StockKLineModal = ({
                     alignItems: 'center',
                     gap: '8px'
                   }}>
-                    <span style={{ fontSize: '13px', color: '#666' }}>抗分歧 K 线</span>
+                    <span style={{ fontSize: '13px', color: showResilienceKline ? '#722ed1' : '#666' }}>抗分歧 K 线</span>
                     <Switch 
                       checked={showResilienceKline} 
                       onChange={(checked) => setShowResilienceKline(checked)}
+                      checkedChildren="开启"
+                      unCheckedChildren="关闭"
+                    />
+                    <span style={{ fontSize: '13px', color: showInstitution ? '#1677ff' : '#666', marginLeft: '8px' }}>机构参与度</span>
+                    <Switch 
+                      checked={showInstitution} 
+                      onChange={(checked) => setShowInstitution(checked)}
                       checkedChildren="开启"
                       unCheckedChildren="关闭"
                     />
@@ -428,6 +456,8 @@ const StockKLineModal = ({
                     height={500}
                     showResilience={showResilienceKline}
                     onFetchResilience={fetchMultiDayResilienceData}
+                    showInstitution={showInstitution}
+                    onFetchInstitution={fetchInstitutionData}
                     onClickCandle={handleCandleClick}
                     tradeMarkers={tradeMarkers}
                     priceLines={tradePriceLines}

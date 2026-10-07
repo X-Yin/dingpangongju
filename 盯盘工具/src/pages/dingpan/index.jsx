@@ -18,9 +18,11 @@ import MainMoneyCharts from './components/MainMoneyCharts';
 import OpeningBattleCards from './components/OpeningBattleCards';
 import BlockRankingCards from './components/BlockRankingCards';
 import WatchlistTopRanking from './components/WatchlistTopRanking';
+import SectorRankingMonitor from './components/SectorRankingMonitor';
 import StockAlertCard from './components/StockAlertCard';
 import BlockAlertCard from './components/BlockAlertCard';
 import OverlayTimelineSection from './components/OverlayTimelineSection';
+import MarketPulsePanel from './components/MarketPulsePanel';
 import StockChangeMonitor from './components/StockChangeMonitor';
 import BlockMoneyMonitor from './components/BlockMoneyMonitor';
 import RihanMonitor from './components/RihanMonitor';
@@ -115,6 +117,7 @@ const DingPan = () => {
     const [searchQuery, setSearchQuery] = useState(''); // 自选股搜索关键词
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [klineModalVisible, setKlineModalVisible] = useState(false);
+    const [klineInitialTab, setKlineInitialTab] = useState(null); // K 线弹窗打开时默认定位的 tab
     const [selectedStock, setSelectedStock] = useState(null);
     const [overlayInlineAddStock, setOverlayInlineAddStock] = useState(null); // 首页叠加分时增量添加
     const notifiedStocks = useRef(new Set()); // 用于记录已通知的异动，防止重复提醒
@@ -629,9 +632,10 @@ const DingPan = () => {
     // 卡片中只展示这 4 个板块（监控告警仍覆盖全部 targetBlocks）
     const displayBlocks = ['创新药', '银行Ⅱ', '光通信模块', '半导体概念', '存储芯片', '黄金概念',];
 
-    // 打开 K 线弹窗
-    const showKLine = (stock) => {
+    // 打开 K 线弹窗（tab 可选：指定打开时展示的 tab，如盘口异动点击股票名传 quantTimeline）
+    const showKLine = (stock, tab) => {
         setSelectedStock(stock);
+        setKlineInitialTab(tab || null);
         setKlineModalVisible(true);
     };
 
@@ -2359,8 +2363,17 @@ const DingPan = () => {
                                 style={{ marginTop: 12 }}
                             />
 
+                            {/* 行情脉搏面板：盘口异动 | 财联社快讯 | 同花顺热度榜（主力资金/成交量趋势下方） */}
+                            <div style={{ marginTop: 16 }}>
+                                <MarketPulsePanel
+                                    onStockClick={(stock) => showKLine(stock, 'quantTimeline')}
+                                    themeColor={effThemeColor}
+                                />
+                            </div>
+
                             {/* 个股异动监控区 */}
                             <StockChangeMonitor
+                                style={{ marginTop: 20 }}
                                 stockViewMode={stockViewMode}
                                 onStockViewModeChange={(mode) => { setStockViewMode(mode); localStorage.setItem('dingpan_stockViewMode', mode); }}
                                 stockData={stockData}
@@ -2464,6 +2477,9 @@ const DingPan = () => {
                                 </div>
                             )}
 
+                            {/* 板块涨幅前十：位于指数叠加分时模块上方，点击板块查看成分股 */}
+                            <SectorRankingMonitor onStockClick={showKLine} themeColor={effThemeColor} />
+
                             {/* 指数叠加分时模块 */}
                             <div style={{ marginTop: 16 }}>
                                 <IndexOverlayTline 
@@ -2495,6 +2511,7 @@ const DingPan = () => {
                     name: selectedStock?.name,
                     change: selectedStock?.change || selectedStock?.changeValue
                 }}
+                initialTab={klineInitialTab}
             />
 
             {/* 利好消息弹窗 */}

@@ -42,6 +42,7 @@ const WatchlistMonitor = ({
     onTempHideStock,
     themeColor,
 }) => {
+    console.log('>>> 自选股', themeColor);
     if (isWatchlistCollapsed) {
         return (
             <Card
@@ -301,7 +302,7 @@ const WatchlistMonitor = ({
                                         </div>
                                         <div className="stock-info-cell">
                                             <div className="stock-name-row" style={{ flexWrap: 'nowrap', alignItems: 'center' }}>
-                                                <Text className="stock-name" style={{ color: titleStyle(themeColor)?.color + '!important' }}>
+                                                <Text className="stock-name" style={titleStyle(themeColor)}>
                                                     {stock.stockName}
                                                     {hasGoodNews(stock.stockName) && (
                                                         <span
