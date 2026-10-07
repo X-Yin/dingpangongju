@@ -1,0 +1,843 @@
+{
+  "month": "202608",
+  "label": "2026-08",
+  "startDate": "20260803",
+  "endDate": "20260831",
+  "targetEndDate": "20260831",
+  "isFinal": true,
+  "generatedAt": "2026/10/7 17:52:51",
+  "strategyCount": 37,
+  "analysis": {
+    "key": "202608",
+    "label": "2026-08",
+    "startDate": "20260803",
+    "endDate": "20260831",
+    "days": 21,
+    "best": [
+      {
+        "id": "key_block_2d_gain",
+        "name": "重点板块-2日最高涨幅",
+        "score": 85.3,
+        "rank": 1,
+        "delta": 48.2,
+        "metrics": {
+          "overallReturn": 58.76,
+          "maxDrawdown": 0.34,
+          "avgDrawdown": 0.34,
+          "winRate": 66.67,
+          "avgHoldingDays": 5.7,
+          "profitLossRatio": 73.69
+        }
+      },
+      {
+        "id": "highest_2d_gain",
+        "name": "2日涨幅最大",
+        "score": 71.2,
+        "rank": 2,
+        "delta": -4.4,
+        "metrics": {
+          "overallReturn": 67.52,
+          "maxDrawdown": null,
+          "avgDrawdown": null,
+          "winRate": 100,
+          "avgHoldingDays": 11,
+          "profitLossRatio": 10
+        }
+      },
+      {
+        "id": "highest_3d_reports",
+        "name": "3日研报覆盖数最多",
+        "score": 71.2,
+        "rank": 3,
+        "delta": -4.4,
+        "metrics": {
+          "overallReturn": 67.52,
+          "maxDrawdown": null,
+          "avgDrawdown": null,
+          "winRate": 100,
+          "avgHoldingDays": 11,
+          "profitLossRatio": 10
+        }
+      },
+      {
+        "id": "highest_2d_gain_emoquick",
+        "name": "2日涨幅最大&三日情绪-60快进快出",
+        "score": 71.2,
+        "rank": 4,
+        "delta": -4.4,
+        "metrics": {
+          "overallReturn": 67.52,
+          "maxDrawdown": null,
+          "avgDrawdown": null,
+          "winRate": 100,
+          "avgHoldingDays": 11,
+          "profitLossRatio": 10
+        }
+      },
+      {
+        "id": "tech_block_top3_2d_gain_emoquick",
+        "name": "科技板块前三&2日涨幅最大&快进快出",
+        "score": 71.2,
+        "rank": 5,
+        "delta": 9.9,
+        "metrics": {
+          "overallReturn": 67.52,
+          "maxDrawdown": null,
+          "avgDrawdown": null,
+          "winRate": 100,
+          "avgHoldingDays": 11,
+          "profitLossRatio": 10
+        }
+      }
+    ],
+    "improved": [
+      {
+        "id": "key_block_3d_gain",
+        "name": "重点板块-3日最高涨幅",
+        "score": 71.1,
+        "rank": 6,
+        "delta": 60,
+        "metrics": {
+          "overallReturn": 56.16,
+          "maxDrawdown": null,
+          "avgDrawdown": null,
+          "winRate": 100,
+          "avgHoldingDays": 5.3,
+          "profitLossRatio": 10
+        }
+      },
+      {
+        "id": "key_block_2d_gain",
+        "name": "重点板块-2日最高涨幅",
+        "score": 85.3,
+        "rank": 1,
+        "delta": 48.2,
+        "metrics": {
+          "overallReturn": 58.76,
+          "maxDrawdown": 0.34,
+          "avgDrawdown": 0.34,
+          "winRate": 66.67,
+          "avgHoldingDays": 5.7,
+          "profitLossRatio": 73.69
+        }
+      },
+      {
+        "id": "tech_block_top3_2d_gain_emoquick",
+        "name": "科技板块前三&2日涨幅最大&快进快出",
+        "score": 71.2,
+        "rank": 5,
+        "delta": 9.9,
+        "metrics": {
+          "overallReturn": 67.52,
+          "maxDrawdown": null,
+          "avgDrawdown": null,
+          "winRate": 100,
+          "avgHoldingDays": 11,
+          "profitLossRatio": 10
+        }
+      },
+      {
+        "id": "tech_block_top3_3d_gain_emoquick",
+        "name": "科技板块前三&3日涨幅最大&快进快出",
+        "score": 68.5,
+        "rank": 15,
+        "delta": 7.2,
+        "metrics": {
+          "overallReturn": 63.99,
+          "maxDrawdown": null,
+          "avgDrawdown": null,
+          "winRate": 100,
+          "avgHoldingDays": 11,
+          "profitLossRatio": 10
+        }
+      },
+      {
+        "id": "highest_gain",
+        "name": "买入最高涨幅",
+        "score": 66.7,
+        "rank": 16,
+        "delta": 5.4,
+        "metrics": {
+          "overallReturn": 61.65,
+          "maxDrawdown": null,
+          "avgDrawdown": null,
+          "winRate": 100,
+          "avgHoldingDays": 11,
+          "profitLossRatio": 10
+        }
+      }
+    ],
+    "regressed": [
+      {
+        "id": "hot_money_ice_2d_gain",
+        "name": "逆周期情绪游资-前2日涨幅最大",
+        "score": 56.6,
+        "rank": 21,
+        "delta": -35.7,
+        "metrics": {
+          "overallReturn": 34.08,
+          "maxDrawdown": 2.43,
+          "avgDrawdown": 2.43,
+          "winRate": 66.67,
+          "avgHoldingDays": 1,
+          "profitLossRatio": 2.26
+        }
+      },
+      {
+        "id": "highest_10d_gain",
+        "name": "10日涨幅最大",
+        "score": 43.7,
+        "rank": 33,
+        "delta": -31.9,
+        "metrics": {
+          "overallReturn": 19.42,
+          "maxDrawdown": null,
+          "avgDrawdown": null,
+          "winRate": 100,
+          "avgHoldingDays": 4.5,
+          "profitLossRatio": 10
+        }
+      },
+      {
+        "id": "highest_5d_resilience",
+        "name": "5日抗分歧分数最大",
+        "score": 43.5,
+        "rank": 34,
+        "delta": -30,
+        "metrics": {
+          "overallReturn": 18.2,
+          "maxDrawdown": null,
+          "avgDrawdown": null,
+          "winRate": 100,
+          "avgHoldingDays": 4,
+          "profitLossRatio": 10
+        }
+      },
+      {
+        "id": "highest_5d_gain",
+        "name": "5日涨幅最大",
+        "score": 46.3,
+        "rank": 31,
+        "delta": -29.3,
+        "metrics": {
+          "overallReturn": 23.69,
+          "maxDrawdown": 2.54,
+          "avgDrawdown": 2.54,
+          "winRate": 50,
+          "avgHoldingDays": 3.5,
+          "profitLossRatio": 6.26
+        }
+      },
+      {
+        "id": "highest_5d_gain_emoquick",
+        "name": "5日涨幅最大&三日情绪-60快进快出",
+        "score": 46.3,
+        "rank": 32,
+        "delta": -29.3,
+        "metrics": {
+          "overallReturn": 23.69,
+          "maxDrawdown": 2.54,
+          "avgDrawdown": 2.54,
+          "winRate": 50,
+          "avgHoldingDays": 3.5,
+          "profitLossRatio": 6.26
+        }
+      }
+    ]
+  },
+  "strategies": [
+    {
+      "id": "key_block_2d_gain",
+      "name": "重点板块-2日最高涨幅",
+      "score": 85.3,
+      "rank": 1,
+      "ret": 58.76,
+      "tradeCount": 3,
+      "metrics": {
+        "overallReturn": 58.76,
+        "maxDrawdown": 0.34,
+        "avgDrawdown": 0.34,
+        "winRate": 66.67,
+        "avgHoldingDays": 5.7,
+        "profitLossRatio": 73.69
+      }
+    },
+    {
+      "id": "highest_2d_gain",
+      "name": "2日涨幅最大",
+      "score": 71.2,
+      "rank": 2,
+      "ret": 67.52,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 67.52,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_3d_reports",
+      "name": "3日研报覆盖数最多",
+      "score": 71.2,
+      "rank": 3,
+      "ret": 67.52,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 67.52,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_2d_gain_emoquick",
+      "name": "2日涨幅最大&三日情绪-60快进快出",
+      "score": 71.2,
+      "rank": 4,
+      "ret": 67.52,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 67.52,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "tech_block_top3_2d_gain_emoquick",
+      "name": "科技板块前三&2日涨幅最大&快进快出",
+      "score": 71.2,
+      "rank": 5,
+      "ret": 67.52,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 67.52,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "key_block_3d_gain",
+      "name": "重点板块-3日最高涨幅",
+      "score": 71.1,
+      "rank": 6,
+      "ret": 56.16,
+      "tradeCount": 3,
+      "metrics": {
+        "overallReturn": 56.16,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 5.3,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_5d_reports",
+      "name": "5日研报覆盖数最多",
+      "score": 68.6,
+      "rank": 7,
+      "ret": 26.62,
+      "tradeCount": 2,
+      "metrics": {
+        "overallReturn": 26.62,
+        "maxDrawdown": 0.23,
+        "avgDrawdown": 0.23,
+        "winRate": 50,
+        "avgHoldingDays": 3.5,
+        "profitLossRatio": 69.17
+      }
+    },
+    {
+      "id": "highest_3d_gain",
+      "name": "3日涨幅最大",
+      "score": 68.5,
+      "rank": 8,
+      "ret": 63.99,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 63.99,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_3d_reports_top5_gain",
+      "name": "3日研报前五&涨幅最大",
+      "score": 68.5,
+      "rank": 9,
+      "ret": 63.99,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 63.99,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "prev3d_fall_low5_day_gain_emoswitch",
+      "name": "前三波动最小&当日涨最大/3日涨幅开关",
+      "score": 68.5,
+      "rank": 10,
+      "ret": 63.99,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 63.99,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "prev2d_fall_low5_day_gain_emoswitch",
+      "name": "前二波动最小&当日涨最大/3日涨幅开关",
+      "score": 68.5,
+      "rank": 11,
+      "ret": 63.99,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 63.99,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "prev1d_fall_low5_day_gain_emoswitch",
+      "name": "昨日波动最小&当日涨最大/3日涨幅开关",
+      "score": 68.5,
+      "rank": 12,
+      "ret": 63.99,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 63.99,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_3d_gain_emoquick",
+      "name": "3日涨幅最大&三日情绪-60快进快出",
+      "score": 68.5,
+      "rank": 13,
+      "ret": 63.99,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 63.99,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_3d_reports_top5_gain_emoquick",
+      "name": "3日涨幅最大&三日情绪-60快进快出&研报覆盖",
+      "score": 68.5,
+      "rank": 14,
+      "ret": 63.99,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 63.99,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "tech_block_top3_3d_gain_emoquick",
+      "name": "科技板块前三&3日涨幅最大&快进快出",
+      "score": 68.5,
+      "rank": 15,
+      "ret": 63.99,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 63.99,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_gain",
+      "name": "买入最高涨幅",
+      "score": 66.7,
+      "rank": 16,
+      "ret": 61.65,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 61.65,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "tech_block_top3_4d_gain_emoquick",
+      "name": "科技板块前三&4日涨幅最大&快进快出",
+      "score": 64,
+      "rank": 17,
+      "ret": 58.25,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 58.25,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 11,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "key_block_4d_gain",
+      "name": "重点板块-4日最高涨幅",
+      "score": 62.8,
+      "rank": 18,
+      "ret": 46.01,
+      "tradeCount": 3,
+      "metrics": {
+        "overallReturn": 46.01,
+        "maxDrawdown": 1.7,
+        "avgDrawdown": 1.7,
+        "winRate": 66.67,
+        "avgHoldingDays": 6,
+        "profitLossRatio": 11.4
+      }
+    },
+    {
+      "id": "highest_4d_gain",
+      "name": "4日涨幅最大",
+      "score": 60.5,
+      "rank": 19,
+      "ret": 45.94,
+      "tradeCount": 2,
+      "metrics": {
+        "overallReturn": 45.94,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 7,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_4d_gain_emoquick",
+      "name": "4日涨幅最大&三日情绪-60快进快出",
+      "score": 60.5,
+      "rank": 20,
+      "ret": 45.94,
+      "tradeCount": 2,
+      "metrics": {
+        "overallReturn": 45.94,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 7,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "hot_money_ice_2d_gain",
+      "name": "逆周期情绪游资-前2日涨幅最大",
+      "score": 56.6,
+      "rank": 21,
+      "ret": 34.08,
+      "tradeCount": 3,
+      "metrics": {
+        "overallReturn": 34.08,
+        "maxDrawdown": 2.43,
+        "avgDrawdown": 2.43,
+        "winRate": 66.67,
+        "avgHoldingDays": 1,
+        "profitLossRatio": 2.26
+      }
+    },
+    {
+      "id": "hot_money_ice_3d_gain",
+      "name": "逆周期情绪游资-前3日涨幅最大",
+      "score": 55.9,
+      "rank": 22,
+      "ret": 33.22,
+      "tradeCount": 3,
+      "metrics": {
+        "overallReturn": 33.22,
+        "maxDrawdown": 2.43,
+        "avgDrawdown": 2.43,
+        "winRate": 66.67,
+        "avgHoldingDays": 1.3,
+        "profitLossRatio": 2.08
+      }
+    },
+    {
+      "id": "hot_money_ice_4d_gain",
+      "name": "逆周期情绪游资-前4日涨幅最大",
+      "score": 53.6,
+      "rank": 23,
+      "ret": 31.85,
+      "tradeCount": 3,
+      "metrics": {
+        "overallReturn": 31.85,
+        "maxDrawdown": 2.43,
+        "avgDrawdown": 1.37,
+        "winRate": 33.33,
+        "avgHoldingDays": 1.3,
+        "profitLossRatio": 6.6
+      }
+    },
+    {
+      "id": "highest_5d_reports_top5_gain",
+      "name": "5日研报前五&涨幅最大",
+      "score": 51.4,
+      "rank": 24,
+      "ret": 32.28,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 32.28,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 6,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "tech_block_top3_5d_gain_emoquick",
+      "name": "科技板块前三&5日涨幅最大&快进快出",
+      "score": 49.2,
+      "rank": 25,
+      "ret": 29.49,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 29.49,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 6,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_1d_resilience",
+      "name": "当日抗分歧分数最大",
+      "score": 48.5,
+      "rank": 26,
+      "ret": 28.56,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 28.56,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 6,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "hot_money_ice_10d_gain",
+      "name": "逆周期情绪游资-前10日涨幅最大",
+      "score": 48.4,
+      "rank": 27,
+      "ret": 24.18,
+      "tradeCount": 2,
+      "metrics": {
+        "overallReturn": 24.18,
+        "maxDrawdown": 2.43,
+        "avgDrawdown": 2.43,
+        "winRate": 50,
+        "avgHoldingDays": 1.5,
+        "profitLossRatio": 0.44
+      }
+    },
+    {
+      "id": "highest_3d_ma_slope",
+      "name": "3日线斜率最陡峭",
+      "score": 47.9,
+      "rank": 28,
+      "ret": 19.98,
+      "tradeCount": 2,
+      "metrics": {
+        "overallReturn": 19.98,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 2,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_3d_resilience",
+      "name": "3日抗分歧分数最大",
+      "score": 47.9,
+      "rank": 29,
+      "ret": 19.98,
+      "tradeCount": 2,
+      "metrics": {
+        "overallReturn": 19.98,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 2,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "hot_money_ice_5d_gain",
+      "name": "逆周期情绪游资-前5日涨幅最大",
+      "score": 46.5,
+      "rank": 30,
+      "ret": 22.66,
+      "tradeCount": 3,
+      "metrics": {
+        "overallReturn": 22.66,
+        "maxDrawdown": 2.43,
+        "avgDrawdown": 1.98,
+        "winRate": 33.33,
+        "avgHoldingDays": 1.3,
+        "profitLossRatio": 0.54
+      }
+    },
+    {
+      "id": "highest_5d_gain",
+      "name": "5日涨幅最大",
+      "score": 46.3,
+      "rank": 31,
+      "ret": 23.69,
+      "tradeCount": 2,
+      "metrics": {
+        "overallReturn": 23.69,
+        "maxDrawdown": 2.54,
+        "avgDrawdown": 2.54,
+        "winRate": 50,
+        "avgHoldingDays": 3.5,
+        "profitLossRatio": 6.26
+      }
+    },
+    {
+      "id": "highest_5d_gain_emoquick",
+      "name": "5日涨幅最大&三日情绪-60快进快出",
+      "score": 46.3,
+      "rank": 32,
+      "ret": 23.69,
+      "tradeCount": 2,
+      "metrics": {
+        "overallReturn": 23.69,
+        "maxDrawdown": 2.54,
+        "avgDrawdown": 2.54,
+        "winRate": 50,
+        "avgHoldingDays": 3.5,
+        "profitLossRatio": 6.26
+      }
+    },
+    {
+      "id": "highest_10d_gain",
+      "name": "10日涨幅最大",
+      "score": 43.7,
+      "rank": 33,
+      "ret": 19.42,
+      "tradeCount": 2,
+      "metrics": {
+        "overallReturn": 19.42,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 4.5,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_5d_resilience",
+      "name": "5日抗分歧分数最大",
+      "score": 43.5,
+      "rank": 34,
+      "ret": 18.2,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 18.2,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 4,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_5d_ma_slope",
+      "name": "5日线斜率最陡峭",
+      "score": 38.8,
+      "rank": 35,
+      "ret": 9.25,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 9.25,
+        "maxDrawdown": 2.21,
+        "avgDrawdown": 2.21,
+        "winRate": 0,
+        "avgHoldingDays": 1,
+        "profitLossRatio": null
+      }
+    },
+    {
+      "id": "resilience_weak_to_strong",
+      "name": "抗分歧弱转强",
+      "score": 23.9,
+      "rank": 36,
+      "ret": 13.01,
+      "tradeCount": 2,
+      "metrics": {
+        "overallReturn": 13.01,
+        "maxDrawdown": 5.91,
+        "avgDrawdown": 5.91,
+        "winRate": 50,
+        "avgHoldingDays": 2,
+        "profitLossRatio": 0.89
+      }
+    },
+    {
+      "id": "key_block_5d_gain",
+      "name": "重点板块-5日最高涨幅",
+      "score": 15.4,
+      "rank": 37,
+      "ret": 8.44,
+      "tradeCount": 4,
+      "metrics": {
+        "overallReturn": 8.44,
+        "maxDrawdown": 7.79,
+        "avgDrawdown": 4.88,
+        "winRate": 25,
+        "avgHoldingDays": 2.5,
+        "profitLossRatio": 3.37
+      }
+    }
+  ],
+  "notified": false
+}

@@ -105,6 +105,8 @@ const { startRandomSim, getRandomSimStatus, getRandomSimDetail } = require('./se
 const { generateReport, ensureLatestReport, getReportById, listReports, getTrendDiagnosisRanges } = require('./service/backtestReport');
 const { getAttackDefenseScore } = require('./service/attackDefenseScore');
 const feishuNotify = require('./service/feishuNotify');
+// 交易日历（月度策略报告以「每月最后一个交易日」为最终期末口径）
+const { isTradingDay } = require('./utils/tradingDay');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
 const { scheduleLianbanDaily } = require('./service/lianban');
@@ -2654,7 +2656,6 @@ app.get('/training_camp/backtest/trend_diagnosis/status', (req, res) => {
 // 复用 backtest-worker.js --monthly 模式：把可用回放交易日按自然月拆分逐月补测缺失缓存；
 // worker 结束后从回测缓存读取「月 × 策略」的月度整体收益，跨月累乘得到累计收益率曲线
 const monthlyTrendJob = { status: 'idle', startedAt: null, endedAt: null, exitCode: null, logTail: [], result: null, error: null };
-let lastMonthlyAnalysisNotifyMonth = null; // 已推送飞书的分析月份，避免自动重跑同一月份重复推送
 
 // ---------- 历史曲线月度评分 ----------
 // 六个维度：收益率 / 最大回撤 / 平均回撤 / 胜率 / 平均持仓时间 / 盈亏比，加权合成 0-100 综合评分；
@@ -2730,7 +2731,8 @@ const scoreMonthEntries = (entries) => {
 
 // 从回测缓存汇总自然月历史曲线数据（worker 结束后调用）
 const buildMonthlyTrendResult = async () => {
-  const dates = [...getTrainingCampDates()].filter(d => d < beijingToday()).sort();
+  // 含当日：当日资金快照在收盘（15:01）后生成，盘中不含当日 → 收盘后回测/汇总可纳入当月最后一个交易日
+  const dates = [...getTrainingCampDates()].filter(d => d <= beijingToday()).sort();
   if (dates.length === 0) throw new Error('无可用回放交易日，无法汇总历史曲线');
   // 按自然月分组（与 worker buildMonthRanges 口径一致）
   const monthMap = new Map(); // 'YYYYMM' -> { key, label, startDate, endDate, days }
@@ -2829,11 +2831,91 @@ const buildMonthlyTrendResult = async () => {
   };
 };
 
-// 组装历史曲线月度分析飞书文本（取最新一个自然月的结论）
-const buildMonthlyAnalysisText = (result) => {
-  const analysis = result?.analysis || [];
-  const latest = analysis[analysis.length - 1];
-  if (!latest) return null;
+// ---------- 月度策略报告存储（每月一份，动态覆盖刷新） ----------
+// 报告落在 data/monthly_strategy_reports/YYYYMM.json；期末日期应为该自然月最后一个交易日，
+// isFinal=true 表示已是最终版（endDate === 该月最后一个交易日）
+const MONTHLY_REPORT_DIR = path.join(__dirname, 'data/monthly_strategy_reports');
+const pad2 = (n) => String(n).padStart(2, '0');
+
+// 某自然月（YYYYMM）的最后一个交易日（YYYYMMDD），以交易日历为准
+const getLastTradingDayOfMonth = (monthKey) => {
+  const y = Number(String(monthKey).slice(0, 4));
+  const m = Number(String(monthKey).slice(4, 6));
+  if (!y || !m) return null;
+  const lastDay = new Date(y, m, 0).getDate();
+  for (let d = lastDay; d >= 1; d--) {
+    if (isTradingDay(new Date(y, m - 1, d))) return `${y}${pad2(m)}${pad2(d)}`;
+  }
+  return null;
+};
+
+const monthlyReportFile = (monthKey) => path.join(MONTHLY_REPORT_DIR, `${monthKey}.json`);
+
+const readMonthReport = (monthKey) => {
+  try {
+    const f = monthlyReportFile(monthKey);
+    if (!fs.existsSync(f)) return null;
+    return JSON.parse(fs.readFileSync(f, 'utf-8'));
+  } catch { return null; }
+};
+
+const writeMonthReport = (report) => {
+  try {
+    if (!fs.existsSync(MONTHLY_REPORT_DIR)) fs.mkdirSync(MONTHLY_REPORT_DIR, { recursive: true });
+    fs.writeFileSync(monthlyReportFile(report.month), JSON.stringify(report, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('月度策略报告写入失败:', e.message);
+  }
+};
+
+// 从汇总结果提取某月报告并写入（每月一份，覆盖刷新）
+const saveMonthReportFromResult = (result, monthKey) => {
+  const idx = (result?.months || []).findIndex(m => m.key === monthKey);
+  if (idx < 0) return null;
+  const m = result.months[idx];
+  const targetEndDate = getLastTradingDayOfMonth(monthKey);
+  const strategies = (result.strategies || []).map(s => {
+    const p = (s.monthly || [])[idx] || {};
+    return { id: s.id, name: s.name, score: p.score ?? null, rank: p.rank ?? null, ret: p.ret ?? null, tradeCount: p.tradeCount ?? null, metrics: p.metrics || null };
+  }).filter(x => x.score != null).sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
+  const analysis = (result.analysis || []).find(a => a.key === monthKey) || null;
+  const prev = readMonthReport(monthKey);
+  const report = {
+    month: monthKey,
+    label: m.label,
+    startDate: m.startDate,
+    endDate: m.endDate, // 本次回测期末（当月最后一个可用回放交易日）
+    targetEndDate, // 该自然月最后一个交易日
+    isFinal: targetEndDate != null && m.endDate === targetEndDate,
+    generatedAt: result.generatedAt || new Date().toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' }),
+    strategyCount: strategies.length,
+    analysis,
+    strategies,
+    // 同一期末日期的报告若已通知过则沿用通知状态，避免重复推送
+    notified: !!(prev && prev.endDate === m.endDate && prev.notified),
+  };
+  writeMonthReport(report);
+  return report;
+};
+
+// 汇总结果 → 写入全部自然月报告（每月一份，返回报告数组，末位为最新月）
+const saveAllMonthReports = (result) => {
+  const reports = [];
+  for (const m of (result?.months || [])) {
+    try {
+      const r = saveMonthReportFromResult(result, m.key);
+      if (r) reports.push(r);
+    } catch (e) {
+      console.error(`月度报告(${m.key})生成失败:`, e.message);
+    }
+  }
+  return reports;
+};
+
+// 单月报告飞书文本（本月最佳 / 进步最大 / 退步最大）
+const buildMonthReportText = (report) => {
+  const a = report?.analysis;
+  if (!a) return null;
   const f2 = (v, suffix = '') => (v == null || !Number.isFinite(Number(v)) ? '--' : `${Number(v).toFixed(2)}${suffix}`);
   const signed = (v, suffix = '') => (v == null || !Number.isFinite(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}${suffix}`);
   const line = (it, idx, showDelta) => {
@@ -2842,97 +2924,160 @@ const buildMonthlyAnalysisText = (result) => {
     const det = `收益 ${signed(m.overallReturn, '%')}｜最大回撤 ${f2(m.maxDrawdown, '%')}｜平均回撤 ${f2(m.avgDrawdown, '%')}｜胜率 ${f2(m.winRate, '%')}｜平均持仓 ${f2(m.avgHoldingDays, '天')}｜盈亏比 ${f2(m.profitLossRatio)}`;
     return `${head}\n    ${det}`;
   };
-  const block = (title, items, showDelta) => (items.length > 0
+  const block = (title, items, showDelta) => (items && items.length > 0
     ? `${title}\n${items.map((it, i) => line(it, i, showDelta)).join('\n')}`
     : `${title}\n    暂无数据`);
+  const finalTag = report.isFinal ? '（最终版）' : '（预生成：月末最后一个交易日收盘后将覆盖为最终版）';
   return [
-    `📊【策略月度评分分析】${latest.label}（${latest.startDate} ~ ${latest.endDate}，${latest.days} 个交易日）`,
+    `📊【策略月度分析报告】${report.label}${finalTag}`,
+    `区间：${report.startDate} ~ ${report.endDate}｜策略数：${report.strategyCount}`,
     '',
-    block('🏆 本月表现最佳 TOP5：', latest.best, false),
+    block('🏆 本月表现最佳 TOP5：', a.best, false),
     '',
-    block('📈 较上月进步最大 TOP5：', latest.improved, true),
+    block('📈 较上月进步最大 TOP5：', a.improved, true),
     '',
-    block('📉 较上月退步最大 TOP5：', latest.regressed, true),
+    block('📉 较上月退步最大 TOP5：', a.regressed, true),
   ].join('\n');
 };
 
-// 启动自然月回测（历史曲线）：spawn backtest-worker.js --monthly，结束后从缓存汇总曲线数据
+// 最新月报告生成后推送飞书（同一期末数据只推送一次）
+const notifyLatestMonthReport = (reports, pushLog) => {
+  if (!reports || reports.length === 0) return;
+  const latest = reports[reports.length - 1];
+  if (latest.notified) return;
+  const text = buildMonthReportText(latest);
+  if (!text) return;
+  feishuNotify.sendFeishuText(text).then((r) => {
+    if (r?.success) {
+      latest.notified = true;
+      writeMonthReport(latest);
+    } else if (pushLog) pushLog('月度分析飞书推送失败');
+  }).catch(() => { if (pushLog) pushLog('月度分析飞书推送异常'); });
+};
+
+// 启动自然月回测（历史曲线）：spawn backtest-worker.js --monthly，结束后汇总曲线并写入月度报告
+// 返回 { success, running?, message? }，供 HTTP 路由与自动调度/启动补测共用
+const startMonthlyTrendWorker = () => {
+  if (monthlyTrendJob.status === 'running') {
+    return { success: true, running: true, startedAt: monthlyTrendJob.startedAt, message: '自然月回测已在进行中' };
+  }
+  if (backtestWorkerJob.status === 'running' || trendDiagnosisJob.status === 'running') {
+    return { success: false, message: '全量回测/策略趋势诊断正在进行中，请等待其完成后再试' };
+  }
+  monthlyTrendJob.status = 'running';
+  monthlyTrendJob.startedAt = Date.now();
+  monthlyTrendJob.endedAt = null;
+  monthlyTrendJob.exitCode = null;
+  monthlyTrendJob.logTail = [];
+  monthlyTrendJob.error = null; // 保留旧 result：重跑期间前端仍可查看上一次曲线
+  const args = [path.join(__dirname, '../script/backtest-worker.js'), '--monthly'];
+  const child = spawn(process.execPath, args, { cwd: path.join(__dirname, '..'), stdio: ['ignore', 'pipe', 'pipe'] });
+  const pushLog = (line) => {
+    const t = String(line || '').trim();
+    if (!t) return;
+    monthlyTrendJob.logTail.push(`[${new Date().toLocaleTimeString('zh-CN', { hour12: false })}] ${t}`);
+    if (monthlyTrendJob.logTail.length > BACKTEST_WORKER_LOG_MAX) monthlyTrendJob.logTail.shift();
+  };
+  let outBuf = '';
+  let errBuf = '';
+  child.stdout.on('data', (d) => {
+    outBuf += String(d);
+    const lines = outBuf.split('\n');
+    outBuf = lines.pop() || '';
+    lines.forEach(pushLog);
+  });
+  child.stderr.on('data', (d) => {
+    errBuf += String(d);
+    const lines = errBuf.split('\n');
+    errBuf = lines.pop() || '';
+    lines.forEach(pushLog);
+  });
+  child.on('error', (err) => {
+    monthlyTrendJob.status = 'error';
+    monthlyTrendJob.endedAt = Date.now();
+    monthlyTrendJob.exitCode = -1;
+    monthlyTrendJob.error = `自然月回测 worker 启动失败: ${err.message}`;
+    pushLog(monthlyTrendJob.error);
+  });
+  child.on('exit', (code) => {
+    if (outBuf.trim()) pushLog(outBuf);
+    if (errBuf.trim()) pushLog(errBuf);
+    monthlyTrendJob.endedAt = Date.now();
+    monthlyTrendJob.exitCode = code;
+    console.log(`自然月回测 worker 结束（code=${code}，耗时 ${((Date.now() - monthlyTrendJob.startedAt) / 1000).toFixed(1)}s）`);
+    // worker 结束后从回测缓存汇总历史曲线数据（个别策略个别月份缺失不影响整体汇总）
+    buildMonthlyTrendResult().then((result) => {
+      monthlyTrendJob.result = result;
+      monthlyTrendJob.status = 'done';
+      // 生成/刷新各月报告（每月一份，覆盖写入），最新月有更新则推送飞书
+      const reports = saveAllMonthReports(result);
+      notifyLatestMonthReport(reports, pushLog);
+    }).catch((err) => {
+      monthlyTrendJob.status = 'error';
+      monthlyTrendJob.error = err.message || String(err);
+    });
+  });
+  console.log('自然月回测 worker 已启动: node script/backtest-worker.js --monthly');
+  return { success: true, running: true, startedAt: monthlyTrendJob.startedAt };
+};
+
+// 启动自然月回测（历史曲线）：HTTP 触发（前端历史曲线 tab 的重新回测/首次补测）
 app.post('/training_camp/backtest/trend_diagnosis/monthly', (req, res) => {
   try {
-    if (monthlyTrendJob.status === 'running') {
-      return res.json({ success: true, running: true, startedAt: monthlyTrendJob.startedAt, message: '自然月回测已在进行中' });
-    }
-    if (backtestWorkerJob.status === 'running' || trendDiagnosisJob.status === 'running') {
-      return res.json({ success: false, message: '全量回测/策略趋势诊断正在进行中，请等待其完成后再试' });
-    }
-    monthlyTrendJob.status = 'running';
-    monthlyTrendJob.startedAt = Date.now();
-    monthlyTrendJob.endedAt = null;
-    monthlyTrendJob.exitCode = null;
-    monthlyTrendJob.logTail = [];
-    monthlyTrendJob.error = null; // 保留旧 result：重跑期间前端仍可查看上一次曲线
-    const args = [path.join(__dirname, '../script/backtest-worker.js'), '--monthly'];
-    const child = spawn(process.execPath, args, { cwd: path.join(__dirname, '..'), stdio: ['ignore', 'pipe', 'pipe'] });
-    const pushLog = (line) => {
-      const t = String(line || '').trim();
-      if (!t) return;
-      monthlyTrendJob.logTail.push(`[${new Date().toLocaleTimeString('zh-CN', { hour12: false })}] ${t}`);
-      if (monthlyTrendJob.logTail.length > BACKTEST_WORKER_LOG_MAX) monthlyTrendJob.logTail.shift();
-    };
-    let outBuf = '';
-    let errBuf = '';
-    child.stdout.on('data', (d) => {
-      outBuf += String(d);
-      const lines = outBuf.split('\n');
-      outBuf = lines.pop() || '';
-      lines.forEach(pushLog);
-    });
-    child.stderr.on('data', (d) => {
-      errBuf += String(d);
-      const lines = errBuf.split('\n');
-      errBuf = lines.pop() || '';
-      lines.forEach(pushLog);
-    });
-    child.on('error', (err) => {
-      monthlyTrendJob.status = 'error';
-      monthlyTrendJob.endedAt = Date.now();
-      monthlyTrendJob.exitCode = -1;
-      monthlyTrendJob.error = `自然月回测 worker 启动失败: ${err.message}`;
-      pushLog(monthlyTrendJob.error);
-    });
-    child.on('exit', (code) => {
-      if (outBuf.trim()) pushLog(outBuf);
-      if (errBuf.trim()) pushLog(errBuf);
-      monthlyTrendJob.endedAt = Date.now();
-      monthlyTrendJob.exitCode = code;
-      console.log(`自然月回测 worker 结束（code=${code}，耗时 ${((Date.now() - monthlyTrendJob.startedAt) / 1000).toFixed(1)}s）`);
-      // worker 结束后从回测缓存汇总历史曲线数据（个别策略个别月份缺失不影响整体汇总）
-      buildMonthlyTrendResult().then((result) => {
-        monthlyTrendJob.result = result;
-        monthlyTrendJob.status = 'done';
-        // 分析完成后推送飞书（同一分析月份只推送一次，避免自动重跑重复推送）
-        const latestMonth = (result?.analysis || [])[(result?.analysis || []).length - 1]?.key;
-        if (latestMonth && latestMonth !== lastMonthlyAnalysisNotifyMonth) {
-          const text = buildMonthlyAnalysisText(result);
-          if (text) {
-            feishuNotify.sendFeishuText(text).then((r) => {
-              if (r?.success) lastMonthlyAnalysisNotifyMonth = latestMonth;
-              else pushLog('月度分析飞书推送失败');
-            }).catch(() => pushLog('月度分析飞书推送异常'));
-          }
-        }
-      }).catch((err) => {
-        monthlyTrendJob.status = 'error';
-        monthlyTrendJob.error = err.message || String(err);
-      });
-    });
-    console.log('自然月回测 worker 已启动: node script/backtest-worker.js --monthly');
-    res.json({ success: true, running: true, startedAt: monthlyTrendJob.startedAt });
+    res.json(startMonthlyTrendWorker());
   } catch (error) {
     console.error('启动自然月回测失败:', error);
     res.status(500).json({ success: false, message: error.message || '启动自然月回测失败' });
   }
 });
+
+// 每月最后一个交易日 15:05（收盘后）自动执行自然月回测：生成/刷新当月报告 + 飞书通知
+const MONTHLY_AUTO_HOUR = 15;
+const MONTHLY_AUTO_MINUTE = 5;
+const scheduleMonthlyReport = () => {
+  const executedDates = new Set();
+  const task = () => {
+    try {
+      const now = new Date();
+      if (!isTradingDay(now)) return; // 非交易日不执行
+      const today = `${now.getFullYear()}${pad2(now.getMonth() + 1)}${pad2(now.getDate())}`;
+      if (executedDates.has(today)) return;
+      const monthKey = today.slice(0, 6);
+      if (today !== getLastTradingDayOfMonth(monthKey)) return; // 仅当月最后一个交易日触发
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), MONTHLY_AUTO_HOUR, MONTHLY_AUTO_MINUTE, 0, 0);
+      if (now < target) return;
+      executedDates.add(today); // 先标记，避免异步执行期间重复触发
+      console.log(`[${today}] 当月最后一个交易日，${MONTHLY_AUTO_HOUR}:${pad2(MONTHLY_AUTO_MINUTE)} 收盘后自动执行策略月度诊断...`);
+      const r = startMonthlyTrendWorker();
+      if (!r?.success && !r?.running) console.error('自动执行策略月度诊断失败:', r?.message || '未知原因');
+    } catch (e) {
+      console.error('月度策略报告定时任务异常:', e.message);
+    }
+  };
+  task();
+  setInterval(task, 60 * 1000);
+  console.log(`月度策略报告定时任务已调度（每月最后一个交易日 ${MONTHLY_AUTO_HOUR}:${pad2(MONTHLY_AUTO_MINUTE)} 后自动执行）`);
+};
+
+// 服务启动后检查上月报告：缺失或期末日期不是上月最后一个交易日时补充生成
+const checkAndBackfillLastMonthReport = () => {
+  try {
+    const now = new Date();
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const monthKey = `${prev.getFullYear()}${pad2(prev.getMonth() + 1)}`;
+    const targetEndDate = getLastTradingDayOfMonth(monthKey);
+    const existing = readMonthReport(monthKey);
+    if (existing && targetEndDate != null && existing.endDate === targetEndDate) {
+      console.log(`上月(${monthKey})报告期末已是最后一个交易日(${targetEndDate})，无需补充`);
+      return;
+    }
+    console.log(`上月(${monthKey})报告缺失或期末非最后一个交易日(应为 ${targetEndDate})，启动补充生成...`);
+    const r = startMonthlyTrendWorker();
+    if (!r?.success && !r?.running) console.error('补充生成上月报告失败:', r?.message || '未知原因');
+  } catch (e) {
+    console.error('检查上月策略报告失败:', e.message);
+  }
+};
 
 app.get('/training_camp/backtest/trend_diagnosis/monthly/status', (req, res) => {
   res.json({
@@ -2953,7 +3098,7 @@ app.get('/training_camp/backtest/trend_diagnosis/monthly/status', (req, res) => 
 app.get('/training_camp/backtest/trend_diagnosis/monthly/detail', (req, res) => {
   try {
     const ids = String(req.query.ids || '').split(',').map(s => s.trim()).filter(id => STRATEGIES[id]);
-    const dates = [...getTrainingCampDates()].filter(d => d < beijingToday()).sort();
+    const dates = [...getTrainingCampDates()].filter(d => d <= beijingToday()).sort();
     if (dates.length === 0) return res.json({ success: true, strategies: [] });
     // 按自然月分组（与 buildMonthlyTrendResult 口径一致）
     const monthMap = new Map();
@@ -4015,4 +4160,7 @@ app.get('/api/ak/sector_detail', async (req, res) => {
 app.listen(port, () => {
   console.log(`服务运行在 http://localhost:${port}`);
   console.log('轮询服务已分离到单独脚本，请运行 npm run poll 启动轮询');
+  // 月度策略报告：调度「每月最后一个交易日收盘后」自动执行，并在启动时检查/补充上月报告
+  scheduleMonthlyReport();
+  checkAndBackfillLastMonthReport();
 });

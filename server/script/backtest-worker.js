@@ -305,7 +305,8 @@ const runTrend = async (workerCount) => {
 // ===== 自然月回测模式（--monthly）：把可用回放交易日按自然月拆分，逐月补测全部策略的缺失缓存 =====
 // 服务端「历史曲线」依赖「月 × 策略」粒度的回测缓存（月度整体收益 → 跨月累乘绘制策略累计曲线）
 const buildMonthRanges = () => {
-  const dates = [...getTrainingCampDates()].filter(d => d < beijingToday()).sort();
+  // 含当日：当日资金快照在收盘（15:01）后生成，盘中不含当日 → 收盘后补测可将当月最后一个交易日纳入期末
+  const dates = [...getTrainingCampDates()].filter(d => d <= beijingToday()).sort();
   const map = new Map(); // 'YYYYMM' -> { key, label, startDate, endDate, days }
   for (const d of dates) {
     const key = d.substring(0, 6);
