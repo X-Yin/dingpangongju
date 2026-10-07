@@ -609,8 +609,10 @@ const DingPan = () => {
     const [blockMoneyAlerts, setBlockMoneyAlerts] = useState([]);
     const prevBlockMoneyRef = useRef(null);
     const overlayTimelineSectionRef = useRef(null);
-    const rihanSectionRef = useRef(null); // 日韩涨跌监控区域，用于双击定位
+    const rihanSectionRef = useRef(null); // 日韩涨跌监控区域，用于长按定位
     const hasAutoScrolledToRihanRef = useRef(false); // 进入页面自动滚动到日韩区域只执行一次的标记
+    const longPressTimerRef = useRef(null); // 长按定时器
+    const longPressStartPosRef = useRef(null); // 长按起始位置，用于拖拽判定
     const targetBlocks = [
         '光通信模块',
         '创新药',
@@ -653,15 +655,47 @@ const DingPan = () => {
         }, 80);
     };
 
-    // 鼠标左键双击页面时自动滚动到日韩涨跌监控区域
-    // 叠加分时观察中的 tag 自带双击移除股票逻辑，双击 tag 时不触发滚动，避免冲突
-    const handlePageDoubleClick = (e) => {
+    // 鼠标左键长按超过 300ms 时自动滚动到日韩涨跌监控区域
+    // 叠加分时观察中的 tag 自带双击移除股票逻辑，长按 tag 时不触发滚动，避免冲突
+    const clearLongPressTimer = () => {
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+        }
+    };
+    const handlePageMouseDown = (e) => {
         if (e.button !== 0) return;
         if (e.target.closest && e.target.closest('.mtlm-tag-item')) return;
-        rihanSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        clearLongPressTimer();
+        longPressStartPosRef.current = { x: e.clientX, y: e.clientY };
+        longPressTimerRef.current = setTimeout(() => {
+            rihanSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            longPressTimerRef.current = null;
+            longPressStartPosRef.current = null;
+        }, 200);
+    };
+    const handlePageMouseUp = () => {
+        clearLongPressTimer();
+        longPressStartPosRef.current = null;
+    };
+    const handlePageMouseLeave = () => {
+        clearLongPressTimer();
+        longPressStartPosRef.current = null;
+    };
+    const handlePageMouseMove = (e) => {
+        if (!longPressStartPosRef.current) return;
+        const dx = e.clientX - longPressStartPosRef.current.x;
+        const dy = e.clientY - longPressStartPosRef.current.y;
+        if (dx * dx + dy * dy > 25) { // 位移超过 5px 视为拖拽，取消长按
+            clearLongPressTimer();
+            longPressStartPosRef.current = null;
+        }
     };
 
-    // 连续两次按空格键滚动到日韩涨跌监控区域（与双击页面功能一致）
+    // 组件卸载时清理长按定时器
+    useEffect(() => () => clearLongPressTimer(), []);
+
+    // 连续两次按空格键滚动到日韩涨跌监控区域（与左键长按功能一致）
     useEffect(() => {
         let lastSpaceTime = 0;
         const handleKeyDown = (e) => {
@@ -2258,7 +2292,10 @@ const DingPan = () => {
             className={`dingpan-container${activeThemePack ? ' pack-active' : ''}`}
             style={packVars}
             data-theme-pack={activeThemePack?.id || 'default'}
-            onDoubleClick={handlePageDoubleClick}
+            onMouseDown={handlePageMouseDown}
+            onMouseUp={handlePageMouseUp}
+            onMouseLeave={handlePageMouseLeave}
+            onMouseMove={handlePageMouseMove}
         >
             <TopGlobalAlerts
                 alerts={alerts}
