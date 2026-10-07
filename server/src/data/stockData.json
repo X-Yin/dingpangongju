@@ -1659,26 +1659,6 @@
     ],
     "isImportant": false
   },
-  "sh688143": {
-    "stockName": "长盈通",
-    "kline": [
-      {
-        "trade_date": 20260930,
-        "open_px": 188,
-        "high_px": 188,
-        "low_px": 171.03,
-        "close_px": 174.67,
-        "business_amount": 11368461,
-        "business_balance": 2023790700,
-        "change": -3.08,
-        "ma5_px": 180.98,
-        "ma10_px": 188.79,
-        "ma20_px": 183.77,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
   "sz002046": {
     "stockName": "国机精工",
     "kline": [

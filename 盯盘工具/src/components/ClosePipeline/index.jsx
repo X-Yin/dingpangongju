@@ -4,6 +4,7 @@ import { Button, Modal, message } from 'antd';
 import { CheckOutlined, CloseOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import './index.scss';
+import { isTradingDay } from '../../utils/tradingDay';
 
 const STORAGE_KEY = 'dingpan_close_pipeline';
 // 15:01 触发（收盘后）
@@ -16,10 +17,10 @@ const PIPELINE_NODES = [
   { key: 'ai', name: '主线 AI 分析', desc: '智能分析 / AI 分析', path: '/block?tab=smart&subTab=ai' },
 ];
 
-const isTradingDay = (d) => {
-  const dow = d.day();
-  return dow !== 0 && dow !== 6;
-};
+// const isTradingDay = (d) => {
+//   const dow = d.day();
+//   return dow !== 0 && dow !== 6;
+// };
 
 const readState = () => {
   try {
@@ -66,7 +67,7 @@ const ClosePipeline = () => {
     // 启动检查：工作日且已过 15:01，且今天尚未启动过流水线
     const tryStart = () => {
       const now = dayjs();
-      if (!isTradingDay(now)) return;
+      if (!isTradingDay()) return;
       if (now.hour() * 60 + now.minute() < TRIGGER_MINUTE) return;
       const today = now.format('YYYYMMDD');
       const current = readState();
