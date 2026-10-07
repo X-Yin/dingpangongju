@@ -4,7 +4,6 @@ import { titleStyle, borderStyle, numberStyle } from '../../utils/themeColor';
 import './index.scss';
 
 const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockStockList, themeColor, vertical = false, fillContainer = false, onRefresh, refreshing = false }) => {
-    console.log('>>> 块排名卡片', themeColor);
     return (
         <Row gutter={[12, 12]} style={{ marginBottom: 12, height: fillContainer ? '100%' : undefined, flex: fillContainer ? 1 : undefined }}>
             <Col span={vertical ? 24 : 12} style={{ display: 'flex', flexDirection: 'column' }}>

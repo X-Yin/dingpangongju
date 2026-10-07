@@ -42,7 +42,6 @@ const WatchlistMonitor = ({
     onTempHideStock,
     themeColor,
 }) => {
-    console.log('>>> 自选股', themeColor);
     if (isWatchlistCollapsed) {
         return (
             <Card

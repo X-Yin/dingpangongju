@@ -68,9 +68,7 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
         if (id) {
             setTimeout(() => {
                 const el = document.querySelector(`div.theme-pack-option.selected`);
-                if (el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
+                el && el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 20);
         }
     }, [draft]);
