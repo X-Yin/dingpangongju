@@ -759,5 +759,23 @@
     "riskScore": " 8",
     "isTech": true,
     "addedAt": "2026-10-05 22:21:15"
+  },
+  {
+    "code": "sz300604",
+    "name": "长川科技",
+    "isImportant": false,
+    "blockName": "半导体",
+    "riskScore": "6",
+    "isTech": true,
+    "addedAt": "2026-10-07 17:58:58"
+  },
+  {
+    "code": "sh603061",
+    "name": "金海通",
+    "isImportant": false,
+    "blockName": "半导体",
+    "riskScore": "7",
+    "isTech": true,
+    "addedAt": "2026-10-07 17:59:33"
   }
 ]

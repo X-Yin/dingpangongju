@@ -1858,5 +1858,45 @@
       }
     ],
     "isImportant": false
+  },
+  "sz300604": {
+    "stockName": "长川科技",
+    "kline": [
+      {
+        "trade_date": 20260930,
+        "open_px": 248.03,
+        "high_px": 253.59,
+        "low_px": 239.09,
+        "close_px": 239.79,
+        "business_amount": 16864768,
+        "business_balance": 4121927200,
+        "change": -3.27,
+        "ma5_px": 253.76,
+        "ma10_px": 264.06,
+        "ma20_px": 264.26,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh603061": {
+    "stockName": "金海通",
+    "kline": [
+      {
+        "trade_date": 20260930,
+        "open_px": 319,
+        "high_px": 323.8,
+        "low_px": 308,
+        "close_px": 311.73,
+        "business_amount": 2264300,
+        "business_balance": 711590220,
+        "change": -2.13,
+        "ma5_px": 324.48,
+        "ma10_px": 335.17,
+        "ma20_px": 325.2,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }
