@@ -58,6 +58,25 @@ exports.thsMarketMap = {
     '39': '32'
 };
 
+// 同花顺个股快照API配置（最新快照：总市值/流通市值/市盈率等）
+exports.thsSnapshotUrl = 'https://quota-h.10jqka.com.cn/fuyao/common_hq_aggr/quote/v1/multi_last_snapshot';
+
+exports.thsSnapshotHeaders = {
+    'accept': '*/*',
+    'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+    'content-type': 'application/json',
+    'origin': 'https://stockpage.10jqka.com.cn',
+    'platform': 'hxkline',
+    'referer': 'https://stockpage.10jqka.com.cn/',
+    'source-id': 'hxkline-NEWS_appNewsFlowHome_Page',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36',
+    'x-auth-appname': 'AINVEST',
+    'x-auth-progid': '7047',
+    'x-auth-type': 'ths',
+    'x-auth-version': '1.0',
+    'x-fuyao-auth': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3JpemVyX25hbWVzcGFjZSI6ImNvbW1vbi1ocS1hZ2dyIiwibGljZW5zZWVfdHlwZSI6IkZST05UX0FQUCIsImxpY2Vuc2VlX25hbWVzcGFjZSI6Imh4a2xpbmUtTkVXU19hcHBOZXdzRmxvd0hvbWVfUGFnZSJ9.ldrvWTheNnGOa_rH_buA6OoUpLtW2bhcdr3fABrGHbk'
+};
+
 // 同花顺分时API配置
 exports.thsTrendUrl = 'https://quota-h.10jqka.com.cn/fuyao/common_hq_aggr/quote/v1/single_trend';
 

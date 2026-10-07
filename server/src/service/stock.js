@@ -3,7 +3,7 @@
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay } = require('../utils');
+const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay, getThsSnapshotUrl, getThsSnapshotHeaders, buildThsSnapshotRequestBody } = require('../utils');
 const { getMonitorStocks } = require('./monitorStock');
 const { useCLS } = require('../config');
 
@@ -182,6 +182,41 @@ const getSingleStockDataFromTHS = async (code, limit = 1) => {
     }
 }
 exports.getSingleStockData = getSingleStockData;
+
+// 获取单个股票估值信息（总市值/流通市值/市盈率）
+// 快照接口 value[0] 数组下标对应：4=流通市值(元)、7=市盈率(null 表示亏损)、9=总市值(元)
+const getStockValuation = async (code) => {
+    try {
+        const pureCode = code.replace(/^[a-zA-Z]+/, '');
+        const url = getThsSnapshotUrl();
+        const headers = getThsSnapshotHeaders();
+        const requestBody = buildThsSnapshotRequestBody(pureCode);
+
+        const response = await axios.post(url, requestBody, { headers });
+
+        if (response.data.status_code !== 0) {
+            return { success: false, message: `同花顺API返回错误状态码: ${response.data.status_code}` };
+        }
+
+        const value = response.data.data?.quote_data?.[0]?.value?.[0];
+        if (!Array.isArray(value) || value.length === 0) {
+            return { success: false, message: '未获取到估值数据' };
+        }
+
+        return {
+            success: true,
+            data: {
+                totalMarketValue: value[9],
+                circulatingMarketValue: value[4],
+                peRatio: value[7]
+            }
+        };
+    } catch (error) {
+        console.error(`获取股票 ${code} 估值数据失败:`, error.message);
+        return { success: false, message: error.message };
+    }
+};
+exports.getStockValuation = getStockValuation;
 
 let tlineNum = 0;
 const getSingleStockTlineData = async (code) => {

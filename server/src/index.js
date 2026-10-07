@@ -14,7 +14,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { filterUnNormalDaPanData, getAllDaPanData } = require('./service/dapan');
-const { filterUnNormalStockData, getSingleStockData, getSingleStockTlineData, getSingleStockTlineDataByDate, getAllStockData, getJiSuYiDongRankData, triggerUpdateStockData, refreshStockData, getOpeningPrices } = require('./service/stock');
+const { filterUnNormalStockData, getSingleStockData, getSingleStockTlineData, getSingleStockTlineDataByDate, getAllStockData, getJiSuYiDongRankData, triggerUpdateStockData, refreshStockData, getOpeningPrices, getStockValuation } = require('./service/stock');
 const { getBlockData, refreshBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock, getBlockHistory, getBlockDayHistory, updateBlockDayHistory, getBlockMoneyDayHistory, updateBlockMoneyDayHistory } = require('./service/block');
 // const { diagnose } = require('./service/diagnose');
 const { getJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
@@ -245,6 +245,16 @@ app.get('/stock_data', async (req, res) => {
   const limit = Number(req.query.limit) || 100;
   const stockData = await getSingleStockData(code, limit);
   res.json(stockData);
+});
+
+// 获取单个股票估值信息（总市值/流通市值/市盈率，市盈率为 null 表示亏损）
+app.get('/stock_valuation', async (req, res) => {
+  const code = req.query.code;
+  if (!code) {
+    return res.status(400).json({ success: false, message: '缺少 code 参数' });
+  }
+  const result = await getStockValuation(code);
+  res.json(result);
 });
 
 // 返回单个股票分时数据

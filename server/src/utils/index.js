@@ -1,4 +1,4 @@
-const { clsReqStockUrl, clsReqDaPanUrl, clsReqStockTlineUrl, clsReqEmotionUrl, clsReqIndexUrl, dfcfBlockMoneyUrl, dfcfBlockMoneyIndustryUrl, clsReqMainFundUrl, dfcfStockTlineDay2Url, clsReqStockTlineDay5Url, thsKlineUrl, thsKlineHeaders, thsMarketMap, thsTrendUrl, thsTrendHeaders, clsReqStockBasicUrl } = require('../constant');
+const { clsReqStockUrl, clsReqDaPanUrl, clsReqStockTlineUrl, clsReqEmotionUrl, clsReqIndexUrl, dfcfBlockMoneyUrl, dfcfBlockMoneyIndustryUrl, clsReqMainFundUrl, dfcfStockTlineDay2Url, clsReqStockTlineDay5Url, thsKlineUrl, thsKlineHeaders, thsMarketMap, thsTrendUrl, thsTrendHeaders, thsSnapshotUrl, thsSnapshotHeaders, clsReqStockBasicUrl } = require('../constant');
 
 exports.sleep = async (n) => {
     return new Promise(resolve => {
@@ -137,6 +137,31 @@ exports.getThsTrendUrl = () => {
 // 获取同花顺分时API的请求头
 exports.getThsTrendHeaders = () => {
     return thsTrendHeaders;
+};
+
+// 获取同花顺个股快照API的URL
+exports.getThsSnapshotUrl = () => {
+    return thsSnapshotUrl;
+};
+
+// 获取同花顺个股快照API的请求头
+exports.getThsSnapshotHeaders = () => {
+    return thsSnapshotHeaders;
+};
+
+// 构建同花顺个股快照API的请求体（最新快照：总市值/流通市值/市盈率等）
+exports.buildThsSnapshotRequestBody = (code) => {
+    const market = exports.getThsMarketCode(code);
+    return {
+        code_list: [{
+            codes: [code],
+            market: market
+        }],
+        trade_class: 'intraday',
+        data_fields: ['7', '8', '9', '10', '11', '13', '19', '24', '30', '6', '264648', '199112', '1968584', '3153', '3541450', '3475914', '1771976', '65551'],
+        lang: 'zh_hans',
+        gpid: 1
+    };
 };
 
 // 构建同花顺分时API的请求体

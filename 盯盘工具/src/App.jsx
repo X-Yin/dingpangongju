@@ -11,6 +11,7 @@ import FloatingStockPosition from './components/FloatingStockPosition';
 import FloatingMonitorAlarm from './components/FloatingMonitorAlarm';
 import FloatingTechEmotion from './components/FloatingTechEmotion';
 import FloatingStrategyCenter from './components/FloatingStrategyCenter';
+import FloatingStockViewer from './components/FloatingStockViewer';
 import GlobalAnalysis from './components/GlobalAnalysis';
 import MajorEventReminder from './components/MajorEventReminder';
 import PersonalFeelingModal from './components/PersonalFeelingModal';
@@ -1334,6 +1335,7 @@ function App() {
       {location.pathname !== '/training_camp' && <FloatingStockPosition onOutflowDetected={handleOutflowDetected} />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingMonitorAlarm />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStrategyCenter />}
+      {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStockViewer />}
       <FloatingTechEmotion />
       <ClosePipeline />
 
