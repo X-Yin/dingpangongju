@@ -27,6 +27,14 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
+    /* 搜索无结果时的提示项（不可点击） */
+    .stock-search-input-empty {
+        padding: 10px 12px;
+        font-size: 13px;
+        color: #999;
+        text-align: center;
+    }
+
     .stock-search-input-option {
         display: flex;
         align-items: center;

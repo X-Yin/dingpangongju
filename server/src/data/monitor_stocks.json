@@ -778,5 +778,14 @@
     "riskScore": "7",
     "isTech": true,
     "addedAt": "2026-10-07 21:38:28"
+  },
+  {
+    "code": "sh600641",
+    "name": "先导基电",
+    "isImportant": false,
+    "blockName": "缺电",
+    "riskScore": " 7",
+    "isTech": true,
+    "addedAt": "2026-10-07 23:55:03"
   }
 ]

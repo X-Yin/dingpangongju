@@ -1898,5 +1898,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sh600641": {
+    "stockName": "先导基电",
+    "kline": [
+      {
+        "trade_date": 20260930,
+        "open_px": 50,
+        "high_px": 51.99,
+        "low_px": 48.45,
+        "close_px": 48.57,
+        "business_amount": 78796016,
+        "business_balance": 3932878000,
+        "change": -0.39,
+        "ma5_px": 49.18,
+        "ma10_px": 43.7,
+        "ma20_px": 37.23,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

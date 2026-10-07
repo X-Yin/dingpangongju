@@ -33,11 +33,12 @@ const StockSearchInput = ({
     const pickFirstOnResultRef = useRef(false); // 结果到达后是否自动选中第一项
     const fieldRef = useRef(null);
 
+    // 空列表也展开：用于展示「无搜索结果」提示（此时无高亮项，回车会重新触发搜索）
     const openDropdown = (list) => {
         optionsRef.current = list;
-        dropdownOpenRef.current = list.length > 0;
+        dropdownOpenRef.current = true;
         setSearchOptions(list);
-        setDropdownOpen(list.length > 0);
+        setDropdownOpen(true);
         activeIndexRef.current = list.length > 0 ? 0 : -1;
         setActiveIndex(list.length > 0 ? 0 : -1);
     };
@@ -154,6 +155,11 @@ const StockSearchInput = ({
             fetchSearchOptions(query);
             return;
         }
+        if (e.key === 'Escape') {
+            // 「无搜索结果」的空下拉也要能被 Esc 收起
+            if (dropdownOpenRef.current) closeDropdown();
+            return;
+        }
         if (!dropdownOpenRef.current || !optionsRef.current.length) return;
         const total = optionsRef.current.length;
         if (e.key === 'ArrowDown') {
@@ -162,8 +168,6 @@ const StockSearchInput = ({
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             updateActiveIndex((activeIndexRef.current - 1 + total) % total);
-        } else if (e.key === 'Escape') {
-            closeDropdown();
         }
     };
 
@@ -182,24 +186,30 @@ const StockSearchInput = ({
                 suffix={searching ? <Spin size="small" /> : <span />}
             />
             {code ? <div className="stock-search-input-code">{code}</div> : null}
-            {dropdownOpen && searchOptions.length > 0 ? (
-                <div className="stock-search-input-dropdown">
-                    {searchOptions.map((item, idx) => (
-                        <div
-                            key={`${item.code}-${idx}`}
-                            className={`stock-search-input-option${idx === activeIndex ? ' active' : ''}`}
-                            onMouseDown={(e) => {
-                                e.preventDefault(); // 防止输入框失焦导致下拉先收起
-                                handleSelectOption(item);
-                            }}
-                            onMouseEnter={() => updateActiveIndex(idx)}
-                            onClick={() => handleSelectOption(item)}
-                        >
-                            <span className="stock-search-input-option-name">{item.name}</span>
-                            <span className="stock-search-input-option-code">{item.code}</span>
-                        </div>
-                    ))}
-                </div>
+            {dropdownOpen ? (
+                searchOptions.length > 0 ? (
+                    <div className="stock-search-input-dropdown">
+                        {searchOptions.map((item, idx) => (
+                            <div
+                                key={`${item.code}-${idx}`}
+                                className={`stock-search-input-option${idx === activeIndex ? ' active' : ''}`}
+                                onMouseDown={(e) => {
+                                    e.preventDefault(); // 防止输入框失焦导致下拉先收起
+                                    handleSelectOption(item);
+                                }}
+                                onMouseEnter={() => updateActiveIndex(idx)}
+                                onClick={() => handleSelectOption(item)}
+                            >
+                                <span className="stock-search-input-option-name">{item.name}</span>
+                                <span className="stock-search-input-option-code">{item.code}</span>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="stock-search-input-dropdown">
+                        <div className="stock-search-input-empty">无搜索结果</div>
+                    </div>
+                )
             ) : null}
         </div>
     );
