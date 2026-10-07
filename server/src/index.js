@@ -2654,6 +2654,79 @@ app.get('/training_camp/backtest/trend_diagnosis/status', (req, res) => {
 // 复用 backtest-worker.js --monthly 模式：把可用回放交易日按自然月拆分逐月补测缺失缓存；
 // worker 结束后从回测缓存读取「月 × 策略」的月度整体收益，跨月累乘得到累计收益率曲线
 const monthlyTrendJob = { status: 'idle', startedAt: null, endedAt: null, exitCode: null, logTail: [], result: null, error: null };
+let lastMonthlyAnalysisNotifyMonth = null; // 已推送飞书的分析月份，避免自动重跑同一月份重复推送
+
+// ---------- 历史曲线月度评分 ----------
+// 六个维度：收益率 / 最大回撤 / 平均回撤 / 胜率 / 平均持仓时间 / 盈亏比，加权合成 0-100 综合评分；
+// 每个月内按 min-max 归一（回撤/持仓时间越低越好取反向），再按综合分排名，输出月度分析结论
+const MONTH_SCORE_WEIGHTS = { overallReturn: 30, maxDrawdown: 20, avgDrawdown: 15, winRate: 15, avgHoldingDays: 10, profitLossRatio: 10 };
+const MONTH_SCORE_METRICS = [
+  { key: 'overallReturn', better: 'high' },
+  { key: 'maxDrawdown', better: 'low' },
+  { key: 'avgDrawdown', better: 'low' },
+  { key: 'winRate', better: 'high' },
+  { key: 'avgHoldingDays', better: 'low' },
+  { key: 'profitLossRatio', better: 'high' },
+];
+const MONTH_ANALYSIS_TOP_N = 5;
+
+// 从单条回测缓存提取六维指标（盈亏比＝盈利单平均收益 / 亏损单平均亏损，无亏损单封顶 10）
+const extractMonthMetrics = (cached) => {
+  if (!cached?.success) return null;
+  const sum = cached.summary || {};
+  const trades = (cached.trades || []).filter(t => t.returnRate != null && Number.isFinite(Number(t.returnRate)));
+  let avgWin = null;
+  let avgLoss = null;
+  const wins = trades.filter(t => Number(t.returnRate) > 0);
+  const losses = trades.filter(t => Number(t.returnRate) < 0);
+  if (wins.length > 0) avgWin = wins.reduce((a, t) => a + Number(t.returnRate), 0) / wins.length;
+  if (losses.length > 0) avgLoss = Math.abs(losses.reduce((a, t) => a + Number(t.returnRate), 0) / losses.length);
+  let profitLossRatio = null;
+  if (avgWin != null && avgLoss != null && avgLoss > 0) profitLossRatio = parseFloat((avgWin / avgLoss).toFixed(2));
+  else if (avgWin != null) profitLossRatio = 10; // 无亏损单
+  return {
+    overallReturn: sum.overallReturn != null ? Number(sum.overallReturn) : null, // 收益率（%）
+    maxDrawdown: sum.maxDrawdown != null ? Math.abs(Number(sum.maxDrawdown)) : null, // 最大回撤（%，取绝对值）
+    avgDrawdown: sum.avgDrawdown != null ? Math.abs(Number(sum.avgDrawdown)) : null, // 平均回撤（%，取绝对值）
+    winRate: sum.winRate != null ? Number(sum.winRate) : null, // 胜率（%）
+    avgHoldingDays: sum.avgHoldingDays != null ? Number(sum.avgHoldingDays) : null, // 平均持仓时间（交易日）
+    profitLossRatio,
+  };
+};
+
+// 对某个月的全部策略计算综合评分（六维 min-max 归一 + 加权，满分 100）并回填 score/rank
+const scoreMonthEntries = (entries) => {
+  const valid = entries.filter(e => e.metrics && e.tradeCount > 0);
+  if (valid.length === 0) return;
+  for (const { key, better } of MONTH_SCORE_METRICS) {
+    const values = valid.map(e => ({ id: e.id, v: e.metrics[key] })).filter(x => x.v != null && Number.isFinite(x.v));
+    if (values.length === 0) continue;
+    const nums = values.map(x => x.v);
+    const min = Math.min(...nums);
+    const max = Math.max(...nums);
+    const span = max - min;
+    for (const { id, v } of values) {
+      let t = span > 0 ? (v - min) / span : 0.5; // 全部相同 → 中性 50 分
+      if (better === 'low') t = 1 - t;
+      const e = valid.find(x => x.id === id);
+      e.norm = e.norm || {};
+      e.norm[key] = t * 100;
+    }
+  }
+  for (const e of valid) {
+    let weighted = 0;
+    let usedWeight = 0;
+    for (const { key } of MONTH_SCORE_METRICS) {
+      const t = e.norm?.[key];
+      if (t == null) continue;
+      weighted += MONTH_SCORE_WEIGHTS[key] * t;
+      usedWeight += MONTH_SCORE_WEIGHTS[key];
+    }
+    e.score = usedWeight > 0 ? parseFloat((weighted / usedWeight).toFixed(1)) : null;
+  }
+  const ranked = valid.filter(e => e.score != null).sort((a, b) => b.score - a.score);
+  ranked.forEach((e, idx) => { e.rank = idx + 1; });
+};
 
 // 从回测缓存汇总自然月历史曲线数据（worker 结束后调用）
 const buildMonthlyTrendResult = async () => {
@@ -2677,13 +2750,16 @@ const buildMonthlyTrendResult = async () => {
       const cached = readCachedBacktest(s.id, m.startDate, m.endDate);
       const ret = cached?.success && cached.summary?.overallReturn != null ? Number(cached.summary.overallReturn) : null;
       const tradeCount = cached?.summary?.tradeCount ?? null;
+      // 六维指标 + 综合评分/排名（评分与排名随后统一计算后回填）
+      const metrics = extractMonthMetrics(cached);
+      const base = { month: m.label, ret, tradeCount, metrics, score: null, rank: null };
       if (ret == null) {
         broken = true;
         missing.push({ strategy: s.name, month: m.label });
-        return { month: m.label, ret: null, cumulative: null, tradeCount };
+        return { ...base, cumulative: null };
       }
       cumulative *= 1 + ret / 100;
-      return { month: m.label, ret, cumulative: broken ? null : parseFloat(((cumulative - 1) * 100).toFixed(2)), tradeCount };
+      return { ...base, cumulative: broken ? null : parseFloat(((cumulative - 1) * 100).toFixed(2)) };
     });
     const validCum = monthly.filter(p => p.cumulative != null);
     return {
@@ -2694,12 +2770,90 @@ const buildMonthlyTrendResult = async () => {
       validMonthCount: validCum.length,
     };
   });
+
+  // 逐月评分与排名，并把结果回填到 monthly
+  months.forEach((m, mi) => {
+    const entries = strategies.map(s => ({
+      id: s.id,
+      name: s.name,
+      tradeCount: s.monthly[mi].tradeCount || 0,
+      metrics: s.monthly[mi].metrics,
+      ref: s.monthly[mi],
+    }));
+    scoreMonthEntries(entries);
+    entries.forEach(e => {
+      e.ref.score = e.score ?? null;
+      e.ref.rank = e.rank ?? null;
+    });
+  });
+
+  // 月度分析结论：本月最佳 / 较上月进步最大 / 较上月退步最大（各 TOP5）
+  const toAnalysisItem = (e, delta) => ({
+    id: e.id,
+    name: e.name,
+    score: e.score,
+    rank: e.rank ?? null,
+    delta: delta ?? null,
+    metrics: e.metrics,
+  });
+  const analysis = months.map((m, mi) => {
+    const cur = strategies.map(s => ({
+      id: s.id,
+      name: s.name,
+      score: s.monthly[mi].score,
+      rank: s.monthly[mi].rank,
+      metrics: s.monthly[mi].metrics,
+    })).filter(x => x.score != null);
+    const prevScore = new Map(mi > 0 ? strategies.map(s => [s.id, s.monthly[mi - 1].score]) : []);
+    const best = [...cur].sort((a, b) => b.score - a.score).slice(0, MONTH_ANALYSIS_TOP_N)
+      .map(e => toAnalysisItem(e, prevScore.get(e.id) != null ? parseFloat((e.score - prevScore.get(e.id)).toFixed(1)) : null));
+    // 环比进步/退步（仅统计上月同样有评分的策略）
+    const deltas = cur
+      .map(e => ({ e, prev: prevScore.get(e.id) }))
+      .filter(x => x.prev != null && Number.isFinite(x.prev))
+      .map(x => ({ e: x.e, delta: parseFloat((x.e.score - x.prev).toFixed(1)) }))
+      .filter(x => x.delta !== 0);
+    const improved = deltas.filter(x => x.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, MONTH_ANALYSIS_TOP_N)
+      .map(x => toAnalysisItem(x.e, x.delta));
+    const regressed = deltas.filter(x => x.delta < 0).sort((a, b) => a.delta - b.delta).slice(0, MONTH_ANALYSIS_TOP_N)
+      .map(x => toAnalysisItem(x.e, x.delta));
+    return { key: m.key, label: m.label, startDate: m.startDate, endDate: m.endDate, days: m.days, best, improved, regressed };
+  });
+
   return {
     generatedAt: new Date().toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' }),
     months: months.map(m => ({ key: m.key, label: m.label, startDate: m.startDate, endDate: m.endDate, days: m.days })),
     strategies,
     missingCount: missing.length,
+    analysis,
   };
+};
+
+// 组装历史曲线月度分析飞书文本（取最新一个自然月的结论）
+const buildMonthlyAnalysisText = (result) => {
+  const analysis = result?.analysis || [];
+  const latest = analysis[analysis.length - 1];
+  if (!latest) return null;
+  const f2 = (v, suffix = '') => (v == null || !Number.isFinite(Number(v)) ? '--' : `${Number(v).toFixed(2)}${suffix}`);
+  const signed = (v, suffix = '') => (v == null || !Number.isFinite(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}${suffix}`);
+  const line = (it, idx, showDelta) => {
+    const m = it.metrics || {};
+    const head = `${idx + 1}. ${it.name}　${f2(it.score)}分${showDelta && it.delta != null ? `（环比${it.delta > 0 ? '+' : ''}${it.delta}）` : ''}`;
+    const det = `收益 ${signed(m.overallReturn, '%')}｜最大回撤 ${f2(m.maxDrawdown, '%')}｜平均回撤 ${f2(m.avgDrawdown, '%')}｜胜率 ${f2(m.winRate, '%')}｜平均持仓 ${f2(m.avgHoldingDays, '天')}｜盈亏比 ${f2(m.profitLossRatio)}`;
+    return `${head}\n    ${det}`;
+  };
+  const block = (title, items, showDelta) => (items.length > 0
+    ? `${title}\n${items.map((it, i) => line(it, i, showDelta)).join('\n')}`
+    : `${title}\n    暂无数据`);
+  return [
+    `📊【策略月度评分分析】${latest.label}（${latest.startDate} ~ ${latest.endDate}，${latest.days} 个交易日）`,
+    '',
+    block('🏆 本月表现最佳 TOP5：', latest.best, false),
+    '',
+    block('📈 较上月进步最大 TOP5：', latest.improved, true),
+    '',
+    block('📉 较上月退步最大 TOP5：', latest.regressed, true),
+  ].join('\n');
 };
 
 // 启动自然月回测（历史曲线）：spawn backtest-worker.js --monthly，结束后从缓存汇总曲线数据
@@ -2756,6 +2910,17 @@ app.post('/training_camp/backtest/trend_diagnosis/monthly', (req, res) => {
       buildMonthlyTrendResult().then((result) => {
         monthlyTrendJob.result = result;
         monthlyTrendJob.status = 'done';
+        // 分析完成后推送飞书（同一分析月份只推送一次，避免自动重跑重复推送）
+        const latestMonth = (result?.analysis || [])[(result?.analysis || []).length - 1]?.key;
+        if (latestMonth && latestMonth !== lastMonthlyAnalysisNotifyMonth) {
+          const text = buildMonthlyAnalysisText(result);
+          if (text) {
+            feishuNotify.sendFeishuText(text).then((r) => {
+              if (r?.success) lastMonthlyAnalysisNotifyMonth = latestMonth;
+              else pushLog('月度分析飞书推送失败');
+            }).catch(() => pushLog('月度分析飞书推送异常'));
+          }
+        }
       }).catch((err) => {
         monthlyTrendJob.status = 'error';
         monthlyTrendJob.error = err.message || String(err);

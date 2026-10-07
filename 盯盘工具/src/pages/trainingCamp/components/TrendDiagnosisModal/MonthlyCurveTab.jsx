@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Button, Checkbox, Empty, Input, Spin, Tag, Tooltip } from 'antd';
-import { LineChartOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { Button, Checkbox, Empty, Input, Select, Spin, Tag, Tooltip } from 'antd';
+import { LineChartOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, TrophyOutlined } from '@ant-design/icons';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, LineElement, PointElement, Tooltip as ChartTooltip } from 'chart.js';
 import axios from 'axios';
@@ -11,6 +11,9 @@ const BASE = `http://${local_ip}:3000`;
 const fmtDate = (d) => (d ? `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}` : '--');
 const fmtPct = (v) => (v == null || !Number.isFinite(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
 const signColor = (v) => (v == null || !Number.isFinite(Number(v)) ? '#8c8c8c' : (Number(v) > 0 ? '#cf1322' : (Number(v) < 0 ? '#389e0d' : '#6b7890')));
+const fmtNum = (v, digits = 2) => (v == null || !Number.isFinite(Number(v)) ? '--' : Number(v).toFixed(digits));
+// 综合评分按分档取色（≥80 红、≥60 橙、≥40 蓝、其余灰）
+const scoreColor = (v) => (v == null || !Number.isFinite(Number(v)) ? '#8c8c8c' : (v >= 80 ? '#cf1322' : (v >= 60 ? '#d48806' : (v >= 40 ? '#1677ff' : '#6b7890'))));
 
 const hexToRgba = (hex, alpha = 1) => {
   if (!hex || !hex.startsWith('#')) return hex;
@@ -43,6 +46,8 @@ const MonthlyCurveTab = ({ active, onStockClick }) => {
   const [rerunLoading, setRerunLoading] = useState(false);
   const [detail, setDetail] = useState([]); // 月度明细：[{ id, name, desc, months: [{ key, label, startDate, endDate, days, summary, trades, currentHolding }] }]
   const [detailLoading, setDetailLoading] = useState(false);
+  const [analysisMonthKey, setAnalysisMonthKey] = useState(null); // 月度分析选中的自然月（默认最新月）
+  const [showFullRank, setShowFullRank] = useState(false); // 是否展开当月全部策略排名
   const pollRef = useRef(null);
 
   const stopPoll = () => {
@@ -157,7 +162,51 @@ const MonthlyCurveTab = ({ active, onStockClick }) => {
     return map;
   }, [result]);
 
-  const months = result?.months || [];
+  const months = useMemo(() => result?.months || [], [result]);
+
+  // 月度评分分析：按自然月切换，默认最新月
+  const analysisList = useMemo(() => result?.analysis || [], [result]);
+  const activeAnalysis = useMemo(() => {
+    if (analysisList.length === 0) return null;
+    return analysisList.find(a => a.key === analysisMonthKey) || analysisList[analysisList.length - 1];
+  }, [analysisList, analysisMonthKey]);
+
+  // 选中月份的全部策略排名（有评分的策略按名次升序）
+  const fullRankRows = useMemo(() => {
+    if (!activeAnalysis) return [];
+    const mi = months.findIndex(m => m.key === activeAnalysis.key);
+    if (mi < 0) return [];
+    return (result?.strategies || [])
+      .map(s => ({ id: s.id, name: s.name, ...(s.monthly?.[mi] || {}) }))
+      .filter(r => r.score != null)
+      .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
+  }, [activeAnalysis, months, result]);
+
+  // 单个策略在分析列表中的一行：名称 + 评分（+ 环比）+ 六维指标
+  const renderAnalysisRow = (it, idx, showDelta) => {
+    const m = it.metrics || {};
+    return (
+      <div key={it.id} style={{ padding: '6px 0', borderTop: idx === 0 ? 'none' : '1px dashed #eef1f6' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', minWidth: 16 }}>{idx + 1}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#12213a' }}>{it.name}</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor(it.score) }}>{fmtNum(it.score, 1)}分</span>
+          {showDelta && it.delta != null && (
+            <Tag
+              style={{ marginInlineEnd: 0, fontSize: 11, lineHeight: '16px', padding: '0 6px' }}
+              color={it.delta > 0 ? 'red' : 'green'}
+            >
+              {it.delta > 0 ? `▲ +${it.delta}` : `▼ ${it.delta}`}
+            </Tag>
+          )}
+        </div>
+        <div style={{ fontSize: 11, color: '#6b7890', marginLeft: 22, lineHeight: '18px' }}>
+          收益 <span style={{ color: signColor(m.overallReturn) }}>{fmtPct(m.overallReturn)}</span>
+          ｜最大回撤 {fmtNum(m.maxDrawdown)}%｜平均回撤 {fmtNum(m.avgDrawdown)}%｜胜率 {fmtNum(m.winRate)}%｜平均持仓 {fmtNum(m.avgHoldingDays, 1)}天｜盈亏比 {fmtNum(m.profitLossRatio)}
+        </div>
+      </div>
+    );
+  };
 
   // 已选且有有效数据的策略（全月缺失的策略无法画线，绘制时跳过但保留在 tag 列表外）
   const drawable = useMemo(
@@ -278,6 +327,74 @@ const MonthlyCurveTab = ({ active, onStockClick }) => {
         <Empty description="暂无历史曲线数据，点击「重新回测」生成" style={{ padding: '40px 0' }} />
       ) : (
         <>
+                    {/* 月度评分分析结论（折线图上方）：本月最佳 / 较上月进步最大 / 较上月退步最大 各 TOP5 + 全量排名 */}
+          {activeAnalysis && (
+            <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(18,33,58,0.06)', padding: '12px 16px 14px', marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+                <TrophyOutlined style={{ color: '#d48806' }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#12213a' }}>策略月度评分分析</span>
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                  六维打分 0-100：收益率 / 最大回撤 / 平均回撤 / 胜率 / 平均持仓时间 / 盈亏比
+                </span>
+                <span style={{ flex: 1 }} />
+                <Select
+                  size="small"
+                  value={activeAnalysis.key}
+                  onChange={setAnalysisMonthKey}
+                  style={{ width: 160 }}
+                  options={analysisList.map(a => ({ value: a.key, label: `${a.label}（${a.days}个交易日）` }))}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 300px', minWidth: 280 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#cf1322' }}>🏆 本月表现最佳 TOP5</div>
+                  {activeAnalysis.best.length === 0
+                    ? <div style={{ fontSize: 12, color: '#9ca3af' }}>暂无数据</div>
+                    : activeAnalysis.best.map((it, i) => renderAnalysisRow(it, i, false))}
+                </div>
+                <div style={{ flex: '1 1 300px', minWidth: 280 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#cf1322' }}>📈 较上月进步最大 TOP5</div>
+                  {activeAnalysis.improved.length === 0
+                    ? <div style={{ fontSize: 12, color: '#9ca3af' }}>暂无环比数据</div>
+                    : activeAnalysis.improved.map((it, i) => renderAnalysisRow(it, i, true))}
+                </div>
+                <div style={{ flex: '1 1 300px', minWidth: 280 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#389e0d' }}>📉 较上月退步最大 TOP5</div>
+                  {activeAnalysis.regressed.length === 0
+                    ? <div style={{ fontSize: 12, color: '#9ca3af' }}>暂无环比数据</div>
+                    : activeAnalysis.regressed.map((it, i) => renderAnalysisRow(it, i, true))}
+                </div>
+              </div>
+              {fullRankRows.length > 0 && (
+                <div style={{ marginTop: 8 }}>
+                  <Button type="link" size="small" style={{ padding: 0 }} onClick={() => setShowFullRank(v => !v)}>
+                    {showFullRank ? '收起全部排名' : `展开全部排名（${fullRankRows.length} 个策略）`}
+                  </Button>
+                  {showFullRank && (
+                    <div style={{ maxHeight: 260, overflowY: 'auto', marginTop: 4, border: '1px solid #eef1f6', borderRadius: 8 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr 58px 72px 76px 76px 62px 74px 62px', gap: 4, padding: '6px 10px', fontSize: 11, color: '#6b7890', fontWeight: 700, position: 'sticky', top: 0, background: '#f7f9fc' }}>
+                        <span>排名</span><span>策略</span><span>评分</span><span>收益率</span><span>最大回撤</span><span>平均回撤</span><span>胜率</span><span>平均持仓</span><span>盈亏比</span>
+                      </div>
+                      {fullRankRows.map(r => (
+                        <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '44px 1fr 58px 72px 76px 76px 62px 74px 62px', gap: 4, padding: '5px 10px', fontSize: 11, color: '#12213a', borderTop: '1px solid #f2f5f9', alignItems: 'center' }}>
+                          <span style={{ color: '#94a3b8', fontWeight: 700 }}>{r.rank}</span>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
+                          <span style={{ fontWeight: 700, color: scoreColor(r.score) }}>{fmtNum(r.score, 1)}</span>
+                          <span style={{ color: signColor(r.ret) }}>{fmtPct(r.ret)}</span>
+                          <span>{fmtNum(r.metrics?.maxDrawdown)}%</span>
+                          <span>{fmtNum(r.metrics?.avgDrawdown)}%</span>
+                          <span>{fmtNum(r.metrics?.winRate)}%</span>
+                          <span>{fmtNum(r.metrics?.avgHoldingDays, 1)}天</span>
+                          <span>{fmtNum(r.metrics?.profitLossRatio)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* 策略 tag 行（模仿叠加分时观察：彩色 tag = 图例，悬停高亮曲线、双击移除） */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
             {selected.length === 0 && <span style={{ fontSize: 12, color: '#9ca3af' }}>尚未选择策略，点击「添加策略」开始</span>}
@@ -293,7 +410,7 @@ const MonthlyCurveTab = ({ active, onStockClick }) => {
                     <div>
                       <div>{s?.name || id}</div>
                       {(s?.monthly || []).map(p => (
-                        <div key={p.month}>{p.month}: 累计 {fmtPct(p.cumulative)}（当月 {fmtPct(p.ret)}，{p.tradeCount ?? 0} 笔）</div>
+                        <div key={p.month}>{p.month}: 累计 {fmtPct(p.cumulative)}（当月 {fmtPct(p.ret)}，{p.tradeCount ?? 0} 笔，评分 {fmtNum(p.score, 1)}{p.rank != null ? ` 第${p.rank}名` : ''}）</div>
                       ))}
                       <div style={{ marginTop: 4, opacity: 0.75 }}>双击移除</div>
                     </div>
