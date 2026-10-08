@@ -1196,5 +1196,37 @@
       "code": "sh603188",
       "change": -6.67
     }
+  ],
+  "固态电池": [
+    {
+      "name": "紫竹高科",
+      "blockName": "固态电池",
+      "code": "sz002058",
+      "change": 10
+    },
+    {
+      "name": "上海洗霸",
+      "blockName": "固态电池",
+      "code": "sh603200",
+      "change": 9.99
+    },
+    {
+      "name": "时代万恒",
+      "blockName": "固态电池",
+      "code": "sh600241",
+      "change": 9.98
+    },
+    {
+      "name": "传艺科技",
+      "blockName": "固态电池",
+      "code": "sz002866",
+      "change": 10
+    },
+    {
+      "name": "龙蟠科技",
+      "blockName": "固态电池",
+      "code": "sh603906",
+      "change": 9.98
+    }
   ]
 }

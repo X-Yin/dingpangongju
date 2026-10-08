@@ -1030,17 +1030,6 @@ exports.default = [
         "name": "襄阳轴承"
     },
     {
-        "blockName": "传媒",
-        "code": "sh600825",
-        "name": "新华传媒",
-        "tag": "防御"
-    },
-    {
-        "blockName": "传媒",
-        "code": "sh605577",
-        "name": "龙版传媒"
-    },
-    {
         "blockName": "机器人",
         "code": "sz002242",
         "name": "九阳股份"
@@ -1101,5 +1090,35 @@ exports.default = [
         "code": "sh603188",
         "name": "亚邦股份",
         "tag": "防御"
+    },
+    {
+        "blockName": "固态电池",
+        "code": "sz002058",
+        "name": "紫竹高科",
+        "tag": "中性"
+    },
+    {
+        "blockName": "固态电池",
+        "code": "sh603200",
+        "name": "上海洗霸",
+        "tag": "中性"
+    },
+    {
+        "blockName": "固态电池",
+        "code": "sh600241",
+        "name": "时代万恒",
+        "tag": "中性"
+    },
+    {
+        "blockName": "固态电池",
+        "code": "sz002866",
+        "name": "传艺科技",
+        "tag": "中性"
+    },
+    {
+        "blockName": "固态电池",
+        "code": "sh603906",
+        "name": "龙蟠科技",
+        "tag": "中性"
     }
 ]

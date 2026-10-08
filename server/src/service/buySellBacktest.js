@@ -4538,6 +4538,47 @@ const buildTwoBuyTradeExtra = (position) => ({
   buyTimes: position?.buyTime != null ? [position.buyTime] : [],
   buyDates: position?.buyDate != null ? [position.buyDate] : [],
 });
+
+// 两次买入策略「整体收益率」按真实账户口径计算（2026-10-08 用户要求）：
+// 资金从 1 起步，每轮买入半仓（第一份）+ 半仓（第二份）= 满仓；两份是「同时持有」的
+// （第二份在第一份卖出前买入），故同一轮内两份的半仓收益应【相加】（合计占满仓，不产生复利放大），
+// 只有【轮次之间】才复利——上一轮已实现收益成为下一轮的本金基数。
+// 算法：把每一份仓位视为一段 [买入时刻, 卖出时刻] 区间（期末持仓以区间终点为卖出时刻），
+// 按买入时刻排序后做区间合并：时间上重叠（含传递重叠）的份数归入同一轮，轮内收益相加、跨轮相乘。
+// legs: [{ buyDate, buyTime, sellDate?, sellTime?, returnRate }]，returnRate 已按半仓折算（百分数）
+const computeTwoBuyAccountReturn = (legs) => {
+  const items = [];
+  for (const l of legs) {
+    if (!l) continue;
+    const rate = l.returnRate != null && Number.isFinite(Number(l.returnRate)) ? Number(l.returnRate) : null;
+    if (rate == null) continue;
+    items.push({
+      start: `${l.buyDate || ''}${l.buyTime || ''}`,
+      // 期末持仓无卖出时刻：视为持有到回测结束（区间终点取最大）
+      end: l.sellDate ? `${l.sellDate}${l.sellTime || '99:99'}` : '99999999999999',
+      rate,
+    });
+  }
+  items.sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0));
+  let overall = 1;
+  let groupRate = 0;
+  let groupEnd = null;
+  for (const it of items) {
+    if (groupEnd != null && it.start <= groupEnd) {
+      // 与当前轮已有持仓时间重叠 → 归入同一轮，收益相加
+      groupRate += it.rate;
+      if (it.end > groupEnd) groupEnd = it.end;
+    } else {
+      // 新一轮：先把上一轮收益复利进总资金
+      if (groupEnd != null) overall *= 1 + groupRate / 100;
+      groupRate = it.rate;
+      groupEnd = it.end;
+    }
+  }
+  if (groupEnd != null) overall *= 1 + groupRate / 100;
+  return parseFloat(((overall - 1) * 100).toFixed(2));
+};
+
 const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_gain', onProgress) => {
   // 重点板块-N日最高涨幅系列走独立的板块驱动回测逻辑（尾盘 14:50 买入，不走大盘买点诊断）
   if (STRATEGIES[strategyId]?.keyBlockDays != null) {
@@ -4936,10 +4977,6 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
 
   // 组装结果
   // 期末持仓：逐份按最近一个有效日期的收盘价估算浮盈，计入整体收益（两次买入策略可能同时持有两份）
-  let overallReturn = 1;
-  for (const t of singleTrades) {
-    if (t.returnRate != null && Number.isFinite(t.returnRate)) overallReturn *= 1 + t.returnRate / 100;
-  }
   const currentHoldings = [];
   for (const pos of positions) {
     const h = { ...pos };
@@ -4960,11 +4997,24 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
     } else {
       h.buyReturn = rawBuyReturn;
     }
-    overallReturn *= 1 + (h.buyReturn || 0) / 100;
     currentHoldings.push(h);
   }
   const holding = currentHoldings[0] || null;
-  overallReturn = parseFloat(((overallReturn - 1) * 100).toFixed(2));
+  // 整体收益：两次买入按真实账户口径（同一轮两份同时持有 → 轮内收益相加，跨轮复利）；
+  // 其余单份策略同一时刻只持有一份，逐笔复利即等价账户口径
+  const overallReturn = strategy.twoBuy === true
+    ? computeTwoBuyAccountReturn([
+        ...singleTrades,
+        ...currentHoldings.map(h => ({ ...h, returnRate: h.buyReturn })),
+      ])
+    : (() => {
+        let acc = 1;
+        for (const t of singleTrades) {
+          if (t.returnRate != null && Number.isFinite(t.returnRate)) acc *= 1 + t.returnRate / 100;
+        }
+        for (const h of currentHoldings) acc *= 1 + (h.buyReturn || 0) / 100;
+        return parseFloat(((acc - 1) * 100).toFixed(2));
+      })();
   const validTrades = singleTrades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
   const winCount = validTrades.filter(t => t.returnRate > 0).length;
   return {
@@ -5418,10 +5468,6 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   return results.concat(states.map(st => {
     const { strategy, singleTrades, skippedDates } = st;
     // 期末持仓：逐份按最近一个有效日期的收盘价估算浮盈，计入整体收益（两次买入策略可能同时持有两份）
-    let overallReturn = 1;
-    for (const t of singleTrades) {
-      if (t.returnRate != null && Number.isFinite(t.returnRate)) overallReturn *= 1 + t.returnRate / 100;
-    }
     const currentHoldings = [];
     for (const pos of st.positions) {
       const h = { ...pos };
@@ -5442,11 +5488,24 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
       } else {
         h.buyReturn = rawBuyReturn;
       }
-      overallReturn *= 1 + (h.buyReturn || 0) / 100;
       currentHoldings.push(h);
     }
     const holding = currentHoldings[0] || null;
-    overallReturn = parseFloat(((overallReturn - 1) * 100).toFixed(2));
+    // 整体收益：两次买入按真实账户口径（同一轮两份同时持有 → 轮内收益相加，跨轮复利）；
+    // 其余单份策略同一时刻只持有一份，逐笔复利即等价账户口径
+    const overallReturn = strategy.twoBuy === true
+      ? computeTwoBuyAccountReturn([
+          ...singleTrades,
+          ...currentHoldings.map(h => ({ ...h, returnRate: h.buyReturn })),
+        ])
+      : (() => {
+          let acc = 1;
+          for (const t of singleTrades) {
+            if (t.returnRate != null && Number.isFinite(t.returnRate)) acc *= 1 + t.returnRate / 100;
+          }
+          for (const h of currentHoldings) acc *= 1 + (h.buyReturn || 0) / 100;
+          return parseFloat(((acc - 1) * 100).toFixed(2));
+        })();
     const validTrades = singleTrades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
     const winCount = validTrades.filter(t => t.returnRate > 0).length;
     return {
