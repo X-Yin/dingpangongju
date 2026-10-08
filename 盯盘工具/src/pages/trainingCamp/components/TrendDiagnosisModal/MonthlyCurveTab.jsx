@@ -550,6 +550,7 @@ const MonthlyCurveTab = ({ active, onStockClick }) => {
                                 summary: m.summary,
                                 trades: m.trades,
                                 currentHolding: m.currentHolding,
+                                currentHoldings: m.currentHoldings || [],
                               }}
                               onStockClick={onStockClick}
                             />

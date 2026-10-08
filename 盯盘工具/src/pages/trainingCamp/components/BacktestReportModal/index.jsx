@@ -42,12 +42,12 @@ const ModeTag = ({ mode }) => {
   if (!meta) return null;
   return <Tag color={meta.color} style={{ marginInlineEnd: 0 }}>{meta.text}</Tag>;
 };
-// 两次买入策略仓位标签：已补买=满仓（成本取两次买入均价）/ 仅建仓第一份=半仓（成本取首次买入价）
-const TwoBuyModeTag = ({ buyCount }) => {
-  if (buyCount == null) return null;
-  return Number(buyCount) >= 2
-    ? <Tag color="red" style={{ marginInlineEnd: 0 }}>两次买入·满仓</Tag>
-    : <Tag color="orange" style={{ marginInlineEnd: 0 }}>两次买入·半仓</Tag>;
+// 两次买入策略仓位标签：每份仓位均为半仓、各自独立买卖（leg=1 第一份 / leg=2 第二份）
+const TwoBuyModeTag = ({ leg }) => {
+  if (leg == null) return null;
+  return Number(leg) >= 2
+    ? <Tag color="red" style={{ marginInlineEnd: 0 }}>两次买入·第二份（半仓）</Tag>
+    : <Tag color="orange" style={{ marginInlineEnd: 0 }}>两次买入·第一份（半仓）</Tag>;
 };
 // 收益标签：半仓笔（weight<1）的 rate 已按 ×0.5 折算，悬停展示个股原始收益；halfReason 说明半仓原因
 const WeightedReturnTag = ({ rate, rawRate, weight, label = '收益', halfReason = '防御为半仓买入' }) => {
@@ -136,7 +136,11 @@ const BuyReasonTag = ({ reason, checks }) => {
 // 回调签名 (code, name, trade)：第三参为该笔交易/持仓记录对象（含买卖日期/时间/价格），供 K 线弹窗标注买卖点
 export const StrategyCard = ({ strategy, rank, onStockClick }) => {
   const s = strategy.summary || {};
-  const hasTrades = (strategy.trades || []).length > 0 || strategy.currentHolding;
+  // 期末持仓：优先取 currentHoldings（两次买入策略可能同时持有两份），兼容旧的单份 currentHolding
+  const holdings = (strategy.currentHoldings && strategy.currentHoldings.length > 0)
+    ? strategy.currentHoldings
+    : (strategy.currentHolding ? [strategy.currentHolding] : []);
+  const hasTrades = (strategy.trades || []).length > 0 || holdings.length > 0;
   const renderStockName = (code, name, trade) => (
     onStockClick ? (
       <span
@@ -159,13 +163,11 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
         {renderStockName(t.code, t.stockName, t)}
         <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{t.code}</span>
         <ModeTag mode={t.positionMode} />
-        {t.twoBuy && <TwoBuyModeTag buyCount={(t.buyPrices || []).length} />}
+        {t.twoBuy && <TwoBuyModeTag leg={t.leg} />}
         {t.metric != null && <Tag color="purple" style={{ marginInlineEnd: 0 }}>选股指标 {Number(t.metric).toFixed(4)}</Tag>}
-        <WeightedReturnTag rate={t.returnRate} rawRate={t.rawReturnRate} weight={t.weight} halfReason="两次买入策略仅建仓第一份即卖出" />
+        <WeightedReturnTag rate={t.returnRate} rawRate={t.rawReturnRate} weight={t.weight} halfReason="两次买入策略每份仓位均为半仓" />
         <span style={{ fontSize: 11, color: '#9ca3af' }}>
-          {t.twoBuy && (t.buyTimes || []).length >= 2
-            ? `${(t.buyTimes || []).map((bt, i) => `第${i + 1}次 ${fmtDate((t.buyDates || [])[i] ?? t.buyDate)} ${fmtTime(bt)}`).join(' / ')} 买`
-            : `${fmtDate(t.buyDate)} ${fmtTime(t.buyTime)} 买`}
+          {`${fmtDate(t.buyDate)} ${fmtTime(t.buyTime)} 买`}
           {' → '}{fmtDate(t.sellDate)} {fmtTime(t.sellTime)} 卖
         </span>
         <span style={{ fontSize: 11, color: '#9ca3af' }}>持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(t)}</b></span>
@@ -199,44 +201,33 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
         )}
         {t.twoBuy && (
           <div style={{ color: '#d46b08' }}>
-            {(t.buyPrices || []).length >= 2
-              ? `两次买入满仓口径：第一次买入 ${Number(t.buyPrices[0]).toFixed(2)}、第二次买入 ${Number(t.buyPrices[1]).toFixed(2)}，平均成本 ${Number(t.avgPrice).toFixed(2)}；按平均成本统一计算收益 ${fmtPct(t.returnRate)}`
-              : `两次买入半仓口径：仅买入第一份（${Number((t.buyPrices || [])[0] ?? t.buyPrice).toFixed(2)}）即触发卖点，个股实际收益 ${fmtPct(t.rawReturnRate)}，按 50% 仓位折算计入概览的收益为 ${fmtPct(t.returnRate)}`}
+            {`两次买入策略·第${Number(t.leg) >= 2 ? '二' : '一'}份仓位（半仓）：本份以自身买入价 ${Number(t.buyPrice).toFixed(2)} 为成本独立计算买卖与收益，个股实际收益 ${fmtPct(t.rawReturnRate)}，按 50% 仓位折算后计入概览（整体收益/平均回撤/单笔最大回撤）的收益为 ${fmtPct(t.returnRate)}；两份仓位不合并、不摊平成本，各产生一条独立交易记录`}
           </div>
         )}
       </div>
     ),
   }));
 
-  if (strategy.currentHolding) {
-    const h = strategy.currentHolding;
+  holdings.forEach((h, hi) => {
     items.push({
-      key: 'HOLD',
+      key: `HOLD${hi}`,
       label: (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#ad6800' }}>持仓中（未卖出）</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#ad6800' }}>持仓中（未卖出）{holdings.length > 1 ? ` · 第${hi + 1}份` : ''}</span>
           {h.holdingDays != null && <span style={{ fontSize: 11, color: '#9ca3af' }}>已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(h)}</b></span>}
           {renderStockName(h.code, h.stockName, h)}
           <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{h.code}</span>
           <ModeTag mode={h.positionMode} />
-          {h.twoBuy && <TwoBuyModeTag buyCount={(h.buyPrices || []).length} />}
+          {h.twoBuy && <TwoBuyModeTag leg={h.leg} />}
           {h.buyReturn != null && (
-            <WeightedReturnTag rate={h.buyReturn} rawRate={h.rawBuyReturn} weight={h.weight} label="浮盈" halfReason="两次买入策略仅建仓第一份（未补买）" />
+            <WeightedReturnTag rate={h.buyReturn} rawRate={h.rawBuyReturn} weight={h.weight} label="浮盈" halfReason="两次买入策略每份仓位均为半仓" />
           )}
         </div>
       ),
       children: (
         <div style={{ fontSize: 12, color: '#6b7890', display: 'flex', flexDirection: 'column', gap: 6 }}>
           <span>
-            买入{' '}
-            {h.twoBuy && (h.buyTimes || []).length >= 2
-              ? (h.buyTimes || []).map((bt, i) => (
-                <span key={i}>
-                  {i > 0 && ' / '}
-                  <b>第{i + 1}次 {fmtDate((h.buyDates || [])[i] ?? h.buyDate)} {fmtTime(bt)}</b>
-                </span>
-              ))
-              : <b>{fmtDate(h.buyDate)} {fmtTime(h.buyTime)}</b>}{' '}
+            买入 <b>{fmtDate(h.buyDate)} {fmtTime(h.buyTime)}</b>{' '}
             价格 <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(h.buyPrice).toFixed(2)}</b>
             {h.buyChange != null && <>（涨幅 <b style={{ color: fmtPctColor(h.buyChange) }}>{fmtPct(h.buyChange)}</b>）</>}
           </span>
@@ -252,15 +243,13 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
           )}
           {h.twoBuy && (
             <span style={{ color: '#d46b08' }}>
-              {(h.buyPrices || []).length >= 2
-                ? `两次买入满仓口径：第一次买入 ${Number(h.buyPrices[0]).toFixed(2)}、第二次买入 ${Number(h.buyPrices[1]).toFixed(2)}，平均成本 ${Number(h.buyPrice).toFixed(2)}；按平均成本统一计算浮盈 ${fmtPct(h.buyReturn)}`
-                : `两次买入半仓口径：仅买入第一份（${Number((h.buyPrices || [])[0] ?? h.buyPrice).toFixed(2)}），个股实际浮盈 ${fmtPct(h.rawBuyReturn)}，按 50% 仓位折算计入概览的浮盈为 ${fmtPct(h.buyReturn)}`}
+              {`两次买入策略·第${Number(h.leg) >= 2 ? '二' : '一'}份仓位（半仓）：本份以自身买入价 ${Number(h.buyPrice).toFixed(2)} 为成本，个股实际浮盈 ${fmtPct(h.rawBuyReturn)}，按 50% 仓位折算计入概览的浮盈为 ${fmtPct(h.buyReturn)}`}
             </span>
           )}
         </div>
       ),
     });
-  }
+  });
 
   const metricItems = [
     { label: '整体收益率', value: s.overallReturn != null ? fmtPct(s.overallReturn) : '--', color: fmtPctColor(s.overallReturn) },
@@ -270,7 +259,7 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
     { label: '成交笔数', value: `${s.tradeCount || 0} 笔` },
     { label: '盈利笔数', value: `${s.winCount || 0} 笔` },
     { label: '平均持仓', value: s.avgHoldingDays != null ? `${s.avgHoldingDaysApprox ? '≈' : ''}${Number(s.avgHoldingDays).toFixed(1)} 交易日` : '--' },
-    { label: '期末持仓', value: s.holding ? '1 只' : '0 只' },
+    { label: '期末持仓', value: `${holdings.length} 只` },
   ];
 
   return (

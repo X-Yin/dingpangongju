@@ -659,6 +659,7 @@ const TimeFlexTestModal = ({ open, onClose, strategy, endDate, startDate: maxSta
               summary: detail?.summary || null,
               trades: detail?.trades || [],
               currentHolding: detail?.currentHolding || null,
+              currentHoldings: detail?.currentHoldings || [],
             }}
             rank={null}
             onStockClick={(code, name, trade) => setKlineTarget({ code, name, trade })}

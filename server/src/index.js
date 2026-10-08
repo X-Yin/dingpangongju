@@ -3170,6 +3170,7 @@ app.get('/training_camp/backtest/trend_diagnosis/monthly/detail', (req, res) => 
           summary: cached?.success ? (cached.summary || null) : null,
           trades: cached?.success ? (cached.trades || []).map((t, idx) => ({ ...t, seq: t.seq != null ? t.seq : idx + 1 })) : [],
           currentHolding: cached?.success ? (cached.currentHolding || null) : null,
+          currentHoldings: cached?.success ? (cached.currentHoldings || []) : [],
         };
       }),
     }));

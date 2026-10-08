@@ -495,18 +495,19 @@ const runSellPointDiagnosis = (position, currentBucket, replayStocks, timeBucket
   }
 
   // ===== 条件7：现价跌破持仓成本线 -2%（即时触发，无需持续分钟；成本线 = 模拟持仓买入价 buyPrice） =====
-  // 竞价低开自救窗口（2026-10-05 新增，与后端 buySellBacktest.js 口径一致）：隔夜持仓当日竞价开盘价
-  //   （首分钟价）已跌破成本线 -2% 时，不在 9:30 直接止损——大低开往往开盘先直线拉升再二次回落（资金自救），
-  //   逐分钟跟踪：只要未出现「某分钟价低于上一分钟」（如 9:36 < 9:35，即自救拉升结束信号）就继续持有
-  //   （即使仍在成本线下方）；首次出现分钟回落 → 无论此刻是否仍跌破成本线都直接卖出。
+  // 竞价低开自救窗口（2026-10-05 新增；2026-10-08 修订，与后端 buySellBacktest.js 口径一致）：隔夜持仓当日竞价开盘价
+  //   （首分钟价）已跌破成本线 -2% 时，不在 9:30 直接止损——大低开往往开盘先直线拉升（资金自救），
+  //   逐分钟跟踪：拉升过程中（尚未回落）继续持有；若拉升把价格回补到阈值上方，则视为自救成功、不再止损，
+  //   待后续再次跌破阈值时再卖；只有当「拉升结束、开始回落」且该分钟价仍跌破阈值时，才卖出。
   //   若开盘价未跌破成本线、盘中才跌破 → 维持原即时止损（该卖就得卖）。
   const costLineThreshold = buyPrice !== null && buyPrice > 0 ? buyPrice * 0.98 : null;
   const openBrokeCostLine = costLineThreshold !== null && openPrice != null && openPrice > 0 && openPrice < costLineThreshold;
-  // 自救窗口观察：在截至当前桶的分时点中找首个「分钟价低于上一分钟」的回落点（stockPoints 已按分钟升序、过滤无效价）
+  // 自救窗口观察：在截至当前桶的分时点中找首个「分钟价低于上一分钟、且该分钟价仍跌破阈值」的回落点
+  //   （stockPoints 已按分钟升序、过滤无效价）——若拉升已回补至阈值上方，此时的回落不计入；待再次跌破阈值并回落才触发
   let costLineFirstDecline = null;
   if (openBrokeCostLine) {
     for (let i = 1; i < stockPoints.length; i++) {
-      if (stockPoints[i].lastPx < stockPoints[i - 1].lastPx) {
+      if (stockPoints[i].lastPx < stockPoints[i - 1].lastPx && stockPoints[i].lastPx < costLineThreshold) {
         costLineFirstDecline = { minute: stockPoints[i].minute, lastPx: stockPoints[i].lastPx, prevMinute: stockPoints[i - 1].minute, prevPx: stockPoints[i - 1].lastPx };
         break;
       }
@@ -522,8 +523,8 @@ const runSellPointDiagnosis = (position, currentBucket, replayStocks, timeBucket
       ? '该模拟持仓无买入价格，无法判断是否跌破成本线 -2%'
       : openBrokeCostLine
         ? (costLineFirstDecline !== null
-          ? `竞价开盘 ${openPrice.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），开盘自救拉升已于 ${fmtMinuteC7(costLineFirstDecline.minute)} 结束（${fmtMinuteC7(costLineFirstDecline.minute)} 价 ${costLineFirstDecline.lastPx.toFixed(2)} 低于 ${fmtMinuteC7(costLineFirstDecline.prevMinute)} 价 ${costLineFirstDecline.prevPx.toFixed(2)}），拉升结束直接卖出`
-          : `竞价开盘 ${openPrice.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），开盘后资金持续拉升（截至当前未出现分钟回落），自救窗口观察中、暂不卖出`)
+          ? `竞价开盘 ${openPrice.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），自救拉升已于 ${fmtMinuteC7(costLineFirstDecline.minute)} 回落（${fmtMinuteC7(costLineFirstDecline.minute)} 价 ${costLineFirstDecline.lastPx.toFixed(2)} 低于 ${fmtMinuteC7(costLineFirstDecline.prevMinute)} 价 ${costLineFirstDecline.prevPx.toFixed(2)}）且仍跌破阈值，卖出`
+          : `竞价开盘 ${openPrice.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），开盘后资金拉升中（尚无「回落且仍跌破阈值」信号；若回补至阈值上方则不自救止损、待再次跌破再卖），自救窗口观察中、暂不卖出`)
         : brokenCostLine
           ? `现价 ${closePrice.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），触发卖点`
           : `现价 ${closePrice.toFixed(2)} 未跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），未触发`,
@@ -532,8 +533,8 @@ const runSellPointDiagnosis = (position, currentBucket, replayStocks, timeBucket
       { label: '阈值（成本价-2%）', value: costLineThreshold !== null ? costLineThreshold.toFixed(2) : '--' },
       { label: '开盘价（首分钟）', value: openPrice != null && openPrice > 0 ? openPrice.toFixed(2) : '--' },
       { label: '现价', value: closePrice.toFixed(2) },
-      ...(openBrokeCostLine ? [{ label: '自救窗口', value: costLineFirstDecline !== null ? `已于 ${fmtMinuteC7(costLineFirstDecline.minute)} 结束（首次分钟回落）` : '进行中（拉升未回落，暂不卖）' }] : []),
-      { label: '判断规则', value: openBrokeCostLine ? '开盘破线 → 等首次分钟回落（自救拉升结束）直接卖；盘中破线 → 现价 < 成本价 × 0.98 即时卖' : '现价 < 成本价 × 0.98 即触发' },
+      ...(openBrokeCostLine ? [{ label: '自救窗口', value: costLineFirstDecline !== null ? `已于 ${fmtMinuteC7(costLineFirstDecline.minute)} 回落（仍跌破阈值，卖出）` : '进行中（拉升中/已回补阈值上方，暂不卖）' }] : []),
+      { label: '判断规则', value: openBrokeCostLine ? '开盘破线 → 拉升中持有；回补至阈值上方则不再止损、待再次跌破阈值再卖；回落时仍跌破阈值才卖。盘中破线 → 现价 < 成本价 × 0.98 即时卖' : '现价 < 成本价 × 0.98 即触发' },
     ],
   };
 

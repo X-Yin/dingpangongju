@@ -50,14 +50,14 @@ const KeyBlockModeTag = ({ mode, ice }) => {
   if (!meta) return null;
   return <Tag color={meta.color} style={{ marginInlineEnd: 0 }}>{meta.text}</Tag>;
 };
-// 两次买入策略仓位标签：已补买=满仓（成本取两次买入均价）/ 仅建仓第一份=半仓（成本取首次买入价）
-const TwoBuyModeTag = ({ buyCount }) => {
-  if (buyCount == null) return null;
-  return Number(buyCount) >= 2
-    ? <Tag color="red" style={{ marginInlineEnd: 0 }}>两次买入·满仓</Tag>
-    : <Tag color="orange" style={{ marginInlineEnd: 0 }}>两次买入·半仓</Tag>;
+// 两次买入策略仓位标签：每份仓位均为半仓、各自独立买卖（leg=1 第一份 / leg=2 第二份）
+const TwoBuyModeTag = ({ leg }) => {
+  if (leg == null) return null;
+  return Number(leg) >= 2
+    ? <Tag color="red" style={{ marginInlineEnd: 0 }}>两次买入·第二份（半仓）</Tag>
+    : <Tag color="orange" style={{ marginInlineEnd: 0 }}>两次买入·第一份（半仓）</Tag>;
 };
-// 收益标签：rate 为计入账户的折算收益率；halfReason 说明半仓原因（重点板块防御 / 两次买入仅建仓第一份）
+// 收益标签：rate 为计入账户的折算收益率；halfReason 说明半仓原因（重点板块防御 / 两次买入每份均为半仓）
 const WeightedReturnTag = ({ rate, rawRate, weight, label = '收益', halfReason = '防御为半仓买入' }) => {
   const isHalf = weight != null && Number(weight) < 1;
   const tag = (
@@ -91,7 +91,7 @@ const SELL_RULES = [
   { key: 'condition4', title: '抗分歧指数弱势', desc: '抗分歧指数 < 6 且当前涨幅 ≤ -5%，仅 14:50 后生效' },
   { key: 'condition5', title: '连续三日抗分歧弱势', desc: '近三日（含当日）抗分歧指数均 < 10，仅 9:40 后生效' },
   { key: 'condition6', title: '跌破最迟买入日低点', desc: '现价跌破买入当日最低点，需持续 ≥5 分钟才触发' },
-  { key: 'condition7', title: '跌破成本线-2%', desc: '现价跌破持仓成本线的 -2%（成本价 × 0.98）即触发卖出，线上为持仓管理设置的成本价，回测为买入价。竞价低开自救窗口（例外）：隔夜持仓当日竞价开盘价已跌破成本线 -2% 时，不在 9:30 直接止损——大低开往往开盘先向上直线拉升再二次回落（资金自救行为），逐分钟跟踪：只要股价不低于上一分钟（资金持续拉升）就继续持有（即使仍在成本线下方），直到首次出现某分钟股价低于上一分钟（如 9:36 < 9:35，自救拉升结束）时，无论此刻是否仍跌破成本线都直接卖出；若开盘未破线、盘中才跌破成本线，则维持原即时止损（该卖就得卖）。桶级精确成交（2026-10-05 优化）：回测在 5 分钟桶触发本卖点后，从桶前一分钟起逐分钟回溯当日分时，定位连续跌破区间的最早一分钟，按该分钟的分时价与时间成交（线上环境在首次跌破的当分钟即已卖出，桶级成交最多晚 4 分钟）；9:35 桶触发最早回溯到 9:30；若破线就发生在当前桶，仍按桶价成交；自救路径的成交价/时间同步由桶改为首次回落分钟' },
+  { key: 'condition7', title: '跌破成本线-2%', desc: '现价跌破持仓成本线的 -2%（成本价 × 0.98）即触发卖出，线上为持仓管理设置的成本价，回测为买入价。竞价低开自救窗口（例外）：隔夜持仓当日竞价开盘价已跌破成本线 -2% 时，不在 9:30 直接止损——大低开往往开盘先向上直线拉升（资金自救行为），逐分钟跟踪：拉升过程中（股价不低于上一分钟）继续持有（即使仍在成本线下方）；若拉升把股价回补到阈值上方，则视为自救成功、不再止损，待后续再次跌破阈值时再卖；只有当拉升结束、开始回落（某分钟股价低于上一分钟，如 9:36 < 9:35）且该分钟仍跌破阈值时，才卖出；若开盘未破线、盘中才跌破成本线，则维持原即时止损（该卖就得卖）。桶级精确成交（2026-10-05 优化）：回测在 5 分钟桶触发本卖点后，从桶前一分钟起逐分钟回溯当日分时，定位连续跌破区间的最早一分钟，按该分钟的分时价与时间成交（线上环境在首次跌破的当分钟即已卖出，桶级成交最多晚 4 分钟）；9:35 桶触发最早回溯到 9:30；若破线就发生在当前桶，仍按桶价成交；自救路径的成交价/时间同步由桶改为该「回落且仍跌破阈值」的分钟' },
 ];
 
 // 回测策略选项（与后端 buySellBacktest.STRATEGIES 保持一致；全量自选股策略已移除）
@@ -115,9 +115,10 @@ const STRATEGY_OPTIONS = [
   { value: 'highest_5d_gain', label: '5日涨幅最大' },
   { value: 'highest_10d_gain', label: '10日涨幅最大' },
   // 两次买入系列（与 N日涨幅最大选股口径一致，区别在分批建仓）
-  // 买点首次触发先买入 5 成，之后任意一次买点再次触发补入剩余 5 成（补买同一只股票，不重新择股）；
-  // 成本取两次买入均价，跌破成本线 -4%；叠加快进快出能力（快进快出触发日买入的持仓次日 10:00 强卖 + 盘中 -4% 先到先卖止损）；
-  // 仅买入第一份即卖出时收益按半仓折算，两份都买入则按平均成本满仓计算
+  // 买点首次触发先买入 5 成（第一份），之后任意一次买点再次触发、且距第一份建仓日已隔至少一个交易日，
+  // 再买入 5 成（第二份，必须与第一份同一只股票、不重新择股）；
+  // 两份仓位各自独立买卖、以自身买入价为成本、跌破成本线 -2% 止损，收益各自按半仓（×0.5）折算，不合并、不摊平成本；
+  // 叠加快进快出能力（快进快出触发日买入的持仓次日 10:00 强卖 + 盘中跌破成本线 -2% 先到先卖止损）
   { value: 'highest_2d_gain_two_buy', label: '2日涨幅最大&两次买入' },
   { value: 'highest_3d_gain_two_buy', label: '3日涨幅最大&两次买入' },
   { value: 'highest_4d_gain_two_buy', label: '4日涨幅最大&两次买入' },
@@ -290,8 +291,8 @@ const KEY_BLOCK_BUY_RULES = [
   { key: 'key_block_best_stock', title: '候选池内 N 日涨幅最大的股票', desc: '在候选池（进攻=自选科技股池；防御=tag 匹配板块成分股）中，按最近 N 个交易日（含触发日）个股涨幅之和取最大的一只买入（个股日涨幅 = 相邻收盘价环比，由回测时重新拉取成分股日K现算）；买入价取触发桶时点的分时价格；同桶允许先卖后买转手（防御卖出与进攻买入可在同一桶完成）' },
 ];
 const KEY_BLOCK_SELL_RULES = [
-  { key: 'key_block_positive_sells', title: '进攻持仓（科技股）：通用 7 条件卖点（成本线 -2%）', desc: '自选科技股买入的进攻持仓沿用通用 7 条件卖出诊断（跌破10日线/前低/5日线、高位放量大阴线、科技板块情绪退潮、连续三日抗分歧<10、距5日收盘新高、跌停、跌破成本线），满足其一即卖（买入次日起生效）；条件 7「跌破成本线」为 -2%（现价 < 买入价 × 0.98 即触发），并含「竞价低开自救窗口」例外——当日竞价开盘价已跌破该线时不在 9:30 直接止损，等开盘自救拉升结束（首次分钟回落，如 9:36 < 9:35）再直接卖出；卖出后按「当日不追买、次日 9:40 复测」规则处理（见买入规则）；「科技板块情绪退潮」受创业板指 3 日线斜率门禁（见下）' },
-  { key: 'key_block_reverse_sells', title: '防御持仓（防御+中性·半仓）：双卖点 = 斜率由负转正 ∪ 个股跌破成本线 -5%', desc: '防御持仓按半仓买入（账户收益贡献 = 个股实际收益 × 0.5，概览的整体收益与平均/最大回撤均按折算口径），双卖点任一先触发即卖出：① 盘中实时创业板指 3 日线斜率由负转正的那个桶（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替），按该桶时点持仓股分时价卖出；② 个股分时价跌破买入成本线 -5%（现价 < 买入价 × 0.95）即止损卖出——例外：当日竞价开盘价已跌破该线（隔夜大低开）时不在 9:30 直接止损，等开盘自救拉升结束（首次分钟回落）于回落当分钟直接卖出（按回落分钟分时价成交），盘中才跌破则维持即时止损。桶级精确成交（2026-10-05 优化）：止损在 5 分钟桶触发后，从桶前一分钟起逐分钟回溯当日分时，定位连续跌破区间的最早一分钟并按该分钟分时价与时间成交（线上在首次跌破当分钟即已卖出）；9:35 桶最早回溯到 9:30，破线就发生在当前桶时仍按桶价成交。卖出后同桶即按进攻买点扫描买入科技股；持仓股分时拉取失败当日安全跳过，次日重试' },
+  { key: 'key_block_positive_sells', title: '进攻持仓（科技股）：通用 7 条件卖点（成本线 -2%）', desc: '自选科技股买入的进攻持仓沿用通用 7 条件卖出诊断（跌破10日线/前低/5日线、高位放量大阴线、科技板块情绪退潮、连续三日抗分歧<10、距5日收盘新高、跌停、跌破成本线），满足其一即卖（买入次日起生效）；条件 7「跌破成本线」为 -2%（现价 < 买入价 × 0.98 即触发），并含「竞价低开自救窗口」例外——当日竞价开盘价已跌破该线时不在 9:30 直接止损，拉升中继续持有、回补至阈值上方则不再止损（待再次跌破再卖），只有拉升结束回落（如 9:36 < 9:35）且该分钟仍跌破阈值时才直接卖出；卖出后按「当日不追买、次日 9:40 复测」规则处理（见买入规则）；「科技板块情绪退潮」受创业板指 3 日线斜率门禁（见下）' },
+  { key: 'key_block_reverse_sells', title: '防御持仓（防御+中性·半仓）：双卖点 = 斜率由负转正 ∪ 个股跌破成本线 -5%', desc: '防御持仓按半仓买入（账户收益贡献 = 个股实际收益 × 0.5，概览的整体收益与平均/最大回撤均按折算口径），双卖点任一先触发即卖出：① 盘中实时创业板指 3 日线斜率由负转正的那个桶（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替），按该桶时点持仓股分时价卖出；② 个股分时价跌破买入成本线 -5%（现价 < 买入价 × 0.95）即止损卖出——例外：当日竞价开盘价已跌破该线（隔夜大低开）时不在 9:30 直接止损——拉升中继续持有、回补至阈值上方则不再止损（待再次跌破再卖），只有拉升结束回落且该分钟仍跌破阈值时，才于回落当分钟直接卖出（按回落分钟分时价成交）；盘中才跌破则维持即时止损。桶级精确成交（2026-10-05 优化）：止损在 5 分钟桶触发后，从桶前一分钟起逐分钟回溯当日分时，定位连续跌破区间的最早一分钟并按该分钟分时价与时间成交（线上在首次跌破当分钟即已卖出）；9:35 桶最早回溯到 9:30，破线就发生在当前桶时仍按桶价成交。卖出后同桶即按进攻买点扫描买入科技股；持仓股分时拉取失败当日安全跳过，次日重试' },
   { key: 'key_block_emo_gate', title: '科技板块情绪退潮门禁（仅进攻持仓）', desc: '创业板指 3 日线斜率为正（MA3 − 5个交易日前的MA3，按当日收盘已基本定型口径）时，「科技板块情绪退潮」条件才参与进攻（科技股）持仓的卖出判定；斜率为负或数据不足时该条件当日不生效（其余 6 项条件不受影响）；防御持仓不走 7 条件卖点，本门禁不适用' },
 ];
 
@@ -313,7 +314,7 @@ const ICE_BUY_RULES = [
 ];
 const ICE_SELL_RULES = [
   { key: 'ice_sell_reverse', title: '上证指数 3 日线斜率由正转负（卖点）', desc: '盘中实时**上证指数** 3 日线斜率由正转负的那个桶即卖出（与买入信号相反：买在斜率转正、卖在斜率转负）；按该桶时点持仓股分时价卖出。斜率转负同时也是**作废尚未成交买入意图**的信号（转正后未及买入即转负 → 放弃本次买入）' },
-  { key: 'ice_sell_stop_loss', title: '个股跌破成本线 -2% 止损', desc: '个股分时价跌破买入成本线 -2%（现价 < 买入价 × 0.98）即止损卖出；全仓买入，卖出后收益率不做半仓折算，直接计入概览（整体收益/平均回撤/单笔最大回撤）。竞价低开自救窗口（例外）：当日竞价开盘价已跌破该线（隔夜大低开）时不在 9:30 直接止损——大低开往往开盘先向上直线拉升再二次回落（资金自救），逐分钟跟踪：只要股价不低于上一分钟就继续持有（即使仍在成本线下方），首次出现分钟回落（如 9:36 < 9:35，拉升结束）时无论是否仍跌破成本线都直接卖出；若开盘未破线、盘中才跌破，则维持原即时止损。桶级精确成交（2026-10-05 优化）：止损在 5 分钟桶触发后，从桶前一分钟起逐分钟回溯当日分时，定位连续跌破区间的最早一分钟并按该分钟分时价与时间成交（线上在首次跌破当分钟即已卖出）；9:35 桶最早回溯到 9:30，破线就发生在当前桶时仍按桶价成交；自救路径成交价/时间同步改为首次回落分钟' },
+  { key: 'ice_sell_stop_loss', title: '个股跌破成本线 -2% 止损', desc: '个股分时价跌破买入成本线 -2%（现价 < 买入价 × 0.98）即止损卖出；全仓买入，卖出后收益率不做半仓折算，直接计入概览（整体收益/平均回撤/单笔最大回撤）。竞价低开自救窗口（例外）：当日竞价开盘价已跌破该线（隔夜大低开）时不在 9:30 直接止损——大低开往往开盘先向上直线拉升（资金自救），逐分钟跟踪：拉升过程中（股价不低于上一分钟）继续持有（即使仍在成本线下方）；若拉升回补至阈值上方则视为自救成功、不再止损，待再次跌破再卖；只有拉升结束回落（如 9:36 < 9:35）且该分钟仍跌破阈值时才卖出；若开盘未破线、盘中才跌破，则维持原即时止损。桶级精确成交（2026-10-05 优化）：止损在 5 分钟桶触发后，从桶前一分钟起逐分钟回溯当日分时，定位连续跌破区间的最早一分钟并按该分钟分时价与时间成交（线上在首次跌破当分钟即已卖出）；9:35 桶最早回溯到 9:30，破线就发生在当前桶时仍按桶价成交；自救路径成交价/时间同步改为该「回落且仍跌破阈值」的分钟' },
   { key: 'ice_sell_lower_shadow', title: '14:55 长下影强卖：下影线 ≥ 实体长度 2 倍', desc: '持仓期内（买入次日起）当日 **14:55** 检查该股当日分时 K 线形态：**下影线长度（min(开,收) − 当日最低）≥ 实体长度（|收 − 开|）的 2 倍**（含实体为 0 的纯长下影形态）即判定为「盘中被砸后拉起、上方承压」，于 **14:55 桶按分时价强制卖出**。开/收/低均用 minute ≤ 1455 的当日分时点现算（无未来数据）；与另外两个卖点任一先触发即卖' },
 ];
 
@@ -373,11 +374,11 @@ const STRATEGY_SPECIFIC_NOTES = {
     group: '两次买入系列',
     bullets: [
       '选股口径：与「2日涨幅最大」完全一致（买点触发时买**触发时点当日盘中涨幅最大**的一只自选科技股）。',
-      '分批建仓：买点**首次触发**先买入 **5 成**仓位；之后**任意一次买点再次触发**补入剩余 **5 成**（同一天后续桶 / 次日 / 更晚均可，不设时间窗口上限）。',
-      '补买固定加仓**首次建仓的同一只股票**，不按 N 日涨幅重新择股；补买同样**过滤涨停**（买入时点已涨停不可成交），本次买点该股已涨停则放弃补买、保持半仓，等待下一次买点触发且该股未涨停时再补入。',
-      '持仓成本：两次买入价之和 ÷ 2（仅买入第一份时即首次买入价）；跌破成本线 -4% 阈值 = 平均成本 × 0.96。',
-      '卖点：叠加「快进快出」能力——满足快进快出触发条件（① 上一交易日科技情绪 3 日 EMA < -60；② 上上个、上个交易日当日科技情绪原始分均在 -30~20 区间且回升）买入的持仓，次日 10:00 强制卖出（不走通用卖点）、强卖当日禁止二次买入，并叠加次日盘中跌破成本线 -4% 先到先卖止损（开盘首分钟已破线走竞价自救窗口、盘中才破线即时止损）；否则走通用 SELL_RULES 7 条件（含跌破成本线 -4%）。',
-      '收益折算：仅买入第一份（半仓）即触发卖点时，只卖这 5 成，个股实际收益率 × 0.5 计入账户（概览/回撤同口径）；两份都已买入则以平均成本满仓统一计算（权重 1）。快进快出强卖/止损同样按当前仓位权重折算。',
+      '分批建仓：买点**首次触发**先买入 **5 成**仓位（第一份）；之后**再次触发买点**、且距第一份建仓日**已间隔至少一个交易日**（次日及以后）时，再买入第二份 **5 成**。同一交易日内不再补买。',
+      '第二份固定买入**第一份的同一只股票**，不按 N 日涨幅重新择股；买入时点该股已**涨停**（主板 >9.5%、创业/科创 >19%）则本次放弃、保持半仓，等待下一次买点触发且该股未涨停时再买入。',
+      '持仓成本：两份仓位**各自独立**，均以**自身买入价**为成本、**不摊平**；各自跌破成本线 **-2%** 止损（阈值 = 自身买入价 × 0.98）。',
+      '卖点：叠加「快进快出」能力——满足快进快出触发条件（① 上一交易日科技情绪 3 日 EMA < -60；② 上上个、上个交易日当日科技情绪原始分均在 -30~20 区间且回升）买入的持仓，次日 10:00 强制卖出（不走通用卖点）、强卖当日禁止二次买入，并叠加次日盘中跌破成本线 -2% 先到先卖止损（开盘首分钟已破线走竞价自救窗口——拉升中持有、回补至阈值上方则不再止损、待再次跌破再卖，回落且仍跌破阈值才卖；盘中才破线即时止损）；否则走通用 SELL_RULES 7 条件（含跌破成本线 -2%）。',
+      '收益折算：两份仓位**各自独立**按 **半仓（×0.5）** 折算收益并计入账户（概览/回撤同口径），**不合并**、各产生一条独立交易记录。快进快出强卖/止损同口径折算。',
       '跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9 顺延照常生效。',
     ],
   },
@@ -385,9 +386,10 @@ const STRATEGY_SPECIFIC_NOTES = {
     group: '两次买入系列',
     bullets: [
       '选股口径：与「3日涨幅最大」完全一致（买点触发时买**最近 3 个交易日涨幅之和最大**的一只自选科技股）。',
-      '分批建仓：买点首次触发先买 5 成，之后任意一次买点再次触发补入剩余 5 成（同一天后续桶 / 次日 / 更晚均可），补买同一只股票、不重新择股；补买同样过滤涨停，该股已涨停时放弃补买、保持半仓，等待下次买点触发且未涨停再补入。',
-      '持仓成本 = 两次买入均价，跌破成本线 -4% 阈值 = 平均成本 × 0.96；叠加「快进快出」能力：快进快出触发日买入的持仓次日 10:00 强卖 + 盘中跌破成本线 -4% 先到先卖止损，否则走通用 7 条件。',
-      '收益折算：仅买入第一份即卖出按半仓（×0.5）计入账户；两份都买入则按平均成本满仓计算。快进快出强卖/止损同口径折算。',
+      '分批建仓：买点首次触发先买入 5 成（第一份）；之后再次触发买点、且距第一份建仓日已间隔至少一个交易日（次日及以后）时，再买入第二份 5 成。同一交易日内不再补买。',
+      '第二份固定买入第一份的同一只股票、不重新择股；买入时点该股已涨停则放弃，保持半仓，等待下次买点触发且未涨停再买入。',
+      '持仓成本：两份仓位各自独立、均以自身买入价为成本、不摊平；各自跌破成本线 -2% 止损（阈值 = 自身买入价 × 0.98）。叠加「快进快出」能力：快进快出触发日买入的持仓次日 10:00 强卖 + 盘中跌破成本线 -2% 先到先卖止损，否则走通用 7 条件。',
+      '收益折算：两份仓位各自独立按半仓（×0.5）折算收益并计入账户，不合并、各产生一条独立交易记录。快进快出强卖/止损同口径折算。',
       '跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9 照常生效。',
     ],
   },
@@ -395,9 +397,10 @@ const STRATEGY_SPECIFIC_NOTES = {
     group: '两次买入系列',
     bullets: [
       '选股口径：与「4日涨幅最大」完全一致（买点触发时买**最近 4 个交易日涨幅之和最大**的一只自选科技股）。',
-      '分批建仓：买点首次触发先买 5 成，之后任意一次买点再次触发补入剩余 5 成（补买同一只股票、不重新择股）；补买同样过滤涨停，该股已涨停时放弃补买、保持半仓，等待下次买点触发且未涨停再补入。',
-      '持仓成本 = 两次买入均价，跌破成本线 -4% 阈值 = 平均成本 × 0.96；叠加「快进快出」能力：快进快出触发日买入的持仓次日 10:00 强卖 + 盘中跌破成本线 -4% 先到先卖止损，否则走通用 7 条件。',
-      '收益折算：仅买入第一份即卖出按半仓（×0.5）计入账户；两份都买入则按平均成本满仓计算。快进快出强卖/止损同口径折算。',
+      '分批建仓：买点首次触发先买入 5 成（第一份）；之后再次触发买点、且距第一份建仓日已间隔至少一个交易日（次日及以后）时，再买入第二份 5 成。同一交易日内不再补买。',
+      '第二份固定买入第一份的同一只股票、不重新择股；买入时点该股已涨停则放弃，保持半仓，等待下次买点触发且未涨停再买入。',
+      '持仓成本：两份仓位各自独立、均以自身买入价为成本、不摊平；各自跌破成本线 -2% 止损（阈值 = 自身买入价 × 0.98）。叠加「快进快出」能力：快进快出触发日买入的持仓次日 10:00 强卖 + 盘中跌破成本线 -2% 先到先卖止损，否则走通用 7 条件。',
+      '收益折算：两份仓位各自独立按半仓（×0.5）折算收益并计入账户，不合并、各产生一条独立交易记录。快进快出强卖/止损同口径折算。',
       '跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9 照常生效。',
     ],
   },
@@ -405,9 +408,10 @@ const STRATEGY_SPECIFIC_NOTES = {
     group: '两次买入系列',
     bullets: [
       '选股口径：与「5日涨幅最大」完全一致（买点触发时买**最近 5 个交易日涨幅之和最大**的一只自选科技股）。',
-      '分批建仓：买点首次触发先买 5 成，之后任意一次买点再次触发补入剩余 5 成（补买同一只股票、不重新择股）；补买同样过滤涨停，该股已涨停时放弃补买、保持半仓，等待下次买点触发且未涨停再补入。',
-      '持仓成本 = 两次买入均价，跌破成本线 -4% 阈值 = 平均成本 × 0.96；叠加「快进快出」能力：快进快出触发日买入的持仓次日 10:00 强卖 + 盘中跌破成本线 -4% 先到先卖止损，否则走通用 7 条件。',
-      '收益折算：仅买入第一份即卖出按半仓（×0.5）计入账户；两份都买入则按平均成本满仓计算。快进快出强卖/止损同口径折算。',
+      '分批建仓：买点首次触发先买入 5 成（第一份）；之后再次触发买点、且距第一份建仓日已间隔至少一个交易日（次日及以后）时，再买入第二份 5 成。同一交易日内不再补买。',
+      '第二份固定买入第一份的同一只股票、不重新择股；买入时点该股已涨停则放弃，保持半仓，等待下次买点触发且未涨停再买入。',
+      '持仓成本：两份仓位各自独立、均以自身买入价为成本、不摊平；各自跌破成本线 -2% 止损（阈值 = 自身买入价 × 0.98）。叠加「快进快出」能力：快进快出触发日买入的持仓次日 10:00 强卖 + 盘中跌破成本线 -2% 先到先卖止损，否则走通用 7 条件。',
+      '收益折算：两份仓位各自独立按半仓（×0.5）折算收益并计入账户，不合并、各产生一条独立交易记录。快进快出强卖/止损同口径折算。',
       '跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9 照常生效。',
     ],
   },
@@ -518,7 +522,7 @@ const STRATEGY_SPECIFIC_NOTES = {
     group: '快进快出系列',
     bullets: [
       '选股口径：与「2日涨幅最大」完全相同——买点触发时买入**触发时点当日盘中涨幅最大**的一只，跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9 顺延生效。',
-      '与常规策略的唯一区别在**卖点**：当上一交易日科技情绪 3 日 EMA < -60 时，该笔持仓**次日 10:00 强制卖出**（不走通用卖点），且强卖当日禁止二次买入；否则仍走通用 SELL_RULES 7 条件。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（首次分钟回落即卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。',
+      '与常规策略的唯一区别在**卖点**：当上一交易日科技情绪 3 日 EMA < -60 时，该笔持仓**次日 10:00 强制卖出**（不走通用卖点），且强卖当日禁止二次买入；否则仍走通用 SELL_RULES 7 条件。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。',
       '快进快出温和回升额外门控：买入日、卖出日（上上个、上个交易日）的当日科技情绪原始分（非 3 日 EMA）必须都落在开区间 (-30, 20) 内且逐日回升，才触发快进快出逻辑；不满足则退化为普通「2日涨幅最大」。',
     ],
   },
@@ -526,7 +530,7 @@ const STRATEGY_SPECIFIC_NOTES = {
     group: '快进快出系列',
     bullets: [
       '选股口径：与「3日涨幅最大」完全相同——买点触发时买入**最近 3 个交易日涨幅之和最大**的一只，跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9 顺延生效。',
-      '特殊卖点：当上一交易日科技情绪 3 日 EMA < -60 → 次日 10:00 强制卖出（不走通用卖点），强卖当日禁止二次买入；否则走通用 SELL_RULES。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（首次分钟回落即卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。',
+      '特殊卖点：当上一交易日科技情绪 3 日 EMA < -60 → 次日 10:00 强制卖出（不走通用卖点），强卖当日禁止二次买入；否则走通用 SELL_RULES。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。',
       '快进快出温和回升门控：近两日当日情绪原始分 ∈ (-30, 20) 且逐日回升才触发；不满足退化为普通 3 日涨幅最大。',
     ],
   },
@@ -534,21 +538,21 @@ const STRATEGY_SPECIFIC_NOTES = {
     group: '快进快出系列',
     bullets: [
       '选股口径：最近 4 个交易日涨幅之和最大的一只；跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9。',
-      '特殊卖点：上一交易日 3 日 EMA < -60 → 次日 10:00 强卖，否则通用 7 条件卖点。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（首次分钟回落即卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。',
+      '特殊卖点：上一交易日 3 日 EMA < -60 → 次日 10:00 强卖，否则通用 7 条件卖点。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。',
     ],
   },
   highest_5d_gain_emoquick: {
     group: '快进快出系列',
     bullets: [
       '选股口径：最近 5 个交易日涨幅之和最大的一只；跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9。',
-      '特殊卖点：上一交易日 3 日 EMA < -60 → 次日 10:00 强卖，否则通用 7 条件卖点。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（首次分钟回落即卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。',
+      '特殊卖点：上一交易日 3 日 EMA < -60 → 次日 10:00 强卖，否则通用 7 条件卖点。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。',
     ],
   },
   highest_3d_reports_top5_gain_emoquick: {
     group: '快进快出系列',
     bullets: [
       '选股口径分三路：当触发「上一交易日科技情绪 3 日 EMA < -60」这条快进快出路径时，先取**最近 3 日研报覆盖数前五（含并列，仅统计买点前已创建的研报）**形成候选池，再从中选 3 日涨幅最大的一只（博弈反弹提胜率）；走「温和回升」或数据缺失 / 非快进快出 时仍按普通「3 日涨幅最大」选股。',
-      '特殊卖点：与 highest_3d_gain_emoquick 完全相同——上一交易日 3 日 EMA < -60 或温和回升任一触发 → 次日 10:00 强卖（不走通用 7 条件），否则走通用 SELL_RULES。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（首次分钟回落即卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。',
+      '特殊卖点：与 highest_3d_gain_emoquick 完全相同——上一交易日 3 日 EMA < -60 或温和回升任一触发 → 次日 10:00 强卖（不走通用 7 条件），否则走通用 SELL_RULES。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。',
     ],
   },
 
@@ -839,7 +843,7 @@ const buildSummary = (result) => {
       maxDrawdown: sum.maxDrawdown != null ? Number(sum.maxDrawdown) : null,
       avgReturn: null,
       overallReturn: sum.overallReturn != null ? Number(sum.overallReturn) : null,
-      holdingCount: sum.holding ? 1 : 0,
+      holdingCount: (result.currentHoldings?.length) || (result.currentHolding ? 1 : 0),
       avgHoldingDays: sum.avgHoldingDays ?? null,
       avgHoldingDaysApprox: sum.avgHoldingDaysApprox ?? false,
     };
@@ -1395,13 +1399,15 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
               avgDrawdown: sum.avgDrawdown != null ? Number(sum.avgDrawdown) : null,
               maxDrawdown: sum.maxDrawdown != null ? Number(sum.maxDrawdown) : null,
               overallReturn: sum.overallReturn != null ? Number(sum.overallReturn) : null,
-              holding: sum.holding ? 1 : 0,
+              holding: (cached.currentHoldings?.length) || (sum.holding ? 1 : 0),
             },
             trades: (cached.trades || []).map(t => ({
               seq: t.seq,
               stockName: t.stockName,
               code: t.code,
               positionMode: t.positionMode ?? null,
+              twoBuy: t.twoBuy ?? false,
+              leg: t.leg ?? null,
               weight: t.weight ?? null,
               rawReturnRate: t.rawReturnRate ?? null,
               metric: t.metric ?? null,
@@ -1467,6 +1473,11 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   // 展示用结果：震荡测试结果存在时优先展示（退出震荡测试或刷新后回到缓存回测结果）
   const displayResult = oscResult || result;
   const summary = displayResult ? buildSummary(displayResult) : null;
+  // 期末持仓：优先取 currentHoldings（两次买入策略可能同时持有两份），兼容旧的单份 currentHolding
+  const displayHoldings = !displayResult ? []
+    : (displayResult.currentHoldings && displayResult.currentHoldings.length > 0)
+      ? displayResult.currentHoldings
+      : (displayResult.currentHolding ? [displayResult.currentHolding] : []);
 
   const progressPercent = progress && progress.total > 0
     ? Math.round((progress.current / progress.total) * 100)
@@ -1783,7 +1794,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                 { label: '覆盖自选股', value: `${summary.stockCount} 只` },
                 { label: '成交笔数', value: `${summary.totalTrades} 笔` },
                 { label: '盈利笔数', value: `${summary.winTrades} 笔` },
-                { label: '期末仍持仓', value: displayResult.type === 'single' ? (summary.holdingCount > 0 ? '1 只' : '0 只') : `${summary.holdingCount} 只` },
+                { label: '期末仍持仓', value: `${summary.holdingCount} 只` },
               ].map(item => (
                 <div key={item.label} style={{ flex: 1, minWidth: 110, background: '#f7f9fc', borderRadius: 10, padding: '10px 12px' }}>
                   <div style={{ fontSize: 12, color: '#9ca3af' }}>{item.label}</div>
@@ -1801,7 +1812,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
 
           {/* 单股策略：逐笔交易明细 */}
           {displayResult.type === 'single' ? (
-            displayResult.trades.length === 0 && !displayResult.currentHolding ? (
+            displayResult.trades.length === 0 && displayHoldings.length === 0 ? (
               <Empty description="所选范围内未产生任何成交" />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1819,7 +1830,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                       </span>
                       <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{t.code}</span>
                       <KeyBlockModeTag mode={t.positionMode} ice={curIsIce} />
-                      {t.twoBuy && <TwoBuyModeTag buyCount={(t.buyPrices || []).length} />}
+                      {t.twoBuy && <TwoBuyModeTag leg={t.leg} />}
                       {t.metric != null && (
                         <Tag color="purple" style={{ marginInlineEnd: 0 }}>
                           选股指标 {Number(t.metric).toFixed(4)}
@@ -1829,7 +1840,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                         rate={t.returnRate}
                         rawRate={t.rawReturnRate}
                         weight={t.weight}
-                        halfReason="两次买入策略仅建仓第一份即卖出"
+                        halfReason="两次买入策略每份仓位均为半仓"
                       />
                       <Checkbox
                         checked={hiddenCodes.has(t.code)}
@@ -1846,17 +1857,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                           <RiseOutlined style={{ color: '#f5222d', fontSize: 12 }} />
                           <span style={{ fontSize: 12, color: '#6b7890' }}>
-                            买入{' '}
-                            {t.twoBuy && (t.buyTimes || []).length >= 2 ? (
-                              (t.buyTimes || []).map((bt, i) => (
-                                <span key={i}>
-                                  {i > 0 && ' / '}
-                                  <b>第{i + 1}次 {fmtDate((t.buyDates || [])[i] ?? t.buyDate)} {bt}</b>
-                                </span>
-                              ))
-                            ) : (
-                              <b>{fmtDate(t.buyDate)} {t.buyTime}</b>
-                            )}
+                            买入 <b>{fmtDate(t.buyDate)} {t.buyTime}</b>
                           </span>
                           <span style={{ fontSize: 12, color: '#6b7890' }}>
                             价格 <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(t.buyPrice).toFixed(2)}</b>
@@ -1896,9 +1897,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                         )}
                         {t.twoBuy && (
                           <div style={{ fontSize: 12, color: '#d46b08', marginTop: 4 }}>
-                            {(t.buyPrices || []).length >= 2
-                              ? `两次买入满仓口径：第一次买入 ${Number(t.buyPrices[0]).toFixed(2)}、第二次买入 ${Number(t.buyPrices[1]).toFixed(2)}，平均成本 ${Number(t.avgPrice).toFixed(2)}；按平均成本统一计算收益 ${fmtPct(t.returnRate)}`
-                              : `两次买入半仓口径：仅买入第一份（${Number((t.buyPrices || [])[0] ?? t.buyPrice).toFixed(2)}）即触发卖点，个股实际收益 ${fmtPct(t.rawReturnRate)}，按 50% 仓位折算计入概览的收益为 ${fmtPct(t.returnRate)}`}
+                            {`两次买入策略·第${Number(t.leg) >= 2 ? '二' : '一'}份仓位（半仓）：本份以自身买入价 ${Number(t.buyPrice).toFixed(2)} 为成本独立计算买卖与收益，个股实际收益 ${fmtPct(t.rawReturnRate)}，按 50% 仓位折算后计入概览（整体收益/平均回撤/单笔最大回撤）的收益为 ${fmtPct(t.returnRate)}；两份仓位不合并、不摊平成本，各产生一条独立交易记录`}
                           </div>
                         )}
                       </div>
@@ -1906,38 +1905,38 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                   </div>
                 ))}
 
-                {/* 期末持仓 */}
-                {displayResult.currentHolding && (
-                  <div style={{ background: '#fff', borderRadius: 12, padding: 14, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
+                {/* 期末持仓：两次买入策略可能同时持有两份，逐份渲染 */}
+                {displayHoldings.map((h, hi) => (
+                  <div key={`${h.code}-${hi}`} style={{ background: '#fff', borderRadius: 12, padding: 14, boxShadow: '0 1px 4px rgba(18,33,58,0.06)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: '#12213a' }}>持仓中（未卖出）</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#12213a' }}>持仓中（未卖出）{displayHoldings.length > 1 ? ` · 第${hi + 1}份` : ''}</span>
                       <span
-                        onClick={() => setKlineTarget({ code: displayResult.currentHolding.code, name: displayResult.currentHolding.stockName, trade: displayResult.currentHolding })}
+                        onClick={() => setKlineTarget({ code: h.code, name: h.stockName, trade: h })}
                         title="点击查看该股票 K 线（含买点标注）"
                         style={{ fontSize: 14, fontWeight: 700, color: '#1677ff', cursor: 'pointer', textDecoration: 'underline dotted' }}
                       >
-                        {displayResult.currentHolding.stockName}
+                        {h.stockName}
                       </span>
-                      <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{displayResult.currentHolding.code}</span>
-                      <KeyBlockModeTag mode={displayResult.currentHolding.mode || displayResult.currentHolding.positionMode} ice={curIsIce} />
-                      {displayResult.currentHolding.twoBuy && <TwoBuyModeTag buyCount={(displayResult.currentHolding.buyPrices || []).length} />}
-                      {displayResult.currentHolding.metric != null && (
+                      <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{h.code}</span>
+                      <KeyBlockModeTag mode={h.mode || h.positionMode} ice={curIsIce} />
+                      {h.twoBuy && <TwoBuyModeTag leg={h.leg} />}
+                      {h.metric != null && (
                         <Tag color="purple" style={{ marginInlineEnd: 0 }}>
-                          选股指标 {Number(displayResult.currentHolding.metric).toFixed(4)}
+                          选股指标 {Number(h.metric).toFixed(4)}
                         </Tag>
                       )}
-                      {displayResult.currentHolding.buyReturn != null && (
+                      {h.buyReturn != null && (
                         <WeightedReturnTag
-                          rate={displayResult.currentHolding.buyReturn}
-                          rawRate={displayResult.currentHolding.rawBuyReturn}
-                          weight={displayResult.currentHolding.weight}
+                          rate={h.buyReturn}
+                          rawRate={h.rawBuyReturn}
+                          weight={h.weight}
                           label="浮盈"
-                          halfReason="两次买入策略仅建仓第一份（未补买）"
+                          halfReason="两次买入策略每份仓位均为半仓"
                         />
                       )}
                       <Checkbox
-                        checked={hiddenCodes.has(displayResult.currentHolding.code)}
-                        onChange={(e) => toggleHiddenCode(displayResult.currentHolding.code, e.target.checked)}
+                        checked={hiddenCodes.has(h.code)}
+                        onChange={(e) => toggleHiddenCode(h.code, e.target.checked)}
                         style={{ marginLeft: 'auto' }}
                       >
                         隐藏
@@ -1945,40 +1944,35 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                     </div>
                     <div style={{ border: '1px dashed #f5c96b', borderRadius: 8, padding: '8px 10px', background: '#fffbea' }}>
                       <span style={{ fontSize: 12, color: '#6b7890' }}>
-                        买入{' '}
-                        {displayResult.currentHolding.twoBuy && (displayResult.currentHolding.buyTimes || []).length >= 2 ? (
-                          (displayResult.currentHolding.buyTimes || []).map((bt, i) => (
-                            <span key={i}>
-                              {i > 0 && ' / '}
-                              <b>第{i + 1}次 {fmtDate((displayResult.currentHolding.buyDates || [])[i] ?? displayResult.currentHolding.buyDate)} {bt}</b>
-                            </span>
-                          ))
-                        ) : (
-                          <b>{fmtDate(displayResult.currentHolding.buyDate)} {displayResult.currentHolding.buyTime}</b>
-                        )}{' '}
+                        买入 <b>{fmtDate(h.buyDate)} {h.buyTime}</b>{' '}
                         价格{' '}
-                        <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(displayResult.currentHolding.buyPrice).toFixed(2)}</b>
+                        <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{Number(h.buyPrice).toFixed(2)}</b>
                       </span>
                       <span style={{ fontSize: 12, marginLeft: 10 }}>
-                        涨幅 <b style={{ color: displayResult.currentHolding.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(displayResult.currentHolding.buyChange)}</b>
+                        涨幅 <b style={{ color: h.buyChange >= 0 ? '#f5222d' : '#52c41a' }}>{fmtPct(h.buyChange)}</b>
                       </span>
                       <span style={{ fontSize: 12, marginLeft: 10, color: '#6b7890' }}>
-                        已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(displayResult.currentHolding)}</b>
+                        已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(h)}</b>
                       </span>
-                      {displayResult.currentHolding.buyReason && (
+                      {h.buyReason && (
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
                           <span style={{ fontSize: 12, color: '#6b7890', lineHeight: '22px' }}>买入原因</span>
-                          <BuyReasonTag reason={displayResult.currentHolding.buyReason} checks={displayResult.currentHolding.buyChecks} />
+                          <BuyReasonTag reason={h.buyReason} checks={h.buyChecks} />
                         </div>
                       )}
-                      {(displayResult.currentHolding.mode || displayResult.currentHolding.positionMode) === 'defense' && displayResult.currentHolding.rawBuyReturn != null && (
+                      {(h.mode || h.positionMode) === 'defense' && h.rawBuyReturn != null && (
                         <div style={{ fontSize: 12, color: '#d46b08', marginTop: 4 }}>
-                          防御半仓口径：个股实际浮盈 {fmtPct(displayResult.currentHolding.rawBuyReturn)}，按 50% 仓位折算后计入概览的浮盈为 {fmtPct(displayResult.currentHolding.buyReturn)}
+                          防御半仓口径：个股实际浮盈 {fmtPct(h.rawBuyReturn)}，按 50% 仓位折算后计入概览的浮盈为 {fmtPct(h.buyReturn)}
+                        </div>
+                      )}
+                      {h.twoBuy && (
+                        <div style={{ fontSize: 12, color: '#d46b08', marginTop: 4 }}>
+                          {`两次买入策略·第${Number(h.leg) >= 2 ? '二' : '一'}份仓位（半仓）：本份以自身买入价 ${Number(h.buyPrice).toFixed(2)} 为成本，个股实际浮盈 ${fmtPct(h.rawBuyReturn)}，按 50% 仓位折算计入概览的浮盈为 ${fmtPct(h.buyReturn)}`}
                         </div>
                       )}
                     </div>
                   </div>
-                )}
+                ))}
               </div>
             )
           ) : (

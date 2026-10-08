@@ -1668,10 +1668,11 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
 
   // ===== 条件7：现价跌破持仓成本线 -2%（即时触发，无需持续分钟） =====
   // 成本价：请求传入值优先，缺省时 checkSingleStockSellPoint 已回退到持仓管理中用户自定义的成本价
-  // 竞价低开自救窗口（2026-10-05 新增）：隔夜持仓（买入日早于今日）当日竞价开盘价已跌破成本线 -2% 时，
-  //   不在 9:30 直接止损——大低开往往开盘先直线拉升再二次回落（资金自救），逐分钟跟踪当日分时：
-  //   只要未出现「某分钟价低于上一分钟」（如 9:36 < 9:35，即自救拉升结束信号）就继续持有（即使仍在成本线下方）；
-  //   首次出现分钟回落 → 无论此刻是否仍跌破成本线都直接卖出（卖点信号保持触发，提示尽快离场）。
+  // 竞价低开自救窗口（2026-10-05 新增；2026-10-08 修订）：隔夜持仓（买入日早于今日）当日竞价开盘价已跌破成本线 -2% 时，
+  //   不在 9:30 直接止损——大低开往往开盘先直线拉升（资金自救），逐分钟跟踪当日分时：
+  //   拉升过程中（尚未出现「某分钟价低于上一分钟」的回落）继续持有（即使仍在成本线下方）；
+  //   若拉升回补至阈值上方则视为自救成功、不再止损，待后续再次跌破阈值时再卖；
+  //   只有当「拉升结束、开始回落」且该回落分钟价仍跌破阈值时，才卖出（卖点信号保持触发，提示尽快离场）。
   //   若开盘价未跌破成本线、盘中才跌破 → 维持原即时止损（该卖就得卖）。买入当日不适用（无「次日竞价」概念）。
   const costPriceNum = costPrice != null && Number.isFinite(Number(costPrice)) && Number(costPrice) > 0 ? Number(costPrice) : null;
   const costLineThreshold = costPriceNum !== null ? costPriceNum * 0.98 : null;
@@ -1695,15 +1696,16 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
           ? ptsC7[0].lastPx
           : (Number.isFinite(parseFloat(targetKline?.open_px)) && parseFloat(targetKline.open_px) > 0 ? parseFloat(targetKline.open_px) : null);
         if (openPxC7 != null && openPxC7 < costLineThreshold) {
+          // 首个「分钟价低于上一分钟、且该分钟价仍跌破阈值」的回落点（拉升回补至阈值上方的回落不计入）
           let firstDeclineC7 = null;
           for (let i = 1; i < ptsC7.length; i++) {
-            if (ptsC7[i].lastPx < ptsC7[i - 1].lastPx) {
+            if (ptsC7[i].lastPx < ptsC7[i - 1].lastPx && ptsC7[i].lastPx < costLineThreshold) {
               firstDeclineC7 = { minute: ptsC7[i].minute, lastPx: ptsC7[i].lastPx, prevMinute: ptsC7[i - 1].minute, prevPx: ptsC7[i - 1].lastPx };
               break;
             }
           }
           openBreakC7 = { openPx: openPxC7, firstDecline: firstDeclineC7, lastMinute: ptsC7.length > 0 ? ptsC7[ptsC7.length - 1].minute : null };
-          // 自救窗口未结束（拉升中/尚无回落）→ 暂不触发；已出现分钟回落 → 触发卖出
+          // 仅在「回落且该分钟仍跌破阈值」时触发（拉升中/已回补至阈值上方则不触发，待再次跌破再卖）
           condition7Satisfied = firstDeclineC7 != null;
         }
       }
@@ -1719,8 +1721,8 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
       ? '未设置持仓成本价（可在持仓管理弹窗中设置），无法判断是否跌破成本线 -2%'
       : openBreakC7 !== null
         ? (openBreakC7.firstDecline !== null
-          ? `竞价开盘 ${openBreakC7.openPx.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），开盘自救拉升已于 ${fmtMinuteC7(openBreakC7.firstDecline.minute)} 结束（${fmtMinuteC7(openBreakC7.firstDecline.minute)} 价 ${openBreakC7.firstDecline.lastPx.toFixed(2)} 低于 ${fmtMinuteC7(openBreakC7.firstDecline.prevMinute)} 价 ${openBreakC7.firstDecline.prevPx.toFixed(2)}），拉升结束直接卖出`
-          : `竞价开盘 ${openBreakC7.openPx.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），开盘后资金持续拉升（截至 ${fmtMinuteC7(openBreakC7.lastMinute)} 未出现分钟回落），自救窗口观察中、暂不卖出`)
+          ? `竞价开盘 ${openBreakC7.openPx.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），自救拉升已于 ${fmtMinuteC7(openBreakC7.firstDecline.minute)} 回落（${fmtMinuteC7(openBreakC7.firstDecline.minute)} 价 ${openBreakC7.firstDecline.lastPx.toFixed(2)} 低于 ${fmtMinuteC7(openBreakC7.firstDecline.prevMinute)} 价 ${openBreakC7.firstDecline.prevPx.toFixed(2)}）且仍跌破阈值，卖出`
+          : `竞价开盘 ${openBreakC7.openPx.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），开盘后资金拉升中（截至 ${fmtMinuteC7(openBreakC7.lastMinute)} 尚无「回落且仍跌破阈值」信号；若回补至阈值上方则不自救止损、待再次跌破再卖），自救窗口观察中、暂不卖出`)
         : brokenCostLine
           ? `现价 ${closePrice.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），触发卖点`
           : `现价 ${closePrice.toFixed(2)} 未跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），未触发`,
@@ -1729,8 +1731,8 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
       { label: '阈值（成本价-2%）', value: costLineThreshold !== null ? costLineThreshold.toFixed(2) : '--' },
       ...(openBreakC7 !== null ? [{ label: '竞价开盘价', value: openBreakC7.openPx.toFixed(2) }] : []),
       { label: '现价', value: closePrice.toFixed(2) },
-      ...(openBreakC7 !== null ? [{ label: '自救窗口', value: openBreakC7.firstDecline !== null ? `已于 ${fmtMinuteC7(openBreakC7.firstDecline.minute)} 结束（首次分钟回落）` : `进行中（截至 ${fmtMinuteC7(openBreakC7.lastMinute)} 拉升未回落，暂不卖）` }] : []),
-      { label: '判断规则', value: openBreakC7 !== null ? '开盘破线 → 等首次分钟回落（自救拉升结束）直接卖；盘中破线 → 现价 < 成本价 × 0.98 即时卖' : '现价 < 成本价 × 0.98 即触发' },
+      ...(openBreakC7 !== null ? [{ label: '自救窗口', value: openBreakC7.firstDecline !== null ? `已于 ${fmtMinuteC7(openBreakC7.firstDecline.minute)} 回落（仍跌破阈值，卖出）` : `进行中（截至 ${fmtMinuteC7(openBreakC7.lastMinute)} 拉升中/已回补阈值上方，暂不卖）` }] : []),
+      { label: '判断规则', value: openBreakC7 !== null ? '开盘破线 → 拉升中持有；回补至阈值上方则不再止损、待再次跌破阈值再卖；回落时仍跌破阈值才卖。盘中破线 → 现价 < 成本价 × 0.98 即时卖' : '现价 < 成本价 × 0.98 即触发' },
     ],
   };
 

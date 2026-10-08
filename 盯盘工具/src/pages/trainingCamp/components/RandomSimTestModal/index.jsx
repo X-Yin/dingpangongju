@@ -370,6 +370,7 @@ const RandomSimTestModal = ({ open, onClose, strategy, endDate, startDate: maxSt
                 summary: detail?.result?.summary || null,
                 trades: detail?.result?.trades || [],
                 currentHolding: detail?.result?.currentHolding || null,
+                currentHoldings: detail?.result?.currentHoldings || [],
               }}
               rank={null}
               onStockClick={openStockKline}
