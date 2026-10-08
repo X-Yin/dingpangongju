@@ -110,7 +110,7 @@ const { isTradingDay } = require('./utils/tradingDay');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
 const { scheduleLianbanDaily } = require('./service/lianban');
-const { getClsNews, getBoardChange, getStockChangesAll, getStockNews, getStockZyjs, getInstitutionParticipation, getSectorSpot, getSectorDetail } = require('./service/akData');
+const { getClsNews, getBoardChange, getStockChangesAll, getStockNews, getStockZyjs, getInstitutionParticipation, getSectorSpot, getSectorDetail, getForeignCommodity } = require('./service/akData');
 const { getThsHotRank } = require('./service/thsHotRank');
 
 
@@ -4219,6 +4219,17 @@ app.get('/api/ak/sector_detail', async (req, res) => {
     res.json({ success: true, data });
   } catch (error) {
     console.error('获取板块成分股失败:', error.message);
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// 外盘期货实时行情（新浪，symbol 如 OIL 布伦特原油 / GC 纽约金，可逗号分隔多个）
+app.get('/api/ak/foreign_commodity', async (req, res) => {
+  try {
+    const data = await getForeignCommodity(req.query.symbol);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('获取外盘期货行情失败:', error.message);
     res.json({ success: false, message: error.message });
   }
 });

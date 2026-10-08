@@ -8,6 +8,12 @@
 
     .item-name {
       font-size: 13px;
+
+      .item-price {
+        font-size: 12px;
+        font-weight: 700;
+        opacity: 0.8;
+      }
     }
   }
 }

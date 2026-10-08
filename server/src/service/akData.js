@@ -14,6 +14,8 @@ const CACHE_TTL = {
   board_change: 10 * 1000,
   stock_changes: 10 * 1000,
   stock_changes_all: 10 * 1000,
+  hot_rank: 5 * 60 * 1000,
+  foreign_commodity: 10 * 1000,
   stock_news: 5 * 60 * 1000,
   stock_zyjs: 60 * 60 * 1000,
   jgcyd: 10 * 60 * 1000,
@@ -119,6 +121,8 @@ const getInstitutionParticipation = (symbol) => getAkData('jgcyd', symbol);
 const getSectorSpot = (indicator) => getAkData('sector_spot', indicator);
 // 新浪行业-板块成分股详情（sector 取板块行情返回的 label）
 const getSectorDetail = (sector) => getAkData('sector_detail', sector);
+// 外盘期货实时行情（新浪，symbol 见 ak.futures_hq_subscribe_exchange_symbol，可逗号分隔多个）
+const getForeignCommodity = (symbol) => getAkData('foreign_commodity', symbol);
 
 module.exports = {
   getClsNews,
@@ -129,4 +133,5 @@ module.exports = {
   getInstitutionParticipation,
   getSectorSpot,
   getSectorDetail,
+  getForeignCommodity,
 };

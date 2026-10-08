@@ -66,6 +66,15 @@ const EMO_QUICK_REPORTS_DESC = `买点命中时均可正常买入、不跳过；
 //   把这 3 个板块的全部成分股与「全量自选股中 isTech ≠ false 的科技股」取交集，再在交集内按最近 N 个交易日涨幅之和最大选一只买入
 const TECH_TOP3_BLOCK_DESC = (n) => `与「${n}日涨幅最大&三日情绪-60快进快出」完全一致，唯一区别在选股口径增加一层板块效应筛选：买点触发时，先取当日重点板块（block_code.js，key_blocks 页面维护）中 tag 为「进攻」的板块，按板块盘中涨幅（= 该板块成分股在买点触发时点的实时涨幅均值，与 key_blocks 页面盘中 avgChange 同口径，不含收盘价前视）降序取前三个板块；把这 3 个板块的全部成分股与「全量自选股（monitor_stocks.json）中 isTech ≠ false 的科技股」取交集，再在交集内按最近 ${n} 个交易日涨幅之和最大选一只买入（与常规「${n}日涨幅最大」同口径）。卖点与 highest_${n}d_gain_emoquick 完全一致：满足以下任一快进快出条件则次日 10:00 强制卖出、盘中跌破成本线 -2% 先到先卖（强卖/止损当日禁止二次买入），否则走通用 7 条件卖点——① 上一交易日科技情绪 3 日 EMA < -60；② 上上个与上个交易日当日科技情绪均处于 -30~20 区间（不含边界）且回升。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效`;
 
+// 两次买入（分批建仓）系列统一描述（highest_{N}d_gain_two_buy，2026-10-08 用户新增）：
+// 买点首次触发先买入 5 成，之后任意一次买点再次触发补入剩余 5 成（同一天后续桶 / 次日 / 更晚均可，不限时间窗口）；
+// 第二份仓位固定加仓首次建仓的同一只股票，不按 N 日涨幅重新择股；补买同样过滤涨停（买入时点已涨停不可成交），
+// 该股已涨停时本次放弃补买、保持半仓，等待下一次买点触发且未涨停时再补入剩余 5 成。
+// 成本 = 两次买入价之和 ÷ 2（仅买入第一份时即首次买入价），跌破成本线 -4% 阈值 = 平均成本 × 0.96；
+// 卖点沿用通用 7 条件，并叠加「快进快出」能力（emoQuickOut）；仅买入第一份（半仓）即触发卖点时只卖这 5 成、收益按半仓折算（个股收益率 × 0.5）；
+// 两份均已买入（满仓）时以平均成本统一计算收益（权重 1）。选股口径与「N日涨幅最大」完全一致。
+const TWO_BUY_DESC = (n) => `买点首次触发时先买入 5 成仓位，随后等待买点第二次触发再补入剩余 5 成（第二次触发可在同一天后续桶、次日或更晚，不设时间窗口上限；补买固定买入首次建仓的同一只股票，不按 N 日涨幅重新择股；补买同样过滤涨停——买入时点该股已涨停（主板>9.5%、创业/科创>19%）不可成交，本次放弃补买、保持半仓，等待下一次买点触发且未涨停时再补入）；持仓成本 = 两次买入价之和 ÷ 2（仅买入第一份时即首次买入价），跌破成本线 -4% 止损阈值 = 平均成本 × 0.96（本策略专属，高于常规 -2%）；卖点沿用通用 7 条件（均线破位 / 高位放量大阴线 / 科技情绪退潮 / 抗分歧弱势 / 连续三日抗分歧 / 跌破买点前低 / 跌破成本线-4%）并叠加「快进快出」能力——买入日上一交易日科技情绪 3 日 EMA < -60（或上两交易日当日科技情绪均处 -30~20 区间且回升）时为快进快出持仓，次日 10:00 强制卖出、强卖当日禁止二次买入，且盘中跌破成本线 -4% 先到先卖止损；若仅买入第一份（半仓）即触发卖点，仅卖出该 5 成仓位，收益按半仓折算（个股实际收益率 × 0.5 计入账户）；两份均已买入（满仓）时以平均成本统一计算收益（权重 1）。选股口径与「${n}日涨幅最大」完全一致：买点触发时从全量自选科技股中买入最近 ${n} 个交易日涨幅之和最大的一只；跨指数双门禁、全局最低抗分歧门槛 ≥ 9、顺/逆周期过滤照常生效`;
+
 // 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
 const STRATEGIES = {
   highest_gain: { id: 'highest_gain', name: '买入最高涨幅', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票' },
@@ -74,6 +83,16 @@ const STRATEGIES = {
   highest_4d_gain: { id: 'highest_4d_gain', name: '4日涨幅最大', desc: '买点命中时只买入最近 4 个交易日涨幅最大的股票' },
   highest_5d_gain: { id: 'highest_5d_gain', name: '5日涨幅最大', desc: '买点命中时只买入最近 5 个交易日涨幅最大的股票' },
   highest_10d_gain: { id: 'highest_10d_gain', name: '10日涨幅最大', desc: '买点命中时只买入最近 10 个交易日涨幅最大的股票' },
+
+  // 两次买入（分批建仓）系列（highest_{N}d_gain_two_buy，2026-10-08 用户新增；twoBuy: true → 独立分批建仓逻辑）：
+  // 买点首次触发买入 5 成，之后任意一次买点再次触发补入剩余 5 成（补买同一只股票，不重新择股）；
+  // 成本取两次买入均价，跌破成本线 -4%（costLinePct: 4，高于常规 -2%）；
+  // 仅买入第一份即卖出时按半仓折算收益，两份都买入则按平均成本满仓计算；
+  // emoQuickOut: true → 叠加「快进快出」能力（情绪冰点/温和回升日买入的持仓次日 10:00 强卖 + 盘中跌破成本线 -4% 先到先卖）
+  highest_2d_gain_two_buy: { id: 'highest_2d_gain_two_buy', name: '2日涨幅最大&两次买入', desc: TWO_BUY_DESC(2), twoBuy: true, costLinePct: 4, emoQuickOut: true },
+  highest_3d_gain_two_buy: { id: 'highest_3d_gain_two_buy', name: '3日涨幅最大&两次买入', desc: TWO_BUY_DESC(3), twoBuy: true, costLinePct: 4, emoQuickOut: true },
+  highest_4d_gain_two_buy: { id: 'highest_4d_gain_two_buy', name: '4日涨幅最大&两次买入', desc: TWO_BUY_DESC(4), twoBuy: true, costLinePct: 4, emoQuickOut: true },
+  highest_5d_gain_two_buy: { id: 'highest_5d_gain_two_buy', name: '5日涨幅最大&两次买入', desc: TWO_BUY_DESC(5), twoBuy: true, costLinePct: 4, emoQuickOut: true },
   highest_3d_ma_slope: { id: 'highest_3d_ma_slope', name: '3日线斜率最陡峭', desc: '买点命中时只买入 3 日涨幅均线斜率角度最大的股票' },
   highest_5d_ma_slope: { id: 'highest_5d_ma_slope', name: '5日线斜率最陡峭', desc: '买点命中时只买入 5 日涨幅均线斜率角度最大的股票' },
   highest_3d_reports: { id: 'highest_3d_reports', name: '3日研报覆盖数最多', desc: '买点命中时只买入过去 3 个交易日（含当日）研报覆盖数最多的股票（覆盖数相同取 3 日涨幅最大）；覆盖仅统计买点前已创建的研报，买点后补录的不计入' },
@@ -2231,6 +2250,30 @@ const buildTechTop3BlockCodeSet = (bucket, dateStr) => {
   return result;
 };
 
+// 计算「快进快出」标注（买入时点判定，与 pickBestStock 内各 emoquick 分支口径完全一致）：
+//   ① 上一交易日科技情绪 3 日 EMA < -60；② 上上个/上个交易日当日科技情绪均处 (-30, 20) 且回升。
+// 两次买入系列（highest_{N}d_gain_two_buy）复用该能力，在首次建仓时调用并把结果挂到持仓上。
+// 入参须与 pickBestStock 一致：di 为日期轴（含预热日）绝对索引、rangeDates 为日期轴，方能取到同一「上一交易日」。
+const computeEmoQuickOutInfo = (di, rangeDates) => {
+  const prevDateStr = di > 0 ? String(rangeDates[di - 1]) : null; // 上一交易日
+  const prev2DateStr = di > 1 ? String(rangeDates[di - 2]) : null; // 上上个交易日
+  const prevEma = prevDateStr != null ? getTechEmotionEmaMap().get(prevDateStr) : null;
+  const prevRaw = prevDateStr != null ? getTechEmotionRawMap().get(prevDateStr) : null;
+  const prev2Raw = prev2DateStr != null ? getTechEmotionRawMap().get(prev2DateStr) : null;
+  const quickByEmaBelow = prevEma != null && prevEma < EMO_SWITCH_EMA_THRESHOLD;
+  const quickByRangeRising = prev2Raw != null && prevRaw != null
+    && prev2Raw > EMO_QUICK_RANGE_LOW && prev2Raw < EMO_QUICK_RANGE_HIGH
+    && prevRaw > EMO_QUICK_RANGE_LOW && prevRaw < EMO_QUICK_RANGE_HIGH
+    && prevRaw > prev2Raw;
+  return {
+    quickOut: quickByEmaBelow || quickByRangeRising,
+    trigger: quickByEmaBelow ? 'ema_below' : (quickByRangeRising ? 'range_rising' : null),
+    ema: prevEma != null ? Number(prevEma.toFixed(2)) : null,
+    prevRaw: prevRaw != null ? Number(prevRaw.toFixed(2)) : null,
+    prev2Raw: prev2Raw != null ? Number(prev2Raw.toFixed(2)) : null,
+  };
+};
+
 // 单股策略选股：在买点命中的当前时间桶，按策略指标选择最优的一只股票。
 // 抗分歧≥11 顺延门槛对 RESILIENCE_GATE_STRATEGY_IDS（当前仅买入最高涨幅）启用：
 // 排名首位不满足则按策略排名依次顺延至下一只满足的股票，skipped 记录被顺延跳过的前序股票（供买入明细标注）；
@@ -2863,11 +2906,13 @@ const buildQuickOutSellReason = (info) => {
   return `情绪快进快出：买入日上一交易日科技情绪 3 日 EMA ${info?.ema != null ? info.ema : '缺失'} < ${EMO_SWITCH_EMA_THRESHOLD}，次日 10:00 强制卖出`;
 };
 
-// 快进快出持仓盘中 -2% 止损的 sellReason（2026-10-05 新增：先到先卖、先于当日 10:00 强卖；Inner/Multi 两处共用）
-const buildQuickOutStopLossReason = (buyPrice, stopPt, desc) => {
-  const threshold = parseFloat((Number(buyPrice) * 0.98).toFixed(2));
+// 快进快出持仓盘中跌破成本线止损的 sellReason（先到先卖、先于当日 10:00 强卖；Inner/Multi 两处共用）
+// stopPct：成本线止损百分比（常规 emoquick 策略为 2，两次买入系列为 4），阈值 = 买入价 × (1 - stopPct/100)
+const buildQuickOutStopLossReason = (buyPrice, stopPt, desc, stopPct = 2) => {
+  const pct = Number(stopPct);
+  const threshold = parseFloat((Number(buyPrice) * (1 - pct / 100)).toFixed(2));
   const stopTime = `${String(Math.floor(Number(stopPt.minute) / 100)).padStart(2, '0')}:${String(Number(stopPt.minute) % 100).padStart(2, '0')}`;
-  return `情绪快进快出：${desc}，触发成本线 -2% 止损（买入价 ${Number(buyPrice).toFixed(2)}、阈值 ${threshold.toFixed(2)}，${stopTime} 价 ${Number(stopPt.lastPx).toFixed(2)} 成交），先于当日 10:00 强卖离场`;
+  return `情绪快进快出：${desc}，触发成本线 -${pct}% 止损（买入价 ${Number(buyPrice).toFixed(2)}、阈值 ${threshold.toFixed(2)}，${stopTime} 价 ${Number(stopPt.lastPx).toFixed(2)} 成交），先于当日 10:00 强卖离场`;
 };
 
 // 将选股顺延信息追加到买入原因/明细：发生顺延时在 buyReason 尾部标注，buyChecks 追加 resilience_gate 明细项。
@@ -4348,6 +4393,30 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
 // ============================================================
 // 多日回测主循环
 // ============================================================
+// ===== 两次买入策略（highest_{N}d_gain_two_buy）公共逻辑 =====
+// 仅建仓第一份（半仓）时权重 0.5，两份都买入后权重 1；成本取两次买入价的算术平均
+const TWO_BUY_FIRST_WEIGHT = 0.5;
+const TWO_BUY_FULL_WEIGHT = 1;
+const calcTwoBuyAvgPrice = (prices) => {
+  const valid = (prices || []).map(Number).filter(p => Number.isFinite(p) && p > 0);
+  if (valid.length === 0) return null;
+  return parseFloat((valid.reduce((s, p) => s + p, 0) / valid.length).toFixed(2));
+};
+// 组装两次买入交易在原有成交流水上追加的字段（半仓折算收益率、平均成本、两笔买入明细）
+const buildTwoBuyTradeExtra = (position) => {
+  const weight = position?.weight ?? TWO_BUY_FIRST_WEIGHT;
+  return {
+    twoBuy: true,
+    weight,
+    rawReturnRate: position?.rawReturnRate ?? null,
+    avgPrice: position?.buyPrice ?? null,
+    buyPrices: [...(position?.buyPrices || [])],
+    buyTimes: [...(position?.buyTimes || [])],
+    buyDates: [...(position?.buyDates || [])],
+    secondBuy: position?.secondBuy || null,
+  };
+};
+
 const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_gain', onProgress) => {
   // 重点板块-N日最高涨幅系列走独立的板块驱动回测逻辑（尾盘 14:50 买入，不走大盘买点诊断）
   if (STRATEGIES[strategyId]?.keyBlockDays != null) {
@@ -4488,7 +4557,8 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
     // 均处 -30~20 区间且回升）买入的持仓，次日上午 10:00 强制卖出（取当日第一个 minute ≥ 1000 的
     // 分时点价格，未覆盖 10:00 时取当日最后一分钟；当日无该股分时数据时保持持仓、顺延至后续日期重试），
     // 不走通用 7 条件卖点。
-    // 2026-10-05 叠加盘中 -2% 止损（先到先卖，口径与通用条件7一致，成本线 = 买入价 × 0.98）：
+    // 2026-10-05 叠加盘中止损（先到先卖，口径与通用条件7一致，成本线 = 买入价 × (1 - costLinePct/100)）：
+    // 常规 emoquick 策略为 -2%；两次买入系列（highest_{N}d_gain_two_buy）为 -4%（strategy.costLinePct = 4）
     // 开盘首分钟已破线 → 竞价低开自救窗口（逐分钟未回落则继续持有），首次分钟回落即卖出；
     // 开盘未破线、盘中才跌破 → 即时止损；止损分钟早于强卖分钟时按止损价先卖，否则仍按 10:00 强卖
     if (strategy.emoQuickOut === true && singlePosition?.emoQuickOut?.quickOut === true && dateStr > singlePosition.buyDate) {
@@ -4499,10 +4569,11 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       if (pts.length > 0) {
         const fmtMin = (m) => `${String(Math.floor(Number(m) / 100)).padStart(2, '0')}:${String(Number(m) % 100).padStart(2, '0')}`;
         const forcedPt = pts.find(p => Number(p.minute) >= 1000) || pts[pts.length - 1];
-        // 盘中 -2% 止损点（先到先卖）
+        // 盘中跌破成本线止损点（先到先卖；两次买入系列成本线为 -4%，常规 emoquick 为 -2%）
+        const qPct = strategy.costLinePct != null && Number.isFinite(Number(strategy.costLinePct)) ? Number(strategy.costLinePct) : 2;
         let stopPt = null;
         let stopDesc = '';
-        const stopThreshold = singlePosition.buyPrice > 0 ? parseFloat((singlePosition.buyPrice * 0.98).toFixed(2)) : null;
+        const stopThreshold = singlePosition.buyPrice > 0 ? parseFloat((singlePosition.buyPrice * (1 - qPct / 100)).toFixed(2)) : null;
         if (stopThreshold != null) {
           if (Number(pts[0].lastPx) <= stopThreshold) {
             // 竞价低开自救窗口：首分钟已破线，逐分钟拉升未回落则继续持有，首次分钟回落即卖出（到 10:00 交由强卖）
@@ -4522,9 +4593,15 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
         const sellPt = stopPt && Number(stopPt.minute) < Number(forcedPt.minute) ? stopPt : forcedPt;
         const isStopLoss = sellPt === stopPt;
         const sellPrice = parseFloat(Number(sellPt.lastPx).toFixed(2));
-        const returnRate = singlePosition.buyPrice > 0
+        // 两次买入策略：快进快出强卖/止损同样按当前仓位权重折算（仅第一份=0.5；两份都已买入=1，用平均成本统一计算）
+        const isTwoBuy = strategy.twoBuy === true;
+        const weight = isTwoBuy ? (singlePosition.weight ?? TWO_BUY_FIRST_WEIGHT) : null;
+        const rawReturnRate = singlePosition.buyPrice > 0
           ? parseFloat((((sellPrice - singlePosition.buyPrice) / singlePosition.buyPrice) * 100).toFixed(2))
           : null;
+        const returnRate = isTwoBuy && rawReturnRate != null
+          ? parseFloat((rawReturnRate * weight).toFixed(2))
+          : rawReturnRate;
         singleTrades.push({
           seq: singleTrades.length + 1,
           metric: singlePosition.metric,
@@ -4537,13 +4614,14 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
           buyChange: singlePosition.buyChange,
           buyReason: singlePosition.buyReason,
           buyChecks: singlePosition.buyChecks,
+          ...(isTwoBuy ? buildTwoBuyTradeExtra({ ...singlePosition, rawReturnRate }) : {}),
           sellDate: dateStr,
           sellDateDisplay: dateDisplay,
           sellTime: fmtMin(sellPt.minute),
           sellPrice,
           sellChange: sellPt.change != null ? parseFloat(Number(sellPt.change).toFixed(2)) : null,
           sellReason: isStopLoss
-            ? buildQuickOutStopLossReason(singlePosition.buyPrice, sellPt, stopDesc)
+            ? buildQuickOutStopLossReason(singlePosition.buyPrice, sellPt, stopDesc, qPct)
             : buildQuickOutSellReason(singlePosition.emoQuickOut),
           returnRate,
         });
@@ -4557,13 +4635,20 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       // 单股策略：仅诊断唯一持仓（尾盘抄底策略走专属卖点）
       if (!singlePosition) return;
       if (dateStr <= singlePosition.buyDate) return;
-      // 情绪快进快出持仓：不走通用 7 条件卖点，仅由上方按日处理（盘中 -2% 止损先到先卖 + 10:00 强卖；分时缺失时顺延）
+      // 情绪快进快出持仓：不走通用 7 条件卖点，仅由上方按日处理（盘中跌破成本线止损先到先卖 + 10:00 强卖；分时缺失时顺延）
       if (strategy.emoQuickOut === true && singlePosition.emoQuickOut?.quickOut === true) return;
       // 三日情绪均值策略走次日开盘专属卖点（已在桶循环前按日处理），不进入通用卖点诊断
-      const position = { code: singlePosition.code, stockName: singlePosition.stockName, buyPrice: singlePosition.buyPrice, buyDate: singlePosition.buyDate, tailDipSell: strategy.tailDip === true && strategy.nextDayOpenSell !== true };
+      const position = { code: singlePosition.code, stockName: singlePosition.stockName, buyPrice: singlePosition.buyPrice, buyDate: singlePosition.buyDate, tailDipSell: strategy.tailDip === true && strategy.nextDayOpenSell !== true, costLinePct: strategy.costLinePct };
       const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
       if (result.isSell && result.closePrice != null) {
         const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
+        // 两次买入策略：收益按当前仓位权重折算（仅第一份=0.5；两份都已买入=1，用平均成本统一计算），保留个股原始收益率供前端悬停展示
+        const isTwoBuy = strategy.twoBuy === true;
+        const weight = isTwoBuy ? (singlePosition.weight ?? TWO_BUY_FIRST_WEIGHT) : null;
+        const rawReturnRate = result.returnRate;
+        const acctReturnRate = isTwoBuy && rawReturnRate != null
+          ? parseFloat((rawReturnRate * weight).toFixed(2))
+          : result.returnRate;
         singleTrades.push({
           seq: singleTrades.length + 1,
           metric: singlePosition.metric,
@@ -4576,13 +4661,14 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
           buyChange: singlePosition.buyChange,
           buyReason: singlePosition.buyReason,
           buyChecks: singlePosition.buyChecks,
+          ...(isTwoBuy ? buildTwoBuyTradeExtra({ ...singlePosition, rawReturnRate }) : {}),
           sellDate: dateStr,
           sellDateDisplay: dateDisplay,
           sellTime: result.displayTime,
           sellPrice: result.closePrice,
           sellChange: result.change,
           sellReason: satisfiedNames || '卖出条件触发',
-          returnRate: result.returnRate,
+          returnRate: acctReturnRate,
         });
         singlePosition = null;
       }
@@ -4622,21 +4708,57 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
             : null;
           const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet);
           if (picked) {
+            // 两次买入系列叠加「快进快出」能力：首次建仓时按买入时点计算快进快出标注
+            // （与 highest_{N}d_gain_emoquick 同口径，传入日期轴绝对索引 di + axisOffset），挂到持仓上驱动
+            // 次日 10:00 强卖 + 盘中跌破成本线止损。必须在 withResilienceGateInfo 之前挂载，买入明细方可写入 emo_quick_out 判定项。
+            if (strategy.twoBuy === true && strategy.emoQuickOut === true) {
+              picked.emoQuickOut = computeEmoQuickOutInfo(di + axisOffset, dateAxis);
+            }
             const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
             const sc = picked.stock;
+            const firstBuyPrice = parseFloat(Number(sc.lastPx).toFixed(2));
             singlePosition = {
               code: sc.code,
               stockName: sc.name || sc.code,
               buyDate: dateStr,
               buyDateDisplay: dateDisplay,
               buyTime,
-              buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
+              buyPrice: firstBuyPrice,
               buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
               metric: picked.metric,
               buyReason: finalBuyInfo.buyReason,
               buyChecks: annotateIndexGateChecksWithStock(finalBuyInfo.buyChecks, sc.code, sc.name),
               emoQuickOut: picked.emoQuickOut || null, // 情绪快进快出标注（quickOut=true → 次日 10:00 强制卖出；其余策略为 null）
+              // 两次买入策略：首份建仓按半仓权重，记录买入价序列供补买后求平均成本
+              ...(strategy.twoBuy === true
+                ? { twoBuy: true, weight: TWO_BUY_FIRST_WEIGHT, buyPrices: [firstBuyPrice], buyTimes: [buyTime], buyDates: [dateStr] }
+                : {}),
             };
+          }
+        } else if (strategy.twoBuy === true && singlePosition.twoBuy === true && (singlePosition.buyPrices || []).length === 1) {
+          // 两次买入策略：已持有第一份（半仓），买点第二次触发 → 补入剩余 5 成（固定加仓同一只股票，不重新择股）
+          const mNum2 = Number(bucket.minute);
+          if (Number.isFinite(mNum2) && mNum2 <= BUY_TIME_MAX_MINUTE) {
+            const heldSc = (bucket.stockChanges || []).find(s => s.code === singlePosition.code);
+            const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
+            // 补买同样过滤涨停（买入时点已涨停无法成交）：本次买点若该股已涨停则放弃补买，
+            // 保持半仓等待下一次买点触发、该股未涨停时再补入剩余 5 成
+            const heldLimitUp = heldSc ? isLimitUpAtBuy(singlePosition.code, heldSc.changePct) : false;
+            if (secondPx != null && secondPx > 0 && !heldLimitUp) {
+              singlePosition.buyPrices.push(secondPx);
+              singlePosition.buyTimes.push(buyTime);
+              singlePosition.buyDates.push(dateStr);
+              singlePosition.weight = TWO_BUY_FULL_WEIGHT;
+              singlePosition.buyPrice = calcTwoBuyAvgPrice(singlePosition.buyPrices); // 平均成本 = 两次买入价之和 ÷ 2
+              singlePosition.secondBuy = {
+                date: dateStr,
+                dateDisplay,
+                time: buyTime,
+                price: secondPx,
+                change: heldSc.changePct != null ? parseFloat(Number(heldSc.changePct).toFixed(2)) : null,
+              };
+              singlePosition.buyReason = `${singlePosition.buyReason}；买点第二次触发，补入剩余 5 成（${buyTime} 价 ${secondPx.toFixed(2)}）`;
+            }
           }
         }
       }
@@ -4656,15 +4778,22 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   let holding = null;
   if (singlePosition) {
     holding = { ...singlePosition };
+    let closePx = null;
     // 自最后一日起向前找到最近的收盘数据，用于估算期末浮盈
     for (let i = rangeDates.length - 1; i >= 0; i--) {
       const info = dailyInfos.get(rangeDates[i])?.get(singlePosition.code);
-      if (info && info.closePx != null && info.closePx > 0) {
-        holding.buyReturn = singlePosition.buyPrice > 0
-          ? parseFloat((((info.closePx - singlePosition.buyPrice) / singlePosition.buyPrice) * 100).toFixed(2))
-          : null;
-        break;
-      }
+      if (info && info.closePx != null && info.closePx > 0) { closePx = info.closePx; break; }
+    }
+    const rawBuyReturn = closePx != null && singlePosition.buyPrice > 0
+      ? parseFloat((((closePx - singlePosition.buyPrice) / singlePosition.buyPrice) * 100).toFixed(2))
+      : null;
+    if (strategy.twoBuy === true) {
+      // 两次买入：期末浮盈同样按当前仓位权重折算（半仓 0.5 / 满仓 1，用平均成本计算）
+      holding.weight = singlePosition.weight ?? TWO_BUY_FIRST_WEIGHT;
+      holding.rawBuyReturn = rawBuyReturn;
+      holding.buyReturn = rawBuyReturn != null ? parseFloat((rawBuyReturn * holding.weight).toFixed(2)) : null;
+    } else {
+      holding.buyReturn = rawBuyReturn;
     }
     overallReturn *= 1 + (holding.buyReturn || 0) / 100;
   }
@@ -4861,7 +4990,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
       // 均处 -30~20 区间且回升）买入的持仓，次日上午 10:00 强制卖出（取当日第一个 minute ≥ 1000 的
       // 分时点价格，未覆盖 10:00 时取当日最后一分钟；当日无该股分时数据时保持持仓、顺延至后续日期重试），
       // 不走通用 7 条件卖点。
-      // 2026-10-05 叠加盘中 -2% 止损（先到先卖，口径与通用条件7一致，成本线 = 买入价 × 0.98）：
+      // 2026-10-05 叠加盘中止损（先到先卖，口径与通用条件7一致，成本线 = 买入价 × (1 - costLinePct/100)）：
+      // 常规 emoquick 策略为 -2%；两次买入系列（highest_{N}d_gain_two_buy）为 -4%（strategy.costLinePct = 4）
       // 开盘首分钟已破线 → 竞价低开自救窗口（逐分钟未回落则继续持有），首次分钟回落即卖出；
       // 开盘未破线、盘中才跌破 → 即时止损；止损分钟早于强卖分钟时按止损价先卖，否则仍按 10:00 强卖
       if (strategy.emoQuickOut === true && st.singlePosition?.emoQuickOut?.quickOut === true && dateStr > st.singlePosition.buyDate) {
@@ -4872,10 +5002,11 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
         if (pts.length > 0) {
           const fmtMin = (m) => `${String(Math.floor(Number(m) / 100)).padStart(2, '0')}:${String(Number(m) % 100).padStart(2, '0')}`;
           const forcedPt = pts.find(p => Number(p.minute) >= 1000) || pts[pts.length - 1];
-          // 盘中 -2% 止损点（先到先卖）
+          // 盘中跌破成本线止损点（先到先卖；两次买入系列成本线为 -4%，常规 emoquick 为 -2%）
+          const qPct = strategy.costLinePct != null && Number.isFinite(Number(strategy.costLinePct)) ? Number(strategy.costLinePct) : 2;
           let stopPt = null;
           let stopDesc = '';
-          const stopThreshold = st.singlePosition.buyPrice > 0 ? parseFloat((st.singlePosition.buyPrice * 0.98).toFixed(2)) : null;
+          const stopThreshold = st.singlePosition.buyPrice > 0 ? parseFloat((st.singlePosition.buyPrice * (1 - qPct / 100)).toFixed(2)) : null;
           if (stopThreshold != null) {
             if (Number(pts[0].lastPx) <= stopThreshold) {
               // 竞价低开自救窗口：首分钟已破线，逐分钟拉升未回落则继续持有，首次分钟回落即卖出（到 10:00 交由强卖）
@@ -4895,9 +5026,15 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           const sellPt = stopPt && Number(stopPt.minute) < Number(forcedPt.minute) ? stopPt : forcedPt;
           const isStopLoss = sellPt === stopPt;
           const sellPrice = parseFloat(Number(sellPt.lastPx).toFixed(2));
-          const returnRate = st.singlePosition.buyPrice > 0
+          // 两次买入策略：快进快出强卖/止损同样按当前仓位权重折算（仅第一份=0.5；两份都已买入=1，用平均成本统一计算）
+          const isTwoBuy = strategy.twoBuy === true;
+          const weight = isTwoBuy ? (st.singlePosition.weight ?? TWO_BUY_FIRST_WEIGHT) : null;
+          const rawReturnRate = st.singlePosition.buyPrice > 0
             ? parseFloat((((sellPrice - st.singlePosition.buyPrice) / st.singlePosition.buyPrice) * 100).toFixed(2))
             : null;
+          const returnRate = isTwoBuy && rawReturnRate != null
+            ? parseFloat((rawReturnRate * weight).toFixed(2))
+            : rawReturnRate;
           singleTrades.push({
             seq: singleTrades.length + 1,
             metric: st.singlePosition.metric,
@@ -4910,13 +5047,14 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
             buyChange: st.singlePosition.buyChange,
             buyReason: st.singlePosition.buyReason,
             buyChecks: st.singlePosition.buyChecks,
+            ...(isTwoBuy ? buildTwoBuyTradeExtra({ ...st.singlePosition, rawReturnRate }) : {}),
             sellDate: dateStr,
             sellDateDisplay: dateDisplay,
             sellTime: fmtMin(sellPt.minute),
             sellPrice,
             sellChange: sellPt.change != null ? parseFloat(Number(sellPt.change).toFixed(2)) : null,
             sellReason: isStopLoss
-              ? buildQuickOutStopLossReason(st.singlePosition.buyPrice, sellPt, stopDesc)
+              ? buildQuickOutStopLossReason(st.singlePosition.buyPrice, sellPt, stopDesc, qPct)
               : buildQuickOutSellReason(st.singlePosition.emoQuickOut),
             returnRate,
           });
@@ -4959,36 +5097,79 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
             : null;
           const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet);
             if (picked) {
+              // 两次买入系列叠加「快进快出」能力：首次建仓时按买入时点计算快进快出标注
+              // （与 highest_{N}d_gain_emoquick 同口径，传入日期轴绝对索引 di + axisOffset），挂到持仓上驱动
+              // 次日 10:00 强卖 + 盘中跌破成本线止损。必须在 withResilienceGateInfo 之前挂载，买入明细方可写入 emo_quick_out 判定项。
+              if (strategy.twoBuy === true && strategy.emoQuickOut === true) {
+                picked.emoQuickOut = computeEmoQuickOutInfo(di + axisOffset, dateAxis);
+              }
               const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
               const sc = picked.stock;
+              const firstBuyPrice = parseFloat(Number(sc.lastPx).toFixed(2));
               st.singlePosition = {
                 code: sc.code,
                 stockName: sc.name || sc.code,
                 buyDate: dateStr,
                 buyDateDisplay: dateDisplay,
                 buyTime,
-                buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
+                buyPrice: firstBuyPrice,
                 buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
                 metric: picked.metric,
                 buyReason: finalBuyInfo.buyReason,
                 buyChecks: annotateIndexGateChecksWithStock(finalBuyInfo.buyChecks, sc.code, sc.name),
                 emoQuickOut: picked.emoQuickOut || null, // 情绪快进快出标注（quickOut=true → 次日 10:00 强制卖出；其余策略为 null）
+                // 两次买入策略：首份建仓按半仓权重，记录买入价序列供补买后求平均成本
+                ...(strategy.twoBuy === true
+                  ? { twoBuy: true, weight: TWO_BUY_FIRST_WEIGHT, buyPrices: [firstBuyPrice], buyTimes: [buyTime], buyDates: [dateStr] }
+                  : {}),
               };
+            }
+          } else if (strategy.twoBuy === true && st.singlePosition.twoBuy === true && (st.singlePosition.buyPrices || []).length === 1) {
+            // 两次买入策略：已持有第一份（半仓），买点第二次触发 → 补入剩余 5 成（固定加仓同一只股票，不重新择股）
+            const mNum2 = Number(bucket.minute);
+            if (Number.isFinite(mNum2) && mNum2 <= BUY_TIME_MAX_MINUTE) {
+              const heldSc = (bucket.stockChanges || []).find(s => s.code === st.singlePosition.code);
+              const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
+              // 补买同样过滤涨停（买入时点已涨停无法成交）：本次买点若该股已涨停则放弃补买，
+              // 保持半仓等待下一次买点触发、该股未涨停时再补入剩余 5 成
+              const heldLimitUp = heldSc ? isLimitUpAtBuy(st.singlePosition.code, heldSc.changePct) : false;
+              if (secondPx != null && secondPx > 0 && !heldLimitUp) {
+                st.singlePosition.buyPrices.push(secondPx);
+                st.singlePosition.buyTimes.push(buyTime);
+                st.singlePosition.buyDates.push(dateStr);
+                st.singlePosition.weight = TWO_BUY_FULL_WEIGHT;
+                st.singlePosition.buyPrice = calcTwoBuyAvgPrice(st.singlePosition.buyPrices); // 平均成本 = 两次买入价之和 ÷ 2
+                st.singlePosition.secondBuy = {
+                  date: dateStr,
+                  dateDisplay,
+                  time: buyTime,
+                  price: secondPx,
+                  change: heldSc.changePct != null ? parseFloat(Number(heldSc.changePct).toFixed(2)) : null,
+                };
+                st.singlePosition.buyReason = `${st.singlePosition.buyReason}；买点第二次触发，补入剩余 5 成（${buyTime} 价 ${secondPx.toFixed(2)}）`;
+              }
             }
           }
         }
 
         // 卖出信号（同日买入不可同日卖出；尾盘抄底策略走专属卖点）
         if (st.singlePosition && dateStr > st.singlePosition.buyDate) {
-          // 情绪快进快出持仓：不走通用 7 条件卖点，仅由上方按日处理（盘中 -2% 止损先到先卖 + 10:00 强卖；分时缺失时顺延）
+          // 情绪快进快出持仓：不走通用 7 条件卖点，仅由上方按日处理（盘中跌破成本线止损先到先卖 + 10:00 强卖；分时缺失时顺延）
           if (strategy.emoQuickOut === true && st.singlePosition.emoQuickOut?.quickOut === true) {
             // skip
           } else {
             // 三日情绪均值策略走次日开盘专属卖点（已在桶循环前按日处理），不进入通用卖点诊断
-            const position = { code: st.singlePosition.code, stockName: st.singlePosition.stockName, buyPrice: st.singlePosition.buyPrice, buyDate: st.singlePosition.buyDate, tailDipSell: strategy.tailDip === true && strategy.nextDayOpenSell !== true };
+            const position = { code: st.singlePosition.code, stockName: st.singlePosition.stockName, buyPrice: st.singlePosition.buyPrice, buyDate: st.singlePosition.buyDate, tailDipSell: strategy.tailDip === true && strategy.nextDayOpenSell !== true, costLinePct: strategy.costLinePct };
             const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
             if (result.isSell && result.closePrice != null) {
               const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
+              // 两次买入策略：收益按当前仓位权重折算（仅第一份=0.5；两份都已买入=1，用平均成本统一计算），保留个股原始收益率供前端悬停展示
+              const isTwoBuy = strategy.twoBuy === true;
+              const weight = isTwoBuy ? (st.singlePosition.weight ?? TWO_BUY_FIRST_WEIGHT) : null;
+              const rawReturnRate = result.returnRate;
+              const acctReturnRate = isTwoBuy && rawReturnRate != null
+                ? parseFloat((rawReturnRate * weight).toFixed(2))
+                : result.returnRate;
               singleTrades.push({
                 seq: singleTrades.length + 1,
                 metric: st.singlePosition.metric,
@@ -5001,13 +5182,14 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                 buyChange: st.singlePosition.buyChange,
                 buyReason: st.singlePosition.buyReason,
                 buyChecks: st.singlePosition.buyChecks,
+                ...(isTwoBuy ? buildTwoBuyTradeExtra({ ...st.singlePosition, rawReturnRate }) : {}),
                 sellDate: dateStr,
                 sellDateDisplay: dateDisplay,
                 sellTime: result.displayTime,
                 sellPrice: result.closePrice,
                 sellChange: result.change,
                 sellReason: satisfiedNames || '卖出条件触发',
-                returnRate: result.returnRate,
+                returnRate: acctReturnRate,
               });
               st.singlePosition = null;
             }
@@ -5032,15 +5214,22 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
     let holding = null;
     if (st.singlePosition) {
       holding = { ...st.singlePosition };
+      let closePx = null;
       // 自最后一日起向前找到最近的收盘数据，用于估算期末浮盈
       for (let i = rangeDates.length - 1; i >= 0; i--) {
         const info = dailyInfos.get(rangeDates[i])?.get(st.singlePosition.code);
-        if (info && info.closePx != null && info.closePx > 0) {
-          holding.buyReturn = st.singlePosition.buyPrice > 0
-            ? parseFloat((((info.closePx - st.singlePosition.buyPrice) / st.singlePosition.buyPrice) * 100).toFixed(2))
-            : null;
-          break;
-        }
+        if (info && info.closePx != null && info.closePx > 0) { closePx = info.closePx; break; }
+      }
+      const rawBuyReturn = closePx != null && st.singlePosition.buyPrice > 0
+        ? parseFloat((((closePx - st.singlePosition.buyPrice) / st.singlePosition.buyPrice) * 100).toFixed(2))
+        : null;
+      if (strategy.twoBuy === true) {
+        // 两次买入：期末浮盈同样按当前仓位权重折算（半仓 0.5 / 满仓 1，用平均成本计算）
+        holding.weight = st.singlePosition.weight ?? TWO_BUY_FIRST_WEIGHT;
+        holding.rawBuyReturn = rawBuyReturn;
+        holding.buyReturn = rawBuyReturn != null ? parseFloat((rawBuyReturn * holding.weight).toFixed(2)) : null;
+      } else {
+        holding.buyReturn = rawBuyReturn;
       }
       overallReturn *= 1 + (holding.buyReturn || 0) / 100;
     }

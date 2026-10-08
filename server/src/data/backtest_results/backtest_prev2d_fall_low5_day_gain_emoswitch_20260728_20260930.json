@@ -189,10 +189,6 @@
       "name": "通富微电"
     },
     {
-      "code": "sh603757",
-      "name": "大元泵业"
-    },
-    {
       "code": "sz002536",
       "name": "飞龙股份"
     },
@@ -337,10 +333,6 @@
       "name": "金安国纪"
     },
     {
-      "code": "sh688143",
-      "name": "长盈通"
-    },
-    {
       "code": "sz002046",
       "name": "国机精工"
     },
@@ -373,8 +365,28 @@
       "name": "雅克科技"
     },
     {
-      "code": "sh688662",
-      "name": "富信科技"
+      "code": "sz300604",
+      "name": "长川科技"
+    },
+    {
+      "code": "sh603061",
+      "name": "金海通"
+    },
+    {
+      "code": "sh688625",
+      "name": "呈和科技"
+    },
+    {
+      "code": "sh600641",
+      "name": "先导基电"
+    },
+    {
+      "code": "sh688123",
+      "name": "聚辰股份"
+    },
+    {
+      "code": "sh601208",
+      "name": "东材科技"
     }
   ],
   "trades": [
@@ -421,8 +433,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -15.38 / 当前 -99.43",
-          "reason": "9:30 竞价科技情绪 -15.38 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -16.01 / 当前 -100.00",
+          "reason": "9:30 竞价科技情绪 -16.01 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -511,16 +523,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "19 / 93只",
-          "reason": "开盘后自选股共 93 只，19 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "20 / 96只",
+          "reason": "开盘后自选股共 96 只，20 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 49.34 / 当前 74.04",
-          "reason": "9:30 竞价科技情绪 49.34 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 47.25 / 当前 73.06",
+          "reason": "9:30 竞价科技情绪 47.25 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -603,8 +615,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -55.92 / 当前 -30.77",
-          "reason": "9:30 竞价科技情绪 -55.92 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -60.97 / 当前 -36.92",
+          "reason": "9:30 竞价科技情绪 -60.97 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -641,20 +653,20 @@
       "sellTime": "14:20",
       "sellPrice": 58.48,
       "sellChange": -7.22,
-      "sellReason": "高位放量大阴线、科技板块情绪退潮",
+      "sellReason": "高位放量大阴线",
       "returnRate": 19.01
     },
     {
       "seq": 4,
-      "metric": 1.35,
-      "code": "sz002050",
-      "stockName": "三花智控",
+      "metric": 3.08,
+      "code": "sz300408",
+      "stockName": "三环集团",
       "buyDate": "20260907",
       "buyDateDisplay": "2026-09-07",
       "buyTime": "09:35",
-      "buyPrice": 35.94,
-      "buyChange": 1.35,
-      "buyReason": "5min 内资金净流入 30.78亿、冰点期豁免成交量，成交量增加 116.71亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票买点抗分歧<9顺延买入）",
+      "buyPrice": 111.74,
+      "buyChange": 3.08,
+      "buyReason": "5min 内资金净流入 30.78亿、冰点期豁免成交量，成交量增加 116.71亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）｜情绪开关→前2个交易日波动最小&当日涨幅最大",
       "buyChecks": [
         {
           "id": "fund_inflow",
@@ -679,22 +691,22 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "25 / 93只",
-          "reason": "开盘后自选股共 93 只，25 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "24 / 96只",
+          "reason": "开盘后自选股共 96 只，24 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 45.64 / 当前 62.75",
-          "reason": "9:30 竞价科技情绪 45.64 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 49.46 / 当前 66.18",
+          "reason": "9:30 竞价科技情绪 49.46 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
-          "title": "三花智控 跟踪创业板指 3 日线斜率门禁",
+          "title": "三环集团 跟踪创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "三花智控 跟踪创业板指，3 日线斜率 +4.28°，今日盘中由负转正，允许出手",
+          "value": "三环集团 跟踪创业板指，3 日线斜率 +4.28°，今日盘中由负转正，允许出手",
           "reason": "创业板指 斜率 +4.28 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
         },
         {
@@ -708,15 +720,9 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "14.6",
-          "skippedStocks": [
-            {
-              "code": "sz300502",
-              "name": "新易盛",
-              "resilience": 7.32
-            }
-          ],
-          "reason": "前序股票全局最低抗分歧不足（新易盛（抗分歧 7.32））依次顺延，轮到本股买入（本股触发时点抗分歧 14.6）"
+          "value": "9.01",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 9.01，≥ 全局最低 9）"
         },
         {
           "id": "emo_switch_branch",
@@ -726,125 +732,16 @@
           "reason": "上一交易日科技情绪 3 日 EMA = -64.91（< -60）→ 走「前2个交易日波动最小&当日涨幅最大」选股买入"
         }
       ],
-      "sellDate": "20260910",
-      "sellDateDisplay": "2026-09-10",
-      "sellTime": "09:35",
-      "sellPrice": 35.7,
-      "sellChange": -1.35,
-      "sellReason": "均线破位",
-      "returnRate": -0.67
+      "sellDate": "20260921",
+      "sellDateDisplay": "2026-09-21",
+      "sellTime": "10:00",
+      "sellPrice": 133.75,
+      "sellChange": 2.13,
+      "sellReason": "连续三日抗分歧弱势",
+      "returnRate": 19.7
     },
     {
       "seq": 5,
-      "metric": 12.9999,
-      "code": "sz301183",
-      "stockName": "东田微",
-      "buyDate": "20260915",
-      "buyDateDisplay": "2026-09-15",
-      "buyTime": "10:20",
-      "buyPrice": 265.97,
-      "buyChange": 3.35,
-      "buyReason": "5min 内资金净流入 21.82亿、成交量增加 105.35亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票涨停/前序股票买点抗分歧<9顺延买入）",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+21.82亿",
-          "reason": "最近 5 分钟资金净流入 21.82 亿（10:15:00→10:20:00），超过 20 亿阈值",
-          "fundText": "5min 内资金净流入 21.82亿"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
-          "passed": true,
-          "exempted": false,
-          "value": "+ 105.35亿",
-          "reason": "当前量能 -453.40 亿为负，但较 5min 前的 -558.75 亿+ 105.35 亿，达到 100 亿阈值",
-          "volumeText": "成交量增加 105.35亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 -9.98 / 当前 64.29",
-          "reason": "9:30 竞价科技情绪 -9.98 未超过 80，当前情绪须低于 40 的限制不生效"
-        },
-        {
-          "id": "cyb_ma3_slope_gate",
-          "title": "东田微 跟踪创业板指 3 日线斜率门禁",
-          "passed": true,
-          "value": "东田微 跟踪创业板指，3 日线斜率 -13.76°，负斜率允许出手；距上次由正转负 第 3 天（2026-09-10 翻转）",
-          "reason": "创业板指 斜率 -13.76 < 0，负斜率允许出手"
-        },
-        {
-          "id": "star_ma3_slope_gate",
-          "title": "科创50 3 日线斜率门禁",
-          "passed": true,
-          "value": "科创50 3 日线斜率 +1.74°，今日盘中由负转正，允许出手",
-          "reason": "科创50 斜率 +1.74 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
-        },
-        {
-          "id": "limit_up_defer",
-          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
-          "passed": true,
-          "value": "顺延 1 只",
-          "skippedStocks": [
-            {
-              "code": "sh603186",
-              "name": "华正新材",
-              "change": 10
-            }
-          ],
-          "reason": "买入时点涨停候选已剔除并顺延：华正新材（触发时涨幅 +10.00%）（涨停股买入不可成交，顺延至排名下一只）"
-        },
-        {
-          "id": "resilience_gate",
-          "title": "触发时点抗分歧分数≥9",
-          "passed": true,
-          "value": "12.6",
-          "skippedStocks": [
-            {
-              "code": "sz000636",
-              "name": "风华高科",
-              "resilience": 8.33
-            },
-            {
-              "code": "sh688143",
-              "name": "长盈通",
-              "resilience": 4.61
-            }
-          ],
-          "reason": "前序股票全局最低抗分歧不足（风华高科（抗分歧 8.33）、长盈通（抗分歧 4.61））依次顺延，轮到本股买入（本股触发时点抗分歧 12.6）"
-        },
-        {
-          "id": "emo_switch_branch",
-          "title": "情绪开关分支",
-          "passed": true,
-          "value": "3日涨幅最大",
-          "reason": "上一交易日科技情绪 3 日 EMA = -48.82（< -60）→ 走「3日涨幅最大」选股买入"
-        }
-      ],
-      "sellDate": "20260921",
-      "sellDateDisplay": "2026-09-21",
-      "sellTime": "09:40",
-      "sellPrice": 300.69,
-      "sellChange": -0.8,
-      "sellReason": "连续三日抗分歧弱势",
-      "returnRate": 13.05
-    },
-    {
-      "seq": 6,
       "metric": 3.26,
       "code": "sh688082",
       "stockName": "盛美上海",
@@ -886,8 +783,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 2.64 / 当前 27.52",
-          "reason": "9:30 竞价科技情绪 2.64 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -0.43 / 当前 24.78",
+          "reason": "9:30 竞价科技情绪 -0.43 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -930,12 +827,12 @@
   ],
   "currentHolding": null,
   "summary": {
-    "tradeCount": 6,
+    "tradeCount": 5,
     "winCount": 4,
-    "winRate": 66.67,
-    "avgDrawdown": -0.9,
+    "winRate": 80,
+    "avgDrawdown": -1.13,
     "maxDrawdown": -1.13,
-    "overallReturn": 107.8,
+    "overallReturn": 121.51,
     "holding": false
   }
 }

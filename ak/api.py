@@ -9,6 +9,7 @@ akshare 行情数据接口封装
     python3 api.py stock_changes [类型]   # 盘口异动（默认 大笔买入）
     python3 api.py stock_changes_all     # 盘口异动·全部类型合并
     python3 api.py hot_rank              # 东财股票热度前 100
+    python3 api.py foreign_commodity [代码]  # 外盘期货行情（新浪，如 OIL 布伦特原油 / GC 纽约金）
 """
 import json
 import math
@@ -141,6 +142,14 @@ def get_hot_rank():
     return pd.DataFrame(rows)
 
 
+def get_foreign_commodity(symbol="OIL"):
+    """外盘期货实时行情（新浪）
+    symbol 可传多个、逗号分隔，取值见 ak.futures_hq_subscribe_exchange_symbol()
+    常用：OIL=布伦特原油, GC=COMEX黄金(纽约金), XAU=伦敦金, CL=NYMEX原油, SI=COMEX白银
+    返回 名称/最新价/涨跌额/涨跌幅/开盘价/最高价/最低价/昨日结算价/买价/卖价/行情时间/日期"""
+    return ak.futures_foreign_commodity_realtime(symbol=symbol)
+
+
 def get_stock_news(symbol="603777"):
     """个股新闻（东财）symbol 为 6 位股票代码
     返回 关键词/新闻标题/新闻内容/发布时间/文章来源/新闻链接，按发布时间倒序（最新在前）"""
@@ -202,6 +211,7 @@ FETCHERS = {
     'stock_changes': get_stock_changes,
     'stock_changes_all': get_stock_changes_all,
     'hot_rank': get_hot_rank,
+    'foreign_commodity': get_foreign_commodity,
     'stock_news': get_stock_news,
     'stock_zyjs': get_stock_zyjs,
     'jgcyd': get_institution_participation,
@@ -213,6 +223,7 @@ FETCHERS = {
 ARG_NAMES = {
     'cls_news': 'symbol',
     'stock_changes': 'symbol',
+    'foreign_commodity': 'symbol',
     'stock_news': 'symbol',
     'stock_zyjs': 'symbol',
     'jgcyd': 'symbol',
@@ -248,7 +259,7 @@ if __name__ == '__main__':
     if len(sys.argv) < 2 or sys.argv[1] not in FETCHERS:
         print(json.dumps({
             'success': False,
-            'message': '用法: python3 api.py <cls_news|board_change|stock_changes|stock_changes_all|hot_rank|stock_news|stock_zyjs|jgcyd|sector_spot|sector_detail> [参数]',
+            'message': '用法: python3 api.py <cls_news|board_change|stock_changes|stock_changes_all|hot_rank|foreign_commodity|stock_news|stock_zyjs|jgcyd|sector_spot|sector_detail> [参数]',
         }, ensure_ascii=False))
         sys.exit(1)
 

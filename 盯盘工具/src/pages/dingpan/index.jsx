@@ -1442,10 +1442,32 @@ const DingPan = () => {
 
     const fetchRiHanData = async () => {
         try {
-            const response = await axios.get(`http://${local_ip}:3000/rihan_data`);
-            if (response.data && Array.isArray(response.data)) {
-                setRihanData(response.data);
+            const [rihanRes, foreignRes] = await Promise.all([
+                axios.get(`http://${local_ip}:3000/rihan_data`),
+                // 外盘期货（新浪，OIL 布伦特原油 / GC 纽约金）：失败时不影响日经/韩指展示
+                axios.get(`http://${local_ip}:3000/api/ak/foreign_commodity?symbol=OIL,GC`).catch(() => null),
+            ]);
+            const list = Array.isArray(rihanRes.data) ? [...rihanRes.data] : [];
+            const foreignRows = foreignRes?.data?.data;
+            if (Array.isArray(foreignRows)) {
+                [
+                    { match: '布伦特', name: '布伦特原油', code: 'B00Y' },
+                    { match: '黄金', name: '纽约金', code: 'GC00Y' },
+                ].forEach(({ match, name, code }) => {
+                    const row = foreignRows.find((d) => String(d['名称'] || '').includes(match));
+                    if (!row) return;
+                    const pct = Number(row['涨跌幅']);
+                    const price = Number(row['最新价']);
+                    list.push({
+                        name,
+                        code,
+                        change: Number.isFinite(pct) ? `${pct.toFixed(2)}%` : '--',
+                        value: Number.isFinite(price) ? price.toFixed(2) : '--',
+                        showValue: true, // 名称后同时展示当前数值
+                    });
+                });
             }
+            setRihanData(list);
         } catch (error) {
             console.error('Fetch rihan data failed:', error);
         }
@@ -2453,7 +2475,7 @@ const DingPan = () => {
                                 themeColor={effThemeColor}
                             />
 
-                            {/* 日韩涨跌监控（自选股展开时在其上方，折叠时移到自选股下方） */}
+                            {/* 外盘涨跌监控（自选股展开时在其上方，折叠时移到自选股下方） */}
                             {!isWatchlistCollapsed && (
                                 <div ref={rihanSectionRef}>
                                     <RihanMonitor rihanData={rihanData} themeColor={effThemeColor} onRefresh={refreshRihanData} />

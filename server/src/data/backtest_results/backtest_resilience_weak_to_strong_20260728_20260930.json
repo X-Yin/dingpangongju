@@ -189,10 +189,6 @@
       "name": "通富微电"
     },
     {
-      "code": "sh603757",
-      "name": "大元泵业"
-    },
-    {
       "code": "sz002536",
       "name": "飞龙股份"
     },
@@ -337,10 +333,6 @@
       "name": "金安国纪"
     },
     {
-      "code": "sh688143",
-      "name": "长盈通"
-    },
-    {
       "code": "sz002046",
       "name": "国机精工"
     },
@@ -373,8 +365,28 @@
       "name": "雅克科技"
     },
     {
-      "code": "sh688662",
-      "name": "富信科技"
+      "code": "sz300604",
+      "name": "长川科技"
+    },
+    {
+      "code": "sh603061",
+      "name": "金海通"
+    },
+    {
+      "code": "sh688625",
+      "name": "呈和科技"
+    },
+    {
+      "code": "sh600641",
+      "name": "先导基电"
+    },
+    {
+      "code": "sh688123",
+      "name": "聚辰股份"
+    },
+    {
+      "code": "sh601208",
+      "name": "东材科技"
     }
   ],
   "trades": [
@@ -413,16 +425,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "19 / 93只",
-          "reason": "开盘后自选股共 93 只，19 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "20 / 96只",
+          "reason": "开盘后自选股共 96 只，20 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 49.34 / 当前 74.04",
-          "reason": "9:30 竞价科技情绪 49.34 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 47.25 / 当前 73.06",
+          "reason": "9:30 竞价科技情绪 47.25 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -482,16 +494,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "1 / 93只",
-          "reason": "开盘后自选股共 93 只，1 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "1 / 96只",
+          "reason": "开盘后自选股共 96 只，1 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -49.94 / 当前 53.97",
-          "reason": "9:30 竞价科技情绪 -49.94 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -46.38 / 当前 60.46",
+          "reason": "9:30 竞价科技情绪 -46.38 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -559,8 +571,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -55.92 / 当前 -30.77",
-          "reason": "9:30 竞价科技情绪 -55.92 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -60.97 / 当前 -36.92",
+          "reason": "9:30 竞价科技情绪 -60.97 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -620,16 +632,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "25 / 93只",
-          "reason": "开盘后自选股共 93 只，25 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "24 / 96只",
+          "reason": "开盘后自选股共 96 只，24 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 45.64 / 当前 62.75",
-          "reason": "9:30 竞价科技情绪 45.64 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 49.46 / 当前 66.18",
+          "reason": "9:30 竞价科技情绪 49.46 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -697,8 +709,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 5.30 / 当前 50.50",
-          "reason": "9:30 竞价科技情绪 5.30 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 7.58 / 当前 52.74",
+          "reason": "9:30 竞价科技情绪 7.58 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -722,85 +734,78 @@
       "sellChange": -3.2,
       "sellReason": "均线破位",
       "returnRate": -1.47
-    },
-    {
-      "seq": 6,
-      "metric": 2.565,
-      "code": "sh688143",
-      "stockName": "长盈通",
-      "buyDate": "20260929",
-      "buyDateDisplay": "2026-09-29",
-      "buyTime": "11:30",
-      "buyPrice": 179.5,
-      "buyChange": 8.75,
-      "buyReason": "5min 内资金净流入 20.54亿、冰点期豁免成交量，成交量增加 78.08亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+20.54亿",
-          "reason": "最近 5 分钟资金净流入 20.54 亿（11:25:00→11:30:00），超过 20 亿阈值",
-          "fundText": "5min 内资金净流入 20.54亿"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "当前量能为正（今日累计成交额超昨日全天）",
-          "passed": true,
-          "exempted": true,
-          "value": "冰点期豁免成交量，成交量增加 78.08亿",
-          "reason": "前一交易日盘中科技情绪触及 -100 退潮冰点（hasIce: true），冰点期豁免成交量，成交量增加 78.08亿",
-          "volumeText": "冰点期豁免成交量，成交量增加 78.08亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 2.64 / 当前 27.52",
-          "reason": "9:30 竞价科技情绪 2.64 未超过 80，当前情绪须低于 40 的限制不生效"
-        },
-        {
-          "id": "cyb_ma3_slope_gate",
-          "title": "创业板指 3 日线斜率门禁",
-          "passed": true,
-          "value": "创业板指 3 日线斜率 -76.41°，负斜率允许出手；距上次由正转负 第 2 天（2026-09-24 翻转）",
-          "reason": "创业板指 斜率 -76.41 < 0，负斜率允许出手"
-        },
-        {
-          "id": "star_ma3_slope_gate",
-          "title": "长盈通 跟踪科创50 3 日线斜率门禁",
-          "passed": true,
-          "value": "长盈通 跟踪科创50，3 日线斜率 -31.96°，负斜率允许出手；距上次由正转负 第 2 天（2026-09-24 翻转）",
-          "reason": "科创50 斜率 -31.96 < 0，负斜率允许出手"
-        }
-      ],
-      "sellDate": "20260930",
-      "sellDateDisplay": "2026-09-30",
-      "sellTime": "09:35",
-      "sellPrice": 174.08,
-      "sellChange": -3.41,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -3.02
     }
   ],
-  "currentHolding": null,
+  "currentHolding": {
+    "code": "sh603186",
+    "stockName": "华正新材",
+    "buyDate": "20260929",
+    "buyDateDisplay": "2026-09-29",
+    "buyTime": "11:30",
+    "buyPrice": 208.83,
+    "buyChange": 2.07,
+    "metric": 2.38,
+    "buyReason": "5min 内资金净流入 20.54亿、冰点期豁免成交量，成交量增加 78.08亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）",
+    "buyChecks": [
+      {
+        "id": "fund_inflow",
+        "title": "最近 5min 资金净流入大于 20 亿",
+        "passed": true,
+        "exempted": false,
+        "value": "+20.54亿",
+        "reason": "最近 5 分钟资金净流入 20.54 亿（11:25:00→11:30:00），超过 20 亿阈值",
+        "fundText": "5min 内资金净流入 20.54亿"
+      },
+      {
+        "id": "volume_expansion",
+        "title": "当前量能为正（今日累计成交额超昨日全天）",
+        "passed": true,
+        "exempted": true,
+        "value": "冰点期豁免成交量，成交量增加 78.08亿",
+        "reason": "前一交易日盘中科技情绪触及 -100 退潮冰点（hasIce: true），冰点期豁免成交量，成交量增加 78.08亿",
+        "volumeText": "冰点期豁免成交量，成交量增加 78.08亿"
+      },
+      {
+        "id": "opening_below",
+        "title": "开盘后自选股低于开盘价不超过 30 只",
+        "passed": true,
+        "exempted": false,
+        "value": "非交易时段",
+        "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+      },
+      {
+        "id": "emotion_retrace_after_open",
+        "title": "竞价情绪超 80 时当前情绪须低于 40",
+        "passed": true,
+        "exempted": false,
+        "value": "开盘 -0.43 / 当前 24.78",
+        "reason": "9:30 竞价科技情绪 -0.43 未超过 80，当前情绪须低于 40 的限制不生效"
+      },
+      {
+        "id": "cyb_ma3_slope_gate",
+        "title": "华正新材 跟踪创业板指 3 日线斜率门禁",
+        "passed": true,
+        "value": "华正新材 跟踪创业板指，3 日线斜率 -76.41°，负斜率允许出手；距上次由正转负 第 2 天（2026-09-24 翻转）",
+        "reason": "创业板指 斜率 -76.41 < 0，负斜率允许出手"
+      },
+      {
+        "id": "star_ma3_slope_gate",
+        "title": "科创50 3 日线斜率门禁",
+        "passed": true,
+        "value": "科创50 3 日线斜率 -31.96°，负斜率允许出手；距上次由正转负 第 2 天（2026-09-24 翻转）",
+        "reason": "科创50 斜率 -31.96 < 0，负斜率允许出手"
+      }
+    ],
+    "emoQuickOut": null,
+    "buyReturn": 1.83
+  },
   "summary": {
-    "tradeCount": 6,
+    "tradeCount": 5,
     "winCount": 3,
-    "winRate": 50,
-    "avgDrawdown": -3.47,
+    "winRate": 60,
+    "avgDrawdown": -3.69,
     "maxDrawdown": -5.91,
-    "overallReturn": 1.29,
-    "holding": false
+    "overallReturn": 6.36,
+    "holding": true
   }
 }

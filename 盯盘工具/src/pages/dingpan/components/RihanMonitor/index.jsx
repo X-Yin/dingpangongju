@@ -24,7 +24,7 @@ const RihanMonitor = ({ rihanData, themeColor, onRefresh }) => {
             className="monitor-card rihan-simple-card"
             variant="borderless"
             style={{ marginBottom: 16 }}
-            title={<><AreaChartOutlined style={{ color: getThemeColor(), marginRight: 8 }} /> 日韩涨跌监控</>}
+            title={<><AreaChartOutlined style={{ color: getThemeColor(), marginRight: 8 }} /> 外盘涨跌监控</>}
             extra={
                 <ReloadOutlined
                     spin={refreshing}
@@ -42,15 +42,23 @@ const RihanMonitor = ({ rihanData, themeColor, onRefresh }) => {
                             key={index}
                             className="unified-list-item"
                             onClick={() => {
-                                const url = item.name.includes('日经')
-                                    ? 'https://quote.eastmoney.com/gb/zsN225.html'
-                                    : 'https://quote.eastmoney.com/gb/zsKS11.html';
+                                let url = 'https://quote.eastmoney.com/gb/zsKS11.html';
+                                if (item.name.includes('日经')) {
+                                    url = 'https://quote.eastmoney.com/gb/zsN225.html';
+                                } else if (item.name.includes('布伦特')) {
+                                    url = 'https://quote.eastmoney.com/globalfuture/B00Y.html';
+                                } else if (item.name.includes('纽约金')) {
+                                    url = 'https://quote.eastmoney.com/globalfuture/GC00Y.html';
+                                }
                                 window.open(url, '_blank');
                             }}
                             style={borderStyle(themeColor)}
                         >
                             <div className="item-name">
                                 <span style={{ fontSize: '12px', ...titleColor }}>{item.name}</span>
+                                {item.showValue && item.value !== '--' && (
+                                    <span className="item-price" style={{ ...titleColor, ...numberStyle(themeColor), marginLeft: 12 }}>{item.value}</span>
+                                )}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                                 <span className={`item-value ${isUp ? 'up' : 'down'}`} style={numberStyle(themeColor)}>
