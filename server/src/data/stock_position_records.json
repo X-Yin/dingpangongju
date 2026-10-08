@@ -1,5 +1,60 @@
 [
   {
+    "id": "1791423861463_gdz8th",
+    "type": "pipeline",
+    "code": "sh603186",
+    "name": "华正新材",
+    "date": "2026-10-08",
+    "time": "09:44:21",
+    "detail": "流水线推进至 100%（100%）",
+    "pipelineStage": 4,
+    "createdAt": "2026-10-08T01:44:21.463Z"
+  },
+  {
+    "id": "1791423860923_oay6ho",
+    "type": "pipeline",
+    "code": "sh603186",
+    "name": "华正新材",
+    "date": "2026-10-08",
+    "time": "09:44:20",
+    "detail": "流水线推进至 75%（75%）",
+    "pipelineStage": 3,
+    "createdAt": "2026-10-08T01:44:20.923Z"
+  },
+  {
+    "id": "1791423860415_zqzy7r",
+    "type": "pipeline",
+    "code": "sh603186",
+    "name": "华正新材",
+    "date": "2026-10-08",
+    "time": "09:44:20",
+    "detail": "流水线推进至 50%（50%）",
+    "pipelineStage": 2,
+    "createdAt": "2026-10-08T01:44:20.415Z"
+  },
+  {
+    "id": "1791423859789_ki1cu8",
+    "type": "pipeline",
+    "code": "sh603186",
+    "name": "华正新材",
+    "date": "2026-10-08",
+    "time": "09:44:19",
+    "detail": "流水线推进至 30%（30%）",
+    "pipelineStage": 1,
+    "createdAt": "2026-10-08T01:44:19.789Z"
+  },
+  {
+    "id": "1791423841840_p30cjq",
+    "type": "buy",
+    "code": "sh603186",
+    "name": "华正新材",
+    "date": "2026-10-08",
+    "time": "09:44:01",
+    "detail": "新增持仓：华正新材（sh603186）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-08T01:44:01.840Z"
+  },
+  {
     "id": "1791298169469_a5chpl",
     "type": "delete",
     "code": "sh603256",

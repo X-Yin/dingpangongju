@@ -875,7 +875,8 @@ app.post('/buy_point_checks', async (req, res) => {
   try {
     const targetDate = req.body?.targetDate;
     const refresh = req.body?.refresh === true || req.body?.refresh === 1 || req.body?.refresh === '1';
-    const result = await getBuyPointChecks(targetDate, refresh);
+    const force = req.body?.force === true || req.body?.force === 1 || req.body?.force === '1';
+    const result = await getBuyPointChecks(targetDate, refresh, force);
     res.json(result);
   } catch (error) {
     console.error('买点前置检查失败:', error);

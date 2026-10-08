@@ -1,28 +1,24 @@
 {
   "overnight_crisis_escape": {
-    "lastCheckedTime": "2026-09-30 09:59:28",
-    "lastTriggeredTime": "2026-09-30 09:47:18"
+    "lastCheckedTime": "2026-10-08 10:00:59"
+  },
+  "ebb_tide_direct_reversal": {
+    "triggeredToday": "2026-10-08"
   },
   "high_open_high_walk": {
-    "advisoryToday": "2026-09-30",
+    "advisoryToday": "2026-10-08",
     "preconditionMet": false,
-    "triggerIndexCode": "sz399006",
-    "triggerIndexName": "创业板指",
-    "checkedToday": "2026-09-30"
+    "triggerIndexCode": null,
+    "triggerIndexName": null,
+    "checkedToday": "2026-10-08"
   },
   "high_open_max_half_position": {
-    "triggeredToday": "2026-09-30"
+    "triggeredToday": "2026-10-08"
   },
   "opening_net_inflow": {
-    "triggeredToday": "2026-09-30"
+    "triggeredToday": "2026-10-08"
   },
-  "volume_shrink_stagnation": {
-    "lastTriggeredTime": "2026-09-30 09:45:17"
-  },
-  "panic_outflow": {
-    "lastTriggeredTime": "2026-09-30 14:57:34"
-  },
-  "tail_dip_buying": {
-    "checkedToday": "2026-09-30"
+  "volume_price_surge": {
+    "lastTriggeredTime": "2026-10-08 09:39:22"
   }
 }

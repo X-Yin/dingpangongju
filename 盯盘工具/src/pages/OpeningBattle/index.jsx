@@ -1013,9 +1013,10 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
     }
   }, []);
 
-  const run = useCallback(async () => {
+  const run = useCallback(async (force = false) => {
     try {
-      const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1 });
+      // force=true：手动刷新按钮传入，绕过后端 30 秒重度刷新节流，随时点击随时真正重拉
+      const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1, force: force ? 1 : 0 });
       const result = res.data?.data;
       if (!result) return;
       setData(result);
@@ -1040,7 +1041,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    try { await run(); } finally { setRefreshing(false); }
+    try { await run(true); } finally { setRefreshing(false); }
   }, [run]);
 
   // 买点诊断自动轮询调度：
@@ -1123,7 +1124,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
           <span className={`ob-status-badge ${hit ? 'hit' : ''}`}>
             {!data ? '诊断中...' : hit ? '🎯 已命中' : `未满足 ${passedCount}/${checks.length}`}
           </span>
-          <button className="ob-refresh-btn" onClick={handleRefresh} title="手动刷新">
+          <button className="ob-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="手动刷新">
             <ReloadOutlined />
           </button>
         </div>
@@ -1215,8 +1216,13 @@ const SellPointDiagnosisCard = () => {
         setResults([]);
         return;
       }
+      const todayStr = dayjs().format('YYYY-MM-DD');
       const list = await Promise.all(
         positions.map(async (stock) => {
+          // 与持仓浮窗口径一致：买入当日卖点诊断不生效，次日起生效
+          if (stock.buyDate === todayStr) {
+            return { code: stock.code, stockName: stock.name, buyToday: true };
+          }
           try {
             const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, { code: stock.code });
             return { ...res.data, stockName: stock.name, code: stock.code };
@@ -1298,11 +1304,13 @@ const SellPointDiagnosisCard = () => {
                 </span>
               )}
               <span className={`ob-sell-stock-tag ${r.isSell ? 'hit' : 'safe'}`}>
-                {r.error ? '诊断失败' : r.isSell ? '建议卖出' : '建议持有'}
+                {r.buyToday ? '买入当日' : r.error ? '诊断失败' : r.isSell ? '建议卖出' : '建议持有'}
               </span>
             </div>
             <div className="ob-sell-stock-conds">
-              {r.error ? (
+              {r.buyToday ? (
+                <div className="ob-check-reason">买入当日卖点诊断不生效，次日起生效</div>
+              ) : r.error ? (
                 <div className="ob-check-reason">{r.error}</div>
               ) : (r.conditions && r.conditions.length > 0 ? r.conditions.sort((a, b) => (b.satisfied ? 2 : b.pending ? 1 : 0) - (a.satisfied ? 2 : a.pending ? 1 : 0)).map((cond, cidx) => (
                 <div key={cidx} className={`ob-sell-cond ${cond.satisfied ? 'hit' : cond.pending ? 'pending' : 'safe'}`}>

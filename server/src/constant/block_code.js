@@ -1067,5 +1067,15 @@ exports.default = [
         "blockName": "PPE树脂",
         "code": "sh688625",
         "name": "呈和科技"
+    },
+    {
+        "blockName": "pcb",
+        "code": "sz300852",
+        "name": "四会富仕"
+    },
+    {
+        "blockName": "pcb",
+        "code": "sh603936",
+        "name": "博敏电子"
     }
 ]

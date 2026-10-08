@@ -2158,7 +2158,7 @@ const backtestBuySell = async (stockCodes, startDate, endDate) => {
 let _lastBuyPointHeavyRefreshAt = 0;
 const BUY_POINT_HEAVY_REFRESH_INTERVAL = 30 * 1000;
 
-const getBuyPointChecks = async (targetDate = null, refresh = false) => {
+const getBuyPointChecks = async (targetDate = null, refresh = false, force = false) => {
   let targetDay;
   if (targetDate) {
     const dateStr = String(targetDate).replace(/-/g, '');
@@ -2178,7 +2178,8 @@ const getBuyPointChecks = async (targetDate = null, refresh = false) => {
   let freshDapanData = null;
   let freshOpeningStats = null;
 
-  if (refresh && Date.now() - _lastBuyPointHeavyRefreshAt >= BUY_POINT_HEAVY_REFRESH_INTERVAL) {
+  // force=true（前端手动刷新按钮）绕过 30 秒节流，随时点击随时真正重拉
+  if (refresh && (force || Date.now() - _lastBuyPointHeavyRefreshAt >= BUY_POINT_HEAVY_REFRESH_INTERVAL)) {
     _lastBuyPointHeavyRefreshAt = Date.now();
     try {
       freshDapanData = await getDaPanData();
@@ -2478,7 +2479,7 @@ const getBuyPointChecks = async (targetDate = null, refresh = false) => {
   // 买点时刻：实时场景取当前分钟（北京时间），历史/空数据回退 1455
   const isTodayTarget = targetDay.isSame(dayjs(), 'day');
   const buyMinute = isTodayTarget
-    ? (() => { const now = new Date(Date.now() + 8*3600*1000); return Number(`${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`); })()
+    ? Number(dayjs().format('HHmm'))
     : 1455;
   const buyTimePassed = Number.isFinite(buyMinute) && buyMinute <= BUY_TIME_MAX_MINUTE;
   const fmtBM = (m) => `${String(Math.floor(m/100)).padStart(2,'0')}:${String(m%100).padStart(2,'0')}`;
@@ -2642,7 +2643,7 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
     // 买点时刻：当前交易日取当前分钟（北京时间），历史交易日取 1455（尾盘买点典型时点）
     const isToday = targetDay.isSame(dayjs(), 'day');
     gateBuyMinute = isToday
-      ? (() => { const now = new Date(Date.now() + 8*3600*1000); return Number(`${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`); })()
+      ? Number(dayjs().format('HHmm'))
       : 1455;
     // ① 买入时段门禁：整个请求在 > 1330 时直接返回空（所有股票同过同不过）
     if (Number.isFinite(gateBuyMinute) && gateBuyMinute > BUY_TIME_MAX_MINUTE) {
@@ -3011,7 +3012,7 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
 
   const isToday = targetDay.isSame(dayjs(), 'day');
   const buyMinute = isToday
-    ? (() => { const now = new Date(Date.now() + 8 * 3600 * 1000); return Number(`${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`); })()
+    ? Number(dayjs().format('HHmm'))
     : 1455;
 
   const monitorStocks = getMonitorStocks();
@@ -3237,7 +3238,7 @@ const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh 
   // minute 优先用调用方传入；没传时取目标交易日的 14:55（模拟回测尾盘买点触发的典型时点）
   try {
     const diagMinute = minute || (targetDay.isSame(dayjs(), 'day')
-      ? (() => { const now = new Date(Date.now() + 8*3600*1000); return `${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`; })()
+      ? dayjs().format('HHmm')
       : '1455');
 
     // 买入时段门禁（与回测 pickBestStock 里的 BUY_TIME_MAX_MINUTE=1330 对齐）

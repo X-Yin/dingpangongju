@@ -5092,4 +5092,6 @@ module.exports = {
   gateIndexName,      // 供 buySellDiagnose 里生成可读标签
   CYB_INDEX_CODE,
   STAR_INDEX_CODE,
+  GLOBAL_RESILIENCE_MIN, // 全局最低抗分歧门槛（供 buySellDiagnose 复用，此前未导出导致比较恒为 false）
+  BUY_TIME_MAX_MINUTE,   // 买入时段门禁上限 13:30（供 buySellDiagnose 复用，此前未导出导致门禁恒不通过）
 };

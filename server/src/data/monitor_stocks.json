@@ -376,14 +376,6 @@
     "isTech": true
   },
   {
-    "code": "sh603757",
-    "name": "大元泵业",
-    "isImportant": false,
-    "blockName": "液冷",
-    "riskScore": 5,
-    "isTech": true
-  },
-  {
     "code": "sz002536",
     "name": "飞龙股份",
     "isImportant": false,
@@ -744,15 +736,6 @@
     "addedAt": "2026-10-05 16:53:39"
   },
   {
-    "code": "sh688662",
-    "name": "富信科技",
-    "isImportant": false,
-    "blockName": "光模块",
-    "riskScore": " 8",
-    "isTech": true,
-    "addedAt": "2026-10-05 22:21:15"
-  },
-  {
     "code": "sz300604",
     "name": "长川科技",
     "isImportant": false,
@@ -787,5 +770,23 @@
     "riskScore": " 7",
     "isTech": true,
     "addedAt": "2026-10-07 23:55:03"
+  },
+  {
+    "code": "sh688123",
+    "name": "聚辰股份",
+    "isImportant": false,
+    "blockName": "半导体",
+    "riskScore": "7",
+    "isTech": true,
+    "addedAt": "2026-10-08 09:02:06"
+  },
+  {
+    "code": "sh601208",
+    "name": "东材科技",
+    "isImportant": false,
+    "blockName": "树脂",
+    "riskScore": " 7",
+    "isTech": true,
+    "addedAt": "2026-10-08 09:32:05"
   }
 ]

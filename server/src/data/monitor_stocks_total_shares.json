@@ -230,11 +230,6 @@
     "TotalShares": 1517596912
   },
   {
-    "secu_code": "sh603757",
-    "secu_name": "大元泵业",
-    "TotalShares": 186547259
-  },
-  {
     "secu_code": "sz002536",
     "secu_name": "飞龙股份",
     "TotalShares": 574785888
@@ -455,11 +450,6 @@
     "TotalShares": 475927678
   },
   {
-    "secu_code": "sh688662",
-    "secu_name": "富信科技",
-    "TotalShares": 114705644
-  },
-  {
     "secu_code": "sz300604",
     "secu_name": "长川科技",
     "TotalShares": 645582194
@@ -478,5 +468,15 @@
     "secu_code": "sh600641",
     "secu_name": "先导基电",
     "TotalShares": 948172920
+  },
+  {
+    "secu_code": "sh688123",
+    "secu_name": "聚辰股份",
+    "TotalShares": 158970494
+  },
+  {
+    "secu_code": "sh601208",
+    "secu_name": "东材科技",
+    "TotalShares": 1010182943
   }
 ]
