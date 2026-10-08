@@ -872,6 +872,30 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
 // ==================== 买点 / 卖点诊断卡片（紫 → 青渐变 · 磨砂玻璃） ====================
 // 参考图效果：整卡使用紫罗兰 → 青蓝渐变底，内部条目统一为半透明磨砂玻璃卡
+// 5 分钟整点高亮：整分钟内卡片背景闪烁做重点提示（如 9:35:00-9:35:59，9:36 起自动恢复）
+.ob-buy-card.is-tick::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-color: rgba(255, 196, 0, 0.65);
+  animation: ob-tick-blink 1.2s ease-in-out infinite;
+}
+
+// 闪烁层压在内容之下，避免把标题 / 正文染色
+.ob-buy-card.is-tick > .ob-diagnosis-header,
+.ob-buy-card.is-tick > .ob-diagnosis-body {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes ob-tick-blink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
 .ob-diagnosis-card {
   position: relative;
   border-radius: 22px;
@@ -922,6 +946,14 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
       height: 30px;
       border-radius: 10px;
       font-size: 15px;
+    }
+
+    .ob-diagnosis-clock {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.03em;
     }
   }
 

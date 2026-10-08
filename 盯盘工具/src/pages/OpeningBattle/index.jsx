@@ -1023,11 +1023,18 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupStocks, setPopupStocks] = useState([]);
+  // 标题旁实时时钟：每秒跳动，便于对照 5 分钟整点判断下一次自动诊断时机
+  const [now, setNow] = useState(() => dayjs());
   // 弹窗频控：命中后 5 分钟内不重复弹出（仅内存，刷新页面即重置）
   const lastPopupRef = useRef(0);
   // 可买标的实时快照：命中时刻发送飞书/弹窗时取用，避免闭包拿到旧值
   const buyableRef = useRef(buyableStocks);
   useEffect(() => { buyableRef.current = buyableStocks; }, [buyableStocks]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(dayjs()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // 命中买点时发送飞书通知（后端已按板块过滤涨停板：主板 10% / 创业板·科创板 20%）
   const sendBuyPointFeishu = useCallback(async (stocks) => {
@@ -1130,8 +1137,11 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
     ? '当前前置条件未全部满足，请耐心等待，不要盲目出手。'
     : data?.conclusion;
 
+  // 5 分钟整点（9:30/9:35/9:40…）：整分钟内背景闪烁做重点提示，进入下一分钟自动恢复
+  const isFiveMinTick = now.minute() % 5 === 0;
+
   return (
-    <div className="ob-diagnosis-card ob-buy-card">
+    <div className={`ob-diagnosis-card ob-buy-card ${isFiveMinTick ? 'is-tick' : ''}`}>
       {refreshing && (
         <div className="ob-refresh-mask">
           <Spin size="large" />
@@ -1141,6 +1151,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
         <div className="ob-module-title">
           <RadarChartOutlined className="ob-module-icon" />
           <span>买点诊断</span>
+          <span className="ob-diagnosis-clock">{now.format('HH:mm:ss')}</span>
         </div>
         <div className="ob-diagnosis-actions">
           <span className={`ob-status-badge ${hit ? 'hit' : ''}`}>
