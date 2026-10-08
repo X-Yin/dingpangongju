@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Menu } from 'antd';
-import { ClockCircleOutlined, BookOutlined, FileTextOutlined, FileSearchOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, BookOutlined, FileTextOutlined, FileSearchOutlined, ReadOutlined } from '@ant-design/icons';
 import TimelineModule from './modules/TimelineModule';
 import MainProblemModule from './modules/MainProblemModule';
 import SuggestionModule from './modules/SuggestionModule';
 import ResearchReportModule from './modules/ResearchReportModule';
+import JigouReportsModule from './modules/JigouReportsModule';
 import './index.scss';
 
 const ShiChangDiaoYan = () => {
@@ -15,6 +16,11 @@ const ShiChangDiaoYan = () => {
       key: 'researchReport',
       icon: <FileSearchOutlined />,
       label: '近期研报',
+    },
+    {
+      key: 'jigouReports',
+      icon: <ReadOutlined />,
+      label: '机构研报',
     },
     {
       key: 'timeline',
@@ -47,6 +53,8 @@ const ShiChangDiaoYan = () => {
         return <SuggestionModule />;
       case 'researchReport':
         return <ResearchReportModule />;
+      case 'jigouReports':
+        return <JigouReportsModule />;
       default:
         return <TimelineModule />;
     }

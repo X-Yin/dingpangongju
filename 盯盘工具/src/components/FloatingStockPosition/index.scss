@@ -239,7 +239,7 @@
       line-height: 1.15;
       white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
+      // text-overflow: ellipsis;
       cursor: pointer;
       text-align: left;
     }
@@ -567,7 +567,7 @@
 /* ---------- 持仓管理抽屉 ---------- */
 .position-manage-drawer {
   .ant-drawer-content-wrapper {
-    width: 520px !important;
+    width: 820px !important;
   }
 
   .ant-drawer-body {
@@ -631,156 +631,6 @@
     }
   }
 
-  /* 流水线 */
-  .pmm-pipeline-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .pmm-pipeline-item {
-    background: #fafafa;
-    border: 1px solid #f0f0f0;
-    border-radius: 12px;
-    padding: 14px 16px;
-    transition: all 0.2s ease;
-
-    &:hover {
-      border-color: #d6e4ff;
-      background: #fafcff;
-    }
-  }
-
-  .pmm-pipeline-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-
-    .pmm-pipeline-stock-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #12213a;
-    }
-
-    .pmm-pipeline-stage-tag {
-      font-size: 12px;
-      font-weight: 600;
-      color: #4f46e5;
-      background: rgba(99, 102, 241, 0.08);
-      padding: 2px 10px;
-      border-radius: 999px;
-    }
-  }
-
-  .pmm-pipeline-steps {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-
-  .pmm-pipeline-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    flex: 1;
-    position: relative;
-
-    .pmm-pipeline-dot {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #e8e8e8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      color: #bbb;
-      transition: all 0.3s ease;
-    }
-
-    .pmm-pipeline-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #bbb;
-      transition: all 0.3s ease;
-    }
-
-    .pmm-pipeline-percent {
-      font-size: 10px;
-      color: #ccc;
-      transition: all 0.3s ease;
-    }
-
-    &.completed {
-      .pmm-pipeline-dot {
-        background: #52c41a;
-        color: #fff;
-      }
-      .pmm-pipeline-label {
-        color: #52c41a;
-      }
-      .pmm-pipeline-percent {
-        color: #52c41a;
-      }
-    }
-
-    &.current {
-      .pmm-pipeline-dot {
-        background: #4f46e5;
-        color: #fff;
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
-      }
-      .pmm-pipeline-label {
-        color: #4f46e5;
-      }
-      .pmm-pipeline-percent {
-        color: #4f46e5;
-      }
-    }
-  }
-
-  .pmm-pipeline-bar {
-    height: 6px;
-    background: #f0f0f0;
-    border-radius: 999px;
-    overflow: hidden;
-    margin-bottom: 12px;
-
-    .pmm-pipeline-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #4f46e5, #7c3aed);
-      border-radius: 999px;
-      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-  }
-
-  .pmm-pipeline-advance-btn {
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    width: 100%;
-  }
-
-  .pmm-pipeline-reduce {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 8px;
-
-    .pmm-pipeline-reduce-label {
-      font-size: 11px;
-      color: #8c8c8c;
-      white-space: nowrap;
-    }
-
-    .ant-btn {
-      flex: 1;
-      font-size: 12px;
-    }
-  }
-
   /* 持仓列表样式（Modal 内复用） */
   .fsp-loading {
     display: flex;
@@ -804,7 +654,7 @@
 
   .fsp-list-header {
     display: grid;
-    grid-template-columns: repeat(4, 1fr) 1.5fr 1fr;
+    grid-template-columns: 1.05fr 0.85fr 1.05fr 0.75fr 1.25fr 98px 1.35fr 1.5fr;
     gap: 4px;
     padding: 6px 8px;
     background: rgba(110, 126, 162, 0.04);
@@ -818,6 +668,42 @@
       text-align: center;
       white-space: nowrap;
     }
+  }
+
+  /* 仓位下拉框 */
+  .fsp-item-weight {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    .fsp-weight-select {
+      width: 100%;
+      font-size: 12px;
+      font-weight: 600;
+
+      .ant-select-selector {
+        justify-content: center;
+        padding: 0 6px !important;
+      }
+
+      .ant-select-selection-item {
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+      }
+    }
+  }
+
+  /* 买入时间（日期 + 时分） */
+  .fsp-item-buytime {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #64748b;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
   }
 
   .fsp-item {
@@ -840,7 +726,7 @@
 
     .fsp-item-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr) 1.5fr 1fr;
+      grid-template-columns: 1.05fr 0.85fr 1.05fr 0.75fr 1.25fr 98px 1.35fr 1.5fr;
       gap: 4px;
       align-items: center;
     }

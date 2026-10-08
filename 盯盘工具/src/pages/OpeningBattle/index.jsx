@@ -802,6 +802,16 @@ const PositionIntradayModule = ({ expanded, onToggleExpanded }) => {
     return () => { cancelled = true; timers.forEach(clearTimeout); };
   }, [positions]);
 
+  // 同一股票可能有多笔持仓（不同仓位/成本线），分时图按股票去重展示
+  const uniquePositions = useMemo(() => {
+    const seen = new Set();
+    return positions.filter((p) => {
+      if (seen.has(p.code)) return false;
+      seen.add(p.code);
+      return true;
+    });
+  }, [positions]);
+
   return (
     <div className="ob-module ob-intraday-module">
       <div className="ob-module-header">
@@ -810,7 +820,7 @@ const PositionIntradayModule = ({ expanded, onToggleExpanded }) => {
           <span>持仓股分时图</span>
         </div>
         <div className="ob-intraday-header-actions">
-          <span className="ob-total-tag">{positions.length} 只持仓</span>
+          <span className="ob-total-tag">{uniquePositions.length} 只持仓</span>
           {/* <button className={`ob-fold-btn ${expanded ? 'is-expanded' : ''}`} onClick={onToggleExpanded}>
             {expanded ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
             {expanded ? '折叠' : '展开'}
@@ -822,8 +832,8 @@ const PositionIntradayModule = ({ expanded, onToggleExpanded }) => {
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无持仓" />
         </div>
       ) : (
-        <div className={`ob-intraday-grid ${positions.length >= 2 ? 'two' : 'single'}`}>
-          {positions.map((stock) => (
+        <div className={`ob-intraday-grid ${uniquePositions.length >= 2 ? 'two' : 'single'}`}>
+          {uniquePositions.map((stock) => (
             <PositionIntradayChart
               key={stock.code}
               name={stock.name}
@@ -1212,6 +1222,37 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
   );
 };
 
+// 单笔持仓的卖点诊断：同一股票的不同仓位各自独立诊断（各自买入日期 / 成本线 / 仓位）。
+// 每笔持仓以 id 区分，买入当日不诊断、次日起生效，按各笔自身买入日期判断。
+const diagnosePositionSellPoint = async (stock, todayStr) => {
+  const base = {
+    positionId: stock.id || stock.code,
+    code: stock.code,
+    stockName: stock.name,
+    weight: stock.weight != null ? stock.weight : null,
+    buyDate: stock.buyDate || null,
+    buyTime: stock.buyTime || null,
+    costPrice: stock.costPrice != null && Number.isFinite(Number(stock.costPrice)) ? Number(stock.costPrice) : null,
+  };
+  if (stock.buyDate === todayStr) {
+    return { ...base, buyToday: true };
+  }
+  try {
+    const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, { code: stock.code, costPrice: stock.costPrice });
+    return { ...res.data, ...base };
+  } catch (err) {
+    return { ...base, error: '诊断失败' };
+  }
+};
+
+// 卖出提示文案：卖出 xx 股票的 xx 仓位（在 xx 时间买入，成本线为 xx）
+const buildSellHint = (result) => {
+  const weightText = result.weight != null ? `${result.weight}%` : '半仓';
+  const buyAt = result.buyDate ? (result.buyTime ? `${result.buyDate} ${result.buyTime}` : result.buyDate) : '--';
+  const costText = result.costPrice != null ? Number(result.costPrice).toFixed(2) : '--';
+  return `建议卖出 ${result.stockName} ${weightText} 仓位（在 ${buyAt} 买入，成本线为 ${costText}）`;
+};
+
 // ==================== 卖点诊断卡片（自动运行） ====================
 const SellPointDiagnosisCard = () => {
   const [results, setResults] = useState([]);
@@ -1229,19 +1270,9 @@ const SellPointDiagnosisCard = () => {
         return;
       }
       const todayStr = dayjs().format('YYYY-MM-DD');
+      // 每笔持仓各自独立诊断（同一股票的多笔仓位会分别产生一张卡片）
       const list = await Promise.all(
-        positions.map(async (stock) => {
-          // 与持仓浮窗口径一致：买入当日卖点诊断不生效，次日起生效
-          if (stock.buyDate === todayStr) {
-            return { code: stock.code, stockName: stock.name, buyToday: true };
-          }
-          try {
-            const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, { code: stock.code });
-            return { ...res.data, stockName: stock.name, code: stock.code };
-          } catch (err) {
-            return { code: stock.code, stockName: stock.name, error: '诊断失败' };
-          }
-        })
+        positions.map((stock) => diagnosePositionSellPoint(stock, todayStr))
       );
       setResults(list);
       // 任一持仓命中卖点则弹窗提示（应用频控避免反复弹出）
@@ -1295,7 +1326,7 @@ const SellPointDiagnosisCard = () => {
         </div>
         <div className="ob-diagnosis-actions">
           <span className={`ob-status-badge ${hitStocks.length > 0 ? 'hit' : ''}`}>
-            {results.length === 0 ? '暂无持仓' : hitStocks.length > 0 ? `⚠️ ${hitStocks.length} 只命中` : `${results.length} 只持仓 · 未触发`}
+            {results.length === 0 ? '暂无持仓' : hitStocks.length > 0 ? `⚠️ ${hitStocks.length} 笔命中` : `${results.length} 笔持仓 · 未触发`}
           </span>
           <button className="ob-refresh-btn" onClick={handleRefresh} title="手动刷新">
             <ReloadOutlined />
@@ -1306,18 +1337,33 @@ const SellPointDiagnosisCard = () => {
         {results.length === 0 ? (
           <div className="ob-empty-mini" style={{ height: 500, fontSize: 16 }}>暂无持仓</div>
         ) : results.map((r) => (
-          <div key={r.code} className={`ob-sell-stock ${r.isSell ? 'hit' : ''}`}>
+          <div key={r.positionId || r.code} className={`ob-sell-stock ${r.isSell ? 'hit' : ''}`}>
             <div className="ob-sell-stock-header">
-              <span className="ob-sell-stock-name">{r.stockName}</span>
-              <span className="ob-sell-stock-code">{r.code}</span>
-              {r.detail?.change !== undefined && (
-                <span className={`ob-sell-stock-change ${r.detail.change >= 0 ? 'ob-up' : 'ob-down'}`}>
-                  {formatSignedPercent(r.detail.change)}
+              {/* 第一行：股票名称 + 代码 */}
+              <div className="ob-sell-header-row">
+                <span className="ob-sell-stock-name">{r.stockName}</span>
+                <span className="ob-sell-stock-code">{r.code}</span>
+              </div>
+              {/* 第二行：仓位 / 买入时间 / 成本线 / 涨幅 / 状态 */}
+              <div className="ob-sell-header-row">
+                {r.weight != null && (
+                  <span className="ob-sell-stock-weight">仓位 {r.weight}%</span>
+                )}
+                <span className="ob-sell-stock-buytime">
+                  买入 {r.buyDate || '--'}{r.buyTime ? ` ${r.buyTime}` : ''}
                 </span>
-              )}
-              <span className={`ob-sell-stock-tag ${r.isSell ? 'hit' : 'safe'}`}>
-                {r.buyToday ? '买入当日' : r.error ? '诊断失败' : r.isSell ? '建议卖出' : '建议持有'}
-              </span>
+                {r.costPrice != null && (
+                  <span className="ob-sell-stock-cost">成本线 {Number(r.costPrice).toFixed(2)}</span>
+                )}
+                {r.detail?.change !== undefined && (
+                  <span className={`ob-sell-stock-change ${r.detail.change >= 0 ? 'ob-up' : 'ob-down'}`}>
+                    {formatSignedPercent(r.detail.change)}
+                  </span>
+                )}
+                <span className={`ob-sell-stock-tag ${r.isSell ? 'hit' : 'safe'}`}>
+                  {r.buyToday ? '买入当日' : r.error ? '诊断失败' : r.isSell ? '建议卖出' : '建议持有'}
+                </span>
+              </div>
             </div>
             <div className="ob-sell-stock-conds">
               {r.buyToday ? (
@@ -1335,6 +1381,9 @@ const SellPointDiagnosisCard = () => {
               )) : (
                 <div className="ob-check-reason">{r.conclusion}</div>
               ))}
+              {r.isSell && !r.buyToday && !r.error && (
+                <div className="ob-sell-hint">{buildSellHint(r)}</div>
+              )}
             </div>
           </div>
         ))}
@@ -1352,16 +1401,20 @@ const SellPointDiagnosisCard = () => {
         <div className="ob-alert-content">
           <div className="ob-alert-big" style={{ color: '#cf1322' }}>⚠️ 以下持仓股触发卖点信号</div>
           {hitStocks.map((r) => (
-            <div key={r.code} className="ob-alert-stock">
+            <div key={r.positionId || r.code} className="ob-alert-stock">
               <div className="ob-alert-stock-head">
                 <b>{r.stockName}</b>
                 <span className="ob-alert-stock-code">{r.code}</span>
+                {r.weight != null && (
+                  <span className="ob-alert-stock-weight">仓位 {r.weight}%</span>
+                )}
                 {r.detail?.change !== undefined && (
                   <span style={{ marginLeft: 'auto', fontWeight: 700, color: r.detail.change >= 0 ? '#e11d48' : '#059669' }}>
                     {formatSignedPercent(r.detail.change)}
                   </span>
                 )}
               </div>
+              <div className="ob-alert-hint">{buildSellHint(r)}</div>
               <div className="ob-alert-reason">{r.reasons?.join('；') || r.conclusion}</div>
             </div>
           ))}

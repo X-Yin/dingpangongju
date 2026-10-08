@@ -1142,10 +1142,19 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
   .ob-sell-stock-header {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
     padding: 11px 15px;
     background: rgba(255, 255, 255, 0.1);
+  }
+
+  // 卡片头部两行布局（标题+代码 / 仓位+买入时间+成本线+涨幅+状态）
+  .ob-sell-header-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   &.hit .ob-sell-stock-header {
@@ -1165,6 +1174,29 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     font-family: $ob-mono;
   }
 
+  // 每笔持仓区分信息：仓位 / 买入时间 / 成本线
+  .ob-sell-stock-weight,
+  .ob-sell-stock-buytime,
+  .ob-sell-stock-cost {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .ob-sell-stock-weight {
+    background: rgba(255, 168, 24, 0.32);
+  }
+
+  .ob-sell-stock-cost {
+    font-family: $ob-mono;
+  }
+
   .ob-sell-stock-change {
     font-weight: 700;
     font-size: 13px;
@@ -1177,7 +1209,6 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   }
 
   .ob-sell-stock-tag {
-    margin-left: auto;
     font-size: 11px;
     font-weight: 700;
     padding: 3px 12px;
@@ -1275,6 +1306,21 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   );
 }
 
+// 卖点提示：应卖出该笔仓位（含买入时间 / 成本线）
+.ob-sell-hint {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.6;
+  padding: 10px 13px;
+  border-radius: 12px;
+  @include ob-glass(
+    rgba(255, 61, 119, 0.62),
+    rgba(255, 255, 255, 0.4),
+    0 10px 24px -14px rgba(255, 61, 119, 0.55)
+  );
+}
+
 // 命中徽章呼吸光晕
 @keyframes ob-glow-buy {
   0%, 100% { box-shadow: 0 4px 14px -4px rgba(6, 214, 160, 0.55); }
@@ -1330,6 +1376,16 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
         font-family: monospace;
       }
 
+      .ob-alert-stock-weight {
+        font-size: 11px;
+        font-weight: 700;
+        color: #cf1322;
+        background: rgba(225, 29, 72, 0.1);
+        border-radius: 100px;
+        padding: 1px 8px;
+        flex-shrink: 0;
+      }
+
       .ob-alert-stock-market {
         font-size: 11px;
         color: #475569;
@@ -1344,6 +1400,19 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
         color: #64748b;
         font-variant-numeric: tabular-nums;
       }
+    }
+
+    .ob-alert-hint {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #cf1322;
+      line-height: 1.6;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(225, 29, 72, 0.08);
+      border: 1px solid rgba(225, 29, 72, 0.18);
+      margin-bottom: 8px;
+      word-break: break-word;
     }
 
     .ob-alert-reason {

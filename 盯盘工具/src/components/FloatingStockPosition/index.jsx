@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button, Spin, message, Tooltip, Tag, Drawer, InputNumber, Select } from 'antd';
-import { PlusOutlined, DeleteOutlined, FolderOpenOutlined, WarningOutlined, RadarChartOutlined, CheckCircleOutlined, CloseCircleOutlined, ThunderboltOutlined, RightCircleOutlined, ExperimentOutlined, ReloadOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, FolderOpenOutlined, WarningOutlined, RadarChartOutlined, CheckCircleOutlined, CloseCircleOutlined, ThunderboltOutlined, ExperimentOutlined, ReloadOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -31,6 +31,37 @@ const formatFundText = (value) => {
   if (value === undefined || value === null || Number.isNaN(Number(value))) return '--';
   const num = Number(value);
   return `${num > 0 ? '+' : ''}${num}亿`;
+};
+
+// 单笔持仓的卖点诊断：同一股票的不同仓位各自独立诊断（各自买入日期 / 成本线 / 仓位）。
+// 每笔持仓以 id 区分，买入当日不诊断、次日起生效，按各笔自身买入日期判断。
+const diagnosePositionSellPoint = async (stock, todayStr) => {
+  const base = {
+    positionId: stock.id || stock.code,
+    code: stock.code,
+    stockName: stock.name,
+    weight: stock.weight != null ? stock.weight : null,
+    buyDate: stock.buyDate || null,
+    buyTime: stock.buyTime || null,
+    costPrice: stock.costPrice != null && Number.isFinite(Number(stock.costPrice)) ? Number(stock.costPrice) : null,
+  };
+  if (stock.buyDate === todayStr) {
+    return { ...base, buyToday: true };
+  }
+  try {
+    const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, { code: stock.code, costPrice: stock.costPrice });
+    return { ...res.data, ...base };
+  } catch (error) {
+    return { ...base, error: '诊断失败' };
+  }
+};
+
+// 卖出提示文案：卖出 xx 股票的 xx 仓位（在 xx 时间买入，成本线为 xx）
+const buildSellHint = (result) => {
+  const weightText = result.weight != null ? `${result.weight}%` : '半仓';
+  const buyAt = result.buyDate ? (result.buyTime ? `${result.buyDate} ${result.buyTime}` : result.buyDate) : '--';
+  const costText = result.costPrice != null ? result.costPrice.toFixed(2) : '--';
+  return `建议卖出 ${result.stockName} ${weightText} 仓位（在 ${buyAt} 买入，成本线为 ${costText}）`;
 };
 
 const FloatingStockPosition = ({ onOutflowDetected }) => {
@@ -70,12 +101,15 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   // 持仓管理弹窗
   const [positionManageModalVisible, setPositionManageModalVisible] = useState(false);
   const [operationGuideCollapsed, setOperationGuideCollapsed] = useState(true);
-  const [pipelineData, setPipelineData] = useState({});
-  const [pipelineAdvancing, setPipelineAdvancing] = useState({});
+  // 仓位下拉框本地值（key: 持仓 id），修改时提交后端
+  const [weightInputs, setWeightInputs] = useState({});
+  const [weightUpdating, setWeightUpdating] = useState({});
+
+  // 仓位可选项：25% / 50% / 75% / 100%
+  const POSITION_WEIGHT_OPTIONS = [25, 50, 75, 100];
 
   const openPositionManageModal = () => {
     setPositionManageModalVisible(true);
-    fetchPipelineData();
     fetchWatchlistStocks();
   };
 
@@ -88,68 +122,40 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     }
   };
 
-  const fetchPipelineData = async () => {
+  // 修改某笔持仓的仓位（25/50/75/100）
+  const handleWeightChange = async (stock, weight) => {
+    const key = stock.id || stock.code;
+    const prev = stock.weight != null ? Number(stock.weight) : 50;
+    if (Number(weight) === prev) return;
+    setWeightInputs((prevMap) => ({ ...prevMap, [key]: weight }));
+    setWeightUpdating((prevMap) => ({ ...prevMap, [key]: true }));
     try {
-      const res = await axios.get(`http://${local_ip}:3000/get_stock_pipeline`);
-      setPipelineData(res.data || {});
-    } catch (error) {
-      console.error('获取流水线数据失败:', error);
-    }
-  };
-
-  const handleAdvancePipeline = async (code, currentStage) => {
-    const nextStage = currentStage + 1;
-    if (nextStage > 4) return;
-    setPipelineAdvancing(prev => ({ ...prev, [code]: true }));
-    try {
-      const res = await axios.post(`http://${local_ip}:3000/update_stock_pipeline`, { code, stage: nextStage });
+      const res = await axios.post(`http://${local_ip}:3000/update_stock_position_weight`, { id: stock.id, weight });
       if (res.data.success) {
-        const stock = positions.find((p) => p.code === code);
-        const stockName = stock?.name || code;
-        autoRecordOperation('pipeline', stockName, code, PIPELINE_STAGE_PERCENTS[nextStage]);
-        message.success(`流水线推进至 ${PIPELINE_STAGE_LABELS[nextStage]}`);
-        fetchPipelineData();
+        message.success(`${stock.name} 仓位已更新为 ${weight}%`);
       } else {
-        message.warning(res.data.message || '推进失败');
+        message.warning(res.data.message || '更新失败');
+        setWeightInputs((prevMap) => ({ ...prevMap, [key]: prev }));
       }
     } catch (error) {
-      console.error('推进流水线失败:', error);
-      message.error('推进失败');
+      console.error('更新仓位失败:', error);
+      message.error('更新失败');
+      setWeightInputs((prevMap) => ({ ...prevMap, [key]: prev }));
     } finally {
-      setPipelineAdvancing(prev => ({ ...prev, [code]: false }));
+      setWeightUpdating((prevMap) => {
+        const next = { ...prevMap };
+        delete next[key];
+        return next;
+      });
+      await fetchPositions();
     }
   };
 
-  const handleReducePipeline = async (code, targetStage) => {
-    setPipelineAdvancing(prev => ({ ...prev, [code]: true }));
-    try {
-      const res = await axios.post(`http://${local_ip}:3000/update_stock_pipeline`, { code, stage: targetStage });
-      if (res.data.success) {
-        const stock = positions.find((p) => p.code === code);
-        const stockName = stock?.name || code;
-        autoRecordOperation('pipeline', stockName, code, PIPELINE_STAGE_PERCENTS[targetStage]);
-        message.success(`回滚至 ${PIPELINE_STAGE_LABELS[targetStage]}`);
-        fetchPipelineData();
-      } else {
-        message.warning(res.data.message || '减仓失败');
-      }
-    } catch (error) {
-      console.error('减仓失败:', error);
-      message.error('减仓失败');
-    } finally {
-      setPipelineAdvancing(prev => ({ ...prev, [code]: false }));
-    }
+  // 持仓买入时间展示：买入日期 + 时分
+  const formatBuyAt = (stock) => {
+    if (!stock.buyDate) return '--';
+    return stock.buyTime ? `${stock.buyDate} ${stock.buyTime}` : stock.buyDate;
   };
-
-  const PIPELINE_STAGE_LABELS = { 0: '未开始', 1: '25%', 2: '50%', 3: '75%', 4: '100%' };
-  const PIPELINE_STAGE_PERCENTS = { 0: 0, 1: 25, 2: 50, 3: 75, 4: 100 };
-
-  // 当弹窗打开且持仓变化时，刷新流水线
-  useEffect(() => {
-    if (positionManageModalVisible) {
-      fetchPipelineData();
-    }
-  }, [positions.length]);
 
   const handleHeaderClick = () => {
     if (dragRef.current.moved) {
@@ -303,19 +309,9 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     setSellDrawerLoading(true);
     setSellDrawerResults([]);
     try {
+      // 每笔持仓各自独立诊断（同一股票的多笔仓位会分别产生一张卡片）
       const results = await Promise.all(
-        currentPositions.map(async (stock) => {
-          // 买入当日卖点诊断不生效，次日起生效
-          if (stock.buyDate === todayStr) {
-            return { code: stock.code, stockName: stock.name, buyToday: true };
-          }
-          try {
-            const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, { code: stock.code, costPrice: stock.costPrice });
-            return { ...res.data, stockName: stock.name, code: stock.code };
-          } catch (error) {
-            return { code: stock.code, stockName: stock.name, error: '诊断失败' };
-          }
-        })
+        currentPositions.map((stock) => diagnosePositionSellPoint(stock, todayStr))
       );
       setSellDrawerResults(results);
     } catch (error) {
@@ -341,8 +337,15 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   const handleAutoBacktestAll = useCallback(() => {
     const currentPositions = positionsRef.current;
     if (currentPositions.length === 0) return;
-    const codes = currentPositions.map(p => p.code).join(',');
-    const names = currentPositions.map(p => p.name).join(',');
+    // 同一股票可能有多笔持仓，回测按股票去重
+    const seen = new Set();
+    const uniq = currentPositions.filter((p) => {
+      if (seen.has(p.code)) return false;
+      seen.add(p.code);
+      return true;
+    });
+    const codes = uniq.map(p => p.code).join(',');
+    const names = uniq.map(p => p.name).join(',');
     navigate(`/stock_diagnosis?backtest=1&codes=${encodeURIComponent(codes)}&names=${encodeURIComponent(names)}&autoBacktest=1&days=10`);
   }, [navigate]);
 
@@ -540,19 +543,9 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     if (currentPositions.length === 0) return;
     const todayStr = dayjs().format('YYYY-MM-DD');
     try {
+      // 每笔持仓各自独立诊断（同一股票的多笔仓位会分别诊断、分别提示）
       const results = await Promise.all(
-        currentPositions.map(async (stock) => {
-          // 买入当日卖点诊断不生效，次日起生效
-          if (stock.buyDate === todayStr) {
-            return { code: stock.code, stockName: stock.name, buyToday: true };
-          }
-          try {
-            const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, { code: stock.code, costPrice: stock.costPrice });
-            return { ...res.data, stockName: stock.name, code: stock.code };
-          } catch (error) {
-            return { code: stock.code, stockName: stock.name, error: '诊断失败' };
-          }
-        })
+        currentPositions.map((stock) => diagnosePositionSellPoint(stock, todayStr))
       );
       setSellDrawerResults(results);
       // 任一持仓命中卖点则自动打开抽屉，并应用频控避免反复弹出
@@ -562,11 +555,15 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         if (now - lastAutoSellOpenRef.current >= 5 * 60 * 1000) {
           lastAutoSellOpenRef.current = now;
           setSellDrawerOpen(true);
-          // 发送卖点诊断飞书卡片（携带触发卖点的持仓股名称及具体触发原因）
+          // 发送卖点诊断飞书卡片（携带触发卖点的仓位、买入时间、成本线及具体触发原因）
           try {
             const sellStocks = hitResults.map((r) => ({
               stockName: r.stockName,
               code: r.code,
+              weight: r.weight,
+              buyDate: r.buyDate,
+              buyTime: r.buyTime,
+              costPrice: r.costPrice,
               reasons: r.reasons || [],
               closePrice: r.detail?.closePrice,
             }));
@@ -617,20 +614,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       const res = await axios.get(`http://${local_ip}:3000/get_position_returns`);
       const returns = res.data || [];
       const existing = returns.find((r) => r.date === todayStr);
-      let operations = existing?.operations ? [...existing.operations] : [];
-
-      if (action === 'pipeline') {
-        const idx = operations.findIndex(
-          (op) => op.action === 'pipeline' && op.stockCode === stockCode && op.time === currentTime
-        );
-        if (idx !== -1) {
-          operations[idx] = newOp;
-        } else {
-          operations.push(newOp);
-        }
-      } else {
-        operations.push(newOp);
-      }
+      const operations = existing?.operations ? [...existing.operations, newOp] : [newOp];
 
       await axios.post(`http://${local_ip}:3000/save_position_return`, {
         date: todayStr,
@@ -655,6 +639,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       const res = await axios.post(`http://${local_ip}:3000/add_stock_position`, {
         code: newStock.code,
         name: newStock.stockName,
+        weight: 50,
       });
       if (res.data.success) {
         message.success('添加成功');
@@ -663,7 +648,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         setAdding(false);
         await fetchPositions();
       } else {
-        message.warning('该股票已存在');
+        message.warning(res.data.message || '添加失败');
       }
     } catch (error) {
       console.error('添加失败:', error);
@@ -725,16 +710,16 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     }
   };
 
-  const handleDelete = async (code, name) => {
+  const handleDelete = async (id, name, code) => {
     try {
-      const res = await axios.post(`http://${local_ip}:3000/delete_stock_position`, { code });
+      const res = await axios.post(`http://${local_ip}:3000/delete_stock_position`, { id });
       if (res.data.success) {
         message.success(`已删除 ${name}`);
         autoRecordOperation('sell', name, code);
         await fetchPositions();
         checkOutflowAndWarn();
       } else {
-        message.warning('删除失败，未找到该股票');
+        message.warning(res.data.message || '删除失败，未找到该持仓');
       }
     } catch (error) {
       console.error('删除失败:', error);
@@ -742,37 +727,38 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     }
   };
 
-  // 持仓成本线价格输入框失焦时保存
+  // 持仓成本线价格输入框失焦时保存（按持仓 id 区分，同一股票的多笔持仓各自独立）
   const handleCostBlur = async (stock) => {
-    const raw = costInputs[stock.code];
+    const key = stock.id || stock.code;
+    const raw = costInputs[key];
     const prev = stock.costPrice != null && Number.isFinite(Number(stock.costPrice)) ? Number(stock.costPrice) : null;
     const num = raw !== undefined && raw !== null && raw !== '' ? Number(raw) : null;
     // 无效输入或数值未变化：本地输入值恢复为后端存储的成本价
     if (num === null || !Number.isFinite(num) || num <= 0) {
       if (num !== null) message.warning('请输入有效的成本价');
-      setCostInputs((prevInputs) => ({ ...prevInputs, [stock.code]: prev }));
+      setCostInputs((prevInputs) => ({ ...prevInputs, [key]: prev }));
       return;
     }
     if (prev !== null && Math.abs(num - prev) < 0.001) {
-      setCostInputs((prevInputs) => ({ ...prevInputs, [stock.code]: prev }));
+      setCostInputs((prevInputs) => ({ ...prevInputs, [key]: prev }));
       return;
     }
     try {
       const res = await axios.post(`http://${local_ip}:3000/update_stock_position_cost`, {
-        code: stock.code,
+        id: stock.id,
         costPrice: num,
       });
       if (res.data.success) {
-        message.success(`${stock.name} 成本价已更新`);
-        setCostInputs((prevInputs) => ({ ...prevInputs, [stock.code]: num }));
+        message.success(`${stock.name} 成本线已更新`);
+        setCostInputs((prevInputs) => ({ ...prevInputs, [key]: num }));
       } else {
         message.warning(res.data.message || '更新失败');
-        setCostInputs((prevInputs) => ({ ...prevInputs, [stock.code]: prev }));
+        setCostInputs((prevInputs) => ({ ...prevInputs, [key]: prev }));
       }
     } catch (error) {
       console.error('更新成本价失败:', error);
       message.error('更新失败');
-      setCostInputs((prevInputs) => ({ ...prevInputs, [stock.code]: prev }));
+      setCostInputs((prevInputs) => ({ ...prevInputs, [key]: prev }));
     } finally {
       await fetchPositions();
     }
@@ -828,14 +814,18 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       {/* 收缩状态下的股票概览列表 */}
       {hasPositions && (
         <div className="fsp-collapsed-list">
-          {positions.map((stock) => {
+          {positions
+            // 缩略框内同一股票（按 code）只合并展示一行
+            .filter((stock, idx, arr) => arr.findIndex((s) => s.code === stock.code) === idx)
+            .map((stock) => {
             const change = changeMap[stock.code];
             const changeNum = change !== null && change !== undefined ? parseFloat(change) : null;
             const changeClass = changeNum === null ? 'neutral' : (changeNum > 0 ? 'up' : changeNum < 0 ? 'down' : 'neutral');
             return (
-              <div key={stock.code} className="fsp-collapsed-item">
+              <div key={stock.id || stock.code} className="fsp-collapsed-item">
                 <span className="fsp-collapsed-name" onClick={() => handleStockClick(stock)}>
                   {stock.name}
+
                 </span>
                 <span className={`fsp-collapsed-change ${changeClass}`} onClick={() => handleStockClick(stock)}>
                   {formatSignedPercent(changeNum)}
@@ -879,14 +869,14 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
             <RadarChartOutlined style={{ color: '#fa8c16', fontSize: 20 }} />
             <span style={{ fontSize: 16, fontWeight: 600 }}>卖点诊断</span>
             {sellDrawerResults.length > 0 && (
-              <span style={{ fontSize: 12, color: '#8c8c8c' }}>{sellDrawerResults.length} 只持仓</span>
+              <span style={{ fontSize: 12, color: '#8c8c8c' }}>{sellDrawerResults.length} 笔持仓</span>
             )}
           </div>
         }
         placement="right"
         open={sellDrawerOpen}
         onClose={() => setSellDrawerOpen(false)}
-        width={720}
+        width={820}
         extra={
           <Tooltip title="刷新诊断">
             <ReloadOutlined
@@ -904,9 +894,9 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         ) : sellDrawerResults.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {sellDrawerResults.map((result, idx) => (
-              // 持仓大卡片
+              // 持仓大卡片（同一股票的多笔仓位各一张，按仓位/买入时间/成本线区分）
               <div
-                key={result.code || idx}
+                key={result.positionId || result.code || idx}
                 style={{
                   background: '#fff',
                   borderRadius: 14,
@@ -924,6 +914,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                     borderBottom: `1px solid ${result.error ? '#ffd591' : result.buyToday ? '#d9d9d9' : result.isSell ? '#ffa39e' : '#91caff'}`,
                     display: 'flex',
                     alignItems: 'center',
+                    flexWrap: 'wrap',
                     gap: 10,
                   }}
                 >
@@ -937,6 +928,15 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                     }}>
                       {result.detail.change >= 0 ? '+' : ''}{result.detail.change?.toFixed(2)}%
                     </span>
+                  )}
+                  {result.weight != null && (
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#4f46e5', background: 'rgba(99,102,241,0.1)', borderRadius: 6, padding: '1px 8px' }}>仓位 {result.weight}%</span>
+                  )}
+                  <span style={{ fontSize: 12, color: '#6b7890' }}>
+                    买入 {result.buyDate || '--'}{result.buyTime ? ` ${result.buyTime}` : ''}
+                  </span>
+                  {result.costPrice != null && (
+                    <span style={{ fontSize: 12, color: '#6b7890' }}>成本线 {Number(result.costPrice).toFixed(2)}</span>
                   )}
                   {result.error ? (
                     <Tag color="warning" style={{ marginLeft: 'auto' }}>诊断失败</Tag>
@@ -1041,6 +1041,11 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                           <div style={{ fontWeight: 700, fontSize: 14, color: result.isSell ? '#cf1322' : '#1677ff', marginBottom: 3 }}>
                             {result.isSell ? '⚠️ 建议卖出' : '✅ 建议持有'}
                           </div>
+                          {result.isSell && (
+                            <div style={{ fontWeight: 700, fontSize: 13, color: '#cf1322', marginBottom: 3 }}>
+                              {buildSellHint(result)}
+                            </div>
+                          )}
                           <div style={{ fontSize: 13, color: result.isSell ? '#a8071a' : '#0958d9', lineHeight: '20px' }}>
                             {result.conclusion}
                           </div>
@@ -1066,9 +1071,9 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         hideTailDipCheck
       />
 
-      {/* 持仓管理抽屉 */}
+      {/* 持仓管理抽屉（宽度在原 520px 基础上增加 300px） */}
       <Drawer
-        width={520}
+        width={820}
         open={positionManageModalVisible}
         onClose={() => setPositionManageModalVisible(false)}
         title={
@@ -1122,10 +1127,13 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                     <span className="col-fund">资金净流入</span>
                     <span className="col-voldiff">量比</span>
                     <span className="col-cost">持仓成本</span>
+                    <span className="col-weight">仓位</span>
+                    <span className="col-buytime">买入时间</span>
                     <span className="col-actions">操作</span>
                   </div>
                   <div className="fsp-list">
                     {positions.map((stock) => {
+                      const posKey = stock.id || stock.code;
                       const fund = parseFloat(stock.mainFund);
                       const fundClass = isNaN(fund) ? 'neutral' : (fund > 0 ? 'up' : fund < 0 ? 'down' : 'neutral');
                       const change = changeMap[stock.code];
@@ -1135,7 +1143,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                       const volDiffNum = volDiffPercent !== null && volDiffPercent !== undefined ? parseFloat(volDiffPercent) : null;
                       const volDiffClass = volDiffNum === null ? 'neutral' : (volDiffNum > 0 ? 'up' : volDiffNum < 0 ? 'down' : 'neutral');
                       return (
-                        <div key={stock.code} className="fsp-item">
+                        <div key={posKey} className="fsp-item">
                           <div className="fsp-item-row">
                             <div className="fsp-item-main" onClick={() => handleStockClick(stock)}>
                               <span className="fsp-item-name">
@@ -1158,19 +1166,32 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                               <span className={`fsp-item-voldiff ${volDiffClass}`}>
                                 {formatSignedPercent(volDiffNum)}
                               </span>
-                              <span className="fsp-item-cost" onClick={(e) => e.stopPropagation()}>
+                              <span className="fsp-item-cost" onClick={stopProp}>
                                 <InputNumber
                                   size="small"
                                   className="fsp-cost-input"
-                                  value={costInputs[stock.code] !== undefined ? costInputs[stock.code] : (stock.costPrice != null && Number.isFinite(Number(stock.costPrice)) ? Number(stock.costPrice) : undefined)}
-                                  onChange={(val) => setCostInputs((prev) => ({ ...prev, [stock.code]: val }))}
+                                  value={costInputs[posKey] !== undefined ? costInputs[posKey] : (stock.costPrice != null && Number.isFinite(Number(stock.costPrice)) ? Number(stock.costPrice) : undefined)}
+                                  onChange={(val) => setCostInputs((prev) => ({ ...prev, [posKey]: val }))}
                                   onBlur={() => handleCostBlur(stock)}
                                   min={0.01}
                                   precision={2}
                                   step={0.01}
-                                  placeholder="成本价"
+                                  placeholder="成本线"
                                   controls={false}
                                 />
+                              </span>
+                              <span className="fsp-item-weight" onClick={stopProp}>
+                                <Select
+                                  size="small"
+                                  className="fsp-weight-select"
+                                  value={weightInputs[posKey] !== undefined ? weightInputs[posKey] : (stock.weight != null ? Number(stock.weight) : 50)}
+                                  loading={!!weightUpdating[posKey]}
+                                  onChange={(val) => handleWeightChange(stock, val)}
+                                  options={POSITION_WEIGHT_OPTIONS.map((w) => ({ value: w, label: `${w}%` }))}
+                                />
+                              </span>
+                              <span className="fsp-item-buytime" title={formatBuyAt(stock)}>
+                                {formatBuyAt(stock)}
                               </span>
                             </div>
                             <div className="fsp-item-actions">
@@ -1193,7 +1214,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                               <Tooltip title="删除">
                                 <DeleteOutlined
                                   className="fsp-item-delete"
-                                  onClick={(e) => { e.stopPropagation(); handleDelete(stock.code, stock.name); }}
+                                  onClick={(e) => { e.stopPropagation(); handleDelete(stock.id, stock.name, stock.code); }}
                                 />
                               </Tooltip>
                             </div>
@@ -1252,93 +1273,6 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                 >
                   添加持仓
                 </Button>
-              )}
-            </div>
-
-            {/* 流水线 */}
-            <div className="pmm-section">
-              <div className="pmm-section-title">🔧 流水线</div>
-              {positions.length === 0 ? (
-                <div className="fsp-empty">暂无持仓，无法显示流水线</div>
-              ) : (
-                <div className="pmm-pipeline-list">
-                  {positions.map((stock) => {
-                    const pipeline = pipelineData[stock.code] || { stage: 0 };
-                    const currentStage = pipeline.stage;
-                    const isMaxStage = currentStage >= 4;
-                    const isAdvancing = pipelineAdvancing[stock.code];
-                    return (
-                      <div key={stock.code} className="pmm-pipeline-item">
-                        <div className="pmm-pipeline-header">
-                          <span className="pmm-pipeline-stock-name">{stock.name}</span>
-                          <span className="pmm-pipeline-stage-tag">
-                            {PIPELINE_STAGE_LABELS[currentStage]}
-                          </span>
-                        </div>
-                        <div className="pmm-pipeline-steps">
-                          {[0, 1, 2, 3, 4].map((stage) => {
-                            const isCompleted = stage <= currentStage;
-                            const isCurrent = stage === currentStage;
-                            return (
-                              <div
-                                key={stage}
-                                className={`pmm-pipeline-step ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`}
-                              >
-                                <div className="pmm-pipeline-dot">
-                                  {isCompleted && stage > 0 ? <CheckCircleOutlined /> : null}
-                                </div>
-                                <div className="pmm-pipeline-label">
-                                  {PIPELINE_STAGE_LABELS[stage]}
-                                </div>
-                                <div className="pmm-pipeline-percent">
-                                  {PIPELINE_STAGE_PERCENTS[stage]}%
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <div className="pmm-pipeline-bar">
-                          <div
-                            className="pmm-pipeline-bar-fill"
-                            style={{ width: `${PIPELINE_STAGE_PERCENTS[currentStage]}%` }}
-                          />
-                        </div>
-                        {!isMaxStage && (
-                          <Button
-                            size="small"
-                            type="primary"
-                            ghost
-                            icon={<RightCircleOutlined />}
-                            loading={isAdvancing}
-                            onClick={() => handleAdvancePipeline(stock.code, currentStage)}
-                            className="pmm-pipeline-advance-btn"
-                          >
-                            推进至 {PIPELINE_STAGE_LABELS[currentStage + 1]}
-                          </Button>
-                        )}
-                        {currentStage > 0 && (
-                          <div className="pmm-pipeline-reduce">
-                            <span className="pmm-pipeline-reduce-label">回滚至：</span>
-                            {[...Array(currentStage)].map((_, i) => {
-                              const stage = currentStage - 1 - i;
-                              return (
-                                <Button
-                                  key={stage}
-                                  size="small"
-                                  danger
-                                  loading={isAdvancing}
-                                  onClick={() => handleReducePipeline(stock.code, stage)}
-                                >
-                                  {PIPELINE_STAGE_LABELS[stage]}
-                                </Button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
               )}
             </div>
           </div>

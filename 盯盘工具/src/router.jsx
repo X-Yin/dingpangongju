@@ -5,7 +5,6 @@ import KeyBlocks from './pages/key_blocks/index.jsx';
 import Sentiment from './pages/sentiment/index.jsx';
 import VolumeStatistics from './pages/volume/index.jsx';
 import ShiChangDiaoYan from './pages/shichangdiaoyan/index.jsx';
-import JigouReports from './pages/JigouReports/index.jsx';
 import StockDiagnosis from './pages/stock_diagnosis/index.jsx';
 import MainFund from './pages/MainFund/index.jsx';
 import FuPan from './pages/fupan/index.jsx';
@@ -47,10 +46,6 @@ const router = createBrowserRouter([
       {
         path: 'shichangdiaoyan',
         element: <ShiChangDiaoYan />,
-      },
-      {
-        path: 'jigou_reports',
-        element: <JigouReports />,
       },
       {
         path: 'stock_diagnosis',

@@ -307,16 +307,6 @@
         display: inline-flex;
         align-items: center;
 
-        .jigou-new-badge {
-          margin-left: 6px;
-
-          .ant-badge-count {
-            background: #ff4d4f;
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
-            animation: jigou-badge-pulse 1.6s ease-in-out infinite;
-          }
-        }
-
         .quant-signal-badge {
           margin-left: 6px;
 

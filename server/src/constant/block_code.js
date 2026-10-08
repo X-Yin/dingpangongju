@@ -1077,5 +1077,29 @@ exports.default = [
         "blockName": "pcb",
         "code": "sh603936",
         "name": "博敏电子"
+    },
+    {
+        "blockName": "染料",
+        "code": "sh600352",
+        "name": "浙江龙盛",
+        "tag": "防御"
+    },
+    {
+        "blockName": "染料",
+        "code": "sz002440",
+        "name": "闰土股份",
+        "tag": "防御"
+    },
+    {
+        "blockName": "染料",
+        "code": "sz300798",
+        "name": "锦鸡股份",
+        "tag": "防御"
+    },
+    {
+        "blockName": "染料",
+        "code": "sh603188",
+        "name": "亚邦股份",
+        "tag": "防御"
     }
 ]

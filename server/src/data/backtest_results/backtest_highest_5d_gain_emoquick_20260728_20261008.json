@@ -1075,6 +1075,7 @@
     }
   ],
   "currentHolding": null,
+  "currentHoldings": [],
   "summary": {
     "tradeCount": 7,
     "winCount": 6,

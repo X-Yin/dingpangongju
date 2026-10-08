@@ -75,8 +75,31 @@ const MarketPulsePanel = ({ onStockClick, themeColor }) => {
     return (
         <div className="market-pulse-panel">
             <Row gutter={[8, 8]}>
+
+                                {/* 第二列：财联社快讯（最新在前，内容全量展示） */}
+                <Col xs={24} lg={11}>
+                    <Card
+                        className="monitor-card"
+                        variant="borderless"
+                        size="small"
+                        title={<span style={titleStyle(themeColor)}><NotificationOutlined style={{ color: getThemeColor(), marginRight: 6 }} />财联社快讯</span>}
+                        extra={<span className="mp-extra">{dayjs(clsNewsUpdated).format('HH:mm:ss')}</span>}
+                        style={{ height: 408, display: 'flex', flexDirection: 'column' }}
+                        styles={{ body: { flex: 1, minHeight: 0, overflowY: 'auto', padding: '4px 8px', marginBottom: 12 } }}
+                    >
+                        <div className="mp-list">
+                            {sortedClsNews.length === 0 && <div className="mp-placeholder">加载中...</div>}
+                            {sortedClsNews.map((it, idx) => (
+                                <div className="mp-news-item" key={idx} style={borderStyle(themeColor)}>
+                                    <span className="mp-time">{it['发布时间']}&nbsp;</span>
+                                    <span className="mp-news-text" style={titleStyle(themeColor)}>{it['内容'] || it['标题']}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+                </Col>
                 {/* 第一列：盘口异动（全部类型，超出滚动） */}
-                <Col xs={24} lg={8}>
+                <Col xs={24} lg={7}>
                     <Card
                         className="monitor-card"
                         variant="borderless"
@@ -107,31 +130,8 @@ const MarketPulsePanel = ({ onStockClick, themeColor }) => {
                     </Card>
                 </Col>
 
-                {/* 第二列：财联社快讯（最新在前，内容全量展示） */}
-                <Col xs={24} lg={8}>
-                    <Card
-                        className="monitor-card"
-                        variant="borderless"
-                        size="small"
-                        title={<span style={titleStyle(themeColor)}><NotificationOutlined style={{ color: getThemeColor(), marginRight: 6 }} />财联社快讯</span>}
-                        extra={<span className="mp-extra">{dayjs(clsNewsUpdated).format('HH:mm:ss')}</span>}
-                        style={{ height: 408, display: 'flex', flexDirection: 'column' }}
-                        styles={{ body: { flex: 1, minHeight: 0, overflowY: 'auto', padding: '4px 8px', marginBottom: 12 } }}
-                    >
-                        <div className="mp-list">
-                            {sortedClsNews.length === 0 && <div className="mp-placeholder">加载中...</div>}
-                            {sortedClsNews.map((it, idx) => (
-                                <div className="mp-news-item" key={idx} style={borderStyle(themeColor)}>
-                                    <span className="mp-time">{it['发布时间']}&nbsp;</span>
-                                    <span className="mp-news-text" style={titleStyle(themeColor)}>{it['内容'] || it['标题']}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
-                </Col>
-
                 {/* 第三列：同花顺热度股票列表（超出滚动） */}
-                <Col xs={24} lg={8}>
+                <Col xs={24} lg={6}>
                     <Card
                         className="monitor-card"
                         variant="borderless"

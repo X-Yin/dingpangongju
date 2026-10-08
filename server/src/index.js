@@ -52,6 +52,7 @@ const {
   addStockPosition,
   deleteStockPosition,
   updateStockPositionCost,
+  updateStockPositionWeight,
   diff2DayStockTline,
   getStockPositionFundFlow,
   getStockPositionAnalysisData,
@@ -1607,9 +1608,9 @@ app.get('/stock_positions', (req, res) => {
 
 app.post('/add_stock_position', async (req, res) => {
   try {
-    const { code, name } = req.body;
-    const success = addStockPosition(code, name);
-    res.json({ message: success ? '添加成功' : '添加失败', success });
+    const { code, name, weight } = req.body;
+    const result = addStockPosition(code, name, weight);
+    res.json({ message: result.success ? '添加成功' : (result.message || '添加失败'), success: result.success });
   } catch (error) {
     console.error('添加失败:', error);
     res.status(500).json({ message: '添加失败' });
@@ -1618,29 +1619,47 @@ app.post('/add_stock_position', async (req, res) => {
 
 app.post('/delete_stock_position', async (req, res) => {
   try {
-    const { code } = req.body;
-    const success = deleteStockPosition(code);
-    res.json({ message: success ? '删除成功' : '删除失败', success });
+    const { id } = req.body;
+    const result = deleteStockPosition(id);
+    res.json({ message: result.success ? '删除成功' : (result.message || '删除失败'), success: result.success });
   } catch (error) {
     console.error('删除失败:', error);
     res.status(500).json({ message: '删除失败' });
   }
 });
 
-// 更新持仓成本价（成本线价格），用于卖点诊断「跌破成本线」条件
+// 更新某笔持仓的成本价（成本线价格），用于卖点诊断「跌破成本线」条件
 app.post('/update_stock_position_cost', async (req, res) => {
   try {
-    const { code, costPrice } = req.body;
-    if (!code) {
-      return res.status(400).json({ success: false, message: '股票代码不能为空' });
+    const { id, costPrice } = req.body;
+    if (!id) {
+      return res.status(400).json({ success: false, message: '持仓 id 不能为空' });
     }
-    const success = updateStockPositionCost(code, costPrice);
-    if (!success) {
-      return res.status(400).json({ success: false, message: '更新失败，请检查成本价是否有效且该股票在持仓中' });
+    const result = updateStockPositionCost(id, costPrice);
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message || '更新失败' });
     }
     res.json({ success: true, message: '成本价已更新' });
   } catch (error) {
     console.error('更新持仓成本价失败:', error);
+    res.status(500).json({ success: false, message: error.message || '更新失败' });
+  }
+});
+
+// 更新某笔持仓的仓位（25/50/75/100）
+app.post('/update_stock_position_weight', async (req, res) => {
+  try {
+    const { id, weight } = req.body;
+    if (!id) {
+      return res.status(400).json({ success: false, message: '持仓 id 不能为空' });
+    }
+    const result = updateStockPositionWeight(id, weight);
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message || '更新失败' });
+    }
+    res.json({ success: true, message: '仓位已更新' });
+  } catch (error) {
+    console.error('更新持仓仓位失败:', error);
     res.status(500).json({ success: false, message: error.message || '更新失败' });
   }
 });

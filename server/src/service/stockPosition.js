@@ -66,7 +66,25 @@ const isTradingTime = () => {
     return cur >= 9 * 60 + 15 && cur <= 15 * 60 + 5;
 };
 
-const readStockPositionsFile = () => readJsonFile(stock_position_path, []);
+// 读取持仓列表：同一股票允许存在多笔持仓，故每笔持仓以唯一 id 标识（历史数据读入时自动补齐）
+const readStockPositionsFile = () => {
+    const list = readJsonFile(stock_position_path, []);
+    if (!Array.isArray(list)) return [];
+    let changed = false;
+    list.forEach((item) => {
+        if (!item.id) {
+            item.id = `${item.code}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+            changed = true;
+        }
+    });
+    if (changed) writeJsonFile(stock_position_path, list);
+    return list;
+};
+
+// 同一股票最多可添加的持仓笔数
+const MAX_POSITIONS_PER_CODE = 2;
+// 仓位可选项（百分比）
+const POSITION_WEIGHT_OPTIONS = [25, 50, 75, 100];
 
 // 读取资金流向全部数据
 const readFundFlowData = () => readJsonFile(stock_position_fund_flow_path, {});
@@ -649,49 +667,79 @@ const getStockPositionFundFlow = (code, date) => {
     return dayData[code] || [];
 };
 
-const addStockPosition = (code, name) => {
+const addStockPosition = (code, name, weight) => {
     try {
+        if (!code || !name) return { success: false, message: '股票代码和名称不能为空' };
         const stock_positions = readStockPositionsFile();
-        // 已存在则不重复添加
-        if (stock_positions.some((item) => item.code === code)) {
-            return false;
+        // 同一股票最多添加 MAX_POSITIONS_PER_CODE 笔（各自独立成本线/仓位/买入时间）
+        if (stock_positions.filter((item) => item.code === code).length >= MAX_POSITIONS_PER_CODE) {
+            return { success: false, message: `同一股票最多添加 ${MAX_POSITIONS_PER_CODE} 笔持仓` };
         }
-        // 记录买入日期：卖点诊断买入当日不生效，次日起生效
-        stock_positions.push({ code, name, buyDate: dayjs().format('YYYY-MM-DD') });
+        const now = dayjs();
+        const normalizedWeight = POSITION_WEIGHT_OPTIONS.includes(Number(weight)) ? Number(weight) : 50;
+        // 记录买入日期与买入时间：卖点诊断买入当日不生效，次日起生效
+        stock_positions.push({
+            id: `${code}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+            code,
+            name,
+            buyDate: now.format('YYYY-MM-DD'),
+            buyTime: now.format('HH:mm'),
+            weight: normalizedWeight,
+        });
         writeJsonFile(stock_position_path, stock_positions);
-        return true;
+        return { success: true };
     } catch (error) {
         console.error('添加持仓失败:', error);
-        return false;
+        return { success: false, message: '添加失败' };
     }
 };
 
-const deleteStockPosition = (code) => {
+const deleteStockPosition = (id) => {
     try {
         const stock_positions = readStockPositionsFile();
-        const filtered = stock_positions.filter((item) => item.code !== code);
+        const filtered = stock_positions.filter((item) => item.id !== id);
+        if (filtered.length === stock_positions.length) {
+            return { success: false, message: '未找到该持仓' };
+        }
         writeJsonFile(stock_position_path, filtered);
-        return filtered.length !== stock_positions.length;
+        return { success: true };
     } catch (error) {
         console.error('删除持仓失败:', error);
-        return false;
+        return { success: false, message: '删除失败' };
     }
 };
 
-// 更新某只持仓的成本价（成本线价格），用于卖点诊断「跌破成本线」条件
-const updateStockPositionCost = (code, costPrice) => {
+// 更新某笔持仓的成本价（成本线价格），用于卖点诊断「跌破成本线」条件
+const updateStockPositionCost = (id, costPrice) => {
     try {
         const stock_positions = readStockPositionsFile();
-        const target = stock_positions.find((item) => item.code === code);
-        if (!target) return false;
+        const target = stock_positions.find((item) => item.id === id);
+        if (!target) return { success: false, message: '未找到该持仓' };
         const num = Number(costPrice);
-        if (!Number.isFinite(num) || num <= 0) return false;
+        if (!Number.isFinite(num) || num <= 0) return { success: false, message: '请输入有效的成本价' };
         target.costPrice = round(num, 2);
         writeJsonFile(stock_position_path, stock_positions);
-        return true;
+        return { success: true };
     } catch (error) {
         console.error('更新持仓成本价失败:', error);
-        return false;
+        return { success: false, message: '更新失败' };
+    }
+};
+
+// 更新某笔持仓的仓位（25/50/75/100 百分比）
+const updateStockPositionWeight = (id, weight) => {
+    try {
+        const stock_positions = readStockPositionsFile();
+        const target = stock_positions.find((item) => item.id === id);
+        if (!target) return { success: false, message: '未找到该持仓' };
+        const num = Number(weight);
+        if (!POSITION_WEIGHT_OPTIONS.includes(num)) return { success: false, message: '仓位只能是 25/50/75/100' };
+        target.weight = num;
+        writeJsonFile(stock_position_path, stock_positions);
+        return { success: true };
+    } catch (error) {
+        console.error('更新持仓仓位失败:', error);
+        return { success: false, message: '更新失败' };
     }
 };
 
@@ -704,19 +752,25 @@ const getStockPositionMainFund = async () => {
             const res = await axios.get(mainFundData);
             const mainFundDiff = res.data?.data?.main_fund_diff;
             result.push({
+                id: item.id,
                 code: item.code,
                 name: item.name,
                 costPrice: item.costPrice != null ? round(item.costPrice, 2) : null,
                 buyDate: item.buyDate || null,
+                buyTime: item.buyTime || null,
+                weight: item.weight != null ? item.weight : 50,
                 mainFund: round(toNumber(mainFundDiff) / 100000000),
             });
         } catch (error) {
             console.error(`获取 ${item.name} 主力资金失败:`, error.message);
             result.push({
+                id: item.id,
                 code: item.code,
                 name: item.name,
                 costPrice: item.costPrice != null ? round(item.costPrice, 2) : null,
                 buyDate: item.buyDate || null,
+                buyTime: item.buyTime || null,
+                weight: item.weight != null ? item.weight : 50,
                 mainFund: null,
             });
         }
@@ -895,9 +949,9 @@ const addStockRecord = ({ type, code, name, detail, pipelineStage }) => {
 };
 
 // 重写 addStockPosition，记录买入操作
-const addStockPositionWithRecord = (code, name) => {
-    const result = addStockPosition(code, name);
-    if (result) {
+const addStockPositionWithRecord = (code, name, weight) => {
+    const result = addStockPosition(code, name, weight);
+    if (result.success) {
         addStockRecord({
             type: 'buy',
             code,
@@ -909,24 +963,27 @@ const addStockPositionWithRecord = (code, name) => {
     return result;
 };
 
-// 重写 deleteStockPosition，记录删除操作
-const deleteStockPositionWithRecord = (code) => {
+// 重写 deleteStockPosition（按持仓 id 删除单笔），记录删除操作
+const deleteStockPositionWithRecord = (id) => {
     const stockPositions = readStockPositionsFile();
-    const stock = stockPositions.find((s) => s.code === code);
-    const result = deleteStockPosition(code);
-    if (result && stock) {
+    const stock = stockPositions.find((s) => s.id === id);
+    const result = deleteStockPosition(id);
+    if (result.success && stock) {
         addStockRecord({
             type: 'delete',
-            code,
+            code: stock.code,
             name: stock.name,
-            detail: `删除持仓：${stock.name}（${code}）`,
+            detail: `删除持仓：${stock.name}（${stock.code}）`,
             pipelineStage: null,
         });
-        // 同时清理流水线数据
-        const pipeline = getStockPipelineData();
-        if (pipeline[code]) {
-            delete pipeline[code];
-            saveStockPipelineData(pipeline);
+        // 仅当该股票已无剩余持仓时才清理流水线数据
+        const hasRemaining = readStockPositionsFile().some((s) => s.code === stock.code);
+        if (!hasRemaining) {
+            const pipeline = getStockPipelineData();
+            if (pipeline[stock.code]) {
+                delete pipeline[stock.code];
+                saveStockPipelineData(pipeline);
+            }
         }
     }
     return result;
@@ -936,6 +993,7 @@ module.exports = {
     addStockPosition: addStockPositionWithRecord,
     deleteStockPosition: deleteStockPositionWithRecord,
     updateStockPositionCost,
+    updateStockPositionWeight,
     getStockPositionMainFund,
     getWatchlistMainFund,
     getStockPositionAnalysisData,

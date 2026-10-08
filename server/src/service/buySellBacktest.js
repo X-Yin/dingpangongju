@@ -9,7 +9,7 @@
 const { loadTrainingCampData, getTrainingCampDates, calcDailyMaInfo, getKlineCached } = require('./trainingCamp');
 const { getSingleStockTlineDataByDate } = require('./stock');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
-const { isStockInWatchlistAt } = require('./monitorStock');
+const { isStockInWatchlistAt, getMonitorStocks } = require('./monitorStock');
 const { batchParallel } = require('../utils');
 const { getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, ensureBarsForCodes, stockWindowGain, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange, getHongliMultiLianbanStocks, scanHongliMultiLianbanCodesInRange } = require('./keyBlockData');
 const { loadIndexKline } = require('./sentimentHotMoney');
@@ -77,6 +77,24 @@ const TECH_TOP3_BLOCK_DESC = (n) => `与「${n}日涨幅最大&三日情绪-60�
 //   否则通用 7 条件），每份仓位产生一条独立交易记录（不合并）。选股口径与「N日涨幅最大」完全一致。
 const TWO_BUY_DESC = (n) => `在「${n}日涨幅最大&三日情绪-60快进快出」基础上做的分批建仓变体：买点首次触发先买入 5 成（第一份），之后若买点再次触发、且距离第一份建仓日已间隔至少一个交易日（次日及以后），再买入 5 成（第二份）——第二份必须买入与第一份完全相同的股票标的（不按 ${n} 日涨幅重新择股），且买入时点该股已涨停（主板>9.5%、创业/科创>19%）则本次放弃、保持半仓等待下次买点。两份仓位各自独立买卖、独立计算收益（均按半仓 0.5 折算，不摊平成本）：各自以自身买入价计算跌破成本线 -2% 止损（阈值 = 自身买入价 × 0.98），卖点完全沿用「${n}日涨幅最大&三日情绪-60快进快出」——买入日上一交易日科技情绪 3 日 EMA < -60（或上两交易日当日科技情绪均处 -30~20 区间且回升）的持仓次日 10:00 强制卖出、强卖当日禁止二次买入，且盘中跌破成本线 -2% 先到先卖止损；否则走通用 7 条件卖点。每份仓位产生一条独立交易记录（不合并、不摊平成本）。选股口径与「${n}日涨幅最大」完全一致：买点触发时从全量自选科技股中买入最近 ${n} 个交易日涨幅之和最大的一只；跨指数双门禁、全局最低抗分歧门槛 ≥ 9、顺/逆周期过滤照常生效`;
 
+// 「N.5 日涨幅最大」窗口口径（2026-10-08 用户新增）：在常规「N 日涨幅最大」（最近 N 个交易日含触发日涨幅之和）
+// 基础上，额外复利计入「更前一个交易日（窗口最早交易日的再前一交易日，0.5 日）下午 13:00 开盘至收盘」的涨幅。
+// 例：触发日 8.4 的 3.5 日窗口 = 8.1 下午 13:00→收盘 + 8.2 + 8.3 + 8.4 三个完整交易日。
+// 「2.5 日」同理：2 日窗口（8.3、8.4）+ 8.2 下午 13:00→收盘。半日涨幅按该交易日回放桶现算
+// （13:00 后首个桶价 → 当日收盘价），该股当日无下午分时则本次候选按无效处理。
+const HALF_DAY_NOTE = (n) => `「${n}.5 日涨幅最大」口径：在常规最近 ${n} 个交易日（含触发日）涨幅之和的基础上，额外复利计入「更前一个交易日（窗口最早交易日的再前一交易日）下午 13:00 开盘至收盘」的半日涨幅；例：触发日 8.4 的 ${n}.5 日窗口 = ${n}.1 下午 13:00→收盘 + ${n}.2~${n}.4 共 ${n} 个完整交易日；半日涨幅按该交易日回放分时现算（13:00 后首个桶价 → 当日收盘价），该股当日无下午分时则本次候选按无效处理`;
+const HIGHEST_HALF_DESC = (n) => `买点命中时只买入${HALF_DAY_NOTE(n)}所定义口径下涨幅最大的一只自选科技股`;
+const EMO_QUICK_HALF_DESC = (n) => `${EMO_QUICK_DESC(n)}；特别说明：本策略的选股窗口采用 ${HALF_DAY_NOTE(n)}`;
+const TECH_TOP3_HALF_DESC = (n) => `${TECH_TOP3_BLOCK_DESC(n)}；特别说明：本策略在交集内的 N 日涨幅窗口采用 ${HALF_DAY_NOTE(n)}`;
+const TWO_BUY_HALF_DESC = (n) => `${TWO_BUY_DESC(n)}；特别说明：本策略的选股窗口采用 ${HALF_DAY_NOTE(n)}`;
+
+// 两次买入「不同板块」系列统一描述（highest_{N}d_gain_two_buy_diff_block，2026-10-08 用户新增）：
+// 在「N日涨幅最大&两次买入」基础上增加板块约束——第一份仍从全量自选科技股中选 N 日涨幅最大（不限板块）；
+// 第二份不再买入第一份的同一只股票，而是在「所属板块（自选股 monitor_stocks.json 的 blockName 标识）
+// 与第一份不同」的候选中，重新按 N 日涨幅最大择股买入。其余（半仓、各自独立买卖、快进快出、-2% 止损、
+// 双门禁/抗分歧/周期过滤/涨停顺延等）与「N日涨幅最大&两次买入」完全一致
+const TWO_BUY_DIFF_BLOCK_DESC = (n) => `在「${n}日涨幅最大&两次买入」基础上增加板块约束的分批建仓变体：买点首次触发先买入 5 成（第一份），从全量自选科技股中买入最近 ${n} 个交易日涨幅之和最大的一只（不限板块）；之后若买点再次触发、且距离第一份建仓日已间隔至少一个交易日（次日及以后），再买入 5 成（第二份）——第二份不再买入第一份的同一只股票，而是在「所属板块（自选股 monitor_stocks.json 的 blockName 板块标识）与第一份不同」的候选中，重新按最近 ${n} 个交易日涨幅之和最大选一只买入（即其他板块中 ${n} 日涨幅最大的个股）；若其他板块中无有效候选（或候选均被涨停/抗分歧/周期等过滤）则本次不补买、保持半仓等待下次买点。两份仓位各自独立买卖、独立计算收益（均按半仓 0.5 折算，不摊平成本）：各自以自身买入价计算跌破成本线 -2% 止损，卖点完全沿用「${n}日涨幅最大&快进快出」规则（买入日快进快出则次日 10:00 强卖 + 盘中跌破成本线 -2% 先到先卖，否则通用 7 条件），每份仓位产生一条独立交易记录。选股窗口、跨指数双门禁、全局最低抗分歧门槛 ≥ 9、顺/逆周期过滤、涨停与一字板顺延均与「N日涨幅最大&两次买入」一致`;
+
 // 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
 const STRATEGIES = {
   highest_gain: { id: 'highest_gain', name: '买入最高涨幅', desc: '买点命中时只买入触发时点当日盘中涨幅最大的股票' },
@@ -86,6 +104,11 @@ const STRATEGIES = {
   highest_5d_gain: { id: 'highest_5d_gain', name: '5日涨幅最大', desc: '买点命中时只买入最近 5 个交易日涨幅最大的股票' },
   highest_10d_gain: { id: 'highest_10d_gain', name: '10日涨幅最大', desc: '买点命中时只买入最近 10 个交易日涨幅最大的股票' },
 
+  // N.5 日涨幅最大系列（highest_{N}d5_gain，2026-10-08 用户新增）：halfDayAfternoon: true → 选股窗口在
+  // 最近 N 个交易日基础上额外复利计入「更前一个交易日（窗口最早日的再前一交易日）下午 13:00→收盘」的半日涨幅
+  highest_2d5_gain: { id: 'highest_2d5_gain', name: '2.5日涨幅最大', desc: HIGHEST_HALF_DESC(2), halfDayAfternoon: true },
+  highest_3d5_gain: { id: 'highest_3d5_gain', name: '3.5日涨幅最大', desc: HIGHEST_HALF_DESC(3), halfDayAfternoon: true },
+
   // 两次买入（分批建仓）系列（highest_{N}d_gain_two_buy，2026-10-08 用户新增；twoBuy: true → 独立分批建仓逻辑）：
   // 买点首次触发买入 5 成（第一份），之后若买点再次触发、且距离第一份建仓日已间隔至少一个交易日，再买入 5 成（第二份）；
   // 第二份必须买入与第一份相同的股票标的；两份仓位各自独立买卖（各半仓），跌破成本线 -2% 止损（默认口径，不摊平成本）；
@@ -94,6 +117,16 @@ const STRATEGIES = {
   highest_3d_gain_two_buy: { id: 'highest_3d_gain_two_buy', name: '3日涨幅最大&两次买入', desc: TWO_BUY_DESC(3), twoBuy: true, emoQuickOut: true },
   highest_4d_gain_two_buy: { id: 'highest_4d_gain_two_buy', name: '4日涨幅最大&两次买入', desc: TWO_BUY_DESC(4), twoBuy: true, emoQuickOut: true },
   highest_5d_gain_two_buy: { id: 'highest_5d_gain_two_buy', name: '5日涨幅最大&两次买入', desc: TWO_BUY_DESC(5), twoBuy: true, emoQuickOut: true },
+  // 两次买入 × N.5 日窗口（2026-10-08 用户新增）
+  highest_2d5_gain_two_buy: { id: 'highest_2d5_gain_two_buy', name: '2.5日涨幅最大&两次买入', desc: TWO_BUY_HALF_DESC(2), twoBuy: true, emoQuickOut: true, halfDayAfternoon: true },
+  highest_3d5_gain_two_buy: { id: 'highest_3d5_gain_two_buy', name: '3.5日涨幅最大&两次买入', desc: TWO_BUY_HALF_DESC(3), twoBuy: true, emoQuickOut: true, halfDayAfternoon: true },
+  // 两次买入 × 不同板块（highest_{N}d_gain_two_buy_diff_block，2026-10-08 用户新增）：
+  // 第一份同「N日涨幅最大」（不限板块）；第二份在「板块（blockName）与第一份不同」的候选中重新按 N 日涨幅最大择股
+  // diffBlock: true → 第二份改为限制板块差异的重新择股（见 runRangeBacktestInner / runRangeBacktestMulti）
+  highest_2d_gain_two_buy_diff_block: { id: 'highest_2d_gain_two_buy_diff_block', name: '2日涨幅最大&两次买入不同板块', desc: TWO_BUY_DIFF_BLOCK_DESC(2), twoBuy: true, diffBlock: true, emoQuickOut: true },
+  highest_3d_gain_two_buy_diff_block: { id: 'highest_3d_gain_two_buy_diff_block', name: '3日涨幅最大&两次买入不同板块', desc: TWO_BUY_DIFF_BLOCK_DESC(3), twoBuy: true, diffBlock: true, emoQuickOut: true },
+  highest_4d_gain_two_buy_diff_block: { id: 'highest_4d_gain_two_buy_diff_block', name: '4日涨幅最大&两次买入不同板块', desc: TWO_BUY_DIFF_BLOCK_DESC(4), twoBuy: true, diffBlock: true, emoQuickOut: true },
+  highest_5d_gain_two_buy_diff_block: { id: 'highest_5d_gain_two_buy_diff_block', name: '5日涨幅最大&两次买入不同板块', desc: TWO_BUY_DIFF_BLOCK_DESC(5), twoBuy: true, diffBlock: true, emoQuickOut: true },
   highest_3d_ma_slope: { id: 'highest_3d_ma_slope', name: '3日线斜率最陡峭', desc: '买点命中时只买入 3 日涨幅均线斜率角度最大的股票' },
   highest_5d_ma_slope: { id: 'highest_5d_ma_slope', name: '5日线斜率最陡峭', desc: '买点命中时只买入 5 日涨幅均线斜率角度最大的股票' },
   highest_3d_reports: { id: 'highest_3d_reports', name: '3日研报覆盖数最多', desc: '买点命中时只买入过去 3 个交易日（含当日）研报覆盖数最多的股票（覆盖数相同取 3 日涨幅最大）；覆盖仅统计买点前已创建的研报，买点后补录的不计入' },
@@ -119,6 +152,9 @@ const STRATEGIES = {
   highest_3d_gain_emoquick: { id: 'highest_3d_gain_emoquick', name: '3日涨幅最大&三日情绪-60快进快出', desc: EMO_QUICK_DESC(3), emoQuickOut: true },
   highest_4d_gain_emoquick: { id: 'highest_4d_gain_emoquick', name: '4日涨幅最大&三日情绪-60快进快出', desc: EMO_QUICK_DESC(4), emoQuickOut: true },
   highest_5d_gain_emoquick: { id: 'highest_5d_gain_emoquick', name: '5日涨幅最大&三日情绪-60快进快出', desc: EMO_QUICK_DESC(5), emoQuickOut: true },
+  // 快进快出 × N.5 日窗口（2026-10-08 用户新增；选股窗口额外计入更前一个交易日下半日涨幅）
+  highest_2d5_gain_emoquick: { id: 'highest_2d5_gain_emoquick', name: '2.5日涨幅最大&三日情绪-60快进快出', desc: EMO_QUICK_HALF_DESC(2), emoQuickOut: true, halfDayAfternoon: true },
+  highest_3d5_gain_emoquick: { id: 'highest_3d5_gain_emoquick', name: '3.5日涨幅最大&三日情绪-60快进快出', desc: EMO_QUICK_HALF_DESC(3), emoQuickOut: true, halfDayAfternoon: true },
   // 快进快出 × 研报覆盖双门策略：仅当快进快出的触发条件是「上一交易日 3 日 EMA < -60」时，
   // 选股口径从「3日涨幅最大」改为「最近 3 日研报覆盖数前五（含并列）→ 组内 3 日涨幅最大」；
   // 温和回升路径 / 非快进快出路径仍走原 3 日涨幅最大；卖出行为与 highest_3d_gain_emoquick 完全一致
@@ -132,6 +168,9 @@ const STRATEGIES = {
   tech_block_top3_3d_gain_emoquick: { id: 'tech_block_top3_3d_gain_emoquick', name: '科技板块前三&3日涨幅最大&快进快出', desc: TECH_TOP3_BLOCK_DESC(3), emoQuickOut: true },
   tech_block_top3_4d_gain_emoquick: { id: 'tech_block_top3_4d_gain_emoquick', name: '科技板块前三&4日涨幅最大&快进快出', desc: TECH_TOP3_BLOCK_DESC(4), emoQuickOut: true },
   tech_block_top3_5d_gain_emoquick: { id: 'tech_block_top3_5d_gain_emoquick', name: '科技板块前三&5日涨幅最大&快进快出', desc: TECH_TOP3_BLOCK_DESC(5), emoQuickOut: true },
+  // 科技板块前三 × N.5 日窗口（2026-10-08 用户新增；交集内选股窗口额外计入更前一个交易日下半日涨幅）
+  tech_block_top3_2d5_gain_emoquick: { id: 'tech_block_top3_2d5_gain_emoquick', name: '科技板块前三&2.5日涨幅最大&快进快出', desc: TECH_TOP3_HALF_DESC(2), emoQuickOut: true, halfDayAfternoon: true },
+  tech_block_top3_3d5_gain_emoquick: { id: 'tech_block_top3_3d5_gain_emoquick', name: '科技板块前三&3.5日涨幅最大&快进快出', desc: TECH_TOP3_HALF_DESC(3), emoQuickOut: true, halfDayAfternoon: true },
 
   // 重点板块-N日最高涨幅系列（keyBlockDays → 独立板块驱动回测 runKeyBlockBacktest：斜率双模式 + tag 板块选股，触发桶买入）
   key_block_2d_gain: { id: 'key_block_2d_gain', name: '重点板块-2日最高涨幅', desc: KEY_BLOCK_DESC(2), keyBlockDays: 2, costLinePct: 2 },
@@ -1726,9 +1765,47 @@ const calcResilienceAtMinute = (replayStocks, code, minute) => {
   return raw != null ? parseFloat(raw.toFixed(2)) : null;
 };
 
+// ============================================================
+// 「N.5 日涨幅最大」系列的 0.5 日成分缓存（2026-10-08 用户新增）：
+// 0.5 日 = 更前一个交易日「下午 13:00 开盘 → 收盘」的涨幅（%）。
+// 数据来源 = 该交易日回放桶（timeBuckets）中该股 minute >= 1300 的首个桶价 → 当日最后一个桶价（收盘）。
+// 逐日回放时（含窗口预热日）在 extractDailyInfo 内顺带缓存，后续日期的选股直接查表（date → Map<code, pct>）。
+// ============================================================
+const afternoonGainCache = new Map(); // dateStr -> Map<code, pct>
+const AFTERNOON_START_MINUTE = 1300;
+const buildAfternoonGainMap = (campData) => {
+  const buckets = campData?.timeBuckets || [];
+  const firstPx = new Map(); // code -> 13:00 后首个桶价
+  const lastPx = new Map(); // code -> 当日最后一个桶价（收盘）
+  for (const b of buckets) {
+    const m = Number(b.minute);
+    if (!Number.isFinite(m)) continue;
+    for (const sc of (b.stockChanges || [])) {
+      const px = sc.lastPx != null ? Number(sc.lastPx) : null;
+      if (px == null || !Number.isFinite(px) || px <= 0) continue;
+      if (m >= AFTERNOON_START_MINUTE && !firstPx.has(sc.code)) firstPx.set(sc.code, px);
+      lastPx.set(sc.code, px);
+    }
+  }
+  const out = new Map();
+  for (const [code, p0] of firstPx) {
+    const close = lastPx.get(code);
+    if (close != null && close > 0) out.set(code, ((close - p0) / p0) * 100);
+  }
+  return out;
+};
+// 查某交易日某股的下半日（13:00→收盘）涨幅；无该日缓存/该股无下午分时返回 null（候选按无效处理）
+const getAfternoonGain = (dateStr, code) => {
+  const m = afternoonGainCache.get(String(dateStr));
+  if (!m) return null;
+  const v = m.get(code);
+  return v != null && Number.isFinite(v) ? v : null;
+};
+
 // 从回放数据提取每个股票「当日 EOD」信息：收盘涨幅、收盘价、当日抗分歧分数
 // （当日抗分歧分数取 resilience3dScores 的最后一位，即 score(当天)，与 resilience3d 口径一致）
-const extractDailyInfo = (campData) => {
+// dateStr 传入时顺带登记该交易日的「下半日涨幅」缓存（供 N.5 日窗口选股查表）
+const extractDailyInfo = (campData, dateStr = null) => {
   const buckets = campData?.timeBuckets || [];
   const lastBucket = buckets[buckets.length - 1];
   const info = new Map();
@@ -1746,6 +1823,7 @@ const extractDailyInfo = (campData) => {
       resilience,
     });
   }
+  if (dateStr != null) afternoonGainCache.set(String(dateStr), buildAfternoonGainMap(campData));
   return info;
 };
 
@@ -1763,6 +1841,19 @@ const computeWindowGain = (code, winDates, dailyInfos, todayIntradayChange) => {
     prod *= 1 + ch / 100;
   }
   return (prod - 1) * 100;
+};
+
+// 「N.5 日涨幅」窗口累计涨幅：在 N 日窗口复利涨幅基础上，再复利计入「更前一个交易日
+// （窗口最早交易日的再前一交易日，0.5 日）下午 13:00 → 收盘」的涨幅。
+// halfDayDate 为 null（窗口前一日超出可用日期范围）时退化为常规 N 日窗口涨幅；
+// 该股当日无下午分时（getAfternoonGain 返回 null）时返回 null，候选按无效处理（与窗口缺失口径一致）。
+const computeWindowGainWithHalf = (code, winDates, dailyInfos, todayIntradayChange, halfDayDate) => {
+  const base = computeWindowGain(code, winDates, dailyInfos, todayIntradayChange);
+  if (base == null) return null;
+  if (halfDayDate == null) return base;
+  const half = getAfternoonGain(halfDayDate, code);
+  if (half == null) return null;
+  return ((1 + base / 100) * (1 + half / 100) - 1) * 100;
 };
 
 // 纯历史窗口累计涨幅（全部取历史 EOD 涨幅复利相乘，不含任何盘中口径）：
@@ -2007,7 +2098,7 @@ const buildWindowAxis = async (allDates, rangeDates, startDate, needDays, dailyI
       const campData = await loadTrainingCampData(d);
       if (campData && campData.success !== false && (campData.timeBuckets || []).length > 0) {
         await injectSimStocksIntoCampData(campData, d); // 随机模拟：预热日同样注入合成股票，保证窗口指标可比
-        dailyInfos.set(d, extractDailyInfo(campData));
+        dailyInfos.set(d, extractDailyInfo(campData, d));
         loaded.push(d);
       }
     } catch { /* 单日预热失败忽略 */ }
@@ -2354,7 +2445,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   //      区间且上个 > 上上个（情绪温和回升）
   // 两条件均不满足（或数据缺失）时为普通持仓，走通用卖点。递归调用不会再次命中本分支（委托 ID 无
   // _emoquick 后缀），买入复用全部通用机制（涨停顺延/抗分歧门槛/跨指数双门禁等）
-  const emoQuickMatch = strategyId.match(/^highest_(\d)d_gain_emoquick$/);
+  const emoQuickMatch = strategyId.match(/^highest_(\d+d\d*)_gain_emoquick$/);
   if (emoQuickMatch) {
     const prevDateStr = di > 0 ? String(rangeDates[di - 1]) : null; // 上一交易日（日期轴均为交易日）
     const prev2DateStr = di > 1 ? String(rangeDates[di - 2]) : null; // 上上个交易日
@@ -2366,7 +2457,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       && prev2Raw > EMO_QUICK_RANGE_LOW && prev2Raw < EMO_QUICK_RANGE_HIGH
       && prevRaw > EMO_QUICK_RANGE_LOW && prevRaw < EMO_QUICK_RANGE_HIGH
       && prevRaw > prev2Raw;
-    const quickPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, `highest_${emoQuickMatch[1]}d_gain`, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet);
+    const quickPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, `highest_${emoQuickMatch[1]}_gain`, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet);
     if (quickPicked) {
       // 附带快进快出标注：经 withResilienceGateInfo 写入买入原因与买入条件明细（emo_quick_out），
       // 并随持仓（positions[].emoQuickOut）传递给卖点侧，决定是否次日 10:00 强制卖出
@@ -2423,7 +2514,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   //   ② 这 3 个板块的全部成分股与「全量自选股中 isTech ≠ false 的科技股」取交集，得到 restrictCodes；
   //   ③ 委托「N 日涨幅最大」在交集内选股（restrictCodes 限制候选池），交集为空则本次不买入。
   // 板块效应只影响买入选股；卖出行为与 highest_{N}d_gain_emoquick 完全一致（emoQuickOut 标注驱动）
-  const techTop3Match = strategyId.match(/^tech_block_top3_(\d)d_gain_emoquick$/);
+  const techTop3Match = strategyId.match(/^tech_block_top3_(\d+d\d*)_gain_emoquick$/);
   if (techTop3Match) {
     const prevDateStr = di > 0 ? String(rangeDates[di - 1]) : null; // 上一交易日
     const prev2DateStr = di > 1 ? String(rangeDates[di - 2]) : null; // 上上个交易日
@@ -2437,7 +2528,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       && prevRaw > prev2Raw;
     const techTop3 = buildTechTop3BlockCodeSet(bucket, String(rangeDates[di]));
     const quickPicked = techTop3.codes.size > 0
-      ? pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, `highest_${techTop3Match[1]}d_gain`, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet, techTop3.codes)
+      ? pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, `highest_${techTop3Match[1]}_gain`, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet, techTop3.codes)
       : null;
     if (quickPicked) {
       quickPicked.emoQuickOut = {
@@ -2476,6 +2567,11 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   }
   // 跌幅最大（_fall）与涨幅共用窗口涨幅指标，仅取最小值；其余照旧
   const gainMode = strategyId === 'highest_gain' || strategyId.includes('_gain') || strategyId.includes('_fall');
+  // 「N.5 日涨幅最大」系列（highest_{N}d5_gain 及其 _emoquick/_two_buy/tech_block_top3 变体）：
+  // 在 N 日窗口之外，额外复利计入「更前一个交易日（窗口最早交易日的再前一交易日）下午 13:00→收盘」的半日涨幅；
+  // halfDayDate = 日期轴上 di - days 那一天（越界为 null，退化为常规 N 日窗口）
+  const halfDayAfternoon = STRATEGIES[strategyId]?.halfDayAfternoon === true;
+  const halfDayDate = halfDayAfternoon && days && di - days >= 0 ? rangeDates[di - days] : null;
   // 抗分歧门槛策略（当前仅买入最高涨幅）：选股排序依据 = 买点触发时点当日盘中涨幅（用户定义，
   // 非窗口累计涨幅），从高到低排序后从最高者起依次用触发时点抗分歧分数≥11 过滤；
   // 若未来加入按 N 日窗口涨幅排序的门槛策略，会走下方窗口涨幅计算分支，仅追加抗分歧顺延校验
@@ -2589,7 +2685,9 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       val = reportCount * 100000 + gain;
       metric = reportCount;
     } else if (gainMode) {
-      val = computeWindowGain(sc.code, winDates, dailyInfos, sc.changePct);
+      val = halfDayDate != null
+        ? computeWindowGainWithHalf(sc.code, winDates, dailyInfos, sc.changePct, halfDayDate)
+        : computeWindowGain(sc.code, winDates, dailyInfos, sc.changePct);
       if (isEmo3Tiebreak) val2 = computeWindowGain(sc.code, tiebreakWinDates, dailyInfos, sc.changePct);
     } else {
       const intradayResilience = calcResilienceAtMinute(replayStocks, sc.code, bucket.minute);
@@ -4020,7 +4118,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     await injectSimStocksIntoCampData(campData, dateStr); // 随机模拟：把合成股票混入当日候选池（重点板块/情绪游资系列）
     const replayStocks = await buildReplayStocksWithTline(campData, dateStr);
     const dateDisplay = campData.dateDisplay || dateStr;
-    dailyInfos.set(dateStr, extractDailyInfo(campData));
+    dailyInfos.set(dateStr, extractDailyInfo(campData, dateStr));
     for (const bucket of timeBuckets) {
       for (const sc of bucket.stockChanges) {
         if (EXCLUDED_CODES.has(sc.code)) continue;
@@ -4408,6 +4506,27 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
 // 建仓约束：第一份按买点正常择股买入；第二份必须在第一份建仓之后的交易日（≥ 隔 1 天）触发买点时买入，
 // 且必须是同一只股票（不重新择股）。
 const TWO_BUY_LEG_WEIGHT = 0.5;
+
+// 两次买入「不同板块」策略：取个股所属板块标识（自选股 monitor_stocks.json 的 blockName），
+// 未记录板块的股票统一按「其他」处理；按文件 mtime 懒加载映射并缓存，避免逐候选重复读盘
+const stockBlockFilePath = path.join(__dirname, '../data/monitor_stocks.json');
+let stockBlockCache = { mtimeMs: -1, map: new Map() };
+const getStockBlockName = (code) => {
+  try {
+    const mtimeMs = fs.statSync(stockBlockFilePath).mtimeMs;
+    if (mtimeMs !== stockBlockCache.mtimeMs) {
+      const map = new Map();
+      for (const s of getMonitorStocks() || []) {
+        if (s && s.code) map.set(s.code, s.blockName || '其他');
+      }
+      stockBlockCache = { mtimeMs, map };
+    }
+  } catch (e) {
+    // 读取失败：沿用上次映射（无映射时全部按「其他」）
+  }
+  return stockBlockCache.map.get(code) || '其他';
+};
+
 // 组装两次买入某一份仓位在成交流水上追加的字段（半仓权重、个股原始收益率、所属份数 1/2）
 const buildTwoBuyTradeExtra = (position) => ({
   twoBuy: true,
@@ -4491,7 +4610,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
     const replayStocks = await buildReplayStocksWithTline(campData, dateStr);
     const dateDisplay = campData.dateDisplay || dateStr;
     // 记录当日 EOD 信息（供后续日期选股使用）
-    dailyInfos.set(dateStr, extractDailyInfo(campData));
+    dailyInfos.set(dateStr, extractDailyInfo(campData, dateStr));
     // 记录回测期间出现过的全部自选股（供前端复制K线等使用）
     for (const bucket of timeBuckets) {
       for (const sc of bucket.stockChanges) {
@@ -4747,27 +4866,64 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
           }
         } else if (strategy.twoBuy === true && positions.length === 1 && positions[0].leg === 1 && dateStr > positions[0].buyDate) {
           // 两次买入策略：已持有第一份（半仓），买点再次触发 → 买入第二份 5 成
-          // 约束：① 必须与第一份同一只股票（不重新择股）；② 必须在第一份建仓之后的交易日（≥ 隔 1 天）买入；
-          //       ③ 补买同样过滤涨停（买入时点该股已涨停不可成交）→ 本次放弃、保持半仓等待下次买点
+          // 约束：① 必须在第一份建仓之后的交易日（≥ 隔 1 天）买入；② 补买同样过滤涨停（买入时点该股已涨停不可成交）；
+          //       ③ 普通两次买入系列第二份必须与第一份同一只股票（不重新择股）；
+          //          「不同板块」变体（diffBlock）第二份则在「板块与第一份不同」的候选中重新按 N 日涨幅最大择股
           const first = positions[0];
-          const heldSc = (bucket.stockChanges || []).find(s => s.code === first.code);
-          const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
-          const heldLimitUp = heldSc ? isLimitUpAtBuy(first.code, heldSc.changePct) : false;
-          if (secondPx != null && secondPx > 0 && !heldLimitUp) {
-            positions.push({
-              code: first.code,
-              stockName: first.stockName,
-              buyDate: dateStr,
-              buyDateDisplay: dateDisplay,
-              buyTime,
-              buyPrice: secondPx,
-              buyChange: heldSc.changePct != null ? parseFloat(Number(heldSc.changePct).toFixed(2)) : null,
-              metric: first.metric,
-              buyReason: `${gatedBuyInfo?.buyReason || first.buyReason}；买点第二次触发，买入第二份 5 成（同一股票 ${first.stockName}，${buyTime} 价 ${secondPx.toFixed(2)}）`,
-              buyChecks: annotateIndexGateChecksWithStock(gatedBuyInfo?.buyChecks || first.buyChecks, first.code, first.stockName),
-              emoQuickOut: strategy.emoQuickOut === true ? computeEmoQuickOutInfo(di + axisOffset, dateAxis) : null,
-              twoBuy: true, leg: 2, weight: TWO_BUY_LEG_WEIGHT,
-            });
+          if (strategy.diffBlock === true) {
+            // 两次买入不同板块：第二份在「所属板块（blockName）≠ 第一份板块」的候选中重新择股（N 日涨幅最大）
+            const firstBlock = getStockBlockName(first.code);
+            const restrictCodes = new Set(
+              (bucket.stockChanges || [])
+                .filter(s => s.lastPx != null && s.lastPx > 0 && getStockBlockName(s.code) !== firstBlock)
+                .map(s => s.code)
+            );
+            const secondPrevOneWordSet = await buildPrevOneWordBoardSet((bucket.stockChanges || []).map(s => s.code), dateStr);
+            const secondEmoCycSet = isCycleFilterStrategy(strategy)
+              ? await buildCounterCycSet((bucket.stockChanges || []).map(s => s.code), dateStr)
+              : null;
+            const secondPicked = restrictCodes.size > 0
+              ? pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, secondPrevOneWordSet, secondEmoCycSet, restrictCodes)
+              : null;
+            if (secondPicked) {
+              const secondBuyInfo = withResilienceGateInfo(gatedBuyInfo, secondPicked);
+              const sc2 = secondPicked.stock;
+              const secondPx = parseFloat(Number(sc2.lastPx).toFixed(2));
+              positions.push({
+                code: sc2.code,
+                stockName: sc2.name || sc2.code,
+                buyDate: dateStr,
+                buyDateDisplay: dateDisplay,
+                buyTime,
+                buyPrice: secondPx,
+                buyChange: sc2.changePct != null ? parseFloat(Number(sc2.changePct).toFixed(2)) : null,
+                metric: secondPicked.metric,
+                buyReason: `${secondBuyInfo.buyReason}；买点第二次触发，买入第二份 5 成（第一份 ${first.stockName}·${firstBlock} 板块，本份改选其他板块中 N 日涨幅最大的 ${sc2.name || sc2.code}·${getStockBlockName(sc2.code)} 板块，${buyTime} 价 ${secondPx.toFixed(2)}）`,
+                buyChecks: annotateIndexGateChecksWithStock(secondBuyInfo.buyChecks, sc2.code, sc2.name),
+                emoQuickOut: strategy.emoQuickOut === true ? computeEmoQuickOutInfo(di + axisOffset, dateAxis) : null,
+                twoBuy: true, leg: 2, weight: TWO_BUY_LEG_WEIGHT,
+              });
+            }
+          } else {
+            const heldSc = (bucket.stockChanges || []).find(s => s.code === first.code);
+            const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
+            const heldLimitUp = heldSc ? isLimitUpAtBuy(first.code, heldSc.changePct) : false;
+            if (secondPx != null && secondPx > 0 && !heldLimitUp) {
+              positions.push({
+                code: first.code,
+                stockName: first.stockName,
+                buyDate: dateStr,
+                buyDateDisplay: dateDisplay,
+                buyTime,
+                buyPrice: secondPx,
+                buyChange: heldSc.changePct != null ? parseFloat(Number(heldSc.changePct).toFixed(2)) : null,
+                metric: first.metric,
+                buyReason: `${gatedBuyInfo?.buyReason || first.buyReason}；买点第二次触发，买入第二份 5 成（同一股票 ${first.stockName}，${buyTime} 价 ${secondPx.toFixed(2)}）`,
+                buyChecks: annotateIndexGateChecksWithStock(gatedBuyInfo?.buyChecks || first.buyChecks, first.code, first.stockName),
+                emoQuickOut: strategy.emoQuickOut === true ? computeEmoQuickOutInfo(di + axisOffset, dateAxis) : null,
+                twoBuy: true, leg: 2, weight: TWO_BUY_LEG_WEIGHT,
+              });
+            }
           }
         }
       }
@@ -4931,7 +5087,7 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
     const replayStocks = await buildReplayStocksWithTline(campData, dateStr);
     const dateDisplay = campData.dateDisplay || dateStr;
     // 记录当日 EOD 信息（供后续日期选股使用，与策略无关）
-    dailyInfos.set(dateStr, extractDailyInfo(campData));
+    dailyInfos.set(dateStr, extractDailyInfo(campData, dateStr));
     // 记录回测期间出现过的全部自选股（供前端复制K线等使用）
     for (const bucket of timeBuckets) {
       for (const sc of bucket.stockChanges) {
@@ -5144,27 +5300,64 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
             }
           } else if (strategy.twoBuy === true && st.positions.length === 1 && st.positions[0].leg === 1 && dateStr > st.positions[0].buyDate) {
             // 两次买入策略：已持有第一份（半仓），买点再次触发 → 买入第二份 5 成
-            // 约束：① 必须与第一份同一只股票（不重新择股）；② 必须在第一份建仓之后的交易日（≥ 隔 1 天）买入；
-            //       ③ 补买同样过滤涨停（买入时点该股已涨停不可成交）→ 本次放弃、保持半仓等待下次买点
+            // 约束：① 必须在第一份建仓之后的交易日（≥ 隔 1 天）买入；② 补买同样过滤涨停（买入时点该股已涨停不可成交）；
+            //       ③ 普通两次买入系列第二份必须与第一份同一只股票（不重新择股）；
+            //          「不同板块」变体（diffBlock）第二份则在「板块与第一份不同」的候选中重新按 N 日涨幅最大择股
             const first = st.positions[0];
-            const heldSc = (bucket.stockChanges || []).find(s => s.code === first.code);
-            const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
-            const heldLimitUp = heldSc ? isLimitUpAtBuy(first.code, heldSc.changePct) : false;
-            if (secondPx != null && secondPx > 0 && !heldLimitUp) {
-              st.positions.push({
-                code: first.code,
-                stockName: first.stockName,
-                buyDate: dateStr,
-                buyDateDisplay: dateDisplay,
-                buyTime,
-                buyPrice: secondPx,
-                buyChange: heldSc.changePct != null ? parseFloat(Number(heldSc.changePct).toFixed(2)) : null,
-                metric: first.metric,
-                buyReason: `${gatedBuyInfo?.buyReason || first.buyReason}；买点第二次触发，买入第二份 5 成（同一股票 ${first.stockName}，${buyTime} 价 ${secondPx.toFixed(2)}）`,
-                buyChecks: annotateIndexGateChecksWithStock(gatedBuyInfo?.buyChecks || first.buyChecks, first.code, first.stockName),
-                emoQuickOut: strategy.emoQuickOut === true ? computeEmoQuickOutInfo(di + axisOffset, dateAxis) : null,
-                twoBuy: true, leg: 2, weight: TWO_BUY_LEG_WEIGHT,
-              });
+            if (strategy.diffBlock === true) {
+              // 两次买入不同板块：第二份在「所属板块（blockName）≠ 第一份板块」的候选中重新择股（N 日涨幅最大）
+              const firstBlock = getStockBlockName(first.code);
+              const restrictCodes = new Set(
+                (bucket.stockChanges || [])
+                  .filter(s => s.lastPx != null && s.lastPx > 0 && getStockBlockName(s.code) !== firstBlock)
+                  .map(s => s.code)
+              );
+              const secondPrevOneWordSet = await buildPrevOneWordBoardSet((bucket.stockChanges || []).map(s => s.code), dateStr);
+              const secondEmoCycSet = isCycleFilterStrategy(strategy)
+                ? await buildCounterCycSet((bucket.stockChanges || []).map(s => s.code), dateStr)
+                : null;
+              const secondPicked = restrictCodes.size > 0
+                ? pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, secondPrevOneWordSet, secondEmoCycSet, restrictCodes)
+                : null;
+              if (secondPicked) {
+                const secondBuyInfo = withResilienceGateInfo(gatedBuyInfo, secondPicked);
+                const sc2 = secondPicked.stock;
+                const secondPx = parseFloat(Number(sc2.lastPx).toFixed(2));
+                st.positions.push({
+                  code: sc2.code,
+                  stockName: sc2.name || sc2.code,
+                  buyDate: dateStr,
+                  buyDateDisplay: dateDisplay,
+                  buyTime,
+                  buyPrice: secondPx,
+                  buyChange: sc2.changePct != null ? parseFloat(Number(sc2.changePct).toFixed(2)) : null,
+                  metric: secondPicked.metric,
+                  buyReason: `${secondBuyInfo.buyReason}；买点第二次触发，买入第二份 5 成（第一份 ${first.stockName}·${firstBlock} 板块，本份改选其他板块中 N 日涨幅最大的 ${sc2.name || sc2.code}·${getStockBlockName(sc2.code)} 板块，${buyTime} 价 ${secondPx.toFixed(2)}）`,
+                  buyChecks: annotateIndexGateChecksWithStock(secondBuyInfo.buyChecks, sc2.code, sc2.name),
+                  emoQuickOut: strategy.emoQuickOut === true ? computeEmoQuickOutInfo(di + axisOffset, dateAxis) : null,
+                  twoBuy: true, leg: 2, weight: TWO_BUY_LEG_WEIGHT,
+                });
+              }
+            } else {
+              const heldSc = (bucket.stockChanges || []).find(s => s.code === first.code);
+              const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
+              const heldLimitUp = heldSc ? isLimitUpAtBuy(first.code, heldSc.changePct) : false;
+              if (secondPx != null && secondPx > 0 && !heldLimitUp) {
+                st.positions.push({
+                  code: first.code,
+                  stockName: first.stockName,
+                  buyDate: dateStr,
+                  buyDateDisplay: dateDisplay,
+                  buyTime,
+                  buyPrice: secondPx,
+                  buyChange: heldSc.changePct != null ? parseFloat(Number(heldSc.changePct).toFixed(2)) : null,
+                  metric: first.metric,
+                  buyReason: `${gatedBuyInfo?.buyReason || first.buyReason}；买点第二次触发，买入第二份 5 成（同一股票 ${first.stockName}，${buyTime} 价 ${secondPx.toFixed(2)}）`,
+                  buyChecks: annotateIndexGateChecksWithStock(gatedBuyInfo?.buyChecks || first.buyChecks, first.code, first.stockName),
+                  emoQuickOut: strategy.emoQuickOut === true ? computeEmoQuickOutInfo(di + axisOffset, dateAxis) : null,
+                  twoBuy: true, leg: 2, weight: TWO_BUY_LEG_WEIGHT,
+                });
+              }
             }
           }
         }

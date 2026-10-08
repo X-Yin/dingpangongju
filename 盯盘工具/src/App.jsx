@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Layout, Menu, Button, Modal, Badge, ColorPicker, Select, message, Tooltip } from 'antd';
+import { Layout, Menu, Button, Modal, ColorPicker, Select, message, Tooltip } from 'antd';
 import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, StockOutlined, AreaChartOutlined, FileTextOutlined, CalendarOutlined, BarChartOutlined, GlobalOutlined, BellOutlined, AlertOutlined, ThunderboltOutlined, BgColorsOutlined, CheckOutlined, WarningOutlined, MinusOutlined, HistoryOutlined, RobotOutlined, RocketOutlined, TrophyOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from './constant';
@@ -476,7 +476,6 @@ function App() {
   const [todayPlanModified, setTodayPlanModified] = useState(false);
   const [majorEventReminderVisible, setMajorEventReminderVisible] = useState(false);
   const [timerId, setTimerId] = useState(null);
-  const [jigouNewCount, setJigouNewCount] = useState(0);
   const [themePickerVisible, setThemePickerVisible] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(getInitialTheme);
   const [customColor, setCustomColor] = useState(() => {
@@ -608,35 +607,6 @@ function App() {
   const [personalFeelingDate, setPersonalFeelingDate] = useState('');
   const [personalFeelingSaving, setPersonalFeelingSaving] = useState(false);
   const personalFeelingVisibleRef = useRef(false);
-
-  // 轮询机构研报的新增数量，用于左侧菜单徽标
-  useEffect(() => {
-    const fetchNewCount = () => {
-      axios
-        .get(`http://${local_ip}:3000/get_jigou_reports_new`)
-        .then((res) => setJigouNewCount(res.data?.count || 0))
-        .catch(() => { });
-    };
-    fetchNewCount();
-
-    const timers = [];
-    const schedulePoll = (callback, delay) => {
-      const timer = setTimeout(() => {
-        if (!isAfterMarketClose()) {
-          callback();
-          schedulePoll(callback, delay);
-        }
-      }, delay);
-      timers.push(timer);
-      return timer;
-    };
-
-    schedulePoll(fetchNewCount, 30000);
-
-    return () => {
-      timers.forEach(clearTimeout);
-    };
-  }, []);
 
   useEffect(() => {
     const timers = [];
@@ -1120,18 +1090,6 @@ function App() {
       label: '市场调研',
     },
     {
-      key: '/jigou_reports',
-      icon: <BookOutlined />,
-      label: (
-        <span className="menu-label-with-badge">
-          机构研报
-          {jigouNewCount > 0 && location.pathname !== '/jigou_reports' && (
-            <Badge count={jigouNewCount} className="jigou-new-badge" offset={[6, -2]} />
-          )}
-        </span>
-      ),
-    },
-    {
       key: '/fupan',
       icon: <HistoryOutlined />,
       label: '复盘分析',
@@ -1174,9 +1132,6 @@ function App() {
           items={menuItems}
           onClick={({ key }) => {
             navigate(key);
-            if (key === '/jigou_reports') {
-              setJigouNewCount(0);
-            }
           }}
           className="app-menu"
         />

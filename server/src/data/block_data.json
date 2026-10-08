@@ -1170,5 +1170,31 @@
       "code": "sz301080",
       "change": -12.48
     }
+  ],
+  "染料": [
+    {
+      "name": "浙江龙盛",
+      "blockName": "染料",
+      "code": "sh600352",
+      "change": -1.91
+    },
+    {
+      "name": "闰土股份",
+      "blockName": "染料",
+      "code": "sz002440",
+      "change": -1.43
+    },
+    {
+      "name": "锦鸡股份",
+      "blockName": "染料",
+      "code": "sz300798",
+      "change": -3.25
+    },
+    {
+      "name": "亚邦股份",
+      "blockName": "染料",
+      "code": "sh603188",
+      "change": -6.67
+    }
   ]
 }
