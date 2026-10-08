@@ -2950,7 +2950,402 @@ export const THEME_PACKS = [
         sidebarRadius: '0px'
     },
 },
-
+{
+    id: 'nocturne-spatial-audio',
+    name: 'Nocturne 暗夜空间音频',
+    desc: 'Nocturne Dark Spatial Audio · 幽深森林暗绿背景 + 高阶半透明暗色玻璃卡片 + 薄荷霓光发光按钮 (Mint Glow) + 优雅斜体衬线大字',
+    source: '#uploaded-image-37',
+    tokens: {
+        pageBg: '#06140E', // 幽深森林暗绿背景[cite: 15]
+        fontFamily: "'Newsreader', 'EB Garamond', 'Playfair Display', Georgia, serif", // 典雅高阶衬线体[cite: 15]
+        numberFontFamily: "'Fira Code', 'SF Mono', monospace", // 声学测量/等宽控制字体[cite: 15]
+        cardBg: 'rgba(15, 38, 29, 0.65)', // 高阶半透明暗绿色玻璃卡片[cite: 15]
+        cardBorderColor: 'rgba(82, 234, 172, 0.25)', // 薄荷绿细边框[cite: 15]
+        cardBorderWidth: '1px',
+        cardRadius: '20px', // 润泽圆角卡片[cite: 15]
+        cardShadow: '0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.15)', // 暗夜沉降与顶光折射[cite: 15]
+        cardBackdropFilter: 'blur(24px) saturate(160%)', // 声波玻璃毛玻璃滤镜[cite: 15]
+        titleColor: '#FFFFFF', // 纯白大标题 (Your music, unfurled...)[cite: 15]
+        descColor: '#87A296', // 鼠尾草灰绿次要描述文本[cite: 15]
+        itemBg: 'rgba(20, 48, 37, 0.5)',
+        itemTitleColor: '#FFFFFF',
+        itemDescColor: '#87A296',
+        itemBorderColor: 'rgba(82, 234, 172, 0.2)',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '1px',
+        itemRadius: '16px',
+        upColor: '#FF4D6D', // 薄荷霓光高亮 (Start listening)[cite: 15]
+        downColor: '#36B088', // 深绿声波高亮[cite: 15]
+        btnBg: '#52EAAC', // 亮薄荷绿主按钮 (Start listening / Get started)[cite: 15]
+        btnColor: '#06140E', // 深绿按钮文字[cite: 15]
+        btnRadius: '999px', // 极致胶囊圆角[cite: 15]
+        btnBorderColor: 'transparent',
+        btnBorderStyle: 'none',
+        btnBorderWidth: '0px',
+        btnFontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+        btnShadow: '0 0 25px rgba(82, 234, 172, 0.4)', // 薄荷绿霓光发光外阴影[cite: 15]
+        tagBg: 'rgba(255, 255, 255, 0.08)', // 毛玻璃描边次级按钮 (Hear a demo)[cite: 15]
+        tagColor: '#FFFFFF',
+        tagFontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+        tagBorderColor: 'rgba(255, 255, 255, 0.2)', // 细白边框[cite: 15]
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '1px',
+        tagRadius: '999px',
+        // 特有 Nocturne 空间音频 Tokens
+        primaryAccent: '#52EAAC', // 主高亮色：薄荷荧光绿 (Mint Glow)[cite: 15]
+        cardPinkBg: 'rgba(220, 100, 140, 0.15)',
+        cardPinkColor: '#DC648C',
+        cardGreenBg: 'rgba(82, 234, 172, 0.15)', // 声场雷达网格点缀绿[cite: 15]
+        cardGreenColor: '#52EAAC',
+        cardPurpleBg: 'rgba(147, 112, 219, 0.15)',
+        cardPurpleColor: '#9370DB',
+        cardOrangeBg: 'rgba(235, 150, 90, 0.15)',
+        cardOrangeColor: '#EB965A',
+        navActiveBg: '#52EAAC',
+        navActiveColor: '#06140E',
+        navInactiveBg: 'transparent',
+        navInactiveColor: '#87A296',
+        calendarHighlightBg: '#52EAAC',
+        calendarHighlightColor: '#06140E',
+        schedulePurpleBg: 'rgba(147, 112, 219, 0.25)',
+        scheduleOrangeBg: 'rgba(235, 150, 90, 0.25)',
+        scheduleGreenBg: 'rgba(82, 234, 172, 0.25)',
+        iconActiveColor: '#52EAAC',
+        iconInactiveColor: '#365246',
+        sidebarBg: '#06140E',
+        sidebarRadius: '0px'
+    },
+},
+{
+    id: 'teal-modern-dashboard',
+    name: 'Teal Modern Dashboard 湖绿现代仪表盘',
+    desc: 'Teal Modern Dashboard · 柔和暖米白底色 + 清爽青绿/湖绿主色 + 极轻微弥散阴影纯白卡片 + 多维度数据指标与状态标签',
+    source: '#uploaded-image-38',
+    tokens: {
+        pageBg: '#F7F7F5', // 柔和暖米白桌面背景[cite: 7]
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif", // 中文现代无衬线体[cite: 7]
+        numberFontFamily: "monospace, -apple-system, sans-serif", // 数据图表与指标高亮等宽数字[cite: 7]
+        cardBg: '#FFFFFF', // 纯白高洁卡片[cite: 7]
+        cardBorderColor: 'rgba(0, 0, 0, 0.03)', // 极淡边界线[cite: 7]
+        cardBorderWidth: '1px',
+        cardRadius: '12px', // 现代化适度圆角[cite: 7]
+        cardShadow: '0 4px 16px rgba(0, 0, 0, 0.04)', // 柔和弥散沉降阴影[cite: 7]
+        cardBackdropFilter: 'none',
+        titleColor: '#262626', // 深黑灰标题[cite: 7]
+        descColor: '#8C8C8C', // 中灰色次要描述[cite: 7]
+        itemBg: '#FFFFFF',
+        itemTitleColor: '#262626',
+        itemDescColor: '#8C8C8C',
+        itemBorderColor: 'rgba(0, 0, 0, 0.05)',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '1px',
+        itemRadius: '10px',
+        upColor: '#E26857', // 湖绿增长高亮 (+12.5% / +22.1%)[cite: 7]
+        downColor: '#3EA299', // 暖红下降警示 (-0.4%)[cite: 7]
+        btnBg: '#3EA299', // 湖绿主操作按钮 (下载完整项目 / 近90天 / 新建项目)[cite: 7]
+        btnColor: '#FFFFFF',
+        btnRadius: '8px', // 适度圆角按钮[cite: 7]
+        btnBorderColor: 'transparent',
+        btnBorderStyle: 'none',
+        btnBorderWidth: '0px',
+        btnFontFamily: "-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif",
+        btnShadow: '0 4px 12px rgba(62, 162, 153, 0.25)', // 湖绿发光按钮阴影[cite: 7]
+        tagBg: '#EAF5F4', // 淡湖绿微光次级标签/选中态[cite: 7]
+        tagColor: '#3EA299',
+        tagFontFamily: "-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif",
+        tagBorderColor: 'transparent',
+        tagBorderStyle: 'none',
+        tagBorderWidth: '0px',
+        tagRadius: '6px',
+        // 特有 Teal Modern Dashboard 颜色 Tokens
+        primaryAccent: '#3EA299', // 主高亮色：清爽湖绿[cite: 7]
+        cardPinkBg: '#FDECEB', // 暖红警告底色 (张伟图标底)[cite: 7]
+        cardPinkColor: '#E26857',
+        cardGreenBg: '#EAF5F4', // 湖绿状态底色 (李明图标底)[cite: 7]
+        cardGreenColor: '#3EA299',
+        cardPurpleBg: '#FEF5E7', // 暖黄状态底色 (王芳图标底)[cite: 7]
+        cardPurpleColor: '#EAA858',
+        cardOrangeBg: '#FEF5E7', // 暖橘状态底色[cite: 7]
+        cardOrangeColor: '#EAA858',
+        navActiveBg: '#3EA299',
+        navActiveColor: '#FFFFFF',
+        navInactiveBg: 'transparent',
+        navInactiveColor: '#595959',
+        calendarHighlightBg: '#3EA299',
+        calendarHighlightColor: '#FFFFFF',
+        schedulePurpleBg: 'rgba(234, 168, 88, 0.15)',
+        scheduleOrangeBg: 'rgba(226, 104, 87, 0.15)',
+        scheduleGreenBg: 'rgba(62, 162, 153, 0.15)',
+        iconActiveColor: '#3EA299',
+        iconInactiveColor: '#BFBFBF',
+        sidebarBg: '#FFFFFF',
+        sidebarRadius: '0px'
+    },
+},
+{
+    id: 'dark-code-syntax',
+    name: 'Dark Code Syntax 极客代码语法',
+    desc: 'Dark Code Syntax · 深邃夜空蓝底色 + 高饱和代码语法高亮色盘 (紫色/天蓝/翡翠绿/暖黄/珊瑚粉) + 等宽终端字体与 "strict": true 极客微光框',
+    source: '#uploaded-image-39',
+    tokens: {
+        pageBg: '#0B0F19', // 深邃夜空蓝底色[cite: 6]
+        fontFamily: "'Fira Code', 'JetBrains Mono', 'SF Mono', Consolas, monospace", // 极客等宽代码体[cite: 6]
+        numberFontFamily: "'Fira Code', 'JetBrains Mono', monospace",
+        cardBg: '#121826', // 代码编辑器卡片底色[cite: 6]
+        cardBorderColor: 'rgba(255, 255, 255, 0.08)',
+        cardBorderWidth: '1px',
+        cardRadius: '12px', // 现代化适度圆角窗口[cite: 6]
+        cardShadow: '0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+        cardBackdropFilter: 'none',
+        titleColor: '#38BDF8', // 青天蓝高亮 (天蓝代码块)[cite: 6]
+        descColor: '#94A3B8', // 灰蓝次要注释文字[cite: 6]
+        itemBg: 'rgba(255, 255, 255, 0.03)',
+        itemTitleColor: '#A78BFA', // 亮紫色代码块[cite: 6]
+        itemDescColor: '#64748B',
+        itemBorderColor: 'rgba(255, 255, 255, 0.06)',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '1px',
+        itemRadius: '8px',
+        upColor: '#FF5A5F', // 翡翠绿 (Strict Mode 状态绿色/上升高亮)[cite: 6]
+        downColor: '#10B981', // 珊瑚粉红 (错误/下降警示红)[cite: 6]
+        btnBg: 'rgba(16, 185, 129, 0.12)', // 微光透明绿主按钮 ("strict": true)[cite: 6]
+        btnColor: '#10B981', // 翡翠绿文字[cite: 6]
+        btnRadius: '8px',
+        btnBorderColor: 'rgba(16, 185, 129, 0.4)', // 绿光细边框[cite: 6]
+        btnBorderStyle: 'solid',
+        btnBorderWidth: '1px',
+        btnFontFamily: "'Fira Code', 'JetBrains Mono', monospace",
+        btnShadow: '0 0 12px rgba(16, 185, 129, 0.25)', // 终端微光发光阴影[cite: 6]
+        tagBg: 'rgba(56, 189, 248, 0.12)',
+        tagColor: '#38BDF8',
+        tagFontFamily: "'Fira Code', 'JetBrains Mono', monospace",
+        tagBorderColor: 'rgba(56, 189, 248, 0.3)',
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '1px',
+        tagRadius: '6px',
+        // 特有 Dark Code Syntax 语法高亮色盘 Tokens
+        primaryAccent: '#38BDF8', // 主高亮色：天蓝色[cite: 6]
+        cardPinkBg: 'rgba(255, 90, 95, 0.15)', // 珊瑚粉色高亮块[cite: 6]
+        cardPinkColor: '#FF5A5F',
+        cardGreenBg: 'rgba(16, 185, 129, 0.15)', // 翡翠绿高亮块[cite: 6]
+        cardGreenColor: '#10B981',
+        cardPurpleBg: 'rgba(167, 139, 250, 0.15)', // 紫罗兰语法高亮块[cite: 6]
+        cardPurpleColor: '#A78BFA',
+        cardOrangeBg: 'rgba(251, 191, 36, 0.15)', // 琥珀黄语法高亮块[cite: 6]
+        cardOrangeColor: '#FBBF24',
+        navActiveBg: '#38BDF8',
+        navActiveColor: '#0B0F19',
+        navInactiveBg: 'transparent',
+        navInactiveColor: '#94A3B8',
+        calendarHighlightBg: '#10B981',
+        calendarHighlightColor: '#0B0F19',
+        schedulePurpleBg: 'rgba(167, 139, 250, 0.2)',
+        scheduleOrangeBg: 'rgba(251, 191, 36, 0.2)',
+        scheduleGreenBg: 'rgba(16, 185, 129, 0.2)',
+        iconActiveColor: '#10B981',
+        iconInactiveColor: '#475569',
+        sidebarBg: '#070A12',
+        sidebarRadius: '0px'
+    },
+},
+{
+    id: 'sunset-desert-horizon',
+    name: 'Sunset Desert Horizon 暮日沙漠向量',
+    desc: 'Sunset Desert Horizon · 薰衣草蓝至金黄落日天空渐变 + 赭石山峦沉降剪影 + 暖金沙丘水面倒影 + A 股红涨绿跌经典配色盘',
+    source: '#uploaded-image-40',
+    tokens: {
+        pageBg: 'linear-gradient(180deg, #9BB0FF 0%, #FFBD74 50%, #FFA033 100%)', // 天空薰衣草蓝至金黄落日渐变底色
+        fontFamily: "'JetBrains Mono'", // 优雅人文衬线体
+        numberFontFamily: "monospace, -apple-system, sans-serif",
+        cardBg: 'rgba(255, 253, 248, 0.85)', // 暖米白温润半透明卡片
+        cardBorderColor: 'rgba(255, 255, 255, 0.6)', // 柔光微白边框
+        cardBorderWidth: '1px',
+        cardRadius: '16px', // 温柔弧度圆角
+        cardShadow: '0 12px 32px rgba(122, 67, 40, 0.15)', // 沙漠赭石色温润下沉阴影
+        cardBackdropFilter: 'blur(16px)',
+        titleColor: '#4A2311', // 深赭石褐色大标题
+        descColor: '#8C5030', // 暖赤褐色次要描述
+        itemBg: 'rgba(255, 255, 255, 0.65)',
+        itemTitleColor: '#4A2311',
+        itemDescColor: '#8C5030',
+        itemBorderColor: 'rgba(255, 193, 116, 0.35)',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '1px',
+        itemRadius: '12px',
+        upColor: '#F53F3F', // A股标准：红涨 (高亮活力红)
+        downColor: '#00B578', // A股标准：绿跌 (翡翠绿色)
+        btnBg: 'linear-gradient(135deg, #FFB830 0%, #FF8819 100%)', // 暖阳金橙渐变按钮
+        btnColor: '#FFFFFF',
+        btnRadius: '12px',
+        btnBorderColor: 'transparent',
+        btnBorderStyle: 'none',
+        btnBorderWidth: '0px',
+        btnFontFamily: "'Georgia', 'Noto Serif SC', sans-serif",
+        btnShadow: '0 6px 18px rgba(255, 136, 25, 0.35)', // 阳光微光暖色阴影
+        tagBg: 'rgba(122, 67, 40, 0.1)', // 赭石描边次级标签
+        tagColor: '#602C14',
+        tagFontFamily: "'Georgia', sans-serif",
+        tagBorderColor: 'rgba(122, 67, 40, 0.25)',
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '1px',
+        tagRadius: '999px',
+        // 特有 Sunset Horizon 向量艺术色盘 Tokens
+        primaryAccent: '#FF8819', // 主高亮色：落日暖橙
+        cardPinkBg: 'rgba(245, 63, 63, 0.12)', // A股红涨警告/高亮块
+        cardPinkColor: '#F53F3F',
+        cardGreenBg: 'rgba(0, 181, 120, 0.12)', // A股绿跌/安全块
+        cardGreenColor: '#00B578',
+        cardPurpleBg: 'rgba(155, 176, 255, 0.25)', // 薰衣草蓝块
+        cardPurpleColor: '#4D62B3',
+        cardOrangeBg: 'rgba(255, 160, 51, 0.2)', // 沙丘金黄块
+        cardOrangeColor: '#C45E00',
+        navActiveBg: '#FF8819',
+        navActiveColor: '#FFFFFF',
+        navInactiveBg: 'transparent',
+        navInactiveColor: '#7A4328',
+        calendarHighlightBg: '#F53F3F', // A股红高亮
+        calendarHighlightColor: '#FFFFFF',
+        schedulePurpleBg: 'rgba(155, 176, 255, 0.25)',
+        scheduleOrangeBg: 'rgba(255, 160, 51, 0.2)',
+        scheduleGreenBg: 'rgba(0, 181, 120, 0.2)',
+        iconActiveColor: '#F53F3F',
+        iconInactiveColor: '#A67C65',
+        sidebarBg: '#FFA033',
+        sidebarRadius: '0px'
+    },
+},
+{
+    id: 'gourmet-recipe-salmon',
+    name: 'Gourmet Recipe 柔和亮采食谱',
+    desc: 'Gourmet Recipe Banner · 浅柔暖杏至温润粉桃明亮渐变背景 + 深赭色高对比度典雅文字 + 纯白高亮毛玻璃卡片 + A 股红涨绿跌经典配色盘',
+    source: '#uploaded-image-41',
+    tokens: {
+        pageBg: 'linear-gradient(135deg, #FFF0E6 0%, #FFE0E5 100%)', // 显著调浅的暖杏至柔粉渐变背景
+        fontFamily: "'Playfair Display', 'DM Serif Display', 'Noto Serif SC', Georgia, serif", // 典雅美食衬线体
+        numberFontFamily: "'SF Pro Display', -apple-system, sans-serif",
+        cardBg: 'rgba(255, 255, 255, 0.75)', // 提高不透明度的半透明纯白毛玻璃卡片
+        cardBorderColor: 'rgba(255, 255, 255, 0.9)', // 亮白微光边缘
+        cardBorderWidth: '1px',
+        cardRadius: '20px', // 大圆角优雅卡片
+        cardShadow: '0 12px 32px rgba(220, 30, 65, 0.08)', // 柔和温润沉降阴影
+        cardBackdropFilter: 'blur(16px)',
+        titleColor: '#2D150D', // 调整为高对比深赭褐色（解决文本清晰度问题）
+        descColor: '#6B4337', // 暖褐色高可读性描述文本
+        itemBg: 'rgba(255, 255, 255, 0.85)',
+        itemTitleColor: '#2D150D',
+        itemDescColor: '#6B4337',
+        itemBorderColor: 'rgba(255, 123, 57, 0.2)',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '1px',
+        itemRadius: '12px',
+        upColor: '#F53F3F', // A股标准：红涨 (高亮珊瑚红)
+        downColor: '#00B578', // A股标准：绿跌 (芦笋清翠绿)
+        btnBg: 'linear-gradient(135deg, #FF6B35 0%, #FF2E55 100%)', // 高醒目暖红橙渐变主按钮
+        btnColor: '#FFFFFF', // 纯白高对比按钮文字
+        btnRadius: '999px', // 胶囊圆角
+        btnBorderColor: 'transparent',
+        btnBorderStyle: 'none',
+        btnBorderWidth: '0px',
+        btnFontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+        btnShadow: '0 8px 20px rgba(255, 46, 85, 0.28)', // 鲜活红橙阴影
+        tagBg: 'rgba(255, 107, 53, 0.12)', // 暖橙微光标签底色
+        tagColor: '#D9381E', // 醒目红橙标签文字
+        tagFontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+        tagBorderColor: 'rgba(255, 107, 53, 0.25)', // 柔和描边
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '1px',
+        tagRadius: '999px',
+        // 特有 Gourmet Recipe 浅色调色盘 Tokens
+        primaryAccent: '#FF6B35', // 主高亮色：鲜活暖橙
+        cardPinkBg: 'rgba(245, 63, 63, 0.12)', // A股红涨警告/高亮块
+        cardPinkColor: '#F53F3F',
+        cardGreenBg: 'rgba(0, 181, 120, 0.12)', // A股绿跌/芦笋绿块
+        cardGreenColor: '#00B578',
+        cardPurpleBg: 'rgba(255, 180, 0, 0.15)', // 柠檬暖黄块
+        cardPurpleColor: '#B87A00',
+        cardOrangeBg: 'rgba(255, 107, 53, 0.15)', // 三文鱼暖橙块
+        cardOrangeColor: '#D9381E',
+        navActiveBg: '#FF2E55',
+        navActiveColor: '#FFFFFF',
+        navInactiveBg: 'transparent',
+        navInactiveColor: '#6B4337',
+        calendarHighlightBg: '#F53F3F', // A股红高亮
+        calendarHighlightColor: '#FFFFFF',
+        schedulePurpleBg: 'rgba(255, 180, 0, 0.2)',
+        scheduleOrangeBg: 'rgba(255, 107, 53, 0.2)',
+        scheduleGreenBg: 'rgba(0, 181, 120, 0.2)',
+        iconActiveColor: '#FF2E55',
+        iconInactiveColor: '#A88276',
+        sidebarBg: '#FFF0E6',
+        sidebarRadius: '0px'
+    },
+},
+{
+    id: 'elite-nft-marketplace',
+    name: 'Elite NFT 幻彩暗黑 Web3 交易平台',
+    desc: 'Elite NFT Marketplace · 深邃夜空蓝紫弥散光背景 + 霓虹洋红与电光青蓝高亮标题 + 桃红渐变胶囊按钮与极高透明度毛玻璃卡片 + A 股红涨绿跌经典配色盘',
+    source: '#uploaded-image-45',
+    tokens: {
+        pageBg: 'radial-gradient(circle at 75% 25%, #4C1D95 0%, #1E1B4B 45%, #0A071B 100%)', // 暗夜蓝紫至电光紫弥散光背景[cite: 5]
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Inter', 'PingFang SC', sans-serif", // 现代 Web3 无衬线体[cite: 5]
+        numberFontFamily: "-apple-system, sans-serif", // 数字与币值高亮等宽字体[cite: 5]
+        cardBg: 'rgba(255, 255, 255, 0.06)', // 通透毛玻璃浮层卡片[cite: 5]
+        cardBorderColor: 'rgba(255, 255, 255, 0.15)', // 亮白微光细描边[cite: 5]
+        cardBorderWidth: '1px',
+        cardRadius: '16px', // 现代卡片大圆角[cite: 5]
+        cardShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(236, 72, 153, 0.15)', // 暗黑沉降阴影与洋红霓虹弥散光[cite: 5]
+        cardBackdropFilter: 'blur(20px)', // 毛玻璃模糊滤镜[cite: 5]
+        titleColor: '#FFFFFF', // 纯白高醒目标题[cite: 5]
+        descColor: '#94A3B8', // 鼠尾草冷灰描述文字[cite: 5]
+        itemBg: 'rgba(255, 255, 255, 0.05)',
+        itemTitleColor: '#FFFFFF',
+        itemDescColor: '#94A3B8',
+        itemBorderColor: 'rgba(255, 255, 255, 0.1)',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '1px',
+        itemRadius: '12px',
+        upColor: '#F53F3F', // A股标准：红涨 (活力红)
+        downColor: '#00B578', // A股标准：绿跌 (翡翠绿，对应青绿 NFT 高亮色)[cite: 5]
+        btnBg: 'linear-gradient(90deg, #FF1493 0%, #FF007A 100%)', // 霓虹洋红渐变主按钮 (Explore / Connect Wallet)[cite: 5]
+        btnColor: '#FFFFFF', // 纯白高对比按钮文本[cite: 5]
+        btnRadius: '999px', // 胶囊圆角[cite: 5]
+        btnBorderColor: 'transparent',
+        btnBorderStyle: 'none',
+        btnBorderWidth: '0px',
+        btnFontFamily: "-apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', sans-serif",
+        btnShadow: '0 0 25px rgba(255, 20, 147, 0.45)', // 荧光桃红发光阴影[cite: 5]
+        tagBg: 'rgba(255, 255, 255, 0.08)', // 半透明暗紫次级按钮 (Create / 竞拍状态)[cite: 5]
+        tagColor: '#FFFFFF',
+        tagFontFamily: "-apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', sans-serif",
+        tagBorderColor: 'rgba(255, 255, 255, 0.2)', // 柔和描边[cite: 5]
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '1px',
+        tagRadius: '999px',
+        // 特有 Elite NFT 幻彩 Web3 色盘 Tokens
+        primaryAccent: '#FF1493', // 主高亮色：电光桃红[cite: 5]
+        cardPinkBg: 'rgba(245, 63, 63, 0.15)', // A股红涨警告/高亮块
+        cardPinkColor: '#F53F3F',
+        cardGreenBg: 'rgba(0, 181, 120, 0.15)', // A股绿跌/青绿高亮块 (NFT Items)[cite: 5]
+        cardGreenColor: '#00B578',
+        cardPurpleBg: 'rgba(168, 85, 247, 0.2)', // 极客魅紫高亮块[cite: 5]
+        cardPurpleColor: '#C084FC',
+        cardOrangeBg: 'rgba(255, 20, 147, 0.2)', // 霓虹洋红高亮块[cite: 5]
+        cardOrangeColor: '#FF1493',
+        navActiveBg: 'transparent',
+        navActiveColor: '#FF1493', // 导航激活项：洋红色[cite: 5]
+        navInactiveBg: 'transparent',
+        navInactiveColor: 'rgba(255, 255, 255, 0.7)',
+        calendarHighlightBg: '#FF1493',
+        calendarHighlightColor: '#FFFFFF',
+        schedulePurpleBg: 'rgba(168, 85, 247, 0.25)',
+        scheduleOrangeBg: 'rgba(255, 20, 147, 0.25)',
+        scheduleGreenBg: 'rgba(0, 181, 120, 0.25)',
+        iconActiveColor: '#FF1493', // 激活图标颜色：荧光桃红[cite: 5]
+        iconInactiveColor: 'rgba(255, 255, 255, 0.5)',
+        sidebarBg: '#0A071B',
+        sidebarRadius: '0px'
+    },
+}
 ];
 
 // 根据 id 获取主题包；'' / undefined / 'default' 返回 null（默认样式）

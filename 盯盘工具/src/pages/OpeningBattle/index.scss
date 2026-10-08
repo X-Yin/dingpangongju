@@ -199,6 +199,16 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   text-overflow: ellipsis;
 }
 
+// 可点击的股票名称（打开 K 线弹窗）
+.ob-stock-name-clickable {
+  cursor: pointer;
+
+  &:hover {
+    color: #1677ff;
+    text-decoration: underline;
+  }
+}
+
 .ob-change-cell {
   text-align: right;
   font-variant-numeric: tabular-nums;

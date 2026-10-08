@@ -11,6 +11,7 @@ import { isAfterMarketClose } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
 import { getThemeColor } from '../../utils/theme';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
+import StockKLineModal from '../../components/StockKLineModal';
 import './index.scss';
 
 // 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
@@ -862,6 +863,9 @@ const slopeTurnText = (gate) => {
 
 const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
   const [data, setData] = useState(null);
+  // 点击股票名称打开 K 线弹窗
+  const [selectedStock, setSelectedStock] = useState(null);
+  const [klineVisible, setKlineVisible] = useState(false);
   const markets = data?.markets || {};
   const cybMainList = markets.cybMain || [];
   const starList = markets.star || [];
@@ -969,7 +973,11 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
               <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
                 <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
                 <span className="ob-gainer-name-cell">
-                  <span className="ob-stock-name">{s.stockName}</span>
+                  <span
+                    className="ob-stock-name ob-stock-name-clickable"
+                    title="点击查看K线"
+                    onClick={() => { setSelectedStock(s); setKlineVisible(true); }}
+                  >{s.stockName}</span>
                   <span className={`ob-gainer-market ${s.isSh688 ? 'star' : 'cyb'}`}>{s.isSh688 ? '科创' : '创业/主板'}</span>
                   {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
                   {isPick && <span className="ob-gainer-buyflag">{buyPointHit ? '买点触发' : '买点候选'}</span>}
@@ -988,6 +996,13 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
           })}
         </div>
       </div>
+
+      <StockKLineModal
+        visible={klineVisible}
+        onCancel={() => setKlineVisible(false)}
+        code={selectedStock?.code}
+        stockInfo={{ name: selectedStock?.stockName, change: selectedStock?.change }}
+      />
     </div>
   );
 };
@@ -1056,18 +1071,11 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
 
   // 买点诊断自动轮询调度：
   // 1. 首次挂载无条件立即执行一次（非交易时间也基于最近交易日数据展示诊断结果）
-  // 2. 交易时段强制对齐 5min 整倍数执行（9:35, 9:40, 9:45 ... 13:05, 13:10 ...）
-  // 3. 开盘宽限窗口（9:30:00-9:34:59，不足 5min）：保持每 10 秒执行一次
+  // 2. 交易时段严格只在 5min 整倍数分钟执行（9:30, 9:35, 9:40, 9:45 ... 13:05, 13:10 ...），其余时间一律不执行
   useEffect(() => {
     const timers = [];
     let stopped = false;
     run(); // 首次立即执行
-
-    // 是否处于开盘宽限窗口（9:30:00 - 9:34:59）
-    const isInOpeningGraceWindow = (d) => {
-      const minutes = d.hour() * 60 + d.minute();
-      return minutes >= 9 * 60 + 30 && minutes < 9 * 60 + 35;
-    };
 
     const scheduleNext = (immediateAllowed) => {
       if (stopped) return;
@@ -1075,23 +1083,17 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
       if (isAfterMarketClose()) return; // 收盘/周末停止轮询
 
       let delay;
-      if (isInOpeningGraceWindow(now)) {
-        // 开盘初期每 10 秒一次，但最后一次不越过 9:35:00（由整倍数逻辑接管）
-        const openingEnd = now.hour(9).minute(35).second(0).millisecond(0);
-        delay = Math.min(10 * 1000, Math.max(openingEnd.diff(now), 0));
+      const minute = now.minute();
+      const second = now.second() + now.millisecond() / 1000;
+      if (immediateAllowed && minute % 5 === 0 && second < 30) {
+        delay = 0; // 刚进入 5min 整倍数分钟的前 30 秒，立即执行
       } else {
-        const minute = now.minute();
-        const second = now.second() + now.millisecond() / 1000;
-        if (immediateAllowed && minute % 5 === 0 && second < 30) {
-          delay = 0; // 刚进入 5min 整倍数分钟的前 30 秒，立即执行
-        } else {
-          const nextMinute = (Math.floor(minute / 5) + 1) * 5;
-          const next = (nextMinute >= 60
-            ? now.add(1, 'hour').minute(nextMinute - 60)
-            : now.minute(nextMinute)
-          ).second(0).millisecond(0);
-          delay = Math.max(next.diff(now), 0);
-        }
+        const nextMinute = (Math.floor(minute / 5) + 1) * 5;
+        const next = (nextMinute >= 60
+          ? now.add(1, 'hour').minute(nextMinute - 60)
+          : now.minute(nextMinute)
+        ).second(0).millisecond(0);
+        delay = Math.max(next.diff(now), 0);
       }
 
       const timer = setTimeout(() => {

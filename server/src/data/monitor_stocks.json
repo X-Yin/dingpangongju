@@ -788,5 +788,14 @@
     "riskScore": " 7",
     "isTech": true,
     "addedAt": "2026-10-08 09:32:05"
+  },
+  {
+    "code": "sh603002",
+    "name": "宏昌电子",
+    "isImportant": false,
+    "blockName": "树脂",
+    "riskScore": " 8",
+    "isTech": true,
+    "addedAt": "2026-10-08 12:23:27"
   }
 ]

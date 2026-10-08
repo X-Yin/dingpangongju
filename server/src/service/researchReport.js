@@ -174,8 +174,24 @@ const deleteItemRecursively = (items, id) => {
   }
 };
 
+// 列表接口为每个研报额外附带可检索文本（标题 + 正文，统一转小写），
+// 供前端搜索时一并匹配正文内容（如按股票名搜索，正文中提及该股票的研报也会命中）
+const attachSearchText = (items) => {
+  if (!Array.isArray(items)) return items;
+  return items.map(item => {
+    const next = { ...item };
+    if (item.type === 'report') {
+      next.searchText = `${String(item.name || '')}\n${getReportContent(item.id) || ''}`.toLowerCase();
+    }
+    if (item.children && item.children.length > 0) {
+      next.children = attachSearchText(item.children);
+    }
+    return next;
+  });
+};
+
 const getResearchReports = () => {
-  return getMenu();
+  return attachSearchText(getMenu());
 };
 
 const getResearchReportById = (id) => {

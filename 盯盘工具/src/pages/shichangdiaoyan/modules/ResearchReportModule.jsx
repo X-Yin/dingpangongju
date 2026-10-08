@@ -204,7 +204,9 @@ const ResearchReportModule = () => {
 
         if (keyword.trim()) {
           const lowerKeyword = keyword.toLowerCase();
-          match = item.name.toLowerCase().includes(lowerKeyword);
+          // 标题命中即可；研报还需匹配正文（searchText = 标题 + 正文，已由接口侧统一转小写）
+          match = item.name.toLowerCase().includes(lowerKeyword)
+            || (item.type === 'report' && !!item.searchText && item.searchText.includes(lowerKeyword));
         }
 
         if (onlyImportant) {

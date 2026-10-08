@@ -481,19 +481,12 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   }, []);
 
   // 买点诊断自动轮询调度：
-  // 1. 强制对齐 5min 整倍数执行（9:35, 9:40, 9:45 ... 13:05, 13:10 ...）；
+  // 1. 严格只在 5min 整倍数分钟执行（9:30, 9:35, 9:40, 9:45 ... 13:05, 13:10 ...），其余时间一律不执行；
   //    页面在整倍数分钟的前 30 秒内加载时立即补跑一次，之后严格对齐下一个整倍数
-  // 2. 开盘宽限窗口（9:30:00-9:34:59，不足 5min）：保持每 10 秒执行一次，
-  //    配合后端"开盘至当前累计净流入"判定，开盘初期即可触发买点诊断
+  // 2. 午休（11:30-13:00）暂停，13:00 恢复
   useEffect(() => {
     const timers = [];
     let stopped = false;
-
-    // 是否处于开盘宽限窗口（9:30:00 - 9:34:59）
-    const isInOpeningGraceWindow = (d) => {
-      const minutes = d.hour() * 60 + d.minute();
-      return minutes >= 9 * 60 + 30 && minutes < 9 * 60 + 35;
-    };
 
     const scheduleNext = (immediateAllowed) => {
       if (stopped) return;
@@ -513,23 +506,17 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       }
 
       let delay;
-      if (isInOpeningGraceWindow(now)) {
-        // 开盘初期每 10 秒一次，但最后一次不越过 9:35:00（由整倍数逻辑接管）
-        const openingEnd = now.hour(9).minute(35).second(0).millisecond(0);
-        delay = Math.min(10 * 1000, Math.max(openingEnd.diff(now), 0));
+      const minute = now.minute();
+      const second = now.second() + now.millisecond() / 1000;
+      if (immediateAllowed && minute % 5 === 0 && second < 30) {
+        delay = 0; // 刚进入 5min 整倍数分钟的前 30 秒，立即执行
       } else {
-        const minute = now.minute();
-        const second = now.second() + now.millisecond() / 1000;
-        if (immediateAllowed && minute % 5 === 0 && second < 30) {
-          delay = 0; // 刚进入 5min 整倍数分钟的前 30 秒，立即执行
-        } else {
-          const nextMinute = (Math.floor(minute / 5) + 1) * 5;
-          const next = (nextMinute >= 60
-            ? now.add(1, 'hour').minute(nextMinute - 60)
-            : now.minute(nextMinute)
-          ).second(0).millisecond(0);
-          delay = Math.max(next.diff(now), 0);
-        }
+        const nextMinute = (Math.floor(minute / 5) + 1) * 5;
+        const next = (nextMinute >= 60
+          ? now.add(1, 'hour').minute(nextMinute - 60)
+          : now.minute(nextMinute)
+        ).second(0).millisecond(0);
+        delay = Math.max(next.diff(now), 0);
       }
 
       const timer = setTimeout(() => {

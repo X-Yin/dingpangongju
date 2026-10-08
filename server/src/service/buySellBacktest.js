@@ -70,10 +70,16 @@ const TECH_TOP3_BLOCK_DESC = (n) => `与「${n}日涨幅最大&三日情绪-60�
 // 买点首次触发先买入 5 成，之后任意一次买点再次触发补入剩余 5 成（同一天后续桶 / 次日 / 更晚均可，不限时间窗口）；
 // 第二份仓位固定加仓首次建仓的同一只股票，不按 N 日涨幅重新择股；补买同样过滤涨停（买入时点已涨停不可成交），
 // 该股已涨停时本次放弃补买、保持半仓，等待下一次买点触发且未涨停时再补入剩余 5 成。
+// 门禁：第一份仓位仍受买入时段上限 13:30 限制（仅 9:30 – 11:30 与 13:00 – 13:30 之间首次触发才可建仓）；
+// 同一交易日内两次买入须至少相隔 30 分钟（如首次 10:00 买入，最早 10:30 才可补第二份），跨日补买不受间隔限制；
+// 第二份仓位不受 13:30 上限限制、可随时补买。
 // 成本 = 两次买入价之和 ÷ 2（仅买入第一份时即首次买入价），跌破成本线 -4% 阈值 = 平均成本 × 0.96；
 // 卖点沿用通用 7 条件，并叠加「快进快出」能力（emoQuickOut）；仅买入第一份（半仓）即触发卖点时只卖这 5 成、收益按半仓折算（个股收益率 × 0.5）；
-// 两份均已买入（满仓）时以平均成本统一计算收益（权重 1）。选股口径与「N日涨幅最大」完全一致。
-const TWO_BUY_DESC = (n) => `买点首次触发时先买入 5 成仓位，随后等待买点第二次触发再补入剩余 5 成（第二次触发可在同一天后续桶、次日或更晚，不设时间窗口上限；补买固定买入首次建仓的同一只股票，不按 N 日涨幅重新择股；补买同样过滤涨停——买入时点该股已涨停（主板>9.5%、创业/科创>19%）不可成交，本次放弃补买、保持半仓，等待下一次买点触发且未涨停时再补入）；持仓成本 = 两次买入价之和 ÷ 2（仅买入第一份时即首次买入价），跌破成本线 -4% 止损阈值 = 平均成本 × 0.96（本策略专属，高于常规 -2%）；卖点沿用通用 7 条件（均线破位 / 高位放量大阴线 / 科技情绪退潮 / 抗分歧弱势 / 连续三日抗分歧 / 跌破买点前低 / 跌破成本线-4%）并叠加「快进快出」能力——买入日上一交易日科技情绪 3 日 EMA < -60（或上两交易日当日科技情绪均处 -30~20 区间且回升）时为快进快出持仓，次日 10:00 强制卖出、强卖当日禁止二次买入，且盘中跌破成本线 -4% 先到先卖止损；若仅买入第一份（半仓）即触发卖点，仅卖出该 5 成仓位，收益按半仓折算（个股实际收益率 × 0.5 计入账户）；两份均已买入（满仓）时以平均成本统一计算收益（权重 1）。选股口径与「${n}日涨幅最大」完全一致：买点触发时从全量自选科技股中买入最近 ${n} 个交易日涨幅之和最大的一只；跨指数双门禁、全局最低抗分歧门槛 ≥ 9、顺/逆周期过滤照常生效`;
+// 两份均已买入（满仓）时以平均成本统一计算收益（权重 1）。
+// 跨日补买 T+1 拆分（2026-10-08 用户新增）：第二份与第一份不在同一天、且第二份买入当日即触发卖点时，
+// 第二份当日买入不可卖 → 仅先卖出第一份（半仓）；第二份顺延至次一交易日按「开盘后逐分钟持续拉升、首次回落即卖」了结。
+// 两腿分别按各自买入价计算盈亏（各半仓，合计 = 两腿收益率之和）。选股口径与「N日涨幅最大」完全一致。
+const TWO_BUY_DESC = (n) => `买点首次触发时先买入 5 成仓位，随后等待买点第二次触发再补入剩余 5 成（第二次触发可在同一天后续桶、次日或更晚，不设时间窗口上限；补买固定买入首次建仓的同一只股票，不按 N 日涨幅重新择股；补买同样过滤涨停——买入时点该股已涨停（主板>9.5%、创业/科创>19%）不可成交，本次放弃补买、保持半仓，等待下一次买点触发且未涨停时再补入）；门禁：第一份仓位仅限 9:30 – 11:30 与 13:00 – 13:30 之间首次触发时建仓（13:30 后不再新建第一份），且同一交易日内两次买入须至少相隔 30 分钟（如首次 10:00 买入，最早 10:30 才可补第二份；跨日补买不受间隔限制），第二份仓位不受 13:30 上限限制、可随时补买；持仓成本 = 两次买入价之和 ÷ 2（仅买入第一份时即首次买入价），跌破成本线 -4% 止损阈值 = 平均成本 × 0.96（本策略专属，高于常规 -2%）；卖点沿用通用 7 条件（均线破位 / 高位放量大阴线 / 科技情绪退潮 / 抗分歧弱势 / 连续三日抗分歧 / 跌破买点前低 / 跌破成本线-4%）并叠加「快进快出」能力——买入日上一交易日科技情绪 3 日 EMA < -60（或上两交易日当日科技情绪均处 -30~20 区间且回升）时为快进快出持仓，次日 10:00 强制卖出、强卖当日禁止二次买入，且盘中跌破成本线 -4% 先到先卖止损；若仅买入第一份（半仓）即触发卖点，仅卖出该 5 成仓位，收益按半仓折算（个股实际收益率 × 0.5 计入账户）；两份均已买入（满仓）时以平均成本统一计算收益（权重 1）；跨日补买（第二份与第一份不在同一天）当日若触发卖点，第二份受 T+1 限制当日不可卖出，仅先卖出第一份（半仓），第二份顺延至次一交易日按「开盘后逐分钟持续拉升、首次回落即卖」了结，两腿分别按各自买入价计算盈亏（各半仓，收益合计 = 两腿实际收益率之和）。选股口径与「${n}日涨幅最大」完全一致：买点触发时从全量自选科技股中买入最近 ${n} 个交易日涨幅之和最大的一只；跨指数双门禁、全局最低抗分歧门槛 ≥ 9、顺/逆周期过滤照常生效`;
 
 // 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
 const STRATEGIES = {
@@ -209,6 +215,7 @@ const GLOBAL_RESILIENCE_MIN = 9;
 // 买入时段门禁（所有策略通用）：仅允许 9:30 – 11:30 和 13:00 – 13:30 之间的买点触发买入，
 // 13:30 之后即使满足所有买点条件也不执行买入；bucket.minute 为数字分钟，
 // 如 930=09:30，1130=11:30，1300=13:00，1330=13:30，1455=14:55
+// 例外：两次买入策略的第二份仓位（补买）不受此上限限制，可随时补买（见 twoBuyIntervalSatisfied 注释）
 const BUY_TIME_MAX_MINUTE = 1330;
 
 // 三日情绪冰点系列统一追加：买入环境门禁说明（触发日跟踪指数满足其一才可买，见 ensureEmo3DayGates）
@@ -4402,6 +4409,22 @@ const calcTwoBuyAvgPrice = (prices) => {
   if (valid.length === 0) return null;
   return parseFloat((valid.reduce((s, p) => s + p, 0) / valid.length).toFixed(2));
 };
+// 两次买入策略：同一交易日内的两次买入须至少相隔 30 分钟（如首次 10:00 买入，最早 10:30 才可补第二份）；
+// 首份仓位仍受买入时段门禁（≤13:30）限制，第二份仓位不受此上限限制、可随时补买
+const TWO_BUY_MIN_INTERVAL_MIN = 30;
+const hhmmToMinuteNum = (t) => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(t || '').trim());
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+};
+// 校验两次买入间隔是否满足 ≥ 30 分钟：同一交易日按 HH:MM 计算，跨日补买直接放行（间隔必然超过 30 分钟）
+const twoBuyIntervalSatisfied = (firstDate, firstTime, secondDate, secondTime) => {
+  if (String(firstDate) !== String(secondDate)) return true;
+  const a = hhmmToMinuteNum(firstTime);
+  const b = hhmmToMinuteNum(secondTime);
+  if (a == null || b == null) return false;
+  return b - a >= TWO_BUY_MIN_INTERVAL_MIN;
+};
 // 组装两次买入交易在原有成交流水上追加的字段（半仓折算收益率、平均成本、两笔买入明细）
 const buildTwoBuyTradeExtra = (position) => {
   const weight = position?.weight ?? TWO_BUY_FIRST_WEIGHT;
@@ -4415,6 +4438,144 @@ const buildTwoBuyTradeExtra = (position) => {
     buyDates: [...(position?.buyDates || [])],
     secondBuy: position?.secondBuy || null,
   };
+};
+// 两次买入时间线一致性（2026-10-08 用户要求）：当卖点被归因到早于当日最近一笔加仓的时间时，
+// 说明卖出发生时该加仓尚未发生（否则会出现"卖出时间早于买入"的矛盾）→ 撤销该笔加仓，
+// 按"仅第一份（半仓）"卖出；随后用该笔被撤销的买入在同一买点作为新的第一份重新建仓
+//（同一买点选股口径一致，故选股结果与当时一致）。
+// 返回 { rolledBack, secondBuy }；撤销后 position.buyPrice 即为第一份成本。
+const rollbackTwoBuyBuyAfterSellTime = (position, dateStr, sellDisplayTime) => {
+  if (!position || position.twoBuy !== true) return { rolledBack: false };
+  const dates = position.buyDates || [];
+  if (dates.length < 2) return { rolledBack: false };
+  const lastIdx = dates.length - 1;
+  if (String(dates[lastIdx]) !== String(dateStr)) return { rolledBack: false };
+  const sellMin = hhmmToMinuteNum(sellDisplayTime);
+  const lastBuyMin = hhmmToMinuteNum(position.buyTimes?.[lastIdx]);
+  if (sellMin == null || lastBuyMin == null || sellMin >= lastBuyMin) return { rolledBack: false };
+  const secondBuy = position.secondBuy || {
+    date: dates[lastIdx],
+    time: position.buyTimes?.[lastIdx],
+    price: position.buyPrices?.[lastIdx],
+  };
+  position.buyPrices = (position.buyPrices || []).slice(0, lastIdx);
+  position.buyTimes = (position.buyTimes || []).slice(0, lastIdx);
+  position.buyDates = (position.buyDates || []).slice(0, lastIdx);
+  position.weight = TWO_BUY_FIRST_WEIGHT;
+  position.buyPrice = calcTwoBuyAvgPrice(position.buyPrices);
+  return { rolledBack: true, secondBuy };
+};
+// 撤销加仓后，用该笔买入作为新的第一份重新建仓（沿用原选股结果与其买入原因/明细）
+const reopenTwoBuyFirstFromSecondBuy = (position, secondBuy) => {
+  if (!secondBuy) return null;
+  return {
+    code: position.code,
+    stockName: position.stockName,
+    buyDate: secondBuy.date,
+    buyDateDisplay: secondBuy.dateDisplay,
+    buyTime: secondBuy.time,
+    buyPrice: secondBuy.price,
+    buyChange: secondBuy.change != null ? secondBuy.change : null,
+    metric: position.metric,
+    buyReason: secondBuy.buyReason || position.buyReason,
+    buyChecks: secondBuy.buyChecks || position.buyChecks,
+    emoQuickOut: position.emoQuickOut || null,
+    twoBuy: true,
+    weight: TWO_BUY_FIRST_WEIGHT,
+    buyPrices: [secondBuy.price],
+    buyTimes: [secondBuy.time],
+    buyDates: [secondBuy.date],
+  };
+};
+// 撤销加仓场景下的卖出原因：写明自救窗口机制与实际成交价，避免"标注止损却盈利"的歧义
+const buildTwoBuyRollbackSellReason = (sellTime, sellPrice, firstCost) => {
+  const costText = firstCost != null && firstCost > 0 ? `第一份成本 ${Number(firstCost).toFixed(2)}` : '第一份成本';
+  return `竞价低开自救窗口：开盘跌破均价-4%止损线，${sellTime} 自救拉升结束按 ${Number(sellPrice).toFixed(2)} 卖出（按${costText}计收益）；该卖点早于当日加仓时点，故撤销加仓、仅卖出第一份`;
+};
+// 跨日补买 + 当日触发卖点（T+1 拆分，2026-10-08 用户要求）：
+//   第二份仓位与第一份买入不在同一天，且第二份买入当日即触发卖点 → 第二份当日买入受 T+1 限制不可卖，
+//   只能先卖出第一份（半仓）；第二份顺延至次一交易日，按「开盘后逐分钟持续拉升、首次回落即卖」规则了结。
+// 命中判定：两次买入分属不同交易日、当前日 = 第二份买入日、已满仓，且卖点发生在第二份买入之后（当日买入后「随后」触发）。
+// 卖点早于加仓时点属时间线回滚场景（见 rollbackTwoBuyBuyAfterSellTime），不在此处理
+const isCrossDaySecondLegSellDay = (position, dateStr, sellDisplayTime) => {
+  if (!position || position.twoBuy !== true) return false;
+  const dates = position.buyDates || [];
+  if (dates.length !== 2) return false;
+  if (position.weight !== TWO_BUY_FULL_WEIGHT) return false;
+  if (String(dates[1]) !== String(dateStr) || String(dates[0]) === String(dateStr)) return false;
+  const sellMin = hhmmToMinuteNum(sellDisplayTime);
+  const secondBuyMin = hhmmToMinuteNum(position.buyTimes?.[1]);
+  if (sellMin == null || secondBuyMin == null) return false;
+  return sellMin >= secondBuyMin;
+};
+// 跨日拆分：产出「第一份交易（当日卖出）」与「第二份持仓（顺延次日按分时回落了结）」
+const buildCrossDaySecondLegSplit = (position, dateStr, dateDisplay, result, seq, satisfiedNames) => {
+  const p1 = (position.buyPrices || [])[0];
+  const t1 = (position.buyTimes || [])[0];
+  const d1 = (position.buyDates || [])[0];
+  const p2 = (position.buyPrices || [])[1];
+  const t2 = (position.buyTimes || [])[1];
+  const d2 = (position.buyDates || [])[1];
+  const secondBuy = position.secondBuy || { date: d2, dateDisplay, time: t2, price: p2, change: null };
+  const sellPrice = result.closePrice;
+  const rawFirstLeg = p1 != null && p1 > 0
+    ? parseFloat((((sellPrice - p1) / p1) * 100).toFixed(2))
+    : null;
+  const firstLegTrade = {
+    seq,
+    metric: position.metric,
+    code: position.code,
+    stockName: position.stockName,
+    buyDate: d1,
+    buyDateDisplay: position.buyDateDisplay,
+    buyTime: t1,
+    buyPrice: p1,
+    buyChange: position.buyChange,
+    buyReason: position.firstLegBuyReason || position.buyReason,
+    buyChecks: position.firstLegBuyChecks || position.buyChecks,
+    twoBuy: true,
+    weight: TWO_BUY_FIRST_WEIGHT,
+    rawReturnRate: rawFirstLeg,
+    avgPrice: p1,
+    buyPrices: [p1],
+    buyTimes: [t1],
+    buyDates: [d1],
+    secondBuy: null,
+    sellDate: dateStr,
+    sellDateDisplay: dateDisplay,
+    sellTime: result.displayTime,
+    sellPrice,
+    sellChange: result.change,
+    sellReason: `${satisfiedNames}：第二份仓位（${t2} 当日买入）受 T+1 限制不可卖出，故先卖出第一份（半仓）`,
+    returnRate: rawFirstLeg != null ? parseFloat((rawFirstLeg * TWO_BUY_FIRST_WEIGHT).toFixed(2)) : null,
+  };
+  // 第二份顺延持仓：单独半仓，标记 crossDaySecondLeg → 次日走「持续拉升/首次回落」专属了结规则
+  const secondLegPosition = {
+    code: position.code,
+    stockName: position.stockName,
+    buyDate: secondBuy.date,
+    buyDateDisplay: secondBuy.dateDisplay,
+    buyTime: secondBuy.time,
+    buyPrice: secondBuy.price,
+    buyChange: secondBuy.change != null ? secondBuy.change : null,
+    metric: position.metric,
+    buyReason: secondBuy.buyReason || position.buyReason,
+    buyChecks: secondBuy.buyChecks || position.buyChecks,
+    emoQuickOut: position.emoQuickOut || null,
+    twoBuy: true,
+    weight: TWO_BUY_FIRST_WEIGHT,
+    buyPrices: [secondBuy.price],
+    buyTimes: [secondBuy.time],
+    buyDates: [secondBuy.date],
+    crossDaySecondLeg: true,
+  };
+  return { firstLegTrade, secondLegPosition };
+};
+// 跨日第二份仓位顺延了结的卖出原因（分时回落点）
+const buildCrossDaySecondLegSellReason = (retrace, sellTime) => {
+  const cur = retrace.currentChange != null ? retrace.currentChange.toFixed(2) : '--';
+  const prev = retrace.prevChange != null ? retrace.prevChange.toFixed(2) : '--';
+  return `第二份仓位顺延了结：开盘后逐分钟跟踪，${sellTime} 涨幅 ${cur}% 较上一分钟 ${prev}% 首次回落（不再持续拉升），按该分钟价卖出`;
 };
 
 const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_gain', onProgress) => {
@@ -4637,15 +4798,68 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       if (dateStr <= singlePosition.buyDate) return;
       // 情绪快进快出持仓：不走通用 7 条件卖点，仅由上方按日处理（盘中跌破成本线止损先到先卖 + 10:00 强卖；分时缺失时顺延）
       if (strategy.emoQuickOut === true && singlePosition.emoQuickOut?.quickOut === true) return;
+      // 跨日补买的第二份顺延仓位（T+1）：不使用通用 7 条件卖点，仅按「开盘后逐分钟持续拉升、首次回落即卖」了结（次日继续跟踪）
+      if (singlePosition.crossDaySecondLeg === true) {
+        const retrace = await checkOpenRetraceSell(replayStocks, singlePosition.code, bucket.minute, dateStr);
+        if (retrace.satisfied && retrace.triggerPrice != null && retrace.triggerMinute != null) {
+          const sellPrice = parseFloat(Number(retrace.triggerPrice).toFixed(2));
+          const sellTime = fmtTime(String(retrace.triggerMinute).padStart(4, '0') + '00').substring(0, 5);
+          const raw = singlePosition.buyPrice > 0
+            ? parseFloat((((sellPrice - singlePosition.buyPrice) / singlePosition.buyPrice) * 100).toFixed(2))
+            : null;
+          singleTrades.push({
+            seq: singleTrades.length + 1,
+            metric: singlePosition.metric,
+            code: singlePosition.code,
+            stockName: singlePosition.stockName,
+            buyDate: singlePosition.buyDate,
+            buyDateDisplay: singlePosition.buyDateDisplay,
+            buyTime: singlePosition.buyTime,
+            buyPrice: singlePosition.buyPrice,
+            buyChange: singlePosition.buyChange,
+            buyReason: singlePosition.buyReason,
+            buyChecks: singlePosition.buyChecks,
+            ...buildTwoBuyTradeExtra({ ...singlePosition, rawReturnRate: raw }),
+            sellDate: dateStr,
+            sellDateDisplay: dateDisplay,
+            sellTime,
+            sellPrice,
+            sellChange: retrace.currentChange != null ? parseFloat(Number(retrace.currentChange).toFixed(2)) : null,
+            sellReason: buildCrossDaySecondLegSellReason(retrace, sellTime),
+            returnRate: raw != null ? parseFloat((raw * TWO_BUY_FIRST_WEIGHT).toFixed(2)) : null,
+          });
+          singlePosition = null;
+        }
+        return;
+      }
       // 三日情绪均值策略走次日开盘专属卖点（已在桶循环前按日处理），不进入通用卖点诊断
       const position = { code: singlePosition.code, stockName: singlePosition.stockName, buyPrice: singlePosition.buyPrice, buyDate: singlePosition.buyDate, tailDipSell: strategy.tailDip === true && strategy.nextDayOpenSell !== true, costLinePct: strategy.costLinePct };
       const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
       if (result.isSell && result.closePrice != null) {
         const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
-        // 两次买入策略：收益按当前仓位权重折算（仅第一份=0.5；两份都已买入=1，用平均成本统一计算），保留个股原始收益率供前端悬停展示
         const isTwoBuy = strategy.twoBuy === true;
+        // 跨日补买当日触发卖点（T+1）：第二份不可卖，仅卖出第一份，第二份顺延至次一交易日按分时回落了结
+        if (isTwoBuy && isCrossDaySecondLegSellDay(singlePosition, dateStr, result.displayTime)) {
+          const { firstLegTrade, secondLegPosition } = buildCrossDaySecondLegSplit(singlePosition, dateStr, dateDisplay, result, singleTrades.length + 1, satisfiedNames || '卖出条件触发');
+          singleTrades.push(firstLegTrade);
+          singlePosition = secondLegPosition;
+          return;
+        }
+        // 两次买入时间线一致性：卖点被归因到早于当日最近一笔加仓的时间 → 撤销该笔加仓，仅按第一份（半仓）卖出
+        const rollback = isTwoBuy
+          ? rollbackTwoBuyBuyAfterSellTime(singlePosition, dateStr, result.displayTime)
+          : { rolledBack: false };
+        const preSecondBuy = rollback.rolledBack ? rollback.secondBuy : null;
+        if (rollback.rolledBack) {
+          delete singlePosition.secondBuy;
+          if (preSecondBuy?.buyReason) singlePosition.buyReason = preSecondBuy.buyReason;
+        }
+        // 两次买入策略：收益按当前仓位权重折算（仅第一份=0.5；两份都已买入=1，用平均成本统一计算），保留个股原始收益率供前端悬停展示
         const weight = isTwoBuy ? (singlePosition.weight ?? TWO_BUY_FIRST_WEIGHT) : null;
-        const rawReturnRate = result.returnRate;
+        // 撤销加仓时 result.returnRate 为均价口径（不适用），按第一份成本重算个股原始收益率
+        const rawReturnRate = rollback.rolledBack && singlePosition.buyPrice > 0
+          ? parseFloat((((result.closePrice - singlePosition.buyPrice) / singlePosition.buyPrice) * 100).toFixed(2))
+          : result.returnRate;
         const acctReturnRate = isTwoBuy && rawReturnRate != null
           ? parseFloat((rawReturnRate * weight).toFixed(2))
           : result.returnRate;
@@ -4667,10 +4881,19 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
           sellTime: result.displayTime,
           sellPrice: result.closePrice,
           sellChange: result.change,
-          sellReason: satisfiedNames || '卖出条件触发',
+          sellReason: rollback.rolledBack
+            ? buildTwoBuyRollbackSellReason(result.displayTime, result.closePrice, singlePosition.buyPrice)
+            : (satisfiedNames || '卖出条件触发'),
           returnRate: acctReturnRate,
         });
-        singlePosition = null;
+        // 撤销加仓 → 用该笔被撤销的买入在同一买点作为新的第一份重新建仓
+        // （快进快出持仓在强卖日禁止二次买入，则不重开）
+        if (rollback.rolledBack) {
+          const canReopen = !(strategy.emoQuickOut === true && singlePosition.emoQuickOut?.quickOut === true);
+          singlePosition = canReopen ? reopenTwoBuyFirstFromSecondBuy(singlePosition, preSecondBuy) : null;
+        } else {
+          singlePosition = null;
+        }
       }
     };
 
@@ -4735,10 +4958,11 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
                 : {}),
             };
           }
-        } else if (strategy.twoBuy === true && singlePosition.twoBuy === true && (singlePosition.buyPrices || []).length === 1) {
+        } else if (strategy.twoBuy === true && singlePosition.twoBuy === true && singlePosition.crossDaySecondLeg !== true && (singlePosition.buyPrices || []).length === 1) {
+          // 注：跨日顺延的第二份仓位（crossDaySecondLeg）已是第二份、账户无第三份可补，禁止再次补买
           // 两次买入策略：已持有第一份（半仓），买点第二次触发 → 补入剩余 5 成（固定加仓同一只股票，不重新择股）
-          const mNum2 = Number(bucket.minute);
-          if (Number.isFinite(mNum2) && mNum2 <= BUY_TIME_MAX_MINUTE) {
+          // 门禁：第二份仓位不受买入时段上限（13:30）限制、可随时补买；但同一交易日内两次买入须相隔 ≥ 30 分钟
+          if (twoBuyIntervalSatisfied(singlePosition.buyDates?.[0], singlePosition.buyTimes?.[0], dateStr, buyTime)) {
             const heldSc = (bucket.stockChanges || []).find(s => s.code === singlePosition.code);
             const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
             // 补买同样过滤涨停（买入时点已涨停无法成交）：本次买点若该股已涨停则放弃补买，
@@ -4750,12 +4974,20 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
               singlePosition.buyDates.push(dateStr);
               singlePosition.weight = TWO_BUY_FULL_WEIGHT;
               singlePosition.buyPrice = calcTwoBuyAvgPrice(singlePosition.buyPrices); // 平均成本 = 两次买入价之和 ÷ 2
+              // 保存补买前的第一份买入原因/明细：跨日补买当日触发卖点时需拆分两腿（第一份当日可卖、第二份受 T+1 顺延），
+              // 拆分后第一份交易仍展示其原始买入原因（见 buildCrossDaySecondLegSplit）
+              singlePosition.firstLegBuyReason = singlePosition.buyReason;
+              singlePosition.firstLegBuyChecks = singlePosition.buyChecks;
+              // 记录本笔补买的买入时点原因/明细：一旦它因「卖点早于加仓时点」被撤销，
+              // 需用它作为重开新第一份时的买入原因（见 reopenTwoBuyFirstFromSecondBuy）
               singlePosition.secondBuy = {
                 date: dateStr,
                 dateDisplay,
                 time: buyTime,
                 price: secondPx,
                 change: heldSc.changePct != null ? parseFloat(Number(heldSc.changePct).toFixed(2)) : null,
+                buyReason: gatedBuyInfo?.buyReason || singlePosition.buyReason,
+                buyChecks: annotateIndexGateChecksWithStock(gatedBuyInfo?.buyChecks || singlePosition.buyChecks, singlePosition.code, singlePosition.stockName),
               };
               singlePosition.buyReason = `${singlePosition.buyReason}；买点第二次触发，补入剩余 5 成（${buyTime} 价 ${secondPx.toFixed(2)}）`;
             }
@@ -5124,10 +5356,11 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                   : {}),
               };
             }
-          } else if (strategy.twoBuy === true && st.singlePosition.twoBuy === true && (st.singlePosition.buyPrices || []).length === 1) {
+          } else if (strategy.twoBuy === true && st.singlePosition.twoBuy === true && st.singlePosition.crossDaySecondLeg !== true && (st.singlePosition.buyPrices || []).length === 1) {
+            // 注：跨日顺延的第二份仓位（crossDaySecondLeg）已是第二份、账户无第三份可补，禁止再次补买
             // 两次买入策略：已持有第一份（半仓），买点第二次触发 → 补入剩余 5 成（固定加仓同一只股票，不重新择股）
-            const mNum2 = Number(bucket.minute);
-            if (Number.isFinite(mNum2) && mNum2 <= BUY_TIME_MAX_MINUTE) {
+            // 门禁：第二份仓位不受买入时段上限（13:30）限制、可随时补买；但同一交易日内两次买入须相隔 ≥ 30 分钟
+            if (twoBuyIntervalSatisfied(st.singlePosition.buyDates?.[0], st.singlePosition.buyTimes?.[0], dateStr, buyTime)) {
               const heldSc = (bucket.stockChanges || []).find(s => s.code === st.singlePosition.code);
               const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
               // 补买同样过滤涨停（买入时点已涨停无法成交）：本次买点若该股已涨停则放弃补买，
@@ -5139,12 +5372,20 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                 st.singlePosition.buyDates.push(dateStr);
                 st.singlePosition.weight = TWO_BUY_FULL_WEIGHT;
                 st.singlePosition.buyPrice = calcTwoBuyAvgPrice(st.singlePosition.buyPrices); // 平均成本 = 两次买入价之和 ÷ 2
+                // 保存补买前的第一份买入原因/明细：跨日补买当日触发卖点时需拆分两腿（第一份当日可卖、第二份受 T+1 顺延），
+                // 拆分后第一份交易仍展示其原始买入原因（见 buildCrossDaySecondLegSplit）
+                st.singlePosition.firstLegBuyReason = st.singlePosition.buyReason;
+                st.singlePosition.firstLegBuyChecks = st.singlePosition.buyChecks;
+                // 记录本笔补买的买入时点原因/明细：一旦它因「卖点早于加仓时点」被撤销，
+                // 需用它作为重开新第一份时的买入原因（见 reopenTwoBuyFirstFromSecondBuy）
                 st.singlePosition.secondBuy = {
                   date: dateStr,
                   dateDisplay,
                   time: buyTime,
                   price: secondPx,
                   change: heldSc.changePct != null ? parseFloat(Number(heldSc.changePct).toFixed(2)) : null,
+                  buyReason: gatedBuyInfo?.buyReason || st.singlePosition.buyReason,
+                  buyChecks: annotateIndexGateChecksWithStock(gatedBuyInfo?.buyChecks || st.singlePosition.buyChecks, st.singlePosition.code, st.singlePosition.stockName),
                 };
                 st.singlePosition.buyReason = `${st.singlePosition.buyReason}；买点第二次触发，补入剩余 5 成（${buyTime} 价 ${secondPx.toFixed(2)}）`;
               }
@@ -5157,16 +5398,67 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           // 情绪快进快出持仓：不走通用 7 条件卖点，仅由上方按日处理（盘中跌破成本线止损先到先卖 + 10:00 强卖；分时缺失时顺延）
           if (strategy.emoQuickOut === true && st.singlePosition.emoQuickOut?.quickOut === true) {
             // skip
+          } else if (st.singlePosition.crossDaySecondLeg === true) {
+            // 跨日补买的第二份顺延仓位（T+1）：仅按「开盘后逐分钟持续拉升、首次回落即卖」了结（未回落则次日继续跟踪）
+            const retrace = await checkOpenRetraceSell(replayStocks, st.singlePosition.code, bucket.minute, dateStr);
+            if (retrace.satisfied && retrace.triggerPrice != null && retrace.triggerMinute != null) {
+              const sellPrice = parseFloat(Number(retrace.triggerPrice).toFixed(2));
+              const sellTime = fmtTime(String(retrace.triggerMinute).padStart(4, '0') + '00').substring(0, 5);
+              const raw = st.singlePosition.buyPrice > 0
+                ? parseFloat((((sellPrice - st.singlePosition.buyPrice) / st.singlePosition.buyPrice) * 100).toFixed(2))
+                : null;
+              singleTrades.push({
+                seq: singleTrades.length + 1,
+                metric: st.singlePosition.metric,
+                code: st.singlePosition.code,
+                stockName: st.singlePosition.stockName,
+                buyDate: st.singlePosition.buyDate,
+                buyDateDisplay: st.singlePosition.buyDateDisplay,
+                buyTime: st.singlePosition.buyTime,
+                buyPrice: st.singlePosition.buyPrice,
+                buyChange: st.singlePosition.buyChange,
+                buyReason: st.singlePosition.buyReason,
+                buyChecks: st.singlePosition.buyChecks,
+                ...buildTwoBuyTradeExtra({ ...st.singlePosition, rawReturnRate: raw }),
+                sellDate: dateStr,
+                sellDateDisplay: dateDisplay,
+                sellTime,
+                sellPrice,
+                sellChange: retrace.currentChange != null ? parseFloat(Number(retrace.currentChange).toFixed(2)) : null,
+                sellReason: buildCrossDaySecondLegSellReason(retrace, sellTime),
+                returnRate: raw != null ? parseFloat((raw * TWO_BUY_FIRST_WEIGHT).toFixed(2)) : null,
+              });
+              st.singlePosition = null;
+            }
           } else {
             // 三日情绪均值策略走次日开盘专属卖点（已在桶循环前按日处理），不进入通用卖点诊断
             const position = { code: st.singlePosition.code, stockName: st.singlePosition.stockName, buyPrice: st.singlePosition.buyPrice, buyDate: st.singlePosition.buyDate, tailDipSell: strategy.tailDip === true && strategy.nextDayOpenSell !== true, costLinePct: strategy.costLinePct };
             const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
             if (result.isSell && result.closePrice != null) {
               const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
-              // 两次买入策略：收益按当前仓位权重折算（仅第一份=0.5；两份都已买入=1，用平均成本统一计算），保留个股原始收益率供前端悬停展示
               const isTwoBuy = strategy.twoBuy === true;
+              // 跨日补买当日触发卖点（T+1）：第二份不可卖，仅卖出第一份，第二份顺延至次一交易日按分时回落了结
+              if (isTwoBuy && isCrossDaySecondLegSellDay(st.singlePosition, dateStr, result.displayTime)) {
+                const { firstLegTrade, secondLegPosition } = buildCrossDaySecondLegSplit(st.singlePosition, dateStr, dateDisplay, result, singleTrades.length + 1, satisfiedNames || '卖出条件触发');
+                singleTrades.push(firstLegTrade);
+                st.singlePosition = secondLegPosition;
+                continue; // 本桶处理完毕，进入下一桶
+              }
+              // 两次买入时间线一致性：卖点被归因到早于当日最近一笔加仓的时间 → 撤销该笔加仓，仅按第一份（半仓）卖出
+              const rollback = isTwoBuy
+                ? rollbackTwoBuyBuyAfterSellTime(st.singlePosition, dateStr, result.displayTime)
+                : { rolledBack: false };
+              const preSecondBuy = rollback.rolledBack ? rollback.secondBuy : null;
+              if (rollback.rolledBack) {
+                delete st.singlePosition.secondBuy;
+                if (preSecondBuy?.buyReason) st.singlePosition.buyReason = preSecondBuy.buyReason;
+              }
+              // 两次买入策略：收益按当前仓位权重折算（仅第一份=0.5；两份都已买入=1，用平均成本统一计算），保留个股原始收益率供前端悬停展示
               const weight = isTwoBuy ? (st.singlePosition.weight ?? TWO_BUY_FIRST_WEIGHT) : null;
-              const rawReturnRate = result.returnRate;
+              // 撤销加仓时 result.returnRate 为均价口径（不适用），按第一份成本重算个股原始收益率
+              const rawReturnRate = rollback.rolledBack && st.singlePosition.buyPrice > 0
+                ? parseFloat((((result.closePrice - st.singlePosition.buyPrice) / st.singlePosition.buyPrice) * 100).toFixed(2))
+                : result.returnRate;
               const acctReturnRate = isTwoBuy && rawReturnRate != null
                 ? parseFloat((rawReturnRate * weight).toFixed(2))
                 : result.returnRate;
@@ -5188,10 +5480,19 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                 sellTime: result.displayTime,
                 sellPrice: result.closePrice,
                 sellChange: result.change,
-                sellReason: satisfiedNames || '卖出条件触发',
+                sellReason: rollback.rolledBack
+                  ? buildTwoBuyRollbackSellReason(result.displayTime, result.closePrice, st.singlePosition.buyPrice)
+                  : (satisfiedNames || '卖出条件触发'),
                 returnRate: acctReturnRate,
               });
-              st.singlePosition = null;
+              // 撤销加仓 → 用该笔被撤销的买入在同一买点作为新的第一份重新建仓
+              // （快进快出持仓在强卖日禁止二次买入，则不重开）
+              if (rollback.rolledBack) {
+                const canReopen = !(strategy.emoQuickOut === true && st.singlePosition.emoQuickOut?.quickOut === true);
+                st.singlePosition = canReopen ? reopenTwoBuyFirstFromSecondBuy(st.singlePosition, preSecondBuy) : null;
+              } else {
+                st.singlePosition = null;
+              }
             }
           }
         }
