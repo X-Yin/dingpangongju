@@ -652,8 +652,41 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   }
 }
 
-// ==================== 自选股 · 3日涨幅前五（创业板+主板 / 科创板 上下分行） ====================
+// ==================== 自选股 · 3日涨幅前十（按门槛筛选市场后合并排名） ====================
 .ob-rank3-module {
+  // 标题下方门槛说明：当前哪个市场满足买点门槛
+  .ob-gainer-gate-note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin: -6px 0 10px;
+
+    &::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    &.both {
+      color: #1d4ed8;
+      &::before { background: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+    }
+
+    &.partial {
+      color: #b45309;
+      &::before { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15); }
+    }
+
+    &.none {
+      color: #be123c;
+      &::before { background: #f43f5e; box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12); }
+    }
+  }
+
   .ob-gainer-body {
     display: flex;
     flex-direction: column;
@@ -671,13 +704,6 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     background: linear-gradient(180deg, #fcfdfe, #f8fafc);
   }
 
-  .ob-gainer-divider {
-    height: 1px;
-    width: 100%;
-    flex-shrink: 0;
-    background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.4), transparent);
-  }
-
   .ob-gainer-col-head {
     display: flex;
     align-items: center;
@@ -687,31 +713,7 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     margin-bottom: 10px;
   }
 
-  .ob-gainer-col-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #0f172a;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    // 板块标识色点
-    &::before {
-      content: '';
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #fb7185, #e11d48);
-      box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
-    }
-  }
-
-  // 第二行（科创板）配色区分
-  .ob-gainer-col:last-child .ob-gainer-col-title::before {
-    background: linear-gradient(135deg, #818cf8, #6366f1);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-  }
-
+  // 两个指数门槛芯片（创业板指 / 科创50）
   .ob-gainer-gate {
     display: flex;
     align-items: center;
@@ -805,6 +807,28 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     font-variant-numeric: tabular-nums;
     font-weight: 600;
     color: #7c3aed;
+  }
+
+  // 行内市场标识：合并榜单中区分创业板/主板 与 科创板
+  .ob-gainer-market {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 5px;
+    padding: 0 5px;
+    line-height: 16px;
+
+    &.cyb {
+      color: #e11d48;
+      background: rgba(225, 29, 72, 0.08);
+      border: 1px solid rgba(225, 29, 72, 0.2);
+    }
+
+    &.star {
+      color: #6366f1;
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid rgba(99, 102, 241, 0.22);
+    }
   }
 
   .ob-gainer-limitup {

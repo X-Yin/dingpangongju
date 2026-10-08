@@ -865,16 +865,38 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
   const markets = data?.markets || {};
   const cybMainList = markets.cybMain || [];
   const starList = markets.star || [];
+  const cybPassed = data?.cybGate?.passed === true;
+  const starPassed = data?.starGate?.passed === true;
 
   // 挂载立即拉一次；交易时段每 5s 轮询，收盘后保留最后一次数据
+  // limit=10：每个市场最多返回 10 只，保证仅一个市场满足门槛时也能填满前十
   const fetchStocks = useCallback(async () => {
     try {
-      const res = await axios.post(`http://${local_ip}:3000/top_gainers_by_market`, {});
+      const res = await axios.post(`http://${local_ip}:3000/top_gainers_by_market`, { limit: 10 });
       setData(res.data?.data || null);
     } catch (err) {
       console.error('获取自选股 3 日涨幅榜失败:', err);
     }
   }, []);
+
+  // 市场门槛说明（标题下方展示）：仅展示满足指数 3 日线斜率买点门槛的市场的股票
+  const gateNote = !data
+    ? '正在检测创业板指 / 科创50 的 3 日线斜率买点门槛…'
+    : cybPassed && starPassed
+      ? '创业板指、科创50 均满足买点门槛：两个市场合并按 3 日涨幅排名'
+      : cybPassed
+        ? '仅创业板指满足买点门槛：仅展示创业板 + 主板'
+        : starPassed
+          ? '仅科创50 满足买点门槛：仅展示科创板'
+          : '创业板指、科创50 均不满足买点门槛：暂无可展示标的';
+
+  // 合并榜单：仅纳入满足门槛的市场，按 3 日涨幅降序取前 10
+  const mergedList = useMemo(() => (
+    [
+      ...(cybPassed ? cybMainList : []),
+      ...(starPassed ? starList : []),
+    ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10)
+  ), [cybMainList, starList, cybPassed, starPassed]);
 
   useEffect(() => {
     fetchStocks();
@@ -892,23 +914,11 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
     return () => timers.forEach(clearTimeout);
   }, [fetchStocks]);
 
-  // 全局唯一推荐标的：两列各自的候选（满足买点且未封涨停，主板 10% / 创业板·科创板 20% 由后端判定）
-  // 之间再取 3 日涨幅高者，平手看抗分歧，让用户无需二选一
-  const globalPick = useMemo(() => {
-    const better = (a, b) => {
-      if (!a) return b;
-      if (!b) return a;
-      const ca = a.change3d ?? -Infinity;
-      const cb = b.change3d ?? -Infinity;
-      if (ca !== cb) return cb > ca ? b : a;
-      const ra = a.resilienceScore ?? -Infinity;
-      const rb = b.resilienceScore ?? -Infinity;
-      if (ra !== rb) return rb > ra ? b : a;
-      return a;
-    };
-    const pickOf = (list) => list.find(s => s.matchesBuyPoint && !s.isLimitUp) || null;
-    return better(pickOf(cybMainList), pickOf(starList));
-  }, [cybMainList, starList]);
+  // 全局唯一推荐标的：合并前十中 3 日涨幅最高且满足买点资格、未封涨停者（仅来自满足门槛的市场）
+  const globalPick = useMemo(
+    () => mergedList.find(s => s.matchesBuyPoint && !s.isLimitUp) || null,
+    [mergedList]
+  );
 
   // 供买点弹窗与飞书通知使用：只推唯一一只标的
   const buyableStocks = useMemo(() => (globalPick ? [globalPick] : []), [globalPick]);
@@ -917,66 +927,66 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
     onBuyableChange?.(buyableStocks);
   }, [buyableStocks, onBuyableChange]);
 
-  const renderColumn = (marketLabel, gate, list) => (
-    <div className="ob-gainer-col">
-      <div className="ob-gainer-col-head">
-        <div className="ob-gainer-col-title">{marketLabel}</div>
-        <div className={`ob-gainer-gate ${gate?.passed ? 'passed' : 'failed'}`}>
-          <span className="ob-gainer-gate-slope">3日线斜率 {formatSlope(gate?.slope)}</span>
-          <span className="ob-gainer-gate-turn">{slopeTurnText(gate)}</span>
-          <span className="ob-gainer-gate-badge">{gate?.passed ? '满足买点门槛' : '不满足买点门槛'}</span>
-        </div>
-      </div>
-      <div className="ob-gainer-head">
-        <span>#</span>
-        <span>股票</span>
-        <span>当日</span>
-        <span>抗分歧</span>
-        <span>3日涨幅</span>
-      </div>
-      {list.length === 0 ? (
-        <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
-      ) : list.map((s, idx) => {
-        // 全局唯一推荐标的：只在名称旁打一个标签，不做整行高亮
-        const isPick = globalPick != null && s.code === globalPick.code;
-        return (
-          <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
-            <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
-            <span className="ob-gainer-name-cell">
-              <span className="ob-stock-name">{s.stockName}</span>
-              {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
-              {isPick && <span className="ob-gainer-buyflag">{buyPointHit ? '买点触发' : '买点候选'}</span>}
-            </span>
-            <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
-              {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
-            </span>
-            <span className="ob-gainer-resilience">
-              {s.resilienceScore !== null && s.resilienceScore !== undefined ? Number(s.resilienceScore).toFixed(2) : '--'}
-            </span>
-            <span className={`ob-change-cell ${s.change3d >= 0 ? 'ob-up' : 'ob-down'}`}>
-              {s.change3d !== null && s.change3d !== undefined ? `${s.change3d >= 0 ? '+' : ''}${Number(s.change3d).toFixed(2)}%` : '--'}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-
   return (
     <div className="ob-module ob-rank3-module">
       <div className="ob-module-header">
         <div className="ob-module-title">
           <CrownOutlined className="ob-module-icon" />
-          <span>自选股 · 3日涨幅前五</span>
+          <span>自选股 · 3日涨幅前十</span>
         </div>
-        <span className="ob-total-tag">
-          创业板+主板 {cybMainList.length} 只 · 科创板 {starList.length} 只
-        </span>
+        <span className="ob-total-tag">共 {mergedList.length} 只</span>
+      </div>
+      <div className={`ob-gainer-gate-note ${(cybPassed && starPassed) ? 'both' : (cybPassed || starPassed) ? 'partial' : 'none'}`}>
+        {gateNote}
       </div>
       <div className="ob-gainer-body">
-        {renderColumn('创业板 + 主板', data?.cybGate, cybMainList)}
-        <div className="ob-gainer-divider" />
-        {renderColumn('科创板', data?.starGate, starList)}
+        <div className="ob-gainer-col">
+          <div className="ob-gainer-col-head">
+            {[
+              { name: '创业板指', gate: data?.cybGate, passed: cybPassed },
+              { name: '科创50', gate: data?.starGate, passed: starPassed },
+            ].map(({ name, gate, passed }) => (
+              <div key={name} className={`ob-gainer-gate ${passed ? 'passed' : 'failed'}`}>
+                <span className="ob-gainer-gate-slope">{name} {formatSlope(gate?.slope)}</span>
+                <span className="ob-gainer-gate-turn">{slopeTurnText(gate)}</span>
+                <span className="ob-gainer-gate-badge">{passed ? '满足买点门槛' : '不满足买点门槛'}</span>
+              </div>
+            ))}
+          </div>
+          <div className="ob-gainer-head">
+            <span>#</span>
+            <span>股票</span>
+            <span>当日</span>
+            <span>抗分歧</span>
+            <span>3日涨幅</span>
+          </div>
+          {mergedList.length === 0 ? (
+            <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
+          ) : mergedList.map((s, idx) => {
+            // 全局唯一推荐标的：只在名称旁打一个标签，不做整行高亮
+            const isPick = globalPick != null && s.code === globalPick.code;
+            return (
+              <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
+                <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
+                <span className="ob-gainer-name-cell">
+                  <span className="ob-stock-name">{s.stockName}</span>
+                  <span className={`ob-gainer-market ${s.isSh688 ? 'star' : 'cyb'}`}>{s.isSh688 ? '科创' : '创业/主板'}</span>
+                  {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
+                  {isPick && <span className="ob-gainer-buyflag">{buyPointHit ? '买点触发' : '买点候选'}</span>}
+                </span>
+                <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
+                  {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
+                </span>
+                <span className="ob-gainer-resilience">
+                  {s.resilienceScore !== null && s.resilienceScore !== undefined ? Number(s.resilienceScore).toFixed(2) : '--'}
+                </span>
+                <span className={`ob-change-cell ${s.change3d >= 0 ? 'ob-up' : 'ob-down'}`}>
+                  {s.change3d !== null && s.change3d !== undefined ? `${s.change3d >= 0 ? '+' : ''}${Number(s.change3d).toFixed(2)}%` : '--'}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

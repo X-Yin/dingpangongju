@@ -67,19 +67,20 @@
   .drawer-split-container {
     display: flex;
     gap: 16px;
-    height: 100%;
+    // 右侧列表平铺不内部滚动，内容超出时由抽屉 body 统一滚动
+    min-height: 100%;
   }
 
   .drawer-left-panel,
   .drawer-right-panel {
-    flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
   }
 
   .drawer-left-panel {
+    // 右侧面板比左侧宽 100px（basis 差 100px，grow 相同）
+    flex: 1 1 calc(50% - 58px);
     overflow-y: auto;
 
     &::-webkit-scrollbar {
@@ -97,22 +98,9 @@
   }
 
   .drawer-right-panel {
+    flex: 1 1 calc(50% + 42px);
     border-left: 1px solid rgba(110, 126, 162, 0.1);
     padding-left: 16px;
-    overflow-y: auto;
-
-    &::-webkit-scrollbar {
-      width: 5px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: rgba(100, 116, 139, 0.2);
-      border-radius: 999px;
-    }
   }
 
   .panel-header {
@@ -476,17 +464,46 @@
     }
   }
 
-  /* 涨跌幅 tab：按市场分列的优选个股（上下两模块，各 400px，内部滚动） */
+  /* 涨跌幅 tab：按指数门槛筛选市场后合并排名的前十优选个股 */
+  // 标题下方门槛说明：当前哪个市场满足买点门槛
+  .fbd-gate-note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 10px;
+
+    &::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    &.both {
+      color: #1d4ed8;
+      &::before { background: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+    }
+
+    &.partial {
+      color: #b45309;
+      &::before { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15); }
+    }
+
+    &.none {
+      color: #be123c;
+      &::before { background: #f43f5e; box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12); }
+    }
+  }
+
   .fbd-market-block {
-    height: 400px;
-    box-sizing: border-box; // 含边框精确 400px
-    flex-shrink: 0; // 父容器为 column flex，避免被压缩导致高度不足 400px
     display: flex;
     flex-direction: column;
     border: 1px solid rgba(157, 176, 207, 0.16);
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.68);
-    overflow: hidden;
     margin-bottom: 12px;
 
     &:last-child {
@@ -505,12 +522,7 @@
     border-bottom: 1px solid rgba(110, 126, 162, 0.08);
     flex-shrink: 0;
 
-    .fbd-market-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: #12213a;
-    }
-
+    // 两个指数门槛芯片（创业板指 / 科创50）
     .fbd-market-gate {
       display: flex;
       align-items: center;
@@ -544,14 +556,8 @@
   }
 
   .fbd-market-list {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
+    // 不限制滚动高度，直接向下平铺（超出部分由抽屉 body 统一滚动）
     padding: 6px 8px 8px;
-
-    &::-webkit-scrollbar { width: 4px; }
-    &::-webkit-scrollbar-track { background: transparent; }
-    &::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.2); border-radius: 999px; }
   }
 
   .fbd-market-list-header {
@@ -635,6 +641,19 @@
       &.limitup {
         color: #cf1322;
         background: rgba(245, 34, 45, 0.1);
+      }
+
+      // 行内市场标识：合并榜单中区分创业板/主板 与 科创板
+      &.market-cyb {
+        color: #e11d48;
+        background: rgba(225, 29, 72, 0.08);
+        border: 1px solid rgba(225, 29, 72, 0.2);
+      }
+
+      &.market-star {
+        color: #6366f1;
+        background: rgba(99, 102, 241, 0.08);
+        border: 1px solid rgba(99, 102, 241, 0.22);
       }
 
       &.pick {

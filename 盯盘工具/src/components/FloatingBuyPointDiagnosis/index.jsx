@@ -48,10 +48,10 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
   const [techEmotion, setTechEmotion] = useState(null);
   const [activeTab, setActiveTab] = useState('change');
   const [reportDays, setReportDays] = useState(3); // 研报覆盖窗口天数：3 或 5
-  // 涨跌幅 tab：按市场分列的优选个股（全量，含实时涨幅/抗分歧/3日涨幅与双指数斜率门禁）
+  // 涨跌幅 tab：优选个股（按指数门槛筛选市场后合并排名前十，含实时涨幅/抗分歧/3日涨幅与双指数斜率门禁）
   const [gainersData, setGainersData] = useState(null);
   const [gainersLoading, setGainersLoading] = useState(false);
-  // 每个市场「立刻可买」那一行的 DOM 引用，用于数据就绪后滚动到可视区域
+  // 「立刻可买」推荐那一行的 DOM 引用，用于数据就绪后滚动到可视区域
   const pickRefs = useRef({});
 
   const [aiLoading, setAiLoading] = useState(false);
@@ -286,15 +286,16 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
     return () => clearInterval(t);
   }, [open]);
 
-  // 优选个股数据就绪后，把两个市场的推荐买入行各自滚动到列表中部，打开抽屉即可直接下单
+  // 优选个股数据就绪后，把推荐买入行滚动到可视区域中部，打开抽屉即可直接下单
+  // 列表不再内部滚动，滚动容器为抽屉 body
   useEffect(() => {
     if (activeTab !== 'change' || !gainersData) return;
     Object.values(pickRefs.current).forEach((el) => {
       if (!el) return;
-      const list = el.closest('.fbd-market-list');
-      if (!list) return;
-      const delta = el.getBoundingClientRect().top - list.getBoundingClientRect().top;
-      list.scrollTo({ top: list.scrollTop + delta - (list.clientHeight - el.clientHeight) / 2 });
+      const scroller = el.closest('.ant-drawer-body');
+      if (!scroller) return;
+      const delta = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+      scroller.scrollTo({ top: scroller.scrollTop + delta - (scroller.clientHeight - el.clientHeight) / 2 });
     });
   }, [gainersData, activeTab]);
 
@@ -331,86 +332,35 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
     }
   };
 
-  // 涨跌幅 tab：按市场（创业板+主板 / 科创板）分列的优选个股，上下两模块各 400px，内部滚动
+  // 涨跌幅 tab：按指数门槛筛选市场后合并排名的前十优选个股（与 OpeningBattle 3 日涨幅榜口径一致）
   const renderChangeModeByMarket = () => {
     const markets = gainersData?.markets || {};
     const cybMainList = markets.cybMain || [];
     const starList = markets.star || [];
+    const cybPassed = gainersData?.cybGate?.passed === true;
+    const starPassed = gainersData?.starGate?.passed === true;
     // 买点条件全部满足时标签为「买点触发」，否则为「买点候选」
     const pickLabel = allPassed ? '买点触发' : '买点候选';
 
-    // 每个市场各自的候选：列表按 3 日涨幅降序，取第一只满足买点且未封涨停的个股
-    const pickOf = (list) => list.find(i => i.matchesBuyPoint && !i.isLimitUp) || null;
+    // 门槛说明（标题下方展示）：仅展示满足指数 3 日线斜率买点门槛的市场的股票
+    const gateNote = !gainersData
+      ? '正在检测创业板指 / 科创50 的 3 日线斜率买点门槛…'
+      : cybPassed && starPassed
+        ? '创业板指、科创50 均满足买点门槛：两个市场合并按 3 日涨幅排名'
+        : cybPassed
+          ? '仅创业板指满足买点门槛：仅展示创业板 + 主板'
+          : starPassed
+            ? '仅科创50 满足买点门槛：仅展示科创板'
+            : '创业板指、科创50 均不满足买点门槛：暂无可展示标的';
 
-    // 两个市场合起来只推荐唯一一只：3 日涨幅高者优先，平手再看抗分歧
-    const betterPick = (a, b) => {
-      if (!a) return b;
-      if (!b) return a;
-      const ca = a.change3d ?? -Infinity;
-      const cb = b.change3d ?? -Infinity;
-      if (ca !== cb) return cb > ca ? b : a;
-      const ra = a.resilienceScore ?? -Infinity;
-      const rb = b.resilienceScore ?? -Infinity;
-      if (ra !== rb) return rb > ra ? b : a;
-      return a;
-    };
-    const globalPick = betterPick(pickOf(cybMainList), pickOf(starList));
+    // 合并榜单：仅纳入满足门槛的市场，按 3 日涨幅降序取前 10
+    const mergedList = [
+      ...(cybPassed ? cybMainList : []),
+      ...(starPassed ? starList : []),
+    ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
 
-    const renderMarketBlock = (label, gate, list) => {
-      // 只有全局最强候选所在的市场才给出推荐，另一市场不再提示，避免二选一
-      const pick = globalPick && list.some(i => i.code === globalPick.code) ? globalPick : null;
-      return (
-      <div className="fbd-market-block">
-        <div className="fbd-market-head">
-          <span className="fbd-market-title">{label}</span>
-          <div className={`fbd-market-gate ${gate?.passed ? 'passed' : 'failed'}`}>
-            <span className="fbd-market-gate-slope">3日线斜率 {formatSlope(gate?.slope)}</span>
-            <span className="fbd-market-gate-turn">{slopeTurnText(gate)}</span>
-            <span className="fbd-market-gate-badge">{gate?.passed ? '满足买点门槛' : '不满足买点门槛'}</span>
-          </div>
-        </div>
-        <div className="fbd-market-list">
-          <div className="fbd-market-list-header">
-            <span>#</span>
-            <span>股票名称</span>
-            <span>抗分歧</span>
-            <span>当日</span>
-            <span>3日涨幅</span>
-          </div>
-          {list.length === 0 ? (
-            <div className="fbd-market-empty">暂无数据</div>
-          ) : list.map((item, idx) => {
-            // 全局唯一推荐标的：只在名称旁打一个标签，不做整行高亮
-            const isPick = pick != null && item.code === pick.code;
-            return (
-              <div
-                key={item.code}
-                ref={isPick ? (el) => { pickRefs.current[label] = el; } : null}
-                className="fbd-market-row"
-                onClick={() => handleStockItemClick(item)}
-              >
-                <span className={`fbd-market-rank ${idx < 3 ? 'top' : ''}`}>{idx + 1}</span>
-                <span className="fbd-market-name-cell">
-                  <span className="fbd-market-name">{item.stockName}</span>
-                  {item.isLimitUp && <span className="fbd-market-tag limitup">涨停</span>}
-                  {isPick && <span className="fbd-market-tag pick">{pickLabel}</span>}
-                </span>
-                <span className="fbd-market-resilience">
-                  {item.resilienceScore != null ? Number(item.resilienceScore).toFixed(2) : '--'}
-                </span>
-                <span className={`fbd-market-change ${item.change > 0 ? 'up' : item.change < 0 ? 'down' : ''}`}>
-                  {item.change != null ? `${item.change > 0 ? '+' : ''}${Number(item.change).toFixed(2)}%` : '--'}
-                </span>
-                <span className={`fbd-market-change ${item.change3d > 0 ? 'up' : item.change3d < 0 ? 'down' : ''}`}>
-                  {item.change3d != null ? `${item.change3d > 0 ? '+' : ''}${Number(item.change3d).toFixed(2)}%` : '--'}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      );
-    };
+    // 全局唯一推荐标的：合并前十中 3 日涨幅最高且满足买点资格、未封涨停者（仅来自满足门槛的市场）
+    const globalPick = mergedList.find(i => i.matchesBuyPoint && !i.isLimitUp) || null;
 
     return (
       <>
@@ -425,8 +375,63 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
           </div>
         ) : gainersData ? (
           <>
-            {renderMarketBlock('创业板 + 主板', gainersData.cybGate, cybMainList)}
-            {renderMarketBlock('科创板', gainersData.starGate, starList)}
+            <div className={`fbd-gate-note ${(cybPassed && starPassed) ? 'both' : (cybPassed || starPassed) ? 'partial' : 'none'}`}>
+              {gateNote}
+            </div>
+            <div className="fbd-market-block">
+              <div className="fbd-market-head">
+                {[
+                  { name: '创业板指', gate: gainersData.cybGate, passed: cybPassed },
+                  { name: '科创50', gate: gainersData.starGate, passed: starPassed },
+                ].map(({ name, gate, passed }) => (
+                  <div key={name} className={`fbd-market-gate ${passed ? 'passed' : 'failed'}`}>
+                    <span className="fbd-market-gate-slope">{name} {formatSlope(gate?.slope)}</span>
+                    <span className="fbd-market-gate-turn">{slopeTurnText(gate)}</span>
+                    <span className="fbd-market-gate-badge">{passed ? '满足买点门槛' : '不满足买点门槛'}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="fbd-market-list">
+                <div className="fbd-market-list-header">
+                  <span>#</span>
+                  <span>股票名称</span>
+                  <span>抗分歧</span>
+                  <span>当日</span>
+                  <span>3日涨幅</span>
+                </div>
+                {mergedList.length === 0 ? (
+                  <div className="fbd-market-empty">暂无数据</div>
+                ) : mergedList.map((item, idx) => {
+                  // 全局唯一推荐标的：只在名称旁打一个标签，不做整行高亮
+                  const isPick = globalPick != null && item.code === globalPick.code;
+                  return (
+                    <div
+                      key={item.code}
+                      ref={isPick ? (el) => { pickRefs.current.pick = el; } : null}
+                      className="fbd-market-row"
+                      onClick={() => handleStockItemClick(item)}
+                    >
+                      <span className={`fbd-market-rank ${idx < 3 ? 'top' : ''}`}>{idx + 1}</span>
+                      <span className="fbd-market-name-cell">
+                        <span className="fbd-market-name">{item.stockName}</span>
+                        <span className={`fbd-market-tag ${item.isSh688 ? 'market-star' : 'market-cyb'}`}>{item.isSh688 ? '科创' : '创业/主板'}</span>
+                        {item.isLimitUp && <span className="fbd-market-tag limitup">涨停</span>}
+                        {isPick && <span className="fbd-market-tag pick">{pickLabel}</span>}
+                      </span>
+                      <span className="fbd-market-resilience">
+                        {item.resilienceScore != null ? Number(item.resilienceScore).toFixed(2) : '--'}
+                      </span>
+                      <span className={`fbd-market-change ${item.change > 0 ? 'up' : item.change < 0 ? 'down' : ''}`}>
+                        {item.change != null ? `${item.change > 0 ? '+' : ''}${Number(item.change).toFixed(2)}%` : '--'}
+                      </span>
+                      <span className={`fbd-market-change ${item.change3d > 0 ? 'up' : item.change3d < 0 ? 'down' : ''}`}>
+                        {item.change3d != null ? `${item.change3d > 0 ? '+' : ''}${Number(item.change3d).toFixed(2)}%` : '--'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </>
         ) : (
           <div className="fbd-panel-empty">
@@ -680,7 +685,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
         placement="right"
         open={open}
         onClose={onClose}
-        width={900}
+        width={1000}
         className="buy-diagnosis-drawer"
         destroyOnClose={false}
         extra={
