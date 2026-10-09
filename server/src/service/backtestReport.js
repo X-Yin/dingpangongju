@@ -7,7 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getTrainingCampDates } = require('./trainingCamp');
-const { STRATEGIES, readCachedBacktest, runRangeBacktest, isEmo3AvgStrategy, getEmo3DefaultRange } = require('./buySellBacktest');
+const { STRATEGIES, readCachedBacktest, runRangeBacktest, isEmo3AvgStrategy, getEmo3DefaultRange, sortTradesByBuyTime } = require('./buySellBacktest');
 
 const reportsDir = path.join(__dirname, '../data/backtest_reports');
 const backtestCacheDir = path.join(__dirname, '../data/backtest_results');
@@ -258,7 +258,12 @@ const getReportById = (id) => {
   const file = path.join(reportsDir, `${id}.json`);
   try {
     if (!fs.existsSync(file)) return null;
-    return JSON.parse(fs.readFileSync(file, 'utf-8'));
+    const report = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    // 旧报告快照的交易记录按平仓顺序落盘，读取时统一按买入时间排序（含 seq 重编）
+    (report.strategies || []).forEach(s => {
+      if (Array.isArray(s.trades)) s.trades = sortTradesByBuyTime(s.trades);
+    });
+    return report;
   } catch {
     return null;
   }

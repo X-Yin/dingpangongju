@@ -1,108 +1,11 @@
 {
-  "updatedAt": "2026-09-29T07:42:44.722Z",
+  "updatedAt": "2026-10-09T03:07:18.227Z",
   "summary": {
-    "total": 91,
-    "classified": 4,
+    "total": 96,
+    "classified": 0,
     "errorCount": 0,
     "requestMode": "串行拉取，每只间隔 1-2s"
   },
-  "categories": [
-    {
-      "key": "ma3_up",
-      "label": "沿着 3 日线上行",
-      "order": 1,
-      "count": 1,
-      "stocks": [
-        {
-          "code": "sh688082",
-          "stockName": "盛美上海",
-          "blockName": "半导体",
-          "isImportant": false,
-          "tradeDate": 20260929,
-          "close_px": 303.44,
-          "change": 6.09,
-          "ma3": 297.8533333333333,
-          "ma5": 294.7,
-          "ma10": 290.557,
-          "ma20": 284.34849999999994,
-          "prevMa3": 293.81666666666666,
-          "prevMa5": 292.71200000000005,
-          "prevMa10": 287.258,
-          "recentFiveDayGain": 5.14,
-          "reason": "收盘位于主要均线上方，当前更接近 3 日线运行。",
-          "categoryKey": "ma3_up",
-          "categoryLabel": "沿着 3 日线上行"
-        }
-      ]
-    },
-    {
-      "key": "pullback_ma5_reclaim_ma3",
-      "label": "前期回踩 5 日均线，现在强势站上 3 日均线",
-      "order": 9,
-      "count": 3,
-      "stocks": [
-        {
-          "code": "sh688143",
-          "stockName": "长盈通",
-          "blockName": "光纤",
-          "isImportant": false,
-          "tradeDate": 20260929,
-          "close_px": 180.23,
-          "change": 9.2,
-          "ma3": 178.87666666666667,
-          "ma5": 185.448,
-          "ma10": 190.32299999999998,
-          "ma20": 183.38350000000003,
-          "prevMa3": 183.33,
-          "prevMa5": 190.41600000000003,
-          "prevMa10": 191.99999999999997,
-          "recentFiveDayGain": -8.52,
-          "reason": "近几日回踩 5 日线后，最新一日强势收阳并重新站上 3 日线。",
-          "categoryKey": "pullback_ma5_reclaim_ma3",
-          "categoryLabel": "前期回踩 5 日均线，现在强势站上 3 日均线"
-        },
-        {
-          "code": "sh688809",
-          "stockName": "强一股份",
-          "blockName": "半导体",
-          "isImportant": false,
-          "tradeDate": 20260929,
-          "close_px": 493.74,
-          "change": 6.69,
-          "ma3": 484.84666666666664,
-          "ma5": 493.33000000000004,
-          "ma10": 512.187,
-          "ma20": 488.392,
-          "prevMa3": 488.6033333333333,
-          "prevMa5": 499.50200000000007,
-          "prevMa10": 515.213,
-          "recentFiveDayGain": -2.63,
-          "reason": "近几日回踩 5 日线后，最新一日强势收阳并重新站上 3 日线。",
-          "categoryKey": "pullback_ma5_reclaim_ma3",
-          "categoryLabel": "前期回踩 5 日均线，现在强势站上 3 日均线"
-        },
-        {
-          "code": "sh600601",
-          "stockName": "方正科技",
-          "blockName": "pcb",
-          "isImportant": false,
-          "tradeDate": 20260929,
-          "close_px": 13.72,
-          "change": 6.6,
-          "ma3": 13.61,
-          "ma5": 14.25,
-          "ma10": 14.532999999999998,
-          "ma20": 14.145500000000004,
-          "prevMa3": 14.056666666666667,
-          "prevMa5": 14.556000000000001,
-          "prevMa10": 14.643,
-          "recentFiveDayGain": -10.68,
-          "reason": "近几日回踩 5 日线后，最新一日强势收阳并重新站上 3 日线。",
-          "categoryKey": "pullback_ma5_reclaim_ma3",
-          "categoryLabel": "前期回踩 5 日均线，现在强势站上 3 日均线"
-        }
-      ]
-    }
-  ],
+  "categories": [],
   "errors": []
 }

@@ -302,6 +302,11 @@ const attachHoldingDays = (result) => {
     (st.trades || []).forEach(t => apply(t, false));
     apply(st.holding, true);
   });
+  // 交易列表统一按买入时间排序（旧缓存/旧报告生成顺序为平仓顺序，读取时归一）
+  if (Array.isArray(result.trades)) result.trades = sortTradesByBuyTime(result.trades);
+  (result.stocks || []).forEach(st => {
+    if (Array.isArray(st.trades)) st.trades = sortTradesByBuyTime(st.trades);
+  });
   // 平均持仓时间：仅统计已卖出成交（holdingDays 非空，不含期末仍持仓），保留 1 位小数；
   // 含退化估算（≈）的交易时在 summary.avgHoldingDaysApprox 标记
   const closedDays = [];
@@ -319,6 +324,24 @@ const attachHoldingDays = (result) => {
     result.summary.avgHoldingDaysApprox = anyApprox;
   }
   return result;
+};
+
+// 交易列表按买入时间升序排序（买入日升序，同日按买入时间升序），并按新顺序重编 seq：
+// 两次买入系列两份仓位独立平仓，成交记录生成顺序 = 平仓顺序（卖出时间序），
+// 展示统一按买入时间排序更符合直觉（不影响收益/胜率/回撤等统计，均为顺序无关计算）
+const sortTradesByBuyTime = (trades) => {
+  if (!Array.isArray(trades)) return trades;
+  return [...trades]
+    .sort((a, b) => {
+      const da = String(a?.buyDate ?? '');
+      const db = String(b?.buyDate ?? '');
+      if (da !== db) return da < db ? -1 : 1;
+      const ta = String(a?.buyTime ?? '');
+      const tb = String(b?.buyTime ?? '');
+      if (ta !== tb) return ta < tb ? -1 : 1;
+      return 0;
+    })
+    .map((t, idx) => ({ ...t, seq: idx + 1 }));
 };
 
 // 回撤统计（仅统计已卖出成交中收益率为负的单笔，returnRate 为百分数）：
@@ -5024,7 +5047,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
     range: { startDate, endDate },
     skippedDates,
     seenStocks: Array.from(seenStocks.values()),
-    trades: singleTrades,
+    trades: sortTradesByBuyTime(singleTrades),
     currentHolding: holding,
     currentHoldings,
     summary: {
@@ -5517,7 +5540,7 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
         range: { startDate, endDate },
         skippedDates,
         seenStocks: Array.from(seenStocks.values()),
-        trades: singleTrades,
+        trades: sortTradesByBuyTime(singleTrades),
         currentHolding: holding,
         currentHoldings,
         summary: {
@@ -5540,6 +5563,7 @@ module.exports = {
   readCachedBacktest,
   writeCachedBacktest,
   attachHoldingDays,
+  sortTradesByBuyTime, // 供回测报告读取旧快照时统一按买入时间排序
   loadReportIndex,
   sumReportCount,
   getStockRecentReports,

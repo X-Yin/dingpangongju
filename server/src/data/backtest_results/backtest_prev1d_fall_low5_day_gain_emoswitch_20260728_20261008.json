@@ -129,10 +129,6 @@
       "name": "三环集团"
     },
     {
-      "code": "sh600118",
-      "name": "中国卫星"
-    },
-    {
       "code": "sz000657",
       "name": "中钨高新"
     },
@@ -437,8 +433,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -16.42 / 当前 -100.00",
-          "reason": "9:30 竞价科技情绪 -16.42 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -16.69 / 当前 -100.00",
+          "reason": "9:30 竞价科技情绪 -16.69 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -527,16 +523,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "20 / 97只",
-          "reason": "开盘后自选股共 97 只，20 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "20 / 96只",
+          "reason": "开盘后自选股共 96 只，20 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 47.58 / 当前 73.43",
-          "reason": "9:30 竞价科技情绪 47.58 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 47.47 / 当前 73.19",
+          "reason": "9:30 竞价科技情绪 47.47 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -619,8 +615,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -61.59 / 当前 -37.47",
-          "reason": "9:30 竞价科技情绪 -61.59 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -61.38 / 当前 -37.76",
+          "reason": "9:30 竞价科技情绪 -61.38 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -662,14 +658,14 @@
     },
     {
       "seq": 4,
-      "metric": 3.28,
-      "code": "sz300308",
-      "stockName": "中际旭创",
+      "metric": 4.1,
+      "code": "sh601138",
+      "stockName": "工业富联",
       "buyDate": "20260907",
       "buyDateDisplay": "2026-09-07",
       "buyTime": "09:35",
-      "buyPrice": 840.73,
-      "buyChange": 3.28,
+      "buyPrice": 66.3,
+      "buyChange": 4.1,
       "buyReason": "5min 内资金净流入 30.78亿、冰点期豁免成交量，成交量增加 116.71亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）｜情绪开关→前1个交易日波动最小&当日涨幅最大",
       "buyChecks": [
         {
@@ -695,22 +691,22 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "24 / 97只",
-          "reason": "开盘后自选股共 97 只，24 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "24 / 96只",
+          "reason": "开盘后自选股共 96 只，24 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 49.61 / 当前 66.78",
-          "reason": "9:30 竞价科技情绪 49.61 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 49.59 / 当前 66.75",
+          "reason": "9:30 竞价科技情绪 49.59 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
-          "title": "中际旭创 跟踪创业板指 3 日线斜率门禁",
+          "title": "工业富联 跟踪创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "中际旭创 跟踪创业板指，3 日线斜率 +4.28°，今日盘中由负转正，允许出手",
+          "value": "工业富联 跟踪创业板指，3 日线斜率 +4.28°，今日盘中由负转正，允许出手",
           "reason": "创业板指 斜率 +4.28 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
         },
         {
@@ -724,9 +720,9 @@
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "12.79",
+          "value": "16.61",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 12.79，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 16.61，≥ 全局最低 9）"
         },
         {
           "id": "emo_switch_branch",
@@ -736,13 +732,13 @@
           "reason": "上一交易日科技情绪 3 日 EMA = -64.91（< -60）→ 走「前1个交易日波动最小&当日涨幅最大」选股买入"
         }
       ],
-      "sellDate": "20260914",
-      "sellDateDisplay": "2026-09-14",
-      "sellTime": "14:50",
-      "sellPrice": 875.78,
-      "sellChange": -5.42,
-      "sellReason": "抗分歧指数弱势",
-      "returnRate": 4.17
+      "sellDate": "20260908",
+      "sellDateDisplay": "2026-09-08",
+      "sellTime": "14:01",
+      "sellPrice": 64.93,
+      "sellChange": -2.64,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -2.07
     },
     {
       "seq": 5,
@@ -787,7 +783,7 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -9.14 / 当前 69.57",
+          "value": "开盘 -9.14 / 当前 69.44",
           "reason": "9:30 竞价科技情绪 -9.14 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
@@ -891,8 +887,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -0.49 / 当前 24.96",
-          "reason": "9:30 竞价科技情绪 -0.49 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -0.31 / 当前 25.21",
+          "reason": "9:30 竞价科技情绪 -0.31 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -937,11 +933,11 @@
   "currentHoldings": [],
   "summary": {
     "tradeCount": 6,
-    "winCount": 5,
-    "winRate": 83.33,
-    "avgDrawdown": -1,
-    "maxDrawdown": -1,
-    "overallReturn": 118.21,
+    "winCount": 4,
+    "winRate": 66.67,
+    "avgDrawdown": -1.53,
+    "maxDrawdown": -2.07,
+    "overallReturn": 105.14,
     "holding": false
   }
 }

@@ -129,10 +129,6 @@
       "name": "三环集团"
     },
     {
-      "code": "sh600118",
-      "name": "中国卫星"
-    },
-    {
       "code": "sz000657",
       "name": "中钨高新"
     },
@@ -437,8 +433,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -16.42 / 当前 -100.00",
-          "reason": "9:30 竞价科技情绪 -16.42 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -16.69 / 当前 -100.00",
+          "reason": "9:30 竞价科技情绪 -16.69 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -541,16 +537,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "20 / 97只",
-          "reason": "开盘后自选股共 97 只，20 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "20 / 96只",
+          "reason": "开盘后自选股共 96 只，20 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 47.58 / 当前 73.43",
-          "reason": "9:30 竞价科技情绪 47.58 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 47.47 / 当前 73.19",
+          "reason": "9:30 竞价科技情绪 47.47 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -639,16 +635,16 @@
           "title": "开盘后自选股低于开盘价不超过 30 只",
           "passed": true,
           "exempted": false,
-          "value": "1 / 97只",
-          "reason": "开盘后自选股共 97 只，1 只现价低于 9:30 开盘价，未超过 30 只"
+          "value": "1 / 96只",
+          "reason": "开盘后自选股共 96 只，1 只现价低于 9:30 开盘价，未超过 30 只"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -46.61 / 当前 61.13",
-          "reason": "9:30 竞价科技情绪 -46.61 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -46.63 / 当前 60.82",
+          "reason": "9:30 竞价科技情绪 -46.63 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -716,194 +712,6 @@
     },
     {
       "seq": 4,
-      "metric": 7.078,
-      "code": "sh601869",
-      "stockName": "长飞光纤",
-      "buyDate": "20260826",
-      "buyDateDisplay": "2026-08-26",
-      "buyTime": "10:40",
-      "buyPrice": 406.01,
-      "buyChange": 2.92,
-      "buyReason": "5min 内资金净流入 31.06亿、成交量增加 348.13亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票买点抗分歧<9顺延买入）；买点第二次触发，买入第二份 5 成（第一份 英维克·液冷 板块，本份改选其他板块中 N 日涨幅最大的 长飞光纤·光纤 板块，10:40 价 406.01）",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+31.06亿",
-          "reason": "最近 5 分钟资金净流入 31.06 亿（10:35:00→10:40:00），超过 20 亿阈值",
-          "fundText": "5min 内资金净流入 31.06亿"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
-          "passed": true,
-          "exempted": false,
-          "value": "+ 348.13亿",
-          "reason": "当前量能 405.79 亿为正，较 5min 前的 57.66 亿+ 348.13 亿，持续放量",
-          "volumeText": "成交量增加 348.13亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "非交易时段",
-          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 16.91 / 当前 25.42",
-          "reason": "9:30 竞价科技情绪 16.91 未超过 80，当前情绪须低于 40 的限制不生效"
-        },
-        {
-          "id": "cyb_ma3_slope_gate",
-          "title": "长飞光纤 跟踪创业板指 3 日线斜率门禁",
-          "passed": true,
-          "value": "长飞光纤 跟踪创业板指，3 日线斜率 -33.42°，负斜率允许出手；距上次由正转负 第 5 天（2026-08-19 翻转）",
-          "reason": "创业板指 斜率 -33.42 < 0，负斜率允许出手"
-        },
-        {
-          "id": "star_ma3_slope_gate",
-          "title": "科创50 3 日线斜率门禁",
-          "passed": true,
-          "value": "科创50 3 日线斜率 -6.75°，负斜率允许出手；距上次由正转负 第 5 天（2026-08-19 翻转）",
-          "reason": "科创50 斜率 -6.75 < 0，负斜率允许出手"
-        },
-        {
-          "id": "resilience_gate",
-          "title": "触发时点抗分歧分数≥9",
-          "passed": true,
-          "value": "13.05",
-          "skippedStocks": [
-            {
-              "code": "sh600487",
-              "name": "亨通光电",
-              "resilience": 8.28
-            }
-          ],
-          "reason": "前序股票全局最低抗分歧不足（亨通光电（抗分歧 8.28））依次顺延，轮到本股买入（本股触发时点抗分歧 13.05）"
-        }
-      ],
-      "twoBuy": true,
-      "leg": 2,
-      "weight": 0.5,
-      "rawReturnRate": -2.19,
-      "avgPrice": 406.01,
-      "buyPrices": [
-        406.01
-      ],
-      "buyTimes": [
-        "10:40"
-      ],
-      "buyDates": [
-        "20260826"
-      ],
-      "sellDate": "20260827",
-      "sellDateDisplay": "2026-08-27",
-      "sellTime": "09:33",
-      "sellPrice": 397.13,
-      "sellChange": 5.38,
-      "sellReason": "跌破成本线-2%",
-      "returnRate": -1.09
-    },
-    {
-      "seq": 5,
-      "metric": 10.3394,
-      "code": "sz300757",
-      "stockName": "罗博特科",
-      "buyDate": "20260827",
-      "buyDateDisplay": "2026-08-27",
-      "buyTime": "09:50",
-      "buyPrice": 543,
-      "buyChange": 2.67,
-      "buyReason": "5min 内资金净流入 20.02亿、成交量增加 51.45亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）；买点第二次触发，买入第二份 5 成（第一份 英维克·液冷 板块，本份改选其他板块中 N 日涨幅最大的 罗博特科·cpo 板块，09:50 价 543.00）",
-      "buyChecks": [
-        {
-          "id": "fund_inflow",
-          "title": "最近 5min 资金净流入大于 20 亿",
-          "passed": true,
-          "exempted": false,
-          "value": "+20.02亿",
-          "reason": "最近 5 分钟资金净流入 20.02 亿（09:45:00→09:50:00），超过 20 亿阈值",
-          "fundText": "5min 内资金净流入 20.02亿"
-        },
-        {
-          "id": "volume_expansion",
-          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
-          "passed": true,
-          "exempted": false,
-          "value": "+ 51.45亿",
-          "reason": "当前量能 286.47 亿为正，较 5min 前的 235.02 亿+ 51.45 亿，持续放量",
-          "volumeText": "成交量增加 51.45亿"
-        },
-        {
-          "id": "opening_below",
-          "title": "开盘后自选股低于开盘价不超过 30 只",
-          "passed": true,
-          "exempted": false,
-          "value": "27 / 97只",
-          "reason": "开盘后自选股共 97 只，27 只现价低于 9:30 开盘价，未超过 30 只"
-        },
-        {
-          "id": "emotion_retrace_after_open",
-          "title": "竞价情绪超 80 时当前情绪须低于 40",
-          "passed": true,
-          "exempted": false,
-          "value": "开盘 43.07 / 当前 60.26",
-          "reason": "9:30 竞价科技情绪 43.07 未超过 80，当前情绪须低于 40 的限制不生效"
-        },
-        {
-          "id": "cyb_ma3_slope_gate",
-          "title": "罗博特科 跟踪创业板指 3 日线斜率门禁",
-          "passed": true,
-          "value": "罗博特科 跟踪创业板指，3 日线斜率 +1.23°，今日盘中由负转正，允许出手",
-          "reason": "创业板指 斜率 +1.23 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
-        },
-        {
-          "id": "star_ma3_slope_gate",
-          "title": "科创50 3 日线斜率门禁",
-          "passed": true,
-          "value": "科创50 3 日线斜率 +17.04°，今日盘中由负转正，允许出手",
-          "reason": "科创50 斜率 +17.04 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
-        },
-        {
-          "id": "resilience_gate",
-          "title": "触发时点抗分歧分数≥9",
-          "passed": true,
-          "value": "11.32",
-          "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 11.32，≥ 全局最低 9）"
-        }
-      ],
-      "twoBuy": true,
-      "leg": 2,
-      "weight": 0.5,
-      "rawReturnRate": 2.58,
-      "avgPrice": 543,
-      "buyPrices": [
-        543
-      ],
-      "buyTimes": [
-        "09:50"
-      ],
-      "buyDates": [
-        "20260827"
-      ],
-      "sellDate": "20260828",
-      "sellDateDisplay": "2026-08-28",
-      "sellTime": "10:00",
-      "sellPrice": 556.99,
-      "sellChange": 0.88,
-      "sellReason": "情绪快进快出：买入日前两交易日当日科技情绪温和回升（-14.81 → -5.53，均在 -30~20 区间），次日 10:00 强制卖出",
-      "returnRate": 1.29
-    },
-    {
-      "seq": 6,
       "metric": 10.4364,
       "code": "sz002837",
       "stockName": "英维克",
@@ -945,8 +753,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -61.59 / 当前 -37.47",
-          "reason": "9:30 竞价科技情绪 -61.59 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -61.38 / 当前 -37.76",
+          "reason": "9:30 竞价科技情绪 -61.38 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -1001,6 +809,194 @@
       "returnRate": 3.33
     },
     {
+      "seq": 5,
+      "metric": 7.078,
+      "code": "sh601869",
+      "stockName": "长飞光纤",
+      "buyDate": "20260826",
+      "buyDateDisplay": "2026-08-26",
+      "buyTime": "10:40",
+      "buyPrice": 406.01,
+      "buyChange": 2.92,
+      "buyReason": "5min 内资金净流入 31.06亿、成交量增加 348.13亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票买点抗分歧<9顺延买入）；买点第二次触发，买入第二份 5 成（第一份 英维克·液冷 板块，本份改选其他板块中 N 日涨幅最大的 长飞光纤·光纤 板块，10:40 价 406.01）",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+31.06亿",
+          "reason": "最近 5 分钟资金净流入 31.06 亿（10:35:00→10:40:00），超过 20 亿阈值",
+          "fundText": "5min 内资金净流入 31.06亿"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 348.13亿",
+          "reason": "当前量能 405.79 亿为正，较 5min 前的 57.66 亿+ 348.13 亿，持续放量",
+          "volumeText": "成交量增加 348.13亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 16.91 / 当前 25.20",
+          "reason": "9:30 竞价科技情绪 16.91 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "cyb_ma3_slope_gate",
+          "title": "长飞光纤 跟踪创业板指 3 日线斜率门禁",
+          "passed": true,
+          "value": "长飞光纤 跟踪创业板指，3 日线斜率 -33.42°，负斜率允许出手；距上次由正转负 第 5 天（2026-08-19 翻转）",
+          "reason": "创业板指 斜率 -33.42 < 0，负斜率允许出手"
+        },
+        {
+          "id": "star_ma3_slope_gate",
+          "title": "科创50 3 日线斜率门禁",
+          "passed": true,
+          "value": "科创50 3 日线斜率 -6.75°，负斜率允许出手；距上次由正转负 第 5 天（2026-08-19 翻转）",
+          "reason": "科创50 斜率 -6.75 < 0，负斜率允许出手"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "13.05",
+          "skippedStocks": [
+            {
+              "code": "sh600487",
+              "name": "亨通光电",
+              "resilience": 8.28
+            }
+          ],
+          "reason": "前序股票全局最低抗分歧不足（亨通光电（抗分歧 8.28））依次顺延，轮到本股买入（本股触发时点抗分歧 13.05）"
+        }
+      ],
+      "twoBuy": true,
+      "leg": 2,
+      "weight": 0.5,
+      "rawReturnRate": -2.19,
+      "avgPrice": 406.01,
+      "buyPrices": [
+        406.01
+      ],
+      "buyTimes": [
+        "10:40"
+      ],
+      "buyDates": [
+        "20260826"
+      ],
+      "sellDate": "20260827",
+      "sellDateDisplay": "2026-08-27",
+      "sellTime": "09:33",
+      "sellPrice": 397.13,
+      "sellChange": 5.38,
+      "sellReason": "跌破成本线-2%",
+      "returnRate": -1.09
+    },
+    {
+      "seq": 6,
+      "metric": 10.3394,
+      "code": "sz300757",
+      "stockName": "罗博特科",
+      "buyDate": "20260827",
+      "buyDateDisplay": "2026-08-27",
+      "buyTime": "09:50",
+      "buyPrice": 543,
+      "buyChange": 2.67,
+      "buyReason": "5min 内资金净流入 20.02亿、成交量增加 51.45亿、开盘后自选股低于开盘价不超过 30 只、竞价情绪超 80 时当前情绪须低于 40；跨指数双门禁（允许市场: 主板/创业板/科创板）；买点第二次触发，买入第二份 5 成（第一份 英维克·液冷 板块，本份改选其他板块中 N 日涨幅最大的 罗博特科·cpo 板块，09:50 价 543.00）",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+20.02亿",
+          "reason": "最近 5 分钟资金净流入 20.02 亿（09:45:00→09:50:00），超过 20 亿阈值",
+          "fundText": "5min 内资金净流入 20.02亿"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "量能较 5min 前增加（负值需增加超 100 亿）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 51.45亿",
+          "reason": "当前量能 286.47 亿为正，较 5min 前的 235.02 亿+ 51.45 亿，持续放量",
+          "volumeText": "成交量增加 51.45亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "27 / 96只",
+          "reason": "开盘后自选股共 96 只，27 只现价低于 9:30 开盘价，未超过 30 只"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 80 时当前情绪须低于 40",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 43.18 / 当前 60.18",
+          "reason": "9:30 竞价科技情绪 43.18 未超过 80，当前情绪须低于 40 的限制不生效"
+        },
+        {
+          "id": "cyb_ma3_slope_gate",
+          "title": "罗博特科 跟踪创业板指 3 日线斜率门禁",
+          "passed": true,
+          "value": "罗博特科 跟踪创业板指，3 日线斜率 +1.23°，今日盘中由负转正，允许出手",
+          "reason": "创业板指 斜率 +1.23 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
+        },
+        {
+          "id": "star_ma3_slope_gate",
+          "title": "科创50 3 日线斜率门禁",
+          "passed": true,
+          "value": "科创50 3 日线斜率 +17.04°，今日盘中由负转正，允许出手",
+          "reason": "科创50 斜率 +17.04 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "11.32",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 11.32，≥ 全局最低 9）"
+        }
+      ],
+      "twoBuy": true,
+      "leg": 2,
+      "weight": 0.5,
+      "rawReturnRate": 2.58,
+      "avgPrice": 543,
+      "buyPrices": [
+        543
+      ],
+      "buyTimes": [
+        "09:50"
+      ],
+      "buyDates": [
+        "20260827"
+      ],
+      "sellDate": "20260828",
+      "sellDateDisplay": "2026-08-28",
+      "sellTime": "10:00",
+      "sellPrice": 556.99,
+      "sellChange": 0.88,
+      "sellReason": "情绪快进快出：买入日前两交易日当日科技情绪温和回升（-14.81 → -5.53，均在 -30~20 区间），次日 10:00 强制卖出",
+      "returnRate": 1.29
+    },
+    {
       "seq": 7,
       "metric": 10.1964,
       "code": "sh600601",
@@ -1043,8 +1039,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 46.17 / 当前 -19.99",
-          "reason": "9:30 竞价科技情绪 46.17 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 45.94 / 当前 -20.41",
+          "reason": "9:30 竞价科技情绪 45.94 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -1134,8 +1130,8 @@
           "title": "竞价情绪超 80 时当前情绪须低于 40",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -0.49 / 当前 24.96",
-          "reason": "9:30 竞价科技情绪 -0.49 未超过 80，当前情绪须低于 40 的限制不生效"
+          "value": "开盘 -0.31 / 当前 25.21",
+          "reason": "9:30 竞价科技情绪 -0.31 未超过 80，当前情绪须低于 40 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",

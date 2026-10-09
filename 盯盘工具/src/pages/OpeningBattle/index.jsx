@@ -350,7 +350,7 @@ export const WatchlistUpDownModule = ({ stockList }) => {
 const FundChartModule = () => {
   const [data, setData] = useState([]);
   // 默认只看变化（筛选掉 diff === 0 的条目），不再提供开关
-  const [fiveMinAggEnabled, setFiveMinAggEnabled] = useState(false);
+  const [fiveMinAggEnabled, setFiveMinAggEnabled] = useState(true);
 
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);

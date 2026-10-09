@@ -58,5 +58,45 @@
     "description": "成交量较约15分钟前放大 <strong>211亿</strong>（≥100亿），主力资金净流出加速（-57.3→-105.5亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
     "severity": "high",
     "isBullish": false
+  },
+  {
+    "id": "6c886cdea6fe4936",
+    "time": "2026-10-09 10:13:34",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>118亿</strong>（≥100亿），主力资金净流出加速（-167.0→-250.3亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "4e000a48b0eb0104",
+    "time": "2026-10-09 10:33:57",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>341亿</strong>（≥100亿），主力资金净流出加速（-300.7→-375.0亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "925196ea25d38e76",
+    "time": "2026-10-09 11:05:25",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>191亿</strong>（≥100亿），主力资金净流出加速（-382.8→-385.2亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "6cd5c76773b6506e",
+    "time": "2026-10-09 11:26:18",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>150亿</strong>（≥100亿），主力资金净流出加速（-440.6→-453.8亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
   }
 ]
