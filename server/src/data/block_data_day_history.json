@@ -1,5 +1,145 @@
 [
   {
+    "date": "20261009",
+    "blocks": {
+      "AI 应用": {
+        "avgChange": 11.3
+      },
+      "消费": {
+        "avgChange": 6.75
+      },
+      "粮食": {
+        "avgChange": 6.71
+      },
+      "固态电池": {
+        "avgChange": 6.03
+      },
+      "贵金属": {
+        "avgChange": 4.31
+      },
+      "磷化铟": {
+        "avgChange": 4.26
+      },
+      "医药": {
+        "avgChange": 3.83
+      },
+      "锂电": {
+        "avgChange": 3.77
+      },
+      "机器人": {
+        "avgChange": 2.18
+      },
+      "AI 医药": {
+        "avgChange": 2
+      },
+      "证券": {
+        "avgChange": 1.77
+      },
+      "MPO": {
+        "avgChange": 1.49
+      },
+      "化工": {
+        "avgChange": 0.83
+      },
+      "功率半导体": {
+        "avgChange": 0.81
+      },
+      "染料": {
+        "avgChange": 0.26
+      },
+      "先进封装": {
+        "avgChange": 0.23
+      },
+      "cpu": {
+        "avgChange": 0.17
+      },
+      "煤炭": {
+        "avgChange": -0.01
+      },
+      "cpo": {
+        "avgChange": -0.04
+      },
+      "MFC": {
+        "avgChange": -0.07
+      },
+      "国产超节点": {
+        "avgChange": -0.37
+      },
+      "房地产": {
+        "avgChange": -0.42
+      },
+      "半导体": {
+        "avgChange": -0.48
+      },
+      "特高压": {
+        "avgChange": -0.57
+      },
+      "光纤": {
+        "avgChange": -0.6
+      },
+      "银行": {
+        "avgChange": -0.75
+      },
+      "存储": {
+        "avgChange": -1.11
+      },
+      "电力": {
+        "avgChange": -1.14
+      },
+      "军工": {
+        "avgChange": -1.36
+      },
+      "液冷": {
+        "avgChange": -1.45
+      },
+      "北美缺电": {
+        "avgChange": -2.3
+      },
+      "半导体材料": {
+        "avgChange": -2.59
+      },
+      "光模块": {
+        "avgChange": -2.61
+      },
+      "AI电源": {
+        "avgChange": -2.79
+      },
+      "金刚石散热": {
+        "avgChange": -2.93
+      },
+      "商业航天": {
+        "avgChange": -2.96
+      },
+      "钨": {
+        "avgChange": -2.98
+      },
+      "pcb": {
+        "avgChange": -3.85
+      },
+      "电子布": {
+        "avgChange": -4.2
+      },
+      "玻璃基板": {
+        "avgChange": -4.27
+      },
+      "MLCC": {
+        "avgChange": -5.22
+      },
+      "PPE树脂": {
+        "avgChange": -5.25
+      },
+      "铜箔": {
+        "avgChange": -5.33
+      },
+      "光芯片": {
+        "avgChange": -5.5
+      },
+      "CCL": {
+        "avgChange": -7.36
+      }
+    }
+  },
+  {
     "date": "20261008",
     "blocks": {
       "PPE树脂": {

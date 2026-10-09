@@ -1132,5 +1132,10 @@ exports.default = [
         "code": "sz002428",
         "name": "云南锗业",
         "tag": "进攻"
+    },
+    {
+        "blockName": "AI 应用",
+        "code": "sz300413",
+        "name": "芒果超媒"
     }
 ]

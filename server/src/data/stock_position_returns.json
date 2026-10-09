@@ -9,6 +9,14 @@
         "stockCode": "sh603186",
         "position": "",
         "time": "09:31"
+      },
+      {
+        "id": "1791523028844_xrim",
+        "action": "buy",
+        "stockName": "云南锗业",
+        "stockCode": "sz002428",
+        "position": "",
+        "time": "13:17"
       }
     ],
     "totalReturn": null,
@@ -16,7 +24,7 @@
     "score": null,
     "review": "",
     "createdAt": "2026-10-09T01:31:09.857Z",
-    "updatedAt": "2026-10-09T01:31:09.857Z"
+    "updatedAt": "2026-10-09T05:17:08.914Z"
   },
   {
     "date": "2026-10-08",
