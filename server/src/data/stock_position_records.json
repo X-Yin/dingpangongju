@@ -1,5 +1,16 @@
 [
   {
+    "id": "1791509469840_iy52j8",
+    "type": "delete",
+    "code": "sh603186",
+    "name": "华正新材",
+    "date": "2026-10-09",
+    "time": "09:31:09",
+    "detail": "删除持仓：华正新材（sh603186）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-09T01:31:09.840Z"
+  },
+  {
     "id": "1791423861463_gdz8th",
     "type": "pipeline",
     "code": "sh603186",

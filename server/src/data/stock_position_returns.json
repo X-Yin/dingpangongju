@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-10-09",
+    "operations": [
+      {
+        "id": "1791509469844_hg3i",
+        "action": "sell",
+        "stockName": "华正新材",
+        "stockCode": "sh603186",
+        "position": "",
+        "time": "09:31"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-09T01:31:09.857Z",
+    "updatedAt": "2026-10-09T01:31:09.857Z"
+  },
+  {
     "date": "2026-10-08",
     "operations": [
       {

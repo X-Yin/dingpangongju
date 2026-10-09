@@ -247,14 +247,6 @@
     "isTech": true
   },
   {
-    "code": "sh600118",
-    "name": "中国卫星",
-    "isImportant": false,
-    "blockName": "商业航天",
-    "riskScore": 8,
-    "isTech": true
-  },
-  {
     "code": "sz000657",
     "name": "中钨高新",
     "isImportant": false,

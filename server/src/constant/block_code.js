@@ -1120,5 +1120,17 @@ exports.default = [
         "code": "sh603906",
         "name": "龙蟠科技",
         "tag": "中性"
+    },
+    {
+        "blockName": "磷化铟",
+        "code": "sz300489",
+        "name": "光智科技",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "磷化铟",
+        "code": "sz002428",
+        "name": "云南锗业",
+        "tag": "进攻"
     }
 ]
