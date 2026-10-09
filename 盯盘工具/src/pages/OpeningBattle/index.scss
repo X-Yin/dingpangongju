@@ -1294,6 +1294,11 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
       color: #fff;
       @include ob-glass(rgba(255, 168, 24, 0.62), rgba(255, 255, 255, 0.38), 0 10px 24px -14px rgba(255, 176, 32, 0.55));
     }
+    // 已豁免：快进快出 10:00 强卖豁免命中（不强卖、继续持有，紫色区分于触发/未触发）
+    &.exempted {
+      color: #fff;
+      @include ob-glass(rgba(124, 58, 237, 0.62), rgba(255, 255, 255, 0.38), 0 10px 24px -14px rgba(124, 58, 237, 0.55));
+    }
 
     .ob-sell-cond-name {
       font-size: 12.5px;

@@ -98,6 +98,164 @@ const getQuickOutForceSoldRecords = (dateStr = null) => {
   return Array.isArray(cache[key]) ? cache[key] : [];
 };
 
+// ========== 买点诊断命中记录（2026-10-09 新增，供快进快出强卖豁免①使用） ==========
+// getBuyPointChecks 诊断目标日为今日且全部前置条件通过（allPassed）时记录一条命中；
+// 快进快出强卖豁免①据此判断「今日 10:00 前（含）买点诊断是否再次触发」。文件结构：
+// { "YYYYMMDD": [{ time: "HH:mm" }, ...] }，读取/写入时自动清理 7 天前的历史记录。
+// 注意：命中记录依赖前端轮询（买点卡片/浮窗每 5 分钟自动诊断一次），页面未打开时无记录，豁免①按不命中处理
+const buyPointHitRecordsPath = path.resolve(__dirname, '../data/buy_point_hit_records.json');
+
+const readBuyPointHitCache = () => {
+  try {
+    if (!fs.existsSync(buyPointHitRecordsPath)) return {};
+    const raw = JSON.parse(fs.readFileSync(buyPointHitRecordsPath, 'utf8'));
+    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  } catch (e) {
+    console.error('读取买点命中记录缓存失败:', e.message);
+    return {};
+  }
+};
+
+// 记录一次买点命中（幂等：同日同分钟只记一条）
+const recordBuyPointHit = (dateStr) => {
+  const key = String(dateStr);
+  if (!/^\d{8}$/.test(key)) return false;
+  const cache = readBuyPointHitCache();
+  const dayRecords = Array.isArray(cache[key]) ? cache[key] : [];
+  const timeStr = dayjs().format('HH:mm');
+  if (dayRecords.some((r) => r && r.time === timeStr)) return false;
+  // 清理 7 天前的历史记录，避免文件无限增长
+  const cutoff = dayjs().subtract(7, 'day').format('YYYYMMDD');
+  const pruned = {};
+  for (const [dateKey, records] of Object.entries(cache)) {
+    if (/^\d{8}$/.test(dateKey) && dateKey >= cutoff && Array.isArray(records) && records.length > 0) {
+      pruned[dateKey] = records;
+    }
+  }
+  pruned[key] = [...dayRecords, { time: timeStr }];
+  try {
+    fs.writeFileSync(buyPointHitRecordsPath, JSON.stringify(pruned, null, 2));
+  } catch (e) {
+    console.error('写入买点命中记录缓存失败:', e.message);
+    return false;
+  }
+  return true;
+};
+
+// 查询某日（YYYYMMDD，缺省今日）的买点命中记录数组
+const getBuyPointHitRecords = (dateStr = null) => {
+  const key = dateStr != null ? String(dateStr) : dayjs().format('YYYYMMDD');
+  const cache = readBuyPointHitCache();
+  return Array.isArray(cache[key]) ? cache[key] : [];
+};
+
+// ========== 情绪快进快出「10:00 强卖豁免」当日记录（缓存文件，2026-10-09 新增） ==========
+// 快进快出口径命中（条件8A/8B 任一）且已过 10:00 时评估两种「次日强势」判断（evaluateQuickOutExempt），
+// 命中任一则本次不强卖、持仓继续持有（通用条件 1-7 仍正常生效，等命中其他卖点再卖）。文件结构：
+// { "YYYYMMDD": [{ code, name, time, via, detail }, ...] }，读取/写入时自动清理 7 天前的历史记录。
+// 豁免按「日+股」幂等锁定：一旦豁免，当日 8A/8B 不再判 satisfied；未豁免则写强卖记录（quick_out_force_sell.json），
+// 次轮诊断凭强卖记录跳过重复评估，避免 10:00 后数据变化导致豁免结论反复翻转
+const quickOutExemptPath = path.resolve(__dirname, '../data/quick_out_exempt_records.json');
+
+const readQuickOutExemptCache = () => {
+  try {
+    if (!fs.existsSync(quickOutExemptPath)) return {};
+    const raw = JSON.parse(fs.readFileSync(quickOutExemptPath, 'utf8'));
+    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  } catch (e) {
+    console.error('读取快进快出强卖豁免记录缓存失败:', e.message);
+    return {};
+  }
+};
+
+// 查询今日某持仓的强卖豁免记录，返回 { time, via, detail } 或 null
+const getQuickOutExemptRecord = (code) => {
+  const key = dayjs().format('YYYYMMDD');
+  const cache = readQuickOutExemptCache();
+  const records = Array.isArray(cache[key]) ? cache[key] : [];
+  const hit = records.find((r) => r && String(r.code) === String(code));
+  return hit || null;
+};
+
+// 记录今日某持仓的强卖豁免（幂等：同日同股只记一条）
+const recordQuickOutExempt = (code, name, info) => {
+  const key = dayjs().format('YYYYMMDD');
+  const cache = readQuickOutExemptCache();
+  const records = Array.isArray(cache[key]) ? cache[key] : [];
+  if (records.some((r) => r && String(r.code) === String(code))) return false;
+  // 清理 7 天前的历史记录，避免文件无限增长
+  const cutoff = dayjs().subtract(7, 'day').format('YYYYMMDD');
+  const pruned = {};
+  for (const [dateKey, dayRecords] of Object.entries(cache)) {
+    if (/^\d{8}$/.test(dateKey) && dateKey >= cutoff && Array.isArray(dayRecords) && dayRecords.length > 0) {
+      pruned[dateKey] = dayRecords;
+    }
+  }
+  pruned[key] = [...records, {
+    code: String(code),
+    name: name != null ? String(name) : null,
+    time: dayjs().format('HH:mm'),
+    via: info?.via || null,
+    detail: info?.detail || null,
+  }];
+  try {
+    fs.writeFileSync(quickOutExemptPath, JSON.stringify(pruned, null, 2));
+  } catch (e) {
+    console.error('写入快进快出强卖豁免记录缓存失败:', e.message);
+    return false;
+  }
+  return true;
+};
+
+// 快进快出强卖豁免评估（与回测 buildQuickOutExemptInfo 口径一致，2026-10-09 新增）：
+//   豁免① 今日 10:00 前（含）买点诊断再次 allPassed（读 buy_point_hit_records，命中记录 time <= 10:00）；
+//   豁免② 评估时点（卖点诊断每 10 秒一跑，首次评估通常即 10:00 整点后数秒）三条件同时满足：
+//          科技情绪 emoValue > 0 且 自选股现价低于开盘价个股数 < 30（复用 fetchOpeningBelowCount，口径同
+//          买点检查4）且 大盘主力资金净流入（amount_history 最新 mainMoney 累计值）> 0。
+// 任一条件数据缺失按不满足处理（不豁免，照常强卖）。返回 { via, detail } 或 null
+const evaluateQuickOutExempt = async (emoValue) => {
+  // 豁免①：10:00 前（含）买点诊断再次触发
+  const hitRecords = getBuyPointHitRecords();
+  const retriggerHits = hitRecords.filter((r) => r && /^\d{2}:\d{2}$/.test(r.time) && r.time <= '10:00');
+  if (retriggerHits.length > 0) {
+    return { via: 'buy_retrigger', detail: `今日 ${retriggerHits[retriggerHits.length - 1].time}（10:00 前）买点诊断再次触发` };
+  }
+  // 豁免②：评估时点「科技情绪>0 + 低于开盘价<30只 + 资金净流入>0」三条件同时满足
+  const emo = Number(emoValue);
+  const emoOk = Number.isFinite(emo) && emo > 0;
+  let belowCount = null;
+  let belowOk = false;
+  try {
+    const openingStats = await fetchOpeningBelowCount();
+    if (openingStats && !openingStats.error) {
+      belowCount = Number(openingStats.belowCount);
+      belowOk = Number.isFinite(belowCount) && belowCount < 30;
+    }
+  } catch (e) {
+    // 数据缺失按不满足处理
+  }
+  let fundValue = null;
+  let fundOk = false;
+  try {
+    const history = getAmountHistory();
+    const sorted = [...(history || [])].sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+    const latest = sorted[sorted.length - 1];
+    if (latest) {
+      fundValue = parseAmountValue(latest[1]?.mainMoney);
+      fundOk = Number.isFinite(fundValue) && fundValue > 0;
+    }
+  } catch (e) {
+    // 数据缺失按不满足处理
+  }
+  if (emoOk && belowOk && fundOk) {
+    return {
+      via: 'strong_at_10',
+      detail: `${dayjs().format('HH:mm')} 时点科技情绪 ${emo.toFixed(2)} > 0、自选股低于开盘价 ${belowCount} 只 < 30、主力资金净流入 ${fundValue.toFixed(2)} 亿 > 0`,
+    };
+  }
+  return null;
+};
+
 // ========== 情绪快进快出买入日判定（与回测 emoquick 策略口径一致，2026-10-03 新增条件②） ==========
 // 判定某买入日（YYYYMMDD 字符串）是否为「快进快出日」，满足任一即为真：
 //   ① 买入日上一交易日科技情绪 3 日 EMA < -60（与情绪页「三日均值」同源同算法）
@@ -1745,6 +1903,10 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
   // 两条条件分别独立判定与展示（便于区分当前命中的是哪个口径、另一个是否满足），任一命中即走强卖。
   // 买入时间取持仓管理中该股的 buyDate（与浮窗「买入当日不生效」同一数据源）。
   // 时间型条件：10:00 前为「确认中」等待态（10:00 起触发，不参与 5 分钟持续判定）；判定数据缺失按普通持仓处理
+  // 2026-10-09 叠加强卖豁免（evaluateQuickOutExempt，口径与回测 buildQuickOutExemptInfo 一致）：
+  //   已过 10:00 且口径命中时先评估两种「次日强势」判断（① 10:00 前含 10:00 买点诊断再次触发；
+  //   ② 评估时点科技情绪>0 + 低于开盘价<30只 + 资金净流入>0），命中任一则 8A/8B 不判 satisfied
+  //   （展示「已豁免」），持仓继续持有、通用条件 1-7 仍正常生效
   const condition8a = {
     name: '情绪快进快出强卖（3日EMA<-60）',
     satisfied: false,
@@ -1803,9 +1965,41 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
       condition8b.detail = detail8;
       condition8b.subConditions = subs8;
     } else {
+      // ===== 强卖豁免评估（2026-10-09，口径与回测 buildQuickOutExemptInfo 一致） =====
+      // 快进快出口径命中（8A/8B 任一）且已过今日 10:00 时，先做两种「次日强势」判断，命中任一不强卖：
+      //   ① 今日 10:00 前（含）买点诊断再次触发（buy_point_checks 每次 allPassed 由服务端记录一条）；
+      //   ② 评估时点（诊断每 10 秒一跑，首次评估通常即 10:00 整点后数秒）科技情绪 > 0 且 自选股低于开盘价
+      //      个股 < 30 只且 主力资金净流入 > 0（三者同时满足）。
+      // 豁免按「日+股」幂等锁定（quick_out_exempt_records.json）：一旦豁免，当日 8A/8B 不再判 satisfied
+      // （展示「已豁免」），通用条件 1-7 仍正常生效，先一直拿着等命中其他卖点再卖；
+      // 未豁免则照常判 satisfied 并写当日强卖记录，后续诊断凭强卖记录跳过重复评估，
+      // 避免 10:00 后数据变化导致豁免结论反复翻转
+      const hitQuick8 = quickInfo8.quickByEma === true || quickInfo8.quickByRange === true;
+      let exemptInfo8 = null;
+      if (hitQuick8 && after10am8) {
+        const existingExempt8 = getQuickOutExemptRecord(code);
+        const alreadySold8 = getQuickOutForceSoldRecords().some((r) => r && String(r.code) === String(code));
+        if (existingExempt8) {
+          exemptInfo8 = existingExempt8;
+        } else if (!alreadySold8) {
+          exemptInfo8 = await evaluateQuickOutExempt(techChange);
+          if (exemptInfo8) recordQuickOutExempt(code, pos8?.name, exemptInfo8);
+        }
+      }
+      const exempted8 = hitQuick8 && after10am8 && exemptInfo8 != null;
+      const exemptViaText8 = exemptInfo8?.via === 'buy_retrigger' ? '买点再触发' : '10:00 时点强势';
       // ===== 条件8A：3 日 EMA < -60 口径 =====
       if (quickInfo8.quickByEma) {
-        if (!after10am8) {
+        if (exempted8) {
+          condition8a.exempted = true;
+          condition8a.detail = `买入日 ${buyDateText8} 命中快进快出（${emaDescA8}），已触发强卖豁免（${exemptInfo8.detail}），今日不强卖、继续持有，通用卖点条件（1-7）仍正常生效`;
+          condition8a.subConditions = [
+            { label: '上一交易日3日EMA', value: emaText8 },
+            { label: '阈值', value: `< ${EMO_QUICK_OUT_EMA}` },
+            { label: '买入日', value: buyDateText8 },
+            { label: '豁免依据', value: exemptViaText8 },
+          ];
+        } else if (!after10am8) {
           condition8a.pending = true;
           condition8a.detail = `买入日 ${buyDateText8} 命中快进快出（${emaDescA8}），今日 10:00 强制卖出（当前 ${dayjs().format('HH:mm')}，等待 10:00）`;
           condition8a.subConditions = [
@@ -1834,7 +2028,16 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
       }
       // ===== 条件8B：情绪温和回升口径（两日原始分均在 (-30, 20) 且逐日回升） =====
       if (quickInfo8.quickByRange) {
-        if (!after10am8) {
+        if (exempted8) {
+          condition8b.exempted = true;
+          condition8b.detail = `买入日 ${buyDateText8} 命中快进快出（${rangeDescB8}），已触发强卖豁免（${exemptInfo8.detail}），今日不强卖、继续持有，通用卖点条件（1-7）仍正常生效`;
+          condition8b.subConditions = [
+            { label: '上两交易日当日情绪', value: `${quickInfo8.prev2Raw} → ${quickInfo8.prevRaw}` },
+            { label: '区间要求', value: `(${EMO_QUICK_RANGE_LOW}, ${EMO_QUICK_RANGE_HIGH}) 且回升` },
+            { label: '买入日', value: buyDateText8 },
+            { label: '豁免依据', value: exemptViaText8 },
+          ];
+        } else if (!after10am8) {
           condition8b.pending = true;
           condition8b.detail = `买入日 ${buyDateText8} 命中快进快出（${rangeDescB8}），今日 10:00 强制卖出（当前 ${dayjs().format('HH:mm')}，等待 10:00）`;
           condition8b.subConditions = [
@@ -2572,6 +2775,12 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
     : tailDipHit
     ? '尾盘抄底条件命中（或逻辑分支），适合尾盘抄底，博弈次日的反弹。可以出手买入，但是请分仓 1/3，随后逐步分批买入，分仓管理是最后一道防火墙，谨防尾盘大盘跳水！'
     : '当前前置条件未全部满足，请耐心等待，不要盲目出手。';
+
+  // 买点命中记录（2026-10-09 新增）：诊断目标日为今日且全部前置条件通过时记录一条命中（同分钟幂等），
+  // 供快进快出强卖豁免①（次日 10:00 前买点诊断再次触发）读取；历史日期/非命中不记录
+  if (allPassed && targetDateStr === dayjs().format('YYYYMMDD')) {
+    recordBuyPointHit(targetDateStr);
+  }
 
   return {
     success: true,

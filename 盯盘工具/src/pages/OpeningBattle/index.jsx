@@ -1381,11 +1381,11 @@ const SellPointDiagnosisCard = () => {
                 <div className="ob-check-reason">买入当日卖点诊断不生效，次日起生效</div>
               ) : r.error ? (
                 <div className="ob-check-reason">{r.error}</div>
-              ) : (r.conditions && r.conditions.length > 0 ? r.conditions.sort((a, b) => (b.satisfied ? 2 : b.pending ? 1 : 0) - (a.satisfied ? 2 : a.pending ? 1 : 0)).map((cond, cidx) => (
-                <div key={cidx} className={`ob-sell-cond ${cond.satisfied ? 'hit' : cond.pending ? 'pending' : 'safe'}`}>
+              ) : (r.conditions && r.conditions.length > 0 ? r.conditions.sort((a, b) => (b.satisfied ? 3 : b.exempted ? 2 : b.pending ? 1 : 0) - (a.satisfied ? 3 : a.exempted ? 2 : a.pending ? 1 : 0)).map((cond, cidx) => (
+                <div key={cidx} className={`ob-sell-cond ${cond.satisfied ? 'hit' : cond.exempted ? 'exempted' : cond.pending ? 'pending' : 'safe'}`}>
                   <span className="ob-sell-cond-name">{cond.name}</span>
                   <span className="ob-sell-cond-badge">
-                    {cond.satisfied ? '触发' : cond.pending ? `确认中 ${cond.pendingMinutes || 0}/5min` : '未触发'}
+                    {cond.satisfied ? '触发' : cond.exempted ? '已豁免' : cond.pending ? `确认中 ${cond.pendingMinutes || 0}/5min` : '未触发'}
                   </span>
                   <div className="ob-sell-cond-detail">{cond.detail}</div>
                 </div>

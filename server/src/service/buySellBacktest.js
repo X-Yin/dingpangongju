@@ -50,13 +50,17 @@ const EMO_QUICK_RANGE_HIGH = 20;
 // 买点触发时均可正常买入（不跳过）；满足以下任一条件的日子买入 → 次日 10:00 强制卖出：
 //   1) 上一交易日科技情绪指数的 3 日 EMA（与情绪开关同源同算法）低于 -60
 //   2) 上上个、上个交易日的当日科技情绪原始分（非 3 日 EMA）均处 (-30, 20) 区间且上个 > 上上个（情绪温和回升）
-const EMO_QUICK_DESC = (n) => `买点命中时按「${n} 日涨幅最大」选股买入${n === 2 ? '（排序依据为触发时点当日盘中涨幅，非 2 日窗口累计涨幅）' : `（最近 ${n} 个交易日涨幅最大）`}，买点触发时均可正常买入、不跳过；买入时先取上一交易日科技情绪指数的 3 日 EMA 与上两个交易日的当日科技情绪原始分（tech_index.json 每日收盘情绪分，与情绪页同源，EMA 不含当日、当日分即当日收盘值），满足以下任一条件则本次买入标记为「快进快出」——该笔持仓不走通用 7 条件卖点，买入次日上午 10:00 强制卖出（取当日第一个 ≥10:00 的分时点价格，分时未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），且买入次日盘中跌破成本线 -2%（买入价 × 0.98，口径与通用条件7一致：开盘首分钟已破线走竞价自救窗口、首次分钟回落即卖；盘中才破线则即时止损）时先到先卖、提前止损离场，强卖/止损当日禁止二次买入（哪怕买点再次触发也不买）：① 上一交易日 3 日 EMA 低于 -60；② 上上个与上个交易日的当日科技情绪均处于 -30~20 区间（不含边界）且上个交易日高于上上个交易日（情绪温和回升）；两条件均不满足（或数据缺失）时为普通持仓，走通用 7 条件卖点。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效`;
+// 2026-10-09 叠加：10:00 强卖豁免（见 buildQuickOutExemptInfo）——强卖前先做两种「次日强势」判断，
+//   命中任一不强卖、持仓转由通用 7 条件卖点接管：① 10:00 前（含）买点诊断再次触发；
+//   ② 10:00 时点科技情绪>0 且自选股低于开盘价<30只且主力资金净流入>0（三者同时满足）
+const EMO_QUICK_EXEMPT_DESC = '2026-10-09 新增「10:00 强卖豁免」：强卖前先做两种次日强势判断，命中任一则本次不强卖、持仓转由通用 7 条件卖点接管（-2% 成本线止损仍先到先卖）：① 次日 10:00 前（含 10:00）买点诊断再次触发；② 次日 10:00 时点科技情绪 > 0、自选股低于开盘价个股 < 30 只、主力资金净流入 > 0 三者同时满足';
+const EMO_QUICK_DESC = (n) => `买点命中时按「${n} 日涨幅最大」选股买入${n === 2 ? '（排序依据为触发时点当日盘中涨幅，非 2 日窗口累计涨幅）' : `（最近 ${n} 个交易日涨幅最大）`}，买点触发时均可正常买入、不跳过；买入时先取上一交易日科技情绪指数的 3 日 EMA 与上两个交易日的当日科技情绪原始分（tech_index.json 每日收盘情绪分，与情绪页同源，EMA 不含当日、当日分即当日收盘值），满足以下任一条件则本次买入标记为「快进快出」——该笔持仓不走通用 7 条件卖点，买入次日上午 10:00 强制卖出（取当日第一个 ≥10:00 的分时点价格，分时未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），且买入次日盘中跌破成本线 -2%（买入价 × 0.98，口径与通用条件7一致：开盘首分钟已破线走竞价自救窗口、首次分钟回落即卖；盘中才破线则即时止损）时先到先卖、提前止损离场，强卖/止损当日禁止二次买入（哪怕买点再次触发也不买）：① 上一交易日 3 日 EMA 低于 -60；② 上上个与上个交易日的当日科技情绪均处于 -30~20 区间（不含边界）且上个交易日高于上上个交易日（情绪温和回升）；两条件均不满足（或数据缺失）时为普通持仓，走通用 7 条件卖点。${EMO_QUICK_EXEMPT_DESC}。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效`;
 
 // 快进快出 × 研报覆盖双门策略描述（highest_3d_reports_top5_gain_emoquick，2026-10-04 用户新增）：
 // 在 highest_3d_gain_emoquick 的基础上：仅当触发「上一交易日 3 日 EMA < -60」这条快进快出路径时，
 // 选股口径从「3日涨幅最大」改为「最近 3 日研报覆盖数前五（含并列）→ 组内 3 日涨幅最大」；
 // 温和回升快进快出路径 / 非快进快出路径 仍走原 3 日涨幅最大选股
-const EMO_QUICK_REPORTS_DESC = `买点命中时均可正常买入、不跳过；满足以下任一条件则本次买入标记为「快进快出」——该笔持仓不走通用 7 条件卖点，买入次日上午 10:00 强制卖出（取当日第一个 ≥10:00 的分时点价格，分时未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），且买入次日盘中跌破成本线 -2%（买入价 × 0.98，口径与通用条件7一致：开盘首分钟已破线走竞价自救窗口、首次分钟回落即卖；盘中才破线则即时止损）时先到先卖、提前止损离场，强卖/止损当日禁止二次买入（哪怕买点再次触发也不买）：① 上一交易日科技情绪 3 日 EMA < -60；② 上上个与上个交易日的当日科技情绪均处于 -30~20 区间（不含边界）且上个交易日高于上上个交易日（情绪温和回升）。选股口径分三路：走①时先取「最近 3 日研报覆盖数前五（含并列，仅统计买点前已创建的研报）」形成候选池，再从中选 3 日涨幅最大的一只（博弈反弹提胜率）；走②或两条件均不满足时仍按「3 日涨幅最大」选股（最近 3 个交易日涨幅之和最大）。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效`;
+const EMO_QUICK_REPORTS_DESC = `买点命中时均可正常买入、不跳过；满足以下任一条件则本次买入标记为「快进快出」——该笔持仓不走通用 7 条件卖点，买入次日上午 10:00 强制卖出（取当日第一个 ≥10:00 的分时点价格，分时未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），且买入次日盘中跌破成本线 -2%（买入价 × 0.98，口径与通用条件7一致：开盘首分钟已破线走竞价自救窗口、首次分钟回落即卖；盘中才破线则即时止损）时先到先卖、提前止损离场，强卖/止损当日禁止二次买入（哪怕买点再次触发也不买）：① 上一交易日科技情绪 3 日 EMA < -60；② 上上个与上个交易日的当日科技情绪均处于 -30~20 区间（不含边界）且上个交易日高于上上个交易日（情绪温和回升）。选股口径分三路：走①时先取「最近 3 日研报覆盖数前五（含并列，仅统计买点前已创建的研报）」形成候选池，再从中选 3 日涨幅最大的一只（博弈反弹提胜率）；走②或两条件均不满足时仍按「3 日涨幅最大」选股（最近 3 个交易日涨幅之和最大）。${EMO_QUICK_EXEMPT_DESC}。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效`;
 
 // 科技板块前三 × N日涨幅最大 × 快进快出系列统一描述（tech_block_top3_{N}d_gain_emoquick，2026-10-06 用户新增）：
 // 与 highest_{N}d_gain_emoquick 完全一致（快进快出触发条件、次日 10:00 强卖、盘中 -2% 止损、否则走通用卖点均不变），
@@ -64,7 +68,7 @@ const EMO_QUICK_REPORTS_DESC = `买点命中时均可正常买入、不跳过；
 //   买点触发时，取当日重点板块（block_code.js，key_blocks 页面维护）中 tag = 进攻 的板块，
 //   按「板块盘中涨幅」（= 该板块成分股在买点触发时点的实时涨幅均值，与 key_blocks 页面盘中 avgChange 同口径，不含收盘价前视）降序取前三，
 //   把这 3 个板块的全部成分股与「全量自选股中 isTech ≠ false 的科技股」取交集，再在交集内按最近 N 个交易日涨幅之和最大选一只买入
-const TECH_TOP3_BLOCK_DESC = (n) => `与「${n}日涨幅最大&三日情绪-60快进快出」完全一致，唯一区别在选股口径增加一层板块效应筛选：买点触发时，先取当日重点板块（block_code.js，key_blocks 页面维护）中 tag 为「进攻」的板块，按板块盘中涨幅（= 该板块成分股在买点触发时点的实时涨幅均值，与 key_blocks 页面盘中 avgChange 同口径，不含收盘价前视）降序取前三个板块；把这 3 个板块的全部成分股与「全量自选股（monitor_stocks.json）中 isTech ≠ false 的科技股」取交集，再在交集内按最近 ${n} 个交易日涨幅之和最大选一只买入（与常规「${n}日涨幅最大」同口径）。卖点与 highest_${n}d_gain_emoquick 完全一致：满足以下任一快进快出条件则次日 10:00 强制卖出、盘中跌破成本线 -2% 先到先卖（强卖/止损当日禁止二次买入），否则走通用 7 条件卖点——① 上一交易日科技情绪 3 日 EMA < -60；② 上上个与上个交易日当日科技情绪均处于 -30~20 区间（不含边界）且回升。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效`;
+const TECH_TOP3_BLOCK_DESC = (n) => `与「${n}日涨幅最大&三日情绪-60快进快出」完全一致，唯一区别在选股口径增加一层板块效应筛选：买点触发时，先取当日重点板块（block_code.js，key_blocks 页面维护）中 tag 为「进攻」的板块，按板块盘中涨幅（= 该板块成分股在买点触发时点的实时涨幅均值，与 key_blocks 页面盘中 avgChange 同口径，不含收盘价前视）降序取前三个板块；把这 3 个板块的全部成分股与「全量自选股（monitor_stocks.json）中 isTech ≠ false 的科技股」取交集，再在交集内按最近 ${n} 个交易日涨幅之和最大选一只买入（与常规「${n}日涨幅最大」同口径）。卖点与 highest_${n}d_gain_emoquick 完全一致：满足以下任一快进快出条件则次日 10:00 强制卖出、盘中跌破成本线 -2% 先到先卖（强卖/止损当日禁止二次买入），否则走通用 7 条件卖点——① 上一交易日科技情绪 3 日 EMA < -60；② 上上个与上个交易日当日科技情绪均处于 -30~20 区间（不含边界）且回升。${EMO_QUICK_EXEMPT_DESC}。涨停顺延、全局最低抗分歧门槛（≥9）、自选股添加时间门禁与跨指数双门禁照常生效`;
 
 // 两次买入（分批建仓）系列统一描述（highest_{N}d_gain_two_buy，2026-10-08 用户重构）：
 // 在「N日涨幅最大 & 快进快出」（highest_{N}d_gain_emoquick）基础上做的分批建仓变体：
@@ -75,7 +79,7 @@ const TECH_TOP3_BLOCK_DESC = (n) => `与「${n}日涨幅最大&三日情绪-60�
 //   各自以自身买入价计算跌破成本线 -2% 止损（阈值 = 自身买入价 × 0.98），
 //   卖点完全沿用「N日涨幅最大&快进快出」规则（买入日快进快出则次日 10:00 强卖 + 盘中跌破成本线 -2% 先到先卖，
 //   否则通用 7 条件），每份仓位产生一条独立交易记录（不合并）。选股口径与「N日涨幅最大」完全一致。
-const TWO_BUY_DESC = (n) => `在「${n}日涨幅最大&三日情绪-60快进快出」基础上做的分批建仓变体：买点首次触发先买入 5 成（第一份），之后若买点再次触发、且距离第一份建仓日已间隔至少一个交易日（次日及以后），再买入 5 成（第二份）——第二份必须买入与第一份完全相同的股票标的（不按 ${n} 日涨幅重新择股），且买入时点该股已涨停（主板>9.5%、创业/科创>19%）则本次放弃、保持半仓等待下次买点。两份仓位各自独立买卖、独立计算收益（均按半仓 0.5 折算，不摊平成本）：各自以自身买入价计算跌破成本线 -2% 止损（阈值 = 自身买入价 × 0.98），卖点完全沿用「${n}日涨幅最大&三日情绪-60快进快出」——买入日上一交易日科技情绪 3 日 EMA < -60（或上两交易日当日科技情绪均处 -30~20 区间且回升）的持仓次日 10:00 强制卖出、强卖当日禁止二次买入，且盘中跌破成本线 -2% 先到先卖止损；否则走通用 7 条件卖点。每份仓位产生一条独立交易记录（不合并、不摊平成本）。选股口径与「${n}日涨幅最大」完全一致：买点触发时从全量自选科技股中买入最近 ${n} 个交易日涨幅之和最大的一只；跨指数双门禁、全局最低抗分歧门槛 ≥ 9、顺/逆周期过滤照常生效`;
+const TWO_BUY_DESC = (n) => `在「${n}日涨幅最大&三日情绪-60快进快出」基础上做的分批建仓变体：买点首次触发先买入 5 成（第一份），之后若买点再次触发、且距离第一份建仓日已间隔至少一个交易日（次日及以后），再买入 5 成（第二份）——第二份必须买入与第一份完全相同的股票标的（不按 ${n} 日涨幅重新择股），且买入时点该股已涨停（主板>9.5%、创业/科创>19%）则本次放弃、保持半仓等待下次买点。两份仓位各自独立买卖、独立计算收益（均按半仓 0.5 折算，不摊平成本）：各自以自身买入价计算跌破成本线 -2% 止损（阈值 = 自身买入价 × 0.98），卖点完全沿用「${n}日涨幅最大&三日情绪-60快进快出」——买入日上一交易日科技情绪 3 日 EMA < -60（或上两交易日当日科技情绪均处 -30~20 区间且回升）的持仓次日 10:00 强制卖出、强卖当日禁止二次买入，且盘中跌破成本线 -2% 先到先卖止损；否则走通用 7 条件卖点。${EMO_QUICK_EXEMPT_DESC}（豁免按每份仓位独立判定）。每份仓位产生一条独立交易记录（不合并、不摊平成本）。选股口径与「${n}日涨幅最大」完全一致：买点触发时从全量自选科技股中买入最近 ${n} 个交易日涨幅之和最大的一只；跨指数双门禁、全局最低抗分歧门槛 ≥ 9、顺/逆周期过滤照常生效`;
 
 // 「N.5 日涨幅最大」窗口口径（2026-10-08 用户新增）：在常规「N 日涨幅最大」（最近 N 个交易日含触发日涨幅之和）
 // 基础上，额外复利计入「更前一个交易日（窗口最早交易日的再前一交易日，0.5 日）下午 13:00 开盘至收盘」的涨幅。
@@ -93,7 +97,7 @@ const TWO_BUY_HALF_DESC = (n) => `${TWO_BUY_DESC(n)}；特别说明：本策略�
 // 第二份不再买入第一份的同一只股票，而是在「所属板块（自选股 monitor_stocks.json 的 blockName 标识）
 // 与第一份不同」的候选中，重新按 N 日涨幅最大择股买入。其余（半仓、各自独立买卖、快进快出、-2% 止损、
 // 双门禁/抗分歧/周期过滤/涨停顺延等）与「N日涨幅最大&两次买入」完全一致
-const TWO_BUY_DIFF_BLOCK_DESC = (n) => `在「${n}日涨幅最大&两次买入」基础上增加板块约束的分批建仓变体：买点首次触发先买入 5 成（第一份），从全量自选科技股中买入最近 ${n} 个交易日涨幅之和最大的一只（不限板块）；之后若买点再次触发、且距离第一份建仓日已间隔至少一个交易日（次日及以后），再买入 5 成（第二份）——第二份不再买入第一份的同一只股票，而是在「所属板块（自选股 monitor_stocks.json 的 blockName 板块标识）与第一份不同」的候选中，重新按最近 ${n} 个交易日涨幅之和最大选一只买入（即其他板块中 ${n} 日涨幅最大的个股）；若其他板块中无有效候选（或候选均被涨停/抗分歧/周期等过滤）则本次不补买、保持半仓等待下次买点。两份仓位各自独立买卖、独立计算收益（均按半仓 0.5 折算，不摊平成本）：各自以自身买入价计算跌破成本线 -2% 止损，卖点完全沿用「${n}日涨幅最大&快进快出」规则（买入日快进快出则次日 10:00 强卖 + 盘中跌破成本线 -2% 先到先卖，否则通用 7 条件），每份仓位产生一条独立交易记录。选股窗口、跨指数双门禁、全局最低抗分歧门槛 ≥ 9、顺/逆周期过滤、涨停与一字板顺延均与「N日涨幅最大&两次买入」一致`;
+const TWO_BUY_DIFF_BLOCK_DESC = (n) => `在「${n}日涨幅最大&两次买入」基础上增加板块约束的分批建仓变体：买点首次触发先买入 5 成（第一份），从全量自选科技股中买入最近 ${n} 个交易日涨幅之和最大的一只（不限板块）；之后若买点再次触发、且距离第一份建仓日已间隔至少一个交易日（次日及以后），再买入 5 成（第二份）——第二份不再买入第一份的同一只股票，而是在「所属板块（自选股 monitor_stocks.json 的 blockName 板块标识）与第一份不同」的候选中，重新按最近 ${n} 个交易日涨幅之和最大选一只买入（即其他板块中 ${n} 日涨幅最大的个股）；若其他板块中无有效候选（或候选均被涨停/抗分歧/周期等过滤）则本次不补买、保持半仓等待下次买点。两份仓位各自独立买卖、独立计算收益（均按半仓 0.5 折算，不摊平成本）：各自以自身买入价计算跌破成本线 -2% 止损，卖点完全沿用「${n}日涨幅最大&快进快出」规则（买入日快进快出则次日 10:00 强卖 + 盘中跌破成本线 -2% 先到先卖，否则通用 7 条件），每份仓位产生一条独立交易记录。${EMO_QUICK_EXEMPT_DESC}（豁免按每份仓位独立判定）。选股窗口、跨指数双门禁、全局最低抗分歧门槛 ≥ 9、顺/逆周期过滤、涨停与一字板顺延均与「N日涨幅最大&两次买入」一致`;
 
 // 回测策略定义（全部为单股策略：买点命中时只选指标最优的一只买入）
 const STRATEGIES = {
@@ -148,6 +152,7 @@ const STRATEGIES = {
   // 情绪快进快出系列（2026-10-03 用户新增）：买点触发时均可正常买入；上一交易日科技情绪 3 日 EMA < -60
   // 的日子买入 → 该笔持仓次日 10:00 强制卖出（不走通用卖点），否则走通用卖点；
   // 2026-10-05 叠加：持仓次日盘中跌破成本线 -2% 先到先卖止损（口径与通用条件7一致，见每日预桶快进快出卖点）
+  // 2026-10-09 叠加：10:00 强卖豁免（buildQuickOutExemptInfo）——次日强势判断命中任一不强卖、转由通用卖点接管
   highest_2d_gain_emoquick: { id: 'highest_2d_gain_emoquick', name: '2日涨幅最大&三日情绪-60快进快出', desc: EMO_QUICK_DESC(2), emoQuickOut: true },
   highest_3d_gain_emoquick: { id: 'highest_3d_gain_emoquick', name: '3日涨幅最大&三日情绪-60快进快出', desc: EMO_QUICK_DESC(3), emoQuickOut: true },
   highest_4d_gain_emoquick: { id: 'highest_4d_gain_emoquick', name: '4日涨幅最大&三日情绪-60快进快出', desc: EMO_QUICK_DESC(4), emoQuickOut: true },
@@ -2997,7 +3002,8 @@ const buildEmoSwitchBranchCheck = (info) => ({
 // 情绪快进快出标注明细项（highest_{N}d_gain_emoquick 系列）：标注本次买入是否为「快进快出」买入
 //（触发条件二选一：上一交易日科技情绪 3 日 EMA < -60；或上上个、上个交易日的当日科技情绪原始分
 // 均处 -30~20 区间且回升）——是则该笔持仓不走通用 7 条件卖点、买入次日 10:00 强制卖出；
-// 2026-10-05 叠加：持仓次日盘中跌破成本线 -2% 时先到先卖止损
+// 2026-10-05 叠加：持仓次日盘中跌破成本线 -2% 时先到先卖止损；
+// 2026-10-09 叠加：次日命中强卖豁免（10:00 前买点再触发 / 10:00 时点科技情绪>0+低于开盘价<30只+资金净流入>0）则不强卖、转由通用卖点接管
 const buildEmoQuickOutCheck = (info) => ({
   id: 'emo_quick_out',
   title: '情绪快进快出（次日10:00强卖）',
@@ -3005,8 +3011,8 @@ const buildEmoQuickOutCheck = (info) => ({
   value: info.quickOut ? '快进快出' : '普通持仓',
   reason: info.quickOut
     ? (info.trigger === 'range_rising'
-      ? `上上个交易日科技情绪 = ${info.prev2Raw != null ? info.prev2Raw : '缺失'}、上一交易日 = ${info.prevRaw != null ? info.prevRaw : '缺失'}（当日原始分，均在 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且较前日回升），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损）`
-      : `上一交易日科技情绪 3 日 EMA = ${info.ema}（< ${EMO_SWITCH_EMA_THRESHOLD}），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损）`)
+      ? `上上个交易日科技情绪 = ${info.prev2Raw != null ? info.prev2Raw : '缺失'}、上一交易日 = ${info.prevRaw != null ? info.prevRaw : '缺失'}（当日原始分，均在 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且较前日回升），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）`
+      : `上一交易日科技情绪 3 日 EMA = ${info.ema}（< ${EMO_SWITCH_EMA_THRESHOLD}），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）`)
     : `上一交易日科技情绪 3 日 EMA = ${info.ema != null ? info.ema : '缺失'}（不满足 < ${EMO_SWITCH_EMA_THRESHOLD}），上两交易日当日科技情绪 = ${info.prev2Raw != null ? info.prev2Raw : '缺失'} / ${info.prevRaw != null ? info.prevRaw : '缺失'}（不满足均处 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且回升），普通持仓，走通用 7 条件卖点`,
 });
 
@@ -3040,6 +3046,54 @@ const buildQuickOutStopLossReason = (buyPrice, stopPt, desc, stopPct = 2) => {
   const threshold = parseFloat((Number(buyPrice) * (1 - pct / 100)).toFixed(2));
   const stopTime = `${String(Math.floor(Number(stopPt.minute) / 100)).padStart(2, '0')}:${String(Number(stopPt.minute) % 100).padStart(2, '0')}`;
   return `情绪快进快出：${desc}，触发成本线 -${pct}% 止损（买入价 ${Number(buyPrice).toFixed(2)}、阈值 ${threshold.toFixed(2)}，${stopTime} 价 ${Number(stopPt.lastPx).toFixed(2)} 成交），先于当日 10:00 强卖离场`;
+};
+
+// 快进快出 10:00 强卖豁免判定（2026-10-09 用户新增）：次日 10:00 强卖前先做两种「次日强势」判断，
+// 命中任一即豁免本次强卖，持仓保留并转由通用 7 条件卖点接管（先一直拿着，等命中其他卖点规则再卖）：
+//   豁免① 次日 10:00 前（含 10:00）任一桶买点诊断再次全部通过（runBuyPointDiagnosis allPassed）；
+//   豁免② 次日 10:00 时点（无 10:00 桶时取其后最近桶，整日缺失时回退当日最后一桶）三条件同时满足：
+//          科技情绪 > 0 且 自选股现价低于 9:30 开盘价个股数 < 30（口径同买点诊断检查4，阈值取严格小于）
+//          且 大盘主力资金净流入（bucket.fundFlow 累计值）> 0。
+// 返回 { via: 'buy_retrigger' | 'strong_at_10', detail } 或 null（不豁免）；任一条件数据缺失按不满足处理（照常强卖）。
+// 注意：豁免只取消 10:00 强卖本身，盘中跌破成本线 -2% 止损仍先到先卖（止损本身即「其他卖点规则」之一）
+const buildQuickOutExemptInfo = (timeBuckets, campData) => {
+  const buckets = timeBuckets || [];
+  if (buckets.length === 0) return null;
+  // 豁免①：10:00 前（含）任一桶买点诊断再次触发
+  for (let i = 0; i < buckets.length; i++) {
+    if (Number(buckets[i].minute) > 1000) break;
+    const diag = runBuyPointDiagnosis(buckets, i, campData)?.data;
+    if (diag?.allPassed === true) {
+      return { via: 'buy_retrigger', detail: `${diag.displayTime} 买点诊断再次触发` };
+    }
+  }
+  // 豁免②：10:00 时点「科技情绪>0 + 低于开盘价<30只 + 资金净流入>0」三条件同时满足
+  const emoBucket = buckets.find(b => Number(b.minute) >= 1000) || buckets[buckets.length - 1];
+  const emo = emoBucket.techEmotion != null && !Number.isNaN(Number(emoBucket.techEmotion)) ? Number(emoBucket.techEmotion) : null;
+  const fund = emoBucket.fundFlow != null && !Number.isNaN(Number(emoBucket.fundFlow)) ? Number(emoBucket.fundFlow) : null;
+  const openingBucket = buckets.find(b => Number(b.minute) === 930) || buckets[0];
+  const openingMap = new Map((openingBucket?.stockChanges || []).map(s => [s.code, s.changePct]));
+  let belowCount = 0;
+  (emoBucket.stockChanges || []).forEach(s => {
+    const openPct = openingMap.get(s.code);
+    if (openPct !== undefined && openPct !== null && Number(s.changePct) < Number(openPct)) belowCount++;
+  });
+  const emoOk = emo != null && emo > 0;
+  const fundOk = fund != null && fund > 0;
+  const belowOk = belowCount < 30;
+  if (emoOk && belowOk && fundOk) {
+    return {
+      via: 'strong_at_10',
+      detail: `10:00 时点科技情绪 ${emo.toFixed(2)} > 0、自选股低于开盘价 ${belowCount} 只 < 30、主力资金净流入 ${fund.toFixed(2)} 亿 > 0`,
+    };
+  }
+  return null;
+};
+
+// 快进快出强卖豁免持仓最终经通用卖点卖出时，sellReason 尾部追加的豁免说明（Inner/Multi 两处通用卖点共用）
+const buildQuickOutExemptSuffix = (pos) => {
+  const ex = pos?.emoQuickOut?.exempted;
+  return ex ? `（${ex.date} 快进快出 10:00 强卖豁免：${ex.detail}，转由通用卖点接管）` : '';
 };
 
 // 将选股顺延信息追加到买入原因/明细：发生顺延时在 buyReason 尾部标注，buyChecks 追加 resilience_gate 明细项。
@@ -4750,10 +4804,16 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
     // 开盘首分钟已破线 → 竞价低开自救窗口（拉升中继续持有；回补至阈值上方则不再止损、待再次跌破再卖）；
     // 回落且仍跌破阈值才卖；开盘未破线、盘中才跌破 → 即时止损；止损分钟早于强卖分钟时按止损价先卖，否则仍按 10:00 强卖
     // 两份仓位各自独立判定（两次买入策略的两份均为半仓、各以自身买入价为成本）
+    // 2026-10-09 叠加强卖豁免（buildQuickOutExemptInfo）：未触发止损且命中任一「次日强势」判断
+    // （① 10:00 前含 10:00 买点诊断再次触发；② 10:00 时点科技情绪>0 + 低于开盘价<30只 + 资金净流入>0）
+    // → 本次不强卖，持仓转由通用 7 条件卖点接管（后续日期也不再强卖）
     if (strategy.emoQuickOut === true) {
+      // 当日存在待强卖（未豁免过的）快进快出持仓时才评估豁免判定（每策略每日一次）
+      const hasDueQuickOut = positions.some(p => p?.emoQuickOut?.quickOut === true && !p.emoQuickOut?.exempted && dateStr > p.buyDate);
+      const exemptInfo = hasDueQuickOut ? buildQuickOutExemptInfo(timeBuckets, campData) : null;
       for (let pi = 0; pi < positions.length; pi++) {
         const pos = positions[pi];
-        if (!pos || pos.emoQuickOut?.quickOut !== true || !(dateStr > pos.buyDate)) continue;
+        if (!pos || pos.emoQuickOut?.quickOut !== true || pos.emoQuickOut?.exempted || !(dateStr > pos.buyDate)) continue;
         const entry = (replayStocks || []).find(s => s.code === pos.code);
         const pts = (entry?.tlinePoints || [])
           .filter(p => p.minute != null && p.lastPx != null && p.lastPx > 0)
@@ -4784,6 +4844,12 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
         }
         const sellPt = stopPt && Number(stopPt.minute) < Number(forcedPt.minute) ? stopPt : forcedPt;
         const isStopLoss = sellPt === stopPt;
+        // 强卖豁免（2026-10-09）：未触发止损且命中任一「次日强势」判断 → 本次不强卖，
+        // 持仓转由通用 7 条件卖点接管（本次及后续日期均不再强卖；止损仍先到先卖）
+        if (!isStopLoss && exemptInfo) {
+          pos.emoQuickOut.exempted = { date: dateStr, via: exemptInfo.via, detail: exemptInfo.detail };
+          continue;
+        }
         const sellPrice = parseFloat(Number(sellPt.lastPx).toFixed(2));
         // 两次买入策略：快进快出强卖/止损按半仓权重折算（每份仓位各自独立、恒为半仓）
         const isTwoBuy = strategy.twoBuy === true;
@@ -4829,8 +4895,9 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
         const pos = positions[pi];
         if (!pos) continue;
         if (dateStr <= pos.buyDate) continue; // 当日买入不可当日卖出（T+1）
-        // 情绪快进快出持仓：不走通用 7 条件卖点，仅由上方按日处理（盘中跌破成本线止损先到先卖 + 10:00 强卖；分时缺失时顺延）
-        if (strategy.emoQuickOut === true && pos.emoQuickOut?.quickOut === true) continue;
+        // 情绪快进快出持仓：不走通用 7 条件卖点，仅由上方按日处理（盘中跌破成本线止损先到先卖 + 10:00 强卖；分时缺失时顺延）；
+        // 2026-10-09 起命中强势豁免的快进快出持仓（exempted）转为普通持仓，由通用 7 条件卖点接管
+        if (strategy.emoQuickOut === true && pos.emoQuickOut?.quickOut === true && !pos.emoQuickOut?.exempted) continue;
         // 三日情绪均值策略走次日开盘专属卖点（已在桶循环前按日处理），不进入通用卖点诊断
         const position = { code: pos.code, stockName: pos.stockName, buyPrice: pos.buyPrice, buyDate: pos.buyDate, tailDipSell: strategy.tailDip === true && strategy.nextDayOpenSell !== true, costLinePct: strategy.costLinePct };
         const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
@@ -4860,7 +4927,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
             sellTime: result.displayTime,
             sellPrice: result.closePrice,
             sellChange: result.change,
-            sellReason: satisfiedNames || '卖出条件触发',
+            sellReason: (satisfiedNames || '卖出条件触发') + buildQuickOutExemptSuffix(pos),
             returnRate,
           });
           positions.splice(pi, 1);
@@ -5240,10 +5307,16 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
       // 开盘首分钟已破线 → 竞价低开自救窗口（拉升中继续持有；回补至阈值上方则不再止损、待再次跌破再卖）；
       // 回落且仍跌破阈值才卖；开盘未破线、盘中才跌破 → 即时止损；止损分钟早于强卖分钟时按止损价先卖，否则仍按 10:00 强卖
       // 两份仓位各自独立判定（两次买入策略的两份均为半仓、各以自身买入价为成本）
+      // 2026-10-09 叠加强卖豁免（buildQuickOutExemptInfo）：未触发止损且命中任一「次日强势」判断
+      // （① 10:00 前含 10:00 买点诊断再次触发；② 10:00 时点科技情绪>0 + 低于开盘价<30只 + 资金净流入>0）
+      // → 本次不强卖，持仓转由通用 7 条件卖点接管（后续日期也不再强卖）
       if (strategy.emoQuickOut === true) {
+        // 当日存在待强卖（未豁免过的）快进快出持仓时才评估豁免判定（每策略每日一次）
+        const hasDueQuickOut = st.positions.some(p => p?.emoQuickOut?.quickOut === true && !p.emoQuickOut?.exempted && dateStr > p.buyDate);
+        const exemptInfo = hasDueQuickOut ? buildQuickOutExemptInfo(timeBuckets, campData) : null;
         for (let pi = 0; pi < st.positions.length; pi++) {
           const pos = st.positions[pi];
-          if (!pos || pos.emoQuickOut?.quickOut !== true || !(dateStr > pos.buyDate)) continue;
+          if (!pos || pos.emoQuickOut?.quickOut !== true || pos.emoQuickOut?.exempted || !(dateStr > pos.buyDate)) continue;
           const entry = (replayStocks || []).find(s => s.code === pos.code);
           const pts = (entry?.tlinePoints || [])
             .filter(p => p.minute != null && p.lastPx != null && p.lastPx > 0)
@@ -5274,6 +5347,12 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           }
           const sellPt = stopPt && Number(stopPt.minute) < Number(forcedPt.minute) ? stopPt : forcedPt;
           const isStopLoss = sellPt === stopPt;
+          // 强卖豁免（2026-10-09）：未触发止损且命中任一「次日强势」判断 → 本次不强卖，
+          // 持仓转由通用 7 条件卖点接管（本次及后续日期均不再强卖；止损仍先到先卖）
+          if (!isStopLoss && exemptInfo) {
+            pos.emoQuickOut.exempted = { date: dateStr, via: exemptInfo.via, detail: exemptInfo.detail };
+            continue;
+          }
           const sellPrice = parseFloat(Number(sellPt.lastPx).toFixed(2));
           // 两次买入策略：快进快出强卖/止损按半仓权重折算（每份仓位各自独立、恒为半仓）
           const isTwoBuy = strategy.twoBuy === true;
@@ -5441,8 +5520,9 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           const pos = st.positions[pi];
           if (!pos) continue;
           if (dateStr <= pos.buyDate) continue; // 当日买入不可当日卖出（T+1）
-          // 情绪快进快出持仓：不走通用 7 条件卖点，仅由上方按日处理（盘中跌破成本线止损先到先卖 + 10:00 强卖；分时缺失时顺延）
-          if (strategy.emoQuickOut === true && pos.emoQuickOut?.quickOut === true) continue;
+          // 情绪快进快出持仓：不走通用 7 条件卖点，仅由上方按日处理（盘中跌破成本线止损先到先卖 + 10:00 强卖；分时缺失时顺延）；
+          // 2026-10-09 起命中强势豁免的快进快出持仓（exempted）转为普通持仓，由通用 7 条件卖点接管
+          if (strategy.emoQuickOut === true && pos.emoQuickOut?.quickOut === true && !pos.emoQuickOut?.exempted) continue;
           // 三日情绪均值策略走次日开盘专属卖点（已在桶循环前按日处理），不进入通用卖点诊断
           const position = { code: pos.code, stockName: pos.stockName, buyPrice: pos.buyPrice, buyDate: pos.buyDate, tailDipSell: strategy.tailDip === true && strategy.nextDayOpenSell !== true, costLinePct: strategy.costLinePct };
           const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
@@ -5472,7 +5552,7 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
               sellTime: result.displayTime,
               sellPrice: result.closePrice,
               sellChange: result.change,
-              sellReason: satisfiedNames || '卖出条件触发',
+              sellReason: (satisfiedNames || '卖出条件触发') + buildQuickOutExemptSuffix(pos),
               returnRate,
             });
             st.positions.splice(pi, 1);

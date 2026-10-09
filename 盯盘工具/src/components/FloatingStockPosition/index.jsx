@@ -967,19 +967,21 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                             style={{
                               borderRadius: 10,
                               padding: '10px 12px',
-                              background: cond.satisfied ? '#fff1f0' : cond.pending ? '#fff7e6' : '#f6ffed',
-                              border: `1px solid ${cond.satisfied ? '#ffa39e' : cond.pending ? '#ffd591' : '#b7eb8f'}`,
+                              background: cond.satisfied ? '#fff1f0' : cond.exempted ? '#f9f0ff' : cond.pending ? '#fff7e6' : '#f6ffed',
+                              border: `1px solid ${cond.satisfied ? '#ffa39e' : cond.exempted ? '#d3adf7' : cond.pending ? '#ffd591' : '#b7eb8f'}`,
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: cond.subConditions?.length ? 6 : 0 }}>
                               {cond.satisfied ? (
                                 <CloseCircleOutlined style={{ color: '#cf1322', fontSize: 16, flexShrink: 0 }} />
+                              ) : cond.exempted ? (
+                                <CheckCircleOutlined style={{ color: '#722ed1', fontSize: 16, flexShrink: 0 }} />
                               ) : cond.pending ? (
                                 <ClockCircleOutlined style={{ color: '#fa8c16', fontSize: 16, flexShrink: 0 }} />
                               ) : (
                                 <CheckCircleOutlined style={{ color: '#389e0d', fontSize: 16, flexShrink: 0 }} />
                               )}
-                              <span style={{ fontWeight: 600, fontSize: 13, color: cond.satisfied ? '#cf1322' : cond.pending ? '#fa8c16' : '#389e0d' }}>
+                              <span style={{ fontWeight: 600, fontSize: 13, color: cond.satisfied ? '#cf1322' : cond.exempted ? '#722ed1' : cond.pending ? '#fa8c16' : '#389e0d' }}>
                                 {cond.name}
                               </span>
                               <span style={{
@@ -988,10 +990,10 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                                 fontWeight: 600,
                                 padding: '1px 8px',
                                 borderRadius: 999,
-                                background: cond.satisfied ? '#ff4d4f' : cond.pending ? '#fa8c16' : '#52c41a',
+                                background: cond.satisfied ? '#ff4d4f' : cond.exempted ? '#722ed1' : cond.pending ? '#fa8c16' : '#52c41a',
                                 color: '#fff',
                               }}>
-                                {cond.satisfied ? '触发' : cond.pending ? `确认中 ${cond.pendingMinutes || 0}/5min` : '未触发'}
+                                {cond.satisfied ? '触发' : cond.exempted ? '已豁免' : cond.pending ? `确认中 ${cond.pendingMinutes || 0}/5min` : '未触发'}
                               </span>
                             </div>
                             <div style={{ fontSize: 12, color: '#595959', marginLeft: 24, marginBottom: cond.subConditions?.length ? 6 : 0 }}>
