@@ -1099,12 +1099,6 @@ exports.default = [
     },
     {
         "blockName": "固态电池",
-        "code": "sh603200",
-        "name": "上海洗霸",
-        "tag": "中性"
-    },
-    {
-        "blockName": "固态电池",
         "code": "sh600241",
         "name": "时代万恒",
         "tag": "中性"
@@ -1137,5 +1131,10 @@ exports.default = [
         "blockName": "AI 应用",
         "code": "sz300413",
         "name": "芒果超媒"
+    },
+    {
+        "blockName": "固态电池",
+        "code": "sh603200",
+        "name": "上海洗霸"
     }
 ]

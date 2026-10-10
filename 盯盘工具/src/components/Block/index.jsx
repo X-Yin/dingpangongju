@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Button, Card, Row, Col, Spin, Space, DatePicker, Typography, Tag
+  Button, Card, Row, Col, Spin, Space, DatePicker, Typography, Tag, Modal
 } from 'antd';
 import { AppstoreOutlined, ClockCircleOutlined, LineChartOutlined, CheckOutlined, ArrowLeftOutlined, CaretRightOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -38,6 +38,7 @@ const Block = ({ embedded = false }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [rankingModalVisible, setRankingModalVisible] = useState(false);
   const [compareModalVisible, setCompareModalVisible] = useState(false);
+  const [historyModalVisible, setHistoryModalVisible] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [historyData, setHistoryData] = useState([]);
   const [selectedBlocks, setSelectedBlocks] = useState([]);
@@ -137,6 +138,11 @@ const Block = ({ embedded = false }) => {
   // 显示多天对比弹窗
   const showCompareModal = () => {
     setCompareModalVisible(true);
+  };
+
+  // 显示历史分时弹窗（顶部四个图表）
+  const showHistoryModal = () => {
+    setHistoryModalVisible(true);
   };
 
   // 处理板块选择变化
@@ -1172,6 +1178,35 @@ const Block = ({ embedded = false }) => {
     }
   }, [loading, renderComputingPowerDailyChart]);
 
+  // 历史分时弹窗打开后容器才挂载，需重新渲染四个图表（等待弹窗动画结束后再补渲染一次）
+  const historyModalOpenedRef = useRef(false);
+  useEffect(() => {
+    if (!historyModalVisible) {
+      historyModalOpenedRef.current = false;
+      return;
+    }
+    // 首次数据加载完成前不渲染，待 loading 结束后由本 effect 补渲染
+    if (historyModalOpenedRef.current || loading) return;
+    historyModalOpenedRef.current = true;
+    let timer = null;
+    const frame = requestAnimationFrame(() => {
+      renderChart();
+      renderDayChart();
+      renderComputingPowerIntradayChart();
+      renderComputingPowerDailyChart();
+      timer = setTimeout(() => {
+        renderChart();
+        renderDayChart();
+        renderComputingPowerIntradayChart();
+        renderComputingPowerDailyChart();
+      }, 300);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      if (timer) clearTimeout(timer);
+    };
+  }, [historyModalVisible, loading, renderChart, renderDayChart, renderComputingPowerIntradayChart, renderComputingPowerDailyChart]);
+
   return (
     <div className="block-container">
       <div className="page-header">
@@ -1194,6 +1229,13 @@ const Block = ({ embedded = false }) => {
         <div className="header-actions">
           <Space size="middle">
             <Button
+              type='default'
+              onClick={showHistoryModal}
+              className="history-time-btn"
+            >
+              查看历史分时
+            </Button>
+            <Button
               type='primary'
               onClick={showRankingModal}
               className="view-ranking-btn"
@@ -1211,6 +1253,16 @@ const Block = ({ embedded = false }) => {
         </div>
       </div>
 
+      {/* 历史分时弹窗：顶部四个图表 */}
+      <Modal
+        title={<span><LineChartOutlined /> 查看历史分时</span>}
+        open={historyModalVisible}
+        onCancel={() => setHistoryModalVisible(false)}
+        footer={null}
+        width={1280}
+        centered
+        styles={{ body: { maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' } }}
+      >
       <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
         <Col xs={24} xl={12}>
           <Card 
@@ -1444,6 +1496,7 @@ const Block = ({ embedded = false }) => {
           </Card>
         </Col>
       </Row>
+      </Modal>
 
       {/* K 线弹窗 */}
       <StockKLineModal
