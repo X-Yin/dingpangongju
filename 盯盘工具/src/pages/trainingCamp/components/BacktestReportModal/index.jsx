@@ -185,6 +185,11 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
               卖出价 <b style={{ color: '#12213a', fontFamily: "'SF Mono', monospace" }}>{t.sellPrice != null ? Number(t.sellPrice).toFixed(2) : '--'}</b>（涨幅 <b style={{ color: fmtPctColor(t.sellChange) }}>{fmtPct(t.sellChange)}</b>）
             </span>
         </div>
+        <div style={{ color: '#6b7890' }}>
+          买入当日收益（{Number(t.buyPrice).toFixed(2)} → 当日收盘 {t.buyDayClose != null ? Number(t.buyDayClose).toFixed(2) : '--'}）：
+          <b style={{ color: fmtPctColor(t.buyDayReturn) }}>{fmtPct(t.buyDayReturn)}</b>
+          <span style={{ color: '#9ca3af', marginLeft: 6 }}>买入当天收盘时该笔持仓的盈亏（仅披露，不计入整体收益）</span>
+        </div>
         {t.buyReason && (
           <div style={{ color: '#6b7890', display: 'flex', alignItems: 'flex-start', gap: 6, flexWrap: 'wrap' }}>
             <span style={{ lineHeight: '22px' }}>买入原因：</span>
@@ -236,6 +241,11 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
               买入原因：<BuyReasonTag reason={h.buyReason} checks={h.buyChecks} />
             </span>
           )}
+          <span>
+            买入当日收益（{Number(h.buyPrice).toFixed(2)} → 当日收盘 {h.buyDayClose != null ? Number(h.buyDayClose).toFixed(2) : '--'}）：
+            <b style={{ color: fmtPctColor(h.buyDayReturn) }}>{fmtPct(h.buyDayReturn)}</b>
+            <span style={{ color: '#9ca3af', marginLeft: 6 }}>买入当天收盘时的盈亏（仅披露，不计入整体收益）</span>
+          </span>
           {h.positionMode === 'defense' && h.rawBuyReturn != null && (
             <span style={{ color: '#d46b08' }}>
               防御半仓口径：个股实际浮盈 {fmtPct(h.rawBuyReturn)}，按 50% 仓位折算后计入概览的浮盈为 {fmtPct(h.buyReturn)}

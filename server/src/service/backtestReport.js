@@ -7,7 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getTrainingCampDates } = require('./trainingCamp');
-const { STRATEGIES, readCachedBacktest, runRangeBacktest, isEmo3AvgStrategy, getEmo3DefaultRange, sortTradesByBuyTime } = require('./buySellBacktest');
+const { STRATEGIES, readCachedBacktest, runRangeBacktest, isEmo3AvgStrategy, getEmo3DefaultRange, sortTradesByBuyTime, attachBuyDayReturn } = require('./buySellBacktest');
 
 const reportsDir = path.join(__dirname, '../data/backtest_reports');
 const backtestCacheDir = path.join(__dirname, '../data/backtest_results');
@@ -87,7 +87,17 @@ const getCommonCachedRange = () => {
 // 读取某策略某范围的结果：优先命中缓存，否则视 fromCacheOnly 决定是否现场回测
 const getStrategyResult = async (strategyId, startDate, endDate, fromCacheOnly) => {
   const cached = readCachedBacktest(strategyId, startDate, endDate);
-  if (cached) return cached;
+  if (cached) {
+    // 旧缓存无「买入当日收益」字段：读取时补写（与 runRangeBacktest 返回口径一致，缓存文件不落盘）
+    await attachBuyDayReturn(cached.trades);
+    await attachBuyDayReturn(cached.currentHoldings);
+    if (cached.currentHolding) await attachBuyDayReturn([cached.currentHolding]);
+    for (const st of cached.stocks || []) {
+      await attachBuyDayReturn(st.trades);
+      if (st.holding) await attachBuyDayReturn([st.holding]);
+    }
+    return cached;
+  }
   if (fromCacheOnly) return null;
   return runRangeBacktest(startDate, endDate, strategyId);
 };
@@ -167,6 +177,8 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         sellChange: t.sellChange,
         sellReason: t.sellReason,
         returnRate: t.returnRate,
+        buyDayClose: t.buyDayClose ?? null, // 买入当日收盘价（「买入当日收益」披露用）
+        buyDayReturn: t.buyDayReturn ?? null, // 买入价 → 买入当日收盘价收益率（仅披露，不计入整体收益）
         holdingDays: t.holdingDays ?? null,
         holdingDaysApprox: t.holdingDaysApprox ?? false,
       })),
@@ -182,6 +194,8 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         buyPrice: result.currentHolding.buyPrice,
         buyChange: result.currentHolding.buyChange,
         buyReturn: result.currentHolding.buyReturn,
+        buyDayClose: result.currentHolding.buyDayClose ?? null, // 买入当日收盘价（「买入当日收益」披露用）
+        buyDayReturn: result.currentHolding.buyDayReturn ?? null, // 买入价 → 买入当日收盘价收益率
         buyReason: result.currentHolding.buyReason ?? null,
         buyChecks: result.currentHolding.buyChecks ?? null,
         holdingDays: result.currentHolding.holdingDays ?? null,
@@ -214,7 +228,7 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
 
 // 最近一次报告；无报告时尝试从现有回测缓存快速生成一份（不重新回测）
 const ensureLatestReport = async () => {
-  const latest = getLatestReport();
+  const latest = await getLatestReport();
   if (latest) return { success: true, report: latest };
   const cachedRange = getCommonCachedRange();
   if (cachedRange) return generateReport({ startDate: cachedRange.start, endDate: cachedRange.end, fromCacheOnly: true });
@@ -247,13 +261,14 @@ const listReports = () => {
   }
 };
 
-const getLatestReport = () => {
+const getLatestReport = async () => {
   const list = listReports();
   if (list.length === 0) return null;
   return getReportById(list[0].id);
 };
 
-const getReportById = (id) => {
+// 读取报告快照；旧快照缺「买入当日收益」字段时按需补写（读取时注入，不落盘）
+const getReportById = async (id) => {
   if (!id || !/^report_[\w-]+$/.test(id)) return null;
   const file = path.join(reportsDir, `${id}.json`);
   try {
@@ -263,6 +278,16 @@ const getReportById = (id) => {
     (report.strategies || []).forEach(s => {
       if (Array.isArray(s.trades)) s.trades = sortTradesByBuyTime(s.trades);
     });
+    // 「买入当日收益」为后加指标：旧快照无该字段，读取时就地补写（新快照已在生成时写入）
+    const needs = (arr) => Array.isArray(arr) && arr.some(t => t && t.buyDayReturn === undefined);
+    for (const s of report.strategies || []) {
+      const needTrades = needs(s.trades);
+      const needHolding = !!(s.currentHolding && s.currentHolding.buyDayReturn === undefined);
+      if (needTrades || needHolding) {
+        await attachBuyDayReturn(s.trades);
+        if (s.currentHolding) await attachBuyDayReturn([s.currentHolding]);
+      }
+    }
     return report;
   } catch {
     return null;

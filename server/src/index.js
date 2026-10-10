@@ -101,7 +101,7 @@ const { getMainFundAiSummary, getMainFundAiContext } = require('./service/mainFu
 const { getAllGroups: getAllIndexOverlayGroups, saveGroup: saveIndexOverlayGroup, deleteGroup: deleteIndexOverlayGroup } = require('./service/indexOverlayGroup');
 const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup } = require('./service/trainingCamp');
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, ''); // 北京今天 YYYYMMDD
-const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, attachHoldingDays, getStockRecentReports, queryLiveIndexGate } = require('./service/buySellBacktest');
+const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, attachHoldingDays, attachBuyDayReturn, getStockRecentReports, queryLiveIndexGate } = require('./service/buySellBacktest');
 const { startRandomSim, getRandomSimStatus, getRandomSimDetail } = require('./service/randomSim');
 const { generateReport, ensureLatestReport, getReportById, listReports, getTrendDiagnosisRanges } = require('./service/backtestReport');
 const { getAttackDefenseScore } = require('./service/attackDefenseScore');
@@ -2407,7 +2407,7 @@ app.delete('/training_camp/groups/:id', (req, res) => {
 // 训练营 - 买卖点历史回测（异步任务：按日期逐个加载回放数据并跑买卖点，耗时较长）
 // 支持多策略；结果按 策略+日期范围 缓存到 data/backtest_results，覆盖旧文件
 const buySellBacktestTasks = new Map(); // taskId -> { status, progress, result, error }
-app.post('/training_camp/backtest', (req, res) => {
+app.post('/training_camp/backtest', async (req, res) => {
   try {
     const { startDate, endDate, strategy, force, excludeCodes } = req.body || {};
     if (!startDate || !endDate || !/^\d{8}$/.test(startDate) || !/^\d{8}$/.test(endDate)) {
@@ -2425,6 +2425,14 @@ app.post('/training_camp/backtest', (req, res) => {
     // 命中缓存则直接返回，不再重复回测（force=true 时忽略缓存强制重跑）
     const cached = (force || isOscTest) ? null : readCachedBacktest(strategyId, startDate, endDate);
     if (cached) {
+      // 旧缓存无「买入当日收益」字段：读取时补写（缓存文件本身不落盘该字段，兼容旧缓存）
+      await attachBuyDayReturn(cached.trades);
+      await attachBuyDayReturn(cached.currentHoldings);
+      if (cached.currentHolding) await attachBuyDayReturn([cached.currentHolding]);
+      for (const st of cached.stocks || []) {
+        await attachBuyDayReturn(st.trades);
+        if (st.holding) await attachBuyDayReturn([st.holding]);
+      }
       return res.json({ success: true, cached: true, strategy: strategyId, taskId: null, result: cached });
     }
     const taskId = `bt${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -2485,7 +2493,7 @@ app.get('/api/index-slope-gate', async (req, res) => {
 });
 
 // 查询某策略+日期范围是否已有缓存结果（抽屉打开时可据此直接展示，无需重新回测）
-app.get('/training_camp/backtest/cache', (req, res) => {
+app.get('/training_camp/backtest/cache', async (req, res) => {
   try {
     const { startDate, endDate, strategy } = req.query || {};
     if (!startDate || !endDate) {
@@ -2494,6 +2502,19 @@ app.get('/training_camp/backtest/cache', (req, res) => {
     const strategyId = STRATEGIES[strategy] ? strategy : Object.keys(STRATEGIES)[0];
     const cached = readCachedBacktest(strategyId, String(startDate), String(endDate));
     if (cached) {
+      // 「买入当日收益」为 2026-10-10 新增字段：历史缓存文件不落盘该字段，读取时按买入日收盘价就地补写
+      //（与 attachHoldingDays 同样的「读取时注入」口径，缓存文件本身不变）
+      const needsBuyDay = (arr) => Array.isArray(arr) && arr.some(t => t && t.buyDayReturn === undefined);
+      const stocksNeed = (cached.stocks || []).some(st => needsBuyDay(st.trades) || (st.holding && st.holding.buyDayReturn === undefined));
+      if (needsBuyDay(cached.trades) || needsBuyDay(cached.currentHoldings) || (cached.currentHolding && cached.currentHolding.buyDayReturn === undefined) || stocksNeed) {
+        await attachBuyDayReturn(cached.trades);
+        await attachBuyDayReturn(cached.currentHoldings);
+        if (cached.currentHolding) await attachBuyDayReturn([cached.currentHolding]);
+        for (const st of cached.stocks || []) {
+          await attachBuyDayReturn(st.trades);
+          if (st.holding) await attachBuyDayReturn([st.holding]);
+        }
+      }
       return res.json({ success: true, cached: true, strategy: strategyId, result: cached });
     }
     res.json({ success: true, cached: false, strategy: strategyId });
@@ -3159,7 +3180,7 @@ app.get('/training_camp/backtest/trend_diagnosis/monthly/status', (req, res) => 
 // 历史曲线月度明细：指定策略在各自然月的完整回测结果（月度概览 + 逐笔交易），
 // 供趋势诊断弹窗在曲线下方按回测报告的 StrategyCard 格式逐月展示。
 // 仅读取已有回测缓存（--monthly worker 结束后缓存即齐备），不做现场回测
-app.get('/training_camp/backtest/trend_diagnosis/monthly/detail', (req, res) => {
+app.get('/training_camp/backtest/trend_diagnosis/monthly/detail', async (req, res) => {
   try {
     const ids = String(req.query.ids || '').split(',').map(s => s.trim()).filter(id => STRATEGIES[id]);
     const dates = [...getTrainingCampDates()].filter(d => d <= beijingToday()).sort();
@@ -3174,12 +3195,18 @@ app.get('/training_camp/backtest/trend_diagnosis/monthly/detail', (req, res) => 
       monthMap.set(key, entry);
     }
     const months = Array.from(monthMap.values());
-    const strategies = ids.map(id => ({
+    const strategies = await Promise.all(ids.map(async id => ({
       id,
       name: STRATEGIES[id].name,
       desc: STRATEGIES[id].desc,
-      months: months.map(m => {
+      months: await Promise.all(months.map(async m => {
         const cached = readCachedBacktest(id, m.startDate, m.endDate);
+        if (cached?.success) {
+          // 旧缓存无「买入当日收益」字段：读取时补写（缓存文件本身不落盘该字段，兼容旧缓存）
+          await attachBuyDayReturn(cached.trades);
+          await attachBuyDayReturn(cached.currentHoldings);
+          if (cached.currentHolding) await attachBuyDayReturn([cached.currentHolding]);
+        }
         return {
           key: m.key,
           label: m.label,
@@ -3191,8 +3218,8 @@ app.get('/training_camp/backtest/trend_diagnosis/monthly/detail', (req, res) => 
           currentHolding: cached?.success ? (cached.currentHolding || null) : null,
           currentHoldings: cached?.success ? (cached.currentHoldings || []) : [],
         };
-      }),
-    }));
+      })),
+    })));
     res.json({ success: true, strategies });
   } catch (error) {
     console.error('获取历史曲线月度明细失败:', error);
@@ -3415,10 +3442,10 @@ app.get('/training_camp/backtest/report/status/:taskId', (req, res) => {
 });
 
 // 指定 id 的回测报告详情
-app.get('/training_camp/backtest/report/:id', (req, res) => {
+app.get('/training_camp/backtest/report/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const report = getReportById(id);
+    const report = await getReportById(id);
     if (!report) {
       return res.status(404).json({ success: false, message: '回测报告不存在' });
     }
