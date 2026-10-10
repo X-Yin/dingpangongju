@@ -321,10 +321,10 @@ const FundChartModule = () => {
 
     const sortedData = chartData && chartData.length > 0
       ? [...chartData].sort((a, b) => {
-          const ta = a.rawTime || a.time;
-          const tb = b.rawTime || b.time;
-          return ta.localeCompare(tb);
-        })
+        const ta = a.rawTime || a.time;
+        const tb = b.rawTime || b.time;
+        return ta.localeCompare(tb);
+      })
       : [];
 
     const today = dayjs().format('YYYY-MM-DD');
@@ -1250,9 +1250,14 @@ const SellPointDiagnosisCard = () => {
           <div key={r.positionId || r.code} className={`ob-sell-stock ${r.isSell ? 'hit' : ''}`}>
             <div className="ob-sell-stock-header">
               {/* 第一行：股票名称 + 代码 */}
-              <div className="ob-sell-header-row">
-                <span className="ob-sell-stock-name">{r.stockName}</span>
-                <span className="ob-sell-stock-code">{r.code}</span>
+              <div className="ob-sell-header-row ob-sell-header-row--title">
+                <div>
+                  <span className="ob-sell-stock-name">{r.stockName}</span>
+                  <span className="ob-sell-stock-code">{r.code}</span>
+                </div>
+                <span className={`ob-sell-stock-tag ${r.isSell ? 'hit' : 'safe'}`}>
+                  {r.buyToday ? '买入当日' : r.error ? '诊断失败' : r.isSell ? '建议卖出' : '建议持有'}
+                </span>
               </div>
               {/* 第二行：仓位 / 买入时间 / 成本线 / 涨幅 / 状态 */}
               <div className="ob-sell-header-row">
@@ -1270,9 +1275,6 @@ const SellPointDiagnosisCard = () => {
                     {formatSignedPercent(r.detail.change)}
                   </span>
                 )}
-                <span className={`ob-sell-stock-tag ${r.isSell ? 'hit' : 'safe'}`}>
-                  {r.buyToday ? '买入当日' : r.error ? '诊断失败' : r.isSell ? '建议卖出' : '建议持有'}
-                </span>
               </div>
             </div>
             <div className="ob-sell-stock-conds">
@@ -1359,7 +1361,7 @@ const OpeningBattle = () => {
   const toggleRankExpanded = useCallback(() => {
     setRankExpanded((prev) => {
       const next = !prev;
-      try { localStorage.setItem('ob_rank_expanded', next ? '1' : '0'); } catch (e) {}
+      try { localStorage.setItem('ob_rank_expanded', next ? '1' : '0'); } catch (e) { }
       return next;
     });
   }, []);

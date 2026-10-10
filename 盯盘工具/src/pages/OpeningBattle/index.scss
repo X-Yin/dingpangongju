@@ -1189,6 +1189,15 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     gap: 8px;
   }
 
+  .ob-sell-stock-code {
+    display: inline-block;
+    margin-left: 4px;
+  }
+
+  .ob-sell-header-row--title {
+    width: 100%;
+  }
+
   &.hit .ob-sell-stock-header {
     background: rgba(255, 255, 255, 0.16);
   }
