@@ -10,51 +10,17 @@ import dayjs from 'dayjs';
 import { isAfterMarketClose } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
 import { getThemeColor } from '../../utils/theme';
+import { parseMoneyValue, formatDisplayTime, aggregateFundByInterval } from '../../utils/fundAggregation';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import StockKLineModal from '../../components/StockKLineModal';
 import './index.scss';
 
 // 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
 
-// 解析资金数值，统一成「亿」为单位
-const parseMoneyValue = (val) => {
-  if (typeof val === 'number') return val;
-  if (!val) return 0;
-  let str = String(val);
-  const sign = str.startsWith('-') ? -1 : 1;
-  if (str.startsWith('+') || str.startsWith('-')) str = str.slice(1);
-  let num = parseFloat(str.replace(/亿|万/g, '')) || 0;
-  if (String(val).indexOf('万') !== -1) {
-    num = num / 10000;
-  }
-  return sign * num;
-};
-
 const formatSignedPercent = (value) => {
   if (value === undefined || value === null || Number.isNaN(Number(value))) return '--';
   const num = Number(value);
   return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
-};
-
-const formatDisplayTime = (timeStr) => {
-  if (!timeStr) return '';
-  if (timeStr.length >= 6) {
-    return `${timeStr.substring(0, 2)}:${timeStr.substring(2, 4)}:${timeStr.substring(4, 6)}`;
-  }
-  return timeStr;
-};
-
-const timeStrToMinutes = (timeStr) => {
-  if (!timeStr || timeStr.length < 4) return 0;
-  const h = parseInt(timeStr.substring(0, 2));
-  const m = parseInt(timeStr.substring(2, 4));
-  return h * 60 + m;
-};
-
-const minutesToTimeStr = (totalMin) => {
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  return `${String(h).padStart(2, '0')}${String(m).padStart(2, '0')}00`;
 };
 
 const formatMinute = (minute) => {
@@ -63,66 +29,6 @@ const formatMinute = (minute) => {
   const h = Math.floor(m / 100);
   const min = m % 100;
   return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-};
-
-const aggregateToInterval = (data, intervalMinutes) => {
-  if (!data || data.length === 0) return [];
-  const sortedData = [...data].sort((a, b) => {
-    const ta = Array.isArray(a) ? a[0] : a.time;
-    const tb = Array.isArray(b) ? b[0] : b.time;
-    return ta.localeCompare(tb);
-  });
-
-  const buckets = {};
-  const tradingSlots = [];
-  const morningStart = 9 * 60 + 30;
-  const morningEnd = 11 * 60 + 30;
-  const afternoonStart = 13 * 60;
-  const afternoonEnd = 15 * 60;
-
-  for (let t = morningStart; t <= morningEnd; t += intervalMinutes) tradingSlots.push(t);
-  for (let t = afternoonStart; t <= afternoonEnd; t += intervalMinutes) tradingSlots.push(t);
-
-  sortedData.forEach((item) => {
-    const timeStr = Array.isArray(item) ? item[0] : (item.rawTime || item.time);
-    const val = Array.isArray(item) ? item[1] : item;
-    const totalMin = timeStrToMinutes(timeStr);
-    let bucketMin = null;
-    for (const slot of tradingSlots) {
-      if (totalMin <= slot + intervalMinutes / 2) {
-        bucketMin = slot;
-        break;
-      }
-    }
-    if (bucketMin === null && totalMin > tradingSlots[tradingSlots.length - 1]) {
-      bucketMin = tradingSlots[tradingSlots.length - 1];
-    }
-    if (bucketMin !== null) {
-      buckets[bucketMin] = { timeStr, val };
-    }
-  });
-
-  const result = [];
-  tradingSlots.forEach((slot) => {
-    const entry = buckets[slot];
-    const bucketTimeStr = minutesToTimeStr(slot);
-    if (entry) {
-      const mainMoney = Array.isArray(entry.val)
-        ? parseMoneyValue(entry.val[1]?.mainMoney)
-        : parseMoneyValue(entry.val.mainMoney);
-      const amountChangeDiff = Array.isArray(entry.val)
-        ? parseMoneyValue(entry.val[1]?.amountChangeDiff)
-        : parseMoneyValue(entry.val.amountChangeDiff);
-      result.push({
-        time: bucketTimeStr,
-        displayTime: formatDisplayTime(bucketTimeStr),
-        mainMoney,
-        amountChangeDiff,
-        rawTime: entry.timeStr,
-      });
-    }
-  });
-  return result;
 };
 
 // 判断数据中是否包含 11:30 之后的时间点，用于决定是否按1分钟聚合
@@ -385,18 +291,18 @@ const FundChartModule = () => {
   // 图表数据：始终按 5min 聚合
   const todayChartData = useMemo(() => {
     if (!data || data.length === 0) return [];
-    return aggregateToInterval(data, 5);
+    return aggregateFundByInterval(data, 5);
   }, [data]);
 
   // 表格数据：根据开关决定是否聚合（保持原始数据逻辑）
   const todayTableData = useMemo(() => {
     if (!data || data.length === 0) return [];
     if (fiveMinAggEnabled) {
-      return aggregateToInterval(data, 5);
+      return aggregateFundByInterval(data, 5);
     }
     // 过了11:30后按1分钟聚合，避免数据过多展示不下
     if (shouldAggregateByOneMin(data)) {
-      return aggregateToInterval(data, 1);
+      return aggregateFundByInterval(data, 1);
     }
     const sorted = [...data].sort((a, b) => a[0].localeCompare(b[0]));
     return sorted.map(([timeStr, item]) => ({
@@ -544,16 +450,9 @@ const FundChartModule = () => {
     return sorted.map((item, index) => {
       const timeStr = item.rawTime || item.time;
       const mainMoney = parseMoneyValue(item.mainMoney);
-      let prevChangedVal = mainMoney;
-      for (let i = index + 1; i < sorted.length; i++) {
-        const prevItem = sorted[i];
-        const prevValue = parseMoneyValue(prevItem.mainMoney);
-        if (i === index + 1) prevChangedVal = prevValue;
-        let nextPrevVal = prevValue;
-        if (i + 1 < sorted.length) nextPrevVal = parseMoneyValue(sorted[i + 1].mainMoney);
-        if (prevValue !== nextPrevVal) { prevChangedVal = prevValue; break; }
-      }
-      const diff = mainMoney - prevChangedVal;
+      // 与盯盘页口径一致：增量 = 本桶累计值 − 相邻上一桶（更早）累计值
+      const prevItem = index + 1 < sorted.length ? sorted[index + 1] : null;
+      const diff = prevItem ? mainMoney - parseMoneyValue(prevItem.mainMoney) : 0;
       if (!fiveMinAggEnabled && diff === 0) return null;
       const dt = item.displayTime || formatDisplayTime(timeStr);
       const isBigOutflow = diff <= -4;

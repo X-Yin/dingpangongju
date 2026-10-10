@@ -87,7 +87,7 @@ const { getRZRQData } = require('./service/rzrq');
 const { getTechBlockCrowd } = require('./service/techCrowd');
 const { getRiskScoreHistory, calculateAndSaveRiskScore } = require('./service/marketRiskScore');
 const { analyzeMonitorStocks } = require('./service/strongAndWeakStock');
-const { getAvailableDates, getSnapshotData, getLatestSnapshotDate, saveDailySnapshots } = require('./service/fundSnapshot');
+const { getAvailableDates, getSnapshotData, getLatestSnapshotDate, saveDailySnapshots, aggregateByInterval } = require('./service/fundSnapshot');
 const { getAllFupanNotes, getFupanNoteByDate, saveFupanNote, deleteFupanNote, getIndexTlineByDate, getPersonalFeelings, savePersonalFeelings, getMarketSnapshot, getTodayPlan, saveTodayPlan } = require('./service/fupan');
 const { listDataFiles, readDataFile, readDataFilesBatch, getAliases, saveAliases, setAlias, getHiddenPaths, setHiddenPath } = require('./service/dataCenter');
 const { runDisasterRecoveryCheck } = require('./service/disasterRecovery');
@@ -4105,37 +4105,18 @@ const runMarketSnapshotJob = async () => {
     const cybArr = indexKlineData?.chuangyebanData || [];
     const kcbArr = indexKlineData?.kechuangbanData || [];
 
-    // 资金净流入：取最近 5 分钟的净流入增量 = 最新累计值 - 5分钟前的累计值
+    // 资金净流入：与盯盘页/训练营/回测完全同口径 —— 对分时快照按 5min 分桶
+    // （边界 9:35/13:05 起，窗口取最后一条），取最近两个桶累计值之差
     const calcMainMoney5minDiff = () => {
-      const src = Array.isArray(amountHistory) ? amountHistory : [];
-      const sorted = src
-        .filter((a) => Array.isArray(a) && a[0] && a[1] && Number.isFinite(Number(a[1].mainMoney)))
-        .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
-        .map((a) => ({ t: String(a[0]), money: Number(a[1].mainMoney) }));
-      if (sorted.length < 2) return null;
-
-      // 从 HHmmss 时间往前推 minutes 分钟
-      const subMinutes = (hhmmss, minutes) => {
-        const hh = parseInt(hhmmss.slice(0, 2), 10);
-        const mm = parseInt(hhmmss.slice(2, 4), 10);
-        const total = hh * 60 + mm - minutes;
-        if (total < 0) return null;
-        const h = String(Math.floor(total / 60)).padStart(2, '0');
-        const m = String(total % 60).padStart(2, '0');
-        const ss = hhmmss.length >= 6 ? hhmmss.slice(4, 6) : '00';
-        return `${h}${m}${ss}`;
-      };
-
-      const last = sorted[sorted.length - 1];
-      const target = subMinutes(last.t, 5);
-      if (!target) return null;
-      // 找时间 <= target 的最近一条快照
-      let prev = null;
-      for (let i = sorted.length - 2; i >= 0; i--) {
-        if (sorted[i].t <= target) { prev = sorted[i]; break; }
-      }
-      if (!prev) return null;
-      const diff = last.money - prev.money;
+      const buckets = aggregateByInterval(
+        Array.isArray(amountHistory) ? amountHistory : [],
+        5
+      );
+      if (!buckets || buckets.length < 2) return null;
+      const last = buckets[buckets.length - 1];
+      const prev = buckets[buckets.length - 2];
+      const diff = Number(last.mainMoney) - Number(prev.mainMoney);
+      if (!Number.isFinite(diff)) return null;
       return `${diff > 0 ? '+' : ''}${diff.toFixed(2)}`;
     };
 

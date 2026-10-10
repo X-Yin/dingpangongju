@@ -2,89 +2,7 @@ import { useState, useMemo } from 'react';
 import { Button, Switch as AntSwitch, Tooltip } from 'antd';
 import { CopyOutlined, ReloadOutlined } from '@ant-design/icons';
 import './index.scss';
-
-const parseMoneyValue = (val) => {
-    if (typeof val === 'number') return val;
-    if (!val) return 0;
-    let str = String(val);
-    const sign = str.startsWith('-') ? -1 : 1;
-    if (str.startsWith('+') || str.startsWith('-')) str = str.slice(1);
-    let num = parseFloat(str.replace(/亿|万/g, '')) || 0;
-    if (String(val).indexOf('万') !== -1) {
-        num = num / 10000;
-    }
-    return sign * num;
-};
-
-const formatDisplayTime = (timeStr) => {
-    if (timeStr.length >= 6) {
-        return `${timeStr.substring(0, 2)}:${timeStr.substring(2, 4)}:${timeStr.substring(4, 6)}`;
-    }
-    return timeStr;
-};
-
-const timeStrToMinutes = (timeStr) => {
-    const h = parseInt(timeStr.substring(0, 2));
-    const m = parseInt(timeStr.substring(2, 4));
-    return h * 60 + m;
-};
-
-const minutesToTimeStr = (totalMin) => {
-    const h = Math.floor(totalMin / 60);
-    const m = totalMin % 60;
-    return `${String(h).padStart(2, '0')}${String(m).padStart(2, '0')}00`;
-};
-
-const aggregateTo5Min = (data) => {
-    if (!data || data.length === 0) return [];
-    const sortedData = [...data].sort((a, b) => a[0].localeCompare(b[0]));
-
-    // tradingSlots 为每个 5min 窗的结束边界（标签）：9:35, 9:40, ... 15:00
-    const tradingSlots = [];
-    const morningStart = 9 * 60 + 30;
-    const morningEnd = 11 * 60 + 30;
-    const afternoonStart = 13 * 60;
-    const afternoonEnd = 15 * 60;
-
-    for (let t = morningStart + 5; t <= morningEnd; t += 5) tradingSlots.push(t);
-    for (let t = afternoonStart + 5; t <= afternoonEnd; t += 5) tradingSlots.push(t);
-
-    const buckets = {};
-    sortedData.forEach((item) => {
-        const timeStr = item[0];
-        const val = item[1];
-        const totalMin = timeStrToMinutes(timeStr);
-        let bucketMin = null;
-        // 归属到「不小于该时间的下一个结束边界」对应的窗口：例如 9:35~9:39 计入标签 9:40
-        for (const slot of tradingSlots) {
-            if (totalMin < slot) {
-                bucketMin = slot;
-                break;
-            }
-        }
-        if (bucketMin === null && tradingSlots.length > 0) {
-            bucketMin = tradingSlots[tradingSlots.length - 1];
-        }
-        if (bucketMin !== null) {
-            // 取窗口内最新一条的累计净流入作为该窗口值；末值相对上一窗口的增量由展示端计算
-            buckets[bucketMin] = { last: parseMoneyValue(val.mainMoney), rawTime: timeStr };
-        }
-    });
-
-    const result = [];
-    tradingSlots.forEach((slot) => {
-        const entry = buckets[slot];
-        if (entry) {
-            result.push({
-                time: minutesToTimeStr(slot),
-                displayTime: formatDisplayTime(minutesToTimeStr(slot)),
-                mainMoney: entry.last,
-                rawTime: entry.rawTime,
-            });
-        }
-    });
-    return result.reverse();
-};
+import { parseMoneyValue, formatDisplayTime, aggregateFundByInterval } from '../../../../utils/fundAggregation';
 
 const formatMoneyYi = (v) => {
     if (v === null || v === undefined || Number.isNaN(Number(v))) return '--';
@@ -112,7 +30,7 @@ const MainMoneyCharts = ({ isMainMoneyExpanded, onToggleExpand, moneyStatus, vol
                 }));
         }
         if (fiveMinAgg) {
-            return aggregateTo5Min(historyData);
+            return aggregateFundByInterval(historyData, 5).reverse();
         }
         const sorted = [...historyData].sort((a, b) => b[0].localeCompare(a[0]));
         const result = [];
