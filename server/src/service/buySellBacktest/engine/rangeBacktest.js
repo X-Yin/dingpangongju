@@ -1,6 +1,6 @@
 const { STRATEGIES, isCycleFilterStrategy } = require('../strategies/registry');
 const { runKeyBlockBacktest } = require('./keyBlockBacktest');
-const { runLianbanGainBacktest } = require('./lianbanGainBacktest');
+const { runLeaderBacktest } = require('./leaderBacktest');
 const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSimContext } = require('../deps');
 const { getTechIndexDates } = require('../utils/techEmotion');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
@@ -24,9 +24,9 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   if (STRATEGIES[strategyId]?.keyBlockDays != null) {
     return runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
   }
-  // 情绪游资-连板 N 日涨幅最大系列走独立引擎（上证斜率>0 买、连板板块选股、专属 5 类卖点）
-  if (STRATEGIES[strategyId]?.lianbanGainDays != null) {
-    return runLianbanGainBacktest(startDate, endDate, strategyId, onProgress);
+  // 情绪游资-龙头战法走独立引擎（上证斜率>0 买、涨停潮板块内总涨幅最大的龙头、切换/跌停卖点）
+  if (STRATEGIES[strategyId]?.leaderMode === true) {
+    return runLeaderBacktest(startDate, endDate, strategyId, onProgress);
   }
   // 三日情绪均值系列不依赖资金快照，日期序列并入 tech_index 覆盖的交易日（补上缺资金快照的日期，如 20260730）
   const strategy = STRATEGIES[strategyId];
