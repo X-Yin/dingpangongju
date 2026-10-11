@@ -20,7 +20,7 @@ const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats')
 
 // 情绪游资-龙头战法（2026-10-11 用户新增；2026-10-11 二次改版：合并为单一「板块口径」策略）：
 //   选股 = 过去 10 个交易日内掀起涨停潮（涨停个股数 >= 20）的板块（剔除 芯片/通信/算力/其他/中报增长，候选池仅保留主板）；
-//          候选池两次过滤：① 最近 5 个交易日内须出现过一次放量（成交量较前一交易日 ≥ +200%，即 ≥ 前一日 × 3），否则跳过；② 自板块爆发日以来涨幅须处 10%~30%；
+//          候选池两次过滤：① 最近 5 个交易日内须出现过一次放量（成交量较前一交易日 ≥ +200%，即 ≥ 前一日 × 3，且该放量日须为从放量之日起往前回溯 10 个交易日内的量能最大日），否则跳过；② 自板块爆发日以来涨幅须处 10%~30%；
 //          再选「当前已涨停个股数最多」的板块，
 //          在该板块内买「自板块爆发日以来涨幅最大」的那只；板块内无符合个股则本次不买；
 //          若涨幅第 1 已涨停 → 买涨幅第 2；若第 2 也涨停 → 顺延到次日 9:30 买涨幅第 2 那只（仍涨停则继续顺延）。
@@ -37,6 +37,7 @@ const LEADER_MIN_BOARD_GAIN_PCT = 10;   // 买入门槛下限：自板块爆发�
 const LEADER_MAX_BOARD_GAIN_PCT = 30;   // 买入门槛上限：自板块爆发日以来涨幅 > 30% 的个股剔除（已透支）
 const LEADER_VOLUME_LOOKBACK_DAYS = 5;  // 放量分歧窗口：最近 5 个交易日内须出现过一次放量
 const LEADER_VOLUME_SURGE_PCT = 200;    // 放量门槛：某日成交量较前一交易日增加 ≥ 200%（即 ≥ 前一日 × 3）即视为放量
+const LEADER_VOLUME_PEAK_DAYS = 10;     // 放量须为峰值：从放量之日起往前回溯 10 个交易日（含放量当日）内量能最大的一天
 const MAIN_BOARD_LIMIT_UP_PCT = 9.5;    // 涨停判定（候选池仅主板，涨幅 > 9.5%）
 const STOP_LOSS_PCT = -5;               // 止损门槛：较成本价（买入价）跌破 -5%
 const STOP_LOSS_SUSTAIN_MINUTES = 5;    // 止损持续性：需连续低于成本线 -5% 至少 5 分钟才卖（防瞬时假跌破）
@@ -174,9 +175,9 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
     let hotBoardsText = '无';
     try {
       const poolInfo = await getLeaderPool(dateStr, LEADER_LOOKBACK_DAYS, LEADER_MIN_LIMIT_UP_COUNT, LEADER_EXCLUDED_BOARDS);
-      // eligible = 非黑名单 + 有基准价 + 仅主板 + 最近 5 个交易日出现过一次放量（成交量较前一交易日 ≥ +200%），否则跳过
+      // eligible = 非黑名单 + 有基准价 + 仅主板 + 最近 5 个交易日出现过一次放量（成交量较前一交易日 ≥ +200%，且该放量日须为从放量之日起往前回溯 10 个交易日内的量能最大日），否则跳过
       const eligible = (p) => !EXCLUDED_CODES.has(p.code) && p.base > 0 && !isStarOrChiNext(p.code)
-        && hasRecentVolumeSurge(p.code, dateStr, LEADER_VOLUME_LOOKBACK_DAYS, LEADER_VOLUME_SURGE_PCT);
+        && hasRecentVolumeSurge(p.code, dateStr, LEADER_VOLUME_LOOKBACK_DAYS, LEADER_VOLUME_SURGE_PCT, LEADER_VOLUME_PEAK_DAYS);
       boardList = (poolInfo.boards || [])
         .map(b => ({ ...b, stocks: b.stocks.filter(eligible) }))
         .filter(b => b.stocks.length > 0);
@@ -495,7 +496,7 @@ const buildPosition = ({ pick, dateStr, dateDisplay, timeText, slopeNow, hotBoar
       title: `选涨停家数最多的涨停潮板块`,
       passed: true,
       value: `${pick.board}（${limitUpCount}/${roster} 只涨停）`,
-      reason: `回溯窗口内掀起涨停潮的板块：${hotBoardsText}（已剔除 ${LEADER_EXCLUDED_BOARDS.join('、')}，候选池仅主板；各成分股须在最近 ${LEADER_VOLUME_LOOKBACK_DAYS} 个交易日内出现过一次放量[成交量较前一交易日 ≥ +${LEADER_VOLUME_SURGE_PCT}%]，否则跳过）；候选池再按买入门槛过滤——仅保留「自板块爆发日以来涨幅」处 ${LEADER_MIN_BOARD_GAIN_PCT}%~${LEADER_MAX_BOARD_GAIN_PCT}% 的个股，其余整体剔除；过滤后共 ${boardCount} 个板块，按触发时点「板块内当前已涨停个股数」降序取最多者，打平则取自爆发以来涨幅最高者`,
+      reason: `回溯窗口内掀起涨停潮的板块：${hotBoardsText}（已剔除 ${LEADER_EXCLUDED_BOARDS.join('、')}，候选池仅主板；各成分股须在最近 ${LEADER_VOLUME_LOOKBACK_DAYS} 个交易日内出现过一次放量[成交量较前一交易日 ≥ +${LEADER_VOLUME_SURGE_PCT}%，且该放量日须为从放量之日起往前回溯 ${LEADER_VOLUME_PEAK_DAYS} 个交易日内的量能最大日]，否则跳过）；候选池再按买入门槛过滤——仅保留「自板块爆发日以来涨幅」处 ${LEADER_MIN_BOARD_GAIN_PCT}%~${LEADER_MAX_BOARD_GAIN_PCT}% 的个股，其余整体剔除；过滤后共 ${boardCount} 个板块，按触发时点「板块内当前已涨停个股数」降序取最多者，打平则取自爆发以来涨幅最高者`,
     },
     {
       id: 'leader_best_stock',

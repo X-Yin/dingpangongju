@@ -430,10 +430,11 @@ const getLeaderPool = async (dateStr, lookbackDays = 10, minCount = 20, excludeB
 // ============================================================
 // 买入门槛：个股最近 N 个交易日内是否出现过「放量」（放量分歧）
 // 口径：某交易日成交量（bars.v = business_amount，单位股）≥ 前一交易日成交量 × (1 + ratioPct/100) 即视为该日放量。
+// 叠加条件：该放量日还须是「从放量之日开始往前回溯 peakLookbackDays 个交易日（含放量当日）」内量能最大的一天。
 // 判定范围：严格早于 dateStr 的最近 days 个交易日（回测当日为盘中，当日成交量不完整，不计入）。
 // 依赖该股日K已进入 barsCache（getLeaderPool 已对候选池预拉取 ensureBarsForCodes）。
 // ============================================================
-const hasRecentVolumeSurge = (code, dateStr, days = 5, ratioPct = 30) => {
+const hasRecentVolumeSurge = (code, dateStr, days = 5, ratioPct = 30, peakLookbackDays = 10) => {
   const bars = barsCache.get(code);
   if (!bars || bars.length < 2) return false;
   const d = Number(dateStr);
@@ -447,7 +448,15 @@ const hasRecentVolumeSurge = (code, dateStr, days = 5, ratioPct = 30) => {
   for (let i = start; i <= end; i++) {
     const cur = bars[i].v;
     const prev = bars[i - 1] && bars[i - 1].v;
-    if (cur != null && prev != null && prev > 0 && cur >= prev * factor) return true;
+    if (cur == null || prev == null || prev <= 0 || cur < prev * factor) continue;
+    // 额外要求：该放量日须为「从放量之日起往前回溯 peakLookbackDays 个交易日（含当日）」内的量能最大之日
+    const peakStart = Math.max(0, i - peakLookbackDays + 1);
+    let peak = -Infinity;
+    for (let j = peakStart; j <= i; j++) {
+      const v = bars[j] && bars[j].v;
+      if (v != null && v > peak) peak = v;
+    }
+    if (cur >= peak) return true;
   }
   return false;
 };
