@@ -1573,7 +1573,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
       const buyRules = curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : (curIsKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES));
-      const sellRules = curIsIceRev ? ICE_REV_SELL_RULES : (curIsIce ? ICE_SELL_RULES : (curIsKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES));
+      const sellRules = curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : (curIsKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES));
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);
@@ -2375,7 +2375,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         const isIce = isIceStrategy(strategy);
         const isIceRev = isIceRevStrategy(strategy);
         const buyRules = isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : (isKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES));
-        const sellRules = isIceRev ? ICE_REV_SELL_RULES : (isIce ? ICE_SELL_RULES : (isKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES));
+        const sellRules = isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : (isKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES));
         const notes = STRATEGY_SPECIFIC_NOTES[strategy];
 
         // 将文案中 **xxx** 这种 markdown 粗体标记解析为 React 节点（纯文本不解析）
