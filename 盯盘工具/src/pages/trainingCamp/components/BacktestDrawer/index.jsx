@@ -151,6 +151,9 @@ const STRATEGY_OPTIONS = [
   { value: 'hot_money_ice_rev_3d_gain', label: '逆周期情绪游资-前3日涨幅最大' },
   { value: 'hot_money_ice_rev_4d_gain', label: '逆周期情绪游资-前4日涨幅最大' },
   { value: 'hot_money_ice_rev_5d_gain', label: '逆周期情绪游资-前5日涨幅最大' },
+  // 连板涨幅最大系列（2026-10-11 用户新增）：上证 3 日线斜率 > 0 即可买、连板板块（涨停>15家非首板主板股）内 N 日涨幅最大、专属 5 类卖点
+  { value: 'hot_money_lianban_2d_gain', label: '情绪游资-连板2日涨幅最大' },
+  { value: 'hot_money_lianban_3d_gain', label: '情绪游资-连板3日涨幅最大' },
   { value: 'highest_3d_reports', label: '3日研报覆盖数最多' },
   { value: 'highest_5d_reports', label: '5日研报覆盖数最多' },
   { value: 'highest_3d_reports_top5_gain', label: '3日研报前五&涨幅最大' },
@@ -234,6 +237,7 @@ const STRATEGY_CATEGORIES = [
       'hot_money_ice_5d_gain', 'hot_money_ice_10d_gain',
       'hot_money_ice_rev_1d_gain', 'hot_money_ice_rev_2d_gain', 'hot_money_ice_rev_3d_gain',
       'hot_money_ice_rev_4d_gain', 'hot_money_ice_rev_5d_gain',
+      'hot_money_lianban_2d_gain', 'hot_money_lianban_3d_gain',
     ],
   },
   {
@@ -371,6 +375,27 @@ const ICE_REV_SELL_RULES = [
   { key: 'ice_rev_sell_reverse', title: '上证指数 3 日线斜率由负转正（卖点，当桶即卖）', desc: '盘中实时**上证指数** 3 日线斜率由负转正的**那个桶当日盘中即卖出**（例：上午 10:00 斜率由负转正，即按 10:00 桶时点持仓股分时价卖出）——与买点信号相反：买在转负次日、卖在转正当桶。斜率转正同时也是**作废尚未成交买入意图**的信号（转负次日买入前盘中已转正 → 放弃本次买入）。当日新买入的持仓遵守「当日买入次日才可卖」全局规则：当日买入后盘中才转正不顺延卖出，与顺周期系列行为对称' },
   { key: 'ice_rev_sell_stop_loss', title: '个股跌破成本线 -2% 止损', desc: '与顺周期情绪游资一致：个股分时价跌破买入成本线 -2%（现价 < 买入价 × 0.98）即止损卖出；含「竞价低开自救窗口」例外（隔夜大低开不在 9:30 直接止损，拉升中持有、回补则豁免、回落且仍破线才卖）与「桶级精确成交」回溯（从桶前一分钟起逐分钟定位连续跌破区间最早一分钟成交）；全仓买入，卖出收益率不做半仓折算，直接计入概览' },
   { key: 'ice_rev_sell_lower_shadow', title: '14:55 长下影强卖：下影线 ≥ 实体长度 2 倍', desc: '与顺周期情绪游资一致：持仓期内（买入次日起）当日 **14:55** 检查该股当日分时 K 线形态：**下影线长度（min(开,收) − 当日最低）≥ 实体长度（|收 − 开|）的 2 倍**（含纯长下影）即判定为「盘中被砸后拉起、上方承压」，于 **14:55 桶按分时价强制卖出**；与另外两个卖点任一先触发即卖' },
+];
+
+// 连板 N 日涨幅最大系列（hot_money_lianban_{2,3}d_gain，2026-10-11 用户新增）：
+// 与情绪游资系列同源（上证 3 日线斜率），但买点为「斜率 > 0 即可买」（非翻转事件）、选股为连板板块内 N 日涨幅最大、专属 5 类卖点，全仓
+const LIANBAN_GAIN_STRATEGY_IDS = [
+  'hot_money_lianban_2d_gain',
+  'hot_money_lianban_3d_gain',
+];
+const isLianbanGainStrategy = (id) => LIANBAN_GAIN_STRATEGY_IDS.includes(id);
+const LIANBAN_GAIN_BUY_RULES = [
+  { key: 'lianban_slope_gate', title: '唯一买卖开关：上证指数 3 日线斜率为正即可买', desc: '盘中实时计算**上证指数** 3 日线斜率（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替，逐桶实时判定）：**只要斜率为正即可买入**（不同于情绪游资系列的「由负转正翻转事件」）。买点执行：① 若**前一交易日收盘口径斜率已为正**，则当日 **9:30 开盘即可开始买**；② 若前一日为负、**当日盘中才由负转正**，则在**转正的那个桶**买入。空仓才买：已持仓时不加仓；当日买入次日才可卖（当日卖出后当日不追买，等次日再看）。斜率符号跨日连续追踪，初值取回测首日前一交易日的收盘斜率，斜率数据不足的桶不参与' },
+  { key: 'lianban_board_pool', title: '候选池：上一交易日涨停数 > 15 的板块内「非首板」主板个股', desc: '看**上一交易日** lianbanSnapshot：取当日涨停个股数 **> 15** 的板块（theme），从中挑选**非首板**（连板数 ≥ 2）且为**主板**（沪 60 / 深 00 开头，剔除创业板 30 / 科创板 68）的个股，合并去重组成候选股集合。若上一交易日**没有任何板块涨停数 > 15**，则当日**不买入**（空仓等待）' },
+  { key: 'lianban_best_stock', title: '候选内 N 日涨幅最大的股票 · 不做一字板顺延', desc: '在候选股集合中，按最近 N 个交易日（含触发日）个股涨幅之和取最大的一只买入；成交价取触发桶时点的分时价。**不做一字板顺延**：若涨幅最大的这只**全天一字板**（买点时点已封涨停）买不进，则**当日跳过不买**，等次日再看能否买（不顺延到排名下一只）' },
+  { key: 'lianban_full_position', title: '仓位：全仓买入', desc: '全仓买入（权重 1，不做半仓折算）；全仓收益直接计入概览（整体收益 / 平均回撤 / 单笔最大回撤）' },
+];
+const LIANBAN_GAIN_SELL_RULES = [
+  { key: 'lianban_sell_resilience', title: '持仓股抗分歧分数 < 9', desc: '持仓期内（买入次日起）盘中计算**持仓股自身**的抗分歧分数（与**上证指数 sh000001** 对比现算，买卖点诊断条件4同口径），**< 9** 即按当桶分时价卖出，资金分歧加剧离场' },
+  { key: 'lianban_sell_shadow', title: '高位放量大阴线', desc: '自当日最高价到现价回落**超过 8%**、且现价低于当日开盘价，需**持续 ≥ 5 分钟**才触发，按当桶分时价卖出' },
+  { key: 'lianban_sell_volume', title: '爆量分歧（收盘桶：较上一交易日放量 > 20%）', desc: '**收盘桶（14:55）**判定：当日成交量 ≥ 上一交易日成交量 × **1.2**（即较上一交易日大幅放量超过 20%）即视为爆量分歧，按收盘桶分时价卖出' },
+  { key: 'lianban_sell_limit_down', title: '跌停', desc: '持仓股分时价触及跌停（主板跌停价 = 昨收 × 0.9）即卖出' },
+  { key: 'lianban_sell_stop_loss', title: '跌破成本线 -2%', desc: '持仓股分时价跌破买入成本线 -2%（现价 < 买入价 × 0.98）即止损卖出；全仓买入，卖出收益率不做半仓折算。五类卖点任一**先触发即卖**：优先级 跌破成本线 -2% > 跌停 > 抗分歧 < 9 > 高位放量大阴线 > 爆量分歧' },
 ];
 
 // 「N.5 日涨幅最大」窗口口径说明（与后端 HALF_DAY_NOTE 一致）：在常规最近 N 个交易日（含触发日）涨幅之和的基础上，
@@ -871,6 +896,24 @@ const STRATEGY_SPECIFIC_NOTES = {
     ],
   },
 
+  // ---- 连板 N 日涨幅最大系列（hot_money_lianban_{2,3}d_gain，2026-10-11 用户新增） ----
+  hot_money_lianban_2d_gain: {
+    group: '连板涨幅最大系列',
+    bullets: [
+      '**信号指数与买点**：信号指数为**上证指数** 3 日线斜率（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替，逐桶实时判定）——**只要斜率为正即可买**（不同于情绪游资系列的「由负转正翻转事件」）。① 若**前一交易日收盘口径斜率已为正**，则当日 **9:30 开盘即可开始买**；② 若前一日为负、**当日盘中才由负转正**，则在**转正的那个桶**买入。空仓才买；当日买入次日才可卖，当日卖出后当日不追买（等次日再看）。',
+      '**选股（与前序情绪游资系列不同）**：看**上一交易日** lianbanSnapshot，取当日涨停个股数 **> 15** 的板块，从中挑选**非首板**（连板数 ≥ 2）且为**主板**（沪 60 / 深 00，剔除创业板 30 / 科创板 68）的个股，合并去重为候选池；在候选池中取最近 **2 个交易日**（含触发日）个股涨幅之和最大的一只买入。若上一交易日**没有任何板块涨停数 > 15**，则当日**不买入**。',
+      '**不做一字板顺延**：若涨幅最大的这只**全天一字板**（买点时点已封涨停）买不进，则**当日跳过不买**，等次日再看能否买（不顺延到排名下一只）。',
+      '**仓位**：全仓买入（权重 1，不做半仓折算）。',
+      '**卖点（5 类，任一先触发即卖）**：① 持仓股自身抗分歧分数 **< 9**（与**上证指数 sh000001** 对比现算）∪ ② 高位放量大阴线（自当日最高回落 > 8% 且现价 < 开盘，持续 ≥ 5 分钟）∪ ③ 爆量分歧（**收盘桶**当日成交量 ≥ 上一交易日 × **1.2**，即放量 > 20%）∪ ④ 跌停 ∪ ⑤ 跌破成本线 **-2%**；优先级 跌破成本线 -2% > 跌停 > 抗分歧 < 9 > 高位放量大阴线 > 爆量分歧。',
+    ],
+  },
+  hot_money_lianban_3d_gain: {
+    group: '连板涨幅最大系列',
+    bullets: [
+      '与 hot_money_lianban_2d_gain 买点/卖点/候选池完全相同，唯选股窗口 = 最近 **3 个交易日**（含触发日）涨幅之和最大。',
+    ],
+  },
+
   // ---- 尾盘抄底系列（tail_dip_*） ----
   tail_dip_1d_gain: {
     group: '尾盘抄底系列',
@@ -1199,6 +1242,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const curIsKeyBlock = KEY_BLOCK_STRATEGY_IDS.includes(strategy);
   const curIsIce = isIceStrategy(strategy);
   const curIsIceRev = isIceRevStrategy(strategy);
+  const curIsLianbanGain = isLianbanGainStrategy(strategy);
   const effectiveRange = range || (curIsEmo3 ? emo3DefaultRange : defaultRange);
 
   // 组件卸载时停止轮询
@@ -1572,8 +1616,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
       const pick = effectiveRange;
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
-      const buyRules = curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : (curIsKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES));
-      const sellRules = curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : (curIsKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES));
+      const buyRules = curIsLianbanGain ? LIANBAN_GAIN_BUY_RULES : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : (curIsKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES)));
+      const sellRules = curIsLianbanGain ? LIANBAN_GAIN_SELL_RULES : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : (curIsKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES)));
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);
@@ -2374,8 +2418,9 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         const isKeyBlock = KEY_BLOCK_STRATEGY_IDS.includes(strategy);
         const isIce = isIceStrategy(strategy);
         const isIceRev = isIceRevStrategy(strategy);
-        const buyRules = isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : (isKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES));
-        const sellRules = isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : (isKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES));
+        const isLianbanGain = isLianbanGainStrategy(strategy);
+        const buyRules = isLianbanGain ? LIANBAN_GAIN_BUY_RULES : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : (isKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES)));
+        const sellRules = isLianbanGain ? LIANBAN_GAIN_SELL_RULES : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : (isKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES)));
         const notes = STRATEGY_SPECIFIC_NOTES[strategy];
 
         // 将文案中 **xxx** 这种 markdown 粗体标记解析为 React 节点（纯文本不解析）
@@ -2406,8 +2451,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <BookOutlined style={{ color: '#1677ff' }} />
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#12213a' }}>策略说明</span>
-                <Tag color={(isIce || isIceRev) ? 'purple' : isKeyBlock ? 'orange' : curIsEmo3 ? 'gold' : 'blue'} style={{ marginLeft: 8 }}>
-                  {(notes?.group) || (isIceRev ? '逆周期情绪游资系列' : isIce ? '顺周期情绪游资系列' : isKeyBlock ? '重点板块系列' : curIsEmo3 ? '三日情绪冰点系列' : '常规策略')}
+                <Tag color={(isIce || isIceRev) ? 'purple' : isLianbanGain ? 'magenta' : isKeyBlock ? 'orange' : curIsEmo3 ? 'gold' : 'blue'} style={{ marginLeft: 8 }}>
+                  {(notes?.group) || (isLianbanGain ? '连板涨幅最大系列' : isIceRev ? '逆周期情绪游资系列' : isIce ? '顺周期情绪游资系列' : isKeyBlock ? '重点板块系列' : curIsEmo3 ? '三日情绪冰点系列' : '常规策略')}
                 </Tag>
               </div>
             }

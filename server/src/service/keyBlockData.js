@@ -368,6 +368,70 @@ const scanAllLianbanCodesInRange = async (rangeDates, lookbackDays = 20, topN = 
   return all;
 };
 
+// ============================================================
+// 连板涨幅最大候选股（情绪游资-连板 N 日涨幅最大）
+// 2026-10-11 用户口径：取「上一交易日」的 lianbanSnapshot，找出该日涨停个股数 > minCount（默认 15）的板块，
+//   从中挑选「非首板」（lianbanCount >= 2）个股，且仅保留主板（沪市 60 开头 / 深市 00 开头，剔除创业板 sz30 / 科创板 sh68），
+//   去重后作为候选股集合。若上一交易日无任何板块涨停数 > minCount，则返回空集合（当日不买入）。
+// ============================================================
+const isMainBoardCode = (code) => {
+  const c = String(code || '').toLowerCase();
+  return c.startsWith('sh60') || c.startsWith('sz00');
+};
+
+// prevDateStr：上一交易日 YYYYMMDD；返回 { stocks: [{ code, name, board, lianbanCount }], boards, date, matched }
+const getBoardLimitUpCandidates = (prevDateStr, minCount = 15, minLianban = 2) => {
+  const data = readLianbanSnapshot(String(prevDateStr));
+  const themes = (data && Array.isArray(data.themes)) ? data.themes : [];
+  const hotThemes = themes.filter(t => t && Number(t.count) > minCount);
+  const stocks = new Map(); // code -> { code, name, board, lianbanCount }
+  const boards = [];
+  for (const theme of hotThemes) {
+    const board = String(theme.board || theme.name || '').trim();
+    if (board) boards.push(board);
+    for (const st of (theme.stocks || [])) {
+      const cnt = parseInt(st.lianbanCount, 10);
+      if (!Number.isFinite(cnt) || cnt < minLianban) continue; // 剔除首板
+      const code = st.marketCode || st.code;
+      if (!code || !isMainBoardCode(code)) continue; // 仅主板
+      if (stocks.has(code)) continue;
+      stocks.set(code, { code, name: st.name || st.code || code, board, lianbanCount: cnt });
+    }
+  }
+  return { stocks: Array.from(stocks.values()), boards, date: String(prevDateStr), matched: stocks.size > 0 };
+};
+
+// 预扫描整个回测日期范围，收集连板候选股代码（用于一次性预拉 bars）。
+// 覆盖每个回测日「其上一交易日」的候选：把范围内所有日期 + 范围首日前一交易日一并扫描即可覆盖。
+const scanBoardLimitUpCodesInRange = async (rangeDates, minCount = 15, minLianban = 2) => {
+  const all = new Set();
+  const dates = new Set(rangeDates.map(String));
+  if (rangeDates.length > 0) {
+    try {
+      const before = await getPastTradingDates(String(rangeDates[0]), 1);
+      for (const d of before) dates.add(String(d));
+    } catch (e) { /* 无前置交易日忽略 */ }
+  }
+  for (const dateStr of dates) {
+    const { stocks } = getBoardLimitUpCandidates(dateStr, minCount, minLianban);
+    for (const s of stocks) all.add(s.code);
+  }
+  return all;
+};
+
+// 个股某交易日成交量（business_amount）与上一交易日之比：{ vol, prevVol, ratio }；数据不足返回 null
+const stockVolumeRatio = (code, dateStr) => {
+  const bars = barsCache.get(code);
+  if (!bars || bars.length < 2) return null;
+  const d = Number(dateStr);
+  const idx = bars.findIndex(b => b.d === d);
+  if (idx <= 0) return null;
+  const vol = bars[idx].v;
+  const prevVol = bars[idx - 1].v;
+  if (!Number.isFinite(vol) || !Number.isFinite(prevVol) || prevVol <= 0) return null;
+  return { vol, prevVol, ratio: vol / prevVol };
+};
+
 module.exports = {
   getKeyBlockConstituents,
   getKeyBlockTagMap,
@@ -380,4 +444,7 @@ module.exports = {
   scanAllLianbanCodesInRange,
   getHongliMultiLianbanStocks,
   scanHongliMultiLianbanCodesInRange,
+  getBoardLimitUpCandidates,
+  scanBoardLimitUpCodesInRange,
+  stockVolumeRatio,
 };

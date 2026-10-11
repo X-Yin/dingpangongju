@@ -1,5 +1,6 @@
 const { STRATEGIES, isCycleFilterStrategy } = require('../strategies/registry');
 const { runKeyBlockBacktest } = require('./keyBlockBacktest');
+const { runLianbanGainBacktest } = require('./lianbanGainBacktest');
 const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
 const { getTechIndexDates } = require('../utils/techEmotion');
 const { buildWindowAxis } = require('./pickHelpers');
@@ -23,10 +24,16 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   if (ids.length === 0) return [];
   // 重点板块-N日最高涨幅系列走独立回测（板块驱动、尾盘 14:50 买入，不走共享数据循环的买点诊断）
   const keyBlockIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays != null);
-  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null);
+  // 情绪游资-连板 N 日涨幅最大系列走独立引擎（上证斜率>0 买、连板板块选股、专属 5 类卖点）
+  const lianbanIds = ids.filter(id => STRATEGIES[id]?.lianbanGainDays != null);
+  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.lianbanGainDays == null);
   const results = [];
   for (const strategyId of keyBlockIds) {
     const result = await runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
+    results.push({ strategyId, result });
+  }
+  for (const strategyId of lianbanIds) {
+    const result = await runLianbanGainBacktest(startDate, endDate, strategyId, onProgress);
     results.push({ strategyId, result });
   }
   if (regularIds.length === 0) return results;

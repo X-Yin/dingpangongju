@@ -5,6 +5,7 @@ const emoSwitchStrategies = require('./families/emoSwitch');
 const emoQuickStrategies = require('./families/emoQuick');
 const keyBlockStrategies = require('./families/keyBlock');
 const iceStrategies = require('./families/ice');
+const lianbanGainStrategies = require('./families/lianbanGain');
 const tailDipStrategies = require('./families/tailDip');
 const { getTrainingCampDates } = require('../deps');
 
@@ -16,6 +17,7 @@ const STRATEGIES = {
   ...emoQuickStrategies,
   ...keyBlockStrategies,
   ...iceStrategies,
+  ...lianbanGainStrategies,
   ...tailDipStrategies,
 };
 
@@ -51,7 +53,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 规则：候选按排名依次判断个股与创业板指最近 20 个已完结交易日的日收益率相关系数，corr > 0（正相关）
 // = 顺周期可买，corr <= 0（逆周期）剔除并顺延排名下一只；数据不足不拦截。下列 desc 文案自动追加到所有适用策略
 const CYC_FILTER_DESC = '顺周期过滤：候选按排名依次判断与创业板指最近 20 个已完结交易日的日收益率相关系数，相关系数 > 0（正相关，顺周期）才可买入，≤ 0（逆周期）则顺延至排名下一只（数据不足不拦截）';
-const isCycleFilterStrategy = (s) => !!s && s.tailDip !== true && s.emoAvgBuy !== true && s.iceMode !== true && s.keyBlockDays == null;
+const isCycleFilterStrategy = (s) => !!s && s.tailDip !== true && s.emoAvgBuy !== true && s.iceMode !== true && s.keyBlockDays == null && s.lianbanGainDays == null;
 for (const s of Object.values(STRATEGIES)) {
   if (isCycleFilterStrategy(s)) s.desc = `${s.desc}；${CYC_FILTER_DESC}`;
 }

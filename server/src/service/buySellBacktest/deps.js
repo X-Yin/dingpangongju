@@ -3,7 +3,7 @@ const { getSingleStockTlineDataByDate } = require('../stock');
 const { calculateResilience, getLimitTypeByCode } = require('../stockDiagnose');
 const { isStockInWatchlistAt, getMonitorStocks } = require('../monitorStock');
 const { batchParallel } = require('../../utils');
-const { getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, ensureBarsForCodes, stockWindowGain, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange, getHongliMultiLianbanStocks, scanHongliMultiLianbanCodesInRange } = require('../keyBlockData');
+const { getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, ensureBarsForCodes, stockWindowGain, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange, getHongliMultiLianbanStocks, scanHongliMultiLianbanCodesInRange, getBoardLimitUpCandidates, scanBoardLimitUpCodesInRange, stockVolumeRatio } = require('../keyBlockData');
 const { loadIndexKline } = require('../sentimentHotMoney');
 const { isOscExcluded, runWithOscExclude } = require('../backtestOscContext');
 const { getSimContext, isSimStock, runWithSimContext } = require('../backtestSimContext');
@@ -17,7 +17,7 @@ module.exports = {
   calculateResilience, getLimitTypeByCode,
   isStockInWatchlistAt, getMonitorStocks,
   batchParallel,
-  getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, ensureBarsForCodes, stockWindowGain, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange, getHongliMultiLianbanStocks, scanHongliMultiLianbanCodesInRange,
+  getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, ensureBarsForCodes, stockWindowGain, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange, getHongliMultiLianbanStocks, scanHongliMultiLianbanCodesInRange, getBoardLimitUpCandidates, scanBoardLimitUpCodesInRange, stockVolumeRatio,
   loadIndexKline,
   isOscExcluded, runWithOscExclude,
   getSimContext, isSimStock, runWithSimContext,
