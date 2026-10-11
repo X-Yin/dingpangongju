@@ -374,7 +374,7 @@ const scanAllLianbanCodesInRange = async (rangeDates, lookbackDays = 20, topN = 
 //   ① 找出这些日子里「涨停个股数 >= minCount（默认 20，即掀起涨停潮）」的板块（theme）；
 //   ② 每个板块取其「窗口内最早一次涨停潮」那天作为该板块的**爆发日**（hotDate），并把爆发日当天的成分股作为该板块名册；
 //   ③ 每只成分股以「爆发日收盘价」为基准（base）——引擎据此按「当前价 / base − 1」计算该股自板块爆发以来的涨幅；
-//   ④ 引擎在买点触发时先选「当前涨停家数最多的板块」，再买该板块内涨幅最大者（已涨停则顺延第二，均涨停则次日 9:30）。
+//   ④ 引擎在买点触发时先选「板块内最优个股自爆发以来涨幅最高」的板块，再买该板块内涨幅最大者（已涨停则顺延第二，均涨停则次日 9:30）。
 // 注意：基准价取自「个股日K」（getStockBars），而不用快照里的 quote.price——历史快照该字段在 20260817
 //   之前全部为空（行情未落库），会导致取不到基准价、候选池恒为空、回测迟迟不成交。
 // 返回 { dates, boards:[{board,hotDate,count,stocks:[{code,name,board,base,baseDate}]}], pool:[...扁平], hotBoards:[{board,date,count}] }

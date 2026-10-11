@@ -21,7 +21,7 @@ const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats')
 // 情绪游资-龙头战法（2026-10-11 用户新增；2026-10-11 二次改版：合并为单一「板块口径」策略）：
 //   选股 = 过去 10 个交易日内掀起涨停潮（涨停个股数 >= 20）的板块（剔除 芯片/通信/算力/其他/中报增长，候选池仅保留主板）；
 //          候选池两次过滤：① 最近 5 个交易日内须出现过一次放量（成交量较前一交易日 ≥ +200%，即 ≥ 前一日 × 3，且该放量日须为从放量之日起往前回溯 10 个交易日内的量能最大日），否则跳过；② 自板块爆发日以来涨幅须处 10%~30%；
-//          再选「当前已涨停个股数最多」的板块，
+//          再选「板块内最优个股自爆发以来涨幅最高」的板块，
 //          在该板块内买「自板块爆发日以来涨幅最大」的那只；板块内无符合个股则本次不买；
 //          若涨幅第 1 已涨停 → 买涨幅第 2；若第 2 也涨停 → 顺延到次日 9:30 买涨幅第 2 那只（仍涨停则继续顺延）。
 //   买点 = 上证指数 3 日线斜率**盘中由负转正**的当桶出手（择时提高胜率）；顺延买点在次日 9:30 且斜率仍为正时执行；
@@ -350,7 +350,7 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
               const pick = { ...pendingBuy, px: atPt.lastPx, changePct: chg, gain: parseFloat(((atPt.lastPx / pendingBuy.base - 1) * 100).toFixed(4)) };
               position = buildPosition({
                 pick, dateStr, dateDisplay, timeText, slopeNow, hotBoardsText, poolTotal, deferred: true,
-                boardCount: pendingBuy.boardCount, limitUpCount: pendingBuy.limitUpCount,
+                boardCount: pendingBuy.boardCount,
                 roster: pendingBuy.roster, hotDate: pendingBuy.hotDate, rank: 2,
               });
               position.buyDi = di;
@@ -365,7 +365,7 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
       // ===== 买入（空仓、无待顺延、斜率盘中由负转正、当日未卖出过）=====
       if (!position && !pendingBuy && turnedPos && dateStr !== lastSellDate && boardList.length > 0) {
         await ensurePoolTlines();
-        // 逐板块统计：当前涨停家数 + 各成分股「自板块爆发日（hotDate）以来」涨幅（按涨幅降序）
+        // 逐板块统计：各成分股「自板块爆发日（hotDate）以来」涨幅（按涨幅降序）
         const boardStats = [];
         for (const b of boardList) {
           const rows = [];
@@ -390,16 +390,15 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
           rows.sort((a, x) => x.gain - a.gain);
           boardStats.push({
             board: b.board, hotDate: b.hotDate, roster: b.stocks.length, rows,
-            limitUpCount: rows.reduce((n, r) => n + (r.limitUp ? 1 : 0), 0),
           });
         }
         if (boardStats.length > 0) {
-          // 选「当前已涨停个股数最多」的板块；打平则取自板块爆发以来涨幅最高的板块
-          boardStats.sort((a, x) => (x.limitUpCount - a.limitUpCount) || (x.rows[0].gain - a.rows[0].gain));
+          // 选「板块内最优个股自爆发以来涨幅最高」的板块，再买入该板块内涨幅最大的那只
+          boardStats.sort((a, x) => x.rows[0].gain - a.rows[0].gain);
           const top = boardStats[0];
           const first = top.rows[0];
           const second = top.rows[1] || null;
-          const ctx = { boardCount: boardStats.length, limitUpCount: top.limitUpCount, roster: top.roster, hotDate: top.hotDate };
+          const ctx = { boardCount: boardStats.length, roster: top.roster, hotDate: top.hotDate };
           if (!first.limitUp) {
             position = buildPosition({ pick: first, dateStr, dateDisplay, timeText, slopeNow, hotBoardsText, poolTotal, ...ctx });
           } else if (second && !second.limitUp) {
@@ -473,14 +472,14 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
 };
 
 // 构建持仓对象（含买入原因与诊断明细）
-const buildPosition = ({ pick, dateStr, dateDisplay, timeText, slopeNow, hotBoardsText, poolTotal, boardCount, limitUpCount, roster, hotDate, rank, deferred }) => {
+const buildPosition = ({ pick, dateStr, dateDisplay, timeText, slopeNow, hotBoardsText, poolTotal, boardCount, roster, hotDate, rank, deferred }) => {
   const t = timeText.substring(0, 5);
   const slopeText = `${slopeNow > 0 ? '+' : ''}${Number(slopeNow).toFixed(2)}`;
   const gainText = `${pick.gain > 0 ? '+' : ''}${pick.gain.toFixed(2)}%`;
-  const boardCtx = `「${pick.board}」（爆发日 ${hotDate}，名册 ${roster} 只，触发时点 ${limitUpCount} 只涨停）`;
+  const boardCtx = `「${pick.board}」（爆发日 ${hotDate}，名册 ${roster} 只）`;
   const buyReason = deferred
-    ? `${t} ${ICE_SIGNAL_INDEX_NAME} 3 日线斜率 ${slopeText}（为正），执行上一交易日顺延买入：涨停家数最多板块 ${boardCtx} 内自爆发以来涨幅第 ${rank || 2} 的 ${pick.name}`
-    : `${t} ${ICE_SIGNAL_INDEX_NAME} 3 日线斜率由负转正（${slopeText}），买入过去 ${LEADER_LOOKBACK_DAYS} 个交易日涨停潮（涨停数 ≥ ${LEADER_MIN_LIMIT_UP_COUNT}）板块中当前涨停家数最多的 ${boardCtx} 内自爆发以来涨幅${rank === 2 ? '第 2' : '最大'}的 ${pick.name}`;
+    ? `${t} ${ICE_SIGNAL_INDEX_NAME} 3 日线斜率 ${slopeText}（为正），执行上一交易日顺延买入：涨停潮板块 ${boardCtx} 内自爆发以来涨幅第 ${rank || 2} 的 ${pick.name}`
+    : `${t} ${ICE_SIGNAL_INDEX_NAME} 3 日线斜率由负转正（${slopeText}），买入过去 ${LEADER_LOOKBACK_DAYS} 个交易日涨停潮（涨停数 ≥ ${LEADER_MIN_LIMIT_UP_COUNT}）板块中自爆发以来涨幅最高的 ${boardCtx} 内${rank === 2 ? '涨幅第 2' : '自爆发以来涨幅最大'}的 ${pick.name}`;
   const checks = [
     {
       id: 'leader_slope_gate',
@@ -493,10 +492,10 @@ const buildPosition = ({ pick, dateStr, dateDisplay, timeText, slopeNow, hotBoar
     },
     {
       id: 'leader_board_pick',
-      title: `选涨停家数最多的涨停潮板块`,
+      title: `选自爆发以来涨幅最高的涨停潮板块`,
       passed: true,
-      value: `${pick.board}（${limitUpCount}/${roster} 只涨停）`,
-      reason: `回溯窗口内掀起涨停潮的板块：${hotBoardsText}（已剔除 ${LEADER_EXCLUDED_BOARDS.join('、')}，候选池仅主板；各成分股须在最近 ${LEADER_VOLUME_LOOKBACK_DAYS} 个交易日内出现过一次放量[成交量较前一交易日 ≥ +${LEADER_VOLUME_SURGE_PCT}%，且该放量日须为从放量之日起往前回溯 ${LEADER_VOLUME_PEAK_DAYS} 个交易日内的量能最大日]，否则跳过）；候选池再按买入门槛过滤——仅保留「自板块爆发日以来涨幅」处 ${LEADER_MIN_BOARD_GAIN_PCT}%~${LEADER_MAX_BOARD_GAIN_PCT}% 的个股，其余整体剔除；过滤后共 ${boardCount} 个板块，按触发时点「板块内当前已涨停个股数」降序取最多者，打平则取自爆发以来涨幅最高者`,
+      value: `${pick.board}（名册 ${roster} 只）`,
+      reason: `回溯窗口内掀起涨停潮的板块：${hotBoardsText}（已剔除 ${LEADER_EXCLUDED_BOARDS.join('、')}，候选池仅主板；各成分股须在最近 ${LEADER_VOLUME_LOOKBACK_DAYS} 个交易日内出现过一次放量[成交量较前一交易日 ≥ +${LEADER_VOLUME_SURGE_PCT}%，且该放量日须为从放量之日起往前回溯 ${LEADER_VOLUME_PEAK_DAYS} 个交易日内的量能最大日]，否则跳过）；候选池再按买入门槛过滤——仅保留「自板块爆发日以来涨幅」处 ${LEADER_MIN_BOARD_GAIN_PCT}%~${LEADER_MAX_BOARD_GAIN_PCT}% 的个股，其余整体剔除；过滤后共 ${boardCount} 个板块，取「板块内最优个股自爆发以来涨幅最高」的板块`,
     },
     {
       id: 'leader_best_stock',
