@@ -3226,7 +3226,8 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     ? Number(dayjs().format('HHmm'))
     : 1455;
 
-  const monitorStocks = getMonitorStocks();
+  // 自选股榜单仅纳入科技股（isTech !== false，与全站「自选股科技股」口径一致）
+  const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false);
   const gate = await queryLiveIndexGate(null, targetDateStr, buyMinute);
 
   // 两个指数的分时（算个股抗分歧用）

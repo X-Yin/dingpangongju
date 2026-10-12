@@ -1,1 +1,28 @@
-[]
+[
+  {
+    "id": "b2ce06d7ab382e7b",
+    "time": "2026-10-12 11:28:39",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-12 11:28:39",
+        "title": "板块排名变化",
+        "description": "<b>煤炭</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">38/49</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "bb46fb2dc6ba09b2",
+    "time": "2026-10-12 11:29:39",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-12 11:29:39",
+        "title": "板块排名变化",
+        "description": "<b>锂电</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">23/49</span><br/><b>端侧AI</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">22/49</span>",
+        "path": "/block"
+      }
+    ]
+  }
+]

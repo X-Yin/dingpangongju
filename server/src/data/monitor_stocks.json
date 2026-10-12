@@ -789,5 +789,23 @@
     "riskScore": " 8",
     "isTech": true,
     "addedAt": "2026-10-08 12:23:27"
+  },
+  {
+    "code": "sz300413",
+    "name": "芒果超媒",
+    "isImportant": false,
+    "blockName": "AI 应用",
+    "riskScore": " 8",
+    "isTech": false,
+    "addedAt": "2026-10-12 10:06:43"
+  },
+  {
+    "code": "sz300182",
+    "name": "捷成股份",
+    "isImportant": false,
+    "blockName": "AI 应用",
+    "riskScore": " 7",
+    "isTech": false,
+    "addedAt": "2026-10-12 10:54:25"
   }
 ]

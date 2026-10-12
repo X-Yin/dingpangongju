@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-10-12",
+    "operations": [
+      {
+        "id": "1791768884402_nqid",
+        "action": "sell",
+        "stockName": "云南锗业",
+        "stockCode": "sz002428",
+        "position": "",
+        "time": "09:34"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-12T01:34:44.420Z",
+    "updatedAt": "2026-10-12T01:34:44.420Z"
+  },
+  {
     "date": "2026-10-09",
     "operations": [
       {

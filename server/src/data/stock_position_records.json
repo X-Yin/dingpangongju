@@ -1,5 +1,16 @@
 [
   {
+    "id": "1791768884399_g3h3za",
+    "type": "delete",
+    "code": "sz002428",
+    "name": "云南锗业",
+    "date": "2026-10-12",
+    "time": "09:34:44",
+    "detail": "删除持仓：云南锗业（sz002428）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-12T01:34:44.399Z"
+  },
+  {
     "id": "1791523028842_gpj6dr",
     "type": "buy",
     "code": "sz002428",

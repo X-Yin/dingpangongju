@@ -1,8 +1,37 @@
-const { batchParallel, getSimContext, isOscExcluded, isSimStock, isStockInWatchlistAt, loadTrainingCampData } = require('../deps');
+const { batchParallel, fs, getMonitorStocks, getSimContext, isOscExcluded, isSimStock, isStockInWatchlistAt, loadTrainingCampData } = require('../deps');
 const { buildKeyBlockSyntheticBucketEntry, buildKeyBlockSyntheticDay } = require('./keyBlockSynthetic');
 const { calcResilienceAtMinute, extractDailyInfo, isLimitUpAtBuy } = require('./replayData');
 const { EXCLUDED_CODES } = require('../constants');
 const { cycCorrCache } = require('./cycleFilter');
+const { stockBlockFilePath } = require('../paths');
+
+// ============================================================
+// 候选池科技股过滤（2026-10-12 用户要求）：凡是以「全量自选股」为候选池的策略，只允许自选股中的
+// 科技股（isTech !== false）参与选股，非科技股（isTech === false）一律剔除。
+// 覆盖候选池出口：pickBestStock 主流水线（N 日涨幅/研报/均线斜率/抗分歧/尾盘抄底，
+// 以及委托到它的情绪开关/快进快出/科技板块前三/两次买入）与抗分歧弱转强 pickWeakToStrongStock。
+// 随机模拟注入的合成股票不在自选股清单内 → 天然按科技股处理，不受本过滤影响。
+// 集合按 monitor_stocks.json mtime 懒加载缓存，避免回测热循环中逐候选重复读盘。
+// ============================================================
+let nonTechCodeSetCache = { mtimeMs: -1, set: new Set() };
+const getNonTechWatchlistCodeSet = () => {
+  try {
+    const mtimeMs = fs.statSync(stockBlockFilePath).mtimeMs;
+    if (mtimeMs !== nonTechCodeSetCache.mtimeMs) {
+      const set = new Set();
+      for (const s of getMonitorStocks() || []) {
+        if (s && s.code && s.isTech === false) set.add(s.code);
+      }
+      nonTechCodeSetCache = { mtimeMs, set };
+    }
+  } catch (e) {
+    // 读取失败：沿用上次集合（空集合 = 不拦截任何候选）
+  }
+  return nonTechCodeSetCache.set;
+};
+
+// 该代码是否为自选股中的非科技股（是则不参与选股策略）
+const isNonTechWatchlistStock = (code) => getNonTechWatchlistCodeSet().has(code);
 
 const injectSimStocksIntoCampData = async (campData, dateStr) => {
   const sim = getSimContext();
@@ -70,6 +99,7 @@ const pickWeakToStrongStock = (bucket, rangeDates, di, replayStocks, dailyInfos,
   let best = null; // { sc, diff, gain }
   for (const sc of bucket.stockChanges) {
     if (EXCLUDED_CODES.has(sc.code)) continue;
+    if (isNonTechWatchlistStock(sc.code)) continue; // 非科技股不参与选股（候选池=全量自选股）
     if (isOscExcluded(sc.code)) continue; // 震荡测试：勾选隐藏的股票不参与选股
     if (sc.lastPx == null || sc.lastPx <= 0) continue;
     // 自选股添加时间门禁：买点时刻尚未加入自选股的股票不参与选股（防止后加自选股污染历史回测）
@@ -160,6 +190,7 @@ module.exports = {
   buildWindowAxis,
   computeMaSlopeAngle,
   injectSimStocksIntoCampData,
+  isNonTechWatchlistStock,
   passWatchlistGate,
   pickWeakToStrongStock,
 };

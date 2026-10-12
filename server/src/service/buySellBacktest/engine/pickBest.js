@@ -1,5 +1,5 @@
 const { BUY_TIME_MAX_MINUTE, GLOBAL_RESILIENCE_MIN, RESILIENCE_GATE_INTRADAY_SORT_IDS, RESILIENCE_GATE_MIN, RESILIENCE_GATE_STRATEGY_IDS, STRATEGIES } = require('../strategies/registry');
-const { computeMaSlopeAngle, passWatchlistGate } = require('./pickHelpers');
+const { computeMaSlopeAngle, isNonTechWatchlistStock, passWatchlistGate } = require('./pickHelpers');
 const { EXCLUDED_CODES } = require('../constants');
 const { resolveDelegatePick } = require('./selectors/delegates');
 const { loadReportIndex, sumReportCount } = require('../utils/reportIndex');
@@ -94,6 +94,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   }
   for (const sc of bucket.stockChanges) {
     if (EXCLUDED_CODES.has(sc.code)) continue;
+    if (isNonTechWatchlistStock(sc.code)) continue; // 非科技股不参与选股（候选池=全量自选股）
     if (isOscExcluded(sc.code)) continue; // 震荡测试：勾选隐藏的股票不参与选股
     // 候选池限制（科技板块前三系列）：只保留「进攻 tag 板块当日涨幅前三 ∩ 全量自选科技股」交集内的股票
     if (restrictCodes && !restrictCodes.has(sc.code)) continue;

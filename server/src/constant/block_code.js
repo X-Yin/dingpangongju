@@ -1136,5 +1136,86 @@ exports.default = [
         "blockName": "固态电池",
         "code": "sh603200",
         "name": "上海洗霸"
+    },
+    {
+        "blockName": "煤炭",
+        "code": "sh600256",
+        "name": "广汇能源"
+    },
+    {
+        "blockName": "乳酸PLA",
+        "code": "sz300829",
+        "name": "金丹科技",
+        "tag": "防御"
+    },
+    {
+        "blockName": "乳酸PLA",
+        "code": "sh688203",
+        "name": "海正生材",
+        "tag": "防御"
+    },
+    {
+        "blockName": "端侧AI",
+        "code": "sh603236",
+        "name": "移远通信",
+        "tag": "中性"
+    },
+    {
+        "blockName": "游戏",
+        "code": "sz002624",
+        "name": "完美世界",
+        "tag": "防御"
+    },
+    {
+        "blockName": "游戏",
+        "code": "sz002555",
+        "name": "三七互娱",
+        "tag": "防御"
+    },
+    {
+        "blockName": "游戏",
+        "code": "sh603444",
+        "name": "吉比特",
+        "tag": "防御"
+    },
+    {
+        "blockName": "游戏",
+        "code": "sz002558",
+        "name": "巨人网络",
+        "tag": "防御"
+    },
+    {
+        "blockName": "游戏",
+        "code": "sz002517",
+        "name": "恺英网络",
+        "tag": "防御"
+    },
+    {
+        "blockName": "厄尔尼诺",
+        "code": "sh601118",
+        "name": "海南橡胶",
+        "tag": "防御"
+    },
+    {
+        "blockName": "厄尔尼诺",
+        "code": "sh600737",
+        "name": "中粮糖业",
+        "tag": "防御"
+    },
+    {
+        "blockName": "厄尔尼诺",
+        "code": "sh600251",
+        "name": "冠农股份",
+        "tag": "防御"
+    },
+    {
+        "blockName": "AI 应用",
+        "code": "sh605287",
+        "name": "德才股份"
+    },
+    {
+        "blockName": "AI 应用",
+        "code": "sz300182",
+        "name": "捷成股份"
     }
 ]

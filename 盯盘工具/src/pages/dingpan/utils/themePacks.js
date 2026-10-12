@@ -1091,7 +1091,7 @@ export const THEME_PACKS = [
             itemBorderColor: 'rgba(255, 255, 255, 0.15)',
             itemBorderStyle: 'solid',
             itemBorderWidth: '1px',
-            itemRadius: '999px',
+            itemRadius: '12px',
             upColor: '#A855F7', // 亮紫色（上升/强调）
             downColor: '#38BDF8', // 青蓝色（下降/辅助）
             btnBg: '#0D0B18', // 黑色纯色胶囊按钮
