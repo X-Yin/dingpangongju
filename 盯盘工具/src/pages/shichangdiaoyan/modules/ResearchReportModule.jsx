@@ -35,6 +35,9 @@ const removeMarkdownFirstLine = (content) => {
   return content;
 };
 
+// 左侧菜单分页（2026-10-12 用户要求）：首屏只加载前 10 个顶层项，点「加载更多」再取剩余全量
+const MENU_PAGE_SIZE = 10;
+
 const ResearchReportModule = () => {
   const [treeData, setTreeData] = useState([]);
   const [selectedKey, setSelectedKey] = useState(null);
@@ -51,6 +54,9 @@ const ResearchReportModule = () => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [selectedFolders, setSelectedFolders] = useState([]);
   const [showCheckboxes, setShowCheckboxes] = useState(false);
+  // 分页相关：totalCount 为顶层项总数；loadedLimit 为当前窗口，点过「加载更多」后置为 Infinity（即全量）
+  const [totalCount, setTotalCount] = useState(0);
+  const [loadedLimit, setLoadedLimit] = useState(MENU_PAGE_SIZE);
   const vditorRef = useRef(null);
   const editorInstance = useRef(null);
   const [currentContent, setCurrentContent] = useState('');
@@ -158,14 +164,41 @@ const ResearchReportModule = () => {
     };
   }, []);
 
+  // 当前分页窗口的请求参数：loadedLimit 为 Infinity（已点过「加载更多」）时不传 limit，即取全量
+  const buildPageParams = (offset = 0) => (
+    Number.isFinite(loadedLimit) ? { offset, limit: loadedLimit } : { offset }
+  );
+
+  // 按当前分页窗口拉取研报树，返回顶层项数组（各增删改后的刷新共用）
+  const loadReportsTree = async (forceFull = false) => {
+    const response = await axios.get(`http://${local_ip}:3000/get_research_reports`, {
+      params: forceFull ? { offset: 0 } : buildPageParams(0)
+    });
+    const items = Array.isArray(response.data?.items)
+      ? response.data.items
+      : (Array.isArray(response.data) ? response.data : []);
+    setTotalCount(Number.isFinite(response.data?.total) ? response.data.total : items.length);
+    return items;
+  };
+
+  // 拉取研报树；若目标项不在当前分页窗口内（新建/重命名后可能被排到窗口外），
+  // 则补齐全量并切换为全量窗口，保证目标项仍可见、可选中
+  const loadReportsTreeEnsuring = async (targetId) => {
+    let items = await loadReportsTree();
+    if (targetId && !findItemById(items, targetId)) {
+      setLoadedLimit(Infinity);
+      items = await loadReportsTree(true);
+    }
+    return items;
+  };
+
   const fetchReports = async (keepOpenKeys = true) => {
     try {
       // 如果需要保持 openKeys，先保存下来
       const savedOpenKeys = keepOpenKeys ? [...openKeys] : [];
 
       setLoading(true);
-      const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
-      setTreeData(response.data);
+      setTreeData(await loadReportsTree());
 
       // 恢复之前的展开状态
       if (keepOpenKeys && savedOpenKeys.length > 0) {
@@ -184,6 +217,29 @@ const ResearchReportModule = () => {
   useEffect(() => {
     fetchReports();
   }, []);
+
+  // 点「加载更多」：一次性取回剩余全量顶层项，并把窗口切换为全量（后续刷新不再被截断）
+  const loadMoreReports = async () => {
+    try {
+      setLoading(true);
+      setLoadedLimit(Infinity);
+      setTreeData(await loadReportsTree(true));
+    } catch (error) {
+      console.error('加载更多研报失败', error);
+      message.error('加载更多研报失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 搜索/重点/隐藏都是在前端对已加载的树做筛选：若只加载了前 10 个顶层项，命中结果可能不完整，
+  // 因此一旦启用任一过滤条件，自动补齐全量（等价于点一次「加载更多」）
+  useEffect(() => {
+    const filteringActive = !!searchKeyword.trim() || filterImportant || showHiddenFolders;
+    if (filteringActive && treeData.length < totalCount) {
+      loadMoreReports();
+    }
+  }, [searchKeyword, filterImportant, showHiddenFolders]);
 
   useEffect(() => {
     const searchKeys = getOpenKeysFromTree(treeData, searchKeyword, filterImportant, showHiddenFolders);
@@ -279,8 +335,7 @@ const ResearchReportModule = () => {
       });
       message.success(item.isImportant ? '已取消重点标记' : '已标记为重点');
 
-      const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
-      setTreeData(response.data);
+      setTreeData(await loadReportsTree());
 
       // 使用 setTimeout 确保 state 更新后再处理
       setTimeout(() => {
@@ -312,8 +367,7 @@ const ResearchReportModule = () => {
       });
       message.success(item.isPinned ? '已取消置顶' : '置顶成功');
 
-      const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
-      setTreeData(response.data);
+      setTreeData(await loadReportsTree());
 
       // 使用 setTimeout 确保 state 更新后再处理
       setTimeout(() => {
@@ -343,8 +397,7 @@ const ResearchReportModule = () => {
       });
       message.success(item.isHidden ? '已取消隐藏' : '已隐藏文件夹');
 
-      const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
-      setTreeData(response.data);
+      setTreeData(await loadReportsTree());
 
       setTimeout(() => {
         setOpenKeys(savedOpenKeys);
@@ -659,9 +712,8 @@ const ResearchReportModule = () => {
       const newItem = response.data.data;
       message.success(`已创建当日文件夹: ${folderName}`);
 
-      // 刷新数据并保持状态
-      const reportsResponse = await axios.get(`http://${local_ip}:3000/get_research_reports`);
-      const newTreeData = reportsResponse.data;
+      // 刷新数据并保持状态（若新建项不在当前分页窗口内，会补齐全量以保证能选中）
+      const newTreeData = await loadReportsTreeEnsuring(newItem.id);
       setTreeData(newTreeData);
 
       // 自动选中并滚动
@@ -721,9 +773,8 @@ const ResearchReportModule = () => {
       message.success('创建成功');
       setCreateModalVisible(false);
 
-      // 刷新数据
-      const reportsResponse = await axios.get(`http://${local_ip}:3000/get_research_reports`);
-      const newTreeData = reportsResponse.data;
+      // 刷新数据（若新建项不在当前分页窗口内，会补齐全量以保证能选中）
+      const newTreeData = await loadReportsTreeEnsuring(newItem.id);
       setTreeData(newTreeData);
 
       // 刷新后重新展开之前展开的菜单，并确保父文件夹也展开
@@ -851,8 +902,8 @@ const ResearchReportModule = () => {
       // 标记正在刷新
       isRefreshingRef.current = true;
 
-      const response = await axios.get(`http://${local_ip}:3000/get_research_reports`);
-      setTreeData(response.data);
+      const newTreeData = await loadReportsTreeEnsuring(selectedKey);
+      setTreeData(newTreeData);
 
       // 使用 setTimeout 确保 state 更新后再处理
       setTimeout(async () => {
@@ -860,7 +911,7 @@ const ResearchReportModule = () => {
         setOpenKeys(savedOpenKeys);
 
         if (selectedKey) {
-          const updatedItem = findItemById(response.data, selectedKey);
+          const updatedItem = findItemById(newTreeData, selectedKey);
           if (updatedItem?.type === 'report') {
             // 研报需要重新获取完整内容
             try {
@@ -1106,6 +1157,14 @@ const ResearchReportModule = () => {
           className="report-menu"
           style={{ maxHeight: '700px', overflowY: 'auto' }}
         />
+        {/* 首次只加载前 10 个顶层项，下方提供「加载更多」取回剩余全量 */}
+        {treeData.length < totalCount && (
+          <div className="load-more-wrapper">
+            <Button block loading={loading} onClick={loadMoreReports}>
+              加载更多
+            </Button>
+          </div>
+        )}
       </Sider>
       <Content className="report-content">
         {currentItem?.type === 'report' ? (

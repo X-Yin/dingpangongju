@@ -123,6 +123,15 @@
         }
       }
     }
+
+    .load-more-wrapper {
+      padding: 8px 16px 16px;
+
+      .ant-btn {
+        border-radius: 8px;
+        font-weight: 500;
+      }
+    }
   }
 
   .report-content {
@@ -169,12 +178,19 @@
 
     .vditor-container {
       flex: 1;
+      // 编辑区最高 740px，超出部分在容器内滚动
+      max-height: 740px;
+      overflow-y: auto;
+      overflow-x: hidden;
       border: 1px solid rgba(0, 0, 0, 0.08) !important;
       border-radius: 8px !important;
-      overflow: hidden;
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
 
       .vditor-toolbar {
+        // 内容在容器内滚动时，工具栏固定在顶部不随内容滚走
+        position: sticky;
+        top: 0;
+        z-index: 2;
         background-color: #fafafa !important;
         border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
       }

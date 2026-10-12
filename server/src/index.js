@@ -34,6 +34,7 @@ const { getRecentOperationData, updateRecentOperationItem } = require('./service
 const { getLongTermRhythmData, updateLongTermRhythmItem, getAllProjects, createProject, updateProject, deleteProject } = require('./service/longTermRhythm');
 const {
   getResearchReports,
+  getResearchReportsPage,
   getResearchReportById,
   createResearchReport,
   updateResearchReport,
@@ -1084,9 +1085,18 @@ app.post('/update_block_day_history', async (req, res) => {
 });
 
 // 获取研报列表
+// 分页（2026-10-12 新增）：传 limit/offset 时只返回该窗口内的顶层项，响应体为 { items, total, offset, hasMore }
+//（供「近期研报」左侧菜单首屏只加载前 10 个顶层项，点「加载更多」再取剩余全量）；
+// 不传参数时保持原契约直接返回全量数组（其它调用方如复制上下文 / 机构研报仍按全量使用）
 app.get('/get_research_reports', async (req, res) => {
-  const researchReports = getResearchReports();
-  res.json(researchReports);
+  const hasPager = req.query?.limit != null || req.query?.offset != null;
+  if (!hasPager) {
+    return res.json(getResearchReports());
+  }
+  const offset = Math.max(0, parseInt(req.query?.offset, 10) || 0);
+  const rawLimit = req.query?.limit == null ? NaN : parseInt(req.query?.limit, 10);
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : Number.MAX_SAFE_INTEGER; // 不传 limit = 取到末尾
+  res.json(getResearchReportsPage(offset, limit));
 });
 
 // 获取最近 N 个文件夹内的研报及内容（用于「复制上下文」）

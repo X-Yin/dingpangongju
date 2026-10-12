@@ -194,6 +194,24 @@ const getResearchReports = () => {
   return attachSearchText(getMenu());
 };
 
+// 研报列表分页（2026-10-12 新增，供「近期研报」左侧菜单首屏截断使用）：
+// 只对顶层项分页（子项随所属顶层项整体返回），排序口径与前端左侧菜单保持一致
+// （置顶优先，其次名称倒序），且只为本页返回的研报附带 searchText，避免首屏返回全量正文
+const getResearchReportsPage = (offset = 0, limit = 10) => {
+  const sorted = [...getMenu()].sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return String(b.name || '').localeCompare(String(a.name || ''));
+  });
+  const items = sorted.slice(offset, offset + limit);
+  return {
+    items: attachSearchText(items),
+    total: sorted.length,
+    offset,
+    hasMore: offset + items.length < sorted.length,
+  };
+};
+
 const getResearchReportById = (id) => {
   const menu = getMenu();
   const item = findItemById(menu, id);
@@ -326,6 +344,7 @@ const getRecentFoldersReports = (folderCount = 30) => {
 
 module.exports = {
   getResearchReports,
+  getResearchReportsPage,
   getResearchReportById,
   createResearchReport,
   updateResearchReport,
