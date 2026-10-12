@@ -430,10 +430,29 @@ const getLeaderPool = async (dateStr, lookbackDays = 10, minCount = 20, excludeB
 // ============================================================
 // 买入门槛：个股最近 N 个交易日内是否出现过「放量」（放量分歧）
 // 口径：某交易日成交量（bars.v = business_amount，单位股）≥ 前一交易日成交量 × (1 + ratioPct/100) 即视为该日放量。
-// 叠加条件：该放量日还须是「从放量之日开始往前回溯 peakLookbackDays 个交易日（含放量当日）」内量能最大的一天。
+// 叠加条件①：该放量日还须是「从放量之日开始往前回溯 peakLookbackDays 个交易日（含放量当日）」内量能最大的一天。
+// 叠加条件②（2026-10-12 用户新增）：该放量日不得是该股的**首板或二板**——当日连板数须为 0（当日未涨停，属真分歧）
+//   或 ≥ 3（已是高位龙头）；落在首板（连板数 1，启动首日）/ 二板（连板数 2）则视为启动初期、尚非龙头形态，
+//   该放量日不能作为买入门槛，继续回溯窗口内其他放量日。
 // 判定范围：严格早于 dateStr 的最近 days 个交易日（回测当日为盘中，当日成交量不完整，不计入）。
 // 依赖该股日K已进入 barsCache（getLeaderPool 已对候选池预拉取 ensureBarsForCodes）。
 // ============================================================
+const LIMIT_UP_PCT = 9.5;                       // 日涨幅 ≥ 9.5% 视为涨停板（口径同 sentimentHotMoney 首板/二板判定）
+const SURGE_EXCLUDE_BOARD_COUNTS = [1, 2];      // 放量分歧日须剔除的连板数：首板(1) / 二板(2)
+
+// 个股某交易日（bars 下标 idx）当日连板数：自当日往前连续累计涨停日数（含当日）；当日非涨停返回 0
+const boardCountAt = (bars, idx) => {
+  let cnt = 0;
+  for (let k = idx; k >= 1; k--) {
+    const prevC = bars[k - 1] && bars[k - 1].c;
+    const curC = bars[k] && bars[k].c;
+    if (!prevC || prevC <= 0 || curC == null) break;
+    if (((curC / prevC) - 1) * 100 < LIMIT_UP_PCT) break;
+    cnt++;
+  }
+  return cnt;
+};
+
 const hasRecentVolumeSurge = (code, dateStr, days = 5, ratioPct = 30, peakLookbackDays = 10) => {
   const bars = barsCache.get(code);
   if (!bars || bars.length < 2) return false;
@@ -449,14 +468,17 @@ const hasRecentVolumeSurge = (code, dateStr, days = 5, ratioPct = 30, peakLookba
     const cur = bars[i].v;
     const prev = bars[i - 1] && bars[i - 1].v;
     if (cur == null || prev == null || prev <= 0 || cur < prev * factor) continue;
-    // 额外要求：该放量日须为「从放量之日起往前回溯 peakLookbackDays 个交易日（含当日）」内的量能最大之日
+    // 额外要求①：该放量日须为「从放量之日起往前回溯 peakLookbackDays 个交易日（含当日）」内的量能最大之日
     const peakStart = Math.max(0, i - peakLookbackDays + 1);
     let peak = -Infinity;
     for (let j = peakStart; j <= i; j++) {
       const v = bars[j] && bars[j].v;
       if (v != null && v > peak) peak = v;
     }
-    if (cur >= peak) return true;
+    if (cur < peak) continue;
+    // 额外要求②：该放量日不得是该股的首板 / 二板（连板数 1、2），否则该放量日不成立、继续回溯
+    if (SURGE_EXCLUDE_BOARD_COUNTS.includes(boardCountAt(bars, i))) continue;
+    return true;
   }
   return false;
 };

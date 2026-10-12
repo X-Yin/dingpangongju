@@ -34,9 +34,10 @@ const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats')
 
 // 情绪游资-龙头战法（2026-10-11 用户新增；2026-10-11 二次改版：合并为单一「板块口径」策略）：
 //   选股 = 过去 10 个交易日内掀起涨停潮（涨停个股数 >= 20）的板块（剔除 芯片/通信/算力/其他/中报增长，候选池仅保留主板）；
-//          候选池两次过滤：① 最近 5 个交易日内须出现过一次放量（成交量较前一交易日 ≥ +200%，即 ≥ 前一日 × 3，且该放量日须为从放量之日起往前回溯 10 个交易日内的量能最大日），否则跳过；② 自板块爆发日以来涨幅须处 10%~30%；
+//          候选池两次过滤：① 最近 5 个交易日内须出现过一次放量（成交量较前一交易日 ≥ +200%，即 ≥ 前一日 × 3，且该放量日须为从放量之日起往前回溯 10 个交易日内的量能最大日，且该放量日不得是该股的首板或二板[当日连板数 ≠ 1、2]），否则跳过；② 自板块爆发日以来涨幅须处 10%~30%；
 //          再选「板块内最优个股自爆发以来涨幅最高」的板块，
 //          在该板块内买「自板块爆发日以来涨幅最大」的那只；板块内无符合个股则本次不买；
+//          买点触发门槛：买点触发时龙头（拟买那只）当日实时涨幅 < -8% 则该股剔除、不买（当日大跌、追买风险高；顺延买入同样适用，次日 9:30 大跌 < -8% 则放弃顺延）；
 //          若涨幅第 1 已涨停 → 买涨幅第 2；若第 2 也涨停 → 顺延到次日 9:30 买涨幅第 2 那只（仍涨停则继续顺延）。
 //   买点 = 上证指数 3 日线斜率**盘中由负转正**的当桶出手（择时提高胜率）；顺延买点在次日 9:30 且斜率仍为正时执行；
 //   卖点 = 持仓股跌破成本线 -5% 且连续维持 ≥5 分钟（止损，防瞬时假跌破）∪ 持仓股跌停（较昨收 <-9%）∪ 高位放量大阴线（当日最高回落 > 8% 且现价 < 开盘）
@@ -56,6 +57,7 @@ const LEADER_MIN_LIMIT_UP_COUNT = 20;   // 涨停潮门槛：板块涨停个股�
 const LEADER_EXCLUDED_BOARDS = ['芯片', '通信', '算力', '其他', '中报增长']; // 整体剔除的板块（不触发候选、成分股不计入候选池）
 const LEADER_MIN_BOARD_GAIN_PCT = 10;   // 买入门槛下限：自板块爆发日以来涨幅 < 10% 的个股剔除（无爆发动能）
 const LEADER_MAX_BOARD_GAIN_PCT = 30;   // 买入门槛上限：自板块爆发日以来涨幅 > 30% 的个股剔除（已透支）
+const LEADER_MAX_BUY_DROP_PCT = -8;     // 买点触发门槛：买点触发时龙头当日实时涨幅 < -8% 则不买（当日大跌、追买风险高）
 const LEADER_VOLUME_LOOKBACK_DAYS = 5;  // 放量分歧窗口：最近 5 个交易日内须出现过一次放量
 const LEADER_VOLUME_SURGE_PCT = 200;    // 放量门槛：某日成交量较前一交易日增加 ≥ 200%（即 ≥ 前一日 × 3）即视为放量
 const LEADER_VOLUME_PEAK_DAYS = 10;     // 放量须为峰值：从放量之日起往前回溯 10 个交易日（含放量当日）内量能最大的一天
@@ -223,7 +225,7 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
     let hotBoardsText = '无';
     try {
       const poolInfo = await getLeaderPool(dateStr, LEADER_LOOKBACK_DAYS, LEADER_MIN_LIMIT_UP_COUNT, LEADER_EXCLUDED_BOARDS);
-      // eligible = 非黑名单 + 有基准价 + 仅主板 + 最近 5 个交易日出现过一次放量（成交量较前一交易日 ≥ +200%，且该放量日须为从放量之日起往前回溯 10 个交易日内的量能最大日），否则跳过
+      // eligible = 非黑名单 + 有基准价 + 仅主板 + 最近 5 个交易日出现过一次放量（成交量较前一交易日 ≥ +200%，且该放量日须为从放量之日起往前回溯 10 个交易日内的量能最大日，且该放量日不得是该股的首板或二板），否则跳过
       const eligible = (p) => !EXCLUDED_CODES.has(p.code) && p.base > 0 && !isStarOrChiNext(p.code)
         && hasRecentVolumeSurge(p.code, dateStr, LEADER_VOLUME_LOOKBACK_DAYS, LEADER_VOLUME_SURGE_PCT, LEADER_VOLUME_PEAK_DAYS);
       boardList = (poolInfo.boards || [])
@@ -409,7 +411,9 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
             const chg = t.preclose && t.preclose > 0
               ? parseFloat((((atPt.lastPx - t.preclose) / t.preclose) * 100).toFixed(2))
               : (atPt.change != null ? atPt.change : null);
-            if (!isLimitUpAtBucket(chg)) {
+            if (chg != null && chg < LEADER_MAX_BUY_DROP_PCT) {
+              pendingBuy = null; // 龙头当日大跌 < -8% → 放弃本次顺延买入
+            } else if (!isLimitUpAtBucket(chg)) {
               const pick = { ...pendingBuy, px: atPt.lastPx, changePct: chg, gain: parseFloat(((atPt.lastPx / pendingBuy.base - 1) * 100).toFixed(4)) };
               position = buildPosition({
                 pick, dateStr, dateDisplay, timeText, slopeNow, hotBoardsText, poolTotal, deferred: true,
@@ -444,6 +448,8 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
             const gain = parseFloat(((atPt.lastPx / s.base - 1) * 100).toFixed(4));
             // 买入门槛：自板块爆发日以来涨幅须处 [10%, 30%] 区间，区间外个股整体剔除（先过滤候选池，再选板块）
             if (gain < LEADER_MIN_BOARD_GAIN_PCT || gain > LEADER_MAX_BOARD_GAIN_PCT) continue;
+            // 买点触发门槛：买点触发时当日实时涨幅 < -8% 的候选整体剔除（龙头当日大跌则不买）
+            if (changePct != null && changePct < LEADER_MAX_BUY_DROP_PCT) continue;
             rows.push({
               code: s.code, name: s.name, board: b.board, base: s.base, baseDate: s.baseDate,
               px: atPt.lastPx, changePct, gain,
@@ -612,14 +618,14 @@ const buildPosition = ({ pick, dateStr, dateDisplay, timeText, slopeNow, hotBoar
       title: `选自爆发以来涨幅最高的涨停潮板块`,
       passed: true,
       value: `${pick.board}（名册 ${roster} 只）`,
-      reason: `回溯窗口内掀起涨停潮的板块：${hotBoardsText}（已剔除 ${LEADER_EXCLUDED_BOARDS.join('、')}，候选池仅主板；各成分股须在最近 ${LEADER_VOLUME_LOOKBACK_DAYS} 个交易日内出现过一次放量[成交量较前一交易日 ≥ +${LEADER_VOLUME_SURGE_PCT}%，且该放量日须为从放量之日起往前回溯 ${LEADER_VOLUME_PEAK_DAYS} 个交易日内的量能最大日]，否则跳过）；候选池再按买入门槛过滤——仅保留「自板块爆发日以来涨幅」处 ${LEADER_MIN_BOARD_GAIN_PCT}%~${LEADER_MAX_BOARD_GAIN_PCT}% 的个股，其余整体剔除；过滤后共 ${boardCount} 个板块，取「板块内最优个股自爆发以来涨幅最高」的板块`,
+      reason: `回溯窗口内掀起涨停潮的板块：${hotBoardsText}（已剔除 ${LEADER_EXCLUDED_BOARDS.join('、')}，候选池仅主板；各成分股须在最近 ${LEADER_VOLUME_LOOKBACK_DAYS} 个交易日内出现过一次放量[成交量较前一交易日 ≥ +${LEADER_VOLUME_SURGE_PCT}%，且该放量日须为从放量之日起往前回溯 ${LEADER_VOLUME_PEAK_DAYS} 个交易日内的量能最大日]，否则跳过）；候选池再按买入门槛过滤——仅保留「自板块爆发日以来涨幅」处 ${LEADER_MIN_BOARD_GAIN_PCT}%~${LEADER_MAX_BOARD_GAIN_PCT}% 的个股，其余整体剔除；买点触发时当日实时涨幅 < ${LEADER_MAX_BUY_DROP_PCT}%（当日大跌）的个股亦整体剔除；过滤后共 ${boardCount} 个板块，取「板块内最优个股自爆发以来涨幅最高」的板块`,
     },
     {
       id: 'leader_best_stock',
       title: `板块内自爆发以来涨幅最大的龙头`,
       passed: true,
       value: `${pick.name}（${pick.code}）${gainText}`,
-      reason: `该股自板块爆发日 ${pick.baseDate} 收盘 ${pick.base.toFixed(2)} 起算，至触发时点价 ${pick.px.toFixed(2)}，涨幅 ${gainText}（已通过 ${LEADER_MIN_BOARD_GAIN_PCT}%~${LEADER_MAX_BOARD_GAIN_PCT}% 买入门槛；板块名册共 ${roster} 只，全仓候选合计 ${poolTotal} 只）；涨幅第 1 已涨停则买第 2，前两名均涨停则顺延次日 9:30${rank === 2 ? '；本次买入为涨幅第 2（第 1 已封涨停）' : ''}`,
+      reason: `该股自板块爆发日 ${pick.baseDate} 收盘 ${pick.base.toFixed(2)} 起算，至触发时点价 ${pick.px.toFixed(2)}，涨幅 ${gainText}（已通过 ${LEADER_MIN_BOARD_GAIN_PCT}%~${LEADER_MAX_BOARD_GAIN_PCT}% 买入门槛，且触发时点当日实时涨幅 ${pick.changePct != null ? `${pick.changePct > 0 ? '+' : ''}${pick.changePct}%` : '--'} ≥ ${LEADER_MAX_BUY_DROP_PCT}%；板块名册共 ${roster} 只，全仓候选合计 ${poolTotal} 只）；涨幅第 1 已涨停则买第 2，前两名均涨停则顺延次日 9:30${rank === 2 ? '；本次买入为涨幅第 2（第 1 已封涨停）' : ''}`,
     },
   ];
   if (deferred) {
@@ -628,7 +634,7 @@ const buildPosition = ({ pick, dateStr, dateDisplay, timeText, slopeNow, hotBoar
       title: '顺延买入（前两名均涨停 → 次日 9:30）',
       passed: true,
       value: `${dateDisplay} ${t}`,
-      reason: '上一交易日该板块涨幅前两名均已封涨停无法成交，按规则顺延到次日 9:30 开盘买入当时选定的那只',
+      reason: `上一交易日该板块涨幅前两名均已封涨停无法成交，按规则顺延到次日 9:30 开盘买入当时选定的那只（要求 9:30 实时涨幅 ≥ ${LEADER_MAX_BUY_DROP_PCT}%，当日大跌 < ${LEADER_MAX_BUY_DROP_PCT}% 则放弃本次顺延）`,
     });
   }
   return {
