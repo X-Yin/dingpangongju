@@ -140,7 +140,8 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
   if (!strategy || strategy.leaderMode !== true) {
     return { success: false, message: `未知龙头战法策略: ${strategyId}` };
   }
-  const combo = strategy.leaderTechCombo === true; // 情绪龙头+科技进攻：叠加②快进快出买点/卖点
+  const combo = strategy.leaderTechCombo === true; // 情绪龙头+科技进攻 / 科技进攻+情绪龙头：叠加②快进快出买点/卖点
+  const techFirst = strategy.techFirst === true;   // 科技进攻+情绪龙头：反优先级（同一桶②优先、持仓①龙头时②触发立即切换卖出）
   // 不依赖资金快照：日期序列并入 tech_index 覆盖的交易日（补上缺资金快照的日期）
   const allDates = Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]));
   const rangeDates = allDates.filter(d => d >= startDate && d <= endDate).sort();
@@ -155,9 +156,11 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
   const skippedDates = [];
   const seenStocks = new Map(); // code -> { code, name }
   const dailyInfos = new Map(); // date -> Map<code, {changePct, closePx, resilience}>
-  // 预热起始日前 5 个交易日 EOD，保证起点附近期末估值与窗口一致
-  // （组合②路复用「3日涨幅最大」选股，窗口用 di + axisOffset 在 dateAxis 上切片，需要 axisOffset）
-  const { dateAxis, axisOffset } = await buildWindowAxis(allDates, rangeDates, startDate, 5, dailyInfos);
+  // 预热起始日前 10 个交易日 EOD，保证起点附近期末估值与窗口一致
+  // （组合②路复用「3日涨幅最大」选股，窗口用 di + axisOffset 在 dateAxis 上切片，需要 axisOffset；
+  //  同时复用「指数由负转正当日个股 MA3 正斜率连续天数 > 4 顺延」过滤——该过滤最多回溯 10 个收盘日，
+  //  预热不足 10 天会因数据不足而静默放行，导致②路选股与独立「3日涨幅最大」策略不一致，故取 10 与 rangeBacktest 对齐）
+  const { dateAxis, axisOffset } = await buildWindowAxis(allDates, rangeDates, startDate, 10, dailyInfos);
 
   // 组合②路（快进快出）：跨指数双门禁预计算（创业板指 sz399006 + 科创50 sh000688）与运行态；
   // 组合策略 id 未落在 CYB_GATE_EXCLUDE_PREFIX 内，天然属于双门禁适用集合，此处显式预计算
@@ -303,6 +306,45 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
       // 买点通道：上证 3 日线斜率「盘中由负转正」的当桶（择时提高胜率）
       const turnedPos = slopePositive && (lastSlopeSign == null || lastSlopeSign <= 0);
 
+      // 组合②路买入逻辑（函数化，便于按优先级分别在①前/①后调用）：按「3日涨幅最大&三日情绪-60快进快出」
+      // 买点出手，命中则返回新持仓对象（branch='emoquick'）并登记 seenStocks，未命中返回 null。
+      const tryEmoQuickBuy = async () => {
+        const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData)?.data;
+        if (buyDiag?.allPassed !== true) return null;
+        const buyInfo = buildBuyReasonFromDiag(buyDiag);
+        // 跨指数双门禁（创业板指 + 科创50）：②路沿用「3日涨幅最大」系列的门禁口径
+        const { gatedBuyInfo, gatePassed, gateAllowedMarkets, gateTurnedPosInfo } = await withDualGateInfo(
+          buyInfo, LEADER_TECH_EMOQUICK_ID, dateStr, bucketMinute,
+          { cybPrecomputed: cybGatePrecomputed, starPrecomputed: starGatePrecomputed, cybRuntime: cybGateRuntimeState, starRuntime: starGateRuntimeState },
+        );
+        if (!gatePassed) return null;
+        // 上一交易日一字板过滤 + 顺/逆周期过滤（②路属「N日涨幅最大系列」适用策略）
+        const prevOneWordSet = await buildPrevOneWordBoardSet((bucket.stockChanges || []).map(s => s.code), dateStr);
+        const emoCycSet = await buildCounterCycSet((bucket.stockChanges || []).map(s => s.code), dateStr);
+        const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, LEADER_TECH_EMOQUICK_ID, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet);
+        if (!picked) return null;
+        // picked.emoQuickOut 已由委派层（delegates.js）按快进快出条件附着，须在 withResilienceGateInfo 之前读取
+        const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
+        const sc = picked.stock;
+        const pos = {
+          code: sc.code,
+          stockName: sc.name || sc.code,
+          branch: 'emoquick',
+          buyDate: dateStr,
+          buyDateDisplay: dateDisplay,
+          buyTime: timeText, // 归一化 HH:MM（与桶时间一致）
+          buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
+          buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
+          metric: picked.metric,
+          buyReason: finalBuyInfo.buyReason,
+          buyChecks: annotateIndexGateChecksWithStock(finalBuyInfo.buyChecks, sc.code, sc.name),
+          emoQuickOut: picked.emoQuickOut || null, // 快进快出标注：quickOut=true → 次日 10:00 强卖；否则走通用 7 条件
+          buyDi: di,
+        };
+        if (!seenStocks.has(pos.code)) seenStocks.set(pos.code, { code: pos.code, name: pos.stockName });
+        return pos;
+      };
+
       // ===== ①情绪游资路卖出（仅隔夜持仓；组合策略下仅对 branch==='leader' 生效）=====
       if (position && (!combo || position.branch === 'leader') && dateStr > position.buyDate && posTline && posTline.points.length > 0) {
         const atPt = priceAtMinute(posTline.points, bucketMinute);
@@ -400,6 +442,61 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
         }
       }
 
+      // ===== 反优先级（科技进攻 + 情绪龙头，techFirst）：②路优先，排在①买入块之前 =====
+      //   ①持仓情绪龙头（隔夜）时，②买点触发 → 立刻按当桶分时价卖出龙头、改买②选中的股票（强制切换）；
+      //   ②空仓时，②买点触发 → 直接买入②（与①同一桶同时触发时先买②）；
+      //   处理完 position 即被占用，①顺延/买入块因 !position 天然不再出手。
+      //   当日②路已强卖/止损（quickOutSoldDate === dateStr）时不再切换、不再买入。
+      if (combo && techFirst && quickOutSoldDate !== dateStr) {
+        if (position && position.branch === 'leader' && dateStr > position.buyDate && posTline && posTline.points.length > 0) {
+          const atPt = priceAtMinute(posTline.points, bucketMinute);
+          if (atPt && atPt.lastPx > 0) {
+            const emoPick = await tryEmoQuickBuy();
+            if (emoPick) {
+              const px = atPt.lastPx;
+              const preclose = posTline.preclose;
+              const changePct = preclose && preclose > 0
+                ? parseFloat((((px - preclose) / preclose) * 100).toFixed(2))
+                : (atPt.change != null ? atPt.change : null);
+              const rawReturnRate = position.buyPrice > 0
+                ? parseFloat((((px - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
+                : null;
+              trades.push({
+                seq: trades.length + 1,
+                metric: position.metric,
+                code: position.code,
+                stockName: position.stockName,
+                board: position.board,
+                base: position.base,
+                baseDate: position.baseDate,
+                positionMode: 'offense',
+                weight: 1,
+                buyDate: position.buyDate,
+                buyDateDisplay: position.buyDateDisplay,
+                buyTime: position.buyTime,
+                buyPrice: position.buyPrice,
+                buyChange: position.buyChange,
+                buyReason: position.buyReason,
+                buyChecks: position.buyChecks,
+                sellDate: dateStr,
+                sellDateDisplay: dateDisplay,
+                sellTime: fmtMinute(atPt.minute),
+                sellPrice: parseFloat(px.toFixed(2)),
+                sellChange: changePct,
+                sellReason: `科技进攻（②快进快出）买点盘中触发，立即切换卖出情绪游资-龙头持仓（全仓），改买科技进攻选中个股 ${emoPick.stockName}`,
+                returnRate: rawReturnRate,
+                rawReturnRate,
+              });
+              position = emoPick;
+              lastSellDate = dateStr; // 切换卖出龙头当日仅①情绪游资路不再追买（②刚买入不受影响）
+            }
+          }
+        } else if (!position && !pendingBuy) {
+          const emoPick = await tryEmoQuickBuy();
+          if (emoPick) position = emoPick;
+        }
+      }
+
       // ===== 顺延买点：前一交易日涨幅前两名均涨停 → 次日首个桶（9:30）买入（要求斜率仍为正）=====
       if (!position && pendingBuy && bi === 0 && dateStr !== lastSellDate) {
         if (!slopePositive) {
@@ -486,44 +583,11 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
       }
 
       // ===== 组合②路买入（快进快出）：①情绪游资路未成交的空仓桶，按「3日涨幅最大&三日情绪-60快进快出」
-      //       买点出手（与①同一桶同时触发时优先①，故本块排在①买入块之后；非同时触发则谁先触发买谁）=====
-      if (combo && !position && !pendingBuy && quickOutSoldDate !== dateStr) {
-        const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData)?.data;
-        if (buyDiag?.allPassed === true) {
-          const buyInfo = buildBuyReasonFromDiag(buyDiag);
-          // 跨指数双门禁（创业板指 + 科创50）：②路沿用「3日涨幅最大」系列的门禁口径
-          const { gatedBuyInfo, gatePassed, gateAllowedMarkets, gateTurnedPosInfo } = await withDualGateInfo(
-            buyInfo, LEADER_TECH_EMOQUICK_ID, dateStr, bucketMinute,
-            { cybPrecomputed: cybGatePrecomputed, starPrecomputed: starGatePrecomputed, cybRuntime: cybGateRuntimeState, starRuntime: starGateRuntimeState },
-          );
-          if (gatePassed) {
-            // 上一交易日一字板过滤 + 顺/逆周期过滤（②路属「N日涨幅最大系列」适用策略）
-            const prevOneWordSet = await buildPrevOneWordBoardSet((bucket.stockChanges || []).map(s => s.code), dateStr);
-            const emoCycSet = await buildCounterCycSet((bucket.stockChanges || []).map(s => s.code), dateStr);
-            const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, LEADER_TECH_EMOQUICK_ID, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet);
-            if (picked) {
-              // picked.emoQuickOut 已由委派层（delegates.js）按快进快出条件附着，须在 withResilienceGateInfo 之前读取
-              const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
-              const sc = picked.stock;
-              position = {
-                code: sc.code,
-                stockName: sc.name || sc.code,
-                branch: 'emoquick',
-                buyDate: dateStr,
-                buyDateDisplay: dateDisplay,
-                buyTime: timeText, // 归一化 HH:MM（与桶时间一致）
-                buyPrice: parseFloat(Number(sc.lastPx).toFixed(2)),
-                buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
-                metric: picked.metric,
-                buyReason: finalBuyInfo.buyReason,
-                buyChecks: annotateIndexGateChecksWithStock(finalBuyInfo.buyChecks, sc.code, sc.name),
-                emoQuickOut: picked.emoQuickOut || null, // 快进快出标注：quickOut=true → 次日 10:00 强卖；否则走通用 7 条件
-                buyDi: di,
-              };
-              if (!seenStocks.has(position.code)) seenStocks.set(position.code, { code: position.code, name: position.stockName });
-            }
-          }
-        }
+      //       买点出手（原优先级策略：与①同一桶同时触发时优先①，故本块排在①买入块之后；
+      //       反优先级策略 techFirst 已在①块之前处理，本块跳过）=====
+      if (combo && !techFirst && !position && !pendingBuy && quickOutSoldDate !== dateStr) {
+        const emoPick = await tryEmoQuickBuy();
+        if (emoPick) position = emoPick;
       }
 
       // ===== 组合②路卖出（通用 7 条件；快进快出持仓已由桶前 hook 接管，此处由 hook 内部自动跳过）=====
@@ -541,10 +605,11 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
     }
   }
 
-  // 组装结果（type:'single'：整体收益率 = 已卖出收益 + 期末持仓按最近收盘价估算的浮动收益）
-  let overallReturn = 0;
+  // 组装结果（type:'single'：全仓单持仓，整体收益率 = 逐笔复利，与 rangeBacktest/sentimentHotMoney 口径一致；
+  // 期末持仓按最近收盘价估算的浮动收益并入复利）
+  let acc = 1;
   for (const t of trades) {
-    if (t.returnRate != null && Number.isFinite(t.returnRate)) overallReturn += t.returnRate;
+    if (t.returnRate != null && Number.isFinite(t.returnRate)) acc *= 1 + t.returnRate / 100;
   }
   let holding = null;
   if (position) {
@@ -567,9 +632,9 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
     }
     holding.rawBuyReturn = rawBuyReturn;
     holding.buyReturn = rawBuyReturn;
-    if (rawBuyReturn != null && Number.isFinite(rawBuyReturn)) overallReturn += rawBuyReturn;
+    if (rawBuyReturn != null && Number.isFinite(rawBuyReturn)) acc *= 1 + rawBuyReturn / 100;
   }
-  overallReturn = parseFloat(overallReturn.toFixed(2));
+  const overallReturn = parseFloat(((acc - 1) * 100).toFixed(2));
   const validTrades = trades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
   const winCount = validTrades.filter(t => t.returnRate > 0).length;
   await attachBuyDayReturn(trades);

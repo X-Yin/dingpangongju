@@ -1210,5 +1210,25 @@ exports.default = [
         "blockName": "消费",
         "code": "sh600882",
         "name": "妙可蓝多"
+    },
+    {
+        "blockName": "玻璃基板",
+        "code": "sz301297",
+        "name": "富乐德"
+    },
+    {
+        "blockName": "AI 应用",
+        "code": "sh601595",
+        "name": "上海电影"
+    },
+    {
+        "blockName": "AI 应用",
+        "code": "sh603058",
+        "name": "永吉股份"
+    },
+    {
+        "blockName": "厄尔尼诺",
+        "code": "sz002597",
+        "name": "金禾实业"
     }
 ]

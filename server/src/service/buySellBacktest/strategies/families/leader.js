@@ -1,4 +1,4 @@
-const { LEADER_DESC, LEADER_TECH_DESC } = require('../descs');
+const { LEADER_DESC, LEADER_TECH_DESC, LEADER_TECH_REV_DESC } = require('../descs');
 
 // 情绪游资-龙头战法（2026-10-11 用户新增，2026-10-11 二次改版合并为单一「板块口径」策略；
 // leaderMode: true → 独立引擎 runLeaderBacktest，不复用重点板块引擎）：
@@ -26,5 +26,16 @@ module.exports = {
     desc: LEADER_TECH_DESC,
     leaderMode: true,
     leaderTechCombo: true,
+  },
+  // 科技进攻 + 情绪龙头（2026-10-12 用户新增）：与「情绪龙头+科技进攻」完全对称，仅优先级反转。
+  // techFirst: true → 同一桶两套买点同时触发先买科技进攻（②快进快出）；非同时触发谁先触发买谁；
+  //   当前持仓为①情绪游资龙头（隔夜）时，②科技进攻买点盘中触发 → 立即卖出龙头、改买②选中的股票。
+  tech_emoquick_hot_money_leader: {
+    id: 'tech_emoquick_hot_money_leader',
+    name: '科技进攻 + 情绪龙头',
+    desc: LEADER_TECH_REV_DESC,
+    leaderMode: true,
+    leaderTechCombo: true,
+    techFirst: true,
   },
 };

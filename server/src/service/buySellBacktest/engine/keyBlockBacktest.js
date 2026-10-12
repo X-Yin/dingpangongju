@@ -779,10 +779,11 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     }
   }
 
-  // 组装结果（type:'single'：整体收益率 = 已卖出收益 + 期末持仓按最近收盘价估算的浮动收益）
-  let overallReturn = 0;
+  // 组装结果（type:'single'：单股顺序持仓，整体收益率 = 逐笔复利，与 rangeBacktest/sentimentHotMoney 口径一致；
+  // 半仓（防御/冰点）成交的 returnRate 已按权重折算，复利即为账户口径；期末持仓浮动收益并入复利）
+  let acc = 1;
   for (const t of trades) {
-    if (t.returnRate != null && Number.isFinite(t.returnRate)) overallReturn += t.returnRate;
+    if (t.returnRate != null && Number.isFinite(t.returnRate)) acc *= 1 + t.returnRate / 100;
   }
   let holding = null;
   if (position) {
@@ -809,10 +810,10 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     holding.rawBuyReturn = rawBuyReturn;
     holding.buyReturn = rawBuyReturn != null ? parseFloat((rawBuyReturn * holding.weight).toFixed(2)) : null;
     if (holding.buyReturn != null && Number.isFinite(holding.buyReturn)) {
-      overallReturn += holding.buyReturn;
+      acc *= 1 + holding.buyReturn / 100;
     }
   }
-  overallReturn = parseFloat(overallReturn.toFixed(2));
+  const overallReturn = parseFloat(((acc - 1) * 100).toFixed(2));
   const validTrades = trades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
   const winCount = validTrades.filter(t => t.returnRate > 0).length;
   // 买入当日收益（2026-10-10 用户新增）：为每笔成交与期末持仓补写「买入价 → 买入当日收盘价」收益率
