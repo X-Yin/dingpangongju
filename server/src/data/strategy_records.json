@@ -1,55 +1,5 @@
 [
   {
-    "id": "1df472fbb1342961",
-    "time": "2026-10-12 09:30:38",
-    "read": true,
-    "strategyId": "prev_day_tail_rally",
-    "title": "⚠️ 前一日尾盘拉升，今日低开大概率下跌",
-    "description": "前一日（20261009）创业板指：14:00后最低3008.23→收盘3043.33，拉升1.17%；科创50：14:00后最低1438.67→收盘1457.27，拉升1.29%。今日竞价低开-0.65%（开盘价3023.51 < 前日收盘3043.33），当日大概率低开低走大阴线，情况不对要赶快清仓！",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
-    "id": "78a065c111bbc85d",
-    "time": "2026-10-12 09:35:38",
-    "read": true,
-    "strategyId": "opening_net_inflow",
-    "title": "✅ 开盘资金未明显流出-市场或有回暖",
-    "description": "开盘 5min 资金净流入 <strong>+6.8亿</strong>，按照历史规律，当天大概率大盘会回暖，可以适当出手。",
-    "severity": "medium",
-    "isBullish": true
-  },
-  {
-    "id": "bf325a32663be1fa",
-    "time": "2026-10-12 09:48:43",
-    "read": true,
-    "strategyId": "overnight_crisis_escape",
-    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
-    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-18.7亿</strong>（净流出）<br/>• 科技分时情绪 -62.0 → -57.7（上升 4.2）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
-    "id": "7d5de293531e64ca",
-    "time": "2026-10-12 09:52:44",
-    "read": true,
-    "strategyId": "panic_outflow",
-    "title": "🚨 恐慌盘出逃",
-    "description": "成交量较约15分钟前放大 <strong>128亿</strong>（≥100亿），主力资金净流出加速（10.1→-19.4亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
-    "id": "404a9fb5cbf6ca15",
-    "time": "2026-10-12 10:30:00",
-    "read": true,
-    "strategyId": "inflow_rise_volume_shrink",
-    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
-    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-117.3→-90.2亿（增加27.1亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.14%<br/>• 成交量差值-507亿（<-500亿严重缩量），较10分钟前仅增加-63亿（≤50亿）",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
     "id": "bfa45acfa4a4f81e",
     "time": "2026-10-12 15:00:20",
     "read": true,

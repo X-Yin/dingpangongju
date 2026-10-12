@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { Card, Typography, Spin, Alert, Row, Col, Divider, Button, message, Tag, Tabs, DatePicker, Table, Collapse, Radio, Modal } from 'antd';
-import { CoffeeOutlined, LineChartOutlined, AreaChartOutlined, ReloadOutlined, AppstoreOutlined, CloseOutlined, BarChartOutlined } from '@ant-design/icons';
+import { Card, Typography, Spin, Alert, Row, Col, Divider, Button, message, Tag, Tabs, DatePicker, Table, Collapse, Radio, Modal, Space } from 'antd';
+import { CoffeeOutlined, LineChartOutlined, AreaChartOutlined, ReloadOutlined, AppstoreOutlined, CloseOutlined, BarChartOutlined, DownloadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { createChart, ColorType } from 'lightweight-charts';
@@ -225,6 +225,28 @@ const Sentiment = () => {
   const [hoveredStrengthGap, setHoveredStrengthGap] = useState(0);
   const [isFixed, setIsFixed] = useState(false);
 
+  // ============ 连板情绪 ============
+  const [lianbanSeries, setLianbanSeries] = useState([]);
+  const [lianbanHoverDate, setLianbanHoverDate] = useState(null);
+  const [lianbanWindowDays, setLianbanWindowDays] = useState([]);
+  const [lianbanWindowLoading, setLianbanWindowLoading] = useState(false);
+  // 连板情绪趋势图的时间范围（YYYYMMDD 字符串），以及下载状态
+  const [lianbanRange, setLianbanRange] = useState(null);
+  const [lianbanDownloading, setLianbanDownloading] = useState(false);
+  const lianbanDayCacheRef = useRef({});
+  // 上证指数 K 线图
+  const shIndexContainerRef = useRef(null);
+  const shIndexChartRef = useRef(null);
+  const shIndexSeriesRef = useRef(null);
+  const shIndexTooltipRef = useRef(null);
+  const shIndexDataMapRef = useRef({});
+  // 连板情绪折线图
+  const lianbanWrapContainerRef = useRef(null);
+  const lianbanChartRef = useRef(null);
+  const lianbanLineSeriesRef = useRef(null);
+  const lianbanTooltipRef = useRef(null);
+  const lianbanDataMapRef = useRef({});
+
   // 首屏优先加载情绪数据，板块分类分析延后加载
   const fetchData = async () => {
     try {
@@ -338,11 +360,84 @@ const Sentiment = () => {
     setKlineModalVisible(true);
   };
 
+  // 拉取连板情绪序列（全部连板快照的每日情绪摘要）
+  const fetchLianbanSeries = async () => {
+    try {
+      const res = await axios.get(`http://${local_ip}:3000/lianban_sentiment_series`);
+      setLianbanSeries(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error('Fetch lianban sentiment series failed:', err);
+    }
+  };
+
   useEffect(() => {
     fetchData();
     fetchRiskScore();
     fetchEmotionCycle();
+    fetchLianbanSeries();
   }, []);
+
+  // 序列就绪后，默认选中全部时间范围
+  useEffect(() => {
+    if (!lianbanRange && lianbanSeries.length) {
+      setLianbanRange([lianbanSeries[0].date, lianbanSeries[lianbanSeries.length - 1].date]);
+    }
+  }, [lianbanSeries, lianbanRange]);
+
+  // 按时间范围过滤后的连板情绪序列（供趋势图渲染）
+  const lianbanSeriesInRange = useMemo(() => {
+    if (!lianbanRange) return lianbanSeries;
+    const [start, end] = lianbanRange;
+    return lianbanSeries.filter((d) => d.date >= start && d.date <= end);
+  }, [lianbanSeries, lianbanRange]);
+
+  // 下载该时间范围内全部连板题材数据（单日完整快照）为 JSON 文件
+  const handleDownloadLianban = async () => {
+    if (!lianbanRange) return;
+    const [start, end] = lianbanRange;
+    const dates = lianbanSeries.map((d) => d.date).filter((d) => d >= start && d <= end);
+    if (!dates.length) {
+      message.warning('该时间范围内暂无连板题材数据');
+      return;
+    }
+    setLianbanDownloading(true);
+    try {
+      const days = await Promise.all(dates.map(async (d) => {
+        if (lianbanDayCacheRef.current[d]) return lianbanDayCacheRef.current[d];
+        try {
+          const res = await axios.get(`http://${local_ip}:3000/lianban_day`, { params: { date: d } });
+          lianbanDayCacheRef.current[d] = res.data;
+          return res.data;
+        } catch (e) {
+          console.error(`Fetch lianban day ${d} failed:`, e);
+          return null;
+        }
+      }));
+      const validDays = days.filter(Boolean);
+      const payload = {
+        start,
+        end,
+        count: validDays.length,
+        generatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        days: validDays,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lianban_${start}_${end}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      message.success(`已下载 ${validDays.length} 个交易日的连板题材数据`);
+    } catch (e) {
+      console.error('下载连板题材数据失败:', e);
+      message.error('下载失败，请稍后重试');
+    } finally {
+      setLianbanDownloading(false);
+    }
+  };
 
     useEffect(() => {
       window.scrollTo(0, 0);
@@ -368,6 +463,59 @@ const Sentiment = () => {
     }
   }, [loading, data, techIndexData, sumDateRange, riskScoreData]);
 
+  // 连板情绪 tab：渲染上证指数K线 + 连板情绪折线（数据就绪且 tab 激活时渲染）
+  useEffect(() => {
+    if (activeTab !== 'lianban') return;
+    if (indexKlineData?.shangzhengData?.length && shIndexContainerRef.current) {
+      renderShIndexChart(indexKlineData.shangzhengData);
+    }
+    if (lianbanSeriesInRange.length && lianbanWrapContainerRef.current) {
+      renderLianbanChart(lianbanSeriesInRange);
+    }
+    return () => {
+      if (shIndexChartRef.current) {
+        shIndexChartRef.current.remove();
+        shIndexChartRef.current = null;
+      }
+      if (lianbanChartRef.current) {
+        lianbanChartRef.current.remove();
+        lianbanChartRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, indexKlineData, lianbanSeriesInRange]);
+
+  // 连板情绪 tab：hover 某日期时，按需拉取该日期及前四个交易日（带缓存）的完整题材数据
+  useEffect(() => {
+    if (activeTab !== 'lianban' || !lianbanHoverDate) return;
+    const dates = lianbanSeries.map((d) => d.date);
+    const idx = dates.indexOf(String(lianbanHoverDate).replace(/-/g, ''));
+    if (idx === -1) {
+      setLianbanWindowDays([]);
+      return;
+    }
+    const windowDates = dates.slice(Math.max(0, idx - 4), idx + 1);
+    let cancelled = false;
+    setLianbanWindowLoading(true);
+    Promise.all(windowDates.map(async (d) => {
+      if (lianbanDayCacheRef.current[d]) return lianbanDayCacheRef.current[d];
+      try {
+        const res = await axios.get(`http://${local_ip}:3000/lianban_day`, { params: { date: d } });
+        lianbanDayCacheRef.current[d] = res.data;
+        return res.data;
+      } catch (e) {
+        console.error(`Fetch lianban day ${d} failed:`, e);
+        return null;
+      }
+    })).then((days) => {
+      if (cancelled) return;
+      // 当天在前，过去四天依次在后
+      setLianbanWindowDays(days.filter(Boolean).reverse());
+      setLianbanWindowLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [activeTab, lianbanHoverDate, lianbanSeries]);
+
   // 处理窗口缩放
   useEffect(() => {
     const handleResize = () => {
@@ -382,6 +530,12 @@ const Sentiment = () => {
       }
       if (riskScoreChartRef.current && riskScoreContainerRef.current) {
         riskScoreChartRef.current.applyOptions({ width: riskScoreContainerRef.current.clientWidth });
+      }
+      if (shIndexChartRef.current && shIndexContainerRef.current) {
+        shIndexChartRef.current.applyOptions({ width: shIndexContainerRef.current.clientWidth });
+      }
+      if (lianbanChartRef.current && lianbanWrapContainerRef.current) {
+        lianbanChartRef.current.applyOptions({ width: lianbanWrapContainerRef.current.clientWidth });
       }
     };
 
@@ -812,11 +966,233 @@ const Sentiment = () => {
     });
   };
 
+  // ============ 连板情绪图表（上证指数K线 + 连板情绪折线，双图联动 tooltip） ============
+
+  // 复用/新建 tooltip 容器，避免多次渲染产生重复节点
+  const ensureTooltip = (container, tooltipRef) => {
+    container.querySelectorAll('.chart-tooltip').forEach((el) => el.remove());
+    const el = document.createElement('div');
+    el.className = 'chart-tooltip';
+    container.appendChild(el);
+    tooltipRef.current = el;
+    return el;
+  };
+
+  // 将 tooltip 定位到数据点坐标附近，并做边界收敛
+  const placeTooltip = (container, tooltip, x, y) => {
+    if (!container || !tooltip || x === null || x === undefined) return;
+    tooltip.style.display = 'block';
+    const w = tooltip.offsetWidth || 170;
+    const h = tooltip.offsetHeight || 110;
+    let left = x + 14;
+    if (left + w > container.clientWidth - 8) left = x - w - 14;
+    if (left < 8) left = 8;
+    let top = (y === null || y === undefined ? 20 : y) + 14;
+    if (top + h > container.clientHeight - 8) {
+      top = (y === null || y === undefined ? 20 : y) - h - 14;
+    }
+    if (top < 8) top = 8;
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+  };
+
+  const hideLianbanTooltips = () => {
+    if (shIndexTooltipRef.current) shIndexTooltipRef.current.style.display = 'none';
+    if (lianbanTooltipRef.current) lianbanTooltipRef.current.style.display = 'none';
+  };
+
+  const buildShIndexTooltip = (dateStr, point) => {
+    const change = point.change;
+    const changeText = change === null || change === undefined
+      ? '--'
+      : `${change > 0 ? '+' : ''}${change.toFixed(2)}%`;
+    const changeCls = change > 0 ? 'up' : change < 0 ? 'down' : '';
+    return `
+      <div class="tooltip-title">${dayjs(dateStr).format('YYYY-MM-DD')}</div>
+      <div class="tooltip-item"><span class="label">开盘:</span><span class="value">${point.open.toFixed(2)}</span></div>
+      <div class="tooltip-item"><span class="label">最高:</span><span class="value">${point.high.toFixed(2)}</span></div>
+      <div class="tooltip-item"><span class="label">最低:</span><span class="value">${point.low.toFixed(2)}</span></div>
+      <div class="tooltip-item"><span class="label">收盘:</span><span class="value">${point.close.toFixed(2)}</span></div>
+      <div class="tooltip-item"><span class="label">涨跌:</span><span class="value ${changeCls}">${changeText}</span></div>
+    `;
+  };
+
+  const buildLianbanTooltip = (dateStr, point) => {
+    const { value, phase, summary } = point;
+    return `
+      <div class="tooltip-title">${dayjs(dateStr).format('YYYY-MM-DD')}</div>
+      <div class="tooltip-item"><span class="label">连板情绪:</span><span class="value ${value >= 0 ? 'up' : 'down'}">${value}</span></div>
+      ${phase ? `<div class="tooltip-item"><span class="label">阶段:</span><span class="value">${phase}</span></div>` : ''}
+      <div class="tooltip-item"><span class="label">涨停数:</span><span class="value up">${summary?.totalCount ?? '--'}</span></div>
+      <div class="tooltip-item"><span class="label">连板数:</span><span class="value">${summary?.lianbanCount ?? '--'}</span></div>
+    `;
+  };
+
+  // 双图联动：在任一图表 hover 某日期时，两个图表同时展示该日期的 tooltip
+  // 若某图表不存在该日期数据，则该图表不出 tooltip（连板情绪无反应）
+  const applyLianbanHover = (dateStr) => {
+    // 上证指数 tooltip
+    const shPoint = shIndexDataMapRef.current[dateStr];
+    const shTooltip = shIndexTooltipRef.current;
+    if (shTooltip && shPoint && shIndexChartRef.current && shIndexSeriesRef.current) {
+      const x = shIndexChartRef.current.timeScale().timeToCoordinate(dateStr);
+      if (x !== null && x !== undefined) {
+        shTooltip.innerHTML = buildShIndexTooltip(dateStr, shPoint);
+        const y = shIndexSeriesRef.current.priceToCoordinate(shPoint.close);
+        placeTooltip(shIndexContainerRef.current, shTooltip, x, y);
+      } else {
+        shTooltip.style.display = 'none';
+      }
+    } else if (shTooltip) {
+      shTooltip.style.display = 'none';
+    }
+
+    // 连板情绪 tooltip
+    const lbPoint = lianbanDataMapRef.current[dateStr];
+    const lbTooltip = lianbanTooltipRef.current;
+    if (lbTooltip && lbPoint && lianbanChartRef.current && lianbanLineSeriesRef.current) {
+      const x = lianbanChartRef.current.timeScale().timeToCoordinate(dateStr);
+      if (x !== null && x !== undefined) {
+        lbTooltip.innerHTML = buildLianbanTooltip(dateStr, lbPoint);
+        const y = lianbanLineSeriesRef.current.priceToCoordinate(lbPoint.value);
+        placeTooltip(lianbanWrapContainerRef.current, lbTooltip, x, y);
+      } else {
+        lbTooltip.style.display = 'none';
+      }
+    } else if (lbTooltip) {
+      lbTooltip.style.display = 'none';
+    }
+
+    // 仅当该日期存在连板数据时才更新题材面板，避免上证指数独有的日期导致面板无反应
+    if (lbPoint && dateStr !== lianbanHoverDate) {
+      setLianbanHoverDate(dateStr);
+    }
+  };
+
+  // 上证指数 K 线图
+  const renderShIndexChart = (data) => {
+    const container = shIndexContainerRef.current;
+    if (!container) return;
+    if (shIndexChartRef.current) {
+      shIndexChartRef.current.remove();
+      shIndexChartRef.current = null;
+    }
+
+    const chart = createBaseChart(container, 350);
+    shIndexChartRef.current = chart;
+    ensureTooltip(container, shIndexTooltipRef);
+
+    const candleSeries = chart.addCandlestickSeries({
+      upColor: '#f5222d',
+      downColor: '#52c41a',
+      borderVisible: false,
+      wickUpColor: '#f5222d',
+      wickDownColor: '#52c41a',
+    });
+    shIndexSeriesRef.current = candleSeries;
+
+    const bars = [];
+    data.forEach((item) => {
+      const d = String(item.trade_date);
+      if (!/^\d{8}$/.test(d)) return;
+      if (item.open_px == null || item.high_px == null || item.low_px == null || item.close_px == null) return;
+      const time = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
+      bars.push({
+        time,
+        open: item.open_px,
+        high: item.high_px,
+        low: item.low_px,
+        close: item.close_px,
+        change: typeof item.change === 'number' ? item.change : null,
+      });
+    });
+    bars.sort((a, b) => a.time.localeCompare(b.time));
+
+    const map = {};
+    const chartData = bars.map((bar, idx) => {
+      if (bar.change === null && idx > 0 && bars[idx - 1].close) {
+        bar.change = ((bar.close - bars[idx - 1].close) / bars[idx - 1].close) * 100;
+      }
+      map[bar.time] = bar;
+      return { time: bar.time, open: bar.open, high: bar.high, low: bar.low, close: bar.close };
+    });
+    shIndexDataMapRef.current = map;
+    candleSeries.setData(chartData);
+
+    chart.timeScale().applyOptions({
+      tickMarkFormatter: (time) => dayjs(time).format('MM-DD'),
+    });
+    chart.applyOptions({
+      localization: { timeFormatter: (time) => dayjs(time).format('YYYY-MM-DD') },
+    });
+
+    chart.subscribeCrosshairMove((param) => {
+      if (!param || param.point === undefined || !param.time) {
+        hideLianbanTooltips();
+        return;
+      }
+      applyLianbanHover(String(param.time));
+    });
+
+    chart.timeScale().fitContent();
+  };
+
+  // 连板情绪折线图
+  const renderLianbanChart = (series) => {
+    const container = lianbanWrapContainerRef.current;
+    if (!container) return;
+    if (lianbanChartRef.current) {
+      lianbanChartRef.current.remove();
+      lianbanChartRef.current = null;
+    }
+
+    const chart = createBaseChart(container, 350);
+    lianbanChartRef.current = chart;
+    ensureTooltip(container, lianbanTooltipRef);
+
+    const areaSeries = chart.addAreaSeries({
+      lineColor: '#fa8c16',
+      topColor: 'rgba(250, 140, 22, 0.25)',
+      bottomColor: 'rgba(250, 140, 22, 0)',
+      lineWidth: 3,
+      priceFormat: { type: 'price', precision: 0, minMove: 1 },
+    });
+    lianbanLineSeriesRef.current = areaSeries;
+
+    const map = {};
+    const chartData = series
+      .filter((d) => d.temperature !== null && d.temperature !== undefined)
+      .map((d) => {
+        const time = `${d.date.slice(0, 4)}-${d.date.slice(4, 6)}-${d.date.slice(6, 8)}`;
+        map[time] = { time, value: d.temperature, phase: d.phase, summary: d.summary };
+        return { time, value: d.temperature };
+      })
+      .sort((a, b) => a.time.localeCompare(b.time));
+    lianbanDataMapRef.current = map;
+    areaSeries.setData(chartData);
+
+    chart.timeScale().applyOptions({
+      tickMarkFormatter: (time) => dayjs(time).format('MM-DD'),
+    });
+    chart.applyOptions({
+      localization: { timeFormatter: (time) => dayjs(time).format('YYYY-MM-DD') },
+    });
+
+    chart.subscribeCrosshairMove((param) => {
+      if (!param || param.point === undefined || !param.time) {
+        hideLianbanTooltips();
+        return;
+      }
+      applyLianbanHover(String(param.time));
+    });
+
+    chart.timeScale().fitContent();
+  };
+
   const renderTechChart = (techData) => {
     if (techChartRef.current) {
       techChartRef.current.remove();
     }
-
     const themeColor = getThemeColor();
     const chart = createBaseChart(techContainerRef.current);
     techChartRef.current = chart;
@@ -1108,6 +1484,51 @@ const Sentiment = () => {
     </Collapse>
   );
 
+  // 连板情绪：单日涨停题材（题材默认折叠，展开后展示涨停个股，点击股票打开公共 K 线组件）
+  const renderLianbanDayThemes = (day) => (
+    <div className="lianban-theme-day" key={day.date}>
+      <div className="lianban-theme-day-header">
+        <span className="lianban-theme-date">{day.pageDate || formatDateStr(day.date)}</span>
+        {day.sentiment?.phase && <Tag color="purple">{day.sentiment.phase}</Tag>}
+        <Tag color="orange">温度 {day.sentiment?.temperature ?? '--'}</Tag>
+        <Tag color="red">涨停 {day.summary?.totalCount ?? 0}</Tag>
+        <Tag>连板 {day.summary?.lianbanCount ?? 0}</Tag>
+      </div>
+      <Collapse
+        size="small"
+        className="lianban-theme-collapse"
+        items={(day.themes || []).map((theme) => ({
+          key: `${day.date}-${theme.rank}-${theme.board}`,
+          label: (
+            <div className="lianban-theme-label">
+              <span className="lianban-theme-name">{theme.board}</span>
+              <span className="lianban-theme-count">{theme.count} 只</span>
+            </div>
+          ),
+          children: (
+            <div className="lianban-stock-list">
+              {(theme.stocks || []).map((stock) => (
+                <div
+                  key={stock.code}
+                  className="lianban-stock-item"
+                  onClick={() => showKLine({ code: stock.marketCode || stock.code, stockName: stock.name })}
+                >
+                  <span className="lianban-stock-name">{stock.name}</span>
+                  <span className="lianban-stock-code">{stock.code}</span>
+                  {stock.lianbanText && (
+                    <Tag color={Number(stock.lianbanCount) >= 2 ? 'red' : 'default'}>{stock.lianbanText}</Tag>
+                  )}
+                  {stock.leader && <Tag color="gold">龙头</Tag>}
+                  <span className="lianban-stock-concept">{stock.concepts || stock.concept || ''}</span>
+                </div>
+              ))}
+            </div>
+          ),
+        }))}
+      />
+    </div>
+  );
+
   return (
     <div className="sentiment-page">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1136,11 +1557,15 @@ const Sentiment = () => {
             items={[
               {
                 key: 'realTime',
-                label: '即时情绪',
+                label: '科技情绪',
               },
               {
                 key: 'cycle',
                 label: '情绪周期',
+              },
+              {
+                key: 'lianban',
+                label: '连板情绪',
               },
             ]}
             style={{ marginBottom: '24px' }}
@@ -1621,6 +2046,83 @@ const Sentiment = () => {
               )}
             </Card>
           </Col>
+        )}
+
+        {activeTab === 'lianban' && (
+          <>
+            <Col span={24}>
+              <Card
+                title={<span><AreaChartOutlined /> 上证指数 K 线图</span>}
+                bordered={false}
+                className="chart-card"
+              >
+                {indexKlineData?.shangzhengData?.length ? (
+                  <div ref={shIndexContainerRef} className="chart-container" style={{ height: '350px' }} />
+                ) : (
+                  <Alert message="暂无上证指数K线数据" type="info" showIcon />
+                )}
+              </Card>
+            </Col>
+
+            <Col span={24}>
+              <Card
+                title={<span><LineChartOutlined /> 连板情绪趋势（短线温度）</span>}
+                bordered={false}
+                className="chart-card"
+                extra={
+                  <Space size={8}>
+                    <DatePicker.RangePicker
+                      size="small"
+                      allowClear={false}
+                      value={lianbanRange ? [dayjs(lianbanRange[0]), dayjs(lianbanRange[1])] : null}
+                      onChange={(vals) => {
+                        if (vals && vals[0] && vals[1]) {
+                          setLianbanRange([vals[0].format('YYYYMMDD'), vals[1].format('YYYYMMDD')]);
+                        }
+                      }}
+                    />
+                    <Button
+                      size="small"
+                      type="primary"
+                      icon={<DownloadOutlined />}
+                      loading={lianbanDownloading}
+                      onClick={handleDownloadLianban}
+                    >
+                      下载
+                    </Button>
+                  </Space>
+                }
+              >
+                {lianbanSeriesInRange.length ? (
+                  <div ref={lianbanWrapContainerRef} className="chart-container" style={{ height: '350px' }} />
+                ) : (
+                  <Alert message="暂无连板情绪数据" type="info" showIcon />
+                )}
+              </Card>
+            </Col>
+
+            <Col span={24}>
+              <Card
+                title={<span><AppstoreOutlined /> 涨停题材（当日及前四日）</span>}
+                bordered={false}
+                className="chart-card"
+              >
+                {lianbanHoverDate ? (
+                  lianbanWindowLoading && lianbanWindowDays.length === 0 ? (
+                    <div className="loading-container"><Spin tip="加载中..." /></div>
+                  ) : lianbanWindowDays.length ? (
+                    <div className="lianban-theme-groups">
+                      {lianbanWindowDays.map(renderLianbanDayThemes)}
+                    </div>
+                  ) : (
+                    <Alert message="该日期暂无连板题材数据" type="info" showIcon />
+                  )
+                ) : (
+                  <div className="lianban-hover-hint">将鼠标悬停在上方任一图表的某个日期上，查看当天及过去四天的涨停题材</div>
+                )}
+              </Card>
+            </Col>
+          </>
         )}
       </Row>
 

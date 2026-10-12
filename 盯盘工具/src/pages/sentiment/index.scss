@@ -231,6 +231,146 @@
     }
   }
 
+  // ============ 连板情绪：涨停题材 ============
+  .lianban-hover-hint {
+    padding: 40px 16px;
+    text-align: center;
+    color: #8c8c8c;
+    font-size: 14px;
+    background: #fafafa;
+    border: 1px dashed #d9d9d9;
+    border-radius: 8px;
+  }
+
+  .lianban-theme-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .lianban-theme-day {
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    background: #fff;
+  }
+
+  .lianban-theme-day-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .lianban-theme-date {
+      font-size: 15px;
+      font-weight: 700;
+      color: #262626;
+      margin-right: 4px;
+    }
+  }
+
+  .lianban-theme-collapse {
+    background: transparent;
+
+    .ant-collapse-item {
+      border: 1px solid #f0f0f0;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      overflow: hidden;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .ant-collapse-header {
+      background: #fafafa;
+      padding: 8px 12px !important;
+
+      &:hover {
+        background: #f0f1f5;
+      }
+    }
+
+    .ant-collapse-content-box {
+      padding: 0 !important;
+    }
+  }
+
+  .lianban-theme-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .lianban-theme-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #262626;
+    }
+
+    .lianban-theme-count {
+      font-size: 12px;
+      color: #8c8c8c;
+    }
+  }
+
+  .lianban-stock-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lianban-stock-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f7f8fa;
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: #f7f8fa;
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .lianban-stock-name {
+      flex: 0 0 96px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1f2329;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .lianban-stock-code {
+      flex: 0 0 64px;
+      font-size: 12px;
+      color: #8c8c8c;
+    }
+
+    .lianban-stock-concept {
+      flex: 1;
+      min-width: 0;
+      font-size: 12px;
+      color: #8c8c8c;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ant-tag {
+      margin: 0;
+      flex-shrink: 0;
+    }
+  }
+
   .tone-up {
     color: #cf1322;
   }

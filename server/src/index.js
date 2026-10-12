@@ -111,7 +111,7 @@ const feishuNotify = require('./service/feishuNotify');
 const { isTradingDay } = require('./utils/tradingDay');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
-const { scheduleLianbanDaily } = require('./service/lianban');
+const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData } = require('./service/lianban');
 const { getClsNews, getBoardChange, getStockChangesAll, getStockNews, getStockZyjs, getInstitutionParticipation, getSectorSpot, getSectorDetail, getForeignCommodity } = require('./service/akData');
 const { getThsHotRank } = require('./service/thsHotRank');
 
@@ -538,6 +538,27 @@ app.post('/mark_tech_index_ice', (req, res) => {
   } catch (error) {
     console.error('标记冰点失败:', error);
     res.status(500).json({ success: false, message: error.message || '标记失败' });
+  }
+});
+
+// 连板情绪序列：全部连板快照的每日情绪摘要（按日期升序，供连板情绪折线图使用）
+app.get('/lianban_sentiment_series', (req, res) => {
+  try {
+    res.json(getLianbanSentimentSeries());
+  } catch (error) {
+    console.error('获取连板情绪序列失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 连板单日完整数据（含题材与涨停个股），供连板情绪悬浮展示当日及前四日题材使用
+app.get('/lianban_day', (req, res) => {
+  try {
+    const date = String(req.query.date || '').replace(/\D/g, '');
+    res.json(date ? getLianbanDayData(date) : null);
+  } catch (error) {
+    console.error('获取连板单日数据失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
   }
 });
 

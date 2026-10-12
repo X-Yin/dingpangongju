@@ -1143,18 +1143,6 @@ exports.default = [
         "name": "广汇能源"
     },
     {
-        "blockName": "乳酸PLA",
-        "code": "sz300829",
-        "name": "金丹科技",
-        "tag": "防御"
-    },
-    {
-        "blockName": "乳酸PLA",
-        "code": "sh688203",
-        "name": "海正生材",
-        "tag": "防御"
-    },
-    {
         "blockName": "端侧AI",
         "code": "sh603236",
         "name": "移远通信",

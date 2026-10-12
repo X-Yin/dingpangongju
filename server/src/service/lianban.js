@@ -362,6 +362,25 @@ const getAvailableLianbanDates = () => {
     .sort((a, b) => b.localeCompare(a));
 };
 
+// 连板情绪序列：读取全部快照，输出按日期升序的每日情绪摘要（供连板情绪折线图使用）
+// 返回 [{ date, pageDate, phase, temperature, summary }]
+const getLianbanSentimentSeries = () => {
+  const dates = getAvailableLianbanDates().slice().reverse(); // 升序
+  const series = [];
+  dates.forEach((ymd) => {
+    const day = getLianbanDayData(ymd);
+    if (!day) return;
+    series.push({
+      date: ymd,
+      pageDate: day.pageDate || `${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)}`,
+      phase: day.sentiment?.phase || null,
+      temperature: day.sentiment?.temperature ?? null,
+      summary: day.summary || null,
+    });
+  });
+  return series;
+};
+
 // 每个交易日晚 21:00 自动抓取当日连板数据；失败不占位，下一分钟自动重试
 let lianbanScheduled = false;
 let lianbanTaskRunning = false;
@@ -416,6 +435,7 @@ module.exports = {
   hasLianbanDay,
   getLianbanDayData,
   getAvailableLianbanDates,
+  getLianbanSentimentSeries,
   lianbanFilePath,
   scheduleLianbanDaily,
   normalizeDateInput,

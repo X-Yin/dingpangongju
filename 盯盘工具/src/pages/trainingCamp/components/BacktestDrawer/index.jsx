@@ -154,6 +154,9 @@ const STRATEGY_OPTIONS = [
   // 情绪游资-龙头战法（2026-10-11 用户新增，2026-10-11 二次改版合并为单一策略）：上证 3 日线斜率盘中由负转正出手、
   // 过去10日涨停潮（≥20）板块（剔除芯片/通信/算力/其他、仅主板）中自爆发以来涨幅最高的板块、买该板块自爆发以来涨幅最大的龙头
   { value: 'hot_money_leader', label: '情绪游资-龙头战法' },
+  // 情绪龙头+科技进攻（2026-10-12 用户新增）：在「情绪游资-龙头战法」基础上叠加「3日涨幅最大&三日情绪-60快进快出」的独立买点，
+  // 共用一个全仓单持仓账户——同一桶两套买点同时触发先买情绪游资、非同时触发谁先触发买谁；两套买点各用各的卖点
+  { value: 'hot_money_leader_tech_emoquick', label: '情绪龙头+科技进攻' },
   { value: 'highest_3d_reports', label: '3日研报覆盖数最多' },
   { value: 'highest_5d_reports', label: '5日研报覆盖数最多' },
   { value: 'highest_3d_reports_top5_gain', label: '3日研报前五&涨幅最大' },
@@ -237,7 +240,7 @@ const STRATEGY_CATEGORIES = [
       'hot_money_ice_5d_gain', 'hot_money_ice_10d_gain',
       'hot_money_ice_rev_1d_gain', 'hot_money_ice_rev_2d_gain', 'hot_money_ice_rev_3d_gain',
       'hot_money_ice_rev_4d_gain', 'hot_money_ice_rev_5d_gain',
-      'hot_money_leader',
+      'hot_money_leader', 'hot_money_leader_tech_emoquick',
     ],
   },
   {
@@ -403,6 +406,31 @@ const LEADER_SELL_RULES = [
   { key: 'leader_sell_low_resilience', title: '当日收盘抗分歧指数 < 6 即卖', desc: '持仓期内（买入次日起）每个交易日**尾盘（收盘）**检查：若该股**当日收盘抗分歧指数 < 6** 即按尾盘分时价卖出（抗分歧指数为当日 EOD 抗分歧分数，基准分 5，低于 6 表示个股明显走弱、分歧加剧）' },
 ];
 
+// 情绪龙头+科技进攻（hot_money_leader_tech_emoquick，2026-10-12 用户新增）：
+// 在「情绪游资-龙头战法」（①）基础上叠加「3日涨幅最大&三日情绪-60快进快出」（②）的独立买点，两者共用一个全仓单持仓账户。
+// 出手优先级：空仓时逐桶判定——同一桶两套买点同时触发先买情绪游资（①）；非同时触发谁先触发买谁。
+// 卖点各用各的：①情绪游资仓位走龙头战法 6 条卖点；②快进快出仓位走快进快出卖点（次日10:00强卖 / 盘中-2%止损 / 否则通用7条件）。
+const LEADER_TECH_STRATEGY_IDS = ['hot_money_leader_tech_emoquick'];
+const isLeaderTechStrategy = (id) => LEADER_TECH_STRATEGY_IDS.includes(id);
+const leaderTechBuyRules = [
+  ...leaderBuyRules, // ①情绪游资-龙头战法买点（斜率由负转正 + 涨停潮板块龙头选股）完整沿用
+  { key: 'leader_tech_priority', title: '出手优先级：同一桶两套买点同时触发先买情绪游资，非同时触发谁先触发买谁', desc: '空仓状态下逐桶判定：①情绪游资买点（上证指数 3 日线斜率盘中由负转正）与②快进快出买点（通用买点诊断全部条件通过）共用同一账户——若**同一时间桶**两者同时触发，**先买情绪游资（①）**；若**非同时触发**，则**谁先触发就买谁**（先触发者成交后即持仓，另一套买点在持仓期间不再触发）' },
+  { key: 'leader_tech_emoquick_buy', title: '②快进快出买点：通用买点诊断全部条件通过时出手（买最近 3 日涨幅最大的科技股）', desc: '在①情绪游资买点未成交的空仓桶，按「3日涨幅最大&三日情绪-60快进快出」的买点出手——即**通用买入诊断（BUY_RULES）的全部条件在当桶通过**时触发，从全量自选科技股中买入**最近 3 个交易日涨幅之和最大**的一只。**跨指数双门禁**（创业板指 + 科创50 的 3 日线斜率实时判定后合并）、**全局最低抗分歧门槛 ≥ 9** 顺延、**涨停股顺延**（主板>9.5%、创业/科创>19%）、**上一交易日一字板过滤**、**顺周期过滤**（与创业板指近 20 日负相关/零相关的逆周期股剔除并顺延）与自选股添加时间门禁照常生效。买入时点若满足快进快出条件（上一交易日科技情绪 3 日 EMA < -60，或上两个交易日当日科技情绪均处 -30~20 区间且回升）则该笔标记为快进快出，卖点见下' },
+];
+const LEADER_TECH_SELL_RULES = [
+  { key: 'leader_tech_sell_own', title: '卖点各用各的：情绪游资仓位走龙头战法、快进快出仓位走快进快出', desc: '由**①情绪游资**买入的持仓走**龙头战法 6 条卖点**（见下方 ①组）；由**②快进快出**买入的持仓走**快进快出卖点**（见下方 ②组）。两路持仓互不影响，各自按自身规则卖出' },
+  { key: 'leader_tech_sell_no_rebuy', title: '卖出后再买：当日仅禁止同路再买', desc: '当日卖出后**仅禁止同路再买**——快进快出持仓强卖/止损当日**仅②快进快出路不再买入**（①情绪游资买点仍可出手）；情绪游资持仓卖出当日**仅①情绪游资路不再追买**（②快进快出买点仍可出手）' },
+  { key: 'leader_tech_sell_leader_stop_loss', title: '①组｜跌破成本线止损（连续 5 分钟）', desc: LEADER_SELL_RULES[0].desc },
+  { key: 'leader_tech_sell_leader_limit_down', title: '①组｜持仓股跌停', desc: LEADER_SELL_RULES[1].desc },
+  { key: 'leader_tech_sell_leader_bearish', title: '①组｜高位放量大阴线', desc: LEADER_SELL_RULES[2].desc },
+  { key: 'leader_tech_sell_leader_weak', title: '①组｜持仓 3 日未拉开 10 个点即卖', desc: LEADER_SELL_RULES[3].desc },
+  { key: 'leader_tech_sell_leader_gap_down', title: '①组｜竞价低开超 -5% 即卖', desc: LEADER_SELL_RULES[4].desc },
+  { key: 'leader_tech_sell_leader_low_resilience', title: '①组｜当日收盘抗分歧指数 < 6 即卖', desc: LEADER_SELL_RULES[5].desc },
+  { key: 'leader_tech_sell_emoquick_1000', title: '②组｜次日 10:00 强制卖出（快进快出）', desc: '②快进快出买入的持仓（买入日满足快进快出条件：上一交易日科技情绪 3 日 EMA < -60，或上两个交易日当日科技情绪均处 -30~20 区间且回升）**买入次日上午 10:00 强制卖出**（取当日第一个 ≥10:00 的分时点价格，未覆盖 10:00 时取当日最后一分钟，当日无该股分时数据时顺延至后续日期重试），不走通用 7 条件卖点。**10:00 强卖豁免**：强卖前先做两种「次日强势」判断（①次日 10:00 前含 10:00 买点诊断再次全部通过；②次日 10:00 时点科技情绪 > 0、自选股低于开盘价个股 < 30 只、大盘主力资金净流入 > 0 三者同时满足），命中任一则本次不强卖、持仓转由通用 7 条件卖点接管' },
+  { key: 'leader_tech_sell_emoquick_stop', title: '②组｜盘中跌破成本线 -2% 先到先卖止损', desc: '②快进快出持仓买入次日盘中跌破成本线 -2%（买入价 × 0.98，口径与通用条件7一致：开盘首分钟已破线走竞价自救窗口、首次分钟回落即卖；盘中才破线则即时止损）时**先到先卖、提前止损离场**，先于当日 10:00 强卖；强卖/止损当日禁止②路二次买入' },
+  { key: 'leader_tech_sell_emoquick_general', title: '②组｜非快进快出（普通持仓）走通用 7 条件卖点', desc: '②快进快出买点买入的持仓，若不满足快进快出条件（为普通持仓），则走**通用 SELL_RULES 7 条件**卖出（均线破位 / 高位放量大阴线 / 科技情绪退潮 / 抗分歧<6 / 连续3日抗分歧<10 / 跌破买点前低 / 跌破成本线-2%）；命中强卖豁免的快进快出持仓也转由通用 7 条件卖点接管' },
+];
+
 // 「N.5 日涨幅最大」窗口口径说明（与后端 HALF_DAY_NOTE 一致）：在常规最近 N 个交易日（含触发日）涨幅之和的基础上，
 // 额外复利计入「窗口最早交易日的再前一交易日」下午 13:00 开盘至收盘的半日涨幅。
 const halfDayNote = (n) =>
@@ -421,6 +449,19 @@ const leaderNote = {
     '**选板块与龙头**：在**过滤后**的候选池内，比较各涨停潮板块内个股「**自板块爆发日以来涨幅**」，取**板块内最优个股涨幅最高**的板块（即涨幅冠军所在的板块；过滤后无任何板块仍有符合区间个股则**本次不买**）；再在该板块名册内按涨幅降序，买**涨幅最大**的那只（必然处于 10%~30% 区间内，即当下市场龙头）。若涨幅第 1 **已封涨停**（主板涨幅 > 9.5%）无法成交，则改买**涨幅第 2**；若涨幅第 2 **也封涨停**，则**顺延到次日 9:30** 再买这只涨幅第 2 的股票（次日 9:30 仍要求上证 3 日线斜率**为正**才执行，否则放弃本次顺延；若次日开盘该股仍封涨停则继续顺延到再下一日 9:30）。',
     '**仓位**：全仓买入（权重 1，不做半仓折算）。',
     '**卖点（6 类，任一先触发即卖）**：① **跌破成本线止损**——持仓股分时价较**成本价（买入价）跌幅 < -5%** 且**连续维持 ≥ 5 分钟**（防瞬时假跌破）才止损卖出 ∪ ② **持仓股跌停**（较昨收跌幅 **< -9%**）∪ ③ **高位放量大阴线**——当日分时**最高价回落到现价幅度 > 8%** 且**现价 < 当日开盘价**（盘中高位被砸、收阴）即卖出 ∪ ④ **弱势持仓时限**——**持仓第 3 个交易日**（含买入当日为第 1 天）尾盘 **14:57** 时点，若当前收益**仍未拉开至 +10%**（现价较成本价涨幅 < 10%）即卖出，达到 +10% 以上则本卖点不再触发 ∪ ⑤ **竞价低开**——当日开盘价较昨收**低开 < -5%** 即按开盘价卖出 ∪ ⑥ **收盘抗分歧指数**——当日**尾盘（收盘）**该股**抗分歧分数 < 6**（基准分 5，低于 6 表示明显走弱、分歧加剧）即按尾盘分时价卖出。卖出后当日不再追买、次日起才可再买。',
+  ],
+};
+// 情绪龙头+科技进攻 策略说明（hot_money_leader_tech_emoquick，2026-10-12 用户新增，组合策略）
+const leaderTechNote = {
+  group: '情绪游资·龙头战法 + 科技进攻',
+  bullets: [
+    '**组合口径**：在「情绪游资-龙头战法」（①）基础上叠加「3日涨幅最大&三日情绪-60快进快出」（②）的独立买点，两套买点共用一个全仓单持仓账户——①走龙头战法的「上证指数 3 日线斜率盘中由负转正」买点，②走「通用买入诊断全部条件通过」买点（买入全量自选科技股中**最近 3 个交易日涨幅之和最大**的一只）。',
+    '**出手优先级**：空仓状态下逐桶判定——**同一时间桶**两套买点同时触发，**先买情绪游资（①）**；**非同时触发**则**谁先触发就买谁**（先触发者成交后即持仓，另一套买点在持仓期间不再触发）。',
+    '**①情绪游资的选股与买点**：与「情绪游资-龙头战法」完全一致——回溯过去 **10 个交易日****涨停潮板块**（涨停个股数 ≥ 20；芯片、通信、算力、其他、中报增长 五板块整体剔除；候选池仅主板），窗口内**最早一次涨停潮爆发日**为爆发日、成分股为名册、爆发日收盘价为基准价；须满足「最近 5 个交易日内出现过一次放量分歧（且为近 10 日量能最大）」与「自爆发以来涨幅处 10%~30%」，再选**板块内最优个股涨幅最高**的板块、买板块内**涨幅最大**的那只（涨幅第 1 已涨停则改买第 2，第 2 也涨停则顺延次日 9:30）。',
+    '**②快进快出的选股与买点**：买点为「通用买入诊断（BUY_RULES）全部条件在当桶通过」，选股为全量自选科技股中**最近 3 个交易日涨幅之和最大**的一只；**跨指数双门禁**（创业板指 + 科创50 的 3 日线斜率实时判定后合并）、**全局最低抗分歧门槛 ≥ 9 顺延**、**涨停股顺延**、**上一交易日一字板过滤**、**顺周期过滤**、自选股添加时间门禁照常生效。买入时点若满足快进快出条件（上一交易日科技情绪 3 日 EMA < -60，或上两个交易日当日科技情绪均处 -30~20 区间且回升）则该笔标记为快进快出。',
+    '**卖点各用各的**：①情绪游资买入的持仓走**龙头战法 6 条卖点**（跌破成本线 -5% 连续 5 分钟 / 跌停 / 高位放量大阴线 / 持仓 3 日未拉开 10 个点 / 竞价低开 < -5% / 当日收盘抗分歧指数 < 6）；②快进快出买入的持仓走**快进快出卖点**（次日 10:00 强卖 / 盘中跌破成本线 -2% 先到先卖 / 否则通用 7 条件）。',
+    '**卖出后再买（仅禁止同路）**：当日卖出后**仅禁止同路再买**——快进快出持仓强卖/止损当日**仅②路不再买入**（①情绪游资买点仍可出手）；情绪游资持仓卖出当日**仅①路不再追买**（②快进快出买点仍可出手）。',
+    '**仓位**：全仓买入（权重 1，不做半仓折算）。',
   ],
 };
 const STRATEGY_SPECIFIC_NOTES = {
@@ -917,6 +958,9 @@ const STRATEGY_SPECIFIC_NOTES = {
   // ---- 情绪游资-龙头战法（hot_money_leader，2026-10-11 用户新增；2026-10-11 二次改版合并为单策略） ----
   hot_money_leader: leaderNote,
 
+  // ---- 情绪龙头+科技进攻（hot_money_leader_tech_emoquick，2026-10-12 用户新增，组合策略） ----
+  hot_money_leader_tech_emoquick: leaderTechNote,
+
   // ---- 尾盘抄底系列（tail_dip_*） ----
   tail_dip_1d_gain: {
     group: '尾盘抄底系列',
@@ -1246,6 +1290,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const curIsIce = isIceStrategy(strategy);
   const curIsIceRev = isIceRevStrategy(strategy);
   const curIsLeader = isLeaderStrategy(strategy);
+  const curIsLeaderTech = isLeaderTechStrategy(strategy);
   const effectiveRange = range || (curIsEmo3 ? emo3DefaultRange : defaultRange);
 
   // 组件卸载时停止轮询
@@ -1619,8 +1664,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
       const pick = effectiveRange;
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
-      const buyRules = curIsLeader ? leaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : (curIsKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES)));
-      const sellRules = curIsLeader ? LEADER_SELL_RULES : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : (curIsKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES)));
+      const buyRules = curIsLeaderTech ? leaderTechBuyRules : (curIsLeader ? leaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : (curIsKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES))));
+      const sellRules = curIsLeaderTech ? LEADER_TECH_SELL_RULES : (curIsLeader ? LEADER_SELL_RULES : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : (curIsKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES))));
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);
@@ -2422,8 +2467,9 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         const isIce = isIceStrategy(strategy);
         const isIceRev = isIceRevStrategy(strategy);
         const isLeader = isLeaderStrategy(strategy);
-        const buyRules = isLeader ? leaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : (isKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES)));
-        const sellRules = isLeader ? LEADER_SELL_RULES : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : (isKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES)));
+        const isLeaderTech = isLeaderTechStrategy(strategy);
+        const buyRules = isLeaderTech ? leaderTechBuyRules : (isLeader ? leaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : (isKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES))));
+        const sellRules = isLeaderTech ? LEADER_TECH_SELL_RULES : (isLeader ? LEADER_SELL_RULES : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : (isKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES))));
         const notes = STRATEGY_SPECIFIC_NOTES[strategy];
 
         // 将文案中 **xxx** 这种 markdown 粗体标记解析为 React 节点（纯文本不解析）
@@ -2454,7 +2500,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <BookOutlined style={{ color: '#1677ff' }} />
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#12213a' }}>策略说明</span>
-                <Tag color={isLeader ? 'magenta' : (isIce || isIceRev) ? 'purple' : isKeyBlock ? 'orange' : curIsEmo3 ? 'gold' : 'blue'} style={{ marginLeft: 8 }}>
+                <Tag color={(isLeader || isLeaderTech) ? 'magenta' : (isIce || isIceRev) ? 'purple' : isKeyBlock ? 'orange' : curIsEmo3 ? 'gold' : 'blue'} style={{ marginLeft: 8 }}>
                   {(notes?.group) || (isLeader ? '情绪游资·龙头战法' : isIceRev ? '逆周期情绪游资系列' : isIce ? '顺周期情绪游资系列' : isKeyBlock ? '重点板块系列' : curIsEmo3 ? '三日情绪冰点系列' : '常规策略')}
                 </Tag>
               </div>
