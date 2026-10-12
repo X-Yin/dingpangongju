@@ -1217,5 +1217,10 @@ exports.default = [
         "blockName": "AI 应用",
         "code": "sz300182",
         "name": "捷成股份"
+    },
+    {
+        "blockName": "消费",
+        "code": "sh600882",
+        "name": "妙可蓝多"
     }
 ]

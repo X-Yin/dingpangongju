@@ -10,6 +10,10 @@
     "firstBoardCount": 23,
     "leaderCount": 8
   },
+  "sentiment": {
+    "phase": "退潮期",
+    "temperature": 32
+  },
   "themes": [
     {
       "rank": 1,

@@ -10,6 +10,10 @@
     "firstBoardCount": 66,
     "leaderCount": 16
   },
+  "sentiment": {
+    "phase": "升温期",
+    "temperature": 70
+  },
   "themes": [
     {
       "rank": 1,

@@ -10,6 +10,10 @@
     "firstBoardCount": 25,
     "leaderCount": 10
   },
+  "sentiment": {
+    "phase": "冰点期",
+    "temperature": 13
+  },
   "themes": [
     {
       "rank": 1,

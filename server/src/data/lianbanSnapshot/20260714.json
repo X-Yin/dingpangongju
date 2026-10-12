@@ -10,6 +10,10 @@
     "firstBoardCount": 53,
     "leaderCount": 8
   },
+  "sentiment": {
+    "phase": "修复期",
+    "temperature": 55
+  },
   "themes": [
     {
       "rank": 1,

@@ -24,5 +24,11 @@
   },
   "inflow_rise_volume_shrink": {
     "lastTriggeredTime": "2026-10-12 10:30:00"
+  },
+  "tail_dip_buying": {
+    "checkedToday": "2026-10-12"
+  },
+  "volume_shrink_stagnation": {
+    "lastTriggeredTime": "2026-10-12 15:00:20"
   }
 }

@@ -10,6 +10,10 @@
     "firstBoardCount": 58,
     "leaderCount": 8
   },
+  "sentiment": {
+    "phase": "高潮期",
+    "temperature": 100
+  },
   "themes": [
     {
       "rank": 1,

@@ -184,6 +184,17 @@ const extractPageDate = (html) => {
   return m ? m[1] : null;
 };
 
+// 提取页面「情绪周期」卡片中的情绪阶段与短线温度（如：修复期 / 温度 36°）
+// 老版页面同样包含该卡片，结构一致：<div class="l">情绪周期</div><div class="v" ...>修复期</div><div class="ly">温度 36°</div>
+const extractSentiment = (html) => {
+  const phaseM = html.match(/情绪周期[\s\S]{0,120}?<div class="v"[^>]*>([\s\S]*?)<\/div>/);
+  const tempM = html.match(/温度\s*(-?\d+)\s*°/);
+  const phase = phaseM ? decodeEntities(phaseM[1]).replace(/<[^>]+>/g, '').trim() : '';
+  const temperature = tempM ? Number(tempM[1]) : null;
+  if (!phase && temperature == null) return null;
+  return { phase: phase || null, temperature };
+};
+
 // 解析「热点题材」HTML：板块顺序/题材理由，以及每只个股的龙头★/早盘标记/连板标签
 // 返回 [{ rank, board, reason, stockOrder: [code...], stocks: Map(code -> info) }]
 // 注意：股票代码全为数字，挂到普通对象上会被引擎按数组索引重排，必须用 Map 保序
@@ -306,6 +317,7 @@ const parseLianbanHtml = (html, requestDate) => {
     sourceUrl: `${BASE_URL}/${requestDate.dash}.html`,
     fetchedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
     summary,
+    sentiment: extractSentiment(html),
     themes,
   };
 };
@@ -399,6 +411,7 @@ module.exports = {
   fetchDayHtml,
   parseLianbanHtml,
   parseThemesHtml,
+  extractSentiment,
   saveLianbanDay,
   hasLianbanDay,
   getLianbanDayData,

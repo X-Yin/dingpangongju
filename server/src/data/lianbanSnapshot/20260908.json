@@ -10,6 +10,10 @@
     "firstBoardCount": 54,
     "leaderCount": 11
   },
+  "sentiment": {
+    "phase": "降温期",
+    "temperature": 71
+  },
   "themes": [
     {
       "rank": 1,
