@@ -61,6 +61,29 @@ const formatChartDate = (dateValue) => {
   return `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
 };
 
+// 计算上证指数 3 日线斜率由负转正的日期集合（口径与服务端 indexGate 一致）：
+//   MA3(i) = 近 3 日收盘价均值；slope(i) = MA3(i) − MA3(i−1)（MA3 切线方向）
+//   由负转正：前一交易日 slope <= 0 且当日 slope > 0
+const getShMa3TurnPosDates = (shData) => {
+  const bars = (shData || [])
+    .filter((item) => /^\d{8}$/.test(String(item.trade_date)) && item.close_px != null)
+    .map((item) => ({ date: String(item.trade_date), close: Number(item.close_px) }))
+    .filter((bar) => Number.isFinite(bar.close) && bar.close > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const turnDates = new Set();
+  if (bars.length < 4) return turnDates;
+  const ma3 = (i) => (bars[i - 2].close + bars[i - 1].close + bars[i].close) / 3;
+  let prevSlope = null;
+  for (let i = 3; i < bars.length; i++) {
+    const slope = ma3(i) - ma3(i - 1);
+    if (prevSlope !== null && prevSlope <= 0 && slope > 0) {
+      turnDates.add(bars[i].date);
+    }
+    prevSlope = slope;
+  }
+  return turnDates;
+};
+
 /**
  * 板块分类分析查看器：左侧日期目录（含主线描述）+ 右侧详情
  */
@@ -1170,6 +1193,20 @@ const Sentiment = () => {
       .sort((a, b) => a.time.localeCompare(b.time));
     lianbanDataMapRef.current = map;
     areaSeries.setData(chartData);
+
+    // 标识「上证指数 3 日线斜率由负转正」的交易日（仅落在连板情绪已有数据的日期上）
+    const turnPosDates = getShMa3TurnPosDates(indexKlineData?.shangzhengData);
+    const turnMarkers = chartData
+      .filter((d) => turnPosDates.has(d.time.replace(/-/g, '')))
+      .map((d) => ({
+        time: d.time,
+        position: 'belowBar',
+        color: '#f5222d',
+        shape: 'arrowUp',
+        text: '指数转正',
+        size: 2,
+      }));
+    if (turnMarkers.length) areaSeries.setMarkers(turnMarkers);
 
     chart.timeScale().applyOptions({
       tickMarkFormatter: (time) => dayjs(time).format('MM-DD'),
