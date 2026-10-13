@@ -38,6 +38,7 @@ const { getSingleStockData, getSingleStockTlineData, getSingleStockTlineDataByDa
 const { getAllTechIndexData, updateCurrentTechIndexData, getCurrentTechEmotion, getTechEmotionIntraday, getLatestTechEmotion } = require('./emotion');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 const { getMonitorStocks } = require('./monitorStock');
+const { ensureWatchlistValuation, isBuyBlockedByValuation } = require('./watchlistValuation');
 const { getStockPositions } = require('./stockPosition');
 const { loadReportIndex, sumReportCount, queryLiveIndexGate, CYB_INDEX_CODE, STAR_INDEX_CODE, codeToGateIndex, gateIndexName, GLOBAL_RESILIENCE_MIN, BUY_TIME_MAX_MINUTE, getTechEmotionEmaMap, getTechEmotionRawMap } = require('./buySellBacktest');
 const { getAmountHistory, parseAmountToYi } = require('./amount');
@@ -3226,8 +3227,11 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     ? Number(dayjs().format('HHmm'))
     : 1455;
 
-  // 自选股榜单仅纳入科技股（isTech !== false，与全站「自选股科技股」口径一致）
-  const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false);
+  // 估值快照（总市值/市盈率）：非当日缓存时拉取一次，供下方买入估值限制过滤使用
+  await ensureWatchlistValuation();
+  // 自选股榜单仅纳入科技股（isTech !== false，与全站「自选股科技股」口径一致），
+  // 并叠加买入估值限制（总市值 < 200 亿 或 市盈率亏损 剔除；2026-10-13）
+  const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false && !isBuyBlockedByValuation(s.code));
   const gate = await queryLiveIndexGate(null, targetDateStr, buyMinute);
 
   // 两个指数的分时（算个股抗分歧用）

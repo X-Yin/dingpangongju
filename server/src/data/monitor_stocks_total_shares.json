@@ -405,11 +405,6 @@
     "TotalShares": 728000000
   },
   {
-    "secu_code": "sz002046",
-    "secu_name": "国机精工",
-    "TotalShares": 536190854
-  },
-  {
     "secu_code": "sz300776",
     "secu_name": "帝尔激光",
     "TotalShares": 285234456
@@ -495,8 +490,18 @@
     "TotalShares": 547874648
   },
   {
-    "secu_code": "sz300304",
-    "secu_name": "云意电气",
-    "TotalShares": 878143718
+    "secu_code": "sz002938",
+    "secu_name": "鹏鼎控股",
+    "TotalShares": 2317536658
+  },
+  {
+    "secu_code": "sz002980",
+    "secu_name": "华盛昌",
+    "TotalShares": 188411224
+  },
+  {
+    "secu_code": "sh603067",
+    "secu_name": "振华股份",
+    "TotalShares": 755525404
   }
 ]

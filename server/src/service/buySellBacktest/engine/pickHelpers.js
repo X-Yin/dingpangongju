@@ -2,6 +2,7 @@ const { batchParallel, fs, getMonitorStocks, getSimContext, isOscExcluded, isSim
 const { buildKeyBlockSyntheticBucketEntry, buildKeyBlockSyntheticDay } = require('./keyBlockSynthetic');
 const { calcResilienceAtMinute, extractDailyInfo, isLimitUpAtBuy } = require('./replayData');
 const { EXCLUDED_CODES } = require('../constants');
+const { isBuyBlockedByValuation } = require('../../watchlistValuation');
 const { cycCorrCache } = require('./cycleFilter');
 const { stockBlockFilePath } = require('../paths');
 
@@ -100,6 +101,7 @@ const pickWeakToStrongStock = (bucket, rangeDates, di, replayStocks, dailyInfos,
   for (const sc of bucket.stockChanges) {
     if (EXCLUDED_CODES.has(sc.code)) continue;
     if (isNonTechWatchlistStock(sc.code)) continue; // 非科技股不参与选股（候选池=全量自选股）
+    if (isBuyBlockedByValuation(sc.code)) continue; // 估值限制：总市值 < 200 亿 或 市盈率亏损 不买（2026-10-13）
     if (isOscExcluded(sc.code)) continue; // 震荡测试：勾选隐藏的股票不参与选股
     if (sc.lastPx == null || sc.lastPx <= 0) continue;
     // 自选股添加时间门禁：买点时刻尚未加入自选股的股票不参与选股（防止后加自选股污染历史回测）

@@ -1,90 +1,60 @@
 {
-  "date": "20261012",
+  "date": "20261013",
   "prices": {
-    "sz002475": {
-      "name": "立讯精密",
-      "open_px": 46.6,
-      "trade_date": 20261012
-    },
-    "sz000657": {
-      "name": "中钨高新",
-      "open_px": 50.9,
-      "trade_date": 20261012
+    "sz002156": {
+      "name": "通富微电",
+      "open_px": 51.52,
+      "trade_date": 20261013
     },
     "sz001309": {
       "name": "德明利",
-      "open_px": 332.53,
-      "trade_date": 20261012
+      "open_px": 222,
+      "trade_date": 20261013
     },
     "sz000636": {
       "name": "风华高科",
-      "open_px": 46.44,
-      "trade_date": 20261012
+      "open_px": 40.85,
+      "trade_date": 20261013
     },
     "sz000977": {
       "name": "浪潮信息",
-      "open_px": 64.01,
-      "trade_date": 20261012
+      "open_px": 60.55,
+      "trade_date": 20261013
     },
     "sz002126": {
       "name": "银轮股份",
-      "open_px": 32.79,
-      "trade_date": 20261012
-    },
-    "sz002428": {
-      "name": "云南锗业",
-      "open_px": 86,
-      "trade_date": 20261012
+      "open_px": 31.76,
+      "trade_date": 20261013
     },
     "sz002080": {
       "name": "中材科技",
-      "open_px": 52.23,
-      "trade_date": 20261012
-    },
-    "sz002050": {
-      "name": "三花智控",
-      "open_px": 33.57,
-      "trade_date": 20261012
-    },
-    "sz000725": {
-      "name": "京东方",
-      "open_px": 5.5,
-      "trade_date": 20261012
-    },
-    "sz002636": {
-      "name": "金安国纪",
-      "open_px": 69.5,
-      "trade_date": 20261012
+      "open_px": 50,
+      "trade_date": 20261013
     },
     "sz002046": {
       "name": "国机精工",
-      "open_px": 55.3,
-      "trade_date": 20261012
+      "open_px": 50.9,
+      "trade_date": 20261013
     },
     "sz000823": {
       "name": "超声电子",
-      "open_px": 20.44,
-      "trade_date": 20261012
+      "open_px": 21.14,
+      "trade_date": 20261013
     },
     "sz002008": {
       "name": "大族激光",
-      "open_px": 74.56,
-      "trade_date": 20261012
+      "open_px": 67.3,
+      "trade_date": 20261013
+    },
+    "sh603650": {
+      "name": "彤程新材",
+      "open_px": 54.62,
+      "trade_date": 20261013
     },
     "sz002409": {
       "name": "雅克科技",
-      "open_px": 111.75,
-      "trade_date": 20261012
-    },
-    "sh603002": {
-      "name": "宏昌电子",
-      "open_px": 16.64,
-      "trade_date": 20261012
-    },
-    "sh603757": {
-      "name": "大元泵业",
-      "open_px": 71.8,
-      "trade_date": 20261012
+      "open_px": 104.24,
+      "trade_date": 20261013
     }
   }
 }

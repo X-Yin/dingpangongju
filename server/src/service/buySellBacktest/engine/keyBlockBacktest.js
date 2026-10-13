@@ -9,6 +9,7 @@ const { buildReplayStocksWithTline, extractDailyInfo, isLimitUpAtBuy, isPrevDayO
 const { fmtTime } = require('../diagnose/buyPoint');
 const { buildKeyBlockSyntheticBucketEntry, buildKeyBlockSyntheticDay } = require('./keyBlockSynthetic');
 const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats');
+const { isBuyBlockedByValuation } = require('../../watchlistValuation');
 
 const KEY_BLOCK_POSITION_WEIGHT = { offense: 1, defense: 0.5 };
 const KEY_BLOCK_MODE_LABEL = { offense: '进攻·全仓', defense: '防御·半仓' };
@@ -216,6 +217,8 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     // 涨停判定取该桶时点当日涨幅；买入价从当日分时线现取（minute ≤ 该桶 minute 的最后一点），停牌/无分时个股自动跳过
     const candidateList = await batchParallel(allMembers, async (m) => {
       if (EXCLUDED_CODES.has(m.code)) return null;
+      // 估值限制：总市值 < 200 亿 或 市盈率亏损 不买（情绪游资 iceMode 豁免；2026-10-13）
+      if (!iceMode && isBuyBlockedByValuation(m.code)) return null;
       if (isOscExcluded(m.code)) return null; // 震荡测试：勾选隐藏的股票不参与选股
       if (isOffense && !isStockInWatchlistAt(m.code, dateStr, bucketMinute)) return null;
       // 逆周期情绪游资 1 日变体（iceRevIntradayGain）：排序依据 = 触发时点当日分时涨幅（下方 changePct），

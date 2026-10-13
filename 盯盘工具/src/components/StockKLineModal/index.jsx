@@ -46,6 +46,7 @@ const StockKLineModal = ({
   const [newsVisible, setNewsVisible] = useState(false);
   const [newsData, setNewsData] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
+  const [valuation, setValuation] = useState(null);
   const pollingRef = useRef(null);
   const klinePollingRef = useRef(null);
 
@@ -57,6 +58,11 @@ const StockKLineModal = ({
     return stockInfo.change;
   })();
   const displayName = stockName || stockInfo.name;
+
+  // 估值展示：市值单位亿元；市盈率为 null/NaN 表示亏损
+  const formatYi = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? '--' : `${(Number(v) / 100000000).toFixed(2)}亿`;
+  const peRatio = valuation?.peRatio;
+  const peText = (peRatio === null || peRatio === undefined || isNaN(Number(peRatio))) ? '亏损' : Number(peRatio).toFixed(2);
 
   // KLine 组件只在初始化时注册一次点击回调，用 ref 读取最新 tradeRecord 避免闭包捕获旧值
   const tradeRecordRef = useRef(tradeRecord);
@@ -176,6 +182,18 @@ const StockKLineModal = ({
     }
   };
 
+  // 估值（同花顺）：总市值/流通市值/市盈率，打开弹窗时随行情一起拉取
+  const fetchValuationData = async () => {
+    if (!code) return;
+    try {
+      const res = await axios.get(`http://${local_ip}:3000/stock_valuation`, { params: { code } });
+      setValuation(res.data?.success ? res.data.data : null);
+    } catch (error) {
+      console.error('Fetch stock valuation failed:', error);
+      setValuation(null);
+    }
+  };
+
   useEffect(() => {
     if (visible && code) {
       // 每次打开弹窗按 initialTab 定位 tab（盘口异动点击股票名会传 quantTimeline）
@@ -201,6 +219,7 @@ const StockKLineModal = ({
     if (visible && code) {
       fetchStockData();
       fetchZyjsData();
+      fetchValuationData();
     } else if (!visible) {
       setKData([]);
       setTData([]);
@@ -219,6 +238,7 @@ const StockKLineModal = ({
       setNewsVisible(false);
       setNewsData([]);
       setNewsLoading(false);
+      setValuation(null);
     }
   }, [visible, code]);
 
@@ -418,6 +438,19 @@ const StockKLineModal = ({
               >
                 个股新闻
               </Button>
+              {valuation && (
+                <Space size={10} style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    流通市值：<Text strong style={{ fontSize: '12px' }}>{formatYi(valuation.circulatingMarketValue)}</Text>
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    总市值：<Text strong style={{ fontSize: '12px' }}>{formatYi(valuation.totalMarketValue)}</Text>
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    市盈率：<Text strong style={{ fontSize: '12px' }}>{peText}</Text>
+                  </Text>
+                </Space>
+              )}
             </Space>
             <Segmented
               options={[

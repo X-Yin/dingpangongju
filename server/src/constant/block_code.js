@@ -132,18 +132,6 @@ exports.default = [
         "tag": "进攻"
     },
     {
-        "blockName": "光芯片",
-        "code": "sh688498",
-        "name": "源杰科技",
-        "tag": "进攻"
-    },
-    {
-        "blockName": "光芯片",
-        "code": "sh688498",
-        "name": "长光华芯",
-        "tag": "进攻"
-    },
-    {
         "blockName": "光模块",
         "code": "sh600105",
         "name": "永鼎股份",
@@ -1321,5 +1309,15 @@ exports.default = [
         "blockName": "北美缺电",
         "code": "sz300304",
         "name": "云意电气"
+    },
+    {
+        "blockName": "光芯片",
+        "code": "sh688498",
+        "name": "源杰科技"
+    },
+    {
+        "blockName": "光芯片",
+        "code": "sh688048",
+        "name": "长光华芯"
     }
 ]

@@ -18,8 +18,12 @@ const { buildCounterCycSet } = require('./cycleFilter');
 const { pickBestStock } = require('./pickBest');
 const { computeEmoQuickOutInfo } = require('./emoQuick');
 const { attachBuyDayReturn, calcDrawdownStats, sortTradesByBuyTime } = require('../utils/tradeStats');
+const { ensureWatchlistValuation } = require('../../watchlistValuation');
 
 const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_gain', onProgress) => {
+  // 买入估值限制预取：非当日缓存时拉取自选股总市值/市盈率快照（除情绪游资相关策略外，买入候选须满足
+  // 总市值 ≥ 200 亿且市盈率非亏损；见 watchlistValuation.js）。覆盖全部路由（常规/重点板块/龙头战法）
+  await ensureWatchlistValuation();
   // 重点板块-N日最高涨幅系列走独立的板块驱动回测逻辑（尾盘 14:50 买入，不走大盘买点诊断）
   if (STRATEGIES[strategyId]?.keyBlockDays != null) {
     return runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);

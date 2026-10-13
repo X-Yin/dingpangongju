@@ -658,14 +658,6 @@
     "isTech": true
   },
   {
-    "code": "sz002046",
-    "name": "国机精工",
-    "isImportant": false,
-    "blockName": "金刚石",
-    "riskScore": "8",
-    "isTech": true
-  },
-  {
     "code": "sz300776",
     "name": "帝尔激光",
     "isImportant": false,
@@ -818,12 +810,30 @@
     "addedAt": "2026-10-13 09:07:19"
   },
   {
-    "code": "sz300304",
-    "name": "云意电气",
+    "code": "sz002938",
+    "name": "鹏鼎控股",
     "isImportant": false,
-    "blockName": "SOFC",
-    "riskScore": "7",
+    "blockName": "pcb",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-10-13 11:51:09"
+  },
+  {
+    "code": "sz002980",
+    "name": "华盛昌",
+    "isImportant": false,
+    "blockName": "光通信",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-10-13 12:22:35"
+  },
+  {
+    "code": "sh603067",
+    "name": "振华股份",
+    "isImportant": false,
+    "blockName": "金属铬",
+    "riskScore": "8",
     "isTech": false,
-    "addedAt": "2026-10-13 09:17:33"
+    "addedAt": "2026-10-13 12:25:40"
   }
 ]
