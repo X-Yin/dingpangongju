@@ -20,7 +20,7 @@ const generalSellPositions = async ({ positions, strategy, bi, replayStocks, tim
     const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
     if (result.isSell && result.closePrice != null) {
       const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
-      // 分批建仓仓位（两次买入 / 斜率门控半仓）：每份仓位各自独立按权重折算收益，保留个股原始收益率供前端悬停展示
+      // 分批建仓仓位（两次买入 / 快进快出半仓）：每份仓位各自独立按权重折算收益，保留个股原始收益率供前端悬停展示
       const isTwoBuy = isLegPosition(pos, strategy);
       const rawReturnRate = result.returnRate;
       const legWeight = getPositionLegWeight(pos, strategy);

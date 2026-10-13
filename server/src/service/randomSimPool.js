@@ -9,7 +9,7 @@ const DEFAULT_RUNS = 20;
 const DEFAULT_STOCK_COUNT = 200;
 const MAX_RUNS = 200;
 const MAX_STOCK_COUNT = 2000;
-const WORKER_COUNT = 8;
+const WORKER_COUNT = 4;
 
 const clampInt = (v, def, min, max) => {
   const n = Number(v);

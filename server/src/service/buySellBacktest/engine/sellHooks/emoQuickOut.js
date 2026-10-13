@@ -55,7 +55,7 @@ const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStoc
       continue;
     }
     const sellPrice = parseFloat(Number(sellPt.lastPx).toFixed(2));
-    // 分批建仓仓位（两次买入 / 斜率门控半仓）：按本份仓位权重折算收益，每份各自独立、互不摊平成本
+    // 分批建仓仓位（两次买入 / 快进快出半仓）：按本份仓位权重折算收益，每份各自独立、互不摊平成本
     const isTwoBuy = isLegPosition(pos, strategy);
     const legWeight = getPositionLegWeight(pos, strategy);
     const rawReturnRate = pos.buyPrice > 0

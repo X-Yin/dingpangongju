@@ -2,7 +2,7 @@
 // 用于检验系统在候选池被大量噪声股票稀释/干扰时的稳定性与鲁棒性。
 //
 // 股票来源：server/src/service/科技板块拥挤度计算/all_tech_stock_code.json（真实 A 股科技股清单）。
-// 并发模型（模仿 script/backtest-worker.js）：父进程 fork 最多 8 个常驻子进程，以工作队列派发 run，
+// 并发模型（模仿 script/backtest-worker.js）：父进程 fork 最多 4 个常驻子进程，以工作队列派发 run，
 //   子进程内自行按 seed 抽取股票并调用 runRangeBacktest，进度经 IPC 上报，完整结果落盘按需读取。
 // 每次运行（run）：
 //   1) 依据 run 专属 seed 从清单中随机抽取 N 只（默认 200，排除当前自选股，避免与真实候选池重叠）
