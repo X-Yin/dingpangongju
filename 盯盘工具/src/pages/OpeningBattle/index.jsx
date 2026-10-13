@@ -935,20 +935,10 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // 命中买点时发送飞书通知（后端已按板块过滤涨停板：主板 10% / 创业板·科创板 20%）
-  const sendBuyPointFeishu = useCallback(async (stocks) => {
+  // 命中买点时发送飞书通知：不传标的，由后端按本页同一份自选股 3 日涨幅榜取前三，并点出其中的买点候选
+  const sendBuyPointFeishu = useCallback(async () => {
     try {
-      await axios.post(`http://${local_ip}:3000/send_feishu_card`, {
-        type: 'buy_point',
-        buyStocks: (stocks || []).map(s => ({
-          stockName: s.stockName,
-          code: s.code,
-          market: s.isSh688 ? '科创板' : '创业板/主板',
-          change: s.change,
-          change3d: s.change3d,
-          resilienceScore: s.resilienceScore,
-        })),
-      });
+      await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'buy_point' });
     } catch (err) {
       console.error('发送买点飞书通知失败:', err);
     }
@@ -972,7 +962,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
           const stocks = buyableRef.current || [];
           setPopupStocks(stocks);
           setPopupVisible(true);
-          sendBuyPointFeishu(stocks);
+          sendBuyPointFeishu();
         }
       }
     } catch (err) {

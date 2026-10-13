@@ -862,5 +862,21 @@
       "lowAvg": -3.309
     },
     "timestamp": "2026-10-12 15:01:11"
+  },
+  {
+    "date": 20261013,
+    "score": 133,
+    "level": 4,
+    "label": "温和回升",
+    "desc": "资金开始试探性给远期叙事定价，风险偏好修复中",
+    "detail": {
+      "spread": 0.557,
+      "breadth": 0.085,
+      "attackTilt": 0.85,
+      "avgChange": 0.949,
+      "highAvg": 1.835,
+      "lowAvg": 1.277
+    },
+    "timestamp": "2026-10-13 15:01:14"
   }
 ]

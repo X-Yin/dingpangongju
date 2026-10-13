@@ -470,7 +470,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         if (now - lastAutoBuyPointOpenRef.current >= 5 * 60 * 1000) {
           lastAutoBuyPointOpenRef.current = now;
           setBuyPointDrawerOpen(true);
-          // 发送买点诊断飞书卡片（前三日涨幅最大前三名由后端拉取并附在卡片中）
+          // 发送买点诊断飞书卡片（自选股 3 日涨幅榜前三由后端与开盘实战页同源拉取，并点出其中的买点候选）
           try {
             await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'buy_point' });
           } catch (err) {

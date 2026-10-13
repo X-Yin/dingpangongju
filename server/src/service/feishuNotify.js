@@ -58,13 +58,14 @@ function buildMarketSnapshotText({ mainMoney, amountChangeDiff, chuangyeban, kec
   return `资金：${mainMoney || '--'}、成交量：${amountChangeDiff || '--'}、创业指数：${formatIndex(chuangyeban)}、科创指数：${formatIndex(kechuangban)}、科技情绪：${emotionText}`;
 }
 
-// 买点诊断卡片：绿色主题，列出命中买点的可买标的（已按板块过滤涨停板）
+// 买点诊断卡片：绿色主题，列出「开盘实战」页自选股 3 日涨幅榜前三，并点出其中的买点候选
 function buildBuyPointCard({ buyStocks, topStocks, timestamp }) {
   const list = Array.isArray(buyStocks) ? buyStocks : (Array.isArray(topStocks) ? topStocks : []);
+  const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
   const elements = [
     {
       tag: "markdown",
-      content: `**🎯【买点诊断】命中买点，可买标的（已过滤涨停板）**\n> ${timestamp || '--'}`,
+      content: `**🎯【买点诊断】命中买点**\n> ${timestamp || '--'}`,
     },
     {
       tag: "hr",
@@ -72,23 +73,27 @@ function buildBuyPointCard({ buyStocks, topStocks, timestamp }) {
   ];
 
   if (list.length === 0) {
-    elements.push({ tag: "markdown", content: "当前无满足买点条件且未封涨停的可买标的。" });
+    elements.push({ tag: "markdown", content: "当前自选股 3 日涨幅榜无可展示标的（创业板指 / 科创50 均不满足买点门槛）。" });
   } else {
+    elements.push({ tag: "markdown", content: "**自选股 3 日涨幅榜前三**（与开盘实战页榜单一致）" });
     list.forEach((s, i) => {
-      const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
       const resilience = (s.resilienceScore == null || isNaN(Number(s.resilienceScore)))
         ? '--'
         : Number(s.resilienceScore).toFixed(2);
+      const candidateTag = s.isCandidate ? '　🎯**买点候选**' : '';
       elements.push({
         tag: "div",
         fields: [
-          { is_short: true, text: { tag: "lark_md", content: `**${i + 1}. ${s.stockName || '--'}**（${s.code || '--'}）` } },
+          { is_short: true, text: { tag: "lark_md", content: `**${i + 1}. ${s.stockName || '--'}**（${s.code || '--'}）${candidateTag}` } },
           { is_short: true, text: { tag: "lark_md", content: `市场：${s.market || '--'}` } },
           { is_short: true, text: { tag: "lark_md", content: `当日：${fmtPct(s.change)}` } },
           { is_short: true, text: { tag: "lark_md", content: `3日：${fmtPct(s.change3d)}　抗分歧：${resilience}` } },
         ],
       });
     });
+    if (list.some((s) => s.isCandidate)) {
+      elements.push({ tag: "markdown", content: "**🎯 买点候选：榜单内满足买点资格且未封涨停的标的。**" });
+    }
   }
 
   elements.push({

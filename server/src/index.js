@@ -953,11 +953,11 @@ app.post('/buy_point_single_stock_diagnosis', async (req, res) => {
 //   sellStocks?: [             // type='sell_point' 时必填：触发卖点的持仓股
 //     { stockName, code, reasons: string[], closePrice? }
 //   ]
-//   topStocks?: [              // type='buy_point' 时可传，mock 前三日涨幅前三名；缺省则后端真实拉取
+//   topStocks?: [              // type='buy_point' 时可传，mock 指定榜单；缺省则后端与「开盘实战」页同源拉取
 //     { stockName, code, change3d }
 //   ]
-//   buyStocks?: [              // type='buy_point' 时可传，命中买点的可买标的（已过滤涨停），优先于 topStocks
-//     { stockName, code, market, change, change3d, resilienceScore }
+//   buyStocks?: [              // type='buy_point' 时可传，直接指定卡片标的（优先于 topStocks 及后端拉取）
+//     { stockName, code, market, change, change3d, resilienceScore, isCandidate? }
 //   ]
 // }
 app.post('/send_feishu_card', async (req, res) => {
@@ -969,21 +969,39 @@ app.post('/send_feishu_card', async (req, res) => {
 
     let card;
     if (type === 'buy_point') {
-      // 买点卡片：优先使用前端传入的命中买点可买标的（已过滤涨停板）
-      let resultStocks = buyStocks;
-      if (!Array.isArray(resultStocks)) {
-        if (Array.isArray(topStocks)) {
-          resultStocks = topStocks;
-        } else {
-          const { getBuyPointStocks } = require('./service/buySellDiagnose');
-          const stocksRes = await getBuyPointStocks(null, 'change');
-          const matched = stocksRes?.data?.matchedStocks || [];
-          resultStocks = matched.slice(0, 3).map((s) => ({
-            stockName: s.stockName,
-            code: s.code,
-            change: s.change,
-            change3d: s.change3d,
-          }));
+      // 买点卡片：优先使用前端传入的标的；未传入时与「开盘实战」页自选股 3 日涨幅榜同源，
+      // 严格取榜单前三，并点出其中的买点候选（榜单内首个满足买点资格且未封涨停的标的）
+      let resultStocks = Array.isArray(buyStocks) && buyStocks.length > 0
+        ? buyStocks
+        : (Array.isArray(topStocks) && topStocks.length > 0 ? topStocks : null);
+      if (!resultStocks) {
+        const gainers = await getTopGainersByMarket(null, 10);
+        const d = gainers?.data || {};
+        const cybPassed = d.cybGate?.passed === true;
+        const starPassed = d.starGate?.passed === true;
+        // 仅纳入满足买点门槛的市场，按 3 日涨幅降序合并前十（与前端 mergedList 口径完全一致）
+        const merged = [
+          ...(cybPassed ? (d.markets?.cybMain || []) : []),
+          ...(starPassed ? (d.markets?.star || []) : []),
+        ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
+        const toRow = (s) => ({
+          stockName: s.stockName,
+          code: s.code,
+          market: s.isSh688 ? '科创板' : '创业板/主板',
+          change: s.change,
+          change3d: s.change3d,
+          resilienceScore: s.resilienceScore,
+        });
+        // 买点候选：与前端 globalPick 一致，榜单内首个满足买点资格且未封涨停的标的
+        const candidate = merged.find((s) => s.matchesBuyPoint && !s.isLimitUp) || null;
+        const top3 = merged.slice(0, 3);
+        resultStocks = top3.map((s) => ({
+          ...toRow(s),
+          isCandidate: candidate != null && s.code === candidate.code,
+        }));
+        // 候选不在前三时补一行，保证买点候选始终被点出
+        if (candidate && !top3.some((s) => s.code === candidate.code)) {
+          resultStocks.push({ ...toRow(candidate), isCandidate: true });
         }
       }
       card = feishuNotify.buildBuyPointCard({

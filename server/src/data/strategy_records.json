@@ -52,7 +52,7 @@
   {
     "id": "a7e18dfec80c0477",
     "time": "2026-10-13 13:00:00",
-    "read": false,
+    "read": true,
     "strategyId": "straight_rise_no_volume",
     "title": "⚠️ 无量拉升警惕回落",
     "description": "创业板5分钟上涨1.26%，但成交量仅增加 <strong>0亿</strong>（不足100亿），无量上涨持续性存疑，容易回落。",

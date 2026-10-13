@@ -1,5 +1,160 @@
 [
   {
+    "date": "20261013",
+    "blocks": {
+      "磷化铟": {
+        "avgChange": 10.09
+      },
+      "MPO": {
+        "avgChange": 5.67
+      },
+      "军工": {
+        "avgChange": 5.5
+      },
+      "CCL": {
+        "avgChange": 5.31
+      },
+      "染料": {
+        "avgChange": 4.57
+      },
+      "pcb": {
+        "avgChange": 4.36
+      },
+      "cpo": {
+        "avgChange": 3.45
+      },
+      "粮食": {
+        "avgChange": 2.71
+      },
+      "煤炭": {
+        "avgChange": 2.5
+      },
+      "玻璃基板": {
+        "avgChange": 2.46
+      },
+      "光芯片": {
+        "avgChange": 2.43
+      },
+      "消费": {
+        "avgChange": 1.96
+      },
+      "PPE树脂": {
+        "avgChange": 1.85
+      },
+      "光纤": {
+        "avgChange": 1.37
+      },
+      "光模块": {
+        "avgChange": 1.36
+      },
+      "贵金属": {
+        "avgChange": 1.26
+      },
+      "金刚石散热": {
+        "avgChange": 1.16
+      },
+      "银行": {
+        "avgChange": 0.95
+      },
+      "端侧AI": {
+        "avgChange": 0.9
+      },
+      "商业航天": {
+        "avgChange": 0.76
+      },
+      "功率半导体": {
+        "avgChange": 0.68
+      },
+      "铜箔": {
+        "avgChange": 0.52
+      },
+      "AI 应用": {
+        "avgChange": 0.52
+      },
+      "电子布": {
+        "avgChange": 0.38
+      },
+      "先进封装": {
+        "avgChange": 0.36
+      },
+      "MLCC": {
+        "avgChange": 0.17
+      },
+      "液冷": {
+        "avgChange": 0.12
+      },
+      "厄尔尼诺": {
+        "avgChange": 0.09
+      },
+      "半导体材料": {
+        "avgChange": 0.05
+      },
+      "医药": {
+        "avgChange": 0.03
+      },
+      "半导体": {
+        "avgChange": 0.02
+      },
+      "国产超节点": {
+        "avgChange": -0.08
+      },
+      "电力": {
+        "avgChange": -0.14
+      },
+      "证券": {
+        "avgChange": -0.46
+      },
+      "钨": {
+        "avgChange": -0.51
+      },
+      "机器人": {
+        "avgChange": -0.55
+      },
+      "存储": {
+        "avgChange": -0.57
+      },
+      "AI电源": {
+        "avgChange": -0.96
+      },
+      "特高压": {
+        "avgChange": -0.98
+      },
+      "游戏": {
+        "avgChange": -1.17
+      },
+      "AI 安全": {
+        "avgChange": -1.25
+      },
+      "MFC": {
+        "avgChange": -1.31
+      },
+      "北美缺电": {
+        "avgChange": -1.45
+      },
+      "AI-EDA": {
+        "avgChange": -1.51
+      },
+      "化工": {
+        "avgChange": -1.54
+      },
+      "cpu": {
+        "avgChange": -1.93
+      },
+      "房地产": {
+        "avgChange": -1.99
+      },
+      "锂电": {
+        "avgChange": -3.51
+      },
+      "AI 医药": {
+        "avgChange": -3.69
+      },
+      "固态电池": {
+        "avgChange": -6.36
+      }
+    }
+  },
+  {
     "date": "20261012",
     "blocks": {
       "乳酸PLA": {
