@@ -488,5 +488,15 @@
     "secu_code": "sz300182",
     "secu_name": "捷成股份",
     "TotalShares": 2663825632
+  },
+  {
+    "secu_code": "sz301269",
+    "secu_name": "华大九天",
+    "TotalShares": 547874648
+  },
+  {
+    "secu_code": "sz300304",
+    "secu_name": "云意电气",
+    "TotalShares": 878143718
   }
 ]

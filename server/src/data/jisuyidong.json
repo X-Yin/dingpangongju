@@ -1,596 +1,422 @@
 {
-  "sh688981": {
-    "stockName": "中芯国际",
-    "change": -1.6,
-    "up": 3,
-    "down": 3
+  "sh688072": {
+    "stockName": "拓荆科技",
+    "change": -5.21,
+    "up": 5,
+    "down": 7
   },
   "sz002371": {
     "stockName": "北方华创",
-    "change": -0.34,
-    "up": 20,
-    "down": 7
+    "change": -1.36,
+    "up": 2,
+    "down": 5
   },
   "sh688048": {
     "stockName": "长光华芯",
-    "change": -4.64,
-    "up": 18,
-    "down": 23
-  },
-  "sh603256": {
-    "stockName": "宏和科技",
-    "change": -4.44,
-    "up": 12,
-    "down": 10
-  },
-  "sz300408": {
-    "stockName": "三环集团",
-    "change": -3.76,
-    "up": 11,
-    "down": 5
-  },
-  "sh688630": {
-    "stockName": "芯基微装",
-    "change": -2.43,
-    "up": 47,
-    "down": 37
-  },
-  "sz002436": {
-    "stockName": "兴森科技",
-    "change": -7.17,
-    "up": 33,
-    "down": 23
-  },
-  "sz001309": {
-    "stockName": "德明利",
-    "change": -3.62,
-    "up": 11,
-    "down": 5
-  },
-  "sz300285": {
-    "stockName": "国瓷材料",
-    "change": -6.76,
-    "up": 18,
-    "down": 23
-  },
-  "sz002046": {
-    "stockName": "国机精工",
-    "change": -3.87,
-    "up": 17,
-    "down": 15
-  },
-  "sz300604": {
-    "stockName": "长川科技",
-    "change": -3.51,
-    "up": 43,
-    "down": 26
-  },
-  "sh688123": {
-    "stockName": "聚辰股份",
-    "change": -7.88,
-    "up": 35,
-    "down": 23
-  },
-  "sh688629": {
-    "stockName": "华丰科技",
-    "change": -4.2,
-    "up": 13,
-    "down": 20
-  },
-  "sh688025": {
-    "stockName": "杰普特",
-    "change": -5.38,
-    "up": 95,
-    "down": 71
-  },
-  "sh688519": {
-    "stockName": "南亚新材",
-    "change": -3.34,
-    "up": 60,
-    "down": 52
-  },
-  "sz002636": {
-    "stockName": "金安国纪",
-    "change": -8.54,
-    "up": 22,
-    "down": 36
-  },
-  "sh688625": {
-    "stockName": "呈和科技",
-    "change": -6.59,
-    "up": 105,
-    "down": 204
-  },
-  "sz002536": {
-    "stockName": "飞龙股份",
-    "change": -0.57,
-    "up": 36,
-    "down": 16
-  },
-  "sh688403": {
-    "stockName": "汇成股份",
-    "change": -2.66,
-    "up": 16,
-    "down": 24
-  },
-  "sz300570": {
-    "stockName": "太辰光",
-    "change": -3.4,
-    "up": 39,
-    "down": 48
-  },
-  "sz002475": {
-    "stockName": "立讯精密",
-    "change": -0.17,
-    "up": 14,
-    "down": 6
-  },
-  "sh600176": {
-    "stockName": "中国巨石",
-    "change": -0.36,
-    "up": 8,
-    "down": 20
-  },
-  "sz300776": {
-    "stockName": "帝尔激光",
-    "change": -5.86,
-    "up": 33,
-    "down": 42
-  },
-  "sz300394": {
-    "stockName": "天孚通信",
-    "change": 0.78,
-    "up": 45,
-    "down": 28
-  },
-  "sh688012": {
-    "stockName": "中微公司",
-    "change": 0.72,
-    "up": 11,
-    "down": 5
-  },
-  "sh688700": {
-    "stockName": "东威科技",
-    "change": -3.56,
-    "up": 19,
-    "down": 21
-  },
-  "sh603061": {
-    "stockName": "金海通",
-    "change": -0.05,
-    "up": 77,
-    "down": 67
-  },
-  "sh688256": {
-    "stockName": "寒武纪",
-    "change": -0.93,
-    "up": 24,
-    "down": 16
-  },
-  "sh603228": {
-    "stockName": "景旺电子",
-    "change": -0.92,
-    "up": 95,
-    "down": 118
-  },
-  "sz002080": {
-    "stockName": "中材科技",
-    "change": 0.58,
-    "up": 18,
-    "down": 29
-  },
-  "sz002384": {
-    "stockName": "东山精密",
-    "change": -6.59,
-    "up": 12,
-    "down": 8
-  },
-  "sh688082": {
-    "stockName": "盛美上海",
-    "change": -1.01,
-    "up": 107,
-    "down": 109
-  },
-  "sh688362": {
-    "stockName": "甬矽电子",
-    "change": -1.63,
-    "up": 23,
-    "down": 12
-  },
-  "sh688702": {
-    "stockName": "盛科通信",
-    "change": -3.81,
-    "up": 31,
-    "down": 33
-  },
-  "sz301165": {
-    "stockName": "锐捷网络",
-    "change": -1.71,
-    "up": 15,
-    "down": 6
-  },
-  "sz002126": {
-    "stockName": "银轮股份",
-    "change": -1.4,
+    "change": -6.88,
     "up": 3,
-    "down": 6
-  },
-  "sz002409": {
-    "stockName": "雅克科技",
-    "change": -3.27,
-    "up": 30,
-    "down": 18
-  },
-  "sz300567": {
-    "stockName": "精测电子",
-    "change": -0.73,
-    "up": 38,
-    "down": 34
-  },
-  "sz301297": {
-    "stockName": "富乐德",
-    "change": -5.64,
-    "up": 20,
-    "down": 16
-  },
-  "sh688072": {
-    "stockName": "拓荆科技",
-    "change": 3.03,
-    "up": 70,
-    "down": 43
-  },
-  "sz301217": {
-    "stockName": "铜冠铜箔",
-    "change": -4.24,
-    "up": 30,
-    "down": 10
-  },
-  "sz300502": {
-    "stockName": "新易盛",
-    "change": -1.4,
-    "up": 14,
-    "down": 1
-  },
-  "sh688498": {
-    "stockName": "源杰科技",
-    "change": -6.96,
-    "up": 45,
-    "down": 37
-  },
-  "sh688808": {
-    "stockName": "联讯仪器",
-    "change": -7.99,
-    "up": 136,
-    "down": 120
-  },
-  "sh688313": {
-    "stockName": "仕佳光子",
-    "change": -4.21,
-    "up": 18,
-    "down": 20
-  },
-  "sz301377": {
-    "stockName": "鼎泰高科",
-    "change": -3.05,
-    "up": 22,
-    "down": 24
-  },
-  "sh688028": {
-    "stockName": "沃尔德",
-    "change": -5.08,
-    "up": 41,
-    "down": 41
-  },
-  "sh601208": {
-    "stockName": "东材科技",
-    "change": -4.33,
-    "up": 33,
-    "down": 36
-  },
-  "sz301526": {
-    "stockName": "国际复材",
-    "change": -0.32,
-    "up": 20,
     "down": 13
-  },
-  "sz301183": {
-    "stockName": "东田微",
-    "change": -3.47,
-    "up": 55,
-    "down": 36
-  },
-  "sz000823": {
-    "stockName": "超声电子",
-    "change": -3.84,
-    "up": 57,
-    "down": 30
-  },
-  "sh688347": {
-    "stockName": "华虹",
-    "change": -4.13,
-    "up": 26,
-    "down": 11
-  },
-  "sh688361": {
-    "stockName": "中科飞测",
-    "change": 2.01,
-    "up": 36,
-    "down": 43
-  },
-  "sh600601": {
-    "stockName": "方正科技",
-    "change": -2.18,
-    "up": 31,
-    "down": 25
-  },
-  "sz300548": {
-    "stockName": "长芯博创",
-    "change": -5.15,
-    "up": 31,
-    "down": 22
-  },
-  "sz300757": {
-    "stockName": "罗博特科",
-    "change": -3.57,
-    "up": 7,
-    "down": 8
-  },
-  "sz002851": {
-    "stockName": "麦格米特",
-    "change": 0.54,
-    "up": 32,
-    "down": 13
-  },
-  "sz002428": {
-    "stockName": "云南锗业",
-    "change": -7.02,
-    "up": 17,
-    "down": 15
-  },
-  "sh688147": {
-    "stockName": "微导纳米",
-    "change": 1,
-    "up": 47,
-    "down": 45
-  },
-  "sh603986": {
-    "stockName": "兆易创新",
-    "change": -4.78,
-    "up": 5,
-    "down": 3
-  },
-  "sz002156": {
-    "stockName": "通富微电",
-    "change": -3.35,
-    "up": 2,
-    "down": 3
-  },
-  "sh688041": {
-    "stockName": "海光信息",
-    "change": -1.14,
-    "up": 5,
-    "down": 4
-  },
-  "sz002916": {
-    "stockName": "深南电路",
-    "change": -5.77,
-    "up": 11,
-    "down": 11
-  },
-  "sh603757": {
-    "stockName": "大元泵业",
-    "change": 2.38,
-    "up": 8,
-    "down": 13
-  },
-  "sz301018": {
-    "stockName": "申菱环境",
-    "change": -2.43,
-    "up": 30,
-    "down": 9
-  },
-  "sz301511": {
-    "stockName": "德福科技",
-    "change": -4.93,
-    "up": 24,
-    "down": 12
-  },
-  "sz300308": {
-    "stockName": "中际旭创",
-    "change": -1.32,
-    "up": 8,
-    "down": 1
-  },
-  "sh603186": {
-    "stockName": "华正新材",
-    "change": -8.46,
-    "up": 33,
-    "down": 40
-  },
-  "sh688120": {
-    "stockName": "华海清科",
-    "change": 2.92,
-    "up": 26,
-    "down": 13
-  },
-  "sh600707": {
-    "stockName": "彩虹股份",
-    "change": -5.38,
-    "up": 9,
-    "down": 11
-  },
-  "sz002837": {
-    "stockName": "英维克",
-    "change": -3.71,
-    "up": 10,
-    "down": 5
-  },
-  "sz300395": {
-    "stockName": "菲利华",
-    "change": -4.48,
-    "up": 9,
-    "down": 12
-  },
-  "sh688825": {
-    "stockName": "长鑫科技",
-    "change": -2.02,
-    "up": 3,
-    "down": 5
-  },
-  "sh603083": {
-    "stockName": "剑桥科技",
-    "change": -8.4,
-    "up": 22,
-    "down": 13
-  },
-  "sz301021": {
-    "stockName": "英诺激光",
-    "change": -2.1,
-    "up": 41,
-    "down": 32
-  },
-  "sh688809": {
-    "stockName": "强一股份",
-    "change": -3.79,
-    "up": 114,
-    "down": 83
-  },
-  "sh688008": {
-    "stockName": "澜起科技",
-    "change": -1.17,
-    "up": 4,
-    "down": 5
-  },
-  "sz002463": {
-    "stockName": "沪电股份",
-    "change": -1.88,
-    "up": 22,
-    "down": 11
-  },
-  "sz002008": {
-    "stockName": "大族激光",
-    "change": -6.49,
-    "up": 11,
-    "down": 8
-  },
-  "sh600105": {
-    "stockName": "永鼎股份",
-    "change": -4.22,
-    "up": 11,
-    "down": 16
-  },
-  "sh601869": {
-    "stockName": "长飞光纤",
-    "change": -5.64,
-    "up": 6,
-    "down": 16
-  },
-  "sh688200": {
-    "stockName": "华峰测控",
-    "change": 2.01,
-    "up": 60,
-    "down": 36
-  },
-  "sh600487": {
-    "stockName": "亨通光电",
-    "change": -3.85,
-    "up": 4,
-    "down": 3
-  },
-  "sh600584": {
-    "stockName": "长电科技",
-    "change": -3.76,
-    "up": 4,
-    "down": 3
-  },
-  "sz000636": {
-    "stockName": "风华高科",
-    "change": -6.25,
-    "up": 11,
-    "down": 11
-  },
-  "sz000977": {
-    "stockName": "浪潮信息",
-    "change": -1.78,
-    "up": 2,
-    "down": 1
-  },
-  "sh600641": {
-    "stockName": "先导基电",
-    "change": -2.4,
-    "up": 24,
-    "down": 14
-  },
-  "sh603002": {
-    "stockName": "宏昌电子",
-    "change": -9.9,
-    "up": 21,
-    "down": 26
-  },
-  "sh601138": {
-    "stockName": "工业富联",
-    "change": -5.07,
-    "up": 16,
-    "down": 5
-  },
-  "sh603119": {
-    "stockName": "浙江荣泰",
-    "change": -5.93,
-    "up": 13,
-    "down": 9
-  },
-  "sh603650": {
-    "stockName": "彤程新材",
-    "change": -0.73,
-    "up": 25,
-    "down": 12
   },
   "sh600183": {
     "stockName": "生益科技",
-    "change": -3.14,
-    "up": 13,
-    "down": 10
-  },
-  "sz300476": {
-    "stockName": "胜宏科技",
-    "change": -1.61,
-    "up": 3,
-    "down": 2
-  },
-  "sz000657": {
-    "stockName": "中钨高新",
-    "change": -3.56,
-    "up": 5,
+    "change": -7.06,
+    "up": 1,
     "down": 0
   },
-  "sz002050": {
-    "stockName": "三花智控",
-    "change": -0.68,
+  "sh600487": {
+    "stockName": "亨通光电",
+    "change": -3.64,
     "up": 0,
     "down": 1
   },
-  "sz000725": {
-    "stockName": "京东方",
-    "change": -2.36,
-    "up": 4,
-    "down": 8
+  "sz002436": {
+    "stockName": "兴森科技",
+    "change": -6.7,
+    "up": 2,
+    "down": 1
   },
-  "sh603629": {
-    "stockName": "利通电子",
-    "change": -3.32,
+  "sz300567": {
+    "stockName": "精测电子",
+    "change": -3.59,
+    "up": 5,
+    "down": 7
+  },
+  "sh600584": {
+    "stockName": "长电科技",
+    "change": -4.62,
     "up": 3,
     "down": 0
   },
-  "sz300413": {
-    "stockName": "芒果超媒",
-    "change": 5.35,
-    "up": 77,
-    "down": 65
+  "sz002156": {
+    "stockName": "通富微电",
+    "change": -3.21,
+    "up": 0,
+    "down": 1
+  },
+  "sz300285": {
+    "stockName": "国瓷材料",
+    "change": -7.17,
+    "up": 4,
+    "down": 9
+  },
+  "sz301165": {
+    "stockName": "锐捷网络",
+    "change": -2.35,
+    "up": 1,
+    "down": 0
+  },
+  "sh603083": {
+    "stockName": "剑桥科技",
+    "change": -8.13,
+    "up": 2,
+    "down": 1
+  },
+  "sh603119": {
+    "stockName": "浙江荣泰",
+    "change": -3.53,
+    "up": 5,
+    "down": 1
+  },
+  "sz301183": {
+    "stockName": "东田微",
+    "change": -4.49,
+    "up": 2,
+    "down": 6
+  },
+  "sh688028": {
+    "stockName": "沃尔德",
+    "change": -9.22,
+    "up": 2,
+    "down": 11
+  },
+  "sz301297": {
+    "stockName": "富乐德",
+    "change": -2.43,
+    "up": 4,
+    "down": 7
+  },
+  "sz300604": {
+    "stockName": "长川科技",
+    "change": -4.58,
+    "up": 10,
+    "down": 10
+  },
+  "sh688123": {
+    "stockName": "聚辰股份",
+    "change": -2.49,
+    "up": 6,
+    "down": 7
   },
   "sz300182": {
     "stockName": "捷成股份",
-    "change": 2.7,
-    "up": 37,
-    "down": 156
+    "change": -1.59,
+    "up": 4,
+    "down": 4
+  },
+  "sh688981": {
+    "stockName": "中芯国际",
+    "change": -2.51,
+    "up": 2,
+    "down": 1
+  },
+  "sz300394": {
+    "stockName": "天孚通信",
+    "change": -5.82,
+    "up": 6,
+    "down": 5
+  },
+  "sz002050": {
+    "stockName": "三花智控",
+    "change": -1.74,
+    "up": 5,
+    "down": 4
+  },
+  "sz300548": {
+    "stockName": "长芯博创",
+    "change": -4.8,
+    "up": 3,
+    "down": 2
+  },
+  "sz300476": {
+    "stockName": "胜宏科技",
+    "change": -5.99,
+    "up": 3,
+    "down": 5
+  },
+  "sz000657": {
+    "stockName": "中钨高新",
+    "change": -2.81,
+    "up": 1,
+    "down": 0
+  },
+  "sz301526": {
+    "stockName": "国际复材",
+    "change": -4.71,
+    "up": 11,
+    "down": 15
+  },
+  "sz301377": {
+    "stockName": "鼎泰高科",
+    "change": -3.25,
+    "up": 1,
+    "down": 7
+  },
+  "sh688025": {
+    "stockName": "杰普特",
+    "change": -2.24,
+    "up": 1,
+    "down": 5
+  },
+  "sh603986": {
+    "stockName": "兆易创新",
+    "change": -6.7,
+    "up": 1,
+    "down": 5
+  },
+  "sh688498": {
+    "stockName": "源杰科技",
+    "change": -10.88,
+    "up": 2,
+    "down": 8
+  },
+  "sh688630": {
+    "stockName": "芯基微装",
+    "change": -6.19,
+    "up": 15,
+    "down": 15
+  },
+  "sz002428": {
+    "stockName": "云南锗业",
+    "change": -6.88,
+    "up": 2,
+    "down": 6
+  },
+  "sz300570": {
+    "stockName": "太辰光",
+    "change": -8.17,
+    "up": 1,
+    "down": 0
+  },
+  "sz300776": {
+    "stockName": "帝尔激光",
+    "change": -10.01,
+    "up": 7,
+    "down": 10
+  },
+  "sh688625": {
+    "stockName": "呈和科技",
+    "change": -4.01,
+    "up": 3,
+    "down": 4
+  },
+  "sz300757": {
+    "stockName": "罗博特科",
+    "change": -6.56,
+    "up": 3,
+    "down": 9
+  },
+  "sh688082": {
+    "stockName": "盛美上海",
+    "change": -3.78,
+    "up": 2,
+    "down": 3
+  },
+  "sh688200": {
+    "stockName": "华峰测控",
+    "change": -3.4,
+    "up": 0,
+    "down": 3
+  },
+  "sz000977": {
+    "stockName": "浪潮信息",
+    "change": -1.64,
+    "up": 0,
+    "down": 1
+  },
+  "sh600707": {
+    "stockName": "彩虹股份",
+    "change": -2.2,
+    "up": 0,
+    "down": 3
+  },
+  "sh688808": {
+    "stockName": "联讯仪器",
+    "change": 6.81,
+    "up": 0,
+    "down": 15
+  },
+  "sh688012": {
+    "stockName": "中微公司",
+    "change": -6.85,
+    "up": 1,
+    "down": 0
+  },
+  "sz002126": {
+    "stockName": "银轮股份",
+    "change": -1.57,
+    "up": 1,
+    "down": 4
+  },
+  "sh603256": {
+    "stockName": "宏和科技",
+    "change": -5.63,
+    "up": 2,
+    "down": 10
+  },
+  "sh688702": {
+    "stockName": "盛科通信",
+    "change": -8.88,
+    "up": 2,
+    "down": 1
+  },
+  "sh688403": {
+    "stockName": "汇成股份",
+    "change": 2.75,
+    "up": 4,
+    "down": 2
+  },
+  "sz002409": {
+    "stockName": "雅克科技",
+    "change": -7.66,
+    "up": 4,
+    "down": 4
+  },
+  "sh600176": {
+    "stockName": "中国巨石",
+    "change": -3.34,
+    "up": 4,
+    "down": 4
+  },
+  "sz300304": {
+    "stockName": "云意电气",
+    "change": 0.9,
+    "up": 0,
+    "down": 2
+  },
+  "sh688519": {
+    "stockName": "南亚新材",
+    "change": -4.19,
+    "up": 2,
+    "down": 7
+  },
+  "sz301269": {
+    "stockName": "华大九天",
+    "change": -2.37,
+    "up": 0,
+    "down": 1
+  },
+  "sz002916": {
+    "stockName": "深南电路",
+    "change": -5.42,
+    "up": 0,
+    "down": 8
+  },
+  "sz301021": {
+    "stockName": "英诺激光",
+    "change": -2.68,
+    "up": 1,
+    "down": 1
+  },
+  "sh688147": {
+    "stockName": "微导纳米",
+    "change": -7.71,
+    "up": 2,
+    "down": 2
+  },
+  "sh601138": {
+    "stockName": "工业富联",
+    "change": -3.55,
+    "up": 0,
+    "down": 2
+  },
+  "sh688313": {
+    "stockName": "仕佳光子",
+    "change": -10.31,
+    "up": 6,
+    "down": 10
+  },
+  "sh688120": {
+    "stockName": "华海清科",
+    "change": -3.82,
+    "up": 0,
+    "down": 6
+  },
+  "sh688361": {
+    "stockName": "中科飞测",
+    "change": -5.96,
+    "up": 0,
+    "down": 4
+  },
+  "sz002046": {
+    "stockName": "国机精工",
+    "change": -3.29,
+    "up": 0,
+    "down": 2
+  },
+  "sz301018": {
+    "stockName": "申菱环境",
+    "change": -3.69,
+    "up": 1,
+    "down": 2
+  },
+  "sh688629": {
+    "stockName": "华丰科技",
+    "change": 1.07,
+    "up": 0,
+    "down": 3
+  },
+  "sz001309": {
+    "stockName": "德明利",
+    "change": -8.1,
+    "up": 3,
+    "down": 0
+  },
+  "sh688700": {
+    "stockName": "东威科技",
+    "change": -7.45,
+    "up": 3,
+    "down": 2
+  },
+  "sh688347": {
+    "stockName": "华虹",
+    "change": -4.01,
+    "up": 0,
+    "down": 1
+  },
+  "sh603061": {
+    "stockName": "金海通",
+    "change": -5.08,
+    "up": 0,
+    "down": 1
+  },
+  "sz300413": {
+    "stockName": "芒果超媒",
+    "change": -2.48,
+    "up": 4,
+    "down": 9
+  },
+  "sh688809": {
+    "stockName": "强一股份",
+    "change": -1.09,
+    "up": 1,
+    "down": 0
+  },
+  "sz002851": {
+    "stockName": "麦格米特",
+    "change": -3.47,
+    "up": 0,
+    "down": 1
+  },
+  "sh688256": {
+    "stockName": "寒武纪",
+    "change": -1.22,
+    "up": 0,
+    "down": 3
+  },
+  "sh600641": {
+    "stockName": "先导基电",
+    "change": -4.57,
+    "up": 3,
+    "down": 0
   }
 }

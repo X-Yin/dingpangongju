@@ -47,7 +47,8 @@ const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats')
 //   买入次日起生效；当日买入次日才可卖；当日卖出后当日不再追买。全仓，收益率不做半仓折算。
 //
 // 情绪龙头+科技进攻（leaderTechCombo: true，2026-10-12 用户新增；走本引擎的组合分支）：
-//   在「情绪游资-龙头战法」基础上叠加「3日涨幅最大&三日情绪-60快进快出」的独立买点，两者共用一个全仓单持仓账户：
+//   在「情绪游资-龙头战法」基础上叠加「3日涨幅最大&三日情绪-60快进快出」的独立买点，两者共用一个单持仓账户
+//   （①情绪游资按半仓计收益[权重 0.5]、②快进快出按全仓计收益[权重 1]）：
 //   空仓时逐桶判定：同一桶两套买点同时触发 → 先买情绪游资（①龙头战法）；非同时触发 → 谁先触发买谁（先成交即持仓）；
 //   卖点各用各的：①情绪游资仓位走龙头战法 6 条卖点；②快进快出仓位走快进快出卖点（次日 10:00 强卖 / 盘中 -2% 止损 / 否则通用 7 条件）；
 //   当日卖出仅禁止同路再买：快进快出强卖/止损当日仅②那路不再买入（①仍可出手）；①卖出当日仅①那路不再追买（②仍可出手）。
@@ -142,6 +143,9 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
   }
   const combo = strategy.leaderTechCombo === true; // 情绪龙头+科技进攻 / 科技进攻+情绪龙头：叠加②快进快出买点/卖点
   const techFirst = strategy.techFirst === true;   // 科技进攻+情绪龙头：反优先级（同一桶②优先、持仓①龙头时②触发立即切换卖出）
+  // ①情绪龙头仓位权重：组合策略（科技进攻+情绪龙头 / 情绪龙头+科技进攻）下①按半仓计收益（占 50% 资金），
+  // ②科技进攻仍按全仓；纯「情绪游资-龙头战法」保持全仓。逐笔复利口径下即为账户真实收益。
+  const leaderWeight = combo ? 0.5 : 1;
   // 不依赖资金快照：日期序列并入 tech_index 覆盖的交易日（补上缺资金快照的日期）
   const allDates = Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]));
   const rangeDates = allDates.filter(d => d >= startDate && d <= endDate).sort();
@@ -419,7 +423,7 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
               base: position.base,
               baseDate: position.baseDate,
               positionMode: 'offense',
-              weight: 1,
+              weight: leaderWeight,
               buyDate: position.buyDate,
               buyDateDisplay: position.buyDateDisplay,
               buyTime: position.buyTime,
@@ -432,8 +436,8 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
               sellTime: fmtMinute(atPt.minute),
               sellPrice: parseFloat(px.toFixed(2)),
               sellChange,
-              sellReason: `${sellReason}，情绪游资-龙头战法持仓卖出（全仓）`,
-              returnRate: rawReturnRate,
+              sellReason: `${sellReason}，情绪游资-龙头战法持仓卖出（${leaderWeight === 0.5 ? '半仓' : '全仓'}）`,
+              returnRate: rawReturnRate != null ? parseFloat((rawReturnRate * leaderWeight).toFixed(2)) : null,
               rawReturnRate,
             });
             position = null;
@@ -470,7 +474,7 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
                 base: position.base,
                 baseDate: position.baseDate,
                 positionMode: 'offense',
-                weight: 1,
+                weight: leaderWeight,
                 buyDate: position.buyDate,
                 buyDateDisplay: position.buyDateDisplay,
                 buyTime: position.buyTime,
@@ -483,8 +487,8 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
                 sellTime: fmtMinute(atPt.minute),
                 sellPrice: parseFloat(px.toFixed(2)),
                 sellChange: changePct,
-                sellReason: `科技进攻（②快进快出）买点盘中触发，立即切换卖出情绪游资-龙头持仓（全仓），改买科技进攻选中个股 ${emoPick.stockName}`,
-                returnRate: rawReturnRate,
+                sellReason: `科技进攻（②快进快出）买点盘中触发，立即切换卖出情绪游资-龙头持仓（${leaderWeight === 0.5 ? '半仓' : '全仓'}），改买科技进攻选中个股 ${emoPick.stockName}`,
+                returnRate: rawReturnRate != null ? parseFloat((rawReturnRate * leaderWeight).toFixed(2)) : null,
                 rawReturnRate,
               });
               position = emoPick;
@@ -613,7 +617,7 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
   }
   let holding = null;
   if (position) {
-    holding = { ...position, weight: 1 };
+    holding = { ...position, weight: position.branch === 'emoquick' ? 1 : leaderWeight };
     let rawBuyReturn = null;
     for (let i = rangeDates.length - 1; i >= 0; i--) {
       const info = dailyInfos.get(rangeDates[i])?.get(position.code);
@@ -631,8 +635,8 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
       }
     }
     holding.rawBuyReturn = rawBuyReturn;
-    holding.buyReturn = rawBuyReturn;
-    if (rawBuyReturn != null && Number.isFinite(rawBuyReturn)) acc *= 1 + rawBuyReturn / 100;
+    holding.buyReturn = rawBuyReturn != null ? parseFloat((rawBuyReturn * holding.weight).toFixed(2)) : null;
+    if (holding.buyReturn != null && Number.isFinite(holding.buyReturn)) acc *= 1 + holding.buyReturn / 100;
   }
   const overallReturn = parseFloat(((acc - 1) * 100).toFixed(2));
   const validTrades = trades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));

@@ -1,12 +1,1 @@
-[
-  {
-    "id": "bfa45acfa4a4f81e",
-    "time": "2026-10-12 15:00:20",
-    "read": true,
-    "strategyId": "volume_shrink_stagnation",
-    "title": "📉 放量后缩量滞涨",
-    "description": "成交量从高位 <strong>-3654亿</strong> 回落至 <strong>-3769亿</strong>，指数开始滞涨，需警惕回落风险。",
-    "severity": "medium",
-    "isBullish": false
-  }
-]
+[]

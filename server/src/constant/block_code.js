@@ -1230,5 +1230,96 @@ exports.default = [
         "blockName": "厄尔尼诺",
         "code": "sz002597",
         "name": "金禾实业"
+    },
+    {
+        "blockName": "AI 安全",
+        "code": "sz300454",
+        "name": "深信服",
+        "tag": "防御"
+    },
+    {
+        "blockName": "AI 安全",
+        "code": "sz300369",
+        "name": "绿盟科技",
+        "tag": "防御"
+    },
+    {
+        "blockName": "AI 安全",
+        "code": "sz002439",
+        "name": "启明星辰",
+        "tag": "防御"
+    },
+    {
+        "blockName": "AI 安全",
+        "code": "sz002212",
+        "name": "天融信",
+        "tag": "防御"
+    },
+    {
+        "blockName": "AI 安全",
+        "code": "sh688561",
+        "name": "奇安信-U",
+        "tag": "防御"
+    },
+    {
+        "blockName": "AI 安全",
+        "code": "sh688225",
+        "name": "亚信安全",
+        "tag": "防御"
+    },
+    {
+        "blockName": "AI 安全",
+        "code": "sz300768",
+        "name": "迪普科技",
+        "tag": "防御"
+    },
+    {
+        "blockName": "AI 安全",
+        "code": "sh688023",
+        "name": "安恒信息",
+        "tag": "防御"
+    },
+    {
+        "blockName": "AI-EDA",
+        "code": "sz301269",
+        "name": "华大九天",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "AI-EDA",
+        "code": "sh688206",
+        "name": "概伦电子",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "AI-EDA",
+        "code": "sz301095",
+        "name": "广立微",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "AI 应用",
+        "code": "sz301218",
+        "name": "华是科技"
+    },
+    {
+        "blockName": "消费",
+        "code": "sh603027",
+        "name": "千禾味业"
+    },
+    {
+        "blockName": "消费",
+        "code": "sh603345",
+        "name": "安井食品"
+    },
+    {
+        "blockName": "医药",
+        "code": "sz300199",
+        "name": "翰宇药业"
+    },
+    {
+        "blockName": "北美缺电",
+        "code": "sz300304",
+        "name": "云意电气"
     }
 ]

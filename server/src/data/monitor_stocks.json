@@ -807,5 +807,23 @@
     "riskScore": " 7",
     "isTech": false,
     "addedAt": "2026-10-12 10:54:25"
+  },
+  {
+    "code": "sz301269",
+    "name": "华大九天",
+    "isImportant": false,
+    "blockName": "AI-EDA",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-10-13 09:07:19"
+  },
+  {
+    "code": "sz300304",
+    "name": "云意电气",
+    "isImportant": false,
+    "blockName": "SOFC",
+    "riskScore": "7",
+    "isTech": false,
+    "addedAt": "2026-10-13 09:17:33"
   }
 ]
