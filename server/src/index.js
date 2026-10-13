@@ -112,6 +112,7 @@ const { isTradingDay } = require('./utils/tradingDay');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
 const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refreshLianbanRange } = require('./service/lianban');
+const { getMarketOverview, getThemeAnalysis, getStockQuotes } = require('./service/themeMonitor');
 const { getClsNews, getBoardChange, getStockChangesAll, getStockNews, getStockZyjs, getInstitutionParticipation, getSectorSpot, getSectorDetail, getForeignCommodity } = require('./service/akData');
 const { getThsHotRank } = require('./service/thsHotRank');
 
@@ -575,6 +576,57 @@ app.post('/refresh_lianban_snapshot', async (req, res) => {
   } catch (error) {
     console.error('刷新连板快照失败:', error);
     res.status(500).json({ success: false, message: error.message || '刷新失败' });
+  }
+});
+
+// 题材盯盘 - 市场情绪概览（涨停/跌停/封板率/炸板/情绪温度/上涨下跌等，来自连板网当日复盘页）
+app.get('/theme_monitor_overview', async (req, res) => {
+  try {
+    res.json(await getMarketOverview());
+  } catch (error) {
+    console.error('获取题材盯盘概览失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 题材盯盘 - 最近 10 个交易日题材回溯分析（主线/支线 + 龙一~龙五）
+app.get('/theme_monitor_analysis', async (req, res) => {
+  try {
+    res.json(await getThemeAnalysis());
+  } catch (error) {
+    console.error('获取题材盯盘分析失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 题材盯盘 - 自选股板块涨跌幅前十（复用盯盘页板块数据，紧凑返回供 10s 轮询）
+app.get('/theme_monitor_blocks', (req, res) => {
+  try {
+    const { firstNumList, lastNumList } = getTopAndBottomBlockData(10);
+    const slim = (list) => (list || []).map((b) => ({
+      blockName: b.blockName,
+      avgChange: b.avgChange,
+      rankChange: b.rankChange || 0,
+      stocks: (b.data || []).filter((s) => !s.noMarketData).slice(0, 8).map((s) => ({ code: s.code, name: s.name, change: s.change })),
+    }));
+    res.json({ first: slim(firstNumList), last: slim(lastNumList) });
+  } catch (error) {
+    console.error('获取题材盯盘板块前十失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 题材盯盘 - 批量实时行情（前端每 10s 轮询做异动监控）
+app.get('/theme_monitor_quotes', async (req, res) => {
+  try {
+    const codes = String(req.query.codes || '')
+      .split(',')
+      .map((c) => c.trim())
+      .filter(Boolean);
+    res.json(await getStockQuotes(codes));
+  } catch (error) {
+    console.error('获取题材盯盘行情失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
   }
 });
 

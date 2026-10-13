@@ -1,0 +1,835 @@
+// 题材盯盘页样式
+.theme-monitor-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 100%;
+
+  .tm-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 120px 0;
+  }
+
+  .tm-empty-mini {
+    color: #999;
+    font-size: 12px;
+    text-align: center;
+    padding: 8px 0;
+  }
+
+  // ==================== 板块涨跌幅前十 ====================
+  .tm-block-ranking {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 8px 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+    .tm-blk-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--theme-color, #1677ff);
+      white-space: nowrap;
+    }
+
+    .tm-blk-groups {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .tm-blk-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+
+      .tm-blk-label {
+        font-size: 11px;
+        color: #8c8c8c;
+        white-space: nowrap;
+        width: 50px;
+        flex-shrink: 0;
+      }
+
+      &.up .tm-blk-label { color: #cf1322; }
+      &.down .tm-blk-label { color: #1d7a46; }
+    }
+
+    .tm-blk-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      background: #f7f9fc;
+      cursor: default;
+      white-space: nowrap;
+
+      .tm-blk-idx {
+        font-style: normal;
+        font-size: 10px;
+        color: #bbb;
+      }
+
+      b { font-variant-numeric: tabular-nums; }
+      b.up { color: #cf1322; }
+      b.down { color: #1d7a46; }
+
+      .tm-blk-rank {
+        font-style: normal;
+        font-size: 10px;
+        display: inline-flex;
+        align-items: center;
+        &.up { color: #cf1322; }
+        &.down { color: #1d7a46; }
+      }
+
+      &.up { background: rgba(207, 19, 34, 0.06); }
+      &.down { background: rgba(29, 122, 70, 0.06); }
+    }
+  }
+
+  // ==================== 概览行 ====================
+  .tm-overview {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+    .tm-overview-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--theme-color, #1677ff);
+      white-space: nowrap;
+
+      .tm-overview-icon {
+        font-size: 16px;
+      }
+
+      .tm-overview-date {
+        font-size: 11px;
+        font-weight: 400;
+        color: #999;
+      }
+    }
+
+    .tm-overview-cards {
+      flex: 1;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+
+    .tm-kpi-card {
+      flex: 1;
+      min-width: 76px;
+      background: #f7f9fc;
+      border-radius: 8px;
+      padding: 6px 10px;
+      text-align: center;
+
+      .tm-kpi-label {
+        font-size: 11px;
+        color: #8c8c8c;
+      }
+
+      .tm-kpi-value {
+        font-size: 17px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.35;
+      }
+
+      .tm-kpi-extra {
+        font-size: 10px;
+        color: #b0b0b0;
+        line-height: 1.2;
+      }
+
+      &.tm-kpi-phase {
+        background: linear-gradient(135deg, rgba(var(--theme-color-rgb, 22, 119, 255), 0.12), rgba(var(--theme-color-rgb, 22, 119, 255), 0.04));
+        .tm-kpi-value { color: var(--theme-color, #1677ff); font-size: 15px; }
+        .tm-kpi-extra { color: var(--theme-color, #1677ff); font-weight: 600; }
+      }
+      &.tm-kpi-up .tm-kpi-value { color: #e11d48; }
+      &.tm-kpi-down .tm-kpi-value { color: #059669; }
+      &.tm-kpi-gold .tm-kpi-value { color: #d48806; }
+      &.tm-kpi-warn .tm-kpi-value { color: #fa8c16; }
+      &.tm-kpi-plain .tm-kpi-value { color: #333; }
+    }
+  }
+
+  // ==================== 主线支线条 ====================
+  .tm-mainline-strip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 8px 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow-x: auto;
+
+    .tm-line-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .tm-line-label {
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tm-line-main .tm-line-label { color: #e11d48; }
+    .tm-line-branch .tm-line-label { color: #8c8c8c; }
+
+    .tm-line-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      padding: 2px 10px;
+      border-radius: 20px;
+      cursor: default;
+      white-space: nowrap;
+
+      em {
+        font-style: normal;
+        font-size: 10px;
+        color: #999;
+      }
+    }
+
+    .tm-line-main .tm-line-chip {
+      background: rgba(225, 29, 72, 0.08);
+      color: #e11d48;
+      border: 1px solid rgba(225, 29, 72, 0.25);
+      font-weight: 600;
+    }
+
+    .tm-line-branch .tm-line-chip {
+      background: #f5f5f5;
+      color: #666;
+      border: 1px solid #eee;
+    }
+
+    .tm-line-divider {
+      width: 1px;
+      height: 16px;
+      background: #e8e8e8;
+      flex-shrink: 0;
+    }
+  }
+
+  // ==================== 主体两列 ====================
+  .tm-body {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .tm-left {
+    width: 70%;
+    min-width: 0;
+  }
+
+  .tm-right {
+    width: 30%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  // ---- 六个题材卡片（上下各三个 => 3 列网格） ----
+  .tm-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .tm-theme-card {
+    max-height: 350px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+      0 14px 38px rgba(71, 96, 139, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.88);
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    &.main .tm-theme-title-icon {
+      background:
+        linear-gradient(135deg, rgba(225, 29, 72, 0.16), rgba(249, 115, 22, 0.12)),
+        rgba(255, 255, 255, 0.65);
+      box-shadow: 0 8px 18px rgba(225, 29, 72, 0.14);
+
+      .anticon { color: #e11d48; }
+    }
+
+    .tm-theme-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px 8px;
+      border-bottom: 1px solid rgba(18, 33, 58, 0.07);
+      background:
+        radial-gradient(circle at top right, rgba(96, 165, 250, 0.07), transparent 32%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.45) 100%);
+
+      .tm-theme-title-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background:
+          linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(139, 92, 246, 0.12)),
+          rgba(255, 255, 255, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 8px 18px rgba(99, 102, 241, 0.12);
+
+        .anticon { font-size: 15px; color: #4f46e5; }
+      }
+
+      .tm-theme-title-content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        line-height: 1.2;
+      }
+
+      .tm-theme-title-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .tm-theme-rank {
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        background: #eef2f7;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        &.r1 { background: #fff1f0; color: #e11d48; }
+        &.r2 { background: #fff7e6; color: #d48806; }
+        &.r3 { background: #fffbe6; color: #faad14; }
+      }
+
+      .tm-theme-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #12213a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .tm-theme-type {
+        font-size: 10px;
+        padding: 0 5px;
+        border-radius: 4px;
+        line-height: 16px;
+        flex-shrink: 0;
+
+        &.main {
+          background: rgba(225, 29, 72, 0.1);
+          color: #e11d48;
+          font-weight: 600;
+        }
+        &.branch {
+          background: #f1f5f9;
+          color: #64748b;
+        }
+      }
+
+      .tm-theme-subtext {
+        font-size: 9px;
+        color: rgba(71, 85, 105, 0.6);
+        letter-spacing: 0.08em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .tm-theme-extra {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.58);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+      }
+
+      .tm-theme-today {
+        font-size: 10px;
+        font-weight: 600;
+        color: #475569;
+        white-space: nowrap;
+      }
+
+      .tm-theme-avg {
+        font-size: 11px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+
+        &.up { color: #e11d48; }
+        &.down { color: #059669; }
+      }
+
+      .tm-sort-btn {
+        border: none;
+        background: transparent;
+        color: #94a3b8;
+        font-size: 11px;
+        padding: 1px 4px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: rgba(148, 163, 184, 0.14);
+          color: #475569;
+        }
+      }
+    }
+
+    .tm-theme-list {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 6px 8px 10px;
+    }
+
+    .tm-list-header {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr) 78px 56px;
+      column-gap: 8px;
+      align-items: center;
+      padding: 3px 10px;
+      font-size: 9px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-bottom: 1px dashed rgba(148, 163, 184, 0.25);
+
+      .col-lianban,
+      .col-change { text-align: right; }
+    }
+
+    .tm-list-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding-top: 4px;
+
+      &::-webkit-scrollbar { width: 4px; }
+      &::-webkit-scrollbar-thumb {
+        background: rgba(100, 116, 139, 0.18);
+        border-radius: 4px;
+      }
+      &::-webkit-scrollbar-track { background: transparent; }
+    }
+
+    .tm-stock-row {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr) 78px 56px;
+      column-gap: 8px;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(18, 33, 58, 0.05);
+      background: rgba(255, 255, 255, 0.85);
+      transition: all 0.2s ease;
+      cursor: default;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.98);
+        border-color: rgba(18, 33, 58, 0.12);
+        box-shadow: 0 6px 16px rgba(74, 99, 140, 0.1);
+        transform: translateY(-1px);
+        z-index: 1;
+      }
+
+      &.is-dragon {
+        border-left: 3px solid #f59e0b;
+        background: linear-gradient(90deg, rgba(255, 171, 0, 0.07), rgba(255, 255, 255, 0.85) 55%);
+      }
+
+      .tm-dragon-badge {
+        width: 24px;
+        height: 18px;
+        flex-shrink: 0;
+        font-size: 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 5px;
+        background: #eef2f7;
+        color: #94a3b8;
+        font-weight: 700;
+
+        &.d1 { background: linear-gradient(135deg, #ffd666, #faad14); color: #612500; box-shadow: 0 2px 6px rgba(250, 173, 20, 0.35); }
+        &.d2 { background: #fff1f0; color: #e11d48; }
+        &.d3 { background: #fff7e6; color: #d48806; }
+        &.d4, &.d5 { background: #f0f5ff; color: #2f54eb; }
+      }
+
+      .tm-stock-info {
+        min-width: 0;
+      }
+
+      .tm-stock-name-row {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+      }
+
+      .tm-stock-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: #12213a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+
+        &:hover { color: var(--theme-color, #1677ff); }
+      }
+
+      .tm-leader-tag {
+        flex-shrink: 0;
+        padding: 0 4px;
+        font-size: 9px;
+        height: 16px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 4px;
+        background: rgba(114, 46, 209, 0.08);
+        border: 1px solid rgba(114, 46, 209, 0.2);
+        color: #722ed1;
+      }
+
+      .tm-lianban-cell {
+        text-align: right;
+        font-size: 10px;
+        color: #d48806;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-variant-numeric: tabular-nums;
+
+        em {
+          font-style: normal;
+          color: #b0b0b0;
+          margin-left: 2px;
+        }
+      }
+
+      .tm-change-cell {
+        text-align: right;
+      }
+
+      .tm-current-change {
+        font-size: 13px;
+        font-weight: 800;
+        font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
+        color: #64748b;
+
+        &.up { color: #e11d48; }
+        &.down { color: #059669; }
+      }
+    }
+  }
+
+  // ==================== 异动监控 ====================
+  .tm-movement-panel {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .tm-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-bottom: 1px solid #f0f0f0;
+
+      .tm-panel-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+        font-size: 13px;
+        color: #262626;
+
+        .tm-panel-icon {
+          color: #fa8c16;
+        }
+      }
+
+      .tm-panel-sub {
+        font-size: 10px;
+        color: #b0b0b0;
+      }
+    }
+
+    .tm-movement-list {
+      overflow-y: auto;
+      max-height: 300px;
+      min-height: 120px;
+      padding: 4px 0;
+    }
+
+    .tm-mv-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 12px;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+
+      .tm-mv-time {
+        color: #b0b0b0;
+        font-size: 10px;
+        flex-shrink: 0;
+      }
+
+      .tm-mv-tag {
+        flex-shrink: 0;
+        font-size: 9px;
+        padding: 0 4px;
+        border-radius: 3px;
+        line-height: 14px;
+        background: #fff7e6;
+        color: #d48806;
+
+        &.stock {
+          background: #f0f5ff;
+          color: #2f54eb;
+        }
+      }
+
+      .tm-mv-name {
+        font-weight: 600;
+        color: #262626;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 72px;
+        flex-shrink: 0;
+      }
+
+      &.up .tm-mv-name { color: #e11d48; }
+      &.down .tm-mv-name { color: #059669; }
+
+      .tm-mv-from { color: #b0b0b0; }
+      .tm-mv-arrow { color: #d0d0d0; }
+      .tm-mv-to { font-weight: 600; color: #555; }
+
+      .tm-mv-delta {
+        margin-left: auto;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+
+        &.up { color: #e11d48; }
+        &.down { color: #059669; }
+      }
+    }
+  }
+
+  // ==================== 资金 & 成交量 ====================
+  .tm-fund-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .tm-fund-row1 {
+      display: flex;
+      gap: 10px;
+    }
+
+    .tm-fund-row2 {
+      display: flex;
+    }
+
+    .tm-fund-chart-card {
+      flex: 1;
+      min-width: 0;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+
+      .tm-fund-chart-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px 0;
+
+        .tm-fund-chart-title {
+          font-size: 12px;
+          font-weight: 700;
+          color: #262626;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .tm-fund-chart-value {
+          font-size: 13px;
+          font-weight: 700;
+          font-variant-numeric: tabular-nums;
+        }
+      }
+
+      .tm-fund-chart-body {
+        height: 130px;
+        width: 100%;
+      }
+    }
+
+    .tm-fund-detail {
+      width: 150px;
+      flex-shrink: 0;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+
+      .tm-fund-detail-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 8px 2px;
+
+        .tm-fund-detail-title {
+          font-size: 12px;
+          font-weight: 700;
+          color: #262626;
+        }
+
+        .tm-fund-switch {
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          font-size: 10px;
+          color: #8c8c8c;
+        }
+      }
+
+      .tm-fund-table {
+        flex: 1;
+        overflow-y: auto;
+        max-height: 150px;
+        padding: 2px 0 6px;
+
+        .tm-fund-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1px 8px;
+          font-size: 10px;
+          font-variant-numeric: tabular-nums;
+
+          &.big-outflow { background: rgba(5, 150, 105, 0.08); }
+          &.big-inflow { background: rgba(225, 29, 72, 0.08); }
+
+          .item-time { color: #8c8c8c; }
+
+          .item-value {
+            font-weight: 600;
+
+            &.up { color: #e11d48; }
+            &.down { color: #059669; }
+
+            .item-diff {
+              margin-left: 4px;
+              font-size: 9px;
+
+              &.up { color: #e11d48; }
+              &.down { color: #059669; }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// 板块成分股悬浮提示（Tooltip 挂载在 portal，需全局作用域）
+.tm-blk-tip {
+  min-width: 150px;
+  max-height: 240px;
+  overflow-y: auto;
+
+  .tm-blk-tip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    line-height: 1.8;
+
+    .up { color: #ff7875; }
+    .down { color: #95de64; }
+  }
+}

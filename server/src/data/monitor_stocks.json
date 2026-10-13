@@ -871,5 +871,14 @@
     "riskScore": " 9",
     "isTech": true,
     "addedAt": "2026-10-13 22:52:43"
+  },
+  {
+    "code": "sh603767",
+    "name": "中马传动",
+    "isImportant": false,
+    "blockName": "汽车零部件",
+    "riskScore": " 9",
+    "isTech": false,
+    "addedAt": "2026-10-14 00:24:02"
   }
 ]

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Layout, Menu, Button, Modal, ColorPicker, Select, message, Tooltip } from 'antd';
-import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, StockOutlined, AreaChartOutlined, FileTextOutlined, CalendarOutlined, BarChartOutlined, GlobalOutlined, BellOutlined, AlertOutlined, ThunderboltOutlined, BgColorsOutlined, CheckOutlined, WarningOutlined, MinusOutlined, HistoryOutlined, RobotOutlined, RocketOutlined, TrophyOutlined } from '@ant-design/icons';
+import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, StockOutlined, AreaChartOutlined, FileTextOutlined, CalendarOutlined, BarChartOutlined, GlobalOutlined, BellOutlined, AlertOutlined, ThunderboltOutlined, BgColorsOutlined, CheckOutlined, WarningOutlined, MinusOutlined, HistoryOutlined, RobotOutlined, RocketOutlined, TrophyOutlined, FireOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from './constant';
 import { getThemeColor } from './utils/theme';
@@ -1062,6 +1062,11 @@ function App() {
       key: '/opening_battle',
       icon: <RocketOutlined />,
       label: '专注交易',
+    },
+    {
+      key: '/theme_monitor',
+      icon: <FireOutlined />,
+      label: '题材盯盘',
     },
     // {
     //   key: '/volume',
