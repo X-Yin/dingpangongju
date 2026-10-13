@@ -16,7 +16,7 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const dayjs = require('dayjs');
-const { isTradingDay } = require('../utils/tradingDay');
+const { isTradingDay, parseDateNum } = require('../utils/tradingDay');
 
 const lianbanDir = path.resolve(__dirname, '../data/lianbanSnapshot');
 const cookieFile = path.resolve(__dirname, '../../.lianban-cookie');
@@ -344,6 +344,43 @@ const saveLianbanDay = async (dateInput) => {
 
 const hasLianbanDay = (dateInput) => fs.existsSync(lianbanFilePath(dateInput));
 
+// 批量刷新时间范围内的连板快照：
+//   交易日历内的每一天，若已有 YYYYMMDD.json 则跳过，缺失的重新抓取并写入缓存文件；
+//   未来交易日无数据可抓，直接忽略。串行抓取以避免触发站点频率限制。
+const refreshLianbanRange = async (startInput, endInput) => {
+  const { ymd: start } = normalizeDateInput(startInput);
+  const { ymd: end } = normalizeDateInput(endInput);
+  const startDate = parseDateNum(start);
+  const endDate = parseDateNum(end);
+  if (!startDate || !endDate || endDate < startDate) {
+    throw new Error('时间范围非法');
+  }
+  const today = dayjs().format('YYYYMMDD');
+  const refreshed = [];
+  const skipped = [];
+  const failed = [];
+  const cursor = new Date(startDate);
+  while (cursor <= endDate) {
+    if (isTradingDay(cursor)) {
+      const ymd = dayjs(cursor).format('YYYYMMDD');
+      if (ymd > today) {
+        // 未来交易日无数据可抓，忽略
+      } else if (hasLianbanDay(ymd)) {
+        skipped.push(ymd);
+      } else {
+        try {
+          await saveLianbanDay(ymd);
+          refreshed.push(ymd);
+        } catch (error) {
+          failed.push({ date: ymd, message: error.message || '抓取失败' });
+        }
+      }
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return { start, end, refreshed, skipped, failed };
+};
+
 const getLianbanDayData = (dateInput) => {
   const file = lianbanFilePath(dateInput);
   if (!fs.existsSync(file)) return null;
@@ -433,6 +470,7 @@ module.exports = {
   extractSentiment,
   saveLianbanDay,
   hasLianbanDay,
+  refreshLianbanRange,
   getLianbanDayData,
   getAvailableLianbanDates,
   getLianbanSentimentSeries,

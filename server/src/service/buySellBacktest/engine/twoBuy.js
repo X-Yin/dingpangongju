@@ -32,6 +32,16 @@ const getStockBlockName = (code) => {
   return stockBlockCache.map.get(code) || '其他';
 };
 
+// 仓位权重（2026-10-13 泛化）：优先取挂到持仓上的 weight（两次买入 / 斜率门控半仓等分批建仓），
+// 缺省时按策略 twoBuy 兜底半仓、其余按全仓
+const getPositionLegWeight = (pos, strategy) => {
+  if (pos && pos.weight != null && Number.isFinite(Number(pos.weight))) return Number(pos.weight);
+  return strategy && strategy.twoBuy === true ? TWO_BUY_LEG_WEIGHT : 1;
+};
+
+// 是否为「分批建仓」仓位（两次买入 / 斜率门控半仓）：用于成交流水附加字段与明细展示
+const isLegPosition = (pos, strategy) => (pos && pos.twoBuy === true) || (strategy && strategy.twoBuy === true);
+
 // 组装两次买入某一份仓位在成交流水上追加的字段（半仓权重、个股原始收益率、所属份数 1/2）
 const buildTwoBuyTradeExtra = (position) => ({
   twoBuy: true,
@@ -89,6 +99,8 @@ module.exports = {
   TWO_BUY_LEG_WEIGHT,
   buildTwoBuyTradeExtra,
   computeTwoBuyAccountReturn,
+  getPositionLegWeight,
   getStockBlockName,
+  isLegPosition,
   stockBlockCache,
 };

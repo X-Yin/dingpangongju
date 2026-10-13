@@ -111,7 +111,7 @@ const feishuNotify = require('./service/feishuNotify');
 const { isTradingDay } = require('./utils/tradingDay');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
-const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData } = require('./service/lianban');
+const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refreshLianbanRange } = require('./service/lianban');
 const { getClsNews, getBoardChange, getStockChangesAll, getStockNews, getStockZyjs, getInstitutionParticipation, getSectorSpot, getSectorDetail, getForeignCommodity } = require('./service/akData');
 const { getThsHotRank } = require('./service/thsHotRank');
 
@@ -559,6 +559,22 @@ app.get('/lianban_day', (req, res) => {
   } catch (error) {
     console.error('获取连板单日数据失败:', error);
     res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 刷新时间范围内的连板快照：已存在对应日期缓存文件的跳过，缺失的重新抓取并写入缓存文件
+app.post('/refresh_lianban_snapshot', async (req, res) => {
+  try {
+    const start = String(req.body?.start || '').replace(/\D/g, '');
+    const end = String(req.body?.end || '').replace(/\D/g, '');
+    if (!/^\d{8}$/.test(start) || !/^\d{8}$/.test(end)) {
+      return res.status(400).json({ success: false, message: '请提供有效的开始/结束日期（YYYYMMDD）' });
+    }
+    const result = await refreshLianbanRange(start, end);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('刷新连板快照失败:', error);
+    res.status(500).json({ success: false, message: error.message || '刷新失败' });
   }
 });
 

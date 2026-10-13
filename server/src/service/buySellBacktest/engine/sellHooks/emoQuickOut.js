@@ -8,7 +8,7 @@
 // 返回本次发生强卖/止损的日期（用于当日禁止二次买入），未发生则返回 null。
 // 本 hook 只做卖点行为，策略开关判定（strategy.emoQuickOut）由引擎负责调度。
 const { buildQuickOutExemptInfo, buildQuickOutSellReason, buildQuickOutStopLossReason } = require('../checkBuilders');
-const { TWO_BUY_LEG_WEIGHT, buildTwoBuyTradeExtra } = require('../twoBuy');
+const { buildTwoBuyTradeExtra, getPositionLegWeight, isLegPosition } = require('../twoBuy');
 
 const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStocks, timeBuckets, campData, singleTrades }) => {
   let quickOutSoldDate = null;
@@ -55,13 +55,14 @@ const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStoc
       continue;
     }
     const sellPrice = parseFloat(Number(sellPt.lastPx).toFixed(2));
-    // 两次买入策略：快进快出强卖/止损按半仓权重折算（每份仓位各自独立、恒为半仓）
-    const isTwoBuy = strategy.twoBuy === true;
+    // 分批建仓仓位（两次买入 / 斜率门控半仓）：按本份仓位权重折算收益，每份各自独立、互不摊平成本
+    const isTwoBuy = isLegPosition(pos, strategy);
+    const legWeight = getPositionLegWeight(pos, strategy);
     const rawReturnRate = pos.buyPrice > 0
       ? parseFloat((((sellPrice - pos.buyPrice) / pos.buyPrice) * 100).toFixed(2))
       : null;
-    const returnRate = isTwoBuy && rawReturnRate != null
-      ? parseFloat((rawReturnRate * TWO_BUY_LEG_WEIGHT).toFixed(2))
+    const returnRate = rawReturnRate != null
+      ? parseFloat((rawReturnRate * legWeight).toFixed(2))
       : rawReturnRate;
     singleTrades.push({
       seq: singleTrades.length + 1,

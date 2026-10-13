@@ -4,12 +4,12 @@ const { runLeaderBacktest } = require('./leaderBacktest');
 const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
 const { getTechIndexDates } = require('../utils/techEmotion');
 const { buildWindowAxis } = require('./pickHelpers');
-const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
+const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, codeToGateIndex, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
 const { buildPrevOneWordBoardSet, buildReplayStocksWithTline, extractDailyInfo, isLimitUpAtBuy } = require('./replayData');
 const { EXCLUDED_CODES } = require('../constants');
 const { ensureEmo3DayGates } = require('./emo3Gate');
 const { withResilienceGateInfo } = require('./checkBuilders');
-const { TWO_BUY_LEG_WEIGHT, computeTwoBuyAccountReturn, getStockBlockName } = require('./twoBuy');
+const { TWO_BUY_LEG_WEIGHT, computeTwoBuyAccountReturn, getPositionLegWeight, getStockBlockName } = require('./twoBuy');
 const { EMO_AVG3_BUY_INFO, TAIL_DIP_BUY_INFO, buildBuyReasonFromDiag, checkEmoAvg3Hit, checkTailDipHit, fmtTime, runBuyPointDiagnosis } = require('../diagnose/buyPoint');
 const { buildCounterCycSet } = require('./cycleFilter');
 const { pickBestStock } = require('./pickBest');
@@ -19,6 +19,13 @@ const { emoQuickOutSell } = require('./sellHooks/emoQuickOut');
 const { generalSellPositions } = require('./sellHooks/generalSell');
 const { calcDrawdownStats, sortTradesByBuyTime } = require('../utils/tradeStats');
 const { ensureWatchlistValuation } = require('../../watchlistValuation');
+
+// 判定某只个股在买点触发时点所跟踪指数的 3 日线斜率是否为负（688 跟踪科创 50 sh000688，其余跟踪创业板指 sz399006）。
+// 数据缺失/无法判定时返回 false（按「斜率非负」处理，即首次即全仓）
+const isTrackedSlopeNegative = (code, turnedPosInfo) => {
+  if (!turnedPosInfo) return false;
+  return codeToGateIndex(code) === STAR_INDEX_CODE ? !!turnedPosInfo.starSlopeNegative : !!turnedPosInfo.cybSlopeNegative;
+};
 
 const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress) => {
   const ids = (Array.isArray(strategyIds) ? strategyIds : []).filter(id => STRATEGIES[id]);
@@ -128,6 +135,10 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
     // 内层策略：同一天数据依次跑本组全部策略的买卖点诊断
     for (const st of states) {
       const { strategy, singleTrades } = st;
+      // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：斜率门控半仓（2026-10-13 用户新增）——
+      // 买点触发时看该股所跟踪指数当前 3 日线斜率：为负则首次仅半仓（第一份），至少次日买点再次触发时
+      // 补剩余半仓（与两次买入同口径，同一标的）；斜率 ≥ 0 或数据不足则首次即全仓。已有 twoBuy 系列不变。
+      const slopeHalfBuy = strategy.emoQuickOut === true && strategy.twoBuy !== true;
 
       // 三日情绪均值策略专属卖点：买入次日按竞价开盘涨幅一次性卖出（见 engine/sellHooks/nextDayOpen.js）
       if (strategy.nextDayOpenSell === true) {
@@ -184,6 +195,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
               const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
               const sc = picked.stock;
               const firstBuyPrice = parseFloat(Number(sc.lastPx).toFixed(2));
+              // 斜率门控半仓：跟踪指数当前斜率为负 → 本次仅半仓（第一份），剩余半仓等次日买点再次触发补买
+              const halfBySlope = slopeHalfBuy && isTrackedSlopeNegative(sc.code, gateTurnedPosInfo);
               st.positions.push({
                 code: sc.code,
                 stockName: sc.name || sc.code,
@@ -196,12 +209,12 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                 buyReason: finalBuyInfo.buyReason,
                 buyChecks: annotateIndexGateChecksWithStock(finalBuyInfo.buyChecks, sc.code, sc.name),
                 emoQuickOut: picked.emoQuickOut || null, // 情绪快进快出标注（quickOut=true → 次日 10:00 强制卖出；其余策略为 null）
-                // 两次买入策略：第一份按半仓权重，标记 leg=1
-                ...(strategy.twoBuy === true ? { twoBuy: true, leg: 1, weight: TWO_BUY_LEG_WEIGHT } : {}),
+                // 两次买入策略 / 斜率门控半仓（第一份）：按半仓权重，标记 leg=1；斜率非负时全仓不标记
+                ...(strategy.twoBuy === true || halfBySlope ? { twoBuy: true, leg: 1, weight: TWO_BUY_LEG_WEIGHT } : {}),
               });
             }
-          } else if (strategy.twoBuy === true && st.positions.length === 1 && st.positions[0].leg === 1 && dateStr > st.positions[0].buyDate) {
-            // 两次买入策略：已持有第一份（半仓），买点再次触发 → 买入第二份 5 成
+          } else if ((strategy.twoBuy === true || slopeHalfBuy) && st.positions.length === 1 && st.positions[0].leg === 1 && dateStr > st.positions[0].buyDate) {
+            // 两次买入 / 斜率门控半仓策略：已持有第一份（半仓），买点再次触发 → 买入第二份 5 成
             // 约束：① 必须在第一份建仓之后的交易日（≥ 隔 1 天）买入；② 补买同样过滤涨停（买入时点该股已涨停不可成交）；
             //       ③ 普通两次买入系列第二份必须与第一份同一只股票（不重新择股）；
             //          「不同板块」变体（diffBlock）第二份则在「板块与第一份不同」的候选中重新按 N 日涨幅最大择股
@@ -277,6 +290,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   // 走上方提前 return results）从未触发此问题）
   return results.concat(states.map(st => {
     const { strategy, singleTrades, skippedDates } = st;
+    // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：斜率门控半仓（见上方循环内说明）
+    const slopeHalfBuy = strategy.emoQuickOut === true && strategy.twoBuy !== true;
     // 期末持仓：逐份按最近一个有效日期的收盘价估算浮盈，计入整体收益（两次买入策略可能同时持有两份）
     const currentHoldings = [];
     for (const pos of st.positions) {
@@ -290,20 +305,21 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
       const rawBuyReturn = closePx != null && pos.buyPrice > 0
         ? parseFloat((((closePx - pos.buyPrice) / pos.buyPrice) * 100).toFixed(2))
         : null;
-      if (strategy.twoBuy === true) {
-        // 两次买入：每份仓位各自半仓折算期末浮盈
-        h.weight = TWO_BUY_LEG_WEIGHT;
+      const legWeight = getPositionLegWeight(pos, strategy);
+      if (legWeight < 1) {
+        // 分批建仓（两次买入 / 斜率门控半仓）：每份仓位按自身权重折算期末浮盈
+        h.weight = legWeight;
         h.rawBuyReturn = rawBuyReturn;
-        h.buyReturn = rawBuyReturn != null ? parseFloat((rawBuyReturn * TWO_BUY_LEG_WEIGHT).toFixed(2)) : null;
+        h.buyReturn = rawBuyReturn != null ? parseFloat((rawBuyReturn * legWeight).toFixed(2)) : null;
       } else {
         h.buyReturn = rawBuyReturn;
       }
       currentHoldings.push(h);
     }
     const holding = currentHoldings[0] || null;
-    // 整体收益：两次买入按真实账户口径（同一轮两份同时持有 → 轮内收益相加，跨轮复利）；
-    // 其余单份策略同一时刻只持有一份，逐笔复利即等价账户口径
-    const overallReturn = strategy.twoBuy === true
+    // 整体收益：分批建仓（两次买入 / 斜率门控半仓）按真实账户口径（同一轮多份同时持有 → 轮内收益相加，跨轮复利）；
+    // 其余单份全仓策略同一时刻只持有一份，逐笔复利即等价账户口径
+    const overallReturn = strategy.twoBuy === true || slopeHalfBuy
       ? computeTwoBuyAccountReturn([
           ...singleTrades,
           ...currentHoldings.map(h => ({ ...h, returnRate: h.buyReturn })),

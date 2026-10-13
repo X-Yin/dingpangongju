@@ -3,7 +3,7 @@
 // 情绪快进快出持仓（未豁免 ever）不进入通用卖点诊断（由 emoQuickOut hook 接管）；
 // 三日情绪均值策略（nextDayOpenSell）走次日开盘专属卖点（已按日处理），同样不进入通用卖点诊断。
 const { runSellPointDiagnosis } = require('../../diagnose/sellPoint');
-const { TWO_BUY_LEG_WEIGHT, buildTwoBuyTradeExtra } = require('../twoBuy');
+const { buildTwoBuyTradeExtra, getPositionLegWeight, isLegPosition } = require('../twoBuy');
 const { buildQuickOutExemptSuffix } = require('../checkBuilders');
 
 const generalSellPositions = async ({ positions, strategy, bi, replayStocks, timeBuckets, dateStr, dateDisplay, singleTrades }) => {
@@ -20,12 +20,13 @@ const generalSellPositions = async ({ positions, strategy, bi, replayStocks, tim
     const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
     if (result.isSell && result.closePrice != null) {
       const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');
-      const isTwoBuy = strategy.twoBuy === true;
-      // 两次买入策略：每份仓位各自独立按半仓折算收益，保留个股原始收益率供前端悬停展示
+      // 分批建仓仓位（两次买入 / 斜率门控半仓）：每份仓位各自独立按权重折算收益，保留个股原始收益率供前端悬停展示
+      const isTwoBuy = isLegPosition(pos, strategy);
       const rawReturnRate = result.returnRate;
-      const returnRate = isTwoBuy && rawReturnRate != null
-        ? parseFloat((rawReturnRate * TWO_BUY_LEG_WEIGHT).toFixed(2))
-        : result.returnRate;
+      const legWeight = getPositionLegWeight(pos, strategy);
+      const returnRate = rawReturnRate != null
+        ? parseFloat((rawReturnRate * legWeight).toFixed(2))
+        : rawReturnRate;
       singleTrades.push({
         seq: singleTrades.length + 1,
         metric: pos.metric,

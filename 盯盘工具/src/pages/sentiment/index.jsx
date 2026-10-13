@@ -256,6 +256,7 @@ const Sentiment = () => {
   // 连板情绪趋势图的时间范围（YYYYMMDD 字符串），以及下载状态
   const [lianbanRange, setLianbanRange] = useState(null);
   const [lianbanDownloading, setLianbanDownloading] = useState(false);
+  const [lianbanRefreshing, setLianbanRefreshing] = useState(false);
   const lianbanDayCacheRef = useRef({});
   // 上证指数 K 线图
   const shIndexContainerRef = useRef(null);
@@ -459,6 +460,38 @@ const Sentiment = () => {
       message.error('下载失败，请稍后重试');
     } finally {
       setLianbanDownloading(false);
+    }
+  };
+
+  // 按当前所选时间范围刷新连板快照：后端仅补齐缺失日期（已存在的跳过），完成后重新拉取序列
+  const handleRefreshLianban = async () => {
+    if (!lianbanRange) {
+      message.warning('请先选择时间范围');
+      return;
+    }
+    const [start, end] = lianbanRange;
+    setLianbanRefreshing(true);
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/refresh_lianban_snapshot`, { start, end });
+      const { refreshed = [], skipped = [], failed = [] } = res.data || {};
+      if (refreshed.length > 0) {
+        lianbanDayCacheRef.current = {}; // 失效日缓存，题材面板与下载重新拉取最新数据
+        await fetchLianbanSeries();
+        message.success(
+          `已刷新 ${refreshed.length} 个交易日` +
+          (skipped.length ? `，${skipped.length} 个已存在跳过` : '') +
+          (failed.length ? `，${failed.length} 个获取失败` : '')
+        );
+      } else if (failed.length > 0) {
+        message.error(`刷新失败：${failed.length} 个交易日未获取到数据`);
+      } else {
+        message.info('该时间范围内数据已是最新，无需刷新');
+      }
+    } catch (err) {
+      console.error('Refresh lianban snapshot failed:', err);
+      message.error('刷新失败，请重试');
+    } finally {
+      setLianbanRefreshing(false);
     }
   };
 
@@ -2118,6 +2151,14 @@ const Sentiment = () => {
                         }
                       }}
                     />
+                    <Button
+                      size="small"
+                      icon={<ReloadOutlined />}
+                      loading={lianbanRefreshing}
+                      onClick={handleRefreshLianban}
+                    >
+                      刷新
+                    </Button>
                     <Button
                       size="small"
                       type="primary"

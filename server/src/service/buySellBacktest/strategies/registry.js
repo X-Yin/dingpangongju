@@ -76,6 +76,16 @@ for (const s of Object.values(STRATEGIES)) {
   s.desc = `${s.desc}${EMO3_GATE_DESC}`;
 }
 
+// 斜率门控半仓（2026-10-13 用户新增）：仅适用于「N日涨幅最大-快进快出」系列
+// （emoQuickOut === true 且非两次买入 twoBuy）。买点触发时先看该股所跟踪指数（688 跟踪科创50 sh000688，
+// 其余跟踪创业板指 sz399006）当前的 3 日线斜率：为负则本次只半仓买入（第一份），至少等到次日
+// 买点再次触发时才把剩余半仓买入（与两次买入策略同口径：同一标的、两份各自独立买卖与收益、均按半仓折算）；
+// 斜率 ≥ 0（或数据不足）时首次触发即全仓买入。
+const SLOPE_HALF_DESC = '；斜率门控半仓（2026-10-13 新增）：买点触发时判定该股所跟踪指数（688 跟踪科创50，其余跟踪创业板指）当前 3 日线斜率——为负则本次仅半仓买入（第一份），至少等到次日买点再次触发时再买入剩余半仓（与两次买入策略同口径：买入同一标的、两份各自独立买卖与收益、均按半仓折算、不摊平成本），斜率 ≥ 0 或数据不足时首次触发即全仓买入';
+for (const s of Object.values(STRATEGIES)) {
+  if (s.emoQuickOut === true && s.twoBuy !== true) s.desc = `${s.desc}${SLOPE_HALF_DESC}`;
+}
+
 module.exports = {
   BUY_TIME_MAX_MINUTE,
   CYC_FILTER_DESC,
