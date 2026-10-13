@@ -2038,5 +2038,65 @@
       }
     ],
     "isImportant": false
+  },
+  "sh601595": {
+    "stockName": "上海电影",
+    "kline": [
+      {
+        "trade_date": 20261013,
+        "open_px": 26.94,
+        "high_px": 28.75,
+        "low_px": 25.5,
+        "close_px": 27.56,
+        "business_amount": 36900139,
+        "business_balance": 1014018680,
+        "change": 1.29,
+        "ma5_px": 25,
+        "ma10_px": 24.21,
+        "ma20_px": 23.7,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh605287": {
+    "stockName": "德才股份",
+    "kline": [
+      {
+        "trade_date": 20261013,
+        "open_px": 48.62,
+        "high_px": 48.62,
+        "low_px": 45.58,
+        "close_px": 45.8,
+        "business_amount": 30065287,
+        "business_balance": 1440036700,
+        "change": 3.62,
+        "ma5_px": 40.82,
+        "ma10_px": 37.91,
+        "ma20_px": 37.01,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz301486": {
+    "stockName": "致尚科技",
+    "kline": [
+      {
+        "trade_date": 20261013,
+        "open_px": 202.4,
+        "high_px": 226.88,
+        "low_px": 198.81,
+        "close_px": 221,
+        "business_amount": 10373251,
+        "business_balance": 2229438100,
+        "change": 4.69,
+        "ma5_px": 210.94,
+        "ma10_px": 206.97,
+        "ma20_px": 202.63,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

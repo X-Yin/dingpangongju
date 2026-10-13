@@ -844,5 +844,32 @@
     "riskScore": "9",
     "isTech": true,
     "addedAt": "2026-10-13 15:13:26"
+  },
+  {
+    "code": "sh601595",
+    "name": "上海电影",
+    "isImportant": false,
+    "blockName": "AI 短剧",
+    "riskScore": " 7",
+    "isTech": false,
+    "addedAt": "2026-10-13 21:19:50"
+  },
+  {
+    "code": "sh605287",
+    "name": "德才股份",
+    "isImportant": false,
+    "blockName": "AI 应用",
+    "riskScore": " 6",
+    "isTech": false,
+    "addedAt": "2026-10-13 21:22:41"
+  },
+  {
+    "code": "sz301486",
+    "name": "致尚科技",
+    "isImportant": false,
+    "blockName": "光通信",
+    "riskScore": " 9",
+    "isTech": true,
+    "addedAt": "2026-10-13 22:52:43"
   }
 ]

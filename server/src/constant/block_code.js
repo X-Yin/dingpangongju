@@ -775,12 +775,6 @@ exports.default = [
     },
     {
         "blockName": "AI 应用",
-        "code": "sz300364",
-        "name": "中文在线",
-        "tag": "中性"
-    },
-    {
-        "blockName": "AI 应用",
         "code": "sz300418",
         "name": "昆仑万维",
         "tag": "中性"
@@ -1116,11 +1110,6 @@ exports.default = [
         "tag": "进攻"
     },
     {
-        "blockName": "AI 应用",
-        "code": "sz300413",
-        "name": "芒果超媒"
-    },
-    {
         "blockName": "固态电池",
         "code": "sh603200",
         "name": "上海洗霸"
@@ -1185,16 +1174,6 @@ exports.default = [
         "tag": "防御"
     },
     {
-        "blockName": "AI 应用",
-        "code": "sh605287",
-        "name": "德才股份"
-    },
-    {
-        "blockName": "AI 应用",
-        "code": "sz300182",
-        "name": "捷成股份"
-    },
-    {
         "blockName": "消费",
         "code": "sh600882",
         "name": "妙可蓝多"
@@ -1203,16 +1182,6 @@ exports.default = [
         "blockName": "玻璃基板",
         "code": "sz301297",
         "name": "富乐德"
-    },
-    {
-        "blockName": "AI 应用",
-        "code": "sh601595",
-        "name": "上海电影"
-    },
-    {
-        "blockName": "AI 应用",
-        "code": "sh603058",
-        "name": "永吉股份"
     },
     {
         "blockName": "厄尔尼诺",
@@ -1286,11 +1255,6 @@ exports.default = [
         "tag": "进攻"
     },
     {
-        "blockName": "AI 应用",
-        "code": "sz301218",
-        "name": "华是科技"
-    },
-    {
         "blockName": "消费",
         "code": "sh603027",
         "name": "千禾味业"
@@ -1319,5 +1283,47 @@ exports.default = [
         "blockName": "光芯片",
         "code": "sh688048",
         "name": "长光华芯"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sz300413",
+        "name": "芒果超媒",
+        "tag": "中性"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sh605287",
+        "name": "德才股份",
+        "tag": "中性"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sh601595",
+        "name": "上海电影",
+        "tag": "中性"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sz300364",
+        "name": "中文在线",
+        "tag": "中性"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sh603533",
+        "name": "掌阅科技",
+        "tag": "中性"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sh688004",
+        "name": "博汇科技",
+        "tag": "中性"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sz300182",
+        "name": "捷成股份",
+        "tag": "中性"
     }
 ]

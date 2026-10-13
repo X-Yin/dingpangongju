@@ -985,12 +985,6 @@
       "change": 2.88
     },
     {
-      "name": "中文在线",
-      "blockName": "AI 应用",
-      "code": "sz300364",
-      "change": 1.1
-    },
-    {
       "name": "昆仑万维",
       "blockName": "AI 应用",
       "code": "sz300418",
@@ -1007,42 +1001,6 @@
       "blockName": "AI 应用",
       "code": "sh688111",
       "change": 2.08
-    },
-    {
-      "name": "芒果超媒",
-      "blockName": "AI 应用",
-      "code": "sz300413",
-      "change": -0.66
-    },
-    {
-      "name": "德才股份",
-      "blockName": "AI 应用",
-      "code": "sh605287",
-      "change": 3.62
-    },
-    {
-      "name": "捷成股份",
-      "blockName": "AI 应用",
-      "code": "sz300182",
-      "change": 1.59
-    },
-    {
-      "name": "上海电影",
-      "blockName": "AI 应用",
-      "code": "sh601595",
-      "change": 1.29
-    },
-    {
-      "name": "永吉股份",
-      "blockName": "AI 应用",
-      "code": "sh603058",
-      "change": 0.45
-    },
-    {
-      "name": "华是科技",
-      "blockName": "AI 应用",
-      "code": "sz301218",
-      "change": -9.19
     }
   ],
   "特高压": [
@@ -1469,6 +1427,50 @@
       "blockName": "AI-EDA",
       "code": "sz301095",
       "change": -1.24
+    }
+  ],
+  "AI 剧": [
+    {
+      "name": "芒果超媒",
+      "blockName": "AI 剧",
+      "code": "sz300413",
+      "change": -0.66
+    },
+    {
+      "name": "德才股份",
+      "blockName": "AI 剧",
+      "code": "sh605287",
+      "change": 3.62
+    },
+    {
+      "name": "上海电影",
+      "blockName": "AI 剧",
+      "code": "sh601595",
+      "change": 1.29
+    },
+    {
+      "name": "中文在线",
+      "blockName": "AI 剧",
+      "code": "sz300364",
+      "change": 1.1
+    },
+    {
+      "name": "掌阅科技",
+      "blockName": "AI 剧",
+      "code": "sh603533",
+      "change": -2.79
+    },
+    {
+      "name": "博汇科技",
+      "blockName": "AI 剧",
+      "code": "sh688004",
+      "change": 14.71
+    },
+    {
+      "name": "捷成股份",
+      "blockName": "AI 剧",
+      "code": "sz300182",
+      "change": 1.59
     }
   ]
 }
