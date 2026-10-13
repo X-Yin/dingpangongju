@@ -263,29 +263,15 @@ const MovementPanel = ({ movements, onOpenKline }) => (
 );
 
 // ==================== 资金分时图 + 明细 + 成交量（第二列第二行） ====================
-const FundChartsPanel = () => {
-  const [data, setData] = useState([]);
+// 数据由主组件聚合轮询（/theme_monitor_all 的 fundHistory）通过 props 下发，本组件不再自行轮询
+const FundChartsPanel = ({ historyData }) => {
+  const data = historyData || [];
   const [fiveMinAggEnabled, setFiveMinAggEnabled] = useState(true);
 
   const fundContainerRef = useRef(null);
   const fundChartRef = useRef(null);
   const volContainerRef = useRef(null);
   const volChartRef = useRef(null);
-
-  const fetchData = useCallback(async () => {
-    try {
-      const response = await axios.get(`http://${local_ip}:3000/amount_history`);
-      setData(response.data || []);
-    } catch (err) {
-      console.error('Fetch main fund data failed:', err);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-    const timer = setInterval(fetchData, 10000);
-    return () => clearInterval(timer);
-  }, [fetchData]);
 
   const chartData = useMemo(() => (data.length ? aggregateFundByInterval(data, 5) : []), [data]);
 
@@ -475,6 +461,7 @@ const ThemeMonitor = () => {
   const [klineStock, setKlineStock] = useState(null);
   const [klineVisible, setKlineVisible] = useState(false);
   const [blocks, setBlocks] = useState(null);
+  const [fundHistory, setFundHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const prevQuotesRef = useRef({});
@@ -540,34 +527,23 @@ const ThemeMonitor = () => {
     }
   }, []);
 
-  // 每 10s 轮询：概览 + 分析 + 批量行情
+  // 每 10s 轮询：单一聚合接口一次返回页面全部数据（概览/分析/板块前十/行情/资金分时）
   useEffect(() => {
     const poll = async () => {
       if (pollingRef.current) return;
       pollingRef.current = true;
       try {
-        const [overviewRes, analysisRes, blocksRes] = await Promise.all([
-          axios.get(`http://${local_ip}:3000/theme_monitor_overview`),
-          axios.get(`http://${local_ip}:3000/theme_monitor_analysis`),
-          axios.get(`http://${local_ip}:3000/theme_monitor_blocks`).catch(() => null),
-        ]);
-        const analysisData = analysisRes.data || null;
-        setOverview(overviewRes.data || null);
+        const res = await axios.get(`http://${local_ip}:3000/theme_monitor_all`);
+        const d = res.data || {};
+        const analysisData = d.analysis || null;
+        setOverview(d.overview || null);
         setAnalysis(analysisData);
-        if (blocksRes?.data) setBlocks(blocksRes.data);
+        if (d.blocks) setBlocks(d.blocks);
+        if (d.fundHistory) setFundHistory(d.fundHistory);
 
-        const codes = (analysisData?.themes || [])
-          .slice(0, TOP_THEME_COUNT)
-          .flatMap((t) => t.stocks.map((s) => s.marketCode))
-          .filter(Boolean);
-        if (codes.length > 0) {
-          const quotesRes = await axios.get(`http://${local_ip}:3000/theme_monitor_quotes`, {
-            params: { codes: codes.join(',') },
-          });
-          const newQuotes = quotesRes.data || {};
-          setQuotes(newQuotes);
-          detectMovements(newQuotes, analysisData);
-        }
+        const newQuotes = d.quotes || {};
+        setQuotes(newQuotes);
+        detectMovements(newQuotes, analysisData);
       } catch (err) {
         console.error('题材盯盘轮询失败:', err);
       } finally {
@@ -612,7 +588,7 @@ const ThemeMonitor = () => {
           </div>
           <div className="tm-right">
             <MovementPanel movements={movements} onOpenKline={openKline} />
-            <FundChartsPanel />
+            <FundChartsPanel historyData={fundHistory} />
           </div>
         </div>
       )}

@@ -600,18 +600,48 @@ app.get('/theme_monitor_analysis', async (req, res) => {
 });
 
 // 题材盯盘 - 自选股板块涨跌幅前十（复用盯盘页板块数据，紧凑返回供 10s 轮询）
+const slimBlockList = (list) => (list || []).map((b) => ({
+  blockName: b.blockName,
+  avgChange: b.avgChange,
+  rankChange: b.rankChange || 0,
+  stocks: (b.data || []).filter((s) => !s.noMarketData).slice(0, 8).map((s) => ({ code: s.code, name: s.name, change: s.change })),
+}));
+
 app.get('/theme_monitor_blocks', (req, res) => {
   try {
     const { firstNumList, lastNumList } = getTopAndBottomBlockData(10);
-    const slim = (list) => (list || []).map((b) => ({
-      blockName: b.blockName,
-      avgChange: b.avgChange,
-      rankChange: b.rankChange || 0,
-      stocks: (b.data || []).filter((s) => !s.noMarketData).slice(0, 8).map((s) => ({ code: s.code, name: s.name, change: s.change })),
-    }));
-    res.json({ first: slim(firstNumList), last: slim(lastNumList) });
+    res.json({ first: slimBlockList(firstNumList), last: slimBlockList(lastNumList) });
   } catch (error) {
     console.error('获取题材盯盘板块前十失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 题材盯盘 - 聚合接口：前端每 10s 只轮询此接口，一次返回页面全部数据
+// （概览 + 题材分析 + 板块前十 + 批量行情 + 资金/成交量分时），行情请求依赖分析结果在服务端内部串行
+app.get('/theme_monitor_all', async (req, res) => {
+  try {
+    const [overview, analysis, blocksData] = await Promise.all([
+      getMarketOverview(),
+      getThemeAnalysis(),
+      Promise.resolve(getTopAndBottomBlockData(10)),
+    ]);
+    const fundHistory = getAmountHistory() || [];
+    const codes = (analysis?.themes || [])
+      .slice(0, 6)
+      .flatMap((t) => (t.stocks || []).map((s) => s.marketCode))
+      .filter(Boolean);
+    const quotes = codes.length > 0 ? await getStockQuotes(codes) : {};
+    res.json({
+      overview,
+      analysis,
+      blocks: { first: slimBlockList(blocksData.firstNumList), last: slimBlockList(blocksData.lastNumList) },
+      quotes,
+      fundHistory: fundHistory || [],
+      generatedAt: Date.now(),
+    });
+  } catch (error) {
+    console.error('获取题材盯盘聚合数据失败:', error);
     res.status(500).json({ message: error.message || '获取失败' });
   }
 });
