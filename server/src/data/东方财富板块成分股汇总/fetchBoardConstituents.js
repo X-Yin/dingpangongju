@@ -2,7 +2,9 @@
 // 用途：根据同目录 东财板块到本地板块map.json 的「分类 → 东财板块代码」映射，
 //       逐个打开 data.eastmoney.com/bkzj/{BK代码}.html 成分股列表页，
 //       拦截 push2.eastmoney.com/api/qt/clist/get 响应并点击「下一页」翻页，
-//       把分类下所有板块的成分股去重合并后写入同目录 {分类}.json（格式 [{code,name}]）。
+//       把分类下所有板块的成分股去重合并后写入同目录 {分类}.json（格式 [{code,name}]）；
+//       同时写入 {分类}_blocks.json（格式 {板块名: [{code,name}]}，保留每个板块的成分股明细，
+//       供「板块成交量占比计算」按子题材拆分成交额使用）。
 // 用法：
 //   node fetchBoardConstituents.js              抓取 map 中全部分类（电力/医药/消费/农业）
 //   node fetchBoardConstituents.js 农业 消费     只抓取指定分类
@@ -139,10 +141,12 @@ async function main() {
 
       console.log(`\n===== 分类：${name}（${blocks.length} 个板块）=====`);
       const merged = new Map();
+      const blockStocksMap = {}; // 板块名 → 成分股明细
 
       for (const block of blocks) {
         console.log(`--- 板块 ${block.name} (${block.code}) ---`);
         const stocks = await fetchBlockStocks(page, block.code);
+        blockStocksMap[block.name] = stocks;
         let newCount = 0;
         for (const s of stocks) {
           if (!merged.has(s.code)) {
@@ -160,6 +164,10 @@ async function main() {
       const outFile = path.join(DIR, `${name}.json`);
       fs.writeFileSync(outFile, JSON.stringify(result, null, 2) + '\n', 'utf-8');
       console.log(`[完成] ${name}: ${result.length} 只股票 → ${outFile}`);
+
+      const blocksFile = path.join(DIR, `${name}_blocks.json`);
+      fs.writeFileSync(blocksFile, JSON.stringify(blockStocksMap, null, 2) + '\n', 'utf-8');
+      console.log(`[完成] ${name} 板块明细（${Object.keys(blockStocksMap).length} 个板块）→ ${blocksFile}`);
     }
   } finally {
     if (page && !page.isClosed()) {

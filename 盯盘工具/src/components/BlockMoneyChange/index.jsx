@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { local_ip } from '../../constant';
 import { AppstoreOutlined, BarChartOutlined, LineChartOutlined, FundOutlined, ReloadOutlined, CheckOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Modal, Tabs, Empty, DatePicker, Card, Row, Col, Divider, Alert, Spin, Tag, Space, Typography } from 'antd';
+import { Button, Checkbox, Modal, Tabs, Empty, DatePicker, Card, Row, Col, Divider, Alert, Spin, Tag, Space, Typography, Switch } from 'antd';
 import { SyncOutlined } from '@ant-design/icons';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, Title as ChartTitle, Tooltip as ChartTooltip, Legend } from 'chart.js';
@@ -332,8 +332,12 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     // 板块成交量占比折线图（传媒/农业/消费/医药/电力）
     const [categoryRatioData, setCategoryRatioData] = useState({});
     const [isCategoryRefreshing, setIsCategoryRefreshing] = useState(false);
+    // 分拆子题材开关：{ 分类名: true/false }，开启后该分类按内部概念拆成多条折线
+    const [splitCategories, setSplitCategories] = useState({});
     const categoryChartRefs = useRef({});
     const categoryContainerRefs = useRef({});
+    const categoryTooltipDataRef = useRef({}); // 分类名 → Map(time → [{name, color, value}])
+    const categoryTooltipElsRef = useRef({}); // 分类名 → tooltip DOM
     const [indexKlineData, setIndexKlineData] = useState(null);
     const [indexLoading, setIndexLoading] = useState(false);
     // 页面已移除手动回放控制，默认保持实时跟随最新一帧
@@ -1559,18 +1563,79 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
   useEffect(() => {
     if (activeTab !== 'crowd') return;
 
+    const removeTooltips = () => {
+      Object.values(categoryTooltipElsRef.current).forEach((el) => {
+        try { el.remove(); } catch (e) { /* ignore */ }
+      });
+      categoryTooltipElsRef.current = {};
+    };
+
     const removeCharts = () => {
       Object.values(categoryChartRefs.current).forEach((chart) => {
         try { chart.remove(); } catch (e) { /* ignore */ }
       });
       categoryChartRefs.current = {};
+      categoryTooltipDataRef.current = {};
+      removeTooltips();
     };
     removeCharts();
+
+    // 分拆子题材模式：为多折线图表挂载 tooltip 并订阅十字线事件，展示当天各子题材的值
+    const attachSplitTooltip = (name, chart, tooltipData) => {
+      const container = categoryContainerRefs.current[name];
+      if (!container) return;
+      const tooltip = document.createElement('div');
+      tooltip.className = 'custom-crowd-tooltip category-split-tooltip';
+      tooltip.style.display = 'none';
+      container.appendChild(tooltip);
+      categoryTooltipElsRef.current[name] = tooltip;
+
+      chart.subscribeCrosshairMove((param) => {
+        if (
+          param.point === undefined ||
+          !param.time ||
+          param.point.x < 0 ||
+          param.point.x > container.clientWidth ||
+          param.point.y < 0
+        ) {
+          tooltip.style.display = 'none';
+          return;
+        }
+        const entries = tooltipData.get(param.time);
+        if (!entries || !entries.length) {
+          tooltip.style.display = 'none';
+          return;
+        }
+        const dateStr = typeof param.time === 'number' ? dayjs.unix(param.time).format('YYYY-MM-DD') : param.time;
+        const rowsHtml = entries.map((entry) => `
+              <div class="category-tooltip-row">
+                <span class="category-tooltip-dot" style="background: ${entry.color}"></span>
+                <span class="category-tooltip-name">${entry.name}</span>
+                <span class="category-tooltip-value">${entry.value.toFixed(2)}%</span>
+              </div>`).join('');
+        tooltip.innerHTML = `<div class="tooltip-date">${dateStr}</div>${rowsHtml}`;
+        tooltip.style.display = 'block';
+        const tooltipWidth = tooltip.offsetWidth || 200;
+        const tooltipHeight = tooltip.offsetHeight || 220;
+        let left = param.point.x + 16;
+        if (left + tooltipWidth > container.clientWidth) {
+          left = param.point.x - tooltipWidth - 16;
+        }
+        if (left < 0) left = 0;
+        let top = param.point.y - tooltipHeight / 2;
+        top = Math.min(Math.max(0, top), Math.max(0, container.clientHeight - tooltipHeight));
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+      });
+    };
 
     Object.entries(categoryContainerRefs.current).forEach(([name, container]) => {
       if (!container) return;
       const list = categoryRatioData[name];
-      if (!Array.isArray(list) || !list.length) return;
+      const blocksList = categoryRatioData[`${name}_blocks`];
+      const isSplit = !!splitCategories[name] && Array.isArray(blocksList) && blocksList.length > 0;
+
+      if (!isSplit && (!Array.isArray(list) || !list.length)) return;
 
       const color = CATEGORY_RATIO_BLOCKS.find((b) => b.name === name)?.color || '#3b82f6';
 
@@ -1627,25 +1692,71 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
         },
       });
 
-      const areaSeries = chart.addAreaSeries({
-        lineColor: color,
-        topColor: `${color}66`,
-        bottomColor: `${color}05`,
-        lineWidth: 3,
-        priceFormat: {
-          type: 'custom',
-          formatter: (value) => `${value.toFixed(2)}%`,
-        },
-      });
+      if (isSplit) {
+        // 按最近5日涨幅（数据最后一天的 gain5）从高到低取前五，只展示前五个子题材
+        const rankedBlocks = blocksList
+          .map((block) => ({
+            ...block,
+            lastGain5: Array.isArray(block.data) && block.data.length > 0
+              ? Number(block.data[block.data.length - 1].gain5)
+              : null,
+          }))
+          .sort((a, b) => (Number.isFinite(b.lastGain5) ? b.lastGain5 : -Infinity) - (Number.isFinite(a.lastGain5) ? a.lastGain5 : -Infinity))
+          .slice(0, 5);
+        // 老数据无涨幅字段时退化为展示全部子题材
+        const hasGain5 = rankedBlocks.some((block) => Number.isFinite(block.lastGain5));
+        const displayBlocks = hasGain5 ? rankedBlocks : blocksList;
 
-      const formattedData = list
-        .map((item) => ({
-          time: dayjs(item.date, 'YYYYMMDD').unix(),
-          value: item.ratio,
-        }))
-        .sort((a, b) => a.time - b.time);
+        // 每个子题材一条折线，颜色取自 BLOCK_COLORS 色板
+        const tooltipData = new Map();
+        displayBlocks.forEach((block, index) => {
+          const lineColor = BLOCK_COLORS[index % BLOCK_COLORS.length];
+          const lineSeries = chart.addLineSeries({
+            color: lineColor,
+            lineWidth: 2,
+            priceFormat: {
+              type: 'custom',
+              formatter: (value) => `${value.toFixed(2)}%`,
+            },
+          });
+          const formattedData = (block.data || [])
+            .map((item) => ({
+              time: dayjs(item.date, 'YYYYMMDD').unix(),
+              value: item.ratio,
+            }))
+            .sort((a, b) => a.time - b.time);
+          lineSeries.setData(formattedData);
+          formattedData.forEach((d) => {
+            if (!tooltipData.has(d.time)) tooltipData.set(d.time, []);
+            tooltipData.get(d.time).push({ name: block.blockName, color: lineColor, value: d.value });
+          });
+        });
+        // tooltip 中按值从高到低展示
+        tooltipData.forEach((entries) => entries.sort((a, b) => b.value - a.value));
+        categoryTooltipDataRef.current[name] = tooltipData;
+        attachSplitTooltip(name, chart, tooltipData);
+      } else {
+        const areaSeries = chart.addAreaSeries({
+          lineColor: color,
+          topColor: `${color}66`,
+          bottomColor: `${color}05`,
+          lineWidth: 3,
+          priceFormat: {
+            type: 'custom',
+            formatter: (value) => `${value.toFixed(2)}%`,
+          },
+        });
 
-      areaSeries.setData(formattedData);
+        const formattedData = list
+          .map((item) => ({
+            time: dayjs(item.date, 'YYYYMMDD').unix(),
+            value: item.ratio,
+          }))
+          .sort((a, b) => a.time - b.time);
+
+        areaSeries.setData(formattedData);
+      }
+
       chart.timeScale().fitContent();
       chart.timeScale().applyOptions({
         fixLeftEdge: true,
@@ -1670,7 +1781,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
       window.removeEventListener('resize', handleCategoryResize);
       removeCharts();
     };
-  }, [categoryRatioData, activeTab]);
+  }, [categoryRatioData, activeTab, splitCategories]);
 
   const allBlocks = useMemo(() => {
         if (!dayHistory.length) return [];
@@ -2770,7 +2881,19 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                         return (
                                             <div key={name} className="crowd-chart-card">
                                                 <div className="crowd-chart-header">
-                                                    <div className="crowd-chart-title">{name}成交量占比</div>
+                                                    <div className="crowd-chart-title-wrap">
+                                                        <div className="crowd-chart-title">{name}成交量占比</div>
+                                                        {(categoryRatioData[`${name}_blocks`] || []).length > 0 && (
+                                                            <div className="crowd-split-toggle">
+                                                                <span className="crowd-split-label">分拆子题材</span>
+                                                                <Switch
+                                                                    size="small"
+                                                                    checked={!!splitCategories[name]}
+                                                                    onChange={(checked) => setSplitCategories((prev) => ({ ...prev, [name]: checked }))}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                     <div className="crowd-chart-right">
                                                         <div className="crowd-chart-value">
                                                             <span className="crowd-value-number" style={{ color }}>
