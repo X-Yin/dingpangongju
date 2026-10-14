@@ -1,5 +1,38 @@
 [
   {
+    "id": "1791945216544_pnnc5h",
+    "type": "buy",
+    "code": "sz300413",
+    "name": "芒果超媒",
+    "date": "2026-10-14",
+    "time": "10:33:36",
+    "detail": "新增持仓：芒果超媒（sz300413）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-14T02:33:36.544Z"
+  },
+  {
+    "id": "1791941569342_p9jb9v",
+    "type": "delete",
+    "code": "sz001309",
+    "name": "德明利",
+    "date": "2026-10-14",
+    "time": "09:32:49",
+    "detail": "删除持仓：德明利（sz001309）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-14T01:32:49.342Z"
+  },
+  {
+    "id": "1791941535100_pagkj8",
+    "type": "delete",
+    "code": "sz002980",
+    "name": "华盛昌",
+    "date": "2026-10-14",
+    "time": "09:32:15",
+    "detail": "删除持仓：华盛昌（sz002980）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-14T01:32:15.100Z"
+  },
+  {
     "id": "1791867941560_jk5019",
     "type": "buy",
     "code": "sz002980",

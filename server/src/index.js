@@ -86,6 +86,7 @@ const { predictSentimentCycle } = require('./service/sentimentPrediction');
 const { runQuantAnalysis, getQuantAnalysisData, analyzeSingleStock } = require('./service/quantAnalysis');
 const { getRZRQData } = require('./service/rzrq');
 const { getTechBlockCrowd } = require('./service/techCrowd');
+const { getBlockCategoryRatio, run: runCategoryAmount, categoryRatioStartDate, categoryRatioEndDate } = require('./service/板块成交量占比计算/category_amount_money');
 const { getRiskScoreHistory, calculateAndSaveRiskScore } = require('./service/marketRiskScore');
 const { analyzeMonitorStocks } = require('./service/strongAndWeakStock');
 const { getAvailableDates, getSnapshotData, getLatestSnapshotDate, saveDailySnapshots, aggregateByInterval } = require('./service/fundSnapshot');
@@ -112,7 +113,7 @@ const { isTradingDay } = require('./utils/tradingDay');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
 const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refreshLianbanRange } = require('./service/lianban');
-const { getMarketOverview, getThemeAnalysis, getStockQuotes } = require('./service/themeMonitor');
+const { getMarketOverview, getThemeAnalysis, getStockQuotes, getThemeHistory, getThemeDayStocks } = require('./service/themeMonitor');
 const { getClsNews, getBoardChange, getStockChangesAll, getStockNews, getStockZyjs, getInstitutionParticipation, getSectorSpot, getSectorDetail, getForeignCommodity } = require('./service/akData');
 const { getThsHotRank } = require('./service/thsHotRank');
 
@@ -656,6 +657,32 @@ app.get('/theme_monitor_quotes', async (req, res) => {
     res.json(await getStockQuotes(codes));
   } catch (error) {
     console.error('获取题材盯盘行情失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 题材盯盘 - 题材历史弹窗：近 N 个交易日情绪温度 + 各题材每日涨停家数 + 每日涨停最多题材
+app.get('/theme_history', (req, res) => {
+  try {
+    const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 5), 60);
+    res.json(getThemeHistory(days));
+  } catch (error) {
+    console.error('获取题材历史失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 题材盯盘 - 某交易日某题材涨停股列表（当日涨幅 / 连板标签 / 近 3 日历史涨幅）
+app.get('/theme_day_stocks', async (req, res) => {
+  try {
+    const date = String(req.query.date || '').replace(/\D/g, '');
+    const theme = String(req.query.theme || '');
+    if (!date || !theme) {
+      return res.status(400).json({ message: '缺少 date 或 theme 参数' });
+    }
+    res.json(await getThemeDayStocks(date, theme));
+  } catch (error) {
+    console.error('获取题材当日涨停股失败:', error);
     res.status(500).json({ message: error.message || '获取失败' });
   }
 });
@@ -1629,6 +1656,29 @@ app.get('/refresh_tech_block_crowd', async (req, res) => {
     res.json({ success: true, message: '刷新成功' });
   } catch (error) {
     console.error('刷新科技板块拥挤度数据失败:', error);
+    res.status(500).json({ success: false, message: error.message || '刷新失败' });
+  }
+});
+
+// 获取各板块（传媒/农业/消费/医药/电力）成交量占比
+app.get('/block_category_ratio', (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const result = getBlockCategoryRatio(startDate, endDate);
+    res.json(result);
+  } catch (error) {
+    console.error('获取板块成交量占比失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 刷新各板块成交额数据（重新拉取成分股日K汇总，耗时较长）
+app.get('/refresh_block_category_ratio', async (req, res) => {
+  try {
+    await runCategoryAmount(categoryRatioStartDate, categoryRatioEndDate);
+    res.json({ success: true, message: '刷新成功' });
+  } catch (error) {
+    console.error('刷新板块成交额数据失败:', error);
     res.status(500).json({ success: false, message: error.message || '刷新失败' });
   }
 });
@@ -4253,15 +4303,24 @@ const runMarketSnapshotJob = async () => {
     const kcbArr = indexKlineData?.kechuangbanData || [];
 
     // 资金净流入：与盯盘页/训练营/回测完全同口径 —— 对分时快照按 5min 分桶
-    // （边界 9:35/13:05 起，窗口取最后一条），取最近两个桶累计值之差
+    // （边界 9:35/13:05 起，窗口取最后一条），取最近两个「已走完」桶累计值之差
+    // 注意：本任务在每 5 分钟边界后几秒触发，边界后新写入的采样点会滚入下一个桶，
+    // 若直接取 last/prev 两桶，实际是相隔几秒的两次采样之差，结果恒为 0.00
     const calcMainMoney5minDiff = () => {
       const buckets = aggregateByInterval(
         Array.isArray(amountHistory) ? amountHistory : [],
         5
       );
       if (!buckets || buckets.length < 2) return null;
-      const last = buckets[buckets.length - 1];
-      const prev = buckets[buckets.length - 2];
+      // 桶标签 = 窗口结束边界，窗口尚未走完的桶（标签时间 > 当前时刻）不参与比较
+      const nowTotalMin = dayjs().hour() * 60 + dayjs().minute();
+      const completeBuckets = buckets.filter((b) => {
+        const labelMin = parseInt(b.time.slice(0, 2), 10) * 60 + parseInt(b.time.slice(2, 4), 10);
+        return labelMin <= nowTotalMin;
+      });
+      if (!completeBuckets || completeBuckets.length < 2) return null;
+      const last = completeBuckets[completeBuckets.length - 1];
+      const prev = completeBuckets[completeBuckets.length - 2];
       const diff = Number(last.mainMoney) - Number(prev.mainMoney);
       if (!Number.isFinite(diff)) return null;
       return `${diff > 0 ? '+' : ''}${diff.toFixed(2)}`;

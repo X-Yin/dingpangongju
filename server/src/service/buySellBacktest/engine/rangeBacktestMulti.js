@@ -23,8 +23,8 @@ const { ensureWatchlistValuation } = require('../../watchlistValuation');
 const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress) => {
   const ids = (Array.isArray(strategyIds) ? strategyIds : []).filter(id => STRATEGIES[id]);
   if (ids.length === 0) return [];
-  // 买入估值限制预取：非当日缓存时拉取自选股总市值/市盈率快照（除情绪游资相关策略外，买入候选须满足
-  // 总市值 ≥ 200 亿且市盈率非亏损；见 watchlistValuation.js）。覆盖本组全部策略（重点板块/龙头战法/常规）
+  // 买入估值限制预取：非当日缓存时拉取自选股流通市值/市盈率快照（除情绪游资相关策略外，买入候选须满足
+  // 流通市值 ≥ 200 亿且市盈率非亏损；见 watchlistValuation.js）。覆盖本组全部策略（重点板块/龙头战法/常规）
   await ensureWatchlistValuation();
   // 重点板块-N日最高涨幅系列走独立回测（板块驱动、尾盘 14:50 买入，不走共享数据循环的买点诊断）
   const keyBlockIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays != null);

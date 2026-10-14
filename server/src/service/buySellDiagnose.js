@@ -3227,10 +3227,10 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     ? Number(dayjs().format('HHmm'))
     : 1455;
 
-  // 估值快照（总市值/市盈率）：非当日缓存时拉取一次，供下方买入估值限制过滤使用
+  // 估值快照（流通市值/市盈率）：非当日缓存时拉取一次，供下方买入估值限制过滤使用
   await ensureWatchlistValuation();
   // 自选股榜单仅纳入科技股（isTech !== false，与全站「自选股科技股」口径一致），
-  // 并叠加买入估值限制（总市值 < 200 亿 或 市盈率亏损 剔除；2026-10-13）
+  // 并叠加买入估值限制（流通市值 < 200 亿 或 市盈率亏损 剔除；2026-10-14 由总市值改为流通市值口径）
   const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false && !isBuyBlockedByValuation(s.code));
   const gate = await queryLiveIndexGate(null, targetDateStr, buyMinute);
 

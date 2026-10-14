@@ -203,6 +203,39 @@ const extractSentiment = (html) => {
   return { phase: phase || null, temperature };
 };
 
+const stripTags = (str) => String(str == null ? '' : str).replace(/<[^>]+>/g, '').trim();
+
+// 解析当日复盘页 KPI 情绪卡片（id="s-env"）：涨停/跌停/连板/封板率/炸板/上涨下跌/两市成交等
+const parseMarketKpi = (html) => {
+  const startIdx = html.indexOf('id="s-env"');
+  if (startIdx === -1) return null;
+  const endIdx = html.indexOf('<div class="qnav"', startIdx);
+  const seg = html.slice(startIdx, endIdx === -1 ? startIdx + 8000 : endIdx);
+
+  const numOf = (label) => {
+    const re = new RegExp(`<div class="l"[^>]*>${label}</div><div class="v[^"]*"[^>]*>([\\d,.]+)(?:<small[^>]*>([^<]*)</small>)?</div>`);
+    const m = seg.match(re);
+    if (!m) return null;
+    return { value: parseFloat(m[1].replace(/,/g, '')), unit: m[2] || '' };
+  };
+
+  const upDownM = seg.match(/<div class="l">上涨\/下跌<\/div>[\s\S]*?<span class="up">([\d,]+)<\/span><small>\/<\/small><span class="dn">([\d,]+)<\/span>/);
+  const amountM = seg.match(/<div class="l">两市成交<\/div><div class="v"[^>]*>([\d.]+[^<]*)</);
+
+  return {
+    limitUpCount: numOf('涨停')?.value ?? null,
+    limitDownCount: numOf('跌停')?.value ?? null,
+    maxLianban: numOf('最高板') ?? null,
+    lianbanCount: numOf('连板')?.value ?? null,
+    sealRate: numOf('封板率')?.value ?? null,
+    brokenBoardCount: numOf('炸板')?.value ?? null,
+    yesterdayZtPerf: numOf('昨涨停今表现')?.value ?? null,
+    upCount: upDownM ? parseInt(upDownM[1].replace(/,/g, ''), 10) : null,
+    downCount: upDownM ? parseInt(upDownM[2].replace(/,/g, ''), 10) : null,
+    totalAmount: amountM ? stripTags(amountM[1]) : null,
+  };
+};
+
 // 解析「热点题材」HTML：板块顺序/题材理由，以及每只个股的龙头★/早盘标记/连板标签
 // 返回 [{ rank, board, reason, stockOrder: [code...], stocks: Map(code -> info) }]
 // 注意：股票代码全为数字，挂到普通对象上会被引擎按数组索引重排，必须用 Map 保序
@@ -326,6 +359,7 @@ const parseLianbanHtml = (html, requestDate) => {
     fetchedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
     summary,
     sentiment: extractSentiment(html),
+    kpi: parseMarketKpi(html),
     themes,
   };
 };
@@ -407,8 +441,8 @@ const getAvailableLianbanDates = () => {
     .sort((a, b) => b.localeCompare(a));
 };
 
-// 连板情绪序列：读取全部快照，输出按日期升序的每日情绪摘要（供连板情绪折线图使用）
-// 返回 [{ date, pageDate, phase, temperature, summary }]
+// 连板情绪序列：读取全部快照，输出按日期升序的每日情绪摘要（供情绪温度折线图使用）
+// 返回 [{ date, pageDate, phase, temperature, limitUp, limitDown, summary }]
 const getLianbanSentimentSeries = () => {
   const dates = getAvailableLianbanDates().slice().reverse(); // 升序
   const series = [];
@@ -420,6 +454,9 @@ const getLianbanSentimentSeries = () => {
       pageDate: day.pageDate || `${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)}`,
       phase: day.sentiment?.phase || null,
       temperature: day.sentiment?.temperature ?? null,
+      // 涨停家数取快照题材股合计；跌停家数依赖快照 kpi（旧快照未存，为 null 由前端显示 --）
+      limitUp: day.summary?.totalCount ?? null,
+      limitDown: day.kpi?.limitDownCount ?? null,
       summary: day.summary || null,
     });
   });
@@ -476,6 +513,7 @@ module.exports = {
   parseLianbanHtml,
   parseThemesHtml,
   extractSentiment,
+  parseMarketKpi,
   saveLianbanDay,
   hasLianbanDay,
   refreshLianbanRange,

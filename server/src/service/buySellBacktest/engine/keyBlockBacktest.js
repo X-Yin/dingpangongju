@@ -217,7 +217,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     // 涨停判定取该桶时点当日涨幅；买入价从当日分时线现取（minute ≤ 该桶 minute 的最后一点），停牌/无分时个股自动跳过
     const candidateList = await batchParallel(allMembers, async (m) => {
       if (EXCLUDED_CODES.has(m.code)) return null;
-      // 估值限制：总市值 < 200 亿 或 市盈率亏损 不买（情绪游资 iceMode 豁免；2026-10-13）
+      // 估值限制：流通市值 < 200 亿 或 市盈率亏损 不买（情绪游资 iceMode 豁免；2026-10-14 由总市值改为流通市值口径）
       if (!iceMode && isBuyBlockedByValuation(m.code)) return null;
       if (isOscExcluded(m.code)) return null; // 震荡测试：勾选隐藏的股票不参与选股
       if (isOffense && !isStockInWatchlistAt(m.code, dateStr, bucketMinute)) return null;

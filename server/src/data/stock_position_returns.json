@@ -1,5 +1,40 @@
 [
   {
+    "date": "2026-10-14",
+    "operations": [
+      {
+        "id": "1791941535118_ff8e",
+        "action": "sell",
+        "stockName": "华盛昌",
+        "stockCode": "sz002980",
+        "position": "",
+        "time": "09:32"
+      },
+      {
+        "id": "1791941569360_h0xw",
+        "action": "sell",
+        "stockName": "德明利",
+        "stockCode": "sz001309",
+        "position": "",
+        "time": "09:32"
+      },
+      {
+        "id": "1791945216566_qct9",
+        "action": "buy",
+        "stockName": "芒果超媒",
+        "stockCode": "sz300413",
+        "position": "",
+        "time": "10:33"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-14T01:32:15.132Z",
+    "updatedAt": "2026-10-14T02:33:36.623Z"
+  },
+  {
     "date": "2026-10-13",
     "operations": [
       {

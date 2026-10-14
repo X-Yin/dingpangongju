@@ -589,6 +589,19 @@
         &.up { color: #e11d48; }
         &.down { color: #059669; }
       }
+
+      .tm-suspended-tag {
+        font-size: 10px;
+        color: #8a94a6;
+        background: rgba(138, 148, 166, 0.12);
+        border-radius: 3px;
+        padding: 1px 5px;
+        white-space: nowrap;
+      }
+
+      .tm-stock-row.is-suspended {
+        opacity: 0.55;
+      }
     }
   }
 
@@ -831,5 +844,202 @@
 
     .up { color: #ff7875; }
     .down { color: #95de64; }
+  }
+}
+
+// ==================== 弹窗与卡片交互（Modal/Tooltip portal 挂 body，需全局作用域） ====================
+.tm-kpi-card.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(114, 46, 209, 0.18);
+  }
+}
+
+.tm-theme-name {
+  cursor: pointer;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: #722ed1;
+  }
+}
+
+.tm-sentiment-chart {
+  position: relative; // chart.js responsive 需要明确高度的定位容器，否则会无限 resize 撑高
+  height: 420px;
+  padding: 8px 4px 0;
+
+  .tm-sentiment-chart-tip {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    font-size: 11px;
+    color: #8a94a6;
+    text-align: center;
+  }
+}
+
+.tm-th-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tm-th-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .tm-th-toolbar-label {
+    font-size: 12px;
+    color: #6b7890;
+    white-space: nowrap;
+  }
+
+  .tm-th-toolbar-date {
+    font-size: 12px;
+    color: #6b7890;
+    white-space: nowrap;
+
+    b {
+      color: #1890ff;
+    }
+  }
+}
+
+.tm-th-body {
+  display: flex;
+  gap: 12px;
+  height: 560px;
+}
+
+.tm-th-chart {
+  flex: 1;
+  min-width: 0;
+  position: relative; // 同上：固定高度 + relative，防止 canvas 无限撑高
+
+  canvas {
+    cursor: pointer;
+  }
+}
+
+.tm-th-lists {
+  width: 420px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.tm-th-stocklist {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .tm-th-stocklist-header {
+    flex-shrink: 0;
+    padding: 5px 10px;
+    background: #fafafa;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+
+    .tm-th-stocklist-name {
+      font-weight: 700;
+      color: #2c3e50;
+    }
+
+    .tm-th-stocklist-meta {
+      color: #8a94a6;
+      font-size: 11px;
+    }
+  }
+
+  .tm-th-stocklist-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .tm-th-stocklist-empty {
+    padding: 24px 0;
+    text-align: center;
+    font-size: 12px;
+    color: #8a94a6;
+  }
+
+  .tm-th-stock-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    border-bottom: 1px dashed #f5f5f5;
+
+    &:hover {
+      background: #fafaff;
+    }
+
+    .tm-th-stock-name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+      color: #2c3e50;
+      cursor: pointer;
+
+      &:hover {
+        color: #722ed1;
+      }
+    }
+
+    .tm-th-stock-lianban {
+      flex-shrink: 0;
+      width: 52px;
+      text-align: center;
+      font-size: 10px;
+      color: #d46b08;
+      background: rgba(212, 107, 8, 0.08);
+      border-radius: 3px;
+      padding: 1px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tm-th-stock-change {
+      flex-shrink: 0;
+      width: 48px;
+      text-align: right;
+      font-weight: 700;
+      font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+
+      &.up { color: #e11d48; }
+      &.down { color: #059669; }
+    }
+
+    .tm-th-stock-prev {
+      flex-shrink: 0;
+      width: 150px;
+      text-align: right;
+      color: #8a94a6;
+      font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 }

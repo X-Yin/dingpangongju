@@ -1,20 +1,11 @@
 [
   {
-    "id": "sz001309_1791859174232_heyq",
-    "code": "sz001309",
-    "name": "德明利",
-    "buyDate": "2026-10-13",
-    "buyTime": "10:39",
-    "weight": 50,
-    "costPrice": 233
-  },
-  {
-    "id": "sz002980_1791867941559_z6y4",
-    "code": "sz002980",
-    "name": "华盛昌",
-    "buyDate": "2026-10-13",
-    "buyTime": "13:05",
-    "weight": 50,
-    "costPrice": 113.88
+    "id": "sz300413_1791945216541_51wo",
+    "code": "sz300413",
+    "name": "芒果超媒",
+    "buyDate": "2026-10-14",
+    "buyTime": "10:33",
+    "weight": 75,
+    "costPrice": 25.1
   }
 ]

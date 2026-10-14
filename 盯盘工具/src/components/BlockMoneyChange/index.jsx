@@ -47,6 +47,15 @@ const DEFAULT_SELECTED_BLOCKS = [
 // 最小面积占比（百分比），防止板块被压缩得太狠
 const MIN_AREA_PERCENT = 2;
 
+// 拥挤度 tab 下的板块成交量占比折线图（分类与后端 东方财富板块成分股汇总/{分类}.json 对应）
+const CATEGORY_RATIO_BLOCKS = [
+    { name: '传媒', color: '#8b5cf6' },
+    { name: '农业', color: '#22c55e' },
+    { name: '消费', color: '#f97316' },
+    { name: '医药', color: '#06b6d4' },
+    { name: '电力', color: '#eab308' },
+];
+
 const getSizeClass = (areaPercent) => {
     if (areaPercent >= 15) return 'size-xl';
     if (areaPercent >= 10) return 'size-lg';
@@ -320,6 +329,11 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     const crowdContainerRef = useRef(null);
     const ratioChartRef = useRef(null);
     const ratioContainerRef = useRef(null);
+    // 板块成交量占比折线图（传媒/农业/消费/医药/电力）
+    const [categoryRatioData, setCategoryRatioData] = useState({});
+    const [isCategoryRefreshing, setIsCategoryRefreshing] = useState(false);
+    const categoryChartRefs = useRef({});
+    const categoryContainerRefs = useRef({});
     const [indexKlineData, setIndexKlineData] = useState(null);
     const [indexLoading, setIndexLoading] = useState(false);
     // 页面已移除手动回放控制，默认保持实时跟随最新一帧
@@ -1198,6 +1212,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     if (activeTab === 'crowd') {
       fetchCrowdData();
       fetchIndexKlineData();
+      fetchCategoryRatioData();
     }
   }, [activeTab, crowdDateRange]);
 
@@ -1502,6 +1517,160 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
       }
     };
   }, [crowdData, activeTab]);
+
+  // ============ 板块成交量占比折线图（传媒/农业/消费/医药/电力） ============
+  const fetchCategoryRatioData = async () => {
+    if (!crowdDateRange[0] || !crowdDateRange[1]) return;
+    try {
+      const startDate = crowdDateRange[0].format('YYYY-MM-DD');
+      const endDate = crowdDateRange[1].format('YYYY-MM-DD');
+      const response = await axios.get(`http://${local_ip}:3000/block_category_ratio`, {
+        params: { startDate, endDate },
+      });
+      setCategoryRatioData(response.data || {});
+    } catch (error) {
+      console.error('Fetch block_category_ratio data failed:', error);
+      setCategoryRatioData({});
+    }
+  };
+
+  const refreshCategoryRatioData = async () => {
+    if (isCategoryRefreshing) return;
+    setIsCategoryRefreshing(true);
+    try {
+      await axios.get(`http://${local_ip}:3000/refresh_block_category_ratio`);
+      await fetchCategoryRatioData();
+    } catch (error) {
+      console.error('Refresh block_category_ratio data failed:', error);
+    } finally {
+      setIsCategoryRefreshing(false);
+    }
+  };
+
+  // 各板块成交量占比容器的回调 ref
+  const setCategoryContainerRef = (name) => (el) => {
+    if (el) {
+      categoryContainerRefs.current[name] = el;
+    } else {
+      delete categoryContainerRefs.current[name];
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab !== 'crowd') return;
+
+    const removeCharts = () => {
+      Object.values(categoryChartRefs.current).forEach((chart) => {
+        try { chart.remove(); } catch (e) { /* ignore */ }
+      });
+      categoryChartRefs.current = {};
+    };
+    removeCharts();
+
+    Object.entries(categoryContainerRefs.current).forEach(([name, container]) => {
+      if (!container) return;
+      const list = categoryRatioData[name];
+      if (!Array.isArray(list) || !list.length) return;
+
+      const color = CATEGORY_RATIO_BLOCKS.find((b) => b.name === name)?.color || '#3b82f6';
+
+      const chart = createChart(container, {
+        layout: {
+          background: { type: ColorType.Solid, color: '#ffffff' },
+          textColor: '#64748b',
+          fontSize: 12,
+        },
+        width: container.clientWidth || 600,
+        height: 380,
+        grid: {
+          vertLines: { color: '#f1f5f9', style: LineStyle.Dotted },
+          horzLines: { color: '#f1f5f9', style: LineStyle.Dotted },
+        },
+        timeScale: {
+          borderColor: '#e2e8f0',
+          timeVisible: true,
+          secondsVisible: false,
+          tickMarkFormatter: (time) => {
+            if (typeof time === 'number') {
+              return dayjs.unix(time).format('MM-DD');
+            }
+            return time;
+          },
+        },
+        localization: {
+          timeFormatter: (time) => {
+            if (typeof time === 'number') {
+              return dayjs.unix(time).format('YYYY-MM-DD');
+            }
+            return time;
+          },
+        },
+        rightPriceScale: {
+          borderColor: '#e2e8f0',
+          autoScale: true,
+          scaleMargins: { top: 0.12, bottom: 0.12 },
+        },
+        handleScroll: false,
+        handleScale: false,
+        crosshair: {
+          mode: 1,
+          vertLine: {
+            color: '#cbd5e1',
+            style: LineStyle.Dotted,
+            labelBackgroundColor: '#1e293b',
+          },
+          horzLine: {
+            color: '#cbd5e1',
+            style: LineStyle.Dotted,
+            labelBackgroundColor: '#1e293b',
+          },
+        },
+      });
+
+      const areaSeries = chart.addAreaSeries({
+        lineColor: color,
+        topColor: `${color}66`,
+        bottomColor: `${color}05`,
+        lineWidth: 3,
+        priceFormat: {
+          type: 'custom',
+          formatter: (value) => `${value.toFixed(2)}%`,
+        },
+      });
+
+      const formattedData = list
+        .map((item) => ({
+          time: dayjs(item.date, 'YYYYMMDD').unix(),
+          value: item.ratio,
+        }))
+        .sort((a, b) => a.time - b.time);
+
+      areaSeries.setData(formattedData);
+      chart.timeScale().fitContent();
+      chart.timeScale().applyOptions({
+        fixLeftEdge: true,
+        fixRightEdge: true,
+        lockVisibleTimeRangeOnResize: true,
+      });
+
+      categoryChartRefs.current[name] = chart;
+    });
+
+    const handleCategoryResize = () => {
+      Object.entries(categoryChartRefs.current).forEach(([name, chart]) => {
+        const container = categoryContainerRefs.current[name];
+        if (chart && container) {
+          chart.applyOptions({ width: container.clientWidth });
+        }
+      });
+    };
+    window.addEventListener('resize', handleCategoryResize);
+
+    return () => {
+      window.removeEventListener('resize', handleCategoryResize);
+      removeCharts();
+    };
+  }, [categoryRatioData, activeTab]);
 
   const allBlocks = useMemo(() => {
         if (!dayHistory.length) return [];
@@ -2595,6 +2764,41 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                             <div ref={ratioContainerRef} className="crowd-chart" />
                                         </div>
                                     </div>
+                                    {CATEGORY_RATIO_BLOCKS.map(({ name, color }) => {
+                                        const list = categoryRatioData[name] || [];
+                                        const latest = list.length > 0 ? list[list.length - 1] : null;
+                                        return (
+                                            <div key={name} className="crowd-chart-card">
+                                                <div className="crowd-chart-header">
+                                                    <div className="crowd-chart-title">{name}成交量占比</div>
+                                                    <div className="crowd-chart-right">
+                                                        <div className="crowd-chart-value">
+                                                            <span className="crowd-value-number" style={{ color }}>
+                                                                {latest ? `${latest.ratio.toFixed(2)}%` : '-'}
+                                                            </span>
+                                                        </div>
+                                                        <Button
+                                                            type="primary"
+                                                            size="small"
+                                                            onClick={refreshCategoryRatioData}
+                                                            loading={isCategoryRefreshing}
+                                                            icon={<SyncOutlined spin={isCategoryRefreshing} />}
+                                                            className="crowd-refresh-btn"
+                                                        >
+                                                            {/* 刷新板块成交额数据 */}
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                                <div className="crowd-chart-body">
+                                                    {list.length > 0 ? (
+                                                        <div ref={setCategoryContainerRef(name)} className="crowd-chart" />
+                                                    ) : (
+                                                        <Empty description="暂无数据，请点击刷新生成" style={{ marginTop: 48 }} />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <Empty description="暂无拥挤度数据，请选择时间范围" style={{ marginTop: 48 }} />

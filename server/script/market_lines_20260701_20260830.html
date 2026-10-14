@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>市场主线/支线阶段分析 07/01 ~ 08/30</title>
+<style>
+  :root {
+    --bg: #0b1020; --card: #121a2e; --card2: #0e1526; --border: #223052;
+    --text: #e6ecff; --muted: #8292b8; --red: #f43f5e; --green: #10b981;
+    --amber: #f59e0b; --blue: #38bdf8; --purple: #a78bfa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; padding: 28px 20px 60px; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 18px; min-width: 140px; }
+  .stat .v { font-size: 22px; font-weight: 700; }
+  .stat .k { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .red { color: var(--red); } .green { color: var(--green); } .amber { color: var(--amber); } .blue { color: var(--blue); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 22px; }
+  .card h2 { font-size: 16px; margin-bottom: 12px; }
+  .card h2 small { color: var(--muted); font-weight: 400; margin-left: 8px; font-size: 12px; }
+  .chart-box svg { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 16px; color: var(--muted); font-size: 12px; margin-top: 8px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  /* 演变时间轴 */
+  table.evo { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.evo th { color: var(--muted); text-align: left; font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.evo td { padding: 9px 10px; border-bottom: 1px solid #1a2440; vertical-align: top; }
+  .chip { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; margin: 1px 4px 1px 0; white-space: nowrap; }
+  .chip.main { background: rgba(244,63,94,.15); color: var(--red); border: 1px solid rgba(244,63,94,.35); }
+  .chip.side { background: rgba(245,158,11,.12); color: var(--amber); border: 1px solid rgba(245,158,11,.3); }
+  .chip.blk-main { background: rgba(244,63,94,.15); color: var(--red); border: 1px solid rgba(244,63,94,.35); }
+  .chip.blk-side { background: rgba(56,189,248,.12); color: var(--blue); border: 1px solid rgba(56,189,248,.3); }
+  .chip.def { background: rgba(130,146,184,.12); color: var(--muted); border: 1px solid rgba(130,146,184,.3); }
+  .phase-name { font-weight: 700; white-space: nowrap; }
+  .phase-name .rng { color: var(--muted); font-weight: 400; font-size: 12px; display: block; }
+  /* 阶段卡 */
+  .phase-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 20px; overflow: hidden; }
+  .phase-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 20px; background: var(--card2); border-bottom: 1px solid var(--border); }
+  .phase-head .no { font-size: 13px; color: var(--muted); }
+  .phase-head h3 { font-size: 16px; }
+  .phase-head .rng { color: var(--muted); font-size: 13px; }
+  .badge { padding: 2px 10px; border-radius: 999px; font-size: 12px; }
+  .badge.hot { background: rgba(244,63,94,.15); color: var(--red); }
+  .badge.warm { background: rgba(245,158,11,.12); color: var(--amber); }
+  .badge.cold { background: rgba(16,185,129,.12); color: var(--green); }
+  .mini-stats { display: flex; gap: 18px; margin-left: auto; color: var(--muted); font-size: 12px; flex-wrap: wrap; }
+  .mini-stats b { color: var(--text); font-size: 14px; }
+  .phase-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  @media (max-width: 860px) { .phase-body { grid-template-columns: 1fr; } }
+  .col { padding: 14px 20px; }
+  .col + .col { border-left: 1px solid var(--border); }
+  @media (max-width: 860px) { .col + .col { border-left: none; border-top: 1px solid var(--border); } }
+  .col h4 { font-size: 13px; margin-bottom: 10px; color: var(--muted); font-weight: 500; }
+  .row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; font-size: 13px; }
+  .row .nm { width: 92px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
+  .tagline { font-size: 11px; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; }
+  .tag-main { background: rgba(244,63,94,.18); color: var(--red); }
+  .tag-side { background: rgba(245,158,11,.15); color: var(--amber); }
+  .tag-def { background: rgba(130,146,184,.15); color: var(--muted); }
+  .bar-wrap { flex: 1; height: 16px; background: #0d1425; border-radius: 4px; overflow: hidden; position: relative; }
+  .bar { height: 100%; border-radius: 4px; }
+  .bar.main-b { background: linear-gradient(90deg, #be123c, var(--red)); }
+  .bar.side-b { background: linear-gradient(90deg, #b45309, var(--amber)); }
+  .bar.blk-main-b { background: linear-gradient(90deg, #be123c, var(--red)); }
+  .bar.blk-side-b { background: linear-gradient(90deg, #0369a1, var(--blue)); }
+  .row .val { width: 120px; flex-shrink: 0; text-align: right; color: var(--muted); font-size: 12px; }
+  .row .val b { color: var(--text); font-size: 13px; }
+  .leader { color: var(--muted); font-size: 11px; margin: -6px 0 8px 92px; }
+  .leader b { color: var(--text); }
+  .empty { color: var(--muted); font-size: 13px; padding: 6px 0; }
+  .foot { color: var(--muted); font-size: 12px; margin-top: 26px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>市场主线 / 支线阶段分析</h1>
+  <div class="sub" id="sub"></div>
+  <div class="stats" id="stats"></div>
+
+  <div class="card chart-box">
+    <h2>情绪温度与阶段划分 <small>连板快照 sentiment.temperature，3 日平滑 zigzag 分段</small></h2>
+    <div id="tempChart"></div>
+    <div class="legend">
+      <span><i style="background:rgba(244,63,94,.25)"></i>上行/高潮阶段</span>
+      <span><i style="background:rgba(16,185,129,.2)"></i>下行/退潮阶段</span>
+      <span><i style="background:rgba(130,146,184,.15)"></i>震荡阶段</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>主线演变时间轴 <small>每阶段题材端与板块端的主线 / 支线</small></h2>
+    <table class="evo" id="evoTable"></table>
+  </div>
+
+  <div class="card chart-box">
+    <h2>上证指数 3 日线斜率窗口 <small>收盘口径：MA3 斜率由负转正 → 由正转负；红底为正斜率窗口</small></h2>
+    <div id="indexChart"></div>
+    <div class="legend">
+      <span><i style="background:#38bdf8"></i>上证收盘</span>
+      <span><i style="background:#a78bfa"></i>MA3</span>
+      <span><i style="background:rgba(244,63,94,.18)"></i>正斜率窗口</span>
+      <span><i style="background:#f59e0b"></i>转正/转负拐点</span>
+    </div>
+    <table class="evo" id="winTable" style="margin-top:16px"></table>
+  </div>
+
+  <div id="phaseCards"></div>
+
+  <div class="card">
+    <h2>全周期强度排名 <small>左：题材涨停家数合计（连板快照）｜右：板块阶段累计涨幅（板块日历史）</small></h2>
+    <div class="phase-body">
+      <div class="col"><h4>题材端 Top12（涨停家数 / 连板高度）</h4><div id="themeRank"></div></div>
+      <div class="col"><h4>板块端 Top12（区间累计涨幅 %）</h4><div id="sectorRank"></div></div>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+window.__REPORT__ = {"start":"20260701","end":"20260830","tradingDays":43,"avgTemp":50,"maxLianban":9,"totalLimitUp":2166,"phases":[{"index":1,"startDate":"20260701","endDate":"20260701","days":1,"dayIndexes":[0],"avgTemp":100,"maxTemp":100,"minTemp":100,"rising":true,"name":"冲高见顶","stats":{"avgLimitUp":86,"avgLianbanCount":14,"maxLianban":3},"lianban":{"phaseTotalLimitUp":86,"maxLianban":3,"main":[{"name":"芯片","total":22,"maxLb":3,"days":1,"share":25.6,"leader":{"name":"多氟多","text":"3连板","concept":"电子气体"},"score":42.5},{"name":"机器人概念","total":21,"maxLb":2,"days":1,"share":24.4,"leader":{"name":"埃斯顿","text":"2连板","concept":"机器人概念"},"score":35.5}],"side":[{"name":"化工","total":10,"maxLb":2,"days":1,"share":11.6,"leader":{"name":"三美股份","text":"2连板","concept":"氢氟酸"},"score":24.5},{"name":"算力","total":6,"maxLb":2,"days":1,"share":7,"leader":{"name":"润建股份","text":"2连板","concept":"算力"},"score":20.5},{"name":"农业","total":8,"maxLb":1,"days":1,"share":9.3,"leader":{"name":"金新农","text":"首板","concept":"猪肉"},"score":16.5}],"hongli":[{"name":"医药","total":9,"maxLb":3,"days":1,"share":10.5,"leader":{"name":"海南海药","text":"3连板","concept":"创新药"},"score":29.5}],"all":[{"name":"芯片","total":22,"maxLb":3,"days":1,"share":25.6,"leader":{"name":"多氟多","text":"3连板","concept":"电子气体"},"score":42.5},{"name":"机器人概念","total":21,"maxLb":2,"days":1,"share":24.4,"leader":{"name":"埃斯顿","text":"2连板","concept":"机器人概念"},"score":35.5},{"name":"医药","total":9,"maxLb":3,"days":1,"share":10.5,"leader":{"name":"海南海药","text":"3连板","concept":"创新药"},"score":29.5},{"name":"化工","total":10,"maxLb":2,"days":1,"share":11.6,"leader":{"name":"三美股份","text":"2连板","concept":"氢氟酸"},"score":24.5},{"name":"算力","total":6,"maxLb":2,"days":1,"share":7,"leader":{"name":"润建股份","text":"2连板","concept":"算力"},"score":20.5},{"name":"通信","total":5,"maxLb":2,"days":1,"share":5.8,"leader":{"name":"星网锐捷","text":"2连板","concept":"交换机"},"score":19.5},{"name":"中报增长","total":5,"maxLb":2,"days":1,"share":5.8,"leader":{"name":"盛达资源","text":"2连板","concept":"中报增长"},"score":19.5},{"name":"农业","total":8,"maxLb":1,"days":1,"share":9.3,"leader":{"name":"金新农","text":"首板","concept":"猪肉"},"score":16.5}]},"blocks":{"main":[{"name":"消费","cum":5,"avgCh":4.97,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":12.2},{"name":"半导体材料","cum":4.8,"avgCh":4.8,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":12}],"side":[{"name":"证券","cum":3.6,"avgCh":3.62,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":10.8},{"name":"机器人","cum":1.9,"avgCh":1.88,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":9.1},{"name":"锂电","cum":1.6,"avgCh":1.57,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":8.8},{"name":"化工","cum":1.4,"avgCh":1.44,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":8.6}],"hongli":[{"name":"医药","cum":5.4,"avgCh":5.44,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":12.6},{"name":"电力","cum":5.2,"avgCh":5.22,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":12.4},{"name":"煤炭","cum":3.9,"avgCh":3.92,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":11.1}],"all":[{"name":"医药","cum":5.4,"avgCh":5.44,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":12.6},{"name":"电力","cum":5.2,"avgCh":5.22,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":12.4},{"name":"消费","cum":5,"avgCh":4.97,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":12.2},{"name":"半导体材料","cum":4.8,"avgCh":4.8,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":12},{"name":"煤炭","cum":3.9,"avgCh":3.92,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":11.1},{"name":"证券","cum":3.6,"avgCh":3.62,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":10.8},{"name":"机器人","cum":1.9,"avgCh":1.88,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":9.1},{"name":"锂电","cum":1.6,"avgCh":1.57,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":8.8},{"name":"化工","cum":1.4,"avgCh":1.44,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":1,"score":8.6},{"name":"铜箔","cum":1.4,"avgCh":1.38,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":0,"score":7.4},{"name":"MLCC","cum":0.3,"avgCh":0.31,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":0,"score":6.3},{"name":"钨","cum":0.2,"avgCh":0.23,"upRatio":1,"upDays":1,"presence":1,"days":1,"topDays":0,"score":6.2}]},"temperature":[100]},{"index":2,"startDate":"20260702","endDate":"20260709","days":6,"dayIndexes":[1,2,3,4,5,6],"avgTemp":31,"maxTemp":79,"minTemp":5,"rising":true,"name":"修复回暖","stats":{"avgLimitUp":46,"avgLianbanCount":5.3,"maxLianban":7},"lianban":{"phaseTotalLimitUp":274,"maxLianban":7,"main":[{"name":"机器人概念","total":72,"maxLb":3,"days":5,"share":26.3,"leader":{"name":"富春染织","text":"3连板","concept":"机器人概念"},"score":102.5},{"name":"芯片","total":55,"maxLb":2,"days":5,"share":20.1,"leader":{"name":"亚威股份","text":"反5天3板","concept":"半导体设备"},"score":79.5}],"side":[{"name":"中报增长","total":29,"maxLb":3,"days":6,"share":10.6,"leader":{"name":"视源股份","text":"3连板","concept":"中报增长"},"score":62},{"name":"算力","total":18,"maxLb":2,"days":2,"share":6.6,"leader":{"name":"大名城","text":"2连板","concept":"算力"},"score":35},{"name":"基础建设","total":12,"maxLb":2,"days":3,"share":4.4,"leader":{"name":"浙江鼎力","text":"2连板","concept":"工程机械"},"score":31.5},{"name":"通信","total":11,"maxLb":2,"days":2,"share":4,"leader":{"name":"贤丰控股","text":"2连板","concept":"覆铜板"},"score":28}],"hongli":[{"name":"医药","total":7,"maxLb":4,"days":1,"share":2.6,"leader":{"name":"海南海药","text":"4连板","concept":"创新药"},"score":33.5}],"all":[{"name":"机器人概念","total":72,"maxLb":3,"days":5,"share":26.3,"leader":{"name":"富春染织","text":"3连板","concept":"机器人概念"},"score":102.5},{"name":"芯片","total":55,"maxLb":2,"days":5,"share":20.1,"leader":{"name":"亚威股份","text":"反5天3板","concept":"半导体设备"},"score":79.5},{"name":"中报增长","total":29,"maxLb":3,"days":6,"share":10.6,"leader":{"name":"视源股份","text":"3连板","concept":"中报增长"},"score":62},{"name":"并购重组","total":3,"maxLb":7,"days":1,"share":1.1,"leader":{"name":"恒尚节能","text":"7连板","concept":"并购重组"},"score":47.5},{"name":"算力","total":18,"maxLb":2,"days":2,"share":6.6,"leader":{"name":"大名城","text":"2连板","concept":"算力"},"score":35},{"name":"医药","total":7,"maxLb":4,"days":1,"share":2.6,"leader":{"name":"海南海药","text":"4连板","concept":"创新药"},"score":33.5},{"name":"基础建设","total":12,"maxLb":2,"days":3,"share":4.4,"leader":{"name":"浙江鼎力","text":"2连板","concept":"工程机械"},"score":31.5},{"name":"物理AI","total":6,"maxLb":3,"days":2,"share":2.2,"leader":{"name":"大恒科技","text":"3连板","concept":"机器视觉"},"score":29},{"name":"通信","total":11,"maxLb":2,"days":2,"share":4,"leader":{"name":"贤丰控股","text":"2连板","concept":"覆铜板"},"score":28},{"name":"AI应用","total":10,"maxLb":1,"days":3,"share":3.6,"leader":{"name":"天娱数科","text":"首板","concept":"AI应用"},"score":23.5},{"name":"化工","total":6,"maxLb":2,"days":1,"share":2.2,"leader":{"name":"金石资源","text":"2连板","concept":"氢氟酸"},"score":20.5},{"name":"黄金","total":6,"maxLb":2,"days":1,"share":2.2,"leader":{"name":"招金黄金","text":"2连板","concept":"黄金"},"score":20.5}]},"blocks":{"main":[{"name":"国产超节点","cum":17.6,"avgCh":2.93,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":3,"score":25.2},{"name":"液冷","cum":7.8,"avgCh":1.29,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":4,"score":15.6}],"side":[{"name":"半导体","cum":6,"avgCh":1,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":4,"score":14.8},{"name":"cpu","cum":3.6,"avgCh":0.6,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":3,"score":10.2},{"name":"贵金属","cum":1.1,"avgCh":0.18,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":2,"score":6.5}],"hongli":[{"name":"银行","cum":2.1,"avgCh":0.35,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":3,"score":8.7}],"all":[{"name":"国产超节点","cum":17.6,"avgCh":2.93,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":3,"score":25.2},{"name":"液冷","cum":7.8,"avgCh":1.29,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":4,"score":15.6},{"name":"半导体","cum":6,"avgCh":1,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":4,"score":14.8},{"name":"cpu","cum":3.6,"avgCh":0.6,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":3,"score":10.2},{"name":"银行","cum":2.1,"avgCh":0.35,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":3,"score":8.7},{"name":"贵金属","cum":1.1,"avgCh":0.18,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":2,"score":6.5},{"name":"医药","cum":-1.1,"avgCh":-0.19,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":2,"score":5.3},{"name":"cpo","cum":-3.1,"avgCh":-0.51,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":3,"score":3.5},{"name":"化工","cum":-2.2,"avgCh":-0.36,"upRatio":0.33,"upDays":2,"presence":6,"days":6,"topDays":3,"score":3.4},{"name":"存储","cum":-3.8,"avgCh":-0.63,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":3,"score":2.8},{"name":"北美缺电","cum":-4.1,"avgCh":-0.68,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":3,"score":2.5},{"name":"消费","cum":-2.1,"avgCh":-0.36,"upRatio":0.33,"upDays":2,"presence":6,"days":6,"topDays":2,"score":2.3}]},"temperature":[34,79,5,5,5,60]},{"index":3,"startDate":"20260710","endDate":"20260717","days":6,"dayIndexes":[7,8,9,10,11,12],"avgTemp":19,"maxTemp":55,"minTemp":5,"rising":false,"name":"退潮降温","stats":{"avgLimitUp":42,"avgLianbanCount":7.2,"maxLianban":5},"lianban":{"phaseTotalLimitUp":252,"maxLianban":5,"main":[{"name":"中报增长","total":63,"maxLb":3,"days":5,"share":25,"leader":{"name":"亚联机械","text":"3连板","concept":"中报增长"},"score":93.5},{"name":"机器人概念","total":24,"maxLb":3,"days":4,"share":9.5,"leader":{"name":"信通电子","text":"3连板","concept":"机器人概念"},"score":52}],"side":[{"name":"商业航天","total":27,"maxLb":3,"days":2,"share":10.7,"leader":{"name":"贵绳股份","text":"3连板","concept":"商业航天"},"score":50},{"name":"芯片","total":14,"maxLb":2,"days":3,"share":5.6,"leader":{"name":"宿迁联盛","text":"2连板","concept":"磷化铟"},"score":33.5},{"name":"端侧AI","total":9,"maxLb":3,"days":2,"share":3.6,"leader":{"name":"智度股份","text":"3连板","concept":"智能音箱"},"score":32},{"name":"算力","total":10,"maxLb":1,"days":4,"share":4,"leader":{"name":"超讯科技","text":"首板","concept":"算力"},"score":26}],"hongli":[{"name":"医药","total":45,"maxLb":5,"days":6,"share":17.9,"leader":{"name":"哈药股份","text":"5连板","concept":"医药"},"score":90},{"name":"电力","total":9,"maxLb":2,"days":1,"share":3.6,"leader":{"name":"立新能源","text":"2连板","concept":"绿色电力"},"score":23.5},{"name":"石油石化","total":5,"maxLb":1,"days":1,"share":2,"leader":{"name":"泰山石油","text":"首板","concept":"石油石化"},"score":13.5}],"all":[{"name":"中报增长","total":63,"maxLb":3,"days":5,"share":25,"leader":{"name":"亚联机械","text":"3连板","concept":"中报增长"},"score":93.5},{"name":"医药","total":45,"maxLb":5,"days":6,"share":17.9,"leader":{"name":"哈药股份","text":"5连板","concept":"医药"},"score":90},{"name":"机器人概念","total":24,"maxLb":3,"days":4,"share":9.5,"leader":{"name":"信通电子","text":"3连板","concept":"机器人概念"},"score":52},{"name":"商业航天","total":27,"maxLb":3,"days":2,"share":10.7,"leader":{"name":"贵绳股份","text":"3连板","concept":"商业航天"},"score":50},{"name":"实控人变更","total":5,"maxLb":4,"days":2,"share":2,"leader":{"name":"艾艾精工","text":"反9天7板","concept":"实控人变更"},"score":34},{"name":"芯片","total":14,"maxLb":2,"days":3,"share":5.6,"leader":{"name":"宿迁联盛","text":"2连板","concept":"磷化铟"},"score":33.5},{"name":"端侧AI","total":9,"maxLb":3,"days":2,"share":3.6,"leader":{"name":"智度股份","text":"3连板","concept":"智能音箱"},"score":32},{"name":"并购重组","total":7,"maxLb":2,"days":3,"share":2.8,"leader":{"name":"华建集团","text":"2连板","concept":"并购重组"},"score":26.5},{"name":"算力","total":10,"maxLb":1,"days":4,"share":4,"leader":{"name":"超讯科技","text":"首板","concept":"算力"},"score":26},{"name":"AI应用","total":7,"maxLb":2,"days":2,"share":2.8,"leader":{"name":"欢瑞世纪","text":"反7天4板","concept":"AI视频"},"score":24},{"name":"电力","total":9,"maxLb":2,"days":1,"share":3.6,"leader":{"name":"立新能源","text":"2连板","concept":"绿色电力"},"score":23.5},{"name":"智能电网","total":3,"maxLb":2,"days":1,"share":1.2,"leader":{"name":"柘中股份","text":"2连板","concept":"电气设备"},"score":17.5}]},"blocks":{"main":[{"name":"消费","cum":6.2,"avgCh":1.03,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":4,"score":15},{"name":"化工","cum":3.6,"avgCh":0.6,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":5,"score":12.6}],"side":[{"name":"贵金属","cum":2.7,"avgCh":0.44,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":5,"score":11.7}],"hongli":[{"name":"银行","cum":4.5,"avgCh":0.75,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":4,"score":13.3},{"name":"医药","cum":2.7,"avgCh":0.44,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":3,"score":9.3}],"all":[{"name":"消费","cum":6.2,"avgCh":1.03,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":4,"score":15},{"name":"银行","cum":4.5,"avgCh":0.75,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":4,"score":13.3},{"name":"化工","cum":3.6,"avgCh":0.6,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":5,"score":12.6},{"name":"贵金属","cum":2.7,"avgCh":0.44,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":5,"score":11.7},{"name":"医药","cum":2.7,"avgCh":0.44,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":3,"score":9.3},{"name":"光芯片","cum":0.5,"avgCh":0.13,"upRatio":0.5,"upDays":2,"presence":4,"days":6,"topDays":3,"score":7.1},{"name":"煤炭","cum":-2.1,"avgCh":-0.36,"upRatio":0.33,"upDays":2,"presence":6,"days":6,"topDays":4,"score":4.7},{"name":"电力","cum":-6.1,"avgCh":-1.01,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":4,"score":2.7},{"name":"证券","cum":-5.5,"avgCh":-0.92,"upRatio":0.17,"upDays":1,"presence":6,"days":6,"topDays":3,"score":-0.9},{"name":"机器人","cum":-11.3,"avgCh":-1.89,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":3,"score":-4.7},{"name":"铜箔","cum":-11.1,"avgCh":-1.86,"upRatio":0.33,"upDays":2,"presence":6,"days":6,"topDays":3,"score":-5.5},{"name":"pcb","cum":-11,"avgCh":-1.84,"upRatio":0.33,"upDays":2,"presence":6,"days":6,"topDays":2,"score":-6.6}]},"temperature":[18,5,55,23,5,5]},{"index":4,"startDate":"20260720","endDate":"20260728","days":7,"dayIndexes":[13,14,15,16,17,18,19],"avgTemp":48,"maxTemp":100,"minTemp":5,"rising":true,"name":"震荡分化","stats":{"avgLimitUp":54,"avgLianbanCount":8.1,"maxLianban":6},"lianban":{"phaseTotalLimitUp":375,"maxLianban":6,"main":[{"name":"芯片","total":70,"maxLb":2,"days":5,"share":18.7,"leader":{"name":"大为股份","text":"2连板","concept":"存储"},"score":94.5},{"name":"智能电网","total":34,"maxLb":4,"days":3,"share":9.1,"leader":{"name":"长缆科技","text":"4连板","concept":"电气设备"},"score":65.5}],"side":[{"name":"算力","total":22,"maxLb":4,"days":4,"share":5.9,"leader":{"name":"美利云","text":"4连板","concept":"算力"},"score":56},{"name":"通信","total":33,"maxLb":2,"days":3,"share":8.8,"leader":{"name":"联创电子","text":"2连板","concept":"光模块"},"score":52.5},{"name":"并购重组","total":15,"maxLb":5,"days":3,"share":4,"leader":{"name":"爱丽家居","text":"5连板","concept":"并购重组"},"score":52.5},{"name":"机器人概念","total":26,"maxLb":2,"days":5,"share":6.9,"leader":{"name":"华达科技","text":"2连板","concept":"机器人概念"},"score":50.5}],"hongli":[{"name":"电力","total":34,"maxLb":5,"days":4,"share":9.1,"leader":{"name":"立新能源","text":"5连板","concept":"绿色电力"},"score":74},{"name":"电力(绿色电力)","total":10,"maxLb":6,"days":2,"share":2.7,"leader":{"name":"立新能源","text":"6连板","concept":"绿色电力"},"score":51},{"name":"医药","total":20,"maxLb":2,"days":4,"share":5.3,"leader":{"name":"汉森制药","text":"2连板","concept":"医药"},"score":42}],"all":[{"name":"芯片","total":70,"maxLb":2,"days":5,"share":18.7,"leader":{"name":"大为股份","text":"2连板","concept":"存储"},"score":94.5},{"name":"电力","total":34,"maxLb":5,"days":4,"share":9.1,"leader":{"name":"立新能源","text":"5连板","concept":"绿色电力"},"score":74},{"name":"智能电网","total":34,"maxLb":4,"days":3,"share":9.1,"leader":{"name":"长缆科技","text":"4连板","concept":"电气设备"},"score":65.5},{"name":"算力","total":22,"maxLb":4,"days":4,"share":5.9,"leader":{"name":"美利云","text":"4连板","concept":"算力"},"score":56},{"name":"通信","total":33,"maxLb":2,"days":3,"share":8.8,"leader":{"name":"联创电子","text":"2连板","concept":"光模块"},"score":52.5},{"name":"并购重组","total":15,"maxLb":5,"days":3,"share":4,"leader":{"name":"爱丽家居","text":"5连板","concept":"并购重组"},"score":52.5},{"name":"电力(绿色电力)","total":10,"maxLb":6,"days":2,"share":2.7,"leader":{"name":"立新能源","text":"6连板","concept":"绿色电力"},"score":51},{"name":"机器人概念","total":26,"maxLb":2,"days":5,"share":6.9,"leader":{"name":"华达科技","text":"2连板","concept":"机器人概念"},"score":50.5},{"name":"医药","total":20,"maxLb":2,"days":4,"share":5.3,"leader":{"name":"汉森制药","text":"2连板","concept":"医药"},"score":42},{"name":"化工","total":14,"maxLb":2,"days":3,"share":3.7,"leader":{"name":"金牛化工","text":"2连板","concept":"甲醇"},"score":33.5},{"name":"锂电池","total":15,"maxLb":2,"days":2,"share":4,"leader":{"name":"新亚制程","text":"2连板","concept":"电解液"},"score":32},{"name":"脑机接口","total":13,"maxLb":2,"days":2,"share":3.5,"leader":{"name":"创新医疗","text":"反4天3板","concept":"脑机接口"},"score":30}]},"blocks":{"main":[{"name":"化工","cum":7.5,"avgCh":1.07,"upRatio":0.57,"upDays":4,"presence":7,"days":7,"topDays":5,"score":16.9},{"name":"贵金属","cum":6.5,"avgCh":0.93,"upRatio":0.57,"upDays":4,"presence":7,"days":7,"topDays":4,"score":14.8}],"side":[{"name":"消费","cum":6.5,"avgCh":0.93,"upRatio":0.71,"upDays":5,"presence":7,"days":7,"topDays":3,"score":14.4},{"name":"证券","cum":0.9,"avgCh":0.12,"upRatio":0.57,"upDays":4,"presence":7,"days":7,"topDays":5,"score":10.3}],"hongli":[{"name":"电力","cum":14.8,"avgCh":2.12,"upRatio":0.57,"upDays":4,"presence":7,"days":7,"topDays":4,"score":23},{"name":"银行","cum":8.3,"avgCh":1.18,"upRatio":0.86,"upDays":6,"presence":7,"days":7,"topDays":5,"score":19.4},{"name":"煤炭","cum":6.6,"avgCh":0.95,"upRatio":0.57,"upDays":4,"presence":7,"days":7,"topDays":4,"score":14.9}],"all":[{"name":"电力","cum":14.8,"avgCh":2.12,"upRatio":0.57,"upDays":4,"presence":7,"days":7,"topDays":4,"score":23},{"name":"银行","cum":8.3,"avgCh":1.18,"upRatio":0.86,"upDays":6,"presence":7,"days":7,"topDays":5,"score":19.4},{"name":"化工","cum":7.5,"avgCh":1.07,"upRatio":0.57,"upDays":4,"presence":7,"days":7,"topDays":5,"score":16.9},{"name":"煤炭","cum":6.6,"avgCh":0.95,"upRatio":0.57,"upDays":4,"presence":7,"days":7,"topDays":4,"score":14.9},{"name":"贵金属","cum":6.5,"avgCh":0.93,"upRatio":0.57,"upDays":4,"presence":7,"days":7,"topDays":4,"score":14.8},{"name":"消费","cum":6.5,"avgCh":0.93,"upRatio":0.71,"upDays":5,"presence":7,"days":7,"topDays":3,"score":14.4},{"name":"证券","cum":0.9,"avgCh":0.12,"upRatio":0.57,"upDays":4,"presence":7,"days":7,"topDays":5,"score":10.3},{"name":"锂电","cum":0.3,"avgCh":0.04,"upRatio":0.29,"upDays":2,"presence":7,"days":7,"topDays":4,"score":6.8},{"name":"国产超节点","cum":0.4,"avgCh":0.06,"upRatio":0.29,"upDays":2,"presence":7,"days":7,"topDays":3,"score":5.7},{"name":"医药","cum":-1.1,"avgCh":-0.16,"upRatio":0.29,"upDays":2,"presence":7,"days":7,"topDays":3,"score":4.2},{"name":"北美缺电","cum":-3.4,"avgCh":-0.48,"upRatio":0.29,"upDays":2,"presence":7,"days":7,"topDays":2,"score":0.8},{"name":"cpu","cum":-5.8,"avgCh":-0.83,"upRatio":0.29,"upDays":2,"presence":7,"days":7,"topDays":2,"score":-1.7}]},"temperature":[5,97,27,100,5,100,5]},{"index":5,"startDate":"20260729","endDate":"20260805","days":6,"dayIndexes":[20,21,22,23,24,25],"avgTemp":64,"maxTemp":100,"minTemp":5,"rising":true,"name":"升温拉升","stats":{"avgLimitUp":65,"avgLianbanCount":10,"maxLianban":9},"lianban":{"phaseTotalLimitUp":391,"maxLianban":9,"main":[{"name":"AI应用","total":63,"maxLb":8,"days":6,"share":16.1,"leader":{"name":"传智教育","text":"8连板","concept":"AI应用"},"score":126},{"name":"算力","total":53,"maxLb":3,"days":4,"share":13.6,"leader":{"name":"美利云","text":"3连板","concept":"算力租赁"},"score":81}],"side":[{"name":"通信","total":55,"maxLb":2,"days":3,"share":14.1,"leader":{"name":"科瑞技术","text":"反4天3板","concept":"光模块"},"score":74.5},{"name":"并购重组","total":8,"maxLb":9,"days":3,"share":2,"leader":{"name":"爱丽家居","text":"9连板","concept":"并购重组"},"score":69.5},{"name":"机器人概念","total":38,"maxLb":3,"days":4,"share":9.7,"leader":{"name":"明新旭腾","text":"3连板","concept":"机器人概念"},"score":66},{"name":"芯片","total":42,"maxLb":2,"days":3,"share":10.7,"leader":{"name":"云南锗业","text":"2连板","concept":"磷化铟"},"score":61.5}],"hongli":[{"name":"食品饮料","total":18,"maxLb":3,"days":2,"share":4.6,"leader":{"name":"一鸣食品","text":"3连板","concept":"乳业"},"score":41},{"name":"医药","total":12,"maxLb":2,"days":2,"share":3.1,"leader":{"name":"济民健康","text":"2连板","concept":"创新药"},"score":29},{"name":"电力","total":7,"maxLb":2,"days":2,"share":1.8,"leader":{"name":"新能股份","text":"2连板","concept":"绿色电力"},"score":24}],"all":[{"name":"AI应用","total":63,"maxLb":8,"days":6,"share":16.1,"leader":{"name":"传智教育","text":"8连板","concept":"AI应用"},"score":126},{"name":"算力","total":53,"maxLb":3,"days":4,"share":13.6,"leader":{"name":"美利云","text":"3连板","concept":"算力租赁"},"score":81},{"name":"通信","total":55,"maxLb":2,"days":3,"share":14.1,"leader":{"name":"科瑞技术","text":"反4天3板","concept":"光模块"},"score":74.5},{"name":"并购重组","total":8,"maxLb":9,"days":3,"share":2,"leader":{"name":"爱丽家居","text":"9连板","concept":"并购重组"},"score":69.5},{"name":"机器人概念","total":38,"maxLb":3,"days":4,"share":9.7,"leader":{"name":"明新旭腾","text":"3连板","concept":"机器人概念"},"score":66},{"name":"芯片","total":42,"maxLb":2,"days":3,"share":10.7,"leader":{"name":"云南锗业","text":"2连板","concept":"磷化铟"},"score":61.5},{"name":"食品饮料","total":18,"maxLb":3,"days":2,"share":4.6,"leader":{"name":"一鸣食品","text":"3连板","concept":"乳业"},"score":41},{"name":"汽车零部件","total":11,"maxLb":4,"days":2,"share":2.8,"leader":{"name":"明新旭腾","text":"4连板","concept":"内外饰"},"score":40},{"name":"智能电网","total":12,"maxLb":2,"days":3,"share":3.1,"leader":{"name":"海兴电力","text":"2连板","concept":"智能电网"},"score":31.5},{"name":"实控人变更","total":8,"maxLb":3,"days":2,"share":2,"leader":{"name":"高争民爆","text":"3连板","concept":"实控人变更"},"score":31},{"name":"医药","total":12,"maxLb":2,"days":2,"share":3.1,"leader":{"name":"济民健康","text":"2连板","concept":"创新药"},"score":29},{"name":"有色金属","total":14,"maxLb":2,"days":1,"share":3.6,"leader":{"name":"新金路","text":"2连板","concept":"金属钨"},"score":28.5}]},"blocks":{"main":[{"name":"MLCC","cum":21.8,"avgCh":3.63,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":3,"score":30.4},{"name":"cpo","cum":18.2,"avgCh":3.03,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":3,"score":26.8}],"side":[{"name":"消费","cum":15,"avgCh":2.51,"upRatio":1,"upDays":6,"presence":6,"days":6,"topDays":3,"score":24.6},{"name":"北美缺电","cum":12.4,"avgCh":2.07,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":3,"score":21},{"name":"CCL","cum":13.5,"avgCh":4.5,"upRatio":0.67,"upDays":2,"presence":3,"days":6,"topDays":2,"score":19.9},{"name":"机器人","cum":12.9,"avgCh":2.15,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":2,"score":19.3}],"hongli":[{"name":"医药","cum":8,"avgCh":1.33,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":2,"score":15.4},{"name":"电力","cum":6.2,"avgCh":1.04,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":1,"score":11.4},{"name":"煤炭","cum":2.9,"avgCh":0.49,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":1,"score":8.1}],"all":[{"name":"MLCC","cum":21.8,"avgCh":3.63,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":3,"score":30.4},{"name":"cpo","cum":18.2,"avgCh":3.03,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":3,"score":26.8},{"name":"消费","cum":15,"avgCh":2.51,"upRatio":1,"upDays":6,"presence":6,"days":6,"topDays":3,"score":24.6},{"name":"北美缺电","cum":12.4,"avgCh":2.07,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":3,"score":21},{"name":"CCL","cum":13.5,"avgCh":4.5,"upRatio":0.67,"upDays":2,"presence":3,"days":6,"topDays":2,"score":19.9},{"name":"机器人","cum":12.9,"avgCh":2.15,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":2,"score":19.3},{"name":"铜箔","cum":10.8,"avgCh":1.81,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":2,"score":17.2},{"name":"钨","cum":11.6,"avgCh":1.93,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":2,"score":17},{"name":"存储","cum":9.2,"avgCh":1.53,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":2,"score":16.6},{"name":"光芯片","cum":8.5,"avgCh":1.42,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":3,"score":16.1},{"name":"医药","cum":8,"avgCh":1.33,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":2,"score":15.4},{"name":"MPO","cum":7.7,"avgCh":1.28,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":3,"score":15.3}]},"temperature":[67,5,55,58,100,100]},{"index":6,"startDate":"20260806","endDate":"20260820","days":11,"dayIndexes":[26,27,28,29,30,31,32,33,34,35,36],"avgTemp":63,"maxTemp":100,"minTemp":5,"rising":false,"name":"高位震荡","stats":{"avgLimitUp":49,"avgLianbanCount":8.8,"maxLianban":7},"lianban":{"phaseTotalLimitUp":541,"maxLianban":7,"main":[{"name":"通信","total":80,"maxLb":4,"days":8,"share":14.8,"leader":{"name":"宝鼎科技","text":"反6天5板","concept":"PCB铜箔"},"score":124},{"name":"芯片","total":62,"maxLb":4,"days":8,"share":11.5,"leader":{"name":"沃格光电","text":"4连板","concept":"玻璃基板"},"score":106}],"side":[{"name":"机器人概念","total":35,"maxLb":5,"days":6,"share":6.5,"leader":{"name":"秦安股份","text":"5连板","concept":"机器人概念"},"score":80},{"name":"算力","total":33,"maxLb":3,"days":7,"share":6.1,"leader":{"name":"城地香江","text":"3连板","concept":"算力租赁"},"score":68.5},{"name":"农业","total":40,"maxLb":3,"days":4,"share":7.4,"leader":{"name":"金健米业","text":"3连板","concept":"农业"},"score":68},{"name":"AI应用","total":21,"maxLb":3,"days":5,"share":3.9,"leader":{"name":"大晟文化","text":"3连板","concept":"AI应用"},"score":51.5}],"hongli":[{"name":"医药","total":109,"maxLb":7,"days":11,"share":20.1,"leader":{"name":"百花医药","text":"7连板","concept":"CRO"},"score":178.5},{"name":"电力(绿色电力)","total":8,"maxLb":4,"days":2,"share":1.5,"leader":{"name":"同力天启","text":"4连板","concept":"绿色电力"},"score":37},{"name":"煤炭","total":12,"maxLb":1,"days":2,"share":2.2,"leader":{"name":"昊华能源","text":"首板","concept":"煤炭"},"score":23}],"all":[{"name":"医药","total":109,"maxLb":7,"days":11,"share":20.1,"leader":{"name":"百花医药","text":"7连板","concept":"CRO"},"score":178.5},{"name":"通信","total":80,"maxLb":4,"days":8,"share":14.8,"leader":{"name":"宝鼎科技","text":"反6天5板","concept":"PCB铜箔"},"score":124},{"name":"芯片","total":62,"maxLb":4,"days":8,"share":11.5,"leader":{"name":"沃格光电","text":"4连板","concept":"玻璃基板"},"score":106},{"name":"机器人概念","total":35,"maxLb":5,"days":6,"share":6.5,"leader":{"name":"秦安股份","text":"5连板","concept":"机器人概念"},"score":80},{"name":"算力","total":33,"maxLb":3,"days":7,"share":6.1,"leader":{"name":"城地香江","text":"3连板","concept":"算力租赁"},"score":68.5},{"name":"农业","total":40,"maxLb":3,"days":4,"share":7.4,"leader":{"name":"金健米业","text":"3连板","concept":"农业"},"score":68},{"name":"AI应用","total":21,"maxLb":3,"days":5,"share":3.9,"leader":{"name":"大晟文化","text":"3连板","concept":"AI应用"},"score":51.5},{"name":"地产链","total":19,"maxLb":2,"days":3,"share":3.5,"leader":{"name":"江河集团","text":"反4天3板","concept":"装修家具"},"score":38.5},{"name":"并购重组","total":15,"maxLb":2,"days":4,"share":2.8,"leader":{"name":"锴威特","text":"2连板","concept":"并购重组"},"score":37},{"name":"电力(绿色电力)","total":8,"maxLb":4,"days":2,"share":1.5,"leader":{"name":"同力天启","text":"4连板","concept":"绿色电力"},"score":37},{"name":"实控人变更","total":5,"maxLb":4,"days":2,"share":0.9,"leader":{"name":"欣天科技","text":"4连板","concept":"实控人变更"},"score":34},{"name":"中报增长","total":13,"maxLb":1,"days":3,"share":2.4,"leader":{"name":"理工能科","text":"首板","concept":"中报增长"},"score":26.5}]},"blocks":{"main":[{"name":"MPO","cum":33.3,"avgCh":3.03,"upRatio":0.64,"upDays":7,"presence":11,"days":11,"topDays":6,"score":44.3},{"name":"光芯片","cum":16.6,"avgCh":1.51,"upRatio":0.82,"upDays":9,"presence":11,"days":11,"topDays":6,"score":28.7}],"side":[{"name":"玻璃基板","cum":9.5,"avgCh":0.87,"upRatio":0.64,"upDays":7,"presence":11,"days":11,"topDays":6,"score":20.6},{"name":"光纤","cum":10.9,"avgCh":0.99,"upRatio":0.64,"upDays":7,"presence":11,"days":11,"topDays":4,"score":19.5},{"name":"cpo","cum":9,"avgCh":0.82,"upRatio":0.73,"upDays":8,"presence":11,"days":11,"topDays":5,"score":19.4},{"name":"铜箔","cum":10.6,"avgCh":0.96,"upRatio":0.55,"upDays":6,"presence":11,"days":11,"topDays":4,"score":18.7}],"hongli":[{"name":"医药","cum":6.3,"avgCh":0.57,"upRatio":0.73,"upDays":8,"presence":11,"days":11,"topDays":4,"score":15.5},{"name":"银行","cum":4.5,"avgCh":0.41,"upRatio":0.64,"upDays":7,"presence":11,"days":11,"topDays":4,"score":13.1},{"name":"煤炭","cum":2.8,"avgCh":0.25,"upRatio":0.45,"upDays":5,"presence":11,"days":11,"topDays":4,"score":10.3}],"all":[{"name":"MPO","cum":33.3,"avgCh":3.03,"upRatio":0.64,"upDays":7,"presence":11,"days":11,"topDays":6,"score":44.3},{"name":"光芯片","cum":16.6,"avgCh":1.51,"upRatio":0.82,"upDays":9,"presence":11,"days":11,"topDays":6,"score":28.7},{"name":"玻璃基板","cum":9.5,"avgCh":0.87,"upRatio":0.64,"upDays":7,"presence":11,"days":11,"topDays":6,"score":20.6},{"name":"光纤","cum":10.9,"avgCh":0.99,"upRatio":0.64,"upDays":7,"presence":11,"days":11,"topDays":4,"score":19.5},{"name":"cpo","cum":9,"avgCh":0.82,"upRatio":0.73,"upDays":8,"presence":11,"days":11,"topDays":5,"score":19.4},{"name":"铜箔","cum":10.6,"avgCh":0.96,"upRatio":0.55,"upDays":6,"presence":11,"days":11,"topDays":4,"score":18.7},{"name":"功率半导体","cum":9.5,"avgCh":0.86,"upRatio":0.64,"upDays":7,"presence":11,"days":11,"topDays":4,"score":18.1},{"name":"医药","cum":6.3,"avgCh":0.57,"upRatio":0.73,"upDays":8,"presence":11,"days":11,"topDays":4,"score":15.5},{"name":"pcb","cum":5.7,"avgCh":0.52,"upRatio":0.55,"upDays":6,"presence":11,"days":11,"topDays":4,"score":13.8},{"name":"液冷","cum":3.8,"avgCh":0.34,"upRatio":0.64,"upDays":7,"presence":11,"days":11,"topDays":5,"score":13.6},{"name":"消费","cum":3.6,"avgCh":0.33,"upRatio":0.64,"upDays":7,"presence":11,"days":11,"topDays":5,"score":13.4},{"name":"钨","cum":4.5,"avgCh":0.41,"upRatio":0.64,"upDays":7,"presence":11,"days":11,"topDays":4,"score":13.2}]},"temperature":[78,66,91,55,89,40,43,100,68,5,59]},{"index":7,"startDate":"20260821","endDate":"20260828","days":6,"dayIndexes":[37,38,39,40,41,42],"avgTemp":52,"maxTemp":73,"minTemp":31,"rising":true,"name":"震荡分化","stats":{"avgLimitUp":41,"avgLianbanCount":7.2,"maxLianban":5},"lianban":{"phaseTotalLimitUp":247,"maxLianban":5,"main":[{"name":"农业","total":31,"maxLb":4,"days":4,"share":12.6,"leader":{"name":"万向德农","text":"4连板","concept":"农业"},"score":65},{"name":"通信","total":28,"maxLb":3,"days":3,"share":11.3,"leader":{"name":"青山纸业","text":"3连板","concept":"光模块"},"score":53.5}],"side":[{"name":"算力","total":24,"maxLb":3,"days":4,"share":9.7,"leader":{"name":"康盛股份","text":"3连板","concept":"液冷"},"score":52},{"name":"黄金","total":12,"maxLb":5,"days":3,"share":4.9,"leader":{"name":"深中华A","text":"5连板","concept":"黄金"},"score":49.5},{"name":"中报增长","total":24,"maxLb":2,"days":5,"share":9.7,"leader":{"name":"海鸥股份","text":"2连板","concept":"中报增长"},"score":48.5},{"name":"金融概念","total":7,"maxLb":5,"days":2,"share":2.8,"leader":{"name":"楚天龙","text":"5连板","concept":"金融科技"},"score":42}],"hongli":[{"name":"医药","total":28,"maxLb":5,"days":6,"share":11.3,"leader":{"name":"汉森制药","text":"5连板","concept":"中药"},"score":73}],"all":[{"name":"医药","total":28,"maxLb":5,"days":6,"share":11.3,"leader":{"name":"汉森制药","text":"5连板","concept":"中药"},"score":73},{"name":"农业","total":31,"maxLb":4,"days":4,"share":12.6,"leader":{"name":"万向德农","text":"4连板","concept":"农业"},"score":65},{"name":"通信","total":28,"maxLb":3,"days":3,"share":11.3,"leader":{"name":"青山纸业","text":"3连板","concept":"光模块"},"score":53.5},{"name":"算力","total":24,"maxLb":3,"days":4,"share":9.7,"leader":{"name":"康盛股份","text":"3连板","concept":"液冷"},"score":52},{"name":"黄金","total":12,"maxLb":5,"days":3,"share":4.9,"leader":{"name":"深中华A","text":"5连板","concept":"黄金"},"score":49.5},{"name":"中报增长","total":24,"maxLb":2,"days":5,"share":9.7,"leader":{"name":"海鸥股份","text":"2连板","concept":"中报增长"},"score":48.5},{"name":"金融概念","total":7,"maxLb":5,"days":2,"share":2.8,"leader":{"name":"楚天龙","text":"5连板","concept":"金融科技"},"score":42},{"name":"芯片","total":24,"maxLb":1,"days":4,"share":9.7,"leader":{"name":"和远气体","text":"首板","concept":"电子气体"},"score":40},{"name":"化工","total":11,"maxLb":2,"days":2,"share":4.5,"leader":{"name":"沃特股份","text":"2连板","concept":"PTFE"},"score":28},{"name":"并购重组","total":4,"maxLb":3,"days":1,"share":1.6,"leader":{"name":"哈森股份","text":"反6天5板","concept":"并购重组"},"score":24.5},{"name":"实控人变更","total":5,"maxLb":2,"days":2,"share":2,"leader":{"name":"海鸥住工","text":"2连板","concept":"实控人变更"},"score":22},{"name":"疫苗概念","total":4,"maxLb":2,"days":1,"share":1.6,"leader":{"name":"双鹭药业","text":"2连板","concept":"疫苗概念"},"score":18.5}]},"blocks":{"main":[{"name":"液冷","cum":17.7,"avgCh":2.95,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":4,"score":26.5},{"name":"CCL","cum":14.9,"avgCh":2.48,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":4,"score":23.7}],"side":[{"name":"光纤","cum":11.8,"avgCh":1.97,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":3,"score":19.4},{"name":"贵金属","cum":4.6,"avgCh":0.77,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":4,"score":14.4},{"name":"PPE树脂","cum":5.7,"avgCh":0.95,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":3,"score":14.3},{"name":"化工","cum":4.8,"avgCh":0.8,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":2,"score":11.2}],"hongli":[{"name":"煤炭","cum":7.8,"avgCh":1.3,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":3,"score":16.4},{"name":"银行","cum":1,"avgCh":0.17,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":2,"score":7.4}],"all":[{"name":"液冷","cum":17.7,"avgCh":2.95,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":4,"score":26.5},{"name":"CCL","cum":14.9,"avgCh":2.48,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":4,"score":23.7},{"name":"光纤","cum":11.8,"avgCh":1.97,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":3,"score":19.4},{"name":"煤炭","cum":7.8,"avgCh":1.3,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":3,"score":16.4},{"name":"贵金属","cum":4.6,"avgCh":0.77,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":4,"score":14.4},{"name":"PPE树脂","cum":5.7,"avgCh":0.95,"upRatio":0.83,"upDays":5,"presence":6,"days":6,"topDays":3,"score":14.3},{"name":"化工","cum":4.8,"avgCh":0.8,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":2,"score":11.2},{"name":"锂电","cum":2.5,"avgCh":0.41,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":3,"score":10.1},{"name":"铜箔","cum":3.9,"avgCh":0.65,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":2,"score":9.3},{"name":"cpu","cum":2.8,"avgCh":0.47,"upRatio":0.67,"upDays":4,"presence":6,"days":6,"topDays":2,"score":9.2},{"name":"pcb","cum":3.3,"avgCh":0.55,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":2,"score":8.7},{"name":"证券","cum":3,"avgCh":0.49,"upRatio":0.5,"upDays":3,"presence":6,"days":6,"topDays":2,"score":8.4}]},"temperature":[31,32,61,45,71,73]}],"indexWindows":{"daily":[{"date":20260701,"slope":28.3967,"ma3":4093.58,"close":4112.45},{"date":20260702,"slope":-15,"ma3":4078.58,"close":4028.9},{"date":20260703,"slope":-16.92,"ma3":4061.66,"close":4043.64},{"date":20260706,"slope":-23.7367,"ma3":4037.93,"close":4041.24},{"date":20260707,"slope":-12.8867,"ma3":4025.04,"close":3990.24},{"date":20260708,"slope":-24.2533,"ma3":4000.79,"close":3970.88},{"date":20260709,"slope":-1.55,"ma3":3999.24,"close":4036.59},{"date":20260710,"slope":1.9733,"ma3":4001.21,"close":3996.16},{"date":20260713,"slope":-19.03,"ma3":3982.18,"close":3913.79},{"date":20260714,"slope":-23.1533,"ma3":3959.03,"close":3967.13},{"date":20260715,"slope":-13.5267,"ma3":3945.5,"close":3955.58},{"date":20260716,"slope":-10.46,"ma3":3935.04,"close":3882.41},{"date":20260717,"slope":-67.66,"ma3":3867.38,"close":3764.15},{"date":20260720,"slope":-53.1,"ma3":3814.28,"close":3796.28},{"date":20260721,"slope":-6.0133,"ma3":3808.27,"close":3864.37},{"date":20260722,"slope":34.2933,"ma3":3842.56,"close":3867.03},{"date":20260723,"slope":26.8333,"ma3":3869.39,"close":3876.78},{"date":20260724,"slope":-16.7233,"ma3":3852.67,"close":3814.2},{"date":20260727,"slope":-2.9267,"ma3":3849.74,"close":3858.25},{"date":20260728,"slope":-21.1567,"ma3":3828.59,"close":3813.31},{"date":20260729,"slope":4.7567,"ma3":3833.34,"close":3828.47},{"date":20260730,"slope":-17.8533,"ma3":3815.49,"close":3804.69},{"date":20260731,"slope":6.3167,"ma3":3821.81,"close":3832.26},{"date":20260803,"slope":-6.27,"ma3":3815.54,"close":3809.66},{"date":20260804,"slope":5.8633,"ma3":3821.4,"close":3822.28},{"date":20260805,"slope":15.39,"ma3":3836.79,"close":3878.43},{"date":20260806,"slope":30.23,"ma3":3867.02,"close":3900.35},{"date":20260807,"slope":39.2533,"ma3":3906.27,"close":3940.04},{"date":20260810,"slope":29.3867,"ma3":3935.66,"close":3966.59},{"date":20260811,"slope":11.2467,"ma3":3946.91,"close":3934.09},{"date":20260812,"slope":2.2133,"ma3":3949.12,"close":3946.68},{"date":20260813,"slope":-13.21,"ma3":3935.91,"close":3926.96},{"date":20260814,"slope":-2.3033,"ma3":3933.61,"close":3927.18},{"date":20260817,"slope":11.99,"ma3":3945.6,"close":3982.65},{"date":20260818,"slope":21.1133,"ma3":3966.71,"close":3990.3},{"date":20260819,"slope":-10.92,"ma3":3955.79,"close":3894.42},{"date":20260820,"slope":-26.31,"ma3":3929.48,"close":3903.72},{"date":20260821,"slope":-28.3667,"ma3":3901.11,"close":3905.2},{"date":20260824,"slope":-4.1367,"ma3":3896.98,"close":3882.01},{"date":20260825,"slope":-4.76,"ma3":3892.22,"close":3889.44},{"date":20260826,"slope":2.44,"ma3":3894.66,"close":3912.52},{"date":20260827,"slope":24.8533,"ma3":3919.51,"close":3956.57},{"date":20260828,"slope":20.9133,"ma3":3940.42,"close":3952.18}],"windows":[{"startDate":20260701,"endDate":20260701,"turnDownDate":20260702,"openEnded":false,"clippedStart":true,"days":1,"indexGain":0.44,"themeTop":[{"name":"机器人概念","total":21,"maxLb":2,"days":1,"share":39.6,"leader":{"name":"埃斯顿","text":"2连板"}},{"name":"医药","total":9,"maxLb":3,"days":1,"share":17,"leader":{"name":"海南海药","text":"3连板"}},{"name":"化工","total":10,"maxLb":2,"days":1,"share":18.9,"leader":{"name":"三美股份","text":"2连板"}}],"sectors":[{"name":"医药","cum":5.4,"upDays":1,"presence":1},{"name":"电力","cum":5.2,"upDays":1,"presence":1},{"name":"消费","cum":5,"upDays":1,"presence":1}],"stockTop":[{"code":"sz300607","name":"拓斯达","board":"机器人概念","lianbanText":"首板","lianbanCount":1,"gain":20,"basis":""},{"code":"sz300539","name":"横河精密","board":"机器人概念","lianbanText":"首板","lianbanCount":1,"gain":20,"basis":""},{"code":"sz301279","name":"金道科技","board":"机器人概念","lianbanText":"首板","lianbanCount":1,"gain":20,"basis":""}],"candidates":30,"stockNoKline":1},{"startDate":20260710,"endDate":20260710,"turnDownDate":20260713,"openEnded":false,"clippedStart":false,"days":1,"indexGain":-1,"themeTop":[{"name":"商业航天","total":24,"maxLb":2,"days":1,"share":39.3,"leader":{"name":"贵绳股份","text":"2连板"}},{"name":"中报增长","total":12,"maxLb":2,"days":1,"share":19.7,"leader":{"name":"高德红外","text":"2连板"}},{"name":"医药","total":9,"maxLb":2,"days":1,"share":14.8,"leader":{"name":"立方制药","text":"2连板"}}],"sectors":[{"name":"医药","cum":4.6,"upDays":1,"presence":1},{"name":"消费","cum":3.5,"upDays":1,"presence":1},{"name":"电力","cum":3,"upDays":1,"presence":1}],"stockTop":[{"code":"sz301117","name":"佳缘科技","board":"商业航天","lianbanText":"首板","lianbanCount":1,"gain":20,"basis":""},{"code":"sh688722","name":"同益中","board":"商业航天","lianbanText":"首板","lianbanCount":1,"gain":20,"basis":""},{"code":"sz300069","name":"金利华电","board":"商业航天","lianbanText":"首板","lianbanCount":1,"gain":20,"basis":""}],"candidates":33,"stockNoKline":4},{"startDate":20260722,"endDate":20260723,"turnDownDate":20260724,"openEnded":false,"clippedStart":false,"days":2,"indexGain":0.32,"themeTop":[{"name":"智能电网","total":27,"maxLb":3,"days":1,"share":32.5,"leader":{"name":"长缆科技","text":"3连板"}},{"name":"电力(绿色电力)","total":8,"maxLb":6,"days":1,"share":9.6,"leader":{"name":"立新能源","text":"6连板"}},{"name":"电力","total":8,"maxLb":5,"days":1,"share":9.6,"leader":{"name":"立新能源","text":"5连板"}}],"sectors":[{"name":"电力","cum":13.8,"upDays":2,"presence":2},{"name":"煤炭","cum":8.3,"upDays":2,"presence":2},{"name":"贵金属","cum":7.1,"upDays":2,"presence":2}],"stockTop":[{"code":"sz000595","name":"新能股份","board":"电力(绿色电力)","lianbanText":"2连板","lianbanCount":2,"gain":21.1,"basis":""},{"code":"sh605162","name":"新中港","board":"电力(绿色电力)","lianbanText":"2连板","lianbanCount":2,"gain":21.1,"basis":""},{"code":"sz001258","name":"立新能源","board":"电力(绿色电力)","lianbanText":"6连板","lianbanCount":6,"gain":21,"basis":""}],"candidates":39,"stockNoKline":0},{"startDate":20260729,"endDate":20260729,"turnDownDate":20260730,"openEnded":false,"clippedStart":false,"days":1,"indexGain":0.4,"themeTop":[{"name":"食品饮料","total":15,"maxLb":2,"days":1,"share":30,"leader":{"name":"一鸣食品","text":"2连板"}},{"name":"AI应用","total":6,"maxLb":3,"days":1,"share":12,"leader":{"name":"传智教育","text":"3连板"}},{"name":"机器人概念","total":6,"maxLb":3,"days":1,"share":12,"leader":{"name":"明新旭腾","text":"3连板"}}],"sectors":[{"name":"消费","cum":5.6,"upDays":1,"presence":1},{"name":"化工","cum":1.7,"upDays":1,"presence":1},{"name":"煤炭","cum":1.3,"upDays":1,"presence":1}],"stockTop":[{"code":"sz300997","name":"欢乐家","board":"食品饮料","lianbanText":"首板","lianbanCount":1,"gain":20,"basis":""},{"code":"sh605337","name":"李子园","board":"食品饮料","lianbanText":"首板","lianbanCount":1,"gain":10.2,"basis":""},{"code":"sh600429","name":"三元股份","board":"食品饮料","lianbanText":"首板","lianbanCount":1,"gain":10.2,"basis":""}],"candidates":15,"stockNoKline":0},{"startDate":20260731,"endDate":20260731,"turnDownDate":20260803,"openEnded":false,"clippedStart":false,"days":1,"indexGain":0.72,"themeTop":[{"name":"AI应用","total":26,"maxLb":5,"days":1,"share":55.3,"leader":{"name":"传智教育","text":"5连板"}},{"name":"实控人变更","total":4,"maxLb":3,"days":1,"share":8.5,"leader":{"name":"高争民爆","text":"3连板"}},{"name":"机器人概念","total":14,"maxLb":1,"days":1,"share":29.8,"leader":{"name":"天娱数科","text":"首板"}}],"sectors":[{"name":"消费","cum":4.3,"upDays":1,"presence":1},{"name":"钨","cum":4,"upDays":1,"presence":1},{"name":"煤炭","cum":3.1,"upDays":1,"presence":1}],"stockTop":[{"code":"sz300996","name":"普联软件","board":"AI应用","lianbanText":"2连板","lianbanCount":2,"gain":20,"basis":""},{"code":"sh688095","name":"福昕软件","board":"AI应用","lianbanText":"首板","lianbanCount":1,"gain":20,"basis":""},{"code":"sz301171","name":"易点天下","board":"AI应用","lianbanText":"首板","lianbanCount":1,"gain":20,"basis":""}],"candidates":26,"stockNoKline":0},{"startDate":20260804,"endDate":20260812,"turnDownDate":20260813,"openEnded":false,"clippedStart":false,"days":7,"indexGain":3.6,"themeTop":[{"name":"医药","total":64,"maxLb":7,"days":6,"share":29,"leader":{"name":"百花医药","text":"7连板"}},{"name":"AI应用","total":41,"maxLb":8,"days":7,"share":18.6,"leader":{"name":"传智教育","text":"8连板"}},{"name":"机器人概念","total":22,"maxLb":4,"days":3,"share":10,"leader":{"name":"秦安股份","text":"4连板"}}],"sectors":[{"name":"钨","cum":30.6,"upDays":6,"presence":7},{"name":"消费","cum":11.3,"upDays":6,"presence":7},{"name":"医药","cum":9.6,"upDays":6,"presence":7}],"stockTop":[{"code":"sh600721","name":"百花医药","board":"医药","lianbanText":"7连板","lianbanCount":7,"gain":94.9,"basis":""},{"code":"sz301080","name":"百普赛斯","board":"医药","lianbanText":"2连板","lianbanCount":2,"gain":82.7,"basis":""},{"code":"sz301520","name":"万邦医药","board":"医药","lianbanText":"首板","lianbanCount":1,"gain":76.7,"basis":""}],"candidates":40,"stockNoKline":0},{"startDate":20260817,"endDate":20260818,"turnDownDate":20260819,"openEnded":false,"clippedStart":false,"days":2,"indexGain":1.61,"themeTop":[{"name":"农业","total":31,"maxLb":2,"days":2,"share":39.7,"leader":{"name":"红四方","text":"2连板"}},{"name":"医药","total":11,"maxLb":4,"days":2,"share":14.1,"leader":{"name":"神奇制药","text":"4连板"}},{"name":"机器人概念","total":14,"maxLb":3,"days":2,"share":17.9,"leader":{"name":"正裕工业","text":"3连板"}}],"sectors":[{"name":"消费","cum":5.2,"upDays":2,"presence":2},{"name":"钨","cum":4.9,"upDays":2,"presence":2},{"name":"化工","cum":2.9,"upDays":2,"presence":2}],"stockTop":[{"code":"sz300313","name":"天山生物","board":"农业","lianbanText":"2连板","lianbanCount":2,"gain":44.1,"basis":""},{"code":"sz300189","name":"神农种业","board":"农业","lianbanText":"首板","lianbanCount":1,"gain":33.4,"basis":""},{"code":"sz300970","name":"华绿生物","board":"农业","lianbanText":"首板","lianbanCount":1,"gain":25.1,"basis":""}],"candidates":25,"stockNoKline":0},{"startDate":20260826,"endDate":20260828,"turnDownDate":null,"openEnded":true,"clippedStart":false,"days":3,"indexGain":1.61,"themeTop":[{"name":"农业","total":26,"maxLb":4,"days":3,"share":26,"leader":{"name":"万向德农","text":"4连板"}},{"name":"医药","total":12,"maxLb":4,"days":3,"share":12,"leader":{"name":"冀衡医药","text":"4连板"}},{"name":"金融概念","total":7,"maxLb":5,"days":2,"share":7,"leader":{"name":"楚天龙","text":"5连板"}}],"sectors":[{"name":"化工","cum":6.8,"upDays":3,"presence":3},{"name":"煤炭","cum":5.4,"upDays":3,"presence":3},{"name":"贵金属","cum":4.8,"upDays":3,"presence":3}],"stockTop":[{"code":"sz301591","name":"肯特股份","board":"化工(PTFE)","lianbanText":"首板","lianbanCount":1,"gain":45.2,"basis":""},{"code":"sh600371","name":"万向德农","board":"农业","lianbanText":"4连板","lianbanCount":4,"gain":33.1,"basis":""},{"code":"sz002942","name":"新农股份","board":"农业","lianbanText":"3连板","lianbanCount":3,"gain":33.1,"basis":""}],"candidates":30,"stockNoKline":0}]}};
+</script>
+<script>
+const R = window.__REPORT__;
+const fd = d => d.slice(4,6) + '/' + d.slice(6,8);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+document.getElementById('sub').textContent =
+  '区间 ' + fd(R.start) + ' ~ ' + fd(R.end) + ' · 共 ' + R.tradingDays + ' 个交易日 · 数据源：lianbanSnapshot 涨停题材快照 + block_data_day_history 板块日历史（key_blocks 板块分类分析底层数据）';
+
+// 顶部统计
+document.getElementById('stats').innerHTML = [
+  ['交易日', R.tradingDays, ''],
+  ['涨停总家数', R.totalLimitUp, 'red'],
+  ['最高连板', R.maxLianban + ' 板', 'red'],
+  ['平均情绪温度', R.avgTemp, R.avgTemp >= 55 ? 'red' : R.avgTemp >= 35 ? 'amber' : 'green'],
+  ['阶段数', R.phases.length, 'blue'],
+].map(([k, v, c]) => '<div class="stat"><div class="v ' + c + '">' + v + '</div><div class="k">' + k + '</div></div>').join('');
+
+// ==================== 情绪温度曲线 + 阶段带 ====================
+(function drawTemp() {
+  // 重建逐日序列（用阶段切分拼接）
+  const series = [];
+  R.phases.forEach(p => { p.temperature.forEach(t => series.push({ t, phase: p })); });
+  const W = 1080, H = 280, PADL = 38, PADR = 14, PADT = 26, PADB = 34;
+  const iw = W - PADL - PADR, ih = H - PADT - PADB;
+  const x = i => PADL + (series.length <= 1 ? iw / 2 : iw * i / (series.length - 1));
+  const y = t => PADT + ih * (1 - t / 100);
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+  // 阶段背景带
+  let idx0 = 0;
+  R.phases.forEach((p, pi) => {
+    const len = p.temperature.length;
+    const x1 = x(idx0) - (idx0 === 0 ? 0 : (iw / (series.length - 1)) / 2);
+    const x2 = x(idx0 + len - 1) + (idx0 + len - 1 === series.length - 1 ? 0 : (iw / (series.length - 1)) / 2);
+    const fill = p.rising && p.avgTemp >= 55 ? 'rgba(244,63,94,.13)' : !p.rising && p.avgTemp < 35 ? 'rgba(16,185,129,.14)' : 'rgba(130,146,184,.10)';
+    svg += '<rect x="' + x1 + '" y="' + PADT + '" width="' + Math.max(2, x2 - x1) + '" height="' + ih + '" fill="' + fill + '" rx="4"/>';
+    const mid = (x1 + x2) / 2;
+    svg += '<text x="' + mid + '" y="' + (PADT - 8) + '" text-anchor="middle" font-size="11" fill="#8292b8">' + p.index + '. ' + esc(p.name) + '</text>';
+    svg += '<text x="' + mid + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="#5b6a91">' + fd(p.startDate) + '~' + fd(p.endDate) + '</text>';
+    idx0 += len;
+  });
+  // 网格与 y 轴
+  [0, 25, 50, 75, 100].forEach(t => {
+    svg += '<line x1="' + PADL + '" y1="' + y(t) + '" x2="' + (W - PADR) + '" y2="' + y(t) + '" stroke="#1a2440" stroke-width="1"/>';
+    svg += '<text x="' + (PADL - 6) + '" y="' + (y(t) + 4) + '" text-anchor="end" font-size="10" fill="#5b6a91">' + t + '</text>';
+  });
+  // 面积 + 折线
+  let area = 'M ' + x(0) + ' ' + y(series[0].t);
+  let line = area;
+  series.forEach((s, i) => { if (i > 0) { line += ' L ' + x(i) + ' ' + y(s.t); } });
+  area = line + ' L ' + x(series.length - 1) + ' ' + (PADT + ih) + ' L ' + x(0) + ' ' + (PADT + ih) + ' Z';
+  svg += '<path d="' + area + '" fill="url(#gradT)"/>';
+  svg += '<path d="' + line + '" fill="none" stroke="#f43f5e" stroke-width="2" stroke-linejoin="round"/>';
+  // 拐点圆点：每阶段首尾
+  let di = 0;
+  R.phases.forEach(p => {
+    p.temperature.forEach((t, i) => {
+      if (i === 0 || i === p.temperature.length - 1) {
+        svg += '<circle cx="' + x(di) + '" cy="' + y(t) + '" r="3.5" fill="#0b1020" stroke="#f43f5e" stroke-width="1.6"/>';
+        svg += '<text x="' + x(di) + '" y="' + (y(t) - 8) + '" text-anchor="middle" font-size="10" fill="#e6ecff">' + t + '</text>';
+      }
+      di++;
+    });
+  });
+  svg += '<defs><linearGradient id="gradT" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="rgba(244,63,94,.35)"/><stop offset="100%" stop-color="rgba(244,63,94,0)"/></linearGradient></defs>';
+  svg += '</svg>';
+  document.getElementById('tempChart').innerHTML = svg;
+})();
+
+// ==================== 主线演变时间轴 ====================
+(function drawEvo() {
+  let html = '<tr><th style="width:150px">阶段</th><th>题材主线（连板快照）</th><th>题材支线</th><th>板块主线（日历史）</th><th>板块支线</th></tr>';
+  R.phases.forEach(p => {
+    const chips = (arr, cls) => arr.length
+      ? arr.map(t => '<span class="chip ' + cls + '">' + esc(t.name) + (t.maxLb ? ' · ' + t.maxLb + '板' : '') + (cls === 'blk-main' || cls === 'blk-side' ? ' +' + t.cum + '%' : '') + '</span>').join('')
+      : '<span style="color:#5b6a91">—</span>';
+    const def = p.blocks.hongli.length ? ' <span class="chip def">防御:' + esc(p.blocks.hongli.map(h => h.name).join('/')) + '</span>' : '';
+    html += '<tr>'
+      + '<td class="phase-name">' + p.index + '. ' + esc(p.name) + '<span class="rng">' + fd(p.startDate) + ' ~ ' + fd(p.endDate) + ' · ' + p.days + '天</span></td>'
+      + '<td>' + chips(p.lianban.main, 'main') + '</td>'
+      + '<td>' + chips(p.lianban.side, 'side') + '</td>'
+      + '<td>' + chips(p.blocks.main, 'blk-main') + '</td>'
+      + '<td>' + chips(p.blocks.side, 'blk-side') + def + '</td>'
+      + '</tr>';
+  });
+  document.getElementById('evoTable').innerHTML = html;
+})();
+
+// ==================== 上证指数 3 日线斜率窗口 ====================
+(function drawIndex() {
+  const IW = R.indexWindows || { daily: [], windows: [] };
+  if (!IW.daily || IW.daily.length === 0) {
+    document.getElementById('indexChart').innerHTML = '<div class="empty">指数数据获取失败，无斜率窗口</div>';
+    document.getElementById('winTable').innerHTML = '';
+    return;
+  }
+  const D = IW.daily, WL = IW.windows;
+  const dateIdx = new Map(D.map((d, i) => [d.date, i]));
+  // ---- SVG 曲线 ----
+  const Wd = 1080, H = 300, PADL = 44, PADR = 14, PADT = 26, PADB = 34;
+  const iw = Wd - PADL - PADR, ih = H - PADT - PADB;
+  const vals = D.flatMap(d => [d.close, d.ma3].filter(v => v != null));
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  const padV = (hi - lo) * 0.08 || 1;
+  const y = v => PADT + ih * (1 - (v - (lo - padV)) / ((hi + padV) - (lo - padV)));
+  const x = i => PADL + (D.length <= 1 ? iw / 2 : iw * i / (D.length - 1));
+  let svg = '<svg viewBox="0 0 ' + Wd + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+  // 正斜率窗口底色
+  WL.forEach((w, wi) => {
+    const i1 = dateIdx.get(w.startDate), i2 = dateIdx.get(w.endDate);
+    if (i1 == null || i2 == null) return;
+    svg += '<rect x="' + (x(i1) - 5) + '" y="' + PADT + '" width="' + Math.max(8, x(i2) - x(i1) + 10) + '" height="' + ih + '" fill="rgba(244,63,94,.16)" rx="5"/>';
+    svg += '<text x="' + ((x(i1) + x(i2)) / 2) + '" y="' + (PADT - 7) + '" text-anchor="middle" font-size="11" fill="#f43f5e">'
+      + '窗口' + (wi + 1) + ' ' + (w.indexGain != null ? (w.indexGain > 0 ? '+' : '') + w.indexGain + '%' : '') + '</text>';
+  });
+  // 网格
+  for (let s = 0; s <= 4; s++) {
+    const v = lo - padV + ((hi + padV) - (lo - padV)) * s / 4;
+    svg += '<line x1="' + PADL + '" y1="' + y(v) + '" x2="' + (Wd - PADR) + '" y2="' + y(v) + '" stroke="#1a2440"/>';
+    svg += '<text x="' + (PADL - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="10" fill="#5b6a91">' + v.toFixed(0) + '</text>';
+  }
+  // 折线：收盘 + MA3
+  const lineOf = key => D.map((d, i) => (d[key] != null ? (i === 0 ? 'M ' : ' L ') + x(i) + ' ' + y(d[key]) : '')).join('');
+  svg += '<path d="' + lineOf('close') + '" fill="none" stroke="#38bdf8" stroke-width="1.8"/>';
+  svg += '<path d="' + lineOf('ma3') + '" fill="none" stroke="#a78bfa" stroke-width="1.4"/>';
+  // 转正/转负拐点
+  WL.forEach(w => {
+    [w.startDate, w.endDate].forEach(dt => {
+      const i = dateIdx.get(dt);
+      if (i == null) return;
+      svg += '<circle cx="' + x(i) + '" cy="' + y(D[i].close) + '" r="4" fill="#0b1020" stroke="#f59e0b" stroke-width="2"/>';
+    });
+  });
+  // x 轴日期
+  const xStep = Math.max(1, Math.ceil(D.length / 9));
+  D.forEach((d, i) => {
+    if (i % xStep === 0 || i === D.length - 1) {
+      svg += '<text x="' + x(i) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="10" fill="#5b6a91">' + fd(String(d.date)) + '</text>';
+    }
+  });
+  svg += '</svg>';
+  document.getElementById('indexChart').innerHTML = svg;
+
+  // ---- 窗口明细表 ----
+  const chipOf = (t, cls) => '<span class="chip ' + cls + '">' + esc(t.name) + ' ' + (t.total != null ? t.total + '家/' + t.maxLb + '板' : (t.cum > 0 ? '+' : '') + t.cum + '%') + '</span>';
+  let html = '<tr><th style="width:160px">窗口（转正 → 转负）</th><th>指数涨幅</th>'
+    + '<th>题材 Top3（剔除算力/芯片/通信/并购重组/其他）</th><th>板块 Top3（剔除科技）</th><th style="width:270px">涨幅最大股票（K线实算）</th></tr>';
+  WL.forEach((w, i) => {
+    const range = fd(String(w.startDate)) + ' ~ ' + fd(String(w.endDate))
+      + (w.openEnded ? '（未转负）' : '') + (w.clippedStart ? '（区间起始即为正）' : '');
+    const gain = w.indexGain != null
+      ? '<b class="' + (w.indexGain >= 0 ? 'red' : 'green') + '">' + (w.indexGain > 0 ? '+' : '') + w.indexGain + '%</b>'
+      : '—';
+    const themeHtml = w.themeTop.length ? w.themeTop.map(t => chipOf(t, 'main')).join('') : '<span style="color:#5b6a91">—</span>';
+    const secHtml = w.sectors.length ? w.sectors.map(t => chipOf(t, 'blk-side')).join('') : '<span style="color:#5b6a91">—</span>';
+    const stockHtml = w.stockTop.length
+      ? '<div class="row" style="margin-bottom:3px"><span class="chip main">' + esc(w.stockTop[0].name) + '</span>'
+        + '<b class="red">+' + w.stockTop[0].gain + '%</b>&nbsp;<span style="color:#8292b8;font-size:12px">'
+        + esc(w.stockTop[0].lianbanText || '') + (w.stockTop[0].basis ? ' · ' + w.stockTop[0].basis : '') + '</span></div>'
+        + w.stockTop.slice(1).map(s => '<div style="color:#8292b8;font-size:12px;margin:1px 0 1px 4px">'
+          + esc(s.name) + ' +' + s.gain + '%（' + esc(s.lianbanText || s.board || '') + '）</div>').join('')
+      : '<span style="color:#5b6a91">无候选或无K线</span>';
+    html += '<tr><td class="phase-name">窗口' + (i + 1) + '<span class="rng">' + range + ' · ' + w.days + '天</span></td>'
+      + '<td>' + gain + '</td><td>' + themeHtml + '</td><td>' + secHtml + '</td><td>' + stockHtml + '</td></tr>';
+  });
+  document.getElementById('winTable').innerHTML = html;
+})();
+
+// ==================== 阶段卡 ====================
+(function drawPhases() {
+  let html = '';
+  R.phases.forEach(p => {
+    const badgeCls = p.avgTemp >= 75 ? 'hot' : p.avgTemp >= 40 ? 'warm' : 'cold';
+    const lianMax = Math.max(1, ...p.lianban.all.map(t => t.total));
+    const blkMax = Math.max(1, ...p.blocks.all.map(s => Math.abs(s.cum)));
+    const themeRow = (t, cls, barCls, tagCls) =>
+      '<div class="row"><div class="nm"><span class="tagline ' + tagCls + '">' + (tagCls === 'tag-main' ? '主线' : '支线') + '</span>' + esc(t.name) + '</div>'
+      + '<div class="bar-wrap"><div class="bar ' + barCls + '" style="width:' + Math.max(4, t.total / lianMax * 100) + '%"></div></div>'
+      + '<div class="val"><b>' + t.total + '</b> 家涨停 · ' + t.maxLb + '板 · ' + t.share + '%</div></div>'
+      + (t.leader ? '<div class="leader">龙头 <b>' + esc(t.leader.name) + '</b>（' + esc(t.leader.text || '') + (t.leader.concept ? ' · ' + esc(t.leader.concept) : '') + '）</div>' : '');
+    const blkRow = (s, tagCls, barCls) =>
+      '<div class="row"><div class="nm"><span class="tagline ' + tagCls + '">' + (tagCls === 'tag-main' ? '主线' : '支线') + '</span>' + esc(s.name) + '</div>'
+      + '<div class="bar-wrap"><div class="bar ' + barCls + '" style="width:' + Math.max(4, Math.abs(s.cum) / blkMax * 100) + '%"></div></div>'
+      + '<div class="val"><b>+' + s.cum + '%</b> · 日均' + s.avgCh + '% · 涨' + s.upDays + '/' + s.presence + '天</div></div>';
+    html += '<div class="phase-card"><div class="phase-head">'
+      + '<span class="no">阶段 ' + p.index + '</span>'
+      + '<h3>' + esc(p.name) + '</h3>'
+      + '<span class="rng">' + fd(p.startDate) + ' ~ ' + fd(p.endDate) + '（' + p.days + ' 个交易日）</span>'
+      + '<span class="badge ' + badgeCls + '">均温 ' + p.avgTemp + ' · 峰值 ' + p.maxTemp + '</span>'
+      + '<div class="mini-stats">'
+      + '<span>日均涨停 <b>' + p.stats.avgLimitUp + '</b></span>'
+      + '<span>日均连板 <b>' + p.stats.avgLianbanCount + '</b></span>'
+      + '<span>最高板 <b>' + p.stats.maxLianban + '</b></span>'
+      + '</div></div>'
+      + '<div class="phase-body">'
+      + '<div class="col"><h4>题材主线 / 支线（连板快照：涨停家数 / 最高连板 / 占比）</h4>'
+      + (p.lianban.main.map(t => themeRow(t, 'main', 'main-b', 'tag-main')).join('') || '<div class="empty">无</div>')
+      + (p.lianban.side.map(t => themeRow(t, 'side', 'side-b', 'tag-side')).join('') || '<div class="empty">无</div>')
+      + (p.lianban.hongli.length ? '<div class="row"><div class="nm"><span class="tagline tag-def">防御</span>' + esc(p.lianban.hongli.map(h => h.name).join('/')) + '</div><div class="bar-wrap"></div><div class="val">涨停 ' + p.lianban.hongli.reduce((a, b) => a + b.total, 0) + '</div></div>' : '')
+      + '</div>'
+      + '<div class="col"><h4>板块主线 / 支线（板块日历史：累计涨幅 / 日均 / 上涨天数）</h4>'
+      + (p.blocks.main.map(s => blkRow(s, 'tag-main', 'blk-main-b')).join('') || '<div class="empty">无</div>')
+      + (p.blocks.side.map(s => blkRow(s, 'tag-side', 'blk-side-b')).join('') || '<div class="empty">无</div>')
+      + (p.blocks.hongli.length ? '<div class="row"><div class="nm"><span class="tagline tag-def">防御</span>' + esc(p.blocks.hongli.map(h => h.name).join('/')) + '</div><div class="bar-wrap"></div><div class="val">累计 +' + p.blocks.hongli.reduce((a, b) => a + b.cum, 0).toFixed(1) + '%</div></div>' : '')
+      + '</div></div></div>';
+  });
+  document.getElementById('phaseCards').innerHTML = html;
+})();
+
+// ==================== 全周期排名 ====================
+(function drawRank() {
+  // 题材端：跨阶段合并
+  const tm = {};
+  R.phases.forEach(p => p.lianban.all.forEach(t => {
+    tm[t.name] = tm[t.name] || { name: t.name, total: 0, maxLb: 0 };
+    tm[t.name].total += t.total;
+    tm[t.name].maxLb = Math.max(tm[t.name].maxLb, t.maxLb);
+  }));
+  const themes = Object.values(tm).sort((a, b) => b.total - a.total).slice(0, 12);
+  const tMax = Math.max(1, ...themes.map(t => t.total));
+  document.getElementById('themeRank').innerHTML = themes.map((t, i) =>
+    '<div class="row"><div class="nm">' + (i + 1) + '. ' + esc(t.name) + '</div>'
+    + '<div class="bar-wrap"><div class="bar side-b" style="width:' + Math.max(4, t.total / tMax * 100) + '%"></div></div>'
+    + '<div class="val"><b>' + t.total + '</b> 家 · ' + t.maxLb + '板</div></div>'
+  ).join('');
+  // 板块端：区间整体累计（直接重算：用各阶段 all 合并近似，改为逐日重算更准）
+  const dates = [];
+  R.phases.forEach(p => { for (let i = 0; i < p.days; i++) dates.push(null); });
+  const sm = {};
+  R.phases.forEach(p => p.blocks.all.forEach(s => {
+    sm[s.name] = sm[s.name] || { name: s.name, cum: 0 };
+    sm[s.name].cum = Math.max(sm[s.name].cum, s.cum); // 取各阶段内最佳累计近似展示
+  }));
+  const sectors = Object.values(sm).sort((a, b) => b.cum - a.cum).slice(0, 12);
+  const sMax = Math.max(1, ...sectors.map(s => s.cum));
+  document.getElementById('sectorRank').innerHTML = sectors.map((s, i) =>
+    '<div class="row"><div class="nm">' + (i + 1) + '. ' + esc(s.name) + '</div>'
+    + '<div class="bar-wrap"><div class="bar blk-side-b" style="width:' + Math.max(4, s.cum / sMax * 100) + '%"></div></div>'
+    + '<div class="val"><b>+' + s.cum + '%</b>（单阶段最佳）</div></div>'
+  ).join('');
+})();
+
+document.getElementById('foot').innerHTML =
+  '主线/支线判定规则：阶段由情绪温度 3 日平滑 zigzag 摆动（阈值 18、最短 3 日）切分；'
+  + '题材端得分 = 涨停家数 + 连板高度×6 + 出现天数×2.5，得分≥最高分 55% 判为主线；'
+  + '板块端得分 = 阶段累计涨幅 + 上涨天数占比×6 + 排名前 30% 天数×1.2，累计 &gt;1% 且上涨天数≥40% 判为主线。'
+  + '红利防御类（hongliName.json）单独标注不参与主线竞争。'
+  + '<br>指数斜率窗口：上证指数收盘价 MA3 斜率（MA3今日 − MA3昨日）由负转正当日开窗、由正转负前一日收窗；'
+  + '窗口内题材排名剔除「算力/芯片/通信/并购重组/其他」（子串匹配），板块排名剔除科技类板块（关键词匹配），'
+  + '个股涨幅 = 窗口末收盘 / 窗口首日前一交易日收盘 − 1（kline_cache 实算，候选为窗口内快照涨停股，无K线者剔除）。'
+  + '生成时间 ' + new Date().toLocaleString('zh-CN') + ' · analyze_market_lines.js';
+</script>
+</body>
+</html>

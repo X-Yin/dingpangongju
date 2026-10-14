@@ -12,11 +12,13 @@
 const axios = require('axios');
 const dayjs = require('dayjs');
 const { isTradingDay } = require('../utils/tradingDay');
+const { getSingleStockData } = require('./stock');
 const {
   fetchDayHtml,
   extractSentiment,
   getLianbanDayData,
   getAvailableLianbanDates,
+  parseMarketKpi,
 } = require('./lianban');
 
 const {
@@ -29,39 +31,6 @@ const {
 const OVERVIEW_CACHE_TTL = 60 * 1000;
 let overviewCache = { ts: 0, data: null };
 let overviewFetching = null;
-
-const stripTags = (str) => String(str == null ? '' : str).replace(/<[^>]+>/g, '').trim();
-
-// 解析当日复盘页 KPI 情绪卡片（id="s-env"）
-const parseMarketKpi = (html) => {
-  const startIdx = html.indexOf('id="s-env"');
-  if (startIdx === -1) return null;
-  const endIdx = html.indexOf('<div class="qnav"', startIdx);
-  const seg = html.slice(startIdx, endIdx === -1 ? startIdx + 8000 : endIdx);
-
-  const numOf = (label) => {
-    const re = new RegExp(`<div class="l"[^>]*>${label}</div><div class="v[^"]*"[^>]*>([\\d,.]+)(?:<small[^>]*>([^<]*)</small>)?</div>`);
-    const m = seg.match(re);
-    if (!m) return null;
-    return { value: parseFloat(m[1].replace(/,/g, '')), unit: m[2] || '' };
-  };
-
-  const upDownM = seg.match(/<div class="l">上涨\/下跌<\/div>[\s\S]*?<span class="up">([\d,]+)<\/span><small>\/<\/small><span class="dn">([\d,]+)<\/span>/);
-  const amountM = seg.match(/<div class="l">两市成交<\/div><div class="v"[^>]*>([\d.]+[^<]*)</);
-
-  return {
-    limitUpCount: numOf('涨停')?.value ?? null,
-    limitDownCount: numOf('跌停')?.value ?? null,
-    maxLianban: numOf('最高板') ?? null,
-    lianbanCount: numOf('连板')?.value ?? null,
-    sealRate: numOf('封板率')?.value ?? null,
-    brokenBoardCount: numOf('炸板')?.value ?? null,
-    yesterdayZtPerf: numOf('昨涨停今表现')?.value ?? null,
-    upCount: upDownM ? parseInt(upDownM[1].replace(/,/g, ''), 10) : null,
-    downCount: upDownM ? parseInt(upDownM[2].replace(/,/g, ''), 10) : null,
-    totalAmount: amountM ? stripTags(amountM[1]) : null,
-  };
-};
 
 // 定位最新复盘页日期：manifest.json 第一个条目即最新交易日（需带站内 referer）
 const fetchLatestReviewDate = async () => {
@@ -322,6 +291,9 @@ const buildThemeAnalysis = () => {
 
   return {
     windowDates: dates,
+    // 最近一次快照日期（YYYYMMDD）。快照为每日复盘数据，盘中当天文件尚未生成时，
+    // todayCount 实际是上一交易日的涨停家数，前端需据此标注口径
+    latestSnapshotDate: dates[dates.length - 1],
     themes,
     mainLines: themes.filter((t) => t.type === '主线').map((t) => ({ board: t.board, score: t.score, todayCount: t.todayCount })),
     branches: themes.filter((t) => t.type === '支线').slice(0, 6).map((t) => ({ board: t.board, score: t.score, todayCount: t.todayCount })),
@@ -386,12 +358,18 @@ const fetchThsBatchQuotes = async (codes) => {
   (res.data?.data?.quote_data || []).forEach((item) => {
     const value = Array.isArray(item.value) ? item.value[0] : null;
     if (!Array.isArray(value) || value.length < 3) return;
-    const prevClose = Number(value[1]);
-    const last = Number(value[value.length - 1]);
-    if (!Number.isFinite(prevClose) || !Number.isFinite(last)) return;
     const market = String(item.market);
     const prefix = market === '17' ? 'sh' : 'sz';
     const marketCode = `${prefix}${item.code}`;
+    const prevClose = Number(value[1]);
+    const rawLast = value[value.length - 1];
+    const last = Number(rawLast);
+    if (!Number.isFinite(prevClose)) return;
+    // 停牌股：同花顺返回最新价为 null（Number(null)===0，不能直接参与计算），标记 suspended
+    if (rawLast == null || !Number.isFinite(last) || last <= 0) {
+      out[marketCode] = { code: marketCode, price: null, prevClose, changePct: null, suspended: true };
+      return;
+    }
     out[marketCode] = {
       code: marketCode,
       price: last,
@@ -400,6 +378,125 @@ const fetchThsBatchQuotes = async (codes) => {
     };
   });
   return out;
+};
+
+// ==================== 4. 题材历史弹窗（近 N 日情绪 + 题材每日涨停数） ====================
+
+const HISTORY_CACHE_TTL = 60 * 1000;
+let themeHistoryCache = { ts: 0, data: null, days: 0 };
+
+// 近 days 个交易日：每日情绪温度 / 各题材每日涨停家数（boardKeyOf 归一化聚合）/ 每日涨停最多的题材
+const getThemeHistory = (days = 30) => {
+  if (themeHistoryCache.data && themeHistoryCache.days === days && Date.now() - themeHistoryCache.ts < HISTORY_CACHE_TTL) {
+    return themeHistoryCache.data;
+  }
+  const todayYmd = dayjs().format('YYYYMMDD');
+  const dates = getAvailableLianbanDates().filter((d) => d <= todayYmd).slice(0, days).reverse(); // 升序
+  const perTheme = new Map(); // key -> { nameCount, ymdCounts: Map(ymd -> count) }
+  const sentiment = [];
+  const topByDate = [];
+
+  dates.forEach((ymd) => {
+    const day = getLianbanDayData(ymd);
+    sentiment.push(day?.sentiment
+      ? { phase: day.sentiment.phase || null, temperature: day.sentiment.temperature ?? null }
+      : null);
+
+    const dayKeyCount = new Map();
+    let topBoard = null;
+    let topCount = -1;
+    (day?.themes || []).forEach((t) => {
+      const key = boardKeyOf(t.board) || t.board;
+      const cnt = t.stocks?.length || 0;
+      if (!key || key === '其他') return;
+      if (cnt > topCount) { topCount = cnt; topBoard = t.board; }
+      dayKeyCount.set(key, (dayKeyCount.get(key) || 0) + cnt);
+      let agg = perTheme.get(key);
+      if (!agg) {
+        agg = { nameCount: {}, ymdCounts: new Map() };
+        perTheme.set(key, agg);
+      }
+      agg.nameCount[t.board] = (agg.nameCount[t.board] || 0) + 1;
+      agg.ymdCounts.set(ymd, (agg.ymdCounts.get(ymd) || 0) + cnt);
+    });
+    topByDate.push(topBoard ? { board: topBoard, count: topCount } : null);
+  });
+
+  const themeCounts = {};
+  Array.from(perTheme.entries()).forEach(([key, agg]) => {
+    // 展示名取窗口内出现次数最多（次数相同取名字最长）的板块名
+    let name = key;
+    let maxCount = -1;
+    Object.entries(agg.nameCount).forEach(([nm, c]) => {
+      if (c > maxCount || (c === maxCount && nm.length > name.length)) {
+        name = nm;
+        maxCount = c;
+      }
+    });
+    const counts = dates.map((ymd) => agg.ymdCounts.get(ymd) || 0);
+    themeCounts[key] = { name, counts, total: counts.reduce((a, b) => a + b, 0) };
+  });
+
+  const data = {
+    dates,
+    sentiment,
+    themeCounts,
+    topByDate,
+    generatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+  };
+  themeHistoryCache = { ts: Date.now(), data, days };
+  return data;
+};
+
+// 个股日 K 内存缓存（历史区间数据不可变，短 TTL 防御当日实时更新）
+const klineCache = new Map(); // code -> { data, ts }
+const KLINE_CACHE_TTL = 10 * 60 * 1000;
+const getKlineCached = async (code) => {
+  const hit = klineCache.get(code);
+  if (hit && Date.now() - hit.ts < KLINE_CACHE_TTL) return hit.data;
+  const data = await getSingleStockData(code, 60);
+  if (klineCache.size > 800) klineCache.clear();
+  klineCache.set(code, { data, ts: Date.now() });
+  return data;
+};
+
+// 某交易日某题材的涨停股列表：当日涨幅（快照）、连板标签、近 3 个交易日历史涨幅（日 K）
+const getThemeDayStocks = async (dateYmd, themeKey) => {
+  const key = String(themeKey || '');
+  const day = getLianbanDayData(String(dateYmd || '').replace(/\D/g, ''));
+  const theme = day && Array.isArray(day.themes)
+    ? day.themes.find((t) => (boardKeyOf(t.board) || t.board) === key)
+    : null;
+  if (!theme) {
+    return { date: dateYmd, theme: key, name: key, stocks: [] };
+  }
+
+  const stocks = await Promise.all((theme.stocks || []).map(async (s) => {
+    let prevChanges = null;
+    try {
+      const kline = await getKlineCached(s.code);
+      if (Array.isArray(kline) && kline.length > 0) {
+        // 日 K 降序，取所选交易日之前最近 3 天的涨跌幅，反转为时间正序 [T-3, T-2, T-1]
+        prevChanges = kline
+          .filter((k) => k.trade_date < Number(dateYmd))
+          .slice(0, 3)
+          .map((k) => (k.change != null ? k.change : null))
+          .reverse();
+      }
+    } catch (e) {
+      prevChanges = null;
+    }
+    return {
+      code: s.code,
+      marketCode: s.marketCode || '',
+      name: s.name,
+      lianbanText: s.lianbanText || (Number(s.lianbanCount) === 1 ? '首板' : ''),
+      changePct: s.quote?.changePct ?? null,
+      prevChanges,
+    };
+  }));
+
+  return { date: dateYmd, theme: key, name: theme.board, stocks };
 };
 
 const getStockQuotes = async (marketCodes) => {
@@ -414,6 +511,8 @@ module.exports = {
   getMarketOverview,
   getThemeAnalysis,
   getStockQuotes,
+  getThemeHistory,
+  getThemeDayStocks,
   parseMarketKpi,
   boardKeyOf,
   dragonScoreOf,

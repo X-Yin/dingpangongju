@@ -1,1 +1,42 @@
-[]
+[
+  {
+    "id": "f0cc0171147a3939",
+    "time": "2026-10-14 11:14:44",
+    "read": true,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-34.9→-29.7亿（增加5.2亿，≥5亿）<br/>• 科创板指较10分钟前上涨0.12%<br/>• 成交量差值-1346亿（<-500亿严重缩量），较10分钟前仅增加35亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "b7a699110f5ef50c",
+    "time": "2026-10-14 14:05:39",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>108亿</strong>（≥100亿），主力资金净流出加速（-172.1→-228.7亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "b30f890e0625f53f",
+    "time": "2026-10-14 14:30:26",
+    "read": true,
+    "strategyId": "tail_dip_buying",
+    "title": "✅ 尾盘抄底机会",
+    "description": "全天科技情绪弱势（科技情绪指数 <strong>-100.0</strong>，-70 ≤ 情绪 < 0），尾盘半小时放量：14:00 量能 <strong>-2927亿</strong> → 当前 <strong>-2871亿</strong>，放量 <strong>56亿</strong>（≥50亿），创业板指涨幅回落（14:00 -2.71% → 14:30 -2.88%）。全天科技情绪弱势，尾盘半小时放量，适合尾盘抄底，博弈次日的反弹。",
+    "severity": "high",
+    "isBullish": true
+  },
+  {
+    "id": "a084e91da44d6405",
+    "time": "2026-10-14 14:44:02",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>102亿</strong>（≥100亿），主力资金净流出加速（-289.0→-328.8亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  }
+]

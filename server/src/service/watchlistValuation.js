@@ -1,10 +1,10 @@
-// 自选股估值快照（总市值 / 市盈率）——2026-10-13 用户新增，供回测买入限制使用：
+// 自选股估值快照（总市值/流通市值/市盈率）——2026-10-13 用户新增，供回测买入限制使用：
 //   除「情绪游资」相关策略（顺/逆周期情绪游资、情绪游资-龙头战法；组合策略里仅豁免其情绪游资腿）外，
-//   买入候选须同时满足：① 总市值 ≥ 200 亿；② 市盈率非亏损。
+//   买入候选须同时满足：① 流通市值 ≥ 200 亿（2026-10-14 由总市值改为流通市值口径）；② 市盈率非亏损。
 // 亏损判定用「滚动市盈率 ttm_pe」（基于最近 12 个月盈利，能反映当前亏损；静态市盈率 pe 基于上一份年报，
 //   会滞后——如中科飞测 sh688361 静态 pe=2091.87 为正、但 ttm_pe=-2432.91 已亏损，故必须用 ttm_pe）。
 // 数据来源：财联社个股基础信息接口（与 monitor_stocks_total_shares.json 同源；fields 含
-//   mc＝总市值（元）、ttm_pe＝滚动市盈率），拉取结果缓存到 data/monitor_stocks_valuation.json。
+//   mc＝总市值（元）、cmc＝流通市值（元）、ttm_pe＝滚动市盈率），拉取结果缓存到 data/monitor_stocks_valuation.json。
 // 回测内同步读表比对：同一自然日复用缓存，跨日或文件缺失时由 ensureWatchlistValuation 重新拉取一次。
 // 数据不足（无该股记录，或 mc 为空）时不拦截，与其它过滤器「数据不足不拦截」口径一致。
 const fs = require('fs');
@@ -15,7 +15,7 @@ const { getMonitorStocks } = require('./monitorStock');
 
 const VALUATION_PATH = path.join(__dirname, '../data/monitor_stocks_valuation.json');
 
-// 总市值下限：200 亿元（接口 mc 单位为元）
+// 流通市值下限：200 亿元（接口 cmc 单位为元）
 const MIN_MARKET_VALUE = 200 * 1e8;
 
 // 本地自然日 'YYYY-MM-DD'（用于判定缓存是否当日有效；避免 ISO/UTC 时区偏差）
@@ -33,7 +33,7 @@ const readFile = () => {
 };
 
 let cache = { mtimeMs: -1, map: new Map() };
-// 同步读取估值映射（回测热循环用）：Map<code, { marketValue, ttmPe }>，按文件 mtime 懒加载缓存
+// 同步读取估值映射（回测热循环用）：Map<code, { marketValue, circulatingMarketValue, ttmPe }>，按文件 mtime 懒加载缓存
 const getValuationMap = () => {
   try {
     const mtimeMs = fs.statSync(VALUATION_PATH).mtimeMs;
@@ -43,6 +43,7 @@ const getValuationMap = () => {
         if (item && item.code) {
           map.set(item.code, {
             marketValue: item.marketValue != null ? Number(item.marketValue) : null,
+            circulatingMarketValue: item.circulatingMarketValue != null ? Number(item.circulatingMarketValue) : null,
             ttmPe: item.ttmPe != null ? Number(item.ttmPe) : null,
           });
         }
@@ -56,14 +57,14 @@ const getValuationMap = () => {
 };
 
 // 是否因估值原因禁止买入：
-//   总市值 < 200 亿 → 禁买；市盈率亏损（滚动市盈率 ttm_pe ≤ 0 或缺失/空）→ 禁买。
-// 无该股估值记录时返回 false（数据不足不拦截）
+//   流通市值 < 200 亿 → 禁买（2026-10-14 由总市值口径改为流通市值）；市盈率亏损（滚动市盈率 ttm_pe ≤ 0 或缺失/空）→ 禁买。
+// 无该股估值记录、或流通市值缺失（旧缓存/拉取失败）时不按市值拦截（数据不足不拦截），市盈率校验照常生效
 const isBuyBlockedByValuation = (code) => {
   const v = getValuationMap().get(code);
   if (!v) return false;
-  const { marketValue, ttmPe } = v;
-  if (marketValue != null && Number.isFinite(marketValue)
-    && marketValue < MIN_MARKET_VALUE) return true;
+  const { circulatingMarketValue, ttmPe } = v;
+  if (circulatingMarketValue != null && Number.isFinite(circulatingMarketValue)
+    && circulatingMarketValue < MIN_MARKET_VALUE) return true;
   if (ttmPe == null || !Number.isFinite(ttmPe) || ttmPe <= 0) return true;
   return false;
 };
@@ -92,6 +93,7 @@ const syncWatchlistValuation = async (codes = null) => {
           code: resp.data.secu_code || code,
           name: resp.data.secu_name || null,
           marketValue: resp.data.mc != null ? Number(resp.data.mc) : null,
+          circulatingMarketValue: resp.data.cmc != null ? Number(resp.data.cmc) : null,
           ttmPe: resp.data.ttm_pe != null ? Number(resp.data.ttm_pe) : null,
           updatedAt,
         };

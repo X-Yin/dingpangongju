@@ -15,7 +15,8 @@ const MAP_FILE = path.join(DIR, '东财板块到本地板块map.json');
 
 const PAGE_SIZE = 50; // bkzj 页面成分股每页 50 条
 const PAGE_WAIT_TIMEOUT = 15000;
-const STOCK_CODE_PREFIX = ['3', '6', '0']; // 只保留沪深 A 股（与 block_amount_money.js 口径一致）
+// 只保留沪深 A 股：深主板(000/001/002/003)、创业板(300/301)、沪主板(600/601/603/605)、科创板(688/689)
+const STOCK_CODE_PREFIX = ['00', '30', '60', '68'];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -113,7 +114,7 @@ async function fetchBlockStocks(page, blockCode) {
   }
 
   const filtered = stocks.filter((s) => STOCK_CODE_PREFIX.some((p) => (s.code || '').startsWith(p)));
-  console.log(`  板块 ${blockCode} 共 ${stocks.length} 只，过滤后（3/6/0开头）${filtered.length} 只`);
+  console.log(`  板块 ${blockCode} 共 ${stocks.length} 只，过滤后（沪深A股：主板/创业板/科创板）${filtered.length} 只`);
   return filtered;
 }
 
