@@ -320,6 +320,8 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     // 拥挤度 tab
     const [crowdData, setCrowdData] = useState([]);
     const [crowdLoading, setCrowdLoading] = useState(false);
+    // 科技板块成交量占比（纯缓存接口，优先加载展示；crowdData 依赖融资融券实时计算，延后加载）
+    const [techRatioData, setTechRatioData] = useState([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [crowdDateRange, setCrowdDateRange] = useState([
         dayjs('2026-04-01'),
@@ -1163,6 +1165,22 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
   }, [rzrqData]);
 
   // ============ 拥挤度 tab ============
+  // 科技板块成交量占比（纯缓存接口，优先加载）
+  const fetchTechRatioData = async () => {
+    if (!crowdDateRange[0] || !crowdDateRange[1]) return;
+    try {
+      const startDate = crowdDateRange[0].format('YYYY-MM-DD');
+      const endDate = crowdDateRange[1].format('YYYY-MM-DD');
+      const response = await axios.get(`http://${local_ip}:3000/tech_block_ratio`, {
+        params: { startDate, endDate },
+      });
+      setTechRatioData(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Fetch tech_block_ratio data failed:', error);
+      setTechRatioData([]);
+    }
+  };
+
   const fetchCrowdData = async () => {
     if (!crowdDateRange[0] || !crowdDateRange[1]) return;
     setCrowdLoading(true);
@@ -1190,7 +1208,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     setIsRefreshing(true);
     try {
       await axios.get(`http://${local_ip}:3000/refresh_tech_block_crowd`);
-      await fetchCrowdData();
+      await Promise.all([fetchCrowdData(), fetchTechRatioData()]);
     } catch (error) {
       console.error('Refresh tech_block_crowd data failed:', error);
     } finally {
@@ -1214,9 +1232,14 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
 
   useEffect(() => {
     if (activeTab === 'crowd') {
-      fetchCrowdData();
-      fetchIndexKlineData();
+      // 先加载缓存数据的图表（科技占比、各板块占比）；拥挤度和指数行情依赖实时请求，延后加载
+      fetchTechRatioData();
       fetchCategoryRatioData();
+      const timer = setTimeout(() => {
+        fetchCrowdData();
+        fetchIndexKlineData();
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [activeTab, crowdDateRange]);
 
@@ -1416,7 +1439,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
       ratioChartRef.current = null;
     }
 
-    if (!crowdData.length) return;
+    if (!techRatioData.length) return;
 
     const chart = createChart(ratioContainerRef.current, {
       layout: {
@@ -1488,7 +1511,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
       },
     });
 
-    const formattedData = crowdData
+    const formattedData = techRatioData
       .map(item => ({
         time: dayjs(item.date, 'YYYYMMDD').unix(),
         value: item.ratio,
@@ -1520,7 +1543,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
         ratioChartRef.current = null;
       }
     };
-  }, [crowdData, activeTab]);
+  }, [techRatioData, activeTab]);
 
   // ============ 板块成交量占比折线图（传媒/农业/消费/医药/电力） ============
   const fetchCategoryRatioData = async () => {
@@ -2830,24 +2853,30 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                     </Row>
                                 </div>
                             )}
-                            {crowdLoading ? (
+                            {techRatioData.length === 0 && crowdData.length === 0 ? (
                                 <div className="rzrq-loading">加载中...</div>
-                            ) : crowdData.length > 0 ? (
+                            ) : techRatioData.length > 0 || crowdData.length > 0 ? (
                                 <div className="crowd-chart-container">
                                     <div className="crowd-chart-card">
                                         <div className="crowd-chart-header">
                                             <div className="crowd-chart-title">拥挤度</div>
                                             <div className="crowd-chart-value">
                                                 <span className="crowd-value-number" style={{ color: '#722ed1' }}>
-                                                    {crowdData[crowdData.length - 2]?.score !== null && crowdData[crowdData.length - 2]?.score !== undefined 
-                                                        ? crowdData[crowdData.length - 2]?.score.toFixed(2) 
+                                                    {crowdData[crowdData.length - 2]?.score !== null && crowdData[crowdData.length - 2]?.score !== undefined
+                                                        ? crowdData[crowdData.length - 2]?.score.toFixed(2)
                                                         : '-'}
                                                 </span>
                                                 <span className="crowd-value-unit">{crowdData[crowdData.length - 2]?.level || '-'}</span>
                                             </div>
                                         </div>
                                         <div className="crowd-chart-body">
-                                            <div ref={crowdContainerRef} className="crowd-chart" />
+                                            {crowdData.length > 0 ? (
+                                                <div ref={crowdContainerRef} className="crowd-chart" />
+                                            ) : (
+                                                <div className="rzrq-loading">
+                                                    {crowdLoading ? '拥挤度实时计算中...' : '暂无拥挤度数据'}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="crowd-chart-card">
@@ -2856,7 +2885,9 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                             <div className="crowd-chart-right">
                                                 <div className="crowd-chart-value">
                                                     <span className="crowd-value-number" style={{ color: getThemeColor() }}>
-                                                        {crowdData[crowdData.length - 1]?.ratio.toFixed(2)}%
+                                                        {techRatioData[techRatioData.length - 1]?.ratio !== undefined
+                                                            ? `${techRatioData[techRatioData.length - 1].ratio.toFixed(2)}%`
+                                                            : '-'}
                                                     </span>
                                                 </div>
                                                 <Button

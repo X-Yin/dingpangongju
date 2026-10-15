@@ -1020,7 +1020,7 @@
       "name": "平高电气",
       "blockName": "特高压",
       "code": "sh600312",
-      "change": -2.38
+      "change": -2.4
     },
     {
       "name": "许继电气",
@@ -1471,6 +1471,12 @@
       "blockName": "AI 剧",
       "code": "sz300182",
       "change": 2.43
+    },
+    {
+      "name": "华策影视",
+      "blockName": "AI 剧",
+      "code": "sz300133",
+      "change": 2.06
     }
   ]
 }

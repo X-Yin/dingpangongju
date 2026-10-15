@@ -245,7 +245,8 @@ const calculateTechCrowdingSeries = (
 
 };
 
-const getTechBlockCrowd = async (startDate, endDate) => {
+// 科技板块成交量占比（仅读本地缓存文件计算，不含融资融券实时数据，响应快，供拥挤度 tab 优先展示）
+const getTechVolumeRatio = (startDate, endDate) => {
     const amountDayHistoryPath = path.resolve(__dirname, '../data/amount_day_history.json');
     const techMoneyPath = path.resolve(__dirname, './科技板块拥挤度计算/block_amount_money_result.json');
 
@@ -301,6 +302,12 @@ const getTechBlockCrowd = async (startDate, endDate) => {
             techTotalMoney,
         });
     }
+
+    return techRatioList;
+};
+
+const getTechBlockCrowd = async (startDate, endDate) => {
+    const techRatioList = getTechVolumeRatio(startDate, endDate);
 
     if (techRatioList.length === 0) {
         return [];
@@ -399,3 +406,4 @@ const getTechBlockCrowd = async (startDate, endDate) => {
 
 exports.calculateTechCrowdingSeries = calculateTechCrowdingSeries;
 exports.getTechBlockCrowd = getTechBlockCrowd;
+exports.getTechVolumeRatio = getTechVolumeRatio;

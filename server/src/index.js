@@ -85,7 +85,7 @@ const { getMaSlopeDiagnosis } = require('./service/maSlopeDiagnosis');
 const { predictSentimentCycle } = require('./service/sentimentPrediction');
 const { runQuantAnalysis, getQuantAnalysisData, analyzeSingleStock } = require('./service/quantAnalysis');
 const { getRZRQData } = require('./service/rzrq');
-const { getTechBlockCrowd } = require('./service/techCrowd');
+const { getTechBlockCrowd, getTechVolumeRatio } = require('./service/techCrowd');
 const { getBlockCategoryRatio, run: runCategoryAmount, categoryRatioStartDate, categoryRatioEndDate } = require('./service/板块成交量占比计算/category_amount_money');
 const { getRiskScoreHistory, calculateAndSaveRiskScore } = require('./service/marketRiskScore');
 const { analyzeMonitorStocks } = require('./service/strongAndWeakStock');
@@ -1644,6 +1644,18 @@ app.get('/tech_block_crowd', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('获取科技板块拥挤度数据失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 科技板块成交量占比（仅读缓存文件，不含融资融券实时计算，供拥挤度 tab 优先展示）
+app.get('/tech_block_ratio', (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const result = getTechVolumeRatio(startDate, endDate);
+    res.json(result);
+  } catch (error) {
+    console.error('获取科技板块成交量占比失败:', error);
     res.status(500).json({ message: error.message || '获取失败' });
   }
 });

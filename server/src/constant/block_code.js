@@ -1325,5 +1325,10 @@ exports.default = [
         "code": "sz300182",
         "name": "捷成股份",
         "tag": "中性"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sz300133",
+        "name": "华策影视"
     }
 ]

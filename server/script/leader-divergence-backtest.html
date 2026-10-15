@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>题材爆发 · 龙头首次分歧低吸回测</title>
+<style>
+  :root { --bg:#0e1420; --panel:#151d2e; --line:#24304a; --txt:#d7e0ef; --muted:#7d8aa0; --up:#e05555; --down:#3fae7a; --accent:#4da3ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; padding:28px; }
+  h1 { font-size:22px; margin:0 0 6px; }
+  h2 { font-size:17px; margin:34px 0 12px; border-left:4px solid var(--accent); padding-left:10px; }
+  .sub { color:var(--muted); font-size:12.5px; margin-bottom:20px; }
+  .cards { display:flex; gap:12px; flex-wrap:wrap; margin:10px 0 6px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 18px; min-width:150px; }
+  .card .k { color:var(--muted); font-size:12px; }
+  .card .v { font-size:21px; font-weight:600; margin-top:2px; }
+  .card .s { color:var(--muted); font-size:11.5px; margin-top:2px; }
+  table { border-collapse:collapse; width:100%; background:var(--panel); border-radius:10px; overflow:hidden; font-size:13px; }
+  th, td { padding:8px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; white-space:nowrap; }
+  th { background:#1a2438; color:#aebad0; font-weight:500; font-size:12px; }
+  tr.hit td { background:rgba(77,163,255,.07); }
+  .up { color:var(--up); } .down { color:var(--down); } .muted { color:var(--muted); font-size:11.5px; } .warn { color:#f5a623; }
+  details.case { background:var(--panel); border:1px solid var(--line); border-radius:10px; margin-bottom:10px; padding:10px 16px; }
+  details.case summary { cursor:pointer; font-weight:600; }
+  .case-body { margin-top:12px; }
+  table.kv { margin-top:10px; font-size:12.5px; }
+  table.kv td { white-space:normal; }
+  table.kv td:nth-child(odd) { color:var(--muted); width:110px; }
+  .note { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; color:var(--muted); font-size:12.5px; }
+  .note b { color:var(--txt); }
+</style>
+</head>
+<body>
+  <h1>题材爆发 · 龙头首次分歧低吸回测</h1>
+  <div class="sub">入选题材：单日涨停数 &gt; 15（排除 算力/通信/芯片/其他）且龙头 ≥ 4 连板 · 回测区间 2026-06-24 ~ 2026-10-14（lianbanSnapshot 75 个交易日） · 生成于 2026/10/14 23:31:51</div>
+
+  <h2>策略 A：分歧日尾盘买入（14:55）</h2>
+  <div class="cards">
+    <div class="card"><div class="k">成交 case</div><div class="v">6</div></div>
+    <div class="card"><div class="k">盘中最大亏损·平均</div><div class="v down">-19.34%</div><div class="s">最深 -33.39%</div></div>
+    <div class="card"><div class="k">二次涨停等待·平均</div><div class="v">5.2 天</div><div class="s">最长 10 天 · 未涨停 1 个</div></div>
+    <div class="card"><div class="k">持仓5日收益·平均</div><div class="v down">-10.91%</div><div class="s">最大 8.29% / 最小 -31.49%</div></div>
+    <div class="card"><div class="k">持仓10日收益·平均</div><div class="v up">3.42%</div><div class="s">最大 16.24% / 最小 -26.12%</div></div>
+  </div>
+  <div style="overflow-x:auto"><table>
+    <tr><th>#</th><th>题材</th><th>爆发日</th><th>龙头</th><th>连板</th><th>分歧日</th><th>买入日</th><th>买入价</th><th>盘中最大亏损</th><th>二次涨停等待</th><th>持仓5日收益</th><th>持仓10日收益</th></tr>
+    <tr>
+    <td>1</td><td>医药</td><td>2026-07-15</td>
+    <td>哈药股份<span class="muted"> sh600664</span></td>
+    <td>4连板<br><span class="muted">首板 07-10</span></td>
+    <td>07-17<br><span class="muted">量能 3.8×</span></td>
+    <td>07-17</td>
+    <td>5.25</td>
+    <td><span class="down">-8.95%</span><br><span class="muted">07-21</span></td>
+    <td><span class="up">2 天</span> <span class="muted">(07-21 +10.0%)</span></td>
+    <td><span class="up">2.86%</span><br><span class="muted">卖07-24</span></td>
+    <td><span class="up">12.19%</span><br><span class="muted">卖07-31</span></td>
+  </tr><tr>
+    <td>2</td><td>AI应用</td><td>2026-07-31</td>
+    <td>传智教育<span class="muted"> sz003032</span></td>
+    <td>5连板<br><span class="muted">首板 07-27</span></td>
+    <td>08-06<br><span class="muted">量能 3.48×</span></td>
+    <td>08-06</td>
+    <td>10.73</td>
+    <td><span class="down">-1.21%</span><br><span class="muted">08-10</span></td>
+    <td><span class="up">4 天</span> <span class="muted">(08-12 +10.0%)</span></td>
+    <td><span class="up">8.29%</span><br><span class="muted">卖08-13</span></td>
+    <td><span class="up">11.37%</span><br><span class="muted">卖08-20</span></td>
+  </tr><tr>
+    <td>3</td><td>医药</td><td>2026-08-07</td>
+    <td>百花医药<span class="muted"> sh600721</span></td>
+    <td>4连板<br><span class="muted">首板 08-04</span></td>
+    <td>08-13<br><span class="muted">量能 2.37×</span></td>
+    <td>08-13</td>
+    <td>14.35</td>
+    <td><span class="down">-14.36%</span><br><span class="muted">08-21</span></td>
+    <td><span class="up">10 天</span> <span class="muted">(08-27 +10.0%)</span></td>
+    <td><span class="down">-4.81%</span><br><span class="muted">卖08-20</span></td>
+    <td><span class="up">16.24%</span><br><span class="muted">卖08-27</span></td>
+  </tr><tr>
+    <td>4</td><td>农业</td><td>2026-09-08</td>
+    <td>亚盛集团<span class="muted"> sh600108</span></td>
+    <td>4连板<br><span class="muted">首板 09-03</span></td>
+    <td>09-09<br><span class="muted">量能 5.85×</span></td>
+    <td>09-09</td>
+    <td>5.78</td>
+    <td><span class="down">-33.39%</span><br><span class="muted">09-16</span></td>
+    <td><span class="warn">未涨停</span></td>
+    <td><span class="down">-31.49%</span><br><span class="muted">卖09-16</span></td>
+    <td><span class="down">-26.12%</span><br><span class="muted">卖09-23</span></td>
+  </tr><tr>
+    <td>5</td><td>医药</td><td>2026-09-21</td>
+    <td>华瓷股份<span class="muted"> sz001216</span></td>
+    <td>5连板<br><span class="muted">首板 09-15</span></td>
+    <td>09-23<br><span class="muted">量能 4.82×</span></td>
+    <td>09-23</td>
+    <td>28.53</td>
+    <td><span class="down">-29.02%</span><br><span class="muted">10-14</span></td>
+    <td><span class="up">9 天</span> <span class="muted">(10-14 +10.0%)</span></td>
+    <td><span class="down">-17.42%</span><br><span class="muted">卖10-08</span></td>
+    <td><span class="muted">数据不足</span><br><span class="muted"></span></td>
+  </tr><tr>
+    <td>6</td><td>大消费</td><td>2026-09-21</td>
+    <td>内蒙新华<span class="muted"> sh603230</span></td>
+    <td>4连板<br><span class="muted">首板 09-16</span></td>
+    <td>09-23<br><span class="muted">量能 2.31×</span></td>
+    <td>09-23</td>
+    <td>16.88</td>
+    <td><span class="down">-29.09%</span><br><span class="muted">10-09</span></td>
+    <td><span class="up">1 天</span> <span class="muted">(09-24 +10.0%)</span></td>
+    <td><span class="down">-22.87%</span><br><span class="muted">卖10-08</span></td>
+    <td><span class="muted">数据不足</span><br><span class="muted"></span></td>
+  </tr>
+  </table></div>
+
+  <h2>策略 B：回踩 5 日线分时买入（分歧日起 10 个交易日内）</h2>
+  <div class="cards">
+    <div class="card"><div class="k">成交 case</div><div class="v">6</div></div>
+    <div class="card"><div class="k">盘中最大亏损·平均</div><div class="v down">-13.16%</div><div class="s">最深 -24.81%</div></div>
+    <div class="card"><div class="k">二次涨停等待·平均</div><div class="v">4.8 天</div><div class="s">最长 9 天 · 未涨停 1 个</div></div>
+    <div class="card"><div class="k">持仓5日收益·平均</div><div class="v down">-1.82%</div><div class="s">最大 17.50% / 最小 -16.97%</div></div>
+    <div class="card"><div class="k">持仓10日收益·平均</div><div class="v up">4.34%</div><div class="s">最大 24.79% / 最小 -21.96%</div></div>
+  </div>
+  <div style="overflow-x:auto"><table>
+    <tr><th>#</th><th>题材</th><th>爆发日</th><th>龙头</th><th>连板</th><th>分歧日</th><th>回踩买入日</th><th>买入价</th><th>盘中最大亏损</th><th>二次涨停等待</th><th>持仓5日收益</th><th>持仓10日收益</th></tr>
+    <tr>
+    <td>1</td><td>医药</td><td>2026-07-15</td>
+    <td>哈药股份<span class="muted"> sh600664</span></td>
+    <td>4连板<br><span class="muted">首板 07-10</span></td>
+    <td>07-17<br><span class="muted">量能 3.8×</span></td>
+    <td>07-20<br><span class="muted">开盘低于5日线 0930 / 等1天</span></td>
+    <td>4.80</td>
+    <td><span class="down">-0.42%</span><br><span class="muted">07-21</span></td>
+    <td><span class="up">1 天</span> <span class="muted">(07-21 +10.0%)</span></td>
+    <td><span class="up">17.50%</span><br><span class="muted">卖07-27</span></td>
+    <td><span class="up">24.79%</span><br><span class="muted">卖08-03</span></td>
+  </tr><tr>
+    <td>2</td><td>AI应用</td><td>2026-07-31</td>
+    <td>传智教育<span class="muted"> sz003032</span></td>
+    <td>5连板<br><span class="muted">首板 07-27</span></td>
+    <td>08-06<br><span class="muted">量能 3.48×</span></td>
+    <td>08-07<br><span class="muted">盘中回踩5日线(日线近似)  / 等1天</span></td>
+    <td>10.91</td>
+    <td><span class="down">-2.84%</span><br><span class="muted">08-10</span></td>
+    <td><span class="up">3 天</span> <span class="muted">(08-12 +10.0%)</span></td>
+    <td><span class="up">12.37%</span><br><span class="muted">卖08-14</span></td>
+    <td><span class="down">-1.37%</span><br><span class="muted">卖08-21</span></td>
+  </tr><tr>
+    <td>3</td><td>医药</td><td>2026-08-07</td>
+    <td>百花医药<span class="muted"> sh600721</span></td>
+    <td>4连板<br><span class="muted">首板 08-04</span></td>
+    <td>08-13<br><span class="muted">量能 2.37×</span></td>
+    <td>08-14<br><span class="muted">盘中回踩5日线 1115 / 等1天</span></td>
+    <td>13.32</td>
+    <td><span class="down">-7.73%</span><br><span class="muted">08-21</span></td>
+    <td><span class="up">9 天</span> <span class="muted">(08-27 +10.0%)</span></td>
+    <td><span class="down">-0.53%</span><br><span class="muted">卖08-21</span></td>
+    <td><span class="up">15.92%</span><br><span class="muted">卖08-28</span></td>
+  </tr><tr>
+    <td>4</td><td>农业</td><td>2026-09-08</td>
+    <td>亚盛集团<span class="muted"> sh600108</span></td>
+    <td>4连板<br><span class="muted">首板 09-03</span></td>
+    <td>09-09<br><span class="muted">量能 5.85×</span></td>
+    <td>09-11<br><span class="muted">开盘低于5日线 0930 / 等2天</span></td>
+    <td>5.01</td>
+    <td><span class="down">-23.15%</span><br><span class="muted">09-16</span></td>
+    <td><span class="warn">未涨停</span></td>
+    <td><span class="down">-16.97%</span><br><span class="muted">卖09-18</span></td>
+    <td><span class="down">-21.96%</span><br><span class="muted">卖09-28</span></td>
+  </tr><tr>
+    <td>5</td><td>医药</td><td>2026-09-21</td>
+    <td>华瓷股份<span class="muted"> sz001216</span></td>
+    <td>5连板<br><span class="muted">首板 09-15</span></td>
+    <td>09-23<br><span class="muted">量能 4.82×</span></td>
+    <td>09-28<br><span class="muted">盘中回踩5日线 0936 / 等2天</span></td>
+    <td>26.93</td>
+    <td><span class="down">-24.81%</span><br><span class="muted">10-14</span></td>
+    <td><span class="up">7 天</span> <span class="muted">(10-14 +10.0%)</span></td>
+    <td><span class="down">-11.33%</span><br><span class="muted">卖10-12</span></td>
+    <td><span class="muted">数据不足</span><br><span class="muted"></span></td>
+  </tr><tr>
+    <td>6</td><td>大消费</td><td>2026-09-21</td>
+    <td>内蒙新华<span class="muted"> sh603230</span></td>
+    <td>4连板<br><span class="muted">首板 09-16</span></td>
+    <td>09-23<br><span class="muted">量能 2.31×</span></td>
+    <td>09-29<br><span class="muted">开盘低于5日线 0930 / 等3天</span></td>
+    <td>14.96</td>
+    <td><span class="down">-19.99%</span><br><span class="muted">10-09</span></td>
+    <td><span class="up">4 天</span> <span class="muted">(10-12 +10.0%)</span></td>
+    <td><span class="down">-11.97%</span><br><span class="muted">卖10-13</span></td>
+    <td><span class="muted">数据不足</span><br><span class="muted"></span></td>
+  </tr>
+  </table></div>
+
+  <h2>股票 Case 明细与走势</h2>
+  <details class="case" open>
+    <summary>#1 2026-07-15 医药（17 家涨停） · 哈药股份 4连板 · 分歧 2026-07-17</summary>
+    <div class="case-body">
+      <svg viewBox="0 0 760 200" style="width:100%;max-width:760px">
+    <line x1="46" y1="166.0" x2="746" y2="166.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="170.0" fill="#7d8aa0" font-size="10" text-anchor="end">3.10</text><line x1="46" y1="128.5" x2="746" y2="128.5" stroke="rgba(255,255,255,.06)"/><text x="40" y="132.5" fill="#7d8aa0" font-size="10" text-anchor="end">3.70</text><line x1="46" y1="91.0" x2="746" y2="91.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="95.0" fill="#7d8aa0" font-size="10" text-anchor="end">4.31</text><line x1="46" y1="53.5" x2="746" y2="53.5" stroke="rgba(255,255,255,.06)"/><text x="40" y="57.5" fill="#7d8aa0" font-size="10" text-anchor="end">4.91</text><line x1="46" y1="16.0" x2="746" y2="16.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="20.0" fill="#7d8aa0" font-size="10" text-anchor="end">5.51</text>
+    <line x1="46" y1="149.35720513139867" x2="46" y2="151.84817536430438" stroke="#e05555" stroke-width="1"/><rect x="43.0" y="149.4" width="6" height="2.5" fill="#e05555"/><line x1="186" y1="128.18395815170007" x2="186" y2="144.37526466558722" stroke="#e05555" stroke-width="1"/><rect x="183.0" y="128.2" width="6" height="12.5" fill="#e05555"/><line x1="326" y1="105.14248349732216" x2="326" y2="132.54315605928508" stroke="#e05555" stroke-width="1"/><rect x="323.0" y="105.1" width="6" height="17.4" fill="#e05555"/><line x1="466" y1="79.61003861003856" x2="466" y2="90.19666209988786" stroke="#e05555" stroke-width="1"/><rect x="463.0" y="79.6" width="6" height="10.6" fill="#e05555"/><line x1="606" y1="51.58662348984923" x2="606" y2="59.682276746792866" stroke="#e05555" stroke-width="1"/><rect x="603.0" y="51.6" width="6" height="1.0" fill="#e05555"/><line x1="746" y1="21.07223813675422" x2="746" y2="67.77793000373643" stroke="#e05555" stroke-width="1"/><rect x="743.0" y="27.3" width="6" height="16.8" fill="#e05555"/>
+    <path d="M46.0,163.1 L186.0,156.2 L326.0,143.8 L466.0,126.3 L606.0,102.7 L746.0,78.4" fill="none" stroke="#f5c542" stroke-width="1.4" opacity=".9"/>
+    <path d="M46.0,149.4 L186.0,128.2 L326.0,105.1 L466.0,79.6 L606.0,51.6 L746.0,27.3" fill="none" stroke="#9ecbff" stroke-width="1.8"/>
+    
+    <line x1="46" y1="16" x2="46" y2="166" stroke="#f5a623" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="46" y="12" fill="#f5a623" font-size="10" text-anchor="middle">首板</text>
+    <line x1="466" y1="16" x2="466" y2="166" stroke="#e0509a" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="466" y="12" fill="#e0509a" font-size="10" text-anchor="middle">爆发</text>
+    <line x1="746" y1="16" x2="746" y2="166" stroke="#4da3ff" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="746" y="12" fill="#4da3ff" font-size="10" text-anchor="middle">分歧</text>
+    <line x1="746" y1="16" x2="746" y2="166" stroke="#ff5252" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="746" y="12" fill="#ff5252" font-size="10" text-anchor="middle">A买</text><text x="46.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">07/10</text><text x="186.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">07/13</text><text x="326.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">07/14</text><text x="466.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">07/15</text><text x="606.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">07/16</text><text x="746.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">07/17</text>
+  </svg>
+      <table class="kv">
+        <tr><td>题材爆发</td><td>2026-07-15 · 17 家涨停</td><td>个股</td><td>哈药股份（sh600664）4连板 · 题材参考：医药</td></tr>
+        <tr><td>本轮首板</td><td>2026-07-10（日K复算 4 连板）</td><td>首次分歧</td><td>2026-07-17 · 量能 3.8× 过去5日均量 · 当日 7.89%</td></tr>
+        <tr><td>A 尾盘买入</td><td>2026-07-17 14:55 @ 5.25</td>
+            <td>B 回踩买入</td><td>2026-07-20 0930 @ 4.8（开盘低于5日线，等 1 天）</td></tr>
+        <tr><td>A：最大亏损 / 二板等待 / 5日 / 10日</td>
+            <td colspan="3"><span class="down">-8.95%</span>（07-21） ·
+              2 天(07-21) ·
+              <span class="up">2.86%</span> · <span class="up">12.19%</span></td></tr>
+        <tr><td>B：最大亏损 / 二板等待 / 5日 / 10日</td>
+            <td colspan="3"><span class="down">-0.42%</span>（07-21） ·
+              1 天(07-21) ·
+              <span class="up">17.50%</span> · <span class="up">24.79%</span></td></tr>
+      </table>
+    </div>
+  </details><details class="case" >
+    <summary>#2 2026-07-31 AI应用（26 家涨停） · 传智教育 5连板 · 分歧 2026-08-06</summary>
+    <div class="case-body">
+      <svg viewBox="0 0 760 200" style="width:100%;max-width:760px">
+    <line x1="46" y1="166.0" x2="746" y2="166.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="170.0" fill="#7d8aa0" font-size="10" text-anchor="end">5.42</text><line x1="46" y1="128.5" x2="746" y2="128.5" stroke="rgba(255,255,255,.06)"/><text x="40" y="132.5" fill="#7d8aa0" font-size="10" text-anchor="end">7.11</text><line x1="46" y1="91.0" x2="746" y2="91.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="95.0" fill="#7d8aa0" font-size="10" text-anchor="end">8.80</text><line x1="46" y1="53.5" x2="746" y2="53.5" stroke="rgba(255,255,255,.06)"/><text x="40" y="57.5" fill="#7d8aa0" font-size="10" text-anchor="end">10.49</text><line x1="46" y1="16.0" x2="746" y2="16.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="20.0" fill="#7d8aa0" font-size="10" text-anchor="end">12.18</text>
+    <line x1="46" y1="152.6358595194085" x2="46" y2="164.17005545286506" stroke="#e05555" stroke-width="1"/><rect x="43.0" y="152.6" width="6" height="11.3" fill="#e05555"/><line x1="133.5" y1="139.32717190388166" x2="133.5" y2="151.5268022181146" stroke="#e05555" stroke-width="1"/><rect x="130.5" y="139.3" width="6" height="11.1" fill="#e05555"/><line x1="221" y1="124.68761552680219" x2="221" y2="124.68761552680219" stroke="#e05555" stroke-width="1"/><rect x="218.0" y="124.7" width="6" height="1.0" fill="#e05555"/><line x1="308.5" y1="108.49537892791128" x2="308.5" y2="115.37153419593344" stroke="#e05555" stroke-width="1"/><rect x="305.5" y="108.5" width="6" height="4.7" fill="#e05555"/><line x1="396" y1="90.75046210720886" x2="396" y2="111.37892791127541" stroke="#e05555" stroke-width="1"/><rect x="393.0" y="90.8" width="6" height="1.0" fill="#e05555"/><line x1="483.5" y1="71.23105360443623" x2="483.5" y2="71.23105360443623" stroke="#e05555" stroke-width="1"/><rect x="480.5" y="71.2" width="6" height="1.0" fill="#e05555"/><line x1="571" y1="49.71534195933455" x2="571" y2="54.8170055452865" stroke="#e05555" stroke-width="1"/><rect x="568.0" y="49.7" width="6" height="1.0" fill="#e05555"/><line x1="658.5" y1="25.98151571164508" x2="658.5" y2="32.6358595194085" stroke="#e05555" stroke-width="1"/><rect x="655.5" y="26.0" width="6" height="1.0" fill="#e05555"/><line x1="746" y1="19.992606284658034" x2="746" y2="49.937153419593336" stroke="#3fae7a" stroke-width="1"/><rect x="743.0" y="31.1" width="6" height="12.2" fill="#3fae7a"/>
+    <path d="M46.0,162.6 L133.5,157.3 L221.0,148.6 L308.5,138.0 L396.0,123.1 L483.5,106.9 L571.0,89.0 L658.5,69.2 L746.0,56.1" fill="none" stroke="#f5c542" stroke-width="1.4" opacity=".9"/>
+    <path d="M46.0,152.6 L133.5,139.3 L221.0,124.7 L308.5,108.5 L396.0,90.8 L483.5,71.2 L571.0,49.7 L658.5,26.0 L746.0,43.3" fill="none" stroke="#9ecbff" stroke-width="1.8"/>
+    
+    <line x1="46" y1="16" x2="46" y2="166" stroke="#f5a623" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="46" y="12" fill="#f5a623" font-size="10" text-anchor="middle">首板</text>
+    <line x1="396" y1="16" x2="396" y2="166" stroke="#e0509a" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="396" y="12" fill="#e0509a" font-size="10" text-anchor="middle">爆发</text>
+    <line x1="746" y1="16" x2="746" y2="166" stroke="#4da3ff" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="746" y="12" fill="#4da3ff" font-size="10" text-anchor="middle">分歧</text>
+    <line x1="746" y1="16" x2="746" y2="166" stroke="#ff5252" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="746" y="12" fill="#ff5252" font-size="10" text-anchor="middle">A买</text><text x="46.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">07/27</text><text x="133.5" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">07/28</text><text x="221.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">07/29</text><text x="308.5" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">07/30</text><text x="396.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">07/31</text><text x="483.5" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">08/03</text><text x="571.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">08/04</text><text x="658.5" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">08/05</text><text x="746.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">08/06</text>
+  </svg>
+      <table class="kv">
+        <tr><td>题材爆发</td><td>2026-07-31 · 26 家涨停</td><td>个股</td><td>传智教育（sz003032）5连板 · 题材参考：AI应用</td></tr>
+        <tr><td>本轮首板</td><td>2026-07-27（日K复算 5 连板）</td><td>首次分歧</td><td>2026-08-06 · 量能 3.48× 过去5日均量 · 当日 -6.65%</td></tr>
+        <tr><td>A 尾盘买入</td><td>2026-08-06 14:55 @ 10.73</td>
+            <td>B 回踩买入</td><td>2026-08-07  @ 10.91（盘中回踩5日线(日线近似)，等 1 天）</td></tr>
+        <tr><td>A：最大亏损 / 二板等待 / 5日 / 10日</td>
+            <td colspan="3"><span class="down">-1.21%</span>（08-10） ·
+              4 天(08-12) ·
+              <span class="up">8.29%</span> · <span class="up">11.37%</span></td></tr>
+        <tr><td>B：最大亏损 / 二板等待 / 5日 / 10日</td>
+            <td colspan="3"><span class="down">-2.84%</span>（08-10） ·
+              3 天(08-12) ·
+              <span class="up">12.37%</span> · <span class="down">-1.37%</span></td></tr>
+      </table>
+    </div>
+  </details><details class="case" >
+    <summary>#3 2026-08-07 医药（20 家涨停） · 百花医药 4连板 · 分歧 2026-08-13</summary>
+    <div class="case-body">
+      <svg viewBox="0 0 760 200" style="width:100%;max-width:760px">
+    <line x1="46" y1="166.0" x2="746" y2="166.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="170.0" fill="#7d8aa0" font-size="10" text-anchor="end">7.10</text><line x1="46" y1="128.5" x2="746" y2="128.5" stroke="rgba(255,255,255,.06)"/><text x="40" y="132.5" fill="#7d8aa0" font-size="10" text-anchor="end">9.16</text><line x1="46" y1="91.0" x2="746" y2="91.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="95.0" fill="#7d8aa0" font-size="10" text-anchor="end">11.21</text><line x1="46" y1="53.5" x2="746" y2="53.5" stroke="rgba(255,255,255,.06)"/><text x="40" y="57.5" fill="#7d8aa0" font-size="10" text-anchor="end">13.26</text><line x1="46" y1="16.0" x2="746" y2="16.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="20.0" fill="#7d8aa0" font-size="10" text-anchor="end">15.32</text>
+    <line x1="46" y1="151.06025929758354" x2="46" y2="151.06025929758354" stroke="#e05555" stroke-width="1"/><rect x="43.0" y="151.1" width="6" height="1.0" fill="#e05555"/><line x1="146" y1="136.63454866394787" x2="146" y2="143.0256862864447" stroke="#e05555" stroke-width="1"/><rect x="143.0" y="136.6" width="6" height="1.0" fill="#e05555"/><line x1="246" y1="120.74800657374152" x2="246" y2="132.2520542942358" stroke="#e05555" stroke-width="1"/><rect x="243.0" y="120.7" width="6" height="1.0" fill="#e05555"/><line x1="346" y1="103.21802909489317" x2="346" y2="111.25260210603201" stroke="#e05555" stroke-width="1"/><rect x="343.0" y="103.2" width="6" height="5.3" fill="#e05555"/><line x1="446" y1="84.04461622740273" x2="446" y2="84.04461622740273" stroke="#e05555" stroke-width="1"/><rect x="443.0" y="84.0" width="6" height="1.0" fill="#e05555"/><line x1="546" y1="62.86256010712761" x2="546" y2="66.14943088441166" stroke="#e05555" stroke-width="1"/><rect x="543.0" y="62.9" width="6" height="1.0" fill="#e05555"/><line x1="646" y1="39.48925680199644" x2="646" y2="53.367155639418066" stroke="#e05555" stroke-width="1"/><rect x="643.0" y="39.5" width="6" height="11.9" fill="#e05555"/><line x1="746" y1="20.133240002434675" x2="746" y2="58.29746180534416" stroke="#e05555" stroke-width="1"/><rect x="743.0" y="30.9" width="6" height="16.4" fill="#e05555"/>
+    <path d="M46.0,164.0 L146.0,158.0 L246.0,148.0 L346.0,135.2 L446.0,119.1 L546.0,101.6 L646.0,82.0 L746.0,64.1" fill="none" stroke="#f5c542" stroke-width="1.4" opacity=".9"/>
+    <path d="M46.0,151.1 L146.0,136.6 L246.0,120.7 L346.0,103.2 L446.0,84.0 L546.0,62.9 L646.0,39.5 L746.0,30.9" fill="none" stroke="#9ecbff" stroke-width="1.8"/>
+    
+    <line x1="46" y1="16" x2="46" y2="166" stroke="#f5a623" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="46" y="12" fill="#f5a623" font-size="10" text-anchor="middle">首板</text>
+    <line x1="346" y1="16" x2="346" y2="166" stroke="#e0509a" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="346" y="12" fill="#e0509a" font-size="10" text-anchor="middle">爆发</text>
+    <line x1="746" y1="16" x2="746" y2="166" stroke="#4da3ff" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="746" y="12" fill="#4da3ff" font-size="10" text-anchor="middle">分歧</text>
+    <line x1="746" y1="16" x2="746" y2="166" stroke="#ff5252" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="746" y="12" fill="#ff5252" font-size="10" text-anchor="middle">A买</text><text x="46.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">08/04</text><text x="146.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">08/05</text><text x="246.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">08/06</text><text x="346.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">08/07</text><text x="446.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">08/10</text><text x="546.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">08/11</text><text x="646.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">08/12</text><text x="746.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">08/13</text>
+  </svg>
+      <table class="kv">
+        <tr><td>题材爆发</td><td>2026-08-07 · 20 家涨停</td><td>个股</td><td>百花医药（sh600721）4连板 · 题材参考：医药</td></tr>
+        <tr><td>本轮首板</td><td>2026-08-04（日K复算 4 连板）</td><td>首次分歧</td><td>2026-08-13 · 量能 2.37× 过去5日均量 · 当日 3.35%</td></tr>
+        <tr><td>A 尾盘买入</td><td>2026-08-13 14:55 @ 14.35</td>
+            <td>B 回踩买入</td><td>2026-08-14 1115 @ 13.32（盘中回踩5日线，等 1 天）</td></tr>
+        <tr><td>A：最大亏损 / 二板等待 / 5日 / 10日</td>
+            <td colspan="3"><span class="down">-14.36%</span>（08-21） ·
+              10 天(08-27) ·
+              <span class="down">-4.81%</span> · <span class="up">16.24%</span></td></tr>
+        <tr><td>B：最大亏损 / 二板等待 / 5日 / 10日</td>
+            <td colspan="3"><span class="down">-7.73%</span>（08-21） ·
+              9 天(08-27) ·
+              <span class="down">-0.53%</span> · <span class="up">15.92%</span></td></tr>
+      </table>
+    </div>
+  </details><details class="case" >
+    <summary>#4 2026-09-08 农业（20 家涨停） · 亚盛集团 4连板 · 分歧 2026-09-09</summary>
+    <div class="case-body">
+      <svg viewBox="0 0 760 200" style="width:100%;max-width:760px">
+    <line x1="46" y1="166.0" x2="746" y2="166.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="170.0" fill="#7d8aa0" font-size="10" text-anchor="end">3.53</text><line x1="46" y1="128.5" x2="746" y2="128.5" stroke="rgba(255,255,255,.06)"/><text x="40" y="132.5" fill="#7d8aa0" font-size="10" text-anchor="end">4.12</text><line x1="46" y1="91.0" x2="746" y2="91.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="95.0" fill="#7d8aa0" font-size="10" text-anchor="end">4.71</text><line x1="46" y1="53.5" x2="746" y2="53.5" stroke="rgba(255,255,255,.06)"/><text x="40" y="57.5" fill="#7d8aa0" font-size="10" text-anchor="end">5.30</text><line x1="46" y1="16.0" x2="746" y2="16.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="20.0" fill="#7d8aa0" font-size="10" text-anchor="end">5.90</text>
+    <line x1="46" y1="138.56047409157054" x2="46" y2="162.60248434105912" stroke="#e05555" stroke-width="1"/><rect x="43.0" y="138.6" width="6" height="20.2" fill="#e05555"/><line x1="221" y1="113.25309488158251" x2="221" y2="147.4180568150663" stroke="#e05555" stroke-width="1"/><rect x="218.0" y="113.3" width="6" height="22.8" fill="#e05555"/><line x1="396" y1="85.41497775059577" x2="396" y2="85.41497775059577" stroke="#e05555" stroke-width="1"/><rect x="393.0" y="85.4" width="6" height="1.0" fill="#e05555"/><line x1="571" y1="55.04612269861014" x2="571" y2="55.04612269861014" stroke="#e05555" stroke-width="1"/><rect x="568.0" y="55.0" width="6" height="1.0" fill="#e05555"/><line x1="746" y1="21.513845245376086" x2="746" y2="37.96364173186828" stroke="#e05555" stroke-width="1"/><rect x="743.0" y="23.4" width="6" height="4.4" fill="#e05555"/>
+    <path d="M46.0,148.7 L221.0,141.7 L396.0,127.8 L571.0,110.7 L746.0,84.1" fill="none" stroke="#f5c542" stroke-width="1.4" opacity=".9"/>
+    <path d="M46.0,138.6 L221.0,113.3 L396.0,85.4 L571.0,55.0 L746.0,27.8" fill="none" stroke="#9ecbff" stroke-width="1.8"/>
+    
+    <line x1="46" y1="16" x2="46" y2="166" stroke="#f5a623" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="46" y="12" fill="#f5a623" font-size="10" text-anchor="middle">首板</text>
+    <line x1="571" y1="16" x2="571" y2="166" stroke="#e0509a" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="571" y="12" fill="#e0509a" font-size="10" text-anchor="middle">爆发</text>
+    <line x1="746" y1="16" x2="746" y2="166" stroke="#4da3ff" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="746" y="12" fill="#4da3ff" font-size="10" text-anchor="middle">分歧</text>
+    <line x1="746" y1="16" x2="746" y2="166" stroke="#ff5252" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="746" y="12" fill="#ff5252" font-size="10" text-anchor="middle">A买</text><text x="46.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/03</text><text x="221.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/04</text><text x="396.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/07</text><text x="571.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/08</text><text x="746.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/09</text>
+  </svg>
+      <table class="kv">
+        <tr><td>题材爆发</td><td>2026-09-08 · 20 家涨停</td><td>个股</td><td>亚盛集团（sh600108）4连板 · 题材参考：农业</td></tr>
+        <tr><td>本轮首板</td><td>2026-09-03（日K复算 4 连板）</td><td>首次分歧</td><td>2026-09-09 · 量能 5.85× 过去5日均量 · 当日 8.14%</td></tr>
+        <tr><td>A 尾盘买入</td><td>2026-09-09 14:55 @ 5.78</td>
+            <td>B 回踩买入</td><td>2026-09-11 0930 @ 5.01（开盘低于5日线，等 2 天）</td></tr>
+        <tr><td>A：最大亏损 / 二板等待 / 5日 / 10日</td>
+            <td colspan="3"><span class="down">-33.39%</span>（09-16） ·
+              <span class="warn">未涨停</span> ·
+              <span class="down">-31.49%</span> · <span class="down">-26.12%</span></td></tr>
+        <tr><td>B：最大亏损 / 二板等待 / 5日 / 10日</td>
+            <td colspan="3"><span class="down">-23.15%</span>（09-16） ·
+              <span class="warn">未涨停</span> ·
+              <span class="down">-16.97%</span> · <span class="down">-21.96%</span></td></tr>
+      </table>
+    </div>
+  </details><details class="case" >
+    <summary>#5 2026-09-21 医药（27 家涨停） · 华瓷股份 5连板 · 分歧 2026-09-23</summary>
+    <div class="case-body">
+      <svg viewBox="0 0 760 200" style="width:100%;max-width:760px">
+    <line x1="46" y1="166.0" x2="746" y2="166.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="170.0" fill="#7d8aa0" font-size="10" text-anchor="end">14.84</text><line x1="46" y1="128.5" x2="746" y2="128.5" stroke="rgba(255,255,255,.06)"/><text x="40" y="132.5" fill="#7d8aa0" font-size="10" text-anchor="end">18.52</text><line x1="46" y1="91.0" x2="746" y2="91.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="95.0" fill="#7d8aa0" font-size="10" text-anchor="end">22.20</text><line x1="46" y1="53.5" x2="746" y2="53.5" stroke="rgba(255,255,255,.06)"/><text x="40" y="57.5" fill="#7d8aa0" font-size="10" text-anchor="end">25.88</text><line x1="46" y1="16.0" x2="746" y2="16.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="20.0" fill="#7d8aa0" font-size="10" text-anchor="end">29.56</text>
+    <line x1="46" y1="149.82995136904134" x2="46" y2="162.06415480345413" stroke="#e05555" stroke-width="1"/><rect x="43.0" y="149.8" width="6" height="12.2" fill="#e05555"/><line x1="162.66666666666666" y1="133.10987334201053" x2="162.66666666666666" y2="133.10987334201053" stroke="#e05555" stroke-width="1"/><rect x="159.7" y="133.1" width="6" height="1.0" fill="#e05555"/><line x1="279.3333333333333" y1="114.65661649510463" x2="279.3333333333333" y2="122.6088487274729" stroke="#e05555" stroke-width="1"/><rect x="276.3" y="114.7" width="6" height="4.0" fill="#e05555"/><line x1="396" y1="94.36822913303676" x2="396" y2="103.64583340413311" stroke="#e05555" stroke-width="1"/><rect x="393.0" y="94.4" width="6" height="9.1" fill="#e05555"/><line x1="512.6666666666666" y1="72.04080786523345" x2="512.6666666666666" y2="72.04080786523345" stroke="#e05555" stroke-width="1"/><rect x="509.7" y="72.0" width="6" height="1.0" fill="#e05555"/><line x1="629.3333333333334" y1="47.470449301121135" x2="629.3333333333334" y2="47.470449301121135" stroke="#e05555" stroke-width="1"/><rect x="626.3" y="47.5" width="6" height="1.0" fill="#e05555"/><line x1="746" y1="20.453250050126236" x2="746" y2="35.338197561995116" stroke="#e05555" stroke-width="1"/><rect x="743.0" y="28.7" width="6" height="6.6" fill="#e05555"/>
+    <path d="M46.0,163.7 L162.7,157.1 L279.3,146.3 L396.0,131.4 L512.7,112.8 L629.3,92.3 L746.0,71.4" fill="none" stroke="#f5c542" stroke-width="1.4" opacity=".9"/>
+    <path d="M46.0,149.8 L162.7,133.1 L279.3,114.7 L396.0,94.4 L512.7,72.0 L629.3,47.5 L746.0,28.7" fill="none" stroke="#9ecbff" stroke-width="1.8"/>
+    
+    <line x1="46" y1="16" x2="46" y2="166" stroke="#f5a623" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="46" y="12" fill="#f5a623" font-size="10" text-anchor="middle">首板</text>
+    <line x1="512.6666666666666" y1="16" x2="512.6666666666666" y2="166" stroke="#e0509a" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="512.6666666666666" y="12" fill="#e0509a" font-size="10" text-anchor="middle">爆发</text>
+    <line x1="746" y1="16" x2="746" y2="166" stroke="#4da3ff" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="746" y="12" fill="#4da3ff" font-size="10" text-anchor="middle">分歧</text>
+    <line x1="746" y1="16" x2="746" y2="166" stroke="#ff5252" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="746" y="12" fill="#ff5252" font-size="10" text-anchor="middle">A买</text><text x="46.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/15</text><text x="162.7" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/16</text><text x="279.3" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/17</text><text x="396.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/18</text><text x="512.7" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/21</text><text x="629.3" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/22</text><text x="746.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/23</text>
+  </svg>
+      <table class="kv">
+        <tr><td>题材爆发</td><td>2026-09-21 · 27 家涨停</td><td>个股</td><td>华瓷股份（sz001216）5连板 · 题材参考：医药</td></tr>
+        <tr><td>本轮首板</td><td>2026-09-15（日K复算 5 连板）</td><td>首次分歧</td><td>2026-09-23 · 量能 4.82× 过去5日均量 · 当日 6.95%</td></tr>
+        <tr><td>A 尾盘买入</td><td>2026-09-23 14:55 @ 28.53</td>
+            <td>B 回踩买入</td><td>2026-09-28 0936 @ 26.93（盘中回踩5日线，等 2 天）</td></tr>
+        <tr><td>A：最大亏损 / 二板等待 / 5日 / 10日</td>
+            <td colspan="3"><span class="down">-29.02%</span>（10-14） ·
+              9 天(10-14) ·
+              <span class="down">-17.42%</span> · <span class="muted">数据不足</span></td></tr>
+        <tr><td>B：最大亏损 / 二板等待 / 5日 / 10日</td>
+            <td colspan="3"><span class="down">-24.81%</span>（10-14） ·
+              7 天(10-14) ·
+              <span class="down">-11.33%</span> · <span class="muted">数据不足</span></td></tr>
+      </table>
+    </div>
+  </details><details class="case" >
+    <summary>#6 2026-09-21 大消费（19 家涨停） · 内蒙新华 4连板 · 分歧 2026-09-23</summary>
+    <div class="case-body">
+      <svg viewBox="0 0 760 200" style="width:100%;max-width:760px">
+    <line x1="46" y1="166.0" x2="746" y2="166.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="170.0" fill="#7d8aa0" font-size="10" text-anchor="end">9.86</text><line x1="46" y1="128.5" x2="746" y2="128.5" stroke="rgba(255,255,255,.06)"/><text x="40" y="132.5" fill="#7d8aa0" font-size="10" text-anchor="end">11.82</text><line x1="46" y1="91.0" x2="746" y2="91.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="95.0" fill="#7d8aa0" font-size="10" text-anchor="end">13.77</text><line x1="46" y1="53.5" x2="746" y2="53.5" stroke="rgba(255,255,255,.06)"/><text x="40" y="57.5" fill="#7d8aa0" font-size="10" text-anchor="end">15.73</text><line x1="46" y1="16.0" x2="746" y2="16.0" stroke="rgba(255,255,255,.06)"/><text x="40" y="20.0" fill="#7d8aa0" font-size="10" text-anchor="end">17.68</text>
+    <line x1="46" y1="141.4492453445333" x2="46" y2="163.12041884816753" stroke="#e05555" stroke-width="1"/><rect x="43.0" y="141.4" width="6" height="20.1" fill="#e05555"/><line x1="186" y1="120.16163243388374" x2="186" y2="120.16163243388374" stroke="#e05555" stroke-width="1"/><rect x="183.0" y="120.2" width="6" height="1.0" fill="#e05555"/><line x1="326" y1="96.57265596532612" x2="326" y2="118.43560976545271" stroke="#e05555" stroke-width="1"/><rect x="323.0" y="96.6" width="6" height="1.0" fill="#e05555"/><line x1="466" y1="70.68231593886044" x2="466" y2="73.94258097923019" stroke="#e05555" stroke-width="1"/><rect x="463.0" y="70.7" width="6" height="1.0" fill="#e05555"/><line x1="606" y1="42.29883205799439" x2="606" y2="67.80561149147536" stroke="#e05555" stroke-width="1"/><rect x="603.0" y="42.3" width="6" height="20.1" fill="#e05555"/><line x1="746" y1="21.011219147344775" x2="746" y2="70.68231593886044" stroke="#e05555" stroke-width="1"/><rect x="743.0" y="33.1" width="6" height="24.5" fill="#e05555"/>
+    <path d="M46.0,157.6 L186.0,148.0 L326.0,134.9 L466.0,117.9 L606.0,94.3 L746.0,72.6" fill="none" stroke="#f5c542" stroke-width="1.4" opacity=".9"/>
+    <path d="M46.0,141.4 L186.0,120.2 L326.0,96.6 L466.0,70.7 L606.0,42.3 L746.0,33.1" fill="none" stroke="#9ecbff" stroke-width="1.8"/>
+    
+    <line x1="46" y1="16" x2="46" y2="166" stroke="#f5a623" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="46" y="12" fill="#f5a623" font-size="10" text-anchor="middle">首板</text>
+    <line x1="466" y1="16" x2="466" y2="166" stroke="#e0509a" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="466" y="12" fill="#e0509a" font-size="10" text-anchor="middle">爆发</text>
+    <line x1="746" y1="16" x2="746" y2="166" stroke="#4da3ff" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="746" y="12" fill="#4da3ff" font-size="10" text-anchor="middle">分歧</text>
+    <line x1="746" y1="16" x2="746" y2="166" stroke="#ff5252" stroke-dasharray="3,3" opacity=".55"/>
+    <text x="746" y="12" fill="#ff5252" font-size="10" text-anchor="middle">A买</text><text x="46.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/16</text><text x="186.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/17</text><text x="326.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/18</text><text x="466.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/21</text><text x="606.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/22</text><text x="746.0" y="188" fill="#7d8aa0" font-size="9" text-anchor="middle">09/23</text>
+  </svg>
+      <table class="kv">
+        <tr><td>题材爆发</td><td>2026-09-21 · 19 家涨停</td><td>个股</td><td>内蒙新华（sh603230）4连板 · 题材参考：大消费</td></tr>
+        <tr><td>本轮首板</td><td>2026-09-16（日K复算 4 连板）</td><td>首次分歧</td><td>2026-09-23 · 量能 2.31× 过去5日均量 · 当日 2.94%</td></tr>
+        <tr><td>A 尾盘买入</td><td>2026-09-23 14:55 @ 16.88</td>
+            <td>B 回踩买入</td><td>2026-09-29 0930 @ 14.96（开盘低于5日线，等 3 天）</td></tr>
+        <tr><td>A：最大亏损 / 二板等待 / 5日 / 10日</td>
+            <td colspan="3"><span class="down">-29.09%</span>（10-09） ·
+              1 天(09-24) ·
+              <span class="down">-22.87%</span> · <span class="muted">数据不足</span></td></tr>
+        <tr><td>B：最大亏损 / 二板等待 / 5日 / 10日</td>
+            <td colspan="3"><span class="down">-19.99%</span>（10-09） ·
+              4 天(10-12) ·
+              <span class="down">-11.97%</span> · <span class="muted">数据不足</span></td></tr>
+      </table>
+    </div>
+  </details>
+  
+  <h2>全部「单日题材涨停数 &gt; 15」爆发日（含被过滤）</h2>
+  <div style="overflow-x:auto"><table>
+    <tr><th>#</th><th>日期</th><th>题材</th><th>涨停数</th><th>龙头（连板最高）</th><th>连板数</th><th>结果</th></tr>
+    <tr class="">
+    <td>1</td><td>2026-06-29</td><td>医药</td><td>24</td>
+    <td>凯莱英<span class="muted"> sz002821</span></td>
+    <td>1</td>
+    <td><span class="muted">龙头 凯莱英 仅 1 连板（反4天2板）</span></td>
+  </tr><tr class="">
+    <td>2</td><td>2026-06-30</td><td>机器人概念</td><td>27</td>
+    <td>成都路桥<span class="muted"> sz002628</span></td>
+    <td>2</td>
+    <td><span class="muted">龙头 成都路桥 仅 2 连板（2连板）</span></td>
+  </tr><tr class="">
+    <td>3</td><td>2026-07-01</td><td>机器人概念</td><td>21</td>
+    <td>埃斯顿<span class="muted"> sz002747</span></td>
+    <td>2</td>
+    <td><span class="muted">龙头 埃斯顿 仅 2 连板（2连板）</span></td>
+  </tr><tr class="">
+    <td>4</td><td>2026-07-02</td><td>机器人概念</td><td>16</td>
+    <td>福莱新材<span class="muted"> sh605488</span></td>
+    <td>2</td>
+    <td><span class="muted">龙头 福莱新材 仅 2 连板（2连板）</span></td>
+  </tr><tr class="">
+    <td>5</td><td>2026-07-03</td><td>机器人概念</td><td>43</td>
+    <td>富春染织<span class="muted"> sh605189</span></td>
+    <td>3</td>
+    <td><span class="muted">龙头 富春染织 仅 3 连板（3连板）</span></td>
+  </tr><tr class="">
+    <td>6</td><td>2026-07-10</td><td>商业航天</td><td>24</td>
+    <td>贵绳股份<span class="muted"> sh600992</span></td>
+    <td>2</td>
+    <td><span class="muted">龙头 贵绳股份 仅 2 连板（2连板）</span></td>
+  </tr><tr class="">
+    <td>7</td><td>2026-07-14</td><td>中报增长</td><td>25</td>
+    <td>宏桥控股<span class="muted"> sz002379</span></td>
+    <td>2</td>
+    <td><span class="muted">龙头 宏桥控股 仅 2 连板（2连板）</span></td>
+  </tr><tr class="">
+    <td>8</td><td>2026-07-15</td><td>中报增长</td><td>20</td>
+    <td>九安医疗<span class="muted"> sz002432</span></td>
+    <td>2</td>
+    <td><span class="muted">龙头 九安医疗 仅 2 连板（2连板）</span></td>
+  </tr><tr class="hit">
+    <td>9</td><td>2026-07-15</td><td>医药</td><td>17</td>
+    <td>哈药股份<span class="muted"> sh600664</span></td>
+    <td>4</td>
+    <td><span class="up">入选</span></td>
+  </tr><tr class="">
+    <td>10</td><td>2026-07-20</td><td>电力</td><td>17</td>
+    <td>立新能源<span class="muted"> sz001258</span></td>
+    <td>3</td>
+    <td><span class="muted">龙头 立新能源 仅 3 连板（3连板）</span></td>
+  </tr><tr class="">
+    <td>11</td><td>2026-07-23</td><td>智能电网</td><td>27</td>
+    <td>长缆科技<span class="muted"> sz002879</span></td>
+    <td>3</td>
+    <td><span class="muted">龙头 长缆科技 仅 3 连板（3连板）</span></td>
+  </tr><tr class="hit">
+    <td>12</td><td>2026-07-31</td><td>AI应用</td><td>26</td>
+    <td>传智教育<span class="muted"> sz003032</span></td>
+    <td>5</td>
+    <td><span class="up">入选</span></td>
+  </tr><tr class="hit">
+    <td>13</td><td>2026-08-07</td><td>医药</td><td>20</td>
+    <td>百花医药<span class="muted"> sh600721</span></td>
+    <td>4</td>
+    <td><span class="up">入选</span></td>
+  </tr><tr class="">
+    <td>14</td><td>2026-08-18</td><td>农业</td><td>23</td>
+    <td>红四方<span class="muted"> sh603395</span></td>
+    <td>2</td>
+    <td><span class="muted">龙头 红四方 仅 2 连板（2连板）</span></td>
+  </tr><tr class="">
+    <td>15</td><td>2026-08-20</td><td>医药</td><td>18</td>
+    <td>汉森制药<span class="muted"> sz002412</span></td>
+    <td>2</td>
+    <td><span class="muted">龙头 汉森制药 仅 2 连板（2连板）</span></td>
+  </tr><tr class="">
+    <td>16</td><td>2026-08-20</td><td>疫苗概念</td><td>18</td>
+    <td>键凯科技<span class="muted"> sh688356</span></td>
+    <td>1</td>
+    <td><span class="muted">龙头 键凯科技 仅 1 连板（首板）</span></td>
+  </tr><tr class="">
+    <td>17</td><td>2026-08-31</td><td>AI应用</td><td>16</td>
+    <td>竞业达<span class="muted"> sz003005</span></td>
+    <td>2</td>
+    <td><span class="muted">龙头 竞业达 仅 2 连板（2连板）</span></td>
+  </tr><tr class="hit">
+    <td>18</td><td>2026-09-08</td><td>农业</td><td>20</td>
+    <td>亚盛集团<span class="muted"> sh600108</span></td>
+    <td>4</td>
+    <td><span class="up">入选</span></td>
+  </tr><tr class="hit">
+    <td>19</td><td>2026-09-21</td><td>医药</td><td>27</td>
+    <td>华瓷股份<span class="muted"> sz001216</span></td>
+    <td>5</td>
+    <td><span class="up">入选</span></td>
+  </tr><tr class="hit">
+    <td>20</td><td>2026-09-21</td><td>大消费</td><td>19</td>
+    <td>内蒙新华<span class="muted"> sh603230</span></td>
+    <td>4</td>
+    <td><span class="up">入选</span></td>
+  </tr><tr class="">
+    <td>21</td><td>2026-09-22</td><td>AI大模型/智能体</td><td>16</td>
+    <td>博通集成<span class="muted"> sh603068</span></td>
+    <td>3</td>
+    <td><span class="muted">龙头 博通集成 仅 3 连板（3连板）</span></td>
+  </tr><tr class="">
+    <td>22</td><td>2026-10-09</td><td>AI应用</td><td>20</td>
+    <td>新华文轩<span class="muted"> sh601811</span></td>
+    <td>1</td>
+    <td><span class="muted">龙头 新华文轩 仅 1 连板（首板）</span></td>
+  </tr>
+  </table></div>
+  
+
+  <h2>回测口径说明</h2>
+  <div class="note">
+    <b>入选条件</b>：单日题材涨停数 &gt; 15（排除含「算力/通信/芯片/其他」的题材）；题材龙头取当日连板数最高者，连板数 ≥ 4 才入选（反包板按 lianbanCount 连板口径计）。<br>
+    <b>首次分歧</b>：个股本轮第一个涨停板（按日K连续涨停向前复算）起，首个「成交量 &gt; 过去 5 日均量 且 当日未涨停」的交易日。<br>
+    <b>策略 A</b>：分歧日 14:55 分时价买入（无分时数据按收盘价）；<b>策略 B</b>：分歧日起 10 个交易日内首个「最低价触及 5 日线」的交易日，按分时触发价买入（开盘低于 5 日线按开盘价；无分时数据按 min(开盘, MA5) 近似）。<br>
+    <b>盘中最大亏损</b>：买入时点起至买入后第 10 个交易日内的最低价对买入价的最大跌幅（尾盘买入当日按 14:55 后分时最低、无分时按收盘价）。<br>
+    <b>二次涨停等待</b>：买入后首个涨停交易日的间隔交易日数（策略B买入日当日涨停记 0 天），扫描至数据末尾仍未涨停则标注「未涨停」。<br>
+    <b>持仓收益</b>：买入后第 5 / 第 10 个交易日收盘价对买入价的收益率（=「持仓 N 个交易日」口径）；数据未覆盖则标注「数据不足」。<br>
+    <b>数据源</b>：lianbanSnapshot（题材/涨停/连板）、kline_cache 日K（OHLC/量能/MA5，覆盖不足自动重拉）、自选股全量过去分时数据（分时成交与盘中低点）。
+  </div>
+</body>
+</html>

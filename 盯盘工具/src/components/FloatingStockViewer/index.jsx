@@ -504,7 +504,12 @@ const FloatingStockViewer = () => {
                 title={<span><LineChartOutlined style={{ color: getThemeColor(), marginRight: 8 }} />看股</span>}
                 placement="right"
                 open={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
+                onClose={() => {
+                    // 清空输入框内容
+                    setStockName('');
+                    setStockCode('');
+                    setDrawerOpen(false);
+                }}
                 width={750}
                 className="stock-viewer-drawer"
                 destroyOnClose={false}
