@@ -10,8 +10,13 @@ const EMO_SWITCH_EMA_THRESHOLD = -60;
 // 均需严格处于该开区间且逐日回升
 const EMO_QUICK_RANGE_LOW = -30;
 const EMO_QUICK_RANGE_HIGH = 20;
+// 快进快出系列「盘中大跌强卖」阈值（2026-10-15 用户新增）：持仓个股盘中当日跌幅（较昨收涨跌幅）
+// ≤ 该阈值时无条件卖出（无持续分钟、无竞价自救窗口、不受强卖豁免保护），与成本线止损 / 10:00 强卖先到先卖。
+// 适用于 emoquick 系列策略的全部持仓（含非快进快出的普通持仓与强卖豁免后的持仓），仅回测生效（实盘诊断暂不加）
+const EMO_QUICK_CRASH_PCT = -7;
 
 module.exports = {
+  EMO_QUICK_CRASH_PCT,
   EMO_QUICK_RANGE_HIGH,
   EMO_QUICK_RANGE_LOW,
   EMO_SWITCH_EMA_THRESHOLD,

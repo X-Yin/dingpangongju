@@ -1,6 +1,6 @@
 const { GLOBAL_RESILIENCE_MIN, RESILIENCE_GATE_MIN, RESILIENCE_GATE_STRATEGY_IDS } = require('../strategies/registry');
 const { CYC_CORR_WINDOW, CYC_MIN_CYB_CORR } = require('./cycleFilter');
-const { EMO_QUICK_RANGE_HIGH, EMO_QUICK_RANGE_LOW, EMO_SWITCH_EMA_THRESHOLD } = require('../constants');
+const { EMO_QUICK_CRASH_PCT, EMO_QUICK_RANGE_HIGH, EMO_QUICK_RANGE_LOW, EMO_SWITCH_EMA_THRESHOLD } = require('../constants');
 const { runBuyPointDiagnosis } = require('../diagnose/buyPoint');
 const { buildEmo3GateCheck } = require('./emo3Gate');
 
@@ -120,7 +120,8 @@ const buildEmoSwitchBranchCheck = (info) => ({
 //（触发条件二选一：上一交易日科技情绪 3 日 EMA < -60；或上上个、上个交易日的当日科技情绪原始分
 // 均处 -30~20 区间且回升）——是则该笔持仓不走通用 7 条件卖点、买入次日 10:00 强制卖出；
 // 2026-10-05 叠加：持仓次日盘中跌破成本线 -2% 时先到先卖止损；
-// 2026-10-09 叠加：次日命中强卖豁免（10:00 前买点再触发 / 10:00 时点科技情绪>0+低于开盘价<30只+资金净流入>0）则不强卖、转由通用卖点接管
+// 2026-10-09 叠加：次日命中强卖豁免（10:00 前买点再触发 / 10:00 时点科技情绪>0+低于开盘价<30只+资金净流入>0）则不强卖、转由通用卖点接管；
+// 2026-10-15 叠加：快进快出系列全部持仓（含普通持仓与豁免持仓）盘中当日跌幅（较昨收）≤ -7% 时无条件强卖
 const buildEmoQuickOutCheck = (info) => ({
   id: 'emo_quick_out',
   title: '情绪快进快出（次日10:00强卖）',
@@ -128,9 +129,9 @@ const buildEmoQuickOutCheck = (info) => ({
   value: info.quickOut ? '快进快出' : '普通持仓',
   reason: info.quickOut
     ? (info.trigger === 'range_rising'
-      ? `上上个交易日科技情绪 = ${info.prev2Raw != null ? info.prev2Raw : '缺失'}、上一交易日 = ${info.prevRaw != null ? info.prevRaw : '缺失'}（当日原始分，均在 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且较前日回升），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）`
-      : `上一交易日科技情绪 3 日 EMA = ${info.ema}（< ${EMO_SWITCH_EMA_THRESHOLD}），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）`)
-    : `上一交易日科技情绪 3 日 EMA = ${info.ema != null ? info.ema : '缺失'}（不满足 < ${EMO_SWITCH_EMA_THRESHOLD}），上两交易日当日科技情绪 = ${info.prev2Raw != null ? info.prev2Raw : '缺失'} / ${info.prevRaw != null ? info.prevRaw : '缺失'}（不满足均处 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且回升），普通持仓，走通用 7 条件卖点`,
+      ? `上上个交易日科技情绪 = ${info.prev2Raw != null ? info.prev2Raw : '缺失'}、上一交易日 = ${info.prevRaw != null ? info.prevRaw : '缺失'}（当日原始分，均在 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且较前日回升），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损、盘中当日跌幅较昨收 ≤ -7% 时无条件强卖；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）`
+      : `上一交易日科技情绪 3 日 EMA = ${info.ema}（< ${EMO_SWITCH_EMA_THRESHOLD}），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损、盘中当日跌幅较昨收 ≤ -7% 时无条件强卖；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）`)
+    : `上一交易日科技情绪 3 日 EMA = ${info.ema != null ? info.ema : '缺失'}（不满足 < ${EMO_SWITCH_EMA_THRESHOLD}），上两交易日当日科技情绪 = ${info.prev2Raw != null ? info.prev2Raw : '缺失'} / ${info.prevRaw != null ? info.prevRaw : '缺失'}（不满足均处 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且回升），普通持仓，走通用 7 条件卖点（快进快出系列全部持仓叠加：盘中当日跌幅较昨收 ≤ -7% 时无条件强卖）`,
 });
 
 // 科技板块效应筛选明细项（tech_block_top3_* 系列）：标注本次买点触发时点 tag=进攻 板块按板块盘中涨幅
@@ -163,6 +164,14 @@ const buildQuickOutStopLossReason = (buyPrice, stopPt, desc, stopPct = 2) => {
   const threshold = parseFloat((Number(buyPrice) * (1 - pct / 100)).toFixed(2));
   const stopTime = `${String(Math.floor(Number(stopPt.minute) / 100)).padStart(2, '0')}:${String(Number(stopPt.minute) % 100).padStart(2, '0')}`;
   return `情绪快进快出：${desc}，触发成本线 -${pct}% 止损（买入价 ${Number(buyPrice).toFixed(2)}、阈值 ${threshold.toFixed(2)}，${stopTime} 价 ${Number(stopPt.lastPx).toFixed(2)} 成交），先于当日 10:00 强卖离场`;
+};
+
+// 快进快出持仓盘中大跌强卖的 sellReason（2026-10-15 用户新增：当日跌幅较昨收 ≤ EMO_QUICK_CRASH_PCT 时
+// 无条件卖出，无自救窗口、不受豁免保护，与成本线止损 / 10:00 强卖先到先卖；Inner/Multi 两处共用）
+const buildQuickOutCrashSellReason = (crashPt) => {
+  const crashTime = `${String(Math.floor(Number(crashPt.minute) / 100)).padStart(2, '0')}:${String(Number(crashPt.minute) % 100).padStart(2, '0')}`;
+  const changeTxt = crashPt.change != null ? `${Number(crashPt.change).toFixed(2)}%` : '缺失';
+  return `情绪快进快出：盘中大跌强卖（${crashTime} 当日跌幅较昨收 ${changeTxt} ≤ ${EMO_QUICK_CRASH_PCT}%，无条件卖出、不适用自救窗口与强卖豁免），先于成本线止损与当日 10:00 强卖离场`;
 };
 
 // 快进快出 10:00 强卖豁免判定（2026-10-09 用户新增）：次日 10:00 强卖前先做两种「次日强势」判断，
@@ -314,6 +323,7 @@ module.exports = {
   buildEmoSwitchBranchCheck,
   buildLimitUpDeferCheck,
   buildOneWordBoardDeferCheck,
+  buildQuickOutCrashSellReason,
   buildQuickOutExemptInfo,
   buildQuickOutExemptSuffix,
   buildQuickOutSellReason,

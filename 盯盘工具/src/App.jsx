@@ -543,6 +543,12 @@ function App() {
   const [showMainMoneyAlert, setShowMainMoneyAlert] = useState(false);
   const [alertCooldownEnd, setAlertCooldownEnd] = useState(0);
 
+  // 沪深300ETF易方达（sh510310）放量监控状态：连续 2 分钟成交额 ≥ 3亿 时全局弹窗
+  const [etfVolumeAlertVisible, setEtfVolumeAlertVisible] = useState(false);
+  const [etfVolumeAlertInfo, setEtfVolumeAlertInfo] = useState(null); // { timeA, amountA, timeB, amountB }
+  const etfVolumeCooldownEndRef = useRef(0); // 「不再提示（30分钟）」冷却截止时间戳
+  const etfVolumeAlertedMinuteRef = useRef(null); // 上次已提示的最近分钟号（同一放量对不重复弹窗）
+
   // 删除持仓股资金净流出警示弹窗
   const [outflowWarningVisible, setOutflowWarningVisible] = useState(false);
   const [outflowWarningMinimized, setOutflowWarningMinimized] = useState(false);
@@ -724,6 +730,61 @@ function App() {
     };
 
     schedulePoll(fetchMainMoney, 30000);
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, []);
+
+  // 沪深300ETF易方达（510310）放量监控：交易日开盘时间每 1min 经服务端同花顺接口拉一次分时数据，
+  // 最近相邻 2 分钟成交额（business_balance，单位元）均 ≥ 3亿 时全局弹窗提示「宽基 ETF 大幅度放量」
+  useEffect(() => {
+    const ETF_TLINE_CODE = 'sh510310';
+    const ETF_VOLUME_THRESHOLD = 3e8; // 单分钟成交额阈值：3 亿
+    const fmtMinute = (m) => `${String(Math.floor(m / 100)).padStart(2, '0')}:${String(m % 100).padStart(2, '0')}`;
+
+    const fetchEtfTline = async () => {
+      if (isAfterMarketClose()) return; // 非交易日 / 未开盘 / 已收盘不请求不判定
+      try {
+        const response = await axios.get(`http://${local_ip}:3000/get_stock_tline`, { params: { code: ETF_TLINE_CODE } });
+        const line = Array.isArray(response.data?.line) ? response.data.line : [];
+        const pts = line
+          .filter(p => p && p.minute != null && p.business_balance != null && Number.isFinite(Number(p.business_balance)))
+          .map(p => ({ minute: Number(p.minute), amount: Number(p.business_balance) }))
+          .sort((a, b) => a.minute - b.minute);
+        if (pts.length < 2) return;
+        const prev = pts[pts.length - 2];
+        const latest = pts[pts.length - 1];
+        // 仅判定相邻两分钟（午休跨段等非相邻场景跳过）；上次已提示过的分钟不再重复触发
+        if (latest.minute - prev.minute !== 1) return;
+        if (etfVolumeAlertedMinuteRef.current != null && prev.minute <= etfVolumeAlertedMinuteRef.current) return;
+        if (prev.amount >= ETF_VOLUME_THRESHOLD && latest.amount >= ETF_VOLUME_THRESHOLD) {
+          etfVolumeAlertedMinuteRef.current = latest.minute;
+          if (Date.now() < etfVolumeCooldownEndRef.current) return; // 冷却期内静默（仍推进已提示进度）
+          setEtfVolumeAlertInfo({
+            timeA: fmtMinute(prev.minute), amountA: prev.amount,
+            timeB: fmtMinute(latest.minute), amountB: latest.amount,
+          });
+          setEtfVolumeAlertVisible(true);
+        }
+      } catch (err) {
+        console.error('Fetch ETF tline data failed:', err);
+      }
+    };
+
+    fetchEtfTline();
+
+    const timers = [];
+    const schedulePoll = (callback, delay) => {
+      const timer = setTimeout(() => {
+        callback();
+        schedulePoll(callback, delay);
+      }, delay);
+      timers.push(timer);
+      return timer;
+    };
+
+    schedulePoll(fetchEtfTline, 60 * 1000);
 
     return () => {
       timers.forEach(clearTimeout);
@@ -1411,6 +1472,48 @@ function App() {
               不再提示（30分钟）
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      {/* 沪深300ETF易方达放量监控弹窗 */}
+      <Modal
+        title={<span><FireOutlined style={{ color: '#fa541c', marginRight: '8px' }} />宽基 ETF 大幅度放量</span>}
+        open={etfVolumeAlertVisible}
+        onCancel={() => setEtfVolumeAlertVisible(false)}
+        footer={[
+          <Button key="ok" type="primary" onClick={() => setEtfVolumeAlertVisible(false)}>
+            我知道了
+          </Button>,
+          <Button
+            key="cooldown"
+            type="default"
+            onClick={() => {
+              etfVolumeCooldownEndRef.current = Date.now() + 30 * 60 * 1000;
+              setEtfVolumeAlertVisible(false);
+            }}
+          >
+            不再提示（30分钟）
+          </Button>,
+        ]}
+        width={500}
+        centered
+      >
+        <div style={{ padding: '8px 0' }}>
+          <p style={{
+            fontWeight: 'bold',
+            fontSize: '18px',
+            color: '#fa541c',
+            lineHeight: '2',
+            marginBottom: '12px'
+          }}>
+            沪深300ETF易方达（510310）连续 2 分钟成交额 ≥ 3 亿，大幅放量！
+          </p>
+          {etfVolumeAlertInfo && (
+            <p style={{ color: '#595959', fontSize: 14, lineHeight: 1.8, marginBottom: 8 }}>
+              {etfVolumeAlertInfo.timeA} 成交额 {(etfVolumeAlertInfo.amountA / 1e8).toFixed(2)} 亿；
+              {etfVolumeAlertInfo.timeB} 成交额 {(etfVolumeAlertInfo.amountB / 1e8).toFixed(2)} 亿
+            </p>
+          )}
         </div>
       </Modal>
 

@@ -2,849 +2,889 @@
   {
     "code": "sh688981",
     "name": "中芯国际",
-    "marketValue": 878072264767,
-    "circulatingMarketValue": 205160905367,
-    "ttmPe": 121.831,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 894255166575,
+    "circulatingMarketValue": 208942027855,
+    "ttmPe": 124.0763,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688347",
     "name": "华虹宏力",
-    "marketValue": 350407504069,
-    "circulatingMarketValue": 74088175000,
-    "ttmPe": 499.7676,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 336580196396,
+    "circulatingMarketValue": 71164607500,
+    "ttmPe": 480.0464,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688072",
     "name": "拓荆科技",
-    "marketValue": 183739004304,
-    "circulatingMarketValue": 178716866093,
-    "ttmPe": 84.4711,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 188451759150,
+    "circulatingMarketValue": 183300807210,
+    "ttmPe": 86.6377,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002371",
     "name": "北方华创",
-    "marketValue": 425841679451,
-    "circulatingMarketValue": 425487529641,
-    "ttmPe": 74.9189,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 442670412000,
+    "circulatingMarketValue": 442302266630,
+    "ttmPe": 77.8796,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688256",
     "name": "寒武纪  ",
-    "marketValue": 584205373432,
-    "circulatingMarketValue": 584205373432,
-    "ttmPe": 175.3287,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 564188950357,
+    "circulatingMarketValue": 564188950357,
+    "ttmPe": 169.3215,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002837",
     "name": "英维克",
-    "marketValue": 60437481791,
-    "circulatingMarketValue": 53637167422,
-    "ttmPe": 123.0801,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 57125313407,
+    "circulatingMarketValue": 50697678137,
+    "ttmPe": 116.3349,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz301018",
     "name": "申菱环境",
-    "marketValue": 28860834050,
-    "circulatingMarketValue": 21808473741,
-    "ttmPe": 239.6915,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 27756704100,
+    "circulatingMarketValue": 20974146189,
+    "ttmPe": 230.5216,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh601138",
     "name": "工业富联",
-    "marketValue": 968391703459,
-    "circulatingMarketValue": 968391703459,
-    "ttmPe": 20.6424,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 930687928119,
+    "circulatingMarketValue": 930687928119,
+    "ttmPe": 19.8387,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300757",
     "name": "罗博特科",
-    "marketValue": 87229277946,
-    "circulatingMarketValue": 79007463342,
-    "ttmPe": -3285.0583,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 82035007773,
+    "circulatingMarketValue": 74302780236,
+    "ttmPe": -3089.4418,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300394",
     "name": "天孚通信",
-    "marketValue": 249798946297,
-    "circulatingMarketValue": 249240863221,
-    "ttmPe": 107.5649,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 243613968019,
+    "circulatingMarketValue": 243069702983,
+    "ttmPe": 104.9016,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300502",
     "name": "新易盛",
-    "marketValue": 461379090900,
-    "circulatingMarketValue": 415062615838,
-    "ttmPe": 35.1693,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 426803553828,
+    "circulatingMarketValue": 383958014125,
+    "ttmPe": 32.5337,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300308",
     "name": "中际旭创",
-    "marketValue": 816173590248,
-    "circulatingMarketValue": 769075349378,
-    "ttmPe": 39.9043,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 773815959558,
+    "circulatingMarketValue": 729162014750,
+    "ttmPe": 37.8333,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688048",
     "name": "长光华芯",
-    "marketValue": 35157271831,
-    "circulatingMarketValue": 35157271831,
-    "ttmPe": 815.1956,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 32788069398,
+    "circulatingMarketValue": 32788069398,
+    "ttmPe": 760.2606,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz301511",
     "name": "德福科技",
-    "marketValue": 50829166080,
-    "circulatingMarketValue": 32146926900,
-    "ttmPe": 150.7056,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 49272270740,
+    "circulatingMarketValue": 31162267805,
+    "ttmPe": 146.0895,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz301217",
     "name": "铜冠铜箔",
-    "marketValue": 76111917094,
-    "circulatingMarketValue": 76111917094,
-    "ttmPe": 313.766,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 73989637302,
+    "circulatingMarketValue": 73989637302,
+    "ttmPe": 305.0171,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688008",
     "name": "澜起科技",
-    "marketValue": 212129508049,
-    "circulatingMarketValue": 198960073749,
-    "ttmPe": 69.0105,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 198947697423,
+    "circulatingMarketValue": 186596616923,
+    "ttmPe": 64.7221,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688041",
     "name": "海光信息",
-    "marketValue": 468261151812,
-    "circulatingMarketValue": 468261151812,
-    "ttmPe": 149.0372,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 450503208797,
+    "circulatingMarketValue": 450503208797,
+    "ttmPe": 143.3853,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002475",
     "name": "立讯精密",
-    "marketValue": 347964052586,
-    "circulatingMarketValue": 329413123751,
-    "ttmPe": 19.5505,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 345734812425,
+    "circulatingMarketValue": 327303593634,
+    "ttmPe": 19.4253,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh600183",
     "name": "生益科技",
-    "marketValue": 290581709042,
-    "circulatingMarketValue": 288517515762,
-    "ttmPe": 55.9409,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 278388110618,
+    "circulatingMarketValue": 276410536500,
+    "ttmPe": 53.5935,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh603986",
     "name": "兆易创新",
-    "marketValue": 205953880683,
-    "circulatingMarketValue": 196225353747,
-    "ttmPe": 25.9737,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 195858930419,
+    "circulatingMarketValue": 186607252937,
+    "ttmPe": 24.7006,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688313",
     "name": "仕佳光子",
-    "marketValue": 55368325180,
-    "circulatingMarketValue": 55368325180,
-    "ttmPe": 117.7133,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 52240579790,
+    "circulatingMarketValue": 52240579790,
+    "ttmPe": 111.0637,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688498",
     "name": "源杰科技",
-    "marketValue": 139302226821,
-    "circulatingMarketValue": 137502791000,
-    "ttmPe": 185.3081,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 132779652070,
+    "circulatingMarketValue": 131064471576,
+    "ttmPe": 176.6314,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002384",
     "name": "东山精密",
-    "marketValue": 240691545780,
-    "circulatingMarketValue": 182176537619,
-    "ttmPe": 67.1393,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 227485655474,
+    "circulatingMarketValue": 172181157996,
+    "ttmPe": 63.4556,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002916",
     "name": "深南电路",
-    "marketValue": 229553142515,
-    "circulatingMarketValue": 224112146759,
-    "ttmPe": 55.086,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 217155910486,
+    "circulatingMarketValue": 212008760791,
+    "ttmPe": 52.111,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002463",
     "name": "沪电股份",
-    "marketValue": 221301806755,
-    "circulatingMarketValue": 221127949640,
-    "ttmPe": 43.7106,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 223572555728,
+    "circulatingMarketValue": 223396914688,
+    "ttmPe": 44.1591,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300476",
     "name": "胜宏科技",
-    "marketValue": 191800284105,
-    "circulatingMarketValue": 168851445466,
-    "ttmPe": 38.1643,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 182797975218,
+    "circulatingMarketValue": 160926259770,
+    "ttmPe": 36.373,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh601869",
     "name": "长飞光纤",
-    "marketValue": 295893285599,
-    "circulatingMarketValue": 145225313423,
-    "ttmPe": 85.9522,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 275775191474,
+    "circulatingMarketValue": 135351292393,
+    "ttmPe": 80.1082,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh600487",
     "name": "亨通光电",
-    "marketValue": 119250065625,
-    "circulatingMarketValue": 118633796525,
-    "ttmPe": 28.4831,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 112220847693,
+    "circulatingMarketValue": 111640904693,
+    "ttmPe": 26.8042,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh603256",
     "name": "宏和科技",
-    "marketValue": 96609832326,
-    "circulatingMarketValue": 96609832326,
-    "ttmPe": 195.5566,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 91652698607,
+    "circulatingMarketValue": 91652698607,
+    "ttmPe": 185.5225,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300408",
     "name": "三环集团",
-    "marketValue": 200210971114,
-    "circulatingMarketValue": 187485469378,
-    "ttmPe": 60.4253,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 192303965573,
+    "circulatingMarketValue": 180079828068,
+    "ttmPe": 58.0389,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz000657",
     "name": "中钨高新",
-    "marketValue": 106341551682,
-    "circulatingMarketValue": 67801652222,
-    "ttmPe": 37.3584,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 100690661428,
+    "circulatingMarketValue": 64198736055,
+    "ttmPe": 35.3733,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688082",
     "name": "盛美上海",
-    "marketValue": 126586570670,
-    "circulatingMarketValue": 125795292554,
-    "ttmPe": 74.9429,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 128595573210,
+    "circulatingMarketValue": 127791737050,
+    "ttmPe": 76.1323,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688808",
     "name": "联讯仪器",
-    "marketValue": 194944534827,
-    "circulatingMarketValue": 36639718753,
+    "marketValue": 192394869755,
+    "circulatingMarketValue": 36160510596,
     "ttmPe": null,
-    "updatedAt": "2026-10-15 00:07:51"
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002851",
     "name": "麦格米特",
-    "marketValue": 60197564397,
-    "circulatingMarketValue": 50594810653,
-    "ttmPe": 268.4609,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 55792436507,
+    "circulatingMarketValue": 46892391565,
+    "ttmPe": 248.8155,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz301526",
     "name": "国际复材",
-    "marketValue": 88050002420,
-    "circulatingMarketValue": 32792574752,
-    "ttmPe": 129.3245,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 83939745348,
+    "circulatingMarketValue": 31261786465,
+    "ttmPe": 123.2875,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688630",
     "name": "芯碁微装",
-    "marketValue": 49789763672,
-    "circulatingMarketValue": 44772082332,
-    "ttmPe": 115.9764,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 47321152468,
+    "circulatingMarketValue": 42552251268,
+    "ttmPe": 110.2262,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh603629",
     "name": "利通电子",
-    "marketValue": 32880832480,
-    "circulatingMarketValue": 32342460044,
-    "ttmPe": 34.8342,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 31138874480,
+    "circulatingMarketValue": 30629023894,
+    "ttmPe": 32.9888,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz301377",
     "name": "鼎泰高科",
-    "marketValue": 124461923511,
-    "circulatingMarketValue": 29098463671,
-    "ttmPe": 130.5983,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 115668187389,
+    "circulatingMarketValue": 27042540029,
+    "ttmPe": 121.371,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688200",
     "name": "华峰测控",
-    "marketValue": 67911318198,
-    "circulatingMarketValue": 67911318198,
-    "ttmPe": 89.7657,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 66398915222,
+    "circulatingMarketValue": 66398915222,
+    "ttmPe": 87.7666,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002436",
     "name": "兴森科技",
-    "marketValue": 64145680267,
-    "circulatingMarketValue": 57286623703,
-    "ttmPe": 296.1197,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 61800130750,
+    "circulatingMarketValue": 55191882296,
+    "ttmPe": 285.2918,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688147",
     "name": "微导纳米",
-    "marketValue": 37747473324,
-    "circulatingMarketValue": 37747473324,
-    "ttmPe": 291.5701,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 36525917339,
+    "circulatingMarketValue": 36525917339,
+    "ttmPe": 282.1345,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300567",
     "name": "精测电子",
-    "marketValue": 44323090280,
-    "circulatingMarketValue": 35973760805,
-    "ttmPe": 342.5561,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 42801267438,
+    "circulatingMarketValue": 34738610220,
+    "ttmPe": 330.7945,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688362",
     "name": "甬矽电子",
-    "marketValue": 21051127938,
-    "circulatingMarketValue": 21051127938,
-    "ttmPe": 231.9165,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 20015826564,
+    "circulatingMarketValue": 20015826564,
+    "ttmPe": 220.5108,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh600584",
     "name": "长电科技",
-    "marketValue": 104949164530,
-    "circulatingMarketValue": 104949164530,
-    "ttmPe": 54.1227,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 102891337775,
+    "circulatingMarketValue": 102891337775,
+    "ttmPe": 53.0615,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002156",
     "name": "通富微电",
-    "marketValue": 82447155331,
-    "circulatingMarketValue": 78497803444,
-    "ttmPe": 32.6643,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 79291435873,
+    "circulatingMarketValue": 75493248044,
+    "ttmPe": 31.4141,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002536",
     "name": "飞龙股份",
-    "marketValue": 24273208050,
-    "circulatingMarketValue": 23028976311,
-    "ttmPe": 133.2264,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 23163871286,
+    "circulatingMarketValue": 21976503560,
+    "ttmPe": 127.1377,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh600176",
     "name": "中国巨石",
-    "marketValue": 145073675022,
-    "circulatingMarketValue": 143930313894,
-    "ttmPe": 32.013,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 137387652504,
+    "circulatingMarketValue": 136304866800,
+    "ttmPe": 30.3169,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688120",
     "name": "华海清科",
-    "marketValue": 113980957865,
-    "circulatingMarketValue": 113980957865,
-    "ttmPe": 99.85,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 120894158296,
+    "circulatingMarketValue": 120894158296,
+    "ttmPe": 105.9062,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688629",
     "name": "华丰科技",
-    "marketValue": 40166910983,
-    "circulatingMarketValue": 39543965043,
-    "ttmPe": 113.0792,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 37661746915,
+    "circulatingMarketValue": 37077653397,
+    "ttmPe": 106.0266,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz001309",
     "name": "德明利",
-    "marketValue": 71614294059,
-    "circulatingMarketValue": 52310899415,
-    "ttmPe": 10.4954,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 67025262798,
+    "circulatingMarketValue": 48958826260,
+    "ttmPe": 9.8229,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300285",
     "name": "国瓷材料",
-    "marketValue": 49772651086,
-    "circulatingMarketValue": 42585403311,
-    "ttmPe": 77.6036,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 46871240535,
+    "circulatingMarketValue": 40102960930,
+    "ttmPe": 73.0798,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz000636",
     "name": "风华高科",
-    "marketValue": 49399462537,
-    "circulatingMarketValue": 49399443165,
-    "ttmPe": 121.4379,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 48378196065,
+    "circulatingMarketValue": 48378177093,
+    "ttmPe": 118.9273,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688702",
     "name": "盛科通信-U",
-    "marketValue": 102081800000,
-    "circulatingMarketValue": 52046447060,
-    "ttmPe": -709.7811,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 97030600000,
+    "circulatingMarketValue": 49471090695,
+    "ttmPe": -674.6598,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz301165",
     "name": "锐捷网络",
-    "marketValue": 102053636305,
-    "circulatingMarketValue": 102053636305,
-    "ttmPe": 108.7508,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 93267045401,
+    "circulatingMarketValue": 93267045401,
+    "ttmPe": 99.3876,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688025",
     "name": "杰普特  ",
-    "marketValue": 36881077112,
-    "circulatingMarketValue": 36881077112,
-    "ttmPe": 97.3134,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 34059059743,
+    "circulatingMarketValue": 34059059743,
+    "ttmPe": 89.8673,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz000977",
     "name": "浪潮信息",
-    "marketValue": 87007241808,
-    "circulatingMarketValue": 86914753092,
-    "ttmPe": 19.0557,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 83791277934,
+    "circulatingMarketValue": 83702207787,
+    "ttmPe": 18.3514,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688361",
     "name": "中科飞测",
-    "marketValue": 122274586371,
-    "circulatingMarketValue": 122274586371,
-    "ttmPe": -2424.6021,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 120401671482,
+    "circulatingMarketValue": 120401671482,
+    "ttmPe": -2387.4637,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300395",
     "name": "菲利华",
-    "marketValue": 41348434999,
-    "circulatingMarketValue": 40290534927,
-    "ttmPe": 80.0951,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 39334900275,
+    "circulatingMarketValue": 38328516507,
+    "ttmPe": 76.1947,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002126",
     "name": "银轮股份",
-    "marketValue": 26207077216,
-    "circulatingMarketValue": 24544658113,
-    "ttmPe": 27.0652,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 25435776709,
+    "circulatingMarketValue": 23822284264,
+    "ttmPe": 26.2686,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh600105",
-    "name": "XD永鼎股",
-    "marketValue": 43465105463,
-    "circulatingMarketValue": 43465105463,
-    "ttmPe": 103.843,
-    "updatedAt": "2026-10-15 00:07:51"
+    "name": "永鼎股份",
+    "marketValue": 40789654975,
+    "circulatingMarketValue": 40789654975,
+    "ttmPe": 97.4511,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688012",
     "name": "中微公司",
-    "marketValue": 282611384777,
-    "circulatingMarketValue": 277995236061,
-    "ttmPe": 66.7993,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 285120931729,
+    "circulatingMarketValue": 280463792301,
+    "ttmPe": 67.3925,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688403",
     "name": "汇成股份",
-    "marketValue": 17339494065,
-    "circulatingMarketValue": 17339494065,
-    "ttmPe": 272.1925,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 16475498656,
+    "circulatingMarketValue": 16475498656,
+    "ttmPe": 258.6297,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688825",
     "name": "长鑫科技",
-    "marketValue": 3122668557542,
-    "circulatingMarketValue": 207139792666,
-    "ttmPe": 38.1688,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 2959067878766,
+    "circulatingMarketValue": 196287468745,
+    "ttmPe": 36.1691,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh603228",
     "name": "景旺电子",
-    "marketValue": 101792576949,
-    "circulatingMarketValue": 92961805374,
-    "ttmPe": 86.0435,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 97007271990,
+    "circulatingMarketValue": 88591638102,
+    "ttmPe": 81.9986,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002428",
     "name": "云南锗业",
-    "marketValue": 53660339200,
-    "circulatingMarketValue": 53651096200,
-    "ttmPe": 742.5379,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 52471660800,
+    "circulatingMarketValue": 52462622550,
+    "ttmPe": 726.0893,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh603083",
     "name": "剑桥科技",
-    "marketValue": 70262730974,
-    "circulatingMarketValue": 50074407374,
-    "ttmPe": 149.3912,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 64655633565,
+    "circulatingMarketValue": 46078375965,
+    "ttmPe": 137.4695,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688519",
     "name": "南亚新材",
-    "marketValue": 63686863693,
-    "circulatingMarketValue": 63686863693,
-    "ttmPe": 103.6902,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 63263538898,
+    "circulatingMarketValue": 63263538898,
+    "ttmPe": 103.001,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002080",
     "name": "中材科技",
-    "marketValue": 77999184184,
-    "circulatingMarketValue": 77999184184,
-    "ttmPe": 38.4838,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 71320252320,
+    "circulatingMarketValue": 71320252320,
+    "ttmPe": 35.1885,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh603186",
     "name": "华正新材",
-    "marketValue": 31673252541,
-    "circulatingMarketValue": 31673252541,
-    "ttmPe": 77.8262,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 29790198420,
+    "circulatingMarketValue": 29790198420,
+    "ttmPe": 73.1992,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002050",
     "name": "三花智控",
-    "marketValue": 131668756026,
-    "circulatingMarketValue": 115492797799,
-    "ttmPe": 32.9418,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 128470665435,
+    "circulatingMarketValue": 112687603605,
+    "ttmPe": 32.1416,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh603119",
     "name": "浙江荣泰",
-    "marketValue": 20541037009,
-    "circulatingMarketValue": 20541037009,
-    "ttmPe": 67.321,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 19496016480,
+    "circulatingMarketValue": 19496016480,
+    "ttmPe": 63.8961,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688809",
     "name": "强一股份",
-    "marketValue": 56179503666,
-    "circulatingMarketValue": 11235920679,
-    "ttmPe": 117.1752,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 55321821100,
+    "circulatingMarketValue": 11064383862,
+    "ttmPe": 115.3863,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300570",
     "name": "太辰光",
-    "marketValue": 43790059957,
-    "circulatingMarketValue": 37054771454,
-    "ttmPe": 145.038,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 42804329354,
+    "circulatingMarketValue": 36220654711,
+    "ttmPe": 141.7731,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz301183",
     "name": "东田微",
-    "marketValue": 19522614130,
-    "circulatingMarketValue": 14310957116,
-    "ttmPe": 142.6446,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 19298400350,
+    "circulatingMarketValue": 14146598298,
+    "ttmPe": 141.0063,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz301021",
     "name": "英诺激光",
-    "marketValue": 9768389229,
-    "circulatingMarketValue": 9756718342,
-    "ttmPe": 130.2537,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 9141622471,
+    "circulatingMarketValue": 9130700420,
+    "ttmPe": 121.8962,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz000725",
     "name": "京东方Ａ",
-    "marketValue": 192260062652,
-    "circulatingMarketValue": 183555426067,
-    "ttmPe": 24.4676,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 187073856723,
+    "circulatingMarketValue": 178604027290,
+    "ttmPe": 23.8076,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh600601",
     "name": "方正科技",
-    "marketValue": 53869784095,
-    "circulatingMarketValue": 50627360504,
-    "ttmPe": 61.692,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 51251730337,
+    "circulatingMarketValue": 48166887464,
+    "ttmPe": 58.6938,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300548",
     "name": "长芯博创",
-    "marketValue": 55004184959,
-    "circulatingMarketValue": 54892948932,
-    "ttmPe": 112.6989,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 52583599847,
+    "circulatingMarketValue": 52477259016,
+    "ttmPe": 107.7393,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688700",
     "name": "东威科技",
-    "marketValue": 15922696569,
-    "circulatingMarketValue": 15922696569,
-    "ttmPe": 89.6773,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 14746995211,
+    "circulatingMarketValue": 14746995211,
+    "ttmPe": 83.0557,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688028",
     "name": "沃尔德  ",
-    "marketValue": 13775605740,
-    "circulatingMarketValue": 13775605740,
-    "ttmPe": 126.0069,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 12800475200,
+    "circulatingMarketValue": 12800475200,
+    "ttmPe": 117.0873,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002636",
     "name": "金安国纪",
-    "marketValue": 49358400000,
-    "circulatingMarketValue": 49171038971,
-    "ttmPe": 49.5489,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 51753520000,
+    "circulatingMarketValue": 51557067263,
+    "ttmPe": 51.9533,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300776",
     "name": "帝尔激光",
-    "marketValue": 26469757516,
-    "circulatingMarketValue": 16640178192,
-    "ttmPe": 53.1104,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 25015061791,
+    "circulatingMarketValue": 15725685640,
+    "ttmPe": 50.1916,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz000823",
     "name": "超声电子",
-    "marketValue": 14606143065,
-    "circulatingMarketValue": 14605584699,
-    "ttmPe": 66.0595,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 15391483547,
+    "circulatingMarketValue": 15390895160,
+    "ttmPe": 69.6114,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh600707",
     "name": "彩虹股份",
-    "marketValue": 28635350061,
-    "circulatingMarketValue": 28629604461,
-    "ttmPe": 1268.5698,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 27343529757,
+    "circulatingMarketValue": 27338043357,
+    "ttmPe": 1211.341,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz301297",
     "name": "富乐德",
-    "marketValue": 26548319860,
-    "circulatingMarketValue": 20292000712,
-    "ttmPe": 48.1663,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 25977464031,
+    "circulatingMarketValue": 19855671522,
+    "ttmPe": 47.1306,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002008",
     "name": "大族激光",
-    "marketValue": 69971847607,
-    "circulatingMarketValue": 65019364207,
-    "ttmPe": 35.1706,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 65245967964,
+    "circulatingMarketValue": 60627973953,
+    "ttmPe": 32.7952,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh603650",
     "name": "彤程新材",
-    "marketValue": 36173037324,
-    "circulatingMarketValue": 32570191718,
-    "ttmPe": 60.2207,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 34708874285,
+    "circulatingMarketValue": 31251859766,
+    "ttmPe": 57.7832,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002409",
     "name": "雅克科技",
-    "marketValue": 49268033226,
-    "circulatingMarketValue": 32973474769,
-    "ttmPe": 47.4445,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 47116840122,
+    "circulatingMarketValue": 31533751953,
+    "ttmPe": 45.3729,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300604",
     "name": "长川科技",
-    "marketValue": 141617192855,
-    "circulatingMarketValue": 107550614971,
-    "ttmPe": 75.8108,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 142480277062,
+    "circulatingMarketValue": 108206080846,
+    "ttmPe": 76.2729,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh603061",
     "name": "金海通  ",
-    "marketValue": 23104590000,
-    "circulatingMarketValue": 23104590000,
-    "ttmPe": 85.0389,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 22391190000,
+    "circulatingMarketValue": 22391190000,
+    "ttmPe": 82.4132,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688625",
     "name": "呈和科技",
-    "marketValue": 14569912003,
-    "circulatingMarketValue": 14569912003,
-    "ttmPe": 56.6322,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 13684447738,
+    "circulatingMarketValue": 13684447738,
+    "ttmPe": 53.1904,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh600641",
     "name": "先导基电",
-    "marketValue": 41871316147,
-    "circulatingMarketValue": 41096617267,
-    "ttmPe": 979.9555,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 38486338822,
+    "circulatingMarketValue": 37774268452,
+    "ttmPe": 900.7336,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh688123",
     "name": "聚辰股份",
-    "marketValue": 20586678973,
-    "circulatingMarketValue": 20586678973,
-    "ttmPe": 30.1081,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 18865028522,
+    "circulatingMarketValue": 18865028522,
+    "ttmPe": 27.5901,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh601208",
     "name": "东材科技",
-    "marketValue": 45811796465,
-    "circulatingMarketValue": 45811796465,
-    "ttmPe": 112.6064,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 43589393990,
+    "circulatingMarketValue": 43589393990,
+    "ttmPe": 107.1437,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh603002",
     "name": "宏昌电子",
-    "marketValue": 19097882091,
-    "circulatingMarketValue": 19097882091,
-    "ttmPe": 326.8616,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 18440116556,
+    "circulatingMarketValue": 18440116556,
+    "ttmPe": 315.6039,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300413",
     "name": "芒果超媒",
-    "marketValue": 47965281696,
-    "circulatingMarketValue": 26196386923,
-    "ttmPe": 72.081,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 45851367175,
+    "circulatingMarketValue": 25041865970,
+    "ttmPe": 68.9043,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300182",
     "name": "捷成股份",
-    "marketValue": 15689932972,
-    "circulatingMarketValue": 14222018696,
-    "ttmPe": 76.3291,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 15050614820,
+    "circulatingMarketValue": 13642513690,
+    "ttmPe": 73.2189,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz301269",
     "name": "华大九天",
-    "marketValue": 52486391278,
-    "circulatingMarketValue": 52486226023,
-    "ttmPe": 4083.8492,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 54047834025,
+    "circulatingMarketValue": 54047663853,
+    "ttmPe": 4205.3416,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002938",
     "name": "鹏鼎控股",
-    "marketValue": 180767859324,
-    "circulatingMarketValue": 180244448670,
-    "ttmPe": 47.7148,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 174417808881,
+    "circulatingMarketValue": 173912784703,
+    "ttmPe": 46.0386,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz002980",
     "name": "华盛昌",
-    "marketValue": 20747843986,
-    "circulatingMarketValue": 11153704508,
-    "ttmPe": 171.8022,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 20802483241,
+    "circulatingMarketValue": 11183077685,
+    "ttmPe": 172.2547,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh603067",
     "name": "振华股份",
-    "marketValue": 33099567949,
-    "circulatingMarketValue": 33099567949,
-    "ttmPe": 49.4529,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 31263641217,
+    "circulatingMarketValue": 31263641217,
+    "ttmPe": 46.7099,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz300489",
     "name": "光智科技",
-    "marketValue": 40355772150,
-    "circulatingMarketValue": 39968504990,
-    "ttmPe": -607.6613,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 36181037100,
+    "circulatingMarketValue": 35833832060,
+    "ttmPe": -544.7997,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh601595",
     "name": "上海电影",
-    "marketValue": 13038138000,
-    "circulatingMarketValue": 13038138000,
-    "ttmPe": 175.2584,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 12818520000,
+    "circulatingMarketValue": 12818520000,
+    "ttmPe": 172.3063,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh605287",
     "name": "德才股份",
-    "marketValue": 6846000000,
-    "circulatingMarketValue": 6846000000,
-    "ttmPe": 102.0885,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 6379800000,
+    "circulatingMarketValue": 6379800000,
+    "ttmPe": 95.1365,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sz301486",
     "name": "致尚科技",
-    "marketValue": 27167399348,
-    "circulatingMarketValue": 15387334249,
-    "ttmPe": -356.4011,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 25023824336,
+    "circulatingMarketValue": 14173235513,
+    "ttmPe": -328.2802,
+    "updatedAt": "2026-10-16 00:11:03"
   },
   {
     "code": "sh603767",
     "name": "中马传动",
-    "marketValue": 4589350405,
-    "circulatingMarketValue": 4589350405,
-    "ttmPe": -1058.2245,
-    "updatedAt": "2026-10-15 00:07:51"
+    "marketValue": 4583177775,
+    "circulatingMarketValue": 4583177775,
+    "ttmPe": -1056.8012,
+    "updatedAt": "2026-10-16 00:11:03"
+  },
+  {
+    "code": "sz002343",
+    "name": "慈文传媒",
+    "marketValue": 4220491348,
+    "circulatingMarketValue": 4220491348,
+    "ttmPe": -149.5149,
+    "updatedAt": "2026-10-16 00:11:03"
+  },
+  {
+    "code": "sh601811",
+    "name": "新华文轩",
+    "marketValue": 31561652779,
+    "circulatingMarketValue": 20256901762,
+    "ttmPe": 23.0988,
+    "updatedAt": "2026-10-16 00:11:03"
+  },
+  {
+    "code": "sh603200",
+    "name": "上海洗霸",
+    "marketValue": 9361863495,
+    "circulatingMarketValue": 9361863495,
+    "ttmPe": -389.5334,
+    "updatedAt": "2026-10-16 00:11:03"
+  },
+  {
+    "code": "sh603533",
+    "name": "掌阅科技",
+    "marketValue": 12732397183,
+    "circulatingMarketValue": 12732397183,
+    "ttmPe": -191.5985,
+    "updatedAt": "2026-10-16 00:11:03"
+  },
+  {
+    "code": "sh600241",
+    "name": "时代万恒",
+    "marketValue": 4117286588,
+    "circulatingMarketValue": 4117286588,
+    "ttmPe": -27.7239,
+    "updatedAt": "2026-10-16 00:11:03"
   }
 ]

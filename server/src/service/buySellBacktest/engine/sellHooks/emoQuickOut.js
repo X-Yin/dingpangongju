@@ -5,9 +5,12 @@
 // 2026-10-05 叠加盘中止损（先到先卖，口径与通用条件7一致，成本线 = 买入价 × (1 - costLinePct/100)）：默认 -2%。
 // 2026-10-09 叠加强卖豁免（buildQuickOutExemptInfo）：未触发止损且命中任一「次日强势」判断 → 本次不强卖，
 // 持仓转由通用 7 条件卖点接管（后续日期也不再强卖）。
+// 2026-10-15 叠加盘中大跌强卖（先到先卖）：盘中当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT（-7%）的
+// 第一个分时点无条件卖出——无持续分钟、无竞价自救窗口、不受强卖豁免保护，先于止损与 10:00 强卖。
 // 返回本次发生强卖/止损的日期（用于当日禁止二次买入），未发生则返回 null。
 // 本 hook 只做卖点行为，策略开关判定（strategy.emoQuickOut）由引擎负责调度。
-const { buildQuickOutExemptInfo, buildQuickOutSellReason, buildQuickOutStopLossReason } = require('../checkBuilders');
+const { EMO_QUICK_CRASH_PCT } = require('../../constants');
+const { buildQuickOutExemptInfo, buildQuickOutSellReason, buildQuickOutStopLossReason, buildQuickOutCrashSellReason } = require('../checkBuilders');
 const { buildTwoBuyTradeExtra, getPositionLegWeight, isLegPosition } = require('../twoBuy');
 
 const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStocks, timeBuckets, campData, singleTrades }) => {
@@ -46,11 +49,21 @@ const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStoc
         if (stopPt) stopDesc = `盘中 ${fmtMin(stopPt.minute)} 跌破止损线`;
       }
     }
-    const sellPt = stopPt && Number(stopPt.minute) < Number(forcedPt.minute) ? stopPt : forcedPt;
-    const isStopLoss = sellPt === stopPt;
-    // 强卖豁免（2026-10-09）：未触发止损且命中任一「次日强势」判断 → 本次不强卖，
-    // 持仓转由通用 7 条件卖点接管（本次及后续日期均不再强卖；止损仍先到先卖）
-    if (!isStopLoss && exemptInfo) {
+    // 盘中大卖点（2026-10-15 用户新增）：当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT 的第一个分时点，
+    // 无条件强卖（无自救窗口、不受豁免保护）。分时点 change 为该分钟当日涨跌幅（较昨收），缺失时跳过该点
+    let crashPt = null;
+    for (const p of pts) {
+      if (p.change != null && Number(p.change) <= EMO_QUICK_CRASH_PCT) { crashPt = p; break; }
+    }
+    // 先到先卖：止损点 / 盘中大卖点 / 10:00 强卖点取分钟最早者（同分钟时大跌强卖优先于止损）
+    let sellPt = forcedPt;
+    let sellKind = 'force'; // 'force' = 10:00 强卖 | 'stop' = 成本线止损 | 'crash' = 盘中大跌强卖
+    if (crashPt && Number(crashPt.minute) < Number(sellPt.minute)) { sellPt = crashPt; sellKind = 'crash'; }
+    if (stopPt && Number(stopPt.minute) < Number(sellPt.minute)) { sellPt = stopPt; sellKind = 'stop'; }
+    const isStopLoss = sellKind === 'stop';
+    // 强卖豁免（2026-10-09）：本次将由 10:00 强卖成交（未先触发止损 / 盘中大卖点）且命中任一「次日强势」判断
+    // → 本次不强卖，持仓转由通用 7 条件卖点接管（本次及后续日期均不再强卖；止损与大跌卖点仍先到先卖）
+    if (sellKind === 'force' && exemptInfo) {
       pos.emoQuickOut.exempted = { date: dateStr, via: exemptInfo.via, detail: exemptInfo.detail };
       continue;
     }
@@ -84,7 +97,9 @@ const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStoc
       sellChange: sellPt.change != null ? parseFloat(Number(sellPt.change).toFixed(2)) : null,
       sellReason: isStopLoss
         ? buildQuickOutStopLossReason(pos.buyPrice, sellPt, stopDesc, qPct)
-        : buildQuickOutSellReason(pos.emoQuickOut),
+        : (sellKind === 'crash'
+          ? buildQuickOutCrashSellReason(sellPt)
+          : buildQuickOutSellReason(pos.emoQuickOut)),
       returnRate,
     });
     positions.splice(pi, 1);
