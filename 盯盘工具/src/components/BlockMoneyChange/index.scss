@@ -896,52 +896,104 @@
     }
 
     .crowd-alerts-section {
-        padding: 24px 32px 16px;
+        padding: 0 32px 16px;
 
-        .crowd-alert {
+        .crowd-analysis-card {
             border-radius: 12px;
-            border-left: 4px solid #faad14;
+            background: #fafbff;
 
-            .crowd-alerts-content {
-                margin-top: 8px;
+            .crowd-analysis-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 12px;
+                font-size: 15px;
+                font-weight: 600;
+                color: #1e293b;
 
-                .alert-item {
-                    display: flex;
-                    align-items: flex-start;
-                    margin-bottom: 12px;
-                    line-height: 1.7;
-                    font-size: 14px;
-                    color: #666;
+                .anticon {
+                    color: #7c3aed;
+                }
 
-                    &:last-child {
-                        margin-bottom: 0;
+                .crowd-analysis-legend {
+                    font-size: 12px;
+                    font-weight: 400;
+                    color: #94a3b8;
+                }
+            }
+
+            .crowd-analysis-empty {
+                padding: 4px 0;
+                font-size: 13px;
+                color: #94a3b8;
+            }
+
+            .crowd-analysis-body {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .crowd-analysis-row {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+
+                .crowd-analysis-label {
+                    flex-shrink: 0;
+                    width: 112px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    line-height: 22px;
+
+                    &.up {
+                        color: #e11d48;
                     }
 
-                    .alert-number {
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        width: 22px;
-                        height: 22px;
-                        background: linear-gradient(135deg, #faad14 0%, #ffc53d 100%);
-                        color: #fff;
-                        border-radius: 50%;
-                        font-size: 12px;
-                        font-weight: 600;
-                        margin-right: 12px;
-                        flex-shrink: 0;
+                    &.down {
+                        color: #059669;
+                    }
+
+                    &.neutral {
+                        color: #64748b;
+                    }
+                }
+
+                .crowd-analysis-chips {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 6px;
+                }
+
+                .crowd-analysis-none {
+                    font-size: 13px;
+                    color: #cbd5e1;
+                    line-height: 22px;
+                }
+
+                .crowd-analysis-chip {
+                    margin-inline-end: 0;
+                    font-size: 12px;
+                    line-height: 20px;
+
+                    &.up {
+                        color: #e11d48;
+                        background: rgba(225, 29, 72, 0.06);
+                        border-color: rgba(225, 29, 72, 0.25);
+                    }
+
+                    &.down {
+                        color: #059669;
+                        background: rgba(5, 150, 105, 0.06);
+                        border-color: rgba(5, 150, 105, 0.25);
+                    }
+
+                    .top-mark {
+                        margin-right: 2px;
+                        color: #faad14;
                     }
                 }
             }
-        }
-    }
-
-    .crowd-index-section {
-        padding: 0 32px 24px;
-
-        .index-kline-card {
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         }
     }
 

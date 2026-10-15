@@ -3,7 +3,7 @@ import axios from 'axios';
 import { local_ip } from '../../constant';
 import { AppstoreOutlined, BarChartOutlined, LineChartOutlined, FundOutlined, ReloadOutlined, CheckOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Modal, Tabs, Empty, DatePicker, Card, Row, Col, Alert, Spin, Tag, Space, Typography, Switch } from 'antd';
-import { SyncOutlined } from '@ant-design/icons';
+import { SyncOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, Title as ChartTitle, Tooltip as ChartTooltip, Legend } from 'chart.js';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
@@ -338,6 +338,8 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     const [categoryRatioData, setCategoryRatioData] = useState({});
     const [isCategoryRefreshing, setIsCategoryRefreshing] = useState(false);
     const [isRefreshingAll, setIsRefreshingAll] = useState(false);
+    // 自动分析结果：{ date, rows, up, down, slopeUp, slopeDown, steep, flat }
+    const [crowdAnalysis, setCrowdAnalysis] = useState(null);
     // 分拆子题材开关：{ 分类名: true/false }，开启后该分类按内部概念拆成多条折线
     const [splitCategories, setSplitCategories] = useState({});
     const categoryChartRefs = useRef({});
@@ -1578,6 +1580,46 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     }
   };
 
+  // 自动分析：基于当前已加载的各分类成交量占比，统计最新一日涨跌归类、涨跌前三与 3 日线斜率
+  const handleAutoAnalyze = () => {
+    const rows = [];
+    for (const { name } of CATEGORY_RATIO_BLOCKS) {
+      const list = categoryRatioData[name];
+      if (!Array.isArray(list) || list.length < 2) continue;
+      const sorted = [...list].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      const latest = sorted[sorted.length - 1];
+      const prev = sorted[sorted.length - 2];
+      const change = Number(latest.ratio) - Number(prev.ratio);
+      // 3 日均线斜率：最近两个 3 日均线值之差（每日变化，单位 pct）；不足 4 天数据无法计算
+      let slope = null;
+      if (sorted.length >= 4) {
+        const ma3 = (i) => (Number(sorted[i].ratio) + Number(sorted[i - 1].ratio) + Number(sorted[i - 2].ratio)) / 3;
+        slope = ma3(sorted.length - 1) - ma3(sorted.length - 2);
+      }
+      rows.push({ name, date: latest.date, ratio: Number(latest.ratio), change, slope });
+    }
+
+    const up = rows.filter((r) => r.change > 0).sort((a, b) => b.change - a.change);
+    const down = rows.filter((r) => r.change < 0).sort((a, b) => a.change - b.change);
+    const slopeUp = rows.filter((r) => r.slope !== null && r.slope > 0).sort((a, b) => b.slope - a.slope);
+    const slopeDown = rows.filter((r) => r.slope !== null && r.slope < 0).sort((a, b) => a.slope - b.slope);
+    const withSlope = rows.filter((r) => r.slope !== null);
+    // 陡峭/平缓按斜率绝对值排序：绝对值大 = 趋势陡峭，绝对值小 = 走势平缓
+    const steep = [...withSlope].sort((a, b) => Math.abs(b.slope) - Math.abs(a.slope)).slice(0, 3);
+    const flat = [...withSlope].sort((a, b) => Math.abs(a.slope) - Math.abs(b.slope)).slice(0, 3);
+
+    setCrowdAnalysis({
+      date: rows.length ? rows[0].date : null,
+      rows,
+      up,
+      down,
+      slopeUp,
+      slopeDown,
+      steep,
+      flat,
+    });
+  };
+
   // 各板块成交量占比容器的回调 ref
   const setCategoryContainerRef = (name) => (el) => {
     if (el) {
@@ -2578,27 +2620,108 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                     >
                                         刷新全部
                                     </Button>
+                                    <Button
+                                        onClick={handleAutoAnalyze}
+                                        icon={<ThunderboltOutlined />}
+                                        style={{ marginLeft: 8 }}
+                                    >
+                                        自动分析
+                                    </Button>
                                 </div>
                             </div>
-                            <div className="crowd-alerts-section">
-                                <Alert
-                                    message="拥挤度分析提醒"
-                                    description={
-                                        <div className="crowd-alerts-content">
-                                            <p className="alert-item">
-                                                <span className="alert-number">1</span>
-                                                <span>拥挤度有滞后性，K线先出现下跌趋势，随后拥挤度才开始逐渐回落。所以K线的量价分析是逃顶的最先指标，拥挤度只能用来做趋势性分析，不能用来精准择时。</span>
-                                            </p>
-                                            <p className="alert-item">
-                                                <span className="alert-number">2</span>
-                                                <span>结合拥挤度和K线来看，拥挤度在大幅度下挫之后，往往会有一个大幅的反抽，形成一个双头结构（创业板的20260603、科创板的20260709），但是这并非反转，后面会继续下挫。真正的底部区间需要有长达一周左右的磨底（创业板的20260608-0615）。</span>
-                                            </p>
+                            <div className="crowd-alerts-section" style={{ marginTop: '20px' }}>
+                                <Card size="small" className="crowd-analysis-card">
+                                    <div className="crowd-analysis-header">
+                                        <ThunderboltOutlined />
+                                        <span>板块占比自动分析</span>
+                                        {crowdAnalysis?.date && (
+                                            <Tag color="blue">
+                                                最新交易日 {dayjs(String(crowdAnalysis.date), 'YYYYMMDD').format('YYYY-MM-DD')}
+                                            </Tag>
+                                        )}
+                                        {crowdAnalysis && (
+                                            <span className="crowd-analysis-legend">★ 为涨/跌或斜率绝对值前三</span>
+                                        )}
+                                    </div>
+                                    {!crowdAnalysis || crowdAnalysis.rows.length === 0 ? (
+                                        <div className="crowd-analysis-empty">
+                                            {crowdAnalysis
+                                                ? '暂无板块占比数据，请先刷新数据'
+                                                : '点击「自动分析」按钮，生成最新一日占比涨跌归类与 3 日线斜率分析'}
                                         </div>
-                                    }
-                                    type="warning"
-                                    showIcon
-                                    className="crowd-alert"
-                                />
+                                    ) : (
+                                        <div className="crowd-analysis-body">
+                                            <div className="crowd-analysis-row">
+                                                <span className="crowd-analysis-label up">占比上涨</span>
+                                                <div className="crowd-analysis-chips">
+                                                    {crowdAnalysis.up.length === 0 && <span className="crowd-analysis-none">无</span>}
+                                                    {crowdAnalysis.up.map((r, i) => (
+                                                        <Tag key={r.name} className={`crowd-analysis-chip up ${i < 3 ? 'top' : ''}`}>
+                                                            {i < 3 && <span className="top-mark">★</span>}
+                                                            {r.name} +{r.change.toFixed(3)}%
+                                                        </Tag>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="crowd-analysis-row">
+                                                <span className="crowd-analysis-label down">占比下跌</span>
+                                                <div className="crowd-analysis-chips">
+                                                    {crowdAnalysis.down.length === 0 && <span className="crowd-analysis-none">无</span>}
+                                                    {crowdAnalysis.down.map((r, i) => (
+                                                        <Tag key={r.name} className={`crowd-analysis-chip down ${i < 3 ? 'top' : ''}`}>
+                                                            {i < 3 && <span className="top-mark">★</span>}
+                                                            {r.name} {r.change.toFixed(3)}%
+                                                        </Tag>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="crowd-analysis-row">
+                                                <span className="crowd-analysis-label up">3日线斜率为正</span>
+                                                <div className="crowd-analysis-chips">
+                                                    {crowdAnalysis.slopeUp.length === 0 && <span className="crowd-analysis-none">无</span>}
+                                                    {crowdAnalysis.slopeUp.map((r) => (
+                                                        <Tag key={r.name} className="crowd-analysis-chip up">
+                                                            {r.name} +{r.slope.toFixed(3)}
+                                                        </Tag>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="crowd-analysis-row">
+                                                <span className="crowd-analysis-label down">3日线斜率为负</span>
+                                                <div className="crowd-analysis-chips">
+                                                    {crowdAnalysis.slopeDown.length === 0 && <span className="crowd-analysis-none">无</span>}
+                                                    {crowdAnalysis.slopeDown.map((r) => (
+                                                        <Tag key={r.name} className="crowd-analysis-chip down">
+                                                            {r.name} {r.slope.toFixed(3)}
+                                                        </Tag>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="crowd-analysis-row">
+                                                <span className="crowd-analysis-label neutral">斜率最陡峭前三</span>
+                                                <div className="crowd-analysis-chips">
+                                                    {crowdAnalysis.steep.length === 0 && <span className="crowd-analysis-none">无</span>}
+                                                    {crowdAnalysis.steep.map((r) => (
+                                                        <Tag key={r.name} className={`crowd-analysis-chip ${r.slope > 0 ? 'up' : 'down'}`}>
+                                                            {r.name} {r.slope > 0 ? '+' : ''}{r.slope.toFixed(3)}
+                                                        </Tag>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="crowd-analysis-row">
+                                                <span className="crowd-analysis-label neutral">斜率最平缓前三</span>
+                                                <div className="crowd-analysis-chips">
+                                                    {crowdAnalysis.flat.length === 0 && <span className="crowd-analysis-none">无</span>}
+                                                    {crowdAnalysis.flat.map((r) => (
+                                                        <Tag key={r.name} className={`crowd-analysis-chip ${r.slope > 0 ? 'up' : 'down'}`}>
+                                                            {r.name} {r.slope > 0 ? '+' : ''}{r.slope.toFixed(3)}
+                                                        </Tag>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </Card>
                             </div>
                             {techRatioData.length === 0 && crowdData.length === 0 ? (
                                 <div className="rzrq-loading">加载中...</div>
