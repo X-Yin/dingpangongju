@@ -916,5 +916,14 @@
     "riskScore": " 9",
     "isTech": false,
     "addedAt": "2026-10-15 13:53:04"
+  },
+  {
+    "code": "sh600241",
+    "name": "时代万恒",
+    "isImportant": false,
+    "blockName": "锂电池",
+    "riskScore": " 8",
+    "isTech": false,
+    "addedAt": "2026-10-15 22:19:14"
   }
 ]

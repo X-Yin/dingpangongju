@@ -128,6 +128,7 @@ const DingPan = () => {
     const [newStockRiskScore, setNewStockRiskScore] = useState(''); // 风险偏好分数
     const [newStockIsTech, setNewStockIsTech] = useState(true); // 是否为科技股，默认打开
     const [addStockModalVisible, setAddStockModalVisible] = useState(false); // 新增股票弹窗可见性
+    const [addingStock, setAddingStock] = useState(false); // 新增股票提交中
     const [showOnlyImportant, setShowOnlyImportant] = useState(() => {
         return localStorage.getItem('dingpan_showOnlyImportant') === 'true';
     }); // 是否只显示重点标记股票
@@ -299,11 +300,12 @@ const DingPan = () => {
         setAddStockModalVisible(true);
     };
 
-    // 新增自选股
-    const handleAddStock = async () => {
+    // 新增自选股（closeAfter=false 时保存后保留弹窗并清空输入，便于连续添加多只）
+    const handleAddStock = async (closeAfter) => {
         if (!newStockCode || !newStockName) {
             return;
         }
+        setAddingStock(true);
         try {
             await axios.post(`http://${local_ip}:3000/add_monitor_stock`, {
                 code: newStockCode,
@@ -312,15 +314,20 @@ const DingPan = () => {
                 riskScore: newStockRiskScore || null,
                 isTech: newStockIsTech
             });
+            message.success(`已添加 ${newStockName}${closeAfter ? '' : '，可继续添加下一只'}`);
             setNewStockCode('');
             setNewStockName('');
             setNewStockBlockName('');
             setNewStockRiskScore('');
             setNewStockIsTech(true);
-            setAddStockModalVisible(false);
+            if (closeAfter) {
+                setAddStockModalVisible(false);
+            }
             fetchData(); // 重新拉取数据
         } catch (error) {
             console.error('Add stock failed:', error);
+        } finally {
+            setAddingStock(false);
         }
     };
 
@@ -2611,7 +2618,9 @@ const DingPan = () => {
             <AddStockModal
                 open={addStockModalVisible}
                 onCancel={() => setAddStockModalVisible(false)}
-                onOk={handleAddStock}
+                onOk={() => handleAddStock(true)}
+                onContinue={() => handleAddStock(false)}
+                addLoading={addingStock}
                 newStockCode={newStockCode}
                 setNewStockCode={setNewStockCode}
                 newStockName={newStockName}

@@ -8,7 +8,9 @@ const { Text } = Typography;
 const AddStockModal = ({
     open,
     onCancel,
-    onOk,
+    onOk, // 保存并关闭
+    onContinue, // 继续添加：保存当前股票后保留弹窗，便于连续添加多只
+    addLoading,
     newStockCode,
     setNewStockCode,
     newStockName,
@@ -25,11 +27,31 @@ const AddStockModal = ({
         title={<span><PlusOutlined style={{ marginRight: '8px' }} />新增监控股票</span>}
         open={open}
         onCancel={onCancel}
-        onOk={onOk}
-        okButtonProps={{ disabled: !newStockCode }} // 未从搜索下拉选定股票（无 code）时不允许提交
         width={400}
         centered
         className="add-stock-modal"
+        footer={[
+            <Button key="cancel" onClick={onCancel}>关闭</Button>,
+            <Button
+                key="continue"
+                type="primary"
+                ghost
+                disabled={!newStockCode} // 未从搜索下拉选定股票（无 code）时不允许提交
+                loading={addLoading}
+                onClick={onContinue}
+            >
+                继续添加
+            </Button>,
+            <Button
+                key="ok"
+                type="primary"
+                disabled={!newStockCode} // 未从搜索下拉选定股票（无 code）时不允许提交
+                loading={addLoading}
+                onClick={onOk}
+            >
+                保存并关闭
+            </Button>,
+        ]}
     >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>

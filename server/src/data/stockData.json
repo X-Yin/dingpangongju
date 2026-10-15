@@ -2198,5 +2198,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sh600241": {
+    "stockName": "时代万恒",
+    "kline": [
+      {
+        "trade_date": 20261015,
+        "open_px": 12.57,
+        "high_px": 14.08,
+        "low_px": 12.17,
+        "close_px": 13.99,
+        "business_amount": 98117065,
+        "business_balance": 1313167280,
+        "change": 5.9,
+        "ma5_px": 12.95,
+        "ma10_px": 10.94,
+        "ma20_px": 9.1,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

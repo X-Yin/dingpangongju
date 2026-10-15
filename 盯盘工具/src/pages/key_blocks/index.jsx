@@ -261,9 +261,8 @@ const BlockConfigPanel = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('change'); // 'change' | 'name'
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
-  // 弹窗内通过搜索选择的股票：新增股票为单只，新增板块为多只（均为 { name, code }，code 带 sh/sz 前缀）
-  const [stockPick, setStockPick] = useState({ name: '', code: '' });
-  const [newBlockStocks, setNewBlockStocks] = useState([]);
+  // 弹窗内通过搜索选择的股票列表：新增股票 / 新增板块共用（均为 { name, code }，code 带 sh/sz 前缀）
+  const [pickStocks, setPickStocks] = useState([]);
 
   // 折叠状态：默认全部折叠；URL 携带 blockName 时仅展开该板块
   const [expandedKeys, setExpandedKeys] = useState(() => {
@@ -308,7 +307,7 @@ const BlockConfigPanel = () => {
   const handleAdd = (blockName) => {
     setEditing(null);
     setModalMode('stock');
-    setStockPick({ name: '', code: '' }); // 清空上一次残留，避免带着旧 code 直接提交
+    setPickStocks([{ name: '', code: '' }]); // 默认一行，可点击下方按钮继续追加
     form.resetFields();
     if (blockName) {
       form.setFieldsValue({ blockName });
@@ -319,7 +318,7 @@ const BlockConfigPanel = () => {
   const handleAddBlock = () => {
     setEditing(null);
     setModalMode('block');
-    setNewBlockStocks([]); // 清空上一次残留的股票行
+    setPickStocks([]); // 清空上一次残留的股票行
     form.resetFields();
     setModalOpen(true);
   };
@@ -430,7 +429,7 @@ const BlockConfigPanel = () => {
         payload = { block: values };
       } else if (modalMode === 'block') {
         // 未完成搜索选择的行不提交，避免写入缺 code 的股票
-        if (newBlockStocks.some(s => !s.code || !s.name)) {
+        if (pickStocks.some(s => !s.code || !s.name)) {
           message.warning('请为每只已添加的股票完成搜索选择');
           return;
         }
@@ -439,16 +438,41 @@ const BlockConfigPanel = () => {
         payload = {
           blockName: values.blockName,
           tag: values.tag || undefined,
-          stocks: newBlockStocks.map(s => ({
+          stocks: pickStocks.map(s => ({
             blockName: values.blockName,
             code: s.code,
             name: s.name,
           }))
         };
       } else {
-        action = 'add';
-        messageText = '添加成功';
-        payload = { block: { blockName: values.blockName, code: stockPick.code, name: stockPick.name } };
+        // 支持一次添加多只股票；未完成搜索选择的行不提交，避免写入缺 code 的股票
+        if (!pickStocks.length) return;
+        if (pickStocks.some(s => !s.code || !s.name)) {
+          message.warning('请为每只已添加的股票完成搜索选择');
+          return;
+        }
+        // 后端 add 为单只接口，逐只提交
+        let failCount = 0;
+        for (const s of pickStocks) {
+          try {
+            const r = await axios.post(`http://${local_ip}:3000/api/blocks_config`, {
+              action: 'add',
+              block: { blockName: values.blockName, code: s.code, name: s.name },
+            });
+            if (!r.data?.success) failCount++;
+          } catch {
+            failCount++;
+          }
+        }
+        if (failCount) {
+          message.error(`${failCount} / ${pickStocks.length} 只股票添加失败`);
+          return;
+        }
+        message.success(pickStocks.length > 1 ? `已添加 ${pickStocks.length} 只股票` : '添加成功');
+        setModalOpen(false);
+        form.resetFields();
+        fetchBlocks();
+        return;
       }
       const res = await axios.post(`http://${local_ip}:3000/api/blocks_config`, {
         action,
@@ -716,7 +740,7 @@ const BlockConfigPanel = () => {
         onCancel={() => setModalOpen(false)}
         okText="保存"
         cancelText="取消"
-        okButtonProps={{ disabled: !editing && modalMode === 'stock' && !stockPick.code }} // 未选定股票（无 code）时不允许提交
+        okButtonProps={{ disabled: !editing && modalMode === 'stock' && !pickStocks.some(s => s.code) }} // 未选定任何股票（无 code）时不允许提交
         width={modalMode === 'block' ? 600 : 480}
       >
         <Form form={form} layout="vertical">
@@ -735,23 +759,23 @@ const BlockConfigPanel = () => {
               <div style={{ marginBottom: 8, color: '#64748b', fontSize: 13 }}>
                 可在此添加多只股票（选填，输入名称后按回车搜索）
               </div>
-              {newBlockStocks.map((stock, index) => (
+              {pickStocks.map((stock, index) => (
                 <div key={index} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
                   <StockSearchInput
                     value={stock.name}
                     code={stock.code}
-                    onChange={(name, code) => setNewBlockStocks(prev => prev.map((s, i) => (i === index ? { name, code } : s)))}
+                    onChange={(name, code) => setPickStocks(prev => prev.map((s, i) => (i === index ? { name, code } : s)))}
                     style={{ flex: 1 }}
                   />
                   <MinusCircleOutlined
-                    onClick={() => setNewBlockStocks(prev => prev.filter((_, i) => i !== index))}
+                    onClick={() => setPickStocks(prev => prev.filter((_, i) => i !== index))}
                     style={{ fontSize: 22, color: '#ff4d4f', marginTop: 4 }}
                   />
                 </div>
               ))}
               <Button
                 type="dashed"
-                onClick={() => setNewBlockStocks(prev => [...prev, { name: '', code: '' }])}
+                onClick={() => setPickStocks(prev => [...prev, { name: '', code: '' }])}
                 block
                 icon={<PlusOutlined />}
               >
@@ -768,16 +792,34 @@ const BlockConfigPanel = () => {
               </Form.Item>
             </>
           ) : (
-            <div>
-              <Text type="secondary" style={{ fontSize: 13 }}>股票名称 (输入后按回车搜索)</Text>
-              <StockSearchInput
-                value={stockPick.name}
-                code={stockPick.code}
-                onChange={(name, code) => setStockPick({ name, code })}
-                style={{ marginTop: 8 }}
-                autoFocus
-              />
-            </div>
+            <>
+              <div style={{ marginBottom: 8, color: '#64748b', fontSize: 13 }}>
+                可一次添加多只股票（输入名称后按回车搜索）
+              </div>
+              {pickStocks.map((stock, index) => (
+                <div key={index} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
+                  <StockSearchInput
+                    value={stock.name}
+                    code={stock.code}
+                    onChange={(name, code) => setPickStocks(prev => prev.map((s, i) => (i === index ? { name, code } : s)))}
+                    style={{ flex: 1 }}
+                    autoFocus={index === 0}
+                  />
+                  <MinusCircleOutlined
+                    onClick={() => setPickStocks(prev => prev.filter((_, i) => i !== index))}
+                    style={{ fontSize: 22, color: '#ff4d4f', marginTop: 4 }}
+                  />
+                </div>
+              ))}
+              <Button
+                type="dashed"
+                onClick={() => setPickStocks(prev => [...prev, { name: '', code: '' }])}
+                block
+                icon={<PlusOutlined />}
+              >
+                继续添加股票
+              </Button>
+            </>
           )}
         </Form>
       </Modal>
