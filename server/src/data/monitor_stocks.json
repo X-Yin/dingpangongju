@@ -880,5 +880,41 @@
     "riskScore": " 9",
     "isTech": false,
     "addedAt": "2026-10-14 00:24:02"
+  },
+  {
+    "code": "sz002343",
+    "name": "慈文传媒",
+    "isImportant": false,
+    "blockName": "AI短剧",
+    "riskScore": "7",
+    "isTech": false,
+    "addedAt": "2026-10-15 09:38:34"
+  },
+  {
+    "code": "sh601811",
+    "name": "新华文轩",
+    "isImportant": false,
+    "blockName": "AI 短剧",
+    "riskScore": " 8",
+    "isTech": false,
+    "addedAt": "2026-10-15 09:38:50"
+  },
+  {
+    "code": "sh603200",
+    "name": "上海洗霸",
+    "isImportant": false,
+    "blockName": "固态电池",
+    "riskScore": " 9",
+    "isTech": false,
+    "addedAt": "2026-10-15 09:52:45"
+  },
+  {
+    "code": "sh603533",
+    "name": "掌阅科技",
+    "isImportant": false,
+    "blockName": "AI 短剧",
+    "riskScore": " 9",
+    "isTech": false,
+    "addedAt": "2026-10-15 13:53:04"
   }
 ]

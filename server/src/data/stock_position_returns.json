@@ -1,5 +1,40 @@
 [
   {
+    "date": "2026-10-15",
+    "operations": [
+      {
+        "id": "1792042791683_esww",
+        "action": "buy",
+        "stockName": "上海洗霸",
+        "stockCode": "sh603200",
+        "position": "",
+        "time": "13:39"
+      },
+      {
+        "id": "1792045150158_eo3e",
+        "action": "sell",
+        "stockName": "芒果超媒",
+        "stockCode": "sz300413",
+        "position": "",
+        "time": "14:19"
+      },
+      {
+        "id": "1792046137578_6eov",
+        "action": "buy",
+        "stockName": "北方华创",
+        "stockCode": "sz002371",
+        "position": "",
+        "time": "14:35"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-15T05:39:51.708Z",
+    "updatedAt": "2026-10-15T06:35:37.617Z"
+  },
+  {
     "date": "2026-10-14",
     "operations": [
       {

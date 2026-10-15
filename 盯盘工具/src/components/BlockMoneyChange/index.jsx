@@ -2,12 +2,11 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { local_ip } from '../../constant';
 import { AppstoreOutlined, BarChartOutlined, LineChartOutlined, FundOutlined, ReloadOutlined, CheckOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Modal, Tabs, Empty, DatePicker, Card, Row, Col, Divider, Alert, Spin, Tag, Space, Typography, Switch } from 'antd';
+import { Button, Checkbox, Modal, Tabs, Empty, DatePicker, Card, Row, Col, Alert, Spin, Tag, Space, Typography, Switch } from 'antd';
 import { SyncOutlined } from '@ant-design/icons';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, Title as ChartTitle, Tooltip as ChartTooltip, Legend } from 'chart.js';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
-import StockKLine from '../../components/StockKLine';
 import dayjs from 'dayjs';
 import { getThemeColor, getThemeColorRgba } from '../../utils/theme';
 import './index.scss';
@@ -54,6 +53,10 @@ const CATEGORY_RATIO_BLOCKS = [
     { name: '消费', color: '#f97316' },
     { name: '医药', color: '#06b6d4' },
     { name: '电力', color: '#eab308' },
+    { name: '存储芯片', color: '#ec4899' },
+    { name: '光通信', color: '#3b82f6' },
+    { name: '液冷', color: '#14b8a6' },
+    { name: 'pcb', color: '#ef4444' },
 ];
 
 const getSizeClass = (areaPercent) => {
@@ -305,7 +308,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     const [historyViewMode, setHistoryViewMode] = useState('line'); // 'line' or 'heatmap'
     const [historyHeatmapTab, setHistoryHeatmapTab] = useState('today'); // 'today' or 'fiveDay'
     const [modalBlock, setModalBlock] = useState(null); // 当前打开折线图弹窗的板块名
-    const [activeTab, setActiveTab] = useState(defaultTab); // 'intraday' 当日资金 | 'history' 历史资金 | 'rzrq' 融资余额 | 'crowd' 拥挤度
+    const [activeTab, setActiveTab] = useState('crowd'); // 'intraday' 当日资金 | 'history' 历史资金 | 'rzrq' 融资余额 | 'crowd' 拥挤度
     const [dayHistory, setDayHistory] = useState([]); // 按天维度的板块资金历史
     const [rzrqData, setRzrqData] = useState([]);
     const [rzrqLoading, setRzrqLoading] = useState(false);
@@ -331,17 +334,16 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     const crowdContainerRef = useRef(null);
     const ratioChartRef = useRef(null);
     const ratioContainerRef = useRef(null);
-    // 板块成交量占比折线图（传媒/农业/消费/医药/电力）
+    // 板块成交量占比折线图（传媒/农业/消费/医药/电力/存储芯片/光通信/液冷/pcb）
     const [categoryRatioData, setCategoryRatioData] = useState({});
     const [isCategoryRefreshing, setIsCategoryRefreshing] = useState(false);
+    const [isRefreshingAll, setIsRefreshingAll] = useState(false);
     // 分拆子题材开关：{ 分类名: true/false }，开启后该分类按内部概念拆成多条折线
     const [splitCategories, setSplitCategories] = useState({});
     const categoryChartRefs = useRef({});
     const categoryContainerRefs = useRef({});
     const categoryTooltipDataRef = useRef({}); // 分类名 → Map(time → [{name, color, value}])
     const categoryTooltipElsRef = useRef({}); // 分类名 → tooltip DOM
-    const [indexKlineData, setIndexKlineData] = useState(null);
-    const [indexLoading, setIndexLoading] = useState(false);
     // 页面已移除手动回放控制，默认保持实时跟随最新一帧
     const isRealTimeRef = useRef(true);
 
@@ -1216,28 +1218,13 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     }
   };
 
-  const fetchIndexKlineData = async () => {
-    setIndexLoading(true);
-    try {
-      const response = await axios.get(`http://${local_ip}:3000/get_index_kline_data`);
-      if (response.data) {
-        setIndexKlineData(response.data);
-      }
-    } catch (error) {
-      console.error('Fetch index kline data failed:', error);
-    } finally {
-      setIndexLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (activeTab === 'crowd') {
-      // 先加载缓存数据的图表（科技占比、各板块占比）；拥挤度和指数行情依赖实时请求，延后加载
+      // 先加载缓存数据的图表（科技占比、各板块占比）；拥挤度依赖实时请求，延后加载
       fetchTechRatioData();
       fetchCategoryRatioData();
       const timer = setTimeout(() => {
         fetchCrowdData();
-        fetchIndexKlineData();
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -1545,7 +1532,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     };
   }, [techRatioData, activeTab]);
 
-  // ============ 板块成交量占比折线图（传媒/农业/消费/医药/电力） ============
+  // ============ 板块成交量占比折线图（传媒/农业/消费/医药/电力/存储芯片/光通信/液冷/pcb） ============
   const fetchCategoryRatioData = async () => {
     if (!crowdDateRange[0] || !crowdDateRange[1]) return;
     try {
@@ -1571,6 +1558,23 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
       console.error('Refresh block_category_ratio data failed:', error);
     } finally {
       setIsCategoryRefreshing(false);
+    }
+  };
+
+  // 刷新全部图表数据：并行触发拥挤度与各分类成交额的后端刷新，完成后统一重拉前端数据
+  const refreshAllCrowdData = async () => {
+    if (isRefreshingAll) return;
+    setIsRefreshingAll(true);
+    try {
+      await Promise.all([
+        axios.get(`http://${local_ip}:3000/refresh_tech_block_crowd`),
+        axios.get(`http://${local_ip}:3000/refresh_block_category_ratio`),
+      ]);
+      await Promise.all([fetchCrowdData(), fetchTechRatioData(), fetchCategoryRatioData()]);
+    } catch (error) {
+      console.error('Refresh all crowd data failed:', error);
+    } finally {
+      setIsRefreshingAll(false);
     }
   };
 
@@ -2529,6 +2533,180 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
             activeKey={activeTab}
             onChange={setActiveTab}
             items={[
+                                {
+                    key: 'crowd',
+                    label: '拥挤度',
+                    children: (
+                        <>
+                            <div className="control-bar history-control-bar">
+                                <div className="crowd-info-bar">
+                    {crowdData.length > 0 && (
+                        <>
+                            {/* <span className="crowd-info-label">最新拥挤度</span> */}
+                            {/* <span
+                                className="crowd-info-value"
+                                style={{ color: '#722ed1' }}
+                            >
+                                {crowdData[crowdData.length - 1]?.score !== null && crowdData[crowdData.length - 1]?.score !== undefined 
+                                    ? crowdData[crowdData.length - 1]?.score.toFixed(2) 
+                                    : '-'}
+                            </span> */}
+                            {/* <span className="crowd-info-sub">
+                                ({crowdData[crowdData.length - 1]?.level || '-'})
+                            </span> */}
+                        </>
+                    )}
+                </div>
+                                <div className="date-range-picker">
+                                    <DatePicker.RangePicker
+                                        value={crowdDateRange}
+                                        onChange={(dates) => dates && setCrowdDateRange(dates)}
+                                        format="YYYY-MM-DD"
+                                        allowClear={false}
+                                        disabledDate={(current) => {
+                                            if (!current) return false;
+                                            const earliest = dayjs('2026-04-01').startOf('day');
+                                            return current.isBefore(earliest) || current.isAfter(dayjs().endOf('day'));
+                                        }}
+                                    />
+                                    <Button
+                                        type="primary"
+                                        onClick={refreshAllCrowdData}
+                                        loading={isRefreshingAll}
+                                        icon={<SyncOutlined spin={isRefreshingAll} />}
+                                        style={{ marginLeft: 8 }}
+                                    >
+                                        刷新全部
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="crowd-alerts-section">
+                                <Alert
+                                    message="拥挤度分析提醒"
+                                    description={
+                                        <div className="crowd-alerts-content">
+                                            <p className="alert-item">
+                                                <span className="alert-number">1</span>
+                                                <span>拥挤度有滞后性，K线先出现下跌趋势，随后拥挤度才开始逐渐回落。所以K线的量价分析是逃顶的最先指标，拥挤度只能用来做趋势性分析，不能用来精准择时。</span>
+                                            </p>
+                                            <p className="alert-item">
+                                                <span className="alert-number">2</span>
+                                                <span>结合拥挤度和K线来看，拥挤度在大幅度下挫之后，往往会有一个大幅的反抽，形成一个双头结构（创业板的20260603、科创板的20260709），但是这并非反转，后面会继续下挫。真正的底部区间需要有长达一周左右的磨底（创业板的20260608-0615）。</span>
+                                            </p>
+                                        </div>
+                                    }
+                                    type="warning"
+                                    showIcon
+                                    className="crowd-alert"
+                                />
+                            </div>
+                            {techRatioData.length === 0 && crowdData.length === 0 ? (
+                                <div className="rzrq-loading">加载中...</div>
+                            ) : techRatioData.length > 0 || crowdData.length > 0 ? (
+                                <div className="crowd-chart-container">
+                                    <div className="crowd-chart-card">
+                                        <div className="crowd-chart-header">
+                                            <div className="crowd-chart-title">拥挤度</div>
+                                            <div className="crowd-chart-value">
+                                                <span className="crowd-value-number" style={{ color: '#722ed1' }}>
+                                                    {crowdData[crowdData.length - 2]?.score !== null && crowdData[crowdData.length - 2]?.score !== undefined
+                                                        ? crowdData[crowdData.length - 2]?.score.toFixed(2)
+                                                        : '-'}
+                                                </span>
+                                                <span className="crowd-value-unit">{crowdData[crowdData.length - 2]?.level || '-'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="crowd-chart-body">
+                                            {crowdData.length > 0 ? (
+                                                <div ref={crowdContainerRef} className="crowd-chart" />
+                                            ) : (
+                                                <div className="rzrq-loading">
+                                                    {crowdLoading ? '拥挤度实时计算中...' : '暂无拥挤度数据'}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="crowd-chart-card">
+                                        <div className="crowd-chart-header">
+                                            <div className="crowd-chart-title">科技板块成交量占比</div>
+                                            <div className="crowd-chart-right">
+                                                <div className="crowd-chart-value">
+                                                    <span className="crowd-value-number" style={{ color: getThemeColor() }}>
+                                                        {techRatioData[techRatioData.length - 1]?.ratio !== undefined
+                                                            ? `${techRatioData[techRatioData.length - 1].ratio.toFixed(2)}%`
+                                                            : '-'}
+                                                    </span>
+                                                </div>
+                                                <Button
+                                                    type="primary"
+                                                    size="small"
+                                                    onClick={refreshCrowdData}
+                                                    loading={isRefreshing}
+                                                    icon={<SyncOutlined spin={isRefreshing} />}
+                                                    className="crowd-refresh-btn"
+                                                >
+                                                    {/* 刷新当前最新数据 */}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <div className="crowd-chart-body">
+                                            <div ref={ratioContainerRef} className="crowd-chart" />
+                                        </div>
+                                    </div>
+                                    {CATEGORY_RATIO_BLOCKS.map(({ name, color }) => {
+                                        const list = categoryRatioData[name] || [];
+                                        const latest = list.length > 0 ? list[list.length - 1] : null;
+                                        return (
+                                            <div key={name} className="crowd-chart-card">
+                                                <div className="crowd-chart-header">
+                                                    <div className="crowd-chart-title-wrap">
+                                                        <div className="crowd-chart-title">{name}成交量占比</div>
+                                                        {(categoryRatioData[`${name}_blocks`] || []).length > 0 && (
+                                                            <div className="crowd-split-toggle">
+                                                                <span className="crowd-split-label">分拆子题材</span>
+                                                                <Switch
+                                                                    size="small"
+                                                                    checked={!!splitCategories[name]}
+                                                                    onChange={(checked) => setSplitCategories((prev) => ({ ...prev, [name]: checked }))}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="crowd-chart-right">
+                                                        <div className="crowd-chart-value">
+                                                            <span className="crowd-value-number" style={{ color }}>
+                                                                {latest ? `${latest.ratio.toFixed(2)}%` : '-'}
+                                                            </span>
+                                                        </div>
+                                                        <Button
+                                                            type="primary"
+                                                            size="small"
+                                                            onClick={refreshCategoryRatioData}
+                                                            loading={isCategoryRefreshing}
+                                                            icon={<SyncOutlined spin={isCategoryRefreshing} />}
+                                                            className="crowd-refresh-btn"
+                                                        >
+                                                            {/* 刷新板块成交额数据 */}
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                                <div className="crowd-chart-body">
+                                                    {list.length > 0 ? (
+                                                        <div ref={setCategoryContainerRef(name)} className="crowd-chart" />
+                                                    ) : (
+                                                        <Empty description="暂无数据，请点击刷新生成" style={{ marginTop: 48 }} />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <Empty description="暂无拥挤度数据，请选择时间范围" style={{ marginTop: 48 }} />
+                            )}
+                        </>
+                    ),
+                },
                 {
                     key: 'intraday',
                     label: '当日资金',
@@ -2774,188 +2952,6 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                 </div>
                             ) : (
                                 <Empty description="暂无融资余额数据，请选择时间范围" style={{ marginTop: 48 }} />
-                            )}
-                        </>
-                    ),
-                },
-                {
-                    key: 'crowd',
-                    label: '拥挤度',
-                    children: (
-                        <>
-                            <div className="control-bar history-control-bar">
-                                <div className="crowd-info-bar">
-                    {crowdData.length > 0 && (
-                        <>
-                            {/* <span className="crowd-info-label">最新拥挤度</span> */}
-                            {/* <span
-                                className="crowd-info-value"
-                                style={{ color: '#722ed1' }}
-                            >
-                                {crowdData[crowdData.length - 1]?.score !== null && crowdData[crowdData.length - 1]?.score !== undefined 
-                                    ? crowdData[crowdData.length - 1]?.score.toFixed(2) 
-                                    : '-'}
-                            </span> */}
-                            {/* <span className="crowd-info-sub">
-                                ({crowdData[crowdData.length - 1]?.level || '-'})
-                            </span> */}
-                        </>
-                    )}
-                </div>
-                                <div className="date-range-picker">
-                                    <DatePicker.RangePicker
-                                        value={crowdDateRange}
-                                        onChange={(dates) => dates && setCrowdDateRange(dates)}
-                                        format="YYYY-MM-DD"
-                                        allowClear={false}
-                                        disabledDate={(current) => {
-                                            if (!current) return false;
-                                            const earliest = dayjs('2026-04-01').startOf('day');
-                                            return current.isBefore(earliest) || current.isAfter(dayjs().endOf('day'));
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                            <div className="crowd-alerts-section">
-                                <Alert
-                                    message="拥挤度分析提醒"
-                                    description={
-                                        <div className="crowd-alerts-content">
-                                            <p className="alert-item">
-                                                <span className="alert-number">1</span>
-                                                <span>拥挤度有滞后性，K线先出现下跌趋势，随后拥挤度才开始逐渐回落。所以K线的量价分析是逃顶的最先指标，拥挤度只能用来做趋势性分析，不能用来精准择时。</span>
-                                            </p>
-                                            <p className="alert-item">
-                                                <span className="alert-number">2</span>
-                                                <span>结合拥挤度和K线来看，拥挤度在大幅度下挫之后，往往会有一个大幅的反抽，形成一个双头结构（创业板的20260603、科创板的20260709），但是这并非反转，后面会继续下挫。真正的底部区间需要有长达一周左右的磨底（创业板的20260608-0615）。</span>
-                                            </p>
-                                        </div>
-                                    }
-                                    type="warning"
-                                    showIcon
-                                    className="crowd-alert"
-                                />
-                            </div>
-                            {indexKlineData && (
-                                <div className="crowd-index-section">
-                                    <Divider orientation="left"><LineChartOutlined /> 指数行情回顾</Divider>
-                                    <Row gutter={[16, 16]}>
-                                        <Col span={12}>
-                                            <Card title="创业板指" bordered={false} className="index-kline-card">
-                                                <StockKLine data={indexKlineData.chuangyebanData} height={300} />
-                                            </Card>
-                                        </Col>
-                                        <Col span={12}>
-                                            <Card title="科创50" bordered={false} className="index-kline-card">
-                                                <StockKLine data={indexKlineData.kechuangbanData} height={300} />
-                                            </Card>
-                                        </Col>
-                                    </Row>
-                                </div>
-                            )}
-                            {techRatioData.length === 0 && crowdData.length === 0 ? (
-                                <div className="rzrq-loading">加载中...</div>
-                            ) : techRatioData.length > 0 || crowdData.length > 0 ? (
-                                <div className="crowd-chart-container">
-                                    <div className="crowd-chart-card">
-                                        <div className="crowd-chart-header">
-                                            <div className="crowd-chart-title">拥挤度</div>
-                                            <div className="crowd-chart-value">
-                                                <span className="crowd-value-number" style={{ color: '#722ed1' }}>
-                                                    {crowdData[crowdData.length - 2]?.score !== null && crowdData[crowdData.length - 2]?.score !== undefined
-                                                        ? crowdData[crowdData.length - 2]?.score.toFixed(2)
-                                                        : '-'}
-                                                </span>
-                                                <span className="crowd-value-unit">{crowdData[crowdData.length - 2]?.level || '-'}</span>
-                                            </div>
-                                        </div>
-                                        <div className="crowd-chart-body">
-                                            {crowdData.length > 0 ? (
-                                                <div ref={crowdContainerRef} className="crowd-chart" />
-                                            ) : (
-                                                <div className="rzrq-loading">
-                                                    {crowdLoading ? '拥挤度实时计算中...' : '暂无拥挤度数据'}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="crowd-chart-card">
-                                        <div className="crowd-chart-header">
-                                            <div className="crowd-chart-title">科技板块成交量占比</div>
-                                            <div className="crowd-chart-right">
-                                                <div className="crowd-chart-value">
-                                                    <span className="crowd-value-number" style={{ color: getThemeColor() }}>
-                                                        {techRatioData[techRatioData.length - 1]?.ratio !== undefined
-                                                            ? `${techRatioData[techRatioData.length - 1].ratio.toFixed(2)}%`
-                                                            : '-'}
-                                                    </span>
-                                                </div>
-                                                <Button
-                                                    type="primary"
-                                                    size="small"
-                                                    onClick={refreshCrowdData}
-                                                    loading={isRefreshing}
-                                                    icon={<SyncOutlined spin={isRefreshing} />}
-                                                    className="crowd-refresh-btn"
-                                                >
-                                                    {/* 刷新当前最新数据 */}
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        <div className="crowd-chart-body">
-                                            <div ref={ratioContainerRef} className="crowd-chart" />
-                                        </div>
-                                    </div>
-                                    {CATEGORY_RATIO_BLOCKS.map(({ name, color }) => {
-                                        const list = categoryRatioData[name] || [];
-                                        const latest = list.length > 0 ? list[list.length - 1] : null;
-                                        return (
-                                            <div key={name} className="crowd-chart-card">
-                                                <div className="crowd-chart-header">
-                                                    <div className="crowd-chart-title-wrap">
-                                                        <div className="crowd-chart-title">{name}成交量占比</div>
-                                                        {(categoryRatioData[`${name}_blocks`] || []).length > 0 && (
-                                                            <div className="crowd-split-toggle">
-                                                                <span className="crowd-split-label">分拆子题材</span>
-                                                                <Switch
-                                                                    size="small"
-                                                                    checked={!!splitCategories[name]}
-                                                                    onChange={(checked) => setSplitCategories((prev) => ({ ...prev, [name]: checked }))}
-                                                                />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="crowd-chart-right">
-                                                        <div className="crowd-chart-value">
-                                                            <span className="crowd-value-number" style={{ color }}>
-                                                                {latest ? `${latest.ratio.toFixed(2)}%` : '-'}
-                                                            </span>
-                                                        </div>
-                                                        <Button
-                                                            type="primary"
-                                                            size="small"
-                                                            onClick={refreshCategoryRatioData}
-                                                            loading={isCategoryRefreshing}
-                                                            icon={<SyncOutlined spin={isCategoryRefreshing} />}
-                                                            className="crowd-refresh-btn"
-                                                        >
-                                                            {/* 刷新板块成交额数据 */}
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                                <div className="crowd-chart-body">
-                                                    {list.length > 0 ? (
-                                                        <div ref={setCategoryContainerRef(name)} className="crowd-chart" />
-                                                    ) : (
-                                                        <Empty description="暂无数据，请点击刷新生成" style={{ marginTop: 48 }} />
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <Empty description="暂无拥挤度数据，请选择时间范围" style={{ marginTop: 48 }} />
                             )}
                         </>
                     ),

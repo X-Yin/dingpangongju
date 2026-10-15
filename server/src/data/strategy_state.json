@@ -1,1 +1,34 @@
-{}
+{
+  "prev_day_volume_price_bottom": {
+    "triggeredToday": "2026-10-15"
+  },
+  "overnight_crisis_escape": {
+    "lastCheckedTime": "2026-10-15 10:00:32",
+    "lastTriggeredTime": "2026-10-15 09:32:26"
+  },
+  "ebb_tide_direct_reversal": {
+    "triggeredToday": "2026-10-15"
+  },
+  "high_open_high_walk": {
+    "advisoryToday": "2026-10-15",
+    "preconditionMet": false,
+    "triggerIndexCode": null,
+    "triggerIndexName": null,
+    "checkedToday": "2026-10-15"
+  },
+  "high_open_max_half_position": {
+    "triggeredToday": "2026-10-15"
+  },
+  "opening_net_inflow": {
+    "triggeredToday": "2026-10-15"
+  },
+  "panic_outflow": {
+    "lastTriggeredTime": "2026-10-15 14:50:27"
+  },
+  "straight_rise_no_volume": {
+    "lastTriggeredTime": "2026-10-15 13:00:00"
+  },
+  "tail_dip_buying": {
+    "checkedToday": "2026-10-15"
+  }
+}

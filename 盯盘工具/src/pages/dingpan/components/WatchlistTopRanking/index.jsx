@@ -1,9 +1,9 @@
-import { Card, Row, Col, Empty, Dropdown } from 'antd';
-import { RiseOutlined, LineChartOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Empty, Dropdown, Tooltip, Button } from 'antd';
+import { RiseOutlined, LineChartOutlined, ReloadOutlined } from '@ant-design/icons';
 import { titleStyle, borderStyle, numberStyle } from '../../utils/themeColor';
 
 // 当前自选股个股涨跌幅前十：展示自选股中涨幅前十与跌幅前十
-const WatchlistTopRanking = ({ stocks = [], onStockClick, onOpenOverlayTimeLine, themeColor }) => {
+const WatchlistTopRanking = ({ stocks = [], onStockClick, onOpenOverlayTimeLine, onRefresh, refreshing = false, themeColor }) => {
     const valid = Array.isArray(stocks)
         ? stocks.filter((s) => s && s.change != null)
         : [];
@@ -109,9 +109,21 @@ const WatchlistTopRanking = ({ stocks = [], onStockClick, onOpenOverlayTimeLine,
     return (
         <Card
             title={
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <RiseOutlined />
-                    <span style={{ fontSize: 15, fontWeight: 600 }}>自选股涨跌幅前十</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <RiseOutlined />
+                        <span style={{ fontSize: 15, fontWeight: 600 }}>自选股涨跌幅前十</span>
+                    </div>
+                    <Tooltip title="刷新股票数据">
+                        <Button
+                            size="small"
+                            type="text"
+                            icon={<ReloadOutlined />}
+                            loading={refreshing}
+                            onClick={onRefresh}
+                            style={{ color: 'rgba(0,0,0,0.45)', padding: '0 4px', height: 24 }}
+                        />
+                    </Tooltip>
                 </div>
             }
             className="monitor-card"

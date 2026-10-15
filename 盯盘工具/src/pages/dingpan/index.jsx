@@ -2541,6 +2541,8 @@ const DingPan = () => {
                                         stocks={visibleAllStockData}
                                         onStockClick={showKLine}
                                         onOpenOverlayTimeLine={handleOpenOverlayTimeLine}
+                                        onRefresh={handleRefreshStockData}
+                                        refreshing={refreshingStockData}
                                         themeColor={effThemeColor}
                                     />
                                 </div>

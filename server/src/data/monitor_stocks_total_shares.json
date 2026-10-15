@@ -528,5 +528,25 @@
     "secu_code": "sh603767",
     "secu_name": "中马传动",
     "TotalShares": 308631500
+  },
+  {
+    "secu_code": "sz002343",
+    "secu_name": "慈文传媒",
+    "TotalShares": 473680286
+  },
+  {
+    "secu_code": "sh601811",
+    "secu_name": "新华文轩",
+    "TotalShares": 1233841000
+  },
+  {
+    "secu_code": "sh603200",
+    "secu_name": "上海洗霸",
+    "TotalShares": 175480103
+  },
+  {
+    "secu_code": "sh603533",
+    "secu_name": "掌阅科技",
+    "TotalShares": 438896835
   }
 ]

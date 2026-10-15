@@ -1,4 +1,4 @@
-// 各板块（传媒/农业/消费/医药/电力/锂电池）成交额汇总计算
+// 各板块（传媒/农业/消费/医药/电力/锂电池/存储芯片/光通信/液冷/pcb）成交额汇总计算
 // 用途：读取 东方财富板块成分股汇总/{分类}.json 的成分股列表，
 //       逐只请求同花顺日K拿成交额与收盘价，按天汇总后写入 category_amount_money_result.json；
 //       若存在 {分类}_blocks.json（板块名 → 成分股明细），额外按子板块拆分成交额，
@@ -24,7 +24,7 @@ const defaultStartDate = '2026-04-01';
 const defaultEndDate = dayjs().format('YYYY-MM-DD');
 
 // 需要计算成交额占比的分类（与 东方财富板块成分股汇总 目录下 {分类}.json 对应）
-const CATEGORY_NAMES = ['传媒', '农业', '消费', '医药', '电力', '锂电池'];
+const CATEGORY_NAMES = ['传媒', '农业', '消费', '医药', '电力', '锂电池', '存储芯片', '光通信', '液冷', 'pcb'];
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
