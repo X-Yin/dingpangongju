@@ -1329,5 +1329,10 @@ exports.default = [
         "blockName": "军工",
         "code": "sz001316",
         "name": "润贝航科"
+    },
+    {
+        "blockName": "电力",
+        "code": "sz000993",
+        "name": "闽东电力"
     }
 ]

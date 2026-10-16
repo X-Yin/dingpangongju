@@ -244,6 +244,40 @@ const getMultiLianbanStocks = (dateStr, minBoardCount = 3) => {
   return out;
 };
 
+// 给定回测日期 D，返回过去 lookbackDays 个交易日（严格不含当日 D）内出现过连板数 >= minBoardCount
+// 的个股（去重合并；同 code 保留最大连板数及其命中日期）
+// 返回 { stocks: [{ code: 'shxxxxxx', name, lianbanCount, board, date }], dates: ['YYYYMMDD'] }
+const getRecentMultiLianbanStocks = async (dateStr, lookbackDays = 20, minBoardCount = 3) => {
+  const dates = (await getPastTradingDates(dateStr, lookbackDays)).map(String);
+  const map = new Map(); // code -> { code, name, lianbanCount, board, date }
+  for (const d of dates) {
+    const list = getMultiLianbanStocks(d, minBoardCount);
+    for (const s of list) {
+      const prev = map.get(s.code);
+      if (prev && prev.lianbanCount >= s.lianbanCount) continue;
+      map.set(s.code, { code: s.code, name: s.name, lianbanCount: s.lianbanCount, board: s.board, date: d });
+    }
+  }
+  return { stocks: Array.from(map.values()), dates };
+};
+
+// 个股「放量比」：昨日成交量 v 相对「更前 3 个交易日日均量」的比值 (v_y − avg3) / avg3
+// 数据不足（bars 缺失 / 更前 3 日量能缺失）返回 null
+const stockVolumeRatio = (code, dateStr) => {
+  const bars = barsCache.get(code);
+  if (!bars || bars.length < 4) return null;
+  const d = Number(dateStr);
+  let yIdx = -1;
+  for (let i = 0; i < bars.length; i++) { if (bars[i].d < d) yIdx = i; else break; }
+  if (yIdx < 3) return null; // 需昨日 + 更前 3 日共 4 根
+  const yv = bars[yIdx].v;
+  const prior = [bars[yIdx - 1].v, bars[yIdx - 2].v, bars[yIdx - 3].v];
+  if (yv == null || prior.some(v => v == null || !(v > 0))) return null;
+  const avg3 = prior.reduce((a, b) => a + b, 0) / 3;
+  if (!(avg3 > 0)) return null;
+  return parseFloat(((yv - avg3) / avg3).toFixed(6));
+};
+
 // ============================================================
 // 红利板块连板候选股（逆周期情绪游资防御池扩展）
 // 2026-10-04 用户口径（修订版）：在回测日期 D 往前 lookbackDays（默认 20）个交易日内，
@@ -491,10 +525,14 @@ module.exports = {
   stockDailyChange,
   stockWindowGain,
   getStockCloseOnOrBefore,
+  getPastTradingDates,
+  getRecentMultiLianbanStocks,
+  stockVolumeRatio,
   getHistoricalLianbanDefenseStocks,
   scanAllLianbanCodesInRange,
   getHongliMultiLianbanStocks,
   scanHongliMultiLianbanCodesInRange,
   getLeaderPool,
   hasRecentVolumeSurge,
+  getTopLianbanBoardStocks,
 };

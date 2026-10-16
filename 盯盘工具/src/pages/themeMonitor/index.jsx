@@ -8,7 +8,7 @@ import {
 import {
   FireOutlined, ThunderboltOutlined, AreaChartOutlined,
   RiseOutlined, FallOutlined, CaretDownOutlined, CaretUpOutlined,
-  PieChartOutlined, FlagOutlined, AppstoreOutlined,
+  PieChartOutlined, FlagOutlined, AppstoreOutlined, LineChartOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -16,6 +16,7 @@ import { local_ip } from '../../constant';
 import { parseMoneyValue, formatDisplayTime, aggregateFundByInterval } from '../../utils/fundAggregation';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import StockKLineModal from '../../components/StockKLineModal';
+import StockHistoryAnalysisModal from '../../components/StockHistoryAnalysisModal';
 import './index.scss';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ChartTooltip, Filler, Legend);
@@ -437,8 +438,7 @@ const OverviewBar = ({ overview, onOpenSentiment }) => {
 };
 
 // ==================== 主线 / 支线 结论条 ====================
-const MainlineStrip = ({ analysis, quotes }) => {
-  if (!analysis?.themes?.length) return null;
+const MainlineStrip = ({ analysis, quotes, onOpenHistoryAnalysis }) => {
   // 今日实时涨停家数：对题材股票池按涨停价规则逐只判断（主板/创业科创/ST 区分）
   const liveCountOf = (t) => (t.stocks || []).filter((s) => isStockLimitUp(s, quotes?.[s.marketCode])).length;
   const renderChips = (list, type) => (
@@ -457,11 +457,21 @@ const MainlineStrip = ({ analysis, quotes }) => {
       })}
     </div>
   );
+  const hasThemes = !!analysis?.themes?.length;
   return (
     <div className="tm-mainline-strip">
-      {renderChips(analysis.mainLines || [], '主线')}
-      <span className="tm-line-divider" />
-      {renderChips(analysis.branches || [], '支线')}
+      {hasThemes ? (
+        <>
+          {renderChips(analysis.mainLines || [], '主线')}
+          <span className="tm-line-divider" />
+          {renderChips(analysis.branches || [], '支线')}
+        </>
+      ) : (
+        <span className="tm-line-empty">暂无主线/支线数据</span>
+      )}
+      <button type="button" className="tm-history-analysis-btn" onClick={onOpenHistoryAnalysis}>
+        <LineChartOutlined /> 个股历史分析
+      </button>
     </div>
   );
 };
@@ -866,6 +876,7 @@ const ThemeMonitor = () => {
   const [loading, setLoading] = useState(true);
   const [sentimentVisible, setSentimentVisible] = useState(false);
   const [themeModal, setThemeModal] = useState({ visible: false, theme: null });
+  const [historyAnalysisVisible, setHistoryAnalysisVisible] = useState(false);
 
   const handleOpenThemeHistory = useCallback((theme) => {
     setThemeModal({ visible: true, theme });
@@ -977,7 +988,11 @@ const ThemeMonitor = () => {
     <div className="theme-monitor-container">
       <OverviewBar overview={overview} onOpenSentiment={() => setSentimentVisible(true)} />
       <BlockRankingStrip blocks={blocks} />
-      <MainlineStrip analysis={analysis} quotes={quotes} />
+      <MainlineStrip
+        analysis={analysis}
+        quotes={quotes}
+        onOpenHistoryAnalysis={() => setHistoryAnalysisVisible(true)}
+      />
 
       {loading && !analysis ? (
         <div className="tm-loading"><Spin size="large" /></div>
@@ -1019,6 +1034,11 @@ const ThemeMonitor = () => {
       <SentimentHistoryModal
         visible={sentimentVisible}
         onCancel={() => setSentimentVisible(false)}
+      />
+
+      <StockHistoryAnalysisModal
+        visible={historyAnalysisVisible}
+        onCancel={() => setHistoryAnalysisVisible(false)}
       />
 
       <ThemeHistoryModal

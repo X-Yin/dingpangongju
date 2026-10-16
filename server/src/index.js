@@ -15,6 +15,7 @@ const path = require('path');
 const fs = require('fs');
 const { filterUnNormalDaPanData, getAllDaPanData } = require('./service/dapan');
 const { filterUnNormalStockData, getSingleStockData, getSingleStockTlineData, getSingleStockTlineDataByDate, getAllStockData, getJiSuYiDongRankData, triggerUpdateStockData, refreshStockData, getOpeningPrices, getStockValuation } = require('./service/stock');
+const { analyzeStockHistory } = require('./service/stockHistoryAnalysis');
 const { getBlockData, refreshBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock, getBlockHistory, getBlockDayHistory, updateBlockDayHistory, getBlockMoneyDayHistory, updateBlockMoneyDayHistory } = require('./service/block');
 // const { diagnose } = require('./service/diagnose');
 const { getJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
@@ -307,6 +308,19 @@ app.get('/stock_tline_data', async (req, res) => {
     // stockData.json 暂不存在时忽略
   }
   res.json({ ...(stockTlineData || {}), stockName, line: stockTlineData?.line || [] });
+});
+
+// 个股历史分析：区间内日K（含 MA3/MA5/MA10）+ 每日差劲分 / 强度分
+app.get('/stock_history_analysis', async (req, res) => {
+  try {
+    const { code, startDate, endDate } = req.query;
+    const result = await analyzeStockHistory(code, startDate, endDate);
+    if (!result.success) return res.status(400).json(result);
+    return res.json(result);
+  } catch (error) {
+    console.error('个股历史分析失败:', error);
+    return res.status(500).json({ success: false, message: error.message || '分析失败' });
+  }
 });
 
 app.get('/technical_diagnosis', async (req, res) => {

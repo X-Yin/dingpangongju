@@ -1,4 +1,4 @@
-const { LEADER_DESC, LEADER_TECH_DESC, LEADER_TECH_REV_DESC } = require('../descs');
+const { LEADER_DESC, LEADER_TECH_DESC, LEADER_TECH_REV_DESC, EXTREME_WIN_DESC, PRECISE_TIMING_DESC } = require('../descs');
 
 // 情绪游资-龙头战法（2026-10-11 用户新增，2026-10-11 二次改版合并为单一「板块口径」策略；
 // leaderMode: true → 独立引擎 runLeaderBacktest，不复用重点板块引擎）：
@@ -37,5 +37,26 @@ module.exports = {
     leaderMode: true,
     leaderTechCombo: true,
     techFirst: true,
+  },
+  // 情绪游资-极致胜率（2026-10-16 用户新增）：在「过去 20 个交易日走出过三连板及以上」的强势股中，
+  // 寻找「昨日表现很差（差劲分高）＋今日分时表现很强（强度分高）」的个股做分歧转一致的低吸反转博弈。
+  // extremeWinMode: true → 独立引擎 runExtremeWinBacktest（不复用重点板块引擎，也不走龙头战法的斜率买点）；
+  //   买点在今日盘中逐桶实时判定，卖点完全沿用「情绪游资-龙头战法」的 6 条卖点；全仓
+  hot_money_extreme_win: {
+    id: 'hot_money_extreme_win',
+    name: '情绪游资-极致胜率',
+    desc: EXTREME_WIN_DESC,
+    extremeWinMode: true,
+  },
+  // 情绪游资-精准择时（2026-10-16 用户新增）：账户拆两份各 5 成——仓位 A 完全按「情绪游资-龙头战法」买卖，
+  // 仓位 B 在「上证 3 日线斜率前一交易日收盘口径由负转正」时当日上午打板（上一交易日涨停数 top2 板块全部成分股中
+  // 最先涨到 +8% 者，一字板顺延，仅上午交易），卖点沿用龙头战法 6 条。
+  // leaderMode: true + preciseTiming: true → 独立引擎 runPreciseTimingBacktest（内部复用 runLeaderBacktest 跑仓位 A）
+  hot_money_precise_timing: {
+    id: 'hot_money_precise_timing',
+    name: '情绪游资-精准择时',
+    desc: PRECISE_TIMING_DESC,
+    leaderMode: true,
+    preciseTiming: true,
   },
 };

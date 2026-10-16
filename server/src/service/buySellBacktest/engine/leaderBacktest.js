@@ -30,6 +30,7 @@ const { buildCounterCycSet } = require('./cycleFilter');
 const { pickBestStock } = require('./pickBest');
 const { emoQuickOutSell } = require('./sellHooks/emoQuickOut');
 const { generalSellPositions } = require('./sellHooks/generalSell');
+const { scanLeaderPriceSell } = require('./leaderSellMinute');
 const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats');
 
 // 情绪游资-龙头战法（2026-10-11 用户新增；2026-10-11 二次改版：合并为单一「板块口径」策略）：
@@ -43,14 +44,18 @@ const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats')
 //   卖点 = 持仓股跌破成本线 -5% 且连续维持 ≥5 分钟（止损，防瞬时假跌破）∪ 持仓股跌停（较昨收 <-9%）∪ 高位放量大阴线（当日最高回落 > 8% 且现价 < 开盘）
 //          ∪ 弱势持仓时限（持仓第 3 个交易日[含买入当日为第 1 天]尾盘 14:57 收益仍未拉开至 +10% 即卖出）
 //          ∪ 竞价低开（开盘价较昨收低开 < -5% 时按开盘价卖出）
-//          ∪ 收盘抗分歧指数（当日收盘抗分歧分数 < 6 即尾盘卖出）。
-//   买入次日起生效；当日买入次日才可卖；当日卖出后当日不再追买。全仓，收益率不做半仓折算。
+//          ∪ 收盘抗分歧指数（当日收盘抗分歧分数 < 6 即尾盘卖出）
+//          ∪ 盘中分时跌幅（较昨收 ≤ -5% 直接卖出，不设持续性门槛）
+//          ∪ 开盘后直线下挫（自 9:30 开盘起，现价较当日开盘价跌幅 ≤ -5%，不管当前较昨收涨幅如何，直接卖出；2026-10-16 用户新增）。
+//   价格类卖点（⑤竞价低开 / ①成本线止损 / ②跌停 / ⑦昨收跌幅 / ⑧开盘跌幅 / ③高位大阴线）均按**分钟级回溯**成交：
+//   自 9:30 逐分钟扫描分时，取「最先触发」的那一分钟的分钟与分时价精准卖出（不再只按 5min 桶时点价成交）。
+//   买入次日起生效；当日买入次日才可卖；当日卖出后当日不再追买。半仓，每笔用当前总资金 50% 逐笔复利（整体收益 = 期末总资产 ÷ 本金 − 1）。
 //
 // 情绪龙头+科技进攻（leaderTechCombo: true，2026-10-12 用户新增；走本引擎的组合分支）：
 //   在「情绪游资-龙头战法」基础上叠加「3日涨幅最大&三日情绪-60快进快出」的独立买点，两者共用一个单持仓账户
 //   （①情绪游资按半仓计收益[权重 0.5]、②快进快出按全仓计收益[权重 1]）：
 //   空仓时逐桶判定：同一桶两套买点同时触发 → 先买情绪游资（①龙头战法）；非同时触发 → 谁先触发买谁（先成交即持仓）；
-//   卖点各用各的：①情绪游资仓位走龙头战法 6 条卖点；②快进快出仓位走快进快出卖点（次日 10:00 强卖 / 盘中 -2% 止损 / 否则通用 7 条件）；
+//   卖点各用各的：①情绪游资仓位走龙头战法 8 条卖点；②快进快出仓位走快进快出卖点（次日 10:00 强卖 / 盘中 -2% 止损 / 否则通用 7 条件）；
 //   当日卖出仅禁止同路再买：快进快出强卖/止损当日仅②那路不再买入（①仍可出手）；①卖出当日仅①那路不再追买（②仍可出手）。
 const LEADER_TECH_EMOQUICK_ID = 'highest_3d_gain_emoquick'; // 组合②路：快进快出买点/卖点直接复用该策略口径
 const LEADER_LOOKBACK_DAYS = 10;        // 回溯窗口：过去 10 个交易日
@@ -63,41 +68,18 @@ const LEADER_VOLUME_LOOKBACK_DAYS = 5;  // 放量分歧窗口：最近 5 个交�
 const LEADER_VOLUME_SURGE_PCT = 200;    // 放量门槛：某日成交量较前一交易日增加 ≥ 200%（即 ≥ 前一日 × 3）即视为放量
 const LEADER_VOLUME_PEAK_DAYS = 10;     // 放量须为峰值：从放量之日起往前回溯 10 个交易日（含放量当日）内量能最大的一天
 const MAIN_BOARD_LIMIT_UP_PCT = 9.5;    // 涨停判定（候选池仅主板，涨幅 > 9.5%）
-const STOP_LOSS_PCT = -5;               // 止损门槛：较成本价（买入价）跌破 -5%
-const STOP_LOSS_SUSTAIN_MINUTES = 5;    // 止损持续性：需连续低于成本线 -5% 至少 5 分钟才卖（防瞬时假跌破）
-const LIMIT_DOWN_SELL_PCT = -9;         // 跌停卖出门槛：较昨收跌幅 < -9%
-const HIGH_POSITION_DROP_PCT = 8;       // 高位放量大阴线：当日最高价回落到现价 > 8%（口径同卖点诊断「条件2」）
+// 价格类卖点门槛（止损 -5%/持续 5min、跌停 -9%、昨收跌幅 -5%、开盘跌幅 -5%、高位回落 8%、竞价低开 -5%）
+// 统一由 ./leaderSellMinute.scanLeaderPriceSell 内部持有，本引擎不再重复定义
 const WEAK_TRADE_HOLD_DAYS = 3;         // 弱势持仓时限：持仓第 3 个交易日（含买入当日为第 1 天）
 const WEAK_TRADE_MIN_GAIN_PCT = 10;     // 收益门槛：到第 3 个交易日尾盘收益仍未拉开至 +10% 即卖出
 const TAIL_MINUTE = 1457;               // 尾盘判定分钟（未覆盖 14:57 时回退当日最后一分钟）
-const AUCTION_GAP_DOWN_PCT = -5;        // 竞价低开门槛：开盘价较昨收低开 < -5% 即开盘卖出
 const RESILIENCE_SELL_MAX = 6;          // 收盘抗分歧指数卖出门槛：当日收盘抗分歧分数 < 6 即卖出
 const LEADER_RESILIENCE_INDEX_CODE = 'sh000001'; // 抗分歧跟踪指数：候选池仅主板，统一跟踪上证指数
 
 // 剔除科创板（688）/ 创业板（300/301）个股，只保留主板标的
 const isStarOrChiNext = (code) => /^(30|688)/.test(String(code).replace(/^(sh|sz|bj)/i, ''));
 
-// HHMM 分钟转「当日绝对分钟数」（用于计算持续时长）
-const toAbsMinute = (mm) => Math.floor(mm / 100) * 60 + (mm % 100);
-
-// 成本线止损持续性：返回截至 minute 时刻，现价「连续低于止损价」的持续分钟数。
-// 仅在分钟数据连续（相邻间隙 ≤ 1 分钟，或跨午休 11:30→13:00）时累计，避免把数据缺口误判为持续跌破。
-const sustainedBelowStopMinutes = (points, minute, stopPx) => {
-  const upto = points.filter(p => p.minute <= minute && p.lastPx > 0);
-  if (upto.length === 0) return 0;
-  const last = upto[upto.length - 1];
-  if (!(last.lastPx < stopPx)) return 0;
-  let start = last;
-  for (let i = upto.length - 2; i >= 0; i--) {
-    const p = upto[i];
-    if (!(p.lastPx < stopPx)) break;
-    const gap = toAbsMinute(start.minute) - toAbsMinute(p.minute);
-    const isLunch = p.minute <= 1130 && start.minute >= 1300;
-    if (gap > 1 && !isLunch) break; // 数据缺口，不视为连续跌破
-    start = p;
-  }
-  return toAbsMinute(last.minute) - toAbsMinute(start.minute);
-};
+// 价格类卖点的分钟级回溯统一走 ./leaderSellMinute.scanLeaderPriceSell
 
 // 个股分时点缓存：`${code}|${dateNum}` -> { preclose, points:[{minute,lastPx,change}] }（升序，过滤无效价）
 // 每个交易日开始前清空，避免整轮回测累积占用内存
@@ -136,16 +118,20 @@ const priceAtMinute = (points, minute) => {
   return atPt;
 };
 
-const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => {
+const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress, opts = {}) => {
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.leaderMode !== true) {
     return { success: false, message: `未知龙头战法策略: ${strategyId}` };
   }
   const combo = strategy.leaderTechCombo === true; // 情绪龙头+科技进攻 / 科技进攻+情绪龙头：叠加②快进快出买点/卖点
   const techFirst = strategy.techFirst === true;   // 科技进攻+情绪龙头：反优先级（同一桶②优先、持仓①龙头时②触发立即切换卖出）
-  // ①情绪龙头仓位权重：组合策略（科技进攻+情绪龙头 / 情绪龙头+科技进攻）下①按半仓计收益（占 50% 资金），
-  // ②科技进攻仍按全仓；纯「情绪游资-龙头战法」保持全仓。逐笔复利口径下即为账户真实收益。
-  const leaderWeight = combo ? 0.5 : 1;
+  // ①情绪龙头仓位权重：一律半仓（占当前总资金 50%，逐笔复利滚动）——纯「情绪游资-龙头战法」自 2026-10-16 起改按半仓计收益：
+  // 每笔用当前总资产的 50%（本金 100 → 首笔买 50；赚 20% 后总资产 110 → 次笔买 55 ……），整体收益 = 期末总资产 ÷ 本金 − 1。
+  // 组合策略下①半仓、②科技进攻仍按全仓。逐笔复利口径下即为账户真实收益。
+  // opts.weight 可显式覆盖（「情绪游资-精准择时」把仓位 A 按半仓 0.5 跑）。
+  const leaderWeight = (opts && opts.weight != null && Number.isFinite(Number(opts.weight)))
+    ? Number(opts.weight)
+    : 0.5;
   // 不依赖资金快照：日期序列并入 tech_index 覆盖的交易日（补上缺资金快照的日期）
   const allDates = Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]));
   const rangeDates = allDates.filter(d => d >= startDate && d <= endDate).sort();
@@ -255,7 +241,7 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
       }, 8);
     };
 
-    // 隔夜持仓当日分时（用于止损/跌停卖出；仅①情绪游资路用本引擎的 6 条卖点，②快进快出路走 hook）
+    // 隔夜持仓当日分时（用于止损/跌停卖出；仅①情绪游资路用本引擎的 7 条卖点，②快进快出路走 hook）
     let posTline = null;
     if (position && (!combo || position.branch === 'leader') && dateStr > position.buyDate) {
       posTline = await loadTlinePoints(position.code, dateNum);
@@ -364,33 +350,24 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
             : null;
 
           let sellReason = null;
-          // ⑤ 竞价低开：开盘价（当日首个桶）较昨收低开 < -5% → 开盘价卖出
-          if (bi === 0 && changePct != null && changePct < AUCTION_GAP_DOWN_PCT) {
-            sellReason = `竞价低开（昨收 ${preclose != null ? preclose.toFixed(2) : '--'}，开盘 ${px.toFixed(2)}，低开 ${changePct}% < ${AUCTION_GAP_DOWN_PCT}%）`;
-          }
-          // ① 跌破成本线 -5%（止损）：需连续低于成本线 -5% 至少 5 分钟才卖，避免瞬时假跌破
-          if (!sellReason && costReturn != null && costReturn < STOP_LOSS_PCT) {
-            const stopPx = position.buyPrice * (1 + STOP_LOSS_PCT / 100);
-            const belowMinutes = sustainedBelowStopMinutes(posTline.points, bucketMinute, stopPx);
-            if (belowMinutes >= STOP_LOSS_SUSTAIN_MINUTES) {
-              sellReason = `持仓股跌破成本线（成本 ${position.buyPrice.toFixed(2)}，现价 ${px.toFixed(2)}，较成本 ${costReturn}% < ${STOP_LOSS_PCT}%）持续 ${belowMinutes} 分钟 ≥ ${STOP_LOSS_SUSTAIN_MINUTES} 分钟止损`;
-            }
-          }
-          // ② 跌停：较昨收跌幅 < -9%
-          if (!sellReason && changePct != null && changePct < LIMIT_DOWN_SELL_PCT) {
-            sellReason = `持仓股触及跌停（昨收 ${preclose != null ? preclose.toFixed(2) : '--'}，现价 ${px.toFixed(2)}，跌幅 ${changePct}% < ${LIMIT_DOWN_SELL_PCT}%）`;
-          }
-          // ③ 高位放量大阴线：当日最高价回落到现价 > 8% 且现价 < 开盘价（口径同卖点诊断「条件2」）
-          if (!sellReason) {
-            const pts = posTline.points.filter(p => p.minute <= bucketMinute && p.lastPx > 0);
-            if (pts.length > 0) {
-              const openPx = pts[0].lastPx;
-              const dayHigh = pts.reduce((mx, p) => Math.max(mx, p.lastPx), 0);
-              const amplitude = px > 0 ? ((dayHigh - px) / px) * 100 : 0;
-              if (amplitude > HIGH_POSITION_DROP_PCT && px < openPx) {
-                sellReason = `高位放量大阴线（当日最高 ${dayHigh.toFixed(2)} 回落至现价 ${px.toFixed(2)}，跌幅 ${amplitude.toFixed(2)}% > ${HIGH_POSITION_DROP_PCT}%，且现价 < 开盘 ${openPx.toFixed(2)}）`;
-              }
-            }
+          let sellMinute = atPt.minute; // 默认按当前桶时点成交（④⑥属尾盘时点卖点）
+          let sellPx = px;
+          let sellChange = changePct;
+
+          // 价格类卖点（⑤竞价低开 / ①成本线止损 / ②跌停 / ⑦昨收跌幅 / ⑧开盘跌幅 / ③高位大阴线）：
+          // 分钟级回溯——自 9:30 起逐分钟扫描分时，取「最先触发」的那一分钟的分钟与分时价精准卖出
+          // （不再只按当前 5min 桶时点价判定，避免 9:35 桶破位却在 9:31 就已触发时卖晚）。
+          const priceHit = scanLeaderPriceSell({
+            points: posTline.points,
+            preclose,
+            buyPrice: position.buyPrice,
+            cutoffMinute: bucketMinute,
+          });
+          if (priceHit) {
+            sellReason = priceHit.reason;
+            sellMinute = priceHit.minute;
+            sellPx = priceHit.px;
+            sellChange = priceHit.changePct;
           }
 
           // ④ 弱势持仓时限：持仓第 3 个交易日（含买入当日为第 1 天）尾盘收益仍未拉开至 +10% → 卖出
@@ -410,9 +387,8 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
           }
 
           if (sellReason) {
-            const sellChange = changePct;
             const rawReturnRate = position.buyPrice > 0
-              ? parseFloat((((px - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
+              ? parseFloat((((sellPx - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
               : null;
             trades.push({
               seq: trades.length + 1,
@@ -433,8 +409,8 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
               buyChecks: position.buyChecks,
               sellDate: dateStr,
               sellDateDisplay: dateDisplay,
-              sellTime: fmtMinute(atPt.minute),
-              sellPrice: parseFloat(px.toFixed(2)),
+              sellTime: fmtMinute(sellMinute),
+              sellPrice: parseFloat(sellPx.toFixed(2)),
               sellChange,
               sellReason: `${sellReason}，情绪游资-龙头战法持仓卖出（${leaderWeight === 0.5 ? '半仓' : '全仓'}）`,
               returnRate: rawReturnRate != null ? parseFloat((rawReturnRate * leaderWeight).toFixed(2)) : null,
@@ -609,7 +585,7 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => 
     }
   }
 
-  // 组装结果（type:'single'：全仓单持仓，整体收益率 = 逐笔复利，与 rangeBacktest/sentimentHotMoney 口径一致；
+  // 组装结果（type:'single'：单持仓（半仓：每笔用当前总资金 50% 逐笔复利），整体收益率 = 逐笔复利，与 rangeBacktest/sentimentHotMoney 口径一致；
   // 期末持仓按最近收盘价估算的浮动收益并入复利）
   let acc = 1;
   for (const t of trades) {
@@ -694,7 +670,7 @@ const buildPosition = ({ pick, dateStr, dateDisplay, timeText, slopeNow, hotBoar
       title: `板块内自爆发以来涨幅最大的龙头`,
       passed: true,
       value: `${pick.name}（${pick.code}）${gainText}`,
-      reason: `该股自板块爆发日 ${pick.baseDate} 收盘 ${pick.base.toFixed(2)} 起算，至触发时点价 ${pick.px.toFixed(2)}，涨幅 ${gainText}（已通过 ${LEADER_MIN_BOARD_GAIN_PCT}%~${LEADER_MAX_BOARD_GAIN_PCT}% 买入门槛，且触发时点当日实时涨幅 ${pick.changePct != null ? `${pick.changePct > 0 ? '+' : ''}${pick.changePct}%` : '--'} ≥ ${LEADER_MAX_BUY_DROP_PCT}%；板块名册共 ${roster} 只，全仓候选合计 ${poolTotal} 只）；涨幅第 1 已涨停则买第 2，前两名均涨停则顺延次日 9:30${rank === 2 ? '；本次买入为涨幅第 2（第 1 已封涨停）' : ''}`,
+      reason: `该股自板块爆发日 ${pick.baseDate} 收盘 ${pick.base.toFixed(2)} 起算，至触发时点价 ${pick.px.toFixed(2)}，涨幅 ${gainText}（已通过 ${LEADER_MIN_BOARD_GAIN_PCT}%~${LEADER_MAX_BOARD_GAIN_PCT}% 买入门槛，且触发时点当日实时涨幅 ${pick.changePct != null ? `${pick.changePct > 0 ? '+' : ''}${pick.changePct}%` : '--'} ≥ ${LEADER_MAX_BUY_DROP_PCT}%；板块名册共 ${roster} 只，候选合计 ${poolTotal} 只）；涨幅第 1 已涨停则买第 2，前两名均涨停则顺延次日 9:30${rank === 2 ? '；本次买入为涨幅第 2（第 1 已封涨停）' : ''}`,
     },
   ];
   if (deferred) {
