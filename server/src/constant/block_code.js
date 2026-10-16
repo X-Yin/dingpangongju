@@ -1120,12 +1120,6 @@ exports.default = [
         "name": "广汇能源"
     },
     {
-        "blockName": "端侧AI",
-        "code": "sh603236",
-        "name": "移远通信",
-        "tag": "中性"
-    },
-    {
         "blockName": "游戏",
         "code": "sz002624",
         "name": "完美世界",
@@ -1330,5 +1324,10 @@ exports.default = [
         "blockName": "AI 剧",
         "code": "sz300133",
         "name": "华策影视"
+    },
+    {
+        "blockName": "军工",
+        "code": "sz001316",
+        "name": "润贝航科"
     }
 ]

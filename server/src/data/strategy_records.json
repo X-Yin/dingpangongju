@@ -1,1 +1,132 @@
-[]
+[
+  {
+    "id": "a8a2b6414949b30c",
+    "time": "2026-10-16 09:30:20",
+    "read": true,
+    "strategyId": "prev_day_tail_rally",
+    "title": "📊 前一日尾盘拉升，今日高开需持续观察",
+    "description": "前一日（20261015）创业板指：14:00后最低2751.79→收盘2783.17，拉升1.14%；科创50：14:00后最低1330.28→收盘1359.52，拉升2.20%。今日竞价高开1.75%（开盘价2831.89 > 前日收盘2783.17），需要持续观察，可能高开低走，也可能是高举高打，概率五五开。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "80d13e65518c3d2e",
+    "time": "2026-10-16 09:30:20",
+    "read": true,
+    "strategyId": "ebb_tide_direct_reversal",
+    "title": "⚠️ 退潮直接反转概率低，切勿追涨",
+    "description": "创业板指前一日涨跌幅 -2.92%。<br/>创业板指前一个交易日大跌超过-2%，次日直接反转的概率只有 <strong>23%</strong>，不要追涨！就算参与只能 <strong>1/3 仓位</strong>参与。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "b27ba944832b046d",
+    "time": "2026-10-16 09:30:20",
+    "read": true,
+    "strategyId": "high_open_high_walk",
+    "title": "📈 高开高走观察-9:40之前不要出手",
+    "description": "9:30 开盘：<strong>创业板指</strong>高开 <strong>+1.75%</strong>、<strong>科创50</strong>高开 <strong>+1.65%</strong>（>0.5%），科技情绪指数 <strong>49.2</strong>（≥30）。<br/>高开高走需要满足 9:40 之前指数持续上攻 & 资金持续净流入，当然有量能放大配合最好，如果量能不放大，前一日必须要满足情绪冰点。所以在 9:40 之前不要出手，等 9:40 之后出手即可，当日买入一般能有 3-4 个点的利润垫。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "b88493dd59a49f8c",
+    "time": "2026-10-16 09:30:20",
+    "read": true,
+    "strategyId": "high_open_max_half_position",
+    "title": "⚠️ 高开最多半仓",
+    "description": "9:30 开盘 创业板指高开 +1.75%、科创50高开 +1.65%（>0.5%）。\n大A惯例高开容易低走，此时如果开盘想要加仓，最多只能买单半仓，分摊到两个个股身上就是各自1/4仓位。最后等到收盘的时候再视情况是否要把剩下的仓位加上。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "5b7f39ce1a47a655",
+    "time": "2026-10-16 09:35:21",
+    "read": true,
+    "strategyId": "opening_net_inflow",
+    "title": "✅ 开盘资金未明显流出-市场或有回暖",
+    "description": "开盘 5min 资金净流入 <strong>+28.2亿</strong>，按照历史规律，当天大概率大盘会回暖，可以适当出手。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "c4a68ac5aa41702e",
+    "time": "2026-10-16 09:41:23",
+    "read": true,
+    "strategyId": "high_open_high_walk",
+    "title": "⚠️ 未命中高开高走-不适合出手",
+    "description": "当前没有满足高开高走的条件，极易高低开走或者是冲高回落，不适合出手。<br/>未满足项：创业板指距最高点回落 1.02%（>0.5%）",
+    "severity": "medium",
+    "isBullish": false
+  },
+  {
+    "id": "5292d4e83382f3d3",
+    "time": "2026-10-16 09:44:24",
+    "read": true,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入27.7→45.4亿（增加17.7亿，≥5亿）<br/>• 科创板指较10分钟前上涨0.04%<br/>• 成交量差值-506亿（<-500亿严重缩量），较10分钟前仅增加-140亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "3864abc05fe21d84",
+    "time": "2026-10-16 09:54:49",
+    "read": true,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入46.6→57.9亿（增加11.3亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.59%<br/>• 成交量差值-612亿（<-500亿严重缩量），较10分钟前仅增加-147亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "e2d117fb30478086",
+    "time": "2026-10-16 10:26:00",
+    "read": true,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入12.1→20.9亿（增加8.8亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.63%<br/>• 成交量差值-775亿（<-500亿严重缩量），较10分钟前仅增加26亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "c8e64f84cdf43c0b",
+    "time": "2026-10-16 10:46:10",
+    "read": true,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入54.4→76.0亿（增加21.6亿，≥5亿）<br/>• 科创板指较10分钟前上涨0.08%<br/>• 成交量差值-631亿（<-500亿严重缩量），较10分钟前仅增加42亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "3005fc4b5500db65",
+    "time": "2026-10-16 11:01:23",
+    "read": true,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入73.2→78.7亿（增加5.5亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.26%<br/>• 成交量差值-712亿（<-500亿严重缩量），较10分钟前仅增加-108亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "fe389104fb58fc56",
+    "time": "2026-10-16 14:44:26",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>110亿</strong>（≥100亿），主力资金净流出加速（-18.1→-77.7亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "ed83a9721ea45e0b",
+    "time": "2026-10-16 14:57:40",
+    "read": true,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-80.6→-72.9亿（增加7.7亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.62%<br/>• 成交量差值-785亿（<-500亿严重缩量），较10分钟前仅增加-41亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  }
+]

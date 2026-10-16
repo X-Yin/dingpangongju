@@ -1,5 +1,60 @@
 [
   {
+    "id": "1792115723769_n2tgvs",
+    "type": "delete",
+    "code": "sh603200",
+    "name": "上海洗霸",
+    "date": "2026-10-16",
+    "time": "09:55:23",
+    "detail": "删除持仓：上海洗霸（sh603200）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-16T01:55:23.769Z"
+  },
+  {
+    "id": "1792115595969_j94wuj",
+    "type": "buy",
+    "code": "sz300413",
+    "name": "芒果超媒",
+    "date": "2026-10-16",
+    "time": "09:53:15",
+    "detail": "新增持仓：芒果超媒（sz300413）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-16T01:53:15.969Z"
+  },
+  {
+    "id": "1792115189328_260ido",
+    "type": "buy",
+    "code": "sh600967",
+    "name": "内蒙一机",
+    "date": "2026-10-16",
+    "time": "09:46:29",
+    "detail": "新增持仓：内蒙一机（sh600967）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-16T01:46:29.328Z"
+  },
+  {
+    "id": "1792114795077_oa4if3",
+    "type": "buy",
+    "code": "sh600396",
+    "name": "华电辽能",
+    "date": "2026-10-16",
+    "time": "09:39:55",
+    "detail": "新增持仓：华电辽能（sh600396）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-16T01:39:55.077Z"
+  },
+  {
+    "id": "1792114238084_ntrt5g",
+    "type": "delete",
+    "code": "sz002371",
+    "name": "北方华创",
+    "date": "2026-10-16",
+    "time": "09:30:38",
+    "detail": "删除持仓：北方华创（sz002371）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-16T01:30:38.084Z"
+  },
+  {
     "id": "1792046137570_3f182s",
     "type": "buy",
     "code": "sz002371",

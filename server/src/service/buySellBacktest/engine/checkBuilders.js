@@ -129,8 +129,8 @@ const buildEmoQuickOutCheck = (info) => ({
   value: info.quickOut ? '快进快出' : '普通持仓',
   reason: info.quickOut
     ? (info.trigger === 'range_rising'
-      ? `上上个交易日科技情绪 = ${info.prev2Raw != null ? info.prev2Raw : '缺失'}、上一交易日 = ${info.prevRaw != null ? info.prevRaw : '缺失'}（当日原始分，均在 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且较前日回升），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损、盘中当日跌幅较昨收 ≤ -7% 时无条件强卖；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）`
-      : `上一交易日科技情绪 3 日 EMA = ${info.ema}（< ${EMO_SWITCH_EMA_THRESHOLD}），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损、盘中当日跌幅较昨收 ≤ -7% 时无条件强卖；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）`)
+      ? `上上个交易日科技情绪 = ${info.prev2Raw != null ? info.prev2Raw : '缺失'}、上一交易日 = ${info.prevRaw != null ? info.prevRaw : '缺失'}（当日原始分，均在 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且较前日回升），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损、盘中当日跌幅较昨收 ≤ -7% 时无条件强卖；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选科技股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）`
+      : `上一交易日科技情绪 3 日 EMA = ${info.ema}（< ${EMO_SWITCH_EMA_THRESHOLD}），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损、盘中当日跌幅较昨收 ≤ -7% 时无条件强卖；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选科技股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）`)
     : `上一交易日科技情绪 3 日 EMA = ${info.ema != null ? info.ema : '缺失'}（不满足 < ${EMO_SWITCH_EMA_THRESHOLD}），上两交易日当日科技情绪 = ${info.prev2Raw != null ? info.prev2Raw : '缺失'} / ${info.prevRaw != null ? info.prevRaw : '缺失'}（不满足均处 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且回升），普通持仓，走通用 7 条件卖点（快进快出系列全部持仓叠加：盘中当日跌幅较昨收 ≤ -7% 时无条件强卖）`,
 });
 
@@ -178,13 +178,15 @@ const buildQuickOutCrashSellReason = (crashPt) => {
 // 命中任一即豁免本次强卖，持仓保留并转由通用 7 条件卖点接管（先一直拿着，等命中其他卖点规则再卖）：
 //   豁免① 次日 10:00 前（含 10:00）任一桶买点诊断再次全部通过（runBuyPointDiagnosis allPassed）；
 //   豁免② 次日 10:00 时点（无 10:00 桶时取其后最近桶，整日缺失时回退当日最后一桶）三条件同时满足：
-//          科技情绪 > 0 且 自选股现价低于 9:30 开盘价个股数 < 30（口径同买点诊断检查4，阈值取严格小于）
-//          且 大盘主力资金净流入（bucket.fundFlow 累计值）> 0。
+//          科技情绪 > 0 且 自选科技股现价低于 9:30 开盘价个股数 < 30（口径同买点诊断检查4，阈值取严格小于，
+//          2026-10-16 起仅在科技股内部筛选、非科技股不参与计数）且 大盘主力资金净流入（bucket.fundFlow 累计值）> 0。
 // 返回 { via: 'buy_retrigger' | 'strong_at_10', detail } 或 null（不豁免）；任一条件数据缺失按不满足处理（照常强卖）。
 // 注意：豁免只取消 10:00 强卖本身，盘中跌破成本线 -2% 止损仍先到先卖（止损本身即「其他卖点规则」之一）
 const buildQuickOutExemptInfo = (timeBuckets, campData) => {
   const buckets = timeBuckets || [];
   if (buckets.length === 0) return null;
+  // 懒加载避免加载期循环依赖（pickHelpers → replayData → sellPoint → buyPoint）
+  const { isNonTechWatchlistStock } = require('./pickHelpers');
   // 豁免①：10:00 前（含）任一桶买点诊断再次触发
   for (let i = 0; i < buckets.length; i++) {
     if (Number(buckets[i].minute) > 1000) break;
@@ -201,6 +203,7 @@ const buildQuickOutExemptInfo = (timeBuckets, campData) => {
   const openingMap = new Map((openingBucket?.stockChanges || []).map(s => [s.code, s.changePct]));
   let belowCount = 0;
   (emoBucket.stockChanges || []).forEach(s => {
+    if (isNonTechWatchlistStock(s.code)) return; // 2026-10-16 起非科技股不参与计数（口径同买点诊断检查4）
     const openPct = openingMap.get(s.code);
     if (openPct !== undefined && openPct !== null && Number(s.changePct) < Number(openPct)) belowCount++;
   });
@@ -210,7 +213,7 @@ const buildQuickOutExemptInfo = (timeBuckets, campData) => {
   if (emoOk && belowOk && fundOk) {
     return {
       via: 'strong_at_10',
-      detail: `10:00 时点科技情绪 ${emo.toFixed(2)} > 0、自选股低于开盘价 ${belowCount} 只 < 30、主力资金净流入 ${fund.toFixed(2)} 亿 > 0`,
+      detail: `10:00 时点科技情绪 ${emo.toFixed(2)} > 0、自选科技股低于开盘价 ${belowCount} 只 < 30、主力资金净流入 ${fund.toFixed(2)} 亿 > 0`,
     };
   }
   return null;

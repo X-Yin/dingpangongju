@@ -553,5 +553,20 @@
     "secu_code": "sh600241",
     "secu_name": "时代万恒",
     "TotalShares": 294302115
+  },
+  {
+    "secu_code": "sh600396",
+    "secu_name": "华电辽能",
+    "TotalShares": 1472706817
+  },
+  {
+    "secu_code": "sh600967",
+    "secu_name": "内蒙一机",
+    "TotalShares": 1701794667
+  },
+  {
+    "secu_code": "sh601606",
+    "secu_name": "长城军工",
+    "TotalShares": 724228400
   }
 ]

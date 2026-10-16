@@ -188,15 +188,19 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
   checks.push(volumeCheck);
   if (!volumeCheck.passed) allPassed = false;
 
-  // 检查4：开盘后自选股低于开盘价不超过 30 只（仅 9:30-10:00 生效）
+  // 检查4：开盘后自选科技股低于开盘价不超过 30 只（仅 9:30-10:00 生效）
+  // 2026-10-16 用户要求：只在科技股（isTech !== false）内部筛选，非科技股不参与本次判断（线上实盘与所有回测策略统一）
   const changes = current.stockChanges || [];
   const inOpeningWindow = Number(current.minute) >= 930 && Number(current.minute) <= 1000;
   if (inOpeningWindow) {
+    // 懒加载避免加载期循环依赖（pickHelpers → replayData → sellPoint → buyPoint）
+    const { isNonTechWatchlistStock } = require('../engine/pickHelpers');
     const openingBucket = buckets.find(b => Number(b.minute) === 930) || buckets[0];
     const openingMap = new Map((openingBucket?.stockChanges || []).map(s => [s.code, s.changePct]));
     let belowCount = 0;
     let validCount = 0;
     changes.forEach(s => {
+      if (isNonTechWatchlistStock(s.code)) return; // 非科技股不参与计数（口径同线上 fetchOpeningBelowCount）
       const openPct = openingMap.get(s.code);
       if (openPct !== undefined && openPct !== null) {
         validCount++;
@@ -206,20 +210,20 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
     const checkOpeningPassed = belowCount <= 30;
     checks.push({
       id: 'opening_below',
-      title: '开盘后自选股低于开盘价不超过 30 只',
+      title: '开盘后自选科技股低于开盘价不超过 30 只',
       passed: checkOpeningPassed,
       value: `${belowCount} / ${validCount}只`,
       reason: checkOpeningPassed
-        ? `开盘后自选股共 ${validCount} 只，${belowCount} 只现价低于 9:30 开盘价，未超过 30 只`
+        ? `开盘后自选科技股共 ${validCount} 只，${belowCount} 只现价低于 9:30 开盘价，未超过 30 只`
         : belowCount > 30
-          ? `开盘后自选股共 ${validCount} 只，${belowCount} 只现价低于 9:30 开盘价，超过 30 只阈值，市场开盘跳水严重`
+          ? `开盘后自选科技股共 ${validCount} 只，${belowCount} 只现价低于 9:30 开盘价，超过 30 只阈值，市场开盘跳水严重`
           : '分时数据获取异常',
     });
     if (!checkOpeningPassed) allPassed = false;
   } else {
     checks.push({
       id: 'opening_below',
-      title: '开盘后自选股低于开盘价不超过 30 只',
+      title: '开盘后自选科技股低于开盘价不超过 30 只',
       passed: true,
       value: '非交易时段',
       reason: '此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过',

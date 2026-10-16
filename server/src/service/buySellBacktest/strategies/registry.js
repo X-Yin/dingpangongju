@@ -87,6 +87,18 @@ for (const s of Object.values(STRATEGIES)) {
   if (s.emoQuickOut === true && s.twoBuy !== true) s.desc = `${s.desc}${EMO_QUICK_HALF_POS_DESC}`;
 }
 
+// 盘中大跌强卖（2026-10-16 用户新增）：适用范围 = 除「情绪游资类（iceMode）」「情绪游资-龙头战法（leaderMode）」
+// 「尾盘抄底类（tailDip）」「三日情绪冰点类（emoAvgBuy）」外的全部策略（快进快出系列此前已内置同口径卖点，
+// 仅补字段不重复追加 desc）。规则：持仓当桶当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT（-7%）时无条件卖出——
+// 即时生效、无持续分钟/自救窗口要求，先于各策略原有卖点判定（generalSell 引擎桶级预检 / 重点板块引擎卖出预检）
+const CRASH_SELL_DESC = '；盘中大跌强卖（2026-10-16 新增）：持仓当桶当日跌幅（较昨收涨跌幅）≤ -7% 时无条件卖出（即时生效，先于其他卖点判定）';
+const isCrashSellStrategy = (s) => !!s && s.iceMode !== true && s.leaderMode !== true && s.tailDip !== true && s.emoAvgBuy !== true;
+for (const s of Object.values(STRATEGIES)) {
+  if (!isCrashSellStrategy(s)) continue;
+  s.crashSell = true;
+  if (s.emoQuickOut !== true) s.desc = `${s.desc}${CRASH_SELL_DESC}`;
+}
+
 module.exports = {
   BUY_TIME_MAX_MINUTE,
   CYC_FILTER_DESC,
@@ -98,7 +110,9 @@ module.exports = {
   RESILIENCE_GATE_MIN,
   RESILIENCE_GATE_STRATEGY_IDS,
   STRATEGIES,
+  CRASH_SELL_DESC,
   getEmo3DefaultRange,
+  isCrashSellStrategy,
   isCycleFilterStrategy,
   isEmo3AvgStrategy,
 };

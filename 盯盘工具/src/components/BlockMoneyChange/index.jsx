@@ -57,6 +57,7 @@ const CATEGORY_RATIO_BLOCKS = [
     { name: '光通信', color: '#3b82f6' },
     { name: '液冷', color: '#14b8a6' },
     { name: 'pcb', color: '#ef4444' },
+    { name: '半导体', color: '#6366f1' },
 ];
 
 const getSizeClass = (areaPercent) => {

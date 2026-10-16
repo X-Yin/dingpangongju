@@ -192,10 +192,11 @@ function isInOpeningCheckWindow() {
   return minutesSinceMidnight >= 9 * 60 + 30 && minutesSinceMidnight <= 10 * 60;
 }
 
-// 实时拉取所有自选股的分时数据，对比当前价与9:30开盘价
+// 实时拉取自选科技股（isTech !== false）的分时数据，对比当前价与9:30开盘价
+// 2026-10-16 用户要求：非科技股不参与「低于开盘价 30 只」判断（口径同 buySellDiagnose.js，线上实盘与回测统一）
 async function fetchOpeningBelowCount() {
   try {
-    const monitorStocks = getMonitorStocks();
+    const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false);
     const stockCodes = monitorStocks.map(s => s.code);
     if (stockCodes.length === 0) {
       return { belowCount: 0, total: 0, openingPrice: null, currentPrice: null };
@@ -426,7 +427,7 @@ async function runDisasterRecoveryCheck(options = {}) {
   });
   if (!check6Passed) allPassed = false;
 
-  // ========== 检查 7：9:30-10:00 期间，自选股跌幅超过 30 只 ==========
+  // ========== 检查 7：9:30-10:00 期间，自选科技股跌幅超过 30 只（非科技股不参与计数） ==========
   // 仅在交易日 9:30-10:00 之间检查，其他时段跳过此项
   const inOpeningWindow = isInOpeningCheckWindow();
   if (inOpeningWindow) {
@@ -438,15 +439,15 @@ async function runDisasterRecoveryCheck(options = {}) {
     const check7Passed = openingStats && openingStats.belowCount <= 30;
     checks.push({
       id: 'opening_below',
-      title: '开盘后自选股低于开盘价不超过 30 只',
+      title: '开盘后自选科技股低于开盘价不超过 30 只',
       passed: check7Passed,
       value: openingStats
         ? `${openingStats.belowCount} / ${openingStats.validCount || openingStats.total}只`
         : '检查中...',
       reason: check7Passed
-        ? `开盘后自选股共 ${openingStats.total} 只，${openingStats.belowCount} 只现价低于 9:30 开盘价，未超过 30 只`
+        ? `开盘后自选科技股共 ${openingStats.total} 只，${openingStats.belowCount} 只现价低于 9:30 开盘价，未超过 30 只`
         : openingStats && openingStats.belowCount > 30
-          ? `开盘后自选股共 ${openingStats.total} 只，${openingStats.belowCount} 只现价低于 9:30 开盘价，超过 30 只阈值，市场开盘跳水严重`
+          ? `开盘后自选科技股共 ${openingStats.total} 只，${openingStats.belowCount} 只现价低于 9:30 开盘价，超过 30 只阈值，市场开盘跳水严重`
           : '分时数据获取异常',
     });
     if (!check7Passed) allPassed = false;
@@ -454,7 +455,7 @@ async function runDisasterRecoveryCheck(options = {}) {
     // 非开盘时段，添加一个跳过的检查项
     checks.push({
       id: 'opening_below',
-      title: '开盘后自选股低于开盘价不超过 30 只',
+      title: '开盘后自选科技股低于开盘价不超过 30 只',
       passed: true,
       value: '非交易时段',
       reason: '此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过',

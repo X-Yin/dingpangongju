@@ -21,9 +21,9 @@ const generalSellPositions = async ({ positions, strategy, bi, replayStocks, tim
     // 情绪快进快出持仓：不走通用 7 条件卖点，仅由 emoQuickOut hook 按日处理（盘中跌破成本线止损先到先卖 + 10:00 强卖；分时缺失时顺延）；
     // 2026-10-09 起命中强势豁免的快进快出持仓（exempted）转为普通持仓，由通用 7 条件卖点接管
     if (strategy.emoQuickOut === true && pos.emoQuickOut?.quickOut === true && !pos.emoQuickOut?.exempted) continue;
-    // 快进快出系列「盘中大跌强卖」预检（2026-10-15 用户新增）：当桶该股当日跌幅（较昨收）≤ -7% 时
-    // 无条件按当桶价格卖出（卖出原因独立标注，不走通用 7 条件诊断）
-    if (strategy.emoQuickOut === true) {
+    // 盘中大跌强卖预检（2026-10-15 快进快出系列新增；2026-10-16 扩展至其余常规策略）：当桶该股
+    // 当日跌幅（较昨收）≤ -7% 时无条件按当桶价格卖出（卖出原因独立标注，不走通用 7 条件诊断）
+    if (strategy.emoQuickOut === true || strategy.crashSell === true) {
       const crashSc = (bucket.stockChanges || []).find(s => s && s.code === pos.code);
       if (crashSc && crashSc.lastPx != null && Number(crashSc.lastPx) > 0
         && crashSc.changePct != null && Number(crashSc.changePct) <= EMO_QUICK_CRASH_PCT) {
@@ -53,7 +53,9 @@ const generalSellPositions = async ({ positions, strategy, bi, replayStocks, tim
           sellTime: fmtTime(bucket.timeKey).substring(0, 5),
           sellPrice: parseFloat(Number(crashSc.lastPx).toFixed(2)),
           sellChange: parseFloat(Number(crashSc.changePct).toFixed(2)),
-          sellReason: `快进快出系列盘中大跌强卖：当桶当日跌幅（较昨收）${Number(crashSc.changePct).toFixed(2)}% ≤ ${EMO_QUICK_CRASH_PCT}%，无条件卖出${buildQuickOutExemptSuffix(pos)}`,
+          sellReason: strategy.emoQuickOut === true
+            ? `快进快出系列盘中大跌强卖：当桶当日跌幅（较昨收）${Number(crashSc.changePct).toFixed(2)}% ≤ ${EMO_QUICK_CRASH_PCT}%，无条件卖出${buildQuickOutExemptSuffix(pos)}`
+            : `策略通用盘中大跌强卖：当桶当日跌幅（较昨收）${Number(crashSc.changePct).toFixed(2)}% ≤ ${EMO_QUICK_CRASH_PCT}%，无条件卖出`,
           returnRate,
         });
         positions.splice(pi, 1);

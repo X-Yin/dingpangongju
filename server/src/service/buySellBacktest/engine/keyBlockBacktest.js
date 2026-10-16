@@ -3,7 +3,7 @@ const { batchParallel, ensureBarsForCodes, ensureKeyBlockBars, getHistoricalLian
 const { getTechIndexDates } = require('../utils/techEmotion');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
 const { ICE_SIGNAL_INDEX_CODE, ICE_SIGNAL_INDEX_NAME, ensureIndexMa3SlopeSeries, fmtCybGateDate, fmtKeyBlockSlope, getIceMa3Slope, getIceMa3SlopeIntraday, getKeyBlockCybMa3Slope, getKeyBlockCybMa3SlopeIntraday, iceIndexName, iceResilienceIndexCode } = require('./indexGate');
-const { EXCLUDED_CODES } = require('../constants');
+const { EXCLUDED_CODES, EMO_QUICK_CRASH_PCT } = require('../constants');
 const { calculateReplayResilience, runSellPointDiagnosis } = require('../diagnose/sellPoint');
 const { buildReplayStocksWithTline, extractDailyInfo, isLimitUpAtBuy, isPrevDayOneWordBoard } = require('./replayData');
 const { fmtTime } = require('../diagnose/buyPoint');
@@ -512,7 +512,51 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
 
       // ===== ② 卖出（仅隔夜持仓） =====
       if (position && dateStr > position.buyDate) {
-        if (position.mode === 'defense' && defensePoints && defensePoints.length > 0) {
+        // 盘中大跌强卖预检（2026-10-16 用户新增，仅非情绪游资的重点板块策略启用）：当桶该股当日跌幅（较昨收）
+        // ≤ EMO_QUICK_CRASH_PCT（-7%）时无条件按当桶价格卖出——即时生效、无自救窗口要求，先于防御/进攻各自
+        // 卖点判定；情绪游资/尾盘抄底/三日情绪冰点系列未启用（strategy.crashSell 未置位，见 strategies/registry.js）。
+        // 用 sellBuckets[bi]（含非自选股持仓的合成逐桶条目），changePct 为较昨收涨跌幅，与 generalSell 桶级预检口径一致
+        const crashScKb = strategy.crashSell === true
+          ? (sellBuckets[bi].stockChanges || []).find(s => s && s.code === position.code)
+          : null;
+        if (crashScKb && crashScKb.lastPx != null && Number(crashScKb.lastPx) > 0
+          && crashScKb.changePct != null && Number(crashScKb.changePct) <= EMO_QUICK_CRASH_PCT) {
+          const modeWasOffense = position.mode === 'offense';
+          const crashWeight = modeWasOffense ? KEY_BLOCK_POSITION_WEIGHT.offense : KEY_BLOCK_POSITION_WEIGHT.defense;
+          const crashRawReturn = position.buyPrice > 0
+            ? parseFloat((((Number(crashScKb.lastPx) - position.buyPrice) / position.buyPrice) * 100).toFixed(2))
+            : null;
+          const crashReturnRate = crashRawReturn != null ? parseFloat((crashRawReturn * crashWeight).toFixed(2)) : null;
+          trades.push({
+            seq: trades.length + 1,
+            metric: position.metric,
+            code: position.code,
+            stockName: position.stockName,
+            positionMode: position.mode,
+            weight: crashWeight,
+            buyDate: position.buyDate,
+            buyDateDisplay: position.buyDateDisplay,
+            buyTime: position.buyTime,
+            buyPrice: position.buyPrice,
+            buyChange: position.buyChange,
+            buyReason: position.buyReason,
+            buyChecks: position.buyChecks,
+            sellDate: dateStr,
+            sellDateDisplay: dateDisplay,
+            sellTime: `${String(Math.floor(bucketMinute / 100)).padStart(2, '0')}:${String(bucketMinute % 100).padStart(2, '0')}`,
+            sellPrice: parseFloat(Number(crashScKb.lastPx).toFixed(2)),
+            sellChange: parseFloat(Number(crashScKb.changePct).toFixed(2)),
+            sellReason: `重点板块盘中大跌强卖：当桶当日跌幅（较昨收）${Number(crashScKb.changePct).toFixed(2)}% ≤ ${EMO_QUICK_CRASH_PCT}%，无条件卖出（${modeWasOffense ? '进攻全仓' : '防御半仓，收益率按半仓折算'}）`,
+            returnRate: crashReturnRate,
+            rawReturnRate: crashRawReturn,
+          });
+          position = null;
+          // 进攻持仓大跌卖出后斜率仍为正：当日不再追买、挂次日 9:40 复测（与通用卖点卖出后口径一致）
+          if (modeWasOffense && signNow === 1) {
+            pendingEntry = { mode: 'offense', trigger: 'retry_next_day_940', armDate: dateStr, fromValue: slopeNow, toValue: slopeNow };
+            offenseBlockDate = dateStr;
+          }
+        } else if (position.mode === 'defense' && defensePoints && defensePoints.length > 0) {
           // 防御卖点：① 斜率翻转的当桶 ② 个股分时价跌破成本线止损 ③（情绪游资）14:55 长下影强卖
           //   重点板块防御持仓 → -5%（KEY_BLOCK_DEFENSE_STOP_LOSS_PCT）；情绪游资（顺/逆周期）→ -2%（策略 costLinePct）
           // 任一先触发即卖出；止损在每个桶都会检查（因为不依赖斜率翻转事件）

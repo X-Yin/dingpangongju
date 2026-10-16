@@ -211,8 +211,8 @@ const recordQuickOutExempt = (code, name, info) => {
 // 快进快出强卖豁免评估（与回测 buildQuickOutExemptInfo 口径一致，2026-10-09 新增）：
 //   豁免① 今日 10:00 前（含）买点诊断再次 allPassed（读 buy_point_hit_records，命中记录 time <= 10:00）；
 //   豁免② 评估时点（卖点诊断每 10 秒一跑，首次评估通常即 10:00 整点后数秒）三条件同时满足：
-//          科技情绪 emoValue > 0 且 自选股现价低于开盘价个股数 < 30（复用 fetchOpeningBelowCount，口径同
-//          买点检查4）且 大盘主力资金净流入（amount_history 最新 mainMoney 累计值）> 0。
+//          科技情绪 emoValue > 0 且 自选科技股现价低于开盘价个股数 < 30（复用 fetchOpeningBelowCount，
+//          仅统计科技股、非科技股不参与，口径同买点检查4）且 大盘主力资金净流入（amount_history 最新 mainMoney 累计值）> 0。
 // 任一条件数据缺失按不满足处理（不豁免，照常强卖）。返回 { via, detail } 或 null
 const evaluateQuickOutExempt = async (emoValue) => {
   // 豁免①：10:00 前（含）买点诊断再次触发
@@ -251,7 +251,7 @@ const evaluateQuickOutExempt = async (emoValue) => {
   if (emoOk && belowOk && fundOk) {
     return {
       via: 'strong_at_10',
-      detail: `${dayjs().format('HH:mm')} 时点科技情绪 ${emo.toFixed(2)} > 0、自选股低于开盘价 ${belowCount} 只 < 30、主力资金净流入 ${fundValue.toFixed(2)} 亿 > 0`,
+      detail: `${dayjs().format('HH:mm')} 时点科技情绪 ${emo.toFixed(2)} > 0、自选科技股低于开盘价 ${belowCount} 只 < 30、主力资金净流入 ${fundValue.toFixed(2)} 亿 > 0`,
     };
   }
   return null;
@@ -268,6 +268,8 @@ const evaluateQuickOutExempt = async (emoValue) => {
 const EMO_QUICK_OUT_EMA = -60;
 const EMO_QUICK_RANGE_LOW = -30;
 const EMO_QUICK_RANGE_HIGH = 20;
+// 快进快出系列「盘中大跌强卖」阈值（条件9，2026-10-16 实盘新增，口径与回测 EMO_QUICK_CRASH_PCT 一致）
+const EMO_QUICK_CRASH_PCT = -7;
 const checkEmoQuickOutDay = (buyDateStr) => {
   const str = String(buyDateStr || '');
   const out = { quickOut: false, trigger: null, ema: null, prevDateStr: null, prev2DateStr: null, prevRaw: null, prev2Raw: null };
@@ -762,7 +764,9 @@ async function fetchOpeningBelowCount() {
     return _openingBelowCache.data;
   }
   try {
-    const monitorStocks = getMonitorStocks();
+    // 2026-10-16 用户要求：只在科技股（isTech !== false）内部筛选，非科技股不参与「低于开盘价 30 只」判断
+    //（口径与全站「自选股科技股」一致，线上实盘与所有回测策略统一）
+    const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false);
     const stockCodes = monitorStocks.map(s => s.code);
     if (stockCodes.length === 0) {
       return { belowCount: 0, total: 0, openingPrice: null, currentPrice: null };
@@ -1969,8 +1973,8 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
       // ===== 强卖豁免评估（2026-10-09，口径与回测 buildQuickOutExemptInfo 一致） =====
       // 快进快出口径命中（8A/8B 任一）且已过今日 10:00 时，先做两种「次日强势」判断，命中任一不强卖：
       //   ① 今日 10:00 前（含）买点诊断再次触发（buy_point_checks 每次 allPassed 由服务端记录一条）；
-      //   ② 评估时点（诊断每 10 秒一跑，首次评估通常即 10:00 整点后数秒）科技情绪 > 0 且 自选股低于开盘价
-      //      个股 < 30 只且 主力资金净流入 > 0（三者同时满足）。
+      //   ② 评估时点（诊断每 10 秒一跑，首次评估通常即 10:00 整点后数秒）科技情绪 > 0 且 自选科技股低于开盘价
+      //      个股 < 30 只且 主力资金净流入 > 0（三者同时满足，非科技股不参与计数）。
       // 豁免按「日+股」幂等锁定（quick_out_exempt_records.json）：一旦豁免，当日 8A/8B 不再判 satisfied
       // （展示「已豁免」），通用条件 1-7 仍正常生效，先一直拿着等命中其他卖点再卖；
       // 未豁免则照常判 satisfied 并写当日强卖记录，后续诊断凭强卖记录跳过重复评估，
@@ -2076,7 +2080,68 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
     }
   }
 
-  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6, condition7, condition8a, condition8b];
+  // ===== 条件9：快进快出系列盘中大跌强卖（当日跌幅较昨收 ≤ -7% 无条件卖出，2026-10-16 实盘新增） =====
+  // 口径与回测一致（emoQuickOutSell 盘中大卖点 + generalSell 桶级预检）：
+  //   仅适用于「快进快出系列持仓」——买入日为快进快出日（checkEmoQuickOutDay 判定，含已豁免转通用条件的持仓）；
+  //   买入当日不生效（次日起生效，与浮窗「买入当日卖点诊断不生效」口径一致）；
+  //   无竞价自救窗口、不受强卖豁免保护；当日分时中第一个「当日涨跌幅（较昨收）≤ -7%」的分钟即触发；
+  //   分时点 change 缺失时跳过该点（与回测口径一致）
+  const condition9 = {
+    name: '盘中大跌强卖（跌幅≤-7%）',
+    satisfied: false,
+    pending: false,
+    pendingMinutes: 0,
+    detail: '',
+    subConditions: [],
+  };
+  {
+    const pos9 = (getStockPositions() || []).find((p) => p && String(p.code) === code);
+    const buyDateStr9 = pos9?.buyDate != null ? String(pos9.buyDate).replace(/-/g, '') : null;
+    const isOvernight9 = buyDateStr9 != null && parseInt(buyDateStr9, 10) < date;
+    const quickDayInfo9 = buyDateStr9 != null ? checkEmoQuickOutDay(buyDateStr9) : null;
+    const isQuickOutSeries9 = quickDayInfo9?.quickOut === true;
+    const buyDateText9 = buyDateStr9 != null ? formatDateStr(parseInt(buyDateStr9, 10)) : '缺失';
+    const baseSubs9 = [
+      { label: '买入日', value: buyDateText9 },
+      { label: '跌幅阈值（较昨收）', value: `≤ ${EMO_QUICK_CRASH_PCT}%` },
+    ];
+    if (!isQuickOutSeries9 || !isOvernight9) {
+      condition9.detail = !isQuickOutSeries9
+        ? '非快进快出系列持仓（买入日非快进快出日），本条件不适用'
+        : '快进快出系列持仓但为买入当日，本条件次日起生效';
+      condition9.subConditions = [...baseSubs9, { label: '状态', value: !isQuickOutSeries9 ? '不适用' : '买入当日' }];
+    } else {
+      // 仅快进快出系列隔夜持仓拉当日分时（控制请求量），找第一个当日跌幅 ≤ -7% 的分钟
+      let crashPt9 = null;
+      let tlineOk9 = false;
+      try {
+        const tline9 = await getSingleStockTlineDataByDate(code, date);
+        const pts9 = (tline9?.line || [])
+          .filter((p) => p && p.minute != null && p.change != null)
+          .map((p) => ({ minute: Number(p.minute), change: Number(p.change) }))
+          .sort((a, b) => a.minute - b.minute);
+        tlineOk9 = true;
+        crashPt9 = pts9.find((p) => p.change <= EMO_QUICK_CRASH_PCT) || null;
+      } catch (e) { /* 分时拉取失败按数据缺失处理 */ }
+      const fmtMinute9 = (m) => `${String(Math.floor(m / 100)).padStart(2, '0')}:${String(m % 100).padStart(2, '0')}`;
+      if (crashPt9) {
+        condition9.satisfied = true;
+        condition9.detail = `快进快出系列盘中大跌强卖：盘中 ${fmtMinute9(crashPt9.minute)} 当日跌幅（较昨收）${crashPt9.change.toFixed(2)}% 已 ≤ ${EMO_QUICK_CRASH_PCT}%，无条件卖出（不适用竞价自救窗口与强卖豁免）`;
+        condition9.subConditions = [
+          ...baseSubs9,
+          { label: '触发时间', value: fmtMinute9(crashPt9.minute) },
+          { label: '当时跌幅', value: `${crashPt9.change.toFixed(2)}%` },
+        ];
+      } else {
+        condition9.detail = !tlineOk9
+          ? '当日分时数据拉取失败，无法判断盘中大跌强卖'
+          : `当日分时未见跌幅 ≤ ${EMO_QUICK_CRASH_PCT}% 的分钟（截至 ${dayjs().format('HH:mm')}），未触发`;
+        condition9.subConditions = [...baseSubs9, { label: '状态', value: !tlineOk9 ? '数据缺失' : '未触发' }];
+      }
+    }
+  }
+
+  const conditions = [condition1, condition2, condition3, condition4, condition5, condition6, condition7, condition8a, condition8b, condition9];
   const satisfiedCount = conditions.filter(c => c.satisfied).length;
   const isSell = satisfiedCount > 0;
 
@@ -2531,23 +2596,23 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
     if (!checkVolumePassed) allPassed = false;
   }
 
-  // 检查4：开盘后自选股低于开盘价不超过30只
+  // 检查4：开盘后自选科技股低于开盘价不超过30只（2026-10-16 起仅在科技股内部筛选，非科技股不参与本次判断）
   const inOpeningWindow = isInOpeningCheckWindow();
   if (inOpeningWindow) {
     let openingStats = freshOpeningStats;
     if (!openingStats) openingStats = await fetchOpeningBelowCount();
     const check7Passed = openingStats && openingStats.belowCount <= 30;
     checks.push({
-      id: 'opening_below', title: '开盘后自选股低于开盘价不超过 30 只', passed: check7Passed,
+      id: 'opening_below', title: '开盘后自选科技股低于开盘价不超过 30 只', passed: check7Passed,
       value: openingStats ? `${openingStats.belowCount} / ${openingStats.validCount || openingStats.total}只` : '检查中...',
-      reason: check7Passed ? `开盘后自选股共 ${openingStats.total} 只，${openingStats.belowCount} 只现价低于 9:30 开盘价，未超过 30 只`
-        : openingStats && openingStats.belowCount > 30 ? `开盘后自选股共 ${openingStats.total} 只，${openingStats.belowCount} 只现价低于 9:30 开盘价，超过 30 只阈值，市场开盘跳水严重`
+      reason: check7Passed ? `开盘后自选科技股共 ${openingStats.total} 只，${openingStats.belowCount} 只现价低于 9:30 开盘价，未超过 30 只`
+        : openingStats && openingStats.belowCount > 30 ? `开盘后自选科技股共 ${openingStats.total} 只，${openingStats.belowCount} 只现价低于 9:30 开盘价，超过 30 只阈值，市场开盘跳水严重`
           : '分时数据获取异常',
     });
     if (!check7Passed) allPassed = false;
   } else {
     checks.push({
-      id: 'opening_below', title: '开盘后自选股低于开盘价不超过 30 只', passed: true,
+      id: 'opening_below', title: '开盘后自选科技股低于开盘价不超过 30 只', passed: true,
       value: '非交易时段',
       reason: '此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过',
     });
