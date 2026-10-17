@@ -2278,5 +2278,45 @@
       }
     ],
     "isImportant": false
+  },
+  "sh600316": {
+    "stockName": "洪都航空",
+    "kline": [
+      {
+        "trade_date": 20261016,
+        "open_px": 35.12,
+        "high_px": 38.61,
+        "low_px": 35.12,
+        "close_px": 37.66,
+        "business_amount": 41067678,
+        "business_balance": 1534022100,
+        "change": 7.29,
+        "ma5_px": 34.53,
+        "ma10_px": 33.59,
+        "ma20_px": 33.35,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh688600": {
+    "stockName": "皖仪科技",
+    "kline": [
+      {
+        "trade_date": 20261016,
+        "open_px": 30.8,
+        "high_px": 30.8,
+        "low_px": 28.6,
+        "close_px": 28.97,
+        "business_amount": 2495669,
+        "business_balance": 73499848,
+        "change": -2.16,
+        "ma5_px": 30.64,
+        "ma10_px": 32.22,
+        "ma20_px": 33.8,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

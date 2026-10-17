@@ -9,7 +9,7 @@ import { local_ip } from '../../constant';
 import StockKLineModal from '../StockKLineModal';
 import StockFundFlowModal from '../StockFundFlowModal';
 import BuyPointDiagnosisDrawer from '../FloatingBuyPointDiagnosis';
-import { useStrategyMode } from '../../utils/strategyMode';
+import { useStrategyMode, MODE_EXTREME_WIN } from '../../utils/strategyMode';
 import './index.scss';
 
 const ALERT_THRESHOLD = 0.15;
@@ -471,14 +471,18 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     try {
       const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1, mode });
       const result = res.data?.data;
-      // 触发条件：其它前置检查全部通过（allPassed，与逻辑）
-      if (result?.allPassed === true) {
+      // 触发条件：顺周期前置检查全部通过（allPassed），或情绪游资模式下逆周期（反向抱团）择时触发
+      const isExtremeMode = mode === MODE_EXTREME_WIN;
+      const forwardHit = result?.allPassed === true;
+      const reverseHit = isExtremeMode && result?.reverse?.allPassed === true;
+      if (forwardHit || reverseHit) {
         // 频控：自动打开抽屉间隔至少 5 分钟，避免重复弹出（仅内存时间戳，刷新页面即重置）
         const now = Date.now();
         if (now - lastAutoBuyPointOpenRef.current >= 5 * 60 * 1000) {
           lastAutoBuyPointOpenRef.current = now;
           setBuyPointDrawerOpen(true);
-          // 发送买点诊断飞书卡片（技术进攻模式为自选股 3 日涨幅榜前三；极致胜率模式为龙头列表完整买点股）
+          // 发送买点诊断飞书卡片（技术进攻模式为自选股 3 日涨幅榜前三；
+          // 极致胜率模式优先为龙头列表完整买点股，无完整买点股时推逆周期反向抱团买点股）
           try {
             await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'buy_point', mode });
           } catch (err) {

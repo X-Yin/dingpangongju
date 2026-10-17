@@ -771,6 +771,11 @@ const slopeTurnText = (gate) => {
   return d === 0 ? '指数今日由正转负' : `指数由正转负第 ${d} 天`;
 };
 
+// 逆周期（反向抱团）择时状态标签样式：已触发 / 涨停不可买 / 斜率未就绪 / 等待命中
+const reverseTimingClass = (tag) => (
+  tag === '已触发买点' ? 'hit' : tag === '涨停不可买' ? 'limitup' : tag === '斜率未就绪' ? 'idle' : 'wait'
+);
+
 const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
@@ -826,8 +831,13 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
 
   // 情绪游资龙头列表（后端已按 delta 降序返回全部达标股）
   const leaderList = useMemo(() => (isExtreme ? (leaderData?.stocks || []) : []), [isExtreme, leaderData]);
+  // 逆周期（反向抱团龙头）：池全部 + 择时状态（列表下半部分）
+  const reverse = leaderData?.reverse || null;
+  const reverseList = useMemo(() => (isExtreme ? (reverse?.stocks || []) : []), [isExtreme, reverse]);
   const indexSlope = leaderData?.indexSlope;
   const slopeOk = indexSlope != null && Number(indexSlope) > 0;
+  const reverseSlope = reverse?.slopeClose ?? null;
+  const reverseSlopeOk = reverse?.eligible === true;
 
   useEffect(() => {
     fetchStocks();
@@ -852,13 +862,16 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
   );
 
   // 供买点弹窗与飞书通知使用：
-  //   tech_attack → 唯一一只标的；hot_money_extreme_win → 完整买点股前 3（delta≥30 且上证斜率>0 且未涨停）
+  //   tech_attack            → 唯一一只标的
+  //   hot_money_extreme_win  → 顺周期完整买点股前 3（delta≥30 且上证斜率>0 且未涨停）+ 逆周期已触发买点的反向抱团股前 3
   const buyableStocks = useMemo(() => {
     if (isExtreme) {
-      return leaderList.filter(s => s.buyPointHit && !s.isLimitUp).slice(0, 3);
+      const forward = leaderList.filter(s => s.buyPointHit && !s.isLimitUp).slice(0, 3);
+      const rev = reverseList.filter(s => s.timingPassed).slice(0, 3).map(s => ({ ...s, isReverse: true }));
+      return [...forward, ...rev];
     }
     return globalPick ? [globalPick] : [];
-  }, [isExtreme, leaderList, globalPick]);
+  }, [isExtreme, leaderList, reverseList, globalPick]);
 
   useEffect(() => {
     onBuyableChange?.(buyableStocks);
@@ -868,6 +881,11 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
   const extremeGateNote = !leaderData
     ? '正在检测上证指数 3 日线斜率买点门槛…'
     : `上证指数 3 日线斜率 ${formatSlope(indexSlope)}（需 > 0）；龙头池共 ${leaderData.poolCount ?? 0} 只（过去 10 交易日四连板及以上，剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）`;
+  const reverseGateNote = !leaderData
+    ? '正在检测逆周期（反向抱团）择时状态…'
+    : !reverse
+      ? '逆周期（反向抱团）数据获取失败，暂无法展示'
+      : `当日上证跌幅 ${reverse.indexChange == null ? '--' : `${Number(reverse.indexChange).toFixed(2)}%`}（触发须 ≤ ${reverse.indexDropPct}%）；反向抱团池共 ${reverse.poolCount ?? 0} 只（过去 20 交易日连板 ≥ 2，剔除创业板/科创板/题材黑名单，近 20 日内滑动 10 日区间最大涨幅 ≥ 60%）`;
 
   return (
     <div className="ob-module ob-rank3-module">
@@ -885,7 +903,7 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
           onChange={setStrategyMode}
           popupMatchSelectWidth={false}
         />
-        <span className="ob-total-tag">共 {rowCount} 只</span>
+        <span className="ob-total-tag">{isExtreme ? `顺周期 ${rowCount} · 逆周期 ${reverseList.length}` : `共 ${rowCount} 只`}</span>
       </div>
       <div className={`ob-gainer-gate-note ${(isExtreme ? slopeOk : (cybPassed && starPassed)) ? 'both' : (isExtreme ? false : (cybPassed || starPassed)) ? 'partial' : 'none'}`}>
         {isExtreme ? extremeGateNote : gateNote}
@@ -893,6 +911,7 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
       <div className="ob-gainer-body">
         <div className="ob-gainer-col">
           <div className="ob-gainer-col-head">
+            {isExtreme && <span className="ob-gainer-section-label">顺周期 · 情绪游资-极致胜率</span>}
             {isExtreme ? (
               <div className={`ob-gainer-gate ${slopeOk ? 'passed' : 'failed'}`}>
                 <span className="ob-gainer-gate-slope">上证指数 {formatSlope(indexSlope)}</span>
@@ -988,6 +1007,58 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
             })
           )}
         </div>
+        {isExtreme && (
+          <div className={`ob-gainer-col ob-gainer-col-reverse ${reverseSlopeOk ? 'active' : ''}`}>
+            <div className="ob-gainer-col-head">
+              <span className="ob-gainer-section-label reverse">逆周期 · 反向抱团龙头</span>
+              <div className={`ob-gainer-gate ${reverseSlopeOk ? 'passed' : 'failed'}`}>
+                <span className="ob-gainer-gate-slope">上证指数 {formatSlope(reverseSlope)}</span>
+                <span className="ob-gainer-gate-turn">{reverse && reverse.slopeDayNo != null ? `连续为负第 ${reverse.slopeDayNo} 天` : '3 日线收盘口径斜率'}</span>
+                <span className="ob-gainer-gate-badge">{reverseSlopeOk ? '逆周期窗口已开启' : '未进入逆周期窗口'}</span>
+              </div>
+            </div>
+            <div className={`ob-gainer-gate-note ${reverseSlopeOk ? 'both' : 'none'}`}>{reverseGateNote}</div>
+            <div className="ob-gainer-head ob-gainer-head-reverse">
+              <span>#</span>
+              <span>股票</span>
+              <span>当日</span>
+              <span>强度分</span>
+              <span>连板</span>
+              <span>逆周期择时</span>
+            </div>
+            {reverseList.length === 0 ? (
+              <div className="ob-empty-mini ob-gainer-empty">暂无满足条件的反向抱团标的</div>
+            ) : reverseList.map((s, idx) => (
+              <div className="ob-gainer-row ob-gainer-row-reverse" key={`rev-${s.code}-${idx}`}>
+                <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
+                <span className="ob-gainer-name-cell">
+                  <span
+                    className="ob-stock-name ob-stock-name-clickable"
+                    title="点击查看K线"
+                    onClick={() => { setSelectedStock({ code: s.code, stockName: s.stockName, change: s.change }); setKlineVisible(true); }}
+                  >{s.stockName}</span>
+                  {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
+                  {s.timingPassed && <span className="ob-gainer-buyflag">逆周期买点</span>}
+                </span>
+                <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
+                  {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
+                </span>
+                <span className="ob-gainer-resilience">
+                  {s.strengthScore !== null && s.strengthScore !== undefined ? Number(s.strengthScore).toFixed(2) : '--'}
+                </span>
+                <span className="ob-gainer-resilience">
+                  {s.lianbanCount != null ? `${s.lianbanCount} 板` : '--'}
+                </span>
+                <span className="ob-rev-timing-cell">
+                  <span
+                    className={`ob-rev-timing-tag ${reverseTimingClass(s.timingTag)}`}
+                    title={s.timingDetail || ''}
+                  >{s.timingTag || '--'}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <StockKLineModal
@@ -1039,10 +1110,13 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
       const result = res.data?.data;
       if (!result) return;
       setData(result);
-      const hit = result.allPassed === true;
+      // 命中口径：顺周期前置全部通过；情绪游资模式下逆周期（反向抱团）择时触发也算命中
+      const forwardHit = result.allPassed === true;
+      const reverseHit = isExtreme && result.reverse?.allPassed === true;
+      const hit = forwardHit || reverseHit;
       // 向上层汇报买点是否命中，供 3 日涨幅榜决定是否高亮展示
       onResultChange?.(hit);
-      // 触发条件：其它前置检查全部通过（allPassed）
+      // 触发条件：命中（顺周期全部前置通过 或 逆周期择时触发）
       if (hit) {
         const now = Date.now();
         if (now - lastPopupRef.current >= 5 * 60 * 1000) {
@@ -1056,7 +1130,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
     } catch (err) {
       console.error('自动买点诊断失败:', err);
     }
-  }, [onResultChange, sendBuyPointFeishu, mode]);
+  }, [onResultChange, sendBuyPointFeishu, mode, isExtreme]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -1109,7 +1183,17 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
   const checks = (data?.checks || []).filter(c => c.id !== 'tail_dip_buying');
   const allPassed = data?.allPassed === true;
   const hit = allPassed;
-  const passedCount = checks.filter(c => c.passed).length;
+  // 逆周期（反向抱团）一组条件（后端在 checks 之外单独返回），独立分组展示
+  const reverseChecks = isExtreme ? (data?.reverseChecks || []) : [];
+  const sortChecks = (list) => [...list].sort((a, b) => a.passed - b.passed);
+  const checkGroups = [
+    { label: isExtreme ? '顺周期 · 情绪游资-极致胜率' : '', items: sortChecks(checks) },
+    ...(reverseChecks.length > 0
+      ? [{ label: '逆周期 · 反向抱团龙头', items: sortChecks(reverseChecks), reverse: true }]
+      : []),
+  ];
+  const totalCheckCount = checkGroups.reduce((n, g) => n + g.items.length, 0);
+  const totalPassedCount = checkGroups.reduce((n, g) => n + g.items.filter(c => c.passed).length, 0);
   const conclusionText = !allPassed && typeof data?.conclusion === 'string' && data.conclusion.includes('尾盘抄底')
     ? '当前前置条件未全部满足，请耐心等待，不要盲目出手。'
     : data?.conclusion;
@@ -1132,32 +1216,37 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
         </div>
         <div className="ob-diagnosis-actions">
           <span className={`ob-status-badge ${hit ? 'hit' : ''}`}>
-            {!data ? '诊断中...' : hit ? '🎯 已命中' : `未满足 ${passedCount}/${checks.length}`}
+            {!data ? '诊断中...' : hit ? '🎯 已命中' : `未满足 ${totalPassedCount}/${totalCheckCount}`}
           </span>
           <button className="ob-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="手动刷新">
             <ReloadOutlined />
           </button>
         </div>
       </div>
-      <div className="ob-diagnosis-body">
+      <div className="ob-diagnosis-body" style={{ maxHeight: 530,overflowY: 'auto' }}>
         {!data ? (
           <div className="ob-diagnosis-loading"><Spin size="small" /></div>
         ) : (
           <>
-            {checks.sort((a, b) => a.passed - b.passed).map((c) => (
-              <div key={c.id} className={`ob-buy-check ${c.exempted ? 'exempted' : c.passed ? 'passed' : 'failed'}`}>
-                <span className="ob-buy-check-name">{c.title}</span>
-                <span className={`ob-buy-check-badge ${c.exempted ? 'exempted' : c.passed ? 'passed' : 'failed'}`}>
-                  {c.exempted ? '已豁免' : c.passed ? '通过' : '未通过'}
-                </span>
-                {(c.value || !c.passed) && (
-                  <span className="ob-buy-check-detail">
-                    {c.value ? <b>{c.value}</b> : null}
-                    {!c.passed && c.reason ? <span>{c.reason}</span> : null}
+            {checkGroups.map((g, gi) => [
+              g.label
+                ? <div key={`g-${gi}`} className={`ob-check-group-label${g.reverse ? ' reverse' : ''}`}>{g.label}</div>
+                : null,
+              ...g.items.map((c) => (
+                <div key={c.id} className={`ob-buy-check ${c.exempted ? 'exempted' : c.passed ? 'passed' : 'failed'}`}>
+                  <span className="ob-buy-check-name">{c.title}</span>
+                  <span className={`ob-buy-check-badge ${c.exempted ? 'exempted' : c.passed ? 'passed' : 'failed'}`}>
+                    {c.exempted ? '已豁免' : c.passed ? '通过' : '未通过'}
                   </span>
-                )}
-              </div>
-            ))}
+                  {(c.value || !c.passed) && (
+                    <span className="ob-buy-check-detail">
+                      {c.value ? <b>{c.value}</b> : null}
+                      {!c.passed && c.reason ? <span>{c.reason}</span> : null}
+                    </span>
+                  )}
+                </div>
+              )),
+            ])}
             <div className={`ob-conclusion ${hit ? 'hit' : ''}`}>
               {conclusionText}
             </div>
@@ -1184,24 +1273,40 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
           {popupStocks.length > 0 ? (
             <>
               <div className="ob-alert-buy-title">
-                {isExtreme ? '情绪游资-龙头列表 · 完整买点标的（已过滤涨停板）' : '可买标的（已过滤涨停板）'}
+                {isExtreme ? '情绪游资-龙头列表 · 完整买点标的 / 反向抱团逆周期买点标的（已过滤涨停板）' : '可买标的（已过滤涨停板）'}
               </div>
               {popupStocks.map((s) => (
-                <div key={s.code} className="ob-alert-stock">
+                <div key={`${s.isReverse ? 'rev-' : ''}${s.code}`} className="ob-alert-stock">
                   {isExtreme ? (
-                    <>
-                      <div className="ob-alert-stock-head">
-                        <b>{s.stockName}</b>
-                        <span className="ob-alert-stock-code">{s.code}</span>
-                        <span className="ob-alert-stock-market">{s.lianbanCount != null ? `${s.lianbanCount} 连板` : ''}</span>
-                        <span style={{ marginLeft: 'auto', fontWeight: 700, color: s.change >= 0 ? '#e11d48' : '#059669' }}>
-                          当日 {formatSignedPercent(s.change)}
-                        </span>
-                      </div>
-                      <div className="ob-alert-stock-meta">
-                        强度−差劲 {s.delta != null ? Number(s.delta).toFixed(2) : '--'}
-                      </div>
-                    </>
+                    s.isReverse ? (
+                      <>
+                        <div className="ob-alert-stock-head">
+                          <b>{s.stockName}</b>
+                          <span className="ob-alert-stock-code">{s.code}</span>
+                          <span className="ob-alert-stock-market">逆周期 · {s.lianbanCount != null ? `${s.lianbanCount} 连板` : '--'}</span>
+                          <span style={{ marginLeft: 'auto', fontWeight: 700, color: s.change >= 0 ? '#e11d48' : '#059669' }}>
+                            当日 {formatSignedPercent(s.change)}
+                          </span>
+                        </div>
+                        <div className="ob-alert-stock-meta">
+                          强度分 {s.strengthScore != null ? Number(s.strengthScore).toFixed(2) : '--'} · {s.timingTag || '--'}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="ob-alert-stock-head">
+                          <b>{s.stockName}</b>
+                          <span className="ob-alert-stock-code">{s.code}</span>
+                          <span className="ob-alert-stock-market">{s.lianbanCount != null ? `${s.lianbanCount} 连板` : ''}</span>
+                          <span style={{ marginLeft: 'auto', fontWeight: 700, color: s.change >= 0 ? '#e11d48' : '#059669' }}>
+                            当日 {formatSignedPercent(s.change)}
+                          </span>
+                        </div>
+                        <div className="ob-alert-stock-meta">
+                          强度−差劲 {s.delta != null ? Number(s.delta).toFixed(2) : '--'}
+                        </div>
+                      </>
+                    )
                   ) : (
                     <>
                       <div className="ob-alert-stock-head">
@@ -1222,7 +1327,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
             </>
           ) : (
             <div className="ob-alert-sub">
-              {isExtreme ? '当前无完整买点标的（需强度分 − 差劲分 ≥ 30 且上证 3 日线斜率为正、未封涨停）。' : '当前无满足买点条件且未封涨停的可买标的。'}
+              {isExtreme ? '当前无顺周期完整买点标的（需强度分 − 差劲分 ≥ 30 且上证 3 日线斜率为正、未封涨停），亦无逆周期反向抱团买点标的。' : '当前无满足买点条件且未封涨停的可买标的。'}
             </div>
           )}
           <div className="ob-alert-time">诊断时间：{data?.timestamp}</div>
@@ -1353,7 +1458,7 @@ const SellPointDiagnosisCard = () => {
           </button>
         </div>
       </div>
-      <div className="ob-diagnosis-body">
+      <div className="ob-diagnosis-body" style={{ maxHeight: 530,overflowY: 'auto' }}>
         {results.length === 0 ? (
           <div className="ob-empty-mini" style={{ height: 500, fontSize: 16 }}>暂无持仓</div>
         ) : results.map((r) => (

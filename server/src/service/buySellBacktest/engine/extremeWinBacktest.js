@@ -21,7 +21,7 @@ const {
   precomputeTurnMap,
 } = require('./indexGate');
 const { scanLeaderPriceSell } = require('./leaderSellMinute');
-const { EXCLUDED_CODES, EXCLUDED_THEMES, isExcludedTheme } = require('../constants');
+const { EXCLUDED_THEMES } = require('../constants');
 const { fmtTime } = require('../diagnose/buyPoint');
 const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats');
 // 差劲分 / 强度分的口径与打分函数（与「个股历史分析」接口共用同一份实现）
@@ -38,9 +38,21 @@ const {
   LOOKBACK_DAYS, MIN_BOARD_COUNT, DEATH_CROSS_WINDOW, DELTA_MIN,
   RANGE_WINDOW_DAYS, RANGE_SLIDE_DAYS, MAX_WINDOW_RANGE_PCT, MAX_TOTAL_RANGE_PCT, POST_LIANBAN_DROP_PCT,
   PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
-  isChiNextOrStar, maxSlidingWindowRangePct,
   computeCrossInfo, buildExtremeWinPool,
 } = require('./extremeWinPool');
+// 逆周期腿候选池 + 择时常量 公共模块（与「情绪游资-反向抱团龙头」独立策略共用同一份实现，避免口径漂移）
+const {
+  LOOKBACK_DAYS: REV_LOOKBACK_DAYS,
+  MIN_BOARD_COUNT: REV_MIN_BOARD_COUNT,
+  RANGE_WINDOW_DAYS: REV_RANGE_WINDOW_DAYS,
+  RANGE_SLIDE_DAYS: REV_RANGE_SLIDE_DAYS,
+  MIN_WINDOW_RANGE_PCT: REV_MIN_WINDOW_RANGE_PCT,
+  NEG_STREAK_MIN_DAYS: REV_NEG_STREAK_MIN_DAYS,
+  INDEX_DROP_PCT: REV_INDEX_DROP_PCT,
+  STRENGTH_MIN: REV_STRENGTH_MIN,
+  HIT_REQUIRED: REV_HIT_REQUIRED,
+  buildReverseLeaderPool,
+} = require('./reverseLeaderPool');
 
 // ============================================================
 // 情绪游资-极致胜率（extremeWinMode: true，2026-10-16 用户新增；2026-10-17 改版；独立引擎）
@@ -119,15 +131,9 @@ const LEADER_RESILIENCE_INDEX_CODE = 'sh000001'; // 抗分歧/涨停口径统一
 // 候选池剔除创业板（30/301）与科创板（688）：isChiNextOrStar 见 ./extremeWinPool
 
 // ---- 逆周期腿（情绪游资-反向抱团龙头，2026-10-17 用户要求融合进本策略；规则与独立策略完全一致，仅按半仓计收益）----
-const REV_LOOKBACK_DAYS = 20;        // 反向抱团：过去 20 个交易日出现过连板
-const REV_MIN_BOARD_COUNT = 2;       // 反向抱团：连板门槛 2 板及以上
-const REV_RANGE_WINDOW_DAYS = 20;    // 反向抱团：动量窗口 20 日（不含当日）
-const REV_RANGE_SLIDE_DAYS = 10;     // 反向抱团：滑动子窗口 连续 10 日
-const REV_MIN_WINDOW_RANGE_PCT = 60; // 反向抱团：子窗口区间最大涨幅门槛 ≥ 60%
-const REV_NEG_STREAK_MIN_DAYS = 2;   // 反向抱团：斜率连续为负第 3 天起（daysSinceTurnNeg >= 2）
-const REV_INDEX_DROP_PCT = -0.5;     // 反向抱团：当日上证跌幅 ≥ 0.5%（较昨收 ≤ -0.5%）
-const REV_STRENGTH_MIN = 50;         // 反向抱团：盘中强度分 > 50 记一次命中
-const REV_HIT_REQUIRED = 2;          // 反向抱团：累计 2 次命中买入
+// REV_LOOKBACK_DAYS / REV_MIN_BOARD_COUNT / REV_RANGE_WINDOW_DAYS / REV_RANGE_SLIDE_DAYS /
+// REV_MIN_WINDOW_RANGE_PCT / REV_NEG_STREAK_MIN_DAYS / REV_INDEX_DROP_PCT / REV_STRENGTH_MIN /
+// REV_HIT_REQUIRED 与候选池构建函数 buildReverseLeaderPool 见 ./reverseLeaderPool
 
 // 候选池题材黑名单（EXCLUDED_THEMES / isExcludedTheme）、区间涨幅过滤常量与工具函数
 // hasPostLianbanBigDrop / maxSlidingWindowRangePct 见 ./extremeWinPool
@@ -282,38 +288,15 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
     }
 
     // ===== 逆周期腿候选池（仅在可用日构建；连板名单 + 题材黑名单 + 动量过滤）=====
+    // 构建实现与「情绪游资-反向抱团龙头」独立策略共用 ./reverseLeaderPool.buildReverseLeaderPool
     let revCandidatesRaw = [];
     let revPoolFilterText = '';
     if (eligibleRev) {
       try {
-        const info = await getRecentMultiLianbanStocks(dateStr, REV_LOOKBACK_DAYS, REV_MIN_BOARD_COUNT);
-        const themeRemoved = [];
-        const base = (info.stocks || []).filter(s => {
-          if (EXCLUDED_CODES.has(s.code)) return false;
-          // 2026-10-17 用户要求：逆周期腿候选池一律剔除创业板（30/301）与科创板（688），与顺周期腿口径一致
-          if (isChiNextOrStar(s.code)) return false;
-          if (isExcludedTheme(s.board)) { themeRemoved.push(s); return false; }
-          return true;
-        });
-        const themeFilterText = themeRemoved.length > 0
-          ? `；题材黑名单（${EXCLUDED_THEMES.join('、')}）剔除 ${themeRemoved.length} 只（${themeRemoved.map(s => `${s.name || s.code}（${s.board}）`).join('、')}）`
-          : '';
-        if (base.length > 0) {
-          let winDates = [];
-          try { winDates = await getPastTradingDates(dateStr, REV_RANGE_WINDOW_DAYS); } catch (e) { winDates = []; }
-          try { await ensureBarsForCodes(new Set(base.map(s => s.code))); } catch (e) { /* 拉取失败按数据缺失处理 */ }
-          if (winDates.length >= REV_RANGE_WINDOW_DAYS) {
-            const before = base.length;
-            revCandidatesRaw = base.filter(s => {
-              const rp = maxSlidingWindowRangePct(s.code, winDates, REV_RANGE_SLIDE_DAYS);
-              return rp != null && Number.isFinite(rp) && rp >= REV_MIN_WINDOW_RANGE_PCT;
-            });
-            revPoolFilterText = `${themeFilterText}；过去 ${REV_RANGE_WINDOW_DAYS} 个交易日（不含当日）内任意连续 ${REV_RANGE_SLIDE_DAYS} 个交易日区间最大涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 ≥ ${REV_MIN_WINDOW_RANGE_PCT}% 保留 ${revCandidatesRaw.length}/${before} 只`;
-          } else {
-            revPoolFilterText = `${themeFilterText}；过去 ${REV_RANGE_WINDOW_DAYS} 个交易日日K数据不足，本日无候选`;
-          }
-        }
-      } catch (e) { revCandidatesRaw = []; }
+        const pool = await buildReverseLeaderPool(dateStr);
+        revCandidatesRaw = pool.stocks || [];
+        revPoolFilterText = pool.poolFilterText || '';
+      } catch (e) { revCandidatesRaw = []; revPoolFilterText = ''; }
       if (revCandidatesRaw.length > 0) {
         for (const s of revCandidatesRaw) {
           s.poolFilterText = revPoolFilterText;

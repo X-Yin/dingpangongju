@@ -138,9 +138,11 @@ const DingPan = () => {
     const [sortField, setSortField] = useState(() => {
         return localStorage.getItem('dingpan_sortField') || 'change'; // 'change' | 'mainFund'
     }); // 排序字段
-    const [showOnlyGoodNews, setShowOnlyGoodNews] = useState(() => {
-        return localStorage.getItem('dingpan_showOnlyGoodNews') === 'true';
-    }); // 是否只显示有利好消息的股票
+    const [techFilter, setTechFilter] = useState(() => {
+        const saved = localStorage.getItem('dingpan_techFilter');
+        const valid = ['all', 'tech', 'nonTech'];
+        return valid.includes(saved) ? saved : 'all';
+    }); // 全量自选股科技股筛选：'all' 全量 / 'tech' 只看科技股 / 'nonTech' 只看非科技股
     const [stockViewMode, setStockViewMode] = useState(() => {
         const saved = localStorage.getItem('dingpan_stockViewMode');
         const valid = ['grouped', 'merged', 'statistics', 'research'];
@@ -240,10 +242,15 @@ const DingPan = () => {
         }
     };
 
-    // 监听利好筛选状态变化并存入 localStorage
+    // 监听科技股筛选状态变化并存入 localStorage
     useEffect(() => {
-        localStorage.setItem('dingpan_showOnlyGoodNews', showOnlyGoodNews);
-    }, [showOnlyGoodNews]);
+        localStorage.setItem('dingpan_techFilter', techFilter);
+    }, [techFilter]);
+
+    // 循环切换科技股筛选：全量 → 只看科技股 → 只看非科技股 → 全量
+    const cycleTechFilter = () => {
+        setTechFilter(prev => (prev === 'all' ? 'tech' : prev === 'tech' ? 'nonTech' : 'all'));
+    };
 
     // 监听主题色配置变化并存入 localStorage
     useEffect(() => {
@@ -984,9 +991,11 @@ const DingPan = () => {
             stocks = stocks.filter(stock => stock.isImportant);
         }
 
-        // 2. 利好消息筛选
-        if (showOnlyGoodNews) {
-            stocks = stocks.filter(stock => hasGoodNews(stock.stockName));
+        // 2. 科技股筛选
+        if (techFilter === 'tech') {
+            stocks = stocks.filter(stock => stock.isTech !== false);
+        } else if (techFilter === 'nonTech') {
+            stocks = stocks.filter(stock => stock.isTech === false);
         }
 
         // 3. 搜索关键词筛选
@@ -1028,7 +1037,7 @@ const DingPan = () => {
         }
 
         return stocks;
-    }, [visibleAllStockData, searchQuery, showOnlyImportant, showOnlyGoodNews, sortOrder, sortField, watchlistMainFund, jigouReports]);
+    }, [visibleAllStockData, searchQuery, showOnlyImportant, techFilter, sortOrder, sortField, watchlistMainFund, jigouReports]);
 
     const allStockOverview = useMemo(() => {
         const allStocks = Array.isArray(data.allStockData) ? data.allStockData : [];
@@ -2504,8 +2513,8 @@ const DingPan = () => {
                                 sortOrder={sortOrder}
                                 sortField={sortField}
                                 onSortChange={handleSortChange}
-                                showOnlyGoodNews={showOnlyGoodNews}
-                                setShowOnlyGoodNews={setShowOnlyGoodNews}
+                                techFilter={techFilter}
+                                onCycleTechFilter={cycleTechFilter}
                                 filteredAllStockData={filteredAllStockData}
                                 watchlistMainFund={watchlistMainFund}
                                 hasGoodNews={hasGoodNews}

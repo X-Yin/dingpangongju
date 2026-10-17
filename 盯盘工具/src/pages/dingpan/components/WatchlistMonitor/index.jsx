@@ -2,8 +2,9 @@ import { Card, Input, Button, Tooltip, Tag, Typography, Empty, Space, Dropdown }
 import {
     AreaChartOutlined, CaretDownOutlined, CaretUpOutlined, SearchOutlined, ReloadOutlined,
     PlusOutlined, StarOutlined, StarFilled, ThunderboltOutlined, ArrowUpOutlined, ArrowDownOutlined,
-    InfoCircleOutlined, DeleteOutlined, PushpinOutlined, RadarChartOutlined, FileSearchOutlined,
+    DeleteOutlined, PushpinOutlined, RadarChartOutlined, FileSearchOutlined,
     EditOutlined, LineChartOutlined, ExperimentOutlined, EyeInvisibleOutlined,
+    AppstoreOutlined, RocketOutlined, ShopOutlined,
 } from '@ant-design/icons';
 import { titleStyle, numberStyle } from '../../utils/themeColor';
 import './index.scss';
@@ -24,8 +25,8 @@ const WatchlistMonitor = ({
     sortOrder,
     sortField,
     onSortChange,
-    showOnlyGoodNews,
-    setShowOnlyGoodNews,
+    techFilter,
+    onCycleTechFilter,
     filteredAllStockData,
     watchlistMainFund,
     hasGoodNews,
@@ -143,16 +144,6 @@ const WatchlistMonitor = ({
                             className="all-stock-input search-input"
                             style={{ flex: 1 }}
                         />
-                        <Tooltip title="刷新股票数据">
-                            <Button
-                                size="small"
-                                type="primary"
-                                icon={<ReloadOutlined />}
-                                loading={refreshingStockData}
-                                onClick={onRefresh}
-                                className="all-stock-filter-btn refresh-filter-btn"
-                            />
-                        </Tooltip>
                         <Tooltip title="新增股票">
                             <Button
                                 size="small"
@@ -180,13 +171,13 @@ const WatchlistMonitor = ({
                                 className={`all-stock-filter-btn sort-filter-btn ${sortField === 'change' && sortOrder !== 'none' ? 'active' : ''}`}
                             />
                         </Tooltip>
-                        <Tooltip title={showOnlyGoodNews ? "取消利好筛选" : "只看有利好"}>
+                        <Tooltip title={techFilter === 'all' ? "当前：全量自选股，点击只看科技股" : techFilter === 'tech' ? "当前：只看科技股，点击只看非科技股" : "当前：只看非科技股，点击恢复全量"}>
                             <Button
                                 size="small"
-                                type={showOnlyGoodNews ? "primary" : "default"}
-                                icon={<InfoCircleOutlined />}
-                                onClick={() => setShowOnlyGoodNews(!showOnlyGoodNews)}
-                                className={`all-stock-filter-btn good-news-filter-btn ${showOnlyGoodNews ? 'active' : ''}`}
+                                type={techFilter === 'all' ? "default" : "primary"}
+                                icon={techFilter === 'tech' ? <RocketOutlined /> : techFilter === 'nonTech' ? <ShopOutlined /> : <AppstoreOutlined />}
+                                onClick={onCycleTechFilter}
+                                className={`all-stock-filter-btn tech-filter-btn ${techFilter === 'all' ? '' : 'active'}`}
                             />
                         </Tooltip>
                     </div>

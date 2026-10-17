@@ -1334,5 +1334,90 @@ exports.default = [
         "blockName": "电力",
         "code": "sz000993",
         "name": "闽东电力"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh600316",
+        "name": "洪都航空"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh600562",
+        "name": "国睿科技"
+    },
+    {
+        "blockName": "军工",
+        "code": "sz302132",
+        "name": "中航成飞"
+    },
+    {
+        "blockName": "军工",
+        "code": "sz000768",
+        "name": "中航西飞"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh688552",
+        "name": "航天南湖"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh688543",
+        "name": "国科军工"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh600435",
+        "name": "北方导航"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh600391",
+        "name": "航发科技"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh600893",
+        "name": "航发动力"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh600765",
+        "name": "中航重机"
+    },
+    {
+        "blockName": "军工",
+        "code": "sz000534",
+        "name": "万泽股份"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh688563",
+        "name": "航材股份"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh688239",
+        "name": "航宇科技"
+    },
+    {
+        "blockName": "军工",
+        "code": "sz300855",
+        "name": "图南股份"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sh603197",
+        "name": "保隆科技"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sh603085",
+        "name": "天成自控"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sz000887",
+        "name": "中鼎股份"
     }
 ]

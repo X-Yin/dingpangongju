@@ -854,6 +854,7 @@ const getAllStockData = () => {
             stockName: monitorStock?.name || value.stockName,
             isImportant: monitorStock ? monitorStock.isImportant : false,
             isTop: monitorStock ? monitorStock.isTop : false,
+            isTech: monitorStock ? monitorStock.isTech !== false : true,
             blockName: monitorStock?.blockName || '',
             ...latestKline
         };

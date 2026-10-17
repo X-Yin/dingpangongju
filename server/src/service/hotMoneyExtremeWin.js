@@ -24,10 +24,29 @@ const {
   loadTlinePoints, strengthAtMinute, diffAtMinute, round2, limitUpThresholdOf,
 } = require('./buySellBacktest/engine/extremeWinScores');
 const {
-  ICE_SIGNAL_INDEX_CODE, getIceMa3SlopeIntraday, fmtKeyBlockSlope, iceResilienceIndexCode,
+  ICE_SIGNAL_INDEX_CODE, getIceMa3SlopeIntraday, fmtKeyBlockSlope, iceResilienceIndexCode, precomputeTurnMap,
 } = require('./buySellBacktest/engine/indexGate');
+// 逆周期（反向抱团龙头）候选池 + 择时常量（与回测引擎 engine/reverseLeaderPool.js 共用同一实现）
+const {
+  LOOKBACK_DAYS: REV_LOOKBACK_DAYS,
+  MIN_BOARD_COUNT: REV_MIN_BOARD_COUNT,
+  RANGE_WINDOW_DAYS: REV_RANGE_WINDOW_DAYS,
+  RANGE_SLIDE_DAYS: REV_RANGE_SLIDE_DAYS,
+  MIN_WINDOW_RANGE_PCT: REV_MIN_WINDOW_RANGE_PCT,
+  INDEX_DROP_PCT: REV_INDEX_DROP_PCT,
+  STRENGTH_MIN: REV_STRENGTH_MIN,
+  HIT_REQUIRED: REV_HIT_REQUIRED,
+  NEG_STREAK_MIN_DAYS: REV_NEG_STREAK_MIN_DAYS,
+  isReverseEligible,
+  buildReverseLeaderPool,
+} = require('./buySellBacktest/engine/reverseLeaderPool');
 
 const MODE_EXTREME_WIN = 'hot_money_extreme_win';
+
+// 反向抱团「强度分命中次数」回溯窗口上限（交易日）：与回测口径一致（窗口自「上证 3 日线斜率由正转负日」起算）
+const REVERSE_HIT_WINDOW_MAX_DAYS = 20;
+// 命中次数缓存（仅历史交易日，key = `${code}|${dateNum}`）：当日盘中实时重算，不缓存
+const reversePastHitCache = new Map();
 
 // ---------- 交易日回退（与 getBuyPointChecks 口径一致） ----------
 const resolveTargetDay = (targetDate) => {
@@ -172,6 +191,265 @@ const fetchExtremeWinContext = async (targetDate = null) => {
 const byDeltaDesc = (a, b) => ((b.delta == null ? -Infinity : b.delta) - (a.delta == null ? -Infinity : a.delta));
 
 // ============================================================
+// 逆周期（反向抱团龙头）上下文：候选池（全部）+ 择时状态（上证斜率天数 / 当日上证跌幅 / 强度分命中次数）
+//   与回测引擎口径一致：窗口自「上证 3 日线斜率由正转负日」起算，窗口变化即清零；
+//   命中判定 = 某交易日上证当日跌幅 ≤ -0.5% 的分钟桶内，候选股盘中强度分首次 > 50 记 1 次（同一天同股只计一次），
+//   累计上限 HIT_REQUIRED；已触发买点 = 命中达上限且该时点未涨停。
+//   说明：为使线上展示轻量，命中次数按「当前（今日）候选池」回溯历史窗口各交易日统计
+//   （回测中每日池按当日行情独立重建，属已知近似）。
+// ============================================================
+const reverseTimestampText = (daysSinceTurnNeg) => (daysSinceTurnNeg == null
+  ? '--'
+  : `第 ${daysSinceTurnNeg + 1} 天`);
+
+// 计算各候选在负斜率窗口内已累计的强度分命中次数（返回值 Map<code, 次数(≤HIT_REQUIRED)>）
+//   逐交易日重建「当日候选池 ∩ 今日池代码」再统计命中，与回测口径一致（回测每个交易日按当日行情重建池）
+const computeReverseHitCounts = async (codes, windowDates, todayNum) => {
+  const counts = new Map(codes.map(c => [c, 0]));
+  const codeSet = new Set(codes);
+  for (const d of windowDates) {
+    const dNum = Number(d);
+    const isToday = dNum === todayNum;
+    let idxT;
+    try { idxT = await loadTlinePoints(ICE_SIGNAL_INDEX_CODE, dNum); } catch (e) { idxT = { preclose: null, points: [] }; }
+    const idxPts = idxT.points || [];
+    const pre = idxT.preclose;
+    if (!(pre > 0) || idxPts.length === 0) continue;
+
+    // 该交易日「上证当日跌幅 ≤ -0.5%」的分钟桶（升序）
+    const buckets = [];
+    for (const p of idxPts) {
+      const chg = ((p.lastPx - pre) / pre) * 100;
+      if (chg <= REV_INDEX_DROP_PCT) buckets.push(p.minute);
+    }
+    if (buckets.length === 0) continue;
+
+    // 该交易日候选池（与今日池代码取交集）
+    let dayCodes;
+    try {
+      const dayPool = await buildReverseLeaderPool(String(dNum), codeSet);
+      dayCodes = new Set((dayPool.stocks || []).map(s => s.code));
+    } catch (e) { dayCodes = new Set(); }
+    if (dayCodes.size === 0) continue;
+
+    await batchParallel(codes, async (code) => {
+      const cur = counts.get(code) || 0;
+      if (cur >= REV_HIT_REQUIRED) return null;
+      if (!dayCodes.has(code)) return null;
+      const ck = `${code}|${dNum}`;
+      let hit = null;
+      if (!isToday && reversePastHitCache.has(ck)) hit = reversePastHitCache.get(ck);
+      if (hit == null) {
+        let t;
+        try { t = await loadTlinePoints(code, dNum); } catch (e) { t = { preclose: null, points: [] }; }
+        const pts = t.points || [];
+        hit = 0;
+        if (pts.length > 0 && t.preclose > 0) {
+          for (const m of buckets) {
+            const s = strengthAtMinute(t, m, code, idxPts);
+            if (s && Number.isFinite(s.score) && s.score > REV_STRENGTH_MIN) { hit = 1; break; }
+          }
+        }
+        if (!isToday) reversePastHitCache.set(ck, hit);
+      }
+      if (hit === 1) counts.set(code, Math.min(cur + 1, REV_HIT_REQUIRED));
+      return null;
+    }, 6);
+  }
+  return counts;
+};
+
+const fetchReverseLeaderContext = async (targetDate = null) => {
+  const targetDay = resolveTargetDay(targetDate);
+  const dateStr = targetDay.format('YYYYMMDD');
+  const dateNum = Number(dateStr);
+  const isToday = dateStr === dayjs().format('YYYYMMDD');
+  const afterClose = !isToday || isAfterMarketClose();
+
+  // 1) 候选池（过去 20 交易日出现过连板 ≥ 2 + 剔除创业板/科创板/题材黑名单 + 10 日滑动窗口区间涨幅 ≥ 60%）
+  const pool = await buildReverseLeaderPool(dateStr);
+  const poolStocks = pool.stocks || [];
+  const codes = poolStocks.map(s => s.code);
+
+  // 2) 上证 3 日线斜率（收盘口径）+ 连续为负天数 / 窗口起点
+  let slopeClose = null;
+  let daysSinceTurnNeg = null;
+  let turnNegDate = null;
+  const turnMap = new Map();
+  try {
+    const recentDates = await getPastTradingDates(dateStr, 60);
+    const rangeDates = [...recentDates.map(Number), dateNum];
+    const tm = await precomputeTurnMap(ICE_SIGNAL_INDEX_CODE, rangeDates);
+    for (const [k, v] of tm) turnMap.set(k, v);
+    const tInfo = tm.get(dateNum);
+    if (tInfo) {
+      slopeClose = tInfo.slopeClose != null ? Number(tInfo.slopeClose) : null;
+      daysSinceTurnNeg = tInfo.daysSinceTurnNeg != null ? Number(tInfo.daysSinceTurnNeg) : null;
+      turnNegDate = tInfo.turnNegDate != null ? Number(tInfo.turnNegDate) : null;
+    }
+  } catch (e) { /* 斜率数据不足时择时状态展示为 -- */ }
+  const eligible = isReverseEligible(slopeClose, daysSinceTurnNeg);
+
+  // 3) 当日上证指数分时（当日跌幅 + 命中桶）
+  let indexTline;
+  try { indexTline = await loadTlinePoints(ICE_SIGNAL_INDEX_CODE, dateNum); } catch (e) { indexTline = { preclose: null, points: [] }; }
+  const idxPts = indexTline.points || [];
+  const idxPre = indexTline.preclose;
+  const indexChange = (idxPre > 0 && idxPts.length > 0)
+    ? round2(((idxPts[idxPts.length - 1].lastPx - idxPre) / idxPre) * 100)
+    : null;
+  const indexDropOk = indexChange != null && indexChange <= REV_INDEX_DROP_PCT;
+
+  // 4) 各候选当日分时 + 当日强度分（当前分钟口径）
+  const tlineList = codes.length > 0
+    ? await batchParallel(codes, async (code) => {
+        try { return await loadTlinePoints(code, dateNum); } catch (e) { return { preclose: null, points: [] }; }
+      }, 6)
+    : [];
+
+  // 5) 负斜率窗口内各交易日的强度分命中次数
+  //   仅统计「该交易日自身也满足择时前置（斜率 < 0 且已连续为负 ≥ 第 3 天）」的日期——与回测一致
+  //   （回测只在当日 eligible 时构建池并登记命中，负斜率窗口前 2 天不计数）
+  let hitCounts = new Map();
+  if (eligible && codes.length > 0) {
+    let windowDates = [];
+    try {
+      const pastDates = await getPastTradingDates(dateStr, REVERSE_HIT_WINDOW_MAX_DAYS + 40);
+      windowDates = pastDates.filter(d => Number(d) >= Number(turnNegDate || 0));
+      if (windowDates.length > REVERSE_HIT_WINDOW_MAX_DAYS) windowDates = windowDates.slice(-REVERSE_HIT_WINDOW_MAX_DAYS);
+    } catch (e) { windowDates = []; }
+    windowDates.push(dateNum); // 含当日（盘中实时）
+    const eligibleDates = windowDates.filter(dd => {
+      const ti = turnMap.get(Number(dd));
+      return !!ti && isReverseEligible(ti.slopeClose, ti.daysSinceTurnNeg);
+    });
+    hitCounts = await computeReverseHitCounts(codes, eligibleDates, dateNum);
+  }
+
+  const rows = poolStocks.map((s, i) => {
+    const code = s.code;
+    const t = tlineList[i] || { preclose: null, points: [] };
+    const points = t.points || [];
+    const preclose = t.preclose;
+    const stockMinute = afterClose
+      ? CLOSE_MINUTE
+      : (points.length > 0 ? points[points.length - 1].minute : CLOSE_MINUTE);
+
+    const strength = points.length > 0 ? strengthAtMinute(t, stockMinute, code, idxPts) : null;
+    const lastPt = points.length > 0 ? points[points.length - 1] : null;
+    const px = lastPt ? round2(lastPt.lastPx) : null;
+    const change = (preclose > 0 && px != null) ? round2(((px - preclose) / preclose) * 100) : null;
+    const isLimitUp = strength
+      ? !!strength.limitUp
+      : (change != null && change > limitUpThresholdOf(code));
+
+    const hitCount = hitCounts.get(code) || 0;
+    const timingPassed = eligible && indexDropOk && hitCount >= REV_HIT_REQUIRED && !isLimitUp;
+    let timingTag;
+    if (!eligible) timingTag = '斜率未就绪';
+    else if (!indexDropOk) timingTag = '大盘未达跌幅';
+    else if (hitCount >= REV_HIT_REQUIRED && !isLimitUp) timingTag = '已触发买点';
+    else if (isLimitUp) timingTag = '涨停不可买';
+    else timingTag = `待命中 ${hitCount}/${REV_HIT_REQUIRED}`;
+
+    const slopeText = slopeClose == null ? '--' : round2(slopeClose);
+    const dayNoText = reverseTimestampText(daysSinceTurnNeg);
+    const timingDetail = `上证 3 日线斜率收盘口径 ${slopeText}（连续为负${daysSinceTurnNeg == null ? '--' : dayNoText}${eligible ? '，已满足 ≥ 第 ' + (REV_NEG_STREAK_MIN_DAYS + 1) + ' 天' : ''}）；当日上证跌幅 ${indexChange == null ? '--' : indexChange + '%'}${indexDropOk ? `（≤ ${REV_INDEX_DROP_PCT}%，已满足）` : `（须 ≤ ${REV_INDEX_DROP_PCT}%）`}；窗口内强度分命中 ${hitCount}/${REV_HIT_REQUIRED} 次`;
+
+    return {
+      code,
+      stockName: s.name || code,
+      name: s.name || code,
+      board: s.board || '',
+      lianbanCount: s.lianbanCount || 0,
+      preclose: round2(preclose),
+      px,
+      change,
+      strengthScore: strength ? strength.score : null,
+      strengthDetail: strength,
+      isLimitUp,
+      hitCount,
+      minute: stockMinute,
+      timingPassed,
+      timingTag,
+      timingDetail,
+    };
+  });
+
+  const byHitDesc = (a, b) => (b.hitCount - a.hitCount) || (b.lianbanCount - a.lianbanCount);
+
+  return {
+    dateStr,
+    dateNum,
+    isToday,
+    afterClose,
+    slopeClose,
+    daysSinceTurnNeg,
+    turnNegDate,
+    eligible,
+    indexChange,
+    indexDropOk,
+    pool,
+    rows: rows.sort(byHitDesc),
+  };
+};
+
+// ============================================================
+// 逆周期（反向抱团龙头）买点诊断 3 项（独立分组，前端在顺周期 7 项之后单独展示）
+//   与回测引擎 reverseLeaderMode 买点口径一致：择时前置（上证 3 日线斜率连续为负第 3 天及以后）
+//   + 触发（当日上证跌幅 ≤ -0.5% 且窗口内强度分命中第 2 次、未涨停）
+// ============================================================
+const buildReverseChecks = (rctx) => {
+  const poolCount = (rctx.pool.stocks || []).length;
+  const rows = rctx.rows || [];
+  const triggered = rows.filter(r => r.timingPassed);
+  const best = rows[0] || null;
+  const slopeText = rctx.slopeClose == null ? '--' : round2(rctx.slopeClose);
+  const dayNoText = reverseTimestampText(rctx.daysSinceTurnNeg);
+  const idxChangeText = rctx.indexChange == null ? '--' : `${rctx.indexChange}%`;
+  const nameText = best ? `${best.stockName}（${best.code}）· ${best.lianbanCount} 连板` : '--';
+
+  const slopePassed = rctx.eligible === true;
+  const triggerPassed = triggered.length > 0;
+  const trigRow = triggered[0] || null;
+
+  return [
+    {
+      id: 'reverse_leader_pool',
+      group: 'reverse',
+      title: `逆周期选股（过去 ${REV_LOOKBACK_DAYS} 个交易日出现 ${REV_MIN_BOARD_COUNT} 连板及以上；剔除创业板/科创板/题材黑名单；近 ${REV_RANGE_WINDOW_DAYS} 日内滑动 ${REV_RANGE_SLIDE_DAYS} 日区间最大涨幅 ≥ ${REV_MIN_WINDOW_RANGE_PCT}%）`,
+      passed: poolCount > 0,
+      value: `反向抱团池 ${poolCount} 只`,
+      reason: `候选 = 过去 ${REV_LOOKBACK_DAYS} 个交易日内出现连板数 ≥ ${REV_MIN_BOARD_COUNT} 的个股，已剔除 ST 等黑名单、创业板（30/301）与科创板（688）及题材黑名单，并叠加动量过滤——过去 ${REV_RANGE_WINDOW_DAYS} 个交易日内任意连续 ${REV_RANGE_SLIDE_DAYS} 个交易日区间最大涨幅 ≥ ${REV_MIN_WINDOW_RANGE_PCT}%${rctx.pool.poolFilterText || ''}；当前反向抱团池共 ${poolCount} 只，展示标的为 ${nameText}`,
+    },
+    {
+      id: 'reverse_leader_timing',
+      group: 'reverse',
+      title: `逆周期买点前置：上证指数 3 日线斜率连续为负第 ${REV_NEG_STREAK_MIN_DAYS + 1} 天及以后`,
+      passed: slopePassed,
+      value: `上证 3 日线斜率（收盘口径）${slopeText}；连续为负${dayNoText}`,
+      reason: slopePassed
+        ? `上证指数（${ICE_SIGNAL_INDEX_CODE}）3 日线斜率收盘口径 = ${slopeText} < 0，且已连续为负${dayNoText}（≥ 第 ${REV_NEG_STREAK_MIN_DAYS + 1} 天，转负当日为第 1 天），满足逆周期择时前置——大盘走弱进入中段，反向抱团龙头具备做多条件`
+        : `上证指数（${ICE_SIGNAL_INDEX_CODE}）3 日线斜率收盘口径 ${slopeText}（连续为负${dayNoText}），未满足「斜率为负且连续为负 ≥ 第 ${REV_NEG_STREAK_MIN_DAYS + 1} 天」，当前不处于逆周期择时窗口`,
+    },
+    {
+      id: 'reverse_leader_trigger',
+      group: 'reverse',
+      title: `逆周期买点触发：当日上证跌幅 ≤ ${REV_INDEX_DROP_PCT}% 且窗口内盘中强度分命中第 ${REV_HIT_REQUIRED} 次（未涨停）`,
+      passed: triggerPassed,
+      value: `当日上证跌幅 ${idxChangeText}（${rctx.indexDropOk ? '已满足' : `须 ≤ ${REV_INDEX_DROP_PCT}%`}）；命中达标 ${triggered.length} 只`,
+      reason: triggerPassed
+        ? `当日上证跌幅 ${idxChangeText}（≤ ${REV_INDEX_DROP_PCT}%），反向抱团池内 ${trigRow.stockName}（${trigRow.code}）盘中强度分已在窗口内累计命中 ${trigRow.hitCount}/${REV_HIT_REQUIRED} 次且未涨停，触发逆周期反向抱团买点`
+        : !slopePassed
+          ? '逆周期择时前置未满足（上证 3 日线斜率未连续为负第 ' + (REV_NEG_STREAK_MIN_DAYS + 1) + ' 天及以后），暂不判定逆周期买点触发'
+          : !rctx.indexDropOk
+            ? `当日上证跌幅 ${idxChangeText} 未达到 ≤ ${REV_INDEX_DROP_PCT}%，不触发逆周期买点（须等待大盘当日出现 ≥ ${Math.abs(REV_INDEX_DROP_PCT)}% 幅度的下跌）`
+            : `当日上证跌幅已满足，但反向抱团池内暂无个股在窗口内累计命中 ${REV_HIT_REQUIRED} 次盘中强度分 > ${REV_STRENGTH_MIN}（当前最高 ${best ? `${best.stockName} ${best.hitCount}/${REV_HIT_REQUIRED} 次` : '--'}）`,
+    },
+  ];
+};
+
+// ============================================================
 // 龙头列表（除「强度分 − 差劲分 ≥ 30」与「上证 3 日线斜率为正」外，其余买点条件全部满足）
 // ============================================================
 const getHotMoneyLeaderList = async (targetDate = null, limit = 50) => {
@@ -179,6 +457,27 @@ const getHotMoneyLeaderList = async (targetDate = null, limit = 50) => {
     const ctx = await fetchExtremeWinContext(targetDate);
     const lim = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : 50;
     const stocks = ctx.rows.filter(r => r.listPassed).sort(byDeltaDesc).slice(0, lim);
+
+    // 逆周期（反向抱团）列表：池全部 + 择时状态（失败时不影响顺周期列表）
+    let reverse = null;
+    try {
+      const rctx = await fetchReverseLeaderContext(targetDate);
+      reverse = {
+        poolCount: (rctx.pool.stocks || []).length,
+        poolFilterText: rctx.pool.poolFilterText || '',
+        slopeClose: rctx.slopeClose != null ? round2(rctx.slopeClose) : null,
+        daysSinceTurnNeg: rctx.daysSinceTurnNeg,
+        slopeDayNo: rctx.daysSinceTurnNeg != null ? rctx.daysSinceTurnNeg + 1 : null,
+        eligible: rctx.eligible,
+        indexChange: rctx.indexChange,
+        indexDropOk: rctx.indexDropOk,
+        strengthMin: REV_STRENGTH_MIN,
+        hitRequired: REV_HIT_REQUIRED,
+        indexDropPct: REV_INDEX_DROP_PCT,
+        stocks: rctx.rows.slice(0, lim),
+      };
+    } catch (e) { reverse = null; }
+
     return {
       success: true,
       data: {
@@ -190,6 +489,7 @@ const getHotMoneyLeaderList = async (targetDate = null, limit = 50) => {
         poolCount: (ctx.pool.stocks || []).length,
         poolFilterText: ctx.pool.poolFilterText || '',
         stocks,
+        reverse,
       },
     };
   } catch (e) {
@@ -310,12 +610,42 @@ const getExtremeWinBuyPointChecks = async (targetDate = null, refresh = false) =
     const passedCount = checks.filter(c => c.passed).length;
     const totalCheckCount = checks.length;
 
+    // 逆周期（反向抱团龙头）一组条件：独立分组，失败时不影响顺周期 7 项
+    let reverseChecks = [];
+    let reverse = null;
+    try {
+      const rctx = await fetchReverseLeaderContext(targetDate);
+      reverseChecks = buildReverseChecks(rctx);
+      const revPoolCount = (rctx.pool.stocks || []).length;
+      reverse = {
+        poolCount: revPoolCount,
+        poolFilterText: rctx.pool.poolFilterText || '',
+        slopeClose: rctx.slopeClose != null ? round2(rctx.slopeClose) : null,
+        daysSinceTurnNeg: rctx.daysSinceTurnNeg,
+        slopeDayNo: rctx.daysSinceTurnNeg != null ? rctx.daysSinceTurnNeg + 1 : null,
+        eligible: rctx.eligible === true,
+        indexChange: rctx.indexChange,
+        indexDropOk: rctx.indexDropOk === true,
+        strengthMin: REV_STRENGTH_MIN,
+        hitRequired: REV_HIT_REQUIRED,
+        indexDropPct: REV_INDEX_DROP_PCT,
+        triggeredCount: (rctx.rows || []).filter(r => r.timingPassed).length,
+        triggered: (rctx.rows || []).filter(r => r.timingPassed),
+      };
+      reverse.allPassed = reverse.triggeredCount > 0;
+      reverse.passedCount = reverseChecks.filter(c => c.passed).length;
+      reverse.totalCheckCount = reverseChecks.length;
+    } catch (e) { reverseChecks = []; reverse = null; }
+
     const poolCount = (ctx.pool.stocks || []).length;
-    const conclusion = allPassed
+    const baseConclusion = allPassed
       ? '龙头池出现完整买点标的（强度分 − 差劲分 ≥ 30 且上证 3 日线斜率为正），可关注买入时机。分仓管理是最后一道防火墙。'
       : poolCount === 0
         ? '龙头池当前无满足条件的标的，请耐心等待。'
         : '龙头池暂未出现完整买点标的（需强度分 − 差劲分 ≥ 30 且上证 3 日线斜率为正），请耐心等待。';
+    const conclusion = reverse && reverse.triggeredCount > 0
+      ? `${baseConclusion} 另：逆周期（反向抱团）择时已触发，反向抱团池出现 ${reverse.triggeredCount} 只买点标的。`
+      : baseConclusion;
 
     return {
       success: true,
@@ -328,6 +658,8 @@ const getExtremeWinBuyPointChecks = async (targetDate = null, refresh = false) =
         allPassed,
         passedCount,
         totalCheckCount,
+        reverseChecks,
+        reverse,
         conclusion,
       },
     };

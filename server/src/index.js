@@ -1126,20 +1126,38 @@ app.post('/send_feishu_card', async (req, res) => {
     let card;
     if (type === 'buy_point') {
       if (mode === MODE_EXTREME_WIN) {
-        // 情绪游资-极致胜率：只推「完整买点股」（同时满足 delta ≥ 30 且上证 3 日线斜率 > 0，且未封涨停），无则不推
+        // 情绪游资-极致胜率：优先推「完整买点股」（同时满足 delta ≥ 30 且上证 3 日线斜率 > 0，且未封涨停）；
+        // 无完整买点股时，若逆周期（反向抱团）择时已触发，则改推「反向抱团买点股」；两者都无则不推
         let resultStocks = Array.isArray(buyStocks) && buyStocks.length > 0 ? buyStocks : null;
+        let reverseTiming = null;
+        let reverseStocks = [];
         if (!resultStocks) {
           const listRes = await getHotMoneyLeaderList(null, 50);
           const stocks = listRes?.data?.stocks || [];
           resultStocks = stocks.filter((s) => s.buyPointHit && !s.isLimitUp).slice(0, 3);
+          if (resultStocks.length === 0) {
+            const rev = listRes?.data?.reverse || null;
+            if (rev) {
+              reverseStocks = (rev.stocks || []).filter((s) => s.timingPassed).slice(0, 3);
+              if (reverseStocks.length > 0) reverseTiming = rev;
+            }
+          }
         }
-        if (!resultStocks || resultStocks.length === 0) {
+        if ((!resultStocks || resultStocks.length === 0) && reverseStocks.length === 0) {
           return res.json({ success: true, skipped: true, message: '当前无完整买点标的，不发送通知' });
         }
-        card = feishuNotify.buildHotMoneyLeaderCard({
-          buyStocks: resultStocks,
-          timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-        });
+        if (resultStocks && resultStocks.length > 0) {
+          card = feishuNotify.buildHotMoneyLeaderCard({
+            buyStocks: resultStocks,
+            timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+          });
+        } else {
+          card = feishuNotify.buildHotMoneyReverseLeaderCard({
+            buyStocks: reverseStocks,
+            timing: reverseTiming,
+            timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+          });
+        }
       } else {
         // 买点卡片：优先使用前端传入的标的；未传入时与「开盘实战」页自选股 3 日涨幅榜同源，
         // 严格取榜单前三，并点出其中的买点候选（榜单内首个满足买点资格且未封涨停的标的）

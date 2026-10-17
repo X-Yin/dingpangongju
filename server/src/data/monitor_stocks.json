@@ -952,5 +952,23 @@
     "riskScore": "9",
     "isTech": false,
     "addedAt": "2026-10-16 09:45:33"
+  },
+  {
+    "code": "sh600316",
+    "name": "洪都航空",
+    "isImportant": false,
+    "blockName": "军工",
+    "riskScore": "8",
+    "isTech": false,
+    "addedAt": "2026-10-17 21:30:13"
+  },
+  {
+    "code": "sh688600",
+    "name": "皖仪科技",
+    "isImportant": false,
+    "blockName": "氦气检测",
+    "riskScore": "9",
+    "isTech": false,
+    "addedAt": "2026-10-17 21:46:12"
   }
 ]

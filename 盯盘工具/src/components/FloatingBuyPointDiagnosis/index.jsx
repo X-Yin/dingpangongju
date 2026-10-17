@@ -17,6 +17,11 @@ const formatSlope = (v) => (
     : `${Number(v) >= 0 ? '+' : ''}${Number(v).toFixed(2)}°`
 );
 
+// 逆周期（反向抱团）择时状态标签样式：已触发 / 涨停不可买 / 斜率未就绪 / 等待命中
+const reverseTimingClass = (tag) => (
+  tag === '已触发买点' ? 'rev-hit' : tag === '涨停不可买' ? 'rev-limitup' : tag === '斜率未就绪' ? 'rev-idle' : 'rev-wait'
+);
+
 // 指数 3 日线斜率状态文案：正斜率披露由负转正第几天，负斜率披露由正转负第几天
 const slopeTurnText = (gate) => {
   if (!gate || gate.slope === null || gate.slope === undefined) return '指数 3 日线斜率数据不足';
@@ -335,11 +340,66 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
   const allPassed = checksResult?.allPassed === true;
   // hideTailDipCheck：隐藏「尾盘抄底」检查项（或逻辑分支），并同步修正计数与结论文案
   let checksList = (checksResult?.checks || []).filter(check => !(hideTailDipCheck && check.id === 'tail_dip_buying'));
-  let passedCount = checksList.filter(c => c.passed).length;
-  let totalCheckCount = checksList.length;
+  // 逆周期（反向抱团）一组条件（后端在 checks 之外单独返回），独立分组展示在顺周期之后
+  const reverseChecks = isExtreme ? (checksResult?.reverseChecks || []) : [];
+  const checkGroups = [
+    { key: 'forward', label: isExtreme ? '顺周期 · 情绪游资-极致胜率' : '', items: checksList },
+    ...(reverseChecks.length > 0
+      ? [{ key: 'reverse', label: '逆周期 · 反向抱团龙头', items: reverseChecks, reverse: true }]
+      : []),
+  ];
+  let passedCount = checkGroups.reduce((n, g) => n + g.items.filter(c => c.passed).length, 0);
+  let totalCheckCount = checkGroups.reduce((n, g) => n + g.items.length, 0);
   if (hideTailDipCheck && !allPassed && typeof checksResult?.conclusion === 'string' && checksResult.conclusion.includes('尾盘抄底')) {
     checksResult.conclusion = '当前前置条件未全部满足，请耐心等待，不要盲目出手。';
   }
+
+  // 单条买点条件卡片（顺周期 / 逆周期共用）
+  const renderCheckCard = (check, idx) => (
+    <div
+      key={check.id}
+      className={`fbd-check-card ${check.passed ? 'passed' : 'failed'}`}
+    >
+      <div className="fbd-card-header">
+        <div className="fbd-title-row">
+          <span className={`fbd-num ${check.passed ? 'num-pass' : 'num-fail'}`}>{idx + 1}</span>
+          <span className="fbd-title">{check.title}</span>
+        </div>
+        {check.passed ? (
+          <CheckCircleFilled className="fbd-status-icon pass-icon" />
+        ) : (
+          <CloseCircleFilled className="fbd-status-icon fail-icon" />
+        )}
+      </div>
+      <div className="fbd-card-body">
+        <div className="fbd-value-row">
+          <span className="fbd-value-label">当前值</span>
+          <span className={`fbd-value ${check.passed ? 'value-pass' : 'value-fail'}`}>{check.value}</span>
+        </div>
+        {check.detail && (
+          <div className="fbd-detail-row">
+            {check.id === 'fund_inflow' && check.detail.pastValue != null && check.detail.currentValue != null && (
+              <span className="fbd-detail-item">
+                资金 <b>{check.detail.pastValue >= 0 ? '+' : ''}{check.detail.pastValue.toFixed(2)}亿</b>
+                <span className="fbd-arrow"> → </span>
+                <b>{check.detail.currentValue >= 0 ? '+' : ''}{check.detail.currentValue.toFixed(2)}亿</b>
+                <span className="fbd-detail-time">（{check.detail.pastTime} → {check.detail.currentTime}）</span>
+              </span>
+            )}
+            {check.id === 'volume_expansion' && check.detail.prev5minVol != null && check.detail.last5minVol != null && (
+              <span className="fbd-detail-item">
+                量能变化 <b>{check.detail.prev5minVol.toFixed(2)}亿</b>
+                <span className="fbd-arrow"> → </span>
+                <b>{check.detail.last5minVol.toFixed(2)}亿</b>
+                <span className="fbd-detail-time">（{check.detail.pastTime} → {check.detail.currentTime}）</span>
+              </span>
+            )}
+          </div>
+        )}
+        <div className="fbd-reason">{check.reason}</div>
+      </div>
+    </div>
+  );
 
   const handleStockItemClick = (item) => {
     if (onStockClick) {
@@ -355,6 +415,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
   };
 
   // 情绪游资-极致胜率：龙头列表（除「强度分 − 差劲分 ≥ 30」与「上证 3 日线斜率为正」外，其余买点条件全部满足）
+  //   上半部分 = 顺周期；下半部分 = 逆周期（反向抱团龙头，池全部 + 择时状态）
   const renderExtremeLeaderList = () => {
     const leaderStocks = leaderData?.stocks || [];
     const slope = leaderData?.indexSlope;
@@ -363,9 +424,20 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
     const pick = leaderStocks.find((s) => s.buyPointHit && !s.isLimitUp) || null;
     const poolCount = leaderData?.poolCount ?? 0;
 
+    // 逆周期（反向抱团龙头）
+    const reverse = leaderData?.reverse || null;
+    const reverseStocks = reverse?.stocks || [];
+    const reverseSlope = reverse?.slopeClose ?? null;
+    const reverseSlopeOk = reverse?.eligible === true;
+
     const gateNote = !leaderData
       ? '正在检测情绪游资-极致胜率买点门槛（上证 3 日线斜率）…'
       : `候选池共 ${poolCount} 只（过去 10 交易日内连板数 ≥ 4，已剔除 ST / 创业板（30·301）/ 科创板（688）与科技自选股重叠者）；上证 3 日线斜率 ${formatSlope(slope)}，${slopeOk ? '满足「斜率为正」门槛' : '不满足「斜率为正」门槛，暂无完整买点标的，下列仅为候选龙头'}`;
+    const reverseGateNote = !leaderData
+      ? '正在检测逆周期（反向抱团）择时状态…'
+      : !reverse
+        ? '逆周期（反向抱团）数据获取失败，暂无法展示'
+        : `当日上证跌幅 ${reverse.indexChange == null ? '--' : `${Number(reverse.indexChange).toFixed(2)}%`}（触发须 ≤ ${reverse.indexDropPct}%）；反向抱团池共 ${reverse.poolCount ?? 0} 只（过去 20 交易日连板 ≥ 2，剔除创业板/科创板/题材黑名单，近 20 日内滑动 10 日区间最大涨幅 ≥ 60%）`;
 
     return (
       <>
@@ -380,8 +452,11 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
           </div>
         ) : leaderData ? (
           <>
-            <div className={`fbd-gate-note ${slopeOk ? 'both' : 'none'}`}>{gateNote}</div>
-            <div className="fbd-market-block">
+            <div className="fbd-market-block fbd-market-block-extreme">
+              <div className="fbd-market-block-title">
+                <span className="fbd-market-block-label">顺周期 · 情绪游资-极致胜率</span>
+              </div>
+              <div className={`fbd-gate-note ${slopeOk ? 'both' : 'none'}`}>{gateNote}</div>
               <div className="fbd-market-list">
                 <div className="fbd-market-list-header">
                   <span>#</span>
@@ -415,6 +490,58 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
                       </span>
                       <span className="fbd-market-change">
                         {item.delta != null ? Number(item.delta).toFixed(2) : '--'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="fbd-market-block fbd-market-block-extreme fbd-market-block-reverse">
+              <div className="fbd-market-block-title">
+                <span className="fbd-market-block-label reverse">逆周期 · 反向抱团龙头</span>
+                <span className={`fbd-market-block-gate ${reverseSlopeOk ? 'pass' : 'fail'}`}>
+                  上证 3 日线斜率（收盘口径）{formatSlope(reverseSlope)} · {reverse && reverse.slopeDayNo != null ? `连续为负第 ${reverse.slopeDayNo} 天` : '数据不足'}
+                </span>
+              </div>
+              <div className={`fbd-gate-note ${reverseSlopeOk ? 'both' : 'none'}`}>{reverseGateNote}</div>
+              <div className="fbd-market-list">
+                <div className="fbd-market-list-header fbd-market-list-header-reverse">
+                  <span>#</span>
+                  <span>股票名称</span>
+                  <span>连板</span>
+                  <span>强度分</span>
+                  <span>当日</span>
+                  <span>逆周期择时</span>
+                </div>
+                {reverseStocks.length === 0 ? (
+                  <div className="fbd-market-empty">暂无满足条件的反向抱团标的</div>
+                ) : reverseStocks.map((item, idx) => {
+                  const lianban = item.lianbanCount > 0 ? `${item.lianbanCount}板` : '--';
+                  return (
+                    <div
+                      key={`rev-${item.code}`}
+                      className="fbd-market-row fbd-market-row-reverse"
+                      onClick={() => handleStockItemClick(item)}
+                    >
+                      <span className={`fbd-market-rank ${idx < 3 ? 'top' : ''}`}>{idx + 1}</span>
+                      <span className="fbd-market-name-cell">
+                        <span className="fbd-market-name">{item.stockName}</span>
+                        <span className="fbd-market-tag market-cyb">{lianban}</span>
+                        {item.isLimitUp && <span className="fbd-market-tag limitup">涨停</span>}
+                        {item.timingPassed && <span className="fbd-market-tag pick">逆周期买点</span>}
+                      </span>
+                      <span className="fbd-market-resilience">{lianban}</span>
+                      <span className="fbd-market-change">
+                        {item.strengthScore != null ? Number(item.strengthScore).toFixed(2) : '--'}
+                      </span>
+                      <span className={`fbd-market-change ${item.change > 0 ? 'up' : item.change < 0 ? 'down' : ''}`}>
+                        {item.change != null ? `${item.change > 0 ? '+' : ''}${Number(item.change).toFixed(2)}%` : '--'}
+                      </span>
+                      <span className="fbd-market-rev-timing">
+                        <span className={`fbd-market-tag ${reverseTimingClass(item.timingTag)}`} title={item.timingDetail || ''}>
+                          {item.timingTag || '--'}
+                        </span>
                       </span>
                     </div>
                   );
@@ -832,51 +959,12 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
             ) : checksResult ? (
               <>
                 <div className="fbd-checks-list">
-                  {checksList.map((check, idx) => (
-                    <div
-                      key={check.id}
-                      className={`fbd-check-card ${check.passed ? 'passed' : 'failed'}`}
-                    >
-                      <div className="fbd-card-header">
-                        <div className="fbd-title-row">
-                          <span className={`fbd-num ${check.passed ? 'num-pass' : 'num-fail'}`}>{idx + 1}</span>
-                          <span className="fbd-title">{check.title}</span>
-                        </div>
-                        {check.passed ? (
-                          <CheckCircleFilled className="fbd-status-icon pass-icon" />
-                        ) : (
-                          <CloseCircleFilled className="fbd-status-icon fail-icon" />
-                        )}
-                      </div>
-                      <div className="fbd-card-body">
-                        <div className="fbd-value-row">
-                          <span className="fbd-value-label">当前值</span>
-                          <span className={`fbd-value ${check.passed ? 'value-pass' : 'value-fail'}`}>{check.value}</span>
-                        </div>
-                        {check.detail && (
-                          <div className="fbd-detail-row">
-                            {check.id === 'fund_inflow' && check.detail.pastValue != null && check.detail.currentValue != null && (
-                              <span className="fbd-detail-item">
-                                资金 <b>{check.detail.pastValue >= 0 ? '+' : ''}{check.detail.pastValue.toFixed(2)}亿</b>
-                                <span className="fbd-arrow"> → </span>
-                                <b>{check.detail.currentValue >= 0 ? '+' : ''}{check.detail.currentValue.toFixed(2)}亿</b>
-                                <span className="fbd-detail-time">（{check.detail.pastTime} → {check.detail.currentTime}）</span>
-                              </span>
-                            )}
-                            {check.id === 'volume_expansion' && check.detail.prev5minVol != null && check.detail.last5minVol != null && (
-                              <span className="fbd-detail-item">
-                                量能变化 <b>{check.detail.prev5minVol.toFixed(2)}亿</b>
-                                <span className="fbd-arrow"> → </span>
-                                <b>{check.detail.last5minVol.toFixed(2)}亿</b>
-                                <span className="fbd-detail-time">（{check.detail.pastTime} → {check.detail.currentTime}）</span>
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        <div className="fbd-reason">{check.reason}</div>
-                      </div>
-                    </div>
-                  ))}
+                  {checkGroups.map((g, gi) => [
+                    g.label
+                      ? <div key={`g-${gi}`} className={`fbd-group-label${g.reverse ? ' reverse' : ''}`}>{g.label}</div>
+                      : null,
+                    ...g.items.map((check, idx) => renderCheckCard(check, idx)),
+                  ])}
                 </div>
 
                 {!isExtreme && (<>

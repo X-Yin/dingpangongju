@@ -2,13 +2,11 @@ const { STRATEGIES } = require('../strategies/registry');
 const {
   batchParallel,
   ensureBarsForCodes,
-  getPastTradingDates,
   getRecentMultiLianbanStocks,
   getSingleStockTlineDataByDate,
   getStockCloseOnOrBefore,
   getTrainingCampDates,
   loadTrainingCampData,
-  stockWindowRangePct,
 } = require('../deps');
 const { getTechIndexDates } = require('../utils/techEmotion');
 const { calculateReplayResilience } = require('../diagnose/sellPoint');
@@ -21,7 +19,7 @@ const {
   precomputeTurnMap,
 } = require('./indexGate');
 const { scanLeaderPriceSell } = require('./leaderSellMinute');
-const { EXCLUDED_CODES, EXCLUDED_THEMES, isExcludedTheme } = require('../constants');
+const { EXCLUDED_THEMES } = require('../constants');
 const { fmtTime } = require('../diagnose/buyPoint');
 const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats');
 // 强度分完全复用「情绪游资-极致胜率」口径（0.3×A + 0.2×B + 0.3×C + 0.2×D）
@@ -31,6 +29,12 @@ const {
   loadTlinePoints, clearTlineCache,
   strengthAtMinute,
 } = require('./extremeWinScores');
+// 逆周期候选池 + 择时常量 公共模块（与「情绪游资-极致胜率」逆周期腿共用同一份实现，避免口径漂移）
+const {
+  LOOKBACK_DAYS, MIN_BOARD_COUNT, RANGE_WINDOW_DAYS, RANGE_SLIDE_DAYS, MIN_WINDOW_RANGE_PCT,
+  NEG_STREAK_MIN_DAYS, INDEX_DROP_PCT, STRENGTH_MIN, HIT_REQUIRED,
+  buildReverseLeaderPool,
+} = require('./reverseLeaderPool');
 
 // ============================================================
 // 情绪游资-反向抱团龙头（reverseLeaderMode: true，2026-10-17 用户新增；独立引擎）
@@ -50,15 +54,9 @@ const {
 //   仓位 = 全仓单持仓（权重 1），收益率不做半仓折算。
 // ============================================================
 
-const LOOKBACK_DAYS = 20;          // 选股回溯窗口：过去 20 个交易日
-const MIN_BOARD_COUNT = 2;         // 连板门槛：二连板及以上（出现过连板）
-const RANGE_WINDOW_DAYS = 20;      // 动量窗口：过去 20 个交易日（不含当日）
-const RANGE_SLIDE_DAYS = 10;       // 滑动子窗口：连续 10 个交易日
-const MIN_WINDOW_RANGE_PCT = 60;   // 子窗口区间最大涨幅门槛：>= 60%
-const NEG_STREAK_MIN_DAYS = 2;     // 斜率连续为负第 3 天起（daysSinceTurnNeg >= 2）才允许执行
-const INDEX_DROP_PCT = -0.5;       // 买点前置：上证当日跌幅 >= 0.5%（较昨收 <= -0.5%）
-const STRENGTH_MIN = 50;           // 命中门槛：盘中强度分 > 50
-const HIT_REQUIRED = 2;            // 需要累计 2 次命中
+// 选股/择时常量（LOOKBACK_DAYS / MIN_BOARD_COUNT / RANGE_WINDOW_DAYS / RANGE_SLIDE_DAYS /
+// MIN_WINDOW_RANGE_PCT / NEG_STREAK_MIN_DAYS / INDEX_DROP_PCT / STRENGTH_MIN / HIT_REQUIRED）
+// 与候选池构建函数 buildReverseLeaderPool 见 ./reverseLeaderPool（与「情绪游资-极致胜率」逆周期腿共用）
 
 const WEAK_TRADE_HOLD_DAYS = 3;
 const WEAK_TRADE_MIN_GAIN_PCT = 10;
@@ -66,29 +64,12 @@ const TAIL_MINUTE = 1457;
 const RESILIENCE_SELL_MAX = 6;
 const LEADER_RESILIENCE_INDEX_CODE = 'sh000001'; // 抗分歧/涨停口径统一跟踪上证指数（与龙头战法一致）
 
-// 过去若干交易日内「任意连续 slideDays 个交易日」的区间最大涨幅取最大值（%）：
-// 逐个子窗口调用 stockWindowRangePct 取最大；任一子窗口缺 K 线则返回 null（视为不达标）
-// 2026-10-17 用户要求：区间涨幅口径按「收盘价」计算
-const maxSlidingWindowRangePct = (code, winDates, slideDays) => {
-  if (!Array.isArray(winDates) || winDates.length < slideDays) return null;
-  let max = null;
-  for (let i = 0; i + slideDays <= winDates.length; i += 1) {
-    const rp = stockWindowRangePct(code, winDates.slice(i, i + slideDays));
-    if (rp == null || !Number.isFinite(rp)) return null;
-    if (max == null || rp > max) max = rp;
-  }
-  return max;
-};
-
 const fmtMinute = (m) => (m != null ? `${String(Math.floor(m / 100)).padStart(2, '0')}:${String(m % 100).padStart(2, '0')}` : '--');
 const priceAtMinute = (points, minute) => {
   let atPt = null;
   for (const p of points) { if (p.minute <= minute) atPt = p; else break; }
   return atPt;
 };
-
-// 2026-10-17 用户要求：候选池一律剔除创业板（30/301）与科创板（688）——与「情绪游资-极致胜率」口径一致
-const isChiNextOrStar = (code) => /^(30|688)/.test(String(code).replace(/^(sh|sz|bj)/i, ''));
 
 // 上证指数「前一交易日收盘口径」3 日线斜率（用于判定「盘中由负转正」的基准），数据不足返回 null
 const getPrevCloseSlope = async (dateStr) => {
@@ -181,42 +162,16 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
       && daysSinceTurnNeg != null && daysSinceTurnNeg >= NEG_STREAK_MIN_DAYS;
     soldThisDate = false;
 
-    // 候选池（仅在可用日构建；连板名单 + 动量过滤）
+    // 候选池（仅在可用日构建；连板名单 + 题材黑名单 + 动量过滤）
+    // 构建实现与「情绪游资-极致胜率」逆周期腿共用 ./reverseLeaderPool.buildReverseLeaderPool
     let candidatesRaw = [];
     let poolFilterText = '';
     if (eligible) {
       try {
-        const info = await getRecentMultiLianbanStocks(dateStr, LOOKBACK_DAYS, MIN_BOARD_COUNT);
-        // 2026-10-17 用户要求：候选池沿用「情绪游资-极致胜率」的题材黑名单，整体剔除 PCB/玻璃基板/光模块/液冷/通信/
-        // 算力/芯片/靶材/电子气体/光刻胶/算力租赁 题材（板块名包含关键词即剔除，覆盖派生板块名，如「通信(PCB)」）
-        const themeRemoved = [];
-        const base = (info.stocks || []).filter(s => {
-          if (EXCLUDED_CODES.has(s.code)) return false;
-          // 2026-10-17 用户要求：候选池一律剔除创业板（30/301）与科创板（688）
-          if (isChiNextOrStar(s.code)) return false;
-          if (isExcludedTheme(s.board)) { themeRemoved.push(s); return false; }
-          return true;
-        });
-        const themeFilterText = themeRemoved.length > 0
-          ? `；题材黑名单（${EXCLUDED_THEMES.join('、')}）剔除 ${themeRemoved.length} 只（${themeRemoved.map(s => `${s.name || s.code}（${s.board}）`).join('、')}）`
-          : '';
-        if (base.length > 0) {
-          let winDates = [];
-          try { winDates = await getPastTradingDates(dateStr, RANGE_WINDOW_DAYS); } catch (e) { winDates = []; }
-          try { await ensureBarsForCodes(new Set(base.map(s => s.code))); } catch (e) { /* 拉取失败按数据缺失处理 */ }
-          if (winDates.length >= RANGE_WINDOW_DAYS) {
-            const before = base.length;
-            candidatesRaw = base.filter(s => {
-              const rp = maxSlidingWindowRangePct(s.code, winDates, RANGE_SLIDE_DAYS);
-              // 区间振幅缺失（日K未覆盖）视为不达标
-              return rp != null && Number.isFinite(rp) && rp >= MIN_WINDOW_RANGE_PCT;
-            });
-            poolFilterText = `${themeFilterText}；过去 ${RANGE_WINDOW_DAYS} 个交易日（不含当日）内任意连续 ${RANGE_SLIDE_DAYS} 个交易日区间最大涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 ≥ ${MIN_WINDOW_RANGE_PCT}% 保留 ${candidatesRaw.length}/${before} 只`;
-          } else {
-            poolFilterText = `${themeFilterText}；过去 ${RANGE_WINDOW_DAYS} 个交易日日K数据不足，本日无候选`;
-          }
-        }
-      } catch (e) { candidatesRaw = []; }
+        const pool = await buildReverseLeaderPool(dateStr);
+        candidatesRaw = pool.stocks || [];
+        poolFilterText = pool.poolFilterText || '';
+      } catch (e) { candidatesRaw = []; poolFilterText = ''; }
     }
     if (candidatesRaw.length > 0) {
       for (const s of candidatesRaw) {

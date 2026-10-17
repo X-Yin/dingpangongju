@@ -160,6 +160,63 @@ function buildHotMoneyLeaderCard({ buyStocks, timestamp }) {
   };
 }
 
+// 情绪游资-反向抱团龙头（逆周期）买点卡片：红色主题，列出反向抱团池中已触发择时的买点标的
+function buildHotMoneyReverseLeaderCard({ buyStocks, timing, timestamp }) {
+  const list = Array.isArray(buyStocks) ? buyStocks : [];
+  const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
+  const fmtNum = (v) => (v == null || isNaN(Number(v)) ? '--' : Number(v).toFixed(2));
+  const elements = [
+    {
+      tag: "markdown",
+      content: `**🎯【情绪游资-反向抱团龙头】逆周期择时触发反向抱团买点**\n> ${timestamp || '--'}`,
+    },
+    {
+      tag: "hr",
+    },
+  ];
+
+  if (timing) {
+    const slopeText = timing.slopeClose == null ? '--' : fmtNum(timing.slopeClose);
+    const dayText = timing.daysSinceTurnNeg == null ? '--' : `连续为负第 ${timing.daysSinceTurnNeg + 1} 天`;
+    elements.push({
+      tag: "markdown",
+      content: `**大盘择时**：上证 3 日线斜率（收盘口径）${slopeText}，${dayText}；当日上证跌幅 ${fmtPct(timing.indexChange)}（门槛 ≤ ${timing.indexDropPct != null ? timing.indexDropPct : -0.5}%）`,
+    });
+  }
+
+  if (list.length === 0) {
+    elements.push({ tag: "markdown", content: "反向抱团池当前无已触发买点标的。" });
+  } else {
+    elements.push({ tag: "markdown", content: "**反向抱团池 · 逆周期买点标的**（窗口内盘中强度分累计命中第 2 次且未封涨停）" });
+    list.forEach((s, i) => {
+      elements.push({
+        tag: "div",
+        fields: [
+          { is_short: true, text: { tag: "lark_md", content: `**${i + 1}. ${s.stockName || s.name || '--'}**（${s.code || '--'}）🎯**逆周期买点触发**` } },
+          { is_short: true, text: { tag: "lark_md", content: `连板：${s.lianbanCount != null ? `${s.lianbanCount} 连板` : '--'}` } },
+          { is_short: true, text: { tag: "lark_md", content: `当日：${fmtPct(s.change)}` } },
+          { is_short: true, text: { tag: "lark_md", content: `强度分：${fmtNum(s.strengthScore)}（命中 ${s.hitCount != null ? s.hitCount : '--'} 次）` } },
+        ],
+      });
+    });
+  }
+
+  elements.push({
+    tag: "markdown",
+    content: "**逆周期反向抱团为左侧博弈，波动更大，务必控制仓位、严守止损。**",
+  });
+
+  return {
+    schema: "2.0",
+    config: { wide_screen_mode: true },
+    header: {
+      template: "red",
+      title: { tag: "plain_text", content: "🔔 情绪游资-反向抱团龙头 买点触发提醒" },
+    },
+    body: { elements },
+  };
+}
+
 // 卖点诊断卡片：红色主题，列出每个触发卖点的持仓股及触发原因
 function buildSellPointCard({ sellStocks, timestamp }) {
   const elements = [
@@ -204,4 +261,4 @@ function buildSellPointCard({ sellStocks, timestamp }) {
   };
 }
 
-module.exports = { sendFeishuCard, sendFeishuText, buildBuyPointCard, buildHotMoneyLeaderCard, buildSellPointCard, buildMarketSnapshotText };
+module.exports = { sendFeishuCard, sendFeishuText, buildBuyPointCard, buildHotMoneyLeaderCard, buildHotMoneyReverseLeaderCard, buildSellPointCard, buildMarketSnapshotText };

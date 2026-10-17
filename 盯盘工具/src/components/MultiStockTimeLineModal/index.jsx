@@ -501,6 +501,9 @@ const MultiStockTimeLineModal = ({
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [selectedNewCodes, setSelectedNewCodes] = useState([]);
   const [panelSearch, setPanelSearch] = useState('');
+  const [remoteResults, setRemoteResults] = useState({ query: '', list: [] }); // 搜索接口返回的非自选股，与查询词配对
+  const [remoteSearching, setRemoteSearching] = useState(false);
+  const remoteSearchSeqRef = useRef(0); // 请求序号，丢弃过期响应
   const [chartData, setChartData] = useState(null);
   const [rightAxisLabels, setRightAxisLabels] = useState([]);
   const [replayVersion, setReplayVersion] = useState(0);
@@ -1402,6 +1405,48 @@ const MultiStockTimeLineModal = ({
     setShowBatchPanel(!showBatchPanel);
   };
 
+  const filteredWatchlist = panelSearch
+    ? watchlist.filter(s =>
+        (s.stockName || '').toLowerCase().includes(panelSearch.toLowerCase()) ||
+        (s.code || '').toLowerCase().includes(panelSearch.toLowerCase())
+      )
+    : watchlist;
+
+  // 批量添加面板远程搜索：输入关键词后调用 /search_stock，把非自选股一并纳入可选项。
+  // 回放模式下图表仅取回放数据集内的股票，搜索到的外部股票无法出图，故回放模式不启用该兜底。
+  const remoteQuery = showBatchPanel && !replayMode ? panelSearch.trim() : '';
+
+  useEffect(() => {
+    if (!remoteQuery) return;
+    const seq = ++remoteSearchSeqRef.current;
+    const timer = window.setTimeout(async () => {
+      setRemoteSearching(true);
+      try {
+        const res = await axios.get(`http://${local_ip}:3000/search_stock`, { params: { query: remoteQuery } });
+        if (seq !== remoteSearchSeqRef.current) return;
+        setRemoteResults({ query: remoteQuery, list: res.data?.data || [] });
+      } catch (error) {
+        console.error('搜索股票失败:', error);
+        if (seq === remoteSearchSeqRef.current) setRemoteResults({ query: remoteQuery, list: [] });
+      } finally {
+        if (seq === remoteSearchSeqRef.current) setRemoteSearching(false);
+      }
+    }, 300);
+    return () => {
+      window.clearTimeout(timer);
+      remoteSearchSeqRef.current += 1; // 查询词已变，作废在途请求
+    };
+  }, [remoteQuery]);
+
+  // 面板展示列表 = 命中搜索词的自选股 + 搜索接口返回的非自选股（去重后标记「非自选」）
+  // 结果与查询词配对，避免上一个查询词的结果在新查询返回前短暂串显
+  const remoteList = remoteQuery && remoteResults.query === remoteQuery ? remoteResults.list : [];
+  const watchlistCodeSet = new Set(watchlist.map(s => s.code));
+  const remoteSearchStocks = remoteList
+    .filter(s => !watchlistCodeSet.has(s.code))
+    .map(s => ({ code: s.code, stockName: s.name || s.code, isSearchResult: true }));
+  const panelStocks = [...filteredWatchlist, ...remoteSearchStocks];
+
   const handleConfirmBatchAdd = () => {
     if (replayMode) {
       const current = readReplayOverlayCodes();
@@ -1413,9 +1458,11 @@ const MultiStockTimeLineModal = ({
       return;
     }
     const current = basicStocksRef.current;
-    const newStocks = watchlist
+    const newStocks = panelStocks
       .filter(s => selectedNewCodes.includes(s.code) && !current.some(c => c.code === s.code))
-      .map(s => ({ code: s.code, stockName: s.stockName, change: s.change }));
+      .map(s => (s.isSearchResult
+        ? { code: s.code, stockName: s.stockName }
+        : { code: s.code, stockName: s.stockName, change: s.change }));
     if (newStocks.length > 0) {
       updateBasicStocks(prev => [...prev, ...newStocks]);
     }
@@ -1438,13 +1485,6 @@ const MultiStockTimeLineModal = ({
       setCurrentStocks(prev => prev.filter(s => s.code !== code));
     }
   };
-
-  const filteredWatchlist = panelSearch
-    ? watchlist.filter(s =>
-        (s.stockName || '').toLowerCase().includes(panelSearch.toLowerCase()) ||
-        (s.code || '').toLowerCase().includes(panelSearch.toLowerCase())
-      )
-    : watchlist;
 
   const getChangeClass = (value) => {
     const num = parseFloat(value);
@@ -1605,7 +1645,7 @@ const MultiStockTimeLineModal = ({
               </div>
               <div className="mtlm-panel-search">
                 <Input
-                  placeholder="搜索股票名称或代码"
+                  placeholder={replayMode ? '搜索股票名称或代码' : '搜索名称或代码，可添加非自选股'}
                   prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
                   allowClear
                   size="small"
@@ -1619,12 +1659,18 @@ const MultiStockTimeLineModal = ({
                 <div className="mtlm-panel-loading">
                   <Spin size="small" />
                 </div>
-              ) : filteredWatchlist.length === 0 ? (
-                <div className="mtlm-panel-empty">
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无股票" />
-                </div>
+              ) : panelStocks.length === 0 ? (
+                remoteQuery && remoteSearching ? (
+                  <div className="mtlm-panel-loading">
+                    <Spin size="small" />
+                  </div>
+                ) : (
+                  <div className="mtlm-panel-empty">
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={panelSearch.trim() ? '无匹配股票' : '暂无股票'} />
+                  </div>
+                )
               ) : (
-                filteredWatchlist.map(s => {
+                panelStocks.map(s => {
                   const alreadyAdded = currentStocks.some(c => c.code === s.code);
                   const changeVal = s.change || 0;
                   return (
@@ -1648,6 +1694,8 @@ const MultiStockTimeLineModal = ({
                       <span className="mtlm-panel-stock-name">{s.stockName || s.code}</span>
                       {alreadyAdded ? (
                         <Tag className="mtlm-panel-tag">已叠加</Tag>
+                      ) : s.isSearchResult ? (
+                        <Tag className="mtlm-panel-tag mtlm-panel-tag-remote">非自选</Tag>
                       ) : (
                         <span className={`mtlm-panel-change ${getChangeClass(changeVal)}`}>
                           {changeVal > 0 ? '+' : ''}{changeVal.toFixed(2)}%

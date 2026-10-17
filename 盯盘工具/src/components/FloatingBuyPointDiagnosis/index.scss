@@ -149,6 +149,33 @@
     flex: 1;
   }
 
+  /* 诊断项分组标题（顺周期 / 逆周期） */
+  .fbd-group-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 2px 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #1d4ed8;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 12px;
+      border-radius: 2px;
+      background: #3b82f6;
+    }
+
+    &.reverse {
+      margin-top: 14px;
+      color: #be123c;
+
+      &::before { background: #f43f5e; }
+    }
+  }
+
   .fbd-check-card {
     border: 1px solid rgba(157, 176, 207, 0.14);
     border-radius: 12px;
@@ -509,6 +536,61 @@
     &:last-child {
       margin-bottom: 0;
     }
+
+    // 情绪游资龙头列表（顺周期 / 逆周期两部分）：板块带内边距
+    &.fbd-market-block-extreme {
+      padding: 8px 10px 10px;
+    }
+
+    // 逆周期（反向抱团）板块
+    &.fbd-market-block-reverse {
+      border-color: rgba(244, 63, 94, 0.2);
+      background: linear-gradient(180deg, rgba(255, 253, 253, 0.9), rgba(253, 246, 247, 0.85));
+    }
+  }
+
+  /* 板块分组标题（上：顺周期 / 下：逆周期） */
+  .fbd-market-block-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .fbd-market-block-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #1d4ed8;
+    padding-left: 8px;
+    border-left: 3px solid #3b82f6;
+
+    &.reverse {
+      color: #be123c;
+      border-left-color: #f43f5e;
+    }
+  }
+
+  .fbd-market-block-gate {
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 2px 9px;
+    font-variant-numeric: tabular-nums;
+
+    &.pass {
+      color: #1d4ed8;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+    }
+
+    &.fail {
+      color: #be123c;
+      background: rgba(244, 63, 94, 0.09);
+      border: 1px solid rgba(244, 63, 94, 0.22);
+    }
   }
 
   .fbd-market-head {
@@ -678,6 +760,39 @@
 
       &.up { color: #cf1322; }
       &.down { color: #389e0d; }
+    }
+  }
+
+  // 逆周期（反向抱团）表格：额外一列「逆周期择时」
+  .fbd-market-list-header-reverse,
+  .fbd-market-row-reverse {
+    grid-template-columns: 24px minmax(0, 1fr) 48px 52px 54px 86px;
+  }
+
+  .fbd-market-rev-timing {
+    text-align: right;
+    overflow: hidden;
+  }
+
+  .fbd-market-tag {
+    &.rev-hit {
+      color: #fff;
+      background: linear-gradient(135deg, #f5222d, #fa8c16);
+    }
+
+    &.rev-limitup {
+      color: #cf1322;
+      background: rgba(245, 34, 45, 0.1);
+    }
+
+    &.rev-wait {
+      color: #b45309;
+      background: rgba(245, 158, 11, 0.14);
+    }
+
+    &.rev-idle {
+      color: #64748b;
+      background: rgba(148, 163, 184, 0.16);
     }
   }
 

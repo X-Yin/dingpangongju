@@ -674,6 +674,13 @@
         border-radius: 999px;
         padding: 2px 8px;
       }
+
+      /* 搜索接口返回的非自选股标记 */
+      &.mtlm-panel-tag-remote {
+        color: #4f46e5;
+        background: rgba(99, 102, 241, 0.1);
+        border-color: rgba(99, 102, 241, 0.24);
+      }
     }
 
     .mtlm-panel-change {
