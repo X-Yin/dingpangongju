@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
+import { MODE_TECH_ATTACK, MODE_EXTREME_WIN } from '../../utils/strategyMode';
 import './index.scss';
 
 const { TextArea } = Input;
@@ -32,8 +33,9 @@ const slopeTurnText = (gate) => {
   return d === 0 ? '指数今日由正转负' : `指数由正转负第 ${d} 天`;
 };
 
-const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck = false }) => {
+const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck = false, mode = MODE_TECH_ATTACK }) => {
   const navigate = useNavigate();
+  const isExtreme = mode === MODE_EXTREME_WIN;
 
   const [checksData, setChecksData] = useState(null);
   const [stocksData, setStocksData] = useState(null);
@@ -51,6 +53,9 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
   // 涨跌幅 tab：优选个股（按指数门槛筛选市场后合并排名前十，含实时涨幅/抗分歧/3日涨幅与双指数斜率门禁）
   const [gainersData, setGainersData] = useState(null);
   const [gainersLoading, setGainersLoading] = useState(false);
+  // 情绪游资-极致胜率模式：龙头列表（除「强度分 − 差劲分 ≥ 30」与「上证 3 日线斜率为正」外，其余买点条件全部满足）
+  const [leaderData, setLeaderData] = useState(null);
+  const [leaderLoading, setLeaderLoading] = useState(false);
   // 「立刻可买」推荐那一行的 DOM 引用，用于数据就绪后滚动到可视区域
   const pickRefs = useRef({});
 
@@ -64,14 +69,14 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
   const fetchChecks = useCallback(async (refresh = false) => {
     setChecksLoading(true);
     try {
-      const response = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: refresh ? 1 : 0 });
+      const response = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: refresh ? 1 : 0, mode });
       setChecksData(response.data);
     } catch (error) {
       console.error('Fetch buy point checks failed:', error);
     } finally {
       setChecksLoading(false);
     }
-  }, []);
+  }, [mode]);
 
   const fetchStocks = useCallback(async (sort, days = 3) => {
     setStocksLoading(true);
@@ -95,6 +100,19 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
       console.error('Fetch top gainers by market failed:', error);
     } finally {
       setGainersLoading(false);
+    }
+  }, []);
+
+  // 情绪游资-极致胜率模式：拉取龙头列表（limit 传大值以覆盖全部候选池达标标的）
+  const fetchLeaders = useCallback(async () => {
+    setLeaderLoading(true);
+    try {
+      const response = await axios.post(`http://${local_ip}:3000/hot_money_leader_list`, { limit: 999 });
+      setLeaderData(response.data?.data || null);
+    } catch (error) {
+      console.error('Fetch hot money leader list failed:', error);
+    } finally {
+      setLeaderLoading(false);
     }
   }, []);
 
@@ -252,14 +270,15 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
   const refreshAll = useCallback(() => {
     fetchChecks(true);
     if (activeTab === 'change') {
-      fetchGainers();
+      if (isExtreme) fetchLeaders();
+      else fetchGainers();
     } else if (activeTab === 'resilience' || activeTab === 'reports') {
       fetchStocks(activeTab, reportDays);
     } else if (activeTab === 'ai') {
       fetchAiScreen();
     }
     fetchTechEmotion();
-  }, [fetchChecks, fetchStocks, fetchGainers, fetchAiScreen, fetchTechEmotion, activeTab, reportDays]);
+  }, [fetchChecks, fetchStocks, fetchGainers, fetchLeaders, fetchAiScreen, fetchTechEmotion, activeTab, reportDays, isExtreme]);
 
   useEffect(() => {
     if (open) {
@@ -267,6 +286,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
       setChecksData(null);
       setStocksData(null);
       setGainersData(null);
+      setLeaderData(null);
       setShowOnlyGoodNews(false);
       setTechEmotion(null);
       setActiveTab('change');
@@ -274,11 +294,12 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
       setAiResults(null);
       setAiContext(null);
       fetchChecks(false);
-      fetchGainers();
+      if (isExtreme) fetchLeaders();
+      else fetchGainers();
       fetchTechEmotion();
       fetchJigouReports();
     }
-  }, [open, fetchChecks, fetchGainers, fetchTechEmotion, fetchJigouReports]);
+  }, [open, mode, isExtreme, fetchChecks, fetchGainers, fetchLeaders, fetchTechEmotion, fetchJigouReports]);
 
   useEffect(() => {
     if (!open) return;
@@ -289,7 +310,8 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
   // 优选个股数据就绪后，把推荐买入行滚动到可视区域中部，打开抽屉即可直接下单
   // 列表不再内部滚动，滚动容器为抽屉 body
   useEffect(() => {
-    if (activeTab !== 'change' || !gainersData) return;
+    if (activeTab !== 'change') return;
+    if (!gainersData && !leaderData) return;
     Object.values(pickRefs.current).forEach((el) => {
       if (!el) return;
       const scroller = el.closest('.ant-drawer-body');
@@ -297,7 +319,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
       const delta = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
       scroller.scrollTo({ top: scroller.scrollTop + delta - (scroller.clientHeight - el.clientHeight) / 2 });
     });
-  }, [gainersData, activeTab]);
+  }, [gainersData, leaderData, activeTab]);
 
   const checksResult = checksData?.data;
   const stocksResult = stocksData?.data;
@@ -330,6 +352,86 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
       const code = rec.code || '';
       onStockClick({ code, name: rec.stockName });
     }
+  };
+
+  // 情绪游资-极致胜率：龙头列表（除「强度分 − 差劲分 ≥ 30」与「上证 3 日线斜率为正」外，其余买点条件全部满足）
+  const renderExtremeLeaderList = () => {
+    const leaderStocks = leaderData?.stocks || [];
+    const slope = leaderData?.indexSlope;
+    const slopeOk = slope != null && slope > 0;
+    // 完整买点标的：龙头列表条件 + 强度−差劲 ≥ 30 + 上证 3 日线斜率为正 + 未封涨停
+    const pick = leaderStocks.find((s) => s.buyPointHit && !s.isLimitUp) || null;
+    const poolCount = leaderData?.poolCount ?? 0;
+
+    const gateNote = !leaderData
+      ? '正在检测情绪游资-极致胜率买点门槛（上证 3 日线斜率）…'
+      : `候选池共 ${poolCount} 只（过去 10 交易日内连板数 ≥ 4，已剔除 ST / 创业板（30·301）/ 科创板（688）与科技自选股重叠者）；上证 3 日线斜率 ${formatSlope(slope)}，${slopeOk ? '满足「斜率为正」门槛' : '不满足「斜率为正」门槛，暂无完整买点标的，下列仅为候选龙头'}`;
+
+    return (
+      <>
+        {checksResult && !allPassed && (
+          <div className="fbd-warning-tip" style={{ marginBottom: 10 }}>
+            ⚠️ 前置条件未全部满足，龙头列表仅供参考，不建议盲目出手
+          </div>
+        )}
+        {leaderLoading && !leaderData ? (
+          <div className="fbd-panel-loading">
+            <Spin size="small" tip="正在加载龙头列表..." />
+          </div>
+        ) : leaderData ? (
+          <>
+            <div className={`fbd-gate-note ${slopeOk ? 'both' : 'none'}`}>{gateNote}</div>
+            <div className="fbd-market-block">
+              <div className="fbd-market-list">
+                <div className="fbd-market-list-header">
+                  <span>#</span>
+                  <span>股票名称</span>
+                  <span>连板</span>
+                  <span>当日</span>
+                  <span>强度−差劲</span>
+                </div>
+                {leaderStocks.length === 0 ? (
+                  <div className="fbd-market-empty">暂无符合前置条件的龙头标的</div>
+                ) : leaderStocks.map((item, idx) => {
+                  const isPick = pick != null && item.code === pick.code;
+                  const lianban = item.lianbanCount > 0 ? `${item.lianbanCount}板` : '--';
+                  return (
+                    <div
+                      key={item.code}
+                      ref={isPick ? (el) => { pickRefs.current.pick = el; } : null}
+                      className="fbd-market-row"
+                      onClick={() => handleStockItemClick(item)}
+                    >
+                      <span className={`fbd-market-rank ${idx < 3 ? 'top' : ''}`}>{idx + 1}</span>
+                      <span className="fbd-market-name-cell">
+                        <span className="fbd-market-name">{item.stockName}</span>
+                        <span className="fbd-market-tag market-cyb">{lianban}</span>
+                        {item.isLimitUp && <span className="fbd-market-tag limitup">涨停</span>}
+                        {isPick && <span className="fbd-market-tag pick">买点触发</span>}
+                      </span>
+                      <span className="fbd-market-resilience">{lianban}</span>
+                      <span className={`fbd-market-change ${item.change > 0 ? 'up' : item.change < 0 ? 'down' : ''}`}>
+                        {item.change != null ? `${item.change > 0 ? '+' : ''}${Number(item.change).toFixed(2)}%` : '--'}
+                      </span>
+                      <span className="fbd-market-change">
+                        {item.delta != null ? Number(item.delta).toFixed(2) : '--'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="fbd-panel-empty">
+            <Empty
+              description={<span style={{ fontSize: 12, color: '#8c8c8c' }}>点击刷新加载龙头列表</span>}
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          </div>
+        )}
+      </>
+    );
   };
 
   // 涨跌幅 tab：按指数门槛筛选市场后合并排名的前十优选个股（与 OpeningBattle 3 日涨幅榜口径一致）
@@ -445,7 +547,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
     );
   };
 
-  const renderStocksTab = () => (isChangeMode ? renderChangeModeByMarket() : (
+  const renderStocksTab = () => (isChangeMode ? (isExtreme ? renderExtremeLeaderList() : renderChangeModeByMarket()) : (
     <>
       {checksResult && !allPassed && matchedStocks.length > 0 && (
         <div className="fbd-warning-tip" style={{ marginBottom: 10 }}>
@@ -777,6 +879,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
                   ))}
                 </div>
 
+                {!isExtreme && (<>
                 {/* 隔夜重大利好策略卡片（前端固定提示，无需后端） */}
                 <div className="fbd-check-card fbd-strategy-card" style={{ marginTop: '8px' }}>
                   <div className="fbd-card-header">
@@ -843,6 +946,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
                     </div>
                   </div>
                 </div>
+                </>)}
 
                 <div className={`fbd-conclusion ${allPassed ? 'conclusion-pass' : 'conclusion-fail'}`}>
                   <div className={`fbd-conclusion-title ${allPassed ? 'title-pass' : 'title-fail'}`}>
@@ -854,7 +958,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
                   )}
                 </div>
 
-                {allPassed && (
+                {!isExtreme && allPassed && (
                   <div className={`fbd-position-tip ${techEmotion !== null && techEmotion < 0 ? 'position-tip-negative' : 'position-tip-positive'}`}>
                     <div className="fbd-position-tip-title">
                       科技情绪指数：{techEmotion !== null ? `${techEmotion > 0 ? '+' : ''}${techEmotion.toFixed(2)}` : '--'}
@@ -896,9 +1000,11 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
                     }
                   }}
                   options={[
-                    { value: 'change', label: '涨跌幅' },
-                    { value: 'reports', label: '研报覆盖' },
-                    { value: 'resilience', label: '抗分歧' },
+                    { value: 'change', label: isExtreme ? '龙头列表' : '涨跌幅' },
+                    ...(isExtreme ? [] : [
+                      { value: 'reports', label: '研报覆盖' },
+                      { value: 'resilience', label: '抗分歧' },
+                    ]),
                     { value: 'ai', label: <span><RobotOutlined /> AI筛选</span> },
                   ]}
                 />

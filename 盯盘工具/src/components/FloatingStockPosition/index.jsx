@@ -9,6 +9,7 @@ import { local_ip } from '../../constant';
 import StockKLineModal from '../StockKLineModal';
 import StockFundFlowModal from '../StockFundFlowModal';
 import BuyPointDiagnosisDrawer from '../FloatingBuyPointDiagnosis';
+import { useStrategyMode } from '../../utils/strategyMode';
 import './index.scss';
 
 const ALERT_THRESHOLD = 0.15;
@@ -35,7 +36,7 @@ const formatFundText = (value) => {
 
 // 单笔持仓的卖点诊断：同一股票的不同仓位各自独立诊断（各自买入日期 / 成本线 / 仓位）。
 // 每笔持仓以 id 区分，买入当日不诊断、次日起生效，按各笔自身买入日期判断。
-const diagnosePositionSellPoint = async (stock, todayStr) => {
+const diagnosePositionSellPoint = async (stock, todayStr, mode) => {
   const base = {
     positionId: stock.id || stock.code,
     code: stock.code,
@@ -49,7 +50,13 @@ const diagnosePositionSellPoint = async (stock, todayStr) => {
     return { ...base, buyToday: true };
   }
   try {
-    const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, { code: stock.code, costPrice: stock.costPrice });
+    // mode='hot_money_extreme_win' 时后端返回「情绪游资-极致胜率」9 条龙头战法卖点；buyDate 供「持仓第 3 日未拉开 +10%」判定
+    const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, {
+      code: stock.code,
+      costPrice: stock.costPrice,
+      buyDate: stock.buyDate || null,
+      mode,
+    });
     return { ...res.data, ...base };
   } catch (error) {
     return { ...base, error: '诊断失败' };
@@ -66,6 +73,7 @@ const buildSellHint = (result) => {
 
 const FloatingStockPosition = ({ onOutflowDetected }) => {
   const navigate = useNavigate();
+  const mode = useStrategyMode();
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -461,7 +469,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   // 买点诊断：交易日交易时间每 10 秒自动运行一次，前置检查全部通过则自动打开右侧抽屉
   const autoRunBuyPointDiagnosis = useCallback(async () => {
     try {
-      const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1 });
+      const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1, mode });
       const result = res.data?.data;
       // 触发条件：其它前置检查全部通过（allPassed，与逻辑）
       if (result?.allPassed === true) {
@@ -470,9 +478,9 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         if (now - lastAutoBuyPointOpenRef.current >= 5 * 60 * 1000) {
           lastAutoBuyPointOpenRef.current = now;
           setBuyPointDrawerOpen(true);
-          // 发送买点诊断飞书卡片（自选股 3 日涨幅榜前三由后端与开盘实战页同源拉取，并点出其中的买点候选）
+          // 发送买点诊断飞书卡片（技术进攻模式为自选股 3 日涨幅榜前三；极致胜率模式为龙头列表完整买点股）
           try {
-            await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'buy_point' });
+            await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'buy_point', mode });
           } catch (err) {
             console.error('发送买点飞书卡片失败:', err);
           }
@@ -481,7 +489,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     } catch (error) {
       console.error('自动买点诊断失败:', error);
     }
-  }, []);
+  }, [mode]);
 
   // 买点诊断自动轮询调度：
   // 1. 严格只在 5min 整倍数分钟执行（9:30, 9:35, 9:40, 9:45 ... 13:05, 13:10 ...），其余时间一律不执行；
@@ -543,9 +551,9 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     if (currentPositions.length === 0) return;
     const todayStr = dayjs().format('YYYY-MM-DD');
     try {
-      // 每笔持仓各自独立诊断（同一股票的多笔仓位会分别诊断、分别提示）
+      // 每笔持仓各自独立诊断（同一股票的多笔仓位会分别诊断、分别提示），跟随全局模式
       const results = await Promise.all(
-        currentPositions.map((stock) => diagnosePositionSellPoint(stock, todayStr))
+        currentPositions.map((stock) => diagnosePositionSellPoint(stock, todayStr, mode))
       );
       setSellDrawerResults(results);
       // 任一持仓命中卖点则自动打开抽屉，并应用频控避免反复弹出
@@ -567,7 +575,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
               reasons: r.reasons || [],
               closePrice: r.detail?.closePrice,
             }));
-            await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'sell_point', sellStocks });
+            await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'sell_point', sellStocks, mode });
           } catch (err) {
             console.error('发送卖点飞书卡片失败:', err);
           }
@@ -576,7 +584,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     } catch (error) {
       console.error('自动卖点诊断失败:', error);
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     const timers = [];
@@ -1071,6 +1079,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         onClose={() => setBuyPointDrawerOpen(false)}
         onStockClick={(stock) => { handleStockClick(stock); }}
         hideTailDipCheck
+        mode={mode}
       />
 
       {/* 持仓管理抽屉（宽度在原 520px 基础上增加 300px） */}

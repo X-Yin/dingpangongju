@@ -112,6 +112,54 @@ function buildBuyPointCard({ buyStocks, topStocks, timestamp }) {
   };
 }
 
+// 情绪游资-极致胜率买点卡片：绿色主题，列出「情绪游资-龙头列表」中的完整买点标的
+function buildHotMoneyLeaderCard({ buyStocks, timestamp }) {
+  const list = Array.isArray(buyStocks) ? buyStocks : [];
+  const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
+  const fmtNum = (v) => (v == null || isNaN(Number(v)) ? '--' : Number(v).toFixed(2));
+  const elements = [
+    {
+      tag: "markdown",
+      content: `**🎯【情绪游资-极致胜率】龙头列表出现完整买点标的**\n> ${timestamp || '--'}`,
+    },
+    {
+      tag: "hr",
+    },
+  ];
+
+  if (list.length === 0) {
+    elements.push({ tag: "markdown", content: "龙头列表当前无完整买点标的。" });
+  } else {
+    elements.push({ tag: "markdown", content: "**情绪游资-龙头列表 · 完整买点标的**（强度分 − 差劲分 ≥ 30 且上证 3 日线斜率为正、未封涨停）" });
+    list.forEach((s, i) => {
+      elements.push({
+        tag: "div",
+        fields: [
+          { is_short: true, text: { tag: "lark_md", content: `**${i + 1}. ${s.stockName || s.name || '--'}**（${s.code || '--'}）🎯**买点触发**` } },
+          { is_short: true, text: { tag: "lark_md", content: `连板：${s.lianbanCount != null ? `${s.lianbanCount} 连板` : '--'}` } },
+          { is_short: true, text: { tag: "lark_md", content: `当日：${fmtPct(s.change)}` } },
+          { is_short: true, text: { tag: "lark_md", content: `强度−差劲：${fmtNum(s.delta)}` } },
+        ],
+      });
+    });
+  }
+
+  elements.push({
+    tag: "markdown",
+    content: "**分仓管理是最后一道防火墙，谨防尾盘大盘跳水。**",
+  });
+
+  return {
+    schema: "2.0",
+    config: { wide_screen_mode: true },
+    header: {
+      template: "green",
+      title: { tag: "plain_text", content: "🔔 情绪游资-极致胜率 买点触发提醒" },
+    },
+    body: { elements },
+  };
+}
+
 // 卖点诊断卡片：红色主题，列出每个触发卖点的持仓股及触发原因
 function buildSellPointCard({ sellStocks, timestamp }) {
   const elements = [
@@ -156,4 +204,4 @@ function buildSellPointCard({ sellStocks, timestamp }) {
   };
 }
 
-module.exports = { sendFeishuCard, sendFeishuText, buildBuyPointCard, buildSellPointCard, buildMarketSnapshotText };
+module.exports = { sendFeishuCard, sendFeishuText, buildBuyPointCard, buildHotMoneyLeaderCard, buildSellPointCard, buildMarketSnapshotText };

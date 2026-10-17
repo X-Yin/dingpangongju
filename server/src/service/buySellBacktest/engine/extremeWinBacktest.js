@@ -4,15 +4,11 @@ const {
   ensureBarsForCodes,
   getPastTradingDates,
   getRecentMultiLianbanStocks,
-  getMonitorStocks,
   getSingleStockTlineDataByDate,
   getStockCloseOnOrBefore,
   getTrainingCampDates,
   loadTrainingCampData,
   stockPriorAvgVolume,
-  stockVolumeRatioAt,
-  stockWindowRangePct,
-  stockDailyChange,
 } = require('../deps');
 const { getTechIndexDates } = require('../utils/techEmotion');
 const { calculateReplayResilience } = require('../diagnose/sellPoint');
@@ -34,10 +30,17 @@ const {
   STRENGTH_A_MAX, STRENGTH_B_MAX, STRENGTH_C_MAX, STRENGTH_D_MAX,
   round2,
   loadTlinePoints, clearTlineCache,
-  maxMinuteDrop, closeDropFromHigh, diffDFrom,
-  buildDiffDetail, strengthAtMinute,
-  diffAtMinute, lastDeathCrossIndex,
+  strengthAtMinute,
+  diffAtMinute,
 } = require('./extremeWinScores');
+// 顺周期腿候选池 + 死叉口径（与「开盘实战页 live 龙头列表」共用同一份实现，避免口径漂移）
+const {
+  LOOKBACK_DAYS, MIN_BOARD_COUNT, DEATH_CROSS_WINDOW, DELTA_MIN,
+  RANGE_WINDOW_DAYS, RANGE_SLIDE_DAYS, MAX_WINDOW_RANGE_PCT, MAX_TOTAL_RANGE_PCT, POST_LIANBAN_DROP_PCT,
+  PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
+  isChiNextOrStar, maxSlidingWindowRangePct,
+  computeCrossInfo, buildExtremeWinPool,
+} = require('./extremeWinPool');
 
 // ============================================================
 // 情绪游资-极致胜率（extremeWinMode: true，2026-10-16 用户新增；2026-10-17 改版；独立引擎）
@@ -103,11 +106,7 @@ const CYCLE_PRO = 'procyclic';     // 顺周期：极致胜率原逻辑（上证
 const CYCLE_COUNTER = 'counter';   // 逆周期：反向抱团龙头逻辑（上证斜率连续为负 + 当日大跌）
 const CYCLE_LABELS = { [CYCLE_PRO]: '顺周期', [CYCLE_COUNTER]: '逆周期' };
 
-const LOOKBACK_DAYS = 10;          // 选股回溯窗口：过去 10 个交易日
-const MIN_BOARD_COUNT = 4;         // 连板门槛：四连板及以上
-const DEATH_CROSS_WINDOW = 10;     // 死叉检索窗口：过去 10 个交易日（不含当日）
-const DELTA_MIN = 30;              // 买点门槛：今日「强度分 − 差劲分」>= 30
-const CLOSE_MINUTE = 1500;         // 日线 delta 序列的收盘口径分钟（与「个股历史分析」一致）
+// LOOKBACK_DAYS / MIN_BOARD_COUNT / DEATH_CROSS_WINDOW / DELTA_MIN / CLOSE_MINUTE 见 ./extremeWinPool
 
 // 差劲分 / 强度分 的分项上限、权重均取自 ./extremeWinScores
 
@@ -117,8 +116,7 @@ const WEAK_TRADE_MIN_GAIN_PCT = 10;
 const TAIL_MINUTE = 1457;
 const RESILIENCE_SELL_MAX = 6;
 const LEADER_RESILIENCE_INDEX_CODE = 'sh000001'; // 抗分歧/涨停口径统一跟踪上证指数（与龙头战法一致）
-// 2026-10-17 用户要求：本策略候选池一律剔除创业板（30/301）与科创板（688）
-const isChiNextOrStar = (code) => /^(30|688)/.test(String(code).replace(/^(sh|sz|bj)/i, ''));
+// 候选池剔除创业板（30/301）与科创板（688）：isChiNextOrStar 见 ./extremeWinPool
 
 // ---- 逆周期腿（情绪游资-反向抱团龙头，2026-10-17 用户要求融合进本策略；规则与独立策略完全一致，仅按半仓计收益）----
 const REV_LOOKBACK_DAYS = 20;        // 反向抱团：过去 20 个交易日出现过连板
@@ -131,55 +129,12 @@ const REV_INDEX_DROP_PCT = -0.5;     // 反向抱团：当日上证跌幅 ≥ 0.
 const REV_STRENGTH_MIN = 50;         // 反向抱团：盘中强度分 > 50 记一次命中
 const REV_HIT_REQUIRED = 2;          // 反向抱团：累计 2 次命中买入
 
-// 2026-10-17 用户要求：候选池整体剔除 PCB / 玻璃基板 / 光模块 / 液冷 / 通信 / 算力 / 芯片 / 靶材 / 电子气体 / 光刻胶 / 算力租赁 题材
-// （EXCLUDED_THEMES / isExcludedTheme 已提升到 ../constants，供「情绪游资-极致胜率」与「情绪游资-反向抱团龙头」共用同一份名单）
-// 2026-10-17 用户要求：候选池再叠加「区间最大涨幅 < 80%」过滤
-// 区间最大涨幅 = 子窗口 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 × 100
-// 窗口：在外层「过去 20 个交易日（不含当日，即不含买点触发日）」内滑动「连续 10 个交易日」子窗口，取各子窗口涨幅的最大值
-const RANGE_WINDOW_DAYS = 20;
-// 2026-10-17 用户要求：改以「连续 10 个交易日」滑动窗口计算（而非整个 20 日区间）
-const RANGE_SLIDE_DAYS = 10;
-// 2026-10-17 用户要求：任意连续 10 个交易日的区间最大涨幅须 < 80%
-const MAX_WINDOW_RANGE_PCT = 80;
-// 2026-10-17 用户要求：过去 20 个交易日整段窗口的「总涨幅」须 < 100%
-// 总涨幅 = 该 20 日窗口 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 × 100（即 stockWindowRangePct 的整段口径）
-const MAX_TOTAL_RANGE_PCT = 100;
-// 2026-10-17 用户要求：四连板（连板数 ≥ 4）之后若出现过任一交易日涨幅 < -9%，则从候选池剔除该股
-// 2026-10-17 用户要求：单日跌幅阈值由 -6% 扩大到 -9%
-const POST_LIANBAN_DROP_PCT = -9;
-const hasPostLianbanBigDrop = (code, lianbanDate, dates) => {
-  const from = Number(lianbanDate);
-  if (!Number.isFinite(from)) return false;
-  for (const d of dates) {
-    if (Number(d) > from) {
-      const chg = stockDailyChange(code, d);
-      // 数据缺失时不判定为「出现过」——仅在确有大跌交易日时才剔除
-      if (chg != null && Number.isFinite(chg) && chg < POST_LIANBAN_DROP_PCT) return true;
-    }
-  }
-  return false;
-};
-
-// 过去若干交易日内「任意连续 slideDays 个交易日」的区间最大涨幅取最大值（%）：
-// 逐个子窗口调用 stockWindowRangePct 取最大；任一子窗口缺 K 线则返回 null（视为不达标）
-// 2026-10-17 用户要求：区间涨幅按「连续 10 个交易日」滑动窗口计算，而非整个外层区间
-// 2026-10-17 用户要求：区间涨幅口径由「最高价/最低价」改为「收盘价」
-const maxSlidingWindowRangePct = (code, winDates, slideDays) => {
-  if (!Array.isArray(winDates) || winDates.length < slideDays) return null;
-  let max = null;
-  for (let i = 0; i + slideDays <= winDates.length; i += 1) {
-    const rp = stockWindowRangePct(code, winDates.slice(i, i + slideDays));
-    if (rp == null || !Number.isFinite(rp)) return null;
-    if (max == null || rp > max) max = rp;
-  }
-  return max;
-};
+// 候选池题材黑名单（EXCLUDED_THEMES / isExcludedTheme）、区间涨幅过滤常量与工具函数
+// hasPostLianbanBigDrop / maxSlidingWindowRangePct 见 ./extremeWinPool
 
 // 价格类卖点的分钟级回溯统一走 ./leaderSellMinute.scanLeaderPriceSell
 
-// 2026-10-17 用户新增门禁：若上个交易日强度分 > 60，则当天买入时竞价低开不得超过 -3%
-const PREV_STRENGTH_GAP_GATE = 60;   // 上个交易日强度分门槛（> 60 时触发竞价限制）
-const OPEN_GAP_MIN_PCT = -3;         // 竞价低开下限（开盘涨幅须 >= -3%）
+// PREV_STRENGTH_GAP_GATE / OPEN_GAP_MIN_PCT 见 ./extremeWinPool
 
 // 2026-10-17 用户新增门禁：上个交易日强度分 > 60 且当日竞价低开超过 -3%（开盘涨幅 < -3%）时该候选不可买（顺延下一只）
 // 上个交易日强度分或竞价数据缺失时不判定（允许买入）
@@ -200,62 +155,7 @@ const priceAtMinute = (points, minute) => {
 
 // 个股分时点缓存与加载统一走 ./extremeWinScores（loadTlinePoints / clearTlineCache）
 
-// 判某候选在过去 DEATH_CROSS_WINDOW 个交易日（crossDates 升序，不含当日）是否满足买点前置：
-//   构建日线「强度分 − 差劲分」序列（差劲分 / 强度分均按收盘 1500 口径，与「个股历史分析」一致）
-//   → 最近一次死叉下标 → 死叉之后 delta >= DELTA_MIN 的交易日计数
-//   2026-10-17 用户要求：死叉之后仅允许「第一次或第二次」达标才可买——即死叉之后至昨日
-//   已出现 delta >= DELTA_MIN 的交易日 >= 2 天时视为已消耗（今日再触发则不买）
-//   2026-10-17 用户新增：若「上个交易日」delta > DELTA_MIN（昨日已达 30），则该日成交量不得小于其前 3 个交易日成交量均值
-//   （即上个交易日须放量，避免「强更强」但缩量的高位被套）；仅在该日前 3 日 K 线与当日量均齐备时判定，数据缺失时不判定
-//   2026-10-17 用户新增门禁：若「上个交易日强度分 > 60」，则当日买入时「竞价低开不得超过 -3%」（开盘价较昨收涨幅须 >= -3%），
-//   否则该候选不可买、顺延至下一只；上个交易日强度分数据缺失时不判定
-// 返回 { hasCross, consumed, hitCount, crossIdx, deltas, dates, prevDayDelta, prevDayVolRatio, prevDayStrength, prevDayVolumeOk }
-const computeCrossInfo = async (code, crossDates) => {
-  const idxCode = iceResilienceIndexCode(code);
-  const deltas = [];
-  const volRatios = []; // 逐日「(当日量 − 前 3 日日均量) ÷ 前 3 日日均量」（用于上个交易日放量确认，2026-10-17 用户新增）
-  const strengths = []; // 逐日「强度分」（收盘 1500 口径，用于上个交易日强度分门禁，2026-10-17 用户新增）
-  for (const d of crossDates) {
-    const t = await loadTlinePoints(code, d);
-    if (!t || t.points.length === 0 || !(t.preclose > 0)) { deltas.push(null); volRatios.push(null); strengths.push(null); continue; }
-    // 差劲分（收盘 1500 口径）：A 放量比 + B 单分钟最大跳水 + C 冲高回落 + D 涨停炸板/跌幅
-    const lastPx = t.points[t.points.length - 1].lastPx;
-    const dayChange = ((lastPx - t.preclose) / t.preclose) * 100;
-    const dItem = diffDFrom(t.points, t.preclose, code, dayChange);
-    const volRatio = stockVolumeRatioAt(code, d);
-    const diff = buildDiffDetail(
-      volRatio,
-      maxMinuteDrop(t.points),
-      closeDropFromHigh(t.points),
-      dItem,
-    );
-    volRatios.push(volRatio);
-    const idxT = await loadTlinePoints(idxCode, d);
-    const s = strengthAtMinute(t, CLOSE_MINUTE, code, idxT.points);
-    const strength = s ? s.score : null;
-    strengths.push(strength);
-    deltas.push(strength != null ? round2(strength - diff.score) : null);
-  }
-  const crossIdx = lastDeathCrossIndex(deltas);
-  // 死叉之后至昨日「delta >= DELTA_MIN」的交易日数（2026-10-17：允许前两次，>= 2 天即视为已消耗）
-  let hitCount = 0;
-  if (crossIdx >= 0) {
-    for (let j = crossIdx + 1; j < deltas.length; j++) {
-      if (deltas[j] != null && deltas[j] >= DELTA_MIN) hitCount++;
-    }
-  }
-  // 2026-10-17 用户要求：上个交易日 delta > DELTA_MIN 时，该日成交量必须 ≥ 其前 3 个交易日成交量均值
-  // （volRatio = (当日量 − 前3日均量) ÷ 前3日均量，故「放量达标」即 volRatio >= 0）；
-  // 数据缺失（volRatio 为 null）时不判定该限制
-  const prevDayDelta = deltas.length > 0 ? deltas[deltas.length - 1] : null;
-  const prevDayVolRatio = volRatios.length > 0 ? volRatios[volRatios.length - 1] : null;
-  const prevDayStrength = strengths.length > 0 ? strengths[strengths.length - 1] : null; // 上个交易日强度分（2026-10-17 用户新增门禁）
-  const prevDayVolumeOk = !(prevDayDelta != null && prevDayDelta > DELTA_MIN)
-    || prevDayVolRatio == null
-    || (Number.isFinite(prevDayVolRatio) && prevDayVolRatio >= 0);
-  const consumed = hitCount >= 2;
-  return { hasCross: crossIdx >= 0, consumed, hitCount, crossIdx, deltas, dates: crossDates, prevDayDelta, prevDayVolRatio, prevDayStrength, prevDayVolumeOk };
-};
+// 死叉前置判定（computeCrossInfo）已迁移至 ./extremeWinPool，与「开盘实战页 live 龙头列表」共用同一实现
 
 // 上证指数「前一交易日收盘口径」3 日线斜率（用于逆周期腿「盘中由负转正」卖点），数据不足返回 null
 // slopeByDate: Map<dateNum, slope>，取严格小于 dateStr 的最大日期对应的斜率
@@ -324,13 +224,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
   const skippedDates = [];
   const seenStocks = new Map(); // code -> { code, name }
 
-  // 2026-10-17 用户要求：候选池若与「全量自选股中的科技股」（monitor_stocks.json 中 isTech !== false）
-  // 重叠，则该股不买（建仓前即从候选池剔除，避免与科技股仓位重叠；仅作用于顺周期腿）
-  const techWatchlistCodes = new Set(
-    (getMonitorStocks() || [])
-      .filter(s => s && s.code && s.isTech !== false)
-      .map(s => s.code),
-  );
+  // 「全量自选股科技股重叠剔除」在 ./extremeWinPool.buildExtremeWinPool 内完成
 
   // 账户拆两份（各半仓）独立持仓：两份各自独立买卖、互不重叠同一标的，可在不同日期建仓
   const positions = new Array(LEG_COUNT).fill(null);
@@ -375,62 +269,14 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
     // 逆周期腿卖点基准：前一交易日收盘口径斜率
     const revPrevCloseSlope = prevSlopeOf(slopeByDate, dateStr);
 
-    // ===== 顺周期腿候选池（连板股名单，读快照，较廉价）=====
+    // ===== 顺周期腿候选池（与「开盘实战页 live 龙头列表」共用 ./extremeWinPool 同一实现）=====
     let candidatesRaw = [];
-    let poolFilterText = '';
     try {
-      const info = await getRecentMultiLianbanStocks(dateStr, LOOKBACK_DAYS, MIN_BOARD_COUNT);
-      const themeRemoved = [];
-      const base = (info.stocks || []).filter(s => {
-        if (EXCLUDED_CODES.has(s.code)) return false;
-        if (isChiNextOrStar(s.code)) return false;
-        // 2026-10-17 用户要求：候选池整体剔除 PCB/玻璃基板/光模块/液冷/通信/算力/芯片 题材
-        if (isExcludedTheme(s.board)) { themeRemoved.push(s); return false; }
-        return true;
-      });
-      const themeFilterText = themeRemoved.length > 0
-        ? `；题材黑名单（${EXCLUDED_THEMES.join('、')}）剔除 ${themeRemoved.length} 只（${themeRemoved.map(s => `${s.name || s.code}（${s.board}）`).join('、')}）`
-        : '';
-      // 2026-10-17 用户要求：过去 RANGE_WINDOW_DAYS 个交易日内「任意连续 RANGE_SLIDE_DAYS 个交易日」区间最大涨幅须 < 80%（剔除近期已大幅拉升者）
-      if (base.length > 0) {
-        let winDates = [];
-        try { winDates = await getPastTradingDates(dateStr, RANGE_WINDOW_DAYS); } catch (e) { winDates = []; }
-        try { await ensureBarsForCodes(new Set(base.map(s => s.code))); } catch (e) { /* 拉取失败按数据缺失处理 */ }
-        if (winDates.length >= RANGE_WINDOW_DAYS) {
-          const before = base.length;
-          candidatesRaw = base.filter(s => {
-            const rp = maxSlidingWindowRangePct(s.code, winDates, RANGE_SLIDE_DAYS);
-            // 区间振幅缺失（日K未覆盖）视为不达标
-            return rp != null && Number.isFinite(rp) && rp < MAX_WINDOW_RANGE_PCT;
-          });
-          const beforeDrop = candidatesRaw.length;
-          // 2026-10-17 用户要求：四连板之后出现过任一交易日涨幅 < -9% 的个股一并剔除
-          candidatesRaw = candidatesRaw.filter(s => !hasPostLianbanBigDrop(s.code, s.date, winDates));
-          const beforeTotal = candidatesRaw.length;
-          // 2026-10-17 用户要求：过去 RANGE_WINDOW_DAYS 个交易日「总涨幅」须 < 100%
-          // 总涨幅 = 整段窗口 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 × 100（不含当日，与区间振幅同口径）
-          candidatesRaw = candidatesRaw.filter(s => {
-            const total = stockWindowRangePct(s.code, winDates);
-            return total != null && Number.isFinite(total) && total < MAX_TOTAL_RANGE_PCT;
-          });
-          poolFilterText = `；过去 ${RANGE_WINDOW_DAYS} 个交易日（不含当日）内任意连续 ${RANGE_SLIDE_DAYS} 个交易日区间最大涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 < ${MAX_WINDOW_RANGE_PCT}% 剔除 ${before - beforeDrop} 只；四连板后出现单日涨幅 < ${POST_LIANBAN_DROP_PCT}% 再剔除 ${beforeDrop - beforeTotal} 只；过去 ${RANGE_WINDOW_DAYS} 个交易日总涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 < ${MAX_TOTAL_RANGE_PCT}% 再剔除 ${beforeTotal - candidatesRaw.length} 只`;
-        } else {
-          poolFilterText = `；过去 ${RANGE_WINDOW_DAYS} 个交易日日K数据不足，本日无候选`;
-        }
-        poolFilterText += themeFilterText;
-      }
+      const pool = await buildExtremeWinPool(dateStr);
+      candidatesRaw = pool.stocks || [];
     } catch (e) { candidatesRaw = []; }
-    // 2026-10-17 用户要求：候选与全量自选股科技股（isTech !== false）重叠者剔除，不参与买入
-    if (candidatesRaw.length > 0 && techWatchlistCodes.size > 0) {
-      const removedStocks = candidatesRaw.filter(s => techWatchlistCodes.has(s.code));
-      if (removedStocks.length > 0) {
-        candidatesRaw = candidatesRaw.filter(s => !techWatchlistCodes.has(s.code));
-        poolFilterText += `；与全量自选股科技股（isTech ≠ false）重叠剔除 ${removedStocks.length} 只（${removedStocks.map(s => `${s.name || s.code}（${s.code}）`).join('、')}）`;
-      }
-    }
     if (candidatesRaw.length > 0) {
       for (const s of candidatesRaw) {
-        s.poolFilterText = poolFilterText;
         if (!seenStocks.has(s.code)) seenStocks.set(s.code, { code: s.code, name: s.name || s.code });
       }
     }

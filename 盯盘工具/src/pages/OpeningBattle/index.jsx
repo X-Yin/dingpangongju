@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Spin, Modal, Empty, Switch as AntSwitch } from 'antd';
+import { Spin, Modal, Empty, Select, Switch as AntSwitch } from 'antd';
 import {
   RocketOutlined, RiseOutlined, FallOutlined, StockOutlined,
   AreaChartOutlined, CrownOutlined, RadarChartOutlined, WarningOutlined,
@@ -13,6 +13,7 @@ import { getThemeColor } from '../../utils/theme';
 import { parseMoneyValue, formatDisplayTime, aggregateFundByInterval } from '../../utils/fundAggregation';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import StockKLineModal from '../../components/StockKLineModal';
+import { useStrategyMode, setStrategyMode, STRATEGY_MODE_OPTIONS, MODE_EXTREME_WIN } from '../../utils/strategyMode';
 import './index.scss';
 
 // 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
@@ -771,26 +772,36 @@ const slopeTurnText = (gate) => {
 };
 
 const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
-  const [data, setData] = useState(null);
+  const mode = useStrategyMode();
+  const isExtreme = mode === MODE_EXTREME_WIN;
+  const [data, setData] = useState(null);        // 科技进攻：自选股 3 日涨幅榜
+  const [leaderData, setLeaderData] = useState(null); // 情绪游资-极致胜率：龙头列表
   // 点击股票名称打开 K 线弹窗
   const [selectedStock, setSelectedStock] = useState(null);
   const [klineVisible, setKlineVisible] = useState(false);
-  const markets = data?.markets || {};
-  const cybMainList = markets.cybMain || [];
-  const starList = markets.star || [];
   const cybPassed = data?.cybGate?.passed === true;
   const starPassed = data?.starGate?.passed === true;
 
   // 挂载立即拉一次；交易时段每 5s 轮询，收盘后保留最后一次数据
-  // limit=10：每个市场最多返回 10 只，保证仅一个市场满足门槛时也能填满前十
+  //   tech_attack            → /top_gainers_by_market（limit=10，每市场最多 10 只）
+  //   hot_money_extreme_win  → /hot_money_leader_list（除 delta≥30 与上证斜率>0 外全部买点条件满足）
   const fetchStocks = useCallback(async () => {
+    if (isExtreme) {
+      try {
+        const res = await axios.post(`http://${local_ip}:3000/hot_money_leader_list`, { limit: 50 });
+        setLeaderData(res.data?.data || null);
+      } catch (err) {
+        console.error('获取情绪游资龙头列表失败:', err);
+      }
+      return;
+    }
     try {
       const res = await axios.post(`http://${local_ip}:3000/top_gainers_by_market`, { limit: 10 });
       setData(res.data?.data || null);
     } catch (err) {
       console.error('获取自选股 3 日涨幅榜失败:', err);
     }
-  }, []);
+  }, [isExtreme]);
 
   // 市场门槛说明（标题下方展示）：仅展示满足指数 3 日线斜率买点门槛的市场的股票
   const gateNote = !data
@@ -804,12 +815,19 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
           : '创业板指、科创50 均不满足买点门槛：暂无可展示标的';
 
   // 合并榜单：仅纳入满足门槛的市场，按 3 日涨幅降序取前 10
-  const mergedList = useMemo(() => (
-    [
+  const mergedList = useMemo(() => {
+    const cybMainList = data?.markets?.cybMain || [];
+    const starList = data?.markets?.star || [];
+    return [
       ...(cybPassed ? cybMainList : []),
       ...(starPassed ? starList : []),
-    ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10)
-  ), [cybMainList, starList, cybPassed, starPassed]);
+    ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
+  }, [data, cybPassed, starPassed]);
+
+  // 情绪游资龙头列表（后端已按 delta 降序返回全部达标股）
+  const leaderList = useMemo(() => (isExtreme ? (leaderData?.stocks || []) : []), [isExtreme, leaderData]);
+  const indexSlope = leaderData?.indexSlope;
+  const slopeOk = indexSlope != null && Number(indexSlope) > 0;
 
   useEffect(() => {
     fetchStocks();
@@ -833,29 +851,55 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
     [mergedList]
   );
 
-  // 供买点弹窗与飞书通知使用：只推唯一一只标的
-  const buyableStocks = useMemo(() => (globalPick ? [globalPick] : []), [globalPick]);
+  // 供买点弹窗与飞书通知使用：
+  //   tech_attack → 唯一一只标的；hot_money_extreme_win → 完整买点股前 3（delta≥30 且上证斜率>0 且未涨停）
+  const buyableStocks = useMemo(() => {
+    if (isExtreme) {
+      return leaderList.filter(s => s.buyPointHit && !s.isLimitUp).slice(0, 3);
+    }
+    return globalPick ? [globalPick] : [];
+  }, [isExtreme, leaderList, globalPick]);
 
   useEffect(() => {
     onBuyableChange?.(buyableStocks);
   }, [buyableStocks, onBuyableChange]);
+
+  const rowCount = isExtreme ? leaderList.length : mergedList.length;
+  const extremeGateNote = !leaderData
+    ? '正在检测上证指数 3 日线斜率买点门槛…'
+    : `上证指数 3 日线斜率 ${formatSlope(indexSlope)}（需 > 0）；龙头池共 ${leaderData.poolCount ?? 0} 只（过去 10 交易日四连板及以上，剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）`;
 
   return (
     <div className="ob-module ob-rank3-module">
       <div className="ob-module-header">
         <div className="ob-module-title">
           <CrownOutlined className="ob-module-icon" />
-          <span>自选股 · 3日涨幅前十</span>
+          <span>{isExtreme ? '情绪游资-龙头列表' : '自选股 · 3日涨幅前十'}</span>
         </div>
-        <span className="ob-total-tag">共 {mergedList.length} 只</span>
+        <span className="ob-mode-switch-label">切换模式</span>
+        <Select
+          size="small"
+          className="ob-mode-switch"
+          value={mode}
+          options={STRATEGY_MODE_OPTIONS}
+          onChange={setStrategyMode}
+          popupMatchSelectWidth={false}
+        />
+        <span className="ob-total-tag">共 {rowCount} 只</span>
       </div>
-      <div className={`ob-gainer-gate-note ${(cybPassed && starPassed) ? 'both' : (cybPassed || starPassed) ? 'partial' : 'none'}`}>
-        {gateNote}
+      <div className={`ob-gainer-gate-note ${(isExtreme ? slopeOk : (cybPassed && starPassed)) ? 'both' : (isExtreme ? false : (cybPassed || starPassed)) ? 'partial' : 'none'}`}>
+        {isExtreme ? extremeGateNote : gateNote}
       </div>
       <div className="ob-gainer-body">
         <div className="ob-gainer-col">
           <div className="ob-gainer-col-head">
-            {[
+            {isExtreme ? (
+              <div className={`ob-gainer-gate ${slopeOk ? 'passed' : 'failed'}`}>
+                <span className="ob-gainer-gate-slope">上证指数 {formatSlope(indexSlope)}</span>
+                <span className="ob-gainer-gate-turn">3 日线分时斜率</span>
+                <span className="ob-gainer-gate-badge">{slopeOk ? '满足买点门槛' : '不满足买点门槛'}</span>
+              </div>
+            ) : [
               { name: '创业板指', gate: data?.cybGate, passed: cybPassed },
               { name: '科创50', gate: data?.starGate, passed: starPassed },
             ].map(({ name, gate, passed }) => (
@@ -867,42 +911,82 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
             ))}
           </div>
           <div className="ob-gainer-head">
-            <span>#</span>
-            <span>股票</span>
-            <span>当日</span>
-            <span>抗分歧</span>
-            <span>3日涨幅</span>
+            {isExtreme ? (
+              <>
+                <span>#</span>
+                <span>股票</span>
+                <span>当日</span>
+                <span>强度−差劲</span>
+                <span>连板</span>
+              </>
+            ) : (
+              <>
+                <span>#</span>
+                <span>股票</span>
+                <span>当日</span>
+                <span>抗分歧</span>
+                <span>3日涨幅</span>
+              </>
+            )}
           </div>
-          {mergedList.length === 0 ? (
-            <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
-          ) : mergedList.map((s, idx) => {
-            // 全局唯一推荐标的：只在名称旁打一个标签，不做整行高亮
-            const isPick = globalPick != null && s.code === globalPick.code;
-            return (
+          {isExtreme ? (
+            leaderList.length === 0 ? (
+              <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
+            ) : leaderList.map((s, idx) => (
               <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
                 <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
                 <span className="ob-gainer-name-cell">
                   <span
                     className="ob-stock-name ob-stock-name-clickable"
                     title="点击查看K线"
-                    onClick={() => { setSelectedStock(s); setKlineVisible(true); }}
+                    onClick={() => { setSelectedStock({ code: s.code, stockName: s.stockName, change: s.change }); setKlineVisible(true); }}
                   >{s.stockName}</span>
-                  <span className={`ob-gainer-market ${s.isSh688 ? 'star' : 'cyb'}`}>{s.isSh688 ? '科创' : '创业/主板'}</span>
                   {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
-                  {isPick && <span className="ob-gainer-buyflag">{buyPointHit ? '买点触发' : '买点候选'}</span>}
+                  {s.buyPointHit && <span className="ob-gainer-buyflag">买点触发</span>}
                 </span>
                 <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
                   {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
                 </span>
-                <span className="ob-gainer-resilience">
-                  {s.resilienceScore !== null && s.resilienceScore !== undefined ? Number(s.resilienceScore).toFixed(2) : '--'}
+                <span className={`ob-gainer-resilience ${s.delta != null && s.delta >= 30 ? 'ob-up' : ''}`}>
+                  {s.delta !== null && s.delta !== undefined ? Number(s.delta).toFixed(2) : '--'}
                 </span>
-                <span className={`ob-change-cell ${s.change3d >= 0 ? 'ob-up' : 'ob-down'}`}>
-                  {s.change3d !== null && s.change3d !== undefined ? `${s.change3d >= 0 ? '+' : ''}${Number(s.change3d).toFixed(2)}%` : '--'}
+                <span className="ob-gainer-resilience">
+                  {s.lianbanCount != null ? `${s.lianbanCount} 连板` : '--'}
                 </span>
               </div>
-            );
-          })}
+            ))
+          ) : (
+            mergedList.length === 0 ? (
+              <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
+            ) : mergedList.map((s, idx) => {
+              // 全局唯一推荐标的：只在名称旁打一个标签，不做整行高亮
+              const isPick = globalPick != null && s.code === globalPick.code;
+              return (
+                <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
+                  <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
+                  <span className="ob-gainer-name-cell">
+                    <span
+                      className="ob-stock-name ob-stock-name-clickable"
+                      title="点击查看K线"
+                      onClick={() => { setSelectedStock(s); setKlineVisible(true); }}
+                    >{s.stockName}</span>
+                    <span className={`ob-gainer-market ${s.isSh688 ? 'star' : 'cyb'}`}>{s.isSh688 ? '科创' : '创业/主板'}</span>
+                    {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
+                    {isPick && <span className="ob-gainer-buyflag">{buyPointHit ? '买点触发' : '买点候选'}</span>}
+                  </span>
+                  <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
+                    {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
+                  </span>
+                  <span className="ob-gainer-resilience">
+                    {s.resilienceScore !== null && s.resilienceScore !== undefined ? Number(s.resilienceScore).toFixed(2) : '--'}
+                  </span>
+                  <span className={`ob-change-cell ${s.change3d >= 0 ? 'ob-up' : 'ob-down'}`}>
+                    {s.change3d !== null && s.change3d !== undefined ? `${s.change3d >= 0 ? '+' : ''}${Number(s.change3d).toFixed(2)}%` : '--'}
+                  </span>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -918,6 +1002,8 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
 
 // ==================== 买点诊断卡片（自动运行） ====================
 const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
+  const mode = useStrategyMode();
+  const isExtreme = mode === MODE_EXTREME_WIN;
   const [data, setData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [popupVisible, setPopupVisible] = useState(false);
@@ -935,19 +1021,21 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // 命中买点时发送飞书通知：不传标的，由后端按本页同一份自选股 3 日涨幅榜取前三，并点出其中的买点候选
+  // 命中买点时发送飞书通知：
+  //   tech_attack → 不传标的，由后端按本页同一份自选股 3 日涨幅榜取前三并点出买点候选
+  //   hot_money_extreme_win → 后端口径为「情绪游资-龙头列表」中的完整买点股（无则不推）
   const sendBuyPointFeishu = useCallback(async () => {
     try {
-      await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'buy_point' });
+      await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'buy_point', mode });
     } catch (err) {
       console.error('发送买点飞书通知失败:', err);
     }
-  }, []);
+  }, [mode]);
 
   const run = useCallback(async (force = false) => {
     try {
       // force=true：手动刷新按钮传入，绕过后端 30 秒重度刷新节流，随时点击随时真正重拉
-      const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1, force: force ? 1 : 0 });
+      const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1, force: force ? 1 : 0, mode });
       const result = res.data?.data;
       if (!result) return;
       setData(result);
@@ -968,7 +1056,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
     } catch (err) {
       console.error('自动买点诊断失败:', err);
     }
-  }, [onResultChange, sendBuyPointFeishu]);
+  }, [onResultChange, sendBuyPointFeishu, mode]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -1095,25 +1183,47 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
           </div>
           {popupStocks.length > 0 ? (
             <>
-              <div className="ob-alert-buy-title">可买标的（已过滤涨停板）</div>
+              <div className="ob-alert-buy-title">
+                {isExtreme ? '情绪游资-龙头列表 · 完整买点标的（已过滤涨停板）' : '可买标的（已过滤涨停板）'}
+              </div>
               {popupStocks.map((s) => (
                 <div key={s.code} className="ob-alert-stock">
-                  <div className="ob-alert-stock-head">
-                    <b>{s.stockName}</b>
-                    <span className="ob-alert-stock-code">{s.code}</span>
-                    <span className="ob-alert-stock-market">{s.isSh688 ? '科创板' : '创业板/主板'}</span>
-                    <span style={{ marginLeft: 'auto', fontWeight: 700, color: s.change3d >= 0 ? '#e11d48' : '#059669' }}>
-                      3日 {formatSignedPercent(s.change3d)}
-                    </span>
-                  </div>
-                  <div className="ob-alert-stock-meta">
-                    当日 {formatSignedPercent(s.change)} · 抗分歧 {s.resilienceScore != null ? Number(s.resilienceScore).toFixed(2) : '--'}
-                  </div>
+                  {isExtreme ? (
+                    <>
+                      <div className="ob-alert-stock-head">
+                        <b>{s.stockName}</b>
+                        <span className="ob-alert-stock-code">{s.code}</span>
+                        <span className="ob-alert-stock-market">{s.lianbanCount != null ? `${s.lianbanCount} 连板` : ''}</span>
+                        <span style={{ marginLeft: 'auto', fontWeight: 700, color: s.change >= 0 ? '#e11d48' : '#059669' }}>
+                          当日 {formatSignedPercent(s.change)}
+                        </span>
+                      </div>
+                      <div className="ob-alert-stock-meta">
+                        强度−差劲 {s.delta != null ? Number(s.delta).toFixed(2) : '--'}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="ob-alert-stock-head">
+                        <b>{s.stockName}</b>
+                        <span className="ob-alert-stock-code">{s.code}</span>
+                        <span className="ob-alert-stock-market">{s.isSh688 ? '科创板' : '创业板/主板'}</span>
+                        <span style={{ marginLeft: 'auto', fontWeight: 700, color: s.change3d >= 0 ? '#e11d48' : '#059669' }}>
+                          3日 {formatSignedPercent(s.change3d)}
+                        </span>
+                      </div>
+                      <div className="ob-alert-stock-meta">
+                        当日 {formatSignedPercent(s.change)} · 抗分歧 {s.resilienceScore != null ? Number(s.resilienceScore).toFixed(2) : '--'}
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </>
           ) : (
-            <div className="ob-alert-sub">当前无满足买点条件且未封涨停的可买标的。</div>
+            <div className="ob-alert-sub">
+              {isExtreme ? '当前无完整买点标的（需强度分 − 差劲分 ≥ 30 且上证 3 日线斜率为正、未封涨停）。' : '当前无满足买点条件且未封涨停的可买标的。'}
+            </div>
           )}
           <div className="ob-alert-time">诊断时间：{data?.timestamp}</div>
         </div>
@@ -1124,7 +1234,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
 
 // 单笔持仓的卖点诊断：同一股票的不同仓位各自独立诊断（各自买入日期 / 成本线 / 仓位）。
 // 每笔持仓以 id 区分，买入当日不诊断、次日起生效，按各笔自身买入日期判断。
-const diagnosePositionSellPoint = async (stock, todayStr) => {
+const diagnosePositionSellPoint = async (stock, todayStr, mode) => {
   const base = {
     positionId: stock.id || stock.code,
     code: stock.code,
@@ -1138,7 +1248,14 @@ const diagnosePositionSellPoint = async (stock, todayStr) => {
     return { ...base, buyToday: true };
   }
   try {
-    const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, { code: stock.code, costPrice: stock.costPrice });
+    // mode='hot_money_extreme_win' 时后端返回「情绪游资-极致胜率」9 条龙头战法卖点；
+    // buyDate 供「持仓第 3 日未拉开 +10%」判定
+    const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, {
+      code: stock.code,
+      costPrice: stock.costPrice,
+      buyDate: stock.buyDate || null,
+      mode,
+    });
     return { ...res.data, ...base };
   } catch (err) {
     return { ...base, error: '诊断失败' };
@@ -1155,6 +1272,8 @@ const buildSellHint = (result) => {
 
 // ==================== 卖点诊断卡片（自动运行） ====================
 const SellPointDiagnosisCard = () => {
+  const mode = useStrategyMode();
+  const isExtreme = mode === MODE_EXTREME_WIN;
   const [results, setResults] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [popupVisible, setPopupVisible] = useState(false);
@@ -1172,7 +1291,7 @@ const SellPointDiagnosisCard = () => {
       const todayStr = dayjs().format('YYYY-MM-DD');
       // 每笔持仓各自独立诊断（同一股票的多笔仓位会分别产生一张卡片）
       const list = await Promise.all(
-        positions.map((stock) => diagnosePositionSellPoint(stock, todayStr))
+        positions.map((stock) => diagnosePositionSellPoint(stock, todayStr, mode))
       );
       setResults(list);
       // 任一持仓命中卖点则弹窗提示（应用频控避免反复弹出）
@@ -1187,7 +1306,7 @@ const SellPointDiagnosisCard = () => {
     } catch (err) {
       console.error('自动卖点诊断失败:', err);
     }
-  }, []);
+  }, [mode]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -1220,9 +1339,10 @@ const SellPointDiagnosisCard = () => {
         </div>
       )}
       <div className="ob-diagnosis-header">
-        <div className="ob-module-title">
+        <div className="ob-module-title" title={isExtreme ? '卖点条件：完整龙头战法 9 条（情绪游资-极致胜率）' : '卖点条件：N 日涨幅最大策略'}>
           <WarningOutlined className="ob-module-icon" />
           <span>卖点诊断</span>
+          {isExtreme && <span className="ob-mode-switch-label">{STRATEGY_MODE_OPTIONS[1].label}</span>}
         </div>
         <div className="ob-diagnosis-actions">
           <span className={`ob-status-badge ${hitStocks.length > 0 ? 'hit' : ''}`}>
@@ -1276,7 +1396,7 @@ const SellPointDiagnosisCard = () => {
                 <div key={cidx} className={`ob-sell-cond ${cond.satisfied ? 'hit' : cond.exempted ? 'exempted' : cond.pending ? 'pending' : 'safe'}`}>
                   <span className="ob-sell-cond-name">{cond.name}</span>
                   <span className="ob-sell-cond-badge">
-                    {cond.satisfied ? '触发' : cond.exempted ? '已豁免' : cond.pending ? `确认中 ${cond.pendingMinutes || 0}/5min` : '未触发'}
+                    {cond.satisfied ? '触发' : cond.exempted ? '已豁免' : cond.pending ? (cond.pendingMinutes != null ? `确认中 ${cond.pendingMinutes}/5min` : '确认中') : '未触发'}
                   </span>
                   <div className="ob-sell-cond-detail">{cond.detail}</div>
                 </div>

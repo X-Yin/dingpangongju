@@ -139,6 +139,29 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   font-variant-numeric: tabular-nums;
 }
 
+// 「切换模式」下拉：标签靠右对齐，下拉宽度自适应
+.ob-mode-switch-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+// 仅在卡片标题栏中把「切换模式」标签推到右侧（标题左、开关右）
+.ob-module-header .ob-mode-switch-label {
+  margin-left: auto;
+}
+
+.ob-mode-switch {
+  min-width: 120px;
+  flex-shrink: 0;
+
+  .ant-select-selector {
+    font-size: 12px;
+  }
+}
+
 // ==================== Colors ====================
 .ob-up { color: #e11d48; }
 .ob-down { color: #059669; }

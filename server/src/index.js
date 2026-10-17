@@ -80,6 +80,7 @@ const { addMonitorStock, deleteMonitorStock, toggleStockImportant, batchSetImpor
 const { diagnoseResilience, diagnoseResilienceMultiDay, calculateRealtimeResilienceBatch, diagnoseSingleStockResilience, diagnoseIntradayResilience, checkPositionSellAlerts } = require('./service/stockDiagnose');
 const { diagnosePremium } = require('./service/premiumDiagnosis');
 const { backtestBuySell, diagnoseRealtimeBuyPoints, getBuyPointChecks, getBuyPointStocks, getTopGainersByMarket, getSingleStockBuyPointDiagnosis, getBuySellSelectableStocks, checkSingleStockSellPoint } = require('./service/buySellDiagnose');
+const { MODE_EXTREME_WIN, getHotMoneyLeaderList, getExtremeWinBuyPointChecks, checkExtremeWinSellPointDetailed } = require('./service/hotMoneyExtremeWin');
 const { diagnoseTrendStocks } = require('./service/trendDiagnose');
 const { getTechnicalDiagnosis } = require('./service/technicalDiagnosis');
 const { getMaSlopeDiagnosis } = require('./service/maSlopeDiagnosis');
@@ -969,14 +970,16 @@ app.get('/premium_diagnosis', async (req, res) => {
   }
 });
 
-// 单个股票卖点诊断
+// 单个股票卖点诊断（mode='hot_money_extreme_win' 时走「情绪游资-极致胜率」9 条龙头战法卖点）
 app.post('/check_single_stock_sell_point', async (req, res) => {
   try {
-    const { code, costPrice } = req.body;
+    const { code, costPrice, buyDate, mode } = req.body;
     if (!code) {
       return res.status(400).json({ success: false, message: '股票代码不能为空' });
     }
-    const result = await checkSingleStockSellPoint(code, costPrice);
+    const result = mode === MODE_EXTREME_WIN
+      ? await checkExtremeWinSellPointDetailed(code, costPrice, buyDate)
+      : await checkSingleStockSellPoint(code, costPrice);
     res.json(result);
   } catch (error) {
     console.error('单个股票卖点诊断失败:', error);
@@ -1032,17 +1035,31 @@ app.post('/diagnose_realtime_buy_points', async (req, res) => {
   }
 });
 
-// 买点7项前置条件检查
+// 买点7项前置条件检查（mode='hot_money_extreme_win' 时返回「情绪游资-极致胜率」7 项龙头买点）
 app.post('/buy_point_checks', async (req, res) => {
   try {
     const targetDate = req.body?.targetDate;
+    const mode = req.body?.mode;
     const refresh = req.body?.refresh === true || req.body?.refresh === 1 || req.body?.refresh === '1';
     const force = req.body?.force === true || req.body?.force === 1 || req.body?.force === '1';
-    const result = await getBuyPointChecks(targetDate, refresh, force);
+    const result = mode === MODE_EXTREME_WIN
+      ? await getExtremeWinBuyPointChecks(targetDate, refresh)
+      : await getBuyPointChecks(targetDate, refresh, force);
     res.json(result);
   } catch (error) {
     console.error('买点前置检查失败:', error);
     res.status(500).json({ success: false, message: error.message || '检查失败' });
+  }
+});
+
+// 开盘实战页「情绪游资-极致胜率」模式：龙头列表（除 delta≥30 与上证斜率>0 外全部买点条件满足的个股）
+app.post('/hot_money_leader_list', async (req, res) => {
+  try {
+    const result = await getHotMoneyLeaderList(req.body?.targetDate, req.body?.limit);
+    res.json(result);
+  } catch (error) {
+    console.error('获取情绪游资龙头列表失败:', error);
+    res.status(500).json({ success: false, message: error.message || '获取失败' });
   }
 });
 
@@ -1101,52 +1118,69 @@ app.post('/buy_point_single_stock_diagnosis', async (req, res) => {
 // }
 app.post('/send_feishu_card', async (req, res) => {
   try {
-    const { type, sellStocks, topStocks, buyStocks } = req.body || {};
+    const { type, sellStocks, topStocks, buyStocks, mode } = req.body || {};
     if (type !== 'buy_point' && type !== 'sell_point') {
       return res.status(400).json({ success: false, message: 'type 必须是 buy_point 或 sell_point' });
     }
 
     let card;
     if (type === 'buy_point') {
-      // 买点卡片：优先使用前端传入的标的；未传入时与「开盘实战」页自选股 3 日涨幅榜同源，
-      // 严格取榜单前三，并点出其中的买点候选（榜单内首个满足买点资格且未封涨停的标的）
-      let resultStocks = Array.isArray(buyStocks) && buyStocks.length > 0
-        ? buyStocks
-        : (Array.isArray(topStocks) && topStocks.length > 0 ? topStocks : null);
-      if (!resultStocks) {
-        const gainers = await getTopGainersByMarket(null, 10);
-        const d = gainers?.data || {};
-        const cybPassed = d.cybGate?.passed === true;
-        const starPassed = d.starGate?.passed === true;
-        // 仅纳入满足买点门槛的市场，按 3 日涨幅降序合并前十（与前端 mergedList 口径完全一致）
-        const merged = [
-          ...(cybPassed ? (d.markets?.cybMain || []) : []),
-          ...(starPassed ? (d.markets?.star || []) : []),
-        ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
-        const toRow = (s) => ({
-          stockName: s.stockName,
-          code: s.code,
-          market: s.isSh688 ? '科创板' : '创业板/主板',
-          change: s.change,
-          change3d: s.change3d,
-          resilienceScore: s.resilienceScore,
-        });
-        // 买点候选：与前端 globalPick 一致，榜单内首个满足买点资格且未封涨停的标的
-        const candidate = merged.find((s) => s.matchesBuyPoint && !s.isLimitUp) || null;
-        const top3 = merged.slice(0, 3);
-        resultStocks = top3.map((s) => ({
-          ...toRow(s),
-          isCandidate: candidate != null && s.code === candidate.code,
-        }));
-        // 候选不在前三时补一行，保证买点候选始终被点出
-        if (candidate && !top3.some((s) => s.code === candidate.code)) {
-          resultStocks.push({ ...toRow(candidate), isCandidate: true });
+      if (mode === MODE_EXTREME_WIN) {
+        // 情绪游资-极致胜率：只推「完整买点股」（同时满足 delta ≥ 30 且上证 3 日线斜率 > 0，且未封涨停），无则不推
+        let resultStocks = Array.isArray(buyStocks) && buyStocks.length > 0 ? buyStocks : null;
+        if (!resultStocks) {
+          const listRes = await getHotMoneyLeaderList(null, 50);
+          const stocks = listRes?.data?.stocks || [];
+          resultStocks = stocks.filter((s) => s.buyPointHit && !s.isLimitUp).slice(0, 3);
         }
+        if (!resultStocks || resultStocks.length === 0) {
+          return res.json({ success: true, skipped: true, message: '当前无完整买点标的，不发送通知' });
+        }
+        card = feishuNotify.buildHotMoneyLeaderCard({
+          buyStocks: resultStocks,
+          timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        });
+      } else {
+        // 买点卡片：优先使用前端传入的标的；未传入时与「开盘实战」页自选股 3 日涨幅榜同源，
+        // 严格取榜单前三，并点出其中的买点候选（榜单内首个满足买点资格且未封涨停的标的）
+        let resultStocks = Array.isArray(buyStocks) && buyStocks.length > 0
+          ? buyStocks
+          : (Array.isArray(topStocks) && topStocks.length > 0 ? topStocks : null);
+        if (!resultStocks) {
+          const gainers = await getTopGainersByMarket(null, 10);
+          const d = gainers?.data || {};
+          const cybPassed = d.cybGate?.passed === true;
+          const starPassed = d.starGate?.passed === true;
+          // 仅纳入满足买点门槛的市场，按 3 日涨幅降序合并前十（与前端 mergedList 口径完全一致）
+          const merged = [
+            ...(cybPassed ? (d.markets?.cybMain || []) : []),
+            ...(starPassed ? (d.markets?.star || []) : []),
+          ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
+          const toRow = (s) => ({
+            stockName: s.stockName,
+            code: s.code,
+            market: s.isSh688 ? '科创板' : '创业板/主板',
+            change: s.change,
+            change3d: s.change3d,
+            resilienceScore: s.resilienceScore,
+          });
+          // 买点候选：与前端 globalPick 一致，榜单内首个满足买点资格且未封涨停的标的
+          const candidate = merged.find((s) => s.matchesBuyPoint && !s.isLimitUp) || null;
+          const top3 = merged.slice(0, 3);
+          resultStocks = top3.map((s) => ({
+            ...toRow(s),
+            isCandidate: candidate != null && s.code === candidate.code,
+          }));
+          // 候选不在前三时补一行，保证买点候选始终被点出
+          if (candidate && !top3.some((s) => s.code === candidate.code)) {
+            resultStocks.push({ ...toRow(candidate), isCandidate: true });
+          }
+        }
+        card = feishuNotify.buildBuyPointCard({
+          buyStocks: resultStocks,
+          timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        });
       }
-      card = feishuNotify.buildBuyPointCard({
-        buyStocks: resultStocks,
-        timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-      });
     } else {
       // 卖点卡片：使用前端传入的持仓股及其触发原因
       card = feishuNotify.buildSellPointCard({
