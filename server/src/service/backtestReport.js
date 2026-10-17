@@ -102,6 +102,28 @@ const getStrategyResult = async (strategyId, startDate, endDate, fromCacheOnly) 
   return runRangeBacktest(startDate, endDate, strategyId);
 };
 
+// 期末持仓投影：报告只保留前端渲染所需字段（含 splitLeg，精准择时标明所属仓位 A / B）
+const mapReportHolding = (h) => (h ? {
+  code: h.code,
+  stockName: h.stockName,
+  positionMode: h.mode ?? h.positionMode ?? null,
+  splitLeg: h.splitLeg ?? null,
+  weight: h.weight ?? null,
+  rawBuyReturn: h.rawBuyReturn ?? null,
+  metric: h.metric ?? null,
+  buyDate: h.buyDate,
+  buyTime: h.buyTime,
+  buyPrice: h.buyPrice,
+  buyChange: h.buyChange,
+  buyReturn: h.buyReturn,
+  buyDayClose: h.buyDayClose ?? null, // 买入当日收盘价（「买入当日收益」披露用）
+  buyDayReturn: h.buyDayReturn ?? null, // 买入价 → 买入当日收盘价收益率
+  buyReason: h.buyReason ?? null,
+  buyChecks: h.buyChecks ?? null,
+  holdingDays: h.holdingDays ?? null,
+  holdingDaysApprox: h.holdingDaysApprox ?? false,
+} : null);
+
 // 生成一份回测报告（可持久化）
 // forceRange=true 时强制全部策略（含三日情绪冰点）使用传入日期范围（策略趋势诊断用）；
 // save=false 时仅返回报告不写入报告历史（策略趋势诊断的三份报告不入常规报告历史）
@@ -160,6 +182,7 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         code: t.code,
         stockName: t.stockName,
         positionMode: t.positionMode ?? null, // 重点板块：offense 进攻·全仓 / defense 防御·半仓
+        splitLeg: t.splitLeg ?? null, // 精准择时：'A' 仓位A / 'B' 仓位B（其余策略为 null）
         weight: t.weight ?? null, // 仓位权重（进攻 1 / 防御 0.5）；null 表示该策略不分仓
         rawReturnRate: t.rawReturnRate ?? null, // 折算前个股实际收益率（防御笔的 returnRate 已 ×0.5）
         metric: t.metric ?? null,
@@ -182,25 +205,8 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         holdingDays: t.holdingDays ?? null,
         holdingDaysApprox: t.holdingDaysApprox ?? false,
       })),
-      currentHolding: result.currentHolding ? {
-        code: result.currentHolding.code,
-        stockName: result.currentHolding.stockName,
-        positionMode: result.currentHolding.mode ?? result.currentHolding.positionMode ?? null,
-        weight: result.currentHolding.weight ?? null,
-        rawBuyReturn: result.currentHolding.rawBuyReturn ?? null,
-        metric: result.currentHolding.metric ?? null,
-        buyDate: result.currentHolding.buyDate,
-        buyTime: result.currentHolding.buyTime,
-        buyPrice: result.currentHolding.buyPrice,
-        buyChange: result.currentHolding.buyChange,
-        buyReturn: result.currentHolding.buyReturn,
-        buyDayClose: result.currentHolding.buyDayClose ?? null, // 买入当日收盘价（「买入当日收益」披露用）
-        buyDayReturn: result.currentHolding.buyDayReturn ?? null, // 买入价 → 买入当日收盘价收益率
-        buyReason: result.currentHolding.buyReason ?? null,
-        buyChecks: result.currentHolding.buyChecks ?? null,
-        holdingDays: result.currentHolding.holdingDays ?? null,
-        holdingDaysApprox: result.currentHolding.holdingDaysApprox ?? false,
-      } : null,
+      currentHolding: mapReportHolding(result.currentHolding),
+      currentHoldings: (result.currentHoldings || []).map(mapReportHolding), // 双仓位策略期末可能同时持有两份（如精准择时 A/B）
     });
   }
 

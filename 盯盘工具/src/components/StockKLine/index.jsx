@@ -5,13 +5,18 @@ import { createChart, ColorType, LineStyle } from 'lightweight-charts';
  * 交易标注相关可选 props（不传时行为与原先完全一致）：
  * - tradeMarkers: 买卖点标记数组 [{ time: 'YYYY-MM-DD', position, color, shape, text }]
  * - priceLines: 价格横线数组 [{ price, color, title }]，统一画为红色/绿色虚线由调用方传色
+ * 指标叠加相关可选 props（不传时行为与原先完全一致）：
+ * - showScores: 是否叠加绘制「强度分 / 差劲分」两条曲线（情绪游资-极致胜率口径，0~100）
+ * - scoresData: [{ time: 'YYYY-MM-DD', diffScore, strengthScore }]
  */
-export default function KLine({ data = [], height = 500, showResilience = false, onFetchResilience, showInstitution = false, onFetchInstitution, onClickCandle, tradeMarkers, priceLines }) {
+export default function KLine({ data = [], height = 500, showResilience = false, onFetchResilience, showInstitution = false, onFetchInstitution, onClickCandle, tradeMarkers, priceLines, showScores = false, scoresData = [] }) {
   const container = useRef(null);
   const chartRef = useRef(null);
   const tooltipRef = useRef(null);
   const resilienceSeriesRef = useRef(null);
   const institutionSeriesRef = useRef(null);
+  const scoreStrengthSeriesRef = useRef(null);
+  const scoreDiffSeriesRef = useRef(null);
   const candlestickRef = useRef(null);
   const volumeSeriesRef = useRef(null);
   const ma5SeriesRef = useRef(null);
@@ -20,12 +25,14 @@ export default function KLine({ data = [], height = 500, showResilience = false,
   const chartInitializedRef = useRef(false);
   const resilienceScoreMapRef = useRef({});
   const institutionMapRef = useRef({});
+  const scoreMapRef = useRef({});
   const changeMapRef = useRef({});
   // 已创建的价格虚线引用集合（换股/清除时逐条 removePriceLine，避免残留与泄漏）
   const priceLineRefs = useRef([]);
-  // tooltip 回调只在图表初始化时注册一次，需用 ref 读取实时 showResilience/showInstitution，避免闭包捕获初始值
+  // tooltip 回调只在图表初始化时注册一次，需用 ref 读取实时 showResilience/showInstitution/showScores，避免闭包捕获初始值
   const showResilienceRef = useRef(showResilience);
   const showInstitutionRef = useRef(showInstitution);
+  const showScoresRef = useRef(showScores);
   const [resilienceData, setResilienceData] = useState(null);
   const [resilienceLoading, setResilienceLoading] = useState(false);
   const [institutionData, setInstitutionData] = useState(null);
@@ -40,6 +47,11 @@ export default function KLine({ data = [], height = 500, showResilience = false,
   useEffect(() => {
     showInstitutionRef.current = showInstitution;
   }, [showInstitution]);
+
+  // 跟随 showScores 实时同步，供已注册一次的 tooltip 回调读取
+  useEffect(() => {
+    showScoresRef.current = showScores;
+  }, [showScores]);
 
   useEffect(() => {
     if (showResilience && onFetchResilience && !resilienceData && !resilienceLoading) {
@@ -184,6 +196,38 @@ export default function KLine({ data = [], height = 500, showResilience = false,
       borderColor: '#1677ff',
     });
 
+    // 强度分 / 差劲分（情绪游资-极致胜率口径，0~100）：两条线共用 'score' 价格刻度，叠在上方价格区
+    const scoreStrengthSeries = chart.addLineSeries({
+      color: '#f5222d',
+      lineWidth: 2,
+      lastValueVisible: true,
+      priceLineVisible: false,
+      priceFormat: {
+        type: 'price',
+        precision: 2,
+      },
+      priceScaleId: 'score',
+    });
+
+    const scoreDiffSeries = chart.addLineSeries({
+      color: '#52c41a',
+      lineWidth: 2,
+      lastValueVisible: true,
+      priceLineVisible: false,
+      priceFormat: {
+        type: 'price',
+        precision: 2,
+      },
+      priceScaleId: 'score',
+    });
+
+    scoreStrengthSeries.priceScale().applyOptions({
+      scaleMargins: {
+        top: 0.05,
+        bottom: 0.5,
+      },
+    });
+
     const volumeSeries = chart.addHistogramSeries({
       color: '#26a69a',
       priceFormat: {
@@ -206,6 +250,8 @@ export default function KLine({ data = [], height = 500, showResilience = false,
     ma20SeriesRef.current = ma20Series;
     resilienceSeriesRef.current = resilienceSeries;
     institutionSeriesRef.current = institutionSeries;
+    scoreStrengthSeriesRef.current = scoreStrengthSeries;
+    scoreDiffSeriesRef.current = scoreDiffSeries;
     chartRef.current = chart;
 
     // Tooltip 逻辑
@@ -243,6 +289,10 @@ export default function KLine({ data = [], height = 500, showResilience = false,
           // 红绿严格按真实涨跌（vs 昨收）：涨红、跌绿、平盘灰
           const changeVal = changeMapRef.current[dateStr];
           const changeColor = changeVal === undefined ? '#333' : changeVal > 0 ? '#f5222d' : changeVal < 0 ? '#52c41a' : '#666';
+          // 强度分 / 差劲分（情绪游资-极致胜率口径）
+          const scoreVal = scoreMapRef.current[dateStr];
+          const strengthDisplay = scoreVal && scoreVal.strengthScore != null ? scoreVal.strengthScore.toFixed(2) : '-';
+          const diffDisplay = scoreVal && scoreVal.diffScore != null ? scoreVal.diffScore.toFixed(2) : '-';
 
           tooltip.innerHTML = `
             <div style="font-weight: bold; margin-bottom: 4px; border-bottom: 1px solid #eee; padding-bottom: 4px;">${dateStr}</div>
@@ -254,6 +304,8 @@ export default function KLine({ data = [], height = 500, showResilience = false,
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>涨跌:</span><span style="font-weight: bold; color: ${changeColor}">${changeVal !== undefined ? (changeVal > 0 ? '+' : '') + changeVal.toFixed(2) + '%' : '-'}</span></div>
             ${showResilienceRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>抗分歧:</span><span style="font-weight: bold; color: ${resilienceColor}">${resilienceDisplay}</span></div>` : ''}
             ${showInstitutionRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>机构参与度:</span><span style="font-weight: bold; color: #1677ff">${institutionDisplay}</span></div>` : ''}
+            ${showScoresRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>强度分:</span><span style="font-weight: bold; color: #f5222d">${strengthDisplay}</span></div>` : ''}
+            ${showScoresRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>差劲分:</span><span style="font-weight: bold; color: #52c41a">${diffDisplay}</span></div>` : ''}
           `;
 
           const coordinate = candlestick.priceToCoordinate(kData.close);
@@ -333,6 +385,8 @@ export default function KLine({ data = [], height = 500, showResilience = false,
     const ma20Series = ma20SeriesRef.current;
     const resilienceSeries = resilienceSeriesRef.current;
     const institutionSeries = institutionSeriesRef.current;
+    const scoreStrengthSeries = scoreStrengthSeriesRef.current;
+    const scoreDiffSeries = scoreDiffSeriesRef.current;
     const chart = chartRef.current;
 
     const klineData = [];
@@ -342,6 +396,8 @@ export default function KLine({ data = [], height = 500, showResilience = false,
     const ma20Data = [];
     const resilienceScoreData = [];
     const institutionValueData = [];
+    const scoreStrengthLineData = [];
+    const scoreDiffLineData = [];
     // 后端已按真实昨收算好的涨跌幅（data 为从新到旧排列，不能直接用相邻项互算）
     const rawChangeMap = {};
 
@@ -417,6 +473,25 @@ export default function KLine({ data = [], height = 500, showResilience = false,
       institutionMapRef.current = {};
     }
 
+    // 强度分 / 差劲分：后端返回 bars [{ time: 'YYYY-MM-DD', diffScore, strengthScore }]
+    if (showScores && Array.isArray(scoresData)) {
+      const map = {};
+      scoresData.forEach(item => {
+        const dateStr = String(item.time || '');
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
+        const diff = item.diffScore;
+        const strength = item.strengthScore;
+        const diffOk = typeof diff === 'number' && !isNaN(diff);
+        const strengthOk = typeof strength === 'number' && !isNaN(strength);
+        if (strengthOk) scoreStrengthLineData.push({ time: dateStr, value: strength });
+        if (diffOk) scoreDiffLineData.push({ time: dateStr, value: diff });
+        map[dateStr] = { diffScore: diffOk ? diff : null, strengthScore: strengthOk ? strength : null };
+      });
+      scoreMapRef.current = map;
+    } else {
+      scoreMapRef.current = {};
+    }
+
     // 涨跌幅：优先后端 change 字段；缺失的日期按时间升序用收盘价补算
     const changeMap = { ...rawChangeMap };
     const ascending = [...klineData].sort((a, b) => a.time.localeCompare(b.time));
@@ -466,8 +541,15 @@ export default function KLine({ data = [], height = 500, showResilience = false,
       institutionSeries.setData(deduplicate(institutionValueData));
     }
 
+    if (scoreStrengthSeries) {
+      scoreStrengthSeries.setData(deduplicate(showScores ? scoreStrengthLineData : []));
+    }
+    if (scoreDiffSeries) {
+      scoreDiffSeries.setData(deduplicate(showScores ? scoreDiffLineData : []));
+    }
+
     chart.timeScale().fitContent();
-  }, [data, showResilience, resilienceData, showInstitution, institutionData]);
+  }, [data, showResilience, resilienceData, showInstitution, institutionData, showScores, scoresData]);
 
   // 交易标注：买卖点 marker + 买入/卖出价格虚线（只在传入 tradeMarkers/priceLines 时生效；依赖 data 保证 setData 后重画）
   useEffect(() => {

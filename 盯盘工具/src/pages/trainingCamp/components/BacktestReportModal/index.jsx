@@ -136,6 +136,20 @@ const BuyReasonTag = ({ reason, checks }) => {
 // 回调签名 (code, name, trade)：第三参为该笔交易/持仓记录对象（含买卖日期/时间/价格），供 K 线弹窗标注买卖点
 export const StrategyCard = ({ strategy, rank, onStockClick }) => {
   const s = strategy.summary || {};
+  // 「情绪游资-精准择时」双仓位策略：每笔交易/持仓标明所属仓位（A / B）
+  const isPreciseTiming = strategy.id === 'hot_money_precise_timing' || strategy.preciseTiming === true;
+  // 仅当记录确实带 splitLeg（'A' / 'B'）时才打标：旧报告缺该字段时不猜（避免把仓位B错标成仓位A）
+  const legTag = (leg) => (
+    isPreciseTiming && (leg === 'A' || leg === 'B') ? (
+      <Tag color={leg === 'B' ? 'gold' : 'blue'} style={{ marginInlineEnd: 0 }}>
+        {leg === 'B' ? '仓位B' : '仓位A'}
+      </Tag>
+    ) : null
+  );
+  // 半仓原因文案：精准择时策略按仓位 A / B 说明，其余保留两次买入策略口径
+  const halfReasonOf = (leg) => (isPreciseTiming
+    ? `精准择时·${leg === 'B' ? '仓位B' : '仓位A'}为半仓买入（两仓位各 5 成）`
+    : '两次买入策略每份仓位均为半仓');
   // 期末持仓：优先取 currentHoldings（两次买入策略可能同时持有两份），兼容旧的单份 currentHolding
   const holdings = (strategy.currentHoldings && strategy.currentHoldings.length > 0)
     ? strategy.currentHoldings
@@ -162,10 +176,11 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
         <span style={{ fontSize: 13, fontWeight: 600, color: '#12213a' }}>第{t.seq}笔</span>
         {renderStockName(t.code, t.stockName, t)}
         <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{t.code}</span>
+        {legTag(t.splitLeg)}
         <ModeTag mode={t.positionMode} />
         {t.twoBuy && <TwoBuyModeTag leg={t.leg} />}
         {t.metric != null && <Tag color="purple" style={{ marginInlineEnd: 0 }}>选股指标 {Number(t.metric).toFixed(4)}</Tag>}
-        <WeightedReturnTag rate={t.returnRate} rawRate={t.rawReturnRate} weight={t.weight} halfReason="两次买入策略每份仓位均为半仓" />
+        <WeightedReturnTag rate={t.returnRate} rawRate={t.rawReturnRate} weight={t.weight} halfReason={halfReasonOf(t.splitLeg)} />
         <span style={{ fontSize: 11, color: '#9ca3af' }}>
           {`${fmtDate(t.buyDate)} ${fmtTime(t.buyTime)} 买`}
           {' → '}{fmtDate(t.sellDate)} {fmtTime(t.sellTime)} 卖
@@ -222,10 +237,11 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
           {h.holdingDays != null && <span style={{ fontSize: 11, color: '#9ca3af' }}>已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(h)}</b></span>}
           {renderStockName(h.code, h.stockName, h)}
           <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{h.code}</span>
+          {legTag(h.splitLeg)}
           <ModeTag mode={h.positionMode} />
           {h.twoBuy && <TwoBuyModeTag leg={h.leg} />}
           {h.buyReturn != null && (
-            <WeightedReturnTag rate={h.buyReturn} rawRate={h.rawBuyReturn} weight={h.weight} label="浮盈" halfReason="两次买入策略每份仓位均为半仓" />
+            <WeightedReturnTag rate={h.buyReturn} rawRate={h.rawBuyReturn} weight={h.weight} label="浮盈" halfReason={halfReasonOf(h.splitLeg)} />
           )}
         </div>
       ),
@@ -514,7 +530,7 @@ const BacktestReportModal = ({ open, onClose }) => {
           <Empty description="暂无可展示的策略回测数据" />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {(report.strategies || []).map(s => <StrategyCard key={s.id} strategy={s} rank={s.rank} onStockClick={(code, name, trade) => setKlineTarget({ code, name, trade })} />)}
+            {(report.strategies || []).map(s => <StrategyCard key={s.id} strategy={s} rank={s.rank} onStockClick={(code, name, trade) => setKlineTarget({ code, name, trade, extremeWin: s.extremeWinMode === true || s.id === 'hot_money_extreme_win' })} />)}
           </div>
         )
       ) : (
@@ -530,6 +546,7 @@ const BacktestReportModal = ({ open, onClose }) => {
         code={klineTarget?.code}
         stockInfo={{ code: klineTarget?.code, name: klineTarget?.name }}
         tradeRecord={klineTarget?.trade || null}
+        extremeWin={klineTarget?.extremeWin === true}
       />
     </Modal>
   );

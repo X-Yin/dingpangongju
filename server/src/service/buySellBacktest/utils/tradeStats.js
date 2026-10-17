@@ -1,5 +1,5 @@
 const { batchParallel, fs, getKlineCached } = require('../deps');
-const { backtestCacheDir, getBacktestCacheFile } = require('../paths');
+const { backtestCacheDir, getBacktestCacheFile, getBacktestCacheVersion } = require('../paths');
 
 
 // ---------- 持仓交易日数（以项目根目录 YYYY交易日.json 交易日历为准）----------
@@ -144,6 +144,9 @@ const readCachedBacktest = (strategy, startDate, endDate) => {
     if (!fs.existsSync(file)) return null;
     const data = JSON.parse(fs.readFileSync(file, 'utf-8'));
     if (!data || data.range?.startDate !== startDate || data.range?.endDate !== endDate) return null;
+    // 缓存版本校验：未写版本号的旧文件按 v1 计（未变更规则的策略继续命中，不重复回测）；
+    // 规则已变更（版本号 > 1）的策略，旧缓存版本不一致即视为未命中并重跑
+    if ((data.cacheVersion ?? 1) !== getBacktestCacheVersion(strategy)) return null;
     return attachHoldingDays(data); // 读取时统一注入持仓交易日数（缓存文件本身不落盘该字段，兼容旧缓存）
   } catch {
     return null;
@@ -153,7 +156,8 @@ const readCachedBacktest = (strategy, startDate, endDate) => {
 const writeCachedBacktest = (strategy, startDate, endDate, result) => {
   try {
     if (!fs.existsSync(backtestCacheDir)) fs.mkdirSync(backtestCacheDir, { recursive: true });
-    fs.writeFileSync(getBacktestCacheFile(strategy, startDate, endDate), JSON.stringify(result, null, 2), 'utf-8');
+    // 落盘时写入当前规则版本号，供 readCachedBacktest 校验（规则变更后旧结果自动失效）
+    fs.writeFileSync(getBacktestCacheFile(strategy, startDate, endDate), JSON.stringify({ ...result, cacheVersion: getBacktestCacheVersion(strategy) }, null, 2), 'utf-8');
   } catch (e) {
     console.error('回测结果缓存写入失败:', e.message);
   }

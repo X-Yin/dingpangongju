@@ -2,15 +2,17 @@ const { STRATEGIES } = require('../strategies/registry');
 const { runLeaderBacktest } = require('./leaderBacktest');
 const {
   batchParallel,
+  ensureBarsForCodes,
   getPastTradingDates,
   getSingleStockTlineDataByDate,
   getStockCloseOnOrBefore,
   getTopLianbanBoardStocks,
   getTrainingCampDates,
   loadTrainingCampData,
+  stockWindowRangePct,
 } = require('../deps');
 const { getTechIndexDates } = require('../utils/techEmotion');
-const { ICE_SIGNAL_INDEX_CODE, ICE_SIGNAL_INDEX_NAME, ensureIndexMa3SlopeSeries } = require('./indexGate');
+const { ICE_SIGNAL_INDEX_CODE, ICE_SIGNAL_INDEX_NAME, ensureIndexMa3SlopeSeries, getIceMa3SlopeIntraday } = require('./indexGate');
 const { EXCLUDED_CODES } = require('../constants');
 const { calculateReplayResilience } = require('../diagnose/sellPoint');
 const { scanLeaderPriceSell } = require('./leaderSellMinute');
@@ -22,19 +24,28 @@ const { attachBuyDayReturn, calcDrawdownStats, sortTradesByBuyTime } = require('
 //   仓位 A（5 成）= 完全按「情绪游资-龙头战法」执行——直接复用 runLeaderBacktest（weight 覆盖为 0.5）；
 //   仓位 B（5 成）= 与 A 择时错开的日内打板——
 //     买点 = 上证指数 3 日线斜率「前一交易日收盘口径由负转正」的当日（斜率转正事件日），
-//            候选池 = 上一交易日（lianbanSnapshot）涨停个股数 top2 板块的全部成分股，
-//            盘中分时逐桶扫描（仅上午 ≤ 11:30），谁最先涨到 +8% 就买谁（按触发桶分时价成交，同桶取涨幅最高者）；
+//            候选池 = 前两个交易日（lianbanSnapshot）各自涨停个股数 top2 板块的全部成分股，两日合并去重（每个交易日各自先剔除「其他/并购重组」板块并在剩余板块中顺延取前二；
+//            再去重、剔除 ST／黑名单／创业板与科创板；
+//            并要求「过去 20 个交易日区间涨幅 = (窗口最高价 − 窗口最低价) ÷ 窗口最低价 < 40%」，剔除近期已大幅拉升者），
+//            盘中分时逐桶扫描（9:35 ≤ 时间桶 ≤ 11:30，开盘后前 5 分钟一律不买），谁最先涨到 +8% 就买谁（按触发桶分时价成交，同桶取涨幅最高者）；
+//            出手前复核：触达 +8% 的那一分钟再观察上证指数 3 日线「实时」斜率（MA3 今日实时 − MA3 昨日收盘），
+//            仍为正才买；为负或数据缺失则当天不买、本次机会作废（不顺延到下一只）（2026-10-17 用户新增）；
 //            一字板（开盘价即达涨停阈值）顺延下一只；下午不再交易（上午未成交则本次买点作废）；
-//     卖点 = 完全沿用「情绪游资-龙头战法」的 8 条卖点（价格类卖点按分钟级回溯，取最先触发分钟精准卖出）；
+//     卖点 = 完全沿用「情绪游资-龙头战法」的卖点（含⑩盘中 1 分钟内跳水 ≤ -3% 直接卖；
+//            价格类卖点按分钟级回溯，取最先触发分钟精准卖出）；
 //   整体收益率按真实两子账户口径：资金一分为二，各半独立复利后相加（0.5×F_A + 0.5×F_B − 1）。
 // ============================================================
 
 const LEG_WEIGHT = 0.5;             // 每份仓位 5 成
-const TOP_BOARDS = 2;               // 候选池：上一交易日涨停数前二板块
+const TOP_BOARDS = 2;               // 候选池：前两个交易日各自涨停数前二板块（两日并集）
 const SURGE_PCT = 8;                // 打板阈值：分时涨幅达到 +8% 即买入
 const MORNING_END_MINUTE = 1130;    // 只在上午打板（时间桶 minute ≤ 1130）
 const MAIN_BOARD_LIMIT_UP_PCT = 9.5;   // 主板涨停阈值
 const NON_MAIN_LIMIT_UP_PCT = 19.5;    // 创业板/科创板涨停阈值
+const RANGE_WINDOW_DAYS = 20;          // 区间涨幅过滤窗口：过去 20 个交易日（不含当日）
+const MAX_WINDOW_RANGE_PCT = 40;       // 区间涨幅上限：(窗口最高价 − 窗口最低价) ÷ 窗口最低价 须 < 40%（2026-10-16 用户新增仓位B 过滤）
+const EXCLUDED_BOARDS = ['其他', '并购重组']; // 仓位B 候选池剔除的板块（非主题类/重组类板块，2026-10-17 用户要求；剔除后在剩余板块中顺延取前二）
+const MIN_BUY_MINUTE = 935;            // 仓位B 开盘后前 5 分钟（9:30–9:34）不买，最早 9:35 才可出手（2026-10-17 用户要求）
 
 // 价格类卖点门槛（止损/跌停/昨收跌幅/开盘跌幅/高位回落/竞价低开）统一由 ./leaderSellMinute 持有
 const WEAK_TRADE_HOLD_DAYS = 3;
@@ -96,6 +107,7 @@ const scanSurge = (points, preclose, code) => {
   if (openCh != null && openCh >= limitPct) return { oneWord: true };
   for (const p of points) {
     if (p.minute > MORNING_END_MINUTE) break;
+    if (p.minute < MIN_BUY_MINUTE) continue; // 开盘后前 5 分钟不买（最早 9:35 出手）
     const ch = changeOf(p, preclose);
     if (ch == null) continue;
     if (ch >= SURGE_PCT) {
@@ -112,9 +124,12 @@ const scanSurge = (points, preclose, code) => {
 };
 
 // 组装仓位B 持仓对象
-const buildBPosition = ({ pick, dateStr, dateDisplay, timeText, poolCount, boardsText, prevDate }) => {
+const buildBPosition = ({ pick, dateStr, dateDisplay, timeText, poolCount, poolBeforeRange, boardsText, prevDate, prevPrevDate }) => {
   const limitText = `${pick.change > 0 ? '+' : ''}${pick.change}%`;
-  const buyReason = `${timeText} ${ICE_SIGNAL_INDEX_NAME} 3 日线斜率前一交易日收盘口径由负转正（${prevDate}），上午打板买入最先涨到 +${SURGE_PCT}% 的 ${pick.name}（${pick.code}），触发时点价 ${pick.px.toFixed(2)}（实时涨幅 ${limitText}）`;
+  const buySlopeText = pick.buySlope != null && Number.isFinite(Number(pick.buySlope))
+    ? `${Number(pick.buySlope) > 0 ? '+' : ''}${Number(pick.buySlope).toFixed(2)}`
+    : '--';
+  const buyReason = `${timeText} ${ICE_SIGNAL_INDEX_NAME} 3 日线斜率前一交易日收盘口径由负转正（${prevDate}），开盘后前 5 分钟不买、于 ${fmtMinute(pick.minute)} 复核实时斜率仍为正（${buySlopeText}）后出手，打板买入最先涨到 +${SURGE_PCT}% 的 ${pick.name}（${pick.code}），触发时点价 ${pick.px.toFixed(2)}（实时涨幅 ${limitText}）`;
   const checks = [
     {
       id: 'precise_timing_slope',
@@ -125,17 +140,24 @@ const buildBPosition = ({ pick, dateStr, dateDisplay, timeText, poolCount, board
     },
     {
       id: 'precise_timing_pool',
-      title: `候选池 = 上一交易日（${prevDate}）涨停个股数前 ${TOP_BOARDS} 板块的全部成分股`,
+      title: `候选池 = 前两个交易日（${prevPrevDate ?? '--'}、${prevDate}）各自涨停个股数前 ${TOP_BOARDS} 板块的全部成分股取并集（各自先剔除「${EXCLUDED_BOARDS.join('、')}」板块并在剩余板块中顺延，且过去 ${RANGE_WINDOW_DAYS} 个交易日区间涨幅 < ${MAX_WINDOW_RANGE_PCT}%）`,
       passed: true,
       value: boardsText,
-      reason: `上一交易日涨停数前 ${TOP_BOARDS} 的板块：${boardsText}（去重、剔除 ST、黑名单与创业板/科创板后合计 ${poolCount} 只）`,
+      reason: `前两个交易日（${prevPrevDate ?? '--'}、${prevDate}）各自涨停数前 ${TOP_BOARDS} 的板块取并集：${boardsText}；候选池构造——每个交易日各自先剔除「${EXCLUDED_BOARDS.join('、')}」板块并按涨停数在剩余板块中顺延取前 ${TOP_BOARDS}（避免非主题类/重组类板块占用名额），两日成分股合并后去重、剔除 ST／黑名单／创业板与科创板（剩余合计 ${poolBeforeRange} 只），最后按「过去 ${RANGE_WINDOW_DAYS} 个交易日（不含当日）区间涨幅 = (窗口内最高价 − 窗口内最低价) ÷ 窗口内最低价」过滤，仅保留 <${MAX_WINDOW_RANGE_PCT}% 者（合计 ${poolCount} 只；区间涨幅数据缺失者视为不达标一并剔除）`,
     },
     {
       id: 'precise_timing_surge',
       title: `上午盘中分时最先涨到 +${SURGE_PCT}%（打板）`,
       passed: true,
       value: `${pick.name}（${pick.code}）${fmtMinute(pick.minute)} 达 ${limitText}`,
-      reason: `仅在上午（≤ ${fmtMinute(MORNING_END_MINUTE)}）逐桶监控候选池分时，最先触及 +${SURGE_PCT}% 者买入（相当于打板）；一字板（开盘即涨停）顺延下一只，触发时点已涨停者亦顺延；下午不再交易`,
+      reason: `仅在上午（${fmtMinute(MIN_BUY_MINUTE)} ≤ 时间桶 ≤ ${fmtMinute(MORNING_END_MINUTE)}）逐桶监控候选池分时，最先触及 +${SURGE_PCT}% 者买入（相当于打板）；开盘后前 5 分钟（9:30–9:34）一律不买；一字板（开盘即涨停）顺延下一只，触发时点已涨停者亦顺延；下午不再交易`,
+    },
+    {
+      id: 'precise_timing_buy_slope',
+      title: `出手前复核：${ICE_SIGNAL_INDEX_NAME} 3 日线实时斜率仍为正（触达 +${SURGE_PCT}% 时点判定）`,
+      passed: true,
+      value: `触发时点（${fmtMinute(pick.minute)}）实时斜率 ${buySlopeText} > 0`,
+      reason: `开盘后前 5 分钟（9:30–9:34）不买；每次出手前（触达 +${SURGE_PCT}% 的那一分钟）复核 ${ICE_SIGNAL_INDEX_NAME} 3 日线实时斜率（MA3 今日实时 − MA3 昨日收盘），仅当仍为正才买入；为负或数据缺失则当天不买、本次机会作废（不顺延到下一只）`,
     },
   ];
   return {
@@ -177,7 +199,7 @@ const runPreciseTimingBacktest = async (startDate, endDate, strategyId, onProgre
   if (!aRes || aRes.success === false) return aRes || { success: false, message: '仓位A（龙头战法）回测失败' };
 
   const aTrades = aRes.trades || [];
-  const aHolding = aRes.currentHolding || null;
+  const aHolding = aRes.currentHolding ? { ...aRes.currentHolding, splitLeg: 'A' } : null;
 
   // ===== 仓位 B（5 成）：斜率前一交易日收盘口径由负转正 → 当日上午打板 =====
   // 上证指数 3 日线斜率序列（收盘口径）一次预计算，供「转正事件」判定复用
@@ -203,19 +225,19 @@ const runPreciseTimingBacktest = async (startDate, endDate, strategyId, onProgre
     // 当日分时缓存重建，控制内存
     tlineCache.clear();
 
-    // 上一交易日（候选池来源 + 斜率转正事件判定）
+    // 前两个交易日（候选池来源：涨停数各自前二板块取并集 + 斜率转正事件判定）
     let prevDates = [];
     try { prevDates = await getPastTradingDates(dateStr, 2); } catch (e) { prevDates = []; }
     const prevDate = prevDates.length > 0 ? Number(prevDates[prevDates.length - 1]) : null;
+    const prevPrevDate0 = prevDates.length >= 2 ? Number(prevDates[0]) : null;
 
     // 转正事件：prevDate 收盘斜率 > 0 且其更前一交易日（prevPrevDate）收盘斜率 ≤ 0
-    let slopePrev = null, slopePrevPrev = null;
+    let slopePrev = null, slopePrevPrev = null, prevPrevDate = prevPrevDate0;
     if (prevDate != null) {
       slopePrev = slopeMap.get(prevDate) ?? null;
       if (slopePrev == null) {
         for (let i = slopeDates.length - 1; i >= 0; i--) { if (slopeDates[i] <= prevDate) { slopePrev = slopeMap.get(slopeDates[i]) ?? null; break; } }
       }
-      let prevPrevDate = prevDates.length >= 2 ? Number(prevDates[0]) : null;
       if (prevPrevDate == null) {
         try { const p = await getPastTradingDates(String(prevDate), 1); prevPrevDate = p.length > 0 ? Number(p[0]) : null; } catch (e) { prevPrevDate = null; }
       }
@@ -259,8 +281,16 @@ const runPreciseTimingBacktest = async (startDate, endDate, strategyId, onProgre
 
     // ===== 仓位B 买入：仅当「斜率转正事件日」且空仓且当日未卖出过，上午逐桶扫描打板 =====
     if (turnedPositive && !bPosition && dateStr !== lastBSellDate && prevDate != null) {
-      let poolRaw = [];
-      try { poolRaw = getTopLianbanBoardStocks(String(prevDate), TOP_BOARDS) || []; } catch (e) { poolRaw = []; }
+      // 候选池 = 前两个交易日各自「涨停数前二板块」成分股的并集（2026-10-17 用户要求：扩大选股范围）
+      // 每个交易日各自先剔除「其他/并购重组」板块、再按涨停数在剩余板块中顺延取前二
+      const boardStocksOf = (d) => {
+        if (d == null) return [];
+        try { return getTopLianbanBoardStocks(String(d), TOP_BOARDS, EXCLUDED_BOARDS) || []; } catch (e) { return []; }
+      };
+      const poolRaw = [...boardStocksOf(prevDate), ...boardStocksOf(prevPrevDate)];
+      // 实际命中的板块名（两个交易日各自剔除「其他/并购重组」后顺延得到的前二板块，合并去重）
+      const pickedBoards = [...new Set(poolRaw.map(s => s && s.board).filter(Boolean))];
+      const boardFilterText = `前两个交易日（${prevPrevDate ?? '--'}、${prevDate}）各自剔除「${EXCLUDED_BOARDS.join('、')}」板块并在剩余板块中顺延取前 ${TOP_BOARDS}`;
       // 去重 + 剔除黑名单/ST
       const seen = new Set();
       const pool = [];
@@ -273,35 +303,68 @@ const runPreciseTimingBacktest = async (startDate, endDate, strategyId, onProgre
         if (isChiNextOrStar(s.code)) continue; // 剔除创业板/科创板
         pool.push(s);
       }
-      if (pool.length === 0) boardsText = '无可交易成分股';
+      const boardTextOf = (extra = '') => `${pickedBoards.length > 0 ? `命中板块：${pickedBoards.join('、')}（${boardFilterText}）；` : ''}${extra}`;
+      if (pool.length === 0) boardsText = boardTextOf('无可交易成分股');
       if (pool.length > 0) {
+        // 过去 20 个交易日区间涨幅过滤（2026-10-16 用户新增）：
+        // (窗口内最高价 − 窗口内最低价) ÷ 窗口内最低价 < 40%（≥ 40% 属近期已大幅拉升者，剔除）
+        let winDates = [];
+        try { winDates = await getPastTradingDates(dateStr, RANGE_WINDOW_DAYS); } catch (e) { winDates = []; }
+        try { await ensureBarsForCodes(new Set(pool.map(s => s.code))); } catch (e) { /* 拉取失败按数据缺失处理 */ }
+        const beforeRangeFilter = pool.length;
+        const ranged = [];
+        if (winDates.length >= RANGE_WINDOW_DAYS) {
+          for (const s of pool) {
+            const rangePct = stockWindowRangePct(s.code, winDates);
+            // 区间振幅缺失（日K未覆盖）视为不达标，与「6 日涨幅窗口」口径一致
+            if (rangePct == null || !Number.isFinite(rangePct) || rangePct >= MAX_WINDOW_RANGE_PCT) continue;
+            ranged.push(s);
+          }
+        }
+        pool.length = 0;
+        pool.push(...ranged);
+        const rangeFilterText = `过去 ${RANGE_WINDOW_DAYS} 个交易日区间涨幅 (最高价 − 最低价) ÷ 最低价 < ${MAX_WINDOW_RANGE_PCT}% 剔除 ${beforeRangeFilter - pool.length} 只`;
+
+        if (pool.length === 0) {
+          boardsText = boardTextOf(`无可交易成分股（${rangeFilterText}）`);
+        }
         for (const s of pool) if (!seenStocks.has(s.code)) seenStocks.set(s.code, { code: s.code, name: s.name || s.code });
 
-        // 逐候选扫描上午分时，找「最先涨到 +8%」且可买入者
-        const scanned = [];
-        await batchParallel(pool, async (s) => {
-          try {
-            const t = await loadTlinePoints(s.code, dateNum);
-            const r = scanSurge(t.points, t.preclose, s.code);
-            if (!r || r.oneWord || r.atLimit) return; // 一字板 / 触发即涨停 → 顺延
-            scanned.push({ code: s.code, name: s.name || s.code, minute: r.minute, change: r.change, px: r.px });
-          } catch (e) { /* 单只失败跳过 */ }
-        }, 8);
+        if (pool.length > 0) {
+          // 逐候选扫描上午分时，找「最先涨到 +8%」且可买入者
+          const scanned = [];
+          await batchParallel(pool, async (s) => {
+            try {
+              const t = await loadTlinePoints(s.code, dateNum);
+              const r = scanSurge(t.points, t.preclose, s.code);
+              if (!r || r.oneWord || r.atLimit) return; // 一字板 / 触发即涨停 → 顺延
+              scanned.push({ code: s.code, name: s.name || s.code, minute: r.minute, change: r.change, px: r.px });
+            } catch (e) { /* 单只失败跳过 */ }
+          }, 8);
 
-        if (scanned.length > 0) {
-          // 最先到达者优先；同桶并列取涨幅最高者
-          scanned.sort((a, b) => (a.minute - b.minute) || (b.change - a.change));
-          const pick = scanned[0];
-          const poolCount = pool.length;
-          boardsText = `上一交易日涨停数前 ${TOP_BOARDS} 板块共 ${poolCount} 只（去重后）`;
-          const timeText = fmtMinute(pick.minute);
-          bPosition = buildBPosition({ pick: { ...pick, slopePrev, slopePrevPrev }, dateStr, dateDisplay: fmtDay(dateStr), timeText, poolCount, boardsText, prevDate: String(prevDate) });
-          bPosition.buyDi = di; // 持仓第 3 个交易日卖点④的计数基准
+          if (scanned.length > 0) {
+            // 最先到达者优先；同桶并列取涨幅最高者
+            scanned.sort((a, b) => (a.minute - b.minute) || (b.change - a.change));
+            const pick = scanned[0];
+            const poolCount = pool.length;
+            boardsText = boardTextOf(`前两个交易日涨停数前 ${TOP_BOARDS} 板块去重后 ${beforeRangeFilter} 只，${rangeFilterText}，余 ${poolCount} 只`);
+            // 出手前复核上证指数 3 日线实时斜率：仅当触发时点该分钟实时斜率 > 0 才买入；
+            // 非正（含数据缺失）则当天不买、本次机会作废（不顺延到下一只）（2026-10-17 用户要求）
+            let buySlope = null;
+            try { buySlope = await getIceMa3SlopeIntraday(dateStr, pick.minute); } catch (e) { buySlope = null; }
+            if (!(buySlope > 0)) {
+              console.log(`[precise_timing] ${dateStr} 仓位B 触发 ${pick.name}（${pick.code}）${fmtMinute(pick.minute)}，但上证 3 日线实时斜率 ${buySlope == null ? '缺失' : buySlope} 非正 → 放弃本次买入（不顺延）`);
+            } else {
+              const timeText = fmtMinute(pick.minute);
+              bPosition = buildBPosition({ pick: { ...pick, slopePrev, slopePrevPrev, buySlope }, dateStr, dateDisplay: fmtDay(dateStr), timeText, poolCount, poolBeforeRange: beforeRangeFilter, boardsText, prevDate: String(prevDate), prevPrevDate: prevPrevDate != null ? String(prevPrevDate) : null });
+              bPosition.buyDi = di; // 持仓第 3 个交易日卖点④的计数基准
+            }
+          }
         }
       }
     }
 
-    // ===== 逐桶循环：仓位B 卖出（隔夜持仓，沿用龙头战法 8 条卖点；价格类卖点分钟级回溯）=====
+    // ===== 逐桶循环：仓位B 卖出（隔夜持仓，沿用龙头战法 10 条卖点；价格类卖点分钟级回溯）=====
     let campData = null;
     try { campData = await loadTrainingCampData(dateStr, { allowMissingFund: true }); } catch (e) { campData = null; }
     const timeBuckets = (campData && campData.success !== false) ? (campData.timeBuckets || []) : [];
@@ -326,7 +389,7 @@ const runPreciseTimingBacktest = async (startDate, endDate, strategyId, onProgre
         let sellPx = px;
         let sellChange = changePct;
 
-        // 价格类卖点（⑤竞价低开 / ①成本线止损 / ②跌停 / ⑦昨收跌幅 / ⑧开盘跌幅 / ③高位大阴线）：
+        // 价格类卖点（⑤竞价低开 / ①成本线止损 / ②跌停 / ⑦昨收跌幅 / ⑧开盘跌幅 / ⑩单分钟跳水 / ③高位大阴线）：
         // 分钟级回溯——自 9:30 起逐分钟扫描分时，取「最先触发」的那一分钟精准卖出
         const priceHit = scanLeaderPriceSell({
           points: bPosTline.points,
@@ -388,7 +451,10 @@ const runPreciseTimingBacktest = async (startDate, endDate, strategyId, onProgre
   }
 
   // ===== 合并两仓位轨迹 =====
-  const trades = sortTradesByBuyTime([...aTrades, ...bTrades]).map((t, i) => ({ ...t, seq: i + 1 }));
+  const trades = sortTradesByBuyTime([
+    ...aTrades.map(t => ({ ...t, splitLeg: 'A' })),
+    ...bTrades,
+  ]).map((t, i) => ({ ...t, seq: i + 1 }));
 
   // 期末持仓：A 的 currentHolding + B 的当前持仓（各半仓）
   const currentHoldings = [];

@@ -90,6 +90,26 @@ const stockWindowGain = (code, winDates) => {
   return parseFloat(sum.toFixed(4));
 };
 
+// 个股最近窗口区间振幅（%）：(窗口内最高价 − 窗口内最低价) ÷ 最低价 × 100；任一日缺 K 线返回 null
+const stockWindowRangePct = (code, winDates) => {
+  const bars = barsCache.get(code);
+  if (!bars || bars.length === 0) return null;
+  let maxHigh = null;
+  let minLow = null;
+  for (const d of winDates) {
+    const dn = Number(d);
+    const bar = bars.find(b => b.d === dn);
+    if (!bar) return null;
+    const h = bar.h != null && Number.isFinite(Number(bar.h)) && Number(bar.h) > 0 ? Number(bar.h) : bar.c;
+    const l = bar.l != null && Number.isFinite(Number(bar.l)) && Number(bar.l) > 0 ? Number(bar.l) : bar.c;
+    if (!(h > 0) || !(l > 0)) return null;
+    if (maxHigh == null || h > maxHigh) maxHigh = h;
+    if (minLow == null || l < minLow) minLow = l;
+  }
+  if (maxHigh == null || !(minLow > 0)) return null;
+  return parseFloat((((maxHigh - minLow) / minLow) * 100).toFixed(4));
+};
+
 // blockName -> tag（进攻/中性/防御；取该板块任一带 tag 条目；未打 tag 的板块不出现在 Map 中）
 let tagCache = null; // { mtimeMs, map }
 const getKeyBlockTagMap = () => {
@@ -199,14 +219,16 @@ const getCybDownDays = async (dateStr, lookbackDays = 20, thresholdPct = -1) => 
   return result;
 };
 
-// 从 lianbanSnapshot 某日期中取涨停数 topN 板块的所有股票
-// 返回 [{ code: 'shxxxxxx', name }]
-const getTopLianbanBoardStocks = (dateStr, topN = 1) => {
+// 上一交易日涨停个股数前 topN 板块的全部成分股；excludeBoards 可剔除指定板块名
+//（如「其他」「并购重组」这类非主题/重组类板块，剔除后在剩余板块中顺延取前 topN）
+// 返回 [{ code: 'shxxxxxx', name, board, lianbanCount }]（board = 所属板块名，lianbanCount = 该股在快照日（上一交易日）的连板数）
+const getTopLianbanBoardStocks = (dateStr, topN = 1, excludeBoards = []) => {
   const data = readLianbanSnapshot(dateStr);
   if (!data || !Array.isArray(data.themes)) return [];
-  // 按 count 降序（同 count 按 rank 升序）
+  const excluded = new Set((excludeBoards || []).map(String));
+  // 先剔除被排除板块（快照里板块名为 theme.board），再按 count 降序（同 count 按 rank 升序）取前 topN
   const sorted = data.themes
-    .filter(t => t && Array.isArray(t.stocks) && t.stocks.length > 0)
+    .filter(t => t && Array.isArray(t.stocks) && t.stocks.length > 0 && !excluded.has(String(t.board || t.name || '')))
     .sort((a, b) => (b.count || 0) - (a.count || 0) || (a.rank || 99) - (b.rank || 99));
   const top = sorted.slice(0, topN);
   const out = [];
@@ -214,7 +236,13 @@ const getTopLianbanBoardStocks = (dateStr, topN = 1) => {
     for (const st of theme.stocks) {
       const code = st.marketCode || st.code;
       if (!code) continue;
-      out.push({ code, name: st.name || st.code || code });
+      const lb = Number(st.lianbanCount);
+      out.push({
+        code,
+        name: st.name || st.code || code,
+        board: theme.board || theme.name || '',
+        lianbanCount: Number.isFinite(lb) ? lb : null,
+      });
     }
   }
   return out;
@@ -276,6 +304,39 @@ const stockVolumeRatio = (code, dateStr) => {
   const avg3 = prior.reduce((a, b) => a + b, 0) / 3;
   if (!(avg3 > 0)) return null;
   return parseFloat(((yv - avg3) / avg3).toFixed(6));
+};
+
+// 某交易日之前的 n 个交易日日均成交量（严格早于 dateNum；默认前 3 日）；数据不足返回 null
+const stockPriorAvgVolume = (code, dateNum, n = 3) => {
+  const bars = barsCache.get(code);
+  if (!bars || bars.length < n + 1) return null;
+  const d = Number(dateNum);
+  let idx = -1;
+  for (let i = 0; i < bars.length; i++) { if (bars[i].d < d) idx = i; else break; }
+  if (idx < n - 1) return null;
+  let sum = 0;
+  for (let k = idx - n + 1; k <= idx; k++) {
+    const v = bars[k].v;
+    if (v == null || !(v > 0)) return null;
+    sum += v;
+  }
+  return sum / n;
+};
+
+// 某交易日「当日」放量比：(当日成交量 − 该日前 3 个交易日日均量) ÷ 该日前 3 个交易日日均量
+// 与 extremeWinScores.volumeRatioAtDate 口径一致（同为日线 business_amount）；数据不足返回 null
+const stockVolumeRatioAt = (code, dateNum) => {
+  const bars = barsCache.get(code);
+  if (!bars || bars.length < 4) return null;
+  const d = Number(dateNum);
+  let idx = -1;
+  for (let i = 0; i < bars.length; i++) { if (bars[i].d === d) { idx = i; break; } if (bars[i].d > d) break; }
+  if (idx < 3) return null;
+  const cv = bars[idx].v;
+  if (cv == null || !(cv > 0)) return null;
+  const avg3 = stockPriorAvgVolume(code, d, 3);
+  if (!(avg3 > 0)) return null;
+  return parseFloat(((cv - avg3) / avg3).toFixed(6));
 };
 
 // ============================================================
@@ -524,10 +585,13 @@ module.exports = {
   ensureBarsForCodes,
   stockDailyChange,
   stockWindowGain,
+  stockWindowRangePct,
   getStockCloseOnOrBefore,
   getPastTradingDates,
   getRecentMultiLianbanStocks,
   stockVolumeRatio,
+  stockPriorAvgVolume,
+  stockVolumeRatioAt,
   getHistoricalLianbanDefenseStocks,
   scanAllLianbanCodesInRange,
   getHongliMultiLianbanStocks,

@@ -39,7 +39,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   if (STRATEGIES[strategyId]?.leaderMode === true) {
     return runLeaderBacktest(startDate, endDate, strategyId, onProgress);
   }
-  // 情绪游资-极致胜率走独立引擎（过去20交易日三连板及以上个股，昨日差劲分/今日强度分阈值买入，卖点沿用龙头战法 7 条）
+  // 情绪游资-极致胜率走独立引擎（过去20交易日三连板及以上个股，昨日差劲分/今日强度分阈值买入，卖点沿用龙头战法 10 条）
   if (STRATEGIES[strategyId]?.extremeWinMode === true) {
     return runExtremeWinBacktest(startDate, endDate, strategyId, onProgress);
   }

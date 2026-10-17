@@ -6,8 +6,8 @@ const { getSingleStockData } = require('./stock');
 const { batchParallel } = require('../utils');
 const {
   loadTlinePoints,
-  maxMinuteDrop, closeDropFromHigh, fanbanCount, volumeRatioAtDate,
-  scoreDiffFromRaw, strengthAtMinute,
+  maxMinuteDrop, closeDropFromHigh, diffDFrom, buildDiffDetail, volumeRatioAtDate,
+  strengthAtMinute,
 } = require('./buySellBacktest/engine/extremeWinScores');
 const { iceResilienceIndexCode } = require('./buySellBacktest/engine/indexGate');
 
@@ -74,15 +74,18 @@ const analyzeStockHistory = async (code, startDate, endDate) => {
     const d = Number(bar.trade_date);
     const t = await loadTlinePoints(code, d);
 
-    // 差劲分：A 放量比（本日量对比其前 3 日均量）+ B 单分钟最大跳水 + C 冲高回落 + D 炸板次数
-    const diff = scoreDiffFromRaw(
+    // 差劲分：A 放量比（本日量对比其前 3 日均量）+ B 单分钟最大跳水 + C 冲高回落 + D 涨停炸板/跌幅
+    const lastPx = t.points.length ? t.points[t.points.length - 1].lastPx : 0;
+    const dayChange = t.preclose > 0 ? ((lastPx - t.preclose) / t.preclose) * 100 : 0;
+    const dItem = diffDFrom(t.points, t.preclose, code, dayChange);
+    const diff = buildDiffDetail(
       volumeRatioAtDate(volBars, d),
       maxMinuteDrop(t.points),
       closeDropFromHigh(t.points),
-      fanbanCount(t.points, t.preclose, code),
+      dItem,
     );
 
-    // 强度分：按收盘口径（A 竞价高开 + B 单分钟最大涨幅 + C 抗分歧分数）
+    // 强度分：按收盘口径（A 竞价高开 + B 单分钟最大涨幅 + C 抗分歧分数 + D 当日涨幅）
     let strength = null;
     if (t.points.length > 0 && t.preclose > 0) {
       const idxT = await loadTlinePoints(idxCode, d);

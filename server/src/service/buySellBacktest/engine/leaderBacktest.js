@@ -38,7 +38,7 @@ const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats')
 //          候选池两次过滤：① 最近 5 个交易日内须出现过一次放量（成交量较前一交易日 ≥ +200%，即 ≥ 前一日 × 3，且该放量日须为从放量之日起往前回溯 10 个交易日内的量能最大日，且该放量日不得是该股的首板或二板[当日连板数 ≠ 1、2]），否则跳过；② 自板块爆发日以来涨幅须处 10%~30%；
 //          再选「板块内最优个股自爆发以来涨幅最高」的板块，
 //          在该板块内买「自板块爆发日以来涨幅最大」的那只；板块内无符合个股则本次不买；
-//          买点触发门槛：买点触发时龙头（拟买那只）当日实时涨幅 < -8% 则该股剔除、不买（当日大跌、追买风险高；顺延买入同样适用，次日 9:30 大跌 < -8% 则放弃顺延）；
+//          买点触发门槛：买点触发时龙头（拟买那只）当日实时涨幅 < -5% 则该股剔除、不买（当日大跌、追买风险高；顺延买入同样适用，次日 9:30 大跌 < -5% 则放弃顺延）；
 //          若涨幅第 1 已涨停 → 买涨幅第 2；若第 2 也涨停 → 顺延到次日 9:30 买涨幅第 2 那只（仍涨停则继续顺延）。
 //   买点 = 上证指数 3 日线斜率**盘中由负转正**的当桶出手（择时提高胜率）；顺延买点在次日 9:30 且斜率仍为正时执行；
 //   卖点 = 持仓股跌破成本线 -5% 且连续维持 ≥5 分钟（止损，防瞬时假跌破）∪ 持仓股跌停（较昨收 <-9%）∪ 高位放量大阴线（当日最高回落 > 8% 且现价 < 开盘）
@@ -46,8 +46,9 @@ const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats')
 //          ∪ 竞价低开（开盘价较昨收低开 < -5% 时按开盘价卖出）
 //          ∪ 收盘抗分歧指数（当日收盘抗分歧分数 < 6 即尾盘卖出）
 //          ∪ 盘中分时跌幅（较昨收 ≤ -5% 直接卖出，不设持续性门槛）
-//          ∪ 开盘后直线下挫（自 9:30 开盘起，现价较当日开盘价跌幅 ≤ -5%，不管当前较昨收涨幅如何，直接卖出；2026-10-16 用户新增）。
-//   价格类卖点（⑤竞价低开 / ①成本线止损 / ②跌停 / ⑦昨收跌幅 / ⑧开盘跌幅 / ③高位大阴线）均按**分钟级回溯**成交：
+//          ∪ 开盘后直线下挫（自 9:30 开盘起，现价较当日开盘价跌幅 ≤ -5%，不管当前较昨收涨幅如何，直接卖出；2026-10-16 用户新增）
+//          ∪ 盘中单分钟跳水（相对上一分钟分时价跌幅 ≤ -3%，即 1 分钟内跳水超 3 个点，直接卖出；2026-10-17 用户新增）。
+//   价格类卖点（⑤竞价低开 / ①成本线止损 / ②跌停 / ⑦昨收跌幅 / ⑧开盘跌幅 / ⑩单分钟跳水 / ③高位大阴线）均按**分钟级回溯**成交：
 //   自 9:30 逐分钟扫描分时，取「最先触发」的那一分钟的分钟与分时价精准卖出（不再只按 5min 桶时点价成交）。
 //   买入次日起生效；当日买入次日才可卖；当日卖出后当日不再追买。半仓，每笔用当前总资金 50% 逐笔复利（整体收益 = 期末总资产 ÷ 本金 − 1）。
 //
@@ -55,7 +56,7 @@ const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats')
 //   在「情绪游资-龙头战法」基础上叠加「3日涨幅最大&三日情绪-60快进快出」的独立买点，两者共用一个单持仓账户
 //   （①情绪游资按半仓计收益[权重 0.5]、②快进快出按全仓计收益[权重 1]）：
 //   空仓时逐桶判定：同一桶两套买点同时触发 → 先买情绪游资（①龙头战法）；非同时触发 → 谁先触发买谁（先成交即持仓）；
-//   卖点各用各的：①情绪游资仓位走龙头战法 8 条卖点；②快进快出仓位走快进快出卖点（次日 10:00 强卖 / 盘中 -2% 止损 / 否则通用 7 条件）；
+//   卖点各用各的：①情绪游资仓位走龙头战法 10 条卖点；②快进快出仓位走快进快出卖点（次日 10:00 强卖 / 盘中 -2% 止损 / 否则通用 7 条件）；
 //   当日卖出仅禁止同路再买：快进快出强卖/止损当日仅②那路不再买入（①仍可出手）；①卖出当日仅①那路不再追买（②仍可出手）。
 const LEADER_TECH_EMOQUICK_ID = 'highest_3d_gain_emoquick'; // 组合②路：快进快出买点/卖点直接复用该策略口径
 const LEADER_LOOKBACK_DAYS = 10;        // 回溯窗口：过去 10 个交易日
@@ -63,7 +64,7 @@ const LEADER_MIN_LIMIT_UP_COUNT = 20;   // 涨停潮门槛：板块涨停个股�
 const LEADER_EXCLUDED_BOARDS = ['芯片', '通信', '算力', '其他', '中报增长']; // 整体剔除的板块（不触发候选、成分股不计入候选池）
 const LEADER_MIN_BOARD_GAIN_PCT = 10;   // 买入门槛下限：自板块爆发日以来涨幅 < 10% 的个股剔除（无爆发动能）
 const LEADER_MAX_BOARD_GAIN_PCT = 30;   // 买入门槛上限：自板块爆发日以来涨幅 > 30% 的个股剔除（已透支）
-const LEADER_MAX_BUY_DROP_PCT = -8;     // 买点触发门槛：买点触发时龙头当日实时涨幅 < -8% 则不买（当日大跌、追买风险高）
+const LEADER_MAX_BUY_DROP_PCT = -5;     // 买点触发门槛：买点触发时龙头当日实时涨幅 < -5% 则不买（2026-10-17 用户要求「买入时涨幅不能低于 -5%」；此前为 -8%，现统一收紧到 -5%）
 const LEADER_VOLUME_LOOKBACK_DAYS = 5;  // 放量分歧窗口：最近 5 个交易日内须出现过一次放量
 const LEADER_VOLUME_SURGE_PCT = 200;    // 放量门槛：某日成交量较前一交易日增加 ≥ 200%（即 ≥ 前一日 × 3）即视为放量
 const LEADER_VOLUME_PEAK_DAYS = 10;     // 放量须为峰值：从放量之日起往前回溯 10 个交易日（含放量当日）内量能最大的一天
@@ -241,7 +242,7 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress, opt
       }, 8);
     };
 
-    // 隔夜持仓当日分时（用于止损/跌停卖出；仅①情绪游资路用本引擎的 7 条卖点，②快进快出路走 hook）
+    // 隔夜持仓当日分时（用于止损/跌停卖出；仅①情绪游资路用本引擎的 10 条卖点，②快进快出路走 hook）
     let posTline = null;
     if (position && (!combo || position.branch === 'leader') && dateStr > position.buyDate) {
       posTline = await loadTlinePoints(position.code, dateNum);
@@ -354,7 +355,7 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress, opt
           let sellPx = px;
           let sellChange = changePct;
 
-          // 价格类卖点（⑤竞价低开 / ①成本线止损 / ②跌停 / ⑦昨收跌幅 / ⑧开盘跌幅 / ③高位大阴线）：
+          // 价格类卖点（⑤竞价低开 / ①成本线止损 / ②跌停 / ⑦昨收跌幅 / ⑧开盘跌幅 / ⑩单分钟跳水 / ③高位大阴线）：
           // 分钟级回溯——自 9:30 起逐分钟扫描分时，取「最先触发」的那一分钟的分钟与分时价精准卖出
           // （不再只按当前 5min 桶时点价判定，避免 9:35 桶破位却在 9:31 就已触发时卖晚）。
           const priceHit = scanLeaderPriceSell({
@@ -489,7 +490,7 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress, opt
               ? parseFloat((((atPt.lastPx - t.preclose) / t.preclose) * 100).toFixed(2))
               : (atPt.change != null ? atPt.change : null);
             if (chg != null && chg < LEADER_MAX_BUY_DROP_PCT) {
-              pendingBuy = null; // 龙头当日大跌 < -8% → 放弃本次顺延买入
+              pendingBuy = null; // 龙头当日大跌 < -5% → 放弃本次顺延买入
             } else if (!isLimitUpAtBucket(chg)) {
               const pick = { ...pendingBuy, px: atPt.lastPx, changePct: chg, gain: parseFloat(((atPt.lastPx / pendingBuy.base - 1) * 100).toFixed(4)) };
               position = buildPosition({
@@ -525,7 +526,7 @@ const runLeaderBacktest = async (startDate, endDate, strategyId, onProgress, opt
             const gain = parseFloat(((atPt.lastPx / s.base - 1) * 100).toFixed(4));
             // 买入门槛：自板块爆发日以来涨幅须处 [10%, 30%] 区间，区间外个股整体剔除（先过滤候选池，再选板块）
             if (gain < LEADER_MIN_BOARD_GAIN_PCT || gain > LEADER_MAX_BOARD_GAIN_PCT) continue;
-            // 买点触发门槛：买点触发时当日实时涨幅 < -8% 的候选整体剔除（龙头当日大跌则不买）
+            // 买点触发门槛：买点触发时当日实时涨幅 < -5% 的候选整体剔除（龙头当日大跌则不买）
             if (changePct != null && changePct < LEADER_MAX_BUY_DROP_PCT) continue;
             rows.push({
               code: s.code, name: s.name, board: b.board, base: s.base, baseDate: s.baseDate,

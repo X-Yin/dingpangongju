@@ -271,13 +271,24 @@ const getStockDailyKline = async (code) => {
   return kline;
 };
 
-// 个股日K收盘序列 [{ d, c, v }] 升序（d=YYYYMMDD 数字，v=成交量 business_amount）
+// 个股日K序列 [{ d, c, v, h, l }] 升序（d=YYYYMMDD 数字，v=成交量 business_amount，h/l=当日最高/最低价）
 const getStockBars = async (code6) => {
   const prefixed = toThsStockCode(code6);
   const kline = await getStockDailyKline(prefixed);
   return (kline || [])
     .filter(k => k && Number.isFinite(Number(k.trade_date)) && Number.isFinite(Number(k.close_px)) && Number(k.close_px) > 0)
-    .map(k => ({ d: Number(k.trade_date), c: Number(k.close_px), v: Number.isFinite(Number(k.business_amount)) ? Number(k.business_amount) : null }))
+    .map(k => {
+      const c = Number(k.close_px);
+      const h = Number(k.high_px);
+      const l = Number(k.low_px);
+      return {
+        d: Number(k.trade_date),
+        c,
+        v: Number.isFinite(Number(k.business_amount)) ? Number(k.business_amount) : null,
+        h: Number.isFinite(h) && h > 0 ? h : c,
+        l: Number.isFinite(l) && l > 0 ? l : c,
+      };
+    })
     .sort((a, b) => a.d - b.d);
 };
 

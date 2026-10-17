@@ -25,6 +25,8 @@ const StockKLineModal = ({
   tradeRecord = null,
   // 可选：打开弹窗时默认展示的 tab（'kline' | 'quantTimeline' | 'resilienceTimeline'），缺省为 'kline'
   initialTab = 'kline',
+  // 可选：极致胜率模式。开启后 K 线图默认叠加绘制「强度分 / 差劲分」两条曲线（情绪游资-极致胜率口径）
+  extremeWin = false,
 }) => {
   const [kData, setKData] = useState([]);
   const [tData, setTData] = useState([]);
@@ -37,6 +39,10 @@ const StockKLineModal = ({
   const [resilienceLoading, setResilienceLoading] = useState(false);
   const [showResilienceKline, setShowResilienceKline] = useState(false);
   const [showInstitution, setShowInstitution] = useState(false);
+  // 强度分 / 差劲分叠加（极致胜率模式下默认开启）
+  const [showScores, setShowScores] = useState(false);
+  const [scoresData, setScoresData] = useState(null);
+  const [scoresLoading, setScoresLoading] = useState(false);
   const [dayTlineVisible, setDayTlineVisible] = useState(false);
   const [dayTlineData, setDayTlineData] = useState([]);
   const [dayTlineLoading, setDayTlineLoading] = useState(false);
@@ -114,6 +120,16 @@ const StockKLineModal = ({
     return markers;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tradeRecord, selectedDay]);
+
+  // K 线区间的稳定标识（最旧~最新交易日）：用于判断「换股 / 新增交易日」时是否需要重算强度分/差劲分
+  const klineRangeKey = useMemo(() => {
+    const dates = kData
+      .map((i) => String(i.trade_date))
+      .filter((s) => /^\d{8}$/.test(s))
+      .sort();
+    if (dates.length === 0) return '';
+    return `${dates[0]}-${dates[dates.length - 1]}`;
+  }, [kData]);
 
   const fetchTimelineData = async () => {
     if (!code) return;
@@ -230,6 +246,9 @@ const StockKLineModal = ({
       setResilienceLoading(false);
       setShowResilienceKline(false);
       setShowInstitution(false);
+      setShowScores(false);
+      setScoresData(null);
+      setScoresLoading(false);
       setDayTlineVisible(false);
       setDayTlineData([]);
       setSelectedDay('');
@@ -345,6 +364,52 @@ const StockKLineModal = ({
     }
     return null;
   };
+
+  // 强度分 / 差劲分：复用后端 /stock_history_analysis（口径与「情绪游资-极致胜率」策略同源）
+  // 区间取当前 K 线数据的最旧~最新交易日，返回 bars 含每日 diffScore / strengthScore
+  const fetchScoresData = async () => {
+    if (!code || kData.length === 0) return;
+    setScoresLoading(true);
+    try {
+      const dates = kData
+        .map((i) => String(i.trade_date))
+        .filter((s) => /^\d{8}$/.test(s))
+        .sort();
+      if (dates.length === 0) return;
+      const res = await axios.get(`http://${local_ip}:3000/stock_history_analysis`, {
+        params: { code, startDate: dates[0], endDate: dates[dates.length - 1] },
+      });
+      if (res.data?.success) {
+        setScoresData(res.data.bars || []);
+      } else {
+        console.error('强度分/差劲分历史计算失败:', res.data?.message);
+        setScoresData([]);
+      }
+    } catch (error) {
+      console.error('Fetch score history failed:', error);
+      setScoresData([]);
+    } finally {
+      setScoresLoading(false);
+    }
+  };
+
+  // 极致胜率模式：打开弹窗时默认开启「强度分 / 差劲分」叠加，关闭时复位
+  useEffect(() => {
+    setShowScores(visible ? extremeWin : false);
+  }, [visible, extremeWin]);
+
+  // 换股或 K 线区间变化时清空已算结果，交给下方 effect 重新拉取
+  useEffect(() => {
+    setScoresData(null);
+  }, [code, klineRangeKey]);
+
+  // 需要叠加强度分/差劲分且数据未就绪时拉取
+  useEffect(() => {
+    if (showScores && klineRangeKey && !scoresData && !scoresLoading) {
+      fetchScoresData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showScores, klineRangeKey, scoresData, scoresLoading]);
 
   const fetchIntervalAnalysis = async () => {
     if (!tData.length || !code) {
@@ -545,7 +610,19 @@ const StockKLineModal = ({
                       </Text>
                     )}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                      <span style={{ fontSize: '13px', color: showResilienceKline ? '#722ed1' : '#666' }}>抗分歧 K 线</span>
+                      {extremeWin && (
+                        <>
+                          <span style={{ fontSize: '13px', color: showScores ? '#f5222d' : '#666' }}>强度分/差劲分</span>
+                          <Switch
+                            checked={showScores}
+                            loading={scoresLoading}
+                            onChange={(checked) => setShowScores(checked)}
+                            checkedChildren="开启"
+                            unCheckedChildren="关闭"
+                          />
+                        </>
+                      )}
+                      <span style={{ fontSize: '13px', color: showResilienceKline ? '#722ed1' : '#666', marginLeft: extremeWin ? '8px' : 0 }}>抗分歧 K 线</span>
                       <Switch
                         checked={showResilienceKline}
                         onChange={(checked) => setShowResilienceKline(checked)}
@@ -568,6 +645,8 @@ const StockKLineModal = ({
                     onFetchResilience={fetchMultiDayResilienceData}
                     showInstitution={showInstitution}
                     onFetchInstitution={fetchInstitutionData}
+                    showScores={showScores}
+                    scoresData={scoresData || []}
                     onClickCandle={handleCandleClick}
                     tradeMarkers={tradeMarkers}
                     priceLines={tradePriceLines}

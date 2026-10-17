@@ -7,13 +7,15 @@
 //
 // 覆盖的价格类卖点（逐分钟扫描）：
 //   ⑤ 竞价低开：开盘（当日首分钟）较昨收 < -5%
-//   ① 成本线止损：现价 < 买入价 ×(1-5%) 且连续维持 ≥5 分钟
+//   ① 成本线止损：现价 < 买入价 ×(1-成本线%) 且连续维持 ≥5 分钟
+//      （成本线阈值/持续分钟可由调用方覆盖：极致胜率传 0% + 0 分钟 → 现价 < 买入价即卖）
 //   ② 跌停：较昨收 < -9%
 //   ⑦ 盘中分时跌幅：较昨收 ≤ -5%（不设持续性门槛）
 //   ⑧ 开盘后直线下挫：较开盘价 ≤ -5%（不管当前较昨收涨幅，2026-10-16 用户新增）
+//   ⑩ 单分钟跳水：相邻两分钟（1min 内）价格跌幅 ≤ -3%（2026-10-17 用户新增）
 //   ③ 高位放量大阴线：当日最高回落至现价 > 8% 且现价 < 开盘
 //
-// 选取规则：命中分钟最早者胜出；同一分钟命中多条时按优先级 ⑤①②⑦⑧③（序号小者先）打破平局。
+// 选取规则：命中分钟最早者胜出；同一分钟命中多条时按优先级 ⑤①②⑦⑧⑩③（序号小者先）打破平局。
 // 注意：④（持仓第 3 日尾盘未拉开 +10%）与 ⑥（收盘抗分歧 < 6）属尾盘时点判定，不参与回溯，
 // 仍由各引擎在尾盘桶按当时点价处理。
 
@@ -24,14 +26,16 @@ const INTRADAY_DROP_SELL_PCT = -5;
 const OPEN_DROP_SELL_PCT = -5;        // ⑧ 较开盘价跌幅卖出门槛
 const HIGH_POSITION_DROP_PCT = 8;
 const AUCTION_GAP_DOWN_PCT = -5;
+const MINUTE_PLUMMET_PCT = -3;           // ⑩ 单分钟跳水卖出门槛：相邻两分钟价格跌幅 ≤ -3%（2026-10-17 用户新增）
 
-// 优先级（同分钟命中多条时序号小者先）：⑤①②⑦⑧③
-const RANK_AUCTION = 1;
-const RANK_STOP_LOSS = 2;
-const RANK_LIMIT_DOWN = 3;
-const RANK_INTRADAY_DROP = 4;
-const RANK_OPEN_DROP = 5;
-const RANK_HIGH_DROP = 6;
+// 优先级（同分钟命中多条时序号小者先）：⑤①②⑦⑧⑩③
+const RANK_AUCTION = 2;
+const RANK_STOP_LOSS = 3;
+const RANK_LIMIT_DOWN = 4;
+const RANK_INTRADAY_DROP = 5;
+const RANK_OPEN_DROP = 6;
+const RANK_MINUTE_PLUMMET = 7;
+const RANK_HIGH_DROP = 8;
 
 // HHMM 分钟转「当日绝对分钟数」（用于计算持续时长）
 const toAbsMinute = (mm) => Math.floor(mm / 100) * 60 + (mm % 100);
@@ -59,14 +63,15 @@ const round2 = (v) => (v == null || !Number.isFinite(Number(v)) ? null : parseFl
 
 // 分时点结构：{ minute:int, lastPx:number, change:number }，当日、minute 升序、lastPx>0
 // 返回：命中则 { minute, px, changePct, costReturn, reason, rank }，未命中返回 null
-const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute }) => {
+// costLinePct / costLineSustainMinutes 可选覆盖①成本线止损的阈值与持续分钟（极致胜率传 0 / 0 → 现价 < 买入价即卖）
+const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute, costLinePct = STOP_LOSS_PCT, costLineSustainMinutes = STOP_LOSS_SUSTAIN_MINUTES }) => {
   if (!Array.isArray(points) || points.length === 0) return null;
   const mins = points.filter(p => p.minute <= cutoffMinute && p.lastPx > 0);
   if (mins.length === 0) return null;
 
   const openPx = mins[0].lastPx;
   const openMinute = mins[0].minute;
-  const stopPx = (buyPrice > 0 && Number.isFinite(Number(buyPrice))) ? buyPrice * (1 + STOP_LOSS_PCT / 100) : null;
+  const stopPx = (buyPrice > 0 && Number.isFinite(Number(buyPrice))) ? buyPrice * (1 + costLinePct / 100) : null;
 
   let best = null;
   const push = (minute, px, changePct, costReturn, rank, reason) => {
@@ -76,6 +81,7 @@ const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute }) => {
   };
 
   let dayHigh = 0;
+  let prevPx = null; // 上一分钟分时价（用于 ⑩ 单分钟跳水判定）
   for (const p of mins) {
     const px = p.lastPx;
     if (px > dayHigh) dayHigh = px;
@@ -89,12 +95,17 @@ const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute }) => {
       push(p.minute, px, changePct, costReturn, RANK_AUCTION,
         `竞价低开（昨收 ${preclose != null ? preclose.toFixed(2) : '--'}，开盘 ${px.toFixed(2)}，低开 ${changePct}% < ${AUCTION_GAP_DOWN_PCT}%）`);
     }
-    // ① 跌破成本线 -5% 且连续 ≥5 分钟
+    // ① 跌破成本线（阈值 costLinePct，默认 -5%）且连续 ≥ costLineSustainMinutes 分钟（默认 5）
     if (stopPx != null && px < stopPx) {
       const belowMinutes = sustainedBelowStopMinutes(points, p.minute, stopPx);
-      if (belowMinutes >= STOP_LOSS_SUSTAIN_MINUTES) {
-        push(p.minute, px, changePct, costReturn, RANK_STOP_LOSS,
-          `持仓股跌破成本线（成本 ${buyPrice.toFixed(2)}，现价 ${px.toFixed(2)}，较成本 ${costReturn}% < ${STOP_LOSS_PCT}%）持续 ${belowMinutes} 分钟 ≥ ${STOP_LOSS_SUSTAIN_MINUTES} 分钟止损`);
+      if (belowMinutes >= costLineSustainMinutes) {
+        const lineText = costLinePct === 0
+          ? '成本线'
+          : `成本线 ${costLinePct}%`;
+        const reason = costLineSustainMinutes <= 0
+          ? `持仓股跌破${lineText}（成本 ${buyPrice.toFixed(2)}，现价 ${px.toFixed(2)}，较成本 ${costReturn}%）即卖出`
+          : `持仓股跌破${lineText}（成本 ${buyPrice.toFixed(2)}，现价 ${px.toFixed(2)}，较成本 ${costReturn}% < ${costLinePct}%）持续 ${belowMinutes} 分钟 ≥ ${costLineSustainMinutes} 分钟止损`;
+        push(p.minute, px, changePct, costReturn, RANK_STOP_LOSS, reason);
       }
     }
     // ② 跌停：较昨收 < -9%
@@ -115,6 +126,14 @@ const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute }) => {
           `开盘后直线下挫（开盘 ${openPx.toFixed(2)}，现价 ${px.toFixed(2)}，较开盘 ${openDropPct}% ≤ ${OPEN_DROP_SELL_PCT}%）直接卖出`);
       }
     }
+    // ⑩ 单分钟跳水：相邻两分钟（1min 内）价格跌幅 ≤ -3%（2026-10-17 用户新增）
+    if (prevPx != null && prevPx > 0) {
+      const plungePct = round2(((px - prevPx) / prevPx) * 100);
+      if (plungePct != null && plungePct <= MINUTE_PLUMMET_PCT) {
+        push(p.minute, px, changePct, costReturn, RANK_MINUTE_PLUMMET,
+          `盘中 1 分钟内跳水（上一分钟 ${prevPx.toFixed(2)} → 现价 ${px.toFixed(2)}，单分钟跌幅 ${plungePct}% ≤ ${MINUTE_PLUMMET_PCT}%）直接卖出`);
+      }
+    }
     // ③ 高位放量大阴线：当日最高回落至现价 > 8% 且现价 < 开盘
     if (px > 0) {
       const amplitude = ((dayHigh - px) / px) * 100;
@@ -123,6 +142,7 @@ const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute }) => {
           `高位放量大阴线（当日最高 ${dayHigh.toFixed(2)} 回落至现价 ${px.toFixed(2)}，跌幅 ${amplitude.toFixed(2)}% > ${HIGH_POSITION_DROP_PCT}%，且现价 < 开盘 ${openPx.toFixed(2)}）`);
       }
     }
+    prevPx = px;
   }
   return best;
 };
