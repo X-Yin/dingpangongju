@@ -53,7 +53,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 规则：候选按排名依次判断个股与创业板指最近 20 个已完结交易日的日收益率相关系数，corr > 0（正相关）
 // = 顺周期可买，corr <= 0（逆周期）剔除并顺延排名下一只；数据不足不拦截。下列 desc 文案自动追加到所有适用策略
 const CYC_FILTER_DESC = '顺周期过滤：候选按排名依次判断与创业板指最近 20 个已完结交易日的日收益率相关系数，相关系数 > 0（正相关，顺周期）才可买入，≤ 0（逆周期）则顺延至排名下一只（数据不足不拦截）';
-const isCycleFilterStrategy = (s) => !!s && s.tailDip !== true && s.emoAvgBuy !== true && s.iceMode !== true && s.keyBlockDays == null && s.leaderMode !== true && s.extremeWinMode !== true;
+const isCycleFilterStrategy = (s) => !!s && s.tailDip !== true && s.emoAvgBuy !== true && s.iceMode !== true && s.keyBlockDays == null && s.leaderMode !== true && s.extremeWinMode !== true && s.reverseLeaderMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (isCycleFilterStrategy(s)) s.desc = `${s.desc}；${CYC_FILTER_DESC}`;
 }
@@ -92,7 +92,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 仅补字段不重复追加 desc）。规则：持仓当桶当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT（-7%）时无条件卖出——
 // 即时生效、无持续分钟/自救窗口要求，先于各策略原有卖点判定（generalSell 引擎桶级预检 / 重点板块引擎卖出预检）
 const CRASH_SELL_DESC = '；盘中大跌强卖（2026-10-16 新增）：持仓当桶当日跌幅（较昨收涨跌幅）≤ -7% 时无条件卖出（即时生效，先于其他卖点判定）';
-const isCrashSellStrategy = (s) => !!s && s.iceMode !== true && s.leaderMode !== true && s.tailDip !== true && s.emoAvgBuy !== true && s.extremeWinMode !== true;
+const isCrashSellStrategy = (s) => !!s && s.iceMode !== true && s.leaderMode !== true && s.tailDip !== true && s.emoAvgBuy !== true && s.extremeWinMode !== true && s.reverseLeaderMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (!isCrashSellStrategy(s)) continue;
   s.crashSell = true;

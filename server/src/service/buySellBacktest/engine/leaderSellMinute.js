@@ -12,7 +12,7 @@
 //   ② 跌停：较昨收 < -9%
 //   ⑦ 盘中分时跌幅：较昨收 ≤ -5%（不设持续性门槛）
 //   ⑧ 开盘后直线下挫：较开盘价 ≤ -5%（不管当前较昨收涨幅，2026-10-16 用户新增）
-//   ⑩ 单分钟跳水：相邻两分钟（1min 内）价格跌幅 ≤ -3%（2026-10-17 用户新增）
+//   ⑩ 单分钟跳水：相邻两分钟（1min 内）价格跌幅 ≤ -3%（2026-10-17 用户新增；可由 disableMinutePlummet 关闭）
 //      豁免条件（2026-10-17 用户新增）：若「跳水的上一分钟」自身涨幅 > 2%（即上一分钟相对再上一分钟
 //      的分时价涨幅 > 2%，属急拉），则该分钟不触发⑩卖出——视为上涨中的回调，不卖；后续分钟若再跳水仍可触发
 //   ③ 高位放量大阴线：当日最高回落至现价 > 8% 且现价 < 开盘
@@ -68,7 +68,8 @@ const round2 = (v) => (v == null || !Number.isFinite(Number(v)) ? null : parseFl
 // 返回：命中则 { minute, px, changePct, costReturn, reason, rank }，未命中返回 null
 // costLinePct / costLineSustainMinutes 可选覆盖①成本线止损的阈值与持续分钟
 // resolveCostLinePct 可选：传入 (minute) => 阈值 时，①成本线阈值按分钟动态取值（极致胜率当前直接传 -5% + 0 分钟，不使用该动态口径）
-const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute, costLinePct = STOP_LOSS_PCT, costLineSustainMinutes = STOP_LOSS_SUSTAIN_MINUTES, resolveCostLinePct }) => {
+// disableMinutePlummet 可选：传 true 时**关闭⑩单分钟跳水卖点**（2026-10-17 用户要求：情绪游资-反向抱团龙头策略不使用该卖点）
+const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute, costLinePct = STOP_LOSS_PCT, costLineSustainMinutes = STOP_LOSS_SUSTAIN_MINUTES, resolveCostLinePct, disableMinutePlummet = false }) => {
   if (!Array.isArray(points) || points.length === 0) return null;
   const mins = points.filter(p => p.minute <= cutoffMinute && p.lastPx > 0);
   if (mins.length === 0) return null;
@@ -136,7 +137,7 @@ const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute, costLin
     }
     // ⑩ 单分钟跳水：相邻两分钟（1min 内）价格跌幅 ≤ -3%（2026-10-17 用户新增）
     //   豁免（2026-10-17 用户新增）：跳水的上一分钟自身涨幅 > 2%（急拉）时本次不卖——视为上涨中的回调
-    if (prevPx != null && prevPx > 0) {
+    if (!disableMinutePlummet && prevPx != null && prevPx > 0) {
       const plungePct = round2(((px - prevPx) / prevPx) * 100);
       const prevMinuteGainPct = prevPrevPx != null && prevPrevPx > 0
         ? round2(((prevPx - prevPrevPx) / prevPrevPx) * 100)

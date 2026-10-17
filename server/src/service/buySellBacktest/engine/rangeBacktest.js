@@ -1,8 +1,7 @@
 const { STRATEGIES, isCycleFilterStrategy } = require('../strategies/registry');
 const { runKeyBlockBacktest } = require('./keyBlockBacktest');
-const { runLeaderBacktest } = require('./leaderBacktest');
-const { runPreciseTimingBacktest } = require('./preciseTimingBacktest');
 const { runExtremeWinBacktest } = require('./extremeWinBacktest');
+const { runReverseLeaderBacktest } = require('./reverseLeaderBacktest');
 const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSimContext } = require('../deps');
 const { getTechIndexDates } = require('../utils/techEmotion');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
@@ -30,18 +29,14 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   if (STRATEGIES[strategyId]?.keyBlockDays != null) {
     return runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
   }
-  // 情绪游资-精准择时走独立引擎（仓位A=龙头战法半仓，仓位B=上证斜率前一交易日收盘口径由负转正日上午打板；
-  // 两仓位各半，合并为单策略结果）。须排在 leaderMode 之前（该策略 leaderMode 亦为 true）
-  if (STRATEGIES[strategyId]?.preciseTiming === true) {
-    return runPreciseTimingBacktest(startDate, endDate, strategyId, onProgress);
-  }
-  // 情绪游资-龙头战法走独立引擎（上证斜率>0 买、涨停潮板块内总涨幅最大的龙头、切换/跌停卖点）
-  if (STRATEGIES[strategyId]?.leaderMode === true) {
-    return runLeaderBacktest(startDate, endDate, strategyId, onProgress);
-  }
   // 情绪游资-极致胜率走独立引擎（过去20交易日三连板及以上个股，昨日差劲分/今日强度分阈值买入，卖点沿用龙头战法 10 条）
   if (STRATEGIES[strategyId]?.extremeWinMode === true) {
     return runExtremeWinBacktest(startDate, endDate, strategyId, onProgress);
+  }
+  // 情绪游资-反向抱团龙头走独立引擎（上证 3 日线斜率连续为负第 3 天起，当日上证跌幅 ≥ 0.5% 时
+  // 候选股盘中强度分第 2 次 > 50 买入；卖点沿用龙头战法全部卖点并新增「上证斜率盘中由负转正」卖出；全仓单持仓）
+  if (STRATEGIES[strategyId]?.reverseLeaderMode === true) {
+    return runReverseLeaderBacktest(startDate, endDate, strategyId, onProgress);
   }
   // 三日情绪均值系列不依赖资金快照，日期序列并入 tech_index 覆盖的交易日（补上缺资金快照的日期，如 20260730）
   const strategy = STRATEGIES[strategyId];

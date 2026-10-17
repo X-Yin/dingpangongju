@@ -136,23 +136,20 @@ const BuyReasonTag = ({ reason, checks }) => {
 // 回调签名 (code, name, trade)：第三参为该笔交易/持仓记录对象（含买卖日期/时间/价格），供 K 线弹窗标注买卖点
 export const StrategyCard = ({ strategy, rank, onStockClick }) => {
   const s = strategy.summary || {};
-  // 拆份（双腿）策略：精准择时（仓位 A / B）与 极致胜率（第 1 份 / 第 2 份，账户拆两份各半仓，2026-10-17 用户要求）
-  const isPreciseTiming = strategy.id === 'hot_money_precise_timing' || strategy.preciseTiming === true;
+  // 拆份（双腿）策略：极致胜率按 cycle 标注顺周期 / 逆周期（账户拆两份各半仓，2026-10-17 用户要求）
   const isExtremeWin = strategy.id === 'hot_money_extreme_win' || strategy.extremeWin === true;
-  // 仅当记录确实带 splitLeg（'A' / 'B'）时才打标：旧报告缺该字段时不猜（避免把仓位B错标成仓位A）
-  const legTag = (leg) => (
-    (isPreciseTiming || isExtremeWin) && (leg === 'A' || leg === 'B') ? (
-      <Tag color={leg === 'B' ? 'gold' : 'blue'} style={{ marginInlineEnd: 0 }}>
-        {isExtremeWin ? `第${leg === 'B' ? 2 : 1}份（半仓）` : (leg === 'B' ? '仓位B' : '仓位A')}
+  // 仅当记录确实带 splitLeg（'A' / 'B'）时才打标：旧报告缺该字段时不猜
+  const legTag = (leg, cycle) => (
+    isExtremeWin && (leg === 'A' || leg === 'B') ? (
+      <Tag color={cycle === 'counter' ? 'purple' : 'blue'} style={{ marginInlineEnd: 0 }}>
+        {cycle === 'counter' ? '逆周期（半仓）' : '顺周期（半仓）'}
       </Tag>
     ) : null
   );
-  // 半仓原因文案：极致胜率 / 精准择时策略按所属份别说明，其余保留两次买入策略口径
-  const halfReasonOf = (leg) => (
-    isExtremeWin
-      ? `极致胜率·第 ${leg === 'B' ? 2 : 1} 份为半仓买入（账户拆两份、每份各 5 成、各自独立买卖）`
-      : isPreciseTiming
-      ? `精准择时·${leg === 'B' ? '仓位B' : '仓位A'}为半仓买入（两仓位各 5 成）`
+  // 半仓原因文案：极致胜率策略按所属周期腿说明，其余保留两次买入策略口径
+  const halfReasonOf = (leg, cycle) => (
+    isExtremeWin && (leg === 'A' || leg === 'B')
+      ? `极致胜率·${cycle === 'counter' ? '逆周期' : '顺周期'}腿为半仓买入（账户拆两份、每份各 5 成、各自独立买卖）`
       : '两次买入策略每份仓位均为半仓');
   // 期末持仓：优先取 currentHoldings（两次买入策略可能同时持有两份），兼容旧的单份 currentHolding
   const holdings = (strategy.currentHoldings && strategy.currentHoldings.length > 0)
@@ -180,11 +177,11 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
         <span style={{ fontSize: 13, fontWeight: 600, color: '#12213a' }}>第{t.seq}笔</span>
         {renderStockName(t.code, t.stockName, t)}
         <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{t.code}</span>
-        {legTag(t.splitLeg)}
+        {legTag(t.splitLeg, t.cycle)}
         <ModeTag mode={t.positionMode} />
         {t.twoBuy && <TwoBuyModeTag leg={t.leg} />}
         {t.metric != null && <Tag color="purple" style={{ marginInlineEnd: 0 }}>选股指标 {Number(t.metric).toFixed(4)}</Tag>}
-        <WeightedReturnTag rate={t.returnRate} rawRate={t.rawReturnRate} weight={t.weight} halfReason={halfReasonOf(t.splitLeg)} />
+        <WeightedReturnTag rate={t.returnRate} rawRate={t.rawReturnRate} weight={t.weight} halfReason={halfReasonOf(t.splitLeg, t.cycle)} />
         <span style={{ fontSize: 11, color: '#9ca3af' }}>
           {`${fmtDate(t.buyDate)} ${fmtTime(t.buyTime)} 买`}
           {' → '}{fmtDate(t.sellDate)} {fmtTime(t.sellTime)} 卖
@@ -241,11 +238,11 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
           {h.holdingDays != null && <span style={{ fontSize: 11, color: '#9ca3af' }}>已持仓 <b style={{ color: '#12213a' }}>{fmtHoldingDays(h)}</b></span>}
           {renderStockName(h.code, h.stockName, h)}
           <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: "'SF Mono', monospace" }}>{h.code}</span>
-          {legTag(h.splitLeg)}
+          {legTag(h.splitLeg, h.cycle)}
           <ModeTag mode={h.positionMode} />
           {h.twoBuy && <TwoBuyModeTag leg={h.leg} />}
           {h.buyReturn != null && (
-            <WeightedReturnTag rate={h.buyReturn} rawRate={h.rawBuyReturn} weight={h.weight} label="浮盈" halfReason={halfReasonOf(h.splitLeg)} />
+            <WeightedReturnTag rate={h.buyReturn} rawRate={h.rawBuyReturn} weight={h.weight} label="浮盈" halfReason={halfReasonOf(h.splitLeg, h.cycle)} />
           )}
         </div>
       ),

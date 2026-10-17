@@ -1,7 +1,6 @@
 const { STRATEGIES, isCycleFilterStrategy } = require('../strategies/registry');
 const { runKeyBlockBacktest } = require('./keyBlockBacktest');
-const { runLeaderBacktest } = require('./leaderBacktest');
-const { runPreciseTimingBacktest } = require('./preciseTimingBacktest');
+const { runReverseLeaderBacktest } = require('./reverseLeaderBacktest');
 const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
 const { getTechIndexDates } = require('../utils/techEmotion');
 const { buildWindowAxis } = require('./pickHelpers');
@@ -29,21 +28,17 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   await ensureWatchlistValuation();
   // 重点板块-N日最高涨幅系列走独立回测（板块驱动、尾盘 14:50 买入，不走共享数据循环的买点诊断）
   const keyBlockIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays != null);
-  // 情绪游资-龙头战法走独立引擎（上证斜率>0 买、涨停潮板块内总涨幅最大的龙头、切换/跌停卖点）
-  const preciseTimingIds = ids.filter(id => STRATEGIES[id]?.preciseTiming === true);
-  const leaderIds = ids.filter(id => STRATEGIES[id]?.leaderMode === true && STRATEGIES[id]?.preciseTiming !== true);
-  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.leaderMode !== true && STRATEGIES[id]?.preciseTiming !== true);
+  // 情绪游资-反向抱团龙头走独立引擎（上证 3 日线斜率连续为负第 3 天起、当日上证跌幅 ≥ 0.5% 时
+  // 候选股盘中强度分第 2 次 > 50 买入；卖点沿用龙头战法全部卖点并新增「上证斜率盘中由负转正」卖出；全仓单持仓）
+  const reverseLeaderIds = ids.filter(id => STRATEGIES[id]?.reverseLeaderMode === true);
+  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.reverseLeaderMode !== true);
   const results = [];
   for (const strategyId of keyBlockIds) {
     const result = await runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
     results.push({ strategyId, result });
   }
-  for (const strategyId of preciseTimingIds) {
-    const result = await runPreciseTimingBacktest(startDate, endDate, strategyId, onProgress);
-    results.push({ strategyId, result });
-  }
-  for (const strategyId of leaderIds) {
-    const result = await runLeaderBacktest(startDate, endDate, strategyId, onProgress);
+  for (const strategyId of reverseLeaderIds) {
+    const result = await runReverseLeaderBacktest(startDate, endDate, strategyId, onProgress);
     results.push({ strategyId, result });
   }
   if (regularIds.length === 0) return results;

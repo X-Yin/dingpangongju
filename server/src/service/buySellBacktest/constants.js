@@ -2,6 +2,16 @@ const SELL_CONDITION_PERSIST_MIN = 5; // 卖出条件持续满足分钟数
 
 // 回测排除的股票（不参与任何策略的回测）
 const EXCLUDED_CODES = new Set(['sh688498', 'sh688808']); // 源杰科技、联讯仪器
+
+// 候选池题材黑名单（2026-10-17 用户新增；「情绪游资-极致胜率」与「情绪游资-反向抱团龙头」共用同一份）：
+// 板块名包含关键词即剔除，以覆盖派生板块名——如「PCB 上游/概念/并购」「通信(PCB)」「光模块上游/高速光模块发布」
+// 「液冷散热/服务器/算力(液冷)」「芯片(玻璃基板)」等；2026-10-17 追加 靶材 / 电子气体 / 光刻胶 / 算力租赁
+const EXCLUDED_THEMES = ['PCB', '玻璃基板', '光模块', '液冷', '通信', '算力', '芯片', '靶材', '电子气体', '光刻胶', '算力租赁'];
+const isExcludedTheme = (board) => {
+  const b = String(board || '').toUpperCase();
+  if (!b) return false;
+  return EXCLUDED_THEMES.some((t) => b.includes(t.toUpperCase()));
+};
 // 情绪开关系列阈值（prev{N}d_fall_low5_day_gain_emoswitch，2026-10-03 用户新增）：
 // 触发买点时取上一交易日科技情绪指数的 3 日 EMA（getTechEmotionEmaMap，与情绪页「三日均值」曲线同源同算法），
 // 低于该阈值 → 使用「前N日波动最小&当日涨幅最大」选股；否则 → 使用「3日涨幅最大」选股
@@ -21,5 +31,7 @@ module.exports = {
   EMO_QUICK_RANGE_LOW,
   EMO_SWITCH_EMA_THRESHOLD,
   EXCLUDED_CODES,
+  EXCLUDED_THEMES,
+  isExcludedTheme,
   SELL_CONDITION_PERSIST_MIN,
 };

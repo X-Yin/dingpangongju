@@ -102,12 +102,13 @@ const getStrategyResult = async (strategyId, startDate, endDate, fromCacheOnly) 
   return runRangeBacktest(startDate, endDate, strategyId);
 };
 
-// 期末持仓投影：报告只保留前端渲染所需字段（含 splitLeg，精准择时标明所属仓位 A / B）
+// 期末持仓投影：报告只保留前端渲染所需字段（含 splitLeg / cycle，双腿策略标明所属腿与顺/逆周期）
 const mapReportHolding = (h) => (h ? {
   code: h.code,
   stockName: h.stockName,
   positionMode: h.mode ?? h.positionMode ?? null,
   splitLeg: h.splitLeg ?? null,
+  cycle: h.cycle ?? null, // 双腿策略：'procyclic' 顺周期 / 'counter' 逆周期（其余策略为 null）
   weight: h.weight ?? null,
   rawBuyReturn: h.rawBuyReturn ?? null,
   metric: h.metric ?? null,
@@ -182,7 +183,8 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         code: t.code,
         stockName: t.stockName,
         positionMode: t.positionMode ?? null, // 重点板块：offense 进攻·全仓 / defense 防御·半仓
-        splitLeg: t.splitLeg ?? null, // 精准择时：'A' 仓位A / 'B' 仓位B（其余策略为 null）
+        splitLeg: t.splitLeg ?? null, // 双腿策略：'A' 第1份 / 'B' 第2份（其余策略为 null）
+        cycle: t.cycle ?? null, // 双腿策略：'procyclic' 顺周期 / 'counter' 逆周期（其余策略为 null）
         weight: t.weight ?? null, // 仓位权重（进攻 1 / 防御 0.5）；null 表示该策略不分仓
         rawReturnRate: t.rawReturnRate ?? null, // 折算前个股实际收益率（防御笔的 returnRate 已 ×0.5）
         metric: t.metric ?? null,
@@ -206,7 +208,7 @@ const generateReport = async ({ startDate, endDate, fromCacheOnly = false, onPro
         holdingDaysApprox: t.holdingDaysApprox ?? false,
       })),
       currentHolding: mapReportHolding(result.currentHolding),
-      currentHoldings: (result.currentHoldings || []).map(mapReportHolding), // 双仓位策略期末可能同时持有两份（如精准择时 A/B）
+      currentHoldings: (result.currentHoldings || []).map(mapReportHolding), // 双仓位策略期末可能同时持有两份（如极致胜率 第1/第2份）
     });
   }
 
