@@ -26,7 +26,7 @@ const { attachBuyDayReturn, calcDrawdownStats, sortTradesByBuyTime } = require('
 //     买点 = 上证指数 3 日线斜率「前一交易日收盘口径由负转正」的当日（斜率转正事件日），
 //            候选池 = 前两个交易日（lianbanSnapshot）各自涨停个股数 top2 板块的全部成分股，两日合并去重（每个交易日各自先剔除「其他/并购重组」板块并在剩余板块中顺延取前二；
 //            再去重、剔除 ST／黑名单／创业板与科创板；
-//            并要求「过去 20 个交易日区间涨幅 = (窗口最高价 − 窗口最低价) ÷ 窗口最低价 < 40%」，剔除近期已大幅拉升者），
+//            并要求「过去 20 个交易日区间涨幅 = (窗口最高收盘价 − 窗口最低收盘价) ÷ 窗口最低收盘价 < 40%」，剔除近期已大幅拉升者），
 //            盘中分时逐桶扫描（9:35 ≤ 时间桶 ≤ 11:30，开盘后前 5 分钟一律不买），谁最先涨到 +8% 就买谁（按触发桶分时价成交，同桶取涨幅最高者）；
 //            出手前复核：触达 +8% 的那一分钟再观察上证指数 3 日线「实时」斜率（MA3 今日实时 − MA3 昨日收盘），
 //            仍为正才买；为负或数据缺失则当天不买、本次机会作废（不顺延到下一只）（2026-10-17 用户新增）；
@@ -43,7 +43,7 @@ const MORNING_END_MINUTE = 1130;    // 只在上午打板（时间桶 minute ≤
 const MAIN_BOARD_LIMIT_UP_PCT = 9.5;   // 主板涨停阈值
 const NON_MAIN_LIMIT_UP_PCT = 19.5;    // 创业板/科创板涨停阈值
 const RANGE_WINDOW_DAYS = 20;          // 区间涨幅过滤窗口：过去 20 个交易日（不含当日）
-const MAX_WINDOW_RANGE_PCT = 40;       // 区间涨幅上限：(窗口最高价 − 窗口最低价) ÷ 窗口最低价 须 < 40%（2026-10-16 用户新增仓位B 过滤）
+const MAX_WINDOW_RANGE_PCT = 40;       // 区间涨幅上限：(窗口最高收盘价 − 窗口最低收盘价) ÷ 窗口最低收盘价 须 < 40%（2026-10-16 用户新增仓位B 过滤）
 const EXCLUDED_BOARDS = ['其他', '并购重组']; // 仓位B 候选池剔除的板块（非主题类/重组类板块，2026-10-17 用户要求；剔除后在剩余板块中顺延取前二）
 const MIN_BUY_MINUTE = 935;            // 仓位B 开盘后前 5 分钟（9:30–9:34）不买，最早 9:35 才可出手（2026-10-17 用户要求）
 
@@ -307,7 +307,7 @@ const runPreciseTimingBacktest = async (startDate, endDate, strategyId, onProgre
       if (pool.length === 0) boardsText = boardTextOf('无可交易成分股');
       if (pool.length > 0) {
         // 过去 20 个交易日区间涨幅过滤（2026-10-16 用户新增）：
-        // (窗口内最高价 − 窗口内最低价) ÷ 窗口内最低价 < 40%（≥ 40% 属近期已大幅拉升者，剔除）
+        // (窗口内最高收盘价 − 窗口内最低收盘价) ÷ 窗口内最低收盘价 < 40%（≥ 40% 属近期已大幅拉升者，剔除）
         let winDates = [];
         try { winDates = await getPastTradingDates(dateStr, RANGE_WINDOW_DAYS); } catch (e) { winDates = []; }
         try { await ensureBarsForCodes(new Set(pool.map(s => s.code))); } catch (e) { /* 拉取失败按数据缺失处理 */ }
@@ -323,7 +323,7 @@ const runPreciseTimingBacktest = async (startDate, endDate, strategyId, onProgre
         }
         pool.length = 0;
         pool.push(...ranged);
-        const rangeFilterText = `过去 ${RANGE_WINDOW_DAYS} 个交易日区间涨幅 (最高价 − 最低价) ÷ 最低价 < ${MAX_WINDOW_RANGE_PCT}% 剔除 ${beforeRangeFilter - pool.length} 只`;
+        const rangeFilterText = `过去 ${RANGE_WINDOW_DAYS} 个交易日区间涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 < ${MAX_WINDOW_RANGE_PCT}% 剔除 ${beforeRangeFilter - pool.length} 只`;
 
         if (pool.length === 0) {
           boardsText = boardTextOf(`无可交易成分股（${rangeFilterText}）`);

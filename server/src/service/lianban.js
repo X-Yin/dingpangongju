@@ -2,14 +2,17 @@
  * 连板网（lianban.net）每日连板复盘数据抓取
  *
  * 数据页面：https://lianban.net/days/YYYY-MM-DD.html
- * 每个交易日 21:00 后抓取当日「热点题材」板块下的全部涨停个股（剔除 ST），
- * 区分板块 / 股票名称 / 股票代码，保存为 src/data/lianbanSnapshot/YYYYMMDD.json
+ * 每个交易日 21:00 后抓取当日「连板天梯」中的全部涨停个股（剔除 ST），
+ * 按板块题材归类，保存为 src/data/lianbanSnapshot/YYYYMMDD.json
  *
  * 页面结构：
- *  - 「热点题材」(id="s-themes") 下每个 <div class="thc"> 为一个板块，
- *    板块内 <div class="tk" data-c="股票代码"> 为个股（含封板时间/龙头★/连板标签/细分题材）
+ *  - 「连板天梯」(id="s-ladder") 按连板档位（9板/5板/…/1板）列出当日最全的涨停名单，
+ *    每档为一个 <div class="row">，档位内 <div class="ch" data-c="股票代码"> 为个股
+ *    （含封板时间/龙头★/连板标签/细分题材），1 板档虽带「展开全部」按钮但 HTML 已含全部个股
+ *  - 「热点题材」(id="s-themes") 只展示排名靠前的板块（截至页尾「展开剩余题材」），数据不完整，
+ *    仅用于补全板块理由与个股展示标签（龙头★/早盘/连板标签），不再作为涨停名单来源
  *  - 页尾 var S = {...} 是以股票代码为 key 的完整数据对象（名称/板块/连板数/涨停原因/行情等）
- *  - ST 个股位于独立的 ST 板块，不在热点题材内，解析时再做一次 st 标记兜底剔除
+ *  - ST 个股位于独立的 ST 板块，不在连板天梯内，解析时再做一次 st 标记兜底剔除
  *  - 非交易日页面返回 404
  */
 const path = require('path');
@@ -153,8 +156,8 @@ const fetchDayHtml = async (dashDate, { retries = 3, timeout = 15000 } = {}) => 
       if (!/var\s+S\s*=\s*\{/.test(res.data)) {
         throw new Error(`${dashDate} 页面缺少 var S 数据（站点结构变化或需要更新登录态）`);
       }
-      if (!/id="s-themes"/.test(res.data)) {
-        throw new Error(`${dashDate} 页面缺少「热点题材」区块（历史页面需登录，请检查 .lianban-cookie 是否有效）`);
+      if (!/id="s-ladder"/.test(res.data)) {
+        throw new Error(`${dashDate} 页面缺少「连板天梯」区块（历史页面需登录，请检查 .lianban-cookie 是否有效）`);
       }
       return res.data;
     } catch (error) {
@@ -287,6 +290,54 @@ const parseThemesHtml = (html) => {
   }).filter((t) => t.board);
 };
 
+// 解析「连板天梯」HTML(id="s-ladder")：当日最全的涨停名单，按连板档位分组
+// 返回 [{ board: '9板', lianbanCount: 9, count, stocks: [{ code, name, time, early, leader, nt, concept }] }]
+// 1 板档带「展开全部 N 家」按钮但个股已全部写在 HTML 中，直接解析即可
+const parseLadderHtml = (html) => {
+  const startIdx = html.indexOf('id="s-ladder"');
+  if (startIdx === -1) return [];
+
+  // 连板天梯区块止于「热点接力」(id="s-relay")
+  const afterStart = html.slice(startIdx);
+  const relayIdx = afterStart.indexOf('id="s-relay"');
+  const segment = relayIdx === -1 ? afterStart.slice(0, 20000) : afterStart.slice(0, relayIdx);
+
+  const rows = segment.split('<div class="row">').slice(1);
+  return rows.map((row) => {
+    const boardM = row.match(/<div class="b"[^>]*>(\d+)板<\/div>/);
+    const countM = row.match(/<div class="c">(\d+)家<\/div>/);
+    const stocks = [];
+    const chRe = /<div class="ch" data-c="(\d+)">([\s\S]*?)<div class="cc">([\s\S]*?)<\/div><\/div>/g;
+    let chMatch;
+    while ((chMatch = chRe.exec(row)) !== null) {
+      const head = chMatch[2];
+      const concept = decodeEntities(chMatch[3]).trim();
+      const nameM = head.match(/<a class="nm"[^>]*>([\s\S]*?)<\/a>/);
+      const timeM = head.match(/<span class="tm mono[^"]*">\s*(\d{2}:\d{2})\s*<\/span>/);
+      const ntM = head.match(/<span class="nt mono">([\s\S]*?)<\/span>/);
+      stocks.push({
+        code: chMatch[1],
+        name: nameM ? decodeEntities(nameM[1]).trim() : '',
+        time: timeM ? timeM[1] : '',
+        early: /class="tm mono early"/.test(head),
+        leader: /<span class="cr">/.test(head),
+        nt: ntM ? decodeEntities(ntM[1]).trim() : '',
+        concept,
+      });
+    }
+    const declared = countM ? Number(countM[1]) : null;
+    if (declared != null && declared !== stocks.length) {
+      console.warn(`[lianban] 连板天梯 ${boardM ? boardM[1] : '?'}板 声明 ${declared} 家，实际解析 ${stocks.length} 家（可能被截断）`);
+    }
+    return {
+      board: boardM ? `${boardM[1]}板` : '',
+      lianbanCount: boardM ? Number(boardM[1]) : null,
+      count: declared != null ? declared : stocks.length,
+      stocks,
+    };
+  }).filter((row) => row.stocks.length > 0);
+};
+
 // 合并 var S 行情数据与热点题材 HTML 展示信息
 const buildStock = (code, sData, htmlInfo, board) => ({
   code,
@@ -324,24 +375,50 @@ const buildStock = (code, sData, htmlInfo, board) => ({
 const parseLianbanHtml = (html, requestDate) => {
   const stockMap = extractStockMap(html);
   const pageDate = extractPageDate(html);
+  // 热点题材：可能不完整，仅用于补全板块理由与个股展示标签
   const htmlThemes = parseThemesHtml(html);
+  // 连板天梯：当日最全的涨停名单（涨停个股来源）
+  const ladder = parseLadderHtml(html);
 
-  const themes = htmlThemes.map((htmlTheme, index) => {
-    const stocks = [];
-    htmlTheme.stockOrder.forEach((code) => {
-      const sData = stockMap[code];
-      // 双保险：剔除 ST 个股（热点题材之外的 ST 板块不会进入这里）
-      if (sData && (sData.st === true || sData.board === 'ST板块')) return;
-      stocks.push(buildStock(code, sData, htmlTheme.stocks.get(code), htmlTheme.board));
+  // 个股展示信息（龙头★/早盘/连板标签）与板块理由，按热点题材索引（缺失时从天梯兜底）
+  const htmlStockInfo = new Map();
+  const themeReasonMap = new Map();
+  htmlThemes.forEach((t) => {
+    themeReasonMap.set(t.board, t.reason || null);
+    t.stockOrder.forEach((code) => {
+      const info = t.stocks.get(code);
+      if (info) htmlStockInfo.set(code, { ...info, board: t.board });
     });
-    return {
-      rank: htmlTheme.rank || index + 1,
-      board: htmlTheme.board,
-      count: stocks.length,
-      reason: htmlTheme.reason || null,
-      stocks,
-    };
-  }).filter((theme) => theme.stocks.length > 0);
+  });
+
+  // 以连板天梯的全量代码为基准（去重，按档位从高到低），再按板块题材归组
+  const boardMap = new Map(); // boardName -> { board, reason, stocks[] }
+  const seen = new Set();
+  ladder.forEach((row) => {
+    row.stocks.forEach((ls) => {
+      if (seen.has(ls.code)) return;
+      seen.add(ls.code);
+      const sData = stockMap[ls.code];
+      // 双保险：剔除 ST 个股（ST 板块不在连板天梯内，此处按 st 标记兜底）
+      if (sData && (sData.st === true || sData.board === 'ST板块')) return;
+      const info = htmlStockInfo.get(ls.code);
+      const board = (sData?.board || info?.board || ls.concept || '').trim() || '其他';
+      if (!boardMap.has(board)) {
+        boardMap.set(board, { board, reason: themeReasonMap.get(board) || null, stocks: [] });
+      }
+      boardMap.get(board).stocks.push(buildStock(ls.code, sData, info || ls, board));
+    });
+  });
+
+  const themes = Array.from(boardMap.values())
+    .sort((a, b) => b.stocks.length - a.stocks.length)
+    .map((t, index) => ({
+      rank: index + 1,
+      board: t.board,
+      count: t.stocks.length,
+      reason: t.reason,
+      stocks: t.stocks,
+    }));
 
   const allStocks = themes.reduce((acc, t) => acc.concat(t.stocks), []);
   const summary = {
@@ -352,6 +429,14 @@ const parseLianbanHtml = (html, requestDate) => {
     leaderCount: allStocks.filter((s) => s.leader).length,
   };
 
+  // 连板天梯原始分组（档位 -> 个股代码），便于核对当日涨停名单是否完整
+  const ladderRows = ladder.map((row) => ({
+    board: row.board,
+    lianbanCount: row.lianbanCount,
+    count: row.count,
+    codes: row.stocks.map((s) => s.code),
+  }));
+
   return {
     date: requestDate.ymd,
     pageDate: pageDate || requestDate.dash,
@@ -360,6 +445,7 @@ const parseLianbanHtml = (html, requestDate) => {
     summary,
     sentiment: extractSentiment(html),
     kpi: parseMarketKpi(html),
+    ladder: ladderRows,
     themes,
   };
 };
@@ -387,9 +473,10 @@ const saveLianbanDay = async (dateInput) => {
 const hasLianbanDay = (dateInput) => fs.existsSync(lianbanFilePath(dateInput));
 
 // 批量刷新时间范围内的连板快照：
-//   交易日历内的每一天，若已有 YYYYMMDD.json 则跳过，缺失的重新抓取并写入缓存文件；
-//   未来交易日无数据可抓，直接忽略。串行抓取以避免触发站点频率限制。
-const refreshLianbanRange = async (startInput, endInput) => {
+//   交易日历内的每一天，若已有 YYYYMMDD.json 则跳过（force=true 时强制覆盖重刷），
+//   缺失的重新抓取并写入缓存文件；未来交易日无数据可抓，直接忽略。
+//   串行抓取以避免触发站点频率限制。
+const refreshLianbanRange = async (startInput, endInput, { force = false } = {}) => {
   const { ymd: start } = normalizeDateInput(startInput);
   const { ymd: end } = normalizeDateInput(endInput);
   const startDate = parseDateNum(start);
@@ -407,7 +494,7 @@ const refreshLianbanRange = async (startInput, endInput) => {
       const ymd = dayjs(cursor).format('YYYYMMDD');
       if (ymd > today) {
         // 未来交易日无数据可抓，忽略
-      } else if (hasLianbanDay(ymd)) {
+      } else if (!force && hasLianbanDay(ymd)) {
         skipped.push(ymd);
       } else {
         try {
@@ -512,6 +599,7 @@ module.exports = {
   fetchDayHtml,
   parseLianbanHtml,
   parseThemesHtml,
+  parseLadderHtml,
   extractSentiment,
   parseMarketKpi,
   saveLianbanDay,

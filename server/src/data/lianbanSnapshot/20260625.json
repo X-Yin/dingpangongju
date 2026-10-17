@@ -2,18 +2,158 @@
   "date": "20260625",
   "pageDate": "2026-06-25",
   "sourceUrl": "https://lianban.net/days/2026-06-25.html",
-  "fetchedAt": "2026-10-01 18:11:51",
+  "fetchedAt": "2026-10-17 14:08:01",
   "summary": {
-    "totalCount": 11,
-    "themeCount": 4,
-    "lianbanCount": 3,
-    "firstBoardCount": 8,
-    "leaderCount": 4
+    "totalCount": 88,
+    "themeCount": 80,
+    "lianbanCount": 29,
+    "firstBoardCount": 59,
+    "leaderCount": 5
   },
   "sentiment": {
     "phase": "修复期",
     "temperature": 62
   },
+  "kpi": {
+    "limitUpCount": 88,
+    "limitDownCount": 17,
+    "maxLianban": {
+      "value": 5,
+      "unit": "板"
+    },
+    "lianbanCount": 12,
+    "sealRate": 73.9,
+    "brokenBoardCount": 31,
+    "yesterdayZtPerf": null,
+    "upCount": null,
+    "downCount": null,
+    "totalAmount": null
+  },
+  "ladder": [
+    {
+      "board": "5板",
+      "lianbanCount": 5,
+      "count": 1,
+      "codes": [
+        "002674"
+      ]
+    },
+    {
+      "board": "3板",
+      "lianbanCount": 3,
+      "count": 1,
+      "codes": [
+        "605366"
+      ]
+    },
+    {
+      "board": "2板",
+      "lianbanCount": 2,
+      "count": 10,
+      "codes": [
+        "603713",
+        "603929",
+        "600228",
+        "002990",
+        "603678",
+        "000818",
+        "002025",
+        "002254",
+        "002080",
+        "002303"
+      ]
+    },
+    {
+      "board": "1板",
+      "lianbanCount": 1,
+      "count": 59,
+      "codes": [
+        "600522",
+        "920249",
+        "600888",
+        "000034",
+        "605300",
+        "002387",
+        "603956",
+        "603313",
+        "002787",
+        "603115",
+        "600579",
+        "688376",
+        "002484",
+        "600857",
+        "603800",
+        "600186",
+        "603459",
+        "603500",
+        "600184",
+        "600330",
+        "000100",
+        "600962",
+        "603267",
+        "600458",
+        "605376",
+        "300650",
+        "002558",
+        "002980",
+        "688380",
+        "002965",
+        "002518",
+        "603527",
+        "601798",
+        "605318",
+        "600152",
+        "600516",
+        "300819",
+        "002928",
+        "001330",
+        "688093",
+        "002579",
+        "002654",
+        "002056",
+        "600237",
+        "688669",
+        "600500",
+        "603010",
+        "605589",
+        "300223",
+        "603690",
+        "000636",
+        "001309",
+        "688381",
+        "600903",
+        "603733",
+        "603063",
+        "600668",
+        "000766",
+        "603019"
+      ]
+    },
+    {
+      "board": "",
+      "lianbanCount": null,
+      "count": 17,
+      "codes": [
+        "000048",
+        "603989",
+        "000811",
+        "002141",
+        "000823",
+        "002068",
+        "600141",
+        "000783",
+        "002842",
+        "600584",
+        "600667",
+        "603335",
+        "000962",
+        "603067",
+        "600058",
+        "603065",
+        "603661"
+      ]
+    }
+  ],
   "themes": [
     {
       "rank": 1,
@@ -21,36 +161,6 @@
       "count": 5,
       "reason": null,
       "stocks": [
-        {
-          "code": "603335",
-          "name": "迪生力",
-          "board": "存储芯片",
-          "marketCode": "sh603335",
-          "sealTime": "09:41",
-          "early": false,
-          "leader": true,
-          "lianbanCount": 2,
-          "lianbanText": "反3天2板",
-          "fanbao": true,
-          "concept": "存储芯片、收购半导体、汽车轮毂",
-          "concepts": "",
-          "reason": "存储芯片、收购半导体、汽车轮毂",
-          "quote": {
-            "price": 9.1,
-            "changePct": 10.0363,
-            "open": null,
-            "prevClose": null,
-            "amplitude": null,
-            "turnoverRate": null,
-            "amountWan": null,
-            "pe": null,
-            "pb": null,
-            "floatMarketValueYi": 38.96,
-            "totalMarketValueYi": null,
-            "fmv": null,
-            "tn": null
-          }
-        },
         {
           "code": "300650",
           "name": "太龙股份",
@@ -170,79 +280,41 @@
             "fmv": null,
             "tn": null
           }
+        },
+        {
+          "code": "603335",
+          "name": "迪生力",
+          "board": "存储芯片",
+          "marketCode": "sh603335",
+          "sealTime": "09:41",
+          "early": false,
+          "leader": true,
+          "lianbanCount": 2,
+          "lianbanText": "反3天2板",
+          "fanbao": true,
+          "concept": "存储芯片、收购半导体、汽车轮毂",
+          "concepts": "",
+          "reason": "存储芯片、收购半导体、汽车轮毂",
+          "quote": {
+            "price": 9.1,
+            "changePct": 10.0363,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 38.96,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
         }
       ]
     },
     {
       "rank": 2,
-      "board": "MLCC",
-      "count": 2,
-      "reason": null,
-      "stocks": [
-        {
-          "code": "603267",
-          "name": "鸿远电子",
-          "board": "MLCC",
-          "marketCode": "sh603267",
-          "sealTime": "09:49",
-          "early": false,
-          "leader": true,
-          "lianbanCount": 1,
-          "lianbanText": "首板",
-          "fanbao": false,
-          "concept": "MLCC、光通信、液冷散热、商业航天",
-          "concepts": "",
-          "reason": "MLCC、光通信、液冷散热、商业航天",
-          "quote": {
-            "price": 83.6,
-            "changePct": 10,
-            "open": null,
-            "prevClose": null,
-            "amplitude": null,
-            "turnoverRate": null,
-            "amountWan": null,
-            "pe": null,
-            "pb": null,
-            "floatMarketValueYi": 193.18,
-            "totalMarketValueYi": null,
-            "fmv": null,
-            "tn": null
-          }
-        },
-        {
-          "code": "000636",
-          "name": "风华高科",
-          "board": "MLCC",
-          "marketCode": "sz000636",
-          "sealTime": "13:25",
-          "early": false,
-          "leader": false,
-          "lianbanCount": 1,
-          "lianbanText": "首板",
-          "fanbao": false,
-          "concept": "MLCC、AI算力、广东国资",
-          "concepts": "",
-          "reason": "MLCC、AI算力、广东国资",
-          "quote": {
-            "price": 79.62,
-            "changePct": 10.0028,
-            "open": null,
-            "prevClose": null,
-            "amplitude": null,
-            "turnoverRate": null,
-            "amountWan": null,
-            "pe": null,
-            "pb": null,
-            "floatMarketValueYi": 921.21,
-            "totalMarketValueYi": null,
-            "fmv": null,
-            "tn": null
-          }
-        }
-      ]
-    },
-    {
-      "rank": 3,
       "board": "光纤概念",
       "count": 2,
       "reason": null,
@@ -302,6 +374,74 @@
             "pe": null,
             "pb": null,
             "floatMarketValueYi": 171.58,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "board": "其他",
+      "count": 2,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600522",
+          "name": "中天科技",
+          "board": "其他",
+          "marketCode": "sh600522",
+          "sealTime": "",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "",
+          "concepts": "",
+          "reason": "",
+          "quote": {
+            "price": null,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": null,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        },
+        {
+          "code": "920249",
+          "name": "利尔达",
+          "board": "其他",
+          "marketCode": "bj920249",
+          "sealTime": "",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "",
+          "concepts": "",
+          "reason": "",
+          "quote": {
+            "price": null,
+            "changePct": 29.99,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": null,
             "totalMarketValueYi": null,
             "fmv": null,
             "tn": null
@@ -370,6 +510,2924 @@
             "pe": null,
             "pb": null,
             "floatMarketValueYi": 132.39,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "board": "MLCC",
+      "count": 2,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603267",
+          "name": "鸿远电子",
+          "board": "MLCC",
+          "marketCode": "sh603267",
+          "sealTime": "09:49",
+          "early": false,
+          "leader": true,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "MLCC、光通信、液冷散热、商业航天",
+          "concepts": "",
+          "reason": "MLCC、光通信、液冷散热、商业航天",
+          "quote": {
+            "price": 83.6,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 193.18,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        },
+        {
+          "code": "000636",
+          "name": "风华高科",
+          "board": "MLCC",
+          "marketCode": "sz000636",
+          "sealTime": "13:25",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "MLCC、AI算力、广东国资",
+          "concepts": "",
+          "reason": "MLCC、AI算力、广东国资",
+          "quote": {
+            "price": 79.62,
+            "changePct": 10.0028,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 921.21,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "board": "磷化铟收购",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002674",
+          "name": "兴业科技",
+          "board": "磷化铟收购",
+          "marketCode": "sz002674",
+          "sealTime": "09:25",
+          "early": true,
+          "leader": true,
+          "lianbanCount": 5,
+          "lianbanText": "5天5板",
+          "fanbao": false,
+          "concept": "磷化铟收购、机器人电子皮肤、汽车内饰皮革",
+          "concepts": "",
+          "reason": "磷化铟收购、机器人电子皮肤、汽车内饰皮革",
+          "quote": {
+            "price": 26.21,
+            "changePct": 9.9874,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 76.68,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "board": "芯片、航运",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603713",
+          "name": "密尔克卫",
+          "board": "芯片、航运",
+          "marketCode": "sh603713",
+          "sealTime": "",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2连板",
+          "fanbao": false,
+          "concept": "芯片、航运",
+          "concepts": "",
+          "reason": "",
+          "quote": {
+            "price": null,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": null,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "board": "半导体洁净室",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603929",
+          "name": "亚翔集成",
+          "board": "半导体洁净室",
+          "marketCode": "sh603929",
+          "sealTime": "09:25",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2天2板",
+          "fanbao": false,
+          "concept": "半导体洁净室、新加坡布局、一季报倍增",
+          "concepts": "",
+          "reason": "半导体洁净室、新加坡布局、一季报倍增",
+          "quote": {
+            "price": 255.07,
+            "changePct": 10.0009,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 544.22,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "board": "控制权变更",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600228",
+          "name": "返利科技",
+          "board": "控制权变更",
+          "marketCode": "sh600228",
+          "sealTime": "09:25",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2天2板",
+          "fanbao": false,
+          "concept": "控制权变更、复牌、在线导购、摘帽",
+          "concepts": "",
+          "reason": "控制权变更、复牌、在线导购、摘帽",
+          "quote": {
+            "price": 9.81,
+            "changePct": 9.9776,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 40.81,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "board": "算力合作",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002990",
+          "name": "盛视科技",
+          "board": "算力合作",
+          "marketCode": "sz002990",
+          "sealTime": "09:31",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2天2板",
+          "fanbao": false,
+          "concept": "算力合作、存储芯片、人形机器人",
+          "concepts": "",
+          "reason": "算力合作、存储芯片、人形机器人",
+          "quote": {
+            "price": 72.6,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 100.2,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 11,
+      "board": "MLCC涨价",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603678",
+          "name": "火炬电子",
+          "board": "MLCC涨价",
+          "marketCode": "sh603678",
+          "sealTime": "09:31",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2天2板",
+          "fanbao": false,
+          "concept": "MLCC涨价、存储代理、商业航天",
+          "concepts": "",
+          "reason": "MLCC涨价、存储代理、商业航天",
+          "quote": {
+            "price": 75.13,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 357.29,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 12,
+      "board": "算力租赁",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "000818",
+          "name": "航锦科技",
+          "board": "算力租赁",
+          "marketCode": "sz000818",
+          "sealTime": "09:32",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2天2板",
+          "fanbao": false,
+          "concept": "算力租赁、800G光模块、存储芯片、武汉国资",
+          "concepts": "",
+          "reason": "算力租赁、800G光模块、存储芯片、武汉国资",
+          "quote": {
+            "price": 14.81,
+            "changePct": 10.0297,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 97.48,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 13,
+      "board": "高速光模块发布",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002025",
+          "name": "航天电器",
+          "board": "高速光模块发布",
+          "marketCode": "sz002025",
+          "sealTime": "09:38",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2天2板",
+          "fanbao": false,
+          "concept": "高速光模块发布、算力配套、商业航天、央企",
+          "concepts": "",
+          "reason": "高速光模块发布、算力配套、商业航天、央企",
+          "quote": {
+            "price": 73.27,
+            "changePct": 9.9985,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 332.55,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 14,
+      "board": "特种纤维布",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002080",
+          "name": "中材科技",
+          "board": "特种纤维布",
+          "marketCode": "sz002080",
+          "sealTime": "09:52",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2天2板",
+          "fanbao": false,
+          "concept": "特种纤维布、风电叶片、央企",
+          "concepts": "",
+          "reason": "特种纤维布、风电叶片、央企",
+          "quote": {
+            "price": 92.93,
+            "changePct": 10.0024,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 1559.48,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 15,
+      "board": "消费电子包装",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002303",
+          "name": "美盈森",
+          "board": "消费电子包装",
+          "marketCode": "sz002303",
+          "sealTime": "10:00",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2天2板",
+          "fanbao": false,
+          "concept": "消费电子包装、包装一体化、仲裁撤案",
+          "concepts": "",
+          "reason": "消费电子包装、包装一体化、仲裁撤案",
+          "quote": {
+            "price": 4.25,
+            "changePct": 10.1036,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 41.09,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 16,
+      "board": "半导体上游",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600888",
+          "name": "新疆众和",
+          "board": "半导体上游",
+          "marketCode": "sh600888",
+          "sealTime": "09:30",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "半导体上游、铝电子新材料、氧化铝项目、一季度净利增",
+          "concepts": "",
+          "reason": "半导体上游、铝电子新材料、氧化铝项目、一季度净利增",
+          "quote": {
+            "price": 16.12,
+            "changePct": 10.0341,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 250.36,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 17,
+      "board": "华为昇腾",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "000034",
+          "name": "神州数码",
+          "board": "华为昇腾",
+          "marketCode": "sz000034",
+          "sealTime": "09:33",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "华为昇腾、AI算力、存储芯片",
+          "concepts": "",
+          "reason": "华为昇腾、AI算力、存储芯片",
+          "quote": {
+            "price": 27.94,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 237.25,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 18,
+      "board": "植物奶",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "605300",
+          "name": "佳禾食品",
+          "board": "植物奶",
+          "marketCode": "sh605300",
+          "sealTime": "09:33",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "植物奶、股东回馈、一季报增长",
+          "concepts": "",
+          "reason": "植物奶、股东回馈、一季报增长",
+          "quote": {
+            "price": 9.43,
+            "changePct": 10.035,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 42.85,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 19,
+      "board": "ViP技术",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002387",
+          "name": "维信诺",
+          "board": "ViP技术",
+          "marketCode": "sz002387",
+          "sealTime": "09:33",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "ViP技术、AMOLED、高世代产线",
+          "concepts": "",
+          "reason": "ViP技术、AMOLED、高世代产线",
+          "quote": {
+            "price": 8.97,
+            "changePct": 10.0613,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 125.13,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 20,
+      "board": "液冷泵",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603956",
+          "name": "威派格",
+          "board": "液冷泵",
+          "marketCode": "sh603956",
+          "sealTime": "09:34",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "液冷泵、六张网建设、智慧水务",
+          "concepts": "",
+          "reason": "液冷泵、六张网建设、智慧水务",
+          "quote": {
+            "price": 5.3,
+            "changePct": 9.9585,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 30.21,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 21,
+      "board": "智能床",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603313",
+          "name": "梦百合",
+          "board": "智能床",
+          "marketCode": "sh603313",
+          "sealTime": "09:34",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "智能床、美国产能、实控人代偿应收款",
+          "concepts": "",
+          "reason": "智能床、美国产能、实控人代偿应收款",
+          "quote": {
+            "price": 5.59,
+            "changePct": 10.0394,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 31.9,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 22,
+      "board": "超级电容涨价",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603115",
+          "name": "海星股份",
+          "board": "超级电容涨价",
+          "marketCode": "sh603115",
+          "sealTime": "09:38",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "超级电容涨价、AI服务器电极箔、全球市占率第一、分红",
+          "concepts": "",
+          "reason": "超级电容涨价、AI服务器电极箔、全球市占率第一、分红",
+          "quote": {
+            "price": 131.33,
+            "changePct": 10.0008,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 317.67,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 23,
+      "board": "对位芳纶聚合反应器",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600579",
+          "name": "中化装备",
+          "board": "对位芳纶聚合反应器",
+          "marketCode": "sh600579",
+          "sealTime": "09:38",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "对位芳纶聚合反应器、管式换热器、资产重组、央企",
+          "concepts": "",
+          "reason": "对位芳纶聚合反应器、管式换热器、资产重组、央企",
+          "quote": {
+            "price": 7.89,
+            "changePct": 10.0418,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 38.95,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 24,
+      "board": "洁净室龙头",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "688376",
+          "name": "美埃科技",
+          "board": "洁净室龙头",
+          "marketCode": "sh688376",
+          "sealTime": "09:39",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "洁净室龙头、空气净化产品、一季报增长",
+          "concepts": "",
+          "reason": "洁净室龙头、空气净化产品、一季报增长",
+          "quote": {
+            "price": 101.52,
+            "changePct": 20,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 137.31,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 25,
+      "board": "AI服务器电源",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002484",
+          "name": "江海股份",
+          "board": "AI服务器电源",
+          "marketCode": "sz002484",
+          "sealTime": "09:39",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "AI服务器电源、超级电容、浙江国资",
+          "concepts": "",
+          "reason": "AI服务器电源、超级电容、浙江国资",
+          "quote": {
+            "price": 111.02,
+            "changePct": 9.997,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 910.89,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 26,
+      "board": "零售",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600857",
+          "name": "宁波中百",
+          "board": "零售",
+          "marketCode": "sh600857",
+          "sealTime": "09:40",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "零售、黄金、杭州金帝入主",
+          "concepts": "",
+          "reason": "零售、黄金、杭州金帝入主",
+          "quote": {
+            "price": 17.36,
+            "changePct": 10.0127,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 38.94,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 27,
+      "board": "PCB并购",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603800",
+          "name": "洪田股份",
+          "board": "PCB并购",
+          "marketCode": "sh603800",
+          "sealTime": "09:41",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "PCB并购、先进封装、TGV、电解铜箔",
+          "concepts": "",
+          "reason": "PCB并购、先进封装、TGV、电解铜箔",
+          "quote": {
+            "price": 84.95,
+            "changePct": 9.9961,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 176.7,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 28,
+      "board": "算力",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600186",
+          "name": "莲花控股",
+          "board": "算力",
+          "marketCode": "sh600186",
+          "sealTime": "09:41",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "算力、半导体材料、阶跃星辰投资、调味品龙头",
+          "concepts": "",
+          "reason": "算力、半导体材料、阶跃星辰投资、调味品龙头",
+          "quote": {
+            "price": 15.6,
+            "changePct": 10.0141,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 279.11,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 29,
+      "board": "投建高阶HDI",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603459",
+          "name": "红板科技",
+          "board": "投建高阶HDI",
+          "marketCode": "sh603459",
+          "sealTime": "09:41",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "投建高阶HDI、1.6T光模块、HDI龙头",
+          "concepts": "",
+          "reason": "投建高阶HDI、1.6T光模块、HDI龙头",
+          "quote": {
+            "price": 94.96,
+            "changePct": 9.9965,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 75.07,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 30,
+      "board": "超级电容胶塞",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603500",
+          "name": "祥和实业",
+          "board": "超级电容胶塞",
+          "marketCode": "sh603500",
+          "sealTime": "09:44",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "超级电容胶塞、轨交扣件龙头、高分子辐照改性",
+          "concepts": "",
+          "reason": "超级电容胶塞、轨交扣件龙头、高分子辐照改性",
+          "quote": {
+            "price": 12.96,
+            "changePct": 10.017,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 43.11,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 31,
+      "board": "光纤材料",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600184",
+          "name": "光电股份",
+          "board": "光纤材料",
+          "marketCode": "sh600184",
+          "sealTime": "09:45",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "光纤材料、光通信、央企",
+          "concepts": "",
+          "reason": "光纤材料、光通信、央企",
+          "quote": {
+            "price": 29.17,
+            "changePct": 9.9925,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 169.98,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 32,
+      "board": "光模块上游",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600330",
+          "name": "天通股份",
+          "board": "光模块上游",
+          "marketCode": "sh600330",
+          "sealTime": "09:46",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "光模块上游、铌酸锂、软磁材料、先进封装",
+          "concepts": "",
+          "reason": "光模块上游、铌酸锂、软磁材料、先进封装",
+          "quote": {
+            "price": 35.6,
+            "changePct": 10.0124,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 439.1,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 33,
+      "board": "面板",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "000100",
+          "name": "TCL科技",
+          "board": "面板",
+          "marketCode": "sz000100",
+          "sealTime": "09:47",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "面板、收购半导体、一季报增长、回购",
+          "concepts": "",
+          "reason": "面板、收购半导体、一季报增长、回购",
+          "quote": {
+            "price": 5.34,
+            "changePct": 10.1031,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 1021.65,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 34,
+      "board": "半导体工程",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600962",
+          "name": "国投中鲁",
+          "board": "半导体工程",
+          "marketCode": "sh600962",
+          "sealTime": "09:48",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "半导体工程、并购重组、浓缩果汁、央企",
+          "concepts": "",
+          "reason": "半导体工程、并购重组、浓缩果汁、央企",
+          "quote": {
+            "price": 26.36,
+            "changePct": 10.0167,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 69.12,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 35,
+      "board": "半导体材料",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600458",
+          "name": "时代新材",
+          "board": "半导体材料",
+          "marketCode": "sh600458",
+          "sealTime": "09:50",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "半导体材料、超级电容、风电出海、央企",
+          "concepts": "",
+          "reason": "半导体材料、超级电容、风电出海、央企",
+          "quote": {
+            "price": 16.92,
+            "changePct": 10.013,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 146.95,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 36,
+      "board": "MLCC镍粉",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "605376",
+          "name": "博迁新材",
+          "board": "MLCC镍粉",
+          "marketCode": "sh605376",
+          "sealTime": "09:50",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "MLCC镍粉、AI算力、H股上市",
+          "concepts": "",
+          "reason": "MLCC镍粉、AI算力、H股上市",
+          "quote": {
+            "price": 246.84,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 645.73,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 37,
+      "board": "游戏",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002558",
+          "name": "巨人网络",
+          "board": "游戏",
+          "marketCode": "sz002558",
+          "sealTime": "09:55",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "游戏、业绩增长、AI基础设施布局",
+          "concepts": "",
+          "reason": "游戏、业绩增长、AI基础设施布局",
+          "quote": {
+            "price": 27.73,
+            "changePct": 9.996,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 527.03,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 38,
+      "board": "光通信测试",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002980",
+          "name": "华盛昌",
+          "board": "光通信测试",
+          "marketCode": "sz002980",
+          "sealTime": "09:56",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "光通信测试、AI眼镜、测量仪器",
+          "concepts": "",
+          "reason": "光通信测试、AI眼镜、测量仪器",
+          "quote": {
+            "price": 123.83,
+            "changePct": 10.0027,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 125.42,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 39,
+      "board": "MCU",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "688380",
+          "name": "中微半导",
+          "board": "MCU",
+          "marketCode": "sh688380",
+          "sealTime": "09:57",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "MCU、存储芯片、业绩增长",
+          "concepts": "",
+          "reason": "MCU、存储芯片、业绩增长",
+          "quote": {
+            "price": 61.74,
+            "changePct": 20,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 247.19,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 40,
+      "board": "收购酷尔芯",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002965",
+          "name": "祥鑫科技",
+          "board": "收购酷尔芯",
+          "marketCode": "sz002965",
+          "sealTime": "09:58",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "收购酷尔芯、液冷服务器、人形机器人",
+          "concepts": "",
+          "reason": "收购酷尔芯、液冷服务器、人形机器人",
+          "quote": {
+            "price": 47.16,
+            "changePct": 10.007,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 89.8,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 41,
+      "board": "液冷服务器",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002518",
+          "name": "科士达",
+          "board": "液冷服务器",
+          "marketCode": "sz002518",
+          "sealTime": "10:03",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "液冷服务器、数据中心电源、储能",
+          "concepts": "",
+          "reason": "液冷服务器、数据中心电源、储能",
+          "quote": {
+            "price": 54.43,
+            "changePct": 10.004,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 307.61,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 42,
+      "board": "紫铜带箔材",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603527",
+          "name": "众源新材",
+          "board": "紫铜带箔材",
+          "marketCode": "sh603527",
+          "sealTime": "10:13",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "紫铜带箔材、压延铜箔、新能源电池结构件、3D打印",
+          "concepts": "",
+          "reason": "紫铜带箔材、压延铜箔、新能源电池结构件、3D打印",
+          "quote": {
+            "price": 14.08,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 44.63,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 43,
+      "board": "熔盐储能",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "601798",
+          "name": "蓝科高新",
+          "board": "熔盐储能",
+          "marketCode": "sh601798",
+          "sealTime": "10:15",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "熔盐储能、并购重组、央企",
+          "concepts": "",
+          "reason": "熔盐储能、并购重组、央企",
+          "quote": {
+            "price": 7.83,
+            "changePct": 9.9719,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 27.76,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 44,
+      "board": "AI智算",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "605318",
+          "name": "法狮龙",
+          "board": "AI智算",
+          "marketCode": "sh605318",
+          "sealTime": "10:21",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "AI智算、装配式建筑、集成吊顶",
+          "concepts": "",
+          "reason": "AI智算、装配式建筑、集成吊顶",
+          "quote": {
+            "price": 134.2,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 168.73,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 45,
+      "board": "AIDC电源",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600152",
+          "name": "维科技术",
+          "board": "AIDC电源",
+          "marketCode": "sh600152",
+          "sealTime": "10:28",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "AIDC电源、钠离子电池、3C消费电池",
+          "concepts": "",
+          "reason": "AIDC电源、钠离子电池、3C消费电池",
+          "quote": {
+            "price": 11.81,
+            "changePct": 9.9628,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 62.48,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 46,
+      "board": "石墨烯散热",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600516",
+          "name": "方大炭素",
+          "board": "石墨烯散热",
+          "marketCode": "sh600516",
+          "sealTime": "10:30",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "石墨烯散热、光纤概念、核电石墨",
+          "concepts": "",
+          "reason": "石墨烯散热、光纤概念、核电石墨",
+          "quote": {
+            "price": 6.77,
+            "changePct": 10.0813,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 272.56,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 47,
+      "board": "电子布",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "300819",
+          "name": "聚杰微纤",
+          "board": "电子布",
+          "marketCode": "sz300819",
+          "sealTime": "10:30",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "电子布、定增募资、超细纤维龙头",
+          "concepts": "",
+          "reason": "电子布、定增募资、超细纤维龙头",
+          "quote": {
+            "price": 84.22,
+            "changePct": 20.0057,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 113.5,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 48,
+      "board": "支线航空",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002928",
+          "name": "华夏航空",
+          "board": "支线航空",
+          "marketCode": "sz002928",
+          "sealTime": "10:38",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "支线航空、C909主力机型、一季报增长",
+          "concepts": "",
+          "reason": "支线航空、C909主力机型、一季报增长",
+          "quote": {
+            "price": 7.9,
+            "changePct": 10.0279,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 100.98,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 49,
+      "board": "《四渡》定档",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "001330",
+          "name": "博纳影业",
+          "board": "《四渡》定档",
+          "marketCode": "sz001330",
+          "sealTime": "10:56",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "《四渡》定档、AI影视、全产业链布局",
+          "concepts": "",
+          "reason": "《四渡》定档、AI影视、全产业链布局",
+          "quote": {
+            "price": 6.93,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 80.59,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 50,
+      "board": "感光干膜",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "688093",
+          "name": "世华科技",
+          "board": "感光干膜",
+          "marketCode": "sh688093",
+          "sealTime": "11:01",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "感光干膜、高性能光学材料、PCB概念",
+          "concepts": "",
+          "reason": "感光干膜、高性能光学材料、PCB概念",
+          "quote": {
+            "price": 34.72,
+            "changePct": 20.0138,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 97.35,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 51,
+      "board": "PCB",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002579",
+          "name": "中京电子",
+          "board": "PCB",
+          "marketCode": "sz002579",
+          "sealTime": "11:03",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "PCB、高阶HDI、AIPC、定增通过",
+          "concepts": "",
+          "reason": "PCB、高阶HDI、AIPC、定增通过",
+          "quote": {
+            "price": 21.3,
+            "changePct": 10.0207,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 124.27,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 52,
+      "board": "AI算力磁材",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002056",
+          "name": "横店东磁",
+          "board": "AI算力磁材",
+          "marketCode": "sz002056",
+          "sealTime": "11:16",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "AI算力磁材、芯片电感、机器人、磁材龙头",
+          "concepts": "",
+          "reason": "AI算力磁材、芯片电感、机器人、磁材龙头",
+          "quote": {
+            "price": 30.2,
+            "changePct": 10.0182,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 490.76,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 53,
+      "board": "薄膜电容器",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600237",
+          "name": "铜峰电子",
+          "board": "薄膜电容器",
+          "marketCode": "sh600237",
+          "sealTime": "13:00",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "薄膜电容器、PET铜箔、国企",
+          "concepts": "",
+          "reason": "薄膜电容器、PET铜箔、国企",
+          "quote": {
+            "price": 12.99,
+            "changePct": 9.9915,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 81.14,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 54,
+      "board": "光刻胶树脂",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "688669",
+          "name": "聚石化学",
+          "board": "光刻胶树脂",
+          "marketCode": "sh688669",
+          "sealTime": "13:00",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "光刻胶树脂、钙钛矿电池、化工新材料、股权激励",
+          "concepts": "",
+          "reason": "光刻胶树脂、钙钛矿电池、化工新材料、股权激励",
+          "quote": {
+            "price": 88.73,
+            "changePct": 20.0027,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 107.66,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 55,
+      "board": "覆铜板上游（PPE树脂）",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600500",
+          "name": "中化国际",
+          "board": "覆铜板上游（PPE树脂）",
+          "marketCode": "sh600500",
+          "sealTime": "13:00",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "覆铜板上游（PPE树脂）、光纤概念、拟收购南通星辰",
+          "concepts": "",
+          "reason": "覆铜板上游（PPE树脂）、光纤概念、拟收购南通星辰",
+          "quote": {
+            "price": 8.64,
+            "changePct": 10.0637,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 310.03,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 56,
+      "board": "PCB概念",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603010",
+          "name": "万盛股份",
+          "board": "PCB概念",
+          "marketCode": "sh603010",
+          "sealTime": "13:01",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "PCB概念、磷系阻燃剂、泰国基地投产",
+          "concepts": "",
+          "reason": "PCB概念、磷系阻燃剂、泰国基地投产",
+          "quote": {
+            "price": 15.53,
+            "changePct": 9.9858,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 88.64,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 57,
+      "board": "PPO树脂",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "605589",
+          "name": "圣泉集团",
+          "board": "PPO树脂",
+          "marketCode": "sh605589",
+          "sealTime": "13:02",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "PPO树脂、先进封装、可转债申购",
+          "concepts": "",
+          "reason": "PPO树脂、先进封装、可转债申购",
+          "quote": {
+            "price": 72.96,
+            "changePct": 9.9955,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 617.18,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 58,
+      "board": "模拟芯片",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "688381",
+          "name": "帝奥微",
+          "board": "模拟芯片",
+          "marketCode": "sh688381",
+          "sealTime": "13:35",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "模拟芯片、光模块、人形机器人",
+          "concepts": "",
+          "reason": "模拟芯片、光模块、人形机器人",
+          "quote": {
+            "price": 51.9,
+            "changePct": 20,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 128.45,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 59,
+      "board": "氦气",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600903",
+          "name": "贵州燃气",
+          "board": "氦气",
+          "marketCode": "sh600903",
+          "sealTime": "13:38",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "氦气、页岩气收购、天然气、贵州国资",
+          "concepts": "",
+          "reason": "氦气、页岩气收购、天然气、贵州国资",
+          "quote": {
+            "price": 7.99,
+            "changePct": 10.0551,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 93,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 60,
+      "board": "可转债强赎",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603733",
+          "name": "仙鹤股份",
+          "board": "可转债强赎",
+          "marketCode": "sh603733",
+          "sealTime": "13:44",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "可转债强赎、超级电容器纸、产品提价、造纸",
+          "concepts": "",
+          "reason": "可转债强赎、超级电容器纸、产品提价、造纸",
+          "quote": {
+            "price": 27.21,
+            "changePct": 9.9838,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 197.13,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 61,
+      "board": "储能变流器",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603063",
+          "name": "禾望电气",
+          "board": "储能变流器",
+          "marketCode": "sh603063",
+          "sealTime": "14:09",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "储能变流器、光伏、氢能、股权激励授予",
+          "concepts": "",
+          "reason": "储能变流器、光伏、氢能、股权激励授予",
+          "quote": {
+            "price": 55.17,
+            "changePct": 10.01,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 254.98,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 62,
+      "board": "创新药",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600668",
+          "name": "尖峰集团",
+          "board": "创新药",
+          "marketCode": "sh600668",
+          "sealTime": "14:13",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "创新药、水泥、年报增长",
+          "concepts": "",
+          "reason": "创新药、水泥、年报增长",
+          "quote": {
+            "price": 7.68,
+            "changePct": 10.0287,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 31.71,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 63,
+      "board": "阿尔茨海默症新药",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "000766",
+          "name": "通化金马",
+          "board": "阿尔茨海默症新药",
+          "marketCode": "sz000766",
+          "sealTime": "14:20",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "阿尔茨海默症新药、创新药、商业化准备",
+          "concepts": "",
+          "reason": "阿尔茨海默症新药、创新药、商业化准备",
+          "quote": {
+            "price": 26.61,
+            "changePct": 10.0041,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 257.05,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 64,
+      "board": "超算登顶",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603019",
+          "name": "中科曙光",
+          "board": "超算登顶",
+          "marketCode": "sh603019",
+          "sealTime": "14:36",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "超算登顶、存储破纪录、终止减持",
+          "concepts": "",
+          "reason": "超算登顶、存储破纪录、终止减持",
+          "quote": {
+            "price": 97.82,
+            "changePct": 9.9966,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 1431.16,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 65,
+      "board": "机器人",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "000048",
+          "name": "京基智农",
+          "board": "机器人",
+          "marketCode": "sz000048",
+          "sealTime": "13:23",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 6,
+          "lianbanText": "反·12天6板",
+          "fanbao": true,
+          "concept": "机器人、股权转让、生猪养殖",
+          "concepts": "",
+          "reason": "机器人、股权转让、生猪养殖",
+          "quote": {
+            "price": 22.31,
+            "changePct": 10.0099,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 118.09,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 66,
+      "board": "MLPC",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603989",
+          "name": "艾华集团",
+          "board": "MLPC",
+          "marketCode": "sh603989",
+          "sealTime": "09:31",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 6,
+          "lianbanText": "反·7天6板",
+          "fanbao": true,
+          "concept": "MLPC、AI服务器、铝电解电容、薄膜电容",
+          "concepts": "",
+          "reason": "MLPC、AI服务器、铝电解电容、薄膜电容",
+          "quote": {
+            "price": 53.75,
+            "changePct": 10.0082,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 214.34,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 67,
+      "board": "数据中心液冷",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "000811",
+          "name": "冰轮环境",
+          "board": "数据中心液冷",
+          "marketCode": "sz000811",
+          "sealTime": "09:37",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 5,
+          "lianbanText": "反·8天5板",
+          "fanbao": true,
+          "concept": "数据中心液冷、拟收购整合、权益分派、烟台国资",
+          "concepts": "",
+          "reason": "数据中心液冷、拟收购整合、权益分派、烟台国资",
+          "quote": {
+            "price": 53.52,
+            "changePct": 10.0103,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 523.64,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 68,
+      "board": "PCB上游",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002141",
+          "name": "贤丰控股",
+          "board": "PCB上游",
+          "marketCode": "sz002141",
+          "sealTime": "14:08",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 5,
+          "lianbanText": "反·7天5板",
+          "fanbao": true,
+          "concept": "PCB上游、覆铜板、盐湖提锂参股",
+          "concepts": "",
+          "reason": "PCB上游、覆铜板、盐湖提锂参股",
+          "quote": {
+            "price": 5.24,
+            "changePct": 10.084,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 54.13,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 69,
+      "board": "转债摘牌",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "000823",
+          "name": "超声电子",
+          "board": "转债摘牌",
+          "marketCode": "sz000823",
+          "sealTime": "09:32",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 5,
+          "lianbanText": "反·8天5板",
+          "fanbao": true,
+          "concept": "转债摘牌、PCB、覆铜板、算力硬件",
+          "concepts": "",
+          "reason": "转债摘牌、PCB、覆铜板、算力硬件",
+          "quote": {
+            "price": 25.87,
+            "changePct": 9.9915,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 153.91,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 70,
+      "board": "超级电容",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002068",
+          "name": "黑猫股份",
+          "board": "超级电容",
+          "marketCode": "sz002068",
+          "sealTime": "09:31",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 4,
+          "lianbanText": "反·5天4板",
+          "fanbao": true,
+          "concept": "超级电容、导电炭黑、炭黑龙头、景德镇国资",
+          "concepts": "",
+          "reason": "超级电容、导电炭黑、炭黑龙头、景德镇国资",
+          "quote": {
+            "price": 14.83,
+            "changePct": 10.0148,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 109,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 71,
+      "board": "磷化工",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600141",
+          "name": "兴发集团",
+          "board": "磷化工",
+          "marketCode": "sh600141",
+          "sealTime": "13:21",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 3,
+          "lianbanText": "反·4天3板",
+          "fanbao": true,
+          "concept": "磷化工、磷化铟、存储芯片材料、液冷",
+          "concepts": "",
+          "reason": "磷化工、磷化铟、存储芯片材料、液冷",
+          "quote": {
+            "price": 47.48,
+            "changePct": 10.0093,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 570.59,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 72,
+      "board": "券商",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "000783",
+          "name": "长江证券",
+          "board": "券商",
+          "marketCode": "sz000783",
+          "sealTime": "10:39",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 3,
+          "lianbanText": "反·4天3板",
+          "fanbao": true,
+          "concept": "券商、科创投资、一季报增长、高分红",
+          "concepts": "",
+          "reason": "券商、科创投资、一季报增长、高分红",
+          "quote": {
+            "price": 10.15,
+            "changePct": 9.9675,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 561.3,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 73,
+      "board": "钨全产业链",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002842",
+          "name": "翔鹭钨业",
+          "board": "钨全产业链",
+          "marketCode": "sz002842",
+          "sealTime": "10:07",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 3,
+          "lianbanText": "反·5天3板",
+          "fanbao": true,
+          "concept": "钨全产业链、定增过会、光伏钨丝",
+          "concepts": "",
+          "reason": "钨全产业链、定增过会、光伏钨丝",
+          "quote": {
+            "price": 51.41,
+            "changePct": 9.9914,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 138.02,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 74,
+      "board": "先进封装",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600584",
+          "name": "长电科技",
+          "board": "先进封装",
+          "marketCode": "sh600584",
+          "sealTime": "09:38",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 3,
+          "lianbanText": "反·4天3板",
+          "fanbao": true,
+          "concept": "先进封装、CPO光引擎、央企",
+          "concepts": "",
+          "reason": "先进封装、CPO光引擎、央企",
+          "quote": {
+            "price": 104.17,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 1864.03,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 75,
+      "board": "存储芯片封测",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600667",
+          "name": "太极实业",
+          "board": "存储芯片封测",
+          "marketCode": "sh600667",
+          "sealTime": "09:25",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 3,
+          "lianbanText": "反·5天3板",
+          "fanbao": true,
+          "concept": "存储芯片封测、SK海力士、无锡国资、一季报增长",
+          "concepts": "",
+          "reason": "存储芯片封测、SK海力士、无锡国资、一季报增长",
+          "quote": {
+            "price": 25.31,
+            "changePct": 9.9957,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 529.37,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 76,
+      "board": "钽铌制品",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "000962",
+          "name": "东方钽业",
+          "board": "钽铌制品",
+          "marketCode": "sz000962",
+          "sealTime": "09:48",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "反·4天2板",
+          "fanbao": true,
+          "concept": "钽铌制品、电容器级钽粉、半导体靶材、央企",
+          "concepts": "",
+          "reason": "钽铌制品、电容器级钽粉、半导体靶材、央企",
+          "quote": {
+            "price": 84.02,
+            "changePct": 10.0026,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 422.77,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 77,
+      "board": "铬盐龙头",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603067",
+          "name": "振华股份",
+          "board": "铬盐龙头",
+          "marketCode": "sh603067",
+          "sealTime": "09:59",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "反·4天2板",
+          "fanbao": true,
+          "concept": "铬盐龙头、SOFC、BE合作",
+          "concepts": "",
+          "reason": "铬盐龙头、SOFC、BE合作",
+          "quote": {
+            "price": 46.38,
+            "changePct": 10.0095,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 350.41,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 78,
+      "board": "铁合金",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "600058",
+          "name": "五矿发展",
+          "board": "铁合金",
+          "marketCode": "sh600058",
+          "sealTime": "10:15",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "反·4天2板",
+          "fanbao": true,
+          "concept": "铁合金、铁矿资产注入、央企",
+          "concepts": "",
+          "reason": "铁合金、铁矿资产注入、央企",
+          "quote": {
+            "price": 11.77,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 126.16,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 79,
+      "board": "磷化铟衬底",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603065",
+          "name": "宿迁联盛",
+          "board": "磷化铟衬底",
+          "marketCode": "sh603065",
+          "sealTime": "10:06",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "反·4天2板",
+          "fanbao": true,
+          "concept": "磷化铟衬底、终止减持、光稳定剂",
+          "concepts": "",
+          "reason": "磷化铟衬底、终止减持、光稳定剂",
+          "quote": {
+            "price": 20.13,
+            "changePct": 10,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 84.34,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        }
+      ]
+    },
+    {
+      "rank": 80,
+      "board": "投资GPU公司",
+      "count": 1,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603661",
+          "name": "恒林股份",
+          "board": "投资GPU公司",
+          "marketCode": "sh603661",
+          "sealTime": "09:36",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "反·4天2板",
+          "fanbao": true,
+          "concept": "投资GPU公司、培育钻石、家居用品、出口",
+          "concepts": "",
+          "reason": "投资GPU公司、培育钻石、家居用品、出口",
+          "quote": {
+            "price": 37.3,
+            "changePct": 9.9971,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 51.87,
             "totalMarketValueYi": null,
             "fmv": null,
             "tn": null

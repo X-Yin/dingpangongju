@@ -2,18 +2,83 @@
   "date": "20260713",
   "pageDate": "2026-07-13",
   "sourceUrl": "https://lianban.net/days/2026-07-13.html",
-  "fetchedAt": "2026-10-01 18:12:18",
+  "fetchedAt": "2026-10-17 14:08:20",
   "summary": {
-    "totalCount": 23,
-    "themeCount": 6,
+    "totalCount": 27,
+    "themeCount": 7,
     "lianbanCount": 9,
-    "firstBoardCount": 14,
+    "firstBoardCount": 18,
     "leaderCount": 6
   },
   "sentiment": {
     "phase": "冰点期",
     "temperature": 5
   },
+  "kpi": {
+    "limitUpCount": 27,
+    "limitDownCount": 172,
+    "maxLianban": {
+      "value": 3,
+      "unit": "板"
+    },
+    "lianbanCount": 9,
+    "sealRate": 67.5,
+    "brokenBoardCount": 13,
+    "yesterdayZtPerf": null,
+    "upCount": 777,
+    "downCount": 4377,
+    "totalAmount": null
+  },
+  "ladder": [
+    {
+      "board": "3板",
+      "lianbanCount": 3,
+      "count": 3,
+      "codes": [
+        "600992",
+        "003020",
+        "001395"
+      ]
+    },
+    {
+      "board": "2板",
+      "lianbanCount": 2,
+      "count": 6,
+      "codes": [
+        "605090",
+        "601608",
+        "600664",
+        "000920",
+        "600629",
+        "600513"
+      ]
+    },
+    {
+      "board": "1板",
+      "lianbanCount": 1,
+      "count": 18,
+      "codes": [
+        "603318",
+        "300214",
+        "601002",
+        "603933",
+        "603137",
+        "603120",
+        "600881",
+        "003030",
+        "000989",
+        "603065",
+        "600671",
+        "300534",
+        "002379",
+        "603669",
+        "603677",
+        "600536",
+        "001388",
+        "603313"
+      ]
+    }
+  ],
   "themes": [
     {
       "rank": 1,
@@ -46,6 +111,36 @@
             "pe": null,
             "pb": null,
             "floatMarketValueYi": 21.44,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        },
+        {
+          "code": "600513",
+          "name": "联环药业",
+          "board": "医药",
+          "marketCode": "sh600513",
+          "sealTime": "13:55",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2连板",
+          "fanbao": false,
+          "concept": "创新药",
+          "concepts": "",
+          "reason": "创新药+减肥药；1. 创新药：据2026年5月29日投资者关系活动记录表，公司计划于2026年6-7月完成LH-1801片pre-NDA沟通并根据审评节奏进行申报，LH-1801顺利完成Ⅲ期临床试验，研发成果转化效率持续提升。据2026年5月21日业绩说明会，国内SGLT-2类药物已纳入集采，价格趋于合理，LH-1801片作为1类创新药，凭借优效数据具备差异化定价空间。\n\n2. 减肥药：据2026年5月21日业绩说明会，SGLT-2类药物以降糖为核心、兼具减重且耐受性好；LH1801片属于SGLT-2抑制剂，核心临床定位是降糖，这与以减重为主要机制的GLP-1类产品形成差异化互补，而非直接竞争。LH-1801片Ⅲ期临床显示降糖效果明确、观察到一定的减重获益（约2.5kg），通过排糖机制实现减重，不影响患者生活质量，在临床应用中具备差异化优势。",
+          "quote": {
+            "price": null,
+            "changePct": null,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 29.23,
             "totalMarketValueYi": null,
             "fmv": null,
             "tn": null
@@ -200,36 +295,6 @@
             "fmv": null,
             "tn": null
           }
-        },
-        {
-          "code": "600513",
-          "name": "联环药业",
-          "board": "医药",
-          "marketCode": "sh600513",
-          "sealTime": "13:55",
-          "early": false,
-          "leader": false,
-          "lianbanCount": 2,
-          "lianbanText": "2连板",
-          "fanbao": false,
-          "concept": "创新药",
-          "concepts": "",
-          "reason": "创新药+减肥药；1. 创新药：据2026年5月29日投资者关系活动记录表，公司计划于2026年6-7月完成LH-1801片pre-NDA沟通并根据审评节奏进行申报，LH-1801顺利完成Ⅲ期临床试验，研发成果转化效率持续提升。据2026年5月21日业绩说明会，国内SGLT-2类药物已纳入集采，价格趋于合理，LH-1801片作为1类创新药，凭借优效数据具备差异化定价空间。\n\n2. 减肥药：据2026年5月21日业绩说明会，SGLT-2类药物以降糖为核心、兼具减重且耐受性好；LH1801片属于SGLT-2抑制剂，核心临床定位是降糖，这与以减重为主要机制的GLP-1类产品形成差异化互补，而非直接竞争。LH-1801片Ⅲ期临床显示降糖效果明确、观察到一定的减重获益（约2.5kg），通过排糖机制实现减重，不影响患者生活质量，在临床应用中具备差异化优势。",
-          "quote": {
-            "price": null,
-            "changePct": null,
-            "open": null,
-            "prevClose": null,
-            "amplitude": null,
-            "turnoverRate": null,
-            "amountWan": null,
-            "pe": null,
-            "pb": null,
-            "floatMarketValueYi": 29.23,
-            "totalMarketValueYi": null,
-            "fmv": null,
-            "tn": null
-          }
         }
       ]
     },
@@ -240,19 +305,19 @@
       "reason": null,
       "stocks": [
         {
-          "code": "601002",
-          "name": "晋亿实业",
+          "code": "001395",
+          "name": "亚联机械",
           "board": "中报增长",
-          "marketCode": "sh601002",
-          "sealTime": "09:30",
-          "early": true,
-          "leader": false,
-          "lianbanCount": 1,
-          "lianbanText": "首板",
+          "marketCode": "sz001395",
+          "sealTime": "10:09",
+          "early": false,
+          "leader": true,
+          "lianbanCount": 3,
+          "lianbanText": "3连板",
           "fanbao": false,
           "concept": "中报增长",
           "concepts": "",
-          "reason": "中报增长；7月10日晚公告，预计2026年1-6月归属于上市公司股东的净利润盈利:18,500万元至22,000万元,同比上年增长:57.67%至87.5%,同比上年增长6,766.73万元至10,266.73万元。",
+          "reason": "中报增长+专用设备；1. 中报增长：7月12日晚公司发布2026年半年度业绩快报称，公司2026年半年度实现营业总收入51，474.27万元，同比增长36.93%；归属于上市公司股东的净利润为15，742.29万元，同比增长60.06%。\n\n2. 专用设备：据2025年年报，公司是人造板生产装备整体解决方案的供应商和服务商，主营业务为人造板生产线及其配套设备和专用材料的研发、生产、销售和服务。公司的核心产品为人造板连续平压生产线，可用于生产纤维板、刨花板、定向刨花板、可饰面复合板等多种类型的人造板材。",
           "quote": {
             "price": null,
             "changePct": null,
@@ -263,7 +328,7 @@
             "amountWan": null,
             "pe": null,
             "pb": null,
-            "floatMarketValueYi": 25.46,
+            "floatMarketValueYi": 16.38,
             "totalMarketValueYi": null,
             "fmv": null,
             "tn": null
@@ -300,19 +365,19 @@
           }
         },
         {
-          "code": "001395",
-          "name": "亚联机械",
+          "code": "601002",
+          "name": "晋亿实业",
           "board": "中报增长",
-          "marketCode": "sz001395",
-          "sealTime": "10:09",
-          "early": false,
-          "leader": true,
-          "lianbanCount": 3,
-          "lianbanText": "3连板",
+          "marketCode": "sh601002",
+          "sealTime": "09:30",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
           "fanbao": false,
           "concept": "中报增长",
           "concepts": "",
-          "reason": "中报增长+专用设备；1. 中报增长：7月12日晚公司发布2026年半年度业绩快报称，公司2026年半年度实现营业总收入51，474.27万元，同比增长36.93%；归属于上市公司股东的净利润为15，742.29万元，同比增长60.06%。\n\n2. 专用设备：据2025年年报，公司是人造板生产装备整体解决方案的供应商和服务商，主营业务为人造板生产线及其配套设备和专用材料的研发、生产、销售和服务。公司的核心产品为人造板连续平压生产线，可用于生产纤维板、刨花板、定向刨花板、可饰面复合板等多种类型的人造板材。",
+          "reason": "中报增长；7月10日晚公告，预计2026年1-6月归属于上市公司股东的净利润盈利:18,500万元至22,000万元,同比上年增长:57.67%至87.5%,同比上年增长6,766.73万元至10,266.73万元。",
           "quote": {
             "price": null,
             "changePct": null,
@@ -323,7 +388,7 @@
             "amountWan": null,
             "pe": null,
             "pb": null,
-            "floatMarketValueYi": 16.38,
+            "floatMarketValueYi": 25.46,
             "totalMarketValueYi": null,
             "fmv": null,
             "tn": null
@@ -367,6 +432,36 @@
       "count": 4,
       "reason": "长鑫科技7月16日启动申购；华为韬定律V2版出炉",
       "stocks": [
+        {
+          "code": "000920",
+          "name": "沃顿科技",
+          "board": "芯片",
+          "marketCode": "sz000920",
+          "sealTime": "10:25",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2连板",
+          "fanbao": false,
+          "concept": "芯片",
+          "concepts": "",
+          "reason": "芯片+液冷；1. 芯片：据2026年6月26日投资者关系活动记录表，公司的超纯水系列膜产品是较为成熟的系列产品，已应用于半导体芯片等对水质要求极高的高端制造领域，公司也在积极推进国产化替代，目前在公司整体营业收入中占比较小。\n\n2. 液冷：据2026年6月26日投资者关系活动记录表，公司产品在数据中心冷却系统领域有实际应用，目前量小，对公司整体影响很小。",
+          "quote": {
+            "price": null,
+            "changePct": null,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 30.96,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        },
         {
           "code": "603318",
           "name": "水发燃气",
@@ -456,21 +551,29 @@
             "fmv": null,
             "tn": null
           }
-        },
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "board": "其他",
+      "count": 4,
+      "reason": null,
+      "stocks": [
         {
-          "code": "000920",
-          "name": "沃顿科技",
-          "board": "芯片",
-          "marketCode": "sz000920",
-          "sealTime": "10:25",
+          "code": "603120",
+          "name": "肯特催化",
+          "board": "其他",
+          "marketCode": "sh603120",
+          "sealTime": "09:37",
           "early": false,
           "leader": false,
-          "lianbanCount": 2,
-          "lianbanText": "2连板",
+          "lianbanCount": 1,
+          "lianbanText": "首板",
           "fanbao": false,
-          "concept": "芯片",
+          "concept": "化工",
           "concepts": "",
-          "reason": "芯片+液冷；1. 芯片：据2026年6月26日投资者关系活动记录表，公司的超纯水系列膜产品是较为成熟的系列产品，已应用于半导体芯片等对水质要求极高的高端制造领域，公司也在积极推进国产化替代，目前在公司整体营业收入中占比较小。\n\n2. 液冷：据2026年6月26日投资者关系活动记录表，公司产品在数据中心冷却系统领域有实际应用，目前量小，对公司整体影响很小。",
+          "reason": "化工+光刻胶；1. 化工：据2026年7月6日投资者关系活动记录表，公司主营季铵(鏻)化合物的研发、生产和销售，核心产品为季铵盐、季铵碱、季鏻盐、冠醚四大系列，面向精细化工、分子筛、高分子材料、电池电解液、油田化学品、电子化学品等下游行业提供优质的产品和服务。目前，公司正全力推进“年产8,860吨功能性催化新材料项目”的建设，匹配下游不断增长的市场需求，实现产能扩容与产品结构优化同步落地。\n\n2. 光刻胶：根据2025年5月13日互动易：公司所开发的产品，并非催化光刻胶显影液，而是光刻胶显影液。目前，刻蚀液产品已实现批量生产。",
           "quote": {
             "price": null,
             "changePct": null,
@@ -481,7 +584,97 @@
             "amountWan": null,
             "pe": null,
             "pb": null,
-            "floatMarketValueYi": 30.96,
+            "floatMarketValueYi": 20.88,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        },
+        {
+          "code": "003030",
+          "name": "祖名股份",
+          "board": "其他",
+          "marketCode": "sz003030",
+          "sealTime": "09:38",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "食品饮料",
+          "concepts": "",
+          "reason": "食品饮料；据2025年年报，公司专注于豆制品的研发、生产和销售，产品主要涵盖生鲜豆制品、植物蛋白饮品、休闲豆制品、其他类产品等400余种。公司形成了以生鲜豆制品为基础、植物蛋白饮品和休闲豆制品为发展重点、其他类产品为补充的产线格局。产品深耕江浙沪地区并且覆盖国内绝大多数省、自治区和直辖市，客户涵盖Costco、奥乐齐、高鑫零售、永辉、世纪联华、华润万家、物美、三江超市等大中型超市，老娘舅、老乡鸡、巴比食品等知名餐饮机构，盒马鲜生、叮咚买菜、朴朴超市、鸣鸣很忙、小象超市、美团等生鲜专营电商平台，赢得了消费者和市场的高度认可。",
+          "quote": {
+            "price": null,
+            "changePct": null,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 12.88,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        },
+        {
+          "code": "600536",
+          "name": "中国软件",
+          "board": "其他",
+          "marketCode": "sh600536",
+          "sealTime": "13:33",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "AI应用",
+          "concepts": "",
+          "reason": "AI应用+国产软件；7月10日国家网信办：截至6月30日累计有988款生成式人工智能服务完成备案\n\n1. AI应用：据2026年4月24日公告，2025年，中国软件持续加强核心能力建设，持续迭代升级“熵舟”数智底座，加强人工智能技术的落地应用，推动“熵舟”数智底座融入集团公司先进计算整体解决方案，并不断形成差异化的核心能力护城河。目前“熵舟”作为集人工智能平台、应用构建、数据服务、运行支撑于一体的、全栈自主可控的数智化底座，已全面支撑公司党政核心应用业务的重大项目交付，为系统高可靠运行、软件敏捷化开发、数据全链路治理等提供支撑。\n\n2. 国产软件：据2025年年报，公司以操作系统为核心，聚力打造国内最强基础软件企业。致力于操作系统技术的研究、产品开发及产业化推广，以桌面、服务器操作系统为引领，构建包括智算操作系统、工业操作系统等在内的操作系统产品集，携手合作伙伴共建产业生态。",
+          "quote": {
+            "price": null,
+            "changePct": null,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 172.93,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        },
+        {
+          "code": "603313",
+          "name": "梦百合",
+          "board": "其他",
+          "marketCode": "sh603313",
+          "sealTime": "14:53",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "反·4天2板",
+          "fanbao": true,
+          "concept": "服装家纺",
+          "concepts": "",
+          "reason": "服装家纺+智能家居；据2025年年报，公司主要从事致力于提升人类深度睡眠的家居产品—记忆绵床垫、记忆绵枕头、沙发、电动床及其他家居制品的研发、生产和销售。",
+          "quote": {
+            "price": null,
+            "changePct": null,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 29.86,
             "totalMarketValueYi": null,
             "fmv": null,
             "tn": null
@@ -490,7 +683,7 @@
       ]
     },
     {
-      "rank": 4,
+      "rank": 5,
       "board": "商业航天",
       "count": 3,
       "reason": null,
@@ -588,11 +781,41 @@
       ]
     },
     {
-      "rank": 5,
+      "rank": 6,
       "board": "并购重组",
       "count": 3,
       "reason": null,
       "stocks": [
+        {
+          "code": "600629",
+          "name": "华建集团",
+          "board": "并购重组",
+          "marketCode": "sh600629",
+          "sealTime": "13:11",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2连板",
+          "fanbao": false,
+          "concept": "并购重组",
+          "concepts": "",
+          "reason": "并购重组；据2026年7月9日晚公告，华建数创（上海）科技有限公司披露重整计划草案，重整投资人上海现代建筑设计（集团）有限公司及上海韵筑投资有限公司合计为华建数创注资约1.17亿元。未来经营方案将聚焦建筑企业数字化转型服务，旨在“挖掘更多专项咨询或平台运维的长期项目，形成‘数字专项设计咨询+全过程咨询服务+平台运维和性能优化’的业务模式”，并“开展设计咨询数据治理和数据中心建设，面向数据驱动的二三维协同设计软件开发，行业垂类多模态大模型与智能体研发”。",
+          "quote": {
+            "price": null,
+            "changePct": null,
+            "open": null,
+            "prevClose": null,
+            "amplitude": null,
+            "turnoverRate": null,
+            "amountWan": null,
+            "pe": null,
+            "pb": null,
+            "floatMarketValueYi": 79.48,
+            "totalMarketValueYi": null,
+            "fmv": null,
+            "tn": null
+          }
+        },
         {
           "code": "300214",
           "name": "日科化学",
@@ -652,41 +875,11 @@
             "fmv": null,
             "tn": null
           }
-        },
-        {
-          "code": "600629",
-          "name": "华建集团",
-          "board": "并购重组",
-          "marketCode": "sh600629",
-          "sealTime": "13:11",
-          "early": false,
-          "leader": false,
-          "lianbanCount": 2,
-          "lianbanText": "2连板",
-          "fanbao": false,
-          "concept": "并购重组",
-          "concepts": "",
-          "reason": "并购重组；据2026年7月9日晚公告，华建数创（上海）科技有限公司披露重整计划草案，重整投资人上海现代建筑设计（集团）有限公司及上海韵筑投资有限公司合计为华建数创注资约1.17亿元。未来经营方案将聚焦建筑企业数字化转型服务，旨在“挖掘更多专项咨询或平台运维的长期项目，形成‘数字专项设计咨询+全过程咨询服务+平台运维和性能优化’的业务模式”，并“开展设计咨询数据治理和数据中心建设，面向数据驱动的二三维协同设计软件开发，行业垂类多模态大模型与智能体研发”。",
-          "quote": {
-            "price": null,
-            "changePct": null,
-            "open": null,
-            "prevClose": null,
-            "amplitude": null,
-            "turnoverRate": null,
-            "amountWan": null,
-            "pe": null,
-            "pb": null,
-            "floatMarketValueYi": 79.48,
-            "totalMarketValueYi": null,
-            "fmv": null,
-            "tn": null
-          }
         }
       ]
     },
     {
-      "rank": 6,
+      "rank": 7,
       "board": "机器人概念",
       "count": 2,
       "reason": null,

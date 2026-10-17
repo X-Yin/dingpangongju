@@ -578,7 +578,7 @@ app.get('/lianban_day', (req, res) => {
   }
 });
 
-// 刷新时间范围内的连板快照：已存在对应日期缓存文件的跳过，缺失的重新抓取并写入缓存文件
+// 刷新时间范围内的连板快照：已存在对应日期缓存文件的跳过（force=true 时强制覆盖重刷），缺失的重新抓取并写入缓存文件
 app.post('/refresh_lianban_snapshot', async (req, res) => {
   try {
     const start = String(req.body?.start || '').replace(/\D/g, '');
@@ -586,7 +586,7 @@ app.post('/refresh_lianban_snapshot', async (req, res) => {
     if (!/^\d{8}$/.test(start) || !/^\d{8}$/.test(end)) {
       return res.status(400).json({ success: false, message: '请提供有效的开始/结束日期（YYYYMMDD）' });
     }
-    const result = await refreshLianbanRange(start, end);
+    const result = await refreshLianbanRange(start, end, { force: req.body?.force === true });
     res.json({ success: true, ...result });
   } catch (error) {
     console.error('刷新连板快照失败:', error);
@@ -4378,7 +4378,7 @@ setInterval(() => {
   if (isInMarketSnapshotWindow()) runMarketSnapshotJob();
 }, 60 * 1000);
 
-// 连板网每日连板数据：交易日 21:00 后自动抓取当日热点题材涨停数据（见 service/lianban.js）
+// 连板网每日连板数据：交易日 21:30 后自动抓取当日连板天梯涨停数据（见 service/lianban.js）
 // 挂在常驻的 Web 服务进程上（poll 进程 15:05 收盘后会自动退出，无法覆盖晚间任务）
 scheduleLianbanDaily(21, 30);
 

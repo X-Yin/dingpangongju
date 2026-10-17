@@ -2,21 +2,313 @@
   "date": "20260819",
   "pageDate": "2026-08-19",
   "sourceUrl": "https://lianban.net/days/2026-08-19.html",
-  "fetchedAt": "2026-10-01 18:13:22",
+  "fetchedAt": "2026-10-17 14:09:05",
   "summary": {
-    "totalCount": 29,
-    "themeCount": 8,
-    "lianbanCount": 5,
-    "firstBoardCount": 24,
+    "totalCount": 36,
+    "themeCount": 9,
+    "lianbanCount": 7,
+    "firstBoardCount": 29,
     "leaderCount": 8
   },
   "sentiment": {
     "phase": "冰点期",
     "temperature": 5
   },
+  "kpi": {
+    "limitUpCount": 36,
+    "limitDownCount": 118,
+    "maxLianban": {
+      "value": 3,
+      "unit": "板"
+    },
+    "lianbanCount": 7,
+    "sealRate": 75,
+    "brokenBoardCount": 12,
+    "yesterdayZtPerf": null,
+    "upCount": 449,
+    "downCount": 5069,
+    "totalAmount": "2.51万亿"
+  },
+  "ladder": [
+    {
+      "board": "3板",
+      "lianbanCount": 3,
+      "count": 3,
+      "codes": [
+        "600127",
+        "603395",
+        "000505"
+      ]
+    },
+    {
+      "board": "2板",
+      "lianbanCount": 2,
+      "count": 4,
+      "codes": [
+        "002953",
+        "000020",
+        "600371",
+        "000526"
+      ]
+    },
+    {
+      "board": "1板",
+      "lianbanCount": 1,
+      "count": 29,
+      "codes": [
+        "600783",
+        "002333",
+        "603506",
+        "601011",
+        "002900",
+        "001301",
+        "603801",
+        "603102",
+        "000560",
+        "000736",
+        "002412",
+        "301211",
+        "000723",
+        "301130",
+        "603848",
+        "001277",
+        "001338",
+        "600403",
+        "603290",
+        "001400",
+        "300069",
+        "601015",
+        "600610",
+        "603366",
+        "002040",
+        "000059",
+        "300911",
+        "002543",
+        "603113"
+      ]
+    }
+  ],
   "themes": [
     {
       "rank": 1,
+      "board": "其他",
+      "count": 7,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "002953",
+          "name": "日丰股份",
+          "board": "其他",
+          "marketCode": "sz002953",
+          "sealTime": "09:25",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2连板",
+          "fanbao": false,
+          "concept": "光纤概念",
+          "concepts": "",
+          "reason": "通信(光纤概念)；据2026年8月17日晚公告，广东日丰电缆股份有限公司拟设立全资子公司并投资建设“年产300吨光纤预制棒、1000万芯公里光纤项目”，项目计划总投资约70,000万元（7亿元）。项目旨在依托全资子公司广东日丰新材料有限公司完成基建，并由新设全资子公司广东日丰光电科技有限公司负责运营。本次投资系公司布局通信装备组件相关产业链的重要战略举措，旨在向产业链上游延伸，助力公司实现从“线缆制造”向“线缆+核心部件”综合提供商的转型升级。",
+          "quote": {
+            "price": 12,
+            "changePct": 2.3,
+            "open": 12,
+            "prevClose": 11.73,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 3273,
+            "pe": 37.64,
+            "pb": 2.7,
+            "floatMarketValueYi": 23.46,
+            "totalMarketValueYi": 58.99,
+            "fmv": 32.56,
+            "tn": 1.01
+          }
+        },
+        {
+          "code": "000526",
+          "name": "学大教育",
+          "board": "其他",
+          "marketCode": "sz000526",
+          "sealTime": "09:33",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2连板",
+          "fanbao": false,
+          "concept": "中报增长",
+          "concepts": "",
+          "reason": "中报增长+AI应用；1. 中报增长：8月17日晚公告，2026年1-6月归属上市公司股东的净利润：3.01亿元，同比上年增长：30.85%。\n\n2. AI应用：据2025年年度报告，公司自主研发面向教育场景的AI模型“星图”大模型，实现对学生学习状况的精准诊断和个性化方案定制。“星图”大模型已接入AI底座平台DeepSeek，聚焦教学场景深度融合与创新应用；研发“学大综合数分引擎”、“学大智能营销获客云”、“学大精准规划系统”及“学大九天系统”。报告期内研发投入金额达3543.10万元。公司荣获2025多鲸“年度AI个性化教育领导品牌”、百度营销“AI见非凡·年度卓越合作”等奖项。",
+          "quote": {
+            "price": 37.82,
+            "changePct": -3.25,
+            "open": 37.82,
+            "prevClose": 39.09,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 2538,
+            "pe": 17.33,
+            "pb": 3.73,
+            "floatMarketValueYi": 32.21,
+            "totalMarketValueYi": 46.09,
+            "fmv": 45.94,
+            "tn": 0.55
+          }
+        },
+        {
+          "code": "002333",
+          "name": "罗普斯金",
+          "board": "其他",
+          "marketCode": "sz002333",
+          "sealTime": "09:25",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "并购重组",
+          "concepts": "",
+          "reason": "并购重组+装修家具；1. 并购重组：据2026年8月18日晚公告，罗普斯金拟以现金方式收购苏州盟萤电子科技有限公司51%股权，使其成为控股子公司并纳入合并报表范围。盟萤科技主要生产AMHS系统专用核心零部件，核心产品包括Crane堆垛机、高性能聚氨酯走行车轮、高端工程塑料、高精密机械加工件等，广泛应用于先进面板工厂，实现玻璃基板载具的自动化传输、存储，同时面向智能制造领域提供柔性自动化搬运仓储解决方案。本次收购旨在依托产业链协同优势，快速切入设备装备赛道，培育第二增长曲线、优化整体业务结构。\n\n2. 装修家具：据2025年年报，公司生产的铝合金建筑型材主要应用于住宅、商业地产及公共建筑领域的铝合金门窗、幕墙、支架、商业建筑室内装修等产品。",
+          "quote": {
+            "price": 6.5,
+            "changePct": 2.52,
+            "open": 6.5,
+            "prevClose": 6.34,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 3136,
+            "pe": 88.01,
+            "pb": 2.28,
+            "floatMarketValueYi": 13.47,
+            "totalMarketValueYi": 43.87,
+            "fmv": 43.32,
+            "tn": 0.72
+          }
+        },
+        {
+          "code": "001301",
+          "name": "尚太科技",
+          "board": "其他",
+          "marketCode": "sz001301",
+          "sealTime": "09:31",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "负极",
+          "concepts": "",
+          "reason": "锂电池(负极)；据2026年半年报，公司从事锂离子电池负极材料以及碳素制品的研发、生产和销售，核心业务为人造石墨负极材料自主研发、生产与销售，产品主要应用于动力电池、储能电池领域；公司硅碳负极材料已实现稳定量产出货，可满足高端高能量密度动力电池、eVTOL、工业机器人等场景应用需求，同时持续加大钠离子电池配套硬碳负极材料研发投入。",
+          "quote": {
+            "price": 62,
+            "changePct": -0.53,
+            "open": 62,
+            "prevClose": 62.33,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 2191,
+            "pe": 26.1,
+            "pb": 3.14,
+            "floatMarketValueYi": 141.31,
+            "totalMarketValueYi": 226.06,
+            "fmv": 161.26,
+            "tn": 0.14
+          }
+        },
+        {
+          "code": "603102",
+          "name": "百合股份",
+          "board": "其他",
+          "marketCode": "sh603102",
+          "sealTime": "09:32",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "反·3天2板",
+          "fanbao": true,
+          "concept": "保健品",
+          "concepts": "",
+          "reason": "保健品+宠物经济；1. 保健品：据2026年半年报，公司是一家专业从事营养保健食品的研发、生产和销售的国家高新技术企业，已形成软胶囊、硬胶囊、片剂、软糖、粉剂、口服液、滴剂、袋装饮品等多剂型、规模化的生产能力；公司产品主要涵盖增强免疫力、增加骨密度、通便、辅助降血糖、减肥、缓解体力疲劳等18项保健功能\n\n2. 宠物经济：据2026年半年报，公司在战略新兴领域前瞻性布局宠物营养赛道，以“用人类食品标准打造高品质宠物营养食品”为理念，开发符合标准的宠物营养补充剂，创新研发宠物功能营养解决方案，如DHA微藻油软胶囊、磷脂美毛片、鲨鱼软骨素硬胶囊等产品，针对幼宠与老龄宠物推出高钙0乳糖羊奶粉及乳铁蛋白营养粉系列",
+          "quote": {
+            "price": 48.3,
+            "changePct": 5.55,
+            "open": 48.3,
+            "prevClose": 45.76,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 2608,
+            "pe": 26.06,
+            "pb": 1.8,
+            "floatMarketValueYi": 16.41,
+            "totalMarketValueYi": 30.91,
+            "fmv": 30.91,
+            "tn": 0.84
+          }
+        },
+        {
+          "code": "603290",
+          "name": "斯达半导",
+          "board": "其他",
+          "marketCode": "sh603290",
+          "sealTime": "09:53",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "IGBT",
+          "concepts": "",
+          "reason": "芯片(IGBT)；据2025年年报，公司业务均为以IGBT为主的功率半导体芯片和模块的设计、研发、生产，并以IGBT模块形式对外实现销售，IGBT模块的销售收入占主营业务收入的83.69%",
+          "quote": {
+            "price": 98.01,
+            "changePct": -2.29,
+            "open": 98.01,
+            "prevClose": 100.31,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 3953,
+            "pe": 71.52,
+            "pb": 3.43,
+            "floatMarketValueYi": 112.95,
+            "totalMarketValueYi": 234.71,
+            "fmv": 234.71,
+            "tn": 0.17
+          }
+        },
+        {
+          "code": "300911",
+          "name": "亿田智能",
+          "board": "其他",
+          "marketCode": "sz300911",
+          "sealTime": "13:07",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "算力租赁",
+          "concepts": "",
+          "reason": "算力租赁+家电；1. 算力租赁：据2026年8月18日公告，全资子公司甘肃亿算智能科技有限公司与Z公司签署《亿田算力中心项目建设合同》，致力于共同建设亿田算力中心，面向市场应用提供智算算力和大模型应用技术支持相关服务，合同总价款为10亿元。\n\n2. 家电：据2025年年报，公司作为现代化厨房电器制造企业，专业从事集成灶等现代新型厨房电器产品的研发、生产和销售；报告期内主要产品包括集成灶（可分为蒸烤独立款、蒸烤一体款、蒸箱款、消毒柜款、保洁柜款和储藏柜款）、集成水槽及集成洗碗机",
+          "quote": {
+            "price": 25.26,
+            "changePct": -5.25,
+            "open": 25.26,
+            "prevClose": 26.66,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 2710,
+            "pe": -28.13,
+            "pb": 4.27,
+            "floatMarketValueYi": 24,
+            "totalMarketValueYi": 46.31,
+            "fmv": 43.28,
+            "tn": 0.63
+          }
+        }
+      ]
+    },
+    {
+      "rank": 2,
       "board": "地产链",
       "count": 6,
       "reason": null,
@@ -204,7 +496,7 @@
       ]
     },
     {
-      "rank": 2,
+      "rank": 3,
       "board": "农业",
       "count": 5,
       "reason": "摩根大通：下一轮全球粮食危机可能正在酝酿之中",
@@ -270,36 +562,6 @@
           }
         },
         {
-          "code": "600371",
-          "name": "万向德农",
-          "board": "农业",
-          "marketCode": "sh600371",
-          "sealTime": "09:31",
-          "early": true,
-          "leader": false,
-          "lianbanCount": 2,
-          "lianbanText": "2连板",
-          "fanbao": false,
-          "concept": "农业",
-          "concepts": "",
-          "reason": "农业；据2026年半年报，报告期内，公司从事的主要业务仍为玉米杂交种子研发、生产、销售。公司主营包括但不限于“硕秋系列”、“德单系列”等玉米杂交种的生产与销售。公司主要产品为玉米杂交种，主要用途为商品玉米种植。",
-          "quote": {
-            "price": 8.06,
-            "changePct": -9.94,
-            "open": 8.06,
-            "prevClose": 8.95,
-            "amplitude": 0,
-            "turnoverRate": 0,
-            "amountWan": 1670,
-            "pe": -428.13,
-            "pb": 4.53,
-            "floatMarketValueYi": 12.9,
-            "totalMarketValueYi": 23.58,
-            "fmv": 23.58,
-            "tn": 0.71
-          }
-        },
-        {
           "code": "000505",
           "name": "京粮控股",
           "board": "农业",
@@ -327,6 +589,36 @@
             "totalMarketValueYi": 50.01,
             "fmv": 43.51,
             "tn": 1.02
+          }
+        },
+        {
+          "code": "600371",
+          "name": "万向德农",
+          "board": "农业",
+          "marketCode": "sh600371",
+          "sealTime": "09:31",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 2,
+          "lianbanText": "2连板",
+          "fanbao": false,
+          "concept": "农业",
+          "concepts": "",
+          "reason": "农业；据2026年半年报，报告期内，公司从事的主要业务仍为玉米杂交种子研发、生产、销售。公司主营包括但不限于“硕秋系列”、“德单系列”等玉米杂交种的生产与销售。公司主要产品为玉米杂交种，主要用途为商品玉米种植。",
+          "quote": {
+            "price": 8.06,
+            "changePct": -9.94,
+            "open": 8.06,
+            "prevClose": 8.95,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 1670,
+            "pe": -428.13,
+            "pb": 4.53,
+            "floatMarketValueYi": 12.9,
+            "totalMarketValueYi": 23.58,
+            "fmv": 23.58,
+            "tn": 0.71
           }
         },
         {
@@ -362,7 +654,7 @@
       ]
     },
     {
-      "rank": 3,
+      "rank": 4,
       "board": "煤炭",
       "count": 5,
       "reason": "焦炭价格近90天上涨11.40%",
@@ -520,7 +812,7 @@
       ]
     },
     {
-      "rank": 4,
+      "rank": 5,
       "board": "医药",
       "count": 4,
       "reason": "1-7月中国创新药BD交易总金额达1063亿美元",
@@ -648,7 +940,7 @@
       ]
     },
     {
-      "rank": 5,
+      "rank": 6,
       "board": "商业航天",
       "count": 3,
       "reason": null,
@@ -746,7 +1038,7 @@
       ]
     },
     {
-      "rank": 6,
+      "rank": 7,
       "board": "化工",
       "count": 2,
       "reason": null,
@@ -814,7 +1106,7 @@
       ]
     },
     {
-      "rank": 7,
+      "rank": 8,
       "board": "家电",
       "count": 2,
       "reason": null,
@@ -882,7 +1174,7 @@
       ]
     },
     {
-      "rank": 8,
+      "rank": 9,
       "board": "石油石化",
       "count": 2,
       "reason": null,

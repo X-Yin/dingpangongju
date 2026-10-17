@@ -2,7 +2,7 @@
   "date": "20260915",
   "pageDate": "2026-09-15",
   "sourceUrl": "https://lianban.net/days/2026-09-15.html",
-  "fetchedAt": "2026-10-01 18:14:20",
+  "fetchedAt": "2026-10-17 14:09:36",
   "summary": {
     "totalCount": 32,
     "themeCount": 8,
@@ -14,6 +14,90 @@
     "phase": "冰点期",
     "temperature": 5
   },
+  "kpi": {
+    "limitUpCount": 32,
+    "limitDownCount": 27,
+    "maxLianban": {
+      "value": 5,
+      "unit": "板"
+    },
+    "lianbanCount": 7,
+    "sealRate": 57.1,
+    "brokenBoardCount": 24,
+    "yesterdayZtPerf": 0.5,
+    "upCount": 1120,
+    "downCount": 4376,
+    "totalAmount": "1.61万亿"
+  },
+  "ladder": [
+    {
+      "board": "5板",
+      "lianbanCount": 5,
+      "count": 1,
+      "codes": [
+        "000993"
+      ]
+    },
+    {
+      "board": "4板",
+      "lianbanCount": 4,
+      "count": 1,
+      "codes": [
+        "002912"
+      ]
+    },
+    {
+      "board": "3板",
+      "lianbanCount": 3,
+      "count": 2,
+      "codes": [
+        "002585",
+        "605058"
+      ]
+    },
+    {
+      "board": "2板",
+      "lianbanCount": 2,
+      "count": 3,
+      "codes": [
+        "002232",
+        "688004",
+        "603090"
+      ]
+    },
+    {
+      "board": "1板",
+      "lianbanCount": 1,
+      "count": 25,
+      "codes": [
+        "002882",
+        "001216",
+        "603186",
+        "603200",
+        "002362",
+        "601579",
+        "600110",
+        "002846",
+        "001223",
+        "603353",
+        "002491",
+        "601218",
+        "002487",
+        "002213",
+        "003026",
+        "002631",
+        "002531",
+        "605162",
+        "603082",
+        "603248",
+        "603266",
+        "600163",
+        "605507",
+        "002584",
+        "002522"
+      ]
+    }
+  ],
   "themes": [
     {
       "rank": 1,
@@ -205,6 +289,164 @@
     },
     {
       "rank": 2,
+      "board": "其他",
+      "count": 5,
+      "reason": null,
+      "stocks": [
+        {
+          "code": "603090",
+          "name": "宏盛股份",
+          "board": "其他",
+          "marketCode": "sh603090",
+          "sealTime": "09:53",
+          "early": false,
+          "leader": true,
+          "lianbanCount": 2,
+          "lianbanText": "2连板",
+          "fanbao": false,
+          "concept": "液冷",
+          "concepts": "金属铝、锂电池",
+          "reason": "算力(液冷)；据2026年9月9日公告，公司液冷产品主要包括CDU及相关热管理产品，部分热管理产品已开始批量出货，但相关收入占公司整体业务比例仍然较低。公司目前整体订单情况良好，产能利用率保持较高水平，液冷相关项目正在持续推进中。",
+          "quote": {
+            "price": 42,
+            "changePct": 4.45,
+            "open": 42,
+            "prevClose": 40.21,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 1713,
+            "pe": 62.73,
+            "pb": 6.62,
+            "floatMarketValueYi": 19.98,
+            "totalMarketValueYi": 42,
+            "fmv": 42,
+            "tn": 0.41
+          }
+        },
+        {
+          "code": "601579",
+          "name": "会稽山",
+          "board": "其他",
+          "marketCode": "sh601579",
+          "sealTime": "09:44",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "黄酒",
+          "concepts": "黄酒、中报增长",
+          "reason": "酿酒(黄酒)；据2026年半年报，公司主要从事黄酒的生产、销售和研发等业务，所处行业细分类为黄酒酿造行业，作为国家非物质文化遗产\"绍兴黄酒酿制技艺\"的传承基地，拥有绍兴本部、乌毡帽、西塘老酒三大生产基地，主要拥有\"会稽山、兰亭、西塘、乌毡帽\"等主品牌，生产\"纯正、兰亭、1743、爽酒、干纯\"等系列黄酒产品。截至报告期末，公司拥有各类有效专利88项，优质原酒储备处于行业领先地位。",
+          "quote": {
+            "price": 25.91,
+            "changePct": 0.62,
+            "open": 25.91,
+            "prevClose": 25.75,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 2030,
+            "pe": 44.46,
+            "pb": 3.31,
+            "floatMarketValueYi": 51.06,
+            "totalMarketValueYi": 124.23,
+            "fmv": 124.23,
+            "tn": 0.16
+          }
+        },
+        {
+          "code": "605162",
+          "name": "新中港",
+          "board": "其他",
+          "marketCode": "sh605162",
+          "sealTime": "10:49",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "电力",
+          "concepts": "煤炭、储能",
+          "reason": "电力+热力；1. 电力：据2026年半年报，公司电力产品直接销售给国家电网公司。据2026年4月25日公告，浙江新中港热电股份有限公司作为嵊州市唯一的热电联产企业，现有装机99.5兆瓦，共建热网约90公里；公司投资建设的嵊州市开发区储能示范项目为100兆瓦/220兆瓦时，2025年4月，1.25兆瓦分布式光伏发电项目并网成功\n\n2. 热力：据2026年9月11日公告，公司除了向原有经济开发区三个区块供热供压缩空气外，今年5月份投运了“向嵊州经济开发区浦口片区新建供热管道项目”，实现向绍兴弗迪电池有限公司供热，管道沿途分别通往“劳密”区块以及即将投产的陌桑工厂化养蚕三期和多家食品、包装类客户，公司供热量将显著增加。",
+          "quote": {
+            "price": 11.55,
+            "changePct": 0,
+            "open": 11.55,
+            "prevClose": 11.55,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 2317,
+            "pe": 50.11,
+            "pb": 3.1,
+            "floatMarketValueYi": 16.61,
+            "totalMarketValueYi": 51.15,
+            "fmv": 51.15,
+            "tn": 0.45
+          }
+        },
+        {
+          "code": "603082",
+          "name": "北自科技",
+          "board": "其他",
+          "marketCode": "sh603082",
+          "sealTime": "11:00",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "机器人概念",
+          "concepts": "机器视觉、灵巧手",
+          "reason": "机器人概念+并购重组；1. 机器人概念：据2026年半年报，公司自主研发了仓储机器人（堆垛机）、穿梭机器人（穿梭车）、悬挂机器人（EMS）、输送机等一系列通用物流装备，以及落丝机器人、包装机器人、外检机器人等一系列专用装备，形成覆盖智能制造多种场景的装备体系。\n\n2. 并购重组：据2026年半年报，北自科技完成发行股份及支付现金购买穗柯智能100%股权并募集配套资金事项，穗柯智能自2026年6月起纳入合并报表。据工商登记信息，苏州穗柯智能科技有限公司主营智慧物流·智能制造系统综合解决方案，为生产制造、流通配送企业提供规划设计、系统集成等业务。",
+          "quote": {
+            "price": 51,
+            "changePct": 5.9,
+            "open": 51,
+            "prevClose": 48.16,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 3268,
+            "pe": 58.11,
+            "pb": 4.86,
+            "floatMarketValueYi": 19.53,
+            "totalMarketValueYi": 84.95,
+            "fmv": 20.68,
+            "tn": 1.58
+          }
+        },
+        {
+          "code": "603266",
+          "name": "天龙股份",
+          "board": "其他",
+          "marketCode": "sh603266",
+          "sealTime": "11:09",
+          "early": false,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "无人驾驶",
+          "concepts": "IGBT、芯片",
+          "reason": "无人驾驶+汽车零部件；1. 无人驾驶：据2026年9月11日投资者关系活动记录表，2026年苏州豪米波将维持较高强度研发投入，主要投向下一代八发八收、十六发十六收4D成像毫米波雷达开发及射频天线、高频电路底层技术自研，同时布局UWB车载传感器等新产品预研；常熟工厂年产100万颗产线硬件已全部建成，上半年产能利用率偏低，自5月份起订单量已稳步上升。\n\n2. 汽车零部件：据2026年半年报，公司主要从事模具、汽车零部件的研发、生产和销售，产品主要有电子控制系统类零部件、轻量化功能结构件、精密模具等；在汽车零部件领域，主要为博泽集团、博世集团等国际一级供应商供货。",
+          "quote": {
+            "price": 17.5,
+            "changePct": 4.6,
+            "open": 17.5,
+            "prevClose": 16.73,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 703,
+            "pe": 36.69,
+            "pb": 2.14,
+            "floatMarketValueYi": 14.91,
+            "totalMarketValueYi": 34.81,
+            "fmv": 34.81,
+            "tn": 0.2
+          }
+        }
+      ]
+    },
+    {
+      "rank": 3,
       "board": "AI应用",
       "count": 4,
       "reason": null,
@@ -332,41 +574,11 @@
       ]
     },
     {
-      "rank": 3,
+      "rank": 4,
       "board": "通信",
       "count": 4,
       "reason": null,
       "stocks": [
-        {
-          "code": "603186",
-          "name": "华正新材",
-          "board": "通信",
-          "marketCode": "sh603186",
-          "sealTime": "09:31",
-          "early": true,
-          "leader": false,
-          "lianbanCount": 1,
-          "lianbanText": "首板",
-          "fanbao": false,
-          "concept": "覆铜板",
-          "concepts": "覆铜板、先进封装",
-          "reason": "通信(覆铜板)；据2026年半年报，公司主要从事覆铜板及粘结片、复合材料和膜材料等产品的设计、研发、生产及销售，覆铜板（CCL）是制作印制电路板（PCB）的基础材料。公司高速覆铜板主要聚焦在AI服务器、交换机、光模块、存储等细分市场应用，开发的无卤Ultra low loss等级材料已获得服务器终端客户的认可，应用于大芯片智算领域的Ultra low loss（Low CTE）材料已在AI数据中心的应用上实现批量销售。",
-          "quote": {
-            "price": 260,
-            "changePct": 3.35,
-            "open": 260,
-            "prevClose": 251.57,
-            "amplitude": 0,
-            "turnoverRate": 0,
-            "amountWan": 16799,
-            "pe": 100.17,
-            "pb": 16.55,
-            "floatMarketValueYi": 250.78,
-            "totalMarketValueYi": 407.66,
-            "fmv": 407.66,
-            "tn": 0.41
-          }
-        },
         {
           "code": "605058",
           "name": "澳弘电子",
@@ -395,6 +607,36 @@
             "totalMarketValueYi": 57.88,
             "fmv": 57.88,
             "tn": 0.55
+          }
+        },
+        {
+          "code": "603186",
+          "name": "华正新材",
+          "board": "通信",
+          "marketCode": "sh603186",
+          "sealTime": "09:31",
+          "early": true,
+          "leader": false,
+          "lianbanCount": 1,
+          "lianbanText": "首板",
+          "fanbao": false,
+          "concept": "覆铜板",
+          "concepts": "覆铜板、先进封装",
+          "reason": "通信(覆铜板)；据2026年半年报，公司主要从事覆铜板及粘结片、复合材料和膜材料等产品的设计、研发、生产及销售，覆铜板（CCL）是制作印制电路板（PCB）的基础材料。公司高速覆铜板主要聚焦在AI服务器、交换机、光模块、存储等细分市场应用，开发的无卤Ultra low loss等级材料已获得服务器终端客户的认可，应用于大芯片智算领域的Ultra low loss（Low CTE）材料已在AI数据中心的应用上实现批量销售。",
+          "quote": {
+            "price": 260,
+            "changePct": 3.35,
+            "open": 260,
+            "prevClose": 251.57,
+            "amplitude": 0,
+            "turnoverRate": 0,
+            "amountWan": 16799,
+            "pe": 100.17,
+            "pb": 16.55,
+            "floatMarketValueYi": 250.78,
+            "totalMarketValueYi": 407.66,
+            "fmv": 407.66,
+            "tn": 0.41
           }
         },
         {
@@ -460,7 +702,7 @@
       ]
     },
     {
-      "rank": 4,
+      "rank": 5,
       "board": "锂电池",
       "count": 4,
       "reason": null,
@@ -588,7 +830,7 @@
       ]
     },
     {
-      "rank": 5,
+      "rank": 6,
       "board": "芯片",
       "count": 4,
       "reason": "ASML正在研究在2028年生产超过110 台EUV光刻机",
@@ -716,7 +958,7 @@
       ]
     },
     {
-      "rank": 6,
+      "rank": 7,
       "board": "化工",
       "count": 3,
       "reason": null,
@@ -814,41 +1056,11 @@
       ]
     },
     {
-      "rank": 7,
+      "rank": 8,
       "board": "元器件",
       "count": 2,
       "reason": null,
       "stocks": [
-        {
-          "code": "001216",
-          "name": "华瓷股份",
-          "board": "元器件",
-          "marketCode": "sz001216",
-          "sealTime": "09:30",
-          "early": true,
-          "leader": false,
-          "lianbanCount": 1,
-          "lianbanText": "首板",
-          "fanbao": false,
-          "concept": "电阻电容",
-          "concepts": "氧化锆、金属锆",
-          "reason": "电阻电容+氧化锆；《科创板日报》9月10日讯，MLCC龙头村田制作所日前正式发布官方通知，宣布在2026会计年度启动产品线优化，将停产部分MLCC产品并扩充其他产能\n\n1. 电阻电容：据2026年9月11日互动易，公司子公司氧化锆粉体纯度最高可达99.995%，产品可适配新能源研磨、齿科陶瓷、MLCC等不同领域使用需求。\n\n2. 氧化锆：据2026年9月1日投资者关系活动记录表，公司科技陶瓷当前核心产品为氧化锆粉体及基于氧化锆粉体的生物齿科材料，下游应用包括齿科、陶瓷关节等生物陶瓷，锂电池正极材料研磨等研磨材料，以及MLCC粉体、燃料电池SOFC等电子级粉体；氧化锆研磨体材料的核心客户湖南裕能为锂电正极材料龙头企业，公司是其氧化锆微珠研磨体的主要供应商，产品已进入潮州三环验证阶段。",
-          "quote": {
-            "price": 18.07,
-            "changePct": 9.98,
-            "open": 18.07,
-            "prevClose": 16.43,
-            "amplitude": 0,
-            "turnoverRate": 0,
-            "amountWan": 3381,
-            "pe": 25.93,
-            "pb": 2.1,
-            "floatMarketValueYi": 12.43,
-            "totalMarketValueYi": 52.76,
-            "fmv": 44.6,
-            "tn": 0.76
-          }
-        },
         {
           "code": "002585",
           "name": "双星新材",
@@ -878,163 +1090,35 @@
             "fmv": 106.92,
             "tn": 1.22
           }
-        }
-      ]
-    },
-    {
-      "rank": 8,
-      "board": "其他",
-      "count": 5,
-      "reason": null,
-      "stocks": [
+        },
         {
-          "code": "601579",
-          "name": "会稽山",
-          "board": "其他",
-          "marketCode": "sh601579",
-          "sealTime": "09:44",
-          "early": false,
+          "code": "001216",
+          "name": "华瓷股份",
+          "board": "元器件",
+          "marketCode": "sz001216",
+          "sealTime": "09:30",
+          "early": true,
           "leader": false,
           "lianbanCount": 1,
           "lianbanText": "首板",
           "fanbao": false,
-          "concept": "黄酒",
-          "concepts": "黄酒、中报增长",
-          "reason": "酿酒(黄酒)；据2026年半年报，公司主要从事黄酒的生产、销售和研发等业务，所处行业细分类为黄酒酿造行业，作为国家非物质文化遗产\"绍兴黄酒酿制技艺\"的传承基地，拥有绍兴本部、乌毡帽、西塘老酒三大生产基地，主要拥有\"会稽山、兰亭、西塘、乌毡帽\"等主品牌，生产\"纯正、兰亭、1743、爽酒、干纯\"等系列黄酒产品。截至报告期末，公司拥有各类有效专利88项，优质原酒储备处于行业领先地位。",
+          "concept": "电阻电容",
+          "concepts": "氧化锆、金属锆",
+          "reason": "电阻电容+氧化锆；《科创板日报》9月10日讯，MLCC龙头村田制作所日前正式发布官方通知，宣布在2026会计年度启动产品线优化，将停产部分MLCC产品并扩充其他产能\n\n1. 电阻电容：据2026年9月11日互动易，公司子公司氧化锆粉体纯度最高可达99.995%，产品可适配新能源研磨、齿科陶瓷、MLCC等不同领域使用需求。\n\n2. 氧化锆：据2026年9月1日投资者关系活动记录表，公司科技陶瓷当前核心产品为氧化锆粉体及基于氧化锆粉体的生物齿科材料，下游应用包括齿科、陶瓷关节等生物陶瓷，锂电池正极材料研磨等研磨材料，以及MLCC粉体、燃料电池SOFC等电子级粉体；氧化锆研磨体材料的核心客户湖南裕能为锂电正极材料龙头企业，公司是其氧化锆微珠研磨体的主要供应商，产品已进入潮州三环验证阶段。",
           "quote": {
-            "price": 25.91,
-            "changePct": 0.62,
-            "open": 25.91,
-            "prevClose": 25.75,
+            "price": 18.07,
+            "changePct": 9.98,
+            "open": 18.07,
+            "prevClose": 16.43,
             "amplitude": 0,
             "turnoverRate": 0,
-            "amountWan": 2030,
-            "pe": 44.46,
-            "pb": 3.31,
-            "floatMarketValueYi": 51.06,
-            "totalMarketValueYi": 124.23,
-            "fmv": 124.23,
-            "tn": 0.16
-          }
-        },
-        {
-          "code": "603090",
-          "name": "宏盛股份",
-          "board": "其他",
-          "marketCode": "sh603090",
-          "sealTime": "09:53",
-          "early": false,
-          "leader": true,
-          "lianbanCount": 2,
-          "lianbanText": "2连板",
-          "fanbao": false,
-          "concept": "液冷",
-          "concepts": "金属铝、锂电池",
-          "reason": "算力(液冷)；据2026年9月9日公告，公司液冷产品主要包括CDU及相关热管理产品，部分热管理产品已开始批量出货，但相关收入占公司整体业务比例仍然较低。公司目前整体订单情况良好，产能利用率保持较高水平，液冷相关项目正在持续推进中。",
-          "quote": {
-            "price": 42,
-            "changePct": 4.45,
-            "open": 42,
-            "prevClose": 40.21,
-            "amplitude": 0,
-            "turnoverRate": 0,
-            "amountWan": 1713,
-            "pe": 62.73,
-            "pb": 6.62,
-            "floatMarketValueYi": 19.98,
-            "totalMarketValueYi": 42,
-            "fmv": 42,
-            "tn": 0.41
-          }
-        },
-        {
-          "code": "605162",
-          "name": "新中港",
-          "board": "其他",
-          "marketCode": "sh605162",
-          "sealTime": "10:49",
-          "early": false,
-          "leader": false,
-          "lianbanCount": 1,
-          "lianbanText": "首板",
-          "fanbao": false,
-          "concept": "电力",
-          "concepts": "煤炭、储能",
-          "reason": "电力+热力；1. 电力：据2026年半年报，公司电力产品直接销售给国家电网公司。据2026年4月25日公告，浙江新中港热电股份有限公司作为嵊州市唯一的热电联产企业，现有装机99.5兆瓦，共建热网约90公里；公司投资建设的嵊州市开发区储能示范项目为100兆瓦/220兆瓦时，2025年4月，1.25兆瓦分布式光伏发电项目并网成功\n\n2. 热力：据2026年9月11日公告，公司除了向原有经济开发区三个区块供热供压缩空气外，今年5月份投运了“向嵊州经济开发区浦口片区新建供热管道项目”，实现向绍兴弗迪电池有限公司供热，管道沿途分别通往“劳密”区块以及即将投产的陌桑工厂化养蚕三期和多家食品、包装类客户，公司供热量将显著增加。",
-          "quote": {
-            "price": 11.55,
-            "changePct": 0,
-            "open": 11.55,
-            "prevClose": 11.55,
-            "amplitude": 0,
-            "turnoverRate": 0,
-            "amountWan": 2317,
-            "pe": 50.11,
-            "pb": 3.1,
-            "floatMarketValueYi": 16.61,
-            "totalMarketValueYi": 51.15,
-            "fmv": 51.15,
-            "tn": 0.45
-          }
-        },
-        {
-          "code": "603082",
-          "name": "北自科技",
-          "board": "其他",
-          "marketCode": "sh603082",
-          "sealTime": "11:00",
-          "early": false,
-          "leader": false,
-          "lianbanCount": 1,
-          "lianbanText": "首板",
-          "fanbao": false,
-          "concept": "机器人概念",
-          "concepts": "机器视觉、灵巧手",
-          "reason": "机器人概念+并购重组；1. 机器人概念：据2026年半年报，公司自主研发了仓储机器人（堆垛机）、穿梭机器人（穿梭车）、悬挂机器人（EMS）、输送机等一系列通用物流装备，以及落丝机器人、包装机器人、外检机器人等一系列专用装备，形成覆盖智能制造多种场景的装备体系。\n\n2. 并购重组：据2026年半年报，北自科技完成发行股份及支付现金购买穗柯智能100%股权并募集配套资金事项，穗柯智能自2026年6月起纳入合并报表。据工商登记信息，苏州穗柯智能科技有限公司主营智慧物流·智能制造系统综合解决方案，为生产制造、流通配送企业提供规划设计、系统集成等业务。",
-          "quote": {
-            "price": 51,
-            "changePct": 5.9,
-            "open": 51,
-            "prevClose": 48.16,
-            "amplitude": 0,
-            "turnoverRate": 0,
-            "amountWan": 3268,
-            "pe": 58.11,
-            "pb": 4.86,
-            "floatMarketValueYi": 19.53,
-            "totalMarketValueYi": 84.95,
-            "fmv": 20.68,
-            "tn": 1.58
-          }
-        },
-        {
-          "code": "603266",
-          "name": "天龙股份",
-          "board": "其他",
-          "marketCode": "sh603266",
-          "sealTime": "11:09",
-          "early": false,
-          "leader": false,
-          "lianbanCount": 1,
-          "lianbanText": "首板",
-          "fanbao": false,
-          "concept": "无人驾驶",
-          "concepts": "IGBT、芯片",
-          "reason": "无人驾驶+汽车零部件；1. 无人驾驶：据2026年9月11日投资者关系活动记录表，2026年苏州豪米波将维持较高强度研发投入，主要投向下一代八发八收、十六发十六收4D成像毫米波雷达开发及射频天线、高频电路底层技术自研，同时布局UWB车载传感器等新产品预研；常熟工厂年产100万颗产线硬件已全部建成，上半年产能利用率偏低，自5月份起订单量已稳步上升。\n\n2. 汽车零部件：据2026年半年报，公司主要从事模具、汽车零部件的研发、生产和销售，产品主要有电子控制系统类零部件、轻量化功能结构件、精密模具等；在汽车零部件领域，主要为博泽集团、博世集团等国际一级供应商供货。",
-          "quote": {
-            "price": 17.5,
-            "changePct": 4.6,
-            "open": 17.5,
-            "prevClose": 16.73,
-            "amplitude": 0,
-            "turnoverRate": 0,
-            "amountWan": 703,
-            "pe": 36.69,
-            "pb": 2.14,
-            "floatMarketValueYi": 14.91,
-            "totalMarketValueYi": 34.81,
-            "fmv": 34.81,
-            "tn": 0.2
+            "amountWan": 3381,
+            "pe": 25.93,
+            "pb": 2.1,
+            "floatMarketValueYi": 12.43,
+            "totalMarketValueYi": 52.76,
+            "fmv": 44.6,
+            "tn": 0.76
           }
         }
       ]

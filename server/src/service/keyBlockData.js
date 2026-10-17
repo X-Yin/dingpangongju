@@ -90,24 +90,24 @@ const stockWindowGain = (code, winDates) => {
   return parseFloat(sum.toFixed(4));
 };
 
-// 个股最近窗口区间振幅（%）：(窗口内最高价 − 窗口内最低价) ÷ 最低价 × 100；任一日缺 K 线返回 null
+// 个股最近窗口区间涨幅（%）：(窗口内最高收盘价 − 窗口内最低收盘价) ÷ 最低收盘价 × 100；任一日缺 K 线返回 null
+// 2026-10-17 用户要求：口径由「最高价/最低价」改为「收盘价」（取窗口内收盘价的最大值与最小值）
 const stockWindowRangePct = (code, winDates) => {
   const bars = barsCache.get(code);
   if (!bars || bars.length === 0) return null;
-  let maxHigh = null;
-  let minLow = null;
+  let maxClose = null;
+  let minClose = null;
   for (const d of winDates) {
     const dn = Number(d);
     const bar = bars.find(b => b.d === dn);
     if (!bar) return null;
-    const h = bar.h != null && Number.isFinite(Number(bar.h)) && Number(bar.h) > 0 ? Number(bar.h) : bar.c;
-    const l = bar.l != null && Number.isFinite(Number(bar.l)) && Number(bar.l) > 0 ? Number(bar.l) : bar.c;
-    if (!(h > 0) || !(l > 0)) return null;
-    if (maxHigh == null || h > maxHigh) maxHigh = h;
-    if (minLow == null || l < minLow) minLow = l;
+    const c = bar.c != null ? Number(bar.c) : null;
+    if (c == null || !Number.isFinite(c) || c <= 0) return null;
+    if (maxClose == null || c > maxClose) maxClose = c;
+    if (minClose == null || c < minClose) minClose = c;
   }
-  if (maxHigh == null || !(minLow > 0)) return null;
-  return parseFloat((((maxHigh - minLow) / minLow) * 100).toFixed(4));
+  if (maxClose == null || !(minClose > 0)) return null;
+  return parseFloat((((maxClose - minClose) / minClose) * 100).toFixed(4));
 };
 
 // blockName -> tag（进攻/中性/防御；取该板块任一带 tag 条目；未打 tag 的板块不出现在 Map 中）
