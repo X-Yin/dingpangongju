@@ -36,7 +36,8 @@ const {
 // 顺周期腿候选池 + 死叉口径（与「开盘实战页 live 龙头列表」共用同一份实现，避免口径漂移）
 const {
   LOOKBACK_DAYS, MIN_BOARD_COUNT, DEATH_CROSS_WINDOW, DELTA_MIN,
-  RANGE_WINDOW_DAYS, RANGE_SLIDE_DAYS, MAX_WINDOW_RANGE_PCT, MAX_TOTAL_RANGE_PCT, POST_LIANBAN_DROP_PCT,
+  RANGE_SLIDE_DAYS, MAX_WINDOW_RANGE_PCT, MAX_TOTAL_RANGE_PCT, POST_LIANBAN_DROP_PCT,
+  NEW_MAX_WINDOW_RANGE_PCT, PEAK_GAP_MIN_DAYS, POST_PEAK_MAX_RANGE_PCT, NEW_BASE_LOOKBACK_DAYS,
   PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
   computeCrossInfo, buildExtremeWinPool,
 } = require('./extremeWinPool');
@@ -59,15 +60,20 @@ const {
 //   2026-10-17 用户要求：把「情绪游资-反向抱团龙头」作为**逆周期**腿融合进本策略——两条腿择时互补：
 //     ① 顺周期腿 = 本策略原有逻辑（上证 3 日线分时斜率 > 0 才买，见下「买点」）；② 逆周期腿 = 反向抱团龙头逻辑
 //     （上证 3 日线斜率连续为负第 3 天及以后、当日上证跌幅 ≥ 0.5% 时，候选股盘中强度分第 2 次 > 50 买入）。
-//     **账户仍拆两份、每份各半仓**：谁的买点先触发就由谁占用一个空仓位（各信号每交易日最多建仓一份）；
-//     若两份均已满仓，则另一条腿即使触发也不买。两条腿各自独立买卖、独立计成本与收益（均 ×0.5 折算），
+//     **账户仍拆两份、每份各半仓**：谁的买点先触发就由谁占用一个空仓位；
+//     2026-10-18 用户要求：同一交易日内可连续建仓、直到两份仓位全部占满（一天之内多个股票依次触发买点时谁先触发就买谁），
+//     两份均已满仓后即使再触发也不再买。两条腿各自独立买卖、独立计成本与收益（均 ×0.5 折算），
 //     两条腿不得同时持有同一只股票。回测记录以 `cycle` 字段区分顺周期（procyclic）/ 逆周期（counter）。
 //     「情绪游资-反向抱团龙头」作为独立策略仍保留（全仓单持仓），本策略的逆周期腿规则与其**完全一致**，唯一区别是按半仓计收益。
 //   —— 以下为顺周期腿（极致胜率原逻辑）——
-//   选股 = 过去 10 个交易日（不含当日）内出现过四连板及以上（连板数 >= 4）的个股（2026-10-17 用户要求：一律剔除创业板 30/301 与科创板 688；
-//          并叠加「过去 20 个交易日内任意连续 10 个交易日区间最大涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 < 80%」过滤，剔除近期已大幅拉升者；
-//          且整段「过去 20 个交易日总涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 < 100%」（2026-10-17 用户新增）；
-//          且四连板之后若出现过任一交易日涨幅 < -9%，一并剔除该股；
+//   选股 = 两条路径取并集（同一只股票满足其一即入选，2026-10-18 用户新增第二条；均一律剔除创业板 30/301 与科创板 688）：
+//          旧路径：过去 10 个交易日（不含当日）内出现过四连板及以上（连板数 >= 4）；
+//                  动量：「最多 10 个交易日的最精准窗口区间最大涨幅 < 80%」剔除近期已大幅拉升者（先枚举长度 ≤ 10 的子窗口取最大涨幅者，再双向缩进到「同时包含窗内最高/最低收盘日的最短跨度」）；
+//                  且四连板之后若出现过任一交易日涨幅 < -9%，一并剔除该股；且 20 日总涨幅 < 100%；
+//          新路径：连板基础名单单独按「过去 20 个交易日（不含当日）内四连板及以上」统计；
+//                  动量：「最多 10 个交易日的最精准窗口区间最大涨幅 < 100%」且「该窗口峰值日（窗内最高收盘日）之后至买点前严格相隔 >= 5 个交易日」
+//                        且「峰值日之后到买点前之间的全部交易日区间最大波动 < 15%」（区间最大波动 = (最高收盘价 − 最低收盘价) ÷ 最低收盘价）；
+//                  允许四连板后出现单日跌幅达 -10%（因已有 5 日最大波动约束兜底，不再套用 -9% 剔除）；且 20 日总涨幅 < 100%；
 //          并整体剔除 PCB / 玻璃基板 / 光模块 / 液冷 / 通信 / 算力 / 芯片 / 靶材 / 电子气体 / 光刻胶 / 算力租赁 题材（板块名包含关键词即剔除，2026-10-17 用户新增）；
 //          并剔除与「全量自选股中的科技股」（monitor_stocks.json，isTech !== false）重叠的个股——2026-10-17 用户新增）；
 //   差劲分（0~100，越高越差）= 0.3×A + 0.2×B + 0.3×C + 0.2×D，各分项先按上限归一化到 0~100：
@@ -83,9 +89,10 @@ const {
 //          D 当日涨幅 = 现价较昨收涨幅（涨幅 < 0 记 0 分；涨幅 >= 0 按 ÷ 10% 归一化）
 //            权重（2026-10-17 用户新增加 D 当日涨幅）：A 0.3 / B 0.2 / C 0.3 / D 0.2
 //   买点 = 分两层判定（当日盘中逐桶实时）：
-//          ① 过去 10 个交易日（不含当日）内须出现过一次「死叉」——最近一次「强度分由高于差劲分转为一度低于差劲分」
-//             （相邻交易日 delta = 强度分 − 差劲分 由 > 0 翻为 < 0）；
-//             且死叉之后至昨日为止 delta >= 30 的交易日数 <= 1——即该机会只允许「第一次或第二次」达标才买
+//          ① 死叉前置（2026-10-18 用户改）：以「最多 10 日最精准窗口」的峰值日（窗内最高收盘日）为基准，
+//             取峰值日之后的第一次「死叉」——「强度分由高于差劲分转为一度低于差劲分」
+//             （相邻交易日 delta = 强度分 − 差劲分 由 > 0 翻为 < 0）；检索窗口 = 峰值日 → 买点前一日；
+//             且该死叉之后至昨日为止 delta >= 30 的交易日数 <= 1——即该机会只允许「第一次或第二次」达标才买
 //             （若死叉之后已出现 >= 2 天 delta >= 30，视为该机会已在历史消耗，今日再触发则不再买入）；
 //             且若上个交易日 delta > 30（昨日已达 30），则该日成交量须 ≥ 其前 3 个交易日成交量均值（须放量，2026-10-17 用户新增——
 //             避免「强更强」但缩量的高位被套；数据缺失时不判定）；
@@ -95,7 +102,9 @@ const {
 //             （机会不顺延作废，后续桶斜率转正后仍可继续判定）；
 //          ④ 竞价低开门禁（2026-10-17 用户新增）：若「上个交易日强度分 > 60」，则当日买入时「竞价低开不得超过 -3%」
 //             （开盘价较昨收涨幅须 >= -3%），否则该候选取值不可买、顺延至差值排名下一只；上个交易日强度分数据缺失时不判定；
-//          多候选取今日「强度分 − 差劲分」差值最大者；买入时点已涨停（主板 > 9.5%、创业/科创 > 19%）不可买、顺延下一只；
+//          多候选触发同一时点桶时，按今日「强度分 − 差劲分」差值降序依次买入；买入时点已涨停（主板 > 9.5%、创业/科创 > 19%）不可买、跳过该只；
+//          2026-10-18 用户要求：同一交易日内可连续建仓——多个股票依次触发买点时「谁先触发就买谁」，每个空仓位槽买一只，
+//          直到两份仓位全部占满为止（不再限制「每条腿每交易日最多建仓一份」）；
 //          日线 delta 与今日盘中 delta 均按「个股历史分析」口径：日线取收盘（1500）口径、今日实时按桶口径。
 //   卖点 = 完全沿用「情绪游资-龙头战法」的卖点，唯一区别是①成本线止损（2026-10-17 用户要求）：
 //          本策略成本线止损口径 -5%（现价 < 买入价 × 0.95）即卖、不设持续分钟门槛
@@ -105,10 +114,11 @@ const {
 //          ∪ 盘中单分钟跳水（相对上一分钟分时价 ≤ -3%）直接卖；价格类卖点按分钟级回溯取最先触发分钟精准成交）。
 //   —— 逆周期腿（反向抱团龙头，2026-10-17 融合）规则见 reverseLeader 系列常量与 buildRevPosition ——
 //   仓位（2026-10-17 用户要求）：账户拆两份、每份各半仓，两份各自独立买卖、独立计成本与收益（均按半仓 ×0.5 折算）；
-//          谁的买点先触发就由谁占用空仓位，两份不得同时持有同一只股票；整体收益 = 两份子账户各自复利后按 0.5 加权相加。
+//          谁的买点先触发就由谁占用空仓位（2026-10-18 用户要求：同一交易日内可连续建仓、直到两份全部占满），
+//          两份不得同时持有同一只股票；整体收益 = 两份子账户各自复利后按 0.5 加权相加。
 // ============================================================
 
-// 2026-10-17 用户要求：账户拆两份、每份各半仓，两份独立买卖（互不重叠同一标的）
+// 2026-10-17 用户要求：账户拆两份、每份各半仓，两份独立买卖（互不重叠同一标的）；2026-10-18 起同一交易日内可连续建仓直至占满两份
 const LEG_COUNT = 2;               // 仓位份数
 const LEG_WEIGHT = 0.5;            // 每份占账户资金比例（半仓）
 const LEG_LABELS = ['A', 'B'];     // 份别标记（物理仓位槽）
@@ -232,7 +242,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
 
   // 「全量自选股科技股重叠剔除」在 ./extremeWinPool.buildExtremeWinPool 内完成
 
-  // 账户拆两份（各半仓）独立持仓：两份各自独立买卖、互不重叠同一标的，可在不同日期建仓
+  // 账户拆两份（各半仓）独立持仓：两份各自独立买卖、互不重叠同一标的，可在同一交易日内连续建仓（直到占满两份）
   const positions = new Array(LEG_COUNT).fill(null);
   const legLastSellDate = new Array(LEG_COUNT).fill(null); // 该份卖出当日不再追买（两份间互不影响）
 
@@ -277,9 +287,11 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
 
     // ===== 顺周期腿候选池（与「开盘实战页 live 龙头列表」共用 ./extremeWinPool 同一实现）=====
     let candidatesRaw = [];
+    let poolWinDates = [];   // 候选池所用的「过去 20 个交易日（不含当日）」升序日期（死叉窗口「峰值日 → 买点前一日」据此截取）
     try {
       const pool = await buildExtremeWinPool(dateStr);
       candidatesRaw = pool.stocks || [];
+      poolWinDates = pool.winDates || [];
     } catch (e) { candidatesRaw = []; }
     if (candidatesRaw.length > 0) {
       for (const s of candidatesRaw) {
@@ -380,14 +392,23 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
       try {
         await ensureBarsForCodes(new Set(candidatesRaw.map(s => s.code)));
       } catch (e) { /* 单只失败后续按 null 处理 */ }
-      // 过去 DEATH_CROSS_WINDOW 个交易日（不含当日）升序日期
-      let crossDates = [];
-      try { crossDates = (await getPastTradingDates(dateStr, DEATH_CROSS_WINDOW)).map(Number); } catch (e) { crossDates = []; }
-      if (crossDates.length < 2) { candidates = []; return; }
-      // 逐候选判定死叉前置：过去窗口内须出现过死叉，且死叉之后至昨日从未有某日 delta >= DELTA_MIN
+      // 死叉检索窗口（2026-10-18 用户要求：由原来的「买点之前最近一次死叉」改为「峰值日之后的第一次死叉」）：
+      //   窗口 = 该股「最多 10 日最精准窗口」的峰值日 → 买点前一日（poolWinDates 中 >= peakDate 的部分）；
+      //   峰值日缺失（数据不足）时退回过去 DEATH_CROSS_WINDOW 个交易日
+      let fallbackCrossDates = [];
+      try { fallbackCrossDates = (await getPastTradingDates(dateStr, DEATH_CROSS_WINDOW)).map(Number); } catch (e) { fallbackCrossDates = []; }
+      const crossDatesOf = (peakDate) => {
+        const p = Number(peakDate);
+        if (!Number.isFinite(p) || poolWinDates.length === 0) return fallbackCrossDates;
+        return poolWinDates.filter(d => Number(d) >= p);
+      };
+      // 逐候选判定死叉前置：峰值日之后须出现过第一次死叉，且该死叉之后至昨日达标次数 ≤ 1
       const crossMap = new Map();
       await batchParallel(candidatesRaw, async (c) => {
-        try { crossMap.set(c.code, await computeCrossInfo(c.code, crossDates)); } catch (e) { crossMap.set(c.code, null); }
+        try {
+          const cd = crossDatesOf(c.peakDate);
+          crossMap.set(c.code, cd.length < 2 ? null : await computeCrossInfo(c.code, cd, c.peakDate));
+        } catch (e) { crossMap.set(c.code, null); }
       }, 8);
       candidates = candidatesRaw
         .map(c => ({ ...c, crossInfo: crossMap.get(c.code) }))
@@ -436,9 +457,9 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
 
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
 
-    // 2026-10-17 用户要求：账户拆两份各半仓，各信号每交易日最多建仓一份（谁先触发谁占空仓位）
-    let boughtProcyclicToday = false;
-    let boughtCounterToday = false;
+    // 2026-10-18 用户要求：账户拆两份各半仓，同一交易日内允许连续建仓、直到两份仓位全部占满——
+    //   一天之内多个股票依次触发买点时，谁先触发就买谁（同一时点桶内按差值降序）；
+    //   不再限制「每条腿每交易日最多建仓一份」，但两份仍不得同时持有同一只股票
     const revDayTriggered = new Set(); // 逆周期腿当日已登记命中的候选（同一天同一只只计一次）
     const idleLegIdx = () => positions.findIndex((p, i) => !p && legLastSellDate[i] !== dateStr);
 
@@ -554,26 +575,26 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
       }
 
       // ===== 买入 =====
-      // 【顺周期腿】极致胜率逻辑：指数门禁（上证 3 日线分时斜率 > 0）+ 今日「强度分 − 差劲分 >= 30」取差值最大者
-      if (!boughtProcyclicToday) {
-        const legIdx = idleLegIdx();
-        if (legIdx !== -1) {
-          const idxMa3Slope = await getIceMa3SlopeIntraday(dateStr, bucketMinute);
-          if (Number(idxMa3Slope) > 0) {
-            await ensurePoolData();
-            if (candidates.length > 0) {
-              const ranked = evalBucket(bucketMinute);
+      // 【顺周期腿】极致胜率逻辑：指数门禁（上证 3 日线分时斜率 > 0）+ 今日「强度分 − 差劲分 >= 30」
+      //   2026-10-18 用户要求：同一交易日内可连续建仓——按触发先后（同一时点桶内按差值降序）依次买入，
+      //   每个空仓位槽买一只，直到两份仓位全部占满（不再限制每条腿每交易日只建仓一份）
+      if (idleLegIdx() !== -1) {
+        const idxMa3Slope = await getIceMa3SlopeIntraday(dateStr, bucketMinute);
+        if (Number(idxMa3Slope) > 0) {
+          await ensurePoolData();
+          if (candidates.length > 0) {
+            const ranked = evalBucket(bucketMinute);
+            for (const pick of ranked) {
+              const legIdx = idleLegIdx();
+              if (legIdx === -1) break; // 两份均已占满 → 本日不再买入
               // 两份不得同时持有同一只股票：剔除另一份当前持仓标的
               const otherHeld = positions.filter((p, i) => i !== legIdx && p).map(p => p.code);
-              // 买入时点已涨停不可买 / 已被另一份持有 / 上个交易日强度分 > 60 且竞价低开 > 3% → 顺延至差值排名下一只
-              const pick = ranked.find(r => !r.limitUp && !otherHeld.includes(r.code) && !failPrevStrengthOpenGap(r));
-              if (pick) {
-                positions[legIdx] = buildPosition({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx, otherHeld });
-                positions[legIdx].buyDi = todayIdx;
-                positions[legIdx].cycle = CYCLE_PRO;
-                boughtProcyclicToday = true;
-                for (const c of candidates) if (!seenStocks.has(c.code)) seenStocks.set(c.code, { code: c.code, name: c.name || c.code });
-              }
+              // 买入时点已涨停不可买 / 已被另一份持有 / 上个交易日强度分 > 60 且竞价低开 > 3% → 跳过该只
+              if (pick.limitUp || otherHeld.includes(pick.code) || failPrevStrengthOpenGap(pick)) continue;
+              positions[legIdx] = buildPosition({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx, otherHeld });
+              positions[legIdx].buyDi = todayIdx;
+              positions[legIdx].cycle = CYCLE_PRO;
+              for (const c of candidates) if (!seenStocks.has(c.code)) seenStocks.set(c.code, { code: c.code, name: c.name || c.code });
             }
           }
         }
@@ -596,7 +617,8 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
             const next = Math.min(prev + 1, REV_HIT_REQUIRED);
             revHitCount.set(c.code, next);
             // 第 2 次命中（或已达标后再次命中）的这一刻为买点；有空仓位且未涨停才买
-            if (prev >= 1 && !boughtCounterToday && !s.limitUp) {
+            //   2026-10-18 用户要求：同一天内不同股票各自触发即可依次买入，直到两份仓位占满（不再限制每条腿每日只建仓一份）
+            if (prev >= 1 && !s.limitUp) {
               const legIdx = idleLegIdx();
               if (legIdx !== -1) {
                 const otherHeld = positions.filter((p, i) => i !== legIdx && p).map(p => p.code);
@@ -608,7 +630,6 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
                   });
                   positions[legIdx].buyDi = todayIdx;
                   positions[legIdx].cycle = CYCLE_COUNTER;
-                  boughtCounterToday = true;
                   for (const cc of revCandidatesRaw) if (!seenStocks.has(cc.code)) seenStocks.set(cc.code, { code: cc.code, name: cc.name || cc.code });
                 }
               }
@@ -688,17 +709,17 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
   const checks = [
     {
       id: 'extreme_win_pool',
-      title: `选股（过去 ${LOOKBACK_DAYS} 个交易日四连板及以上；剔除创业板/科创板；剔除 ${EXCLUDED_THEMES.join('/')} 题材；过去 ${RANGE_WINDOW_DAYS} 个交易日（不含当日）内任意连续 ${RANGE_SLIDE_DAYS} 个交易日区间最大涨幅 < ${MAX_WINDOW_RANGE_PCT}%；过去 ${RANGE_WINDOW_DAYS} 个交易日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%；四连板后无单日涨幅 < ${POST_LIANBAN_DROP_PCT}%；无全量自选股科技股重叠）`,
+      title: `选股（两路径并集，满足其一即可；均剔除创业板/科创板与 ${EXCLUDED_THEMES.join('/')} 题材。旧路径：过去 ${LOOKBACK_DAYS} 个交易日四连板及以上，最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 < ${MAX_WINDOW_RANGE_PCT}%，四连板后无单日涨幅 < ${POST_LIANBAN_DROP_PCT}%，20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。新路径：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日四连板及以上，最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 < ${NEW_MAX_WINDOW_RANGE_PCT}% 且该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日后区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%（允许出现 -10% 单日跌幅），20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。两路径均剔除与全量自选股科技股重叠者）`,
       passed: true,
       value: `${pick.name}（${pick.code}）· ${pick.lianbanCount} 连板`,
       reason: `候选 = 过去 ${LOOKBACK_DAYS} 个交易日内出现连板数 ≥ ${MIN_BOARD_COUNT} 的个股（命中日 ${pick.date}，板块 ${pick.board || '--'}）；已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、${EXCLUDED_THEMES.join('/')} 题材（板块名包含关键词即剔除）与全量自选股科技股（isTech ≠ false）重叠者${pick.poolFilterText || ''}；本桶达标候选共 ${ranked.length} 只，按今日「强度分 − 差劲分」降序取第一个「未涨停且未被另一腿持有」者作为顺周期腿（第 ${legIdx + 1} 份半仓）建仓标的`,
     },
     {
       id: 'extreme_win_cross',
-      title: `买点前置：过去 ${DEATH_CROSS_WINDOW} 个交易日死叉且死叉后达标次数 ≤ 1（上个交易日 delta > ${DELTA_MIN} 时须放量）`,
+      title: `买点前置：峰值日之后的第一次死叉（窗口＝峰值日→买点前一日）且死叉后达标次数 ≤ 1（上个交易日 delta > ${DELTA_MIN} 时须放量）`,
       passed: true,
       value: `死叉日 ${crossDate}（死叉后达标 ${hitCount} 次，本次为第 ${hitCount + 1} 次；上个交易日 delta ${cross.prevDayDelta == null ? '--' : cross.prevDayDelta}${cross.prevDayDelta != null && cross.prevDayDelta > DELTA_MIN ? `、放量比 ${cross.prevDayVolRatio == null ? '--' : cross.prevDayVolRatio}` : ''}；日线「强度 − 差劲」序列 ${deltasText}）`,
-      reason: `过去 ${DEATH_CROSS_WINDOW} 个交易日内出现过「强度分由高于差劲分转为一度低于差劲分」的死叉；死叉之后至昨日 delta ≥ ${DELTA_MIN} 的交易日数为 ${hitCount}（2026-10-17 用户要求：只允许「第一次或第二次」达标才买，${hitCount} ≤ 1 天视为未被历史消耗）；且上个交易日 delta = ${cross.prevDayDelta == null ? '数据缺失（不判定）' : cross.prevDayDelta}${cross.prevDayDelta != null && cross.prevDayDelta > DELTA_MIN ? ` > ${DELTA_MIN}，则该日成交量须 ≥ 其前 3 个交易日成交量均值（放量比 ${cross.prevDayVolRatio == null ? '数据缺失（不判定）' : cross.prevDayVolRatio} ≥ 0，2026-10-17 用户新增：避免「强更强」但缩量的高位被套）` : '（未超过 ' + DELTA_MIN + '，不触发放量要求）'}`,
+      reason: `以「最多 10 日最精准窗口」的峰值日为基准，取峰值日之后的第一次「强度分由高于差劲分转为一度低于差劲分」的死叉（检索窗口＝峰值日→买点前一日，2026-10-18 用户改）；该死叉之后至昨日 delta ≥ ${DELTA_MIN} 的交易日数为 ${hitCount}（2026-10-17 用户要求：只允许「第一次或第二次」达标才买，${hitCount} ≤ 1 天视为未被历史消耗）；且上个交易日 delta = ${cross.prevDayDelta == null ? '数据缺失（不判定）' : cross.prevDayDelta}${cross.prevDayDelta != null && cross.prevDayDelta > DELTA_MIN ? ` > ${DELTA_MIN}，则该日成交量须 ≥ 其前 3 个交易日成交量均值（放量比 ${cross.prevDayVolRatio == null ? '数据缺失（不判定）' : cross.prevDayVolRatio} ≥ 0，2026-10-17 用户新增：避免「强更强」但缩量的高位被套）` : '（未超过 ' + DELTA_MIN + '，不触发放量要求）'}`,
     },
     {
       id: 'extreme_win_prev_strength_gap',
