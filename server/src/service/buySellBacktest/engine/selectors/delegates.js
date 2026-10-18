@@ -1,12 +1,10 @@
 // 选股委派注册表（策略行为 hook 化）：
 // 把「先按策略 id 判定、再委托到其它策略 / 独立选股函数」的路由逻辑集中到本文件，
 // pickBestStock 只保留共享流水线（候选过滤 / 涨停与一字板顺延 / 抗分歧门槛 / 周期过滤 / 排序）。
-// 命中委派的策略：抗分歧弱转强 / 情绪开关 / 情绪快进快出（含研报双门、科技板块前三）。
+// 命中委派的策略：情绪快进快出（含研报双门）。
 // 递归委托时 pickBestStock 由调用方注入（避免 pickBest ←→ delegates 循环 require）。
-const { pickWeakToStrongStock } = require('../pickHelpers');
 const { getTechEmotionEmaMap, getTechEmotionRawMap } = require('../../utils/techEmotion');
 const { EMO_QUICK_RANGE_HIGH, EMO_QUICK_RANGE_LOW, EMO_SWITCH_EMA_THRESHOLD } = require('../../constants');
-const { buildTechTop3BlockCodeSet } = require('../emoQuick');
 
 // 返回 undefined 表示该策略不由委派层处理（交回 pickBestStock 主流水线继续）；
 // 否则返回选股结果（可能为 null，表示命中委派但本次不买入）。
@@ -15,36 +13,6 @@ const resolveDelegatePick = (ctx) => {
     pickBestStock, stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     strategyId, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet,
   } = ctx;
-
-  // 抗分歧弱转强：使用独立的 5 日窗口弱转强选股逻辑（已内置「当日分数 > 11 参与优选」门槛）
-  if (strategyId === 'resilience_weak_to_strong') {
-    return pickWeakToStrongStock(bucket, rangeDates, di, replayStocks, dailyInfos, prevOneWordSet, emoCycSet);
-  }
-
-  // 情绪开关系列（prev{N}d_fall_low5_day_gain_emoswitch）：触发买点时取上一交易日科技情绪指数的
-  // 3 日 EMA（getTechEmotionEmaMap，与情绪页「三日均值」曲线同源同算法），低于 -60 → 委托
-  // 「前N日波动最小&当日涨幅最大」选股，否则 → 委托「3日涨幅最大」选股；EMA 缺失（无上一
-  // 交易日或数据未覆盖）时按「否则」分支处理。递归调用不会再次命中本分支（委托 ID 无 _emoswitch 后缀），
-  // 两分支复用全部通用机制（涨停顺延/抗分歧门槛/门禁等）
-  const emoswitchMatch = strategyId.match(/^prev(\d)d_fall_low5_day_gain_emoswitch$/);
-  if (emoswitchMatch) {
-    const prevDateStr = di > 0 ? String(rangeDates[di - 1]) : null; // 上一交易日（日期轴均为交易日）
-    const prevEma = prevDateStr != null ? getTechEmotionEmaMap().get(prevDateStr) : null;
-    const useLow5 = prevEma != null && prevEma < EMO_SWITCH_EMA_THRESHOLD;
-    const delegateId = useLow5
-      ? `prev${emoswitchMatch[1]}d_fall_low5_day_gain`
-      : 'highest_3d_gain';
-    const emoPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, delegateId, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet);
-    if (emoPicked) {
-      // 附带分支标注：经 withResilienceGateInfo 写入买入原因与买入条件明细（emo_switch_branch），
-      // 抽屉/报告据此展示本次买入走的是「前N波动最小&当日涨幅最大」还是「3日涨幅最大」分支
-      emoPicked.emoSwitchBranch = {
-        ema: prevEma != null ? Number(prevEma.toFixed(2)) : null,
-        branch: useLow5 ? `前${emoswitchMatch[1]}个交易日波动最小&当日涨幅最大` : '3日涨幅最大',
-      };
-    }
-    return emoPicked;
-  }
 
   // 情绪快进快出系列（highest_{N}d_gain_emoquick，2026-10-03 用户新增）：买点触发时均可正常买入
   // （不跳过），委托「N 日涨幅最大」（highest_{N}d_gain）选股；满足以下任一条件的日子，本次买入标记
@@ -111,50 +79,6 @@ const resolveDelegatePick = (ctx) => {
         ema: prevEma != null ? Number(prevEma.toFixed(2)) : null,
         prevRaw: prevRaw != null ? Number(prevRaw.toFixed(2)) : null,
         prev2Raw: prev2Raw != null ? Number(prev2Raw.toFixed(2)) : null,
-      };
-    }
-    return quickPicked;
-  }
-
-  // 科技板块前三 × N日涨幅最大 × 快进快出系列（tech_block_top3_{N}d_gain_emoquick，2026-10-06 用户新增）：
-  // 与 highest_{N}d_gain_emoquick 几乎完全一样（快进快出触发条件、次日 10:00 强卖、盘中 -2% 止损、
-  // 否则走通用 7 条件卖点均不变），唯一区别在选股口径——先做一层板块效应筛选：
-  //   ① 取当日重点板块（block_code.js，key_blocks 页面维护）中 tag = 进攻 的板块，按「触发时点盘中涨幅」
-  //      （= 成分股在买点触发时点的实时涨幅均值，取自回放桶 blockRanking.all，与 key_blocks 页面盘中
-  //      avgChange 同口径、不含收盘价前视）降序取前三；
-  //   ② 这 3 个板块的全部成分股与「全量自选股中 isTech ≠ false 的科技股」取交集，得到 restrictCodes；
-  //   ③ 委托「N 日涨幅最大」在交集内选股（restrictCodes 限制候选池），交集为空则本次不买入。
-  // 板块效应只影响买入选股；卖出行为与 highest_{N}d_gain_emoquick 完全一致（emoQuickOut 标注驱动）
-  const techTop3Match = strategyId.match(/^tech_block_top3_(\d+d\d*)_gain_emoquick$/);
-  if (techTop3Match) {
-    const prevDateStr = di > 0 ? String(rangeDates[di - 1]) : null; // 上一交易日
-    const prev2DateStr = di > 1 ? String(rangeDates[di - 2]) : null; // 上上个交易日
-    const prevEma = prevDateStr != null ? getTechEmotionEmaMap().get(prevDateStr) : null;
-    const prevRaw = prevDateStr != null ? getTechEmotionRawMap().get(prevDateStr) : null;
-    const prev2Raw = prev2DateStr != null ? getTechEmotionRawMap().get(prev2DateStr) : null;
-    const quickByEmaBelow = prevEma != null && prevEma < EMO_SWITCH_EMA_THRESHOLD;
-    const quickByRangeRising = prev2Raw != null && prevRaw != null
-      && prev2Raw > EMO_QUICK_RANGE_LOW && prev2Raw < EMO_QUICK_RANGE_HIGH
-      && prevRaw > EMO_QUICK_RANGE_LOW && prevRaw < EMO_QUICK_RANGE_HIGH
-      && prevRaw > prev2Raw;
-    const techTop3 = buildTechTop3BlockCodeSet(bucket, String(rangeDates[di]));
-    const quickPicked = techTop3.codes.size > 0
-      ? pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, `highest_${techTop3Match[1]}_gain`, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet, techTop3.codes)
-      : null;
-    if (quickPicked) {
-      quickPicked.emoQuickOut = {
-        quickOut: quickByEmaBelow || quickByRangeRising,
-        trigger: quickByEmaBelow ? 'ema_below' : (quickByRangeRising ? 'range_rising' : null),
-        ema: prevEma != null ? Number(prevEma.toFixed(2)) : null,
-        prevRaw: prevRaw != null ? Number(prevRaw.toFixed(2)) : null,
-        prev2Raw: prev2Raw != null ? Number(prev2Raw.toFixed(2)) : null,
-      };
-      // 板块效应筛选明细：标注买点触发时点进攻 tag 板块盘中涨幅前三与交集后候选数量（供买入明细展示）
-      quickPicked.techTop3Block = {
-        date: String(rangeDates[di]),
-        time: bucket && bucket.displayTime ? bucket.displayTime : null,
-        blocks: techTop3.top,
-        candidateCount: techTop3.codes.size,
       };
     }
     return quickPicked;

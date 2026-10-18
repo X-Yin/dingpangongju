@@ -294,8 +294,7 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
   if (!checkEmotionRetracePassed) allPassed = false;
 
   // ============================================================
-  // 尾盘抄底（或逻辑分支）已移除：买点诊断仅看前置检查全部通过（allPassed），
-  // 尾盘抄底仅保留在回测策略（buySellBacktest.js tail_dip_* 系列）中
+  // 尾盘抄底（或逻辑分支）已移除：买点诊断仅看前置检查全部通过（allPassed）
   // ============================================================
 
   const passedCount = checks.filter(c => c.passed).length;

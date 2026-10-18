@@ -250,50 +250,6 @@ const checkBuyDayLowPersist = (replayStocks, code, currentMinute, buyDayLow) => 
   return { satisfied: true, checkedMin: recent.length };
 };
 
-// 尾盘抄底专属卖点检查（1 分钟维度）：
-//   开盘后逐分钟环比跟踪：当前分钟涨幅（相对昨收）与上一分钟涨幅比较——
-//   一直在上涨（ curr > prev ）→ 先不卖出继续持有；首次开始下降（ curr < prev ）→ 在该分钟卖出。
-//   涨幅持平视为尚未开始下降，继续持有；开盘首分钟无上一分钟可比，仅作为基准；
-//   若全天持续上涨未出现下降则当日不卖，次日继续跟踪。
-// 数据源：getSingleStockTlineDataByDate 分钟级分时（磁盘/内存缓存）；拉取失败时回退用 5min 桶回放点近似
-const checkOpenRetraceSell = async (replayStocks, code, currentMinute, dateStr) => {
-  let points = [];
-  try {
-    const tline = await getSingleStockTlineDataByDate(code, parseInt(dateStr));
-    points = (tline?.line || [])
-      .filter(p => p.minute != null && Number(p.minute) <= currentMinute
-        && p.change != null && !Number.isNaN(Number(p.change))
-        && p.last_px != null && Number(p.last_px) > 0)
-      .map(p => ({ minute: Number(p.minute), change: Number(p.change), lastPx: Number(p.last_px) }));
-  } catch (e) { /* 拉取失败走回退 */ }
-  if (points.length === 0) {
-    points = getTlinePoints(replayStocks, code, currentMinute)
-      .filter(p => p.change != null && !Number.isNaN(Number(p.change)) && p.lastPx != null && p.lastPx > 0);
-  }
-  // 逐分钟环比：首个较上一分钟开始下降的分钟即卖点（首分钟仅作基准）
-  for (let i = 1; i < points.length; i++) {
-    if (points[i].change < points[i - 1].change) {
-      return {
-        satisfied: true,
-        triggerMinute: points[i].minute,
-        triggerPrice: points[i].lastPx,
-        prevChange: points[i - 1].change,
-        currentChange: points[i].change,
-        retrace: points[i - 1].change - points[i].change,
-      };
-    }
-  }
-  const last = points.length > 0 ? points[points.length - 1] : null;
-  return {
-    satisfied: false,
-    triggerMinute: null,
-    triggerPrice: null,
-    prevChange: points.length > 1 ? points[points.length - 2].change : null,
-    currentChange: last ? last.change : null,
-    retrace: null,
-  };
-};
-
 // 训练营回放模拟持仓卖点诊断（对齐前端 sellPointChecks.js）
 const runSellPointDiagnosis = async (position, currentBucket, replayStocks, timeBuckets, currentIndex, dateStr) => {
   const code = position?.code;
@@ -327,46 +283,6 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
   const stockPoints = getTlinePoints(replayStocks, code, minute).filter(p => p.lastPx != null && p.lastPx > 0);
   const dayHigh = stockPoints.reduce((mx, p) => Math.max(mx, p.lastPx), 0);
   const openPrice = stockPoints.length > 0 ? stockPoints[0].lastPx : null;
-
-  // ===== 尾盘抄底策略专属卖点：开盘后逐分钟环比跟踪，涨幅开始下降（较上一分钟回落）即卖出（1 分钟维度，独立于下方 7 项通用条件） =====
-  if (position?.tailDipSell === true) {
-    const retraceCheck = await checkOpenRetraceSell(replayStocks, code, minute, dateStr);
-    // 卖出价/卖出时间用分钟级触发点（精确到触发分钟），而非当前 5min 桶
-    const sellPrice = retraceCheck.satisfied && retraceCheck.triggerPrice != null ? retraceCheck.triggerPrice : closePrice;
-    const sellDisplayTime = retraceCheck.satisfied && retraceCheck.triggerMinute != null
-      ? fmtTime(String(retraceCheck.triggerMinute).padStart(4, '0') + '00').substring(0, 5)
-      : displayTime;
-    const tailReturnRate = buyPrice !== null && buyPrice > 0 && sellPrice > 0
-      ? parseFloat((((sellPrice - buyPrice) / buyPrice) * 100).toFixed(2))
-      : null;
-    const condition = {
-      name: '开盘后涨幅开始下降即卖出',
-      satisfied: retraceCheck.satisfied,
-      detail: retraceCheck.currentChange == null
-        ? '当前涨幅数据缺失，无法判断'
-        : retraceCheck.satisfied
-          ? `${sellDisplayTime} 涨幅 ${retraceCheck.currentChange.toFixed(2)}%，较上一分钟 ${retraceCheck.prevChange != null ? retraceCheck.prevChange.toFixed(2) : '--'}% 开始下降（回落 ${retraceCheck.retrace != null ? retraceCheck.retrace.toFixed(2) : '--'} 个百分点），按触发分钟价格卖出`
-          : `开盘后涨幅持续上涨未开始下降（当前 ${retraceCheck.currentChange.toFixed(2)}%），继续持有`,
-      subConditions: [],
-    };
-    const conditions = [condition];
-    return {
-      isSell: condition.satisfied,
-      code,
-      stockName,
-      closePrice: parseFloat(sellPrice.toFixed(2)),
-      change: change !== null ? parseFloat(change.toFixed(2)) : null,
-      returnRate: tailReturnRate,
-      dayHigh: dayHigh > 0 ? parseFloat(dayHigh.toFixed(2)) : null,
-      techEmotion: currentBucket?.techEmotion != null ? toNumber(currentBucket.techEmotion) : null,
-      resilienceScore: null,
-      conditions,
-      conclusion: condition.satisfied
-        ? `尾盘抄底专属卖点：${sellDisplayTime} 涨幅开始下降（较上一分钟回落），卖出离场`
-        : '尾盘抄底专属卖点未触发（开盘后涨幅持续上涨尚未开始下降），继续持有',
-      displayTime: sellDisplayTime,
-    };
-  }
 
   // ===== 条件1：均线破位 =====
   const ma5 = stock?.dailyMa5 != null ? toNumber(stock.dailyMa5) : null;
@@ -750,7 +666,6 @@ module.exports = {
   checkBuyDayLowPersist,
   checkCondition2Persist,
   checkCondition3Persist,
-  checkOpenRetraceSell,
   getReplayLimitType,
   getTlinePoints,
   runSellPointDiagnosis,

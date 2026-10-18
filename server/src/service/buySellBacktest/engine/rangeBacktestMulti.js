@@ -2,19 +2,16 @@ const { STRATEGIES, isCycleFilterStrategy } = require('../strategies/registry');
 const { runKeyBlockBacktest } = require('./keyBlockBacktest');
 const { runReverseLeaderBacktest } = require('./reverseLeaderBacktest');
 const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
-const { getTechIndexDates } = require('../utils/techEmotion');
 const { buildWindowAxis } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
 const { buildPrevOneWordBoardSet, buildReplayStocksWithTline, extractDailyInfo, isLimitUpAtBuy } = require('./replayData');
 const { EXCLUDED_CODES } = require('../constants');
-const { ensureEmo3DayGates } = require('./emo3Gate');
 const { withResilienceGateInfo } = require('./checkBuilders');
 const { TWO_BUY_LEG_WEIGHT, computeTwoBuyAccountReturn, getPositionLegWeight, getStockBlockName } = require('./twoBuy');
-const { EMO_AVG3_BUY_INFO, TAIL_DIP_BUY_INFO, buildBuyReasonFromDiag, checkEmoAvg3Hit, checkTailDipHit, fmtTime, runBuyPointDiagnosis } = require('../diagnose/buyPoint');
+const { buildBuyReasonFromDiag, fmtTime, runBuyPointDiagnosis } = require('../diagnose/buyPoint');
 const { buildCounterCycSet } = require('./cycleFilter');
 const { pickBestStock } = require('./pickBest');
 const { computeEmoQuickOutInfo } = require('./emoQuick');
-const { nextDayOpenSell } = require('./sellHooks/nextDayOpen');
 const { emoQuickOutSell } = require('./sellHooks/emoQuickOut');
 const { generalSellPositions } = require('./sellHooks/generalSell');
 const { calcDrawdownStats, sortTradesByBuyTime } = require('../utils/tradeStats');
@@ -43,13 +40,7 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   }
   if (regularIds.length === 0) return results;
 
-  // 三日情绪均值系列不依赖资金快照：组内包含该系列策略时，日期序列并入 tech_index 覆盖的交易日
-  // （补上缺资金快照的日期，如 20260730）并允许构建无资金快照的回放数据；
-  // 非该系列策略在这些日期上量能等依赖资金快照的条件为 null 会安全判不通过，不会误买入
-  const hasEmoAvg = regularIds.some(id => STRATEGIES[id].emoAvgBuy === true);
-  const allDates = hasEmoAvg
-    ? Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]))
-    : getTrainingCampDates();
+  const allDates = getTrainingCampDates();
   // 升序处理（按时间先后）
   const rangeDates = allDates.filter(d => d >= startDate && d <= endDate).sort();
   const total = rangeDates.length;
@@ -123,9 +114,6 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
 
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
 
-    // 组内含三日情绪冰点策略：预计算当日跟踪指数环境门禁（pickBestStock 内同步查表过滤候选，见 calcEmo3IndexGate）
-    if (hasEmoAvg) await ensureEmo3DayGates(dateStr);
-
     // 内层策略：同一天数据依次跑本组全部策略的买卖点诊断
     for (const st of states) {
       const { strategy, singleTrades } = st;
@@ -134,11 +122,6 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
       // 次日 10:00 强制卖出）：属于则首次仅半仓（第一份），至少次日买点再次触发时补剩余半仓
       // （与两次买入同口径，同一标的）；非快进快出情形（走通用 7 条件卖点）则首次即全仓。已有 twoBuy 系列不变。
       const emoQuickHalfBuy = strategy.emoQuickOut === true && strategy.twoBuy !== true;
-
-      // 三日情绪均值策略专属卖点：买入次日按竞价开盘涨幅一次性卖出（见 engine/sellHooks/nextDayOpen.js）
-      if (strategy.nextDayOpenSell === true) {
-        nextDayOpenSell({ positions: st.positions, dateStr, dateDisplay, replayStocks, singleTrades });
-      }
 
       // 情绪快进快出策略专属卖点：次日 10:00 强卖 + 盘中跌破成本线止损（先到先卖）+ 强卖豁免
       // （见 engine/sellHooks/emoQuickOut.js）。每策略各自记录强卖日期，用于当日禁止二次买入
@@ -150,17 +133,12 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
       for (let bi = 0; bi < timeBuckets.length; bi++) {
         const bucket = timeBuckets[bi];
 
-        // 买入信号：尾盘抄底策略仅以尾盘抄底命中为买入前提（不跑买点诊断），其余策略沿用买点诊断 allPassed
-        // 情绪快进快出策略：当日已发生 10:00 强制卖出 → 当日禁止二次买入（哪怕买点再次触发）
+        // 买入信号：情绪快进快出策略当日已发生 10:00 强制卖出 → 当日禁止二次买入（哪怕买点再次触发）；其余沿用买点诊断 allPassed
         const quickOutNoRebuy = strategy.emoQuickOut === true && st.quickOutSoldDate === dateStr;
-        const buyDiag = strategy.tailDip === true ? null : runBuyPointDiagnosis(timeBuckets, bi, campData)?.data;
-        const buyHit = !quickOutNoRebuy && (strategy.tailDip === true
-          ? (strategy.emoAvgBuy === true ? checkEmoAvg3Hit(timeBuckets, bi, dateStr) : checkTailDipHit(timeBuckets, bi))
-          : buyDiag?.allPassed === true);
-        // 买入原因：命中了哪些买入条件（尾盘抄底为固定命中原因，三日情绪均值走专属命中原因，其余取买点诊断全部通过项汇总）
-        const buyInfo = buyHit
-          ? (strategy.tailDip === true ? (strategy.emoAvgBuy === true ? EMO_AVG3_BUY_INFO : TAIL_DIP_BUY_INFO) : buildBuyReasonFromDiag(buyDiag))
-          : null;
+        const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData)?.data;
+        const buyHit = !quickOutNoRebuy && buyDiag?.allPassed === true;
+        // 买入原因：取买点诊断全部通过项汇总
+        const buyInfo = buyHit ? buildBuyReasonFromDiag(buyDiag) : null;
         if (buyHit) {
           // N 日涨幅最大系列策略：跨指数双门禁 + 选股市场过滤
           const { gatedBuyInfo, gatePassed, gateAllowedMarkets, gateTurnedPosInfo } = await withDualGateInfo(buyInfo, strategy.id, dateStr, bucket.minute,
@@ -168,8 +146,7 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           if (!gatePassed) {
             continue;
           }
-          // 尾盘抄底策略 14:57 尾盘挂单买入（收盘集合竞价成交，价格取触发桶价），按挂单时间显示；其余策略按桶时间
-          const buyTime = strategy.tailDip === true ? '14:57' : fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
+          const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
 
           if (st.positions.length === 0) {
             // 未持仓时按指标选最优的一只买入（普通策略同一时刻仅持有一只；两次买入策略建第一份）

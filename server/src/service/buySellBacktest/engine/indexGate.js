@@ -1,4 +1,9 @@
-const { EMO3_GATE_INDEX_CODES } = require('./emo3Gate');
+// 指数日K配置（供 MA3 斜率序列按指数代码取用；创业板指 / 科创50 / 上证指数）
+const GATE_INDEX_CODES = [
+  { code: 'sz399006', name: '创业板指', cacheName: 'cyb_kline.json', pureCode: '399006', market: '32' },
+  { code: 'sh000688', name: '科创50', cacheName: 'kcb50_kline.json', pureCode: '1B0688', market: '16' },
+  { code: 'sh000001', name: '上证指数', cacheName: 'sh_kline.json', pureCode: '1A0001', market: '16' },
+];
 const { getSingleStockTlineDataByDate, loadIndexKline } = require('../deps');
 const { STRATEGIES } = require('../strategies/registry');
 
@@ -6,7 +11,7 @@ let indexMa3SlopeSeriesPromises = new Map(); // indexCode -> Promise<{ dates, cl
 const ensureIndexMa3SlopeSeries = async (indexCode) => {
   let p = indexMa3SlopeSeriesPromises.get(indexCode);
   if (p) return p;
-  const conf = EMO3_GATE_INDEX_CODES.find(c => c.code === indexCode);
+  const conf = GATE_INDEX_CODES.find(c => c.code === indexCode);
   if (!conf) throw new Error(`未知指数: ${indexCode}`);
   p = (async () => {
     const kline = await loadIndexKline(conf.cacheName, conf.pureCode, conf.market, 100);
@@ -136,17 +141,14 @@ const fmtCybGateDate = (d) => {
 //   ③a 今日盘中由正转负 → 当日禁止；③b 转负后第 1 天（前一交易日转负且今日 slope<0 盘中未转正）→ 次日也禁止
 // 买入选股时，根据两个指数各自门禁是否允许，过滤出允许的市场集合，
 // 只从允许的集合中选 N 日涨幅最大；两个都允许 → 全池；都禁止 → 跳过买入
-// 仅对常规 N 日涨幅最大策略启用，key_block / tail_dip / sentiment 系列有各自独立门禁
+// 仅对常规 N 日涨幅最大策略启用，情绪游资系列有各自独立门禁
 // ---------------------------------------------------------------------------
 // 指数斜率门禁（双指数：创业板指 sz399006 + 科创 50 sh000688）适用策略集合。
 // 排除以下前缀的策略（它们有独立的情绪/板块门禁，不走指数斜率）：
-//   key_block_*        重点板块
 //   hot_money_ice_*    情绪游资系列（复用重点板块引擎；顺周期＝斜率由负转正买/由正转负卖，
 //                      逆周期（_rev_）＝镜像：由正转负次日 9:40 依旧为负买/由负转正当桶卖）
-//   tail_dip_*         尾盘抄底（含 emo3 变体 tail_dip_emo3_*）
-// 三日情绪冰点策略全部包含在 tail_dip_emo3_* 内，随 tail_dip_* 一起排除。
-// 构建方式：从 STRATEGIES 枚举中排除上述前缀，未来新增策略只要不在这 3 组前缀里自动纳入。
-const CYB_GATE_EXCLUDE_PREFIX = ['key_block_', 'hot_money_ice_', 'tail_dip_'];
+// 构建方式：从 STRATEGIES 枚举中排除上述前缀，未来新增策略只要不在此前缀内自动纳入。
+const CYB_GATE_EXCLUDE_PREFIX = ['hot_money_ice_'];
 const CYB_GATE_STRATEGY_IDS = new Set(Object.keys(STRATEGIES).filter(id => !CYB_GATE_EXCLUDE_PREFIX.some(p => id.startsWith(p))));
 
 // 指数代码

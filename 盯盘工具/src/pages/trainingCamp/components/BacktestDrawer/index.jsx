@@ -100,8 +100,8 @@ const BUY_RULES = [
   { key: 'opening_below', title: '开盘后自选股低于开盘价数量', desc: '仅 9:30-10:00 生效：现价低于 9:30 开盘价的自选股数量不超过 30 只' },
   { key: 'emotion_retrace_after_open', title: '竞价情绪回落', desc: '9:30 竞价科技情绪 > 80 时，需当前科技情绪 < 40 才允许买入；开盘情绪 ≤80 或无线数据时该项不限制' },
   { key: 'resilience_gate', title: '选股抗分歧门槛（仅「买入最高涨幅」策略叠加 ≥ 11；所有策略通用 ≥ 9）', desc: '两层门槛：① 全局最低门槛 ≥ 9（所有策略通用，买点触发时刻个股抗分歧分数 < 9 → 顺延至下一只满足的股票，全部不满足则当日不买入）；② 专项门槛 ≥ 11（仅「买入最高涨幅」一个策略叠加启用，其余策略不走此条）。BUY_RULES 的买入条件明细会在 resiliencScore 字段里返回实际抗分歧分数，并标注是否因前序股票抗分歧不足而顺延（含前序股票触发时涨幅与抗分歧分数）' },
-  { key: 'one_word_board_defer', title: '上一交易日一字板过滤（主板≥8%、创业/科创≥16%，全策略通用）', desc: '选股通用限制：上一交易日一字板的股票次日不买。一字板判定（按上一交易日日K，对上一交易日昨收计算涨幅，口径较真实一字板放宽）：主板（60/00 开头）竞价开盘涨幅 ≥ 8%、收盘涨幅 ≥ 8%、且全天最低价对应涨幅 ≥ 8%（三项同时满足，即全天始终维持普涨、无低位上车机会）；创业板（30）/科创板（68）阈值为 16%。命中者从候选中剔除并顺延到 N 日涨幅排名的下一只，买入明细追加 one_word_board_defer 项标注被剔除的候选（含触发时涨幅）；上一交易日日K数据不足无法判定时不拦截。重点板块/情绪游资系列与弱转强策略同样执行此过滤' },
-  { key: 'cycle_defer', title: '顺周期过滤（与创业板指近20日相关性>0，除情绪游资/三日情绪冰点/尾盘抄底/重点板块外全策略）', desc: '适用范围：除「情绪游资类（ice_hot_money）」「三日情绪冰点类（tail_dip_emo3_*）」「尾盘抄底类（tail_dip_*）」「重点板块类（key_block_*）」外的全部策略（含快进快出、N日涨幅最大、斜率、研报覆盖、抗分歧、情绪开关等）。规则：候选按涨幅排名依次判断个股与创业板指在最近 20 个已完结交易日（截至买入前一交易日收盘，不含买入日）的日收益率 Pearson 相关系数——相关系数 > 0（正相关）为顺周期，可买入；≤ 0（负相关/零相关）为逆周期，剔除并顺延到排名下一只。买入明细追加 cycle_defer 项记录被顺延候选及其相关系数；个股或指数共同交易日不足 20 个（无法计算）时不拦截' },
+  { key: 'one_word_board_defer', title: '上一交易日一字板过滤（主板≥8%、创业/科创≥16%，全策略通用）', desc: '选股通用限制：上一交易日一字板的股票次日不买。一字板判定（按上一交易日日K，对上一交易日昨收计算涨幅，口径较真实一字板放宽）：主板（60/00 开头）竞价开盘涨幅 ≥ 8%、收盘涨幅 ≥ 8%、且全天最低价对应涨幅 ≥ 8%（三项同时满足，即全天始终维持普涨、无低位上车机会）；创业板（30）/科创板（68）阈值为 16%。命中者从候选中剔除并顺延到 N 日涨幅排名的下一只，买入明细追加 one_word_board_defer 项标注被剔除的候选（含触发时涨幅）；上一交易日日K数据不足无法判定时不拦截。情绪游资系列同样执行此过滤' },
+  { key: 'cycle_defer', title: '顺周期过滤（与创业板指近20日相关性>0，除情绪游资类外全策略）', desc: '适用范围：除「情绪游资类」（顺/逆周期情绪游资、情绪游资·极致胜率、情绪游资·反向抱团龙头）外的全部策略（含 N日涨幅最大、快进快出、研报覆盖、两次买入等）。规则：候选按涨幅排名依次判断个股与创业板指在最近 20 个已完结交易日（截至买入前一交易日收盘，不含买入日）的日收益率 Pearson 相关系数——相关系数 > 0（正相关）为顺周期，可买入；≤ 0（负相关/零相关）为逆周期，剔除并顺延到排名下一只。买入明细追加 cycle_defer 项记录被顺延候选及其相关系数；个股或指数共同交易日不足 20 个（无法计算）时不拦截' },
 ];
 const SELL_RULES = [
   { key: 'condition1', title: '均线破位', desc: '根据 MA5/MA10 斜率与开盘价位置分四种规则，跌破对应均线或前一交易日最低价触发卖点' },
@@ -123,14 +123,6 @@ const STRATEGY_OPTIONS = [
   { value: 'highest_2d5_gain_emoquick', label: '2.5日涨幅最大&三日情绪-60快进快出' },
   { value: 'highest_3d5_gain_emoquick', label: '3.5日涨幅最大&三日情绪-60快进快出' },
   { value: 'highest_3d_reports_top5_gain_emoquick', label: '3日涨幅最大&三日情绪-60快进快出&研报覆盖' },
-  // 科技板块前三系列（与快进快出类几乎完全一样，唯一区别在选股：先做板块效应筛选——当日 tag=进攻 的重点板块
-  // 按板块当日涨幅取前三，成分股与全量自选科技股取交集，再在交集内选 N 日涨幅最大）
-  { value: 'tech_block_top3_2d_gain_emoquick', label: '科技板块前三&2日涨幅最大&快进快出' },
-  { value: 'tech_block_top3_3d_gain_emoquick', label: '科技板块前三&3日涨幅最大&快进快出' },
-  { value: 'tech_block_top3_4d_gain_emoquick', label: '科技板块前三&4日涨幅最大&快进快出' },
-  { value: 'tech_block_top3_5d_gain_emoquick', label: '科技板块前三&5日涨幅最大&快进快出' },
-  { value: 'tech_block_top3_2d5_gain_emoquick', label: '科技板块前三&2.5日涨幅最大&快进快出' },
-  { value: 'tech_block_top3_3d5_gain_emoquick', label: '科技板块前三&3.5日涨幅最大&快进快出' },
   { value: 'highest_gain', label: '买入最高涨幅' },
   { value: 'highest_2d_gain', label: '2日涨幅最大' },
   { value: 'highest_3d_gain', label: '3日涨幅最大' },
@@ -155,10 +147,6 @@ const STRATEGY_OPTIONS = [
   { value: 'highest_3d_gain_two_buy_diff_block', label: '3日涨幅最大&两次买入不同板块' },
   { value: 'highest_4d_gain_two_buy_diff_block', label: '4日涨幅最大&两次买入不同板块' },
   { value: 'highest_5d_gain_two_buy_diff_block', label: '5日涨幅最大&两次买入不同板块' },
-  { value: 'key_block_2d_gain', label: '重点板块-2日最高涨幅' },
-  { value: 'key_block_3d_gain', label: '重点板块-3日最高涨幅' },
-  { value: 'key_block_4d_gain', label: '重点板块-4日最高涨幅' },
-  { value: 'key_block_5d_gain', label: '重点板块-5日最高涨幅' },
   // 情绪游资系列（信号指数=上证指数 3 日线斜率，全仓）：顺周期=斜率由负转正买 / 由正转负卖；逆周期=镜像（转负次日 9:40 且依旧为负才买、转正当桶卖）
   { value: 'hot_money_ice_2d_gain', label: '顺周期情绪游资-前2日涨幅最大' },
   { value: 'hot_money_ice_3d_gain', label: '顺周期情绪游资-前3日涨幅最大' },
@@ -183,51 +171,10 @@ const STRATEGY_OPTIONS = [
   { value: 'highest_5d_reports', label: '5日研报覆盖数最多' },
   { value: 'highest_3d_reports_top5_gain', label: '3日研报前五&涨幅最大' },
   { value: 'highest_5d_reports_top5_gain', label: '5日研报前五&涨幅最大' },
-  { value: 'highest_3d_ma_slope', label: '3日线斜率最陡峭' },
-  { value: 'highest_5d_ma_slope', label: '5日线斜率最陡峭' },
-  { value: 'highest_5d_resilience', label: '5日抗分歧分数最大' },
-  { value: 'highest_3d_resilience', label: '3日抗分歧分数最大' },
-  { value: 'resilience_weak_to_strong', label: '抗分歧弱转强' },
-
-  // 当日实时口径系列（与后端 buySellBacktest.STRATEGIES 保持一致；指标按买点触发时刻分时数据实时计算）
-  { value: 'highest_1d_resilience', label: '当日抗分歧分数最大' },
-
-  // 情绪开关系列（上一交易日科技情绪 3 日 EMA < -60 → 波动最小策略，否则 → 3日涨幅最大）
-  { value: 'prev3d_fall_low5_day_gain_emoswitch', label: '前三波动最小&当日涨最大/3日涨幅开关' },
-  { value: 'prev2d_fall_low5_day_gain_emoswitch', label: '前二波动最小&当日涨最大/3日涨幅开关' },
-  { value: 'prev1d_fall_low5_day_gain_emoswitch', label: '昨日波动最小&当日涨最大/3日涨幅开关' },
-
-  { value: 'tail_dip_1d_gain', label: '尾盘抄底-当日涨幅最大' },
-  { value: 'tail_dip_3d_gain', label: '尾盘抄底-3日涨幅最大' },
-  { value: 'tail_dip_1d_resilience', label: '尾盘抄底-当日抗分歧最大' },
-  { value: 'tail_dip_3d_resilience', label: '尾盘抄底-3日抗分歧最大' },
-  { value: 'tail_dip_1d_fall', label: '尾盘抄底-当日跌幅最大' },
-  { value: 'tail_dip_3d_fall', label: '尾盘抄底-3日跌幅最大' },
-  { value: 'tail_dip_1d_resilience_low', label: '尾盘抄底-当日抗分歧分数最低' },
-  { value: 'tail_dip_emo3_3d_gain', label: '三日情绪冰点-3日涨幅最大' },
-  { value: 'tail_dip_emo3_3d_fall', label: '三日情绪冰点-3日跌幅最大' },
-  { value: 'tail_dip_emo3_3d_reports_top5_gain', label: '三日情绪冰点-3日研报前五&涨幅最大' },
-  { value: 'tail_dip_emo3_1d_gain', label: '三日情绪冰点-当日涨幅最大' },
-  { value: 'tail_dip_emo3_1d_fall', label: '三日情绪冰点-当日跌幅最大' },
-  { value: 'tail_dip_emo3_1d_resilience', label: '三日情绪冰点-当日抗分歧最大' },
 ];
 
-// 策略分类（用于「回测全部」旁的分类 Tag，点击只回测该分类下的策略）：
-// 同一策略可归属多个分类（研报覆盖类与快进快出类、三日情绪冰点类存在交叉），并集覆盖全部策略
+// 策略分类（用于「回测全部」旁的分类 Tag，点击只回测该分类下的策略）
 const STRATEGY_CATEGORIES = [
-  {
-    key: 'key_block',
-    label: '重点板块类',
-    ids: ['key_block_2d_gain', 'key_block_3d_gain', 'key_block_4d_gain', 'key_block_5d_gain'],
-  },
-  {
-    key: 'emo3',
-    label: '三日情绪冰点类',
-    ids: [
-      'tail_dip_emo3_3d_gain', 'tail_dip_emo3_3d_fall', 'tail_dip_emo3_3d_reports_top5_gain',
-      'tail_dip_emo3_1d_gain', 'tail_dip_emo3_1d_fall', 'tail_dip_emo3_1d_resilience',
-    ],
-  },
   {
     key: 'emo_quick',
     label: '快进快出类',
@@ -238,20 +185,11 @@ const STRATEGY_CATEGORIES = [
     ],
   },
   {
-    key: 'tech_block_top3',
-    label: '科技板块前三&快进快出类',
-    ids: [
-      'tech_block_top3_2d_gain_emoquick', 'tech_block_top3_3d_gain_emoquick',
-      'tech_block_top3_4d_gain_emoquick', 'tech_block_top3_5d_gain_emoquick',
-      'tech_block_top3_2d5_gain_emoquick', 'tech_block_top3_3d5_gain_emoquick',
-    ],
-  },
-  {
     key: 'reports',
     label: '研报覆盖类',
     ids: [
       'highest_3d_reports', 'highest_5d_reports', 'highest_3d_reports_top5_gain',
-      'highest_5d_reports_top5_gain', 'highest_3d_reports_top5_gain_emoquick', 'tail_dip_emo3_3d_reports_top5_gain',
+      'highest_5d_reports_top5_gain', 'highest_3d_reports_top5_gain_emoquick',
     ],
   },
   {
@@ -287,73 +225,6 @@ const STRATEGY_CATEGORIES = [
       'highest_4d_gain_two_buy_diff_block', 'highest_5d_gain_two_buy_diff_block',
     ],
   },
-  {
-    key: 'tail_dip',
-    label: '尾盘抄底类',
-    ids: [
-      'tail_dip_1d_gain', 'tail_dip_3d_gain', 'tail_dip_1d_resilience', 'tail_dip_3d_resilience',
-      'tail_dip_1d_fall', 'tail_dip_3d_fall', 'tail_dip_1d_resilience_low',
-    ],
-  },
-  {
-    key: 'resilience_slope',
-    label: '抗分歧/斜率类',
-    ids: [
-      'highest_3d_ma_slope', 'highest_5d_ma_slope', 'highest_5d_resilience',
-      'highest_3d_resilience', 'resilience_weak_to_strong',
-    ],
-  },
-  {
-    key: 'realtime_intraday',
-    label: '当日实时口径',
-    ids: ['highest_1d_resilience'],
-  },
-  {
-    key: 'emo_switch',
-    label: '情绪开关系列',
-    ids: [
-      'prev3d_fall_low5_day_gain_emoswitch',
-      'prev2d_fall_low5_day_gain_emoswitch',
-      'prev1d_fall_low5_day_gain_emoswitch',
-    ],
-  },
-];
-
-// 三日情绪冰点系列策略（与后端 buySellBacktest.STRATEGIES 的 emoAvgBuy: true 保持一致）：
-// 回测日期范围独立——固定从 2026-07-01 开始回测，与其他策略（最近 60 个交易日滚动窗口）区别开
-const EMO3_STRATEGY_IDS = [
-  'tail_dip_emo3_3d_gain',
-  'tail_dip_emo3_3d_fall',
-  'tail_dip_emo3_3d_reports_top5_gain',
-  'tail_dip_emo3_1d_gain',
-  'tail_dip_emo3_1d_fall',
-  'tail_dip_emo3_1d_resilience',
-];
-const isEmo3Strategy = (id) => EMO3_STRATEGY_IDS.includes(id);
-// 三日情绪冰点系列固定回测起点（与后端 buySellBacktest.EMO3_BACKTEST_START_DATE 保持一致）
-const EMO3_BACKTEST_START_DATE = '20260701';
-// 策略类别：用于切换策略时判断是否需要重置手动日期范围（emo3 / regular 各自默认范围不同）
-const strategyCategory = (id) => (isEmo3Strategy(id) ? 'emo3' : 'regular');
-
-// 重点板块-N日最高涨幅系列策略（与后端 buySellBacktest.STRATEGIES 的 keyBlockDays 保持一致）：
-// 板块驱动的独立买入逻辑（斜率分模式 + tag 板块选股），日期范围与常规策略一致（依赖回放缓存）
-const KEY_BLOCK_STRATEGY_IDS = [
-  'key_block_2d_gain',
-  'key_block_3d_gain',
-  'key_block_4d_gain',
-  'key_block_5d_gain',
-];
-const KEY_BLOCK_BUY_RULES = [
-  { key: 'key_block_cyb_gate', title: '唯一买卖开关：3 日线斜率正负翻转（盘中实时）', desc: '盘中实时计算创业板指 3 日线斜率（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替，不等收盘，逐桶实时判定），只在斜率正负翻转的桶触发买卖，不需要资金、成交量、情绪等任何条件配合：斜率由负转正 → 进攻买点（买自选科技股）；斜率由正转负且当前空仓 → 防御买点（买防御+中性 tag 板块）。斜率符号跨日连续追踪，初值取回测首日前一交易日的收盘斜率；斜率数据不足的桶不参与翻转判定；回测首日之前若斜率无翻转则不建仓' },
-  { key: 'key_block_watchlist_tech', title: '候选池筛选与仓位（进攻=自选科技股·全仓 / 防御=防御+中性板块·半仓）', desc: '进攻候选 = 自选股（monitor_stocks.json）中 isTech ≠ false 的科技股（剔除排除股；含自选股添加时间门禁，买点时点未加入自选的股票不参与），进攻为全仓买入；防御候选 =「防御+中性」tag 板块全部成分股（板块 tag 在 key_blocks 页面维护，未打 tag 的板块不参与，不限自选股），防御对应创业板情绪低迷期，按半仓买入；防御笔的收益率（含期末浮盈）在概览的整体收益、平均回撤、单笔最大回撤中一律按半仓（×0.5）折算；停牌或无当日分时数据的个股自动跳过' },
-  { key: 'key_block_retry_940', title: '进攻卖出后当日不追买，次日 9:40 复测', desc: '进攻持仓按卖点诊断卖出后，若当时 3 日线斜率仍为正，当日不再继续买入；等到次日开盘 10 分钟后（9:40 桶）再看盘中实时斜率，仍为正才继续买 N 日涨幅最大的科技股；若复测时斜率已经为负，则不再买科技股，改由「由正转负」防御信号驱动（空仓时买入防御+中性）；防御持仓在斜率转正桶卖出后，同桶即可转手买入进攻科技股，不受此限制' },
-  { key: 'key_block_limit_up', title: '涨停过滤与顺延', desc: '买入时点判断候选股是否涨停：主板股票（60/00 开头）涨幅 > 9.5% 视为涨停，创业板（30）/科创板（68）涨幅 > 19% 视为涨停；涨停股不可买入，顺延到 N 日涨幅排名的下一只非涨停股票（买入明细中标注被顺延的涨停候选）；全部候选涨停或无有效候选时，在斜率状态不变的后续桶持续重试。另叠加**上一交易日一字板过滤**：昨日开盘/收盘/全天最低涨幅均不低于阈值（主板 ≥ 8%、创业/科创 ≥ 16%）的一字板候选同样剔除并顺延（买入明细 one_word_board_defer 项标注）' },
-  { key: 'key_block_best_stock', title: '候选池内 N 日涨幅最大的股票', desc: '在候选池（进攻=自选科技股池；防御=tag 匹配板块成分股）中，按最近 N 个交易日（含触发日）个股涨幅之和取最大的一只买入（个股日涨幅 = 相邻收盘价环比，由回测时重新拉取成分股日K现算）；买入价取触发桶时点的分时价格；同桶允许先卖后买转手（防御卖出与进攻买入可在同一桶完成）' },
-];
-const KEY_BLOCK_SELL_RULES = [
-  { key: 'key_block_positive_sells', title: '进攻持仓（科技股）：通用 7 条件卖点（成本线 -2%）', desc: '自选科技股买入的进攻持仓沿用通用 7 条件卖出诊断（跌破10日线/前低/5日线、高位放量大阴线、科技板块情绪退潮、连续三日抗分歧<10、距5日收盘新高、跌停、跌破成本线），满足其一即卖（买入次日起生效）；条件 7「跌破成本线」为 -2%（现价 < 买入价 × 0.98 即触发），并含「竞价低开自救窗口」例外——当日竞价开盘价已跌破该线时不在 9:30 直接止损，拉升中继续持有、回补至阈值上方则不再止损（待再次跌破再卖），只有拉升结束回落（如 9:36 < 9:35）且该分钟仍跌破阈值时才直接卖出；卖出后按「当日不追买、次日 9:40 复测」规则处理（见买入规则）；「科技板块情绪退潮」受创业板指 3 日线斜率门禁（见下）' },
-  { key: 'key_block_reverse_sells', title: '防御持仓（防御+中性·半仓）：双卖点 = 斜率由负转正 ∪ 个股跌破成本线 -5%', desc: '防御持仓按半仓买入（账户收益贡献 = 个股实际收益 × 0.5，概览的整体收益与平均/最大回撤均按折算口径），双卖点任一先触发即卖出：① 盘中实时创业板指 3 日线斜率由负转正的那个桶（MA3 − 5个交易日前的MA3，当日收盘价用盘中实时价代替），按该桶时点持仓股分时价卖出；② 个股分时价跌破买入成本线 -5%（现价 < 买入价 × 0.95）即止损卖出——例外：当日竞价开盘价已跌破该线（隔夜大低开）时不在 9:30 直接止损——拉升中继续持有、回补至阈值上方则不再止损（待再次跌破再卖），只有拉升结束回落且该分钟仍跌破阈值时，才于回落当分钟直接卖出（按回落分钟分时价成交）；盘中才跌破则维持即时止损。桶级精确成交（2026-10-05 优化）：止损在 5 分钟桶触发后，从桶前一分钟起逐分钟回溯当日分时，定位连续跌破区间的最早一分钟并按该分钟分时价与时间成交（线上在首次跌破当分钟即已卖出）；9:35 桶最早回溯到 9:30，破线就发生在当前桶时仍按桶价成交。卖出后同桶即按进攻买点扫描买入科技股；持仓股分时拉取失败当日安全跳过，次日重试' },
-  { key: 'key_block_emo_gate', title: '科技板块情绪退潮门禁（仅进攻持仓）', desc: '创业板指 3 日线斜率为正（MA3 − 5个交易日前的MA3，按当日收盘已基本定型口径）时，「科技板块情绪退潮」条件才参与进攻（科技股）持仓的卖出判定；斜率为负或数据不足时该条件当日不生效（其余 6 项条件不受影响）；防御持仓不走 7 条件卖点，本门禁不适用' },
 ];
 
 // 情绪游资系列策略（与后端 buySellBacktest.STRATEGIES 的 iceMode + keyBlockDays 保持一致）：
@@ -712,76 +583,6 @@ const STRATEGY_SPECIFIC_NOTES = {
     ],
   },
 
-  // ---- 均线斜率系列 ----
-  highest_3d_ma_slope: {
-    group: '均线斜率系列',
-    bullets: [
-      '选股口径：买点触发时，从全量自选科技股中买入 **3 日涨幅均线斜率最陡峭** 的一只（斜率 = 当前 MA3 − 5 个交易日前的 MA3，斜率越大=近期涨幅越陡峭）。',
-      '卖点：通用 SELL_RULES 7 条件；不适用抗分歧门槛。',
-    ],
-  },
-  highest_5d_ma_slope: {
-    group: '均线斜率系列',
-    bullets: [
-      '选股口径：5 日涨幅均线斜率最陡峭的一只。',
-      '卖点：通用 SELL_RULES 7 条件；不适用抗分歧门槛。',
-    ],
-  },
-
-  // ---- 抗分歧系列 ----
-  highest_3d_resilience: {
-    group: '抗分歧系列',
-    bullets: [
-      '选股口径：买点触发时买入**最近 3 个交易日抗分歧分数之和最大**的一只。',
-      '卖点：通用 SELL_RULES 7 条件。',
-    ],
-  },
-  highest_5d_resilience: {
-    group: '抗分歧系列',
-    bullets: [
-      '选股口径：买点触发时买入**最近 5 个交易日抗分歧分数之和最大**的一只。',
-      '卖点：通用 SELL_RULES 7 条件。',
-    ],
-  },
-  highest_1d_resilience: {
-    group: '抗分歧系列',
-    bullets: [
-      '选股口径：买点触发时，**按触发时点实时分时数据**计算每只自选股的日内抗分歧分数，买入分数最大的一只；分数相同时取触发时点当日实时涨幅最大的一只。',
-      '与 highest_3d/5d_resilience 的区别：这里用的是「当日截至触发时点的实时分数」，不是收盘口径。',
-      '卖点：通用 SELL_RULES 7 条件。',
-    ],
-  },
-  resilience_weak_to_strong: {
-    group: '抗分歧系列',
-    bullets: [
-      '选股口径：两阶段——① 先筛出**当日抗分歧分数 > 11** 的股票；② 在候选池里计算「最近 4 个交易日抗分歧均值」的弱转强差值（前两天均值 vs 最近两天均值，差值越大=由弱转强越明显），全仓买入差值最大的一只；差值相同则取当日涨幅最大的。',
-      '卖点：通用 SELL_RULES 7 条件。',
-    ],
-  },
-
-  // ---- 情绪开关系列（prev{N}d_fall_low5_day_gain_emoswitch）----
-  prev1d_fall_low5_day_gain_emoswitch: {
-    group: '情绪开关系列',
-    bullets: [
-      '选股口径：两阶段 + 情绪开关。当开关触发（上一交易日科技情绪 3 日 EMA < -60）：① 先按「**昨日累计涨幅绝对值最小**」取前五（无论涨跌，波动最小在前，top5=最低 5 只含并列）；② 候选池内选**买点触发时点当日盘中涨幅最大**的一只；否则（EMA ≥ -60 或数据缺失）跳过第一步，直接按「3 日涨幅最大」（最近 3 个交易日涨幅之和最大）选股。',
-      '卖点：通用 SELL_RULES 7 条件。',
-    ],
-  },
-  prev2d_fall_low5_day_gain_emoswitch: {
-    group: '情绪开关系列',
-    bullets: [
-      '选股口径：两阶段 + 情绪开关。开关触发时（EMA < -60）：① 先按「**前 2 个交易日累计涨幅绝对值最小**」取前五（波动最小，无论涨跌）；② 候选池内选**触发时点当日盘中涨幅最大**的一只；否则直接按「3 日涨幅最大」选股。',
-      '卖点：通用 SELL_RULES 7 条件。',
-    ],
-  },
-  prev3d_fall_low5_day_gain_emoswitch: {
-    group: '情绪开关系列',
-    bullets: [
-      '选股口径：两阶段 + 情绪开关。开关触发时（EMA < -60）：① 先按「**前 3 个交易日累计涨幅绝对值最小**」取前五（波动最小，无论涨跌）；② 候选池内选**触发时点当日盘中涨幅最大**的一只；否则直接按「3 日涨幅最大」选股。',
-      '卖点：通用 SELL_RULES 7 条件。',
-    ],
-  },
-
   // ---- 快进快出系列（*_emoquick） ----
   highest_2d_gain_emoquick: {
     group: '快进快出系列',
@@ -836,83 +637,6 @@ const STRATEGY_SPECIFIC_NOTES = {
     bullets: [
       '选股口径分三路：当触发「上一交易日科技情绪 3 日 EMA < -60」这条快进快出路径时，先取**最近 3 日研报覆盖数前五（含并列，仅统计买点前已创建的研报）**形成候选池，再从中选 3 日涨幅最大的一只（博弈反弹提胜率）；走「温和回升」或数据缺失 / 非快进快出 时仍按普通「3 日涨幅最大」选股。',
       '特殊卖点：与 highest_3d_gain_emoquick 完全相同——上一交易日 3 日 EMA < -60 或温和回升任一触发 → 次日 10:00 强卖（不走通用 7 条件），否则走通用 SELL_RULES。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
-    ],
-  },
-
-  // ---- 科技板块前三系列（tech_block_top3_*）：与快进快出系列几乎完全一样，唯一区别在选股（增加板块效应筛选） ----
-  tech_block_top3_2d_gain_emoquick: {
-    group: '科技板块前三快进快出系列',
-    bullets: [
-      '选股口径：与快进快出系列的唯一区别在选股——买点触发时先做**板块效应筛选**：① 取当日重点板块（block_code.js，key_blocks 页面维护）中 tag 为**进攻**的板块，按**板块盘中涨幅**（= 该板块成分股在**买点触发时点**的实时涨幅均值，与 key_blocks 页面盘中 avgChange 同口径，不含收盘价前视）降序取**前三个板块**；② 把这 3 个板块的全部成分股与**全量自选股中 isTech ≠ false 的科技股**取交集；③ 在交集内按最近 2 个交易日涨幅之和最大选一只买入（为「2日涨幅最大」口径，排序依据为触发时点当日盘中涨幅）；交集为空则本次不买入。',
-      '与普通快进快出系列的差异：普通快进快出**不看板块效应**，直接在全部自选股里按 N 日涨幅最大选股；本系列相当于在选股前叠加一层「板块效应」筛选（只买当日进攻板块前三的科技股）。',
-      '卖点与 highest_2d_gain_emoquick 完全一致：满足快进快出触发条件（① 上一交易日科技情绪 3 日 EMA < -60；② 上上个、上个交易日当日科技情绪原始分均在 -30~20 区间且回升）→ 次日 10:00 强制卖出（不走通用卖点）、强卖当日禁止二次买入；2026-10-05 起叠加持仓次日盘中跌破成本线 -2% 先到先卖止损；否则走通用 SELL_RULES 7 条件。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
-      '通用机制照常生效：触发时点涨停顺延、全局最低抗分歧门槛 ≥ 9、自选股添加时间门禁、跨指数双门禁（主板/创业板→创业板指、科创板→科创50）。',
-    ],
-  },
-  tech_block_top3_3d_gain_emoquick: {
-    group: '科技板块前三快进快出系列',
-    bullets: [
-      '与 tech_block_top3_2d_gain_emoquick 完全相同，唯 N 日窗口 = 3 个交易日（交集内按最近 3 个交易日涨幅之和最大选股）。',
-      '板块效应筛选、快进快出触发条件与卖点、涨停顺延/抗分歧门槛/时间门禁/跨指数双门禁均与 2 日版一致。',
-    ],
-  },
-  tech_block_top3_4d_gain_emoquick: {
-    group: '科技板块前三快进快出系列',
-    bullets: [
-      '与 tech_block_top3_2d_gain_emoquick 完全相同，唯 N 日窗口 = 4 个交易日（交集内按最近 4 个交易日涨幅之和最大选股）。',
-    ],
-  },
-  tech_block_top3_5d_gain_emoquick: {
-    group: '科技板块前三快进快出系列',
-    bullets: [
-      '与 tech_block_top3_2d_gain_emoquick 完全相同，唯 N 日窗口 = 5 个交易日（交集内按最近 5 个交易日涨幅之和最大选股）。',
-    ],
-  },
-  tech_block_top3_2d5_gain_emoquick: {
-    group: '科技板块前三快进快出系列',
-    bullets: [
-      '选股口径：与快进快出系列的唯一区别在选股——买点触发时先做**板块效应筛选**：① 取当日重点板块中 tag 为**进攻**的板块，按**板块盘中涨幅**降序取**前三个板块**；② 把这 3 个板块的全部成分股与**全量自选股中 isTech ≠ false 的科技股**取交集；③ 在交集内按「2.5 日涨幅最大」口径选一只买入；交集为空则本次不买入。',
-      halfDayNote(2),
-      '卖点与 highest_2d5_gain_emoquick 完全一致：满足快进快出触发条件 → 次日 10:00 强制卖出（不走通用卖点）、强卖当日禁止二次买入；2026-10-05 起叠加持仓次日盘中跌破成本线 -2% 先到先卖止损；否则走通用 SELL_RULES 7 条件。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
-      '通用机制照常生效：触发时点涨停顺延、全局最低抗分歧门槛 ≥ 9、自选股添加时间门禁、跨指数双门禁。',
-    ],
-  },
-  tech_block_top3_3d5_gain_emoquick: {
-    group: '科技板块前三快进快出系列',
-    bullets: [
-      '与 tech_block_top3_2d5_gain_emoquick 完全相同，唯 N.5 日窗口 = 3.5 日（交集内按「3.5 日涨幅最大」口径选股）。',
-      halfDayNote(3),
-      '板块效应筛选、快进快出触发条件与卖点、涨停顺延/抗分歧门槛/时间门禁/跨指数双门禁均与 2.5 日版一致。',
-    ],
-  },
-
-  // ---- 重点板块系列（key_block_*） ----
-  key_block_2d_gain: {
-    group: '重点板块系列',
-    bullets: [
-      '选股口径：板块驱动，**不走通用 BUY_RULES**。候选池分两种——进攻 = 自选股 monitor_stocks 中 isTech ≠ false 的科技股（全仓）；防御 = 「防御+中性」tag 板块全部成分股（半仓）。',
-      '触发时点：**唯一触发开关 = 创业板指 3 日线斜率正负翻转桶**。斜率由负转正 → 进攻买点，全仓买 N 日涨幅最大科技股；斜率由正转负且空仓 → 防御买点，半仓买防御+中性板块 N 日涨幅最大股。',
-      'N 日窗口：2 个交易日（与其他 key_block_* 同步）。',
-      '进攻卖点：通用 7 条件卖点（成本线 -2%）；但防御卖点 = 斜率由负转正 ∪ 个股跌破买入价 × 0.95，双条件任一触发即卖。',
-      '特殊：进攻卖出后当日不追买，次日 9:40 再复测斜率；涨停股（主板>9.5%、创业板/科创板>19%）顺延到下一只；上一交易日一字板（开盘/收盘/最低涨幅均≥阈值，主板 8%、创业/科创 16%）的候选同样剔除顺延。',
-    ],
-  },
-  key_block_3d_gain: {
-    group: '重点板块系列',
-    bullets: [
-      '与 key_block_2d_gain 完全相同，唯 N 日窗口 = 3 个交易日。',
-    ],
-  },
-  key_block_4d_gain: {
-    group: '重点板块系列',
-    bullets: [
-      '与 key_block_2d_gain 完全相同，唯 N 日窗口 = 4 个交易日。',
-    ],
-  },
-  key_block_5d_gain: {
-    group: '重点板块系列',
-    bullets: [
-      '与 key_block_2d_gain 完全相同，唯 N 日窗口 = 5 个交易日。',
     ],
   },
 
@@ -995,108 +719,6 @@ const STRATEGY_SPECIFIC_NOTES = {
   // ---- 情绪游资-反向抱团龙头（hot_money_reverse_leader，2026-10-17 用户新增，单策略） ----
   hot_money_reverse_leader: reverseLeaderNote,
 
-  // ---- 尾盘抄底系列（tail_dip_*） ----
-  tail_dip_1d_gain: {
-    group: '尾盘抄底系列',
-    bullets: [
-      '买入触发条件：仅当**当日科技情绪分时曾触及 -100 退潮冰点（hasIce: true）**时命中，不走通用 BUY_RULES 的 allPassed。',
-      '触发时点：固定 14:57（尾盘集合竞价时点）挂单买入，成交价取 14:57 那一分钟的 lastPx（等价于收盘价）。',
-      '选股口径：当日涨幅最大的自选科技股（tail_dip_1d_gain 变体）。',
-      '卖点：**专属逐分钟环比规则**——次日开盘后持续监测：只要当前分钟涨幅比上一分钟回落，就立即按回落那一分钟的价格卖出。不走通用 SELL_RULES。',
-    ],
-  },
-  tail_dip_3d_gain: {
-    group: '尾盘抄底系列',
-    bullets: [
-      '与 tail_dip_1d_gain 相同，但选股口径改为「最近 3 个交易日涨幅之和最大」。',
-      '买入触发条件：当日科技情绪分时曾触及 -100 冰点（hasIce: true）；14:57 挂单买入。',
-      '卖点：次日开盘后逐分钟监测，涨幅开始回落即按回落分钟价格卖出。',
-    ],
-  },
-  tail_dip_1d_resilience: {
-    group: '尾盘抄底系列',
-    bullets: [
-      '选股口径：当日抗分歧分数最大的自选科技股。',
-      '买入触发条件：当日科技情绪曾触及 -100 冰点（hasIce: true）；14:57 挂单买入。',
-      '卖点：次日开盘后逐分钟环比，涨幅回落即卖出。',
-    ],
-  },
-  tail_dip_3d_resilience: {
-    group: '尾盘抄底系列',
-    bullets: [
-      '选股口径：最近 3 个交易日抗分歧分数之和最大。',
-      '其他规则同 tail_dip_1d_resilience。',
-    ],
-  },
-  tail_dip_1d_fall: {
-    group: '尾盘抄底系列',
-    bullets: [
-      '选股口径：当日跌幅最大的自选科技股（「跌深反弹」版本，与 gain 系列对称）。',
-      '买入触发条件：当日科技情绪曾触及 -100 冰点；14:57 挂单。',
-      '卖点：次日开盘后逐分钟环比，涨幅回落即卖。',
-    ],
-  },
-  tail_dip_3d_fall: {
-    group: '尾盘抄底系列',
-    bullets: [
-      '选股口径：最近 3 个交易日跌幅最大。',
-      '其他规则同 tail_dip_1d_fall。',
-    ],
-  },
-  tail_dip_1d_resilience_low: {
-    group: '尾盘抄底系列',
-    bullets: [
-      '选股口径：**当日抗分歧分数最低**的自选科技股（与 resilience 对称，买最「弱」的博弈反弹）。',
-      '其他规则同 tail_dip_1d_resilience。',
-    ],
-  },
-
-  // ---- 三日情绪冰点变体（tail_dip_emo3_*） ----
-  tail_dip_emo3_3d_gain: {
-    group: '三日情绪冰点系列',
-    bullets: [
-      '触发条件：情绪页「三日均值」EMA 线（每日收盘情绪分递推，与 sentiment 页同源）当日读数 < -60；**不走 hasIce**（与普通尾盘抄底的核心区别）。回测固定起点 2026-07-01。',
-      '选股口径：最近 3 个交易日涨幅之和最大；买点固定 14:57（尾盘集合竞价）。',
-      '卖点**专属**（不走通用 SELL_RULES / 不走尾盘逐分钟回落）——买入次日竞价开盘涨幅 < 0 → 9:30 开盘直接卖出；开盘涨幅 ≥ 0（含 0~1%）→ 固定次日 10:00 统一卖出。',
-    ],
-  },
-  tail_dip_emo3_3d_fall: {
-    group: '三日情绪冰点系列',
-    bullets: [
-      '触发条件：情绪页三日均值 EMA < -60；选股口径：最近 3 个交易日跌幅最大；14:57 挂单。',
-      '卖点专属：次日竞价开盘涨幅 < 0 → 9:30 开盘直接卖；≥ 0 → 固定次日 10:00 卖。',
-      '回测固定起点 2026-07-01。',
-    ],
-  },
-  tail_dip_emo3_3d_reports_top5_gain: {
-    group: '三日情绪冰点系列',
-    bullets: [
-      '触发条件：情绪页三日均值 EMA < -60。',
-      '选股口径：先取最近 3 日研报覆盖数前五（含并列），候选池内选 3 日涨幅最大。',
-      '卖点专属：次日竞价开盘涨幅 < 0 → 9:30 开盘直接卖；≥ 0 → 固定次日 10:00 卖。买点 14:57；回测固定起点 2026-07-01。',
-    ],
-  },
-  tail_dip_emo3_1d_gain: {
-    group: '三日情绪冰点系列',
-    bullets: [
-      '触发条件：情绪页三日均值 EMA < -60；选股口径：当日涨幅最大（涨幅相同时取最近 2 个交易日涨幅最大的一只）；14:57 挂单。',
-      '卖点专属：次日竞价开盘涨幅 < 0 → 9:30 开盘直接卖；≥ 0 → 固定次日 10:00 卖；回测固定起点 2026-07-01。',
-    ],
-  },
-  tail_dip_emo3_1d_fall: {
-    group: '三日情绪冰点系列',
-    bullets: [
-      '触发条件：情绪页三日均值 EMA < -60；选股口径：当日跌幅最大（跌幅相同时取最近 2 个交易日跌幅最大的一只）；14:57 挂单。',
-      '卖点专属：次日竞价开盘涨幅 < 0 → 9:30 开盘直接卖；≥ 0 → 固定次日 10:00 卖；回测固定起点 2026-07-01。',
-    ],
-  },
-  tail_dip_emo3_1d_resilience: {
-    group: '三日情绪冰点系列',
-    bullets: [
-      '触发条件：情绪页三日均值 EMA < -60；选股口径：当日抗分歧分数最大（分数相同时取最近 2 个交易日抗分歧分数汇总最大的一只）；14:57 挂单。',
-      '卖点专属：次日竞价开盘涨幅 < 0 → 9:30 开盘直接卖；≥ 0 → 固定次日 10:00 卖；回测固定起点 2026-07-01。',
-    ],
-  },
 };
 
 // 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
@@ -1241,7 +863,11 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   // embedded=true 时以内嵌页面方式渲染（不套 Drawer 外壳），open 恒视为 true
   const isOpen = embedded ? true : open;
   const [range, setRange] = useState(null);
-  const [strategy, setStrategy] = useState(localStorage.getItem('latest_training_camp_buy_sell_backtest_strategy') || 'highest_3d_gain_emoquick');
+  const [strategy, setStrategy] = useState(() => {
+    // 默认策略：若 localStorage 里存的是已下线的策略 id，回退到默认的「3日涨幅最大&三日情绪-60快进快出」
+    const saved = localStorage.getItem('latest_training_camp_buy_sell_backtest_strategy');
+    return STRATEGY_OPTIONS.some(o => o.value === saved) ? saved : 'highest_3d_gain_emoquick';
+  });
   const [reportOpen, setReportOpen] = useState(false);
   const [trendOpen, setTrendOpen] = useState(false); // 策略趋势诊断弹窗（三档时间范围 × 全部策略）
   const [timeFlexOpen, setTimeFlexOpen] = useState(false); // 时间伸缩测试弹窗
@@ -1302,8 +928,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
 
   const availableDates = useMemo(() => (Array.isArray(dates) ? dates : []), [dates]);
   const maxDateStr = availableDates.length > 0 ? availableDates[0] : dayjs().format('YYYYMMDD');
-  // 三日情绪冰点策略固定从 2026-07-01 开始回测（结束日取最新可用交易日）；
-  // 未手动选择时常规策略默认取「最近 60 个可用交易日」（不足 60 个时取最早的一个日期），与后端回测报告 /
+  // 未手动选择时默认取「最近 60 个可用交易日」（不足 60 个时取最早的一个日期），与后端回测报告 /
   // worker 预生成缓存的日期范围口径一致，
   // 保证 worker 跑完后打开抽屉能直接命中缓存（此前写死最早日期会因范围不一致查不到缓存而空白）
   const defaultRange = useMemo(() => {
@@ -1313,19 +938,11 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
     const end = sortedAsc[sortedAsc.length - 1];
     return [dayjs(start, 'YYYYMMDD'), dayjs(end, 'YYYYMMDD')];
   }, [availableDates, maxDateStr]);
-  // 三日情绪冰点默认范围：起点固定 2026-07-01，结束日取最新可用回放交易日（与后端 getEmo3DefaultRange 口径一致）
-  const emo3DefaultRange = useMemo(() => {
-    if (availableDates.length === 0) return [dayjs(EMO3_BACKTEST_START_DATE, 'YYYYMMDD'), dayjs(maxDateStr, 'YYYYMMDD')];
-    const sortedAsc = [...availableDates].sort();
-    return [dayjs(EMO3_BACKTEST_START_DATE, 'YYYYMMDD'), dayjs(sortedAsc[sortedAsc.length - 1], 'YYYYMMDD')];
-  }, [availableDates, maxDateStr]);
-  const curIsEmo3 = isEmo3Strategy(strategy);
-  const curIsKeyBlock = KEY_BLOCK_STRATEGY_IDS.includes(strategy);
   const curIsIce = isIceStrategy(strategy);
   const curIsIceRev = isIceRevStrategy(strategy);
   const curIsExtremeWin = isExtremeWinStrategy(strategy);
   const curIsReverseLeader = isReverseLeaderStrategy(strategy);
-  const effectiveRange = range || (curIsEmo3 ? emo3DefaultRange : defaultRange);
+  const effectiveRange = range || defaultRange;
 
   // 组件卸载时停止轮询
   useEffect(() => {
@@ -1417,13 +1034,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
     }
   };
 
-  // 切换策略：策略类别（三日情绪冰点 / 常规）变化时重置手动日期，回退到该类别的默认范围；
-  // 选中后自动复制策略名称到剪贴板
+  // 切换策略：选中后自动复制策略名称到剪贴板
   const handleStrategyChange = async (v) => {
-    if (strategyCategory(v) !== strategyCategory(strategy)) {
-      setRange(null);
-      setResult(null);
-    }
     setActiveCategory(null); // 手动切换策略后取消分类 Tag 高亮
     setStrategy(v);
     localStorage.setItem('latest_training_camp_buy_sell_backtest_strategy', v);
@@ -1607,9 +1219,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
       message.warning(`「${cat.label}」下暂无可回测策略`);
       return;
     }
-    // 切换策略会按类别重置手动日期范围，这里用与「切换后」一致的生效范围，保证范围口径一致
-    const switching = strategyCategory(first.value) !== strategyCategory(strategy) || !range;
-    const pick = switching ? (isEmo3Strategy(first.value) ? emo3DefaultRange : defaultRange) : range;
+    // 未手动选择日期范围时回退到默认范围，保证与「切换策略后」的生效范围口径一致
+    const pick = range && range[0] && range[1] ? range : defaultRange;
     if (!pick || !pick[0] || !pick[1]) {
       message.warning('请选择回测日期范围');
       return;
@@ -1698,8 +1309,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
       const pick = effectiveRange;
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
-      const buyRules = curIsExtremeWin ? extremeWinBuyRules : (curIsReverseLeader ? reverseLeaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : (curIsKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES))));
-      const sellRules = curIsReverseLeader ? reverseLeaderSellRules : (curIsExtremeWin ? LEADER_SELL_RULES : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : (curIsKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES))));
+      const buyRules = curIsExtremeWin ? extremeWinBuyRules : (curIsReverseLeader ? reverseLeaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : BUY_RULES)));
+      const sellRules = curIsReverseLeader ? reverseLeaderSellRules : (curIsExtremeWin ? LEADER_SELL_RULES : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : SELL_RULES)));
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);
@@ -1834,10 +1445,6 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const disabledDate = (current) => {
     if (!current) return false;
     const ds = current.format('YYYYMMDD');
-    // 三日情绪冰点策略固定从 2026-07-01 开始回测，下限放开至该日（早于回放数据的日期回测时自动跳过）
-    if (curIsEmo3) {
-      return ds < EMO3_BACKTEST_START_DATE || ds > maxDateStr;
-    }
     return ds < EARLIEST_DATE || ds > maxDateStr;
   };
 
@@ -1959,11 +1566,6 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
             style={{ flex: 1, minWidth: 240, maxWidth: 360 }}
             options={STRATEGY_OPTIONS}
           />
-          {curIsEmo3 && (
-            <span style={{ fontSize: 12, color: '#9ca3af' }}>
-              三日情绪冰点策略固定从 2026-07-01 开始回测（结束日取最新交易日）
-            </span>
-          )}
           <style>{`
             .bt-action-group { display:inline-flex; align-items:center; border:1px solid #e9ecf1; border-radius:10px; background:#fff; box-shadow:0 1px 2px rgba(16,24,40,.04); overflow:hidden; }
             .bt-action-group .ant-btn { height:32px; border-radius:0 !important; padding:0 14px !important; color:#334155; font-size:13px; box-shadow:none !important; }
@@ -1972,21 +1574,17 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
             .bt-action-sep { width:1px; height:16px; background:#eef1f5; flex:0 0 auto; }
           `}</style>
           <div className="bt-action-group">
-            {!curIsEmo3 && (
-              <>
-                <Tooltip title="在回测记录右上角勾选「隐藏」排除个别股票后重跑一次回测：被隐藏的股票不参与本次回测，用于检验策略收益率是结构正确带来的，还是单纯依赖个别牛股；结果不落缓存，刷新即失效">
-                  <Button
-                    type="text"
-                    icon={<ExperimentOutlined />}
-                    onClick={handleOscTest}
-                    disabled={!displayResult || running || workerRunning}
-                  >
-                    选股震荡测试
-                  </Button>
-                </Tooltip>
-                <span className="bt-action-sep" />
-              </>
-            )}
+            <Tooltip title="在回测记录右上角勾选「隐藏」排除个别股票后重跑一次回测：被隐藏的股票不参与本次回测，用于检验策略收益率是结构正确带来的，还是单纯依赖个别牛股；结果不落缓存，刷新即失效">
+              <Button
+                type="text"
+                icon={<ExperimentOutlined />}
+                onClick={handleOscTest}
+                disabled={!displayResult || running || workerRunning}
+              >
+                选股震荡测试
+              </Button>
+            </Tooltip>
+            <span className="bt-action-sep" />
             <Tooltip title="固定当前结束日，将回测起始日从最早可用交易日逐日平移至「结束日前 10 个交易日」，观察不同起始日下的整体收益率曲线，用于检验策略收益对起始日是否敏感">
               <Button
                 type="text"
@@ -2508,13 +2106,12 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
       {(() => {
         const opt = STRATEGY_OPTIONS.find(o => o.value === strategy);
         const label = opt?.label || strategy;
-        const isKeyBlock = KEY_BLOCK_STRATEGY_IDS.includes(strategy);
         const isIce = isIceStrategy(strategy);
         const isIceRev = isIceRevStrategy(strategy);
         const isExtremeWin = isExtremeWinStrategy(strategy);
         const isReverseLeader = isReverseLeaderStrategy(strategy);
-        const buyRules = isExtremeWin ? extremeWinBuyRules : (isReverseLeader ? reverseLeaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : (isKeyBlock ? KEY_BLOCK_BUY_RULES : BUY_RULES))));
-        const sellRules = isReverseLeader ? reverseLeaderSellRules : (isExtremeWin ? LEADER_SELL_RULES : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : (isKeyBlock ? KEY_BLOCK_SELL_RULES : SELL_RULES))));
+        const buyRules = isExtremeWin ? extremeWinBuyRules : (isReverseLeader ? reverseLeaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : BUY_RULES)));
+        const sellRules = isReverseLeader ? reverseLeaderSellRules : (isExtremeWin ? LEADER_SELL_RULES : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : SELL_RULES)));
         const notes = STRATEGY_SPECIFIC_NOTES[strategy];
 
         // 将文案中 **xxx** 这种 markdown 粗体标记解析为 React 节点（纯文本不解析）
@@ -2545,8 +2142,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <BookOutlined style={{ color: '#1677ff' }} />
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#12213a' }}>策略说明</span>
-                <Tag color={(isExtremeWin || isReverseLeader) ? 'magenta' : (isIce || isIceRev) ? 'purple' : isKeyBlock ? 'orange' : curIsEmo3 ? 'gold' : 'blue'} style={{ marginLeft: 8 }}>
-                  {(notes?.group) || (isReverseLeader ? '情绪游资·反向抱团龙头' : isExtremeWin ? '情绪游资·龙头战法' : isIceRev ? '逆周期情绪游资系列' : isIce ? '顺周期情绪游资系列' : isKeyBlock ? '重点板块系列' : curIsEmo3 ? '三日情绪冰点系列' : '常规策略')}
+                <Tag color={(isExtremeWin || isReverseLeader) ? 'magenta' : (isIce || isIceRev) ? 'purple' : 'blue'} style={{ marginLeft: 8 }}>
+                  {(notes?.group) || (isReverseLeader ? '情绪游资·反向抱团龙头' : isExtremeWin ? '情绪游资·龙头战法' : isIceRev ? '逆周期情绪游资系列' : isIce ? '顺周期情绪游资系列' : '常规策略')}
                 </Tag>
               </div>
             }

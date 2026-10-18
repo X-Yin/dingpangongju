@@ -1,5 +1,3 @@
-const { getTechEmotionEmaMap } = require('../utils/techEmotion');
-
 // ============================================================
 const minuteToSeconds = (minute) => {
   const m = Number(minute);
@@ -280,72 +278,7 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
   };
 };
 
-// 尾盘抄底命中检查（买卖点回测专用）：
-// 抄底时机固定在尾盘 14:57（收盘集合竞价挂单，按触发桶价格成交，价格≈当日收盘价）：
-// 判断点取当日第一个 minute ≥ 1457 的回放桶（通常即 1500 收盘桶）；
-// 若当日分时数据未覆盖 14:57（如最后一桶为 1455），回退用当日最后一个桶，其余桶一律不触发。
-// 命中条件（唯一）：当日科技情绪分时曾触及 -100 退潮冰点（等价于当日科技情绪指数 hasIce: true）
-const checkTailDipHit = (timeBuckets, currentIndex) => {
-  const buckets = timeBuckets || [];
-  if (buckets.length === 0 || currentIndex < 0 || currentIndex >= buckets.length) return false;
-  // 注意：回放桶的 minute 为 HHMM 整数（如 1457 表示 14:57），与 runBuyPointDiagnosis 开盘窗口（930-1000）口径一致
-  let triggerIdx = -1;
-  for (let i = 0; i < buckets.length; i++) {
-    if (Number(buckets[i].minute) >= 1457) { triggerIdx = i; break; }
-  }
-  if (triggerIdx === -1) triggerIdx = buckets.length - 1; // 数据未覆盖 14:57 时回退最后一个桶，避免条件永不命中
-  if (currentIndex !== triggerIdx) return false;
-
-  // 当日科技情绪分时曾触及 -100（hasIce）；仅统计截至当前时点的分时，避免使用未来数据
-  return buckets.slice(0, currentIndex + 1).some((b) => {
-    const e = b.techEmotion == null ? null : Number(b.techEmotion);
-    return e != null && !Number.isNaN(e) && e <= -100;
-  });
-};
-
-// 情绪页同源数据：tech_index.json 每日收盘情绪分（changeSumResult）序列，
-// 复刻 sentiment 页「三日均值」EMA 线算法（emaAlpha = 2/(3+1) = 0.5，首点 = 前三个值简单均值，
-// 之后 currentEma = 0.5 * 当日值 + 0.5 * 前一日 EMA；按文件全量序列递推，含周末重复数据点，与页面展示一致）。
-// 返回 Map<'YYYYMMDD', EMA值>（序列前两个点无 EMA，存 null）
-const EMO_AVG3_THRESHOLD = -60;
-const checkEmoAvg3Hit = (timeBuckets, currentIndex, dateStr) => {
-  const buckets = timeBuckets || [];
-  if (buckets.length === 0 || currentIndex < 0 || currentIndex >= buckets.length) return false;
-  let triggerIdx = -1;
-  for (let i = 0; i < buckets.length; i++) {
-    if (Number(buckets[i].minute) >= 1457) { triggerIdx = i; break; }
-  }
-  if (triggerIdx === -1) triggerIdx = buckets.length - 1; // 数据未覆盖 14:57 时回退最后一个桶，避免条件永不命中
-  if (currentIndex !== triggerIdx) return false;
-  const ema = getTechEmotionEmaMap().get(String(dateStr));
-  return ema != null && ema < EMO_AVG3_THRESHOLD;
-};
-
 // ===== 买入原因构建（随成交记录/缓存/回测报告落盘，供前端与报告展示命中了哪些买入条件） =====
-// 尾盘抄底策略的固定买入原因（命中条件唯一：当日科技情绪分时曾触及 -100 退潮冰点）
-const TAIL_DIP_BUY_INFO = {
-  buyReason: '尾盘抄底命中：当日科技情绪曾触及-100退潮冰点',
-  buyChecks: [{
-    id: 'tail_dip',
-    title: '尾盘抄底命中（当日科技情绪曾触及-100退潮冰点）',
-    passed: true,
-    value: '14:57',
-    reason: '当日科技情绪分时曾触及 -100 退潮冰点（等价 hasIce: true），14:57 尾盘挂单买入（收盘集合竞价成交）',
-  }],
-};
-
-// 三日情绪均值尾盘抄底策略的固定买入原因（命中条件：情绪页三日均值EMA线 < -60）
-const EMO_AVG3_BUY_INFO = {
-  buyReason: '尾盘抄底命中：情绪页三日均值线(EMA) < -60',
-  buyChecks: [{
-    id: 'tail_dip_emo3',
-    title: '尾盘抄底命中（情绪页三日均值EMA线<-60）',
-    passed: true,
-    value: '14:57',
-    reason: '情绪页「三日均值」EMA 线（每日收盘情绪分 changeSumResult 递推，与 sentiment 页同源同算法）当日读数 < -60，14:57 尾盘挂单买入（收盘集合竞价成交）',
-  }],
-};
-
 // 由买点诊断结果构建买入原因：buyReason 为全部命中条件标题汇总（与 sellReason 命中卖出条件名口径一致），
 // 资金净流入/量能项额外附带明细数值（如「5min 内资金净流入 24.00亿」「成交量增加 120.00亿」「冰点期豁免成交量，成交量增加 50.00亿」）；
 // buyChecks 为逐项明细（含数值与判定理由），allPassed !== true 时返回空
@@ -377,14 +310,9 @@ const buildBuyReasonFromDiag = (diagData) => {
 // 以下为抗分歧指数移植（对齐 src/utils/replayResilience.js）
 
 module.exports = {
-  EMO_AVG3_BUY_INFO,
-  EMO_AVG3_THRESHOLD,
-  TAIL_DIP_BUY_INFO,
   buildBuyReasonFromDiag,
   buildFundInflowCheck,
   buildVolumeExpansionCheck,
-  checkEmoAvg3Hit,
-  checkTailDipHit,
   findBucketMinutesAgo,
   fmtTime,
   minuteToSeconds,

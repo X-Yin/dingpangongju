@@ -2,7 +2,6 @@ const { GLOBAL_RESILIENCE_MIN, RESILIENCE_GATE_MIN, RESILIENCE_GATE_STRATEGY_IDS
 const { CYC_CORR_WINDOW, CYC_MIN_CYB_CORR } = require('./cycleFilter');
 const { EMO_QUICK_CRASH_PCT, EMO_QUICK_RANGE_HIGH, EMO_QUICK_RANGE_LOW, EMO_SWITCH_EMA_THRESHOLD } = require('../constants');
 const { runBuyPointDiagnosis } = require('../diagnose/buyPoint');
-const { buildEmo3GateCheck } = require('./emo3Gate');
 
 const buildResilienceGateCheck = (resilienceScore, gateSkipped, globalSkipped) => {
   const fmtChangePct = v => (v != null ? `${v > 0 ? '+' : ''}${Number(v).toFixed(2)}%` : '无法计算');
@@ -104,18 +103,6 @@ const buildCycleDeferCheck = (emoCycSkipped) => {
   };
 };
 
-// 情绪开关分支明细项（prev{N}d_fall_low5_day_gain_emoswitch 系列）：
-// 标注本次买入由开关的哪个分支触发——上一交易日科技情绪 3 日 EMA 低于阈值走「前N波动最小&当日涨幅最大」，否则走「3日涨幅最大」
-const buildEmoSwitchBranchCheck = (info) => ({
-  id: 'emo_switch_branch',
-  title: '情绪开关分支',
-  passed: true,
-  value: info.branch,
-  reason: info.ema != null
-    ? `上一交易日科技情绪 3 日 EMA = ${info.ema}（< ${EMO_SWITCH_EMA_THRESHOLD}）→ 走「${info.branch}」选股买入`
-    : `上一交易日科技情绪 3 日 EMA 无数据（缺失按「否则」分支处理）→ 走「${info.branch}」选股买入`,
-});
-
 // 情绪快进快出标注明细项（highest_{N}d_gain_emoquick 系列）：标注本次买入是否为「快进快出」买入
 //（触发条件二选一：上一交易日科技情绪 3 日 EMA < -60；或上上个、上个交易日的当日科技情绪原始分
 // 均处 -30~20 区间且回升）——是则该笔持仓不走通用 7 条件卖点、买入次日 10:00 强制卖出；
@@ -133,21 +120,6 @@ const buildEmoQuickOutCheck = (info) => ({
       : `上一交易日科技情绪 3 日 EMA = ${info.ema}（< ${EMO_SWITCH_EMA_THRESHOLD}），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损、盘中当日跌幅较昨收 ≤ -7% 时无条件强卖；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选科技股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）`)
     : `上一交易日科技情绪 3 日 EMA = ${info.ema != null ? info.ema : '缺失'}（不满足 < ${EMO_SWITCH_EMA_THRESHOLD}），上两交易日当日科技情绪 = ${info.prev2Raw != null ? info.prev2Raw : '缺失'} / ${info.prevRaw != null ? info.prevRaw : '缺失'}（不满足均处 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间且回升），普通持仓，走通用 7 条件卖点（快进快出系列全部持仓叠加：盘中当日跌幅较昨收 ≤ -7% 时无条件强卖）`,
 });
-
-// 科技板块效应筛选明细项（tech_block_top3_* 系列）：标注本次买点触发时点 tag=进攻 板块按板块盘中涨幅
-// （触发时点成分股实时涨幅均值）取前三的结果，以及前三板块成分股与全量自选科技股取交集后的候选数量
-const buildTechTop3BlockCheck = (info) => {
-  const fmt = (b) => `${b.blockName} ${b.gain > 0 ? '+' : ''}${b.gain}%`;
-  const text = (info.blocks || []).map(fmt).join('、') || '无';
-  const at = `${info.date}${info.time ? ' ' + info.time : ''}`;
-  return {
-    id: 'tech_block_top3',
-    title: '科技板块效应筛选（进攻 tag 板块盘中涨幅前三 ∩ 自选科技股）',
-    passed: true,
-    value: text,
-    reason: `${at} 买点触发时点 tag=进攻 的重点板块按板块盘中涨幅（触发时点成分股实时涨幅均值）前三：${text}；前三板块成分股与全量自选科技股（isTech ≠ false）取交集后候选 ${info.candidateCount} 只，在其中选 N 日涨幅最大的一只`,
-  };
-};
 
 // 快进快出持仓强卖的 sellReason（按触发条件区分文案；Inner/Multi 两处强卖点共用）
 const buildQuickOutSellReason = (info) => {
@@ -228,13 +200,11 @@ const buildQuickOutExemptSuffix = (pos) => {
 // 将选股顺延信息追加到买入原因/明细：发生顺延时在 buyReason 尾部标注，buyChecks 追加 resilience_gate 明细项。
 // 仅 RESILIENCE_GATE_STRATEGY_IDS 门槛策略（当前仅买入最高涨幅）的选股结果带
 // resilienceScore/skipped，其余策略（含抗分歧弱转强）返回结构不含该字段，此处自动跳过标注（买入原因/明细保持原样）；
-// 全部策略的选股结果都可能带 limitUpSkipped（买点时点涨停被顺延的候选），追加 limit_up_defer 明细项并标注买入原因；
-// 三日情绪冰点策略的选股结果带 emo3Gate（跟踪指数环境门禁命中明细），追加 emo3_index_gate 明细项
+// 全部策略的选股结果都可能带 limitUpSkipped（买点时点涨停被顺延的候选），追加 limit_up_defer 明细项并标注买入原因
 // 将选股顺延信息追加到买入原因/明细：
 //   - 全部策略都可能带 resilienceScore（买点时刻抗分歧分数）：有分数就追加全局 ≥ 9 的 resilience_gate 明细；
 //     若全局不达标（globalResilienceSkipped）或门槛策略专项不达标（skipped），追加顺延标注；
-//   - 全部策略都可能带 limitUpSkipped（买点时点涨停被顺延的候选），追加 limit_up_defer 明细项并标注买入原因；
-//   - 三日情绪冰点策略的选股结果带 emo3Gate（跟踪指数环境门禁命中明细），追加 emo3_index_gate 明细项
+//   - 全部策略都可能带 limitUpSkipped（买点时点涨停被顺延的候选），追加 limit_up_defer 明细项并标注买入原因
 const withResilienceGateInfo = (buyInfo, picked) => {
   if (!buyInfo || !picked) return buyInfo;
   const hasLimitUp = Array.isArray(picked.limitUpSkipped) && picked.limitUpSkipped.length > 0;
@@ -242,8 +212,8 @@ const withResilienceGateInfo = (buyInfo, picked) => {
   const hasEmoCyc = Array.isArray(picked.emoCycSkipped) && picked.emoCycSkipped.length > 0;
   const hasGlobalSkip = Array.isArray(picked.globalResilienceSkipped) && picked.globalResilienceSkipped.length > 0;
   const hasGateSkip = Array.isArray(picked.skipped) && picked.skipped.length > 0;
-  // 早返回：既没有分数也没有任何顺延信息也没有情绪冰点门禁/情绪开关分支/情绪快进快出标注
-  if (picked.resilienceScore == null && !picked.emo3Gate && !picked.emoSwitchBranch && !picked.emoQuickOut && !picked.techTop3Block && !hasLimitUp && !hasOneWord && !hasEmoCyc && !hasGlobalSkip && !hasGateSkip) return buyInfo;
+  // 早返回：既没有分数也没有任何顺延信息，也没有情绪快进快出标注
+  if (picked.resilienceScore == null && !picked.emoQuickOut && !hasLimitUp && !hasOneWord && !hasEmoCyc && !hasGlobalSkip && !hasGateSkip) return buyInfo;
   let buyReason = buyInfo.buyReason;
   const buyChecks = [...(buyInfo.buyChecks || [])];
   if (hasLimitUp) {
@@ -261,14 +231,6 @@ const withResilienceGateInfo = (buyInfo, picked) => {
     // 全局最低抗分歧 ≥ 9 + 门槛策略专项 ≥ 11（RESILIENCE_GATE_STRATEGY_IDS）
     buyChecks.push(buildResilienceGateCheck(picked.resilienceScore, picked.skipped, picked.globalResilienceSkipped));
   }
-  if (picked.emo3Gate) {
-    buyChecks.push(buildEmo3GateCheck(picked.emo3Gate));
-  }
-  if (picked.emoSwitchBranch) {
-    // 情绪开关系列：标注本次买入由哪个分支触发（明细项 + 买入原因尾部标签，前端抽屉直接可见）
-    buyChecks.push(buildEmoSwitchBranchCheck(picked.emoSwitchBranch));
-    buyReason = `${buyReason}｜情绪开关→${picked.emoSwitchBranch.branch}`;
-  }
   if (picked.emoQuickOut) {
     // 情绪快进快出系列：标注本次买入是否为快进快出（明细项；快进快出时买入原因尾部加标签）
     buyChecks.push(buildEmoQuickOutCheck(picked.emoQuickOut));
@@ -276,10 +238,6 @@ const withResilienceGateInfo = (buyInfo, picked) => {
       const quickTag = picked.emoQuickOut.trigger === 'range_rising' ? '情绪回升快进快出(次日10:00强卖)' : '情绪-60快进快出(次日10:00强卖)';
       buyReason = `${buyReason}｜${quickTag}`;
     }
-  }
-  if (picked.techTop3Block) {
-    // 科技板块前三系列：标注当日进攻 tag 板块涨幅前三与交集后候选数量
-    buyChecks.push(buildTechTop3BlockCheck(picked.techTop3Block));
   }
   const suffixParts = [];
   if (hasLimitUp) suffixParts.push('前序股票涨停');
@@ -323,7 +281,6 @@ const withResilienceGateInfo = (buyInfo, picked) => {
 module.exports = {
   buildCycleDeferCheck,
   buildEmoQuickOutCheck,
-  buildEmoSwitchBranchCheck,
   buildLimitUpDeferCheck,
   buildOneWordBoardDeferCheck,
   buildQuickOutCrashSellReason,
@@ -332,6 +289,5 @@ module.exports = {
   buildQuickOutSellReason,
   buildQuickOutStopLossReason,
   buildResilienceGateCheck,
-  buildTechTop3BlockCheck,
   withResilienceGateInfo,
 };

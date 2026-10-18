@@ -1,38 +1,19 @@
 const windowGainStrategies = require('./families/windowGain');
 const twoBuyStrategies = require('./families/twoBuy');
 const rankingStrategies = require('./families/ranking');
-const emoSwitchStrategies = require('./families/emoSwitch');
 const emoQuickStrategies = require('./families/emoQuick');
-const keyBlockStrategies = require('./families/keyBlock');
 const iceStrategies = require('./families/ice');
 const leaderStrategies = require('./families/leader');
-const tailDipStrategies = require('./families/tailDip');
-const { getTrainingCampDates } = require('../deps');
 
 const STRATEGIES = {
   ...windowGainStrategies,
   ...twoBuyStrategies,
   ...rankingStrategies,
-  ...emoSwitchStrategies,
   ...emoQuickStrategies,
-  ...keyBlockStrategies,
   ...iceStrategies,
   ...leaderStrategies,
-  ...tailDipStrategies,
 };
 
-
-// 三日情绪冰点系列固定回测起点（与其他策略的「最近 60 个交易日」滚动窗口区别开）：
-// 起点固定 2026-07-01，结束日取最新可用回放交易日；早于回放数据覆盖范围的日期自动跳过
-const EMO3_BACKTEST_START_DATE = '20260701';
-const isEmo3AvgStrategy = (strategyId) => STRATEGIES[strategyId]?.emoAvgBuy === true;
-// 三日情绪冰点系列默认日期范围：起点固定 2026-07-01，结束日取最新可用回放交易日
-// （与前端 BacktestDrawer 用同一份 /training_camp/dates 列表取最大值的口径一致，保证缓存命中）
-const getEmo3DefaultRange = () => {
-  const sorted = [...getTrainingCampDates()].sort();
-  if (sorted.length === 0) return null;
-  return { startDate: EMO3_BACKTEST_START_DATE, endDate: sorted[sorted.length - 1] };
-};
 
 // 选股抗分歧门槛（当前仅「买入最高涨幅」启用）：买入时从策略排名最高者起依次要求「触发时点当日
 // 抗分歧分数 ≥ 11」，不满足则顺延至下一只满足的股票（买入条件明细中标注顺延原因；其余策略不受此限制）。
@@ -49,11 +30,11 @@ for (const s of Object.values(STRATEGIES)) {
 }
 
 // 个股顺/逆周期过滤（2026-10-06 新增，2026-10-06 扩展至全策略）：适用范围 = 除「情绪游资类（iceMode）」
-// 「三日情绪冰点类（emoAvgBuy）」「尾盘抄底类（tailDip）」「重点板块类（keyBlockDays）」外的全部策略。
+// 外的全部策略（极致胜率 / 反向抱团龙头同属情绪游资类）。
 // 规则：候选按排名依次判断个股与创业板指最近 20 个已完结交易日的日收益率相关系数，corr > 0（正相关）
 // = 顺周期可买，corr <= 0（逆周期）剔除并顺延排名下一只；数据不足不拦截。下列 desc 文案自动追加到所有适用策略
 const CYC_FILTER_DESC = '顺周期过滤：候选按排名依次判断与创业板指最近 20 个已完结交易日的日收益率相关系数，相关系数 > 0（正相关，顺周期）才可买入，≤ 0（逆周期）则顺延至排名下一只（数据不足不拦截）';
-const isCycleFilterStrategy = (s) => !!s && s.tailDip !== true && s.emoAvgBuy !== true && s.iceMode !== true && s.keyBlockDays == null && s.leaderMode !== true && s.extremeWinMode !== true && s.reverseLeaderMode !== true;
+const isCycleFilterStrategy = (s) => !!s && s.iceMode !== true && s.keyBlockDays == null && s.extremeWinMode !== true && s.reverseLeaderMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (isCycleFilterStrategy(s)) s.desc = `${s.desc}；${CYC_FILTER_DESC}`;
 }
@@ -69,13 +50,6 @@ const GLOBAL_RESILIENCE_MIN = 9;
 // 例外：两次买入策略的第二份仓位（补买）不受此上限限制，可在触发日任意买点补入
 const BUY_TIME_MAX_MINUTE = 1330;
 
-// 三日情绪冰点系列统一追加：买入环境门禁说明（触发日跟踪指数满足其一才可买，见 ensureEmo3DayGates）
-const EMO3_GATE_DESC = '；买入环境门禁：触发日候选股所跟踪指数（sh688 开头跟踪科创50 sh000688，其余跟踪创业板指 sz399006）满足其一才可买入——①往前数 5 个交易日 20 日线斜率为正（MA20(触发日) − MA20(5个交易日前) > 0，含触发日收盘价，尾盘 14:57 触发按收盘已基本定型口径）；②触发日 30 日线在 60 日线下方（MA30 < MA60）。目的：剔除单边阴跌中段（20日线仍下行且 30 日线未跌破 60 日线）的无溢价环境，仅保留下跌初期/末期；全部候选股均不满足（或指数日K数据不足/获取失败）时当日不买入，买入条件明细中展示命中条件与具体数值';
-for (const s of Object.values(STRATEGIES)) {
-  if (s.emoAvgBuy !== true) continue;
-  s.desc = `${s.desc}${EMO3_GATE_DESC}`;
-}
-
 // 快进快出半仓（2026-10-13 用户新增）：仅适用于「N日涨幅最大-快进快出」系列
 // （emoQuickOut === true 且非两次买入 twoBuy）。买点触发时看该笔买入是否属于「快进快出」情形
 // （emoQuickOut.quickOut：上一交易日科技情绪 3 日 EMA < -60，或上两/上一交易日科技情绪均处 (-30,20)
@@ -87,12 +61,12 @@ for (const s of Object.values(STRATEGIES)) {
   if (s.emoQuickOut === true && s.twoBuy !== true) s.desc = `${s.desc}${EMO_QUICK_HALF_POS_DESC}`;
 }
 
-// 盘中大跌强卖（2026-10-16 用户新增）：适用范围 = 除「情绪游资类（iceMode）」「情绪游资-龙头战法（leaderMode）」
-// 「尾盘抄底类（tailDip）」「三日情绪冰点类（emoAvgBuy）」外的全部策略（快进快出系列此前已内置同口径卖点，
+// 盘中大跌强卖（2026-10-16 用户新增）：适用范围 = 除「情绪游资类（iceMode）」「极致胜率（extremeWinMode）」
+// 「反向抱团龙头（reverseLeaderMode）」外的全部策略（两次买入系列已内置同口径卖点，
 // 仅补字段不重复追加 desc）。规则：持仓当桶当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT（-7%）时无条件卖出——
 // 即时生效、无持续分钟/自救窗口要求，先于各策略原有卖点判定（generalSell 引擎桶级预检 / 重点板块引擎卖出预检）
 const CRASH_SELL_DESC = '；盘中大跌强卖（2026-10-16 新增）：持仓当桶当日跌幅（较昨收涨跌幅）≤ -7% 时无条件卖出（即时生效，先于其他卖点判定）';
-const isCrashSellStrategy = (s) => !!s && s.iceMode !== true && s.leaderMode !== true && s.tailDip !== true && s.emoAvgBuy !== true && s.extremeWinMode !== true && s.reverseLeaderMode !== true;
+const isCrashSellStrategy = (s) => !!s && s.iceMode !== true && s.extremeWinMode !== true && s.reverseLeaderMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (!isCrashSellStrategy(s)) continue;
   s.crashSell = true;
@@ -102,8 +76,6 @@ for (const s of Object.values(STRATEGIES)) {
 module.exports = {
   BUY_TIME_MAX_MINUTE,
   CYC_FILTER_DESC,
-  EMO3_BACKTEST_START_DATE,
-  EMO3_GATE_DESC,
   GLOBAL_RESILIENCE_MIN,
   RESILIENCE_GATE_DESC,
   RESILIENCE_GATE_INTRADAY_SORT_IDS,
@@ -111,8 +83,6 @@ module.exports = {
   RESILIENCE_GATE_STRATEGY_IDS,
   STRATEGIES,
   CRASH_SELL_DESC,
-  getEmo3DefaultRange,
   isCrashSellStrategy,
   isCycleFilterStrategy,
-  isEmo3AvgStrategy,
 };

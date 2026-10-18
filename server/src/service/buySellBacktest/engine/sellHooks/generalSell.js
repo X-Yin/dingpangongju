@@ -63,8 +63,7 @@ const generalSellPositions = async ({ positions, strategy, bi, replayStocks, tim
         continue;
       }
     }
-    // 三日情绪均值策略走次日开盘专属卖点（已在桶循环前按日处理），不进入通用卖点诊断
-    const position = { code: pos.code, stockName: pos.stockName, buyPrice: pos.buyPrice, buyDate: pos.buyDate, tailDipSell: strategy.tailDip === true && strategy.nextDayOpenSell !== true, costLinePct: strategy.costLinePct };
+    const position = { code: pos.code, stockName: pos.stockName, buyPrice: pos.buyPrice, buyDate: pos.buyDate, costLinePct: strategy.costLinePct };
     const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
     if (result.isSell && result.closePrice != null) {
       const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');

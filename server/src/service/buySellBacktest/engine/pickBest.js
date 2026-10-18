@@ -1,12 +1,11 @@
 const { BUY_TIME_MAX_MINUTE, GLOBAL_RESILIENCE_MIN, RESILIENCE_GATE_INTRADAY_SORT_IDS, RESILIENCE_GATE_MIN, RESILIENCE_GATE_STRATEGY_IDS, STRATEGIES } = require('../strategies/registry');
-const { computeMaSlopeAngle, isNonTechWatchlistStock, passWatchlistGate } = require('./pickHelpers');
+const { countStockPositiveSlopeDays, isNonTechWatchlistStock, passWatchlistGate } = require('./pickHelpers');
 const { EXCLUDED_CODES } = require('../constants');
 const { isBuyBlockedByValuation } = require('../../watchlistValuation');
 const { resolveDelegatePick } = require('./selectors/delegates');
 const { loadReportIndex, sumReportCount } = require('../utils/reportIndex');
 const { isOscExcluded } = require('../deps');
-const { countStockPositiveSlopeDays, emo3IndexGateCache, trackedIndexCodeOf } = require('./emo3Gate');
-const { calcResilienceAtMinute, computeHistoricalWindowGain, computeWindowGain, computeWindowGainWithHalf, computeWindowResilience, isLimitUpAtBuy } = require('./replayData');
+const { calcResilienceAtMinute, computeWindowGain, computeWindowGainWithHalf, computeWindowResilience, isLimitUpAtBuy } = require('./replayData');
 const { cycCorrCache } = require('./cycleFilter');
 
 const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos, strategyId, axisOffset = 0, allowedMarkets = null, turnedPosInfo = null, prevOneWordSet = null, emoCycSet = null, restrictCodes = null) => {
@@ -17,29 +16,10 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   const isReportStrategy = strategyId.includes('reports');
   const isTop5ReportGainMode = strategyId.includes('reports_top5_gain'); // 研报覆盖前五（含覆盖数相同）中取窗口涨幅最大
   const isPureReportMode = isReportStrategy && !isTop5ReportGainMode; // 研报覆盖数最多/第二多
-  const isMaSlopeMode = strategyId.includes('ma_slope'); // 均线斜率最陡峭（3日/5日）
-  // 尾盘抄底反向选股：跌幅最大/抗分歧分数最低（取窗口指标最小值而非最大值）
-  const lowMode = strategyId.includes('_fall') || strategyId.includes('_resilience_low');
   const dayMatch = strategyId.match(/(\d+)d/);
   const days = dayMatch ? Number(dayMatch[1]) : null;
-  // 三日情绪冰点 1d 系列决胜规则：主指标（当日涨幅/跌幅/抗分歧分数）相同时，
-  // 按最近 2 个交易日窗口的同向指标决胜（如当日涨幅相同取最近 2 日累计涨幅更大的一只）
-  const isEmo3Tiebreak = /^tail_dip_emo3_1d_(gain|fall|resilience)$/.test(strategyId);
-  const tiebreakWinDates = isEmo3Tiebreak ? rangeDates.slice(Math.max(0, di - 1), di + 1) : null;
-  // 三日情绪冰点系列：候选股按各自跟踪指数的当日环境门禁过滤（满足其一才可买，结果由 ensureEmo3DayGates 按日预计算）
-  const isEmo3GateStrategy = /^tail_dip_emo3_/.test(strategyId);
-  // 当日抗分歧分数最大：实时抗分歧分数选股，分数相同按触发时点当日实时涨幅决胜
-  const isResilienceMaxToday = strategyId === 'highest_1d_resilience';
-  // 前N日「跌幅最大/波动最小」前五&当日指标最大（prev{N}d_fall_top5_day_* / prev{N}d_fall_low5_day_*）：两阶段选股——
-  // 第一阶段按前 N 个交易日（不含今日）累计涨幅取前五（top5=跌幅最大；low5=波动最小版，无论涨跌按
-  // 累计涨幅绝对值取最小的五只），第二阶段组内选当日实时指标最大
-  const prevFallMatch = strategyId.match(/^prev(\d)d_fall_(top|low)5_day_(gain|resilience)$/);
-  const isPrevFall5Mode = prevFallMatch != null;
-  const prevFallLowMode = isPrevFall5Mode && prevFallMatch[2] === 'low';
-  const prevFallWinDays = isPrevFall5Mode ? Number(prevFallMatch[1]) : 0;
-  const prevFallStage2Resilience = isPrevFall5Mode && prevFallMatch[3] === 'resilience';
 
-  // 策略选股委派（弱转强 / 情绪开关 / 情绪快进快出 / 研报双门 / 科技板块前三）：见 selectors/delegates.js。
+  // 策略选股委派（情绪快进快出 / 研报双门）：见 selectors/delegates.js。
   // 命中委派时直接返回其结果（可能为 null），未命中（undefined）交回下方主流水线。
   const delegated = resolveDelegatePick({
     pickBestStock, stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
@@ -63,9 +43,8 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   if (isReportStrategy && days) {
     reportWinDates = winDates;
   }
-  // 跌幅最大（_fall）与涨幅共用窗口涨幅指标，仅取最小值；其余照旧
-  const gainMode = strategyId === 'highest_gain' || strategyId.includes('_gain') || strategyId.includes('_fall');
-  // 「N.5 日涨幅最大」系列（highest_{N}d5_gain 及其 _emoquick/_two_buy/tech_block_top3 变体）：
+  const gainMode = strategyId === 'highest_gain' || strategyId.includes('_gain');
+  // 「N.5 日涨幅最大」系列（highest_{N}d5_gain 及其 _two_buy 变体）：
   // 在 N 日窗口之外，额外复利计入「更前一个交易日（窗口最早交易日的再前一交易日）下午 13:00→收盘」的半日涨幅；
   // halfDayDate = 日期轴上 di - days 那一天（越界为 null，退化为常规 N 日窗口）
   const halfDayAfternoon = STRATEGIES[strategyId]?.halfDayAfternoon === true;
@@ -113,11 +92,6 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     }
     // 自选股添加时间门禁：买点时刻尚未加入自选股的股票不参与选股（防止后加自选股污染历史回测）
     if (!passWatchlistGate(sc.code, rangeDates[di], bucket.minute)) continue;
-    if (isEmo3GateStrategy) {
-      // 三日情绪冰点：跟踪指数环境门禁（当日满足其一才可买；未预计算/数据不足按不满足处理）
-      const gate = emo3IndexGateCache.get(`${rangeDates[di]}_${trackedIndexCodeOf(sc.code)}`);
-      if (!gate || gate.passed !== true) continue;
-    }
     if (gateIntradaySort) {
       // 门槛策略（最高涨幅/2日涨幅最大）：按触发时点当日盘中涨幅排序（如买点触发在 13:10，即看 13:10 时谁的涨幅最大）
       const chg = sc.changePct != null ? Number(sc.changePct) : null;
@@ -125,51 +99,9 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       candidates.push({ sc, val: chg, metric: parseFloat(chg.toFixed(4)) });
       continue;
     }
-    // 当日抗分歧分数最大：取触发时点截至当时的日内实时抗分歧分数（非收盘口径），同分按实时涨幅决胜
-    if (isResilienceMaxToday) {
-      const r = calcResilienceAtMinute(replayStocks, sc.code, bucket.minute);
-      if (r == null || !Number.isFinite(r)) continue;
-      const chg = sc.changePct != null && Number.isFinite(Number(sc.changePct)) ? Number(sc.changePct) : null;
-      candidates.push({
-        sc,
-        val: r,
-        // 分数相同时按触发时点当日实时涨幅决胜（涨幅缺失排同分组末尾）
-        val2: chg != null ? chg : -Infinity,
-        metric: parseFloat(r.toFixed(2)),
-      });
-      continue;
-    }
-    // 前N日跌幅前五&当日指标最大：收集第一阶段指标（前 N 个交易日不含今日的累计涨幅，纯历史收盘口径）
-    // 与第二阶段指标（触发时点当日实时涨幅 / 日内实时抗分歧分数）；循环结束后统一做「前五 → 组内排序」
-    if (isPrevFall5Mode) {
-      const winPrev = rangeDates.slice(Math.max(0, di - prevFallWinDays), di); // 不含今日
-      if (winPrev.length === 0) continue; // 无任何历史交易日（回测最早日），无法构成跌幅窗口
-      const prevGain = computeHistoricalWindowGain(sc.code, winPrev, dailyInfos);
-      if (prevGain == null || !Number.isFinite(prevGain)) continue;
-      let stage2 = null;
-      if (prevFallStage2Resilience) {
-        stage2 = calcResilienceAtMinute(replayStocks, sc.code, bucket.minute);
-      } else {
-        stage2 = sc.changePct != null && Number.isFinite(Number(sc.changePct)) ? Number(sc.changePct) : null;
-      }
-      // 第二阶段指标无法计算的候选保留 prevGain 参与前五筛选，但组内不参与买入排序（见下方 ordered 构建）
-      candidates.push({
-        sc,
-        prevGain,
-        stage2: stage2 != null && Number.isFinite(stage2) ? stage2 : -Infinity,
-      });
-      continue;
-    }
     let val;
-    let val2; // 三日情绪冰点 1d 系列的决胜指标（最近 2 个交易日窗口的同向指标）
     let metric = null;
-    if (isMaSlopeMode) {
-      // 涨幅均线斜率角度：用当前盘中涨幅作为"今日涨幅均线"的今日成分，避免未来数据
-      const angle = computeMaSlopeAngle(sc.code, days, di, rangeDates, dailyInfos, Number(sc.changePct));
-      if (angle == null || !Number.isFinite(angle)) continue;
-      val = angle;
-      metric = parseFloat(angle.toFixed(4));
-    } else if (isTop5ReportGainMode) {
+    if (isTop5ReportGainMode) {
       // 收集研报覆盖数与涨幅候选，事后按覆盖数取前五再按涨幅最大选股
       const reportCount = sumReportCount(sc.name, reportWinDates, reportIndex, reportBuyTs);
       const gain = computeWindowGain(sc.code, winDates, dailyInfos, sc.changePct);
@@ -188,49 +120,21 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       val = halfDayDate != null
         ? computeWindowGainWithHalf(sc.code, winDates, dailyInfos, sc.changePct, halfDayDate)
         : computeWindowGain(sc.code, winDates, dailyInfos, sc.changePct);
-      if (isEmo3Tiebreak) val2 = computeWindowGain(sc.code, tiebreakWinDates, dailyInfos, sc.changePct);
     } else {
       const intradayResilience = calcResilienceAtMinute(replayStocks, sc.code, bucket.minute);
       val = computeWindowResilience(sc.code, winDates, dailyInfos, intradayResilience);
-      if (isEmo3Tiebreak) val2 = computeWindowResilience(sc.code, tiebreakWinDates, dailyInfos, intradayResilience);
     }
     if (val == null || !Number.isFinite(val)) continue;
     candidates.push({
       sc,
       val,
-      // 决胜指标：2 日窗口数据缺失（如回测首日无昨日数据）时排到同分组末尾——
-      // 降序（涨幅/抗分歧）用 -Infinity，升序（跌幅）用 +Infinity
-      val2: isEmo3Tiebreak
-        ? (val2 != null && Number.isFinite(val2) ? val2 : (lowMode ? Infinity : -Infinity))
-        : undefined,
       metric: metric != null ? metric : parseFloat(val.toFixed(4)),
     });
   }
 
   // 构建策略排名序列
   let ordered; // [{ sc, metric }]
-  if (isPrevFall5Mode) {
-    // 前N日「跌幅最大 / 波动最小」前五&当日指标最大：
-    // 第一阶段：按前 N 日（不含今日）累计涨幅取前五（与第 5 名并列的全部纳入）
-    //   top5：升序（跌幅最大在前）；low5（波动最小）：无论涨跌，按累计涨幅绝对值升序（波动最小在前）
-    if (candidates.length === 0) return null;
-    let topGroup;
-    if (prevFallLowMode) {
-      const byVol = candidates.slice().sort((a, b) => Math.abs(a.prevGain) - Math.abs(b.prevGain));
-      const volThreshold = byVol[Math.min(4, byVol.length - 1)].prevGain;
-      topGroup = byVol.filter(c => Math.abs(c.prevGain) <= Math.abs(volThreshold));
-    } else {
-      const byFall = candidates.slice().sort((a, b) => a.prevGain - b.prevGain);
-      const fallThreshold = byFall[Math.min(4, byFall.length - 1)].prevGain;
-      topGroup = byFall.filter(c => c.prevGain <= fallThreshold);
-    }
-    // 第二阶段：组内按当日实时指标（触发时点实时涨幅 / 日内实时抗分歧分数）降序；
-    // 指标无法计算（-Infinity 占位）的候选不参与买入排序
-    ordered = topGroup
-      .filter(c => c.stage2 !== -Infinity)
-      .sort((a, b) => b.stage2 - a.stage2)
-      .map(c => ({ sc: c.sc, metric: parseFloat(c.stage2.toFixed(2)) }));
-  } else if (isTop5ReportGainMode) {
+  if (isTop5ReportGainMode) {
     // 研报覆盖数降序取前五（覆盖数相同的股票全部纳入），组内按窗口涨幅降序；
     // 前五组之后按涨幅降序接在后面（仅在组内全部不满足抗分歧门槛时才会顺延到）
     if (!top5Candidates.length) return null;
@@ -240,13 +144,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     const restGroup = top5Candidates.filter(c => c.reportCount < threshold).sort((a, b) => b.gain - a.gain);
     ordered = topGroup.concat(restGroup).map(c => ({ sc: c.sc, metric: c.reportCount }));
   } else {
-    ordered = candidates.slice().sort((a, b) => {
-      const primary = lowMode ? a.val - b.val : b.val - a.val;
-      if (primary !== 0 || a.val2 === undefined) return primary;
-      // 主指标（当日指标）相同时按最近 2 日窗口指标决胜；双方均缺失（±Infinity 相等）保持自选股原顺序
-      if (a.val2 === b.val2) return 0;
-      return lowMode ? a.val2 - b.val2 : b.val2 - a.val2;
-    }).map(c => ({ sc: c.sc, metric: c.metric }));
+    ordered = candidates.slice().sort((a, b) => b.val - a.val).map(c => ({ sc: c.sc, metric: c.metric }));
   }
 
   // 抗分歧≥11 门槛：门槛策略从排名最高者起向后找第一只满足的股票；其余策略不做校验，
@@ -342,10 +240,6 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
         emoCycSkipped,
         globalResilienceSkipped,
         stockSlopeSkipped,
-        // 三日情绪冰点：附带命中的跟踪指数环境门禁明细（withResilienceGateInfo 会追加到买入条件明细）
-        emo3Gate: isEmo3GateStrategy
-          ? emo3IndexGateCache.get(`${rangeDates[di]}_${trackedIndexCodeOf(cand.sc.code)}`)
-          : undefined,
       };
     }
   }

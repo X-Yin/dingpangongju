@@ -3,9 +3,6 @@ const { runRangeBacktest } = require('./engine/rangeBacktest');
 const { runRangeBacktestMulti } = require('./engine/rangeBacktestMulti');
 const {
   STRATEGIES,
-  EMO3_BACKTEST_START_DATE,
-  isEmo3AvgStrategy,
-  getEmo3DefaultRange,
   GLOBAL_RESILIENCE_MIN,
   BUY_TIME_MAX_MINUTE,
 } = require('./strategies/registry');
@@ -41,9 +38,6 @@ module.exports = {
   getTechEmotionEmaMap,
   getTechEmotionRawMap, // 供 buySellDiagnose 线上卖点诊断条件8/买点提示按当日科技情绪原始分判定快进快出
   getTechIndexDates, // 供 backtest-worker 对三日情绪冰点日期范围（含缺资金快照日期）做兜底预构建
-  EMO3_BACKTEST_START_DATE,
-  isEmo3AvgStrategy,
-  getEmo3DefaultRange,
   queryLiveIndexGate, // 无状态实时门禁查询（供前端 /api/index-slope-gate 使用）
   codeToGateIndex,    // 供 buySellDiagnose 的 getSingleStockBuyPointDiagnosis 复用
   gateIndexName,      // 供 buySellDiagnose 里生成可读标签

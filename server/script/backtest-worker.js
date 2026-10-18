@@ -23,7 +23,7 @@
 //   --child --strategies ...          内部参数：由父进程 fork 调用，进度经 IPC 上报，请勿手动使用
 const fs = require('fs');
 const path = require('path');
-const { STRATEGIES, runRangeBacktestMulti, writeCachedBacktest, readCachedBacktest, isEmo3AvgStrategy, getEmo3DefaultRange, getTechIndexDates } = require('../src/service/buySellBacktest');
+const { STRATEGIES, runRangeBacktestMulti, writeCachedBacktest, readCachedBacktest } = require('../src/service/buySellBacktest');
 const { loadTrainingCampData, getTrainingCampDates, beijingToday, prewarmKlineCache } = require('../src/service/trainingCamp');
 const { generateReport, getDefaultReportRange, getTrendDiagnosisRanges } = require('../src/service/backtestReport');
 const { fork } = require('child_process');
@@ -279,22 +279,11 @@ const runTrend = async (workerCount) => {
       console.log(`[${ts()}] 该范围全部策略已有缓存，跳过回测`);
       continue;
     }
-    // 常规/三日情绪冰点策略依赖回放数据缓存，先预构建
+    // 常规策略依赖回放数据缓存，先预构建
     const needReplay = missing.length > 0;
     if (needReplay) {
       const buildDates = getTrainingCampDates().filter(d => d >= r.startDate && d <= r.endDate && d < beijingToday()).sort();
       await runPrebuild(buildDates, workerCount);
-      // 缺失策略含三日情绪冰点时，对其固定范围（2026-07-01 起，含缺资金快照日期）补一轮兜底预构建；
-      // 已构建过的日期读文件秒过，仅首次会现场构建并落盘 .nomfund.json
-      if (missing.some(id => isEmo3AvgStrategy(id))) {
-        let e3r = null;
-        try { e3r = getEmo3DefaultRange(); } catch (e) { e3r = null; }
-        if (e3r) {
-          const e3Dates = Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]))
-            .filter(d => d >= e3r.startDate && d <= e3r.endDate && d < beijingToday()).sort();
-          await runPrebuild(e3Dates, workerCount, { allowMissingFund: true });
-        }
-      }
     }
     const exitCode = await runParallel(buildGroups(missing, workerCount), r.startDate, r.endDate);
     if (exitCode !== 0) process.exitCode = exitCode;
@@ -547,44 +536,17 @@ const main = async () => {
     console.error('参数错误：开始日期不能晚于结束日期');
     process.exit(1);
   }
-  const explicitRange = !!(args.start || args.end);
-
-  const allIds = Object.keys(STRATEGIES);
-  // 两类策略拆分：常规（最近 60 个交易日）/ 三日情绪冰点（固定从 2026-07-01 开始，与其他策略区别开）
-  const regularIds = allIds.filter(id => !isEmo3AvgStrategy(id));
-  const emo3Ids = allIds.filter(id => isEmo3AvgStrategy(id));
-  let emo3Range = null;
-  if (emo3Ids.length > 0) {
-    try { emo3Range = getEmo3DefaultRange(); } catch (e) { emo3Range = null; }
-  }
-  // 全组均为三日情绪冰点时，改用其固定起点范围（2026-07-01 起）
-  const pickRange = (ids) => {
-    if (explicitRange || ids.length === 0) return { startDate, endDate };
-    if (ids.every(id => isEmo3AvgStrategy(id)) && emo3Range) return emo3Range;
-    return { startDate, endDate };
-  };
+  const regularIds = Object.keys(STRATEGIES);
   const workerCount = Math.max(1, args.workers || 8);
-  // 三日情绪冰点策略分组：每进程至少 2 个策略共享同一天回放数据加载（6 策略 → 3 进程），
-  // 避免单策略单进程各自重复加载同一批日期缓存
-  const emo3WorkerCount = Math.max(1, Math.min(workerCount, Math.ceil(emo3Ids.length / 2)));
 
   if (args.list) {
     const groups = buildGroups(regularIds, workerCount);
-    console.log(`常规策略日期范围: ${startDate} ~ ${endDate}（默认最近 60 个交易日，可用 --start/--end 覆盖）`);
-    if (emo3Range) console.log(`三日情绪冰点日期范围: ${emo3Range.startDate} ~ ${emo3Range.endDate}（固定从 2026-07-01 开始）`);
-    console.log(`常规策略共 ${regularIds.length} 个，${workerCount} 进程分组: ${groups.map(g => g.length).join(' / ')}`);
+    console.log(`策略日期范围: ${startDate} ~ ${endDate}（默认最近 60 个交易日，可用 --start/--end 覆盖）`);
+    console.log(`共 ${regularIds.length} 个策略，${workerCount} 进程分组: ${groups.map(g => g.length).join(' / ')}`);
     groups.forEach((ids, i) => {
       console.log(`\n线程 ${i + 1}（${ids.length} 个）:`);
       ids.forEach(id => console.log(`  - ${id}  ${STRATEGIES[id].name}`));
     });
-    if (emo3Ids.length > 0) {
-      const eGroups = buildGroups(emo3Ids, emo3WorkerCount);
-      console.log(`\n三日情绪冰点策略共 ${emo3Ids.length} 个，${eGroups.length} 进程分组: ${eGroups.map(g => g.length).join(' / ')}（日期 ${emo3Range ? `${emo3Range.startDate} ~ ${emo3Range.endDate}` : '获取失败'}）`);
-      eGroups.forEach((ids, i) => {
-        console.log(`\n情绪冰点线程 ${i + 1}（${ids.length} 个）:`);
-        ids.forEach(id => console.log(`  - ${id}  ${STRATEGIES[id].name}`));
-      });
-    }
     return;
   }
 
@@ -615,8 +577,7 @@ const main = async () => {
   // 子进程模式（由父进程 fork 调用）
   if (args.child) {
     const ids = args.strategies || [];
-    const r = pickRange(ids);
-    await runAsChild(ids, r.startDate, r.endDate);
+    await runAsChild(ids, startDate, endDate);
     return;
   }
 
@@ -638,7 +599,7 @@ const main = async () => {
       }
       strategyIds = groups[args.group - 1];
     }
-    const r = pickRange(strategyIds);
+    const r = { startDate, endDate };
     if (args.prebuild) {
       // 分类回测：先预热日K线 + 预构建回放数据，避免冷缓存时逐日串行重建
       try {
@@ -648,12 +609,8 @@ const main = async () => {
       } catch (e) {
         console.error(`日K线预热失败（不影响后续流程，子进程将自行拉取）: ${e.message}`);
       }
-      const hasEmo3 = strategyIds.some(id => isEmo3AvgStrategy(id));
-      const allDates = hasEmo3
-        ? Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]))
-        : getTrainingCampDates();
-      const buildDates = allDates.filter(d => d >= r.startDate && d <= r.endDate && d < beijingToday()).sort();
-      await runPrebuild(buildDates, workerCount, { allowMissingFund: hasEmo3 });
+      const buildDates = getTrainingCampDates().filter(d => d >= r.startDate && d <= r.endDate && d < beijingToday()).sort();
+      await runPrebuild(buildDates, workerCount);
     }
     await runStandalone(strategyIds, r.startDate, r.endDate);
     return;
@@ -662,10 +619,7 @@ const main = async () => {
   // 默认：清空回测缓存 → 预热日K线文件缓存 → 并行预构建回放数据缓存 → 多进程并行强制重跑全部策略 → 自动汇总生成回测报告
   const groups = buildGroups(regularIds, workerCount);
   const removed = clearBacktestCache();
-  console.log(`常规策略 ${regularIds.length} 个 → ${groups.length} 进程并行（${groups.map(g => g.length).join(' / ')}），日期 ${startDate} ~ ${endDate}`);
-  if (emo3Ids.length > 0) {
-    console.log(`三日情绪冰点策略 ${emo3Ids.length} 个${emo3Range ? `，日期 ${emo3Range.startDate} ~ ${emo3Range.endDate}（固定从 2026-07-01 开始）` : '，默认日期范围获取失败将跳过'}`);
-  }
+  console.log(`全部策略 ${regularIds.length} 个 → ${groups.length} 进程并行（${groups.map(g => g.length).join(' / ')}），日期 ${startDate} ~ ${endDate}`);
   console.log(`已清空回测缓存 ${removed} 个文件，全部策略强制重跑`);
   // 预热日K线文件缓存（跨进程共享）：一次性并发拉取全部自选股日K落盘，
   // 避免每个预构建/回测子进程各自重复拉取（原 5 进程 × 84 次 HTTP → 一次性 84 次）
@@ -677,33 +631,14 @@ const main = async () => {
     console.error(`日K线预热失败（不影响后续流程，子进程将自行拉取）: ${e.message}`);
   }
   // 预构建过去交易日的回放数据缓存（已构建过的日期读缓存秒过；策略线程随后只读文件）
-  // 下限取全部回放类策略（常规 + 三日情绪冰点）范围的最早起点
-  const earliestStart = [startDate, emo3Range?.startDate].filter(Boolean).sort()[0];
-  const buildDates = getTrainingCampDates().filter(d => d >= earliestStart && d <= endDate && d < beijingToday()).sort();
+  const buildDates = getTrainingCampDates().filter(d => d >= startDate && d <= endDate && d < beijingToday()).sort();
   await runPrebuild(buildDates, workerCount);
   console.log('Ctrl+C 可随时终止全部线程\n');
   const exitCode = await runParallel(groups, startDate, endDate);
 
-  // 三日情绪冰点阶段：独立日期范围并行回测（固定从 2026-07-01 开始，与其他策略区别开）
-  let emo3Exit = 0;
-  if (emo3Ids.length > 0) {
-    if (emo3Range) {
-      // 先对 emo3 范围全部日期预构建兜底缓存：无资金快照日期（资金快照从 20260728 才开始）原先
-      // 不落盘，每次回测都由各策略进程现场全量 HTTP 重复重建 —— 这是三日情绪冰点回测缓慢的主因；
-      // 此处预构建一次落盘 .nomfund.json（构建失败的日期写当日负缓存标记），策略阶段全部命中文件
-      const emo3BuildDates = Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]))
-        .filter(d => d >= emo3Range.startDate && d <= emo3Range.endDate && d < beijingToday()).sort();
-      await runPrebuild(emo3BuildDates, workerCount, { allowMissingFund: true });
-      console.log(`\n[${ts()}] 常规策略完成，开始三日情绪冰点策略回测（${emo3Range.startDate} ~ ${emo3Range.endDate}）...`);
-      emo3Exit = await runParallel(buildGroups(emo3Ids, emo3WorkerCount), emo3Range.startDate, emo3Range.endDate);
-    } else {
-      console.error(`\n[${ts()}] 三日情绪冰点默认日期范围获取失败，跳过 ${emo3Ids.length} 个策略`);
-    }
-  }
-
   console.log(`\n[${ts()}] 全部线程结束，自动汇总生成回测报告...`);
   await aggregate(startDate, endDate, false);
-  process.exitCode = exitCode || emo3Exit;
+  process.exitCode = exitCode;
 };
 
 process.on('exit', () => {

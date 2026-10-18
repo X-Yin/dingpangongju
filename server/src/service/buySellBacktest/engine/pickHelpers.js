@@ -1,16 +1,12 @@
-const { batchParallel, fs, getMonitorStocks, getSimContext, isOscExcluded, isSimStock, isStockInWatchlistAt, loadTrainingCampData } = require('../deps');
+const { batchParallel, fs, getMonitorStocks, getSimContext, isSimStock, isStockInWatchlistAt, loadTrainingCampData } = require('../deps');
 const { buildKeyBlockSyntheticBucketEntry, buildKeyBlockSyntheticDay } = require('./keyBlockSynthetic');
-const { calcResilienceAtMinute, extractDailyInfo, isLimitUpAtBuy } = require('./replayData');
-const { EXCLUDED_CODES } = require('../constants');
-const { isBuyBlockedByValuation } = require('../../watchlistValuation');
-const { cycCorrCache } = require('./cycleFilter');
+const { extractDailyInfo } = require('./replayData');
 const { stockBlockFilePath } = require('../paths');
 
 // ============================================================
 // 候选池科技股过滤（2026-10-12 用户要求）：凡是以「全量自选股」为候选池的策略，只允许自选股中的
 // 科技股（isTech !== false）参与选股，非科技股（isTech === false）一律剔除。
-// 覆盖候选池出口：pickBestStock 主流水线（N 日涨幅/研报/均线斜率/抗分歧/尾盘抄底，
-// 以及委托到它的情绪开关/快进快出/科技板块前三/两次买入）与抗分歧弱转强 pickWeakToStrongStock。
+// 覆盖候选池出口：pickBestStock 主流水线（N 日涨幅/研报/抗分歧，以及两次买入的选股）。
 // 随机模拟注入的合成股票不在自选股清单内 → 天然按科技股处理，不受本过滤影响。
 // 集合按 monitor_stocks.json mtime 懒加载缓存，避免回测热循环中逐候选重复读盘。
 // ============================================================
@@ -90,109 +86,40 @@ const buildWindowAxis = async (allDates, rangeDates, startDate, needDays, dailyI
 // 其余股票沿用真实自选股加入时间校验，防止后加自选股污染历史回测
 const passWatchlistGate = (code, dateStr, minute) => isSimStock(code) || isStockInWatchlistAt(code, dateStr, minute);
 
-// 抗分歧弱转强选股：取最近 4 个交易日（最后一位为当日，用盘中过滤后的抗分歧分数）每只股票的抗分歧分数，
-// 先筛选出「买点触发时抗分歧分数 > 11」的股票，再从中计算「前两天均值」与「后两天均值」（第 3 天+当日，即最近两天）的差值
-// diff = 后两天均值 - 前两天均值。diff 越大代表抗分歧由弱转强越明显，选 diff 最大的一只；diff 相同（弱转强过程一致）时，取当日盘中涨幅最大的一只。
-const pickWeakToStrongStock = (bucket, rangeDates, di, replayStocks, dailyInfos, prevOneWordSet = null, emoCycSet = null) => {
-  const winDates = rangeDates.slice(Math.max(0, di - 3), di + 1); // 最近 4 个交易日
-  if (winDates.length < 4) return null; // 4 日窗口不足，不构成弱转强
-  const emoCycSkipped = [];
-  let best = null; // { sc, diff, gain }
-  for (const sc of bucket.stockChanges) {
-    if (EXCLUDED_CODES.has(sc.code)) continue;
-    if (isNonTechWatchlistStock(sc.code)) continue; // 非科技股不参与选股（候选池=全量自选股）
-    if (isBuyBlockedByValuation(sc.code)) continue; // 估值限制：流通市值 < 200 亿 或 市盈率亏损 不买（2026-10-14 由总市值改为流通市值口径）
-    if (isOscExcluded(sc.code)) continue; // 震荡测试：勾选隐藏的股票不参与选股
-    if (sc.lastPx == null || sc.lastPx <= 0) continue;
-    // 自选股添加时间门禁：买点时刻尚未加入自选股的股票不参与选股（防止后加自选股污染历史回测）
-    if (!passWatchlistGate(sc.code, rangeDates[di], bucket.minute)) continue;
-    // 涨停顺延：买点触发时点已涨停的股票无法成交，不参与优选
-    if (isLimitUpAtBuy(sc.code, sc.changePct)) continue;
-    // 上一交易日一字板过滤（全策略通用）：昨日一字板的候选次日不买，不参与优选
-    if (prevOneWordSet && prevOneWordSet.size > 0 && prevOneWordSet.has(sc.code)) continue;
-    // 顺/逆周期过滤：逆周期（与创业板指负相关/零相关）候选剔除并顺延（由循环自然改选下一最优）
-    if (emoCycSet && emoCycSet.size > 0 && emoCycSet.has(sc.code)) {
-      emoCycSkipped.push({ code: sc.code, name: sc.name || sc.code, change: sc.changePct != null ? Number(sc.changePct) : null, corr: cycCorrCache.get(`${sc.code}_${rangeDates[di]}`) });
-      continue;
-    }
-    const scores = [];
-    for (let i = 0; i < winDates.length; i++) {
-      let r;
-      if (i === winDates.length - 1) {
-        // 当日：用当前分钟的日内抗分歧分数
-        r = calcResilienceAtMinute(replayStocks, sc.code, bucket.minute);
-      } else {
-        r = dailyInfos.get(winDates[i])?.get(sc.code)?.resilience;
-      }
-      if (r == null || !Number.isFinite(r)) {
-        scores.length = 0;
-        break;
-      }
-      scores.push(Number(r));
-    }
-    if (scores.length < 4) continue;
-    if (!(scores[3] > 11)) continue; // 买点触发时当日抗分歧分数需 > 11 才参与弱转强优选
-    const first2Avg = (scores[0] + scores[1]) / 2; // 前两天均值
-    const last2Avg = (scores[2] + scores[3]) / 2; // 最近两天均值（含当日）
-    const diff = last2Avg - first2Avg;
-    const gain = sc.changePct != null ? Number(sc.changePct) : -Infinity;
-    if (!best || diff > best.diff + 1e-9 || (Math.abs(diff - best.diff) <= 1e-9 && gain > best.gain)) {
-      best = { sc, diff, gain };
-    }
+// 计算个股 MA3 切线正斜率连续天数（从 targetDateStr 倒着数，包括 targetDateStr 本身）
+// MA3 切线公式 B：MA3(今日) − MA3(昨日)；avg(i,d) = closes.slice(i, i+d).reduce(...) / d
+// closes 是按日期降序的 [{date, close}] 数组，[0] = 目标日，[1] = 前一日，...
+// 返回：连续正的天数（含当日）；斜率非正返回 0；数据不足返回 null（调用方保守放行）
+const countStockPositiveSlopeDays = (code, targetDateStr, dailyInfos) => {
+  if (!dailyInfos) return null;
+  const codeStr = String(code);
+  const dates = [...dailyInfos.keys()].sort((a, b) => b - a);
+  const closes = [];
+  for (const d of dates) {
+    const info = dailyInfos.get(d)?.get(codeStr);
+    if (info?.closePx != null && info.closePx > 0) closes.push({ date: d, close: Number(info.closePx) });
+    if (closes.length >= 10) break;
   }
-  if (!best) return null;
-  return { stock: best.sc, metric: parseFloat(best.diff.toFixed(4)), emoCycSkipped };
+  if (closes.length < 4) return null;
+  const avg = (i, d) => closes.slice(i, i + d).reduce((s, v) => s + v.close, 0) / d;
+  const slopeToday = avg(0, 3) - avg(1, 3);
+  if (!Number.isFinite(slopeToday)) return null;
+  if (slopeToday <= 0) return 0;
+  let count = 1;
+  for (let i = 1; i + 3 <= closes.length; i++) {
+    const slope = avg(i, 3) - avg(i + 1, 3);
+    if (!Number.isFinite(slope)) break;
+    if (slope > 0) count++;
+    else break;
+    if (count >= 6) break; // 用户关心 ≤4，算到 5 就够了
+  }
+  return count;
 };
-
-// 计算 N 日线斜率角度：以「N 日涨幅均线」为观测线（用涨幅替代价格，消除不同股票价格差异）
-// avgRet(d) = 近 N 个交易日涨幅均值，今日涨幅用当前盘中涨幅（避免未来数据），其余用历史 EOD 涨幅
-// 斜率Δ（每日变化，% / 天）= avgRet(今日) - avgRet(昨日)
-// 角度（度）= atan(Δ) * 180 / π；取当日角度最大（即线最陡峭）的股票买入
-const computeMaSlopeAngle = (code, days, di, rangeDates, dailyInfos, todayIntradayChange) => {
-  if (!days || todayIntradayChange == null || !Number.isFinite(Number(todayIntradayChange))) return null;
-  if (di < days) return null; // 历史日不足，无法得到「昨日N日涨幅均线」
-  // 今日N日涨幅均线 = (今日盘中涨幅 + 最近 days-1 个历史 EOD 涨幅) / days
-  const todayRets = [Number(todayIntradayChange)];
-  for (let i = di - 1; i >= 0 && todayRets.length < days; i--) {
-    const r = dailyInfos.get(rangeDates[i])?.get(code)?.changePct;
-    if (r == null || !Number.isFinite(Number(r))) return null;
-    todayRets.push(Number(r));
-  }
-  if (todayRets.length < days) return null;
-  // 昨日N日涨幅均线 = 最近 days 个历史 EOD 涨幅 / days
-  const yestRets = [];
-  for (let i = di - 1; i >= di - days; i--) {
-    if (i < 0) return null;
-    const r = dailyInfos.get(rangeDates[i])?.get(code)?.changePct;
-    if (r == null || !Number.isFinite(Number(r))) return null;
-    yestRets.push(Number(r));
-  }
-  if (yestRets.length < days) return null;
-  const avgToday = todayRets.reduce((a, b) => a + b, 0) / days;
-  const avgYesterday = yestRets.reduce((a, b) => a + b, 0) / days;
-  if (!Number.isFinite(avgToday) || !Number.isFinite(avgYesterday)) return null;
-  const delta = avgToday - avgYesterday; // 斜率（百分点 / 天）
-  const angle = Math.atan(delta) * 180 / Math.PI; // 转化为角度
-  return angle;
-};
-
-// ============================================================
-// 三日情绪冰点系列买入环境门禁（2026-09-28 新增）：触发买点当天，候选股所跟踪指数满足其一才可买——
-//   ① 往前数 5 个交易日 20 日线斜率为正：MA20(触发日) − MA20(5个交易日前) > 0（口径同 maSlope=当前MA−5日前MA）
-//   ② 触发日 30 日线在 60 日线下方：MA30 < MA60
-// 目的：单边阴跌中段（20日线仍下行且 30 日线未跌破 60 日线）抄底隔日无溢价，
-//       仅保留「下跌末期反弹（20日线回升）」与「深跌阶段（30<60）」两类有溢价环境。
-// 数据：同花顺指数日K收盘价（创业板指 sz399006 / 科创50 sh000688），MA 含触发日收盘
-//      （尾盘 14:57 触发时按收盘已基本定型口径，与 EMA 命中条件一致）。
-// 跟踪指数映射与抗分歧口径一致：sh688 开头跟踪科创50，其余跟踪创业板指。
-// 全部候选股均不满足（或指数日K数据不足/获取失败）时当日不买入。
-// ============================================================
 
 module.exports = {
   buildWindowAxis,
-  computeMaSlopeAngle,
+  countStockPositiveSlopeDays,
   injectSimStocksIntoCampData,
   isNonTechWatchlistStock,
   passWatchlistGate,
-  pickWeakToStrongStock,
 };
