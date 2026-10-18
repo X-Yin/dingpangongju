@@ -962,7 +962,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   }, [categoryOrder]);
   // 持久化：categoryOrder 变化时写回 localStorage
   useEffect(() => {
-    try { localStorage.setItem(CATEGORY_ORDER_LS_KEY, JSON.stringify(categoryOrder)); } catch {}
+    try { localStorage.setItem(CATEGORY_ORDER_LS_KEY, JSON.stringify(categoryOrder)); } catch { }
   }, [categoryOrder]);
   // 点击分类时把该 key 推到最前（去重）
   const pushCategoryOrder = (key) => {
@@ -1511,7 +1511,14 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         size="small"
         icon={<BarChartOutlined />}
         onClick={() => setReportOpen(true)}
-        style={{ marginLeft: 12, borderRadius: 999 }}
+        style={{
+          marginLeft: 12,
+          borderRadius: 999,
+          paddingInline: 14,
+          height: 28,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          fontWeight: 450,
+        }}
       >
         回测报告
       </Button>
@@ -1519,7 +1526,15 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         size="small"
         icon={<LineChartOutlined />}
         onClick={() => setTrendOpen(true)}
-        style={{ marginLeft: 12, borderRadius: 999 }}
+        style={{
+          marginLeft: 12,
+          borderRadius: 999,
+          paddingInline: 14,
+          height: 28,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          fontWeight: 450,
+          borderColor: '#dcdfe6',
+        }}
       >
         策略趋势诊断
       </Button>
@@ -1530,7 +1545,14 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
           icon={<CopyOutlined />}
           onClick={handleCopy}
           loading={copying}
-          style={{ marginLeft: 12, borderRadius: 999 }}
+          style={{
+            marginLeft: 12,
+            borderRadius: 999,
+            paddingInline: 14,
+            height: 28,
+            boxShadow: '0 1px 4px rgba(22, 119, 255, 0.2)',
+            fontWeight: 450,
+          }}
         >
           {copying ? '正在获取K线…' : '复制结果内容'}
         </Button>
