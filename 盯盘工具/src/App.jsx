@@ -1278,9 +1278,33 @@ function App() {
               >
                 大事提醒
               </Button>
-              <span className="debug-switch">
-                <span className="debug-switch-label">debug</span>
-                <Switch size="small" checked={debugEnabled} onChange={setDebugEnabled} />
+              <span className="debug-switch" style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                userSelect: 'none',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                transition: 'background-color 0.2s ease',
+              }}
+              >
+                <Switch
+                  size="small"
+                  checked={debugEnabled}
+                  onChange={setDebugEnabled}
+                  style={{
+                    backgroundColor: debugEnabled ? '#1677ff' : '#dcdfe6',
+                  }}
+                />
+                <span className="debug-switch-label" style={{
+                  fontSize: 12,
+                  color: '#4e5969',
+                  fontWeight: 500,
+                  letterSpacing: '0.3px',
+                }}>
+                  Debug
+                </span>
               </span>
             </div>
           </Header>
