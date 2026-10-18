@@ -517,6 +517,21 @@
           }
         }
 
+        .debug-switch {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-left: 2px;
+          user-select: none;
+
+          .debug-switch-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.75);
+            letter-spacing: 0.5px;
+          }
+        }
+
         .ai-provider-switcher {
           margin-right: 4px;
 

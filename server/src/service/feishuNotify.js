@@ -59,7 +59,8 @@ function buildMarketSnapshotText({ mainMoney, amountChangeDiff, chuangyeban, kec
 }
 
 // 买点诊断卡片：绿色主题，列出「开盘实战」页自选股 3 日涨幅榜前三，并点出其中的买点候选
-function buildBuyPointCard({ buyStocks, topStocks, timestamp }) {
+//   mock=true 时为调试面板触发的 MOCK 测试卡片，卡片中额外标注说明
+function buildBuyPointCard({ buyStocks, topStocks, timestamp, mock }) {
   const list = Array.isArray(buyStocks) ? buyStocks : (Array.isArray(topStocks) ? topStocks : []);
   const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
   const elements = [
@@ -67,10 +68,11 @@ function buildBuyPointCard({ buyStocks, topStocks, timestamp }) {
       tag: "markdown",
       content: `**🎯【买点诊断】命中买点**\n> ${timestamp || '--'}`,
     },
-    {
-      tag: "hr",
-    },
   ];
+  if (mock) {
+    elements.push({ tag: "markdown", content: "**🧪【MOCK 测试卡片】本条为调试用途，非实盘信号**" });
+  }
+  elements.push({ tag: "hr" });
 
   if (list.length === 0) {
     elements.push({ tag: "markdown", content: "当前自选股 3 日涨幅榜无可展示标的（创业板指 / 科创50 均不满足买点门槛）。" });
@@ -106,7 +108,7 @@ function buildBuyPointCard({ buyStocks, topStocks, timestamp }) {
     config: { wide_screen_mode: true },
     header: {
       template: "green",
-      title: { tag: "plain_text", content: "🔔 买点诊断触发提醒" },
+      title: { tag: "plain_text", content: mock ? "🔔 买点诊断触发提醒（MOCK 测试）" : "🔔 买点诊断触发提醒" },
     },
     body: { elements },
   };
@@ -218,16 +220,18 @@ function buildHotMoneyReverseLeaderCard({ buyStocks, timing, timestamp }) {
 }
 
 // 卖点诊断卡片：红色主题，列出每个触发卖点的持仓股及触发原因
-function buildSellPointCard({ sellStocks, timestamp }) {
+//   mock=true 时为调试面板触发的 MOCK 测试卡片，卡片中额外标注说明
+function buildSellPointCard({ sellStocks, timestamp, mock }) {
   const elements = [
     {
       tag: "markdown",
       content: `**⚠️【卖点诊断】以下持仓已触发卖出条件**\n> ${timestamp || '--'}`,
     },
-    {
-      tag: "hr",
-    },
   ];
+  if (mock) {
+    elements.push({ tag: "markdown", content: "**🧪【MOCK 测试卡片】本条为调试用途，非实盘信号**" });
+  }
+  elements.push({ tag: "hr" });
 
   (sellStocks || []).forEach((s, i) => {
     const reasons = (s.reasons || []).join('\n');
@@ -255,7 +259,7 @@ function buildSellPointCard({ sellStocks, timestamp }) {
     config: { wide_screen_mode: true },
     header: {
       template: "red",
-      title: { tag: "plain_text", content: "⚠️ 卖点诊断触发提醒" },
+      title: { tag: "plain_text", content: mock ? "⚠️ 卖点诊断触发提醒（MOCK 测试）" : "⚠️ 卖点诊断触发提醒" },
     },
     body: { elements },
   };

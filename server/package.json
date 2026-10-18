@@ -26,6 +26,7 @@
     "iconv-lite": "^0.7.3",
     "multer": "^2.2.0",
     "nodemon": "^3.1.14",
-    "puppeteer": "^25.1.0"
+    "puppeteer": "^25.1.0",
+    "ws": "^8.21.0"
   }
 }

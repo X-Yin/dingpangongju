@@ -9,18 +9,11 @@ import { local_ip } from '../../constant';
 import StockKLineModal from '../StockKLineModal';
 import StockFundFlowModal from '../StockFundFlowModal';
 import BuyPointDiagnosisDrawer from '../FloatingBuyPointDiagnosis';
-import { useStrategyMode, MODE_EXTREME_WIN } from '../../utils/strategyMode';
+import { useStrategyMode } from '../../utils/strategyMode';
+import { subscribeBuyPointPush, subscribeSellPointPush } from '../../utils/buyPointWs';
 import './index.scss';
 
 const ALERT_THRESHOLD = 0.15;
-
-// 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
-
-// 是否处于午休时间（11:30 - 13:00），此时暂停买点/卖点自动诊断
-const isInLunchBreak = (d) => {
-  const minutes = d.hour() * 60 + d.minute();
-  return minutes >= 11 * 60 + 30 && minutes < 13 * 60;
-};
 
 const formatSignedPercent = (value) => {
   if (value === undefined || value === null || Number.isNaN(Number(value))) return '--';
@@ -71,6 +64,9 @@ const buildSellHint = (result) => {
   return `建议卖出 ${result.stockName} ${weightText} 仓位（在 ${buyAt} 买入，成本线为 ${costText}）`;
 };
 
+// 卖点诊断结果排序：命中卖点的持仓置顶（同组内保持原顺序）
+const sortSellResults = (list) => [...(list || [])].sort((a, b) => (b.isSell ? 1 : 0) - (a.isSell ? 1 : 0));
+
 const FloatingStockPosition = ({ onOutflowDetected }) => {
   const navigate = useNavigate();
   const mode = useStrategyMode();
@@ -93,10 +89,6 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   // 持仓成本线价格输入框本地值（key: 股票代码），失焦时保存
   const [costInputs, setCostInputs] = useState({});
   const [buyPointDrawerOpen, setBuyPointDrawerOpen] = useState(false);
-  // 自动买点诊断弹窗打开频控：记录最近一次因诊断通过而自动打开抽屉的时间戳（仅内存，刷新页面即重置）
-  const lastAutoBuyPointOpenRef = useRef(0);
-  // 自动卖点诊断弹窗打开频控：记录最近一次因诊断命中而自动打开抽屉的时间戳（仅内存，刷新页面即重置）
-  const lastAutoSellOpenRef = useRef(0);
   const [pos, setPos] = useState({ x: 20, y: window.innerHeight - 300 });
   const dragRef = useRef({ dragging: false, moved: false, offsetX: 0, offsetY: 0, startX: 0, startY: 0 });
   const containerRef = useRef(null);
@@ -319,9 +311,9 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     try {
       // 每笔持仓各自独立诊断（同一股票的多笔仓位会分别产生一张卡片）
       const results = await Promise.all(
-        currentPositions.map((stock) => diagnosePositionSellPoint(stock, todayStr))
+        currentPositions.map((stock) => diagnosePositionSellPoint(stock, todayStr, mode))
       );
-      setSellDrawerResults(results);
+      setSellDrawerResults(sortSellResults(results));
     } catch (error) {
       console.error('卖点诊断失败:', error);
       message.error('卖点诊断失败');
@@ -466,149 +458,28 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     };
   }, [fetchStockChanges]);
 
-  // 买点诊断：交易日交易时间每 10 秒自动运行一次，前置检查全部通过则自动打开右侧抽屉
-  const autoRunBuyPointDiagnosis = useCallback(async () => {
-    try {
-      const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1, mode });
-      const result = res.data?.data;
-      // 触发条件：顺周期前置检查全部通过（allPassed），或情绪游资模式下逆周期（反向抱团）择时触发
-      const isExtremeMode = mode === MODE_EXTREME_WIN;
-      const forwardHit = result?.allPassed === true;
-      const reverseHit = isExtremeMode && result?.reverse?.allPassed === true;
-      if (forwardHit || reverseHit) {
-        // 频控：自动打开抽屉间隔至少 5 分钟，避免重复弹出（仅内存时间戳，刷新页面即重置）
-        const now = Date.now();
-        if (now - lastAutoBuyPointOpenRef.current >= 5 * 60 * 1000) {
-          lastAutoBuyPointOpenRef.current = now;
-          setBuyPointDrawerOpen(true);
-          // 发送买点诊断飞书卡片（技术进攻模式为自选股 3 日涨幅榜前三；
-          // 极致胜率模式优先为龙头列表完整买点股，无完整买点股时推逆周期反向抱团买点股）
-          try {
-            await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'buy_point', mode });
-          } catch (err) {
-            console.error('发送买点飞书卡片失败:', err);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('自动买点诊断失败:', error);
-    }
-  }, [mode]);
-
-  // 买点诊断自动轮询调度：
-  // 1. 严格只在 5min 整倍数分钟执行（9:30, 9:35, 9:40, 9:45 ... 13:05, 13:10 ...），其余时间一律不执行；
-  //    页面在整倍数分钟的前 30 秒内加载时立即补跑一次，之后严格对齐下一个整倍数
-  // 2. 午休（11:30-13:00）暂停，13:00 恢复
+  // 买点诊断：由后端 WebSocket 集中推送（每 10s 一次），前端不再轮询
+  //   命中且进入新的 5 分钟桶时后端下发 open:true（飞书与频控均由后端完成），前端据此打开右侧抽屉。
+  //   抽屉每次打开仍走独立接口拉取最新诊断数据（见 BuyPointDiagnosisDrawer 自身逻辑）。
   useEffect(() => {
-    const timers = [];
-    let stopped = false;
+    const unsubscribe = subscribeBuyPointPush((msg) => {
+      if (msg?.open === true) setBuyPointDrawerOpen(true);
+    });
+    return unsubscribe;
+  }, []);
 
-    const scheduleNext = (immediateAllowed) => {
-      if (stopped) return;
-      const now = dayjs();
-      if (isAfterMarketClose()) return; // 收盘/周末停止轮询
-
-      // 午休(11:30-13:00)暂停买点诊断，等到 13:00 再恢复
-      if (isInLunchBreak(now)) {
-        const waitMs = Math.max(dayjs().hour(13).minute(0).second(0).millisecond(0).diff(now), 0);
-        const lunchTimer = setTimeout(() => {
-          if (stopped || isAfterMarketClose()) return;
-          autoRunBuyPointDiagnosis();
-          scheduleNext(false);
-        }, waitMs);
-        timers.push(lunchTimer);
-        return;
-      }
-
-      let delay;
-      const minute = now.minute();
-      const second = now.second() + now.millisecond() / 1000;
-      if (immediateAllowed && minute % 5 === 0 && second < 30) {
-        delay = 0; // 刚进入 5min 整倍数分钟的前 30 秒，立即执行
-      } else {
-        const nextMinute = (Math.floor(minute / 5) + 1) * 5;
-        const next = (nextMinute >= 60
-          ? now.add(1, 'hour').minute(nextMinute - 60)
-          : now.minute(nextMinute)
-        ).second(0).millisecond(0);
-        delay = Math.max(next.diff(now), 0);
-      }
-
-      const timer = setTimeout(() => {
-        if (stopped || isAfterMarketClose()) return;
-        autoRunBuyPointDiagnosis();
-        scheduleNext(false);
-      }, delay);
-      timers.push(timer);
-    };
-
-    scheduleNext(true);
-    return () => {
-      stopped = true;
-      timers.forEach(clearTimeout);
-    };
-  }, [autoRunBuyPointDiagnosis]);
-
-  // 卖点诊断：交易日交易时间每 10 秒自动运行一次，任一持仓股命中卖点则自动打开抽屉（频控 5 分钟，仿买点诊断）
-  const autoRunSellDiagnosis = useCallback(async () => {
-    const currentPositions = positionsRef.current;
-    if (currentPositions.length === 0) return;
-    const todayStr = dayjs().format('YYYY-MM-DD');
-    try {
-      // 每笔持仓各自独立诊断（同一股票的多笔仓位会分别诊断、分别提示），跟随全局模式
-      const results = await Promise.all(
-        currentPositions.map((stock) => diagnosePositionSellPoint(stock, todayStr, mode))
-      );
-      setSellDrawerResults(results);
-      // 任一持仓命中卖点则自动打开抽屉，并应用频控避免反复弹出
-      const hitResults = results.filter((r) => r.isSell === true);
-      if (hitResults.length > 0) {
-        const now = Date.now();
-        if (now - lastAutoSellOpenRef.current >= 5 * 60 * 1000) {
-          lastAutoSellOpenRef.current = now;
-          setSellDrawerOpen(true);
-          // 发送卖点诊断飞书卡片（携带触发卖点的仓位、买入时间、成本线及具体触发原因）
-          try {
-            const sellStocks = hitResults.map((r) => ({
-              stockName: r.stockName,
-              code: r.code,
-              weight: r.weight,
-              buyDate: r.buyDate,
-              buyTime: r.buyTime,
-              costPrice: r.costPrice,
-              reasons: r.reasons || [],
-              closePrice: r.detail?.closePrice,
-            }));
-            await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'sell_point', sellStocks, mode });
-          } catch (err) {
-            console.error('发送卖点飞书卡片失败:', err);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('自动卖点诊断失败:', error);
-    }
-  }, [mode]);
-
+  // 卖点诊断：由后端 WebSocket 集中推送（每 10s 一次），前端不再轮询
+  //   - 每条消息更新抽屉内诊断数据（命中卖点的持仓置顶展示）
+  //   - 命中且进入新的 5 分钟桶时后端下发 open:true（飞书与频控均由后端完成），前端据此打开抽屉
+  //   - 抽屉内刷新按钮仍走独立接口拉取最新数据（fetchAllSellDiagnosis）
   useEffect(() => {
-    const timers = [];
-    const schedulePoll = (callback, delay) => {
-      const timer = setTimeout(() => {
-        if (isAfterMarketClose()) return; // 收盘/周末停止轮询
-        // 午休(11:30-13:00)暂停卖点诊断，但不终止轮询，13:00 后自动恢复
-        if (!isInLunchBreak(dayjs())) {
-          callback();
-        }
-        schedulePoll(callback, delay);
-      }, delay);
-      timers.push(timer);
-      return timer;
-    };
-    schedulePoll(autoRunSellDiagnosis, 10 * 1000);
-    return () => {
-      timers.forEach(clearTimeout);
-    };
-  }, [autoRunSellDiagnosis]);
+    const unsubscribe = subscribeSellPointPush((msg) => {
+      const results = msg?.data?.results;
+      if (Array.isArray(results)) setSellDrawerResults(sortSellResults(results));
+      if (msg?.open === true) setSellDrawerOpen(true);
+    });
+    return unsubscribe;
+  }, []);
 
   const autoRecordOperation = async (action, stockName, stockCode, position) => {
     const todayStr = dayjs().format('YYYY-MM-DD');
@@ -877,11 +748,16 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       {/* 卖点诊断抽屉：每个持仓股为一张大卡片，卡片内含该股的卖点诊断条件卡片 */}
       <Drawer
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <RadarChartOutlined style={{ color: '#fa8c16', fontSize: 20 }} />
             <span style={{ fontSize: 16, fontWeight: 600 }}>卖点诊断</span>
             {sellDrawerResults.length > 0 && (
               <span style={{ fontSize: 12, color: '#8c8c8c' }}>{sellDrawerResults.length} 笔持仓</span>
+            )}
+            {sellDrawerResults.some((r) => r.isSell === true) && (
+              <span style={{ fontSize: 12, color: '#cf1322', fontWeight: 600 }}>
+                命中：{sellDrawerResults.filter((r) => r.isSell === true).map((r) => r.stockName).join('、')}
+              </span>
             )}
           </div>
         }

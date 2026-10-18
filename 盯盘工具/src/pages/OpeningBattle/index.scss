@@ -990,6 +990,25 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   50% { opacity: 1; }
 }
 
+// 卖点命中闪烁：收到后端 open:true（命中且进入新 5 分钟桶）时整卡背景红闪提示，数秒后自动恢复
+.ob-sell-card.is-flash::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-color: rgba(255, 77, 79, 0.55);
+  animation: ob-tick-blink 1.1s ease-in-out infinite;
+}
+
+// 闪烁层压在内容之下，避免把标题 / 正文染色
+.ob-sell-card.is-flash > .ob-diagnosis-header,
+.ob-sell-card.is-flash > .ob-diagnosis-body {
+  position: relative;
+  z-index: 1;
+}
+
 .ob-diagnosis-card {
   position: relative;
   border-radius: 22px;

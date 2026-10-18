@@ -9,6 +9,7 @@ import { marked } from 'marked';
 import { local_ip } from '../../constant';
 import FloatingTechEmotion from '../../components/FloatingTechEmotion';
 import BuyPointDiagnosisDrawer from '../../components/FloatingBuyPointDiagnosis';
+import { subscribeBuyPointPush } from '../../utils/buyPointWs';
 import '../../components/FloatingBuyPointDiagnosis/index.scss';
 import './index.scss';
 
@@ -374,8 +375,6 @@ export const MainFundContent = () => {
   const [error, setError] = useState(null);
   // 明细数据固定为只看变化，5min 级别可勾选（默认开启）
   const [fiveMinAggEnabled, setFiveMinAggEnabled] = useState(true);
-  // 自动买点诊断：命中后自动打开买点诊断抽屉（默认涨跌幅 tab），仅当前浏览器 tab 激活时弹出
-  const lastAutoBuyPointOpenRef = useRef(0);
   // 买点诊断抽屉：点击控制栏「买点诊断」按钮手动打开，展示各条件是否符合
   const [buyPointDrawerOpen, setBuyPointDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('today');
@@ -540,46 +539,17 @@ export const MainFundContent = () => {
     };
   }, [fetchData]);
 
-  // 自动买点诊断：与 FloatingStockPosition 保持一致，交易日交易时段每 10 秒运行一次
-  // 命中后自动打开买点诊断抽屉（默认落在涨跌幅 tab，直接给出该买哪只个股），频控 5 分钟，且仅当前浏览器 tab 激活（可见）时才弹
-  const autoRunBuyPointDiagnosis = useCallback(async () => {
-    try {
-      const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1 });
-      const result = res.data?.data;
-      // 触发条件：其它前置检查全部通过（allPassed，与逻辑）
-      //          或尾盘抄底命中（tailDipBuyingHit，或逻辑分支，14:30-15:00 内任一时刻满足即可）
-      if (result?.allPassed === true || result?.tailDipBuyingHit === true) {
-        const now = Date.now();
-        if (now - lastAutoBuyPointOpenRef.current >= 5 * 60 * 1000) {
-          // 只有当前浏览器 tab 页被激活（可见）时才能弹出
-          if (document.visibilityState === 'visible' && !document.hidden) {
-            lastAutoBuyPointOpenRef.current = now;
-            setBuyPointDrawerOpen(true);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('自动买点诊断失败:', error);
-    }
-  }, []);
-
+  // 买点诊断：由后端 WebSocket 集中推送（每 10s 一次），前端不再轮询
+  //   命中且进入新的 5 分钟桶时后端下发 open:true（飞书与频控均由后端完成）；
+  //   仅当前浏览器 tab 激活（可见）时才自动打开买点诊断抽屉（默认涨跌幅 tab，直接给出该买的个股）
   useEffect(() => {
-    const timers = [];
-    const schedulePoll = (callback, delay) => {
-      const timer = setTimeout(() => {
-        if (!isAfterMarketClose()) {
-          callback();
-          schedulePoll(callback, delay);
-        }
-      }, delay);
-      timers.push(timer);
-      return timer;
-    };
-    schedulePoll(autoRunBuyPointDiagnosis, 10 * 1000);
-    return () => {
-      timers.forEach(clearTimeout);
-    };
-  }, [autoRunBuyPointDiagnosis]);
+    const unsubscribe = subscribeBuyPointPush((msg) => {
+      if (msg?.open === true && document.visibilityState === 'visible' && !document.hidden) {
+        setBuyPointDrawerOpen(true);
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   const renderChartToContainers = useCallback((chartData, mainContainer, volContainer, mainChartRef, volChartRef) => {
     // chart 已存在且容器有效时，只更新 series 数据，避免轮询重建 chart 导致闪烁

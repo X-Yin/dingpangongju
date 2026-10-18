@@ -14,6 +14,7 @@ import { parseMoneyValue, formatDisplayTime, aggregateFundByInterval } from '../
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import StockKLineModal from '../../components/StockKLineModal';
 import { useStrategyMode, setStrategyMode, STRATEGY_MODE_OPTIONS, MODE_EXTREME_WIN } from '../../utils/strategyMode';
+import { subscribeBuyPointPush, subscribeSellPointPush } from '../../utils/buyPointWs';
 import './index.scss';
 
 // 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
@@ -1081,9 +1082,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
   const [popupStocks, setPopupStocks] = useState([]);
   // 标题旁实时时钟：每秒跳动，便于对照 5 分钟整点判断下一次自动诊断时机
   const [now, setNow] = useState(() => dayjs());
-  // 弹窗频控：命中后 5 分钟内不重复弹出（仅内存，刷新页面即重置）
-  const lastPopupRef = useRef(0);
-  // 可买标的实时快照：命中时刻发送飞书/弹窗时取用，避免闭包拿到旧值
+  // 可买标的实时快照：命中时刻打开弹窗时取用，避免闭包拿到旧值
   const buyableRef = useRef(buyableStocks);
   useEffect(() => { buyableRef.current = buyableStocks; }, [buyableStocks]);
 
@@ -1092,17 +1091,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // 命中买点时发送飞书通知：
-  //   tech_attack → 不传标的，由后端按本页同一份自选股 3 日涨幅榜取前三并点出买点候选
-  //   hot_money_extreme_win → 后端口径为「情绪游资-龙头列表」中的完整买点股（无则不推）
-  const sendBuyPointFeishu = useCallback(async () => {
-    try {
-      await axios.post(`http://${local_ip}:3000/send_feishu_card`, { type: 'buy_point', mode });
-    } catch (err) {
-      console.error('发送买点飞书通知失败:', err);
-    }
-  }, [mode]);
-
+  // 手动 / 初始一次性刷新：仅拉取当前最新诊断数据用于展示，不发飞书、不弹窗（这些由后端集中处理）
   const run = useCallback(async (force = false) => {
     try {
       // force=true：手动刷新按钮传入，绕过后端 30 秒重度刷新节流，随时点击随时真正重拉
@@ -1113,71 +1102,39 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
       // 命中口径：顺周期前置全部通过；情绪游资模式下逆周期（反向抱团）择时触发也算命中
       const forwardHit = result.allPassed === true;
       const reverseHit = isExtreme && result.reverse?.allPassed === true;
-      const hit = forwardHit || reverseHit;
       // 向上层汇报买点是否命中，供 3 日涨幅榜决定是否高亮展示
-      onResultChange?.(hit);
-      // 触发条件：命中（顺周期全部前置通过 或 逆周期择时触发）
-      if (hit) {
-        const now = Date.now();
-        if (now - lastPopupRef.current >= 5 * 60 * 1000) {
-          lastPopupRef.current = now;
-          const stocks = buyableRef.current || [];
-          setPopupStocks(stocks);
-          setPopupVisible(true);
-          sendBuyPointFeishu();
-        }
-      }
+      onResultChange?.(forwardHit || reverseHit);
     } catch (err) {
-      console.error('自动买点诊断失败:', err);
+      console.error('买点诊断刷新失败:', err);
     }
-  }, [onResultChange, sendBuyPointFeishu, mode, isExtreme]);
+  }, [onResultChange, mode, isExtreme]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try { await run(true); } finally { setRefreshing(false); }
   }, [run]);
 
-  // 买点诊断自动轮询调度：
-  // 1. 首次挂载无条件立即执行一次（非交易时间也基于最近交易日数据展示诊断结果）
-  // 2. 交易时段严格只在 5min 整倍数分钟执行（9:30, 9:35, 9:40, 9:45 ... 13:05, 13:10 ...），其余时间一律不执行
+  // 买点诊断：由后端 WebSocket 集中推送（每 10s 一次），前端不再轮询
+  //   - 每条消息更新诊断数据（供卡片展示）
+  //   - 命中且进入新的 5 分钟桶时后端下发 open:true（频控在后端完成），前端据此打开弹窗
+  //   - 初次挂载仍一次性拉取一次（非交易时段也能展示最近交易日的诊断结果）
   useEffect(() => {
-    const timers = [];
-    let stopped = false;
-    run(); // 首次立即执行
-
-    const scheduleNext = (immediateAllowed) => {
-      if (stopped) return;
-      const now = dayjs();
-      if (isAfterMarketClose()) return; // 收盘/周末停止轮询
-
-      let delay;
-      const minute = now.minute();
-      const second = now.second() + now.millisecond() / 1000;
-      if (immediateAllowed && minute % 5 === 0 && second < 30) {
-        delay = 0; // 刚进入 5min 整倍数分钟的前 30 秒，立即执行
-      } else {
-        const nextMinute = (Math.floor(minute / 5) + 1) * 5;
-        const next = (nextMinute >= 60
-          ? now.add(1, 'hour').minute(nextMinute - 60)
-          : now.minute(nextMinute)
-        ).second(0).millisecond(0);
-        delay = Math.max(next.diff(now), 0);
+    run(false);
+    const unsubscribe = subscribeBuyPointPush((msg) => {
+      const result = msg?.data;
+      if (!result) return;
+      setData(result);
+      const forwardHit = result.allPassed === true;
+      const reverseHit = isExtreme && result.reverse?.allPassed === true;
+      onResultChange?.(forwardHit || reverseHit);
+      if (msg.open === true) {
+        // 优先使用消息内 buyable（仅 MOCK 调试会携带），否则用页面实时可买列表
+        setPopupStocks(result.buyable || buyableRef.current || []);
+        setPopupVisible(true);
       }
-
-      const timer = setTimeout(() => {
-        if (stopped || isAfterMarketClose()) return;
-        run();
-        scheduleNext(false);
-      }, delay);
-      timers.push(timer);
-    };
-
-    scheduleNext(true);
-    return () => {
-      stopped = true;
-      timers.forEach(clearTimeout);
-    };
-  }, [run]);
+    });
+    return unsubscribe;
+  }, [run, onResultChange, isExtreme]);
 
   // 过滤掉「尾盘抄底」检查项（或逻辑分支，已从买点诊断移除），并同步修正计数与结论文案
   const checks = (data?.checks || []).filter(c => c.id !== 'tail_dip_buying');
@@ -1223,7 +1180,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
           </button>
         </div>
       </div>
-      <div className="ob-diagnosis-body" style={{ maxHeight: 530,overflowY: 'auto' }}>
+      <div className="ob-diagnosis-body" style={{ maxHeight: 530,overflowY: 'auto', minHeight: 522 }}>
         {!data ? (
           <div className="ob-diagnosis-loading"><Spin size="small" /></div>
         ) : (
@@ -1382,9 +1339,11 @@ const SellPointDiagnosisCard = () => {
   const [results, setResults] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [popupVisible, setPopupVisible] = useState(false);
-  // 弹窗频控：命中后 5 分钟内不重复弹出（仅内存，刷新页面即重置）
-  const lastPopupRef = useRef(0);
+  // 命中闪烁：后端下发 open:true 时卡片背景闪烁提示，数秒后自动恢复
+  const [flash, setFlash] = useState(false);
+  const flashTimerRef = useRef(null);
 
+  // 独立接口拉取最新卖点诊断数据（卡片刷新按钮 / 初次挂载使用；不发飞书、不触发弹窗）
   const run = useCallback(async () => {
     try {
       const posRes = await axios.get(`http://${local_ip}:3000/get_stock_position`);
@@ -1399,17 +1358,8 @@ const SellPointDiagnosisCard = () => {
         positions.map((stock) => diagnosePositionSellPoint(stock, todayStr, mode))
       );
       setResults(list);
-      // 任一持仓命中卖点则弹窗提示（应用频控避免反复弹出）
-      const hit = list.some((r) => r.isSell === true);
-      if (hit) {
-        const now = Date.now();
-        if (now - lastPopupRef.current >= 5 * 60 * 1000) {
-          lastPopupRef.current = now;
-          setPopupVisible(true);
-        }
-      }
     } catch (err) {
-      console.error('自动卖点诊断失败:', err);
+      console.error('卖点诊断刷新失败:', err);
     }
   }, [mode]);
 
@@ -1418,26 +1368,33 @@ const SellPointDiagnosisCard = () => {
     try { await run(); } finally { setRefreshing(false); }
   }, [run]);
 
+  // 卖点诊断：由后端 WebSocket 集中推送（每 10s 一次），前端不再轮询
+  //   - 每条消息更新卡片诊断数据
+  //   - 命中且进入新的 5 分钟桶时后端下发 open:true（飞书与频控均由后端完成），前端据此弹窗 + 卡片闪烁
+  //   - 卡片内刷新按钮仍走独立接口拉取最新数据（handleRefresh）
+  //   - 初次挂载一次性拉取一次（非交易时段也能展示最近诊断结果）
   useEffect(() => {
     run();
-    const timers = [];
-    const schedulePoll = (callback, delay) => {
-      const timer = setTimeout(() => {
-        if (!isAfterMarketClose()) {
-          callback();
-          schedulePoll(callback, delay);
-        }
-      }, delay);
-      timers.push(timer);
+    const unsubscribe = subscribeSellPointPush((msg) => {
+      const list = msg?.data?.results;
+      if (Array.isArray(list)) setResults(list);
+      if (msg?.open === true) {
+        setPopupVisible(true);
+        setFlash(true);
+        if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+        flashTimerRef.current = setTimeout(() => setFlash(false), 6000);
+      }
+    });
+    return () => {
+      unsubscribe();
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
     };
-    if (!isAfterMarketClose()) schedulePoll(run, 10 * 1000);
-    return () => timers.forEach(clearTimeout);
   }, [run]);
 
   const hitStocks = results.filter((r) => r.isSell === true);
 
   return (
-    <div className="ob-diagnosis-card ob-sell-card">
+    <div className={`ob-diagnosis-card ob-sell-card ${flash ? 'is-flash' : ''}`}>
       {refreshing && (
         <div className="ob-refresh-mask">
           <Spin size="large" />
@@ -1458,7 +1415,7 @@ const SellPointDiagnosisCard = () => {
           </button>
         </div>
       </div>
-      <div className="ob-diagnosis-body" style={{ maxHeight: 530,overflowY: 'auto' }}>
+      <div className="ob-diagnosis-body" style={{ maxHeight: 530,overflowY: 'auto', minHeight: 522 }}>
         {results.length === 0 ? (
           <div className="ob-empty-mini" style={{ height: 500, fontSize: 16 }}>暂无持仓</div>
         ) : results.map((r) => (

@@ -118,6 +118,15 @@ const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refr
 const { getMarketOverview, getThemeAnalysis, getStockQuotes, getThemeHistory, getThemeDayStocks, invalidateThemeAnalysisCache } = require('./service/themeMonitor');
 const { getStore: getThemeCustomStore, saveTheme: saveCustomTheme, deleteTheme: deleteCustomTheme, saveOverride: saveThemeOverride, saveOrder: saveThemeOrder } = require('./service/themeCustom');
 const { getClsNews, getBoardChange, getStockChangesAll, getStockNews, getStockZyjs, getInstitutionParticipation, getSectorSpot, getSectorDetail, getForeignCommodity } = require('./service/akData');
+// 买点诊断后端集中化：全局模式状态 / 飞书通知 / 10s 集中推送 / WebSocket 服务
+const strategyModeState = require('./service/strategyModeState');
+const { notifyBuyPointFeishu } = require('./service/buyPointNotifier');
+const buyPointPushService = require('./service/buyPointPushService');
+// 卖点诊断后端集中化：与买点共用同一 WebSocket 服务，10s 集中推送 + 后端发飞书
+const sellPointPushService = require('./service/sellPointPushService');
+// 调试面板 MOCK：手动触发买点/卖点命中，走同一推送 + 飞书链路
+const debugMock = require('./service/debugMock');
+const wsServer = require('./wsServer');
 const { getThsHotRank } = require('./service/thsHotRank');
 
 
@@ -1186,6 +1195,41 @@ app.post('/buy_point_single_stock_diagnosis', async (req, res) => {
   }
 });
 
+// 同步全局策略模式（前端切换「科技进攻 / 情绪游资-极致胜率」时调用）
+// 后端据此集中进行买点诊断与飞书发送，即使浏览器未打开也按当前模式运行
+app.post('/set_strategy_mode', (req, res) => {
+  try {
+    const mode = strategyModeState.setMode(req.body?.mode);
+    res.json({ success: true, data: { mode } });
+  } catch (error) {
+    console.error('设置策略模式失败:', error);
+    res.status(500).json({ success: false, message: error.message || '设置失败' });
+  }
+});
+
+app.get('/get_strategy_mode', (req, res) => {
+  res.json({ success: true, data: { mode: strategyModeState.getMode() } });
+});
+
+// ===== 调试面板（MOCK）接口：仅在 debug 面板手动触发，直接推送 WS + 发送飞书，不做桶门控 =====
+app.post('/debug/mock_buy_point', async (req, res) => {
+  try {
+    res.json(await debugMock.mockBuyPoint());
+  } catch (error) {
+    console.error('MOCK 买点失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 买点失败' });
+  }
+});
+
+app.post('/debug/mock_sell_point', async (req, res) => {
+  try {
+    res.json(await debugMock.mockSellPoint());
+  } catch (error) {
+    console.error('MOCK 卖点失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 卖点失败' });
+  }
+});
+
 // 发送飞书卡片消息（供前端调用）
 // body: {
 //   type: 'buy_point' | 'sell_point',
@@ -1208,80 +1252,10 @@ app.post('/send_feishu_card', async (req, res) => {
 
     let card;
     if (type === 'buy_point') {
-      if (mode === MODE_EXTREME_WIN) {
-        // 情绪游资-极致胜率：优先推「完整买点股」（同时满足 delta ≥ 30 且上证 3 日线斜率 > 0，且未封涨停）；
-        // 无完整买点股时，若逆周期（反向抱团）择时已触发，则改推「反向抱团买点股」；两者都无则不推
-        let resultStocks = Array.isArray(buyStocks) && buyStocks.length > 0 ? buyStocks : null;
-        let reverseTiming = null;
-        let reverseStocks = [];
-        if (!resultStocks) {
-          const listRes = await getHotMoneyLeaderList(null, 50);
-          const stocks = listRes?.data?.stocks || [];
-          resultStocks = stocks.filter((s) => s.buyPointHit && !s.isLimitUp).slice(0, 3);
-          if (resultStocks.length === 0) {
-            const rev = listRes?.data?.reverse || null;
-            if (rev) {
-              reverseStocks = (rev.stocks || []).filter((s) => s.timingPassed).slice(0, 3);
-              if (reverseStocks.length > 0) reverseTiming = rev;
-            }
-          }
-        }
-        if ((!resultStocks || resultStocks.length === 0) && reverseStocks.length === 0) {
-          return res.json({ success: true, skipped: true, message: '当前无完整买点标的，不发送通知' });
-        }
-        if (resultStocks && resultStocks.length > 0) {
-          card = feishuNotify.buildHotMoneyLeaderCard({
-            buyStocks: resultStocks,
-            timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-          });
-        } else {
-          card = feishuNotify.buildHotMoneyReverseLeaderCard({
-            buyStocks: reverseStocks,
-            timing: reverseTiming,
-            timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-          });
-        }
-      } else {
-        // 买点卡片：优先使用前端传入的标的；未传入时与「开盘实战」页自选股 3 日涨幅榜同源，
-        // 严格取榜单前三，并点出其中的买点候选（榜单内首个满足买点资格且未封涨停的标的）
-        let resultStocks = Array.isArray(buyStocks) && buyStocks.length > 0
-          ? buyStocks
-          : (Array.isArray(topStocks) && topStocks.length > 0 ? topStocks : null);
-        if (!resultStocks) {
-          const gainers = await getTopGainersByMarket(null, 10);
-          const d = gainers?.data || {};
-          const cybPassed = d.cybGate?.passed === true;
-          const starPassed = d.starGate?.passed === true;
-          // 仅纳入满足买点门槛的市场，按 3 日涨幅降序合并前十（与前端 mergedList 口径完全一致）
-          const merged = [
-            ...(cybPassed ? (d.markets?.cybMain || []) : []),
-            ...(starPassed ? (d.markets?.star || []) : []),
-          ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
-          const toRow = (s) => ({
-            stockName: s.stockName,
-            code: s.code,
-            market: s.isSh688 ? '科创板' : '创业板/主板',
-            change: s.change,
-            change3d: s.change3d,
-            resilienceScore: s.resilienceScore,
-          });
-          // 买点候选：与前端 globalPick 一致，榜单内首个满足买点资格且未封涨停的标的
-          const candidate = merged.find((s) => s.matchesBuyPoint && !s.isLimitUp) || null;
-          const top3 = merged.slice(0, 3);
-          resultStocks = top3.map((s) => ({
-            ...toRow(s),
-            isCandidate: candidate != null && s.code === candidate.code,
-          }));
-          // 候选不在前三时补一行，保证买点候选始终被点出
-          if (candidate && !top3.some((s) => s.code === candidate.code)) {
-            resultStocks.push({ ...toRow(candidate), isCandidate: true });
-          }
-        }
-        card = feishuNotify.buildBuyPointCard({
-          buyStocks: resultStocks,
-          timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-        });
-      }
+      // 买点卡片统一由 buyPointNotifier 构建并发送（与后端集中诊断共用同一实现）
+      const result = await notifyBuyPointFeishu({ mode, buyStocks, topStocks });
+      if (result.skipped) return res.json({ success: true, skipped: true, message: result.message });
+      return res.json({ success: result.success, data: result.data, error: result.error });
     } else {
       // 卖点卡片：使用前端传入的持仓股及其触发原因
       card = feishuNotify.buildSellPointCard({
@@ -4630,10 +4604,31 @@ app.get('/api/ak/foreign_commodity', async (req, res) => {
 });
 
 // 启动服务
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`服务运行在 http://localhost:${port}`);
   console.log('轮询服务已分离到单独脚本，请运行 npm run poll 启动轮询');
+  // 买点诊断后端集中化：WebSocket 与 HTTP 共用同一 http.Server，并启动 10s 集中推送
+  wsServer.attach(server, port);
+  buyPointPushService.start();
+  sellPointPushService.start();
   // 月度策略报告：调度「每月最后一个交易日收盘后」自动执行，并在启动时检查/补充上月报告
   scheduleMonthlyReport();
   checkAndBackfillLastMonthReport();
+});
+
+// 优雅关闭：Ctrl+C（SIGINT）/ kill（SIGTERM）时一并停止买点/卖点推送、关闭 WebSocket 与 HTTP 服务
+let shuttingDown = false;
+const shutdown = (signal) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`收到 ${signal}，正在关闭 HTTP / WebSocket / 买点/卖点推送服务...`);
+  try { buyPointPushService.stop(); } catch (e) { /* 忽略 */ }
+  try { sellPointPushService.stop(); } catch (e) { /* 忽略 */ }
+  try { wsServer.close(); } catch (e) { /* 忽略 */ }
+  server.close(() => process.exit(0));
+  // 兜底：3s 内未能正常关闭则强制退出
+  setTimeout(() => process.exit(0), 3000).unref();
+};
+['SIGINT', 'SIGTERM'].forEach((sig) => {
+  process.on(sig, () => shutdown(sig));
 });

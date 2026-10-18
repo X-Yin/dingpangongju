@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Layout, Menu, Button, Modal, ColorPicker, Select, message, Tooltip } from 'antd';
+import { Layout, Menu, Button, Modal, ColorPicker, Select, message, Tooltip, Switch } from 'antd';
 import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined, BookOutlined, CoffeeOutlined, StockOutlined, AreaChartOutlined, FileTextOutlined, CalendarOutlined, BarChartOutlined, GlobalOutlined, BellOutlined, AlertOutlined, ThunderboltOutlined, BgColorsOutlined, CheckOutlined, WarningOutlined, MinusOutlined, HistoryOutlined, RobotOutlined, RocketOutlined, TrophyOutlined, FireOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from './constant';
 import { getThemeColor } from './utils/theme';
 import { isTradingDay, isAfterMarketClose, getNextTradingDay } from './utils/tradingDay';
+import { getStrategyMode } from './utils/strategyMode';
+import { syncStrategyMode } from './utils/buyPointWs';
 import PreMarketReading from './components/PreMarketReading';
 import TodayPlan from './components/TodayPlan';
 import FloatingStockPosition from './components/FloatingStockPosition';
@@ -12,6 +14,7 @@ import FloatingMonitorAlarm from './components/FloatingMonitorAlarm';
 import FloatingTechEmotion from './components/FloatingTechEmotion';
 import FloatingStrategyCenter from './components/FloatingStrategyCenter';
 import FloatingStockViewer from './components/FloatingStockViewer';
+import DebugPanel from './components/DebugPanel';
 import GlobalAnalysis from './components/GlobalAnalysis';
 import MajorEventReminder from './components/MajorEventReminder';
 import PersonalFeelingModal from './components/PersonalFeelingModal';
@@ -475,6 +478,8 @@ function App() {
   const [todayPlanVisible, setTodayPlanVisible] = useState(false);
   const [todayPlanModified, setTodayPlanModified] = useState(false);
   const [majorEventReminderVisible, setMajorEventReminderVisible] = useState(false);
+  // debug 调试开关：开启后在右侧「看股」下方显示 debug 悬浮按钮
+  const [debugEnabled, setDebugEnabled] = useState(false);
   const [timerId, setTimerId] = useState(null);
   const [themePickerVisible, setThemePickerVisible] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(getInitialTheme);
@@ -650,6 +655,11 @@ function App() {
     return () => {
       delete window.onGlobalAnalysisBlinkChange;
     };
+  }, []);
+
+  // 应用启动时把当前策略模式同步给后端（后端集中诊断 / 发飞书据此模式运行）
+  useEffect(() => {
+    syncStrategyMode(getStrategyMode());
   }, []);
 
   // 初始化 AI 引擎配置：从后端读取当前选择，与 localStorage 缓存同步
@@ -1268,6 +1278,10 @@ function App() {
               >
                 大事提醒
               </Button>
+              <span className="debug-switch">
+                <span className="debug-switch-label">debug</span>
+                <Switch size="small" checked={debugEnabled} onChange={setDebugEnabled} />
+              </span>
             </div>
           </Header>
         </div>
@@ -1357,6 +1371,7 @@ function App() {
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingMonitorAlarm />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStrategyCenter />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStockViewer />}
+      {debugEnabled && <DebugPanel />}
       <FloatingTechEmotion />
       <ClosePipeline />
 

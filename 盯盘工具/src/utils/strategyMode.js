@@ -3,6 +3,7 @@
 //   hot_money_extreme_win = 情绪游资-极致胜率（买卖点与回测页同名策略一致）
 // 模式为全局共享 + localStorage 持久化：模块级变量 + CustomEvent 广播，不引入 Context/Provider。
 import { useEffect, useState } from 'react';
+import { syncStrategyMode } from './buyPointWs';
 
 export const MODE_TECH_ATTACK = 'tech_attack';
 export const MODE_EXTREME_WIN = 'hot_money_extreme_win';
@@ -36,6 +37,8 @@ export const setStrategyMode = (mode) => {
     localStorage.setItem(STORAGE_KEY, next);
   } catch { /* 忽略存储失败 */ }
   window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: next }));
+  // 同步到后端：后端集中诊断 / 发飞书据此模式运行（失败不阻塞本地切换）
+  syncStrategyMode(next);
 };
 
 // 订阅全局模式：任意组件调用即可随模式切换自动重渲染
