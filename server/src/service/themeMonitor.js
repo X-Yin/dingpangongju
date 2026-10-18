@@ -13,6 +13,7 @@ const axios = require('axios');
 const dayjs = require('dayjs');
 const { isTradingDay } = require('../utils/tradingDay');
 const { getSingleStockData } = require('./stock');
+const { getStore: getThemeCustomStore } = require('./themeCustom');
 const {
   fetchDayHtml,
   extractSentiment,
@@ -135,7 +136,8 @@ const buildThemeAnalysis = () => {
   const allDates = getAvailableLianbanDates(); // 降序
   const dates = allDates.filter((d) => d <= todayYmd).slice(0, WINDOW_DAYS).reverse(); // 升序
   if (dates.length === 0) {
-    return { windowDates: [], themes: [], mainLines: [], branches: [] };
+    const { customThemes } = applyThemeOverrides([]);
+    return { windowDates: [], themes: [], customThemes, overrides: {}, mainLines: [], branches: [] };
   }
 
   const themesMap = new Map(); // key -> 聚合题材
@@ -289,16 +291,90 @@ const buildThemeAnalysis = () => {
     t.type = idx < 3 ? '主线' : '支线';
   });
 
+  const { customThemes, overrides } = applyThemeOverrides(themes);
+
   return {
     windowDates: dates,
     // 最近一次快照日期（YYYYMMDD）。快照为每日复盘数据，盘中当天文件尚未生成时，
     // todayCount 实际是上一交易日的涨停家数，前端需据此标注口径
     latestSnapshotDate: dates[dates.length - 1],
     themes,
+    customThemes,
+    overrides,
     mainLines: themes.filter((t) => t.type === '主线').map((t) => ({ board: t.board, score: t.score, todayCount: t.todayCount })),
     branches: themes.filter((t) => t.type === '支线').slice(0, 6).map((t) => ({ board: t.board, score: t.score, todayCount: t.todayCount })),
     generatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
   };
+};
+
+// 股票条目标识：优先用带市前缀的 marketCode，缺省回退纯代码
+const stockKeyOf = (s) => String(s?.marketCode || s?.code || '').trim();
+
+// 由 { code, name }（code 为 marketCode）构造最小展示字段的股票对象，供个股增删覆盖 / 自定义题材使用
+const buildMinimalStock = ({ code, name }) => {
+  const mc = String(code || '').trim();
+  const pureCode = mc.replace(/^(sh|sz|bj)/i, '');
+  return {
+    code: pureCode || mc,
+    marketCode: mc,
+    name: String(name || mc).trim(),
+    concept: '',
+    limitUpDays: 0,
+    maxLianban: 1,
+    lianbanText: '--',
+    isLeader: false,
+    lastSeenDaysAgo: null,
+    todayLimitUp: false,
+    minSealTime: '',
+    floatMarketValueYi: null,
+    dragonScore: 0,
+  };
+};
+
+// 读取自定义题材 store，对系统题材应用个股增删覆盖，并产出 customThemes 列表
+const applyThemeOverrides = (themes) => {
+  let store = { themes: [], overrides: {}, order: [] };
+  try {
+    store = getThemeCustomStore();
+  } catch (e) {
+    console.error('[themeMonitor] 读取自定义题材数据失败:', e.message);
+  }
+  const overrides = store.overrides || {};
+
+  (themes || []).forEach((theme) => {
+    const ov = overrides[theme.key];
+    if (!ov) return;
+    const removedSet = new Set((ov.removed || []).map((c) => String(c || '').trim()).filter(Boolean));
+    const existingKeys = new Set((theme.stocks || []).map(stockKeyOf));
+    const keptStocks = (theme.stocks || []).filter((s) => !removedSet.has(stockKeyOf(s)));
+    const addedStocks = (ov.added || [])
+      .filter((s) => s && s.code && !removedSet.has(String(s.code).trim()) && !existingKeys.has(String(s.code).trim()))
+      .map(buildMinimalStock);
+    addedStocks.forEach((s) => existingKeys.add(stockKeyOf(s)));
+    theme.stocks = [...keptStocks, ...addedStocks];
+    theme.dragons = (theme.dragons || []).filter((d) => !removedSet.has(stockKeyOf(d)));
+    theme.stockCount = theme.stocks.length;
+  });
+
+  const customThemes = (store.themes || []).map((t) => ({
+    key: `custom:${t.id}`,
+    id: t.id,
+    board: t.name,
+    custom: true,
+    type: '自定义',
+    rank: 0,
+    score: null,
+    totalLimitUp: 0,
+    todayCount: 0,
+    dailyCounts: [],
+    maxLianban: 0,
+    leaderCount: 0,
+    stockCount: (t.stocks || []).length,
+    stocks: (t.stocks || []).map(buildMinimalStock),
+    dragons: [],
+  }));
+
+  return { customThemes, overrides };
 };
 
 const getThemeAnalysis = async () => {
@@ -473,12 +549,19 @@ const getThemeDayStocks = async (dateYmd, themeKey) => {
 
   const stocks = await Promise.all((theme.stocks || []).map(async (s) => {
     let prevChanges = null;
+    let changePct = s.quote?.changePct ?? null;
     try {
       const kline = await getKlineCached(s.code);
       if (Array.isArray(kline) && kline.length > 0) {
+        const numDate = Number(dateYmd);
+        // 快照当日涨幅缺失时，用所选交易日当日的日 K 涨幅兜底（保证展示的是该日当日涨幅）
+        if (changePct == null) {
+          const sameDay = kline.find((k) => Number(k.trade_date) === numDate);
+          if (sameDay && sameDay.change != null) changePct = sameDay.change;
+        }
         // 日 K 降序，取所选交易日之前最近 3 天的涨跌幅，反转为时间正序 [T-3, T-2, T-1]
         prevChanges = kline
-          .filter((k) => k.trade_date < Number(dateYmd))
+          .filter((k) => k.trade_date < numDate)
           .slice(0, 3)
           .map((k) => (k.change != null ? k.change : null))
           .reverse();
@@ -491,7 +574,7 @@ const getThemeDayStocks = async (dateYmd, themeKey) => {
       marketCode: s.marketCode || '',
       name: s.name,
       lianbanText: s.lianbanText || (Number(s.lianbanCount) === 1 ? '首板' : ''),
-      changePct: s.quote?.changePct ?? null,
+      changePct,
       prevChanges,
     };
   }));
@@ -507,12 +590,18 @@ const getStockQuotes = async (marketCodes) => {
   return fetchThsBatchQuotes(list);
 };
 
+// 自定义题材 / 个股增删 / 横幅排序写操作后调用，使 60s 分析缓存立即失效
+const invalidateThemeAnalysisCache = () => {
+  analysisCache = { ts: 0, data: null };
+};
+
 module.exports = {
   getMarketOverview,
   getThemeAnalysis,
   getStockQuotes,
   getThemeHistory,
   getThemeDayStocks,
+  invalidateThemeAnalysisCache,
   parseMarketKpi,
   boardKeyOf,
   dragonScoreOf,

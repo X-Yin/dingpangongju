@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Spin, Empty, Switch as AntSwitch, Tooltip, Modal, Select } from 'antd';
+import { Spin, Empty, Switch as AntSwitch, Tooltip, Modal, Select, Tabs, Input, Button, message } from 'antd';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS, CategoryScale, LinearScale,
@@ -8,8 +8,12 @@ import {
 import {
   FireOutlined, ThunderboltOutlined, AreaChartOutlined,
   RiseOutlined, FallOutlined, CaretDownOutlined, CaretUpOutlined,
-  PieChartOutlined, FlagOutlined, AppstoreOutlined, LineChartOutlined,
+  PieChartOutlined, AppstoreOutlined, LineChartOutlined,
+  PlusOutlined, DeleteOutlined,
 } from '@ant-design/icons';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
@@ -22,6 +26,8 @@ import './index.scss';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ChartTooltip, Filler, Legend);
 
 const TOP_THEME_COUNT = 6;
+const CHIP_THEME_COUNT = 9; // 横幅条题材 chip 上限（与后端 /theme_monitor_all 一致）
+const API_BASE = `http://${local_ip}:3000`;
 
 const formatPct = (v, { sign = true } = {}) => {
   if (v === undefined || v === null || Number.isNaN(Number(v))) return '--';
@@ -150,13 +156,7 @@ const SentimentHistoryModal = ({ visible, onCancel }) => {
 // 悬浮 tooltip：各线数值 + 当日涨停最多的题材；点击图表选日期，右侧展示该日各题材涨停股列表
 const THEME_LINE_COLORS = ['#13c2c2', '#fa8c16', '#eb2f96', '#52c41a', '#2f54eb', '#a0d911'];
 
-const formatSignedNum = (v) => {
-  if (v == null || !Number.isFinite(Number(v))) return '--';
-  const n = Number(v);
-  return `${n > 0 ? '+' : ''}${n}`;
-};
-
-const ThemeHistoryModal = ({ visible, onCancel, initialTheme, onOpenStockKline }) => {
+const ThemeBacktrackPanel = ({ active, initialTheme, onOpenStockKline }) => {
   const [history, setHistory] = useState(null);
   const [selectedKeys, setSelectedKeys] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -167,7 +167,7 @@ const ThemeHistoryModal = ({ visible, onCancel, initialTheme, onOpenStockKline }
 
   // 打开时拉取近 30 日历史，默认选中点击的题材 + 最新日期
   useEffect(() => {
-    if (!visible) return;
+    if (!active) return;
     let cancelled = false;
     setHistory(null);
     setSelectedDate(null);
@@ -187,11 +187,11 @@ const ThemeHistoryModal = ({ visible, onCancel, initialTheme, onOpenStockKline }
         if (!cancelled) setHistory({ dates: [], sentiment: [], themeCounts: {}, topByDate: [] });
       });
     return () => { cancelled = true; };
-  }, [visible, initialTheme]);
+  }, [active, initialTheme]);
 
   // 拉取选中日期各题材的涨停股列表（前端缓存避免重复请求）
   useEffect(() => {
-    if (!visible || !selectedDate || selectedKeys.length === 0) {
+    if (!active || !selectedDate || selectedKeys.length === 0) {
       if (selectedKeys.length === 0) setStocksByTheme({});
       return;
     }
@@ -214,7 +214,7 @@ const ThemeHistoryModal = ({ visible, onCancel, initialTheme, onOpenStockKline }
       setStocksLoading(false);
     });
     return () => { cancelled = true; };
-  }, [visible, selectedDate, selectedKeys]);
+  }, [active, selectedDate, selectedKeys]);
 
   const themeOptions = useMemo(() => {
     if (!history?.themeCounts) return [];
@@ -232,6 +232,7 @@ const ThemeHistoryModal = ({ visible, onCancel, initialTheme, onOpenStockKline }
       data: (history.sentiment || []).map((s) => (s && s.temperature != null ? s.temperature : null)),
       borderColor: '#7c3aed',
       backgroundColor: 'rgba(124, 58, 237, 0.06)',
+      borderDash: [6, 4],
       fill: true,
       tension: 0.3,
       pointRadius: 2,
@@ -314,15 +315,7 @@ const ThemeHistoryModal = ({ visible, onCancel, initialTheme, onOpenStockKline }
     : '';
 
   return (
-    <Modal
-      title={`题材涨停回溯${initialTheme?.board ? ` · ${initialTheme.board}` : ''}`}
-      open={visible}
-      onCancel={onCancel}
-      footer={null}
-      width={1280}
-      destroyOnHidden
-    >
-      <div className="tm-th-wrap">
+    <div className="tm-th-wrap">
         <div className="tm-th-toolbar">
           <span className="tm-th-toolbar-label">对比题材</span>
           <Select
@@ -376,11 +369,6 @@ const ThemeHistoryModal = ({ visible, onCancel, initialTheme, onOpenStockKline }
                         <span className={`tm-th-stock-change ${Number(s.changePct) >= 0 ? 'up' : 'down'}`}>
                           {formatPct(s.changePct)}
                         </span>
-                        <span className="tm-th-stock-prev" title="前 3 个交易日涨幅（由远及近）">
-                          前3日 {Array.isArray(s.prevChanges) && s.prevChanges.length > 0
-                            ? s.prevChanges.map((c) => formatSignedNum(c)).join(' / ')
-                            : '--'}
-                        </span>
                       </div>
                     ))}
                   </div>
@@ -392,7 +380,265 @@ const ThemeHistoryModal = ({ visible, onCancel, initialTheme, onOpenStockKline }
             )}
           </div>
         </div>
+    </div>
+  );
+};
+
+// ==================== 新增自定义题材弹窗 ====================
+// 批量解析股票文本（每行一个名称或代码，支持逗号/空格分隔）→ [{code, name}]
+// code 为带市前缀的 marketCode（/search_stock 返回格式），解析不到的行原样记录在 failed
+const resolveStockLines = async (text) => {
+  const lines = Array.from(new Set(
+    String(text || '').split(/[\n,，;；、\s]+/).map((s) => s.trim()).filter(Boolean),
+  ));
+  const settled = await Promise.all(lines.map(async (line) => {
+    try {
+      const res = await axios.get(`${API_BASE}/search_stock`, { params: { query: line } });
+      const first = (res.data?.data || [])[0];
+      return first?.code ? { code: String(first.code), name: first.name || first.code } : { line, failed: true };
+    } catch {
+      return { line, failed: true };
+    }
+  }));
+  const stocks = [];
+  const failed = [];
+  const seen = new Set();
+  settled.forEach((r) => {
+    if (r.failed) { failed.push(r.line); return; }
+    if (seen.has(r.code)) return;
+    seen.add(r.code);
+    stocks.push({ code: r.code, name: r.name });
+  });
+  return { stocks, failed };
+};
+
+const CustomThemeModal = ({ visible, onCancel, onSaved }) => {
+  const [name, setName] = useState('');
+  const [text, setText] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [wasVisible, setWasVisible] = useState(visible);
+
+  // 每次打开时重置表单（渲染期同步重置，避免 effect 级联渲染）
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
+    if (visible) { setName(''); setText(''); setSaving(false); }
+  }
+
+  const handleSubmit = async () => {
+    const trimmed = name.trim();
+    if (!trimmed) { message.warning('请输入题材名称'); return; }
+    setSaving(true);
+    try {
+      const { stocks, failed } = await resolveStockLines(text);
+      const res = await axios.post(`${API_BASE}/theme_custom/save_theme`, { name: trimmed, stocks });
+      if (res.data?.success) {
+        message.success(`已新增自定义题材「${trimmed}」（${stocks.length} 只股票）${failed.length ? `，${failed.length} 个未解析：${failed.join('、')}` : ''}`);
+        await onSaved?.();
+        onCancel?.();
+      } else {
+        message.error(res.data?.message || '保存失败');
+      }
+    } catch {
+      message.error('保存自定义题材失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      title="新增自定义题材"
+      open={visible}
+      onCancel={onCancel}
+      onOk={handleSubmit}
+      confirmLoading={saving}
+      okText="保存"
+      destroyOnHidden
+      width={520}
+    >
+      <div className="tm-ct-form">
+        <div className="tm-ct-field">
+          <span className="tm-ct-label">题材名称</span>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：低空经济" maxLength={20} />
+        </div>
+        <div className="tm-ct-field">
+          <span className="tm-ct-label">题材股票</span>
+          <Input.TextArea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={7}
+            placeholder="每行一个股票名称或代码（支持逗号/空格分隔），保存时自动解析"
+          />
+        </div>
       </div>
+    </Modal>
+  );
+};
+
+// ==================== 题材设置弹窗（基础配置 / 题材回溯） ====================
+const ThemeSettingsModal = ({ visible, onCancel, initialTheme, onOpenStockKline, customStore, onSaved }) => {
+  const [tab, setTab] = useState('base');
+  const [text, setText] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [wasVisible, setWasVisible] = useState(false);
+
+  // 每次打开时重置为基础配置 tab（渲染期同步重置，避免 effect 级联渲染）
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
+    if (visible) { setTab('base'); setText(''); setSaving(false); }
+  }
+
+  const isCustom = !!initialTheme?.custom;
+  const storeTheme = useMemo(
+    () => (customStore?.themes || []).find((t) => t.id === initialTheme?.id) || null,
+    [customStore, initialTheme],
+  );
+  const override = customStore?.overrides?.[initialTheme?.key] || null;
+
+  // 当前题材股票列表：系统题材用分析结果（已含覆盖后的增删），自定义题材用 store 原始数据
+  const currentStocks = useMemo(() => {
+    if (isCustom) {
+      return (storeTheme?.stocks || [])
+        .map((s) => ({ code: String(s.code || '').trim(), name: s.name }))
+        .filter((s) => s.code);
+    }
+    return (initialTheme?.stocks || [])
+      .map((s) => ({ code: String(s.marketCode || s.code || '').trim(), name: s.name }))
+      .filter((s) => s.code);
+  }, [isCustom, storeTheme, initialTheme]);
+
+  const themeName = storeTheme?.name || initialTheme?.board || '';
+
+  const handleDelete = async (code) => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      if (isCustom) {
+        const next = currentStocks.filter((s) => s.code !== code);
+        const res = await axios.post(`${API_BASE}/theme_custom/save_theme`, { id: storeTheme?.id, name: themeName, stocks: next });
+        if (!res.data?.success) throw new Error(res.data?.message);
+      } else {
+        const prevAdded = override?.added || [];
+        const wasAdded = prevAdded.some((s) => String(s.code).trim() === code);
+        const added = prevAdded.filter((s) => String(s.code).trim() !== code);
+        const removedSet = new Set((override?.removed || []).map((c) => String(c).trim()));
+        if (!wasAdded) removedSet.add(code);
+        const res = await axios.post(`${API_BASE}/theme_custom/save_override`, {
+          themeKey: initialTheme.key, added, removed: Array.from(removedSet),
+        });
+        if (!res.data?.success) throw new Error(res.data?.message);
+      }
+      message.success('已删除股票');
+      await onSaved?.();
+    } catch (e) {
+      message.error(e.message || '删除失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAdd = async () => {
+    const trimmed = text.trim();
+    if (!trimmed) { message.warning('请输入股票名称或代码'); return; }
+    setSaving(true);
+    try {
+      const { stocks: parsed, failed } = await resolveStockLines(trimmed);
+      if (parsed.length === 0) { message.warning('未解析到有效股票'); return; }
+      if (isCustom) {
+        const existing = new Set(currentStocks.map((s) => s.code));
+        const next = [...currentStocks, ...parsed.filter((p) => !existing.has(p.code))];
+        const res = await axios.post(`${API_BASE}/theme_custom/save_theme`, { id: storeTheme?.id, name: themeName, stocks: next });
+        if (!res.data?.success) throw new Error(res.data?.message);
+      } else {
+        const prevAdded = override?.added || [];
+        const removedSet = new Set((override?.removed || []).map((c) => String(c).trim()));
+        const existing = new Set([...currentStocks.map((s) => s.code), ...prevAdded.map((s) => String(s.code).trim())]);
+        const addedMap = new Map(prevAdded.map((s) => [String(s.code).trim(), { code: String(s.code).trim(), name: s.name }]));
+        parsed.forEach((p) => {
+          const c = String(p.code).trim();
+          removedSet.delete(c);
+          if (!existing.has(c)) { addedMap.set(c, { code: c, name: p.name }); existing.add(c); }
+        });
+        const res = await axios.post(`${API_BASE}/theme_custom/save_override`, {
+          themeKey: initialTheme.key, added: Array.from(addedMap.values()), removed: Array.from(removedSet),
+        });
+        if (!res.data?.success) throw new Error(res.data?.message);
+      }
+      message.success(`已添加 ${parsed.length} 只股票${failed.length ? `，${failed.length} 个未解析` : ''}`);
+      setText('');
+      await onSaved?.();
+    } catch (e) {
+      message.error(e.message || '添加失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      title={`「${initialTheme?.board || ''}」题材设置`}
+      open={visible}
+      onCancel={onCancel}
+      footer={null}
+      width={1280}
+      destroyOnHidden
+    >
+      <Tabs
+        activeKey={tab}
+        onChange={setTab}
+        items={[
+          {
+            key: 'base',
+            label: '基础配置',
+            children: (
+              <div className="tm-ts-base">
+                <div className="tm-ts-base-header">
+                  <span className="tm-ts-base-title">题材股票（{currentStocks.length}）</span>
+                  <span className="tm-ts-base-sub">{isCustom ? '自定义题材' : '系统题材'} · 增删即时生效</span>
+                </div>
+                <div className="tm-ts-stock-list">
+                  {currentStocks.length === 0 ? (
+                    <div className="tm-ts-empty">暂无股票，请在下方添加</div>
+                  ) : currentStocks.map((s) => (
+                    <div key={s.code} className="tm-ts-stock-row">
+                      <span className="tm-ts-stock-name">{s.name}</span>
+                      <span className="tm-ts-stock-code">{s.code}</span>
+                      <Button
+                        type="text"
+                        size="small"
+                        danger
+                        icon={<DeleteOutlined />}
+                        disabled={saving}
+                        onClick={() => handleDelete(s.code)}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="tm-ts-add">
+                  <Input.TextArea
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    rows={4}
+                    placeholder="批量添加：每行一个股票名称或代码（支持逗号/空格分隔）"
+                  />
+                  <Button type="primary" icon={<PlusOutlined />} loading={saving} onClick={handleAdd}>添加股票</Button>
+                </div>
+              </div>
+            ),
+          },
+          {
+            key: 'back',
+            label: '题材回溯',
+            children: (
+              <ThemeBacktrackPanel
+                active={tab === 'back'}
+                initialTheme={initialTheme}
+                onOpenStockKline={onOpenStockKline}
+              />
+            ),
+          },
+        ]}
+      />
     </Modal>
   );
 };
@@ -437,47 +683,74 @@ const OverviewBar = ({ overview, onOpenSentiment }) => {
   );
 };
 
-// ==================== 主线 / 支线 结论条 ====================
-const MainlineStrip = ({ analysis, quotes, onOpenHistoryAnalysis }) => {
-  // 今日实时涨停家数：对题材股票池按涨停价规则逐只判断（主板/创业科创/ST 区分）
-  const liveCountOf = (t) => (t.stocks || []).filter((s) => isStockLimitUp(s, quotes?.[s.marketCode])).length;
-  const renderChips = (list, type) => (
-    <div className={`tm-line-group tm-line-${type === '主线' ? 'main' : 'branch'}`}>
-      <span className="tm-line-label"><FlagOutlined /> {type}</span>
-      {list.map((t) => {
-        const cnt = liveCountOf(t);
-        return (
-          <Tooltip key={t.board} title={`权重 ${t.score} · 今日涨停 ${cnt} 家`}>
-            <span className="tm-line-chip">
-              {t.board}
-              <em>{cnt > 0 ? `${cnt}家` : '--'}</em>
-            </span>
-          </Tooltip>
-        );
-      })}
-    </div>
+// ==================== 题材横幅条（可拖拽排序 + 新增/删除自定义题材） ====================
+const ThemeChip = ({ chip, quotes, onDeleteCustom }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: chip.key });
+  const isMain = chip.type === '主线';
+  // 今日实时涨停家数：按涨停价规则（主板/创业科创/ST 区分）对题材股票池逐只判断
+  const cnt = (chip.stocks || []).filter((s) => isStockLimitUp(s, quotes?.[s.marketCode])).length;
+  const cls = `tm-line-chip ${isMain ? 'main' : chip.custom ? 'custom' : 'branch'}${isDragging ? ' is-dragging' : ''}`;
+  return (
+    <Tooltip
+      title={chip.custom
+        ? `${chip.board} · 自定义题材 · 今日涨停 ${cnt} 家（双击删除）`
+        : `${chip.board} · ${chip.type} · 权重 ${chip.score} · 今日涨停 ${cnt} 家`}
+    >
+      <span
+        ref={setNodeRef}
+        className={cls}
+        style={{ transform: CSS.Transform.toString(transform), transition }}
+        onDoubleClick={chip.custom ? () => onDeleteCustom?.(chip) : undefined}
+        {...attributes}
+        {...listeners}
+      >
+        {chip.board}
+        <em>{cnt > 0 ? `${cnt}家` : '--'}</em>
+        {chip.custom && <i className="tm-line-chip-custom-tag">自定义</i>}
+      </span>
+    </Tooltip>
   );
-  const hasThemes = !!analysis?.themes?.length;
+};
+
+const ThemeChipsStrip = ({ chips, quotes, onOpenHistoryAnalysis, onAddTheme, onDeleteCustom, onReorder }) => {
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = chips.findIndex((c) => c.key === active.id);
+    const newIndex = chips.findIndex((c) => c.key === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    onReorder?.(arrayMove(chips, oldIndex, newIndex).map((c) => c.key));
+  };
   return (
     <div className="tm-mainline-strip">
-      {hasThemes ? (
-        <>
-          {renderChips(analysis.mainLines || [], '主线')}
-          <span className="tm-line-divider" />
-          {renderChips(analysis.branches || [], '支线')}
-        </>
+      {chips.length > 0 ? (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={chips.map((c) => c.key)} strategy={horizontalListSortingStrategy}>
+            <div className="tm-line-chips">
+              {chips.map((chip) => (
+                <ThemeChip key={chip.key} chip={chip} quotes={quotes} onDeleteCustom={onDeleteCustom} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       ) : (
-        <span className="tm-line-empty">暂无主线/支线数据</span>
+        <span className="tm-line-empty">暂无题材数据</span>
       )}
-      <button type="button" className="tm-history-analysis-btn" onClick={onOpenHistoryAnalysis}>
-        <LineChartOutlined /> 个股历史分析
-      </button>
+      <div className="tm-line-actions">
+        <button type="button" className="tm-add-theme-btn" onClick={onAddTheme}>
+          <PlusOutlined /> 新增板块
+        </button>
+        <button type="button" className="tm-history-analysis-btn" onClick={onOpenHistoryAnalysis}>
+          <LineChartOutlined /> 个股历史分析
+        </button>
+      </div>
     </div>
   );
 };
 
 // ==================== 自选股板块涨跌幅前十（市场情绪下方） ====================
-const BlockRankingStrip = ({ blocks }) => {
+const BlockRankingStrip = ({ blocks, onOpenKline }) => {
   if (!blocks) return null;
   const renderGroup = (list, type) => (
     <div className={`tm-blk-group ${type}`}>
@@ -488,8 +761,13 @@ const BlockRankingStrip = ({ blocks }) => {
           title={(b.stocks || []).length > 0 ? (
             <div className="tm-blk-tip">
               {b.stocks.map((s) => (
-                <div key={s.code} className="tm-blk-tip-row">
-                  <span>{s.name}</span>
+                <div
+                  key={s.code}
+                  className="tm-blk-tip-row clickable"
+                  onClick={() => s.code && onOpenKline?.({ marketCode: s.code, name: s.name })}
+                  title="点击查看 K 线"
+                >
+                  <span className="tm-blk-tip-name">{s.name}</span>
                   <span className={s.change >= 0 ? 'up' : 'down'}>{formatPct(s.change)}</span>
                 </div>
               ))}
@@ -498,7 +776,7 @@ const BlockRankingStrip = ({ blocks }) => {
         >
           <span className={`tm-blk-chip ${type}`}>
             <em className="tm-blk-idx">{idx + 1}</em>
-            {b.blockName}
+            <span className="tm-blk-name">{b.blockName}</span>
             <b className={b.avgChange >= 0 ? 'up' : 'down'}>{formatPct(b.avgChange)}</b>
             {!!b.rankChange && (
               <i className={`tm-blk-rank ${b.rankChange > 0 ? 'up' : 'down'}`}>
@@ -525,6 +803,8 @@ const BlockRankingStrip = ({ blocks }) => {
 // ==================== 题材卡片（第一列） ====================
 const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenThemeHistory }) => {
   const dragonCodes = useMemo(() => new Set(theme.dragons.map((d) => d.code)), [theme]);
+  // 「今日 N 家」点击后仅展示当日涨停股，再次点击恢复全量
+  const [limitOnly, setLimitOnly] = useState(false);
 
   // 今日实时涨停家数：按涨停价规则（主板/创业科创/ST 区分）对题材股票池逐只判断
   const todayLiveCount = useMemo(
@@ -558,6 +838,17 @@ const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenTh
       .filter((v) => v != null && Number.isFinite(v));
     return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   }, [theme, quotes]);
+
+  // 仅涨停筛选：龙头与其余个股各自过滤
+  const dragonsShown = useMemo(
+    () => (limitOnly ? theme.dragons.filter((s) => isStockLimitUp(s, quotes[s.marketCode])) : theme.dragons),
+    [limitOnly, theme, quotes],
+  );
+  const restShown = useMemo(
+    () => (limitOnly ? restStocks.filter((s) => isStockLimitUp(s, quotes[s.marketCode])) : restStocks),
+    [limitOnly, restStocks, quotes],
+  );
+  const shownCount = dragonsShown.length + restShown.length;
 
   const DRAGON_NAMES = ['龙一', '龙二', '龙三', '龙四', '龙五'];
 
@@ -600,14 +891,24 @@ const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenTh
         <div className="tm-theme-title-icon"><FireOutlined /></div>
         <div className="tm-theme-title-content">
           <div className="tm-theme-title-row">
-            <span className={`tm-theme-rank r${theme.rank}`}>{theme.rank}</span>
-            <span className="tm-theme-name" onClick={() => onOpenThemeHistory?.(theme)} title="点击查看题材涨停回溯与情绪对比">{theme.board}</span>
-            <span className={`tm-theme-type ${theme.type === '主线' ? 'main' : 'branch'}`}>{theme.type}</span>
+            <span className={`tm-theme-rank ${theme.custom ? 'custom' : `r${theme.rank}`}`}>{theme.custom ? '自' : theme.rank}</span>
+            <span className="tm-theme-name" onClick={() => onOpenThemeHistory?.(theme)} title="点击打开题材设置（基础配置 / 题材回溯）">{theme.board}</span>
+            <span className={`tm-theme-type ${theme.custom ? 'custom' : theme.type === '主线' ? 'main' : 'branch'}`}>{theme.type}</span>
           </div>
-          <span className="tm-theme-subtext">WEIGHT {theme.score} · {theme.totalLimitUp} LIMIT-UP · 10D</span>
+          {theme.custom ? (
+            <span className="tm-theme-subtext">自定义题材 · {theme.stockCount ?? theme.stocks.length} 只</span>
+          ) : (
+            <span className="tm-theme-subtext">WEIGHT {theme.score} · {theme.totalLimitUp} LIMIT-UP · 10D</span>
+          )}
         </div>
         <div className="tm-theme-extra">
-          <span className="tm-theme-today">今日 {todayLiveCount} 家</span>
+          <span
+            className={`tm-theme-today${limitOnly ? ' active' : ''}`}
+            onClick={() => setLimitOnly((v) => !v)}
+            title={limitOnly ? '点击恢复全部股票' : '点击仅看今日涨停股'}
+          >
+            今日 {todayLiveCount} 家
+          </span>
           <span className={`tm-theme-avg ${avgChange != null && avgChange >= 0 ? 'up' : 'down'}`}>{formatPct(avgChange)}</span>
           <button className="tm-sort-btn" onClick={() => onToggleSort(theme.key)} title="切换剩余个股涨跌排序">
             {sortDir === 'asc' ? <CaretUpOutlined /> : <CaretDownOutlined />}
@@ -622,9 +923,11 @@ const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenTh
           <span className="col-change">涨幅</span>
         </div>
         <div className="tm-list-body">
-          {theme.dragons.map((s, idx) => renderRow(s, idx, true))}
-          {restStocks.map((s, idx) => renderRow(s, idx, false))}
-          {theme.stocks.length === 0 && <div className="tm-empty-mini">暂无数据</div>}
+          {dragonsShown.map((s) => renderRow(s, (s.dragonRank || 1) - 1, true))}
+          {restShown.map((s, idx) => renderRow(s, idx, false))}
+          {shownCount === 0 && (
+            <div className="tm-empty-mini">{limitOnly ? '今日暂无涨停股' : '暂无数据'}</div>
+          )}
         </div>
       </div>
     </div>
@@ -877,6 +1180,8 @@ const ThemeMonitor = () => {
   const [sentimentVisible, setSentimentVisible] = useState(false);
   const [themeModal, setThemeModal] = useState({ visible: false, theme: null });
   const [historyAnalysisVisible, setHistoryAnalysisVisible] = useState(false);
+  const [customStore, setCustomStore] = useState({ themes: [], overrides: {}, order: [] });
+  const [customModalVisible, setCustomModalVisible] = useState(false);
 
   const handleOpenThemeHistory = useCallback((theme) => {
     setThemeModal({ visible: true, theme });
@@ -953,7 +1258,19 @@ const ThemeMonitor = () => {
   }, []);
 
   // 每 10s 轮询：单一聚合接口一次返回页面全部数据（概览/分析/板块前十/行情/资金分时）
+  // 同时挂载时拉取一次自定义题材 store（自定义题材 / 个股增删 / 横幅排序）
+  const pollRef = useRef(null);
+  const fetchCustomRef = useRef(null);
+
   useEffect(() => {
+    const fetchCustom = async () => {
+      try {
+        const res = await axios.get(`http://${local_ip}:3000/theme_custom/list`);
+        setCustomStore(res.data?.data || { themes: [], overrides: {}, order: [] });
+      } catch (err) {
+        console.error('获取自定义题材数据失败:', err);
+      }
+    };
     const poll = async () => {
       if (pollingRef.current) return;
       pollingRef.current = true;
@@ -976,22 +1293,81 @@ const ThemeMonitor = () => {
         setLoading(false);
       }
     };
-
+    pollRef.current = poll;
+    fetchCustomRef.current = fetchCustom;
     poll();
+    fetchCustom();
     const timer = setInterval(poll, 10000);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      pollRef.current = null;
+      fetchCustomRef.current = null;
+    };
   }, [detectMovements]);
 
-  const topThemes = useMemo(() => (analysis?.themes || []).slice(0, TOP_THEME_COUNT), [analysis]);
+  // 写操作后：刷新 store 并立即拉一次聚合数据，使卡片/横幅即时更新
+  const reloadCustom = useCallback(async () => {
+    await fetchCustomRef.current?.();
+    await pollRef.current?.();
+  }, []);
+
+  const handleReorder = useCallback((keys) => {
+    setCustomStore((prev) => ({ ...prev, order: keys }));
+    axios.post(`http://${local_ip}:3000/theme_custom/save_order`, { order: keys }).catch((err) => {
+      console.error('保存题材排序失败:', err);
+    });
+  }, []);
+
+  const handleDeleteCustom = useCallback((chip) => {
+    Modal.confirm({
+      title: '删除自定义题材',
+      content: `确认删除自定义题材「${chip.board}」？删除后不可恢复。`,
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          const res = await axios.post(`http://${local_ip}:3000/theme_custom/delete_theme`, { id: chip.id });
+          if (!res.data?.success) throw new Error(res.data?.message);
+          message.success(`已删除自定义题材「${chip.board}」`);
+          await reloadCustom();
+        } catch (err) {
+          message.error(err.message || '删除失败');
+        }
+      },
+    });
+  }, [reloadCustom]);
+
+  const handleAddTheme = useCallback(() => setCustomModalVisible(true), []);
+
+  const customThemes = useMemo(() => analysis?.customThemes || [], [analysis]);
+
+  // 横幅 chip：系统题材前 9 个 + 自定义题材，按持久化 order 重排（order 未记录的新 chip 追加末尾）
+  const chipList = useMemo(() => {
+    const base = [...(analysis?.themes || []).slice(0, CHIP_THEME_COUNT), ...customThemes];
+    const byKey = new Map(base.map((t) => [t.key, t]));
+    const ordered = [];
+    (customStore.order || []).forEach((k) => {
+      if (byKey.has(k)) { ordered.push(byKey.get(k)); byKey.delete(k); }
+    });
+    byKey.forEach((t) => ordered.push(t));
+    return ordered;
+  }, [analysis, customThemes, customStore.order]);
+
+  // 下方 6 张题材卡片 = 横幅排序前六（含自定义题材）
+  const cardThemes = useMemo(() => chipList.slice(0, TOP_THEME_COUNT), [chipList]);
 
   return (
     <div className="theme-monitor-container">
       <OverviewBar overview={overview} onOpenSentiment={() => setSentimentVisible(true)} />
-      <BlockRankingStrip blocks={blocks} />
-      <MainlineStrip
-        analysis={analysis}
+      <BlockRankingStrip blocks={blocks} onOpenKline={openKline} />
+      <ThemeChipsStrip
+        chips={chipList}
         quotes={quotes}
         onOpenHistoryAnalysis={() => setHistoryAnalysisVisible(true)}
+        onAddTheme={handleAddTheme}
+        onDeleteCustom={handleDeleteCustom}
+        onReorder={handleReorder}
       />
 
       {loading && !analysis ? (
@@ -1000,7 +1376,7 @@ const ThemeMonitor = () => {
         <div className="tm-body">
           <div className="tm-left">
             <div className="tm-cards-grid">
-              {topThemes.map((theme) => (
+              {cardThemes.map((theme) => (
                 <ThemeCard
                   key={theme.key}
                   theme={theme}
@@ -1011,7 +1387,7 @@ const ThemeMonitor = () => {
                   onOpenThemeHistory={handleOpenThemeHistory}
                 />
               ))}
-              {topThemes.length === 0 && (
+              {cardThemes.length === 0 && (
                 <div className="tm-empty-mini" style={{ gridColumn: '1 / -1' }}>暂无题材数据（需先抓取连板快照）</div>
               )}
             </div>
@@ -1041,11 +1417,19 @@ const ThemeMonitor = () => {
         onCancel={() => setHistoryAnalysisVisible(false)}
       />
 
-      <ThemeHistoryModal
+      <CustomThemeModal
+        visible={customModalVisible}
+        onCancel={() => setCustomModalVisible(false)}
+        onSaved={reloadCustom}
+      />
+
+      <ThemeSettingsModal
         visible={themeModal.visible}
         initialTheme={themeModal.theme}
         onCancel={handleCloseThemeHistory}
         onOpenStockKline={openKline}
+        customStore={customStore}
+        onSaved={reloadCustom}
       />
     </div>
   );

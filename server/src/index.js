@@ -115,7 +115,8 @@ const { isTradingDay } = require('./utils/tradingDay');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
 const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refreshLianbanRange } = require('./service/lianban');
-const { getMarketOverview, getThemeAnalysis, getStockQuotes, getThemeHistory, getThemeDayStocks } = require('./service/themeMonitor');
+const { getMarketOverview, getThemeAnalysis, getStockQuotes, getThemeHistory, getThemeDayStocks, invalidateThemeAnalysisCache } = require('./service/themeMonitor');
+const { getStore: getThemeCustomStore, saveTheme: saveCustomTheme, deleteTheme: deleteCustomTheme, saveOverride: saveThemeOverride, saveOrder: saveThemeOrder } = require('./service/themeCustom');
 const { getClsNews, getBoardChange, getStockChangesAll, getStockNews, getStockZyjs, getInstitutionParticipation, getSectorSpot, getSectorDetail, getForeignCommodity } = require('./service/akData');
 const { getThsHotRank } = require('./service/thsHotRank');
 
@@ -633,6 +634,9 @@ app.get('/theme_monitor_blocks', (req, res) => {
   }
 });
 
+// 题材盯盘 - 横幅条题材 chip 数量（含自定义题材的行情也需一并返回）
+const CHIP_THEME_COUNT = 9;
+
 // 题材盯盘 - 聚合接口：前端每 10s 只轮询此接口，一次返回页面全部数据
 // （概览 + 题材分析 + 板块前十 + 批量行情 + 资金/成交量分时），行情请求依赖分析结果在服务端内部串行
 app.get('/theme_monitor_all', async (req, res) => {
@@ -643,8 +647,10 @@ app.get('/theme_monitor_all', async (req, res) => {
       Promise.resolve(getTopAndBottomBlockData(10)),
     ]);
     const fundHistory = getAmountHistory() || [];
-    const codes = (analysis?.themes || [])
-      .slice(0, 6)
+    const codes = [
+      ...(analysis?.themes || []).slice(0, CHIP_THEME_COUNT),
+      ...(analysis?.customThemes || []),
+    ]
       .flatMap((t) => (t.stocks || []).map((s) => s.marketCode))
       .filter(Boolean);
     const quotes = codes.length > 0 ? await getStockQuotes(codes) : {};
@@ -699,6 +705,83 @@ app.get('/theme_day_stocks', async (req, res) => {
   } catch (error) {
     console.error('获取题材当日涨停股失败:', error);
     res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 题材盯盘 - 自定义题材与个股增删 / 横幅排序持久化
+app.get('/theme_custom/list', (req, res) => {
+  try {
+    res.json({ success: true, data: getThemeCustomStore() });
+  } catch (error) {
+    console.error('获取自定义题材数据失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/theme_custom/save_theme', (req, res) => {
+  try {
+    const { id, name, stocks } = req.body || {};
+    const result = saveCustomTheme({ id, name, stocks });
+    if (result.success) {
+      invalidateThemeAnalysisCache();
+      res.json({ success: true, data: result.theme });
+    } else {
+      res.status(500).json({ success: false, message: result.error });
+    }
+  } catch (error) {
+    console.error('保存自定义题材失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/theme_custom/delete_theme', (req, res) => {
+  try {
+    const { id } = req.body || {};
+    if (!id) {
+      return res.status(400).json({ success: false, message: '缺少 id 参数' });
+    }
+    const result = deleteCustomTheme(id);
+    if (result.success) {
+      invalidateThemeAnalysisCache();
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ success: false, message: result.error });
+    }
+  } catch (error) {
+    console.error('删除自定义题材失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/theme_custom/save_override', (req, res) => {
+  try {
+    const { themeKey, added, removed } = req.body || {};
+    const result = saveThemeOverride(themeKey, { added, removed });
+    if (result.success) {
+      invalidateThemeAnalysisCache();
+      res.json({ success: true, data: result.override });
+    } else {
+      res.status(500).json({ success: false, message: result.error });
+    }
+  } catch (error) {
+    console.error('保存题材股票增删覆盖失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/theme_custom/save_order', (req, res) => {
+  try {
+    const { order } = req.body || {};
+    const result = saveThemeOrder(order);
+    if (result.success) {
+      invalidateThemeAnalysisCache();
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ success: false, message: result.error });
+    }
+  } catch (error) {
+    console.error('保存题材横幅排序失败:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
