@@ -2,6 +2,7 @@ const { STRATEGIES, isCycleFilterStrategy } = require('../strategies/registry');
 const { runKeyBlockBacktest } = require('./keyBlockBacktest');
 const { runExtremeWinBacktest } = require('./extremeWinBacktest');
 const { runReverseLeaderBacktest } = require('./reverseLeaderBacktest');
+const { runNBoardBacktest } = require('./nBoardBacktest');
 const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSimContext } = require('../deps');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -34,6 +35,11 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   // 候选股盘中强度分第 2 次 > 50 买入；卖点沿用龙头战法全部卖点并新增「上证斜率盘中由负转正」卖出；全仓单持仓）
   if (STRATEGIES[strategyId]?.reverseLeaderMode === true) {
     return runReverseLeaderBacktest(startDate, endDate, strategyId, onProgress);
+  }
+  // 情绪游资-n板打板（n=2/3）走独立引擎（上证 3 日线斜率分时 > 0 时，买入上一交易日 n-1 板个股中
+  // 当日首次冲高至 +8% 者；卖点沿用「情绪游资-极致胜率」顺周期腿；半仓单持仓）
+  if (STRATEGIES[strategyId]?.nBoardMode === true) {
+    return runNBoardBacktest(startDate, endDate, strategyId, onProgress);
   }
   const strategy = STRATEGIES[strategyId];
   // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：快进快出半仓（2026-10-13 用户新增）——

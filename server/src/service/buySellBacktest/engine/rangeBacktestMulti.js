@@ -1,6 +1,7 @@
 const { STRATEGIES, isCycleFilterStrategy } = require('../strategies/registry');
 const { runKeyBlockBacktest } = require('./keyBlockBacktest');
 const { runReverseLeaderBacktest } = require('./reverseLeaderBacktest');
+const { runNBoardBacktest } = require('./nBoardBacktest');
 const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
 const { buildWindowAxis } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -28,7 +29,9 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   // 情绪游资-反向抱团龙头走独立引擎（上证 3 日线斜率连续为负第 3 天起、当日上证跌幅 ≥ 0.5% 时
   // 候选股盘中强度分第 2 次 > 50 买入；卖点沿用龙头战法全部卖点并新增「上证斜率盘中由负转正」卖出；全仓单持仓）
   const reverseLeaderIds = ids.filter(id => STRATEGIES[id]?.reverseLeaderMode === true);
-  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.reverseLeaderMode !== true);
+  // 情绪游资-n板打板（n=2/3）走独立引擎（同单策略路径，避免落入常规循环）
+  const nBoardIds = ids.filter(id => STRATEGIES[id]?.nBoardMode === true);
+  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true);
   const results = [];
   for (const strategyId of keyBlockIds) {
     const result = await runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
@@ -36,6 +39,10 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   }
   for (const strategyId of reverseLeaderIds) {
     const result = await runReverseLeaderBacktest(startDate, endDate, strategyId, onProgress);
+    results.push({ strategyId, result });
+  }
+  for (const strategyId of nBoardIds) {
+    const result = await runNBoardBacktest(startDate, endDate, strategyId, onProgress);
     results.push({ strategyId, result });
   }
   if (regularIds.length === 0) return results;

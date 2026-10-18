@@ -167,6 +167,11 @@ const STRATEGY_OPTIONS = [
   // 找「当日上证跌幅 ≤ -0.5% 且盘中强度分 > 50」累计 ≥ 2 次的个股，在第二次达标的盘中分时买入（涨停不买、顺延下一达标日）；
   // 卖点沿用「情绪游资-龙头战法」9 条并新增「上证 3 日线斜率盘中由负转正」卖出；全仓单持仓
   { value: 'hot_money_reverse_leader', label: '情绪游资-反向抱团龙头' },
+  // 情绪游资-n板打板（2026-10-18 用户新增，n = 2 / 3）：上证指数 3 日线斜率分时为正（前一日收盘已为正则当日至少等到 9:40）时，
+  // 买入上一交易日「n-1 板」个股中当日盘中分时首次冲高至 +8% 的那只（先冲到 8% 的先买，剔除创业板/科创板、限 9:30–11:30）；
+  // 卖点完全沿用「情绪游资-极致胜率」顺周期腿；半仓单持仓
+  { value: 'hot_money_2board_attack', label: '情绪游资-2板打板' },
+  { value: 'hot_money_3board_attack', label: '情绪游资-3板打板' },
   { value: 'highest_3d_reports', label: '3日研报覆盖数最多' },
   { value: 'highest_5d_reports', label: '5日研报覆盖数最多' },
   { value: 'highest_3d_reports_top5_gain', label: '3日研报前五&涨幅最大' },
@@ -201,6 +206,7 @@ const STRATEGY_CATEGORIES = [
       'hot_money_ice_rev_1d_gain', 'hot_money_ice_rev_2d_gain', 'hot_money_ice_rev_3d_gain',
       'hot_money_ice_rev_4d_gain', 'hot_money_ice_rev_5d_gain',
       'hot_money_extreme_win', 'hot_money_reverse_leader',
+      'hot_money_2board_attack', 'hot_money_3board_attack',
     ],
   },
   {
@@ -368,6 +374,39 @@ const reverseLeaderNote = {
     '**仓位**：**全仓单持仓（权重 1）**——账户最多同时持有 1 只股票，买入按全仓计收益（returnRate = 个股实际收益，不做半仓折算），收益**逐笔复利**；持仓期间不再买入，卖出后方可再触发。',
   ],
 };
+
+// 情绪游资-n板打板（hot_money_2board_attack / hot_money_3board_attack，2026-10-18 用户新增）：
+// n = 2 → 上一交易日的「1 板」；n = 3 → 上一交易日的「2 板」。
+//   买点门禁 = 上证指数（sh000001）3 日线斜率分时为正；若前一交易日收盘口径斜率已为正，则当日至少等到 9:40 才买
+//     （前一日为负、今日盘中才转正 → 可从转正桶起买）；买入时段限 9:30–11:30。
+//   选股 = 上一交易日（T-1）lianbanSnapshot 中连板数恰为 n-1（n-1 板）的个股，剔除 ST 等黑名单、创业板（30/301）与科创板（688）。
+//   买点触发 = 候选当日盘中分时（较昨收）首次冲高至 +8% 的分钟，按该分钟分时价买入；先冲到 8% 的先买（并列取涨幅更高者）。
+//   卖点 = 完全沿用「情绪游资-极致胜率」顺周期腿（龙头战法 9 条，唯①成本线止损为 -5% 即时、不设持续分钟）。
+//   仓位 = 半仓单持仓（权重 0.5），收益率按半仓折算后逐笔复利。
+const N_BOARD_ATTACK_STRATEGY_IDS = ['hot_money_2board_attack', 'hot_money_3board_attack'];
+const isNBoardAttackStrategy = (id) => N_BOARD_ATTACK_STRATEGY_IDS.includes(id);
+const nBoardAttackN = (id) => (id === 'hot_money_3board_attack' ? 3 : 2);
+const nBoardAttackBuyRules = (n) => [
+  { key: 'n_board_index_slope', title: '买点门禁：上证指数 3 日线斜率分时为正，且严格只在 9:40 及以后买入', desc: '**上证指数（sh000001）3 日线分时斜率**（MA3 当日实时 − MA3 五个交易日前，逐桶实时判定）**为正**时才允许买入；斜率为负或数据不足则该桶不买。**严格时段门禁（2026-10-18 用户要求）**：当日**一律只在 9:40 及以后**才允许买入——**9:40 之前不买**，不再区分「前一交易日收盘口径斜率是否为正」。买入时段整体限 **9:40–11:30**。' },
+  { key: 'n_board_pool', title: `选股：上一交易日（T-1）的 ${n - 1} 板个股（剔除创业板 30/301 与科创板 688）`, desc: `候选池 = **上一交易日（T-1）** 在 lianbanSnapshot 中出现过**连板数恰为 ${n - 1}（${n - 1} 板）** 的个股；剔除 ST 等黑名单，并**一律剔除创业板（30/301）与科创板（688）**，仅保留主板标的。` },
+  { key: 'n_board_trigger', title: '买点触发：9:40 及以后当日分时首次冲高至 +8%（先冲到 8% 的先买）', desc: '**仅在 9:40 及以后**逐桶实时比较候选股分时价较**昨收**的涨幅：首次冲高至 **+8%** 的那一分钟即按该分钟分时价买入（**9:40 之前冲高到 +8% 不计、不回溯成交**，避免用到 9:40 前的分钟价）；**多只候选同日达到 +8% 时，取「首次触及 +8% 更早」的一只**（先冲到 8% 的先买）；同桶并列时取触发涨幅更高者。' },
+  { key: 'n_board_one_word', title: '一字板过滤：开盘竞价涨幅 > 9.5% 不买（即使后续炸板也不买）', desc: '候选当日**开盘竞价（9:30 开盘价）较昨收涨幅 > 9.5%** 即视为**一字板 / 竞价大幅高开**（主板涨停约 +10%，>9.5% 基本即封板开盘），该候选**整日不买**——**即使后续盘中炸板（打开涨停、回落）也不买**（2026-10-18 用户要求）。' },
+  { key: 'n_board_not_limit_up', title: '涨停过滤：9:40 及以后触发时已涨停的不买（即使后续炸板也不买）', desc: '**9:40 及以后**首次触及 +8% 的那一分钟若**已涨停**（主板涨幅 **≥ 9.5%**，涨停价实际买不进），该候选**整日不买**——**即使后续盘中炸板（回落、打开涨停）也不买**（2026-10-18 用户要求）。即真正可成交的触发分钟必须满足 **+8% ≤ 涨幅 < 9.5%**。' },
+  { key: 'n_board_position', title: '仓位与时段：半仓单持仓；买入仅限 9:40–11:30', desc: '**半仓单持仓（权重 0.5）**：账户最多同时持有 1 只股票，买入按**半仓（×0.5）**计收益，收益**逐笔复利**；买入时段严格限 **9:40–11:30**（9:40 之前、11:30 之后不再买入），卖出后**当日不再追买**、次日起才可再买。' },
+];
+const nBoardAttackSellRules = LEADER_SELL_RULES.map(r => r.key === 'leader_sell_stop_loss'
+  ? { ...r, key: 'n_board_sell_stop_loss', title: '跌破成本线 -5% 即时止损（不设持续分钟）', desc: '持仓期内（买入次日起）盘中分时实时比较：持仓股分时价较**成本价（买入价）跌幅 < -5%**（现价 < 买入价 × 0.95）即按当桶分时价止损卖出——**不设持续分钟门槛**（区别于「情绪游资-龙头战法」要求连续维持 ≥ 5 分钟）；卖出后当日不再追买（等次日再看）' }
+  : r);
+const nBoardAttackNote = (n) => ({
+  group: `情绪游资·${n}板打板`,
+  bullets: [
+    `**买点门禁（择时）**：**上证指数（sh000001）3 日线斜率分时为正**（MA3 当日实时 − MA3 五个交易日前，逐桶实时判定）才允许买入。**严格时段门禁**：当日**一律只在 9:40 及以后**才允许买入——**9:40 之前不买**，不再区分「前一交易日收盘口径斜率是否为正」。买入时段整体限 **9:40–11:30**。`,
+    `**选股（候选池）**：**上一交易日（T-1）** 在 lianbanSnapshot 中出现过**连板数恰为 ${n - 1}（${n - 1} 板）** 的个股（本策略 n = ${n}）；剔除 ST 等黑名单，并**一律剔除创业板（30/301）与科创板（688）**，仅保留主板标的。`,
+    `**买点触发**：**仅在 9:40 及以后**逐桶实时比较候选股分时价较昨收涨幅，**首次冲高至 +8%** 的那一分钟按该分钟分时价买入（**9:40 之前冲高到 +8% 不计、不回溯成交**）；**多只候选同日达到 +8% 时取「首次触及更早」的一只（先冲到 8% 的先买）**，同桶并列取涨幅更高者。**一字板过滤（2026-10-18 用户要求）**：候选当日**开盘竞价（9:30 开盘价）较昨收涨幅 > 9.5%** 即视为一字板/竞价大幅高开，该候选**整日不买**——**即使后续炸板也不买**。**涨停过滤（2026-10-18 用户要求）**：**9:40 及以后触发时已涨停**（触发分钟涨幅 **≥ 9.5%**，涨停价买不进）的候选**整日不买**——**即使后续炸板也不买**；真正可成交的触发分钟须满足 **+8% ≤ 涨幅 < 9.5%**。`,
+    `**卖点（完全沿用「情绪游资-极致胜率」顺周期腿）**：① **跌破成本线 -5% 即时止损**（现价 < 买入价 × 0.95 即卖、**不设持续分钟**）；② **盘中分时跌幅较昨收 ≤ -5%** 直接卖；③ **开盘后较开盘价下挫 5 个点**直接卖；④ **持仓股跌停**（较昨收 < -9%）；⑤ **高位放量大阴线**（当日最高回落至现价 > 8% 且现价 < 开盘）；⑥ **持仓第 3 个交易日**（含买入当日为第 1 天）尾盘 **14:57** 收益仍未拉开至 +10% 即卖；⑦ **竞价低开 < -5%** 即按开盘价卖；⑧ **当日收盘抗分歧指数 < 6** 即按尾盘分时价卖；⑨ **盘中 1 分钟内跳水 ≤ -3%** 直接卖（豁免：跳水的上一分钟自身涨幅 > 2% 属急拉时不卖）。任一先触发即卖，**价格类卖点按分钟级回溯成交**（自 9:30 起逐分钟扫描、取最先触发分钟精准卖出）。`,
+    `**仓位**：**半仓单持仓（权重 0.5）**——账户最多同时持有 1 只股票，买入按半仓（×0.5）计收益、**逐笔复利**；卖出后**当日不再追买**、次日起才可再买。`,
+  ],
+});
 
 const STRATEGY_SPECIFIC_NOTES = {
   // ---- 常规「N日涨幅最大」系列 ----
@@ -719,6 +758,10 @@ const STRATEGY_SPECIFIC_NOTES = {
   // ---- 情绪游资-反向抱团龙头（hot_money_reverse_leader，2026-10-17 用户新增，单策略） ----
   hot_money_reverse_leader: reverseLeaderNote,
 
+  // ---- 情绪游资-n板打板（mood n-board attack，2026-10-18 用户新增，n = 2 / 3） ----
+  hot_money_2board_attack: nBoardAttackNote(2),
+  hot_money_3board_attack: nBoardAttackNote(3),
+
 };
 
 // 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
@@ -942,6 +985,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const curIsIceRev = isIceRevStrategy(strategy);
   const curIsExtremeWin = isExtremeWinStrategy(strategy);
   const curIsReverseLeader = isReverseLeaderStrategy(strategy);
+  const curIsNBoardAttack = isNBoardAttackStrategy(strategy);
   const effectiveRange = range || defaultRange;
 
   // 组件卸载时停止轮询
@@ -1309,8 +1353,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
       const pick = effectiveRange;
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
-      const buyRules = curIsExtremeWin ? extremeWinBuyRules : (curIsReverseLeader ? reverseLeaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : BUY_RULES)));
-      const sellRules = curIsReverseLeader ? reverseLeaderSellRules : (curIsExtremeWin ? LEADER_SELL_RULES : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : SELL_RULES)));
+      const buyRules = curIsNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (curIsExtremeWin ? extremeWinBuyRules : (curIsReverseLeader ? reverseLeaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : BUY_RULES))));
+      const sellRules = curIsNBoardAttack ? nBoardAttackSellRules : (curIsReverseLeader ? reverseLeaderSellRules : (curIsExtremeWin ? LEADER_SELL_RULES : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : SELL_RULES))));
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);
@@ -2110,8 +2154,9 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         const isIceRev = isIceRevStrategy(strategy);
         const isExtremeWin = isExtremeWinStrategy(strategy);
         const isReverseLeader = isReverseLeaderStrategy(strategy);
-        const buyRules = isExtremeWin ? extremeWinBuyRules : (isReverseLeader ? reverseLeaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : BUY_RULES)));
-        const sellRules = isReverseLeader ? reverseLeaderSellRules : (isExtremeWin ? LEADER_SELL_RULES : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : SELL_RULES)));
+        const isNBoardAttack = isNBoardAttackStrategy(strategy);
+        const buyRules = isNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (isExtremeWin ? extremeWinBuyRules : (isReverseLeader ? reverseLeaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : BUY_RULES))));
+        const sellRules = isNBoardAttack ? nBoardAttackSellRules : (isReverseLeader ? reverseLeaderSellRules : (isExtremeWin ? LEADER_SELL_RULES : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : SELL_RULES))));
         const notes = STRATEGY_SPECIFIC_NOTES[strategy];
 
         // 将文案中 **xxx** 这种 markdown 粗体标记解析为 React 节点（纯文本不解析）

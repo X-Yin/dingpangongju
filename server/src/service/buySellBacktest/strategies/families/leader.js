@@ -1,4 +1,4 @@
-const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC } = require('../descs');
+const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC } = require('../descs');
 
 // 情绪游资系列（2026-10-17 用户要求：已删除「情绪游资-龙头战法」「情绪龙头+科技进攻」「科技进攻 + 情绪龙头」三个策略）：
 module.exports = {
@@ -29,5 +29,25 @@ module.exports = {
     name: '情绪游资-反向抱团龙头',
     desc: REVERSE_LEADER_DESC,
     reverseLeaderMode: true,
+  },
+  // 情绪游资-n板打板（2026-10-18 用户新增，n = 2 / 3 两个独立策略）：
+  //   买点门禁 = 上证指数 3 日线斜率分时为正；若前一交易日收盘口径斜率已为正，则当日至少等到 9:40 才买；
+  //   选股 = 上一交易日（T-1）的 n-1 板个股（n=2→首板、n=3→二板），剔除创业板（30/301）与科创板（688），
+  //   当日盘中分时涨幅（较昨收）首次冲高至 +8% 的那一分钟按该分钟分时价买入，先冲到 8% 的先买；
+  //   卖点 = 完全沿用「情绪游资-极致胜率」顺周期腿；买入仅限早盘 9:30–11:30；半仓单持仓（权重 0.5）。
+  // nBoardMode: true → 独立引擎 runNBoardBacktest
+  hot_money_2board_attack: {
+    id: 'hot_money_2board_attack',
+    name: '情绪游资-2板打板',
+    desc: N_BOARD_ATTACK_DESC(2),
+    nBoardMode: true,
+    nBoardN: 2,
+  },
+  hot_money_3board_attack: {
+    id: 'hot_money_3board_attack',
+    name: '情绪游资-3板打板',
+    desc: N_BOARD_ATTACK_DESC(3),
+    nBoardMode: true,
+    nBoardN: 3,
   },
 };
