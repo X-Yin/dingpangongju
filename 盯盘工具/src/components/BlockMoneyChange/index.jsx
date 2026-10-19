@@ -58,6 +58,9 @@ const CATEGORY_RATIO_BLOCKS = [
     { name: '液冷', color: '#14b8a6' },
     { name: 'pcb', color: '#ef4444' },
     { name: '半导体', color: '#6366f1' },
+    { name: '商业航天', color: '#0ea5e9' },
+    { name: '军工', color: '#f43f5e' },
+    { name: '机器人', color: '#84cc16' },
 ];
 
 const getSizeClass = (areaPercent) => {
@@ -337,7 +340,8 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     const ratioContainerRef = useRef(null);
     // 板块成交量占比折线图（传媒/农业/消费/医药/电力/存储芯片/光通信/液冷/pcb）
     const [categoryRatioData, setCategoryRatioData] = useState({});
-    const [isCategoryRefreshing, setIsCategoryRefreshing] = useState(false);
+    // 正在刷新的分类名（null=无）；单图刷新按钮只刷新对应分类，刷新全部按钮刷新所有分类
+    const [categoryRefreshingName, setCategoryRefreshingName] = useState(null);
     const [isRefreshingAll, setIsRefreshingAll] = useState(false);
     // 自动分析结果：{ date, rows, up, down, slopeUp, slopeDown, steep, flat }
     const [crowdAnalysis, setCrowdAnalysis] = useState(null);
@@ -1551,22 +1555,26 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     }
   };
 
-  const refreshCategoryRatioData = async () => {
-    if (isCategoryRefreshing) return;
-    setIsCategoryRefreshing(true);
+  // 刷新单个分类的成交额数据（name 为空时刷新全部分类）；后端 run 完成后会自动清空占比缓存
+  const refreshCategoryRatioData = async (name) => {
+    if (categoryRefreshingName) return;
+    setCategoryRefreshingName(name || '__all__');
     try {
-      await axios.get(`http://${local_ip}:3000/refresh_block_category_ratio`);
+      const url = name
+        ? `http://${local_ip}:3000/refresh_block_category_ratio?category=${encodeURIComponent(name)}`
+        : `http://${local_ip}:3000/refresh_block_category_ratio`;
+      await axios.get(url);
       await fetchCategoryRatioData();
     } catch (error) {
       console.error('Refresh block_category_ratio data failed:', error);
     } finally {
-      setIsCategoryRefreshing(false);
+      setCategoryRefreshingName(null);
     }
   };
 
   // 刷新全部图表数据：并行触发拥挤度与各分类成交额的后端刷新，完成后统一重拉前端数据
   const refreshAllCrowdData = async () => {
-    if (isRefreshingAll) return;
+    if (isRefreshingAll || categoryRefreshingName) return;
     setIsRefreshingAll(true);
     try {
       await Promise.all([
@@ -2805,9 +2813,10 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                                         <Button
                                                             type="primary"
                                                             size="small"
-                                                            onClick={refreshCategoryRatioData}
-                                                            loading={isCategoryRefreshing}
-                                                            icon={<SyncOutlined spin={isCategoryRefreshing} />}
+                                                            onClick={() => refreshCategoryRatioData(name)}
+                                                            loading={categoryRefreshingName === name}
+                                                            disabled={!!categoryRefreshingName && categoryRefreshingName !== name}
+                                                            icon={<SyncOutlined spin={categoryRefreshingName === name} />}
                                                             className="crowd-refresh-btn"
                                                         >
                                                             {/* 刷新板块成交额数据 */}

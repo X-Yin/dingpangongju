@@ -1810,10 +1810,17 @@ app.get('/block_category_ratio', (req, res) => {
 });
 
 // 刷新各板块成交额数据（重新拉取成分股日K汇总，耗时较长）
+// 传入 category 参数时仅刷新指定分类（各折线图右上角刷新按钮），否则刷新全部分类（页面「刷新全部」按钮）
 app.get('/refresh_block_category_ratio', async (req, res) => {
   try {
-    await runCategoryAmount(categoryRatioStartDate, categoryRatioEndDate);
-    res.json({ success: true, message: '刷新成功' });
+    const { category } = req.query;
+    if (category) {
+      await runCategoryAmount(categoryRatioStartDate, categoryRatioEndDate, [String(category)]);
+      res.json({ success: true, message: `刷新成功：${category}` });
+    } else {
+      await runCategoryAmount(categoryRatioStartDate, categoryRatioEndDate);
+      res.json({ success: true, message: '刷新成功' });
+    }
   } catch (error) {
     console.error('刷新板块成交额数据失败:', error);
     res.status(500).json({ success: false, message: error.message || '刷新失败' });

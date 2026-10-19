@@ -1598,6 +1598,12 @@ const MultiStockTimeLineModal = ({
                     className={`mtlm-right-label ${label.isImportant ? 'label-important' : ''} ${hoveredCode && hoveredCode !== label.key ? 'label-dimmed' : ''} ${hoveredCode === label.key ? 'label-highlighted' : ''}`}
                     style={{ top: `${label.y}px`, borderColor: label.color }}
                     onMouseDown={(e) => handleLabelMouseDown(e, label.key)}
+                    onDoubleClick={() => onStockClick({
+                      code: label.key,
+                      stockName: label.name,
+                      name: label.name,
+                      change: label.changeStr,
+                    })}
                   >
                     <span className="mtlm-right-label-name" style={label.isImportant ? { color: '#ffffff', background: label.color } : { color: label.color }}>
                       {label.rank && <span className={`mtlm-right-label-rank rank-${label.rank}`}>{label.rank}</span>}

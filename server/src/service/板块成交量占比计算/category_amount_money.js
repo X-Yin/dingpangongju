@@ -24,7 +24,7 @@ const defaultStartDate = '2026-04-01';
 const defaultEndDate = dayjs().format('YYYY-MM-DD');
 
 // 需要计算成交额占比的分类（与 东方财富板块成分股汇总 目录下 {分类}.json 对应）
-const CATEGORY_NAMES = ['传媒', '农业', '消费', '医药', '电力', '锂电池', '存储芯片', '光通信', '液冷', 'pcb', '半导体'];
+const CATEGORY_NAMES = ['传媒', '农业', '消费', '医药', '电力', '锂电池', '存储芯片', '光通信', '液冷', 'pcb', '半导体', '商业航天', '军工', '机器人'];
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
