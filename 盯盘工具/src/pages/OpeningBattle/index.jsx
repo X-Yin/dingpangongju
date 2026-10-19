@@ -722,10 +722,6 @@ const PositionIntradayModule = ({ expanded, onToggleExpanded }) => {
         </div>
         <div className="ob-intraday-header-actions">
           <span className="ob-total-tag">{uniquePositions.length} 只持仓</span>
-          {/* <button className={`ob-fold-btn ${expanded ? 'is-expanded' : ''}`} onClick={onToggleExpanded}>
-            {expanded ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
-            {expanded ? '折叠' : '展开'}
-          </button> */}
         </div>
       </div>
       {positions.length === 0 ? (
