@@ -242,6 +242,11 @@
       // text-overflow: ellipsis;
       cursor: pointer;
       text-align: left;
+
+      // 镜像持仓（回测自动添加）以灰色标题展示
+      &.is-auto-mirror {
+        color: #9ca3af;
+      }
     }
 
     .fsp-collapsed-change {
@@ -434,6 +439,11 @@
       cursor: pointer;
       transition: color 0.2s ease;
       text-align: center;
+
+      // 镜像持仓（回测自动添加）以灰色标题展示（含 hover 态）
+      &.is-auto-mirror {
+        color: #9ca3af;
+      }
     }
 
     .fsp-item-change,
@@ -754,6 +764,11 @@
       cursor: pointer;
       transition: color 0.2s ease;
       text-align: center;
+
+      // 镜像持仓（回测自动添加）以灰色标题展示（含 hover 态）
+      &.is-auto-mirror {
+        color: #9ca3af;
+      }
     }
 
     .fsp-item-change,

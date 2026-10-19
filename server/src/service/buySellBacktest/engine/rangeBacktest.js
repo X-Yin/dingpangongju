@@ -8,7 +8,7 @@ const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSi
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
 const { buildPrevOneWordBoardSet, buildReplayStocksWithTline, extractDailyInfo, isLimitUpAtBuy } = require('./replayData');
-const { EXCLUDED_CODES } = require('../constants');
+const { EXCLUDED_CODES, OPENING_BELOW_RATIO_STRATEGY_IDS } = require('../constants');
 const { withResilienceGateInfo } = require('./checkBuilders');
 const { TWO_BUY_LEG_WEIGHT, computeTwoBuyAccountReturn, getPositionLegWeight, getStockBlockName } = require('./twoBuy');
 const { emoQuickOutSell } = require('./sellHooks/emoQuickOut');
@@ -140,7 +140,8 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
 
       // 买入信号：情绪快进快出策略当日已发生 10:00 强制卖出 → 当日禁止二次买入（哪怕买点再次触发）；其余沿用买点诊断 allPassed
       const quickOutNoRebuy = strategy.emoQuickOut === true && quickOutSoldDate === dateStr;
-      const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData)?.data;
+      // 24 个涨幅最大/快进快出策略启用检查4 比例收紧：阈值 = ceil(科技股数 × 25%)，其余策略固定 30 只
+      const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(strategy.id) })?.data;
       const buyHit = !quickOutNoRebuy && buyDiag?.allPassed === true;
       // 买入原因：取买点诊断全部通过项汇总
       const buyInfo = buyHit ? buildBuyReasonFromDiag(buyDiag) : null;

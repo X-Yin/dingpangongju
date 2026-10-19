@@ -765,6 +765,8 @@ const getStockPositionMainFund = async () => {
                 buyDate: item.buyDate || null,
                 buyTime: item.buyTime || null,
                 weight: item.weight != null ? item.weight : 50,
+                // 镜像持仓标记：存在 mirror 说明为回测镜像同步自动添加，供前端以灰色标题区分手动添加
+                mirror: item.mirror || null,
                 mainFund: round(toNumber(mainFundDiff) / 100000000),
             });
         } catch (error) {
@@ -777,6 +779,7 @@ const getStockPositionMainFund = async () => {
                 buyDate: item.buyDate || null,
                 buyTime: item.buyTime || null,
                 weight: item.weight != null ? item.weight : 50,
+                mirror: item.mirror || null,
                 mainFund: null,
             });
         }

@@ -904,5 +904,13 @@
     "riskScore": "9",
     "isTech": false,
     "addedAt": "2026-10-19 10:13:29"
+  },
+  {
+    "code": "sz301183",
+    "name": "东田微",
+    "isImportant": false,
+    "blockName": "光通信",
+    "riskScore": "9",
+    "isTech": true
   }
 ]

@@ -44,6 +44,11 @@ const findBucketMinutesAgo = (buckets, currentIndex, targetMin = 5) => {
   return hit ? { bucket: hit, index: hitIdx } : null;
 };
 
+// 检查4「开盘后自选科技股低于开盘价」数量上限（2026-10-19 用户定，取代原「创业板指斜率负收紧为 15」）：
+// 训练营为通用回放诊断（无策略概念），统一按比例判定——阈值 = ceil(参与计数的科技股数 × 25%)（向上取整，如 90 只科技股 → 23 只），
+// 与回测中 24 个「涨幅最大/快进快出」策略口径一致（后端 constants.OPENING_BELOW_RATIO）
+const OPENING_BELOW_RATIO = 0.25;
+
 const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
   const buckets = timeBuckets || [];
   if (buckets.length === 0 || currentIndex < 0 || currentIndex >= buckets.length) return null;
@@ -218,38 +223,45 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
   if (!checkVolumePassed) allPassed = false;
   }
 
-  // 检查4：开盘后自选股低于开盘价不超过 30 只（仅 9:30-10:00 生效）
+  // 检查4：开盘后自选科技股低于开盘价不超过「科技股数的 25%（向上取整）」（仅 9:30-10:00 生效）
+  // 2026-10-19 用户定：取代原「创业板指斜率负收紧为 15」，训练营为通用诊断统一按比例判定
+  // 2026-10-19 对齐线上 buySellDiagnose.js / 回测 diagnose/buyPoint.js：只在科技股（isTech !== false）内部筛选，
+  // 非科技股不参与计数（campData.monitorStocks 自 CAMP_BUILDER_VERSION 6 起携带 isTech 字段）
   const changes = current.stockChanges || [];
   const inOpeningWindow = Number(current.minute) >= 930 && Number(current.minute) <= 1000;
   if (inOpeningWindow) {
+    const nonTechSet = new Set((campData?.monitorStocks || []).filter(s => s.isTech === false).map(s => s.code));
     const openingBucket = buckets.find(b => Number(b.minute) === 930) || buckets[0];
     const openingMap = new Map((openingBucket?.stockChanges || []).map(s => [s.code, s.changePct]));
     let belowCount = 0;
     let validCount = 0;
     changes.forEach(s => {
+      if (nonTechSet.has(s.code)) return; // 非科技股不参与计数（口径同 buySellDiagnose.js fetchOpeningBelowCount）
       const openPct = openingMap.get(s.code);
       if (openPct !== undefined && openPct !== null) {
         validCount++;
         if (Number(s.changePct) < Number(openPct)) belowCount++;
       }
     });
-    const checkOpeningPassed = belowCount <= 30;
+    const openingBelowMax = Math.ceil(validCount * OPENING_BELOW_RATIO);
+    const ratioText = `（阈值 = 科技股数 ${validCount} 只的 25% 向上取整）`;
+    const checkOpeningPassed = belowCount <= openingBelowMax;
     checks.push({
       id: 'opening_below',
-      title: '开盘后自选股低于开盘价不超过 30 只',
+      title: `开盘后自选科技股低于开盘价不超过科技股数的 25%（${openingBelowMax} 只）`,
       passed: checkOpeningPassed,
       value: `${belowCount} / ${validCount}只`,
       reason: checkOpeningPassed
-        ? `开盘后自选股共 ${validCount} 只，${belowCount} 只现价低于 9:30 开盘价，未超过 30 只`
-        : belowCount > 30
-          ? `开盘后自选股共 ${validCount} 只，${belowCount} 只现价低于 9:30 开盘价，超过 30 只阈值，市场开盘跳水严重`
+        ? `开盘后自选科技股共 ${validCount} 只，${belowCount} 只现价低于 9:30 开盘价，未超过 ${openingBelowMax} 只${ratioText}`
+        : belowCount > openingBelowMax
+          ? `开盘后自选科技股共 ${validCount} 只，${belowCount} 只现价低于 9:30 开盘价，超过 ${openingBelowMax} 只阈值，市场开盘跳水严重${ratioText}`
           : '分时数据获取异常',
     });
     if (!checkOpeningPassed) allPassed = false;
   } else {
     checks.push({
       id: 'opening_below',
-      title: '开盘后自选股低于开盘价不超过 30 只',
+      title: '开盘后自选科技股低于开盘价不超过科技股数的 25%',
       passed: true,
       value: '非交易时段',
       reason: '此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过',

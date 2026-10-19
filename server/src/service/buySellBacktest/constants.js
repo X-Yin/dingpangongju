@@ -25,6 +25,42 @@ const EMO_QUICK_RANGE_HIGH = -10;
 // 适用于 emoquick 系列策略的全部持仓（含非快进快出的普通持仓与强卖豁免后的持仓），仅回测生效（实盘诊断暂不加）
 const EMO_QUICK_CRASH_PCT = -7;
 
+// 检查4「开盘后自选科技股低于开盘价」按比例收紧（2026-10-19 用户定，取代原「创业板指斜率负时固定收紧为 15」）：
+// 适用范围（24 个）= 快进快出（emoQuickOut）7 个 + 纯「N 日涨幅最大」7 个 + 两次买入 6 个 + 两次买入不同板块 4 个。
+// 这些策略的阈值 = ceil(参与计数的科技股数 × 25%)（向上取整，如 90 只科技股 → 23），其余策略保持固定 30 只。
+// 「参与计数的科技股数」= 当桶自选股中 isTech !== false 且当日开盘涨幅数据存在的只数（即诊断明细 value 的「X / N只」里的 N）
+const OPENING_BELOW_RATIO = 0.25;
+const OPENING_BELOW_RATIO_STRATEGY_IDS = new Set([
+  // 快进快出（emoQuickOut）
+  'highest_2d_gain_emoquick',
+  'highest_3d_gain_emoquick',
+  'highest_4d_gain_emoquick',
+  'highest_5d_gain_emoquick',
+  'highest_2d5_gain_emoquick',
+  'highest_3d5_gain_emoquick',
+  'highest_3d_reports_top5_gain_emoquick',
+  // 纯「N 日涨幅最大」
+  'highest_2d_gain',
+  'highest_3d_gain',
+  'highest_4d_gain',
+  'highest_5d_gain',
+  'highest_10d_gain',
+  'highest_2d5_gain',
+  'highest_3d5_gain',
+  // 两次买入
+  'highest_2d_gain_two_buy',
+  'highest_3d_gain_two_buy',
+  'highest_4d_gain_two_buy',
+  'highest_5d_gain_two_buy',
+  'highest_2d5_gain_two_buy',
+  'highest_3d5_gain_two_buy',
+  // 两次买入不同板块
+  'highest_2d_gain_two_buy_diff_block',
+  'highest_3d_gain_two_buy_diff_block',
+  'highest_4d_gain_two_buy_diff_block',
+  'highest_5d_gain_two_buy_diff_block',
+]);
+
 module.exports = {
   EMO_QUICK_CRASH_PCT,
   EMO_QUICK_RANGE_HIGH,
@@ -32,6 +68,8 @@ module.exports = {
   EMO_SWITCH_EMA_THRESHOLD,
   EXCLUDED_CODES,
   EXCLUDED_THEMES,
+  OPENING_BELOW_RATIO,
+  OPENING_BELOW_RATIO_STRATEGY_IDS,
   isExcludedTheme,
   SELL_CONDITION_PERSIST_MIN,
 };

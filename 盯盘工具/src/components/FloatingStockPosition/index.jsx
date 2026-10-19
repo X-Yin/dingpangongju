@@ -704,9 +704,14 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
             const change = changeMap[stock.code];
             const changeNum = change !== null && change !== undefined ? parseFloat(change) : null;
             const changeClass = changeNum === null ? 'neutral' : (changeNum > 0 ? 'up' : changeNum < 0 ? 'down' : 'neutral');
+            // 镜像持仓（回测自动添加）以灰色标题展示，与手动添加的持仓区分
+            const isAutoMirror = !!stock.mirror;
             return (
               <div key={stock.id || stock.code} className="fsp-collapsed-item">
-                <span className="fsp-collapsed-name" onClick={() => handleStockClick(stock)}>
+                <span
+                  className={`fsp-collapsed-name${isAutoMirror ? ' is-auto-mirror' : ''}`}
+                  onClick={() => handleStockClick(stock)}
+                >
                   {stock.name}
 
                 </span>
@@ -1033,11 +1038,13 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                       const volDiffPercent = volumeDiffPercentMap[stock.code];
                       const volDiffNum = volDiffPercent !== null && volDiffPercent !== undefined ? parseFloat(volDiffPercent) : null;
                       const volDiffClass = volDiffNum === null ? 'neutral' : (volDiffNum > 0 ? 'up' : volDiffNum < 0 ? 'down' : 'neutral');
+                      // 镜像持仓（回测自动添加）以灰色标题展示，与手动添加的持仓区分
+                      const isAutoMirror = !!stock.mirror;
                       return (
                         <div key={posKey} className="fsp-item">
                           <div className="fsp-item-row">
                             <div className="fsp-item-main" onClick={() => handleStockClick(stock)}>
-                              <span className="fsp-item-name">
+                              <span className={`fsp-item-name${isAutoMirror ? ' is-auto-mirror' : ''}`}>
                                 {stock.name}
                               </span>
                               <span className={`fsp-item-change ${changeClass}`}>

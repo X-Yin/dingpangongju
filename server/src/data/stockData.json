@@ -2158,5 +2158,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sz301183": {
+    "stockName": "东田微",
+    "kline": [
+      {
+        "trade_date": 20261019,
+        "open_px": 228.68,
+        "high_px": 230.98,
+        "low_px": 212,
+        "close_px": 218.98,
+        "business_amount": 3526130,
+        "business_balance": 775564900,
+        "change": -5.2,
+        "ma5_px": 237.38,
+        "ma10_px": 249.47,
+        "ma20_px": 271.57,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

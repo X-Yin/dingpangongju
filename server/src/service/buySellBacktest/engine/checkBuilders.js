@@ -162,7 +162,8 @@ const buildQuickOutExemptInfo = (timeBuckets, campData) => {
   // 豁免①：10:00 前（含）任一桶买点诊断再次触发
   for (let i = 0; i < buckets.length; i++) {
     if (Number(buckets[i].minute) > 1000) break;
-    const diag = runBuyPointDiagnosis(buckets, i, campData)?.data;
+    // 仅快进快出持仓会走到这里（sellHooks/emoQuickOut），与买入侧同口径启用检查4 比例收紧
+    const diag = runBuyPointDiagnosis(buckets, i, campData, { ratioGatedOpeningBelow: true })?.data;
     if (diag?.allPassed === true) {
       return { via: 'buy_retrigger', detail: `${diag.displayTime} 买点诊断再次触发` };
     }

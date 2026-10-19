@@ -31,7 +31,7 @@ const groupsFile = path.resolve(__dirname, '../data/training_camp_groups.json');
 const CAMP_BUILT_DIR = path.resolve(__dirname, '../data/backtest_camp_cache');
 // 构建逻辑版本：修改 loadTrainingCampData 的构建逻辑（如为 campData 新增预计算字段）时必须 +1，
 // 使全部旧缓存自动失效重建；仅新增策略或调整买卖点条件无需动它（条件在回测阶段实时应用，不依赖此缓存失效）
-const CAMP_BUILDER_VERSION = 5;
+const CAMP_BUILDER_VERSION = 6;
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
 // 构建签名：构建器版本 + 自选股清单 + 板块清单；仅无资金快照兜底构建追加 'no-fund' 标记
 // （allowMissingFund=false 时不追加任何元素，常规签名与历史缓存保持一致，避免全量缓存失效）
@@ -546,7 +546,9 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
     success: true,
     date: dateStr,
     dateDisplay: `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`,
-    monitorStocks: monitorStocks.map(s => ({ code: s.code, name: s.name || s.code })),
+    // 2026-10-19 新增 isTech：训练营回放买点诊断「开盘后自选科技股低于开盘价 ≤ 30 只」需在前端按
+    // isTech !== false 过滤（与线上 buySellDiagnose.js / 回测 buyPoint.js 口径一致），故随 campData 一并下发
+    monitorStocks: monitorStocks.map(s => ({ code: s.code, name: s.name || s.code, isTech: s.isTech !== false })),
     indexKline: backtestResult.chartData?.kline || { cyb: [], kcb: [] },
     strategies: backtestResult.strategies || getStrategyDefinitions(),
     dailyLowByCode,
