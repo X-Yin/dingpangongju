@@ -137,7 +137,7 @@ const BuyReasonTag = ({ reason, checks }) => {
 export const StrategyCard = ({ strategy, rank, onStockClick }) => {
   const s = strategy.summary || {};
   // 拆份（双腿）策略：极致胜率按 cycle 标注顺周期 / 逆周期（账户拆两份各半仓，2026-10-17 用户要求）
-  const isExtremeWin = strategy.id === 'hot_money_extreme_win' || strategy.extremeWin === true;
+  const isExtremeWin = strategy.id === 'hot_money_extreme_win' || strategy.id === 'sci_attack_emo_win' || strategy.extremeWin === true;
   // 仅当记录确实带 splitLeg（'A' / 'B'）时才打标：旧报告缺该字段时不猜
   const legTag = (leg, cycle) => (
     isExtremeWin && (leg === 'A' || leg === 'B') ? (
@@ -535,7 +535,7 @@ const BacktestReportModal = ({ open, onClose }) => {
           <Empty description="暂无可展示的策略回测数据" />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {(report.strategies || []).map(s => <StrategyCard key={s.id} strategy={s} rank={s.rank} onStockClick={(code, name, trade) => setKlineTarget({ code, name, trade, extremeWin: s.extremeWinMode === true || s.id === 'hot_money_extreme_win' })} />)}
+            {(report.strategies || []).map(s => <StrategyCard key={s.id} strategy={s} rank={s.rank} onStockClick={(code, name, trade) => setKlineTarget({ code, name, trade, extremeWin: s.extremeWinMode === true || s.id === 'hot_money_extreme_win' || s.id === 'sci_attack_emo_win' })} />)}
           </div>
         )
       ) : (

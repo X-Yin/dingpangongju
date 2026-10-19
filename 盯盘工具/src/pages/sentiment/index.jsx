@@ -324,13 +324,13 @@ const Sentiment = () => {
       await axios.post(`http://${local_ip}:3000/update_emotion_data`);
       message.success('今日情绪数据更新成功');
 
-      // 更新后检查当日分时是否达到冰点（<= -100），若是则标记 hasIce
+      // 更新后检查当日分时是否达到冰点（<= -39），若是则标记 hasIce
       try {
         const intraRes = await axios.get(`http://${local_ip}:3000/tech_emotion_intraday`);
         const today = dayjs().format('YYYYMMDD');
         const todayData = intraRes.data?.data?.[today] || [];
         const hasIce = todayData.some(item =>
-          item.value !== null && item.value !== undefined && !isNaN(item.value) && Number(item.value) <= -100
+          item.value !== null && item.value !== undefined && !isNaN(item.value) && Number(item.value) <= -39
         );
         if (hasIce) {
           await axios.post(`http://${local_ip}:3000/mark_tech_index_ice`);
@@ -608,9 +608,9 @@ const Sentiment = () => {
         const todayData = res.data?.data?.[today] || [];
         setTechIntradayData(todayData);
 
-        // 检查当日分时是否达到冰点（<= -100），若是则标记 hasIce
+        // 检查当日分时是否达到冰点（<= -39），若是则标记 hasIce
         const hasIce = todayData.some(item =>
-          item.value !== null && item.value !== undefined && !isNaN(item.value) && Number(item.value) <= -100
+          item.value !== null && item.value !== undefined && !isNaN(item.value) && Number(item.value) <= -39
         );
         if (hasIce) {
           try {
@@ -1755,7 +1755,7 @@ const Sentiment = () => {
                             setTechIntraday5DayData(res5Day.data?.data || {});
 
                             const hasIce = todayData.some(item =>
-                              item.value !== null && item.value !== undefined && !isNaN(item.value) && Number(item.value) <= -100
+                              item.value !== null && item.value !== undefined && !isNaN(item.value) && Number(item.value) <= -39
                             );
                             if (hasIce) {
                               try {

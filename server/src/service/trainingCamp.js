@@ -546,7 +546,7 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
     success: true,
     date: dateStr,
     dateDisplay: `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`,
-    // 2026-10-19 新增 isTech：训练营回放买点诊断「开盘后自选科技股低于开盘价 ≤ 30 只」需在前端按
+    // 2026-10-19 新增 isTech：训练营回放买点诊断「开盘后自选科技股低于开盘价 ≤ 科技股数 25%（向上取整）」需在前端按
     // isTech !== false 过滤（与线上 buySellDiagnose.js / 回测 buyPoint.js 口径一致），故随 campData 一并下发
     monitorStocks: monitorStocks.map(s => ({ code: s.code, name: s.name || s.code, isTech: s.isTech !== false })),
     indexKline: backtestResult.chartData?.kline || { cyb: [], kcb: [] },

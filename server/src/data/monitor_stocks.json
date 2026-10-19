@@ -912,5 +912,14 @@
     "blockName": "光通信",
     "riskScore": "9",
     "isTech": true
+  },
+  {
+    "code": "sh603626",
+    "name": "科森科技",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": " 2",
+    "isTech": false,
+    "addedAt": "2026-10-19 22:35:46"
   }
 ]

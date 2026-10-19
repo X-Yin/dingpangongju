@@ -720,7 +720,7 @@ const getLatestTechEmotion = () => {
 };
 
 // 标记最新科技情绪指数日为冰点（hasIce: true）
-// 由前端分时轮询触发：当盘中分时情绪 <= -100（退潮冰点）时调用
+// 由前端分时轮询触发：当盘中分时情绪 <= -39（退潮冰点）时调用
 const markTechIndexIce = () => {
     // 非交易日（周末/节假日，以交易日历为准）不写入
     if (tradingDayUtil.isNonTradingDay(new Date())) return false;

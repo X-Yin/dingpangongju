@@ -1,4 +1,4 @@
-const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC } = require('../descs');
+const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC, FUSED_EMO_WIN_DESC } = require('../descs');
 
 // 情绪游资系列（2026-10-17 用户要求：已删除「情绪游资-龙头战法」「情绪龙头+科技进攻」「科技进攻 + 情绪龙头」三个策略）：
 module.exports = {
@@ -13,6 +13,17 @@ module.exports = {
     name: '情绪游资-极致胜率',
     desc: EXTREME_WIN_DESC,
     extremeWinMode: true,
+  },
+  // 科技进攻-情绪游资极致胜率（2026-10-19 用户新增）：把「3日涨幅最大&三日情绪-30快进快出」（A 风格）
+  //   与「情绪游资-极致胜率」（B 风格，双腿）融合为一个账户——账户被单一风格独占（仍 2 个半仓槽）：
+  //   空仓时谁先触发买谁（同一时间桶内两者均触发 → 快进快出优先）；某风格开始建仓后另一风格完全禁止
+  //  （即使其买点触发也不买、不使用剩余半仓），该风格全部平仓回到空仓后另一风格才解禁。
+  // fusedEmoWinMode: true → 独立引擎 runFusedEmoWinBacktest
+  sci_attack_emo_win: {
+    id: 'sci_attack_emo_win',
+    name: '科技进攻-情绪游资极致胜率',
+    desc: FUSED_EMO_WIN_DESC,
+    fusedEmoWinMode: true,
   },
   // 情绪游资-反向抱团龙头（2026-10-17 用户新增）：独立策略——
   //   大盘（上证 3 日线斜率）连续走弱第 3 天起，逆势低吸「抱团龙头」：

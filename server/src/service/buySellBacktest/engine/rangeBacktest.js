@@ -4,6 +4,7 @@ const { runExtremeWinBacktest } = require('./extremeWinBacktest');
 const { runReverseLeaderBacktest } = require('./reverseLeaderBacktest');
 const { runNBoardBacktest } = require('./nBoardBacktest');
 const { runVolumeShareBacktest } = require('./volumeShareBacktest');
+const { runFusedEmoWinBacktest } = require('./fusedEmoWinBacktest');
 const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSimContext } = require('../deps');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -46,6 +47,11 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   // 买 N 日涨幅最大者、9:40 起逐桶重试；卖点 = 所属板块占比斜率转负 → 次日开盘卖出；半仓单持仓）
   if (STRATEGIES[strategyId]?.volumeShareMode === true) {
     return runVolumeShareBacktest(startDate, endDate, strategyId, onProgress);
+  }
+  // 科技进攻-情绪游资极致胜率走独立引擎（快进快出 + 情绪游资-极致胜率双腿融合，账户被单一风格独占；
+  // 空仓时谁先触发买谁、同一时间桶内快进快出优先；见 engine/fusedEmoWinBacktest.js）
+  if (STRATEGIES[strategyId]?.fusedEmoWinMode === true) {
+    return runFusedEmoWinBacktest(startDate, endDate, strategyId, onProgress);
   }
   const strategy = STRATEGIES[strategyId];
   // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：快进快出半仓（2026-10-13 用户新增）——

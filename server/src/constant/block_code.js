@@ -1412,12 +1412,17 @@ exports.default = [
     },
     {
         "blockName": "机器人",
-        "code": "sh603085",
-        "name": "天成自控"
+        "code": "sh603626",
+        "name": "科森科技"
     },
     {
         "blockName": "机器人",
-        "code": "sz000887",
-        "name": "中鼎股份"
+        "code": "sh688836",
+        "name": "宇树科技-W"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sz003021",
+        "name": "兆威机电"
     }
 ]

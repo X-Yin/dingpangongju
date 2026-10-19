@@ -3,6 +3,8 @@ const { runKeyBlockBacktest } = require('./keyBlockBacktest');
 const { runReverseLeaderBacktest } = require('./reverseLeaderBacktest');
 const { runNBoardBacktest } = require('./nBoardBacktest');
 const { runVolumeShareBacktest } = require('./volumeShareBacktest');
+const { runExtremeWinBacktest } = require('./extremeWinBacktest');
+const { runFusedEmoWinBacktest } = require('./fusedEmoWinBacktest');
 const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
 const { buildWindowAxis } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -34,7 +36,12 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   const nBoardIds = ids.filter(id => STRATEGIES[id]?.nBoardMode === true);
   // 情绪游资-成交量占比（N=2/3/5）走独立引擎（同单策略路径，避免落入常规循环）
   const volumeShareIds = ids.filter(id => STRATEGIES[id]?.volumeShareMode === true);
-  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true && STRATEGIES[id]?.volumeShareMode !== true);
+  // 情绪游资-极致胜率走独立引擎（双腿结构：顺周期腿 + 逆周期腿，账户拆两份各半仓；同单策略路径）。
+  // 2026-10-19 补上：此前本 multi 路径未分发 extremeWinMode，worker 全量重跑会把它按常规循环回测并覆盖其正确缓存
+  const extremeWinIds = ids.filter(id => STRATEGIES[id]?.extremeWinMode === true);
+  // 科技进攻-情绪游资极致胜率（快进快出 + 极致胜率双腿融合，风格独占锁）走独立引擎（同单策略路径）
+  const fusedIds = ids.filter(id => STRATEGIES[id]?.fusedEmoWinMode === true);
+  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.extremeWinMode !== true && STRATEGIES[id]?.fusedEmoWinMode !== true && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true && STRATEGIES[id]?.volumeShareMode !== true);
   const results = [];
   for (const strategyId of keyBlockIds) {
     const result = await runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
@@ -50,6 +57,14 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   }
   for (const strategyId of volumeShareIds) {
     const result = await runVolumeShareBacktest(startDate, endDate, strategyId, onProgress);
+    results.push({ strategyId, result });
+  }
+  for (const strategyId of extremeWinIds) {
+    const result = await runExtremeWinBacktest(startDate, endDate, strategyId, onProgress);
+    results.push({ strategyId, result });
+  }
+  for (const strategyId of fusedIds) {
+    const result = await runFusedEmoWinBacktest(startDate, endDate, strategyId, onProgress);
     results.push({ strategyId, result });
   }
   if (regularIds.length === 0) return results;

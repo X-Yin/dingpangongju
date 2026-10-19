@@ -5,12 +5,13 @@
 // 2026-10-05 叠加盘中止损（先到先卖，口径与通用条件7一致，成本线 = 买入价 × (1 - costLinePct/100)）：默认 -2%。
 // 2026-10-09 叠加强卖豁免（buildQuickOutExemptInfo）：未触发止损且命中任一「次日强势」判断 → 本次不强卖，
 // 持仓转由通用 7 条件卖点接管（后续日期也不再强卖）。
-// 2026-10-15 叠加盘中大跌强卖（先到先卖）：盘中当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT（-7%）的
-// 第一个分时点无条件卖出——无持续分钟、无竞价自救窗口、不受强卖豁免保护，先于止损与 10:00 强卖。
+// 2026-10-15 叠加盘中大跌强卖（先到先卖）：盘中当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT（-7%）时
+// 无条件卖出，先于止损与 10:00 强卖；2026-10-19 叠加竞价低开自救窗口（首个分时点即 ≤ 阈值时改为逐分钟
+// 等待自救拉升结束的首个回落分钟，口径与成本线止损同规则，见 engine/crashSellWindow.js）。
 // 返回本次发生强卖/止损的日期（用于当日禁止二次买入），未发生则返回 null。
 // 本 hook 只做卖点行为，策略开关判定（strategy.emoQuickOut）由引擎负责调度。
-const { EMO_QUICK_CRASH_PCT } = require('../../constants');
 const { buildQuickOutExemptInfo, buildQuickOutSellReason, buildQuickOutStopLossReason, buildQuickOutCrashSellReason } = require('../checkBuilders');
+const { locateCrashSellPoint } = require('../crashSellWindow');
 const { buildTwoBuyTradeExtra, getPositionLegWeight, isLegPosition } = require('../twoBuy');
 
 const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStocks, timeBuckets, campData, singleTrades }) => {
@@ -49,12 +50,11 @@ const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStoc
         if (stopPt) stopDesc = `盘中 ${fmtMin(stopPt.minute)} 跌破止损线`;
       }
     }
-    // 盘中大卖点（2026-10-15 用户新增）：当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT 的第一个分时点，
-    // 无条件强卖（无自救窗口、不受豁免保护）。分时点 change 为该分钟当日涨跌幅（较昨收），缺失时跳过该点
-    let crashPt = null;
-    for (const p of pts) {
-      if (p.change != null && Number(p.change) <= EMO_QUICK_CRASH_PCT) { crashPt = p; break; }
-    }
+    // 盘中大跌强卖（2026-10-15 用户新增）：当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT 的卖出点；
+    // 2026-10-19 叠加竞价低开自救窗口（首个分时点即 ≤ 阈值时，改为逐分钟跟踪首个「回落且仍 ≤ 阈值」的
+    // 分钟再卖，10:00 前未回落且仍 ≤ 阈值则按 10:00 时点价兜底），与大跌强卖原有「无条件卖出」口径一致
+    const crashLoc = locateCrashSellPoint(pts);
+    const crashPt = crashLoc.pt;
     // 先到先卖：止损点 / 盘中大卖点 / 10:00 强卖点取分钟最早者（同分钟时大跌强卖优先于止损）
     let sellPt = forcedPt;
     let sellKind = 'force'; // 'force' = 10:00 强卖 | 'stop' = 成本线止损 | 'crash' = 盘中大跌强卖
@@ -98,7 +98,7 @@ const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStoc
       sellReason: isStopLoss
         ? buildQuickOutStopLossReason(pos.buyPrice, sellPt, stopDesc, qPct)
         : (sellKind === 'crash'
-          ? buildQuickOutCrashSellReason(sellPt)
+          ? buildQuickOutCrashSellReason(sellPt, crashLoc)
           : buildQuickOutSellReason(pos.emoQuickOut)),
       returnRate,
     });

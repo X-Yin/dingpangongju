@@ -40,13 +40,13 @@ const FloatingTechEmotion = () => {
       const res = await axios.post(`http://${local_ip}:3000/update_emotion_data`);
       setCurrentValue(res.data.data);
 
-      // 刷新后检查当日分时是否达到冰点（<= -100），若是则标记 hasIce
+      // 刷新后检查当日分时是否达到冰点（<= -39），若是则标记 hasIce
       try {
         const intraRes = await axios.get(`http://${local_ip}:3000/tech_emotion_intraday`);
         const today = dayjs().format('YYYYMMDD');
         const todayData = intraRes.data?.data?.[today] || [];
         const hasIce = todayData.some(item =>
-          item.value !== null && item.value !== undefined && !isNaN(item.value) && Number(item.value) <= -100
+          item.value !== null && item.value !== undefined && !isNaN(item.value) && Number(item.value) <= -39
         );
         if (hasIce) {
           await axios.post(`http://${local_ip}:3000/mark_tech_index_ice`);

@@ -79,7 +79,7 @@ const buildFundInflowCheck = (buckets, currentIndex) => {
 };
 
 // 量能检查构建（常规买点诊断与重点板块策略共用）：当前量能（今日累计成交额 − 昨日全天成交额）
-// 为正时较 5min 前增加即可，为负时需增加 ≥ 100 亿；今日/昨日科技情绪触及 -100 冰点时自动豁免
+// 为正时较 5min 前增加即可，为负时需增加 ≥ 100 亿；今日/昨日科技情绪触及 -39 冰点时自动豁免
 const buildVolumeExpansionCheck = (buckets, currentIndex, campData) => {
   const list = buckets || [];
   const current = list[currentIndex];
@@ -134,8 +134,8 @@ const buildVolumeExpansionCheck = (buckets, currentIndex, campData) => {
         value: exemptVolText,
         volumeText: exemptVolText,
         reason: volumeResult.hasData
-          ? `${iceSource}盘中科技情绪触及 -100 退潮冰点（hasIce: true），${exemptVolText}`
-          : `${iceSource}盘中科技情绪触及 -100 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免`,
+          ? `${iceSource}盘中科技情绪触及 -39 退潮冰点（hasIce: true），${exemptVolText}`
+          : `${iceSource}盘中科技情绪触及 -39 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免`,
       },
       volumeResult,
     };

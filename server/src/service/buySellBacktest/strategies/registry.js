@@ -35,7 +35,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 规则：候选按排名依次判断个股与创业板指最近 20 个已完结交易日的日收益率相关系数，corr > 0（正相关）
 // = 顺周期可买，corr <= 0（逆周期）剔除并顺延排名下一只；数据不足不拦截。下列 desc 文案自动追加到所有适用策略
 const CYC_FILTER_DESC = '顺周期过滤：候选按排名依次判断与创业板指最近 20 个已完结交易日的日收益率相关系数，相关系数 > 0（正相关，顺周期）才可买入，≤ 0（逆周期）则顺延至排名下一只（数据不足不拦截）';
-const isCycleFilterStrategy = (s) => !!s && s.iceMode !== true && s.keyBlockDays == null && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true;
+const isCycleFilterStrategy = (s) => !!s && s.iceMode !== true && s.keyBlockDays == null && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true && s.fusedEmoWinMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (isCycleFilterStrategy(s)) s.desc = `${s.desc}；${CYC_FILTER_DESC}`;
 }
@@ -64,10 +64,12 @@ for (const s of Object.values(STRATEGIES)) {
 
 // 盘中大跌强卖（2026-10-16 用户新增）：适用范围 = 除「情绪游资类（iceMode）」「极致胜率（extremeWinMode）」
 // 「反向抱团龙头（reverseLeaderMode）」外的全部策略（两次买入系列已内置同口径卖点，
-// 仅补字段不重复追加 desc）。规则：持仓当桶当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT（-7%）时无条件卖出——
-// 即时生效、无持续分钟/自救窗口要求，先于各策略原有卖点判定（generalSell 引擎桶级预检 / 重点板块引擎卖出预检）
-const CRASH_SELL_DESC = '；盘中大跌强卖（2026-10-16 新增）：持仓当桶当日跌幅（较昨收涨跌幅）≤ -7% 时无条件卖出（即时生效，先于其他卖点判定）';
-const isCrashSellStrategy = (s) => !!s && s.iceMode !== true && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true;
+// 仅补字段不重复追加 desc）。规则：持仓当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT（-7%）时无条件卖出——
+// 先于各策略原有卖点判定（generalSell 引擎桶级预检 / 重点板块引擎卖出预检）；
+// 2026-10-19 叠加竞价低开自救窗口：竞价首分钟即 ≤ -7% 时不在 9:30 直接卖出，改为等自救拉升结束的
+// 首个「回落且仍 ≤ -7%」的分钟再卖（10:00 前未回落且 10:00 仍 ≤ -7% 则按 10:00 时点价兜底）
+const CRASH_SELL_DESC = '；盘中大跌强卖（2026-10-16 新增）：持仓当日跌幅（较昨收涨跌幅）≤ -7% 时无条件卖出（先于其他卖点判定；2026-10-19 起叠加竞价低开自救窗口——竞价首分钟即跌破 -7% 时改为等自救拉升结束的首个回落分钟再卖）';
+const isCrashSellStrategy = (s) => !!s && s.iceMode !== true && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true && s.fusedEmoWinMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (!isCrashSellStrategy(s)) continue;
   s.crashSell = true;

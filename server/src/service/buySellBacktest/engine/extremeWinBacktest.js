@@ -833,4 +833,4 @@ const buildRevPosition = ({ pick, s, score, px, changePct, dateStr, dateDisplay,
   };
 };
 
-module.exports = { runExtremeWinBacktest };
+module.exports = { runExtremeWinBacktest, buildPosition, buildRevPosition };

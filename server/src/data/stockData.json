@@ -2178,5 +2178,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sh603626": {
+    "stockName": "科森科技",
+    "kline": [
+      {
+        "trade_date": 20261019,
+        "open_px": 20,
+        "high_px": 22.21,
+        "low_px": 19.33,
+        "close_px": 22.21,
+        "business_amount": 38922294,
+        "business_balance": 816131650,
+        "change": 10,
+        "ma5_px": 21.59,
+        "ma10_px": 22.7,
+        "ma20_px": 22.2,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

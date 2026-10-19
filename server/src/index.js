@@ -559,7 +559,7 @@ app.get('/tech_emotion_intraday_5day', (req, res) => {
   res.json(data);
 });
 
-// 标记最新科技情绪指数为冰点（分时轮询发现 <= -40 时调用）
+// 标记最新科技情绪指数为冰点（分时轮询发现 <= -39 时调用）
 app.post('/mark_tech_index_ice', (req, res) => {
   try {
     const result = markTechIndexIce();

@@ -8,7 +8,7 @@
  * 4. 前一日是否为情绪冰点
  * 5. 最近 5min 内资金净流入是否大于 20亿
  * 6. 自选股上涨家数是否大于下跌家数
- * 7. 9:30-10:00 期间，自选股跌幅超过 30 只
+ * 7. 9:30-10:00 期间，自选科技股低于开盘价不超过科技股数的 25%（向上取整，非科技股不参与计数）
  */
 
 const axios = require('axios');
@@ -193,7 +193,7 @@ function isInOpeningCheckWindow() {
 }
 
 // 实时拉取自选科技股（isTech !== false）的分时数据，对比当前价与9:30开盘价
-// 2026-10-16 用户要求：非科技股不参与「低于开盘价 30 只」判断（口径同 buySellDiagnose.js，线上实盘与回测统一）
+// 2026-10-16 用户要求：非科技股不参与「低于开盘价」计数；2026-10-20 起阈值按科技股数 25% 向上取整（口径同 buySellDiagnose.js，线上实盘与回测统一）
 async function fetchOpeningBelowCount() {
   try {
     const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false);
@@ -427,8 +427,8 @@ async function runDisasterRecoveryCheck(options = {}) {
   });
   if (!check6Passed) allPassed = false;
 
-  // ========== 检查 7：9:30-10:00 期间，自选科技股跌幅超过 30 只（非科技股不参与计数） ==========
-  // 仅在交易日 9:30-10:00 之间检查，其他时段跳过此项
+  // ========== 检查 7：9:30-10:00 期间，自选科技股低于开盘价不超过「科技股数的 25%」（非科技股不参与计数） ==========
+  // 仅 9:30-10:00 检查，其他时段跳过；2026-10-20 用户要求：阈值改为 ceil(科技股数 × 25%)，与 buySellDiagnose.js / 回测口径统一
   const inOpeningWindow = isInOpeningCheckWindow();
   if (inOpeningWindow) {
     let openingStats = freshOpeningStats;
@@ -436,18 +436,23 @@ async function runDisasterRecoveryCheck(options = {}) {
     if (!openingStats) {
       openingStats = await fetchOpeningBelowCount();
     }
-    const check7Passed = openingStats && openingStats.belowCount <= 30;
+    // 懒加载阈值常量（避免加载期循环依赖）
+    const { OPENING_BELOW_RATIO } = require('./buySellBacktest/constants');
+    const validCount = openingStats ? Number(openingStats.validCount || 0) : 0;
+    const openingBelowMax = Math.ceil(validCount * OPENING_BELOW_RATIO);
+    const ratioText = `（阈值 = 科技股数 ${validCount} 只的 25% 向上取整）`;
+    const check7Passed = openingStats && openingStats.belowCount <= openingBelowMax;
     checks.push({
       id: 'opening_below',
-      title: '开盘后自选科技股低于开盘价不超过 30 只',
+      title: `开盘后自选科技股低于开盘价不超过科技股数的 25%（${openingBelowMax} 只）`,
       passed: check7Passed,
       value: openingStats
         ? `${openingStats.belowCount} / ${openingStats.validCount || openingStats.total}只`
         : '检查中...',
       reason: check7Passed
-        ? `开盘后自选科技股共 ${openingStats.total} 只，${openingStats.belowCount} 只现价低于 9:30 开盘价，未超过 30 只`
-        : openingStats && openingStats.belowCount > 30
-          ? `开盘后自选科技股共 ${openingStats.total} 只，${openingStats.belowCount} 只现价低于 9:30 开盘价，超过 30 只阈值，市场开盘跳水严重`
+        ? `开盘后自选科技股共 ${validCount} 只，${openingStats.belowCount} 只现价低于 9:30 开盘价，未超过 ${openingBelowMax} 只${ratioText}`
+        : openingStats && openingStats.belowCount > openingBelowMax
+          ? `开盘后自选科技股共 ${validCount} 只，${openingStats.belowCount} 只现价低于 9:30 开盘价，超过 ${openingBelowMax} 只阈值，市场开盘跳水严重${ratioText}`
           : '分时数据获取异常',
     });
     if (!check7Passed) allPassed = false;
@@ -455,7 +460,7 @@ async function runDisasterRecoveryCheck(options = {}) {
     // 非开盘时段，添加一个跳过的检查项
     checks.push({
       id: 'opening_below',
-      title: '开盘后自选科技股低于开盘价不超过 30 只',
+      title: '开盘后自选科技股低于开盘价不超过科技股数的 25%',
       passed: true,
       value: '非交易时段',
       reason: '此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过',
