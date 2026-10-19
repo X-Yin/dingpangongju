@@ -1,29 +1,20 @@
 [
   {
-    "id": "sh600396_1792114795076_epdd",
-    "code": "sh600396",
-    "name": "华电辽能",
-    "buyDate": "2026-10-16",
-    "buyTime": "09:39",
+    "id": "sh688543_1792375322409_mm66",
+    "code": "sh688543",
+    "name": "国科军工",
+    "buyDate": "2026-10-19",
+    "buyTime": "10:02",
     "weight": 25,
-    "costPrice": 11.39
+    "costPrice": 47.89
   },
   {
-    "id": "sh600967_1792115189326_3qjd",
-    "code": "sh600967",
-    "name": "内蒙一机",
-    "buyDate": "2026-10-16",
-    "buyTime": "09:46",
-    "weight": 25,
-    "costPrice": 13.8
-  },
-  {
-    "id": "sz300413_1792115595968_fl7q",
-    "code": "sz300413",
-    "name": "芒果超媒",
-    "buyDate": "2026-10-16",
-    "buyTime": "09:53",
-    "weight": 25,
-    "costPrice": 25.25
+    "id": "sh603061_1792378802002_rp1i",
+    "code": "sh603061",
+    "name": "金海通",
+    "buyDate": "2026-10-19",
+    "buyTime": "11:00",
+    "weight": 75,
+    "costPrice": 276.89
   }
 ]

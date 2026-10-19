@@ -970,5 +970,32 @@
     "riskScore": "9",
     "isTech": false,
     "addedAt": "2026-10-17 21:46:12"
+  },
+  {
+    "code": "sh688543",
+    "name": "国科军工",
+    "isImportant": false,
+    "blockName": "军工",
+    "riskScore": "7",
+    "isTech": false,
+    "addedAt": "2026-10-19 10:01:46"
+  },
+  {
+    "code": "sh600435",
+    "name": "北方导航",
+    "isImportant": false,
+    "blockName": "军工",
+    "riskScore": " 7",
+    "isTech": false,
+    "addedAt": "2026-10-19 10:04:09"
+  },
+  {
+    "code": "sh600825",
+    "name": "新华传媒",
+    "isImportant": false,
+    "blockName": "AI短剧",
+    "riskScore": "9",
+    "isTech": false,
+    "addedAt": "2026-10-19 10:13:29"
   }
 ]

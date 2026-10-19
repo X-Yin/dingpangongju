@@ -1,5 +1,56 @@
 [
   {
+    "date": "2026-10-19",
+    "operations": [
+      {
+        "id": "1792373463188_1wrr",
+        "action": "sell",
+        "stockName": "华电辽能",
+        "stockCode": "sh600396",
+        "position": "",
+        "time": "09:31"
+      },
+      {
+        "id": "1792373464537_9pd0",
+        "action": "sell",
+        "stockName": "内蒙一机",
+        "stockCode": "sh600967",
+        "position": "",
+        "time": "09:31"
+      },
+      {
+        "id": "1792373465286_kgg8",
+        "action": "sell",
+        "stockName": "芒果超媒",
+        "stockCode": "sz300413",
+        "position": "",
+        "time": "09:31"
+      },
+      {
+        "id": "1792375322413_dj7a",
+        "action": "buy",
+        "stockName": "国科军工",
+        "stockCode": "sh688543",
+        "position": "",
+        "time": "10:02"
+      },
+      {
+        "id": "1792378802011_ey9c",
+        "action": "buy",
+        "stockName": "金海通",
+        "stockCode": "sh603061",
+        "position": "",
+        "time": "11:00"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-19T01:31:03.247Z",
+    "updatedAt": "2026-10-19T03:00:02.035Z"
+  },
+  {
     "date": "2026-10-16",
     "operations": [
       {

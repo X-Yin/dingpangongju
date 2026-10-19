@@ -1,5 +1,60 @@
 [
   {
+    "id": "1792378802003_9lrpzu",
+    "type": "buy",
+    "code": "sh603061",
+    "name": "金海通",
+    "date": "2026-10-19",
+    "time": "11:00:02",
+    "detail": "新增持仓：金海通（sh603061）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-19T03:00:02.003Z"
+  },
+  {
+    "id": "1792375322411_day59h",
+    "type": "buy",
+    "code": "sh688543",
+    "name": "国科军工",
+    "date": "2026-10-19",
+    "time": "10:02:02",
+    "detail": "新增持仓：国科军工（sh688543）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-19T02:02:02.411Z"
+  },
+  {
+    "id": "1792373465281_52bnwd",
+    "type": "delete",
+    "code": "sz300413",
+    "name": "芒果超媒",
+    "date": "2026-10-19",
+    "time": "09:31:05",
+    "detail": "删除持仓：芒果超媒（sz300413）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-19T01:31:05.281Z"
+  },
+  {
+    "id": "1792373464524_gdpadv",
+    "type": "delete",
+    "code": "sh600967",
+    "name": "内蒙一机",
+    "date": "2026-10-19",
+    "time": "09:31:04",
+    "detail": "删除持仓：内蒙一机（sh600967）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-19T01:31:04.524Z"
+  },
+  {
+    "id": "1792373463185_n5zz4h",
+    "type": "delete",
+    "code": "sh600396",
+    "name": "华电辽能",
+    "date": "2026-10-19",
+    "time": "09:31:03",
+    "detail": "删除持仓：华电辽能（sh600396）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-19T01:31:03.185Z"
+  },
+  {
     "id": "1792115723769_n2tgvs",
     "type": "delete",
     "code": "sh603200",
