@@ -12,6 +12,10 @@
 //        期间另一风格被完全禁止；直到该风格全部平仓回到空仓，另一风格才解禁。
 //     ② B 风格保持双腿结构（逆周期腿不删除）。
 //     ③ 「同时触发」判定粒度 = 同一时间桶（5 分钟桶）内：先评估 A 风格，A 未成交才评估 B 风格。
+//     ④ 科技进攻抢仓（2026-10-20 用户新增）：B 风格（情绪游资-极致胜率）持仓锁定账户期间，若某时间桶
+//        A 风格（科技进攻）买点成交且该桶「实时科技情绪指数 > 0」，则把 B 风格**全部隔夜持仓**按当桶分时价
+//        强制卖出（当日买入的 B 风格持仓保留不卖——存在此类持仓时放弃抢仓、账户仍由 B 风格独占），
+//        同桶即由 A 风格接管账户建仓——即「风格独占锁」的例外：A 风格优先级高于 B 风格。
 //   实现：单循环 + styleLock（null / 'emo' / 'ew'）状态机。A 侧口径以 EMO_ID='highest_3d_gain_emoquick' 传入
 //   pickBestStock / withDualGateInfo / runBuyPointDiagnosis（保证选股委派、跨指数双门禁、检查4 比例收紧与独立
 //   快进快出策略完全一致），卖点侧使用合成策略视图 emoStrategyView（emoQuickOut: true）驱动快进快出专属卖点
@@ -425,6 +429,75 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
     const revDayTriggered = new Set(); // 逆周期腿当日已登记命中的候选（同一天同一只只计一次）
     const idleLegIdx = () => ewPositions.findIndex((p, i) => !p && ewLegLastSellDate[i] !== dateStr);
 
+    // B 风格卖出记录（正常卖点与「科技进攻抢仓」强制卖出共用）：写成交、清空该份、登记当日已卖出
+    const recordEwSell = (l, position, sellMinute, sellPx, sellChange, sellReason) => {
+      const rawReturnRate = position.buyPrice > 0
+        ? round2(((sellPx - position.buyPrice) / position.buyPrice) * 100)
+        : null;
+      ewTrades.push({
+        seq: ewTrades.length + 1,
+        metric: position.metric,
+        code: position.code,
+        stockName: position.stockName,
+        board: position.board,
+        positionMode: 'offense',
+        splitLeg: LEG_LABELS[l],
+        cycle: position.cycle,
+        weight: LEG_WEIGHT,
+        buyDate: position.buyDate,
+        buyDateDisplay: position.buyDateDisplay,
+        buyTime: position.buyTime,
+        buyPrice: position.buyPrice,
+        buyChange: position.buyChange,
+        buyReason: position.buyReason,
+        buyChecks: position.buyChecks,
+        sellDate: dateStr,
+        sellDateDisplay: dateDisplay,
+        sellTime: fmtMinute(sellMinute),
+        sellPrice: round2(sellPx),
+        sellChange,
+        sellReason,
+        returnRate: rawReturnRate != null ? round2(rawReturnRate * LEG_WEIGHT) : null,
+        rawReturnRate,
+      });
+      ewPositions[l] = null;
+      ewLegLastSellDate[l] = dateStr;
+    };
+
+    // A 风格「科技进攻抢仓」（2026-10-20 用户新增）：B 风格持仓锁定账户期间，A 风格买点成交且当桶实时科技情绪
+    // > 0 时，把 B 风格全部隔夜持仓按当桶分时价强制卖出，账户随即由 A 风格接管。仅当 B 风格持仓全部为隔夜持仓
+    // （买入日早于当日）且当桶分时价可用时才执行——当日买入的 B 风格持仓保留不卖，该情形下放弃抢仓、账户仍由
+    // B 风格独占；返回是否已完成抢仓（true 表示账户已空出、可立即由 A 风格建仓）
+    const tryPreemptEwPositions = (bucketMinute, emotion) => {
+      if (styleLock !== 'ew') return true; // 非 B 风格锁定：无需抢仓
+      const plan = [];
+      for (let l = 0; l < LEG_COUNT; l++) {
+        const p = ewPositions[l];
+        if (!p) continue;
+        if (!(dateStr > p.buyDate)) return false; // 当日买入的 B 风格持仓不卖 → 放弃抢仓
+        const t = posTlines[l];
+        const atPt = t && t.points.length > 0 ? priceAtMinute(t.points, bucketMinute) : null;
+        if (!atPt || !(atPt.lastPx > 0)) return false; // 当桶无可用分时价 → 放弃抢仓
+        const preclose = t.preclose;
+        plan.push({
+          l,
+          position: p,
+          minute: atPt.minute,
+          px: atPt.lastPx,
+          change: preclose && preclose > 0
+            ? round2(((atPt.lastPx - preclose) / preclose) * 100)
+            : (atPt.change != null ? atPt.change : null),
+        });
+      }
+      if (plan.length === 0) return false;
+      for (const it of plan) {
+        const cycleLabel = CYCLE_LABELS[it.position.cycle] || '顺周期';
+        recordEwSell(it.l, it.position, it.minute, it.px, it.change,
+          `科技进攻（A 风格）买点触发且当桶实时科技情绪 ${emotion} > 0，强制抢仓卖出（清出账户交 A 风格建仓），情绪游资-极致胜率·${cycleLabel}腿（半仓）卖出`);
+      }
+      return true;
+    };
+
     for (let bi = 0; bi < timeBuckets.length; bi++) {
       const bucket = timeBuckets[bi];
       const bucketMinute = Number(bucket.minute);
@@ -495,38 +568,8 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
         }
 
         if (sellReason) {
-          const rawReturnRate = position.buyPrice > 0
-            ? round2(((sellPx - position.buyPrice) / position.buyPrice) * 100)
-            : null;
           const cycleLabel = CYCLE_LABELS[position.cycle] || '顺周期';
-          ewTrades.push({
-            seq: ewTrades.length + 1,
-            metric: position.metric,
-            code: position.code,
-            stockName: position.stockName,
-            board: position.board,
-            positionMode: 'offense',
-            splitLeg: LEG_LABELS[l],
-            cycle: position.cycle,
-            weight: LEG_WEIGHT,
-            buyDate: position.buyDate,
-            buyDateDisplay: position.buyDateDisplay,
-            buyTime: position.buyTime,
-            buyPrice: position.buyPrice,
-            buyChange: position.buyChange,
-            buyReason: position.buyReason,
-            buyChecks: position.buyChecks,
-            sellDate: dateStr,
-            sellDateDisplay: dateDisplay,
-            sellTime: fmtMinute(sellMinute),
-            sellPrice: round2(sellPx),
-            sellChange,
-            sellReason: `${sellReason}，情绪游资-极致胜率·${cycleLabel}腿（半仓）卖出`,
-            returnRate: rawReturnRate != null ? round2(rawReturnRate * LEG_WEIGHT) : null,
-            rawReturnRate,
-          });
-          ewPositions[l] = null;
-          ewLegLastSellDate[l] = dateStr;
+          recordEwSell(l, position, sellMinute, sellPx, sellChange, `${sellReason}，情绪游资-极致胜率·${cycleLabel}腿（半仓）卖出`);
         }
       }
 
@@ -539,8 +582,14 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       if (styleLock === 'emo' && emoPositions.length === 0) styleLock = null;
       if (styleLock === 'ew' && ewPositions.every(p => !p)) styleLock = null;
 
-      // ===== 买入①（A 风格·科技进攻：仅在未被 B 风格独占时评估）=====
-      if (styleLock !== 'ew') {
+      // ===== 买入①（A 风格·科技进攻）=====
+      // 未被 B 风格独占时照常评估；B 风格（情绪游资-极致胜率）持仓锁定账户期间，仅当「科技进攻抢仓」条件成立时
+      // 才评估（2026-10-20 用户新增）：当桶实时科技情绪 > 0，且 B 风格持仓全部为隔夜持仓 → 强制卖出后由 A 风格接管
+      const bucketTechEmotion = bucket.techEmotion != null && !Number.isNaN(Number(bucket.techEmotion))
+        ? Number(bucket.techEmotion)
+        : null;
+      const preemptGateOk = bucketTechEmotion != null && bucketTechEmotion > 0;
+      if (styleLock !== 'ew' || preemptGateOk) {
         const quickOutNoRebuy = quickOutSoldDate === dateStr;
         const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(EMO_ID) })?.data;
         const buyHit = !quickOutNoRebuy && buyDiag?.allPassed === true;
@@ -556,7 +605,8 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
                 ? await buildCounterCycSet((bucket.stockChanges || []).map(s => s.code), dateStr)
                 : null;
               const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, EMO_ID, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet);
-              if (picked) {
+              // A 风格买点确实可以成交（已选到标的）才执行抢仓：先强制卖出 B 风格隔夜持仓，再建仓
+              if (picked && tryPreemptEwPositions(bucketMinute, bucketTechEmotion)) {
                 const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
                 const sc = picked.stock;
                 const firstBuyPrice = parseFloat(Number(sc.lastPx).toFixed(2));
