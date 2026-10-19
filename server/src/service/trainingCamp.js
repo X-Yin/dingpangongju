@@ -7,7 +7,9 @@ const { getIndexTlineByDate } = require('./fupan');
 const { getMonitorStocks } = require('./monitorStock');
 const { getSingleStockTlineDataByDate, getSingleStockData } = require('./stock');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
-const { normalizeTechEmotion, computeTechEmotion, computePullbackPenaltyFromPullback } = require('./emotion');
+// 科技情绪 V2：个股板块限制归一化得分 × 市值加权（分时当时价格）+ 指数冲高回落惩罚 × 0.2
+// （与 emotion.js 实时路径、回溯脚本 script/backfill-tech-emotion-v2.js 完全同口径）
+const { computeTechEmotionV2Base, computeTechEmotionV2, computePullbackPenaltyFromPullback } = require('./emotion');
 const blockCodeList = require('../constant/block_code').default || [];
 const { batchParallel } = require('../utils');
 
@@ -486,18 +488,20 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
     if (cybPoint && (cybMaxChange === null || cybPoint.changePct > cybMaxChange)) cybMaxChange = cybPoint.changePct;
     if (kcbPoint && (kcbMaxChange === null || kcbPoint.changePct > kcbMaxChange)) kcbMaxChange = kcbPoint.changePct;
 
-    const rawSum = techStockTlines.reduce((acc, st) => {
+    // V2 算法：科技股分时涨幅按板块涨跌幅限制归一化 → 市值加权平均（用分时当时价格）+ 指数冲高回落惩罚 × 0.2
+    // （旧 V1「涨幅累加 tanh 压缩」已于 2026-10-19 废弃；历史缓存已由回溯脚本原地迁移为 V2）
+    const techItems = techStockTlines.map(st => {
       const p = findStockChange(st.sortedLine, minute);
-      return acc + (p ? p.changePct : 0);
-    }, 0);
-    const baseEmotion = normalizeTechEmotion(rawSum);
+      return p ? { code: st.code, change: p.changePct, price: p.lastPx } : null;
+    }).filter(Boolean);
+    const baseEmotion = computeTechEmotionV2Base(techItems);
 
     const pullbacks = [];
     if (cybPoint && cybMaxChange !== null) pullbacks.push(cybPoint.changePct - cybMaxChange);
     if (kcbPoint && kcbMaxChange !== null) pullbacks.push(kcbPoint.changePct - kcbMaxChange);
     const avgPullback = pullbacks.length > 0 ? pullbacks.reduce((a, b) => a + b, 0) / pullbacks.length : 0;
     const pullbackPenalty = computePullbackPenaltyFromPullback(avgPullback);
-    const techEmotion = computeTechEmotion(baseEmotion, pullbackPenalty);
+    const techEmotion = computeTechEmotionV2(baseEmotion, pullbackPenalty);
 
     const blockMap = {};
     blockStockTlines.forEach(st => {

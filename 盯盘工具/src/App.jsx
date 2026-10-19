@@ -1454,7 +1454,7 @@ function App() {
             <div style={{ color: 'rgba(0,0,0,0.75)' }}>{buyPointBlockedInfo?.reason || '当日已发生情绪快进快出 10:00 强制卖出，当日禁止二次买入'}</div>
           </div>
           <div style={{ color: 'rgba(0,0,0,0.65)', fontSize: 13 }}>
-            依据「{buyPointBlockedInfo?.strategyName || '3日涨幅最大&三日情绪-60快进快出'}」策略规则：强卖 / 止损当日禁止二次买入（哪怕买点再次触发也不买）。
+            依据「{buyPointBlockedInfo?.strategyName || '3日涨幅最大&三日情绪-30快进快出'}」策略规则：强卖 / 止损当日禁止二次买入（哪怕买点再次触发也不买）。
             今日盘中其余买点前置条件虽已全部通过，但为保证实盘操作与回测策略完全一致，今日买点命中通知已被屏蔽。
           </div>
           {buyPointBlockedInfo?.bucket != null && (

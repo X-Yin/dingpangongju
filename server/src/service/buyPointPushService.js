@@ -117,7 +117,7 @@ const tick = async () => {
           data: {
             ...block,
             strategy: 'highest_3d_gain_emoquick',
-            strategyName: '3日涨幅最大&三日情绪-60快进快出',
+            strategyName: '3日涨幅最大&三日情绪-30快进快出',
           },
         });
         console.log(`[买点屏蔽] 桶 ${bucket} 买点命中被快进快出强卖当日禁买规则拦截：${block.reason}`);

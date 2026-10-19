@@ -1,4 +1,4 @@
-const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC } = require('../descs');
+const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC } = require('../descs');
 
 // 情绪游资系列（2026-10-17 用户要求：已删除「情绪游资-龙头战法」「情绪龙头+科技进攻」「科技进攻 + 情绪龙头」三个策略）：
 module.exports = {
@@ -49,5 +49,32 @@ module.exports = {
     desc: N_BOARD_ATTACK_DESC(3),
     nBoardMode: true,
     nBoardN: 3,
+  },
+  // 情绪游资-成交量占比（2026-10-19 用户新增，N = 2 / 3 / 5 三个独立策略）：
+  //   选股 = 「成交量占比 3 日线斜率（截止 T-1）为正且最陡的前 3 板块（剔除半导体/液冷/光通信/存储芯片/pcb）」
+  //          成分股 ∩ 最近 5 个交易日连板个股；
+  //   买点 = 9:40 起在 9:40–11:30 逐桶重试，候选按 N 日涨幅最大排名，涨停（一字板）/分时涨幅 ≤ -5%/抗分歧 < 9 顺延；
+  //   卖点 = 所属前 3 板块中任一板块成交量占比 3 日线斜率（截止 T-1）转负 → 次一交易日开盘卖出；
+  //   半仓单持仓（权重 0.5）。volumeShareMode: true → 独立引擎 runVolumeShareBacktest
+  hot_money_volume_share_2d: {
+    id: 'hot_money_volume_share_2d',
+    name: '情绪游资-成交量占比-2日涨幅最大',
+    desc: VOLUME_SHARE_DESC(2),
+    volumeShareMode: true,
+    volumeShareDays: 2,
+  },
+  hot_money_volume_share_3d: {
+    id: 'hot_money_volume_share_3d',
+    name: '情绪游资-成交量占比-3日涨幅最大',
+    desc: VOLUME_SHARE_DESC(3),
+    volumeShareMode: true,
+    volumeShareDays: 3,
+  },
+  hot_money_volume_share_5d: {
+    id: 'hot_money_volume_share_5d',
+    name: '情绪游资-成交量占比-5日涨幅最大',
+    desc: VOLUME_SHARE_DESC(5),
+    volumeShareMode: true,
+    volumeShareDays: 5,
   },
 };

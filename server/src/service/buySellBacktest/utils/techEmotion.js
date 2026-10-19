@@ -33,7 +33,7 @@ const getTechEmotionEmaMap = (force = false) => {
 };
 
 // 当日科技情绪原始分 Map<'YYYYMMDD', changeSumResult>（tech_index.json 每日收盘情绪分，不做 EMA 平滑），
-// 供快进快出「-30~20 温和回升」条件按当日情绪分判定（与 3 日 EMA 条件口径不同）
+// 供快进快出「-30~-10 温和回升」条件按当日情绪分判定（与 3 日 EMA 条件口径不同）
 let techEmotionRawCache = null;
 const getTechEmotionRawMap = (force = false) => {
   if (!force && techEmotionRawCache) return techEmotionRawCache;

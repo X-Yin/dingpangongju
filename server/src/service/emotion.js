@@ -51,42 +51,12 @@ const computeMarketCapFactors = (items, sharesMap) => {
     return caps.map(c => (c !== null && c > 0 ? c / avgCap : 1));
 };
 
-// 批量获取成分股涨幅并按市值加权累加（日级与分时路径共用）
-// 返回 { rawSum, weighted }
-const fetchWeightedChangeSum = async (stockCodes) => {
-    const sharesMap = getTotalSharesMap();
-
-    const fetchChange = async (stockCode) => {
-        try {
-            const { data: { data: klineData } } = await axios.get(getClsReqUrl(stockCode, 1));
-            if (klineData && klineData.length > 0) {
-                const klineItem = klineData[0];
-                // 现价：盘中为最新收盘价字段，缺失时退回昨收
-                const price = klineItem.close_px ?? klineItem.last_px ?? klineItem.preclose_px ?? null;
-                return {
-                    code: stockCode,
-                    change: klineItem.change != null && !isNaN(klineItem.change) ? klineItem.change : 0,
-                    price: price != null && !isNaN(price) ? price : null,
-                };
-            }
-        } catch (error) {
-            console.error(`获取股票 ${stockCode} K线数据失败:`, error.message);
-        }
-        return { code: stockCode, change: 0, price: null };
-    };
-
-    const items = await batchParallel(stockCodes, fetchChange, useCLS() ? 5 : 20);
-    const factors = computeMarketCapFactors(items, sharesMap);
-    const weighted = items.some((it, i) => factors[i] !== 1);
-    const rawSum = items.reduce((acc, cur, i) => acc + cur.change * factors[i], 0);
-    return { rawSum, weighted };
-};
-
 const techIndexIntradayPath = path.join(__dirname, "../data/tech_index_intraday.json");
 const techIndexIntraday5DayPath = path.join(__dirname, "../data/tech_index_intraday_5day.json");
 const INTRADAY_5DAY_MAX = 5;
 
-// 科技情绪指数归一化：将个股涨幅累加值通过 tanh 映射到 [-100, 100] 区间
+// ========== V1 旧算法归一化（实时路径已切换 V2；保留供历史数据迁移与训练营回放 trainingCamp.js 沿用旧口径） ==========
+// 将个股涨幅累加值通过 tanh 映射到 [-100, 100] 区间
 // scale=300 时：rawSum≈±300→±76，±600→±97，±900→±99.5，确保永远不超过 ±100
 const TECH_EMOTION_SCALE = 300;
 const normalizeTechEmotion = (rawValue) => {
@@ -100,7 +70,7 @@ exports.normalizeTechEmotion = normalizeTechEmotion;
 // 通过创业板指(sz399006)和科创50(sh000688)的实时分时数据，计算从当日最高涨幅的回落幅度，
 // 映射为负向惩罚值，叠加到基础情绪上。
 // PULLBACK_PENALTY_SCALE=2：回落1%→惩罚-46，回落2%→-76，回落3%→-95
-// PULLBACK_WEIGHT=0.4：回落惩罚的权重，控制对最终情绪的影响程度
+// PULLBACK_WEIGHT=0.4：V1 冲高回落惩罚权重（训练回放口径）；实时 V2 路径权重为下方 PULLBACK_WEIGHT_V2=0.2
 const PULLBACK_PENALTY_SCALE = 2;
 const PULLBACK_WEIGHT = 0.4;
 const CHUANGYEBAN_CODE = 'sz399006';
@@ -175,7 +145,7 @@ const computePullbackPenaltyFromKline = (klineItem) => {
 };
 exports.computePullbackPenaltyFromKline = computePullbackPenaltyFromKline;
 
-// 综合科技情绪计算：基础情绪 + 加权回落惩罚
+// 综合科技情绪计算（V1）：基础情绪 + 加权回落惩罚
 // baseEmotion: 成分股涨幅累加归一化值 [-100, 100]
 // pullbackPenalty: 冲高回落惩罚 [-100, 0]
 // 最终值 clip 到 [-100, 100]，保证满分100，-40为退潮分界线
@@ -184,6 +154,96 @@ const computeTechEmotion = (baseEmotion, pullbackPenalty) => {
     return parseFloat(Math.max(-100, Math.min(100, combined)).toFixed(2));
 };
 exports.computeTechEmotion = computeTechEmotion;
+
+// ========== 科技情绪指数 V2 算法（2026-10-19 用户重新定义，实时/当日路径使用） ==========
+// 端点基准：全部科技股涨停 → +100、全部跌停 → -100；叠加市值加权与冲高回落惩罚后，
+// 未全部跌停/涨停也可能触及 ±100 端点（用户确认的口径）。
+// ① 个股归一化得分 = 涨幅 ÷ 所属板块涨跌幅限制 × 100，截断到 [-100, 100]
+//    （主板 ±10%、创业板 sz30* ±20%、科创板 sh68* ±20%）；
+// ② 基础情绪 = 得分的市值加权平均（市值 = 总股本 × 现价，权重因子 = 个股市值 / 线内平均市值，
+//    缺失总股本/现价的个股按因子 1 参与，与 V1 加权口径一致）；
+// ③ 最终值 = 基础情绪 + 冲高回落惩罚 × 0.2，截断到 [-100, 100]。
+// 与 V1 的区别：不再用「涨幅累加值 tanh 压缩」（旧口径平均跌 3% 就接近 -80），改为按板块限制归一化，
+// 保证同样的指数数值在任意板块构成下语义一致（如 -50 ≈ 市值加权平均跌幅达到板块限制的一半）。
+const PULLBACK_WEIGHT_V2 = 0.2;
+
+// 按代码返回所属板块的涨跌幅限制（百分点）：主板 10、创业板/科创板 20
+const getTechLimitPctByCode = (code) => {
+    const c = String(code);
+    if (c.startsWith('sh68')) return 20; // 科创板
+    if (c.startsWith('sz30')) return 20; // 创业板
+    return 10; // 主板（sh60*/sz00* 等）
+};
+exports.getTechLimitPctByCode = getTechLimitPctByCode;
+
+// 批量获取科技成分股实时涨幅与现价（V2 日级与分时路径共用），单只失败按 change=0 计
+// 返回 [{ code, change, price }]
+const fetchTechStockItems = async (stockCodes) => {
+    const fetchChange = async (stockCode) => {
+        try {
+            const { data: { data: klineData } } = await axios.get(getClsReqUrl(stockCode, 1));
+            if (klineData && klineData.length > 0) {
+                const klineItem = klineData[0];
+                // 现价：盘中为最新收盘价字段，缺失时退回昨收（市值加权因子用）
+                const price = klineItem.close_px ?? klineItem.last_px ?? klineItem.preclose_px ?? null;
+                return {
+                    code: stockCode,
+                    change: klineItem.change != null && !isNaN(klineItem.change) ? klineItem.change : 0,
+                    price: price != null && !isNaN(price) ? price : null,
+                };
+            }
+        } catch (error) {
+            console.error(`获取股票 ${stockCode} K线数据失败:`, error.message);
+        }
+        return { code: stockCode, change: 0, price: null };
+    };
+    return batchParallel(stockCodes, fetchChange, useCLS() ? 5 : 20);
+};
+exports.fetchTechStockItems = fetchTechStockItems;
+
+// V2 基础情绪：个股板块限制归一化得分的市值加权平均（严格落在 [-100, 100]）
+// items: [{ code, change, price }]
+const computeTechEmotionV2Base = (items) => {
+    const valid = (items || []).filter(it => it && it.code && it.change !== null && it.change !== undefined && !isNaN(it.change));
+    if (valid.length === 0) return 0;
+    const sharesMap = getTotalSharesMap();
+    const factors = computeMarketCapFactors(valid, sharesMap);
+    let weightedSum = 0;
+    let factorSum = 0;
+    valid.forEach((it, i) => {
+        const limit = getTechLimitPctByCode(it.code);
+        const score = Math.max(-100, Math.min(100, (it.change / limit) * 100));
+        weightedSum += score * factors[i];
+        factorSum += factors[i];
+    });
+    if (factorSum <= 0) return 0;
+    return parseFloat((weightedSum / factorSum).toFixed(2));
+};
+exports.computeTechEmotionV2Base = computeTechEmotionV2Base;
+
+// V2 市值加权平均涨幅（百分点，诊断用）：与基础情绪同权重的原始涨幅均值
+const computeTechAvgChangeV2 = (items) => {
+    const valid = (items || []).filter(it => it && it.code && it.change !== null && it.change !== undefined && !isNaN(it.change));
+    if (valid.length === 0) return 0;
+    const sharesMap = getTotalSharesMap();
+    const factors = computeMarketCapFactors(valid, sharesMap);
+    let weightedSum = 0;
+    let factorSum = 0;
+    valid.forEach((it, i) => {
+        weightedSum += it.change * factors[i];
+        factorSum += factors[i];
+    });
+    if (factorSum <= 0) return 0;
+    return parseFloat((weightedSum / factorSum).toFixed(2));
+};
+exports.computeTechAvgChangeV2 = computeTechAvgChangeV2;
+
+// V2 最终合成：基础情绪 + 冲高回落惩罚 × 0.2，截断到 [-100, 100]
+const computeTechEmotionV2 = (baseEmotion, pullbackPenalty) => {
+    const combined = baseEmotion + pullbackPenalty * PULLBACK_WEIGHT_V2;
+    return parseFloat(Math.max(-100, Math.min(100, combined)).toFixed(2));
+};
+exports.computeTechEmotionV2 = computeTechEmotionV2;
 
 // 获取当天的涨停板和跌停板个数，以及炸板率，作为当日情绪计算的依据
 const getCurrentEmotionData = async () => {
@@ -297,19 +357,20 @@ const updateCurrentTechIndexData = async () => {
     const stockCodes = monitorStocks.filter(s => s.isTech !== false).map(s => s.code);
     const changeSumData = [];
 
-    // 拉取各成分股涨幅并按市值（总股本×现价）加权累加
-    const { rawSum, weighted } = await fetchWeightedChangeSum(stockCodes);
-    const baseEmotion = normalizeTechEmotion(rawSum);
+    // V2 算法：个股按板块涨跌幅限制归一化 → 市值加权平均 + 冲高回落惩罚 × 0.2
+    const items = await fetchTechStockItems(stockCodes);
+    const baseEmotion = computeTechEmotionV2Base(items);
     // 计算冲高回落惩罚（实时获取创业板指和科创50分时数据）
     const pullbackPenalty = await computePullbackPenalty();
-    const finalEmotion = computeTechEmotion(baseEmotion, pullbackPenalty);
+    const finalEmotion = computeTechEmotionV2(baseEmotion, pullbackPenalty);
     changeSumData.push({
         date: Number(dayjs().format('YYYYMMDD')),
         changeSumResult: finalEmotion,
-        rawSum: parseFloat(rawSum.toFixed(2)),
         baseEmotion,
         pullbackPenalty,
-        marketCapWeighted: weighted,
+        avgChange: computeTechAvgChangeV2(items),
+        stockCount: items.length,
+        algorithm: 2,
     });
 
     // 先把之前的 tech_index.json 的数据读出来，然后合并新的数据，检查重复日期，如有则覆盖
@@ -317,9 +378,10 @@ const updateCurrentTechIndexData = async () => {
     let oldDataJson;
     try { oldDataJson = JSON.parse(oldData); } catch { oldDataJson = []; }
 
-    // 归一化历史数据（旧数据没有 normalized 值，需要用 raw 值或 changeSumResult 做归一化）
+    // 归一化历史数据（旧数据没有 normalized 值，需要用 raw 值或 changeSumResult 做归一化；
+    // algorithm 字段为 V2 新算法标记，有该字段的条目已是最终值，不做旧格式迁移）
     oldDataJson = oldDataJson.map(item => {
-        if (item.changeSumResult !== undefined && item.rawSum === undefined) {
+        if (item.changeSumResult !== undefined && item.rawSum === undefined && item.algorithm === undefined) {
             // 旧数据：changeSumResult 是原始累加值，需要归一化
             return {
                 date: item.date,
@@ -351,9 +413,9 @@ const getAllTechIndexData = () => {
     const data = fs.readFileSync(techIndexPath, "utf-8") || '[]';
     let parsed;
     try { parsed = JSON.parse(data); } catch { return []; }
-    // 归一化旧数据（兼容尚未被 updateCurrentTechIndexData 迁移的历史记录）
+    // 归一化旧数据（兼容尚未被 updateCurrentTechIndexData 迁移的历史记录；algorithm 为 V2 标记，跳过）
     return parsed.map(item => {
-        if (item.changeSumResult !== undefined && item.rawSum === undefined) {
+        if (item.changeSumResult !== undefined && item.rawSum === undefined && item.algorithm === undefined) {
             return {
                 date: item.date,
                 changeSumResult: normalizeTechEmotion(item.changeSumResult),
@@ -369,17 +431,15 @@ exports.updateCurrentTechIndexData = updateCurrentTechIndexData;
 // ========== 当日科技情绪分时数据 ==========
 
 // 获取当前科技情绪指数（实时计算，不入库）
-// 综合考虑成分股涨幅（基础情绪）和创业板指/科创50冲高回落（惩罚修正）
+// V2 算法：自选科技股按板块涨跌幅限制归一化 → 市值加权平均 + 创业板指/科创50冲高回落惩罚 × 0.2
 const getCurrentTechEmotion = async () => {
     const monitorStocks = getMonitorStocks();
     const stockCodes = monitorStocks.filter(s => s.isTech !== false).map(s => s.code);
 
-    // 拉取各成分股涨幅并按市值（总股本×现价）加权累加
-    const { rawSum } = await fetchWeightedChangeSum(stockCodes);
-    const baseEmotion = normalizeTechEmotion(rawSum);
-    // 并行计算冲高回落惩罚
+    const items = await fetchTechStockItems(stockCodes);
+    const baseEmotion = computeTechEmotionV2Base(items);
     const pullbackPenalty = await computePullbackPenalty();
-    return computeTechEmotion(baseEmotion, pullbackPenalty);
+    return computeTechEmotionV2(baseEmotion, pullbackPenalty);
 };
 
 // 记录当前时刻的科技情绪指数到分时文件

@@ -1219,26 +1219,6 @@
     ],
     "isImportant": false
   },
-  "sh688403": {
-    "stockName": "汇成股份",
-    "kline": [
-      {
-        "trade_date": 20261019,
-        "open_px": 16.65,
-        "high_px": 16.77,
-        "low_px": 16.05,
-        "close_px": 16.4,
-        "business_amount": 21480429,
-        "business_balance": 352114170,
-        "change": -2.15,
-        "ma5_px": 17.08,
-        "ma10_px": 18.53,
-        "ma20_px": 21.84,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
   "sh688825": {
     "stockName": "长鑫科技",
     "kline": [
@@ -1459,46 +1439,6 @@
     ],
     "isImportant": false
   },
-  "sz301183": {
-    "stockName": "东田微",
-    "kline": [
-      {
-        "trade_date": 20261019,
-        "open_px": 228.68,
-        "high_px": 230.98,
-        "low_px": 212,
-        "close_px": 218.98,
-        "business_amount": 3526130,
-        "business_balance": 775564900,
-        "change": -5.2,
-        "ma5_px": 237.38,
-        "ma10_px": 249.47,
-        "ma20_px": 271.57,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
-  "sz301021": {
-    "stockName": "英诺激光",
-    "kline": [
-      {
-        "trade_date": 20261019,
-        "open_px": 57.81,
-        "high_px": 57.98,
-        "low_px": 53.18,
-        "close_px": 56.07,
-        "business_amount": 6784248,
-        "business_balance": 378391490,
-        "change": -3.51,
-        "ma5_px": 61.03,
-        "ma10_px": 66.57,
-        "ma20_px": 77.56,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
   "sz000725": {
     "stockName": "京东方",
     "kline": [
@@ -1559,46 +1499,6 @@
     ],
     "isImportant": false
   },
-  "sh688700": {
-    "stockName": "东威科技",
-    "kline": [
-      {
-        "trade_date": 20261019,
-        "open_px": 47.38,
-        "high_px": 47.5,
-        "low_px": 43.97,
-        "close_px": 45.75,
-        "business_amount": 11765644,
-        "business_balance": 535412950,
-        "change": -4.39,
-        "ma5_px": 50.2,
-        "ma10_px": 54.09,
-        "ma20_px": 59.47,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
-  "sh688028": {
-    "stockName": "沃尔德",
-    "kline": [
-      {
-        "trade_date": 20261019,
-        "open_px": 83.71,
-        "high_px": 84.32,
-        "low_px": 76.01,
-        "close_px": 79.92,
-        "business_amount": 6360788,
-        "business_balance": 505979130,
-        "change": -5.93,
-        "ma5_px": 87.19,
-        "ma10_px": 95.49,
-        "ma20_px": 109.36,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
   "sz002636": {
     "stockName": "金安国纪",
     "kline": [
@@ -1619,26 +1519,6 @@
     ],
     "isImportant": false
   },
-  "sz300776": {
-    "stockName": "帝尔激光",
-    "kline": [
-      {
-        "trade_date": 20261019,
-        "open_px": 84,
-        "high_px": 86.2,
-        "low_px": 81.35,
-        "close_px": 84.56,
-        "business_amount": 6871393,
-        "business_balance": 577764630,
-        "change": -0.32,
-        "ma5_px": 89.82,
-        "ma10_px": 102.05,
-        "ma20_px": 111.96,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
   "sz000823": {
     "stockName": "超声电子",
     "kline": [
@@ -1654,46 +1534,6 @@
         "ma5_px": 24.54,
         "ma10_px": 23.47,
         "ma20_px": 23.91,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
-  "sh600707": {
-    "stockName": "彩虹股份",
-    "kline": [
-      {
-        "trade_date": 20261019,
-        "open_px": 7.49,
-        "high_px": 7.64,
-        "low_px": 7.25,
-        "close_px": 7.56,
-        "business_amount": 64951505,
-        "business_balance": 483494070,
-        "change": -0.4,
-        "ma5_px": 7.82,
-        "ma10_px": 8.48,
-        "ma20_px": 8.96,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
-  "sz301297": {
-    "stockName": "富乐德",
-    "kline": [
-      {
-        "trade_date": 20261019,
-        "open_px": 35.01,
-        "high_px": 35.47,
-        "low_px": 33.41,
-        "close_px": 35.13,
-        "business_amount": 14651772,
-        "business_balance": 506899330,
-        "change": -0.82,
-        "ma5_px": 36.84,
-        "ma10_px": 40.1,
-        "ma20_px": 43.91,
         "change_diff": 0
       }
     ],
@@ -1799,26 +1639,6 @@
     ],
     "isImportant": false
   },
-  "sh688625": {
-    "stockName": "呈和科技",
-    "kline": [
-      {
-        "trade_date": 20261019,
-        "open_px": 52.52,
-        "high_px": 52.52,
-        "low_px": 48,
-        "close_px": 50.31,
-        "business_amount": 5072980,
-        "business_balance": 253185200,
-        "change": -3.32,
-        "ma5_px": 54.01,
-        "ma10_px": 58.99,
-        "ma20_px": 64.25,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
   "sh600641": {
     "stockName": "先导基电",
     "kline": [
@@ -1834,26 +1654,6 @@
         "ma5_px": 41.89,
         "ma10_px": 44.03,
         "ma20_px": 42.16,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
-  "sh688123": {
-    "stockName": "聚辰股份",
-    "kline": [
-      {
-        "trade_date": 20261019,
-        "open_px": 126,
-        "high_px": 129.86,
-        "low_px": 120.08,
-        "close_px": 126.28,
-        "business_amount": 9595933,
-        "business_balance": 1191567720,
-        "change": -0.73,
-        "ma5_px": 127.34,
-        "ma10_px": 139.62,
-        "ma20_px": 144.79,
         "change_diff": 0
       }
     ],
@@ -1974,26 +1774,6 @@
         "ma5_px": 76.13,
         "ma10_px": 76.93,
         "ma20_px": 82.36,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
-  "sz002980": {
-    "stockName": "华盛昌",
-    "kline": [
-      {
-        "trade_date": 20261019,
-        "open_px": 109.61,
-        "high_px": 111,
-        "low_px": 100.7,
-        "close_px": 103.8,
-        "business_amount": 12403540,
-        "business_balance": 1289754750,
-        "change": -7.23,
-        "ma5_px": 110.45,
-        "ma10_px": 107.97,
-        "ma20_px": 112.05,
         "change_diff": 0
       }
     ],

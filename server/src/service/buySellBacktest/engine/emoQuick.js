@@ -2,7 +2,7 @@ const { EMO_QUICK_RANGE_HIGH, EMO_QUICK_RANGE_LOW, EMO_SWITCH_EMA_THRESHOLD } = 
 const { getTechEmotionEmaMap, getTechEmotionRawMap } = require('../utils/techEmotion');
 
 // 计算「快进快出」标注（买入时点判定）：
-//   ① 上一交易日科技情绪 3 日 EMA < -60；② 上上个/上个交易日当日科技情绪均处 (-30, 20) 且回升。
+//   ① 上一交易日科技情绪 3 日 EMA < -30；② 上上个/上个交易日当日科技情绪均处 (-30, -10) 且回升。
 // 两次买入系列（highest_{N}d_gain_two_buy）复用该能力，在首次建仓时调用并把结果挂到持仓上。
 // 入参须与 pickBestStock 一致：di 为日期轴（含预热日）绝对索引、rangeDates 为日期轴，方能取到同一「上一交易日」。
 const computeEmoQuickOutInfo = (di, rangeDates) => {

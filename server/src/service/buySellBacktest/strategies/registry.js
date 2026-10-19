@@ -34,7 +34,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 规则：候选按排名依次判断个股与创业板指最近 20 个已完结交易日的日收益率相关系数，corr > 0（正相关）
 // = 顺周期可买，corr <= 0（逆周期）剔除并顺延排名下一只；数据不足不拦截。下列 desc 文案自动追加到所有适用策略
 const CYC_FILTER_DESC = '顺周期过滤：候选按排名依次判断与创业板指最近 20 个已完结交易日的日收益率相关系数，相关系数 > 0（正相关，顺周期）才可买入，≤ 0（逆周期）则顺延至排名下一只（数据不足不拦截）';
-const isCycleFilterStrategy = (s) => !!s && s.iceMode !== true && s.keyBlockDays == null && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true;
+const isCycleFilterStrategy = (s) => !!s && s.iceMode !== true && s.keyBlockDays == null && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (isCycleFilterStrategy(s)) s.desc = `${s.desc}；${CYC_FILTER_DESC}`;
 }
@@ -52,11 +52,11 @@ const BUY_TIME_MAX_MINUTE = 1330;
 
 // 快进快出半仓（2026-10-13 用户新增）：仅适用于「N日涨幅最大-快进快出」系列
 // （emoQuickOut === true 且非两次买入 twoBuy）。买点触发时看该笔买入是否属于「快进快出」情形
-// （emoQuickOut.quickOut：上一交易日科技情绪 3 日 EMA < -60，或上两/上一交易日科技情绪均处 (-30,20)
+// （emoQuickOut.quickOut：上一交易日科技情绪 3 日 EMA < -30，或上两/上一交易日科技情绪均处 (-30,-10)
 // 区间且温和回升——即买入次日 10:00 强制卖出的持仓）：属于则本次只半仓买入（第一份），至少等到次日
 // 买点再次触发时才把剩余半仓买入（与两次买入策略同口径：同一标的、两份各自独立买卖与收益、均按半仓折算）；
 // 非快进快出情形（走通用 7 条件卖点）则首次触发即全仓买入。
-const EMO_QUICK_HALF_POS_DESC = '；快进快出半仓（2026-10-13 新增）：买点触发时判定该笔买入是否属于「快进快出」情形（上一交易日科技情绪 3 日 EMA < -60，或上两/上一交易日科技情绪均处 (-30,20) 区间且温和回升，即买入次日 10:00 强制卖出的持仓）——属于则本次仅半仓买入（第一份），至少等到次日买点再次触发时再买入剩余半仓（与两次买入策略同口径：买入同一标的、两份各自独立买卖与收益、均按半仓折算、不摊平成本），非快进快出情形（走通用 7 条件卖点）首次触发即全仓买入';
+const EMO_QUICK_HALF_POS_DESC = '；快进快出半仓（2026-10-13 新增）：买点触发时判定该笔买入是否属于「快进快出」情形（上一交易日科技情绪 3 日 EMA < -30，或上两/上一交易日科技情绪均处 (-30,-10) 区间且温和回升，即买入次日 10:00 强制卖出的持仓）——属于则本次仅半仓买入（第一份），至少等到次日买点再次触发时再买入剩余半仓（与两次买入策略同口径：买入同一标的、两份各自独立买卖与收益、均按半仓折算、不摊平成本），非快进快出情形（走通用 7 条件卖点）首次触发即全仓买入';
 for (const s of Object.values(STRATEGIES)) {
   if (s.emoQuickOut === true && s.twoBuy !== true) s.desc = `${s.desc}${EMO_QUICK_HALF_POS_DESC}`;
 }
@@ -66,7 +66,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 仅补字段不重复追加 desc）。规则：持仓当桶当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT（-7%）时无条件卖出——
 // 即时生效、无持续分钟/自救窗口要求，先于各策略原有卖点判定（generalSell 引擎桶级预检 / 重点板块引擎卖出预检）
 const CRASH_SELL_DESC = '；盘中大跌强卖（2026-10-16 新增）：持仓当桶当日跌幅（较昨收涨跌幅）≤ -7% 时无条件卖出（即时生效，先于其他卖点判定）';
-const isCrashSellStrategy = (s) => !!s && s.iceMode !== true && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true;
+const isCrashSellStrategy = (s) => !!s && s.iceMode !== true && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (!isCrashSellStrategy(s)) continue;
   s.crashSell = true;

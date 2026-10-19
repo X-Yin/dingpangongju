@@ -181,16 +181,16 @@ const getBlockAiContext = async (days = 10) => {
     })
     .join('\n');
 
-  // 格式化科技板块情绪数据（最近30条）
+  // 格式化科技板块情绪数据（最近30条；2026-10-19 起新条目为 V2 口径：加权涨幅=市值加权平均涨幅）
   const techIndexLines = (techIndexData || [])
     .map(t => {
       const date = fmtDate(t.date);
       const changeSum = t.changeSumResult?.toFixed(2) ?? '-';
-      const rawSum = t.rawSum?.toFixed(2) ?? '-';
+      const avgChange = t.avgChange != null ? t.avgChange.toFixed(2) : (t.rawSum != null ? t.rawSum.toFixed(2) : '-');
       const base = t.baseEmotion?.toFixed(2) ?? '-';
       const penalty = t.pullbackPenalty?.toFixed(2) ?? '-';
       const hasIce = t.hasIce ? ' [冰点]' : '';
-      return `${date} | 情绪指数:${changeSum >= 0 ? '+' : ''}${changeSum} | 原始值:${rawSum >= 0 ? '+' : ''}${rawSum} | 基础情绪:${base >= 0 ? '+' : ''}${base} | 冲高回落惩罚:${penalty}${hasIce}`;
+      return `${date} | 情绪指数:${changeSum >= 0 ? '+' : ''}${changeSum} | 加权涨幅:${avgChange >= 0 ? '+' : ''}${avgChange} | 基础情绪:${base >= 0 ? '+' : ''}${base} | 冲高回落惩罚:${penalty}${hasIce}`;
     })
     .join('\n');
 
@@ -216,7 +216,7 @@ const getBlockAiContext = async (days = 10) => {
 5. 最近十天研究报告：来自 research_reports 目录下最近 10 个交易日的研报内容
 6. 机构调研研报：来自 jigouReports.json 中的机构调研交流圈帖子
 7. 创业板指K线：创业板指(sz399006)最近30天日K线数据，含开高低收、涨跌幅、成交额
-8. 科技板块情绪指数：科技板块情绪数据最近30条记录，含情绪指数、原始值、基础情绪、冲高回落惩罚、冰点标记
+8. 科技板块情绪指数：科技板块情绪数据最近30条记录，含情绪指数、加权涨幅、基础情绪、冲高回落惩罚、冰点标记
 
 ========== 板块涨跌幅日历史 ==========
 格式：日期 | 涨幅前5 | 跌幅前5
@@ -252,7 +252,8 @@ ${jigouReportLines || '无数据'}
 ${cybKlineLines || '无数据'}
 
 ========== 科技板块情绪指数（最近30条） ==========
-格式：日期 | 情绪指数 | 原始值 | 基础情绪 | 冲高回落惩罚 [冰点]
+格式：日期 | 情绪指数 | 加权涨幅 | 基础情绪 | 冲高回落惩罚 [冰点]
+说明：2026-10-19 起情绪指数为新口径（V2）——个股按板块涨跌幅限制归一化后市值加权平均，再叠加冲高回落惩罚×0.2，±100 为全部涨停/跌停的极端端点
 
 ${techIndexLines || '无数据'}
 

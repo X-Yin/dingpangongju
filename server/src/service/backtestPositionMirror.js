@@ -1,7 +1,7 @@
 // 回测持仓镜像同步服务（2026-10-19 新增）
 // 目的：保证每天线上实盘操作与回测策略操作完全一致。
 // 流程：每天首次启动后端服务时（以「回测范围最新交易日已同步」为幂等判据），后台执行一次
-//   「3日涨幅最大&三日情绪-60快进快出」（highest_3d_gain_emoquick）策略回测（范围=回测报告默认
+//   「3日涨幅最大&三日情绪-30快进快出」（highest_3d_gain_emoquick）策略回测（范围=回测报告默认
 //   范围：最近 60 个可用回放交易日，与抽屉/全量回测缓存口径一致，现算不读写回测缓存），
 //   读取回测期末持仓（currentHoldings，快进快出半仓 / 两次买入可能有多份腿）：
 //     - 有期末持仓且持仓管理中不存在「同股票 + 同买入日」的镜像持仓 → 自动生成持仓：
@@ -20,7 +20,7 @@ const { runRangeBacktest, STRATEGIES } = require('./buySellBacktest');
 const { addStockPosition, getStockPositions } = require('./stockPosition');
 
 const MIRROR_STRATEGY_ID = 'highest_3d_gain_emoquick';
-const MIRROR_STRATEGY_NAME = STRATEGIES[MIRROR_STRATEGY_ID]?.name || '3日涨幅最大&三日情绪-60快进快出';
+const MIRROR_STRATEGY_NAME = STRATEGIES[MIRROR_STRATEGY_ID]?.name || '3日涨幅最大&三日情绪-30快进快出';
 const MIRROR_POSITION_WEIGHT = 50; // 镜像持仓默认仓位 50%
 const MAX_ATTEMPTS_PER_DAY = 3; // 同一自然日回测失败重试上限
 const STARTUP_DELAY_MS = 8 * 1000; // 启动后延迟执行，避免与前端首屏请求 / 诊断初始化抢资源

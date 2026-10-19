@@ -19,8 +19,8 @@ const resolveDelegatePick = (ctx) => {
   // 为「快进快出」（emoQuickOut.quickOut = true）：该笔持仓不走通用 7 条件卖点，买入次日 10:00 强制
   // 卖出、盘中跌破成本线 -2% 先到先卖止损（2026-10-05 新增；见 runRangeBacktest / runRangeBacktestMulti
   // 的每日预桶快进快出卖点）：
-  //   1) 上一交易日科技情绪指数的 3 日 EMA（getTechEmotionEmaMap，与情绪页「三日均值」同源同算法）< -60
-  //   2) 上上个、上个交易日的当日科技情绪原始分（getTechEmotionRawMap，非 3 日 EMA）均处 (-30, 20)
+  //   1) 上一交易日科技情绪指数的 3 日 EMA（getTechEmotionEmaMap，与情绪页「三日均值」同源同算法）< -30
+  //   2) 上上个、上个交易日的当日科技情绪原始分（getTechEmotionRawMap，非 3 日 EMA）均处 (-30, -10)
   //      区间且上个 > 上上个（情绪温和回升）
   // 两条件均不满足（或数据缺失）时为普通持仓，走通用卖点。递归调用不会再次命中本分支（委托 ID 无
   // _emoquick 后缀），买入复用全部通用机制（涨停顺延/抗分歧门槛/跨指数双门禁等）
@@ -52,7 +52,7 @@ const resolveDelegatePick = (ctx) => {
   }
 
   // 快进快出 × 研报覆盖双门策略（highest_3d_reports_top5_gain_emoquick，2026-10-04 用户新增）：
-  // 在 highest_3d_gain_emoquick 的基础上，仅当快进快出的触发条件是「上一交易日 3 日 EMA < -60」时，
+  // 在 highest_3d_gain_emoquick 的基础上，仅当快进快出的触发条件是「上一交易日 3 日 EMA < -30」时，
   // 选股口径从「3日涨幅最大」改为「最近 3 日研报覆盖数前五（含并列）→ 组内 3 日涨幅最大」
   // （委托到已有的 highest_3d_reports_top5_gain 策略，天然走 isTop5ReportGainMode 分支）；
   // 温和回升快进快出路径 / 非快进快出路径 / EMA 缺失时 → 仍委托 highest_3d_gain
@@ -68,7 +68,7 @@ const resolveDelegatePick = (ctx) => {
       && prev2Raw > EMO_QUICK_RANGE_LOW && prev2Raw < EMO_QUICK_RANGE_HIGH
       && prevRaw > EMO_QUICK_RANGE_LOW && prevRaw < EMO_QUICK_RANGE_HIGH
       && prevRaw > prev2Raw;
-    // 关键：只有走「上一交易日 3 日 EMA < -60」这条快进快出路径才切换到研报前五选股；
+    // 关键：只有走「上一交易日 3 日 EMA < -30」这条快进快出路径才切换到研报前五选股；
     // 温和回升 / 数据缺失 / 非快进快出 都用原 3 日涨幅最大选股
     const delegateId = quickByEmaBelow ? 'highest_3d_reports_top5_gain' : 'highest_3d_gain';
     const quickPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, delegateId, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet);

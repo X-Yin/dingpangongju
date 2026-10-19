@@ -256,7 +256,7 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
     });
   }
 
-  // 检查6：9:30 竞价开盘科技情绪 > 80 时，后续触发买点要求当前科技情绪 < 40（开盘过热需回落才可买）
+  // 检查6：9:30 竞价开盘科技情绪 > 30 时，后续触发买点要求当前科技情绪 < 10（开盘过热需回落才可买；2026-10-19 用户改：80 → 30、40 → 10）
   // 与线上 buySellDiagnose.js 一致：取 9:30 竞价桶（minute 930）科技情绪，找不到时回退当日第一个桶
   const openEmotionBucket = buckets.find(b => Number(b.minute) === 930) || buckets[0];
   const openingAuctionEmotion = openEmotionBucket && openEmotionBucket.techEmotion !== null && openEmotionBucket.techEmotion !== undefined && !Number.isNaN(Number(openEmotionBucket.techEmotion))
@@ -271,22 +271,22 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData) => {
   if (openingAuctionEmotion === null) {
     checkEmotionRetracePassed = true;
     emotionRetraceReason = '暂无 9:30 竞价科技情绪分时数据，跳过该检查';
-  } else if (openingAuctionEmotion <= 80) {
+  } else if (openingAuctionEmotion <= 30) {
     checkEmotionRetracePassed = true;
-    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 未超过 80，当前情绪须低于 40 的限制不生效`;
+    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 未超过 30，当前情绪须低于 10 的限制不生效`;
   } else if (currentRetraceEmotion === null) {
     checkEmotionRetracePassed = false;
-    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 80，但暂无当前分时数据，无法确认情绪回落至 40 以下`;
-  } else if (currentRetraceEmotion < 40) {
+    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 30，但暂无当前分时数据，无法确认情绪回落至 10 以下`;
+  } else if (currentRetraceEmotion < 10) {
     checkEmotionRetracePassed = true;
-    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 80，当前科技情绪 ${currentRetraceEmotion.toFixed(2)} 已回落至 40 以下，允许买入`;
+    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 30，当前科技情绪 ${currentRetraceEmotion.toFixed(2)} 已回落至 10 以下，允许买入`;
   } else {
     checkEmotionRetracePassed = false;
-    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 80，当前科技情绪 ${currentRetraceEmotion.toFixed(2)} 未回落至 40 以下，禁止买入`;
+    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 30，当前科技情绪 ${currentRetraceEmotion.toFixed(2)} 未回落至 10 以下，禁止买入`;
   }
   checks.push({
     id: 'emotion_retrace_after_open',
-    title: '竞价情绪超 80 时当前情绪须低于 40',
+    title: '竞价情绪超 30 时当前情绪须低于 10',
     passed: checkEmotionRetracePassed,
     value: openingAuctionEmotion === null ? '暂无分时数据' : `开盘 ${openingAuctionEmotion.toFixed(2)} / 当前 ${currentRetraceEmotion === null ? '--' : currentRetraceEmotion.toFixed(2)}`,
     reason: emotionRetraceReason,

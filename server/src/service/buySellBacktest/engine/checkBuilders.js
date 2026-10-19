@@ -104,8 +104,8 @@ const buildCycleDeferCheck = (emoCycSkipped) => {
 };
 
 // 情绪快进快出标注明细项（highest_{N}d_gain_emoquick 系列）：标注本次买入是否为「快进快出」买入
-//（触发条件二选一：上一交易日科技情绪 3 日 EMA < -60；或上上个、上个交易日的当日科技情绪原始分
-// 均处 -30~20 区间且回升）——是则该笔持仓不走通用 7 条件卖点、买入次日 10:00 强制卖出；
+//（触发条件二选一：上一交易日科技情绪 3 日 EMA < -30；或上上个、上个交易日的当日科技情绪原始分
+// 均处 -30~-10 区间且回升）——是则该笔持仓不走通用 7 条件卖点、买入次日 10:00 强制卖出；
 // 2026-10-05 叠加：持仓次日盘中跌破成本线 -2% 时先到先卖止损；
 // 2026-10-09 叠加：次日命中强卖豁免（10:00 前买点再触发 / 10:00 时点科技情绪>0+低于开盘价<30只+资金净流入>0）则不强卖、转由通用卖点接管；
 // 2026-10-15 叠加：快进快出系列全部持仓（含普通持仓与豁免持仓）盘中当日跌幅（较昨收）≤ -7% 时无条件强卖
@@ -235,7 +235,7 @@ const withResilienceGateInfo = (buyInfo, picked) => {
     // 情绪快进快出系列：标注本次买入是否为快进快出（明细项；快进快出时买入原因尾部加标签）
     buyChecks.push(buildEmoQuickOutCheck(picked.emoQuickOut));
     if (picked.emoQuickOut.quickOut) {
-      const quickTag = picked.emoQuickOut.trigger === 'range_rising' ? '情绪回升快进快出(次日10:00强卖)' : '情绪-60快进快出(次日10:00强卖)';
+      const quickTag = picked.emoQuickOut.trigger === 'range_rising' ? '情绪回升快进快出(次日10:00强卖)' : '情绪-30快进快出(次日10:00强卖)';
       buyReason = `${buyReason}｜${quickTag}`;
     }
   }

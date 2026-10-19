@@ -146,13 +146,15 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
       </Tag>
     ) : null
   );
-  // 半仓原因文案：极致胜率策略按所属周期腿说明，情绪游资-n板打板为半仓单持仓，其余保留两次买入策略口径
+  // 半仓原因文案：极致胜率策略按所属周期腿说明，情绪游资-n板打板/成交量占比为半仓单持仓，其余保留两次买入策略口径
   const halfReasonOf = (leg, cycle) => (
     (strategy.id === 'hot_money_2board_attack' || strategy.id === 'hot_money_3board_attack' || strategy.nBoardMode === true)
       ? '情绪游资-n板打板为半仓单持仓（权重 0.5、逐笔复利）'
-      : isExtremeWin && (leg === 'A' || leg === 'B')
-        ? `极致胜率·${cycle === 'counter' ? '逆周期' : '顺周期'}腿为半仓买入（账户拆两份、每份各 5 成、各自独立买卖）`
-        : '两次买入策略每份仓位均为半仓');
+      : (strategy.volumeShareMode === true || /^hot_money_volume_share_\dd$/.test(strategy.id || ''))
+        ? '情绪游资-成交量占比为半仓单持仓（权重 0.5、逐笔复利）'
+        : isExtremeWin && (leg === 'A' || leg === 'B')
+          ? `极致胜率·${cycle === 'counter' ? '逆周期' : '顺周期'}腿为半仓买入（账户拆两份、每份各 5 成、各自独立买卖）`
+          : '两次买入策略每份仓位均为半仓');
   // 期末持仓：优先取 currentHoldings（两次买入策略可能同时持有两份），兼容旧的单份 currentHolding
   const holdings = (strategy.currentHoldings && strategy.currentHoldings.length > 0)
     ? strategy.currentHoldings

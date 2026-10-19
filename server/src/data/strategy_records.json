@@ -1,55 +1,5 @@
 [
   {
-    "id": "4cfb04384b74f818",
-    "time": "2026-10-19 09:30:06",
-    "read": true,
-    "strategyId": "prev_day_tail_rally",
-    "title": "⚠️ 前一日尾盘拉升，今日低开大概率下跌",
-    "description": "前一日（20261016）创业板指：14:00后最低2743.98→收盘2772.38，拉升1.03%；科创50：14:00后最低1341.27→收盘1358.65，拉升1.30%。今日竞价低开-0.43%（开盘价2760.35 < 前日收盘2772.38），当日大概率低开低走大阴线，情况不对要赶快清仓！",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
-    "id": "ba6ce485979918c4",
-    "time": "2026-10-19 09:30:06",
-    "read": true,
-    "strategyId": "overnight_crisis_escape",
-    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
-    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-0.0亿</strong>（净流出）<br/>• 科技分时情绪 -54.8 → -48.1（上升 6.7）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
-    "id": "d63447cd143280f1",
-    "time": "2026-10-19 09:49:12",
-    "read": true,
-    "strategyId": "volume_shrink_stagnation",
-    "title": "📉 放量后缩量滞涨",
-    "description": "成交量从高位 <strong>-271亿</strong> 回落至 <strong>-379亿</strong>，指数开始滞涨，需警惕回落风险。",
-    "severity": "medium",
-    "isBullish": false
-  },
-  {
-    "id": "23044b897d57c354",
-    "time": "2026-10-19 09:57:14",
-    "read": true,
-    "strategyId": "panic_outflow",
-    "title": "🚨 恐慌盘出逃",
-    "description": "成交量较约15分钟前放大 <strong>119亿</strong>（≥100亿），主力资金净流出加速（-88.5→-127.6亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
-    "id": "0a1715555c6423d7",
-    "time": "2026-10-19 10:17:22",
-    "read": true,
-    "strategyId": "panic_outflow",
-    "title": "🚨 恐慌盘出逃",
-    "description": "成交量较约15分钟前放大 <strong>174亿</strong>（≥100亿），主力资金净流出加速（-159.3→-184.5亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
     "id": "93d940f11db69f3f",
     "time": "2026-10-19 14:34:31",
     "read": true,

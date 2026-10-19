@@ -124,7 +124,7 @@ const { notifyBuyPointFeishu } = require('./service/buyPointNotifier');
 const buyPointPushService = require('./service/buyPointPushService');
 // 卖点诊断后端集中化：与买点共用同一 WebSocket 服务，10s 集中推送 + 后端发飞书
 const sellPointPushService = require('./service/sellPointPushService');
-// 回测持仓镜像同步：每天首次启动跑「3日涨幅最大&三日情绪-60快进快出」回测，期末未卖持仓自动入持仓管理
+// 回测持仓镜像同步：每天首次启动跑「3日涨幅最大&三日情绪-30快进快出」回测，期末未卖持仓自动入持仓管理
 const backtestPositionMirror = require('./service/backtestPositionMirror');
 // 调试面板 MOCK：手动触发买点/卖点命中，走同一推送 + 飞书链路
 const debugMock = require('./service/debugMock');

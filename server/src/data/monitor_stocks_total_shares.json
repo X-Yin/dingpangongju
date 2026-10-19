@@ -305,11 +305,6 @@
     "TotalShares": 957842348
   },
   {
-    "secu_code": "sh688403",
-    "secu_name": "汇成股份",
-    "TotalShares": 993098171
-  },
-  {
     "secu_code": "sh688825",
     "secu_name": "长鑫科技",
     "TotalShares": 67884099077
@@ -365,16 +360,6 @@
     "TotalShares": 227126867
   },
   {
-    "secu_code": "sz301183",
-    "secu_name": "东田微",
-    "TotalShares": 80076350
-  },
-  {
-    "secu_code": "sz301021",
-    "secu_name": "英诺激光",
-    "TotalShares": 152869941
-  },
-  {
     "secu_code": "sz000725",
     "secu_name": "京东方Ａ",
     "TotalShares": 37044328064
@@ -390,39 +375,14 @@
     "TotalShares": 294833553
   },
   {
-    "secu_code": "sh688700",
-    "secu_name": "东威科技",
-    "TotalShares": 298401360
-  },
-  {
-    "secu_code": "sh688028",
-    "secu_name": "沃尔德  ",
-    "TotalShares": 150949000
-  },
-  {
     "secu_code": "sz002636",
     "secu_name": "金安国纪",
     "TotalShares": 728000000
   },
   {
-    "secu_code": "sz300776",
-    "secu_name": "帝尔激光",
-    "TotalShares": 285234456
-  },
-  {
     "secu_code": "sz000823",
     "secu_name": "超声电子",
     "TotalShares": 594954911
-  },
-  {
-    "secu_code": "sh600707",
-    "secu_name": "彩虹股份",
-    "TotalShares": 3588389732
-  },
-  {
-    "secu_code": "sz301297",
-    "secu_name": "富乐德",
-    "TotalShares": 704760283
   },
   {
     "secu_code": "sz002008",
@@ -450,19 +410,9 @@
     "TotalShares": 87000000
   },
   {
-    "secu_code": "sh688625",
-    "secu_name": "呈和科技",
-    "TotalShares": 259666940
-  },
-  {
     "secu_code": "sh600641",
     "secu_name": "先导基电",
     "TotalShares": 948172920
-  },
-  {
-    "secu_code": "sh688123",
-    "secu_name": "聚辰股份",
-    "TotalShares": 158970494
   },
   {
     "secu_code": "sh601208",
@@ -493,11 +443,6 @@
     "secu_code": "sz002938",
     "secu_name": "鹏鼎控股",
     "TotalShares": 2317536658
-  },
-  {
-    "secu_code": "sz002980",
-    "secu_name": "华盛昌",
-    "TotalShares": 188411224
   },
   {
     "secu_code": "sh603067",

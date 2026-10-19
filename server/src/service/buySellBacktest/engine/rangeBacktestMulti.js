@@ -2,6 +2,7 @@ const { STRATEGIES, isCycleFilterStrategy } = require('../strategies/registry');
 const { runKeyBlockBacktest } = require('./keyBlockBacktest');
 const { runReverseLeaderBacktest } = require('./reverseLeaderBacktest');
 const { runNBoardBacktest } = require('./nBoardBacktest');
+const { runVolumeShareBacktest } = require('./volumeShareBacktest');
 const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
 const { buildWindowAxis } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -31,7 +32,9 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   const reverseLeaderIds = ids.filter(id => STRATEGIES[id]?.reverseLeaderMode === true);
   // 情绪游资-n板打板（n=2/3）走独立引擎（同单策略路径，避免落入常规循环）
   const nBoardIds = ids.filter(id => STRATEGIES[id]?.nBoardMode === true);
-  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true);
+  // 情绪游资-成交量占比（N=2/3/5）走独立引擎（同单策略路径，避免落入常规循环）
+  const volumeShareIds = ids.filter(id => STRATEGIES[id]?.volumeShareMode === true);
+  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true && STRATEGIES[id]?.volumeShareMode !== true);
   const results = [];
   for (const strategyId of keyBlockIds) {
     const result = await runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
@@ -43,6 +46,10 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   }
   for (const strategyId of nBoardIds) {
     const result = await runNBoardBacktest(startDate, endDate, strategyId, onProgress);
+    results.push({ strategyId, result });
+  }
+  for (const strategyId of volumeShareIds) {
+    const result = await runVolumeShareBacktest(startDate, endDate, strategyId, onProgress);
     results.push({ strategyId, result });
   }
   if (regularIds.length === 0) return results;

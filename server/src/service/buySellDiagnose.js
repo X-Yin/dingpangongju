@@ -52,7 +52,7 @@ const dapanDataPath = path.resolve(__dirname, '../data/dapanData.json');
 const quickOutForceSellPath = path.resolve(__dirname, '../data/quick_out_force_sell.json');
 
 // ========== 情绪快进快出「10:00 强制卖出」当日记录（缓存文件） ==========
-// 卖点诊断条件8（上上个交易日科技情绪 3 日 EMA < -60 且买入在上一交易日 → 今日 10:00 强制卖出）
+// 卖点诊断条件8（上上个交易日科技情绪 3 日 EMA < -30 且买入在上一交易日 → 今日 10:00 强制卖出）
 // 触发时写入一条当日记录；买点前置诊断（getBuyPointChecks）读取该缓存：当日已有强卖记录则买点诊断
 // 不命中（与回测 emoquick 策略「强卖当日禁止二次买入」规则对齐）。文件结构：
 // { "YYYYMMDD": [{ code, name, time, ema }], ... }，读取时自动清理 7 天前的历史记录
@@ -259,15 +259,15 @@ const evaluateQuickOutExempt = async (emoValue) => {
 
 // ========== 情绪快进快出买入日判定（与回测 emoquick 策略口径一致，2026-10-03 新增条件②） ==========
 // 判定某买入日（YYYYMMDD 字符串）是否为「快进快出日」，满足任一即为真：
-//   ① 买入日上一交易日科技情绪 3 日 EMA < -60（与情绪页「三日均值」同源同算法）
+//   ① 买入日上一交易日科技情绪 3 日 EMA < -30（与情绪页「三日均值」同源同算法，2026-10-19 用户改：-60 → -30）
 //   ② 买入日上两个交易日的当日科技情绪原始分（tech_index.json 每日收盘情绪分，非 3 日 EMA）
-//      均处 (-30, 20) 开区间且上个交易日 > 上上个交易日（情绪温和回升）
+//      均处 (-30, -10) 开区间且上个交易日 > 上上个交易日（情绪温和回升，2026-10-19 用户改：(-30, 20) → (-30, -10)）
 // 供卖点诊断条件8（买入次日 10:00 强卖）与买点前置诊断的「快进快出买入提示」共用。
 // 交易日历不足或数据缺失的判定值记 null，该条件不触发（按普通持仓处理）。
 // 返回 { quickOut, trigger, ema, prevDateStr, prev2DateStr, prevRaw, prev2Raw }
-const EMO_QUICK_OUT_EMA = -60;
+const EMO_QUICK_OUT_EMA = -30;
 const EMO_QUICK_RANGE_LOW = -30;
-const EMO_QUICK_RANGE_HIGH = 20;
+const EMO_QUICK_RANGE_HIGH = -10;
 // 快进快出系列「盘中大跌强卖」阈值（条件9，2026-10-16 实盘新增，口径与回测 EMO_QUICK_CRASH_PCT 一致）
 const EMO_QUICK_CRASH_PCT = -7;
 const checkEmoQuickOutDay = (buyDateStr) => {
@@ -1902,9 +1902,9 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
   // ===== 条件8A/8B：情绪快进快出强制卖出（次日 10:00 强卖，两个触发口径拆分为独立条件展示） =====
   // 买入日为「快进快出日」且买入时间在上一交易日 → 今日上午 10:00 强制卖出。快进快出日判定走
   // checkEmoQuickOutDay（与回测 emoquick 策略口径一致），满足任一口径即触发强卖：
-  //   条件8A：买入日上一交易日科技情绪 3 日 EMA < -60；
+  //   条件8A：买入日上一交易日科技情绪 3 日 EMA < -30；
   //   条件8B：买入日上两个交易日的当日科技情绪原始分（tech_index.json 每日收盘情绪分，非 3 日 EMA）
-  //           均处 (-30, 20) 区间且逐日回升（情绪温和回升）。
+  //           均处 (-30, -10) 区间且逐日回升（情绪温和回升）。
   // 两条条件分别独立判定与展示（便于区分当前命中的是哪个口径、另一个是否满足），任一命中即走强卖。
   // 买入时间取持仓管理中该股的 buyDate（与浮窗「买入当日不生效」同一数据源）。
   // 时间型条件：10:00 前为「确认中」等待态（10:00 起触发，不参与 5 分钟持续判定）；判定数据缺失按普通持仓处理
@@ -1913,7 +1913,7 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
   //   ② 评估时点科技情绪>0 + 低于开盘价<30只 + 资金净流入>0），命中任一则 8A/8B 不判 satisfied
   //   （展示「已豁免」），持仓继续持有、通用条件 1-7 仍正常生效
   const condition8a = {
-    name: '情绪快进快出强卖（3日EMA<-60）',
+    name: '情绪快进快出强卖（3日EMA<-30）',
     satisfied: false,
     pending: false,
     pendingMinutes: 0,
@@ -1993,7 +1993,7 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
       }
       const exempted8 = hitQuick8 && after10am8 && exemptInfo8 != null;
       const exemptViaText8 = exemptInfo8?.via === 'buy_retrigger' ? '买点再触发' : '10:00 时点强势';
-      // ===== 条件8A：3 日 EMA < -60 口径 =====
+      // ===== 条件8A：3 日 EMA < -30 口径 =====
       if (quickInfo8.quickByEma) {
         if (exempted8) {
           condition8a.exempted = true;
@@ -2031,7 +2031,7 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
           { label: '状态', value: '未触发' },
         ];
       }
-      // ===== 条件8B：情绪温和回升口径（两日原始分均在 (-30, 20) 且逐日回升） =====
+      // ===== 条件8B：情绪温和回升口径（两日原始分均在 (-30, -10) 且逐日回升） =====
       if (quickInfo8.quickByRange) {
         if (exempted8) {
           condition8b.exempted = true;
@@ -2618,7 +2618,7 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
     });
   }
 
-  // 检查6：9:30 竞价开盘科技情绪 > 80 时，后续触发买点要求当前科技情绪 < 40（开盘过热需回落才可买）
+  // 检查6：9:30 竞价开盘科技情绪 > 30 时，后续触发买点要求当前科技情绪 < 10（开盘过热需回落才可买；2026-10-19 用户改：80 → 30、40 → 10）
   let intradayRecords = [];
   try {
     const { data: intradayData } = getTechEmotionIntraday();
@@ -2637,21 +2637,21 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
   if (openingAuctionEmotion === null) {
     checkEmotionRetracePassed = true;
     emotionRetraceReason = '暂无 9:30 竞价科技情绪分时数据，跳过该检查';
-  } else if (openingAuctionEmotion <= 80) {
+  } else if (openingAuctionEmotion <= 30) {
     checkEmotionRetracePassed = true;
-    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 未超过 80，当前情绪须低于 40 的限制不生效`;
+    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 未超过 30，当前情绪须低于 10 的限制不生效`;
   } else if (currentTechEmotion === null) {
     checkEmotionRetracePassed = false;
-    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 80，但暂无当前分时数据，无法确认情绪回落至 40 以下`;
-  } else if (currentTechEmotion < 40) {
+    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 30，但暂无当前分时数据，无法确认情绪回落至 10 以下`;
+  } else if (currentTechEmotion < 10) {
     checkEmotionRetracePassed = true;
-    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 80，当前科技情绪 ${currentTechEmotion.toFixed(2)} 已回落至 40 以下，允许买入`;
+    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 30，当前科技情绪 ${currentTechEmotion.toFixed(2)} 已回落至 10 以下，允许买入`;
   } else {
     checkEmotionRetracePassed = false;
-    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 80，当前科技情绪 ${currentTechEmotion.toFixed(2)} 未回落至 40 以下，禁止买入`;
+    emotionRetraceReason = `9:30 竞价科技情绪 ${openingAuctionEmotion.toFixed(2)} 超过 30，当前科技情绪 ${currentTechEmotion.toFixed(2)} 未回落至 10 以下，禁止买入`;
   }
   checks.push({
-    id: 'emotion_retrace_after_open', title: '竞价情绪超 80 时当前情绪须低于 40', passed: checkEmotionRetracePassed,
+    id: 'emotion_retrace_after_open', title: '竞价情绪超 30 时当前情绪须低于 10', passed: checkEmotionRetracePassed,
     value: openingAuctionEmotion === null ? '暂无分时数据' : `开盘 ${openingAuctionEmotion.toFixed(2)} / 当前 ${currentTechEmotion === null ? '--' : currentTechEmotion.toFixed(2)}`,
     reason: emotionRetraceReason,
   });
@@ -2818,7 +2818,7 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
   if (quickOutSoldRecords.length > 0) allPassed = false;
 
   // 快进快出买入提示：今日若按买点买入且今日为「快进快出日」（判定口径与卖点诊断条件8/回测
-  // emoquick 策略一致：① 上一交易日 3 日 EMA < -60；② 上两交易日当日科技情绪原始分均处 -30~20
+  // emoquick 策略一致：① 上一交易日 3 日 EMA < -30；② 上两交易日当日科技情绪原始分均处 -30~-10
   // 区间且回升），该笔持仓不走通用卖点、次日上午 10:00 强制卖出。提示性检查项，不阻断买入（可正常买）
   const quickOutHint = /^\d{8}$/.test(String(targetDateStr || '')) ? checkEmoQuickOutDay(targetDateStr) : null;
   checks.push({
@@ -2828,8 +2828,8 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
     value: quickOutHint?.quickOut ? '快进快出日（次日10:00强卖）' : '普通买入日',
     reason: quickOutHint?.quickOut
       ? (quickOutHint.trigger === 'range_rising'
-        ? `今日为快进快出买入日：上两交易日当日科技情绪温和回升（${quickOutHint.prev2Raw} → ${quickOutHint.prevRaw}，均在 -30~20 区间），今日买入的持仓不走通用卖点，次日上午 10:00 强制卖出`
-        : `今日为快进快出买入日：上一交易日科技情绪 3 日 EMA ${quickOutHint.ema} < -60，今日买入的持仓不走通用卖点，次日上午 10:00 强制卖出`)
+        ? `今日为快进快出买入日：上两交易日当日科技情绪温和回升（${quickOutHint.prev2Raw} → ${quickOutHint.prevRaw}，均在 ${EMO_QUICK_RANGE_LOW}~${EMO_QUICK_RANGE_HIGH} 区间），今日买入的持仓不走通用卖点，次日上午 10:00 强制卖出`
+        : `今日为快进快出买入日：上一交易日科技情绪 3 日 EMA ${quickOutHint.ema} < ${EMO_QUICK_OUT_EMA}，今日买入的持仓不走通用卖点，次日上午 10:00 强制卖出`)
       : '今日为普通买入日，买入后走通用卖点诊断（情绪数据缺失时同样按普通持仓处理）',
   });
 

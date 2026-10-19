@@ -98,7 +98,7 @@ const BUY_RULES = [
   { key: 'fund_inflow', title: '最近 5 分钟资金净流入', desc: '最近 5min 大盘主力资金净流入大于 20 亿才触发买入' },
   { key: 'volume_expansion', title: '量能变化', desc: '当前量能（今日累计成交额-昨日全天）为 0 以上：较 5min 前增加即可；量能为负：需较 5min 前增加不小于 100 亿。若今日或前一交易日科技情绪触及 -100 退潮冰点（hasIce）则此项自动豁免' },
   { key: 'opening_below', title: '开盘后自选股低于开盘价数量', desc: '仅 9:30-10:00 生效：现价低于 9:30 开盘价的自选股数量不超过 30 只' },
-  { key: 'emotion_retrace_after_open', title: '竞价情绪回落', desc: '9:30 竞价科技情绪 > 80 时，需当前科技情绪 < 40 才允许买入；开盘情绪 ≤80 或无线数据时该项不限制' },
+  { key: 'emotion_retrace_after_open', title: '竞价情绪回落', desc: '9:30 竞价科技情绪 > 30 时，需当前科技情绪 < 10 才允许买入；开盘情绪 ≤30 或无线数据时该项不限制' },
   { key: 'resilience_gate', title: '选股抗分歧门槛（仅「买入最高涨幅」策略叠加 ≥ 11；所有策略通用 ≥ 9）', desc: '两层门槛：① 全局最低门槛 ≥ 9（所有策略通用，买点触发时刻个股抗分歧分数 < 9 → 顺延至下一只满足的股票，全部不满足则当日不买入）；② 专项门槛 ≥ 11（仅「买入最高涨幅」一个策略叠加启用，其余策略不走此条）。BUY_RULES 的买入条件明细会在 resiliencScore 字段里返回实际抗分歧分数，并标注是否因前序股票抗分歧不足而顺延（含前序股票触发时涨幅与抗分歧分数）' },
   { key: 'one_word_board_defer', title: '上一交易日一字板过滤（主板≥8%、创业/科创≥16%，全策略通用）', desc: '选股通用限制：上一交易日一字板的股票次日不买。一字板判定（按上一交易日日K，对上一交易日昨收计算涨幅，口径较真实一字板放宽）：主板（60/00 开头）竞价开盘涨幅 ≥ 8%、收盘涨幅 ≥ 8%、且全天最低价对应涨幅 ≥ 8%（三项同时满足，即全天始终维持普涨、无低位上车机会）；创业板（30）/科创板（68）阈值为 16%。命中者从候选中剔除并顺延到 N 日涨幅排名的下一只，买入明细追加 one_word_board_defer 项标注被剔除的候选（含触发时涨幅）；上一交易日日K数据不足无法判定时不拦截。情绪游资系列同样执行此过滤' },
   { key: 'cycle_defer', title: '顺周期过滤（与创业板指近20日相关性>0，除情绪游资类外全策略）', desc: '适用范围：除「情绪游资类」（顺/逆周期情绪游资、情绪游资·极致胜率、情绪游资·反向抱团龙头）外的全部策略（含 N日涨幅最大、快进快出、研报覆盖、两次买入等）。规则：候选按涨幅排名依次判断个股与创业板指在最近 20 个已完结交易日（截至买入前一交易日收盘，不含买入日）的日收益率 Pearson 相关系数——相关系数 > 0（正相关）为顺周期，可买入；≤ 0（负相关/零相关）为逆周期，剔除并顺延到排名下一只。买入明细追加 cycle_defer 项记录被顺延候选及其相关系数；个股或指数共同交易日不足 20 个（无法计算）时不拦截' },
@@ -115,14 +115,14 @@ const SELL_RULES = [
 
 // 回测策略选项（与后端 buySellBacktest.STRATEGIES 保持一致；全量自选股策略已移除）
 const STRATEGY_OPTIONS = [
-  // 情绪快进快出系列（买点触发均可买入；上一交易日科技情绪 3 日 EMA < -60 的日子买入 → 该笔持仓次日 10:00 强制卖出且强卖当日禁止二次买入，否则走通用卖点；2026-10-05 起叠加次日盘中跌破成本线 -2% 先到先卖止损；2026-10-15 起全部持仓叠加盘中当日跌幅较昨收 ≤ -7% 无条件强卖）
-  { value: 'highest_2d_gain_emoquick', label: '2日涨幅最大&三日情绪-60快进快出' },
-  { value: 'highest_3d_gain_emoquick', label: '3日涨幅最大&三日情绪-60快进快出' },
-  { value: 'highest_4d_gain_emoquick', label: '4日涨幅最大&三日情绪-60快进快出' },
-  { value: 'highest_5d_gain_emoquick', label: '5日涨幅最大&三日情绪-60快进快出' },
-  { value: 'highest_2d5_gain_emoquick', label: '2.5日涨幅最大&三日情绪-60快进快出' },
-  { value: 'highest_3d5_gain_emoquick', label: '3.5日涨幅最大&三日情绪-60快进快出' },
-  { value: 'highest_3d_reports_top5_gain_emoquick', label: '3日涨幅最大&三日情绪-60快进快出&研报覆盖' },
+  // 情绪快进快出系列（买点触发均可买入；上一交易日科技情绪 3 日 EMA < -30 的日子买入 → 该笔持仓次日 10:00 强制卖出且强卖当日禁止二次买入，否则走通用卖点；2026-10-05 起叠加次日盘中跌破成本线 -2% 先到先卖止损；2026-10-15 起全部持仓叠加盘中当日跌幅较昨收 ≤ -7% 无条件强卖）
+  { value: 'highest_2d_gain_emoquick', label: '2日涨幅最大&三日情绪-30快进快出' },
+  { value: 'highest_3d_gain_emoquick', label: '3日涨幅最大&三日情绪-30快进快出' },
+  { value: 'highest_4d_gain_emoquick', label: '4日涨幅最大&三日情绪-30快进快出' },
+  { value: 'highest_5d_gain_emoquick', label: '5日涨幅最大&三日情绪-30快进快出' },
+  { value: 'highest_2d5_gain_emoquick', label: '2.5日涨幅最大&三日情绪-30快进快出' },
+  { value: 'highest_3d5_gain_emoquick', label: '3.5日涨幅最大&三日情绪-30快进快出' },
+  { value: 'highest_3d_reports_top5_gain_emoquick', label: '3日涨幅最大&三日情绪-30快进快出&研报覆盖' },
   { value: 'highest_gain', label: '买入最高涨幅' },
   { value: 'highest_2d_gain', label: '2日涨幅最大' },
   { value: 'highest_3d_gain', label: '3日涨幅最大' },
@@ -172,6 +172,12 @@ const STRATEGY_OPTIONS = [
   // 卖点完全沿用「情绪游资-极致胜率」顺周期腿；半仓单持仓
   { value: 'hot_money_2board_attack', label: '情绪游资-2板打板' },
   { value: 'hot_money_3board_attack', label: '情绪游资-3板打板' },
+  // 情绪游资-成交量占比（2026-10-19 用户新增，N = 2 / 3 / 5）：成交量占比 3 日线斜率最陡前 3 板块（剔除半导体/液冷/光通信/存储芯片/pcb）
+  // 成分股 ∩ 近 5 日连板为候选，买 N 日涨幅最大者（涨停顺延、分时 > -5%、抗分歧 ≥ 9），9:40 起逐桶重试；
+  // 卖点 = 所属板块占比 3 日线斜率转负 → 次日开盘卖出；半仓单持仓
+  { value: 'hot_money_volume_share_2d', label: '情绪游资-成交量占比-2日涨幅最大' },
+  { value: 'hot_money_volume_share_3d', label: '情绪游资-成交量占比-3日涨幅最大' },
+  { value: 'hot_money_volume_share_5d', label: '情绪游资-成交量占比-5日涨幅最大' },
   { value: 'highest_3d_reports', label: '3日研报覆盖数最多' },
   { value: 'highest_5d_reports', label: '5日研报覆盖数最多' },
   { value: 'highest_3d_reports_top5_gain', label: '3日研报前五&涨幅最大' },
@@ -207,6 +213,7 @@ const STRATEGY_CATEGORIES = [
       'hot_money_ice_rev_4d_gain', 'hot_money_ice_rev_5d_gain',
       'hot_money_extreme_win', 'hot_money_reverse_leader',
       'hot_money_2board_attack', 'hot_money_3board_attack',
+      'hot_money_volume_share_2d', 'hot_money_volume_share_3d', 'hot_money_volume_share_5d',
     ],
   },
   {
@@ -408,6 +415,42 @@ const nBoardAttackNote = (n) => ({
   ],
 });
 
+// 情绪游资-成交量占比（hot_money_volume_share_{2,3,5}d，2026-10-19 用户新增；N = 2 / 3 / 5）：
+//   选股 = 「成交量占比 3 日线斜率（截止 T-1）为正且最陡的前 3 板块（剔除半导体/液冷/光通信/存储芯片/pcb）」
+//          成分股 ∩ 最近 5 个交易日连板个股；
+//   买点 = 9:40 起在 9:40–11:30 逐桶重试，候选按 N 日涨幅最大排名，涨停（一字板）/分时涨幅 ≤ -5%/抗分歧 < 9 顺延；
+//   卖点 = 所属前 3 板块中任一板块成交量占比 3 日线斜率（截止 T-1）转负 → 次一交易日开盘卖出；
+//   仓位 = 半仓单持仓（权重 0.5）。
+const VOLUME_SHARE_STRATEGY_IDS = ['hot_money_volume_share_2d', 'hot_money_volume_share_3d', 'hot_money_volume_share_5d'];
+const isVolumeShareStrategy = (id) => VOLUME_SHARE_STRATEGY_IDS.includes(id);
+const volumeShareN = (id) => {
+  if (id === 'hot_money_volume_share_2d') return 2;
+  if (id === 'hot_money_volume_share_5d') return 5;
+  return 3;
+};
+const VOLUME_SHARE_EXCLUDE_TEXT = '半导体/液冷/光通信/存储芯片/pcb';
+const volumeShareBuyRules = (n) => [
+  { key: 'vs_block_rank', title: `选股①：成交量占比 3 日线斜率（截止 T-1）为正且最陡的前 3 板块（剔除 ${VOLUME_SHARE_EXCLUDE_TEXT}）`, desc: `从「板块成交量占比」中筛选**截止上一交易日（T-1）3 日线斜率**（斜率 = (r[i] − r[i-3]) / 3，占比 = 板块成交额 ÷ 全市场总成交额 × 100）**为正**的板块，**剔除 ${VOLUME_SHARE_EXCLUDE_TEXT}** 后，取**斜率最陡的前 3 个板块**（不足 3 个取全部剩余）；板块判定统一以 T-1 收盘口径为准。` },
+  { key: 'vs_pool', title: '选股②：前 3 板块成分股 ∩ 最近 5 个交易日连板个股（交叉过滤取重叠）', desc: `读这 3 个板块的成分股汇总 json（「东方财富板块成分股汇总/{板块名}.json」）得到其**全部个股**，并与**最近 5 个交易日** lianbanSnapshot 中的**所有连板个股**做**交叉过滤**，取两者**重叠（交集）**的个股构成候选池（剔除 ST 等黑名单）；同一只股票若属多个前 3 板块，记录其全部所属板块（卖出时取**任一板块**转负即触发）。` },
+  { key: 'vs_gain_rank', title: `选股③：候选中买入 ${n} 日涨幅最大的一只`, desc: `在候选池中按 **${n} 日涨幅**（复利口径：最近 ${n - 1} 个收盘日涨幅复利 × 买入桶当日分时涨幅复利）**降序排名**，买入**排名第一**且通过下方顺延筛选的一只。` },
+  { key: 'vs_skip', title: '顺延规则：一字板/涨停顺延 → 当日分时涨幅 > -5% → 抗分歧指数 ≥ 9', desc: `按排名依次筛选：① 买入时点该候选**已涨停（一字板：主板 ≥ 9.5%、创业板/科创板 ≥ 19%）**买不进 → **顺延下一只**；② 仅可买入**当日分时涨幅 > -5%** 者（≤ -5% 顺延下一只）；③ 买入时点**抗分歧指数需 ≥ 9**（抗分歧跟踪指数：sh688 → 科创 50 sh000688，其余 → 创业板指 sz399006；不足者按 ${n} 日涨幅排名顺延下一只）。` },
+  { key: 'vs_buy_time', title: '买点：等到 9:40 之后，自 9:40 起逐桶重试（9:40–11:30）', desc: `**买点等到 9:40 之后**才触发——**自 9:40 起**在 9:40–11:30 的**每个时间桶**按上述规则**持续重试**，直到买进为止；某桶内多只候选均通过时取 ${n} 日涨幅排名最高者；**当日全部桶无合格候选则当日不买**（次日再看）。` },
+  { key: 'vs_position', title: '仓位：半仓单持仓（权重 0.5）', desc: `**半仓单持仓（权重 0.5）**：账户最多同时持有 1 只股票，买入按**半仓（×0.5）**计收益、收益**逐笔复利**。` },
+];
+const volumeShareSellRules = [
+  { key: 'vs_sell_block_slope', title: '卖点：该股所属板块成交量占比 3 日线斜率（截止 T-1）转负 → 次日开盘卖出', desc: `当该个股**所属板块**（其命中的前 3 板块中的**任一板块**）的**成交量占比 3 日线斜率截止到上一交易日（T-1）变成负数**时，**次一交易日开盘按开盘分时价卖出**（买入次日起生效）；同一股属多个前 3 板块时，**任一板块**的斜率转负即触发。` },
+];
+const volumeShareNote = (n) => ({
+  group: `情绪游资·成交量占比（N=${n}）`,
+  bullets: [
+    `**选股（每日按 D 的前一交易日 T-1 数据判定）**：① 从「板块成交量占比」中筛选**截止上一交易日 3 日线斜率（(r[i] − r[i-3]) / 3）为正**的板块，**剔除 ${VOLUME_SHARE_EXCLUDE_TEXT}** 后取**斜率最陡的前 3 个板块**（不足 3 个取全部）；② 读这 3 个板块的成分股汇总 json 得到其全部个股，并与**最近 5 个交易日 lianbanSnapshot 中的所有连板个股**做交叉过滤，取**重叠（交集）**的个股为候选（剔除 ST 等黑名单）；③ 在候选中买入 **${n} 日涨幅最大**的一只（${n} 日涨幅按复利口径，窗口末位为买入桶当日分时涨幅）。`,
+    `**顺延规则**：买入时点该候选若**已涨停（一字板：主板 ≥ 9.5%、创业板/科创板 ≥ 19%）**则**顺延下一只**；且仅可买入**当日分时涨幅 > -5%** 者；且**抗分歧指数 ≥ 9** 者（跟踪指数：sh688 → 科创 50 sh000688，其余 → 创业板指 sz399006；不足者按 ${n} 日涨幅排名顺延下一只）。`,
+    `**买点**：**等到 9:40 之后**才买——自 9:40 起在 9:40–11:30 的**每个时间桶**持续重试，直到买进；当日全部桶无合格候选则当日不买（次日再看）。`,
+    `**卖点**：该个股**所属板块（命中的前 3 板块中的任一板块）**的成交量占比 **3 日线斜率截止到上一交易日变成负数**时，**次一交易日开盘按开盘分时价卖出**（买入次日起生效，任一所属板块转负即触发）。`,
+    `**仓位**：**半仓单持仓（权重 0.5）**，买入按半仓（×0.5）计收益、**逐笔复利**。`,
+  ],
+});
+
 const STRATEGY_SPECIFIC_NOTES = {
   // ---- 常规「N日涨幅最大」系列 ----
   highest_gain: {
@@ -481,7 +524,7 @@ const STRATEGY_SPECIFIC_NOTES = {
       '分批建仓：买点**首次触发**先买入 **5 成**仓位（第一份）；之后**再次触发买点**、且距第一份建仓日**已间隔至少一个交易日**（次日及以后）时，再买入第二份 **5 成**。同一交易日内不再补买。',
       '第二份固定买入**第一份的同一只股票**，不按 N 日涨幅重新择股；买入时点该股已**涨停**（主板 >9.5%、创业/科创 >19%）则本次放弃、保持半仓，等待下一次买点触发且该股未涨停时再买入。',
       '持仓成本：两份仓位**各自独立**，均以**自身买入价**为成本、**不摊平**；各自跌破成本线 **-2%** 止损（阈值 = 自身买入价 × 0.98）。',
-      '卖点：叠加「快进快出」能力——满足快进快出触发条件（① 上一交易日科技情绪 3 日 EMA < -60；② 上上个、上个交易日当日科技情绪原始分均在 -30~20 区间且回升）买入的持仓，次日 10:00 强制卖出（不走通用卖点）、强卖当日禁止二次买入，并叠加次日盘中跌破成本线 -2% 先到先卖止损（开盘首分钟已破线走竞价自救窗口——拉升中持有、回补至阈值上方则不再止损、待再次跌破再卖，回落且仍跌破阈值才卖；盘中才破线即时止损）；否则走通用 SELL_RULES 7 条件（含跌破成本线 -2%）。',
+      '卖点：叠加「快进快出」能力——满足快进快出触发条件（① 上一交易日科技情绪 3 日 EMA < -30；② 上上个、上个交易日当日科技情绪原始分均在 -30~-10 区间且回升）买入的持仓，次日 10:00 强制卖出（不走通用卖点）、强卖当日禁止二次买入，并叠加次日盘中跌破成本线 -2% 先到先卖止损（开盘首分钟已破线走竞价自救窗口——拉升中持有、回补至阈值上方则不再止损、待再次跌破再卖，回落且仍跌破阈值才卖；盘中才破线即时止损）；否则走通用 SELL_RULES 7 条件（含跌破成本线 -2%）。',
       '收益折算：两份仓位**各自独立**按 **半仓（×0.5）** 折算收益并计入账户（概览/回撤同口径），**不合并**、各产生一条独立交易记录。快进快出强卖/止损同口径折算。',
       '跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9 顺延照常生效。',
     ],
@@ -627,30 +670,30 @@ const STRATEGY_SPECIFIC_NOTES = {
     group: '快进快出系列',
     bullets: [
       '选股口径：与「2日涨幅最大」完全相同——买点触发时买入**触发时点当日盘中涨幅最大**的一只，跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9 顺延生效。',
-      '与常规策略的唯一区别在**卖点**：当上一交易日科技情绪 3 日 EMA < -60 时，该笔持仓**次日 10:00 强制卖出**（不走通用卖点），且强卖当日禁止二次买入；否则仍走通用 SELL_RULES 7 条件。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
-      '快进快出温和回升额外门控：买入日、卖出日（上上个、上个交易日）的当日科技情绪原始分（非 3 日 EMA）必须都落在开区间 (-30, 20) 内且逐日回升，才触发快进快出逻辑；不满足则退化为普通「2日涨幅最大」。',
+      '与常规策略的唯一区别在**卖点**：当上一交易日科技情绪 3 日 EMA < -30 时，该笔持仓**次日 10:00 强制卖出**（不走通用卖点），且强卖当日禁止二次买入；否则仍走通用 SELL_RULES 7 条件。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
+      '快进快出温和回升额外门控：买入日、卖出日（上上个、上个交易日）的当日科技情绪原始分（非 3 日 EMA）必须都落在开区间 (-30, -10) 内且逐日回升，才触发快进快出逻辑；不满足则退化为普通「2日涨幅最大」。',
     ],
   },
   highest_3d_gain_emoquick: {
     group: '快进快出系列',
     bullets: [
       '选股口径：与「3日涨幅最大」完全相同——买点触发时买入**最近 3 个交易日涨幅之和最大**的一只，跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9 顺延生效。',
-      '特殊卖点：当上一交易日科技情绪 3 日 EMA < -60 → 次日 10:00 强制卖出（不走通用卖点），强卖当日禁止二次买入；否则走通用 SELL_RULES。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
-      '快进快出温和回升门控：近两日当日情绪原始分 ∈ (-30, 20) 且逐日回升才触发；不满足退化为普通 3 日涨幅最大。',
+      '特殊卖点：当上一交易日科技情绪 3 日 EMA < -30 → 次日 10:00 强制卖出（不走通用卖点），强卖当日禁止二次买入；否则走通用 SELL_RULES。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
+      '快进快出温和回升门控：近两日当日情绪原始分 ∈ (-30, -10) 且逐日回升才触发；不满足退化为普通 3 日涨幅最大。',
     ],
   },
   highest_4d_gain_emoquick: {
     group: '快进快出系列',
     bullets: [
       '选股口径：最近 4 个交易日涨幅之和最大的一只；跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9。',
-      '特殊卖点：上一交易日 3 日 EMA < -60 → 次日 10:00 强卖，否则通用 7 条件卖点。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
+      '特殊卖点：上一交易日 3 日 EMA < -30 → 次日 10:00 强卖，否则通用 7 条件卖点。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
     ],
   },
   highest_5d_gain_emoquick: {
     group: '快进快出系列',
     bullets: [
       '选股口径：最近 5 个交易日涨幅之和最大的一只；跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9。',
-      '特殊卖点：上一交易日 3 日 EMA < -60 → 次日 10:00 强卖，否则通用 7 条件卖点。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
+      '特殊卖点：上一交易日 3 日 EMA < -30 → 次日 10:00 强卖，否则通用 7 条件卖点。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
     ],
   },
   highest_2d5_gain_emoquick: {
@@ -658,8 +701,8 @@ const STRATEGY_SPECIFIC_NOTES = {
     bullets: [
       '选股口径：买点触发时买入「2.5 日涨幅最大」口径下涨幅最大的一只；跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9 顺延生效。',
       halfDayNote(2),
-      '与常规策略的唯一区别在**卖点**：当上一交易日科技情绪 3 日 EMA < -60 时，该笔持仓**次日 10:00 强制卖出**（不走通用卖点），且强卖当日禁止二次买入；否则仍走通用 SELL_RULES 7 条件。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
-      '快进快出温和回升额外门控：买入日、卖出日（上上个、上个交易日）的当日科技情绪原始分（非 3 日 EMA）必须都落在开区间 (-30, 20) 内且逐日回升，才触发快进快出逻辑；不满足则退化为普通「2.5 日涨幅最大」。',
+      '与常规策略的唯一区别在**卖点**：当上一交易日科技情绪 3 日 EMA < -30 时，该笔持仓**次日 10:00 强制卖出**（不走通用卖点），且强卖当日禁止二次买入；否则仍走通用 SELL_RULES 7 条件。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
+      '快进快出温和回升额外门控：买入日、卖出日（上上个、上个交易日）的当日科技情绪原始分（非 3 日 EMA）必须都落在开区间 (-30, -10) 内且逐日回升，才触发快进快出逻辑；不满足则退化为普通「2.5 日涨幅最大」。',
     ],
   },
   highest_3d5_gain_emoquick: {
@@ -667,15 +710,15 @@ const STRATEGY_SPECIFIC_NOTES = {
     bullets: [
       '选股口径：买点触发时买入「3.5 日涨幅最大」口径下涨幅最大的一只；跨指数双门禁 + 全局最低抗分歧门槛 ≥ 9 顺延生效。',
       halfDayNote(3),
-      '特殊卖点：当上一交易日科技情绪 3 日 EMA < -60 → 次日 10:00 强制卖出（不走通用卖点），强卖当日禁止二次买入；否则走通用 SELL_RULES。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
-      '快进快出温和回升门控：近两日当日情绪原始分 ∈ (-30, 20) 且逐日回升才触发；不满足退化为普通「3.5 日涨幅最大」。',
+      '特殊卖点：当上一交易日科技情绪 3 日 EMA < -30 → 次日 10:00 强制卖出（不走通用卖点），强卖当日禁止二次买入；否则走通用 SELL_RULES。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
+      '快进快出温和回升门控：近两日当日情绪原始分 ∈ (-30, -10) 且逐日回升才触发；不满足退化为普通「3.5 日涨幅最大」。',
     ],
   },
   highest_3d_reports_top5_gain_emoquick: {
     group: '快进快出系列',
     bullets: [
-      '选股口径分三路：当触发「上一交易日科技情绪 3 日 EMA < -60」这条快进快出路径时，先取**最近 3 日研报覆盖数前五（含并列，仅统计买点前已创建的研报）**形成候选池，再从中选 3 日涨幅最大的一只（博弈反弹提胜率）；走「温和回升」或数据缺失 / 非快进快出 时仍按普通「3 日涨幅最大」选股。',
-      '特殊卖点：与 highest_3d_gain_emoquick 完全相同——上一交易日 3 日 EMA < -60 或温和回升任一触发 → 次日 10:00 强卖（不走通用 7 条件），否则走通用 SELL_RULES。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
+      '选股口径分三路：当触发「上一交易日科技情绪 3 日 EMA < -30」这条快进快出路径时，先取**最近 3 日研报覆盖数前五（含并列，仅统计买点前已创建的研报）**形成候选池，再从中选 3 日涨幅最大的一只（博弈反弹提胜率）；走「温和回升」或数据缺失 / 非快进快出 时仍按普通「3 日涨幅最大」选股。',
+      '特殊卖点：与 highest_3d_gain_emoquick 完全相同——上一交易日 3 日 EMA < -30 或温和回升任一触发 → 次日 10:00 强卖（不走通用 7 条件），否则走通用 SELL_RULES。2026-10-05 起快进快出持仓叠加盘中 -2% 止损（先到先卖）：次日盘中跌破成本线 -2%（买入价 × 0.98）即提前止损离场——开盘首分钟已破线走竞价自救窗口（拉升中持有；回补至阈值上方则不再止损、待再次跌破再卖；回落且仍跌破阈值才卖）、盘中才破线即时止损；止损与强卖当日均禁止二次买入。2026-10-15 起快进快出系列全部持仓（含普通持仓与强卖豁免持仓）叠加盘中大跌强卖：盘中当日跌幅（较昨收）≤ -7% 时无条件卖出（先到先卖、无自救窗口、不受强卖豁免保护）。',
     ],
   },
 
@@ -761,6 +804,9 @@ const STRATEGY_SPECIFIC_NOTES = {
   // ---- 情绪游资-n板打板（mood n-board attack，2026-10-18 用户新增，n = 2 / 3） ----
   hot_money_2board_attack: nBoardAttackNote(2),
   hot_money_3board_attack: nBoardAttackNote(3),
+  hot_money_volume_share_2d: volumeShareNote(2),
+  hot_money_volume_share_3d: volumeShareNote(3),
+  hot_money_volume_share_5d: volumeShareNote(5),
 
 };
 
@@ -907,7 +953,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const isOpen = embedded ? true : open;
   const [range, setRange] = useState(null);
   const [strategy, setStrategy] = useState(() => {
-    // 默认策略：若 localStorage 里存的是已下线的策略 id，回退到默认的「3日涨幅最大&三日情绪-60快进快出」
+    // 默认策略：若 localStorage 里存的是已下线的策略 id，回退到默认的「3日涨幅最大&三日情绪-30快进快出」
     const saved = localStorage.getItem('latest_training_camp_buy_sell_backtest_strategy');
     return STRATEGY_OPTIONS.some(o => o.value === saved) ? saved : 'highest_3d_gain_emoquick';
   });
@@ -986,6 +1032,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const curIsExtremeWin = isExtremeWinStrategy(strategy);
   const curIsReverseLeader = isReverseLeaderStrategy(strategy);
   const curIsNBoardAttack = isNBoardAttackStrategy(strategy);
+  const curIsVolumeShare = isVolumeShareStrategy(strategy);
   const effectiveRange = range || defaultRange;
 
   // 组件卸载时停止轮询
@@ -1353,8 +1400,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
       const pick = effectiveRange;
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
-      const buyRules = curIsNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (curIsExtremeWin ? extremeWinBuyRules : (curIsReverseLeader ? reverseLeaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : BUY_RULES))));
-      const sellRules = curIsNBoardAttack ? nBoardAttackSellRules : (curIsReverseLeader ? reverseLeaderSellRules : (curIsExtremeWin ? LEADER_SELL_RULES : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : SELL_RULES))));
+      const buyRules = curIsVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (curIsNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (curIsExtremeWin ? extremeWinBuyRules : (curIsReverseLeader ? reverseLeaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : BUY_RULES)))));
+      const sellRules = curIsVolumeShare ? volumeShareSellRules : (curIsNBoardAttack ? nBoardAttackSellRules : (curIsReverseLeader ? reverseLeaderSellRules : (curIsExtremeWin ? LEADER_SELL_RULES : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : SELL_RULES)))));
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);
@@ -1855,7 +1902,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                         weight={t.weight}
                         halfReason={
                           splitLegHalfReason(t.splitLeg, { extremeWin: curIsExtremeWin, cycle: t.cycle })
-                          || (t.twoBuy ? '两次买入策略每份仓位均为半仓' : '防御为半仓买入')
+                          || (curIsVolumeShare ? '情绪游资-成交量占比为半仓单持仓（权重 0.5、逐笔复利）' : (t.twoBuy ? '两次买入策略每份仓位均为半仓' : '防御为半仓买入'))
                         }
                       />
                       <Checkbox
@@ -1956,7 +2003,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                           label="浮盈"
                           halfReason={
                             splitLegHalfReason(h.splitLeg, { extremeWin: curIsExtremeWin, cycle: h.cycle })
-                            || (h.twoBuy ? '两次买入策略每份仓位均为半仓' : '防御为半仓买入')
+                            || (curIsVolumeShare ? '情绪游资-成交量占比为半仓单持仓（权重 0.5、逐笔复利）' : (h.twoBuy ? '两次买入策略每份仓位均为半仓' : '防御为半仓买入'))
                           }
                         />
                       )}
@@ -2177,8 +2224,9 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         const isExtremeWin = isExtremeWinStrategy(strategy);
         const isReverseLeader = isReverseLeaderStrategy(strategy);
         const isNBoardAttack = isNBoardAttackStrategy(strategy);
-        const buyRules = isNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (isExtremeWin ? extremeWinBuyRules : (isReverseLeader ? reverseLeaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : BUY_RULES))));
-        const sellRules = isNBoardAttack ? nBoardAttackSellRules : (isReverseLeader ? reverseLeaderSellRules : (isExtremeWin ? LEADER_SELL_RULES : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : SELL_RULES))));
+        const isVolumeShare = isVolumeShareStrategy(strategy);
+        const buyRules = isVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (isNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (isExtremeWin ? extremeWinBuyRules : (isReverseLeader ? reverseLeaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : BUY_RULES)))));
+        const sellRules = isVolumeShare ? volumeShareSellRules : (isNBoardAttack ? nBoardAttackSellRules : (isReverseLeader ? reverseLeaderSellRules : (isExtremeWin ? LEADER_SELL_RULES : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : SELL_RULES)))));
         const notes = STRATEGY_SPECIFIC_NOTES[strategy];
 
         // 将文案中 **xxx** 这种 markdown 粗体标记解析为 React 节点（纯文本不解析）
