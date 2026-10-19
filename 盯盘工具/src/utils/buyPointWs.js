@@ -10,7 +10,7 @@ import { local_ip } from '../constant';
 const WS_URL = `ws://${local_ip}:3000/ws`;
 const RECONNECT_BASE_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
-const PUSH_TYPES = ['buy_point', 'sell_point'];
+const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked'];
 
 let socket = null;
 let reconnectTimer = null;
@@ -135,6 +135,8 @@ export const subscribePush = (type, handler) => {
 export const subscribeBuyPointPush = (handler) => subscribePush('buy_point', handler);
 // 卖点订阅
 export const subscribeSellPointPush = (handler) => subscribePush('sell_point', handler);
+// 买点屏蔽通知订阅（快进快出强卖当日禁买：其余买点条件通过但被策略规则拦截时后端推送，open:true 实时弹窗）
+export const subscribeBuyPointBlockedPush = (handler) => subscribePush('buy_point_blocked', handler);
 
 // 订阅 debug 自检消息（debug_pong / debug_ping / debug_pong_ack）；返回取消订阅函数
 export const subscribeDebugWs = (handler) => {

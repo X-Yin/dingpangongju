@@ -667,7 +667,9 @@ const getStockPositionFundFlow = (code, date) => {
     return dayData[code] || [];
 };
 
-const addStockPosition = (code, name, weight) => {
+// extras（可选）：回测持仓镜像同步等场景需要指定买入日期/成本价/来源标记，覆盖默认「当前时刻」
+//   { buyDate: 'YYYY-MM-DD', buyTime: 'HH:mm', costPrice: number, mirror: { strategy, strategyName, syncedDate, ... } }
+const addStockPosition = (code, name, weight, extras = null) => {
     try {
         if (!code || !name) return { success: false, message: '股票代码和名称不能为空' };
         const stock_positions = readStockPositionsFile();
@@ -678,13 +680,17 @@ const addStockPosition = (code, name, weight) => {
         const now = dayjs();
         const normalizedWeight = POSITION_WEIGHT_OPTIONS.includes(Number(weight)) ? Number(weight) : 50;
         // 记录买入日期与买入时间：卖点诊断买入当日不生效，次日起生效
+        const extraFields = extras && typeof extras === 'object' ? extras : {};
+        const costNum = Number(extraFields.costPrice);
         stock_positions.push({
             id: `${code}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
             code,
             name,
-            buyDate: now.format('YYYY-MM-DD'),
-            buyTime: now.format('HH:mm'),
+            buyDate: extraFields.buyDate || now.format('YYYY-MM-DD'),
+            buyTime: extraFields.buyTime || now.format('HH:mm'),
             weight: normalizedWeight,
+            ...(Number.isFinite(costNum) && costNum > 0 ? { costPrice: round(costNum, 2) } : {}),
+            ...(extraFields.mirror && typeof extraFields.mirror === 'object' ? { mirror: extraFields.mirror } : {}),
         });
         writeJsonFile(stock_position_path, stock_positions);
         return { success: true };
@@ -949,14 +955,16 @@ const addStockRecord = ({ type, code, name, detail, pipelineStage }) => {
 };
 
 // 重写 addStockPosition，记录买入操作
-const addStockPositionWithRecord = (code, name, weight) => {
-    const result = addStockPosition(code, name, weight);
+const addStockPositionWithRecord = (code, name, weight, extras = null) => {
+    const result = addStockPosition(code, name, weight, extras);
     if (result.success) {
         addStockRecord({
             type: 'buy',
             code,
             name,
-            detail: `新增持仓：${name}（${code}）`,
+            detail: extras && extras.mirror
+                ? `新增持仓（回测镜像同步）：${name}（${code}），成本 ${extras.costPrice != null ? Number(extras.costPrice).toFixed(2) : '-'}，买入日 ${extras.buyDate || '-'}`
+                : `新增持仓：${name}（${code}）`,
             pipelineStage: 0,
         });
     }

@@ -6,7 +6,7 @@ import { local_ip } from './constant';
 import { getThemeColor } from './utils/theme';
 import { isTradingDay, isAfterMarketClose, getNextTradingDay } from './utils/tradingDay';
 import { getStrategyMode } from './utils/strategyMode';
-import { syncStrategyMode } from './utils/buyPointWs';
+import { syncStrategyMode, subscribeBuyPointBlockedPush } from './utils/buyPointWs';
 import PreMarketReading from './components/PreMarketReading';
 import TodayPlan from './components/TodayPlan';
 import FloatingStockPosition from './components/FloatingStockPosition';
@@ -558,6 +558,18 @@ function App() {
   const [outflowWarningVisible, setOutflowWarningVisible] = useState(false);
   const [outflowWarningMinimized, setOutflowWarningMinimized] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState(1200);
+
+  // 买点屏蔽通知（2026-10-19 新增）：快进快出强卖当日禁买——当日其余买点前置条件全部通过、
+  // 仅被「快进快出强卖当日禁买」规则拦截时，后端经 WS 推送 buy_point_blocked（open:true 实时弹窗）
+  const [buyPointBlockedInfo, setBuyPointBlockedInfo] = useState(null);
+  useEffect(() => {
+    const unsubscribe = subscribeBuyPointBlockedPush((msg) => {
+      if (msg && msg.open === true && msg.data) {
+        setBuyPointBlockedInfo({ ...msg.data, bucket: msg.bucket ?? null, ts: msg.ts ?? null });
+      }
+    });
+    return unsubscribe;
+  }, []);
   const countdownTimerRef = useRef(null);
 
   const handleOutflowDetected = () => {
@@ -1425,6 +1437,32 @@ function App() {
         }}
       >
         <MajorEventReminder />
+      </Modal>
+      <Modal
+        title={<span><WarningOutlined style={{ color: '#fa8c16', marginRight: '8px' }} />今日买点命中已屏蔽</span>}
+        open={!!buyPointBlockedInfo}
+        onCancel={() => setBuyPointBlockedInfo(null)}
+        footer={[
+          <Button key="ok" type="primary" onClick={() => setBuyPointBlockedInfo(null)}>我知道了</Button>,
+        ]}
+        width={560}
+        centered
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ padding: '10px 12px', background: '#fff7e6', border: '1px solid #ffd591', borderRadius: 6 }}>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>屏蔽原因</div>
+            <div style={{ color: 'rgba(0,0,0,0.75)' }}>{buyPointBlockedInfo?.reason || '当日已发生情绪快进快出 10:00 强制卖出，当日禁止二次买入'}</div>
+          </div>
+          <div style={{ color: 'rgba(0,0,0,0.65)', fontSize: 13 }}>
+            依据「{buyPointBlockedInfo?.strategyName || '3日涨幅最大&三日情绪-60快进快出'}」策略规则：强卖 / 止损当日禁止二次买入（哪怕买点再次触发也不买）。
+            今日盘中其余买点前置条件虽已全部通过，但为保证实盘操作与回测策略完全一致，今日买点命中通知已被屏蔽。
+          </div>
+          {buyPointBlockedInfo?.bucket != null && (
+            <div style={{ color: 'rgba(0,0,0,0.45)', fontSize: 12 }}>
+              通知时间桶：{String(buyPointBlockedInfo.bucket).slice(0, 2)}:{String(buyPointBlockedInfo.bucket).slice(2, 4)}
+            </div>
+          )}
+        </div>
       </Modal>
 
       {location.pathname !== '/training_camp' && <FloatingStockPosition onOutflowDetected={handleOutflowDetected} />}

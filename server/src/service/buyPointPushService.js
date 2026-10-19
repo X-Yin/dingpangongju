@@ -20,6 +20,7 @@ const statePath = path.resolve(__dirname, '../data/buy_point_notify_state.json')
 let timer = null;
 let running = false;
 let lastNotifiedBucket = null;
+let lastBlockedBucket = null; // 买点屏蔽通知独立桶门控（快进快出强卖当日禁买）
 
 const readState = () => {
   try {
@@ -44,6 +45,26 @@ const loadLastNotifiedBucket = () => {
   const s = readState();
   const today = dayjs().format('YYYYMMDD');
   lastNotifiedBucket = s && s.date === today && s.bucket != null ? s.bucket : null;
+  lastBlockedBucket = s && s.date === today && s.blockedBucket != null ? s.blockedBucket : null;
+};
+
+// 买点屏蔽检测（快进快出强卖当日禁买，2026-10-19 新增）：当日已有「情绪快进快出 10:00 强制卖出」
+// 记录时买点诊断的 quick_out_no_rebuy 检查不通过（与回测 emoquick 策略「强卖当日禁止二次买入」对齐）。
+// 若除该拦截项（及提示项/尾盘抄底或分支）外其余前置条件全部通过，说明买点本应命中、仅被该规则屏蔽，
+// 返回屏蔽信息供推送 buy_point_blocked；其余条件也有失败时属「买点本来就不命中」，不算屏蔽。
+const detectQuickOutBlock = (data) => {
+  if (!data || data.allPassed !== false) return null;
+  const checks = Array.isArray(data.checks) ? data.checks : [];
+  const noRebuy = checks.find((c) => c && c.id === 'quick_out_no_rebuy');
+  if (!noRebuy || noRebuy.passed !== false) return null;
+  const otherFailed = checks.filter((c) => c && c.passed === false
+    && c.id !== 'quick_out_no_rebuy' && c.id !== 'tail_dip_buying' && c.id !== 'quick_out_buy_hint');
+  if (otherFailed.length > 0) return null;
+  return {
+    reason: noRebuy.reason || '当日已发生情绪快进快出 10:00 强制卖出，当日禁止二次买入，买点诊断不命中',
+    value: noRebuy.value || null,
+    failedChecks: otherFailed.map((c) => c.id),
+  };
 };
 
 // 推送时间窗：非交易日不发；9:30 前不发；15:00 后不发；午休（11:31-12:59）不发。
@@ -80,7 +101,31 @@ const tick = async () => {
     // 1) 每 10s 广播诊断结果（仅供前端展示，不触发打开）
     wsServer.broadcast({ type: 'buy_point', mode, bucket, ts: Date.now(), data, open: false });
 
-    // 2) 桶门控命中：命中且进入新的合法桶时，发飞书 + 额外广播 open:true（每桶最多一次）
+    // 2) 买点屏蔽（快进快出强卖当日禁买）：其余前置条件全部通过但被该规则拦截时，抑制买点命中
+    //    通知（含尾盘抄底或分支）与飞书，改为推送 buy_point_blocked 屏蔽通知（每桶最多一次）
+    const block = detectQuickOutBlock(data);
+    if (block) {
+      if (bucket != null && lastBlockedBucket !== bucket) {
+        lastBlockedBucket = bucket;
+        writeState({ date: dayjs().format('YYYYMMDD'), bucket, mode, blockedBucket: bucket });
+        wsServer.broadcast({
+          type: 'buy_point_blocked',
+          mode,
+          bucket,
+          ts: Date.now(),
+          open: true, // 实时推送才弹窗；前端晚挂载补发时 open 被去掉，不重复弹
+          data: {
+            ...block,
+            strategy: 'highest_3d_gain_emoquick',
+            strategyName: '3日涨幅最大&三日情绪-60快进快出',
+          },
+        });
+        console.log(`[买点屏蔽] 桶 ${bucket} 买点命中被快进快出强卖当日禁买规则拦截：${block.reason}`);
+      }
+      return;
+    }
+
+    // 3) 桶门控命中：命中且进入新的合法桶时，发飞书 + 额外广播 open:true（每桶最多一次）
     const canonicalHit = data.allPassed === true
       || (data.reverse && data.reverse.allPassed === true)
       || data.tailDipBuyingHit === true;

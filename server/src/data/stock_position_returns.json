@@ -41,6 +41,14 @@
         "stockCode": "sh603061",
         "position": "",
         "time": "11:00"
+      },
+      {
+        "id": "1792390341304_454i",
+        "action": "sell",
+        "stockName": "华海清科",
+        "stockCode": "sh688120",
+        "position": "",
+        "time": "14:12"
       }
     ],
     "totalReturn": null,
@@ -48,7 +56,7 @@
     "score": null,
     "review": "",
     "createdAt": "2026-10-19T01:31:03.247Z",
-    "updatedAt": "2026-10-19T03:00:02.035Z"
+    "updatedAt": "2026-10-19T06:12:21.321Z"
   },
   {
     "date": "2026-10-16",
