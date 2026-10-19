@@ -1187,6 +1187,42 @@ function App() {
     },
   ];
 
+  // 键盘快捷键：连按两次 ↑ 切换到上一条菜单路由，连按两次 ↓ 切换到下一条菜单路由
+  useEffect(() => {
+    const DOUBLE_PRESS_INTERVAL = 400; // 判定「连按两次」的最大间隔（毫秒）
+    const MENU_KEYS = menuItems.map((item) => item.key);
+    let lastKey = '';
+    let lastTime = 0;
+
+    const handleArrowKeyDown = (e) => {
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+      if (e.repeat) return; // 长按产生的重复事件不计入连按
+      const target = e.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return; // 输入状态下不触发路由切换
+      }
+
+      const now = Date.now();
+      const isDoublePress = lastKey === e.key && now - lastTime <= DOUBLE_PRESS_INTERVAL;
+      lastKey = e.key;
+      lastTime = now;
+      if (!isDoublePress) return;
+
+      lastKey = '';
+      lastTime = 0;
+      e.preventDefault();
+
+      const currentIndex = MENU_KEYS.indexOf(location.pathname);
+      if (currentIndex === -1) return;
+      const step = e.key === 'ArrowUp' ? -1 : 1;
+      const nextIndex = (currentIndex + step + MENU_KEYS.length) % MENU_KEYS.length;
+      navigate(MENU_KEYS[nextIndex]);
+    };
+
+    window.addEventListener('keydown', handleArrowKeyDown);
+    return () => window.removeEventListener('keydown', handleArrowKeyDown);
+  }, [location.pathname, navigate]);
+
   return (
     <Layout className="app-layout">
       <Sider
