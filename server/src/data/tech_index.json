@@ -838,10 +838,10 @@
   },
   {
     "date": 20261019,
-    "changeSumResult": -93.03,
-    "rawSum": -272.58,
-    "baseEmotion": -72.05,
-    "pullbackPenalty": -52.45,
+    "changeSumResult": -93.92,
+    "rawSum": -262.06,
+    "baseEmotion": -70.32,
+    "pullbackPenalty": -58.99,
     "marketCapWeighted": true,
     "hasIce": true
   }
