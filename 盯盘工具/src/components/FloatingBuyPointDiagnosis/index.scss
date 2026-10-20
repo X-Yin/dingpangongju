@@ -359,6 +359,38 @@
     }
   }
 
+  /* 建议买入仓位提示（与回测仓位管理一致；科技进攻橙色 / 情绪游资蓝色） */
+  .fbd-buy-position-hint {
+    margin-top: 10px;
+    padding: 11px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.04));
+    flex-shrink: 0;
+
+    .fbd-buy-position-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #b45309;
+      margin-bottom: 5px;
+    }
+
+    .fbd-buy-position-text {
+      font-size: 12px;
+      line-height: 1.7;
+      color: #7c510b;
+      word-break: break-word;
+    }
+
+    &.ew {
+      border-color: rgba(59, 130, 246, 0.28);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.03));
+
+      .fbd-buy-position-title { color: #1e40af; }
+      .fbd-buy-position-text { color: #33507a; }
+    }
+  }
+
   /* 股票列表 */
   .fbd-stock-list {
     flex: 1;

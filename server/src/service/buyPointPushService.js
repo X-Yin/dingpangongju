@@ -12,7 +12,7 @@ const strategyModeState = require('./strategyModeState');
 const wsServer = require('../wsServer');
 const { notifyBuyPointFeishu } = require('./buyPointNotifier');
 const { getBuyPointChecks } = require('./buySellDiagnose');
-const { getExtremeWinBuyPointChecks, MODE_EXTREME_WIN } = require('./hotMoneyExtremeWin');
+const { getExtremeWinBuyPointChecks, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } = require('./hotMoneyExtremeWin');
 
 const INTERVAL_MS = 10 * 1000;
 const statePath = path.resolve(__dirname, '../data/buy_point_notify_state.json');
@@ -20,6 +20,8 @@ const statePath = path.resolve(__dirname, '../data/buy_point_notify_state.json')
 let timer = null;
 let running = false;
 let lastNotifiedBucket = null;
+// 攻防兼备分源桶门控：科技进攻(tech)与情绪游资(ew)各自独立记桶（每桶每源至多一次通知）
+let lastNotifiedBuckets = { tech: null, ew: null };
 let lastBlockedBucket = null; // 买点屏蔽通知独立桶门控（快进快出强卖当日禁买）
 
 const readState = () => {
@@ -44,8 +46,17 @@ const writeState = (obj) => {
 const loadLastNotifiedBucket = () => {
   const s = readState();
   const today = dayjs().format('YYYYMMDD');
-  lastNotifiedBucket = s && s.date === today && s.bucket != null ? s.bucket : null;
-  lastBlockedBucket = s && s.date === today && s.blockedBucket != null ? s.blockedBucket : null;
+  const sameDay = s && s.date === today;
+  lastNotifiedBucket = sameDay && s.bucket != null ? s.bucket : null;
+  lastBlockedBucket = sameDay && s.blockedBucket != null ? s.blockedBucket : null;
+  // 攻防兼备分源恢复：优先读 buckets；仅有旧单桶字段时保守视为两源均已通知到该桶
+  if (sameDay && s.buckets && typeof s.buckets === 'object') {
+    lastNotifiedBuckets = { tech: s.buckets.tech ?? null, ew: s.buckets.ew ?? null };
+  } else if (sameDay && s.bucket != null) {
+    lastNotifiedBuckets = { tech: s.bucket, ew: s.bucket };
+  } else {
+    lastNotifiedBuckets = { tech: null, ew: null };
+  }
 };
 
 // 买点屏蔽检测（快进快出强卖当日禁买，2026-10-19 新增）：当日已有「情绪快进快出 10:00 强制卖出」
@@ -78,11 +89,87 @@ const isInPushWindow = (date = new Date()) => {
   return true;
 };
 
-const runDiagnosis = (mode) => (
-  mode === MODE_EXTREME_WIN
+const runDiagnosis = (mode) => {
+  if (mode === MODE_ATTACK_DEFENSE) {
+    // 攻防兼备：双策略并行诊断，组合 data = 情绪游资顺周期（顶层）+ tech 字段（科技进攻完整诊断）
+    return Promise.all([
+      getBuyPointChecks(null, true, false),
+      getExtremeWinBuyPointChecks(null, true),
+    ]).then(([techRes, ewRes]) => ({
+      data: { ...(ewRes?.data || {}), tech: techRes?.data || null, mode: MODE_ATTACK_DEFENSE },
+    }));
+  }
+  return mode === MODE_EXTREME_WIN
     ? getExtremeWinBuyPointChecks(null, true)
-    : getBuyPointChecks(null, true, false)
-);
+    : getBuyPointChecks(null, true, false);
+};
+
+// 攻防兼备状态落盘：同时保留单桶字段（旧逻辑兼容）与分源 buckets 字段
+const writeDefenseState = (mode, bucket) => {
+  writeState({
+    date: dayjs().format('YYYYMMDD'),
+    bucket,
+    buckets: { ...lastNotifiedBuckets },
+    blockedBucket: lastBlockedBucket,
+    mode,
+  });
+};
+
+// 攻防兼备 tick：双策略分源桶门控——科技进攻(tech)与情绪游资(ew)各自独立判定命中与通知（每桶每源至多一次），
+// 任一源命中新桶即广播 open:true；tech 源的快进快出强卖当日禁买屏蔽检测独立生效（不遮蔽 ew 源）
+const tickAttackDefense = async (mode, data, bucket) => {
+  const techData = data.tech || null;
+  const techBlocked = detectQuickOutBlock(techData);
+  const techHit = !techBlocked && techData != null
+    && (techData.allPassed === true || techData.tailDipBuyingHit === true);
+  const ewHit = data.allPassed === true
+    || (data.reverse && data.reverse.allPassed === true);
+
+  // tech 屏蔽（其余前置条件全部通过但被禁买拦截）且 ew 未命中时，推买点屏蔽通知（独立桶门控，每桶一次）
+  if (techBlocked && !ewHit && bucket != null && lastBlockedBucket !== bucket) {
+    lastBlockedBucket = bucket;
+    writeDefenseState(mode, bucket);
+    wsServer.broadcast({
+      type: 'buy_point_blocked',
+      mode,
+      bucket,
+      ts: Date.now(),
+      open: true, // 实时推送才弹窗；前端晚挂载补发时 open 被去掉，不重复弹
+      data: {
+        ...techBlocked,
+        strategy: 'highest_3d_gain_emoquick',
+        strategyName: '3日涨幅最大&三日情绪-30快进快出',
+      },
+    });
+    console.log(`[买点屏蔽] 桶 ${bucket} 科技进攻买点命中被快进快出强卖当日禁买规则拦截：${techBlocked.reason}`);
+  }
+
+  if (bucket == null) return;
+
+  const techNewBucket = techHit && lastNotifiedBuckets.tech !== bucket;
+  const ewNewBucket = ewHit && lastNotifiedBuckets.ew !== bucket;
+  if (!techNewBucket && !ewNewBucket) return;
+
+  if (techNewBucket) lastNotifiedBuckets.tech = bucket;
+  if (ewNewBucket) lastNotifiedBuckets.ew = bucket;
+  writeDefenseState(mode, bucket);
+
+  if (techNewBucket) {
+    try {
+      await notifyBuyPointFeishu({ mode, source: 'tech' });
+    } catch (e) {
+      console.error('科技进攻买点飞书发送失败:', e.message);
+    }
+  }
+  if (ewNewBucket) {
+    try {
+      await notifyBuyPointFeishu({ mode, source: 'ew' });
+    } catch (e) {
+      console.error('情绪游资买点飞书发送失败:', e.message);
+    }
+  }
+  wsServer.broadcast({ type: 'buy_point', mode, bucket, ts: Date.now(), data, open: true });
+};
 
 const tick = async () => {
   if (running) return; // 上一 tick 未完成则跳过，避免重入
@@ -100,6 +187,12 @@ const tick = async () => {
 
     // 1) 每 10s 广播诊断结果（仅供前端展示，不触发打开）
     wsServer.broadcast({ type: 'buy_point', mode, bucket, ts: Date.now(), data, open: false });
+
+    // 攻防兼备：双策略分源桶门控 + 分源飞书通知，独立于单模式逻辑
+    if (mode === MODE_ATTACK_DEFENSE) {
+      await tickAttackDefense(mode, data, bucket);
+      return;
+    }
 
     // 2) 买点屏蔽（快进快出强卖当日禁买）：其余前置条件全部通过但被该规则拦截时，抑制买点命中
     //    通知（含尾盘抄底或分支）与飞书，改为推送 buy_point_blocked 屏蔽通知（每桶最多一次）

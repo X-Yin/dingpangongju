@@ -1,16 +1,17 @@
 // 全局策略模式状态（后端集中管控买点诊断所需）
 //   tech_attack           = 科技进攻（默认）
 //   hot_money_extreme_win = 情绪游资-极致胜率
+//   attack_defense        = 攻防兼备（双策略同时诊断：科技进攻 + 情绪游资-极致胜率）
 // 前端在切换模式时通过 POST /set_strategy_mode 同步给后端；持久化到 strategy_mode.json，
 // 使后端即使浏览器未打开也能按当前模式诊断并发飞书。
 const fs = require('fs');
 const path = require('path');
-const { MODE_EXTREME_WIN } = require('./hotMoneyExtremeWin');
+const { MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } = require('./hotMoneyExtremeWin');
 
 const MODE_TECH_ATTACK = 'tech_attack';
 const statePath = path.resolve(__dirname, '../data/strategy_mode.json');
 
-const normalize = (value) => (value === MODE_EXTREME_WIN ? MODE_EXTREME_WIN : MODE_TECH_ATTACK);
+const normalize = (value) => (value === MODE_EXTREME_WIN ? MODE_EXTREME_WIN : value === MODE_ATTACK_DEFENSE ? MODE_ATTACK_DEFENSE : MODE_TECH_ATTACK);
 
 let current = (() => {
   try {

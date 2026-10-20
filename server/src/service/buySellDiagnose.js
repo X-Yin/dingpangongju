@@ -3750,4 +3750,5 @@ module.exports = {
   getSingleStockBuyPointDiagnosis,
   getBuySellSelectableStocks,
   checkSingleStockSellPoint,
+  checkEmoQuickOutDay,
 };

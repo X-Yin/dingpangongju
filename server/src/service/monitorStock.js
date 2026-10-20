@@ -252,6 +252,13 @@ const updateMonitorStockName = (code, newName) => {
     return saveMonitorStocks(stocks);
 };
 
+// 判断股票是否属于「全量自选股中的科技股」（isTech !== false）：
+// 攻防兼备模式下卖点诊断据此分流——科技股走科技卖点诊断，其余（非科技或不在自选股）视为连板股走龙头卖点诊断
+const isTechWatchlistStock = (code) => {
+    const s = getMonitorStocks().find(x => x.code === code);
+    return !!s && s.isTech !== false;
+};
+
 module.exports = {
     getMonitorStocks,
     addMonitorStock,
@@ -262,5 +269,6 @@ module.exports = {
     toggleStockTop,
     getTotalSharesData,
     syncTotalShares,
-    isStockInWatchlistAt
+    isStockInWatchlistAt,
+    isTechWatchlistStock
 };

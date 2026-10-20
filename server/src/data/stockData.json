@@ -7,14 +7,14 @@
         "open_px": 98.99,
         "high_px": 101.86,
         "low_px": 98.51,
-        "close_px": 100.08,
-        "business_amount": 16559804,
-        "business_balance": 1659714600,
-        "change": 0.38,
-        "ma5_px": 101.89,
-        "ma10_px": 104.96,
-        "ma20_px": 112.29,
-        "change_diff": -0.07
+        "close_px": 99.76,
+        "business_amount": 18616853,
+        "business_balance": 1865047800,
+        "change": 0.06,
+        "ma5_px": 101.82,
+        "ma10_px": 104.93,
+        "ma20_px": 112.28,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -27,14 +27,14 @@
         "open_px": 166.62,
         "high_px": 172.91,
         "low_px": 165.1,
-        "close_px": 169.31,
-        "business_amount": 6814729,
-        "business_balance": 1153811120,
-        "change": 1.61,
-        "ma5_px": 172.41,
-        "ma10_px": 183.1,
-        "ma20_px": 203.7,
-        "change_diff": 0.010000000000000009
+        "close_px": 167.85,
+        "business_amount": 7567252,
+        "business_balance": 1280242450,
+        "change": 0.73,
+        "ma5_px": 172.12,
+        "ma10_px": 182.96,
+        "ma20_px": 203.63,
+        "change_diff": -0.030000000000000027
       }
     ],
     "isImportant": false
@@ -46,15 +46,15 @@
         "trade_date": 20261020,
         "open_px": 564.94,
         "high_px": 578.32,
-        "low_px": 552,
-        "close_px": 554.4,
-        "business_amount": 4503178,
-        "business_balance": 2528882900,
-        "change": -2.91,
-        "ma5_px": 612.45,
-        "ma10_px": 622.08,
-        "ma20_px": 657.49,
-        "change_diff": -0.11000000000000032
+        "low_px": 548,
+        "close_px": 548.19,
+        "business_amount": 5006633,
+        "business_balance": 2806084000,
+        "change": -3.99,
+        "ma5_px": 611.21,
+        "ma10_px": 621.46,
+        "ma20_px": 657.18,
+        "change_diff": 0.009999999999999787
       }
     ],
     "isImportant": false
@@ -67,14 +67,14 @@
         "open_px": 574.98,
         "high_px": 582.22,
         "low_px": 565.31,
-        "close_px": 573.1,
-        "business_amount": 3545607,
-        "business_balance": 2035216400,
-        "change": 0,
-        "ma5_px": 587.33,
-        "ma10_px": 592.6,
-        "ma20_px": 625.63,
-        "change_diff": -0.02
+        "close_px": 568,
+        "business_amount": 4081727,
+        "business_balance": 2340255600,
+        "change": -0.89,
+        "ma5_px": 586.31,
+        "ma10_px": 592.09,
+        "ma20_px": 625.38,
+        "change_diff": -0.010000000000000009
       }
     ],
     "isImportant": false
@@ -87,13 +87,13 @@
         "open_px": 915.93,
         "high_px": 944.61,
         "low_px": 885,
-        "close_px": 925.01,
-        "business_amount": 5844717,
-        "business_balance": 5368673100,
-        "change": -0.38,
-        "ma5_px": 918.94,
-        "ma10_px": 951.91,
-        "ma20_px": 1022.22,
+        "close_px": 913.78,
+        "business_amount": 6285134,
+        "business_balance": 5772521500,
+        "change": -1.59,
+        "ma5_px": 916.69,
+        "ma10_px": 950.78,
+        "ma20_px": 1021.65,
         "change_diff": -0.010000000000000009
       }
     ],
@@ -107,14 +107,14 @@
         "open_px": 44.39,
         "high_px": 45.58,
         "low_px": 43.8,
-        "close_px": 45.05,
-        "business_amount": 11885757,
-        "business_balance": 533253110,
-        "change": 1.33,
-        "ma5_px": 45.23,
-        "ma10_px": 48.07,
-        "ma20_px": 53.99,
-        "change_diff": -0.05999999999999983
+        "close_px": 44.71,
+        "business_amount": 13818746,
+        "business_balance": 619818840,
+        "change": 0.56,
+        "ma5_px": 45.16,
+        "ma10_px": 48.04,
+        "ma20_px": 53.97,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -127,14 +127,14 @@
         "open_px": 73,
         "high_px": 75.89,
         "low_px": 71.61,
-        "close_px": 74.43,
-        "business_amount": 4948870,
-        "business_balance": 366798010,
-        "change": 0.13,
-        "ma5_px": 74.94,
-        "ma10_px": 78.86,
-        "ma20_px": 89.26,
-        "change_diff": 0.020000000000000004
+        "close_px": 73.54,
+        "business_amount": 5399570,
+        "business_balance": 400023180,
+        "change": -1.06,
+        "ma5_px": 74.76,
+        "ma10_px": 78.78,
+        "ma20_px": 89.21,
+        "change_diff": -0.040000000000000036
       }
     ],
     "isImportant": false
@@ -147,14 +147,14 @@
         "open_px": 47.24,
         "high_px": 49.29,
         "low_px": 47,
-        "close_px": 48.74,
-        "business_amount": 55919073,
-        "business_balance": 2700546400,
-        "change": 2.16,
-        "ma5_px": 47.99,
-        "ma10_px": 51.42,
-        "ma20_px": 56.48,
-        "change_diff": 0.020000000000000018
+        "close_px": 48.63,
+        "business_amount": 64051908,
+        "business_balance": 3094760500,
+        "change": 1.93,
+        "ma5_px": 47.96,
+        "ma10_px": 51.41,
+        "ma20_px": 56.47,
+        "change_diff": 0.05999999999999983
       }
     ],
     "isImportant": false
@@ -167,14 +167,14 @@
         "open_px": 438.61,
         "high_px": 448.13,
         "low_px": 432.53,
-        "close_px": 440.01,
-        "business_amount": 3109366,
-        "business_balance": 1370715100,
-        "change": -0.08,
-        "ma5_px": 453.19,
-        "ma10_px": 478.63,
-        "ma20_px": 533.94,
-        "change_diff": -0.07
+        "close_px": 436.34,
+        "business_amount": 3422178,
+        "business_balance": 1507360100,
+        "change": -0.92,
+        "ma5_px": 452.46,
+        "ma10_px": 478.26,
+        "ma20_px": 533.76,
+        "change_diff": -0.040000000000000036
       }
     ],
     "isImportant": false
@@ -187,14 +187,14 @@
         "open_px": 201.6,
         "high_px": 209.47,
         "low_px": 197.68,
-        "close_px": 204.9,
-        "business_amount": 17476296,
-        "business_balance": 3565667600,
-        "change": 0.79,
-        "ma5_px": 214.67,
-        "ma10_px": 228.04,
-        "ma20_px": 248.37,
-        "change_diff": 0.010000000000000009
+        "close_px": 203.96,
+        "business_amount": 19158610,
+        "business_balance": 3908617300,
+        "change": 0.32,
+        "ma5_px": 214.48,
+        "ma10_px": 227.95,
+        "ma20_px": 248.32,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -207,13 +207,13 @@
         "open_px": 302.75,
         "high_px": 311.88,
         "low_px": 299,
-        "close_px": 303.62,
-        "business_amount": 21118140,
-        "business_balance": 6422286800,
-        "change": -1.42,
-        "ma5_px": 311.07,
-        "ma10_px": 339.19,
-        "ma20_px": 383.63,
+        "close_px": 300.1,
+        "business_amount": 23986081,
+        "business_balance": 7285075100,
+        "change": -2.56,
+        "ma5_px": 310.36,
+        "ma10_px": 338.84,
+        "ma20_px": 383.45,
         "change_diff": 0
       }
     ],
@@ -227,14 +227,14 @@
         "open_px": 650.7,
         "high_px": 673.1,
         "low_px": 648.66,
-        "close_px": 656.68,
-        "business_amount": 11740225,
-        "business_balance": 7761022400,
-        "change": -0.61,
-        "ma5_px": 667.44,
-        "ma10_px": 715.98,
-        "ma20_px": 802.86,
-        "change_diff": 0.020000000000000018
+        "close_px": 650.73,
+        "business_amount": 13715199,
+        "business_balance": 9048242600,
+        "change": -1.51,
+        "ma5_px": 666.25,
+        "ma10_px": 715.39,
+        "ma20_px": 802.56,
+        "change_diff": -0.020000000000000018
       }
     ],
     "isImportant": false
@@ -247,14 +247,14 @@
         "open_px": 177.08,
         "high_px": 187.1,
         "low_px": 173.97,
-        "close_px": 181.87,
-        "business_amount": 5228560,
-        "business_balance": 949743860,
-        "change": 2.75,
-        "ma5_px": 185.11,
-        "ma10_px": 208.25,
-        "ma20_px": 268.35,
-        "change_diff": 0.020000000000000018
+        "close_px": 179.89,
+        "business_amount": 5738394,
+        "business_balance": 1041656600,
+        "change": 1.63,
+        "ma5_px": 184.71,
+        "ma10_px": 208.05,
+        "ma20_px": 268.25,
+        "change_diff": -0.17000000000000015
       }
     ],
     "isImportant": false
@@ -267,14 +267,14 @@
         "open_px": 74.85,
         "high_px": 78.18,
         "low_px": 72.9,
-        "close_px": 77.09,
-        "business_amount": 11909218,
-        "business_balance": 904485980,
-        "change": 3.06,
-        "ma5_px": 77.26,
-        "ma10_px": 82.63,
-        "ma20_px": 94.76,
-        "change_diff": 0.040000000000000036
+        "close_px": 76.65,
+        "business_amount": 13466918,
+        "business_balance": 1023876330,
+        "change": 2.47,
+        "ma5_px": 77.17,
+        "ma10_px": 82.58,
+        "ma20_px": 94.74,
+        "change_diff": -0.05999999999999961
       }
     ],
     "isImportant": false
@@ -287,14 +287,14 @@
         "open_px": 84.58,
         "high_px": 87.68,
         "low_px": 83.38,
-        "close_px": 86.39,
-        "business_amount": 8639105,
-        "business_balance": 743538210,
-        "change": 1.91,
-        "ma5_px": 87.53,
-        "ma10_px": 91.48,
-        "ma20_px": 101.42,
-        "change_diff": 0
+        "close_px": 86.08,
+        "business_amount": 9485958,
+        "business_balance": 816284270,
+        "change": 1.55,
+        "ma5_px": 87.47,
+        "ma10_px": 91.45,
+        "ma20_px": 101.41,
+        "change_diff": -0.030000000000000027
       }
     ],
     "isImportant": false
@@ -307,14 +307,14 @@
         "open_px": 165.26,
         "high_px": 171.11,
         "low_px": 164.02,
-        "close_px": 168.4,
-        "business_amount": 15933374,
-        "business_balance": 2681639300,
-        "change": 1.91,
-        "ma5_px": 167.93,
-        "ma10_px": 181.32,
-        "ma20_px": 194.44,
-        "change_diff": -0.050000000000000044
+        "close_px": 166.81,
+        "business_amount": 17560690,
+        "business_balance": 2953742200,
+        "change": 0.94,
+        "ma5_px": 167.61,
+        "ma10_px": 181.16,
+        "ma20_px": 194.36,
+        "change_diff": -0.1200000000000001
       }
     ],
     "isImportant": false
@@ -327,14 +327,14 @@
         "open_px": 189.91,
         "high_px": 194.45,
         "low_px": 186,
-        "close_px": 191.4,
-        "business_amount": 12095693,
-        "business_balance": 2305801200,
-        "change": -0.05,
-        "ma5_px": 194.14,
-        "ma10_px": 206.09,
-        "ma20_px": 223.64,
-        "change_diff": 0
+        "close_px": 189.92,
+        "business_amount": 13139498,
+        "business_balance": 2504162600,
+        "change": -0.83,
+        "ma5_px": 193.85,
+        "ma10_px": 205.94,
+        "ma20_px": 223.56,
+        "change_diff": 0.06000000000000005
       }
     ],
     "isImportant": false
@@ -347,14 +347,14 @@
         "open_px": 45.81,
         "high_px": 48,
         "low_px": 45.75,
-        "close_px": 47.5,
-        "business_amount": 63431401,
-        "business_balance": 2989777500,
-        "change": 2.81,
-        "ma5_px": 45.59,
-        "ma10_px": 46.59,
-        "ma20_px": 49.63,
-        "change_diff": -0.06999999999999984
+        "close_px": 47.14,
+        "business_amount": 71466456,
+        "business_balance": 3370182900,
+        "change": 2.03,
+        "ma5_px": 45.52,
+        "ma10_px": 46.55,
+        "ma20_px": 49.61,
+        "change_diff": -0.07000000000000028
       }
     ],
     "isImportant": false
@@ -367,14 +367,14 @@
         "open_px": 117.3,
         "high_px": 121,
         "low_px": 113.63,
-        "close_px": 117.56,
-        "business_amount": 40659068,
-        "business_balance": 4801420600,
-        "change": -0.06,
-        "ma5_px": 116.81,
-        "ma10_px": 121.25,
-        "ma20_px": 132.14,
-        "change_diff": 0.03
+        "close_px": 116.69,
+        "business_amount": 43885746,
+        "business_balance": 5178155300,
+        "change": -0.8,
+        "ma5_px": 116.63,
+        "ma10_px": 121.17,
+        "ma20_px": 132.09,
+        "change_diff": -0.010000000000000009
       }
     ],
     "isImportant": false
@@ -387,14 +387,14 @@
         "open_px": 277,
         "high_px": 288.5,
         "low_px": 275.67,
-        "close_px": 283.9,
-        "business_amount": 18576749,
-        "business_balance": 5279713400,
-        "change": 0.52,
-        "ma5_px": 283.8,
-        "ma10_px": 305.08,
-        "ma20_px": 342.37,
-        "change_diff": 0.010000000000000009
+        "close_px": 282.36,
+        "business_amount": 20500749,
+        "business_balance": 5823342500,
+        "change": -0.03,
+        "ma5_px": 283.49,
+        "ma10_px": 304.93,
+        "ma20_px": 342.3,
+        "change_diff": -0.04
       }
     ],
     "isImportant": false
@@ -407,14 +407,14 @@
         "open_px": 110.78,
         "high_px": 116.96,
         "low_px": 108.88,
-        "close_px": 114.19,
-        "business_amount": 8708157,
-        "business_balance": 989645890,
-        "change": 2.1,
-        "ma5_px": 115.3,
-        "ma10_px": 124.66,
-        "ma20_px": 142.09,
-        "change_diff": 0.050000000000000266
+        "close_px": 112.99,
+        "business_amount": 9551919,
+        "business_balance": 1085146670,
+        "change": 1.03,
+        "ma5_px": 115.06,
+        "ma10_px": 124.54,
+        "ma20_px": 142.03,
+        "change_diff": -0.07000000000000006
       }
     ],
     "isImportant": false
@@ -427,13 +427,13 @@
         "open_px": 1004.85,
         "high_px": 1055,
         "low_px": 986.39,
-        "close_px": 1024,
-        "business_amount": 2706225,
-        "business_balance": 2776940500,
-        "change": 2.2,
-        "ma5_px": 1047.99,
-        "ma10_px": 1163.45,
-        "ma20_px": 1446.99,
+        "close_px": 1014.2,
+        "business_amount": 2918865,
+        "business_balance": 2993078600,
+        "change": 1.22,
+        "ma5_px": 1046.03,
+        "ma10_px": 1162.47,
+        "ma20_px": 1446.5,
         "change_diff": 0
       }
     ],
@@ -447,14 +447,14 @@
         "open_px": 122,
         "high_px": 126.23,
         "low_px": 120,
-        "close_px": 122.9,
-        "business_amount": 33176002,
-        "business_balance": 4093981600,
-        "change": 0.61,
-        "ma5_px": 124.67,
-        "ma10_px": 136.25,
-        "ma20_px": 161.93,
-        "change_diff": -0.030000000000000027
+        "close_px": 121.79,
+        "business_amount": 37029313,
+        "business_balance": 4564333700,
+        "change": -0.29,
+        "ma5_px": 124.44,
+        "ma10_px": 136.14,
+        "ma20_px": 161.88,
+        "change_diff": -0.04999999999999999
       }
     ],
     "isImportant": false
@@ -467,14 +467,14 @@
         "open_px": 300.12,
         "high_px": 311.99,
         "low_px": 294.71,
-        "close_px": 303.89,
-        "business_amount": 4806654,
-        "business_balance": 1466107700,
-        "change": 0.57,
-        "ma5_px": 314.37,
-        "ma10_px": 332.51,
-        "ma20_px": 361.32,
-        "change_diff": -0.13
+        "close_px": 301.35,
+        "business_amount": 5420456,
+        "business_balance": 1651201200,
+        "change": -0.27,
+        "ma5_px": 313.86,
+        "ma10_px": 332.26,
+        "ma20_px": 361.19,
+        "change_diff": -0.05000000000000002
       }
     ],
     "isImportant": false
@@ -487,14 +487,14 @@
         "open_px": 111.87,
         "high_px": 114.7,
         "low_px": 109.35,
-        "close_px": 112.32,
-        "business_amount": 24175786,
-        "business_balance": 2725584800,
-        "change": 0.51,
-        "ma5_px": 113.73,
-        "ma10_px": 113.82,
-        "ma20_px": 118.92,
-        "change_diff": -0.040000000000000036
+        "close_px": 111.55,
+        "business_amount": 26918453,
+        "business_balance": 3031582800,
+        "change": -0.18,
+        "ma5_px": 113.57,
+        "ma10_px": 113.75,
+        "ma20_px": 118.88,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -507,14 +507,14 @@
         "open_px": 176.99,
         "high_px": 192.5,
         "low_px": 174.97,
-        "close_px": 185.51,
-        "business_amount": 21276510,
-        "business_balance": 3946757900,
-        "change": 4.9,
-        "ma5_px": 185.1,
-        "ma10_px": 194.06,
-        "ma20_px": 212.22,
-        "change_diff": 0
+        "close_px": 183.49,
+        "business_amount": 23359356,
+        "business_balance": 4330135300,
+        "change": 3.75,
+        "ma5_px": 184.7,
+        "ma10_px": 193.86,
+        "ma20_px": 212.12,
+        "change_diff": -0.009999999999999787
       }
     ],
     "isImportant": false
@@ -527,14 +527,14 @@
         "open_px": 333.37,
         "high_px": 349,
         "low_px": 329,
-        "close_px": 341.51,
-        "business_amount": 6603466,
-        "business_balance": 2255559800,
-        "change": 0.44,
-        "ma5_px": 340.7,
-        "ma10_px": 362.92,
-        "ma20_px": 404.39,
-        "change_diff": 0
+        "close_px": 339.26,
+        "business_amount": 7200466,
+        "business_balance": 2458326000,
+        "change": -0.22,
+        "ma5_px": 340.25,
+        "ma10_px": 362.69,
+        "ma20_px": 404.28,
+        "change_diff": -0.04999999999999999
       }
     ],
     "isImportant": false
@@ -547,14 +547,14 @@
         "open_px": 50,
         "high_px": 52.88,
         "low_px": 50,
-        "close_px": 52.18,
-        "business_amount": 157437260,
-        "business_balance": 8111282300,
-        "change": 3.84,
-        "ma5_px": 48.39,
-        "ma10_px": 50.2,
-        "ma20_px": 58.38,
-        "change_diff": -0.020000000000000018
+        "close_px": 51.82,
+        "business_amount": 167418670,
+        "business_balance": 8628799900,
+        "change": 3.12,
+        "ma5_px": 48.32,
+        "ma10_px": 50.16,
+        "ma20_px": 58.36,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -567,14 +567,14 @@
         "open_px": 97.48,
         "high_px": 101.88,
         "low_px": 95.66,
-        "close_px": 100.06,
-        "business_amount": 8605168,
-        "business_balance": 856681750,
-        "change": 2.65,
-        "ma5_px": 101.37,
-        "ma10_px": 110.23,
-        "ma20_px": 128.72,
-        "change_diff": 0.04999999999999982
+        "close_px": 99.23,
+        "business_amount": 9468668,
+        "business_balance": 942382150,
+        "change": 1.8,
+        "ma5_px": 101.2,
+        "ma10_px": 110.15,
+        "ma20_px": 128.68,
+        "change_diff": -0.050000000000000044
       }
     ],
     "isImportant": false
@@ -586,15 +586,15 @@
         "trade_date": 20261020,
         "open_px": 92.92,
         "high_px": 95.97,
-        "low_px": 92.12,
-        "close_px": 93.44,
-        "business_amount": 20288246,
-        "business_balance": 1907994800,
-        "change": -1.04,
-        "ma5_px": 96.32,
-        "ma10_px": 103.35,
-        "ma20_px": 114.79,
-        "change_diff": 0.010000000000000009
+        "low_px": 91.86,
+        "close_px": 92.35,
+        "business_amount": 24177232,
+        "business_balance": 2267556700,
+        "change": -2.19,
+        "ma5_px": 96.11,
+        "ma10_px": 103.24,
+        "ma20_px": 114.73,
+        "change_diff": -0.020000000000000018
       }
     ],
     "isImportant": false
@@ -607,14 +607,14 @@
         "open_px": 43.23,
         "high_px": 44.8,
         "low_px": 42.25,
-        "close_px": 44.16,
-        "business_amount": 27285857,
-        "business_balance": 1193003440,
-        "change": 3.2,
-        "ma5_px": 44.29,
-        "ma10_px": 47.37,
-        "ma20_px": 53.23,
-        "change_diff": 0.020000000000000018
+        "close_px": 43.6,
+        "business_amount": 30744757,
+        "business_balance": 1344429000,
+        "change": 1.89,
+        "ma5_px": 44.18,
+        "ma10_px": 47.31,
+        "ma20_px": 53.2,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -627,14 +627,14 @@
         "open_px": 244,
         "high_px": 250.99,
         "low_px": 240.1,
-        "close_px": 243.37,
-        "business_amount": 2158748,
-        "business_balance": 531254120,
-        "change": -1.27,
-        "ma5_px": 255.8,
-        "ma10_px": 264.45,
-        "ma20_px": 277.5,
-        "change_diff": -0.13000000000000012
+        "close_px": 244.01,
+        "business_amount": 2367171,
+        "business_balance": 581922330,
+        "change": -1.01,
+        "ma5_px": 255.93,
+        "ma10_px": 264.52,
+        "ma20_px": 277.54,
+        "change_diff": 0.3799999999999999
       }
     ],
     "isImportant": false
@@ -647,14 +647,14 @@
         "open_px": 1135.66,
         "high_px": 1228,
         "low_px": 1135.66,
-        "close_px": 1198.04,
-        "business_amount": 1217124,
-        "business_balance": 1452055100,
-        "change": 3.95,
-        "ma5_px": 1219.94,
-        "ma10_px": 1306.62,
-        "ma20_px": 1431.18,
-        "change_diff": 0
+        "close_px": 1186,
+        "business_amount": 1288335,
+        "business_balance": 1536769900,
+        "change": 2.91,
+        "ma5_px": 1217.54,
+        "ma10_px": 1305.41,
+        "ma20_px": 1430.57,
+        "change_diff": 0.020000000000000018
       }
     ],
     "isImportant": false
@@ -667,14 +667,14 @@
         "open_px": 93.51,
         "high_px": 97.8,
         "low_px": 91.67,
-        "close_px": 95.9,
-        "business_amount": 11155125,
-        "business_balance": 1061302930,
-        "change": 2.23,
-        "ma5_px": 96.5,
-        "ma10_px": 101.31,
-        "ma20_px": 111.43,
-        "change_diff": 0.020000000000000018
+        "close_px": 95.01,
+        "business_amount": 12354725,
+        "business_balance": 1175470030,
+        "change": 1.28,
+        "ma5_px": 96.33,
+        "ma10_px": 101.22,
+        "ma20_px": 111.39,
+        "change_diff": -0.050000000000000044
       }
     ],
     "isImportant": false
@@ -687,14 +687,14 @@
         "open_px": 21.26,
         "high_px": 22.45,
         "low_px": 20.8,
-        "close_px": 22.02,
-        "business_amount": 62741605,
-        "business_balance": 1371903400,
-        "change": 3.97,
-        "ma5_px": 22.13,
-        "ma10_px": 23.8,
-        "ma20_px": 27.12,
-        "change_diff": 0.050000000000000266
+        "close_px": 21.79,
+        "business_amount": 68058180,
+        "business_balance": 1487959400,
+        "change": 2.88,
+        "ma5_px": 22.09,
+        "ma10_px": 23.78,
+        "ma20_px": 27.11,
+        "change_diff": -0.0900000000000003
       }
     ],
     "isImportant": false
@@ -707,14 +707,14 @@
         "open_px": 300.2,
         "high_px": 311.18,
         "low_px": 295.15,
-        "close_px": 304.61,
-        "business_amount": 1768524,
-        "business_balance": 538490050,
-        "change": 1.45,
-        "ma5_px": 316.71,
-        "ma10_px": 340.23,
-        "ma20_px": 381.14,
-        "change_diff": 0
+        "close_px": 301.54,
+        "business_amount": 2007942,
+        "business_balance": 610743700,
+        "change": 0.43,
+        "ma5_px": 316.1,
+        "ma10_px": 339.93,
+        "ma20_px": 380.99,
+        "change_diff": -0.21000000000000002
       }
     ],
     "isImportant": false
@@ -727,14 +727,14 @@
         "open_px": 82.6,
         "high_px": 85.33,
         "low_px": 81.5,
-        "close_px": 84.13,
-        "business_amount": 10028120,
-        "business_balance": 842513780,
-        "change": 1.56,
-        "ma5_px": 85.01,
-        "ma10_px": 88.92,
-        "ma20_px": 98.82,
-        "change_diff": 0.010000000000000009
+        "close_px": 83.4,
+        "business_amount": 11250400,
+        "business_balance": 944600300,
+        "change": 0.68,
+        "ma5_px": 84.86,
+        "ma10_px": 88.85,
+        "ma20_px": 98.78,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -747,14 +747,14 @@
         "open_px": 259.47,
         "high_px": 268.47,
         "low_px": 254.09,
-        "close_px": 261.4,
-        "business_amount": 1802352,
-        "business_balance": 471201220,
-        "change": -0.11,
-        "ma5_px": 271.7,
-        "ma10_px": 294.14,
-        "ma20_px": 341.1,
-        "change_diff": 0
+        "close_px": 257.9,
+        "business_amount": 2068452,
+        "business_balance": 539912710,
+        "change": -1.45,
+        "ma5_px": 271,
+        "ma10_px": 293.79,
+        "ma20_px": 340.92,
+        "change_diff": 0.030000000000000027
       }
     ],
     "isImportant": false
@@ -766,15 +766,15 @@
         "trade_date": 20261020,
         "open_px": 310.6,
         "high_px": 314.23,
-        "low_px": 302.68,
-        "close_px": 303.76,
-        "business_amount": 2017534,
-        "business_balance": 621686160,
-        "change": -1.54,
-        "ma5_px": 319.91,
-        "ma10_px": 339.86,
-        "ma20_px": 362.56,
-        "change_diff": 0
+        "low_px": 301.1,
+        "close_px": 302.45,
+        "business_amount": 2315547,
+        "business_balance": 711839570,
+        "change": -1.96,
+        "ma5_px": 319.65,
+        "ma10_px": 339.73,
+        "ma20_px": 362.49,
+        "change_diff": -0.06000000000000005
       }
     ],
     "isImportant": false
@@ -787,14 +787,14 @@
         "open_px": 34.52,
         "high_px": 36.25,
         "low_px": 33.73,
-        "close_px": 35.7,
-        "business_amount": 60351298,
-        "business_balance": 2130882700,
-        "change": 3.42,
-        "ma5_px": 35.87,
-        "ma10_px": 37.08,
-        "ma20_px": 39.98,
-        "change_diff": -0.06000000000000005
+        "close_px": 35.24,
+        "business_amount": 66510198,
+        "business_balance": 2348624200,
+        "change": 2.09,
+        "ma5_px": 35.78,
+        "ma10_px": 37.03,
+        "ma20_px": 39.96,
+        "change_diff": -0.08000000000000007
       }
     ],
     "isImportant": false
@@ -807,14 +807,14 @@
         "open_px": 74,
         "high_px": 78.3,
         "low_px": 73.44,
-        "close_px": 76.59,
-        "business_amount": 4866544,
-        "business_balance": 370064520,
-        "change": 2.9,
-        "ma5_px": 77.9,
-        "ma10_px": 84.34,
-        "ma20_px": 97.97,
-        "change_diff": 0
+        "close_px": 76.25,
+        "business_amount": 5468447,
+        "business_balance": 415853810,
+        "change": 2.45,
+        "ma5_px": 77.83,
+        "ma10_px": 84.31,
+        "ma20_px": 97.95,
+        "change_diff": -0.009999999999999787
       }
     ],
     "isImportant": false
@@ -827,14 +827,14 @@
         "open_px": 140,
         "high_px": 150.01,
         "low_px": 138.03,
-        "close_px": 145.76,
-        "business_amount": 4292753,
-        "business_balance": 621330360,
-        "change": 3.16,
-        "ma5_px": 150.07,
-        "ma10_px": 161.21,
-        "ma20_px": 183.35,
-        "change_diff": 0.06000000000000005
+        "close_px": 144.48,
+        "business_amount": 4736253,
+        "business_balance": 685623420,
+        "change": 2.25,
+        "ma5_px": 149.81,
+        "ma10_px": 161.08,
+        "ma20_px": 183.29,
+        "change_diff": -0.22999999999999998
       }
     ],
     "isImportant": false
@@ -847,14 +847,14 @@
         "open_px": 42.97,
         "high_px": 45.75,
         "low_px": 42.7,
-        "close_px": 44.81,
-        "business_amount": 8089953,
-        "business_balance": 360079240,
-        "change": 3.73,
-        "ma5_px": 44.51,
-        "ma10_px": 47.39,
-        "ma20_px": 54.3,
-        "change_diff": 0
+        "close_px": 44.53,
+        "business_amount": 9199369,
+        "business_balance": 409424330,
+        "change": 3.08,
+        "ma5_px": 44.45,
+        "ma10_px": 47.37,
+        "ma20_px": 54.28,
+        "change_diff": -0.16000000000000014
       }
     ],
     "isImportant": false
@@ -867,14 +867,14 @@
         "open_px": 56.3,
         "high_px": 58.12,
         "low_px": 56,
-        "close_px": 57.39,
-        "business_amount": 31402327,
-        "business_balance": 1796953400,
-        "change": 1.86,
-        "ma5_px": 57.37,
-        "ma10_px": 59.66,
-        "ma20_px": 64.48,
-        "change_diff": 0.010000000000000009
+        "close_px": 57,
+        "business_amount": 34838944,
+        "business_balance": 1992927500,
+        "change": 1.17,
+        "ma5_px": 57.29,
+        "ma10_px": 59.62,
+        "ma20_px": 64.46,
+        "change_diff": -0.050000000000000044
       }
     ],
     "isImportant": false
@@ -887,14 +887,14 @@
         "open_px": 47.65,
         "high_px": 48.99,
         "low_px": 47.43,
-        "close_px": 48.36,
-        "business_amount": 27111631,
-        "business_balance": 1309662350,
-        "change": 1.49,
-        "ma5_px": 49.23,
-        "ma10_px": 52.16,
-        "ma20_px": 56.28,
-        "change_diff": -0.020000000000000018
+        "close_px": 48,
+        "business_amount": 30205131,
+        "business_balance": 1458314000,
+        "change": 0.73,
+        "ma5_px": 49.16,
+        "ma10_px": 52.12,
+        "ma20_px": 56.26,
+        "change_diff": -0.030000000000000027
       }
     ],
     "isImportant": false
@@ -907,14 +907,14 @@
         "open_px": 38.84,
         "high_px": 40.68,
         "low_px": 37.7,
-        "close_px": 39.8,
-        "business_amount": 20202041,
-        "business_balance": 799124830,
-        "change": 2.03,
-        "ma5_px": 40.39,
-        "ma10_px": 41.41,
-        "ma20_px": 46.54,
-        "change_diff": 0
+        "close_px": 39.44,
+        "business_amount": 21853519,
+        "business_balance": 864304470,
+        "change": 1.1,
+        "ma5_px": 40.32,
+        "ma10_px": 41.38,
+        "ma20_px": 46.52,
+        "change_diff": -0.04999999999999982
       }
     ],
     "isImportant": false
@@ -927,14 +927,14 @@
         "open_px": 33.96,
         "high_px": 35.21,
         "low_px": 33.4,
-        "close_px": 34.83,
-        "business_amount": 104070129,
-        "business_balance": 3583591900,
-        "change": 3.29,
-        "ma5_px": 34.47,
-        "ma10_px": 36.5,
-        "ma20_px": 40.37,
-        "change_diff": 0.03000000000000025
+        "close_px": 34.62,
+        "business_amount": 114009948,
+        "business_balance": 3927547900,
+        "change": 2.67,
+        "ma5_px": 34.43,
+        "ma10_px": 36.48,
+        "ma20_px": 40.36,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -947,14 +947,14 @@
         "open_px": 225.02,
         "high_px": 232.55,
         "low_px": 220.46,
-        "close_px": 222.73,
-        "business_amount": 6656986,
-        "business_balance": 1504886100,
-        "change": -2.98,
-        "ma5_px": 234.69,
-        "ma10_px": 231.07,
-        "ma20_px": 242.1,
-        "change_diff": 0.020000000000000018
+        "close_px": 221.7,
+        "business_amount": 7288891,
+        "business_balance": 1645273600,
+        "change": -3.42,
+        "ma5_px": 234.48,
+        "ma10_px": 230.97,
+        "ma20_px": 242.05,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -967,14 +967,14 @@
         "open_px": 77.29,
         "high_px": 82.53,
         "low_px": 77.17,
-        "close_px": 81.32,
-        "business_amount": 8435240,
-        "business_balance": 678307770,
-        "change": 4.66,
-        "ma5_px": 80.64,
-        "ma10_px": 87.61,
-        "ma20_px": 105.18,
-        "change_diff": -0.3099999999999996
+        "close_px": 80.71,
+        "business_amount": 9230007,
+        "business_balance": 742487310,
+        "change": 3.87,
+        "ma5_px": 80.52,
+        "ma10_px": 87.55,
+        "ma20_px": 105.15,
+        "change_diff": -0.029999999999999805
       }
     ],
     "isImportant": false
@@ -987,14 +987,14 @@
         "open_px": 219.19,
         "high_px": 228.99,
         "low_px": 216.5,
-        "close_px": 220.86,
-        "business_amount": 14944883,
-        "business_balance": 3341275800,
-        "change": 0.76,
-        "ma5_px": 216.52,
-        "ma10_px": 228.23,
-        "ma20_px": 255.43,
-        "change_diff": -0.010000000000000009
+        "close_px": 218.86,
+        "business_amount": 16338928,
+        "business_balance": 3646274100,
+        "change": -0.15,
+        "ma5_px": 216.12,
+        "ma10_px": 228.03,
+        "ma20_px": 255.33,
+        "change_diff": 0.010000000000000009
       }
     ],
     "isImportant": false
@@ -1007,14 +1007,14 @@
         "open_px": 45.78,
         "high_px": 47.39,
         "low_px": 44.66,
-        "close_px": 46.51,
-        "business_amount": 30412121,
-        "business_balance": 1408692100,
-        "change": 2.33,
-        "ma5_px": 46.98,
-        "ma10_px": 51.73,
-        "ma20_px": 59.38,
-        "change_diff": 0.020000000000000018
+        "close_px": 46.19,
+        "business_amount": 34207893,
+        "business_balance": 1584016000,
+        "change": 1.63,
+        "ma5_px": 46.91,
+        "ma10_px": 51.7,
+        "ma20_px": 59.36,
+        "change_diff": -0.09000000000000008
       }
     ],
     "isImportant": false
@@ -1027,13 +1027,13 @@
         "open_px": 40.6,
         "high_px": 41.21,
         "low_px": 39.6,
-        "close_px": 40.44,
-        "business_amount": 37325655,
-        "business_balance": 1511059900,
-        "change": 0.77,
-        "ma5_px": 41.31,
-        "ma10_px": 44.08,
-        "ma20_px": 50.25,
+        "close_px": 40.22,
+        "business_amount": 41638528,
+        "business_balance": 1685523000,
+        "change": 0.22,
+        "ma5_px": 41.26,
+        "ma10_px": 44.05,
+        "ma20_px": 50.24,
         "change_diff": 0
       }
     ],
@@ -1047,14 +1047,14 @@
         "open_px": 227,
         "high_px": 237.2,
         "low_px": 221.56,
-        "close_px": 232.86,
-        "business_amount": 2887478,
-        "business_balance": 666235640,
-        "change": 2.38,
-        "ma5_px": 235.54,
-        "ma10_px": 250.5,
-        "ma20_px": 285.61,
-        "change_diff": 0
+        "close_px": 230.41,
+        "business_amount": 3192105,
+        "business_balance": 736557040,
+        "change": 1.3,
+        "ma5_px": 235.05,
+        "ma10_px": 250.25,
+        "ma20_px": 285.49,
+        "change_diff": -0.030000000000000027
       }
     ],
     "isImportant": false
@@ -1067,14 +1067,14 @@
         "open_px": 81.55,
         "high_px": 83.82,
         "low_px": 75.5,
-        "close_px": 82.82,
-        "business_amount": 8593769,
-        "business_balance": 692427910,
-        "change": 1.15,
-        "ma5_px": 84.37,
-        "ma10_px": 90.41,
-        "ma20_px": 100.88,
-        "change_diff": 0
+        "close_px": 81.71,
+        "business_amount": 9156589,
+        "business_balance": 738554520,
+        "change": -0.21,
+        "ma5_px": 84.15,
+        "ma10_px": 90.3,
+        "ma20_px": 100.83,
+        "change_diff": -0.09999999999999999
       }
     ],
     "isImportant": false
@@ -1087,13 +1087,13 @@
         "open_px": 330,
         "high_px": 344.56,
         "low_px": 323.54,
-        "close_px": 337.98,
-        "business_amount": 1627338,
-        "business_balance": 544616500,
-        "change": 0.79,
-        "ma5_px": 352.55,
-        "ma10_px": 372.19,
-        "ma20_px": 401.51,
+        "close_px": 335.2,
+        "business_amount": 1745911,
+        "business_balance": 584285660,
+        "change": -0.04,
+        "ma5_px": 351.99,
+        "ma10_px": 371.92,
+        "ma20_px": 401.37,
         "change_diff": 0
       }
     ],
@@ -1107,14 +1107,14 @@
         "open_px": 56.45,
         "high_px": 58,
         "low_px": 55.5,
-        "close_px": 57.38,
-        "business_amount": 24202594,
-        "business_balance": 1377040200,
-        "change": 0.63,
-        "ma5_px": 57.45,
-        "ma10_px": 60.61,
-        "ma20_px": 65.36,
-        "change_diff": 0
+        "close_px": 57.02,
+        "business_amount": 27047494,
+        "business_balance": 1539386400,
+        "change": 0,
+        "ma5_px": 57.38,
+        "ma10_px": 60.58,
+        "ma20_px": 65.34,
+        "change_diff": -0.04
       }
     ],
     "isImportant": false
@@ -1127,14 +1127,14 @@
         "open_px": 295.17,
         "high_px": 298.99,
         "low_px": 283.11,
-        "close_px": 286,
-        "business_amount": 8080454,
-        "business_balance": 2340786400,
-        "change": -5.04,
-        "ma5_px": 322.5,
-        "ma10_px": 334.71,
-        "ma20_px": 348.67,
-        "change_diff": 0
+        "close_px": 284.76,
+        "business_amount": 9090085,
+        "business_balance": 2628418600,
+        "change": -5.46,
+        "ma5_px": 322.25,
+        "ma10_px": 334.59,
+        "ma20_px": 348.61,
+        "change_diff": -0.11000000000000032
       }
     ],
     "isImportant": false
@@ -1147,14 +1147,14 @@
         "open_px": 74.8,
         "high_px": 79.6,
         "low_px": 74.66,
-        "close_px": 78.27,
-        "business_amount": 9612278,
-        "business_balance": 748498110,
-        "change": 3.71,
-        "ma5_px": 76.7,
-        "ma10_px": 81.15,
-        "ma20_px": 88.08,
-        "change_diff": 0.040000000000000036
+        "close_px": 77.4,
+        "business_amount": 10857678,
+        "business_balance": 845276020,
+        "change": 2.56,
+        "ma5_px": 76.52,
+        "ma10_px": 81.06,
+        "ma20_px": 88.04,
+        "change_diff": -0.08000000000000007
       }
     ],
     "isImportant": false
@@ -1167,14 +1167,14 @@
         "open_px": 30.01,
         "high_px": 31.2,
         "low_px": 29.99,
-        "close_px": 30.73,
-        "business_amount": 9537529,
-        "business_balance": 291689890,
-        "change": 1.42,
-        "ma5_px": 30.2,
-        "ma10_px": 31.52,
-        "ma20_px": 34.52,
-        "change_diff": 0
+        "close_px": 30.49,
+        "business_amount": 11272529,
+        "business_balance": 344766180,
+        "change": 0.63,
+        "ma5_px": 30.15,
+        "ma10_px": 31.49,
+        "ma20_px": 34.51,
+        "change_diff": -0.09999999999999998
       }
     ],
     "isImportant": false
@@ -1187,14 +1187,14 @@
         "open_px": 28.77,
         "high_px": 30.07,
         "low_px": 28.45,
-        "close_px": 29.49,
-        "business_amount": 65975610,
-        "business_balance": 1942303300,
-        "change": 1.44,
-        "ma5_px": 28.98,
-        "ma10_px": 30.89,
-        "ma20_px": 37.07,
-        "change_diff": -0.040000000000000036
+        "close_px": 29.35,
+        "business_amount": 73450986,
+        "business_balance": 2161613300,
+        "change": 0.96,
+        "ma5_px": 28.95,
+        "ma10_px": 30.88,
+        "ma20_px": 37.06,
+        "change_diff": -0.07000000000000006
       }
     ],
     "isImportant": false
@@ -1207,14 +1207,14 @@
         "open_px": 273.01,
         "high_px": 281.98,
         "low_px": 269.8,
-        "close_px": 278.73,
-        "business_amount": 11339787,
-        "business_balance": 3127830700,
-        "change": 0.53,
-        "ma5_px": 288.79,
-        "ma10_px": 300.56,
-        "ma20_px": 321.83,
-        "change_diff": -0.010000000000000009
+        "close_px": 278,
+        "business_amount": 12536096,
+        "business_balance": 3460007800,
+        "change": 0.26,
+        "ma5_px": 288.64,
+        "ma10_px": 300.49,
+        "ma20_px": 321.79,
+        "change_diff": 0.08000000000000002
       }
     ],
     "isImportant": false
@@ -1227,13 +1227,13 @@
         "open_px": 41.1,
         "high_px": 41.89,
         "low_px": 40.5,
-        "close_px": 40.95,
-        "business_amount": 187380780,
-        "business_balance": 7731935800,
-        "change": -1.37,
-        "ma5_px": 43.42,
-        "ma10_px": 46.87,
-        "ma20_px": 51.3,
+        "close_px": 40.59,
+        "business_amount": 221816770,
+        "business_balance": 9131788000,
+        "change": -2.24,
+        "ma5_px": 43.34,
+        "ma10_px": 46.84,
+        "ma20_px": 51.28,
         "change_diff": 0
       }
     ],
@@ -1247,14 +1247,14 @@
         "open_px": 86.7,
         "high_px": 90.05,
         "low_px": 85,
-        "close_px": 88.91,
-        "business_amount": 14606480,
-        "business_balance": 1290668610,
-        "change": 2.31,
-        "ma5_px": 90.24,
-        "ma10_px": 94.19,
-        "ma20_px": 99.22,
-        "change_diff": -0.08000000000000007
+        "close_px": 87.91,
+        "business_amount": 16380180,
+        "business_balance": 1447087300,
+        "change": 1.16,
+        "ma5_px": 90.04,
+        "ma10_px": 94.09,
+        "ma20_px": 99.17,
+        "change_diff": -0.1200000000000001
       }
     ],
     "isImportant": false
@@ -1267,14 +1267,14 @@
         "open_px": 76.72,
         "high_px": 80,
         "low_px": 75.8,
-        "close_px": 78.78,
-        "business_amount": 20133108,
-        "business_balance": 1580226000,
-        "change": 2.7,
-        "ma5_px": 79.33,
-        "ma10_px": 82.34,
-        "ma20_px": 87.2,
-        "change_diff": 0
+        "close_px": 78.13,
+        "business_amount": 22306484,
+        "business_balance": 1750151600,
+        "change": 1.85,
+        "ma5_px": 79.2,
+        "ma10_px": 82.28,
+        "ma20_px": 87.16,
+        "change_diff": -0.029999999999999805
       }
     ],
     "isImportant": false
@@ -1287,14 +1287,14 @@
         "open_px": 163.42,
         "high_px": 166.61,
         "low_px": 158.48,
-        "close_px": 163.3,
-        "business_amount": 9095514,
-        "business_balance": 1483948700,
-        "change": -0.31,
-        "ma5_px": 168.9,
-        "ma10_px": 179.81,
-        "ma20_px": 197.68,
-        "change_diff": 0.06
+        "close_px": 161.65,
+        "business_amount": 10190914,
+        "business_balance": 1661124900,
+        "change": -1.32,
+        "ma5_px": 168.57,
+        "ma10_px": 179.64,
+        "ma20_px": 197.6,
+        "change_diff": -0.09000000000000008
       }
     ],
     "isImportant": false
@@ -1307,14 +1307,14 @@
         "open_px": 256,
         "high_px": 263.98,
         "low_px": 247.3,
-        "close_px": 257.26,
-        "business_amount": 2835831,
-        "business_balance": 729116090,
-        "change": 0.49,
-        "ma5_px": 262.27,
-        "ma10_px": 262.99,
-        "ma20_px": 287.32,
-        "change_diff": 0.010000000000000009
+        "close_px": 254.59,
+        "business_amount": 3137729,
+        "business_balance": 805810590,
+        "change": -0.55,
+        "ma5_px": 261.74,
+        "ma10_px": 262.72,
+        "ma20_px": 287.19,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1327,14 +1327,14 @@
         "open_px": 41.5,
         "high_px": 42.94,
         "low_px": 41.03,
-        "close_px": 42.25,
-        "business_amount": 22280716,
-        "business_balance": 941486380,
-        "change": 1.2,
-        "ma5_px": 43.13,
-        "ma10_px": 47.73,
-        "ma20_px": 53,
-        "change_diff": 0
+        "close_px": 41.97,
+        "business_amount": 24798716,
+        "business_balance": 1047256790,
+        "change": 0.53,
+        "ma5_px": 43.07,
+        "ma10_px": 47.7,
+        "ma20_px": 52.99,
+        "change_diff": -0.020000000000000018
       }
     ],
     "isImportant": false
@@ -1347,14 +1347,14 @@
         "open_px": 185.5,
         "high_px": 197.44,
         "low_px": 179.8,
-        "close_px": 191.78,
-        "business_amount": 8851739,
-        "business_balance": 1694800500,
-        "change": 2.7,
-        "ma5_px": 192.1,
-        "ma10_px": 198.37,
-        "ma20_px": 213.09,
-        "change_diff": 0
+        "close_px": 191.25,
+        "business_amount": 9592539,
+        "business_balance": 1836074500,
+        "change": 2.42,
+        "ma5_px": 192,
+        "ma10_px": 198.32,
+        "ma20_px": 213.06,
+        "change_diff": -0.040000000000000036
       }
     ],
     "isImportant": false
@@ -1367,14 +1367,14 @@
         "open_px": 32.45,
         "high_px": 33.44,
         "low_px": 32.42,
-        "close_px": 33.18,
-        "business_amount": 42142783,
-        "business_balance": 1392102900,
-        "change": 1.62,
-        "ma5_px": 31.81,
-        "ma10_px": 32.76,
-        "ma20_px": 33.97,
-        "change_diff": 0.1200000000000001
+        "close_px": 32.86,
+        "business_amount": 47178793,
+        "business_balance": 1558150900,
+        "change": 0.64,
+        "ma5_px": 31.75,
+        "ma10_px": 32.72,
+        "ma20_px": 33.95,
+        "change_diff": -0.030000000000000027
       }
     ],
     "isImportant": false
@@ -1388,8 +1388,8 @@
         "high_px": 50.46,
         "low_px": 45.99,
         "close_px": 50.46,
-        "business_amount": 14441750,
-        "business_balance": 712311230,
+        "business_amount": 14621928,
+        "business_balance": 721403010,
         "change": 10.01,
         "ma5_px": 44.54,
         "ma10_px": 46.26,
@@ -1407,14 +1407,14 @@
         "open_px": 405.85,
         "high_px": 422.92,
         "low_px": 398.51,
-        "close_px": 416.52,
-        "business_amount": 532385,
-        "business_balance": 220242050,
-        "change": 1.89,
-        "ma5_px": 423.79,
-        "ma10_px": 449.01,
-        "ma20_px": 480.6,
-        "change_diff": 0
+        "close_px": 413,
+        "business_amount": 595466,
+        "business_balance": 246254870,
+        "change": 1.03,
+        "ma5_px": 423.08,
+        "ma10_px": 448.66,
+        "ma20_px": 480.42,
+        "change_diff": 0.050000000000000044
       }
     ],
     "isImportant": false
@@ -1427,14 +1427,14 @@
         "open_px": 165.47,
         "high_px": 174.65,
         "low_px": 162.58,
-        "close_px": 170.74,
-        "business_amount": 7943570,
-        "business_balance": 1353633300,
-        "change": 2.01,
-        "ma5_px": 178.67,
-        "ma10_px": 188.45,
-        "ma20_px": 202.28,
-        "change_diff": 0.029999999999999805
+        "close_px": 169.52,
+        "business_amount": 8661067,
+        "business_balance": 1475365900,
+        "change": 1.28,
+        "ma5_px": 178.43,
+        "ma10_px": 188.32,
+        "ma20_px": 202.22,
+        "change_diff": -0.040000000000000036
       }
     ],
     "isImportant": false
@@ -1447,14 +1447,14 @@
         "open_px": 5.04,
         "high_px": 5.1,
         "low_px": 5.01,
-        "close_px": 5.06,
-        "business_amount": 354164230,
-        "business_balance": 1789549000,
-        "change": 0,
-        "ma5_px": 5.1,
+        "close_px": 5.04,
+        "business_amount": 393960830,
+        "business_balance": 1990096200,
+        "change": -0.4,
+        "ma5_px": 5.09,
         "ma10_px": 5.29,
         "ma20_px": 5.54,
-        "change_diff": 0
+        "change_diff": 0.18999999999999995
       }
     ],
     "isImportant": false
@@ -1467,14 +1467,14 @@
         "open_px": 10.99,
         "high_px": 11.28,
         "low_px": 10.87,
-        "close_px": 11.03,
-        "business_amount": 106532893,
-        "business_balance": 1179456960,
-        "change": -0.18,
-        "ma5_px": 11.46,
-        "ma10_px": 11.88,
-        "ma20_px": 13.21,
-        "change_diff": -0.09
+        "close_px": 10.91,
+        "business_amount": 119944681,
+        "business_balance": 1326079240,
+        "change": -1.27,
+        "ma5_px": 11.43,
+        "ma10_px": 11.86,
+        "ma20_px": 13.2,
+        "change_diff": -0.09000000000000008
       }
     ],
     "isImportant": false
@@ -1487,14 +1487,14 @@
         "open_px": 168.03,
         "high_px": 175.96,
         "low_px": 165.5,
-        "close_px": 171.18,
-        "business_amount": 5681388,
-        "business_balance": 974336310,
-        "change": 0.9,
-        "ma5_px": 175.77,
-        "ma10_px": 185.01,
-        "ma20_px": 207.09,
-        "change_diff": 0.040000000000000036
+        "close_px": 169.89,
+        "business_amount": 6243388,
+        "business_balance": 1069951170,
+        "change": 0.14,
+        "ma5_px": 175.51,
+        "ma10_px": 184.88,
+        "ma20_px": 207.02,
+        "change_diff": -0.06
       }
     ],
     "isImportant": false
@@ -1507,14 +1507,14 @@
         "open_px": 63.63,
         "high_px": 65.99,
         "low_px": 62.5,
-        "close_px": 64.35,
-        "business_amount": 21516638,
-        "business_balance": 1392341900,
-        "change": 0.14,
-        "ma5_px": 66.56,
-        "ma10_px": 69.52,
+        "close_px": 64.26,
+        "business_amount": 23391641,
+        "business_balance": 1512482200,
+        "change": 0,
+        "ma5_px": 66.54,
+        "ma10_px": 69.51,
         "ma20_px": 75.96,
-        "change_diff": -0.03
+        "change_diff": -0.11
       }
     ],
     "isImportant": false
@@ -1527,14 +1527,14 @@
         "open_px": 24.01,
         "high_px": 27.18,
         "low_px": 23.9,
-        "close_px": 25.98,
-        "business_amount": 145984300,
-        "business_balance": 3818294200,
-        "change": 5.14,
-        "ma5_px": 25.27,
-        "ma10_px": 23.63,
-        "ma20_px": 24.08,
-        "change_diff": 0.08000000000000007
+        "close_px": 25.88,
+        "business_amount": 153765510,
+        "business_balance": 4019373600,
+        "change": 4.73,
+        "ma5_px": 25.25,
+        "ma10_px": 23.62,
+        "ma20_px": 24.07,
+        "change_diff": -0.04999999999999982
       }
     ],
     "isImportant": false
@@ -1547,14 +1547,14 @@
         "open_px": 62.9,
         "high_px": 66.1,
         "low_px": 61.94,
-        "close_px": 64.79,
-        "business_amount": 26047488,
-        "business_balance": 1680860400,
-        "change": 2.52,
-        "ma5_px": 64.63,
-        "ma10_px": 69.79,
-        "ma20_px": 80.91,
-        "change_diff": -0.029999999999999805
+        "close_px": 64.32,
+        "business_amount": 29138698,
+        "business_balance": 1879917700,
+        "change": 1.77,
+        "ma5_px": 64.54,
+        "ma10_px": 69.74,
+        "ma20_px": 80.88,
+        "change_diff": -0.050000000000000044
       }
     ],
     "isImportant": false
@@ -1567,14 +1567,14 @@
         "open_px": 49.22,
         "high_px": 51.19,
         "low_px": 49.02,
-        "close_px": 50.44,
-        "business_amount": 5182550,
-        "business_balance": 260861020,
-        "change": 1.88,
-        "ma5_px": 50.81,
-        "ma10_px": 54.47,
-        "ma20_px": 61.8,
-        "change_diff": 0.039999999999999813
+        "close_px": 50,
+        "business_amount": 6057050,
+        "business_balance": 304626070,
+        "change": 0.99,
+        "ma5_px": 50.72,
+        "ma10_px": 54.42,
+        "ma20_px": 61.78,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1587,14 +1587,14 @@
         "open_px": 96.18,
         "high_px": 100.17,
         "low_px": 95,
-        "close_px": 98.36,
-        "business_amount": 7402750,
-        "business_balance": 726592250,
-        "change": 2.34,
-        "ma5_px": 99,
-        "ma10_px": 105.93,
-        "ma20_px": 119.67,
-        "change_diff": 0.009999999999999787
+        "close_px": 97.54,
+        "business_amount": 8129450,
+        "business_balance": 797604600,
+        "change": 1.49,
+        "ma5_px": 98.84,
+        "ma10_px": 105.84,
+        "ma20_px": 119.63,
+        "change_diff": -0.06000000000000005
       }
     ],
     "isImportant": false
@@ -1607,14 +1607,14 @@
         "open_px": 207,
         "high_px": 211,
         "low_px": 200.36,
-        "close_px": 206,
-        "business_amount": 8756034,
-        "business_balance": 1808855600,
-        "change": -0.12,
-        "ma5_px": 212.89,
-        "ma10_px": 219.94,
-        "ma20_px": 243.37,
-        "change_diff": 0
+        "close_px": 204.62,
+        "business_amount": 9573046,
+        "business_balance": 1976256500,
+        "change": -0.79,
+        "ma5_px": 212.62,
+        "ma10_px": 219.8,
+        "ma20_px": 243.3,
+        "change_diff": -0.13
       }
     ],
     "isImportant": false
@@ -1627,14 +1627,14 @@
         "open_px": 38.8,
         "high_px": 39.54,
         "low_px": 37.8,
-        "close_px": 38.65,
-        "business_amount": 31569398,
-        "business_balance": 1224022770,
-        "change": -1.13,
-        "ma5_px": 40.56,
-        "ma10_px": 43.02,
-        "ma20_px": 42.5,
-        "change_diff": -0.029999999999999805
+        "close_px": 38.44,
+        "business_amount": 35624876,
+        "business_balance": 1379654100,
+        "change": -1.66,
+        "ma5_px": 40.52,
+        "ma10_px": 43,
+        "ma20_px": 42.48,
+        "change_diff": -0.020000000000000018
       }
     ],
     "isImportant": false
@@ -1647,14 +1647,14 @@
         "open_px": 40.8,
         "high_px": 42.13,
         "low_px": 40.1,
-        "close_px": 41.47,
-        "business_amount": 21139592,
-        "business_balance": 875599710,
-        "change": 1.42,
-        "ma5_px": 42.65,
-        "ma10_px": 45.24,
-        "ma20_px": 48.82,
-        "change_diff": 0.030000000000000027
+        "close_px": 40.95,
+        "business_amount": 24097992,
+        "business_balance": 997109990,
+        "change": 0.15,
+        "ma5_px": 42.55,
+        "ma10_px": 45.19,
+        "ma20_px": 48.8,
+        "change_diff": -0.020000000000000018
       }
     ],
     "isImportant": false
@@ -1667,14 +1667,14 @@
         "open_px": 14.6,
         "high_px": 15.37,
         "low_px": 14.5,
-        "close_px": 14.87,
-        "business_amount": 31812200,
-        "business_balance": 477104130,
-        "change": 0.61,
-        "ma5_px": 15.55,
+        "close_px": 14.81,
+        "business_amount": 34607300,
+        "business_balance": 518465540,
+        "change": 0.2,
+        "ma5_px": 15.54,
         "ma10_px": 16.4,
         "ma20_px": 17.71,
-        "change_diff": -0.07000000000000006
+        "change_diff": -0.07
       }
     ],
     "isImportant": false
@@ -1687,14 +1687,14 @@
         "open_px": 23.04,
         "high_px": 23.86,
         "low_px": 22.4,
-        "close_px": 23.24,
-        "business_amount": 57528305,
-        "business_balance": 1324041110,
-        "change": -0.26,
-        "ma5_px": 24.06,
-        "ma10_px": 23.16,
-        "ma20_px": 20.84,
-        "change_diff": 0.13
+        "close_px": 22.96,
+        "business_amount": 61470705,
+        "business_balance": 1415169000,
+        "change": -1.46,
+        "ma5_px": 24,
+        "ma10_px": 23.13,
+        "ma20_px": 20.83,
+        "change_diff": -0.040000000000000036
       }
     ],
     "isImportant": false
@@ -1707,14 +1707,14 @@
         "open_px": 5.54,
         "high_px": 5.68,
         "low_px": 5.47,
-        "close_px": 5.61,
-        "business_amount": 152889620,
-        "business_balance": 850247760,
-        "change": 0.36,
+        "close_px": 5.57,
+        "business_amount": 162477090,
+        "business_balance": 903930810,
+        "change": -0.36,
         "ma5_px": 5.64,
         "ma10_px": 5.54,
-        "ma20_px": 5.28,
-        "change_diff": 0.18
+        "ma20_px": 5.27,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1727,14 +1727,14 @@
         "open_px": 97,
         "high_px": 102.93,
         "low_px": 96.5,
-        "close_px": 101.51,
-        "business_amount": 5770846,
-        "business_balance": 581089480,
-        "change": 4.22,
-        "ma5_px": 98.34,
-        "ma10_px": 94.98,
-        "ma20_px": 91.21,
-        "change_diff": 0.009999999999999787
+        "close_px": 100.57,
+        "business_amount": 6464846,
+        "business_balance": 650833020,
+        "change": 3.25,
+        "ma5_px": 98.15,
+        "ma10_px": 94.88,
+        "ma20_px": 91.16,
+        "change_diff": -0.029999999999999805
       }
     ],
     "isImportant": false
@@ -1747,14 +1747,14 @@
         "open_px": 72,
         "high_px": 75.88,
         "low_px": 71.48,
-        "close_px": 74.12,
-        "business_amount": 12024867,
-        "business_balance": 890601200,
-        "change": 1.95,
-        "ma5_px": 74.85,
-        "ma10_px": 76.35,
-        "ma20_px": 81.66,
-        "change_diff": -0.030000000000000027
+        "close_px": 73.54,
+        "business_amount": 13256067,
+        "business_balance": 981203540,
+        "change": 1.16,
+        "ma5_px": 74.73,
+        "ma10_px": 76.29,
+        "ma20_px": 81.63,
+        "change_diff": 0.020000000000000018
       }
     ],
     "isImportant": false
@@ -1767,14 +1767,14 @@
         "open_px": 231.6,
         "high_px": 248.95,
         "low_px": 228.84,
-        "close_px": 244.75,
-        "business_amount": 7664200,
-        "business_balance": 1841964100,
-        "change": 5.71,
-        "ma5_px": 255.53,
-        "ma10_px": 266.31,
-        "ma20_px": 252.91,
-        "change_diff": 0.019999999999999574
+        "close_px": 243.25,
+        "business_amount": 8087900,
+        "business_balance": 1944838700,
+        "change": 5.06,
+        "ma5_px": 255.23,
+        "ma10_px": 266.16,
+        "ma20_px": 252.83,
+        "change_diff": -0.020000000000000462
       }
     ],
     "isImportant": false
@@ -1787,14 +1787,14 @@
         "open_px": 27.05,
         "high_px": 29,
         "low_px": 27.04,
-        "close_px": 28.59,
-        "business_amount": 11605200,
-        "business_balance": 326022860,
-        "change": 3.81,
-        "ma5_px": 28.29,
-        "ma10_px": 26.65,
+        "close_px": 28.45,
+        "business_amount": 12777000,
+        "business_balance": 359432290,
+        "change": 3.3,
+        "ma5_px": 28.27,
+        "ma10_px": 26.63,
         "ma20_px": 25.05,
-        "change_diff": -0.08000000000000007
+        "change_diff": -0.040000000000000036
       }
     ],
     "isImportant": false
@@ -1807,14 +1807,14 @@
         "open_px": 43.66,
         "high_px": 48.95,
         "low_px": 43.4,
-        "close_px": 48.05,
-        "business_amount": 11524607,
-        "business_balance": 537367830,
-        "change": 7.98,
-        "ma5_px": 46.23,
-        "ma10_px": 43.53,
-        "ma20_px": 39.35,
-        "change_diff": 0.27000000000000046
+        "close_px": 46.74,
+        "business_amount": 12158807,
+        "business_balance": 567273370,
+        "change": 5.03,
+        "ma5_px": 45.97,
+        "ma10_px": 43.4,
+        "ma20_px": 39.29,
+        "change_diff": 0.040000000000000036
       }
     ],
     "isImportant": false
@@ -1827,14 +1827,14 @@
         "open_px": 182.15,
         "high_px": 186.66,
         "low_px": 173,
-        "close_px": 179.5,
-        "business_amount": 3225750,
-        "business_balance": 585385630,
-        "change": -1.43,
-        "ma5_px": 191,
-        "ma10_px": 200.97,
-        "ma20_px": 203.36,
-        "change_diff": 0.10000000000000009
+        "close_px": 177.78,
+        "business_amount": 3527550,
+        "business_balance": 639120270,
+        "change": -2.37,
+        "ma5_px": 190.65,
+        "ma10_px": 200.8,
+        "ma20_px": 203.28,
+        "change_diff": -0.07000000000000028
       }
     ],
     "isImportant": false
@@ -1845,16 +1845,16 @@
       {
         "trade_date": 20261020,
         "open_px": 10.19,
-        "high_px": 10.44,
+        "high_px": 10.54,
         "low_px": 9.95,
-        "close_px": 10.35,
-        "business_amount": 115444507,
-        "business_balance": 1177788280,
-        "change": 0.88,
+        "close_px": 10.34,
+        "business_amount": 129020167,
+        "business_balance": 1319234470,
+        "change": 0.78,
         "ma5_px": 9.39,
-        "ma10_px": 7.83,
+        "ma10_px": 7.82,
         "ma20_px": 6.74,
-        "change_diff": 0.19999999999999996
+        "change_diff": 0.09999999999999998
       }
     ],
     "isImportant": false
@@ -1867,11 +1867,11 @@
         "open_px": 24.29,
         "high_px": 24.9,
         "low_px": 23.25,
-        "close_px": 23.71,
-        "business_amount": 34983586,
-        "business_balance": 840233990,
-        "change": -6.4,
-        "ma5_px": 25.2,
+        "close_px": 23.74,
+        "business_amount": 37912186,
+        "business_balance": 910437560,
+        "change": -6.28,
+        "ma5_px": 25.21,
         "ma10_px": 23.12,
         "ma20_px": 19.57,
         "change_diff": 0
@@ -1887,12 +1887,12 @@
         "open_px": 52.34,
         "high_px": 53.46,
         "low_px": 49.99,
-        "close_px": 50.94,
-        "business_amount": 15961200,
-        "business_balance": 823323030,
-        "change": -2.38,
-        "ma5_px": 52.1,
-        "ma10_px": 51.19,
+        "close_px": 50.81,
+        "business_amount": 16800900,
+        "business_balance": 865850870,
+        "change": -2.63,
+        "ma5_px": 52.07,
+        "ma10_px": 51.17,
         "ma20_px": 45.35,
         "change_diff": 0
       }
@@ -1907,14 +1907,14 @@
         "open_px": 28.39,
         "high_px": 29.3,
         "low_px": 28.05,
-        "close_px": 28.51,
-        "business_amount": 42688709,
-        "business_balance": 1219800720,
-        "change": -1.18,
-        "ma5_px": 28.78,
-        "ma10_px": 27.16,
-        "ma20_px": 25.12,
-        "change_diff": -0.16999999999999993
+        "close_px": 28.27,
+        "business_amount": 46103957,
+        "business_balance": 1316721250,
+        "change": -2.01,
+        "ma5_px": 28.74,
+        "ma10_px": 27.13,
+        "ma20_px": 25.11,
+        "change_diff": -0.06999999999999984
       }
     ],
     "isImportant": false
@@ -1927,14 +1927,14 @@
         "open_px": 11.96,
         "high_px": 13.95,
         "low_px": 11.96,
-        "close_px": 13.02,
-        "business_amount": 71421998,
-        "business_balance": 938769120,
-        "change": 2.2,
-        "ma5_px": 13.42,
-        "ma10_px": 12.51,
-        "ma20_px": 9.99,
-        "change_diff": 0
+        "close_px": 13.48,
+        "business_amount": 75197764,
+        "business_balance": 988978810,
+        "change": 5.81,
+        "ma5_px": 13.51,
+        "ma10_px": 12.55,
+        "ma20_px": 10.02,
+        "change_diff": 0.23999999999999932
       }
     ],
     "isImportant": false
@@ -1947,13 +1947,13 @@
         "open_px": 14.1,
         "high_px": 14.15,
         "low_px": 13.66,
-        "close_px": 13.85,
-        "business_amount": 64378882,
-        "business_balance": 889124330,
-        "change": -4.48,
-        "ma5_px": 13.69,
-        "ma10_px": 13.23,
-        "ma20_px": 13.23,
+        "close_px": 13.93,
+        "business_amount": 70280261,
+        "business_balance": 971383490,
+        "change": -3.93,
+        "ma5_px": 13.7,
+        "ma10_px": 13.24,
+        "ma20_px": 13.24,
         "change_diff": 0
       }
     ],
@@ -1967,14 +1967,14 @@
         "open_px": 33.12,
         "high_px": 33.12,
         "low_px": 31.43,
-        "close_px": 31.72,
-        "business_amount": 38806594,
-        "business_balance": 1239165260,
-        "change": -5.37,
-        "ma5_px": 31.15,
-        "ma10_px": 30.73,
-        "ma20_px": 31.51,
-        "change_diff": -0.03000000000000025
+        "close_px": 32.01,
+        "business_amount": 44114395,
+        "business_balance": 1410477900,
+        "change": -4.5,
+        "ma5_px": 31.21,
+        "ma10_px": 30.76,
+        "ma20_px": 31.53,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -1987,14 +1987,14 @@
         "open_px": 36.84,
         "high_px": 37.55,
         "low_px": 36,
-        "close_px": 36.89,
-        "business_amount": 11208310,
-        "business_balance": 410992070,
-        "change": -1.97,
-        "ma5_px": 36.57,
-        "ma10_px": 34.46,
-        "ma20_px": 33.74,
-        "change_diff": 0.050000000000000044
+        "close_px": 36.69,
+        "business_amount": 13210838,
+        "business_balance": 484805610,
+        "change": -2.5,
+        "ma5_px": 36.53,
+        "ma10_px": 34.44,
+        "ma20_px": 33.73,
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -2005,16 +2005,16 @@
       {
         "trade_date": 20261020,
         "open_px": 12.6,
-        "high_px": 12.75,
+        "high_px": 12.79,
         "low_px": 12.34,
-        "close_px": 12.66,
-        "business_amount": 37131154,
-        "business_balance": 464860100,
-        "change": -1.71,
-        "ma5_px": 12.02,
-        "ma10_px": 11.57,
+        "close_px": 12.75,
+        "business_amount": 40700454,
+        "business_balance": 510169700,
+        "change": -1.01,
+        "ma5_px": 12.04,
+        "ma10_px": 11.58,
         "ma20_px": 11.43,
-        "change_diff": 0
+        "change_diff": 0.08000000000000007
       }
     ],
     "isImportant": false
@@ -2025,16 +2025,16 @@
       {
         "trade_date": 20261020,
         "open_px": 14.95,
-        "high_px": 15.58,
+        "high_px": 15.71,
         "low_px": 14.77,
-        "close_px": 15.4,
-        "business_amount": 101437049,
-        "business_balance": 1543548100,
-        "change": -1.16,
-        "ma5_px": 14.49,
-        "ma10_px": 11.99,
+        "close_px": 15.5,
+        "business_amount": 112857326,
+        "business_balance": 1720996000,
+        "change": -0.51,
+        "ma5_px": 14.51,
+        "ma10_px": 12,
         "ma20_px": 8.78,
-        "change_diff": -0.06999999999999984
+        "change_diff": 0
       }
     ],
     "isImportant": false
@@ -2047,13 +2047,13 @@
         "open_px": 214.89,
         "high_px": 232.98,
         "low_px": 214.22,
-        "close_px": 228.2,
-        "business_amount": 2122492,
-        "business_balance": 479029990,
-        "change": 4.21,
-        "ma5_px": 232.59,
-        "ma10_px": 243.07,
-        "ma20_px": 270.12,
+        "close_px": 227.26,
+        "business_amount": 2274892,
+        "business_balance": 513564730,
+        "change": 3.78,
+        "ma5_px": 232.41,
+        "ma10_px": 242.98,
+        "ma20_px": 270.07,
         "change_diff": 0
       }
     ],
@@ -2068,8 +2068,8 @@
         "high_px": 24.43,
         "low_px": 22.82,
         "close_px": 24.43,
-        "business_amount": 34643929,
-        "business_balance": 830172070,
+        "business_amount": 35177429,
+        "business_balance": 843205480,
         "change": 10,
         "ma5_px": 21.8,
         "ma10_px": 22.76,
@@ -2087,14 +2087,14 @@
         "open_px": 79.72,
         "high_px": 93.39,
         "low_px": 79.67,
-        "close_px": 90.6,
-        "business_amount": 20188696,
-        "business_balance": 1740190800,
-        "change": 15.77,
-        "ma5_px": 76.72,
-        "ma10_px": 78.42,
-        "ma20_px": 84.03,
-        "change_diff": 0
+        "close_px": 89.78,
+        "business_amount": 21475629,
+        "business_balance": 1857004200,
+        "change": 14.72,
+        "ma5_px": 76.55,
+        "ma10_px": 78.34,
+        "ma20_px": 83.98,
+        "change_diff": -0.17999999999999972
       }
     ],
     "isImportant": false

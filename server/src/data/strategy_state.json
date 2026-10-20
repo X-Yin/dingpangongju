@@ -21,5 +21,11 @@
   },
   "inflow_rise_volume_shrink": {
     "lastTriggeredTime": "2026-10-20 10:38:53"
+  },
+  "straight_rise_no_volume": {
+    "lastTriggeredTime": "2026-10-20 13:00:00"
+  },
+  "panic_outflow": {
+    "lastTriggeredTime": "2026-10-20 13:09:07"
   }
 }

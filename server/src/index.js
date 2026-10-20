@@ -76,11 +76,11 @@ const { getBlockAiContext, runBlockAiAnalysis } = require('./service/blockAi');
 const { getAiScreenContext, runAiScreen } = require('./service/aiStockScreener');
 const { getJigouReportsData, refreshJigouReports, getPendingNewReports, acknowledgeNewReports } = require('./service/jigouReports');
 const { getMonitorAlarms, markAlarmRead, markAllAlarmsRead } = require('./service/monitor');
-const { addMonitorStock, deleteMonitorStock, toggleStockImportant, batchSetImportant, updateMonitorStockName, getMonitorStocks, toggleStockTop, syncTotalShares } = require('./service/monitorStock');
+const { addMonitorStock, deleteMonitorStock, toggleStockImportant, batchSetImportant, updateMonitorStockName, getMonitorStocks, toggleStockTop, syncTotalShares, isTechWatchlistStock } = require('./service/monitorStock');
 const { diagnoseResilience, diagnoseResilienceMultiDay, calculateRealtimeResilienceBatch, diagnoseSingleStockResilience, diagnoseIntradayResilience, checkPositionSellAlerts } = require('./service/stockDiagnose');
 const { diagnosePremium } = require('./service/premiumDiagnosis');
 const { backtestBuySell, diagnoseRealtimeBuyPoints, getBuyPointChecks, getBuyPointStocks, getTopGainersByMarket, getSingleStockBuyPointDiagnosis, getBuySellSelectableStocks, checkSingleStockSellPoint } = require('./service/buySellDiagnose');
-const { MODE_EXTREME_WIN, getHotMoneyLeaderList, getExtremeWinBuyPointChecks, checkExtremeWinSellPointDetailed } = require('./service/hotMoneyExtremeWin');
+const { MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, getHotMoneyLeaderList, getExtremeWinBuyPointChecks, checkExtremeWinSellPointDetailed } = require('./service/hotMoneyExtremeWin');
 const { diagnoseTrendStocks } = require('./service/trendDiagnose');
 const { getTechnicalDiagnosis } = require('./service/technicalDiagnosis');
 const { getMaSlopeDiagnosis } = require('./service/maSlopeDiagnosis');
@@ -1064,14 +1064,17 @@ app.get('/premium_diagnosis', async (req, res) => {
   }
 });
 
-// 单个股票卖点诊断（mode='hot_money_extreme_win' 时走「情绪游资-极致胜率」9 条龙头战法卖点）
+// 单个股票卖点诊断（mode='hot_money_extreme_win' 时走「情绪游资-极致胜率」9 条龙头战法卖点；
+//   mode='attack_defense' 时按持仓股是否属于自选股科技股范围分流：科技股走科技卖点诊断，其余走龙头卖点诊断）
 app.post('/check_single_stock_sell_point', async (req, res) => {
   try {
     const { code, costPrice, buyDate, mode } = req.body;
     if (!code) {
       return res.status(400).json({ success: false, message: '股票代码不能为空' });
     }
-    const result = mode === MODE_EXTREME_WIN
+    const useExtremeWin = mode === MODE_EXTREME_WIN
+      || (mode === MODE_ATTACK_DEFENSE && !isTechWatchlistStock(code));
+    const result = useExtremeWin
       ? await checkExtremeWinSellPointDetailed(code, costPrice, buyDate)
       : await checkSingleStockSellPoint(code, costPrice);
     res.json(result);
@@ -1129,13 +1132,24 @@ app.post('/diagnose_realtime_buy_points', async (req, res) => {
   }
 });
 
-// 买点7项前置条件检查（mode='hot_money_extreme_win' 时返回「情绪游资-极致胜率」7 项龙头买点）
+// 买点7项前置条件检查（mode='hot_money_extreme_win' 时返回「情绪游资-极致胜率」7 项龙头买点；
+//   mode='attack_defense' 时双策略并行诊断：顶层=情绪游资顺周期 7 项 + tech 字段=科技进攻完整诊断）
 app.post('/buy_point_checks', async (req, res) => {
   try {
     const targetDate = req.body?.targetDate;
     const mode = req.body?.mode;
     const refresh = req.body?.refresh === true || req.body?.refresh === 1 || req.body?.refresh === '1';
     const force = req.body?.force === true || req.body?.force === 1 || req.body?.force === '1';
+    if (mode === MODE_ATTACK_DEFENSE) {
+      const [techRes, ewRes] = await Promise.all([
+        getBuyPointChecks(targetDate, refresh, force),
+        getExtremeWinBuyPointChecks(targetDate, refresh),
+      ]);
+      const ewData = ewRes?.data || {};
+      const techData = techRes?.data || null;
+      res.json({ success: true, data: { ...ewData, tech: techData, mode: MODE_ATTACK_DEFENSE } });
+      return;
+    }
     const result = mode === MODE_EXTREME_WIN
       ? await getExtremeWinBuyPointChecks(targetDate, refresh)
       : await getBuyPointChecks(targetDate, refresh, force);

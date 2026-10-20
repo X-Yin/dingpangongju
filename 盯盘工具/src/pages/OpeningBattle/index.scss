@@ -724,6 +724,24 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     display: flex;
     flex-direction: column;
     gap: 12px;
+
+    // 攻防兼备：科技进攻 / 顺周期 / 逆周期三列并排
+    &.defense {
+      flex-direction: row;
+      align-items: stretch;
+
+      .ob-gainer-col {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 10px 11px;
+      }
+
+      .ob-gainer-col-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+    }
   }
 
   // 分行板块卡片
@@ -1290,6 +1308,25 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   }
 }
 
+// 建议买入仓位提示（与回测仓位管理一致）
+.ob-position-hint {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  word-break: break-word;
+
+  &.ew {
+    color: #1e40af;
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.26);
+  }
+}
+
 // 卖点持仓卡片（磨砂玻璃卡 + 半透明状态色条件条目）
 .ob-sell-stock {
   position: relative;
@@ -1607,6 +1644,26 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
       line-height: 1.7;
       margin-bottom: 10px;
       word-break: break-word;
+    }
+
+    // 建议买入仓位提示（科技进攻橙色 / 情绪游资蓝色，与卡片 ob-position-hint 同口径）
+    .ob-alert-position {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #b45309;
+      line-height: 1.7;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.24);
+      margin-bottom: 8px;
+      word-break: break-word;
+
+      &.ew {
+        color: #1e40af;
+        background: rgba(59, 130, 246, 0.08);
+        border-color: rgba(59, 130, 246, 0.22);
+      }
     }
 
     .ob-alert-sub {

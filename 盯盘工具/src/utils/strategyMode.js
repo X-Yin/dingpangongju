@@ -1,22 +1,25 @@
 // 全局策略模式（开盘实战页「切换模式」）
 //   tech_attack           = 科技进攻（现状，默认）
 //   hot_money_extreme_win = 情绪游资-极致胜率（买卖点与回测页同名策略一致）
+//   attack_defense        = 攻防兼备（双策略同时诊断：科技进攻 + 情绪游资-极致胜率，对应回测融合策略）
 // 模式为全局共享 + localStorage 持久化：模块级变量 + CustomEvent 广播，不引入 Context/Provider。
 import { useEffect, useState } from 'react';
 import { syncStrategyMode } from './buyPointWs';
 
 export const MODE_TECH_ATTACK = 'tech_attack';
 export const MODE_EXTREME_WIN = 'hot_money_extreme_win';
+export const MODE_ATTACK_DEFENSE = 'attack_defense';
 
 export const STRATEGY_MODE_OPTIONS = [
   { value: MODE_TECH_ATTACK, label: '科技进攻' },
   { value: MODE_EXTREME_WIN, label: '情绪游资-极致胜率' },
+  { value: MODE_ATTACK_DEFENSE, label: '攻防兼备' },
 ];
 
 const STORAGE_KEY = 'ob_strategy_mode';
 const EVENT_NAME = 'strategy-mode-change';
 
-const normalize = (value) => (value === MODE_EXTREME_WIN ? MODE_EXTREME_WIN : MODE_TECH_ATTACK);
+const normalize = (value) => (value === MODE_EXTREME_WIN ? MODE_EXTREME_WIN : value === MODE_ATTACK_DEFENSE ? MODE_ATTACK_DEFENSE : MODE_TECH_ATTACK);
 
 const readStored = () => {
   try {

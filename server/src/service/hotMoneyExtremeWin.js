@@ -42,6 +42,9 @@ const {
 } = require('./buySellBacktest/engine/reverseLeaderPool');
 
 const MODE_EXTREME_WIN = 'hot_money_extreme_win';
+// 攻防兼备（2026-10-20 新增）：融合「科技进攻(快进快出)」与「情绪游资-极致胜率(双腿)」双策略同时诊断，
+// 对应回测融合策略 sci_attack_emo_win（引擎 runFusedEmoWinBacktest）
+const MODE_ATTACK_DEFENSE = 'attack_defense';
 
 // 反向抱团「强度分命中次数」回溯窗口上限（交易日）：与回测口径一致（窗口自「上证 3 日线斜率由正转负日」起算）
 const REVERSE_HIT_WINDOW_MAX_DAYS = 20;
@@ -906,6 +909,7 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
 
 module.exports = {
   MODE_EXTREME_WIN,
+  MODE_ATTACK_DEFENSE,
   getHotMoneyLeaderList,
   getExtremeWinBuyPointChecks,
   checkExtremeWinSellPointDetailed,

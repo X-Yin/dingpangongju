@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
-import { MODE_TECH_ATTACK, MODE_EXTREME_WIN } from '../../utils/strategyMode';
+import { MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } from '../../utils/strategyMode';
 import './index.scss';
 
 const { TextArea } = Input;
@@ -41,6 +41,8 @@ const slopeTurnText = (gate) => {
 const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck = false, mode = MODE_TECH_ATTACK }) => {
   const navigate = useNavigate();
   const isExtreme = mode === MODE_EXTREME_WIN;
+  // 攻防兼备：科技进攻（快进快出）+ 情绪游资（顺/逆周期）双策略并示
+  const isDefense = mode === MODE_ATTACK_DEFENSE;
 
   const [checksData, setChecksData] = useState(null);
   const [stocksData, setStocksData] = useState(null);
@@ -276,6 +278,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
     fetchChecks(true);
     if (activeTab === 'change') {
       if (isExtreme) fetchLeaders();
+      else if (isDefense) { fetchLeaders(); fetchGainers(); } // 攻防兼备：龙头列表 + 涨幅榜双拉
       else fetchGainers();
     } else if (activeTab === 'resilience' || activeTab === 'reports') {
       fetchStocks(activeTab, reportDays);
@@ -283,7 +286,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
       fetchAiScreen();
     }
     fetchTechEmotion();
-  }, [fetchChecks, fetchStocks, fetchGainers, fetchLeaders, fetchAiScreen, fetchTechEmotion, activeTab, reportDays, isExtreme]);
+  }, [fetchChecks, fetchStocks, fetchGainers, fetchLeaders, fetchAiScreen, fetchTechEmotion, activeTab, reportDays, isExtreme, isDefense]);
 
   useEffect(() => {
     if (open) {
@@ -300,11 +303,12 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
       setAiContext(null);
       fetchChecks(false);
       if (isExtreme) fetchLeaders();
+      else if (isDefense) { fetchLeaders(); fetchGainers(); }
       else fetchGainers();
       fetchTechEmotion();
       fetchJigouReports();
     }
-  }, [open, mode, isExtreme, fetchChecks, fetchGainers, fetchLeaders, fetchTechEmotion, fetchJigouReports]);
+  }, [open, mode, isExtreme, isDefense, fetchChecks, fetchGainers, fetchLeaders, fetchTechEmotion, fetchJigouReports]);
 
   useEffect(() => {
     if (!open) return;
@@ -338,21 +342,51 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
   }
 
   const allPassed = checksResult?.allPassed === true;
+  // 科技进攻全部通过（tech_attack 即顶层 allPassed；attack_defense 读 tech 嵌套诊断）
+  const techAllPassed = isDefense ? checksResult?.tech?.allPassed === true : allPassed;
   // hideTailDipCheck：隐藏「尾盘抄底」检查项（或逻辑分支），并同步修正计数与结论文案
-  let checksList = (checksResult?.checks || []).filter(check => !(hideTailDipCheck && check.id === 'tail_dip_buying'));
+  const filterChecks = (list) => (list || []).filter(check => !(hideTailDipCheck && check.id === 'tail_dip_buying'));
+  const checksList = filterChecks(checksResult?.checks);
+  // 攻防兼备：科技进攻组检查项（tech 嵌套诊断，同样过滤尾盘抄底提示项）
+  const techChecksList = isDefense ? filterChecks(checksResult?.tech?.checks) : [];
   // 逆周期（反向抱团）一组条件（后端在 checks 之外单独返回），独立分组展示在顺周期之后
-  const reverseChecks = isExtreme ? (checksResult?.reverseChecks || []) : [];
-  const checkGroups = [
-    { key: 'forward', label: isExtreme ? '顺周期 · 情绪游资-极致胜率' : '', items: checksList },
-    ...(reverseChecks.length > 0
-      ? [{ key: 'reverse', label: '逆周期 · 反向抱团龙头', items: reverseChecks, reverse: true }]
-      : []),
-  ];
-  let passedCount = checkGroups.reduce((n, g) => n + g.items.filter(c => c.passed).length, 0);
-  let totalCheckCount = checkGroups.reduce((n, g) => n + g.items.length, 0);
-  if (hideTailDipCheck && !allPassed && typeof checksResult?.conclusion === 'string' && checksResult.conclusion.includes('尾盘抄底')) {
-    checksResult.conclusion = '当前前置条件未全部满足，请耐心等待，不要盲目出手。';
-  }
+  const reverseChecks = (isExtreme || isDefense) ? (checksResult?.reverseChecks || []) : [];
+  const checkGroups = isDefense
+    ? [
+      { key: 'tech', label: '科技进攻 · 快进快出', items: techChecksList },
+      { key: 'forward', label: '顺周期 · 情绪游资-极致胜率', items: checksList },
+      ...(reverseChecks.length > 0
+        ? [{ key: 'reverse', label: '逆周期 · 反向抱团龙头', items: reverseChecks, reverse: true }]
+        : []),
+    ]
+    : [
+      { key: 'forward', label: isExtreme ? '顺周期 · 情绪游资-极致胜率' : '', items: checksList },
+      ...(reverseChecks.length > 0
+        ? [{ key: 'reverse', label: '逆周期 · 反向抱团龙头', items: reverseChecks, reverse: true }]
+        : []),
+    ];
+  const passedCount = checkGroups.reduce((n, g) => n + g.items.filter(c => c.passed).length, 0);
+  const totalCheckCount = checkGroups.reduce((n, g) => n + g.items.length, 0);
+  // 尾盘抄底结论文案修正（渲染期净化，不改后端数据）：attack_defense 分别修正科技进攻与情绪游资两段
+  const sanitizeConclusionText = (text, passed) => (
+    hideTailDipCheck && !passed && typeof text === 'string' && text.includes('尾盘抄底')
+      ? '当前前置条件未全部满足，请耐心等待，不要盲目出手。'
+      : text
+  );
+  const conclusionText = isDefense
+    ? `科技进攻：${sanitizeConclusionText(checksResult?.tech?.conclusion, techAllPassed) || '--'}｜情绪游资：${sanitizeConclusionText(checksResult?.conclusion, allPassed) || '--'}`
+    : sanitizeConclusionText(checksResult?.conclusion, allPassed);
+  // 建议买入仓位提示（与回测仓位管理完全一致）：
+  //   科技进攻——快进快出日首次半仓、次日补足第二份半仓（次日10:00强卖），普通日全仓；
+  //   情绪游资——双腿结构，顺/逆周期各半仓；攻防兼备下两策略同时触发时科技进攻优先
+  const quickOutHint = (isDefense ? techChecksList : checksList).find(c => c.id === 'quick_out_buy_hint')?.value;
+  const isQuickOutDay = typeof quickOutHint === 'string' && quickOutHint.includes('快进快出');
+  const showTechPosition = !isExtreme; // tech_attack / attack_defense
+  const showEwPosition = isExtreme || isDefense;
+  // 任一策略命中（attack_defense：科技进攻 / 顺周期 / 逆周期任一；其余模式即顶层 allPassed）
+  const anyHit = isDefense
+    ? (techAllPassed || allPassed || checksResult?.reverse?.allPassed === true)
+    : allPassed;
 
   // 单条买点条件卡片（顺周期 / 逆周期共用）
   const renderCheckCard = (check, idx) => (
@@ -568,8 +602,8 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
     const starList = markets.star || [];
     const cybPassed = gainersData?.cybGate?.passed === true;
     const starPassed = gainersData?.starGate?.passed === true;
-    // 买点条件全部满足时标签为「买点触发」，否则为「买点候选」
-    const pickLabel = allPassed ? '买点触发' : '买点候选';
+    // 买点条件全部满足时标签为「买点触发」，否则为「买点候选」（攻防兼备下读科技进攻 tech 嵌套结果）
+    const pickLabel = techAllPassed ? '买点触发' : '买点候选';
 
     // 门槛说明（标题下方展示）：仅展示满足指数 3 日线斜率买点门槛的市场的股票
     const gateNote = !gainersData
@@ -593,7 +627,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
 
     return (
       <>
-        {checksResult && !allPassed && (
+        {checksResult && !techAllPassed && (
           <div className="fbd-warning-tip" style={{ marginBottom: 10 }}>
             ⚠️ 前置条件未全部满足，个股列表仅供参考，不建议盲目出手
           </div>
@@ -674,7 +708,8 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
     );
   };
 
-  const renderStocksTab = () => (isChangeMode ? (isExtreme ? renderExtremeLeaderList() : renderChangeModeByMarket()) : (
+  // 攻防兼备：科技进攻涨幅榜 + 情绪游资龙头列表（顺/逆周期）三段并示
+  const renderStocksTab = () => (isChangeMode ? (isDefense ? (<>{renderChangeModeByMarket()}{renderExtremeLeaderList()}</>) : isExtreme ? renderExtremeLeaderList() : renderChangeModeByMarket()) : (
     <>
       {checksResult && !allPassed && matchedStocks.length > 0 && (
         <div className="fbd-warning-tip" style={{ marginBottom: 10 }}>
@@ -946,7 +981,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
             <div className="panel-header">
               <span className="panel-title">买点条件诊断</span>
               {checksResult && (
-                <span className={`panel-badge ${allPassed ? 'pass' : 'fail'}`}>
+                <span className={`panel-badge ${anyHit ? 'pass' : 'fail'}`}>
                   {passedCount}/{totalCheckCount}
                 </span>
               )}
@@ -1036,17 +1071,39 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
                 </div>
                 </>)}
 
-                <div className={`fbd-conclusion ${allPassed ? 'conclusion-pass' : 'conclusion-fail'}`}>
-                  <div className={`fbd-conclusion-title ${allPassed ? 'title-pass' : 'title-fail'}`}>
-                    {allPassed ? '🚀 诊断结果：可以出手' : '⚠️ 诊断结果：暂不可出手'}
+                <div className={`fbd-conclusion ${anyHit ? 'conclusion-pass' : 'conclusion-fail'}`}>
+                  <div className={`fbd-conclusion-title ${anyHit ? 'title-pass' : 'title-fail'}`}>
+                    {anyHit ? '🚀 诊断结果：可以出手' : '⚠️ 诊断结果：暂不可出手'}
                   </div>
-                  <div className="fbd-conclusion-text">{checksResult.conclusion}</div>
+                  <div className="fbd-conclusion-text">{conclusionText}</div>
                   {checksResult.timestamp && (
                     <div className="fbd-conclusion-time">诊断结果时间：{checksResult.timestamp}</div>
                   )}
                 </div>
 
-                {!isExtreme && allPassed && (
+                {/* 建议买入仓位提示（与回测仓位管理完全一致；科技进攻橙色 / 情绪游资蓝色） */}
+                {showTechPosition && (
+                  <div className="fbd-buy-position-hint">
+                    <div className="fbd-buy-position-title">📦 科技进攻建议仓位</div>
+                    <div className="fbd-buy-position-text">
+                      {isQuickOutDay
+                        ? '半仓（50%）——快进快出日：首次买入半仓，次日买点再次触发时补足第二份半仓，该笔次日 10:00 强卖'
+                        : '全仓（100%）——普通买入日'}
+                      {isDefense ? '；两策略同时触发时科技进攻（快进快出）优先' : ''}
+                    </div>
+                  </div>
+                )}
+                {showEwPosition && (
+                  <div className="fbd-buy-position-hint ew">
+                    <div className="fbd-buy-position-title">📦 情绪游资建议仓位</div>
+                    <div className="fbd-buy-position-text">
+                      半仓（50%）——双腿结构，顺周期、逆周期各半仓
+                      {isDefense ? '；若科技进攻（快进快出）同时触发则其优先，本笔情绪游资暂缓，待上一笔完全结束后再考虑' : ''}
+                    </div>
+                  </div>
+                )}
+
+                {!isExtreme && (isDefense ? techAllPassed : allPassed) && (
                   <div className={`fbd-position-tip ${techEmotion !== null && techEmotion < 0 ? 'position-tip-negative' : 'position-tip-positive'}`}>
                     <div className="fbd-position-tip-title">
                       科技情绪指数：{techEmotion !== null ? `${techEmotion > 0 ? '+' : ''}${techEmotion.toFixed(2)}` : '--'}
@@ -1080,7 +1137,8 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
                   onChange={(val) => {
                     setActiveTab(val);
                     if (val === 'change') {
-                      fetchGainers();
+                      if (isDefense) { fetchGainers(); fetchLeaders(); } // 攻防兼备：涨幅榜 + 龙头列表双拉
+                      else fetchGainers();
                     } else if (val === 'resilience' || val === 'reports') {
                       fetchStocks(val, reportDays);
                     } else if (val === 'ai') {
@@ -1088,7 +1146,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
                     }
                   }}
                   options={[
-                    { value: 'change', label: isExtreme ? '龙头列表' : '涨跌幅' },
+                    { value: 'change', label: isDefense ? '攻防列表' : isExtreme ? '龙头列表' : '涨跌幅' },
                     ...(isExtreme ? [] : [
                       { value: 'reports', label: '研报覆盖' },
                       { value: 'resilience', label: '抗分歧' },

@@ -13,7 +13,7 @@ import { getThemeColor } from '../../utils/theme';
 import { parseMoneyValue, formatDisplayTime, aggregateFundByInterval } from '../../utils/fundAggregation';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import StockKLineModal from '../../components/StockKLineModal';
-import { useStrategyMode, setStrategyMode, STRATEGY_MODE_OPTIONS, MODE_EXTREME_WIN } from '../../utils/strategyMode';
+import { useStrategyMode, setStrategyMode, STRATEGY_MODE_OPTIONS, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } from '../../utils/strategyMode';
 import { subscribeBuyPointPush, subscribeSellPointPush } from '../../utils/buyPointWs';
 import './index.scss';
 
@@ -776,6 +776,7 @@ const reverseTimingClass = (tag) => (
 const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
+  const isDefense = mode === MODE_ATTACK_DEFENSE;
   const [data, setData] = useState(null);        // 科技进攻：自选股 3 日涨幅榜
   const [leaderData, setLeaderData] = useState(null); // 情绪游资-极致胜率：龙头列表
   // 点击股票名称打开 K 线弹窗
@@ -787,15 +788,16 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
   // 挂载立即拉一次；交易时段每 5s 轮询，收盘后保留最后一次数据
   //   tech_attack            → /top_gainers_by_market（limit=10，每市场最多 10 只）
   //   hot_money_extreme_win  → /hot_money_leader_list（除 delta≥30 与上证斜率>0 外全部买点条件满足）
+  //   attack_defense         → 两个接口同时拉（科技进攻 + 情绪游资双策略并示）
   const fetchStocks = useCallback(async () => {
-    if (isExtreme) {
+    if (isExtreme || isDefense) {
       try {
         const res = await axios.post(`http://${local_ip}:3000/hot_money_leader_list`, { limit: 50 });
         setLeaderData(res.data?.data || null);
       } catch (err) {
         console.error('获取情绪游资龙头列表失败:', err);
       }
-      return;
+      if (isExtreme) return;
     }
     try {
       const res = await axios.post(`http://${local_ip}:3000/top_gainers_by_market`, { limit: 10 });
@@ -803,7 +805,7 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
     } catch (err) {
       console.error('获取自选股 3 日涨幅榜失败:', err);
     }
-  }, [isExtreme]);
+  }, [isExtreme, isDefense]);
 
   // 市场门槛说明（标题下方展示）：仅展示满足指数 3 日线斜率买点门槛的市场的股票
   const gateNote = !data
@@ -826,11 +828,12 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
     ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
   }, [data, cybPassed, starPassed]);
 
-  // 情绪游资龙头列表（后端已按 delta 降序返回全部达标股）
-  const leaderList = useMemo(() => (isExtreme ? (leaderData?.stocks || []) : []), [isExtreme, leaderData]);
+  // 情绪游资龙头列表（后端已按 delta 降序返回全部达标股；attack_defense 模式下也计算，供顺周期列展示）
+  const showEwCols = isExtreme || isDefense;
+  const leaderList = useMemo(() => (showEwCols ? (leaderData?.stocks || []) : []), [showEwCols, leaderData]);
   // 逆周期（反向抱团龙头）：池全部 + 择时状态（列表下半部分）
   const reverse = leaderData?.reverse || null;
-  const reverseList = useMemo(() => (isExtreme ? (reverse?.stocks || []) : []), [isExtreme, reverse]);
+  const reverseList = useMemo(() => (showEwCols ? (reverse?.stocks || []) : []), [showEwCols, reverse]);
   const indexSlope = leaderData?.indexSlope;
   const slopeOk = indexSlope != null && Number(indexSlope) > 0;
   const reverseSlope = reverse?.slopeClose ?? null;
@@ -861,14 +864,19 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
   // 供买点弹窗与飞书通知使用：
   //   tech_attack            → 唯一一只标的
   //   hot_money_extreme_win  → 顺周期完整买点股前 3（delta≥30 且上证斜率>0 且未涨停）+ 逆周期已触发买点的反向抱团股前 3
+  //   attack_defense         → 科技进攻唯一推荐 + 顺周期前 3 + 逆周期前 3（三段合并）
   const buyableStocks = useMemo(() => {
-    if (isExtreme) {
+    if (showEwCols) {
       const forward = leaderList.filter(s => s.buyPointHit && !s.isLimitUp).slice(0, 3);
       const rev = reverseList.filter(s => s.timingPassed).slice(0, 3).map(s => ({ ...s, isReverse: true }));
-      return [...forward, ...rev];
+      const ewStocks = [...forward, ...rev];
+      if (isExtreme) return ewStocks;
+      // 攻防兼备：科技进攻标的加 isTechPick 标记（买点弹窗据此区分渲染科技/情绪游资标的样式）
+      const techPick = globalPick ? [{ ...globalPick, isTechPick: true }] : [];
+      return [...techPick, ...ewStocks];
     }
     return globalPick ? [globalPick] : [];
-  }, [isExtreme, leaderList, reverseList, globalPick]);
+  }, [showEwCols, isExtreme, leaderList, reverseList, globalPick]);
 
   useEffect(() => {
     onBuyableChange?.(buyableStocks);
@@ -889,7 +897,7 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
       <div className="ob-module-header">
         <div className="ob-module-title">
           <CrownOutlined className="ob-module-icon" />
-          <span>{isExtreme ? '情绪游资-龙头列表' : '自选股 · 3日涨幅前十'}</span>
+          <span>{isExtreme ? '情绪游资-龙头列表' : isDefense ? '攻防兼备 · 涨幅榜与龙头列表' : '自选股 · 3日涨幅前十'}</span>
         </div>
         <span className="ob-mode-switch-label">切换模式</span>
         <Select
@@ -900,42 +908,35 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
           onChange={setStrategyMode}
           popupMatchSelectWidth={false}
         />
-        <span className="ob-total-tag">{isExtreme ? `顺周期 ${rowCount} · 逆周期 ${reverseList.length}` : `共 ${rowCount} 只`}</span>
+        <span className="ob-total-tag">
+          {isExtreme
+            ? `顺周期 ${rowCount} · 逆周期 ${reverseList.length}`
+            : isDefense
+              ? `科技 ${mergedList.length} · 顺周期 ${leaderList.length} · 逆周期 ${reverseList.length}`
+              : `共 ${rowCount} 只`}
+        </span>
       </div>
       <div className={`ob-gainer-gate-note ${(isExtreme ? slopeOk : (cybPassed && starPassed)) ? 'both' : (isExtreme ? false : (cybPassed || starPassed)) ? 'partial' : 'none'}`}>
         {isExtreme ? extremeGateNote : gateNote}
       </div>
-      <div className="ob-gainer-body">
-        <div className="ob-gainer-col">
-          <div className="ob-gainer-col-head">
-            {isExtreme && <span className="ob-gainer-section-label">顺周期 · 情绪游资-极致胜率</span>}
-            {isExtreme ? (
-              <div className={`ob-gainer-gate ${slopeOk ? 'passed' : 'failed'}`}>
-                <span className="ob-gainer-gate-slope">上证指数 {formatSlope(indexSlope)}</span>
-                <span className="ob-gainer-gate-turn">3 日线分时斜率</span>
-                <span className="ob-gainer-gate-badge">{slopeOk ? '满足买点门槛' : '不满足买点门槛'}</span>
-              </div>
-            ) : [
-              { name: '创业板指', gate: data?.cybGate, passed: cybPassed },
-              { name: '科创50', gate: data?.starGate, passed: starPassed },
-            ].map(({ name, gate, passed }) => (
-              <div key={name} className={`ob-gainer-gate ${passed ? 'passed' : 'failed'}`}>
-                <span className="ob-gainer-gate-slope">{name} {formatSlope(gate?.slope)}</span>
-                <span className="ob-gainer-gate-turn">{slopeTurnText(gate)}</span>
-                <span className="ob-gainer-gate-badge">{passed ? '满足买点门槛' : '不满足买点门槛'}</span>
-              </div>
-            ))}
-          </div>
-          <div className="ob-gainer-head">
-            {isExtreme ? (
-              <>
-                <span>#</span>
-                <span>股票</span>
-                <span>当日</span>
-                <span>强度−差劲</span>
-                <span>连板</span>
-              </>
-            ) : (
+      <div className={`ob-gainer-body ${isDefense ? 'defense' : ''}`}>
+        {/* 科技进攻列（tech_attack / attack_defense） */}
+        {!isExtreme && (
+          <div className="ob-gainer-col">
+            <div className="ob-gainer-col-head">
+              {isDefense && <span className="ob-gainer-section-label">科技进攻 · 快进快出</span>}
+              {[
+                { name: '创业板指', gate: data?.cybGate, passed: cybPassed },
+                { name: '科创50', gate: data?.starGate, passed: starPassed },
+              ].map(({ name, gate, passed }) => (
+                <div key={name} className={`ob-gainer-gate ${passed ? 'passed' : 'failed'}`}>
+                  <span className="ob-gainer-gate-slope">{name} {formatSlope(gate?.slope)}</span>
+                  <span className="ob-gainer-gate-turn">{slopeTurnText(gate)}</span>
+                  <span className="ob-gainer-gate-badge">{passed ? '满足买点门槛' : '不满足买点门槛'}</span>
+                </div>
+              ))}
+            </div>
+            <div className="ob-gainer-head">
               <>
                 <span>#</span>
                 <span>股票</span>
@@ -943,36 +944,8 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
                 <span>抗分歧</span>
                 <span>3日涨幅</span>
               </>
-            )}
-          </div>
-          {isExtreme ? (
-            leaderList.length === 0 ? (
-              <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
-            ) : leaderList.map((s, idx) => (
-              <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
-                <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
-                <span className="ob-gainer-name-cell">
-                  <span
-                    className="ob-stock-name ob-stock-name-clickable"
-                    title="点击查看K线"
-                    onClick={() => { setSelectedStock({ code: s.code, stockName: s.stockName, change: s.change }); setKlineVisible(true); }}
-                  >{s.stockName}</span>
-                  {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
-                  {s.buyPointHit && <span className="ob-gainer-buyflag">买点触发</span>}
-                </span>
-                <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
-                  {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
-                </span>
-                <span className={`ob-gainer-resilience ${s.delta != null && s.delta >= 30 ? 'ob-up' : ''}`}>
-                  {s.delta !== null && s.delta !== undefined ? Number(s.delta).toFixed(2) : '--'}
-                </span>
-                <span className="ob-gainer-resilience">
-                  {s.lianbanCount != null ? `${s.lianbanCount} 连板` : '--'}
-                </span>
-              </div>
-            ))
-          ) : (
-            mergedList.length === 0 ? (
+            </div>
+            {mergedList.length === 0 ? (
               <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
             ) : mergedList.map((s, idx) => {
               // 全局唯一推荐标的：只在名称旁打一个标签，不做整行高亮
@@ -1001,10 +974,57 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
                   </span>
                 </div>
               );
-            })
-          )}
-        </div>
-        {isExtreme && (
+            })}
+          </div>
+        )}
+        {/* 顺周期列（hot_money_extreme_win / attack_defense） */}
+        {showEwCols && (
+          <div className="ob-gainer-col">
+            <div className="ob-gainer-col-head">
+              <span className="ob-gainer-section-label">顺周期 · 情绪游资-极致胜率</span>
+              <div className={`ob-gainer-gate ${slopeOk ? 'passed' : 'failed'}`}>
+                <span className="ob-gainer-gate-slope">上证指数 {formatSlope(indexSlope)}</span>
+                <span className="ob-gainer-gate-turn">3 日线分时斜率</span>
+                <span className="ob-gainer-gate-badge">{slopeOk ? '满足买点门槛' : '不满足买点门槛'}</span>
+              </div>
+            </div>
+            <div className="ob-gainer-head">
+              <>
+                <span>#</span>
+                <span>股票</span>
+                <span>当日</span>
+                <span>强度−差劲</span>
+                <span>连板</span>
+              </>
+            </div>
+            {leaderList.length === 0 ? (
+              <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
+            ) : leaderList.map((s, idx) => (
+              <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
+                <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
+                <span className="ob-gainer-name-cell">
+                  <span
+                    className="ob-stock-name ob-stock-name-clickable"
+                    title="点击查看K线"
+                    onClick={() => { setSelectedStock({ code: s.code, stockName: s.stockName, change: s.change }); setKlineVisible(true); }}
+                  >{s.stockName}</span>
+                  {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
+                  {s.buyPointHit && <span className="ob-gainer-buyflag">买点触发</span>}
+                </span>
+                <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
+                  {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
+                </span>
+                <span className={`ob-gainer-resilience ${s.delta != null && s.delta >= 30 ? 'ob-up' : ''}`}>
+                  {s.delta !== null && s.delta !== undefined ? Number(s.delta).toFixed(2) : '--'}
+                </span>
+                <span className="ob-gainer-resilience">
+                  {s.lianbanCount != null ? `${s.lianbanCount} 连板` : '--'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        {showEwCols && (
           <div className={`ob-gainer-col ob-gainer-col-reverse ${reverseSlopeOk ? 'active' : ''}`}>
             <div className="ob-gainer-col-head">
               <span className="ob-gainer-section-label reverse">逆周期 · 反向抱团龙头</span>
@@ -1072,6 +1092,7 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
 const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
+  const isDefense = mode === MODE_ATTACK_DEFENSE;
   const [data, setData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [popupVisible, setPopupVisible] = useState(false);
@@ -1095,15 +1116,17 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
       const result = res.data?.data;
       if (!result) return;
       setData(result);
-      // 命中口径：顺周期前置全部通过；情绪游资模式下逆周期（反向抱团）择时触发也算命中
+      // 命中口径：攻防兼备模式下科技进攻 / 顺周期 / 逆周期任一命中即算命中；
+      // 情绪游资模式下逆周期（反向抱团）择时触发也算命中
+      const techHit = isDefense && (result.tech?.allPassed === true || result.tech?.tailDipBuyingHit === true);
       const forwardHit = result.allPassed === true;
-      const reverseHit = isExtreme && result.reverse?.allPassed === true;
+      const reverseHit = (isExtreme || isDefense) && result.reverse?.allPassed === true;
       // 向上层汇报买点是否命中，供 3 日涨幅榜决定是否高亮展示
-      onResultChange?.(forwardHit || reverseHit);
+      onResultChange?.(techHit || forwardHit || reverseHit);
     } catch (err) {
       console.error('买点诊断刷新失败:', err);
     }
-  }, [onResultChange, mode, isExtreme]);
+  }, [onResultChange, mode, isExtreme, isDefense]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -1120,9 +1143,10 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
       const result = msg?.data;
       if (!result) return;
       setData(result);
+      const techHit = isDefense && (result.tech?.allPassed === true || result.tech?.tailDipBuyingHit === true);
       const forwardHit = result.allPassed === true;
-      const reverseHit = isExtreme && result.reverse?.allPassed === true;
-      onResultChange?.(forwardHit || reverseHit);
+      const reverseHit = (isExtreme || isDefense) && result.reverse?.allPassed === true;
+      onResultChange?.(techHit || forwardHit || reverseHit);
       if (msg.open === true) {
         // 优先使用消息内 buyable（仅 MOCK 调试会携带），否则用页面实时可买列表
         setPopupStocks(result.buyable || buyableRef.current || []);
@@ -1130,26 +1154,62 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
       }
     });
     return unsubscribe;
-  }, [run, onResultChange, isExtreme]);
+  }, [run, onResultChange, isExtreme, isDefense]);
 
   // 过滤掉「尾盘抄底」检查项（或逻辑分支，已从买点诊断移除），并同步修正计数与结论文案
-  const checks = (data?.checks || []).filter(c => c.id !== 'tail_dip_buying');
-  const allPassed = data?.allPassed === true;
-  const hit = allPassed;
-  // 逆周期（反向抱团）一组条件（后端在 checks 之外单独返回），独立分组展示
-  const reverseChecks = isExtreme ? (data?.reverseChecks || []) : [];
+  // 攻防兼备：三组分开展示——科技进攻（tech.checks）/ 顺周期（checks）/ 逆周期（reverseChecks）
   const sortChecks = (list) => [...list].sort((a, b) => a.passed - b.passed);
-  const checkGroups = [
-    { label: isExtreme ? '顺周期 · 情绪游资-极致胜率' : '', items: sortChecks(checks) },
-    ...(reverseChecks.length > 0
-      ? [{ label: '逆周期 · 反向抱团龙头', items: sortChecks(reverseChecks), reverse: true }]
-      : []),
-  ];
+  const filterTailDip = (list) => (list || []).filter(c => c.id !== 'tail_dip_buying');
+  let checkGroups;
+  if (isDefense) {
+    const techItems = sortChecks(filterTailDip(data?.tech?.checks));
+    const ewItems = sortChecks(data?.checks || []);
+    const revItems = sortChecks(data?.reverseChecks || []);
+    checkGroups = [
+      { label: '科技进攻 · 快进快出', items: techItems },
+      { label: '顺周期 · 情绪游资-极致胜率', items: ewItems },
+      ...(revItems.length > 0
+        ? [{ label: '逆周期 · 反向抱团龙头', items: revItems, reverse: true }]
+        : []),
+    ];
+  } else {
+    const checks = filterTailDip(data?.checks);
+    const reverseChecks = isExtreme ? (data?.reverseChecks || []) : [];
+    checkGroups = [
+      { label: isExtreme ? '顺周期 · 情绪游资-极致胜率' : '', items: sortChecks(checks) },
+      ...(reverseChecks.length > 0
+        ? [{ label: '逆周期 · 反向抱团龙头', items: sortChecks(reverseChecks), reverse: true }]
+        : []),
+    ];
+  }
+  // 顺周期前置全部通过（attack_defense 时 data 顶层即情绪游资顺周期结果）
+  const allPassed = data?.allPassed === true;
+  // 科技进攻全部通过（tech_attack 时即 allPassed；attack_defense 时读 tech 嵌套）
+  const techAllPassed = isDefense ? data?.tech?.allPassed === true : allPassed;
+  const hit = isDefense
+    ? (techAllPassed || allPassed || data?.reverse?.allPassed === true)
+    : allPassed;
   const totalCheckCount = checkGroups.reduce((n, g) => n + g.items.length, 0);
   const totalPassedCount = checkGroups.reduce((n, g) => n + g.items.filter(c => c.passed).length, 0);
-  const conclusionText = !allPassed && typeof data?.conclusion === 'string' && data.conclusion.includes('尾盘抄底')
-    ? '当前前置条件未全部满足，请耐心等待，不要盲目出手。'
-    : data?.conclusion;
+  const sanitizeConclusion = (text) => (
+    typeof text === 'string' && text.includes('尾盘抄底')
+      ? '当前前置条件未全部满足，请耐心等待，不要盲目出手。'
+      : text
+  );
+  const conclusionText = isDefense
+    ? `科技进攻：${sanitizeConclusion(data?.tech?.conclusion) || '--'}｜情绪游资：${sanitizeConclusion(data?.conclusion) || '--'}`
+    : (!allPassed && typeof data?.conclusion === 'string' && data.conclusion.includes('尾盘抄底')
+      ? '当前前置条件未全部满足，请耐心等待，不要盲目出手。'
+      : data?.conclusion);
+
+  // 建议买入仓位提示（与回测仓位管理完全一致）：
+  //   科技进攻——快进快出日首次半仓、次日补足第二份半仓（次日10:00强卖），普通日全仓；
+  //   情绪游资——双腿结构，顺/逆周期各半仓；攻防兼备下两策略同时触发时科技进攻优先
+  const quickOutHint = (isDefense ? (data?.tech?.checks || []) : (data?.checks || []))
+    .find(c => c.id === 'quick_out_buy_hint')?.value;
+  const isQuickOutDay = typeof quickOutHint === 'string' && quickOutHint.includes('快进快出');
+  const showTechPosition = !isExtreme; // tech_attack / attack_defense
+  const showEwPosition = isExtreme || isDefense;
 
   // 5 分钟整点（9:30/9:35/9:40…）：整分钟内背景闪烁做重点提示，进入下一分钟自动恢复
   const isFiveMinTick = now.minute() % 5 === 0;
@@ -1203,6 +1263,20 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
             <div className={`ob-conclusion ${hit ? 'hit' : ''}`}>
               {conclusionText}
             </div>
+            {showTechPosition && (
+              <div className="ob-position-hint">
+                📦 科技进攻建议仓位：{isQuickOutDay
+                  ? '半仓（50%）——快进快出日：首次买入半仓，次日买点再次触发时补足第二份半仓，该笔次日 10:00 强卖'
+                  : '全仓（100%）——普通买入日'}
+                {isDefense ? '；两策略同时触发时科技进攻（快进快出）优先' : ''}
+              </div>
+            )}
+            {showEwPosition && (
+              <div className="ob-position-hint ew">
+                📦 情绪游资建议仓位：半仓（50%）——双腿结构，顺周期、逆周期各半仓
+                {isDefense ? '；若科技进攻（快进快出）同时触发则其优先，本笔情绪游资暂缓，待上一笔完全结束后再考虑' : ''}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -1219,18 +1293,44 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
         <div className="ob-alert-content">
           <div className="ob-alert-big">🎯 买点信号触发，可以关注买入时机</div>
           <div className="ob-alert-reason">{conclusionText}</div>
+          {showTechPosition && (
+            <div className="ob-alert-position">
+              📦 科技进攻建议仓位：{isQuickOutDay
+                ? '半仓（50%）——快进快出日：首次买入半仓，次日买点再次触发时补足第二份半仓，该笔次日 10:00 强卖'
+                : '全仓（100%）——普通买入日'}
+              {isDefense ? '；两策略同时触发时科技进攻（快进快出）优先' : ''}
+            </div>
+          )}
+          {showEwPosition && (
+            <div className="ob-alert-position ew">
+              📦 情绪游资建议仓位：半仓（50%）——双腿结构，顺周期、逆周期各半仓
+              {isDefense ? '；若科技进攻（快进快出）同时触发则其优先，本笔情绪游资暂缓，待上一笔完全结束后再考虑' : ''}
+            </div>
+          )}
           <div className="ob-alert-sub">
             命中类型：
-            {allPassed && '全部前置条件通过'}
+            {isDefense
+              ? ([
+                techAllPassed && '科技进攻·快进快出',
+                allPassed && '情绪游资·顺周期',
+                data?.reverse?.allPassed === true && '情绪游资·逆周期',
+              ].filter(Boolean).join('、') || '--')
+              : (allPassed && '全部前置条件通过')}
           </div>
           {popupStocks.length > 0 ? (
             <>
               <div className="ob-alert-buy-title">
-                {isExtreme ? '情绪游资-龙头列表 · 完整买点标的 / 反向抱团逆周期买点标的（已过滤涨停板）' : '可买标的（已过滤涨停板）'}
+                {isExtreme
+                  ? '情绪游资-龙头列表 · 完整买点标的 / 反向抱团逆周期买点标的（已过滤涨停板）'
+                  : isDefense
+                    ? '科技进攻 · 可买标的 ＋ 情绪游资 · 顺周期前三 / 逆周期前三（已过滤涨停板）'
+                    : '可买标的（已过滤涨停板）'}
               </div>
-              {popupStocks.map((s) => (
+              {popupStocks.map((s) => {
+                const asEw = isExtreme || (isDefense && !s.isTechPick);
+                return (
                 <div key={`${s.isReverse ? 'rev-' : ''}${s.code}`} className="ob-alert-stock">
-                  {isExtreme ? (
+                  {asEw ? (
                     s.isReverse ? (
                       <>
                         <div className="ob-alert-stock-head">
@@ -1276,7 +1376,8 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
                     </>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </>
           ) : (
             <div className="ob-alert-sub">

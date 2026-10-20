@@ -14,7 +14,8 @@ const wsServer = require('../wsServer');
 const { notifySellPointFeishu } = require('./sellPointNotifier');
 const { getStockPositions } = require('./stockPosition');
 const { checkSingleStockSellPoint } = require('./buySellDiagnose');
-const { checkExtremeWinSellPointDetailed, MODE_EXTREME_WIN } = require('./hotMoneyExtremeWin');
+const { checkExtremeWinSellPointDetailed, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } = require('./hotMoneyExtremeWin');
+const { isTechWatchlistStock } = require('./monitorStock');
 
 const INTERVAL_MS = 10 * 1000;
 const statePath = path.resolve(__dirname, '../data/sell_point_notify_state.json');
@@ -75,7 +76,10 @@ const diagnosePosition = async (stock, todayStr, mode) => {
     return { ...base, buyToday: true };
   }
   try {
-    const res = mode === MODE_EXTREME_WIN
+    // 攻防兼备模式：按持仓股是否属于自选股科技股范围分流——科技股走科技卖点诊断，其余（连板股）走龙头卖点诊断
+    const useExtremeWin = mode === MODE_EXTREME_WIN
+      || (mode === MODE_ATTACK_DEFENSE && !isTechWatchlistStock(stock.code));
+    const res = useExtremeWin
       ? await checkExtremeWinSellPointDetailed(stock.code, stock.costPrice, stock.buyDate || null)
       : await checkSingleStockSellPoint(stock.code, stock.costPrice);
     return { ...res, ...base };

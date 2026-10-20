@@ -22,10 +22,30 @@
   {
     "id": "8111ad3905a54018",
     "time": "2026-10-20 10:38:53",
-    "read": false,
+    "read": true,
     "strategyId": "inflow_rise_volume_shrink",
     "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
     "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-31.4→-19.3亿（增加12.1亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.25%<br/>• 成交量差值-517亿（<-500亿严重缩量），较10分钟前仅增加-48亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "c8b7d9645dc0d315",
+    "time": "2026-10-20 13:00:00",
+    "read": true,
+    "strategyId": "straight_rise_no_volume",
+    "title": "⚠️ 无量拉升警惕回落",
+    "description": "创业板5分钟上涨0.68%，但成交量仅增加 <strong>0亿</strong>（不足100亿），无量上涨持续性存疑，容易回落。",
+    "severity": "medium",
+    "isBullish": false
+  },
+  {
+    "id": "5eab08999ef61a1a",
+    "time": "2026-10-20 13:09:07",
+    "read": false,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>207亿</strong>（≥100亿），主力资金净流出加速（20.6→-12.5亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
     "severity": "high",
     "isBullish": false
   }
