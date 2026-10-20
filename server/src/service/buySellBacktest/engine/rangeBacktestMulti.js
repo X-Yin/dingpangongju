@@ -15,7 +15,7 @@ const { TWO_BUY_LEG_WEIGHT, TWO_BUY_SAME_DAY_TAIL_PROFIT_PCT, computeTwoBuyAccou
 const { buildBuyReasonFromDiag, fmtTime, runBuyPointDiagnosis } = require('../diagnose/buyPoint');
 const { buildCounterCycSet } = require('./cycleFilter');
 const { pickBestStock } = require('./pickBest');
-const { computeEmoQuickOutInfo } = require('./emoQuick');
+const { computeEmoQuickOutInfo, getBucketTechEmotion } = require('./emoQuick');
 const { emoQuickOutSell } = require('./sellHooks/emoQuickOut');
 const { generalSellPositions } = require('./sellHooks/generalSell');
 const { calcDrawdownStats, sortTradesByBuyTime } = require('../utils/tradeStats');
@@ -167,11 +167,54 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
 
         // 买入信号：情绪快进快出策略当日已发生 10:00 强制卖出 → 当日禁止二次买入（哪怕买点再次触发）；其余沿用买点诊断 allPassed
         const quickOutNoRebuy = strategy.emoQuickOut === true && st.quickOutSoldDate === dateStr;
-        // 24 个涨幅最大/快进快出策略启用检查4 比例收紧：阈值 = ceil(科技股数 × 25%)，其余策略固定 30 只
-        const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(strategy.id) })?.data;
-        const buyHit = !quickOutNoRebuy && buyDiag?.allPassed === true;
-        // 买入原因：取买点诊断全部通过项汇总
-        const buyInfo = buyHit ? buildBuyReasonFromDiag(buyDiag) : null;
+        // 「10n 科技情绪-快进快出」系列（emoBreak 阈值 = 10×n）：买点时机不走买点诊断，改为盘中分时科技情绪
+        // 突破 10×n——当前桶分时科技情绪 ≥ 阈值即处于突破买点窗口（情绪线每日 9:30 竞价起算、跨日不累计，
+        // 首个满足的桶即为突破时点）；该桶选股失败时情绪仍 ≥ 阈值的后续桶持续重试。其余机制与快进快出系列一致
+        let buyInfo = null;
+        if (strategy.emoBreak != null) {
+          const breakThreshold = Number(strategy.emoBreak);
+          const emoNow = getBucketTechEmotion(bucket);
+          if (!quickOutNoRebuy && emoNow != null && emoNow >= breakThreshold) {
+            buyInfo = {
+              buyReason: `分时科技情绪突破 ${breakThreshold}（当前 ${emoNow.toFixed(2)}）`,
+              buyChecks: [{
+                id: 'emo_break_buy',
+                title: `分时科技情绪突破 ${breakThreshold}（10×${breakThreshold / 10}）`,
+                passed: true,
+                value: emoNow.toFixed(2),
+                reason: `当前分时科技情绪 ${emoNow.toFixed(2)} 已突破 ${breakThreshold}（本策略不走通用买点诊断，买点时机 = 分时科技情绪突破 10×${breakThreshold / 10}），触发买入`,
+              }],
+            };
+          }
+        } else {
+          // 24 个涨幅最大/快进快出策略启用检查4 比例收紧：阈值 = ceil(科技股数 × 25%)，其余策略固定 30 只
+          const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(strategy.id) })?.data;
+          if (!quickOutNoRebuy && buyDiag?.allPassed === true) {
+            // 「快进快出-科技情绪门禁」系列（emoGate，2026-10-20 用户新增）：通用买点诊断全部通过后，
+            // 还要求当前桶分时科技情绪 ≥ 阈值才可买入；不满足（或数据缺失）该桶不买，后续桶买点诊断
+            // 再次全部通过时重新判断该门禁。通过时门禁作为一条附加检查项写入买入明细
+            const gateThreshold = strategy.emoGate != null ? Number(strategy.emoGate) : null;
+            const emoNow = gateThreshold != null ? getBucketTechEmotion(bucket) : null;
+            if (gateThreshold == null || (emoNow != null && emoNow >= gateThreshold)) {
+              // 买入原因：取买点诊断全部通过项汇总
+              buyInfo = buildBuyReasonFromDiag(buyDiag);
+              if (gateThreshold != null) {
+                buyInfo.buyReason = `${buyInfo.buyReason}；分时科技情绪 ${emoNow.toFixed(2)} ≥ ${gateThreshold}`;
+                buyInfo.buyChecks = [
+                  ...(buyInfo.buyChecks || []),
+                  {
+                    id: 'emo_gate_buy',
+                    title: `分时科技情绪 ≥ ${gateThreshold}`,
+                    passed: true,
+                    value: emoNow.toFixed(2),
+                    reason: `当前分时科技情绪 ${emoNow.toFixed(2)} 已达到 ${gateThreshold}（在通用买点诊断全部通过的基础上叠加该门禁），允许买入`,
+                  },
+                ];
+              }
+            }
+          }
+        }
+        const buyHit = buyInfo != null;
         if (buyHit) {
           // N 日涨幅最大系列策略：跨指数双门禁 + 选股市场过滤
           const { gatedBuyInfo, gatePassed, gateAllowedMarkets, gateTurnedPosInfo } = await withDualGateInfo(buyInfo, strategy.id, dateStr, bucket.minute,
@@ -191,10 +234,11 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
               : null;
             const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet);
             if (picked) {
-              // 两次买入系列叠加「快进快出」能力：首次建仓时按买入时点计算快进快出标注
-              // （与 highest_{N}d_gain_emoquick 同口径，传入日期轴绝对索引 di + axisOffset），挂到持仓上驱动
-              // 次日 10:00 强卖 + 盘中跌破成本线止损。必须在 withResilienceGateInfo 之前挂载，买入明细方可写入 emo_quick_out 判定项。
-              if (strategy.twoBuy === true && strategy.emoQuickOut === true) {
+              // 两次买入、「10n 科技情绪-快进快出」与「快进快出-科技情绪门禁」系列叠加「快进快出」能力：首次建仓时按买入时点计算
+              // 快进快出标注（与 highest_{N}d_gain_emoquick 委托路径同口径，传入日期轴绝对索引 di + axisOffset），
+              // 挂到持仓上驱动次日 10:00 强卖 + 盘中跌破成本线止损。必须在 withResilienceGateInfo 之前挂载，
+              // 买入明细方可写入 emo_quick_out 判定项。
+              if (strategy.emoQuickOut === true && (strategy.twoBuy === true || strategy.emoBreak != null || strategy.emoGate != null)) {
                 picked.emoQuickOut = computeEmoQuickOutInfo(di + axisOffset, dateAxis);
               }
               const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);

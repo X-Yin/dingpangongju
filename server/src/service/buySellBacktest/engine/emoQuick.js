@@ -25,6 +25,12 @@ const computeEmoQuickOutInfo = (di, rangeDates) => {
   };
 };
 
+// 读取时间桶的分时科技情绪（与情绪页分时线同源，每日 9:30 竞价起算、跨日不累计；缺失/非法返回 null）
+const getBucketTechEmotion = (bucket) => (
+  bucket && bucket.techEmotion != null && !Number.isNaN(Number(bucket.techEmotion)) ? Number(bucket.techEmotion) : null
+);
+
 module.exports = {
   computeEmoQuickOutInfo,
+  getBucketTechEmotion,
 };

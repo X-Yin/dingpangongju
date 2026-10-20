@@ -4124,7 +4124,8 @@ export const THEME_PACKS = [
     "sidebarBg": "#3B1873",
     "sidebarRadius": "0px"
   }
-}
+},
+
 ];
 
 // 根据 id 获取主题包；'' / undefined / 'default' 返回 null（默认样式）

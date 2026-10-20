@@ -544,9 +544,7 @@
       "sellPrice": 52.7,
       "sellChange": -0.47,
       "sellReason": "情绪快进快出：买入日上一交易日科技情绪 3 日 EMA -34.83 < -30，次日 10:00 强制卖出",
-      "returnRate": 3.91,
-      "buyDayClose": 52.95,
-      "buyDayReturn": 8.33
+      "returnRate": 3.91
     },
     {
       "seq": 2,
@@ -630,9 +628,7 @@
       "sellPrice": 150.75,
       "sellChange": -7.12,
       "sellReason": "快进快出系列盘中大跌强卖：13:16 当日跌幅（较昨收）-7.12% ≤ -7%，无条件卖出",
-      "returnRate": 42.67,
-      "buyDayClose": 113.7,
-      "buyDayReturn": 7.61
+      "returnRate": 42.67
     },
     {
       "seq": 3,
@@ -716,9 +712,7 @@
       "sellPrice": 58.54,
       "sellChange": -7.12,
       "sellReason": "快进快出系列盘中大跌强卖：14:16 当日跌幅（较昨收）-7.12% ≤ -7%，无条件卖出",
-      "returnRate": 19.13,
-      "buyDayClose": 51.56,
-      "buyDayReturn": 4.92
+      "returnRate": 19.13
     },
     {
       "seq": 4,
@@ -802,9 +796,7 @@
       "sellPrice": 104.3,
       "sellChange": -3.61,
       "sellReason": "高位放量大阴线",
-      "returnRate": -0.67,
-      "buyDayClose": 105.97,
-      "buyDayReturn": 0.92
+      "returnRate": -0.67
     },
     {
       "seq": 5,
@@ -902,9 +894,7 @@
       "sellPrice": 437.26,
       "sellChange": -1.6,
       "sellReason": "情绪快进快出：盘中 09:51 跌破止损线，触发成本线 -2% 止损（成本线基准 447.80、阈值 438.84，09:51 价 437.26 成交），先于当日 10:00 强卖离场",
-      "returnRate": -1.18,
-      "buyDayClose": 444.35,
-      "buyDayReturn": -0.77
+      "returnRate": -1.18
     },
     {
       "seq": 6,
@@ -1002,9 +992,7 @@
       "sellPrice": 301.08,
       "sellChange": -0.78,
       "sellReason": "情绪快进快出：买入日上一交易日科技情绪 3 日 EMA -39.61 < -30，次日 10:00 强制卖出",
-      "returnRate": 0.97,
-      "buyDayClose": 303.44,
-      "buyDayReturn": 2.75
+      "returnRate": 0.97
     },
     {
       "seq": 7,
@@ -1102,9 +1090,7 @@
       "sellPrice": 82.49,
       "sellChange": -6.11,
       "sellReason": "情绪快进快出：盘中 09:41 跌破止损线，触发成本线 -2% 止损（成本线基准 84.53、阈值 82.84，09:41 价 82.49 成交），先于当日 10:00 强卖离场",
-      "returnRate": -1.21,
-      "buyDayClose": 87.86,
-      "buyDayReturn": 3.94
+      "returnRate": -1.21
     },
     {
       "seq": 8,
@@ -1208,9 +1194,7 @@
       "sellPrice": 652.71,
       "sellChange": -0.23,
       "sellReason": "情绪快进快出：买入日上一交易日科技情绪 3 日 EMA -35.12 < -30，次日 10:00 强制卖出",
-      "returnRate": 0.21,
-      "buyDayClose": 654.23,
-      "buyDayReturn": 0.65
+      "returnRate": 0.21
     },
     {
       "seq": 9,
@@ -1308,9 +1292,7 @@
       "sellPrice": 245,
       "sellChange": -1.16,
       "sellReason": "情绪快进快出：开盘首分钟 09:30 价 247.80 已跌破止损线，自救拉升于 09:31 回落且仍跌破止损线，触发成本线 -2% 止损（成本线基准 252.89、阈值 247.83，09:31 价 245.00 成交），先于当日 10:00 强卖离场",
-      "returnRate": -1.56,
-      "buyDayClose": 247.88,
-      "buyDayReturn": -1.98
+      "returnRate": -1.56
     }
   ],
   "currentHolding": {
@@ -1339,7 +1321,7 @@
         "passed": true,
         "exempted": true,
         "value": "冰点期豁免量能，当前量能 -375.71亿",
-        "reason": "前一交易日盘中科技情绪触及 -39 退潮冰点（hasIce: true），冰点期豁免量能，当前量能 -375.71亿",
+        "reason": "今日(10-20)盘中科技情绪触及 -39 退潮冰点（hasIce: true），冰点期豁免量能，当前量能 -375.71亿",
         "volumeText": "冰点期豁免量能，当前量能 -375.71亿"
       },
       {
@@ -1395,9 +1377,7 @@
       "prevRaw": -8.55,
       "prev2Raw": -15.35
     },
-    "buyReturn": -1.21,
-    "buyDayClose": 52.07,
-    "buyDayReturn": -1.21
+    "buyReturn": -1.21
   },
   "currentHoldings": [
     {
@@ -1426,7 +1406,7 @@
           "passed": true,
           "exempted": true,
           "value": "冰点期豁免量能，当前量能 -375.71亿",
-          "reason": "前一交易日盘中科技情绪触及 -39 退潮冰点（hasIce: true），冰点期豁免量能，当前量能 -375.71亿",
+          "reason": "今日(10-20)盘中科技情绪触及 -39 退潮冰点（hasIce: true），冰点期豁免量能，当前量能 -375.71亿",
           "volumeText": "冰点期豁免量能，当前量能 -375.71亿"
         },
         {
@@ -1482,9 +1462,7 @@
         "prevRaw": -8.55,
         "prev2Raw": -15.35
       },
-      "buyReturn": -1.21,
-      "buyDayClose": 52.07,
-      "buyDayReturn": -1.21
+      "buyReturn": -1.21
     }
   ],
   "summary": {

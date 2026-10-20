@@ -1444,5 +1444,29 @@ exports.default = [
         "blockName": "机器人",
         "code": "sh688787",
         "name": "海天瑞声"
+    },
+    {
+        "blockName": "氧化锆",
+        "code": "sh603407",
+        "name": "长裕集团",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "氧化锆",
+        "code": "sz002167",
+        "name": "东方锆业",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "氧化锆",
+        "code": "sh603663",
+        "name": "三祥新材",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "氧化锆",
+        "code": "sz301580",
+        "name": "爱迪特",
+        "tag": "进攻"
     }
 ]

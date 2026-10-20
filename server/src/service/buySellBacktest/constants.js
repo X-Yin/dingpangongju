@@ -36,6 +36,8 @@ const OPENING_BELOW_RATIO_STRATEGY_IDS = new Set([
   // 快进快出（emoQuickOut）
   'highest_2d_gain_emoquick',
   'highest_3d_gain_emoquick',
+  // 快进快出-科技情绪门禁系列（2026-10-20 用户新增）：与 highest_3d_gain_emoquick 口径完全一致（含检查4 比例收紧）
+  'highest_3d_gain_emoquick_g10',
   'highest_4d_gain_emoquick',
   'highest_5d_gain_emoquick',
   'highest_2d5_gain_emoquick',
