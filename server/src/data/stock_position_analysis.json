@@ -1,5 +1,5 @@
 {
-  "updateTime": "2026-10-20T05:22:34.306Z",
+  "updateTime": "2026-10-20T05:26:32.896Z",
   "date": "20261020",
   "trading": true,
   "overview": {
@@ -17,57 +17,21 @@
       "capitalAction": "震荡换手",
       "signalType": "neutral",
       "riskLevel": "低",
-      "summary": "温和上涨，当前涨幅 +3.08%，同刻量能 -5.53%，近5分钟主力资金变化 +0.03亿。当前更像震荡换手。",
+      "summary": "温和上涨，当前涨幅 +2.89%，同刻量能 -6.1%，近5分钟主力资金变化 +0.03亿。当前更像震荡换手。",
       "suggestion": "先观察分时高低点是否被突破，再决定是否加减仓。",
       "metrics": {
-        "latestChange": 3.08,
-        "latestMainFund": -1.26,
+        "latestChange": 2.89,
+        "latestMainFund": -1.24,
         "recentFundChange": 0.03,
-        "recentChangeDelta": 0,
-        "volumeDiffPercent": -5.53,
+        "recentChangeDelta": -0.23,
+        "volumeDiffPercent": -6.1,
         "volumeState": "平量",
         "amplitude": 2.13,
-        "pullbackFromHigh": 1.86,
-        "reboundFromLow": 0.27
+        "pullbackFromHigh": 2.05,
+        "reboundFromLow": 0.08
       },
       "quant": null,
       "recentFlow": [
-        {
-          "time": "131600",
-          "minute": "1316",
-          "mainFund": -1.31,
-          "change": 3.16,
-          "latestPrice": 51.84,
-          "volumeDiffPercent": -5.58,
-          "volumeState": "平量"
-        },
-        {
-          "time": "131700",
-          "minute": "1317",
-          "mainFund": -1.28,
-          "change": 3.26,
-          "latestPrice": 51.89,
-          "volumeDiffPercent": -5.62,
-          "volumeState": "平量"
-        },
-        {
-          "time": "131800",
-          "minute": "1318",
-          "mainFund": -1.29,
-          "change": 3.08,
-          "latestPrice": 51.8,
-          "volumeDiffPercent": -5.69,
-          "volumeState": "平量"
-        },
-        {
-          "time": "131900",
-          "minute": "1319",
-          "mainFund": -1.3,
-          "change": 3.22,
-          "latestPrice": 51.87,
-          "volumeDiffPercent": -5.66,
-          "volumeState": "平量"
-        },
         {
           "time": "132000",
           "minute": "1320",
@@ -103,30 +67,66 @@
           "latestPrice": 51.8,
           "volumeDiffPercent": -5.53,
           "volumeState": "平量"
+        },
+        {
+          "time": "132332",
+          "minute": "1323",
+          "mainFund": -1.24,
+          "change": 3.14,
+          "latestPrice": 51.83,
+          "volumeDiffPercent": -5.53,
+          "volumeState": "平量"
+        },
+        {
+          "time": "132432",
+          "minute": "1324",
+          "mainFund": -1.24,
+          "change": 2.89,
+          "latestPrice": 51.7,
+          "volumeDiffPercent": -5.72,
+          "volumeState": "平量"
+        },
+        {
+          "time": "132532",
+          "minute": "1325",
+          "mainFund": -1.27,
+          "change": 2.99,
+          "latestPrice": 51.75,
+          "volumeDiffPercent": -5.85,
+          "volumeState": "平量"
+        },
+        {
+          "time": "132632",
+          "minute": "1326",
+          "mainFund": -1.24,
+          "change": 2.89,
+          "latestPrice": 51.7,
+          "volumeDiffPercent": -6.1,
+          "volumeState": "平量"
         }
       ],
-      "updatedTime": "132232",
+      "updatedTime": "132632",
       "latestDiagnosis": {
-        "time": "132232",
-        "minute": "1322",
+        "time": "132632",
+        "minute": "1326",
         "intervalLabel": "13:20 - 13:30",
-        "pattern": "横盘震荡",
+        "pattern": "缩量回落",
         "capitalAction": "震荡换手",
-        "diagnosis": "横盘震荡，震荡换手",
+        "diagnosis": "缩量回落，震荡换手",
         "signalType": "neutral",
         "riskLevel": "低",
-        "notes": "区间涨跌变化 -0.14%，主力资金变化 +0.04亿，同刻量能 -5.53%",
+        "notes": "区间涨跌变化 -0.33%，主力资金变化 +0.06亿，同刻量能 -6.1%",
         "startChange": 3.14,
-        "endChange": 3.08,
-        "intervalChangeDelta": -0.06,
+        "endChange": 2.89,
+        "intervalChangeDelta": -0.25,
         "metrics": {
-          "changeDelta": -0.14,
-          "fundDelta": 0.04,
-          "currentChange": 3.08,
-          "currentFund": -1.26,
-          "volumeDiffPercent": -5.53,
+          "changeDelta": -0.33,
+          "fundDelta": 0.06,
+          "currentChange": 2.89,
+          "currentFund": -1.24,
+          "volumeDiffPercent": -6.1,
           "volumeState": "平量",
-          "latestPrice": 51.8
+          "latestPrice": 51.7
         }
       },
       "diagnosisHistory": [
@@ -292,30 +292,30 @@
           }
         },
         {
-          "time": "132232",
-          "minute": "1322",
+          "time": "132632",
+          "minute": "1326",
           "intervalLabel": "13:20 - 13:30",
-          "pattern": "横盘震荡",
+          "pattern": "缩量回落",
           "capitalAction": "震荡换手",
-          "diagnosis": "横盘震荡，震荡换手",
+          "diagnosis": "缩量回落，震荡换手",
           "signalType": "neutral",
           "riskLevel": "低",
-          "notes": "区间涨跌变化 -0.14%，主力资金变化 +0.04亿，同刻量能 -5.53%",
+          "notes": "区间涨跌变化 -0.33%，主力资金变化 +0.06亿，同刻量能 -6.1%",
           "startChange": 3.14,
-          "endChange": 3.08,
-          "intervalChangeDelta": -0.06,
+          "endChange": 2.89,
+          "intervalChangeDelta": -0.25,
           "metrics": {
-            "changeDelta": -0.14,
-            "fundDelta": 0.04,
-            "currentChange": 3.08,
-            "currentFund": -1.26,
-            "volumeDiffPercent": -5.53,
+            "changeDelta": -0.33,
+            "fundDelta": 0.06,
+            "currentChange": 2.89,
+            "currentFund": -1.24,
+            "volumeDiffPercent": -6.1,
             "volumeState": "平量",
-            "latestPrice": 51.8
+            "latestPrice": 51.7
           }
         }
       ],
-      "latestPrice": 51.8
+      "latestPrice": 51.7
     }
   ]
 }

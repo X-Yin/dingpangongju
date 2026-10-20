@@ -322,5 +322,44 @@
         "path": "/block"
       }
     ]
+  },
+  {
+    "id": "f3502e0dbb5cd3a9",
+    "time": "2026-10-20 13:24:32",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-20 13:24:32",
+        "title": "板块排名变化",
+        "description": "<b>房地产</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">43/50</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "be92227c127968e9",
+    "time": "2026-10-20 13:25:33",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-20 13:25:33",
+        "title": "板块排名变化",
+        "description": "<b>固态电池</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">21/50</span><br/><b>游戏</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">29/50</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "a7a0d18226f123e0",
+    "time": "2026-10-20 13:26:33",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-20 13:26:33",
+        "title": "板块排名变化",
+        "description": "<b>固态电池</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">16/50</span><br/><b>消费</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">21/50</span>",
+        "path": "/block"
+      }
+    ]
   }
 ]

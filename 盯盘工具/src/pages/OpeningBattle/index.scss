@@ -725,15 +725,14 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     flex-direction: column;
     gap: 12px;
 
-    // 攻防兼备：科技进攻 / 顺周期 / 逆周期三列并排
+    // 攻防兼备：科技进攻 / 顺周期 / 逆周期纵向堆叠
     &.defense {
-      flex-direction: row;
-      align-items: stretch;
+      flex-direction: column;
 
       .ob-gainer-col {
-        flex: 1 1 0;
-        min-width: 0;
         padding: 10px 11px;
+        max-height: 250px;
+        overflow-y: auto;
       }
 
       .ob-gainer-col-head {
