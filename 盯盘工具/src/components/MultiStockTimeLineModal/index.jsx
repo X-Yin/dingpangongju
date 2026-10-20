@@ -552,6 +552,14 @@ const MultiStockTimeLineModal = ({
   const hoveredCodeRef = useRef(null);
   const clickTimerRef = useRef(null);
 
+  // 独立折线图模式：长按右侧 label 超过 200ms 进入，只显示该股票的折线图
+  const [isolatedCode, setIsolatedCode] = useState(null);
+  const isolatedCodeRef = useRef(null);
+  const longPressTimerRef = useRef(null);
+  const longPressFiredRef = useRef(false);
+  // 进入独立视图时保存一份完整 chartData，退出时用它重建图表
+  const preIsolationChartDataRef = useRef(null);
+
   // tag 区域折叠相关：折叠时分时图高度固定增加 100px，并整体重建图表
   const [tagsCollapsed, setTagsCollapsed] = useState(true);
   const [chartReloadVersion, setChartReloadVersion] = useState(0);
@@ -775,8 +783,17 @@ const MultiStockTimeLineModal = ({
 
   useEffect(() => {
     if (!chartData || !containerRef.current) return;
-    return updateChart(chartData.alignedLines, chartData.infoList);
-  }, [chartData, chartReloadVersion]);
+    let { alignedLines, infoList } = chartData;
+    if (isolatedCode) {
+      // 独立视图模式：只保留 isolatedCode 对应的那一只股票
+      const idx = infoList.findIndex((i) => i.code === isolatedCode);
+      if (idx !== -1) {
+        alignedLines = [alignedLines[idx]];
+        infoList = [infoList[idx]];
+      }
+    }
+    return updateChart(alignedLines, infoList);
+  }, [chartData, chartReloadVersion, isolatedCode]);
 
   useEffect(() => {
     if (!replayMode) return;
@@ -1037,17 +1054,90 @@ const MultiStockTimeLineModal = ({
     }
   }, [currentStocks, fetchMainFund, fetchTimeLineData, beginTimelineRefresh, endTimelineRefresh]);
 
-  // 按住右侧 label：高亮对应折线（效果同悬浮 tag），并冻结分时图更新，避免 label 随涨幅变化乱跑；松开后恢复
+  // 退出独立视图（必须在 fetchTimeLineData 之后定义，避免 TDZ）
+  const exitIsolatedView = useCallback(() => {
+    if (!isolatedCodeRef.current) return;
+    isolatedCodeRef.current = null;
+    setIsolatedCode(null);
+    chartPausedRef.current = false;
+    hoveredCodeRef.current = null;
+    setHoveredCode(null);
+    applyHoverHighlight(null);
+    preIsolationChartDataRef.current = null;
+    if (replayMode) {
+      setReplayVersion(v => v + 1);
+    } else if (currentStocks.length > 0) {
+      fetchTimeLineData();
+    }
+  }, [replayMode, currentStocks, fetchTimeLineData, applyHoverHighlight]);
+
+  // ESC 键退出独立视图
+  useEffect(() => {
+    if (!isolatedCode) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        exitIsolatedView();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isolatedCode, exitIsolatedView]);
+
+  // 按住右侧 label：
+  //   短按（<200ms）：高亮对应折线 + 冻结分时图更新，松开后恢复（与原有行为一致）
+  //   长按（≥200ms）：进入独立折线图模式，只显示该股票的折线，解冻让图表继续刷新
   const handleLabelMouseDown = (e, code) => {
     if (e.button !== 0) return;
     e.preventDefault(); // 防止按住拖动时选中文字
+
+    // 已经在该股票的独立视图 → 再次按住同一只 label 退出独立视图
+    if (isolatedCodeRef.current === code) {
+      exitIsolatedView();
+      return;
+    }
+
     chartPausedRef.current = true;
     hoveredCodeRef.current = code;
     setHoveredCode(code);
     applyHoverHighlight(code);
+
+    longPressFiredRef.current = false;
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => {
+      longPressFiredRef.current = true;
+      // 进入独立视图
+      preIsolationChartDataRef.current = chartData;
+      isolatedCodeRef.current = code;
+      setIsolatedCode(code);
+      // 解冻：独立视图下继续刷新分时图数据
+      chartPausedRef.current = false;
+      longPressTimerRef.current = null;
+    }, 200);
+
     const release = () => {
       window.removeEventListener('mouseup', release);
       window.removeEventListener('blur', release);
+
+      // 清除长按定时器（若已触发则这里是 null，不影响）
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+
+      if (longPressFiredRef.current) {
+        // 长按已触发 → 进入独立视图，保持当前高亮/冻结状态（定时器已解冻）
+        // 但 mouseup 后应该取消 hover 高亮感（用户已松开鼠标），isolated 模式下也无需冻结
+        chartPausedRef.current = false;
+        hoveredCodeRef.current = null;
+        setHoveredCode(null);
+        // 独立视图下 applyHoverHighlight 无意义（只剩一条线），跳过
+        if (!isolatedCodeRef.current) {
+          applyHoverHighlight(null);
+        }
+        return;
+      }
+
+      // 短按（<200ms）：正常恢复原有逻辑
       chartPausedRef.current = false;
       hoveredCodeRef.current = null;
       setHoveredCode(null);
@@ -1473,6 +1563,10 @@ const MultiStockTimeLineModal = ({
   const handleRemoveStock = (code) => {
     hoveredCodeRef.current = null;
     setHoveredCode(null);
+    // 删除的股票正好是独立视图中的 → 自动退出独立视图
+    if (isolatedCodeRef.current === code) {
+      exitIsolatedView();
+    }
     if (replayMode) {
       const remaining = readReplayOverlayCodes().filter(c => c !== code);
       writeReplayOverlayCodes(remaining);
@@ -1494,9 +1588,12 @@ const MultiStockTimeLineModal = ({
   };
 
   const renderBody = (isFullscreen = false) => {
-    const displayInfoList = hideIndexTags
+    let displayInfoList = hideIndexTags
       ? stockInfoList.filter((item) => !INDEX_CODE_SET.has(item.code))
       : stockInfoList;
+    if (isolatedCode) {
+      displayInfoList = displayInfoList.filter((item) => item.code === isolatedCode);
+    }
     return (
     <div className="multi-stock-timeline-modal">
       {refreshing && (
@@ -1755,12 +1852,31 @@ const MultiStockTimeLineModal = ({
     setFullscreenOpen(false);
     setChartReloadVersion(v => v + 1);
   };
-  const renderFullscreenModal = () => (
+  const renderFullscreenModal = () => {
+    const isolatedStockInfo = isolatedCode
+      ? (stockInfoList.find((s) => s.code === isolatedCode) || chartData?.infoList?.find((i) => i.code === isolatedCode))
+      : null;
+    return (
     <Modal
       title={
         <span>
           <FullscreenOutlined style={{ color: getThemeColor(), marginRight: '8px' }} />
           {title}（放大视图）
+          {isolatedStockInfo && (
+            <>
+              <Tag color="blue" style={{ marginLeft: 8 }}>
+                独立视图: {isolatedStockInfo.stockName}
+              </Tag>
+              <Button
+                size="small"
+                icon={<CloseOutlined />}
+                onClick={exitIsolatedView}
+                style={{ marginLeft: 8 }}
+              >
+                退出独立视图
+              </Button>
+            </>
+          )}
         </span>
       }
       open={fullscreenOpen}
@@ -1779,6 +1895,7 @@ const MultiStockTimeLineModal = ({
       </div>
     </Modal>
   );
+  };
 
   const openGroupDropdown = () => {
     clearTimeout(hoverTimerRef.current);
@@ -1882,6 +1999,9 @@ const MultiStockTimeLineModal = ({
   );
 
   if (embedded) {
+    const isolatedStockInfo = isolatedCode
+      ? (stockInfoList.find((s) => s.code === isolatedCode) || chartData?.infoList?.find((i) => i.code === isolatedCode))
+      : null;
     return (
       <>
         <Card
@@ -1891,8 +2011,28 @@ const MultiStockTimeLineModal = ({
                 <LineChartOutlined style={{ color: getThemeColor(), marginRight: '8px' }} />
                 {title}
                 <span style={{ fontSize: 13, color: 'red', fontWeight: 'bold' }}>&nbsp;{desc}</span>
+                {isolatedStockInfo && (
+                  <Tag
+                    color="blue"
+                    closable
+                    onClose={(e) => { e.preventDefault(); exitIsolatedView(); }}
+                    style={{ marginLeft: 8 }}
+                  >
+                    独立视图: {isolatedStockInfo.stockName}
+                  </Tag>
+                )}
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {isolatedStockInfo && (
+                  <Button
+                    icon={<CloseOutlined />}
+                    title="退出独立视图（ESC）"
+                    onClick={exitIsolatedView}
+                    className="mtlm-exit-isolated-btn"
+                  >
+                    退出独立视图
+                  </Button>
+                )}
                 <Button
                   icon={axisZoomIn ? <ZoomOutOutlined /> : <ZoomInOutlined />}
                   title={axisZoomIn
@@ -1946,13 +2086,33 @@ const MultiStockTimeLineModal = ({
     );
   }
 
+  const isolatedStockInfo = isolatedCode
+    ? (stockInfoList.find((s) => s.code === isolatedCode) || chartData?.infoList?.find((i) => i.code === isolatedCode))
+    : null;
+
   return (
     <>
       <Modal
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-            <span><LineChartOutlined style={{ color: getThemeColor(), marginRight: '8px' }} />{title}</span>
+            <span>
+              <LineChartOutlined style={{ color: getThemeColor(), marginRight: '8px' }} />{title}
+              {isolatedStockInfo && (
+                <Tag color="blue" style={{ marginLeft: 8 }}>
+                  独立视图: {isolatedStockInfo.stockName}
+                </Tag>
+              )}
+            </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {isolatedStockInfo && (
+                <Button
+                  icon={<CloseOutlined />}
+                  onClick={exitIsolatedView}
+                  title="退出独立视图（ESC）"
+                >
+                  退出独立视图
+                </Button>
+              )}
               {renderTagsToggle()}
               {renderGroupToolbar()}
               <Button

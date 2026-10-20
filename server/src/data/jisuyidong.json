@@ -49,9 +49,9 @@
   },
   "sh605287": {
     "stockName": "德才股份",
-    "change": 4.83,
-    "up": 108,
-    "down": 59
+    "change": 5.48,
+    "up": 112,
+    "down": 61
   },
   "sz002343": {
     "stockName": "慈文传媒",
@@ -103,15 +103,15 @@
   },
   "sh600825": {
     "stockName": "新华传媒",
-    "change": -0.83,
-    "up": 75,
+    "change": 0.19,
+    "up": 77,
     "down": 81
   },
   "sh688808": {
     "stockName": "联讯仪器",
-    "change": 3.42,
-    "up": 88,
-    "down": 81
+    "change": 2.72,
+    "up": 90,
+    "down": 83
   },
   "sh688702": {
     "stockName": "盛科通信",
@@ -169,8 +169,8 @@
   },
   "sh601811": {
     "stockName": "新华文轩",
-    "change": -6.12,
-    "up": 101,
+    "change": -5.21,
+    "up": 105,
     "down": 84
   },
   "sh600396": {
@@ -277,8 +277,8 @@
   },
   "sh688048": {
     "stockName": "长光华芯",
-    "change": 1.78,
-    "up": 42,
+    "change": 1.86,
+    "up": 44,
     "down": 20
   },
   "sh688362": {
@@ -301,9 +301,9 @@
   },
   "sh600435": {
     "stockName": "北方导航",
-    "change": -1.79,
+    "change": 0,
     "up": 18,
-    "down": 17
+    "down": 19
   },
   "sz300567": {
     "stockName": "精测电子",
@@ -403,15 +403,15 @@
   },
   "sh603200": {
     "stockName": "上海洗霸",
-    "change": -2.66,
+    "change": -2.87,
     "up": 49,
-    "down": 53
+    "down": 57
   },
   "sh600241": {
     "stockName": "时代万恒",
-    "change": 5.81,
-    "up": 138,
-    "down": 102
+    "change": 5.18,
+    "up": 140,
+    "down": 106
   },
   "sh688600": {
     "stockName": "皖仪科技",
@@ -541,9 +541,9 @@
   },
   "sh688809": {
     "stockName": "强一股份",
-    "change": 0.56,
-    "up": 74,
-    "down": 56
+    "change": 0.5,
+    "up": 76,
+    "down": 58
   },
   "sz002409": {
     "stockName": "雅克科技",
@@ -637,8 +637,8 @@
   },
   "sz300489": {
     "stockName": "光智科技",
-    "change": 4.82,
-    "up": 47,
+    "change": 4.95,
+    "up": 49,
     "down": 41
   },
   "sh688008": {
@@ -661,8 +661,8 @@
   },
   "sh688322": {
     "stockName": "奥比中光-W",
-    "change": 15,
+    "change": 14.45,
     "up": 20,
-    "down": 15
+    "down": 17
   }
 }

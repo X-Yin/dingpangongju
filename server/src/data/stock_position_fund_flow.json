@@ -1111,6 +1111,87 @@
         "latestPrice": 51.7,
         "volumeDiffPercent": -6.1,
         "volumeState": "平量"
+      },
+      {
+        "time": "132732",
+        "minute": "1327",
+        "mainFund": -1.25,
+        "change": 2.81,
+        "latestPrice": 51.66,
+        "volumeDiffPercent": -6.1,
+        "volumeState": "平量"
+      },
+      {
+        "time": "132832",
+        "minute": "1328",
+        "mainFund": -1.27,
+        "change": 2.93,
+        "latestPrice": 51.72,
+        "volumeDiffPercent": -6.13,
+        "volumeState": "平量"
+      },
+      {
+        "time": "132932",
+        "minute": "1329",
+        "mainFund": -1.28,
+        "change": 2.95,
+        "latestPrice": 51.73,
+        "volumeDiffPercent": -6.18,
+        "volumeState": "平量"
+      },
+      {
+        "time": "133032",
+        "minute": "1330",
+        "mainFund": -1.3,
+        "change": 3.02,
+        "latestPrice": 51.77,
+        "volumeDiffPercent": -6.13,
+        "volumeState": "平量"
+      },
+      {
+        "time": "133132",
+        "minute": "1331",
+        "mainFund": -1.3,
+        "change": 3.04,
+        "latestPrice": 51.78,
+        "volumeDiffPercent": -6.09,
+        "volumeState": "平量"
+      },
+      {
+        "time": "133232",
+        "minute": "1332",
+        "mainFund": -1.3,
+        "change": 2.91,
+        "latestPrice": 51.71,
+        "volumeDiffPercent": -6.31,
+        "volumeState": "平量"
+      },
+      {
+        "time": "133332",
+        "minute": "1333",
+        "mainFund": -1.34,
+        "change": 2.81,
+        "latestPrice": 51.66,
+        "volumeDiffPercent": -6.31,
+        "volumeState": "平量"
+      },
+      {
+        "time": "133432",
+        "minute": "1334",
+        "mainFund": -1.34,
+        "change": 2.85,
+        "latestPrice": 51.68,
+        "volumeDiffPercent": -6.33,
+        "volumeState": "平量"
+      },
+      {
+        "time": "133532",
+        "minute": "1335",
+        "mainFund": -1.38,
+        "change": 2.75,
+        "latestPrice": 51.63,
+        "volumeDiffPercent": -6.35,
+        "volumeState": "平量"
       }
     ]
   }
