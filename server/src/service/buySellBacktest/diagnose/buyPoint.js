@@ -78,8 +78,8 @@ const buildFundInflowCheck = (buckets, currentIndex) => {
   return { fundResult, fundDiff, check };
 };
 
-// 量能检查构建（常规买点诊断与重点板块策略共用）：当前量能（今日累计成交额 − 昨日全天成交额）
-// 为正时较 5min 前增加即可，为负时需增加 ≥ 100 亿；今日/昨日科技情绪触及 -39 冰点时自动豁免
+// 量能检查构建（常规买点诊断与重点板块策略共用）：只看当前量能（今日累计成交额 − 昨日全天成交额）的值本身是否为正；
+// 今日/昨日科技情绪触及 -39 冰点时自动豁免
 const buildVolumeExpansionCheck = (buckets, currentIndex, campData) => {
   const list = buckets || [];
   const current = list[currentIndex];
@@ -110,21 +110,18 @@ const buildVolumeExpansionCheck = (buckets, currentIndex, campData) => {
       past2Cumulative: past2VolHit ? parseFloat((Number(past2VolHit.bucket.volume) || 0).toFixed(2)) : null,
     };
   }
-  const volDiff = volumeResult.hasData ? volumeResult.diff : 0;
-  // 判定规则（对齐线上 buySellDiagnose.js）：当前量能为正时只需较 5min 前增加；为负时需增加 100 亿以上
-  const checkVolumePassed = !volumeResult.hasData ? false
-    : volumeResult.last5minVol > 0
-      ? volumeResult.last5minVol > volumeResult.prev5minVol
-      : volDiff >= 100;
+  // 判定规则（2026-10-20 用户定，对齐线上 buySellDiagnose.js）：只看当前 amountChangeDiff 的值本身是否为正
+  // （今日累计成交额超昨日全天）；不再用「现在 vs 5min 前」相邻变化值判定，5min 前对比仅作展示参考
+  const checkVolumePassed = volumeResult.hasData && volumeResult.last5minVol > 0;
   const todayHasIceFlag = campData?.todayHasIce === true;
   const prevDayHasIceFlag = campData?.prevDayHasIce === true;
   if (todayHasIceFlag || prevDayHasIceFlag) {
     const targetDateStr = String(campData?.date || '').replace(/-/g, '');
     const iceSource = todayHasIceFlag ? `今日(${targetDateStr.substring(4, 6)}-${targetDateStr.substring(6, 8)})` : '前一交易日';
-    // 豁免文案：明确说明「冰点期豁免成交量」，并带出实际量能变化数值（无数据时仅说明豁免）
+    // 豁免文案：明确说明「冰点期豁免量能」，并带出当前量能数值（无数据时仅说明豁免）
     const exemptVolText = volumeResult.hasData
-      ? `冰点期豁免成交量，成交量${volDiff >= 0 ? '增加' : '减少'} ${Math.abs(volDiff).toFixed(2)}亿`
-      : '冰点期豁免成交量';
+      ? `冰点期豁免量能，当前量能 ${volumeResult.last5minVol >= 0 ? '+' : '-'}${Math.abs(volumeResult.last5minVol).toFixed(2)}亿`
+      : '冰点期豁免量能';
     return {
       check: {
         id: 'volume_expansion',
@@ -140,29 +137,22 @@ const buildVolumeExpansionCheck = (buckets, currentIndex, campData) => {
       volumeResult,
     };
   }
-  // 量能明细文案（随买入原因汇总展示）：最近 5min 成交量变化量
+  // 量能明细文案（随买入原因汇总展示）：当前量能值本身
   const volumeText = volumeResult.hasData
-    ? `成交量${volDiff >= 0 ? '增加' : '减少'} ${Math.abs(volDiff).toFixed(2)}亿`
+    ? `当前量能 ${volumeResult.last5minVol >= 0 ? '+' : '-'}${Math.abs(volumeResult.last5minVol).toFixed(2)}亿`
     : null;
   return {
     check: {
       id: 'volume_expansion',
-      title: '量能较 5min 前增加（负值需增加超 100 亿）',
+      title: '当前量能为正（今日累计成交额超昨日全天）',
       passed: checkVolumePassed,
-      value: volumeResult.hasData ? `${volDiff >= 0 ? '+' : '-'} ${Math.abs(volDiff).toFixed(2)}亿` : '数据不足',
+      value: volumeResult.hasData ? `${volumeResult.last5minVol >= 0 ? '+' : '-'} ${Math.abs(volumeResult.last5minVol).toFixed(2)}亿` : '数据不足',
       volumeText,
       reason: !volumeResult.hasData
         ? '量能数据不足，无法判断当前量能'
-        : (() => {
-          const volChangeText = volDiff >= 0 ? `+ ${volDiff.toFixed(2)} 亿` : `- ${Math.abs(volDiff).toFixed(2)} 亿`;
-          return volumeResult.last5minVol > 0
-            ? checkVolumePassed
-              ? `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为正，较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}，持续放量`
-              : `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿虽为正，但较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}`
-            : checkVolumePassed
-              ? `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为负，但较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}，达到 100 亿阈值`
-              : `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为负，较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿仅${volChangeText}，未达到增加 100 亿的阈值`;
-        })(),
+        : checkVolumePassed
+          ? `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为正，今日累计成交额已超过昨日全天`
+          : `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为负，今日累计成交额尚未超过昨日全天`,
     },
     volumeResult,
   };
@@ -186,7 +176,7 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData, opts) => {
   checks.push(fundCheck);
   if (!fundCheck.passed) allPassed = false;
 
-  // 检查3：量能较 5min 前增加（负值需增加超 100 亿；情绪冰点自动豁免，构建函数与重点板块策略共用）
+  // 检查3：当前量能为正（今日累计成交额超昨日全天；情绪冰点自动豁免，构建函数与重点板块策略共用）
   const { check: volumeCheck } = buildVolumeExpansionCheck(buckets, currentIndex, campData);
   checks.push(volumeCheck);
   if (!volumeCheck.passed) allPassed = false;
@@ -292,7 +282,7 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData, opts) => {
 
 // ===== 买入原因构建（随成交记录/缓存/回测报告落盘，供前端与报告展示命中了哪些买入条件） =====
 // 由买点诊断结果构建买入原因：buyReason 为全部命中条件标题汇总（与 sellReason 命中卖出条件名口径一致），
-// 资金净流入/量能项额外附带明细数值（如「5min 内资金净流入 24.00亿」「成交量增加 120.00亿」「冰点期豁免成交量，成交量增加 50.00亿」）；
+// 资金净流入/量能项额外附带明细数值（如「5min 内资金净流入 24.00亿」「当前量能 +120.00亿」「冰点期豁免量能，当前量能 +50.00亿」）；
 // buyChecks 为逐项明细（含数值与判定理由），allPassed !== true 时返回空
 const buildBuyReasonFromDiag = (diagData) => {
   if (!diagData || diagData.allPassed !== true) return { buyReason: '', buyChecks: [] };

@@ -405,11 +405,6 @@
     "TotalShares": 645582194
   },
   {
-    "secu_code": "sh603061",
-    "secu_name": "金海通  ",
-    "TotalShares": 87000000
-  },
-  {
     "secu_code": "sh600641",
     "secu_name": "先导基电",
     "TotalShares": 948172920
@@ -445,11 +440,6 @@
     "TotalShares": 2317536658
   },
   {
-    "secu_code": "sh603067",
-    "secu_name": "振华股份",
-    "TotalShares": 755525404
-  },
-  {
     "secu_code": "sz300489",
     "secu_name": "光智科技",
     "TotalShares": 139157835
@@ -468,11 +458,6 @@
     "secu_code": "sz301486",
     "secu_name": "致尚科技",
     "TotalShares": 128743244
-  },
-  {
-    "secu_code": "sh603767",
-    "secu_name": "中马传动",
-    "TotalShares": 308631500
   },
   {
     "secu_code": "sz002343",
@@ -500,11 +485,6 @@
     "TotalShares": 294302115
   },
   {
-    "secu_code": "sh600396",
-    "secu_name": "华电辽能",
-    "TotalShares": 1472706817
-  },
-  {
     "secu_code": "sh600967",
     "secu_name": "内蒙一机",
     "TotalShares": 1701794667
@@ -518,16 +498,6 @@
     "secu_code": "sh600316",
     "secu_name": "洪都航空",
     "TotalShares": 717114512
-  },
-  {
-    "secu_code": "sh688600",
-    "secu_name": "皖仪科技",
-    "TotalShares": 134708490
-  },
-  {
-    "secu_code": "sh688543",
-    "secu_name": "国科军工",
-    "TotalShares": 250610433
   },
   {
     "secu_code": "sh600435",
@@ -548,5 +518,10 @@
     "secu_code": "sh603626",
     "secu_name": "科森科技",
     "TotalShares": 554879690
+  },
+  {
+    "secu_code": "sh688322",
+    "secu_name": "奥比中光-W",
+    "TotalShares": 412834732
   }
 ]

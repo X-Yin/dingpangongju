@@ -28,7 +28,7 @@ const EMO_QUICK_RANGE_HIGH = -10;
 const EMO_QUICK_CRASH_PCT = -7;
 
 // 检查4「开盘后自选科技股低于开盘价」按比例收紧（2026-10-19 用户定，取代原「创业板指斜率负时固定收紧为 15」）：
-// 适用范围（24 个）= 快进快出（emoQuickOut）7 个 + 纯「N 日涨幅最大」7 个 + 两次买入 6 个 + 两次买入不同板块 4 个。
+// 适用范围（25 个）= 快进快出（emoQuickOut）7 个 + 纯「N 日涨幅最大」7 个 + 两次买入 7 个 + 两次买入不同板块 4 个。
 // 这些策略的阈值 = ceil(参与计数的科技股数 × 25%)（向上取整，如 90 只科技股 → 23），其余策略保持固定 30 只。
 // 「参与计数的科技股数」= 当桶自选股中 isTech !== false 且当日开盘涨幅数据存在的只数（即诊断明细 value 的「X / N只」里的 N）
 const OPENING_BELOW_RATIO = 0.25;
@@ -56,6 +56,8 @@ const OPENING_BELOW_RATIO_STRATEGY_IDS = new Set([
   'highest_5d_gain_two_buy',
   'highest_2d5_gain_two_buy',
   'highest_3d5_gain_two_buy',
+  // 两次买入（同一天）
+  'highest_3d_gain_two_buy_same_day',
   // 两次买入不同板块
   'highest_2d_gain_two_buy_diff_block',
   'highest_3d_gain_two_buy_diff_block',

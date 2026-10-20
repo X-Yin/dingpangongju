@@ -1,5 +1,40 @@
 [
   {
+    "date": "2026-10-20",
+    "operations": [
+      {
+        "id": "1792459827858_mqr7",
+        "action": "sell",
+        "stockName": "金海通",
+        "stockCode": "sh603061",
+        "position": "",
+        "time": "09:30"
+      },
+      {
+        "id": "1792461370284_26xu",
+        "action": "sell",
+        "stockName": "国科军工",
+        "stockCode": "sh688543",
+        "position": "",
+        "time": "09:56"
+      },
+      {
+        "id": "1792464834105_1q26",
+        "action": "buy",
+        "stockName": "亨通光电",
+        "stockCode": "sh600487",
+        "position": "",
+        "time": "10:53"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-20T01:30:27.868Z",
+    "updatedAt": "2026-10-20T02:53:54.125Z"
+  },
+  {
     "date": "2026-10-19",
     "operations": [
       {

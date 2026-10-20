@@ -2574,16 +2574,13 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
       reason: `${iceSource}盘中科技情绪触及 -39 退潮冰点（hasIce: true），情绪已达冰点量能条件自动豁免`,
     });
   } else {
-    // 判定规则：当前量能为正时，只需较 5min 前增加即可（无阈值）；当前量能为负时，需较 5min 前增加 100 亿以上
-    const checkVolumePassed = !volumeResult.hasData ? false
-      : volumeResult.last5minVol > 0
-        ? volumeResult.last5minVol > volumeResult.prev5minVol
-        : (volumeResult.last5minVol - volumeResult.prev5minVol) >= 100;
+    // 判定规则（2026-10-20 用户定）：只看当前 amountChangeDiff 的值本身是否为正（今日累计成交额超昨日全天），
+    // 不再用「现在 vs 5min 前」相邻两个 amountChangeDiff 的变化值判定；5min 前对比仅作展示参考
+    const checkVolumePassed = volumeResult.hasData && volumeResult.last5minVol > 0;
     const volIncrease = volumeResult.last5minVol - volumeResult.prev5minVol;
-    const volChangeText = volIncrease >= 0 ? `+${volIncrease.toFixed(2)} 亿` : `-${Math.abs(volIncrease).toFixed(2)} 亿`;
     checks.push({
-      id: 'volume_expansion', title: '量能较 5min 前增加（成交量为负时需增加超 100 亿）', passed: checkVolumePassed,
-      value: volumeResult.hasData ? `${volIncrease >= 0 ? '+' : '-'} ${Math.abs(volIncrease).toFixed(2)}亿` : '数据不足',
+      id: 'volume_expansion', title: '当前量能为正（今日累计成交额超昨日全天）', passed: checkVolumePassed,
+      value: volumeResult.hasData ? `${volumeResult.last5minVol >= 0 ? '+' : '-'} ${Math.abs(volumeResult.last5minVol).toFixed(2)}亿` : '数据不足',
       detail: {
         currentTime: volumeResult.currentTime,
         pastTime: volumeResult.pastTime,
@@ -2592,11 +2589,9 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
         increase5min: volumeResult.hasData ? parseFloat(volIncrease.toFixed(2)) : null,
       },
       reason: !volumeResult.hasData ? '量能数据不足，无法判断当前量能'
-        : volumeResult.last5minVol > 0
-          ? checkVolumePassed ? `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为正，较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}，持续放量`
-            : `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿虽为正，但较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}`
-          : checkVolumePassed ? `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为负，但较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿${volChangeText}，达到 100 亿阈值`
-            : `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为负，较 5min 前的 ${volumeResult.prev5minVol.toFixed(2)} 亿仅${volChangeText}，未达到增加 100 亿的阈值`,
+        : checkVolumePassed
+          ? `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为正，今日累计成交额已超过昨日全天`
+          : `当前量能 ${volumeResult.last5minVol.toFixed(2)} 亿为负，今日累计成交额尚未超过昨日全天`,
     });
     if (!checkVolumePassed) allPassed = false;
   }

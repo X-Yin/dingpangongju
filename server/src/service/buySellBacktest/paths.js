@@ -47,7 +47,7 @@ const CACHE_VERSION_BY_STRATEGY = {
   // v2（2026-10-17）：卖点去掉龙头战法的「盘中 1 分钟内跳水 ≤ -3%」这一条（反向抱团龙头专用；共享模块 leaderSellMinute 的 disableMinutePlummet 开关）
   // v1（2026-10-17）：策略创建（买点/选股/卖点初版）
   hot_money_reverse_leader: 4,
-  // ===== 检查4 按比例收紧的 24 个策略（快进快出 7 + 纯 N 日涨幅最大 7 + 两次买入 6 + 两次买入不同板块 4） =====
+  // ===== 检查4 按比例收紧的 25 个策略（快进快出 7 + 纯 N 日涨幅最大 7 + 两次买入 7 + 两次买入不同板块 4） =====
   // v4（2026-10-19）：比例由 20% 调整为 25%（用户最终定稿）——阈值 = ceil(参与计数的科技股数 × 25%)（如 90 只科技股 → 23 只）
   // v3（2026-10-19）：买点诊断检查4「开盘后自选科技股低于开盘价不超过 30 只」改为按比例——
   // 阈值 = ceil(参与计数的科技股数 × 20%)，取代 v2 的「创业板指斜率负收紧为 15」；
@@ -73,6 +73,8 @@ const CACHE_VERSION_BY_STRATEGY = {
   highest_5d_gain_two_buy: 4,
   highest_2d5_gain_two_buy: 4,
   highest_3d5_gain_two_buy: 4,
+  // 两次买入（同一天）新策略（2026-10-20 创建）：无历史缓存，沿用默认版本 1
+  highest_3d_gain_two_buy_same_day: 1,
   highest_2d_gain_two_buy_diff_block: 4,
   highest_3d_gain_two_buy_diff_block: 4,
   highest_4d_gain_two_buy_diff_block: 4,

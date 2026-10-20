@@ -559,7 +559,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": "6",
-    "isTech": true
+    "isTech": false
   },
   {
     "code": "sh603119",
@@ -567,7 +567,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": " 7",
-    "isTech": true
+    "isTech": false
   },
   {
     "code": "sh688809",
@@ -663,15 +663,6 @@
     "addedAt": "2026-10-07 17:58:58"
   },
   {
-    "code": "sh603061",
-    "name": "金海通",
-    "isImportant": false,
-    "blockName": "半导体",
-    "riskScore": "7",
-    "isTech": true,
-    "addedAt": "2026-10-07 17:59:33"
-  },
-  {
     "code": "sh600641",
     "name": "先导基电",
     "isImportant": false,
@@ -735,15 +726,6 @@
     "addedAt": "2026-10-13 11:51:09"
   },
   {
-    "code": "sh603067",
-    "name": "振华股份",
-    "isImportant": false,
-    "blockName": "金属铬",
-    "riskScore": "8",
-    "isTech": false,
-    "addedAt": "2026-10-13 12:25:40"
-  },
-  {
     "code": "sz300489",
     "name": "光智科技",
     "isImportant": false,
@@ -778,15 +760,6 @@
     "riskScore": " 9",
     "isTech": true,
     "addedAt": "2026-10-13 22:52:43"
-  },
-  {
-    "code": "sh603767",
-    "name": "中马传动",
-    "isImportant": false,
-    "blockName": "汽车零部件",
-    "riskScore": " 9",
-    "isTech": false,
-    "addedAt": "2026-10-14 00:24:02"
   },
   {
     "code": "sz002343",
@@ -834,15 +807,6 @@
     "addedAt": "2026-10-15 22:19:14"
   },
   {
-    "code": "sh600396",
-    "name": "华电辽能",
-    "isImportant": false,
-    "blockName": "电力",
-    "riskScore": " 8",
-    "isTech": false,
-    "addedAt": "2026-10-16 09:39:44"
-  },
-  {
     "code": "sh600967",
     "name": "内蒙一机",
     "isImportant": false,
@@ -868,24 +832,6 @@
     "riskScore": "8",
     "isTech": false,
     "addedAt": "2026-10-17 21:30:13"
-  },
-  {
-    "code": "sh688600",
-    "name": "皖仪科技",
-    "isImportant": false,
-    "blockName": "氦气检测",
-    "riskScore": "9",
-    "isTech": false,
-    "addedAt": "2026-10-17 21:46:12"
-  },
-  {
-    "code": "sh688543",
-    "name": "国科军工",
-    "isImportant": false,
-    "blockName": "军工",
-    "riskScore": "7",
-    "isTech": false,
-    "addedAt": "2026-10-19 10:01:46"
   },
   {
     "code": "sh600435",
@@ -921,5 +867,14 @@
     "riskScore": " 2",
     "isTech": false,
     "addedAt": "2026-10-19 22:35:46"
+  },
+  {
+    "code": "sh688322",
+    "name": "奥比中光-W",
+    "isImportant": false,
+    "blockName": "物理 AI",
+    "riskScore": "9",
+    "isTech": false,
+    "addedAt": "2026-10-20 12:24:44"
   }
 ]

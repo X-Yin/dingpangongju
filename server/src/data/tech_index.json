@@ -1268,21 +1268,17 @@
   },
   {
     "date": 20261019,
-    "changeSumResult": -25.2,
-    "baseEmotion": -13.43,
-    "pullbackPenalty": -58.83,
-    "avgChange": -2.65,
-    "stockCount": 90,
-    "algorithm": 2,
+    "changeSumResult": -8.55,
+    "rawSum": -25.7,
     "hasIce": true
   },
   {
     "date": 20261020,
-    "changeSumResult": -25.2,
-    "baseEmotion": -13.43,
-    "pullbackPenalty": -58.83,
-    "avgChange": -2.65,
-    "stockCount": 90,
+    "changeSumResult": -6.17,
+    "baseEmotion": 4.68,
+    "pullbackPenalty": -54.24,
+    "avgChange": 0.43,
+    "stockCount": 87,
     "algorithm": 2
   }
 ]

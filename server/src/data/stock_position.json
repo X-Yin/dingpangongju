@@ -1,20 +1,11 @@
 [
   {
-    "id": "sh688543_1792375322409_mm66",
-    "code": "sh688543",
-    "name": "国科军工",
-    "buyDate": "2026-10-19",
-    "buyTime": "10:02",
-    "weight": 25,
-    "costPrice": 47.89
-  },
-  {
-    "id": "sh603061_1792378802002_rp1i",
-    "code": "sh603061",
-    "name": "金海通",
-    "buyDate": "2026-10-19",
-    "buyTime": "11:00",
-    "weight": 75,
-    "costPrice": 276.89
+    "id": "sh600487_1792464834101_w1mz",
+    "code": "sh600487",
+    "name": "亨通光电",
+    "buyDate": "2026-10-20",
+    "buyTime": "10:53",
+    "weight": 50,
+    "costPrice": 52.82
   }
 ]

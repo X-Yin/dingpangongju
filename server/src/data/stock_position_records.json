@@ -1,5 +1,38 @@
 [
   {
+    "id": "1792464834103_3vwyxy",
+    "type": "buy",
+    "code": "sh600487",
+    "name": "亨通光电",
+    "date": "2026-10-20",
+    "time": "10:53:54",
+    "detail": "新增持仓：亨通光电（sh600487）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-20T02:53:54.103Z"
+  },
+  {
+    "id": "1792461370274_m3i8h6",
+    "type": "delete",
+    "code": "sh688543",
+    "name": "国科军工",
+    "date": "2026-10-20",
+    "time": "09:56:10",
+    "detail": "删除持仓：国科军工（sh688543）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-20T01:56:10.274Z"
+  },
+  {
+    "id": "1792459827845_c42spr",
+    "type": "delete",
+    "code": "sh603061",
+    "name": "金海通",
+    "date": "2026-10-20",
+    "time": "09:30:27",
+    "detail": "删除持仓：金海通（sh603061）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-20T01:30:27.845Z"
+  },
+  {
     "id": "1792390341283_59ujjx",
     "type": "delete",
     "code": "sh688120",

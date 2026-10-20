@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "id": "6187fad0fbf3f9b7",
+    "time": "2026-10-20 09:30:27",
+    "read": true,
+    "strategyId": "ebb_tide_direct_reversal",
+    "title": "⚠️ 退潮直接反转概率低，切勿追涨",
+    "description": "科创50前一日涨跌幅 -2.17%。<br/>科创50前一个交易日大跌超过-2%，次日直接反转的概率只有 <strong>23%</strong>，不要追涨！就算参与只能 <strong>1/3 仓位</strong>参与。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "27fd6636cbb73770",
+    "time": "2026-10-20 09:38:30",
+    "read": true,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-51.6亿</strong>（净流出）<br/>• 科技分时情绪 -14.1 → -7.2（上升 6.9）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "8111ad3905a54018",
+    "time": "2026-10-20 10:38:53",
+    "read": false,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-31.4→-19.3亿（增加12.1亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.25%<br/>• 成交量差值-517亿（<-500亿严重缩量），较10分钟前仅增加-48亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  }
+]

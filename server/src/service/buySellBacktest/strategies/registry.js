@@ -77,7 +77,7 @@ for (const s of Object.values(STRATEGIES)) {
 }
 
 // 检查4「开盘后自选科技股低于开盘价」按比例收紧（2026-10-19 用户定，取代原「创业板指斜率负收紧为 15」）：
-// 仅 OPENING_BELOW_RATIO_STRATEGY_IDS 内的 24 个策略（快进快出 7 + 纯 N 日涨幅最大 7 + 两次买入 6 + 两次买入不同板块 4）生效，
+// 仅 OPENING_BELOW_RATIO_STRATEGY_IDS 内的 25 个策略（快进快出 7 + 纯 N 日涨幅最大 7 + 两次买入 7 + 两次买入不同板块 4）生效，
 // 阈值 = ceil(参与计数的科技股数 × 25%)（向上取整，如 90 只科技股 → 23 只）；其余策略保持固定 30 只
 const OPENING_BELOW_RATIO_DESC = `；开盘门禁按比例收紧（2026-10-19 新增）：买点检查4「开盘后自选科技股低于开盘价」阈值由固定 30 只改为「参与计数的科技股数的 ${OPENING_BELOW_RATIO * 100}% 向上取整」（如 90 只科技股 → 23 只），非科技股不参与计数`;
 for (const s of Object.values(STRATEGIES)) {

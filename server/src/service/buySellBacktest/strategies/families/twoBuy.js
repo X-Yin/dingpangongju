@@ -1,4 +1,4 @@
-const { TWO_BUY_DESC, TWO_BUY_DIFF_BLOCK_DESC, TWO_BUY_HALF_DESC } = require('../descs');
+const { TWO_BUY_DESC, TWO_BUY_DIFF_BLOCK_DESC, TWO_BUY_HALF_DESC, TWO_BUY_SAME_DAY_DESC } = require('../descs');
 
 module.exports = {
 
@@ -13,6 +13,10 @@ module.exports = {
   // 两次买入 × N.5 日窗口（2026-10-08 用户新增）
   highest_2d5_gain_two_buy: { id: 'highest_2d5_gain_two_buy', name: '2.5日涨幅最大&两次买入', desc: TWO_BUY_HALF_DESC(2), twoBuy: true, emoQuickOut: true, halfDayAfternoon: true },
   highest_3d5_gain_two_buy: { id: 'highest_3d5_gain_two_buy', name: '3.5日涨幅最大&两次买入', desc: TWO_BUY_HALF_DESC(3), twoBuy: true, emoQuickOut: true, halfDayAfternoon: true },
+  // 两次买入 × 同一天（highest_3d_gain_two_buy_same_day，2026-10-20 用户新增）：
+  // 与「3日涨幅最大&两次买入」唯一区别——第二份允许在同一交易日内补买，只要求两次买入时间相隔 ≥ 10 分钟
+  // （twoBuySameDay: true → rangeBacktest/rangeBacktestMulti 放宽第二份建仓时点约束；见 engine/twoBuy.js 说明）
+  highest_3d_gain_two_buy_same_day: { id: 'highest_3d_gain_two_buy_same_day', name: '3日涨幅最大&两次买入（同一天）', desc: TWO_BUY_SAME_DAY_DESC(3), twoBuy: true, twoBuySameDay: true, emoQuickOut: true },
   // 两次买入 × 不同板块（highest_{N}d_gain_two_buy_diff_block，2026-10-08 用户新增）：
   // 第一份同「N日涨幅最大」（不限板块）；第二份在「板块（blockName）与第一份不同」的候选中重新按 N 日涨幅最大择股
   // diffBlock: true → 第二份改为限制板块差异的重新择股（见 runRangeBacktestInner / runRangeBacktestMulti）

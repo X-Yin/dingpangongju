@@ -195,11 +195,19 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
               emoQuickOut: picked.emoQuickOut || null, // 情绪快进快出标注（quickOut=true → 次日 10:00 强制卖出；其余策略为 null）
               // 两次买入策略 / 快进快出半仓（第一份）：按半仓权重，标记 leg=1；非快进快出时全仓不标记
               ...(strategy.twoBuy === true || halfByQuickOut ? { twoBuy: true, leg: 1, weight: TWO_BUY_LEG_WEIGHT } : {}),
+              // 「两次买入（同一天）」变体：记录第一份买入分钟，供第二份做「相隔 ≥ 10 分钟」判定
+              ...(strategy.twoBuySameDay === true ? { buyMinute: bucket.minute } : {}),
             });
           }
-        } else if ((strategy.twoBuy === true || emoQuickHalfBuy) && positions.length === 1 && positions[0].leg === 1 && dateStr > positions[0].buyDate) {
+        } else if ((strategy.twoBuy === true || emoQuickHalfBuy) && positions.length === 1 && positions[0].leg === 1
+          && (dateStr > positions[0].buyDate
+            // 「两次买入（同一天）」变体（highest_3d_gain_two_buy_same_day）：允许同一交易日内买点二次触发时即补买第二份，
+            // 但两次买入时间需相隔 ≥ 10 分钟（bucket.minute 为数字分钟，如 935/1000）
+            || (strategy.twoBuySameDay === true && dateStr === positions[0].buyDate
+                && positions[0].buyMinute != null && Number(bucket.minute) - Number(positions[0].buyMinute) >= 10))) {
           // 两次买入 / 快进快出半仓策略：已持有第一份（半仓），买点再次触发 → 买入第二份 5 成
-          // 约束：① 必须在第一份建仓之后的交易日（≥ 隔 1 天）买入；② 补买同样过滤涨停（买入时点该股已涨停不可成交）；
+          // 约束：① 普通两次买入须在第一份建仓之后的交易日（≥ 隔 1 天）买入；「同一天」变体允许当日补买、
+          //          但两次买入时间需相隔 ≥ 10 分钟；② 补买同样过滤涨停（买入时点该股已涨停不可成交）；
           //       ③ 普通两次买入系列第二份必须与第一份同一只股票（不重新择股）；
           //          「不同板块」变体（diffBlock）第二份则在「板块与第一份不同」的候选中重新按 N 日涨幅最大择股
           const first = positions[0];

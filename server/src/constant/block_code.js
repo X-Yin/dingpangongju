@@ -1424,5 +1424,25 @@ exports.default = [
         "blockName": "机器人",
         "code": "sz003021",
         "name": "兆威机电"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sh605488",
+        "name": "福莱新材"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sh688322",
+        "name": "奥比中光-W"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sz300100",
+        "name": "双林股份"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sh688787",
+        "name": "海天瑞声"
     }
 ]
