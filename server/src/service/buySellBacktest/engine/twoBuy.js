@@ -13,6 +13,22 @@ const { stockBlockFilePath } = require('../paths');
 // 且必须是同一只股票（不重新择股）。
 const TWO_BUY_LEG_WEIGHT = 0.5;
 
+// 「两次买入（同一天）」尾盘补买第二份的当日盈利阈值（2026-10-20 用户改版）：
+// 14:55 检查当日盈利（14:55 分时价 vs 第一份买入价）超过该百分比且未涨停 → 尾盘买入第二份 5 成
+const TWO_BUY_SAME_DAY_TAIL_PROFIT_PCT = 2;
+
+// 「两次买入（同一天）」统一成本线（2026-10-20 用户改版）：两份仓位均在持时，
+// 成本线 = 两次买入价的平均值（(买1 + 买2) ÷ 2），两份共用；仅剩一份或非本变体时返回 null
+// （调用方回落到 pos.buyPrice 自身成本）。仅用于「跌破成本线 -2%」止损判定，
+// 每份仓位的收益率仍按各自实际买入价计算。
+const getUnifiedCostLinePrice = (pos, positions, strategy) => {
+  if (!pos || strategy?.twoBuySameDay !== true || !Array.isArray(positions) || positions.length !== 2) return null;
+  const mine = Number(pos.buyPrice);
+  const other = positions.find(p => p && p !== pos && p.code === pos.code && Number(p.buyPrice) > 0);
+  if (!Number.isFinite(mine) || mine <= 0 || !other) return null;
+  return parseFloat(((mine + Number(other.buyPrice)) / 2).toFixed(2));
+};
+
 // 两次买入「不同板块」策略：取个股所属板块标识（自选股 monitor_stocks.json 的 blockName），
 // 未记录板块的股票统一按「其他」处理；按文件 mtime 懒加载映射并缓存，避免逐候选重复读盘
 let stockBlockCache = { mtimeMs: -1, map: new Map() };
@@ -97,8 +113,10 @@ const computeTwoBuyAccountReturn = (legs) => {
 
 module.exports = {
   TWO_BUY_LEG_WEIGHT,
+  TWO_BUY_SAME_DAY_TAIL_PROFIT_PCT,
   buildTwoBuyTradeExtra,
   computeTwoBuyAccountReturn,
+  getUnifiedCostLinePrice,
   getPositionLegWeight,
   getStockBlockName,
   isLegPosition,

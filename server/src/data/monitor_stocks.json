@@ -876,5 +876,23 @@
     "riskScore": "9",
     "isTech": false,
     "addedAt": "2026-10-20 12:24:44"
+  },
+  {
+    "code": "sh688543",
+    "name": "国科军工",
+    "isImportant": false,
+    "blockName": "军工",
+    "riskScore": " 9",
+    "isTech": false,
+    "addedAt": "2026-10-20 13:52:34"
+  },
+  {
+    "code": "sz002058",
+    "name": "紫竹高科",
+    "isImportant": false,
+    "blockName": "固态电池",
+    "riskScore": " 8",
+    "isTech": false,
+    "addedAt": "2026-10-20 14:00:57"
   }
 ]

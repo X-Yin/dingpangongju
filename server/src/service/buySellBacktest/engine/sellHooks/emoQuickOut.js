@@ -12,7 +12,7 @@
 // 本 hook 只做卖点行为，策略开关判定（strategy.emoQuickOut）由引擎负责调度。
 const { buildQuickOutExemptInfo, buildQuickOutSellReason, buildQuickOutStopLossReason, buildQuickOutCrashSellReason } = require('../checkBuilders');
 const { locateCrashSellPoint } = require('../crashSellWindow');
-const { buildTwoBuyTradeExtra, getPositionLegWeight, isLegPosition } = require('../twoBuy');
+const { buildTwoBuyTradeExtra, getPositionLegWeight, getUnifiedCostLinePrice, isLegPosition } = require('../twoBuy');
 
 const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStocks, timeBuckets, campData, singleTrades }) => {
   let quickOutSoldDate = null;
@@ -31,9 +31,13 @@ const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStoc
     const forcedPt = pts.find(p => Number(p.minute) >= 1000) || pts[pts.length - 1];
     // 盘中跌破成本线止损点（先到先卖）
     const qPct = strategy.costLinePct != null && Number.isFinite(Number(strategy.costLinePct)) ? Number(strategy.costLinePct) : 2;
+    // 「两次买入（同一天）」统一成本线（2026-10-20）：两份均在持时成本线 = 两次买入价均值，两份共用；
+    // 仅剩一份时用该份自身买入价。仅影响止损阈值判定，收益率仍按各自实际买入价计算
+    const unifiedCost = getUnifiedCostLinePrice(pos, positions, strategy);
+    const costBase = unifiedCost != null ? unifiedCost : pos.buyPrice;
     let stopPt = null;
     let stopDesc = '';
-    const stopThreshold = pos.buyPrice > 0 ? parseFloat((pos.buyPrice * (1 - qPct / 100)).toFixed(2)) : null;
+    const stopThreshold = costBase > 0 ? parseFloat((costBase * (1 - qPct / 100)).toFixed(2)) : null;
     if (stopThreshold != null) {
       if (Number(pts[0].lastPx) <= stopThreshold) {
         // 竞价低开自救窗口：首分钟已破线，拉升中继续持有；回补至阈值上方则不再止损（待再次跌破再卖）；回落且仍跌破阈值才卖（到 10:00 交由强卖）
@@ -96,7 +100,7 @@ const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStoc
       sellPrice,
       sellChange: sellPt.change != null ? parseFloat(Number(sellPt.change).toFixed(2)) : null,
       sellReason: isStopLoss
-        ? buildQuickOutStopLossReason(pos.buyPrice, sellPt, stopDesc, qPct)
+        ? buildQuickOutStopLossReason(costBase, sellPt, stopDesc, qPct)
         : (sellKind === 'crash'
           ? buildQuickOutCrashSellReason(sellPt, crashLoc)
           : buildQuickOutSellReason(pos.emoQuickOut)),

@@ -11,7 +11,7 @@ const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGat
 const { buildPrevOneWordBoardSet, buildReplayStocksWithTline, extractDailyInfo, isLimitUpAtBuy } = require('./replayData');
 const { EXCLUDED_CODES, OPENING_BELOW_RATIO_STRATEGY_IDS } = require('../constants');
 const { withResilienceGateInfo } = require('./checkBuilders');
-const { TWO_BUY_LEG_WEIGHT, computeTwoBuyAccountReturn, getPositionLegWeight, getStockBlockName } = require('./twoBuy');
+const { TWO_BUY_LEG_WEIGHT, TWO_BUY_SAME_DAY_TAIL_PROFIT_PCT, computeTwoBuyAccountReturn, getPositionLegWeight, getStockBlockName } = require('./twoBuy');
 const { emoQuickOutSell } = require('./sellHooks/emoQuickOut');
 const { generalSellPositions } = require('./sellHooks/generalSell');
 const { buildBuyReasonFromDiag, fmtTime, runBuyPointDiagnosis } = require('../diagnose/buyPoint');
@@ -72,6 +72,8 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   const positions = []; // { code, stockName, buyDate, buyDateDisplay, buyTime, buyPrice, buyChange, metric, ... }
   // 情绪快进快出策略：最近一次 10:00 强制卖出的日期（该日禁止二次买入，哪怕买点再次触发）
   let quickOutSoldDate = null;
+  // 「两次买入（同一天）」变体：当日 14:55 尾盘补买评估标记（每交易日评估一次，盈利未达标/涨停不重试）
+  let sameDayTailChecked = false;
   const singleTrades = [];
   const skippedDates = [];
 
@@ -100,6 +102,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
 
   for (let di = 0; di < total; di++) {
     const dateStr = rangeDates[di];
+    sameDayTailChecked = false; // 「两次买入（同一天）」尾盘补买评估标记按日重置
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'loading' });
     let campData;
     try {
@@ -195,19 +198,13 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
               emoQuickOut: picked.emoQuickOut || null, // 情绪快进快出标注（quickOut=true → 次日 10:00 强制卖出；其余策略为 null）
               // 两次买入策略 / 快进快出半仓（第一份）：按半仓权重，标记 leg=1；非快进快出时全仓不标记
               ...(strategy.twoBuy === true || halfByQuickOut ? { twoBuy: true, leg: 1, weight: TWO_BUY_LEG_WEIGHT } : {}),
-              // 「两次买入（同一天）」变体：记录第一份买入分钟，供第二份做「相隔 ≥ 10 分钟」判定
-              ...(strategy.twoBuySameDay === true ? { buyMinute: bucket.minute } : {}),
             });
           }
         } else if ((strategy.twoBuy === true || emoQuickHalfBuy) && positions.length === 1 && positions[0].leg === 1
-          && (dateStr > positions[0].buyDate
-            // 「两次买入（同一天）」变体（highest_3d_gain_two_buy_same_day）：允许同一交易日内买点二次触发时即补买第二份，
-            // 但两次买入时间需相隔 ≥ 10 分钟（bucket.minute 为数字分钟，如 935/1000）
-            || (strategy.twoBuySameDay === true && dateStr === positions[0].buyDate
-                && positions[0].buyMinute != null && Number(bucket.minute) - Number(positions[0].buyMinute) >= 10))) {
+          && dateStr > positions[0].buyDate) {
           // 两次买入 / 快进快出半仓策略：已持有第一份（半仓），买点再次触发 → 买入第二份 5 成
-          // 约束：① 普通两次买入须在第一份建仓之后的交易日（≥ 隔 1 天）买入；「同一天」变体允许当日补买、
-          //          但两次买入时间需相隔 ≥ 10 分钟；② 补买同样过滤涨停（买入时点该股已涨停不可成交）；
+          // 约束：① 须在第一份建仓日之后的交易日买入（含「两次买入（同一天）」变体——当日不再因买点二次触发补买，
+          //          改由下方 14:55 尾盘补买规则处理）；② 补买同样过滤涨停（买入时点该股已涨停不可成交）；
           //       ③ 普通两次买入系列第二份必须与第一份同一只股票（不重新择股）；
           //          「不同板块」变体（diffBlock）第二份则在「板块与第一份不同」的候选中重新按 N 日涨幅最大择股
           const first = positions[0];
@@ -265,6 +262,39 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
                 twoBuy: true, leg: 2, weight: TWO_BUY_LEG_WEIGHT,
               });
             }
+          }
+        }
+
+        // 「两次买入（同一天）」尾盘补买第二份（2026-10-20 用户改版）：当日不再因买点二次触发补买，
+        // 改为 14:55（当日首个 minute ≥ 1455 的桶）评估一次——当日盈利（14:55 分时价 vs 第一份买入价）
+        // 超过 2% 且该股未涨停 → 按 14:55 分时价尾盘买入第二份 5 成（同一只股票）；
+        // 已涨停或盈利未达标 → 当日不补，等后续交易日买点再次触发时再买（见上方建仓分支）
+        if (strategy.twoBuySameDay === true && !sameDayTailChecked
+          && positions.length === 1 && positions[0].leg === 1 && dateStr === positions[0].buyDate
+          && Number(bucket.minute) >= 1455) {
+          sameDayTailChecked = true;
+          const first = positions[0];
+          const heldSc = (bucket.stockChanges || []).find(s => s.code === first.code);
+          const tailPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
+          const tailLimitUp = heldSc ? isLimitUpAtBuy(first.code, heldSc.changePct) : false;
+          const tailProfitPct = tailPx != null && first.buyPrice > 0
+            ? parseFloat((((tailPx - first.buyPrice) / first.buyPrice) * 100).toFixed(2))
+            : null;
+          if (tailPx != null && tailPx > 0 && !tailLimitUp && tailProfitPct != null && tailProfitPct > TWO_BUY_SAME_DAY_TAIL_PROFIT_PCT) {
+            positions.push({
+              code: first.code,
+              stockName: first.stockName,
+              buyDate: dateStr,
+              buyDateDisplay: dateDisplay,
+              buyTime: fmtTime(bucket.timeKey).substring(0, 5),
+              buyPrice: tailPx,
+              buyChange: heldSc.changePct != null ? parseFloat(Number(heldSc.changePct).toFixed(2)) : null,
+              metric: first.metric,
+              buyReason: `尾盘补买第二份 5 成：14:55 检查当日盈利达标（14:55 价 ${tailPx.toFixed(2)} 较第一份买入价 ${first.buyPrice.toFixed(2)} 盈利 +${tailProfitPct.toFixed(2)}% > ${TWO_BUY_SAME_DAY_TAIL_PROFIT_PCT}% 且未涨停），按 14:55 价买入同一股票 ${first.stockName}`,
+              buyChecks: first.buyChecks,
+              emoQuickOut: strategy.emoQuickOut === true ? computeEmoQuickOutInfo(di + axisOffset, dateAxis) : null,
+              twoBuy: true, leg: 2, weight: TWO_BUY_LEG_WEIGHT,
+            });
           }
         }
       }

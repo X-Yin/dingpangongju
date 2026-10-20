@@ -1,5 +1,10 @@
 {
   "date": "20261020",
-  "bucket": 650,
-  "mode": "tech_attack"
+  "bucket": 845,
+  "buckets": {
+    "tech": 650,
+    "ew": 845
+  },
+  "blockedBucket": null,
+  "mode": "attack_defense"
 }

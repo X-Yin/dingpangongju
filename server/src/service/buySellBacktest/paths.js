@@ -73,8 +73,10 @@ const CACHE_VERSION_BY_STRATEGY = {
   highest_5d_gain_two_buy: 4,
   highest_2d5_gain_two_buy: 4,
   highest_3d5_gain_two_buy: 4,
-  // 两次买入（同一天）新策略（2026-10-20 创建）：无历史缓存，沿用默认版本 1
-  highest_3d_gain_two_buy_same_day: 1,
+  // 两次买入（同一天）：v1（2026-10-20 创建）；v2（2026-10-20 改版）——当日不再因买点二次触发补买第二份，
+  // 改为 14:55 当日盈利（14:55 价 vs 第一份买入价）> 2% 且未涨停时尾盘补买（否则等后续买点再买）；
+  // 两份买入后成本线 = 两次买入价均值（统一成本线，条件7 止损与快进快出盘中止损共用）
+  highest_3d_gain_two_buy_same_day: 2,
   highest_2d_gain_two_buy_diff_block: 4,
   highest_3d_gain_two_buy_diff_block: 4,
   highest_4d_gain_two_buy_diff_block: 4,

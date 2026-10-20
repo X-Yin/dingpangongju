@@ -25,6 +25,14 @@
         "stockCode": "sh600487",
         "position": "",
         "time": "10:53"
+      },
+      {
+        "id": "1792476065633_f2xx",
+        "action": "buy",
+        "stockName": "紫竹高科",
+        "stockCode": "sz002058",
+        "position": "",
+        "time": "14:01"
       }
     ],
     "totalReturn": null,
@@ -32,7 +40,7 @@
     "score": null,
     "review": "",
     "createdAt": "2026-10-20T01:30:27.868Z",
-    "updatedAt": "2026-10-20T02:53:54.125Z"
+    "updatedAt": "2026-10-20T06:01:05.667Z"
   },
   {
     "date": "2026-10-19",

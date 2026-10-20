@@ -136,7 +136,7 @@ const buildQuickOutStopLossReason = (buyPrice, stopPt, desc, stopPct = 2) => {
   const pct = Number(stopPct);
   const threshold = parseFloat((Number(buyPrice) * (1 - pct / 100)).toFixed(2));
   const stopTime = `${String(Math.floor(Number(stopPt.minute) / 100)).padStart(2, '0')}:${String(Number(stopPt.minute) % 100).padStart(2, '0')}`;
-  return `情绪快进快出：${desc}，触发成本线 -${pct}% 止损（买入价 ${Number(buyPrice).toFixed(2)}、阈值 ${threshold.toFixed(2)}，${stopTime} 价 ${Number(stopPt.lastPx).toFixed(2)} 成交），先于当日 10:00 强卖离场`;
+  return `情绪快进快出：${desc}，触发成本线 -${pct}% 止损（成本线基准 ${Number(buyPrice).toFixed(2)}、阈值 ${threshold.toFixed(2)}，${stopTime} 价 ${Number(stopPt.lastPx).toFixed(2)} 成交），先于当日 10:00 强卖离场`;
 };
 
 // 快进快出持仓盘中大跌强卖的 sellReason（2026-10-15 用户新增：当日跌幅较昨收 ≤ EMO_QUICK_CRASH_PCT 时

@@ -558,6 +558,9 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
 
   // ===== 条件7：现价跌破持仓成本线 -2%（即时触发，无需持续分钟；成本线 = 模拟持仓买入价 buyPrice） =====
   // 阈值可按持仓覆盖（position.costLinePct，百分比数值，默认 2）
+  // 统一成本线覆盖（2026-10-20「两次买入（同一天）」变体）：调用方可传 position.costLinePrice
+  //（= 两次买入价均值，两份共用）作为成本线基准；未传时回落到买入价 buyPrice。
+  // 仅影响本条件止损阈值判定；returnRate 仍按实际买入价 buyPrice 计算
   // 竞价低开自救窗口（2026-10-05 新增；2026-10-08 修订）：隔夜持仓当日竞价开盘价（首分钟价）已跌破成本线 -xx% 时，
   //   不在 9:30 直接止损——大低开往往开盘先直线拉升（资金自救），逐分钟跟踪：
   //   拉升过程中（尚未出现「某分钟价低于上一分钟」的回落）继续持有（即使仍在成本线下方）；
@@ -566,7 +569,10 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
   //   若开盘价未跌破成本线、盘中才跌破 → 维持原即时止损（该卖就得卖）。
   const costLinePct = position?.costLinePct != null && Number.isFinite(Number(position.costLinePct)) ? Number(position.costLinePct) : 2;
   const costLineRatio = 1 - costLinePct / 100;
-  const costLineThreshold = buyPrice !== null && buyPrice > 0 ? buyPrice * costLineRatio : null;
+  const costLineBase = position?.costLinePrice != null && Number.isFinite(Number(position.costLinePrice)) && Number(position.costLinePrice) > 0
+    ? Number(position.costLinePrice)
+    : buyPrice;
+  const costLineThreshold = costLineBase !== null && costLineBase > 0 ? costLineBase * costLineRatio : null;
   const openBrokeCostLine = costLineThreshold !== null && openPrice != null && openPrice > 0 && openPrice < costLineThreshold;
   // 自救窗口观察：在截至当前桶的分时点中找首个「分钟价低于上一分钟、且该分钟价仍跌破阈值」的回落点
   //（stockPoints 已按分钟升序、过滤无效价）——若拉升已回补至阈值上方，此时的回落不计入；待再次跌破阈值并回落才触发
@@ -613,13 +619,13 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
       ? `该模拟持仓无买入价格，无法判断是否跌破成本线 -${costLinePct}%`
       : openBrokeCostLine
         ? (costLineFirstDecline !== null
-          ? `竞价开盘 ${openPrice.toFixed(2)} 已跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），自救拉升已于 ${fmtMinuteC7(costLineFirstDecline.minute)} 回落（${fmtMinuteC7(costLineFirstDecline.minute)} 价 ${costLineFirstDecline.lastPx.toFixed(2)} 低于 ${fmtMinuteC7(costLineFirstDecline.prevMinute)} 价 ${costLineFirstDecline.prevPx.toFixed(2)}）且仍跌破阈值，卖出，按回落分钟 ${fmtMinuteC7(costLineFirstDecline.minute)} 价格 ${costLineFirstDecline.lastPx.toFixed(2)} 成交`
-          : `竞价开盘 ${openPrice.toFixed(2)} 已跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），开盘后资金拉升中（尚无「回落且仍跌破阈值」信号；若回补至阈值上方则不自救止损、待再次跌破再卖），自救窗口观察中、暂不卖出`)
+          ? `竞价开盘 ${openPrice.toFixed(2)} 已跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（成本线基准 ${costLineBase.toFixed(2)}），自救拉升已于 ${fmtMinuteC7(costLineFirstDecline.minute)} 回落（${fmtMinuteC7(costLineFirstDecline.minute)} 价 ${costLineFirstDecline.lastPx.toFixed(2)} 低于 ${fmtMinuteC7(costLineFirstDecline.prevMinute)} 价 ${costLineFirstDecline.prevPx.toFixed(2)}）且仍跌破阈值，卖出，按回落分钟 ${fmtMinuteC7(costLineFirstDecline.minute)} 价格 ${costLineFirstDecline.lastPx.toFixed(2)} 成交`
+          : `竞价开盘 ${openPrice.toFixed(2)} 已跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（成本线基准 ${costLineBase.toFixed(2)}），开盘后资金拉升中（尚无「回落且仍跌破阈值」信号；若回补至阈值上方则不自救止损、待再次跌破再卖），自救窗口观察中、暂不卖出`)
         : brokenCostLine
-          ? `现价 ${closePrice.toFixed(2)} 已跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），触发卖点${condition7PreciseSell !== null ? `；逐分钟回溯：实际于 ${fmtMinuteC7(condition7PreciseSell.minute)} 首次跌破（价 ${condition7PreciseSell.price.toFixed(2)}），按该分钟价格成交（桶级 ${displayTime}）` : '（破线发生在当前桶，按桶价成交）'}`
-          : `现价 ${closePrice.toFixed(2)} 未跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（买入价 ${buyPrice.toFixed(2)}），未触发`,
+          ? `现价 ${closePrice.toFixed(2)} 已跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（成本线基准 ${costLineBase.toFixed(2)}），触发卖点${condition7PreciseSell !== null ? `；逐分钟回溯：实际于 ${fmtMinuteC7(condition7PreciseSell.minute)} 首次跌破（价 ${condition7PreciseSell.price.toFixed(2)}），按该分钟价格成交（桶级 ${displayTime}）` : '（破线发生在当前桶，按桶价成交）'}`
+          : `现价 ${closePrice.toFixed(2)} 未跌破成本线 -${costLinePct}% 阈值 ${costLineThreshold.toFixed(2)}（成本线基准 ${costLineBase.toFixed(2)}），未触发`,
     subConditions: [
-      { label: '买入价（成本线）', value: buyPrice !== null && buyPrice > 0 ? buyPrice.toFixed(2) : '--' },
+      { label: '成本线基准', value: costLineBase !== null && costLineBase > 0 ? costLineBase.toFixed(2) : '--' },
       { label: `阈值（成本价-${costLinePct}%）`, value: costLineThreshold !== null ? costLineThreshold.toFixed(2) : '--' },
       { label: '开盘价（首分钟）', value: openPrice != null && openPrice > 0 ? openPrice.toFixed(2) : '--' },
       { label: '现价', value: closePrice.toFixed(2) },

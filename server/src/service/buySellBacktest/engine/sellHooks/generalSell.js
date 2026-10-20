@@ -8,7 +8,7 @@
 // 以分钟级精度接管，不会进入本 hook）。2026-10-19 叠加竞价低开自救窗口（见 engine/crashSellWindow.js）：
 // 首个分时点即 ≤ 阈值时改为逐分钟等待自救拉升结束的首个回落分钟，桶级调用只使用不晚于当桶分钟的分钟点。
 const { runSellPointDiagnosis } = require('../../diagnose/sellPoint');
-const { buildTwoBuyTradeExtra, getPositionLegWeight, isLegPosition } = require('../twoBuy');
+const { buildTwoBuyTradeExtra, getPositionLegWeight, getUnifiedCostLinePrice, isLegPosition } = require('../twoBuy');
 const { buildQuickOutExemptSuffix } = require('../checkBuilders');
 const { locateCrashSellPoint, describeCrashSell, fmtMin } = require('../crashSellWindow');
 
@@ -67,7 +67,10 @@ const generalSellPositions = async ({ positions, strategy, bi, replayStocks, tim
         continue;
       }
     }
-    const position = { code: pos.code, stockName: pos.stockName, buyPrice: pos.buyPrice, buyDate: pos.buyDate, costLinePct: strategy.costLinePct };
+    // 「两次买入（同一天）」统一成本线（2026-10-20）：两份均在持时传两次买入价均价作为成本线基准
+    //（仅条件7「跌破成本线 -2%」判定使用；收益率 returnRate 仍按各自实际买入价计算）
+    const unifiedCost = getUnifiedCostLinePrice(pos, positions, strategy);
+    const position = { code: pos.code, stockName: pos.stockName, buyPrice: pos.buyPrice, buyDate: pos.buyDate, costLinePct: strategy.costLinePct, ...(unifiedCost != null ? { costLinePrice: unifiedCost } : {}) };
     const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
     if (result.isSell && result.closePrice != null) {
       const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');

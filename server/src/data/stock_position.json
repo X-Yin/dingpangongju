@@ -7,5 +7,14 @@
     "buyTime": "10:53",
     "weight": 50,
     "costPrice": 52.82
+  },
+  {
+    "id": "sz002058_1792476065596_divg",
+    "code": "sz002058",
+    "name": "紫竹高科",
+    "buyDate": "2026-10-20",
+    "buyTime": "14:01",
+    "weight": 25,
+    "costPrice": 21.49
   }
 ]
