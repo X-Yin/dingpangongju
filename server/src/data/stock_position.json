@@ -16,5 +16,21 @@
     "buyTime": "14:01",
     "weight": 25,
     "costPrice": 21.49
+  },
+  {
+    "id": "sh600487_1792481292321_zvy3",
+    "code": "sh600487",
+    "name": "亨通光电",
+    "buyDate": "2026-10-20",
+    "buyTime": "10:50",
+    "weight": 50,
+    "costPrice": 52.71,
+    "mirror": {
+      "strategy": "highest_3d_gain_emoquick",
+      "strategyName": "3日涨幅最大&三日情绪-30快进快出",
+      "syncedDate": "2026-10-20",
+      "buyDateRaw": "20261020",
+      "source": "backtest_position_mirror"
+    }
   }
 ]

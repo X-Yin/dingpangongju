@@ -29,6 +29,7 @@ const iconv = require('iconv-lite');
 const { getThsKlineUrl, getThsKlineHeaders, timestampToDateStr } = require('../utils');
 const { getSingleStockData, getSingleStockTlineDataByDate } = require('./stock');
 const { beijingToday } = require('./trainingCamp');
+const { isTradingDay } = require('../utils/tradingDay');
 const { batchParallel } = require('../utils');
 const { isOscExcluded } = require('./backtestOscContext');
 
@@ -256,14 +257,37 @@ const getLhbStocks = async (dateStr) => {
 // 个股日K线（任意龙虎榜股票，文件缓存跨进程共享）
 // ============================================================
 const stockKlineMem = new Map();
+// 收盘后当日缓存过期检查：交易日 15:00 后，缓存未含今日有效 bar 即视为盘中拉取的旧快照
+//（修复：当日盘中拉过一次后 fetchedAt=今天全天有效，收盘后回测期末估值错用昨收价的问题）
+const STALE_REFETCH_COOLDOWN_MS = 60 * 1000; // 重拉冷却：收盘后数据源发布当日K线可能滞后，防止反复打接口
+const staleRefetchAt = new Map(); // code -> 上次重拉时间戳
+const klineCacheIsStale = (kline) => {
+  if (!Array.isArray(kline) || kline.length === 0) return false;
+  const now = new Date();
+  const hhmm = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+  if (hhmm < '1500') return false; // 盘中维持当日缓存不变
+  if (!isTradingDay(now)) return false; // 非交易日无今日K线
+  const todayNum = Number(beijingToday());
+  return !kline.some(k => k && Number(k.trade_date) === todayNum && Number(k.close_px) > 0);
+};
 const getStockDailyKline = async (code) => {
-  if (stockKlineMem.has(code)) return stockKlineMem.get(code);
+  // 过期且已过冷却期才真正重拉；冷却期内仍返回旧快照，避免数据源未就绪时高频重试
+  const shouldRefetch = (kline) => klineCacheIsStale(kline) && Date.now() - (staleRefetchAt.get(code) || 0) > STALE_REFETCH_COOLDOWN_MS;
+  if (stockKlineMem.has(code)) {
+    const memKline = stockKlineMem.get(code);
+    if (!shouldRefetch(memKline)) return memKline;
+    stockKlineMem.delete(code);
+  }
   const file = path.join(KLINE_CACHE_DIR, `${code}.json`);
   const cached = readJsonCache(file);
   if (cached && cached.fetchedAt === beijingToday() && Array.isArray(cached.kline) && cached.kline.length > 0) {
-    stockKlineMem.set(code, cached.kline);
-    return cached.kline;
+    if (!shouldRefetch(cached.kline)) {
+      stockKlineMem.set(code, cached.kline);
+      return cached.kline;
+    }
+    // 收盘后旧快照已过期 → 继续走重拉
   }
+  staleRefetchAt.set(code, Date.now());
   let kline = [];
   try { kline = (await getSingleStockData(code, 280)) || []; } catch (e) { /* 失败返回空 */ }
   if (kline.length > 0) writeJsonCache(file, { fetchedAt: beijingToday(), kline });
