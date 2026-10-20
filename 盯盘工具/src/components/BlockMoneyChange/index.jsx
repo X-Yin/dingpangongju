@@ -53,6 +53,7 @@ const CATEGORY_RATIO_BLOCKS = [
     { name: '消费', color: '#f97316' },
     { name: '医药', color: '#06b6d4' },
     { name: '电力', color: '#eab308' },
+    { name: '锂电池', color: '#9ca3af' },
     { name: '存储芯片', color: '#ec4899' },
     { name: '光通信', color: '#3b82f6' },
     { name: '液冷', color: '#14b8a6' },

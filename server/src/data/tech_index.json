@@ -1279,6 +1279,7 @@
     "pullbackPenalty": -59.64,
     "avgChange": -0.15,
     "stockCount": 87,
-    "algorithm": 2
+    "algorithm": 2,
+    "hasIce": true
   }
 ]

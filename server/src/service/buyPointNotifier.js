@@ -7,6 +7,9 @@ const dayjs = require('dayjs');
 const feishuNotify = require('./feishuNotify');
 const { getHotMoneyLeaderList, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } = require('./hotMoneyExtremeWin');
 const { getTopGainersByMarket, checkEmoQuickOutDay } = require('./buySellDiagnose');
+const { getStockPositions } = require('./stockPosition');
+const { isTechWatchlistStock } = require('./monitorStock');
+const { getTechEmotionIntraday } = require('./emotion');
 
 // 科技进攻（快进快出）仓位提示：与回测 fusedEmoWinBacktest 的 A 风格仓位管理完全一致——
 //   快进快出日 → 首次半仓 50%，次日买点再次触发补足第二份半仓，该笔次日 10:00 强卖；
@@ -34,6 +37,58 @@ const buildEwPositionHint = (mode) => {
     hint += '；若科技进攻（快进快出）同时触发则其优先，本笔情绪游资暂缓，待上一笔完全结束后再考虑';
   }
   return hint;
+};
+
+// ---------- 攻防兼备·持仓联动提醒（2026-10-20 用户新增，与回测「科技进攻-情绪游资极致胜率」规则一致） ----------
+
+// 持仓科技属性分类：自选股中的科技股（isTechWatchlistStock，isTech !== false）视为科技持仓，
+// 其余（自选非科技 / 不在自选股）视为非科技持仓——与两风格候选池口径一致：
+// 科技进攻（快进快出）只买自选科技股，情绪游资-极致胜率候选池剔除自选科技股（持仓均为非科技连板股）
+const classifyHoldingsByTech = () => {
+  const tech = [];
+  const nonTech = [];
+  for (const p of getStockPositions()) {
+    const row = { code: p.code, name: p.name, buyDate: p.buyDate || null, weight: p.weight != null ? p.weight : 50 };
+    (isTechWatchlistStock(p.code) ? tech : nonTech).push(row);
+  }
+  return { tech, nonTech };
+};
+
+// 当前实时科技情绪指数（分时最后一点，与买点诊断检查6同源；无数据返回 null）
+const getCurrentTechEmotion = () => {
+  try {
+    const { data } = getTechEmotionIntraday();
+    const records = data && data[dayjs().format('YYYYMMDD')];
+    const last = Array.isArray(records) && records.length > 0 ? records[records.length - 1] : null;
+    return last && typeof last.value === 'number' ? last.value : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+// 情况1·科技卡片「科技进攻抢仓」提醒：存在隔夜非科技连板持仓（买入日早于当日，即与本次科技买入不同日）、
+// 且不存在当日买入的非科技持仓（存在则放弃抢仓——当日买入的保留不卖，同回测）、
+// 且当前实时科技情绪 > 0（同回测「该桶实时科技情绪 > 0」门槛）时，提醒先卖出该持仓、再买入科技股；否则返回 null
+const buildTechGrabWarn = () => {
+  const { nonTech } = classifyHoldingsByTech();
+  if (nonTech.length === 0) return null;
+  const today = dayjs().format('YYYY-MM-DD');
+  if (nonTech.some((p) => p.buyDate === today)) return null;
+  const overnight = nonTech.filter((p) => p.buyDate && p.buyDate < today);
+  if (overnight.length === 0) return null;
+  const emotion = getCurrentTechEmotion();
+  if (emotion == null || !(emotion > 0)) return null;
+  const listText = overnight.map((p) => `**${p.name}**（${p.code}，买入日 ${p.buyDate}）`).join('、');
+  return `**🔁 科技进攻抢仓提醒**：当前持有非科技连板持仓 ${listText}，请**先卖出上述持仓、再买入科技股**——与回测「科技进攻-情绪游资极致胜率」的科技进攻抢仓规则一致（科技买点触发 + 隔夜非科技持仓 + 当前实时科技情绪 ${Number(emotion).toFixed(2)} > 0）。`;
+};
+
+// 情况2·情绪游资卡片「仅提醒不买入」提示：当下已有科技股持仓时，连板股买点触发仅做提醒、
+// 不执行买入（「科技进攻-情绪游资极致胜率」风格独占，科技持仓期间情绪游资不建仓）；无科技持仓返回 null
+const buildEwHoldOnlyWarn = () => {
+  const { tech } = classifyHoldingsByTech();
+  if (tech.length === 0) return null;
+  const listText = tech.map((p) => `**${p.name}**（${p.code}）`).join('、');
+  return `**⚠️ 本条消息仅做提醒，不执行买入**：因为当下已经有科技股持仓：${listText}——「科技进攻-情绪游资极致胜率」为风格独占，科技持仓期间情绪游资（连板股）不建仓，待科技持仓全部平仓后恢复。`;
 };
 
 // 构建并发送买点飞书卡片
@@ -70,11 +125,14 @@ const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, top
       return { success: true, skipped: true, message: '当前无完整买点标的，不发送通知' };
     }
     const ewPositionHint = buildEwPositionHint(mode);
+    // 攻防兼备（2026-10-20 用户新增）：当下已有科技股持仓时，连板股买点触发仅做提醒、不执行买入（与回测风格独占一致）
+    const holdOnlyWarn = mode === MODE_ATTACK_DEFENSE ? buildEwHoldOnlyWarn() : null;
     if (resultStocks && resultStocks.length > 0) {
       card = feishuNotify.buildHotMoneyLeaderCard({
         buyStocks: resultStocks,
         timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
         positionHint: ewPositionHint,
+        holdOnlyWarn,
       });
     } else {
       card = feishuNotify.buildHotMoneyReverseLeaderCard({
@@ -82,6 +140,7 @@ const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, top
         timing: reverseTiming,
         timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
         positionHint: ewPositionHint,
+        holdOnlyWarn,
       });
     }
   } else {
@@ -124,6 +183,8 @@ const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, top
       buyStocks: resultStocks,
       timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       positionHint: buildTechPositionHint(mode),
+      // 攻防兼备（2026-10-20 用户新增）：存在隔夜非科技连板持仓且实时科技情绪 > 0 时，提醒先卖后买（与回测抢仓规则一致）
+      grabWarn: mode === MODE_ATTACK_DEFENSE ? buildTechGrabWarn() : null,
     });
   }
 

@@ -21,6 +21,8 @@
 //   快进快出策略完全一致），卖点侧使用合成策略视图 emoStrategyView（emoQuickOut: true）驱动快进快出专属卖点
 //   与盘中大跌强卖；B 侧完整照搬 runExtremeWinBacktest 的双腿卖出 / 买入逻辑，持仓构建复用其导出的
 //   buildPosition / buildRevPosition（买入原因与 buyChecks 明细文案逐字节一致）。
+//   2026-10-20 用户新增：B 风格双腿买入受「每天 13:30 后不买」时间门禁限制（13:30 桶本身可买；与独立极致胜率引擎同口径），
+//   A 风格（科技进攻·快进快出）不受该门禁影响。
 // ============================================================
 const { STRATEGIES, isCycleFilterStrategy } = require('../strategies/registry');
 const {
@@ -102,6 +104,9 @@ const WEAK_TRADE_MIN_GAIN_PCT = 10;
 const TAIL_MINUTE = 1457;
 const RESILIENCE_SELL_MAX = 6;
 const LEADER_RESILIENCE_INDEX_CODE = 'sh000001';
+// 2026-10-20 用户新增（与 ./extremeWinBacktest 同值同口径）：每天 13:30 之后不买（13:30 桶本身仍可买），
+//   仅约束 B 风格（情绪游资-极致胜率）双腿买入；A 风格（科技进攻·快进快出）不受影响
+const BUY_CUTOFF_MINUTE = 1330;
 
 const fmtMinute = (m) => (m != null ? `${String(Math.floor(m / 100)).padStart(2, '0')}:${String(m % 100).padStart(2, '0')}` : '--');
 const priceAtMinute = (points, minute) => {
@@ -657,7 +662,8 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       // ===== 买入②（B 风格·极致胜率双腿：仅在未被 A 风格独占时评估）=====
       if (styleLock !== 'emo') {
         // 【顺周期腿】上证 3 日线分时斜率 > 0 + 今日「强度分 − 差劲分 >= 30」
-        if (idleLegIdx() !== -1) {
+        //   2026-10-20 用户新增：每天 13:30 之后不买（13:30 桶本身仍可买，13:35 起的桶一律不买）
+        if (bucketMinute <= BUY_CUTOFF_MINUTE && idleLegIdx() !== -1) {
           const idxMa3Slope = await getIceMa3SlopeIntraday(dateStr, bucketMinute);
           if (Number(idxMa3Slope) > 0) {
             await ensurePoolData();
@@ -693,7 +699,8 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
               const prev = revHitCount.get(c.code) || 0;
               const next = Math.min(prev + 1, REV_HIT_REQUIRED);
               revHitCount.set(c.code, next);
-              if (prev >= 1 && !s.limitUp) {
+              // 2026-10-20 用户新增：每天 13:30 之后不买——命中登记照常累计（与线上口径一致），仅不再实际买入
+              if (prev >= 1 && !s.limitUp && bucketMinute <= BUY_CUTOFF_MINUTE) {
                 const legIdx = idleLegIdx();
                 if (legIdx !== -1) {
                   const otherHeld = ewPositions.filter((p, i) => i !== legIdx && p).map(p => p.code);

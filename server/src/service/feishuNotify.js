@@ -61,7 +61,7 @@ function buildMarketSnapshotText({ mainMoney, amountChangeDiff, chuangyeban, kec
 // 买点诊断卡片：绿色主题，列出「开盘实战」页自选股 3 日涨幅榜前三，并点出其中的买点候选
 //   mock=true 时为调试面板触发的 MOCK 测试卡片，卡片中额外标注说明
 //   positionHint：买入仓位提示（与回测仓位管理一致的口径）
-function buildBuyPointCard({ buyStocks, topStocks, timestamp, mock, positionHint }) {
+function buildBuyPointCard({ buyStocks, topStocks, timestamp, mock, positionHint, grabWarn }) {
   const list = Array.isArray(buyStocks) ? buyStocks : (Array.isArray(topStocks) ? topStocks : []);
   const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
   const elements = [
@@ -76,6 +76,10 @@ function buildBuyPointCard({ buyStocks, topStocks, timestamp, mock, positionHint
   elements.push({ tag: "hr" });
   if (positionHint) {
     elements.push({ tag: "markdown", content: `**📦 建议买入仓位：${positionHint}**` });
+  }
+  if (grabWarn) {
+    // 「科技进攻抢仓」提醒（攻防兼备模式，2026-10-20 用户新增）：先卖出非科技连板持仓、再买入科技股
+    elements.push({ tag: "markdown", content: grabWarn });
   }
 
   if (list.length === 0) {
@@ -120,7 +124,7 @@ function buildBuyPointCard({ buyStocks, topStocks, timestamp, mock, positionHint
 
 // 情绪游资-极致胜率买点卡片：绿色主题，列出「情绪游资-龙头列表」中的完整买点标的
 //   positionHint：买入仓位提示（顺周期腿半仓，与回测双腿结构一致）
-function buildHotMoneyLeaderCard({ buyStocks, timestamp, positionHint }) {
+function buildHotMoneyLeaderCard({ buyStocks, timestamp, positionHint, holdOnlyWarn }) {
   const list = Array.isArray(buyStocks) ? buyStocks : [];
   const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
   const fmtNum = (v) => (v == null || isNaN(Number(v)) ? '--' : Number(v).toFixed(2));
@@ -135,6 +139,10 @@ function buildHotMoneyLeaderCard({ buyStocks, timestamp, positionHint }) {
   ];
   if (positionHint) {
     elements.push({ tag: "markdown", content: `**📦 建议买入仓位：${positionHint}**` });
+  }
+  if (holdOnlyWarn) {
+    // 「仅提醒不买入」提示（攻防兼备模式，2026-10-20 用户新增）：已有科技持仓时情绪游资不建仓
+    elements.push({ tag: "markdown", content: holdOnlyWarn });
   }
 
   if (list.length === 0) {
@@ -172,7 +180,7 @@ function buildHotMoneyLeaderCard({ buyStocks, timestamp, positionHint }) {
 
 // 情绪游资-反向抱团龙头（逆周期）买点卡片：红色主题，列出反向抱团池中已触发择时的买点标的
 //   positionHint：买入仓位提示（逆周期腿半仓，与回测双腿结构一致）
-function buildHotMoneyReverseLeaderCard({ buyStocks, timing, timestamp, positionHint }) {
+function buildHotMoneyReverseLeaderCard({ buyStocks, timing, timestamp, positionHint, holdOnlyWarn }) {
   const list = Array.isArray(buyStocks) ? buyStocks : [];
   const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
   const fmtNum = (v) => (v == null || isNaN(Number(v)) ? '--' : Number(v).toFixed(2));
@@ -187,6 +195,10 @@ function buildHotMoneyReverseLeaderCard({ buyStocks, timing, timestamp, position
   ];
   if (positionHint) {
     elements.push({ tag: "markdown", content: `**📦 建议买入仓位：${positionHint}**` });
+  }
+  if (holdOnlyWarn) {
+    // 「仅提醒不买入」提示（攻防兼备模式，2026-10-20 用户新增）：已有科技持仓时情绪游资不建仓
+    elements.push({ tag: "markdown", content: holdOnlyWarn });
   }
 
   if (timing) {

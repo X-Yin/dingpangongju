@@ -102,6 +102,8 @@ const {
 //             （机会不顺延作废，后续桶斜率转正后仍可继续判定）；
 //          ④ 竞价低开门禁（2026-10-17 用户新增）：若「上个交易日强度分 > 60」，则当日买入时「竞价低开不得超过 -3%」
 //             （开盘价较昨收涨幅须 >= -3%），否则该候选取值不可买、顺延至差值排名下一只；上个交易日强度分数据缺失时不判定；
+//          ⑤ 时间门禁（2026-10-20 用户新增）：每天 13:30 之后不买（13:30 桶本身可买，13:35 起的桶一律不买），
+//             顺周期腿 13:30 后的桶直接跳过买入评估；逆周期腿命中登记照常累计、仅不再实际买入；
 //          多候选触发同一时点桶时，按今日「强度分 − 差劲分」差值降序依次买入；买入时点已涨停（主板 > 9.5%、创业/科创 > 19%）不可买、跳过该只；
 //          2026-10-18 用户要求：同一交易日内可连续建仓——多个股票依次触发买点时「谁先触发就买谁」，每个空仓位槽买一只，
 //          直到两份仓位全部占满为止（不再限制「每条腿每交易日最多建仓一份」）；
@@ -138,6 +140,9 @@ const WEAK_TRADE_MIN_GAIN_PCT = 10;
 const TAIL_MINUTE = 1457;
 const RESILIENCE_SELL_MAX = 6;
 const LEADER_RESILIENCE_INDEX_CODE = 'sh000001'; // 抗分歧/涨停口径统一跟踪上证指数（与龙头战法一致）
+// 2026-10-20 用户新增：每天 13:30 之后不买（13:30 桶本身仍可买，13:35 起的时间桶一律不买；顺/逆周期两条腿均适用，
+//   线上实盘「情绪游资-极致胜率」与「攻防兼备」模式同步该规则）。逆周期腿 13:30 之后的命中登记照常累计（与线上口径一致），仅不再实际买入
+const BUY_CUTOFF_MINUTE = 1330;
 // 候选池剔除创业板（30/301）与科创板（688）：isChiNextOrStar 见 ./extremeWinPool
 
 // ---- 逆周期腿（情绪游资-反向抱团龙头，2026-10-17 用户要求融合进本策略；规则与独立策略完全一致，仅按半仓计收益）----
@@ -576,9 +581,10 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
 
       // ===== 买入 =====
       // 【顺周期腿】极致胜率逻辑：指数门禁（上证 3 日线分时斜率 > 0）+ 今日「强度分 − 差劲分 >= 30」
+      //   2026-10-20 用户新增：每天 13:30 之后不买——13:35 起的时间桶直接跳过买入评估（13:30 桶本身仍可买）
       //   2026-10-18 用户要求：同一交易日内可连续建仓——按触发先后（同一时点桶内按差值降序）依次买入，
       //   每个空仓位槽买一只，直到两份仓位全部占满（不再限制每条腿每交易日只建仓一份）
-      if (idleLegIdx() !== -1) {
+      if (bucketMinute <= BUY_CUTOFF_MINUTE && idleLegIdx() !== -1) {
         const idxMa3Slope = await getIceMa3SlopeIntraday(dateStr, bucketMinute);
         if (Number(idxMa3Slope) > 0) {
           await ensurePoolData();
@@ -618,7 +624,8 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
             revHitCount.set(c.code, next);
             // 第 2 次命中（或已达标后再次命中）的这一刻为买点；有空仓位且未涨停才买
             //   2026-10-18 用户要求：同一天内不同股票各自触发即可依次买入，直到两份仓位占满（不再限制每条腿每日只建仓一份）
-            if (prev >= 1 && !s.limitUp) {
+            //   2026-10-20 用户新增：每天 13:30 之后不买——命中登记照常累计（与线上口径一致），仅不再实际买入
+            if (prev >= 1 && !s.limitUp && bucketMinute <= BUY_CUTOFF_MINUTE) {
               const legIdx = idleLegIdx();
               if (legIdx !== -1) {
                 const otherHeld = positions.filter((p, i) => i !== legIdx && p).map(p => p.code);
@@ -760,6 +767,13 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
       value: `上证指数 3 日线斜率 ${fmtKeyBlockSlope(idxMa3Slope)}（> 0）`,
       reason: `买入时点计算上证指数（sh000001）3 日线分时斜率 = MA3(今日实时) − MA3(昨日收盘) = ${idxMa3Slope}，为正（> 0），大盘短期趋势向上，允许买入；若斜率 ≤ 0 或数据不足则该桶跳过买入`,
     },
+    {
+      id: 'extreme_win_time_gate',
+      title: '买点时间门禁：每天 13:30 后不买',
+      passed: true,
+      value: `买入时点 ${timeText}（≤ 13:30，可买窗口内）`,
+      reason: `2026-10-20 用户新增规则：每天 13:30 之后不再买入（13:30 桶本身仍可买，13:35 起的时间桶一律不买，顺周期/逆周期两条腿均适用，线上实盘同步该规则）；本笔买入时点 ${timeText} 在可买窗口内，门禁通过`,
+    },
   ];
   return {
     code: pick.code,
@@ -812,6 +826,13 @@ const buildRevPosition = ({ pick, s, score, px, changePct, dateStr, dateDisplay,
       passed: true,
       value: `A 竞价高开 ${s.aRaw}%（分 ${s.aScore}）· B 分钟最大涨幅 ${s.bRaw}%（分 ${s.bScore}）${s.isOneWord ? '（一字板）' : ''} · C 抗分歧 ${s.cRaw}（分 ${s.cScore}）· D 当日涨幅 ${s.dRaw}%（分 ${s.dScore}）`,
       reason: `强度分 = 0.3×A + 0.2×B + 0.3×C + 0.2×D = 0.3×${s.aScore} + 0.2×${s.bScore} + 0.3×${s.cScore} + 0.2×${s.dScore} = ${score} > ${REV_STRENGTH_MIN}（A 上限 ${STRENGTH_A_MAX}%、B 上限 ${STRENGTH_B_MAX}%、C 上限 ${STRENGTH_C_MAX}%、D 上限 ${STRENGTH_D_MAX}%；与「情绪游资-极致胜率」口径一致）；本股累计第 ${hitCount} 次命中（需达 ${REV_HIT_REQUIRED} 次），命中计数逐股独立累计、同一交易日同一只只计一次；时点价 ${px.toFixed(2)}（昨收 ${s.preclose}，现价涨幅 ${chgText(changePct)}）`,
+    },
+    {
+      id: 'reverse_leader_time_gate',
+      title: '买点时间门禁：每天 13:30 后不买',
+      passed: true,
+      value: `买入时点 ${timeText}（≤ 13:30，可买窗口内）`,
+      reason: `2026-10-20 用户新增规则：每天 13:30 之后不再买入（13:30 桶本身仍可买，13:35 起的时间桶一律不买，顺周期/逆周期两条腿均适用，线上实盘同步该规则；13:30 后的命中登记照常累计、仅不再实际买入）；本笔买入时点 ${timeText} 在可买窗口内，门禁通过`,
     },
   ];
   return {
