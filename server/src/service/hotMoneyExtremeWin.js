@@ -85,7 +85,7 @@ const fetchExtremeWinContext = async (targetDate = null) => {
       }, 6)
     : [];
 
-  // 3) 当日分时（进程内缓存；当日盘中跳过缓存，支持 live）
+  // 3) 当日分时（进程内缓存；当日盘中 5s TTL 短缓存支持 live 刷新，历史日期永久缓存）
   const tlineList = poolStocks.length > 0
     ? await batchParallel(poolStocks.map(s => s.code), async (code) => {
         try { return await loadTlinePoints(code, dateNum); } catch (e) { return { preclose: null, points: [] }; }

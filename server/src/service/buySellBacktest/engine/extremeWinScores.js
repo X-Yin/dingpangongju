@@ -2,8 +2,10 @@
 // 供两处复用，保证公式完全一致：
 //   1) 回测引擎 engine/extremeWinBacktest.js
 //   2) 个股历史分析接口 GET /stock_history_analysis（index.js）
+const dayjs = require('dayjs');
 const { getSingleStockTlineDataByDate } = require('../deps');
 const { calculateReplayResilience } = require('../diagnose/sellPoint');
+const { isAfterMarketClose } = require('../../../utils');
 
 // ==================== 归一化上限与权重 ====================
 // 差劲分（越高越差）：A 放量比 / B 单分钟最大跳水 / C 冲高回落 / D 涨停炸板或跌幅
@@ -37,10 +39,19 @@ const clamp100 = (v) => (!Number.isFinite(Number(v)) ? 0 : Math.max(0, Math.min(
 const round2 = (v) => (v == null || !Number.isFinite(Number(v)) ? null : parseFloat(Number(v).toFixed(2)));
 
 // ==================== 分时数据加载（进程内缓存） ====================
-const tlineCache = new Map(); // `${code}|${dateNum}` -> { preclose, points }
+// 历史交易日分时不可变，永久缓存供回测复用；当日分时盘中随时在变，
+// 曾因无条件永久缓存导致龙头列表「当日涨幅/强度分/差劲分」冻结在首次拉取值（2026-10-20 修复）：
+// 当日未收盘时改为 TTL 短缓存——页面每 5s 轮询可拿到新数据，同轮询周期内的并发/重复调用仍共享一次拉取
+const tlineCache = new Map(); // `${code}|${dateNum}` -> { res: { preclose, points }, ts: 拉取时间戳 }
+const TODAY_TLINE_TTL_MS = 5000;
 const loadTlinePoints = async (code, dateNum) => {
   const key = `${code}|${dateNum}`;
-  if (tlineCache.has(key)) return tlineCache.get(key);
+  const isToday = Number(dateNum) === Number(dayjs().format('YYYYMMDD'));
+  const todayLive = isToday && !isAfterMarketClose(); // 当日且未收盘（15:05 前，含盘前/午间）
+  if (tlineCache.has(key)) {
+    const entry = tlineCache.get(key);
+    if (!todayLive || Date.now() - entry.ts < TODAY_TLINE_TTL_MS) return entry.res;
+  }
   let res = { preclose: null, points: [] };
   try {
     const t = await getSingleStockTlineDataByDate(code, dateNum);
@@ -59,7 +70,7 @@ const loadTlinePoints = async (code, dateNum) => {
         .sort((a, b) => a.minute - b.minute),
     };
   } catch (e) { /* 拉取失败返回空 */ }
-  tlineCache.set(key, res);
+  tlineCache.set(key, { res, ts: Date.now() });
   return res;
 };
 const clearTlineCache = () => tlineCache.clear();

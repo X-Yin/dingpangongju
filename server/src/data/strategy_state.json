@@ -27,5 +27,8 @@
   },
   "panic_outflow": {
     "lastTriggeredTime": "2026-10-20 13:29:39"
+  },
+  "tail_dip_buying": {
+    "checkedToday": "2026-10-20"
   }
 }

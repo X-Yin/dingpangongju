@@ -4,8 +4,10 @@ const GATE_INDEX_CODES = [
   { code: 'sh000688', name: '科创50', cacheName: 'kcb50_kline.json', pureCode: '1B0688', market: '16' },
   { code: 'sh000001', name: '上证指数', cacheName: 'sh_kline.json', pureCode: '1A0001', market: '16' },
 ];
+const dayjs = require('dayjs');
 const { getSingleStockTlineDataByDate, loadIndexKline } = require('../deps');
 const { STRATEGIES } = require('../strategies/registry');
+const { isAfterMarketClose } = require('../../../utils');
 
 let indexMa3SlopeSeriesPromises = new Map(); // indexCode -> Promise<{ dates, closes, slopes }>
 const ensureIndexMa3SlopeSeries = async (indexCode) => {
@@ -53,11 +55,19 @@ const getIndexMa3Slope = async (indexCode, dateStr) => {
 };
 
 // 创业板指当日分时缓存（进程内按日期缓存，供盘中实时斜率逐桶复用；值 null 表示当日拉取失败）
-// 科创板同理，两个缓存互相独立
-const indexTlineCache = new Map(); // key=`${indexCode}_${dateStr}` -> [{ minute, lastPx }] | null
+// 科创板同理，两个缓存互相独立。
+// 历史交易日分时不可变、永久缓存；当日分时盘中随时在变，无条件缓存曾导致线上「上证 3 日线分时斜率」
+// 门禁冻结在首次拉取值（2026-10-20 修复）——当日未收盘时改为 TTL 短缓存（页面每 5s 轮询可拿到新数据）
+const indexTlineCache = new Map(); // key=`${indexCode}_${dateStr}` -> { res: [{ minute, lastPx }] | null, ts: 拉取时间戳 }
+const INDEX_TLINE_TODAY_TTL_MS = 5000;
 const getIndexTlinePoints = async (indexCode, dateStr) => {
   const key = `${indexCode}_${dateStr}`;
-  if (indexTlineCache.has(key)) return indexTlineCache.get(key);
+  const isToday = Number(dateStr) === Number(dayjs().format('YYYYMMDD'));
+  const todayLive = isToday && !isAfterMarketClose(); // 当日且未收盘（15:05 前）
+  if (indexTlineCache.has(key)) {
+    const entry = indexTlineCache.get(key);
+    if (!todayLive || Date.now() - entry.ts < INDEX_TLINE_TODAY_TTL_MS) return entry.res;
+  }
   let points = null;
   try {
     const tline = await getSingleStockTlineDataByDate(indexCode, parseInt(dateStr, 10));
@@ -71,7 +81,7 @@ const getIndexTlinePoints = async (indexCode, dateStr) => {
   }
   // 缓存上限：每个指数最多 200 天，两个指数加起来 ≤ 400（和之前单缓存上限一致）
   if (indexTlineCache.size > 400) indexTlineCache.clear();
-  indexTlineCache.set(key, points);
+  indexTlineCache.set(key, { res: points, ts: Date.now() });
   return points;
 };
 
