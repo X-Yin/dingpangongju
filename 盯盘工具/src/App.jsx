@@ -20,6 +20,7 @@ import GlobalAnalysis from './components/GlobalAnalysis';
 import MajorEventReminder from './components/MajorEventReminder';
 import PersonalFeelingModal from './components/PersonalFeelingModal';
 import ClosePipeline from './components/ClosePipeline';
+import GlobalDiagnosisAlert from './components/GlobalDiagnosisAlert';
 import dayjs from 'dayjs';
 import './App.scss';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -1563,6 +1564,8 @@ function App() {
       </Modal>
 
       {location.pathname !== '/training_camp' && <FloatingStockPosition onOutflowDetected={handleOutflowDetected} />}
+      {/* 全局买点 / 卖点诊断弹窗卡片：后端命中推送 open:true 时右下角弹出，全页面生效 */}
+      <GlobalDiagnosisAlert />
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingMonitorAlarm />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStrategyCenter />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStockViewer />}

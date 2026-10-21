@@ -10,7 +10,7 @@ import StockKLineModal from '../StockKLineModal';
 import StockFundFlowModal from '../StockFundFlowModal';
 import BuyPointDiagnosisDrawer from '../FloatingBuyPointDiagnosis';
 import { useStrategyMode } from '../../utils/strategyMode';
-import { subscribeBuyPointPush, subscribeSellPointPush } from '../../utils/buyPointWs';
+import { subscribeSellPointPush } from '../../utils/buyPointWs';
 import './index.scss';
 
 const ALERT_THRESHOLD = 0.15;
@@ -458,28 +458,20 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     };
   }, [fetchStockChanges]);
 
-  // 买点诊断：由后端 WebSocket 集中推送（每 10s 一次），前端不再轮询
-  //   命中且进入新的 5 分钟桶时后端下发 open:true（飞书与频控均由后端完成），前端据此打开右侧抽屉。
-  //   抽屉每次打开仍走独立接口拉取最新诊断数据（见 BuyPointDiagnosisDrawer 自身逻辑）。
-  useEffect(() => {
-    const unsubscribe = subscribeBuyPointPush((msg) => {
-      if (msg?.open === true) setBuyPointDrawerOpen(true);
-    });
-    return unsubscribe;
-  }, []);
+  // 买点诊断抽屉：不再随 WS 推送自动弹开（2026-10-21 用户调整）——命中提醒改由 App.jsx 全局诊断卡片
+  //（GlobalDiagnosisAlert）弹出，抽屉仅通过 header 闪电图标手动打开，打开时自行拉取最新诊断数据。
 
   // 快进快出「资金净流入阈值动态调节」：阈值文案由后端买点诊断条件卡片随 buy_point WS 推送更新
   //（fund_inflow 检查标题/理由带动态阈值），此处无需单独展示（2026-10-21 用户调整：不在 header 展示阈值）
 
   // 卖点诊断：由后端 WebSocket 集中推送（每 10s 一次），前端不再轮询
-  //   - 每条消息更新抽屉内诊断数据（命中卖点的持仓置顶展示）
-  //   - 命中且进入新的 5 分钟桶时后端下发 open:true（飞书与频控均由后端完成），前端据此打开抽屉
-  //   - 抽屉内刷新按钮仍走独立接口拉取最新数据（fetchAllSellDiagnosis）
+  //   - 每条消息更新抽屉内诊断数据（命中卖点的持仓置顶展示），抽屉打开即有最新数据
+  //   - 不再自动弹开（2026-10-21 用户调整）：命中提醒改由 App.jsx 全局诊断卡片弹出，
+  //     抽屉仅通过 header 雷达图标 / 持仓管理卖点分析图标手动打开
   useEffect(() => {
     const unsubscribe = subscribeSellPointPush((msg) => {
       const results = msg?.data?.results;
       if (Array.isArray(results)) setSellDrawerResults(sortSellResults(results));
-      if (msg?.open === true) setSellDrawerOpen(true);
     });
     return unsubscribe;
   }, []);

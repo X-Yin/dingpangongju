@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Spin, Modal, Empty, Select, Switch as AntSwitch } from 'antd';
+import { Spin, Empty, Select, Switch as AntSwitch } from 'antd';
 import {
   RocketOutlined, RiseOutlined, FallOutlined, StockOutlined,
   AreaChartOutlined, CrownOutlined, RadarChartOutlined, WarningOutlined,
@@ -773,7 +773,7 @@ const reverseTimingClass = (tag) => (
   tag === '已触发买点' ? 'hit' : tag === '涨停不可买' ? 'limitup' : tag === '斜率未就绪' ? 'idle' : 'wait'
 );
 
-const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
+const TopChange3dModule = ({ buyPointHit = false }) => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isDefense = mode === MODE_ATTACK_DEFENSE;
@@ -860,27 +860,6 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
     () => mergedList.find(s => s.matchesBuyPoint && !s.isLimitUp) || null,
     [mergedList]
   );
-
-  // 供买点弹窗与飞书通知使用：
-  //   tech_attack            → 唯一一只标的
-  //   hot_money_extreme_win  → 顺周期完整买点股前 3（delta≥30 且上证斜率>0 且未涨停）+ 逆周期已触发买点的反向抱团股前 3
-  //   attack_defense         → 科技进攻唯一推荐 + 顺周期前 3 + 逆周期前 3（三段合并）
-  const buyableStocks = useMemo(() => {
-    if (showEwCols) {
-      const forward = leaderList.filter(s => s.buyPointHit && !s.isLimitUp).slice(0, 3);
-      const rev = reverseList.filter(s => s.timingPassed).slice(0, 3).map(s => ({ ...s, isReverse: true }));
-      const ewStocks = [...forward, ...rev];
-      if (isExtreme) return ewStocks;
-      // 攻防兼备：科技进攻标的加 isTechPick 标记（买点弹窗据此区分渲染科技/情绪游资标的样式）
-      const techPick = globalPick ? [{ ...globalPick, isTechPick: true }] : [];
-      return [...techPick, ...ewStocks];
-    }
-    return globalPick ? [globalPick] : [];
-  }, [showEwCols, isExtreme, leaderList, reverseList, globalPick]);
-
-  useEffect(() => {
-    onBuyableChange?.(buyableStocks);
-  }, [buyableStocks, onBuyableChange]);
 
   const rowCount = isExtreme ? leaderList.length : mergedList.length;
   const extremeGateNote = !leaderData
@@ -1089,19 +1068,16 @@ const TopChange3dModule = ({ buyPointHit = false, onBuyableChange }) => {
 };
 
 // ==================== 买点诊断卡片（自动运行） ====================
-const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
+// 命中弹窗已移除（2026-10-21 用户调整）：命中提醒改由 App.jsx 全局诊断卡片（GlobalDiagnosisAlert）负责，
+// 本卡片仅负责诊断数据展示与命中状态上报
+const BuyPointDiagnosisCard = ({ onResultChange }) => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isDefense = mode === MODE_ATTACK_DEFENSE;
   const [data, setData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [popupVisible, setPopupVisible] = useState(false);
-  const [popupStocks, setPopupStocks] = useState([]);
   // 标题旁实时时钟：每秒跳动，便于对照 5 分钟整点判断下一次自动诊断时机
   const [now, setNow] = useState(() => dayjs());
-  // 可买标的实时快照：命中时刻打开弹窗时取用，避免闭包拿到旧值
-  const buyableRef = useRef(buyableStocks);
-  useEffect(() => { buyableRef.current = buyableStocks; }, [buyableStocks]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(dayjs()), 1000);
@@ -1135,7 +1111,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
 
   // 买点诊断：由后端 WebSocket 集中推送（每 10s 一次），前端不再轮询
   //   - 每条消息更新诊断数据（供卡片展示）
-  //   - 命中且进入新的 5 分钟桶时后端下发 open:true（频控在后端完成），前端据此打开弹窗
+  //   - 命中弹窗不再由本组件处理（改由 App.jsx 全局诊断卡片弹出）
   //   - 初次挂载仍一次性拉取一次（非交易时段也能展示最近交易日的诊断结果）
   useEffect(() => {
     run(false);
@@ -1147,11 +1123,6 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
       const forwardHit = result.allPassed === true;
       const reverseHit = (isExtreme || isDefense) && result.reverse?.allPassed === true;
       onResultChange?.(techHit || forwardHit || reverseHit);
-      if (msg.open === true) {
-        // 优先使用消息内 buyable（仅 MOCK 调试会携带），否则用页面实时可买列表
-        setPopupStocks(result.buyable || buyableRef.current || []);
-        setPopupVisible(true);
-      }
     });
     return unsubscribe;
   }, [run, onResultChange, isExtreme, isDefense]);
@@ -1280,113 +1251,6 @@ const BuyPointDiagnosisCard = ({ onResultChange, buyableStocks = [] }) => {
           </>
         )}
       </div>
-
-      <Modal
-        open={popupVisible}
-        onCancel={() => setPopupVisible(false)}
-        onOk={() => setPopupVisible(false)}
-        okText="知道了"
-        cancelButtonProps={{ style: { display: 'none' } }}
-        title={<span><WarningOutlined style={{ color: '#fa8c16', marginRight: 8 }} />买点诊断命中</span>}
-        className="ob-alert-modal"
-      >
-        <div className="ob-alert-content">
-          <div className="ob-alert-big">🎯 买点信号触发，可以关注买入时机</div>
-          <div className="ob-alert-reason">{conclusionText}</div>
-          {showTechPosition && (
-            <div className="ob-alert-position">
-              📦 科技进攻建议仓位：{isQuickOutDay
-                ? '半仓（50%）——快进快出日：首次买入半仓，次日买点再次触发时补足第二份半仓，该笔次日 10:00 强卖'
-                : '全仓（100%）——普通买入日'}
-              {isDefense ? '；两策略同时触发时科技进攻（快进快出）优先' : ''}
-            </div>
-          )}
-          {showEwPosition && (
-            <div className="ob-alert-position ew">
-              📦 情绪游资建议仓位：半仓（50%）——双腿结构，顺周期、逆周期各半仓
-              {isDefense ? '；若科技进攻（快进快出）同时触发则其优先，本笔情绪游资暂缓，待上一笔完全结束后再考虑' : ''}
-            </div>
-          )}
-          <div className="ob-alert-sub">
-            命中类型：
-            {isDefense
-              ? ([
-                techAllPassed && '科技进攻·快进快出',
-                allPassed && '情绪游资·顺周期',
-                data?.reverse?.allPassed === true && '情绪游资·逆周期',
-              ].filter(Boolean).join('、') || '--')
-              : (allPassed && '全部前置条件通过')}
-          </div>
-          {popupStocks.length > 0 ? (
-            <>
-              <div className="ob-alert-buy-title">
-                {isExtreme
-                  ? '情绪游资-龙头列表 · 完整买点标的 / 反向抱团逆周期买点标的（已过滤涨停板）'
-                  : isDefense
-                    ? '科技进攻 · 可买标的 ＋ 情绪游资 · 顺周期前三 / 逆周期前三（已过滤涨停板）'
-                    : '可买标的（已过滤涨停板）'}
-              </div>
-              {popupStocks.map((s) => {
-                const asEw = isExtreme || (isDefense && !s.isTechPick);
-                return (
-                <div key={`${s.isReverse ? 'rev-' : ''}${s.code}`} className="ob-alert-stock">
-                  {asEw ? (
-                    s.isReverse ? (
-                      <>
-                        <div className="ob-alert-stock-head">
-                          <b>{s.stockName}</b>
-                          <span className="ob-alert-stock-code">{s.code}</span>
-                          <span className="ob-alert-stock-market">逆周期 · {s.lianbanCount != null ? `${s.lianbanCount} 连板` : '--'}</span>
-                          <span style={{ marginLeft: 'auto', fontWeight: 700, color: s.change >= 0 ? '#e11d48' : '#059669' }}>
-                            当日 {formatSignedPercent(s.change)}
-                          </span>
-                        </div>
-                        <div className="ob-alert-stock-meta">
-                          强度分 {s.strengthScore != null ? Number(s.strengthScore).toFixed(2) : '--'} · {s.timingTag || '--'}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="ob-alert-stock-head">
-                          <b>{s.stockName}</b>
-                          <span className="ob-alert-stock-code">{s.code}</span>
-                          <span className="ob-alert-stock-market">{s.lianbanCount != null ? `${s.lianbanCount} 连板` : ''}</span>
-                          <span style={{ marginLeft: 'auto', fontWeight: 700, color: s.change >= 0 ? '#e11d48' : '#059669' }}>
-                            当日 {formatSignedPercent(s.change)}
-                          </span>
-                        </div>
-                        <div className="ob-alert-stock-meta">
-                          强度−差劲 {s.delta != null ? Number(s.delta).toFixed(2) : '--'}
-                        </div>
-                      </>
-                    )
-                  ) : (
-                    <>
-                      <div className="ob-alert-stock-head">
-                        <b>{s.stockName}</b>
-                        <span className="ob-alert-stock-code">{s.code}</span>
-                        <span className="ob-alert-stock-market">{s.isSh688 ? '科创板' : '创业板/主板'}</span>
-                        <span style={{ marginLeft: 'auto', fontWeight: 700, color: s.change3d >= 0 ? '#e11d48' : '#059669' }}>
-                          3日 {formatSignedPercent(s.change3d)}
-                        </span>
-                      </div>
-                      <div className="ob-alert-stock-meta">
-                        当日 {formatSignedPercent(s.change)} · 抗分歧 {s.resilienceScore != null ? Number(s.resilienceScore).toFixed(2) : '--'}
-                      </div>
-                    </>
-                  )}
-                </div>
-                );
-              })}
-            </>
-          ) : (
-            <div className="ob-alert-sub">
-              {isExtreme ? '当前无顺周期完整买点标的（需强度分 − 差劲分 ≥ 30 且上证 3 日线斜率为正、未封涨停），亦无逆周期反向抱团买点标的。' : '当前无满足买点条件且未封涨停的可买标的。'}
-            </div>
-          )}
-          <div className="ob-alert-time">诊断时间：{data?.timestamp}</div>
-        </div>
-      </Modal>
     </div>
   );
 };
@@ -1430,12 +1294,13 @@ const buildSellHint = (result) => {
 };
 
 // ==================== 卖点诊断卡片（自动运行） ====================
+// 命中弹窗已移除（2026-10-21 用户调整）：命中提醒改由 App.jsx 全局诊断卡片（GlobalDiagnosisAlert）负责，
+// 本卡片仅负责诊断数据展示；命中时保留卡片背景闪烁提示
 const SellPointDiagnosisCard = () => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
   const [results, setResults] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [popupVisible, setPopupVisible] = useState(false);
   // 命中闪烁：后端下发 open:true 时卡片背景闪烁提示，数秒后自动恢复
   const [flash, setFlash] = useState(false);
   const flashTimerRef = useRef(null);
@@ -1467,7 +1332,7 @@ const SellPointDiagnosisCard = () => {
 
   // 卖点诊断：由后端 WebSocket 集中推送（每 10s 一次），前端不再轮询
   //   - 每条消息更新卡片诊断数据
-  //   - 命中且进入新的 5 分钟桶时后端下发 open:true（飞书与频控均由后端完成），前端据此弹窗 + 卡片闪烁
+  //   - 命中弹窗不再由本组件处理（改由 App.jsx 全局诊断卡片弹出）；命中时保留卡片闪烁
   //   - 卡片内刷新按钮仍走独立接口拉取最新数据（handleRefresh）
   //   - 初次挂载一次性拉取一次（非交易时段也能展示最近诊断结果）
   useEffect(() => {
@@ -1476,7 +1341,6 @@ const SellPointDiagnosisCard = () => {
       const list = msg?.data?.results;
       if (Array.isArray(list)) setResults(list);
       if (msg?.open === true) {
-        setPopupVisible(true);
         setFlash(true);
         if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
         flashTimerRef.current = setTimeout(() => setFlash(false), 6000);
@@ -1569,39 +1433,6 @@ const SellPointDiagnosisCard = () => {
           </div>
         ))}
       </div>
-
-      <Modal
-        open={popupVisible}
-        onCancel={() => setPopupVisible(false)}
-        onOk={() => setPopupVisible(false)}
-        okText="知道了"
-        cancelButtonProps={{ style: { display: 'none' } }}
-        title={<span><WarningOutlined style={{ color: '#cf1322', marginRight: 8 }} />卖点诊断命中</span>}
-        className="ob-alert-modal"
-      >
-        <div className="ob-alert-content">
-          <div className="ob-alert-big" style={{ color: '#cf1322' }}>⚠️ 以下持仓股触发卖点信号</div>
-          {hitStocks.map((r) => (
-            <div key={r.positionId || r.code} className="ob-alert-stock">
-              <div className="ob-alert-stock-head">
-                <b>{r.stockName}</b>
-                <span className="ob-alert-stock-code">{r.code}</span>
-                {r.weight != null && (
-                  <span className="ob-alert-stock-weight">仓位 {r.weight}%</span>
-                )}
-                {r.detail?.change !== undefined && (
-                  <span style={{ marginLeft: 'auto', fontWeight: 700, color: r.detail.change >= 0 ? '#e11d48' : '#059669' }}>
-                    {formatSignedPercent(r.detail.change)}
-                  </span>
-                )}
-              </div>
-              <div className="ob-alert-hint">{buildSellHint(r)}</div>
-              <div className="ob-alert-reason">{r.reasons?.join('；') || r.conclusion}</div>
-            </div>
-          ))}
-          <div className="ob-alert-sub">建议分批减仓：先卖一半仓位，次日视开盘走势再决定是否清仓。</div>
-        </div>
-      </Modal>
     </div>
   );
 };
@@ -1615,8 +1446,6 @@ const OpeningBattle = () => {
 
   // 买点是否命中（由买点诊断卡片回调），命中时 3 日涨幅榜中唯一推荐标的的标签改为「买点触发」
   const [buyPointHit, setBuyPointHit] = useState(false);
-  // 唯一推荐标的（3 日涨幅榜提供，供买点弹窗与飞书通知使用）
-  const [buyableStocks, setBuyableStocks] = useState([]);
 
   // 持仓分时图展开状态，状态持久化到 localStorage
   const [rankExpanded, setRankExpanded] = useState(() => {
@@ -1635,8 +1464,6 @@ const OpeningBattle = () => {
     });
   }, []);
 
-  const handleBuyableChange = useCallback((stocks) => setBuyableStocks(stocks), []);
-
   return (
     <div className="opening-battle-container">
       <div className="ob-layout">
@@ -1646,9 +1473,10 @@ const OpeningBattle = () => {
           <PositionIntradayModule expanded={rankExpanded} onToggleExpanded={toggleRankExpanded} />
         </div>
         {/* 第二行：自选股 3 日涨幅前五（上下分行） | 买点诊断 | 卖点诊断（三列等宽，高度由内容撑开） */}
+        {/* 命中弹窗已移除，统一由 App.jsx 全局诊断卡片（GlobalDiagnosisAlert）提示 */}
         <div className="ob-row ob-row-second">
-          <TopChange3dModule buyPointHit={buyPointHit} onBuyableChange={handleBuyableChange} />
-          <BuyPointDiagnosisCard onResultChange={setBuyPointHit} buyableStocks={buyableStocks} />
+          <TopChange3dModule buyPointHit={buyPointHit} />
+          <BuyPointDiagnosisCard onResultChange={setBuyPointHit} />
           <SellPointDiagnosisCard />
         </div>
       </div>
