@@ -403,37 +403,52 @@ const scheduleBlockDayHistory = (hour = 15, minute = 1) => {
   console.log(`每日板块涨跌幅历史记录已调度，超过 ${hour}:${String(minute).padStart(2, '0')} 且未记录时将自动执行`);
 };
 
-// 立即刷新板块数据（同步等待完成）
-const refreshBlockData = async () => {
-  console.log('---------- 开始刷新板块数据 ---------- ', new Date().toLocaleString());
+// 立即刷新板块数据（同步等待完成）；传入 blockName 时仅刷新该板块
+const refreshBlockData = async (blockName = null) => {
+  console.log(`---------- 开始刷新板块数据${blockName ? `（${blockName}）` : ''} ---------- `, new Date().toLocaleString());
   try {
     // 每次获取最新的配置
     const blockCodeList = getBlocksConfig();
     // 拆分板块数据
     const blockGroupData = divideBlockCodeList(blockCodeList);
-    const totalBlocks = Object.keys(blockGroupData).length;
+    const allBlockNames = [...new Set(blockCodeList.map(item => item.blockName))];
+    if (blockName && !allBlockNames.includes(blockName)) {
+      return { success: false, message: `板块 ${blockName} 不存在` };
+    }
+    const targetBlocks = blockName ? [blockName] : Object.keys(blockGroupData);
+    const totalBlocks = targetBlocks.length;
     let completedBlocks = 0;
 
     // 每一个板块数据依次写入，防止同时发出的请求太多，接口返回有问题
-    for (const blockName in blockGroupData) {
-      const blockListData = await getSingleBlockData(blockName, blockGroupData[blockName]);
-      let originData = '{}';
-      try {
-        originData = fs.readFileSync(blockPath, 'utf-8');
-      } catch (e) {
-        originData = '{}';
+    for (const name of targetBlocks) {
+      const stocks = blockGroupData[name] || [];
+      // 板块没有股票（仅占位）时无需拉取行情
+      if (stocks.length > 0) {
+        const blockListData = await getSingleBlockData(name, stocks);
+        let originData = '{}';
+        try {
+          originData = fs.readFileSync(blockPath, 'utf-8');
+        } catch (e) {
+          originData = '{}';
+        }
+        const blockData = JSON.parse(originData || '{}');
+        blockData[name] = blockListData[name];
+        fs.writeFileSync(blockPath, JSON.stringify(blockData, null, 2));
       }
-      const blockData = JSON.parse(originData || '{}');
-      blockData[blockName] = blockListData[blockName];
-      fs.writeFileSync(blockPath, JSON.stringify(blockData, null, 2));
 
       completedBlocks++;
-      console.log(`刷新进度: ${completedBlocks}/${totalBlocks} - ${blockName}`);
+      console.log(`刷新进度: ${completedBlocks}/${totalBlocks} - ${name}`);
 
       if (useCLS()) await sleep(500);
     }
-    console.log('---------- 刷新板块数据完成！---------- ', new Date().toLocaleString());
-    return { success: true, message: '刷新成功', totalBlocks, updatedAt: new Date().toISOString() };
+    console.log(`---------- 刷新板块数据完成${blockName ? `（${blockName}）` : ''}！---------- `, new Date().toLocaleString());
+    return {
+      success: true,
+      message: '刷新成功',
+      blockName: blockName || undefined,
+      totalBlocks,
+      updatedAt: new Date().toISOString()
+    };
   } catch (error) {
     console.error("刷新板块数据失败:", error.message);
     return { success: false, message: error.message };

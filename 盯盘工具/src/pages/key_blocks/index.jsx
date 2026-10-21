@@ -261,6 +261,8 @@ const BlockConfigPanel = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('change'); // 'change' | 'name'
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
+  // 各板块独立刷新状态：key 为板块名
+  const [refreshingBlocks, setRefreshingBlocks] = useState({});
   // 弹窗内通过搜索选择的股票列表：新增股票 / 新增板块共用（均为 { name, code }，code 带 sh/sz 前缀）
   const [pickStocks, setPickStocks] = useState([]);
 
@@ -297,6 +299,26 @@ const BlockConfigPanel = () => {
   useEffect(() => {
     fetchBlocks();
   }, [fetchBlocks]);
+
+  // 仅刷新指定板块内所有股票的涨幅
+  const refreshSingleBlock = useCallback(async (blockName) => {
+    setRefreshingBlocks(prev => ({ ...prev, [blockName]: true }));
+    try {
+      const refreshRes = await axios.post(`http://${local_ip}:3000/api/block/refresh`, { blockName });
+      if (!refreshRes.data?.success) {
+        message.warning(refreshRes.data?.message || `「${blockName}」刷新失败`);
+        return;
+      }
+      // 只重新读取板块数据，不触发整页 loading
+      const res = await axios.get(`http://${local_ip}:3000/block`);
+      setBlocks(res.data || []);
+      message.success(`「${blockName}」涨幅已刷新`);
+    } catch (err) {
+      message.error('刷新失败: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setRefreshingBlocks(prev => ({ ...prev, [blockName]: false }));
+    }
+  }, []);
 
   const toggleExpand = (blockName) => {
     setExpandedKeys(prev =>
@@ -378,7 +400,7 @@ const BlockConfigPanel = () => {
         try {
           const res = await axios.post(`http://${local_ip}:3000/api/blocks_config`, {
             action: 'delete',
-            block: { code: stock.code },
+            block: { code: stock.code, blockName },
           });
           if (res.data?.success) {
             message.success('删除成功');
@@ -426,7 +448,8 @@ const BlockConfigPanel = () => {
       if (editing) {
         action = 'update';
         messageText = '更新成功';
-        payload = { block: values };
+        // 同一股票可存在于多个板块，需带原板块名定位条目
+        payload = { block: { ...values, originalBlockName: editing.blockName } };
       } else if (modalMode === 'block') {
         // 未完成搜索选择的行不提交，避免写入缺 code 的股票
         if (pickStocks.some(s => !s.code || !s.name)) {
@@ -615,6 +638,21 @@ const BlockConfigPanel = () => {
                       >
                         {block.avgChange > 0 ? '+' : ''}{block.avgChange}%
                       </Text>
+                      <Tooltip title="仅刷新该板块内所有股票的涨幅">
+                        <Button
+                          size="small"
+                          type="text"
+                          icon={<ReloadOutlined />}
+                          loading={!!refreshingBlocks[block.blockName]}
+                          className="block-group-refresh-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            refreshSingleBlock(block.blockName);
+                          }}
+                        >
+                          刷新
+                        </Button>
+                      </Tooltip>
                       <Button
                         size="small"
                         type="text"

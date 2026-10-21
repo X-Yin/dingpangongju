@@ -118,7 +118,8 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
 // 买点/卖点卡片本身已是紫→青渐变底，图标芯片改用磨砂玻璃白
 .ob-buy-card .ob-module-icon,
-.ob-sell-card .ob-module-icon {
+.ob-sell-card .ob-module-icon,
+.ob-rank3-module .ob-module-icon {
   background: rgba(255, 255, 255, 0.22);
   color: #fff;
   box-shadow:
@@ -687,14 +688,89 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
 // ==================== 自选股 · 3日涨幅前十（按门槛筛选市场后合并排名） ====================
 .ob-rank3-module {
+  // ===== 与右侧买点/卖点诊断卡同一视觉体系：紫 → 靛蓝 → 青蓝渐变 + 磨砂玻璃 =====
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 16px 16px 18px;
+  border: none;
+  color: #fff;
+  background:
+    radial-gradient(118% 86% at 8% -8%, rgba(162, 124, 255, 0.95) 0%, rgba(162, 124, 255, 0) 62%),
+    radial-gradient(108% 94% at 106% 8%, rgba(48, 197, 210, 0.92) 0%, rgba(48, 197, 210, 0) 58%),
+    radial-gradient(130% 110% at -8% 108%, rgba(132, 94, 255, 0.9) 0%, rgba(132, 94, 255, 0) 64%),
+    linear-gradient(116deg, #7b4dff 0%, #4d55d8 46%, #1ba7c6 100%);
+  box-shadow: 0 22px 48px -26px rgba(49, 46, 129, 0.6);
+
+  .ob-module-header {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 10px;
+  }
+
+  .ob-module-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.01em;
+    text-shadow: 0 1px 2px rgba(30, 27, 75, 0.28);
+
+    .ob-module-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+  }
+
+  .ob-mode-switch-label {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .ob-mode-switch {
+    // antd v6 Select 的底色挂在外层 .ant-select 上，需直接覆盖根部
+    &.ant-select {
+      background: rgba(255, 255, 255, 0.2) !important;
+      border: 1px solid rgba(255, 255, 255, 0.32) !important;
+      border-radius: 10px !important;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      color: #fff;
+    }
+
+    .ant-select-content,
+    .ant-select-content-value {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .ant-select-suffix {
+      color: rgba(255, 255, 255, 0.85);
+    }
+  }
+
+  .ob-total-tag {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    letter-spacing: 0.02em;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
   // 标题下方门槛说明：当前哪个市场满足买点门槛
   .ob-gainer-gate-note {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 11px;
     font-weight: 600;
-    margin: -6px 0 10px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: -2px 0 10px;
 
     &::before {
       content: '';
@@ -705,32 +781,34 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     }
 
     &.both {
-      color: #1d4ed8;
-      &::before { background: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+      color: #b8ffe9;
+      &::before { background: #5eead4; box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.22); }
     }
 
     &.partial {
-      color: #b45309;
-      &::before { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15); }
+      color: #ffe4b3;
+      &::before { background: #fcd34d; box-shadow: 0 0 0 3px rgba(252, 211, 77, 0.22); }
     }
 
     &.none {
-      color: #be123c;
-      &::before { background: #f43f5e; box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12); }
+      color: #ffc7d4;
+      &::before { background: #fb7185; box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.22); }
     }
   }
 
   .ob-gainer-body {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 
     // 攻防兼备：科技进攻 / 顺周期 / 逆周期纵向堆叠
     &.defense {
       flex-direction: column;
 
       .ob-gainer-col {
-        padding: 10px 11px;
+        padding: 12px 12px 10px;
         max-height: 250px;
         overflow-y: auto;
       }
@@ -743,15 +821,32 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     }
   }
 
-  // 分行板块卡片
+  // 分行板块：与诊断卡条目一致的磨砂玻璃
   .ob-gainer-col {
+    position: relative;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    padding: 12px 14px;
-    border: 1px solid $ob-border-light;
-    border-radius: 11px;
-    background: linear-gradient(180deg, #fcfdfe, #f8fafc);
+    padding: 12px 13px 10px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      0 12px 26px -18px rgba(15, 23, 42, 0.5);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 999px;
+    }
   }
 
   .ob-gainer-col-head {
@@ -760,7 +855,7 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     justify-content: space-between;
     gap: 8px;
     flex-wrap: wrap;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 
   // 两个指数门槛芯片（创业板指 / 科创50）
@@ -768,41 +863,48 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     display: flex;
     align-items: center;
     gap: 7px;
-    font-size: 11px;
-    color: #64748b;
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.78);
     flex-wrap: wrap;
 
     .ob-gainer-gate-slope {
       font-weight: 600;
-      color: #334155;
+      color: #fff;
       font-variant-numeric: tabular-nums;
       font-family: $ob-mono;
       padding: 2px 8px;
-      border-radius: 6px;
-      background: rgba(148, 163, 184, 0.12);
-      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
     }
 
     .ob-gainer-gate-turn {
-      color: #94a3b8;
+      color: rgba(255, 255, 255, 0.65);
     }
 
     .ob-gainer-gate-badge {
       font-weight: 600;
       padding: 2px 9px;
       border-radius: 999px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.24);
+      border: 1px solid rgba(255, 255, 255, 0.42);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
 
     &.passed .ob-gainer-gate-badge {
-      color: #1d4ed8;
-      background: rgba(59, 130, 246, 0.1);
-      border: 1px solid rgba(59, 130, 246, 0.25);
+      color: #04372a;
+      background: #d9fff3;
+      border-color: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 4px 12px -6px rgba(6, 214, 160, 0.55);
     }
 
     &.failed .ob-gainer-gate-badge {
-      color: #be123c;
-      background: rgba(244, 63, 94, 0.09);
-      border: 1px solid rgba(244, 63, 94, 0.22);
+      color: #4a0418;
+      background: #ffe3ec;
+      border-color: rgba(255, 255, 255, 0.72);
     }
   }
 
@@ -810,14 +912,14 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     display: grid;
     grid-template-columns: 22px minmax(0, 1fr) 62px 54px 72px;
     gap: 6px;
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 600;
-    color: #94a3b8;
-    padding: 4px 6px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    color: rgba(255, 255, 255, 0.75);
+    padding: 6px 6px 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
     margin-bottom: 4px;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
 
     span {
       text-align: right;
@@ -827,20 +929,24 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   }
 
   .ob-gainer-row {
+    position: relative;
     display: grid;
     grid-template-columns: 22px minmax(0, 1fr) 62px 54px 72px;
     gap: 6px;
     font-size: 12px;
-    padding: 7px 6px;
+    padding: 8px 8px;
     align-items: center;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-    border-radius: 8px;
-    transition: background 0.15s ease;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    margin-bottom: 3px;
+    transition: background 0.18s ease, filter 0.18s ease;
 
-    &:last-child { border-bottom: none; }
+    &:last-child { margin-bottom: 0; }
 
     &:hover {
-      background: rgba(148, 163, 184, 0.09);
+      background: rgba(255, 255, 255, 0.16);
+      filter: brightness(1.06);
     }
   }
 
@@ -856,50 +962,55 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     text-align: right;
     font-variant-numeric: tabular-nums;
     font-weight: 600;
-    color: #7c3aed;
+    font-family: $ob-mono;
+    font-size: 11.5px;
+    color: #ddd6fe;
   }
 
   // 行内市场标识：合并榜单中区分创业板/主板 与 科创板
   .ob-gainer-market {
     flex-shrink: 0;
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 600;
     border-radius: 5px;
     padding: 0 5px;
     line-height: 16px;
 
     &.cyb {
-      color: #e11d48;
-      background: rgba(225, 29, 72, 0.08);
-      border: 1px solid rgba(225, 29, 72, 0.2);
+      color: #fff;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.32);
     }
 
     &.star {
-      color: #6366f1;
-      background: rgba(99, 102, 241, 0.08);
-      border: 1px solid rgba(99, 102, 241, 0.22);
+      color: #ede9fe;
+      background: rgba(196, 181, 253, 0.26);
+      border: 1px solid rgba(221, 214, 254, 0.45);
     }
   }
 
   .ob-gainer-limitup {
     flex-shrink: 0;
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 600;
-    color: #be123c;
-    background: rgba(244, 63, 94, 0.1);
-    border: 1px solid rgba(244, 63, 94, 0.2);
+    color: #fff;
+    background: rgba(255, 71, 87, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.36);
     border-radius: 5px;
     padding: 0 5px;
     line-height: 16px;
   }
 
+  // 买点标记：与诊断卡「命中」徽章一致的高亮薄荷胶囊
   .ob-gainer-buyflag {
     flex-shrink: 0;
-    font-size: 10px;
-    font-weight: 700;
-    color: #fff;
-    background: var(--theme-color, #1677ff);
-    box-shadow: 0 2px 6px rgba(var(--theme-color-rgb, 22, 119, 255), 0.4);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #04372a;
+    background: #d9fff3;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: 0 4px 12px -6px rgba(6, 214, 160, 0.6);
     border-radius: 5px;
     padding: 0 6px;
     line-height: 16px;
@@ -907,24 +1018,39 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
   // 分组标题（上：顺周期 / 下：逆周期）
   .ob-gainer-section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.03em;
-    color: #1d4ed8;
-    padding-left: 8px;
-    border-left: 3px solid #3b82f6;
+    letter-spacing: 0.04em;
+    color: #fff;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 12px;
+      border-radius: 2px;
+      background: #c7d2fe;
+    }
 
     &.reverse {
-      color: #be123c;
-      border-left-color: #f43f5e;
+      color: #fff;
+
+      &::before {
+        background: #fb7185;
+      }
     }
   }
 
-  // 逆周期（反向抱团）板块：择时窗口开启时染红底
+  // 逆周期（反向抱团）板块：择时窗口开启时整列染玫红玻璃
   .ob-gainer-col-reverse {
     &.active {
-      border-color: rgba(244, 63, 94, 0.28);
-      background: linear-gradient(180deg, #fffdfd, #fdf6f7);
+      background: rgba(255, 61, 119, 0.24);
+      border-color: rgba(255, 255, 255, 0.42);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.55),
+        0 14px 30px -14px rgba(255, 61, 119, 0.55);
     }
   }
 
@@ -942,7 +1068,7 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   .ob-rev-timing-tag {
     display: inline-block;
     max-width: 100%;
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 600;
     border-radius: 5px;
     padding: 0 6px;
@@ -953,31 +1079,90 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     vertical-align: middle;
 
     &.hit {
-      color: #fff;
-      background: linear-gradient(135deg, #f5222d, #fa8c16);
+      color: #4a0418;
+      background: #ffe3ec;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      box-shadow: 0 4px 10px -4px rgba(255, 61, 119, 0.55);
     }
 
     &.limitup {
-      color: #be123c;
-      background: rgba(244, 63, 94, 0.1);
-      border: 1px solid rgba(244, 63, 94, 0.2);
+      color: #fff;
+      background: rgba(255, 71, 87, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.36);
     }
 
     &.wait {
-      color: #b45309;
-      background: rgba(245, 158, 11, 0.12);
-      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: #fff;
+      background: rgba(255, 168, 24, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.36);
     }
 
     &.idle {
-      color: #64748b;
-      background: rgba(148, 163, 184, 0.14);
-      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.28);
     }
+  }
+
+  // ===== 紫底下的通用文本 / 涨跌色（仅作用于本卡片） =====
+  .ob-stock-name {
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .ob-stock-name-clickable:hover {
+    color: #e0e7ff;
+    text-decoration: none;
+  }
+
+  .ob-change-cell {
+    font-family: $ob-mono;
+    font-weight: 700;
+    font-size: 11.5px;
+  }
+
+  .ob-up { color: #ffb3c1; }
+  .ob-down { color: #86efac; }
+
+  // 排名徽章：白色玻璃体系（第 1 名实心白）
+  .ob-rank {
+    width: 20px;
+    height: 20px;
+    border-radius: 7px;
+    font-family: $ob-mono;
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+
+  .ob-rank-1 {
+    color: #4d55d8;
+    background: #fff;
+    border-color: rgba(255, 255, 255, 0.75);
+    box-shadow: 0 4px 12px -4px rgba(30, 27, 75, 0.45);
+  }
+
+  .ob-rank-2 {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.42);
+    border-color: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 4px 12px -5px rgba(30, 27, 75, 0.35);
+  }
+
+  .ob-rank-3 {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.28);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 12px -5px rgba(30, 27, 75, 0.3);
   }
 
   .ob-gainer-empty {
     height: 120px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
   }
 }
 

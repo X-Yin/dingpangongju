@@ -1,12 +1,1 @@
-[
-  {
-    "id": "8a912da438a54076",
-    "time": "2026-10-21 14:48:57",
-    "read": true,
-    "strategyId": "panic_outflow",
-    "title": "🚨 恐慌盘出逃",
-    "description": "成交量较约15分钟前放大 <strong>101亿</strong>（≥100亿），主力资金净流出加速（-65.5→-111.6亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
-    "severity": "high",
-    "isBullish": false
-  }
-]
+[]

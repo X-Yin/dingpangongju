@@ -901,7 +901,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
       <div className={`ob-gainer-body ${isDefense ? 'defense' : ''}`}>
         {/* 科技进攻列（tech_attack / attack_defense） */}
         {!isExtreme && (
-          <div className="ob-gainer-col">
+          <div className="ob-gainer-col ob-gainer-col-tech">
             <div className="ob-gainer-col-head">
               {isDefense && <span className="ob-gainer-section-label">科技进攻 · 快进快出</span>}
               {[
@@ -931,7 +931,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
               const isPick = globalPick != null && s.code === globalPick.code;
               return (
                 <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
-                  <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
+                  <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
                   <span className="ob-gainer-name-cell">
                     <span
                       className="ob-stock-name ob-stock-name-clickable"
@@ -958,7 +958,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
         )}
         {/* 顺周期列（hot_money_extreme_win / attack_defense） */}
         {showEwCols && (
-          <div className="ob-gainer-col">
+          <div className="ob-gainer-col ob-gainer-col-ew">
             <div className="ob-gainer-col-head">
               <span className="ob-gainer-section-label">顺周期 · 情绪游资-极致胜率</span>
               <div className={`ob-gainer-gate ${slopeOk ? 'passed' : 'failed'}`}>
@@ -980,7 +980,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
               <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
             ) : leaderList.map((s, idx) => (
               <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
-                <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
+                <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
                 <span className="ob-gainer-name-cell">
                   <span
                     className="ob-stock-name ob-stock-name-clickable"
@@ -1026,7 +1026,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
               <div className="ob-empty-mini ob-gainer-empty">暂无满足条件的反向抱团标的</div>
             ) : reverseList.map((s, idx) => (
               <div className="ob-gainer-row ob-gainer-row-reverse" key={`rev-${s.code}-${idx}`}>
-                <span className={`ob-rank ${idx < 3 ? 'ob-rank-top' : ''}`}>{idx + 1}</span>
+                <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
                 <span className="ob-gainer-name-cell">
                   <span
                     className="ob-stock-name ob-stock-name-clickable"

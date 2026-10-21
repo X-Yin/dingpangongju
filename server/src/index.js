@@ -247,10 +247,11 @@ app.get('/block', (req, res) => {
   res.json(blockData);
 });
 
-// 强制刷新板块数据（同步等待完成）
+// 强制刷新板块数据（同步等待完成）；传 blockName 时仅刷新该板块
 app.post('/api/block/refresh', async (req, res) => {
   try {
-    const result = await refreshBlockData();
+    const { blockName } = req.body || {};
+    const result = await refreshBlockData(blockName || null);
     if (result.success) {
       res.json(result);
     } else {
@@ -4119,7 +4120,7 @@ app.post('/api/blocks_config', (req, res) => {
       if (!block?.code) {
         return res.status(400).json({ success: false, message: 'block.code 不能为空' });
       }
-      data = deleteBlock(block.code);
+      data = deleteBlock(block.code, block.blockName);
     } else if (action === 'deleteByName') {
       if (!blockName) {
         return res.status(400).json({ success: false, message: 'blockName 不能为空' });

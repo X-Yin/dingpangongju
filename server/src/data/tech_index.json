@@ -1279,11 +1279,11 @@
   },
   {
     "date": 20261021,
-    "changeSumResult": -8.46,
-    "baseEmotion": 7.62,
+    "changeSumResult": -8.37,
+    "baseEmotion": 7.71,
     "pullbackPenalty": -80.41,
     "avgChange": 1,
-    "stockCount": 92,
+    "stockCount": 88,
     "algorithm": 2
   }
 ]

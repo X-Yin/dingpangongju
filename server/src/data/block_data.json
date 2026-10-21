@@ -1185,12 +1185,6 @@
       "change": -3.7
     },
     {
-      "name": "科森科技",
-      "blockName": "机器人",
-      "code": "sh603626",
-      "change": -1.76
-    },
-    {
       "name": "宇树科技-W",
       "blockName": "机器人",
       "code": "sh688836",
@@ -1203,34 +1197,10 @@
       "change": 4.46
     },
     {
-      "name": "福莱新材",
-      "blockName": "机器人",
-      "code": "sh605488",
-      "change": 6.2
-    },
-    {
-      "name": "奥比中光-W",
-      "blockName": "机器人",
-      "code": "sh688322",
-      "change": 2.35
-    },
-    {
       "name": "双林股份",
       "blockName": "机器人",
       "code": "sz300100",
       "change": -0.85
-    },
-    {
-      "name": "海天瑞声",
-      "blockName": "机器人",
-      "code": "sh688787",
-      "change": 11.7
-    },
-    {
-      "name": "凡拓数创",
-      "blockName": "机器人",
-      "code": "sz301313",
-      "change": 11.54
     }
   ],
   "消费": [
@@ -1617,6 +1587,38 @@
       "blockName": "氧化锆",
       "code": "sz301580",
       "change": 1.35
+    }
+  ],
+  "机器人大脑": [
+    {
+      "name": "科森科技",
+      "blockName": "机器人大脑",
+      "code": "sh603626",
+      "change": -1.76
+    },
+    {
+      "name": "奥比中光-W",
+      "blockName": "机器人大脑",
+      "code": "sh688322",
+      "change": 2.35
+    },
+    {
+      "name": "福莱新材",
+      "blockName": "机器人大脑",
+      "code": "sh605488",
+      "change": 6.2
+    },
+    {
+      "name": "凡拓数创",
+      "blockName": "机器人大脑",
+      "code": "sz301313",
+      "change": 11.54
+    },
+    {
+      "name": "海天瑞声",
+      "blockName": "机器人大脑",
+      "code": "sh688787",
+      "change": 11.7
     }
   ]
 }

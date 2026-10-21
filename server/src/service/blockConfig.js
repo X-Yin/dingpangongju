@@ -41,8 +41,9 @@ const addBlock = (block) => {
     throw new Error('blockName / code / name 不能为空');
   }
   const list = getBlocksConfig();
-  if (list.some(item => item.code === code)) {
-    throw new Error(`股票代码 ${code} 已存在`);
+  // 同一只股票允许存在于多个板块，只在同一板块内去重
+  if (list.some(item => item.blockName === blockName && item.code === code)) {
+    throw new Error(`股票代码 ${code} 已存在于板块 ${blockName}`);
   }
   list.push({ blockName, code, name });
   writeBlocksConfig(list);
@@ -66,8 +67,9 @@ const addBlockName = ({ blockName, stocks = [], tag }) => {
       if (!stock.code || !stock.name) {
         throw new Error('每只股票必须包含 code 和 name');
       }
-      if (list.some(item => item.code === stock.code)) {
-        throw new Error(`股票代码 ${stock.code} 已存在`);
+      // 同一只股票允许存在于多个板块，只在同一板块内去重
+      if (list.some(item => item.blockName === blockName && item.code === stock.code)) {
+        throw new Error(`股票代码 ${stock.code} 已存在于板块 ${blockName}`);
       }
       list.push({ blockName, code: stock.code, name: stock.name, ...(normTag ? { tag: normTag } : {}) });
     }
@@ -103,15 +105,23 @@ const updateBlockInfo = ({ blockName, newBlockName, tag }) => {
   return list;
 };
 
-// 更新板块条目（按 code 匹配）
+// 更新板块条目（按 原板块名 + code 匹配，支持同一股票存在于多个板块）
 const updateBlock = (block) => {
-  const { blockName, code, name } = block;
+  const { blockName, originalBlockName, code, name } = block;
   if (!code) throw new Error('code 不能为空');
   const list = getBlocksConfig();
-  const idx = list.findIndex(item => item.code === code);
-  if (idx === -1) throw new Error(`股票代码 ${code} 不存在`);
+  // 未传原板块名时兼容旧调用：按 code 匹配第一条
+  const sourceBlockName = originalBlockName || blockName;
+  const idx = list.findIndex(item => item.code === code && (!originalBlockName || item.blockName === originalBlockName));
+  if (idx === -1) throw new Error(`股票代码 ${code} 不在板块 ${sourceBlockName} 中`);
+  const targetBlockName = blockName || list[idx].blockName;
+  if (targetBlockName !== list[idx].blockName
+    && list.some(item => item.blockName === targetBlockName && item.code === code)) {
+    throw new Error(`股票代码 ${code} 已存在于板块 ${targetBlockName}`);
+  }
   list[idx] = {
-    blockName: blockName || list[idx].blockName,
+    ...list[idx],
+    blockName: targetBlockName,
     code,
     name: name || list[idx].name,
   };
@@ -119,11 +129,11 @@ const updateBlock = (block) => {
   return list;
 };
 
-// 删除板块条目（按 code 匹配）
-const deleteBlock = (code) => {
+// 删除板块条目（按 板块名 + code 匹配，仅删除指定板块内的该股票）
+const deleteBlock = (code, blockName) => {
   if (!code) throw new Error('code 不能为空');
   const list = getBlocksConfig();
-  const newList = list.filter(item => item.code !== code);
+  const newList = list.filter(item => !(item.code === code && (!blockName || item.blockName === blockName)));
   if (newList.length === list.length) {
     throw new Error(`股票代码 ${code} 不存在`);
   }

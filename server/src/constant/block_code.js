@@ -1407,16 +1407,6 @@ exports.default = [
     },
     {
         "blockName": "机器人",
-        "code": "sh603197",
-        "name": "保隆科技"
-    },
-    {
-        "blockName": "机器人",
-        "code": "sh603626",
-        "name": "科森科技"
-    },
-    {
-        "blockName": "机器人",
         "code": "sh688836",
         "name": "宇树科技-W"
     },
@@ -1427,23 +1417,8 @@ exports.default = [
     },
     {
         "blockName": "机器人",
-        "code": "sh605488",
-        "name": "福莱新材"
-    },
-    {
-        "blockName": "机器人",
-        "code": "sh688322",
-        "name": "奥比中光-W"
-    },
-    {
-        "blockName": "机器人",
         "code": "sz300100",
         "name": "双林股份"
-    },
-    {
-        "blockName": "机器人",
-        "code": "sh688787",
-        "name": "海天瑞声"
     },
     {
         "blockName": "氧化锆",
@@ -1470,8 +1445,43 @@ exports.default = [
         "tag": "进攻"
     },
     {
-        "blockName": "机器人",
+        "blockName": "机器人大脑",
+        "code": "sh603626",
+        "name": "科森科技",
+        "tag": "中性"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sh688322",
+        "name": "奥比中光-W",
+        "tag": "中性"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sh605488",
+        "name": "福莱新材",
+        "tag": "中性"
+    },
+    {
+        "blockName": "机器人大脑",
         "code": "sz301313",
-        "name": "凡拓数创"
+        "name": "凡拓数创",
+        "tag": "中性"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sh688787",
+        "name": "海天瑞声",
+        "tag": "中性"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sh603278",
+        "name": "大业股份"
+    },
+    {
+        "blockName": "军工",
+        "code": "sz002724",
+        "name": "海洋王"
     }
 ]

@@ -2118,5 +2118,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sh688150": {
+    "stockName": "莱特光电",
+    "kline": [
+      {
+        "trade_date": 20261021,
+        "open_px": 31.7,
+        "high_px": 36.74,
+        "low_px": 31.66,
+        "close_px": 35.39,
+        "business_amount": 12501088,
+        "business_balance": 438298910,
+        "change": 13.32,
+        "ma5_px": 31.76,
+        "ma10_px": 33.06,
+        "ma20_px": 37.65,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

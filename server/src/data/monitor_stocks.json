@@ -885,5 +885,14 @@
     "riskScore": " 5",
     "isTech": false,
     "addedAt": "2026-10-21 11:09:03"
+  },
+  {
+    "code": "sh688150",
+    "name": "莱特光电",
+    "isImportant": false,
+    "blockName": "oled",
+    "riskScore": "8",
+    "isTech": false,
+    "addedAt": "2026-10-21 21:11:25"
   }
 ]
