@@ -52,7 +52,7 @@ const {
   withDualGateInfo,
 } = require('./indexGate');
 const { scanLeaderPriceSell } = require('./leaderSellMinute');
-const { EXCLUDED_CODES, OPENING_BELOW_RATIO_STRATEGY_IDS } = require('../constants');
+const { EXCLUDED_CODES, EMO_QUICK_FUND_INFLOW_BASE, OPENING_BELOW_RATIO_STRATEGY_IDS } = require('../constants');
 const { fmtTime, buildBuyReasonFromDiag, runBuyPointDiagnosis } = require('../diagnose/buyPoint');
 const { createEmoQuickFundGate } = require('./emoQuick');
 const { attachBuyDayReturn, calcDrawdownStats, sortTradesByBuyTime } = require('../utils/tradeStats');
@@ -612,8 +612,10 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       const preemptGateOk = bucketTechEmotion != null && bucketTechEmotion > 0;
       if (styleLock !== 'ew' || preemptGateOk) {
         const quickOutNoRebuy = quickOutSoldDate === dateStr;
-        // A 风格买点诊断按动态阈值判定资金净流入检查（见上方 fundGate；B 风格不受影响）
-        const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(EMO_ID), fundInflowThreshold: fundGate.getThreshold() })?.data;
+        // A 风格买点诊断按动态阈值判定资金净流入检查（见上方 fundGate；B 风格不受影响）；
+        // 已持第一份半仓待补买第二份时，检查2 固定按基准 20 亿判定（2026-10-21 用户新增：第二份补买阈值降回 20 亿）
+        const waitingSecondLeg = emoPositions.length === 1 && emoPositions[0].leg === 1;
+        const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(EMO_ID), fundInflowThreshold: waitingSecondLeg ? EMO_QUICK_FUND_INFLOW_BASE : fundGate.getThreshold() })?.data;
         const buyHit = !quickOutNoRebuy && buyDiag?.allPassed === true;
         const buyInfo = buyHit ? buildBuyReasonFromDiag(buyDiag) : null;
         if (buyHit) {
@@ -632,7 +634,12 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
                 const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
                 const sc = picked.stock;
                 const firstBuyPrice = parseFloat(Number(sc.lastPx).toFixed(2));
-                const halfByQuickOut = picked.emoQuickOut?.quickOut === true;
+                // 快进快出半仓：本次买入属快进快出情形 → 仅半仓（第一份）；
+                // 30 亿抬高态强制两次买入（2026-10-21 用户新增，与独立快进快出策略同口径）：
+                // 阈值处于抬高态（30 亿）时不分快进快出情形一律只买半仓（第一份），剩余半仓等后续交易日补买（阈值 20 亿）
+                const gateRaised = fundGate.isRaised();
+                const halfByQuickOut = picked.emoQuickOut?.quickOut === true || gateRaised;
+                const forcedRaisedHalf = gateRaised && picked.emoQuickOut?.quickOut !== true;
                 emoPositions.push({
                   code: sc.code,
                   stockName: sc.name || sc.code,
@@ -642,7 +649,9 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
                   buyPrice: firstBuyPrice,
                   buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
                   metric: picked.metric,
-                  buyReason: finalBuyInfo.buyReason,
+                  buyReason: forcedRaisedHalf
+                    ? `${finalBuyInfo.buyReason}；资金净流入阈值处于抬高态 30 亿，强制两次买入——本次仅买第一份 5 成，剩余半仓等后续交易日买点再次触发时补买（补买阈值降为 20 亿）`
+                    : finalBuyInfo.buyReason,
                   buyChecks: annotateIndexGateChecksWithStock(finalBuyInfo.buyChecks, sc.code, sc.name),
                   emoQuickOut: picked.emoQuickOut || null,
                   ...(halfByQuickOut ? { twoBuy: true, leg: 1, weight: TWO_BUY_LEG_WEIGHT } : {}),

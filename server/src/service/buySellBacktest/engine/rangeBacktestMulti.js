@@ -9,7 +9,7 @@ const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
 const { buildWindowAxis } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
 const { buildPrevOneWordBoardSet, buildReplayStocksWithTline, extractDailyInfo, isLimitUpAtBuy } = require('./replayData');
-const { EXCLUDED_CODES, OPENING_BELOW_RATIO_STRATEGY_IDS } = require('../constants');
+const { EXCLUDED_CODES, EMO_QUICK_FUND_INFLOW_BASE, OPENING_BELOW_RATIO_STRATEGY_IDS } = require('../constants');
 const { withResilienceGateInfo } = require('./checkBuilders');
 const { TWO_BUY_LEG_WEIGHT, TWO_BUY_SAME_DAY_TAIL_PROFIT_PCT, computeTwoBuyAccountReturn, getPositionLegWeight, getStockBlockName } = require('./twoBuy');
 const { buildBuyReasonFromDiag, fmtTime, runBuyPointDiagnosis } = require('../diagnose/buyPoint');
@@ -159,6 +159,9 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
       // 买点触发时看该笔买入是否属于「快进快出」情形（emoQuickOut.quickOut：情绪冰点/温和回升日买入、
       // 次日 10:00 强制卖出）：属于则首次仅半仓（第一份），至少次日买点再次触发时补剩余半仓
       // （与两次买入同口径，同一标的）；非快进快出情形（走通用 7 条件卖点）则首次即全仓。已有 twoBuy 系列不变。
+      // 「30 亿抬高态强制两次买入」（2026-10-21 用户新增，与 rangeBacktest 单策略路径同口径）：资金净流入动态阈值
+      // 处于抬高态（30 亿）时，首次建仓不分快进快出情形一律只买半仓（第一份），剩余半仓等后续交易日买点再次触发时
+      // 补买（第二份不能与第一份同日，与「N日涨幅最大-两次买入」同效果），且第二份补买诊断阈值降回基准 20 亿
       const emoQuickHalfBuy = strategy.emoQuickOut === true && strategy.twoBuy !== true;
 
       // 情绪快进快出策略专属卖点：次日 10:00 强卖 + 盘中跌破成本线止损（先到先卖）+ 强卖豁免
@@ -201,8 +204,10 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           }
         } else {
           // 24 个涨幅最大/快进快出策略启用检查4 比例收紧：阈值 = ceil(科技股数 × 25%)，其余策略固定 30 只
-          // 资金净流入阈值动态调节：策略启用状态机时按当前动态阈值判定（见 states 初始化处 fundGate 说明）
-          const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(strategy.id), ...(st.fundGate ? { fundInflowThreshold: st.fundGate.getThreshold() } : {}) })?.data;
+          // 资金净流入阈值动态调节：策略启用状态机时按当前动态阈值判定（见 states 初始化处 fundGate 说明）；
+          // 已持第一份半仓待补买第二份时，检查2 固定按基准 20 亿判定（2026-10-21 用户新增：第二份补买阈值降回 20 亿）
+          const waitingSecondLeg = emoQuickHalfBuy && st.positions.length === 1 && st.positions[0].leg === 1;
+          const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(strategy.id), ...(st.fundGate ? { fundInflowThreshold: waitingSecondLeg ? EMO_QUICK_FUND_INFLOW_BASE : st.fundGate.getThreshold() } : {}) })?.data;
           if (!quickOutNoRebuy && buyDiag?.allPassed === true) {
             // 「快进快出-科技情绪门禁」系列（emoGate，2026-10-20 用户新增）：通用买点诊断全部通过后，
             // 还要求当前桶分时科技情绪 ≥ 阈值才可买入；不满足（或数据缺失）该桶不买，后续桶买点诊断
@@ -258,8 +263,11 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
               const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
               const sc = picked.stock;
               const firstBuyPrice = parseFloat(Number(sc.lastPx).toFixed(2));
-              // 快进快出半仓：本次买入属快进快出情形（次日 10:00 强制卖出）→ 仅半仓（第一份），剩余半仓等次日买点再次触发补买
-              const halfByQuickOut = emoQuickHalfBuy && picked.emoQuickOut?.quickOut === true;
+              // 快进快出半仓：本次买入属快进快出情形（次日 10:00 强制卖出）→ 仅半仓（第一份），剩余半仓等次日买点再次触发补买；
+              // 30 亿抬高态强制两次买入（2026-10-21 用户新增）：阈值处于抬高态时不分快进快出情形一律只买半仓（第一份）
+              const gateRaised = st.fundGate != null && st.fundGate.isRaised();
+              const halfByQuickOut = emoQuickHalfBuy && (picked.emoQuickOut?.quickOut === true || gateRaised);
+              const forcedRaisedHalf = emoQuickHalfBuy && gateRaised && picked.emoQuickOut?.quickOut !== true;
               st.positions.push({
                 code: sc.code,
                 stockName: sc.name || sc.code,
@@ -269,7 +277,9 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                 buyPrice: firstBuyPrice,
                 buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
                 metric: picked.metric,
-                buyReason: finalBuyInfo.buyReason,
+                buyReason: forcedRaisedHalf
+                  ? `${finalBuyInfo.buyReason}；资金净流入阈值处于抬高态 30 亿，强制两次买入——本次仅买第一份 5 成，剩余半仓等后续交易日买点再次触发时补买（补买阈值降为 20 亿）`
+                  : finalBuyInfo.buyReason,
                 buyChecks: annotateIndexGateChecksWithStock(finalBuyInfo.buyChecks, sc.code, sc.name),
                 emoQuickOut: picked.emoQuickOut || null, // 情绪快进快出标注（quickOut=true → 次日 10:00 强制卖出；其余策略为 null）
                 // 两次买入策略 / 快进快出半仓（第一份）：按半仓权重，标记 leg=1；非快进快出时全仓不标记

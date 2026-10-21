@@ -49,7 +49,8 @@ const { locateCrashSellPoint, describeCrashSell } = require('./buySellBacktest/e
 // 快进快出「资金净流入阈值动态调节」线上同步（2026-10-21 用户新增）：阈值由启动回测/持仓增删重跑
 // 回测的成交序列计算（连续 2 笔折算收益率未超 3% → 20 → 30 亿，任一笔超 3% → 回落 20 亿），
 // 状态落盘 emo_quick_fund_gate.json，科技进攻与攻防兼备（tech 腿）买点诊断共用
-const { getLiveFundInflowThreshold } = require('./emoQuickFundGateLive');
+const { getLiveFundInflowThreshold, getTechHalfPositionState } = require('./emoQuickFundGateLive');
+const { EMO_QUICK_FUND_INFLOW_BASE } = require('./buySellBacktest/constants');
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
 const monitorAlarmsPath = path.resolve(__dirname, '../data/monitor_alarms.json');
@@ -2520,11 +2521,20 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
   // 动态取值——每天首次启动回测 / 持仓增删后台重跑回测后，按成交序列（半仓 ×0.5 折算收益率）计算：
   // 连续 2 笔未超 3% → 提高到 30 亿；任一笔超 3% → 回落 20 亿（见 emoQuickFundGateLive.js）；
   // 状态缺失时回退固定 20 亿。开盘初期（9:30-9:35 不满 5min）回退为"9:30 开盘至当前"累计净流入判定（sinceOpen）
+  // 「30 亿抬高态强制两次买入」线上同步（2026-10-21 用户新增）：已持第一份半仓待补买第二份时（恰好 1 笔
+  // 50% tech 持仓），检查2 固定按基准 20 亿判定——第一次半仓买入用 30 亿阈值、第二份买入自动降为 20 亿
+  //（与回测 rangeBacktest.js waitingSecondLeg 同口径）
   const fundGate = getLiveFundInflowThreshold();
-  const fundThreshold = fundGate.threshold;
+  const techLegState = getTechHalfPositionState();
+  const waitingSecondLeg = techLegState.waitingSecondLeg === true;
+  const firstLeg = waitingSecondLeg ? techLegState.positions[0] : null;
+  const fundThreshold = waitingSecondLeg ? EMO_QUICK_FUND_INFLOW_BASE : fundGate.threshold;
   const inflowResult = getRecent5MinInflow();
   const check5Passed = inflowResult.hasData && inflowResult.diff > fundThreshold;
   const inflowWindowText = inflowResult.sinceOpen ? '开盘至当前' : '最近 5 分钟';
+  const waitingNote = firstLeg
+    ? `（已持第一份半仓 ${firstLeg.name || firstLeg.code}，${firstLeg.buyDate || '?'} 买入；第二份补买阈值降为基准 ${EMO_QUICK_FUND_INFLOW_BASE} 亿）`
+    : '';
   checks.push({
     id: 'fund_inflow',
     title: inflowResult.sinceOpen ? `开盘至当前资金净流入大于 ${fundThreshold} 亿（开盘不满 5min）` : `最近 5min 资金净流入大于 ${fundThreshold} 亿`,
@@ -2536,10 +2546,12 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
       pastValue: inflowResult.pastTime ? inflowResult.pastValue : null,
       sinceOpen: !!inflowResult.sinceOpen,
       fundGate,
+      waitingSecondLeg,
+      ...(firstLeg ? { firstLeg } : {}),
     },
-    reason: check5Passed ? `${inflowWindowText}资金净流入 ${inflowResult.diff.toFixed(2)} 亿（${inflowResult.pastTime}→${inflowResult.currentTime}），超过 ${fundThreshold} 亿阈值`
+    reason: check5Passed ? `${inflowWindowText}资金净流入 ${inflowResult.diff.toFixed(2)} 亿（${inflowResult.pastTime}→${inflowResult.currentTime}），超过 ${fundThreshold} 亿阈值${waitingNote}`
       : !inflowResult.hasData ? '资金数据不足，无法判断最近 5 分钟净流入'
-        : `${inflowWindowText}资金净流入 ${inflowResult.diff.toFixed(2)} 亿（${inflowResult.pastTime}→${inflowResult.currentTime}），未达到 ${fundThreshold} 亿阈值`,
+        : `${inflowWindowText}资金净流入 ${inflowResult.diff.toFixed(2)} 亿（${inflowResult.pastTime}→${inflowResult.currentTime}），未达到 ${fundThreshold} 亿阈值${waitingNote}`,
   });
   if (!check5Passed) allPassed = false;
 

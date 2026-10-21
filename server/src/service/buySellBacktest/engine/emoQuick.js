@@ -42,12 +42,17 @@ const getBucketTechEmotion = (bucket) => (
 //   初始阈值 20 亿；每完结一笔交易（按成交顺序）判定其折算收益率（半仓已按 ×0.5 折算，与 3% 直接比较）——
 //   折算收益率 > 3% → 连续计数清零、阈值降回 20 亿；折算收益率 ≤ 3%（或数据缺失）→ 连续计数 +1，
 //   累计连续 2 笔未超过 3% → 阈值提高到 30 亿（保持到下一次单笔折算收益率超 3% 为止）。
+//   阈值处于抬高态 30 亿时，快进快出类策略（emoQuickOut 且非两次买入）强制执行两次买入（2026-10-21 用户新增）：
+//   首次建仓不分快进快出情形一律半仓，剩余半仓等后续交易日买点再次触发时补买（不能与第一份同日），
+//   第二份补买的资金净流入诊断阈值按基准 20 亿判定（见 rangeBacktest / rangeBacktestMulti / fusedEmoWinBacktest）。
 // 仅限快进快出类策略（emoQuickOut 且非两次买入）启用；buyPoint 的 fund_inflow 检查按 getThreshold() 动态判定
 const createEmoQuickFundGate = () => {
   let consecutiveBelow = 0;
   let threshold = EMO_QUICK_FUND_INFLOW_BASE;
   return {
     getThreshold: () => threshold,
+    // 是否处于抬高态（阈值 ≥ 30 亿）：该态下快进快出类策略强制两次买入（供引擎建仓分支判定）
+    isRaised: () => threshold >= EMO_QUICK_FUND_INFLOW_RAISED,
     getState: () => ({ threshold, consecutiveBelow }),
     onTradeClosed: (returnRate) => {
       const r = Number(returnRate);

@@ -10,17 +10,40 @@ const { getTopGainersByMarket, checkEmoQuickOutDay } = require('./buySellDiagnos
 const { getStockPositions } = require('./stockPosition');
 const { isTechWatchlistStock } = require('./monitorStock');
 const { getTechEmotionIntraday } = require('./emotion');
+const { getTechHalfPositionState, isGateRaised } = require('./emoQuickFundGateLive');
 
 // 科技进攻（快进快出）仓位提示：与回测 fusedEmoWinBacktest 的 A 风格仓位管理完全一致——
 //   快进快出日 → 首次半仓 50%，次日买点再次触发补足第二份半仓，该笔次日 10:00 强卖；
-//   普通买入日 → 全仓 100%
+//   普通买入日 → 全仓 100%；
+//   「30 亿抬高态强制两次买入」（2026-10-21 用户新增线上同步）：资金净流入阈值处于抬高态 30 亿时，
+//   首次建仓不分快进快出情形一律只买半仓（第一份 5 成），剩余半仓等后续交易日买点再次触发时补买
+//   （第二份 5 成，不能与第一份同一天买入，补买资金净流入诊断阈值降为基准 20 亿）；
+//   已持第一份半仓时提示补买第二份，已持全仓/两份腿时提示本次不买入
 const buildTechPositionHint = (mode) => {
   let hint;
   try {
+    const today = dayjs().format('YYYY-MM-DD');
     const quickOut = checkEmoQuickOutDay(dayjs().format('YYYYMMDD'))?.quickOut === true;
-    hint = quickOut
-      ? '半仓（50%）——快进快出日：首次买入半仓，次日买点再次触发时补足第二份半仓，该笔次日 10:00 强卖'
-      : '全仓（100%）——普通买入日';
+    const legState = getTechHalfPositionState();
+    const firstLeg = legState.positions[0] || null;
+    if (legState.count === 1 && firstLeg) {
+      // 已持第一份半仓：提示补买第二份（不能与第一份同一天买入，对应回测 dateStr > buyDate 约束）
+      if (firstLeg.buyDate === today) {
+        hint = `本次不买入——今日已买第一份半仓 **${firstLeg.name}**（${firstLeg.code}），两份仓位不能同一天买入，剩余半仓等后续交易日买点再次触发时补买（补买资金净流入阈值降为 20 亿）`;
+      } else {
+        hint = `半仓（50%）——补买第二份：已持第一份半仓 **${firstLeg.name}**（${firstLeg.code}，${firstLeg.buyDate} 买入），本次买入剩余半仓 5 成（资金净流入诊断阈值降为基准 20 亿）${quickOut ? '；今日为快进快出日，本份买入后次日 10:00 强卖' : ''}`;
+      }
+    } else if (legState.techCount > 0) {
+      // 已持全仓 / 两份腿：该笔未完全结束前不再买入（与回测单持仓规则一致）
+      const listText = legState.techHoldings.map((p) => `**${p.name}**（${p.code}，仓位 ${p.weight}%）`).join('、');
+      hint = `本次不买入——已持有科技进攻持仓：${listText}，待该笔完全平仓后再考虑下一次买入`;
+    } else if (quickOut) {
+      hint = '半仓（50%）——快进快出日：首次买入半仓，次日买点再次触发时补足第二份半仓，该笔次日 10:00 强卖';
+    } else if (isGateRaised()) {
+      hint = '半仓（50%）——资金净流入阈值处于抬高态 30 亿，强制两次买入：本次仅买第一份 5 成，剩余半仓等后续交易日买点再次触发时补买（补买阈值降为 20 亿，且不能与第一份同一天买入）';
+    } else {
+      hint = '全仓（100%）——普通买入日';
+    }
   } catch (e) {
     hint = '全仓（100%）——普通买入日';
   }
