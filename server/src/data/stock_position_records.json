@@ -1,5 +1,49 @@
 [
   {
+    "id": "1792547266589_62tr20",
+    "type": "buy",
+    "code": "sh600487",
+    "name": "亨通光电",
+    "date": "2026-10-21",
+    "time": "09:47:46",
+    "detail": "新增持仓：亨通光电（sh600487）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-21T01:47:46.589Z"
+  },
+  {
+    "id": "1792546355823_sxai2s",
+    "type": "delete",
+    "code": "sh600487",
+    "name": "亨通光电",
+    "date": "2026-10-21",
+    "time": "09:32:35",
+    "detail": "删除持仓：亨通光电（sh600487）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-21T01:32:35.823Z"
+  },
+  {
+    "id": "1792546354128_8gjrjl",
+    "type": "delete",
+    "code": "sh600487",
+    "name": "亨通光电",
+    "date": "2026-10-21",
+    "time": "09:32:34",
+    "detail": "删除持仓：亨通光电（sh600487）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-21T01:32:34.128Z"
+  },
+  {
+    "id": "1792546223874_0mnjr4",
+    "type": "delete",
+    "code": "sz002058",
+    "name": "紫竹高科",
+    "date": "2026-10-21",
+    "time": "09:30:23",
+    "detail": "删除持仓：紫竹高科（sz002058）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-21T01:30:23.874Z"
+  },
+  {
     "id": "1792481292323_jcgo6l",
     "type": "buy",
     "code": "sh600487",

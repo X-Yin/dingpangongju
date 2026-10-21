@@ -1468,5 +1468,10 @@ exports.default = [
         "code": "sz301580",
         "name": "爱迪特",
         "tag": "进攻"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sz301313",
+        "name": "凡拓数创"
     }
 ]

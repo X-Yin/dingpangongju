@@ -1,34 +1,24 @@
 {
-  "overnight_crisis_escape": {
-    "lastCheckedTime": "2026-10-20 10:00:37",
-    "lastTriggeredTime": "2026-10-20 09:38:30"
+  "prev_day_tail_rally": {
+    "triggeredToday": "2026-10-21"
   },
-  "ebb_tide_direct_reversal": {
-    "triggeredToday": "2026-10-20"
+  "overnight_crisis_escape": {
+    "lastCheckedTime": "2026-10-21 10:00:51"
   },
   "high_open_high_walk": {
-    "advisoryToday": "2026-10-20",
-    "preconditionMet": false,
-    "triggerIndexCode": null,
-    "triggerIndexName": null,
-    "checkedToday": "2026-10-20"
+    "advisoryToday": "2026-10-21",
+    "preconditionMet": true,
+    "triggerIndexCode": "sh000688",
+    "triggerIndexName": "科创50",
+    "checkedToday": "2026-10-21"
   },
   "high_open_max_half_position": {
-    "triggeredToday": "2026-10-20"
+    "triggeredToday": "2026-10-21"
   },
   "opening_net_inflow": {
-    "triggeredToday": "2026-10-20"
+    "triggeredToday": "2026-10-21"
   },
-  "inflow_rise_volume_shrink": {
-    "lastTriggeredTime": "2026-10-20 10:38:53"
-  },
-  "straight_rise_no_volume": {
-    "lastTriggeredTime": "2026-10-20 13:00:00"
-  },
-  "panic_outflow": {
-    "lastTriggeredTime": "2026-10-20 13:29:39"
-  },
-  "tail_dip_buying": {
-    "checkedToday": "2026-10-20"
+  "volume_price_surge": {
+    "lastTriggeredTime": "2026-10-21 09:58:50"
   }
 }

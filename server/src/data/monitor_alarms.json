@@ -1,1 +1,366 @@
-[]
+[
+  {
+    "id": "cf79966cb3afebe0",
+    "time": "2026-10-21 11:02:47",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:02:47",
+        "title": "板块排名变化",
+        "description": "<b>机器人</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">22/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "73e8012128007da4",
+    "time": "2026-10-21 11:04:43",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:04:43",
+        "title": "板块排名变化",
+        "description": "<b>AI 医药</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">35/51</span><br/><b>电力</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">38/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "ee3d2ddbab691fc1",
+    "time": "2026-10-21 11:05:43",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:05:43",
+        "title": "板块排名变化",
+        "description": "<b>特高压</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">39/51</span><br/><b>半导体</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">42/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "97021a74a190139a",
+    "time": "2026-10-21 11:06:43",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:06:43",
+        "title": "板块排名变化",
+        "description": "<b>电力</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">6名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">32/51</span><br/><b>AI 剧</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">34/51</span><br/><b>先进封装</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">36/51</span><br/><b>国产超节点</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">39/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "e0417d6611616ca2",
+    "time": "2026-10-21 11:07:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:07:44",
+        "title": "板块排名变化",
+        "description": "<b>房地产</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">23/51</span><br/><b>AI 医药</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">32/51</span><br/><b>电力</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">35/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "ababb8728cb37155",
+    "time": "2026-10-21 11:08:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:08:44",
+        "title": "板块排名变化",
+        "description": "<b>pcb</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">12/51</span><br/><b>光纤</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">15/51</span><br/><b>房地产</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">26/51</span><br/><b>电力</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">38/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "10eaf16abec2d0c9",
+    "time": "2026-10-21 11:09:45",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:09:45",
+        "title": "板块排名变化",
+        "description": "<b>机器人</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">6名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">14/51</span><br/><b>光纤</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">12/51</span><br/><b>电力</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">35/51</span><br/><b>光芯片</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">16/51</span><br/><b>光模块</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">26/51</span><br/><b>铜箔</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">31/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "106ea3290f9411dc",
+    "time": "2026-10-21 11:10:45",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:10:45",
+        "title": "板块排名变化",
+        "description": "<b>房地产</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">23/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "74a52abe20cf9bc7",
+    "time": "2026-10-21 11:11:45",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:11:45",
+        "title": "板块排名变化",
+        "description": "<b>消费</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">23/51</span><br/><b>房地产</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">28/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "649d0c4933061f56",
+    "time": "2026-10-21 11:13:46",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:13:46",
+        "title": "板块排名变化",
+        "description": "<b>房地产</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">25/51</span><br/><b>厄尔尼诺</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">19/51</span><br/><b>光模块</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">30/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "d9e3e1864b2bc6d6",
+    "time": "2026-10-21 11:14:43",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:14:43",
+        "title": "板块排名变化",
+        "description": "<b>医药</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">25/51</span><br/><b>消费</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">27/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "da0576aa3045123e",
+    "time": "2026-10-21 11:15:43",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:15:43",
+        "title": "板块排名变化",
+        "description": "<b>AI 应用</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">6名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">22/51</span><br/><b>光模块</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">25/51</span><br/><b>游戏</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">41/51</span><br/><b>房地产</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">7名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">30/51</span><br/><b>银行</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">44/51</span><br/><b>厄尔尼诺</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">23/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "a9cb68f806674891",
+    "time": "2026-10-21 11:16:43",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:16:43",
+        "title": "板块排名变化",
+        "description": "<b>电力</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">33/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "000b22e8ac15f2d4",
+    "time": "2026-10-21 11:17:43",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:17:43",
+        "title": "板块排名变化",
+        "description": "<b>商业航天</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">17/51</span><br/><b>房地产</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">26/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "27136ebdf8584c5a",
+    "time": "2026-10-21 11:18:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:18:44",
+        "title": "板块排名变化",
+        "description": "<b>特高压</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">33/51</span><br/><b>先进封装</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">36/51</span><br/><b>AI 医药</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">39/51</span><br/><b>AI 剧</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">35/51</span><br/><b>AI 应用</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">23/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "1002797e00984bc4",
+    "time": "2026-10-21 11:19:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:19:44",
+        "title": "板块排名变化",
+        "description": "<b>AI 应用</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">19/51</span><br/><b>AI 医药</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">36/51</span><br/><b>存储</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">11/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "9cf77c0dc12017cc",
+    "time": "2026-10-21 11:20:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:20:44",
+        "title": "板块排名变化",
+        "description": "<b>AI 医药</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">32/51</span><br/><b>房地产</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">29/51</span><br/><b>铜箔</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">34/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "c59182c51cec9f44",
+    "time": "2026-10-21 11:21:45",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:21:45",
+        "title": "板块排名变化",
+        "description": "<b>房地产</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">26/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "6739030a505c9299",
+    "time": "2026-10-21 11:22:45",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:22:45",
+        "title": "板块排名变化",
+        "description": "<b>AI 应用</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">6名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">12/51</span><br/><b>国产超节点</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">34/51</span><br/><b>AI 剧</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">31/51</span><br/><b>AI 安全</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">41/51</span><br/><b>AI 医药</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">7名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">40/51</span><br/><b>电力</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">36/51</span><br/><b>房地产</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">29/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "76ed24bce52059b9",
+    "time": "2026-10-21 11:23:46",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:23:46",
+        "title": "板块排名变化",
+        "description": "<b>房地产</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">26/51</span><br/><b>特高压</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">37/51</span><br/><b>染料</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">30/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "036ee2d52736ef90",
+    "time": "2026-10-21 11:24:46",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:24:46",
+        "title": "板块排名变化",
+        "description": "<b>染料</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">27/51</span><br/><b>AI 安全</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">45/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "3bbdd8be75ac43d2",
+    "time": "2026-10-21 11:25:46",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:25:46",
+        "title": "板块排名变化",
+        "description": "<b>AI 安全</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">40/51</span><br/><b>特高压</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">33/51</span><br/><b>国产超节点</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">36/51</span><br/><b>电力</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">39/51</span><br/><b>PPE树脂</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">41/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "bbc03fcb27afa117",
+    "time": "2026-10-21 11:26:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:26:44",
+        "title": "板块排名变化",
+        "description": "<b>银行</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">9名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">34/51</span><br/><b>厄尔尼诺</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">22/51</span><br/><b>电力</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">36/51</span><br/><b>AI 安全</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">37/51</span><br/><b>贵金属</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">39/51</span><br/><b>半导体材料</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">6名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">41/51</span><br/><b>AI 医药</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">6名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">44/51</span><br/><b>光芯片</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">27/51</span><br/><b>先进封装</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">38/51</span><br/><b>国产超节点</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">40/51</span><br/><b>CCL</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">26/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "b3f9ade6abc35aaf",
+    "time": "2026-10-21 11:27:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:27:44",
+        "title": "板块排名变化",
+        "description": "<b>贵金属</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">36/51</span><br/><b>游戏</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">40/51</span><br/><b>房地产</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">29/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "f1c14f10fc4a255f",
+    "time": "2026-10-21 11:28:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:28:44",
+        "title": "板块排名变化",
+        "description": "<b>AI 安全</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">7名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">32/51</span><br/><b>房地产</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">24/51</span><br/><b>染料</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">25/51</span><br/><b>光芯片</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">29/51</span><br/><b>消费</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">27/51</span><br/><b>铜箔</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">36/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "52f4f3bce4e5f196",
+    "time": "2026-10-21 11:29:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:29:44",
+        "title": "板块排名变化",
+        "description": "<b>CCL</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">24/51</span><br/><b>AI 应用</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">9/51</span><br/><b>液冷</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">12/51</span><br/><b>染料</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">28/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "c5fa80dc1b6544b6",
+    "time": "2026-10-21 11:30:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:30:44",
+        "title": "板块排名变化",
+        "description": "<b>光芯片</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">25/51</span><br/><b>液冷</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">9/51</span><br/><b>AI 医药</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">43/51</span><br/><b>AI 应用</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">12/51</span><br/><b>银行</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">37/51</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "464c2120efa1d436",
+    "time": "2026-10-21 11:31:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-21 11:31:44",
+        "title": "板块排名变化",
+        "description": "<b>国产超节点</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">41/51</span><br/><b>AI 医药</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">46/51</span>",
+        "path": "/block"
+      }
+    ]
+  }
+]

@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "id": "941f5d4781c33aae",
+    "time": "2026-10-21 09:30:44",
+    "read": true,
+    "strategyId": "prev_day_tail_rally",
+    "title": "📊 前一日尾盘拉升，今日高开需持续观察",
+    "description": "前一日（20261020）创业板指：14:00后最低2707.49→收盘2739.20，拉升1.17%；科创50：14:00后最低1319.50→收盘1342.42，拉升1.74%。今日竞价高开0.28%（开盘价2746.84 > 前日收盘2739.20），需要持续观察，可能高开低走，也可能是高举高打，概率五五开。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "2daa71a04151d717",
+    "time": "2026-10-21 09:30:44",
+    "read": true,
+    "strategyId": "high_open_high_walk",
+    "title": "📈 高开高走观察-9:40之前不要出手",
+    "description": "9:30 开盘：<strong>科创50</strong>高开 <strong>+1.06%</strong>（>0.5%），科技情绪指数 <strong>48.5</strong>（≥30）。<br/>高开高走需要满足 9:40 之前指数持续上攻 & 资金持续净流入，当然有量能放大配合最好，如果量能不放大，前一日必须要满足情绪冰点。所以在 9:40 之前不要出手，等 9:40 之后出手即可，当日买入一般能有 3-4 个点的利润垫。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "c87f1e884dbadba8",
+    "time": "2026-10-21 09:30:44",
+    "read": true,
+    "strategyId": "high_open_max_half_position",
+    "title": "⚠️ 高开最多半仓",
+    "description": "9:30 开盘 科创50高开 +1.06%（>0.5%）。\n大A惯例高开容易低走，此时如果开盘想要加仓，最多只能买单半仓，分摊到两个个股身上就是各自1/4仓位。最后等到收盘的时候再视情况是否要把剩下的仓位加上。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "4f7d410f928a89b3",
+    "time": "2026-10-21 09:35:46",
+    "read": true,
+    "strategyId": "opening_net_inflow",
+    "title": "✅ 开盘资金未明显流出-市场或有回暖",
+    "description": "开盘 5min 资金净流入 <strong>+23.7亿</strong>，按照历史规律，当天大概率大盘会回暖，可以适当出手。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "124d85b851fb206f",
+    "time": "2026-10-21 09:38:46",
+    "read": true,
+    "strategyId": "volume_price_surge",
+    "title": "✅ 量价齐升",
+    "description": "成交量放大 <strong>139亿</strong>（≥100亿），资金净流入24.4→38.9亿（≥10亿，流入增加），科创板5分钟上涨0.36%。量价资金三者共振，多方占优。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "cdd4432b21bc4f57",
+    "time": "2026-10-21 09:41:47",
+    "read": true,
+    "strategyId": "high_open_high_walk",
+    "title": "✅ 命中高开高走-可以出手",
+    "description": "命中高开高走，可以出手。当天资金净流入 <strong>42.2亿</strong>，科创50上涨 <strong>1.44%</strong>，量能 <strong>306亿</strong>（amountChangeDiff 值）。<br/>确认明细：科创50距最高点回落 0.00%（≤0.5%），9:30-9:35 流入 23.7亿（≥10亿），9:35-9:40 流入 12.1亿（≥10亿）。",
+    "severity": "high",
+    "isBullish": true
+  },
+  {
+    "id": "526136299518c0b1",
+    "time": "2026-10-21 09:58:50",
+    "read": false,
+    "strategyId": "volume_price_surge",
+    "title": "✅ 量价齐升",
+    "description": "成交量放大 <strong>112亿</strong>（≥100亿），资金净流入88.9→121.8亿（≥10亿，流入增加），创业板5分钟上涨0.59%。量价资金三者共振，多方占优。",
+    "severity": "medium",
+    "isBullish": true
+  }
+]

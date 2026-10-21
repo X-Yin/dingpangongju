@@ -1,5 +1,48 @@
 [
   {
+    "date": "2026-10-21",
+    "operations": [
+      {
+        "id": "1792546223967_couu",
+        "action": "sell",
+        "stockName": "紫竹高科",
+        "stockCode": "sz002058",
+        "position": "",
+        "time": "09:30"
+      },
+      {
+        "id": "1792546354138_ad33",
+        "action": "sell",
+        "stockName": "亨通光电",
+        "stockCode": "sh600487",
+        "position": "",
+        "time": "09:32"
+      },
+      {
+        "id": "1792546355835_5puy",
+        "action": "sell",
+        "stockName": "亨通光电",
+        "stockCode": "sh600487",
+        "position": "",
+        "time": "09:32"
+      },
+      {
+        "id": "1792547266591_xrsr",
+        "action": "buy",
+        "stockName": "亨通光电",
+        "stockCode": "sh600487",
+        "position": "",
+        "time": "09:47"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-21T01:30:23.992Z",
+    "updatedAt": "2026-10-21T01:47:46.617Z"
+  },
+  {
     "date": "2026-10-20",
     "operations": [
       {

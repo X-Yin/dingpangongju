@@ -42,8 +42,8 @@ const MAX_TOTAL_RANGE_PCT = 100;
 // 新路径（2026-10-18 用户新增，与旧路径为「或」关系，满足其一即可入选）：
 //   连板基础名单单独按「过去 20 个交易日（不含当日）内四连板及以上」统计（不同于旧路径的 10 日）；
 //   动量：最多 10 个交易日的最精准窗口区间最大涨幅 < 100%，且「该窗口峰值日（窗内最高收盘日）」距买点严格相隔 ≥ 5 个交易日，
-//   且该峰值日之后到买点前之间的全部交易日区间最大波动 < 15%（区间最大波动 = (最高收盘价 − 最低收盘价) ÷ 最低收盘价 × 100）；
-//   且允许四连板后出现单日跌幅达 -10%（不再套用旧路径的「四连板后无单日跌幅 <-9%」，因已有 5 日最大波动约束兜底）
+//   且峰值日（含峰值日本身，2026-10-21 用户改）到买点前之间的全部交易日区间最大波动 < 15%（区间最大波动 = (最高收盘价 − 最低收盘价) ÷ 最低收盘价 × 100）；
+//   且该窗口内收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除，2026-10-21 用户要求；不再完全豁免旧路径的 -9% 规则）
 const NEW_MAX_WINDOW_RANGE_PCT = 100;
 const PEAK_GAP_MIN_DAYS = 5;
 const POST_PEAK_MAX_RANGE_PCT = 15;
@@ -247,7 +247,8 @@ const computeCrossInfo = async (code, crossDates, peakDate) => {
 //   → 动量过滤（满足其一即入选）：
 //       旧路径：最多 10 个交易日的最精准窗口区间最大涨幅 < 80%，且四连板后无单日跌幅 < -9%，且过去 20 个交易日总涨幅 < 100%
 //       新路径：最多 10 个交易日的最精准窗口区间最大涨幅 < 100%，且该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ 5 个交易日，
-//               且峰值日至买点前之间的全部交易日区间最大波动 < 15%（允许四连板后出现单日跌幅达 -10%），
+//               且峰值日（含峰值日本身，2026-10-21 用户改）至买点前之间的全部交易日区间最大波动 < 15%，
+//               且该窗口内收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除，2026-10-21 用户要求），
 //               且过去 20 个交易日总涨幅 < 100%
 //   → 剔除与全量自选股科技股（isTech !== false）重叠者
 // 返回 { stocks, poolFilterText, winDates }
@@ -306,14 +307,23 @@ const buildExtremeWinPool = async (dateStr) => {
         return total != null && Number.isFinite(total) && total < MAX_TOTAL_RANGE_PCT;
       };
       // 新路径：最多 10 日最精准窗口区间最大涨幅 < 100% + 该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ 5 交易日
-      //        + 峰值日至买点前之间的全部交易日区间最大波动 < 15% + 20 日总涨幅 < 100%
-      //        （允许四连板后出现单日跌幅达 -10%，不套用旧路径的 -9% 剔除）
+      //        + 峰值日（含峰值日本身，2026-10-21 用户改）至买点前之间的全部交易日区间最大波动 < 15%
+      //        + 该窗口内收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除，2026-10-21 用户要求）+ 20 日总涨幅 < 100%
       const newPass = (code, info) => {
         if (!info || !Number.isFinite(info.max) || !(info.max < NEW_MAX_WINDOW_RANGE_PCT)) return false;
         const betweenDates = winDates.slice(info.peakIdx + 1);
         if (betweenDates.length < PEAK_GAP_MIN_DAYS) return false;
-        const betweenRange = stockWindowRangePct(code, betweenDates);
-        if (!(betweenRange != null && Number.isFinite(betweenRange) && betweenRange < POST_PEAK_MAX_RANGE_PCT)) return false;
+        // 波动窗口带上峰值日本身（2026-10-21 用户改：原 slice(peakIdx+1) 不含峰值日，峰值日回撤本身不计入波动）
+        const postPeakDates = winDates.slice(info.peakIdx);
+        const postPeakRange = stockWindowRangePct(code, postPeakDates);
+        if (!(postPeakRange != null && Number.isFinite(postPeakRange) && postPeakRange < POST_PEAK_MAX_RANGE_PCT)) return false;
+        // 峰值日（含）至买点前，收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除；数据缺失日不计数）
+        let bigDropCount = 0;
+        for (const d of postPeakDates) {
+          const chg = stockDailyChange(code, d);
+          if (chg != null && Number.isFinite(chg) && chg < POST_LIANBAN_DROP_PCT) bigDropCount += 1;
+        }
+        if (bigDropCount > 1) return false;
         const total = stockWindowRangePct(code, winDates);
         return total != null && Number.isFinite(total) && total < MAX_TOTAL_RANGE_PCT;
       };
@@ -329,7 +339,7 @@ const buildExtremeWinPool = async (dateStr) => {
         // 2026-10-18 用户要求：候选挂上「峰值日」，后续死叉口径按「峰值之后的第一次死叉」计算
         if (okOld || okNew) candidates.push(info ? { ...s, peakDate: info.peakDate } : s);
       }
-      poolFilterText = `；旧路径选股：过去 ${LOOKBACK_DAYS} 个交易日（不含当日）内四连板及以上 ${baseOld.length} 只，满足「最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 < ${MAX_WINDOW_RANGE_PCT}%」且「四连板后无单日跌幅 < ${POST_LIANBAN_DROP_PCT}%」且「过去 ${RANGE_WINDOW_DAYS} 个交易日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%」命中 ${oldHit} 只；新路径选股（2026-10-18 用户新增，与旧路径取并集）：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日（不含当日）内四连板及以上 ${baseNew.length} 只，满足「最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 < ${NEW_MAX_WINDOW_RANGE_PCT}%」且「该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日至买点前之间全部交易日区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%」且「过去 ${RANGE_WINDOW_DAYS} 个交易日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%」（允许四连板后出现单日跌幅达 -10%）新增命中 ${newHit} 只；两路径去重后共 ${candidates.length} 只`;
+      poolFilterText = `；旧路径选股：过去 ${LOOKBACK_DAYS} 个交易日（不含当日）内四连板及以上 ${baseOld.length} 只，满足「最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 < ${MAX_WINDOW_RANGE_PCT}%」且「四连板后无单日跌幅 < ${POST_LIANBAN_DROP_PCT}%」且「过去 ${RANGE_WINDOW_DAYS} 个交易日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%」命中 ${oldHit} 只；新路径选股（2026-10-18 用户新增，与旧路径取并集）：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日（不含当日）内四连板及以上 ${baseNew.length} 只，满足「最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 < ${NEW_MAX_WINDOW_RANGE_PCT}%」且「该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日（含峰值日本身，2026-10-21 用户改）至买点前之间全部交易日区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%、该窗口内收盘跌幅 < ${POST_LIANBAN_DROP_PCT}% 的交易日至多 1 次（≥ 2 次剔除）」且「过去 ${RANGE_WINDOW_DAYS} 个交易日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%」新增命中 ${newHit} 只；两路径去重后共 ${candidates.length} 只`;
     } else {
       poolFilterText = `；过去 ${RANGE_WINDOW_DAYS} 个交易日日K数据不足，本日无候选`;
     }
