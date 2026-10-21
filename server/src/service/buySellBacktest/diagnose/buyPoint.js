@@ -42,9 +42,12 @@ const findBucketMinutesAgo = (buckets, currentIndex, targetMin = 5) => {
 };
 
 // 训练营回放买点诊断（对齐前端 buyPointChecks.js，返回 { success, data } 或 null）
-// 资金净流入检查构建（常规买点诊断与重点板块策略共用）：最近 5min 大盘主力资金净流入差值，> 20 亿通过
+// 资金净流入检查构建（常规买点诊断与重点板块策略共用）：最近 5min 大盘主力资金净流入差值，> 阈值通过
+// 阈值默认 20 亿；快进快出类策略传入 opts.fundInflowThreshold 动态调节（2026-10-21 用户新增：
+// 连续 2 笔交易折算收益率均未超 3% → 提高到 30 亿，任一笔超 3% → 降回 20 亿，见 engine/emoQuick.js）
 // 返回 { fundResult, fundDiff, check }；fundResult.hasData=false 表示数据不足
-const buildFundInflowCheck = (buckets, currentIndex) => {
+const buildFundInflowCheck = (buckets, currentIndex, threshold = 20) => {
+  const fundThreshold = Number(threshold) > 0 ? Number(threshold) : 20;
   const list = buckets || [];
   const current = list[currentIndex];
   const currentFund = Number(current.fundFlow) || 0;
@@ -60,20 +63,20 @@ const buildFundInflowCheck = (buckets, currentIndex) => {
     }
     : { hasData: false, diff: 0, currentValue: currentFund, pastValue: 0, currentTime: fmtTime(current.timeKey), pastTime: null };
   const fundDiff = parseFloat(fundResult.diff.toFixed(2));
-  const checkFundPassed = fundResult.hasData && fundDiff > 20;
+  const checkFundPassed = fundResult.hasData && fundDiff > fundThreshold;
   // 资金明细文案（随买入原因汇总展示）：最近 5min 净流入差值
   const fundText = fundResult.hasData ? `5min 内资金净流入 ${fundDiff.toFixed(2)}亿` : null;
   const check = {
     id: 'fund_inflow',
-    title: '最近 5min 资金净流入大于 20 亿',
+    title: `最近 5min 资金净流入大于 ${fundThreshold} 亿`,
     passed: checkFundPassed,
     value: fundResult.hasData ? `${fundDiff >= 0 ? '+' : ''}${fundDiff.toFixed(2)}亿` : '数据不足',
     fundText,
     reason: checkFundPassed
-      ? `最近 5 分钟资金净流入 ${fundDiff.toFixed(2)} 亿（${fundResult.pastTime}→${fundResult.currentTime}），超过 20 亿阈值`
+      ? `最近 5 分钟资金净流入 ${fundDiff.toFixed(2)} 亿（${fundResult.pastTime}→${fundResult.currentTime}），超过 ${fundThreshold} 亿阈值`
       : !fundResult.hasData
         ? '资金数据不足，无法判断最近 5 分钟净流入'
-        : `最近 5 分钟资金净流入 ${fundDiff.toFixed(2)} 亿（${fundResult.pastTime}→${fundResult.currentTime}），未达到 20 亿阈值`,
+        : `最近 5 分钟资金净流入 ${fundDiff.toFixed(2)} 亿（${fundResult.pastTime}→${fundResult.currentTime}），未达到 ${fundThreshold} 亿阈值`,
   };
   return { fundResult, fundDiff, check };
 };
@@ -171,8 +174,9 @@ const runBuyPointDiagnosis = (timeBuckets, currentIndex, campData, opts) => {
   let allPassed = true;
   const targetDateStr = String(campData?.date || '').replace(/-/g, '');
 
-  // 检查2：最近 5min 资金净流入大于 20 亿（构建函数与重点板块策略共用）
-  const { check: fundCheck } = buildFundInflowCheck(buckets, currentIndex);
+  // 检查2：最近 5min 资金净流入大于阈值（默认 20 亿；快进快出类策略经 opts.fundInflowThreshold 动态调节，
+  // 连续 2 笔交易折算收益率均未超 3% → 30 亿，任一笔超 3% → 回落 20 亿；构建函数与重点板块策略共用）
+  const { check: fundCheck } = buildFundInflowCheck(buckets, currentIndex, opts?.fundInflowThreshold);
   checks.push(fundCheck);
   if (!fundCheck.passed) allPassed = false;
 

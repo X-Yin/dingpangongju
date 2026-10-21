@@ -53,6 +53,7 @@ const {
   getWatchlistMainFund,
   addStockPosition,
   deleteStockPosition,
+  onPositionChange,
   updateStockPositionCost,
   updateStockPositionWeight,
   diff2DayStockTline,
@@ -126,6 +127,9 @@ const buyPointPushService = require('./service/buyPointPushService');
 const sellPointPushService = require('./service/sellPointPushService');
 // 回测持仓镜像同步：每天首次启动跑「3日涨幅最大&三日情绪-30快进快出」回测，期末未卖持仓自动入持仓管理
 const backtestPositionMirror = require('./service/backtestPositionMirror');
+// 快进快出「资金净流入阈值动态调节」线上同步（2026-10-21 用户新增）：启动回测后按成交序列设定阈值，
+// 持仓管理增删股票后后台重跑回测并重算阈值（见 emoQuickFundGateLive.js）
+const emoQuickFundGateLive = require('./service/emoQuickFundGateLive');
 // 调试面板 MOCK：手动触发买点/卖点命中，走同一推送 + 飞书链路
 const debugMock = require('./service/debugMock');
 const wsServer = require('./wsServer');
@@ -1958,6 +1962,17 @@ app.get('/stock_positions', (req, res) => {
   } catch (error) {
     console.error('获取持仓列表失败:', error);
     res.status(500).json({ message: '获取持仓列表失败' });
+  }
+});
+
+// 快进快出「资金净流入阈值动态调节」快照（2026-10-21 用户新增）：前端页面刷新时自动请求当前阈值
+//（与 WebSocket fund_gate 推送互补——WS 负责回测完成后实时推送，本接口负责打开/刷新页面即取）
+app.get('/emo_quick_fund_gate', (req, res) => {
+  try {
+    res.json({ success: true, data: emoQuickFundGateLive.getFundGateSnapshot() });
+  } catch (error) {
+    console.error('获取资金净流入动态阈值失败:', error);
+    res.status(500).json({ success: false, message: '获取资金净流入动态阈值失败' });
   }
 });
 
@@ -4636,6 +4651,12 @@ const server = app.listen(port, () => {
   sellPointPushService.start();
   // 回测持仓镜像同步：每天首次启动后台跑一次快进快出策略回测，期末未卖持仓自动写入持仓管理
   backtestPositionMirror.start();
+  // 快进快出「资金净流入阈值动态调节」：监听持仓管理增删股票——每次操作后台重跑回测并重算
+  // 买点诊断资金净流入阈值（镜像同步自身产生的 add 已在启动回测中计入，mirrorSource 标记跳过）
+  onPositionChange(({ mirrorSource }) => {
+    if (mirrorSource === 'backtest_position_mirror') return;
+    emoQuickFundGateLive.requestRecomputeBacktest('持仓管理增删股票');
+  });
   // 月度策略报告：调度「每月最后一个交易日收盘后」自动执行，并在启动时检查/补充上月报告
   scheduleMonthlyReport();
   checkAndBackfillLastMonthReport();

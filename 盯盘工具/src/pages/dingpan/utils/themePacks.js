@@ -3435,7 +3435,7 @@ export const THEME_PACKS = [
             "itemBorderWidth": "1px",
             "itemRadius": "12px",
             "upColor": "#FF8C00",
-            "downColor": "#800080",
+            "downColor": "#00E676",
             "btnBg": "#0DFFB7",
             "btnColor": "#051A42",
             "btnRadius": "999px",

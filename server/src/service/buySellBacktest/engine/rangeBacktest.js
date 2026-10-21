@@ -17,7 +17,7 @@ const { generalSellPositions } = require('./sellHooks/generalSell');
 const { buildBuyReasonFromDiag, fmtTime, runBuyPointDiagnosis } = require('../diagnose/buyPoint');
 const { buildCounterCycSet } = require('./cycleFilter');
 const { pickBestStock } = require('./pickBest');
-const { computeEmoQuickOutInfo, getBucketTechEmotion } = require('./emoQuick');
+const { computeEmoQuickOutInfo, createEmoQuickFundGate, getBucketTechEmotion } = require('./emoQuick');
 const { attachBuyDayReturn, calcDrawdownStats, sortTradesByBuyTime } = require('../utils/tradeStats');
 const { ensureWatchlistValuation } = require('../../watchlistValuation');
 
@@ -60,6 +60,22 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   // （与两次买入策略同口径：同一标的、各自独立买卖与收益、均按半仓折算）；
   // 非快进快出情形（走通用 7 条件卖点）则首次即全仓买入。已有两次买入系列（twoBuy）保持原有恒定半仓行为不变。
   const emoQuickHalfBuy = strategy.emoQuickOut === true && strategy.twoBuy !== true;
+  // 「资金净流入阈值动态调节」状态机（2026-10-21 用户新增；2026-10-21 用户扩展适用范围）：
+  // 适用策略——①「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）；②「N日涨幅最大」系列
+  // （registry 动态阈值标记 dynamicFundGate: true，即 highest_2d/3d/4d/5d/10d_gain 与 2.5/3.5 日变体）。
+  // 规则：连续 2 笔已完结交易的折算收益率（半仓 ×0.5 折算后）均未超过 3% → 买点诊断资金净流入阈值
+  // 20 → 30 亿；此后任一笔交易折算收益率超过 3% → 阈值降回 20 亿并重置连续计数（状态机见 engine/emoQuick.js）
+  const useDynamicFundGate = (strategy.emoQuickOut === true && strategy.twoBuy !== true) || strategy.dynamicFundGate === true;
+  const fundGate = useDynamicFundGate ? createEmoQuickFundGate() : null;
+  // 已喂给阈值状态机的成交笔数（sell hooks 逐笔 push singleTrades，按成交顺序喂增量即可）
+  let fundGateFedCount = 0;
+  const feedFundGate = () => {
+    if (!fundGate) return;
+    while (fundGateFedCount < singleTrades.length) {
+      fundGate.onTradeClosed(singleTrades[fundGateFedCount]?.returnRate);
+      fundGateFedCount += 1;
+    }
+  };
   const allDates = getTrainingCampDates();
   // 升序处理（按时间先后）
   const rangeDates = allDates.filter(d => d >= startDate && d <= endDate).sort();
@@ -142,6 +158,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
     if (strategy.emoQuickOut === true) {
       const soldDate = emoQuickOutSell({ positions, strategy, dateStr, dateDisplay, replayStocks, timeBuckets, campData, singleTrades });
       if (soldDate) quickOutSoldDate = soldDate;
+      feedFundGate(); // 快进快出强卖/止损成交后喂入折算收益率，驱动资金净流入阈值动态调节
     }
 
     for (let bi = 0; bi < timeBuckets.length; bi++) {
@@ -170,7 +187,11 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
         }
       } else {
         // 24 个涨幅最大/快进快出策略启用检查4 比例收紧：阈值 = ceil(科技股数 × 25%)，其余策略固定 30 只
-        const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(strategy.id) })?.data;
+        // 快进快出类策略叠加资金净流入阈值动态调节（fundGate）：按当前状态机阈值判定检查2
+        const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, {
+          ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(strategy.id),
+          ...(fundGate ? { fundInflowThreshold: fundGate.getThreshold() } : {}),
+        })?.data;
         if (!quickOutNoRebuy && buyDiag?.allPassed === true) {
           // 「快进快出-科技情绪门禁」系列（emoGate，2026-10-20 用户新增）：通用买点诊断全部通过后，
           // 还要求当前桶分时科技情绪 ≥ 阈值才可买入；不满足（或数据缺失）该桶不买，后续桶买点诊断
@@ -345,6 +366,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
 
       // 卖出信号（通用 7 条件卖点，见 engine/sellHooks/generalSell.js）
       await generalSellPositions({ positions, strategy, bi, replayStocks, timeBuckets, dateStr, dateDisplay, singleTrades });
+      feedFundGate(); // 通用卖点成交后喂入折算收益率，驱动资金净流入阈值动态调节（影响后续桶买入判定）
     }
 
   }

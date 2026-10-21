@@ -468,6 +468,9 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     return unsubscribe;
   }, []);
 
+  // 快进快出「资金净流入阈值动态调节」：阈值文案由后端买点诊断条件卡片随 buy_point WS 推送更新
+  //（fund_inflow 检查标题/理由带动态阈值），此处无需单独展示（2026-10-21 用户调整：不在 header 展示阈值）
+
   // 卖点诊断：由后端 WebSocket 集中推送（每 10s 一次），前端不再轮询
   //   - 每条消息更新抽屉内诊断数据（命中卖点的持仓置顶展示）
   //   - 命中且进入新的 5 分钟桶时后端下发 open:true（飞书与频控均由后端完成），前端据此打开抽屉

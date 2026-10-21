@@ -54,6 +54,7 @@ const {
 const { scanLeaderPriceSell } = require('./leaderSellMinute');
 const { EXCLUDED_CODES, OPENING_BELOW_RATIO_STRATEGY_IDS } = require('../constants');
 const { fmtTime, buildBuyReasonFromDiag, runBuyPointDiagnosis } = require('../diagnose/buyPoint');
+const { createEmoQuickFundGate } = require('./emoQuick');
 const { attachBuyDayReturn, calcDrawdownStats, sortTradesByBuyTime } = require('../utils/tradeStats');
 // 差劲分 / 强度分口径与打分函数（与「个股历史分析」接口共用同一份实现）
 const {
@@ -194,6 +195,19 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
   const skippedDates = [];
   const seenStocks = new Map(); // code -> { code, name }
 
+  // A 风格（科技进攻·快进快出）「资金净流入阈值动态调节」状态机（2026-10-21 用户新增）：
+  // 连续 2 笔 A 风格已完结交易的折算收益率（半仓 ×0.5 折算后）均未超过 3% → A 风格买点诊断
+  // 资金净流入阈值 20 → 30 亿；此后任一笔超过 3% → 降回 20 亿并重置连续计数。
+  // 仅作用于 A 风格买点诊断，B 风格（情绪游资极致胜率）不受影响、仍按固定 20 亿判定
+  const fundGate = createEmoQuickFundGate();
+  let fundGateFedCount = 0;
+  const feedFundGate = () => {
+    while (fundGateFedCount < emoTrades.length) {
+      fundGate.onTradeClosed(emoTrades[fundGateFedCount]?.returnRate);
+      fundGateFedCount += 1;
+    }
+  };
+
   // ===== 账户状态（风格独占锁）=====
   let styleLock = null;         // null = 空仓（两风格均可参与）| 'emo' | 'ew'
   const emoPositions = [];      // A 风格持仓：0~1 份（非快进快出全仓）或 1~2 份（快进快出半仓两份）
@@ -262,6 +276,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
     // ===== A 风格·专属卖点（次日 10:00 强卖 + 盘中止损 + 盘中大跌强卖，先到先卖），返回强卖日期 =====
     const soldDate = emoQuickOutSell({ positions: emoPositions, strategy: emoStrategyView, dateStr, dateDisplay, replayStocks, timeBuckets, campData, singleTrades: emoTrades });
     if (soldDate) quickOutSoldDate = soldDate;
+    feedFundGate(); // 强卖成交即时喂入 A 风格资金净流入阈值状态机（后续时间桶买点诊断按新阈值判定）
 
     // ===== B 风格当日准备：逆周期腿买点前置 + 两条腿的候选池 =====
     const tInfo = turnMap.get(Number(dateStr));
@@ -582,6 +597,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       if (emoPositions.length > 0) {
         await generalSellPositions({ positions: emoPositions, strategy: emoStrategyView, bi, replayStocks, timeBuckets, dateStr, dateDisplay, singleTrades: emoTrades });
       }
+      feedFundGate(); // 通用卖点成交即时喂入 A 风格资金净流入阈值状态机
 
       // ===== 风格独占锁·解锁判定：当前风格全部平仓回到空仓 → 解锁 =====
       if (styleLock === 'emo' && emoPositions.length === 0) styleLock = null;
@@ -596,7 +612,8 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       const preemptGateOk = bucketTechEmotion != null && bucketTechEmotion > 0;
       if (styleLock !== 'ew' || preemptGateOk) {
         const quickOutNoRebuy = quickOutSoldDate === dateStr;
-        const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(EMO_ID) })?.data;
+        // A 风格买点诊断按动态阈值判定资金净流入检查（见上方 fundGate；B 风格不受影响）
+        const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(EMO_ID), fundInflowThreshold: fundGate.getThreshold() })?.data;
         const buyHit = !quickOutNoRebuy && buyDiag?.allPassed === true;
         const buyInfo = buyHit ? buildBuyReasonFromDiag(buyDiag) : null;
         if (buyHit) {

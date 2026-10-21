@@ -27,6 +27,15 @@ const EMO_QUICK_RANGE_HIGH = -10;
 // 适用于 emoquick 系列策略的全部持仓（含非快进快出的普通持仓与强卖豁免后的持仓）及全部常规策略（回测与实盘诊断同口径）
 const EMO_QUICK_CRASH_PCT = -7;
 
+// 快进快出系列「资金净流入阈值动态调节」（2026-10-21 用户新增）：
+// 常规买点诊断资金净流入阈值为 20 亿；当连续 2 笔已完结交易的折算收益率（半仓按 ×0.5 折算后，
+// 即原始收益率须超 6% 折算后才算超 3%）均未超过 3% 时，阈值提高到 30 亿（2026-10-21 用户改：先改 25 后定 30）；
+// 此后任一笔交易折算收益率超过 3% 时，阈值降回 20 亿并重置连续计数
+const EMO_QUICK_FUND_INFLOW_BASE = 20;
+const EMO_QUICK_FUND_INFLOW_RAISED = 30;
+const EMO_QUICK_FUND_GATE_RETURN_PCT = 3;
+const EMO_QUICK_FUND_GATE_CONSECUTIVE = 2;
+
 // 检查4「开盘后自选科技股低于开盘价」按比例收紧（2026-10-19 用户定，取代原「创业板指斜率负时固定收紧为 15」）：
 // 适用范围（25 个）= 快进快出（emoQuickOut）7 个 + 纯「N 日涨幅最大」7 个 + 两次买入 7 个 + 两次买入不同板块 4 个。
 // 这些策略的阈值 = ceil(参与计数的科技股数 × 25%)（向上取整，如 90 只科技股 → 23），其余策略保持固定 30 只。
@@ -69,6 +78,10 @@ const OPENING_BELOW_RATIO_STRATEGY_IDS = new Set([
 
 module.exports = {
   EMO_QUICK_CRASH_PCT,
+  EMO_QUICK_FUND_GATE_CONSECUTIVE,
+  EMO_QUICK_FUND_GATE_RETURN_PCT,
+  EMO_QUICK_FUND_INFLOW_BASE,
+  EMO_QUICK_FUND_INFLOW_RAISED,
   EMO_QUICK_RANGE_HIGH,
   EMO_QUICK_RANGE_LOW,
   EMO_SWITCH_EMA_THRESHOLD,

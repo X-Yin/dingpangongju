@@ -1,4 +1,12 @@
-const { EMO_QUICK_RANGE_HIGH, EMO_QUICK_RANGE_LOW, EMO_SWITCH_EMA_THRESHOLD } = require('../constants');
+const {
+  EMO_QUICK_FUND_GATE_CONSECUTIVE,
+  EMO_QUICK_FUND_GATE_RETURN_PCT,
+  EMO_QUICK_FUND_INFLOW_BASE,
+  EMO_QUICK_FUND_INFLOW_RAISED,
+  EMO_QUICK_RANGE_HIGH,
+  EMO_QUICK_RANGE_LOW,
+  EMO_SWITCH_EMA_THRESHOLD,
+} = require('../constants');
 const { getTechEmotionEmaMap, getTechEmotionRawMap } = require('../utils/techEmotion');
 
 // 计算「快进快出」标注（买入时点判定）：
@@ -30,7 +38,32 @@ const getBucketTechEmotion = (bucket) => (
   bucket && bucket.techEmotion != null && !Number.isNaN(Number(bucket.techEmotion)) ? Number(bucket.techEmotion) : null
 );
 
+// 快进快出系列「资金净流入阈值动态调节」状态机（2026-10-21 用户新增）：
+//   初始阈值 20 亿；每完结一笔交易（按成交顺序）判定其折算收益率（半仓已按 ×0.5 折算，与 3% 直接比较）——
+//   折算收益率 > 3% → 连续计数清零、阈值降回 20 亿；折算收益率 ≤ 3%（或数据缺失）→ 连续计数 +1，
+//   累计连续 2 笔未超过 3% → 阈值提高到 30 亿（保持到下一次单笔折算收益率超 3% 为止）。
+// 仅限快进快出类策略（emoQuickOut 且非两次买入）启用；buyPoint 的 fund_inflow 检查按 getThreshold() 动态判定
+const createEmoQuickFundGate = () => {
+  let consecutiveBelow = 0;
+  let threshold = EMO_QUICK_FUND_INFLOW_BASE;
+  return {
+    getThreshold: () => threshold,
+    getState: () => ({ threshold, consecutiveBelow }),
+    onTradeClosed: (returnRate) => {
+      const r = Number(returnRate);
+      if (Number.isFinite(r) && r > EMO_QUICK_FUND_GATE_RETURN_PCT) {
+        consecutiveBelow = 0;
+        threshold = EMO_QUICK_FUND_INFLOW_BASE;
+      } else {
+        consecutiveBelow += 1;
+        if (consecutiveBelow >= EMO_QUICK_FUND_GATE_CONSECUTIVE) threshold = EMO_QUICK_FUND_INFLOW_RAISED;
+      }
+    },
+  };
+};
+
 module.exports = {
   computeEmoQuickOutInfo,
+  createEmoQuickFundGate,
   getBucketTechEmotion,
 };

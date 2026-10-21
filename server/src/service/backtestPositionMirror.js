@@ -18,6 +18,7 @@ const dayjs = require('dayjs');
 const { getDefaultReportRange } = require('./backtestReport');
 const { runRangeBacktest, STRATEGIES } = require('./buySellBacktest');
 const { addStockPosition, getStockPositions } = require('./stockPosition');
+const emoQuickFundGateLive = require('./emoQuickFundGateLive');
 
 const MIRROR_STRATEGY_ID = 'highest_3d_gain_emoquick';
 const MIRROR_STRATEGY_NAME = STRATEGIES[MIRROR_STRATEGY_ID]?.name || '3日涨幅最大&三日情绪-30快进快出';
@@ -81,6 +82,9 @@ const syncOnce = async () => {
   if (!result || result.success !== true) {
     throw new Error((result && result.message) || '回测执行失败');
   }
+  // 快进快出「资金净流入阈值动态调节」：启动回测完成后按成交序列重算实盘买点诊断阈值
+  //（无论启动时是否有持仓都先按回测报告设定；后续持仓增删会触发后台重跑重算，见 emoQuickFundGateLive.js）
+  emoQuickFundGateLive.onBacktestCompleted(result, '每日首次启动回测');
 
   // 期末持仓同步：每份腿独立生成一笔镜像持仓（仓位 50%、成本价 = 回测买入价、买入日 = 回测买入日）
   const holdings = Array.isArray(result.currentHoldings) ? result.currentHoldings : [];

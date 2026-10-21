@@ -1,0 +1,57 @@
+{
+  "strategyId": "highest_3d_gain_emoquick",
+  "strategyName": "3日涨幅最大&三日情绪-30快进快出",
+  "computedAt": "2026-10-21 15:21:14",
+  "reason": "手动重算-首次生成阈值状态",
+  "range": {
+    "startDate": "20260728",
+    "endDate": "20261021"
+  },
+  "tradeCount": 6,
+  "threshold": 30,
+  "consecutiveBelow": 3,
+  "lastReturns": [
+    {
+      "code": "sh688825",
+      "name": "长鑫科技",
+      "sellDate": "20260730",
+      "sellTime": "10:00",
+      "returnRate": 3.91
+    },
+    {
+      "code": "sh688313",
+      "name": "仕佳光子",
+      "sellDate": "20260819",
+      "sellTime": "13:16",
+      "returnRate": 42.67
+    },
+    {
+      "code": "sz002536",
+      "name": "飞龙股份",
+      "sellDate": "20260904",
+      "sellTime": "14:16",
+      "returnRate": 19.13
+    },
+    {
+      "code": "sh603228",
+      "name": "景旺电子",
+      "sellDate": "20260915",
+      "sellTime": "14:35",
+      "returnRate": -0.67
+    },
+    {
+      "code": "sh688025",
+      "name": "杰普特",
+      "sellDate": "20260917",
+      "sellTime": "09:51",
+      "returnRate": -1.18
+    },
+    {
+      "code": "sh688072",
+      "name": "拓荆科技",
+      "sellDate": "20261014",
+      "sellTime": "10:00",
+      "returnRate": 0.21
+    }
+  ]
+}

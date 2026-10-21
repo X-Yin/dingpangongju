@@ -15,7 +15,7 @@ const { TWO_BUY_LEG_WEIGHT, TWO_BUY_SAME_DAY_TAIL_PROFIT_PCT, computeTwoBuyAccou
 const { buildBuyReasonFromDiag, fmtTime, runBuyPointDiagnosis } = require('../diagnose/buyPoint');
 const { buildCounterCycSet } = require('./cycleFilter');
 const { pickBestStock } = require('./pickBest');
-const { computeEmoQuickOutInfo, getBucketTechEmotion } = require('./emoQuick');
+const { computeEmoQuickOutInfo, getBucketTechEmotion, createEmoQuickFundGate } = require('./emoQuick');
 const { emoQuickOutSell } = require('./sellHooks/emoQuickOut');
 const { generalSellPositions } = require('./sellHooks/generalSell');
 const { calcDrawdownStats, sortTradesByBuyTime } = require('../utils/tradeStats');
@@ -88,6 +88,12 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
     sameDayTailChecked: false,
     singleTrades: [],
     skippedDates: [],
+    // 「资金净流入阈值动态调节」状态机（2026-10-21 用户新增；2026-10-21 用户扩展适用范围，与 rangeBacktest 同口径）：
+    // ①「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）②「N日涨幅最大」系列（dynamicFundGate: true）
+    // 连续 2 笔已完结交易折算收益率（半仓 ×0.5 折算后）均未超 3% → 阈值 20 → 30 亿；任一笔超 3% → 降回 20 亿
+    fundGate: ((STRATEGIES[strategyId].emoQuickOut === true && STRATEGIES[strategyId].twoBuy !== true) || STRATEGIES[strategyId].dynamicFundGate === true)
+      ? createEmoQuickFundGate() : null,
+    fundGateFedCount: 0,
   }));
 
   // 整组策略共享：每日 EOD 信息与期间出现过的自选股（均由 campData 派生）
@@ -161,6 +167,13 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
         const soldDate = emoQuickOutSell({ positions: st.positions, strategy, dateStr, dateDisplay, replayStocks, timeBuckets, campData, singleTrades });
         if (soldDate) st.quickOutSoldDate = soldDate;
       }
+      // 资金净流入阈值动态调节：当日成交即时喂入状态机（后续时间桶买点诊断按新阈值判定）
+      if (st.fundGate) {
+        while (st.fundGateFedCount < singleTrades.length) {
+          st.fundGate.onTradeClosed(singleTrades[st.fundGateFedCount]?.returnRate);
+          st.fundGateFedCount += 1;
+        }
+      }
 
       for (let bi = 0; bi < timeBuckets.length; bi++) {
         const bucket = timeBuckets[bi];
@@ -188,7 +201,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           }
         } else {
           // 24 个涨幅最大/快进快出策略启用检查4 比例收紧：阈值 = ceil(科技股数 × 25%)，其余策略固定 30 只
-          const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(strategy.id) })?.data;
+          // 资金净流入阈值动态调节：策略启用状态机时按当前动态阈值判定（见 states 初始化处 fundGate 说明）
+          const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(strategy.id), ...(st.fundGate ? { fundInflowThreshold: st.fundGate.getThreshold() } : {}) })?.data;
           if (!quickOutNoRebuy && buyDiag?.allPassed === true) {
             // 「快进快出-科技情绪门禁」系列（emoGate，2026-10-20 用户新增）：通用买点诊断全部通过后，
             // 还要求当前桶分时科技情绪 ≥ 阈值才可买入；不满足（或数据缺失）该桶不买，后续桶买点诊断
@@ -363,6 +377,13 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
 
         // 卖出信号（同日买入不可同日卖出；通用 7 条件卖点，见 engine/sellHooks/generalSell.js）
         await generalSellPositions({ positions: st.positions, strategy, bi, replayStocks, timeBuckets, dateStr, dateDisplay, singleTrades });
+        // 资金净流入阈值动态调节：通用卖点成交即时喂入状态机（后续时间桶买入评估按新阈值判定）
+        if (st.fundGate) {
+          while (st.fundGateFedCount < singleTrades.length) {
+            st.fundGate.onTradeClosed(singleTrades[st.fundGateFedCount]?.returnRate);
+            st.fundGateFedCount += 1;
+          }
+        }
       }
     }
   }

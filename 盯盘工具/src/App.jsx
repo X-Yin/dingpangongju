@@ -4,6 +4,7 @@ import { DesktopOutlined, AppstoreOutlined, MenuFoldOutlined, MenuUnfoldOutlined
 import axios from 'axios';
 import { local_ip } from './constant';
 import { getThemeColor } from './utils/theme';
+import { getThemePack } from './pages/dingpan/utils/themePacks';
 import { isTradingDay, isAfterMarketClose, getNextTradingDay } from './utils/tradingDay';
 import { getStrategyMode } from './utils/strategyMode';
 import { syncStrategyMode, subscribeBuyPointBlockedPush } from './utils/buyPointWs';
@@ -439,6 +440,91 @@ const applyThemeColor = (theme) => {
   root.style.setProperty('--theme-gradient-end', theme.gradientEnd);
 };
 
+// 盯盘页默认页面背景色（与 dingpan/index.scss 中 var(--dp-page-bg, #f6f9ff) 的回退值一致）
+const DEFAULT_DINGPAN_PAGE_BG = '#f6f9ff';
+
+// 读取盯盘页当前主题包的页面背景色（pageBg，支持纯色与渐变）；未启用主题包时取默认背景
+const getDingpanPageBg = () => {
+  try {
+    const saved = localStorage.getItem('dingpan_themeColor');
+    const packId = saved ? (JSON.parse(saved)?.pack ?? '') : '';
+    return getThemePack(packId)?.tokens?.pageBg || DEFAULT_DINGPAN_PAGE_BG;
+  } catch (e) {
+    return DEFAULT_DINGPAN_PAGE_BG;
+  }
+};
+
+// 从 CSS 颜色/渐变字符串中按出现顺序提取颜色（hex 与 rgb/rgba）
+const extractCssColors = (str) => {
+  if (!str) return [];
+  const matches = [];
+  [/#[0-9a-f]{3,8}/gi, /rgba?\([^)]+\)/gi].forEach((re) => {
+    let m;
+    while ((m = re.exec(str))) {
+      matches.push({ index: m.index, value: m[0] });
+    }
+  });
+  return matches.sort((a, b) => a.index - b.index).map((m) => m.value);
+};
+
+// 任意 CSS 颜色值归一化为 6 位 hex（忽略透明度），无法识别时返回 null
+const normalizeToHex = (color) => {
+  if (!color) return null;
+  const str = String(color).trim();
+  if (str.startsWith('#')) {
+    let h = str.slice(1);
+    if (h.length === 3 || h.length === 4) {
+      h = h.slice(0, 3).split('').map((c) => c + c).join('');
+    }
+    if (h.length === 8) h = h.slice(0, 6);
+    return /^[0-9a-f]{6}$/i.test(h) ? `#${h.toLowerCase()}` : null;
+  }
+  const match = str.match(/^rgba?\(([^)]+)\)$/i);
+  if (match) {
+    const parts = match[1].split(',').map((p) => parseFloat(p));
+    if (parts.length >= 3 && parts.slice(0, 3).every((n) => !Number.isNaN(n))) {
+      return rgbToHex(parts[0], parts[1], parts[2]);
+    }
+  }
+  return null;
+};
+
+// 由盯盘页背景色构建完整主题：多色渐变取色带（主色取中间色），纯色由背景色派生
+const buildThemeFromDingpanBg = () => {
+  const pageBg = getDingpanPageBg();
+  const colors = extractCssColors(pageBg);
+  const fallback = { ...getThemeByKey(DEFAULT_THEME_KEY), key: 'dingpanBg', name: '盯盘背景色' };
+
+  if (colors.length >= 2) {
+    const gradientStart = colors[0];
+    const gradientEnd = colors[colors.length - 1];
+    const gradientMid = colors.length >= 3 ? colors[Math.floor((colors.length - 1) / 2)] : colors[0];
+    const primary = normalizeToHex(gradientMid) || normalizeToHex(gradientStart);
+    if (!primary) return fallback;
+    const rgb = hexToRgb(primary);
+    const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+    const darkHsl = { ...hsl, l: Math.max(0, hsl.l - 0.15) };
+    const darkerHsl = { ...hsl, l: Math.max(0, hsl.l - 0.3) };
+    const lightHsl = { ...hsl, l: Math.min(1, hsl.l + 0.18) };
+    return {
+      key: 'dingpanBg',
+      name: '盯盘背景色',
+      primary,
+      dark: rgbToHex(...Object.values(hslToRgb(darkHsl.h, darkHsl.s, darkHsl.l))),
+      darker: rgbToHex(...Object.values(hslToRgb(darkerHsl.h, darkerHsl.s, darkerHsl.l))),
+      light: rgbToHex(...Object.values(hslToRgb(lightHsl.h, lightHsl.s, lightHsl.l))),
+      gradientStart,
+      gradientMid,
+      gradientEnd,
+      rgb: `${rgb.r}, ${rgb.g}, ${rgb.b}`,
+    };
+  }
+
+  const solidHex = normalizeToHex(colors[0] || pageBg);
+  if (!solidHex) return fallback;
+  return { ...deriveThemeFromColor(solidHex, 1), key: 'dingpanBg', name: '盯盘背景色' };
+};
+
 const getInitialTheme = () => {
   try {
     const savedKey = localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME_KEY;
@@ -448,6 +534,9 @@ const getInitialTheme = () => {
         const { hex, alpha } = JSON.parse(savedCustomColor);
         return deriveThemeFromColor(hex, alpha);
       }
+    }
+    if (savedKey === 'dingpanBg') {
+      return buildThemeFromDingpanBg();
     }
     if (savedKey && savedKey.startsWith('gradient_')) {
       const gradient = getGradientByKey(savedKey.replace('gradient_', ''));
@@ -463,8 +552,9 @@ const getInitialTheme = () => {
 
 // 个人感受记录触发时间点：9:40 起每隔 20 分钟，午休（11:30-13:00）和收盘后不执行
 const PERSONAL_FEELING_TIMES = [
-  '09:40', '10:00', '10:20', '10:40', '11:00', '11:20',
-  '13:20', '13:40', '14:00', '14:20', '14:40',
+  // '09:40', '10:00', '10:20', '10:40', '11:00', '11:20',
+  // '13:20', '13:40', '14:00', '14:20', '14:40', 
+  '15:30'
 ];
 
 function App() {
@@ -517,6 +607,13 @@ function App() {
 
   const handleSelectGradient = (gradient) => {
     setCurrentTheme(buildThemeFromGradient(gradient));
+    setThemePickerVisible(false);
+  };
+
+  // 使用盯盘页当前主题包的页面背景色（pageBg）作为主题色
+  const dingpanPageBg = getDingpanPageBg();
+  const handleUseDingpanBg = () => {
+    setCurrentTheme(buildThemeFromDingpanBg());
     setThemePickerVisible(false);
   };
 
@@ -1697,7 +1794,7 @@ function App() {
         open={themePickerVisible}
         onCancel={() => setThemePickerVisible(false)}
         footer={null}
-        width={600}
+        width={860}
         centered
         className="theme-picker-modal"
       >
@@ -1726,31 +1823,41 @@ function App() {
                 </Tooltip>
               );
             })}
-          </div>
-          <div className="theme-picker-divider">
-            <span className="theme-picker-divider-text">主题色搭配组</span>
-          </div>
-          <div className="theme-picker-gradients">
             {THEME_GRADIENTS.map((gradient) => {
               const isActive = currentTheme.key === `gradient_${gradient.key}`;
               const gradientCss = `linear-gradient(135deg, ${gradient.colors.join(', ')})`;
               return (
                 <Tooltip key={gradient.key} title={`${gradient.name}（${gradient.colors.join(' · ')}）`}>
                   <div
-                    className={`theme-picker-gradient-item${isActive ? ' theme-picker-gradient-item-active' : ''}`}
+                    className={`theme-picker-item${isActive ? ' theme-picker-item-active' : ''}`}
                     onClick={() => handleSelectGradient(gradient)}
                   >
                     <div
-                      className="theme-picker-gradient-swatch"
+                      className="theme-picker-swatch"
                       style={{ background: gradientCss }}
                     >
                       {isActive && <CheckOutlined className="theme-picker-check" />}
                     </div>
-                    <div className="theme-picker-gradient-name">{gradient.name}</div>
+                    <div className="theme-picker-name">{gradient.name}</div>
                   </div>
                 </Tooltip>
               );
             })}
+            {/* 使用盯盘背景色：直接采用盯盘页当前主题包的页面背景色（pageBg） */}
+            <Tooltip title={`使用盯盘页当前背景色：${dingpanPageBg}`}>
+              <div
+                className={`theme-picker-item${currentTheme.key === 'dingpanBg' ? ' theme-picker-item-active' : ''}`}
+                onClick={handleUseDingpanBg}
+              >
+                <div
+                  className="theme-picker-swatch"
+                  style={{ background: dingpanPageBg }}
+                >
+                  {currentTheme.key === 'dingpanBg' && <CheckOutlined className="theme-picker-check" />}
+                </div>
+                <div className="theme-picker-name">使用盯盘背景色</div>
+              </div>
+            </Tooltip>
           </div>
           <div className="theme-picker-divider">
             <span className="theme-picker-divider-text">自定义颜色</span>

@@ -263,6 +263,27 @@ const JigouReportsModule = () => {
     }
   };
 
+  // 弹窗内 Cmd/Ctrl+S 快捷保存（相当于点击保存按钮）
+  const saveModalShortcutRef = useRef(null);
+
+  useEffect(() => {
+    saveModalShortcutRef.current = () => {
+      if (!addModalVisible || addModalSaving) return;
+      handleSaveResearchReport();
+    };
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && String(e.key).toLowerCase() === 's') {
+        e.preventDefault();
+        saveModalShortcutRef.current?.();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <div className="jigou-reports-page">
       <div className="page-header">

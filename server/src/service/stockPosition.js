@@ -957,6 +957,20 @@ const addStockRecord = ({ type, code, name, detail, pipelineStage }) => {
     return records;
 };
 
+// 持仓变动监听（2026-10-21 用户新增）：增加/删除持仓成功后通知外部注册的回调
+//（当前唯一消费方：快进快出「资金净流入阈值动态调节」的持仓增删→后台重跑回测→重算阈值钩子，
+// 见 emoQuickFundGateLive.js，回调在 index.js 启动时注册——事件化避免持仓模块反向依赖业务服务）
+const positionChangeListeners = new Set();
+const onPositionChange = (fn) => {
+    positionChangeListeners.add(fn);
+    return () => positionChangeListeners.delete(fn);
+};
+const notifyPositionChange = (payload) => {
+    positionChangeListeners.forEach((fn) => {
+        try { fn(payload); } catch (e) { console.error('持仓变动监听回调执行失败:', e.message); }
+    });
+};
+
 // 重写 addStockPosition，记录买入操作
 const addStockPositionWithRecord = (code, name, weight, extras = null) => {
     const result = addStockPosition(code, name, weight, extras);
@@ -970,6 +984,8 @@ const addStockPositionWithRecord = (code, name, weight, extras = null) => {
                 : `新增持仓：${name}（${code}）`,
             pipelineStage: 0,
         });
+        // 通知持仓变动（mirrorSource 标记回测镜像同步来源，供监听方决定是否跳过重跑回测）
+        notifyPositionChange({ action: 'add', code, name, mirrorSource: (extras && extras.mirror && extras.mirror.source) || null });
     }
     return result;
 };
@@ -987,6 +1003,8 @@ const deleteStockPositionWithRecord = (id) => {
             detail: `删除持仓：${stock.name}（${stock.code}）`,
             pipelineStage: null,
         });
+        // 通知持仓变动（删除=一笔交易完结，触发快进快出资金净流入阈值重算）
+        notifyPositionChange({ action: 'delete', id, code: stock.code, name: stock.name, mirrorSource: null });
         // 仅当该股票已无剩余持仓时才清理流水线数据
         const hasRemaining = readStockPositionsFile().some((s) => s.code === stock.code);
         if (!hasRemaining) {
@@ -1003,6 +1021,7 @@ const deleteStockPositionWithRecord = (id) => {
 module.exports = {
     addStockPosition: addStockPositionWithRecord,
     deleteStockPosition: deleteStockPositionWithRecord,
+    onPositionChange,
     updateStockPositionCost,
     updateStockPositionWeight,
     getStockPositionMainFund,

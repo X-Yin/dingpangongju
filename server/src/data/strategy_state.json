@@ -20,5 +20,11 @@
   },
   "volume_price_surge": {
     "lastTriggeredTime": "2026-10-21 09:58:50"
+  },
+  "tail_dip_buying": {
+    "checkedToday": "2026-10-21"
+  },
+  "panic_outflow": {
+    "lastTriggeredTime": "2026-10-21 14:48:57"
   }
 }

@@ -962,6 +962,27 @@ const ResearchReportModule = () => {
     }
   };
 
+  // Cmd/Ctrl+S 快捷保存：编辑研报时按下相当于点击保存按钮（无未保存修改时不触发请求）
+  const saveShortcutRef = useRef(null);
+
+  useEffect(() => {
+    saveShortcutRef.current = () => {
+      if (!currentItem || currentItem.type !== 'report' || !isModified) return;
+      handleSave();
+    };
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && String(e.key).toLowerCase() === 's') {
+        e.preventDefault();
+        saveShortcutRef.current?.();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // 用 ref 来跟踪当前正在编辑的项目 id，防止内容错位
   const currentEditingIdRef = useRef(null);
 

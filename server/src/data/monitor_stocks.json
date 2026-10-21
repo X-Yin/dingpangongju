@@ -690,15 +690,6 @@
     "addedAt": "2026-10-08 12:23:27"
   },
   {
-    "code": "sz300413",
-    "name": "芒果超媒",
-    "isImportant": false,
-    "blockName": "AI 应用",
-    "riskScore": " 8",
-    "isTech": false,
-    "addedAt": "2026-10-12 10:06:43"
-  },
-  {
     "code": "sz300182",
     "name": "捷成股份",
     "isImportant": false,
@@ -778,24 +769,6 @@
     "riskScore": " 8",
     "isTech": false,
     "addedAt": "2026-10-15 09:38:50"
-  },
-  {
-    "code": "sh603200",
-    "name": "上海洗霸",
-    "isImportant": false,
-    "blockName": "固态电池",
-    "riskScore": " 9",
-    "isTech": false,
-    "addedAt": "2026-10-15 09:52:45"
-  },
-  {
-    "code": "sh603533",
-    "name": "掌阅科技",
-    "isImportant": false,
-    "blockName": "AI 短剧",
-    "riskScore": " 9",
-    "isTech": false,
-    "addedAt": "2026-10-15 13:53:04"
   },
   {
     "code": "sh600241",

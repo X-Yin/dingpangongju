@@ -46,6 +46,10 @@ const { getDaPanData } = require('./dapan');
 const { getClsReqUrl, getClsReqStockTlineUrl, batchParallel, sleep } = require('../utils');
 const { useCLS } = require('../config');
 const { locateCrashSellPoint, describeCrashSell } = require('./buySellBacktest/engine/crashSellWindow');
+// 快进快出「资金净流入阈值动态调节」线上同步（2026-10-21 用户新增）：阈值由启动回测/持仓增删重跑
+// 回测的成交序列计算（连续 2 笔折算收益率未超 3% → 20 → 30 亿，任一笔超 3% → 回落 20 亿），
+// 状态落盘 emo_quick_fund_gate.json，科技进攻与攻防兼备（tech 腿）买点诊断共用
+const { getLiveFundInflowThreshold } = require('./emoQuickFundGateLive');
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
 const monitorAlarmsPath = path.resolve(__dirname, '../data/monitor_alarms.json');
@@ -2511,14 +2515,19 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
   // });
   // if (!check4Passed) allPassed = false;
 
-  // 检查2：最近5min资金净流入大于20亿
-  // 开盘初期（9:30-9:35 不满 5min）回退为"9:30 开盘至当前"累计净流入判定（sinceOpen）
+  // 检查2：最近5min资金净流入大于阈值（默认 20 亿）
+  // 快进快出「资金净流入阈值动态调节」线上同步（2026-10-21 用户新增）：阈值按 emo_quick_fund_gate.json
+  // 动态取值——每天首次启动回测 / 持仓增删后台重跑回测后，按成交序列（半仓 ×0.5 折算收益率）计算：
+  // 连续 2 笔未超 3% → 提高到 30 亿；任一笔超 3% → 回落 20 亿（见 emoQuickFundGateLive.js）；
+  // 状态缺失时回退固定 20 亿。开盘初期（9:30-9:35 不满 5min）回退为"9:30 开盘至当前"累计净流入判定（sinceOpen）
+  const fundGate = getLiveFundInflowThreshold();
+  const fundThreshold = fundGate.threshold;
   const inflowResult = getRecent5MinInflow();
-  const check5Passed = inflowResult.hasData && inflowResult.diff > 20;
+  const check5Passed = inflowResult.hasData && inflowResult.diff > fundThreshold;
   const inflowWindowText = inflowResult.sinceOpen ? '开盘至当前' : '最近 5 分钟';
   checks.push({
     id: 'fund_inflow',
-    title: inflowResult.sinceOpen ? '开盘至当前资金净流入大于 20 亿（开盘不满 5min）' : '最近 5min 资金净流入大于 20 亿',
+    title: inflowResult.sinceOpen ? `开盘至当前资金净流入大于 ${fundThreshold} 亿（开盘不满 5min）` : `最近 5min 资金净流入大于 ${fundThreshold} 亿`,
     passed: check5Passed,
     value: inflowResult.hasData ? `${inflowResult.diff >= 0 ? '+' : ''}${inflowResult.diff.toFixed(2)}亿` : '数据不足',
     detail: {
@@ -2526,10 +2535,11 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
       currentValue: inflowResult.currentTime ? inflowResult.currentValue : null,
       pastValue: inflowResult.pastTime ? inflowResult.pastValue : null,
       sinceOpen: !!inflowResult.sinceOpen,
+      fundGate,
     },
-    reason: check5Passed ? `${inflowWindowText}资金净流入 ${inflowResult.diff.toFixed(2)} 亿（${inflowResult.pastTime}→${inflowResult.currentTime}），超过 20 亿阈值`
+    reason: check5Passed ? `${inflowWindowText}资金净流入 ${inflowResult.diff.toFixed(2)} 亿（${inflowResult.pastTime}→${inflowResult.currentTime}），超过 ${fundThreshold} 亿阈值`
       : !inflowResult.hasData ? '资金数据不足，无法判断最近 5 分钟净流入'
-        : `${inflowWindowText}资金净流入 ${inflowResult.diff.toFixed(2)} 亿（${inflowResult.pastTime}→${inflowResult.currentTime}），未达到 20 亿阈值`,
+        : `${inflowWindowText}资金净流入 ${inflowResult.diff.toFixed(2)} 亿（${inflowResult.pastTime}→${inflowResult.currentTime}），未达到 ${fundThreshold} 亿阈值`,
   });
   if (!check5Passed) allPassed = false;
 
