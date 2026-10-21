@@ -5,9 +5,10 @@ const { getIndexTlineByDate } = require('./fupan');
 const { getAllIndexKlineData, getAllTechIndexData } = require('./emotion');
 const { getMonitorStocks } = require('./monitorStock');
 const { getSingleStockTlineDataByDate } = require('./stock');
+const { getFundSnapshot, getAmountSnapshot } = require('./fundSnapshot');
+const { isTradingDay } = require('../utils/tradingDay');
 const { getActiveProvider, getHeaders, buildRequestBody } = require('../utils/aiProvider');
 
-const amountSnapshotDir = path.resolve(__dirname, '../data/amountSnapshot');
 const fundSnapshotDir = path.resolve(__dirname, '../data/fundSnapshot');
 
 const STRATEGY_DEFINITIONS = {
@@ -283,15 +284,6 @@ const STRATEGY_DEFINITIONS = {
   },
 };
 
-const readJsonFile = (filePath) => {
-  try {
-    if (!fs.existsSync(filePath)) return null;
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  } catch (e) {
-    return null;
-  }
-};
-
 const timeKeyToHhmm = (timeKey) => {
   const str = String(timeKey).padStart(6, '0');
   return parseInt(str.substring(0, 4));
@@ -324,16 +316,17 @@ const getAvailableDates = () => {
       if (match) dates.add(match[1]);
     });
   }
+  // 交易日盘中：今天收盘快照尚未归档，也把今天纳入可用日期（快照数据由 fundSnapshot 实时兜底，
+  // 2026-10-21 用户新增——回测范围可包含今天，使用当日实时资金/成交量数据而非历史归档）
+  if (isTradingDay(new Date())) dates.add(dayjs().format('YYYYMMDD'));
   return Array.from(dates).sort().reverse();
 };
 
 const loadSnapshotData = (dateStr) => {
-  const fundPath = path.join(fundSnapshotDir, `${dateStr}.json`);
-  const amountPath = path.join(amountSnapshotDir, `${dateStr}.json`);
-  
-  const fundData = readJsonFile(fundPath) || [];
-  const amountData = readJsonFile(amountPath) || [];
-  
+  // 统一走 fundSnapshot 读取入口：交易日盘中查询当天且归档文件未生成时，自动回退为当日实时聚合快照
+  const fundData = getFundSnapshot(dateStr) || [];
+  const amountData = getAmountSnapshot(dateStr) || [];
+
   return { fundData, amountData };
 };
 

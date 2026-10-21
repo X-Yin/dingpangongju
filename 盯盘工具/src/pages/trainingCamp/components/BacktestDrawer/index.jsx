@@ -1960,11 +1960,19 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                 </div>
               ))}
             </div>
-            <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 10 }}>
-              回测范围：{fmtDate(displayResult.range?.startDate)} ~ {fmtDate(displayResult.range?.endDate)}
-              {displayResult.skippedDates && displayResult.skippedDates.length > 0
-                ? `｜跳过无数据交易日 ${displayResult.skippedDates.length} 天`
-                : ''}
+            <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span>
+                回测范围：{fmtDate(displayResult.range?.startDate)} ~ {fmtDate(displayResult.range?.endDate)}
+                {displayResult.skippedDates && displayResult.skippedDates.length > 0
+                  ? `｜跳过无数据交易日 ${displayResult.skippedDates.length} 天`
+                  : ''}
+              </span>
+              {/* 范围包含今天（交易日）：盘中回测使用当日实时资金/成交量数据，收盘归档前每次结果都会随行情变化 */}
+              {displayResult.range?.endDate === dayjs().format('YYYYMMDD') ? (
+                <Tooltip title="今天为交易日：收盘前（15:00）回测使用当日实时资金/成交量与分时数据（非历史归档），期末持仓按最新分时价估算；收盘归档后自动切换为全天固定数据。盘中每次回测都会重新计算当天数据。">
+                  <Tag color="orange" style={{ marginInlineEnd: 0 }}>含今日实时数据</Tag>
+                </Tooltip>
+              ) : null}
             </div>
           </div>
 

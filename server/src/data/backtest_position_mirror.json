@@ -1,24 +1,24 @@
 {
-  "lastSyncedEndDate": "20261020",
+  "lastSyncedEndDate": "20261021",
   "lastRange": {
     "startDate": "20260728",
-    "endDate": "20261020"
+    "endDate": "20261021"
   },
-  "lastSyncedAt": "2026-10-20 15:28:12",
+  "lastSyncedAt": "2026-10-21 12:32:51",
   "lastHoldings": [
     {
       "code": "sh600487",
       "name": "亨通光电",
-      "buyDate": "20261020",
-      "buyPrice": 52.71,
-      "buyTime": "10:50",
+      "buyDate": "20261021",
+      "buyPrice": 52.37,
+      "buyTime": "09:50",
       "weight": null
     }
   ],
   "added": [
-    "亨通光电(sh600487) 成本 52.71 买入日 2026-10-20"
+    "亨通光电(sh600487) 成本 52.37 买入日 2026-10-21"
   ],
   "skipped": [],
   "attempts": 0,
-  "attemptsDate": "2026-10-20"
+  "attemptsDate": "2026-10-21"
 }

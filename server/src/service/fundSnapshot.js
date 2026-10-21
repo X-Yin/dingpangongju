@@ -135,9 +135,46 @@ const getAvailableDates = () => {
   return files;
 };
 
+// ===== 盘中实时快照兜底（2026-10-21 用户新增）=====
+// 交易日当天收盘快照尚未落盘（15:01 定时归档）时，把今天也纳入回测范围并用实时数据：
+// 用当日实时轮询的主力资金/成交量数据（getAmountHistory，与 saveDailySnapshots 同源同口径）
+// 按完全相同的 5min 归属分桶聚合成「准快照」；收盘归档后文件存在，自动切回归档快照。
+// 非交易日或当日暂无轮询数据时返回 null（调用方回退为「无快照」的既有兜底逻辑）。
+// 30s 备忘缓存：一次回测会多处查询快照，避免重复读文件与聚合
+let liveSnapCache = null; // { at, data: { fund5min, amount5min } | null }
+const LIVE_SNAP_TTL_MS = 30 * 1000;
+const getLiveSnapshot5min = () => {
+  if (liveSnapCache && Date.now() - liveSnapCache.at < LIVE_SNAP_TTL_MS) return liveSnapCache.data;
+  let data = null;
+  try {
+    const today = dayjs().format('YYYYMMDD');
+    // 非交易日不提供实时快照（getAmountHistory 返回的是最近交易日的数据，不能误当成「今天」的）
+    if (isTradingDay(new Date())) {
+      const history = (getAmountHistory() || []).filter(i => i[1]?.date === today);
+      if (history.length > 0) {
+        data = { fund5min: aggregateByInterval(history, 5), amount5min: aggregateByInterval(history, 5) };
+      }
+    }
+  } catch (e) {
+    data = null;
+  }
+  liveSnapCache = { at: Date.now(), data };
+  return data;
+};
+
+// 当日收盘快照是否已归档（供回测缓存新鲜度校验：归档前当日范围的结果随盘中行情持续变化）
+const hasArchivedSnapshot = (date) => fs.existsSync(path.join(fundSnapshotDir, `${date}.json`));
+
 const getFundSnapshot = (date) => {
   const file = path.join(fundSnapshotDir, `${date}.json`);
-  if (!fs.existsSync(file)) return null;
+  if (!fs.existsSync(file)) {
+    // 交易日盘中：今天的收盘快照尚未生成 → 回退为当日实时聚合数据
+    if (date === dayjs().format('YYYYMMDD')) {
+      const live = getLiveSnapshot5min();
+      if (live) return live.fund5min;
+    }
+    return null;
+  }
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch (e) {
@@ -147,7 +184,14 @@ const getFundSnapshot = (date) => {
 
 const getAmountSnapshot = (date) => {
   const file = path.join(amountSnapshotDir, `${date}.json`);
-  if (!fs.existsSync(file)) return null;
+  if (!fs.existsSync(file)) {
+    // 交易日盘中：今天的收盘快照尚未生成 → 回退为当日实时聚合数据
+    if (date === dayjs().format('YYYYMMDD')) {
+      const live = getLiveSnapshot5min();
+      if (live) return live.amount5min;
+    }
+    return null;
+  }
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch (e) {
@@ -209,4 +253,6 @@ module.exports = {
   getSnapshotData,
   scheduleDailySnapshot,
   aggregateByInterval,
+  hasArchivedSnapshot,
+  getLiveSnapshot5min,
 };

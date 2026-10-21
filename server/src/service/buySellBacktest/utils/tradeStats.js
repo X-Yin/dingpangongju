@@ -1,5 +1,6 @@
+const path = require('path');
 const { batchParallel, fs, getKlineCached } = require('../deps');
-const { backtestCacheDir, getBacktestCacheFile, getBacktestCacheVersion } = require('../paths');
+const { DATA_DIR, backtestCacheDir, getBacktestCacheFile, getBacktestCacheVersion } = require('../paths');
 
 
 // ---------- 持仓交易日数（以项目根目录 YYYY交易日.json 交易日历为准）----------
@@ -8,6 +9,25 @@ const { backtestCacheDir, getBacktestCacheFile, getBacktestCacheVersion } = requ
 // 并以 holdingDaysApprox = true 标记为退化估算（前端显示 ≈）
 const tradingDayUtil = require('../../../utils/tradingDay');
 const normDateNum = (s) => String(s == null ? '' : s).replace(/-/g, '');
+
+// ---------- 盘中实时回测范围（2026-10-21 用户新增）----------
+// 结束日期为「今天（交易日）」时，回测数据随盘中行情持续变化（收盘快照 15:01 才归档落盘）：
+// 该范围的缓存不再永久有效——未归档时仅接受生成后短窗口内的结果（过期即重跑）；
+// 归档后仅接受快照落盘之后生成的结果（盘中早前的结果缺收盘前最后一段数据，不能冒充全天回测）。
+// 历史范围（endDate < 今天）不受影响，沿用常规缓存口径。
+const LIVE_RANGE_CACHE_TTL_MS = 10 * 60 * 1000;
+const beijingTodayStr = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
+const getLiveRangeMeta = (endDate) => {
+  const end = normDateNum(endDate);
+  const today = beijingTodayStr();
+  if (end !== today) return null; // 非当日范围
+  if (!tradingDayUtil.isTradingDay(new Date())) return null; // 非交易日（今天不在可用日期内）
+  const snapFile = path.join(DATA_DIR, 'fundSnapshot', `${today}.json`);
+  if (fs.existsSync(snapFile)) {
+    try { return { archivedAtMs: fs.statSync(snapFile).mtimeMs }; } catch { return null; }
+  }
+  return { archivedAtMs: null }; // 收盘快照未归档 → 盘中实时范围
+};
 
 // 为回测结果就地补充持仓交易日数（trades / currentHolding / stocks[].trades / stocks[].holding）：
 // holdingDays = 卖出日 - 买入日的交易日跨度；期末仍持仓的统计买入日至最近一个交易日（今日为交易日则含今日）；
@@ -147,6 +167,14 @@ const readCachedBacktest = (strategy, startDate, endDate) => {
     // 缓存版本校验：未写版本号的旧文件按 v1 计（未变更规则的策略继续命中，不重复回测）；
     // 规则已变更（版本号 > 1）的策略，旧缓存版本不一致即视为未命中并重跑
     if ((data.cacheVersion ?? 1) !== getBacktestCacheVersion(strategy)) return null;
+    // 当日实时范围的新鲜度校验（见上方 getLiveRangeMeta 说明）
+    const liveMeta = getLiveRangeMeta(endDate);
+    if (liveMeta) {
+      const gen = Number(data.generatedAt);
+      if (!Number.isFinite(gen)) return null; // 旧缓存无生成时间：当日范围一律视为过期重跑
+      if (liveMeta.archivedAtMs == null && Date.now() - gen > LIVE_RANGE_CACHE_TTL_MS) return null; // 盘中未归档：仅接受 10 分钟内的结果
+      if (liveMeta.archivedAtMs != null && gen < liveMeta.archivedAtMs) return null; // 已归档：仅接受归档后生成的结果
+    }
     return attachHoldingDays(data); // 读取时统一注入持仓交易日数（缓存文件本身不落盘该字段，兼容旧缓存）
   } catch {
     return null;
@@ -156,8 +184,9 @@ const readCachedBacktest = (strategy, startDate, endDate) => {
 const writeCachedBacktest = (strategy, startDate, endDate, result) => {
   try {
     if (!fs.existsSync(backtestCacheDir)) fs.mkdirSync(backtestCacheDir, { recursive: true });
-    // 落盘时写入当前规则版本号，供 readCachedBacktest 校验（规则变更后旧结果自动失效）
-    fs.writeFileSync(getBacktestCacheFile(strategy, startDate, endDate), JSON.stringify({ ...result, cacheVersion: getBacktestCacheVersion(strategy) }, null, 2), 'utf-8');
+    // 落盘时写入当前规则版本号，供 readCachedBacktest 校验（规则变更后旧结果自动失效）；
+    // generatedAt 为生成时间戳，供当日实时范围的新鲜度校验使用
+    fs.writeFileSync(getBacktestCacheFile(strategy, startDate, endDate), JSON.stringify({ ...result, cacheVersion: getBacktestCacheVersion(strategy), generatedAt: Date.now() }, null, 2), 'utf-8');
   } catch (e) {
     console.error('回测结果缓存写入失败:', e.message);
   }

@@ -7,5 +7,21 @@
     "buyTime": "09:47",
     "weight": 100,
     "costPrice": 52.62
+  },
+  {
+    "id": "sh600487_1792557171672_32vx",
+    "code": "sh600487",
+    "name": "亨通光电",
+    "buyDate": "2026-10-21",
+    "buyTime": "09:50",
+    "weight": 50,
+    "costPrice": 52.37,
+    "mirror": {
+      "strategy": "highest_3d_gain_emoquick",
+      "strategyName": "3日涨幅最大&三日情绪-30快进快出",
+      "syncedDate": "2026-10-21",
+      "buyDateRaw": "20261021",
+      "source": "backtest_position_mirror"
+    }
   }
 ]

@@ -294,7 +294,8 @@ const runTrend = async (workerCount) => {
 // ===== 自然月回测模式（--monthly）：把可用回放交易日按自然月拆分，逐月补测全部策略的缺失缓存 =====
 // 服务端「历史曲线」依赖「月 × 策略」粒度的回测缓存（月度整体收益 → 跨月累乘绘制策略累计曲线）
 const buildMonthRanges = () => {
-  // 含当日：当日资金快照在收盘（15:01）后生成，盘中不含当日 → 收盘后补测可将当月最后一个交易日纳入期末
+  // 含当日：交易日盘中今天经实时快照兜底也纳入范围（fundSnapshot 实时聚合，2026-10-21 起），
+  // 收盘（15:01）归档后当天数据固定，补测可将当月最后一个交易日纳入期末
   const dates = [...getTrainingCampDates()].filter(d => d <= beijingToday()).sort();
   const map = new Map(); // 'YYYYMM' -> { key, label, startDate, endDate, days }
   for (const d of dates) {
@@ -326,8 +327,9 @@ const runMonthlyTrend = async (workerCount) => {
   } catch (e) {
     console.error(`日K线预热失败（不影响后续流程，子进程将自行拉取）: ${e.message}`);
   }
-  // 预构建全部月度日期的回放数据缓存（已构建过的日期读缓存秒过；月度日期均早于今日且含资金快照）
-  await runPrebuild(months.flatMap(m => [...getTrainingCampDates()].filter(d => d >= m.startDate && d <= m.endDate).sort()), workerCount);
+  // 预构建月度日期的回放数据缓存（已构建过的日期读缓存秒过）；今天不预构建——当日回放数据随盘中行情变化
+  // 且构建结果不落盘（loadTrainingCampData 仅持久化过去日期），由策略线程现场实时构建
+  await runPrebuild(months.flatMap(m => [...getTrainingCampDates()].filter(d => d >= m.startDate && d <= m.endDate && d < beijingToday()).sort()), workerCount);
   // 逐月补测缺失缓存：单进程串行，月内日期数据只加载一次喂给整组缺失策略
   for (const m of months) {
     const missing = allIds.filter(id => !readCachedBacktest(id, m.startDate, m.endDate));

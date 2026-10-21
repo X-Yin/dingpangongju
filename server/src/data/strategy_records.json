@@ -62,7 +62,7 @@
   {
     "id": "526136299518c0b1",
     "time": "2026-10-21 09:58:50",
-    "read": false,
+    "read": true,
     "strategyId": "volume_price_surge",
     "title": "✅ 量价齐升",
     "description": "成交量放大 <strong>112亿</strong>（≥100亿），资金净流入88.9→121.8亿（≥10亿，流入增加），创业板5分钟上涨0.59%。量价资金三者共振，多方占优。",
