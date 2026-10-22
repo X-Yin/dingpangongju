@@ -3194,6 +3194,9 @@ const isLimitUpChange = (code, change) => {
 // 剔除并顺延下一只（顺延后对新的第一名重新判定）；返回 { pick, skipped }
 // ============================================================
 const TECH_GAIN_GAP_N = 3; // 科技进攻口径：3 日涨幅榜 → n = 3（百分点 / 抗分歧分）
+// 科技进攻 3 日涨幅过热门槛（2026-10-22 用户新增，与回测「3日涨幅最大」规则 10% × N 同口径）：
+// 最近 3 日累计涨幅 > 30% 的个股视为已过度上涨，直接不进入买点候选（也不参与榜单排名）
+const TECH_GAIN_CAP_PCT = 30;
 const pickTechCandidateWithGainGap = (list) => {
   const arr = Array.isArray(list) ? list : [];
   const skipped = [];
@@ -3373,11 +3376,14 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   ]);
 
   // 合并榜（与前端 mergedList / 飞书卡片同口径：仅纳入满足门槛的市场，按 3 日涨幅降序取前十），
+  // 先剔除最近 3 日涨幅 > 30% 的过热个股（2026-10-22 与回测 10% × N 规则同步），
   // 并在其上应用「涨幅领先但当日爆发力不足」顺延，得到唯一买点候选
   const mergedTop = [
     ...(gate?.cybGate?.passed === true ? cybMainList : []),
     ...(gate?.starGate?.passed === true ? starList : []),
-  ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
+  ]
+    .filter(s => !(Number.isFinite(Number(s.change3d)) && Number(s.change3d) > TECH_GAIN_CAP_PCT))
+    .sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
   const { pick: techPick, skipped: techGainGapSkipped } = pickTechCandidateWithGainGap(mergedTop);
 
   const pickGate = (g) => (g ? {

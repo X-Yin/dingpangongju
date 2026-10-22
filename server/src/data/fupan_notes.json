@@ -419,5 +419,14 @@
     "tagColor": "orange",
     "createdAt": "2026-10-21T09:44:59.118Z",
     "updatedAt": "2026-10-21T09:48:26.713Z"
+  },
+  {
+    "date": 20261022,
+    "title": "2026-10-22 复盘",
+    "content": "\n",
+    "tag": "情绪退潮",
+    "tagColor": "green",
+    "createdAt": "2026-10-22T07:43:56.437Z",
+    "updatedAt": "2026-10-22T07:43:56.437Z"
   }
 ]

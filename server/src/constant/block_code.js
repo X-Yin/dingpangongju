@@ -1483,5 +1483,20 @@ exports.default = [
         "blockName": "军工",
         "code": "sz002724",
         "name": "海洋王"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sh688686",
+        "name": "奥普特"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sh603341",
+        "name": "龙旗科技"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sh688097",
+        "name": "博众精工"
     }
 ]

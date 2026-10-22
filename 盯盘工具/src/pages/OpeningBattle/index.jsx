@@ -807,25 +807,29 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
     }
   }, [isExtreme, isDefense]);
 
-  // 市场门槛说明（标题下方展示）：仅展示满足指数 3 日线斜率买点门槛的市场的股票
+  // 市场门槛说明（标题下方展示）：仅展示满足指数 3 日线斜率买点门槛的市场的股票；
+  // 3 日涨幅过热（> 30%）个股已剔除（与回测 10% × N 规则同步）
   const gateNote = !data
     ? '正在检测创业板指 / 科创50 的 3 日线斜率买点门槛…'
-    : cybPassed && starPassed
+    : `${cybPassed && starPassed
       ? '创业板指、科创50 均满足买点门槛：两个市场合并按 3 日涨幅排名'
       : cybPassed
         ? '仅创业板指满足买点门槛：仅展示创业板 + 主板'
         : starPassed
           ? '仅科创50 满足买点门槛：仅展示科创板'
-          : '创业板指、科创50 均不满足买点门槛：暂无可展示标的';
+          : '创业板指、科创50 均不满足买点门槛：暂无可展示标的'}；已剔除最近 3 日涨幅 > 30% 的过热个股`;
 
-  // 合并榜单：仅纳入满足门槛的市场，按 3 日涨幅降序取前 10
+  // 合并榜单：仅纳入满足门槛的市场，先剔除最近 3 日涨幅 > 30% 的过热个股（2026-10-22 与回测 10% × N 规则同步），
+  // 再按 3 日涨幅降序取前 10
   const mergedList = useMemo(() => {
     const cybMainList = data?.markets?.cybMain || [];
     const starList = data?.markets?.star || [];
     return [
       ...(cybPassed ? cybMainList : []),
       ...(starPassed ? starList : []),
-    ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
+    ]
+      .filter(s => !(Number.isFinite(Number(s.change3d)) && Number(s.change3d) > 30))
+      .sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
   }, [data, cybPassed, starPassed]);
 
   // 情绪游资龙头列表（后端已按 delta 降序返回全部达标股；attack_defense 模式下也计算，供顺周期列展示）
@@ -887,6 +891,8 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
           options={STRATEGY_MODE_OPTIONS}
           onChange={setStrategyMode}
           popupMatchSelectWidth={false}
+          style={{ fontSize: 12 }}
+          classNames={{ popup: { root: 'ob-mode-dropdown' } }}
         />
         <span className="ob-total-tag">
           {isExtreme

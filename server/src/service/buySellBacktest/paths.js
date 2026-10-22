@@ -56,7 +56,8 @@ const CACHE_VERSION_BY_STRATEGY = {
   //   不足」顺延（2026-10-22 规则，与同批 N 日涨幅最大 / 两次买入 / 快进快出系列同口径）
   // v4（2026-10-22）：B 腿（极致胜率）顺周期候选池与 hot_money_extreme_win v33 同口径——
   //   连板准入按流通市值分档（> 100 亿元两连板 + 含两连板 5 日涨幅 > 40%；≤ 100 亿元四连板及以上）+ 新路径最大涨幅峰值 > 70% 且 < 100%
-  sci_attack_emo_win: 5,
+  // v6（2026-10-22）：A 风格（highest_3d_gain_emoquick）选股叠加「最近 N 日涨幅 > 10% × N 直接剔除」过热门槛
+  sci_attack_emo_win: 6,
   // v4（2026-10-17）：候选池新增「一律剔除创业板（30/301）与科创板（688）」
   // v3（2026-10-17）：候选池沿用「情绪游资-极致胜率」的题材黑名单（PCB/玻璃基板/光模块/液冷/通信/算力/芯片/靶材/电子气体/光刻胶/算力租赁，共享 constants.EXCLUDED_THEMES）
   // v2（2026-10-17）：卖点去掉龙头战法的「盘中 1 分钟内跳水 ≤ -3%」这一条（反向抱团龙头专用；共享模块 leaderSellMinute 的 disableMinutePlummet 开关）
@@ -71,38 +72,45 @@ const CACHE_VERSION_BY_STRATEGY = {
   // v5（2026-10-22）：选股新增「涨幅领先但当日爆发力不足」顺延——当前候选 N 日涨幅领先第二名 > N 个百分点
   //   且买点时刻抗分歧低于第2~5名均值达 N 分 → 剔除并顺延（买入明细追加 gain_gap_defer）；
   //   同时适用于快进快出 7 个、纯 N 日涨幅最大 7 个、两次买入 7 个与两次买入不同板块 4 个策略
-  highest_2d_gain_emoquick: 5,
-  highest_3d_gain_emoquick: 5,
-  highest_4d_gain_emoquick: 5,
-  highest_5d_gain_emoquick: 5,
-  highest_2d5_gain_emoquick: 5,
-  highest_3d5_gain_emoquick: 5,
-  highest_3d_reports_top5_gain_emoquick: 5,
+  // v6（2026-10-22）：选股新增「最近 N 日涨幅 > 10% × N 直接剔除」过热门槛（N.5 日窗口按 N+0.5 计；
+  //   「买入最高涨幅」「研报覆盖类」「两次买入不同板块系列」不适用）
+  highest_2d_gain_emoquick: 6,
+  highest_3d_gain_emoquick: 6,
+  highest_4d_gain_emoquick: 6,
+  highest_5d_gain_emoquick: 6,
+  highest_2d5_gain_emoquick: 6,
+  highest_3d5_gain_emoquick: 6,
+  // 研报覆盖快进快出：走 highest_3d_gain 选股时同样受 v6 过热门槛约束
+  highest_3d_reports_top5_gain_emoquick: 6,
   // v2（2026-10-22）：同上「涨幅领先但当日爆发力不足」顺延规则（首版为默认版本 1，未列此表）
-  highest_3d_gain_emoquick_emo10: 2,
-  highest_3d_gain_emoquick_emo20: 2,
-  highest_3d_gain_emoquick_emo30: 2,
-  highest_3d_gain_emoquick_g10: 2,
+  // v3（2026-10-22）：选股叠加「最近 3 日涨幅 > 30% 直接剔除」过热门槛
+  highest_3d_gain_emoquick_emo10: 3,
+  highest_3d_gain_emoquick_emo20: 3,
+  highest_3d_gain_emoquick_emo30: 3,
+  highest_3d_gain_emoquick_g10: 3,
   // 纯 N 日涨幅最大系列：v5 与快进快出系列同口径（新增「涨幅领先但当日爆发力不足」顺延）
-  highest_2d_gain: 5,
-  highest_3d_gain: 5,
-  highest_4d_gain: 5,
-  highest_5d_gain: 5,
-  highest_10d_gain: 5,
-  highest_2d5_gain: 5,
-  highest_3d5_gain: 5,
+  // v6（2026-10-22）：选股叠加「最近 N 日涨幅 > 10% × N 直接剔除」过热门槛
+  highest_2d_gain: 6,
+  highest_3d_gain: 6,
+  highest_4d_gain: 6,
+  highest_5d_gain: 6,
+  highest_10d_gain: 6,
+  highest_2d5_gain: 6,
+  highest_3d5_gain: 6,
   // v5（2026-10-22）：两次买入系列与 N 日涨幅最大同口径——新增「涨幅领先但当日爆发力不足」顺延
-  highest_2d_gain_two_buy: 5,
-  highest_3d_gain_two_buy: 5,
-  highest_4d_gain_two_buy: 5,
-  highest_5d_gain_two_buy: 5,
-  highest_2d5_gain_two_buy: 5,
-  highest_3d5_gain_two_buy: 5,
+  // v6（2026-10-22）：选股叠加「最近 N 日涨幅 > 10% × N 直接剔除」过热门槛
+  highest_2d_gain_two_buy: 6,
+  highest_3d_gain_two_buy: 6,
+  highest_4d_gain_two_buy: 6,
+  highest_5d_gain_two_buy: 6,
+  highest_2d5_gain_two_buy: 6,
+  highest_3d5_gain_two_buy: 6,
   // 两次买入（同一天）：v1（2026-10-20 创建）；v2（2026-10-20 改版）——当日不再因买点二次触发补买第二份，
   // 改为 14:55 当日盈利（14:55 价 vs 第一份买入价）> 2% 且未涨停时尾盘补买（否则等后续买点再买）；
   // 两份买入后成本线 = 两次买入价均值（统一成本线，条件7 止损与快进快出盘中止损共用）；
   // v3（2026-10-22）：选股新增「涨幅领先但当日爆发力不足」顺延
-  highest_3d_gain_two_buy_same_day: 3,
+  // v4（2026-10-22）：选股叠加「最近 3 日涨幅 > 30% 直接剔除」过热门槛
+  highest_3d_gain_two_buy_same_day: 4,
   // v5（2026-10-22）：同上「涨幅领先但当日爆发力不足」顺延
   highest_2d_gain_two_buy_diff_block: 5,
   highest_3d_gain_two_buy_diff_block: 5,

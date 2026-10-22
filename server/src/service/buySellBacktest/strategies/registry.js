@@ -73,6 +73,17 @@ for (const s of Object.values(STRATEGIES)) {
   if (isGainGapDescStrategy(s)) s.desc = `${s.desc}${GAIN_GAP_DEFER_DESC}`;
 }
 
+// 「最近 N 日涨幅超过 10% × N」过热门槛（2026-10-22 用户新增）：
+// 候选个股最近 N 日累计涨幅 > 10% × N 时直接剔除、不参与涨幅排名（如 3 日涨幅最大 → 最近 3 日涨幅 > 30% 不选；
+// 2.5 日 → 25%、3.5 日 → 35%）。适用于 N 日涨幅最大系列、N 日涨幅最大-两次买入系列与快进快出系列；
+// 「买入最高涨幅」无固定 N 日窗口、研报覆盖类按覆盖数排序、两次买入不同板块系列未纳入，均不适用
+const GAIN_CAP_DESC = '；N日涨幅过热门槛（2026-10-22 新增）：候选个股最近 N 日累计涨幅超过 10% × N 时直接剔除、不参与涨幅排名（如 3 日涨幅最大 → 最近 3 日涨幅 > 30% 不选；2.5 日 → 25%、3.5 日 → 35%）';
+const isGainCapDescStrategy = (s) => !!s && s.id !== 'highest_gain' && s.id.startsWith('highest_')
+  && s.id.includes('_gain') && !s.id.includes('reports') && !s.id.includes('diff_block');
+for (const s of Object.values(STRATEGIES)) {
+  if (isGainCapDescStrategy(s)) s.desc = `${s.desc}${GAIN_CAP_DESC}`;
+}
+
 // 盘中大跌强卖（2026-10-16 用户新增）：适用范围 = 除「情绪游资类（iceMode）」「极致胜率（extremeWinMode）」
 // 「反向抱团龙头（reverseLeaderMode）」外的全部策略（两次买入系列已内置同口径卖点，
 // 仅补字段不重复追加 desc）。规则：持仓当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT（-7%）时无条件卖出——

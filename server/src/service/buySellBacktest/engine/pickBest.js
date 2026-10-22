@@ -63,6 +63,15 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   //   不适用：买入最高涨幅（按触发时点当日盘中涨幅排序）与研报覆盖类（按覆盖数排序）。
   const applyGainGapRule = days != null && gainMode && !isReportStrategy && !gateIntradaySort;
 
+  // 「最近 N 日涨幅超过 10% × N」过热门槛（2026-10-22 用户新增）：
+  //   N 日涨幅最大系列、N 日涨幅最大-两次买入系列、快进快出系列（含 10×1/10×2/10×3 科技情绪快进快出）。
+  //   例：3 日涨幅最大 → 最近 3 日累计涨幅 > 30% 的个股直接不进入候选（不参与涨幅排名）；
+  //   N.5 日窗口按 10% × (N + 0.5) 计算（2.5 日 → 25%、3.5 日 → 35%）。
+  //   不适用：买入最高涨幅（按触发时点当日盘中涨幅排序、无固定 N 日窗口）、研报覆盖类（按覆盖数排序）、
+  //   两次买入不同板块系列（用户未纳入本次限制）。
+  const gainCapPct = days == null ? null : (halfDayAfternoon ? days + 0.5 : days) * 10;
+  const applyGainCap = gainCapPct != null && gainMode && !isReportStrategy && !strategyId.includes('diff_block');
+
   // 收集全部候选（与原 best/second 口径一致：按指标值排序，同值保持自选股原顺序）
   const candidates = [];
   const top5Candidates = isTop5ReportGainMode ? [] : null;
@@ -133,6 +142,8 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       val = computeWindowResilience(sc.code, winDates, dailyInfos, intradayResilience);
     }
     if (val == null || !Number.isFinite(val)) continue;
+    // 最近 N 日涨幅超过 10% × N 的个股视为已过度上涨，直接剔除、不进入候选
+    if (applyGainCap && val > gainCapPct) continue;
     candidates.push({
       sc,
       val,

@@ -163,6 +163,44 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   }
 }
 
+// 「切换模式」下拉面板：与卡片同一视觉体系（白底 + 细描边 + 层叠阴影 + 14px 圆角）
+// 面板通过 portal 挂载到 body 下，需用全局规则，不能嵌在页面容器内
+.ob-mode-dropdown.ant-select-dropdown {
+  min-width: 168px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid $ob-border;
+  border-radius: 14px;
+  box-shadow: $ob-shadow-card;
+  overflow: hidden;
+
+  .ant-select-item {
+    min-height: auto;
+    padding: 7px 10px;
+    border-radius: 9px;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.45;
+    color: #475569;
+    transition: background-color 0.18s ease, color 0.18s ease;
+  }
+
+  .ant-select-item-option-active:not(.ant-select-item-option-selected) {
+    background: rgba(148, 163, 184, 0.12);
+    color: #0f172a;
+  }
+
+  .ant-select-item-option-selected {
+    color: #e11d48;
+    font-weight: 700;
+    background: rgba(225, 29, 72, 0.08);
+
+    .ant-select-item-option-state {
+      color: #e11d48;
+    }
+  }
+}
+
 // ==================== Colors ====================
 .ob-up { color: #e11d48; }
 .ob-down { color: #059669; }
@@ -706,6 +744,12 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     position: relative;
     z-index: 1;
     margin-bottom: 10px;
+  }
+
+  .ob-module-switch {
+    ::global(.ant-select-content) {
+      font-size: 12px !important;
+    }
   }
 
   .ob-module-title {
