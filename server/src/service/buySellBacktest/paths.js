@@ -45,12 +45,18 @@ const CACHE_VERSION_BY_STRATEGY = {
   // v4（2026-10-17）：买点新增指数门禁「上证指数（sh000001）3 日线分时斜率为正」才可买入，否则该桶跳过
   // v3（2026-10-17）：选股改为「过去 10 个交易日四连板及以上」；买点改为「过去 10 日出现死叉（强度分由高于差劲分转为一度低于差劲分）且死叉后未提前达标，今日盘中首次 强度分−差劲分 ≥ 30」（差劲分/强度分改为当日实时口径）
   // v2（2026-10-17）：卖点新增⑩「盘中 1 分钟内跳水 ≤ -3%」（共享模块 leaderSellMinute 扩展）
-  hot_money_extreme_win: 32,
+  // v33（2026-10-22）：候选池连板准入按流通市值分档——流通市值 > 100 亿元者「两连板 + 含两连板在内连续 5 日累计涨幅 > 40%」即可，
+  //   ≤ 100 亿元（含市值缺失）者仍需四连板及以上；新路径新增「最多 10 日最精准窗口区间最大涨幅 > 70%」下限（形成 70%~100% 区间）
+  hot_money_extreme_win: 33,
   // v3（2026-10-21）：B 腿（极致胜率）新路径选股加严，与 hot_money_extreme_win v32 同口径——波动窗口含峰值日本身 + 峰值日（含）至买点前收盘跌幅 < -9% 至多 1 次
   // v2（2026-10-20）：B 风格（情绪游资-极致胜率）双腿买入新增时间门禁「每天 13:30 之后不买」（13:30 桶本身可买；
   //   与 hot_money_extreme_win v31 同口径）；A 风格（科技进攻·快进快出）不受影响
   // v1（2026-10-19）：策略创建（A 风格快进快出 + B 风格极致胜率双腿，风格独占 + 科技进攻抢仓）
-  sci_attack_emo_win: 3,
+  // v5（2026-10-19）：A 风格（科技进攻·快进快出，highest_3d_gain_emoquick）选股新增「涨幅领先但当日爆发力
+  //   不足」顺延（2026-10-22 规则，与同批 N 日涨幅最大 / 两次买入 / 快进快出系列同口径）
+  // v4（2026-10-22）：B 腿（极致胜率）顺周期候选池与 hot_money_extreme_win v33 同口径——
+  //   连板准入按流通市值分档（> 100 亿元两连板 + 含两连板 5 日涨幅 > 40%；≤ 100 亿元四连板及以上）+ 新路径最大涨幅峰值 > 70% 且 < 100%
+  sci_attack_emo_win: 5,
   // v4（2026-10-17）：候选池新增「一律剔除创业板（30/301）与科创板（688）」
   // v3（2026-10-17）：候选池沿用「情绪游资-极致胜率」的题材黑名单（PCB/玻璃基板/光模块/液冷/通信/算力/芯片/靶材/电子气体/光刻胶/算力租赁，共享 constants.EXCLUDED_THEMES）
   // v2（2026-10-17）：卖点去掉龙头战法的「盘中 1 分钟内跳水 ≤ -3%」这一条（反向抱团龙头专用；共享模块 leaderSellMinute 的 disableMinutePlummet 开关）
@@ -62,34 +68,46 @@ const CACHE_VERSION_BY_STRATEGY = {
   // 阈值 = ceil(参与计数的科技股数 × 20%)，取代 v2 的「创业板指斜率负收紧为 15」；
   // 其余策略仍为固定 30 只。该变更同时影响强卖豁免①（10:00 前买点再次触发，内部复用 runBuyPointDiagnosis）。
   // v2（2026-10-19）：斜率收紧（已废弃，被 v3 取代）
-  highest_2d_gain_emoquick: 4,
-  highest_3d_gain_emoquick: 4,
-  highest_4d_gain_emoquick: 4,
-  highest_5d_gain_emoquick: 4,
-  highest_2d5_gain_emoquick: 4,
-  highest_3d5_gain_emoquick: 4,
-  highest_3d_reports_top5_gain_emoquick: 4,
-  highest_2d_gain: 4,
-  highest_3d_gain: 4,
-  highest_4d_gain: 4,
-  highest_5d_gain: 4,
-  highest_10d_gain: 4,
-  highest_2d5_gain: 4,
-  highest_3d5_gain: 4,
-  highest_2d_gain_two_buy: 4,
-  highest_3d_gain_two_buy: 4,
-  highest_4d_gain_two_buy: 4,
-  highest_5d_gain_two_buy: 4,
-  highest_2d5_gain_two_buy: 4,
-  highest_3d5_gain_two_buy: 4,
+  // v5（2026-10-22）：选股新增「涨幅领先但当日爆发力不足」顺延——当前候选 N 日涨幅领先第二名 > N 个百分点
+  //   且买点时刻抗分歧低于第2~5名均值达 N 分 → 剔除并顺延（买入明细追加 gain_gap_defer）；
+  //   同时适用于快进快出 7 个、纯 N 日涨幅最大 7 个、两次买入 7 个与两次买入不同板块 4 个策略
+  highest_2d_gain_emoquick: 5,
+  highest_3d_gain_emoquick: 5,
+  highest_4d_gain_emoquick: 5,
+  highest_5d_gain_emoquick: 5,
+  highest_2d5_gain_emoquick: 5,
+  highest_3d5_gain_emoquick: 5,
+  highest_3d_reports_top5_gain_emoquick: 5,
+  // v2（2026-10-22）：同上「涨幅领先但当日爆发力不足」顺延规则（首版为默认版本 1，未列此表）
+  highest_3d_gain_emoquick_emo10: 2,
+  highest_3d_gain_emoquick_emo20: 2,
+  highest_3d_gain_emoquick_emo30: 2,
+  highest_3d_gain_emoquick_g10: 2,
+  // 纯 N 日涨幅最大系列：v5 与快进快出系列同口径（新增「涨幅领先但当日爆发力不足」顺延）
+  highest_2d_gain: 5,
+  highest_3d_gain: 5,
+  highest_4d_gain: 5,
+  highest_5d_gain: 5,
+  highest_10d_gain: 5,
+  highest_2d5_gain: 5,
+  highest_3d5_gain: 5,
+  // v5（2026-10-22）：两次买入系列与 N 日涨幅最大同口径——新增「涨幅领先但当日爆发力不足」顺延
+  highest_2d_gain_two_buy: 5,
+  highest_3d_gain_two_buy: 5,
+  highest_4d_gain_two_buy: 5,
+  highest_5d_gain_two_buy: 5,
+  highest_2d5_gain_two_buy: 5,
+  highest_3d5_gain_two_buy: 5,
   // 两次买入（同一天）：v1（2026-10-20 创建）；v2（2026-10-20 改版）——当日不再因买点二次触发补买第二份，
   // 改为 14:55 当日盈利（14:55 价 vs 第一份买入价）> 2% 且未涨停时尾盘补买（否则等后续买点再买）；
-  // 两份买入后成本线 = 两次买入价均值（统一成本线，条件7 止损与快进快出盘中止损共用）
-  highest_3d_gain_two_buy_same_day: 2,
-  highest_2d_gain_two_buy_diff_block: 4,
-  highest_3d_gain_two_buy_diff_block: 4,
-  highest_4d_gain_two_buy_diff_block: 4,
-  highest_5d_gain_two_buy_diff_block: 4,
+  // 两份买入后成本线 = 两次买入价均值（统一成本线，条件7 止损与快进快出盘中止损共用）；
+  // v3（2026-10-22）：选股新增「涨幅领先但当日爆发力不足」顺延
+  highest_3d_gain_two_buy_same_day: 3,
+  // v5（2026-10-22）：同上「涨幅领先但当日爆发力不足」顺延
+  highest_2d_gain_two_buy_diff_block: 5,
+  highest_3d_gain_two_buy_diff_block: 5,
+  highest_4d_gain_two_buy_diff_block: 5,
+  highest_5d_gain_two_buy_diff_block: 5,
 };
 const getBacktestCacheVersion = (strategy) => CACHE_VERSION_BY_STRATEGY[strategy] || 1;
 

@@ -92,7 +92,7 @@
   {
     "code": "sz300308",
     "name": "中际旭创",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "光模块",
     "riskScore": 2,
     "isTech": true,
@@ -499,7 +499,7 @@
   {
     "code": "sh688825",
     "name": "长鑫科技",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "存储",
     "riskScore": "2",
     "isTech": true,
@@ -771,15 +771,6 @@
     "addedAt": "2026-10-15 09:38:50"
   },
   {
-    "code": "sh600241",
-    "name": "时代万恒",
-    "isImportant": false,
-    "blockName": "锂电池",
-    "riskScore": " 8",
-    "isTech": false,
-    "addedAt": "2026-10-15 22:19:14"
-  },
-  {
     "code": "sh600967",
     "name": "内蒙一机",
     "isImportant": false,
@@ -858,15 +849,6 @@
     "riskScore": " 9",
     "isTech": false,
     "addedAt": "2026-10-20 13:52:34"
-  },
-  {
-    "code": "sz002058",
-    "name": "紫竹高科",
-    "isImportant": false,
-    "blockName": "固态电池",
-    "riskScore": " 8",
-    "isTech": false,
-    "addedAt": "2026-10-20 14:00:57"
   },
   {
     "code": "sh688469",

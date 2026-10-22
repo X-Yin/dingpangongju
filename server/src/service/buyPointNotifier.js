@@ -177,11 +177,14 @@ const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, top
       const d = gainers?.data || {};
       const cybPassed = d.cybGate?.passed === true;
       const starPassed = d.starGate?.passed === true;
-      // 仅纳入满足买点门槛的市场，按 3 日涨幅降序合并前十（与前端 mergedList 口径完全一致）
-      const merged = [
-        ...(cybPassed ? (d.markets?.cybMain || []) : []),
-        ...(starPassed ? (d.markets?.star || []) : []),
-      ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
+      // 仅纳入满足买点门槛的市场，按 3 日涨幅降序合并前十（与前端 mergedList 口径完全一致）；
+      // 优先使用后端已合并并应用「涨幅领先但当日爆发力不足」顺延的 mergedTop（与回测口径一致）
+      const merged = Array.isArray(d.mergedTop) && d.mergedTop.length > 0
+        ? d.mergedTop
+        : [
+            ...(cybPassed ? (d.markets?.cybMain || []) : []),
+            ...(starPassed ? (d.markets?.star || []) : []),
+          ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
       const toRow = (s) => ({
         stockName: s.stockName,
         code: s.code,
@@ -190,8 +193,11 @@ const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, top
         change3d: s.change3d,
         resilienceScore: s.resilienceScore,
       });
-      // 买点候选：与前端 globalPick 一致，榜单内首个满足买点资格且未封涨停的标的
-      const candidate = merged.find((s) => s.matchesBuyPoint && !s.isLimitUp) || null;
+      // 买点候选：后端已按「涨幅领先但当日爆发力不足」规则顺延后的唯一候选（pickCode）；
+      // 缺省时回退为榜单内首个满足买点资格且未封涨停的标的
+      const candidate = d.pickCode
+        ? (merged.find((s) => s.code === d.pickCode) || null)
+        : (merged.find((s) => s.matchesBuyPoint && !s.isLimitUp) || null);
       const top3 = merged.slice(0, 3);
       resultStocks = top3.map((s) => ({
         ...toRow(s),

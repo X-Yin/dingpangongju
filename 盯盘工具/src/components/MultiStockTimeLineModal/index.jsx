@@ -562,7 +562,7 @@ const MultiStockTimeLineModal = ({
   // 坐标轴缩放：默认缩小（自动缩放，展示完整历史区间）；
   // 放大时右侧价格轴范围固定为各股票「当前涨幅」的最小值~最大值（非历史极值），
   // 让涨幅相近的股票最大限度在可视区纵向展开，历史高低点超出范围的部分允许被裁掉
-  const [axisZoomIn, setAxisZoomIn] = useState(false);
+  const [axisZoomIn, setAxisZoomIn] = useState(Boolean(Number(localStorage.getItem('die_jia_fen_shi_guan_cha_axis_zoomin'))));
 
   // 悬浮 tag 时高亮对应股票曲线，其他曲线虚化
   const applyHoverHighlight = useCallback((code) => {
@@ -1905,7 +1905,10 @@ const MultiStockTimeLineModal = ({
                     ? '坐标轴已放大（按当前涨幅范围展开，点击恢复自动缩放）'
                     : '坐标轴放大：Y轴范围固定为当前涨幅最小~最大，便于区分涨幅相近的股票'}
                   onClick={() => {
-                    setAxisZoomIn((v) => !v);
+                    setAxisZoomIn((v) => {
+                      localStorage.setItem('die_jia_fen_shi_guan_cha_axis_zoomin', Number(!v))
+                      return !v;
+                    });
                     // 切换后重建图表以应用/取消固定坐标轴范围
                     setChartReloadVersion((v) => v + 1);
                   }}

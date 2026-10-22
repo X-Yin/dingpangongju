@@ -104,6 +104,35 @@ const buildCycleDeferCheck = (emoCycSkipped) => {
   };
 };
 
+// 快进快出类「涨幅领先但当日爆发力不足」顺延明细（2026-10-22 用户新增）：
+// 当前候选 N 日涨幅领先第二名 > N 个百分点，且买点时刻抗分歧低于第2~5名抗分歧均值达 N 分时，
+// 视为仅靠历史涨幅、当日爆发力不足 → 剔除并顺延，追加 gain_gap_defer 买入明细项
+const buildGainGapDeferCheck = (gainGapSkipped) => {
+  const skippedStocks = (gainGapSkipped || []).map(s => ({
+    code: s.code,
+    name: s.name,
+    gain: s.gain != null ? Number(s.gain) : null, // N 日窗口涨幅
+    gainLead: s.gainLead != null ? Number(s.gainLead) : null, // 领先第二名百分点
+    resilience: s.resilience != null ? Number(s.resilience) : null, // 买点时刻抗分歧
+    avgResilience: s.avgResilience != null ? Number(s.avgResilience) : null, // 第2~5名抗分歧均值
+    diff: s.diff != null ? Number(s.diff) : null, // 均值 − 该股
+    threshold: s.threshold != null ? Number(s.threshold) : null,
+  }));
+  const skipText = skippedStocks
+    .map(s => `${s.name}（${s.threshold}日涨幅 ${s.gain != null ? s.gain.toFixed(2) + '%' : '--'}、领先第二名 ${s.gainLead != null ? s.gainLead.toFixed(2) : '--'} 个百分点；抗分歧 ${s.resilience != null ? s.resilience.toFixed(2) : '--'}，低于第2~5名均值 ${s.avgResilience != null ? s.avgResilience.toFixed(2) : '--'} 达 ${s.diff != null ? s.diff.toFixed(2) : '--'} 分）`)
+    .join('、');
+  return {
+    id: 'gain_gap_defer',
+    title: '快进快出涨幅领先但当日爆发力不足过滤',
+    passed: true,
+    value: skippedStocks.length > 0 ? `顺延 ${skippedStocks.length} 只` : '无领先但爆发力不足候选',
+    skippedStocks,
+    reason: skippedStocks.length > 0
+      ? `前序候选 N 日涨幅领先第二名 > N 个百分点、但买点时刻抗分歧低于第2~5名均值达 N 分，已剔除并顺延：${skipText}（该类个股仅历史涨幅大、当日爆发力不强，顺延至排名下一只）`
+      : '当前候选未触发「涨幅领先但当日爆发力不足」过滤',
+  };
+};
+
 // 情绪快进快出标注明细项（highest_{N}d_gain_emoquick 系列）：标注本次买入是否为「快进快出」买入
 //（触发条件二选一：上一交易日科技情绪 3 日 EMA < -30；或上上个、上个交易日的当日科技情绪原始分
 // 均处 -30~-10 区间且回升）——是则该笔持仓不走通用 7 条件卖点、买入次日 10:00 强制卖出；
@@ -214,10 +243,11 @@ const withResilienceGateInfo = (buyInfo, picked) => {
   const hasLimitUp = Array.isArray(picked.limitUpSkipped) && picked.limitUpSkipped.length > 0;
   const hasOneWord = Array.isArray(picked.prevOneWordSkipped) && picked.prevOneWordSkipped.length > 0;
   const hasEmoCyc = Array.isArray(picked.emoCycSkipped) && picked.emoCycSkipped.length > 0;
+  const hasGainGap = Array.isArray(picked.gainGapSkipped) && picked.gainGapSkipped.length > 0;
   const hasGlobalSkip = Array.isArray(picked.globalResilienceSkipped) && picked.globalResilienceSkipped.length > 0;
   const hasGateSkip = Array.isArray(picked.skipped) && picked.skipped.length > 0;
   // 早返回：既没有分数也没有任何顺延信息，也没有情绪快进快出标注
-  if (picked.resilienceScore == null && !picked.emoQuickOut && !hasLimitUp && !hasOneWord && !hasEmoCyc && !hasGlobalSkip && !hasGateSkip) return buyInfo;
+  if (picked.resilienceScore == null && !picked.emoQuickOut && !hasLimitUp && !hasOneWord && !hasEmoCyc && !hasGainGap && !hasGlobalSkip && !hasGateSkip) return buyInfo;
   let buyReason = buyInfo.buyReason;
   const buyChecks = [...(buyInfo.buyChecks || [])];
   if (hasLimitUp) {
@@ -230,6 +260,10 @@ const withResilienceGateInfo = (buyInfo, picked) => {
   if (hasEmoCyc) {
     // 顺/逆周期过滤顺延：追加 cycle_defer 明细项（除情绪游资/三日情绪冰点/尾盘抄底外的全部策略）
     buyChecks.push(buildCycleDeferCheck(picked.emoCycSkipped));
+  }
+  if (hasGainGap) {
+    // 快进快出类：涨幅领先但当日爆发力不足顺延 → gain_gap_defer
+    buyChecks.push(buildGainGapDeferCheck(picked.gainGapSkipped));
   }
   if (picked.resilienceScore != null) {
     // 全局最低抗分歧 ≥ 9 + 门槛策略专项 ≥ 11（RESILIENCE_GATE_STRATEGY_IDS）
@@ -247,6 +281,7 @@ const withResilienceGateInfo = (buyInfo, picked) => {
   if (hasLimitUp) suffixParts.push('前序股票涨停');
   if (hasOneWord) suffixParts.push('前序股票昨日一字板');
   if (hasEmoCyc) suffixParts.push('前序股票逆周期');
+  if (hasGainGap) suffixParts.push('前序股票涨幅领先但当日爆发力不足');
   if (hasGlobalSkip) suffixParts.push(`前序股票买点抗分歧<${GLOBAL_RESILIENCE_MIN}`);
   if (hasGateSkip) suffixParts.push(`前序股票抗分歧<${RESILIENCE_GATE_MIN}`);
   if (suffixParts.length > 0) {

@@ -66,7 +66,7 @@ const {
 } = require('./extremeWinScores');
 // B 风格·顺周期腿候选池 + 死叉口径
 const {
-  LOOKBACK_DAYS, MIN_BOARD_COUNT, DEATH_CROSS_WINDOW, DELTA_MIN,
+  LOOKBACK_DAYS, BASE_MIN_BOARD_COUNT, DEATH_CROSS_WINDOW, DELTA_MIN,
   PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
   computeCrossInfo, buildExtremeWinPool,
 } = require('./extremeWinPool');
@@ -176,7 +176,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
   try {
     const presetAll = new Set();
     for (const d of rangeDates) {
-      const { stocks } = await getRecentMultiLianbanStocks(d, LOOKBACK_DAYS, MIN_BOARD_COUNT);
+      const { stocks } = await getRecentMultiLianbanStocks(d, LOOKBACK_DAYS, BASE_MIN_BOARD_COUNT);
       for (const s of stocks) presetAll.add(s.code);
     }
     if (presetAll.size > 0) await ensureBarsForCodes(presetAll);

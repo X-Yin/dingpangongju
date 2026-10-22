@@ -249,7 +249,8 @@ const getTopLianbanBoardStocks = (dateStr, topN = 1, excludeBoards = []) => {
 };
 
 // 从 lianbanSnapshot 某日期中取当日所有 ≥minBoardCount 连板的个股（minBoardCount 默认 3）
-// 返回 [{ code: 'shxxxxxx', name, lianbanCount, board }]
+// 返回 [{ code: 'shxxxxxx', name, lianbanCount, board, floatMarketValueYi }]
+//   floatMarketValueYi = 当日快照流通市值（亿元，取自 quote.floatMarketValueYi）；缺失时为 null
 const getMultiLianbanStocks = (dateStr, minBoardCount = 3) => {
   const data = readLianbanSnapshot(dateStr);
   if (!data || !Array.isArray(data.themes)) return [];
@@ -260,11 +261,13 @@ const getMultiLianbanStocks = (dateStr, minBoardCount = 3) => {
       if (Number.isFinite(cnt) && cnt >= minBoardCount) {
         const code = st.marketCode || st.code;
         if (!code) continue;
+        const rawFmv = st.quote ? Number(st.quote.floatMarketValueYi) : null;
         out.push({
           code,
           name: st.name || st.code || code,
           lianbanCount: cnt,
           board: theme.name || theme.board || '',
+          floatMarketValueYi: Number.isFinite(rawFmv) && rawFmv > 0 ? rawFmv : null,
         });
       }
     }
@@ -287,6 +290,19 @@ const getRecentMultiLianbanStocks = async (dateStr, lookbackDays = 20, minBoardC
     }
   }
   return { stocks: Array.from(map.values()), dates };
+};
+
+// 给定回测日期 D，返回过去 lookbackDays 个交易日（严格不含当日 D）内每一次出现的连板个股记录
+// （不做 code 合并，同一只股票在不同快照日各返回一条；供「两连板 + 5 日涨幅」等多事件判定使用）
+// 返回 { stocks: [{ code, name, lianbanCount, board, date, floatMarketValueYi }], dates: ['YYYYMMDD'] }
+const getRecentMultiLianbanOccurrences = async (dateStr, lookbackDays = 20, minBoardCount = 2) => {
+  const dates = (await getPastTradingDates(dateStr, lookbackDays)).map(String);
+  const out = [];
+  for (const d of dates) {
+    const list = getMultiLianbanStocks(d, minBoardCount);
+    for (const s of list) out.push({ ...s, date: d });
+  }
+  return { stocks: out, dates };
 };
 
 // 个股「放量比」：昨日成交量 v 相对「更前 3 个交易日日均量」的比值 (v_y − avg3) / avg3
@@ -589,6 +605,7 @@ module.exports = {
   getStockCloseOnOrBefore,
   getPastTradingDates,
   getRecentMultiLianbanStocks,
+  getRecentMultiLianbanOccurrences,
   stockVolumeRatio,
   stockPriorAvgVolume,
   stockVolumeRatioAt,

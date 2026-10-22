@@ -55,6 +55,14 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   const gateEnabled = RESILIENCE_GATE_STRATEGY_IDS.has(strategyId);
   const gateIntradaySort = RESILIENCE_GATE_INTRADAY_SORT_IDS.has(strategyId);
 
+  // 按 N 日窗口涨幅排名的策略「涨幅领先但当日爆发力不足」顺延规则（2026-10-22 用户新增，同日扩展至
+  // 全部按 N 日窗口涨幅排名的策略：N 日涨幅最大、N 日涨幅最大-两次买入、快进快出系列）：
+  //   对当前排名第一的候选：若其 N 日涨幅领先第二名 > N 个百分点，且买点触发时点抗分歧分数低于
+  //   「第二名~第五名」均值达 N 分（均值 − 该股 ≥ N），说明它只是历史涨幅大、当日爆发力不强 → 剔除并顺延，
+  //   顺延后对新排名第一的候选重新按同规则判定（循环内自然继续）。
+  //   不适用：买入最高涨幅（按触发时点当日盘中涨幅排序）与研报覆盖类（按覆盖数排序）。
+  const applyGainGapRule = days != null && gainMode && !isReportStrategy && !gateIntradaySort;
+
   // 收集全部候选（与原 best/second 口径一致：按指标值排序，同值保持自选股原顺序）
   const candidates = [];
   const top5Candidates = isTop5ReportGainMode ? [] : null;
@@ -144,7 +152,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     const restGroup = top5Candidates.filter(c => c.reportCount < threshold).sort((a, b) => b.gain - a.gain);
     ordered = topGroup.concat(restGroup).map(c => ({ sc: c.sc, metric: c.reportCount }));
   } else {
-    ordered = candidates.slice().sort((a, b) => b.val - a.val).map(c => ({ sc: c.sc, metric: c.metric }));
+    ordered = candidates.slice().sort((a, b) => b.val - a.val).map(c => ({ sc: c.sc, metric: c.metric, val: c.val }));
   }
 
   // 抗分歧≥11 门槛：门槛策略从排名最高者起向后找第一只满足的股票；其余策略不做校验，
@@ -157,6 +165,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   const prevOneWordSkipped = []; // 因上一交易日一字板被顺延跳过的候选（全策略通用，追加 one_word_board_defer 买入明细）
   const emoCycSkipped = []; // 因逆周期（与创业板指负相关）被顺延跳过的候选（除情绪游资/三日情绪冰点/尾盘抄底外的全部策略，追加 cycle_defer 买入明细）
   const stockSlopeSkipped = []; // 因个股 MA3 切线正斜率连续天数 > 4 被顺延跳过
+  const gainGapSkipped = []; // 快进快出类：N 日涨幅领先第二名 > N 个百分点但买点时刻抗分歧低于第2~5名均值达 N 分被顺延跳过
   // 个股斜率过滤触发条件：**仅指数今日盘中由负转正当日**（turnedPosToday=true）
   // 过滤规则：个股 MA3 切线正斜率连续天数 > 4 → 顺延下一只（= 4 允许）
   // 原因：指数刚由负转正，个股如果已经抢先连涨 ≥5 天是提前反应过大盘，不该再追
@@ -196,6 +205,39 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     }
     // 全局最低抗分歧门槛（所有策略）：买点触发时刻个股抗分歧 < GLOBAL_RESILIENCE_MIN → 顺延
     const intradayResilience = calcResilienceAtMinute(replayStocks, cand.sc.code, bucket.minute);
+    // 快进快出类「涨幅领先但当日爆发力不足」顺延（2026-10-22 用户新增）：
+    //   当前候选 N 日涨幅领先第二名 > N 个百分点 → 对比其买点时刻抗分歧 与 第2~5名抗分歧均值，
+    //   若「均值 − 该股 ≥ N」则剔除该股并顺延（顺延后循环会对新的第一名重新判定）
+    if (applyGainGapRule && intradayResilience != null) {
+      const second = ordered[i + 1];
+      const curGain = cand.val;
+      const secondGain = second ? second.val : null;
+      if (curGain != null && Number.isFinite(curGain) && secondGain != null && Number.isFinite(secondGain)) {
+        const gainLead = curGain - secondGain;
+        if (gainLead > days) {
+          const refResiliences = ordered.slice(i + 1, i + 5)
+            .map(o => calcResilienceAtMinute(replayStocks, o.sc.code, bucket.minute))
+            .filter(v => v != null && Number.isFinite(v));
+          if (refResiliences.length > 0) {
+            const avgResilience = refResiliences.reduce((s, v) => s + v, 0) / refResiliences.length;
+            if (avgResilience - intradayResilience >= days) {
+              gainGapSkipped.push({
+                code: cand.sc.code,
+                name: cand.sc.name || cand.sc.code,
+                gain: Number(curGain.toFixed(2)),
+                gainLead: Number(gainLead.toFixed(2)),
+                resilience: Number(intradayResilience.toFixed(2)),
+                avgResilience: Number(avgResilience.toFixed(2)),
+                diff: Number((avgResilience - intradayResilience).toFixed(2)),
+                threshold: days,
+                refCount: refResiliences.length,
+              });
+              continue;
+            }
+          }
+        }
+      }
+    }
     if (intradayResilience != null && intradayResilience < GLOBAL_RESILIENCE_MIN) {
       globalResilienceSkipped.push({
         code: cand.sc.code,
@@ -221,7 +263,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     if (gateEnabled) {
       // RESILIENCE_GATE_STRATEGY_IDS（仅 highest_gain）：已经过了全局 ≥ 9 的线，这里再叠加 ≥ 11
       if (intradayResilience != null && intradayResilience >= RESILIENCE_GATE_MIN) {
-        return { stock: cand.sc, metric: cand.metric, resilienceScore: intradayResilience, skipped, globalResilienceSkipped, limitUpSkipped, prevOneWordSkipped, emoCycSkipped, stockSlopeSkipped };
+        return { stock: cand.sc, metric: cand.metric, resilienceScore: intradayResilience, skipped, globalResilienceSkipped, limitUpSkipped, prevOneWordSkipped, emoCycSkipped, stockSlopeSkipped, gainGapSkipped };
       }
       skipped.push({
         code: cand.sc.code,
@@ -240,6 +282,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
         emoCycSkipped,
         globalResilienceSkipped,
         stockSlopeSkipped,
+        gainGapSkipped,
       };
     }
   }

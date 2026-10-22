@@ -3278,6 +3278,49 @@ const isLimitUpChange = (code, change) => {
 };
 
 // ============================================================
+// 科技进攻 3 日涨幅榜的「涨幅领先但当日爆发力不足」顺延（2026-10-22 用户新增，与回测 N 日涨幅最大系列同口径）：
+// 合并榜按 3 日涨幅降序后，若当前满足买点资格、未封涨停的候选 3 日涨幅领先第二名超过 3 个百分点，
+// 且其实时分时抗分歧低于第2~5名均值达 3 分（均值 − 该股 ≥ 3），则视为仅历史涨幅大、当日爆发力不足，
+// 剔除并顺延下一只（顺延后对新的第一名重新判定）；返回 { pick, skipped }
+// ============================================================
+const TECH_GAIN_GAP_N = 3; // 科技进攻口径：3 日涨幅榜 → n = 3（百分点 / 抗分歧分）
+const pickTechCandidateWithGainGap = (list) => {
+  const arr = Array.isArray(list) ? list : [];
+  const skipped = [];
+  for (let i = 0; i < arr.length; i++) {
+    const s = arr[i];
+    if (!s.matchesBuyPoint || s.isLimitUp) continue;
+    const second = arr[i + 1];
+    const cur = Number(s.change3d);
+    const sec = second != null ? Number(second.change3d) : NaN;
+    if (Number.isFinite(cur) && Number.isFinite(sec) && cur - sec > TECH_GAIN_GAP_N) {
+      const refs = arr.slice(i + 1, i + 5)
+        .map(o => Number(o.resilienceScore))
+        .filter(v => Number.isFinite(v));
+      const self = Number(s.resilienceScore);
+      if (refs.length > 0 && Number.isFinite(self)) {
+        const avg = refs.reduce((a, b) => a + b, 0) / refs.length;
+        if (avg - self >= TECH_GAIN_GAP_N) {
+          skipped.push({
+            code: s.code,
+            stockName: s.stockName,
+            change3d: cur,
+            gainLead: Number((cur - sec).toFixed(2)),
+            resilienceScore: self,
+            avgResilience: Number(avg.toFixed(2)),
+            diff: Number((avg - self).toFixed(2)),
+            threshold: TECH_GAIN_GAP_N,
+          });
+          continue;
+        }
+      }
+    }
+    return { pick: s, skipped };
+  }
+  return { pick: null, skipped };
+};
+
+// ============================================================
 // 上一交易日一字板判定（2026-10-05 新增，选股通用限制，与 buySellBacktest 口径一致；同日放宽阈值）：
 // 一字板 = 上一交易日竞价开盘涨幅、收盘涨幅、全天最低价涨幅三者均不低于阈值
 //（主板 8%、创业板/科创板 16%，口径较真实一字板放宽：全天始终维持普涨、无低位上车机会）；
@@ -3419,6 +3462,14 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     batchParallel(topStar, enrich, 8),
   ]);
 
+  // 合并榜（与前端 mergedList / 飞书卡片同口径：仅纳入满足门槛的市场，按 3 日涨幅降序取前十），
+  // 并在其上应用「涨幅领先但当日爆发力不足」顺延，得到唯一买点候选
+  const mergedTop = [
+    ...(gate?.cybGate?.passed === true ? cybMainList : []),
+    ...(gate?.starGate?.passed === true ? starList : []),
+  ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
+  const { pick: techPick, skipped: techGainGapSkipped } = pickTechCandidateWithGainGap(mergedTop);
+
   const pickGate = (g) => (g ? {
     slope: g.slope ?? null,
     passed: g.passed === true,
@@ -3440,6 +3491,10 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       cybGate: pickGate(gate?.cybGate),
       starGate: pickGate(gate?.starGate),
       markets: { cybMain: cybMainList, star: starList },
+      // 科技进攻唯一买点候选（已按「涨幅领先但当日爆发力不足」顺延）与顺延明细
+      mergedTop,
+      pickCode: techPick?.code || null,
+      gainGapSkipped: techGainGapSkipped,
     },
   };
 };

@@ -1,10 +1,5 @@
 {
-  "date": "20261021",
-  "bucket": 600,
-  "buckets": {
-    "tech": 600,
-    "ew": null
-  },
-  "blockedBucket": null,
-  "mode": "attack_defense"
+  "date": "20261022",
+  "bucket": 870,
+  "mode": "tech_attack"
 }

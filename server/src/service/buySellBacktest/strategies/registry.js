@@ -62,6 +62,17 @@ for (const s of Object.values(STRATEGIES)) {
   if (s.emoQuickOut === true && s.twoBuy !== true) s.desc = `${s.desc}${EMO_QUICK_HALF_POS_DESC}`;
 }
 
+// 按 N 日窗口涨幅排名的策略「涨幅领先但当日爆发力不足」过滤（2026-10-22 用户新增，同日扩展至全部
+// 按 N 日窗口涨幅排名的策略：N 日涨幅最大、N 日涨幅最大-两次买入、快进快出系列）。按 N 日窗口涨幅排名后，
+// 若当前候选的 N 日涨幅领先第二名超过 N 个百分点，且其买点时刻抗分歧分数低于「第二名~第五名」抗分歧均值
+// 达 N 分（均值 − 该股 ≥ N），说明该股只是历史涨幅大、当日爆发力不强 → 剔除并顺延排名下一只，
+// 顺延后对新的第一名重新按同规则判定；买入条件明细追加 gain_gap_defer 项
+const GAIN_GAP_DEFER_DESC = '；涨幅领先但当日爆发力不足过滤（2026-10-22 新增）：按 N 日窗口涨幅排名后，若当前候选的 N 日涨幅领先第二名超过 N 个百分点，且其买点时刻抗分歧分数低于「第二名~第五名」抗分歧均值达 N 分（均值 − 该股 ≥ N），则视为仅历史涨幅大、当日爆发力不强，剔除并顺延排名下一只（顺延后重新判定），买入条件明细追加顺延说明';
+const isGainGapDescStrategy = (s) => !!s && s.id !== 'highest_gain' && s.id.includes('_gain') && !s.id.includes('reports');
+for (const s of Object.values(STRATEGIES)) {
+  if (isGainGapDescStrategy(s)) s.desc = `${s.desc}${GAIN_GAP_DEFER_DESC}`;
+}
+
 // 盘中大跌强卖（2026-10-16 用户新增）：适用范围 = 除「情绪游资类（iceMode）」「极致胜率（extremeWinMode）」
 // 「反向抱团龙头（reverseLeaderMode）」外的全部策略（两次买入系列已内置同口径卖点，
 // 仅补字段不重复追加 desc）。规则：持仓当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT（-7%）时无条件卖出——
@@ -94,6 +105,7 @@ module.exports = {
   RESILIENCE_GATE_STRATEGY_IDS,
   STRATEGIES,
   CRASH_SELL_DESC,
+  GAIN_GAP_DEFER_DESC,
   isCrashSellStrategy,
   isCycleFilterStrategy,
 };
