@@ -61,7 +61,7 @@ const loadLastNotifiedBucket = () => {
 
 // 买点屏蔽检测（快进快出强卖当日禁买，2026-10-19 新增）：当日已有「情绪快进快出 10:00 强制卖出」
 // 记录时买点诊断的 quick_out_no_rebuy 检查不通过（与回测 emoquick 策略「强卖当日禁止二次买入」对齐）。
-// 若除该拦截项（及提示项/尾盘抄底或分支）外其余前置条件全部通过，说明买点本应命中、仅被该规则屏蔽，
+// 若除该拦截项（及提示项）外其余前置条件全部通过，说明买点本应命中、仅被该规则屏蔽，
 // 返回屏蔽信息供推送 buy_point_blocked；其余条件也有失败时属「买点本来就不命中」，不算屏蔽。
 const detectQuickOutBlock = (data) => {
   if (!data || data.allPassed !== false) return null;
@@ -69,7 +69,7 @@ const detectQuickOutBlock = (data) => {
   const noRebuy = checks.find((c) => c && c.id === 'quick_out_no_rebuy');
   if (!noRebuy || noRebuy.passed !== false) return null;
   const otherFailed = checks.filter((c) => c && c.passed === false
-    && c.id !== 'quick_out_no_rebuy' && c.id !== 'tail_dip_buying' && c.id !== 'quick_out_buy_hint');
+    && c.id !== 'quick_out_no_rebuy' && c.id !== 'quick_out_buy_hint');
   if (otherFailed.length > 0) return null;
   return {
     reason: noRebuy.reason || '当日已发生情绪快进快出 10:00 强制卖出，当日禁止二次买入，买点诊断不命中',
@@ -120,8 +120,7 @@ const writeDefenseState = (mode, bucket) => {
 const tickAttackDefense = async (mode, data, bucket) => {
   const techData = data.tech || null;
   const techBlocked = detectQuickOutBlock(techData);
-  const techHit = !techBlocked && techData != null
-    && (techData.allPassed === true || techData.tailDipBuyingHit === true);
+  const techHit = !techBlocked && techData != null && techData.allPassed === true;
   const ewHit = data.allPassed === true
     || (data.reverse && data.reverse.allPassed === true);
 
@@ -195,7 +194,7 @@ const tick = async () => {
     }
 
     // 2) 买点屏蔽（快进快出强卖当日禁买）：其余前置条件全部通过但被该规则拦截时，抑制买点命中
-    //    通知（含尾盘抄底或分支）与飞书，改为推送 buy_point_blocked 屏蔽通知（每桶最多一次）
+    //    通知与飞书，改为推送 buy_point_blocked 屏蔽通知（每桶最多一次）
     const block = detectQuickOutBlock(data);
     if (block) {
       if (bucket != null && lastBlockedBucket !== bucket) {
@@ -220,8 +219,7 @@ const tick = async () => {
 
     // 3) 桶门控命中：命中且进入新的合法桶时，发飞书 + 额外广播 open:true（每桶最多一次）
     const canonicalHit = data.allPassed === true
-      || (data.reverse && data.reverse.allPassed === true)
-      || data.tailDipBuyingHit === true;
+      || (data.reverse && data.reverse.allPassed === true);
     if (bucket == null || !canonicalHit) return;
     if (lastNotifiedBucket === bucket) return;
 

@@ -38,7 +38,7 @@ const slopeTurnText = (gate) => {
   return d === 0 ? '指数今日由正转负' : `指数由正转负第 ${d} 天`;
 };
 
-const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck = false, mode = MODE_TECH_ATTACK }) => {
+const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH_ATTACK }) => {
   const navigate = useNavigate();
   const isExtreme = mode === MODE_EXTREME_WIN;
   // 攻防兼备：科技进攻（快进快出）+ 情绪游资（顺/逆周期）双策略并示
@@ -344,11 +344,9 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
   const allPassed = checksResult?.allPassed === true;
   // 科技进攻全部通过（tech_attack 即顶层 allPassed；attack_defense 读 tech 嵌套诊断）
   const techAllPassed = isDefense ? checksResult?.tech?.allPassed === true : allPassed;
-  // hideTailDipCheck：隐藏「尾盘抄底」检查项（或逻辑分支），并同步修正计数与结论文案
-  const filterChecks = (list) => (list || []).filter(check => !(hideTailDipCheck && check.id === 'tail_dip_buying'));
-  const checksList = filterChecks(checksResult?.checks);
-  // 攻防兼备：科技进攻组检查项（tech 嵌套诊断，同样过滤尾盘抄底提示项）
-  const techChecksList = isDefense ? filterChecks(checksResult?.tech?.checks) : [];
+  const checksList = checksResult?.checks || [];
+  // 攻防兼备：科技进攻组检查项（tech 嵌套诊断）
+  const techChecksList = isDefense ? (checksResult?.tech?.checks || []) : [];
   // 逆周期（反向抱团）一组条件（后端在 checks 之外单独返回），独立分组展示在顺周期之后
   const reverseChecks = (isExtreme || isDefense) ? (checksResult?.reverseChecks || []) : [];
   const checkGroups = isDefense
@@ -367,15 +365,9 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, hideTailDipCheck
     ];
   const passedCount = checkGroups.reduce((n, g) => n + g.items.filter(c => c.passed).length, 0);
   const totalCheckCount = checkGroups.reduce((n, g) => n + g.items.length, 0);
-  // 尾盘抄底结论文案修正（渲染期净化，不改后端数据）：attack_defense 分别修正科技进攻与情绪游资两段
-  const sanitizeConclusionText = (text, passed) => (
-    hideTailDipCheck && !passed && typeof text === 'string' && text.includes('尾盘抄底')
-      ? '当前前置条件未全部满足，请耐心等待，不要盲目出手。'
-      : text
-  );
   const conclusionText = isDefense
-    ? `科技进攻：${sanitizeConclusionText(checksResult?.tech?.conclusion, techAllPassed) || '--'}｜情绪游资：${sanitizeConclusionText(checksResult?.conclusion, allPassed) || '--'}`
-    : sanitizeConclusionText(checksResult?.conclusion, allPassed);
+    ? `科技进攻：${checksResult?.tech?.conclusion || '--'}｜情绪游资：${checksResult?.conclusion || '--'}`
+    : checksResult?.conclusion;
   // 建议买入仓位提示（与回测仓位管理完全一致）：
   //   科技进攻——快进快出日首次半仓、次日补足第二份半仓（次日10:00强卖），普通日全仓；
   //   情绪游资——双腿结构，顺/逆周期各半仓；攻防兼备下两策略同时触发时科技进攻优先

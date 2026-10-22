@@ -179,7 +179,6 @@ const BuyCard = ({ alert, onClose }) => {
   const hitTypes = isDefense
     ? [
       data?.tech?.allPassed === true && '科技进攻·快进快出',
-      data?.tech?.tailDipBuyingHit === true && '科技进攻·尾盘抄底',
       data?.allPassed === true && '情绪游资·顺周期',
       data?.reverse?.allPassed === true && '情绪游资·逆周期',
     ].filter(Boolean)
@@ -190,7 +189,6 @@ const BuyCard = ({ alert, onClose }) => {
       ].filter(Boolean)
       : [
         data?.allPassed === true && '全部前置条件通过',
-        data?.tailDipBuyingHit === true && '尾盘抄底',
       ].filter(Boolean);
 
   // 仓位说明：科技进攻按快进快出 / 抬高态 / 补买第二份分情形；情绪游资固定双腿半仓

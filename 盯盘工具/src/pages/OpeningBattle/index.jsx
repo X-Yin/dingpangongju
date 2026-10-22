@@ -1095,7 +1095,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
       setData(result);
       // 命中口径：攻防兼备模式下科技进攻 / 顺周期 / 逆周期任一命中即算命中；
       // 情绪游资模式下逆周期（反向抱团）择时触发也算命中
-      const techHit = isDefense && (result.tech?.allPassed === true || result.tech?.tailDipBuyingHit === true);
+      const techHit = isDefense && result.tech?.allPassed === true;
       const forwardHit = result.allPassed === true;
       const reverseHit = (isExtreme || isDefense) && result.reverse?.allPassed === true;
       // 向上层汇报买点是否命中，供 3 日涨幅榜决定是否高亮展示
@@ -1120,7 +1120,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
       const result = msg?.data;
       if (!result) return;
       setData(result);
-      const techHit = isDefense && (result.tech?.allPassed === true || result.tech?.tailDipBuyingHit === true);
+      const techHit = isDefense && result.tech?.allPassed === true;
       const forwardHit = result.allPassed === true;
       const reverseHit = (isExtreme || isDefense) && result.reverse?.allPassed === true;
       onResultChange?.(techHit || forwardHit || reverseHit);
@@ -1128,13 +1128,11 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
     return unsubscribe;
   }, [run, onResultChange, isExtreme, isDefense]);
 
-  // 过滤掉「尾盘抄底」检查项（或逻辑分支，已从买点诊断移除），并同步修正计数与结论文案
   // 攻防兼备：三组分开展示——科技进攻（tech.checks）/ 顺周期（checks）/ 逆周期（reverseChecks）
   const sortChecks = (list) => [...list].sort((a, b) => a.passed - b.passed);
-  const filterTailDip = (list) => (list || []).filter(c => c.id !== 'tail_dip_buying');
   let checkGroups;
   if (isDefense) {
-    const techItems = sortChecks(filterTailDip(data?.tech?.checks));
+    const techItems = sortChecks(data?.tech?.checks || []);
     const ewItems = sortChecks(data?.checks || []);
     const revItems = sortChecks(data?.reverseChecks || []);
     checkGroups = [
@@ -1145,7 +1143,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
         : []),
     ];
   } else {
-    const checks = filterTailDip(data?.checks);
+    const checks = sortChecks(data?.checks || []);
     const reverseChecks = isExtreme ? (data?.reverseChecks || []) : [];
     checkGroups = [
       { label: isExtreme ? '顺周期 · 情绪游资-极致胜率' : '', items: sortChecks(checks) },
@@ -1163,16 +1161,9 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
     : allPassed;
   const totalCheckCount = checkGroups.reduce((n, g) => n + g.items.length, 0);
   const totalPassedCount = checkGroups.reduce((n, g) => n + g.items.filter(c => c.passed).length, 0);
-  const sanitizeConclusion = (text) => (
-    typeof text === 'string' && text.includes('尾盘抄底')
-      ? '当前前置条件未全部满足，请耐心等待，不要盲目出手。'
-      : text
-  );
   const conclusionText = isDefense
-    ? `科技进攻：${sanitizeConclusion(data?.tech?.conclusion) || '--'}｜情绪游资：${sanitizeConclusion(data?.conclusion) || '--'}`
-    : (!allPassed && typeof data?.conclusion === 'string' && data.conclusion.includes('尾盘抄底')
-      ? '当前前置条件未全部满足，请耐心等待，不要盲目出手。'
-      : data?.conclusion);
+    ? `科技进攻：${data?.tech?.conclusion || '--'}｜情绪游资：${data?.conclusion || '--'}`
+    : data?.conclusion;
 
   // 建议买入仓位提示（与回测仓位管理完全一致）：
   //   科技进攻——快进快出日首次半仓、次日补足第二份半仓（次日10:00强卖），普通日全仓；

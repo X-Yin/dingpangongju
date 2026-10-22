@@ -78,5 +78,15 @@
     "description": "全天科技情绪弱势（科技情绪指数 <strong>-41.8</strong>，-70 ≤ 情绪 < 0），尾盘半小时放量：14:00 量能 <strong>187亿</strong> → 当前 <strong>679亿</strong>，放量 <strong>492亿</strong>（≥50亿），创业板指涨幅回落（14:00 -3.05% → 14:30 -3.24%）。全天科技情绪弱势，尾盘半小时放量，适合尾盘抄底，博弈次日的反弹。",
     "severity": "high",
     "isBullish": true
+  },
+  {
+    "id": "6d143b2faf75f9ab",
+    "time": "2026-10-22 14:57:45",
+    "read": false,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>158亿</strong>（≥100亿），主力资金净流出加速（-593.7→-617.8亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
   }
 ]

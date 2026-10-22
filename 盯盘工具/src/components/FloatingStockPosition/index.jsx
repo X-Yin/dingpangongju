@@ -958,7 +958,6 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         open={buyPointDrawerOpen}
         onClose={() => setBuyPointDrawerOpen(false)}
         onStockClick={(stock) => { handleStockClick(stock); }}
-        hideTailDipCheck
         mode={mode}
       />
 

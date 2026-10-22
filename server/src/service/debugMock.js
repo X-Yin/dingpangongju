@@ -97,13 +97,6 @@ const mockBuyPoint = async () => {
       reason: `9:30 竞价科技情绪 ${openEmotion.toFixed(2)} 未超过 30，当前情绪须低于 10 的限制不生效`,
     },
     {
-      id: 'tail_dip_buying',
-      title: '尾盘抄底（14:10-15:00，或逻辑：命中即可触发）',
-      passed: false,
-      value: '未生效',
-      reason: '尾盘抄底检查仅在交易日 14:10-15:00 生效，当前时段未生效',
-    },
-    {
       id: 'buy_time_gate',
       title: '买入时段门禁（仅 9:30 – 11:30 / 13:00 – 13:30）',
       passed: true,
@@ -143,8 +136,8 @@ const mockBuyPoint = async () => {
     timestamp,
     // 攻防兼备：实盘科技进攻腿为嵌套结构（data.tech），单模式直接用顶层字段
     ...(mode === 'attack_defense'
-      ? { tech: { allPassed: true, tailDipBuyingHit: false, checks, conclusion }, reverse: { allPassed: false } }
-      : { tailDipBuyingHit: false }),
+      ? { tech: { allPassed: true, checks, conclusion }, reverse: { allPassed: false } }
+      : {}),
     // buyable 仅用于 MOCK：前端卡片直接展示本次命中标的（实盘无此字段，不影响线上）。
     //   数值满足各自门槛：抗分歧 ≥ 9、强度−差劲 ≥ 30、3 日涨幅为正
     buyable: [{

@@ -34,8 +34,8 @@ const path = require('path');
 const dayjs = require('dayjs');
 const axios = require('axios');
 const { isTradingDay, getPrevTradingDay } = require('../utils/tradingDay');
-const { getSingleStockData, getSingleStockTlineData, getSingleStockTlineDataByDate, getAllStockData } = require('./stock');
-const { getAllTechIndexData, updateCurrentTechIndexData, getCurrentTechEmotion, getTechEmotionIntraday, getLatestTechEmotion } = require('./emotion');
+const { getSingleStockData, getSingleStockTlineDataByDate, getAllStockData } = require('./stock');
+const { getAllTechIndexData, updateCurrentTechIndexData, getCurrentTechEmotion, getTechEmotionIntraday } = require('./emotion');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 const { getMonitorStocks } = require('./monitorStock');
 const { ensureWatchlistValuation, isBuyBlockedByValuation } = require('./watchlistValuation');
@@ -2687,93 +2687,6 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
   if (!checkEmotionRetracePassed) allPassed = false;
 
   // ============================================================
-  // 检查（或逻辑分支）：尾盘抄底（交易日 14:10-15:00 生效）
-  // 与其它检查相互独立：其它检查全部通过（allPassed）或本检查命中，均可触发买点诊断
-  // 条件（均为当前时刻相较 14:00 的比较，14:10-15:00 任一时刻满足即可）：
-  // ① 当前科技情绪指数 ≥ -70 且 < 0（全天弱势但未极端冰点）
-  // ② 当前创业板指涨幅 < 14:00 涨幅（尾盘涨幅回落）
-  // ③ 当前量能 amountChangeDiff 相较 14:00 放大 ≥ 50亿（尾盘放量）
-  // ============================================================
-  let tailDipHit = false;
-  let tailDipValue = '未生效';
-  let tailDipReason = '尾盘抄底检查仅在交易日 14:10-15:00 生效，当前时段未生效';
-  try {
-    const nowT = dayjs();
-    const curTotalMin = nowT.hour() * 60 + nowT.minute();
-    const inTailWindow = curTotalMin >= 14 * 60 + 10 && curTotalMin <= 15 * 60;
-    if (inTailWindow) {
-      // ① 当前科技情绪指数（-70 ≤ 情绪 < 0）
-      const emotionNow = getLatestTechEmotion();
-      const emotionOk = emotionNow !== null && emotionNow >= -70 && emotionNow < 0;
-
-      // ③ 当前量能相较 14:00 放大 ≥ 50亿
-      const amountHistory = getAmountHistory();
-      let a1400 = null;
-      if (amountHistory && amountHistory.length > 0) {
-        for (const item of amountHistory) {
-          if (String(item[0]) <= '140059') a1400 = item;
-          else break;
-        }
-      }
-      const aNow = amountHistory && amountHistory.length > 0 ? amountHistory[amountHistory.length - 1] : null;
-      const diff1400 = a1400 ? parseAmountToYi(a1400[1].amountChangeDiff) : NaN;
-      const diffNow = aNow ? parseAmountToYi(aNow[1].amountChangeDiff) : NaN;
-      const tailSurge = (!isNaN(diff1400) && !isNaN(diffNow)) ? diffNow - diff1400 : null;
-      const volumeOk = tailSurge !== null && tailSurge >= 50;
-
-      // ② 创业板指当前涨幅 < 14:00 涨幅（尾盘涨幅回落）
-      const cybTline = await getSingleStockTlineData('sz399006');
-      const getCybChangeAt = (limitHhmm) => {
-        if (!cybTline || !cybTline.preclose_px || !Array.isArray(cybTline.line)) return null;
-        const preclose = parseFloat(cybTline.preclose_px);
-        if (!preclose || preclose <= 0) return null;
-        const line = cybTline.line
-          .filter(p => p.minute != null && p.last_px)
-          .map(p => ({ minute: p.minute, last_px: parseFloat(p.last_px) }))
-          .filter(p => !isNaN(p.last_px))
-          .sort((a, b) => a.minute - b.minute);
-        let px = null;
-        for (const p of line) {
-          if (p.minute > limitHhmm) break;
-          px = p.last_px;
-        }
-        if (px === null) return null;
-        return ((px - preclose) / preclose) * 100;
-      };
-      const cybChangeNow = getCybChangeAt(1500);
-      const cybChange1400 = getCybChangeAt(1400);
-      const cybOk = cybChangeNow !== null && cybChange1400 !== null && cybChangeNow < cybChange1400;
-
-      tailDipHit = emotionOk && volumeOk && cybOk;
-
-      const fmtPct = (v) => (v === null || v === undefined || isNaN(v)) ? '--' : `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
-      const fmtEmotion = (v) => (v === null || v === undefined || isNaN(v)) ? '--' : v.toFixed(1);
-      const fmtSurge = (v) => v === null ? '--' : `${v >= 0 ? '+' : ''}${v.toFixed(0)}亿`;
-      tailDipValue = `情绪 ${fmtEmotion(emotionNow)} / 量能 ${fmtSurge(tailSurge)} / 涨幅 ${fmtPct(cybChange1400)}→${fmtPct(cybChangeNow)}`;
-
-      if (tailDipHit) {
-        tailDipReason = `尾盘抄底条件全部满足：科技情绪 ${fmtEmotion(emotionNow)}（-70 ≤ 情绪 < 0），量能较 14:00 放大 ${fmtSurge(tailSurge)}（≥50亿），创业板指涨幅回落（14:00 ${fmtPct(cybChange1400)} → 当前 ${fmtPct(cybChangeNow)}），命中尾盘抄底，可触发买点诊断`;
-      } else {
-        const failed = [];
-        if (!emotionOk) failed.push(`科技情绪 ${fmtEmotion(emotionNow)}（需 -70 ≤ 情绪 < 0）`);
-        if (!volumeOk) failed.push(`量能较 14:00 ${fmtSurge(tailSurge)}（需放大 ≥50亿）`);
-        if (!cybOk) failed.push(`创业板指涨幅 14:00 ${fmtPct(cybChange1400)} → 当前 ${fmtPct(cybChangeNow)}（需涨幅回落）`);
-        tailDipReason = `尾盘抄底条件未全部满足：${failed.join('；')}（14:10-15:00 内任一时刻满足即可触发）`;
-      }
-    }
-  } catch (e) {
-    console.error('尾盘抄底检查失败:', e.message);
-    tailDipValue = '检查异常';
-    tailDipReason = `尾盘抄底检查异常：${e.message}`;
-  }
-  checks.push({
-    id: 'tail_dip_buying', title: '尾盘抄底（14:10-15:00，或逻辑：命中即可触发）', passed: tailDipHit,
-    value: tailDipValue,
-    reason: tailDipReason,
-  });
-  // 注意：尾盘抄底为或分支，不计入 allPassed（与其它检查的与逻辑无关）
-
-  // ============================================================
   // 新增：买入时段门禁 + 双指数 3 日线斜率门禁（与回测 pickBestStock 规则一致）
   // ============================================================
   // 买点时刻：实时场景取当前分钟（北京时间），历史/空数据回退 1455
@@ -2867,8 +2780,6 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
 
   const conclusion = allPassed
     ? '全部前置条件已满足，可以出手买入，但是请分仓 1/3，随后逐步分批买入，分仓管理是最后一道防火墙，谨防尾盘大盘跳水！'
-    : tailDipHit
-    ? '尾盘抄底条件命中（或逻辑分支），适合尾盘抄底，博弈次日的反弹。可以出手买入，但是请分仓 1/3，随后逐步分批买入，分仓管理是最后一道防火墙，谨防尾盘大盘跳水！'
     : '当前前置条件未全部满足，请耐心等待，不要盲目出手。';
 
   // 买点命中记录（2026-10-09 新增）：诊断目标日为今日且全部前置条件通过时记录一条命中（同分钟幂等），
@@ -2885,7 +2796,6 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
       refreshed: refresh,
       checks,
       allPassed,
-      tailDipBuyingHit: tailDipHit,
       passedCount,
       totalCheckCount,
       isFreezingDay: false, // 情绪冰点检查已注释停用，固定返回 false
