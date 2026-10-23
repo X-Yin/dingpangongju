@@ -22,7 +22,7 @@
  * 卖点触发条件（满足任一即可）：
  *   1. 收盘价跌破 10 日线（收盘价 < MA10，趋势破位）
  *   2. 高位阴线（收盘跌幅超过 -5%，主力出货信号）
- *   3. 科技板块情绪退潮 == -100（市场整体情绪极度低迷，避险卖出）
+ *   3. 科技板块情绪退潮 < -30（市场整体情绪极度低迷，避险卖出）
  *   4. 抗分歧指数 < 6 且 涨幅 ≤ -5%（14:50后生效，个股抗跌性弱且正在下跌）
  *   5. 连续三天（含当日）抗分歧指数均 < 10（个股连续弱势，资金持续分歧），仅 9:40 后生效；
  *      且上一交易日距「最近5个交易日（不含当日）收盘价最高点」需 >= 2 个交易日（收盘价仍创新高说明趋势未破，不算卖点）
@@ -1060,7 +1060,7 @@ const checkBuyPoint = async (code, tradeDate, klineData, prefetchedStockTline = 
 //      - MA10 斜率为正（上升趋势）：收盘价 < MA10 即卖点
 //      - MA10 斜率为负（下降趋势）：收盘价未站上 5 日线（收盘价 < MA5）即卖点
 //   2. 高位大阴线（当日最高最低振幅超过 5 个点，且为阴线：最新价低于开盘价）
-//   3. 科技板块情绪退潮 == -100 且自选股中跌幅 <-9% 的个股 >= 5 个（市场整体情绪极度低迷，避险卖出）
+//   3. 科技板块情绪退潮 < -30 且自选股中跌幅 <-9% 的个股 >= 5 个（市场整体情绪极度低迷，避险卖出）
 //   4. 抗分歧指数 < 6（个股抗跌性弱，资金分歧大）
 
 // 统计自选股中当前跌幅低于 threshold（如 -9，表示跌幅超过 9%）的个股数量
@@ -1230,7 +1230,7 @@ const checkSellPoint = async (code, tradeDate, klineData, prefetchedStockTline =
     };
   }
 
-  // 条件3：科技板块情绪退潮 == -100（同步检查，优先判断以避免不必要的异步调用）
+  // 条件3：科技板块情绪退潮 < -30（同步检查，优先判断以避免不必要的异步调用）
   const techIndexData = getAllTechIndexData();
   if (Array.isArray(techIndexData) && techIndexData.length > 0) {
     const sortedTech = [...techIndexData].sort((a, b) => a.date - b.date);
@@ -1238,8 +1238,8 @@ const checkSellPoint = async (code, tradeDate, klineData, prefetchedStockTline =
     if (targetTechIdx >= 0) {
       const techIndex = sortedTech[targetTechIdx];
       const techChange = parseFloat(techIndex.changeSumResult || 0);
-      // 条件3：科技板块情绪退潮 == -100，且自选股中跌幅 <-9% 的个股 >= 5 个
-      if (techChange === -100) {
+      // 条件3：科技板块情绪退潮 < -30，且自选股中跌幅 <-9% 的个股 >= 5 个
+      if (techChange < -30) {
         const downStocksCount = countWatchlistStocksBelow(-9);
         if (downStocksCount >= 5) {
           // 当日实盘需持续满足 ≥5 分钟才触发，历史回测直接按当前值判定
@@ -1255,7 +1255,7 @@ const checkSellPoint = async (code, tradeDate, klineData, prefetchedStockTline =
               ma10,
               techEmotion: parseFloat(techChange.toFixed(2)),
               downStocksCount,
-              reason: `科技板块情绪退潮 ${techChange.toFixed(2)} = -100 且自选股中跌幅<-9%的个股 ${downStocksCount} 个（>=5）`,
+              reason: `科技板块情绪退潮 ${techChange.toFixed(2)} < -30 且自选股中跌幅<-9%的个股 ${downStocksCount} 个（>=5）`,
             };
           }
         }
@@ -1614,9 +1614,9 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
     const targetTechIdx = sortedTech.findIndex(t => parseInt(t.date) === date);
     if (targetTechIdx >= 0) {
       techChange = parseFloat(sortedTech[targetTechIdx].changeSumResult || 0);
-      // 条件3：科技板块情绪退潮 == -100 且自选股中跌幅 <-9% 的个股 >= 5
+      // 条件3：科技板块情绪退潮 < -30 且自选股中跌幅 <-9% 的个股 >= 5
       const downStocksCount = countWatchlistStocksBelow(-9);
-      const isCondition3RawTrue = techChange === -100 && downStocksCount >= 5;
+      const isCondition3RawTrue = techChange < -30 && downStocksCount >= 5;
       // 当日实盘需持续满足 ≥5 分钟才触发，历史回测直接按当前值判定
       const isLiveTodayForCond3 = date === parseInt(dayjs().format('YYYYMMDD'));
       let cond3Satisfied = isCondition3RawTrue;
@@ -1631,18 +1631,18 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
       condition3.satisfied = cond3Satisfied;
       condition3.pending = cond3Pending;
       condition3.pendingMinutes = cond3PendingMinutes;
-      condition3.detail = techChange === -100 && downStocksCount >= 5
-        ? `科技情绪指数 = -100 且自选股中跌幅<-9%的个股 ${downStocksCount} 个（>=5），市场触底`
-        : techChange === -100
-          ? `科技情绪指数 = -100，但自选股中跌幅<-9%的个股仅 ${downStocksCount} 个（<5），未触发`
-          : `科技情绪指数 ${techChange.toFixed(2)}，未达到 -100（需 = -100 且自选股中跌幅<-9%个股 >=5 才触发）`;
+      condition3.detail = techChange < -30 && downStocksCount >= 5
+        ? `科技情绪指数 ${techChange.toFixed(2)} < -30 且自选股中跌幅<-9%的个股 ${downStocksCount} 个（>=5），市场触底`
+        : techChange < -30
+          ? `科技情绪指数 ${techChange.toFixed(2)} < -30，但自选股中跌幅<-9%的个股仅 ${downStocksCount} 个（<5），未触发`
+          : `科技情绪指数 ${techChange.toFixed(2)}，未低于 -30（需 < -30 且自选股中跌幅<-9%个股 >=5 才触发）`;
       // 补充 pending 提示到 detail
       if (cond3Pending) {
         condition3.detail += `（已持续 ${cond3PendingMinutes} 分钟，需≥${SELL_CONDITION_PERSIST_MIN} 分钟）`;
       }
       condition3.subConditions = [
         { label: '科技情绪指数', value: techChange.toFixed(2) },
-        { label: '阈值', value: '= -100（持续≥5分钟才触发）' },
+        { label: '阈值', value: '< -30（持续≥5分钟才触发）' },
         { label: '跌幅<-9%自选股', value: `${downStocksCount} 个（需>=5）` },
       ];
     } else {

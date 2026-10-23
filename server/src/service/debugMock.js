@@ -276,10 +276,10 @@ const mockSellPoint = async () => {
       satisfied: false,
       pending: false,
       pendingMinutes: 0,
-      detail: `科技情绪指数 ${techEmotion.toFixed(2)}，未达到 -100（需 = -100 且自选股中跌幅<-9%个股 >=5 才触发）`,
+      detail: `科技情绪指数 ${techEmotion.toFixed(2)}，未低于 -30（需 < -30 且自选股中跌幅<-9%个股 >=5 才触发）`,
       subConditions: [
         { label: '科技情绪指数', value: techEmotion.toFixed(2) },
-        { label: '阈值', value: '= -100（持续≥5分钟才触发）' },
+        { label: '阈值', value: '< -30（持续≥5分钟才触发）' },
       ],
     },
     {

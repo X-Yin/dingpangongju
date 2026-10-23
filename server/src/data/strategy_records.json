@@ -1,1 +1,62 @@
-[]
+[
+  {
+    "id": "4bc8e6d889e01590",
+    "time": "2026-10-23 09:30:48",
+    "read": true,
+    "strategyId": "ebb_tide_direct_reversal",
+    "title": "⚠️ 退潮直接反转概率低，切勿追涨",
+    "description": "创业板指前一日涨跌幅 -4.37%，科创50前一日涨跌幅 -2.78%。<br/>创业板指/科创50前一个交易日大跌超过-2%，次日直接反转的概率只有 <strong>23%</strong>，不要追涨！就算参与只能 <strong>1/3 仓位</strong>参与。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "330cd38c1eaefb84",
+    "time": "2026-10-23 09:35:49",
+    "read": true,
+    "strategyId": "opening_net_inflow",
+    "title": "🚨 开盘大幅资金出逃-谨防大跌",
+    "description": "开盘 5min 资金净流出 <strong>74.9亿</strong>，按照历史规律，当天大概率大盘要大幅下跌，谨慎出手。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "183eb3bfcb4a5c58",
+    "time": "2026-10-23 09:44:50",
+    "read": true,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-146.1亿</strong>（净流出）<br/>• 科技分时情绪 -22.3 → -18.1（上升 4.2）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "aca9cf636aee5305",
+    "time": "2026-10-23 09:45:51",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>440亿</strong>（≥100亿），主力资金净流出加速（-71.2→-150.4亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "c940ee3850d25001",
+    "time": "2026-10-23 10:05:57",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>194亿</strong>（≥100亿），主力资金净流出加速（-185.5→-254.7亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "36b72f7d37be59e6",
+    "time": "2026-10-23 10:26:07",
+    "read": false,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>136亿</strong>（≥100亿），主力资金净流出加速（-322.3→-351.8亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  }
+]

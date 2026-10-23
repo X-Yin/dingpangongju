@@ -4,7 +4,7 @@
 //   1. 均线破位（真实日K线 MA10，由后端按回放日期计算下发；10日线斜率为负时屏蔽跌破10日线条件，
 //      改用「现价不跌破前一交易日最低价」判断；斜率非负时 9:30-14:50 需跌破10日线且涨幅<-3%，14:50后跌破即触发）
 //   2. 高位放量大阴线（日内最高价到现价回落超过 8%，且现价低于日内开盘价）—— 需持续 ≥5 分钟才触发
-//   3. 科技板块情绪退潮 == -100 且自选股中跌幅 <-9% 的个股 >= 5 个 —— 需持续 ≥5 分钟才触发
+//   3. 科技板块情绪退潮 < -30 且自选股中跌幅 <-9% 的个股 >= 5 个 —— 需持续 ≥5 分钟才触发
 //   4. 抗分歧指数 < 6 且 当前涨幅 ≤ -5%
 //   5. 连续三日（含当日）抗分歧指数均 < 10：前两日用后端预计算的全天分数（resilience3dScores 前 2 位），
 //      当日为实时口径（分钟级/桶级分时截至当前分钟现算，与叠加分时 tag 同口径），仅 9:40 后生效
@@ -82,7 +82,7 @@ const checkCondition3Persist = (timeBuckets, currentIndex) => {
       const pct = toNumber(s.changePct);
       return pct !== null && pct < -9;
     }).length;
-    const cond3True = techEmotion !== null && techEmotion === -100 && downStocksCount >= 5;
+    const cond3True = techEmotion !== null && techEmotion < -30 && downStocksCount >= 5;
     if (!cond3True) break;
     // 计算该桶覆盖的分钟数
     const bucketMinute = toNumber(bucket?.minute);
@@ -330,13 +330,13 @@ const runSellPointDiagnosis = (position, currentBucket, replayStocks, timeBucket
     ],
   };
 
-  // ===== 条件3：科技板块情绪退潮 == -100，且自选股中跌幅 <-9% 的个股 >= 5 个 —— 需持续 ≥5 分钟 =====
+  // ===== 条件3：科技板块情绪退潮 < -30，且自选股中跌幅 <-9% 的个股 >= 5 个 —— 需持续 ≥5 分钟 =====
   const techEmotion = toNumber(currentBucket?.techEmotion);
   const downStocksCount = (currentBucket?.stockChanges || []).filter(s => {
     const pct = toNumber(s.changePct);
     return pct !== null && pct < -9;
   }).length;
-  const techCrash = techEmotion !== null && techEmotion === -100;
+  const techCrash = techEmotion !== null && techEmotion < -30;
   const isCondition3RawTrue = techCrash && downStocksCount >= 5;
   const cond3Persist = isCondition3RawTrue
     ? checkCondition3Persist(timeBuckets, currentIndex)
@@ -347,15 +347,15 @@ const runSellPointDiagnosis = (position, currentBucket, replayStocks, timeBucket
     pending: isCondition3RawTrue && !cond3Persist.satisfied,
     pendingMinutes: isCondition3RawTrue ? cond3Persist.checkedMin : 0,
     detail: techCrash && downStocksCount >= 5
-      ? `科技情绪指数 = -100 且自选股中跌幅<-9%的个股 ${downStocksCount} 个（>=5），市场触底${!cond3Persist.satisfied ? `（已持续 ${cond3Persist.checkedMin} 分钟，需≥${SELL_CONDITION_PERSIST_MIN} 分钟）` : ''}`
+      ? `科技情绪指数 ${techEmotion.toFixed(2)} < -30 且自选股中跌幅<-9%的个股 ${downStocksCount} 个（>=5），市场触底${!cond3Persist.satisfied ? `（已持续 ${cond3Persist.checkedMin} 分钟，需≥${SELL_CONDITION_PERSIST_MIN} 分钟）` : ''}`
       : techCrash
-        ? `科技情绪指数 = -100，但自选股中跌幅<-9%的个股仅 ${downStocksCount} 个（<5），未触发`
+        ? `科技情绪指数 ${techEmotion.toFixed(2)} < -30，但自选股中跌幅<-9%的个股仅 ${downStocksCount} 个（<5），未触发`
         : techEmotion !== null
-          ? `科技情绪指数 ${techEmotion.toFixed(2)}，未达到 -100（需 = -100 且自选股中跌幅<-9%个股 >=5 才触发）`
+          ? `科技情绪指数 ${techEmotion.toFixed(2)}，未低于 -30（需 < -30 且自选股中跌幅<-9%个股 >=5 才触发）`
           : '当日科技情绪数据暂无',
     subConditions: [
       { label: '科技情绪指数', value: techEmotion !== null ? techEmotion.toFixed(2) : '--' },
-      { label: '阈值', value: `= -100（持续≥${SELL_CONDITION_PERSIST_MIN}分钟才触发）` },
+      { label: '阈值', value: `< -30（持续≥${SELL_CONDITION_PERSIST_MIN}分钟才触发）` },
       { label: '跌幅<-9%自选股', value: `${downStocksCount} 个（需>=5）` },
     ],
   };

@@ -11,6 +11,9 @@ const getBacktestCacheFile = (strategy, startDate, endDate) => path.join(backtes
 // 否则 readCachedBacktest 仍会命中「旧规则」算出的结果（时间伸缩测试、回测报告都会读到过期数据）。
 // 版本号随结果一起落盘，读取时校验；不匹配即视为未命中并重跑（旧文件会被同名的重跑结果覆盖）。
 // 只影响列在这里的策略，其余策略沿用默认版本 1（无需清理即可自动失效）。
+// v+1（2026-10-23）：通用卖点条件3「科技板块情绪退潮」阈值由「= -100」改为「< -30」（自选股中跌幅<-9%的个股≥5 不变）
+//   —— 走通用 7 条件卖点诊断的策略（快进快出 / N日涨幅最大 / 两次买入 / 两次买入不同板块 / 研报覆盖快进快出 /
+//   科技进攻-情绪游资极致胜率的 A 风格）全部 +1 失效重跑；情绪游资（ice）/ 极致胜率 / 反向抱团龙头等自有卖点策略不受影响
 const CACHE_VERSION_BY_STRATEGY = {
   // v32（2026-10-21）：新路径选股加严——①「峰值后区间最大波动」窗口带上峰值日本身（原不含，峰值日回撤不计入波动）；
   //   ② 峰值日（含）至买点前收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除，原完全豁免 -9% 规则，仅靠波动 < 15% 兜底）
@@ -57,7 +60,8 @@ const CACHE_VERSION_BY_STRATEGY = {
   // v4（2026-10-22）：B 腿（极致胜率）顺周期候选池与 hot_money_extreme_win v33 同口径——
   //   连板准入按流通市值分档（> 100 亿元两连板 + 含两连板 5 日涨幅 > 40%；≤ 100 亿元四连板及以上）+ 新路径最大涨幅峰值 > 70% 且 < 100%
   // v6（2026-10-22）：A 风格（highest_3d_gain_emoquick）选股叠加「最近 N 日涨幅 > 10% × N 直接剔除」过热门槛
-  sci_attack_emo_win: 6,
+  // v7（2026-10-23）：A 风格走通用 7 条件卖点，条件3 阈值改为 < -30
+  sci_attack_emo_win: 7,
   // v4（2026-10-17）：候选池新增「一律剔除创业板（30/301）与科创板（688）」
   // v3（2026-10-17）：候选池沿用「情绪游资-极致胜率」的题材黑名单（PCB/玻璃基板/光模块/液冷/通信/算力/芯片/靶材/电子气体/光刻胶/算力租赁，共享 constants.EXCLUDED_THEMES）
   // v2（2026-10-17）：卖点去掉龙头战法的「盘中 1 分钟内跳水 ≤ -3%」这一条（反向抱团龙头专用；共享模块 leaderSellMinute 的 disableMinutePlummet 开关）
@@ -74,48 +78,59 @@ const CACHE_VERSION_BY_STRATEGY = {
   //   同时适用于快进快出 7 个、纯 N 日涨幅最大 7 个、两次买入 7 个与两次买入不同板块 4 个策略
   // v6（2026-10-22）：选股新增「最近 N 日涨幅 > 10% × N 直接剔除」过热门槛（N.5 日窗口按 N+0.5 计；
   //   「买入最高涨幅」「研报覆盖类」「两次买入不同板块系列」不适用）
-  highest_2d_gain_emoquick: 6,
-  highest_3d_gain_emoquick: 6,
-  highest_4d_gain_emoquick: 6,
-  highest_5d_gain_emoquick: 6,
-  highest_2d5_gain_emoquick: 6,
-  highest_3d5_gain_emoquick: 6,
-  // 研报覆盖快进快出：走 highest_3d_gain 选股时同样受 v6 过热门槛约束
-  highest_3d_reports_top5_gain_emoquick: 6,
+  // v7（2026-10-23）：通用卖点条件3 阈值改为 < -30
+  highest_2d_gain_emoquick: 7,
+  highest_3d_gain_emoquick: 7,
+  highest_4d_gain_emoquick: 7,
+  highest_5d_gain_emoquick: 7,
+  highest_2d5_gain_emoquick: 7,
+  highest_3d5_gain_emoquick: 7,
+  // 研报覆盖快进快出：v7（2026-10-23）通用卖点条件3 阈值改为 < -30
+  highest_3d_reports_top5_gain_emoquick: 7,
   // v2（2026-10-22）：同上「涨幅领先但当日爆发力不足」顺延规则（首版为默认版本 1，未列此表）
   // v3（2026-10-22）：选股叠加「最近 3 日涨幅 > 30% 直接剔除」过热门槛
-  highest_3d_gain_emoquick_emo10: 3,
-  highest_3d_gain_emoquick_emo20: 3,
-  highest_3d_gain_emoquick_emo30: 3,
-  highest_3d_gain_emoquick_g10: 3,
+  // v4（2026-10-23）：通用卖点条件3 阈值改为 < -30
+  highest_3d_gain_emoquick_emo10: 4,
+  highest_3d_gain_emoquick_emo20: 4,
+  highest_3d_gain_emoquick_emo30: 4,
+  highest_3d_gain_emoquick_g10: 4,
   // 纯 N 日涨幅最大系列：v5 与快进快出系列同口径（新增「涨幅领先但当日爆发力不足」顺延）
   // v6（2026-10-22）：选股叠加「最近 N 日涨幅 > 10% × N 直接剔除」过热门槛
-  highest_2d_gain: 6,
-  highest_3d_gain: 6,
-  highest_4d_gain: 6,
-  highest_5d_gain: 6,
-  highest_10d_gain: 6,
-  highest_2d5_gain: 6,
-  highest_3d5_gain: 6,
+  // v7（2026-10-23）：通用卖点条件3 阈值改为 < -30
+  highest_2d_gain: 7,
+  highest_3d_gain: 7,
+  highest_4d_gain: 7,
+  highest_5d_gain: 7,
+  highest_10d_gain: 7,
+  highest_2d5_gain: 7,
+  highest_3d5_gain: 7,
   // v5（2026-10-22）：两次买入系列与 N 日涨幅最大同口径——新增「涨幅领先但当日爆发力不足」顺延
   // v6（2026-10-22）：选股叠加「最近 N 日涨幅 > 10% × N 直接剔除」过热门槛
-  highest_2d_gain_two_buy: 6,
-  highest_3d_gain_two_buy: 6,
-  highest_4d_gain_two_buy: 6,
-  highest_5d_gain_two_buy: 6,
-  highest_2d5_gain_two_buy: 6,
-  highest_3d5_gain_two_buy: 6,
+  // v7（2026-10-23）：通用卖点条件3 阈值改为 < -30
+  highest_2d_gain_two_buy: 7,
+  highest_3d_gain_two_buy: 7,
+  highest_4d_gain_two_buy: 7,
+  highest_5d_gain_two_buy: 7,
+  highest_2d5_gain_two_buy: 7,
+  highest_3d5_gain_two_buy: 7,
   // 两次买入（同一天）：v1（2026-10-20 创建）；v2（2026-10-20 改版）——当日不再因买点二次触发补买第二份，
   // 改为 14:55 当日盈利（14:55 价 vs 第一份买入价）> 2% 且未涨停时尾盘补买（否则等后续买点再买）；
   // 两份买入后成本线 = 两次买入价均值（统一成本线，条件7 止损与快进快出盘中止损共用）；
   // v3（2026-10-22）：选股新增「涨幅领先但当日爆发力不足」顺延
   // v4（2026-10-22）：选股叠加「最近 3 日涨幅 > 30% 直接剔除」过热门槛
-  highest_3d_gain_two_buy_same_day: 4,
-  // v5（2026-10-22）：同上「涨幅领先但当日爆发力不足」顺延
-  highest_2d_gain_two_buy_diff_block: 5,
-  highest_3d_gain_two_buy_diff_block: 5,
-  highest_4d_gain_two_buy_diff_block: 5,
-  highest_5d_gain_two_buy_diff_block: 5,
+  // v5（2026-10-23）：通用卖点条件3 阈值改为 < -30
+  highest_3d_gain_two_buy_same_day: 5,
+  // v6（2026-10-23）：同上，通用卖点条件3 阈值改为 < -30
+  highest_2d_gain_two_buy_diff_block: 6,
+  highest_3d_gain_two_buy_diff_block: 6,
+  highest_4d_gain_two_buy_diff_block: 6,
+  highest_5d_gain_two_buy_diff_block: 6,
+  // v2（2026-10-23）：通用卖点条件3 阈值改为 < -30（此前未列版本，默认 v1）
+  highest_gain: 2,
+  highest_3d_reports: 2,
+  highest_5d_reports: 2,
+  highest_3d_reports_top5_gain: 2,
+  highest_5d_reports_top5_gain: 2,
   // ===== 情绪游资类（顺/逆周期） =====
   // v2（2026-10-23）：仓位由全仓改为半仓——returnRate = 个股实际收益 × 0.5（整体收益/回撤均按折算口径），
   //   顺周期（hot_money_ice_*）与逆周期（hot_money_ice_rev_*）共 10 个策略全部适用

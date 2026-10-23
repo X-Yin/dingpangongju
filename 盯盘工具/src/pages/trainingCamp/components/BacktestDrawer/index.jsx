@@ -108,7 +108,7 @@ const BUY_RULES = [
 const SELL_RULES = [
   { key: 'condition1', title: '均线破位', desc: '根据 MA5/MA10 斜率与开盘价位置分四种规则，跌破对应均线或前一交易日最低价触发卖点' },
   { key: 'condition2', title: '高位放量大阴线', desc: '日内最高价到现价回落超过 8%，且现价低于日内开盘价，需持续 ≥5 分钟才触发' },
-  { key: 'condition3', title: '科技板块情绪退潮', desc: '科技情绪指数 = -100 且自选股中跌幅 <-9% 的个股 ≥5 个，需持续 ≥5 分钟才触发' },
+  { key: 'condition3', title: '科技板块情绪退潮', desc: '科技情绪指数 < -30 且自选股中跌幅 <-9% 的个股 ≥5 个，需持续 ≥5 分钟才触发' },
   { key: 'condition4', title: '抗分歧指数弱势', desc: '抗分歧指数 < 6 且当前涨幅 ≤ -5%，仅 14:50 后生效' },
   { key: 'condition5', title: '连续三日抗分歧弱势', desc: '近三日（含当日）抗分歧指数均 < 10，仅 9:40 后生效' },
   { key: 'condition6', title: '跌破最迟买入日低点', desc: '现价跌破买入当日最低点，需持续 ≥5 分钟才触发' },

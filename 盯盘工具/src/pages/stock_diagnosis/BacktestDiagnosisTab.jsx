@@ -308,7 +308,7 @@ const BacktestDiagnosisTab = ({ onStockClick, preSelectedCode, preSelectedName, 
             <div style={{ fontSize: 12, lineHeight: 1.8, color: '#5b6b86' }}>
               <div><strong style={{ color: '#cf1322' }}>情绪冰点（满足任一）：</strong>① 当日盘中有分时触及冰点（hasIce）；② 前一日科技情绪指数 &lt; -40；③ 前两日科技情绪指数连续为负；④ 前三天科技情绪指数平均值 &lt; 0（前提：前一日情绪 &le; 45，否则不触发）</div>
               <div><strong style={{ color: '#cf1322' }}>买点（需全部满足）：</strong>① 前一日为情绪冰点；② 跟踪指数当日涨幅 &gt; 1%（sh688 跟踪科创板，其他跟踪创业板）；③ 当天科技情绪指数 &ge; -40；④ 10日线斜率非负；⑤ 抗分歧指数 &gt; 8；⑥ 价格不低于10日线。买入价 = (收盘价+开盘价)/2</div>
-              <div><strong style={{ color: '#389e0d' }}>卖点（满足任一）：</strong>① MA10上升时收盘价跌破10日线，MA10下降时收盘价未站上5日线；② 高位大阴线（振幅&gt;5%且收盘价&lt;开盘价）；③ 科技情绪退潮 = -100 且自选股中跌幅&lt;-9%的个股≥5；④ 抗分歧指数 &lt; 6</div>
+              <div><strong style={{ color: '#389e0d' }}>卖点（满足任一）：</strong>① MA10上升时收盘价跌破10日线，MA10下降时收盘价未站上5日线；② 高位大阴线（振幅&gt;5%且收盘价&lt;开盘价）；③ 科技情绪退潮 &lt; -30 且自选股中跌幅&lt;-9%的个股≥5；④ 抗分歧指数 &lt; 6</div>
             </div>
           }
         />

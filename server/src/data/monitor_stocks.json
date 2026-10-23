@@ -838,7 +838,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "9",
-    "isTech": false,
+    "isTech":  true,
     "addedAt": "2026-10-01 12:24:44"
   },
   {
@@ -894,5 +894,23 @@
     "riskScore": " 8",
     "isTech": true,
     "addedAt": "2026-10-23 08:55:48"
+  },
+  {
+    "code": "sh605488",
+    "name": "福莱新材",
+    "isImportant": false,
+    "blockName": "物理 AI",
+    "riskScore": "8",
+    "isTech": false,
+    "addedAt": "2026-10-23 09:36:25"
+  },
+  {
+    "code": "sz003021",
+    "name": "兆威机电",
+    "isImportant": false,
+    "blockName": "物理 AI",
+    "riskScore": "7",
+    "isTech": false,
+    "addedAt": "2026-10-23 10:12:30"
   }
 ]

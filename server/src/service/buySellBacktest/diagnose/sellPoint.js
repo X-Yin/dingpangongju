@@ -208,7 +208,7 @@ const checkCondition3Persist = (timeBuckets, currentIndex) => {
       const pct = toNumber(s.changePct);
       return pct !== null && pct < -9;
     }).length;
-    const cond3True = techEmotion !== null && techEmotion === -100 && downStocksCount >= 5;
+    const cond3True = techEmotion !== null && techEmotion < -30 && downStocksCount >= 5;
     if (!cond3True) break;
     const bucketMinute = toNumber(bucket?.minute);
     if (bucketMinute === null || bucketMinute === undefined) break;
@@ -390,7 +390,7 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
     const pct = toNumber(s.changePct);
     return pct !== null && pct < -9;
   }).length;
-  const techCrash = techEmotion !== null && techEmotion === -100;
+  const techCrash = techEmotion !== null && techEmotion < -30;
   const hasKeyBlockGateC3 = position?.keyBlockCybMa3Slope !== undefined;
   const gateSlopeC3 = hasKeyBlockGateC3 && Number.isFinite(Number(position.keyBlockCybMa3Slope)) ? Number(position.keyBlockCybMa3Slope) : null;
   const gatePassedC3 = !hasKeyBlockGateC3 || (gateSlopeC3 !== null && gateSlopeC3 > 0);
@@ -418,11 +418,11 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
       pending: isCondition3RawTrue && !cond3Persist.satisfied,
       pendingMinutes: isCondition3RawTrue ? cond3Persist.checkedMin : 0,
       detail: techCrash && downStocksCount >= 5
-        ? `科技情绪指数 = -100 且自选股中跌幅<-9%的个股 ${downStocksCount} 个（>=5），市场触底${!cond3Persist.satisfied ? `（已持续 ${cond3Persist.checkedMin} 分钟，需≥${SELL_CONDITION_PERSIST_MIN} 分钟）` : ''}`
+        ? `科技情绪指数 ${techEmotion.toFixed(2)} < -30 且自选股中跌幅<-9%的个股 ${downStocksCount} 个（>=5），市场触底${!cond3Persist.satisfied ? `（已持续 ${cond3Persist.checkedMin} 分钟，需≥${SELL_CONDITION_PERSIST_MIN} 分钟）` : ''}`
         : techCrash
-          ? `科技情绪指数 = -100，但自选股中跌幅<-9%的个股仅 ${downStocksCount} 个（<5），未触发`
+          ? `科技情绪指数 ${techEmotion.toFixed(2)} < -30，但自选股中跌幅<-9%的个股仅 ${downStocksCount} 个（<5），未触发`
           : techEmotion !== null
-            ? `科技情绪指数 ${techEmotion.toFixed(2)}，未达到 -100（需 = -100 且自选股中跌幅<-9%个股 >=5 才触发）`
+            ? `科技情绪指数 ${techEmotion.toFixed(2)}，未低于 -30（需 < -30 且自选股中跌幅<-9%个股 >=5 才触发）`
             : '当日科技情绪数据暂无',
       subConditions: [],
     };
