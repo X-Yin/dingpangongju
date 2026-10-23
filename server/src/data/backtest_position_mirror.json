@@ -1,24 +1,24 @@
 {
-  "lastSyncedEndDate": "20261022",
+  "lastSyncedEndDate": "20261023",
   "lastRange": {
     "startDate": "20260728",
-    "endDate": "20261022"
+    "endDate": "20261023"
   },
-  "lastSyncedAt": "2026-10-22 00:39:09",
+  "lastSyncedAt": "2026-10-23 08:54:32",
   "lastHoldings": [
     {
-      "code": "sh600487",
-      "name": "亨通光电",
+      "code": "sz001309",
+      "name": "德明利",
       "buyDate": "20261021",
-      "buyPrice": 52.83,
+      "buyPrice": 225.72,
       "buyTime": "09:55",
       "weight": 0.5
     }
   ],
-  "added": [],
-  "skipped": [
-    "亨通光电（镜像持仓已存在）"
+  "added": [
+    "德明利(sz001309) 成本 225.72 买入日 2026-10-21"
   ],
+  "skipped": [],
   "attempts": 0,
-  "attemptsDate": "2026-10-22"
+  "attemptsDate": "2026-10-23"
 }

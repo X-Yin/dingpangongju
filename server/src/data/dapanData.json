@@ -87,16 +87,6 @@
     "suspend_num": 6,
     "status": true
   },
-  "listed_today": [
-    {
-      "secu_name": "N通则",
-      "secu_code": "sz301718",
-      "ipo_price": 26.88,
-      "ipo_pe": 44.72,
-      "allot_max": 10000,
-      "lot_rate": 0.0163,
-      "issue_vol": 36450000
-    }
-  ],
+  "listed_today": [],
   "purchase_today": []
 }

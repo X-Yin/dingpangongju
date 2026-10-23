@@ -2098,5 +2098,45 @@
       }
     ],
     "isImportant": false
+  },
+  "sz002913": {
+    "stockName": "奥士康",
+    "kline": [
+      {
+        "trade_date": 20261022,
+        "open_px": 84.99,
+        "high_px": 85.11,
+        "low_px": 79.56,
+        "close_px": 80.66,
+        "business_amount": 10845383,
+        "business_balance": 888087540,
+        "change": -5.11,
+        "ma5_px": 83.32,
+        "ma10_px": 85.52,
+        "ma20_px": 86.43,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz002185": {
+    "stockName": "华天科技",
+    "kline": [
+      {
+        "trade_date": 20261022,
+        "open_px": 14.26,
+        "high_px": 15.68,
+        "low_px": 13.96,
+        "close_px": 15.55,
+        "business_amount": 230446990,
+        "business_balance": 3448063100,
+        "change": 9.12,
+        "ma5_px": 14.41,
+        "ma10_px": 14.73,
+        "ma20_px": 16.05,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

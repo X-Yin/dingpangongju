@@ -102,7 +102,7 @@ const GlobalDiagnosisAlert = () => {
     const isExtreme = mode === MODE_EXTREME_WIN;
     const isDefense = mode === MODE_ATTACK_DEFENSE;
     const stocks = [];
-    // 科技进攻源（tech_attack / attack_defense）：3 日涨幅榜内首个满足买点资格且未涨停的标的
+    // 科技进攻源（tech_attack / attack_defense）：使用后端唯一买点候选 pickCode（已应用过热/一字板/顺延规则）
     if (!isExtreme) {
       try {
         const res = await axios.post(`http://${local_ip}:3000/top_gainers_by_market`, { limit: 10 });
@@ -110,10 +110,14 @@ const GlobalDiagnosisAlert = () => {
         const cybPassed = d.cybGate?.passed === true;
         const starPassed = d.starGate?.passed === true;
         const merged = [
+          ...(Array.isArray(d.mergedTop) ? d.mergedTop : []),
           ...(cybPassed ? (d.markets?.cybMain || []) : []),
           ...(starPassed ? (d.markets?.star || []) : []),
-        ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity));
-        const pick = merged.find((s) => s.matchesBuyPoint && !s.isLimitUp) || null;
+        ];
+        // 优先使用后端 pickCode（已应用 3日涨幅过热剔除与「涨幅领先但当日爆发力不足」顺延）
+        const pick = (d.pickCode ? merged.find((s) => s.code === d.pickCode) : null)
+          || merged.find((s) => s.isCandidate)
+          || null;
         if (pick) stocks.push({ ...pick, isTechPick: true });
       } catch (e) {
         console.error('全局买点卡片获取科技进攻标的失败:', e);

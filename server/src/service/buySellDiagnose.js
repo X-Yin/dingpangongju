@@ -38,7 +38,7 @@ const { getSingleStockData, getSingleStockTlineDataByDate, getAllStockData } = r
 const { getAllTechIndexData, updateCurrentTechIndexData, getCurrentTechEmotion, getTechEmotionIntraday } = require('./emotion');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 const { getMonitorStocks } = require('./monitorStock');
-const { ensureWatchlistValuation, isBuyBlockedByValuation } = require('./watchlistValuation');
+const { ensureWatchlistValuation, getValuationBlockReason } = require('./watchlistValuation');
 const { getStockPositions } = require('./stockPosition');
 const { loadReportIndex, sumReportCount, queryLiveIndexGate, CYB_INDEX_CODE, STAR_INDEX_CODE, codeToGateIndex, gateIndexName, GLOBAL_RESILIENCE_MIN, BUY_TIME_MAX_MINUTE, getTechEmotionEmaMap, getTechEmotionRawMap } = require('./buySellBacktest');
 const { getAmountHistory, parseAmountToYi } = require('./amount');
@@ -3277,11 +3277,12 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     ? Number(dayjs().format('HHmm'))
     : 1455;
 
-  // 估值快照（流通市值/市盈率）：非当日缓存时拉取一次，供下方买入估值限制过滤使用
+  // 估值快照（流通市值/市盈率）：非当日缓存时拉取一次，供榜单标注估值禁买原因
   await ensureWatchlistValuation();
-  // 自选股榜单仅纳入科技股（isTech !== false，与全站「自选股科技股」口径一致），
-  // 并叠加买入估值限制（流通市值 < 200 亿 或 市盈率亏损 剔除；2026-10-14 由总市值改为流通市值口径）
-  const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false && !isBuyBlockedByValuation(s.code));
+  // 自选股榜单仅纳入科技股（isTech !== false，与全站「自选股科技股」口径一致）；
+  // 2026-10-22 起涨幅榜展示全部科技自选股：估值禁买（流通市值 < 200 亿 / 市盈率亏损）个股不再从榜单剔除，
+  // 只在名称后标注原因，且仍不进入买点候选
+  const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false);
   const gate = await queryLiveIndexGate(null, targetDateStr, buyMinute);
 
   // 两个指数的分时（算个股抗分歧用）
@@ -3317,14 +3318,13 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       const close3Ago = parseFloat(sortedKline[targetIdx - 3].close_px);
       if (close3Ago > 0) change3d = parseFloat(((closePrice - close3Ago) / close3Ago * 100).toFixed(2));
     }
-    // 上一交易日一字板（开盘/收盘/最低涨幅均≥阈值，主板 8%、创业/科创 16%）不进入涨幅榜；
-    // 数据不足无法判定时不拦截（与 buySellBacktest 口径一致）
+    // 上一交易日一字板（开盘/收盘/最低涨幅均≥阈值，主板 8%、创业/科创 16%）不进入买点候选；
+    // 2026-10-22 起仍进入涨幅榜全量展示，仅在名称后标注原因（数据不足无法判定时不拦截）
     const prevOneWord = targetIdx >= 2
       ? isPrevDayOneWordBoardBars(stock.code, sortedKline[targetIdx - 1], sortedKline[targetIdx - 2])
       : null;
-    if (prevOneWord === true) continue;
     const isSh688 = stock.code.startsWith('sh688') || stock.code.startsWith('688');
-    base.push({ stock, isSh688, sortedKline, targetIdx, change, change3d });
+    base.push({ stock, isSh688, sortedKline, targetIdx, change, change3d, prevOneWord });
   }
 
   const byChange3d = (a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity);
@@ -3356,6 +3356,19 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       const days = countStockPositiveSlopeDaysLocal(s.sortedKline, s.targetIdx);
       slopeOk = !(days != null && days > 4);
     }
+    const isLimitUp = isLimitUpChange(s.stock.code, rtChange);
+    const valuationReason = getValuationBlockReason(s.stock.code);
+    const matchesBuyPoint = indexGatePassed && resilienceOk && slopeOk && !valuationReason;
+    // 名称后的简短说明（2026-10-22 用户新增）：为什么该股不是买点候选。
+    // 按排除优先级取第一条：估值禁买 → 昨日一字板 → 3日涨幅过热 → 涨停 → 抗分歧不足 → MA3 正斜率天数超限；
+    // 「涨幅领先但抗分歧弱」在合并榜顺延阶段补充；市场门槛未满足由榜单头部说明统一展示，不逐行标注
+    let excludeReason = '';
+    if (valuationReason) excludeReason = valuationReason;
+    else if (s.prevOneWord === true) excludeReason = '昨日一字板';
+    else if (Number.isFinite(s.change3d) && s.change3d > TECH_GAIN_CAP_PCT) excludeReason = `3日涨幅>${TECH_GAIN_CAP_PCT}%`;
+    else if (isLimitUp) excludeReason = '涨停';
+    else if (!resilienceOk) excludeReason = resilienceScore == null ? '抗分歧缺失' : `抗分歧<${MIN_RESILIENCE_SCORE}`;
+    else if (!slopeOk) excludeReason = 'MA3正斜率>4天';
     return {
       code: s.stock.code,
       stockName: s.stock.name,
@@ -3364,27 +3377,52 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       change: rtChange,
       change3d: s.change3d,
       resilienceScore,
-      isLimitUp: isLimitUpChange(s.stock.code, rtChange),
-      matchesBuyPoint: indexGatePassed && resilienceOk && slopeOk,
+      isLimitUp,
+      matchesBuyPoint,
+      prevOneWord: s.prevOneWord === true,
+      valuationBlocked: !!valuationReason,
+      excludeReason,
     };
   };
 
-  // 全量模式下入选数量可达上百只，用 batchParallel 限流并发（保留原顺序），避免瞬间打爆数据源
+  // 分市场入榜个股并行计算（限流并发，保留原顺序），避免瞬间打爆数据源
   const [cybMainList, starList] = await Promise.all([
     batchParallel(topCybMain, enrich, 8),
     batchParallel(topStar, enrich, 8),
   ]);
 
-  // 合并榜（与前端 mergedList / 飞书卡片同口径：仅纳入满足门槛的市场，按 3 日涨幅降序取前十），
-  // 先剔除最近 3 日涨幅 > 30% 的过热个股（2026-10-22 与回测 10% × N 规则同步），
-  // 并在其上应用「涨幅领先但当日爆发力不足」顺延，得到唯一买点候选
-  const mergedTop = [
+  // 满足市场门槛的个股池（仅这两种市场参与排名与买点候选）
+  const gatePassedList = [
     ...(gate?.cybGate?.passed === true ? cybMainList : []),
     ...(gate?.starGate?.passed === true ? starList : []),
-  ]
-    .filter(s => !(Number.isFinite(Number(s.change3d)) && Number(s.change3d) > TECH_GAIN_CAP_PCT))
-    .sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
-  const { pick: techPick, skipped: techGainGapSkipped } = pickTechCandidateWithGainGap(mergedTop);
+  ];
+
+  // 展示榜：按 3 日涨幅降序取前十，不做剔除（涨停 / 3日涨幅>30% / 昨日一字板 / 估值禁买 仍在榜内），
+  // 由 excludeReason 说明为什么不是买点候选（2026-10-22）
+  const mergedTop = [...gatePassedList].sort(byChange3d).slice(0, 10);
+
+  // 买点候选池：剔除估值禁买、昨日一字板与最近 3 日涨幅 > 30% 的个股后按 3 日涨幅降序取前十，
+  // 再应用「涨幅领先但当日爆发力不足」顺延，得到唯一买点候选
+  const candidatePool = gatePassedList
+    .filter(s => s.valuationBlocked !== true
+      && s.prevOneWord !== true
+      && !(Number.isFinite(Number(s.change3d)) && Number(s.change3d) > TECH_GAIN_CAP_PCT))
+    .sort(byChange3d)
+    .slice(0, 10);
+  const { pick: techPick, skipped: techGainGapSkipped } = pickTechCandidateWithGainGap(candidatePool);
+
+  // 榜单逐行补充「买点候选」标记与顺延说明：非候选个股靠 excludeReason 解释为什么不是买点候选
+  const gainGapSkippedCodes = new Set((techGainGapSkipped || []).map(s => s.code));
+  const decorate = (s) => {
+    if (techPick && s.code === techPick.code) return { ...s, isCandidate: true, excludeReason: '' };
+    return {
+      ...s,
+      isCandidate: false,
+      excludeReason: gainGapSkippedCodes.has(s.code) ? '领先但抗分歧弱' : s.excludeReason,
+    };
+  };
+  const cybMainOut = cybMainList.map(decorate);
+  const starOut = starList.map(decorate);
 
   const pickGate = (g) => (g ? {
     slope: g.slope ?? null,
@@ -3406,9 +3444,9 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       buyMinute,
       cybGate: pickGate(gate?.cybGate),
       starGate: pickGate(gate?.starGate),
-      markets: { cybMain: cybMainList, star: starList },
+      markets: { cybMain: cybMainOut, star: starOut },
       // 科技进攻唯一买点候选（已按「涨幅领先但当日爆发力不足」顺延）与顺延明细
-      mergedTop,
+      mergedTop: mergedTop.map(decorate),
       pickCode: techPick?.code || null,
       gainGapSkipped: techGainGapSkipped,
     },

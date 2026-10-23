@@ -69,6 +69,17 @@ const isBuyBlockedByValuation = (code) => {
   return false;
 };
 
+// 估值禁买原因（2026-10-22 涨幅榜全量展示用）：返回简短原因，'' 表示不受估值限制
+const getValuationBlockReason = (code) => {
+  const v = getValuationMap().get(code);
+  if (!v) return '';
+  const { circulatingMarketValue, ttmPe } = v;
+  if (circulatingMarketValue != null && Number.isFinite(circulatingMarketValue)
+    && circulatingMarketValue < MIN_MARKET_VALUE) return `流通市值<${MIN_MARKET_VALUE / 1e8}亿`;
+  if (ttmPe == null || !Number.isFinite(ttmPe) || ttmPe <= 0) return '市盈率亏损';
+  return '';
+};
+
 // 拉取自选股估值快照并写入本地缓存文件（codes 为空时拉取全部自选股）。
 // 与已有记录合并（本次拉到的覆盖旧值），拉取失败的股票沿用旧记录
 const syncWatchlistValuation = async (codes = null) => {
@@ -144,6 +155,7 @@ module.exports = {
   MIN_MARKET_VALUE,
   ensureWatchlistValuation,
   getValuationMap,
+  getValuationBlockReason,
   isBuyBlockedByValuation,
   syncWatchlistValuation,
 };

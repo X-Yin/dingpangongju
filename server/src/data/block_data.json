@@ -306,7 +306,7 @@
       "name": "中国铝业",
       "blockName": "贵金属",
       "code": "sh601600",
-      "change": -1.02
+      "change": -1.05
     },
     {
       "name": "白银有色",
@@ -960,7 +960,7 @@
       "name": "海亮股份",
       "blockName": "铜箔",
       "code": "sz002203",
-      "change": -1.85
+      "change": -1.86
     }
   ],
   "pcb": [
@@ -1018,7 +1018,7 @@
       "name": "潍柴动力",
       "blockName": "北美缺电",
       "code": "sz000338",
-      "change": -2.88
+      "change": -2.95
     },
     {
       "name": "东方电气",
@@ -1088,7 +1088,7 @@
       "name": "华鲁恒升",
       "blockName": "化工",
       "code": "sh600426",
-      "change": -1.86
+      "change": -1.88
     },
     {
       "name": "宝丰能源",
@@ -1643,6 +1643,12 @@
       "blockName": "机器人大脑",
       "code": "sh688097",
       "change": -4.86
+    },
+    {
+      "name": "德马科技",
+      "blockName": "机器人大脑",
+      "code": "sh688360",
+      "change": 1.83
     }
   ]
 }

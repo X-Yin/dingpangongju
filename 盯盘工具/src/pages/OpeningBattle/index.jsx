@@ -786,7 +786,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   const starPassed = data?.starGate?.passed === true;
 
   // 挂载立即拉一次；交易时段每 5s 轮询，收盘后保留最后一次数据
-  //   tech_attack            → /top_gainers_by_market（limit=10，每市场最多 10 只）
+  //   tech_attack            → /top_gainers_by_market（limit=10，每市场最多 10 只，合并后展示前十）
   //   hot_money_extreme_win  → /hot_money_leader_list（除 delta≥30 与上证斜率>0 外全部买点条件满足）
   //   attack_defense         → 两个接口同时拉（科技进攻 + 情绪游资双策略并示）
   const fetchStocks = useCallback(async () => {
@@ -807,30 +807,20 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
     }
   }, [isExtreme, isDefense]);
 
-  // 市场门槛说明（标题下方展示）：仅展示满足指数 3 日线斜率买点门槛的市场的股票；
-  // 3 日涨幅过热（> 30%）个股已剔除（与回测 10% × N 规则同步）
+  // 市场门槛说明（标题下方展示）：仅展示满足指数 3 日线斜率买点门槛的市场，按 3 日涨幅取前十；
+  // 未入选买点候选的个股在名称后标注原因（涨停 / 3日涨幅>30% / 昨日一字板 / 抗分歧<9 / 估值禁买 等）
   const gateNote = !data
     ? '正在检测创业板指 / 科创50 的 3 日线斜率买点门槛…'
     : `${cybPassed && starPassed
-      ? '创业板指、科创50 均满足买点门槛：两个市场合并按 3 日涨幅排名'
+      ? '创业板指、科创50 均满足买点门槛：两个市场合并按 3 日涨幅排名前十'
       : cybPassed
-        ? '仅创业板指满足买点门槛：仅展示创业板 + 主板'
+        ? '仅创业板指满足买点门槛：展示创业板 + 主板 3 日涨幅前十'
         : starPassed
-          ? '仅科创50 满足买点门槛：仅展示科创板'
-          : '创业板指、科创50 均不满足买点门槛：暂无可展示标的'}；已剔除最近 3 日涨幅 > 30% 的过热个股`;
+          ? '仅科创50 满足买点门槛：展示科创板 3 日涨幅前十'
+          : '创业板指、科创50 均不满足买点门槛：暂无可展示标的'}；未入选买点候选的个股在名称后标注原因（涨停 / 3日涨幅>30% / 昨日一字板 / 抗分歧<9 / 估值禁买 / 领先但抗分歧弱 等）`;
 
-  // 合并榜单：仅纳入满足门槛的市场，先剔除最近 3 日涨幅 > 30% 的过热个股（2026-10-22 与回测 10% × N 规则同步），
-  // 再按 3 日涨幅降序取前 10
-  const mergedList = useMemo(() => {
-    const cybMainList = data?.markets?.cybMain || [];
-    const starList = data?.markets?.star || [];
-    return [
-      ...(cybPassed ? cybMainList : []),
-      ...(starPassed ? starList : []),
-    ]
-      .filter(s => !(Number.isFinite(Number(s.change3d)) && Number(s.change3d) > 30))
-      .sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
-  }, [data, cybPassed, starPassed]);
+  // 合并榜单：后端已按门槛筛选市场、按 3 日涨幅降序取前十，并补充 excludeReason（2026-10-22）
+  const mergedList = useMemo(() => data?.mergedTop || [], [data]);
 
   // 情绪游资龙头列表（后端已按 delta 降序返回全部达标股；attack_defense 模式下也计算，供顺周期列展示）
   const showEwCols = isExtreme || isDefense;
@@ -859,11 +849,11 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
     return () => timers.forEach(clearTimeout);
   }, [fetchStocks]);
 
-  // 全局唯一推荐标的：合并前十中 3 日涨幅最高且满足买点资格、未封涨停者（仅来自满足门槛的市场）；
-  // 后端已按「涨幅领先但当日爆发力不足」规则顺延（pickCode），优先使用后端结论
+  // 全局唯一推荐标的：后端 pickCode（已应用市场门槛、3日涨幅过热剔除与「涨幅领先但当日爆发力不足」顺延）；
+  // 未入选买点的原因见行内 excludeReason
   const globalPick = useMemo(() => {
     if (data?.pickCode) return mergedList.find(s => s.code === data.pickCode) || null;
-    return mergedList.find(s => s.matchesBuyPoint && !s.isLimitUp) || null;
+    return mergedList.find(s => s.isCandidate) || null;
   }, [mergedList, data]);
 
   const rowCount = isExtreme ? leaderList.length : mergedList.length;
@@ -947,6 +937,9 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
                     >{s.stockName}</span>
                     <span className={`ob-gainer-market ${s.isSh688 ? 'star' : 'cyb'}`}>{s.isSh688 ? '科创' : '创业/主板'}</span>
                     {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
+                    {!isPick && s.excludeReason && s.excludeReason !== '涨停' && (
+                      <span className="ob-gainer-reason">{s.excludeReason}</span>
+                    )}
                     {isPick && <span className="ob-gainer-buyflag">{buyPointHit ? '买点触发' : '买点候选'}</span>}
                   </span>
                   <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>

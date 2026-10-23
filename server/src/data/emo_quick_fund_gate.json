@@ -1,15 +1,15 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-10-22 09:36:11",
-  "reason": "持仓变动重跑（持仓管理增删股票）",
+  "computedAt": "2026-10-23 08:54:32",
+  "reason": "每日首次启动回测",
   "range": {
     "startDate": "20260728",
-    "endDate": "20261022"
+    "endDate": "20261023"
   },
-  "tradeCount": 7,
+  "tradeCount": 6,
   "threshold": 30,
-  "consecutiveBelow": 4,
+  "consecutiveBelow": 3,
   "lastReturns": [
     {
       "code": "sh688825",
@@ -52,13 +52,6 @@
       "sellDate": "20261014",
       "sellTime": "10:00",
       "returnRate": 0.21
-    },
-    {
-      "code": "sh600487",
-      "name": "亨通光电",
-      "sellDate": "20261022",
-      "sellTime": "09:31",
-      "returnRate": -1.57
     }
   ]
 }

@@ -724,7 +724,7 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   }
 }
 
-// ==================== 自选股 · 3日涨幅前十（按门槛筛选市场后合并排名） ====================
+// ==================== 自选股 · 3日涨幅前十（按门槛筛选市场后合并排名，名称后标注非候选原因） ====================
 .ob-rank3-module {
   // ===== 与右侧买点/卖点诊断卡同一视觉体系：紫 → 靛蓝 → 青蓝渐变 + 磨砂玻璃 =====
   position: relative;
@@ -1043,6 +1043,20 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     border-radius: 5px;
     padding: 0 5px;
     line-height: 16px;
+  }
+
+  // 非买点候选原因（2026-10-22）：名称后的简短说明，如「3日涨幅>30%」「抗分歧<9」
+  .ob-gainer-reason {
+    flex-shrink: 0;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.16);
+    border: 1px solid rgba(245, 158, 11, 0.32);
+    border-radius: 5px;
+    padding: 0 5px;
+    line-height: 16px;
+    white-space: nowrap;
   }
 
   // 买点标记：与诊断卡「命中」徽章一致的高亮薄荷胶囊

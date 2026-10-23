@@ -97,11 +97,11 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
     }
   }, []);
 
-  // 涨跌幅 tab：拉取分市场的优选个股（limit 传大值以覆盖全部自选股）
+  // 涨跌幅 tab：拉取分市场的优选个股（limit=10，每市场最多 10 只，合并后展示前十）
   const fetchGainers = useCallback(async () => {
     setGainersLoading(true);
     try {
-      const response = await axios.post(`http://${local_ip}:3000/top_gainers_by_market`, { limit: 999 });
+      const response = await axios.post(`http://${local_ip}:3000/top_gainers_by_market`, { limit: 10 });
       setGainersData(response.data?.data || null);
     } catch (error) {
       console.error('Fetch top gainers by market failed:', error);
@@ -587,35 +587,33 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
     );
   };
 
-  // 涨跌幅 tab：按指数门槛筛选市场后合并排名的前十优选个股（与 OpeningBattle 3 日涨幅榜口径一致）
+  // 涨跌幅 tab：按指数门槛筛选市场后合并排名的前十优选个股（与 OpeningBattle 3 日涨幅榜口径一致），
+  // 未入选买点候选的个股在名称后标注原因
   const renderChangeModeByMarket = () => {
-    const markets = gainersData?.markets || {};
-    const cybMainList = markets.cybMain || [];
-    const starList = markets.star || [];
     const cybPassed = gainersData?.cybGate?.passed === true;
     const starPassed = gainersData?.starGate?.passed === true;
     // 买点条件全部满足时标签为「买点触发」，否则为「买点候选」（攻防兼备下读科技进攻 tech 嵌套结果）
     const pickLabel = techAllPassed ? '买点触发' : '买点候选';
 
-    // 门槛说明（标题下方展示）：仅展示满足指数 3 日线斜率买点门槛的市场的股票
+    // 门槛说明（标题下方展示）：仅展示满足指数 3 日线斜率买点门槛的市场，按 3 日涨幅取前十；
+    // 未入选买点候选的个股在名称后标注原因
     const gateNote = !gainersData
       ? '正在检测创业板指 / 科创50 的 3 日线斜率买点门槛…'
       : cybPassed && starPassed
-        ? '创业板指、科创50 均满足买点门槛：两个市场合并按 3 日涨幅排名'
+        ? '创业板指、科创50 均满足买点门槛：两个市场合并按 3 日涨幅排名前十（未入选买点候选的个股在名称后标注原因）'
         : cybPassed
-          ? '仅创业板指满足买点门槛：仅展示创业板 + 主板'
+          ? '仅创业板指满足买点门槛：仅展示创业板 + 主板 3 日涨幅前十（未入选买点候选的个股在名称后标注原因）'
           : starPassed
-            ? '仅科创50 满足买点门槛：仅展示科创板'
+            ? '仅科创50 满足买点门槛：仅展示科创板 3 日涨幅前十（未入选买点候选的个股在名称后标注原因）'
             : '创业板指、科创50 均不满足买点门槛：暂无可展示标的';
 
-    // 合并榜单：仅纳入满足门槛的市场，按 3 日涨幅降序取前 10
-    const mergedList = [
-      ...(cybPassed ? cybMainList : []),
-      ...(starPassed ? starList : []),
-    ].sort((a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity)).slice(0, 10);
+    // 合并榜单：后端已按门槛筛选市场、按 3 日涨幅降序取前十，并补充 excludeReason（2026-10-22）
+    const mergedList = gainersData?.mergedTop || [];
 
-    // 全局唯一推荐标的：合并前十中 3 日涨幅最高且满足买点资格、未封涨停者（仅来自满足门槛的市场）
-    const globalPick = mergedList.find(i => i.matchesBuyPoint && !i.isLimitUp) || null;
+    // 全局唯一推荐标的：优先使用后端 pickCode（已应用市场门槛、3日涨幅过热剔除与「涨幅领先但当日爆发力不足」顺延）
+    const globalPick = (gainersData?.pickCode
+      ? mergedList.find(i => i.code === gainersData.pickCode)
+      : null) || mergedList.find(i => i.isCandidate) || null;
 
     return (
       <>
@@ -671,6 +669,9 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
                         <span className="fbd-market-name">{item.stockName}</span>
                         <span className={`fbd-market-tag ${item.isSh688 ? 'market-star' : 'market-cyb'}`}>{item.isSh688 ? '科创' : '创业/主板'}</span>
                         {item.isLimitUp && <span className="fbd-market-tag limitup">涨停</span>}
+                        {!isPick && item.excludeReason && item.excludeReason !== '涨停' && (
+                          <span className="fbd-market-tag reason">{item.excludeReason}</span>
+                        )}
                         {isPick && <span className="fbd-market-tag pick">{pickLabel}</span>}
                       </span>
                       <span className="fbd-market-resilience">
