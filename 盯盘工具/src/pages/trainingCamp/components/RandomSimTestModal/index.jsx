@@ -129,6 +129,7 @@ const RandomSimTestModal = ({ open, onClose, strategy, endDate, startDate: maxSt
     datasets: [
       {
         label: '收益率 %',
+        yAxisID: 'yLeft',
         data: validItems.map(it => Number(it.summary.overallReturn)),
         borderColor: '#f5222d',
         backgroundColor: 'rgba(245,34,45,0.12)',
@@ -143,6 +144,7 @@ const RandomSimTestModal = ({ open, onClose, strategy, endDate, startDate: maxSt
       },
       {
         label: '平均回撤 %',
+        yAxisID: 'yRight',
         data: validItems.map(it => (it.summary.avgDrawdown != null ? Math.abs(Number(it.summary.avgDrawdown)) : null)),
         borderColor: '#1677ff',
         backgroundColor: 'transparent',
@@ -158,6 +160,7 @@ const RandomSimTestModal = ({ open, onClose, strategy, endDate, startDate: maxSt
       },
       {
         label: '最大回撤 %',
+        yAxisID: 'yRight',
         data: validItems.map(it => (it.summary.maxDrawdown != null ? Math.abs(Number(it.summary.maxDrawdown)) : null)),
         borderColor: '#722ed1',
         backgroundColor: 'transparent',
@@ -226,7 +229,17 @@ const RandomSimTestModal = ({ open, onClose, strategy, endDate, startDate: maxSt
       },
       scales: {
         x: { ticks: { color: '#6b7890' }, grid: { color: 'rgba(18,33,58,0.05)' } },
-        y: { ticks: { color: '#6b7890', callback: (v) => `${v}%` }, grid: { color: 'rgba(18,33,58,0.05)' } },
+        // 双 Y 轴：左轴为收益率（常见几十个百分点），右轴为回撤（通常个位数），避免回撤线被压平看不清
+        yLeft: {
+          position: 'left',
+          ticks: { color: '#6b7890', callback: (v) => `${v}%` },
+          grid: { color: 'rgba(18,33,58,0.05)' },
+        },
+        yRight: {
+          position: 'right',
+          ticks: { color: '#1677ff', callback: (v) => `${v}%` },
+          grid: { drawOnChartArea: false },
+        },
       },
       onClick: (_e, elements) => {
         if (!elements || elements.length === 0) return;
@@ -304,9 +317,9 @@ const RandomSimTestModal = ({ open, onClose, strategy, endDate, startDate: maxSt
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#12213a' }}>收益率 / 回撤幅度曲线（横轴为第 n 次回测）</span>
           <span style={{ fontSize: 11, color: '#9ca3af' }}>
-            <span style={{ color: '#f5222d', fontWeight: 700 }}>红线</span> 收益率 ·
-            <span style={{ color: '#1677ff', fontWeight: 700 }}> 蓝线</span> 平均回撤 ·
-            <span style={{ color: '#722ed1', fontWeight: 700 }}> 紫线</span> 最大回撤；点击折线点可查看该次完整回测报告
+            <span style={{ color: '#f5222d', fontWeight: 700 }}>红线</span> 收益率（左轴） ·
+            <span style={{ color: '#1677ff', fontWeight: 700 }}> 蓝线</span> 平均回撤（右轴） ·
+            <span style={{ color: '#722ed1', fontWeight: 700 }}> 紫线</span> 最大回撤（右轴）；点击折线点可查看该次完整回测报告
           </span>
         </div>
 

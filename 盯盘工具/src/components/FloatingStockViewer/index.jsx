@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { Drawer, Empty, Spin, Typography, Space } from 'antd';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Drawer, Empty, Spin, Typography, Space, Switch } from 'antd';
 import { EyeOutlined, AreaChartOutlined, LineChartOutlined } from '@ant-design/icons';
-import { createChart, ColorType } from 'lightweight-charts';
+import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import axios from 'axios';
 import StockSearchInput from '../StockSearchInput';
 import StockTimeLine from '../StockTimeLine';
@@ -21,17 +21,27 @@ const MA_LINES = [
 /**
  * 看股 K 线图：K 线 + 成交额 + 3/5/10 日均线，点击 K 线柱回调对应日期（YYYY-MM-DD）
  * 模仿 StockKLine 简化实现（不含抗分歧/机构参与度等附加能力）
+ * showScores / scoresData：叠加「强度分 / 差劲分」两条虚线（与全局通用 K 线弹窗同口径、同样式）
  */
-function ViewerKLine({ data = [], height = 420, onClickCandle }) {
+function ViewerKLine({ data = [], height = 420, onClickCandle, showScores = false, scoresData = [] }) {
     const container = useRef(null);
     const tooltipRef = useRef(null);
     const chartRef = useRef(null);
     const candlestickRef = useRef(null);
     const volumeSeriesRef = useRef(null);
     const maSeriesRefs = useRef([]);
+    const scoreStrengthSeriesRef = useRef(null);
+    const scoreDiffSeriesRef = useRef(null);
     const maValueMapsRef = useRef({});
     const changeMapRef = useRef({});
+    const scoreMapRef = useRef({});
+    const showScoresRef = useRef(showScores);
     const initializedRef = useRef(false);
+
+    // 供只注册一次的十字光标回调读取实时开关状态
+    useEffect(() => {
+        showScoresRef.current = showScores;
+    }, [showScores]);
 
     // 初始化图表（只执行一次）
     useEffect(() => {
@@ -100,6 +110,35 @@ function ViewerKLine({ data = [], height = 420, onClickCandle }) {
             priceLineVisible: false,
         }));
 
+        // 强度分 / 差劲分（0~100）：两条虚线共用 'score' 价格刻度，限制在图表顶部约 29% 的带状区域内，
+        // 与全局通用 K 线弹窗保持一致（紫=强度分、蓝=差劲分，虚线，不显示末值标签）
+        const scoreStrengthSeries = chart.addLineSeries({
+            color: '#722ed1',
+            lineWidth: 2,
+            lineStyle: LineStyle.Dashed,
+            lastValueVisible: false,
+            priceLineVisible: false,
+            priceFormat: { type: 'price', precision: 2 },
+            priceScaleId: 'score',
+        });
+        const scoreDiffSeries = chart.addLineSeries({
+            color: '#1677ff',
+            lineWidth: 2,
+            lineStyle: LineStyle.Dashed,
+            lastValueVisible: false,
+            priceLineVisible: false,
+            priceFormat: { type: 'price', precision: 2 },
+            priceScaleId: 'score',
+        });
+        scoreStrengthSeries.priceScale().applyOptions({
+            scaleMargins: {
+                top: 0.02,
+                bottom: 0.69,
+            },
+        });
+        scoreStrengthSeriesRef.current = scoreStrengthSeries;
+        scoreDiffSeriesRef.current = scoreDiffSeries;
+
         chartRef.current = chart;
         candlestickRef.current = candlestick;
         volumeSeriesRef.current = volumeSeries;
@@ -130,6 +169,10 @@ function ViewerKLine({ data = [], height = 420, onClickCandle }) {
             // 红涨绿跌严格按真实涨跌（vs 昨收）
             const changeVal = changeMapRef.current[dateStr];
             const changeColor = changeVal === undefined ? '#333' : changeVal > 0 ? '#f5222d' : changeVal < 0 ? '#52c41a' : '#666';
+            // 强度分 / 差劲分（与全局通用 K 线弹窗口径一致）
+            const scoreVal = scoreMapRef.current[dateStr];
+            const strengthDisplay = scoreVal && scoreVal.strengthScore != null ? scoreVal.strengthScore.toFixed(2) : '-';
+            const diffDisplay = scoreVal && scoreVal.diffScore != null ? scoreVal.diffScore.toFixed(2) : '-';
             const maRows = MA_LINES.map(cfg => {
                 const v = maValueMapsRef.current[cfg.key]?.[dateStr];
                 return `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span style="color: ${cfg.color};">${cfg.label}:</span><span style="font-weight: bold;">${v !== undefined ? v.toFixed(2) : '-'}</span></div>`;
@@ -142,6 +185,8 @@ function ViewerKLine({ data = [], height = 420, onClickCandle }) {
                 <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>收盘:</span><span style="font-weight: bold; color: ${changeColor}">${kData.close.toFixed(2)}</span></div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>成交额:</span><span style="font-weight: bold;">${volDisplay}</span></div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>涨跌:</span><span style="font-weight: bold; color: ${changeColor}">${changeVal !== undefined ? (changeVal > 0 ? '+' : '') + changeVal.toFixed(2) + '%' : '-'}</span></div>
+                ${showScoresRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>强度分:</span><span style="font-weight: bold; color: #722ed1">${strengthDisplay}</span></div>` : ''}
+                ${showScoresRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>差劲分:</span><span style="font-weight: bold; color: #1677ff">${diffDisplay}</span></div>` : ''}
                 ${maRows}
             `;
 
@@ -204,6 +249,14 @@ function ViewerKLine({ data = [], height = 420, onClickCandle }) {
         const volumeSeries = volumeSeriesRef.current;
         const chart = chartRef.current;
 
+        // 展示强度分/差劲分时把 K 线主图下压，顶部 34% 留给两条分数线；关闭时恢复默认留白（top 0.2）
+        chart.priceScale('right').applyOptions({
+            scaleMargins: {
+                top: showScores ? 0.34 : 0.2,
+                bottom: 0.1,
+            },
+        });
+
         const ascending = [...data].sort((a, b) => a.trade_date - b.trade_date);
         const ma3Map = {};
         for (let i = 2; i < ascending.length; i++) {
@@ -262,6 +315,25 @@ function ViewerKLine({ data = [], height = 420, onClickCandle }) {
             });
         });
 
+        // 强度分 / 差劲分：后端返回 bars [{ time: 'YYYY-MM-DD', diffScore, strengthScore }]
+        const scoreStrengthData = [];
+        const scoreDiffData = [];
+        const scoreMap = {};
+        if (showScores && Array.isArray(scoresData)) {
+            scoresData.forEach(item => {
+                const time = String(item.time || '');
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(time)) return;
+                const diff = item.diffScore;
+                const strength = item.strengthScore;
+                const diffOk = typeof diff === 'number' && !isNaN(diff);
+                const strengthOk = typeof strength === 'number' && !isNaN(strength);
+                if (strengthOk) scoreStrengthData.push({ time, value: strength });
+                if (diffOk) scoreDiffData.push({ time, value: diff });
+                scoreMap[time] = { diffScore: diffOk ? diff : null, strengthScore: strengthOk ? strength : null };
+            });
+        }
+        scoreMapRef.current = scoreMap;
+
         const deduplicate = (arr) => {
             if (arr.length === 0) return [];
             const filtered = arr.filter(item => {
@@ -291,8 +363,14 @@ function ViewerKLine({ data = [], height = 420, onClickCandle }) {
         maSeriesRefs.current.forEach((series, idx) => {
             series.setData(deduplicate(maData[MA_LINES[idx].key]));
         });
+        if (scoreStrengthSeriesRef.current) {
+            scoreStrengthSeriesRef.current.setData(deduplicate(scoreStrengthData));
+        }
+        if (scoreDiffSeriesRef.current) {
+            scoreDiffSeriesRef.current.setData(deduplicate(scoreDiffData));
+        }
         chart.timeScale().fitContent();
-    }, [data]);
+    }, [data, showScores, scoresData]);
 
     return (
         <div className="fsv-kline-container" style={{ position: 'relative', width: '100%' }}>
@@ -340,6 +418,11 @@ const FloatingStockViewer = () => {
     const [zyjsText, setZyjsText] = useState('');
     const [valuation, setValuation] = useState(null);
     const [valuationLoading, setValuationLoading] = useState(false);
+
+    // 强度分 / 差劲分叠加（与全局通用 K 线弹窗同源：/stock_history_analysis）
+    // 用 { key, bars } 记录所属的「股票+K线区间」，换股/新增交易日后旧结果自动失效
+    const [showScores, setShowScores] = useState(false);
+    const [scoreState, setScoreState] = useState({ key: '', bars: null });
 
     // 点击 K 线后展示的当日分时
     const [selectedDay, setSelectedDay] = useState('');
@@ -415,6 +498,7 @@ const FloatingStockViewer = () => {
         setDayTlineLoading(false);
         setKLoading(false);
         setValuationLoading(false);
+        setScoreState({ key: '', bars: null });
     };
 
     // 并行拉取 K 线、主营业务、估值数据；切换股票后丢弃过期结果
@@ -474,6 +558,41 @@ const FloatingStockViewer = () => {
             setDayTlineLoading(false);
         }
     };
+
+    // 当前 K 线区间（最旧~最新交易日）：用于判断换股/新增交易日时是否需要重算强度分/差劲分
+    const klineRangeKey = useMemo(() => {
+        const dates = kData
+            .map(i => String(i.trade_date))
+            .filter(s => /^\d{8}$/.test(s))
+            .sort();
+        if (dates.length === 0) return '';
+        return `${dates[0]}-${dates[dates.length - 1]}`;
+    }, [kData]);
+
+    // 换股或 K 线区间变化时旧结果自动失效（key 不匹配即视为无数据），交给下方 effect 重新拉取
+    const scoreKey = `${stockCode}|${klineRangeKey}`;
+    const scoresData = scoreState.key === scoreKey ? scoreState.bars : null;
+    const scoresLoading = showScores && !!stockCode && !!klineRangeKey && scoresData === null;
+
+    // 打开开关且数据未就绪时拉取强度分/差劲分（与全局通用 K 线弹窗口径同源）
+    useEffect(() => {
+        if (!showScores || !stockCode || !klineRangeKey || scoresData) return undefined;
+        let cancelled = false;
+        const [startDate, endDate] = klineRangeKey.split('-');
+        axios.get(`http://${local_ip}:3000/stock_history_analysis`, {
+            params: { code: stockCode, startDate, endDate },
+        })
+            .then(res => {
+                if (cancelled) return;
+                setScoreState({ key: scoreKey, bars: res.data?.success ? (res.data.bars || []) : [] });
+            })
+            .catch(() => {
+                if (!cancelled) setScoreState({ key: scoreKey, bars: [] });
+            });
+        return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showScores, stockCode, klineRangeKey, scoreKey, scoreState]);
+
 
     // 市值展示：单位亿
     const formatYi = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? '--' : `${(Number(v) / 100000000).toFixed(2)}亿`;
@@ -550,7 +669,24 @@ const FloatingStockViewer = () => {
                             {MA_LINES.map(cfg => (
                                 <span key={cfg.key} className="fsv-ma-legend-item" style={{ color: cfg.color }}>{cfg.label}</span>
                             ))}
+                            {showScores && (
+                                <>
+                                    <span className="fsv-ma-legend-item" style={{ color: '#722ed1' }}>强度分</span>
+                                    <span className="fsv-ma-legend-item" style={{ color: '#1677ff' }}>差劲分</span>
+                                </>
+                            )}
                             <span className="fsv-ma-legend-tip">点击 K 线柱在下方查看当日分时图</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ fontSize: 12, color: showScores ? '#722ed1' : '#64748b' }}>强度分/差劲分</span>
+                                <Switch
+                                    size="small"
+                                    checked={showScores}
+                                    loading={scoresLoading}
+                                    onChange={(checked) => setShowScores(checked)}
+                                    checkedChildren="开"
+                                    unCheckedChildren="关"
+                                />
+                            </span>
                         </div>
 
                         {kLoading ? (
@@ -558,7 +694,13 @@ const FloatingStockViewer = () => {
                                 <Spin tip="正在加载K线数据..." size="large" />
                             </div>
                         ) : kData.length > 0 ? (
-                            <ViewerKLine data={kData} height={420} onClickCandle={handleCandleClick} />
+                            <ViewerKLine
+                                data={kData}
+                                height={420}
+                                onClickCandle={handleCandleClick}
+                                showScores={showScores}
+                                scoresData={scoresData || []}
+                            />
                         ) : (
                             <Empty description="暂无 K 线数据" />
                         )}
