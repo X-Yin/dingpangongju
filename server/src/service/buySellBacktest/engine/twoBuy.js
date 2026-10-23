@@ -21,12 +21,29 @@ const TWO_BUY_SAME_DAY_TAIL_PROFIT_PCT = 2;
 // 成本线 = 两次买入价的平均值（(买1 + 买2) ÷ 2），两份共用；仅剩一份或非本变体时返回 null
 // （调用方回落到 pos.buyPrice 自身成本）。仅用于「跌破成本线 -2%」止损判定，
 // 每份仓位的收益率仍按各自实际买入价计算。
+// 2026-10-23 扩展：同样适用于「两次买入（不同股）」中第二份重新择股仍选中同一只股票（同股合并）的情形。
 const getUnifiedCostLinePrice = (pos, positions, strategy) => {
-  if (!pos || strategy?.twoBuySameDay !== true || !Array.isArray(positions) || positions.length !== 2) return null;
+  const enabled = strategy?.twoBuySameDay === true || strategy?.twoBuyDiffStock === true;
+  if (!pos || !enabled || !Array.isArray(positions) || positions.length !== 2) return null;
   const mine = Number(pos.buyPrice);
   const other = positions.find(p => p && p !== pos && p.code === pos.code && Number(p.buyPrice) > 0);
   if (!Number.isFinite(mine) || mine <= 0 || !other) return null;
   return parseFloat(((mine + Number(other.buyPrice)) / 2).toFixed(2));
+};
+
+// 卖点 hook 专用：循环内卖出会 splice 持仓，导致同桶内第二个同股仓位的 getUnifiedCostLinePrice
+// 因 positions.length !== 2 失效而回落到自身成本（两腿退出不对称）。故在循环前按 code 快照统一成本线。
+// 仅「两次买入（不同股）」同股合并需要（twoBuySameDay 维持原行为不动）。
+const buildUnifiedCostLineMap = (positions, strategy) => {
+  const map = new Map();
+  if (strategy?.twoBuyDiffStock !== true || !Array.isArray(positions) || positions.length !== 2) return map;
+  const [p0, p1] = positions;
+  if (!p0 || !p1 || p0.code !== p1.code) return map;
+  const c0 = Number(p0.buyPrice);
+  const c1 = Number(p1.buyPrice);
+  if (!(c0 > 0) || !(c1 > 0)) return map;
+  map.set(p0.code, parseFloat(((c0 + c1) / 2).toFixed(2)));
+  return map;
 };
 
 // 两次买入「不同板块」策略：取个股所属板块标识（自选股 monitor_stocks.json 的 blockName），
@@ -64,6 +81,7 @@ const buildTwoBuyTradeExtra = (position) => ({
   leg: position?.leg ?? null,
   weight: TWO_BUY_LEG_WEIGHT,
   rawReturnRate: position?.rawReturnRate ?? null,
+  ...(position?.mergedCostLine === true ? { mergedCostLine: true } : {}),
   avgPrice: position?.buyPrice ?? null,
   buyPrices: position?.buyPrice != null ? [position.buyPrice] : [],
   buyTimes: position?.buyTime != null ? [position.buyTime] : [],
@@ -115,6 +133,7 @@ module.exports = {
   TWO_BUY_LEG_WEIGHT,
   TWO_BUY_SAME_DAY_TAIL_PROFIT_PCT,
   buildTwoBuyTradeExtra,
+  buildUnifiedCostLineMap,
   computeTwoBuyAccountReturn,
   getUnifiedCostLinePrice,
   getPositionLegWeight,

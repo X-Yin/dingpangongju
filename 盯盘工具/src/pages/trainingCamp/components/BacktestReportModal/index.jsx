@@ -228,7 +228,7 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
         )}
         {t.twoBuy && (
           <div style={{ color: '#d46b08' }}>
-            {`两次买入策略·第${Number(t.leg) >= 2 ? '二' : '一'}份仓位（半仓）：本份以自身买入价 ${Number(t.buyPrice).toFixed(2)} 为成本独立计算买卖与收益，个股实际收益 ${fmtPct(t.rawReturnRate)}，按 50% 仓位折算后计入概览（整体收益/平均回撤/单笔最大回撤）的收益为 ${fmtPct(t.returnRate)}；两份仓位不合并、不摊平成本，各产生一条独立交易记录`}
+            {`两次买入策略·第${Number(t.leg) >= 2 ? '二' : '一'}份仓位（半仓）：本份以自身买入价 ${Number(t.buyPrice).toFixed(2)} 为成本独立计算买卖与收益，个股实际收益 ${fmtPct(t.rawReturnRate)}，按 50% 仓位折算后计入概览（整体收益/平均回撤/单笔最大回撤）的收益为 ${fmtPct(t.returnRate)}；${t.mergedCostLine ? '两份仓位为同一只股票、合并持有（两腿共用摊平的统一成本线判定卖点），但仍各产生一条独立交易记录、各自收益按自身买入价计算' : '两份仓位不合并、不摊平成本，各产生一条独立交易记录'}`}
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-const { TWO_BUY_DESC, TWO_BUY_DIFF_BLOCK_DESC, TWO_BUY_HALF_DESC, TWO_BUY_SAME_DAY_DESC } = require('../descs');
+const { TWO_BUY_DESC, TWO_BUY_DIFF_BLOCK_DESC, TWO_BUY_DIFF_STOCK_DESC, TWO_BUY_HALF_DESC, TWO_BUY_SAME_DAY_DESC } = require('../descs');
 
 module.exports = {
 
@@ -26,4 +26,12 @@ module.exports = {
   highest_3d_gain_two_buy_diff_block: { id: 'highest_3d_gain_two_buy_diff_block', name: '3日涨幅最大&两次买入不同板块', desc: TWO_BUY_DIFF_BLOCK_DESC(3), twoBuy: true, diffBlock: true, emoQuickOut: true },
   highest_4d_gain_two_buy_diff_block: { id: 'highest_4d_gain_two_buy_diff_block', name: '4日涨幅最大&两次买入不同板块', desc: TWO_BUY_DIFF_BLOCK_DESC(4), twoBuy: true, diffBlock: true, emoQuickOut: true },
   highest_5d_gain_two_buy_diff_block: { id: 'highest_5d_gain_two_buy_diff_block', name: '5日涨幅最大&两次买入不同板块', desc: TWO_BUY_DIFF_BLOCK_DESC(5), twoBuy: true, diffBlock: true, emoQuickOut: true },
+  // 两次买入 × 不同股（highest_{N}d_gain_two_buy_diff_stock，2026-10-23 用户新增）：
+  // 第一份半仓买入 N 日涨幅最大；第二份在后续交易日买点再次触发时重新按 N 日涨幅最大择股——
+  // 若仍为同一只股票则合并持有（成本线摊平 = 两次买入价均值，卖点按该均价判定；记录仍为两条独立交易、
+  // 各自收益率按自身买入价计算）；若已变为另一只股票则买入该股票（两份独立买卖、独立成本线）
+  // twoBuyDiffStock: true → 见 rangeBacktest / rangeBacktestMulti 与 engine/twoBuy.js
+  highest_2d_gain_two_buy_diff_stock: { id: 'highest_2d_gain_two_buy_diff_stock', name: '2日涨幅最大&两次买入（不同股）', desc: TWO_BUY_DIFF_STOCK_DESC(2), twoBuy: true, twoBuyDiffStock: true, emoQuickOut: true },
+  highest_3d_gain_two_buy_diff_stock: { id: 'highest_3d_gain_two_buy_diff_stock', name: '3日涨幅最大&两次买入（不同股）', desc: TWO_BUY_DIFF_STOCK_DESC(3), twoBuy: true, twoBuyDiffStock: true, emoQuickOut: true },
+  highest_4d_gain_two_buy_diff_stock: { id: 'highest_4d_gain_two_buy_diff_stock', name: '4日涨幅最大&两次买入（不同股）', desc: TWO_BUY_DIFF_STOCK_DESC(4), twoBuy: true, twoBuyDiffStock: true, emoQuickOut: true },
 };

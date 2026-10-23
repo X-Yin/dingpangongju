@@ -175,6 +175,12 @@ const CACHE_VERSION_BY_STRATEGY = {
   highest_3d_gain_two_buy_diff_block: 7,
   highest_4d_gain_two_buy_diff_block: 7,
   highest_5d_gain_two_buy_diff_block: 7,
+  // 两次买入（不同股）：v1（2026-10-23 创建）——第二份在买点再次触发时重新按 N 日涨幅最大择股：
+  // 同股 → 合并持有（成本线摊平 = 两次买入价均值，卖点按均价判定，记录仍两条独立交易、收益各按自身买入价）；
+  // 不同股 → 买入该股票（两份独立买卖、独立成本线）
+  highest_2d_gain_two_buy_diff_stock: 1,
+  highest_3d_gain_two_buy_diff_stock: 1,
+  highest_4d_gain_two_buy_diff_stock: 1,
   // v2（2026-10-23）：通用卖点条件3 阈值改为 < -30（此前未列版本，默认 v1）
   // v3（2026-10-23）：移除买点过滤「个股 MA3 正斜率连续天数 > 4」
   highest_gain: 3,

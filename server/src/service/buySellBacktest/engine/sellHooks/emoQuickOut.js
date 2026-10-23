@@ -12,10 +12,12 @@
 // 本 hook 只做卖点行为，策略开关判定（strategy.emoQuickOut）由引擎负责调度。
 const { buildQuickOutExemptInfo, buildQuickOutSellReason, buildQuickOutStopLossReason, buildQuickOutCrashSellReason } = require('../checkBuilders');
 const { locateCrashSellPoint } = require('../crashSellWindow');
-const { buildTwoBuyTradeExtra, getPositionLegWeight, getUnifiedCostLinePrice, isLegPosition } = require('../twoBuy');
+const { buildTwoBuyTradeExtra, buildUnifiedCostLineMap, getPositionLegWeight, getUnifiedCostLinePrice, isLegPosition } = require('../twoBuy');
 
 const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStocks, timeBuckets, campData, singleTrades }) => {
   let quickOutSoldDate = null;
+  // 「两次买入（不同股）」同股合并：循环内 splice 前按 code 快照摊平成本线，保证同桶两腿对称退出
+  const unifiedCostMap = buildUnifiedCostLineMap(positions, strategy);
   // 当日存在待强卖（未豁免过的）快进快出持仓时才评估豁免判定（每策略每日一次）
   const hasDueQuickOut = positions.some(p => p?.emoQuickOut?.quickOut === true && !p.emoQuickOut?.exempted && dateStr > p.buyDate);
   const exemptInfo = hasDueQuickOut ? buildQuickOutExemptInfo(timeBuckets, campData) : null;
@@ -33,7 +35,8 @@ const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStoc
     const qPct = strategy.costLinePct != null && Number.isFinite(Number(strategy.costLinePct)) ? Number(strategy.costLinePct) : 2;
     // 「两次买入（同一天）」统一成本线（2026-10-20）：两份均在持时成本线 = 两次买入价均值，两份共用；
     // 仅剩一份时用该份自身买入价。仅影响止损阈值判定，收益率仍按各自实际买入价计算
-    const unifiedCost = getUnifiedCostLinePrice(pos, positions, strategy);
+    // 「两次买入（不同股）」同股合并（2026-10-23）：用循环前快照，避免先卖出一份后另一份失效
+    const unifiedCost = unifiedCostMap.has(pos.code) ? unifiedCostMap.get(pos.code) : getUnifiedCostLinePrice(pos, positions, strategy);
     const costBase = unifiedCost != null ? unifiedCost : pos.buyPrice;
     let stopPt = null;
     let stopDesc = '';

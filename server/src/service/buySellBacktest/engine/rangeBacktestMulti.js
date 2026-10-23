@@ -383,6 +383,39 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                   twoBuy: true, leg: 2, weight: TWO_BUY_LEG_WEIGHT,
                 });
               }
+            } else if (strategy.twoBuyDiffStock === true) {
+              // 两次买入（不同股）：第二份在买点再次触发时重新按 N 日涨幅最大择股（不限板块）——
+              // 若仍选中第一份同一只股票 → 合并持有（两份共用摊平成本线，见 engine/twoBuy.js）；
+              // 若已变为另一只股票 → 买入该股票（两份不同股票、各自独立买卖与独立成本线）
+              const secondPrevOneWordSet = await buildPrevOneWordBoardSet((bucket.stockChanges || []).map(s => s.code), dateStr);
+              const secondEmoCycSet = isCycleFilterStrategy(strategy)
+                ? await buildCounterCycSet((bucket.stockChanges || []).map(s => s.code), dateStr)
+                : null;
+              const secondPicked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, secondPrevOneWordSet, secondEmoCycSet, null);
+              if (secondPicked) {
+                const secondBuyInfo = withResilienceGateInfo(gatedBuyInfo, secondPicked);
+                const sc2 = secondPicked.stock;
+                const secondPx = parseFloat(Number(sc2.lastPx).toFixed(2));
+                const sameStock = sc2.code === first.code;
+                if (sameStock) first.mergedCostLine = true;
+                st.positions.push({
+                  code: sc2.code,
+                  stockName: sc2.name || sc2.code,
+                  buyDate: dateStr,
+                  buyDateDisplay: dateDisplay,
+                  buyTime,
+                  buyPrice: secondPx,
+                  buyChange: sc2.changePct != null ? parseFloat(Number(sc2.changePct).toFixed(2)) : null,
+                  metric: secondPicked.metric,
+                  buyReason: `${secondBuyInfo.buyReason}；买点第二次触发，买入第二份 5 成（${sameStock
+                    ? `N 日涨幅最大仍是同一股票 ${first.stockName}，合并持有（成本线摊平为两次买入价均值，卖出止损按该均价判定；回测仍记两条交易）`
+                    : `N 日涨幅最大已变为 ${sc2.name || sc2.code}，本份买入该股票（与第一份 ${first.stockName} 各自独立买卖）`}，${buyTime} 价 ${secondPx.toFixed(2)}）`,
+                  buyChecks: annotateIndexGateChecksWithStock(secondBuyInfo.buyChecks, sc2.code, sc2.name),
+                  emoQuickOut: strategy.emoQuickOut === true ? computeEmoQuickOutInfo(di + axisOffset, dateAxis) : null,
+                  ...(sameStock ? { mergedCostLine: true } : {}),
+                  twoBuy: true, leg: 2, weight: TWO_BUY_LEG_WEIGHT,
+                });
+              }
             } else {
               const heldSc = (bucket.stockChanges || []).find(s => s.code === first.code);
               const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
