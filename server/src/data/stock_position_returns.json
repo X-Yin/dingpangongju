@@ -9,6 +9,22 @@
         "stockCode": "sz001309",
         "position": "",
         "time": "10:32"
+      },
+      {
+        "id": "1792732256926_rsjb",
+        "action": "buy",
+        "stockName": "华天科技",
+        "stockCode": "sz002185",
+        "position": "",
+        "time": "13:10"
+      },
+      {
+        "id": "1792732989679_z365",
+        "action": "buy",
+        "stockName": "奥比中光-W",
+        "stockCode": "sh688322",
+        "position": "",
+        "time": "13:23"
       }
     ],
     "totalReturn": null,
@@ -16,7 +32,7 @@
     "score": null,
     "review": "",
     "createdAt": "2026-10-23T02:32:10.735Z",
-    "updatedAt": "2026-10-23T02:32:10.735Z"
+    "updatedAt": "2026-10-23T05:23:21.889Z"
   },
   {
     "date": "2026-10-21",

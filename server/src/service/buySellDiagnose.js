@@ -2809,29 +2809,9 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
 // 买点诊断涨跌幅排名排除的股票（不参与 3 日涨幅排名）
 const BUY_POINT_EXCLUDED_CODES = new Set(['sh688498', 'sh688808']); // 源杰科技、联讯仪器
 
-// 计算个股 MA3 切线正斜率连续天数（与 buySellBacktest.js 里的 countStockPositiveSlopeDays 口径一致）
-// closes 为降序 [{date, close}]；返回正斜率天数（含当日），斜率非正返回 0，数据不足返回 null
-const countStockPositiveSlopeDaysLocal = (sortedKline, targetIdx) => {
-  if (targetIdx < 3) return null;
-  const closes = sortedKline.slice(Math.max(0, targetIdx - 10), targetIdx + 1).map(k => parseFloat(k.close_px)).reverse();
-  if (closes.length < 4) return null;
-  const avg = (i, d) => closes.slice(i, i + d).reduce((s, v) => s + v, 0) / d;
-  const slopeToday = avg(0, 3) - avg(1, 3);
-  if (!Number.isFinite(slopeToday)) return null;
-  if (slopeToday <= 0) return 0;
-  let c = 1;
-  for (let i = 1; i + 3 <= closes.length; i++) {
-    const slope = avg(i, 3) - avg(i + 1, 3);
-    if (!Number.isFinite(slope)) break;
-    if (slope > 0) c++; else break;
-    if (c >= 6) break;
-  }
-  return c;
-};
-
 // 买点候选筛选（加全局门槛过滤可选）
 // filterGate=true 时，对 change / reports 模式也加：①买点时刻 ≤ 1330、②跟踪指数 3 日线斜率门禁通过、
-//   ③抗分歧 ≥ GLOBAL_RESILIENCE_MIN、④指数由负转正当日时个股 MA3 切线正斜率连续天数 ≤ 4
+//   ③抗分歧 ≥ GLOBAL_RESILIENCE_MIN
 const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', reportDays = 3, filterGate = false) => {
   let targetDay;
   if (targetDate) {
@@ -3044,8 +3024,7 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
       reportCount = sumReportCount(stock.name, reportWinDates, reportIndex);
     }
 
-    // filterGate=true：个股级过滤（②跟踪指数 3 日线斜率门禁、③抗分歧 ≥ GLOBAL_RESILIENCE_MIN、
-    // ④指数由负转正当日时个股 MA3 切线正斜率连续天数 ≤ 4）
+    // filterGate=true：个股级过滤（②跟踪指数 3 日线斜率门禁、③抗分歧 ≥ GLOBAL_RESILIENCE_MIN）
     if (filterGate) {
       const isSh688 = stock.code.startsWith('sh688') || stock.code.startsWith('688');
       const trackedIdx = isSh688 ? STAR_INDEX_CODE : CYB_INDEX_CODE;
@@ -3063,12 +3042,6 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
         resilienceScore = Number.isFinite(resilienceScore) ? parseFloat(resilienceScore.toFixed(2)) : null;
       }
       if (resilienceScore == null || resilienceScore < GLOBAL_RESILIENCE_MIN) { checkedCount++; continue; }
-
-      // ④ 指数由负转正当日，个股 MA3 切线正斜率连续天数 ≤ 4（否则 skip）
-      if (trackedGate.turnedPosToday === true) {
-        const slopeDays = countStockPositiveSlopeDaysLocal(sortedKline, targetIdx);
-        if (slopeDays != null && slopeDays > 4) { checkedCount++; continue; }
-      }
     }
 
     checkedCount++;
@@ -3197,9 +3170,51 @@ const TECH_GAIN_GAP_N = 3; // 科技进攻口径：3 日涨幅榜 → n = 3（�
 // 科技进攻 3 日涨幅过热门槛（2026-10-22 用户新增，与回测「3日涨幅最大」规则 10% × N 同口径）：
 // 最近 3 日累计涨幅 > 30% 的个股视为已过度上涨，直接不进入买点候选（也不参与榜单排名）
 const TECH_GAIN_CAP_PCT = 30;
+// ============================================================
+// 科技进攻 3 日涨幅榜的「3 日涨幅接近时按当日抗分歧优先」（2026-10-23 用户新增，与回测快进快出系列同口径）：
+// 候选池按 3 日涨幅降序后，若第一名与第二名涨幅相差 ≤ 1 个百分点，则比较两者实时抗分歧分数，
+// 分数更高者优先（两者分数缺失或相等时保持原涨幅排名）；仅调整前两名的先后顺序，
+// 后续涨停 / 抗分歧不足等顺延仍由下方循环统一处理
+// ============================================================
+const TECH_GAIN_TIE_PCT = 1;
 const pickTechCandidateWithGainGap = (list) => {
-  const arr = Array.isArray(list) ? list : [];
+  let arr = Array.isArray(list) ? list : [];
   const skipped = [];
+  let tieInfo = null;
+  if (arr.length >= 2) {
+    const first = arr[0];
+    const second = arr[1];
+    const cur = Number(first.change3d);
+    const sec = Number(second.change3d);
+    const gap = cur - sec;
+    if (Number.isFinite(gap) && gap <= TECH_GAIN_TIE_PCT) {
+      const firstRes = Number(first.resilienceScore);
+      const secondRes = Number(second.resilienceScore);
+      const swapped = Number.isFinite(firstRes) && Number.isFinite(secondRes) && secondRes > firstRes;
+      const pickEntry = swapped ? second : first;
+      const dropEntry = swapped ? first : second;
+      if (swapped) {
+        arr = [second, first, ...arr.slice(2)];
+      }
+      tieInfo = {
+        threshold: TECH_GAIN_TIE_PCT,
+        gap: Number(gap.toFixed(2)),
+        swapped,
+        picked: {
+          code: pickEntry.code,
+          stockName: pickEntry.stockName,
+          change3d: Number(Number(pickEntry.change3d).toFixed(2)),
+          resilienceScore: swapped ? secondRes : firstRes,
+        },
+        dropped: {
+          code: dropEntry.code,
+          stockName: dropEntry.stockName,
+          change3d: Number(Number(dropEntry.change3d).toFixed(2)),
+          resilienceScore: swapped ? firstRes : secondRes,
+        },
+      };
+    }
+  }
   for (let i = 0; i < arr.length; i++) {
     const s = arr[i];
     if (!s.matchesBuyPoint || s.isLimitUp) continue;
@@ -3228,9 +3243,9 @@ const pickTechCandidateWithGainGap = (list) => {
         }
       }
     }
-    return { pick: s, skipped };
+    return { pick: s, skipped, tieInfo };
   }
-  return { pick: null, skipped };
+  return { pick: null, skipped, tieInfo };
 };
 
 // ============================================================
@@ -3324,7 +3339,7 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       ? isPrevDayOneWordBoardBars(stock.code, sortedKline[targetIdx - 1], sortedKline[targetIdx - 2])
       : null;
     const isSh688 = stock.code.startsWith('sh688') || stock.code.startsWith('688');
-    base.push({ stock, isSh688, sortedKline, targetIdx, change, change3d, prevOneWord });
+    base.push({ stock, isSh688, change, change3d, prevOneWord });
   }
 
   const byChange3d = (a, b) => (b.change3d ?? -Infinity) - (a.change3d ?? -Infinity);
@@ -3347,20 +3362,15 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       const score = calculateResilience(indexLine, stockLine, getLimitTypeByCode(s.stock.code));
       resilienceScore = Number.isFinite(score) ? parseFloat(score.toFixed(2)) : null;
     }
-    // 买点资格：跟踪指数门禁通过 + 抗分歧 ≥ 全局门槛 + （指数由负转正当日）个股 MA3 正斜率天数 ≤ 4
+    // 买点资格：跟踪指数门禁通过 + 抗分歧 ≥ 全局门槛
     // （前一日一字板个股已在组榜阶段剔除，不会进入此处）
     const indexGatePassed = trackedGate?.passed === true;
     const resilienceOk = resilienceScore != null && resilienceScore >= MIN_RESILIENCE_SCORE;
-    let slopeOk = true;
-    if (trackedGate?.turnedPosToday === true) {
-      const days = countStockPositiveSlopeDaysLocal(s.sortedKline, s.targetIdx);
-      slopeOk = !(days != null && days > 4);
-    }
     const isLimitUp = isLimitUpChange(s.stock.code, rtChange);
     const valuationReason = getValuationBlockReason(s.stock.code);
-    const matchesBuyPoint = indexGatePassed && resilienceOk && slopeOk && !valuationReason;
+    const matchesBuyPoint = indexGatePassed && resilienceOk && !valuationReason;
     // 名称后的简短说明（2026-10-22 用户新增）：为什么该股不是买点候选。
-    // 按排除优先级取第一条：估值禁买 → 昨日一字板 → 3日涨幅过热 → 涨停 → 抗分歧不足 → MA3 正斜率天数超限；
+    // 按排除优先级取第一条：估值禁买 → 昨日一字板 → 3日涨幅过热 → 涨停 → 抗分歧不足；
     // 「涨幅领先但抗分歧弱」在合并榜顺延阶段补充；市场门槛未满足由榜单头部说明统一展示，不逐行标注
     let excludeReason = '';
     if (valuationReason) excludeReason = valuationReason;
@@ -3368,7 +3378,6 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     else if (Number.isFinite(s.change3d) && s.change3d > TECH_GAIN_CAP_PCT) excludeReason = `3日涨幅>${TECH_GAIN_CAP_PCT}%`;
     else if (isLimitUp) excludeReason = '涨停';
     else if (!resilienceOk) excludeReason = resilienceScore == null ? '抗分歧缺失' : `抗分歧<${MIN_RESILIENCE_SCORE}`;
-    else if (!slopeOk) excludeReason = 'MA3正斜率>4天';
     return {
       code: s.stock.code,
       stockName: s.stock.name,
@@ -3409,16 +3418,23 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       && !(Number.isFinite(Number(s.change3d)) && Number(s.change3d) > TECH_GAIN_CAP_PCT))
     .sort(byChange3d)
     .slice(0, 10);
-  const { pick: techPick, skipped: techGainGapSkipped } = pickTechCandidateWithGainGap(candidatePool);
+  const { pick: techPick, skipped: techGainGapSkipped, tieInfo: techGainTie } = pickTechCandidateWithGainGap(candidatePool);
 
   // 榜单逐行补充「买点候选」标记与顺延说明：非候选个股靠 excludeReason 解释为什么不是买点候选
   const gainGapSkippedCodes = new Set((techGainGapSkipped || []).map(s => s.code));
+  // 涨幅接近时按抗分歧优先：被让位的原第一名若最终仍未入选，在名称后标注原因
+  const tieDroppedCode = techGainTie && techGainTie.swapped === true
+    && techPick && techPick.code === techGainTie.picked.code
+    ? techGainTie.dropped.code
+    : null;
   const decorate = (s) => {
     if (techPick && s.code === techPick.code) return { ...s, isCandidate: true, excludeReason: '' };
     return {
       ...s,
       isCandidate: false,
-      excludeReason: gainGapSkippedCodes.has(s.code) ? '领先但抗分歧弱' : s.excludeReason,
+      excludeReason: gainGapSkippedCodes.has(s.code)
+        ? '领先但抗分歧弱'
+        : (!s.excludeReason && s.code === tieDroppedCode ? '涨幅接近但抗分歧较低' : s.excludeReason),
     };
   };
   const cybMainOut = cybMainList.map(decorate);
@@ -3449,6 +3465,8 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       mergedTop: mergedTop.map(decorate),
       pickCode: techPick?.code || null,
       gainGapSkipped: techGainGapSkipped,
+      // 3 日涨幅接近（第一名与第二名相差 ≤ 1 个百分点）时的抗分歧优先判定明细（未触发时为 null）
+      gainTie: techGainTie,
     },
   };
 };
@@ -3593,45 +3611,6 @@ const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh 
         reason: trackedGate?.reason || '门禁判定失败',
       });
       if (!gatePassed) allPassed = false;
-
-      // 个股 MA3 切线正斜率连续天数检查（**仅跟踪的指数今日盘中由负转正当日**触发）：
-      //   过滤规则：连续正 > 4 天 → 禁止出手（= 4 允许）
-      //   原因：指数刚由负转正，个股如果已经抢先连涨 ≥5 天是提前反应过大盘
-      const shouldCheckStockSlope = trackedGate?.turnedPosToday === true;
-      if (shouldCheckStockSlope && klineData && klineData.length >= 4) {
-        const sortedKline = [...klineData].sort((a, b) => a.trade_date - b.trade_date);
-        const targetIdx = sortedKline.findIndex(k => parseInt(k.trade_date) === parseInt(targetDateStr));
-        const count = (() => {
-          if (targetIdx < 3) return null;
-          const closes = sortedKline.slice(Math.max(0, targetIdx - 10), targetIdx + 1).map(k => parseFloat(k.close_px)).reverse();
-          if (closes.length < 4) return null;
-          const avg = (i, d) => closes.slice(i, i + d).reduce((s, v) => s + v, 0) / d;
-          const slopeToday = avg(0, 3) - avg(1, 3);
-          if (!Number.isFinite(slopeToday)) return null;
-          if (slopeToday <= 0) return 0;
-          let c = 1;
-          for (let i = 1; i + 3 <= closes.length; i++) {
-            const slope = avg(i, 3) - avg(i + 1, 3);
-            if (!Number.isFinite(slope)) break;
-            if (slope > 0) c++; else break;
-            if (c >= 6) break;
-          }
-          return c;
-        })();
-        if (count != null) {
-          const stockSlopePassed = count <= 4;
-          checks.push({
-            id: 'stock_ma3_slope_duration',
-            title: '个股 MA3 切线正斜率连续天数',
-            passed: stockSlopePassed,
-            value: `${count} 天（≤ 4 才允许）`,
-            reason: stockSlopePassed
-              ? `跟踪${trackedName}今日由负转正，个股 MA3 切线正斜率已连续 ${count} 天（≤ 4），允许出手`
-              : `跟踪${trackedName}今日由负转正，个股 MA3 切线正斜率已连续 ${count} 天（> 4），禁止出手`,
-          });
-          if (!stockSlopePassed) allPassed = false;
-        }
-      }
     }
   } catch (e) {
     checks.push({

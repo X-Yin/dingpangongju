@@ -1,5 +1,5 @@
 const { BUY_TIME_MAX_MINUTE, GLOBAL_RESILIENCE_MIN, RESILIENCE_GATE_INTRADAY_SORT_IDS, RESILIENCE_GATE_MIN, RESILIENCE_GATE_STRATEGY_IDS, STRATEGIES } = require('../strategies/registry');
-const { countStockPositiveSlopeDays, isNonTechWatchlistStock, passWatchlistGate } = require('./pickHelpers');
+const { isNonTechWatchlistStock, passWatchlistGate } = require('./pickHelpers');
 const { EXCLUDED_CODES } = require('../constants');
 const { isBuyBlockedByValuation } = require('../../watchlistValuation');
 const { resolveDelegatePick } = require('./selectors/delegates');
@@ -8,7 +8,11 @@ const { isOscExcluded } = require('../deps');
 const { calcResilienceAtMinute, computeWindowGain, computeWindowGainWithHalf, computeWindowResilience, isLimitUpAtBuy } = require('./replayData');
 const { cycCorrCache } = require('./cycleFilter');
 
-const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos, strategyId, axisOffset = 0, allowedMarkets = null, turnedPosInfo = null, prevOneWordSet = null, emoCycSet = null, restrictCodes = null) => {
+// 快进快出类「N 日涨幅接近时按抗分歧优先」阈值（2026-10-23 用户新增）：
+// 第一名与第二名 N 日涨幅相差 ≤ 1 个百分点时，改买当日抗分歧分数更高的一只
+const GAIN_TIE_PCT = 1;
+
+const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos, strategyId, axisOffset = 0, allowedMarkets = null, turnedPosInfo = null, prevOneWordSet = null, emoCycSet = null, restrictCodes = null, emoQuickTie = false) => {
   // 买入时段门禁（所有策略通用）：仅允许 9:30 – 11:30 和 13:00 – 13:30 之间的买点触发买入
   const mNum = Number(bucket.minute);
   if (Number.isFinite(mNum) && mNum > BUY_TIME_MAX_MINUTE) return null;
@@ -23,7 +27,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   // 命中委派时直接返回其结果（可能为 null），未命中（undefined）交回下方主流水线。
   const delegated = resolveDelegatePick({
     pickBestStock, stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
-    strategyId, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet,
+    strategyId, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet, restrictCodes,
   });
   if (delegated !== undefined) return delegated;
 
@@ -71,6 +75,17 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   //   两次买入不同板块系列（用户未纳入本次限制）。
   const gainCapPct = days == null ? null : (halfDayAfternoon ? days + 0.5 : days) * 10;
   const applyGainCap = gainCapPct != null && gainMode && !isReportStrategy && !strategyId.includes('diff_block');
+
+  // 快进快出类「N 日涨幅接近时按抗分歧优先」（2026-10-23 用户新增）：
+  //   按 N 日窗口涨幅排名后，若第一名与第二名的 N 日涨幅相差 ≤ 1 个百分点，则改买买点触发时点
+  //   「当日抗分歧分数」更高的一只（分数缺失或相等时保持原涨幅排名）。
+  //   适用范围 = 快进快出类（emoQuickOut 且非两次买入：N日涨幅最大-快进快出 6 个、研报覆盖快进快出、
+  //   10×n 科技情绪-快进快出 3 个、快进快出-科技情绪门禁）；纯 N 日涨幅最大 / 两次买入系列不适用。
+  //   注：普通快进快出策略在 selectors/delegates 中委托为 highest_{N}d_gain 选股，故由委派层显式传 emoQuickTie=true；
+  //   10×n / 科技情绪门禁策略直接以自身 id 走主流水线，此处按策略配置自动识别
+  const strategyConf = STRATEGIES[strategyId] || {};
+  const quickTieScope = emoQuickTie || (strategyConf.emoQuickOut === true && strategyConf.twoBuy !== true);
+  const applyGainTieRule = quickTieScope && days != null && gainMode && !isReportStrategy && !gateIntradaySort;
 
   // 收集全部候选（与原 best/second 口径一致：按指标值排序，同值保持自选股原顺序）
   const candidates = [];
@@ -166,6 +181,44 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
     ordered = candidates.slice().sort((a, b) => b.val - a.val).map(c => ({ sc: c.sc, metric: c.metric, val: c.val }));
   }
 
+  // 快进快出类：N 日涨幅第一名与第二名相差 ≤ 1 个百分点 → 买点触发时点当日抗分歧更高者优先
+  // （仅调整前两名的先后顺序；两者分数缺失或相等时保持原涨幅排名。顺延逻辑仍在下方循环里统一处理，
+  //   若优先者后续因涨停/一字板/逆周期/抗分歧不足被顺延时，另一只仍会按原顺序被买入）
+  let gainTieInfo = null;
+  if (applyGainTieRule && ordered.length >= 2) {
+    const first = ordered[0];
+    const second = ordered[1];
+    const gap = Number(first.val) - Number(second.val);
+    if (Number.isFinite(gap) && gap <= GAIN_TIE_PCT) {
+      const firstRes = calcResilienceAtMinute(replayStocks, first.sc.code, bucket.minute);
+      const secondRes = calcResilienceAtMinute(replayStocks, second.sc.code, bucket.minute);
+      const swapped = firstRes != null && secondRes != null && secondRes > firstRes;
+      const pickEntry = swapped ? second : first;
+      const dropEntry = swapped ? first : second;
+      if (swapped) {
+        ordered[0] = second;
+        ordered[1] = first;
+      }
+      gainTieInfo = {
+        threshold: GAIN_TIE_PCT,
+        gap: Number(gap.toFixed(2)),
+        swapped,
+        picked: {
+          code: pickEntry.sc.code,
+          name: pickEntry.sc.name || pickEntry.sc.code,
+          gain: Number(Number(pickEntry.val).toFixed(2)),
+          resilience: swapped ? secondRes : firstRes,
+        },
+        dropped: {
+          code: dropEntry.sc.code,
+          name: dropEntry.sc.name || dropEntry.sc.code,
+          gain: Number(Number(dropEntry.val).toFixed(2)),
+          resilience: swapped ? firstRes : secondRes,
+        },
+      };
+    }
+  }
+
   // 抗分歧≥11 门槛：门槛策略从排名最高者起向后找第一只满足的股票；其余策略不做校验，
   // 直接取策略排名指定名次的第一只（与原逻辑一致）。
   // 涨停顺延（全策略通用）：买点触发时点已涨停的候选（主板涨幅>9.5%、创业/科创>19%）实际无法成交，
@@ -175,14 +228,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   const limitUpSkipped = []; // 因买点时点涨停被顺延跳过的候选（全策略通用，追加 limit_up_defer 买入明细）
   const prevOneWordSkipped = []; // 因上一交易日一字板被顺延跳过的候选（全策略通用，追加 one_word_board_defer 买入明细）
   const emoCycSkipped = []; // 因逆周期（与创业板指负相关）被顺延跳过的候选（除情绪游资/三日情绪冰点/尾盘抄底外的全部策略，追加 cycle_defer 买入明细）
-  const stockSlopeSkipped = []; // 因个股 MA3 切线正斜率连续天数 > 4 被顺延跳过
   const gainGapSkipped = []; // 快进快出类：N 日涨幅领先第二名 > N 个百分点但买点时刻抗分歧低于第2~5名均值达 N 分被顺延跳过
-  // 个股斜率过滤触发条件：**仅指数今日盘中由负转正当日**（turnedPosToday=true）
-  // 过滤规则：个股 MA3 切线正斜率连续天数 > 4 → 顺延下一只（= 4 允许）
-  // 原因：指数刚由负转正，个股如果已经抢先连涨 ≥5 天是提前反应过大盘，不该再追
-  const shouldCheckStockSlope = turnedPosInfo && (
-    turnedPosInfo.cybTurnedPosToday || turnedPosInfo.starTurnedPosToday
-  );
   for (let i = 0; i < ordered.length; i++) {
     const cand = ordered[i];
     if (isLimitUpAtBuy(cand.sc.code, cand.sc.changePct)) {
@@ -258,23 +304,10 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
       });
       continue;
     }
-    // 指数今日由负转正当日，检查个股 MA3 切线正斜率连续天数；> 4 则顺延（= 4 允许）
-    if (shouldCheckStockSlope) {
-      const slopeDays = countStockPositiveSlopeDays(cand.sc.code, rangeDates[di], dailyInfos);
-      if (slopeDays != null && slopeDays > 4) {
-        stockSlopeSkipped.push({
-          code: cand.sc.code,
-          name: cand.sc.name || cand.sc.code,
-          slopeDays,
-          reason: `跟踪指数今日由负转正，个股 MA3 切线正斜率已连续 ${slopeDays} 天（≤ 4 才允许）`,
-        });
-        continue;
-      }
-    }
     if (gateEnabled) {
       // RESILIENCE_GATE_STRATEGY_IDS（仅 highest_gain）：已经过了全局 ≥ 9 的线，这里再叠加 ≥ 11
       if (intradayResilience != null && intradayResilience >= RESILIENCE_GATE_MIN) {
-        return { stock: cand.sc, metric: cand.metric, resilienceScore: intradayResilience, skipped, globalResilienceSkipped, limitUpSkipped, prevOneWordSkipped, emoCycSkipped, stockSlopeSkipped, gainGapSkipped };
+        return { stock: cand.sc, metric: cand.metric, resilienceScore: intradayResilience, skipped, globalResilienceSkipped, limitUpSkipped, prevOneWordSkipped, emoCycSkipped, gainGapSkipped, gainTieInfo };
       }
       skipped.push({
         code: cand.sc.code,
@@ -292,8 +325,8 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
         prevOneWordSkipped,
         emoCycSkipped,
         globalResilienceSkipped,
-        stockSlopeSkipped,
         gainGapSkipped,
+        gainTieInfo,
       };
     }
   }

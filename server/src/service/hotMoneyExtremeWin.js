@@ -78,7 +78,7 @@ const fetchExtremeWinContext = async (targetDate = null) => {
   const isToday = dateStr === dayjs().format('YYYYMMDD');
   const afterClose = !isToday || isAfterMarketClose();
 
-  // 1) 候选池（过去 10/20 交易日连板准入：流通市值 > 100 亿元者两连板 + 含两连板的 5 日涨幅 > 40%，其余需四连板及以上；
+  // 1) 候选池（过去 10/20 交易日连板准入：流通市值 > 100 亿元者一次涨停（首板即可）+ 含该涨停日的 5 日涨幅 > 40%，其余需四连板及以上；
   //    并剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）
   const pool = await buildExtremeWinPool(dateStr);
   const poolStocks = pool.stocks || [];
@@ -593,7 +593,7 @@ const buildExtremeWinChecks = (ctx, candidate) => {
   const checks = [
     {
       id: 'extreme_win_pool',
-      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板且含这两连板在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${CAP_BOARD_MIN_GAIN_PCT}% 即可，流通市值 ≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者仍需四连板及以上；旧路径=过去 10 个交易日达标 + 最多 10 日最精准窗口区间最大涨幅 < 80% 且连板后无单日跌幅 < -9%；新路径=过去 20 个交易日达标 + 最多 10 日最精准窗口区间最大涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < 100% 且该窗口峰值日至买点严格相隔 ≥ 5 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < 15%、该窗口内收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除）；均剔除创业板/科创板/题材黑名单/全量自选股科技股）`,
+      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过一次涨停且含该涨停日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${CAP_BOARD_MIN_GAIN_PCT}% 即可，流通市值 ≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者仍需四连板及以上；旧路径=过去 10 个交易日达标 + 最多 10 日最精准窗口区间最大涨幅 < 80% 且连板后无单日跌幅 < -9%；新路径=过去 20 个交易日达标 + 最多 10 日最精准窗口区间最大涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < 100% 且该窗口峰值日至买点严格相隔 ≥ 5 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < 15%、该窗口内收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除）；均剔除创业板/科创板/题材黑名单/全量自选股科技股）`,
       passed: poolCount > 0,
       value: `龙头池 ${poolCount} 只`,
       reason: `候选 = 旧路径（过去 10 个交易日连板准入达标 + 上述动量过滤）与新路径（过去 20 个交易日连板准入达标 + 上述动量过滤）并集，已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、题材黑名单与全量自选股科技股（isTech ≠ false）重叠者${ctx.pool.poolFilterText || ''}；当前龙头池共 ${poolCount} 只，展示标的为 ${nameText}`,

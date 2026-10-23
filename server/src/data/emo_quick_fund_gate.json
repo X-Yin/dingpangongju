@@ -1,7 +1,7 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-10-23 10:32:55",
+  "computedAt": "2026-10-23 13:24:43",
   "reason": "持仓变动重跑（持仓管理增删股票）",
   "range": {
     "startDate": "20260728",

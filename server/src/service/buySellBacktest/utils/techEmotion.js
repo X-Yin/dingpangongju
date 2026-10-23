@@ -50,6 +50,25 @@ const getTechEmotionRawMap = (force = false) => {
   return map;
 };
 
+// hasIce: true 的日期集合（YYYYMMDD 字符串）。tech_index.json 的 hasIce 由线上分时轮询在
+// 科技情绪 <= TECH_ICE_THRESHOLD 时写入（emotion.markTechIndexIce），昨日冰点判定直接读该标记；
+// 当日因写盘时点不确定，改用分时回溯（见 emoQuick.isTechIceGateOpen）
+let techIceDateCache = null;
+const getTechIceDateSet = (force = false) => {
+  if (!force && techIceDateCache) return techIceDateCache;
+  const set = new Set();
+  try {
+    const arr = JSON.parse(fs.readFileSync(TECH_INDEX_FILE, 'utf-8'));
+    if (Array.isArray(arr)) {
+      for (const x of arr) {
+        if (x && x.date != null && x.hasIce === true) set.add(String(x.date));
+      }
+    }
+  } catch (e) { /* 文件缺失/损坏时为空集合，冰点门禁不生效 */ }
+  techIceDateCache = set;
+  return set;
+};
+
 // tech_index.json 覆盖的日期（过滤周末重复数据点），供三日情绪均值策略并入回测日期序列，
 // 覆盖缺资金快照的交易日（如 20260730）——该系列策略不依赖历史资金/成交量快照
 const getTechIndexDates = () => Array.from(getTechEmotionEmaMap().keys()).filter(d => {
@@ -66,6 +85,7 @@ const getTechIndexDates = () => Array.from(getTechEmotionEmaMap().keys()).filter
 module.exports = {
   getTechEmotionEmaMap,
   getTechEmotionRawMap,
+  getTechIceDateSet,
   getTechIndexDates,
   techEmotionEmaCache,
   techEmotionRawCache,

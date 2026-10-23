@@ -5,10 +5,10 @@
 //   抽屉（FloatingStockPosition）与页面内诊断卡片的数据展示不受影响，本组件只负责全局弹窗提醒。
 import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
-import { ThunderboltOutlined, WarningOutlined, CloseOutlined } from '@ant-design/icons';
+import { ThunderboltOutlined, WarningOutlined, CloseOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { local_ip } from '../../constant';
 import { getStrategyMode, MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } from '../../utils/strategyMode';
-import { subscribeBuyPointPush, subscribeSellPointPush } from '../../utils/buyPointWs';
+import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush } from '../../utils/buyPointWs';
 import './index.scss';
 
 const MODE_LABELS = {
@@ -83,6 +83,8 @@ const GlobalDiagnosisAlert = () => {
   const [buyAlert, setBuyAlert] = useState(null);
   // 卖点卡片：{ results, ts }
   const [sellAlert, setSellAlert] = useState(null);
+  // 冰点转折延时观察卡片：{ mode, data:{ triggerTime, executeTime, delayMin, message }, ts }
+  const [iceAlert, setIceAlert] = useState(null);
   const seqRef = useRef(0); // 旧请求返回晚于新触发时丢弃过期结果
 
   // 拉取本次买点命中对应的推荐标的（含实时买入价格）
@@ -98,6 +100,10 @@ const GlobalDiagnosisAlert = () => {
     // MOCK：后端调试触发直接携带标的
     if (Array.isArray(data?.buyable) && data.buyable.length > 0) {
       return decorate(data.buyable);
+    }
+    // 冰点转折延时买入（2026-10-23）：到点由后端直接给出标的；无标的时不回退普通榜单拉取
+    if (data?.iceDelay) {
+      return [];
     }
     const isExtreme = mode === MODE_EXTREME_WIN;
     const isDefense = mode === MODE_ATTACK_DEFENSE;
@@ -142,6 +148,8 @@ const GlobalDiagnosisAlert = () => {
   useEffect(() => {
     const unsubBuy = subscribeBuyPointPush((msg) => {
       if (msg?.open !== true || !msg.data) return;
+      // 冰点转折延时到点：收起等待卡片，改由买点卡片展示本次要买入的个股
+      if (msg.data.iceDelay) setIceAlert(null);
       const seq = ++seqRef.current;
       const mode = msg.mode || getStrategyMode();
       setBuyAlert({ mode, data: msg.data, bucket: msg.bucket ?? null, ts: msg.ts ?? null, stocks: [], loading: true });
@@ -161,15 +169,69 @@ const GlobalDiagnosisAlert = () => {
       if (hits.length === 0) return;
       setSellAlert({ results: hits, ts: msg.ts ?? null });
     });
-    return () => { unsubBuy(); unsubSell(); };
+    // 冰点转折：买点触发后先展示「延时 15min 观察资金聚焦主线板块」等待卡片（补发消息同样展示）
+    const unsubIce = subscribeIceDelayWaitPush((msg) => {
+      if (!msg?.data || msg.data.phase !== 'wait') return;
+      // 过期的等待消息（补发时可能已到点买入）不再展示，窗口 = 延时 + 2 分钟
+      const delayMs = ((msg.data.delayMin ?? 15) + 2) * 60 * 1000;
+      if (msg.ts && Date.now() - msg.ts > delayMs) return;
+      setIceAlert({ mode: msg.mode || getStrategyMode(), data: msg.data, ts: msg.ts ?? null });
+    });
+    return () => { unsubBuy(); unsubSell(); unsubIce(); };
   }, [fetchBuyStocks]);
 
-  if (!buyAlert && !sellAlert) return null;
+  if (!buyAlert && !sellAlert && !iceAlert) return null;
 
   return (
     <div className="gda-container">
+      {iceAlert && <IceWaitCard alert={iceAlert} onClose={() => setIceAlert(null)} />}
       {buyAlert && <BuyCard alert={buyAlert} onClose={() => setBuyAlert(null)} />}
       {sellAlert && <SellCard alert={sellAlert} onClose={() => setSellAlert(null)} />}
+    </div>
+  );
+};
+
+// ==================== 冰点转折延时观察卡片 ====================
+// 买点触发且属冰点转折时，先提示延时 15min 观察资金聚焦主线板块，到点后由买点卡片给出个股
+const IceWaitCard = ({ alert, onClose }) => {
+  const { mode, data } = alert;
+  const delayMin = data?.delayMin ?? 15;
+  return (
+    <div className="gda-card gda-ice">
+      <div className="gda-header">
+        <ClockCircleOutlined className="gda-header-icon ice" />
+        <span className="gda-title">冰点转折 · 延时观察</span>
+        <span className="gda-mode-badge">{MODE_LABELS[mode] || mode}</span>
+        <CloseOutlined className="gda-close" onClick={onClose} />
+      </div>
+      <div className="gda-body">
+        {/* ① 当前模式 */}
+        <div className="gda-row">
+          <span className="gda-label">当前模式</span>
+          <span className="gda-value">{MODE_LABELS[mode] || mode}</span>
+          {data?.mock && <span className="gda-hit-types">MOCK 测试</span>}
+        </div>
+        {/* ② 延时观察提示 */}
+        <div className="gda-section">
+          <div className="gda-section-title">延时观察提示</div>
+          <div className="gda-reason-detail">
+            {data?.message || `冰点转折：买点已触发，需延时 ${delayMin} 分钟观察资金聚焦主线板块后再执行买入`}
+          </div>
+        </div>
+        {/* ③ 时间安排 */}
+        <div className="gda-section">
+          <div className="gda-section-title">时间安排</div>
+          <div className="gda-reason">
+            <span className="gda-reason-name">买点触发时间</span>
+            <span className="gda-reason-value">{data?.triggerTime || '--'}</span>
+          </div>
+          <div className="gda-reason">
+            <span className="gda-reason-name">计划买入时间</span>
+            <span className="gda-reason-value">{(data?.executeTime || '--') + `（延时 ${delayMin} 分钟）`}</span>
+          </div>
+        </div>
+        <div className="gda-footer">到点后后端会自动推送要买入的个股，请保持页面打开</div>
+      </div>
     </div>
   );
 };
@@ -203,6 +265,8 @@ const BuyCard = ({ alert, onClose }) => {
 
   const reasons = collectBuyReasons(isDefense ? data?.tech?.checks : data?.checks);
   const reverseReasons = collectBuyReasons(data?.reverseChecks);
+  // 冰点转折延时买入（2026-10-23）：到点推送时携带 iceDelay（触发/执行时间 + 选中板块）
+  const iceDelay = data?.iceDelay || null;
 
   return (
     <div className="gda-card gda-buy">
@@ -219,6 +283,21 @@ const BuyCard = ({ alert, onClose }) => {
           <span className="gda-value">{MODE_LABELS[mode] || mode}</span>
           {hitTypes.length > 0 && <span className="gda-hit-types">命中：{hitTypes.join('、')}</span>}
         </div>
+        {/* ①-2 冰点转折 · 延时买入说明 */}
+        {iceDelay?.phase === 'ready' && (
+          <div className="gda-section">
+            <div className="gda-section-title">冰点转折 · 延时买入</div>
+            <div className="gda-reason">
+              <span className="gda-reason-name">触发 / 执行</span>
+              <span className="gda-reason-value">{`${iceDelay.triggerTime || '--'} → ${iceDelay.executeTime || '--'}（延时 ${iceDelay.delayMin ?? 15} 分钟）`}</span>
+            </div>
+            <div className="gda-reason">
+              <span className="gda-reason-name">资金聚焦板块</span>
+              <span className="gda-reason-value">{iceDelay.board || '全量科技自选股（回退）'}</span>
+            </div>
+            {iceDelay.reason && <div className="gda-reason-detail">{iceDelay.reason}</div>}
+          </div>
+        )}
         {/* ② 要买入的股票 + 买入价格 */}
         <div className="gda-section">
           <div className="gda-section-title">要买入的股票</div>
@@ -226,9 +305,11 @@ const BuyCard = ({ alert, onClose }) => {
             <div className="gda-loading">正在获取推荐标的与实时价格…</div>
           ) : stocks.length === 0 ? (
             <div className="gda-empty">
-              {isExtreme
-                ? '当前无顺周期完整买点标的，亦无逆周期反向抱团买点标的。'
-                : '当前无满足买点条件且未封涨停的可买标的。'}
+              {iceDelay?.phase === 'ready'
+                ? `延时 ${iceDelay.delayMin ?? 15} 分钟观察结束：全量科技自选股当前无满足买点条件的可买标的。`
+                : isExtreme
+                  ? '当前无顺周期完整买点标的，亦无逆周期反向抱团买点标的。'
+                  : '当前无满足买点条件且未封涨停的可买标的。'}
             </div>
           ) : stocks.map((s) => {
             const asEw = isExtreme || (isDefense && !s.isTechPick);

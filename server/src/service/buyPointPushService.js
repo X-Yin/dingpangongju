@@ -13,6 +13,7 @@ const wsServer = require('../wsServer');
 const { notifyBuyPointFeishu } = require('./buyPointNotifier');
 const { getBuyPointChecks } = require('./buySellDiagnose');
 const { getExtremeWinBuyPointChecks, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } = require('./hotMoneyExtremeWin');
+const iceDelayBuy = require('./iceDelayBuy');
 
 const INTERVAL_MS = 10 * 1000;
 const statePath = path.resolve(__dirname, '../data/buy_point_notify_state.json');
@@ -149,11 +150,23 @@ const tickAttackDefense = async (mode, data, bucket) => {
   const ewNewBucket = ewHit && lastNotifiedBuckets.ew !== bucket;
   if (!techNewBucket && !ewNewBucket) return;
 
+  // 冰点转折延时买入（2026-10-23）：科技腿命中且属冰点转折时，不立即通知买入，
+  // 改为延时 15min 观察资金聚焦主线板块，到点由 iceDelayBuy.tick 推送个股
+  const iceTriggered = techNewBucket && iceDelayBuy.canTrigger(bucket) && iceDelayBuy.isIceTransition();
+  // 当日已进入冰点转折延时模式：科技腿后续普通买点通知一律抑制
+  const techSuppressed = iceTriggered || iceDelayBuy.shouldSuppressTech();
+
   if (techNewBucket) lastNotifiedBuckets.tech = bucket;
   if (ewNewBucket) lastNotifiedBuckets.ew = bucket;
   writeDefenseState(mode, bucket);
 
-  if (techNewBucket) {
+  if (iceTriggered) {
+    try {
+      await iceDelayBuy.trigger({ mode, bucket });
+    } catch (e) {
+      console.error('冰点转折延时触发失败:', e.message);
+    }
+  } else if (techNewBucket && !techSuppressed) {
     try {
       await notifyBuyPointFeishu({ mode, source: 'tech' });
     } catch (e) {
@@ -166,6 +179,20 @@ const tickAttackDefense = async (mode, data, bucket) => {
     } catch (e) {
       console.error('情绪游资买点飞书发送失败:', e.message);
     }
+  }
+  if (techSuppressed) {
+    // 科技腿已转为延时观察（或当日已完成延时买入）：仅情绪游资同时命中时才广播买点卡片（且只展示情绪游资腿）
+    if (ewNewBucket) {
+      wsServer.broadcast({
+        type: 'buy_point',
+        mode,
+        bucket,
+        ts: Date.now(),
+        data: { ...data, tech: data.tech ? { ...data.tech, allPassed: false } : null },
+        open: true,
+      });
+    }
+    return;
   }
   wsServer.broadcast({ type: 'buy_point', mode, bucket, ts: Date.now(), data, open: true });
 };
@@ -180,9 +207,17 @@ const tick = async () => {
     const mode = strategyModeState.getMode();
     const res = await runDiagnosis(mode);
     const data = res && res.data ? res.data : null;
-    if (!data) return;
-
     const bucket = getCurrentClosedBucket(now);
+
+    // 冰点转折延时买入到点：达到 15min 延时目标后选股并推送买入标的（13:30 之后同样执行；
+    // 即使本轮诊断失败也按时执行，避免错过买入时点）
+    try {
+      await iceDelayBuy.tick({ data });
+    } catch (e) {
+      console.error('冰点转折延时买入任务异常:', e.message);
+    }
+
+    if (!data) return;
 
     // 1) 每 10s 广播诊断结果（仅供前端展示，不触发打开）
     wsServer.broadcast({ type: 'buy_point', mode, bucket, ts: Date.now(), data, open: false });
@@ -221,6 +256,23 @@ const tick = async () => {
     const canonicalHit = data.allPassed === true
       || (data.reverse && data.reverse.allPassed === true);
     if (bucket == null || !canonicalHit) return;
+
+    // 冰点转折延时买入（2026-10-23）：科技进攻模式命中且属冰点转折时，不立即通知买入，
+    // 改为延时 15min 观察资金聚焦主线板块，到点由 iceDelayBuy.tick 推送个股
+    if (mode !== MODE_EXTREME_WIN && iceDelayBuy.canTrigger(bucket) && iceDelayBuy.isIceTransition()) {
+      lastNotifiedBucket = bucket;
+      writeState({ date: dayjs().format('YYYYMMDD'), bucket, mode });
+      try {
+        await iceDelayBuy.trigger({ mode, bucket });
+      } catch (e) {
+        console.error('冰点转折延时触发失败:', e.message);
+      }
+      return;
+    }
+
+    // 当日已进入冰点转折延时模式：后续普通科技买点通知一律抑制（避免延时买入后又弹普通卡片）
+    if (mode !== MODE_EXTREME_WIN && iceDelayBuy.shouldSuppressTech()) return;
+
     if (lastNotifiedBucket === bucket) return;
 
     lastNotifiedBucket = bucket;

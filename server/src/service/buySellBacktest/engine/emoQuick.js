@@ -6,8 +6,9 @@ const {
   EMO_QUICK_RANGE_HIGH,
   EMO_QUICK_RANGE_LOW,
   EMO_SWITCH_EMA_THRESHOLD,
+  TECH_ICE_THRESHOLD,
 } = require('../constants');
-const { getTechEmotionEmaMap, getTechEmotionRawMap } = require('../utils/techEmotion');
+const { getTechEmotionEmaMap, getTechEmotionRawMap, getTechIceDateSet } = require('../utils/techEmotion');
 
 // 计算「快进快出」标注（买入时点判定）：
 //   ① 上一交易日科技情绪 3 日 EMA < -30；② 上上个/上个交易日当日科技情绪均处 (-30, -10) 且回升。
@@ -67,8 +68,23 @@ const createEmoQuickFundGate = () => {
   };
 };
 
+// 「连续两日冰点」前置门禁（2026-10-23 用户新增；板块内选股 + 板块发酵延时共用）：
+//   ① 上一交易日：tech_index.json 中该日 hasIce === true；
+//   ② 当日（含买点触发桶）：回溯当日每个 5 分钟桶的实时科技情绪，只要有过 <= TECH_ICE_THRESHOLD 即视为当日冰点。
+// 当日不用 hasIce 判定——该字段由前端轮询在触冰时调用接口落盘，无法确定写盘时点，回测中不可靠。
+const isTechIceGateOpen = (prevDateStr, timeBuckets, bi) => {
+  if (prevDateStr == null || !getTechIceDateSet().has(String(prevDateStr))) return false;
+  const end = Math.min(bi, (timeBuckets || []).length - 1);
+  for (let i = 0; i <= end; i++) {
+    const v = getBucketTechEmotion(timeBuckets[i]);
+    if (v != null && v <= TECH_ICE_THRESHOLD) return true;
+  }
+  return false;
+};
+
 module.exports = {
   computeEmoQuickOutInfo,
   createEmoQuickFundGate,
   getBucketTechEmotion,
+  isTechIceGateOpen,
 };

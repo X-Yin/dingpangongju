@@ -1,6 +1,15 @@
 const { GLOBAL_RESILIENCE_MIN, RESILIENCE_GATE_MIN, RESILIENCE_GATE_STRATEGY_IDS } = require('../strategies/registry');
 const { CYC_CORR_WINDOW, CYC_MIN_CYB_CORR } = require('./cycleFilter');
-const { EMO_QUICK_CRASH_PCT, EMO_QUICK_RANGE_HIGH, EMO_QUICK_RANGE_LOW, EMO_SWITCH_EMA_THRESHOLD } = require('../constants');
+const {
+  EMO_QUICK_CRASH_PCT,
+  EMO_QUICK_RAISED_BLOCK_DELAY_MIN,
+  EMO_QUICK_RAISED_BLOCK_TAGS,
+  EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN,
+  TECH_ICE_THRESHOLD,
+  EMO_QUICK_RANGE_HIGH,
+  EMO_QUICK_RANGE_LOW,
+  EMO_SWITCH_EMA_THRESHOLD,
+} = require('../constants');
 const { runBuyPointDiagnosis } = require('../diagnose/buyPoint');
 const { describeCrashSell, fmtMin, pctTxt } = require('./crashSellWindow');
 
@@ -133,6 +142,62 @@ const buildGainGapDeferCheck = (gainGapSkipped) => {
   };
 };
 
+// 快进快出类「N 日涨幅接近时按当日抗分歧优先」明细（2026-10-23 用户新增）：
+// 按 N 日窗口涨幅排名后，第一名与第二名涨幅相差 ≤ 1 个百分点时，改按买点触发时点的当日抗分歧分数排序，
+// 买入抗分歧更高者（两者分数缺失或相等时保持原涨幅排名），买入条件明细追加 gain_tie_break 项
+const buildGainTieCheck = (info) => {
+  const fmt = v => (v != null && Number.isFinite(Number(v)) ? Number(v).toFixed(2) : '--');
+  const p = info?.picked || {};
+  const d = info?.dropped || {};
+  const swapped = info?.swapped === true;
+  const detail = `${p.name || p.code}（涨幅 ${fmt(p.gain)}% / 抗分歧 ${fmt(p.resilience)}）优先于 ${d.name || d.code}（涨幅 ${fmt(d.gain)}% / 抗分歧 ${fmt(d.resilience)}）`;
+  return {
+    id: 'gain_tie_break',
+    title: '快进快出N日涨幅接近时按当日抗分歧优先',
+    passed: true,
+    value: swapped ? '按抗分歧优先调整' : '保持涨幅排名',
+    reason: swapped
+      ? `第一名与第二名 N 日涨幅相差 ${fmt(info?.gap)} 个百分点（≤ ${info?.threshold}），按买点触发时点的当日抗分歧分数更高者优先：${detail}`
+      : `第一名与第二名 N 日涨幅相差 ${fmt(info?.gap)} 个百分点（≤ ${info?.threshold}），但当日抗分歧分数缺失或第一名不低于第二名，保持原涨幅排名：${detail}`,
+  };
+};
+
+// 快进快出类「连续两日冰点·板块内选股」明细（2026-10-23 用户新增）：
+// 上一交易日 hasIce + 当日分时曾触冰时，首次建仓不再从全量自选股中选 N 日涨幅最大者，改为在「中性/进攻」tag 板块中
+// 按「区间涨幅差值（目标时点 T+15 往前回溯 20 分钟）」降序逐个尝试：某板块交集内选不出可买标的则顺延下一板块，
+// 本次命中的板块追加 raised_block_pick
+const buildRaisedBlockCheck = (info) => {
+  const fmt = v => (v != null && Number.isFinite(Number(v)) ? Number(v).toFixed(2) : '--');
+  const chg = info?.avgChange;
+  return {
+    id: 'raised_block_pick',
+    title: `连续两日冰点·改板块内选股（${EMO_QUICK_RAISED_BLOCK_TAGS.join('+')}）`,
+    passed: true,
+    value: `${info?.blockName || '--'}（区间差值第 ${info?.rank != null ? info.rank : '--'} 名，${fmt(info?.startChange)}%→${chg > 0 ? '+' : ''}${fmt(chg)}%，差值 ${info?.delta != null && info.delta > 0 ? '+' : ''}${fmt(info?.delta)}）`,
+    reason: `上一交易日与当日科技情绪均达到冰点（上一交易日 hasIce: true；当日任一分时科技情绪 ≤ ${TECH_ICE_THRESHOLD}）：本次买入不再从全量自选股中选 N 日涨幅最大者，改为在「${EMO_QUICK_RAISED_BLOCK_TAGS.join('/')}」tag 板块中，按「目标时点往前回溯 ${EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN} 分钟的区间涨幅差值」从高到低逐个板块尝试（前序板块交集内均无可买标的时顺延），本次命中板块「${info?.blockName || '--'}」（${fmt(info?.startChange)}% → ${chg > 0 ? '+' : ''}${fmt(chg)}%，差值 ${info?.delta != null && info.delta > 0 ? '+' : ''}${fmt(info?.delta)}，第 ${info?.rank != null ? info.rank : '--'} 名），并仅在该板块与自选科技股交集（${info?.overlapCount != null ? info.overlapCount : '--'} 只）中选 N 日涨幅最大者`,
+  };
+};
+
+// 快进快出类「连续两日冰点·板块内选股兜底」（2026-10-23 用户新增）：
+// 全部「中性/进攻」板块的交集内都选不出可买标的（如抗分歧不足、涨停、一字板等被过滤）→ 回退全量自选股原逻辑
+const buildRaisedBlockFallbackCheck = (info) => ({
+  id: 'raised_block_fallback',
+  title: '板块内均选不出·回退全量自选股',
+  passed: true,
+  value: `已尝试 ${info?.triedCount != null ? info.triedCount : '--'} 个板块`,
+  reason: `连续两日冰点下已按区间涨幅差值从高到低尝试 ${info?.triedCount != null ? info.triedCount : '--'} 个「${EMO_QUICK_RAISED_BLOCK_TAGS.join('/')}」tag 板块，但所有板块交集内的股票均被其它选股条件（抗分歧不足/涨停/一字板/逆周期/过热等）剔除、选不出可买标的，回退为原逻辑：从全量自选股中选 N 日涨幅最大者`,
+});
+
+// 快进快出类「板块发酵延时」明细（2026-10-23 用户新增）：
+// 连续两日冰点下买点触发后不立刻买入，等待 15 分钟（目标桶）再按区间涨幅差值重新选板块与选股，明细追加 raised_block_delay
+const buildRaisedBlockDelayCheck = (info) => ({
+  id: 'raised_block_delay',
+  title: `板块发酵延时 ${EMO_QUICK_RAISED_BLOCK_DELAY_MIN} 分钟`,
+  passed: true,
+  value: `${info?.triggerTime || '--'} → ${info?.execTime || '--'}`,
+  reason: `连续两日冰点（上一交易日 hasIce: true 且当日分时科技情绪触及 ${TECH_ICE_THRESHOLD}）下买点于 ${info?.triggerTime || '--'} 触发，不立刻买入：延时 ${EMO_QUICK_RAISED_BLOCK_DELAY_MIN} 分钟至 ${info?.execTime || '--'} 桶，并以该时点为终点往前回溯 ${EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN} 分钟，重新计算「${EMO_QUICK_RAISED_BLOCK_TAGS.join('/')}」tag 板块的区间涨幅差值（给板块发酵时间），再按差值从高到低逐个尝试板块并选 N 日涨幅最大者买入`,
+});
+
 // 情绪快进快出标注明细项（highest_{N}d_gain_emoquick 系列）：标注本次买入是否为「快进快出」买入
 //（触发条件二选一：上一交易日科技情绪 3 日 EMA < -30；或上上个、上个交易日的当日科技情绪原始分
 // 均处 -30~-10 区间且回升）——是则该笔持仓不走通用 7 条件卖点、买入次日 10:00 强制卖出；
@@ -244,10 +309,14 @@ const withResilienceGateInfo = (buyInfo, picked) => {
   const hasOneWord = Array.isArray(picked.prevOneWordSkipped) && picked.prevOneWordSkipped.length > 0;
   const hasEmoCyc = Array.isArray(picked.emoCycSkipped) && picked.emoCycSkipped.length > 0;
   const hasGainGap = Array.isArray(picked.gainGapSkipped) && picked.gainGapSkipped.length > 0;
+  const hasGainTie = !!picked.gainTieInfo;
+  const hasRaisedBlock = !!picked.raisedBlockInfo;
+  const hasRaisedFallback = !!picked.raisedBlockFallbackInfo;
+  const hasRaisedDelay = !!picked.raisedBlockDelayInfo;
   const hasGlobalSkip = Array.isArray(picked.globalResilienceSkipped) && picked.globalResilienceSkipped.length > 0;
   const hasGateSkip = Array.isArray(picked.skipped) && picked.skipped.length > 0;
   // 早返回：既没有分数也没有任何顺延信息，也没有情绪快进快出标注
-  if (picked.resilienceScore == null && !picked.emoQuickOut && !hasLimitUp && !hasOneWord && !hasEmoCyc && !hasGainGap && !hasGlobalSkip && !hasGateSkip) return buyInfo;
+  if (picked.resilienceScore == null && !picked.emoQuickOut && !hasLimitUp && !hasOneWord && !hasEmoCyc && !hasGainGap && !hasGainTie && !hasRaisedBlock && !hasRaisedFallback && !hasRaisedDelay && !hasGlobalSkip && !hasGateSkip) return buyInfo;
   let buyReason = buyInfo.buyReason;
   const buyChecks = [...(buyInfo.buyChecks || [])];
   if (hasLimitUp) {
@@ -264,6 +333,22 @@ const withResilienceGateInfo = (buyInfo, picked) => {
   if (hasGainGap) {
     // 快进快出类：涨幅领先但当日爆发力不足顺延 → gain_gap_defer
     buyChecks.push(buildGainGapDeferCheck(picked.gainGapSkipped));
+  }
+  if (hasGainTie) {
+    // 快进快出类：N 日涨幅接近时按当日抗分歧优先 → gain_tie_break
+    buyChecks.push(buildGainTieCheck(picked.gainTieInfo));
+  }
+  if (hasRaisedBlock) {
+    // 快进快出类：连续两日冰点改板块内选股 → raised_block_pick
+    buyChecks.push(buildRaisedBlockCheck(picked.raisedBlockInfo));
+  }
+  if (hasRaisedFallback) {
+    // 快进快出类：全部板块交集内均选不出 → raised_block_fallback（回退全量自选股）
+    buyChecks.push(buildRaisedBlockFallbackCheck(picked.raisedBlockFallbackInfo));
+  }
+  if (hasRaisedDelay) {
+    // 快进快出类：连续两日冰点下买点触发后延时 15 分钟再按区间涨幅差值选板块 → raised_block_delay
+    buyChecks.push(buildRaisedBlockDelayCheck(picked.raisedBlockDelayInfo));
   }
   if (picked.resilienceScore != null) {
     // 全局最低抗分歧 ≥ 9 + 门槛策略专项 ≥ 11（RESILIENCE_GATE_STRATEGY_IDS）
@@ -286,6 +371,18 @@ const withResilienceGateInfo = (buyInfo, picked) => {
   if (hasGateSkip) suffixParts.push(`前序股票抗分歧<${RESILIENCE_GATE_MIN}`);
   if (suffixParts.length > 0) {
     buyReason = `${buyInfo.buyReason}（因${suffixParts.join('/')}顺延买入）`;
+  }
+  if (hasRaisedBlock) {
+    // 连续两日冰点改板块内选股：非顺延语义，单独追加标签（明细见 raised_block_pick）
+    buyReason = `${buyReason}｜连续两日冰点·改板块内选股`;
+  }
+  if (hasRaisedFallback) {
+    // 冰点板块内均选不出 → 回退全量自选股（明细见 raised_block_fallback）
+    buyReason = `${buyReason}｜板块内均选不出，回退全量自选股`;
+  }
+  if (hasRaisedDelay) {
+    // 冰点板块发酵延时：单独追加标签（明细见 raised_block_delay）
+    buyReason = `${buyReason}｜买点触发后延时 ${EMO_QUICK_RAISED_BLOCK_DELAY_MIN} 分钟按最新板块涨幅选股（${picked.raisedBlockDelayInfo.triggerTime} → ${picked.raisedBlockDelayInfo.execTime}）`;
   }
   return { buyReason, buyChecks };
 };

@@ -497,9 +497,7 @@ const withDualGateInfo = async (buyInfo, strategyId, dateStr, minute, opts) => {
     gatedBuyInfo: { ...buyInfo, buyReason, buyChecks },
     gatePassed: !allBlocked,
     gateAllowedMarkets: allowedMarkets,
-    // 关键补充：用于下游 pickBestStock 对个股 MA3 切线正斜率连续天数做过滤
-    //   两种场景都触发：① 指数今日由负转正当日；② 指数斜率为负（规则① 持续负斜率窗口）
-    //   两种场景的过滤规则相同：个股 MA3 切线正斜率连续天数 > 4 则顺延
+    // 指数今日盘中是否由负转正的状态透传（供选股层与明细展示使用）
     gateTurnedPosInfo: {
       cybTurnedPosToday: !!cybGate?.turnedPosToday,
       starTurnedPosToday: !!starGate?.turnedPosToday,

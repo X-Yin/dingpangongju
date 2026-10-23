@@ -817,7 +817,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
         ? '仅创业板指满足买点门槛：展示创业板 + 主板 3 日涨幅前十'
         : starPassed
           ? '仅科创50 满足买点门槛：展示科创板 3 日涨幅前十'
-          : '创业板指、科创50 均不满足买点门槛：暂无可展示标的'}；未入选买点候选的个股在名称后标注原因（涨停 / 3日涨幅>30% / 昨日一字板 / 抗分歧<9 / 估值禁买 / 领先但抗分歧弱 等）`;
+          : '创业板指、科创50 均不满足买点门槛：暂无可展示标的'}；未入选买点候选的个股在名称后标注原因（涨停 / 3日涨幅>30% / 昨日一字板 / 抗分歧<9 / 估值禁买 / 领先但抗分歧弱 / 涨幅接近但抗分歧较低 等）`;
 
   // 合并榜单：后端已按门槛筛选市场、按 3 日涨幅降序取前十，并补充 excludeReason（2026-10-22）
   const mergedList = useMemo(() => data?.mergedTop || [], [data]);
@@ -859,7 +859,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   const rowCount = isExtreme ? leaderList.length : mergedList.length;
   const extremeGateNote = !leaderData
     ? '正在检测上证指数 3 日线斜率买点门槛…'
-    : `上证指数 3 日线斜率 ${formatSlope(indexSlope)}（需 > 0）；龙头池共 ${leaderData.poolCount ?? 0} 只（过去 10 交易日连板准入：流通市值 > 100 亿元者两连板 + 含两连板 5 日涨幅 > 40%，其余四连板及以上，剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）`;
+    : `上证指数 3 日线斜率 ${formatSlope(indexSlope)}（需 > 0）；龙头池共 ${leaderData.poolCount ?? 0} 只（过去 10 交易日连板准入：流通市值 > 100 亿元者出现过一次涨停 + 含该涨停日 5 日涨幅 > 40%，其余四连板及以上，剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）`;
   const reverseGateNote = !leaderData
     ? '正在检测逆周期（反向抱团）择时状态…'
     : !reverse
@@ -895,6 +895,14 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
       <div className={`ob-gainer-gate-note ${(isExtreme ? slopeOk : (cybPassed && starPassed)) ? 'both' : (isExtreme ? false : (cybPassed || starPassed)) ? 'partial' : 'none'}`}>
         {isExtreme ? extremeGateNote : gateNote}
       </div>
+      {/* 3 日涨幅接近时按当日抗分歧优先（2026-10-23 用户新增，后端 gainTie 触发时才展示） */}
+      {data?.gainTie && (
+        <div className={`ob-gainer-gate-note ${data.gainTie.swapped ? 'both' : 'partial'}`}>
+          {data.gainTie.swapped
+            ? `3日涨幅第一名与第二名相差 ${Number(data.gainTie.gap).toFixed(2)} 个百分点（≤ ${data.gainTie.threshold}），按当日抗分歧优先：${data.gainTie.picked.stockName}（抗分歧 ${data.gainTie.picked.resilienceScore != null ? Number(data.gainTie.picked.resilienceScore).toFixed(2) : '--'}）优先于 ${data.gainTie.dropped.stockName}（抗分歧 ${data.gainTie.dropped.resilienceScore != null ? Number(data.gainTie.dropped.resilienceScore).toFixed(2) : '--'}）`
+            : `3日涨幅第一名与第二名相差 ${Number(data.gainTie.gap).toFixed(2)} 个百分点（≤ ${data.gainTie.threshold}），但抗分歧分数缺失或第一名不低于第二名，保持原涨幅排名：${data.gainTie.picked.stockName} 优先于 ${data.gainTie.dropped.stockName}`}
+        </div>
+      )}
       <div className={`ob-gainer-body ${isDefense ? 'defense' : ''}`}>
         {/* 科技进攻列（tech_attack / attack_defense） */}
         {!isExtreme && (

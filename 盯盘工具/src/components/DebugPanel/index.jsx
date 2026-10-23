@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Drawer, Card, Button, Space, Typography, message } from 'antd';
 import {
-  BugOutlined, SyncOutlined, CheckCircleFilled, WarningFilled, RocketOutlined, FallOutlined,
+  BugOutlined, SyncOutlined, CheckCircleFilled, WarningFilled, RocketOutlined, FallOutlined, ClockCircleOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../constant';
@@ -22,6 +22,7 @@ const DebugPanel = () => {
   const [wsStatus, setWsStatus] = useState('testing');
   const [buyMocking, setBuyMocking] = useState(false);
   const [sellMocking, setSellMocking] = useState(false);
+  const [iceMocking, setIceMocking] = useState(false);
 
   // 模块一：WS 双向对等自检
   //   每轮流程：前端发 debug_ping → 后端回 debug_pong（方向一）；
@@ -95,6 +96,24 @@ const DebugPanel = () => {
       message.error(`mock 请求失败：${e.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 冰点转折延时观察 MOCK：只广播等待卡片，不发飞书、不影响真实延时状态
+  const triggerIceMock = async () => {
+    setIceMocking(true);
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/debug/mock_ice_delay`);
+      const d = res.data;
+      if (d?.success) {
+        message.success('已模拟冰点转折延时观察提示');
+      } else {
+        message.error(d?.error || 'mock 触发失败');
+      }
+    } catch (e) {
+      message.error(`mock 请求失败：${e.message}`);
+    } finally {
+      setIceMocking(false);
     }
   };
 
@@ -178,6 +197,23 @@ const DebugPanel = () => {
               onClick={() => triggerMock('sell')}
             >
               触发 Mock 卖点命中
+            </Button>
+          </Card>
+
+          {/* 模块四：冰点转折延时触发 MOCK */}
+          <Card size="small" title="4. 冰点转折延时触发">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              模拟冰点转折买点触发：向后端推送 WS 消息，打开全局「冰点转折 · 延时观察」提示卡片
+              （含买点触发时间与 15 分钟后的计划买入时间）；仅展示等待提示，不发送飞书。
+            </Paragraph>
+            <Button
+              type="primary"
+              icon={<ClockCircleOutlined />}
+              loading={iceMocking}
+              onClick={triggerIceMock}
+              style={{ background: '#d97706', borderColor: '#d97706' }}
+            >
+              触发冰点转折延时提示
             </Button>
           </Card>
 

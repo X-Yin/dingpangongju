@@ -86,39 +86,8 @@ const buildWindowAxis = async (allDates, rangeDates, startDate, needDays, dailyI
 // 其余股票沿用真实自选股加入时间校验，防止后加自选股污染历史回测
 const passWatchlistGate = (code, dateStr, minute) => isSimStock(code) || isStockInWatchlistAt(code, dateStr, minute);
 
-// 计算个股 MA3 切线正斜率连续天数（从 targetDateStr 倒着数，包括 targetDateStr 本身）
-// MA3 切线公式 B：MA3(今日) − MA3(昨日)；avg(i,d) = closes.slice(i, i+d).reduce(...) / d
-// closes 是按日期降序的 [{date, close}] 数组，[0] = 目标日，[1] = 前一日，...
-// 返回：连续正的天数（含当日）；斜率非正返回 0；数据不足返回 null（调用方保守放行）
-const countStockPositiveSlopeDays = (code, targetDateStr, dailyInfos) => {
-  if (!dailyInfos) return null;
-  const codeStr = String(code);
-  const dates = [...dailyInfos.keys()].sort((a, b) => b - a);
-  const closes = [];
-  for (const d of dates) {
-    const info = dailyInfos.get(d)?.get(codeStr);
-    if (info?.closePx != null && info.closePx > 0) closes.push({ date: d, close: Number(info.closePx) });
-    if (closes.length >= 10) break;
-  }
-  if (closes.length < 4) return null;
-  const avg = (i, d) => closes.slice(i, i + d).reduce((s, v) => s + v.close, 0) / d;
-  const slopeToday = avg(0, 3) - avg(1, 3);
-  if (!Number.isFinite(slopeToday)) return null;
-  if (slopeToday <= 0) return 0;
-  let count = 1;
-  for (let i = 1; i + 3 <= closes.length; i++) {
-    const slope = avg(i, 3) - avg(i + 1, 3);
-    if (!Number.isFinite(slope)) break;
-    if (slope > 0) count++;
-    else break;
-    if (count >= 6) break; // 用户关心 ≤4，算到 5 就够了
-  }
-  return count;
-};
-
 module.exports = {
   buildWindowAxis,
-  countStockPositiveSlopeDays,
   injectSimStocksIntoCampData,
   isNonTechWatchlistStock,
   passWatchlistGate,

@@ -293,7 +293,7 @@ const getRecentMultiLianbanStocks = async (dateStr, lookbackDays = 20, minBoardC
 };
 
 // 给定回测日期 D，返回过去 lookbackDays 个交易日（严格不含当日 D）内每一次出现的连板个股记录
-// （不做 code 合并，同一只股票在不同快照日各返回一条；供「两连板 + 5 日涨幅」等多事件判定使用）
+// （不做 code 合并，同一只股票在不同快照日各返回一条；供「涨停/连板 + 后续涨幅」等多事件判定使用）
 // 返回 { stocks: [{ code, name, lianbanCount, board, date, floatMarketValueYi }], dates: ['YYYYMMDD'] }
 const getRecentMultiLianbanOccurrences = async (dateStr, lookbackDays = 20, minBoardCount = 2) => {
   const dates = (await getPastTradingDates(dateStr, lookbackDays)).map(String);

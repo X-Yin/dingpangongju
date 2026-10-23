@@ -68,8 +68,8 @@ const {
 //     「情绪游资-反向抱团龙头」作为独立策略仍保留（全仓单持仓），本策略的逆周期腿规则与其**完全一致**，唯一区别是按半仓计收益。
 //   —— 以下为顺周期腿（极致胜率原逻辑）——
 //   选股 = 两条路径取并集（同一只股票满足其一即入选，2026-10-18 用户新增第二条；均一律剔除创业板 30/301 与科创板 688）：
-//          旧路径：过去 10 个交易日（不含当日）内出现过连板准入（2026-10-22 用户改，按流通市值分档：
-//                  流通市值 > 100 亿元者两连板 + 含这两连板在内连续 5 个交易日累计涨幅 > 40%；否则连板数 >= 4）；
+//          旧路径：过去 10 个交易日（不含当日）内出现过连板准入（2026-10-23 用户改，按流通市值分档：
+//                  流通市值 > 100 亿元者出现过一次涨停（首板即可）+ 含该涨停日在内连续 5 个交易日累计涨幅 > 40%；否则连板数 >= 4）；
 //                  动量：「最多 10 个交易日的最精准窗口区间最大涨幅 < 80%」剔除近期已大幅拉升者（先枚举长度 ≤ 10 的子窗口取最大涨幅者，再双向缩进到「同时包含窗内最高/最低收盘日的最短跨度」）；
 //                  且连板准入事件之后若出现过任一交易日涨幅 < -9%，一并剔除该股；且 20 日总涨幅 < 100%；
 //          新路径：连板基础名单单独按「过去 20 个交易日（不含当日）内连板准入（同上市值分档）」统计；
@@ -719,7 +719,7 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
   const checks = [
     {
       id: 'extreme_win_pool',
-      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板且含这两连板在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${CAP_BOARD_MIN_GAIN_PCT}% 即可、≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者需四连板及以上；均剔除创业板/科创板与 ${EXCLUDED_THEMES.join('/')} 题材。旧路径：过去 ${LOOKBACK_DAYS} 个交易日达标，最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 < ${MAX_WINDOW_RANGE_PCT}%，连板后无单日涨幅 < ${POST_LIANBAN_DROP_PCT}%，20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。新路径：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日达标，最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < ${NEW_MAX_WINDOW_RANGE_PCT}% 且该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%、该窗口内收盘跌幅 < ${POST_LIANBAN_DROP_PCT}% 的交易日至多 1 次（≥ 2 次剔除），20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。两路径均剔除与全量自选股科技股重叠者）`,
+      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过一次涨停且含该涨停日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${CAP_BOARD_MIN_GAIN_PCT}% 即可、≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者需四连板及以上；均剔除创业板/科创板与 ${EXCLUDED_THEMES.join('/')} 题材。旧路径：过去 ${LOOKBACK_DAYS} 个交易日达标，最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 < ${MAX_WINDOW_RANGE_PCT}%，连板后无单日涨幅 < ${POST_LIANBAN_DROP_PCT}%，20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。新路径：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日达标，最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < ${NEW_MAX_WINDOW_RANGE_PCT}% 且该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%、该窗口内收盘跌幅 < ${POST_LIANBAN_DROP_PCT}% 的交易日至多 1 次（≥ 2 次剔除），20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。两路径均剔除与全量自选股科技股重叠者）`,
       passed: true,
       value: `${pick.name}（${pick.code}）· ${pick.lianbanCount} 连板`,
       reason: `候选 = 旧路径（过去 ${LOOKBACK_DAYS} 个交易日内连板准入达标）与新路径（过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日内连板准入达标）并集（命中日 ${pick.date}，板块 ${pick.board || '--'}）；已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、${EXCLUDED_THEMES.join('/')} 题材（板块名包含关键词即剔除）与全量自选股科技股（isTech ≠ false）重叠者${pick.poolFilterText || ''}；本桶达标候选共 ${ranked.length} 只，按今日「强度分 − 差劲分」降序取第一个「未涨停且未被另一腿持有」者作为顺周期腿（第 ${legIdx + 1} 份半仓）建仓标的`,

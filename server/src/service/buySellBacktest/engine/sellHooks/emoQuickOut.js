@@ -93,6 +93,7 @@ const emoQuickOutSell = ({ positions, strategy, dateStr, dateDisplay, replayStoc
       buyChange: pos.buyChange,
       buyReason: pos.buyReason,
       buyChecks: pos.buyChecks,
+      raisedBlockDelay: pos.raisedBlockDelay || null,
       ...(isTwoBuy ? buildTwoBuyTradeExtra({ ...pos, rawReturnRate }) : {}),
       sellDate: dateStr,
       sellDateDisplay: dateDisplay,

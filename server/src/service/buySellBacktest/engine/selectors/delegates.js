@@ -11,7 +11,7 @@ const { EMO_QUICK_RANGE_HIGH, EMO_QUICK_RANGE_LOW, EMO_SWITCH_EMA_THRESHOLD } = 
 const resolveDelegatePick = (ctx) => {
   const {
     pickBestStock, stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
-    strategyId, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet,
+    strategyId, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet, restrictCodes,
   } = ctx;
 
   // 情绪快进快出系列（highest_{N}d_gain_emoquick，2026-10-03 用户新增）：买点触发时均可正常买入
@@ -36,7 +36,7 @@ const resolveDelegatePick = (ctx) => {
       && prev2Raw > EMO_QUICK_RANGE_LOW && prev2Raw < EMO_QUICK_RANGE_HIGH
       && prevRaw > EMO_QUICK_RANGE_LOW && prevRaw < EMO_QUICK_RANGE_HIGH
       && prevRaw > prev2Raw;
-    const quickPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, `highest_${emoQuickMatch[1]}_gain`, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet);
+    const quickPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, `highest_${emoQuickMatch[1]}_gain`, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet, restrictCodes, true);
     if (quickPicked) {
       // 附带快进快出标注：经 withResilienceGateInfo 写入买入原因与买入条件明细（emo_quick_out），
       // 并随持仓（positions[].emoQuickOut）传递给卖点侧，决定是否次日 10:00 强制卖出
@@ -71,7 +71,7 @@ const resolveDelegatePick = (ctx) => {
     // 关键：只有走「上一交易日 3 日 EMA < -30」这条快进快出路径才切换到研报前五选股；
     // 温和回升 / 数据缺失 / 非快进快出 都用原 3 日涨幅最大选股
     const delegateId = quickByEmaBelow ? 'highest_3d_reports_top5_gain' : 'highest_3d_gain';
-    const quickPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, delegateId, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet);
+    const quickPicked = pickBestStock(stocks, rangeDates, di, bucket, replayStocks, dailyInfos, delegateId, axisOffset, allowedMarkets, turnedPosInfo, prevOneWordSet, emoCycSet, restrictCodes, true);
     if (quickPicked) {
       quickPicked.emoQuickOut = {
         quickOut: quickByEmaBelow || quickByRangeRising,

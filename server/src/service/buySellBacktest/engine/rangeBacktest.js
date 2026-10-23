@@ -17,7 +17,8 @@ const { generalSellPositions } = require('./sellHooks/generalSell');
 const { buildBuyReasonFromDiag, fmtTime, runBuyPointDiagnosis } = require('../diagnose/buyPoint');
 const { buildCounterCycSet } = require('./cycleFilter');
 const { pickBestStock } = require('./pickBest');
-const { computeEmoQuickOutInfo, createEmoQuickFundGate, getBucketTechEmotion } = require('./emoQuick');
+const { resolveQuickRaisedBlocks, resolveRaisedBlockLookbackBucket, resolveRaisedBlockDelayTarget, isRaisedBlockDelayBucket, isRaisedBlockDelayExpired } = require('./quickRaisedBlock');
+const { computeEmoQuickOutInfo, createEmoQuickFundGate, getBucketTechEmotion, isTechIceGateOpen } = require('./emoQuick');
 const { attachBuyDayReturn, calcDrawdownStats, sortTradesByBuyTime } = require('../utils/tradeStats');
 const { ensureWatchlistValuation } = require('../../watchlistValuation');
 
@@ -164,8 +165,91 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       feedFundGate(); // 快进快出强卖/止损成交后喂入折算收益率，驱动资金净流入阈值动态调节
     }
 
+    // 「板块发酵延时」待执行买入（2026-10-23 用户新增）：连续两日冰点下买点触发后不立刻买入，
+    // 等待 15 分钟到目标桶后按区间涨幅差值选板块并选股建仓（给板块发酵时间）。仅当日有效，跨日自然清空
+    let pendingRaisedBuy = null;
+    // 上一交易日（日期轴上一位）：用于「连续两日冰点」前置门禁的昨日 hasIce 判定
+    const prevDateStr = di + axisOffset > 0 ? String(dateAxis[di + axisOffset - 1]) : null;
+    // 首次建仓（板块内即时路径 / 延时目标桶路径共用）：execBucket 为实际成交桶（延时路径即 T+15 桶），
+    // delayInfo 非空时在买入明细追加 raised_block_delay 并在买入原因标注触发→成交时点；
+    // iceGateOpen = 连续两日冰点门禁是否成立（成立才启用板块内选股，不成立沿用全量自选股选股）
+    const openFirstPosition = async (execBucket, gatedBuyInfo, gateAllowedMarkets, gateTurnedPosInfo, delayInfo, iceGateOpen) => {
+      // 上一交易日一字板过滤（全策略通用）：预取候选池昨日一字板集合传入选股（进程内按 股票_日期 缓存）
+      const prevOneWordSet = await buildPrevOneWordBoardSet((execBucket.stockChanges || []).map(s => s.code), dateStr);
+      // 顺/逆周期过滤（除情绪游资/三日情绪冰点/尾盘抄底外的全部策略）：预取逆周期候选集合传入选股
+      const emoCycSet = isCycleFilterStrategy(strategy)
+        ? await buildCounterCycSet((execBucket.stockChanges || []).map(s => s.code), dateStr)
+        : null;
+      // 「连续两日冰点」板块内选股（2026-10-23 用户改）：门禁成立时首次建仓不再从全量自选股中选 N 日涨幅最大者，
+      // 改为在「中性/进攻」tag 板块中按「区间（目标时点 T+15 往前回溯 20 分钟）涨幅差值」降序逐个尝试：
+      // 板块交集内选不出可买标的（如抗分歧不足/涨停）则顺延下一板块；全部板块都选不出时回退全量自选股原逻辑
+      const raisedBlocks = iceGateOpen
+        ? resolveQuickRaisedBlocks(execBucket, dateStr, resolveRaisedBlockLookbackBucket(timeBuckets, execBucket.minute))
+        : [];
+      let picked = null;
+      let raisedBlock = null;
+      for (const rb of raisedBlocks) {
+        picked = pickBestStock(new Map(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, rb.codes);
+        if (picked) { raisedBlock = rb; break; }
+      }
+      if (!picked) {
+        // 全部板块交集内均选不出（或本就没有交集非空的板块）→ 回退原逻辑：全量自选股选 N 日涨幅最大
+        picked = pickBestStock(new Map(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, null);
+        if (picked && raisedBlocks.length > 0) picked.raisedBlockFallbackInfo = { triedCount: raisedBlocks.length };
+      }
+      if (!picked) return;
+      // 资金净流入阈值抬高态（连续 2 笔折算收益率 ≤ 3% → 30 亿）仍驱动「强制两次买入·首次仅半仓」
+      const gateRaised = fundGate != null && fundGate.isRaised();
+      if (raisedBlock) picked.raisedBlockInfo = raisedBlock; // 买入明细 raised_block_pick
+      if (delayInfo) picked.raisedBlockDelayInfo = delayInfo; // 买入明细 raised_block_delay
+      // 两次买入、「10n 科技情绪-快进快出」与「快进快出-科技情绪门禁」系列叠加「快进快出」能力：首次建仓时按买入时点计算
+      // 快进快出标注（与 highest_{N}d_gain_emoquick 委托路径同口径，传入日期轴绝对索引 di + axisOffset），
+      // 挂到持仓上驱动次日 10:00 强卖 + 盘中跌破成本线止损。必须在 withResilienceGateInfo 之前挂载，
+      // 买入明细方可写入 emo_quick_out 判定项。
+      if (strategy.emoQuickOut === true && (strategy.twoBuy === true || strategy.emoBreak != null || strategy.emoGate != null)) {
+        picked.emoQuickOut = computeEmoQuickOutInfo(di + axisOffset, dateAxis);
+      }
+      const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
+      const sc = picked.stock;
+      const firstBuyPrice = parseFloat(Number(sc.lastPx).toFixed(2));
+      const buyTime = fmtTime(execBucket.timeKey).substring(0, 5); // 归一化 HH:MM（延时路径为实际成交桶时点）
+      // 快进快出半仓：本次买入属快进快出情形（次日 10:00 强制卖出）→ 仅半仓（第一份），剩余半仓等次日买点再次触发补买；
+      // 30 亿抬高态强制两次买入（2026-10-21 用户新增）：阈值处于抬高态时不分快进快出情形一律只买半仓（第一份）
+      const halfByQuickOut = emoQuickHalfBuy && (picked.emoQuickOut?.quickOut === true || gateRaised);
+      const forcedRaisedHalf = emoQuickHalfBuy && gateRaised && picked.emoQuickOut?.quickOut !== true;
+      positions.push({
+        code: sc.code,
+        stockName: sc.name || sc.code,
+        buyDate: dateStr,
+        buyDateDisplay: dateDisplay,
+        buyTime,
+        buyPrice: firstBuyPrice,
+        buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
+        metric: picked.metric,
+        buyReason: forcedRaisedHalf
+          ? `${finalBuyInfo.buyReason}；资金净流入阈值处于抬高态 30 亿，强制两次买入——本次仅买第一份 5 成，剩余半仓等后续交易日买点再次触发时补买（补买阈值降为 20 亿）`
+          : finalBuyInfo.buyReason,
+        buyChecks: annotateIndexGateChecksWithStock(finalBuyInfo.buyChecks, sc.code, sc.name),
+        raisedBlockDelay: delayInfo || null, // 板块发酵延时（触发时点 → 实际成交时点），供前端展示/追溯
+        emoQuickOut: picked.emoQuickOut || null, // 情绪快进快出标注（quickOut=true → 次日 10:00 强制卖出；其余策略为 null）
+        // 两次买入策略 / 快进快出半仓（第一份）：按半仓权重，标记 leg=1；非快进快出时全仓不标记
+        ...(strategy.twoBuy === true || halfByQuickOut ? { twoBuy: true, leg: 1, weight: TWO_BUY_LEG_WEIGHT } : {}),
+      });
+    };
+
     for (let bi = 0; bi < timeBuckets.length; bi++) {
       const bucket = timeBuckets[bi];
+
+      // 抬高态延时建仓：到达目标桶（T+15，允许 5 分钟桶缺口）→ 本桶执行建仓；超过目标 10 分钟仍无桶 → 放弃本次买入
+      let delayedExec = null;
+      if (pendingRaisedBuy) {
+        if (isRaisedBlockDelayBucket(bucket.minute, pendingRaisedBuy.targetMinute)) {
+          delayedExec = pendingRaisedBuy;
+          pendingRaisedBuy = null;
+        } else if (isRaisedBlockDelayExpired(bucket.minute, pendingRaisedBuy.targetMinute)) {
+          pendingRaisedBuy = null;
+        }
+      }
 
       // 买入信号：情绪快进快出策略当日已发生 10:00 强制卖出 → 当日禁止二次买入（哪怕买点再次触发）；其余沿用买点诊断 allPassed
       const quickOutNoRebuy = strategy.emoQuickOut === true && quickOutSoldDate === dateStr;
@@ -173,6 +257,8 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       // 突破 10×n——当前桶分时科技情绪 ≥ 阈值即处于突破买点窗口（情绪线每日 9:30 竞价起算、跨日不累计，
       // 首个满足的桶即为突破时点）；该桶选股失败时情绪仍 ≥ 阈值的后续桶持续重试。其余机制与快进快出系列一致
       let buyInfo = null;
+      // 抬高态延时等待中或本桶即延时成交桶 → 不重复评估新买点（避免同一段等待期内重复触发）
+      if (!pendingRaisedBuy && !delayedExec) {
       if (strategy.emoBreak != null) {
         const breakThreshold = Number(strategy.emoBreak);
         const emoNow = getBucketTechEmotion(bucket);
@@ -222,6 +308,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
           }
         }
       }
+      }
       const buyHit = buyInfo != null;
       if (buyHit) {
         // N 日涨幅最大系列策略：跨指数双门禁 + 选股市场过滤
@@ -234,46 +321,22 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
 
         if (positions.length === 0) {
           // 未持仓时按指标选最优的一只买入（普通策略同一时刻仅持有一只；两次买入策略建第一份）
-          // 上一交易日一字板过滤（全策略通用）：预取候选池昨日一字板集合传入选股（进程内按 股票_日期 缓存）
-          const prevOneWordSet = await buildPrevOneWordBoardSet((bucket.stockChanges || []).map(s => s.code), dateStr);
-          // 顺/逆周期过滤（除情绪游资/三日情绪冰点/尾盘抄底外的全部策略）：预取逆周期候选集合传入选股
-          const emoCycSet = isCycleFilterStrategy(strategy)
-            ? await buildCounterCycSet((bucket.stockChanges || []).map(s => s.code), dateStr)
-            : null;
-          const picked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet);
-          if (picked) {
-            // 两次买入、「10n 科技情绪-快进快出」与「快进快出-科技情绪门禁」系列叠加「快进快出」能力：首次建仓时按买入时点计算
-            // 快进快出标注（与 highest_{N}d_gain_emoquick 委托路径同口径，传入日期轴绝对索引 di + axisOffset），
-            // 挂到持仓上驱动次日 10:00 强卖 + 盘中跌破成本线止损。必须在 withResilienceGateInfo 之前挂载，
-            // 买入明细方可写入 emo_quick_out 判定项。
-            if (strategy.emoQuickOut === true && (strategy.twoBuy === true || strategy.emoBreak != null || strategy.emoGate != null)) {
-              picked.emoQuickOut = computeEmoQuickOutInfo(di + axisOffset, dateAxis);
+          // 「板块发酵延时」（2026-10-23 用户改）：连续两日冰点下买点触发后不立刻买入，记录待执行建仓，
+          // 等待 15 分钟到目标桶后按「区间涨幅差值」重新选板块与个股（给板块发酵时间）；目标落在非买入时段 → 本次不买
+          const iceGateOpen = emoQuickHalfBuy && isTechIceGateOpen(prevDateStr, timeBuckets, bi);
+          if (iceGateOpen) {
+            const targetMinute = resolveRaisedBlockDelayTarget(bucket.minute);
+            if (targetMinute != null) {
+              pendingRaisedBuy = {
+                targetMinute,
+                triggerTime: buyTime,
+                gatedBuyInfo,
+                gateAllowedMarkets,
+                gateTurnedPosInfo,
+              };
             }
-            const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
-            const sc = picked.stock;
-            const firstBuyPrice = parseFloat(Number(sc.lastPx).toFixed(2));
-            // 快进快出半仓：本次买入属快进快出情形（次日 10:00 强制卖出）→ 仅半仓（第一份），剩余半仓等次日买点再次触发补买；
-            // 30 亿抬高态强制两次买入（2026-10-21 用户新增）：阈值处于抬高态时不分快进快出情形一律只买半仓（第一份）
-            const gateRaised = fundGate != null && fundGate.isRaised();
-            const halfByQuickOut = emoQuickHalfBuy && (picked.emoQuickOut?.quickOut === true || gateRaised);
-            const forcedRaisedHalf = emoQuickHalfBuy && gateRaised && picked.emoQuickOut?.quickOut !== true;
-            positions.push({
-              code: sc.code,
-              stockName: sc.name || sc.code,
-              buyDate: dateStr,
-              buyDateDisplay: dateDisplay,
-              buyTime,
-              buyPrice: firstBuyPrice,
-              buyChange: sc.changePct != null ? parseFloat(Number(sc.changePct).toFixed(2)) : null,
-              metric: picked.metric,
-              buyReason: forcedRaisedHalf
-                ? `${finalBuyInfo.buyReason}；资金净流入阈值处于抬高态 30 亿，强制两次买入——本次仅买第一份 5 成，剩余半仓等后续交易日买点再次触发时补买（补买阈值降为 20 亿）`
-                : finalBuyInfo.buyReason,
-              buyChecks: annotateIndexGateChecksWithStock(finalBuyInfo.buyChecks, sc.code, sc.name),
-              emoQuickOut: picked.emoQuickOut || null, // 情绪快进快出标注（quickOut=true → 次日 10:00 强制卖出；其余策略为 null）
-              // 两次买入策略 / 快进快出半仓（第一份）：按半仓权重，标记 leg=1；非快进快出时全仓不标记
-              ...(strategy.twoBuy === true || halfByQuickOut ? { twoBuy: true, leg: 1, weight: TWO_BUY_LEG_WEIGHT } : {}),
-            });
+          } else {
+            await openFirstPosition(bucket, gatedBuyInfo, gateAllowedMarkets, gateTurnedPosInfo, null, false);
           }
         } else if ((strategy.twoBuy === true || emoQuickHalfBuy) && positions.length === 1 && positions[0].leg === 1
           && dateStr > positions[0].buyDate) {
@@ -372,6 +435,14 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
             });
           }
         }
+      }
+
+      // 延时建仓执行：目标桶（买点触发后 15 分钟）到达时，按区间涨幅差值重新选板块与个股，按本桶价成交
+      if (delayedExec && positions.length === 0 && !quickOutNoRebuy) {
+        await openFirstPosition(bucket, delayedExec.gatedBuyInfo, delayedExec.gateAllowedMarkets, delayedExec.gateTurnedPosInfo, {
+          triggerTime: delayedExec.triggerTime,
+          execTime: fmtTime(bucket.timeKey).substring(0, 5),
+        }, emoQuickHalfBuy && isTechIceGateOpen(prevDateStr, timeBuckets, bi));
       }
 
       // 卖出信号（通用 7 条件卖点，见 engine/sellHooks/generalSell.js）

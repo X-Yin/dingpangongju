@@ -39,6 +39,21 @@ const EMO_QUICK_FUND_INFLOW_RAISED = 30;
 const EMO_QUICK_FUND_GATE_RETURN_PCT = 3;
 const EMO_QUICK_FUND_GATE_CONSECUTIVE = 2;
 
+// 快进快出类「连续两日冰点」板块内选股（2026-10-23 用户新增）：
+// 不再从全量自选股中选 N 日涨幅最大者，改为只在 tag 为「中性」/「进攻」的板块中按板块区间涨幅差值取第一个与
+// 全量自选科技股有重叠的板块，再在该交集内选 N 日涨幅最大者（见 engine/quickRaisedBlock.js）
+const EMO_QUICK_RAISED_BLOCK_TAGS = ['中性', '进攻'];
+// 板块发酵延时（2026-10-23 用户改）：冰点日买点触发后不立刻买入，延迟 15 分钟到目标时点再选板块并买入
+const EMO_QUICK_RAISED_BLOCK_DELAY_MIN = 15;
+// 板块涨幅回溯窗口（2026-10-23 用户改）：在目标时点（T+15）往前回溯 20 分钟（即 T−5 → T+15），
+// 板块区间涨幅差值 = avgChange(T+15) − avgChange(T−5)
+const EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN = 20;
+// 科技情绪冰点阈值（2026-10-23 用户新增）：必须与 hasIce: true 的写入阈值保持一致
+// （线上前端分时轮询在科技情绪 <= -39 时调用 /mark_tech_index_ice，后端 emotion.markTechIndexIce 落盘）。
+// 板块内选股/发酵延时的前置限制「连续两日冰点」中，今日无法用 hasIce 判定（写盘时点不确定），
+// 改为回溯当日每 5 分钟分时科技情绪是否 <= 该阈值（见 engine/emoQuick.isTechIceGateOpen）。
+const TECH_ICE_THRESHOLD = -39;
+
 // 检查4「开盘后自选科技股低于开盘价」按比例收紧（2026-10-19 用户定，取代原「创业板指斜率负时固定收紧为 15」）：
 // 适用范围（25 个）= 快进快出（emoQuickOut）7 个 + 纯「N 日涨幅最大」7 个 + 两次买入 7 个 + 两次买入不同板块 4 个。
 // 这些策略的阈值 = ceil(参与计数的科技股数 × 25%)（向上取整，如 90 只科技股 → 23），其余策略保持固定 30 只。
@@ -85,6 +100,10 @@ module.exports = {
   EMO_QUICK_FUND_GATE_RETURN_PCT,
   EMO_QUICK_FUND_INFLOW_BASE,
   EMO_QUICK_FUND_INFLOW_RAISED,
+  EMO_QUICK_RAISED_BLOCK_TAGS,
+  EMO_QUICK_RAISED_BLOCK_DELAY_MIN,
+  EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN,
+  TECH_ICE_THRESHOLD,
   EMO_QUICK_RANGE_HIGH,
   EMO_QUICK_RANGE_LOW,
   EMO_SWITCH_EMA_THRESHOLD,

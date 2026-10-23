@@ -1176,7 +1176,7 @@ app.post('/hot_money_leader_list', async (req, res) => {
   }
 });
 
-// 筛选买点个股（filterGate=true 时加全局门槛过滤：买入时段 + 跟踪指数 3 日线斜率门禁 + 抗分歧 ≥ 9 + 个股 MA3 斜率 ≤ 4）
+// 筛选买点个股（filterGate=true 时加全局门槛过滤：买入时段 + 跟踪指数 3 日线斜率门禁 + 抗分歧 ≥ 9）
 app.post('/buy_point_stocks', async (req, res) => {
   try {
     const targetDate = req.body?.targetDate;
@@ -1239,6 +1239,15 @@ app.post('/debug/mock_buy_point', async (req, res) => {
   } catch (error) {
     console.error('MOCK 买点失败:', error);
     res.json({ success: false, error: error.message || 'MOCK 买点失败' });
+  }
+});
+
+app.post('/debug/mock_ice_delay', async (req, res) => {
+  try {
+    res.json(await debugMock.mockIceDelay());
+  } catch (error) {
+    console.error('MOCK 冰点转折失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 冰点转折失败' });
   }
 });
 

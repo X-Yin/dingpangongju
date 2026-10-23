@@ -428,5 +428,14 @@
     "tagColor": "green",
     "createdAt": "2026-10-22T07:43:56.437Z",
     "updatedAt": "2026-10-22T07:43:56.437Z"
+  },
+  {
+    "date": 20261023,
+    "title": "2026-10-23 复盘",
+    "content": "\n",
+    "tag": "情绪主升",
+    "tagColor": "red",
+    "createdAt": "2026-10-23T09:29:11.476Z",
+    "updatedAt": "2026-10-23T09:29:11.476Z"
   }
 ]

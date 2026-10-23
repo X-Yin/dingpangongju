@@ -1,0 +1,338 @@
+[
+  {
+    "time": "093500",
+    "displayTime": "09:35:00",
+    "mainMoney": -68.16,
+    "amountChangeDiff": 235.3,
+    "rawTime": "093459"
+  },
+  {
+    "time": "094000",
+    "displayTime": "09:40:00",
+    "mainMoney": -120.71,
+    "amountChangeDiff": 409.06,
+    "rawTime": "093959"
+  },
+  {
+    "time": "094500",
+    "displayTime": "09:45:00",
+    "mainMoney": -148.28,
+    "amountChangeDiff": 510.94,
+    "rawTime": "094459"
+  },
+  {
+    "time": "095000",
+    "displayTime": "09:50:00",
+    "mainMoney": -161.88,
+    "amountChangeDiff": 520.6,
+    "rawTime": "094959"
+  },
+  {
+    "time": "095500",
+    "displayTime": "09:55:00",
+    "mainMoney": -177.44,
+    "amountChangeDiff": 674.74,
+    "rawTime": "095459"
+  },
+  {
+    "time": "100000",
+    "displayTime": "10:00:00",
+    "mainMoney": -221.13,
+    "amountChangeDiff": 776.79,
+    "rawTime": "095959"
+  },
+  {
+    "time": "100500",
+    "displayTime": "10:05:00",
+    "mainMoney": -251.06,
+    "amountChangeDiff": 738.47,
+    "rawTime": "100459"
+  },
+  {
+    "time": "101000",
+    "displayTime": "10:10:00",
+    "mainMoney": -282.63,
+    "amountChangeDiff": 691.32,
+    "rawTime": "100959"
+  },
+  {
+    "time": "101500",
+    "displayTime": "10:15:00",
+    "mainMoney": -309.61,
+    "amountChangeDiff": 700.48,
+    "rawTime": "101459"
+  },
+  {
+    "time": "102000",
+    "displayTime": "10:20:00",
+    "mainMoney": -348.44,
+    "amountChangeDiff": 721.14,
+    "rawTime": "101959"
+  },
+  {
+    "time": "102500",
+    "displayTime": "10:25:00",
+    "mainMoney": -356.92,
+    "amountChangeDiff": 804.86,
+    "rawTime": "102459"
+  },
+  {
+    "time": "103000",
+    "displayTime": "10:30:00",
+    "mainMoney": -364.62,
+    "amountChangeDiff": 941.25,
+    "rawTime": "102959"
+  },
+  {
+    "time": "103500",
+    "displayTime": "10:35:00",
+    "mainMoney": -384.19,
+    "amountChangeDiff": 1139.48,
+    "rawTime": "103459"
+  },
+  {
+    "time": "104000",
+    "displayTime": "10:40:00",
+    "mainMoney": -375.97,
+    "amountChangeDiff": 1229.61,
+    "rawTime": "103959"
+  },
+  {
+    "time": "104500",
+    "displayTime": "10:45:00",
+    "mainMoney": -368.04,
+    "amountChangeDiff": 1319.35,
+    "rawTime": "104459"
+  },
+  {
+    "time": "105000",
+    "displayTime": "10:50:00",
+    "mainMoney": -370.01,
+    "amountChangeDiff": 1342.57,
+    "rawTime": "104959"
+  },
+  {
+    "time": "105500",
+    "displayTime": "10:55:00",
+    "mainMoney": -356.14,
+    "amountChangeDiff": 1471,
+    "rawTime": "105459"
+  },
+  {
+    "time": "110000",
+    "displayTime": "11:00:00",
+    "mainMoney": -348.66,
+    "amountChangeDiff": 1498.11,
+    "rawTime": "105959"
+  },
+  {
+    "time": "110500",
+    "displayTime": "11:05:00",
+    "mainMoney": -343.62,
+    "amountChangeDiff": 1515.63,
+    "rawTime": "110459"
+  },
+  {
+    "time": "111000",
+    "displayTime": "11:10:00",
+    "mainMoney": -349.12,
+    "amountChangeDiff": 1488.54,
+    "rawTime": "110959"
+  },
+  {
+    "time": "111500",
+    "displayTime": "11:15:00",
+    "mainMoney": -355.41,
+    "amountChangeDiff": 1494.64,
+    "rawTime": "111458"
+  },
+  {
+    "time": "112000",
+    "displayTime": "11:20:00",
+    "mainMoney": -357.85,
+    "amountChangeDiff": 1472.93,
+    "rawTime": "111959"
+  },
+  {
+    "time": "112500",
+    "displayTime": "11:25:00",
+    "mainMoney": -360.89,
+    "amountChangeDiff": 1514.01,
+    "rawTime": "112459"
+  },
+  {
+    "time": "113000",
+    "displayTime": "11:30:00",
+    "mainMoney": -356.49,
+    "amountChangeDiff": 1487.16,
+    "rawTime": "112959"
+  },
+  {
+    "time": "130500",
+    "displayTime": "13:05:00",
+    "mainMoney": -328.9,
+    "amountChangeDiff": 1680.26,
+    "rawTime": "130459"
+  },
+  {
+    "time": "131000",
+    "displayTime": "13:10:00",
+    "mainMoney": -293.25,
+    "amountChangeDiff": 2016.87,
+    "rawTime": "130959"
+  },
+  {
+    "time": "131500",
+    "displayTime": "13:15:00",
+    "mainMoney": -264.77,
+    "amountChangeDiff": 2281.3,
+    "rawTime": "131459"
+  },
+  {
+    "time": "132000",
+    "displayTime": "13:20:00",
+    "mainMoney": -234.78,
+    "amountChangeDiff": 2426.54,
+    "rawTime": "131958"
+  },
+  {
+    "time": "132500",
+    "displayTime": "13:25:00",
+    "mainMoney": -202.53,
+    "amountChangeDiff": 2700.09,
+    "rawTime": "132457"
+  },
+  {
+    "time": "133000",
+    "displayTime": "13:30:00",
+    "mainMoney": -187.18,
+    "amountChangeDiff": 2852.57,
+    "rawTime": "132958"
+  },
+  {
+    "time": "133500",
+    "displayTime": "13:35:00",
+    "mainMoney": -177.28,
+    "amountChangeDiff": 2989.14,
+    "rawTime": "133458"
+  },
+  {
+    "time": "134000",
+    "displayTime": "13:40:00",
+    "mainMoney": -170.02,
+    "amountChangeDiff": 3078.81,
+    "rawTime": "133958"
+  },
+  {
+    "time": "134500",
+    "displayTime": "13:45:00",
+    "mainMoney": -140.54,
+    "amountChangeDiff": 3235.52,
+    "rawTime": "134458"
+  },
+  {
+    "time": "135000",
+    "displayTime": "13:50:00",
+    "mainMoney": -126.87,
+    "amountChangeDiff": 3300.56,
+    "rawTime": "134959"
+  },
+  {
+    "time": "135500",
+    "displayTime": "13:55:00",
+    "mainMoney": -124.13,
+    "amountChangeDiff": 3313.58,
+    "rawTime": "135457"
+  },
+  {
+    "time": "140000",
+    "displayTime": "14:00:00",
+    "mainMoney": -122.27,
+    "amountChangeDiff": 3243.2,
+    "rawTime": "135958"
+  },
+  {
+    "time": "140500",
+    "displayTime": "14:05:00",
+    "mainMoney": -118.9,
+    "amountChangeDiff": 3139.63,
+    "rawTime": "140457"
+  },
+  {
+    "time": "141000",
+    "displayTime": "14:10:00",
+    "mainMoney": -89.92,
+    "amountChangeDiff": 3219.26,
+    "rawTime": "140958"
+  },
+  {
+    "time": "141500",
+    "displayTime": "14:15:00",
+    "mainMoney": -61.21,
+    "amountChangeDiff": 3370.42,
+    "rawTime": "141458"
+  },
+  {
+    "time": "142000",
+    "displayTime": "14:20:00",
+    "mainMoney": -28.57,
+    "amountChangeDiff": 3650.08,
+    "rawTime": "141952"
+  },
+  {
+    "time": "142500",
+    "displayTime": "14:25:00",
+    "mainMoney": -11.74,
+    "amountChangeDiff": 3850.69,
+    "rawTime": "142459"
+  },
+  {
+    "time": "143000",
+    "displayTime": "14:30:00",
+    "mainMoney": -10.33,
+    "amountChangeDiff": 3960.13,
+    "rawTime": "142951"
+  },
+  {
+    "time": "143500",
+    "displayTime": "14:35:00",
+    "mainMoney": 5.8,
+    "amountChangeDiff": 4075.69,
+    "rawTime": "143459"
+  },
+  {
+    "time": "144000",
+    "displayTime": "14:40:00",
+    "mainMoney": 21.09,
+    "amountChangeDiff": 4134.41,
+    "rawTime": "143959"
+  },
+  {
+    "time": "144500",
+    "displayTime": "14:45:00",
+    "mainMoney": 40.73,
+    "amountChangeDiff": 4293.4,
+    "rawTime": "144459"
+  },
+  {
+    "time": "145000",
+    "displayTime": "14:50:00",
+    "mainMoney": 54,
+    "amountChangeDiff": 4359.72,
+    "rawTime": "144959"
+  },
+  {
+    "time": "145500",
+    "displayTime": "14:55:00",
+    "mainMoney": 56.78,
+    "amountChangeDiff": 4305.83,
+    "rawTime": "145458"
+  },
+  {
+    "time": "150000",
+    "displayTime": "15:00:00",
+    "mainMoney": 71.04,
+    "amountChangeDiff": 4309.47,
+    "rawTime": "150058"
+  }
+]

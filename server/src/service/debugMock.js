@@ -10,6 +10,7 @@ const { getSingleStockTlineData } = require('./stock');
 const strategyModeState = require('./strategyModeState');
 const wsServer = require('../wsServer');
 const feishuNotify = require('./feishuNotify');
+const iceDelayBuy = require('./iceDelayBuy');
 
 const MOCK_TAG = '【MOCK 测试】';
 
@@ -433,4 +434,23 @@ const mockSellPoint = async () => {
   };
 };
 
-module.exports = { mockBuyPoint, mockSellPoint };
+// ==================== MOCK 冰点转折延时观察 ====================
+// 仅广播前端等待卡片（ice_delay_wait），不发飞书、不写 pending，避免影响真实延时状态
+const mockIceDelay = async () => {
+  const mode = strategyModeState.getMode();
+  const now = dayjs();
+  const executeAt = iceDelayBuy.computeExecuteAt(now);
+  const data = {
+    phase: 'wait',
+    mock: true,
+    source: 'tech',
+    delayMin: iceDelayBuy.DELAY_MIN,
+    triggerTime: now.format('HH:mm'),
+    executeTime: executeAt.format('HH:mm'),
+    message: '（MOCK）冰点转折：买点已触发，需延时 15 分钟观察资金聚焦主线板块后再执行买入',
+  };
+  wsServer.broadcast({ type: 'ice_delay_wait', mode, bucket: null, ts: Date.now(), data, open: true });
+  return { success: true, mode, target: null };
+};
+
+module.exports = { mockBuyPoint, mockSellPoint, mockIceDelay };

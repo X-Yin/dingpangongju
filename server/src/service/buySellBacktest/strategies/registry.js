@@ -84,6 +84,15 @@ for (const s of Object.values(STRATEGIES)) {
   if (isGainCapDescStrategy(s)) s.desc = `${s.desc}${GAIN_CAP_DESC}`;
 }
 
+// 快进快出类「N 日涨幅接近时按当日抗分歧优先」（2026-10-23 用户新增）：
+// 按 N 日窗口涨幅排名后，若第一名与第二名涨幅相差不超过 1 个百分点，改按买点触发时点的当日抗分歧分数排序，
+// 买入抗分歧更高者（两者分数缺失或相等时保持原涨幅排名）；买入条件明细追加 gain_tie_break 项
+// 适用范围 = 快进快出类（emoQuickOut 且非两次买入，共 11 个策略）；纯 N 日涨幅最大 / 两次买入系列不适用
+const GAIN_TIE_DESC = '；N日涨幅接近时按当日抗分歧优先（2026-10-23 新增）：按 N 日窗口涨幅排名后，若第一名与第二名涨幅相差不超过 1 个百分点，改按买点触发时点的当日抗分歧分数排序、买入抗分歧更高者（两者分数缺失或相等时保持原涨幅排名），买入条件明细追加 gain_tie_break 说明';
+for (const s of Object.values(STRATEGIES)) {
+  if (s.emoQuickOut === true && s.twoBuy !== true) s.desc = `${s.desc}${GAIN_TIE_DESC}`;
+}
+
 // 盘中大跌强卖（2026-10-16 用户新增）：适用范围 = 除「情绪游资类（iceMode）」「极致胜率（extremeWinMode）」
 // 「反向抱团龙头（reverseLeaderMode）」外的全部策略（两次买入系列已内置同口径卖点，
 // 仅补字段不重复追加 desc）。规则：持仓当日跌幅（较昨收涨跌幅）≤ EMO_QUICK_CRASH_PCT（-7%）时无条件卖出——
