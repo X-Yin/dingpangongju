@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-10-23",
+    "operations": [
+      {
+        "id": "1792722726717_eyo4",
+        "action": "sell",
+        "stockName": "德明利",
+        "stockCode": "sz001309",
+        "position": "",
+        "time": "10:32"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-23T02:32:10.735Z",
+    "updatedAt": "2026-10-23T02:32:10.735Z"
+  },
+  {
     "date": "2026-10-21",
     "operations": [
       {

@@ -666,6 +666,33 @@
         "latestPrice": 245.4,
         "volumeDiffPercent": 103.21,
         "volumeState": "放量"
+      },
+      {
+        "time": "102948",
+        "minute": "1029",
+        "mainFund": 2.24,
+        "change": 1.09,
+        "latestPrice": 245.83,
+        "volumeDiffPercent": 103.09,
+        "volumeState": "放量"
+      },
+      {
+        "time": "103048",
+        "minute": "1030",
+        "mainFund": 2.23,
+        "change": 0.92,
+        "latestPrice": 245.41,
+        "volumeDiffPercent": 102.91,
+        "volumeState": "放量"
+      },
+      {
+        "time": "103148",
+        "minute": "1031",
+        "mainFund": 2.23,
+        "change": 1.57,
+        "latestPrice": 246.99,
+        "volumeDiffPercent": 102.68,
+        "volumeState": "放量"
       }
     ]
   }

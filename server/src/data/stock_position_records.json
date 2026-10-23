@@ -1,5 +1,16 @@
 [
   {
+    "id": "1792722726712_5c7eg1",
+    "type": "delete",
+    "code": "sz001309",
+    "name": "德明利",
+    "date": "2026-10-23",
+    "time": "10:32:06",
+    "detail": "删除持仓：德明利（sz001309）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-23T02:32:06.712Z"
+  },
+  {
     "id": "1792716872993_sju3gl",
     "type": "buy",
     "code": "sz001309",

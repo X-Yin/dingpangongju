@@ -612,7 +612,7 @@ const StockKLineModal = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                       {extremeWin && (
                         <>
-                          <span style={{ fontSize: '13px', color: showScores ? '#f5222d' : '#666' }}>强度分/差劲分</span>
+                          <span style={{ fontSize: '13px', color: showScores ? '#722ed1' : '#666' }}>强度分/差劲分</span>
                           <Switch
                             checked={showScores}
                             loading={scoresLoading}

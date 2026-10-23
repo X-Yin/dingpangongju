@@ -29,6 +29,11 @@ export default function KLine({ data = [], height = 500, showResilience = false,
   const changeMapRef = useRef({});
   // 已创建的价格虚线引用集合（换股/清除时逐条 removePriceLine，避免残留与泄漏）
   const priceLineRefs = useRef([]);
+  // 右侧坐标轴上的文字标签（买入/卖出价格线、强度分/差劲分）：
+  // 轻量图表默认把价格线 title 画在图表内右侧（会遮挡最新K线），因此改用 DOM 覆盖层画在坐标轴上
+  const priceLinesRef = useRef(priceLines);
+  const scoresDataRef = useRef(scoresData);
+  const [axisLabels, setAxisLabels] = useState({ width: 0, items: [] });
   // tooltip 回调只在图表初始化时注册一次，需用 ref 读取实时 showResilience/showInstitution/showScores，避免闭包捕获初始值
   const showResilienceRef = useRef(showResilience);
   const showInstitutionRef = useRef(showInstitution);
@@ -52,6 +57,73 @@ export default function KLine({ data = [], height = 500, showResilience = false,
   useEffect(() => {
     showScoresRef.current = showScores;
   }, [showScores]);
+
+  // 跟随 priceLines 实时同步，供 resize / 数据刷新时重算坐标轴标签
+  useEffect(() => {
+    priceLinesRef.current = priceLines;
+  }, [priceLines]);
+
+  // 跟随 scoresData 实时同步，供 resize 时重算强度分/差劲分的坐标轴文案
+  useEffect(() => {
+    scoresDataRef.current = scoresData;
+  }, [scoresData]);
+
+  // 计算右侧坐标轴上的文案标签：买入/卖出价格 + 强度分/差劲分最新值。
+  // 标签互相重叠时按 16px 间距依次下推，避免文字叠在一起
+  const refreshAxisLabels = () => {
+    const chart = chartRef.current;
+    const candlestick = candlestickRef.current;
+    if (!chart || !candlestick) {
+      setAxisLabels({ width: 0, items: [] });
+      return;
+    }
+    const axisWidth = chart.priceScale('right').width();
+    const labels = [];
+
+    // 买入/卖出价格线
+    (Array.isArray(priceLinesRef.current) ? priceLinesRef.current : []).forEach((pl) => {
+      const price = Number(pl && pl.price);
+      if (!Number.isFinite(price)) return;
+      const y = candlestick.priceToCoordinate(price);
+      if (y === null || y === undefined) return;
+      labels.push({
+        key: `price-${(pl && pl.title) || 'line'}-${price}`,
+        title: (pl && pl.title) || '',
+        value: price,
+        color: (pl && pl.color) || '#f5222d',
+        y,
+      });
+    });
+
+    // 强度分/差劲分：取最新一个交易日的数值，按其所属 series 的价格坐标定位
+    if (showScoresRef.current) {
+      const sorted = (Array.isArray(scoresDataRef.current) ? scoresDataRef.current : [])
+        .filter((i) => /^\d{4}-\d{2}-\d{2}$/.test(String(i && i.time)))
+        .sort((a, b) => String(a.time).localeCompare(String(b.time)));
+      const latest = sorted[sorted.length - 1];
+      if (latest) {
+        [
+          { title: '强度分', value: latest.strengthScore, color: '#722ed1', series: scoreStrengthSeriesRef.current },
+          { title: '差劲分', value: latest.diffScore, color: '#1677ff', series: scoreDiffSeriesRef.current },
+        ].forEach(({ title, value, color, series }) => {
+          if (!series || typeof value !== 'number' || !Number.isFinite(value)) return;
+          const y = series.priceToCoordinate(value);
+          if (y === null || y === undefined) return;
+          labels.push({ key: title, title, value, color, y });
+        });
+      }
+    }
+
+    // 自上而下排列，重叠时依次下移（保持在同一列坐标轴内）
+    labels.sort((a, b) => a.y - b.y);
+    let nextTop = 0;
+    labels.forEach((l) => {
+      l.top = Math.min(height - 16, Math.max(nextTop, Math.round(l.y) - 8));
+      nextTop = l.top + 16;
+    });
+
+    setAxisLabels({ width: axisWidth, items: labels });
+  };
 
   useEffect(() => {
     if (showResilience && onFetchResilience && !resilienceData && !resilienceLoading) {
@@ -134,6 +206,9 @@ export default function KLine({ data = [], height = 500, showResilience = false,
       wickDownColor: '#52c41a',
     });
 
+    // 右侧坐标轴最小宽度放宽，保证「买入/卖出」「强度分/差劲分」等文案标签能完整显示
+    chart.priceScale('right').applyOptions({ minimumWidth: 68 });
+
     const ma5Series = chart.addLineSeries({
       color: '#ff9800',
       lineWidth: 1,
@@ -196,11 +271,14 @@ export default function KLine({ data = [], height = 500, showResilience = false,
       borderColor: '#1677ff',
     });
 
-    // 强度分 / 差劲分（情绪游资-极致胜率口径，0~100）：两条线共用 'score' 价格刻度，叠在上方价格区
+    // 强度分 / 差劲分（情绪游资-极致胜率口径，0~100）：两条线共用 'score' 价格刻度，
+    // 限制在图表顶部约 29% 的带状区域内（见下方 scaleMargins），避免与 K 线主体重叠遮挡
     const scoreStrengthSeries = chart.addLineSeries({
-      color: '#f5222d',
+      color: '#722ed1',
       lineWidth: 2,
-      lastValueVisible: true,
+      lineStyle: LineStyle.Dashed,
+      // 最新值改由右侧坐标轴上的「强度分 xx.xx」文案标签展示，关闭库自带的末值标签避免重叠
+      lastValueVisible: false,
       priceLineVisible: false,
       priceFormat: {
         type: 'price',
@@ -210,9 +288,10 @@ export default function KLine({ data = [], height = 500, showResilience = false,
     });
 
     const scoreDiffSeries = chart.addLineSeries({
-      color: '#52c41a',
+      color: '#1677ff',
       lineWidth: 2,
-      lastValueVisible: true,
+      lineStyle: LineStyle.Dashed,
+      lastValueVisible: false,
       priceLineVisible: false,
       priceFormat: {
         type: 'price',
@@ -221,10 +300,12 @@ export default function KLine({ data = [], height = 500, showResilience = false,
       priceScaleId: 'score',
     });
 
+    // 强度分/差劲分占据顶部 2%~31% 的带状区域（约 145px），纵向像素更多，
+    // 两条线之间的差值比原先 12% 窄带时放大一倍以上，且不与下方 K 线主图重叠
     scoreStrengthSeries.priceScale().applyOptions({
       scaleMargins: {
-        top: 0.05,
-        bottom: 0.5,
+        top: 0.02,
+        bottom: 0.69,
       },
     });
 
@@ -304,8 +385,8 @@ export default function KLine({ data = [], height = 500, showResilience = false,
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>涨跌:</span><span style="font-weight: bold; color: ${changeColor}">${changeVal !== undefined ? (changeVal > 0 ? '+' : '') + changeVal.toFixed(2) + '%' : '-'}</span></div>
             ${showResilienceRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>抗分歧:</span><span style="font-weight: bold; color: ${resilienceColor}">${resilienceDisplay}</span></div>` : ''}
             ${showInstitutionRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>机构参与度:</span><span style="font-weight: bold; color: #1677ff">${institutionDisplay}</span></div>` : ''}
-            ${showScoresRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>强度分:</span><span style="font-weight: bold; color: #f5222d">${strengthDisplay}</span></div>` : ''}
-            ${showScoresRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>差劲分:</span><span style="font-weight: bold; color: #52c41a">${diffDisplay}</span></div>` : ''}
+            ${showScoresRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>强度分:</span><span style="font-weight: bold; color: #722ed1">${strengthDisplay}</span></div>` : ''}
+            ${showScoresRef.current ? `<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>差劲分:</span><span style="font-weight: bold; color: #1677ff">${diffDisplay}</span></div>` : ''}
           `;
 
           const coordinate = candlestick.priceToCoordinate(kData.close);
@@ -359,6 +440,8 @@ export default function KLine({ data = [], height = 500, showResilience = false,
     const handleResize = () => {
       if (container.current && chartRef.current) {
         chartRef.current.applyOptions({ width: container.current.clientWidth });
+        // 宽度变化后价格轴宽度可能变化，重新定位买入/卖出标签
+        setTimeout(refreshAxisLabels, 0);
       }
     };
     window.addEventListener('resize', handleResize);
@@ -388,6 +471,15 @@ export default function KLine({ data = [], height = 500, showResilience = false,
     const scoreStrengthSeries = scoreStrengthSeriesRef.current;
     const scoreDiffSeries = scoreDiffSeriesRef.current;
     const chart = chartRef.current;
+
+    // 仅在展示强度分/差劲分时把 K 线主图下压（顶部 34% 留给两条分数线，2%~31% 区间），
+    // 关闭时恢复默认留白（top 0.2），避免其他场景图表顶部出现大片空白
+    chart.priceScale('right').applyOptions({
+      scaleMargins: {
+        top: showScores ? 0.34 : 0.2,
+        bottom: 0.1,
+      },
+    });
 
     const klineData = [];
     const volumeData = [];
@@ -549,6 +641,9 @@ export default function KLine({ data = [], height = 500, showResilience = false,
     }
 
     chart.timeScale().fitContent();
+    // setData + fitContent 后价格轴刻度与两条分数线的坐标会重排，重算坐标轴标签位置
+    requestAnimationFrame(refreshAxisLabels);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, showResilience, resilienceData, showInstitution, institutionData, showScores, scoresData]);
 
   // 交易标注：买卖点 marker + 买入/卖出价格虚线（只在传入 tradeMarkers/priceLines 时生效；依赖 data 保证 setData 后重画）
@@ -572,15 +667,56 @@ export default function KLine({ data = [], height = 500, showResilience = false,
         color: (pl && pl.color) || '#f5222d',
         lineWidth: 1,
         lineStyle: LineStyle.Dashed, // 虚线横线
-        axisLabelVisible: true,
-        title: (pl && pl.title) || '',
+        // 关闭库自带的图表内标题与价格轴标签，改由下方 DOM 覆盖层把「买入/卖出 + 价格」画在右侧坐标轴上
+        axisLabelVisible: false,
+        title: '',
       }));
     });
+    // 虚线重建后按价格坐标重算坐标轴标签位置
+    requestAnimationFrame(refreshAxisLabels);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tradeMarkers, priceLines, data]);
 
   return (
     <div className="stock-kline-container" style={{ position: 'relative', width: '100%' }}>
       <div ref={container} style={{ height, width: '100%' }} />
+      {/* 右侧坐标轴文字标签：买入/卖出价格、强度分/差劲分，均不进入图表区域，避免遮挡最新一根K线 */}
+      {axisLabels.items.length > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: axisLabels.width,
+            height,
+            pointerEvents: 'none',
+            zIndex: 10,
+          }}
+        >
+          {axisLabels.items.map((l) => (
+            <div
+              key={l.key}
+              style={{
+                position: 'absolute',
+                top: l.top,
+                left: 0,
+                right: 0,
+                height: 16,
+                lineHeight: '16px',
+                textAlign: 'center',
+                fontSize: 10,
+                color: '#fff',
+                background: l.color,
+                borderRadius: 2,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+              }}
+            >
+              {l.title ? `${l.title} ${l.value.toFixed(2)}` : l.value.toFixed(2)}
+            </div>
+          ))}
+        </div>
+      )}
       {((showResilience && resilienceLoading) || (showInstitution && institutionLoading)) && (
         <div 
           style={{

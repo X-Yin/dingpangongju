@@ -1,18 +1,1 @@
-[
-  {
-    "id": "sz001309_1792716872989_vtez",
-    "code": "sz001309",
-    "name": "德明利",
-    "buyDate": "2026-10-21",
-    "buyTime": "09:55",
-    "weight": 50,
-    "costPrice": 225.72,
-    "mirror": {
-      "strategy": "highest_3d_gain_emoquick",
-      "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-      "syncedDate": "2026-10-23",
-      "buyDateRaw": "20261021",
-      "source": "backtest_position_mirror"
-    }
-  }
-]
+[]
