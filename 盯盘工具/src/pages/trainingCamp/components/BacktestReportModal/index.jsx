@@ -152,7 +152,9 @@ export const StrategyCard = ({ strategy, rank, onStockClick }) => {
       ? '情绪游资-n板打板为半仓单持仓（权重 0.5、逐笔复利）'
       : (strategy.volumeShareMode === true || /^hot_money_volume_share_\dd$/.test(strategy.id || ''))
         ? '情绪游资-成交量占比为半仓单持仓（权重 0.5、逐笔复利）'
-        : isExtremeWin && (leg === 'A' || leg === 'B')
+        : /^hot_money_ice_(rev_)?\d+d_gain$/.test(strategy.id || '')
+          ? `${/^hot_money_ice_rev_/.test(strategy.id) ? '逆周期' : '顺周期'}情绪游资为半仓买入（权重 0.5、逐笔复利）`
+          : isExtremeWin && (leg === 'A' || leg === 'B')
           ? `极致胜率·${cycle === 'counter' ? '逆周期' : '顺周期'}腿为半仓买入（账户拆两份、每份各 5 成、各自独立买卖）`
           : '两次买入策略每份仓位均为半仓');
   // 期末持仓：优先取 currentHoldings（两次买入策略可能同时持有两份），兼容旧的单份 currentHolding

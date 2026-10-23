@@ -23,7 +23,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     return { success: false, message: `未知重点板块策略: ${strategyId}` };
   }
   const days = Number(strategy.keyBlockDays);
-  // 情绪游资系列（iceMode）：只用 tag 板块∪红利连板候选池、全仓、-2% 止损、14:55 长下影强卖；
+  // 情绪游资系列（iceMode）：只用 tag 板块∪红利连板候选池、半仓（权重 0.5）、-2% 止损、14:55 长下影强卖；
   //   顺周期情绪游资（iceReverse: false）＝斜率由负转正才买、由正转负即卖；
   //   逆周期情绪游资（iceReverse: true，2026-10-10 新增）＝完全镜像——斜率由正转负的次日 9:40 依旧为负才买、由负转正当桶即卖
   const iceMode = strategy.iceMode === true;
@@ -329,7 +329,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
           : `；红利板块连板扩展 = 往前20交易日无符合条件（三板及以上）的红利板块个股（或均已在 tag 板块）`;
         return {
           id: 'key_block_tag_blocks',
-          title: `${iceName}候选池（防御+中性 Tag板块 ∪ 红利板块三板及以上·全仓）`,
+          title: `${iceName}候选池（防御+中性 Tag板块 ∪ 红利板块三板及以上·半仓）`,
           passed: true,
           value: `${tagBlocks.length} 个Tag板块 ${tagCount} 只 + 红利板块 ${hongliAdded.length} 只`,
           reason: `参与选股的防御+中性 tag 板块 ${tagBlocks.length} 个：${blocksText}${hongliInfo}；合并去重后共 ${allMembers.length} 只候选`,
@@ -656,8 +656,8 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
                 ? parseFloat((((sellPtFinal.lastPx - defensePreclose) / defensePreclose) * 100).toFixed(2))
                 : null;
               // 防御半仓折算：个股实际收益 × 0.5 才是对全仓账户的收益贡献（回撤/整体收益均按折算口径）
-              // 逆周期情绪游资（iceMode）为全仓买入，不做折算
-              const weight = iceMode ? 1 : KEY_BLOCK_POSITION_WEIGHT.defense;
+              // 情绪游资（iceMode，顺/逆周期）同样按半仓买入，做 0.5 折算（2026-10-23 用户要求）
+              const weight = KEY_BLOCK_POSITION_WEIGHT.defense;
               const returnRate = finalRawReturnRate != null ? parseFloat((finalRawReturnRate * weight).toFixed(2)) : null;
               const slopeTurnText = iceMode
                 ? (iceReverse
@@ -693,7 +693,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
                 sellPrice: parseFloat(Number(sellPtFinal.lastPx).toFixed(2)),
                 sellChange,
                 sellReason: iceMode
-                  ? `${sellTrigger}，${iceName}持仓卖出（全仓买入）`
+                  ? `${sellTrigger}，${iceName}持仓卖出（半仓买入，收益率按半仓折算）`
                   : `${sellTrigger}，防御半仓持仓卖出（防御为半仓买入，收益率按半仓折算）`,
                 returnRate,
                 rawReturnRate: finalRawReturnRate,
@@ -840,7 +840,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
   let holding = null;
   if (position) {
     holding = { ...position };
-    holding.weight = (iceMode && position.mode === 'defense') ? 1 : (KEY_BLOCK_POSITION_WEIGHT[position.mode] ?? 1);
+    holding.weight = KEY_BLOCK_POSITION_WEIGHT[position.mode] ?? 1;
     let rawBuyReturn = null; // 期末持仓的个股实际浮盈（未折算）
     for (let i = rangeDates.length - 1; i >= 0; i--) {
       const info = dailyInfos.get(rangeDates[i])?.get(position.code);

@@ -116,6 +116,19 @@ const CACHE_VERSION_BY_STRATEGY = {
   highest_3d_gain_two_buy_diff_block: 5,
   highest_4d_gain_two_buy_diff_block: 5,
   highest_5d_gain_two_buy_diff_block: 5,
+  // ===== 情绪游资类（顺/逆周期） =====
+  // v2（2026-10-23）：仓位由全仓改为半仓——returnRate = 个股实际收益 × 0.5（整体收益/回撤均按折算口径），
+  //   顺周期（hot_money_ice_*）与逆周期（hot_money_ice_rev_*）共 10 个策略全部适用
+  hot_money_ice_2d_gain: 2,
+  hot_money_ice_3d_gain: 2,
+  hot_money_ice_4d_gain: 2,
+  hot_money_ice_5d_gain: 2,
+  hot_money_ice_10d_gain: 2,
+  hot_money_ice_rev_1d_gain: 2,
+  hot_money_ice_rev_2d_gain: 2,
+  hot_money_ice_rev_3d_gain: 2,
+  hot_money_ice_rev_4d_gain: 2,
+  hot_money_ice_rev_5d_gain: 2,
 };
 const getBacktestCacheVersion = (strategy) => CACHE_VERSION_BY_STRATEGY[strategy] || 1;
 
