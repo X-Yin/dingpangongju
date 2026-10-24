@@ -859,7 +859,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   const rowCount = isExtreme ? leaderList.length : mergedList.length;
   const extremeGateNote = !leaderData
     ? '正在检测上证指数 3 日线斜率买点门槛…'
-    : `上证指数 3 日线斜率 ${formatSlope(indexSlope)}（需 > 0）；龙头池共 ${leaderData.poolCount ?? 0} 只（过去 10 交易日连板准入：流通市值 > 100 亿元者出现过一次涨停 + 含该涨停日 5 日涨幅 > 40%，其余四连板及以上，剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）`;
+    : `上证指数 3 日线斜率 ${formatSlope(indexSlope)}（需 > 0）；龙头池共 ${leaderData.poolCount ?? 0} 只（过去 10 交易日连板准入：流通市值 > 100 亿元者出现过两连板 + 含该连板日 5 日涨幅 > 40%，其余四连板及以上，剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）`;
   const reverseGateNote = !leaderData
     ? '正在检测逆周期（反向抱团）择时状态…'
     : !reverse

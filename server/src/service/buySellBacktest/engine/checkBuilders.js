@@ -171,10 +171,12 @@ const buildRaisedBlockCheck = (info) => {
   const chg = info?.avgChange;
   return {
     id: 'raised_block_pick',
-    title: `连续两日冰点·改板块内选股（${EMO_QUICK_RAISED_BLOCK_TAGS.join('+')}）`,
+    title: `${info?.pulse ? '脉冲最强' : '连续两日冰点'}·改板块内选股（${EMO_QUICK_RAISED_BLOCK_TAGS.join('+')}）`,
     passed: true,
     value: `${info?.blockName || '--'}（区间差值第 ${info?.rank != null ? info.rank : '--'} 名，${fmt(info?.startChange)}%→${chg > 0 ? '+' : ''}${fmt(chg)}%，差值 ${info?.delta != null && info.delta > 0 ? '+' : ''}${fmt(info?.delta)}）`,
-    reason: `上一交易日与当日科技情绪均达到冰点（上一交易日 hasIce: true；当日任一分时科技情绪 ≤ ${TECH_ICE_THRESHOLD}）：本次买入不再从全量自选股中选 N 日涨幅最大者，改为在「${EMO_QUICK_RAISED_BLOCK_TAGS.join('/')}」tag 板块中，按「目标时点往前回溯 ${EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN} 分钟的区间涨幅差值」从高到低逐个板块尝试（前序板块交集内均无可买标的时顺延），本次命中板块「${info?.blockName || '--'}」（${fmt(info?.startChange)}% → ${chg > 0 ? '+' : ''}${fmt(chg)}%，差值 ${info?.delta != null && info.delta > 0 ? '+' : ''}${fmt(info?.delta)}，第 ${info?.rank != null ? info.rank : '--'} 名），并仅在该板块与自选科技股交集（${info?.overlapCount != null ? info.overlapCount : '--'} 只）中选 N 日涨幅最大者`,
+    reason: `${info?.pulse
+      ? `脉冲最强策略每次买点触发都无条件走板块内选股：本次买入不从全量自选股中选 N 日涨幅最大者`
+      : `上一交易日与当日科技情绪均达到冰点（上一交易日 hasIce: true；当日任一分时科技情绪 ≤ ${TECH_ICE_THRESHOLD}）：本次买入不再从全量自选股中选 N 日涨幅最大者`}，改为在「${EMO_QUICK_RAISED_BLOCK_TAGS.join('/')}」tag 板块中，按「目标时点往前回溯 ${EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN} 分钟的区间涨幅差值」从高到低逐个板块尝试（前序板块交集内均无可买标的时顺延），本次命中板块「${info?.blockName || '--'}」（${fmt(info?.startChange)}% → ${chg > 0 ? '+' : ''}${fmt(chg)}%，差值 ${info?.delta != null && info.delta > 0 ? '+' : ''}${fmt(info?.delta)}，第 ${info?.rank != null ? info.rank : '--'} 名），并仅在该板块与自选科技股交集（${info?.overlapCount != null ? info.overlapCount : '--'} 只）中选 N 日涨幅最大者`,
   };
 };
 
@@ -185,7 +187,7 @@ const buildRaisedBlockFallbackCheck = (info) => ({
   title: '板块内均选不出·回退全量自选股',
   passed: true,
   value: `已尝试 ${info?.triedCount != null ? info.triedCount : '--'} 个板块`,
-  reason: `连续两日冰点下已按区间涨幅差值从高到低尝试 ${info?.triedCount != null ? info.triedCount : '--'} 个「${EMO_QUICK_RAISED_BLOCK_TAGS.join('/')}」tag 板块，但所有板块交集内的股票均被其它选股条件（抗分歧不足/涨停/一字板/逆周期/过热等）剔除、选不出可买标的，回退为原逻辑：从全量自选股中选 N 日涨幅最大者`,
+  reason: `${info?.pulse ? '脉冲最强策略' : '连续两日冰点下'}已按区间涨幅差值从高到低尝试 ${info?.triedCount != null ? info.triedCount : '--'} 个「${EMO_QUICK_RAISED_BLOCK_TAGS.join('/')}」tag 板块，但所有板块交集内的股票均被其它选股条件（抗分歧不足/涨停/一字板/逆周期/过热等）剔除、选不出可买标的，回退为原逻辑：从全量自选股中选 N 日涨幅最大者`,
 });
 
 // 快进快出类「板块发酵延时」明细（2026-10-23 用户新增）：
@@ -195,7 +197,9 @@ const buildRaisedBlockDelayCheck = (info) => ({
   title: `板块发酵延时 ${EMO_QUICK_RAISED_BLOCK_DELAY_MIN} 分钟`,
   passed: true,
   value: `${info?.triggerTime || '--'} → ${info?.execTime || '--'}`,
-  reason: `连续两日冰点（上一交易日 hasIce: true 且当日分时科技情绪触及 ${TECH_ICE_THRESHOLD}）下买点于 ${info?.triggerTime || '--'} 触发，不立刻买入：延时 ${EMO_QUICK_RAISED_BLOCK_DELAY_MIN} 分钟至 ${info?.execTime || '--'} 桶，并以该时点为终点往前回溯 ${EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN} 分钟，重新计算「${EMO_QUICK_RAISED_BLOCK_TAGS.join('/')}」tag 板块的区间涨幅差值（给板块发酵时间），再按差值从高到低逐个尝试板块并选 N 日涨幅最大者买入`,
+  reason: `${info?.pulse
+    ? '脉冲最强策略每次买点触发都无条件走板块内选股'
+    : `连续两日冰点（上一交易日 hasIce: true 且当日分时科技情绪触及 ${TECH_ICE_THRESHOLD}）下`}买点于 ${info?.triggerTime || '--'} 触发，不立刻买入：延时 ${EMO_QUICK_RAISED_BLOCK_DELAY_MIN} 分钟至 ${info?.execTime || '--'} 桶，并以该时点为终点往前回溯 ${EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN} 分钟，重新计算「${EMO_QUICK_RAISED_BLOCK_TAGS.join('/')}」tag 板块的区间涨幅差值（给板块发酵时间），再按差值从高到低逐个尝试板块并选 N 日涨幅最大者买入`,
 });
 
 // 情绪快进快出标注明细项（highest_{N}d_gain_emoquick 系列）：标注本次买入是否为「快进快出」买入
@@ -373,15 +377,15 @@ const withResilienceGateInfo = (buyInfo, picked) => {
     buyReason = `${buyInfo.buyReason}（因${suffixParts.join('/')}顺延买入）`;
   }
   if (hasRaisedBlock) {
-    // 连续两日冰点改板块内选股：非顺延语义，单独追加标签（明细见 raised_block_pick）
-    buyReason = `${buyReason}｜连续两日冰点·改板块内选股`;
+    // 板块内选股：非顺延语义，单独追加标签（明细见 raised_block_pick）
+    buyReason = `${buyReason}｜${picked.raisedBlockInfo?.pulse ? '脉冲最强·改板块内选股' : '连续两日冰点·改板块内选股'}`;
   }
   if (hasRaisedFallback) {
-    // 冰点板块内均选不出 → 回退全量自选股（明细见 raised_block_fallback）
+    // 板块内均选不出 → 回退全量自选股（明细见 raised_block_fallback）
     buyReason = `${buyReason}｜板块内均选不出，回退全量自选股`;
   }
   if (hasRaisedDelay) {
-    // 冰点板块发酵延时：单独追加标签（明细见 raised_block_delay）
+    // 板块发酵延时：单独追加标签（明细见 raised_block_delay）
     buyReason = `${buyReason}｜买点触发后延时 ${EMO_QUICK_RAISED_BLOCK_DELAY_MIN} 分钟按最新板块涨幅选股（${picked.raisedBlockDelayInfo.triggerTime} → ${picked.raisedBlockDelayInfo.execTime}）`;
   }
   return { buyReason, buyChecks };

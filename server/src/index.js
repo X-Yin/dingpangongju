@@ -81,7 +81,7 @@ const { addMonitorStock, deleteMonitorStock, toggleStockImportant, batchSetImpor
 const { diagnoseResilience, diagnoseResilienceMultiDay, calculateRealtimeResilienceBatch, diagnoseSingleStockResilience, diagnoseIntradayResilience, checkPositionSellAlerts } = require('./service/stockDiagnose');
 const { diagnosePremium } = require('./service/premiumDiagnosis');
 const { backtestBuySell, diagnoseRealtimeBuyPoints, getBuyPointChecks, getBuyPointStocks, getTopGainersByMarket, getSingleStockBuyPointDiagnosis, getBuySellSelectableStocks, checkSingleStockSellPoint } = require('./service/buySellDiagnose');
-const { MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, getHotMoneyLeaderList, getExtremeWinBuyPointChecks, checkExtremeWinSellPointDetailed } = require('./service/hotMoneyExtremeWin');
+const { MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE, getHotMoneyLeaderList, getExtremeWinBuyPointChecks, checkExtremeWinSellPointDetailed } = require('./service/hotMoneyExtremeWin');
 const { diagnoseTrendStocks } = require('./service/trendDiagnose');
 const { getTechnicalDiagnosis } = require('./service/technicalDiagnosis');
 const { getMaSlopeDiagnosis } = require('./service/maSlopeDiagnosis');
@@ -1148,7 +1148,7 @@ app.post('/buy_point_checks', async (req, res) => {
     if (mode === MODE_ATTACK_DEFENSE) {
       const [techRes, ewRes] = await Promise.all([
         getBuyPointChecks(targetDate, refresh, force),
-        getExtremeWinBuyPointChecks(targetDate, refresh),
+        getExtremeWinBuyPointChecks(targetDate, refresh, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE),
       ]);
       const ewData = ewRes?.data || {};
       const techData = techRes?.data || null;

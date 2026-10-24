@@ -12,7 +12,7 @@ const strategyModeState = require('./strategyModeState');
 const wsServer = require('../wsServer');
 const { notifyBuyPointFeishu } = require('./buyPointNotifier');
 const { getBuyPointChecks } = require('./buySellDiagnose');
-const { getExtremeWinBuyPointChecks, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } = require('./hotMoneyExtremeWin');
+const { getExtremeWinBuyPointChecks, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE } = require('./hotMoneyExtremeWin');
 const iceDelayBuy = require('./iceDelayBuy');
 
 const INTERVAL_MS = 10 * 1000;
@@ -95,7 +95,7 @@ const runDiagnosis = (mode) => {
     // 攻防兼备：双策略并行诊断，组合 data = 情绪游资顺周期（顶层）+ tech 字段（科技进攻完整诊断）
     return Promise.all([
       getBuyPointChecks(null, true, false),
-      getExtremeWinBuyPointChecks(null, true),
+      getExtremeWinBuyPointChecks(null, true, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE),
     ]).then(([techRes, ewRes]) => ({
       data: { ...(ewRes?.data || {}), tech: techRes?.data || null, mode: MODE_ATTACK_DEFENSE },
     }));

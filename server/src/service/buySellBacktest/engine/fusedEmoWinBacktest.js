@@ -21,8 +21,9 @@
 //   快进快出策略完全一致），卖点侧使用合成策略视图 emoStrategyView（emoQuickOut: true）驱动快进快出专属卖点
 //   与盘中大跌强卖；B 侧完整照搬 runExtremeWinBacktest 的双腿卖出 / 买入逻辑，持仓构建复用其导出的
 //   buildPosition / buildRevPosition（买入原因与 buyChecks 明细文案逐字节一致）。
-//   2026-10-20 用户新增：B 风格双腿买入受「每天 13:30 后不买」时间门禁限制（13:30 桶本身可买；与独立极致胜率引擎同口径），
-//   A 风格（科技进攻·快进快出）不受该门禁影响。
+//   2026-10-20 用户新增：B 风格双腿买入受「每天 13:30 后不买」时间门禁限制（13:30 桶本身可买），
+//   A 风格（科技进攻·快进快出）不受该门禁影响。注：2026-10-24 用户仅把独立「情绪游资-极致胜率」
+//   改为 14:30，本融合策略保持 13:30 原样不动。
 // ============================================================
 const { STRATEGIES, isCycleFilterStrategy } = require('../strategies/registry');
 const {
@@ -107,8 +108,9 @@ const WEAK_TRADE_MIN_GAIN_PCT = 10;
 const TAIL_MINUTE = 1457;
 const RESILIENCE_SELL_MAX = 6;
 const LEADER_RESILIENCE_INDEX_CODE = 'sh000001';
-// 2026-10-20 用户新增（与 ./extremeWinBacktest 同值同口径）：每天 13:30 之后不买（13:30 桶本身仍可买），
-//   仅约束 B 风格（情绪游资-极致胜率）双腿买入；A 风格（科技进攻·快进快出）不受影响
+// 2026-10-20 用户新增：每天 13:30 之后不买（13:30 桶本身仍可买），
+//   仅约束 B 风格（情绪游资-极致胜率）双腿买入；A 风格（科技进攻·快进快出）不受影响。
+//   2026-10-24 用户要求：仅独立「情绪游资-极致胜率」改为 14:30，本融合策略保持 13:30
 const BUY_CUTOFF_MINUTE = 1330;
 
 const fmtMinute = (m) => (m != null ? `${String(Math.floor(m / 100)).padStart(2, '0')}:${String(m % 100).padStart(2, '0')}` : '--');
@@ -391,18 +393,19 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       try {
         await ensureBarsForCodes(new Set(candidatesRaw.map(s => s.code)));
       } catch (e) { /* 单只失败后续按 null 处理 */ }
+      // 2026-10-24 用户改：传入完整 poolWinDates + 峰值窗口起止日，由 computeCrossInfo 先做「死叉 + 次日未创新高 → 峰值锁死」
       let fallbackCrossDates = [];
       try { fallbackCrossDates = (await getPastTradingDates(dateStr, DEATH_CROSS_WINDOW)).map(Number); } catch (e) { fallbackCrossDates = []; }
-      const crossDatesOf = (peakDate) => {
-        const p = Number(peakDate);
-        if (!Number.isFinite(p) || poolWinDates.length === 0) return fallbackCrossDates;
-        return poolWinDates.filter(d => Number(d) >= p);
+      const crossDatesOf = (c) => {
+        const p = Number(c.peakDate);
+        if (!Number.isFinite(p) || poolWinDates.length === 0) return { dates: fallbackCrossDates, peakWindow: null };
+        return { dates: poolWinDates.map(Number), peakWindow: { windowStart: c.windowStart, windowEnd: c.windowEnd } };
       };
       const crossMap = new Map();
       await batchParallel(candidatesRaw, async (c) => {
         try {
-          const cd = crossDatesOf(c.peakDate);
-          crossMap.set(c.code, cd.length < 2 ? null : await computeCrossInfo(c.code, cd, c.peakDate));
+          const { dates: cd, peakWindow } = crossDatesOf(c);
+          crossMap.set(c.code, cd.length < 2 ? null : await computeCrossInfo(c.code, cd, c.peakDate, peakWindow));
         } catch (e) { crossMap.set(c.code, null); }
       }, 8);
       candidates = candidatesRaw
@@ -772,7 +775,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
                 if (legIdx === -1) break;
                 const otherHeld = ewPositions.filter((p, i) => i !== legIdx && p).map(p => p.code);
                 if (pick.limitUp || otherHeld.includes(pick.code) || failPrevStrengthOpenGap(pick)) continue;
-                ewPositions[legIdx] = buildPosition({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx, otherHeld });
+                ewPositions[legIdx] = buildPosition({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx, otherHeld, cutoffMinute: BUY_CUTOFF_MINUTE });
                 ewPositions[legIdx].buyDi = todayIdx;
                 ewPositions[legIdx].cycle = CYCLE_PRO;
                 styleLock = 'ew';
@@ -807,6 +810,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
                       pick: c, s, score: s.score, px: s.px, changePct: s.changePct,
                       dateStr, dateDisplay, timeText, hitCount: next,
                       slopeClose, daysSinceTurnNeg, idxChg, legIdx, otherHeld,
+                      cutoffMinute: BUY_CUTOFF_MINUTE,
                     });
                     ewPositions[legIdx].buyDi = todayIdx;
                     ewPositions[legIdx].cycle = CYCLE_COUNTER;

@@ -6,7 +6,7 @@
 //
 //   导出：
 //     getHotMoneyLeaderList(targetDate, limit)     龙头列表（除 delta≥30 与上证斜率>0 外全部买点条件满足）
-//     getExtremeWinBuyPointChecks(targetDate, ...) 买点诊断 8 项（结构同科技进攻，便于前端复用；含 13:30 买入截止时间门禁）
+//     getExtremeWinBuyPointChecks(targetDate, ...) 买点诊断 8 项（结构同科技进攻，便于前端复用；含买入截止时间门禁，默认 14:30）
 //     checkExtremeWinSellPointDetailed(code, costPrice, buyDate) 卖点诊断 9 条（完整龙头战法）
 // ============================================================
 const dayjs = require('dayjs');
@@ -49,10 +49,12 @@ const MODE_ATTACK_DEFENSE = 'attack_defense';
 
 // 反向抱团「强度分命中次数」回溯窗口上限（交易日）：与回测口径一致（窗口自「上证 3 日线斜率由正转负日」起算）
 const REVERSE_HIT_WINDOW_MAX_DAYS = 20;
-// 2026-10-20 用户新增：每天 13:30 之后不买（13:30 桶本身仍可买；顺周期/逆周期两条腿均适用，与回测引擎 BUY_CUTOFF_MINUTE 同口径）。
+// 2026-10-20 用户新增、2026-10-24 用户改为 14:30：每天 14:30 之后不买（14:30 桶本身仍可买；顺周期/逆周期两条腿均适用，与回测引擎 BUY_CUTOFF_MINUTE 同口径）。
 //   判定口径：盘中取「候选池分时最新分钟」；盘前尚无分时数据视为未过截止；收盘后/历史日期一律视为已过截止。
 //   顺周期作用于 buyPointHit；逆周期作用于 timingPassed（命中登记照常累计，仅不再触发买入）
-const BUY_CUTOFF_MINUTE = 1330;
+//   2026-10-24 用户要求：仅「情绪游资-极致胜率」用 14:30；「攻防兼备」模式的 EW 腿保持 13:30（调用方传 buyCutoffMinute）
+const BUY_CUTOFF_MINUTE = 1430;
+const ATTACK_DEFENSE_BUY_CUTOFF_MINUTE = 1330;
 // 命中次数缓存（仅历史交易日，key = `${code}|${dateNum}`）：当日盘中实时重算，不缓存
 const reversePastHitCache = new Map();
 
@@ -71,14 +73,14 @@ const resolveTargetDay = (targetDate) => {
 // ============================================================
 // 共享上下文：池 + 死叉信息 + 盘中实时打分（一次算出供列表 / 买点诊断复用）
 // ============================================================
-const fetchExtremeWinContext = async (targetDate = null) => {
+const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_CUTOFF_MINUTE) => {
   const targetDay = resolveTargetDay(targetDate);
   const dateStr = targetDay.format('YYYYMMDD');
   const dateNum = Number(dateStr);
   const isToday = dateStr === dayjs().format('YYYYMMDD');
   const afterClose = !isToday || isAfterMarketClose();
 
-  // 1) 候选池（过去 10/20 交易日连板准入：流通市值 > 100 亿元者一次涨停（首板即可）+ 含该涨停日的 5 日涨幅 > 40%，其余需四连板及以上；
+  // 1) 候选池（过去 10/20 交易日连板准入：流通市值 > 100 亿元者两连板（连板数 ≥ 2）+ 含该连板日的 5 日涨幅 > 40%，其余需四连板及以上；
   //    并剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）
   const pool = await buildExtremeWinPool(dateStr);
   const poolStocks = pool.stocks || [];
@@ -125,8 +127,8 @@ const fetchExtremeWinContext = async (targetDate = null) => {
     }
   }
 
-  // 5.5) 13:30 买入截止（2026-10-20 用户新增，与回测引擎同口径）：13:30 后不买（13:30 桶本身仍可买）
-  const buyWindowOpen = afterClose ? false : (latestTlineMinute > 0 ? latestTlineMinute <= BUY_CUTOFF_MINUTE : true);
+  // 5.5) 买入截止（2026-10-20 用户新增，与回测引擎同口径）：截止分钟之后不买（截止桶本身仍可买）
+  const buyWindowOpen = afterClose ? false : (latestTlineMinute > 0 ? latestTlineMinute <= buyCutoffMinute : true);
 
   // 6) 上证指数（sh000001）3 日线分时斜率门禁
   let indexSlope = null;
@@ -168,7 +170,7 @@ const fetchExtremeWinContext = async (targetDate = null) => {
     // 龙头列表口径 = 池筛选 + 死叉前置 + 竞价门禁（除 delta≥30 与上证斜率>0 外全部满足）
     const listPassed = crossPassed && gatePassed;
     const deltaOk = delta != null && delta >= DELTA_MIN;
-    // 2026-10-20 用户新增：每天 13:30 后不买——买入窗口关闭时买点一律不命中（与回测引擎同口径）
+    // 2026-10-20 用户新增：买入截止后不买——买入窗口关闭时买点一律不命中（与回测引擎同口径）
     const buyPointHit = listPassed && deltaOk && indexSlope != null && indexSlope > 0 && buyWindowOpen;
 
     return {
@@ -209,6 +211,7 @@ const fetchExtremeWinContext = async (targetDate = null) => {
     afterClose,
     minute,
     buyWindowOpen,
+    buyCutoffMinute,
     buyGateMinute: afterClose ? null : (latestTlineMinute > 0 ? latestTlineMinute : null),
     indexSlope,
     pool,
@@ -218,11 +221,16 @@ const fetchExtremeWinContext = async (targetDate = null) => {
 
 const byDeltaDesc = (a, b) => ((b.delta == null ? -Infinity : b.delta) - (a.delta == null ? -Infinity : a.delta));
 
-// 13:30 时间门禁的口径时间展示文本（buyGateMinute 为 null 时：收盘后/历史 → 已收盘；盘前暂无分时 → 盘前）
+// 14:30 时间门禁的口径时间展示文本（buyGateMinute 为 null 时：收盘后/历史 → 已收盘；盘前暂无分时 → 盘前）
 const gateTimeText = (ctx) => {
   const m = ctx && ctx.buyGateMinute;
   if (m == null || !Number.isFinite(Number(m))) return ctx && ctx.afterClose ? '已收盘' : '盘前（暂无分时数据）';
   return `${String(Math.floor(Number(m) / 100)).padStart(2, '0')}:${String(Number(m) % 100).padStart(2, '0')}`;
+};
+// 买入截止时间展示文本（不同模式口径不同：情绪游资-极致胜率 14:30 / 攻防兼备 EW 腿 13:30）
+const cutoffText = (ctx) => {
+  const m = ctx && ctx.buyCutoffMinute != null ? Number(ctx.buyCutoffMinute) : BUY_CUTOFF_MINUTE;
+  return `${String(Math.floor(m / 100)).padStart(2, '0')}:${String(m % 100).padStart(2, '0')}`;
 };
 
 // ============================================================
@@ -294,7 +302,7 @@ const computeReverseHitCounts = async (codes, windowDates, todayNum) => {
   return counts;
 };
 
-const fetchReverseLeaderContext = async (targetDate = null) => {
+const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BUY_CUTOFF_MINUTE) => {
   const targetDay = resolveTargetDay(targetDate);
   const dateStr = targetDay.format('YYYYMMDD');
   const dateNum = Number(dateStr);
@@ -342,7 +350,7 @@ const fetchReverseLeaderContext = async (targetDate = null) => {
       }, 6)
     : [];
 
-  // 4.5) 13:30 买入截止（2026-10-20 用户新增，与顺周期/回测引擎同口径）：13:30 后不买（13:30 桶本身仍可买）。
+  // 4.5) 买入截止（2026-10-20 用户新增，与顺周期/回测引擎同口径）：截止分钟之后不买（截止桶本身仍可买）。
   //   命中登记（computeReverseHitCounts）照常累计，仅不再触发买入
   let revLatestMinute = 0;
   for (const t of tlineList) {
@@ -352,7 +360,7 @@ const fetchReverseLeaderContext = async (targetDate = null) => {
       if (Number.isFinite(m) && m > revLatestMinute) revLatestMinute = m;
     }
   }
-  const buyWindowOpen = afterClose ? false : (revLatestMinute > 0 ? revLatestMinute <= BUY_CUTOFF_MINUTE : true);
+  const buyWindowOpen = afterClose ? false : (revLatestMinute > 0 ? revLatestMinute <= buyCutoffMinute : true);
 
   // 5) 负斜率窗口内各交易日的强度分命中次数
   //   仅统计「该交易日自身也满足择时前置（斜率 < 0 且已连续为负 ≥ 第 3 天）」的日期——与回测一致
@@ -391,10 +399,10 @@ const fetchReverseLeaderContext = async (targetDate = null) => {
       : (change != null && change > limitUpThresholdOf(code));
 
     const hitCount = hitCounts.get(code) || 0;
-    // 2026-10-20 用户新增：每天 13:30 后不买——买入窗口关闭时买点不触发（命中计数照常展示）
+    // 2026-10-20 用户新增：买入截止后不买——买入窗口关闭时买点不触发（命中计数照常展示）
     const timingPassed = eligible && indexDropOk && hitCount >= REV_HIT_REQUIRED && !isLimitUp && buyWindowOpen;
     let timingTag;
-    if (!buyWindowOpen && eligible && hitCount >= REV_HIT_REQUIRED && !isLimitUp) timingTag = '已过13:30不买';
+    if (!buyWindowOpen && eligible && hitCount >= REV_HIT_REQUIRED && !isLimitUp) timingTag = `已过${cutoffText({ buyCutoffMinute })}不买`;
     else if (!eligible) timingTag = '斜率未就绪';
     else if (!indexDropOk) timingTag = '大盘未达跌幅';
     else if (hitCount >= REV_HIT_REQUIRED && !isLimitUp) timingTag = '已触发买点';
@@ -403,7 +411,7 @@ const fetchReverseLeaderContext = async (targetDate = null) => {
 
     const slopeText = slopeClose == null ? '--' : round2(slopeClose);
     const dayNoText = reverseTimestampText(daysSinceTurnNeg);
-    const timingDetail = `上证 3 日线斜率收盘口径 ${slopeText}（连续为负${daysSinceTurnNeg == null ? '--' : dayNoText}${eligible ? '，已满足 ≥ 第 ' + (REV_NEG_STREAK_MIN_DAYS + 1) + ' 天' : ''}）；当日上证跌幅 ${indexChange == null ? '--' : indexChange + '%'}${indexDropOk ? `（≤ ${REV_INDEX_DROP_PCT}%，已满足）` : `（须 ≤ ${REV_INDEX_DROP_PCT}%）`}；窗口内强度分命中 ${hitCount}/${REV_HIT_REQUIRED} 次${buyWindowOpen ? '' : '；已过 13:30 买入截止，今日不再买入'}`;
+    const timingDetail = `上证 3 日线斜率收盘口径 ${slopeText}（连续为负${daysSinceTurnNeg == null ? '--' : dayNoText}${eligible ? '，已满足 ≥ 第 ' + (REV_NEG_STREAK_MIN_DAYS + 1) + ' 天' : ''}）；当日上证跌幅 ${indexChange == null ? '--' : indexChange + '%'}${indexDropOk ? `（≤ ${REV_INDEX_DROP_PCT}%，已满足）` : `（须 ≤ ${REV_INDEX_DROP_PCT}%）`}；窗口内强度分命中 ${hitCount}/${REV_HIT_REQUIRED} 次${buyWindowOpen ? '' : `；已过 ${cutoffText({ buyCutoffMinute })} 买入截止，今日不再买入`}`;
 
     return {
       code,
@@ -439,6 +447,7 @@ const fetchReverseLeaderContext = async (targetDate = null) => {
     indexChange,
     indexDropOk,
     buyWindowOpen,
+    buyCutoffMinute,
     buyGateMinute: afterClose ? null : (revLatestMinute > 0 ? revLatestMinute : null),
     pool,
     rows: rows.sort(byHitDesc),
@@ -448,9 +457,10 @@ const fetchReverseLeaderContext = async (targetDate = null) => {
 // ============================================================
 // 逆周期（反向抱团龙头）买点诊断 4 项（独立分组，前端在顺周期 8 项之后单独展示）
 //   与回测引擎 reverseLeaderMode 买点口径一致：择时前置（上证 3 日线斜率连续为负第 3 天及以后）
-//   + 触发（当日上证跌幅 ≤ -0.5% 且窗口内强度分命中第 2 次、未涨停）+ 13:30 买入截止时间门禁
+//   + 触发（当日上证跌幅 ≤ -0.5% 且窗口内强度分命中第 2 次、未涨停）+ 买入截止时间门禁
 // ============================================================
 const buildReverseChecks = (rctx) => {
+  const cutoff = cutoffText(rctx);
   const poolCount = (rctx.pool.stocks || []).length;
   const rows = rctx.rows || [];
   const triggered = rows.filter(r => r.timingPassed);
@@ -496,20 +506,20 @@ const buildReverseChecks = (rctx) => {
           : !rctx.indexDropOk
             ? `当日上证跌幅 ${idxChangeText} 未达到 ≤ ${REV_INDEX_DROP_PCT}%，不触发逆周期买点（须等待大盘当日出现 ≥ ${Math.abs(REV_INDEX_DROP_PCT)}% 幅度的下跌）`
             : rctx.buyWindowOpen === false
-              ? `当日上证跌幅已满足且窗口内已有达标命中，但已过 13:30 买入截止（每天 13:30 之后不买，2026-10-20 用户新增），今日不再买入`
+              ? `当日上证跌幅已满足且窗口内已有达标命中，但已过 ${cutoff} 买入截止（每天 ${cutoff} 之后不买，2026-10-20 用户新增），今日不再买入`
               : `当日上证跌幅已满足，但反向抱团池内暂无个股在窗口内累计命中 ${REV_HIT_REQUIRED} 次盘中强度分 > ${REV_STRENGTH_MIN}（当前最高 ${best ? `${best.stockName} ${best.hitCount}/${REV_HIT_REQUIRED} 次` : '--'}）`,
     },
     {
       id: 'reverse_leader_time_gate',
       group: 'reverse',
-      title: '逆周期时间门禁：每天 13:30 后不买',
+      title: `逆周期时间门禁：每天 ${cutoff} 后不买`,
       passed: rctx.buyWindowOpen === true,
       value: rctx.buyWindowOpen
-        ? `当前口径时间 ${gateTimeText(rctx)}（未过 13:30 截止，可买）`
-        : `${rctx.afterClose ? '已收盘/历史口径' : `当前口径时间 ${gateTimeText(rctx)}`}，已过 13:30 截止，今日不再买入`,
+        ? `当前口径时间 ${gateTimeText(rctx)}（未过 ${cutoff} 截止，可买）`
+        : `${rctx.afterClose ? '已收盘/历史口径' : `当前口径时间 ${gateTimeText(rctx)}`}，已过 ${cutoff} 截止，今日不再买入`,
       reason: rctx.buyWindowOpen
-        ? '2026-10-20 用户新增规则：每天 13:30 之后不再买入（13:30 桶本身仍可买；顺周期/逆周期两条腿均适用，与回测引擎同口径）；当前未过 13:30 截止，买入窗口开放（13:30 后窗口内强度分命中登记照常累计，仅不再实际买入）'
-        : '2026-10-20 用户新增规则：每天 13:30 之后不再买入（13:30 桶本身仍可买；顺周期/逆周期两条腿均适用，与回测引擎同口径）；当前已过 13:30 截止（或为收盘后/历史口径），今日买入窗口已关闭——窗口内强度分命中登记照常累计、仅不再触发买入',
+        ? `2026-10-20 用户新增、2026-10-24 改为 ${cutoff} 的门禁规则：每天 ${cutoff} 之后不再买入（${cutoff} 桶本身仍可买；顺周期/逆周期两条腿均适用，与回测引擎同口径）；当前未过 ${cutoff} 截止，买入窗口开放（${cutoff} 后窗口内强度分命中登记照常累计，仅不再实际买入）`
+        : `2026-10-20 用户新增、2026-10-24 改为 ${cutoff} 的门禁规则：每天 ${cutoff} 之后不再买入（${cutoff} 桶本身仍可买；顺周期/逆周期两条腿均适用，与回测引擎同口径）；当前已过 ${cutoff} 截止（或为收盘后/历史口径），今日买入窗口已关闭——窗口内强度分命中登记照常累计、仅不再触发买入`,
     },
   ];
 };
@@ -571,6 +581,7 @@ const getHotMoneyLeaderList = async (targetDate = null, limit = 50) => {
 // 买点诊断 8 项（与回测 buildPosition 的 checks 一一对应）
 // ============================================================
 const buildExtremeWinChecks = (ctx, candidate) => {
+  const cutoff = cutoffText(ctx);
   const poolCount = (ctx.pool.stocks || []).length;
   const cross = candidate ? candidate.crossInfo : null;
   const crossPassed = !!(cross && cross.crossDate != null && cross.hitCount <= 1 && cross.prevDayVolumeOk);
@@ -593,7 +604,7 @@ const buildExtremeWinChecks = (ctx, candidate) => {
   const checks = [
     {
       id: 'extreme_win_pool',
-      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过一次涨停且含该涨停日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${CAP_BOARD_MIN_GAIN_PCT}% 即可，流通市值 ≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者仍需四连板及以上；旧路径=过去 10 个交易日达标 + 最多 10 日最精准窗口区间最大涨幅 < 80% 且连板后无单日跌幅 < -9%；新路径=过去 20 个交易日达标 + 最多 10 日最精准窗口区间最大涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < 100% 且该窗口峰值日至买点严格相隔 ≥ 5 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < 15%、该窗口内收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除）；均剔除创业板/科创板/题材黑名单/全量自选股科技股）`,
+      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板（连板数 ≥ 2）且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${CAP_BOARD_MIN_GAIN_PCT}% 即可，流通市值 ≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者仍需四连板及以上；旧路径=过去 10 个交易日达标 + 最多 10 日最精准窗口区间最大涨幅 < 80% 且连板后无单日跌幅 < -9%；新路径=过去 20 个交易日达标 + 最多 10 日最精准窗口区间最大涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < 100% 且该窗口峰值日至买点严格相隔 ≥ 5 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < 15%、该窗口内收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除）；均剔除创业板/科创板/题材黑名单/全量自选股科技股）`,
       passed: poolCount > 0,
       value: `龙头池 ${poolCount} 只`,
       reason: `候选 = 旧路径（过去 10 个交易日连板准入达标 + 上述动量过滤）与新路径（过去 20 个交易日连板准入达标 + 上述动量过滤）并集，已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、题材黑名单与全量自选股科技股（isTech ≠ false）重叠者${ctx.pool.poolFilterText || ''}；当前龙头池共 ${poolCount} 只，展示标的为 ${nameText}`,
@@ -662,22 +673,22 @@ const buildExtremeWinChecks = (ctx, candidate) => {
     },
     {
       id: 'extreme_win_time_gate',
-      title: '买点时间门禁：每天 13:30 后不买',
+      title: `买点时间门禁：每天 ${cutoff} 后不买`,
       passed: ctx.buyWindowOpen === true,
       value: ctx.buyWindowOpen
-        ? `当前口径时间 ${gateTimeText(ctx)}（未过 13:30 截止，可买）`
-        : `${ctx.afterClose ? '已收盘/历史口径' : `当前口径时间 ${gateTimeText(ctx)}`}，已过 13:30 截止，今日不再买入`,
+        ? `当前口径时间 ${gateTimeText(ctx)}（未过 ${cutoff} 截止，可买）`
+        : `${ctx.afterClose ? '已收盘/历史口径' : `当前口径时间 ${gateTimeText(ctx)}`}，已过 ${cutoff} 截止，今日不再买入`,
       reason: ctx.buyWindowOpen
-        ? '2026-10-20 用户新增规则：每天 13:30 之后不再买入（13:30 桶本身仍可买；顺周期/逆周期两条腿均适用，与回测引擎同口径）；当前未过 13:30 截止，买入窗口开放'
-        : '2026-10-20 用户新增规则：每天 13:30 之后不再买入（13:30 桶本身仍可买；顺周期/逆周期两条腿均适用，与回测引擎同口径）；当前已过 13:30 截止（或为收盘后/历史口径），今日买入窗口已关闭，不再触发买入信号',
+        ? `2026-10-20 用户新增、2026-10-24 改为 ${cutoff} 的门禁规则：每天 ${cutoff} 之后不再买入（${cutoff} 桶本身仍可买；顺周期/逆周期两条腿均适用，与回测引擎同口径）；当前未过 ${cutoff} 截止，买入窗口开放`
+        : `2026-10-20 用户新增、2026-10-24 改为 ${cutoff} 的门禁规则：每天 ${cutoff} 之后不再买入（${cutoff} 桶本身仍可买；顺周期/逆周期两条腿均适用，与回测引擎同口径）；当前已过 ${cutoff} 截止（或为收盘后/历史口径），今日买入窗口已关闭，不再触发买入信号`,
     },
   ];
   return checks;
 };
 
-const getExtremeWinBuyPointChecks = async (targetDate = null, refresh = false) => {
+const getExtremeWinBuyPointChecks = async (targetDate = null, refresh = false, buyCutoffMinute = BUY_CUTOFF_MINUTE) => {
   try {
-    const ctx = await fetchExtremeWinContext(targetDate);
+    const ctx = await fetchExtremeWinContext(targetDate, buyCutoffMinute);
     const rows = ctx.rows || [];
     const notLimitUp = rows.filter(r => r.listPassed && !r.isLimitUp).sort(byDeltaDesc);
     const candidate = notLimitUp[0] || rows.filter(r => r.listPassed)[0] || rows[0] || null;
@@ -691,7 +702,7 @@ const getExtremeWinBuyPointChecks = async (targetDate = null, refresh = false) =
     let reverseChecks = [];
     let reverse = null;
     try {
-      const rctx = await fetchReverseLeaderContext(targetDate);
+      const rctx = await fetchReverseLeaderContext(targetDate, buyCutoffMinute);
       reverseChecks = buildReverseChecks(rctx);
       const revPoolCount = (rctx.pool.stocks || []).length;
       reverse = {
@@ -720,7 +731,7 @@ const getExtremeWinBuyPointChecks = async (targetDate = null, refresh = false) =
       : poolCount === 0
         ? '龙头池当前无满足条件的标的，请耐心等待。'
         : '龙头池暂未出现完整买点标的（需强度分 − 差劲分 ≥ 30 且上证 3 日线斜率为正），请耐心等待。';
-    const gateSuffix = ctx.buyWindowOpen ? '' : ' 已过 13:30 买入截止（每天 13:30 之后不买），今日买入窗口已关闭。';
+    const gateSuffix = ctx.buyWindowOpen ? '' : ` 已过 ${cutoff} 买入截止（每天 ${cutoff} 之后不买），今日买入窗口已关闭。`;
     const conclusionBase = `${baseConclusion}${gateSuffix}`;
     const conclusion = reverse && reverse.triggeredCount > 0
       ? `${conclusionBase} 另：逆周期（反向抱团）择时已触发，反向抱团池出现 ${reverse.triggeredCount} 只买点标的。`
@@ -987,6 +998,7 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
 module.exports = {
   MODE_EXTREME_WIN,
   MODE_ATTACK_DEFENSE,
+  ATTACK_DEFENSE_BUY_CUTOFF_MINUTE,
   getHotMoneyLeaderList,
   getExtremeWinBuyPointChecks,
   checkExtremeWinSellPointDetailed,

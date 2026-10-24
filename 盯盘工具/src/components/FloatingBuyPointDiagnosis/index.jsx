@@ -458,7 +458,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
 
     const gateNote = !leaderData
       ? '正在检测情绪游资-极致胜率买点门槛（上证 3 日线斜率）…'
-      : `候选池共 ${poolCount} 只（过去 10 交易日连板准入：流通市值 > 100 亿元者出现过一次涨停 + 含该涨停日 5 日涨幅 > 40%，其余连板数 ≥ 4；已剔除 ST / 创业板（30·301）/ 科创板（688）与科技自选股重叠者）；上证 3 日线斜率 ${formatSlope(slope)}，${slopeOk ? '满足「斜率为正」门槛' : '不满足「斜率为正」门槛，暂无完整买点标的，下列仅为候选龙头'}`;
+      : `候选池共 ${poolCount} 只（过去 10 交易日连板准入：流通市值 > 100 亿元者出现过两连板 + 含该连板日 5 日涨幅 > 40%，其余连板数 ≥ 4；已剔除 ST / 创业板（30·301）/ 科创板（688）与科技自选股重叠者）；上证 3 日线斜率 ${formatSlope(slope)}，${slopeOk ? '满足「斜率为正」门槛' : '不满足「斜率为正」门槛，暂无完整买点标的，下列仅为候选龙头'}`;
     const reverseGateNote = !leaderData
       ? '正在检测逆周期（反向抱团）择时状态…'
       : !reverse

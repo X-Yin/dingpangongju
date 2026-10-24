@@ -1,4 +1,4 @@
-const { EMO_BREAK_DESC, EMO_GATE_DESC, EMO_QUICK_DESC, EMO_QUICK_HALF_DESC, EMO_QUICK_REPORTS_DESC } = require('../descs');
+const { EMO_BREAK_DESC, EMO_GATE_DESC, EMO_QUICK_DESC, EMO_QUICK_HALF_DESC, EMO_QUICK_REPORTS_DESC, PULSE_DESC } = require('../descs');
 
 module.exports = {
   // 情绪快进快出系列（2026-10-03 用户新增）：买点触发时均可正常买入；上一交易日科技情绪 3 日 EMA < -30
@@ -28,4 +28,11 @@ module.exports = {
   // emoGate = 分时情绪买入门禁阈值（与 emoBreak 的「替换买点时机」不同，emoGate 是「诊断之上叠加门禁」），
   // 引擎据此在诊断 allPassed 后追加门禁判断，其余机制（快进快出标注/半仓/卖点）全部复用
   highest_3d_gain_emoquick_g10: { id: 'highest_3d_gain_emoquick_g10', name: '3日涨幅最大-快进快出-科技情绪10', desc: EMO_GATE_DESC(10), emoQuickOut: true, emoGate: 10 },
+  // 脉冲最强系列（2026-10-23 用户新增）：把「N日涨幅最大&快进快出」中原本只在「连续两日冰点」下才启用的
+  // 板块发酵延时选股，改为每次买点触发都无条件执行——买点触发后等 15 分钟，按目标时点回溯 20 分钟的
+  // 「中性/进攻」板块区间涨幅差值降序逐个尝试，在其与全量自选科技股的交集内选 N 日涨幅最大者；
+  // 全部板块选不出则回退全量自选股。pulseBlockPick = 引擎据此跳过冰点门禁、强制走延时建仓
+  highest_2d_gain_emoquick_pulse: { id: 'highest_2d_gain_emoquick_pulse', name: '脉冲最强-2日涨幅最大-快进快出', desc: PULSE_DESC(2), emoQuickOut: true, pulseBlockPick: true },
+  highest_3d_gain_emoquick_pulse: { id: 'highest_3d_gain_emoquick_pulse', name: '脉冲最强-3日涨幅最大-快进快出', desc: PULSE_DESC(3), emoQuickOut: true, pulseBlockPick: true },
+  highest_4d_gain_emoquick_pulse: { id: 'highest_4d_gain_emoquick_pulse', name: '脉冲最强-4日涨幅最大-快进快出', desc: PULSE_DESC(4), emoQuickOut: true, pulseBlockPick: true },
 };
