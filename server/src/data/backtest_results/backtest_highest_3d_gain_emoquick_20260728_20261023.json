@@ -556,9 +556,7 @@
       "sellPrice": 52.7,
       "sellChange": -0.47,
       "sellReason": "情绪快进快出：买入日上一交易日科技情绪 3 日 EMA -34.83 < -30，次日 10:00 强制卖出",
-      "returnRate": 3.44,
-      "buyDayClose": 52.95,
-      "buyDayReturn": 7.38
+      "returnRate": 3.44
     },
     {
       "seq": 2,
@@ -643,9 +641,7 @@
       "sellPrice": 155.1,
       "sellChange": -4.44,
       "sellReason": "科技板块情绪退潮",
-      "returnRate": 46.79,
-      "buyDayClose": 113.7,
-      "buyDayReturn": 7.61
+      "returnRate": 46.79
     },
     {
       "seq": 3,
@@ -730,9 +726,7 @@
       "sellPrice": 58.54,
       "sellChange": -7.12,
       "sellReason": "快进快出系列盘中大跌强卖：14:16 当日跌幅（较昨收）-7.12% ≤ -7%，无条件卖出",
-      "returnRate": 19.13,
-      "buyDayClose": 51.56,
-      "buyDayReturn": 4.92
+      "returnRate": 19.13
     },
     {
       "seq": 4,
@@ -817,9 +811,7 @@
       "sellPrice": 104.3,
       "sellChange": -3.61,
       "sellReason": "高位放量大阴线",
-      "returnRate": 0.36,
-      "buyDayClose": 105.97,
-      "buyDayReturn": 1.96
+      "returnRate": 0.36
     },
     {
       "seq": 5,
@@ -925,9 +917,7 @@
       "sellPrice": 437.26,
       "sellChange": -1.6,
       "sellReason": "情绪快进快出：盘中 09:51 跌破止损线，触发成本线 -2% 止损（成本线基准 447.80、阈值 438.84，09:51 价 437.26 成交），先于当日 10:00 强卖离场",
-      "returnRate": -1.18,
-      "buyDayClose": 444.35,
-      "buyDayReturn": -0.77
+      "returnRate": -1.18
     },
     {
       "seq": 6,
@@ -1043,9 +1033,7 @@
       "sellPrice": 241.73,
       "sellChange": -2.01,
       "sellReason": "情绪快进快出：盘中 09:33 跌破止损线，触发成本线 -2% 止损（成本线基准 247.21、阈值 242.27，09:33 价 241.73 成交），先于当日 10:00 强卖离场",
-      "returnRate": -1.11,
-      "buyDayClose": 246.7,
-      "buyDayReturn": -0.21
+      "returnRate": -1.11
     },
     {
       "seq": 7,
@@ -1177,9 +1165,7 @@
       "sellPrice": 228.63,
       "sellChange": -2.22,
       "sellReason": "科技板块情绪退潮",
-      "returnRate": 0.65,
-      "buyDayClose": 233.81,
-      "buyDayReturn": 3.58
+      "returnRate": 0.65
     }
   ],
   "currentHolding": {
@@ -1231,7 +1217,7 @@
         "id": "cyb_ma3_slope_gate",
         "title": "创业板指 3 日线斜率门禁",
         "passed": true,
-        "value": "创业板指 3 日线斜率 -43.79°，负斜率允许出手",
+        "value": "创业板指 3 日线斜率 -43.79°，负斜率允许出手；距上次由正转负 第 15 天（2026-09-24 翻转）",
         "reason": "创业板指 斜率 -43.79 < 0，负斜率允许出手"
       },
       {
@@ -1286,9 +1272,7 @@
     "leg": 1,
     "weight": 0.5,
     "rawBuyReturn": 14.88,
-    "buyReturn": 7.44,
-    "buyDayClose": 108,
-    "buyDayReturn": 15.37
+    "buyReturn": 7.44
   },
   "currentHoldings": [
     {
@@ -1340,7 +1324,7 @@
           "id": "cyb_ma3_slope_gate",
           "title": "创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "创业板指 3 日线斜率 -43.79°，负斜率允许出手",
+          "value": "创业板指 3 日线斜率 -43.79°，负斜率允许出手；距上次由正转负 第 15 天（2026-09-24 翻转）",
           "reason": "创业板指 斜率 -43.79 < 0，负斜率允许出手"
         },
         {
@@ -1395,9 +1379,7 @@
       "leg": 1,
       "weight": 0.5,
       "rawBuyReturn": 14.88,
-      "buyReturn": 7.44,
-      "buyDayClose": 108,
-      "buyDayReturn": 15.37
+      "buyReturn": 7.44
     }
   ],
   "summary": {
@@ -1410,5 +1392,5 @@
     "holding": true
   },
   "cacheVersion": 16,
-  "generatedAt": 1792747776919
+  "generatedAt": 1792817251853
 }

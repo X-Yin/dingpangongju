@@ -12,6 +12,7 @@ import {
   ExperimentOutlined,
   BookOutlined,
   SwapOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -1182,6 +1183,11 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const checkCacheRef = useRef(null);
   const [activeCategory, setActiveCategory] = useState(null); // 当前高亮的策略分类 Tag（null=无）
   const [workerMode, setWorkerMode] = useState('all'); // 'all' | 'category'：worker 回测模式，仅用于文案
+  // 日常回测：策略 id 列表持久化在后端（服务启动后仍保留），点击「日常回测」Tag 时只回测这些策略
+  const [dailyIds, setDailyIds] = useState([]);
+  const [dailyEditOpen, setDailyEditOpen] = useState(false); // 日常回测策略编辑弹窗
+  const [dailyEditSelected, setDailyEditSelected] = useState([]); // 弹窗内临时勾选（保存前的草稿）
+  const [dailySaving, setDailySaving] = useState(false);
   // 策略分类最近点击顺序：mount 时从 localStorage 读取，点击分类时把该 key 提到最前并持久化
   const [categoryOrder, setCategoryOrder] = useState(() => {
     try {
@@ -1213,6 +1219,22 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const pushCategoryOrder = (key) => {
     setCategoryOrder(prev => [key, ...prev.filter(k => k !== key)]);
   };
+
+  // 打开抽屉时从后端拉取日常回测策略配置（配置持久化在后端，换浏览器/清缓存不丢失）
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    axios.get(`http://${local_ip}:3000/training_camp/backtest/daily_strategies`)
+      .then(r => { if (!cancelled && r.data?.success) setDailyIds(Array.isArray(r.data.ids) ? r.data.ids : []); })
+      .catch(() => { });
+    return () => { cancelled = true; };
+  }, [isOpen]);
+
+  // 日常回测已选策略的展示文案（id → 策略名称，用于 hover Tooltip）
+  const dailyLabels = useMemo(() => dailyIds.map(id => ({
+    id,
+    label: STRATEGY_OPTIONS.find(o => o.value === id)?.label || id,
+  })), [dailyIds]);
 
   const availableDates = useMemo(() => (Array.isArray(dates) ? dates : []), [dates]);
   const maxDateStr = availableDates.length > 0 ? availableDates[0] : dayjs().format('YYYYMMDD');
@@ -1545,6 +1567,42 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
     }
   };
 
+  // 打开日常回测策略编辑弹窗：草稿初始化为当前已保存的列表
+  const openDailyEdit = () => {
+    setDailyEditSelected(dailyIds);
+    setDailyEditOpen(true);
+  };
+
+  // 保存日常回测策略（持久化到后端），保存成功后点击 Tag 即按新配置回测
+  const handleSaveDaily = async () => {
+    setDailySaving(true);
+    try {
+      const r = await axios.post(`http://${local_ip}:3000/training_camp/backtest/daily_strategies`, { ids: dailyEditSelected });
+      if (r.data?.success) {
+        const saved = Array.isArray(r.data.ids) ? r.data.ids : dailyEditSelected;
+        setDailyIds(saved);
+        setDailyEditOpen(false);
+        message.success(`已保存日常回测策略（${saved.length} 个）`);
+      } else {
+        message.error(r.data?.message || '保存日常回测策略失败');
+      }
+    } catch {
+      message.error('保存日常回测策略失败，请检查后端服务');
+    } finally {
+      setDailySaving(false);
+    }
+  };
+
+  // 点击「日常回测」Tag：只回测已保存的日常策略；未配置时提示并直接打开编辑弹窗
+  const handleRunDaily = () => {
+    if (dailyIds.length === 0) {
+      message.warning('请先点击「日常回测」右侧编辑图标选择策略');
+      openDailyEdit();
+      return;
+    }
+    handleRunCategory({ key: 'daily', label: '日常回测', ids: dailyIds });
+  };
+
   // 回测全部：后台执行 backtest-worker.js（清空回测缓存 → 预热日K → 并行预构建 → 全部策略并行回测 → 自动汇总生成回测报告）
   const handleRunAll = async () => {
     const pick = effectiveRange;
@@ -1848,6 +1906,47 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         {/* 策略分类 Tag：点击只回测该分类下的策略，并自动把下方 select 切到该分类的第一个策略 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#12213a' }}>策略分类</span>
+          {/* 日常回测：hover 浅色 Tooltip 展示已选策略；点击 Tag 只回测这些策略，点编辑图标打开配置弹窗 */}
+          <Tooltip
+            color="#fff"
+            styles={{
+              root: { color: '#4b5563', border: '1px solid #e5e7eb', boxShadow: '0 6px 18px rgba(18,33,58,0.12)', maxWidth: 360 },
+              container: { color: '#4b5563' },
+            }}
+            title={dailyLabels.length > 0 ? (
+              <div style={{ fontSize: 12, lineHeight: 1.8, maxHeight: 320, overflowY: 'auto', paddingRight: 4 }}>
+                <div style={{ fontWeight: 600, marginBottom: 2 }}>日常回测策略（{dailyLabels.length}）</div>
+                {dailyLabels.map(s => <div key={s.id}>• {s.label}</div>)}
+              </div>
+            ) : '尚未选择策略，点击右侧编辑图标配置'}
+          >
+            <span
+              onClick={() => { if (!workerRunning) handleRunDaily(); }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                fontSize: 12,
+                padding: '2px 10px',
+                borderRadius: 999,
+                border: '1px solid ' + (activeCategory === 'daily' ? '#722ed1' : '#e5e7eb'),
+                color: activeCategory === 'daily' ? '#722ed1' : '#4b5563',
+                background: activeCategory === 'daily' ? '#f9f0ff' : '#fafbfd',
+                cursor: workerRunning ? 'not-allowed' : 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              日常回测
+              <EditOutlined
+                onClick={(e) => { e.stopPropagation(); if (!workerRunning) openDailyEdit(); }}
+                style={{
+                  marginLeft: 6,
+                  fontSize: 12,
+                  cursor: workerRunning ? 'not-allowed' : 'pointer',
+                  color: activeCategory === 'daily' ? '#722ed1' : '#8c8c8c',
+                }}
+              />
+            </span>
+          </Tooltip>
           {orderedCategories.map(cat => (
             <Tag.CheckableTag
               key={cat.key}
@@ -2403,6 +2502,38 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         </>
       ) : null}
 
+      {/* 日常回测策略编辑弹窗：勾选的策略保存到后端，点击「日常回测」Tag 时只回测这些策略 */}
+      <Modal
+        open={dailyEditOpen}
+        onCancel={() => setDailyEditOpen(false)}
+        onOk={handleSaveDaily}
+        okText="保存"
+        confirmLoading={dailySaving}
+        width={760}
+        destroyOnHidden
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <EditOutlined style={{ color: '#722ed1' }} />
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#12213a' }}>编辑日常回测策略</span>
+            <Tag color="purple" style={{ marginInlineStart: 4 }}>已选 {dailyEditSelected.length} 个</Tag>
+          </div>
+        }
+      >
+        <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 12 }}>
+          勾选的策略会保存到后端；点击「日常回测」Tag 时只回测这些策略（不清空其它缓存、不生成汇总报告）。
+        </div>
+        <Checkbox.Group
+          value={dailyEditSelected}
+          onChange={(v) => setDailyEditSelected(v)}
+          style={{ width: '100%', maxHeight: 440, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px 16px', paddingRight: 4 }}
+        >
+          {STRATEGY_OPTIONS.map(o => (
+            <Checkbox key={o.value} value={o.value} style={{ marginInlineStart: 0, whiteSpace: 'normal', lineHeight: 1.5 }}>
+              {o.label}
+            </Checkbox>
+          ))}
+        </Checkbox.Group>
+      </Modal>
       <BacktestReportModal open={reportOpen} onClose={() => setReportOpen(false)} />
       <TrendDiagnosisModal open={trendOpen} onClose={() => setTrendOpen(false)} />
       {/* 股票 K 线弹窗（点击交易记录/持仓的股票名称打开，带买卖点标注；回测报告/回测全部/震荡测试共用） */}

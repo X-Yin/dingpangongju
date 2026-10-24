@@ -24,6 +24,8 @@ const getBlockCodeStocks = () => {
 };
 
 const groupsFile = path.resolve(__dirname, '../data/training_camp_groups.json');
+// 日常回测策略配置：用户在「策略分类 → 日常回测」弹窗中勾选的策略 id 列表（点该 Tag 时只回测这些策略）
+const dailyStrategiesFile = path.resolve(__dirname, '../data/daily_backtest_strategies.json');
 
 // 回放数据构建缓存：过去交易日的 loadTrainingCampData 构建结果落盘（data/backtest_camp_cache/{date}.json）。
 // 历史日期的回放数据/分时/日K线均不可变，构建结果只依赖自选股与板块清单（签名校验），
@@ -208,6 +210,28 @@ const deleteTrainingCampGroup = (id) => {
   ensureGroupsFile();
   const groups = getTrainingCampGroups().filter(g => g.id !== id);
   fs.writeFileSync(groupsFile, JSON.stringify(groups, null, 2));
+};
+
+// 读取日常回测策略 id 列表（文件不存在/损坏时返回空数组）
+const getDailyBacktestStrategies = () => {
+  try {
+    if (!fs.existsSync(dailyStrategiesFile)) return [];
+    const raw = JSON.parse(fs.readFileSync(dailyStrategiesFile, 'utf-8'));
+    return Array.isArray(raw?.ids) ? raw.ids.filter(id => typeof id === 'string' && id) : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+// 保存日常回测策略 id 列表（去重；空数组表示清空配置）
+const saveDailyBacktestStrategies = (ids) => {
+  const list = Array.isArray(ids)
+    ? Array.from(new Set(ids.filter(id => typeof id === 'string' && id.trim()).map(id => id.trim())))
+    : [];
+  const tmpFile = `${dailyStrategiesFile}.${process.pid}.tmp`;
+  fs.writeFileSync(tmpFile, JSON.stringify({ ids: list, updatedAt: new Date().toISOString() }, null, 2));
+  fs.renameSync(tmpFile, dailyStrategiesFile);
+  return list;
 };
 
 const buildIndexLineMap = (indexTline) => {
@@ -593,6 +617,8 @@ module.exports = {
   getTrainingCampGroups,
   saveTrainingCampGroup,
   deleteTrainingCampGroup,
+  getDailyBacktestStrategies,
+  saveDailyBacktestStrategies,
   prewarmKlineCache,
   calcDailyMaInfo, // 供重点板块策略为非自选股持仓合成卖出诊断所需的日K衍生字段（口径与自选股完全一致）
   getKlineCached,

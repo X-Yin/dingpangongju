@@ -104,7 +104,7 @@ const { getActiveProvider, getHeaders, buildRequestBody } = require('./utils/aiP
 const aiSettings = require('./service/aiSettings');
 const { getMainFundAiSummary, getMainFundAiContext } = require('./service/mainFundAi');
 const { getAllGroups: getAllIndexOverlayGroups, saveGroup: saveIndexOverlayGroup, deleteGroup: deleteIndexOverlayGroup } = require('./service/indexOverlayGroup');
-const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup } = require('./service/trainingCamp');
+const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup, getDailyBacktestStrategies, saveDailyBacktestStrategies } = require('./service/trainingCamp');
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, ''); // 北京今天 YYYYMMDD
 const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, attachHoldingDays, attachBuyDayReturn, getStockRecentReports, queryLiveIndexGate } = require('./service/buySellBacktest');
 const { startRandomSim, getRandomSimStatus, getRandomSimDetail } = require('./service/randomSim');
@@ -2781,6 +2781,34 @@ app.delete('/training_camp/groups/:id', (req, res) => {
   } catch (error) {
     console.error('删除训练营分组失败:', error);
     res.status(500).json({ message: error.message || '删除训练营分组失败' });
+  }
+});
+
+// 训练营 - 日常回测策略配置（用户在前端「策略分类 → 日常回测」弹窗中勾选的策略，点该 Tag 时只回测这些策略）
+app.get('/training_camp/backtest/daily_strategies', (req, res) => {
+  try {
+    res.json({ success: true, ids: getDailyBacktestStrategies() });
+  } catch (error) {
+    console.error('获取日常回测策略失败:', error);
+    res.status(500).json({ success: false, message: error.message || '获取日常回测策略失败' });
+  }
+});
+
+app.post('/training_camp/backtest/daily_strategies', (req, res) => {
+  try {
+    const { ids } = req.body || {};
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ success: false, message: '参数错误：ids 需为策略 id 数组' });
+    }
+    const clean = Array.from(new Set(ids.map(s => String(s).trim()).filter(Boolean)));
+    const unknown = clean.filter(id => !STRATEGIES[id]);
+    if (unknown.length > 0) {
+      return res.status(400).json({ success: false, message: `未知策略: ${unknown.join(', ')}` });
+    }
+    res.json({ success: true, ids: saveDailyBacktestStrategies(clean) });
+  } catch (error) {
+    console.error('保存日常回测策略失败:', error);
+    res.status(500).json({ success: false, message: error.message || '保存日常回测策略失败' });
   }
 });
 
