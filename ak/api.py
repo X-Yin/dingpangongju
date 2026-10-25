@@ -9,7 +9,15 @@ akshare 行情数据接口封装
     python3 api.py stock_changes [类型]   # 盘口异动（默认 大笔买入）
     python3 api.py stock_changes_all     # 盘口异动·全部类型合并
     python3 api.py hot_rank              # 东财股票热度前 100
+    python3 api.py a_spot                # 全部 A 股实时行情（代码/名称/成交额）
+    python3 api.py stock_hist_em [代码]   # 东财个股日K
+    python3 api.py stock_daily_sina [代码] # 新浪个股日K（代码需带 sh/sz 前缀）
+    python3 api.py stock_hist_tx [代码]   # 腾讯个股日K（代码需带 sh/sz 前缀）
     python3 api.py foreign_commodity [代码]  # 外盘期货行情（新浪，如 OIL 布伦特原油 / GC 纽约金）
+
+批量/常驻模式（供 server 轮询兜底使用）：
+    python3 api.py kline_batch '{"platform":"sina","symbols":["sz000001"],"start_date":"20261001","end_date":"20261025"}'
+    python3 api.py kline_worker          # 常驻进程，按行读取上述 JSON 请求并逐行输出结果
 """
 import json
 import math
@@ -142,6 +150,130 @@ def get_hot_rank():
     return pd.DataFrame(rows)
 
 
+def _get_a_spot_sina():
+    """备用数据源：新浪全 A 股实时行情（东财 clist 限频/不可用时使用）
+    返回 代码 / 名称 / 成交额（元）"""
+    url = 'https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData'
+    rows = []
+    page = 1
+    while True:
+        resp = requests.get(url, params={
+            'page': page,
+            'num': 100,
+            'sort': 'symbol',
+            'asc': 1,
+            'node': 'hs_a',
+            'symbol': '',
+            '_s_r_a': 'page',
+        }, timeout=20)
+        data = resp.json()
+        if not data:
+            break
+        for item in data:
+            rows.append({
+                '代码': item.get('code'),
+                '名称': item.get('name'),
+                '成交额': _parse_float(item.get('amount')),
+            })
+        if len(data) < 100:
+            break
+        page += 1
+    return pd.DataFrame(rows)
+
+
+def get_a_spot():
+    """全部 A 股实时行情，返回 代码 / 名称 / 成交额（元）
+    优先东财接口（ak.stock_zh_a_spot_em），失败时回退新浪全 A 行情（同一批数据口径）"""
+    try:
+        df = ak.stock_zh_a_spot_em()
+    except Exception:
+        df = _get_a_spot_sina()
+    if df is None or df.empty:
+        return pd.DataFrame(columns=['代码', '名称', '成交额'])
+    cols = [c for c in ('代码', '名称', '成交额') if c in df.columns]
+    return df[cols]
+
+
+def get_stock_hist_em(symbol="000001", start_date="", end_date=""):
+    """东财个股日K（symbol 为 6 位代码），返回 日期/开盘/收盘/最高/最低/成交量/成交额 等"""
+    return ak.stock_zh_a_hist(symbol=symbol, period="daily", start_date=start_date, end_date=end_date, adjust="")
+
+
+def get_stock_daily_sina(symbol="sz000001", start_date="", end_date=""):
+    """新浪个股日K（前复权，symbol 需带 sh/sz 前缀），返回 date/open/high/low/close/volume/amount 等"""
+    return ak.stock_zh_a_daily(symbol=symbol, start_date=start_date, end_date=end_date, adjust="qfq")
+
+
+def get_stock_hist_tx(symbol="sz000001", start_date="", end_date=""):
+    """腾讯个股日K（symbol 需带 sh/sz 前缀），返回 date/open/close/high/low/volume/amount 等"""
+    return ak.stock_zh_a_hist_tx(symbol=symbol, start_date=start_date, end_date=end_date, adjust="")
+
+
+# 日K批量/常驻模式支持的平台 → 数据源函数
+KLINE_PLATFORMS = {
+    'eastmoney': get_stock_hist_em,
+    'sina': get_stock_daily_sina,
+    'tencent': get_stock_hist_tx,
+}
+
+
+def _normalize_kline(df, platform):
+    """统一为 [{date: 'YYYYMMDD', amount: 成交额(元), close: 收盘价}]，按日期升序"""
+    if df is None or df.empty:
+        return []
+
+    rows = []
+    for item in df.to_dict('records'):
+        if platform == 'eastmoney':
+            raw_date, amount, close = item.get('日期'), item.get('成交额'), item.get('收盘')
+        else:
+            raw_date, amount, close = item.get('date'), item.get('amount'), item.get('close')
+
+        if raw_date is None:
+            continue
+        date_str = str(raw_date).replace('-', '')[:8]
+        if len(date_str) != 8 or not date_str.isdigit():
+            continue
+
+        amount = _parse_float(amount)
+        close = _parse_float(close)
+        rows.append({'date': date_str, 'amount': amount, 'close': close})
+
+    rows.sort(key=lambda row: row['date'])
+    return rows
+
+
+def get_kline_batch(payload):
+    """批量获取指定平台的个股日K（供 server 轮询兜底调用）
+    payload: {platform, symbols, start_date, end_date}
+    返回 {symbol: [{date, amount, close}]}；单只失败返回空数组，不影响其他股票"""
+    from concurrent.futures import ThreadPoolExecutor
+
+    platform = payload.get('platform')
+    symbols = payload.get('symbols') or []
+    start_date = payload.get('start_date') or ''
+    end_date = payload.get('end_date') or ''
+
+    fetcher = KLINE_PLATFORMS.get(platform)
+    if fetcher is None:
+        raise ValueError(f'不支持的平台: {platform}')
+
+    if not symbols:
+        return {}
+
+    def _fetch_one(symbol):
+        try:
+            df = fetcher(symbol=symbol, start_date=start_date, end_date=end_date)
+            return symbol, _normalize_kline(df, platform)
+        except Exception:
+            return symbol, []
+
+    # 单只接口本身是 HTTP 请求，并发拉取可把一批控制在 1s 量级（与轮询配额对齐）
+    with ThreadPoolExecutor(max_workers=min(10, len(symbols))) as pool:
+        results = list(pool.map(_fetch_one, symbols))
+    return {symbol: rows for symbol, rows in results}
+
+
 def get_foreign_commodity(symbol="OIL"):
     """外盘期货实时行情（新浪）
     symbol 可传多个、逗号分隔，取值见 ak.futures_hq_subscribe_exchange_symbol()
@@ -211,6 +343,10 @@ FETCHERS = {
     'stock_changes': get_stock_changes,
     'stock_changes_all': get_stock_changes_all,
     'hot_rank': get_hot_rank,
+    'a_spot': get_a_spot,
+    'stock_hist_em': get_stock_hist_em,
+    'stock_daily_sina': get_stock_daily_sina,
+    'stock_hist_tx': get_stock_hist_tx,
     'foreign_commodity': get_foreign_commodity,
     'stock_news': get_stock_news,
     'stock_zyjs': get_stock_zyjs,
@@ -224,6 +360,9 @@ ARG_NAMES = {
     'cls_news': 'symbol',
     'stock_changes': 'symbol',
     'foreign_commodity': 'symbol',
+    'stock_hist_em': 'symbol',
+    'stock_daily_sina': 'symbol',
+    'stock_hist_tx': 'symbol',
     'stock_news': 'symbol',
     'stock_zyjs': 'symbol',
     'jgcyd': 'symbol',
@@ -255,11 +394,43 @@ def fetch_as_json(cmd, **kwargs):
     raise last_err
 
 
+def _run_kline_worker():
+    """常驻模式：从 stdin 按行读取批量日K请求，逐行输出结果
+    请求: {id, platform, symbols, start_date, end_date}
+    响应: {id, success, data|message}
+    进程内复用 akshare，避免每批请求都重新 import（轮询兜底时节省大量启动开销"""
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+        payload = {}
+        try:
+            payload = json.loads(line)
+            data = get_kline_batch(payload)
+            print(json.dumps({'id': payload.get('id'), 'success': True, 'data': data}, ensure_ascii=False), flush=True)
+        except Exception as e:
+            print(json.dumps({'id': payload.get('id'), 'success': False, 'message': str(e)}, ensure_ascii=False), flush=True)
+
+
 if __name__ == '__main__':
+    # 批量日K：python3 api.py kline_batch '<json>'
+    if len(sys.argv) > 1 and sys.argv[1] == 'kline_batch':
+        try:
+            _payload = json.loads(sys.argv[2]) if len(sys.argv) > 2 else {}
+            print(json.dumps({'success': True, 'data': get_kline_batch(_payload)}, ensure_ascii=False))
+        except Exception as _e:
+            print(json.dumps({'success': False, 'message': str(_e)}, ensure_ascii=False))
+        sys.exit(0)
+
+    # 常驻批量日K worker：python3 api.py kline_worker
+    if len(sys.argv) > 1 and sys.argv[1] == 'kline_worker':
+        _run_kline_worker()
+        sys.exit(0)
+
     if len(sys.argv) < 2 or sys.argv[1] not in FETCHERS:
         print(json.dumps({
             'success': False,
-            'message': '用法: python3 api.py <cls_news|board_change|stock_changes|stock_changes_all|hot_rank|foreign_commodity|stock_news|stock_zyjs|jgcyd|sector_spot|sector_detail> [参数]',
+            'message': '用法: python3 api.py <cls_news|board_change|stock_changes|stock_changes_all|hot_rank|a_spot|stock_hist_em|stock_daily_sina|stock_hist_tx|foreign_commodity|stock_news|stock_zyjs|jgcyd|sector_spot|sector_detail|kline_batch|kline_worker> [参数]',
         }, ensure_ascii=False))
         sys.exit(1)
 

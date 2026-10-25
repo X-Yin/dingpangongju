@@ -46,6 +46,12 @@ const clearDirectories = () => {
     fs.writeFileSync(path.resolve(__dirname, '../src/data/strategy_state.json'), '{}');
     // 清空 strategy_records.json 文件
     fs.writeFileSync(path.resolve(__dirname, '../src/data/strategy_records.json'), '[]');
+    // 清空板块成交量占比分时缓存（每日首次启动时重置，由 block_amount_poll 重新写入）
+    fs.writeFileSync(
+        path.resolve(__dirname, '../src/data/block_volume_ratio_intraday.json'),
+        JSON.stringify({ date: '', updatedAt: '', points: [] }, null, 2),
+        'utf-8'
+    );
 };
 
 clearDirectories();

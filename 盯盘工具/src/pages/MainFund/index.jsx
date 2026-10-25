@@ -7,8 +7,8 @@ import { Tabs, Switch as AntSwitch, Select, Spin, Button, Modal, message, Checkb
 import { RobotOutlined, CopyOutlined, ThunderboltOutlined, LineChartOutlined, AppstoreOutlined, PlusOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import { marked } from 'marked';
 import { local_ip } from '../../constant';
-import FloatingTechEmotion from '../../components/FloatingTechEmotion';
 import BuyPointDiagnosisDrawer from '../../components/FloatingBuyPointDiagnosis';
+import BlockVolumeRatio from '../../components/BlockVolumeRatio';
 import { subscribeBuyPointPush } from '../../utils/buyPointWs';
 import '../../components/FloatingBuyPointDiagnosis/index.scss';
 import './index.scss';
@@ -2040,6 +2040,11 @@ export const MainFundContent = () => {
             children: renderBlockTab(),
           },
           {
+            key: 'blockVolume',
+            label: '板块成交量',
+            children: <BlockVolumeRatio />,
+          },
+          {
             key: 'history',
             label: '历史数据',
             children: renderHistoryContent(),
@@ -2113,7 +2118,6 @@ export const MainFundContent = () => {
 const MainFund = () => (
   <div className="main-fund-page">
     <MainFundContent />
-    <FloatingTechEmotion />
   </div>
 );
 

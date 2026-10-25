@@ -1,0 +1,224 @@
+.block-volume-ratio {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 18px 46px rgba(71, 96, 139, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(22px);
+  overflow: hidden;
+
+  .bvr-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .bvr-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #12213a;
+  }
+
+  .bvr-subtitle {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #71809c;
+  }
+
+  .bvr-sub-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0;
+    flex-shrink: 0;
+  }
+
+  .bvr-error {
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(245, 34, 45, 0.08);
+    color: #cf1322;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .bvr-loading {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bvr-toolbar-label {
+    font-size: 12px;
+    color: #71809c;
+    white-space: nowrap;
+  }
+
+  .bvr-badge {
+    padding: 0 6px;
+    border-radius: 6px;
+    background: rgba(250, 140, 22, 0.12);
+    color: #fa8c16;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 16px;
+  }
+
+  .bvr-daily {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+
+    .bvr-daily-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .bvr-group {
+      & + .bvr-group {
+        margin-top: 16px;
+      }
+
+      .bvr-group-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        font-size: 13px;
+        font-weight: 700;
+
+        &.up {
+          color: #cf1322;
+        }
+
+        &.down {
+          color: #389e0d;
+        }
+      }
+
+      .bvr-group-count {
+        padding: 0 6px;
+        border-radius: 10px;
+        background: rgba(148, 163, 184, 0.16);
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 600;
+      }
+    }
+
+    .bvr-line-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      padding-right: 4px;
+
+      @media (max-width: 1400px) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      @media (max-width: 1000px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .bvr-line-card {
+      display: flex;
+      flex-direction: column;
+      background-color: #fafafa;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+
+      .bvr-line-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 12px;
+        background-color: #f3f4f6;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .bvr-line-card-name {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #1f2937;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .bvr-line-card-value {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1f2937;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .bvr-line-card-change {
+        font-size: 12px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+
+        &.up {
+          color: #cf1322;
+        }
+
+        &.down {
+          color: #389e0d;
+        }
+      }
+
+      .bvr-line-card-body {
+        position: relative;
+        height: 220px;
+        padding: 8px;
+      }
+    }
+  }
+
+  .bvr-intraday {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    .bvr-intraday-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .bvr-chart-body {
+      flex: 1;
+      min-height: 360px;
+      position: relative;
+    }
+  }
+}

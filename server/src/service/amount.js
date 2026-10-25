@@ -105,6 +105,38 @@ const fetchAmountDiffFromApi = async () => {
     };
 };
 
+// 从 Sina 接口直接获取当日全市场总成交额（沪+深+北，单位：亿）
+// 用于板块成交量占比的实时分母；30 秒内存缓存，避免同一时刻多个接口重复请求
+let _marketTotalCache = { value: null, ts: 0 };
+const fetchMarketTotalAmountYi = async ({ force = false } = {}) => {
+    if (!force && _marketTotalCache.value !== null && Date.now() - _marketTotalCache.ts < 30 * 1000) {
+        return _marketTotalCache.value;
+    }
+
+    const callback = genCallback();
+    const url = `https://gu.sina.cn/hq/api/openapi.php/ZhenMinAmtService.getTodayDataForGraph?&callback=${callback}`;
+    const { data } = await axios.get(url, {
+        headers: { 'User-Agent': UA, 'Referer': 'https://gu.sina.cn/' },
+        timeout: 15000,
+        responseType: 'text',
+        transformResponse: [(d) => d],
+    });
+    const json = parseJsonp(data);
+    const latest = json?.result?.data?.latest_data;
+    if (!latest) {
+        throw new Error('全市场成交额接口返回数据异常');
+    }
+
+    const total = Number(latest.sh_amount) + Number(latest.sz_amount) + Number(latest.bjs_amount);
+    if (!isFinite(total) || total <= 0) {
+        throw new Error('全市场成交额数据异常');
+    }
+
+    const valueYi = total / 1e8;
+    _marketTotalCache = { value: valueYi, ts: Date.now() };
+    return valueYi;
+};
+
 // 从带单位的字符串（如 "-873.55亿" / "+3216.55亿" / "2.68万亿" / "1234.56万"）中解析出数值（单位：亿）
 const parseAmountToYi = (str) => {
     if (!str) return 0;
@@ -466,3 +498,4 @@ exports.getAmountDayHistory = getAmountDayHistory;
 exports.updateAmountDayHistory = updateAmountDayHistory;
 exports.scheduleAmountDayHistory = scheduleAmountDayHistory;
 exports.parseAmountToYi = parseAmountToYi;
+exports.fetchMarketTotalAmountYi = fetchMarketTotalAmountYi;

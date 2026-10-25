@@ -1,10 +1,9 @@
-const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
 const puppeteer = require('puppeteer');
 const { techBlockMap } = require('../../constant/block_money');
-const { getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr } = require('../../utils');
+const { StockKlineTempCache, fetchStockKlineCached } = require('../stockKlineCache');
 
 const OUTPUT_FILE = path.resolve(__dirname, 'block_amount_money_result.json');
 const STOCK_CODE_FILE = path.resolve(__dirname, 'all_tech_stock_code.json');
@@ -175,58 +174,6 @@ const fetchBlockStocks = async (blockCode) => {
     return filtered;
 };
 
-const fetchStockKline = async (code, startDate) => {
-    if (!code) {
-        console.error('股票代码为空');
-        return [];
-    }
-    const codeStr = String(code);
-    const pureCode = codeStr.replace(/^[a-zA-Z]+/, '');
-
-    const start = dayjs(startDate);
-    const end = dayjs();
-    const daysDiff = end.diff(start, 'day');
-    const limit = Math.max(daysDiff + 60, 120);
-
-    try {
-        const url = getThsKlineUrl();
-        const headers = getThsKlineHeaders();
-        const requestBody = buildThsKlineRequestBody(pureCode, limit);
-
-        const response = await axios.post(url, requestBody, { headers });
-
-        if (response.data.status_code !== 0) {
-            console.error(`同花顺API返回错误状态码: ${response.data.status_code}`);
-            return [];
-        }
-
-        const quoteData = response.data.data.quote_data;
-        if (!quoteData || quoteData.length === 0) {
-            return [];
-        }
-
-        const valueArray = quoteData[0].value;
-        if (!valueArray || !Array.isArray(valueArray) || valueArray.length === 0) {
-            return [];
-        }
-
-        const result = [];
-        for (let i = 0; i < valueArray.length; i++) {
-            const item = valueArray[i];
-            if (item.length < 7) continue;
-            result.push({
-                date: timestampToDateStr(item[0]),
-                amount: item[6],
-            });
-        }
-
-        return result;
-    } catch (error) {
-        console.error(`获取股票 ${code} K线数据失败:`, error.message);
-        return [];
-    }
-};
-
 const generateDateRange = (startDate, endDate) => {
     console.log(`生成日期范围: ${startDate} ~ ${endDate}`);
     const dates = [];
@@ -313,35 +260,44 @@ const run = async (startDate = defaultStartDate, endDate = defaultEndDate, needC
     }
 
     const techTotalMoneyByDate = {};
+    // 临时缓存：同一只股票在本轮刷新中只请求一次，刷新结束后删除临时目录
+    const stockCache = new StockKlineTempCache('tech_block');
 
-    for (let i = 0; i < stocksArray.length; i++) {
-        const stock = stocksArray[i];
-        console.log(`\n  获取股票 ${i + 1}/${stocksArray.length}: ${stock.code} ${stock.name}`);
+    try {
+        for (let i = 0; i < stocksArray.length; i++) {
+            const stock = stocksArray[i];
+            console.log(`\n  获取股票 ${i + 1}/${stocksArray.length}: ${stock.code} ${stock.name}`);
 
-        const klineData = await fetchStockKline(stock.code, startDate);
+            const klineData = await fetchStockKlineCached(stockCache, stock.code, startDate);
 
-        for (const item of klineData) {
-            const date = item.date;
-            const amount = parseFloat(item.amount);
-            if (date && !isNaN(amount) && dateRange.includes(date)) {
-                techTotalMoneyByDate[date] = (techTotalMoneyByDate[date] || 0) + amount;
+            for (const item of klineData) {
+                const date = item.date;
+                const amount = parseFloat(item.amount);
+                if (date && !isNaN(amount) && dateRange.includes(date)) {
+                    techTotalMoneyByDate[date] = (techTotalMoneyByDate[date] || 0) + amount;
+                }
             }
+
+            await sleep(100);
         }
 
-        await sleep(100);
+        console.log(dateRange);
+        const finalResult = dateRange
+            .filter(date => techTotalMoneyByDate[date] !== undefined)
+            .map(date => ({
+                date,
+                techTotalMoney: techTotalMoneyByDate[date],
+            }));
+
+        fs.writeFileSync(OUTPUT_FILE, JSON.stringify(finalResult, null, 2), 'utf-8');
+        console.log(`\n===== 数据已写入: ${OUTPUT_FILE} =====`);
+        console.log(`共 ${finalResult.length} 天数据`);
+    } finally {
+        const stats = stockCache.getStats();
+        console.log(`股票缓存命中率: ${(stats.hitRate * 100).toFixed(2)}% (命中 ${stats.hits}/${stats.total})`);
+        stockCache.cleanup();
+        console.log('股票临时缓存已清理');
     }
-
-    console.log(dateRange);
-    const finalResult = dateRange
-        .filter(date => techTotalMoneyByDate[date] !== undefined)
-        .map(date => ({
-            date,
-            techTotalMoney: techTotalMoneyByDate[date],
-        }));
-
-    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(finalResult, null, 2), 'utf-8');
-    console.log(`\n===== 数据已写入: ${OUTPUT_FILE} =====`);
-    console.log(`共 ${finalResult.length} 天数据`);
 };
 
 const args = process.argv.slice(2);

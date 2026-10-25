@@ -9,11 +9,10 @@
 // 用法：
 //   node category_amount_money.js              计算全部分类
 //   node category_amount_money.js 传媒 农业     只计算指定分类
-const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
-const { getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr } = require('../../utils');
+const { StockKlineTempCache, fetchStockKlineCached } = require('../stockKlineCache');
 
 const OUTPUT_FILE = path.resolve(__dirname, 'category_amount_money_result.json');
 const BLOCK_OUTPUT_FILE = path.resolve(__dirname, 'category_block_amount_result.json');
@@ -28,60 +27,8 @@ const CATEGORY_NAMES = ['传媒', '农业', '消费', '医药', '电力', '锂�
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// 获取单只股票的日K成交额与收盘价（与 科技板块拥挤度计算/block_amount_money.js 同一数据源）
-const fetchStockKline = async (code, startDate) => {
-    if (!code) return [];
-
-    const codeStr = String(code);
-    const pureCode = codeStr.replace(/^[a-zA-Z]+/, '');
-
-    const start = dayjs(startDate);
-    const end = dayjs();
-    const daysDiff = end.diff(start, 'day');
-    const limit = Math.max(daysDiff + 60, 120);
-
-    try {
-        const url = getThsKlineUrl();
-        const headers = getThsKlineHeaders();
-        const requestBody = buildThsKlineRequestBody(pureCode, limit);
-
-        const response = await axios.post(url, requestBody, { headers });
-
-        if (response.data.status_code !== 0) {
-            console.error(`同花顺API返回错误状态码: ${response.data.status_code}`);
-            return [];
-        }
-
-        const quoteData = response.data.data.quote_data;
-        if (!quoteData || quoteData.length === 0) {
-            return [];
-        }
-
-        const valueArray = quoteData[0].value;
-        if (!valueArray || !Array.isArray(valueArray) || valueArray.length === 0) {
-            return [];
-        }
-
-        const result = [];
-        for (let i = 0; i < valueArray.length; i++) {
-            const item = valueArray[i];
-            if (item.length < 7) continue;
-            result.push({
-                date: timestampToDateStr(item[0]),
-                amount: item[6],
-                close: item[4], // 收盘价，用于计算子板块近5日涨幅
-            });
-        }
-
-        return result;
-    } catch (error) {
-        console.error(`获取股票 ${code} K线数据失败:`, error.message);
-        return [];
-    }
-};
-
 // 拉取一个分类下所有股票并按天汇总成交额；同时返回每只股票的按天成交额与收盘价明细，供子板块拆分复用
-const fetchCategoryMoney = async (categoryName, stocks, startDate, endDate) => {
+const fetchCategoryMoney = async (categoryName, stocks, startDate, endDate, stockCache) => {
     const moneyByDate = {};
     const stockAmounts = {}; // code → { date: amount }
     const stockCloses = {}; // code → { date: close }
@@ -91,7 +38,7 @@ const fetchCategoryMoney = async (categoryName, stocks, startDate, endDate) => {
         const stock = stocks[i];
         console.log(`  [${categoryName}] 获取股票 ${i + 1}/${stocks.length}: ${stock.code} ${stock.name}`);
 
-        const klineData = await fetchStockKline(stock.code, startDate);
+        const klineData = await fetchStockKlineCached(stockCache, stock.code, startDate);
 
         const amountsByDate = {};
         const closesByDate = {};
@@ -183,42 +130,52 @@ const run = async (startDate = defaultStartDate, endDate = defaultEndDate, categ
         }
     }
 
-    for (const name of categoryNames) {
-        const constituentsFile = path.join(CONSTITUENTS_DIR, `${name}.json`);
-        if (!fs.existsSync(constituentsFile)) {
-            console.warn(`[warn] 成分股文件不存在，跳过分类「${name}」: ${constituentsFile}`);
-            continue;
+    // 临时缓存：多个分类存在大量重复成分股，同一只股票本轮只请求一次，刷新结束后删除临时目录
+    const stockCache = new StockKlineTempCache('category_amount');
+
+    try {
+        for (const name of categoryNames) {
+            const constituentsFile = path.join(CONSTITUENTS_DIR, `${name}.json`);
+            if (!fs.existsSync(constituentsFile)) {
+                console.warn(`[warn] 成分股文件不存在，跳过分类「${name}」: ${constituentsFile}`);
+                continue;
+            }
+
+            const stocks = JSON.parse(fs.readFileSync(constituentsFile, 'utf-8'));
+            console.log(`\n--- 分类：${name}（${stocks.length} 只股票）---`);
+
+            const { rows, stockAmounts, stockCloses } = await fetchCategoryMoney(name, stocks, startDate, endDate, stockCache);
+            result[name] = rows;
+
+            fs.writeFileSync(OUTPUT_FILE, JSON.stringify(result, null, 2), 'utf-8');
+            console.log(`[完成] ${name}: ${rows.length} 天数据已写入`);
+
+            // 若存在板块明细文件，则按子板块拆分成交额（复用上面已拉取的股票日K数据，不重复请求）
+            const blocksFile = path.join(CONSTITUENTS_DIR, `${name}_blocks.json`);
+            if (fs.existsSync(blocksFile)) {
+                const blocksMap = JSON.parse(fs.readFileSync(blocksFile, 'utf-8'));
+                const blockRows = Object.entries(blocksMap).map(([blockName, blockStocks]) => {
+                    const moneyRows = sumBlockMoney(blockStocks, stockAmounts);
+                    const gain5ByDate = computeBlockGain5(blockStocks, stockCloses);
+                    return {
+                        blockName,
+                        data: moneyRows.map((row) => ({
+                            ...row,
+                            gain5: gain5ByDate[row.date] !== undefined ? Number(gain5ByDate[row.date].toFixed(4)) : null,
+                        })),
+                    };
+                });
+                blockResult[name] = blockRows;
+
+                fs.writeFileSync(BLOCK_OUTPUT_FILE, JSON.stringify(blockResult, null, 2), 'utf-8');
+                console.log(`[完成] ${name} 子板块拆分（${blockRows.length} 个板块）已写入`);
+            }
         }
-
-        const stocks = JSON.parse(fs.readFileSync(constituentsFile, 'utf-8'));
-        console.log(`\n--- 分类：${name}（${stocks.length} 只股票）---`);
-
-        const { rows, stockAmounts, stockCloses } = await fetchCategoryMoney(name, stocks, startDate, endDate);
-        result[name] = rows;
-
-        fs.writeFileSync(OUTPUT_FILE, JSON.stringify(result, null, 2), 'utf-8');
-        console.log(`[完成] ${name}: ${rows.length} 天数据已写入`);
-
-        // 若存在板块明细文件，则按子板块拆分成交额（复用上面已拉取的股票日K数据，不重复请求）
-        const blocksFile = path.join(CONSTITUENTS_DIR, `${name}_blocks.json`);
-        if (fs.existsSync(blocksFile)) {
-            const blocksMap = JSON.parse(fs.readFileSync(blocksFile, 'utf-8'));
-            const blockRows = Object.entries(blocksMap).map(([blockName, blockStocks]) => {
-                const moneyRows = sumBlockMoney(blockStocks, stockAmounts);
-                const gain5ByDate = computeBlockGain5(blockStocks, stockCloses);
-                return {
-                    blockName,
-                    data: moneyRows.map((row) => ({
-                        ...row,
-                        gain5: gain5ByDate[row.date] !== undefined ? Number(gain5ByDate[row.date].toFixed(4)) : null,
-                    })),
-                };
-            });
-            blockResult[name] = blockRows;
-
-            fs.writeFileSync(BLOCK_OUTPUT_FILE, JSON.stringify(blockResult, null, 2), 'utf-8');
-            console.log(`[完成] ${name} 子板块拆分（${blockRows.length} 个板块）已写入`);
-        }
+    } finally {
+        const stats = stockCache.getStats();
+        console.log(`股票缓存命中率: ${(stats.hitRate * 100).toFixed(2)}% (命中 ${stats.hits}/${stats.total})`);
+        stockCache.cleanup();
+        console.log('股票临时缓存已清理');
     }
 
     ratioCache = null; // 数据已更新，清空内存缓存，下次请求重新计算并缓存
@@ -261,8 +218,9 @@ const buildRatioRows = (moneyRows, totalAmountMap, start, end) => {
 };
 
 // 读取成交额数据并计算占比；子板块拆分数据以「{分类}_blocks」键附加在返回值中
-const getBlockCategoryRatio = (startDate, endDate) => {
-    const cacheKey = `${startDate || ''}|${endDate || ''}`;
+// todayTotalAmountYi：当日全市场总成交额（亿），由接口实时获取；传入后覆盖 amount_day_history 中的当日值
+const getBlockCategoryRatio = (startDate, endDate, todayTotalAmountYi) => {
+    const cacheKey = `${startDate || ''}|${endDate || ''}|${todayTotalAmountYi || ''}`;
     if (ratioCache && ratioCache.key === cacheKey) {
         return ratioCache.data;
     }
@@ -282,6 +240,11 @@ const getBlockCategoryRatio = (startDate, endDate) => {
         if (item && item.date && item.totalAmount !== undefined && item.totalAmount !== null) {
             totalAmountMap.set(String(item.date), Number(item.totalAmount));
         }
+    }
+
+    // 当日分母改用接口实时获取的全市场成交额
+    if (isFinite(Number(todayTotalAmountYi)) && Number(todayTotalAmountYi) > 0) {
+        totalAmountMap.set(dayjs().format('YYYYMMDD'), Number(todayTotalAmountYi));
     }
 
     const start = startDate ? String(startDate).replace(/-/g, '') : null;

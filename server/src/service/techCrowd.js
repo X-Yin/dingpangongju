@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getRZRQData } = require('./rzrq');
+const { fetchMarketTotalAmountYi } = require('./amount');
 const dayjs = require('dayjs');
 
 /**
@@ -246,7 +247,8 @@ const calculateTechCrowdingSeries = (
 };
 
 // 科技板块成交量占比（仅读本地缓存文件计算，不含融资融券实时数据，响应快，供拥挤度 tab 优先展示）
-const getTechVolumeRatio = (startDate, endDate) => {
+// todayTotalAmountYi：当日全市场总成交额（亿），由接口实时获取；传入后覆盖 amount_day_history 中的当日值
+const getTechVolumeRatio = (startDate, endDate, todayTotalAmountYi) => {
     const amountDayHistoryPath = path.resolve(__dirname, '../data/amount_day_history.json');
     const techMoneyPath = path.resolve(__dirname, './科技板块拥挤度计算/block_amount_money_result.json');
 
@@ -265,6 +267,11 @@ const getTechVolumeRatio = (startDate, endDate) => {
         if (item && item.date && item.totalAmount !== undefined && item.totalAmount !== null) {
             totalAmountMap.set(String(item.date), Number(item.totalAmount));
         }
+    }
+
+    // 当日分母改用接口实时获取的全市场成交额
+    if (isFinite(Number(todayTotalAmountYi)) && Number(todayTotalAmountYi) > 0) {
+        totalAmountMap.set(dayjs().format('YYYYMMDD'), Number(todayTotalAmountYi));
     }
 
     const techMoneyMap = new Map();
@@ -307,7 +314,12 @@ const getTechVolumeRatio = (startDate, endDate) => {
 };
 
 const getTechBlockCrowd = async (startDate, endDate) => {
-    const techRatioList = getTechVolumeRatio(startDate, endDate);
+    // 当日分母直接从接口获取全市场成交额（实时），历史日期仍用 amount_day_history
+    const todayTotalAmountYi = await fetchMarketTotalAmountYi().catch((e) => {
+        console.error('获取全市场成交额失败，回退本地缓存:', e.message);
+        return null;
+    });
+    const techRatioList = getTechVolumeRatio(startDate, endDate, todayTotalAmountYi);
 
     if (techRatioList.length === 0) {
         return [];

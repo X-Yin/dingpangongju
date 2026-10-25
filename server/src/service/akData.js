@@ -15,6 +15,7 @@ const CACHE_TTL = {
   stock_changes: 10 * 1000,
   stock_changes_all: 10 * 1000,
   hot_rank: 5 * 60 * 1000,
+  a_spot: 30 * 1000,
   foreign_commodity: 10 * 1000,
   stock_news: 5 * 60 * 1000,
   stock_zyjs: 60 * 60 * 1000,
@@ -123,6 +124,8 @@ const getSectorSpot = (indicator) => getAkData('sector_spot', indicator);
 const getSectorDetail = (sector) => getAkData('sector_detail', sector);
 // 外盘期货实时行情（新浪，symbol 见 ak.futures_hq_subscribe_exchange_symbol，可逗号分隔多个）
 const getForeignCommodity = (symbol) => getAkData('foreign_commodity', symbol);
+// 全部 A 股实时行情（东财，代码/名称/成交额），用于计算板块成交量占比
+const getASpot = () => getAkData('a_spot');
 
 module.exports = {
   getClsNews,
@@ -134,4 +137,5 @@ module.exports = {
   getSectorSpot,
   getSectorDetail,
   getForeignCommodity,
+  getASpot,
 };

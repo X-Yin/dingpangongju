@@ -22,7 +22,7 @@ const { getJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
 const { getKaiPanZhuDongData, getKaiPanHighChangeStocks } = require('./service/kaipanzhudong');
 const { getRiHanData, refreshRiHanData } = require('./service/rihan');
 const { getKaiPanXiaCuoData } = require('./service/kaipanxiacuo');
-const { getAmountHistory, getAmountDayHistory, updateAmountDayHistory } = require('./service/amount');
+const { getAmountHistory, getAmountDayHistory, updateAmountDayHistory, fetchMarketTotalAmountYi } = require('./service/amount');
 const { getAllEmotionData, getAllIndexKlineData, updateCurrentEmotionData, updateCurrentTechIndexData, getAllTechIndexData, getTechEmotionIntraday, getLatestTechEmotion, forceRecordTechEmotionIntraday, markTechIndexIce, getTechEmotionIntraday5Day } = require('./service/emotion');
 const { getMainProblem, writeMainProblem, updateMainProblemSeq, delMainProblem, updatePersonalSugg } = require('./service/mainProblem');
 const { getOpRecord, updateOpRecord } = require('./service/opRecord');
@@ -90,6 +90,7 @@ const { runQuantAnalysis, getQuantAnalysisData, analyzeSingleStock } = require('
 const { getRZRQData } = require('./service/rzrq');
 const { getTechBlockCrowd, getTechVolumeRatio } = require('./service/techCrowd');
 const { getBlockCategoryRatio, run: runCategoryAmount, categoryRatioStartDate, categoryRatioEndDate } = require('./service/板块成交量占比计算/category_amount_money');
+const { getBlockVolumeRatioHistory, getIntradayData } = require('./service/blockVolumeRatio');
 const { getRiskScoreHistory, calculateAndSaveRiskScore } = require('./service/marketRiskScore');
 const { analyzeMonitorStocks } = require('./service/strongAndWeakStock');
 const { getAvailableDates, getSnapshotData, getLatestSnapshotDate, saveDailySnapshots, aggregateByInterval } = require('./service/fundSnapshot');
@@ -1802,10 +1803,12 @@ app.get('/tech_block_crowd', async (req, res) => {
 });
 
 // 科技板块成交量占比（仅读缓存文件，不含融资融券实时计算，供拥挤度 tab 优先展示）
-app.get('/tech_block_ratio', (req, res) => {
+// 当日分母直接从接口获取全市场成交额，历史日期仍用 amount_day_history
+app.get('/tech_block_ratio', async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const result = getTechVolumeRatio(startDate, endDate);
+    const liveTotal = await fetchMarketTotalAmountYi().catch(() => null);
+    const result = getTechVolumeRatio(startDate, endDate, liveTotal);
     res.json(result);
   } catch (error) {
     console.error('获取科技板块成交量占比失败:', error);
@@ -1826,10 +1829,12 @@ app.get('/refresh_tech_block_crowd', async (req, res) => {
 });
 
 // 获取各板块（传媒/农业/消费/医药/电力）成交量占比
-app.get('/block_category_ratio', (req, res) => {
+// 当日分母直接从接口获取全市场成交额，历史日期仍用 amount_day_history
+app.get('/block_category_ratio', async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const result = getBlockCategoryRatio(startDate, endDate);
+    const liveTotal = await fetchMarketTotalAmountYi().catch(() => null);
+    const result = getBlockCategoryRatio(startDate, endDate, liveTotal);
     res.json(result);
   } catch (error) {
     console.error('获取板块成交量占比失败:', error);
@@ -1852,6 +1857,27 @@ app.get('/refresh_block_category_ratio', async (req, res) => {
   } catch (error) {
     console.error('刷新板块成交额数据失败:', error);
     res.status(500).json({ success: false, message: error.message || '刷新失败' });
+  }
+});
+
+// 板块成交量占比：各板块按日历史占比 + 当日实时占比（含科技成交量占比，不含拥挤度）
+app.get('/block_volume_ratio_history', async (req, res) => {
+  try {
+    const result = await getBlockVolumeRatioHistory();
+    res.json(result);
+  } catch (error) {
+    console.error('获取板块历史成交量占比失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 板块成交量占比：分时缓存（block_amount_poll 每 10 分钟写入一个时点）
+app.get('/block_volume_ratio_intraday', (req, res) => {
+  try {
+    res.json(getIntradayData());
+  } catch (error) {
+    console.error('获取板块成交量占比分时数据失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
   }
 });
 

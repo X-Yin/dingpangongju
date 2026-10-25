@@ -10,6 +10,8 @@
     "dev": "node script/dev-with-clear.js",
     "poll": "node src/poll.js",
     "poll-all": "node src/poll.js --all",
+    "block_amount_poll": "node src/block_amount_poll.js",
+    "block_amount_poll:now": "node src/block_amount_poll.js --now",
     "start": "npm run clear & npm run dev",
     "git": "node script/git-push.js",
     "tech_block_crowd_refresh": "node src/service/科技板块拥挤度计算/block_amount_money.js --reset",
