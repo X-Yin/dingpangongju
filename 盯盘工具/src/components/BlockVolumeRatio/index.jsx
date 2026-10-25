@@ -204,56 +204,77 @@ const BlockVolumeRatio = () => {
     return intradayAvailableNames.filter((name) => selected.includes(name));
   }, [selected, intradayAvailableNames]);
 
-  const chartData = useMemo(() => {
+  // 每个板块「最新日 vs 上一日」的占比变化：与日成交量占比使用同一口径
+  const latestChangeByName = useMemo(() => {
+    const map = new Map();
+    for (const block of history.blocks) {
+      const points = block.points || [];
+      const latest = points[points.length - 1];
+      const prev = points[points.length - 2];
+      const change = latest && prev
+        && isFinite(Number(latest.ratio)) && isFinite(Number(prev.ratio))
+        ? Number(latest.ratio) - Number(prev.ratio)
+        : null;
+      map.set(block.name, change);
+    }
+    return map;
+  }, [history]);
+
+  // 分时图：每个板块一张独立折线图，涨跌分组与日成交量占比保持一致
+  const intradayChartItems = useMemo(() => {
     const labels = intraday.points.map((point) => formatTime(point.time));
-    const datasets = intradaySelected.map((name) => {
+
+    return intradaySelected.map((name) => {
       const index = intradayAvailableNames.indexOf(name);
       const color = COLORS[index >= 0 ? index % COLORS.length : 0];
+      const values = intraday.points.map((point) => {
+        const value = point.ratios ? point.ratios[name] : null;
+        return value === null || value === undefined || !isFinite(Number(value)) ? null : Number(value);
+      });
+
+      let latest = null;
+      for (let i = values.length - 1; i >= 0; i -= 1) {
+        if (values[i] !== null) {
+          latest = values[i];
+          break;
+        }
+      }
+
+      const change = latestChangeByName.get(name);
       return {
-        label: name,
-        data: intraday.points.map((point) => {
-          const value = point.ratios ? point.ratios[name] : null;
-          return value === null || value === undefined ? null : Number(value);
-        }),
-        borderColor: color,
-        backgroundColor: color,
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 3,
-        tension: 0.3,
-        spanGaps: true,
-        fill: false,
+        name,
+        color,
+        latest: latest !== null ? { ratio: latest } : null,
+        change: change === undefined ? null : change,
+        data: {
+          labels,
+          datasets: [
+            {
+              label: name,
+              data: values,
+              borderColor: color,
+              backgroundColor: `${color}1f`,
+              borderWidth: 2,
+              fill: true,
+              tension: 0.3,
+              spanGaps: true,
+              pointRadius: 0,
+              pointHoverRadius: 4,
+            },
+          ],
+        },
       };
     });
-    return { labels, datasets };
-  }, [intraday, intradaySelected, intradayAvailableNames]);
+  }, [intraday, intradaySelected, intradayAvailableNames, latestChangeByName]);
 
-  const chartOptions = useMemo(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: { color: '#475569', boxWidth: 10, usePointStyle: true, pointStyle: 'circle' },
-      },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y === null ? '--' : `${ctx.parsed.y.toFixed(2)}%`}`,
-        },
-      },
-    },
-    scales: {
-      x: {
-        grid: { display: false },
-        ticks: { color: '#94a3b8', maxTicksLimit: 12, maxRotation: 0 },
-      },
-      y: {
-        grid: { color: 'rgba(148, 163, 184, 0.18)' },
-        ticks: { color: '#94a3b8', callback: (value) => `${value}%` },
-      },
-    },
-  }), []);
+  // 按「相比上一日占比变化」拆分：提升（含持平/无对比）与下降
+  const intradayUpItems = useMemo(() => intradayChartItems
+    .filter((item) => item.change === null || item.change >= 0)
+    .sort((a, b) => (b.change || 0) - (a.change || 0)), [intradayChartItems]);
+
+  const intradayDownItems = useMemo(() => intradayChartItems
+    .filter((item) => item.change !== null && item.change < 0)
+    .sort((a, b) => a.change - b.change), [intradayChartItems]);
 
   const historySubtitle = useMemo(() => {
     if (subTab !== 'daily') {
@@ -404,13 +425,36 @@ const BlockVolumeRatio = () => {
               placeholder="选择板块"
             />
           </div>
-          <div className="bvr-chart-body">
-            {intraday.points.length === 0 ? (
-              <Empty description="暂无分时数据，交易时段内每 10 分钟自动采集一次" />
-            ) : (
-              <Line data={chartData} options={chartOptions} />
-            )}
-          </div>
+          {intraday.points.length === 0 ? (
+            <Empty description="暂无分时数据，交易时段内每 10 分钟自动采集一次" />
+          ) : intradayChartItems.length === 0 ? (
+            <Empty description="请选择要展示的板块" style={{ marginTop: 48 }} />
+          ) : (
+            <>
+              {intradayUpItems.length > 0 && (
+                <div className="bvr-group">
+                  <div className="bvr-group-title up">
+                    相比上一日占比提升
+                    <span className="bvr-group-count">{intradayUpItems.length}</span>
+                  </div>
+                  <div className="bvr-line-grid">
+                    {intradayUpItems.map(renderLineCard)}
+                  </div>
+                </div>
+              )}
+              {intradayDownItems.length > 0 && (
+                <div className="bvr-group">
+                  <div className="bvr-group-title down">
+                    相比上一日占比下降
+                    <span className="bvr-group-count">{intradayDownItems.length}</span>
+                  </div>
+                  <div className="bvr-line-grid">
+                    {intradayDownItems.map(renderLineCard)}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>

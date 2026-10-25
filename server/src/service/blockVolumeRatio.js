@@ -2,7 +2,7 @@
 // - 主路径 computeFromSpot：一次获取全部 A 股实时行情（东财，含每只股票当日成交额），
 //   按成分股 code 匹配成交额后分别汇总各分类 + 科技板块，除以全 A 股成交额合计得到占比
 // - 兜底路径 computeByPolling：东财、新浪的全量行情接口都不可用时，按平台配额逐只请求日K
-//   （同花顺 20 / 财联社 10 / 新浪 10 / 东财 15 / 腾讯 5，每秒 60 只），
+//   （同花顺 45 / 财联社 45，每秒 90 只），
 //   某只股票主平台失败时按 同花顺 → 财联社 兜底；请求结果写入临时缓存目录，结束后删除
 // - 结果按 10 分钟粒度追加写入 src/data/block_volume_ratio_intraday.json，供前端分时图使用
 const fs = require('fs');
@@ -16,7 +16,6 @@ const { StockKlineTempCache } = require('./stockKlineCache');
 const {
     fetchKlineBatch,
     fetchSingleKline,
-    closeKlineWorkers,
     PLATFORM_NAMES,
 } = require('./stockKlinePlatforms');
 const { isTradingDay } = require('../utils');
@@ -28,15 +27,12 @@ const AMOUNT_DAY_HISTORY_FILE = path.resolve(__dirname, '../data/amount_day_hist
 
 const TECH_GROUP_NAME = '科技';
 
-// 兜底轮询：每秒 60 只，按平台配额分配
-const ROUND_SIZE = 60;
+// 兜底轮询：每秒 90 只，按平台配额分配
+const ROUND_SIZE = 90;
 const ROUND_INTERVAL = 1000;
 const PLATFORM_QUOTAS = [
-    ['ths', 20],   // 同花顺
-    ['cls', 10],   // 财联社
-    ['sina', 10],  // 新浪
-    ['em', 15],    // 东财
-    ['tx', 5],     // 腾讯
+    ['ths', 45],   // 同花顺
+    ['cls', 45],   // 财联社
 ];
 // 平台连续失败达到该轮数后，本次轮询不再尝试（其股票直接走兜底链）
 const PLATFORM_DOWN_THRESHOLD = 3;
@@ -66,7 +62,7 @@ const runWithConcurrency = async (items, concurrency, fn) => {
     await Promise.all(workers);
 };
 
-// 构建一轮 60 个平台槽位：按配额均匀穿插，避免同一平台连续扎堆
+// 构建一轮 90 个平台槽位：按配额均匀穿插，避免同一平台连续扎堆
 const buildRoundPattern = () => {
     const buckets = PLATFORM_QUOTAS.map(([name, quota]) => ({ name, quota, used: 0 }));
     const pattern = [];
@@ -111,7 +107,7 @@ const buildGroups = () => {
 };
 
 // 主路径：用全 A 股实时行情（每只股票当日成交额）按成分股 code 汇总
-// onProgress: ({ done, total, matched, hitRate, current, label }) => void
+// onProgress: ({ done, total, matched, current, detail }) => void
 const computeFromSpot = (groups, spot, onProgress) => {
     // 代码 → 当日成交额（元）；同时累加得到全市场成交额作为分母
     const amountByCode = new Map();
@@ -151,9 +147,7 @@ const computeFromSpot = (groups, spot, onProgress) => {
             onProgress({
                 done,
                 total: totalTasks,
-                matched,
-                hitRate: totalTasks > 0 ? matched / totalTasks : 0,
-                label: '成分股匹配率',
+                detail: `成分股匹配 ${matched}/${totalTasks}`,
                 current: group.name,
             });
         }
@@ -203,7 +197,7 @@ const computeByPolling = async (groups, { onProgress } = {}) => {
     const pattern = buildRoundPattern();
 
     // 平台连续失败计数（达到阈值后本轮询不再使用该平台）
-    const health = { ths: 0, cls: 0, sina: 0, em: 0, tx: 0 };
+    const health = { ths: 0, cls: 0 };
     // 代码 → 最新日K日期（用于确定目标交易日）
     const dateCounter = new Map();
 
@@ -217,9 +211,8 @@ const computeByPolling = async (groups, { onProgress } = {}) => {
         onProgress({
             done,
             total: totalEntries,
-            // 去重后实际请求数 / 已覆盖条目数：重复成分股走临时缓存即命中
-            hitRate: done > 0 ? (done - fetched) / done : 0,
-            label: '缓存命中率',
+            // 同一只股票在多个板块重复出现时只请求一次，重复条目数即为免请求数
+            detail: `已请求 ${fetched}/${codes.length} 只（重复条目免请求 ${Math.max(done - fetched, 0)} 条）`,
             current: '多平台兜底轮询',
         });
     };
@@ -390,14 +383,15 @@ const computeByPolling = async (groups, { onProgress } = {}) => {
         const stats = {
             mode: 'poll',
             targetDate,
-            cacheHits: Math.max(done - fetched, 0),
-            cacheMisses: fetched,
-            hitRate: done > 0 ? Math.max(done - fetched, 0) / done : 0,
+            requested: fetched,
+            uniqueCodes: codes.length,
+            dedupSaved: Math.max(done - fetched, 0),
+            dedupRate: done > 0 ? Math.max(done - fetched, 0) / done : 0,
             matched,
             total: totalEntries,
         };
 
-        console.log(`\n[兜底轮询] 目标交易日 ${targetDate}，去重股票 ${codes.length} 只 / 成分股条目 ${totalEntries} 条，缓存命中率 ${(stats.hitRate * 100).toFixed(1)}%`);
+        console.log(`\n[兜底轮询] 目标交易日 ${targetDate}，去重股票 ${codes.length} 只 / 成分股条目 ${totalEntries} 条，实际请求 ${fetched} 只（重复条目免请求 ${stats.dedupSaved} 条）`);
 
         return {
             time: dayjs().format('HHmmss'),
@@ -408,13 +402,12 @@ const computeByPolling = async (groups, { onProgress } = {}) => {
         };
     } finally {
         stockCache.cleanup();
-        closeKlineWorkers();
     }
 };
 
 // 计算当日各板块成交量占比（单位：%）
 // 优先一次性拉取全 A 股实时行情；东财、新浪两个全量接口都失败时回退多平台轮询
-// onProgress: ({ done, total, hitRate, label, current }) => void
+// onProgress: ({ done, total, detail, current }) => void
 // forcePolling: true 时跳过全 A 股行情，强制走多平台轮询兜底（--all）
 const computeTodayRatios = async ({ onProgress, forcePolling = false } = {}) => {
     const groups = buildGroups();

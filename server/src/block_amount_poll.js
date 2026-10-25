@@ -3,7 +3,7 @@
 // - 默认仅在交易日的交易时段、且 10:00 之后执行（避开开盘初期成交量不稳定）
 // - npm run block_amount_poll        常驻轮询
 // - npm run block_amount_poll --now  立即执行一次（不判断交易日/时间），执行完退出
-// - 追加 --all：强制走多平台轮询兜底（同花顺/财联社/新浪/东财/腾讯）
+// - 追加 --all：强制走多平台轮询兜底（同花顺/财联社）
 const dayjs = require('dayjs');
 const { isTradingDay, isMiddayBreak, isAfterMarketClose } = require('./utils');
 const { runAndSaveIntradayPoint } = require('./service/blockVolumeRatio');
@@ -29,15 +29,15 @@ const isInPollWindow = (now = new Date()) => {
 
 const formatTime = (date = new Date()) => dayjs(date).format('HH:mm:ss');
 
-// 终端进度条：完成比例 + 当前时间 + 命中率（行情匹配率 / 临时缓存命中率）
-const renderProgress = ({ done, total, hitRate, current, label }) => {
+// 终端进度条：完成比例 + 明细（已请求/匹配数量）
+const renderProgress = ({ done, total, current, detail }) => {
     const percent = total > 0 ? done / total : 0;
     const width = 24;
     const filled = Math.round(percent * width);
     const bar = '█'.repeat(filled) + '░'.repeat(Math.max(0, width - filled));
-    const rateText = `${label || '命中率'} ${(hitRate * 100).toFixed(1)}% (${done}/${total})`;
-    const line = `[${formatTime()}] ${bar} ${(percent * 100).toFixed(1).padStart(5)}% (${done}/${total}) ${rateText} 当前:${current}`;
-    process.stdout.write(`\r${line}${' '.repeat(6)}`);
+    const detailText = detail ? ` ${detail}` : '';
+    const line = `[${formatTime()}] ${bar} ${(percent * 100).toFixed(1).padStart(5)}% (${done}/${total})${detailText} 当前:${current}`;
+    process.stdout.write(`\r${line}\x1b[K`);
 };
 
 const runOnce = async () => {

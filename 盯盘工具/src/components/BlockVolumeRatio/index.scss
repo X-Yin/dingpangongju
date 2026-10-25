@@ -73,14 +73,16 @@
     line-height: 16px;
   }
 
-  .bvr-daily {
+  .bvr-daily,
+  .bvr-intraday {
     flex: 1;
     min-height: 0;
     overflow: auto;
     display: flex;
     flex-direction: column;
 
-    .bvr-daily-toolbar {
+    .bvr-daily-toolbar,
+    .bvr-intraday-toolbar {
       display: flex;
       align-items: center;
       gap: 10px;
@@ -198,27 +200,6 @@
         height: 220px;
         padding: 8px;
       }
-    }
-  }
-
-  .bvr-intraday {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-
-    .bvr-intraday-toolbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-      flex-shrink: 0;
-    }
-
-    .bvr-chart-body {
-      flex: 1;
-      min-height: 360px;
-      position: relative;
     }
   }
 }
