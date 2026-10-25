@@ -4,6 +4,10 @@ const { researchReportsDir } = require('../paths');
 let reportIndexCache = null; // { YYYYMMDD: { stockName: [createdAtMs, ...] } }（每条命中研报记录一次创建时间）
 let reportIndexMtime = 0; // menu.json 修改时间，用于检测新增/编辑研报后自动重建索引
 
+// 自选股名称归一化：去掉字母、数字、符号等非汉字字符，仅保留汉字
+// 例如「奥比中光-W」→「奥比中光」，便于与研报标题/正文中的股票名匹配
+const normalizeStockName = (name) => String(name || '').replace(/[^\u4e00-\u9fa5]/g, '');
+
 // 读取报告正文内容（id.json 存放 { content }），供正文匹配股票名使用
 const readReportContent = (id) => {
   try {
@@ -26,7 +30,7 @@ const loadReportIndex = () => {
   if (reportIndexCache && mtime === reportIndexMtime) return reportIndexCache;
   const { getMonitorStocks } = require('../../monitorStock');
   const stockNames = Array.from(new Set(
-    getMonitorStocks().map(s => s.name).filter(Boolean)
+    getMonitorStocks().map(s => normalizeStockName(s.name)).filter(Boolean)
   )).sort((a, b) => b.length - a.length); // 长名优先，避免"天孚通信"被"通信"误配
   const index = {};
   try {
@@ -66,12 +70,13 @@ const loadReportIndex = () => {
 // beforeTs：买点时间戳（ms）。传入时只统计 createdAt ≤ 买点时间的研报，
 // 排除买点之后才录入（如盘后补录）的研报对历史回测统计的污染；不传则统计全部
 const sumReportCount = (stockName, winDates, reportIndex, beforeTs) => {
-  if (!stockName || !reportIndex) return 0;
+  const key = normalizeStockName(stockName);
+  if (!key || !reportIndex) return 0;
   let count = 0;
   for (const d of winDates) {
     const day = reportIndex[d];
     if (!day) continue;
-    const arr = day[stockName];
+    const arr = day[key];
     if (!arr) continue;
     if (beforeTs == null) {
       count += arr.length;
@@ -91,7 +96,8 @@ const sumReportCount = (stockName, winDates, reportIndex, beforeTs) => {
  * stockNames 按「长名优先」匹配避免短名误配（与 loadReportIndex 保持一致）。
  */
 const getStockRecentReports = (stockName, days = 5) => {
-  if (!stockName) return [];
+  const normalizedName = normalizeStockName(stockName);
+  if (!normalizedName) return [];
   const menuFile = path.join(researchReportsDir, 'menu.json');
   let menu;
   try {
@@ -124,7 +130,7 @@ const getStockRecentReports = (stockName, days = 5) => {
   const winSet = new Set(winDates);
 
   // 构造 stockNames（若只给了一个名字，取它自己即可；长名优先匹配）
-  const stockNames = [stockName].sort((a, b) => b.length - a.length);
+  const stockNames = [normalizedName].sort((a, b) => b.length - a.length);
 
   const results = [];
   const walk = (node, folderDate) => {

@@ -151,6 +151,12 @@ const STRATEGY_OPTIONS = [
   { value: 'highest_10d_gain', label: '10日涨幅最大' },
   { value: 'highest_2d5_gain', label: '2.5日涨幅最大' },
   { value: 'highest_3d5_gain', label: '3.5日涨幅最大' },
+  // N 日涨幅最大-成交量占比（2026-10-25 用户新增，N = 2/3/4/5）：先按 T-1 占比 3 日线斜率为正且高于前 10 日均值选板块，
+  // 再在该板块成分股中按 N 日涨幅取前 5，9:40 单点买入排名最高且未涨停、分时涨幅为正且高于开盘价者；卖点同 N 日涨幅最大
+  { value: 'highest_2d_gain_volume_share', label: '2日涨幅最大-成交量占比' },
+  { value: 'highest_3d_gain_volume_share', label: '3日涨幅最大-成交量占比' },
+  { value: 'highest_4d_gain_volume_share', label: '4日涨幅最大-成交量占比' },
+  { value: 'highest_5d_gain_volume_share', label: '5日涨幅最大-成交量占比' },
   // 两次买入系列（与 N日涨幅最大选股口径一致，区别在分批建仓）
   // 买点首次触发先买入 5 成（第一份），之后任意一次买点再次触发、且距第一份建仓日已隔至少一个交易日，
   // 再买入 5 成（第二份，必须与第一份同一只股票、不重新择股）；
@@ -258,6 +264,14 @@ const STRATEGY_CATEGORIES = [
     key: 'highest_gain',
     label: 'N日涨幅最大类',
     ids: ['highest_gain', 'highest_2d_gain', 'highest_3d_gain', 'highest_4d_gain', 'highest_5d_gain', 'highest_10d_gain', 'highest_2d5_gain', 'highest_3d5_gain'],
+  },
+  {
+    key: 'gain_volume_share',
+    label: 'N日涨幅最大-成交量占比类',
+    ids: [
+      'highest_2d_gain_volume_share', 'highest_3d_gain_volume_share',
+      'highest_4d_gain_volume_share', 'highest_5d_gain_volume_share',
+    ],
   },
   {
     key: 'two_buy',
@@ -510,6 +524,41 @@ const volumeShareNote = (n) => ({
     `**买点**：**等到 9:40 之后**才买——自 9:40 起在 9:40–11:30 的**每个时间桶**持续重试，直到买进；当日全部桶无合格候选则当日不买（次日再看）。`,
     `**卖点**：该个股**所属板块（命中的前 3 板块中的任一板块）**的成交量占比 **3 日线斜率截止到上一交易日变成负数**时，**次一交易日开盘按开盘分时价卖出**（买入次日起生效，任一所属板块转负即触发）。`,
     `**仓位**：**半仓单持仓（权重 0.5）**，买入按半仓（×0.5）计收益、**逐笔复利**。`,
+  ],
+});
+
+// N 日涨幅最大-成交量占比（2026-10-25 用户新增，N = 2/3/4/5；后端独立引擎 engine/gainVolumeShareBacktest.js）：
+//   选股 = 33 个一级板块中，T-1 成交量占比的 3 日线斜率为正、且较此前 5 个交易日最低占比高出 30% 以上（该最低占比须 >5%）的板块（多个满足时取 T-1−T-2 增幅最大者）；
+//          在该板块沪深主板/创业板/科创板成分股中按 N 日涨幅取前 5；
+//   买点 = 仅 9:40 单点，排名从前到后取第一只「未涨停 + 分时涨幅 > 0 + 现价 > 开盘价」买入（全仓单持仓）；
+//   卖点 = 与「N日涨幅最大」完全一致（通用 7 条件卖点 + 盘中大跌 -7% 强卖）。
+const GAIN_VOLUME_SHARE_STRATEGY_IDS = [
+  'highest_2d_gain_volume_share',
+  'highest_3d_gain_volume_share',
+  'highest_4d_gain_volume_share',
+  'highest_5d_gain_volume_share',
+];
+const isGainVolumeShareStrategy = (id) => GAIN_VOLUME_SHARE_STRATEGY_IDS.includes(id);
+const gainVolumeShareN = (id) => {
+  const m = /^highest_(\d+)d_gain_volume_share$/.exec(String(id || ''));
+  return m ? Number(m[1]) : 2;
+};
+const gainVolumeShareBuyRules = (n) => [
+  { key: 'gvs_block', title: '选股①：上一交易日成交量占比的 3 日线斜率为正、且较此前 5 个交易日最低占比高出 30% 以上（该最低占比须 >5%）的板块（多个满足取增幅最大者）', desc: `对 **33 个一级板块**，取截止上一交易日（T-1）的**成交量占比序列**（占比 = 板块成交额 ÷ 全市场总成交额 × 100）：① **3 日线斜率为正**——**MA3(T-1) > MA3(T-2)**（MA3 为最近 3 个交易日占比均值）；② **T-1 占比较此前 5 个交易日（T-6 ~ T-2）的最低占比高出 30% 及以上**——即 (占比(T-1) − 前5日最低占比) ÷ 前5日最低占比 ≥ 30%；③ **该前5日最低占比本身须 > 5%**（过滤低占比板块）。若**多个板块同时满足**，取「**占比(T-1) − 占比(T-2)**」**差值最大**者（差值越大代表资金流入越多，越可能是主线板块）。` },
+  { key: 'gvs_pool', title: '选股②：该板块成分股仅取沪深主板（60/00）、创业板（30）、科创板（68）', desc: '读「东方财富板块成分股汇总/{板块名}.json」，剔除北交所等非沪深主板/创业板/科创板个股及黑名单个股，剩余作为候选池。' },
+  { key: 'gvs_top5', title: `选股③：候选按最近 ${n} 日涨幅（含当日 9:40 分时，复利口径）降序取前 5`, desc: `**N 日涨幅 = 最近 ${n - 1} 个交易日收盘涨幅复利 × 当日 9:40 分时涨幅（较昨收）复利**，按降序排名取**前 5 只**（历史日K缺失者视为无效剔除）。` },
+  { key: 'gvs_gain_rank', title: '买点：前 5 中按排名从前到后取第一只满足条件的股票', desc: '按 N 日涨幅排名**依次检查**，首个满足下方「未涨停 + 分时涨幅 > 0 + 现价 > 开盘价」者买入；**前 5 均不满足则当日跳过**。' },
+  { key: 'gvs_not_limit_up', title: '9:40 未涨停（主板 < 9.5%、创业板/科创板 < 19%）', desc: '买入时点（9:40）**已涨停**的股票买不进（主板 ≥ 9.5%、创业板/科创板 ≥ 19%），按排名**顺延下一只**。' },
+  { key: 'gvs_positive_above_open', title: '9:40 分时涨幅 > 0 且现价高于当日开盘价', desc: '9:40 **分时涨幅（较昨收）必须为正**，且 **9:40 现价必须高于当日开盘价**（首分钟价），否则按排名顺延下一只。' },
+  { key: 'gvs_buy_point', title: '买点时段：仅 9:40 单点（不逐桶重试）；仓位：全仓单持仓', desc: '**只看 9:40 这一个时间点**，9:40 无合格候选则当日跳过（不逐桶重试）；账户最多同时持有 1 只股票，买入为**全仓**。' },
+];
+const gainVolumeShareNote = (n) => ({
+  group: `N日涨幅最大·成交量占比（N=${n}）`,
+  bullets: [
+    `**选股（每日按 D 的前一交易日 T-1 数据判定）**：① 对 **33 个一级板块**，取截止 T-1 的**成交量占比序列**，筛选同时满足「**MA3(T-1) > MA3(T-2)**（3 日线斜率为正）」与「**T-1 占比较此前 5 个交易日（T-6 ~ T-2）最低占比高出 30% 及以上**」且「**该最低占比本身 > 5%**」的板块；若多个板块同时满足，取「**占比(T-1) − 占比(T-2)**」**差值最大**者（差值越大代表资金流入越多，越可能是主线板块）。② 读该板块成分股汇总 json，仅保留**沪深主板（60/00）、创业板（30）、科创板（68）**个股；③ 候选中按 **${n} 日涨幅**（复利口径：最近 ${n - 1} 个收盘日涨幅复利 × 当日 9:40 分时涨幅复利）**降序取前 5**。`,
+    '**买点**：**只看 9:40 这一个时间点**——在前 5 中按排名从前到后，取第一只满足「**9:40 未涨停**（主板 < 9.5%、创业板/科创板 < 19%）+ **9:40 分时涨幅 > 0** + **9:40 现价高于当日开盘价**」的股票买入；前 5 均不满足则**当日跳过**（不逐桶重试、不追买）。',
+    '**卖点**：与「**N日涨幅最大**」策略**完全一致**——通用 7 条件卖点 + 盘中大跌 -7% 强卖。',
+    '**仓位**：**全仓单持仓**（账户最多同时持有 1 只股票，收益逐笔复利）。',
   ],
 });
 
@@ -1008,6 +1057,12 @@ const STRATEGY_SPECIFIC_NOTES = {
   hot_money_volume_share_3d: volumeShareNote(3),
   hot_money_volume_share_5d: volumeShareNote(5),
 
+  // ---- N 日涨幅最大-成交量占比（2026-10-25 用户新增，N = 2/3/4/5） ----
+  highest_2d_gain_volume_share: gainVolumeShareNote(2),
+  highest_3d_gain_volume_share: gainVolumeShareNote(3),
+  highest_4d_gain_volume_share: gainVolumeShareNote(4),
+  highest_5d_gain_volume_share: gainVolumeShareNote(5),
+
 };
 
 // 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
@@ -1256,6 +1311,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const curIsReverseLeader = isReverseLeaderStrategy(strategy);
   const curIsNBoardAttack = isNBoardAttackStrategy(strategy);
   const curIsVolumeShare = isVolumeShareStrategy(strategy);
+  const curIsGainVolumeShare = isGainVolumeShareStrategy(strategy);
   const effectiveRange = range || defaultRange;
 
   // 组件卸载时停止轮询
@@ -1659,8 +1715,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
       const pick = effectiveRange;
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
-      const buyRules = curIsVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (curIsNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (curIsExtremeWinLike ? extremeWinBuyRules : (curIsReverseLeader ? reverseLeaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : BUY_RULES)))));
-      const sellRules = curIsVolumeShare ? volumeShareSellRules : (curIsNBoardAttack ? nBoardAttackSellRules : (curIsReverseLeader ? reverseLeaderSellRules : (curIsExtremeWinLike ? LEADER_SELL_RULES : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : SELL_RULES)))));
+      const buyRules = curIsGainVolumeShare ? gainVolumeShareBuyRules(gainVolumeShareN(strategy)) : (curIsVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (curIsNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (curIsExtremeWinLike ? extremeWinBuyRules : (curIsReverseLeader ? reverseLeaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : BUY_RULES))))));
+      const sellRules = curIsGainVolumeShare ? SELL_RULES : (curIsVolumeShare ? volumeShareSellRules : (curIsNBoardAttack ? nBoardAttackSellRules : (curIsReverseLeader ? reverseLeaderSellRules : (curIsExtremeWinLike ? LEADER_SELL_RULES : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : SELL_RULES))))));
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);
@@ -2572,8 +2628,9 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         const isReverseLeader = isReverseLeaderStrategy(strategy);
         const isNBoardAttack = isNBoardAttackStrategy(strategy);
         const isVolumeShare = isVolumeShareStrategy(strategy);
-        const buyRules = isVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (isNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (isExtremeWinLike ? extremeWinBuyRules : (isReverseLeader ? reverseLeaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : BUY_RULES)))));
-        const sellRules = isVolumeShare ? volumeShareSellRules : (isNBoardAttack ? nBoardAttackSellRules : (isReverseLeader ? reverseLeaderSellRules : (isExtremeWinLike ? LEADER_SELL_RULES : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : SELL_RULES)))));
+        const isGainVolumeShare = isGainVolumeShareStrategy(strategy);
+        const buyRules = isGainVolumeShare ? gainVolumeShareBuyRules(gainVolumeShareN(strategy)) : (isVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (isNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (isExtremeWinLike ? extremeWinBuyRules : (isReverseLeader ? reverseLeaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : BUY_RULES))))));
+        const sellRules = isGainVolumeShare ? SELL_RULES : (isVolumeShare ? volumeShareSellRules : (isNBoardAttack ? nBoardAttackSellRules : (isReverseLeader ? reverseLeaderSellRules : (isExtremeWinLike ? LEADER_SELL_RULES : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : SELL_RULES))))));
         const notes = STRATEGY_SPECIFIC_NOTES[strategy];
 
         // 将文案中 **xxx** 这种 markdown 粗体标记解析为 React 节点（纯文本不解析）

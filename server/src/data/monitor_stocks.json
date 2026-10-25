@@ -838,7 +838,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "9",
-    "isTech":  true,
+    "isTech": true,
     "addedAt": "2026-10-01 12:24:44"
   },
   {
@@ -912,5 +912,23 @@
     "riskScore": "7",
     "isTech": false,
     "addedAt": "2026-10-23 10:12:30"
+  },
+  {
+    "code": "sz002827",
+    "name": "高争民爆",
+    "isImportant": false,
+    "blockName": "民爆",
+    "riskScore": "8",
+    "isTech": false,
+    "addedAt": "2026-10-25 19:17:02"
+  },
+  {
+    "code": "sh600391",
+    "name": "航发科技",
+    "isImportant": false,
+    "blockName": "军工",
+    "riskScore": "7",
+    "isTech": false,
+    "addedAt": "2026-10-25 23:30:08"
   }
 ]

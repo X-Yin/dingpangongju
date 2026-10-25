@@ -1503,5 +1503,20 @@ exports.default = [
         "blockName": "机器人大脑",
         "code": "sh688360",
         "name": "德马科技"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sz002472",
+        "name": "双环传动"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sh688071",
+        "name": "华依科技"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sh688279",
+        "name": "峰岹科技"
     }
 ]

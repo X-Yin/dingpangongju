@@ -609,6 +609,45 @@ const getSingleStockTlineDataByDateFromTHS = async (code, tradeDate) => {
 };
 exports.getSingleStockTlineDataByDate = getSingleStockTlineDataByDate;
 
+// 清空分时内存缓存（供批量回测等一次性场景按日释放，避免数百只股票的分时长期驻留导致堆溢出；
+// 只清内存，磁盘缓存文件不受影响，下次读取会自动重新加载）
+exports.clearTlineMemCache = () => {
+    tlineFileMemCache.clear();
+    tlineResultMemCache.clear();
+};
+
+// 轻量版按日取分时：只从磁盘缓存解析出请求的那一天并返回，整份历史分时数组不驻留进程内存
+// （getTlineFromCache 会把整份历史分时数组写入 tlineFileMemCache；批量回测单日要取数百只成分股，
+//   每份文件可达 1MB 级，累计即 GB 级导致堆溢出。此处解析后立即丢弃整份数组）
+const getSingleStockTlineDataByDateLean = async (code, tradeDate) => {
+    const stockName = getStockNameByCode(code);
+    const cacheKey = stockName || String(code);
+    const dateNum = parseInt(tradeDate, 10);
+    let cached = null;
+    try {
+        const cacheFile = path.join(tlineCacheDir, `${cacheKey}.json`);
+        if (fs.existsSync(cacheFile)) {
+            const cacheData = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+            const dayData = Array.isArray(cacheData) ? cacheData.find(d => d.trade_date === dateNum) : null;
+            if (dayData && Array.isArray(dayData.line) && dayData.line.length > 0) {
+                cached = { date: dayData.trade_date, preclose_px: dayData.preclose_px || 0, line: dayData.line };
+            }
+        }
+    } catch (e) {
+        cached = null;
+    }
+    if (cached && isTlineCacheComplete(cached.line, dateNum)) return cached;
+
+    let result = await getSingleStockTlineDataByDateFromTHS(code, tradeDate);
+    if (!result) result = await getSingleStockTlineDataByDateFromCLS(code, tradeDate);
+    if (result && Array.isArray(result.line) && result.line.length > 0) {
+        saveTlineToCache(cacheKey, dateNum, result);
+        tlineFileMemCache.delete(cacheKey); // 落盘后立即释放，不保留整份历史分时
+    }
+    return result;
+};
+exports.getSingleStockTlineDataByDateLean = getSingleStockTlineDataByDateLean;
+
 /**
  * 获取批量个股的数据
  * @param {*} stockCodeList 股票代码列表

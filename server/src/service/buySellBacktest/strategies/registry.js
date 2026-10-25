@@ -35,7 +35,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 规则：候选按排名依次判断个股与创业板指最近 20 个已完结交易日的日收益率相关系数，corr > 0（正相关）
 // = 顺周期可买，corr <= 0（逆周期）剔除并顺延排名下一只；数据不足不拦截。下列 desc 文案自动追加到所有适用策略
 const CYC_FILTER_DESC = '顺周期过滤：候选按排名依次判断与创业板指最近 20 个已完结交易日的日收益率相关系数，相关系数 > 0（正相关，顺周期）才可买入，≤ 0（逆周期）则顺延至排名下一只（数据不足不拦截）';
-const isCycleFilterStrategy = (s) => !!s && s.iceMode !== true && s.keyBlockDays == null && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true && s.fusedEmoWinMode !== true;
+const isCycleFilterStrategy = (s) => !!s && s.iceMode !== true && s.keyBlockDays == null && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true && s.fusedEmoWinMode !== true && s.gainVolumeShareMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (isCycleFilterStrategy(s)) s.desc = `${s.desc}；${CYC_FILTER_DESC}`;
 }
@@ -68,7 +68,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 达 N 分（均值 − 该股 ≥ N），说明该股只是历史涨幅大、当日爆发力不强 → 剔除并顺延排名下一只，
 // 顺延后对新的第一名重新按同规则判定；买入条件明细追加 gain_gap_defer 项
 const GAIN_GAP_DEFER_DESC = '；涨幅领先但当日爆发力不足过滤（2026-10-22 新增）：按 N 日窗口涨幅排名后，若当前候选的 N 日涨幅领先第二名超过 N 个百分点，且其买点时刻抗分歧分数低于「第二名~第五名」抗分歧均值达 N 分（均值 − 该股 ≥ N），则视为仅历史涨幅大、当日爆发力不强，剔除并顺延排名下一只（顺延后重新判定），买入条件明细追加顺延说明';
-const isGainGapDescStrategy = (s) => !!s && s.id !== 'highest_gain' && s.id.includes('_gain') && !s.id.includes('reports');
+const isGainGapDescStrategy = (s) => !!s && s.id !== 'highest_gain' && s.id.includes('_gain') && !s.id.includes('reports') && s.gainVolumeShareMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (isGainGapDescStrategy(s)) s.desc = `${s.desc}${GAIN_GAP_DEFER_DESC}`;
 }
@@ -79,7 +79,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 「买入最高涨幅」无固定 N 日窗口、研报覆盖类按覆盖数排序、两次买入不同板块系列未纳入，均不适用
 const GAIN_CAP_DESC = '；N日涨幅过热门槛（2026-10-22 新增）：候选个股最近 N 日累计涨幅超过 10% × N 时直接剔除、不参与涨幅排名（如 3 日涨幅最大 → 最近 3 日涨幅 > 30% 不选；2.5 日 → 25%、3.5 日 → 35%）';
 const isGainCapDescStrategy = (s) => !!s && s.id !== 'highest_gain' && s.id.startsWith('highest_')
-  && s.id.includes('_gain') && !s.id.includes('reports') && !s.id.includes('diff_block');
+  && s.id.includes('_gain') && !s.id.includes('reports') && !s.id.includes('diff_block') && s.gainVolumeShareMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (isGainCapDescStrategy(s)) s.desc = `${s.desc}${GAIN_CAP_DESC}`;
 }

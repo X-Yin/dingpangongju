@@ -1,5 +1,5 @@
 const { loadTrainingCampData, getTrainingCampDates, calcDailyMaInfo, getKlineCached } = require('../trainingCamp');
-const { getSingleStockTlineDataByDate } = require('../stock');
+const { getSingleStockTlineDataByDate, getSingleStockTlineDataByDateLean, clearTlineMemCache } = require('../stock');
 const { calculateResilience, getLimitTypeByCode } = require('../stockDiagnose');
 const { isStockInWatchlistAt, getMonitorStocks } = require('../monitorStock');
 const { batchParallel } = require('../../utils');
@@ -13,7 +13,7 @@ const dayjs = require('dayjs');
 
 module.exports = {
   loadTrainingCampData, getTrainingCampDates, calcDailyMaInfo, getKlineCached,
-  getSingleStockTlineDataByDate,
+  getSingleStockTlineDataByDate, getSingleStockTlineDataByDateLean, clearTlineMemCache,
   calculateResilience, getLimitTypeByCode,
   isStockInWatchlistAt, getMonitorStocks,
   batchParallel,

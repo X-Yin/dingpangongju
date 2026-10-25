@@ -2178,5 +2178,45 @@
       }
     ],
     "isImportant": false
+  },
+  "sz002827": {
+    "stockName": "高争民爆",
+    "kline": [
+      {
+        "trade_date": 20261023,
+        "open_px": 47.82,
+        "high_px": 52.1,
+        "low_px": 47.5,
+        "close_px": 51.8,
+        "business_amount": 13073126,
+        "business_balance": 650604490,
+        "change": 6.41,
+        "ma5_px": 52.41,
+        "ma10_px": 54.97,
+        "ma20_px": 61.23,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh600391": {
+    "stockName": "航发科技",
+    "kline": [
+      {
+        "trade_date": 20261023,
+        "open_px": 39.81,
+        "high_px": 42.1,
+        "low_px": 39.13,
+        "close_px": 41.99,
+        "business_amount": 20594370,
+        "business_balance": 832458690,
+        "change": 3.27,
+        "ma5_px": 42.25,
+        "ma10_px": 41.1,
+        "ma20_px": 41.12,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

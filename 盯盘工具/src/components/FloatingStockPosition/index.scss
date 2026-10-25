@@ -27,7 +27,7 @@
   }
 
   &.collapsed {
-    width: 190px;
+    width: 180px;
     max-width: 190px;
   }
 
@@ -218,7 +218,7 @@
 
   .fsp-collapsed-item {
     display: grid;
-    grid-template-columns: 1fr 56px 28px;
+    grid-template-columns: 1fr 56px;
     gap: 6px;
     align-items: center;
     padding: 7px 10px;
@@ -251,7 +251,7 @@
 
     .fsp-collapsed-change {
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
       line-height: 1;
       white-space: nowrap;
       font-variant-numeric: tabular-nums;

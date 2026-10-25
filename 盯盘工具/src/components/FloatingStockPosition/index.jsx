@@ -713,14 +713,14 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                 <span className={`fsp-collapsed-change ${changeClass}`} onClick={() => handleStockClick(stock)}>
                   {formatSignedPercent(changeNum)}
                 </span>
-                <Tooltip title="刷新持仓数据" placement="top">
+                {/* <Tooltip title="刷新持仓数据" placement="top">
                   <span
                     className="fsp-icon-btn fsp-backtest-icon-btn"
                     onClick={(e) => { e.stopPropagation(); handleRefreshPositionData(); }}
                   >
                     <ReloadOutlined spin={dataRefreshing} />
                   </span>
-                </Tooltip>
+                </Tooltip> */}
               </div>
             );
           })}

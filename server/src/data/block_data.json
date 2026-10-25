@@ -1207,6 +1207,12 @@
       "blockName": "机器人",
       "code": "sh603278",
       "change": 9.99
+    },
+    {
+      "name": "双环传动",
+      "blockName": "机器人",
+      "code": "sz002472",
+      "change": 7.21
     }
   ],
   "消费": [
@@ -1649,6 +1655,18 @@
       "blockName": "机器人大脑",
       "code": "sh688360",
       "change": 9.03
+    },
+    {
+      "name": "华依科技",
+      "blockName": "机器人大脑",
+      "code": "sh688071",
+      "change": 20
+    },
+    {
+      "name": "峰岹科技",
+      "blockName": "机器人大脑",
+      "code": "sh688279",
+      "change": 14.67
     }
   ]
 }
