@@ -1667,6 +1667,12 @@
       "blockName": "机器人大脑",
       "code": "sh688279",
       "change": 14.67
+    },
+    {
+      "name": "凌云光",
+      "blockName": "机器人大脑",
+      "code": "sh688400",
+      "change": 12.16
     }
   ]
 }

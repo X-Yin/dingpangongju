@@ -33,7 +33,7 @@ const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
 const axios = require('axios');
-const { isTradingDay, getPrevTradingDay } = require('../utils/tradingDay');
+const { isTradingDay, getPrevTradingDay, resolveAnalysisDate } = require('../utils/tradingDay');
 const { getSingleStockData, getSingleStockTlineDataByDate, getAllStockData } = require('./stock');
 const { getAllTechIndexData, updateCurrentTechIndexData, getCurrentTechEmotion, getTechEmotionIntraday } = require('./emotion');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
@@ -2445,11 +2445,8 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
     const dateStr = String(targetDate).replace(/-/g, '');
     targetDay = dayjs(dateStr, 'YYYYMMDD');
   } else {
-    targetDay = dayjs();
-    // 非交易日（周末/节假日，以交易日历为准）回退到最近一个交易日
-    if (!isTradingDay(targetDay.toDate())) {
-      targetDay = dayjs(getPrevTradingDay());
-    }
+    // 非交易日 / 开盘前（09:30 前当日行情尚未产生）一律回退到最近一个交易日
+    targetDay = dayjs(resolveAnalysisDate());
   }
 
   const targetDateStr = targetDay.format('YYYYMMDD');
@@ -2818,12 +2815,8 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
     const dateStr = String(targetDate).replace(/-/g, '');
     targetDay = dayjs(dateStr, 'YYYYMMDD');
   } else {
-    targetDay = dayjs();
-    // 周末 / 法定节假日（如国庆、中秋）一律回退到最近一个交易日
-    if (!isTradingDay(targetDay.toDate())) {
-      const prev = getPrevTradingDay(targetDay.toDate());
-      targetDay = dayjs(prev);
-    }
+    // 非交易日 / 开盘前（09:30 前当日行情尚未产生）一律回退到最近一个交易日
+    targetDay = dayjs(resolveAnalysisDate());
   }
   const targetDateStr = targetDay.format('YYYYMMDD');
 
@@ -3282,8 +3275,8 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   if (targetDate) {
     targetDay = dayjs(String(targetDate).replace(/-/g, ''), 'YYYYMMDD');
   } else {
-    targetDay = dayjs();
-    if (!isTradingDay(targetDay.toDate())) targetDay = dayjs(getPrevTradingDay(targetDay.toDate()));
+    // 开盘前 / 非交易日：当日 K 线尚未生成，回退到上一个交易日，避免榜单为空
+    targetDay = dayjs(resolveAnalysisDate());
   }
   const targetDateStr = targetDay.format('YYYYMMDD');
 
@@ -3308,14 +3301,15 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   const cyIndexLine = cybIdxTline?.line || [];
   const kcIndexLine = starIdxTline?.line || [];
 
-  // 阶段1：并行拉取全部自选股 K 线
+  // 阶段1：并行拉取全部自选股 K 线（并发 30：与 /get_all_stock_data 轮询的全量并发同级，
+  // 将 100+ 只股票的串行轮次从 12 轮降到约 4 轮，显著压缩首屏等待）
   const klineResults = await batchParallel(monitorStocks, async (stock) => {
     try {
       return { stock, klineData: await getSingleStockData(stock.code, 30) };
     } catch (e) {
       return { stock, klineData: null };
     }
-  }, 10);
+  }, 30);
 
   const base = [];
   for (const { stock, klineData } of klineResults) {
@@ -3488,11 +3482,8 @@ const getSingleStockBuyPointDiagnosis = async (code, targetDate = null, refresh 
     const dateStr = String(targetDate).replace(/-/g, '');
     targetDay = dayjs(dateStr, 'YYYYMMDD');
   } else {
-    targetDay = dayjs();
-    // 非交易日（周末/节假日，以交易日历为准）回退到最近一个交易日
-    if (!isTradingDay(targetDay.toDate())) {
-      targetDay = dayjs(getPrevTradingDay());
-    }
+    // 非交易日 / 开盘前（09:30 前当日行情尚未产生）一律回退到最近一个交易日
+    targetDay = dayjs(resolveAnalysisDate());
   }
   const targetDateStr = targetDay.format('YYYYMMDD');
 

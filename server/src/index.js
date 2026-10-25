@@ -150,6 +150,95 @@ app.use(cors({
 // 解析 JSON 请求体
 app.use(express.json({ limit: '10mb' }));
 
+// ==================== 重型诊断接口「旧数据秒回 + 后台刷新」缓存 ====================
+// 背景：/top_gainers_by_market、/hot_money_leader_list、/buy_point_checks 内部需要拉取全量
+// 自选股 K 线 / 分时（单次计算 1.5~3.5s），页面每次挂载都同步等待会明显卡顿。
+// 策略：同一缓存键（含自然日与参数）首次计算后落盘；后续请求毫秒级返回上次结果，
+// 同时按最小间隔在后台去重刷新，下一次轮询即拿到新数据；服务重启后从磁盘恢复，依旧秒开。
+const API_CACHE_DIR = path.resolve(__dirname, './data/api_cache');
+const apiCacheMem = new Map(); // key -> { payload, at, refreshing }
+const apiCachePending = new Map(); // key -> Promise（冷启动并发去重，避免同一参数重复计算）
+const apiCacheLastPersist = new Map(); // key -> 上次落盘时间（限制落盘频率，避免每轮刷新都写盘）
+const API_CACHE_MIN_INTERVAL_MS = 4000;
+const API_CACHE_PERSIST_INTERVAL_MS = 30000;
+
+const apiCacheFile = (key) => path.join(API_CACHE_DIR, `${key.replace(/[^\w-]/g, '_')}.json`);
+
+const readApiCacheFromDisk = (key) => {
+  try {
+    const file = apiCacheFile(key);
+    if (!fs.existsSync(file)) return null;
+    const raw = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    if (!raw || raw.payload === undefined) return null;
+    return { payload: raw.payload, at: Number(raw.at) || 0, refreshing: false };
+  } catch (e) {
+    return null;
+  }
+};
+
+const persistApiCache = (key, entry) => {
+  try {
+    const now = Date.now();
+    if (now - (apiCacheLastPersist.get(key) || 0) < API_CACHE_PERSIST_INTERVAL_MS) return;
+    apiCacheLastPersist.set(key, now);
+    if (!fs.existsSync(API_CACHE_DIR)) fs.mkdirSync(API_CACHE_DIR, { recursive: true });
+    fs.promises.writeFile(apiCacheFile(key), JSON.stringify({ at: entry.at, payload: entry.payload }), 'utf-8')
+      .catch(() => { });
+  } catch (e) {
+    // 缓存落盘失败不影响主流程
+  }
+};
+
+const refreshApiCacheInBackground = (key, compute) => {
+  const entry = apiCacheMem.get(key);
+  if (!entry || entry.refreshing) return;
+  entry.refreshing = true;
+  Promise.resolve()
+    .then(compute)
+    .then((payload) => {
+      const fresh = { payload, at: Date.now(), refreshing: false };
+      apiCacheMem.set(key, fresh);
+      persistApiCache(key, fresh);
+    })
+    .catch(() => { entry.refreshing = false; });
+};
+
+/**
+ * 读取缓存结果；无缓存时同步计算一次。
+ * force=true 时强制同步重算并更新缓存（前端手动刷新按钮）。
+ */
+const withApiCache = async (key, compute, force = false, minIntervalMs = API_CACHE_MIN_INTERVAL_MS) => {
+  if (force) {
+    const payload = await compute();
+    const fresh = { payload, at: Date.now(), refreshing: false };
+    apiCacheMem.set(key, fresh);
+    persistApiCache(key, fresh);
+    return payload;
+  }
+  let entry = apiCacheMem.get(key);
+  if (!entry) {
+    entry = readApiCacheFromDisk(key);
+    if (entry) apiCacheMem.set(key, entry);
+  }
+  if (!entry) {
+    // 冷启动并发去重：同一缓存键的多请求（StrictMode 双挂载 / 多标签页）共用一次计算
+    if (apiCachePending.has(key)) return apiCachePending.get(key);
+    const pending = Promise.resolve()
+      .then(compute)
+      .then((payload) => {
+        const fresh = { payload, at: Date.now(), refreshing: false };
+        apiCacheMem.set(key, fresh);
+        persistApiCache(key, fresh);
+        return payload;
+      })
+      .finally(() => apiCachePending.delete(key));
+    apiCachePending.set(key, pending);
+    return pending;
+  }
+  if (Date.now() - entry.at >= minIntervalMs) refreshApiCacheInBackground(key, compute);
+  return entry.payload;
+};
+
 // 静态文件服务
 app.use('/static', express.static(path.join(__dirname, '../static')));
 
@@ -1146,19 +1235,23 @@ app.post('/buy_point_checks', async (req, res) => {
     const mode = req.body?.mode;
     const refresh = req.body?.refresh === true || req.body?.refresh === 1 || req.body?.refresh === '1';
     const force = req.body?.force === true || req.body?.force === 1 || req.body?.force === '1';
-    if (mode === MODE_ATTACK_DEFENSE) {
-      const [techRes, ewRes] = await Promise.all([
-        getBuyPointChecks(targetDate, refresh, force),
-        getExtremeWinBuyPointChecks(targetDate, refresh, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE),
-      ]);
-      const ewData = ewRes?.data || {};
-      const techData = techRes?.data || null;
-      res.json({ success: true, data: { ...ewData, tech: techData, mode: MODE_ATTACK_DEFENSE } });
-      return;
-    }
-    const result = mode === MODE_EXTREME_WIN
-      ? await getExtremeWinBuyPointChecks(targetDate, refresh)
-      : await getBuyPointChecks(targetDate, refresh, force);
+    const compute = async () => {
+      if (mode === MODE_ATTACK_DEFENSE) {
+        const [techRes, ewRes] = await Promise.all([
+          getBuyPointChecks(targetDate, refresh, force),
+          getExtremeWinBuyPointChecks(targetDate, refresh, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE),
+        ]);
+        const ewData = ewRes?.data || {};
+        const techData = techRes?.data || null;
+        return { success: true, data: { ...ewData, tech: techData, mode: MODE_ATTACK_DEFENSE } };
+      }
+      return mode === MODE_EXTREME_WIN
+        ? await getExtremeWinBuyPointChecks(targetDate, refresh)
+        : await getBuyPointChecks(targetDate, refresh, force);
+    };
+    // 缓存键含自然日与模式：服务运行期间重复挂载直接秒回，后台按最小间隔刷新
+    const cacheKey = `buy_point_checks_${dayjs().format('YYYYMMDD')}_${targetDate || 'live'}_${mode || 'tech_attack'}`;
+    const result = await withApiCache(cacheKey, compute, force, 15000);
     res.json(result);
   } catch (error) {
     console.error('买点前置检查失败:', error);
@@ -1169,7 +1262,15 @@ app.post('/buy_point_checks', async (req, res) => {
 // 开盘实战页「情绪游资-极致胜率」模式：龙头列表（除 delta≥30 与上证斜率>0 外全部买点条件满足的个股）
 app.post('/hot_money_leader_list', async (req, res) => {
   try {
-    const result = await getHotMoneyLeaderList(req.body?.targetDate, req.body?.limit);
+    const targetDate = req.body?.targetDate;
+    const limit = req.body?.limit;
+    const cacheKey = `hot_money_leader_list_${dayjs().format('YYYYMMDD')}_${targetDate || 'live'}_${limit || 50}`;
+    const result = await withApiCache(
+      cacheKey,
+      () => getHotMoneyLeaderList(targetDate, limit),
+      false,
+      4000
+    );
     res.json(result);
   } catch (error) {
     console.error('获取情绪游资龙头列表失败:', error);
@@ -1184,7 +1285,13 @@ app.post('/buy_point_stocks', async (req, res) => {
     const sortBy = req.body?.sortBy || 'resilience';
     const days = req.body?.days || 3; // 研报模式窗口天数：3 或 5
     const filterGate = req.body?.filterGate === true;
-    const result = await getBuyPointStocks(targetDate, sortBy, days, filterGate);
+    const cacheKey = `buy_point_stocks_${dayjs().format('YYYYMMDD')}_${targetDate || 'live'}_${sortBy}_${days}_${filterGate ? 1 : 0}`;
+    const result = await withApiCache(
+      cacheKey,
+      () => getBuyPointStocks(targetDate, sortBy, days, filterGate),
+      false,
+      4000
+    );
     res.json(result);
   } catch (error) {
     console.error('筛选买点个股失败:', error);
@@ -1196,7 +1303,15 @@ app.post('/buy_point_stocks', async (req, res) => {
 app.post('/top_gainers_by_market', async (req, res) => {
   try {
     // limit：每市场最大条数，缺省 5（开盘实战页）；优选个股全量展示时传较大的值
-    const result = await getTopGainersByMarket(req.body?.targetDate, req.body?.limit);
+    const targetDate = req.body?.targetDate;
+    const limit = req.body?.limit;
+    const cacheKey = `top_gainers_by_market_${dayjs().format('YYYYMMDD')}_${targetDate || 'live'}_${limit || 5}`;
+    const result = await withApiCache(
+      cacheKey,
+      () => getTopGainersByMarket(targetDate, limit),
+      false,
+      4000
+    );
     res.json(result);
   } catch (error) {
     console.error('获取自选股涨幅榜失败:', error);

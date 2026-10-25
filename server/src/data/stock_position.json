@@ -16,5 +16,21 @@
     "buyTime": "13:23",
     "weight": 50,
     "costPrice": 93.18
+  },
+  {
+    "id": "sh688322_1792945993613_wwnt",
+    "code": "sh688322",
+    "name": "奥比中光-W",
+    "buyDate": "2026-10-23",
+    "buyTime": "13:25",
+    "weight": 50,
+    "costPrice": 93.61,
+    "mirror": {
+      "strategy": "highest_3d_gain_emoquick",
+      "strategyName": "3日涨幅最大&三日情绪-30快进快出",
+      "syncedDate": "2026-10-26",
+      "buyDateRaw": "20261023",
+      "source": "backtest_position_mirror"
+    }
   }
 ]

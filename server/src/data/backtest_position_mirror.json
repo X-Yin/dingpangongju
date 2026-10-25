@@ -1,24 +1,24 @@
 {
-  "lastSyncedEndDate": "20261023",
+  "lastSyncedEndDate": "20261026",
   "lastRange": {
     "startDate": "20260728",
-    "endDate": "20261023"
+    "endDate": "20261026"
   },
-  "lastSyncedAt": "2026-10-23 08:54:32",
+  "lastSyncedAt": "2026-10-26 00:33:13",
   "lastHoldings": [
     {
-      "code": "sz001309",
-      "name": "德明利",
-      "buyDate": "20261021",
-      "buyPrice": 225.72,
-      "buyTime": "09:55",
+      "code": "sh688322",
+      "name": "奥比中光-W",
+      "buyDate": "20261023",
+      "buyPrice": 93.61,
+      "buyTime": "13:25",
       "weight": 0.5
     }
   ],
   "added": [
-    "德明利(sz001309) 成本 225.72 买入日 2026-10-21"
+    "奥比中光-W(sh688322) 成本 93.61 买入日 2026-10-23"
   ],
   "skipped": [],
   "attempts": 0,
-  "attemptsDate": "2026-10-23"
+  "attemptsDate": "2026-10-26"
 }

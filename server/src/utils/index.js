@@ -230,6 +230,7 @@ exports.getPrevTradingDay = tradingDay.getPrevTradingDay;
 exports.getNextTradingDay = tradingDay.getNextTradingDay;
 exports.getRecentTradingDays = tradingDay.getRecentTradingDays;
 exports.isTradingDateNum = tradingDay.isTradingDateNum;
+exports.resolveAnalysisDate = tradingDay.resolveAnalysisDate;
 
 // 判断是否在午休时段（11:30-13:00）
 exports.isMiddayBreak = (date = new Date()) => {

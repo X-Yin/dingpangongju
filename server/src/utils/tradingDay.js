@@ -79,6 +79,16 @@ const getRecentTradingDays = (n = 5, endDate = new Date()) => {
     return dates;
 };
 
+// 分析日（未显式传 targetDate 时使用）：
+// 非交易日，或交易日但开盘前（09:30 前，当日行情/当日 K 线尚未产生）时，
+// 一律回退到上一个交易日，避免开盘前榜单、买点诊断因当日无数据而返回空结果。
+const OPEN_MINUTE = 9 * 60 + 30;
+const resolveAnalysisDate = (date = new Date()) => {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const beforeOpen = date.getHours() * 60 + date.getMinutes() < OPEN_MINUTE;
+    return (!isTradingDay(d) || beforeOpen) ? getPrevTradingDay(d) : d;
+};
+
 // 'YYYYMMDD' 数字/字符串（或 'YYYY-MM-DD'）是否为交易日
 const isTradingDateNum = (dateNum) => {
     const d = parseDateNum(dateNum);
@@ -118,4 +128,4 @@ const countTradingDaysBetween = (start, end) => {
     return count;
 };
 
-module.exports = { isTradingDay, isNonTradingDay, getPrevTradingDay, getNextTradingDay, getRecentTradingDays, isTradingDateNum, parseDateNum, isYearCovered, countTradingDaysBetween };
+module.exports = { isTradingDay, isNonTradingDay, getPrevTradingDay, getNextTradingDay, getRecentTradingDays, isTradingDateNum, parseDateNum, isYearCovered, countTradingDaysBetween, resolveAnalysisDate };

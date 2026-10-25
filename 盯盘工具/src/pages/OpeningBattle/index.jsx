@@ -17,6 +17,28 @@ import { useStrategyMode, setStrategyMode, STRATEGY_MODE_OPTIONS, MODE_EXTREME_W
 import { subscribeBuyPointPush, subscribeSellPointPush } from '../../utils/buyPointWs';
 import './index.scss';
 
+// 首屏「旧数据秒开」：各诊断模块把最近一次结果写入 localStorage，页面重新挂载时先用缓存渲染，
+// 请求返回后覆盖；仅使用当日缓存，避免跨日展示过期榜单/诊断。
+const readTodayLocalCache = (key) => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (!cached || cached.date !== dayjs().format('YYYYMMDD')) return null;
+    return cached.value;
+  } catch {
+    return null;
+  }
+};
+
+const writeLocalCache = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify({ date: dayjs().format('YYYYMMDD'), value, ts: Date.now() }));
+  } catch {
+    // localStorage 写入失败（容量/隐私模式）时忽略，不影响主流程
+  }
+};
+
 // 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
 
 const formatSignedPercent = (value) => {
@@ -777,8 +799,13 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isDefense = mode === MODE_ATTACK_DEFENSE;
-  const [data, setData] = useState(null);        // 科技进攻：自选股 3 日涨幅榜
-  const [leaderData, setLeaderData] = useState(null); // 情绪游资-极致胜率：龙头列表
+  const rankCacheKey = `ob_rank3_cache_${mode}`;
+  const cachedRank = useMemo(() => readTodayLocalCache(rankCacheKey), [rankCacheKey]);
+  // 记录当前 data 对应的策略模式，避免切换模式时把旧模式数据写进新模式缓存
+  const dataModeRef = useRef(cachedRank ? mode : null);
+  // 首屏优先用当日缓存渲染，接口返回后再覆盖，避免每次进入页面都先白屏等待
+  const [data, setData] = useState(cachedRank?.data || null);        // 科技进攻：自选股 3 日涨幅榜
+  const [leaderData, setLeaderData] = useState(cachedRank?.leaderData || null); // 情绪游资-极致胜率：龙头列表
   // 点击股票名称打开 K 线弹窗
   const [selectedStock, setSelectedStock] = useState(null);
   const [klineVisible, setKlineVisible] = useState(false);
@@ -790,22 +817,36 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   //   hot_money_extreme_win  → /hot_money_leader_list（除 delta≥30 与上证斜率>0 外全部买点条件满足）
   //   attack_defense         → 两个接口同时拉（科技进攻 + 情绪游资双策略并示）
   const fetchStocks = useCallback(async () => {
+    // 攻防兼备需要同时拉两份数据，改为并行请求（原先串行等待两个接口，首屏耗时翻倍）
+    const tasks = [];
     if (isExtreme || isDefense) {
-      try {
-        const res = await axios.post(`http://${local_ip}:3000/hot_money_leader_list`, { limit: 50 });
-        setLeaderData(res.data?.data || null);
-      } catch (err) {
-        console.error('获取情绪游资龙头列表失败:', err);
-      }
-      if (isExtreme) return;
+      tasks.push(
+        axios.post(`http://${local_ip}:3000/hot_money_leader_list`, { limit: 50 })
+          .then((res) => {
+            dataModeRef.current = mode;
+            setLeaderData(res.data?.data || null);
+          })
+          .catch((err) => console.error('获取情绪游资龙头列表失败:', err))
+      );
     }
-    try {
-      const res = await axios.post(`http://${local_ip}:3000/top_gainers_by_market`, { limit: 10 });
-      setData(res.data?.data || null);
-    } catch (err) {
-      console.error('获取自选股 3 日涨幅榜失败:', err);
+    if (!isExtreme) {
+      tasks.push(
+        axios.post(`http://${local_ip}:3000/top_gainers_by_market`, { limit: 10 })
+          .then((res) => {
+            dataModeRef.current = mode;
+            setData(res.data?.data || null);
+          })
+          .catch((err) => console.error('获取自选股 3 日涨幅榜失败:', err))
+      );
     }
-  }, [isExtreme, isDefense]);
+    await Promise.all(tasks);
+  }, [mode, isExtreme, isDefense]);
+
+  // 最近一次成功结果按「数据所属模式」写入 localStorage，供下次进入页面秒开
+  useEffect(() => {
+    if (!dataModeRef.current || (!data && !leaderData)) return;
+    writeLocalCache(`ob_rank3_cache_${dataModeRef.current}`, { data, leaderData });
+  }, [data, leaderData]);
 
   // 市场门槛说明（标题下方展示）：仅展示满足指数 3 日线斜率买点门槛的市场，按 3 日涨幅取前十；
   // 未入选买点候选的个股在名称后标注原因（涨停 / 3日涨幅>30% / 昨日一字板 / 抗分歧<9 / 估值禁买 等）
@@ -1082,7 +1123,12 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isDefense = mode === MODE_ATTACK_DEFENSE;
-  const [data, setData] = useState(null);
+  const buyCacheKey = `ob_buy_point_cache_${mode}`;
+  const cachedBuyDiagnosis = useMemo(() => readTodayLocalCache(buyCacheKey), [buyCacheKey]);
+  // 记录当前诊断数据对应的策略模式，避免切换模式时把旧模式数据写进新模式缓存
+  const dataModeRef = useRef(cachedBuyDiagnosis ? mode : null);
+  // 首屏直接用当日缓存的诊断结果渲染，接口/WS 返回后再覆盖，避免每次进入页面都等 1~3 秒
+  const [data, setData] = useState(cachedBuyDiagnosis || null);
   const [refreshing, setRefreshing] = useState(false);
   // 标题旁实时时钟：每秒跳动，便于对照 5 分钟整点判断下一次自动诊断时机
   const [now, setNow] = useState(() => dayjs());
@@ -1099,6 +1145,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
       const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1, force: force ? 1 : 0, mode });
       const result = res.data?.data;
       if (!result) return;
+      dataModeRef.current = mode;
       setData(result);
       // 命中口径：攻防兼备模式下科技进攻 / 顺周期 / 逆周期任一命中即算命中；
       // 情绪游资模式下逆周期（反向抱团）择时触发也算命中
@@ -1117,6 +1164,12 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
     try { await run(true); } finally { setRefreshing(false); }
   }, [run]);
 
+  // 最近一次诊断结果按「数据所属模式」落 localStorage，供下次进入页面秒开
+  useEffect(() => {
+    if (!data || !dataModeRef.current) return;
+    writeLocalCache(`ob_buy_point_cache_${dataModeRef.current}`, data);
+  }, [data]);
+
   // 买点诊断：由后端 WebSocket 集中推送（每 10s 一次），前端不再轮询
   //   - 每条消息更新诊断数据（供卡片展示）
   //   - 命中弹窗不再由本组件处理（改由 App.jsx 全局诊断卡片弹出）
@@ -1126,6 +1179,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
     const unsubscribe = subscribeBuyPointPush((msg) => {
       const result = msg?.data;
       if (!result) return;
+      dataModeRef.current = msg?.mode || mode;
       setData(result);
       const techHit = isDefense && result.tech?.allPassed === true;
       const forwardHit = result.allPassed === true;

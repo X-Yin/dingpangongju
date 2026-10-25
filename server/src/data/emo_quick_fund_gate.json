@@ -1,11 +1,11 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-10-23 13:24:43",
-  "reason": "持仓变动重跑（持仓管理增删股票）",
+  "computedAt": "2026-10-26 00:33:13",
+  "reason": "每日首次启动回测",
   "range": {
     "startDate": "20260728",
-    "endDate": "20261023"
+    "endDate": "20261026"
   },
   "tradeCount": 7,
   "threshold": 30,
@@ -16,7 +16,7 @@
       "name": "长鑫科技",
       "sellDate": "20260730",
       "sellTime": "10:00",
-      "returnRate": 3.91
+      "returnRate": 3.44
     },
     {
       "code": "sh688313",
@@ -37,7 +37,7 @@
       "name": "景旺电子",
       "sellDate": "20260915",
       "sellTime": "14:35",
-      "returnRate": 0.36
+      "returnRate": -0.67
     },
     {
       "code": "sh688025",
@@ -47,18 +47,18 @@
       "returnRate": -1.18
     },
     {
-      "code": "sh688072",
-      "name": "拓荆科技",
+      "code": "sz300394",
+      "name": "天孚通信",
       "sellDate": "20261014",
-      "sellTime": "10:00",
-      "returnRate": 0.21
+      "sellTime": "09:33",
+      "returnRate": -1.11
     },
     {
       "code": "sz001309",
       "name": "德明利",
       "sellDate": "20261022",
-      "sellTime": "13:40",
-      "returnRate": 0.65
+      "sellTime": "13:25",
+      "returnRate": -0.38
     }
   ]
 }

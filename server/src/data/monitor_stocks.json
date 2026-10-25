@@ -930,5 +930,14 @@
     "riskScore": "7",
     "isTech": false,
     "addedAt": "2026-10-25 23:30:08"
+  },
+  {
+    "code": "sh688400",
+    "name": "凌云光",
+    "isImportant": false,
+    "blockName": "物理 AI",
+    "riskScore": "7",
+    "isTech": true,
+    "addedAt": "2026-10-26 00:11:53"
   }
 ]

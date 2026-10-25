@@ -2218,5 +2218,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sh688400": {
+    "stockName": "凌云光",
+    "kline": [
+      {
+        "trade_date": 20261023,
+        "open_px": 42.33,
+        "high_px": 48.93,
+        "low_px": 40.9,
+        "close_px": 48.78,
+        "business_amount": 25690788,
+        "business_balance": 1148947420,
+        "change": 12.16,
+        "ma5_px": 43.44,
+        "ma10_px": 40.44,
+        "ma20_px": 42.21,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

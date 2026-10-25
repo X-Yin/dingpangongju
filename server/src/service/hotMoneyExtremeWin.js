@@ -10,7 +10,7 @@
 //     checkExtremeWinSellPointDetailed(code, costPrice, buyDate) 卖点诊断 9 条（完整龙头战法）
 // ============================================================
 const dayjs = require('dayjs');
-const { batchParallel, isTradingDay, getPrevTradingDay, isAfterMarketClose } = require('../utils');
+const { batchParallel, isAfterMarketClose, resolveAnalysisDate } = require('../utils');
 const { countTradingDaysBetween } = require('../utils/tradingDay');
 const { getStockPositions } = require('./stockPosition');
 const { getPastTradingDates, stockPriorAvgVolume } = require('./buySellBacktest/deps');
@@ -66,8 +66,8 @@ const resolveTargetDay = (targetDate) => {
     return d.isValid() ? d : dayjs();
   }
   const now = dayjs();
-  if (!isTradingDay(now.toDate())) return dayjs(getPrevTradingDay());
-  return now;
+  // 非交易日 / 开盘前：回退到上一个交易日，避免列表与诊断因当日无数据而为空
+  return dayjs(resolveAnalysisDate(now.toDate()));
 };
 
 // ============================================================
