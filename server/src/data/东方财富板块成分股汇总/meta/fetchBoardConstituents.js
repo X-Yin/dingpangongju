@@ -1,20 +1,21 @@
 // 东方财富板块成分股汇总抓取
-// 用途：根据同目录 东财板块到本地板块map.json 的「分类 → 东财板块代码」映射，
+// 用途：根据 meta 同目录 东财板块到本地板块map.json 的「分类 → 东财板块代码」映射，
 //       逐个打开 data.eastmoney.com/bkzj/{BK代码}.html 成分股列表页，
 //       拦截 push2.eastmoney.com/api/qt/clist/get 响应并点击「下一页」翻页，
-//       把分类下所有板块的成分股去重合并后写入同目录 {分类}.json（格式 [{code,name}]）；
+//       把分类下所有板块的成分股去重合并后写入上级目录 {分类}.json（格式 [{code,name}]）；
 //       同时写入 {分类}_blocks.json（格式 {板块名: [{code,name}]}，保留每个板块的成分股明细，
 //       供「板块成交量占比计算」按子题材拆分成交额使用）。
-// 用法：
-//   node fetchBoardConstituents.js              抓取 map 中全部分类（电力/医药/消费/农业）
-//   node fetchBoardConstituents.js 农业 消费     只抓取指定分类
+// 用法（在 东方财富板块成分股汇总 目录下执行）：
+//   node meta/fetchBoardConstituents.js              抓取 map 中全部分类（电力/医药/消费/农业）
+//   node meta/fetchBoardConstituents.js 农业 消费     只抓取指定分类
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const { getBrowser } = require('../../utils/browser');
+const { getBrowser } = require('../../../utils/browser');
 
-const DIR = __dirname;
-const MAP_FILE = path.join(DIR, '东财板块到本地板块map.json');
+const META_DIR = __dirname;
+const OUTPUT_DIR = path.resolve(__dirname, '..');
+const MAP_FILE = path.join(META_DIR, '东财板块到本地板块map.json');
 
 const PAGE_SIZE = 50; // bkzj 页面成分股每页 50 条
 const PAGE_WAIT_TIMEOUT = 15000;
@@ -229,11 +230,11 @@ async function main() {
         .map(([code, nm]) => ({ code, name: nm }))
         .sort((a, b) => a.code.localeCompare(b.code));
 
-      const outFile = path.join(DIR, `${name}.json`);
+      const outFile = path.join(OUTPUT_DIR, `${name}.json`);
       fs.writeFileSync(outFile, JSON.stringify(result, null, 2) + '\n', 'utf-8');
       console.log(`[完成] ${name}: ${result.length} 只股票 → ${outFile}`);
 
-      const blocksFile = path.join(DIR, `${name}_blocks.json`);
+      const blocksFile = path.join(OUTPUT_DIR, `${name}_blocks.json`);
       fs.writeFileSync(blocksFile, JSON.stringify(blockStocksMap, null, 2) + '\n', 'utf-8');
       console.log(`[完成] ${name} 板块明细（${Object.keys(blockStocksMap).length} 个板块）→ ${blocksFile}`);
     }
