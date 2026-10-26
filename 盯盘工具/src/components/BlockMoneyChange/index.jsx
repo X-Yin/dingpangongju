@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { local_ip } from '../../constant';
-import { AppstoreOutlined, BarChartOutlined, LineChartOutlined, FundOutlined, ReloadOutlined, CheckOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Modal, Tabs, Empty, DatePicker, Card, Row, Col, Alert, Spin, Tag, Space, Typography, Switch, Table } from 'antd';
+import { AppstoreOutlined, BarChartOutlined, LineChartOutlined, FundOutlined, ReloadOutlined, CheckOutlined, SearchOutlined } from '@ant-design/icons';
+import { Button, Checkbox, Modal, Tabs, Empty, DatePicker, Card, Row, Col, Alert, Spin, Tag, Space, Typography, Switch, Table, Input } from 'antd';
 import { SyncOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, Title as ChartTitle, Tooltip as ChartTooltip, Legend } from 'chart.js';
@@ -373,6 +373,19 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     const [crowdAnalysis, setCrowdAnalysis] = useState(null);
     // 分拆子题材开关：{ 分类名: true/false }，开启后该分类按内部概念拆成多条折线
     const [splitCategories, setSplitCategories] = useState({});
+    // 拥挤度 tab 折线图搜索：按标题关键字过滤展示对应折线图（隐藏不匹配项，保留图表实例避免重建）
+    const [crowdChartKeyword, setCrowdChartKeyword] = useState('');
+    const crowdChartKeywordNorm = crowdChartKeyword.trim().toLowerCase();
+    // 全部折线图标题（与下方卡片标题保持一致），用于判断是否搜索到结果
+    const crowdChartTitleList = useMemo(() => (
+        ['拥挤度', '科技板块成交量占比', ...CATEGORY_RATIO_BLOCKS.map(({ name }) => `${name}成交量占比`)]
+    ), []);
+    const matchCrowdChart = (title) => (
+        !crowdChartKeywordNorm || String(title).toLowerCase().includes(crowdChartKeywordNorm)
+    );
+    const crowdChartMatchCount = crowdChartKeywordNorm
+        ? crowdChartTitleList.filter((title) => title.toLowerCase().includes(crowdChartKeywordNorm)).length
+        : crowdChartTitleList.length;
     const categoryChartRefs = useRef({});
     const categoryContainerRefs = useRef({});
     const categoryTooltipDataRef = useRef({}); // 分类名 → Map(time → [{name, color, value}])
@@ -1948,6 +1961,13 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     };
   }, [categoryRatioData, activeTab, splitCategories]);
 
+  // 搜索过滤导致卡片显隐变化后，触发一次 resize，让重新显示的图表按当前容器宽度重绘
+  useEffect(() => {
+    if (activeTab !== 'crowd') return;
+    const timer = setTimeout(() => window.dispatchEvent(new Event('resize')), 0);
+    return () => clearTimeout(timer);
+  }, [crowdChartKeyword, activeTab]);
+
   const allBlocks = useMemo(() => {
         if (!dayHistory.length) return [];
 
@@ -2752,7 +2772,12 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                                 <div className="crowd-analysis-chips">
                                                     {crowdAnalysis.up.length === 0 && <span className="crowd-analysis-none">无</span>}
                                                     {crowdAnalysis.up.map((r, i) => (
-                                                        <Tag key={r.name} className={`crowd-analysis-chip up ${i < 3 ? 'top' : ''}`}>
+                                                        <Tag
+                                                            key={r.name}
+                                                            className={`crowd-analysis-chip up ${i < 3 ? 'top' : ''}`}
+                                                            onClick={() => setCrowdChartKeyword(r.name)}
+                                                            title="点击搜索该板块折线图"
+                                                        >
                                                             {i < 3 && <span className="top-mark">★</span>}
                                                             {r.name} +{r.change.toFixed(3)}%
                                                         </Tag>
@@ -2764,7 +2789,12 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                                 <div className="crowd-analysis-chips">
                                                     {crowdAnalysis.down.length === 0 && <span className="crowd-analysis-none">无</span>}
                                                     {crowdAnalysis.down.map((r, i) => (
-                                                        <Tag key={r.name} className={`crowd-analysis-chip down ${i < 3 ? 'top' : ''}`}>
+                                                        <Tag
+                                                            key={r.name}
+                                                            className={`crowd-analysis-chip down ${i < 3 ? 'top' : ''}`}
+                                                            onClick={() => setCrowdChartKeyword(r.name)}
+                                                            title="点击搜索该板块折线图"
+                                                        >
                                                             {i < 3 && <span className="top-mark">★</span>}
                                                             {r.name} {r.change.toFixed(3)}%
                                                         </Tag>
@@ -2776,7 +2806,12 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                                 <div className="crowd-analysis-chips">
                                                     {crowdAnalysis.slopeUp.length === 0 && <span className="crowd-analysis-none">无</span>}
                                                     {crowdAnalysis.slopeUp.map((r) => (
-                                                        <Tag key={r.name} className="crowd-analysis-chip up">
+                                                        <Tag
+                                                            key={r.name}
+                                                            className="crowd-analysis-chip up"
+                                                            onClick={() => setCrowdChartKeyword(r.name)}
+                                                            title="点击搜索该板块折线图"
+                                                        >
                                                             {r.name} +{r.slope.toFixed(3)}
                                                         </Tag>
                                                     ))}
@@ -2787,7 +2822,12 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                                 <div className="crowd-analysis-chips">
                                                     {crowdAnalysis.slopeDown.length === 0 && <span className="crowd-analysis-none">无</span>}
                                                     {crowdAnalysis.slopeDown.map((r) => (
-                                                        <Tag key={r.name} className="crowd-analysis-chip down">
+                                                        <Tag
+                                                            key={r.name}
+                                                            className="crowd-analysis-chip down"
+                                                            onClick={() => setCrowdChartKeyword(r.name)}
+                                                            title="点击搜索该板块折线图"
+                                                        >
                                                             {r.name} {r.slope.toFixed(3)}
                                                         </Tag>
                                                     ))}
@@ -2798,7 +2838,12 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                                 <div className="crowd-analysis-chips">
                                                     {crowdAnalysis.steep.length === 0 && <span className="crowd-analysis-none">无</span>}
                                                     {crowdAnalysis.steep.map((r) => (
-                                                        <Tag key={r.name} className={`crowd-analysis-chip ${r.slope > 0 ? 'up' : 'down'}`}>
+                                                        <Tag
+                                                            key={r.name}
+                                                            className={`crowd-analysis-chip ${r.slope > 0 ? 'up' : 'down'}`}
+                                                            onClick={() => setCrowdChartKeyword(r.name)}
+                                                            title="点击搜索该板块折线图"
+                                                        >
                                                             {r.name} {r.slope > 0 ? '+' : ''}{r.slope.toFixed(3)}
                                                         </Tag>
                                                     ))}
@@ -2809,7 +2854,12 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                                 <div className="crowd-analysis-chips">
                                                     {crowdAnalysis.flat.length === 0 && <span className="crowd-analysis-none">无</span>}
                                                     {crowdAnalysis.flat.map((r) => (
-                                                        <Tag key={r.name} className={`crowd-analysis-chip ${r.slope > 0 ? 'up' : 'down'}`}>
+                                                        <Tag
+                                                            key={r.name}
+                                                            className={`crowd-analysis-chip ${r.slope > 0 ? 'up' : 'down'}`}
+                                                            onClick={() => setCrowdChartKeyword(r.name)}
+                                                            title="点击搜索该板块折线图"
+                                                        >
                                                             {r.name} {r.slope > 0 ? '+' : ''}{r.slope.toFixed(3)}
                                                         </Tag>
                                                     ))}
@@ -2819,11 +2869,29 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                     )}
                                 </Card>
                             </div>
+                            <div className="crowd-chart-search-bar">
+                                <Input
+                                    allowClear
+                                    prefix={<SearchOutlined />}
+                                    placeholder="搜索折线图标题，如：半导体、科技"
+                                    value={crowdChartKeyword}
+                                    onChange={(e) => setCrowdChartKeyword(e.target.value)}
+                                    className="crowd-chart-search"
+                                />
+                            </div>
                             {techRatioData.length === 0 && crowdData.length === 0 ? (
                                 <div className="rzrq-loading">加载中...</div>
                             ) : techRatioData.length > 0 || crowdData.length > 0 ? (
                                 <div className="crowd-chart-container">
-                                    <div className="crowd-chart-card">
+                                    {crowdChartMatchCount === 0 && (
+                                        <div className="crowd-chart-search-empty">
+                                            未找到标题包含「{crowdChartKeyword.trim()}」的折线图
+                                        </div>
+                                    )}
+                                    <div
+                                        className="crowd-chart-card"
+                                        style={matchCrowdChart('拥挤度') ? undefined : { display: 'none' }}
+                                    >
                                         <div className="crowd-chart-header">
                                             <div className="crowd-chart-title">拥挤度</div>
                                             <div className="crowd-chart-value">
@@ -2845,7 +2913,10 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="crowd-chart-card">
+                                    <div
+                                        className="crowd-chart-card"
+                                        style={matchCrowdChart('科技板块成交量占比') ? undefined : { display: 'none' }}
+                                    >
                                         <div className="crowd-chart-header">
                                             <div
                                                 className="crowd-chart-title crowd-chart-title-clickable"
@@ -2882,7 +2953,11 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                         const list = categoryRatioData[name] || [];
                                         const latest = list.length > 0 ? list[list.length - 1] : null;
                                         return (
-                                            <div key={name} className="crowd-chart-card">
+                                            <div
+                                                key={name}
+                                                className="crowd-chart-card"
+                                                style={matchCrowdChart(`${name}成交量占比`) ? undefined : { display: 'none' }}
+                                            >
                                                 <div className="crowd-chart-header">
                                                     <div className="crowd-chart-title-wrap">
                                                         <div

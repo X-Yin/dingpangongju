@@ -1587,5 +1587,30 @@ exports.default = [
         "code": "sh688049",
         "name": "炬芯科技",
         "tag": "中性"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sz300976",
+        "name": "达瑞电子"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sz000810",
+        "name": "创维数字"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sz300130",
+        "name": "新国都"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sz300296",
+        "name": "利亚德"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sh688585",
+        "name": "上纬新材"
     }
 ]

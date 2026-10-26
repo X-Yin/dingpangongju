@@ -1264,11 +1264,13 @@ app.post('/hot_money_leader_list', async (req, res) => {
   try {
     const targetDate = req.body?.targetDate;
     const limit = req.body?.limit;
+    // force=1：前端卡片手动刷新按钮传入，强制重算，绕开缓存等待下一轮轮询
+    const force = req.body?.force === true || req.body?.force === 1 || req.body?.force === '1';
     const cacheKey = `hot_money_leader_list_${dayjs().format('YYYYMMDD')}_${targetDate || 'live'}_${limit || 50}`;
     const result = await withApiCache(
       cacheKey,
       () => getHotMoneyLeaderList(targetDate, limit),
-      false,
+      force,
       4000
     );
     res.json(result);
@@ -1305,11 +1307,13 @@ app.post('/top_gainers_by_market', async (req, res) => {
     // limit：每市场最大条数，缺省 5（开盘实战页）；优选个股全量展示时传较大的值
     const targetDate = req.body?.targetDate;
     const limit = req.body?.limit;
+    // force=1：前端卡片手动刷新按钮传入，强制重算，绕开缓存等待下一轮轮询
+    const force = req.body?.force === true || req.body?.force === 1 || req.body?.force === '1';
     const cacheKey = `top_gainers_by_market_${dayjs().format('YYYYMMDD')}_${targetDate || 'live'}_${limit || 5}`;
     const result = await withApiCache(
       cacheKey,
       () => getTopGainersByMarket(targetDate, limit),
-      false,
+      force,
       4000
     );
     res.json(result);

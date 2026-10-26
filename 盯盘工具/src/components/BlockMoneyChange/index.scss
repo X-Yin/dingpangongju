@@ -731,6 +731,32 @@
         gap: 24px;
     }
 
+    // 自动分析卡片下方的折线图标题搜索框
+    .crowd-chart-search-bar {
+        display: flex;
+        align-items: center;
+        padding: 12px 32px 0;
+
+        .crowd-chart-search {
+            width: 300px;
+            max-width: 100%;
+
+            .ant-input-prefix {
+                color: #94a3b8;
+                margin-inline-end: 6px;
+            }
+        }
+    }
+
+    // 搜索无匹配结果提示（跨满整行）
+    .crowd-chart-search-empty {
+        grid-column: 1 / -1;
+        padding: 48px 0;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 13px;
+    }
+
     .crowd-chart-card {
         background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
         border: 1px solid #e2e8f0;
@@ -985,6 +1011,15 @@
                     margin-inline-end: 0;
                     font-size: 12px;
                     line-height: 20px;
+                    // 点击板块 tag 会把名称填入搜索框并过滤折线图
+                    cursor: pointer;
+                    transition: all 0.18s ease;
+
+                    &:hover {
+                        filter: brightness(0.96);
+                        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+                        transform: translateY(-1px);
+                    }
 
                     &.up {
                         color: #e11d48;

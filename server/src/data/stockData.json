@@ -2119,26 +2119,6 @@
     ],
     "isImportant": false
   },
-  "sz002185": {
-    "stockName": "华天科技",
-    "kline": [
-      {
-        "trade_date": 20261026,
-        "open_px": 15.6,
-        "high_px": 15.7,
-        "low_px": 14.92,
-        "close_px": 14.92,
-        "business_amount": 286522470,
-        "business_balance": 4367615000,
-        "change": -7.84,
-        "ma5_px": 15.05,
-        "ma10_px": 14.74,
-        "ma20_px": 15.89,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
   "sh605488": {
     "stockName": "福莱新材",
     "kline": [
@@ -2274,6 +2254,46 @@
         "ma5_px": 571.41,
         "ma10_px": 504.15,
         "ma20_px": 482.34,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh688585": {
+    "stockName": "上纬新材",
+    "kline": [
+      {
+        "trade_date": 20261026,
+        "open_px": 130,
+        "high_px": 151.57,
+        "low_px": 129.5,
+        "close_px": 151.57,
+        "business_amount": 13661123,
+        "business_balance": 1952158200,
+        "change": 20,
+        "ma5_px": 123.03,
+        "ma10_px": 116.33,
+        "ma20_px": 123.57,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz000810": {
+    "stockName": "创维数字",
+    "kline": [
+      {
+        "trade_date": 20261026,
+        "open_px": 10.38,
+        "high_px": 11.02,
+        "low_px": 10.1,
+        "close_px": 11.02,
+        "business_amount": 74395718,
+        "business_balance": 808267100,
+        "change": 9.98,
+        "ma5_px": 9.69,
+        "ma10_px": 9.3,
+        "ma20_px": 9.28,
         "change_diff": 0
       }
     ],

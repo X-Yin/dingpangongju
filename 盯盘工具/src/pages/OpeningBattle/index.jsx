@@ -809,6 +809,8 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   // 点击股票名称打开 K 线弹窗
   const [selectedStock, setSelectedStock] = useState(null);
   const [klineVisible, setKlineVisible] = useState(false);
+  // 卡片右上角手动刷新：强制重拉涨幅榜 + 龙头列表（含指数斜率），不用缓存
+  const [refreshing, setRefreshing] = useState(false);
   const cybPassed = data?.cybGate?.passed === true;
   const starPassed = data?.starGate?.passed === true;
 
@@ -816,12 +818,14 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   //   tech_attack            → /top_gainers_by_market（limit=10，每市场最多 10 只，合并后展示前十）
   //   hot_money_extreme_win  → /hot_money_leader_list（除 delta≥30 与上证斜率>0 外全部买点条件满足）
   //   attack_defense         → 两个接口同时拉（科技进攻 + 情绪游资双策略并示）
-  const fetchStocks = useCallback(async () => {
+  const fetchStocks = useCallback(async (force = false) => {
+    // force=true：手动刷新按钮传入，后端强制重算，绕过缓存直接拿最新数据
+    const refreshFlag = force ? 1 : 0;
     // 攻防兼备需要同时拉两份数据，改为并行请求（原先串行等待两个接口，首屏耗时翻倍）
     const tasks = [];
     if (isExtreme || isDefense) {
       tasks.push(
-        axios.post(`http://${local_ip}:3000/hot_money_leader_list`, { limit: 50 })
+        axios.post(`http://${local_ip}:3000/hot_money_leader_list`, { limit: 50, force: refreshFlag })
           .then((res) => {
             dataModeRef.current = mode;
             setLeaderData(res.data?.data || null);
@@ -831,7 +835,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
     }
     if (!isExtreme) {
       tasks.push(
-        axios.post(`http://${local_ip}:3000/top_gainers_by_market`, { limit: 10 })
+        axios.post(`http://${local_ip}:3000/top_gainers_by_market`, { limit: 10, force: refreshFlag })
           .then((res) => {
             dataModeRef.current = mode;
             setData(res.data?.data || null);
@@ -841,6 +845,11 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
     }
     await Promise.all(tasks);
   }, [mode, isExtreme, isDefense]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await fetchStocks(true); } finally { setRefreshing(false); }
+  }, [fetchStocks]);
 
   // 最近一次成功结果按「数据所属模式」写入 localStorage，供下次进入页面秒开
   useEffect(() => {
@@ -932,6 +941,9 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
               ? `科技 ${mergedList.length} · 顺周期 ${leaderList.length} · 逆周期 ${reverseList.length}`
               : `共 ${rowCount} 只`}
         </span>
+        <button className="ob-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="刷新卡片数据">
+          <ReloadOutlined spin={refreshing} />
+        </button>
       </div>
       <div className={`ob-gainer-gate-note ${(isExtreme ? slopeOk : (cybPassed && starPassed)) ? 'both' : (isExtreme ? false : (cybPassed || starPassed)) ? 'partial' : 'none'}`}>
         {isExtreme ? extremeGateNote : gateNote}

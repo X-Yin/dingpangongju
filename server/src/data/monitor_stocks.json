@@ -887,15 +887,6 @@
     "addedAt": "2026-10-23 08:54:32"
   },
   {
-    "code": "sz002185",
-    "name": "华天科技",
-    "isImportant": false,
-    "blockName": "先进封装",
-    "riskScore": " 8",
-    "isTech": true,
-    "addedAt": "2026-10-23 08:55:48"
-  },
-  {
     "code": "sh605488",
     "name": "福莱新材",
     "isImportant": false,
@@ -957,5 +948,23 @@
     "riskScore": "8",
     "isTech": true,
     "addedAt": "2026-10-26 15:10:30"
+  },
+  {
+    "code": "sh688585",
+    "name": "上纬新材",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": " 7",
+    "isTech": true,
+    "addedAt": "2026-10-26 20:57:23"
+  },
+  {
+    "code": "sz000810",
+    "name": "创维数字",
+    "isImportant": false,
+    "blockName": "物理 AI",
+    "riskScore": "7",
+    "isTech": true,
+    "addedAt": "2026-10-26 21:05:30"
   }
 ]

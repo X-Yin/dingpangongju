@@ -22,6 +22,7 @@ import TrendDiagnosisModal from '../TrendDiagnosisModal';
 import TimeFlexTestModal from '../TimeFlexTestModal';
 import RandomSimTestModal from '../RandomSimTestModal';
 import StockKLineModal from '../../../../components/StockKLineModal';
+import StrategyFlowDiagram, { getStrategyFlow, parseNoteBullet, splitBoldClauses } from './StrategyFlowDiagram';
 
 // 回测最早支持日期（早于此日期无回放数据）
 const EARLIEST_DATE = '20260728';
@@ -2639,23 +2640,48 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
           return parts.map((p, i) => (i % 2 === 1 ? <strong key={`${keyPrefix}-${i}`}>{p}</strong> : <span key={`${keyPrefix}-${i}`}>{p}</span>));
         };
 
-        const ruleRow = (item, idx) => (
-          <div key={item.key || idx} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px dashed #eef1f6' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#12213a', marginBottom: 4 }}>
-              {idx + 1}. {item.title}
-            </div>
-            <div style={{ fontSize: 12.5, color: '#4b5563', lineHeight: 1.8 }}>
-              {renderBold(item.desc, `rule-${idx}`)}
-            </div>
+        // 编号圆点（专属说明 & 规则条目共用）
+        const numDot = (n, bg = '#1677ff') => (
+          <span style={{
+            flexShrink: 0, width: 20, height: 20, borderRadius: '50%',
+            background: bg, color: '#fff', fontSize: 11.5, fontWeight: 700,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginTop: 1,
+          }}>{n}</span>
+        );
+
+        // 单行子句：› 前缀 + 粗体解析，一行一条清晰易读
+        const clauseLine = (ln, keyPrefix) => (
+          <div style={{ fontSize: 12.5, color: '#4b5563', lineHeight: 1.75, display: 'flex', gap: 7, alignItems: 'flex-start', marginBottom: 3 }}>
+            <span style={{ color: '#b7c1d4', flexShrink: 0, fontSize: 12 }}>›</span>
+            <span style={{ flex: 1, minWidth: 0 }}>{renderBold(ln, keyPrefix)}</span>
           </div>
         );
+
+        const ruleRow = (item, idx) => {
+          const lines = splitBoldClauses(item.desc);
+          return (
+            <div key={item.key || idx} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: '1px dashed #eef1f6' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
+                {numDot(idx + 1)}
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#12213a', flex: 1, minWidth: 0, paddingTop: 1 }}>
+                  {item.title}
+                </div>
+              </div>
+              <div style={{ marginLeft: 28 }}>
+                {lines.map((ln, j) => clauseLine(ln, `rule-${idx}-${j}`))}
+              </div>
+            </div>
+          );
+        };
 
         return (
           <Modal
             open={ruleOpen}
             onCancel={() => setRuleOpen(false)}
             footer={null}
-            width={860}
+            width="94vw"
+            style={{ top: 20 }}
+            styles={{ body: { maxHeight: 'calc(100vh - 150px)', overflowY: 'auto' } }}
             destroyOnHidden
             title={
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -2674,7 +2700,17 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
               <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4, fontFamily: "'SF Mono', monospace" }}>{strategy}</div>
             </div>
 
-            {/* 策略专属说明（选股口径/触发时点等） */}
+            {/* 决策流程图（先图后文：并列条件 / 先后顺序 / 分支路径一览） */}
+            {getStrategyFlow(strategy) && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#12213a', marginBottom: 10 }}>
+                  🗺 决策流程图
+                </div>
+                <StrategyFlowDiagram strategyId={strategy} height={540} />
+              </div>
+            )}
+
+            {/* 策略专属说明（选股口径/触发时点等）— 编号分行 */}
             {notes?.bullets && notes.bullets.length > 0 && (
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#12213a', marginBottom: 10 }}>
@@ -2682,13 +2718,24 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                 </div>
                 <div style={{
                   border: '1px solid #e6f0ff', background: '#f0f6ff', borderRadius: 8,
-                  padding: '12px 14px', fontSize: 12.5, color: '#12213a', lineHeight: 1.9,
+                  padding: '14px 16px',
                 }}>
-                  {notes.bullets.map((b, i) => (
-                    <div key={i} style={{ marginBottom: i < notes.bullets.length - 1 ? 6 : 0 }}>
-                      • {renderBold(b, `note-${i}`)}
-                    </div>
-                  ))}
+                  {notes.bullets.map((b, i) => {
+                    const { title, lines } = parseNoteBullet(b);
+                    return (
+                      <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < notes.bullets.length - 1 ? 14 : 0 }}>
+                        {numDot(i + 1, '#2f54eb')}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          {title && (
+                            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#12213a', marginBottom: 4 }}>
+                              {title}
+                            </div>
+                          )}
+                          {lines.map((ln, j) => clauseLine(ln, `note-${i}-${j}`))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -2700,12 +2747,12 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                 {
                   key: 'buy',
                   label: `买入规则（${buyRules.length} 条）`,
-                  children: (<div style={{ height: 400, overflowY: 'auto' }}>{buyRules.map(ruleRow)}</div>),
+                  children: (<div style={{ height: 460, overflowY: 'auto' }}>{buyRules.map(ruleRow)}</div>),
                 },
                 {
                   key: 'sell',
                   label: `卖出规则（${sellRules.length} 条）`,
-                  children: (<div style={{ height: 400, overflowY: 'auto' }}>{sellRules.map(ruleRow)}</div>),
+                  children: (<div style={{ height: 460, overflowY: 'auto' }}>{sellRules.map(ruleRow)}</div>),
                 },
               ]}
             />
