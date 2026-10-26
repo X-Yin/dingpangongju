@@ -1,5 +1,38 @@
 [
   {
+    "id": "1792985063901_lex21o",
+    "type": "buy",
+    "code": "sh600825",
+    "name": "新华传媒",
+    "date": "2026-10-26",
+    "time": "11:24:23",
+    "detail": "新增持仓：新华传媒（sh600825）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-26T03:24:23.901Z"
+  },
+  {
+    "id": "1792978711672_arhglu",
+    "type": "delete",
+    "code": "sh688322",
+    "name": "奥比中光-W",
+    "date": "2026-10-26",
+    "time": "09:38:31",
+    "detail": "删除持仓：奥比中光-W（sh688322）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-26T01:38:31.672Z"
+  },
+  {
+    "id": "1792978241316_zer07w",
+    "type": "delete",
+    "code": "sz002185",
+    "name": "华天科技",
+    "date": "2026-10-26",
+    "time": "09:30:41",
+    "detail": "删除持仓：华天科技（sz002185）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-26T01:30:41.316Z"
+  },
+  {
     "id": "1792945993614_1uuraw",
     "type": "buy",
     "code": "sh688322",

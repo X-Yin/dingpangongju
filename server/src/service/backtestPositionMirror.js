@@ -49,10 +49,10 @@ const writeState = (obj) => {
   }
 };
 
-// 幂等：持仓管理中是否已存在「同策略镜像 + 同股票 + 同买入日」的持仓
+// 幂等：持仓管理中是否已存在「同股票 + 同买入日」的持仓（不限定是否带镜像标记）
+// 用户可能已手动录入回测的同一笔买入，若只比对镜像标记会再镜像一份，导致同一笔持仓变两腿
 const findMirroredPosition = (code, buyDateDash) => (getStockPositions() || []).find((p) =>
-  p && p.mirror && p.mirror.strategy === MIRROR_STRATEGY_ID
-  && String(p.code) === String(code)
+  p && String(p.code) === String(code)
   && String(p.buyDate) === String(buyDateDash));
 
 const syncOnce = async () => {
@@ -103,7 +103,7 @@ const syncOnce = async () => {
       continue;
     }
     if (findMirroredPosition(code, buyDateDash)) {
-      skipped.push(`${name}（镜像持仓已存在）`);
+      skipped.push(`${name}（同股票同买入日持仓已存在）`);
       continue;
     }
     const res = addStockPosition(code, name, MIRROR_POSITION_WEIGHT, {

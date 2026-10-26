@@ -1,36 +1,20 @@
 [
   {
-    "id": "sz002185_1792732256909_91ix",
-    "code": "sz002185",
-    "name": "华天科技",
-    "buyDate": "2026-10-23",
-    "buyTime": "13:10",
-    "weight": 50,
-    "costPrice": 16.45
-  },
-  {
     "id": "sh688322_1792732989573_89ip",
     "code": "sh688322",
     "name": "奥比中光-W",
     "buyDate": "2026-10-23",
     "buyTime": "13:23",
-    "weight": 50,
+    "weight": 75,
     "costPrice": 93.18
   },
   {
-    "id": "sh688322_1792945993613_wwnt",
-    "code": "sh688322",
-    "name": "奥比中光-W",
-    "buyDate": "2026-10-23",
-    "buyTime": "13:25",
-    "weight": 50,
-    "costPrice": 93.61,
-    "mirror": {
-      "strategy": "highest_3d_gain_emoquick",
-      "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-      "syncedDate": "2026-10-26",
-      "buyDateRaw": "20261023",
-      "source": "backtest_position_mirror"
-    }
+    "id": "sh600825_1792985063900_56a6",
+    "code": "sh600825",
+    "name": "新华传媒",
+    "buyDate": "2026-10-26",
+    "buyTime": "11:24",
+    "weight": 25,
+    "costPrice": 15.75
   }
 ]

@@ -2518,8 +2518,8 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
   // 动态取值——每天首次启动回测 / 持仓增删后台重跑回测后，按成交序列（半仓 ×0.5 折算收益率）计算：
   // 连续 2 笔未超 3% → 提高到 30 亿；任一笔超 3% → 回落 20 亿（见 emoQuickFundGateLive.js）；
   // 状态缺失时回退固定 20 亿。开盘初期（9:30-9:35 不满 5min）回退为"9:30 开盘至当前"累计净流入判定（sinceOpen）
-  // 「30 亿抬高态强制两次买入」线上同步（2026-10-21 用户新增）：已持第一份半仓待补买第二份时（恰好 1 笔
-  // 50% tech 持仓），检查2 固定按基准 20 亿判定——第一次半仓买入用 30 亿阈值、第二份买入自动降为 20 亿
+  // 「30 亿抬高态强制两次买入」线上同步（2026-10-21 用户新增）：恰好持有 1 笔未满仓（<100%）tech 持仓
+  // 待补买第二份时，检查2 固定按基准 20 亿判定——第一次建仓用 30 亿阈值、后续补买自动降为 20 亿
   //（与回测 rangeBacktest.js waitingSecondLeg 同口径）
   const fundGate = getLiveFundInflowThreshold();
   const techLegState = getTechHalfPositionState();
@@ -2530,7 +2530,7 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
   const check5Passed = inflowResult.hasData && inflowResult.diff > fundThreshold;
   const inflowWindowText = inflowResult.sinceOpen ? '开盘至当前' : '最近 5 分钟';
   const waitingNote = firstLeg
-    ? `（已持第一份半仓 ${firstLeg.name || firstLeg.code}，${firstLeg.buyDate || '?'} 买入；第二份补买阈值降为基准 ${EMO_QUICK_FUND_INFLOW_BASE} 亿）`
+    ? `（已持 ${firstLeg.name || firstLeg.code} 仓位 ${firstLeg.weight != null ? firstLeg.weight : 50}%，${firstLeg.buyDate || '?'} 买入；补买阈值降为基准 ${EMO_QUICK_FUND_INFLOW_BASE} 亿）`
     : '';
   checks.push({
     id: 'fund_inflow',

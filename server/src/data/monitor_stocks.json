@@ -914,15 +914,6 @@
     "addedAt": "2026-10-23 10:12:30"
   },
   {
-    "code": "sz002827",
-    "name": "高争民爆",
-    "isImportant": false,
-    "blockName": "民爆",
-    "riskScore": "8",
-    "isTech": false,
-    "addedAt": "2026-10-25 19:17:02"
-  },
-  {
     "code": "sh600391",
     "name": "航发科技",
     "isImportant": false,

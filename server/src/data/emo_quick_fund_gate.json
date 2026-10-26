@@ -1,15 +1,15 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-10-26 00:33:13",
-  "reason": "每日首次启动回测",
+  "computedAt": "2026-10-26 11:25:37",
+  "reason": "持仓变动重跑（持仓管理增删股票）",
   "range": {
     "startDate": "20260728",
     "endDate": "20261026"
   },
-  "tradeCount": 7,
-  "threshold": 30,
-  "consecutiveBelow": 4,
+  "tradeCount": 8,
+  "threshold": 20,
+  "consecutiveBelow": 0,
   "lastReturns": [
     {
       "code": "sh688825",
@@ -37,7 +37,7 @@
       "name": "景旺电子",
       "sellDate": "20260915",
       "sellTime": "14:35",
-      "returnRate": -0.67
+      "returnRate": 0.36
     },
     {
       "code": "sh688025",
@@ -57,8 +57,15 @@
       "code": "sz001309",
       "name": "德明利",
       "sellDate": "20261022",
-      "sellTime": "13:25",
-      "returnRate": -0.38
+      "sellTime": "13:40",
+      "returnRate": 0.65
+    },
+    {
+      "code": "sh688322",
+      "name": "奥比中光-W",
+      "sellDate": "20261026",
+      "sellTime": "10:05",
+      "returnRate": 9.5
     }
   ]
 }

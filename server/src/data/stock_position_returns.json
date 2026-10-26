@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-10-26",
+    "operations": [
+      {
+        "id": "1792978241331_6aj6",
+        "action": "sell",
+        "stockName": "华天科技",
+        "stockCode": "sz002185",
+        "position": "",
+        "time": "09:30"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-26T01:30:44.720Z",
+    "updatedAt": "2026-10-26T01:30:44.720Z"
+  },
+  {
     "date": "2026-10-23",
     "operations": [
       {

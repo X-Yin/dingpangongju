@@ -80,19 +80,20 @@ const getFundGateSnapshot = () => {
 // 科技进攻（快进快出）只买自选科技股、情绪游资-极致胜率候选池剔除自选科技股，两者持仓互不重叠，
 // 故「tech 持仓」= 自选科技股（isTechWatchlistStock，isTech !== false）的持仓。
 // 与回测 waitingSecondLeg（emoQuickHalfBuy && positions.length === 1 && positions[0].leg === 1）同口径：
-// 恰好持有 1 笔仓位 50% 的 tech 持仓 → 待补买第二份（买点诊断 fund_inflow 阈值降回基准 20 亿，
-// 第二份买入提醒文案同步提示）。不限制买入日期：当日已买第一份时「同日不能买第二份」由买入提醒
-// 文案提示（对应回测 dateStr > positions[0].buyDate 约束）
+// 恰好持有 1 笔「未满仓」（仓位 < 100%）的 tech 持仓 → 待补买第二份（买点诊断 fund_inflow 阈值降回基准
+// 20 亿，第二份买入提醒文案同步提示）。仓位允许 25/50/75/100，以 50% 建仓即原「第一份半仓」；
+// 用户实际仓位为 75% 等未满仓情形同样视为待补。不限制买入日期：当日已买第一份时「同日不能买第二份」
+// 由买入提醒文案提示（对应回测 dateStr > positions[0].buyDate 约束）
 const getTechHalfPositionState = () => {
   const techHoldings = (getStockPositions() || []).filter((p) => p && isTechWatchlistStock(p.code));
-  const halfLegs = techHoldings.filter((p) => Number(p.weight) === 50);
+  const partialLegs = techHoldings.filter((p) => Number(p.weight) < 100);
   const toRow = (p) => ({ code: p.code, name: p.name, buyDate: p.buyDate || null, weight: Number(p.weight) });
   return {
     techCount: techHoldings.length,
     techHoldings: techHoldings.map(toRow),
-    positions: halfLegs.map(toRow),
-    count: halfLegs.length,
-    waitingSecondLeg: halfLegs.length === 1,
+    positions: partialLegs.map(toRow),
+    count: partialLegs.length,
+    waitingSecondLeg: partialLegs.length === 1,
   };
 };
 

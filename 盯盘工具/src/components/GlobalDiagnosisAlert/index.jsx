@@ -56,9 +56,11 @@ const buildTechPositionExplain = (techData) => {
   const isRaised = typeof gateThreshold === 'number' && gateThreshold >= 30;
   const firstLeg = fundDetail.waitingSecondLeg === true ? (fundDetail.firstLeg || null) : null;
   if (firstLeg) {
+    const firstLegWeight = Number.isFinite(Number(firstLeg.weight)) ? Number(firstLeg.weight) : 50;
+    const remaining = Math.max(0, 100 - firstLegWeight);
     return {
-      pos: '半仓（50%）',
-      why: `补买第二份半仓：已持第一份半仓 ${firstLeg.name || firstLeg.code}（${firstLeg.buyDate || '?'} 买入），本次买入剩余 5 成；补买资金净流入阈值降为基准 20 亿${isQuickOutDay ? '；今日为快进快出日，本份买入后次日 10:00 强卖' : ''}`,
+      pos: remaining === 50 ? '半仓（50%）' : `${remaining}%（补足至满仓）`,
+      why: `补买剩余 ${remaining === 50 ? '半仓 5 成' : `${remaining}%`}：已持 ${firstLeg.name || firstLeg.code}（仓位 ${firstLegWeight}%，${firstLeg.buyDate || '?'} 买入），本次补足至满仓；补买资金净流入阈值降为基准 20 亿${isQuickOutDay ? '；今日为快进快出日，本份买入后次日 10:00 强卖' : ''}`,
     };
   }
   if (isQuickOutDay) {
