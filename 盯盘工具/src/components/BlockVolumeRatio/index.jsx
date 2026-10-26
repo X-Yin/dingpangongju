@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import axios from 'axios';
-import { Button, DatePicker, Empty, Select, Spin } from 'antd';
+import { Button, DatePicker, Empty, Modal, Select, Spin, Table } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { Line } from 'react-chartjs-2';
 import {
@@ -15,6 +15,7 @@ import {
 } from 'chart.js';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
+import StockKLineModal from '../StockKLineModal';
 import './index.scss';
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip, Legend, Filler);
@@ -37,14 +38,51 @@ const formatTime = (time) => {
   return `${str.slice(0, 2)}:${str.slice(2, 4)}`;
 };
 
+const timeToMinute = (time) => {
+  const str = String(time || '');
+  if (str.length < 4) return null;
+  const hour = Number(str.slice(0, 2));
+  const minute = Number(str.slice(2, 4));
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+  return hour * 60 + minute;
+};
+
+// 近 windowMinutes 分钟内占比持续提升：窗口内有效采集点逐段严格上升，且至少覆盖 windowMinutes/10 个 10 分钟区间
+const isRiseSustained = (points, name, windowMinutes) => {
+  const required = windowMinutes / 10 + 1;
+  const valid = [];
+  for (const point of points) {
+    const minute = timeToMinute(point.time);
+    const raw = point.ratios ? point.ratios[name] : null;
+    if (minute === null || raw === null || raw === undefined || !isFinite(Number(raw))) continue;
+    valid.push({ minute, value: Number(raw) });
+  }
+  if (valid.length < required) return false;
+  const latestMinute = valid[valid.length - 1].minute;
+  const window = valid.filter((item) => latestMinute - item.minute <= windowMinutes);
+  if (window.length < required) return false;
+  for (let i = 1; i < window.length; i += 1) {
+    if (!(window[i].value > window[i - 1].value)) return false;
+  }
+  return true;
+};
+
 const BlockVolumeRatio = () => {
   const [subTab, setSubTab] = useState('daily');
+  const [intradayGroupMode, setIntradayGroupMode] = useState('prevDay');
   const [history, setHistory] = useState({ blocks: [], live: null });
   const [intraday, setIntraday] = useState({ date: '', updatedAt: '', points: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null); // null 表示默认全选板块
   const [range, setRange] = useState(() => [dayjs().subtract(60, 'day'), dayjs()]);
+  const [stockModalOpen, setStockModalOpen] = useState(false);
+  const [stockModalBlock, setStockModalBlock] = useState('');
+  const [stockList, setStockList] = useState([]);
+  const [stockLoading, setStockLoading] = useState(false);
+  const [stockError, setStockError] = useState(null);
+  const [klineStock, setKlineStock] = useState(null);
+  const [klineVisible, setKlineVisible] = useState(false);
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -82,6 +120,28 @@ const BlockVolumeRatio = () => {
     await Promise.all([fetchHistory(), fetchIntraday()]);
     setLoading(false);
   }, [fetchHistory, fetchIntraday]);
+
+  // 点击折线卡片标题：拉取该板块全部成分股的最新行情
+  const openBlockStocks = useCallback(async (name) => {
+    setStockModalOpen(true);
+    setStockModalBlock(name);
+    setStockList([]);
+    setStockError(null);
+    setStockLoading(true);
+    try {
+      const resp = await axios.get(`http://${local_ip}:3000/block_volume_ratio_stocks`, {
+        params: { name },
+        timeout: 60 * 1000,
+      });
+      const data = resp.data || {};
+      setStockList(Array.isArray(data.stocks) ? data.stocks : []);
+    } catch (err) {
+      console.error('获取板块成分股行情失败:', err);
+      setStockError('获取板块成分股行情失败，请检查后端服务');
+    } finally {
+      setStockLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchAll();
@@ -250,6 +310,8 @@ const BlockVolumeRatio = () => {
         color,
         latest: latest !== null ? { ratio: latest } : null,
         change: change === undefined ? null : change,
+        rise10m: isRiseSustained(intraday.points, name, 10),
+        rise30m: isRiseSustained(intraday.points, name, 30),
         data: {
           labels,
           datasets: [
@@ -280,6 +342,18 @@ const BlockVolumeRatio = () => {
     .filter((item) => item.change !== null && item.change < 0)
     .sort((a, b) => a.change - b.change), [intradayChartItems]);
 
+  const intradayTrendFlag = intradayGroupMode === 'rise10m' ? 'rise10m' : 'rise30m';
+  const intradayTrendTitle = intradayGroupMode === 'rise10m' ? '过去10分钟持续提升' : '过去30分钟持续提升';
+
+  // 按「过去 N 分钟占比持续提升」拆分：持续提升与其余板块
+  const intradayTrendItems = useMemo(() => intradayChartItems
+    .filter((item) => item[intradayTrendFlag])
+    .sort((a, b) => (b.change || 0) - (a.change || 0)), [intradayChartItems, intradayTrendFlag]);
+
+  const intradayRestItems = useMemo(() => intradayChartItems
+    .filter((item) => !item[intradayTrendFlag])
+    .sort((a, b) => (b.change || 0) - (a.change || 0)), [intradayChartItems, intradayTrendFlag]);
+
   const historySubtitle = useMemo(() => {
     if (subTab !== 'daily') {
       const dateText = intraday.date ? `数据日期 ${formatDate(intraday.date)}` : '';
@@ -290,10 +364,54 @@ const BlockVolumeRatio = () => {
     return `当日实时占比 ${formatDate(history.live.date)} ${formatTime(history.live.time)} · 全市场成交额 ${Number(history.live.marketTotalAmount || 0).toFixed(0)}亿`;
   }, [subTab, intraday, history]);
 
+  const stockColumns = useMemo(() => [
+    { title: '名称', dataIndex: 'name', width: 150 },
+    {
+      title: '代码',
+      dataIndex: 'marketCode',
+      width: 110,
+      render: (value, record) => value || record.code || '-',
+    },
+    {
+      title: '最新价',
+      dataIndex: 'price',
+      width: 110,
+      align: 'right',
+      render: (value) => (typeof value === 'number' ? value.toFixed(2) : '-'),
+    },
+    {
+      title: '涨跌幅',
+      dataIndex: 'changePct',
+      width: 130,
+      align: 'right',
+      defaultSortOrder: 'descend',
+      sortDirections: ['descend', 'ascend'],
+      sorter: (a, b) => {
+        const av = typeof a.changePct === 'number' ? a.changePct : -Infinity;
+        const bv = typeof b.changePct === 'number' ? b.changePct : -Infinity;
+        return av - bv;
+      },
+      render: (value, record) => {
+        if (record.suspended) return <span style={{ color: '#94a3b8' }}>停牌</span>;
+        if (typeof value !== 'number') return <span style={{ color: '#94a3b8' }}>-</span>;
+        const color = value > 0 ? '#f5222d' : value < 0 ? '#52c41a' : '#666';
+        return (
+          <span style={{ color, fontWeight: 600 }}>
+            {value > 0 ? '+' : ''}{value.toFixed(2)}%
+          </span>
+        );
+      },
+    },
+  ], []);
+
   const renderLineCard = (item) => (
     <div className="bvr-line-card" key={item.name}>
       <div className="bvr-line-card-header">
-        <span className="bvr-line-card-name">
+        <span
+          className="bvr-line-card-name"
+          onClick={() => openBlockStocks(item.name)}
+          title="查看板块成分股最新涨幅"
+        >
           {item.name}
           {item.name === TECH_NAME ? <span className="bvr-badge">汇总</span> : null}
         </span>
@@ -417,6 +535,30 @@ const BlockVolumeRatio = () => {
       {subTab === 'intraday' && (
         <div className="bvr-intraday">
           <div className="bvr-intraday-toolbar">
+            <span className="bvr-toolbar-label">分区模式</span>
+            <div className="bvr-mode-switch">
+              <Button
+                size="small"
+                type={intradayGroupMode === 'prevDay' ? 'primary' : 'default'}
+                onClick={() => setIntradayGroupMode('prevDay')}
+              >
+                相比上一日
+              </Button>
+              <Button
+                size="small"
+                type={intradayGroupMode === 'rise30m' ? 'primary' : 'default'}
+                onClick={() => setIntradayGroupMode('rise30m')}
+              >
+                近30分钟持续提升
+              </Button>
+              <Button
+                size="small"
+                type={intradayGroupMode === 'rise10m' ? 'primary' : 'default'}
+                onClick={() => setIntradayGroupMode('rise10m')}
+              >
+                近10分钟持续提升
+              </Button>
+            </div>
             <span className="bvr-toolbar-label">展示板块</span>
             <Select
               mode="multiple"
@@ -435,32 +577,100 @@ const BlockVolumeRatio = () => {
             <Empty description="请选择要展示的板块" style={{ marginTop: 48 }} />
           ) : (
             <>
-              {intradayUpItems.length > 0 && (
-                <div className="bvr-group">
-                  <div className="bvr-group-title up">
-                    相比上一日占比提升
-                    <span className="bvr-group-count">{intradayUpItems.length}</span>
-                  </div>
-                  <div className="bvr-line-grid">
-                    {intradayUpItems.map(renderLineCard)}
-                  </div>
-                </div>
-              )}
-              {intradayDownItems.length > 0 && (
-                <div className="bvr-group">
-                  <div className="bvr-group-title down">
-                    相比上一日占比下降
-                    <span className="bvr-group-count">{intradayDownItems.length}</span>
-                  </div>
-                  <div className="bvr-line-grid">
-                    {intradayDownItems.map(renderLineCard)}
-                  </div>
-                </div>
+              {intradayGroupMode === 'prevDay' ? (
+                <>
+                  {intradayUpItems.length > 0 && (
+                    <div className="bvr-group">
+                      <div className="bvr-group-title up">
+                        相比上一日占比提升
+                        <span className="bvr-group-count">{intradayUpItems.length}</span>
+                      </div>
+                      <div className="bvr-line-grid">
+                        {intradayUpItems.map(renderLineCard)}
+                      </div>
+                    </div>
+                  )}
+                  {intradayDownItems.length > 0 && (
+                    <div className="bvr-group">
+                      <div className="bvr-group-title down">
+                        相比上一日占比下降
+                        <span className="bvr-group-count">{intradayDownItems.length}</span>
+                      </div>
+                      <div className="bvr-line-grid">
+                        {intradayDownItems.map(renderLineCard)}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {intradayTrendItems.length > 0 && (
+                    <div className="bvr-group">
+                      <div className="bvr-group-title up">
+                        {intradayTrendTitle}
+                        <span className="bvr-group-count">{intradayTrendItems.length}</span>
+                      </div>
+                      <div className="bvr-line-grid">
+                        {intradayTrendItems.map(renderLineCard)}
+                      </div>
+                    </div>
+                  )}
+                  {intradayRestItems.length > 0 && (
+                    <div className="bvr-group">
+                      <div className="bvr-group-title flat">
+                        其余板块
+                        <span className="bvr-group-count">{intradayRestItems.length}</span>
+                      </div>
+                      <div className="bvr-line-grid">
+                        {intradayRestItems.map(renderLineCard)}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
         </div>
       )}
+
+      <Modal
+        title={stockModalBlock ? `${stockModalBlock} · 成分股最新涨幅` : '板块成分股'}
+        open={stockModalOpen}
+        onCancel={() => setStockModalOpen(false)}
+        footer={null}
+        width={780}
+        centered
+      >
+        {stockError ? <div className="bvr-error">{stockError}</div> : null}
+        {stockLoading ? (
+          <div className="bvr-stock-loading"><Spin /></div>
+        ) : (
+          <Table
+            size="small"
+            rowKey={(record) => record.marketCode || record.code}
+            columns={stockColumns}
+            dataSource={stockList}
+            pagination={false}
+            scroll={{ y: 460 }}
+            locale={{ emptyText: '暂无成分股行情' }}
+            onRow={(record) => ({
+              style: { cursor: record.marketCode ? 'pointer' : 'default' },
+              onClick: () => {
+                if (!record.marketCode) return;
+                setKlineStock(record);
+                setKlineVisible(true);
+              },
+            })}
+          />
+        )}
+      </Modal>
+
+      <StockKLineModal
+        visible={klineVisible}
+        onCancel={() => setKlineVisible(false)}
+        code={klineStock?.marketCode}
+        stockInfo={{ name: klineStock?.name, change: klineStock?.changePct }}
+      />
     </div>
   );
 };

@@ -90,7 +90,7 @@ const { runQuantAnalysis, getQuantAnalysisData, analyzeSingleStock } = require('
 const { getRZRQData } = require('./service/rzrq');
 const { getTechBlockCrowd, getTechVolumeRatio } = require('./service/techCrowd');
 const { getBlockCategoryRatio, run: runCategoryAmount, categoryRatioStartDate, categoryRatioEndDate } = require('./service/板块成交量占比计算/category_amount_money');
-const { getBlockVolumeRatioHistory, getIntradayData } = require('./service/blockVolumeRatio');
+const { getBlockVolumeRatioHistory, getIntradayData, getBlockConstituents } = require('./service/blockVolumeRatio');
 const { getRiskScoreHistory, calculateAndSaveRiskScore } = require('./service/marketRiskScore');
 const { analyzeMonitorStocks } = require('./service/strongAndWeakStock');
 const { getAvailableDates, getSnapshotData, getLatestSnapshotDate, saveDailySnapshots, aggregateByInterval } = require('./service/fundSnapshot');
@@ -1992,6 +1992,45 @@ app.get('/block_volume_ratio_intraday', (req, res) => {
     res.json(getIntradayData());
   } catch (error) {
     console.error('获取板块成交量占比分时数据失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 板块成交量占比：点击折线卡片标题，返回该板块全部成分股的最新涨幅
+app.get('/block_volume_ratio_stocks', async (req, res) => {
+  try {
+    const name = String(req.query.name || '').trim();
+    if (!name) {
+      return res.status(400).json({ message: '缺少 name 参数' });
+    }
+    const stocks = getBlockConstituents(name);
+    const codes = stocks.map((stock) => stock.marketCode).filter(Boolean);
+
+    // 分批请求批量行情，避免单次代码过多导致上游超时
+    const chunks = [];
+    for (let i = 0; i < codes.length; i += 300) {
+      chunks.push(codes.slice(i, i + 300));
+    }
+    const quoteMaps = await Promise.all(chunks.map((chunk) => getStockQuotes(chunk)));
+    const quotes = Object.assign({}, ...quoteMaps);
+
+    res.json({
+      name,
+      updatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+      stocks: stocks.map((stock) => {
+        const quote = stock.marketCode ? quotes[stock.marketCode] : null;
+        return {
+          code: stock.code,
+          name: stock.name,
+          marketCode: stock.marketCode,
+          price: quote?.price ?? null,
+          changePct: quote?.changePct ?? null,
+          suspended: Boolean(quote?.suspended),
+        };
+      }),
+    });
+  } catch (error) {
+    console.error('获取板块成分股行情失败:', error);
     res.status(500).json({ message: error.message || '获取失败' });
   }
 });

@@ -534,9 +534,34 @@ const getBlockVolumeRatioHistory = async () => {
     };
 };
 
+// 读取板块成分股列表（科技汇总读科技股票池，其余读分类成分股文件），并补充沪深市场代码
+const getBlockConstituents = (name) => {
+    if (!name) return [];
+    const list = name === TECH_GROUP_NAME
+        ? (readJsonSafe(TECH_STOCK_FILE, null) || {}).stocks
+        : readJsonSafe(path.join(CONSTITUENTS_DIR, `${name}.json`), null);
+    if (!Array.isArray(list)) return [];
+
+    const seen = new Set();
+    const result = [];
+    for (const stock of list) {
+        const code = String(stock.code || '').trim();
+        if (!/^\d{6}$/.test(code) || seen.has(code)) continue;
+        seen.add(code);
+        const prefix = code.startsWith('6') ? 'sh' : (code.startsWith('0') || code.startsWith('3') ? 'sz' : null);
+        result.push({
+            code,
+            name: stock.name || code,
+            marketCode: prefix ? `${prefix}${code}` : null,
+        });
+    }
+    return result;
+};
+
 exports.TECH_GROUP_NAME = TECH_GROUP_NAME;
 exports.computeTodayRatios = computeTodayRatios;
 exports.runAndSaveIntradayPoint = runAndSaveIntradayPoint;
 exports.getIntradayData = getIntradayData;
 exports.getBlockVolumeRatioHistory = getBlockVolumeRatioHistory;
+exports.getBlockConstituents = getBlockConstituents;
 exports.INTRADAY_FILE = INTRADAY_FILE;

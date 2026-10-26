@@ -1533,5 +1533,59 @@ exports.default = [
         "blockName": "机器人大脑",
         "code": "sz300307",
         "name": "慈星股份"
+    },
+    {
+        "blockName": "端侧SOC",
+        "code": "sh603893",
+        "name": "瑞芯微",
+        "tag": "中性"
+    },
+    {
+        "blockName": "端侧SOC",
+        "code": "sh688608",
+        "name": "恒玄科技",
+        "tag": "中性"
+    },
+    {
+        "blockName": "端侧SOC",
+        "code": "sh688018",
+        "name": "乐鑫科技",
+        "tag": "中性"
+    },
+    {
+        "blockName": "端侧SOC",
+        "code": "sh688332",
+        "name": "中科蓝讯",
+        "tag": "中性"
+    },
+    {
+        "blockName": "端侧SOC",
+        "code": "sh688099",
+        "name": "晶晨股份",
+        "tag": "中性"
+    },
+    {
+        "blockName": "端侧SOC",
+        "code": "sz300672",
+        "name": "国科微",
+        "tag": "中性"
+    },
+    {
+        "blockName": "端侧SOC",
+        "code": "sz301536",
+        "name": "星宸科技",
+        "tag": "中性"
+    },
+    {
+        "blockName": "端侧SOC",
+        "code": "sh688591",
+        "name": "泰凌微",
+        "tag": "中性"
+    },
+    {
+        "blockName": "端侧SOC",
+        "code": "sh688049",
+        "name": "炬芯科技",
+        "tag": "中性"
     }
 ]

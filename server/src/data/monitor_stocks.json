@@ -939,5 +939,14 @@
     "riskScore": "6",
     "isTech": true,
     "addedAt": "2026-10-26 08:35:37"
+  },
+  {
+    "code": "sh688097",
+    "name": "博众精工",
+    "isImportant": false,
+    "blockName": "物理 AI",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-10-26 14:35:08"
   }
 ]

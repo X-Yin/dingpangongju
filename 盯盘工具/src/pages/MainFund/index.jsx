@@ -51,6 +51,36 @@ const formatDisplayTime = (timeStr) => {
   return timeStr;
 };
 
+// 转换为连续交易分钟（9:30=0，11:30=120，13:00=120，15:00=240），用于跨午休回溯 N 分钟前
+const toTradingMinute = (timeStr) => {
+  const h = parseInt(timeStr.substring(0, 2));
+  const m = parseInt(timeStr.substring(2, 4));
+  const totalMin = h * 60 + m;
+  if (totalMin <= 11 * 60 + 30) return totalMin - (9 * 60 + 30);
+  return 120 + (totalMin - 13 * 60);
+};
+
+// 分区模式为全部板块分配颜色（黄金角取色，输出 hex 以兼容 lightweight-charts）
+const getPartitionBlockColor = (index) => {
+  const hue = (index * 137.508) % 360;
+  const s = 0.7;
+  const l = 0.45;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  if (hue < 60) [r, g, b] = [c, x, 0];
+  else if (hue < 120) [r, g, b] = [x, c, 0];
+  else if (hue < 180) [r, g, b] = [0, c, x];
+  else if (hue < 240) [r, g, b] = [0, x, c];
+  else if (hue < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  const toHex = (v) => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
 const aggregateToInterval = (data, intervalMinutes) => {
   if (!data || data.length === 0) return [];
   const sortedData = [...data].sort((a, b) => {
@@ -164,7 +194,7 @@ const BLOCK_LINE_COLORS = [
 // 板块资金默认选中板块
 const DEFAULT_SELECTED_BLOCKS = [
   'PCB', '半导体概念', '光通信模块', '创新药', '银行Ⅱ', '存储芯片',
-  '液冷服务器', '黄金概念'
+  '液冷服务器', '黄金概念', '人形机器人'
 ];
 
 // 热力图最小面积占比（百分比）
@@ -369,6 +399,103 @@ const buildHeatmapItems = (dataList, valueKey = 'money') => {
   });
 };
 
+// 分区模式：单个板块的独立折线图卡片
+const BlockPartitionChart = ({ blockName, color, points, latest, delta, windowLabel }) => {
+  const containerRef = useRef(null);
+  const chartRef = useRef(null);
+  const seriesRef = useRef(null);
+
+  // 图表只创建一次，后续轮询仅更新数据，避免全部板块的图表被反复重建
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+    const chart = createChart(container, {
+      layout: {
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: '#6b7890',
+        fontSize: 10,
+      },
+      width: container.clientWidth,
+      height: container.clientHeight,
+      grid: {
+        vertLines: { color: 'rgba(18, 33, 58, 0.04)' },
+        horzLines: { color: 'rgba(18, 33, 58, 0.04)' },
+      },
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+        borderColor: 'rgba(18, 33, 58, 0.08)',
+        tickMarkFormatter: (time) => dayjs.unix(time).format('HH:mm'),
+      },
+      localization: {
+        timeFormatter: (time) => dayjs.unix(time).format('HH:mm'),
+      },
+      rightPriceScale: {
+        borderColor: 'rgba(18, 33, 58, 0.08)',
+        scaleMargins: { top: 0.15, bottom: 0.15 },
+      },
+      handleScroll: false,
+      handleScale: false,
+    });
+    chartRef.current = chart;
+    seriesRef.current = chart.addLineSeries({
+      color: 'transparent',
+      lineWidth: 2,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      priceFormat: {
+        type: 'custom',
+        formatter: (value) => `${value > 0 ? '+' : ''}${value.toFixed(2)}亿`,
+      },
+    });
+
+    const resize = () => chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+    let observer = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(resize);
+      observer.observe(container);
+    } else {
+      window.addEventListener('resize', resize);
+    }
+
+    return () => {
+      if (observer) observer.disconnect();
+      else window.removeEventListener('resize', resize);
+      chart.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+    if (!chart || !series || !points.length) return;
+    series.applyOptions({ color });
+    series.setData(points);
+    chart.timeScale().fitContent();
+    chart.timeScale().applyOptions({ fixLeftEdge: true, fixRightEdge: true, rightOffset: 0 });
+  }, [points, color]);
+
+  return (
+    <div className="block-partition-card">
+      <div className="block-partition-card-header">
+        <span className="block-partition-card-name" style={{ color }}>{blockName}</span>
+        <span className="block-partition-card-value">
+          {latest >= 0 ? '+' : ''}{latest.toFixed(2)}亿
+        </span>
+        <span
+          className={`block-partition-card-delta ${delta === null ? 'neutral' : delta >= 0 ? 'up' : 'down'}`}
+          title={delta === null ? `缺少${windowLabel}的数据` : `相比${windowLabel}`}
+        >
+          {delta === null ? '--' : `${delta >= 0 ? '+' : ''}${delta.toFixed(2)}亿`}
+        </span>
+      </div>
+      <div ref={containerRef} className="block-partition-card-body" />
+    </div>
+  );
+};
+
 export const MainFundContent = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -395,6 +522,8 @@ export const MainFundContent = () => {
   const [blockDetailSelected, setBlockDetailSelected] = useState(null);
   const [blockRightAxisLabels, setBlockRightAxisLabels] = useState([]);
   const [blockFiveMinAgg, setBlockFiveMinAgg] = useState(false);
+  // 折线图分区模式：default=当前叠加现状，diff30/diff10=按相比 N 分钟前分区后每板块独立折线图
+  const [blockChartMode, setBlockChartMode] = useState('default');
   // 板块折线图 hover 高亮 + 批量添加面板相关状态
   const [blockHoveredBlock, setBlockHoveredBlock] = useState(null);
   const blockHoveredBlockRef = useRef(null);
@@ -1010,6 +1139,69 @@ export const MainFundContent = () => {
     return [...morning, ...aggregatedAfternoon];
   }, [blockTimeSeriesData]);
 
+  // 分区模式数据：展示全部板块，每个板块的资金序列 + 最新值与 N 分钟前的差值，按变化方向分组
+  const blockPartitionData = useMemo(() => {
+    if (blockChartMode === 'default' || !blockChartFrames.length || !allBlocks.length) {
+      return { up: [], down: [], windowLabel: '' };
+    }
+    const windowMinutes = blockChartMode === 'diff30' ? 30 : 10;
+    const windowLabel = `${windowMinutes}分钟前`;
+    const today = dayjs().format('YYYY-MM-DD');
+
+    const items = allBlocks.map((blockName, idx) => {
+      const color = getPartitionBlockColor(idx);
+      const rawPoints = [];
+      blockChartFrames.forEach(frame => {
+        const blockItem = frame.data?.find(item => item.block === blockName);
+        if (!blockItem) return;
+        const hh = frame.time.substring(0, 2);
+        const mm = frame.time.substring(2, 4);
+        const ss = frame.time.substring(4, 6);
+        rawPoints.push({
+          tradingMinute: toTradingMinute(frame.time),
+          time: dayjs(`${today} ${hh}:${mm}:${ss}`).unix(),
+          value: blockItem.money / 100000000,
+        });
+      });
+      if (!rawPoints.length) return null;
+      rawPoints.sort((a, b) => a.time - b.time);
+      const points = [];
+      rawPoints.forEach(point => {
+        if (points.length && points[points.length - 1].time === point.time) {
+          points[points.length - 1] = point;
+        } else {
+          points.push(point);
+        }
+      });
+
+      const latestPoint = points[points.length - 1];
+      const targetMinute = latestPoint.tradingMinute - windowMinutes;
+      let basePoint = null;
+      for (const point of points) {
+        if (point.tradingMinute <= targetMinute) basePoint = point;
+        else break;
+      }
+
+      return {
+        name: blockName,
+        color,
+        points: points.map(point => ({ time: point.time, value: point.value })),
+        latest: latestPoint.value,
+        delta: basePoint ? latestPoint.value - basePoint.value : null,
+      };
+    }).filter(Boolean);
+
+    return {
+      windowLabel,
+      up: items
+        .filter(item => item.delta === null || item.delta >= 0)
+        .sort((a, b) => (b.delta || 0) - (a.delta || 0)),
+      down: items
+        .filter(item => item.delta !== null && item.delta < 0)
+        .sort((a, b) => a.delta - b.delta),
+    };
+  }, [blockChartMode, blockChartFrames, allBlocks]);
+
 
   const formatBlockMoney = (money) => {
     const yi = money / 100000000;
@@ -1310,9 +1502,9 @@ export const MainFundContent = () => {
     });
   }, [blockChartFrames, selectedBlocks, updateBlockRightAxisLabels, applyBlockHoverHighlight]);
 
-  // 板块折线图渲染 effect
+  // 板块折线图渲染 effect（仅默认叠加模式）
   useEffect(() => {
-    if (blockChartContainerRef.current && activeTab === 'block' && blockTab === 'line') {
+    if (blockChartContainerRef.current && activeTab === 'block' && blockTab === 'line' && blockChartMode === 'default') {
       renderBlockOverlayChart();
     }
     return () => {
@@ -1321,7 +1513,7 @@ export const MainFundContent = () => {
         blockChartRef.current = null;
       }
     };
-  }, [activeTab, blockTab, blockChartFrames, selectedBlocks, renderBlockOverlayChart]);
+  }, [activeTab, blockTab, blockChartMode, blockChartFrames, selectedBlocks, renderBlockOverlayChart]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -1801,6 +1993,34 @@ export const MainFundContent = () => {
 
             {blockTab === 'line' && (
               <>
+                {/* 分区模式：默认叠加现状 / 相比 N 分钟前（每板块独立折线图） */}
+                <div className="block-mode-row">
+                  <span className="block-mode-label">分区模式</span>
+                  <div className="block-mode-switch">
+                    <Button
+                      size="small"
+                      type={blockChartMode === 'default' ? 'primary' : 'default'}
+                      onClick={() => setBlockChartMode('default')}
+                    >
+                      默认（现状）
+                    </Button>
+                    <Button
+                      size="small"
+                      type={blockChartMode === 'diff30' ? 'primary' : 'default'}
+                      onClick={() => setBlockChartMode('diff30')}
+                    >
+                      相比30min前
+                    </Button>
+                    <Button
+                      size="small"
+                      type={blockChartMode === 'diff10' ? 'primary' : 'default'}
+                      onClick={() => setBlockChartMode('diff10')}
+                    >
+                      相比10min前
+                    </Button>
+                  </div>
+                </div>
+
                 {/* tag 展示区 */}
                 <div className="block-tags">
                   {blockTagInfoList.map(item => (
@@ -1824,6 +2044,7 @@ export const MainFundContent = () => {
 
                 {/* 图表 + 批量添加面板并排 */}
                 <div className="block-chart-body">
+                  {blockChartMode === 'default' ? (
                   <div className="block-chart-wrapper">
                     {blockLoading && (
                       <div className="chart-overlay">
@@ -1854,6 +2075,58 @@ export const MainFundContent = () => {
                       </div>
                     </div>
                   </div>
+                  ) : (
+                  <div className="block-partition-stage">
+                    {blockPartitionData.up.length === 0 && blockPartitionData.down.length === 0 ? (
+                      <div className="table-empty">{blockLoading ? '加载中...' : '暂无数据'}</div>
+                    ) : (
+                      <>
+                        {blockPartitionData.up.length > 0 && (
+                          <div className="block-partition-group">
+                            <div className="block-partition-group-title up">
+                              相比{blockPartitionData.windowLabel}资金提升
+                              <span className="block-partition-group-count">{blockPartitionData.up.length}</span>
+                            </div>
+                            <div className="block-partition-grid">
+                              {blockPartitionData.up.map(item => (
+                                <BlockPartitionChart
+                                  key={item.name}
+                                  blockName={item.name}
+                                  color={item.color}
+                                  points={item.points}
+                                  latest={item.latest}
+                                  delta={item.delta}
+                                  windowLabel={blockPartitionData.windowLabel}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {blockPartitionData.down.length > 0 && (
+                          <div className="block-partition-group">
+                            <div className="block-partition-group-title down">
+                              相比{blockPartitionData.windowLabel}资金下降
+                              <span className="block-partition-group-count">{blockPartitionData.down.length}</span>
+                            </div>
+                            <div className="block-partition-grid">
+                              {blockPartitionData.down.map(item => (
+                                <BlockPartitionChart
+                                  key={item.name}
+                                  blockName={item.name}
+                                  color={item.color}
+                                  points={item.points}
+                                  latest={item.latest}
+                                  delta={item.delta}
+                                  windowLabel={blockPartitionData.windowLabel}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  )}
 
                   {showBlockBatchPanel && (
                     <div className="block-batch-panel">

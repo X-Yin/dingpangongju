@@ -63,6 +63,18 @@
     white-space: nowrap;
   }
 
+  .bvr-mode-switch {
+    display: flex;
+    gap: 8px;
+  }
+
+  .bvr-stock-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+  }
+
   .bvr-badge {
     padding: 0 6px;
     border-radius: 6px;
@@ -110,6 +122,10 @@
 
         &.down {
           color: #389e0d;
+        }
+
+        &.flat {
+          color: #64748b;
         }
       }
 
@@ -172,6 +188,12 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        cursor: pointer;
+        transition: color 0.2s;
+
+        &:hover {
+          color: #1890ff;
+        }
       }
 
       .bvr-line-card-value {
