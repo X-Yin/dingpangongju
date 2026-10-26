@@ -939,5 +939,14 @@
     "riskScore": "7",
     "isTech": true,
     "addedAt": "2026-10-26 00:11:53"
+  },
+  {
+    "code": "sh688686",
+    "name": "奥普特",
+    "isImportant": false,
+    "blockName": "物理 AI",
+    "riskScore": "6",
+    "isTech": true,
+    "addedAt": "2026-10-26 08:35:37"
   }
 ]

@@ -274,6 +274,13 @@ exports.getMsToNextTradingSession = (date = new Date()) => {
         next.setHours(13, 0, 0, 0);
         return next.getTime() - now.getTime();
     }
+
+    // 交易日开盘前（9:15 之前），返回距离当天 9:15 的时间
+    if (exports.isTradingDay(now) && timeVal < 555 /* 9:15 */) {
+        const next = new Date(now);
+        next.setHours(9, 15, 0, 0);
+        return next.getTime() - now.getTime();
+    }
     
     // 如果在收盘后或非交易日，返回距离下一个交易日9:15的时间（简化处理）
     // 实际使用中通常由外部进程管理器负责重启

@@ -1673,6 +1673,12 @@
       "blockName": "机器人大脑",
       "code": "sh688400",
       "change": 12.16
+    },
+    {
+      "name": "科达利",
+      "blockName": "机器人大脑",
+      "code": "sz002850",
+      "change": 7.48
     }
   ]
 }

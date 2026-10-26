@@ -2238,5 +2238,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sh688686": {
+    "stockName": "奥普特",
+    "kline": [
+      {
+        "trade_date": 20261023,
+        "open_px": 125,
+        "high_px": 153.2,
+        "low_px": 121.3,
+        "close_px": 153.2,
+        "business_amount": 5145551,
+        "business_balance": 695392190,
+        "change": 20,
+        "ma5_px": 128.19,
+        "ma10_px": 119.64,
+        "ma20_px": 126.67,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

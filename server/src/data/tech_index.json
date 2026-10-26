@@ -1308,11 +1308,11 @@
   },
   {
     "date": 20261026,
-    "changeSumResult": 15.36,
-    "baseEmotion": 19.64,
+    "changeSumResult": 15.47,
+    "baseEmotion": 19.75,
     "pullbackPenalty": -21.41,
-    "avgChange": 3.36,
-    "stockCount": 92,
+    "avgChange": 3.38,
+    "stockCount": 93,
     "algorithm": 2
   }
 ]

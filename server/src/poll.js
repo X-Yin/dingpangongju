@@ -1,3 +1,6 @@
+// 盯盘轮询服务
+// - npm run poll        仅在交易时段（交易日 9:15-11:30、13:00-15:05）启动轮询，其余时间等待
+// - npm run poll:now    忽略交易日与交易时段限制，立即启动轮询（--all 为同义历史别名）
 const { setConfig } = require('./config');
 const { isTradingHours, isMiddayBreak, isAfterMarketClose, isTradingDay, getMsToNextTradingSession } = require('./utils');
 const fs = require('fs');
@@ -7,10 +10,14 @@ const useCLS = process.argv.includes('--cls');
 setConfig({ useCLS });
 console.log(`数据源模式: ${useCLS ? '财联社(CLS)' : '同花顺(THS)'}`);
 
-// --all 模式：任何时间都直接执行轮询逻辑，不卡交易时段（周末/午休/收盘均不拦截，也不自动退出）
-const pollAll = process.argv.includes('--all');
-if (pollAll) {
-  console.log('poll-all 模式已开启：跳过交易时段限制，立即启动全部轮询');
+// --now / --all 模式：忽略交易日与交易时段限制，立即启动全部轮询
+// npm 会把 `npm run poll:now` 解析成 npm_config_now，因此两种方式都兼容
+const POLL_NOW = process.argv.includes('--now')
+  || process.argv.includes('--all')
+  || String(process.env.npm_config_now || '').toLowerCase() === 'true'
+  || String(process.env.npm_config_all || '').toLowerCase() === 'true';
+if (POLL_NOW) {
+  console.log('--now 模式已开启：跳过交易日与交易时段限制，立即启动全部轮询');
 }
 
 const { pollDaPanData } = require('./service/dapan');
@@ -54,7 +61,6 @@ const POLL_CONFIG = {
 };
 
 let middayBreakNotified = false;
-let afternoonResumeScheduled = false;
 
 // 收盘后（15:01）自动执行的定时任务，每天只执行一次，非交易日（周末/节假日）不执行
 const scheduleAfterCloseTasks = (hour = 15, minute = 1) => {
@@ -109,7 +115,6 @@ const waitForNextSessionAndStart = () => {
   setTimeout(() => {
     console.log('交易时段开始，准备启动轮询服务...');
     middayBreakNotified = false;
-    afternoonResumeScheduled = false;
     startPolling();
   }, ms);
 };
@@ -117,7 +122,7 @@ const waitForNextSessionAndStart = () => {
 const startPolling = (force = false) => {
   const now = new Date();
 
-  // force 模式（--all）：任何时间都直接执行轮询，跳过交易时段检查
+  // force 模式（--now）：任何时间都直接执行轮询，跳过交易日与交易时段检查
   if (!force) {
     // 检查是否为非交易日（周末/节假日，以交易日历为准）
     if (!isTradingDay(now)) {
@@ -126,16 +131,9 @@ const startPolling = (force = false) => {
       return;
     }
 
-     // 检查是否已收盘
-    if (isAfterMarketClose(now)) {
-      console.log('今日已收盘，不启动轮询服务');
-      waitForNextSessionAndStart();
-      return;
-    }
-
-    // 检查是否在午休时段
-    if (isMiddayBreak(now)) {
-      console.log('当前处于午休时段(11:30-13:00)，不启动轮询服务');
+    // 严格要求只在交易时段（9:15-11:30、13:00-15:05）执行
+    if (!isTradingHours(now)) {
+      console.log('当前不在交易时段（交易日 9:15-11:30、13:00-15:05），不启动轮询服务');
       waitForNextSessionAndStart();
       return;
     }
@@ -231,33 +229,23 @@ const startPolling = (force = false) => {
 
   console.log('轮询服务已全部启动');
 
-  // 定时检查：午休/收盘（--all 模式下不启用，保持持续轮询不退出）
+  // 定时检查：午休/收盘（--now 模式下不启用，保持持续轮询不退出）
   if (!force) {
     const closeCheckInterval = setInterval(() => {
     const currentNow = new Date();
     
-    // 检查午休开始（11:30）
+    // 检查午休开始（11:30）：严格要求只在 9:15-11:30、13:00-15:05 轮询
     if (isMiddayBreak(currentNow) && !middayBreakNotified) {
       middayBreakNotified = true;
-      console.log('已到午休时间(11:30)，轮询将暂停，13:00后自动恢复');
-      console.log('提示：建议使用 pm2 等进程管理器配合重启策略，或在13:00手动重启服务');
-      
-      // 设置13:00的恢复检查（如果进程还在运行）
-      if (!afternoonResumeScheduled) {
-        afternoonResumeScheduled = true;
-        const msTo1300 = getMsToNextTradingSession();
-        setTimeout(() => {
-          console.log('午休结束，准备重新启动轮询服务...');
-          // 退出进程，建议由外部进程管理器（如pm2）自动重启
-          // 如果你希望不退出进程而是内部重启，可以取消注释下一行并修改逻辑
-          process.exit(0);
-        }, msTo1300);
-      }
+      console.log('已到午休时间(11:30)，轮询自动停止');
+      console.log('提示：13:00 后需由 pm2 等进程管理器重新拉起，或手动执行 npm run poll');
+      clearInterval(closeCheckInterval);
+      process.exit(0);
     }
     
-    // 检查收盘
+    // 检查收盘（15:05）
     if (checkMarketClose()) {
-      console.log('已过下午3点，轮询服务自动停止');
+      console.log('已过 15:05，轮询服务自动停止');
       clearInterval(closeCheckInterval);
       process.exit(0);
     }
@@ -265,10 +253,12 @@ const startPolling = (force = false) => {
   }
 };
 
-// 启动入口：--all 模式任何时间直接启动，否则仅在交易时段启动
+// 启动入口：--now 模式任何时间直接启动，否则仅在交易时段（9:15-11:30、13:00-15:05）启动
 const entryNow = new Date();
-if (pollAll || isTradingHours(entryNow)) {
-  startPolling(pollAll);
+if (POLL_NOW) {
+  startPolling(true);
+} else if (isTradingHours(entryNow)) {
+  startPolling();
 } else {
   waitForNextSessionAndStart();
 }

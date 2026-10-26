@@ -1523,5 +1523,15 @@ exports.default = [
         "blockName": "机器人大脑",
         "code": "sh688400",
         "name": "凌云光"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sz002850",
+        "name": "科达利"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sz300307",
+        "name": "慈星股份"
     }
 ]

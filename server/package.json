@@ -9,6 +9,7 @@
     "clean-intraday-history": "node script/clean-intraday-history.js",
     "dev": "node script/dev-with-clear.js",
     "poll": "node src/poll.js",
+    "poll:now": "node src/poll.js --now",
     "poll-all": "node src/poll.js --all",
     "block_amount_poll": "node src/block_amount_poll.js",
     "block_amount_poll:now": "node src/block_amount_poll.js --now",
