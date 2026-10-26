@@ -451,6 +451,14 @@
     {
       "code": "sh688686",
       "name": "奥普特"
+    },
+    {
+      "code": "sh688097",
+      "name": "博众精工"
+    },
+    {
+      "code": "sh688836",
+      "name": "宇树科技-W"
     }
   ],
   "trades": [
@@ -607,16 +615,16 @@
           "title": "开盘后自选科技股低于开盘价不超过科技股数的 25%（24 只）",
           "passed": true,
           "exempted": false,
-          "value": "19 / 93只",
-          "reason": "开盘后自选科技股共 93 只，19 只现价低于 9:30 开盘价，未超过 24 只（阈值 = 科技股数 93 只的 25% 向上取整）"
+          "value": "19 / 94只",
+          "reason": "开盘后自选科技股共 94 只，19 只现价低于 9:30 开盘价，未超过 24 只（阈值 = 科技股数 94 只的 25% 向上取整）"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 30 时当前情绪须低于 10",
           "passed": true,
           "exempted": false,
-          "value": "开盘 9.52 / 当前 16.02",
-          "reason": "9:30 竞价科技情绪 9.52 未超过 30，当前情绪须低于 10 的限制不生效"
+          "value": "开盘 9.51 / 当前 16.02",
+          "reason": "9:30 竞价科技情绪 9.51 未超过 30，当前情绪须低于 10 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -702,8 +710,8 @@
           "title": "竞价情绪超 30 时当前情绪须低于 10",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -9.20 / 当前 -3.90",
-          "reason": "9:30 竞价科技情绪 -9.20 未超过 30，当前情绪须低于 10 的限制不生效"
+          "value": "开盘 -8.93 / 当前 -3.70",
+          "reason": "9:30 竞价科技情绪 -8.93 未超过 30，当前情绪须低于 10 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -748,71 +756,71 @@
     },
     {
       "seq": 4,
-      "metric": 17.0288,
+      "metric": 18.233,
       "code": "sh603228",
       "stockName": "景旺电子",
       "buyDate": "20260907",
       "buyDateDisplay": "2026-09-07",
-      "buyTime": "09:35",
-      "buyPrice": 103.93,
-      "buyChange": 7.88,
-      "buyReason": "5min 内资金净流入 30.78亿、冰点期豁免量能，当前量能 +226.09亿、开盘后自选科技股低于开盘价不超过科技股数的 25%（24 只）、竞价情绪超 30 时当前情绪须低于 10；跨指数双门禁（允许市场: 主板/创业板/科创板）",
+      "buyTime": "09:55",
+      "buyPrice": 105,
+      "buyChange": 8.99,
+      "buyReason": "5min 内资金净流入 33.61亿、冰点期豁免量能，当前量能 -41.36亿、开盘后自选科技股低于开盘价不超过科技股数的 25%（24 只）、竞价情绪超 30 时当前情绪须低于 10；跨指数双门禁（允许市场: 主板/创业板/科创板）",
       "buyChecks": [
         {
           "id": "fund_inflow",
           "title": "最近 5min 资金净流入大于 20 亿",
           "passed": true,
           "exempted": false,
-          "value": "+30.78亿",
-          "reason": "最近 5 分钟资金净流入 30.78 亿（09:30:00→09:35:00），超过 20 亿阈值",
-          "fundText": "5min 内资金净流入 30.78亿"
+          "value": "+33.61亿",
+          "reason": "最近 5 分钟资金净流入 33.61 亿（09:50:00→09:55:00），超过 20 亿阈值",
+          "fundText": "5min 内资金净流入 33.61亿"
         },
         {
           "id": "volume_expansion",
           "title": "当前量能为正（今日累计成交额超昨日全天）",
           "passed": true,
           "exempted": true,
-          "value": "冰点期豁免量能，当前量能 +226.09亿",
-          "reason": "前一交易日盘中科技情绪触及 -39 退潮冰点（hasIce: true），冰点期豁免量能，当前量能 +226.09亿",
-          "volumeText": "冰点期豁免量能，当前量能 +226.09亿"
+          "value": "冰点期豁免量能，当前量能 -41.36亿",
+          "reason": "前一交易日盘中科技情绪触及 -39 退潮冰点（hasIce: true），冰点期豁免量能，当前量能 -41.36亿",
+          "volumeText": "冰点期豁免量能，当前量能 -41.36亿"
         },
         {
           "id": "opening_below",
           "title": "开盘后自选科技股低于开盘价不超过科技股数的 25%（24 只）",
           "passed": true,
           "exempted": false,
-          "value": "24 / 93只",
-          "reason": "开盘后自选科技股共 93 只，24 只现价低于 9:30 开盘价，未超过 24 只（阈值 = 科技股数 93 只的 25% 向上取整）"
+          "value": "12 / 95只",
+          "reason": "开盘后自选科技股共 95 只，12 只现价低于 9:30 开盘价，未超过 24 只（阈值 = 科技股数 95 只的 25% 向上取整）"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 30 时当前情绪须低于 10",
           "passed": true,
           "exempted": false,
-          "value": "开盘 13.22 / 当前 19.53",
-          "reason": "9:30 竞价科技情绪 13.22 未超过 30，当前情绪须低于 10 的限制不生效"
+          "value": "开盘 13.07 / 当前 25.01",
+          "reason": "9:30 竞价科技情绪 13.07 未超过 30，当前情绪须低于 10 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
           "title": "景旺电子 跟踪创业板指 3 日线斜率门禁",
           "passed": true,
-          "value": "景旺电子 跟踪创业板指，3 日线斜率 +4.28°，今日盘中由负转正，允许出手",
-          "reason": "创业板指 斜率 +4.28 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
+          "value": "景旺电子 跟踪创业板指，3 日线斜率 +15.38°，今日盘中由负转正，允许出手",
+          "reason": "创业板指 斜率 +15.38 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
         },
         {
           "id": "star_ma3_slope_gate",
           "title": "科创50 3 日线斜率门禁",
           "passed": true,
-          "value": "科创50 3 日线斜率 -7.20°，负斜率允许出手；距上次由正转负 第 4 天（2026-09-01 翻转）",
-          "reason": "科创50 斜率 -7.20 < 0，负斜率允许出手"
+          "value": "科创50 3 日线斜率 -6.39°，负斜率允许出手；距上次由正转负 第 4 天（2026-09-01 翻转）",
+          "reason": "科创50 斜率 -6.39 < 0，负斜率允许出手"
         },
         {
           "id": "resilience_gate",
           "title": "触发时点抗分歧分数≥9",
           "passed": true,
-          "value": "17.34",
+          "value": "15.35",
           "skippedStocks": [],
-          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 17.34，≥ 全局最低 9）"
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 15.35，≥ 全局最低 9）"
         },
         {
           "id": "emo_quick_out",
@@ -829,9 +837,9 @@
       "sellPrice": 104.3,
       "sellChange": -3.61,
       "sellReason": "高位放量大阴线",
-      "returnRate": 0.36,
+      "returnRate": -0.67,
       "buyDayClose": 105.97,
-      "buyDayReturn": 1.96
+      "buyDayReturn": 0.92
     },
     {
       "seq": 5,
@@ -876,8 +884,8 @@
           "title": "竞价情绪超 30 时当前情绪须低于 10",
           "passed": true,
           "exempted": false,
-          "value": "开盘 1.49 / 当前 22.72",
-          "reason": "9:30 竞价科技情绪 1.49 未超过 30，当前情绪须低于 10 的限制不生效"
+          "value": "开盘 1.46 / 当前 22.54",
+          "reason": "9:30 竞价科技情绪 1.46 未超过 30，当前情绪须低于 10 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -984,8 +992,8 @@
           "title": "竞价情绪超 30 时当前情绪须低于 10",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -18.29 / 当前 0.15",
-          "reason": "9:30 竞价科技情绪 -18.29 未超过 30，当前情绪须低于 10 的限制不生效"
+          "value": "开盘 -18.05 / 当前 0.28",
+          "reason": "9:30 竞价科技情绪 -18.05 未超过 30，当前情绪须低于 10 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -1094,16 +1102,16 @@
           "title": "开盘后自选科技股低于开盘价不超过科技股数的 25%（24 只）",
           "passed": true,
           "exempted": false,
-          "value": "1 / 93只",
-          "reason": "开盘后自选科技股共 93 只，1 只现价低于 9:30 开盘价，未超过 24 只（阈值 = 科技股数 93 只的 25% 向上取整）"
+          "value": "2 / 95只",
+          "reason": "开盘后自选科技股共 95 只，2 只现价低于 9:30 开盘价，未超过 24 只（阈值 = 科技股数 95 只的 25% 向上取整）"
         },
         {
           "id": "emotion_retrace_after_open",
           "title": "竞价情绪超 30 时当前情绪须低于 10",
           "passed": true,
           "exempted": false,
-          "value": "开盘 12.40 / 当前 21.99",
-          "reason": "9:30 竞价科技情绪 12.40 未超过 30，当前情绪须低于 10 的限制不生效"
+          "value": "开盘 12.08 / 当前 21.52",
+          "reason": "9:30 竞价科技情绪 12.08 未超过 30，当前情绪须低于 10 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -1236,8 +1244,8 @@
           "title": "竞价情绪超 30 时当前情绪须低于 10",
           "passed": true,
           "exempted": false,
-          "value": "开盘 -14.63 / 当前 0.26",
-          "reason": "9:30 竞价科技情绪 -14.63 未超过 30，当前情绪须低于 10 的限制不生效"
+          "value": "开盘 -14.56 / 当前 0.86",
+          "reason": "9:30 竞价科技情绪 -14.56 未超过 30，当前情绪须低于 10 的限制不生效"
         },
         {
           "id": "cyb_ma3_slope_gate",
@@ -1290,7 +1298,7 @@
       "twoBuy": true,
       "leg": 1,
       "weight": 0.5,
-      "rawReturnRate": 19,
+      "rawReturnRate": 17.39,
       "avgPrice": 93.61,
       "buyPrices": [
         93.61
@@ -1303,11 +1311,11 @@
       ],
       "sellDate": "20261026",
       "sellDateDisplay": "2026-10-26",
-      "sellTime": "10:05",
-      "sellPrice": 111.4,
-      "sellChange": 3.15,
+      "sellTime": "10:10",
+      "sellPrice": 109.89,
+      "sellChange": 1.75,
       "sellReason": "科技板块情绪退潮",
-      "returnRate": 9.5,
+      "returnRate": 8.7,
       "buyDayClose": 108,
       "buyDayReturn": 15.37
     }
@@ -1316,13 +1324,13 @@
   "currentHoldings": [],
   "summary": {
     "tradeCount": 8,
-    "winCount": 6,
-    "winRate": 75,
-    "avgDrawdown": -1.15,
+    "winCount": 5,
+    "winRate": 62.5,
+    "avgDrawdown": -0.99,
     "maxDrawdown": -1.18,
-    "overallReturn": 95.52,
+    "overallReturn": 92.1,
     "holding": false
   },
   "cacheVersion": 16,
-  "generatedAt": 1792981131627
+  "generatedAt": 1792999167363
 }

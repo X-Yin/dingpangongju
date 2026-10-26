@@ -2258,5 +2258,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sh688836": {
+    "stockName": "宇树科技-W",
+    "kline": [
+      {
+        "trade_date": 20261026,
+        "open_px": 624,
+        "high_px": 737.5,
+        "low_px": 607.01,
+        "close_px": 672,
+        "business_amount": 11347630,
+        "business_balance": 7464759700,
+        "change": 7.69,
+        "ma5_px": 571.41,
+        "ma10_px": 504.15,
+        "ma20_px": 482.34,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

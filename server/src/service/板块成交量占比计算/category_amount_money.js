@@ -13,11 +13,14 @@ const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
 const { StockKlineTempCache, fetchStockKlineCached } = require('../stockKlineCache');
+const { isTradingDay } = require('../../utils');
 
 const OUTPUT_FILE = path.resolve(__dirname, 'category_amount_money_result.json');
 const BLOCK_OUTPUT_FILE = path.resolve(__dirname, 'category_block_amount_result.json');
 const CONSTITUENTS_DIR = path.resolve(__dirname, '../../data/东方财富板块成分股汇总');
 const AMOUNT_DAY_HISTORY_FILE = path.resolve(__dirname, '../../data/amount_day_history.json');
+// 与主资金页「板块成交量」共用的当日实时占比缓存（全 A 股实时行情汇总，失败时多平台轮询兜底）
+const INTRADAY_FILE = path.resolve(__dirname, '../../data/block_volume_ratio_intraday.json');
 
 const defaultStartDate = '2026-04-01';
 const defaultEndDate = dayjs().format('YYYY-MM-DD');
@@ -222,10 +225,26 @@ const buildRatioRows = (moneyRows, totalAmountMap, start, end) => {
     return rows;
 };
 
+// 读取当日分时缓存的最新实时点（与主资金页「板块成交量」同一份数据）
+// 仅交易日当天有效：周末补跑产生的全 0 时点不接入，避免污染当日数据
+const getLiveIntradayPoint = () => {
+    try {
+        if (!fs.existsSync(INTRADAY_FILE) || !isTradingDay(new Date())) return null;
+        const data = JSON.parse(fs.readFileSync(INTRADAY_FILE, 'utf-8'));
+        if (!data || data.date !== dayjs().format('YYYYMMDD')) return null;
+        const point = Array.isArray(data.points) ? data.points[data.points.length - 1] : null;
+        // 分时点本身不带日期，日期在缓存文件顶层
+        return point && point.ratios ? { ...point, date: data.date } : null;
+    } catch (e) {
+        return null;
+    }
+};
+
 // 读取成交额数据并计算占比；子板块拆分数据以「{分类}_blocks」键附加在返回值中
 // todayTotalAmountYi：当日全市场总成交额（亿），由接口实时获取；传入后覆盖 amount_day_history 中的当日值
 const getBlockCategoryRatio = (startDate, endDate, todayTotalAmountYi) => {
-    const cacheKey = `${startDate || ''}|${endDate || ''}|${todayTotalAmountYi || ''}`;
+    const live = getLiveIntradayPoint();
+    const cacheKey = `${startDate || ''}|${endDate || ''}|${todayTotalAmountYi || ''}|${live ? live.time : ''}`;
     if (ratioCache && ratioCache.key === cacheKey) {
         return ratioCache.data;
     }
@@ -274,6 +293,29 @@ const getBlockCategoryRatio = (startDate, endDate, todayTotalAmountYi) => {
             }
         } catch (e) {
             console.error('读取子板块成交额数据失败:', e.message);
+        }
+    }
+
+    // 当日占比改用分时缓存的最新实时点（全 A 股实时行情汇总，失败时为多平台轮询兜底）
+    if (live) {
+        const liveDate = String(live.date);
+        const inRange = (!start || liveDate >= start) && (!end || liveDate <= end);
+        if (inRange) {
+            for (const name of CATEGORY_NAMES) {
+                const ratio = Number(live.ratios[name]);
+                if (!isFinite(ratio)) continue;
+                const list = Array.isArray(result[name]) ? result[name] : [];
+                result[name] = [
+                    ...list.filter((row) => String(row.date) !== liveDate),
+                    {
+                        date: liveDate,
+                        ratio,
+                        money: Number(live.amounts && live.amounts[name]) || 0,
+                        totalAmount: Number(live.marketTotalAmount) || 0,
+                        live: true,
+                    },
+                ];
+            }
         }
     }
 

@@ -2,7 +2,26 @@ const fs = require('fs');
 const path = require('path');
 const { getRZRQData } = require('./rzrq');
 const { fetchMarketTotalAmountYi } = require('./amount');
+const { isTradingDay } = require('../utils');
 const dayjs = require('dayjs');
+
+const TECH_GROUP_NAME = '科技';
+// 与主资金页「板块成交量」共用的当日实时占比缓存（全 A 股实时行情汇总，失败时多平台轮询兜底）
+const INTRADAY_FILE = path.resolve(__dirname, '../data/block_volume_ratio_intraday.json');
+
+// 读取当日分时缓存的最新实时点；仅交易日当天有效，避免周末补跑的全 0 时点污染当日数据
+const getLiveIntradayPoint = () => {
+    try {
+        if (!fs.existsSync(INTRADAY_FILE) || !isTradingDay(new Date())) return null;
+        const data = JSON.parse(fs.readFileSync(INTRADAY_FILE, 'utf-8'));
+        if (!data || data.date !== dayjs().format('YYYYMMDD')) return null;
+        const point = Array.isArray(data.points) ? data.points[data.points.length - 1] : null;
+        // 分时点本身不带日期，日期在缓存文件顶层
+        return point && point.ratios ? { ...point, date: data.date } : null;
+    } catch (e) {
+        return null;
+    }
+};
 
 /**
  * 科技行情交易拥挤度计算
@@ -308,6 +327,26 @@ const getTechVolumeRatio = (startDate, endDate, todayTotalAmountYi) => {
             totalAmount: totalAmountYi,
             techTotalMoney,
         });
+    }
+
+    // 当日占比改用分时缓存的最新实时点（全 A 股实时行情汇总，失败时为多平台轮询兜底）
+    const live = getLiveIntradayPoint();
+    if (live) {
+        const liveDate = String(live.date);
+        const liveRatio = Number(live.ratios[TECH_GROUP_NAME]);
+        const inRange = (!start || liveDate >= start) && (!end || liveDate <= end);
+        if (inRange && isFinite(liveRatio)) {
+            const liveRow = {
+                date: liveDate,
+                ratio: liveRatio,
+                totalAmount: Number(live.marketTotalAmount) || 0,
+                techTotalMoney: Number(live.amounts && live.amounts[TECH_GROUP_NAME]) || 0,
+                live: true,
+            };
+            const liveIndex = techRatioList.findIndex((item) => item.date === liveDate);
+            if (liveIndex >= 0) techRatioList[liveIndex] = liveRow;
+            else techRatioList.push(liveRow);
+        }
     }
 
     return techRatioList;

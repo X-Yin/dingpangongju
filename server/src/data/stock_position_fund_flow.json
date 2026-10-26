@@ -2684,6 +2684,33 @@
         "latestPrice": 107.87,
         "volumeDiffPercent": 19.74,
         "volumeState": "平量"
+      },
+      {
+        "time": "150308",
+        "minute": "1503",
+        "mainFund": 1.96,
+        "change": -0.12,
+        "latestPrice": 107.87,
+        "volumeDiffPercent": 19.74,
+        "volumeState": "平量"
+      },
+      {
+        "time": "150408",
+        "minute": "1504",
+        "mainFund": 1.96,
+        "change": -0.12,
+        "latestPrice": 107.87,
+        "volumeDiffPercent": 19.74,
+        "volumeState": "平量"
+      },
+      {
+        "time": "150508",
+        "minute": "1505",
+        "mainFund": 1.96,
+        "change": -0.12,
+        "latestPrice": 107.87,
+        "volumeDiffPercent": 19.74,
+        "volumeState": "平量"
       }
     ],
     "sh600825": [
@@ -3833,6 +3860,42 @@
       {
         "time": "150108",
         "minute": "1501",
+        "mainFund": 0.65,
+        "change": 2.31,
+        "latestPrice": 15.53,
+        "volumeDiffPercent": -19.08,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "150208",
+        "minute": "1502",
+        "mainFund": 0.65,
+        "change": 2.31,
+        "latestPrice": 15.53,
+        "volumeDiffPercent": -19.08,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "150308",
+        "minute": "1503",
+        "mainFund": 0.65,
+        "change": 2.31,
+        "latestPrice": 15.53,
+        "volumeDiffPercent": -19.08,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "150408",
+        "minute": "1504",
+        "mainFund": 0.65,
+        "change": 2.31,
+        "latestPrice": 15.53,
+        "volumeDiffPercent": -19.08,
+        "volumeState": "缩量"
+      },
+      {
+        "time": "150508",
+        "minute": "1505",
         "mainFund": 0.65,
         "change": 2.31,
         "latestPrice": 15.53,

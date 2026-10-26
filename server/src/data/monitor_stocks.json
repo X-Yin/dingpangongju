@@ -96,7 +96,7 @@
     "blockName": "光模块",
     "riskScore": 2,
     "isTech": true,
-    "isTop": true
+    "isTop": false
   },
   {
     "code": "sh688048",
@@ -503,7 +503,7 @@
     "blockName": "存储",
     "riskScore": "2",
     "isTech": true,
-    "isTop": true
+    "isTop": false
   },
   {
     "code": "sh603228",
@@ -948,5 +948,14 @@
     "riskScore": "8",
     "isTech": true,
     "addedAt": "2026-10-26 14:35:08"
+  },
+  {
+    "code": "sh688836",
+    "name": "宇树科技-W",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-10-26 15:10:30"
   }
 ]

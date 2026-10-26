@@ -1975,6 +1975,21 @@ app.get('/refresh_block_category_ratio', async (req, res) => {
   }
 });
 
+// 刷新板块成交量占比（复用主资金页「板块成交量」的实时算法）
+// 优先一次性拉取全 A 股实时行情（东财，失败时回退新浪全量列表）汇总各板块成交额；
+// 两种全量接口都失败时回退多平台轮询。结果写入分时缓存，拥挤度 tab 的科技/各分类占比会同步使用
+app.get('/refresh_block_volume_ratio', async (req, res) => {
+  try {
+    const { runAndSaveIntradayPoint } = require('./service/blockVolumeRatio');
+    const forcePolling = ['1', 'true'].includes(String(req.query.polling || '').toLowerCase());
+    const { point, stats } = await runAndSaveIntradayPoint({ forcePolling });
+    res.json({ success: true, message: '刷新成功', mode: stats.mode, time: point.time });
+  } catch (error) {
+    console.error('刷新板块成交量占比失败:', error);
+    res.status(500).json({ success: false, message: error.message || '刷新失败' });
+  }
+});
+
 // 板块成交量占比：各板块按日历史占比 + 当日实时占比（含科技成交量占比，不含拥挤度）
 app.get('/block_volume_ratio_history', async (req, res) => {
   try {

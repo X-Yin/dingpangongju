@@ -760,6 +760,16 @@
             letter-spacing: 0.5px;
         }
 
+        .crowd-chart-title-clickable {
+            cursor: pointer;
+            transition: color 0.2s;
+
+            &:hover {
+                color: #2563eb;
+                text-decoration: underline;
+            }
+        }
+
         .crowd-chart-value {
             display: flex;
             align-items: baseline;

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { local_ip } from '../../constant';
 import { AppstoreOutlined, BarChartOutlined, LineChartOutlined, FundOutlined, ReloadOutlined, CheckOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Modal, Tabs, Empty, DatePicker, Card, Row, Col, Alert, Spin, Tag, Space, Typography, Switch } from 'antd';
+import { Button, Checkbox, Modal, Tabs, Empty, DatePicker, Card, Row, Col, Alert, Spin, Tag, Space, Typography, Switch, Table } from 'antd';
 import { SyncOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, Title as ChartTitle, Tooltip as ChartTooltip, Legend } from 'chart.js';
@@ -363,6 +363,12 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     // 正在刷新的分类名（null=无）；单图刷新按钮只刷新对应分类，刷新全部按钮刷新所有分类
     const [categoryRefreshingName, setCategoryRefreshingName] = useState(null);
     const [isRefreshingAll, setIsRefreshingAll] = useState(false);
+    // 点击板块折线图标题打开的成分股弹窗
+    const [stockModalOpen, setStockModalOpen] = useState(false);
+    const [stockModalBlock, setStockModalBlock] = useState('');
+    const [stockList, setStockList] = useState([]);
+    const [stockLoading, setStockLoading] = useState(false);
+    const [stockError, setStockError] = useState(null);
     // 自动分析结果：{ date, rows, up, down, slopeUp, slopeDown, steep, flat }
     const [crowdAnalysis, setCrowdAnalysis] = useState(null);
     // 分拆子题材开关：{ 分类名: true/false }，开启后该分类按内部概念拆成多条折线
@@ -1592,15 +1598,13 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     }
   };
 
-  // 刷新全部图表数据：并行触发拥挤度与各分类成交额的后端刷新，完成后统一重拉前端数据
+  // 刷新全部板块的成交量占比：复用主资金页「板块成交量」的实时算法
+  // 后端优先一次性拉取全 A 股实时行情（含新浪全量列表兜底），全部失败时回退多平台轮询；完成后统一重拉前端数据
   const refreshAllCrowdData = async () => {
     if (isRefreshingAll || categoryRefreshingName) return;
     setIsRefreshingAll(true);
     try {
-      await Promise.all([
-        axios.get(`http://${local_ip}:3000/refresh_tech_block_crowd`),
-        axios.get(`http://${local_ip}:3000/refresh_block_category_ratio`),
-      ]);
+      await axios.get(`http://${local_ip}:3000/refresh_block_volume_ratio`);
       await Promise.all([fetchCrowdData(), fetchTechRatioData(), fetchCategoryRatioData()]);
     } catch (error) {
       console.error('Refresh all crowd data failed:', error);
@@ -1608,6 +1612,69 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
       setIsRefreshingAll(false);
     }
   };
+
+  // 点击板块折线图标题：打开弹窗展示该板块全部成分股的最新涨幅（复用主资金页「板块成交量」的接口）
+  const openBlockStocks = async (name) => {
+    if (!name) return;
+    setStockModalOpen(true);
+    setStockModalBlock(name);
+    setStockList([]);
+    setStockError(null);
+    setStockLoading(true);
+    try {
+      const resp = await axios.get(`http://${local_ip}:3000/block_volume_ratio_stocks`, {
+        params: { name },
+        timeout: 60 * 1000,
+      });
+      const data = resp.data || {};
+      setStockList(Array.isArray(data.stocks) ? data.stocks : []);
+    } catch (error) {
+      console.error('获取板块成分股行情失败:', error);
+      setStockError('获取板块成分股行情失败，请检查后端服务');
+    } finally {
+      setStockLoading(false);
+    }
+  };
+
+  const stockColumns = useMemo(() => [
+    { title: '名称', dataIndex: 'name', width: 150 },
+    {
+      title: '代码',
+      dataIndex: 'marketCode',
+      width: 110,
+      render: (value, record) => value || record.code || '-',
+    },
+    {
+      title: '最新价',
+      dataIndex: 'price',
+      width: 110,
+      align: 'right',
+      render: (value) => (typeof value === 'number' ? value.toFixed(2) : '-'),
+    },
+    {
+      title: '涨跌幅',
+      dataIndex: 'changePct',
+      width: 130,
+      align: 'right',
+      defaultSortOrder: 'descend',
+      sortDirections: ['descend', 'ascend'],
+      sorter: (a, b) => {
+        const av = typeof a.changePct === 'number' ? a.changePct : -Infinity;
+        const bv = typeof b.changePct === 'number' ? b.changePct : -Infinity;
+        return av - bv;
+      },
+      render: (value, record) => {
+        if (record.suspended) return <span style={{ color: '#94a3b8' }}>停牌</span>;
+        if (typeof value !== 'number') return <span style={{ color: '#94a3b8' }}>-</span>;
+        const color = value > 0 ? '#f5222d' : value < 0 ? '#52c41a' : '#666';
+        return (
+          <span style={{ color, fontWeight: 600 }}>
+            {value > 0 ? '+' : ''}{value.toFixed(2)}%
+          </span>
+        );
+      },
+    },
+  ], []);
 
   // 自动分析：基于当前已加载的各分类成交量占比，统计最新一日涨跌归类、涨跌前三与 3 日线斜率
   const handleAutoAnalyze = () => {
@@ -2780,7 +2847,13 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                     </div>
                                     <div className="crowd-chart-card">
                                         <div className="crowd-chart-header">
-                                            <div className="crowd-chart-title">科技板块成交量占比</div>
+                                            <div
+                                                className="crowd-chart-title crowd-chart-title-clickable"
+                                                onClick={() => openBlockStocks('科技')}
+                                                title="查看板块成分股最新涨幅"
+                                            >
+                                                科技板块成交量占比
+                                            </div>
                                             <div className="crowd-chart-right">
                                                 <div className="crowd-chart-value">
                                                     <span className="crowd-value-number" style={{ color: getThemeColor() }}>
@@ -2812,7 +2885,13 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                             <div key={name} className="crowd-chart-card">
                                                 <div className="crowd-chart-header">
                                                     <div className="crowd-chart-title-wrap">
-                                                        <div className="crowd-chart-title">{name}成交量占比</div>
+                                                        <div
+                                                            className="crowd-chart-title crowd-chart-title-clickable"
+                                                            onClick={() => openBlockStocks(name)}
+                                                            title="查看板块成分股最新涨幅"
+                                                        >
+                                                            {name}成交量占比
+                                                        </div>
                                                         {(categoryRatioData[`${name}_blocks`] || []).length > 0 && (
                                                             <div className="crowd-split-toggle">
                                                                 <span className="crowd-split-label">分拆子题材</span>
@@ -3479,6 +3558,33 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                         </Col>
                     </Row>
                 ) : null}
+            </Modal>
+
+            <Modal
+                title={stockModalBlock ? `${stockModalBlock} · 成分股最新涨幅` : '板块成分股'}
+                open={stockModalOpen}
+                onCancel={() => setStockModalOpen(false)}
+                footer={null}
+                width={780}
+                centered
+                destroyOnClose
+            >
+                {stockError ? <Alert type="error" message={stockError} showIcon style={{ marginBottom: 12 }} /> : null}
+                {stockLoading ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
+                        <Spin />
+                    </div>
+                ) : (
+                    <Table
+                        size="small"
+                        rowKey={(record) => record.marketCode || record.code}
+                        columns={stockColumns}
+                        dataSource={stockList}
+                        pagination={false}
+                        scroll={{ y: 460 }}
+                        locale={{ emptyText: '暂无成分股行情' }}
+                    />
+                )}
             </Modal>
         </div>
     );
