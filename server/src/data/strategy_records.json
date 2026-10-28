@@ -1,88 +1,8 @@
 [
   {
-    "id": "8432bd974f3336d4",
-    "time": "2026-10-28 09:30:00",
-    "read": false,
-    "strategyId": "prev_day_volume_price_bottom",
-    "title": "✅ 前日地量地价，今日平开/高开大概率反弹",
-    "description": "前一日创业板指地量地价：涨跌幅-3.41%（<-1%大幅下跌）、缩量-6.8%（>5%缩量）。今日竞价高开1.77%（开盘价2593.15 ≥ 前日收盘2548.15），可能受隔夜情绪催化，当日大概率上涨反弹。",
-    "severity": "high",
-    "isBullish": true
-  },
-  {
-    "id": "da60f01117b8ba7b",
-    "time": "2026-10-28 09:30:00",
-    "read": false,
-    "strategyId": "ebb_tide_direct_reversal",
-    "title": "⚠️ 退潮直接反转概率低，切勿追涨",
-    "description": "创业板指前一日涨跌幅 -3.41%，科创50前一日涨跌幅 -4.81%。<br/>创业板指/科创50前一个交易日大跌超过-2%，次日直接反转的概率只有 <strong>23%</strong>，不要追涨！就算参与只能 <strong>1/3 仓位</strong>参与。",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
-    "id": "93fe06a33ddbf494",
-    "time": "2026-10-28 09:30:00",
-    "read": false,
-    "strategyId": "high_open_max_half_position",
-    "title": "⚠️ 高开最多半仓",
-    "description": "9:30 开盘 创业板指高开 +1.77%、科创50高开 +2.21%（>0.5%）。\n大A惯例高开容易低走，此时如果开盘想要加仓，最多只能买单半仓，分摊到两个个股身上就是各自1/4仓位。最后等到收盘的时候再视情况是否要把剩下的仓位加上。",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
-    "id": "abda69b305299202",
-    "time": "2026-10-28 09:35:00",
-    "read": false,
-    "strategyId": "opening_net_inflow",
-    "title": "✅ 开盘资金未明显流出-市场或有回暖",
-    "description": "开盘 5min 资金净流入 <strong>+6.9亿</strong>，按照历史规律，当天大概率大盘会回暖，可以适当出手。",
-    "severity": "medium",
-    "isBullish": true
-  },
-  {
-    "id": "dc080d93bb9bdcd5",
-    "time": "2026-10-28 09:44:02",
-    "read": false,
-    "strategyId": "overnight_crisis_escape",
-    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
-    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-1.6亿</strong>（净流出）<br/>• 科技分时情绪 2.4 → 19.3（上升 16.9）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
-    "id": "3419585688a26094",
-    "time": "2026-10-28 09:47:02",
-    "read": false,
-    "strategyId": "volume_price_surge",
-    "title": "✅ 量价齐升",
-    "description": "成交量放大 <strong>210亿</strong>（≥100亿），资金净流入-14.4→15.8亿（≥10亿，流入增加），创业板5分钟上涨0.49%。量价资金三者共振，多方占优。",
-    "severity": "medium",
-    "isBullish": true
-  },
-  {
-    "id": "e4fed0335171f471",
-    "time": "2026-10-28 11:09:02",
-    "read": false,
-    "strategyId": "volume_price_surge",
-    "title": "✅ 量价齐升",
-    "description": "成交量放大 <strong>110亿</strong>（≥100亿），资金净流入46.1→62.8亿（≥10亿，流入增加），创业板5分钟上涨0.69%。量价资金三者共振，多方占优。",
-    "severity": "medium",
-    "isBullish": true
-  },
-  {
-    "id": "7c6b8348dda2a06f",
-    "time": "2026-10-28 11:29:35",
-    "read": false,
-    "strategyId": "volume_price_surge",
-    "title": "✅ 量价齐升",
-    "description": "成交量放大 <strong>210亿</strong>（≥100亿），资金净流入125.4→162.1亿（≥10亿，流入增加），创业板5分钟上涨1.35%。量价资金三者共振，多方占优。",
-    "severity": "medium",
-    "isBullish": true
-  },
-  {
     "id": "0b6aaae3adb03336",
     "time": "2026-10-28 13:00:00",
-    "read": false,
+    "read": true,
     "strategyId": "straight_rise_no_volume",
     "title": "⚠️ 无量拉升警惕回落",
     "description": "创业板5分钟上涨1.23%，但成交量仅增加 <strong>-1亿</strong>（不足100亿），无量上涨持续性存疑，容易回落。",
@@ -92,10 +12,20 @@
   {
     "id": "7ef811fae472b142",
     "time": "2026-10-28 13:05:14",
-    "read": false,
+    "read": true,
     "strategyId": "volume_price_surge",
     "title": "✅ 量价齐升",
     "description": "成交量放大 <strong>161亿</strong>（≥100亿），资金净流入164.3→180.1亿（≥10亿，流入增加），创业板5分钟上涨1.28%。量价资金三者共振，多方占优。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "b43e182077d0a7fb",
+    "time": "2026-10-28 13:26:05",
+    "read": true,
+    "strategyId": "volume_price_surge",
+    "title": "✅ 量价齐升",
+    "description": "成交量放大 <strong>125亿</strong>（≥100亿），资金净流入233.1→248.7亿（≥10亿，流入增加），创业板5分钟上涨1.64%。量价资金三者共振，多方占优。",
     "severity": "medium",
     "isBullish": true
   }

@@ -1038,5 +1038,21 @@
       "lowAvg": -3.823
     },
     "timestamp": "2026-10-27 15:01:37"
+  },
+  {
+    "date": 20261028,
+    "score": 85,
+    "level": 3,
+    "label": "中性均衡",
+    "desc": "业绩与叙事定价大体平衡，市场没有明确的风偏方向",
+    "detail": {
+      "spread": -0.893,
+      "breadth": 0,
+      "attackTilt": -0.15,
+      "avgChange": 4.66,
+      "highAvg": 3.977,
+      "lowAvg": 4.871
+    },
+    "timestamp": "2026-10-28 15:01:12"
   }
 ]

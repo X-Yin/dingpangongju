@@ -254,7 +254,7 @@ const run = async (startDate = defaultStartDate, endDate = defaultEndDate, needC
         }
 
         console.log(`\n--- 所有板块股票汇总完成，共 ${allStocksMap.size} 只 ---`);
-        stocksArray = stocksArray.filter(stock => progress.completedBlocks.includes(stock.code));
+        stocksArray = Array.from(allStocksMap.entries()).map(([code, name]) => ({ code, name }));
     } else {
         stocksArray = JSON.parse(fs.readFileSync(STOCK_CODE_FILE, 'utf-8')).stocks;
     }

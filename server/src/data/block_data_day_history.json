@@ -1,5 +1,169 @@
 [
   {
+    "date": "20261028",
+    "blocks": {
+      "AI 医药": {
+        "avgChange": 19.08
+      },
+      "机器人": {
+        "avgChange": 7.56
+      },
+      "MPO": {
+        "avgChange": 7.35
+      },
+      "液冷": {
+        "avgChange": 5.94
+      },
+      "AI 剧": {
+        "avgChange": 5.9
+      },
+      "金刚石散热": {
+        "avgChange": 5.89
+      },
+      "MFC": {
+        "avgChange": 5.48
+      },
+      "存储": {
+        "avgChange": 5.42
+      },
+      "cpo": {
+        "avgChange": 5.36
+      },
+      "光模块": {
+        "avgChange": 5.31
+      },
+      "功率半导体": {
+        "avgChange": 5.2
+      },
+      "商业航天": {
+        "avgChange": 5.1
+      },
+      "CCL": {
+        "avgChange": 5.03
+      },
+      "pcb": {
+        "avgChange": 5.01
+      },
+      "半导体材料": {
+        "avgChange": 4.48
+      },
+      "PPE树脂": {
+        "avgChange": 4.43
+      },
+      "机器人大脑": {
+        "avgChange": 4.17
+      },
+      "光纤": {
+        "avgChange": 4.01
+      },
+      "半导体": {
+        "avgChange": 3.92
+      },
+      "先进封装": {
+        "avgChange": 3.89
+      },
+      "端侧SOC": {
+        "avgChange": 3.67
+      },
+      "电子布": {
+        "avgChange": 3.65
+      },
+      "MLCC": {
+        "avgChange": 3.55
+      },
+      "玻璃基板": {
+        "avgChange": 3.55
+      },
+      "北美缺电": {
+        "avgChange": 3.29
+      },
+      "氧化锆": {
+        "avgChange": 3.29
+      },
+      "cpu": {
+        "avgChange": 3.25
+      },
+      "国产超节点": {
+        "avgChange": 2.99
+      },
+      "钨": {
+        "avgChange": 2.98
+      },
+      "AI电源": {
+        "avgChange": 2.62
+      },
+      "铜箔": {
+        "avgChange": 2.6
+      },
+      "光芯片": {
+        "avgChange": 2.53
+      },
+      "AI 安全": {
+        "avgChange": 2.07
+      },
+      "AI-EDA": {
+        "avgChange": 1.32
+      },
+      "游戏": {
+        "avgChange": 0.8
+      },
+      "军工": {
+        "avgChange": 0.78
+      },
+      "电力": {
+        "avgChange": 0.61
+      },
+      "煤炭": {
+        "avgChange": 0.48
+      },
+      "染料": {
+        "avgChange": 0.36
+      },
+      "磷化铟": {
+        "avgChange": 0.3
+      },
+      "厄尔尼诺": {
+        "avgChange": 0.3
+      },
+      "锂电": {
+        "avgChange": 0.18
+      },
+      "医药": {
+        "avgChange": 0.11
+      },
+      "AI 应用": {
+        "avgChange": 0.1
+      },
+      "贵金属": {
+        "avgChange": -0.02
+      },
+      "房地产": {
+        "avgChange": -0.08
+      },
+      "银行": {
+        "avgChange": -0.1
+      },
+      "粮食": {
+        "avgChange": -0.38
+      },
+      "特高压": {
+        "avgChange": -0.39
+      },
+      "化工": {
+        "avgChange": -0.82
+      },
+      "证券": {
+        "avgChange": -1.41
+      },
+      "固态电池": {
+        "avgChange": -1.59
+      },
+      "消费": {
+        "avgChange": -2.84
+      }
+    }
+  },
+  {
     "date": "20261027",
     "blocks": {
       "消费": {

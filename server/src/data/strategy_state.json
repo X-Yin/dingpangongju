@@ -23,9 +23,12 @@
     "triggeredToday": "2026-10-28"
   },
   "volume_price_surge": {
-    "lastTriggeredTime": "2026-10-28 13:05:14"
+    "lastTriggeredTime": "2026-10-28 13:26:05"
   },
   "straight_rise_no_volume": {
     "lastTriggeredTime": "2026-10-28 13:00:00"
+  },
+  "tail_dip_buying": {
+    "checkedToday": "2026-10-28"
   }
 }

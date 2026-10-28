@@ -89,7 +89,7 @@ const { predictSentimentCycle } = require('./service/sentimentPrediction');
 const { runQuantAnalysis, getQuantAnalysisData, analyzeSingleStock } = require('./service/quantAnalysis');
 const { getRZRQData } = require('./service/rzrq');
 const { getTechBlockCrowd, getTechVolumeRatio } = require('./service/techCrowd');
-const { getBlockCategoryRatio, run: runCategoryAmount, categoryRatioStartDate, categoryRatioEndDate } = require('./service/板块成交量占比计算/category_amount_money');
+const { getBlockCategoryRatio, run: runCategoryAmount, categoryRatioStartDate } = require('./service/板块成交量占比计算/category_amount_money');
 const { getBlockVolumeRatioHistory, getIntradayData, getBlockConstituents } = require('./service/blockVolumeRatio');
 const { getRiskScoreHistory, calculateAndSaveRiskScore } = require('./service/marketRiskScore');
 const { analyzeMonitorStocks } = require('./service/strongAndWeakStock');
@@ -1950,8 +1950,9 @@ app.get('/tech_block_ratio', async (req, res) => {
 // 刷新科技板块拥挤度数据
 app.get('/refresh_tech_block_crowd', async (req, res) => {
   try {
-    const { run, techCrowdStartDate, techCrowdEndDate } = require('./service/科技板块拥挤度计算/block_amount_money');
-    await run(techCrowdStartDate, techCrowdEndDate, false);
+    const { run, techCrowdStartDate } = require('./service/科技板块拥挤度计算/block_amount_money');
+    // 结束日期必须用「当天」：模块内的默认结束日期在服务启动时即被冻结，跨天后会截断新数据
+    await run(techCrowdStartDate, dayjs().format('YYYY-MM-DD'), false);
     res.json({ success: true, message: '刷新成功' });
   } catch (error) {
     console.error('刷新科技板块拥挤度数据失败:', error);
@@ -1978,11 +1979,13 @@ app.get('/block_category_ratio', async (req, res) => {
 app.get('/refresh_block_category_ratio', async (req, res) => {
   try {
     const { category } = req.query;
+    // 结束日期同科技拥挤度，必须实时取当天，避免服务长期不重启时把新一天的数据截断
+    const endDate = dayjs().format('YYYY-MM-DD');
     if (category) {
-      await runCategoryAmount(categoryRatioStartDate, categoryRatioEndDate, [String(category)]);
+      await runCategoryAmount(categoryRatioStartDate, endDate, [String(category)]);
       res.json({ success: true, message: `刷新成功：${category}` });
     } else {
-      await runCategoryAmount(categoryRatioStartDate, categoryRatioEndDate);
+      await runCategoryAmount(categoryRatioStartDate, endDate);
       res.json({ success: true, message: '刷新成功' });
     }
   } catch (error) {

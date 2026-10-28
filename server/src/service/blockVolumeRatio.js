@@ -24,6 +24,9 @@ const INTRADAY_FILE = path.resolve(__dirname, '../data/block_volume_ratio_intrad
 const CONSTITUENTS_DIR = path.resolve(__dirname, '../data/东方财富板块成分股汇总');
 const TECH_STOCK_FILE = path.resolve(__dirname, './科技板块拥挤度计算/all_tech_stock_code.json');
 const AMOUNT_DAY_HISTORY_FILE = path.resolve(__dirname, '../data/amount_day_history.json');
+// 按日历史文件（拥挤度 tab 折线图的日线数据源）
+const TECH_MONEY_FILE = path.resolve(__dirname, './科技板块拥挤度计算/block_amount_money_result.json');
+const CATEGORY_MONEY_FILE = path.resolve(__dirname, './板块成交量占比计算/category_amount_money_result.json');
 
 const TECH_GROUP_NAME = '科技';
 
@@ -442,10 +445,52 @@ const getIntradayData = () => {
     return data;
 };
 
+// 把收盘时点的实时汇总结果补写进按日历史文件（科技板块成交额 / 各分类成交额）
+// 分时缓存跨日滚动时只保留当天时点，若不落盘，次日「上一天」的占比折线点会消失
+const persistClosedDayToHistory = (point, date) => {
+    if (!point || !point.amounts || !date) return;
+
+    const techMoney = Number(point.amounts[TECH_GROUP_NAME]);
+    if (isFinite(techMoney) && techMoney > 0) {
+        const list = readJsonSafe(TECH_MONEY_FILE, []);
+        if (Array.isArray(list)) {
+            const next = list.filter((item) => String(item.date) !== String(date));
+            next.push({ date, techTotalMoney: techMoney });
+            next.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+            fs.writeFileSync(TECH_MONEY_FILE, JSON.stringify(next, null, 2), 'utf-8');
+        }
+    }
+
+    const categoryMoney = readJsonSafe(CATEGORY_MONEY_FILE, {});
+    if (categoryMoney && typeof categoryMoney === 'object' && !Array.isArray(categoryMoney)) {
+        let changed = false;
+        for (const name of CATEGORY_NAMES) {
+            const amount = Number(point.amounts[name]);
+            if (!isFinite(amount) || amount <= 0) continue;
+            const list = Array.isArray(categoryMoney[name]) ? categoryMoney[name] : [];
+            categoryMoney[name] = [...list.filter((row) => String(row.date) !== String(date)), { date, money: amount }]
+                .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+            changed = true;
+        }
+        if (changed) {
+            fs.writeFileSync(CATEGORY_MONEY_FILE, JSON.stringify(categoryMoney, null, 2), 'utf-8');
+        }
+    }
+};
+
 // 写入一个分时点（同一天内按时间排序，同一时间点覆盖）
 const saveIntradayPoint = (point) => {
     const today = dayjs().format('YYYYMMDD');
     const existing = getIntradayData();
+
+    // 跨日滚动前先把上一天最后一个收盘时点落盘，避免旧数据随分时缓存清空而丢失
+    if (existing.date && existing.date !== today && Array.isArray(existing.points) && existing.points.length > 0) {
+        const lastPoint = existing.points[existing.points.length - 1];
+        if (lastPoint && String(lastPoint.time) >= '150000') {
+            persistClosedDayToHistory(lastPoint, existing.date);
+        }
+    }
+
     const points = existing.date === today && Array.isArray(existing.points) ? existing.points : [];
 
     const next = points.filter((item) => item.time !== point.time);
@@ -465,6 +510,14 @@ const saveIntradayPoint = (point) => {
 const runAndSaveIntradayPoint = async ({ onProgress, forcePolling = false } = {}) => {
     const { stats, ...point } = await computeTodayRatios({ onProgress, forcePolling });
     const payload = saveIntradayPoint(point);
+
+    // 15:00 收盘后的时点即当日最终成交额，落盘到按日历史，次日刷新时上一天的数据不会消失
+    const now = new Date();
+    const timeVal = now.getHours() * 60 + now.getMinutes();
+    if (isTradingDay(now) && timeVal >= 900) {
+        persistClosedDayToHistory(point, dayjs().format('YYYYMMDD'));
+    }
+
     return { point, payload, stats };
 };
 
@@ -561,6 +614,7 @@ const getBlockConstituents = (name) => {
 exports.TECH_GROUP_NAME = TECH_GROUP_NAME;
 exports.computeTodayRatios = computeTodayRatios;
 exports.runAndSaveIntradayPoint = runAndSaveIntradayPoint;
+exports.persistClosedDayToHistory = persistClosedDayToHistory;
 exports.getIntradayData = getIntradayData;
 exports.getBlockVolumeRatioHistory = getBlockVolumeRatioHistory;
 exports.getBlockConstituents = getBlockConstituents;
