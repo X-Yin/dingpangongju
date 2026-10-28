@@ -5,9 +5,10 @@ $ob-border-light: rgba(148, 163, 184, 0.16);
 $ob-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -16px rgba(15, 23, 42, 0.14);
 $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
-// ==================== 页面布局：两行网格 ====================
+// ==================== 页面布局：网格 ====================
 // 第一行：资金模块（左 62%）+ 持仓分时（右，与左侧严格等高）
-// 第二行：涨幅前五 | 买点诊断 | 卖点诊断（三列等宽，高度由内容撑开）
+// 第二、三行：重点板块涨幅前十 / 跌幅前十（各占一行横向排列）
+// 第四行：涨幅前五 | 买点诊断 | 卖点诊断（三列等宽，高度由内容撑开）
 .opening-battle-container {
   padding: 18px 22px 40px;
   min-height: 100vh;
@@ -41,14 +42,21 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     }
   }
 
-  // ---------- 第二行 ----------
+  // ---------- 重点板块涨跌幅前十（两张渐变卡上下排列，各占一行） ----------
+  .ob-keysector-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  // ---------- 第四行 ----------
   .ob-row-second {
     display: flex;
     gap: 16px;
     align-items: flex-start; // 买/卖点诊断高度由内容撑开
 
     > * {
-      flex: 1 1 0;
+      flex: 2;
       min-width: 0;
     }
   }
@@ -119,6 +127,7 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 // 买点/卖点卡片本身已是紫→青渐变底，图标芯片改用磨砂玻璃白
 .ob-buy-card .ob-module-icon,
 .ob-sell-card .ob-module-icon,
+.ob-keysector-module .ob-module-icon,
 .ob-rank3-module .ob-module-icon {
   background: rgba(255, 255, 255, 0.22);
   color: #fff;
@@ -935,6 +944,17 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     margin-bottom: 8px;
   }
 
+  // 只看符合条件开关：位于股票列表上方
+  .ob-gainer-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 6px;
+  }
+
   // 两个指数门槛芯片（创业板指 / 科创50）
   .ob-gainer-gate {
     display: flex;
@@ -1456,6 +1476,212 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   backdrop-filter: blur(14px) saturate(180%);
   -webkit-backdrop-filter: blur(14px) saturate(180%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), $shadow;
+}
+
+// ==================== 重点板块涨跌幅前十（与下方三张诊断卡同一渐变玻璃体系） ====================
+// 10 个板块单行并排，超出宽度时内部横向滚动；压缩高度，给下方三张卡片留出展示空间
+.ob-keysector-module {
+  .ob-diagnosis-header {
+    padding: 9px 16px 6px;
+  }
+
+  .ob-diagnosis-body {
+    padding: 2px 16px 10px;
+  }
+
+  .ob-module-title {
+    font-size: 14px;
+  }
+
+  .ob-module-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+
+  .ob-refresh-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+}
+
+// 选择器需高于 `.ob-diagnosis-card .ob-diagnosis-body`（其中写死了 flex-direction: column）
+.ob-diagnosis-card.ob-keysector-module .ob-keysector-body {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 3px;
+  }
+
+  // 空态占满整行，避免在横向 flex 中被压缩
+  .ob-empty-mini {
+    flex: 1 1 auto;
+  }
+}
+
+.ob-keysector-chip {
+  flex: 0 0 auto;
+  width: auto; // 宽度由内容决定，避免名称与涨幅之间出现大片空白
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  color: #fff;
+  transition: transform 0.18s ease, filter 0.18s ease;
+  @include ob-glass(
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.28),
+    0 10px 24px -18px rgba(15, 23, 42, 0.55)
+  );
+
+  &:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+  }
+}
+
+.ob-keysector-chip-rank {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  font-family: $ob-mono;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+
+  // 前三名实心白，与涨幅榜卡片一致
+  &.is-top {
+    color: #4d55d8;
+    background: #fff;
+    border-color: rgba(255, 255, 255, 0.75);
+    box-shadow: 0 4px 12px -4px rgba(30, 27, 75, 0.45);
+  }
+}
+
+.ob-keysector-chip-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 104px; // 板块名过长时省略，避免芯片被拉宽
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
+
+.ob-keysector-chip-delta {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+
+  &.up { color: #ffd2dd; }
+  &.down { color: #9ff2da; }
+}
+
+.ob-keysector-chip-change {
+  flex-shrink: 0;
+  font-family: $ob-mono;
+  font-size: 11.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #ffd2dd;
+
+  &.down { color: #9ff2da; }
+}
+
+// 悬停成分股浮层（浅色卡片，点击成分股打开 K 线）
+.ob-keysector-popover {
+  min-width: 196px;
+}
+
+.ob-keysector-popover-title {
+  padding: 2px 4px 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  border-bottom: 1px solid rgba(18, 33, 58, 0.08);
+  margin-bottom: 4px;
+}
+
+.ob-keysector-stocks {
+  display: flex;
+  flex-direction: column;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.ob-keysector-stock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 4px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(18, 33, 58, 0.06);
+
+    .ob-keysector-stock-name {
+      color: #1677ff;
+      text-decoration: underline;
+    }
+  }
+}
+
+.ob-keysector-stock-name {
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ob-keysector-stock-change {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-family: $ob-mono;
+  font-variant-numeric: tabular-nums;
+
+  &.up { color: #e11d48; }
+  &.down { color: #059669; }
+}
+
+.ob-keysector-popover-empty {
+  padding: 12px 4px;
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
 }
 
 // 买点条件分组标题（顺周期 / 逆周期）
@@ -1996,5 +2222,172 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     .ob-fund-row {
       flex-direction: column;
     }
+  }
+}
+
+// ==================== 第一行：与第二行三卡同视觉体系（紫 → 靛蓝 → 青蓝渐变 + 磨砂玻璃） ====================
+// 外层模块退化为透明容器，内部「主力资金 / 资金数据 / 成交量 / 持仓分时」逐卡渐变化
+.opening-battle-container .ob-row-first {
+  .ob-fund-module,
+  .ob-intraday-module {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  // 透明容器上的模块标题回到浅色背景下的深色体系（仅持仓模块有标题）
+  .ob-intraday-module {
+    .ob-module-title {
+      color: #0f172a;
+      text-shadow: none;
+    }
+
+    .ob-total-tag {
+      color: #475569;
+      background: rgba(148, 163, 184, 0.14);
+      border-color: $ob-border-light;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+  }
+
+  .ob-fund-row {
+    gap: 14px;
+  }
+
+  // 卡片本体：渐变 + 22px 圆角 + 内描边（与 .ob-rank3-module / .ob-diagnosis-card 一致）
+  .ob-fund-chart-card,
+  .ob-fund-detail,
+  .ob-intraday-chart-card {
+    position: relative;
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    color: #fff;
+    background:
+      radial-gradient(118% 86% at 8% -8%, rgba(162, 124, 255, 0.95) 0%, rgba(162, 124, 255, 0) 62%),
+      radial-gradient(108% 94% at 106% 8%, rgba(48, 197, 210, 0.92) 0%, rgba(48, 197, 210, 0) 58%),
+      radial-gradient(130% 110% at -8% 108%, rgba(132, 94, 255, 0.9) 0%, rgba(132, 94, 255, 0) 64%),
+      linear-gradient(116deg, #7b4dff 0%, #4d55d8 46%, #1ba7c6 100%);
+    box-shadow: 0 22px 48px -26px rgba(49, 46, 129, 0.6);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      border-radius: inherit;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+    }
+
+    &:hover {
+      box-shadow: 0 26px 54px -24px rgba(49, 46, 129, 0.72);
+      border: none;
+    }
+  }
+
+  .ob-fund-chart-card,
+  .ob-fund-detail {
+    height: 278px;
+  }
+
+  // 卡片头部：磨砂玻璃条
+  .ob-fund-chart-header,
+  .ob-fund-detail-header,
+  .ob-intraday-chart-header {
+    position: relative;
+    z-index: 1;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+  }
+
+  .ob-fund-chart-title,
+  .ob-fund-detail-title,
+  .ob-intraday-chart-name {
+    color: #fff;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(30, 27, 75, 0.28);
+  }
+
+  .ob-intraday-chart-code {
+    color: rgba(255, 255, 255, 0.62);
+  }
+
+  .ob-fund-switch-label {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  // 5min 开关：白色玻璃质感
+  .ob-fund-switch-label .ant-switch {
+    background: rgba(255, 255, 255, 0.28);
+
+    &.ant-switch-checked {
+      background: rgba(255, 255, 255, 0.62);
+    }
+  }
+
+  // 资金明细滚动区 + 玻璃行卡
+  .ob-fund-table-wrapper {
+    position: relative;
+    z-index: 1;
+
+    &::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); }
+
+    .data-item {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: rgba(255, 255, 255, 0.92);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.17);
+        border-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 6px 16px -10px rgba(15, 23, 42, 0.55);
+      }
+
+      &.up .item-value { color: #fecdd3; }
+      &.down .item-value { color: #86efac; }
+
+      &.big-outflow {
+        background: linear-gradient(90deg, rgba(134, 239, 172, 0.24), rgba(134, 239, 172, 0.05));
+        border-color: rgba(134, 239, 172, 0.34);
+      }
+
+      &.big-inflow {
+        background: linear-gradient(90deg, rgba(254, 205, 211, 0.24), rgba(254, 205, 211, 0.05));
+        border-color: rgba(254, 205, 211, 0.34);
+      }
+
+      .item-time { color: rgba(255, 255, 255, 0.66); }
+
+      .item-diff {
+        background: rgba(255, 255, 255, 0.14);
+
+        &.up { color: #fecdd3; background: rgba(254, 205, 211, 0.18); }
+        &.down { color: #86efac; background: rgba(134, 239, 172, 0.18); }
+      }
+    }
+  }
+
+  // 持仓分时网格滚动条
+  .ob-intraday-grid {
+    position: relative;
+    z-index: 1;
+
+    &::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); }
+  }
+
+  .ob-intraday-chart-body {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ob-fund-chart-body {
+    position: relative;
+    z-index: 1;
   }
 }

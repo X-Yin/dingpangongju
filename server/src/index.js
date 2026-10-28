@@ -118,6 +118,8 @@ const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
 const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refreshLianbanRange } = require('./service/lianban');
 const { getMarketOverview, getThemeAnalysis, getStockQuotes, getThemeHistory, getThemeDayStocks, invalidateThemeAnalysisCache } = require('./service/themeMonitor');
+// 复盘页「四维立体」：主线/支线 + 龙一~龙五 + 三线情绪周期
+const { getSiweiLitiAnalysis } = require('./service/siweiLiti');
 const { getStore: getThemeCustomStore, saveTheme: saveCustomTheme, deleteTheme: deleteCustomTheme, saveOverride: saveThemeOverride, saveOrder: saveThemeOrder } = require('./service/themeCustom');
 const { getClsNews, getBoardChange, getStockChangesAll, getStockNews, getStockZyjs, getInstitutionParticipation, getSectorSpot, getSectorDetail, getForeignCommodity } = require('./service/akData');
 // 买点诊断后端集中化：全局模式状态 / 飞书通知 / 10s 集中推送 / WebSocket 服务
@@ -699,6 +701,16 @@ app.post('/refresh_lianban_snapshot', async (req, res) => {
   } catch (error) {
     console.error('刷新连板快照失败:', error);
     res.status(500).json({ success: false, message: error.message || '刷新失败' });
+  }
+});
+
+// 复盘页「四维立体」：最近 10 个交易日主线/支线 + 龙头/中军 + 三线情绪周期
+app.get('/siwei_liti_analysis', async (req, res) => {
+  try {
+    res.json(await getSiweiLitiAnalysis());
+  } catch (error) {
+    console.error('获取四维立体分析失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
   }
 });
 

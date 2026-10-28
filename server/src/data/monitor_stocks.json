@@ -892,7 +892,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "8",
-    "isTech": false,
+    "isTech": true,
     "addedAt": "2026-10-23 09:36:25"
   },
   {
@@ -901,7 +901,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "7",
-    "isTech": false,
+    "isTech":  true,
     "addedAt": "2026-10-23 10:12:30"
   },
   {

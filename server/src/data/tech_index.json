@@ -1315,5 +1315,24 @@
     "stockCount": 97,
     "algorithm": 2,
     "hasIce": true
+  },
+  {
+    "date": 20261027,
+    "changeSumResult": -39.11,
+    "baseEmotion": -19.35,
+    "pullbackPenalty": -98.78,
+    "avgChange": -2.88,
+    "stockCount": 98,
+    "algorithm": 2,
+    "hasIce": true
+  },
+  {
+    "date": 20261028,
+    "changeSumResult": -39.68,
+    "baseEmotion": -19.92,
+    "pullbackPenalty": -98.78,
+    "avgChange": -3.06,
+    "stockCount": 98,
+    "algorithm": 2
   }
 ]

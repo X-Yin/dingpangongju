@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Spin, Empty, Select, Switch as AntSwitch } from 'antd';
+import { Spin, Empty, Select, Switch as AntSwitch, Popover } from 'antd';
 import {
   RocketOutlined, RiseOutlined, FallOutlined, StockOutlined,
   AreaChartOutlined, CrownOutlined, RadarChartOutlined, WarningOutlined,
@@ -9,7 +9,6 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import { isAfterMarketClose } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
-import { getThemeColor } from '../../utils/theme';
 import { parseMoneyValue, formatDisplayTime, aggregateFundByInterval } from '../../utils/fundAggregation';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import StockKLineModal from '../../components/StockKLineModal';
@@ -37,6 +36,68 @@ const writeLocalCache = (key, value) => {
   } catch {
     // localStorage 写入失败（容量/隐私模式）时忽略，不影响主流程
   }
+};
+
+// ==================== 网络检测轮询 ====================
+// 每 3s 探测一次外网（百度），单次请求超过 1s 未返回即判定为网络差/断网，
+// 由「正常」转为「异常」时通过浏览器通知提醒（持续断网不重复弹窗，恢复后再次异常会重新提醒）
+// 说明：用图片探测而非 fetch —— 图片加载不受跨域限制（fetch 抓百度首页 HTML 会被浏览器
+//       跨域保护 ORB 拦截而恒定失败），且只能用图片类资源：把 HTML 页面当图片加载必然报错。
+//       故探测百度静态图片资源（favicon，同属百度域名：www.baidu.com）
+const NET_PROBE_URL = 'https://www.baidu.com/favicon.ico';
+const NET_PROBE_INTERVAL_MS = 3000;
+const NET_PROBE_TIMEOUT_MS = 1000;
+
+// 单次探测：图片 onload 视为网络正常；onerror / 1s 超时视为网络异常
+const probeNetworkOnce = () => new Promise((resolve) => {
+  const img = new Image();
+  let settled = false;
+  const finish = (ok) => {
+    if (settled) return;
+    settled = true;
+    clearTimeout(timer);
+    img.onload = null;
+    img.onerror = null;
+    resolve(ok);
+  };
+  const timer = setTimeout(() => finish(false), NET_PROBE_TIMEOUT_MS);
+  img.onload = () => finish(true);
+  img.onerror = () => finish(false);
+  img.src = `${NET_PROBE_URL}?t=${Date.now()}`;
+});
+
+const useNetworkWatch = () => {
+  const offlineRef = useRef(false);
+  useEffect(() => {
+    let cancelled = false;
+    // 提前申请通知权限，保证检测到断网时能立即弹出提醒
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => { });
+    }
+
+    const notifyOffline = () => {
+      try {
+        if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+        new Notification('网络异常', { body: '当前网络较差，请检查网络状况' });
+      } catch (e) {
+        // 通知发送失败不影响后续轮询
+      }
+    };
+
+    const probe = async () => {
+      const ok = await probeNetworkOnce();
+      if (cancelled) return;
+      if (!ok && !offlineRef.current) notifyOffline();
+      offlineRef.current = !ok;
+    };
+
+    probe();
+    const interval = setInterval(probe, NET_PROBE_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 };
 
 // 是否已收盘（统一来自 utils/tradingDay，非交易日视为已收盘，交易日 9:15 前或 14:59 及以后）
@@ -354,12 +415,12 @@ const FundChartModule = () => {
     const today = dayjs().format('YYYY-MM-DD');
 
     const baseOpts = {
-      layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: '#6b7890', fontSize: 10 },
-      grid: { vertLines: { color: 'rgba(18, 33, 58, 0.05)' }, horzLines: { color: 'rgba(18, 33, 58, 0.05)' } },
+      layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: 'rgba(255,255,255,0.75)', fontSize: 10 },
+      grid: { vertLines: { color: 'rgba(255,255,255,0.09)' }, horzLines: { color: 'rgba(255,255,255,0.09)' } },
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
-        borderColor: 'rgba(18, 33, 58, 0.08)',
+        borderColor: 'rgba(255,255,255,0.18)',
         tickMarkFormatter: (time) => {
           return dayjs.unix(time).format('HH:mm');
         },
@@ -369,7 +430,7 @@ const FundChartModule = () => {
           return dayjs.unix(time).format('HH:mm');
         },
       },
-      rightPriceScale: { borderColor: 'rgba(18, 33, 58, 0.08)', autoScale: true, scaleMargins: { top: 0.12, bottom: 0.12 } },
+      rightPriceScale: { borderColor: 'rgba(255,255,255,0.18)', autoScale: true, scaleMargins: { top: 0.12, bottom: 0.12 } },
       handleScroll: false,
       handleScale: false,
     };
@@ -408,7 +469,7 @@ const FundChartModule = () => {
     dummySeries.setData(allTimePoints.map(t => ({ time: t, value: 0 })));
 
     const series = chart.addAreaSeries({
-      lineColor: '#7c3aed', topColor: 'rgba(124, 58, 237, 0.35)', bottomColor: 'rgba(124, 58, 237, 0.02)',
+      lineColor: '#a5b4fc', topColor: 'rgba(165, 180, 252, 0.45)', bottomColor: 'rgba(165, 180, 252, 0.02)',
       lineWidth: 2.5, priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
     });
     const cData = sortedData.map((item) => {
@@ -419,7 +480,7 @@ const FundChartModule = () => {
       return { time: dayjs(`${today} ${hh}:${mm}:${ss}`).unix(), value: parseMoneyValue(item.mainMoney) };
     });
     series.setData(cData);
-    series.createPriceLine({ price: -100, color: 'red', lineStyle: LineStyle.Dashed });
+    series.createPriceLine({ price: -100, color: 'rgba(255,255,255,0.35)', lineStyle: LineStyle.Dashed });
     if (cData.length > 0) chart.timeScale().fitContent();
 
     if (volContainer) {
@@ -438,7 +499,7 @@ const FundChartModule = () => {
       volDummySeries.setData(allTimePoints.map(t => ({ time: t, value: 0 })));
 
       const volumeSeries = volumeChart.addAreaSeries({
-        lineColor: '#1890ff', topColor: 'rgba(24, 144, 255, 0.35)', bottomColor: 'rgba(24, 144, 255, 0.02)',
+        lineColor: '#67e8f9', topColor: 'rgba(103, 232, 249, 0.4)', bottomColor: 'rgba(103, 232, 249, 0.02)',
         lineWidth: 2.5, priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
       });
       const vData = sortedData.map((item) => {
@@ -508,7 +569,7 @@ const FundChartModule = () => {
         <div className="ob-fund-chart-card ob-fund-chart-main">
           <div className="ob-fund-chart-header">
             <span className="ob-fund-chart-title">主力资金</span>
-            <span className="ob-fund-chart-value" style={{ color: '#7c3aed' }}>
+            <span className="ob-fund-chart-value" style={{ color: '#fde68a' }}>
               {latestMainMoney !== null && latestMainMoney !== undefined ? `${latestMainMoney >= 0 ? '+' : ''}${latestMainMoney.toFixed(2)}` : '-'}
             </span>
           </div>
@@ -533,7 +594,7 @@ const FundChartModule = () => {
         <div className="ob-fund-chart-card ob-fund-chart-volume">
           <div className="ob-fund-chart-header">
             <span className="ob-fund-chart-title">成交量</span>
-            <span className="ob-fund-chart-value" style={{ color: '#1890ff' }}>
+            <span className="ob-fund-chart-value" style={{ color: '#a5f3fc' }}>
               {latestVolume !== null && latestVolume !== undefined ? `${latestVolume >= 0 ? '+' : ''}${latestVolume.toFixed(2)}` : '-'}
             </span>
           </div>
@@ -572,13 +633,13 @@ const PositionIntradayChart = ({ name, code, preclose, line }) => {
     if (!container || data.length === 0) return;
 
     const chart = createChart(container, {
-      layout: { background: { type: ColorType.Solid, color: '#ffffff' }, textColor: '#6b7890', fontSize: 10 },
-      grid: { vertLines: { color: 'rgba(18, 33, 58, 0.04)' }, horzLines: { color: 'rgba(18, 33, 58, 0.04)' } },
+      layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: 'rgba(255,255,255,0.75)', fontSize: 10 },
+      grid: { vertLines: { color: 'rgba(255,255,255,0.08)' }, horzLines: { color: 'rgba(255,255,255,0.08)' } },
       width: container.clientWidth,
       height: container.clientHeight,
       timeScale: {
         visible: true,
-        borderColor: 'rgba(18, 33, 58, 0.08)',
+        borderColor: 'rgba(255,255,255,0.18)',
         tickMarkFormatter: (time) => data[time]?.label || '',
       },
       localization: {
@@ -593,14 +654,14 @@ const PositionIntradayChart = ({ name, code, preclose, line }) => {
           return price.toFixed(2);
         },
       },
-      rightPriceScale: { borderColor: 'rgba(18, 33, 58, 0.08)', autoScale: true, scaleMargins: { top: 0.1, bottom: 0.1 } },
+      rightPriceScale: { borderColor: 'rgba(255,255,255,0.18)', autoScale: true, scaleMargins: { top: 0.1, bottom: 0.1 } },
       handleScroll: false,
       handleScale: false,
     });
 
     const lastVal = data[data.length - 1].value;
-    // 持仓股分时图线条统一使用主题色
-    const lineColor = getThemeColor();
+    // 渐变卡内统一用浅青色线条，保证在紫蓝背景上清晰可见
+    const lineColor = '#67e8f9';
     const lineSeries = chart.addLineSeries({
       color: lineColor,
       lineWidth: 2,
@@ -610,7 +671,7 @@ const PositionIntradayChart = ({ name, code, preclose, line }) => {
 
     if (preclose > 0) {
       const baseline = chart.addLineSeries({
-        color: '#999',
+        color: 'rgba(255,255,255,0.4)',
         lineWidth: 1,
         lineStyle: LineStyle.Dashed,
         priceLineVisible: false,
@@ -646,7 +707,7 @@ const PositionIntradayChart = ({ name, code, preclose, line }) => {
       <div className="ob-intraday-chart-header">
         <span className="ob-intraday-chart-name">{name}</span>
         <span className="ob-intraday-chart-code">{code}</span>
-        <span className="ob-intraday-chart-change" style={{ color: getThemeColor() }}>
+        <span className="ob-intraday-chart-change" style={{ color: '#a5f3fc' }}>
           {formatSignedPercent(changePct)}
         </span>
       </div>
@@ -811,6 +872,8 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   const [klineVisible, setKlineVisible] = useState(false);
   // 卡片右上角手动刷新：强制重拉涨幅榜 + 龙头列表（含指数斜率），不用缓存
   const [refreshing, setRefreshing] = useState(false);
+  // 只看符合条件：开启后仅展示完全符合条件的个股（后端 qualifiedTop，按 3 日涨幅降序），默认关闭
+  const [onlyQualified, setOnlyQualified] = useState(false);
   const cybPassed = data?.cybGate?.passed === true;
   const starPassed = data?.starGate?.passed === true;
 
@@ -871,6 +934,10 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
 
   // 合并榜单：后端已按门槛筛选市场、按 3 日涨幅降序取前十，并补充 excludeReason（2026-10-22）
   const mergedList = useMemo(() => data?.mergedTop || [], [data]);
+  // 只看符合条件榜单：后端全量扫描得到的完全符合条件个股，已按 3 日涨幅降序，首位即买点候选
+  const qualifiedList = useMemo(() => data?.qualifiedTop || [], [data]);
+  // 科技进攻列当前展示的榜单（开关开启时切换到只看符合条件）
+  const techList = onlyQualified ? qualifiedList : mergedList;
 
   // 情绪游资龙头列表（后端已按 delta 降序返回全部达标股；attack_defense 模式下也计算，供顺周期列展示）
   const showEwCols = isExtreme || isDefense;
@@ -906,7 +973,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
     return mergedList.find(s => s.isCandidate) || null;
   }, [mergedList, data]);
 
-  const rowCount = isExtreme ? leaderList.length : mergedList.length;
+  const rowCount = isExtreme ? leaderList.length : techList.length;
   const extremeGateNote = !leaderData
     ? '正在检测上证指数 3 日线斜率买点门槛…'
     : `上证指数 3 日线斜率 ${formatSlope(indexSlope)}（需 > 0）；龙头池共 ${leaderData.poolCount ?? 0} 只（过去 10 交易日连板准入：流通市值 > 100 亿元者出现过两连板 + 含该连板日 5 日涨幅 > 40%，其余四连板及以上，剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）`;
@@ -938,7 +1005,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
           {isExtreme
             ? `顺周期 ${rowCount} · 逆周期 ${reverseList.length}`
             : isDefense
-              ? `科技 ${mergedList.length} · 顺周期 ${leaderList.length} · 逆周期 ${reverseList.length}`
+              ? `科技 ${techList.length} · 顺周期 ${leaderList.length} · 逆周期 ${reverseList.length}`
               : `共 ${rowCount} 只`}
         </span>
         <button className="ob-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="刷新卡片数据">
@@ -973,6 +1040,10 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
                 </div>
               ))}
             </div>
+            <div className="ob-gainer-filter-row">
+              <AntSwitch size="small" checked={onlyQualified} onChange={setOnlyQualified} />
+              <span>只看符合条件</span>
+            </div>
             <div className="ob-gainer-head">
               <>
                 <span>#</span>
@@ -982,11 +1053,11 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
                 <span>3日涨幅</span>
               </>
             </div>
-            {mergedList.length === 0 ? (
-              <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
-            ) : mergedList.map((s, idx) => {
-              // 全局唯一推荐标的：只在名称旁打一个标签，不做整行高亮
-              const isPick = globalPick != null && s.code === globalPick.code;
+            {techList.length === 0 ? (
+              <div className="ob-empty-mini ob-gainer-empty">{onlyQualified ? '暂无完全符合条件的标的' : '暂无数据'}</div>
+            ) : techList.map((s, idx) => {
+              // 全部符合条件时买点候选必为 3 日涨幅第一名（idx 0）；否则以后端唯一推荐标的为准
+              const isPick = onlyQualified ? idx === 0 : (globalPick != null && s.code === globalPick.code);
               return (
                 <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
                   <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
@@ -1502,12 +1573,164 @@ const SellPointDiagnosisCard = () => {
   );
 };
 
+// ==================== 重点板块涨跌幅前十 ====================
+// 数据与盯盘页「重点板块涨跌幅前十」完全一致：同一接口同一字段
+//   GET /notice_data → topAndBottomBlockData.firstNumList / lastNumList（后端已排序并给出 rankChange）
+// 交互：每个卡片横向一行展示 10 个板块，悬停 Popover 展示成分股，点击成分股打开 K 线弹窗
+const KeyBlockRankingCard = ({ title, tone, items, refreshing, onRefresh, onStockClick }) => (
+  <div className="ob-diagnosis-card ob-keysector-module">
+    <div className="ob-diagnosis-header">
+      <div className="ob-module-title">
+        {tone === 'up' ? <RiseOutlined className="ob-module-icon" /> : <FallOutlined className="ob-module-icon" />}
+        <span>{title}</span>
+      </div>
+      <div className="ob-diagnosis-actions">
+        <button className="ob-refresh-btn" onClick={onRefresh} disabled={refreshing} title="强制刷新板块数据">
+          <ReloadOutlined spin={refreshing} />
+        </button>
+      </div>
+    </div>
+    <div className="ob-diagnosis-body ob-keysector-body">
+      {items.length === 0 ? (
+        <div className="ob-empty-mini">暂无数据</div>
+      ) : items.map((item, idx) => (
+        <Popover
+          key={`${item.blockName}-${idx}`}
+          trigger="hover"
+          placement="top"
+          mouseEnterDelay={0.25}
+          mouseLeaveDelay={0.1}
+          content={
+            <div className="ob-keysector-popover">
+              <div className="ob-keysector-popover-title">{item.blockName} · 成分股涨跌幅</div>
+              {Array.isArray(item.data) && item.data.length > 0 ? (
+                <div className="ob-keysector-stocks">
+                  {item.data.map((s) => (
+                    <div
+                      key={s.code}
+                      className="ob-keysector-stock"
+                      title="点击查看K线"
+                      onClick={() => onStockClick(s)}
+                    >
+                      <span className="ob-keysector-stock-name">{s.name}</span>
+                      <span className={`ob-keysector-stock-change ${s.change >= 0 ? 'up' : 'down'}`}>
+                        {s.change !== null && s.change !== undefined ? `${s.change > 0 ? '+' : ''}${s.change}%` : '--'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="ob-keysector-popover-empty">暂无成分股数据</div>
+              )}
+            </div>
+          }
+        >
+          <div className="ob-keysector-chip">
+            <span className={`ob-keysector-chip-rank ${idx < 3 ? 'is-top' : ''}`}>{idx + 1}</span>
+            <span className="ob-keysector-chip-name" title={item.blockName}>{item.blockName}</span>
+            {item.rankChange != null && item.rankChange !== 0 && (
+              <span className={`ob-keysector-chip-delta ${item.rankChange > 0 ? 'up' : 'down'}`}>
+                {item.rankChange > 0 ? '↑' : '↓'}{Math.abs(item.rankChange)}
+              </span>
+            )}
+            <span className={`ob-keysector-chip-change ${item.avgChange > 0 ? 'up' : 'down'}`}>
+              {item.avgChange > 0 ? '+' : ''}{item.avgChange}%
+            </span>
+          </div>
+        </Popover>
+      ))}
+    </div>
+  </div>
+);
+
+const KeyBlockRankingSection = () => {
+  const [blockData, setBlockData] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedStock, setSelectedStock] = useState(null);
+  const [klineVisible, setKlineVisible] = useState(false);
+
+  const fetchBlocks = useCallback(async () => {
+    try {
+      const res = await axios.get(`http://${local_ip}:3000/notice_data`);
+      setBlockData(res.data?.topAndBottomBlockData || null);
+    } catch (err) {
+      console.error('重点板块涨跌幅拉取失败:', err);
+    }
+  }, []);
+
+  // 强制刷新：先让后端重算所有板块成分股行情，再重新拉取（与盯盘页刷新口径一致）
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await axios.post(`http://${local_ip}:3000/api/block/refresh`);
+      await fetchBlocks();
+    } catch (err) {
+      console.error('重点板块数据刷新失败:', err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchBlocks]);
+
+  // 点击成分股打开 K 线弹窗
+  const openKLine = useCallback((stock) => {
+    setSelectedStock({ code: stock.code, stockName: stock.name, change: stock.change });
+    setKlineVisible(true);
+  }, []);
+
+  // 初次拉取 + 交易时段每 5s 轮询（收盘后停止轮询，保留最后一次结果）
+  useEffect(() => {
+    fetchBlocks();
+    const timers = [];
+    const schedulePoll = (callback, delay) => {
+      const timer = setTimeout(() => {
+        if (!isAfterMarketClose()) {
+          callback();
+          schedulePoll(callback, delay);
+        }
+      }, delay);
+      timers.push(timer);
+    };
+    if (!isAfterMarketClose()) schedulePoll(fetchBlocks, 5000);
+    return () => timers.forEach(clearTimeout);
+  }, [fetchBlocks]);
+
+  return (
+    <div className="ob-keysector-section">
+      <KeyBlockRankingCard
+        title="重点板块涨幅前十"
+        tone="up"
+        items={blockData?.firstNumList || []}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        onStockClick={openKLine}
+      />
+      <KeyBlockRankingCard
+        title="重点板块跌幅前十"
+        tone="down"
+        items={blockData?.lastNumList || []}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        onStockClick={openKLine}
+      />
+      <StockKLineModal
+        visible={klineVisible}
+        onCancel={() => setKlineVisible(false)}
+        code={selectedStock?.code}
+        stockInfo={{ name: selectedStock?.stockName, change: selectedStock?.change }}
+      />
+    </div>
+  );
+};
+
 // ==================== 主页面 ====================
 const OpeningBattle = () => {
   // 进入页面时回到顶部，避免沿用上一页面遗留的滚动位置（路由切换或刷新都会重新触发）
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // 网络检测轮询：每 3s 探测外网，超过 1s 未返回即通过浏览器通知提醒网络差
+  useNetworkWatch();
 
   // 买点是否命中（由买点诊断卡片回调），命中时 3 日涨幅榜中唯一推荐标的的标签改为「买点触发」
   const [buyPointHit, setBuyPointHit] = useState(false);
@@ -1537,7 +1760,9 @@ const OpeningBattle = () => {
           <FundChartModule />
           <PositionIntradayModule expanded={rankExpanded} onToggleExpanded={toggleRankExpanded} />
         </div>
-        {/* 第二行：自选股 3 日涨幅前五（上下分行） | 买点诊断 | 卖点诊断（三列等宽，高度由内容撑开） */}
+        {/* 第二、三行：重点板块涨幅前十 / 跌幅前十（各占一行横向排列，数据与盯盘页一致） */}
+        <KeyBlockRankingSection />
+        {/* 第四行：自选股 3 日涨幅前五（上下分行） | 买点诊断 | 卖点诊断（三列等宽，高度由内容撑开） */}
         {/* 命中弹窗已移除，统一由 App.jsx 全局诊断卡片（GlobalDiagnosisAlert）提示 */}
         <div className="ob-row ob-row-second">
           <TopChange3dModule buyPointHit={buyPointHit} />

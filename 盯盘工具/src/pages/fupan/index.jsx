@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Layout, Row, Col, Card, Button, Input, message, Spin, Empty, Tag, Space, Tooltip as AntTooltip, Popconfirm } from 'antd';
+import { Layout, Row, Col, Card, Button, Input, message, Spin, Empty, Tag, Space, Tooltip as AntTooltip, Popconfirm, Tabs } from 'antd';
 import { FileTextOutlined, LineChartOutlined, SaveOutlined, DeleteOutlined, HistoryOutlined, ReloadOutlined, CalendarOutlined, EditOutlined, TagOutlined, GlobalOutlined } from '@ant-design/icons';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -9,6 +9,7 @@ import 'vditor/dist/index.css';
 import { VDITOR_CDN } from '../../utils/vditorConfig';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
+import SiweiLiti from './SiweiLiti';
 import './index.scss';
 
 const { Sider, Content } = Layout;
@@ -1117,6 +1118,8 @@ const Fupan = () => {
   const [personalFeelings, setPersonalFeelings] = useState([]);
   const [personalFeelingsLoading, setPersonalFeelingsLoading] = useState(false);
   const [notesList, setNotesList] = useState([]);
+  // 页面双 Tab：复盘手记（原有内容） / 四维立体（主线与情绪周期）
+  const [activeTab, setActiveTab] = useState('notes');
   const [currentNote, setCurrentNote] = useState('');
   const [currentTitle, setCurrentTitle] = useState('');
   const [currentTag, setCurrentTag] = useState('');
@@ -1534,6 +1537,16 @@ const Fupan = () => {
   return (
     <Layout className="fupan-layout">
       <Content className="fupan-content">
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          className="fupan-tabs"
+          items={[
+            {
+              key: 'notes',
+              label: <span><FileTextOutlined /> 复盘手记</span>,
+              children: (
+                <div className="fupan-tab-pane">
         {loading ? (
           <div className="loading-container">
             <Spin size="large" tip="加载中..." />
@@ -1778,7 +1791,18 @@ const Fupan = () => {
             )}
           </>
         )}
+                </div>
+              ),
+            },
+            {
+              key: 'siwei',
+              label: <span><LineChartOutlined /> 四维立体</span>,
+              children: <SiweiLiti />,
+            },
+          ]}
+        />
       </Content>
+      {activeTab === 'notes' && (
       <Sider width={260} className="fupan-sider" theme="light">
         <Card 
           title={
@@ -1850,6 +1874,7 @@ const Fupan = () => {
           )}
         </Card>
       </Sider>
+      )}
     </Layout>
   );
 };

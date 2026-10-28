@@ -1,24 +1,13 @@
 {
-  "lastSyncedEndDate": "20261026",
+  "lastSyncedEndDate": "20261028",
   "lastRange": {
-    "startDate": "20260728",
-    "endDate": "20261026"
+    "startDate": "20260729",
+    "endDate": "20261028"
   },
-  "lastSyncedAt": "2026-10-26 00:33:13",
-  "lastHoldings": [
-    {
-      "code": "sh688322",
-      "name": "奥比中光-W",
-      "buyDate": "20261023",
-      "buyPrice": 93.61,
-      "buyTime": "13:25",
-      "weight": 0.5
-    }
-  ],
-  "added": [
-    "奥比中光-W(sh688322) 成本 93.61 买入日 2026-10-23"
-  ],
+  "lastSyncedAt": "2026-10-28 08:24:32",
+  "lastHoldings": [],
+  "added": [],
   "skipped": [],
   "attempts": 0,
-  "attemptsDate": "2026-10-26"
+  "attemptsDate": "2026-10-28"
 }

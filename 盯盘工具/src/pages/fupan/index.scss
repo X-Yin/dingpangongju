@@ -10,6 +10,22 @@
     padding: 16px;
     padding-right: 8px;
 
+    // 双 Tab：复盘手记 / 四维立体
+    .fupan-tabs {
+      .ant-tabs-nav {
+        margin: 0 0 12px;
+      }
+
+      .ant-tabs-tab {
+        font-size: 14px;
+        font-weight: 600;
+      }
+    }
+
+    .fupan-tab-pane {
+      min-height: 200px;
+    }
+
     .loading-container {
       display: flex;
       justify-content: center;

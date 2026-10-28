@@ -3400,6 +3400,24 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     ...(gate?.starGate?.passed === true ? starList : []),
   ];
 
+  // 「只看符合条件」候选池（2026-10-27 用户新增）：展示榜每市场仅取 maxPerMarket 只，
+  // 完全符合条件的个股（excludeReason 为空）可能凑不满 10 只；此处按 3 日涨幅降序对榜单之外的
+  // 个股继续补充 enrich，集满 QUALIFIED_TOP_N 只即停止，最多补充至 MAX_QUALIFIED_SCAN 只以控制计算量。
+  const QUALIFIED_TOP_N = 10;
+  const MAX_QUALIFIED_SCAN = 60;
+  const qualifiedScan = [...gatePassedList];
+  const scannedCodes = new Set(qualifiedScan.map((s) => s.code));
+  const qualifiedGateBase = [
+    ...(gate?.cybGate?.passed === true ? base.filter((b) => !b.isSh688) : []),
+    ...(gate?.starGate?.passed === true ? base.filter((b) => b.isSh688) : []),
+  ].sort(byChange3d);
+  const qualifiedFound = () => qualifiedScan.reduce((n, s) => n + (s.excludeReason ? 0 : 1), 0);
+  const restCandidates = qualifiedGateBase.filter((b) => !scannedCodes.has(b.stock.code));
+  for (let i = 0; i < restCandidates.length && qualifiedScan.length < MAX_QUALIFIED_SCAN && qualifiedFound() < QUALIFIED_TOP_N; i += 8) {
+    const enrichedChunk = await batchParallel(restCandidates.slice(i, i + 8), enrich, 8);
+    qualifiedScan.push(...enrichedChunk);
+  }
+
   // 展示榜：按 3 日涨幅降序取前十，不做剔除（涨停 / 3日涨幅>30% / 昨日一字板 / 估值禁买 仍在榜内），
   // 由 excludeReason 说明为什么不是买点候选（2026-10-22）
   const mergedTop = [...gatePassedList].sort(byChange3d).slice(0, 10);
@@ -3434,6 +3452,14 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   const cybMainOut = cybMainList.map(decorate);
   const starOut = starList.map(decorate);
 
+  // 「只看符合条件」榜单（2026-10-27 用户新增）：完全符合条件的个股（名称后无排除原因）按
+  // 3 日涨幅降序取前十；首位即买点候选（热榜顺延 / 涨幅接近抗分歧优先等已通过 excludeReason 反映）
+  const qualifiedTop = qualifiedScan
+    .map(decorate)
+    .filter((s) => !s.excludeReason)
+    .sort(byChange3d)
+    .slice(0, QUALIFIED_TOP_N);
+
   const pickGate = (g) => (g ? {
     slope: g.slope ?? null,
     passed: g.passed === true,
@@ -3457,6 +3483,8 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       markets: { cybMain: cybMainOut, star: starOut },
       // 科技进攻唯一买点候选（已按「涨幅领先但当日爆发力不足」顺延）与顺延明细
       mergedTop: mergedTop.map(decorate),
+      // 「只看符合条件」榜单：完全符合条件的个股（按 3 日涨幅降序，最多 10 只），开关开启时前端展示
+      qualifiedTop,
       pickCode: techPick?.code || null,
       gainGapSkipped: techGainGapSkipped,
       // 3 日涨幅接近（第一名与第二名相差 ≤ 1 个百分点）时的抗分歧优先判定明细（未触发时为 null）

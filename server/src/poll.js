@@ -1,5 +1,6 @@
 // 盯盘轮询服务
 // - npm run poll        仅在交易时段（交易日 9:15-11:30、13:00-15:05）启动轮询，其余时间等待
+// - 午休（11:30-13:00）不退出进程：暂停轮询定时器，13:00 开盘后自动恢复
 // - npm run poll:now    忽略交易日与交易时段限制，立即启动轮询（--all 为同义历史别名）
 const { setConfig } = require('./config');
 const { isTradingHours, isMiddayBreak, isAfterMarketClose, isTradingDay, getMsToNextTradingSession } = require('./utils');
@@ -19,6 +20,15 @@ const POLL_NOW = process.argv.includes('--now')
 if (POLL_NOW) {
   console.log('--now 模式已开启：跳过交易日与交易时段限制，立即启动全部轮询');
 }
+
+// 午休暂停开关：暂停期间所有由轮询服务创建的 setInterval 回调直接跳过，
+// 定时器本身保持存活，13:00 恢复后自动继续执行，无需重启进程
+let pollingPaused = false;
+const rawSetInterval = global.setInterval;
+global.setInterval = (fn, ms, ...args) => rawSetInterval(() => {
+  if (pollingPaused) return;
+  fn(...args);
+}, ms);
 
 const { pollDaPanData } = require('./service/dapan');
 const { pollStockData } = require('./service/stock');
@@ -229,20 +239,26 @@ const startPolling = (force = false) => {
 
   console.log('轮询服务已全部启动');
 
-  // 定时检查：午休/收盘（--now 模式下不启用，保持持续轮询不退出）
+  // 定时检查：午休暂停/恢复、收盘退出（--now 模式下不启用，保持持续轮询不退出）
+  // 使用 rawSetInterval 创建，确保暂停期间仍能检查并恢复
   if (!force) {
-    const closeCheckInterval = setInterval(() => {
+    const closeCheckInterval = rawSetInterval(() => {
     const currentNow = new Date();
-    
-    // 检查午休开始（11:30）：严格要求只在 9:15-11:30、13:00-15:05 轮询
+
+    // 午休开始（11:30）：暂停轮询但不退出进程，等待 13:00 开盘
     if (isMiddayBreak(currentNow) && !middayBreakNotified) {
       middayBreakNotified = true;
-      console.log('已到午休时间(11:30)，轮询自动停止');
-      console.log('提示：13:00 后需由 pm2 等进程管理器重新拉起，或手动执行 npm run poll');
-      clearInterval(closeCheckInterval);
-      process.exit(0);
+      pollingPaused = true;
+      console.log('已到午休时间(11:30)，轮询已暂停，进程保持运行，13:00 开盘后自动恢复');
     }
-    
+
+    // 午休结束（13:00）：恢复轮询
+    if (!isMiddayBreak(currentNow) && pollingPaused) {
+      pollingPaused = false;
+      middayBreakNotified = false;
+      console.log('已到 13:00 开盘，轮询已自动恢复');
+    }
+
     // 检查收盘（15:05）
     if (checkMarketClose()) {
       console.log('已过 15:05，轮询服务自动停止');

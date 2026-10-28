@@ -1,5 +1,40 @@
 [
   {
+    "date": "2026-10-27",
+    "operations": [
+      {
+        "id": "1793064663976_6tos",
+        "action": "sell",
+        "stockName": "奥比中光-W",
+        "stockCode": "sh688322",
+        "position": "",
+        "time": "09:31"
+      },
+      {
+        "id": "1793064664609_2t3x",
+        "action": "sell",
+        "stockName": "新华传媒",
+        "stockCode": "sh600825",
+        "position": "",
+        "time": "09:31"
+      },
+      {
+        "id": "1793064673758_l734",
+        "action": "buy",
+        "stockName": "兆威机电",
+        "stockCode": "sz003021",
+        "position": "",
+        "time": "09:31"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-27T01:31:04.006Z",
+    "updatedAt": "2026-10-27T01:31:13.773Z"
+  },
+  {
     "date": "2026-10-26",
     "operations": [
       {

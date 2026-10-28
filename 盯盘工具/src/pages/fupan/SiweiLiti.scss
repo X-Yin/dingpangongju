@@ -1,0 +1,864 @@
+// 四维立体：与 OpeningBattle「科技进攻股票涨幅列表」同款的紫→靛蓝→青蓝渐变磨砂卡
+$sl-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+
+@mixin sl-gradient($alpha: 1) {
+  background:
+    radial-gradient(118% 86% at 8% -8%, rgba(162, 124, 255, 0.95) 0%, rgba(162, 124, 255, 0) 62%),
+    radial-gradient(108% 94% at 106% 8%, rgba(48, 197, 210, 0.92) 0%, rgba(48, 197, 210, 0) 58%),
+    radial-gradient(130% 110% at -8% 108%, rgba(132, 94, 255, 0.9) 0%, rgba(132, 94, 255, 0) 64%),
+    linear-gradient(116deg, #7b4dff 0%, #4d55d8 46%, #1ba7c6 100%);
+  opacity: 1;
+}
+
+.siwei-liti-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 2px 6px 40px;
+  color: #0f172a;
+
+  .sl-up { color: #fecdd3 !important; }
+  .sl-down { color: #86efac !important; }
+
+  .sl-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+  }
+
+  .sl-error { padding: 40px 0; }
+
+  // ---------- 顶部主卡 ----------
+  .sl-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    padding: 16px 18px 18px;
+    color: #fff;
+    @include sl-gradient();
+    box-shadow: 0 22px 48px -26px rgba(49, 46, 129, 0.6);
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      pointer-events: none;
+    }
+  }
+
+  .sl-hero-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+
+  .sl-hero-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    text-shadow: 0 1px 2px rgba(30, 27, 75, 0.28);
+
+    .sl-hero-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      font-size: 15px;
+      background: rgba(255, 255, 255, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  .sl-hero-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sl-total-tag {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .sl-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    padding: 0;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.34);
+      transform: rotate(90deg);
+    }
+
+    &:disabled { cursor: default; opacity: 0.75; }
+  }
+
+  .sl-status-note {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 12px 0 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+
+    &::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: #5eead4;
+      box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.22);
+    }
+
+    &.rotation {
+      color: #ffe4b3;
+
+      &::before {
+        background: #fcd34d;
+        box-shadow: 0 0 0 3px rgba(252, 211, 77, 0.22);
+      }
+    }
+
+    .sl-status-sub {
+      color: rgba(255, 255, 255, 0.65);
+      font-weight: 500;
+    }
+  }
+
+  .sl-summary-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .sl-summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 9px 11px;
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    backdrop-filter: blur(12px) saturate(170%);
+    -webkit-backdrop-filter: blur(12px) saturate(170%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    min-width: 0;
+  }
+
+  .sl-summary-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+  }
+
+  .sl-summary-value {
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.small { font-size: 13px; font-weight: 700; }
+    &.rotation { color: #ffe4b3; }
+  }
+
+  // ---------- 区块标题 ----------
+  .sl-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+
+    .anticon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 12px;
+      background: linear-gradient(135deg, #7b4dff, #1ba7c6);
+      box-shadow: 0 6px 14px -8px rgba(77, 85, 216, 0.8);
+    }
+
+    .sl-fast-rotation {
+      font-size: 11px;
+      font-weight: 700;
+      color: #b45309;
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 999px;
+      padding: 1px 9px;
+    }
+  }
+
+  // ---------- 通用磨砂卡 ----------
+  .sl-glass-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    padding: 14px 16px 12px;
+    color: #fff;
+    @include sl-gradient();
+    box-shadow: 0 18px 38px -26px rgba(30, 27, 75, 0.55);
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      pointer-events: none;
+    }
+  }
+
+  // ---------- 情绪周期 ----------
+  .sl-chart-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+
+    @media (max-width: 1000px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .sl-chart-card {
+    min-width: 0;
+  }
+
+  .sl-chart-card-head {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .sl-chart-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .sl-chart-sub {
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.68);
+  }
+
+  .sl-chart {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+  }
+
+  .sl-chart-canvas {
+    width: 100%;
+  }
+
+  // 十字光标 tooltip（深色玻璃卡，浮在曲线上方）
+  .sl-chart-tooltip {
+    position: absolute;
+    z-index: 20;
+    min-width: 118px;
+    max-width: 196px;
+    padding: 7px 9px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 8px 22px rgba(2, 6, 23, 0.38);
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+
+    .sl-tip-date {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.72);
+      letter-spacing: 0.02em;
+      margin-bottom: 4px;
+    }
+
+    .sl-tip-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #fff;
+      line-height: 1.6;
+
+      i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .sl-tip-name {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: rgba(255, 255, 255, 0.82);
+      }
+
+      .sl-tip-value {
+        margin-left: auto;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        color: #fff;
+      }
+    }
+  }
+
+  .sl-mini-phase-row {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+  }
+
+  .sl-mini-phase-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--phase-color, #94a3b8);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.16);
+  }
+
+  .sl-sector-head {
+    align-items: flex-start;
+  }
+
+  .sl-theme-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+    max-width: 68%;
+  }
+
+  .sl-theme-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.86);
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+
+    &:hover { background: rgba(255, 255, 255, 0.26); }
+
+    &.main {
+      border-color: rgba(253, 230, 138, 0.55);
+    }
+
+    &.active {
+      color: #04372a;
+      background: #d9fff3;
+      border-color: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 12px -6px rgba(6, 214, 160, 0.6);
+    }
+
+    .sl-chip-star {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 0 4px;
+      border-radius: 4px;
+      background: rgba(233, 55, 6, 0.3);
+      color: #e07809;
+s
+      .active & { background: #f59e0b; color: #fff; }
+    }
+
+    .sl-chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  // 已选题材图例（与曲线同色，点击可取消）
+  .sl-selected-legend {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-top: 4px;
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.86);
+  }
+
+  .sl-legend-clickable {
+    cursor: pointer;
+    padding: 1px 6px;
+    border-radius: 999px;
+    transition: background 0.16s ease;
+
+    &:hover { background: rgba(255, 255, 255, 0.18); }
+  }
+
+  .sl-phase-strip {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px 2px 2px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  }
+
+  // 多选：每个题材一行
+  .sl-phase-strip-multi {
+    flex-direction: column;
+    gap: 5px;
+    overflow-x: visible;
+  }
+
+  .sl-phase-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .sl-phase-theme {
+    flex: 0 0 88px;
+    max-width: 88px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-left: 3px solid var(--line-color, #94a3b8);
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+  }
+
+  .sl-phase-cells {
+    display: flex;
+    gap: 6px;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  }
+
+  .sl-phase-cell {
+    flex: 1 0 74px;
+    min-width: 74px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-left: 3px solid var(--phase-color, #94a3b8);
+  }
+
+  .sl-phase-date {
+    font-size: 9.5px;
+    color: rgba(255, 255, 255, 0.66);
+    font-family: $sl-mono;
+  }
+
+  .sl-phase-name {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .sl-phase-detail {
+    font-size: 9.5px;
+    color: rgba(255, 255, 255, 0.72);
+    white-space: nowrap;
+  }
+
+  .sl-phase-legend {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .sl-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+
+    i {
+      width: 8px;
+      height: 8px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+  }
+
+  .sl-legend-note {
+    flex: 1 1 100%;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.6;
+  }
+
+  // ---------- 题材卡 ----------
+  .sl-theme-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+
+    @media (max-width: 1180px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .sl-theme-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    padding: 13px 14px 10px;
+    color: #fff;
+    @include sl-gradient();
+    box-shadow: 0 18px 40px -28px rgba(30, 27, 75, 0.6);
+    min-width: 0;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      pointer-events: none;
+    }
+
+    &.is-main::after {
+      border-color: rgba(253, 230, 138, 0.55);
+      box-shadow: inset 0 0 0 1px rgba(253, 230, 138, 0.25);
+    }
+  }
+
+  .sl-theme-head {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .sl-theme-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+
+  .sl-theme-name {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(30, 27, 75, 0.25);
+  }
+
+  .sl-type-badge {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 1px 7px;
+    border-radius: 5px;
+    line-height: 15px;
+
+    &.main {
+      color: #4a2c00;
+      background: #fde68a;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+
+    &.branch {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.32);
+    }
+  }
+
+  .sl-map-badge {
+    font-size: 9.5px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 5px;
+    line-height: 15px;
+    color: #cffafe;
+    background: rgba(34, 211, 238, 0.2);
+    border: 1px solid rgba(165, 243, 252, 0.4);
+    white-space: nowrap;
+  }
+
+  .sl-theme-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.76);
+
+    b {
+      color: #fff;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .sl-phase-chip {
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 999px;
+    line-height: 15px;
+    color: #fff;
+    background: color-mix(in srgb, var(--phase-color, #94a3b8) 55%, transparent);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+
+  .sl-stock-head,
+  .sl-stock-row {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) 48px 76px 46px;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .sl-stock-head {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 4px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+
+    span {
+      text-align: right;
+      &:first-child, &:nth-child(2) { text-align: left; }
+    }
+  }
+
+  .sl-stock-row {
+    font-size: 12px;
+    padding: 6px 6px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    margin-top: 3px;
+    cursor: pointer;
+    transition: background 0.18s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.17);
+
+      .sl-stock-name { color: #cffafe; text-decoration: underline; }
+    }
+  }
+
+  .sl-rank {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: $sl-mono;
+
+    &.rank-top { color: #fde68a; }
+    &.rank-1 { color: #fbbf24; }
+  }
+
+  .sl-stock-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .sl-stock-name {
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.16s ease;
+
+    &:hover { color: #cffafe; text-decoration: underline; }
+  }
+
+  .sl-tag {
+    flex-shrink: 0;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 0 4px;
+    line-height: 14px;
+    border-radius: 4px;
+
+    &.dragon {
+      color: #4a1d00;
+      background: #fed7aa;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    &.mid {
+      color: #0c4a6e;
+      background: #bae6fd;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  .sl-mono {
+    text-align: right;
+    font-family: $sl-mono;
+    font-variant-numeric: tabular-nums;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .sl-score {
+    color: #ddd6fe;
+    font-weight: 700;
+  }
+
+  .sl-empty-row {
+    position: relative;
+    z-index: 1;
+    padding: 12px;
+    text-align: center;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .sl-theme-foot {
+    position: relative;
+    z-index: 1;
+    margin-top: 6px;
+    font-size: 9.5px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.6;
+  }
+
+  .sl-empty-block {
+    padding: 26px 0;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px dashed #cbd5e1;
+
+    .ant-empty-description { color: #64748b; font-size: 12px; }
+  }
+
+  .sl-more-row {
+    display: flex;
+    justify-content: center;
+    margin-top: 2px;
+  }
+
+  .sl-more-btn {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #4d55d8;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 999px;
+    padding: 4px 16px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+
+    &:hover { background: #e0e7ff; }
+  }
+}
+
+// 小屏适配
+@media (max-width: 760px) {
+  .siwei-liti-page {
+    .sl-summary-grid { grid-template-columns: minmax(0, 1fr); }
+    .sl-theme-chips { max-width: 100%; justify-content: flex-start; }
+    .sl-chart-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+}

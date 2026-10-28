@@ -1,5 +1,38 @@
 [
   {
+    "id": "1793064673755_jh80ew",
+    "type": "buy",
+    "code": "sz003021",
+    "name": "兆威机电",
+    "date": "2026-10-27",
+    "time": "09:31:13",
+    "detail": "新增持仓：兆威机电（sz003021）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-27T01:31:13.755Z"
+  },
+  {
+    "id": "1793064664601_j5n83b",
+    "type": "delete",
+    "code": "sh600825",
+    "name": "新华传媒",
+    "date": "2026-10-27",
+    "time": "09:31:04",
+    "detail": "删除持仓：新华传媒（sh600825）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-27T01:31:04.601Z"
+  },
+  {
+    "id": "1793064663962_nsun03",
+    "type": "delete",
+    "code": "sh688322",
+    "name": "奥比中光-W",
+    "date": "2026-10-27",
+    "time": "09:31:03",
+    "detail": "删除持仓：奥比中光-W（sh688322）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-27T01:31:03.962Z"
+  },
+  {
     "id": "1792985063901_lex21o",
     "type": "buy",
     "code": "sh600825",
