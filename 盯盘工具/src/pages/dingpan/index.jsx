@@ -160,9 +160,17 @@ const DingPan = () => {
         }
     });
     const [themeColorModalVisible, setThemeColorModalVisible] = useState(false);
+    // 弹窗内未保存的实时预览主题包（null 表示无预览）；不写入 localStorage，取消时自动失效
+    const [themePreviewPack, setThemePreviewPack] = useState(null);
+
+    // 预览优先于已保存配置，用于弹窗中悬停/点选时即时生效
+    const themeColorView = useMemo(
+        () => (themePreviewPack === null ? themeColor : { ...themeColor, pack: themePreviewPack }),
+        [themeColor, themePreviewPack]
+    );
 
     // 当前生效的主题包（null 表示默认样式）
-    const activeThemePack = getThemePack(themeColor.pack);
+    const activeThemePack = getThemePack(themeColorView.pack);
     // 主题包 CSS 变量（挂到 .dingpan-container 上，仅外层组件消费）
     const packVars = useMemo(
         () => (activeThemePack ? buildPackVars(activeThemePack) : undefined),
@@ -170,8 +178,8 @@ const DingPan = () => {
     );
     // 主题包生效时传给组件的 themeColor 清空，避免 DIY 内联样式与主题包冲突
     const effThemeColor = useMemo(
-        () => (activeThemePack ? { ...DEFAULT_THEME_COLOR } : themeColor),
-        [activeThemePack, themeColor]
+        () => (activeThemePack ? { ...DEFAULT_THEME_COLOR } : themeColorView),
+        [activeThemePack, themeColorView]
     );
 
     // 研报数据相关状态
@@ -294,6 +302,13 @@ const DingPan = () => {
 
     const handleSaveThemeColor = (next) => {
         setThemeColor(next);
+        setThemePreviewPack(null);
+        setThemeColorModalVisible(false);
+    };
+
+    // 关闭弹窗：未保存的预览失效，恢复已保存的主题
+    const handleCancelThemeColor = () => {
+        setThemePreviewPack(null);
         setThemeColorModalVisible(false);
     };
 
@@ -2356,7 +2371,10 @@ const DingPan = () => {
                 lastUpdated={lastUpdated}
                 historyCount={history.length}
                 onHistoryClick={() => setIsModalOpen(true)}
-                onOpenThemeColor={() => setThemeColorModalVisible(true)}
+                onOpenThemeColor={() => {
+                    setThemePreviewPack(null);
+                    setThemeColorModalVisible(true);
+                }}
             />
 
             {loading ? (
@@ -2686,8 +2704,9 @@ const DingPan = () => {
             {/* DIY 主题色设置弹窗 */}
             <ThemeColorModal
                 open={themeColorModalVisible}
-                onCancel={() => setThemeColorModalVisible(false)}
+                onCancel={handleCancelThemeColor}
                 onOk={handleSaveThemeColor}
+                onPreview={setThemePreviewPack}
                 value={themeColor}
             />
 

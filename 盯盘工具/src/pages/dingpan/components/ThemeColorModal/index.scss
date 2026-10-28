@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 18px;
   padding-top: 4px;
+  width: 100%;
 }
 
 .theme-color-tip {
@@ -63,15 +64,17 @@
 
 .theme-pack-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  /* 一行 5 个，均分弹窗宽度；minmax(0,1fr) 防止文字撑破轨道产生横向滚动 */
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .theme-pack-option {
   position: relative;
+  min-width: 0;
   border: 1px solid rgba(18, 33, 58, 0.1);
   border-radius: 12px;
-  padding: 8px;
+  padding: 6px;
   cursor: pointer;
   background: rgba(247, 250, 255, 0.6);
   transition: all 0.2s ease;

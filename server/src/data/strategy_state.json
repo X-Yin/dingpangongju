@@ -1,1 +1,31 @@
-{}
+{
+  "prev_day_volume_price_bottom": {
+    "triggeredToday": "2026-10-28"
+  },
+  "overnight_crisis_escape": {
+    "lastCheckedTime": "2026-10-28 10:00:05",
+    "lastTriggeredTime": "2026-10-28 09:44:02"
+  },
+  "ebb_tide_direct_reversal": {
+    "triggeredToday": "2026-10-28"
+  },
+  "high_open_high_walk": {
+    "advisoryToday": "2026-10-28",
+    "preconditionMet": false,
+    "triggerIndexCode": "sz399006",
+    "triggerIndexName": "创业板指",
+    "checkedToday": "2026-10-28"
+  },
+  "high_open_max_half_position": {
+    "triggeredToday": "2026-10-28"
+  },
+  "opening_net_inflow": {
+    "triggeredToday": "2026-10-28"
+  },
+  "volume_price_surge": {
+    "lastTriggeredTime": "2026-10-28 13:05:14"
+  },
+  "straight_rise_no_volume": {
+    "lastTriggeredTime": "2026-10-28 13:00:00"
+  }
+}

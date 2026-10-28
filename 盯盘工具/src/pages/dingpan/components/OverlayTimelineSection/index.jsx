@@ -2,7 +2,7 @@ import MultiStockTimeLineModal from '../../../../components/MultiStockTimeLineMo
 import './index.scss';
 
 const OverlayTimelineSection = ({ overlayInlineAddStock, onStockClick, sectionRef, themeColor }) => (
-    <div style={{ marginTop: 16 }} ref={sectionRef}>
+    <div className="overlay-timeline-section" style={{ marginTop: 16 }} ref={sectionRef}>
         <MultiStockTimeLineModal
             embedded
             title="叠加分时观察"

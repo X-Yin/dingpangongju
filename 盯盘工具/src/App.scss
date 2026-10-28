@@ -1152,4 +1152,13 @@
       letter-spacing: 1px;
     }
   }
+
+  .global-fixed-bottom__tip {
+    position: fixed;
+    bottom: 40;
+    left: 50%;
+    margin-left: -50%;
+    opacity: 0.5;
+    background: transparent;
+  }
 }

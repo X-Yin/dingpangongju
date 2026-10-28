@@ -3,7 +3,7 @@
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay, getThsSnapshotUrl, getThsSnapshotHeaders, buildThsSnapshotRequestBody } = require('../utils');
+const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay, getThsSnapshotUrl, getThsSnapshotHeaders, buildThsSnapshotRequestBody, getThsMarketCode } = require('../utils');
 const { getMonitorStocks } = require('./monitorStock');
 const { useCLS } = require('../config');
 
@@ -182,6 +182,70 @@ const getSingleStockDataFromTHS = async (code, limit = 1) => {
     }
 }
 exports.getSingleStockData = getSingleStockData;
+
+// 批量获取个股实时快照（涨跌幅 / 现价 / 昨收），按同花顺市场分组，一次请求同市场多只股票
+// 用途：集合竞价（9:15-9:30）当日日 K 线尚未生成时，补充「当日实时涨幅」，
+//       避免刷新榜单 / 科技情绪指数时仍沿用上一交易日收盘数据
+// 返回 { [code]: { change, price, preclose } }；未取到的股票不出现在结果中，由调用方回退 K 线
+const REALTIME_SNAPSHOT_BATCH = 50;
+const getRealtimeQuotes = async (codes = []) => {
+    const result = {};
+    const uniqueCodes = Array.from(new Set((Array.isArray(codes) ? codes : []).filter(Boolean).map(String)));
+    if (uniqueCodes.length === 0) return result;
+
+    const byMarket = new Map();
+    uniqueCodes.forEach((code) => {
+        const pureCode = code.replace(/^[a-zA-Z]+/, '');
+        const market = getThsMarketCode(pureCode) || '17';
+        if (!byMarket.has(market)) byMarket.set(market, []);
+        byMarket.get(market).push({ code, pureCode });
+    });
+
+    const groups = [];
+    byMarket.forEach((list, market) => {
+        for (let i = 0; i < list.length; i += REALTIME_SNAPSHOT_BATCH) {
+            groups.push({ market, list: list.slice(i, i + REALTIME_SNAPSHOT_BATCH) });
+        }
+    });
+
+    await Promise.all(groups.map(async ({ market, list }) => {
+        try {
+            const response = await axios.post(getThsSnapshotUrl(), {
+                code_list: [{ codes: list.map(item => item.pureCode), market }],
+                trade_class: 'intraday',
+                // 字段：10=现价、6=昨收、199112=涨跌幅(%)
+                data_fields: ['10', '6', '199112'],
+                lang: 'zh_hans',
+                gpid: 1,
+            }, { headers: getThsSnapshotHeaders() });
+
+            const quoteData = response.data?.data?.quote_data;
+            if (!Array.isArray(quoteData)) return;
+            quoteData.forEach((quote) => {
+                const value = Array.isArray(quote?.value) ? quote.value[0] : null;
+                const fields = Array.isArray(quote?.data_fields) ? quote.data_fields : [];
+                if (!Array.isArray(value) || fields.length === 0) return;
+                const matched = list.find(item => item.pureCode === String(quote.code));
+                if (!matched) return;
+                const pick = (field) => {
+                    const idx = fields.indexOf(field);
+                    if (idx < 0) return null;
+                    const v = value[idx];
+                    return v !== null && v !== undefined && !isNaN(Number(v)) ? Number(v) : null;
+                };
+                const change = pick('199112');
+                const price = pick('10');
+                if (change === null && price === null) return;
+                result[matched.code] = { change, price, preclose: pick('6') };
+            });
+        } catch (error) {
+            console.error(`批量获取实时快照失败(${market}):`, error.message);
+        }
+    }));
+
+    return result;
+};
+exports.getRealtimeQuotes = getRealtimeQuotes;
 
 // 获取单个股票估值信息（总市值/流通市值/市盈率）
 // 快照接口 value[0] 数组下标对应：4=流通市值(元)、7=市盈率(null 表示亏损)、9=总市值(元)

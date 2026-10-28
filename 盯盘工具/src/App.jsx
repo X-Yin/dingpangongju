@@ -1333,6 +1333,8 @@ function App() {
     return () => window.removeEventListener('keydown', handleArrowKeyDown);
   }, [location.pathname, navigate]);
 
+  const [senseColor, setSenseColor] = useState('#333');
+
   return (
     <Layout className="app-layout">
       <Sider
@@ -1899,6 +1901,18 @@ function App() {
           </div>
         </div>
       </Modal>
+
+      <div class='global-fixed-bottom__tip'
+      onClick={() => setSenseColor(v => v === '#333' ? '#fff' : '#333')}
+      style={{
+        position: 'fixed',
+        bottom: 40,
+        right: '100px',
+        fontSize: 20,
+        marginLeft: '-50%',
+        opacity: .7,
+        color: senseColor
+      }}>防止潜意识的冲动，除了考虑标的是否有赔率，还要考虑当下是否是好时机</div>
     </Layout>
   );
 }

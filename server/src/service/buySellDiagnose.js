@@ -34,7 +34,7 @@ const path = require('path');
 const dayjs = require('dayjs');
 const axios = require('axios');
 const { isTradingDay, getPrevTradingDay, resolveAnalysisDate } = require('../utils/tradingDay');
-const { getSingleStockData, getSingleStockTlineDataByDate, getAllStockData } = require('./stock');
+const { getSingleStockData, getSingleStockTlineDataByDate, getAllStockData, getRealtimeQuotes } = require('./stock');
 const { getAllTechIndexData, updateCurrentTechIndexData, getCurrentTechEmotion, getTechEmotionIntraday } = require('./emotion');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 const { getMonitorStocks } = require('./monitorStock');
@@ -3272,11 +3272,18 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     ? Math.floor(Number(limit))
     : TOP_GAINERS_PER_MARKET;
   let targetDay;
+  // 集合竞价（9:15-9:30）：当日日 K 线尚未生成，但竞价已有最新价格，
+  // 按今日取数并用实时快照补齐当日涨幅，避免刷新后仍展示上一交易日涨幅
+  const nowDay = dayjs();
+  const nowTimeStr = nowDay.format('HHmm');
+  const preOpenAuction = !targetDate
+    && isTradingDay(nowDay.toDate())
+    && nowTimeStr >= '0915' && nowTimeStr < '0930';
   if (targetDate) {
     targetDay = dayjs(String(targetDate).replace(/-/g, ''), 'YYYYMMDD');
   } else {
     // 开盘前 / 非交易日：当日 K 线尚未生成，回退到上一个交易日，避免榜单为空
-    targetDay = dayjs(resolveAnalysisDate());
+    targetDay = preOpenAuction ? nowDay.startOf('day') : dayjs(resolveAnalysisDate());
   }
   const targetDateStr = targetDay.format('YYYYMMDD');
 
@@ -3311,26 +3318,65 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     }
   }, 30);
 
+  // 集合竞价阶段：一次性批量拉取实时快照（按市场分组），为当日 K 线缺失的个股补齐竞价涨幅/现价
+  const preOpenQuotes = preOpenAuction
+    ? await getRealtimeQuotes(monitorStocks.map(s => s.code))
+    : null;
+
   const base = [];
   for (const { stock, klineData } of klineResults) {
     if (!klineData || klineData.length === 0) continue;
     const sortedKline = [...klineData].sort((a, b) => a.trade_date - b.trade_date);
     const targetIdx = sortedKline.findIndex(k => parseInt(k.trade_date) === parseInt(targetDateStr));
-    if (targetIdx < 0) continue;
-    const targetKline = sortedKline[targetIdx];
-    const closePrice = parseFloat(targetKline.close_px);
-    if (!(closePrice > 0)) continue;
-    const change = parseFloat(targetKline.change || 0);
-    // 3 日涨幅：当前收盘较 3 个交易日前收盘的累计涨幅，数据不足时回退当日涨幅
+    // 当日数据来源：优先当日 K 线；集合竞价阶段当日 K 线尚未生成时，用实时快照的竞价价格/涨幅代替
+    let change;
+    let currentPrice;   // 当日现价（用于计算 3 日涨幅）
+    let prevBar;        // 上一交易日 K 线
+    let preBar;         // 上上交易日 K 线
+    let baseIdx;        // 3 个交易日前收盘在 sortedKline 中的下标
+    if (targetIdx >= 0) {
+      const targetKline = sortedKline[targetIdx];
+      currentPrice = parseFloat(targetKline.close_px);
+      if (!(currentPrice > 0)) continue;
+      change = parseFloat(targetKline.change || 0);
+      prevBar = sortedKline[targetIdx - 1];
+      preBar = sortedKline[targetIdx - 2];
+      baseIdx = targetIdx - 3;
+    } else {
+      const quote = preOpenQuotes ? preOpenQuotes[stock.code] : null;
+      const lastIdx = sortedKline.length - 1;
+      const lastClose = lastIdx >= 0 ? parseFloat(sortedKline[lastIdx].close_px) : NaN;
+      const hasQuote = quote && quote.change !== null && quote.change !== undefined
+        && quote.price !== null && quote.price !== undefined && quote.price > 0
+        && lastIdx >= 2 && lastClose > 0;
+      if (hasQuote) {
+        change = Number(quote.change);
+        currentPrice = Number(quote.price);
+        prevBar = sortedKline[lastIdx];
+        preBar = sortedKline[lastIdx - 1];
+        // 今日尚无 K 线，lastIdx 即上一交易日：3 个交易日前为 lastIdx - 2
+        baseIdx = lastIdx - 2;
+      } else if (preOpenAuction && lastIdx >= 0 && lastClose > 0) {
+        // 竞价快照暂不可用（9:15 前接口字段为空）：回退到最近一个交易日 K 线，保证榜单不为空
+        change = parseFloat(sortedKline[lastIdx].change || 0);
+        currentPrice = lastClose;
+        prevBar = sortedKline[lastIdx - 1];
+        preBar = sortedKline[lastIdx - 2];
+        baseIdx = lastIdx - 3;
+      } else {
+        continue;
+      }
+    }
+    // 3 日涨幅：当前价较 3 个交易日前收盘的累计涨幅，数据不足时回退当日涨幅
     let change3d = change;
-    if (targetIdx >= 3) {
-      const close3Ago = parseFloat(sortedKline[targetIdx - 3].close_px);
-      if (close3Ago > 0) change3d = parseFloat(((closePrice - close3Ago) / close3Ago * 100).toFixed(2));
+    if (baseIdx >= 0) {
+      const close3Ago = parseFloat(sortedKline[baseIdx].close_px);
+      if (close3Ago > 0) change3d = parseFloat(((currentPrice - close3Ago) / close3Ago * 100).toFixed(2));
     }
     // 上一交易日一字板（开盘/收盘/最低涨幅均≥阈值，主板 8%、创业/科创 16%）不进入买点候选；
     // 2026-10-22 起仍进入涨幅榜全量展示，仅在名称后标注原因（数据不足无法判定时不拦截）
-    const prevOneWord = targetIdx >= 2
-      ? isPrevDayOneWordBoardBars(stock.code, sortedKline[targetIdx - 1], sortedKline[targetIdx - 2])
+    const prevOneWord = prevBar && preBar
+      ? isPrevDayOneWordBoardBars(stock.code, prevBar, preBar)
       : null;
     const isSh688 = stock.code.startsWith('sh688') || stock.code.startsWith('688');
     base.push({ stock, isSh688, change, change3d, prevOneWord });

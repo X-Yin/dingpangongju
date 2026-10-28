@@ -1,5 +1,40 @@
 [
   {
+    "date": "2026-10-28",
+    "operations": [
+      {
+        "id": "1793151926619_px10",
+        "action": "sell",
+        "stockName": "兆威机电",
+        "stockCode": "sz003021",
+        "position": "",
+        "time": "09:45"
+      },
+      {
+        "id": "1793151978197_mu37",
+        "action": "buy",
+        "stockName": "兆威机电",
+        "stockCode": "sz003021",
+        "position": "",
+        "time": "09:46"
+      },
+      {
+        "id": "1793155939828_wjeq",
+        "action": "buy",
+        "stockName": "芒果超媒",
+        "stockCode": "sz300413",
+        "position": "",
+        "time": "10:52"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-28T01:45:29.316Z",
+    "updatedAt": "2026-10-28T02:52:19.912Z"
+  },
+  {
     "date": "2026-10-27",
     "operations": [
       {

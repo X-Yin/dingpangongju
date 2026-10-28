@@ -1477,6 +1477,23 @@
     background: var(--dp-item-bg, rgba(54, 87, 214, 0.08)) !important;
   }
 
+  /* ---------- 叠加分时观察：涨跌幅固定使用默认红绿，不跟随主题色 ---------- */
+  .overlay-timeline-section {
+    .up,
+    .mtlm-tag-change.up,
+    .mtlm-right-label-change.up,
+    .mtlm-panel-change.up {
+      color: #cf1322 !important;
+    }
+
+    .down,
+    .mtlm-tag-change.down,
+    .mtlm-right-label-change.down,
+    .mtlm-panel-change.down {
+      color: #389e0d !important;
+    }
+  }
+
   /* ---------- 数字字体 ---------- */
   .item-value,
   .stock-change-value,

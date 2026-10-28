@@ -4581,71 +4581,6 @@ export const THEME_PACKS = [
         }
     },
     {
-        "id": "dark-chocolate-warm-camel-pop",
-        "name": "深咖啡与暖驼复古高撞色盘",
-        "desc": "Dark Chocolate Warm Camel Pop · 深咖啡背景色 (#47352A) + 第一个颜色暖驼色实体卡片 (#BB905E) + 玫瑰洋红与琥珀金高亮点缀 + 活力橙上涨/荧光绿下跌配色方案",
-        "source": "#uploaded-image-54dd11",
-        "tokens": {
-            "pageBg": "#47352A",
-            "fontFamily": "'Fira Code', 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace",
-            "numberFontFamily": "'Fira Code', 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace",
-            "cardBg": "#BB905E",
-            "cardBorderColor": "rgba(205, 56, 138, 0.4)",
-            "cardBorderWidth": "1px",
-            "cardRadius": "16px",
-            "cardShadow": "0 20px 50px rgba(71, 53, 42, 0.45), 0 0 30px rgba(205, 56, 138, 0.2)",
-            "cardBackdropFilter": "none",
-            "titleColor": "#FFFFFF",
-            "descColor": "#CD438A",
-            "itemBg": "rgba(255, 255, 255, 0.15)",
-            "itemTitleColor": "#FFFFFF",
-            "itemDescColor": "#CD438A",
-            "itemBorderColor": "rgba(205, 56, 138, 0.3)",
-            "itemBorderStyle": "solid",
-            "itemBorderWidth": "1px",
-            "itemRadius": "12px",
-            "upColor": "#4A0072",
-            "downColor": "#1F5F3A",
-            "btnBg": "#CD438A",
-            "btnColor": "#FFFFFF",
-            "btnRadius": "999px",
-            "btnBorderColor": "transparent",
-            "btnBorderStyle": "none",
-            "btnBorderWidth": "0px",
-            "btnFontFamily": "'Fira Code', 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace",
-            "btnShadow": "0 0 25px rgba(205, 56, 138, 0.45)",
-            "tagBg": "rgba(195, 137, 32, 0.3)",
-            "tagColor": "#FFFFFF",
-            "tagFontFamily": "'Fira Code', 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace",
-            "tagBorderColor": "rgba(195, 137, 32, 0.5)",
-            "tagBorderStyle": "solid",
-            "tagBorderWidth": "1px",
-            "tagRadius": "8px",
-            "primaryAccent": "#CD438A",
-            "cardPinkBg": "rgba(205, 56, 138, 0.25)",
-            "cardPinkColor": "#CD438A",
-            "cardGreenBg": "rgba(18, 254, 64, 0.22)",
-            "cardGreenColor": "#12FE40",
-            "cardPurpleBg": "rgba(187, 144, 94, 0.35)",
-            "cardPurpleColor": "#FFFFFF",
-            "cardOrangeBg": "rgba(255, 122, 0, 0.2)",
-            "cardOrangeColor": "#FF7A00",
-            "navActiveBg": "#CD438A",
-            "navActiveColor": "#FFFFFF",
-            "navInactiveBg": "transparent",
-            "navInactiveColor": "#C38920",
-            "calendarHighlightBg": "#FF7A00",
-            "calendarHighlightColor": "#FFFFFF",
-            "schedulePurpleBg": "rgba(187, 144, 94, 0.4)",
-            "scheduleOrangeBg": "rgba(205, 56, 138, 0.3)",
-            "scheduleGreenBg": "rgba(18, 254, 64, 0.25)",
-            "iconActiveColor": "#CD438A",
-            "iconInactiveColor": "#8C6A43",
-            "sidebarBg": "#36271F",
-            "sidebarRadius": "0px"
-        }
-    },
-    {
         "id": "deep-purple-mint-cyan-pop",
         "name": "极夜紫与薄荷青高对比撞色盘",
         "desc": "Deep Purple Mint Cyan Pop · 极夜紫背景色 (#590370) + 第一个颜色薄荷青实体卡片 (#3DEFC5) + 深海蓝与橄榄金高亮点缀 + 活力橙上涨/亮绿下跌配色方案",
@@ -5120,70 +5055,320 @@ export const THEME_PACKS = [
         }
     },
     {
-  "id": "magenta-olive-glass-flat",
-  "name": "洋红橄榄玻璃质感色盘",
-  "desc": "Magenta Olive Glass Flat · 深色橄榄褐背景 + 高饱和洋红与亮粉玻璃卡片 + 芥末黄高光按钮点缀 + 现代无衬线字体 + A股红涨绿跌配色方案",
-  "source": "#uploaded-image-66",
-  "tokens": {
-    "pageBg": "#846D43",
-    "fontFamily": "'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif",
-    "numberFontFamily": "'DIN Alternate', 'Roboto Mono', monospace",
-    "cardBg": "rgba(172, 74, 104, 0.65)",
-    "cardBorderColor": "rgba(247, 16, 164, 0.3)",
-    "cardBorderWidth": "1px",
-    "cardRadius": "16px",
-    "cardShadow": "0 20px 50px rgba(132, 109, 67, 0.8), 0 0 30px rgba(248, 38, 100, 0.3)",
-    "cardBackdropFilter": "blur(20px)",
-    "titleColor": "#FFFFFF",
-    "descColor": "#FCE4EC",
-    "itemBg": "rgba(255, 255, 255, 0.1)",
-    "itemTitleColor": "#FFFFFF",
-    "itemDescColor": "#FCE4EC",
-    "itemBorderColor": "rgba(247, 16, 164, 0.2)",
-    "itemBorderStyle": "solid",
-    "itemBorderWidth": "1px",
-    "itemRadius": "12px",
-    "upColor": "#d48122",
-    "downColor": "#00C853",
-    "btnBg": "#72e4a1",
-    "btnColor": "#3E2723",
-    "btnRadius": "999px",
-    "btnBorderColor": "transparent",
-    "btnBorderStyle": "none",
-    "btnBorderWidth": "0px",
-    "btnFontFamily": "'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif",
-    "btnShadow": "0 0 25px rgba(238, 185, 47, 0.5)",
-    "tagBg": "rgba(247, 16, 164, 0.25)",
-    "tagColor": "#F710A4",
-    "tagFontFamily": "'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif",
-    "tagBorderColor": "rgba(247, 16, 164, 0.4)",
-    "tagBorderStyle": "solid",
-    "tagBorderWidth": "1px",
-    "tagRadius": "8px",
-    "primaryAccent": "#F710A4",
-    "cardPinkBg": "rgba(248, 38, 100, 0.2)",
-    "cardPinkColor": "#F82664",
-    "cardGreenBg": "rgba(0, 200, 83, 0.2)",
-    "cardGreenColor": "#00C853",
-    "cardPurpleBg": "rgba(172, 74, 104, 0.3)",
-    "cardPurpleColor": "#AC4A68",
-    "cardOrangeBg": "rgba(238, 185, 47, 0.25)",
-    "cardOrangeColor": "#EEB92F",
-    "navActiveBg": "#F710A4",
-    "navActiveColor": "#FFFFFF",
-    "navInactiveBg": "transparent",
-    "navInactiveColor": "#D7CCC8",
-    "calendarHighlightBg": "#F82664",
-    "calendarHighlightColor": "#FFFFFF",
-    "schedulePurpleBg": "rgba(172, 74, 104, 0.4)",
-    "scheduleOrangeBg": "rgba(238, 185, 47, 0.3)",
-    "scheduleGreenBg": "rgba(0, 200, 83, 0.25)",
-    "iconActiveColor": "#F710A4",
-    "iconInactiveColor": "#5D4037",
-    "sidebarBg": "#5D4037",
-    "sidebarRadius": "0px"
-  }
+        "id": "opening-battle-tech",
+        "name": "科技进攻 · 蓝紫渐变",
+        "desc": "Tech Attack · 紫→靛蓝→青蓝渐变 + 磨砂玻璃卡片 + 粉红涨/薄荷绿跌 + 10px 圆角",
+        "source": "OpeningBattle",
+        "tokens": {
+            "pageBg": "radial-gradient(118% 86% at 8% -8%, rgba(162, 124, 255, 0.95) 0%, rgba(162, 124, 255, 0) 62%), radial-gradient(108% 94% at 106% 8%, rgba(48, 197, 210, 0.92) 0%, rgba(48, 197, 210, 0) 58%), radial-gradient(130% 110% at -8% 108%, rgba(132, 94, 255, 0.9) 0%, rgba(132, 94, 255, 0) 64%), linear-gradient(116deg, #7B4DFF 0%, #4D55D8 46%, #1BA7C6 100%)",
+            "fontFamily": "'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+            "numberFontFamily": "'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace",
+            "cardBg": "rgba(255, 255, 255, 0.14)",
+            "cardBorderColor": "rgba(255, 255, 255, 0.26)",
+            "cardBorderWidth": "1px",
+            "cardRadius": "22px",
+            "cardShadow": "inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 22px 48px -26px rgba(49, 46, 129, 0.6)",
+            "titleColor": "#FFFFFF",
+            "descColor": "rgba(255, 255, 255, 0.8)",
+            "itemBg": "rgba(255, 255, 255, 0.08)",
+            "itemTitleColor": "#FFFFFF",
+            "itemDescColor": "#DDD6FE",
+            "itemBorderColor": "rgba(255, 255, 255, 0.14)",
+            "itemBorderStyle": "solid",
+            "itemBorderWidth": "1px",
+            "itemRadius": "10px",
+            "upColor": "#FFD2DD",
+            "downColor": "#9FF2DA",
+            "upBg": "rgba(254, 205, 211, 0.18)",
+            "downBg": "rgba(159, 242, 218, 0.18)",
+            "btnBg": "rgba(255, 255, 255, 0.2)",
+            "btnColor": "#FFFFFF",
+            "btnFontFamily": "'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+            "btnRadius": "10px",
+            "btnBorderColor": "rgba(255, 255, 255, 0.32)",
+            "btnBorderStyle": "solid",
+            "btnBorderWidth": "1px",
+            "btnShadow": "inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+            "tagBg": "rgba(255, 255, 255, 0.2)",
+            "tagColor": "#FFFFFF",
+            "tagFontFamily": "'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+            "tagBorderColor": "rgba(255, 255, 255, 0.32)",
+            "tagBorderStyle": "solid",
+            "tagBorderWidth": "1px",
+            "tagRadius": "5px"
+        }
+    },
+    {
+    id: 'neon-glass-vibrant',
+    name: 'Neon Glass Vivid 霓虹高质玻璃',
+    desc: 'Neon Glass Vivid · 深度暗夜玻璃底色 + 极高质感毛玻璃半透卡片 + 鲜明霓虹五色高亮全量融合 + 现代无衬线流体排版',
+    source: '#uploaded-image-a840c0',
+    tokens: {
+        pageBg: '#4909ED', // 鲜亮深蓝紫作为沉浸式页面主背景
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+        numberFontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        cardBg: 'rgba(101, 34, 125, 0.45)', // 采用 #65227D 深紫调制作的高级半透毛玻璃卡片背景
+        cardBorderColor: 'rgba(177, 243, 142, 0.3)', // 使用 #B1F38E 荧光绿边缘提升玻璃折射立体感
+        cardBorderWidth: '1px',
+        cardRadius: '20px',
+        cardShadow: '0 16px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2)', // 深度毛玻璃浮雕光影
+        cardBackdropFilter: 'blur(16px)', // 高级毛玻璃模糊特效
+        titleColor: '#FFFFFF',
+        descColor: 'rgba(255, 255, 255, 0.75)',
+        itemBg: 'rgba(101, 34, 125, 0.3)',
+        itemTitleColor: '#FFFFFF',
+        itemDescColor: 'rgba(255, 255, 255, 0.7)',
+        itemBorderColor: 'rgba(177, 243, 142, 0.2)',
+        itemBorderStyle: 'solid',
+        itemBorderWidth: '1px',
+        itemRadius: '16px',
+        upColor: '#B1F38E', // 涨幅字体颜色使用 #B1F38E (荧光浅绿)
+        downColor: '#EF5913', // 跌幅字体颜色使用 #EF5913 (活力橙红)
+        btnBg: 'linear-gradient(135deg, #EF5913 0%, #62A164 100%)', // 按钮颜色融合 #EF5913 与 #62A164 渐变
+        btnColor: '#FFFFFF',
+        btnRadius: '16px',
+        btnBorderColor: 'rgba(255, 255, 255, 0.25)',
+        btnBorderStyle: 'solid',
+        btnBorderWidth: '1px',
+        btnFontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        btnShadow: '0 8px 24px rgba(239, 89, 19, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)', // 按钮玻璃高光弥散阴影
+        tagBg: 'rgba(98, 161, 100, 0.25)', // 标签背景使用 #62A164 调性
+        tagColor: '#B1F38E',
+        tagFontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        tagBorderColor: 'rgba(177, 243, 142, 0.4)',
+        tagBorderStyle: 'solid',
+        tagBorderWidth: '1px',
+        tagRadius: '999px',
+        // 5色全员完整映射 Tokens（无遗漏）：
+        // 1. #4909ED -> 页面背景 (pageBg)
+        // 2. #EF5913 -> 跌幅颜色与按钮渐变 (downColor / btnBg)
+        // 3. #65227D -> 卡片毛玻璃底色 (cardBg)
+        // 4. #62A164 -> 标签背景与按钮渐变 (tagBg / btnBg)
+        // 5. #B1F38E -> 涨幅颜色与卡片边框 (upColor / cardBorderColor)
+        primaryAccent: '#EF5913',
+        cardPurpleBg: 'rgba(101, 34, 125, 0.4)',
+        cardPurpleColor: '#65227D',
+        cardGreenBg: 'rgba(98, 161, 100, 0.3)',
+        cardGreenColor: '#62A164',
+        navActiveBg: 'linear-gradient(135deg, #EF5913 0%, #4909ED 100%)',
+        navActiveColor: '#FFFFFF',
+        navInactiveBg: 'transparent',
+        navInactiveColor: 'rgba(255, 255, 255, 0.6)',
+        calendarHighlightBg: '#EF5913',
+        calendarHighlightColor: '#FFFFFF',
+        iconActiveColor: '#B1F38E',
+        iconInactiveColor: 'rgba(255, 255, 255, 0.4)',
+        sidebarBg: '#4909ED',
+        sidebarRadius: '0px'
+    }
 },
+    {
+        id: 'premium-colorful-glass',
+        name: 'Premium Colorful Glass 高级彩色玻璃',
+        desc: '高级玻璃质感 · 雾霾紫底色 + 多巴胺高饱和彩块 + 磨砂玻璃卡片模糊 + 细腻半透明高光描边',
+        source: '#uploaded-image',
+        tokens: {
+            pageBg: '#6C62A5', // 雾霾紫主背景
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+            numberFontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            cardBg: 'rgba(255, 255, 255, 0.08)', // 极光白玻璃底色
+            cardBorderColor: 'rgba(255, 255, 255, 0.15)', // 玻璃高光边框
+            cardBorderWidth: '1px',
+            cardRadius: '24px', // 柔和圆角
+            cardShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)', // 立体弥散阴影
+            cardBackdropFilter: 'blur(20px)', // 磨砂玻璃模糊
+            titleColor: '#FFFFFF', // 纯白高对比度主标题
+            descColor: '#CFC38C', // 卡其米色次要描述文本
+            itemBg: 'rgba(255, 255, 255, 0.05)',
+            itemTitleColor: '#FFFFFF',
+            itemDescColor: 'rgba(255, 255, 255, 0.6)',
+            itemBorderColor: 'rgba(255, 255, 255, 0.08)',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '1px',
+            itemRadius: '16px',
+            upColor: '#a40d40', // 薄荷绿涨幅
+            downColor: '#19D8A6', // 玫红色跌幅
+            btnBg: '#CE742B', // 暖橙色主按钮
+            btnColor: '#FFFFFF',
+            btnRadius: '16px',
+            btnBorderColor: 'rgba(255, 255, 255, 0.2)', // 玻璃质感按钮边框
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '1px',
+            btnFontFamily: "inherit",
+            btnShadow: '0 4px 15px rgba(206, 116, 43, 0.4)', // 橙色发光阴影
+            tagBg: 'rgba(207, 195, 140, 0.15)', // 卡其米色半透明标签
+            tagColor: '#CFC38C',
+            tagFontFamily: "inherit",
+            tagBorderColor: 'rgba(207, 195, 140, 0.4)',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '1px',
+            tagRadius: '999px',
+            // 专属玻璃质感多巴胺彩色卡片背景 (运用全部5个颜色)
+            cardGreenBg: 'rgba(25, 216, 166, 0.15)', // #19D8A6
+            cardGreenColor: '#19D8A6',
+            cardOrangeBg: 'rgba(206, 116, 43, 0.15)', // #CE742B
+            cardOrangeColor: '#CE742B',
+            cardPinkBg: 'rgba(214, 43, 100, 0.15)', // #D62B64
+            cardPinkColor: '#D62B64',
+            cardBeigeBg: 'rgba(207, 195, 140, 0.15)', // #CFC38C
+            cardBeigeColor: '#CFC38C',
+            cardPurpleBg: 'rgba(108, 98, 165, 0.4)', // #6C62A5
+            cardPurpleColor: '#6C62A5',
+            navActiveBg: 'rgba(255, 255, 255, 0.12)',
+            navActiveColor: '#FFFFFF',
+            navInactiveBg: 'transparent',
+            navInactiveColor: 'rgba(255, 255, 255, 0.5)',
+            calendarHighlightBg: '#CE742B', // 橙色高亮
+            calendarHighlightColor: '#FFFFFF',
+            scheduleGreenBg: 'rgba(25, 216, 166, 0.25)', // #19D8A6 玻璃色块
+            scheduleOrangeBg: 'rgba(206, 116, 43, 0.25)', // #CE742B 玻璃色块
+            schedulePinkBg: 'rgba(214, 43, 100, 0.25)', // #D62B64 玻璃色块
+            scheduleBeigeBg: 'rgba(207, 195, 140, 0.25)', // #CFC38C 玻璃色块
+            schedulePurpleBg: 'rgba(108, 98, 165, 0.25)', // #6C62A5 玻璃色块
+            iconActiveColor: '#CFC38C', // 卡其米色激活图标
+            iconInactiveColor: 'rgba(255, 255, 255, 0.4)',
+            sidebarBg: 'rgba(108, 98, 165, 0.3)', // #6C62A5 磨砂玻璃侧边栏
+            sidebarRadius: '0px'
+        },
+    },
+    {
+        id: 'neon-aurora-glass',
+        name: 'Neon Aurora Glass 霓虹极光玻璃',
+        desc: '暗黑霓虹极光 · 深海蓝底色 + 高饱和紫黄撞色 + 磨砂玻璃卡片 + 细腻发光半透明边框',
+        source: '#uploaded-image-2',
+        tokens: {
+            pageBg: '#05132E', // 深海蓝黑，构建暗黑霓虹氛围
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+            numberFontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            cardBg: 'rgba(255, 255, 255, 0.04)', // 极透白玻璃底色
+            cardBorderColor: 'rgba(217, 150, 252, 0.25)', // 浅紫高光描边
+            cardBorderWidth: '1px',
+            cardRadius: '20px', // 现代感圆角
+            cardShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5)', // 深邃弥散阴影
+            cardBackdropFilter: 'blur(24px)', // 高强度磨砂玻璃模糊
+            titleColor: '#FFFFFF', // 纯白主标题保证对比度
+            descColor: '#D996FC', // 浅紫作为次要描述文本，带出赛博感
+            itemBg: 'rgba(255, 255, 255, 0.02)',
+            itemTitleColor: '#FFFFFF',
+            itemDescColor: 'rgba(255, 255, 255, 0.5)',
+            itemBorderColor: 'rgba(255, 255, 255, 0.08)',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '1px',
+            itemRadius: '12px',
+            upColor: '#FAE019', // 亮黄涨幅，极度醒目
+            downColor: '#B000FC', // 霓虹紫跌幅，充满未来感
+            btnBg: '#BE8B45', // 金棕主按钮，沉稳压住高饱和色调
+            btnColor: '#FFFFFF',
+            btnRadius: '12px',
+            btnBorderColor: 'rgba(255, 255, 255, 0.2)', // 玻璃质感按钮边框
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '1px',
+            btnFontFamily: "inherit",
+            btnShadow: '0 4px 20px rgba(190, 139, 69, 0.4)', // 金棕发光阴影
+            tagBg: 'rgba(217, 150, 252, 0.1)', // 浅紫玻璃标签
+            tagColor: '#D996FC',
+            tagFontFamily: "inherit",
+            tagBorderColor: 'rgba(217, 150, 252, 0.4)',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '1px',
+            tagRadius: '999px',
+            // 极光玻璃专属彩色卡片背景 (运用全部5个颜色的半透明玻璃态)
+            cardGlassPurpleBg: 'rgba(217, 150, 252, 0.15)', // #D996FC
+            cardGlassPurpleColor: '#D996FC',
+            cardGlassYellowBg: 'rgba(250, 224, 25, 0.15)', // #FAE019
+            cardGlassYellowColor: '#FAE019',
+            cardGlassBrownBg: 'rgba(190, 139, 69, 0.15)', // #BE8B45
+            cardGlassBrownColor: '#BE8B45',
+            cardGlassMagentaBg: 'rgba(176, 0, 252, 0.15)', // #B000FC
+            cardGlassMagentaColor: '#B000FC',
+            cardGlassDarkBg: 'rgba(5, 19, 46, 0.6)', // #05132E (深色玻璃底)
+            cardGlassDarkColor: '#FFFFFF',
+            navActiveBg: 'rgba(217, 150, 252, 0.15)',
+            navActiveColor: '#D996FC',
+            navInactiveBg: 'transparent',
+            navInactiveColor: 'rgba(255, 255, 255, 0.4)',
+            calendarHighlightBg: '#FAE019', // 亮黄高亮
+            calendarHighlightColor: '#05132E', // 配合亮黄使用深色字
+            schedulePurpleBg: 'rgba(217, 150, 252, 0.2)', // #D996FC 玻璃色块
+            scheduleYellowBg: 'rgba(250, 224, 25, 0.2)', // #FAE019 玻璃色块
+            scheduleBrownBg: 'rgba(190, 139, 69, 0.2)', // #BE8B45 玻璃色块
+            scheduleMagentaBg: 'rgba(176, 0, 252, 0.2)', // #B000FC 玻璃色块
+            scheduleDarkBg: 'rgba(5, 19, 46, 0.4)', // #05132E 玻璃色块
+            iconActiveColor: '#D996FC', // 浅紫激活图标
+            iconInactiveColor: 'rgba(255, 255, 255, 0.3)',
+            sidebarBg: 'rgba(5, 19, 46, 0.4)', // 深海蓝磨砂玻璃侧边栏
+            sidebarRadius: '0px'
+        },
+    },
+        {
+        id: 'retro-highlight-glass',
+        name: 'Retro Highlight Glass 复古高光玻璃',
+        desc: '复古高光玻璃 · 深墨绿底色 + 紫黄高对比撞色 + 磨砂玻璃卡片 + 细腻半透明发光描边',
+        source: '#uploaded-image-3',
+        tokens: {
+            pageBg: '#044736', // 深墨绿，作为整个页面的沉稳底色
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+            numberFontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            cardBg: 'rgba(255, 255, 255, 0.06)', // 极透白玻璃底色
+            cardBorderColor: 'rgba(255, 255, 255, 0.15)', // 玻璃高光边框
+            cardBorderWidth: '1px',
+            cardRadius: '20px', // 现代感圆角
+            cardShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)', // 深邃弥散阴影
+            cardBackdropFilter: 'blur(24px)', // 强烈磨砂玻璃模糊
+            titleColor: '#FFFFFF', // 纯白高对比度主标题
+            descColor: '#8FA908', // 橄榄绿作为次要描述文本，在深色底上显得复古且高级
+            itemBg: 'rgba(255, 255, 255, 0.03)',
+            itemTitleColor: '#FFFFFF',
+            itemDescColor: 'rgba(255, 255, 255, 0.5)',
+            itemBorderColor: 'rgba(255, 255, 255, 0.08)',
+            itemBorderStyle: 'solid',
+            itemBorderWidth: '1px',
+            itemRadius: '12px',
+            upColor: '#FAF418', // 亮黄涨幅，极具视觉冲击力
+            downColor: '#9bed9e', // 紫罗兰跌幅，带有神秘色彩
+            btnBg: '#F9C506', // 金黄主按钮，明亮且引人点击
+            btnColor: '#044736', // 深墨绿字，与按钮底色形成极高对比
+            btnRadius: '12px',
+            btnBorderColor: 'rgba(255, 255, 255, 0.3)', // 玻璃质感按钮边框
+            btnBorderStyle: 'solid',
+            btnBorderWidth: '1px',
+            btnFontFamily: "inherit",
+            btnShadow: '0 4px 20px rgba(249, 197, 6, 0.3)', // 金黄发光阴影
+            tagBg: 'rgba(143, 169, 8, 0.15)', // 橄榄绿半透明标签
+            tagColor: '#8FA908',
+            tagFontFamily: "inherit",
+            tagBorderColor: 'rgba(143, 169, 8, 0.4)',
+            tagBorderStyle: 'solid',
+            tagBorderWidth: '1px',
+            tagRadius: '999px',
+            // 专属高级玻璃质感彩色卡片背景 (5色全应用)
+            cardOliveBg: 'rgba(143, 169, 8, 0.15)', // #8FA908
+            cardOliveColor: '#8FA908',
+            cardVioletBg: 'rgba(85, 61, 231, 0.15)', // #553DE7
+            cardVioletColor: '#553DE7',
+            cardYellowBg: 'rgba(250, 244, 24, 0.15)', // #FAF418
+            cardYellowColor: '#FAF418',
+            cardGoldBg: 'rgba(249, 197, 6, 0.15)', // #F9C506
+            cardGoldColor: '#F9C506',
+            cardGreenBg: 'rgba(4, 71, 54, 0.6)', // #044736 深色玻璃块
+            cardGreenColor: '#FFFFFF',
+            navActiveBg: 'rgba(249, 197, 6, 0.15)', // 金黄高亮导航
+            navActiveColor: '#F9C506',
+            navInactiveBg: 'transparent',
+            navInactiveColor: 'rgba(255, 255, 255, 0.4)',
+            calendarHighlightBg: '#553DE7', // 紫罗兰日历高亮
+            calendarHighlightColor: '#FFFFFF',
+            scheduleOliveBg: 'rgba(143, 169, 8, 0.25)', // #8FA908 玻璃色块
+            scheduleVioletBg: 'rgba(85, 61, 231, 0.25)', // #553DE7 玻璃色块
+            scheduleYellowBg: 'rgba(250, 244, 24, 0.25)', // #FAF418 玻璃色块
+            scheduleGoldBg: 'rgba(249, 197, 6, 0.25)', // #F9C506 玻璃色块
+            scheduleGreenBg: 'rgba(4, 71, 54, 0.4)', // #044736 玻璃色块
+            iconActiveColor: '#F9C506', // 金黄激活图标
+            iconInactiveColor: 'rgba(255, 255, 255, 0.3)',
+            sidebarBg: 'rgba(4, 71, 54, 0.4)', // 深墨绿磨砂玻璃侧边栏
+            sidebarRadius: '0px'
+        },
+    },
 ];
 
 // 根据 id 获取主题包；'' / undefined / 'default' 返回 null（默认样式）

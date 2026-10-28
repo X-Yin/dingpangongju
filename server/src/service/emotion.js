@@ -2,7 +2,7 @@
 
 const { getClsReqEmotionUrl, getClsReqIndexUrl, getClsReqUrl, batchParallel } = require("../utils");
 const { getDaPanData } = require("./dapan");
-const { getSingleStockTlineData } = require("./stock");
+const { getSingleStockTlineData, getRealtimeQuotes, getSingleStockData } = require("./stock");
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
@@ -177,11 +177,23 @@ const getTechLimitPctByCode = (code) => {
 exports.getTechLimitPctByCode = getTechLimitPctByCode;
 
 // 批量获取科技成分股实时涨幅与现价（V2 日级与分时路径共用），单只失败按 change=0 计
-// 返回 [{ code, change, price }]
+// 返回 [{ code, change, price, tradeDate }]
 const fetchTechStockItems = async (stockCodes) => {
+    const now = dayjs();
+    const timeStr = now.format('HHmm');
+    // 集合竞价（9:15-9:30）：财联社日 K 线要等竞价撮合完成后才带上当日 bar，
+    // 同花顺日 K 线在竞价阶段即可返回当日竞价 bar，这里先走同花顺，再用实时快照兜底
+    const inAuction = tradingDayUtil.isTradingDay(now.toDate()) && timeStr >= '0915' && timeStr < '0930';
+
     const fetchChange = async (stockCode) => {
         try {
-            const { data: { data: klineData } } = await axios.get(getClsReqUrl(stockCode, 1));
+            let klineData;
+            if (inAuction) {
+                klineData = await getSingleStockData(stockCode, 1);
+            } else {
+                const { data: { data } } = await axios.get(getClsReqUrl(stockCode, 1));
+                klineData = data;
+            }
             if (klineData && klineData.length > 0) {
                 const klineItem = klineData[0];
                 // 现价：盘中为最新收盘价字段，缺失时退回昨收（市值加权因子用）
@@ -190,14 +202,39 @@ const fetchTechStockItems = async (stockCodes) => {
                     code: stockCode,
                     change: klineItem.change != null && !isNaN(klineItem.change) ? klineItem.change : 0,
                     price: price != null && !isNaN(price) ? price : null,
+                    tradeDate: klineItem.trade_date != null && !isNaN(Number(klineItem.trade_date))
+                        ? Number(klineItem.trade_date)
+                        : null,
                 };
             }
         } catch (error) {
             console.error(`获取股票 ${stockCode} K线数据失败:`, error.message);
         }
-        return { code: stockCode, change: 0, price: null };
+        return { code: stockCode, change: 0, price: null, tradeDate: null };
     };
-    return batchParallel(stockCodes, fetchChange, useCLS() ? 5 : 20);
+    const items = await batchParallel(stockCodes, fetchChange, useCLS() ? 5 : 20);
+
+    // 集合竞价阶段：日 K 线若仍停在上一交易日，用实时快照的竞价涨跌幅/现价覆盖，
+    // 保证开盘前刷新也能反映当日最新情绪（快照字段为空时保持 K 线结果不变）
+    if (inAuction) {
+        const todayNum = Number(now.format('YYYYMMDD'));
+        const staleItems = items.filter(item => Number(item.tradeDate) !== todayNum);
+        if (staleItems.length > 0) {
+            try {
+                const quotes = await getRealtimeQuotes(staleItems.map(item => item.code));
+                staleItems.forEach(item => {
+                    const quote = quotes[item.code];
+                    if (!quote) return;
+                    if (quote.change !== null && quote.change !== undefined) item.change = quote.change;
+                    if (quote.price !== null && quote.price !== undefined) item.price = quote.price;
+                });
+            } catch (error) {
+                console.error('获取集合竞价实时快照失败:', error.message);
+            }
+        }
+    }
+
+    return items;
 };
 exports.fetchTechStockItems = fetchTechStockItems;
 
@@ -353,6 +390,14 @@ const updateCurrentTechIndexData = async () => {
         console.log('非交易日，跳过科技情绪日数据写入');
         return getLatestTechEmotion();
     }
+    // 交易日 9:15（集合竞价）前：当日尚无行情，计算结果等同上一交易日收盘，
+    // 写库只会把上一交易日数值复制成「今日」记录（曾导致日线出现与昨日完全相同的记录），
+    // 这里直接返回已有最新值，不产生重复记录
+    const nowCheck = dayjs();
+    if (nowCheck.format('HHmm') < '0915') {
+        console.log('集合竞价开始前，跳过科技情绪日数据写入');
+        return getLatestTechEmotion();
+    }
     const monitorStocks = getMonitorStocks();
     const stockCodes = monitorStocks.filter(s => s.isTech !== false).map(s => s.code);
     const changeSumData = [];
@@ -449,9 +494,10 @@ const recordTechEmotionIntraday = async () => {
     // 非交易日（周末/节假日，以交易日历为准）不记录
     if (tradingDayUtil.isNonTradingDay(now.toDate())) return null;
 
-    // 只在交易时段记录 (9:25 - 11:30, 13:00 - 15:00)
+    // 只在交易时段记录 (9:15 - 11:30, 13:00 - 15:00)
+    // 2026-10-28 起提前到 9:15：集合竞价阶段已可用竞价价格计算当日科技情绪
     const timeStr = now.format('HHmm');
-    if (!((timeStr >= '0925' && timeStr <= '1130') || (timeStr >= '1300' && timeStr <= '1500'))) {
+    if (!((timeStr >= '0915' && timeStr <= '1130') || (timeStr >= '1300' && timeStr <= '1500'))) {
         return null;
     }
 
@@ -498,6 +544,11 @@ const forceRecordTechEmotionIntraday = async (presetValue = null) => {
         return null;
     }
     const now = dayjs();
+    // 交易日 9:15（集合竞价）前：当日尚无行情，写入的分时点只是上一交易日收盘值的重复，直接跳过
+    if (now.format('HHmm') < '0915') {
+        console.log('集合竞价开始前，跳过科技情绪分时数据写入');
+        return null;
+    }
     const today = now.format('YYYYMMDD');
     const timeLabel = now.format('HHmm');
 

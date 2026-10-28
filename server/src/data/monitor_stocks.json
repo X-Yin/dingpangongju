@@ -901,7 +901,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "7",
-    "isTech":  true,
+    "isTech": true,
     "addedAt": "2026-10-23 10:12:30"
   },
   {
@@ -966,5 +966,14 @@
     "riskScore": "7",
     "isTech": true,
     "addedAt": "2026-10-26 21:05:30"
+  },
+  {
+    "code": "sz300413",
+    "name": "芒果超媒",
+    "isImportant": false,
+    "blockName": "AI 漫剧",
+    "riskScore": " 8",
+    "isTech": false,
+    "addedAt": "2026-10-28 10:52:08"
   }
 ]

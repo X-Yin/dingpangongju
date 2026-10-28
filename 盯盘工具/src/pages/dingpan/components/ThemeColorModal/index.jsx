@@ -47,7 +47,7 @@ const buildPackOption = (pack) => {
     };
 };
 
-const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
+const ThemeColorModal = ({ open, onCancel, onOk, onPreview, value }) => {
     const [draft, setDraft] = useState(DEFAULT_THEME_COLOR);
 
     useEffect(() => {
@@ -85,6 +85,12 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
         });
     };
 
+    const selectPack = (id) => {
+        updateField('pack', id);
+        // 点击即实时预览（不写入存储），点「保存」才持久化，取消关闭则恢复原主题
+        onPreview && onPreview(id);
+    };
+
     const renderPackOption = (option) => {
         const p = option.preview || {};
         const selected = (draft.pack || '') === option.id;
@@ -92,7 +98,7 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
             <div
                 key={option.id || 'default'}
                 className={`theme-pack-option${selected ? ' selected' : ''}`}
-                onClick={() => updateField('pack', option.id)}
+                onClick={() => selectPack(option.id)}
             >
                 <div className="theme-pack-preview" style={{ background: p.pageBg }}>
                     <div
@@ -172,9 +178,9 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
             onOk={handleOk}
             okText="保存"
             cancelText="取消"
-            width={860}
-            // 内容区最高 500px，超出滚动；footer（保存/取消）固定在弹窗底部
-            styles={{ body: { maxHeight: 500, overflowY: 'auto' } }}
+            width={1200}
+            // 内容区最高 500px，超出纵向滚动；禁止横向滚动
+            styles={{ body: { maxHeight: 500, overflowY: 'auto', overflowX: 'hidden' } }}
             destroyOnClose
         >
             <div className="theme-color-modal-body">
@@ -187,7 +193,7 @@ const ThemeColorModal = ({ open, onCancel, onOk, value }) => {
                             仅作用于盯盘页外层组件；弹窗、Tooltip 保持原样式
                         </Text>
                     </div>
-                    <div className="theme-pack-grid" style={{ marginRight: 10 }}>
+                    <div className="theme-pack-grid">
                         {[DEFAULT_PACK_OPTION, ...THEME_PACKS.map(buildPackOption)].map(renderPackOption)}
                     </div>
                     {/* 随机播放：每隔 5 分钟自动随机切换一个主题包 */}
