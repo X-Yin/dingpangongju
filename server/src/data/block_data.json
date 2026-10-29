@@ -393,6 +393,36 @@
       "blockName": "商业航天",
       "code": "sz300136",
       "change": 4.56
+    },
+    {
+      "name": "顺灏股份",
+      "blockName": "商业航天",
+      "code": "sz002565",
+      "change": 10
+    },
+    {
+      "name": "江顺科技",
+      "blockName": "商业航天",
+      "code": "sz001400",
+      "change": 4.36
+    },
+    {
+      "name": "航天晨光",
+      "blockName": "商业航天",
+      "code": "sh600501",
+      "change": 10.03
+    },
+    {
+      "name": "航天发展",
+      "blockName": "商业航天",
+      "code": "sz000547",
+      "change": 4.03
+    },
+    {
+      "name": "上海沪工",
+      "blockName": "商业航天",
+      "code": "sh603131",
+      "change": 10
     }
   ],
   "机器人": [

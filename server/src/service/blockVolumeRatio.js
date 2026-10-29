@@ -1,6 +1,10 @@
 // 板块成交量占比（实时）
 // - 主路径 computeFromSpot：一次获取全部 A 股实时行情（东财，含每只股票当日成交额），
-//   按成分股 code 匹配成交额后分别汇总各分类 + 科技板块，除以全 A 股成交额合计得到占比
+//   按成分股 code 匹配成交额后分别汇总各分类 + 科技板块；
+//   分母优先取 amount.json 里的全市场成交额（不被残缺快照带偏，避免向上突刺），
+//   缺失时退回新浪接口、最后才用快照合计。
+// - 快照完整性校验：有效股票数、成分股匹配率过低，或某板块累计成交额反而下降时，
+//   判定为上游返回了不完整快照，抛错由轮询侧等待 10s 重试，避免向下的突刺
 // - 兜底路径 computeByPolling：东财、新浪的全量行情接口都不可用时，按平台配额逐只请求日K
 //   （同花顺 45 / 财联社 45，每秒 90 只），
 //   某只股票主平台失败时按 同花顺 → 财联社 兜底；请求结果写入临时缓存目录，结束后删除
@@ -10,7 +14,7 @@ const path = require('path');
 const dayjs = require('dayjs');
 const { CATEGORY_NAMES, getBlockCategoryRatio } = require('./板块成交量占比计算/category_amount_money');
 const { getTechVolumeRatio } = require('./techCrowd');
-const { fetchMarketTotalAmountYi } = require('./amount');
+const { fetchMarketTotalAmountYi, parseAmountToYi } = require('./amount');
 const { getASpot } = require('./akData');
 const { StockKlineTempCache } = require('./stockKlineCache');
 const {
@@ -21,6 +25,8 @@ const {
 const { isTradingDay } = require('../utils');
 
 const INTRADAY_FILE = path.resolve(__dirname, '../data/block_volume_ratio_intraday.json');
+// 全市场成交额的分母数据源：amount.json（每 10s 由新浪接口写入，含 totalAmount）
+const AMOUNT_FILE = path.resolve(__dirname, '../data/amount.json');
 const CONSTITUENTS_DIR = path.resolve(__dirname, '../data/东方财富板块成分股汇总');
 const TECH_STOCK_FILE = path.resolve(__dirname, './科技板块拥挤度计算/all_tech_stock_code.json');
 const AMOUNT_DAY_HISTORY_FILE = path.resolve(__dirname, '../data/amount_day_history.json');
@@ -40,6 +46,16 @@ const PLATFORM_QUOTAS = [
 // 平台连续失败达到该轮数后，本次轮询不再尝试（其股票直接走兜底链）
 const PLATFORM_DOWN_THRESHOLD = 3;
 
+// 快照完整性校验：全 A 股实时行情偶发只返回部分股票（或部分股票成交额为空），
+// 各板块的分子成交额随之偏小，占比就会画出向下的突刺（如 10:31 军工、14:50 银行）。
+// 校验不通过时抛错，由轮询侧等待 10s 后强制重新拉取，而不是把坏点写进分时缓存。
+const MIN_SPOT_ROWS = 4800;          // 全 A 股约 5600 只，低于该数量视为不完整快照
+const MIN_HIT_RATE = 0.95;           // 成分股匹配率，完整快照实测约 0.998
+const MAX_TOTAL_DROP_RATIO = 0.95;   // 同一交易日内成交额是累计值，容忍 5% 抖动
+const MIN_BLOCK_AMOUNT_RATIO = 0.98; // 单板块累计成交额只增不减，容忍 2% 抖动
+// amount.json 记录超过该时长未更新则视为过期，改用新浪接口实时获取分母
+const AMOUNT_FILE_MAX_AGE_SEC = 5 * 60;
+
 const readJsonSafe = (file, fallback) => {
     try {
         if (!fs.existsSync(file)) return fallback;
@@ -50,6 +66,56 @@ const readJsonSafe = (file, fallback) => {
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// 快照不完整错误：与网络失败区分开，避免因为一次残缺快照就触发耗时的多平台轮询兜底
+const createIncompleteError = (message) => {
+    const error = new Error(message);
+    error.incompleteSnapshot = true;
+    return error;
+};
+
+// 从 amount.json 读取今日最新一条全市场成交额（单位：亿）
+// 该文件由成交量轮询每 10s 写入，与前端「成交量」图同一口径；记录日期不符或过期时返回 null
+const getAmountFileTotalYi = () => {
+    const list = readJsonSafe(AMOUNT_FILE, []);
+    if (!Array.isArray(list) || list.length === 0) return null;
+
+    const today = dayjs().format('YYYYMMDD');
+    for (let i = list.length - 1; i >= 0; i--) {
+        const record = list[i];
+        if (!Array.isArray(record)) continue;
+        const info = record[1];
+        if (!info || String(info.date) !== today) continue;
+
+        const totalYi = parseAmountToYi(info.totalAmount);
+        if (!isFinite(totalYi) || totalYi <= 0) continue;
+
+        const time = String(record[0] || '');
+        const ts = dayjs(`${today.slice(0, 4)}-${today.slice(4, 6)}-${today.slice(6, 8)} ${time.slice(0, 2)}:${time.slice(2, 4)}:${time.slice(4, 6)}`);
+        const ageSec = ts.isValid() ? Math.abs(dayjs().diff(ts, 'second')) : Infinity;
+        if (ageSec > AMOUNT_FILE_MAX_AGE_SEC) {
+            console.warn(`amount.json 最新成交额记录已过期（${time}，约 ${ageSec}s 前），改用新浪接口获取分母`);
+            return null;
+        }
+        return totalYi;
+    }
+    return null;
+};
+
+// 分母来源：优先 amount.json（不受全 A 股快照残缺影响，避免向上突刺），
+// 过期时改用新浪接口实时获取；两者都不可用时退回快照合计（此时靠完整性校验兜底）
+const resolveMarketTotalYi = async () => {
+    const fromFile = getAmountFileTotalYi();
+    if (fromFile !== null) return { marketTotalYi: fromFile, totalSource: 'amount_file' };
+
+    try {
+        const yi = await fetchMarketTotalAmountYi();
+        if (isFinite(yi) && yi > 0) return { marketTotalYi: yi, totalSource: 'sina_api' };
+    } catch (error) {
+        console.warn('获取全市场成交额失败，回退实时行情合计:', error.message);
+    }
+    return { marketTotalYi: null, totalSource: 'spot' };
+};
 
 // 并发执行（固定并发数，单个任务自行处理异常）
 const runWithConcurrency = async (items, concurrency, fn) => {
@@ -110,18 +176,28 @@ const buildGroups = () => {
 };
 
 // 主路径：用全 A 股实时行情（每只股票当日成交额）按成分股 code 汇总
+// 分母优先取外部全市场成交额（amount.json / 新浪接口），缺省时退回快照合计
 // onProgress: ({ done, total, matched, current, detail }) => void
-const computeFromSpot = (groups, spot, onProgress) => {
-    // 代码 → 当日成交额（元）；同时累加得到全市场成交额作为分母
+const computeFromSpot = (groups, spot, onProgress, totalInfo = {}) => {
+    const { marketTotalYi = null, totalSource = 'spot' } = totalInfo;
+
+    // 代码 → 当日成交额（元）；快照合计仅在缺少外部分母时兜底使用
     const amountByCode = new Map();
-    let marketTotalAmount = 0;
+    let spotTotalAmount = 0;
     for (const item of spot) {
         const code = String(item['代码'] || '').trim();
         const amount = Number(item['成交额']);
         if (!code || !isFinite(amount) || amount <= 0) continue;
         amountByCode.set(code, amount);
-        marketTotalAmount += amount;
+        spotTotalAmount += amount;
     }
+
+    if (amountByCode.size < MIN_SPOT_ROWS) {
+        throw createIncompleteError(`全 A 股实时行情数据不完整（有效 ${amountByCode.size} 只），放弃本次计算`);
+    }
+
+    const useExternalTotal = isFinite(Number(marketTotalYi)) && Number(marketTotalYi) > 0;
+    const marketTotalAmount = useExternalTotal ? Number(marketTotalYi) * 1e8 : spotTotalAmount;
 
     if (marketTotalAmount <= 0) {
         throw new Error('全 A 股成交额合计为 0，无法计算成交量占比');
@@ -156,6 +232,12 @@ const computeFromSpot = (groups, spot, onProgress) => {
         }
     }
 
+    // 匹配率过低说明快照漏掉了大量成分股：即使分母正确，各板块占比也会偏小（向下突刺）
+    const hitRate = totalTasks > 0 ? matched / totalTasks : 0;
+    if (hitRate < MIN_HIT_RATE) {
+        throw createIncompleteError(`成分股匹配率过低（${(hitRate * 100).toFixed(1)}%），判定为行情快照不完整，放弃本次计算`);
+    }
+
     const ratios = {};
     for (const [name, amount] of Object.entries(amounts)) {
         ratios[name] = Number((amount / marketTotalAmount * 100).toFixed(4));
@@ -168,9 +250,11 @@ const computeFromSpot = (groups, spot, onProgress) => {
         ratios,
         stats: {
             mode: 'spot',
+            totalSource: useExternalTotal ? totalSource : 'spot',
+            spotRows: amountByCode.size,
             matched,
             total: totalTasks,
-            hitRate: totalTasks > 0 ? matched / totalTasks : 0,
+            hitRate,
         },
     };
 };
@@ -412,7 +496,8 @@ const computeByPolling = async (groups, { onProgress } = {}) => {
 // 优先一次性拉取全 A 股实时行情；东财、新浪两个全量接口都失败时回退多平台轮询
 // onProgress: ({ done, total, detail, current }) => void
 // forcePolling: true 时跳过全 A 股行情，强制走多平台轮询兜底（--all）
-const computeTodayRatios = async ({ onProgress, forcePolling = false } = {}) => {
+// forceRefresh: true 时跳过实时行情缓存重新拉取（校验失败后的重试使用）
+const computeTodayRatios = async ({ onProgress, forcePolling = false, forceRefresh = false } = {}) => {
     const groups = buildGroups();
 
     if (groups.length === 0) {
@@ -421,12 +506,15 @@ const computeTodayRatios = async ({ onProgress, forcePolling = false } = {}) => 
 
     if (!forcePolling) {
         try {
-            const spot = await getASpot();
+            const spot = await getASpot(forceRefresh);
             if (!Array.isArray(spot) || spot.length === 0) {
                 throw new Error('全 A 股实时行情数据为空');
             }
-            return computeFromSpot(groups, spot, onProgress);
+            const totalInfo = await resolveMarketTotalYi();
+            return computeFromSpot(groups, spot, onProgress, totalInfo);
         } catch (error) {
+            // 不完整快照由轮询侧延迟重试，不走耗时的多平台轮询兜底
+            if (error.incompleteSnapshot) throw error;
             console.warn(`获取全 A 股实时行情失败，回退多平台轮询兜底: ${error.message}`);
         }
     } else {
@@ -436,13 +524,82 @@ const computeTodayRatios = async ({ onProgress, forcePolling = false } = {}) => 
     return computeByPolling(groups, { onProgress });
 };
 
+// 分时点合理性校验，两层保证：
+// 1) 分母：全市场成交额是当日累计值，只增不减；明显低于当日已有时点说明外部分母异常
+// 2) 分子：各板块累计成交额同样只增不减；某板块明显下降说明该板块成分股未完整返回（向下突刺来源）
+const validateIntradayPoint = (point, existing) => {
+    const total = Number(point && point.marketTotalAmount);
+    if (!isFinite(total) || total <= 0) {
+        throw new Error('全市场成交额无效，放弃本次写入');
+    }
+
+    const today = dayjs().format('YYYYMMDD');
+    const sameDay = existing && existing.date === today && Array.isArray(existing.points) ? existing.points : [];
+    if (sameDay.length === 0) return;
+
+    let maxTotal = 0;
+    const maxAmountByName = {};
+    for (const item of sameDay) {
+        const value = Number(item.marketTotalAmount);
+        if (isFinite(value) && value > maxTotal) maxTotal = value;
+        for (const [name, amount] of Object.entries(item.amounts || {})) {
+            const current = Number(amount);
+            if (isFinite(current) && current > (maxAmountByName[name] || 0)) {
+                maxAmountByName[name] = current;
+            }
+        }
+    }
+
+    if (maxTotal > 0 && total < maxTotal * MAX_TOTAL_DROP_RATIO) {
+        throw new Error(`全市场成交额异常（${total.toFixed(2)}亿，当日已有时点最大 ${maxTotal.toFixed(2)}亿），判定为分母异常，放弃本次写入`);
+    }
+
+    for (const [name, amount] of Object.entries(point.amounts || {})) {
+        const prevMax = maxAmountByName[name];
+        const current = Number(amount);
+        if (!prevMax || !isFinite(current)) continue;
+        if (current < prevMax * MIN_BLOCK_AMOUNT_RATIO) {
+            throw createIncompleteError(`板块「${name}」成交额较当日已有时点明显下降，判定为成分股未完整返回，放弃本次写入`);
+        }
+    }
+};
+
+// 过滤分时缓存中的历史坏点：分母骤降（向上突刺）或任一板块累计成交额下降（向下突刺）的时点
+const sanitizeIntradayPoints = (points) => {
+    const list = [];
+    let maxTotal = 0;
+    const maxAmountByName = {};
+
+    for (const item of points) {
+        const total = Number(item.marketTotalAmount);
+        if (!isFinite(total) || total <= 0) continue;
+        if (maxTotal > 0 && total < maxTotal * MAX_TOTAL_DROP_RATIO) continue;
+
+        const amounts = item.amounts || {};
+        const hasShrink = Object.entries(amounts).some(([name, amount]) => {
+            const prevMax = maxAmountByName[name];
+            const current = Number(amount);
+            return prevMax && isFinite(current) && current < prevMax * MIN_BLOCK_AMOUNT_RATIO;
+        });
+        if (hasShrink) continue;
+
+        maxTotal = Math.max(maxTotal, total);
+        for (const [name, amount] of Object.entries(amounts)) {
+            const current = Number(amount);
+            if (isFinite(current)) maxAmountByName[name] = Math.max(maxAmountByName[name] || 0, current);
+        }
+        list.push(item);
+    }
+    return list;
+};
+
 // 读取分时缓存文件
 const getIntradayData = () => {
     const data = readJsonSafe(INTRADAY_FILE, null);
     if (!data || !Array.isArray(data.points)) {
         return { date: '', updatedAt: '', points: [] };
     }
-    return data;
+    return { ...data, points: sanitizeIntradayPoints(data.points) };
 };
 
 // 把收盘时点的实时汇总结果补写进按日历史文件（科技板块成交额 / 各分类成交额）
@@ -507,8 +664,9 @@ const saveIntradayPoint = (point) => {
 };
 
 // 计算并写入当前时点的分时数据
-const runAndSaveIntradayPoint = async ({ onProgress, forcePolling = false } = {}) => {
-    const { stats, ...point } = await computeTodayRatios({ onProgress, forcePolling });
+const runAndSaveIntradayPoint = async ({ onProgress, forcePolling = false, forceRefresh = false } = {}) => {
+    const { stats, ...point } = await computeTodayRatios({ onProgress, forcePolling, forceRefresh });
+    validateIntradayPoint(point, getIntradayData());
     const payload = saveIntradayPoint(point);
 
     // 15:00 收盘后的时点即当日最终成交额，落盘到按日历史，次日刷新时上一天的数据不会消失

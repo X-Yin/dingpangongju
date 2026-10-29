@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { getBlocksConfig } = require('./blockConfig');
 const { getSingleStockData } = require('./stock');
+const { getStockBars } = require('./sentimentHotMoney');
 const { sleep, batchParallel, isTradingDay } = require('../utils/index.js');
 const { useCLS } = require('../config');
 const dayjs = require('dayjs');
@@ -99,6 +100,61 @@ const pollBlockData = async (interval = 60000) => {
 
   setInterval(task, interval);
 }
+
+// 板块近 N 个交易日数据：板块每日平均涨跌幅
+// 个股日涨幅 = 相邻两个交易日收盘价环比；板块平均涨幅 = 当日有数据个股涨幅均值（与实时 avgChange 口径一致）
+const getBlockAvgChangeHistory = async (days = 20) => {
+  const blockList = getBlockData();
+  const codeSet = new Set();
+  blockList.forEach(block => (block.data || []).forEach(stock => {
+    if (stock.code && stock.code !== '__block_placeholder__') codeSet.add(stock.code);
+  }));
+
+  const barsMap = new Map();
+  await batchParallel(Array.from(codeSet), async (code) => {
+    try {
+      barsMap.set(code, await getStockBars(code.replace(/^(sh|sz|bj)/i, '')));
+    } catch (e) {
+      barsMap.set(code, []);
+    }
+  }, 8);
+
+  // 交易日取所有成分股日K日期的并集，取最近 days 个
+  const dateSet = new Set();
+  barsMap.forEach(bars => (bars || []).forEach(bar => dateSet.add(bar.d)));
+  const dates = Array.from(dateSet).sort((a, b) => a - b).slice(-days);
+
+  const stockChangeAt = (bars, dateNum) => {
+    if (!Array.isArray(bars)) return null;
+    const index = bars.findIndex(bar => bar.d === dateNum);
+    if (index <= 0) return null;
+    const prevClose = bars[index - 1].c;
+    const close = bars[index].c;
+    if (!(prevClose > 0) || !(close > 0)) return null;
+    return Number((((close - prevClose) / prevClose) * 100).toFixed(2));
+  };
+
+  const formatDate = (dateNum) => {
+    const str = String(dateNum);
+    return `${str.slice(0, 4)}-${str.slice(4, 6)}-${str.slice(6, 8)}`;
+  };
+
+  return blockList.map(block => {
+    const dayRows = dates.map(dateNum => {
+      const changes = [];
+      (block.data || []).forEach(stock => {
+        if (!stock.code || stock.code === '__block_placeholder__') return;
+        const change = stockChangeAt(barsMap.get(stock.code), dateNum);
+        if (change !== null) changes.push(change);
+      });
+      const avgChange = changes.length > 0
+        ? Number((changes.reduce((sum, cur) => sum + cur, 0) / changes.length).toFixed(2))
+        : null;
+      return { 日期: formatDate(dateNum), 板块平均涨幅: avgChange };
+    });
+    return { 板块名称: block.blockName, 板块标签: block.tag || '', [`近${days}个交易日`]: dayRows };
+  });
+};
 
 const getBlockData = () => {
   const blockData = JSON.parse(fs.readFileSync(blockPath, 'utf-8') || '{}');
@@ -463,6 +519,7 @@ exports.getCurrentDayHotBlock = getCurrentDayHotBlock;
 exports.pollBlockHistory = pollBlockHistory;
 exports.getBlockHistory = getBlockHistory;
 exports.getBlockDayHistory = getBlockDayHistory;
+exports.getBlockAvgChangeHistory = getBlockAvgChangeHistory;
 exports.updateBlockDayHistory = updateBlockDayHistory;
 exports.scheduleBlockDayHistory = scheduleBlockDayHistory;
 exports.getBlockMoneyDayHistory = getBlockMoneyDayHistory;

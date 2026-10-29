@@ -16,7 +16,7 @@ const fs = require('fs');
 const { filterUnNormalDaPanData, getAllDaPanData } = require('./service/dapan');
 const { filterUnNormalStockData, getSingleStockData, getSingleStockTlineData, getSingleStockTlineDataByDate, getAllStockData, getJiSuYiDongRankData, triggerUpdateStockData, refreshStockData, getOpeningPrices, getStockValuation } = require('./service/stock');
 const { analyzeStockHistory } = require('./service/stockHistoryAnalysis');
-const { getBlockData, refreshBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock, getBlockHistory, getBlockDayHistory, updateBlockDayHistory, getBlockMoneyDayHistory, updateBlockMoneyDayHistory } = require('./service/block');
+const { getBlockData, refreshBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock, getBlockHistory, getBlockDayHistory, getBlockAvgChangeHistory, updateBlockDayHistory, getBlockMoneyDayHistory, updateBlockMoneyDayHistory } = require('./service/block');
 // const { diagnose } = require('./service/diagnose');
 const { getJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
 const { getKaiPanZhuDongData, getKaiPanHighChangeStocks } = require('./service/kaipanzhudong');
@@ -339,6 +339,17 @@ app.get('/kaipan_high_change_stocks', (req, res) => {
 app.get('/block', (req, res) => {
   const blockData = getBlockData();
   res.json(blockData);
+});
+
+// 板块近 N 个交易日数据：板块每日平均涨跌幅（默认 20 个交易日）
+app.get('/block_avg_change_history', async (req, res) => {
+  try {
+    const days = Math.min(Math.max(parseInt(req.query.days, 10) || 20, 1), 60);
+    res.json(await getBlockAvgChangeHistory(days));
+  } catch (error) {
+    console.error('获取板块历史数据失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
 });
 
 // 强制刷新板块数据（同步等待完成）；传 blockName 时仅刷新该板块

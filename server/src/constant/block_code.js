@@ -1617,5 +1617,30 @@ exports.default = [
         "blockName": "机器人大脑",
         "code": "sz301479",
         "name": "弘景光电"
+    },
+    {
+        "blockName": "商业航天",
+        "code": "sz002565",
+        "name": "顺灏股份"
+    },
+    {
+        "blockName": "商业航天",
+        "code": "sz001400",
+        "name": "江顺科技"
+    },
+    {
+        "blockName": "商业航天",
+        "code": "sh600501",
+        "name": "航天晨光"
+    },
+    {
+        "blockName": "商业航天",
+        "code": "sz000547",
+        "name": "航天发展"
+    },
+    {
+        "blockName": "商业航天",
+        "code": "sh603131",
+        "name": "上海沪工"
     }
 ]

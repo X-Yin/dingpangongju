@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Layout, Row, Col, Card, Button, Input, message, Spin, Empty, Tag, Space, Tooltip as AntTooltip, Popconfirm, Tabs } from 'antd';
-import { FileTextOutlined, LineChartOutlined, SaveOutlined, DeleteOutlined, HistoryOutlined, ReloadOutlined, CalendarOutlined, EditOutlined, TagOutlined, GlobalOutlined } from '@ant-design/icons';
+import { FileTextOutlined, LineChartOutlined, SaveOutlined, DeleteOutlined, HistoryOutlined, ReloadOutlined, CalendarOutlined, EditOutlined, TagOutlined, GlobalOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
@@ -14,11 +14,22 @@ import './index.scss';
 
 const { Sider, Content } = Layout;
 
-const TAG_COLORS = [
-  { name: 'red', color: '#f5222d', label: '红' },
-  { name: 'green', color: '#52c41a', label: '绿' },
-  { name: 'orange', color: '#fa8c16', label: '橙' },
+// 市场情绪固定三档：科技指数情绪 > 20 情绪主升；< -20 情绪退潮；其余为震荡期
+const MARKET_PHASES = [
+  { name: '震荡期', color: 'gold', range: '-20 ~ 20' },
+  { name: '情绪主升', color: 'red', range: '> 20' },
+  { name: '情绪退潮', color: 'green', range: '< -20' },
 ];
+
+const getMarketPhase = (emotion) => {
+  if (emotion === null || emotion === undefined || isNaN(emotion)) return null;
+  if (emotion > 20) return MARKET_PHASES.find(p => p.name === '情绪主升');
+  if (emotion < -20) return MARKET_PHASES.find(p => p.name === '情绪退潮');
+  return MARKET_PHASES.find(p => p.name === '震荡期');
+};
+
+// 量价分析提示语（下载的 txt 文件开头）
+const VOLUME_PRICE_PROMPT = `通过以下各个板块的成交量占比变化，以及板块内个股的今日涨幅，做一个今日复盘。看下谁是主线，谁是支线。根据兵法中以正合以奇胜的策略，给出接下来应该怎么做的指导。比如当下某个板块成交量持续放大，而板块内个股涨幅巨大，说明是主线，那么应该集中重点仓位进攻该板块。但是如果板块成交量占比放大，而板块内个股跌幅严重，负反馈较大，说明板块高位退潮，不宜参与或者静待观察。这里主要以成交量占比变化来判断主线和支线。如果近期持续放大，说明资金参与程度较深，假设今天市场情绪不高，而板块只要没有出现大面积负反馈，也不能直接看做情绪退潮。相反，如果大盘今天情绪不好，而某个板块突然开始上涨，那也不能判断说就是主线，因为它有可能是资金声东击西做的一个低位迂回套利。另外不能看谁占比最大，谁就是主线。而是要重点关注变化的趋势。因为每个板块内的成分股个数不同，个数多的自然成交量占比大，但是如果近期不是持续上升，说明资金参与度不高。我这里要分析的主线核心是游资和量化和部分活跃的机构资金，他们总是短期内趋利避害，寻找阻力最小的方向，因此哪个板块成交量占比持续提升就代表他们在往哪个板块聚集，也代表了市场的人气和热点方向。数据中的「板块近20个交易日平均涨跌幅」给出了每个板块最近20个交易日的每日平均涨跌幅，请结合这部分历史数据判断板块的持续性、分歧与轮动节奏。`;
 
 const formatDateStr = (dateNum) => {
   if (!dateNum) return '';
@@ -1107,6 +1118,7 @@ const Fupan = () => {
   const navigate = useNavigate();
   const queryDate = searchParams.get('date');
   const [indexKlineData, setIndexKlineData] = useState(null);
+  const [techIndexData, setTechIndexData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(null);
   const [tlineData, setTlineData] = useState(null);
@@ -1125,6 +1137,7 @@ const Fupan = () => {
   const [currentTag, setCurrentTag] = useState('');
   const [currentTagColor, setCurrentTagColor] = useState('red');
   const [saving, setSaving] = useState(false);
+  const [vpLoading, setVpLoading] = useState(false);
   const [notesLoading, setNotesLoading] = useState(false);
   const [isContentModified, setIsContentModified] = useState(false);
   const vditorRef = useRef(null);
@@ -1136,6 +1149,22 @@ const Fupan = () => {
   const currentTagColorRef = useRef('red');
   const selectedDateRef = useRef(null);
   const notesListRef = useRef([]);
+
+  // 当期（或最近一个交易日）的科技指数情绪值，用于固定市场情绪标签
+  const techEmotion = useMemo(() => {
+    if (!techIndexData.length) return null;
+    const target = selectedDate ? String(selectedDate) : null;
+    const matched = target
+      ? techIndexData.find(item => String(item.date) === target)
+      : null;
+    const latest = [...techIndexData].sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
+    const value = parseFloat((matched || latest)?.changeSumResult);
+    return isNaN(value) ? null : value;
+  }, [techIndexData, selectedDate]);
+
+  const marketPhase = useMemo(() => getMarketPhase(techEmotion), [techEmotion]);
+  const marketPhaseName = marketPhase?.name || '';
+  const marketPhaseColor = marketPhase?.color || 'default';
 
   useEffect(() => {
     selectedDateRef.current = selectedDate;
@@ -1181,6 +1210,7 @@ const Fupan = () => {
       const res = await axios.get(`http://${local_ip}:3000/emotion_data`);
       const klineData = res.data.indexKlineData || null;
       setIndexKlineData(klineData);
+      setTechIndexData(Array.isArray(res.data.techIndexData) ? res.data.techIndexData : []);
       
       if (klineData?.shangzhengData?.length > 0) {
         const dates = klineData.shangzhengData.map(item => item.trade_date);
@@ -1319,14 +1349,80 @@ const Fupan = () => {
     setIsContentModified(true);
   };
 
-  const handleTagChange = (e) => {
-    setCurrentTag(e.target.value);
-    setIsContentModified(true);
-  };
+  // 量价分析：汇总各板块成交量占比 + 板块内个股当日涨幅，生成 txt 下载
+  const handleVolumePriceAnalysis = async () => {
+    setVpLoading(true);
+    try {
+      const startDate = dayjs('2026-04-01').format('YYYY-MM-DD');
+      const endDate = dayjs().format('YYYY-MM-DD');
+      const [techRes, categoryRes, blockRes, blockHistoryRes] = await Promise.all([
+        axios.get(`http://${local_ip}:3000/tech_block_ratio`, { params: { startDate, endDate } }),
+        axios.get(`http://${local_ip}:3000/block_category_ratio`, { params: { startDate, endDate } }),
+        axios.get(`http://${local_ip}:3000/block`),
+        axios.get(`http://${local_ip}:3000/block_avg_change_history`, { params: { days: 20 } })
+          .catch(() => ({ data: [] })),
+      ]);
 
-  const handleTagColorChange = (color) => {
-    setCurrentTagColor(color);
-    setIsContentModified(true);
+      // 成交量占比只保留最近 20 个交易日
+      const normalizeRatioRows = (list) => (Array.isArray(list)
+        ? [...list]
+          .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+          .slice(-20)
+          .map(row => ({ 日期: formatDateStr(row.date), 成交量占比: Number(row.ratio) }))
+        : []);
+
+      const 板块成交量占比 = { 科技板块成交量占比: normalizeRatioRows(techRes.data) };
+      Object.entries(categoryRes.data || {}).forEach(([name, list]) => {
+        // 跳过子题材拆分数据（键名以 _blocks 结尾）
+        if (name.endsWith('_blocks')) return;
+        板块成交量占比[`${name}成交量占比`] = normalizeRatioRows(list);
+      });
+
+      const 板块个股当日涨幅 = {};
+      (Array.isArray(blockRes.data) ? blockRes.data : []).forEach(block => {
+        const stocks = (block.data || [])
+          .filter(stock => !stock.noMarketData && isFinite(Number(stock.change)))
+          .map(stock => ({
+            名称: stock.name,
+            代码: stock.code,
+            当日涨幅: Number(stock.change),
+          }));
+        板块个股当日涨幅[block.blockName] = {
+          板块标签: block.tag || '',
+          板块平均涨幅: block.avgChange,
+          个股数量: stocks.length,
+          个股: stocks,
+        };
+      });
+
+      const payload = {
+        生成时间: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        复盘日期: selectedDate ? formatDateStr(selectedDate) : dayjs().format('YYYY-MM-DD'),
+        科技指数情绪: techEmotion,
+        市场情绪: marketPhaseName || '未知',
+        板块成交量占比,
+        板块个股当日涨幅,
+        板块近20个交易日平均涨跌幅: Array.isArray(blockHistoryRes.data) ? blockHistoryRes.data : [],
+      };
+
+      const blob = new Blob([`${VOLUME_PRICE_PROMPT}\n\n${JSON.stringify(payload, null, 2)}`], {
+        type: 'text/plain;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `量价分析_${dayjs().format('YYYYMMDD_HHmm')}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      message.success('量价分析数据已生成并下载');
+    } catch (error) {
+      console.error('生成量价分析数据失败:', error);
+      message.error('生成量价分析数据失败，请检查后端服务');
+    } finally {
+      setVpLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -1341,8 +1437,8 @@ const Fupan = () => {
     
     const content = editorInstance.current.getValue() || '';
     const title = currentTitleRef.current?.trim() || formatDateStr(selectedDate) + ' 复盘';
-    const tag = currentTagRef.current?.trim() || '';
-    const tagColor = currentTagColorRef.current || 'red';
+    const tag = marketPhaseName;
+    const tagColor = marketPhaseColor === 'default' ? 'red' : marketPhaseColor;
     
     setSaving(true);
     try {
@@ -1727,32 +1823,29 @@ const Fupan = () => {
                     </div>
                     <div className="editor-tag-row">
                       <span className="editor-tag-label">
-                        <TagOutlined /> 标签
+                        <TagOutlined /> 市场情绪
                       </span>
-                      <Input
-                        value={currentTag}
-                        onChange={handleTagChange}
-                        placeholder="为当天复盘添加标签（可选）"
-                        size="small"
-                        maxLength={10}
-                        style={{ width: 200 }}
-                      />
-                      <div className="tag-color-selector">
-                        {TAG_COLORS.map(c => (
-                          <div
-                            key={c.name}
-                            className={`tag-color-dot ${currentTagColor === c.name ? 'selected' : ''}`}
-                            style={{ background: c.color }}
-                            onClick={() => handleTagColorChange(c.name)}
-                            title={c.label}
-                          />
+                      <div className="market-phase-selector">
+                        {MARKET_PHASES.map(phase => (
+                          <span
+                            key={phase.name}
+                            className={`market-phase-chip ${marketPhaseName === phase.name ? 'active' : ''} phase-${phase.name}`}
+                            title={phase.range}
+                          >
+                            {phase.name}
+                          </span>
                         ))}
                       </div>
-                      {currentTag && (
-                        <Tag color={currentTagColor} style={{ margin: 0 }}>
-                          {currentTag}
-                        </Tag>
-                      )}
+                      <span className="market-phase-value">
+                        科技指数情绪：
+                        <b style={{
+                          color: techEmotion === null
+                            ? '#999'
+                            : techEmotion > 0 ? '#f5222d' : techEmotion < 0 ? '#52c41a' : '#666',
+                        }}>
+                          {techEmotion === null ? '暂无数据' : techEmotion.toFixed(2)}
+                        </b>
+                      </span>
                     </div>
                   </div>
                   <div className="editor-toolbar">
@@ -1767,6 +1860,14 @@ const Fupan = () => {
                           刷新
                         </Button>
                       </AntTooltip>
+                      <Button
+                        icon={<BarChartOutlined />}
+                        onClick={handleVolumePriceAnalysis}
+                        loading={vpLoading}
+                        size="small"
+                      >
+                        量价分析
+                      </Button>
                     </Space>
                     <Space>
                       <Button

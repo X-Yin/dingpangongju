@@ -76,11 +76,12 @@ const runAkScript = (cmd, symbol) => new Promise((resolve, reject) => {
 });
 
 // 带 TTL 缓存 + 失败回退旧数据的统一获取入口
-const getAkData = async (cmd, symbol) => {
+// force=true 时跳过 TTL 缓存直接重新请求（用于校验失败后的重试，避免复用同一份坏数据）
+const getAkData = async (cmd, symbol, force = false) => {
   const key = symbol ? `${cmd}:${symbol}` : cmd;
   const hit = cache.get(key);
 
-  if (hit && Date.now() - hit.ts < CACHE_TTL[cmd]) {
+  if (!force && hit && Date.now() - hit.ts < CACHE_TTL[cmd]) {
     return hit.data;
   }
 
@@ -125,7 +126,8 @@ const getSectorDetail = (sector) => getAkData('sector_detail', sector);
 // 外盘期货实时行情（新浪，symbol 见 ak.futures_hq_subscribe_exchange_symbol，可逗号分隔多个）
 const getForeignCommodity = (symbol) => getAkData('foreign_commodity', symbol);
 // 全部 A 股实时行情（东财，代码/名称/成交额），用于计算板块成交量占比
-const getASpot = () => getAkData('a_spot');
+// force=true 时跳过 30s 缓存，强制重新拉取（上游偶发返回不完整快照时用于重试）
+const getASpot = (force = false) => getAkData('a_spot', undefined, force);
 
 module.exports = {
   getClsNews,

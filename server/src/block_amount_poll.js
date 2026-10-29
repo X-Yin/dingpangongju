@@ -11,6 +11,11 @@ const { runAndSaveIntradayPoint } = require('./service/blockVolumeRatio');
 const POLL_INTERVAL = 10 * 60 * 1000;
 const CHECK_INTERVAL = 60 * 1000;
 const START_MINUTE = 10 * 60; // 10:00 之后才开始
+// 校验失败 / 请求失败时的重试：等待 10s 后强制重新拉取行情（不复用同一份异常快照）
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY = 10 * 1000;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // npm 会把 `npm run xxx --now` 解析成 npm_config_now，因此两种方式都兼容
 const NOW = process.argv.includes('--now')
@@ -44,29 +49,42 @@ const runOnce = async () => {
     const startedAt = Date.now();
     console.log(`\n[${formatTime()}] 开始计算板块成交量占比...`);
 
-    try {
-        const { point, payload, stats } = await runAndSaveIntradayPoint({ onProgress: renderProgress, forcePolling: ALL });
-        process.stdout.write('\n');
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+        try {
+            const { point, payload, stats } = await runAndSaveIntradayPoint({
+                onProgress: renderProgress,
+                forcePolling: ALL,
+                // 重试时绕过 30s 实时行情缓存，避免拿到同一份不完整快照
+                forceRefresh: attempt > 1,
+            });
+            process.stdout.write('\n');
 
-        const cost = ((Date.now() - startedAt) / 1000).toFixed(1);
-        const ratioText = Object.entries(point.ratios)
-            .filter(([, value]) => value !== null)
-            .sort((a, b) => b[1] - a[1])
-            .map(([name, value]) => `${name} ${value.toFixed(2)}%`)
-            .join(' | ');
+            const cost = ((Date.now() - startedAt) / 1000).toFixed(1);
+            const ratioText = Object.entries(point.ratios)
+                .filter(([, value]) => value !== null)
+                .sort((a, b) => b[1] - a[1])
+                .map(([name, value]) => `${name} ${value.toFixed(2)}%`)
+                .join(' | ');
 
-        console.log(`[${formatTime()}] 计算完成（${stats.mode === 'poll' ? '多平台轮询兜底' : '全 A 股实时行情'}），耗时 ${cost}s，全市场成交额 ${point.marketTotalAmount} 亿`);
-        if (stats.mode === 'poll') {
-            console.log(`兜底轮询目标交易日 ${stats.targetDate}，覆盖 ${stats.matched}/${stats.total} 条成分股`);
+            console.log(`[${formatTime()}] 计算完成（${stats.mode === 'poll' ? '多平台轮询兜底' : '全 A 股实时行情'}），耗时 ${cost}s，全市场成交额 ${point.marketTotalAmount} 亿`);
+            if (stats.mode === 'poll') {
+                console.log(`兜底轮询目标交易日 ${stats.targetDate}，覆盖 ${stats.matched}/${stats.total} 条成分股`);
+            }
+            console.log(`占比: ${ratioText}`);
+            console.log(`已写入分时缓存（${payload.points.length} 个时点）: ${payload.date}`);
+            return true;
+        } catch (error) {
+            process.stdout.write('\n');
+            if (attempt < MAX_ATTEMPTS) {
+                console.warn(`[${formatTime()}] 第 ${attempt} 次计算失败：${error.message}，${RETRY_DELAY / 1000}s 后重试`);
+                await sleep(RETRY_DELAY);
+            } else {
+                console.error(`[${formatTime()}] 连续 ${MAX_ATTEMPTS} 次计算失败，本次跳过（不写入分时缓存，避免画出假突刺）：${error.message}`);
+            }
         }
-        console.log(`占比: ${ratioText}`);
-        console.log(`已写入分时缓存（${payload.points.length} 个时点）: ${payload.date}`);
-        return true;
-    } catch (error) {
-        process.stdout.write('\n');
-        console.error(`[${formatTime()}] 计算失败:`, error.message);
-        return false;
     }
+
+    return false;
 };
 
 const main = async () => {

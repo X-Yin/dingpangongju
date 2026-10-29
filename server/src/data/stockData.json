@@ -2558,5 +2558,65 @@
       }
     ],
     "isImportant": false
+  },
+  "sz301313": {
+    "stockName": "凡拓数创",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 60.51,
+        "high_px": 68.7,
+        "low_px": 60.51,
+        "close_px": 64.82,
+        "business_amount": 26212919,
+        "business_balance": 1700403100,
+        "change": 2.89,
+        "ma5_px": 64.3,
+        "ma10_px": 54.32,
+        "ma20_px": 42.34,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh688787": {
+    "stockName": "海天瑞声",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 131.61,
+        "high_px": 142.5,
+        "low_px": 131.61,
+        "close_px": 132.63,
+        "business_amount": 7539628,
+        "business_balance": 1029660390,
+        "change": -2.17,
+        "ma5_px": 137.98,
+        "ma10_px": 119.29,
+        "ma20_px": 102.13,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh601698": {
+    "stockName": "中国卫通",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 21.99,
+        "high_px": 23.86,
+        "low_px": 21.83,
+        "close_px": 23.1,
+        "business_amount": 63901269,
+        "business_balance": 1482544800,
+        "change": 4.57,
+        "ma5_px": 22.3,
+        "ma10_px": 22.31,
+        "ma20_px": 22.42,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

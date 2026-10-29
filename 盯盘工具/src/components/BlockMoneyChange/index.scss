@@ -738,12 +738,22 @@
         padding: 12px 32px 0;
 
         .crowd-chart-search {
-            width: 300px;
+            width: 480px;
             max-width: 100%;
 
-            .ant-input-prefix {
+            .ant-select-selector {
+                min-height: 36px;
+                align-items: center;
+            }
+
+            .ant-select-selection-item {
+                background: #f1f5f9;
+                border-color: #e2e8f0;
+                color: #334155;
+            }
+
+            .ant-select-suffix {
                 color: #94a3b8;
-                margin-inline-end: 6px;
             }
         }
     }

@@ -1083,5 +1083,32 @@
     "riskScore": "8",
     "isTech": true,
     "addedAt": "2026-10-29 15:28:51"
+  },
+  {
+    "code": "sz301313",
+    "name": "凡拓数创",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": " 8",
+    "isTech": true,
+    "addedAt": "2026-10-29 17:01:39"
+  },
+  {
+    "code": "sh688787",
+    "name": "海天瑞声",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": " 8",
+    "isTech": true,
+    "addedAt": "2026-10-29 17:01:52"
+  },
+  {
+    "code": "sh601698",
+    "name": "中国卫通",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": " 8",
+    "isTech": true,
+    "addedAt": "2026-10-29 17:08:01"
   }
 ]
