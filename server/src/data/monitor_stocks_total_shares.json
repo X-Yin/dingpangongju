@@ -578,5 +578,35 @@
     "secu_code": "sz300413",
     "secu_name": "芒果超媒",
     "TotalShares": 1870720815
+  },
+  {
+    "secu_code": "sz300684",
+    "secu_name": "中石科技",
+    "TotalShares": 299509223
+  },
+  {
+    "secu_code": "sz300720",
+    "secu_name": "海川智能",
+    "TotalShares": 194877256
+  },
+  {
+    "secu_code": "sz002149",
+    "secu_name": "西部材料",
+    "TotalShares": 488214274
+  },
+  {
+    "secu_code": "sh600118",
+    "secu_name": "中国卫星",
+    "TotalShares": 1182489135
+  },
+  {
+    "secu_code": "sh600879",
+    "secu_name": "航天电子",
+    "TotalShares": 3299299334
+  },
+  {
+    "secu_code": "sz300136",
+    "secu_name": "信维通信",
+    "TotalShares": 967568638
   }
 ]

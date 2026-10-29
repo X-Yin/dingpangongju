@@ -104,6 +104,91 @@
     text-align: center;
     font-weight: 700;
   }
+
+  .theme-pack-delete {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    z-index: 2;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8a97ae;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    /* 默认隐藏，悬浮时从左侧滑入 */
+    opacity: 0;
+    transform: translateX(-10px);
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease, color 0.2s ease, background 0.2s ease;
+
+    &:hover {
+      color: #ff4d4f;
+      background: #fff1f0;
+    }
+  }
+
+  &:hover .theme-pack-delete {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+}
+
+/* 添加主题包表单 */
+.theme-pack-add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px dashed rgba(99, 102, 241, 0.4);
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.04);
+
+  .theme-pack-add-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .ant-typography {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+}
+
+/* 编辑主题包颜色抽屉 */
+.theme-pack-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .theme-pack-edit-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border: 1px solid rgba(18, 33, 58, 0.08);
+    border-radius: 10px;
+    background: rgba(247, 250, 255, 0.6);
+  }
+
+  .theme-pack-edit-label {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .theme-pack-edit-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 6px;
+  }
 }
 
 .theme-pack-preview {

@@ -1,32 +1,62 @@
 [
   {
-    "id": "0b6aaae3adb03336",
-    "time": "2026-10-28 13:00:00",
+    "id": "87217b69ad0264da",
+    "time": "2026-10-29 09:30:00",
     "read": true,
-    "strategyId": "straight_rise_no_volume",
-    "title": "⚠️ 无量拉升警惕回落",
-    "description": "创业板5分钟上涨1.23%，但成交量仅增加 <strong>-1亿</strong>（不足100亿），无量上涨持续性存疑，容易回落。",
-    "severity": "medium",
+    "strategyId": "prev_day_tail_rally",
+    "title": "⚠️ 前一日尾盘拉升，今日低开大概率下跌",
+    "description": "前一日（20261028）创业板指：14:00后最低2604.23→收盘2634.76，拉升1.17%。今日竞价低开-1.46%（开盘价2596.22 < 前日收盘2634.76），当日大概率低开低走大阴线，情况不对要赶快清仓！",
+    "severity": "high",
     "isBullish": false
   },
   {
-    "id": "7ef811fae472b142",
-    "time": "2026-10-28 13:05:14",
+    "id": "bc6211d0397ad018",
+    "time": "2026-10-29 09:45:04",
     "read": true,
-    "strategyId": "volume_price_surge",
-    "title": "✅ 量价齐升",
-    "description": "成交量放大 <strong>161亿</strong>（≥100亿），资金净流入164.3→180.1亿（≥10亿，流入增加），创业板5分钟上涨1.28%。量价资金三者共振，多方占优。",
-    "severity": "medium",
-    "isBullish": true
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>618亿</strong>（≥100亿），主力资金净流出加速（-59.2→-174.8亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
   },
   {
-    "id": "b43e182077d0a7fb",
-    "time": "2026-10-28 13:26:05",
+    "id": "2732dd9ed3575651",
+    "time": "2026-10-29 09:52:09",
     "read": true,
-    "strategyId": "volume_price_surge",
-    "title": "✅ 量价齐升",
-    "description": "成交量放大 <strong>125亿</strong>（≥100亿），资金净流入233.1→248.7亿（≥10亿，流入增加），创业板5分钟上涨1.64%。量价资金三者共振，多方占优。",
-    "severity": "medium",
-    "isBullish": true
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-226.3亿</strong>（净流出）<br/>• 科技分时情绪 -38.2 → -37.3（上升 0.9）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "041c5f0d9c5f91f9",
+    "time": "2026-10-29 10:05:12",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>337亿</strong>（≥100亿），主力资金净流出加速（-238.3→-263.4亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "b895f98032ce18dc",
+    "time": "2026-10-29 13:22:38",
+    "read": false,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-423.8→-403.9亿（增加19.8亿，≥5亿）<br/>• 科创板指较10分钟前上涨0.06%<br/>• 成交量差值-506亿（<-500亿严重缩量），较10分钟前仅增加-220亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "62b5086fb1cee0b0",
+    "time": "2026-10-29 14:46:49",
+    "read": false,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>113亿</strong>（≥100亿），主力资金净流出加速（-582.6→-615.8亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
   }
 ]

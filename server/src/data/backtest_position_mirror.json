@@ -1,13 +1,24 @@
 {
-  "lastSyncedEndDate": "20261028",
+  "lastSyncedEndDate": "20261029",
   "lastRange": {
-    "startDate": "20260729",
-    "endDate": "20261028"
+    "startDate": "20260730",
+    "endDate": "20261029"
   },
-  "lastSyncedAt": "2026-10-28 08:24:32",
-  "lastHoldings": [],
-  "added": [],
+  "lastSyncedAt": "2026-10-29 08:34:42",
+  "lastHoldings": [
+    {
+      "code": "sh688025",
+      "name": "杰普特",
+      "buyDate": "20261028",
+      "buyPrice": 363.55,
+      "buyTime": "09:50",
+      "weight": 0.5
+    }
+  ],
+  "added": [
+    "杰普特(sh688025) 成本 363.55 买入日 2026-10-28"
+  ],
   "skipped": [],
   "attempts": 0,
-  "attemptsDate": "2026-10-28"
+  "attemptsDate": "2026-10-29"
 }

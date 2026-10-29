@@ -1,5 +1,32 @@
 [
   {
+    "date": "2026-10-29",
+    "operations": [
+      {
+        "id": "1793237794373_13i2",
+        "action": "sell",
+        "stockName": "芒果超媒",
+        "stockCode": "sz300413",
+        "position": "",
+        "time": "09:36"
+      },
+      {
+        "id": "1793238398897_o55t",
+        "action": "sell",
+        "stockName": "杰普特",
+        "stockCode": "sh688025",
+        "position": "",
+        "time": "09:46"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-10-29T01:36:40.372Z",
+    "updatedAt": "2026-10-29T01:46:48.644Z"
+  },
+  {
     "date": "2026-10-28",
     "operations": [
       {

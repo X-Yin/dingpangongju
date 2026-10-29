@@ -1,23 +1,16 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-10-28 10:54:27",
+  "computedAt": "2026-10-29 09:47:55",
   "reason": "持仓变动重跑（持仓管理增删股票）",
   "range": {
-    "startDate": "20260729",
-    "endDate": "20261028"
+    "startDate": "20260730",
+    "endDate": "20261029"
   },
   "tradeCount": 8,
   "threshold": 20,
-  "consecutiveBelow": 0,
+  "consecutiveBelow": 1,
   "lastReturns": [
-    {
-      "code": "sh688825",
-      "name": "长鑫科技",
-      "sellDate": "20260730",
-      "sellTime": "10:00",
-      "returnRate": 3.44
-    },
     {
       "code": "sh688313",
       "name": "仕佳光子",
@@ -66,6 +59,13 @@
       "sellDate": "20261026",
       "sellTime": "10:10",
       "returnRate": 8.7
+    },
+    {
+      "code": "sh688025",
+      "name": "杰普特",
+      "sellDate": "20261029",
+      "sellTime": "09:47",
+      "returnRate": -1.1
     }
   ]
 }

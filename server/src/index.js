@@ -121,6 +121,8 @@ const { getMarketOverview, getThemeAnalysis, getStockQuotes, getThemeHistory, ge
 // 复盘页「四维立体」：主线/支线 + 龙一~龙五 + 三线情绪周期
 const { getSiweiLitiAnalysis } = require('./service/siweiLiti');
 const { getStore: getThemeCustomStore, saveTheme: saveCustomTheme, deleteTheme: deleteCustomTheme, saveOverride: saveThemeOverride, saveOrder: saveThemeOrder } = require('./service/themeCustom');
+// 盯盘页主题包配置：列表 / 新增 / 更新 / 删除
+const { getPacks: getThemePacks, addPack: addThemePack, updatePack: updateThemePack, deletePack: deleteThemePack } = require('./service/themePacks');
 const { getClsNews, getBoardChange, getStockChangesAll, getStockNews, getStockZyjs, getInstitutionParticipation, getSectorSpot, getSectorDetail, getForeignCommodity } = require('./service/akData');
 // 买点诊断后端集中化：全局模式状态 / 飞书通知 / 10s 集中推送 / WebSocket 服务
 const strategyModeState = require('./service/strategyModeState');
@@ -899,6 +901,61 @@ app.post('/theme_custom/save_order', (req, res) => {
     }
   } catch (error) {
     console.error('保存题材横幅排序失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 盯盘页主题包：列表 / 新增 / 删除
+app.get('/theme_packs/list', (req, res) => {
+  try {
+    res.json({ success: true, data: getThemePacks() });
+  } catch (error) {
+    console.error('获取主题包列表失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/theme_packs/add', (req, res) => {
+  try {
+    const { pack } = req.body || {};
+    const result = addThemePack(pack);
+    if (result.success) {
+      res.json({ success: true, data: result.packs });
+    } else {
+      res.status(400).json({ success: false, message: result.error });
+    }
+  } catch (error) {
+    console.error('新增主题包失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/theme_packs/update', (req, res) => {
+  try {
+    const { id, pack } = req.body || {};
+    const result = updateThemePack(id, pack);
+    if (result.success) {
+      res.json({ success: true, data: result.packs });
+    } else {
+      res.status(400).json({ success: false, message: result.error });
+    }
+  } catch (error) {
+    console.error('更新主题包失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/theme_packs/delete', (req, res) => {
+  try {
+    const { id } = req.body || {};
+    const result = deleteThemePack(id);
+    if (result.success) {
+      res.json({ success: true, data: result.packs });
+    } else {
+      res.status(400).json({ success: false, message: result.error });
+    }
+  } catch (error) {
+    console.error('删除主题包失败:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

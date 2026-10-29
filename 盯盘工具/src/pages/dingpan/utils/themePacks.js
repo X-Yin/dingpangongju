@@ -5371,10 +5371,21 @@ export const THEME_PACKS = [
     },
 ];
 
+// 后端返回的主题包列表缓存在模块级变量中：加载成功后作为唯一数据源（支持删除），
+// 未加载或加载失败时回退到本地静态列表
+let remoteThemePacks = null;
+
+export const setRemoteThemePacks = (packs) => {
+    remoteThemePacks = Array.isArray(packs) ? packs : null;
+};
+
+// 当前可用的主题包列表（后端优先）
+export const getThemePacks = () => remoteThemePacks || THEME_PACKS;
+
 // 根据 id 获取主题包；'' / undefined / 'default' 返回 null（默认样式）
 export const getThemePack = (id) => {
     if (!id || id === 'default') return null;
-    return THEME_PACKS.find(p => p.id === id) || null;
+    return getThemePacks().find(p => p.id === id) || null;
 };
 
 // 将主题包 token 转为 CSS 变量 style 对象（用于 React style / 挂到容器上）

@@ -37,7 +37,7 @@ import IndexOverlayFullscreenModal from './components/IndexOverlayFullscreenModa
 import BuyPointDiagnosisModal from './components/BuyPointDiagnosisModal';
 import ThemeColorModal from './components/ThemeColorModal';
 import { DEFAULT_THEME_COLOR } from './utils/themeColor';
-import { getThemePack, buildPackVars, THEME_PACKS } from './utils/themePacks';
+import { buildPackVars, getThemePacks, setRemoteThemePacks } from './utils/themePacks';
 import { hideStock, unhideStock, cleanExpiredHiddenStocks, filterHiddenStocks } from './utils/hiddenStocks';
 import { fetchAndCopyContext } from './utils/copyContext';
 import './index.scss';
@@ -162,6 +162,10 @@ const DingPan = () => {
     const [themeColorModalVisible, setThemeColorModalVisible] = useState(false);
     // 弹窗内未保存的实时预览主题包（null 表示无预览）；不写入 localStorage，取消时自动失效
     const [themePreviewPack, setThemePreviewPack] = useState(null);
+    // 编辑主题包颜色时的实时预览数据（仅内存，点击保存才写入后端）
+    const [themePreviewPackData, setThemePreviewPackData] = useState(null);
+    // 主题包列表：由后端 /theme_packs/list 返回，加载失败时回退到本地静态列表
+    const [themePacks, setThemePacks] = useState(() => getThemePacks());
 
     // 预览优先于已保存配置，用于弹窗中悬停/点选时即时生效
     const themeColorView = useMemo(
@@ -170,7 +174,12 @@ const DingPan = () => {
     );
 
     // 当前生效的主题包（null 表示默认样式）
-    const activeThemePack = getThemePack(themeColorView.pack);
+    const activeThemePack = useMemo(() => {
+        if (!themeColorView.pack) return null;
+        // 编辑颜色中的实时预览数据优先
+        const previewData = themePreviewPackData?.id === themeColorView.pack ? themePreviewPackData : null;
+        return previewData || themePacks.find(p => p.id === themeColorView.pack) || null;
+    }, [themeColorView.pack, themePacks, themePreviewPackData]);
     // 主题包 CSS 变量（挂到 .dingpan-container 上，仅外层组件消费）
     const packVars = useMemo(
         () => (activeThemePack ? buildPackVars(activeThemePack) : undefined),
@@ -270,7 +279,7 @@ const DingPan = () => {
         if (!themeColor.randomPlay) return undefined;
         const timer = setInterval(() => {
             setThemeColor(prev => {
-                const ids = THEME_PACKS.map(p => p.id);
+                const ids = themePacks.map(p => p.id);
                 if (!ids.length) return prev;
                 let next = prev.pack;
                 while (next === prev.pack && ids.length > 1) {
@@ -281,7 +290,7 @@ const DingPan = () => {
             });
         }, 5 * 60 * 1000);
         return () => clearInterval(timer);
-    }, [themeColor.randomPlay]);
+    }, [themeColor.randomPlay, themePacks]);
 
     // 交易纪律弹窗：每个交易日 9:30:00-9:40:00 显示，非交易日（周末/节假日，以交易日历为准）与午休/收盘后不显示
     useEffect(() => {
@@ -300,15 +309,67 @@ const DingPan = () => {
         return () => clearInterval(id);
     }, []);
 
+    // 应用后端返回的主题包列表：同步到模块级缓存（App.jsx 等读取页面背景色时也会用到）
+    const applyThemePacks = (packs) => {
+        if (!Array.isArray(packs)) return;
+        setRemoteThemePacks(packs);
+        setThemePacks(packs);
+    };
+
+    // 从后端加载主题包列表；失败时保留当前列表（首次加载失败则使用本地静态列表）
+    const loadThemePacks = async () => {
+        try {
+            const res = await axios.get(`http://${local_ip}:3000/theme_packs/list`);
+            if (res.data?.success) applyThemePacks(res.data.data);
+        } catch (error) {
+            console.error('加载主题包列表失败:', error);
+        }
+    };
+
+    useEffect(() => {
+        loadThemePacks();
+        // 仅首次进入页面加载一次，之后由弹窗打开/增删操作刷新
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // 新增主题包：后端校验 JSON 结构，成功后刷新列表
+    const handleAddThemePack = async (pack) => {
+        const res = await axios.post(`http://${local_ip}:3000/theme_packs/add`, { pack });
+        if (!res.data?.success) throw new Error(res.data?.message || '新增主题包失败');
+        applyThemePacks(res.data.data);
+        return res.data.data;
+    };
+
+    // 更新主题包（编辑颜色后保存）：后端按 token 合并，成功后刷新列表
+    const handleUpdateThemePack = async (id, tokens) => {
+        const res = await axios.post(`http://${local_ip}:3000/theme_packs/update`, { id, pack: { tokens } });
+        if (!res.data?.success) throw new Error(res.data?.message || '更新主题包失败');
+        applyThemePacks(res.data.data);
+        return res.data.data;
+    };
+
+    // 删除主题包；若删除的是当前生效主题，则回退到默认主题
+    const handleDeleteThemePack = async (id) => {
+        const res = await axios.post(`http://${local_ip}:3000/theme_packs/delete`, { id });
+        if (!res.data?.success) throw new Error(res.data?.message || '删除主题包失败');
+        applyThemePacks(res.data.data);
+        setThemeColor(prev => (prev.pack === id ? { ...prev, pack: '' } : prev));
+        setThemePreviewPack(prev => (prev === id ? '' : prev));
+        setThemePreviewPackData(prev => (prev?.id === id ? null : prev));
+        return res.data.data;
+    };
+
     const handleSaveThemeColor = (next) => {
         setThemeColor(next);
         setThemePreviewPack(null);
+        setThemePreviewPackData(null);
         setThemeColorModalVisible(false);
     };
 
     // 关闭弹窗：未保存的预览失效，恢复已保存的主题
     const handleCancelThemeColor = () => {
         setThemePreviewPack(null);
+        setThemePreviewPackData(null);
         setThemeColorModalVisible(false);
     };
 
@@ -2374,6 +2435,8 @@ const DingPan = () => {
                 onOpenThemeColor={() => {
                     setThemePreviewPack(null);
                     setThemeColorModalVisible(true);
+                    // 打开弹窗前拉取最新主题包，保证增删结果与后端一致
+                    loadThemePacks();
                 }}
             />
 
@@ -2708,6 +2771,11 @@ const DingPan = () => {
                 onOk={handleSaveThemeColor}
                 onPreview={setThemePreviewPack}
                 value={themeColor}
+                packs={themePacks}
+                onAddPack={handleAddThemePack}
+                onUpdatePack={handleUpdateThemePack}
+                onDeletePack={handleDeleteThemePack}
+                onPreviewPackData={setThemePreviewPackData}
             />
 
             {/* 交易纪律悬浮组件（每个交易日 9:30-9:40 自动显示，fixed 布局，屏幕正中间，9:40 后自动隐藏） */}

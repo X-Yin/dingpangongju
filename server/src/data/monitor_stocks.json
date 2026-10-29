@@ -975,5 +975,59 @@
     "riskScore": " 8",
     "isTech": false,
     "addedAt": "2026-10-28 10:52:08"
+  },
+  {
+    "code": "sz300684",
+    "name": "中石科技",
+    "isImportant": false,
+    "blockName": "TIM",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-10-29 00:24:35"
+  },
+  {
+    "code": "sz300720",
+    "name": "海川智能",
+    "isImportant": false,
+    "blockName": "磷化铟",
+    "riskScore": "9",
+    "isTech": true,
+    "addedAt": "2026-10-29 08:44:16"
+  },
+  {
+    "code": "sz002149",
+    "name": "西部材料",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": " 8",
+    "isTech": true,
+    "addedAt": "2026-10-29 15:03:12"
+  },
+  {
+    "code": "sh600118",
+    "name": "中国卫星",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": " 8",
+    "isTech": true,
+    "addedAt": "2026-10-29 15:03:24"
+  },
+  {
+    "code": "sh600879",
+    "name": "航天电子",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": " 7",
+    "isTech": true,
+    "addedAt": "2026-10-29 15:03:36"
+  },
+  {
+    "code": "sz300136",
+    "name": "信维通信",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": " 7",
+    "isTech": true,
+    "addedAt": "2026-10-29 15:03:48"
   }
 ]
