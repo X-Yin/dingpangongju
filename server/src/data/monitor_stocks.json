@@ -1110,5 +1110,59 @@
     "riskScore": " 8",
     "isTech": true,
     "addedAt": "2026-10-29 17:08:01"
+  },
+  {
+    "code": "sh605598",
+    "name": "上海港湾",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": "8",
+    "isTech": false,
+    "addedAt": "2026-10-29 19:19:49"
+  },
+  {
+    "code": "sz002865",
+    "name": "钧达股份",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-10-29 19:19:59"
+  },
+  {
+    "code": "sh603969",
+    "name": "银龙股份",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": "8",
+    "isTech": false,
+    "addedAt": "2026-10-29 20:26:29"
+  },
+  {
+    "code": "sh600261",
+    "name": "阳光照明",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": " 8",
+    "isTech": true,
+    "addedAt": "2026-10-29 20:34:32"
+  },
+  {
+    "code": "sh603337",
+    "name": "杰克科技",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": " 8",
+    "isTech": true,
+    "addedAt": "2026-10-29 21:35:53"
+  },
+  {
+    "code": "sh603667",
+    "name": "五洲新春",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-10-29 21:37:20"
   }
 ]

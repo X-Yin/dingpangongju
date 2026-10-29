@@ -380,6 +380,12 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
+
+    // 三板块布局：单行展示，卡片高度延伸为六板块布局的两倍
+    &.is-three .tm-theme-card {
+      height: 700px;
+      max-height: 700px;
+    }
   }
 
   .tm-theme-card {
@@ -631,6 +637,12 @@
         background: linear-gradient(90deg, rgba(255, 171, 0, 0.07), rgba(255, 255, 255, 0.85) 55%);
       }
 
+      // 置顶个股：紧跟龙头之后展示
+      &.is-pinned {
+        border-left: 3px solid #7c3aed;
+        background: linear-gradient(90deg, rgba(124, 58, 237, 0.09), rgba(255, 255, 255, 0.85) 55%);
+      }
+
       .tm-dragon-badge {
         width: 24px;
         height: 18px;
@@ -648,6 +660,7 @@
         &.d2 { background: #fff1f0; color: #e11d48; }
         &.d3 { background: #fff7e6; color: #d48806; }
         &.d4, &.d5 { background: #f0f5ff; color: #2f54eb; }
+        &.pinned { background: rgba(124, 58, 237, 0.12); color: #7c3aed; }
       }
 
       .tm-stock-info {
@@ -673,17 +686,30 @@
         &:hover { color: var(--theme-color, #1677ff); }
       }
 
-      .tm-leader-tag {
+      // 异动提示：临近橙色 / 触发红色
+      .tm-alert-tag {
         flex-shrink: 0;
         padding: 0 4px;
         font-size: 9px;
         height: 16px;
+        line-height: 16px;
         display: inline-flex;
         align-items: center;
         border-radius: 4px;
-        background: rgba(114, 46, 209, 0.08);
-        border: 1px solid rgba(114, 46, 209, 0.2);
-        color: #722ed1;
+        cursor: help;
+        white-space: nowrap;
+
+        &.near {
+          background: rgba(250, 140, 22, 0.1);
+          border: 1px solid rgba(250, 140, 22, 0.45);
+          color: #d46b08;
+        }
+
+        &.trigger {
+          background: rgba(245, 34, 45, 0.1);
+          border: 1px solid rgba(245, 34, 45, 0.45);
+          color: #cf1322;
+        }
       }
 
       .tm-lianban-cell {

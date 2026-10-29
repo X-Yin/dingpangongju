@@ -813,6 +813,71 @@ app.get('/theme_monitor_quotes', async (req, res) => {
   }
 });
 
+// 题材盯盘 - 个股异动阈值基准：近 30 个交易日收盘价，用于前端计算严重异常波动阈值
+// 日 K 拉取较慢，按自然日做进程内缓存；前端仅在切换板块时按需请求一次
+const ABNORMAL_BASIS_KLINE_LIMIT = 33;
+let abnormalBasisCache = { day: '', data: new Map() };
+
+const fetchAbnormalBasis = async (marketCode) => {
+  // 该接口返回按日期倒序的日 K，先转升序，最后一条为最新交易日
+  const raw = await getSingleStockData(marketCode, ABNORMAL_BASIS_KLINE_LIMIT);
+  if (!Array.isArray(raw) || raw.length < 2) return null;
+  const klines = [...raw].sort((a, b) => Number(a.trade_date) - Number(b.trade_date));
+  const lastItem = klines[klines.length - 1];
+  const lastDate = String(lastItem.trade_date);
+  // 连续 N 个交易日累计涨跌幅 = 最新收盘 / N 个交易日前的收盘 - 1，即倒数第 N+1 根 K 线
+  const closeBack = (back) => {
+    const item = klines[klines.length - 1 - back];
+    const v = Number(item?.close_px);
+    return Number.isFinite(v) && v > 0 ? v : null;
+  };
+  const base10 = closeBack(10);
+  const base30 = closeBack(30);
+  if (!base10 && !base30) return null;
+  const lastClose = Number(lastItem.close_px);
+  return {
+    base10,
+    base30,
+    lastDate: Number(lastDate),
+    lastClose: Number.isFinite(lastClose) && lastClose > 0 ? lastClose : null,
+  };
+};
+
+app.get('/theme_monitor_alert_basis', async (req, res) => {
+  try {
+    const codes = [...new Set(String(req.query.codes || '')
+      .split(',')
+      .map((c) => c.trim().toLowerCase())
+      .filter((c) => /^(sh|sz)\d{6}$/.test(c)))];
+    const todayYmd = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' }).replace(/\D/g, '');
+    if (abnormalBasisCache.day !== todayYmd) {
+      abnormalBasisCache = { day: todayYmd, data: new Map() };
+    }
+    const missing = codes.filter((c) => !abnormalBasisCache.data.has(c));
+    // 日 K 接口较慢，限制并发避免压垮数据源
+    const chunkSize = 10;
+    for (let i = 0; i < missing.length; i += chunkSize) {
+      await Promise.all(missing.slice(i, i + chunkSize).map(async (code) => {
+        try {
+          abnormalBasisCache.data.set(code, await fetchAbnormalBasis(code));
+        } catch (error) {
+          console.error(`[themeMonitor] 获取 ${code} 异动基准失败:`, error.message);
+          abnormalBasisCache.data.set(code, null);
+        }
+      }));
+    }
+    const out = {};
+    codes.forEach((code) => {
+      const basis = abnormalBasisCache.data.get(code);
+      if (basis) out[code] = basis;
+    });
+    res.json(out);
+  } catch (error) {
+    console.error('获取异动阈值基准失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
 // 题材盯盘 - 题材历史弹窗：近 N 个交易日情绪温度 + 各题材每日涨停家数 + 每日涨停最多题材
 app.get('/theme_history', (req, res) => {
   try {

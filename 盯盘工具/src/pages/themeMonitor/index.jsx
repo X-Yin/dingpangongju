@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Spin, Empty, Switch as AntSwitch, Tooltip, Modal, Select, Tabs, Input, Button, message } from 'antd';
+import { Spin, Empty, Switch as AntSwitch, Tooltip, Modal, Select, Tabs, Input, Button, message, Segmented, Dropdown } from 'antd';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS, CategoryScale, LinearScale,
@@ -9,7 +9,7 @@ import {
   FireOutlined, ThunderboltOutlined, AreaChartOutlined,
   RiseOutlined, FallOutlined, CaretDownOutlined, CaretUpOutlined,
   PieChartOutlined, AppstoreOutlined, LineChartOutlined,
-  PlusOutlined, DeleteOutlined,
+  PlusOutlined, DeleteOutlined, PushpinOutlined,
 } from '@ant-design/icons';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
@@ -26,6 +26,12 @@ import './index.scss';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ChartTooltip, Filler, Legend);
 
 const TOP_THEME_COUNT = 6;
+const CARD_LAYOUT_OPTIONS = [
+  { label: '3 板块', value: 3 },
+  { label: '6 板块', value: 6 },
+];
+const PIN_STORAGE_KEY = 'theme_monitor_pinned_stocks'; // { [themeKey]: [{ code, pinnedAt }] }
+const FAST_POLL_INTERVAL = 3000; // 龙头 + 置顶个股行情刷新间隔（其余个股仍跟随 10s 聚合轮询）
 const CHIP_THEME_COUNT = 9; // 横幅条题材 chip 上限（与后端 /theme_monitor_all 一致）
 const API_BASE = `http://${local_ip}:3000`;
 
@@ -51,6 +57,40 @@ const isStockLimitUp = (stock, quote) => {
   else if (/ST/i.test(String(stock?.name || ''))) pct = 0.05;
   const limitPrice = Math.round(prev * (1 + pct) * 100) / 100;
   return last >= limitPrice - 0.0001;
+};
+
+// A 股严重异常波动（异动）指标：连续 10 个交易日累计涨幅 +100% / 跌幅 -50%，
+// 连续 30 个交易日累计涨幅 +200% / 跌幅 -70%（以收盘价累计涨跌幅近似交易所的偏离值累计）
+const ABNORMAL_ALERT_RULES = [
+  { days: 10, up: 100, down: -50 },
+  { days: 30, up: 200, down: -70 },
+];
+const ABNORMAL_ALERT_NEAR_POINTS = 10; // 距阈值 10 个百分点以内视为「临近异动」
+
+// 结合「历史基准收盘价 + 当前实时价」计算某只个股的异动状态
+// 返回 { level: 'trigger' | 'near', days, threshold, currentPct, targetPrice, gap }，未临近时返回 null
+const getAbnormalAlert = (basis, price) => {
+  const last = Number(price);
+  if (!basis || !Number.isFinite(last) || last <= 0) return null;
+  const candidates = [];
+  ABNORMAL_ALERT_RULES.forEach(({ days, up, down }) => {
+    const base = Number(days === 10 ? basis.base10 : basis.base30);
+    if (!Number.isFinite(base) || base <= 0) return;
+    const currentPct = (last / base - 1) * 100;
+    [up, down].forEach((threshold) => {
+      const dir = threshold > 0 ? 1 : -1;
+      const gap = dir > 0 ? threshold - currentPct : currentPct - threshold;
+      const targetPrice = base * (1 + threshold / 100);
+      if (gap <= 0) candidates.push({ level: 'trigger', days, threshold, currentPct, targetPrice, gap: 0 });
+      else if (gap <= ABNORMAL_ALERT_NEAR_POINTS) {
+        candidates.push({ level: 'near', days, threshold, currentPct, targetPrice, gap });
+      }
+    });
+  });
+  if (candidates.length === 0) return null;
+  const triggered = candidates.filter((c) => c.level === 'trigger');
+  if (triggered.length > 0) return triggered.sort((a, b) => a.days - b.days)[0];
+  return candidates.sort((a, b) => a.gap - b.gap)[0];
 };
 
 // ==================== 情绪温度历史弹窗（点击概览"情绪"卡片打开） ====================
@@ -712,7 +752,7 @@ const ThemeChip = ({ chip, quotes, onDeleteCustom }) => {
   );
 };
 
-const ThemeChipsStrip = ({ chips, quotes, onOpenHistoryAnalysis, onAddTheme, onDeleteCustom, onReorder }) => {
+const ThemeChipsStrip = ({ chips, quotes, onOpenHistoryAnalysis, onAddTheme, onDeleteCustom, onReorder, cardCount, onCardCountChange }) => {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -738,6 +778,13 @@ const ThemeChipsStrip = ({ chips, quotes, onOpenHistoryAnalysis, onAddTheme, onD
         <span className="tm-line-empty">暂无题材数据</span>
       )}
       <div className="tm-line-actions">
+        <Segmented
+          size="small"
+          value={cardCount}
+          options={CARD_LAYOUT_OPTIONS}
+          onChange={onCardCountChange}
+          title="切换下方板块卡片数量"
+        />
         <button type="button" className="tm-add-theme-btn" onClick={onAddTheme}>
           <PlusOutlined /> 新增板块
         </button>
@@ -801,10 +848,23 @@ const BlockRankingStrip = ({ blocks, onOpenKline }) => {
 };
 
 // ==================== 题材卡片（第一列） ====================
-const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenThemeHistory }) => {
+const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenThemeHistory, pins, onPin, onUnpin, alertBasis }) => {
   const dragonCodes = useMemo(() => new Set(theme.dragons.map((d) => d.code)), [theme]);
   // 「今日 N 家」点击后仅展示当日涨停股，再次点击恢复全量
   const [limitOnly, setLimitOnly] = useState(false);
+
+  // 置顶股票：按置顶时间倒序（越晚置顶越靠前），仅保留当前题材仍存在的个股
+  // 龙头本身已固定在最前，不重复参与置顶区
+  const pinnedStocks = useMemo(() => {
+    const byCode = new Map(theme.stocks.map((s) => [s.code, s]));
+    return (pins || [])
+      .slice()
+      .sort((a, b) => (b.pinnedAt || 0) - (a.pinnedAt || 0))
+      .map((p) => byCode.get(p.code))
+      .filter((s) => s && !dragonCodes.has(s.code));
+  }, [pins, theme, dragonCodes]);
+
+  const pinnedCodes = useMemo(() => new Set(pinnedStocks.map((s) => s.code)), [pinnedStocks]);
 
   // 今日实时涨停家数：按涨停价规则（主板/创业科创/ST 区分）对题材股票池逐只判断
   const todayLiveCount = useMemo(
@@ -813,7 +873,7 @@ const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenTh
   );
 
   const restStocks = useMemo(() => {
-    const rest = theme.stocks.filter((s) => !dragonCodes.has(s.code));
+    const rest = theme.stocks.filter((s) => !dragonCodes.has(s.code) && !pinnedCodes.has(s.code));
     const dir = sortDir === 'asc' ? 1 : -1;
     const valOf = (s) => {
       const q = quotes[s.marketCode];
@@ -829,7 +889,7 @@ const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenTh
       if (vb == null) return -1;
       return (va - vb) * dir;
     });
-  }, [theme, quotes, sortDir, dragonCodes]);
+  }, [theme, quotes, sortDir, dragonCodes, pinnedCodes]);
 
   const avgChange = useMemo(() => {
     const vals = theme.stocks
@@ -839,49 +899,79 @@ const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenTh
     return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   }, [theme, quotes]);
 
-  // 仅涨停筛选：龙头与其余个股各自过滤
+  // 仅涨停筛选：龙头、置顶与其余个股各自过滤
   const dragonsShown = useMemo(
     () => (limitOnly ? theme.dragons.filter((s) => isStockLimitUp(s, quotes[s.marketCode])) : theme.dragons),
     [limitOnly, theme, quotes],
+  );
+  const pinnedShown = useMemo(
+    () => (limitOnly ? pinnedStocks.filter((s) => isStockLimitUp(s, quotes[s.marketCode])) : pinnedStocks),
+    [limitOnly, pinnedStocks, quotes],
   );
   const restShown = useMemo(
     () => (limitOnly ? restStocks.filter((s) => isStockLimitUp(s, quotes[s.marketCode])) : restStocks),
     [limitOnly, restStocks, quotes],
   );
-  const shownCount = dragonsShown.length + restShown.length;
+  const shownCount = dragonsShown.length + pinnedShown.length + restShown.length;
 
   const DRAGON_NAMES = ['龙一', '龙二', '龙三', '龙四', '龙五'];
 
-  const renderRow = (stock, idx, isDragon) => {
+  const renderRow = (stock, idx, isDragon, isPinned) => {
     const q = quotes[stock.marketCode];
     const suspended = !!q?.suspended;
     const change = suspended ? null : q?.changePct;
     const upCls = change == null ? '' : Number(change) >= 0 ? 'up' : 'down';
+    const badge = isDragon ? DRAGON_NAMES[idx] : isPinned ? '顶' : idx + 1;
+    const alert = suspended ? null : getAbnormalAlert(alertBasis?.[stock.marketCode], q?.price);
+    const alertTip = alert
+      ? `当前价 ${Number(q.price).toFixed(2)}，异动价 ${alert.targetPrice.toFixed(2)}\n`
+        + `连续 ${alert.days} 个交易日累计${alert.threshold > 0 ? '涨幅' : '跌幅'}达 ${formatPct(alert.threshold, { sign: false })}`
+        + `（当前 ${formatPct(alert.currentPct)}）`
+      : '';
     return (
-      <div
+      <Dropdown
         key={`${stock.code}-${idx}`}
-        className={`tm-stock-row${isDragon ? ' is-dragon' : ''}${suspended ? ' is-suspended' : ''}`}
-        data-is-up={change != null && Number(change) >= 0 ? 'true' : 'false'}
+        trigger={['contextMenu']}
+        menu={{
+          items: isPinned
+            ? [{ key: 'unpin', label: '取消置顶' }]
+            : [{ key: 'pin', label: '置顶', icon: <PushpinOutlined /> }],
+          onClick: ({ key }) => {
+            if (key === 'pin') onPin?.(theme.key, stock);
+            if (key === 'unpin') onUnpin?.(theme.key, stock);
+          },
+        }}
       >
-        <span className={`tm-dragon-badge d${stock.dragonRank || 0}`}>{isDragon ? DRAGON_NAMES[idx] : idx + 1}</span>
-        <div className="tm-stock-info" title={stock.concept}>
-          <div className="tm-stock-name-row">
-            <span className="tm-stock-name" onClick={() => onOpenKline(stock)}>{stock.name}</span>
-            {stock.isLeader && <span className="tm-leader-tag">龙头</span>}
+        <div
+          className={`tm-stock-row${isDragon ? ' is-dragon' : ''}${isPinned ? ' is-pinned' : ''}${suspended ? ' is-suspended' : ''}`}
+          data-is-up={change != null && Number(change) >= 0 ? 'true' : 'false'}
+        >
+          <span className={`tm-dragon-badge d${isDragon ? stock.dragonRank || 0 : 0}${isPinned ? ' pinned' : ''}`}>{badge}</span>
+          <div className="tm-stock-info" title={stock.concept}>
+            <div className="tm-stock-name-row">
+              <span className="tm-stock-name" onClick={() => onOpenKline(stock)}>{stock.name}</span>
+              {alert && (
+                <Tooltip title={<span style={{ whiteSpace: 'pre-line' }}>{alertTip}</span>}>
+                  <span className={`tm-alert-tag ${alert.level}`}>
+                    {alert.level === 'trigger' ? '触发异动' : '临近异动'}
+                  </span>
+                </Tooltip>
+              )}
+            </div>
+          </div>
+          <div className="tm-lianban-cell" title={`近10日涨停 ${stock.limitUpDays} 次${stock.isLeader ? ' · 题材龙头' : ''}`}>
+            {stock.lianbanText || '首板'}
+            {stock.limitUpDays > 1 && <em>{stock.limitUpDays}次</em>}
+          </div>
+          <div className="tm-change-cell">
+            {suspended ? (
+              <span className="tm-suspended-tag">停牌</span>
+            ) : (
+              <span className={`tm-current-change ${upCls}`}>{formatPct(change)}</span>
+            )}
           </div>
         </div>
-        <div className="tm-lianban-cell" title={`近10日涨停 ${stock.limitUpDays} 次${stock.isLeader ? ' · 题材龙头' : ''}`}>
-          {stock.lianbanText || '首板'}
-          {stock.limitUpDays > 1 && <em>{stock.limitUpDays}次</em>}
-        </div>
-        <div className="tm-change-cell">
-          {suspended ? (
-            <span className="tm-suspended-tag">停牌</span>
-          ) : (
-            <span className={`tm-current-change ${upCls}`}>{formatPct(change)}</span>
-          )}
-        </div>
-      </div>
+      </Dropdown>
     );
   };
 
@@ -924,6 +1014,7 @@ const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenTh
         </div>
         <div className="tm-list-body">
           {dragonsShown.map((s) => renderRow(s, (s.dragonRank || 1) - 1, true))}
+          {pinnedShown.map((s, idx) => renderRow(s, idx, false, true))}
           {restShown.map((s, idx) => renderRow(s, idx, false))}
           {shownCount === 0 && (
             <div className="tm-empty-mini">{limitOnly ? '今日暂无涨停股' : '暂无数据'}</div>
@@ -1182,6 +1273,39 @@ const ThemeMonitor = () => {
   const [historyAnalysisVisible, setHistoryAnalysisVisible] = useState(false);
   const [customStore, setCustomStore] = useState({ themes: [], overrides: {}, order: [] });
   const [customModalVisible, setCustomModalVisible] = useState(false);
+  // 下方板块卡片数量：默认 3 个板块，可切换为 6 个板块
+  const [cardCount, setCardCount] = useState(3);
+  // 置顶个股（按题材持久化到 localStorage）
+  const [pins, setPins] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(PIN_STORAGE_KEY)) || {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify(pins));
+    } catch (err) {
+      console.error('保存置顶个股失败:', err);
+    }
+  }, [pins]);
+
+  const handlePin = useCallback((themeKey, stock) => {
+    setPins((prev) => {
+      const list = prev[themeKey] || [];
+      if (list.some((p) => p.code === stock.code)) return prev;
+      return { ...prev, [themeKey]: [...list, { code: stock.code, pinnedAt: Date.now() }] };
+    });
+  }, []);
+
+  const handleUnpin = useCallback((themeKey, stock) => {
+    setPins((prev) => ({
+      ...prev,
+      [themeKey]: (prev[themeKey] || []).filter((p) => p.code !== stock.code),
+    }));
+  }, []);
 
   const handleOpenThemeHistory = useCallback((theme) => {
     setThemeModal({ visible: true, theme });
@@ -1354,8 +1478,76 @@ const ThemeMonitor = () => {
     return ordered;
   }, [analysis, customThemes, customStore.order]);
 
-  // 下方 6 张题材卡片 = 横幅排序前六（含自定义题材）
-  const cardThemes = useMemo(() => chipList.slice(0, TOP_THEME_COUNT), [chipList]);
+  // 下方板块卡片 = 横幅排序前 N 个（含自定义题材），N 由 3/6 板块布局决定
+  const cardThemes = useMemo(() => chipList.slice(0, cardCount), [chipList, cardCount]);
+
+  // 高频刷新的个股：当前展示板块的龙一~龙五 + 置顶个股（其余个股仍由 10s 聚合轮询更新）
+  const fastQuoteCodes = useMemo(() => {
+    const codes = new Set();
+    cardThemes.forEach((theme) => {
+      (theme.dragons || []).slice(0, 5).forEach((d) => d.marketCode && codes.add(d.marketCode));
+      const byCode = new Map((theme.stocks || []).map((s) => [s.code, s]));
+      (pins?.[theme.key] || []).forEach((p) => {
+        const stock = byCode.get(p.code);
+        if (stock?.marketCode) codes.add(stock.marketCode);
+      });
+    });
+    return Array.from(codes);
+  }, [cardThemes, pins]);
+
+  // codes 未变化时保持同一个轮询实例，避免每 10s 聚合刷新就重置 3s 定时器
+  const fastQuoteCodesKey = useMemo(() => fastQuoteCodes.join(','), [fastQuoteCodes]);
+
+  useEffect(() => {
+    if (!fastQuoteCodesKey) return;
+    let cancelled = false;
+    let polling = false;
+    const fetchFastQuotes = async () => {
+      if (polling) return;
+      polling = true;
+      try {
+        const res = await axios.get(`${API_BASE}/theme_monitor_quotes`, { params: { codes: fastQuoteCodesKey } });
+        if (cancelled) return;
+        const data = res.data || {};
+        if (Object.keys(data).length > 0) {
+          setQuotes((prev) => ({ ...prev, ...data }));
+        }
+      } catch (err) {
+        console.error('龙头/置顶个股行情刷新失败:', err);
+      } finally {
+        polling = false;
+      }
+    };
+    fetchFastQuotes();
+    const timer = setInterval(fetchFastQuotes, FAST_POLL_INTERVAL);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [fastQuoteCodesKey]);
+
+  // 异动阈值基准（10/30 个交易日前的收盘价）：每天拉取一次，临近/触发状态由实时价即时计算
+  const [alertBasis, setAlertBasis] = useState({});
+  const alertBasisCodesKey = useMemo(() => {
+    const codes = new Set();
+    cardThemes.forEach((theme) => {
+      (theme.stocks || []).forEach((s) => s.marketCode && codes.add(s.marketCode));
+    });
+    return Array.from(codes).join(',');
+  }, [cardThemes]);
+
+  useEffect(() => {
+    if (!alertBasisCodesKey) return;
+    let cancelled = false;
+    axios.get(`${API_BASE}/theme_monitor_alert_basis`, { params: { codes: alertBasisCodesKey } })
+      .then((res) => {
+        if (!cancelled) setAlertBasis((prev) => ({ ...prev, ...(res.data || {}) }));
+      })
+      .catch((err) => console.error('获取异动阈值基准失败:', err));
+    return () => {
+      cancelled = true;
+    };
+  }, [alertBasisCodesKey]);
 
   return (
     <div className="theme-monitor-container">
@@ -1368,6 +1560,8 @@ const ThemeMonitor = () => {
         onAddTheme={handleAddTheme}
         onDeleteCustom={handleDeleteCustom}
         onReorder={handleReorder}
+        cardCount={cardCount}
+        onCardCountChange={setCardCount}
       />
 
       {loading && !analysis ? (
@@ -1375,7 +1569,7 @@ const ThemeMonitor = () => {
       ) : (
         <div className="tm-body">
           <div className="tm-left">
-            <div className="tm-cards-grid">
+            <div className={`tm-cards-grid${cardCount === 3 ? ' is-three' : ''}`}>
               {cardThemes.map((theme) => (
                 <ThemeCard
                   key={theme.key}
@@ -1385,6 +1579,10 @@ const ThemeMonitor = () => {
                   sortDir={sortDirs[theme.key] || 'desc'}
                   onToggleSort={handleToggleSort}
                   onOpenThemeHistory={handleOpenThemeHistory}
+                  pins={pins[theme.key]}
+                  onPin={handlePin}
+                  onUnpin={handleUnpin}
+                  alertBasis={alertBasis}
                 />
               ))}
               {cardThemes.length === 0 && (

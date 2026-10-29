@@ -653,5 +653,35 @@
     "secu_code": "sh601698",
     "secu_name": "中国卫通",
     "TotalShares": 4224385412
+  },
+  {
+    "secu_code": "sh605598",
+    "secu_name": "上海港湾",
+    "TotalShares": 240868649
+  },
+  {
+    "secu_code": "sz002865",
+    "secu_name": "钧达股份",
+    "TotalShares": 311266052
+  },
+  {
+    "secu_code": "sh603969",
+    "secu_name": "银龙股份",
+    "TotalShares": 871533800
+  },
+  {
+    "secu_code": "sh600261",
+    "secu_name": "阳光照明",
+    "TotalShares": 1335052966
+  },
+  {
+    "secu_code": "sh603337",
+    "secu_name": "杰克科技",
+    "TotalShares": 476388091
+  },
+  {
+    "secu_code": "sh603667",
+    "secu_name": "五洲新春",
+    "TotalShares": 383151922
   }
 ]

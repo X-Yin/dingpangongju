@@ -2618,5 +2618,125 @@
       }
     ],
     "isImportant": false
+  },
+  "sh605598": {
+    "stockName": "上海港湾",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 22.72,
+        "high_px": 24.9,
+        "low_px": 22.35,
+        "close_px": 24.9,
+        "business_amount": 5698272,
+        "business_balance": 137500630,
+        "change": 9.98,
+        "ma5_px": 22.86,
+        "ma10_px": 22.71,
+        "ma20_px": 23.04,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz002865": {
+    "stockName": "钧达股份",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 34.66,
+        "high_px": 38.62,
+        "low_px": 34.66,
+        "close_px": 38.62,
+        "business_amount": 29457079,
+        "business_balance": 1099486060,
+        "change": 10,
+        "ma5_px": 35.16,
+        "ma10_px": 34.58,
+        "ma20_px": 35.09,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh603969": {
+    "stockName": "银龙股份",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 5.97,
+        "high_px": 5.99,
+        "low_px": 5.74,
+        "close_px": 5.85,
+        "business_amount": 13892854,
+        "business_balance": 81573733,
+        "change": -2.17,
+        "ma5_px": 6.2,
+        "ma10_px": 6.41,
+        "ma20_px": 6.78,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh600261": {
+    "stockName": "阳光照明",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 3.37,
+        "high_px": 3.72,
+        "low_px": 3.36,
+        "close_px": 3.72,
+        "business_amount": 75892060,
+        "business_balance": 278628290,
+        "change": 10.06,
+        "ma5_px": 3.45,
+        "ma10_px": 3.38,
+        "ma20_px": 3.33,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh603337": {
+    "stockName": "杰克科技",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 51,
+        "high_px": 53.58,
+        "low_px": 48.84,
+        "close_px": 52.2,
+        "business_amount": 28569833,
+        "business_balance": 1474825100,
+        "change": 6.9,
+        "ma5_px": 45.57,
+        "ma10_px": 40.28,
+        "ma20_px": 37.45,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh603667": {
+    "stockName": "五洲新春",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 50.82,
+        "high_px": 54.9,
+        "low_px": 50.59,
+        "close_px": 53.11,
+        "business_amount": 59761111,
+        "business_balance": 3152244900,
+        "change": 6.26,
+        "ma5_px": 48.64,
+        "ma10_px": 46.18,
+        "ma20_px": 46.42,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

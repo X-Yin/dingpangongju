@@ -1642,5 +1642,20 @@ exports.default = [
         "blockName": "商业航天",
         "code": "sh603131",
         "name": "上海沪工"
+    },
+    {
+        "blockName": "商业航天",
+        "code": "sh605598",
+        "name": "上海港湾"
+    },
+    {
+        "blockName": "商业航天",
+        "code": "sz002865",
+        "name": "钧达股份"
+    },
+    {
+        "blockName": "商业航天",
+        "code": "sh600261",
+        "name": "阳光照明"
     }
 ]
