@@ -550,7 +550,7 @@ const getLianbanSentimentSeries = () => {
   return series;
 };
 
-// 每个交易日晚 21:00 自动抓取当日连板数据；失败不占位，下一分钟自动重试
+// 每个交易日 18:00 自动抓取当日连板数据；失败不占位，下一分钟自动重试
 let lianbanScheduled = false;
 let lianbanTaskRunning = false;
 const executedDates = new Set();

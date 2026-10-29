@@ -608,5 +608,35 @@
     "secu_code": "sz300136",
     "secu_name": "信维通信",
     "TotalShares": 967568638
+  },
+  {
+    "secu_code": "sz002565",
+    "secu_name": "顺灏股份",
+    "TotalShares": 1059988922
+  },
+  {
+    "secu_code": "sh600501",
+    "secu_name": "航天晨光",
+    "TotalShares": 427824200
+  },
+  {
+    "secu_code": "sh603131",
+    "secu_name": "上海沪工",
+    "TotalShares": 336907220
+  },
+  {
+    "secu_code": "sz001400",
+    "secu_name": "江顺科技",
+    "TotalShares": 84000000
+  },
+  {
+    "secu_code": "sh603278",
+    "secu_name": "大业股份",
+    "TotalShares": 341759392
+  },
+  {
+    "secu_code": "sz000678",
+    "secu_name": "襄阳轴承",
+    "TotalShares": 459611797
   }
 ]

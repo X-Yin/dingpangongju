@@ -2438,5 +2438,125 @@
       }
     ],
     "isImportant": false
+  },
+  "sz002565": {
+    "stockName": "顺灏股份",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 7.36,
+        "high_px": 8.14,
+        "low_px": 7.3,
+        "close_px": 8.14,
+        "business_amount": 121637262,
+        "business_balance": 969166830,
+        "change": 10,
+        "ma5_px": 7.61,
+        "ma10_px": 7.8,
+        "ma20_px": 8.25,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh600501": {
+    "stockName": "航天晨光",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 15.11,
+        "high_px": 16.89,
+        "low_px": 14.9,
+        "close_px": 16.89,
+        "business_amount": 34532712,
+        "business_balance": 568768630,
+        "change": 10.03,
+        "ma5_px": 16,
+        "ma10_px": 15.75,
+        "ma20_px": 15.13,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh603131": {
+    "stockName": "上海沪工",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 15.38,
+        "high_px": 15.95,
+        "low_px": 14.68,
+        "close_px": 15.95,
+        "business_amount": 37479709,
+        "business_balance": 574523830,
+        "change": 10,
+        "ma5_px": 14.11,
+        "ma10_px": 13.69,
+        "ma20_px": 13.57,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz001400": {
+    "stockName": "江顺科技",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 90.03,
+        "high_px": 97.14,
+        "low_px": 89.89,
+        "close_px": 92.16,
+        "business_amount": 8127771,
+        "business_balance": 760060750,
+        "change": 4.36,
+        "ma5_px": 81.28,
+        "ma10_px": 79.22,
+        "ma20_px": 80.37,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh603278": {
+    "stockName": "大业股份",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 17.5,
+        "high_px": 17.95,
+        "low_px": 17.32,
+        "close_px": 17.88,
+        "business_amount": 79531850,
+        "business_balance": 1416001200,
+        "change": -0.22,
+        "ma5_px": 17.28,
+        "ma10_px": 14.69,
+        "ma20_px": 12.34,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz000678": {
+    "stockName": "襄阳轴承",
+    "kline": [
+      {
+        "trade_date": 20261029,
+        "open_px": 19.37,
+        "high_px": 19.37,
+        "low_px": 18.57,
+        "close_px": 18.75,
+        "business_amount": 192720580,
+        "business_balance": 3689998800,
+        "change": 6.47,
+        "ma5_px": 16.03,
+        "ma10_px": 13.63,
+        "ma20_px": 12.45,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

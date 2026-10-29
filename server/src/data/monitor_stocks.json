@@ -1029,5 +1029,59 @@
     "riskScore": " 7",
     "isTech": true,
     "addedAt": "2026-10-29 15:03:48"
+  },
+  {
+    "code": "sz002565",
+    "name": "顺灏股份",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": "9",
+    "isTech": true,
+    "addedAt": "2026-10-29 15:11:30"
+  },
+  {
+    "code": "sh600501",
+    "name": "航天晨光",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-10-29 15:11:42"
+  },
+  {
+    "code": "sh603131",
+    "name": "上海沪工",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-10-29 15:11:56"
+  },
+  {
+    "code": "sz001400",
+    "name": "江顺科技",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": " 7",
+    "isTech": true,
+    "addedAt": "2026-10-29 15:26:45"
+  },
+  {
+    "code": "sh603278",
+    "name": "大业股份",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": " 8",
+    "isTech": true,
+    "addedAt": "2026-10-29 15:28:33"
+  },
+  {
+    "code": "sz000678",
+    "name": "襄阳轴承",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-10-29 15:28:51"
   }
 ]
