@@ -5,8 +5,8 @@
   "endDate": "20260930",
   "targetEndDate": "20260930",
   "isFinal": true,
-  "generatedAt": "2026/10/30 15:21:17",
-  "strategyCount": 61,
+  "generatedAt": "2026/10/30 19:46:16",
+  "strategyCount": 63,
   "analysis": {
     "key": "202609",
     "label": "2026-09",
@@ -172,7 +172,7 @@
         "id": "highest_5d_gain_volume_share",
         "name": "5日涨幅最大-成交量占比",
         "score": 16.9,
-        "rank": 60,
+        "rank": 62,
         "delta": -47.9,
         "metrics": {
           "overallReturn": -25,
@@ -187,7 +187,7 @@
         "id": "highest_3d_gain_volume_share",
         "name": "3日涨幅最大-成交量占比",
         "score": 13.3,
-        "rank": 61,
+        "rank": 63,
         "delta": -20.5,
         "metrics": {
           "overallReturn": -31.41,
@@ -202,7 +202,7 @@
         "id": "highest_4d_gain_volume_share",
         "name": "4日涨幅最大-成交量占比",
         "score": 21.2,
-        "rank": 59,
+        "rank": 61,
         "delta": -17.1,
         "metrics": {
           "overallReturn": -20.56,
@@ -217,7 +217,7 @@
         "id": "hot_money_volume_share_3d",
         "name": "情绪游资-成交量占比-3日涨幅最大",
         "score": 49.8,
-        "rank": 53,
+        "rank": 55,
         "delta": -11.2,
         "metrics": {
           "overallReturn": 4.39,
@@ -232,7 +232,7 @@
         "id": "hot_money_3board_attack",
         "name": "情绪游资-3板打板",
         "score": 42.1,
-        "rank": 57,
+        "rank": 59,
         "delta": -8.1,
         "metrics": {
           "overallReturn": -7.4,
@@ -999,10 +999,42 @@
       }
     },
     {
+      "id": "highest_3d_gain_key_block_attack_delay15",
+      "name": "重点板块-进攻延迟15分钟",
+      "score": 61.8,
+      "rank": 48,
+      "ret": -2.06,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": -2.06,
+        "maxDrawdown": 2.06,
+        "avgDrawdown": 2.06,
+        "winRate": 0,
+        "avgHoldingDays": 1,
+        "profitLossRatio": null
+      }
+    },
+    {
+      "id": "highest_3d_gain_key_block_attack_delay20",
+      "name": "重点板块-进攻延迟20分钟",
+      "score": 61.7,
+      "rank": 49,
+      "ret": -2.07,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": -2.07,
+        "maxDrawdown": 2.07,
+        "avgDrawdown": 2.07,
+        "winRate": 0,
+        "avgHoldingDays": 1,
+        "profitLossRatio": null
+      }
+    },
+    {
       "id": "hot_money_ice_rev_4d_gain",
       "name": "逆周期情绪游资-前4日涨幅最大",
       "score": 61.1,
-      "rank": 48,
+      "rank": 50,
       "ret": 7.19,
       "tradeCount": 3,
       "metrics": {
@@ -1018,7 +1050,7 @@
       "id": "highest_10d_gain",
       "name": "10日涨幅最大",
       "score": 60.4,
-      "rank": 49,
+      "rank": 51,
       "ret": -2.7,
       "tradeCount": 2,
       "metrics": {
@@ -1034,7 +1066,7 @@
       "id": "hot_money_ice_rev_5d_gain",
       "name": "逆周期情绪游资-前5日涨幅最大",
       "score": 59.1,
-      "rank": 50,
+      "rank": 52,
       "ret": 6.39,
       "tradeCount": 3,
       "metrics": {
@@ -1050,7 +1082,7 @@
       "id": "hot_money_volume_share_5d",
       "name": "情绪游资-成交量占比-5日涨幅最大",
       "score": 54.1,
-      "rank": 51,
+      "rank": 53,
       "ret": 8.54,
       "tradeCount": 6,
       "metrics": {
@@ -1066,7 +1098,7 @@
       "id": "hot_money_ice_rev_1d_gain",
       "name": "逆周期情绪游资-当日分时涨幅最大",
       "score": 50.9,
-      "rank": 52,
+      "rank": 54,
       "ret": -7,
       "tradeCount": 3,
       "metrics": {
@@ -1082,7 +1114,7 @@
       "id": "hot_money_volume_share_3d",
       "name": "情绪游资-成交量占比-3日涨幅最大",
       "score": 49.8,
-      "rank": 53,
+      "rank": 55,
       "ret": 4.39,
       "tradeCount": 7,
       "metrics": {
@@ -1098,7 +1130,7 @@
       "id": "highest_3d_gain_emoquick_emo10",
       "name": "10×1 科技情绪-快进快出",
       "score": 49.5,
-      "rank": 54,
+      "rank": 56,
       "ret": -8.16,
       "tradeCount": 4,
       "metrics": {
@@ -1114,7 +1146,7 @@
       "id": "hot_money_ice_rev_3d_gain",
       "name": "逆周期情绪游资-前3日涨幅最大",
       "score": 49.1,
-      "rank": 55,
+      "rank": 57,
       "ret": -5.98,
       "tradeCount": 2,
       "metrics": {
@@ -1130,7 +1162,7 @@
       "id": "hot_money_volume_share_2d",
       "name": "情绪游资-成交量占比-2日涨幅最大",
       "score": 45.8,
-      "rank": 56,
+      "rank": 58,
       "ret": -0.54,
       "tradeCount": 7,
       "metrics": {
@@ -1146,7 +1178,7 @@
       "id": "hot_money_3board_attack",
       "name": "情绪游资-3板打板",
       "score": 42.1,
-      "rank": 57,
+      "rank": 59,
       "ret": -7.4,
       "tradeCount": 4,
       "metrics": {
@@ -1162,7 +1194,7 @@
       "id": "highest_2d_gain_volume_share",
       "name": "2日涨幅最大-成交量占比",
       "score": 23.2,
-      "rank": 58,
+      "rank": 60,
       "ret": -22.36,
       "tradeCount": 7,
       "metrics": {
@@ -1178,7 +1210,7 @@
       "id": "highest_4d_gain_volume_share",
       "name": "4日涨幅最大-成交量占比",
       "score": 21.2,
-      "rank": 59,
+      "rank": 61,
       "ret": -20.56,
       "tradeCount": 8,
       "metrics": {
@@ -1194,7 +1226,7 @@
       "id": "highest_5d_gain_volume_share",
       "name": "5日涨幅最大-成交量占比",
       "score": 16.9,
-      "rank": 60,
+      "rank": 62,
       "ret": -25,
       "tradeCount": 7,
       "metrics": {
@@ -1210,7 +1242,7 @@
       "id": "highest_3d_gain_volume_share",
       "name": "3日涨幅最大-成交量占比",
       "score": 13.3,
-      "rank": 61,
+      "rank": 63,
       "ret": -31.41,
       "tradeCount": 10,
       "metrics": {

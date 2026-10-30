@@ -48,6 +48,10 @@ const EMO_QUICK_RAISED_BLOCK_DELAY_MIN = 15;
 // 板块涨幅回溯窗口（2026-10-23 用户改）：在目标时点（T+15）往前回溯 20 分钟（即 T−5 → T+15），
 // 板块区间涨幅差值 = avgChange(T+15) − avgChange(T−5)
 const EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN = 20;
+// 冰点转折延时买入·涨幅确认（2026-10-30 用户新增）：延时 15 分钟到期后不立即买入，先取所选个股在
+// 「T → T+15」窗口内的最高当日涨幅，之后每 5 分钟桶监控，只有当前涨幅超过该窗口最高涨幅 + 1 个百分点
+// （例：窗口最高 8% → 需 > 9%）才允许买入；始终未超过则本次不买
+const EMO_QUICK_ICE_CONFIRM_PCT = 1;
 // 科技情绪冰点阈值（2026-10-23 用户新增）：必须与 hasIce: true 的写入阈值保持一致
 // （线上前端分时轮询在科技情绪 <= -39 时调用 /mark_tech_index_ice，后端 emotion.markTechIndexIce 落盘）。
 // 板块内选股/发酵延时的前置限制「连续两日冰点」中，今日无法用 hasIce 判定（写盘时点不确定），
@@ -75,6 +79,11 @@ const OPENING_BELOW_RATIO_STRATEGY_IDS = new Set([
   'highest_2d_gain_emoquick_pulse',
   'highest_3d_gain_emoquick_pulse',
   'highest_4d_gain_emoquick_pulse',
+  // 重点板块-进攻延迟系列（2026-10-30 用户新增）：与快进快出同口径
+  'highest_3d_gain_key_block_attack_delay15',
+  'highest_3d_gain_key_block_attack_delay20',
+  'highest_3d_gain_key_block_attack_delay25',
+  'highest_3d_gain_key_block_attack_delay30',
   // 纯「N 日涨幅最大」
   'highest_2d_gain',
   'highest_3d_gain',
@@ -112,6 +121,7 @@ module.exports = {
   EMO_QUICK_RAISED_BLOCK_TAGS,
   EMO_QUICK_RAISED_BLOCK_DELAY_MIN,
   EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN,
+  EMO_QUICK_ICE_CONFIRM_PCT,
   TECH_ICE_THRESHOLD,
   EMO_QUICK_RANGE_HIGH,
   EMO_QUICK_RANGE_LOW,

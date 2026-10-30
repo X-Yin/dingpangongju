@@ -88,7 +88,7 @@ const { withResilienceGateInfo } = require('./checkBuilders');
 const { TWO_BUY_LEG_WEIGHT, computeTwoBuyAccountReturn, getPositionLegWeight } = require('./twoBuy');
 const { buildCounterCycSet } = require('./cycleFilter');
 const { pickBestStock } = require('./pickBest');
-const { resolveQuickRaisedBlocks, resolveRaisedBlockLookbackBucket, resolveRaisedBlockDelayTarget, isRaisedBlockDelayBucket, isRaisedBlockDelayExpired } = require('./quickRaisedBlock');
+const { resolveQuickRaisedBlocks, resolveRaisedBlockLookbackBucket, resolveRaisedBlockDelayTarget, isRaisedBlockDelayBucket, isRaisedBlockDelayExpired, buildIceGainWindowMax, isIceGainConfirmed } = require('./quickRaisedBlock');
 const { isTechIceGateOpen } = require('./emoQuick');
 const { emoQuickOutSell } = require('./sellHooks/emoQuickOut');
 const { generalSellPositions } = require('./sellHooks/generalSell');
@@ -526,11 +526,14 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
     // 「板块发酵延时」待执行买入（2026-10-23 用户新增）：A 风格连续两日冰点下买点触发后等待 15 分钟，
     // 目标桶到达时按区间涨幅差值选板块并建仓。仅当日有效
     let pendingRaisedBuy = null;
+    // 「冰点转折·延时后涨幅确认」待确认买入（2026-10-30 用户新增）：延时 15 分钟到点后已锁定标的，
+    // 但当日涨幅尚未超过窗口最高涨幅 +1 个百分点 → 存入此状态逐桶监控，确认后才成交；始终未确认 → 当日不买
+    let pendingIceConfirm = null;
     // 上一交易日（日期轴上一位）：用于「连续两日冰点」前置门禁的昨日 hasIce 判定
     const prevDateStr = di + axisOffset > 0 ? String(dateAxis[di + axisOffset - 1]) : null;
     // A 风格首次建仓（板块内即时路径 / 延时目标桶路径共用）：execBucket 为实际成交桶（延时路径即 T+15 桶）；
     // iceGateOpen = 连续两日冰点门禁是否成立（成立才启用板块内选股）
-    const openEmoFirstPosition = async (execBucket, gatedBuyInfo, gateAllowedMarkets, gateTurnedPosInfo, delayInfo, iceGateOpen) => {
+    const openEmoFirstPosition = async (execBucket, gatedBuyInfo, gateAllowedMarkets, gateTurnedPosInfo, delayInfo, iceGateOpen, opts = {}) => {
       const execMinute = Number(execBucket.minute);
       const emoAtExec = execBucket.techEmotion != null && !Number.isNaN(Number(execBucket.techEmotion))
         ? Number(execBucket.techEmotion)
@@ -546,22 +549,54 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
         : [];
       // 资金净流入阈值抬高态（30 亿）仍驱动「强制两次买入·首次仅半仓」
       const gateRaised = fundGate.isRaised();
-      let picked = null;
+      let picked = opts.lockedPick || null; // 涨幅确认路径：沿用延时到点已锁定的标的，不再重新选股
       let raisedBlock = null;
-      for (const rb of raisedBlocks) {
-        picked = pickBestStock(new Map(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, EMO_ID, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, rb.codes);
-        if (picked) { raisedBlock = rb; break; }
-      }
       if (!picked) {
-        // 全部板块交集内均选不出（或本就没有交集非空的板块）→ 回退原逻辑：全量自选股选 N 日涨幅最大
-        picked = pickBestStock(new Map(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, EMO_ID, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, null);
-        if (picked && raisedBlocks.length > 0) picked.raisedBlockFallbackInfo = { triedCount: raisedBlocks.length };
+        for (const rb of raisedBlocks) {
+          picked = pickBestStock(new Map(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, EMO_ID, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, rb.codes);
+          if (picked) { raisedBlock = rb; break; }
+        }
+        if (!picked) {
+          // 全部板块交集内均选不出（或本就没有交集非空的板块）→ 回退原逻辑：全量自选股选 N 日涨幅最大
+          picked = pickBestStock(new Map(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, EMO_ID, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, null);
+          if (picked && raisedBlocks.length > 0) picked.raisedBlockFallbackInfo = { triedCount: raisedBlocks.length };
+        }
       }
       if (!picked) return false;
-      // A 风格买点确实可以成交（已选到标的）才执行抢仓：先强制卖出 B 风格隔夜持仓，再建仓
-      if (!tryPreemptEwPositions(execMinute, emoAtExec)) return false;
       if (raisedBlock) picked.raisedBlockInfo = raisedBlock; // 买入明细 raised_block_pick
       if (delayInfo) picked.raisedBlockDelayInfo = delayInfo; // 买入明细 raised_block_delay
+      // 冰点转折·延时后涨幅确认（2026-10-30 用户新增）：延时 15 分钟到点选好个股后不立即买入——
+      // 取该股在「T → T+15」窗口内的最高当日涨幅，之后每 5min 桶监控，涨幅超过窗口最高 +1 个百分点才成交；
+      // 未达到确认条件时把已选标的存入 pendingIceConfirm（始终未确认 → 当日不买）。
+      // 必须放在 tryPreemptEwPositions 之前：尚未确认成交时不得抢先卖出 B 风格隔夜持仓
+      if (opts.iceConfirmInfo) picked.iceConfirmInfo = opts.iceConfirmInfo;
+      if (opts.iceConfirm === true) {
+        const curGain = picked.stock.changePct != null ? Number(picked.stock.changePct) : null;
+        const winMax = opts.iceGainWindowMax instanceof Map ? opts.iceGainWindowMax.get(picked.stock.code) : null;
+        const maxGain = winMax != null ? Number(winMax) : curGain;
+        if (!isIceGainConfirmed(curGain, maxGain)) {
+          pendingIceConfirm = {
+            picked,
+            gatedBuyInfo,
+            gateAllowedMarkets,
+            gateTurnedPosInfo,
+            delayInfo: delayInfo || null,
+            iceGateOpen,
+            targetMinute: Number(execBucket.minute),
+            windowMaxGain: maxGain,
+          };
+          return false;
+        }
+        picked.iceConfirmInfo = {
+          triggerTime: delayInfo?.triggerTime,
+          execTime: delayInfo?.execTime,
+          windowMaxGain: maxGain,
+          confirmTime: fmtTime(execBucket.timeKey).substring(0, 5),
+          confirmGain: curGain,
+        };
+      }
+      // A 风格买点确实可以成交（已选到标的）才执行抢仓：先强制卖出 B 风格隔夜持仓，再建仓
+      if (!tryPreemptEwPositions(execMinute, emoAtExec)) return false;
       const finalBuyInfo = withResilienceGateInfo(gatedBuyInfo, picked);
       const sc = picked.stock;
       const firstBuyPrice = parseFloat(Number(sc.lastPx).toFixed(2));
@@ -600,6 +635,22 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
           pendingRaisedBuy = null;
         } else if (isRaisedBlockDelayExpired(bucketMinute, pendingRaisedBuy.targetMinute)) {
           pendingRaisedBuy = null;
+        }
+      }
+
+      // 冰点转折·涨幅确认监控（2026-10-30 用户新增）：延时到点已锁定个股但尚未确认时，每个 5min 桶检查该股涨幅，
+      // 超过窗口最高涨幅 +1 个百分点即本桶成交；等待期内不做新买点评估，始终未确认 → 当日不买
+      let iceConfirmHit = null;
+      if (pendingIceConfirm && emoPositions.length === 0 && bucketMinute > pendingIceConfirm.targetMinute) {
+        const confirmSc = (bucket.stockChanges || []).find(s => s.code === pendingIceConfirm.picked.stock.code);
+        const curGain = confirmSc && confirmSc.changePct != null ? Number(confirmSc.changePct) : null;
+        if (isIceGainConfirmed(curGain, pendingIceConfirm.windowMaxGain)) {
+          iceConfirmHit = {
+            ...pendingIceConfirm,
+            confirmSc,
+            confirmGain: curGain,
+            confirmTime: fmtTime(bucket.timeKey).substring(0, 5),
+          };
         }
       }
 
@@ -684,6 +735,8 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       // ===== 风格独占锁·解锁判定：当前风格全部平仓回到空仓 → 解锁 =====
       if (styleLock === 'emo' && emoPositions.length === 0) styleLock = null;
       if (styleLock === 'ew' && ewPositions.every(p => !p)) styleLock = null;
+      // A 风格冰点转折待确认期间 B 风格已独占账户（谁先成交谁占账户）→ 取消该笔待确认买入
+      if (pendingIceConfirm && styleLock === 'ew') pendingIceConfirm = null;
 
       // ===== 买入①（A 风格·科技进攻）=====
       // 未被 B 风格独占时照常评估；B 风格（情绪游资-极致胜率）持仓锁定账户期间，仅当「科技进攻抢仓」条件成立时
@@ -692,7 +745,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
         ? Number(bucket.techEmotion)
         : null;
       const preemptGateOk = bucketTechEmotion != null && bucketTechEmotion > 0;
-      if ((styleLock !== 'ew' || preemptGateOk) && !pendingRaisedBuy && !delayedExec) {
+      if ((styleLock !== 'ew' || preemptGateOk) && !pendingRaisedBuy && !delayedExec && !pendingIceConfirm) {
         const quickOutNoRebuy = quickOutSoldDate === dateStr;
         // A 风格买点诊断按动态阈值判定资金净流入检查（见上方 fundGate；B 风格不受影响）；
         // 已持第一份半仓待补买第二份时，检查2 固定按基准 20 亿判定（2026-10-21 用户新增：第二份补买阈值降回 20 亿）
@@ -750,12 +803,45 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
         }
       }
 
-      // 延时建仓执行：目标桶（买点触发后 15 分钟）到达时，按区间涨幅差值重新选板块与个股，按本桶价成交
+      // 延时建仓执行：目标桶（买点触发后 15 分钟）到达时，按区间涨幅差值重新选板块与个股，按本桶价成交；
+      // 连续两日冰点路径下还要先做「延时后涨幅确认」：到点只锁定标的、不成交，
+      // 待后续 5min 桶涨幅超过窗口最高 +1 个百分点才由 pendingIceConfirm 确认成交
       if (delayedExec && emoPositions.length === 0 && !(quickOutSoldDate === dateStr)) {
+        const iceNow = isTechIceGateOpen(prevDateStr, timeBuckets, bi);
         if (await openEmoFirstPosition(bucket, delayedExec.gatedBuyInfo, delayedExec.gateAllowedMarkets, delayedExec.gateTurnedPosInfo, {
           triggerTime: delayedExec.triggerTime,
           execTime: fmtTime(bucket.timeKey).substring(0, 5),
-        }, isTechIceGateOpen(prevDateStr, timeBuckets, bi))) {
+        }, iceNow, iceNow
+          ? { iceConfirm: true, iceGainWindowMax: buildIceGainWindowMax(timeBuckets, delayedExec.targetMinute) }
+          : undefined)) {
+          styleLock = 'emo';
+        }
+      }
+
+      // 冰点转折·涨幅确认通过：沿用延时到点锁定的标的，按本桶（确认桶）价成交（等待期内不重复评估新买点）
+      if (iceConfirmHit && emoPositions.length === 0 && styleLock !== 'ew' && !(quickOutSoldDate === dateStr)) {
+        const saved = iceConfirmHit;
+        pendingIceConfirm = null;
+        const lockedPick = {
+          ...saved.picked,
+          stock: {
+            ...saved.picked.stock,
+            lastPx: saved.confirmSc.lastPx,
+            changePct: saved.confirmSc.changePct != null ? saved.confirmSc.changePct : saved.picked.stock.changePct,
+            name: saved.confirmSc.name || saved.picked.stock.name,
+          },
+        };
+        if (await openEmoFirstPosition(bucket, saved.gatedBuyInfo, saved.gateAllowedMarkets, saved.gateTurnedPosInfo, saved.delayInfo, saved.iceGateOpen, {
+          lockedPick,
+          iceConfirmInfo: {
+            ...(saved.picked.iceConfirmInfo || {}),
+            triggerTime: saved.delayInfo?.triggerTime,
+            execTime: saved.delayInfo?.execTime,
+            windowMaxGain: saved.windowMaxGain,
+            confirmTime: saved.confirmTime,
+            confirmGain: saved.confirmGain,
+          },
+        })) {
           styleLock = 'emo';
         }
       }

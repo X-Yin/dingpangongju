@@ -171,12 +171,22 @@ const GlobalDiagnosisAlert = () => {
       if (hits.length === 0) return;
       setSellAlert({ results: hits, ts: msg.ts ?? null });
     });
-    // 冰点转折：买点触发后先展示「延时 15min 观察资金聚焦主线板块」等待卡片（补发消息同样展示）
+    // 冰点转折：买点触发后先展示「延时 15min 观察资金聚焦主线板块」等待卡片（补发消息同样展示）；
+    // 延时到点转为「涨幅确认」阶段（phase='confirm'）同样展示，确认通过由买点卡片接管，
+    // 15:00 仍未确认（phase='giveup'）则收起卡片
     const unsubIce = subscribeIceDelayWaitPush((msg) => {
-      if (!msg?.data || msg.data.phase !== 'wait') return;
-      // 过期的等待消息（补发时可能已到点买入）不再展示，窗口 = 延时 + 2 分钟
-      const delayMs = ((msg.data.delayMin ?? 15) + 2) * 60 * 1000;
-      if (msg.ts && Date.now() - msg.ts > delayMs) return;
+      const phase = msg?.data?.phase;
+      if (!msg?.data || phase == null) return;
+      if (phase === 'giveup') {
+        setIceAlert(null);
+        return;
+      }
+      if (phase !== 'wait' && phase !== 'confirm') return;
+      // 过期的等待消息（补发时可能已到点买入）不再展示，窗口 = 延时 + 2 分钟（确认阶段持续到收盘，不做过期）
+      if (phase === 'wait') {
+        const delayMs = ((msg.data.delayMin ?? 15) + 2) * 60 * 1000;
+        if (msg.ts && Date.now() - msg.ts > delayMs) return;
+      }
       setIceAlert({ mode: msg.mode || getStrategyMode(), data: msg.data, ts: msg.ts ?? null });
     });
     return () => { unsubBuy(); unsubSell(); unsubIce(); };
@@ -194,15 +204,17 @@ const GlobalDiagnosisAlert = () => {
 };
 
 // ==================== 冰点转折延时观察卡片 ====================
-// 买点触发且属冰点转折时，先提示延时 15min 观察资金聚焦主线板块，到点后由买点卡片给出个股
+// 阶段①（phase='wait'）：买点触发后提示延时 15min 观察资金聚焦主线板块；
+// 阶段②（phase='confirm'）：延时到点已锁定个股，逐 5min 桶监控涨幅，须超过窗口最高涨幅 +1 个百分点才买入
 const IceWaitCard = ({ alert, onClose }) => {
   const { mode, data } = alert;
   const delayMin = data?.delayMin ?? 15;
+  const isConfirm = data?.phase === 'confirm';
   return (
     <div className="gda-card gda-ice">
       <div className="gda-header">
         <ClockCircleOutlined className="gda-header-icon ice" />
-        <span className="gda-title">冰点转折 · 延时观察</span>
+        <span className="gda-title">{isConfirm ? '冰点转折 · 涨幅确认' : '冰点转折 · 延时观察'}</span>
         <span className="gda-mode-badge">{MODE_LABELS[mode] || mode}</span>
         <CloseOutlined className="gda-close" onClick={onClose} />
       </div>
@@ -213,26 +225,42 @@ const IceWaitCard = ({ alert, onClose }) => {
           <span className="gda-value">{MODE_LABELS[mode] || mode}</span>
           {data?.mock && <span className="gda-hit-types">MOCK 测试</span>}
         </div>
-        {/* ② 延时观察提示 */}
+        {/* ② 延时观察 / 涨幅确认提示 */}
         <div className="gda-section">
-          <div className="gda-section-title">延时观察提示</div>
+          <div className="gda-section-title">{isConfirm ? '涨幅确认提示' : '延时观察提示'}</div>
           <div className="gda-reason-detail">
             {data?.message || `冰点转折：买点已触发，需延时 ${delayMin} 分钟观察资金聚焦主线板块后再执行买入`}
           </div>
         </div>
         {/* ③ 时间安排 */}
         <div className="gda-section">
-          <div className="gda-section-title">时间安排</div>
+          <div className="gda-section-title">{isConfirm ? '确认安排' : '时间安排'}</div>
           <div className="gda-reason">
             <span className="gda-reason-name">买点触发时间</span>
             <span className="gda-reason-value">{data?.triggerTime || '--'}</span>
           </div>
           <div className="gda-reason">
-            <span className="gda-reason-name">计划买入时间</span>
-            <span className="gda-reason-value">{(data?.executeTime || '--') + `（延时 ${delayMin} 分钟）`}</span>
+            <span className="gda-reason-name">{isConfirm ? '延时结束时间' : '计划买入时间'}</span>
+            <span className="gda-reason-value">{isConfirm
+              ? (data?.executeTime || '--')
+              : (data?.executeTime || '--') + `（延时 ${delayMin} 分钟）`}</span>
           </div>
+          {isConfirm && (
+            <>
+              <div className="gda-reason">
+                <span className="gda-reason-name">监控标的</span>
+                <span className="gda-reason-value">{`${data?.stockName || '--'}（${data?.stockCode || '--'}）`}</span>
+              </div>
+              <div className="gda-reason">
+                <span className="gda-reason-name">确认阈值</span>
+                <span className="gda-reason-value">{`窗口最高 ${data?.windowMaxGain ?? '--'}% → 需 > ${data?.needGain ?? '--'}%`}</span>
+              </div>
+            </>
+          )}
         </div>
-        <div className="gda-footer">到点后后端会自动推送要买入的个股，请保持页面打开</div>
+        <div className="gda-footer">{isConfirm
+          ? '每隔 5 分钟桶检查一次涨幅，超过阈值即推送买入；15:00 仍未超过则本次不买'
+          : '到点后后端会自动推送要买入的个股，请保持页面打开'}</div>
       </div>
     </div>
   );
@@ -297,6 +325,12 @@ const BuyCard = ({ alert, onClose }) => {
               <span className="gda-reason-name">资金聚焦板块</span>
               <span className="gda-reason-value">{iceDelay.board || '全量科技自选股（回退）'}</span>
             </div>
+            {iceDelay.windowMaxGain != null && (
+              <div className="gda-reason">
+                <span className="gda-reason-name">涨幅确认</span>
+                <span className="gda-reason-value">{`窗口最高 ${iceDelay.windowMaxGain}% → 需 > ${iceDelay.needGain != null ? iceDelay.needGain : iceDelay.windowMaxGain + 1}%${iceDelay.confirmTime ? `（${iceDelay.confirmTime} 确认 ${iceDelay.confirmGain}%）` : ''}`}</span>
+              </div>
+            )}
             {iceDelay.reason && <div className="gda-reason-detail">{iceDelay.reason}</div>}
           </div>
         )}

@@ -1,55 +1,5 @@
 [
   {
-    "id": "59e692c29b16c971",
-    "time": "2026-10-30 09:30:00",
-    "read": true,
-    "strategyId": "prev_day_volume_price_bottom",
-    "title": "⚠️ 前日地量地价，今日低开继续下跌",
-    "description": "前一日创业板指地量地价：涨跌幅-4.45%（<-1%大幅下跌）、缩量-5.7%（>5%缩量）。今日竞价低开-3.29%（开盘价2434.80 < 前日收盘2517.59），可能受外围利空拖累，当日大概率继续下跌。",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
-    "id": "b5eb596c712a43e1",
-    "time": "2026-10-30 09:30:00",
-    "read": true,
-    "strategyId": "ebb_tide_direct_reversal",
-    "title": "⚠️ 退潮直接反转概率低，切勿追涨",
-    "description": "创业板指前一日涨跌幅 -4.45%，科创50前一日涨跌幅 -4.27%。<br/>创业板指/科创50前一个交易日大跌超过-2%，次日直接反转的概率只有 <strong>23%</strong>，不要追涨！就算参与只能 <strong>1/3 仓位</strong>参与。",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
-    "id": "f0bb5d2ec40ce6ee",
-    "time": "2026-10-30 09:34:01",
-    "read": true,
-    "strategyId": "overnight_crisis_escape",
-    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
-    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-42.2亿</strong>（净流出）<br/>• 科技分时情绪 -30.6 → -24.9（上升 5.6）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
-    "id": "ec3c7ebcf1a8a702",
-    "time": "2026-10-30 09:39:06",
-    "read": true,
-    "strategyId": "volume_shrink_stagnation",
-    "title": "📉 放量后缩量滞涨",
-    "description": "成交量从高位 <strong>262亿</strong> 回落至 <strong>111亿</strong>，指数开始滞涨，需警惕回落风险。",
-    "severity": "medium",
-    "isBullish": false
-  },
-  {
-    "id": "abbb37fad596c989",
-    "time": "2026-10-30 09:45:07",
-    "read": true,
-    "strategyId": "panic_outflow",
-    "title": "🚨 恐慌盘出逃",
-    "description": "成交量较约15分钟前放大 <strong>816亿</strong>（≥100亿），主力资金净流出加速（-44.9→-82.8亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
     "id": "1dbb7d6f5412b4f1",
     "time": "2026-10-30 13:00:11",
     "read": true,

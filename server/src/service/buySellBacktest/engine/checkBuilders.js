@@ -5,6 +5,7 @@ const {
   EMO_QUICK_RAISED_BLOCK_DELAY_MIN,
   EMO_QUICK_RAISED_BLOCK_TAGS,
   EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN,
+  EMO_QUICK_ICE_CONFIRM_PCT,
   TECH_ICE_THRESHOLD,
   EMO_QUICK_RANGE_HIGH,
   EMO_QUICK_RANGE_LOW,
@@ -202,6 +203,39 @@ const buildRaisedBlockDelayCheck = (info) => ({
     : `连续两日冰点（上一交易日 hasIce: true 且当日分时科技情绪触及 ${TECH_ICE_THRESHOLD}）下`}买点于 ${info?.triggerTime || '--'} 触发，不立刻买入：延时 ${EMO_QUICK_RAISED_BLOCK_DELAY_MIN} 分钟至 ${info?.execTime || '--'} 桶，并以该时点为终点往前回溯 ${EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN} 分钟，重新计算「${EMO_QUICK_RAISED_BLOCK_TAGS.join('/')}」tag 板块的区间涨幅差值（给板块发酵时间），再按差值从高到低逐个尝试板块并选 N 日涨幅最大者买入`,
 });
 
+// 快进快出类「冰点转折·延时后涨幅确认」明细（2026-10-30 用户新增）：
+// 延时 15 分钟到期选好个股后不立即买入，先取该股在延时窗口内的最高当日涨幅，此后每 5min 桶监控，
+// 只有当前涨幅超过窗口最高涨幅 + 1 个百分点（8% → > 9%）才允许买入；始终未超过 → 本次不买
+const buildIceGainConfirmCheck = (info) => ({
+  id: 'raised_block_gain_confirm',
+  title: `延时后涨幅确认（须超过窗口最高涨幅 +${EMO_QUICK_ICE_CONFIRM_PCT} 个百分点）`,
+  passed: true,
+  value: `${info?.confirmTime || '--'} 涨幅 ${info?.confirmGain != null ? Number(info.confirmGain).toFixed(2) : '--'}%（窗口最高 ${info?.windowMaxGain != null ? Number(info.windowMaxGain).toFixed(2) : '--'}%）`,
+  reason: `冰点转折延时 ${EMO_QUICK_RAISED_BLOCK_DELAY_MIN} 分钟到期（${info?.triggerTime || '--'} → ${info?.execTime || '--'}）后不立即买入：先取该股在延时窗口内的最高当日涨幅 ${info?.windowMaxGain != null ? Number(info.windowMaxGain).toFixed(2) : '--'}%，随后每隔 5 分钟桶监控，只有当涨幅超过该最高涨幅 +${EMO_QUICK_ICE_CONFIRM_PCT} 个百分点（即 > ${info?.windowMaxGain != null ? (Number(info.windowMaxGain) + EMO_QUICK_ICE_CONFIRM_PCT).toFixed(2) : '--'}%）时才允许买入；本次在 ${info?.confirmTime || '--'} 涨幅 ${info?.confirmGain != null ? Number(info.confirmGain).toFixed(2) : '--'}% 达到确认条件，按该桶价买入`,
+});
+
+// 重点板块-进攻延迟 n 分钟：延时窗口资金净流入逐 5min 桶校验明细
+const buildAttackDelayWindowCheck = (info) => ({
+  id: 'attack_delay_window',
+  title: `买点延迟 ${info?.delayMin != null ? info.delayMin : '--'} 分钟：窗口内资金净流入 5min 桶逐桶为正`,
+  passed: true,
+  value: `${info?.window?.passedCount != null ? info.window.passedCount : '--'} / ${info?.window?.totalCount != null ? info.window.totalCount : '--'} 个 5min 桶通过`,
+  reason: `${info?.triggerTime || '--'} 买点触发后不立刻买入，延时 ${info?.delayMin != null ? info.delayMin : '--'} 分钟至 ${info?.execTime || '--'} 桶：${info?.window?.reason || ''}`,
+});
+
+// 重点板块-进攻延迟 n 分钟：全量重点板块中 3 日涨幅最大板块明细（前天/昨天/实时涨幅、合成 gain、排名与交集只数）
+const buildAttackBlockCheck = (info) => {
+  const fmt = v => (v != null && Number.isFinite(Number(v)) ? Number(v).toFixed(2) : '--');
+  const pct = v => (Number(v) > 0 ? '+' : '') + fmt(v);
+  return {
+    id: 'attack_block_pick',
+    title: '全量重点板块3日涨幅最大·板块内选股',
+    passed: true,
+    value: `${info?.blockName || '--'}（3 日 ${pct(info?.gain)}% = 前天 ${pct(info?.prev2Change)}% + 昨天 ${pct(info?.prev1Change)}% + 实时 ${pct(info?.todayChange)}%）`,
+    reason: `在目标时点对全量重点板块按「最近 3 日涨幅」（前天收盘涨幅 + 昨天收盘涨幅 + 目标桶实时涨幅，复利口径）降序逐个尝试，本次命中「${info?.blockName || '--'}」（3 日涨幅 ${pct(info?.gain)}%，第 ${info?.rank != null ? info.rank : '--'} 名），并仅在该板块成分股与全量自选股交集（${info?.overlapCount != null ? info.overlapCount : '--'} 只）内选最近 3 日涨幅最大者（涨停顺延、抗分歧 ≥ 9）`,
+  };
+};
+
 // 情绪快进快出标注明细项（highest_{N}d_gain_emoquick 系列）：标注本次买入是否为「快进快出」买入
 //（触发条件二选一：上一交易日科技情绪 3 日 EMA < -30；或上上个、上个交易日的当日科技情绪原始分
 // 均处 -30~-10 区间且回升）——是则该笔持仓不走通用 7 条件卖点、买入次日 10:00 强制卖出；
@@ -317,10 +351,13 @@ const withResilienceGateInfo = (buyInfo, picked) => {
   const hasRaisedBlock = !!picked.raisedBlockInfo;
   const hasRaisedFallback = !!picked.raisedBlockFallbackInfo;
   const hasRaisedDelay = !!picked.raisedBlockDelayInfo;
+  const hasIceConfirm = !!picked.iceConfirmInfo;
+  const hasAttackDelay = !!picked.attackDelayInfo;
+  const hasAttackBlock = !!picked.attackBlockInfo;
   const hasGlobalSkip = Array.isArray(picked.globalResilienceSkipped) && picked.globalResilienceSkipped.length > 0;
   const hasGateSkip = Array.isArray(picked.skipped) && picked.skipped.length > 0;
   // 早返回：既没有分数也没有任何顺延信息，也没有情绪快进快出标注
-  if (picked.resilienceScore == null && !picked.emoQuickOut && !hasLimitUp && !hasOneWord && !hasEmoCyc && !hasGainGap && !hasGainTie && !hasRaisedBlock && !hasRaisedFallback && !hasRaisedDelay && !hasGlobalSkip && !hasGateSkip) return buyInfo;
+  if (picked.resilienceScore == null && !picked.emoQuickOut && !hasLimitUp && !hasOneWord && !hasEmoCyc && !hasGainGap && !hasGainTie && !hasRaisedBlock && !hasRaisedFallback && !hasRaisedDelay && !hasIceConfirm && !hasAttackDelay && !hasAttackBlock && !hasGlobalSkip && !hasGateSkip) return buyInfo;
   let buyReason = buyInfo.buyReason;
   const buyChecks = [...(buyInfo.buyChecks || [])];
   if (hasLimitUp) {
@@ -353,6 +390,18 @@ const withResilienceGateInfo = (buyInfo, picked) => {
   if (hasRaisedDelay) {
     // 快进快出类：连续两日冰点下买点触发后延时 15 分钟再按区间涨幅差值选板块 → raised_block_delay
     buyChecks.push(buildRaisedBlockDelayCheck(picked.raisedBlockDelayInfo));
+  }
+  if (hasIceConfirm) {
+    // 快进快出类：冰点转折延时到点后须涨幅确认才买入 → raised_block_gain_confirm
+    buyChecks.push(buildIceGainConfirmCheck(picked.iceConfirmInfo));
+  }
+  if (hasAttackDelay) {
+    // 重点板块-进攻延迟 n 分钟：延时窗口资金净流入逐 5min 桶校验 → attack_delay_window
+    buyChecks.push(buildAttackDelayWindowCheck(picked.attackDelayInfo));
+  }
+  if (hasAttackBlock) {
+    // 重点板块-进攻延迟 n 分钟：命中「3 日涨幅最大」板块 → attack_block_pick
+    buyChecks.push(buildAttackBlockCheck(picked.attackBlockInfo));
   }
   if (picked.resilienceScore != null) {
     // 全局最低抗分歧 ≥ 9 + 门槛策略专项 ≥ 11（RESILIENCE_GATE_STRATEGY_IDS）
@@ -388,6 +437,18 @@ const withResilienceGateInfo = (buyInfo, picked) => {
     // 板块发酵延时：单独追加标签（明细见 raised_block_delay）
     buyReason = `${buyReason}｜买点触发后延时 ${EMO_QUICK_RAISED_BLOCK_DELAY_MIN} 分钟按最新板块涨幅选股（${picked.raisedBlockDelayInfo.triggerTime} → ${picked.raisedBlockDelayInfo.execTime}）`;
   }
+  if (hasIceConfirm) {
+    // 冰点转折·延时后涨幅确认（明细见 raised_block_gain_confirm）
+    buyReason = `${buyReason}｜延时后涨幅 ${picked.iceConfirmInfo.confirmGain != null ? Number(picked.iceConfirmInfo.confirmGain).toFixed(2) : '--'}% 超过窗口最高 ${picked.iceConfirmInfo.windowMaxGain != null ? Number(picked.iceConfirmInfo.windowMaxGain).toFixed(2) : '--'}% +${EMO_QUICK_ICE_CONFIRM_PCT}%（${picked.iceConfirmInfo.confirmTime || '--'} 确认买入）`;
+  }
+  if (hasAttackDelay) {
+    // 重点板块-进攻延迟：单独追加标签（明细见 attack_delay_window）
+    buyReason = `${buyReason}｜买点触发后延时 ${picked.attackDelayInfo.delayMin} 分钟、窗口内资金净流入逐 5min 桶为正（${picked.attackDelayInfo.triggerTime} → ${picked.attackDelayInfo.execTime}）`;
+  }
+  if (hasAttackBlock) {
+    // 全量重点板块 3 日涨幅最大选股：单独追加标签（明细见 attack_block_pick）
+    buyReason = `${buyReason}｜全量重点板块「${picked.attackBlockInfo.blockName}」3 日涨幅最大·板块内选股`;
+  }
   return { buyReason, buyChecks };
 };
 
@@ -419,8 +480,12 @@ const withResilienceGateInfo = (buyInfo, picked) => {
 // 返回 { replayEntry, perBucket }；当日无分时（停牌/拉取失败）返回 null（卖出诊断当日安全跳过，次日重试）
 
 module.exports = {
+  buildAttackBlockCheck,
+  buildAttackDelayWindowCheck,
   buildCycleDeferCheck,
   buildEmoQuickOutCheck,
+  buildGainGapDeferCheck,
+  buildGainTieCheck,
   buildLimitUpDeferCheck,
   buildOneWordBoardDeferCheck,
   buildQuickOutCrashSellReason,

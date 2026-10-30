@@ -5,7 +5,7 @@
   "endDate": "20260731",
   "targetEndDate": "20260731",
   "isFinal": true,
-  "generatedAt": "2026/10/30 15:21:17",
+  "generatedAt": "2026/10/30 19:46:16",
   "strategyCount": 45,
   "analysis": {
     "key": "202607",
@@ -287,26 +287,10 @@
       }
     },
     {
-      "id": "sci_attack_emo_win",
-      "name": "科技进攻-情绪游资极致胜率",
-      "score": 82.3,
-      "rank": 13,
-      "ret": 4.5,
-      "tradeCount": 1,
-      "metrics": {
-        "overallReturn": 4.5,
-        "maxDrawdown": null,
-        "avgDrawdown": null,
-        "winRate": 100,
-        "avgHoldingDays": 1,
-        "profitLossRatio": 10
-      }
-    },
-    {
       "id": "highest_2d_gain_two_buy",
       "name": "2日涨幅最大&两次买入",
       "score": 81.1,
-      "rank": 14,
+      "rank": 13,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -322,7 +306,7 @@
       "id": "highest_3d_gain_two_buy",
       "name": "3日涨幅最大&两次买入",
       "score": 81.1,
-      "rank": 15,
+      "rank": 14,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -338,7 +322,7 @@
       "id": "highest_4d_gain_two_buy",
       "name": "4日涨幅最大&两次买入",
       "score": 81.1,
-      "rank": 16,
+      "rank": 15,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -354,7 +338,7 @@
       "id": "highest_5d_gain_two_buy",
       "name": "5日涨幅最大&两次买入",
       "score": 81.1,
-      "rank": 17,
+      "rank": 16,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -370,7 +354,7 @@
       "id": "highest_2d5_gain_two_buy",
       "name": "2.5日涨幅最大&两次买入",
       "score": 81.1,
-      "rank": 18,
+      "rank": 17,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -386,7 +370,7 @@
       "id": "highest_3d5_gain_two_buy",
       "name": "3.5日涨幅最大&两次买入",
       "score": 81.1,
-      "rank": 19,
+      "rank": 18,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -402,7 +386,7 @@
       "id": "highest_2d_gain_two_buy_diff_block",
       "name": "2日涨幅最大&两次买入不同板块",
       "score": 81.1,
-      "rank": 20,
+      "rank": 19,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -418,7 +402,7 @@
       "id": "highest_3d_gain_two_buy_diff_block",
       "name": "3日涨幅最大&两次买入不同板块",
       "score": 81.1,
-      "rank": 21,
+      "rank": 20,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -434,7 +418,7 @@
       "id": "highest_4d_gain_two_buy_diff_block",
       "name": "4日涨幅最大&两次买入不同板块",
       "score": 81.1,
-      "rank": 22,
+      "rank": 21,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -450,7 +434,7 @@
       "id": "highest_5d_gain_two_buy_diff_block",
       "name": "5日涨幅最大&两次买入不同板块",
       "score": 81.1,
-      "rank": 23,
+      "rank": 22,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -466,7 +450,7 @@
       "id": "highest_2d_gain_two_buy_diff_stock",
       "name": "2日涨幅最大&两次买入（不同股）",
       "score": 81.1,
-      "rank": 24,
+      "rank": 23,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -482,7 +466,7 @@
       "id": "highest_3d_gain_two_buy_diff_stock",
       "name": "3日涨幅最大&两次买入（不同股）",
       "score": 81.1,
-      "rank": 25,
+      "rank": 24,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -498,7 +482,7 @@
       "id": "highest_4d_gain_two_buy_diff_stock",
       "name": "4日涨幅最大&两次买入（不同股）",
       "score": 81.1,
-      "rank": 26,
+      "rank": 25,
       "ret": 3.91,
       "tradeCount": 1,
       "metrics": {
@@ -511,110 +495,14 @@
       }
     },
     {
-      "id": "highest_2d_gain_emoquick",
-      "name": "2日涨幅最大&三日情绪-30快进快出",
-      "score": 80.2,
-      "rank": 27,
-      "ret": 3.44,
+      "id": "sci_attack_emo_win",
+      "name": "科技进攻-情绪游资极致胜率",
+      "score": 81,
+      "rank": 26,
+      "ret": 3.86,
       "tradeCount": 1,
       "metrics": {
-        "overallReturn": 3.44,
-        "maxDrawdown": null,
-        "avgDrawdown": null,
-        "winRate": 100,
-        "avgHoldingDays": 1,
-        "profitLossRatio": 10
-      }
-    },
-    {
-      "id": "highest_3d_gain_emoquick",
-      "name": "3日涨幅最大&三日情绪-30快进快出",
-      "score": 80.2,
-      "rank": 28,
-      "ret": 3.44,
-      "tradeCount": 1,
-      "metrics": {
-        "overallReturn": 3.44,
-        "maxDrawdown": null,
-        "avgDrawdown": null,
-        "winRate": 100,
-        "avgHoldingDays": 1,
-        "profitLossRatio": 10
-      }
-    },
-    {
-      "id": "highest_4d_gain_emoquick",
-      "name": "4日涨幅最大&三日情绪-30快进快出",
-      "score": 80.2,
-      "rank": 29,
-      "ret": 3.44,
-      "tradeCount": 1,
-      "metrics": {
-        "overallReturn": 3.44,
-        "maxDrawdown": null,
-        "avgDrawdown": null,
-        "winRate": 100,
-        "avgHoldingDays": 1,
-        "profitLossRatio": 10
-      }
-    },
-    {
-      "id": "highest_5d_gain_emoquick",
-      "name": "5日涨幅最大&三日情绪-30快进快出",
-      "score": 80.2,
-      "rank": 30,
-      "ret": 3.44,
-      "tradeCount": 1,
-      "metrics": {
-        "overallReturn": 3.44,
-        "maxDrawdown": null,
-        "avgDrawdown": null,
-        "winRate": 100,
-        "avgHoldingDays": 1,
-        "profitLossRatio": 10
-      }
-    },
-    {
-      "id": "highest_2d5_gain_emoquick",
-      "name": "2.5日涨幅最大&三日情绪-30快进快出",
-      "score": 80.2,
-      "rank": 31,
-      "ret": 3.44,
-      "tradeCount": 1,
-      "metrics": {
-        "overallReturn": 3.44,
-        "maxDrawdown": null,
-        "avgDrawdown": null,
-        "winRate": 100,
-        "avgHoldingDays": 1,
-        "profitLossRatio": 10
-      }
-    },
-    {
-      "id": "highest_3d5_gain_emoquick",
-      "name": "3.5日涨幅最大&三日情绪-30快进快出",
-      "score": 80.2,
-      "rank": 32,
-      "ret": 3.44,
-      "tradeCount": 1,
-      "metrics": {
-        "overallReturn": 3.44,
-        "maxDrawdown": null,
-        "avgDrawdown": null,
-        "winRate": 100,
-        "avgHoldingDays": 1,
-        "profitLossRatio": 10
-      }
-    },
-    {
-      "id": "highest_3d_reports_top5_gain_emoquick",
-      "name": "3日涨幅最大&三日情绪-30快进快出&研报覆盖",
-      "score": 80.2,
-      "rank": 33,
-      "ret": 3.44,
-      "tradeCount": 1,
-      "metrics": {
-        "overallReturn": 3.44,
+        "overallReturn": 3.86,
         "maxDrawdown": null,
         "avgDrawdown": null,
         "winRate": 100,
@@ -626,7 +514,7 @@
       "id": "highest_2d_gain_emoquick_pulse",
       "name": "脉冲最强-2日涨幅最大-快进快出",
       "score": 80.2,
-      "rank": 34,
+      "rank": 27,
       "ret": 3.44,
       "tradeCount": 1,
       "metrics": {
@@ -642,7 +530,7 @@
       "id": "highest_3d_gain_emoquick_pulse",
       "name": "脉冲最强-3日涨幅最大-快进快出",
       "score": 80.2,
-      "rank": 35,
+      "rank": 28,
       "ret": 3.44,
       "tradeCount": 1,
       "metrics": {
@@ -658,11 +546,123 @@
       "id": "highest_4d_gain_emoquick_pulse",
       "name": "脉冲最强-4日涨幅最大-快进快出",
       "score": 80.2,
-      "rank": 36,
+      "rank": 29,
       "ret": 3.44,
       "tradeCount": 1,
       "metrics": {
         "overallReturn": 3.44,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 1,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_2d_gain_emoquick",
+      "name": "2日涨幅最大&三日情绪-30快进快出",
+      "score": 78.9,
+      "rank": 30,
+      "ret": 2.81,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 2.81,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 1,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_3d_gain_emoquick",
+      "name": "3日涨幅最大&三日情绪-30快进快出",
+      "score": 78.9,
+      "rank": 31,
+      "ret": 2.81,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 2.81,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 1,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_4d_gain_emoquick",
+      "name": "4日涨幅最大&三日情绪-30快进快出",
+      "score": 78.9,
+      "rank": 32,
+      "ret": 2.81,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 2.81,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 1,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_5d_gain_emoquick",
+      "name": "5日涨幅最大&三日情绪-30快进快出",
+      "score": 78.9,
+      "rank": 33,
+      "ret": 2.81,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 2.81,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 1,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_2d5_gain_emoquick",
+      "name": "2.5日涨幅最大&三日情绪-30快进快出",
+      "score": 78.9,
+      "rank": 34,
+      "ret": 2.81,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 2.81,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 1,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_3d5_gain_emoquick",
+      "name": "3.5日涨幅最大&三日情绪-30快进快出",
+      "score": 78.9,
+      "rank": 35,
+      "ret": 2.81,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 2.81,
+        "maxDrawdown": null,
+        "avgDrawdown": null,
+        "winRate": 100,
+        "avgHoldingDays": 1,
+        "profitLossRatio": 10
+      }
+    },
+    {
+      "id": "highest_3d_reports_top5_gain_emoquick",
+      "name": "3日涨幅最大&三日情绪-30快进快出&研报覆盖",
+      "score": 78.9,
+      "rank": 36,
+      "ret": 2.81,
+      "tradeCount": 1,
+      "metrics": {
+        "overallReturn": 2.81,
         "maxDrawdown": null,
         "avgDrawdown": null,
         "winRate": 100,

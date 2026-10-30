@@ -1200,5 +1200,23 @@
     "riskScore": " 7",
     "isTech": true,
     "addedAt": "2026-10-30 15:23:01"
+  },
+  {
+    "code": "sz001219",
+    "name": "青岛食品",
+    "isImportant": false,
+    "blockName": "消费",
+    "riskScore": " 7",
+    "isTech": false,
+    "addedAt": "2026-10-30 19:56:02"
+  },
+  {
+    "code": "sh605338",
+    "name": "巴比食品",
+    "isImportant": false,
+    "blockName": "消费",
+    "riskScore": " 6",
+    "isTech": false,
+    "addedAt": "2026-10-30 19:56:16"
   }
 ]

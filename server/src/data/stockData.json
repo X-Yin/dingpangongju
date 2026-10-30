@@ -2818,5 +2818,45 @@
       }
     ],
     "isImportant": false
+  },
+  "sz001219": {
+    "stockName": "青岛食品",
+    "kline": [
+      {
+        "trade_date": 20261030,
+        "open_px": 19.94,
+        "high_px": 19.94,
+        "low_px": 19.51,
+        "close_px": 19.94,
+        "business_amount": 47354902,
+        "business_balance": 944077290,
+        "change": 9.98,
+        "ma5_px": 16.63,
+        "ma10_px": 14.52,
+        "ma20_px": 13.74,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh605338": {
+    "stockName": "巴比食品",
+    "kline": [
+      {
+        "trade_date": 20261030,
+        "open_px": 19.09,
+        "high_px": 20.88,
+        "low_px": 18.72,
+        "close_px": 20.88,
+        "business_amount": 15476414,
+        "business_balance": 309524520,
+        "change": 10.01,
+        "ma5_px": 18.5,
+        "ma10_px": 18.52,
+        "ma20_px": 18.54,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

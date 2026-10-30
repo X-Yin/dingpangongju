@@ -1,4 +1,4 @@
-const { EMO_BREAK_DESC, EMO_GATE_DESC, EMO_QUICK_DESC, EMO_QUICK_HALF_DESC, EMO_QUICK_REPORTS_DESC, PULSE_DESC } = require('../descs');
+const { EMO_BREAK_DESC, EMO_GATE_DESC, EMO_QUICK_DESC, EMO_QUICK_HALF_DESC, EMO_QUICK_REPORTS_DESC, PULSE_DESC, KEY_BLOCK_ATTACK_DELAY_DESC } = require('../descs');
 
 module.exports = {
   // 情绪快进快出系列（2026-10-03 用户新增）：买点触发时均可正常买入；上一交易日科技情绪 3 日 EMA < -30
@@ -35,4 +35,13 @@ module.exports = {
   highest_2d_gain_emoquick_pulse: { id: 'highest_2d_gain_emoquick_pulse', name: '脉冲最强-2日涨幅最大-快进快出', desc: PULSE_DESC(2), emoQuickOut: true, pulseBlockPick: true },
   highest_3d_gain_emoquick_pulse: { id: 'highest_3d_gain_emoquick_pulse', name: '脉冲最强-3日涨幅最大-快进快出', desc: PULSE_DESC(3), emoQuickOut: true, pulseBlockPick: true },
   highest_4d_gain_emoquick_pulse: { id: 'highest_4d_gain_emoquick_pulse', name: '脉冲最强-4日涨幅最大-快进快出', desc: PULSE_DESC(4), emoQuickOut: true, pulseBlockPick: true },
+  // 重点板块-进攻延迟 n 分钟系列（2026-10-30 用户重构，n = 15/20/25/30）：
+  // 基于「3日涨幅最大」（highest_3d_gain）——买点诊断通过后把买点后移 n 分钟，这 n 分钟内每个 5min 桶的
+  // 资金净流入增量都为正才在目标时点买入；选股改为「全量重点板块中 3 日涨幅最大（前天+昨天+实时）且与
+  // 全量自选股有交集」的板块，其交集内再选 3 日涨幅最大者（涨停顺延、抗分歧 ≥ 9）；卖点与 3日涨幅最大一致。
+  // keyBlockAttackDelay = 延时分钟数（与 keyBlockDays 无关，仍走常规回测循环）；dynamicFundGate = 资金净流入阈值动态调节
+  highest_3d_gain_key_block_attack_delay15: { id: 'highest_3d_gain_key_block_attack_delay15', name: '重点板块-进攻延迟15分钟', desc: KEY_BLOCK_ATTACK_DELAY_DESC(15), dynamicFundGate: true, keyBlockAttackDelay: 15 },
+  highest_3d_gain_key_block_attack_delay20: { id: 'highest_3d_gain_key_block_attack_delay20', name: '重点板块-进攻延迟20分钟', desc: KEY_BLOCK_ATTACK_DELAY_DESC(20), dynamicFundGate: true, keyBlockAttackDelay: 20 },
+  highest_3d_gain_key_block_attack_delay25: { id: 'highest_3d_gain_key_block_attack_delay25', name: '重点板块-进攻延迟25分钟', desc: KEY_BLOCK_ATTACK_DELAY_DESC(25), dynamicFundGate: true, keyBlockAttackDelay: 25 },
+  highest_3d_gain_key_block_attack_delay30: { id: 'highest_3d_gain_key_block_attack_delay30', name: '重点板块-进攻延迟30分钟', desc: KEY_BLOCK_ATTACK_DELAY_DESC(30), dynamicFundGate: true, keyBlockAttackDelay: 30 },
 };

@@ -494,10 +494,13 @@ const addIceBranch = (ctx, { passKey, passEdge = {} }) => {
   ctx.add('s2', 'step', { title: '目标时点回溯 20 分钟：「中性 / 进攻」tag 板块**区间涨幅差值**降序排名', w: 280 }, { x: X1, y: ys });
   ys += estH({ title: '目标时点回溯 20 分钟：「中性 / 进攻」tag 板块区间涨幅差值降序排名' }, 280) + GAP;
   ctx.add('s3', 'step', { title: '逐板块取「成分股 ∩ 自选科技股 ∩ 目标桶有行情」交集，交集内选 N 日涨幅最大；无标的 → 顺延下一板块；全部失败 → 回退全量自选股', w: 280 }, { x: X1, y: ys });
+  ys += estH({ title: '逐板块取「成分股 ∩ 自选科技股 ∩ 目标桶有行情」交集，交集内选 N 日涨幅最大；无标的 → 顺延下一板块；全部失败 → 回退全量自选股' }, 280) + GAP;
+  ctx.add('s1c', 'step', { title: '选股完成后**涨幅确认**：取「触发 → 到点」窗口内该股最高当日涨幅，之后每 5min 桶监控，当前涨幅**超过窗口最高 +1 个百分点**才买入；始终未超过 → 本次不买', w: 280 }, { x: X1, y: ys });
   ctx.link('ice', 's1', { label: '是 · 冰点日', tone: 'yes', sh: 's-r', th: 't-l' });
   ctx.link('s1', 's2');
   ctx.link('s2', 's3');
-  return { iceKey: 'ice', s2: 's2', s3: 's3' };
+  ctx.link('s3', 's1c');
+  return { iceKey: 'ice', s2: 's2', s3: 's1c' };
 };
 
 // ---------------- 各策略家族的流程定义 ----------------
@@ -534,7 +537,7 @@ const specEmoQuick = (n, opts = {}) =>
       note: '冰点日：在板块交集内排名（全部板块无标的 → 回退全量自选股）；涨停 / 一字板 / 逆周期 / 过热 / 抗分歧等过滤照常',
     });
     stdDualGate(ctx, { fromKey: ice.iceKey, toKey: 'rank', fromEdge: { label: '否 · 正常日', tone: 'yes' } });
-    ctx.link(ice.s3, 'rank', { tone: 'yes', label: '目标时点选股', sh: 's-l', th: 't-r' });
+    ctx.link(ice.s3, 'rank', { tone: 'yes', label: '涨幅确认通过', sh: 's-l', th: 't-r' });
     const chain = addFilterChain(ctx, {
       fromKey: 'rank',
       loopKeys: ['rank', 's2'],
@@ -575,7 +578,7 @@ const specEmoBreak = (t) =>
       note: '该桶选股失败（涨停 / 抗分歧不足）时，情绪仍 ≥ 阈值的后续桶持续重试',
     });
     stdDualGate(ctx, { fromKey: ice.iceKey, toKey: 'rank', fromEdge: { label: '否 · 正常日', tone: 'yes' }, waitKey: 'waitE' });
-    ctx.link(ice.s3, 'rank', { tone: 'yes', label: '目标时点选股', sh: 's-l', th: 't-r' });
+    ctx.link(ice.s3, 'rank', { tone: 'yes', label: '涨幅确认通过', sh: 's-l', th: 't-r' });
     const chain = addFilterChain(ctx, {
       fromKey: 'rank',
       loopKeys: ['rank', 's2'],
