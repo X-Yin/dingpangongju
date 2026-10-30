@@ -1,11 +1,11 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-10-29 09:47:55",
+  "computedAt": "2026-10-30 10:07:18",
   "reason": "持仓变动重跑（持仓管理增删股票）",
   "range": {
-    "startDate": "20260730",
-    "endDate": "20261029"
+    "startDate": "20260731",
+    "endDate": "20261030"
   },
   "tradeCount": 8,
   "threshold": 20,
@@ -15,15 +15,15 @@
       "code": "sh688313",
       "name": "仕佳光子",
       "sellDate": "20260819",
-      "sellTime": "10:30",
-      "returnRate": 46.79
+      "sellTime": "10:10",
+      "returnRate": 44.76
     },
     {
-      "code": "sz002536",
-      "name": "飞龙股份",
+      "code": "sz002837",
+      "name": "英维克",
       "sellDate": "20260904",
-      "sellTime": "14:16",
-      "returnRate": 19.13
+      "sellTime": "13:55",
+      "returnRate": 6.66
     },
     {
       "code": "sh603228",
@@ -57,8 +57,8 @@
       "code": "sh688322",
       "name": "奥比中光-W",
       "sellDate": "20261026",
-      "sellTime": "10:10",
-      "returnRate": 8.7
+      "sellTime": "10:15",
+      "returnRate": 7.75
     },
     {
       "code": "sh688025",

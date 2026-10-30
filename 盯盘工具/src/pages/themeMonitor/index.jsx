@@ -93,6 +93,51 @@ const getAbnormalAlert = (basis, price) => {
   return candidates.sort((a, b) => a.gap - b.gap)[0];
 };
 
+// 向上异动阈值目标：按所需涨幅从近到远排序，triggered 表示已越过该阈值
+const getUpcomingAbnormalTargets = (basis, price) => {
+  const last = Number(price);
+  if (!basis || !Number.isFinite(last) || last <= 0) return [];
+  const targets = [];
+  ABNORMAL_ALERT_RULES.forEach(({ days, up }) => {
+    const base = Number(days === 10 ? basis.base10 : basis.base30);
+    if (!Number.isFinite(base) || base <= 0) return;
+    const targetPrice = base * (1 + up / 100);
+    const needPct = (targetPrice / last - 1) * 100;
+    targets.push({ days, threshold: up, targetPrice, needPct, triggered: needPct <= 0 });
+  });
+  return targets.sort((a, b) => a.needPct - b.needPct);
+};
+
+// 右键「异动查询」：列出未来的异动价与还需要的涨幅
+const showAbnormalQuery = (stock, quote, basis) => {
+  const price = Number(quote?.price);
+  const hasPrice = Number.isFinite(price) && price > 0;
+  const targets = getUpcomingAbnormalTargets(basis, hasPrice ? price : null);
+  const upcoming = targets.filter((t) => !t.triggered);
+  let content;
+  if (!hasPrice) {
+    content = <div>当前无实时行情（停牌或未开盘），暂无法计算异动价。</div>;
+  } else if (targets.length === 0) {
+    content = <div>暂无历史基准数据，无法计算异动价。</div>;
+  } else if (upcoming.length === 0) {
+    content = <div>已触发全部向上异动阈值（连续10个交易日 +100%、连续30个交易日 +200%）。</div>;
+  } else {
+    content = (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div>当前价：<b>{price.toFixed(2)}</b></div>
+        {upcoming.map((t) => (
+          <div key={`${t.days}-${t.threshold}`}>
+            未来异动价 <b>{t.targetPrice.toFixed(2)}</b>
+            （连续 {t.days} 个交易日累计涨幅达 {formatPct(t.threshold, { sign: false })}），
+            还需涨幅 <b>{formatPct(t.needPct)}</b>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  Modal.info({ title: `${stock.name} 异动查询`, content, okText: '知道了' });
+};
+
 // ==================== 情绪温度历史弹窗（点击概览"情绪"卡片打开） ====================
 const SentimentHistoryModal = ({ visible, onCancel }) => {
   const [series, setSeries] = useState([]);
@@ -933,12 +978,16 @@ const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenTh
         key={`${stock.code}-${idx}`}
         trigger={['contextMenu']}
         menu={{
-          items: isPinned
-            ? [{ key: 'unpin', label: '取消置顶' }]
-            : [{ key: 'pin', label: '置顶', icon: <PushpinOutlined /> }],
+          items: [
+            isPinned
+              ? { key: 'unpin', label: '取消置顶' }
+              : { key: 'pin', label: '置顶', icon: <PushpinOutlined /> },
+            { key: 'alertQuery', label: '异动查询' },
+          ],
           onClick: ({ key }) => {
             if (key === 'pin') onPin?.(theme.key, stock);
             if (key === 'unpin') onUnpin?.(theme.key, stock);
+            if (key === 'alertQuery') showAbnormalQuery(stock, q, alertBasis?.[stock.marketCode]);
           },
         }}
       >

@@ -1657,5 +1657,15 @@ exports.default = [
         "blockName": "商业航天",
         "code": "sh600261",
         "name": "阳光照明"
+    },
+    {
+        "blockName": "商业航天",
+        "code": "sh603135",
+        "name": "中重科技"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sh605118",
+        "name": "力鼎光电"
     }
 ]

@@ -3,9 +3,9 @@
 //   按成分股 code 匹配成交额后分别汇总各分类 + 科技板块；
 //   分母优先取 amount.json 里的全市场成交额（不被残缺快照带偏，避免向上突刺），
 //   缺失时退回新浪接口、最后才用快照合计。
-// - 快照完整性校验：有效股票数、成分股匹配率过低，或某板块累计成交额反而下降时，
-//   判定为上游返回了不完整快照，抛错由轮询侧等待 10s 重试，避免向下的突刺
-// - 兜底路径 computeByPolling：东财、新浪的全量行情接口都不可用时，按平台配额逐只请求日K
+// - 快照完整性校验：有效股票数、成分股匹配率过低时判定为上游返回了不完整快照，
+//   直接回退同花顺 + 财联社多平台轮询兜底，避免写进向下的突刺
+// - 兜底路径 computeByPolling：全量行情接口不可用或不完整时，按平台配额逐只请求日K
 //   （同花顺 45 / 财联社 45，每秒 90 只），
 //   某只股票主平台失败时按 同花顺 → 财联社 兜底；请求结果写入临时缓存目录，结束后删除
 // - 结果按 10 分钟粒度追加写入 src/data/block_volume_ratio_intraday.json，供前端分时图使用
@@ -493,7 +493,7 @@ const computeByPolling = async (groups, { onProgress } = {}) => {
 };
 
 // 计算当日各板块成交量占比（单位：%）
-// 优先一次性拉取全 A 股实时行情；东财、新浪两个全量接口都失败时回退多平台轮询
+// 优先一次性拉取全 A 股实时行情；接口失败或返回股票数量过少（快照不完整）时回退同花顺 + 财联社多平台轮询兜底
 // onProgress: ({ done, total, detail, current }) => void
 // forcePolling: true 时跳过全 A 股行情，强制走多平台轮询兜底（--all）
 // forceRefresh: true 时跳过实时行情缓存重新拉取（校验失败后的重试使用）
@@ -513,8 +513,8 @@ const computeTodayRatios = async ({ onProgress, forcePolling = false, forceRefre
             const totalInfo = await resolveMarketTotalYi();
             return computeFromSpot(groups, spot, onProgress, totalInfo);
         } catch (error) {
-            // 不完整快照由轮询侧延迟重试，不走耗时的多平台轮询兜底
-            if (error.incompleteSnapshot) throw error;
+            // 全 A 股行情不可用（东财/新浪接口挂掉，或返回股票数量过少、匹配率过低）。
+            // 手动刷新时不能直接失败，统一改走同花顺 + 财联社兜底轮询，保证能拿到真实数据
             console.warn(`获取全 A 股实时行情失败，回退多平台轮询兜底: ${error.message}`);
         }
     } else {
@@ -527,7 +527,9 @@ const computeTodayRatios = async ({ onProgress, forcePolling = false, forceRefre
 // 分时点合理性校验，两层保证：
 // 1) 分母：全市场成交额是当日累计值，只增不减；明显低于当日已有时点说明外部分母异常
 // 2) 分子：各板块累计成交额同样只增不减；某板块明显下降说明该板块成分股未完整返回（向下突刺来源）
-const validateIntradayPoint = (point, existing) => {
+// 兜底轮询（mode='poll'）逐只拉取全部成分股，成交额可能略滞后于实时快照，不做分子下降校验，
+// 否则从快照切换到轮询时会因为 2% 的抖动被误判为失败
+const validateIntradayPoint = (point, existing, mode) => {
     const total = Number(point && point.marketTotalAmount);
     if (!isFinite(total) || total <= 0) {
         throw new Error('全市场成交额无效，放弃本次写入');
@@ -553,6 +555,8 @@ const validateIntradayPoint = (point, existing) => {
     if (maxTotal > 0 && total < maxTotal * MAX_TOTAL_DROP_RATIO) {
         throw new Error(`全市场成交额异常（${total.toFixed(2)}亿，当日已有时点最大 ${maxTotal.toFixed(2)}亿），判定为分母异常，放弃本次写入`);
     }
+
+    if (mode === 'poll') return;
 
     for (const [name, amount] of Object.entries(point.amounts || {})) {
         const prevMax = maxAmountByName[name];
@@ -666,7 +670,7 @@ const saveIntradayPoint = (point) => {
 // 计算并写入当前时点的分时数据
 const runAndSaveIntradayPoint = async ({ onProgress, forcePolling = false, forceRefresh = false } = {}) => {
     const { stats, ...point } = await computeTodayRatios({ onProgress, forcePolling, forceRefresh });
-    validateIntradayPoint(point, getIntradayData());
+    validateIntradayPoint(point, getIntradayData(), stats.mode);
     const payload = saveIntradayPoint(point);
 
     // 15:00 收盘后的时点即当日最终成交额，落盘到按日历史，次日刷新时上一天的数据不会消失

@@ -33,7 +33,7 @@ const dailyStrategiesFile = path.resolve(__dirname, '../data/daily_backtest_stra
 const CAMP_BUILT_DIR = path.resolve(__dirname, '../data/backtest_camp_cache');
 // 构建逻辑版本：修改 loadTrainingCampData 的构建逻辑（如为 campData 新增预计算字段）时必须 +1，
 // 使全部旧缓存自动失效重建；仅新增策略或调整买卖点条件无需动它（条件在回测阶段实时应用，不依赖此缓存失效）
-const CAMP_BUILDER_VERSION = 6;
+const CAMP_BUILDER_VERSION = 7;
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
 // 构建签名：构建器版本 + 自选股清单 + 板块清单；仅无资金快照兜底构建追加 'no-fund' 标记
 // （allowMissingFund=false 时不追加任何元素，常规签名与历史缓存保持一致，避免全量缓存失效）
@@ -253,6 +253,64 @@ const findIndexPoint = (sortedLine, preclose, minute) => {
   if (!point) return null;
   const changePct = preclose > 0 ? parseFloat((((point.lastPx - preclose) / preclose) * 100).toFixed(2)) : 0;
   return { price: point.lastPx, changePct };
+};
+
+// 当日分钟级科技情绪序列（2026-10-30 用户改）：冰点门禁按「当日任意分时点 ≤ 阈值」判定，与线上
+// tech_index_intraday 的分时序列口径一致。5 分钟桶会漏掉桶间的瞬时低点（如 09:53/09:55 的 -40），
+// 因此这里按 1 分钟粒度、与桶同口径（V2 市值加权 + 指数冲高回落惩罚）重算全天情绪，供桶前缀最小值使用。
+// 分钟取全部科技股分时时间点并集；个股取时间 ≤ 当前分钟的最后一条分时，指数取截至该分钟的最高涨幅。
+const buildMinuteTechEmotionSeries = (techStockTlines, cybMap, kcbMap) => {
+  const minuteSet = new Set();
+  (techStockTlines || []).forEach(st => {
+    (st.sortedLine || []).forEach(p => {
+      if (p.minute >= 930 && p.minute <= 1500) minuteSet.add(p.minute);
+    });
+  });
+  const minutes = Array.from(minuteSet).sort((a, b) => a - b);
+  if (minutes.length === 0) return [];
+
+  const pointers = new Array(techStockTlines.length).fill(0);
+  const cybLine = (cybMap && cybMap.sortedLine) || [];
+  const kcbLine = (kcbMap && kcbMap.sortedLine) || [];
+  const cybPre = cybMap ? cybMap.preclose : null;
+  const kcbPre = kcbMap ? kcbMap.preclose : null;
+  let cybPtr = 0;
+  let kcbPtr = 0;
+  let cybMax = null;
+  let kcbMax = null;
+  const series = [];
+
+  for (const minute of minutes) {
+    const items = [];
+    for (let i = 0; i < techStockTlines.length; i += 1) {
+      const line = techStockTlines[i].sortedLine || [];
+      let ptr = pointers[i];
+      while (ptr < line.length && line[ptr].minute <= minute) ptr += 1;
+      pointers[i] = ptr;
+      if (ptr > 0) {
+        const p = line[ptr - 1];
+        items.push({ code: techStockTlines[i].code, change: p.changePct, price: p.lastPx });
+      }
+    }
+
+    while (cybPtr < cybLine.length && cybLine[cybPtr].minute <= minute) cybPtr += 1;
+    const cybPoint = cybPtr > 0 ? cybLine[cybPtr - 1] : null;
+    const cybChange = cybPoint && cybPre > 0 ? parseFloat((((cybPoint.lastPx - cybPre) / cybPre) * 100).toFixed(2)) : null;
+    if (cybChange != null && (cybMax === null || cybChange > cybMax)) cybMax = cybChange;
+
+    while (kcbPtr < kcbLine.length && kcbLine[kcbPtr].minute <= minute) kcbPtr += 1;
+    const kcbPoint = kcbPtr > 0 ? kcbLine[kcbPtr - 1] : null;
+    const kcbChange = kcbPoint && kcbPre > 0 ? parseFloat((((kcbPoint.lastPx - kcbPre) / kcbPre) * 100).toFixed(2)) : null;
+    if (kcbChange != null && (kcbMax === null || kcbChange > kcbMax)) kcbMax = kcbChange;
+
+    const pullbacks = [];
+    if (cybChange != null && cybMax != null) pullbacks.push(cybChange - cybMax);
+    if (kcbChange != null && kcbMax != null) pullbacks.push(kcbChange - kcbMax);
+    const avgPullback = pullbacks.length > 0 ? pullbacks.reduce((a, b) => a + b, 0) / pullbacks.length : 0;
+    const techEmotion = computeTechEmotionV2(computeTechEmotionV2Base(items), computePullbackPenaltyFromPullback(avgPullback));
+    series.push({ minute, techEmotion });
+  }
+  return series;
 };
 
 const loadTrainingCampData = async (dateStr, opts = {}) => {
@@ -488,7 +546,24 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
     ? fundData
     : (cybMap.sortedLine || []).filter(p => Number(p.minute) % 5 === 0).map(p => ({ time: p.minute * 100, mainMoney: 0 }));
 
-  const timeBuckets = bucketSource.map(f => {
+  // 分钟级科技情绪（「当日任意分时点 ≤ 冰点阈值」口径）：先算全天每分钟情绪，再按桶时间取前缀最低值随桶下发
+  const minuteTechEmotion = buildMinuteTechEmotionSeries(techStockTlines, cybMap, kcbMap);
+  const minuteEmotionPrefixMin = [];
+  {
+    let ptr = 0;
+    let min = null;
+    for (const f of bucketSource) {
+      const minute = hhmmssToMinute(f.time);
+      while (ptr < minuteTechEmotion.length && minuteTechEmotion[ptr].minute <= minute) {
+        const v = minuteTechEmotion[ptr].techEmotion;
+        if (v != null && (min === null || v < min)) min = v;
+        ptr += 1;
+      }
+      minuteEmotionPrefixMin.push(min);
+    }
+  }
+
+  const timeBuckets = bucketSource.map((f, bucketIdx) => {
     const timeKey = padTimeKey(f.time);
     const minute = hhmmssToMinute(f.time);
     const displayTime = f.displayTime ? f.displayTime.substring(0, 5) : `${timeKey.substring(0, 2)}:${timeKey.substring(2, 4)}`;
@@ -562,6 +637,8 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
         all: sortedBlocks.map(b => ({ blockName: b.blockName, avgChange: Number(b.avgChange.toFixed(2)) })),
       },
       techEmotion,
+      // 当日截至该桶时点、任意分时点的最低科技情绪（「连续两日冰点」门禁按分钟级口径判定；无数据为 null）
+      techEmotionMin: minuteEmotionPrefixMin[bucketIdx] != null ? minuteEmotionPrefixMin[bucketIdx] : null,
       signals: signalsMap.get(timeKey) || [],
     };
   });

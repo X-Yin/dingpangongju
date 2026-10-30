@@ -51,7 +51,7 @@ const EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN = 20;
 // 科技情绪冰点阈值（2026-10-23 用户新增）：必须与 hasIce: true 的写入阈值保持一致
 // （线上前端分时轮询在科技情绪 <= -39 时调用 /mark_tech_index_ice，后端 emotion.markTechIndexIce 落盘）。
 // 板块内选股/发酵延时的前置限制「连续两日冰点」中，今日无法用 hasIce 判定（写盘时点不确定），
-// 改为回溯当日每 5 分钟分时科技情绪是否 <= 该阈值（见 engine/emoQuick.isTechIceGateOpen）。
+// 改为回溯当日任意分时点（分钟级）分时科技情绪是否 <= 该阈值（见 engine/emoQuick.isTechIceGateOpen）。
 const TECH_ICE_THRESHOLD = -39;
 
 // 检查4「开盘后自选科技股低于开盘价」按比例收紧（2026-10-19 用户定，取代原「创业板指斜率负时固定收紧为 15」）：

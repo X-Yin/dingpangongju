@@ -1,1 +1,28 @@
-[]
+[
+  {
+    "id": "ebf222428708eeb4",
+    "time": "2026-10-30 15:01:05",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-30 15:01:05",
+        "title": "大盘主力资金变化",
+        "description": "主力资金变化 <span style=\"color: #ff4d4f; font-weight: bold;\">+5.59亿</span>",
+        "path": "/volume"
+      }
+    ]
+  },
+  {
+    "id": "ffa85a682007bdbe",
+    "time": "2026-10-30 15:01:40",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-10-30 15:01:40",
+        "title": "板块排名变化",
+        "description": "<b>证券</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">12/53</span><br/><b>cpu</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">31/53</span>",
+        "path": "/block"
+      }
+    ]
+  }
+]

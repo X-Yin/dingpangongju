@@ -1164,5 +1164,41 @@
     "riskScore": "8",
     "isTech": true,
     "addedAt": "2026-10-29 21:37:20"
+  },
+  {
+    "code": "sh688386",
+    "name": "泛亚微透",
+    "isImportant": false,
+    "blockName": "物理 AI",
+    "riskScore": "8",
+    "isTech": true,
+    "addedAt": "2026-10-29 21:48:22"
+  },
+  {
+    "code": "sz003033",
+    "name": "征和工业",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": " 8",
+    "isTech": true,
+    "addedAt": "2026-10-30 12:15:49"
+  },
+  {
+    "code": "sh605118",
+    "name": "力鼎光电",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": " 7",
+    "isTech": true,
+    "addedAt": "2026-10-30 12:18:43"
+  },
+  {
+    "code": "sz301079",
+    "name": "邵阳液压",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": " 7",
+    "isTech": true,
+    "addedAt": "2026-10-30 15:23:01"
   }
 ]

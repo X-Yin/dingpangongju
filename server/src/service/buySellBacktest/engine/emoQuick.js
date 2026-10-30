@@ -39,6 +39,11 @@ const getBucketTechEmotion = (bucket) => (
   bucket && bucket.techEmotion != null && !Number.isNaN(Number(bucket.techEmotion)) ? Number(bucket.techEmotion) : null
 );
 
+// 读取时间桶的「当日截至该时点、任意分时点（分钟级）的最低科技情绪」；缺失/非法返回 null
+const getBucketTechEmotionMin = (bucket) => (
+  bucket && bucket.techEmotionMin != null && !Number.isNaN(Number(bucket.techEmotionMin)) ? Number(bucket.techEmotionMin) : null
+);
+
 // 快进快出系列「资金净流入阈值动态调节」状态机（2026-10-21 用户新增）：
 //   初始阈值 20 亿；每完结一笔交易（按成交顺序）判定其折算收益率（半仓已按 ×0.5 折算，与 3% 直接比较）——
 //   折算收益率 > 3% → 连续计数清零、阈值降回 20 亿；折算收益率 ≤ 3%（或数据缺失）→ 连续计数 +1，
@@ -70,13 +75,16 @@ const createEmoQuickFundGate = () => {
 
 // 「连续两日冰点」前置门禁（2026-10-23 用户新增；板块内选股 + 板块发酵延时共用）：
 //   ① 上一交易日：tech_index.json 中该日 hasIce === true；
-//   ② 当日（含买点触发桶）：回溯当日每个 5 分钟桶的实时科技情绪，只要有过 <= TECH_ICE_THRESHOLD 即视为当日冰点。
+//   ② 当日（含买点触发桶）：回溯当日任意分时点（分钟级）的实时科技情绪，只要有过 <= TECH_ICE_THRESHOLD 即视为当日冰点
+//      （2026-10-30 用户改：与线上 tech_index_intraday 分时序列口径一致，不再只看每 5 分钟桶，
+//        避免漏掉桶间瞬时低点；旧缓存无 techEmotionMin 字段时退回桶情绪）；
 // 当日不用 hasIce 判定——该字段由前端轮询在触冰时调用接口落盘，无法确定写盘时点，回测中不可靠。
 const isTechIceGateOpen = (prevDateStr, timeBuckets, bi) => {
   if (prevDateStr == null || !getTechIceDateSet().has(String(prevDateStr))) return false;
   const end = Math.min(bi, (timeBuckets || []).length - 1);
-  for (let i = 0; i <= end; i++) {
-    const v = getBucketTechEmotion(timeBuckets[i]);
+  for (let i = 0; i <= end; i += 1) {
+    const minEmotion = getBucketTechEmotionMin(timeBuckets[i]);
+    const v = minEmotion != null ? minEmotion : getBucketTechEmotion(timeBuckets[i]);
     if (v != null && v <= TECH_ICE_THRESHOLD) return true;
   }
   return false;

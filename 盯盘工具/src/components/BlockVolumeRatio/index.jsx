@@ -121,6 +121,22 @@ const BlockVolumeRatio = () => {
     setLoading(false);
   }, [fetchHistory, fetchIntraday]);
 
+  // 点击刷新按钮：先让后端真实拉取行情并写入分时点，再重新加载数据（不走缓存）
+  const refreshWithLiveData = useCallback(async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await axios.get(`http://${local_ip}:3000/refresh_block_volume_ratio`, { timeout: 5 * 60 * 1000 });
+      await Promise.all([fetchHistory(), fetchIntraday()]);
+      setError(null);
+    } catch (err) {
+      console.error('刷新板块成交量占比失败:', err);
+      setError('刷新板块成交量占比失败，请检查后端服务');
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, fetchHistory, fetchIntraday]);
+
   // 点击折线卡片标题：拉取该板块全部成分股的最新行情
   const openBlockStocks = useCallback(async (name) => {
     setStockModalOpen(true);
@@ -440,7 +456,7 @@ const BlockVolumeRatio = () => {
           <div className="bvr-subtitle">{historySubtitle}</div>
         </div>
         <div className="bvr-header-right">
-          <Button size="small" icon={<ReloadOutlined />} onClick={fetchAll} loading={loading}>
+          <Button size="small" icon={<ReloadOutlined />} onClick={refreshWithLiveData} loading={loading}>
             刷新
           </Button>
         </div>

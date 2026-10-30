@@ -1070,5 +1070,21 @@
       "lowAvg": -7.317
     },
     "timestamp": "2026-10-29 15:02:01"
+  },
+  {
+    "date": 20261030,
+    "score": 62,
+    "level": 2,
+    "label": "防御收缩",
+    "desc": "风险偏好低位：资金只认最近可兑现的业绩，叙事股被持续抛弃",
+    "detail": {
+      "spread": -0.861,
+      "breadth": 0,
+      "attackTilt": -0.458,
+      "avgChange": -6.913,
+      "highAvg": -7.586,
+      "lowAvg": -6.725
+    },
+    "timestamp": "2026-10-30 15:01:47"
   }
 ]

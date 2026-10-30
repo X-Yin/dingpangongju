@@ -1,5 +1,27 @@
 [
   {
+    "id": "1793325948198_k2lxw0",
+    "type": "buy",
+    "code": "sz002565",
+    "name": "顺灏股份",
+    "date": "2026-10-30",
+    "time": "10:05:48",
+    "detail": "新增持仓：顺灏股份（sz002565）",
+    "pipelineStage": 0,
+    "createdAt": "2026-10-30T02:05:48.198Z"
+  },
+  {
+    "id": "1793325585391_iz5ebo",
+    "type": "delete",
+    "code": "sz003021",
+    "name": "兆威机电",
+    "date": "2026-10-30",
+    "time": "09:59:45",
+    "detail": "删除持仓：兆威机电（sz003021）",
+    "pipelineStage": null,
+    "createdAt": "2026-10-30T01:59:45.391Z"
+  },
+  {
     "id": "1793238398878_yl8vbi",
     "type": "delete",
     "code": "sh688025",

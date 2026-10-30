@@ -1,31 +1,40 @@
 {
-  "prev_day_tail_rally": {
-    "triggeredToday": "2026-10-29"
+  "prev_day_volume_price_bottom": {
+    "triggeredToday": "2026-10-30"
   },
   "overnight_crisis_escape": {
-    "lastCheckedTime": "2026-10-29 10:00:11",
-    "lastTriggeredTime": "2026-10-29 09:52:09"
+    "lastCheckedTime": "2026-10-30 10:00:12",
+    "lastTriggeredTime": "2026-10-30 09:34:02"
+  },
+  "ebb_tide_direct_reversal": {
+    "triggeredToday": "2026-10-30"
   },
   "high_open_high_walk": {
-    "advisoryToday": "2026-10-29",
+    "advisoryToday": "2026-10-30",
     "preconditionMet": false,
     "triggerIndexCode": null,
     "triggerIndexName": null,
-    "checkedToday": "2026-10-29"
+    "checkedToday": "2026-10-30"
   },
   "high_open_max_half_position": {
-    "triggeredToday": "2026-10-29"
+    "triggeredToday": "2026-10-30"
   },
   "opening_net_inflow": {
-    "triggeredToday": "2026-10-29"
+    "triggeredToday": "2026-10-30"
+  },
+  "volume_shrink_stagnation": {
+    "lastTriggeredTime": "2026-10-30 13:00:11"
   },
   "panic_outflow": {
-    "lastTriggeredTime": "2026-10-29 14:46:49"
+    "lastTriggeredTime": "2026-10-30 14:51:19"
   },
-  "inflow_rise_volume_shrink": {
-    "lastTriggeredTime": "2026-10-29 13:22:38"
+  "straight_rise_no_volume": {
+    "lastTriggeredTime": "2026-10-30 13:00:11"
   },
   "tail_dip_buying": {
-    "checkedToday": "2026-10-29"
+    "checkedToday": "2026-10-30"
+  },
+  "outflow_fake_rally": {
+    "lastTriggeredTime": "2026-10-30 15:01:35"
   }
 }
