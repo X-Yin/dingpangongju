@@ -5,7 +5,9 @@
     "isImportant": false,
     "blockName": "半导体",
     "riskScore": 5,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688347",
@@ -14,7 +16,9 @@
     "blockName": "半导体",
     "riskScore": 4,
     "isTech": true,
-    "isTop": false
+    "isTop": false,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688072",
@@ -23,7 +27,9 @@
     "blockName": "半导体",
     "riskScore": 4,
     "isTop": false,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002371",
@@ -31,7 +37,9 @@
     "isImportant": false,
     "blockName": "半导体",
     "riskScore": 3,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688256",
@@ -39,7 +47,9 @@
     "isImportant": false,
     "blockName": "半导体",
     "riskScore": 8,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002837",
@@ -47,7 +57,9 @@
     "isImportant": false,
     "blockName": "液冷",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz301018",
@@ -55,7 +67,9 @@
     "isImportant": false,
     "blockName": "液冷",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh601138",
@@ -63,7 +77,9 @@
     "isImportant": false,
     "blockName": "cpo",
     "riskScore": 2,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300757",
@@ -71,7 +87,9 @@
     "isImportant": false,
     "blockName": "cpo",
     "riskScore": 8,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300394",
@@ -79,7 +97,9 @@
     "isImportant": false,
     "blockName": "cpo",
     "riskScore": 3,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300502",
@@ -87,7 +107,9 @@
     "isImportant": false,
     "blockName": "光模块",
     "riskScore": 2,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300308",
@@ -96,7 +118,9 @@
     "blockName": "光模块",
     "riskScore": 2,
     "isTech": true,
-    "isTop": false
+    "isTop": false,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688048",
@@ -104,7 +128,9 @@
     "isImportant": false,
     "blockName": "光芯片",
     "riskScore": 7,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz301511",
@@ -112,7 +138,9 @@
     "isImportant": false,
     "blockName": "铜箔",
     "riskScore": 6,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz301217",
@@ -120,7 +148,9 @@
     "isImportant": false,
     "blockName": "铜箔",
     "riskScore": 6,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688008",
@@ -128,7 +158,9 @@
     "isImportant": false,
     "blockName": "cpu",
     "riskScore": 3,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688041",
@@ -136,7 +168,9 @@
     "isImportant": false,
     "blockName": "cpu",
     "riskScore": 5,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002475",
@@ -144,7 +178,9 @@
     "isImportant": false,
     "blockName": "光模块",
     "riskScore": 3,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600183",
@@ -153,7 +189,9 @@
     "blockName": "pcb",
     "riskScore": 3,
     "isTech": true,
-    "isTop": false
+    "isTop": false,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603986",
@@ -162,7 +200,9 @@
     "blockName": "存储",
     "riskScore": 5,
     "isTop": false,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688313",
@@ -171,7 +211,9 @@
     "blockName": "光芯片",
     "riskScore": 7,
     "isTech": true,
-    "isTop": false
+    "isTop": false,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688498",
@@ -180,7 +222,9 @@
     "blockName": "光芯片",
     "riskScore": 8,
     "isTop": false,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002384",
@@ -188,7 +232,9 @@
     "isImportant": false,
     "blockName": "光模块",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002916",
@@ -196,7 +242,9 @@
     "isImportant": false,
     "blockName": "pcb",
     "riskScore": 3,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002463",
@@ -204,7 +252,9 @@
     "isImportant": false,
     "blockName": "pcb",
     "riskScore": 2,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300476",
@@ -212,7 +262,9 @@
     "isImportant": false,
     "blockName": "pcb",
     "riskScore": 2,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh601869",
@@ -220,7 +272,9 @@
     "isImportant": false,
     "blockName": "光纤",
     "riskScore": 6,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600487",
@@ -228,7 +282,9 @@
     "isImportant": false,
     "blockName": "光纤",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603256",
@@ -236,7 +292,9 @@
     "isImportant": false,
     "blockName": "电子布",
     "riskScore": 7,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300408",
@@ -244,7 +302,9 @@
     "isImportant": false,
     "blockName": "MLCC",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz000657",
@@ -252,7 +312,9 @@
     "isImportant": false,
     "blockName": "钨",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688082",
@@ -260,7 +322,9 @@
     "isImportant": false,
     "blockName": "半导体",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688808",
@@ -268,7 +332,9 @@
     "isImportant": false,
     "blockName": "光模块",
     "riskScore": 7,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002851",
@@ -276,7 +342,9 @@
     "isImportant": false,
     "blockName": "AI电源",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz301526",
@@ -285,7 +353,9 @@
     "blockName": "电子布",
     "riskScore": 6,
     "isTop": false,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688630",
@@ -293,7 +363,9 @@
     "isImportant": false,
     "blockName": "半导体",
     "riskScore": 7,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603629",
@@ -301,7 +373,9 @@
     "isImportant": false,
     "blockName": "算力租赁",
     "riskScore": 8,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz301377",
@@ -309,7 +383,9 @@
     "isImportant": false,
     "blockName": "钨",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688200",
@@ -317,7 +393,9 @@
     "isImportant": false,
     "blockName": "半导体",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002436",
@@ -325,7 +403,9 @@
     "isImportant": false,
     "blockName": "pcb",
     "riskScore": 6,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688147",
@@ -333,7 +413,9 @@
     "isImportant": false,
     "blockName": "半导体",
     "riskScore": 6,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300567",
@@ -341,7 +423,9 @@
     "isImportant": false,
     "blockName": "半导体",
     "riskScore": 5,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688362",
@@ -349,7 +433,9 @@
     "isImportant": false,
     "blockName": "先进封装",
     "riskScore": 5,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600584",
@@ -357,7 +443,9 @@
     "isImportant": false,
     "blockName": "先进封装",
     "riskScore": 3,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002156",
@@ -365,7 +453,9 @@
     "isImportant": false,
     "blockName": "先进封装",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002536",
@@ -373,7 +463,9 @@
     "isImportant": false,
     "blockName": "液冷",
     "riskScore": 5,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600176",
@@ -381,7 +473,9 @@
     "isImportant": false,
     "blockName": "电子布",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688120",
@@ -389,7 +483,9 @@
     "isImportant": false,
     "blockName": "半导体",
     "riskScore": 3,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688629",
@@ -397,7 +493,9 @@
     "isImportant": false,
     "blockName": "国产超节点",
     "riskScore": 6,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz001309",
@@ -405,7 +503,9 @@
     "isImportant": false,
     "blockName": "存储",
     "riskScore": 5,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300285",
@@ -413,7 +513,9 @@
     "isImportant": false,
     "blockName": "MLCC",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz000636",
@@ -421,7 +523,9 @@
     "isImportant": false,
     "blockName": "MLCC",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688702",
@@ -429,7 +533,9 @@
     "isImportant": false,
     "blockName": "国产超节点",
     "riskScore": 7,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz301165",
@@ -437,7 +543,9 @@
     "isImportant": false,
     "blockName": "国产超节点",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688025",
@@ -445,7 +553,9 @@
     "isImportant": false,
     "blockName": "MPO",
     "riskScore": 6,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz000977",
@@ -453,7 +563,9 @@
     "isImportant": false,
     "blockName": "国产超节点",
     "riskScore": 3,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688361",
@@ -461,7 +573,9 @@
     "isImportant": false,
     "blockName": "半导体",
     "riskScore": 6,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300395",
@@ -470,7 +584,9 @@
     "blockName": "电子布",
     "riskScore": 4,
     "isTech": true,
-    "isTop": false
+    "isTop": false,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002126",
@@ -478,7 +594,9 @@
     "isImportant": false,
     "blockName": "液冷",
     "riskScore": 4,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600105",
@@ -486,7 +604,9 @@
     "isImportant": false,
     "blockName": "光芯片",
     "riskScore": 7,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688012",
@@ -494,7 +614,9 @@
     "isImportant": false,
     "blockName": "半导体",
     "riskScore": 3,
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688825",
@@ -503,7 +625,9 @@
     "blockName": "存储",
     "riskScore": "2",
     "isTech": true,
-    "isTop": false
+    "isTop": false,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603228",
@@ -511,7 +635,9 @@
     "isImportant": false,
     "blockName": "pcb",
     "riskScore": "5",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002428",
@@ -519,7 +645,9 @@
     "isImportant": false,
     "blockName": "磷化铟",
     "riskScore": "7",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603083",
@@ -527,7 +655,9 @@
     "isImportant": false,
     "blockName": "光模块",
     "riskScore": "5",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688519",
@@ -535,7 +665,9 @@
     "isImportant": false,
     "blockName": "ccl",
     "riskScore": "6",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002080",
@@ -543,7 +675,9 @@
     "isImportant": false,
     "blockName": "电子布",
     "riskScore": "6",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603186",
@@ -551,7 +685,9 @@
     "isImportant": false,
     "blockName": "ccl",
     "riskScore": "7",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002050",
@@ -559,7 +695,9 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": "6",
-    "isTech": false
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603119",
@@ -567,7 +705,9 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": " 7",
-    "isTech": false
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688809",
@@ -575,7 +715,9 @@
     "isImportant": false,
     "blockName": "半导体",
     "riskScore": "8",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300570",
@@ -583,7 +725,9 @@
     "isImportant": false,
     "blockName": "MPO",
     "riskScore": "6",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz000725",
@@ -591,7 +735,9 @@
     "isImportant": false,
     "blockName": "玻璃基板",
     "riskScore": "6",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600601",
@@ -599,7 +745,9 @@
     "isImportant": false,
     "blockName": "pcb",
     "riskScore": "7",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300548",
@@ -607,7 +755,9 @@
     "isImportant": false,
     "blockName": "MPO",
     "riskScore": "7",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002636",
@@ -615,7 +765,9 @@
     "isImportant": false,
     "blockName": "ccl",
     "riskScore": "6",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz000823",
@@ -624,7 +776,9 @@
     "blockName": "CCL",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-09-30 15:31:48"
+    "addedAt": "2026-09-30 15:31:48",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002008",
@@ -633,7 +787,9 @@
     "blockName": "pcb",
     "riskScore": "6",
     "isTech": true,
-    "addedAt": "2026-10-05 15:41:42"
+    "addedAt": "2026-10-05 15:41:42",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603650",
@@ -642,7 +798,9 @@
     "blockName": "半导体",
     "riskScore": "7",
     "isTech": true,
-    "addedAt": "2026-10-05 16:53:20"
+    "addedAt": "2026-10-05 16:53:20",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002409",
@@ -651,7 +809,9 @@
     "blockName": "半导体",
     "riskScore": "7",
     "isTech": true,
-    "addedAt": "2026-10-05 16:53:39"
+    "addedAt": "2026-10-05 16:53:39",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300604",
@@ -660,7 +820,9 @@
     "blockName": "半导体",
     "riskScore": "6",
     "isTech": true,
-    "addedAt": "2026-10-07 17:58:58"
+    "addedAt": "2026-10-07 17:58:58",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600641",
@@ -669,7 +831,9 @@
     "blockName": "缺电",
     "riskScore": " 7",
     "isTech": true,
-    "addedAt": "2026-10-07 23:55:03"
+    "addedAt": "2026-10-07 23:55:03",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh601208",
@@ -678,7 +842,9 @@
     "blockName": "树脂",
     "riskScore": " 7",
     "isTech": true,
-    "addedAt": "2026-10-08 09:32:05"
+    "addedAt": "2026-10-08 09:32:05",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603002",
@@ -687,7 +853,9 @@
     "blockName": "树脂",
     "riskScore": " 8",
     "isTech": true,
-    "addedAt": "2026-10-08 12:23:27"
+    "addedAt": "2026-10-08 12:23:27",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300182",
@@ -696,7 +864,9 @@
     "blockName": "AI 应用",
     "riskScore": " 7",
     "isTech": false,
-    "addedAt": "2026-10-12 10:54:25"
+    "addedAt": "2026-10-12 10:54:25",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz301269",
@@ -705,7 +875,9 @@
     "blockName": "AI-EDA",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-13 09:07:19"
+    "addedAt": "2026-10-13 09:07:19",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002938",
@@ -714,7 +886,9 @@
     "blockName": "pcb",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-13 11:51:09"
+    "addedAt": "2026-10-13 11:51:09",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300489",
@@ -723,7 +897,9 @@
     "blockName": "磷化铟",
     "riskScore": "9",
     "isTech": true,
-    "addedAt": "2026-10-13 15:13:26"
+    "addedAt": "2026-10-13 15:13:26",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh601595",
@@ -732,7 +908,9 @@
     "blockName": "AI 短剧",
     "riskScore": " 7",
     "isTech": false,
-    "addedAt": "2026-10-13 21:19:50"
+    "addedAt": "2026-10-13 21:19:50",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh605287",
@@ -741,7 +919,9 @@
     "blockName": "AI 应用",
     "riskScore": " 6",
     "isTech": false,
-    "addedAt": "2026-10-13 21:22:41"
+    "addedAt": "2026-10-13 21:22:41",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz301486",
@@ -750,7 +930,9 @@
     "blockName": "光通信",
     "riskScore": " 9",
     "isTech": true,
-    "addedAt": "2026-10-13 22:52:43"
+    "addedAt": "2026-10-13 22:52:43",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002343",
@@ -759,7 +941,9 @@
     "blockName": "AI短剧",
     "riskScore": "7",
     "isTech": false,
-    "addedAt": "2026-10-15 09:38:34"
+    "addedAt": "2026-10-15 09:38:34",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh601811",
@@ -768,7 +952,9 @@
     "blockName": "AI 短剧",
     "riskScore": " 8",
     "isTech": false,
-    "addedAt": "2026-10-15 09:38:50"
+    "addedAt": "2026-10-15 09:38:50",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600967",
@@ -777,7 +963,9 @@
     "blockName": "军工",
     "riskScore": "7",
     "isTech": false,
-    "addedAt": "2026-10-16 09:45:12"
+    "addedAt": "2026-10-16 09:45:12",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh601606",
@@ -786,7 +974,9 @@
     "blockName": "军工",
     "riskScore": "9",
     "isTech": false,
-    "addedAt": "2026-10-16 09:45:33"
+    "addedAt": "2026-10-16 09:45:33",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600316",
@@ -795,7 +985,9 @@
     "blockName": "军工",
     "riskScore": "8",
     "isTech": false,
-    "addedAt": "2026-10-17 21:30:13"
+    "addedAt": "2026-10-17 21:30:13",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600435",
@@ -804,7 +996,9 @@
     "blockName": "军工",
     "riskScore": " 7",
     "isTech": false,
-    "addedAt": "2026-10-19 10:04:09"
+    "addedAt": "2026-10-19 10:04:09",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600825",
@@ -813,7 +1007,9 @@
     "blockName": "AI短剧",
     "riskScore": "9",
     "isTech": false,
-    "addedAt": "2026-10-19 10:13:29"
+    "addedAt": "2026-10-19 10:13:29",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz301183",
@@ -821,7 +1017,9 @@
     "isImportant": false,
     "blockName": "光通信",
     "riskScore": "9",
-    "isTech": true
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603626",
@@ -830,7 +1028,9 @@
     "blockName": "机器人",
     "riskScore": " 2",
     "isTech": false,
-    "addedAt": "2026-10-01 22:35:46"
+    "addedAt": "2026-10-01 22:35:46",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688322",
@@ -839,7 +1039,9 @@
     "blockName": "物理 AI",
     "riskScore": "9",
     "isTech": true,
-    "addedAt": "2026-10-01 12:24:44"
+    "addedAt": "2026-10-01 12:24:44",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688543",
@@ -848,7 +1050,9 @@
     "blockName": "军工",
     "riskScore": " 9",
     "isTech": false,
-    "addedAt": "2026-10-20 13:52:34"
+    "addedAt": "2026-10-20 13:52:34",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688469",
@@ -857,7 +1061,9 @@
     "blockName": "光通信",
     "riskScore": " 8",
     "isTech": true,
-    "addedAt": "2026-10-21 08:59:05"
+    "addedAt": "2026-10-21 08:59:05",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300750",
@@ -866,7 +1072,9 @@
     "blockName": "锂电",
     "riskScore": " 5",
     "isTech": false,
-    "addedAt": "2026-10-21 11:09:03"
+    "addedAt": "2026-10-21 11:09:03",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688150",
@@ -875,7 +1083,9 @@
     "blockName": "oled",
     "riskScore": "8",
     "isTech": false,
-    "addedAt": "2026-10-21 21:11:25"
+    "addedAt": "2026-10-21 21:11:25",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002913",
@@ -884,7 +1094,9 @@
     "blockName": "pcb",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-23 08:54:32"
+    "addedAt": "2026-10-23 08:54:32",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh605488",
@@ -893,7 +1105,9 @@
     "blockName": "物理 AI",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-23 09:36:25"
+    "addedAt": "2026-10-23 09:36:25",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz003021",
@@ -902,7 +1116,9 @@
     "blockName": "物理 AI",
     "riskScore": "7",
     "isTech": true,
-    "addedAt": "2026-10-23 10:12:30"
+    "addedAt": "2026-10-23 10:12:30",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600391",
@@ -911,7 +1127,9 @@
     "blockName": "军工",
     "riskScore": "7",
     "isTech": false,
-    "addedAt": "2026-10-25 23:30:08"
+    "addedAt": "2026-10-25 23:30:08",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688400",
@@ -920,7 +1138,9 @@
     "blockName": "物理 AI",
     "riskScore": "7",
     "isTech": true,
-    "addedAt": "2026-10-26 00:11:53"
+    "addedAt": "2026-10-26 00:11:53",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688686",
@@ -929,7 +1149,9 @@
     "blockName": "物理 AI",
     "riskScore": "6",
     "isTech": true,
-    "addedAt": "2026-10-26 08:35:37"
+    "addedAt": "2026-10-26 08:35:37",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688097",
@@ -938,7 +1160,9 @@
     "blockName": "物理 AI",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-26 14:35:08"
+    "addedAt": "2026-10-26 14:35:08",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688836",
@@ -947,7 +1171,9 @@
     "blockName": "机器人",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-26 15:10:30"
+    "addedAt": "2026-10-26 15:10:30",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688585",
@@ -956,7 +1182,9 @@
     "blockName": "机器人",
     "riskScore": " 7",
     "isTech": true,
-    "addedAt": "2026-10-26 20:57:23"
+    "addedAt": "2026-10-26 20:57:23",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz000810",
@@ -965,7 +1193,9 @@
     "blockName": "物理 AI",
     "riskScore": "7",
     "isTech": true,
-    "addedAt": "2026-10-26 21:05:30"
+    "addedAt": "2026-10-26 21:05:30",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300413",
@@ -974,7 +1204,9 @@
     "blockName": "AI 漫剧",
     "riskScore": " 8",
     "isTech": false,
-    "addedAt": "2026-10-28 10:52:08"
+    "addedAt": "2026-10-28 10:52:08",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300684",
@@ -983,7 +1215,9 @@
     "blockName": "TIM",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-29 00:24:35"
+    "addedAt": "2026-10-29 00:24:35",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300720",
@@ -992,7 +1226,9 @@
     "blockName": "磷化铟",
     "riskScore": "9",
     "isTech": true,
-    "addedAt": "2026-10-29 08:44:16"
+    "addedAt": "2026-10-29 08:44:16",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002149",
@@ -1001,7 +1237,9 @@
     "blockName": "商业航天",
     "riskScore": " 8",
     "isTech": true,
-    "addedAt": "2026-10-29 15:03:12"
+    "addedAt": "2026-10-29 15:03:12",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600118",
@@ -1010,7 +1248,9 @@
     "blockName": "商业航天",
     "riskScore": " 8",
     "isTech": true,
-    "addedAt": "2026-10-29 15:03:24"
+    "addedAt": "2026-10-29 15:03:24",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600879",
@@ -1019,7 +1259,9 @@
     "blockName": "商业航天",
     "riskScore": " 7",
     "isTech": true,
-    "addedAt": "2026-10-29 15:03:36"
+    "addedAt": "2026-10-29 15:03:36",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz300136",
@@ -1028,7 +1270,9 @@
     "blockName": "商业航天",
     "riskScore": " 7",
     "isTech": true,
-    "addedAt": "2026-10-29 15:03:48"
+    "addedAt": "2026-10-29 15:03:48",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002565",
@@ -1037,7 +1281,9 @@
     "blockName": "商业航天",
     "riskScore": "9",
     "isTech": true,
-    "addedAt": "2026-10-29 15:11:30"
+    "addedAt": "2026-10-29 15:11:30",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600501",
@@ -1046,7 +1292,9 @@
     "blockName": "商业航天",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-29 15:11:42"
+    "addedAt": "2026-10-29 15:11:42",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603131",
@@ -1055,7 +1303,9 @@
     "blockName": "商业航天",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-29 15:11:56"
+    "addedAt": "2026-10-29 15:11:56",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz001400",
@@ -1064,7 +1314,9 @@
     "blockName": "商业航天",
     "riskScore": " 7",
     "isTech": true,
-    "addedAt": "2026-10-29 15:26:45"
+    "addedAt": "2026-10-29 15:26:45",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603278",
@@ -1073,7 +1325,9 @@
     "blockName": "机器人",
     "riskScore": " 8",
     "isTech": true,
-    "addedAt": "2026-10-29 15:28:33"
+    "addedAt": "2026-10-29 15:28:33",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz000678",
@@ -1082,7 +1336,9 @@
     "blockName": "机器人",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-29 15:28:51"
+    "addedAt": "2026-10-29 15:28:51",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz301313",
@@ -1091,7 +1347,9 @@
     "blockName": "机器人",
     "riskScore": " 8",
     "isTech": true,
-    "addedAt": "2026-10-29 17:01:39"
+    "addedAt": "2026-10-29 17:01:39",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688787",
@@ -1100,7 +1358,9 @@
     "blockName": "机器人",
     "riskScore": " 8",
     "isTech": true,
-    "addedAt": "2026-10-29 17:01:52"
+    "addedAt": "2026-10-29 17:01:52",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh601698",
@@ -1109,7 +1369,9 @@
     "blockName": "商业航天",
     "riskScore": " 8",
     "isTech": true,
-    "addedAt": "2026-10-29 17:08:01"
+    "addedAt": "2026-10-29 17:08:01",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh605598",
@@ -1118,7 +1380,9 @@
     "blockName": "商业航天",
     "riskScore": "8",
     "isTech": false,
-    "addedAt": "2026-10-29 19:19:49"
+    "addedAt": "2026-10-29 19:19:49",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz002865",
@@ -1127,7 +1391,9 @@
     "blockName": "商业航天",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-29 19:19:59"
+    "addedAt": "2026-10-29 19:19:59",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603969",
@@ -1136,7 +1402,9 @@
     "blockName": "机器人",
     "riskScore": "8",
     "isTech": false,
-    "addedAt": "2026-10-29 20:26:29"
+    "addedAt": "2026-10-29 20:26:29",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh600261",
@@ -1145,7 +1413,9 @@
     "blockName": "商业航天",
     "riskScore": " 8",
     "isTech": true,
-    "addedAt": "2026-10-29 20:34:32"
+    "addedAt": "2026-10-29 20:34:32",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603337",
@@ -1154,7 +1424,9 @@
     "blockName": "机器人",
     "riskScore": " 8",
     "isTech": true,
-    "addedAt": "2026-10-29 21:35:53"
+    "addedAt": "2026-10-29 21:35:53",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh603667",
@@ -1163,7 +1435,9 @@
     "blockName": "机器人",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-29 21:37:20"
+    "addedAt": "2026-10-29 21:37:20",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh688386",
@@ -1172,7 +1446,9 @@
     "blockName": "物理 AI",
     "riskScore": "8",
     "isTech": true,
-    "addedAt": "2026-10-29 21:48:22"
+    "addedAt": "2026-10-29 21:48:22",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz003033",
@@ -1181,7 +1457,9 @@
     "blockName": "机器人",
     "riskScore": " 8",
     "isTech": true,
-    "addedAt": "2026-10-30 12:15:49"
+    "addedAt": "2026-10-30 12:15:49",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh605118",
@@ -1190,7 +1468,9 @@
     "blockName": "机器人",
     "riskScore": " 7",
     "isTech": true,
-    "addedAt": "2026-10-30 12:18:43"
+    "addedAt": "2026-10-30 12:18:43",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz301079",
@@ -1199,7 +1479,9 @@
     "blockName": "商业航天",
     "riskScore": " 7",
     "isTech": true,
-    "addedAt": "2026-10-30 15:23:01"
+    "addedAt": "2026-10-30 15:23:01",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sz001219",
@@ -1208,7 +1490,9 @@
     "blockName": "消费",
     "riskScore": " 7",
     "isTech": false,
-    "addedAt": "2026-10-30 19:56:02"
+    "addedAt": "2026-10-30 19:56:02",
+    "watchMarketCap": true,
+    "watchPE": true
   },
   {
     "code": "sh605338",
@@ -1217,6 +1501,8 @@
     "blockName": "消费",
     "riskScore": " 6",
     "isTech": false,
-    "addedAt": "2026-10-30 19:56:16"
+    "addedAt": "2026-10-30 19:56:16",
+    "watchMarketCap": true,
+    "watchPE": true
   }
 ]

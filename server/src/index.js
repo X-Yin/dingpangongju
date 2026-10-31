@@ -79,7 +79,7 @@ const { getBlockAiContext, runBlockAiAnalysis } = require('./service/blockAi');
 const { getAiScreenContext, runAiScreen } = require('./service/aiStockScreener');
 const { getJigouReportsData, refreshJigouReports, getPendingNewReports, acknowledgeNewReports } = require('./service/jigouReports');
 const { getMonitorAlarms, markAlarmRead, markAllAlarmsRead } = require('./service/monitor');
-const { addMonitorStock, deleteMonitorStock, toggleStockImportant, batchSetImportant, updateMonitorStockName, getMonitorStocks, toggleStockTop, syncTotalShares, isTechWatchlistStock } = require('./service/monitorStock');
+const { addMonitorStock, deleteMonitorStock, toggleStockImportant, batchSetImportant, updateMonitorStockName, updateMonitorStockInfo, getMonitorStocks, toggleStockTop, syncTotalShares, isTechWatchlistStock } = require('./service/monitorStock');
 const { diagnoseResilience, diagnoseResilienceMultiDay, calculateRealtimeResilienceBatch, diagnoseSingleStockResilience, diagnoseIntradayResilience, checkPositionSellAlerts } = require('./service/stockDiagnose');
 const { diagnosePremium } = require('./service/premiumDiagnosis');
 const { backtestBuySell, diagnoseRealtimeBuyPoints, getBuyPointChecks, getBuyPointStocks, getTopGainersByMarket, getSingleStockBuyPointDiagnosis, getBuySellSelectableStocks, checkSingleStockSellPoint } = require('./service/buySellDiagnose');
@@ -1252,8 +1252,8 @@ app.get('/search_stock', async (req, res) => {
 
 // 自选股管理接口
 app.post('/add_monitor_stock', async (req, res) => {
-  const { code, name, blockName, riskScore, isTech } = req.body;
-  const success = addMonitorStock(code, name, blockName, riskScore, isTech);
+  const { code, name, blockName, riskScore, isTech, watchMarketCap, watchPE } = req.body;
+  const success = addMonitorStock(code, name, blockName, riskScore, isTech, watchMarketCap !== false, watchPE !== false);
   if (success) {
     // 立即触发一次该股票的数据抓取，确保前端能立即看到数据
     await triggerUpdateStockData([code]);
@@ -1261,6 +1261,22 @@ app.post('/add_monitor_stock', async (req, res) => {
     try { await syncTotalShares([code]); } catch (e) { console.error('同步总股本失败:', e.message); }
   }
   res.json({ success, message: success ? '添加成功' : '添加失败，可能已存在' });
+});
+
+// 编辑自选股（右键菜单「编辑」）：名称 / 板块 / 风险偏好 / 科技股 / 关注市值 / 关注 PE 均可改
+app.post('/update_monitor_stock', async (req, res) => {
+  const { originalCode, code, name, blockName, riskScore, isTech, watchMarketCap, watchPE } = req.body;
+  const result = updateMonitorStockInfo(originalCode || code, { code, name, blockName, riskScore, isTech, watchMarketCap, watchPE });
+  if (!result.success) {
+    res.json(result);
+    return;
+  }
+  // 仅股票代码变化时才需要重新抓取该股数据与总股本
+  if (result.codeChanged) {
+    await triggerUpdateStockData([result.code]);
+    try { await syncTotalShares([result.code]); } catch (e) { console.error('同步总股本失败:', e.message); }
+  }
+  res.json(result);
 });
 
 // 手动刷新自选股总股本数据（monitor_stocks_total_shares.json）

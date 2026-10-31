@@ -127,7 +127,10 @@ const DingPan = () => {
     const [newStockBlockName, setNewStockBlockName] = useState(''); // 新增股票板块
     const [newStockRiskScore, setNewStockRiskScore] = useState(''); // 风险偏好分数
     const [newStockIsTech, setNewStockIsTech] = useState(true); // 是否为科技股，默认打开
-    const [addStockModalVisible, setAddStockModalVisible] = useState(false); // 新增股票弹窗可见性
+    const [newStockWatchMarketCap, setNewStockWatchMarketCap] = useState(true); // 是否关注市值，默认关注
+    const [newStockWatchPE, setNewStockWatchPE] = useState(true); // 是否关注 PE，默认关注
+    const [editingStockCode, setEditingStockCode] = useState(''); // 正在编辑的自选股代码（'' 表示新增模式）
+    const [addStockModalVisible, setAddStockModalVisible] = useState(false); // 新增/编辑股票弹窗可见性
     const [addingStock, setAddingStock] = useState(false); // 新增股票提交中
     const [showOnlyImportant, setShowOnlyImportant] = useState(() => {
         return localStorage.getItem('dingpan_showOnlyImportant') === 'true';
@@ -375,11 +378,27 @@ const DingPan = () => {
 
     // 打开新增股票弹窗：清空上一次的残留输入，避免带着旧 code 直接提交
     const handleOpenAddStockModal = () => {
+        setEditingStockCode('');
         setNewStockCode('');
         setNewStockName('');
         setNewStockBlockName('');
         setNewStockRiskScore('');
         setNewStockIsTech(true);
+        setNewStockWatchMarketCap(true);
+        setNewStockWatchPE(true);
+        setAddStockModalVisible(true);
+    };
+
+    // 打开编辑股票弹窗（右键菜单「编辑」）：用该股现有内容预填，所有字段均可重新编辑
+    const handleOpenEditStockModal = (stock) => {
+        setEditingStockCode(stock.code);
+        setNewStockCode(stock.code);
+        setNewStockName(stock.stockName || '');
+        setNewStockBlockName(stock.blockName && stock.blockName !== 'xxx' ? stock.blockName : '');
+        setNewStockRiskScore(stock.riskScore != null ? String(stock.riskScore) : '');
+        setNewStockIsTech(stock.isTech !== false);
+        setNewStockWatchMarketCap(stock.watchMarketCap !== false);
+        setNewStockWatchPE(stock.watchPE !== false);
         setAddStockModalVisible(true);
     };
 
@@ -395,7 +414,9 @@ const DingPan = () => {
                 name: newStockName,
                 blockName: newStockBlockName || 'xxx',
                 riskScore: newStockRiskScore || null,
-                isTech: newStockIsTech
+                isTech: newStockIsTech,
+                watchMarketCap: newStockWatchMarketCap,
+                watchPE: newStockWatchPE
             });
             message.success(`已添加 ${newStockName}${closeAfter ? '' : '，可继续添加下一只'}`);
             setNewStockCode('');
@@ -403,12 +424,47 @@ const DingPan = () => {
             setNewStockBlockName('');
             setNewStockRiskScore('');
             setNewStockIsTech(true);
+            setNewStockWatchMarketCap(true);
+            setNewStockWatchPE(true);
             if (closeAfter) {
                 setAddStockModalVisible(false);
             }
             fetchData(); // 重新拉取数据
         } catch (error) {
             console.error('Add stock failed:', error);
+        } finally {
+            setAddingStock(false);
+        }
+    };
+
+    // 保存编辑自选股：代码/名称/板块/风险偏好/科技股/关注市值/关注 PE 全部可改
+    const handleEditStock = async () => {
+        if (!editingStockCode || !newStockCode || !newStockName) {
+            return;
+        }
+        setAddingStock(true);
+        try {
+            const res = await axios.post(`http://${local_ip}:3000/update_monitor_stock`, {
+                originalCode: editingStockCode,
+                code: newStockCode,
+                name: newStockName,
+                blockName: newStockBlockName || 'xxx',
+                riskScore: newStockRiskScore || null,
+                isTech: newStockIsTech,
+                watchMarketCap: newStockWatchMarketCap,
+                watchPE: newStockWatchPE
+            });
+            if (!res.data?.success) {
+                message.error(res.data?.message || '保存失败');
+                return;
+            }
+            message.success(`已更新 ${newStockName}`);
+            setAddStockModalVisible(false);
+            setEditingStockCode('');
+            fetchData();
+        } catch (error) {
+            console.error('Edit stock failed:', error);
+            message.error('保存失败');
         } finally {
             setAddingStock(false);
         }
@@ -2608,6 +2664,7 @@ const DingPan = () => {
                                 onLogicExplore={handleLogicExplore}
                                 onOpenOverlayTimeLine={handleOpenOverlayTimeLine}
                                 onBacktest={(stock) => navigate(`/stock_diagnosis?backtest=1&code=${encodeURIComponent(stock.code)}&name=${encodeURIComponent(stock.stockName || '')}`)}
+                                onEdit={handleOpenEditStockModal}
                                 onRename={handleOpenRenameModal}
                                 onTempHideStock={handleOpenTempHideModal}
                                 themeColor={effThemeColor}
@@ -2704,11 +2761,12 @@ const DingPan = () => {
                 themeColor={effThemeColor}
             />
 
-            {/* 新增股票弹窗 */}
+            {/* 新增/编辑股票弹窗 */}
             <AddStockModal
                 open={addStockModalVisible}
-                onCancel={() => setAddStockModalVisible(false)}
-                onOk={() => handleAddStock(true)}
+                mode={editingStockCode ? 'edit' : 'add'}
+                onCancel={() => { setAddStockModalVisible(false); setEditingStockCode(''); }}
+                onOk={() => (editingStockCode ? handleEditStock() : handleAddStock(true))}
                 onContinue={() => handleAddStock(false)}
                 addLoading={addingStock}
                 newStockCode={newStockCode}
@@ -2721,6 +2779,10 @@ const DingPan = () => {
                 setNewStockRiskScore={setNewStockRiskScore}
                 newStockIsTech={newStockIsTech}
                 setNewStockIsTech={setNewStockIsTech}
+                watchMarketCap={newStockWatchMarketCap}
+                setWatchMarketCap={setNewStockWatchMarketCap}
+                watchPE={newStockWatchPE}
+                setWatchPE={setNewStockWatchPE}
                 themeColor={effThemeColor}
             />
 

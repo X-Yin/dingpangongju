@@ -4921,7 +4921,7 @@
         "itemBorderStyle": "solid",
         "itemBorderWidth": "1px",
         "itemRadius": "16px",
-        "upColor": "#a40d40",
+        "upColor": "rgb(242,94,144)",
         "downColor": "#19D8A6",
         "btnBg": "#CE742B",
         "btnColor": "#FFFFFF",

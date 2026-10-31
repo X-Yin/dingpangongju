@@ -3,7 +3,7 @@ import {
     AreaChartOutlined, CaretDownOutlined, CaretUpOutlined, SearchOutlined, ReloadOutlined,
     PlusOutlined, StarOutlined, StarFilled, ThunderboltOutlined, ArrowUpOutlined, ArrowDownOutlined,
     DeleteOutlined, PushpinOutlined, RadarChartOutlined, FileSearchOutlined,
-    EditOutlined, LineChartOutlined, ExperimentOutlined, EyeInvisibleOutlined,
+    EditOutlined, FormOutlined, LineChartOutlined, ExperimentOutlined, EyeInvisibleOutlined,
     AppstoreOutlined, RocketOutlined, ShopOutlined,
 } from '@ant-design/icons';
 import { titleStyle, numberStyle } from '../../utils/themeColor';
@@ -39,6 +39,7 @@ const WatchlistMonitor = ({
     onLogicExplore,
     onOpenOverlayTimeLine,
     onBacktest,
+    onEdit,
     onRename,
     onTempHideStock,
     themeColor,
@@ -244,9 +245,15 @@ const WatchlistMonitor = ({
                                                 onClick: () => onLogicExplore(stock),
                                             },
                                             {
+                                                key: 'edit',
+                                                label: '编辑',
+                                                icon: <EditOutlined />,
+                                                onClick: () => onEdit(stock),
+                                            },
+                                            {
                                                 key: 'rename',
                                                 label: '重命名',
-                                                icon: <EditOutlined />,
+                                                icon: <FormOutlined />,
                                                 onClick: () => onRename(stock),
                                             },
                                             {

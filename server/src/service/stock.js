@@ -959,6 +959,10 @@ const getAllStockData = () => {
             isTop: monitorStock ? monitorStock.isTop : false,
             isTech: monitorStock ? monitorStock.isTech !== false : true,
             blockName: monitorStock?.blockName || '',
+            riskScore: monitorStock?.riskScore ?? null,
+            // 关注市值 / 关注 PE 开关（2026-10-31）：右键「编辑」弹窗预填用；存量数据缺失按 true
+            watchMarketCap: monitorStock ? monitorStock.watchMarketCap !== false : true,
+            watchPE: monitorStock ? monitorStock.watchPE !== false : true,
             ...latestKline
         };
     }).sort((a, b) => {

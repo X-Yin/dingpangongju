@@ -126,7 +126,7 @@ const fmtLocalDateTime = (d) => {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
-const addMonitorStock = (code, name, blockName = 'xxx', riskScore = null, isTech = true) => {
+const addMonitorStock = (code, name, blockName = 'xxx', riskScore = null, isTech = true, watchMarketCap = true, watchPE = true) => {
     const stocks = getMonitorStocks();
     if (stocks.find(s => s.code === code)) {
         return false;
@@ -134,7 +134,7 @@ const addMonitorStock = (code, name, blockName = 'xxx', riskScore = null, isTech
     // 记录添加时刻（本地时间）：供买卖点回测判断「买点时刻该股是否已在自选股中」，
     // 防止后加自选股污染历史回测结果（历史上买的是 A，不能因后加了 B 就改成买 B）
     const addedAt = fmtLocalDateTime(new Date());
-    stocks.push({ code, name, isImportant: false, blockName, riskScore, isTech, addedAt });
+    stocks.push({ code, name, isImportant: false, blockName, riskScore, isTech, watchMarketCap, watchPE, addedAt });
     return saveMonitorStocks(stocks);
 };
 
@@ -185,6 +185,67 @@ const isStockInWatchlistAt = (code, dateStr, minute) => {
     if (added.date > d) return false;
     if (minute == null || !Number.isFinite(Number(minute))) return false;
     return added.minute <= Number(minute);
+};
+
+// 自选股「是否关注市值 / 是否关注 PE」开关索引（按文件 mtime 缓存，供回测/线上热循环同步查询）：
+// code -> { watchMarketCap, watchPE }；存量数据缺失字段时按 true（关注）处理
+let watchFlagIndexCache = null; // { mtimeMs, map, checkedAt }
+const getStockWatchFlagIndex = () => {
+    try {
+        const now = Date.now();
+        if (watchFlagIndexCache && now - watchFlagIndexCache.checkedAt < ADDED_INDEX_CHECK_INTERVAL_MS) {
+            return watchFlagIndexCache.map;
+        }
+        const mtimeMs = fs.statSync(DATA_PATH).mtimeMs;
+        if (watchFlagIndexCache && watchFlagIndexCache.mtimeMs === mtimeMs) {
+            watchFlagIndexCache.checkedAt = now;
+            return watchFlagIndexCache.map;
+        }
+        const map = new Map();
+        for (const s of getMonitorStocks()) {
+            if (!s || !s.code) continue;
+            map.set(s.code, {
+                watchMarketCap: s.watchMarketCap !== false,
+                watchPE: s.watchPE !== false,
+            });
+        }
+        watchFlagIndexCache = { mtimeMs, map, checkedAt: now };
+        return map;
+    } catch (error) {
+        console.error('读取自选股关注开关索引失败:', error.message);
+        return watchFlagIndexCache ? watchFlagIndexCache.map : new Map();
+    }
+};
+
+// 查询单只自选股的两个关注开关；不在自选股中或字段缺失时均按关注（true）
+const getStockWatchFlags = (code) => getStockWatchFlagIndex().get(code) || { watchMarketCap: true, watchPE: true };
+
+// 编辑自选股（右键菜单「编辑」）：名称 / 板块 / 风险偏好 / 是否科技股 / 是否关注市值 / 是否关注 PE 均可改；
+// 股票代码允许改（视为替换该条记录），改代码时若新代码已在自选股中则拒绝，避免重复
+const updateMonitorStockInfo = (originalCode, payload = {}) => {
+    const stocks = getMonitorStocks();
+    const idx = stocks.findIndex(s => s.code === originalCode);
+    if (idx < 0) {
+        return { success: false, message: '该股票不在自选股中' };
+    }
+    const prev = stocks[idx];
+    const nextCode = payload.code || originalCode;
+    if (nextCode !== originalCode && stocks.some(s => s.code === nextCode)) {
+        return { success: false, message: '该股票已在自选股中，请勿重复添加' };
+    }
+    const nextName = payload.name != null && String(payload.name).trim() ? String(payload.name).trim() : prev.name;
+    stocks[idx] = {
+        ...prev,
+        code: nextCode,
+        name: nextName,
+        blockName: payload.blockName != null ? payload.blockName : prev.blockName,
+        riskScore: payload.riskScore != null && payload.riskScore !== '' ? payload.riskScore : null,
+        isTech: payload.isTech !== false,
+        watchMarketCap: payload.watchMarketCap !== false,
+        watchPE: payload.watchPE !== false,
+    };
+    const success = saveMonitorStocks(stocks);
+    return { success, codeChanged: nextCode !== originalCode, code: nextCode, message: success ? '更新成功' : '更新失败' };
 };
 
 const deleteMonitorStock = (code) => {
@@ -266,9 +327,11 @@ module.exports = {
     toggleStockImportant,
     batchSetImportant,
     updateMonitorStockName,
+    updateMonitorStockInfo,
     toggleStockTop,
     getTotalSharesData,
     syncTotalShares,
     isStockInWatchlistAt,
+    getStockWatchFlags,
     isTechWatchlistStock
 };

@@ -7,11 +7,13 @@
 //   mc＝总市值（元）、cmc＝流通市值（元）、ttm_pe＝滚动市盈率），拉取结果缓存到 data/monitor_stocks_valuation.json。
 // 回测内同步读表比对：同一自然日复用缓存，跨日或文件缺失时由 ensureWatchlistValuation 重新拉取一次。
 // 数据不足（无该股记录，或 mc 为空）时不拦截，与其它过滤器「数据不足不拦截」口径一致。
+// 2026-10-31 用户新增个股豁免开关（monitor_stocks.json 的 watchMarketCap / watchPE，默认 true）：
+//   某只自选股「是否关注市值」关闭时，不再按流通市值 < 200 亿拦截；「是否关注 PE」关闭时，不再按市盈率亏损拦截。
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const { getClsReqStockBasicUrl, batchParallel } = require('../utils');
-const { getMonitorStocks } = require('./monitorStock');
+const { getMonitorStocks, getStockWatchFlags } = require('./monitorStock');
 
 const VALUATION_PATH = path.join(__dirname, '../data/monitor_stocks_valuation.json');
 
@@ -58,14 +60,16 @@ const getValuationMap = () => {
 
 // 是否因估值原因禁止买入：
 //   流通市值 < 200 亿 → 禁买（2026-10-14 由总市值口径改为流通市值）；市盈率亏损（滚动市盈率 ttm_pe ≤ 0 或缺失/空）→ 禁买。
-// 无该股估值记录、或流通市值缺失（旧缓存/拉取失败）时不按市值拦截（数据不足不拦截），市盈率校验照常生效
+// 无该股估值记录、或流通市值缺失（旧缓存/拉取失败）时不按市值拦截（数据不足不拦截），市盈率校验照常生效。
+// 个股开关豁免（2026-10-31）：watchMarketCap=false 时跳过市值校验，watchPE=false 时跳过亏损校验。
 const isBuyBlockedByValuation = (code) => {
   const v = getValuationMap().get(code);
   if (!v) return false;
+  const flags = getStockWatchFlags(code);
   const { circulatingMarketValue, ttmPe } = v;
-  if (circulatingMarketValue != null && Number.isFinite(circulatingMarketValue)
+  if (flags.watchMarketCap && circulatingMarketValue != null && Number.isFinite(circulatingMarketValue)
     && circulatingMarketValue < MIN_MARKET_VALUE) return true;
-  if (ttmPe == null || !Number.isFinite(ttmPe) || ttmPe <= 0) return true;
+  if (flags.watchPE && (ttmPe == null || !Number.isFinite(ttmPe) || ttmPe <= 0)) return true;
   return false;
 };
 
@@ -73,10 +77,11 @@ const isBuyBlockedByValuation = (code) => {
 const getValuationBlockReason = (code) => {
   const v = getValuationMap().get(code);
   if (!v) return '';
+  const flags = getStockWatchFlags(code);
   const { circulatingMarketValue, ttmPe } = v;
-  if (circulatingMarketValue != null && Number.isFinite(circulatingMarketValue)
+  if (flags.watchMarketCap && circulatingMarketValue != null && Number.isFinite(circulatingMarketValue)
     && circulatingMarketValue < MIN_MARKET_VALUE) return `流通市值<${MIN_MARKET_VALUE / 1e8}亿`;
-  if (ttmPe == null || !Number.isFinite(ttmPe) || ttmPe <= 0) return '市盈率亏损';
+  if (flags.watchPE && (ttmPe == null || !Number.isFinite(ttmPe) || ttmPe <= 0)) return '市盈率亏损';
   return '';
 };
 
