@@ -42,9 +42,7 @@ const { calculateReplayResilience } = require('../diagnose/sellPoint');
 const {
   iceResilienceIndexCode,
   getIceMa3SlopeIntraday,
-  fmtKeyBlockSlope,
   ICE_SIGNAL_INDEX_CODE,
-  ensureIndexMa3SlopeSeries,
   precomputeTurnMap,
   CYB_GATE_STRATEGY_IDS,
   CYB_INDEX_CODE,
@@ -129,17 +127,6 @@ const failPrevStrengthOpenGap = (r) => {
   return gap < OPEN_GAP_MIN_PCT;
 };
 
-// 上证指数「前一交易日收盘口径」3 日线斜率（用于逆周期腿「盘中由负转正」卖点），数据不足返回 null
-const prevSlopeOf = (slopeByDate, dateStr) => {
-  const target = Number(dateStr);
-  let bestDate = null;
-  let bestSlope = null;
-  for (const [d, s] of slopeByDate) {
-    if (d < target && (bestDate === null || d > bestDate)) { bestDate = d; bestSlope = s; }
-  }
-  return bestSlope;
-};
-
 const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress) => {
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.fusedEmoWinMode !== true) {
@@ -160,15 +147,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
 
   if (onProgress) onProgress({ current: 0, total, date: '', status: 'loading' });
 
-  // ===== B 风格预计算：上证 3 日线斜率收盘序列 + 「由正转负 / 由负转正」事件 =====
-  const slopeByDate = new Map();
-  try {
-    const { dates, slopes } = await ensureIndexMa3SlopeSeries(ICE_SIGNAL_INDEX_CODE);
-    for (const d of dates) {
-      const s = slopes.get(d);
-      if (s != null && Number.isFinite(Number(s))) slopeByDate.set(Number(d), Number(s));
-    }
-  } catch (e) { /* 数据不足时逆周期腿卖点不生效 */ }
+  // ===== B 风格预计算：「由正转负 / 由负转正」事件（逆周期腿买点前置） =====
   let turnMap = new Map();
   try {
     turnMap = await precomputeTurnMap(ICE_SIGNAL_INDEX_CODE, rangeDates.map(Number));
@@ -290,7 +269,6 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
     if (curWindowKey !== revWindowKey) { revHitCount.clear(); revWindowKey = curWindowKey; }
     const eligibleRev = slopeClose != null && slopeClose < 0
       && daysSinceTurnNeg != null && daysSinceTurnNeg >= REV_NEG_STREAK_MIN_DAYS;
-    const revPrevCloseSlope = prevSlopeOf(slopeByDate, dateStr);
 
     let candidatesRaw = [];
     let poolWinDates = [];
@@ -679,6 +657,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
         let sellChange = changePct;
 
         const isCounter = position.cycle === CYCLE_COUNTER;
+        // 仅顺周期腿启用⑪竞价大幅低开（< -2%）后的冲高回落即卖（2026-10-31 用户新增，与独立「情绪游资-极致胜率」同口径；逆周期腿不启用）
         const priceHit = isCounter
           ? scanLeaderPriceSell({
             points: posTline.points,
@@ -694,19 +673,13 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
             cutoffMinute: bucketMinute,
             costLinePct: -5,
             costLineSustainMinutes: 0,
+            enableOpenGapReboundSell: true,
           });
         if (priceHit) {
           sellReason = priceHit.reason;
           sellMinute = priceHit.minute;
           sellPx = priceHit.px;
           sellChange = priceHit.changePct;
-        }
-        if (!sellReason && isCounter) {
-          const intradaySlope = await getIceMa3SlopeIntraday(dateStr, bucketMinute);
-          if (intradaySlope != null && Number.isFinite(Number(intradaySlope))
-            && revPrevCloseSlope != null && revPrevCloseSlope <= 0 && Number(intradaySlope) > 0) {
-            sellReason = `上证指数 3 日线斜率盘中由负转正（前一交易日收盘 ${fmtKeyBlockSlope(revPrevCloseSlope)} → 当桶实时 ${fmtKeyBlockSlope(intradaySlope)}）`;
-          }
         }
         if (!sellReason && position.buyDi != null && (di - position.buyDi + 1) === WEAK_TRADE_HOLD_DAYS && isTailBucket) {
           if (costReturn != null && costReturn < WEAK_TRADE_MIN_GAIN_PCT) {

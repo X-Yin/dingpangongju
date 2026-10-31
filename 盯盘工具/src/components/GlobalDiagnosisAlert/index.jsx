@@ -95,7 +95,7 @@ const GlobalDiagnosisAlert = () => {
     const decorate = async (list) => {
       const withPrice = await Promise.all(list.map(async (s) => {
         const { price, change } = await fetchStockPrice(s.code);
-        return { ...s, buyPrice: price, priceChange: s.change != null ? s.change : change };
+        return { ...s, buyPrice: price != null ? price : (s.buyPrice ?? null), priceChange: s.change != null ? s.change : change };
       }));
       return withPrice;
     };

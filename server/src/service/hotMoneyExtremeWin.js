@@ -7,7 +7,7 @@
 //   导出：
 //     getHotMoneyLeaderList(targetDate, limit)     龙头列表（除 delta≥30 与上证斜率>0 外全部买点条件满足）
 //     getExtremeWinBuyPointChecks(targetDate, ...) 买点诊断 8 项（结构同科技进攻，便于前端复用；含买入截止时间门禁，默认 14:30）
-//     checkExtremeWinSellPointDetailed(code, costPrice, buyDate) 卖点诊断 9 条（完整龙头战法）
+//     checkExtremeWinSellPointDetailed(code, costPrice, buyDate, opts) 卖点诊断 11 条（完整龙头战法 + ⑪冲高回落/⑫开盘自救）
 // ============================================================
 const dayjs = require('dayjs');
 const { batchParallel, isAfterMarketClose, resolveAnalysisDate } = require('../utils');
@@ -55,6 +55,17 @@ const REVERSE_HIT_WINDOW_MAX_DAYS = 20;
 //   2026-10-24 用户要求：仅「情绪游资-极致胜率」用 14:30；「攻防兼备」模式的 EW 腿保持 13:30（调用方传 buyCutoffMinute）
 const BUY_CUTOFF_MINUTE = 1430;
 const ATTACK_DEFENSE_BUY_CUTOFF_MINUTE = 1330;
+// ⑪⑫ 竞价大幅低开后的「开盘自救」（2026-10-31 用户改版；仅「情绪游资-极致胜率」/「攻防兼备」的顺周期持仓，
+//   持仓标记为 reverse（逆周期）时不启用，未标记按顺周期处理）：
+//   当日竞价开盘价较昨收 < -2% 时启用——自开盘起进入自救观察期（截至 9:35）：
+//   ① 期间「回落不低于开盘价」且「距当日分时最高涨幅回落 ≤ 2 个百分点」时先不卖；
+//   ② 跌破开盘价 → ⑫ 在该分钟卖出；自当日最高涨幅回落超过 2 个百分点 → ⑪ 在该分钟卖出；
+//   ③ 9:35 当日涨幅已脱离 ≤ -5% 区域 → 自救成功，当日剩余时间不再因⑪⑫卖出（交由其他卖点规则）；
+//      9:35 仍处于 ≤ -5% 区域 → 自救失败，在 9:35 按分时价卖出。
+//   期间 ⑤竞价低开 与 ⑦盘中跌幅 在观察期内不再直接判定，避免把自救机会吃掉（与回测 leaderSellMinute 同口径）
+const OPEN_GAP_REBOUND_PCT = -2;
+const RESCUE_EVAL_MINUTE = 935;   // 自救判定时点：9:35
+const RESCUE_TOLERANCE_PCT = 2;   // 自当日分时最高涨幅回落的容忍幅度（个百分点）
 // 命中次数缓存（仅历史交易日，key = `${code}|${dateNum}`）：当日盘中实时重算，不缓存
 const reversePastHitCache = new Map();
 
@@ -80,9 +91,13 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
   const isToday = dateStr === dayjs().format('YYYYMMDD');
   const afterClose = !isToday || isAfterMarketClose();
 
-  // 1) 候选池（过去 10/20 交易日连板准入：流通市值 > 100 亿元者两连板（连板数 ≥ 2）+ 含该连板日的 5 日涨幅 > 40%，其余需四连板及以上；
+  // 1) 候选池（过去 10/20 交易日连板准入：流通市值 > 100 亿元者两连板（连板数 ≥ 2）+ 含该连板日的 5 日累计涨幅 > 50%，其余需四连板及以上；
+  //    10 日最大涨幅窗口「从第一天涨停的前一交易日收盘价起算」（2026-10-31 与回测同口径）；
   //    并剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）
-  const pool = await buildExtremeWinPool(dateStr);
+  const pool = await buildExtremeWinPool(dateStr, {
+    fromFirstLimitUp: true,
+    capBoardMinGainPct: CAP_BOARD_MIN_GAIN_PCT,
+  });
   const poolStocks = pool.stocks || [];
 
   // 2) 死叉口径（过去 DEATH_CROSS_WINDOW 个交易日，不含当日）
@@ -604,7 +619,7 @@ const buildExtremeWinChecks = (ctx, candidate) => {
   const checks = [
     {
       id: 'extreme_win_pool',
-      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板（连板数 ≥ 2）且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${CAP_BOARD_MIN_GAIN_PCT}% 即可，流通市值 ≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者仍需四连板及以上；旧路径=过去 10 个交易日达标 + 最多 10 日最精准窗口区间最大涨幅 < 80% 且连板后无单日跌幅 < -9%；新路径=过去 20 个交易日达标 + 最多 10 日最精准窗口区间最大涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < 100% 且该窗口峰值日至买点严格相隔 ≥ 5 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < 15%、该窗口内收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除）；均剔除创业板/科创板/题材黑名单/全量自选股科技股）`,
+      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板（连板数 ≥ 2）且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${CAP_BOARD_MIN_GAIN_PCT}% 即可，流通市值 ≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者仍需四连板及以上；10 日最大涨幅窗口 = 从第一天涨停的前一交易日收盘价起算、最多 10 个交易日；旧路径=过去 10 个交易日达标 + 该窗口区间最大涨幅 < 80% 且连板后无单日跌幅 < -9%；新路径=过去 20 个交易日达标 + 该窗口区间最大涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < 100% 且该窗口峰值日至买点严格相隔 ≥ 5 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < 15%、该窗口内收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除）；均剔除创业板/科创板/题材黑名单/全量自选股科技股）`,
       passed: poolCount > 0,
       value: `龙头池 ${poolCount} 只`,
       reason: `候选 = 旧路径（过去 10 个交易日连板准入达标 + 上述动量过滤）与新路径（过去 20 个交易日连板准入达标 + 上述动量过滤）并集，已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、题材黑名单与全量自选股科技股（isTech ≠ false）重叠者${ctx.pool.poolFilterText || ''}；当前龙头池共 ${poolCount} 只，展示标的为 ${nameText}`,
@@ -731,6 +746,7 @@ const getExtremeWinBuyPointChecks = async (targetDate = null, refresh = false, b
       : poolCount === 0
         ? '龙头池当前无满足条件的标的，请耐心等待。'
         : '龙头池暂未出现完整买点标的（需强度分 − 差劲分 ≥ 30 且上证 3 日线斜率为正），请耐心等待。';
+    const cutoff = cutoffText(ctx);
     const gateSuffix = ctx.buyWindowOpen ? '' : ` 已过 ${cutoff} 买入截止（每天 ${cutoff} 之后不买），今日买入窗口已关闭。`;
     const conclusionBase = `${baseConclusion}${gateSuffix}`;
     const conclusion = reverse && reverse.triggeredCount > 0
@@ -760,7 +776,7 @@ const getExtremeWinBuyPointChecks = async (targetDate = null, refresh = false, b
 };
 
 // ============================================================
-// 卖点诊断 9 条（完整龙头战法）；不调用 buySellDiagnose.checkSellPointDetailed（口径不同）
+// 卖点诊断 10 条（完整龙头战法 9 条 + ⑪竞价大幅低开后冲高回落即卖）；不调用 buySellDiagnose.checkSellPointDetailed（口径不同）
 // ============================================================
 const mkCond = (name, satisfied, detail, extra = {}) => ({
   name, satisfied, detail,
@@ -769,8 +785,11 @@ const mkCond = (name, satisfied, detail, extra = {}) => ({
   pendingMinutes: extra.pendingMinutes != null ? extra.pendingMinutes : null,
 });
 
-const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate = null) => {
+const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate = null, opts = {}) => {
   try {
+    const holdDays = 3;
+    const weakCondName = `持仓第 ${holdDays} 日未拉开 +10%`;
+    const modeName = '龙头战法';
     const targetDay = resolveTargetDay(null);
     const dateStr = targetDay.format('YYYYMMDD');
     const dateNum = Number(dateStr);
@@ -793,6 +812,10 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
     const chgOf = (px) => (preclose > 0 && px > 0) ? round2(((px - preclose) / preclose) * 100) : null;
     const openPx = mins.length > 0 ? mins[0].lastPx : null;
     const lastPx = mins.length > 0 ? mins[mins.length - 1].lastPx : null;
+    const openChg = mins.length > 0 ? chgOf(mins[0].lastPx) : null;
+    // ⑪⑫ 开盘自救启用条件（仅顺周期持仓）：竞价低开 < -2% 且调用方开启该卖点
+    const rescueEnabled = !!opts.enableOpenGapReboundSell;
+    const gapArmed = rescueEnabled && openChg != null && openChg < OPEN_GAP_REBOUND_PCT;
 
     if (mins.length === 0) {
       return {
@@ -808,8 +831,12 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
           mkCond('单分钟跳水 ≥ 3 个点', false, '分时数据不足'),
           mkCond('持仓股跌停', false, '分时数据不足'),
           mkCond('高位放量大阴线', false, '分时数据不足'),
-          mkCond('持仓第 3 日未拉开 +10%', false, '分时数据不足', { exempted: true }),
+          mkCond(weakCondName, false, '分时数据不足', { exempted: true }),
           mkCond('竞价低开 < -5%', false, '分时数据不足'),
+          ...(opts.enableOpenGapReboundSell ? [
+            mkCond('竞价大幅低开后冲高回落超过 2 个百分点即卖', false, '分时数据不足'),
+            mkCond('竞价大幅低开后「开盘自救」', false, '分时数据不足'),
+          ] : []),
           mkCond('当日收盘抗分歧指数 < 6', false, '分时数据不足', { pending: true }),
         ],
         conclusion: '分时数据不足，无法诊断',
@@ -821,9 +848,12 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
     // 全时段最小涨跌幅 / 最小开盘跌幅
     let minChg = null;
     let minOpenDrop = null;
+    // ⑦盘中跌幅判定口径：开启开盘自救且竞价低开 < -2% 时，自救观察期（≤9:35）内的分钟不判定（交给⑪⑫）
+    let minChgJudged = null;
     for (const p of mins) {
       const v = chgOf(p.lastPx);
       if (v != null && (minChg == null || v < minChg)) minChg = v;
+      if (!(gapArmed && p.minute <= RESCUE_EVAL_MINUTE) && v != null && (minChgJudged == null || v < minChgJudged)) minChgJudged = v;
       if (openPx > 0) {
         const od = round2(((p.lastPx - openPx) / openPx) * 100);
         if (od != null && (minOpenDrop == null || od < minOpenDrop)) minOpenDrop = od;
@@ -843,10 +873,10 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
     }
     conditions.push(mkCond('跌破成本线 -5%（即时）', c1, c1Detail));
 
-    // ② 盘中分时跌幅 ≤ -5%（较昨收）
-    const c2 = minChg != null && minChg <= -5;
+    // ② 盘中分时跌幅 ≤ -5%（较昨收）；竞价低开 < -2% 开启自救时，观察期（≤9:35）内不判定
+    const c2 = minChgJudged != null && minChgJudged <= -5;
     conditions.push(mkCond('盘中分时跌幅 ≤ -5%', c2,
-      `当日最低分时涨跌幅 ${minChg == null ? '--' : minChg}%（较昨收 ${preclose != null ? round2(preclose) : '--'}）${c2 ? ' ≤ -5%，直接卖出' : '，未达 -5%'}`));
+      `当日最低分时涨跌幅 ${minChgJudged == null ? '--' : minChgJudged}%（较昨收 ${preclose != null ? round2(preclose) : '--'}）${gapArmed ? '；竞价低开 < -2% 开启开盘自救，观察期（≤9:35）内不判定⑦' : ''}${c2 ? ' ≤ -5%，直接卖出' : '，未达 -5%'}`));
 
     // ③ 较开盘价下挫 5 个点
     const c3 = minOpenDrop != null && minOpenDrop <= -5;
@@ -904,14 +934,14 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
       const daysSince = countTradingDaysBetween(bd, dateStr); // (buyDate, today] 的交易日数
       if (daysSince == null) {
         c7Detail = '买入日期非法，不适用';
-      } else if (daysSince + 1 !== 3) {
-        c7Detail = `当前为持仓第 ${daysSince + 1} 日，非第 3 日，不适用`;
+      } else if (daysSince + 1 !== holdDays) {
+        c7Detail = `当前为持仓第 ${daysSince + 1} 日，非第 ${holdDays} 日，不适用`;
       } else {
         const isTail = afterClose || (mins.length > 0 && mins[mins.length - 1].minute >= 1457);
         if (!isTail) {
           c7Exempted = false;
           c7Pending = true;
-          c7Detail = `持仓第 3 日，待尾盘 14:57 后判定是否未拉开 +10%（当前现价 ${lastPx != null ? round2(lastPx) : '--'}）`;
+          c7Detail = `持仓第 ${holdDays} 日，待尾盘 14:57 后判定是否未拉开 +10%（当前现价 ${lastPx != null ? round2(lastPx) : '--'}）`;
         } else {
           c7Exempted = false;
           const ret = effCostPrice > 0 && lastPx != null
@@ -919,18 +949,77 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
             : null;
           c7 = ret != null && ret < 10;
           c7Detail = ret == null
-            ? '成本价缺失，无法判定持仓第 3 日涨幅'
-            : `持仓第 3 日尾盘现价 ${round2(lastPx)}，较成本 ${effCostPrice.toFixed(2)} 涨幅 ${ret}% ${c7 ? '< +10%，未拉开 → 卖出' : '≥ +10%，继续持有'}`;
+            ? `成本价缺失，无法判定持仓第 ${holdDays} 日涨幅`
+            : `持仓第 ${holdDays} 日尾盘现价 ${round2(lastPx)}，较成本 ${effCostPrice.toFixed(2)} 涨幅 ${ret}% ${c7 ? '< +10%，未拉开 → 卖出' : '≥ +10%，继续持有'}`;
         }
       }
     }
-    conditions.push(mkCond('持仓第 3 日未拉开 +10%', c7, c7Detail, { exempted: c7Exempted, pending: c7Pending }));
+    conditions.push(mkCond(weakCondName, c7, c7Detail, { exempted: c7Exempted, pending: c7Pending }));
 
-    // ⑧ 竞价低开 < -5%
-    const openChg = mins.length > 0 ? chgOf(mins[0].lastPx) : null;
-    const c8 = openChg != null && openChg < -5;
+    // ⑧ 竞价低开 < -5%（竞价低开 < -2% 开启自救时，由⑪⑫在观察期内按回落容忍线判定，此处不直接卖）
+    const c8 = openChg != null && openChg < -5 && !gapArmed;
     conditions.push(mkCond('竞价低开 < -5%', c8,
-      `当日竞价开盘涨跌幅 ${openChg == null ? '--' : openChg}%（昨收 ${preclose != null ? round2(preclose) : '--'}，开盘 ${mins[0].lastPx.toFixed(2)}）${c8 ? ' < -5%，直接卖出' : '，未达 -5%'}`));
+      `当日竞价开盘涨跌幅 ${openChg == null ? '--' : openChg}%（昨收 ${preclose != null ? round2(preclose) : '--'}，开盘 ${mins[0].lastPx.toFixed(2)}）${gapArmed ? '，竞价低开 < -2% 已进入开盘自救观察期，本卖点不直接触发' : (c8 ? ' < -5%，直接卖出' : '，未达 -5%')}`));
+
+    // ⑪⑫ 竞价大幅低开（开盘较昨收 < -2%）后的「开盘自救」（2026-10-31 用户改版；仅 opts.enableOpenGapReboundSell 时启用，
+    //   调用方按持仓顺逆周期标记决定：逆周期持仓不启用、条件列表也不额外增加该项）
+    //   自救观察期 = 开盘 ~ 9:35：回落不低于开盘价且距当日最高涨幅回落 ≤ 2 个百分点时先不卖；
+    //   跌破开盘价 / 自最高涨幅回落超过 2 个百分点 → 该分钟卖出；9:35 脱离 ≤ -5% 区域 → 自救成功、当日不再因⑪⑫卖出；
+    //   9:35 仍 ≤ -5% → 自救失败、9:35 卖出。
+    if (rescueEnabled) {
+      let c11 = false;
+      let c11Detail = '未出现竞价大幅低开后的冲高回落';
+      let c12 = false;
+      let c12Detail = '未出现竞价大幅低开后的开盘自救卖点';
+      if (!gapArmed) {
+        const noArmed = `当日竞价开盘涨跌幅 ${openChg == null ? '--' : openChg}%（未低于 ${OPEN_GAP_REBOUND_PCT}%），本卖点不触发`;
+        c11Detail = noArmed;
+        c12Detail = noArmed;
+      } else {
+        const gapText = `竞价大幅低开（开盘 ${openPx.toFixed(2)}，低开 ${openChg}% < ${OPEN_GAP_REBOUND_PCT}%）`;
+        let rescuePeakChangePct = null;
+        let rescueSuccess = false;
+        for (const p of mins) {
+          if (p.minute > RESCUE_EVAL_MINUTE) break;
+          const changePct = chgOf(p.lastPx);
+          if (changePct != null && (rescuePeakChangePct == null || changePct > rescuePeakChangePct)) rescuePeakChangePct = changePct;
+          const isEvalMinute = p.minute === RESCUE_EVAL_MINUTE;
+          const brokeOpenPx = p.lastPx < openPx;
+          const overRetrace = rescuePeakChangePct != null && changePct != null && changePct < rescuePeakChangePct - RESCUE_TOLERANCE_PCT;
+          if (isEvalMinute) {
+            if (changePct != null && changePct <= -5) {
+              c12 = true;
+              c12Detail = `${gapText}后开盘自救失败：9:35 仍未脱离 -5% 区域（现价 ${p.lastPx.toFixed(2)}，涨幅 ${changePct}%），按分时价卖出`;
+            } else {
+              if (brokeOpenPx) {
+                c12 = true;
+                c12Detail = `${gapText}后开盘自救期间跌破开盘价（开盘 ${openPx.toFixed(2)} → 现价 ${p.lastPx.toFixed(2)}，涨幅 ${changePct != null ? `${changePct}%` : '--'}）即卖出`;
+              } else if (overRetrace) {
+                c11 = true;
+                c11Detail = `${gapText}后冲高回落超过 ${RESCUE_TOLERANCE_PCT} 个百分点（当日最高涨幅 ${rescuePeakChangePct}% → 现价涨幅 ${changePct}%）即卖出`;
+              }
+              rescueSuccess = true; // 9:35 脱离 -5% 区域 → 自救成功，当日剩余时间不再因⑪⑫卖出
+            }
+            break;
+          }
+          if (brokeOpenPx) {
+            c12 = true;
+            c12Detail = `${gapText}后开盘自救期间跌破开盘价（开盘 ${openPx.toFixed(2)} → 现价 ${p.lastPx.toFixed(2)}，涨幅 ${changePct != null ? `${changePct}%` : '--'}）即卖出`;
+            break;
+          }
+          if (overRetrace) {
+            c11 = true;
+            c11Detail = `${gapText}后冲高回落超过 ${RESCUE_TOLERANCE_PCT} 个百分点（当日最高涨幅 ${rescuePeakChangePct}% → 现价涨幅 ${changePct}%）即卖出`;
+            break;
+          }
+        }
+        if (!c11 && !c12 && !rescueSuccess) {
+          c12Detail = `${gapText}，自救观察期内尚未出现跌破开盘价或回落超过 ${RESCUE_TOLERANCE_PCT} 个百分点，等待 9:35 判定是否脱离 -5% 区域`;
+        }
+      }
+      conditions.push(mkCond('竞价大幅低开后冲高回落超过 2 个百分点即卖', c11, c11Detail));
+      conditions.push(mkCond('竞价大幅低开后「开盘自救」', c12, c12Detail));
+    }
 
     // ⑨ 当日收盘抗分歧指数 < 6（未收盘待确认）
     let c9 = false;
@@ -962,7 +1051,7 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
     const isSell = conditions.some(c => c.satisfied && !c.exempted);
     const reasons = isSell
       ? conditions.filter(c => c.satisfied).map(c => c.detail)
-      : ['当前未达到龙头战法卖点条件，可以继续持有'];
+      : [`当前未达到${modeName}卖点条件，可以继续持有`];
 
     return {
       success: true,
@@ -972,8 +1061,8 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
       tradeDate: dateNum,
       conditions,
       conclusion: isSell
-        ? '已触发龙头战法卖点条件，建议卖出 / 减仓。'
-        : '当前未达到龙头战法卖点条件，可以继续持有。',
+        ? `已触发${modeName}卖点条件，建议卖出 / 减仓。`
+        : `当前未达到${modeName}卖点条件，可以继续持有。`,
       mode: MODE_EXTREME_WIN,
       detail: {
         closePrice: lastPx != null ? round2(lastPx) : null,

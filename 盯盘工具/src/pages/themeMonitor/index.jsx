@@ -18,6 +18,9 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
 import { parseMoneyValue, formatDisplayTime, aggregateFundByInterval } from '../../utils/fundAggregation';
+import {
+  getAbnormalAlert, showAbnormalQuery, fetchAbnormalBasis, fetchIndexQuotes, INDEX_BENCHMARK_NAMES,
+} from '../../utils/abnormalAlert';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import StockKLineModal from '../../components/StockKLineModal';
 import StockHistoryAnalysisModal from '../../components/StockHistoryAnalysisModal';
@@ -57,85 +60,6 @@ const isStockLimitUp = (stock, quote) => {
   else if (/ST/i.test(String(stock?.name || ''))) pct = 0.05;
   const limitPrice = Math.round(prev * (1 + pct) * 100) / 100;
   return last >= limitPrice - 0.0001;
-};
-
-// A 股严重异常波动（异动）指标：连续 10 个交易日累计涨幅 +100% / 跌幅 -50%，
-// 连续 30 个交易日累计涨幅 +200% / 跌幅 -70%（以收盘价累计涨跌幅近似交易所的偏离值累计）
-const ABNORMAL_ALERT_RULES = [
-  { days: 10, up: 100, down: -50 },
-  { days: 30, up: 200, down: -70 },
-];
-const ABNORMAL_ALERT_NEAR_POINTS = 10; // 距阈值 10 个百分点以内视为「临近异动」
-
-// 结合「历史基准收盘价 + 当前实时价」计算某只个股的异动状态
-// 返回 { level: 'trigger' | 'near', days, threshold, currentPct, targetPrice, gap }，未临近时返回 null
-const getAbnormalAlert = (basis, price) => {
-  const last = Number(price);
-  if (!basis || !Number.isFinite(last) || last <= 0) return null;
-  const candidates = [];
-  ABNORMAL_ALERT_RULES.forEach(({ days, up, down }) => {
-    const base = Number(days === 10 ? basis.base10 : basis.base30);
-    if (!Number.isFinite(base) || base <= 0) return;
-    const currentPct = (last / base - 1) * 100;
-    [up, down].forEach((threshold) => {
-      const dir = threshold > 0 ? 1 : -1;
-      const gap = dir > 0 ? threshold - currentPct : currentPct - threshold;
-      const targetPrice = base * (1 + threshold / 100);
-      if (gap <= 0) candidates.push({ level: 'trigger', days, threshold, currentPct, targetPrice, gap: 0 });
-      else if (gap <= ABNORMAL_ALERT_NEAR_POINTS) {
-        candidates.push({ level: 'near', days, threshold, currentPct, targetPrice, gap });
-      }
-    });
-  });
-  if (candidates.length === 0) return null;
-  const triggered = candidates.filter((c) => c.level === 'trigger');
-  if (triggered.length > 0) return triggered.sort((a, b) => a.days - b.days)[0];
-  return candidates.sort((a, b) => a.gap - b.gap)[0];
-};
-
-// 向上异动阈值目标：按所需涨幅从近到远排序，triggered 表示已越过该阈值
-const getUpcomingAbnormalTargets = (basis, price) => {
-  const last = Number(price);
-  if (!basis || !Number.isFinite(last) || last <= 0) return [];
-  const targets = [];
-  ABNORMAL_ALERT_RULES.forEach(({ days, up }) => {
-    const base = Number(days === 10 ? basis.base10 : basis.base30);
-    if (!Number.isFinite(base) || base <= 0) return;
-    const targetPrice = base * (1 + up / 100);
-    const needPct = (targetPrice / last - 1) * 100;
-    targets.push({ days, threshold: up, targetPrice, needPct, triggered: needPct <= 0 });
-  });
-  return targets.sort((a, b) => a.needPct - b.needPct);
-};
-
-// 右键「异动查询」：列出未来的异动价与还需要的涨幅
-const showAbnormalQuery = (stock, quote, basis) => {
-  const price = Number(quote?.price);
-  const hasPrice = Number.isFinite(price) && price > 0;
-  const targets = getUpcomingAbnormalTargets(basis, hasPrice ? price : null);
-  const upcoming = targets.filter((t) => !t.triggered);
-  let content;
-  if (!hasPrice) {
-    content = <div>当前无实时行情（停牌或未开盘），暂无法计算异动价。</div>;
-  } else if (targets.length === 0) {
-    content = <div>暂无历史基准数据，无法计算异动价。</div>;
-  } else if (upcoming.length === 0) {
-    content = <div>已触发全部向上异动阈值（连续10个交易日 +100%、连续30个交易日 +200%）。</div>;
-  } else {
-    content = (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div>当前价：<b>{price.toFixed(2)}</b></div>
-        {upcoming.map((t) => (
-          <div key={`${t.days}-${t.threshold}`}>
-            未来异动价 <b>{t.targetPrice.toFixed(2)}</b>
-            （连续 {t.days} 个交易日累计涨幅达 {formatPct(t.threshold, { sign: false })}），
-            还需涨幅 <b>{formatPct(t.needPct)}</b>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  Modal.info({ title: `${stock.name} 异动查询`, content, okText: '知道了' });
 };
 
 // ==================== 情绪温度历史弹窗（点击概览"情绪"卡片打开） ====================
@@ -893,7 +817,7 @@ const BlockRankingStrip = ({ blocks, onOpenKline }) => {
 };
 
 // ==================== 题材卡片（第一列） ====================
-const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenThemeHistory, pins, onPin, onUnpin, alertBasis }) => {
+const ThemeCard = ({ theme, quotes, indexQuotes, onOpenKline, sortDir, onToggleSort, onOpenThemeHistory, pins, onPin, onUnpin, alertBasis }) => {
   const dragonCodes = useMemo(() => new Set(theme.dragons.map((d) => d.code)), [theme]);
   // 「今日 N 家」点击后仅展示当日涨停股，再次点击恢复全量
   const [limitOnly, setLimitOnly] = useState(false);
@@ -967,11 +891,14 @@ const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenTh
     const change = suspended ? null : q?.changePct;
     const upCls = change == null ? '' : Number(change) >= 0 ? 'up' : 'down';
     const badge = isDragon ? DRAGON_NAMES[idx] : isPinned ? '顶' : idx + 1;
-    const alert = suspended ? null : getAbnormalAlert(alertBasis?.[stock.marketCode], q?.price);
+    const basis = alertBasis?.[stock.marketCode];
+    const alert = suspended ? null : getAbnormalAlert(basis, q?.price, indexQuotes?.[basis?.indexCode]);
+    const indexName = basis?.indexCode ? INDEX_BENCHMARK_NAMES[basis.indexCode] || basis.indexCode : '对应指数';
     const alertTip = alert
       ? `当前价 ${Number(q.price).toFixed(2)}，异动价 ${alert.targetPrice.toFixed(2)}\n`
-        + `连续 ${alert.days} 个交易日累计${alert.threshold > 0 ? '涨幅' : '跌幅'}达 ${formatPct(alert.threshold, { sign: false })}`
-        + `（当前 ${formatPct(alert.currentPct)}）`
+        + `连续 ${alert.days} 个交易日累计偏离值达 ${formatPct(alert.threshold, { sign: false })}`
+        + `（当前 ${formatPct(alert.deviationPct)}）\n`
+        + `个股区间涨跌幅 ${formatPct(alert.stockPct)}，已扣除${indexName}区间涨跌幅 ${formatPct(alert.indexCum)}`
       : '';
     return (
       <Dropdown
@@ -987,7 +914,7 @@ const ThemeCard = ({ theme, quotes, onOpenKline, sortDir, onToggleSort, onOpenTh
           onClick: ({ key }) => {
             if (key === 'pin') onPin?.(theme.key, stock);
             if (key === 'unpin') onUnpin?.(theme.key, stock);
-            if (key === 'alertQuery') showAbnormalQuery(stock, q, alertBasis?.[stock.marketCode]);
+            if (key === 'alertQuery') showAbnormalQuery(stock, q, basis, indexQuotes?.[basis?.indexCode]);
           },
         }}
       >
@@ -1547,20 +1474,31 @@ const ThemeMonitor = () => {
   // codes 未变化时保持同一个轮询实例，避免每 10s 聚合刷新就重置 3s 定时器
   const fastQuoteCodesKey = useMemo(() => fastQuoteCodes.join(','), [fastQuoteCodes]);
 
+  // 异动阈值基准（10/30 个交易日的个股与对应指数基准点位）：每天拉取一次，临近/触发状态由实时价即时计算
+  const [alertBasis, setAlertBasis] = useState({});
+  // 基准指数实时点位（上证综指 / 深证成指 / 创业板指 / 科创50），随个股行情同频刷新
+  const [indexQuotes, setIndexQuotes] = useState({});
+
   useEffect(() => {
-    if (!fastQuoteCodesKey) return;
     let cancelled = false;
     let polling = false;
     const fetchFastQuotes = async () => {
       if (polling) return;
       polling = true;
       try {
-        const res = await axios.get(`${API_BASE}/theme_monitor_quotes`, { params: { codes: fastQuoteCodesKey } });
+        // 指数实时点位与个股轮询同频刷新：异动偏离值需要「个股涨跌幅 - 对应指数涨跌幅」
+        const [stockRes, indexData] = await Promise.all([
+          fastQuoteCodesKey
+            ? axios.get(`${API_BASE}/theme_monitor_quotes`, { params: { codes: fastQuoteCodesKey } })
+            : Promise.resolve(null),
+          fetchIndexQuotes().catch(() => null),
+        ]);
         if (cancelled) return;
-        const data = res.data || {};
+        const data = stockRes?.data || {};
         if (Object.keys(data).length > 0) {
           setQuotes((prev) => ({ ...prev, ...data }));
         }
+        if (indexData) setIndexQuotes(indexData);
       } catch (err) {
         console.error('龙头/置顶个股行情刷新失败:', err);
       } finally {
@@ -1575,8 +1513,7 @@ const ThemeMonitor = () => {
     };
   }, [fastQuoteCodesKey]);
 
-  // 异动阈值基准（10/30 个交易日前的收盘价）：每天拉取一次，临近/触发状态由实时价即时计算
-  const [alertBasis, setAlertBasis] = useState({});
+  // 异动阈值基准（10/30 个交易日的个股与对应指数基准点位）：每天拉取一次，临近/触发状态由实时价即时计算
   const alertBasisCodesKey = useMemo(() => {
     const codes = new Set();
     cardThemes.forEach((theme) => {
@@ -1588,9 +1525,9 @@ const ThemeMonitor = () => {
   useEffect(() => {
     if (!alertBasisCodesKey) return;
     let cancelled = false;
-    axios.get(`${API_BASE}/theme_monitor_alert_basis`, { params: { codes: alertBasisCodesKey } })
-      .then((res) => {
-        if (!cancelled) setAlertBasis((prev) => ({ ...prev, ...(res.data || {}) }));
+    fetchAbnormalBasis(alertBasisCodesKey)
+      .then((data) => {
+        if (!cancelled) setAlertBasis((prev) => ({ ...prev, ...data }));
       })
       .catch((err) => console.error('获取异动阈值基准失败:', err));
     return () => {
@@ -1624,6 +1561,7 @@ const ThemeMonitor = () => {
                   key={theme.key}
                   theme={theme}
                   quotes={quotes}
+                  indexQuotes={indexQuotes}
                   onOpenKline={openKline}
                   sortDir={sortDirs[theme.key] || 'desc'}
                   onToggleSort={handleToggleSort}

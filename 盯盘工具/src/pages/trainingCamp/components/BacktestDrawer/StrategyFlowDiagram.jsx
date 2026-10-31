@@ -356,6 +356,12 @@ const leaderSellData = (opts = {}) => ({
     ...(opts.noPlummet
       ? ['⑨ 上证 3 日线斜率盘中由负转正 → 立即卖出（下跌窗口结束即离场）']
       : ['⑨ 盘中 1 分钟内跳水 ≤ -3% 直接卖（豁免：上一分钟自身涨幅 > 2% 属急拉则不卖）']),
+    ...(opts.openGapRebound
+      ? [
+        '⑩ 竞价低开 < -2%（较昨收）后冲高回落即卖：自救观察期（≤9:35）内自当日分时最高涨幅回落超过 2 个百分点的那一分钟卖出（回落不足 2 个百分点且未跌破开盘价则先不卖）',
+        '⑪ 竞价低开 < -2% 后「开盘自救」：观察期（≤9:35）内跌破开盘价即在该分钟卖出；9:35 仍处于 ≤ -5% 区域（自救失败）即在 9:35 卖出；9:35 已脱离 -5% 区域（涨幅 > -5%）则自救成功、当日不再因竞价低开类规则卖出（改由其他卖点执行）；此时⑤/⑦在观察期内不再直接卖',
+      ]
+      : []),
   ],
   note: '价格类卖点按分钟级回溯成交（自 9:30 起取最先触发分钟）；卖出后当日不再追买',
 });
@@ -900,7 +906,7 @@ const specReverseLeader = () =>
       w: 350,
       items: [
         '回溯过去 20 个交易日出现过**连板 ≥ 2（二连板及以上）**的个股',
-        '剔除 ST / 创业板(30/301) / 科创板(688) / 题材黑名单（PCB·玻璃基板·光模块·液冷·通信·算力·芯片·靶材·电子气体·光刻胶·算力租赁）',
+        '剔除 ST / 创业板(30/301) / 科创板(688) / 题材黑名单（PCB·玻璃基板·光模块·液冷·通信·算力·芯片·靶材·电子气体·光刻胶·算力租赁·元器件·黄金·中报增长·次新股）',
         '∩ 20 日内滑动「连续 10 日」子窗口区间最大涨幅 **≥ 60%**（子窗口缺日K视为不达标）',
       ],
     });
@@ -1085,9 +1091,9 @@ const specExtremeWin = () => {
       title: '【顺周期腿】候选池：过去 10 个交易日出现过**连板准入**的个股',
       w: 350,
       items: [
-        '连板准入：流通市值 > 100 亿 → 两连板且含该连板日 5 日涨幅 > 40%；其余 → 连板数 ≥ 4',
-        '剔除 ST / 创业板 / 科创板 / 题材黑名单（PCB·玻璃基板·光模块·液冷·通信·算力·芯片·靶材·电子气体·光刻胶·算力租赁）',
-        '剔除：20 日滑动 10 日子窗口区间最大涨幅 ≥ 80%，或 20 日总涨幅 ≥ 100%',
+        '连板准入：流通市值 > 100 亿 → 两连板且含该连板日 5 日累计涨幅 > 50%；其余 → 连板数 ≥ 4',
+        '剔除 ST / 创业板 / 科创板 / 题材黑名单（PCB·玻璃基板·光模块·液冷·通信·算力·芯片·靶材·电子气体·光刻胶·算力租赁·元器件·黄金·中报增长·次新股）',
+        '剔除：10 日最大涨幅窗口（从第一天涨停的前一交易日收盘价起算、最多 10 个交易日）区间最大涨幅 ≥ 80%，或 20 日总涨幅 ≥ 100%',
         '剔除：连板准入后出现过单日涨幅 < -9%；剔除与自选科技股（isTech !== false）重叠',
       ],
     });
@@ -1097,7 +1103,7 @@ const specExtremeWin = () => {
     ctx.add('waitA2', 'wait', { title: '机会已被历史消耗 / 前置不满足 → 不买', w: 260 }, { x: X2, y: ctx.pos.gA2.y + 6 });
     ctx.link('gA2', 'waitA2', { label: '否', tone: 'no', sh: 's-r', th: 't-l', dashed: true });
     ctx.link('waitA2', 'start', { tone: 'loop', sh: 's-t', th: 't-r', dashed: true, animated: true });
-    ctx.add('gA3', 'gate', { title: '今日盘中逐桶「**强度分 − 差劲分 ≥ 30**」？（首次达到；多只候选取差值最大）', w: 330 });
+    ctx.add('gA3', 'gate', { title: '今日盘中逐 5min 桶「**强度分 − 差劲分 ≥ 30**」？（触发即买；多只候选取差值最大）', w: 330 });
     ctx.link('gA2', 'gA3', { label: '是', tone: 'yes' });
     ctx.add('waitA3', 'wait', { title: '逐桶继续实时判定', w: 220 }, { x: X2, y: ctx.pos.gA3.y + 6 });
     ctx.link('gA3', 'waitA3', { label: '否', tone: 'no', sh: 's-r', th: 't-l', dashed: true });
@@ -1107,9 +1113,9 @@ const specExtremeWin = () => {
     ctx.add('waitA4', 'wait', { title: '顺延差值排名下一只；均不可买则本桶不买', w: 270 }, { x: X2, y: ctx.pos.gA4.y + 6 });
     ctx.link('gA4', 'waitA4', { label: '否', tone: 'no', sh: 's-r', th: 't-l', dashed: true });
     ctx.link('waitA4', 'gA3', { tone: 'loop', sh: 's-t', th: 't-r', dashed: true, animated: true, label: '顺延' });
-    ctx.add('buyA', 'buy', { title: '【顺周期腿】按当桶分时价买入（半仓 ×0.5）', w: 310 });
+    ctx.add('buyA', 'buy', { title: '【顺周期腿】按该时间桶分时价买入（半仓 ×0.5）', w: 310 });
     ctx.link('gA4', 'buyA', { label: '通过', tone: 'yes' });
-    ctx.add('sellA', 'sell', leaderSellData({ instant: true, title: '【顺周期腿】卖点（9 条 · 任一触发即卖）' }), {});
+    ctx.add('sellA', 'sell', leaderSellData({ instant: true, openGapRebound: true, title: '【顺周期腿】卖点（11 条 · 任一触发即卖）' }), {});
     ctx.link('buyA', 'sellA', { label: '持仓期间', tone: 'sell' });
   });
   const legB = build((ctx) => {
@@ -1137,16 +1143,16 @@ const specExtremeWin = () => {
       ],
     }, { y: legA.pos.gA2.y });
     ctx.link('poolB', 'hitsB');
-    ctx.add('gB2', 'gate', { title: '该股**累计第 2 次达标** 且 此刻未涨停？（已涨停 → 本次不买、等后续达标时点）', w: 320 }, { y: legA.pos.gA3.y });
+    ctx.add('gB2', 'gate', { title: '该股**累计第 2 次达标** 且 未涨停？→ 当日**即按该时间桶分时价买入**', w: 320 }, { y: legA.pos.gA3.y });
     ctx.link('hitsB', 'gB2');
     ctx.add('waitB2', 'wait', { title: '等待后续达标（14:30 后命中登记照常累计、只是不买）', w: 280 }, { x: X2, y: legA.pos.gA3.y + 180 });
     ctx.link('gB2', 'waitB2', { label: '否', tone: 'no', sh: 's-r', th: 't-l', dashed: true });
     ctx.link('waitB2', 'hitsB', { tone: 'loop', sh: 's-t', th: 't-r', dashed: true, animated: true, label: '继续累计' });
-    ctx.add('buyB', 'buy', { title: '【逆周期腿】第 2 次达标的盘中分时买入（半仓 ×0.5）', w: 320 }, { y: legA.pos.gA4.y });
+    ctx.add('buyB', 'buy', { title: '【逆周期腿】按该时间桶分时价买入（半仓 ×0.5）', w: 320 }, { y: legA.pos.gA4.y });
     ctx.link('gB2', 'buyB', { label: '是', tone: 'yes' });
     ctx.add('sellB', 'sell', {
       kind: 'sell',
-      title: '【逆周期腿】卖点（8 条 + 斜率转正 · 任一触发即卖）',
+      title: '【逆周期腿】卖点（8 条 + 斜率转正 · 任一触发即卖；⑪仅顺周期腿启用）',
       w: 350,
       items: [
         '① 跌破成本线 -5% 止损（须连续维持 ≥ 5 分钟）',

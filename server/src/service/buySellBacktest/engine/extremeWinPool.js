@@ -20,6 +20,7 @@ const {
   loadTlinePoints,
   maxMinuteDrop, closeDropFromHigh, diffDFrom,
   buildDiffDetail, strengthAtMinute,
+  limitUpThresholdOf,
 } = require('./extremeWinScores');
 
 // ---- 选股与死叉窗口常量（与回测引擎完全一致）----
@@ -31,12 +32,13 @@ const DELTA_MIN = 30;              // 买点门槛：今日「强度分 − 差�
 const CLOSE_MINUTE = 1500;         // 日线 delta 序列的收盘口径分钟（与「个股历史分析」一致）
 
 // 2026-10-23 用户改：连板基础名单按流通市值分档（2026-10-24 用户改：大市值口径由「一次涨停」收紧为「两连板」）
-//   流通市值 > 100 亿元：出现过两连板（连板数 ≥ 2），且「含该连板日在内」的连续 5 个交易日累计涨幅 > 40% 即可入选
+//   流通市值 > 100 亿元：出现过两连板（连板数 ≥ 2），且「含该连板日在内」的连续 5 个交易日累计涨幅 > 50% 即可入选
+//   （2026-10-31 用户要求：门槛由 40% 提高到 50%，线上实盘与回测同步）
 //   流通市值 ≤ 100 亿元（或市值数据缺失）：仍需四连板及以上
 const LARGE_CAP_FLOAT_MV_YI = 100;      // 流通市值门槛（亿元）：严格大于该值适用「两连板」口径
 const LARGE_CAP_MIN_BOARD_COUNT = 2;    // 大市值个股的连板基础门槛：出现过两连板（连板数 ≥ 2）即可
 const CAP_BOARD_WINDOW_DAYS = 5;        // 大市值个股的涨幅判定窗口：连续 5 个交易日（含连板日）
-const CAP_BOARD_MIN_GAIN_PCT = 40;      // 该 5 日窗口累计涨幅须 > 40%
+const CAP_BOARD_MIN_GAIN_PCT = 50;      // 该 5 日窗口累计涨幅须 > 50%
 
 // 2026-10-17 用户要求：本策略候选池一律剔除创业板（30/301）与科创板（688）
 const isChiNextOrStar = (code) => /^(30|688)/.test(String(code).replace(/^(sh|sz|bj)/i, ''));
@@ -103,13 +105,91 @@ const maxSlidingWindowRangePct = (code, winDates, slideDays) => {
 //   返回 { max, startIdx, endIdx, startDate, endDate, lowIdx, peakIdx, peakDate, len }；任一相关交易日收盘价缺失时返回 null（视为不达标）
 //   注：peakIdx = 窗内最高收盘日（峰值日）、lowIdx = 窗内最低收盘日；后续「峰值距今间隔 ≥ 5 交易日」
 //       「峰值后区间最大波动 < 15%」等条件均以 peakIdx 为基准（下跌型窗口下 peakIdx 早于 endIdx，故不可用 endIdx）
-const maxPreciseGainWindowInfo = (code, winDates, maxLen) => {
+//   2026-10-31 用户要求（opts.fromFirstLimitUp，默认 true；线上实盘与回测同口径，传 false 可回退旧的最精准子窗口口径）：
+//      窗口起始日固定为「第一天涨停的前一交易日」，以该日收盘价为涨幅基准（不再枚举任意子窗口取最大涨幅）：
+//      ① 以候选记录所属「本轮连板」的第一天涨停为锚点（由连板快照日向前回溯连续涨停得到；取不到时退化为窗口内第一个涨停日），
+//         取其前一交易日为基准日；若该涨停日恰为窗口首日，基准日取窗口外的前一交易日（opts.prevDate）；
+//      ② 窗口长度仍最多 maxLen 个交易日（含基准日），峰值日 = 该区间内最高收盘日，
+//         区间最大涨幅 = (峰值日收盘 − 基准日收盘) ÷ 基准日收盘 × 100（基准日即窗内最低收盘日 lowIdx）。
+const findFirstLimitUpIdx = (code, winDates) => {
+  const thr = limitUpThresholdOf(code);
+  for (let i = 0; i < winDates.length; i += 1) {
+    const chg = stockDailyChange(code, winDates[i]);
+    if (chg != null && Number.isFinite(chg) && chg >= thr) return i;
+  }
+  return -1;
+};
+
+// 本轮连板「第一天涨停」在 winDates 的下标：从连板快照日（该轮最后一天）向前回溯连续涨停日；
+// 快照日不在窗口内或当日不是涨停日时返回 -1（调用方退化为「窗口内第一个涨停日」）
+const findRunStartIdx = (code, rec, winDates) => {
+  if (!rec || rec.date == null) return -1;
+  const idx = winDates.findIndex(d => Number(d) === Number(rec.date));
+  if (idx < 0) return -1;
+  const thr = limitUpThresholdOf(code);
+  let start = -1;
+  for (let k = idx; k >= 0; k -= 1) {
+    const chg = stockDailyChange(code, winDates[k]);
+    if (chg != null && Number.isFinite(chg) && chg >= thr) start = k;
+    else break;
+  }
+  return start;
+};
+
+const firstLimitUpWindowInfo = (code, winDates, closes, maxLen, opts) => {
+  const n = winDates.length;
+  // 优先用调用方给出的「本轮连板第一天涨停」下标（由连板快照日向前回溯连续涨停得到）；
+  // 未给出时退化为窗口内第一个涨停日
+  const hinted = Number(opts.firstLimitIdx);
+  const firstIdx = Number.isFinite(hinted) && hinted >= 0
+    ? Math.min(hinted, n - 1)
+    : findFirstLimitUpIdx(code, winDates);
+  // 窗口内找不到涨停日（多日数据缺失等）时视为不达标，避免用错误基准日给出涨幅
+  if (firstIdx < 0) return null;
+  const baseIdx = firstIdx - 1;
+  let baseline = baseIdx >= 0 ? closes[baseIdx] : null;
+  if (baseIdx < 0) {
+    const prev = Number(opts.prevDate);
+    baseline = Number.isFinite(prev) ? getStockCloseOnOrBefore(code, prev) : null;
+    if (baseline == null || !Number.isFinite(baseline) || baseline <= 0) return null;
+  }
+  // 峰值检索区间：基准日在窗口内时为 [基准日, 基准日 + maxLen - 1]（含基准日共 maxLen 个点）；
+  // 基准日在窗口外时为 [首日, maxLen - 2]（窗口外基准日 + 这些点合计 maxLen 个点）
+  const scanFrom = baseIdx >= 0 ? firstIdx : 0;
+  const scanTo = baseIdx >= 0 ? Math.min(n - 1, baseIdx + maxLen - 1) : Math.min(n - 1, maxLen - 2);
+  let mx = -Infinity;
+  let peakIdx = -1;
+  for (let k = scanFrom; k <= scanTo; k += 1) {
+    if (closes[k] > mx) { mx = closes[k]; peakIdx = k; }
+  }
+  if (peakIdx < 0) return null;
+  const pct = (mx - baseline) / baseline * 100;
+  const startDate = baseIdx >= 0 ? winDates[baseIdx] : opts.prevDate;
+  return {
+    max: pct,
+    startIdx: baseIdx,
+    endIdx: peakIdx,
+    startDate,
+    endDate: winDates[peakIdx],
+    lowIdx: baseIdx,
+    peakIdx,
+    peakDate: winDates[peakIdx],
+    len: (baseIdx >= 0 ? peakIdx - baseIdx : peakIdx + 1) + 1,
+    firstLimitDate: winDates[firstIdx],
+    fixedStart: true,
+  };
+};
+
+const maxPreciseGainWindowInfo = (code, winDates, maxLen, opts) => {
   if (!Array.isArray(winDates) || winDates.length < 1) return null;
   const closes = [];
   for (const d of winDates) {
     const c = getStockCloseOnOrBefore(code, Number(d));
     if (c == null || !Number.isFinite(c) || c <= 0) return null;
     closes.push(c);
+  }
+  if (opts && opts.fromFirstLimitUp === true) {
+    return firstLimitUpWindowInfo(code, winDates, closes, maxLen, opts);
   }
   const n = winDates.length;
   const limit = Math.min(maxLen, n);
@@ -293,9 +373,9 @@ const computeCrossInfo = async (code, crossDates, peakDate, peakWindow) => {
 };
 
 // 大市值（流通市值 > 100 亿元）个股的连板准入判定（2026-10-24 用户改：两连板口径）：
-//   出现过两连板（该条快照记录的连板数 ≥ 2）且「含该连板日在内」的连续 5 个交易日累计涨幅 > 40%：
+//   出现过两连板（该条快照记录的连板数 ≥ 2）且「含该连板日在内」的连续 5 个交易日累计涨幅 > 50%（2026-10-31 由 40% 提高）：
 //   连板命中日为 hitDate（快照日 = 连板当日）；枚举所有包含该交易日的 5 日窗口（最多 5 个），
-//   窗口累计涨幅按复利口径（各交易日涨幅复利相乘，(∏(1+r)−1)×100，与「N 日涨幅」同口径），任一窗口 > 40% 即通过；日K缺失视为不通过
+//   窗口累计涨幅按复利口径（各交易日涨幅复利相乘，(∏(1+r)−1)×100，与「N 日涨幅」同口径），任一窗口 > 50% 即通过；日K缺失视为不通过
 const windowCompoundGain = (code, dates) => {
   let acc = 1;
   for (const d of dates) {
@@ -306,14 +386,16 @@ const windowCompoundGain = (code, dates) => {
   return parseFloat(((acc - 1) * 100).toFixed(4));
 };
 
-const largeCapBoardPass = (code, hitDate, winDates) => {
+//   门槛可覆盖（minGainPct）：默认 CAP_BOARD_MIN_GAIN_PCT（50%，线上实盘与回测同口径）
+const largeCapBoardPass = (code, hitDate, winDates, minGainPct) => {
   if (!Array.isArray(winDates) || winDates.length < CAP_BOARD_WINDOW_DAYS) return false;
   const idx = winDates.findIndex(d => Number(d) === Number(hitDate));
   if (idx < 0) return false;   // 需在窗口内
+  const thr = Number.isFinite(Number(minGainPct)) ? Number(minGainPct) : CAP_BOARD_MIN_GAIN_PCT;
   for (let start = idx - (CAP_BOARD_WINDOW_DAYS - 1); start <= idx; start += 1) {
     if (start < 0 || start + CAP_BOARD_WINDOW_DAYS > winDates.length) continue;
     const gain = windowCompoundGain(code, winDates.slice(start, start + CAP_BOARD_WINDOW_DAYS));
-    if (gain != null && Number.isFinite(gain) && gain > CAP_BOARD_MIN_GAIN_PCT) return true;
+    if (gain != null && Number.isFinite(gain) && gain > thr) return true;
   }
   return false;
 };
@@ -322,8 +404,8 @@ const largeCapBoardPass = (code, hitDate, winDates) => {
 //   两条路径各自统计连板基础名单并取并集（2026-10-18 用户要求）：
 //     旧路径基础：过去 10 个交易日（不含当日）内满足下面的连板准入；
 //     新路径基础：过去 20 个交易日（不含当日）内满足下面的连板准入（单独统计，范围更宽）
-//   连板准入（2026-10-24 用户改，按流通市值分档）：
-//     流通市值 > 100 亿元：出现过两连板（连板数 ≥ 2），且含该连板日在内的连续 5 个交易日累计涨幅 > 40% 即可；
+//   连板准入（2026-10-24 用户改，按流通市值分档；2026-10-31 用户改门槛 40% → 50%）：
+//     流通市值 > 100 亿元：出现过两连板（连板数 ≥ 2），且含该连板日在内的连续 5 个交易日累计涨幅 > 50% 即可；
 //     流通市值 ≤ 100 亿元（含市值数据缺失）：仍需四连板及以上
 //   两份基础名单均先剔除 ST 等黑名单 / 创业板(30/301) / 科创板(688) / 题材黑名单
 //   → 动量过滤（满足其一即入选）：
@@ -334,15 +416,34 @@ const largeCapBoardPass = (code, hitDate, winDates) => {
 //               且过去 20 个交易日总涨幅 < 100%
 //   → 剔除与全量自选股科技股（isTech !== false）重叠者
 // 返回 { stocks, poolFilterText, winDates }
-const buildExtremeWinPool = async (dateStr) => {
+// opts.fromFirstLimitUp（默认 true；2026-10-31 用户要求线上实盘与回测同口径）：10 日最大涨幅窗口改为「从第一天涨停的前一交易日收盘价起算」，
+//   传 false 时回退原「最精准子窗口」口径（其它策略可按需显式关闭）
+const buildExtremeWinPool = async (dateStr, opts = {}) => {
   let themeFilterText = '';
+  const fromFirstLimitUp = opts.fromFirstLimitUp !== false;
+  // 大市值「两连板 + 含连板日连续 5 日累计涨幅」门槛：默认 50%（线上实盘与回测同口径）
+  const capBoardMinGain = Number.isFinite(Number(opts.capBoardMinGainPct)) ? Number(opts.capBoardMinGainPct) : CAP_BOARD_MIN_GAIN_PCT;
 
   // 过去 RANGE_WINDOW_DAYS 个交易日（不含当日）日期序列：动量过滤与大市值「涨停后 5 日涨幅」判定共用
+  //   新口径下额外多取 1 天，作为「首个涨停日恰为窗口首日」时的窗口外基准日
   let winDates = [];
-  try { winDates = await getPastTradingDates(dateStr, RANGE_WINDOW_DAYS); } catch (e) { winDates = []; }
+  let prevDateOfWindow = null;
+  try {
+    if (fromFirstLimitUp) {
+      const full = await getPastTradingDates(dateStr, RANGE_WINDOW_DAYS + 1);
+      if (Array.isArray(full) && full.length > RANGE_WINDOW_DAYS) {
+        prevDateOfWindow = full[0];
+        winDates = full.slice(1);
+      } else {
+        winDates = full || [];
+      }
+    } else {
+      winDates = await getPastTradingDates(dateStr, RANGE_WINDOW_DAYS);
+    }
+  } catch (e) { winDates = []; }
 
   // 两条路径的连板基础名单分别统计（不合并：保留每次出现的快照日与当日流通市值，
-  //   以便大市值个股按「两连板 + 5 日涨幅 > 40%」逐次出现判定）
+  //   以便大市值个股按「两连板 + 5 日累计涨幅 > 50%」逐次出现判定）
   let occOld = { stocks: [] };
   let occNew = { stocks: [] };
   try {
@@ -382,7 +483,7 @@ const buildExtremeWinPool = async (dateStr) => {
   const boardPass = (s) => {
     if (!s) return false;
     const lb = Number(s.lianbanCount) || 0;
-    if (isLargeCap(s)) return lb >= LARGE_CAP_MIN_BOARD_COUNT && largeCapBoardPass(s.code, s.date, winDates);
+    if (isLargeCap(s)) return lb >= LARGE_CAP_MIN_BOARD_COUNT && largeCapBoardPass(s.code, s.date, winDates, capBoardMinGain);
     return lb >= MIN_BOARD_COUNT;
   };
   // 每条路径内按 code 去重（同 code 取连板数更高、命中日更晚的达标记录）
@@ -451,7 +552,13 @@ const buildExtremeWinPool = async (dateStr) => {
       let newHit = 0;
       for (const [code, s] of byCode) {
         // 最精准窗口（最多 10 日）信息每只只算一次：区间最大涨幅 + 峰值日（旧/新两路径与后续死叉口径共用）
-        const info = maxPreciseGainWindowInfo(code, winDates, RANGE_SLIDE_DAYS);
+        // 2026-10-31：极致胜率回测改为「从第一天涨停的前一交易日收盘价起算」，其余场景仍按原最精准子窗口口径
+        const info = maxPreciseGainWindowInfo(
+          code, winDates, RANGE_SLIDE_DAYS,
+          fromFirstLimitUp
+            ? { fromFirstLimitUp: true, prevDate: prevDateOfWindow, firstLimitIdx: findRunStartIdx(code, s, winDates) }
+            : undefined,
+        );
         const okOld = oldCodes.has(code) && oldPass(code, s, info);
         const okNew = newCodes.has(code) && newPass(code, info);
         if (okOld) oldHit += 1;
@@ -460,7 +567,11 @@ const buildExtremeWinPool = async (dateStr) => {
         // 2026-10-24 用户要求：同时挂上峰值窗口起止日，供死叉前置做「死叉 + 次日未创新高 → 峰值锁死」判定
         if (okOld || okNew) candidates.push(info ? { ...s, peakDate: info.peakDate, windowStart: info.startDate, windowEnd: info.endDate } : s);
       }
-      poolFilterText = `；连板准入（2026-10-24 用户改）：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者「出现过两连板且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${CAP_BOARD_MIN_GAIN_PCT}%」，流通市值 ≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元（含市值缺失）者「四连板及以上」；旧路径选股：过去 ${LOOKBACK_DAYS} 个交易日（不含当日）内达标 ${baseOld.length} 只，满足「最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 < ${MAX_WINDOW_RANGE_PCT}%」且「连板后无单日跌幅 < ${POST_LIANBAN_DROP_PCT}%」且「过去 ${RANGE_WINDOW_DAYS} 个交易日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%」命中 ${oldHit} 只；新路径选股（2026-10-18 用户新增，与旧路径取并集）：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日（不含当日）内达标 ${baseNew.length} 只，满足「最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}%（2026-10-22 用户新增，要求 10 日滑动窗口最大涨幅峰值 > 70%）且 < ${NEW_MAX_WINDOW_RANGE_PCT}%」且「该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日（含峰值日本身，2026-10-21 用户改）至买点前之间全部交易日区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%、该窗口内收盘跌幅 < ${POST_LIANBAN_DROP_PCT}% 的交易日至多 1 次（≥ 2 次剔除）」且「过去 ${RANGE_WINDOW_DAYS} 个交易日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%」新增命中 ${newHit} 只；两路径去重后共 ${candidates.length} 只`;
+      // 窗口口径文案：新版从「第一天涨停的前一交易日收盘价」起算（2026-10-31 用户要求，线上实盘与回测同口径）
+      const winText = fromFirstLimitUp
+        ? `${RANGE_SLIDE_DAYS} 日最大涨幅窗口（从第一天涨停的前一交易日收盘价起算、最多 ${RANGE_SLIDE_DAYS} 个交易日，涨幅 = (窗内最高收盘价 − 涨停前一交易日收盘价) ÷ 涨停前一交易日收盘价`
+        : `最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价`;
+      poolFilterText = `；连板准入（2026-10-24 用户改）：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者「出现过两连板且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${capBoardMinGain}%」，流通市值 ≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元（含市值缺失）者「四连板及以上」；旧路径选股：过去 ${LOOKBACK_DAYS} 个交易日（不含当日）内达标 ${baseOld.length} 只，满足「${winText} < ${MAX_WINDOW_RANGE_PCT}%」且「连板后无单日跌幅 < ${POST_LIANBAN_DROP_PCT}%」且「过去 ${RANGE_WINDOW_DAYS} 个交易日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%」命中 ${oldHit} 只；新路径选股（2026-10-18 用户新增，与旧路径取并集）：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日（不含当日）内达标 ${baseNew.length} 只，满足「${winText} > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < ${NEW_MAX_WINDOW_RANGE_PCT}%」且「该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日（含峰值日本身，2026-10-21 用户改）至买点前之间全部交易日区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%、该窗口内收盘跌幅 < ${POST_LIANBAN_DROP_PCT}% 的交易日至多 1 次（≥ 2 次剔除）」且「过去 ${RANGE_WINDOW_DAYS} 个交易日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%」新增命中 ${newHit} 只；两路径去重后共 ${candidates.length} 只`;
     } else {
       poolFilterText = `；过去 ${RANGE_WINDOW_DAYS} 个交易日日K数据不足，本日无候选`;
     }

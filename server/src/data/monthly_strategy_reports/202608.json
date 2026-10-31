@@ -5,8 +5,8 @@
   "endDate": "20260831",
   "targetEndDate": "20260831",
   "isFinal": true,
-  "generatedAt": "2026/10/30 19:46:16",
-  "strategyCount": 61,
+  "generatedAt": "2026/10/30 23:29:53",
+  "strategyCount": 62,
   "analysis": {
     "key": "202608",
     "label": "2026-08",
@@ -110,7 +110,7 @@
         "id": "highest_3d_gain_volume_share",
         "name": "3日涨幅最大-成交量占比",
         "score": 33.8,
-        "rank": 59,
+        "rank": 60,
         "delta": 28.2,
         "metrics": {
           "overallReturn": 12.32,
@@ -125,7 +125,7 @@
         "id": "highest_4d_gain_volume_share",
         "name": "4日涨幅最大-成交量占比",
         "score": 38.3,
-        "rank": 54,
+        "rank": 55,
         "delta": 21.4,
         "metrics": {
           "overallReturn": 0.21,
@@ -155,7 +155,7 @@
         "id": "highest_2d_gain_volume_share",
         "name": "2日涨幅最大-成交量占比",
         "score": 19.7,
-        "rank": 61,
+        "rank": 62,
         "delta": 6.6,
         "metrics": {
           "overallReturn": 2.92,
@@ -172,7 +172,7 @@
         "id": "highest_10d_gain",
         "name": "10日涨幅最大",
         "score": 40.8,
-        "rank": 50,
+        "rank": 51,
         "delta": -46.9,
         "metrics": {
           "overallReturn": 6.49,
@@ -202,7 +202,7 @@
         "id": "highest_2d_gain_emoquick_pulse",
         "name": "脉冲最强-2日涨幅最大-快进快出",
         "score": 40.6,
-        "rank": 51,
+        "rank": 52,
         "delta": -39.6,
         "metrics": {
           "overallReturn": 17.37,
@@ -217,7 +217,7 @@
         "id": "highest_3d_gain_emoquick_pulse",
         "name": "脉冲最强-3日涨幅最大-快进快出",
         "score": 40.6,
-        "rank": 52,
+        "rank": 53,
         "delta": -39.6,
         "metrics": {
           "overallReturn": 17.37,
@@ -232,7 +232,7 @@
         "id": "highest_4d_gain_emoquick_pulse",
         "name": "脉冲最强-4日涨幅最大-快进快出",
         "score": 40.6,
-        "rank": 53,
+        "rank": 54,
         "delta": -39.6,
         "metrics": {
           "overallReturn": 17.37,
@@ -1031,10 +1031,26 @@
       }
     },
     {
+      "id": "emotion_burst_drift_leader",
+      "name": "连板题材-情绪瞬爆-惯性漂移-龙头",
+      "score": 41.9,
+      "rank": 50,
+      "ret": -0.46,
+      "tradeCount": 4,
+      "metrics": {
+        "overallReturn": -0.46,
+        "maxDrawdown": 2.54,
+        "avgDrawdown": 1.55,
+        "winRate": 25,
+        "avgHoldingDays": 1.3,
+        "profitLossRatio": 2.79
+      }
+    },
+    {
       "id": "highest_10d_gain",
       "name": "10日涨幅最大",
       "score": 40.8,
-      "rank": 50,
+      "rank": 51,
       "ret": 6.49,
       "tradeCount": 4,
       "metrics": {
@@ -1050,7 +1066,7 @@
       "id": "highest_2d_gain_emoquick_pulse",
       "name": "脉冲最强-2日涨幅最大-快进快出",
       "score": 40.6,
-      "rank": 51,
+      "rank": 52,
       "ret": 17.37,
       "tradeCount": 2,
       "metrics": {
@@ -1066,7 +1082,7 @@
       "id": "highest_3d_gain_emoquick_pulse",
       "name": "脉冲最强-3日涨幅最大-快进快出",
       "score": 40.6,
-      "rank": 52,
+      "rank": 53,
       "ret": 17.37,
       "tradeCount": 2,
       "metrics": {
@@ -1082,7 +1098,7 @@
       "id": "highest_4d_gain_emoquick_pulse",
       "name": "脉冲最强-4日涨幅最大-快进快出",
       "score": 40.6,
-      "rank": 53,
+      "rank": 54,
       "ret": 17.37,
       "tradeCount": 2,
       "metrics": {
@@ -1098,7 +1114,7 @@
       "id": "highest_4d_gain_volume_share",
       "name": "4日涨幅最大-成交量占比",
       "score": 38.3,
-      "rank": 54,
+      "rank": 55,
       "ret": 0.21,
       "tradeCount": 6,
       "metrics": {
@@ -1114,7 +1130,7 @@
       "id": "highest_3d_gain_emoquick_emo10",
       "name": "10×1 科技情绪-快进快出",
       "score": 36.8,
-      "rank": 55,
+      "rank": 56,
       "ret": 27.9,
       "tradeCount": 5,
       "metrics": {
@@ -1130,7 +1146,7 @@
       "id": "hot_money_volume_share_2d",
       "name": "情绪游资-成交量占比-2日涨幅最大",
       "score": 35.6,
-      "rank": 56,
+      "rank": 57,
       "ret": -1.39,
       "tradeCount": 6,
       "metrics": {
@@ -1146,7 +1162,7 @@
       "id": "hot_money_ice_4d_gain",
       "name": "顺周期情绪游资-前4日涨幅最大",
       "score": 34.9,
-      "rank": 57,
+      "rank": 58,
       "ret": -3.38,
       "tradeCount": 4,
       "metrics": {
@@ -1162,7 +1178,7 @@
       "id": "hot_money_ice_10d_gain",
       "name": "顺周期情绪游资-前10日涨幅最大",
       "score": 33.9,
-      "rank": 58,
+      "rank": 59,
       "ret": -5.37,
       "tradeCount": 3,
       "metrics": {
@@ -1178,7 +1194,7 @@
       "id": "highest_3d_gain_volume_share",
       "name": "3日涨幅最大-成交量占比",
       "score": 33.8,
-      "rank": 59,
+      "rank": 60,
       "ret": 12.32,
       "tradeCount": 4,
       "metrics": {
@@ -1194,7 +1210,7 @@
       "id": "hot_money_2board_attack",
       "name": "情绪游资-2板打板",
       "score": 31.2,
-      "rank": 60,
+      "rank": 61,
       "ret": -3.4,
       "tradeCount": 5,
       "metrics": {
@@ -1210,7 +1226,7 @@
       "id": "highest_2d_gain_volume_share",
       "name": "2日涨幅最大-成交量占比",
       "score": 19.7,
-      "rank": 61,
+      "rank": 62,
       "ret": 2.92,
       "tradeCount": 5,
       "metrics": {

@@ -6,6 +6,8 @@ const { runNBoardBacktest } = require('./nBoardBacktest');
 const { runVolumeShareBacktest } = require('./volumeShareBacktest');
 const { runGainVolumeShareBacktest } = require('./gainVolumeShareBacktest');
 const { runFusedEmoWinBacktest } = require('./fusedEmoWinBacktest');
+const { runEmotionBurstDriftBacktest } = require('./emotionBurstDriftBacktest');
+const { runEmotionBurstFollowBacktest } = require('./emotionBurstFollowBacktest');
 const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSimContext } = require('../deps');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -60,6 +62,16 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   // 空仓时谁先触发买谁、同一时间桶内快进快出优先；见 engine/fusedEmoWinBacktest.js）
   if (STRATEGIES[strategyId]?.fusedEmoWinMode === true) {
     return runFusedEmoWinBacktest(startDate, endDate, strategyId, onProgress);
+  }
+  // 连板题材-情绪瞬爆-惯性漂移-龙头走独立引擎（大盘资金 5min 净流入 ≥ 20 亿且延时 15min 持续流入后，
+  // 近 5 日涨停题材中按 20min 平均涨幅选板块、突破窗口最大值确认后买该题材主板龙头；卖点沿用极致胜率顺周期腿）
+  if (STRATEGIES[strategyId]?.emotionBurstDriftMode === true) {
+    return runEmotionBurstDriftBacktest(startDate, endDate, strategyId, onProgress);
+  }
+  // 连板题材-情绪瞬爆-惯性漂移-补涨走独立引擎（记录龙头买点为触发，其后 3 个交易日内在触发日该题材爆发的
+  // 首板股中，买首个分时涨幅达 +9% 者；卖点同龙头并新增「收盘未涨停即卖」）
+  if (STRATEGIES[strategyId]?.emotionBurstFollowMode === true) {
+    return runEmotionBurstFollowBacktest(startDate, endDate, strategyId, onProgress);
   }
   const strategy = STRATEGIES[strategyId];
   // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：快进快出半仓（2026-10-13 用户新增）——

@@ -19,7 +19,11 @@ export const STRATEGY_MODE_OPTIONS = [
 const STORAGE_KEY = 'ob_strategy_mode';
 const EVENT_NAME = 'strategy-mode-change';
 
-const normalize = (value) => (value === MODE_EXTREME_WIN ? MODE_EXTREME_WIN : value === MODE_ATTACK_DEFENSE ? MODE_ATTACK_DEFENSE : MODE_TECH_ATTACK);
+const normalize = (value) => {
+  if (value === MODE_EXTREME_WIN) return MODE_EXTREME_WIN;
+  if (value === MODE_ATTACK_DEFENSE) return MODE_ATTACK_DEFENSE;
+  return MODE_TECH_ATTACK;
+};
 
 const readStored = () => {
   try {

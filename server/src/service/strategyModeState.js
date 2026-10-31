@@ -11,7 +11,11 @@ const { MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } = require('./hotMoneyExtremeWin'
 const MODE_TECH_ATTACK = 'tech_attack';
 const statePath = path.resolve(__dirname, '../data/strategy_mode.json');
 
-const normalize = (value) => (value === MODE_EXTREME_WIN ? MODE_EXTREME_WIN : value === MODE_ATTACK_DEFENSE ? MODE_ATTACK_DEFENSE : MODE_TECH_ATTACK);
+const normalize = (value) => {
+  if (value === MODE_EXTREME_WIN) return MODE_EXTREME_WIN;
+  if (value === MODE_ATTACK_DEFENSE) return MODE_ATTACK_DEFENSE;
+  return MODE_TECH_ATTACK;
+};
 
 let current = (() => {
   try {

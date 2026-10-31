@@ -2,7 +2,8 @@
 //   后端每 10s 集中计算一次诊断，经 WebSocket 推送：
 //     { type:'buy_point' | 'sell_point', mode, bucket, ts, data, open }
 //     - data = 完整诊断结果（供卡片/抽屉实时展示）
-//     - open = true 表示「命中且进入新的 5 分钟桶」，前端据此打开抽屉/弹窗（飞书由后端统一发送）
+//     - open = true 表示「命中且需要前端弹出卖点/买点提示」，前端据此打开抽屉/弹窗（飞书由后端统一发送）
+//       （卖点：情绪游资-极致胜率模式下命中即推送；其余模式为「命中且进入新的 5 分钟桶」）
 //   多个页面/组件共享同一连接；断线指数退避重连，页面重新可见时主动重连。
 import axios from 'axios';
 import { local_ip } from '../constant';

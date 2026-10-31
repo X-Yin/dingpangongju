@@ -85,6 +85,9 @@ const readStockPositionsFile = () => {
 const MAX_POSITIONS_PER_CODE = 2;
 // 仓位可选项（百分比）
 const POSITION_WEIGHT_OPTIONS = [25, 50, 75, 100];
+// 顺逆周期标记（仅「情绪游资-极致胜率」/「攻防兼备」模式下前端展示、后端卖点使用）：
+//   pro = 顺周期；reverse = 逆周期；未标记（缺省）按顺周期处理
+const POSITION_CYCLE_OPTIONS = ['pro', 'reverse'];
 
 // 读取资金流向全部数据
 const readFundFlowData = () => readJsonFile(stock_position_fund_flow_path, {});
@@ -749,6 +752,27 @@ const updateStockPositionWeight = (id, weight) => {
     }
 };
 
+// 更新某笔持仓的顺逆周期标记（pro 顺周期 / reverse 逆周期；传 null 或空串清除标记）
+const updateStockPositionCycle = (id, cycle) => {
+    try {
+        const stock_positions = readStockPositionsFile();
+        const target = stock_positions.find((item) => item.id === id);
+        if (!target) return { success: false, message: '未找到该持仓' };
+        if (cycle == null || cycle === '') {
+            delete target.cycle;
+        } else if (!POSITION_CYCLE_OPTIONS.includes(cycle)) {
+            return { success: false, message: '标记只能是 pro（顺周期）或 reverse（逆周期）' };
+        } else {
+            target.cycle = cycle;
+        }
+        writeJsonFile(stock_position_path, stock_positions);
+        return { success: true };
+    } catch (error) {
+        console.error('更新持仓顺逆周期标记失败:', error);
+        return { success: false, message: '更新失败' };
+    }
+};
+
 const getStockPositionMainFund = async () => {
     const stock_positions = readStockPositionsFile();
     const result = [];
@@ -1024,6 +1048,7 @@ module.exports = {
     onPositionChange,
     updateStockPositionCost,
     updateStockPositionWeight,
+    updateStockPositionCycle,
     getStockPositionMainFund,
     getWatchlistMainFund,
     getStockPositionAnalysisData,

@@ -17,12 +17,10 @@ const {
   getIceMa3SlopeIntraday,
   fmtKeyBlockSlope,
   ICE_SIGNAL_INDEX_CODE,
-  ensureIndexMa3SlopeSeries,
   precomputeTurnMap,
 } = require('./indexGate');
 const { scanLeaderPriceSell } = require('./leaderSellMinute');
 const { EXCLUDED_THEMES } = require('../constants');
-const { fmtTime } = require('../diagnose/buyPoint');
 const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats');
 // 差劲分 / 强度分的口径与打分函数（与「个股历史分析」接口共用同一份实现）
 const {
@@ -69,7 +67,7 @@ const {
 //   —— 以下为顺周期腿（极致胜率原逻辑）——
 //   选股 = 两条路径取并集（同一只股票满足其一即入选，2026-10-18 用户新增第二条；均一律剔除创业板 30/301 与科创板 688）：
 //          旧路径：过去 10 个交易日（不含当日）内出现过连板准入（2026-10-24 用户改，按流通市值分档：
-//                  流通市值 > 100 亿元者出现过两连板（连板数 >= 2）+ 含该连板日在内连续 5 个交易日累计涨幅 > 40%；否则连板数 >= 4）；
+//                  流通市值 > 100 亿元者出现过两连板（连板数 >= 2）+ 含该连板日在内连续 5 个交易日累计涨幅 > 50%（2026-10-31 由 40% 提高，线上实盘同口径）；否则连板数 >= 4）；
 //                  动量：「最多 10 个交易日的最精准窗口区间最大涨幅 < 80%」剔除近期已大幅拉升者（先枚举长度 ≤ 10 的子窗口取最大涨幅者，再双向缩进到「同时包含窗内最高/最低收盘日的最短跨度」）；
 //                  且连板准入事件之后若出现过任一交易日涨幅 < -9%，一并剔除该股；且 20 日总涨幅 < 100%；
 //          新路径：连板基础名单单独按「过去 20 个交易日（不含当日）内连板准入（同上市值分档）」统计；
@@ -77,7 +75,7 @@ const {
 //                        且「峰值日（含峰值日本身，2026-10-21 用户改）到买点前之间的全部交易日区间最大波动 < 15%」（区间最大波动 = (最高收盘价 − 最低收盘价) ÷ 最低收盘价）
 //                        且「该窗口内收盘跌幅 < -9% 的交易日至多 1 次」（≥ 2 次剔除，2026-10-21 用户要求）；
 //                  且 20 日总涨幅 < 100%；
-//          并整体剔除 PCB / 玻璃基板 / 光模块 / 液冷 / 通信 / 算力 / 芯片 / 靶材 / 电子气体 / 光刻胶 / 算力租赁 题材（板块名包含关键词即剔除，2026-10-17 用户新增）；
+//          并整体剔除 PCB / 玻璃基板 / 光模块 / 液冷 / 通信 / 算力 / 芯片 / 靶材 / 电子气体 / 光刻胶 / 算力租赁 / 元器件 / 黄金 / 中报增长 / 次新股 题材（板块名包含关键词即剔除，2026-10-17 用户新增）；
 //          并剔除与「全量自选股中的科技股」（monitor_stocks.json，isTech !== false）重叠的个股——2026-10-17 用户新增）；
 //   差劲分（0~100，越高越差）= 0.3×A + 0.2×B + 0.3×C + 0.2×D，各分项先按上限归一化到 0~100：
 //          A 放量比 = (当日量 − 该日前 3 日日均量) ÷ 该日前 3 日日均量（上限 3）
@@ -91,7 +89,7 @@ const {
 //          C 抗分歧分数 = calculateReplayResilience（原始 0~30，上限 20）
 //          D 当日涨幅 = 现价较昨收涨幅（涨幅 < 0 记 0 分；涨幅 >= 0 按 ÷ 10% 归一化）
 //            权重（2026-10-17 用户新增加 D 当日涨幅）：A 0.3 / B 0.2 / C 0.3 / D 0.2
-//   买点 = 分两层判定（当日盘中逐桶实时）：
+//   买点 = 分两层判定（当日盘中逐桶实时，与其他策略一致按 5min 时间桶回测）：
 //          ① 死叉前置（2026-10-18 用户改）：以「最多 10 日最精准窗口」的峰值日（窗内最高收盘日）为基准，
 //             取峰值日之后的第一次「死叉」——「强度分由高于差劲分转为一度低于差劲分」
 //             （相邻交易日 delta = 强度分 − 差劲分 由 > 0 翻为 < 0）；检索窗口 = 峰值日 → 买点前一日；
@@ -99,24 +97,32 @@ const {
 //             （若死叉之后已出现 >= 2 天 delta >= 30，视为该机会已在历史消耗，今日再触发则不再买入）；
 //             且若上个交易日 delta > 30（昨日已达 30），则该日成交量须 ≥ 其前 3 个交易日成交量均值（须放量，2026-10-17 用户新增——
 //             避免「强更强」但缩量的高位被套；数据缺失时不判定）；
-//          ② 今日盘中逐桶实时：今日「强度分 − 差劲分 >= 30」（首次达到）即买入该股；
+//          ② 今日盘中逐桶实时：今日「强度分 − 差劲分 >= 30」且未涨停、未被另一腿持有者，当场按该桶分时价买入该股；
 //          ③ 指数门禁（2026-10-17 用户新增）：仅当上证指数（sh000001）3 日线分时斜率为正
-//             （MA3 今日实时 − MA3 昨日收盘 > 0，逐桶实时判定）时才允许买入；斜率为负或数据不足时该桶跳过买入
+//             （MA3 今日实时 − MA3 昨日收盘 > 0，按桶时点实时判定）时才允许买入；斜率为负或数据不足时该桶跳过买入
 //             （机会不顺延作废，后续桶斜率转正后仍可继续判定）；
 //          ④ 竞价低开门禁（2026-10-17 用户新增）：若「上个交易日强度分 > 60」，则当日买入时「竞价低开不得超过 -3%」
 //             （开盘价较昨收涨幅须 >= -3%），否则该候选取值不可买、顺延至差值排名下一只；上个交易日强度分数据缺失时不判定；
-//          ⑤ 时间门禁（2026-10-20 用户新增）：每天 14:30 之后不买（14:30 桶本身可买，14:35 起的桶一律不买），
+//          ⑤ 时间门禁（2026-10-20 用户新增）：每天 14:30 之后不买（14:30 时间桶本身可买，14:35 起的桶一律不买），
 //             顺周期腿 14:30 后的桶直接跳过买入评估；逆周期腿命中登记照常累计、仅不再实际买入；
-//          多候选触发同一时点桶时，按今日「强度分 − 差劲分」差值降序依次买入；买入时点已涨停（主板 > 9.5%、创业/科创 > 19%）不可买、跳过该只；
+//          多候选触发同一桶时，按今日「强度分 − 差劲分」差值降序依次买入；买入时点已涨停（主板 > 9.5%、创业/科创 > 19%）不可买、跳过该只；
 //          2026-10-18 用户要求：同一交易日内可连续建仓——多个股票依次触发买点时「谁先触发就买谁」，每个空仓位槽买一只，
 //          直到两份仓位全部占满为止（不再限制「每条腿每交易日最多建仓一份」）；
-//          日线 delta 与今日盘中 delta 均按「个股历史分析」口径：日线取收盘（1500）口径、今日实时按桶口径。
+//          日线 delta 与今日盘中 delta 均按「个股历史分析」口径：日线取收盘（1500）口径、今日实时按分钟口径。
 //   卖点 = 完全沿用「情绪游资-龙头战法」的卖点，唯一区别是①成本线止损（2026-10-17 用户要求）：
 //          本策略成本线止损口径 -5%（现价 < 买入价 × 0.95）即卖、不设持续分钟门槛
 //          （龙头战法同为 -5% 但要求连续维持 ≥5 分钟）；其余卖点不变——跌停 ∪ 高位放量大阴线
 //          ∪ 持仓第 3 日尾盘未拉开 +10% ∪ 竞价低开 < -5% ∪ 收盘抗分歧 < 6 ∪ 盘中分时跌幅（较昨收）≤ -5% 直接卖
 //          ∪ 开盘后较开盘价直线下挫 ≤ -5% 直接卖
-//          ∪ 盘中单分钟跳水（相对上一分钟分时价 ≤ -3%）直接卖；价格类卖点按分钟级回溯取最先触发分钟精准成交）。
+//          ∪ 盘中单分钟跳水（相对上一分钟分时价 ≤ -3%）直接卖
+//          ∪ 竞价大幅低开（开盘较昨收 < -2%）后分钟级冲高结束即卖（2026-10-31 用户新增：开盘后先出现高于开盘价的分钟级冲高，
+//            此后首次回落——某分钟分时价低于此前分钟级最高价——即在该分钟卖出；例 9:30 -3% → 9:31 -2% → 9:32 +2% → 9:33 +1%，
+//            则在 9:33 卖出；若开盘后始终未高于开盘价则不触发。仅顺周期腿启用，仅回测口径、线上实盘不变）
+//          ∪ 竞价大幅低开（开盘较昨收 < -2%）后「开盘自救」首次回落即卖（2026-10-31 用户新增：低开当日自开盘起
+//            逐分钟向后找**第一次回落**——某分钟分时价低于上一分钟即在该分钟卖出，不要求先拉升、也不要求冲高过开盘价；
+//            为让自救有机会执行，此开关下⑤竞价低开与⑦盘中跌幅在**开盘分钟**不再直接卖；
+//            若开盘后一路上行、始终未出现分钟级回落则不触发。仅顺周期腿启用，仅回测口径、线上实盘不变）
+//          价格类卖点按分钟级回溯取最先触发分钟精准成交。
 //   —— 逆周期腿（反向抱团龙头，2026-10-17 融合）规则见 reverseLeader 系列常量与 buildRevPosition ——
 //   仓位（2026-10-17 用户要求）：账户拆两份、每份各半仓，两份各自独立买卖、独立计成本与收益（均按半仓 ×0.5 折算）；
 //          谁的买点先触发就由谁占用空仓位（2026-10-18 用户要求：同一交易日内可连续建仓、直到两份全部占满），
@@ -143,9 +149,12 @@ const WEAK_TRADE_MIN_GAIN_PCT = 10;
 const TAIL_MINUTE = 1457;
 const RESILIENCE_SELL_MAX = 6;
 const LEADER_RESILIENCE_INDEX_CODE = 'sh000001'; // 抗分歧/涨停口径统一跟踪上证指数（与龙头战法一致）
-// 2026-10-20 用户新增、2026-10-24 用户改为 14:30：每天 14:30 之后不买（14:30 桶本身仍可买，14:35 起的时间桶一律不买；
+// 2026-10-20 用户新增、2026-10-24 用户改为 14:30：每天 14:30 之后不买（14:30 分钟本身仍可买，14:31 起的分钟一律不买；
 //   顺/逆周期两条腿均适用，线上实盘「情绪游资-极致胜率」模式同步该规则；「攻防兼备」模式的极致胜率腿保持 13:30）。逆周期腿 14:30 之后的命中登记照常累计（与线上口径一致），仅不再实际买入
 const BUY_CUTOFF_MINUTE = 1430;
+// 2026-10-31 用户要求（本策略回测 + 线上实盘）：大市值连板准入「两连板（≥2）+ 含该连板日连续 5 日累计涨幅」门槛由 40% 提高到 50%
+//   （线上实盘 hotMoneyExtremeWin.js 与融合策略 sci_attack_emo_win 已于同日同步为 50%）
+const EXTREME_CAP_BOARD_MIN_GAIN_PCT = 50;
 // 候选池剔除创业板（30/301）与科创板（688）：isChiNextOrStar 见 ./extremeWinPool
 
 // ---- 逆周期腿（情绪游资-反向抱团龙头，2026-10-17 用户要求融合进本策略；规则与独立策略完全一致，仅按半仓计收益）----
@@ -181,17 +190,6 @@ const priceAtMinute = (points, minute) => {
 
 // 死叉前置判定（computeCrossInfo）已迁移至 ./extremeWinPool，与「开盘实战页 live 龙头列表」共用同一实现
 
-// 上证指数「前一交易日收盘口径」3 日线斜率（用于逆周期腿「盘中由负转正」卖点），数据不足返回 null
-// slopeByDate: Map<dateNum, slope>，取严格小于 dateStr 的最大日期对应的斜率
-const prevSlopeOf = (slopeByDate, dateStr) => {
-  const target = Number(dateStr);
-  let bestDate = null;
-  let bestSlope = null;
-  for (const [d, s] of slopeByDate) {
-    if (d < target && (bestDate === null || d > bestDate)) { bestDate = d; bestSlope = s; }
-  }
-  return bestSlope;
-};
 
 const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress) => {
   const strategy = STRATEGIES[strategyId];
@@ -209,15 +207,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
 
   if (onProgress) onProgress({ current: 0, total, date: '', status: 'loading' });
 
-  // 顺周期腿预计算：上证 3 日线斜率收盘序列（供逆周期腿卖点「前一交易日收盘斜率」基准）+ 历史「由正转负 / 由负转正」事件
-  const slopeByDate = new Map();
-  try {
-    const { dates, slopes } = await ensureIndexMa3SlopeSeries(ICE_SIGNAL_INDEX_CODE);
-    for (const d of dates) {
-      const s = slopes.get(d);
-      if (s != null && Number.isFinite(Number(s))) slopeByDate.set(Number(d), Number(s));
-    }
-  } catch (e) { /* 数据不足时逆周期腿卖点不生效 */ }
+  // 顺周期腿预计算：历史「由正转负 / 由负转正」事件（逆周期腿买点前置）
   let turnMap = new Map();
   try {
     turnMap = await precomputeTurnMap(ICE_SIGNAL_INDEX_CODE, rangeDates.map(Number));
@@ -290,14 +280,17 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
     if (curWindowKey !== revWindowKey) { revHitCount.clear(); revWindowKey = curWindowKey; }
     const eligibleRev = slopeClose != null && slopeClose < 0
       && daysSinceTurnNeg != null && daysSinceTurnNeg >= REV_NEG_STREAK_MIN_DAYS;
-    // 逆周期腿卖点基准：前一交易日收盘口径斜率
-    const revPrevCloseSlope = prevSlopeOf(slopeByDate, dateStr);
 
     // ===== 顺周期腿候选池（与「开盘实战页 live 龙头列表」共用 ./extremeWinPool 同一实现）=====
     let candidatesRaw = [];
     let poolWinDates = [];   // 候选池所用的「过去 20 个交易日（不含当日）」升序日期（死叉窗口「峰值日 → 买点前一日」据此截取）
     try {
-      const pool = await buildExtremeWinPool(dateStr);
+      // 2026-10-31 用户要求（仅本策略回测）：10 日最大涨幅窗口从「第一天涨停的前一交易日收盘价」起算；
+      //   大市值连板准入的 5 日累计涨幅门槛提高到 50%
+      const pool = await buildExtremeWinPool(dateStr, {
+        fromFirstLimitUp: true,
+        capBoardMinGainPct: EXTREME_CAP_BOARD_MIN_GAIN_PCT,
+      });
       candidatesRaw = pool.stocks || [];
       poolWinDates = pool.winDates || [];
     } catch (e) { candidatesRaw = []; }
@@ -375,8 +368,12 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
         } catch (e) { idxTlineMap.set(ic, { preclose: null, points: [] }); }
       }));
     };
+    // 2026-10-31 用户要求：恢复与其他策略一致的 5min 时间桶回测口径（来自 campData 的 timeBuckets），
+    // 逐桶评估买点与卖点；分时数据仍按桶时点价取值
+    await ensureIdxTlines();
+    const minuteSlots = timeBuckets.map(b => ({ minute: Number(b.minute) }));
     const idxPointsOf = (code) => (idxTlineMap.get(iceResilienceIndexCode(code)) || {}).points || [];
-    // 上证指数截至某桶的当日跌幅（较昨收 %）；数据不足返回 null（逆周期腿买点前置用）
+    // 上证指数截至某分钟的当日跌幅（较昨收 %）；数据不足返回 null（逆周期腿买点前置用）
     const idxChangeAt = (minute) => {
       const t = idxTlineMap.get(ICE_SIGNAL_INDEX_CODE);
       if (!t || !(t.preclose > 0) || t.points.length === 0) return null;
@@ -443,39 +440,46 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
       }, 8);
     };
 
-    // 顺周期腿评估某桶的候选：返回按今日「强度分 − 差劲分」降序排列的达标（>= DELTA_MIN）候选数组
+    // 顺周期腿评估某候选在某分钟的分数（差劲分 / 强度分 / 差值）；数据不足返回 null
+    const evalCandidateAt = (c, bucketMinute, tline) => {
+      const t = tline || todayTline.get(c.code);
+      if (!t || t.points.length === 0 || !(t.preclose > 0)) return null;
+      // 今日实时差劲分（A 用分时累计成交量对前 3 日日均量的放量比）
+      const d = diffAtMinute(t.points, t.preclose, c.code, bucketMinute, todayAvg3Vol.get(c.code));
+      if (!d) return null;
+      // 今日实时强度分（截至当前分钟）
+      const s = strengthAtMinute(t, bucketMinute, c.code, idxPointsOf(c.code));
+      if (!s) return null;
+      const delta = round2(s.score - d.score);
+      if (delta == null) return null;
+      return { ...c, delta, strength: s.score, diffScore: d.score, s, d, px: s.px, changePct: s.changePct, limitUp: s.limitUp };
+    };
+    // 顺周期腿评估某分钟的候选：返回按今日「强度分 − 差劲分」降序排列的达标（>= DELTA_MIN）候选数组
     const evalBucket = (bucketMinute) => {
       const out = [];
       for (const c of candidates) {
-        const t = todayTline.get(c.code);
-        if (!t || t.points.length === 0 || !(t.preclose > 0)) continue;
-        // 今日实时差劲分（A 用分时累计成交量对前 3 日日均量的放量比）
-        const d = diffAtMinute(t.points, t.preclose, c.code, bucketMinute, todayAvg3Vol.get(c.code));
-        if (!d) continue;
-        // 今日实时强度分（截至当前桶）
-        const s = strengthAtMinute(t, bucketMinute, c.code, idxPointsOf(c.code));
-        if (!s) continue;
-        const delta = round2(s.score - d.score);
-        if (delta == null || delta < DELTA_MIN) continue;
-        out.push({ ...c, delta, strength: s.score, diffScore: d.score, s, d, px: s.px, changePct: s.changePct, limitUp: s.limitUp });
+        const p = evalCandidateAt(c, bucketMinute);
+        if (!p || p.delta < DELTA_MIN) continue;
+        out.push(p);
       }
       out.sort((a, b) => b.delta - a.delta);
       return out;
     };
+    // 今日前 3 个交易日日均量（按 code 懒加载）在 ensurePoolData 中预取
 
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
 
     // 2026-10-18 用户要求：账户拆两份各半仓，同一交易日内允许连续建仓、直到两份仓位全部占满——
-    //   一天之内多个股票依次触发买点时，谁先触发就买谁（同一时点桶内按差值降序）；
+    //   一天之内多个股票依次触发买点时，谁先触发就买谁（同一分钟内按差值降序）；
     //   不再限制「每条腿每交易日最多建仓一份」，但两份仍不得同时持有同一只股票
     const revDayTriggered = new Set(); // 逆周期腿当日已登记命中的候选（同一天同一只只计一次）
     const idleLegIdx = () => positions.findIndex((p, i) => !p && legLastSellDate[i] !== dateStr);
 
-    for (let bi = 0; bi < timeBuckets.length; bi++) {
-      const bucket = timeBuckets[bi];
+    for (let bi = 0; bi < minuteSlots.length; bi++) {
+      const bucket = minuteSlots[bi];
       const bucketMinute = Number(bucket.minute);
-      const isTailBucket = hasTailBucket ? bucketMinute >= TAIL_MINUTE : bi === timeBuckets.length - 1;
-      const timeText = fmtTime(bucket.timeKey).substring(0, 5);
+      // 尾盘桶：优先按 minute >= TAIL_MINUTE 判定；时间轴无尾盘点时取当日最后一个分钟
+      const isTailBucket = hasTailBucket ? bucketMinute >= TAIL_MINUTE : bi === minuteSlots.length - 1;
 
       // ===== 卖出（隔夜持仓；按每条腿各自的卖点规则独立卖出）=====
       for (let l = 0; l < LEG_COUNT; l++) {
@@ -494,7 +498,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
           : null;
 
         let sellReason = null;
-        let sellMinute = atPt.minute; // 默认按当前桶时点成交（④⑥属尾盘时点卖点）
+        let sellMinute = atPt.minute; // 默认按当前分钟成交（④⑥属尾盘时点卖点）
         let sellPx = px;
         let sellChange = changePct;
 
@@ -502,6 +506,8 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
         // 价格类卖点分钟级回溯：
         //   顺周期腿 = 极致胜率原口径（成本线 -5% 且不设持续分钟）∪ 其余 6 类（含单分钟跳水）
         //   逆周期腿 = 反向抱团龙头口径（成本线 -5% 且连续 ≥5 分钟）但**去掉「1 分钟内跳水」卖点**
+        //   仅顺周期腿启用⑪竞价大幅低开（< -2%）后的冲高回落即卖、⑫竞价大幅低开后的开盘自救首次回落即卖
+        //   （2026-10-31 用户新增，仅回测；逆周期腿不启用）
         const priceHit = isCounter
           ? scanLeaderPriceSell({
             points: posTline.points,
@@ -517,20 +523,13 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
             cutoffMinute: bucketMinute,
             costLinePct: -5,
             costLineSustainMinutes: 0,
+            enableOpenGapReboundSell: true,
           });
         if (priceHit) {
           sellReason = priceHit.reason;
           sellMinute = priceHit.minute;
           sellPx = priceHit.px;
           sellChange = priceHit.changePct;
-        }
-        // 逆周期腿新增卖点：上证指数 3 日线斜率盘中由负转正（前一交易日收盘斜率 <= 0、当桶实时斜率 > 0）
-        if (!sellReason && isCounter) {
-          const intradaySlope = await getIceMa3SlopeIntraday(dateStr, bucketMinute);
-          if (intradaySlope != null && Number.isFinite(Number(intradaySlope))
-            && revPrevCloseSlope != null && revPrevCloseSlope <= 0 && Number(intradaySlope) > 0) {
-            sellReason = `上证指数 3 日线斜率盘中由负转正（前一交易日收盘 ${fmtKeyBlockSlope(revPrevCloseSlope)} → 当桶实时 ${fmtKeyBlockSlope(intradaySlope)}）`;
-          }
         }
         // ④ 持仓第 3 个交易日尾盘收益仍未拉开至 +10%（两条腿共用）
         if (!sellReason && position.buyDi != null && (di - position.buyDi + 1) === WEAK_TRADE_HOLD_DAYS && isTailBucket) {
@@ -582,11 +581,11 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
         }
       }
 
-      // ===== 买入 =====
+      // ===== 买入（逐桶实时，触发即按本桶分时价成交；2026-10-31 用户要求取消延时观察）=====
+      const timeText = fmtMinute(bucketMinute);
+
       // 【顺周期腿】极致胜率逻辑：指数门禁（上证 3 日线分时斜率 > 0）+ 今日「强度分 − 差劲分 >= 30」
       //   2026-10-20 用户新增：每天 14:30 之后不买——14:35 起的时间桶直接跳过买入评估（14:30 桶本身仍可买）
-      //   2026-10-18 用户要求：同一交易日内可连续建仓——按触发先后（同一时点桶内按差值降序）依次买入，
-      //   每个空仓位槽买一只，直到两份仓位全部占满（不再限制每条腿每交易日只建仓一份）
       if (bucketMinute <= BUY_CUTOFF_MINUTE && idleLegIdx() !== -1) {
         const idxMa3Slope = await getIceMa3SlopeIntraday(dateStr, bucketMinute);
         if (Number(idxMa3Slope) > 0) {
@@ -595,10 +594,8 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
             const ranked = evalBucket(bucketMinute);
             for (const pick of ranked) {
               const legIdx = idleLegIdx();
-              if (legIdx === -1) break; // 两份均已占满 → 本日不再买入
-              // 两份不得同时持有同一只股票：剔除另一份当前持仓标的
+              if (legIdx === -1) break;
               const otherHeld = positions.filter((p, i) => i !== legIdx && p).map(p => p.code);
-              // 买入时点已涨停不可买 / 已被另一份持有 / 上个交易日强度分 > 60 且竞价低开 > 3% → 跳过该只
               if (pick.limitUp || otherHeld.includes(pick.code) || failPrevStrengthOpenGap(pick)) continue;
               positions[legIdx] = buildPosition({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx, otherHeld });
               positions[legIdx].buyDi = todayIdx;
@@ -609,7 +606,8 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
         }
       }
 
-      // 【逆周期腿】反向抱团龙头逻辑：斜率连续为负 + 当日上证跌幅 ≥ 0.5% 时逐桶累计强度分命中，第 2 次命中且有空仓位即买
+      // 【逆周期腿】反向抱团龙头逻辑：斜率连续为负 + 当日上证跌幅 ≥ 0.5% 时逐桶累计强度分命中，
+      //   第 2 次命中且有空仓位即按本桶分时价买入（同一天同一只股票只计一次命中）
       if (eligibleRev && revCandidatesRaw.length > 0) {
         await ensureRevPoolData();
         const idxChg = idxChangeAt(bucketMinute);
@@ -625,8 +623,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
             const prev = revHitCount.get(c.code) || 0;
             const next = Math.min(prev + 1, REV_HIT_REQUIRED);
             revHitCount.set(c.code, next);
-            // 第 2 次命中（或已达标后再次命中）的这一刻为买点；有空仓位且未涨停才买
-            //   2026-10-18 用户要求：同一天内不同股票各自触发即可依次买入，直到两份仓位占满（不再限制每条腿每日只建仓一份）
+            // 第 2 次命中即按本桶分时价买入
             //   2026-10-20 用户新增：每天 14:30 之后不买——命中登记照常累计（与线上口径一致），仅不再实际买入
             if (prev >= 1 && !s.limitUp && bucketMinute <= BUY_CUTOFF_MINUTE) {
               const legIdx = idleLegIdx();
@@ -716,14 +713,15 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
   const crossDate = cross && cross.crossIdx >= 0 ? cross.dates[cross.crossIdx] : '';
   const deltasText = cross ? cross.deltas.map(v => (v == null ? '--' : v)).join(' → ') : '--';
   const hitCount = cross && cross.hitCount != null ? cross.hitCount : 0;
-  const buyReason = `${timeText} 过去 ${DEATH_CROSS_WINDOW} 个交易日内出现死叉（${crossDate}）后，今日满足「强度分 − 差劲分 = ${delta} ≥ ${DELTA_MIN}」（死叉后第 ${hitCount + 1} 次达标，本策略只允许前 2 次），买入候选 ${pick.name}（${pick.code}，${pick.lianbanCount} 连板），触发时点价 ${pick.px.toFixed(2)}；本次建仓为顺周期腿（极致胜率，第 ${legIdx + 1} 份半仓 ${LEG_WEIGHT * 100}%）${otherHeld.length > 0 ? `，已排除另一腿当前持仓标的（${otherHeld.join('、')}）` : ''}`;
+  const delayText = `触发时点价 ${pick.px.toFixed(2)}`;
+  const buyReason = `${timeText} 过去 ${DEATH_CROSS_WINDOW} 个交易日内出现死叉（${crossDate}）后，今日满足「强度分 − 差劲分 = ${delta} ≥ ${DELTA_MIN}」（死叉后第 ${hitCount + 1} 次达标，本策略只允许前 2 次），买入候选 ${pick.name}（${pick.code}，${pick.lianbanCount} 连板），${delayText}；本次建仓为顺周期腿（极致胜率，第 ${legIdx + 1} 份半仓 ${LEG_WEIGHT * 100}%）${otherHeld.length > 0 ? `，已排除另一腿当前持仓标的（${otherHeld.join('、')}）` : ''}`;
   const checks = [
     {
       id: 'extreme_win_pool',
-      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板（连板数 ≥ 2）且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${CAP_BOARD_MIN_GAIN_PCT}% 即可、≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者需四连板及以上；均剔除创业板/科创板与 ${EXCLUDED_THEMES.join('/')} 题材。旧路径：过去 ${LOOKBACK_DAYS} 个交易日达标，最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 < ${MAX_WINDOW_RANGE_PCT}%，连板后无单日涨幅 < ${POST_LIANBAN_DROP_PCT}%，20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。新路径：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日达标，最多 ${RANGE_SLIDE_DAYS} 个交易日的最精准窗口区间最大涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < ${NEW_MAX_WINDOW_RANGE_PCT}% 且该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%、该窗口内收盘跌幅 < ${POST_LIANBAN_DROP_PCT}% 的交易日至多 1 次（≥ 2 次剔除），20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。两路径均剔除与全量自选股科技股重叠者）`,
+      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板（连板数 ≥ 2）且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${EXTREME_CAP_BOARD_MIN_GAIN_PCT}% 即可、≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者需四连板及以上；均剔除创业板/科创板与 ${EXCLUDED_THEMES.join('/')} 题材。旧路径：过去 ${LOOKBACK_DAYS} 个交易日达标，10 日最大涨幅窗口（从第一天涨停的前一交易日收盘价起算）区间涨幅 < ${MAX_WINDOW_RANGE_PCT}%，连板后无单日涨幅 < ${POST_LIANBAN_DROP_PCT}%，20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。新路径：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日达标，10 日最大涨幅窗口（同口径）区间涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < ${NEW_MAX_WINDOW_RANGE_PCT}% 且该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%、该窗口内收盘跌幅 < ${POST_LIANBAN_DROP_PCT}% 的交易日至多 1 次（≥ 2 次剔除），20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。两路径均剔除与全量自选股科技股重叠者）`,
       passed: true,
       value: `${pick.name}（${pick.code}）· ${pick.lianbanCount} 连板`,
-      reason: `候选 = 旧路径（过去 ${LOOKBACK_DAYS} 个交易日内连板准入达标）与新路径（过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日内连板准入达标）并集（命中日 ${pick.date}，板块 ${pick.board || '--'}）；已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、${EXCLUDED_THEMES.join('/')} 题材（板块名包含关键词即剔除）与全量自选股科技股（isTech ≠ false）重叠者${pick.poolFilterText || ''}；本桶达标候选共 ${ranked.length} 只，按今日「强度分 − 差劲分」降序取第一个「未涨停且未被另一腿持有」者作为顺周期腿（第 ${legIdx + 1} 份半仓）建仓标的`,
+      reason: `候选 = 旧路径（过去 ${LOOKBACK_DAYS} 个交易日内连板准入达标）与新路径（过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日内连板准入达标）并集（命中日 ${pick.date}，板块 ${pick.board || '--'}）；已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、${EXCLUDED_THEMES.join('/')} 题材（板块名包含关键词即剔除）与全量自选股科技股（isTech ≠ false）重叠者${pick.poolFilterText || ''}；本分钟达标候选共 ${ranked.length} 只，按今日「强度分 − 差劲分」降序取第一个「未涨停且未被另一腿持有」者作为顺周期腿（第 ${legIdx + 1} 份半仓）建仓标的`,
     },
     {
       id: 'extreme_win_cross',
@@ -748,7 +746,7 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
       value: `${d.limitDown ? '当日跌停 → 差劲分封顶 100；' : ''}A 放量 ${d.aRaw == null ? '--' : d.aRaw}（分 ${d.aScore}）· B 跳水 ${d.bRaw}%（分 ${d.bScore}）· C 冲高回落 ${d.cRaw}%（分 ${d.cScore}）· D ${d.dRaw < 0 ? `跌幅 ${d.dRaw}%` : `炸板 ${d.dRaw} 次`}（分 ${d.dScore}）`,
       reason: d.limitDown
         ? `当日跌停 → 整个差劲分直接封顶 100（2026-10-17 用户要求；A/B/C/D 分项仅供展示：0.3×${d.aScore} + 0.2×${d.bScore} + 0.3×${d.cScore} + 0.2×${d.dScore}）`
-        : `差劲分 = 0.3×A + 0.2×B + 0.3×C + 0.2×D = 0.3×${d.aScore} + 0.2×${d.bScore} + 0.3×${d.cScore} + 0.2×${d.dScore} = ${diff}（A 为分时累计成交量对该股前 3 个交易日日均量的放量比，上限 ${DIFF_A_MAX}；B 上限 ${DIFF_B_MAX}%、C 上限 ${DIFF_C_MAX}%；D：当日跌停时整个差劲分记 100；当日触及涨停价时取炸板次数（上限 ${DIFF_D_MAX}），未涨停时改用跌幅——涨幅 ≥ 0 记 0 分、跌幅按 10% 归一（-10% 记满 100）；均按盘中截至当前桶口径）`,
+        : `差劲分 = 0.3×A + 0.2×B + 0.3×C + 0.2×D = 0.3×${d.aScore} + 0.2×${d.bScore} + 0.3×${d.cScore} + 0.2×${d.dScore} = ${diff}（A 为分时累计成交量对该股前 3 个交易日日均量的放量比，上限 ${DIFF_A_MAX}；B 上限 ${DIFF_B_MAX}%、C 上限 ${DIFF_C_MAX}%；D：当日跌停时整个差劲分记 100；当日触及涨停价时取炸板次数（上限 ${DIFF_D_MAX}），未涨停时改用跌幅——涨幅 ≥ 0 记 0 分、跌幅按 10% 归一（-10% 记满 100）；均按盘中截至当前分钟口径）`,
     },
     {
       id: 'extreme_win_strength',
@@ -769,14 +767,14 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
       title: '买点门禁：上证指数 3 日线分时斜率为正',
       passed: true,
       value: `上证指数 3 日线斜率 ${fmtKeyBlockSlope(idxMa3Slope)}（> 0）`,
-      reason: `买入时点计算上证指数（sh000001）3 日线分时斜率 = MA3(今日实时) − MA3(昨日收盘) = ${idxMa3Slope}，为正（> 0），大盘短期趋势向上，允许买入；若斜率 ≤ 0 或数据不足则该桶跳过买入`,
+      reason: `买入时点计算上证指数（sh000001）3 日线分时斜率 = MA3(今日实时) − MA3(昨日收盘) = ${idxMa3Slope}，为正（> 0），大盘短期趋势向上，允许买入；若斜率 ≤ 0 或数据不足则该分钟跳过买入`,
     },
     {
       id: 'extreme_win_time_gate',
       title: `买点时间门禁：每天 ${cutoffTime} 后不买`,
       passed: true,
       value: `买入时点 ${timeText}（≤ ${cutoffTime}，可买窗口内）`,
-      reason: `2026-10-20 用户新增的门禁规则：每天 ${cutoffTime} 之后不再买入（${cutoffTime} 桶本身仍可买，之后的时间桶一律不买，顺周期/逆周期两条腿均适用）；本笔买入时点 ${timeText} 在可买窗口内，门禁通过`,
+      reason: `2026-10-20 用户新增的门禁规则：每天 ${cutoffTime} 之后不再买入（${cutoffTime} 分钟本身仍可买，之后的时间分钟一律不买，顺周期/逆周期两条腿均适用）；本笔买入时点 ${timeText} 在可买窗口内，门禁通过`,
     },
   ];
   return {
@@ -802,7 +800,8 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
 const buildRevPosition = ({ pick, s, score, px, changePct, dateStr, dateDisplay, timeText, hitCount, slopeClose, daysSinceTurnNeg, idxChg, legIdx = 0, otherHeld = [], cutoffMinute = BUY_CUTOFF_MINUTE }) => {
   const chgText = (v) => (v == null ? '--' : `${v > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
   const cutoffTime = `${Math.floor(Number(cutoffMinute) / 100)}:${String(Number(cutoffMinute) % 100).padStart(2, '0')}`;
-  const buyReason = `${timeText} 上证指数 3 日线斜率连续为负第 ${daysSinceTurnNeg + 1} 天（斜率 ${fmtKeyBlockSlope(slopeClose)}），当日上证跌幅 ${chgText(idxChg)} ≤ ${REV_INDEX_DROP_PCT}%，候选 ${pick.name}（${pick.code}，${pick.lianbanCount} 连板）盘中强度分第 ${hitCount} 次 > ${REV_STRENGTH_MIN}（本次强度分 ${score}），按该分钟分时价 ${px.toFixed(2)} 买入；本次建仓为逆周期腿（反向抱团龙头，第 ${legIdx + 1} 份半仓 ${LEG_WEIGHT * 100}%）${otherHeld.length > 0 ? `，已排除另一腿当前持仓标的（${otherHeld.join('、')}）` : ''}`;
+  const delayText = `按该分钟分时价 ${px.toFixed(2)} 买入`;
+  const buyReason = `${timeText} 上证指数 3 日线斜率连续为负第 ${daysSinceTurnNeg + 1} 天（斜率 ${fmtKeyBlockSlope(slopeClose)}），当日上证跌幅 ${chgText(idxChg)} ≤ ${REV_INDEX_DROP_PCT}%，候选 ${pick.name}（${pick.code}，${pick.lianbanCount} 连板）盘中强度分第 ${hitCount} 次 > ${REV_STRENGTH_MIN}（本次强度分 ${score}），${delayText}；本次建仓为逆周期腿（反向抱团龙头，第 ${legIdx + 1} 份半仓 ${LEG_WEIGHT * 100}%）${otherHeld.length > 0 ? `，已排除另一腿当前持仓标的（${otherHeld.join('、')}）` : ''}`;
   const checks = [
     {
       id: 'reverse_leader_pool',
@@ -823,7 +822,7 @@ const buildRevPosition = ({ pick, s, score, px, changePct, dateStr, dateDisplay,
       title: `买点前置：当日上证跌幅 ≥ 0.5%（较昨收 ≤ ${REV_INDEX_DROP_PCT}%）`,
       passed: true,
       value: `上证当日跌幅 ${chgText(idxChg)} ≤ ${REV_INDEX_DROP_PCT}%`,
-      reason: `买入时点上证指数较昨收跌幅 ${chgText(idxChg)}，达到 ≤ ${REV_INDEX_DROP_PCT}% 门槛（按该桶指数分时价实时判定），符合「大盘走弱」的逆势低吸条件`,
+      reason: `买入时点上证指数较昨收跌幅 ${chgText(idxChg)}，达到 ≤ ${REV_INDEX_DROP_PCT}% 门槛（按该分钟指数分时价实时判定），符合「大盘走弱」的逆势低吸条件`,
     },
     {
       id: 'reverse_leader_strength',
@@ -837,7 +836,7 @@ const buildRevPosition = ({ pick, s, score, px, changePct, dateStr, dateDisplay,
       title: `买点时间门禁：每天 ${cutoffTime} 后不买`,
       passed: true,
       value: `买入时点 ${timeText}（≤ ${cutoffTime}，可买窗口内）`,
-      reason: `2026-10-20 用户新增的门禁规则：每天 ${cutoffTime} 之后不再买入（${cutoffTime} 桶本身仍可买，之后的时间桶一律不买，顺周期/逆周期两条腿均适用；${cutoffTime} 后的命中登记照常累计、仅不再实际买入）；本笔买入时点 ${timeText} 在可买窗口内，门禁通过`,
+      reason: `2026-10-20 用户新增的门禁规则：每天 ${cutoffTime} 之后不再买入（${cutoffTime} 分钟本身仍可买，之后的时间分钟一律不买，顺周期/逆周期两条腿均适用；${cutoffTime} 后的命中登记照常累计、仅不再实际买入）；本笔买入时点 ${timeText} 在可买窗口内，门禁通过`,
     },
   ];
   return {

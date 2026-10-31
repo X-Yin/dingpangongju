@@ -9,7 +9,7 @@ import { local_ip } from '../../constant';
 import StockKLineModal from '../StockKLineModal';
 import StockFundFlowModal from '../StockFundFlowModal';
 import BuyPointDiagnosisDrawer from '../FloatingBuyPointDiagnosis';
-import { useStrategyMode } from '../../utils/strategyMode';
+import { useStrategyMode, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } from '../../utils/strategyMode';
 import { subscribeSellPointPush } from '../../utils/buyPointWs';
 import './index.scss';
 
@@ -43,12 +43,14 @@ const diagnosePositionSellPoint = async (stock, todayStr, mode) => {
     return { ...base, buyToday: true };
   }
   try {
-    // mode='hot_money_extreme_win' 时后端返回「情绪游资-极致胜率」9 条龙头战法卖点；buyDate 供「持仓第 3 日未拉开 +10%」判定
+    // mode='hot_money_extreme_win' 时后端返回「情绪游资-极致胜率」11 条龙头战法卖点（含⑪冲高回落 / ⑫开盘自救）；buyDate 供「持仓第 3 日未拉开 +10%」判定
     const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, {
       code: stock.code,
       costPrice: stock.costPrice,
       buyDate: stock.buyDate || null,
       mode,
+      // 顺逆周期标记：后端据此决定⑪⑫「竞价大幅低开后冲高回落 / 开盘自救」是否启用（逆周期持仓不启用）
+      cycle: stock.cycle || 'pro',
     });
     return { ...res.data, ...base };
   } catch (error) {
@@ -70,6 +72,9 @@ const sortSellResults = (list) => [...(list || [])].sort((a, b) => (b.isSell ? 1
 const FloatingStockPosition = ({ onOutflowDetected }) => {
   const navigate = useNavigate();
   const mode = useStrategyMode();
+  // 顺逆周期标记列：仅在「情绪游资-极致胜率」/「攻防兼备（科技进攻-情绪游资极致胜率）」模式下展示
+  const showCycleColumn = mode === MODE_EXTREME_WIN || mode === MODE_ATTACK_DEFENSE;
+  const [cycleUpdating, setCycleUpdating] = useState({});
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -143,6 +148,37 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       setWeightInputs((prevMap) => ({ ...prevMap, [key]: prev }));
     } finally {
       setWeightUpdating((prevMap) => {
+        const next = { ...prevMap };
+        delete next[key];
+        return next;
+      });
+      await fetchPositions();
+    }
+  };
+
+  // 持仓顺逆周期标记：pro 顺周期 / reverse 逆周期（仅上述两种模式展示；后端卖点⑪据此启用）
+  const POSITION_CYCLE_OPTIONS = [
+    { value: 'pro', label: '顺周期' },
+    { value: 'reverse', label: '逆周期' },
+  ];
+
+  const handleCycleChange = async (stock, cycle) => {
+    const key = stock.id || stock.code;
+    const prev = stock.cycle || 'pro';
+    if (cycle === prev) return;
+    setCycleUpdating((prevMap) => ({ ...prevMap, [key]: true }));
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/update_stock_position_cycle`, { id: stock.id, cycle });
+      if (res.data.success) {
+        message.success(`${stock.name} 已标记为${cycle === 'reverse' ? '逆周期' : '顺周期'}`);
+      } else {
+        message.warning(res.data.message || '更新失败');
+      }
+    } catch (error) {
+      console.error('更新顺逆周期标记失败:', error);
+      message.error('更新失败');
+    } finally {
+      setCycleUpdating((prevMap) => {
         const next = { ...prevMap };
         delete next[key];
         return next;
@@ -774,6 +810,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
             />
           </Tooltip>
         }
+        wdith
       >
         {sellDrawerLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
@@ -963,7 +1000,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
 
       {/* 持仓管理抽屉（宽度在原 520px 基础上增加 300px） */}
       <Drawer
-        width={820}
+        width={1080}
         open={positionManageModalVisible}
         onClose={() => setPositionManageModalVisible(false)}
         title={
@@ -1004,20 +1041,21 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
 
             {/* 持仓列表 */}
             <div className="pmm-section">
-              <div className="pmm-section-title">📊 持仓列表</div>
+              <div className="pmm-section-title">持仓列表</div>
               {loading && positions.length === 0 ? (
                 <div className="fsp-loading"><Spin size="small" /></div>
               ) : positions.length === 0 ? (
                 <div className="fsp-empty">暂无持仓</div>
               ) : (
                 <>
-                  <div className="fsp-list-header">
+                  <div className={`fsp-list-header${showCycleColumn ? ' has-cycle' : ''}`}>
                     <span className="col-name">股票名称</span>
                     <span className="col-change">涨幅</span>
                     <span className="col-fund">资金净流入</span>
                     <span className="col-voldiff">量比</span>
                     <span className="col-cost">持仓成本</span>
                     <span className="col-weight">仓位</span>
+                    {showCycleColumn && <span className="col-cycle">顺/逆周期</span>}
                     <span className="col-buytime">买入时间</span>
                     <span className="col-actions">操作</span>
                   </div>
@@ -1036,7 +1074,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                       const isAutoMirror = !!stock.mirror;
                       return (
                         <div key={posKey} className="fsp-item">
-                          <div className="fsp-item-row">
+                          <div className={`fsp-item-row${showCycleColumn ? ' has-cycle' : ''}`}>
                             <div className="fsp-item-main" onClick={() => handleStockClick(stock)}>
                               <span className={`fsp-item-name${isAutoMirror ? ' is-auto-mirror' : ''}`}>
                                 {stock.name}
@@ -1082,6 +1120,18 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                                   options={POSITION_WEIGHT_OPTIONS.map((w) => ({ value: w, label: `${w}%` }))}
                                 />
                               </span>
+                              {showCycleColumn && (
+                                <span className="fsp-item-cycle" onClick={stopProp}>
+                                  <Select
+                                    size="small"
+                                    className={`fsp-cycle-select${stock.cycle === 'reverse' ? ' is-reverse' : ''}`}
+                                    value={stock.cycle === 'reverse' ? 'reverse' : 'pro'}
+                                    loading={!!cycleUpdating[posKey]}
+                                    onChange={(val) => handleCycleChange(stock, val)}
+                                    options={POSITION_CYCLE_OPTIONS}
+                                  />
+                                </span>
+                              )}
                               <span className="fsp-item-buytime" title={formatBuyAt(stock)}>
                                 {formatBuyAt(stock)}
                               </span>

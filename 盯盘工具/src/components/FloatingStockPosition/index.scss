@@ -703,6 +703,38 @@
     }
   }
 
+  /* 顺逆周期标记列（仅「情绪游资-极致胜率」/「攻防兼备」模式展示） */
+  .fsp-list-header.has-cycle {
+    grid-template-columns: 1.05fr 0.85fr 1.05fr 0.75fr 1.25fr 88px 74px 1.3fr 1.5fr;
+  }
+
+  .fsp-item-cycle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    .fsp-cycle-select {
+      width: 100%;
+      font-size: 11px;
+      font-weight: 600;
+
+      .ant-select-selector {
+        justify-content: center;
+        padding: 0 4px !important;
+      }
+
+      .ant-select-selection-item {
+        text-align: center;
+      }
+    }
+
+    .fsp-cycle-select.is-reverse {
+      .ant-select-selection-item {
+        color: #d97706;
+      }
+    }
+  }
+
   /* 买入时间（日期 + 时分） */
   .fsp-item-buytime {
     font-size: 11px;
@@ -739,6 +771,11 @@
       grid-template-columns: 1.05fr 0.85fr 1.05fr 0.75fr 1.25fr 98px 1.35fr 1.5fr;
       gap: 4px;
       align-items: center;
+
+      /* 展示顺逆周期标记列时多一列（放在 .fsp-item 内层，确保覆盖上面的 8 列栅格） */
+      &.has-cycle {
+        grid-template-columns: 1.05fr 0.85fr 1.05fr 0.75fr 1.25fr 88px 74px 1.3fr 1.5fr;
+      }
     }
 
     .fsp-item-main {

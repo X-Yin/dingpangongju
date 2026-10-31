@@ -2,7 +2,7 @@
   "date": "20261030",
   "pageDate": "2026-10-30",
   "sourceUrl": "https://lianban.net/days/2026-10-30.html",
-  "fetchedAt": "2026-10-30 19:45:07",
+  "fetchedAt": "2026-10-30 23:56:07",
   "summary": {
     "totalCount": 47,
     "themeCount": 12,
@@ -11,8 +11,8 @@
     "leaderCount": 12
   },
   "sentiment": {
-    "phase": "退潮期",
-    "temperature": null
+    "phase": "冰点期",
+    "temperature": 5
   },
   "kpi": {
     "limitUpCount": 47,

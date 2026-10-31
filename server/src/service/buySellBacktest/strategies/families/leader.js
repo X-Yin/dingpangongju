@@ -1,8 +1,8 @@
-const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC, FUSED_EMO_WIN_DESC } = require('../descs');
+const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC, FUSED_EMO_WIN_DESC, EMOTION_BURST_DRIFT_DESC, EMOTION_BURST_FOLLOW_DESC } = require('../descs');
 
 // 情绪游资系列（2026-10-17 用户要求：已删除「情绪游资-龙头战法」「情绪龙头+科技进攻」「科技进攻 + 情绪龙头」三个策略）：
 module.exports = {
-  // 情绪游资-极致胜率（2026-10-16 用户新增）：在「过去 10 个交易日走出过连板准入（流通市值 > 100 亿元者出现过两连板 + 含该连板日 5 日涨幅 > 40%，其余四连板及以上）」的强势股中，
+  // 情绪游资-极致胜率（2026-10-16 用户新增）：在「过去 10 个交易日走出过连板准入（流通市值 > 100 亿元者出现过两连板 + 含该连板日 5 日累计涨幅 > 50%，其余四连板及以上）」的强势股中，
   // 寻找「昨日表现很差（差劲分高）＋今日分时表现很强（强度分高）」的个股做分歧转一致的低吸反转博弈。
   // extremeWinMode: true → 独立引擎 runExtremeWinBacktest（不复用重点板块引擎）；
   //   买点在今日盘中逐桶实时判定；2026-10-17 起为双腿结构（顺周期腿 = 极致胜率原逻辑、
@@ -87,5 +87,33 @@ module.exports = {
     desc: VOLUME_SHARE_DESC(5),
     volumeShareMode: true,
     volumeShareDays: 5,
+  },
+  // 连板题材-情绪瞬爆-惯性漂移-龙头（2026-10-30 用户新增；2026-10-31 用户重构，仅回测、线上不动）：独立引擎——
+  //   买点前置 = 前一交易日「科技情绪指数」收盘 > 10；
+  //   选股 = 前一交易日涨停家数最多的题材（须 > 5 家；剔除并购重组/三季报/其他与题材黑名单），
+  //          候选 = 该题材前一交易日的首板股（连板数 = 1，即次日打二板），只买主板；
+  //          新增限制 = 遍历题材近 20 交易日出现过的全部涨停股（已回落为首板也计入），
+  //                     取「最多 10 日」最大涨幅窗口的最大值 ≤ 70%，除非该题材前一交易日涨停家数 > 20；
+  //   买点 = 次日 9:30–14:30 内，候选股分时涨幅首次达到 +9% 且未涨停者买入（谁先达到谁先买，同分钟取涨幅更大者）；
+  //   卖点 = 完全沿用「情绪游资-极致胜率」顺周期腿；半仓单持仓（权重 0.5）。
+  // emotionBurstDriftMode: true → 独立引擎 runEmotionBurstDriftBacktest
+  emotion_burst_drift_leader: {
+    id: 'emotion_burst_drift_leader',
+    name: '连板题材-情绪瞬爆-惯性漂移-龙头',
+    desc: EMOTION_BURST_DRIFT_DESC,
+    emotionBurstDriftMode: true,
+  },
+  // 连板题材-情绪瞬爆-惯性漂移-补涨（2026-10-31 用户新增）：独立引擎——
+  //   触发 = 复用龙头引擎，记录其真实买入（龙头买点）当日 D 与命中题材 B；
+  //   窗口 = D 之后 3 个交易日内（不含 D）；
+  //   选股 = 题材 B 在 D 当日爆发的首板股（连板数 = 1），只买主板；
+  //   买点 = 窗口内首个分时涨幅达到 +9% 者买入（谁先达到谁先买）；
+  //   卖点 = 与龙头模式一致 + 任一交易日收盘未涨停即尾盘卖出；半仓单持仓（权重 0.5）。
+  // emotionBurstFollowMode: true → 独立引擎 runEmotionBurstFollowBacktest
+  emotion_burst_follow_leader: {
+    id: 'emotion_burst_follow_leader',
+    name: '连板题材-情绪瞬爆-惯性漂移-补涨',
+    desc: EMOTION_BURST_FOLLOW_DESC,
+    emotionBurstFollowMode: true,
   },
 };

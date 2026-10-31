@@ -6,6 +6,7 @@
     "buyDate": "2026-10-30",
     "buyTime": "10:05",
     "weight": 50,
-    "costPrice": 8.48
+    "costPrice": 8.48,
+    "cycle": "reverse"
   }
 ]

@@ -358,7 +358,11 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
         : []),
     ]
     : [
-      { key: 'forward', label: isExtreme ? '顺周期 · 情绪游资-极致胜率' : '', items: checksList },
+      {
+        key: 'forward',
+        label: isExtreme ? '顺周期 · 情绪游资-极致胜率' : '',
+        items: checksList,
+      },
       ...(reverseChecks.length > 0
         ? [{ key: 'reverse', label: '逆周期 · 反向抱团龙头', items: reverseChecks, reverse: true }]
         : []),
@@ -458,7 +462,7 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
 
     const gateNote = !leaderData
       ? '正在检测情绪游资-极致胜率买点门槛（上证 3 日线斜率）…'
-      : `候选池共 ${poolCount} 只（过去 10 交易日连板准入：流通市值 > 100 亿元者出现过两连板 + 含该连板日 5 日涨幅 > 40%，其余连板数 ≥ 4；已剔除 ST / 创业板（30·301）/ 科创板（688）与科技自选股重叠者）；上证 3 日线斜率 ${formatSlope(slope)}，${slopeOk ? '满足「斜率为正」门槛' : '不满足「斜率为正」门槛，暂无完整买点标的，下列仅为候选龙头'}`;
+      : `候选池共 ${poolCount} 只（过去 10 交易日连板准入：流通市值 > 100 亿元者出现过两连板 + 含该连板日 5 日累计涨幅 > 50%，其余连板数 ≥ 4；已剔除 ST / 创业板（30·301）/ 科创板（688）与科技自选股重叠者）；上证 3 日线斜率 ${formatSlope(slope)}，${slopeOk ? '满足「斜率为正」门槛' : '不满足「斜率为正」门槛，暂无完整买点标的，下列仅为候选龙头'}`;
     const reverseGateNote = !leaderData
       ? '正在检测逆周期（反向抱团）择时状态…'
       : !reverse
@@ -702,7 +706,13 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
   };
 
   // 攻防兼备：科技进攻涨幅榜 + 情绪游资龙头列表（顺/逆周期）三段并示
-  const renderStocksTab = () => (isChangeMode ? (isDefense ? (<>{renderChangeModeByMarket()}{renderExtremeLeaderList()}</>) : isExtreme ? renderExtremeLeaderList() : renderChangeModeByMarket()) : (
+  const renderStocksTab = () => (isChangeMode
+    ? (isDefense
+      ? (<>{renderChangeModeByMarket()}{renderExtremeLeaderList()}</>)
+      : isExtreme
+        ? renderExtremeLeaderList()
+        : renderChangeModeByMarket())
+    : (
     <>
       {checksResult && !allPassed && matchedStocks.length > 0 && (
         <div className="fbd-warning-tip" style={{ marginBottom: 10 }}>
@@ -1095,7 +1105,6 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
                     </div>
                   </div>
                 )}
-
                 {!isExtreme && (isDefense ? techAllPassed : allPassed) && (
                   <div className={`fbd-position-tip ${techEmotion !== null && techEmotion < 0 ? 'position-tip-negative' : 'position-tip-positive'}`}>
                     <div className="fbd-position-tip-title">
@@ -1139,7 +1148,14 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
                     }
                   }}
                   options={[
-                    { value: 'change', label: isDefense ? '攻防列表' : isExtreme ? '龙头列表' : '涨跌幅' },
+                    {
+                      value: 'change',
+                      label: isDefense
+                        ? '攻防列表'
+                        : isExtreme
+                          ? '龙头列表'
+                          : '涨跌幅',
+                    },
                     ...(isExtreme ? [] : [
                       { value: 'reports', label: '研报覆盖' },
                       { value: 'resilience', label: '抗分歧' },

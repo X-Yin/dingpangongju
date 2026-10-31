@@ -976,7 +976,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   const rowCount = isExtreme ? leaderList.length : techList.length;
   const extremeGateNote = !leaderData
     ? '正在检测上证指数 3 日线斜率买点门槛…'
-    : `上证指数 3 日线斜率 ${formatSlope(indexSlope)}（需 > 0）；龙头池共 ${leaderData.poolCount ?? 0} 只（过去 10 交易日连板准入：流通市值 > 100 亿元者出现过两连板 + 含该连板日 5 日涨幅 > 40%，其余四连板及以上，剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）`;
+    : `上证指数 3 日线斜率 ${formatSlope(indexSlope)}（需 > 0）；龙头池共 ${leaderData.poolCount ?? 0} 只（过去 10 交易日连板准入：流通市值 > 100 亿元者出现过两连板 + 含该连板日 5 日累计涨幅 > 50%，其余四连板及以上，剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）`;
   const reverseGateNote = !leaderData
     ? '正在检测逆周期（反向抱团）择时状态…'
     : !reverse
@@ -1407,13 +1407,15 @@ const diagnosePositionSellPoint = async (stock, todayStr, mode) => {
     return { ...base, buyToday: true };
   }
   try {
-    // mode='hot_money_extreme_win' 时后端返回「情绪游资-极致胜率」9 条龙头战法卖点；
-    // buyDate 供「持仓第 3 日未拉开 +10%」判定
+    // mode='hot_money_extreme_win' 时后端返回「情绪游资-极致胜率」11 条龙头战法卖点（含⑪冲高回落 / ⑫开盘自救）；
+    // buyDate 供「持仓第 N 日未拉开 +10%」判定
     const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, {
       code: stock.code,
       costPrice: stock.costPrice,
       buyDate: stock.buyDate || null,
       mode,
+      // 顺逆周期标记：逆周期持仓不启用⑪⑫「竞价大幅低开后冲高回落 / 开盘自救」
+      cycle: stock.cycle || 'pro',
     });
     return { ...res.data, ...base };
   } catch (err) {
@@ -1498,7 +1500,11 @@ const SellPointDiagnosisCard = () => {
         </div>
       )}
       <div className="ob-diagnosis-header">
-        <div className="ob-module-title" title={isExtreme ? '卖点条件：完整龙头战法 9 条（情绪游资-极致胜率）' : '卖点条件：N 日涨幅最大策略'}>
+        <div className="ob-module-title" title={
+          isExtreme
+            ? '卖点条件：完整龙头战法 9 条 + 竞价大幅低开后「冲高回落 / 开盘自救」（共 11 条，情绪游资-极致胜率）'
+            : '卖点条件：N 日涨幅最大策略'
+        }>
           <WarningOutlined className="ob-module-icon" />
           <span>卖点诊断</span>
           {isExtreme && <span className="ob-mode-switch-label">{STRATEGY_MODE_OPTIONS[1].label}</span>}

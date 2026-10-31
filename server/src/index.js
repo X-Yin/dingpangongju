@@ -13,6 +13,7 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const axios = require('axios');
 const { filterUnNormalDaPanData, getAllDaPanData } = require('./service/dapan');
 const { filterUnNormalStockData, getSingleStockData, getSingleStockTlineData, getSingleStockTlineDataByDate, getAllStockData, getJiSuYiDongRankData, triggerUpdateStockData, refreshStockData, getOpeningPrices, getStockValuation } = require('./service/stock');
 const { analyzeStockHistory } = require('./service/stockHistoryAnalysis');
@@ -56,6 +57,7 @@ const {
   onPositionChange,
   updateStockPositionCost,
   updateStockPositionWeight,
+  updateStockPositionCycle,
   diff2DayStockTline,
   getStockPositionFundFlow,
   getStockPositionAnalysisData,
@@ -114,10 +116,11 @@ const { getAttackDefenseScore } = require('./service/attackDefenseScore');
 const feishuNotify = require('./service/feishuNotify');
 // 交易日历（月度策略报告以「每月最后一个交易日」为最终期末口径）
 const { isTradingDay } = require('./utils/tradingDay');
+const { getClsReqIndexUrl } = require('./utils');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
 const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refreshLianbanRange } = require('./service/lianban');
-const { getMarketOverview, getThemeAnalysis, getStockQuotes, getThemeHistory, getThemeDayStocks, invalidateThemeAnalysisCache } = require('./service/themeMonitor');
+const { getMarketOverview, getThemeAnalysis, getStockQuotes, getThemeHistory, getThemeDayStocks, getIndexQuotes, invalidateThemeAnalysisCache } = require('./service/themeMonitor');
 // 复盘页「四维立体」：主线/支线 + 龙一~龙五 + 三线情绪周期
 const { getSiweiLitiAnalysis } = require('./service/siweiLiti');
 const { getStore: getThemeCustomStore, saveTheme: saveCustomTheme, deleteTheme: deleteCustomTheme, saveOverride: saveThemeOverride, saveOrder: saveThemeOrder } = require('./service/themeCustom');
@@ -815,31 +818,104 @@ app.get('/theme_monitor_quotes', async (req, res) => {
 
 // 题材盯盘 - 个股异动阈值基准：近 30 个交易日收盘价，用于前端计算严重异常波动阈值
 // 日 K 拉取较慢，按自然日做进程内缓存；前端仅在切换板块时按需请求一次
-const ABNORMAL_BASIS_KLINE_LIMIT = 33;
+const ABNORMAL_BASIS_KLINE_LIMIT = 45;
+
+// 交易所「严重异常波动」口径为收盘价涨跌幅偏离值累计值：
+// （个股期末价/期初前收盘价-1）-（对应分类指数期末点位/期初前收盘点位-1）
+// 因此基准价必须与对应分类指数在同一交易日对齐：沪市主板→上证综指、科创板→科创50、
+// 深市主板→深证成指、创业板→创业板指
+const getBenchmarkIndexCode = (marketCode) => {
+  const m = /^(sh|sz)(\d{6})$/.exec(String(marketCode || '').toLowerCase());
+  if (!m) return null;
+  const [, exchange, pureCode] = m;
+  if (exchange === 'sh') return /^(688|689)/.test(pureCode) ? 'sh000688' : 'sh000001';
+  if (/^399/.test(pureCode)) return 'sz399001';
+  return /^(300|301)/.test(pureCode) ? 'sz399006' : 'sz399001';
+};
+
+// 指数日 K（财联社，支持 sh000001 / sz399001 / sz399006 / sh000688），按自然日缓存
+let abnormalIndexKlineCache = { day: '', data: new Map() };
+
+const fetchBenchmarkIndexKlines = async (indexCode, dayYmd) => {
+  if (abnormalIndexKlineCache.day !== dayYmd) {
+    abnormalIndexKlineCache = { day: dayYmd, data: new Map() };
+  }
+  if (abnormalIndexKlineCache.data.has(indexCode)) {
+    return abnormalIndexKlineCache.data.get(indexCode);
+  }
+  let klines = [];
+  try {
+    const res = await axios.get(getClsReqIndexUrl(indexCode, ABNORMAL_BASIS_KLINE_LIMIT), { timeout: 15000 });
+    const raw = Array.isArray(res.data?.data) ? res.data.data : [];
+    klines = raw
+      .map((item) => ({ trade_date: Number(item.trade_date), close_px: Number(item.close_px) }))
+      .filter((item) => Number.isFinite(item.trade_date) && Number.isFinite(item.close_px) && item.close_px > 0)
+      .sort((a, b) => a.trade_date - b.trade_date);
+  } catch (error) {
+    console.error(`[themeMonitor] 获取基准指数 ${indexCode} 日K失败:`, error.message);
+  }
+  abnormalIndexKlineCache.data.set(indexCode, klines);
+  return klines;
+};
+
 let abnormalBasisCache = { day: '', data: new Map() };
 
-const fetchAbnormalBasis = async (marketCode) => {
+const fetchAbnormalBasis = async (marketCode, dayYmd) => {
   // 该接口返回按日期倒序的日 K，先转升序，最后一条为最新交易日
   const raw = await getSingleStockData(marketCode, ABNORMAL_BASIS_KLINE_LIMIT);
   if (!Array.isArray(raw) || raw.length < 2) return null;
-  const klines = [...raw].sort((a, b) => Number(a.trade_date) - Number(b.trade_date));
+  const klines = raw
+    .map((item) => ({ trade_date: Number(item.trade_date), close_px: Number(item.close_px) }))
+    .filter((item) => Number.isFinite(item.trade_date) && Number.isFinite(item.close_px) && item.close_px > 0)
+    .sort((a, b) => a.trade_date - b.trade_date);
+  if (klines.length < 11) return null;
   const lastItem = klines[klines.length - 1];
-  const lastDate = String(lastItem.trade_date);
-  // 连续 N 个交易日累计涨跌幅 = 最新收盘 / N 个交易日前的收盘 - 1，即倒数第 N+1 根 K 线
+  const lastDate = lastItem.trade_date;
+
+  // 窗口口径：近 N 个交易日（含当日实时）累计偏离值。若日 K 尚未包含当日（盘中数据源未生成当日 K），
+  // 窗口起点需整体前移一个交易日，保证「期初」与实时「期末」正好相隔 N 个交易日
+  const now = new Date();
+  const timeVal = now.getHours() * 60 + now.getMinutes();
+  const isLiveDay = isTradingDay(now) && timeVal >= 555;
+  const offset = isLiveDay && lastDate !== dayYmd ? 1 : 0;
+
   const closeBack = (back) => {
     const item = klines[klines.length - 1 - back];
     const v = Number(item?.close_px);
     return Number.isFinite(v) && v > 0 ? v : null;
   };
-  const base10 = closeBack(10);
-  const base30 = closeBack(30);
+  const dateBack = (back) => klines[klines.length - 1 - back]?.trade_date;
+
+  const base10 = closeBack(10 - offset);
+  const base30 = closeBack(30 - offset);
   if (!base10 && !base30) return null;
+
+  // 对应分类指数：按交易日对齐取同一天的收盘点位
+  const indexCode = getBenchmarkIndexCode(marketCode);
+  const indexKlines = indexCode ? await fetchBenchmarkIndexKlines(indexCode, dayYmd) : [];
+  const indexByDate = new Map(indexKlines.map((item) => [item.trade_date, item.close_px]));
+  const indexIndexBack = (back) => {
+    const item = indexKlines[indexKlines.length - 1 - back];
+    return Number.isFinite(item?.close_px) && item.close_px > 0 ? item.close_px : null;
+  };
+  const indexCloseFor = (stockDate, days) => {
+    const byDate = indexByDate.get(stockDate);
+    if (byDate) return byDate;
+    // 数据源交易日历不一致时，退化为指数序列相同偏移
+    return indexIndexBack(days - offset);
+  };
+  const indexBase10 = indexCloseFor(dateBack(10 - offset), 10);
+  const indexBase30 = indexCloseFor(dateBack(30 - offset), 30);
   const lastClose = Number(lastItem.close_px);
   return {
     base10,
     base30,
-    lastDate: Number(lastDate),
+    lastDate,
     lastClose: Number.isFinite(lastClose) && lastClose > 0 ? lastClose : null,
+    indexCode,
+    indexBase10,
+    indexBase30,
+    indexLastClose: indexIndexBack(0),
   };
 };
 
@@ -849,17 +925,20 @@ app.get('/theme_monitor_alert_basis', async (req, res) => {
       .split(',')
       .map((c) => c.trim().toLowerCase())
       .filter((c) => /^(sh|sz)\d{6}$/.test(c)))];
-    const todayYmd = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' }).replace(/\D/g, '');
+    const todayYmd = Number(new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' }).replace(/\D/g, ''));
     if (abnormalBasisCache.day !== todayYmd) {
       abnormalBasisCache = { day: todayYmd, data: new Map() };
     }
     const missing = codes.filter((c) => !abnormalBasisCache.data.has(c));
+    // 先按标的所属板块把用到的基准指数日 K 拉一遍，避免并发重复请求
+    const indexCodes = [...new Set(missing.map(getBenchmarkIndexCode).filter(Boolean))];
+    await Promise.all(indexCodes.map((indexCode) => fetchBenchmarkIndexKlines(indexCode, todayYmd)));
     // 日 K 接口较慢，限制并发避免压垮数据源
     const chunkSize = 10;
     for (let i = 0; i < missing.length; i += chunkSize) {
       await Promise.all(missing.slice(i, i + chunkSize).map(async (code) => {
         try {
-          abnormalBasisCache.data.set(code, await fetchAbnormalBasis(code));
+          abnormalBasisCache.data.set(code, await fetchAbnormalBasis(code, todayYmd));
         } catch (error) {
           console.error(`[themeMonitor] 获取 ${code} 异动基准失败:`, error.message);
           abnormalBasisCache.data.set(code, null);
@@ -874,6 +953,16 @@ app.get('/theme_monitor_alert_basis', async (req, res) => {
     res.json(out);
   } catch (error) {
     console.error('获取异动阈值基准失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 题材盯盘 - 基准指数实时行情：异动偏离值 = 个股涨跌幅 - 对应指数涨跌幅，需要实时指数点位
+app.get('/theme_monitor_index_quotes', async (req, res) => {
+  try {
+    res.json(await getIndexQuotes());
+  } catch (error) {
+    console.error('获取基准指数行情失败:', error);
     res.status(500).json({ message: error.message || '获取失败' });
   }
 });
@@ -1304,18 +1393,22 @@ app.get('/premium_diagnosis', async (req, res) => {
   }
 });
 
-// 单个股票卖点诊断（mode='hot_money_extreme_win' 时走「情绪游资-极致胜率」9 条龙头战法卖点；
+// 单个股票卖点诊断（mode='hot_money_extreme_win' 时走「情绪游资-极致胜率」11 条龙头战法卖点；
 //   mode='attack_defense' 时按持仓股是否属于自选股科技股范围分流：科技股走科技卖点诊断，其余走龙头卖点诊断）
 app.post('/check_single_stock_sell_point', async (req, res) => {
   try {
-    const { code, costPrice, buyDate, mode } = req.body;
+    const { code, costPrice, buyDate, mode, cycle } = req.body;
     if (!code) {
       return res.status(400).json({ success: false, message: '股票代码不能为空' });
     }
     const useExtremeWin = mode === MODE_EXTREME_WIN
       || (mode === MODE_ATTACK_DEFENSE && !isTechWatchlistStock(code));
+    // ⑪⑫「竞价大幅低开后冲高回落 / 开盘自救」仅顺周期持仓启用：两种相关模式下，持仓标记为 reverse（逆周期）时关闭；
+    //   未标记（缺省）按顺周期处理
     const result = useExtremeWin
-      ? await checkExtremeWinSellPointDetailed(code, costPrice, buyDate)
+      ? await checkExtremeWinSellPointDetailed(code, costPrice, buyDate, {
+        enableOpenGapReboundSell: (mode === MODE_EXTREME_WIN || mode === MODE_ATTACK_DEFENSE) && cycle !== 'reverse',
+      })
       : await checkSingleStockSellPoint(code, costPrice);
     res.json(result);
   } catch (error) {
@@ -2387,6 +2480,24 @@ app.post('/update_stock_position_weight', async (req, res) => {
     res.json({ success: true, message: '仓位已更新' });
   } catch (error) {
     console.error('更新持仓仓位失败:', error);
+    res.status(500).json({ success: false, message: error.message || '更新失败' });
+  }
+});
+
+// 更新某笔持仓的顺逆周期标记（pro 顺周期 / reverse 逆周期；仅「情绪游资-极致胜率」/「攻防兼备」模式下的持仓管理列表展示）
+app.post('/update_stock_position_cycle', async (req, res) => {
+  try {
+    const { id, cycle } = req.body;
+    if (!id) {
+      return res.status(400).json({ success: false, message: '持仓 id 不能为空' });
+    }
+    const result = updateStockPositionCycle(id, cycle);
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message || '更新失败' });
+    }
+    res.json({ success: true, message: '顺逆周期标记已更新' });
+  } catch (error) {
+    console.error('更新持仓顺逆周期标记失败:', error);
     res.status(500).json({ success: false, message: error.message || '更新失败' });
   }
 });

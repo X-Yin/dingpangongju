@@ -607,6 +607,74 @@ const getStockQuotes = async (marketCodes) => {
   return fetchThsBatchQuotes(list);
 };
 
+// ==================== 3.1 基准指数实时行情 ====================
+
+// 交易所严重异常波动判定用「收盘价涨跌幅偏离值累计值」= 个股区间涨跌幅 - 对应分类指数区间涨跌幅，
+// 因此异动监控除了个股行情，还需要对应指数的实时点位。指数快照与个股不同：
+// 需使用指数专用的同花顺市场码与代码（上证 1A0001 / 科创50 1B0688 / 深证成指与创业板指市场码 32）
+const BENCHMARK_INDEX_TARGETS = [
+  { code: 'sh000001', market: '16', thsCode: '1A0001' }, // 上证综指（沪市主板基准）
+  { code: 'sh000688', market: '16', thsCode: '1B0688' }, // 科创50（科创板基准）
+  { code: 'sz399001', market: '32', thsCode: '399001' }, // 深证成指（深市主板基准）
+  { code: 'sz399006', market: '32', thsCode: '399006' }, // 创业板指（创业板基准）
+];
+
+const INDEX_QUOTE_CACHE_TTL = 2000;
+let indexQuoteCache = { ts: 0, data: null };
+
+const getIndexQuotes = async () => {
+  if (indexQuoteCache.data && Date.now() - indexQuoteCache.ts < INDEX_QUOTE_CACHE_TTL) {
+    return indexQuoteCache.data;
+  }
+  const groups = new Map(); // market -> target[]
+  BENCHMARK_INDEX_TARGETS.forEach((target) => {
+    if (!groups.has(target.market)) groups.set(target.market, []);
+    groups.get(target.market).push(target);
+  });
+  const out = {};
+  await Promise.all([...groups.entries()].map(async ([market, targets]) => {
+    try {
+      const response = await axios.post(thsSnapshotUrl, {
+        code_list: [{ codes: targets.map((t) => t.thsCode), market }],
+        trade_class: 'intraday',
+        data_fields: ['6', '199112', '10'],
+        lang: 'zh_hans',
+        gpid: 1,
+      }, { headers: thsSnapshotHeaders, timeout: 8000 });
+      const quoteData = response.data?.data?.quote_data;
+      if (!Array.isArray(quoteData)) return;
+      quoteData.forEach((item) => {
+        const target = targets.find((t) => t.thsCode === String(item.code));
+        if (!target) return;
+        const value = Array.isArray(item.value) ? item.value[0] : null;
+        const fields = Array.isArray(item.data_fields) ? item.data_fields : [];
+        if (!Array.isArray(value) || fields.length === 0) return;
+        const pick = (field) => {
+          const idx = fields.indexOf(field);
+          if (idx < 0) return null;
+          const v = value[idx];
+          return v !== null && v !== undefined && !isNaN(Number(v)) ? Number(v) : null;
+        };
+        const price = pick('10');
+        if (price === null || price <= 0) return;
+        const change = pick('199112');
+        out[target.code] = {
+          code: target.code,
+          price,
+          prevClose: pick('6'),
+          changePct: change === null ? null : Math.round(change * 100) / 100,
+        };
+      });
+    } catch (error) {
+      console.error(`[themeMonitor] 获取基准指数行情失败(${market}):`, error.message);
+    }
+  }));
+  if (Object.keys(out).length > 0) {
+    indexQuoteCache = { ts: Date.now(), data: out };
+  }
+  return out;
+};
+
 // 自定义题材 / 个股增删 / 横幅排序写操作后调用，使 60s 分析缓存立即失效
 const invalidateThemeAnalysisCache = () => {
   analysisCache = { ts: 0, data: null };
@@ -616,6 +684,7 @@ module.exports = {
   getMarketOverview,
   getThemeAnalysis,
   getStockQuotes,
+  getIndexQuotes,
   getThemeHistory,
   getThemeDayStocks,
   invalidateThemeAnalysisCache,

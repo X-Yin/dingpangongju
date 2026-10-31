@@ -6,6 +6,8 @@ const { runVolumeShareBacktest } = require('./volumeShareBacktest');
 const { runGainVolumeShareBacktest } = require('./gainVolumeShareBacktest');
 const { runExtremeWinBacktest } = require('./extremeWinBacktest');
 const { runFusedEmoWinBacktest } = require('./fusedEmoWinBacktest');
+const { runEmotionBurstDriftBacktest } = require('./emotionBurstDriftBacktest');
+const { runEmotionBurstFollowBacktest } = require('./emotionBurstFollowBacktest');
 const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
 const { buildWindowAxis } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -46,7 +48,11 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   const extremeWinIds = ids.filter(id => STRATEGIES[id]?.extremeWinMode === true);
   // 科技进攻-情绪游资极致胜率（快进快出 + 极致胜率双腿融合，风格独占锁）走独立引擎（同单策略路径）
   const fusedIds = ids.filter(id => STRATEGIES[id]?.fusedEmoWinMode === true);
-  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.extremeWinMode !== true && STRATEGIES[id]?.fusedEmoWinMode !== true && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true && STRATEGIES[id]?.volumeShareMode !== true && STRATEGIES[id]?.gainVolumeShareMode !== true);
+  // 连板题材-情绪瞬爆-惯性漂移-龙头走独立引擎（同单策略路径，避免落入常规循环）
+  const emotionBurstDriftIds = ids.filter(id => STRATEGIES[id]?.emotionBurstDriftMode === true);
+  // 连板题材-情绪瞬爆-惯性漂移-补涨走独立引擎（同单策略路径）
+  const emotionBurstFollowIds = ids.filter(id => STRATEGIES[id]?.emotionBurstFollowMode === true);
+  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.extremeWinMode !== true && STRATEGIES[id]?.fusedEmoWinMode !== true && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true && STRATEGIES[id]?.volumeShareMode !== true && STRATEGIES[id]?.gainVolumeShareMode !== true && STRATEGIES[id]?.emotionBurstDriftMode !== true && STRATEGIES[id]?.emotionBurstFollowMode !== true);
   const results = [];
   for (const strategyId of keyBlockIds) {
     const result = await runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
@@ -74,6 +80,14 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   }
   for (const strategyId of fusedIds) {
     const result = await runFusedEmoWinBacktest(startDate, endDate, strategyId, onProgress);
+    results.push({ strategyId, result });
+  }
+  for (const strategyId of emotionBurstDriftIds) {
+    const result = await runEmotionBurstDriftBacktest(startDate, endDate, strategyId, onProgress);
+    results.push({ strategyId, result });
+  }
+  for (const strategyId of emotionBurstFollowIds) {
+    const result = await runEmotionBurstFollowBacktest(startDate, endDate, strategyId, onProgress);
     results.push({ strategyId, result });
   }
   if (regularIds.length === 0) return results;

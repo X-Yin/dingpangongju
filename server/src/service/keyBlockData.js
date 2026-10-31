@@ -594,7 +594,18 @@ const hasRecentVolumeSurge = (code, dateStr, days = 5, ratioPct = 30, peakLookba
   return false;
 };
 
+// 个股某交易日收盘时的连板数（含当日；当日未涨停为 0；中间断板即重新计数）；无该日K线返回 null
+const getBoardCountAtDate = (code, dateStr) => {
+  const bars = barsCache.get(code);
+  if (!bars || bars.length === 0) return null;
+  const d = Number(dateStr);
+  const idx = bars.findIndex(b => b.d === d);
+  if (idx < 1) return null;
+  return boardCountAt(bars, idx);
+};
+
 module.exports = {
+  getBoardCountAtDate,
   getKeyBlockConstituents,
   getKeyBlockTagMap,
   ensureKeyBlockBars,
@@ -604,6 +615,7 @@ module.exports = {
   stockWindowRangePct,
   getStockCloseOnOrBefore,
   getPastTradingDates,
+  getMultiLianbanStocks,
   getRecentMultiLianbanStocks,
   getRecentMultiLianbanOccurrences,
   stockVolumeRatio,

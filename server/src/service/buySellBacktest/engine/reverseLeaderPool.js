@@ -44,7 +44,7 @@ const buildReverseLeaderPool = async (dateStr, filterCodes = null) => {
   try {
     const info = await getRecentMultiLianbanStocks(dateStr, LOOKBACK_DAYS, MIN_BOARD_COUNT);
     // 候选池沿用「情绪游资-极致胜率」的题材黑名单，整体剔除 PCB/玻璃基板/光模块/液冷/通信/
-    // 算力/芯片/靶材/电子气体/光刻胶/算力租赁 题材（板块名包含关键词即剔除，覆盖派生板块名，如「通信(PCB)」）
+    // 算力/芯片/靶材/电子气体/光刻胶/算力租赁/元器件/黄金/中报增长/次新股 题材（板块名包含关键词即剔除，覆盖派生板块名，如「通信(PCB)」）
     const themeRemoved = [];
     base = (info.stocks || []).filter(s => {
       if (filterCodes && !filterCodes.has(s.code)) return false;

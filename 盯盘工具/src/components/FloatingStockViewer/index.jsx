@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Drawer, Empty, Spin, Typography, Space, Switch } from 'antd';
-import { EyeOutlined, AreaChartOutlined, LineChartOutlined } from '@ant-design/icons';
+import { Drawer, Empty, Spin, Typography, Space, Switch, Button, message } from 'antd';
+import { EyeOutlined, AreaChartOutlined, LineChartOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import axios from 'axios';
 import StockSearchInput from '../StockSearchInput';
 import StockTimeLine from '../StockTimeLine';
 import { local_ip } from '../../constant';
 import { getThemeColor } from '../../utils/theme';
+import { showAbnormalQuery, fetchAbnormalBasis, fetchIndexQuotes } from '../../utils/abnormalAlert';
 import './index.scss';
 
 const { Text } = Typography;
@@ -424,6 +425,9 @@ const FloatingStockViewer = () => {
     const [showScores, setShowScores] = useState(false);
     const [scoreState, setScoreState] = useState({ key: '', bars: null });
 
+    // 异动查询（与题材盯盘同一套偏离值口径）
+    const [abnormalLoading, setAbnormalLoading] = useState(false);
+
     // 点击 K 线后展示的当日分时
     const [selectedDay, setSelectedDay] = useState('');
     const [dayTlineData, setDayTlineData] = useState([]);
@@ -559,6 +563,34 @@ const FloatingStockViewer = () => {
         }
     };
 
+    // 异动查询：与题材盯盘同一套口径（累计偏离值 = 个股区间涨跌幅 - 对应分类指数区间涨跌幅）
+    const handleAbnormalQuery = async () => {
+        const code = String(stockCodeRef.current || '').toLowerCase();
+        if (!/^(sh|sz)\d{6}$/.test(code)) {
+            message.warning('请先选择股票');
+            return;
+        }
+        setAbnormalLoading(true);
+        try {
+            const [basisData, indexQuotes, quoteRes] = await Promise.all([
+                fetchAbnormalBasis([code]),
+                fetchIndexQuotes().catch(() => ({})),
+                axios.get(`http://${local_ip}:3000/theme_monitor_quotes`, { params: { codes: code } }),
+            ]);
+            const basis = basisData?.[code];
+            if (!basis) {
+                message.warning('暂无该股异动基准数据');
+                return;
+            }
+            showAbnormalQuery({ name: stockName }, quoteRes?.data?.[code], basis, indexQuotes?.[basis.indexCode]);
+        } catch (e) {
+            console.error('异动查询失败:', e);
+            message.error('异动查询失败');
+        } finally {
+            setAbnormalLoading(false);
+        }
+    };
+
     // 当前 K 线区间（最旧~最新交易日）：用于判断换股/新增交易日时是否需要重算强度分/差劲分
     const klineRangeKey = useMemo(() => {
         const dates = kData
@@ -686,6 +718,15 @@ const FloatingStockViewer = () => {
                                     checkedChildren="开"
                                     unCheckedChildren="关"
                                 />
+                                <Button
+                                    size="small"
+                                    icon={<ThunderboltOutlined />}
+                                    loading={abnormalLoading}
+                                    disabled={!stockCode}
+                                    onClick={handleAbnormalQuery}
+                                >
+                                    异动查询
+                                </Button>
                             </span>
                         </div>
 
