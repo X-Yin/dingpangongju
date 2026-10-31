@@ -2,14 +2,15 @@
 //   - 每 10s 计算一次诊断，经 WebSocket 广播给所有前端（卡片/抽屉实时刷新，前端不再轮询）
 //   - 命中且进入新的 5 分钟时间桶时（每桶最多一次）：后端发飞书 + 额外广播 open:true 让前端开抽屉/弹窗
 //   - 5 分钟桶标签口径严格对齐回测（见 buyPointBuckets.js）
-//   - 例外（2026-10-31 用户要求）：「情绪游资-极致胜率」的买点诊断只在 5 分钟整数分钟（9:30 / 9:35 / 9:40 …）
-//     执行与命中（后端仍每 10s 轮询，非整数分钟复用本桶结果、不产生新命中）；其余模式维持 10s 一次
+//   - 例外（2026-10-31 用户要求）：「情绪游资-极致胜率」（MODE_EXTREME_WIN）与「科技进攻-情绪游资-极致胜率」
+//     （MODE_ATTACK_DEFENSE）的情绪游资腿，买点诊断只在 3 的整数倍分钟（9:30 / 9:33 / 9:36 … 11:30、
+//     13:00 / 13:03 … 15:00）执行与命中（后端仍每 10s 轮询，非整数分钟不产生新命中）；其余模式维持 10s 一次
 //   - 非交易日 / 午休 / 收盘后不发；幂等状态落盘，重启同桶不重复发
 const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
 const { isTradingDay } = require('../utils');
-const { getCurrentClosedBucket, TRADING_BUCKET_LABELS } = require('./buyPointBuckets');
+const { getCurrentClosedBucket } = require('./buyPointBuckets');
 const strategyModeState = require('./strategyModeState');
 const wsServer = require('../wsServer');
 const { notifyBuyPointFeishu } = require('./buyPointNotifier');
@@ -92,26 +93,40 @@ const isInPushWindow = (date = new Date()) => {
   return true;
 };
 
-const runDiagnosis = (mode) => {
+const runDiagnosis = (mode, ewEvalNow = true) => {
   if (mode === MODE_ATTACK_DEFENSE) {
     // 攻防兼备：双策略并行诊断，组合 data = 情绪游资顺周期（顶层）+ tech 字段（科技进攻完整诊断）
+    //   情绪游资腿只在 3 的整数倍分钟才允许命中（非整数分钟抑制命中，科技腿不受影响）
     return Promise.all([
       getBuyPointChecks(null, true, false),
       getExtremeWinBuyPointChecks(null, true, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE),
-    ]).then(([techRes, ewRes]) => ({
-      data: { ...(ewRes?.data || {}), tech: techRes?.data || null, mode: MODE_ATTACK_DEFENSE },
-    }));
+    ]).then(([techRes, ewRes]) => {
+      const ewData = ewRes?.data || {};
+      return {
+        data: {
+          ...(ewEvalNow ? ewData : suppressEwBuyHit(ewData)),
+          tech: techRes?.data || null,
+          mode: MODE_ATTACK_DEFENSE,
+        },
+      };
+    });
   }
   return getBuyPointChecks(null, true, false);
 };
 
 // ============================================================
-// 「情绪游资-极致胜率」买点诊断执行门禁（2026-10-31 用户要求）：
-//   后端仍是每 10s 轮询，但买点诊断「命中」只允许在 5 分钟整数分钟评估/触发——
-//   9:30 / 13:00（开盘时点）以及 9:35 / 9:40 … 11:30、13:05 … 15:00（与回测 5min 桶标签同口径）；
+// 「情绪游资-极致胜率」买点诊断执行门禁（2026-10-31 用户要求，线上两个模式同步）：
+//   后端仍是每 10s 轮询，但买点诊断「命中」只允许在 3 的整数倍分钟评估/触发——
+//   9:30 / 9:33 / 9:36 … 11:30、13:00 / 13:03 … 15:00（自 0 点起分钟数为 3 的倍数）；
 //   非整数分钟不重新执行诊断，直接复用最近一次整数分钟的结果（命中标记同样保持，不会在非整数分钟新命中）
 // ============================================================
-const EW_BUY_EVAL_MINUTES = new Set([9 * 60 + 30, 13 * 60, ...TRADING_BUCKET_LABELS]);
+const buildEwEvalMinutes = () => {
+  const set = new Set();
+  for (let m = 9 * 60 + 30; m <= 11 * 60 + 30; m += 3) set.add(m);
+  for (let m = 13 * 60; m <= 15 * 60; m += 3) set.add(m);
+  return set;
+};
+const EW_BUY_EVAL_MINUTES = buildEwEvalMinutes();
 let ewBuyEvalDate = null;
 let lastEwBuyData = null;
 
@@ -122,7 +137,7 @@ const suppressEwBuyHit = (d) => {
     ...d,
     allPassed: false,
     reverse: d.reverse ? { ...d.reverse, allPassed: false, triggeredCount: 0, triggered: [] } : d.reverse,
-    hitGate: '当前非 5 分钟整数分钟，买点命中暂不评估（9:30 / 9:35 / 9:40 … 等整数分钟才判定）',
+    hitGate: '当前非 3 分钟整数分钟，买点命中暂不评估（9:30 / 9:33 / 9:36 … 等 3 的整数倍分钟才判定）',
   };
 };
 
@@ -157,12 +172,13 @@ const writeDefenseState = (mode, bucket) => {
 
 // 攻防兼备 tick：双策略分源桶门控——科技进攻(tech)与情绪游资(ew)各自独立判定命中与通知（每桶每源至多一次），
 // 任一源命中新桶即广播 open:true；tech 源的快进快出强卖当日禁买屏蔽检测独立生效（不遮蔽 ew 源）
-const tickAttackDefense = async (mode, data, bucket) => {
+const tickAttackDefense = async (mode, data, bucket, ewBucket = null) => {
   const techData = data.tech || null;
   const techBlocked = detectQuickOutBlock(techData);
   const techHit = !techBlocked && techData != null && techData.allPassed === true;
-  const ewHit = data.allPassed === true
-    || (data.reverse && data.reverse.allPassed === true);
+  // 情绪游资腿只在 3 的整数倍分钟（ewBucket 非空）才允许命中与通知
+  const ewHit = ewBucket != null && (data.allPassed === true
+    || (data.reverse && data.reverse.allPassed === true));
 
   // tech 屏蔽（其余前置条件全部通过但被禁买拦截）且 ew 未命中时，推买点屏蔽通知（独立桶门控，每桶一次）
   if (techBlocked && !ewHit && bucket != null && lastBlockedBucket !== bucket) {
@@ -183,10 +199,10 @@ const tickAttackDefense = async (mode, data, bucket) => {
     console.log(`[买点屏蔽] 桶 ${bucket} 科技进攻买点命中被快进快出强卖当日禁买规则拦截：${techBlocked.reason}`);
   }
 
-  if (bucket == null) return;
+  if (bucket == null && ewBucket == null) return;
 
-  const techNewBucket = techHit && lastNotifiedBuckets.tech !== bucket;
-  const ewNewBucket = ewHit && lastNotifiedBuckets.ew !== bucket;
+  const techNewBucket = bucket != null && techHit && lastNotifiedBuckets.tech !== bucket;
+  const ewNewBucket = ewBucket != null && ewHit && lastNotifiedBuckets.ew !== ewBucket;
   if (!techNewBucket && !ewNewBucket) return;
 
   // 冰点转折延时买入（2026-10-23）：科技腿命中且属冰点转折时，不立即通知买入，
@@ -196,8 +212,10 @@ const tickAttackDefense = async (mode, data, bucket) => {
   const techSuppressed = iceTriggered || iceDelayBuy.shouldSuppressTech();
 
   if (techNewBucket) lastNotifiedBuckets.tech = bucket;
-  if (ewNewBucket) lastNotifiedBuckets.ew = bucket;
+  if (ewNewBucket) lastNotifiedBuckets.ew = ewBucket;
   writeDefenseState(mode, bucket);
+  // 广播用的桶键：情绪游资腿命中且科技桶未闭合时（如 9:30 / 9:33）用 3 分钟整数分钟 HHMM
+  const msgBucket = bucket != null ? bucket : ewBucket;
 
   if (iceTriggered) {
     try {
@@ -225,7 +243,7 @@ const tickAttackDefense = async (mode, data, bucket) => {
       wsServer.broadcast({
         type: 'buy_point',
         mode,
-        bucket,
+        bucket: msgBucket,
         ts: Date.now(),
         data: { ...data, tech: data.tech ? { ...data.tech, allPassed: false } : null },
         open: true,
@@ -233,7 +251,7 @@ const tickAttackDefense = async (mode, data, bucket) => {
     }
     return;
   }
-  wsServer.broadcast({ type: 'buy_point', mode, bucket, ts: Date.now(), data, open: true });
+  wsServer.broadcast({ type: 'buy_point', mode, bucket: msgBucket, ts: Date.now(), data, open: true });
 };
 
 const tick = async () => {
@@ -245,17 +263,19 @@ const tick = async () => {
 
     const mode = strategyModeState.getMode();
     const ewMinute = now.getHours() * 60 + now.getMinutes();
-    const ewEvalNow = mode === MODE_EXTREME_WIN && EW_BUY_EVAL_MINUTES.has(ewMinute);
-    // 「情绪游资-极致胜率」的买点诊断只在 5 分钟整数分钟执行（其余模式维持 10s 一次）
+    // 情绪游资腿（极致胜率 / 攻防兼备）只在 3 的整数倍分钟允许命中
+    const ewEvalNow = (mode === MODE_EXTREME_WIN || mode === MODE_ATTACK_DEFENSE)
+      && EW_BUY_EVAL_MINUTES.has(ewMinute);
     const res = mode === MODE_EXTREME_WIN
       ? { data: await runExtremeWinBuyDiagnosis(now) }
-      : await runDiagnosis(mode);
+      : await runDiagnosis(mode, ewEvalNow);
     const data = res && res.data ? res.data : null;
-    // 命中门控用的桶键：情绪游资-极致胜率在整数分钟用「当前分钟 HHMM」（9:30 / 13:00 无闭合桶也能命中通知、
+    // 命中门控用的桶键：情绪游资腿在 3 的整数倍分钟用「当前分钟 HHMM」（9:30 / 9:33 无闭合桶也能命中通知、
     //   每个整数分钟至多通知一次）；其余情形沿用 5min 闭合桶标签
     const bucket = mode === MODE_EXTREME_WIN
       ? (ewEvalNow ? now.getHours() * 100 + now.getMinutes() : getCurrentClosedBucket(now))
       : getCurrentClosedBucket(now);
+    const ewBucket = ewEvalNow ? now.getHours() * 100 + now.getMinutes() : null;
 
     // 冰点转折延时买入到点：达到 15min 延时目标后选股并推送买入标的（13:30 之后同样执行；
     // 即使本轮诊断失败也按时执行，避免错过买入时点）
@@ -272,11 +292,11 @@ const tick = async () => {
 
     // 攻防兼备：双策略分源桶门控 + 分源飞书通知，独立于单模式逻辑
     if (mode === MODE_ATTACK_DEFENSE) {
-      await tickAttackDefense(mode, data, bucket);
+      await tickAttackDefense(mode, data, bucket, ewBucket);
       return;
     }
 
-    // 情绪游资-极致胜率：命中通知只允许在 5 分钟整数分钟（非整数分钟仅广播展示，复用上次数值、不再命中通知）
+    // 情绪游资-极致胜率：命中通知只允许在 3 的整数倍分钟（非整数分钟仅广播展示、不再命中通知）
     if (mode === MODE_EXTREME_WIN && !ewEvalNow) return;
 
     // 2) 买点屏蔽（快进快出强卖当日禁买）：其余前置条件全部通过但被该规则拦截时，抑制买点命中

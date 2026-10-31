@@ -1213,7 +1213,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
   // 首屏直接用当日缓存的诊断结果渲染，接口/WS 返回后再覆盖，避免每次进入页面都等 1~3 秒
   const [data, setData] = useState(cachedBuyDiagnosis || null);
   const [refreshing, setRefreshing] = useState(false);
-  // 标题旁实时时钟：每秒跳动，便于对照 5 分钟整点判断下一次自动诊断时机
+  // 标题旁实时时钟：每秒跳动，便于对照 3 分钟整点（9:30 / 9:33 / 9:36 …）判断下一次自动诊断时机
   const [now, setNow] = useState(() => dayjs());
 
   useEffect(() => {
@@ -1318,11 +1318,14 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
   const showTechPosition = !isExtreme; // tech_attack / attack_defense
   const showEwPosition = isExtreme || isDefense;
 
-  // 5 分钟整点（9:30/9:35/9:40…）：整分钟内背景闪烁做重点提示，进入下一分钟自动恢复
-  const isFiveMinTick = now.minute() % 5 === 0;
+  // 情绪游资模式按 3 分钟整点（9:30/9:33/9:36…）高亮（与买点诊断触发口径一致），其余模式仍按 5 分钟整点；
+  // 整分钟内背景闪烁做重点提示，进入下一分钟自动恢复
+  const isTickMinute = (isExtreme || isDefense)
+    ? now.minute() % 3 === 0
+    : now.minute() % 5 === 0;
 
   return (
-    <div className={`ob-diagnosis-card ob-buy-card ${isFiveMinTick ? 'is-tick' : ''}`}>
+    <div className={`ob-diagnosis-card ob-buy-card ${isTickMinute ? 'is-tick' : ''}`}>
       {refreshing && (
         <div className="ob-refresh-mask">
           <Spin size="large" />

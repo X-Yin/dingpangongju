@@ -1104,7 +1104,7 @@ const specExtremeWin = () => {
     ctx.add('waitA2', 'wait', { title: '机会已被历史消耗 / 前置不满足 → 不买', w: 260 }, { x: X2, y: ctx.pos.gA2.y + 6 });
     ctx.link('gA2', 'waitA2', { label: '否', tone: 'no', sh: 's-r', th: 't-l', dashed: true });
     ctx.link('waitA2', 'start', { tone: 'loop', sh: 's-t', th: 't-r', dashed: true, animated: true });
-    ctx.add('gA3', 'gate', { title: '今日盘中逐 5min 桶「**强度分 − 差劲分 ≥ 30**」？（触发即买；多只候选取差值最大）', w: 330 });
+    ctx.add('gA3', 'gate', { title: '今日盘中逐 **3 分钟**时间桶「**强度分 − 差劲分 ≥ 30**」？（触发即买；多只候选取差值最大）', w: 340 });
     ctx.link('gA2', 'gA3', { label: '是', tone: 'yes' });
     ctx.add('waitA3', 'wait', { title: '逐桶继续实时判定', w: 220 }, { x: X2, y: ctx.pos.gA3.y + 6 });
     ctx.link('gA3', 'waitA3', { label: '否', tone: 'no', sh: 's-r', th: 't-l', dashed: true });
