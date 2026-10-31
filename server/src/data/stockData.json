@@ -2858,5 +2858,65 @@
       }
     ],
     "isImportant": false
+  },
+  "sz301021": {
+    "stockName": "英诺激光",
+    "kline": [
+      {
+        "trade_date": 20261030,
+        "open_px": 49,
+        "high_px": 52.19,
+        "low_px": 47.8,
+        "close_px": 47.86,
+        "business_amount": 6406178,
+        "business_balance": 316617890,
+        "change": -7.53,
+        "ma5_px": 52.8,
+        "ma10_px": 55.36,
+        "ma20_px": 62.22,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz002981": {
+    "stockName": "朝阳科技",
+    "kline": [
+      {
+        "trade_date": 20261030,
+        "open_px": 21.1,
+        "high_px": 22.89,
+        "low_px": 20.95,
+        "close_px": 21.52,
+        "business_amount": 7870100,
+        "business_balance": 171818220,
+        "change": 1.03,
+        "ma5_px": 21.5,
+        "ma10_px": 21.83,
+        "ma20_px": 22.26,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh688331": {
+    "stockName": "荣昌生物",
+    "kline": [
+      {
+        "trade_date": 20261030,
+        "open_px": 92.63,
+        "high_px": 96.95,
+        "low_px": 90.63,
+        "close_px": 92.06,
+        "business_amount": 6814277,
+        "business_balance": 639620760,
+        "change": -1.67,
+        "ma5_px": 95.62,
+        "ma10_px": 97.5,
+        "ma20_px": 102.89,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

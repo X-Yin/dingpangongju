@@ -55,9 +55,14 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     gap: 16px;
     align-items: flex-start; // 买/卖点诊断高度由内容撑开
 
+    // 三卡按 4:3:3 分配：带「切换模式」的涨幅榜卡更宽，买点 / 卖点诊断各占 3 份
     > * {
-      flex: 2;
+      flex: 19 1 0;
       min-width: 0;
+    }
+
+    > :first-child {
+      flex: 20 1 0;
     }
   }
 }
@@ -2202,7 +2207,8 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
     .ob-row-first > .ob-fund-module,
     .ob-row-first > .ob-intraday-module,
-    .ob-row-second > * {
+    .ob-row-second > *,
+    .ob-row-second > :first-child {
       flex: none;
       width: 100%;
     }

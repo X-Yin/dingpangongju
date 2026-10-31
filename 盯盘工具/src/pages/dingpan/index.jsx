@@ -125,7 +125,6 @@ const DingPan = () => {
     const [newStockCode, setNewStockCode] = useState(''); // 新增股票代码
     const [newStockName, setNewStockName] = useState(''); // 新增股票名称
     const [newStockBlockName, setNewStockBlockName] = useState(''); // 新增股票板块
-    const [newStockRiskScore, setNewStockRiskScore] = useState(''); // 风险偏好分数
     const [newStockIsTech, setNewStockIsTech] = useState(true); // 是否为科技股，默认打开
     const [newStockWatchMarketCap, setNewStockWatchMarketCap] = useState(true); // 是否关注市值，默认关注
     const [newStockWatchPE, setNewStockWatchPE] = useState(true); // 是否关注 PE，默认关注
@@ -382,7 +381,6 @@ const DingPan = () => {
         setNewStockCode('');
         setNewStockName('');
         setNewStockBlockName('');
-        setNewStockRiskScore('');
         setNewStockIsTech(true);
         setNewStockWatchMarketCap(true);
         setNewStockWatchPE(true);
@@ -395,7 +393,6 @@ const DingPan = () => {
         setNewStockCode(stock.code);
         setNewStockName(stock.stockName || '');
         setNewStockBlockName(stock.blockName && stock.blockName !== 'xxx' ? stock.blockName : '');
-        setNewStockRiskScore(stock.riskScore != null ? String(stock.riskScore) : '');
         setNewStockIsTech(stock.isTech !== false);
         setNewStockWatchMarketCap(stock.watchMarketCap !== false);
         setNewStockWatchPE(stock.watchPE !== false);
@@ -413,7 +410,6 @@ const DingPan = () => {
                 code: newStockCode,
                 name: newStockName,
                 blockName: newStockBlockName || 'xxx',
-                riskScore: newStockRiskScore || null,
                 isTech: newStockIsTech,
                 watchMarketCap: newStockWatchMarketCap,
                 watchPE: newStockWatchPE
@@ -422,7 +418,6 @@ const DingPan = () => {
             setNewStockCode('');
             setNewStockName('');
             setNewStockBlockName('');
-            setNewStockRiskScore('');
             setNewStockIsTech(true);
             setNewStockWatchMarketCap(true);
             setNewStockWatchPE(true);
@@ -437,7 +432,7 @@ const DingPan = () => {
         }
     };
 
-    // 保存编辑自选股：代码/名称/板块/风险偏好/科技股/关注市值/关注 PE 全部可改
+    // 保存编辑自选股：代码/名称/板块/科技股/关注市值/关注 PE 全部可改
     const handleEditStock = async () => {
         if (!editingStockCode || !newStockCode || !newStockName) {
             return;
@@ -449,7 +444,6 @@ const DingPan = () => {
                 code: newStockCode,
                 name: newStockName,
                 blockName: newStockBlockName || 'xxx',
-                riskScore: newStockRiskScore || null,
                 isTech: newStockIsTech,
                 watchMarketCap: newStockWatchMarketCap,
                 watchPE: newStockWatchPE
@@ -2775,8 +2769,6 @@ const DingPan = () => {
                 setNewStockName={setNewStockName}
                 newStockBlockName={newStockBlockName}
                 setNewStockBlockName={setNewStockBlockName}
-                newStockRiskScore={newStockRiskScore}
-                setNewStockRiskScore={setNewStockRiskScore}
                 newStockIsTech={newStockIsTech}
                 setNewStockIsTech={setNewStockIsTech}
                 watchMarketCap={newStockWatchMarketCap}

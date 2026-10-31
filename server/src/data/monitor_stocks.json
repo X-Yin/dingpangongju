@@ -1238,8 +1238,8 @@
     "riskScore": " 8",
     "isTech": true,
     "addedAt": "2026-10-29 15:03:12",
-    "watchMarketCap": true,
-    "watchPE": true
+    "watchMarketCap": false,
+    "watchPE": false
   },
   {
     "code": "sh600118",
@@ -1504,5 +1504,38 @@
     "addedAt": "2026-10-30 19:56:16",
     "watchMarketCap": true,
     "watchPE": true
+  },
+  {
+    "code": "sz301021",
+    "name": "英诺激光",
+    "isImportant": false,
+    "blockName": "ABF 载板设备",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": false,
+    "watchPE": true,
+    "addedAt": "2026-10-31 22:19:23"
+  },
+  {
+    "code": "sz002981",
+    "name": "朝阳科技",
+    "isImportant": false,
+    "blockName": "耳机",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-10-31 22:22:50"
+  },
+  {
+    "code": "sh688331",
+    "name": "荣昌生物",
+    "isImportant": false,
+    "blockName": "创新药",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": false,
+    "watchPE": true,
+    "addedAt": "2026-10-31 22:33:04"
   }
 ]

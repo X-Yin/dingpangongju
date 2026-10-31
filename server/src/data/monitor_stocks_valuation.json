@@ -594,10 +594,10 @@
   {
     "code": "sz301021",
     "name": "英诺激光",
-    "marketValue": 8897030566,
-    "circulatingMarketValue": 8886400743,
-    "ttmPe": 118.6348,
-    "updatedAt": "2026-10-19 09:15:48"
+    "marketValue": 7316355376,
+    "circulatingMarketValue": 7307614082,
+    "ttmPe": 90.4463,
+    "updatedAt": "2026-10-31 22:34:54"
   },
   {
     "code": "sz000725",
@@ -1310,5 +1310,21 @@
     "circulatingMarketValue": 5002151902,
     "ttmPe": 17.6538,
     "updatedAt": "2026-10-31 00:03:29"
+  },
+  {
+    "code": "sz002981",
+    "name": "朝阳科技",
+    "marketValue": 2938743546,
+    "circulatingMarketValue": 2616489853,
+    "ttmPe": 284.8925,
+    "updatedAt": "2026-10-31 22:34:54"
+  },
+  {
+    "code": "sh688331",
+    "name": "荣昌生物",
+    "marketValue": 51965797084,
+    "circulatingMarketValue": 32763808222,
+    "ttmPe": 7.9536,
+    "updatedAt": "2026-10-31 22:34:54"
   }
 ]

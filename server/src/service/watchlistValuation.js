@@ -35,6 +35,9 @@ const readFile = () => {
 };
 
 let cache = { mtimeMs: -1, map: new Map() };
+// 补拉失败的代码与重试间隔：榜单接口 5s 轮询，避免对同一只拉取失败的股票反复请求
+const failedAt = new Map();
+const RETRY_INTERVAL_MS = 60 * 1000;
 // 同步读取估值映射（回测热循环用）：Map<code, { marketValue, circulatingMarketValue, ttmPe }>，按文件 mtime 懒加载缓存
 const getValuationMap = () => {
   try {
@@ -120,6 +123,11 @@ const syncWatchlistValuation = async (codes = null) => {
     return null;
   }, 5);
   const rows = fetched.filter(Boolean);
+  // 记录补拉结果：成功清除失败标记，失败则从现在起 60s 内不再重复请求
+  targetCodes.forEach((code, i) => {
+    if (fetched[i]) failedAt.delete(code);
+    else failedAt.set(code, Date.now());
+  });
   if (rows.length > 0) {
     const merged = new Map();
     for (const item of readFile()) if (item && item.code) merged.set(item.code, item);
@@ -130,23 +138,31 @@ const syncWatchlistValuation = async (codes = null) => {
   return rows;
 };
 
-// 是否已有「当日」缓存（按本地自然日判定）
-const isCacheFreshToday = () => {
-  const rows = readFile();
-  if (rows.length === 0) return false;
+// 当日快照中缺失的自选股代码（如盘中新增的自选股）：缓存「当日已新鲜」不代表每只股票都有当日记录，
+// 缺记录会走「数据不足不拦截」而绕过市值/PE 过滤，故按缺失补齐
+const getPendingValuationCodes = () => {
   const today = localDateStr();
-  return rows.some(r => typeof r.updatedAt === 'string' && r.updatedAt.slice(0, 10) === today);
+  const freshCodes = new Set();
+  for (const r of readFile()) {
+    if (r && r.code && typeof r.updatedAt === 'string' && r.updatedAt.slice(0, 10) === today) freshCodes.add(r.code);
+  }
+  const now = Date.now();
+  return getMonitorStocks()
+    .filter(s => s && s.code && !freshCodes.has(s.code))
+    .map(s => s.code)
+    .filter(code => now - (failedAt.get(code) || 0) >= RETRY_INTERVAL_MS);
 };
 
-// 回测入口预取：文件缺失或缓存非当日时自动拉取一次（同日后续回测直接复用；拉取失败沿用旧缓存/空表，不阻塞回测）
-// 并发调用（同进程内多个回测请求同时进入）共用同一次拉取，避免重复请求
+// 回测/实时入口预取：当日快照缺失（首次进入、跨日、盘中新增自选股）时按缺失代码补拉；
+// force=true 则忽略缓存全量重拉。并发调用（同进程内多个请求）共用同一次拉取，避免重复请求
 let inflight = null;
 const ensureWatchlistValuation = async (force = false) => {
-  if (!force && isCacheFreshToday()) return;
+  const pendingCodes = force ? null : getPendingValuationCodes();
+  if (!force && pendingCodes.length === 0) return;
   if (inflight) return inflight;
   inflight = (async () => {
     try {
-      await syncWatchlistValuation();
+      await syncWatchlistValuation(force ? null : pendingCodes);
     } catch (e) {
       console.error('同步自选股估值失败:', e.message);
     } finally {

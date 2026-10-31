@@ -220,8 +220,9 @@ const getStockWatchFlagIndex = () => {
 // 查询单只自选股的两个关注开关；不在自选股中或字段缺失时均按关注（true）
 const getStockWatchFlags = (code) => getStockWatchFlagIndex().get(code) || { watchMarketCap: true, watchPE: true };
 
-// 编辑自选股（右键菜单「编辑」）：名称 / 板块 / 风险偏好 / 是否科技股 / 是否关注市值 / 是否关注 PE 均可改；
+// 编辑自选股（右键菜单「编辑」）：名称 / 板块 / 是否科技股 / 是否关注市值 / 是否关注 PE 均可改；
 // 股票代码允许改（视为替换该条记录），改代码时若新代码已在自选股中则拒绝，避免重复
+// 风险偏好分数已从新增/编辑弹窗移除：前端不再传该字段，未传时保留原值（不置空）
 const updateMonitorStockInfo = (originalCode, payload = {}) => {
     const stocks = getMonitorStocks();
     const idx = stocks.findIndex(s => s.code === originalCode);
@@ -239,7 +240,9 @@ const updateMonitorStockInfo = (originalCode, payload = {}) => {
         code: nextCode,
         name: nextName,
         blockName: payload.blockName != null ? payload.blockName : prev.blockName,
-        riskScore: payload.riskScore != null && payload.riskScore !== '' ? payload.riskScore : null,
+        riskScore: payload.riskScore !== undefined
+            ? (payload.riskScore != null && payload.riskScore !== '' ? payload.riskScore : null)
+            : prev.riskScore,
         isTech: payload.isTech !== false,
         watchMarketCap: payload.watchMarketCap !== false,
         watchPE: payload.watchPE !== false,

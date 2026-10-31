@@ -235,9 +235,6 @@ const Sentiment = () => {
   const [techIntraday5DayData, setTechIntraday5DayData] = useState({});
   const [intradayMode, setIntradayMode] = useState('today');
   const [sumDateRange, setSumDateRange] = useState(null);
-  const [riskScoreData, setRiskScoreData] = useState([]);
-  const riskScoreContainerRef = useRef(null);
-  const riskScoreChartRef = useRef(null);
   const [emotionCycleData, setEmotionCycleData] = useState([]);
   const [emotionCycleLoading, setEmotionCycleLoading] = useState(false);
   const [klineModalVisible, setKlineModalVisible] = useState(false);
@@ -293,29 +290,6 @@ const Sentiment = () => {
     // } finally {
     //   setClassifyLoading(false);
     // }
-  };
-
-  const fetchRiskScore = async () => {
-    try {
-      const res = await axios.get(`http://${local_ip}:3000/market_risk_score`);
-      setRiskScoreData(res.data || []);
-    } catch (err) {
-      console.error('Fetch risk score data failed:', err);
-    }
-  };
-
-  const handleUpdateRiskScore = async () => {
-    setUpdating(true);
-    try {
-      await axios.post(`http://${local_ip}:3000/update_market_risk_score`);
-      message.success('市场风险偏好指数更新成功');
-      fetchRiskScore();
-    } catch (err) {
-      console.error('Update risk score failed:', err);
-      message.error('更新失败，请重试');
-    } finally {
-      setUpdating(false);
-    }
   };
 
   const handleUpdateEmotion = async () => {
@@ -396,7 +370,6 @@ const Sentiment = () => {
 
   useEffect(() => {
     fetchData();
-    fetchRiskScore();
     fetchEmotionCycle();
     fetchLianbanSeries();
   }, []);
@@ -513,11 +486,8 @@ const Sentiment = () => {
         const maxDate = dayjs(formatChartDate(dates[dates.length - 1]));
         setSumDateRange([minDate, maxDate]);
       }
-      if (riskScoreData.length > 0 && riskScoreContainerRef.current) {
-        renderRiskScoreChart(riskScoreData);
-      }
     }
-  }, [loading, data, techIndexData, sumDateRange, riskScoreData]);
+  }, [loading, data, techIndexData, sumDateRange]);
 
   // 连板情绪 tab：渲染上证指数K线 + 连板情绪折线（数据就绪且 tab 激活时渲染）
   useEffect(() => {
@@ -583,9 +553,6 @@ const Sentiment = () => {
       }
       if (techIntradayChartRef.current && techIntradayContainerRef.current) {
         techIntradayChartRef.current.applyOptions({ width: techIntradayContainerRef.current.clientWidth });
-      }
-      if (riskScoreChartRef.current && riskScoreContainerRef.current) {
-        riskScoreChartRef.current.applyOptions({ width: riskScoreContainerRef.current.clientWidth });
       }
       if (shIndexChartRef.current && shIndexContainerRef.current) {
         shIndexChartRef.current.applyOptions({ width: shIndexContainerRef.current.clientWidth });
@@ -846,144 +813,6 @@ const Sentiment = () => {
       localization: {
         timeFormatter: (time) => {
           return dayjs.unix(time).format('MM-DD HH:mm');
-        },
-      },
-    });
-
-    chart.timeScale().fitContent();
-  };
-
-  const renderRiskScoreChart = (riskScoreData) => {
-    if (riskScoreChartRef.current) {
-      riskScoreChartRef.current.remove();
-    }
-
-    const chart = createBaseChart(riskScoreContainerRef.current, 220);
-    riskScoreChartRef.current = chart;
-
-    const tooltip = document.createElement('div');
-    tooltip.className = 'chart-tooltip';
-    riskScoreContainerRef.current.appendChild(tooltip);
-
-    const riskScoreColorMap = {
-      1: '#52c41a',
-      2: '#73d13d',
-      3: '#faad14',
-      4: '#ff7a45',
-      5: '#ff4d4f',
-      6: '#f5222d',
-    };
-
-    const chartData = riskScoreData.map(item => {
-      const value = parseFloat(item.score) || 0;
-      return {
-        time: formatChartDate(item.date),
-        value: value,
-        color: riskScoreColorMap[item.level] || '#faad14',
-      };
-    }).sort((a, b) => a.time.localeCompare(b.time));
-
-    const lineSeries = chart.addLineSeries({
-      color: '#722ed1',
-      lineWidth: 3,
-      priceFormat: {
-        type: 'price',
-        precision: 0,
-        minMove: 1,
-      },
-    });
-    lineSeries.setData(chartData);
-
-    const areaSeries = chart.addAreaSeries({
-      color: 'rgba(114, 46, 209, 0.1)',
-      topColor: 'rgba(114, 46, 209, 0.15)',
-      bottomColor: 'rgba(114, 46, 209, 0)',
-      lineWidth: 0,
-      priceFormat: {
-        type: 'price',
-        precision: 0,
-        minMove: 1,
-      },
-    });
-    areaSeries.setData(chartData);
-
-    const baselineSeries = chart.addLineSeries({
-      color: '#ff4d4f',
-      lineWidth: 1,
-      lineStyle: 2,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    baselineSeries.setData(chartData.map(d => ({ time: d.time, value: 100 })));
-
-    chart.timeScale().applyOptions({
-      tickMarkFormatter: (time) => {
-        return dayjs(time).format('MM-DD');
-      },
-      rightOffset: 0,
-      borderColor: 'transparent',
-    });
-
-    chart.subscribeCrosshairMove((param) => {
-      if (
-        param.point === undefined ||
-        !param.time ||
-        param.point.x < 0 ||
-        param.point.x > riskScoreContainerRef.current.clientWidth ||
-        param.point.y < 0 ||
-        param.point.y > 300
-      ) {
-        tooltip.style.display = 'none';
-      } else {
-        const dateStr = param.time;
-        const dataPoint = chartData.find(d => d.time === dateStr);
-        const rawItem = riskScoreData.find(item => formatChartDate(item.date) === dateStr);
-
-        if (dataPoint && rawItem) {
-          tooltip.style.display = 'block';
-          const { value, color } = dataPoint;
-
-          tooltip.innerHTML = `
-             <div class="tooltip-title">${dayjs(dateStr).format('YYYY-MM-DD')}</div>
-             <div class="tooltip-item">
-               <span class="label">风险偏好:</span>
-               <span class="value" style="color: ${color}">${value}</span>
-             </div>
-             <div class="tooltip-item">
-               <span class="label">等级:</span>
-               <span class="value" style="color: ${color}">${rawItem.label}</span>
-             </div>
-             <div class="tooltip-item">
-               <span class="label">描述:</span>
-               <span class="value">${rawItem.desc}</span>
-             </div>
-           `;
-
-          let x = param.point.x + 15;
-          const y = param.point.y + 15;
-
-          if (x > riskScoreContainerRef.current.clientWidth - 180) {
-            x = param.point.x - 195;
-          }
-
-          tooltip.style.left = x + 'px';
-          tooltip.style.top = y + 'px';
-        }
-      }
-    });
-
-    chart.applyOptions({
-      layout: {
-        padding: {
-          top: 10,
-          right: 10,
-          bottom: 0,
-          left: 10,
-        },
-      },
-      localization: {
-        timeFormatter: (time) => {
-          return dayjs(time).format('YYYY-MM-DD');
         },
       },
     });
@@ -1667,61 +1496,6 @@ const Sentiment = () => {
                 </Row>
               </Col>
             )}
-
-            <Col span={24}>
-              <Card
-                title={
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                    <span><LineChartOutlined /> 市场风险偏好日线图</span>
-                    {riskScoreData.length > 0 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '14px' }}>
-                          当前：
-                          <span style={{ fontWeight: 'bold', color: { 1: '#52c41a', 2: '#73d13d', 3: '#faad14', 4: '#ff7a45', 5: '#ff4d4f', 6: '#f5222d' }[riskScoreData[0].level] || '#faad14' }}>
-                            {riskScoreData[riskScoreData.length - 1].label}
-                          </span>
-                          <span style={{ marginLeft: '8px', color: '#666' }}>
-                            分数：{riskScoreData[riskScoreData.length - 1].score}
-                          </span>
-                        </span>
-                        <Button
-                          type="primary"
-                          icon={<ReloadOutlined />}
-                          loading={updating}
-                          onClick={handleUpdateRiskScore}
-                          size="small"
-                        >
-                          刷新
-                        </Button>
-                      </div>
-                    )}
-                    {riskScoreData.length === 0 && (
-                      <Button
-                        type="primary"
-                        icon={<ReloadOutlined />}
-                        loading={updating}
-                        onClick={handleUpdateRiskScore}
-                        size="small"
-                      >
-                        刷新
-                      </Button>
-                    )}
-                  </div>
-                }
-                bordered={false}
-                className="chart-card"
-              >
-                {riskScoreData.length > 0 ? (
-                  <div ref={riskScoreContainerRef} className="chart-container" style={{ height: '220px' }} />
-                ) : (
-                  <div className="chart-placeholder">
-                    <div className="chart-placeholder-icon">📊</div>
-                    <div className="chart-placeholder-text">暂无市场风险偏好数据</div>
-                    <div className="chart-placeholder-hint">交易时段收盘后（15:05）自动计算并记录</div>
-                  </div>
-                )}
-              </Card>
-            </Col>
 
             <Col span={24}>
               <Card

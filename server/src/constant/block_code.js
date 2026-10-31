@@ -1667,5 +1667,47 @@ exports.default = [
         "blockName": "机器人大脑",
         "code": "sh605118",
         "name": "力鼎光电"
+    },
+    {
+        "blockName": "阿里耳机",
+        "code": "sz002981",
+        "name": "朝阳科技",
+        "tag": "中性"
+    },
+    {
+        "blockName": "阿里耳机",
+        "code": "sh601116",
+        "name": "三江购物",
+        "tag": "中性"
+    },
+    {
+        "blockName": "阿里耳机",
+        "code": "sz002241",
+        "name": "歌尔股份",
+        "tag": "中性"
+    },
+    {
+        "blockName": "阿里耳机",
+        "code": "sz300785",
+        "name": "值得买",
+        "tag": "中性"
+    },
+    {
+        "blockName": "阿里耳机",
+        "code": "sz300792",
+        "name": "壹网壹创",
+        "tag": "中性"
+    },
+    {
+        "blockName": "阿里耳机",
+        "code": "sz002153",
+        "name": "石基信息",
+        "tag": "中性"
+    },
+    {
+        "blockName": "阿里耳机",
+        "code": "sh603881",
+        "name": "数据港",
+        "tag": "中性"
     }
 ]
