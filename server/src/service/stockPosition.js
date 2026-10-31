@@ -789,6 +789,8 @@ const getStockPositionMainFund = async () => {
                 buyDate: item.buyDate || null,
                 buyTime: item.buyTime || null,
                 weight: item.weight != null ? item.weight : 50,
+                // 顺逆周期标记：pro 顺周期 / reverse 逆周期，未标记按顺周期（前端持仓管理展示、卖点诊断⑪⑫启用依据）
+                cycle: item.cycle === 'reverse' ? 'reverse' : 'pro',
                 // 镜像持仓标记：存在 mirror 说明为回测镜像同步自动添加，供前端以灰色标题区分手动添加
                 mirror: item.mirror || null,
                 mainFund: round(toNumber(mainFundDiff) / 100000000),
@@ -803,6 +805,7 @@ const getStockPositionMainFund = async () => {
                 buyDate: item.buyDate || null,
                 buyTime: item.buyTime || null,
                 weight: item.weight != null ? item.weight : 50,
+                cycle: item.cycle === 'reverse' ? 'reverse' : 'pro',
                 mirror: item.mirror || null,
                 mainFund: null,
             });

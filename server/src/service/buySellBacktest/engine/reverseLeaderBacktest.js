@@ -33,6 +33,7 @@ const {
 const {
   LOOKBACK_DAYS, MIN_BOARD_COUNT, RANGE_WINDOW_DAYS, RANGE_SLIDE_DAYS, MIN_WINDOW_RANGE_PCT,
   NEG_STREAK_MIN_DAYS, INDEX_DROP_PCT, STRENGTH_MIN, HIT_REQUIRED,
+  BIG_DROP_MAX_TIMES,
   buildReverseLeaderPool,
 } = require('./reverseLeaderPool');
 
@@ -168,7 +169,7 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
     let poolFilterText = '';
     if (eligible) {
       try {
-        const pool = await buildReverseLeaderPool(dateStr);
+        const pool = await buildReverseLeaderPool(dateStr, null, { bigDropMaxTimes: BIG_DROP_MAX_TIMES });
         candidatesRaw = pool.stocks || [];
         poolFilterText = pool.poolFilterText || '';
       } catch (e) { candidatesRaw = []; poolFilterText = ''; }

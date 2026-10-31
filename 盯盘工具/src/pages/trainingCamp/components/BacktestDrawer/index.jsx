@@ -26,6 +26,9 @@ import StrategyFlowDiagram, { getStrategyFlow, parseNoteBullet, splitBoldClauses
 
 // 回测最早支持日期（早于此日期无回放数据）
 const EARLIEST_DATE = '20260728';
+// 「情绪游资-极致胜率」回测不依赖本地资金/成交量快照（引擎按分时 + 科技情绪数据驱动），
+// 支持更早的回测日期：默认范围从 2026-07-01 起，与其他策略区分开（2026-10-31 用户要求）
+const EXTREME_WIN_EARLIEST_DATE = '20260701';
 // 策略分类「最近点击」顺序缓存键：值为分类 key 数组，最近点击的排首位
 const CATEGORY_ORDER_LS_KEY = 'backtest_drawer_category_order';
 // 默认回测范围窗口（最近 N 个交易日），与后端 backtestReport.js 的 getDefaultReportRange /
@@ -428,7 +431,7 @@ const extremeWinBuyRules = [
   { key: 'extreme_win_limit_up', title: '【顺周期腿】涨停顺延：买入时点已涨停者不可买、顺延下一只', desc: '买入时点（时间桶）已涨停的候选（**主板涨幅 > 9.5%、创业板/科创板涨幅 > 19%**）无法成交，**顺延至「强度分 − 差劲分」差值排名的下一只**；全部达标候选均已涨停则该桶不买、后续桶继续实时判定。' },
   { key: 'extreme_win_time_gate', title: '【通用·两腿】时间门禁：每天 14:30 后不买', desc: '**2026-10-20 用户新增，2026-10-24 用户改为 14:30**：每天 **14:30 之后不再买入**——**14:30 时间桶本身仍可买**，14:35 起的时间桶一律不买；**顺周期腿与逆周期腿均适用**（线上实盘的「情绪游资-极致胜率」模式同步该规则；「攻防兼备」模式的极致胜率腿仍保持 13:30）。逆周期腿 14:30 之后的强度分命中登记**照常累计**（与线上口径一致），只是不再实际买入。' },
   { key: 'reverse_leader_timing', title: '【逆周期腿】买点前置：上证指数 3 日线斜率连续为负 ≥ 2 天（负斜率第 3 天起执行）', desc: '**逆周期腿 = 独立「情绪游资-反向抱团龙头」策略的完整逻辑**（选股 / 买点 / 卖点完全一致，唯一区别是按**半仓 ×0.5** 计收益）。信号指数为**上证指数** 3 日线斜率（收盘口径）。以**斜率由正转负当日为第 1 天**（如 8.4 转负 → 8.4 为第 1 天、8.5 为第 2 天），**连续为负 ≥ 2 天**（即处于负斜率第 3 天及以后，如 8.6 起）才允许执行；斜率转正（窗口重置）后需等待下一次「由正转负」重新累计天数。' },
-  { key: 'reverse_leader_pool', title: '【逆周期腿】选股池：近 20 日连板个股池（≥ 2 板）+ 题材黑名单 ∩ 20 日滑动 10 日子窗口区间最大涨幅 ≥ 60%', desc: '候选池 = 在回测当日回溯**过去 20 个交易日**（不含当日）内曾在 lianbanSnapshot 中出现过**连板数 ≥ 2（二连板及以上）**的个股；剔除 ST 等黑名单，并**一律剔除创业板（30/301）与科创板（688）**（2026-10-17 用户要求）；再沿用**题材黑名单**（**PCB / 玻璃基板 / 光模块 / 液冷 / 通信 / 算力 / 芯片 / 靶材 / 电子气体 / 光刻胶 / 算力租赁 / 元器件 / 黄金 / 中报增长 / 次新股**，板块名含任一关键词即整体剔除，如「通信(PCB)」「芯片(玻璃基板)」等派生板块名）；并叠加区间涨幅过滤——在**过去 20 个交易日（不含当日）**内滑动「**连续 10 个交易日**」子窗口，取各子窗口「(最高收盘价 − 最低收盘价) ÷ 最低收盘价 × 100」的**最大值须 ≥ 60%**（只保留近期已大幅拉升的强势抱团股；子窗口缺日K视为不达标）。' },
+  { key: 'reverse_leader_pool', title: '【逆周期腿】选股池：近 20 日连板个股池（≥ 2 板）+ 题材黑名单 ∩ 20 日滑动 10 日子窗口区间最大涨幅 ≥ 60%', desc: '候选池 = 在回测当日回溯**过去 20 个交易日**（不含当日）内曾在 lianbanSnapshot 中出现过**连板数 ≥ 2（二连板及以上）**的个股；剔除 ST 等黑名单，并**一律剔除创业板（30/301）与科创板（688）**（2026-10-17 用户要求）；再沿用**题材黑名单**（**PCB / 玻璃基板 / 光模块 / 液冷 / 通信 / 算力 / 芯片 / 靶材 / 电子气体 / 光刻胶 / 算力租赁 / 元器件 / 黄金 / 中报增长 / 次新股**，板块名含任一关键词即整体剔除，如「通信(PCB)」「芯片(玻璃基板)」等派生板块名）；并叠加区间涨幅过滤——在**过去 20 个交易日（不含当日）**内滑动「**连续 10 个交易日**」子窗口，取各子窗口「(最高收盘价 − 最低收盘价) ÷ 最低收盘价 × 100」的**最大值须 ≥ 60%**（只保留近期已大幅拉升的强势抱团股；子窗口缺日K视为不达标）；另要求（2026-10-31 用户新增，回测与线上实盘同口径）：**最近 10 个交易日（不含当日）收盘涨幅低于 -9% 的交易日至多 2 次**（不要求连续，只统计频次；出现第 3 次即整只剔除）。' },
   { key: 'reverse_leader_index_drop', title: '【逆周期腿】命中条件①：当日上证指数跌幅 ≤ -0.5%', desc: '仅在当日**上证指数跌幅 ≤ -0.5%**（当日较昨收下跌至少 0.5 个点）的交易日内，才对该股的强度分进行统计；上证微反弹或跌幅不足 0.5 个点的交易日**不统计**（不影响已累计的次数）。盘中逐桶以**上一交易日收盘价**为基准实时计算上证指数当日跌幅。' },
   { key: 'reverse_leader_strength', title: '【逆周期腿】命中条件②：盘中强度分 > 50（复用顺周期腿强度分口径）', desc: '强度分口径与顺周期腿一致：各分项归一化到 0~100 后加权 = **0.3×A + 0.2×B + 0.3×C + 0.2×D**——① **竞价高开 A**（上限 10%）；② **单分钟最大涨幅 B**（上限 10%，一字板取 10%/20%）；③ **抗分歧分数 C**（上限 20）；④ **当日涨幅 D**（上限 10%，< 0 记 0 分）。当日**盘中分时强度分首次 > 50** 即计为一次命中（同一交易日同一只股只计一次）。' },
   { key: 'reverse_leader_second_hit', title: '【逆周期腿】买点：同一只股累计第 2 次达标时买入', desc: '**按个股独立累计**命中次数：在负斜率窗口内，同一只候选股每满足一次「上证跌幅 ≤ -0.5% 且盘中强度分 > 50」即累计 1 次（同一交易日同一只只计一次）。**累计达到 2 次**时（如 8.6 第 1 次、8.8 第 2 次），在**第 2 次强度分 > 50 的时间桶即按该桶分时价买入**（通过门禁：14:30、有空仓位、未涨停、未被顺周期腿持有）。若此时该股**已封涨停**（主板涨幅 > 9.5%、创业板/科创板 > 19%）则本次不买，继续等待后续达标时点再买。计数窗口在**斜率由负转正**（窗口重置）时**清零**。若当前两个仓位槽均已占用、或该标的已被顺周期腿持有，则本腿**本次不买**。' },
@@ -483,7 +486,7 @@ const REVERSE_LEADER_STRATEGY_IDS = ['hot_money_reverse_leader'];
 const isReverseLeaderStrategy = (id) => REVERSE_LEADER_STRATEGY_IDS.includes(id);
 const reverseLeaderBuyRules = [
   { key: 'reverse_leader_timing', title: '买点前置：上证指数 3 日线斜率连续为负 ≥ 2 天（负斜率第 3 天起执行）', desc: '信号指数为**上证指数** 3 日线斜率（收盘口径）。以**斜率由正转负当日为第 1 天**（如 8.4 转负 → 8.4 为第 1 天、8.5 为第 2 天），**连续为负 ≥ 2 天**（即处于负斜率第 3 天及以后，如 8.6 起）才允许执行本策略；斜率转正（窗口重置）后需等待下一次「由正转负」重新累计天数。' },
-  { key: 'reverse_leader_pool', title: '选股池：近 20 日连板个股池（≥ 2 板）+ 题材黑名单 ∩ 20 日滑动 10 日子窗口区间最大涨幅 ≥ 60%', desc: '候选池 = 在回测当日回溯**过去 20 个交易日**（不含当日）内曾在 lianbanSnapshot 中出现过**连板数 ≥ 2（二连板及以上）**的个股；剔除 ST 等黑名单，并沿用「情绪游资-极致胜率」的**题材黑名单**（**PCB / 玻璃基板 / 光模块 / 液冷 / 通信 / 算力 / 芯片 / 靶材 / 电子气体 / 光刻胶 / 算力租赁 / 元器件 / 黄金 / 中报增长 / 次新股**，板块名含任一关键词即整体剔除，如「通信(PCB)」「芯片(玻璃基板)」等派生板块名）；并叠加区间涨幅过滤——在**过去 20 个交易日（不含当日）**内滑动「**连续 10 个交易日**」子窗口，取各子窗口「(**最高收盘价** − **最低收盘价**) ÷ 最低收盘价 × 100」的**最大值须 ≥ 60%**（只保留近期已大幅拉升的强势抱团股；子窗口缺日K视为不达标）。' },
+  { key: 'reverse_leader_pool', title: '选股池：近 20 日连板个股池（≥ 2 板）+ 题材黑名单 ∩ 20 日滑动 10 日子窗口区间最大涨幅 ≥ 60%', desc: '候选池 = 在回测当日回溯**过去 20 个交易日**（不含当日）内曾在 lianbanSnapshot 中出现过**连板数 ≥ 2（二连板及以上）**的个股；剔除 ST 等黑名单，并沿用「情绪游资-极致胜率」的**题材黑名单**（**PCB / 玻璃基板 / 光模块 / 液冷 / 通信 / 算力 / 芯片 / 靶材 / 电子气体 / 光刻胶 / 算力租赁 / 元器件 / 黄金 / 中报增长 / 次新股**，板块名含任一关键词即整体剔除，如「通信(PCB)」「芯片(玻璃基板)」等派生板块名）；并叠加区间涨幅过滤——在**过去 20 个交易日（不含当日）**内滑动「**连续 10 个交易日**」子窗口，取各子窗口「(**最高收盘价** − **最低收盘价**) ÷ 最低收盘价 × 100」的**最大值须 ≥ 60%**（只保留近期已大幅拉升的强势抱团股；子窗口缺日K视为不达标）；另要求（2026-10-31 用户新增，回测与线上实盘同口径）：**最近 10 个交易日（不含当日）收盘涨幅低于 -9% 的交易日至多 2 次**（不要求连续，只统计频次；出现第 3 次即整只剔除）。' },
   { key: 'reverse_leader_index_drop', title: '命中条件①：当日上证指数跌幅 ≤ -0.5%', desc: '仅在当日**上证指数跌幅 ≤ -0.5%**（当日较昨收下跌至少 0.5 个点）的交易日内，才对该股的强度分进行统计；上证微反弹或跌幅不足 0.5 个点的交易日**不统计**（不影响已累计的次数）。盘中逐桶以**上一交易日收盘价**为基准实时计算上证指数当日跌幅。' },
   { key: 'reverse_leader_strength', title: '命中条件②：盘中强度分 > 50（复用「极致胜率」口径）', desc: '强度分口径与「情绪游资-极致胜率」一致：各分项归一化到 0~100 后加权 = **0.3×A + 0.2×B + 0.3×C + 0.2×D**——① **竞价高开 A**（上限 10%）= (当日开盘价 − 昨收) ÷ 昨收 × 100；② **单分钟最大涨幅 B**（上限 10%）= 分时相邻分钟最大涨幅（一字板取 10%/20%）；③ **抗分歧分数 C**（上限 20）= 服务内抗分歧算法；④ **当日涨幅 D**（上限 10%）= 现价较昨收涨幅（< 0 记 0 分）。当日**盘中分时强度分首次 > 50** 即计为一次命中（同一交易日同一只股只计一次）。' },
   { key: 'reverse_leader_second_hit', title: '买点：同一只股累计第 2 次达标时，在达标盘中分时买入', desc: '**按个股独立累计**命中次数：在负斜率窗口内，同一只候选股每满足一次「上证跌幅 ≤ -0.5% 且盘中强度分 > 50」即累计 1 次（同一交易日同一只只计一次）。**累计达到 2 次**时（如 8.6 第 1 次、8.8 第 2 次），在该**第 2 次强度分 > 50 的盘中分时**按当桶分时价买入。计数窗口在**斜率由负转正**（窗口重置）时**清零**。' },
@@ -1424,19 +1427,23 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
 
   const availableDates = useMemo(() => (Array.isArray(dates) ? dates : []), [dates]);
   const maxDateStr = availableDates.length > 0 ? availableDates[0] : dayjs().format('YYYYMMDD');
-  // 未手动选择时默认取「最近 60 个可用交易日」（不足 60 个时取最早的一个日期），与后端回测报告 /
-  // worker 预生成缓存的日期范围口径一致，
-  // 保证 worker 跑完后打开抽屉能直接命中缓存（此前写死最早日期会因范围不一致查不到缓存而空白）
+  const curIsIce = isIceStrategy(strategy);
+  const curIsIceRev = isIceRevStrategy(strategy);
+  const curIsExtremeWin = isExtremeWinStrategy(strategy);
+  // 「情绪游资-极致胜率」默认范围固定从 2026-07-01 起（其他策略仍为最近 60 个可用交易日），
+  // 该策略引擎不依赖资金/成交量快照，可用更早的历史日期（2026-10-31 用户要求）
   const defaultRange = useMemo(() => {
+    if (curIsExtremeWin) {
+      const start = dayjs(EXTREME_WIN_EARLIEST_DATE, 'YYYYMMDD');
+      const end = dayjs(maxDateStr, 'YYYYMMDD');
+      return start.isAfter(end) ? [end, end] : [start, end];
+    }
     if (availableDates.length === 0) return [dayjs(EARLIEST_DATE, 'YYYYMMDD'), dayjs(maxDateStr, 'YYYYMMDD')];
     const sortedAsc = [...availableDates].sort();
     const start = sortedAsc[Math.max(0, sortedAsc.length - REPORT_DAYS)];
     const end = sortedAsc[sortedAsc.length - 1];
     return [dayjs(start, 'YYYYMMDD'), dayjs(end, 'YYYYMMDD')];
-  }, [availableDates, maxDateStr]);
-  const curIsIce = isIceStrategy(strategy);
-  const curIsIceRev = isIceRevStrategy(strategy);
-  const curIsExtremeWin = isExtremeWinStrategy(strategy);
+  }, [availableDates, maxDateStr, curIsExtremeWin]);
   // 融合策略（sci_attack_emo_win）在记录标签/规则集合上与极致胜率共用同一套渲染分支
   const curIsExtremeWinLike = curIsExtremeWin || isFusedStrategy(strategy);
   const curIsReverseLeader = isReverseLeaderStrategy(strategy);
@@ -1542,6 +1549,11 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
     setActiveCategory(null); // 手动切换策略后取消分类 Tag 高亮
     setStrategy(v);
     localStorage.setItem('latest_training_camp_buy_sell_backtest_strategy', v);
+    // 手动选择的日期范围若早于新策略的最早支持日期（仅「情绪游资-极致胜率」支持 2026-07-01 起），
+    // 回退到默认范围，避免其他策略沿用极致胜率更早的日期导致结果不符
+    if (!isExtremeWinStrategy(v) && range && range[0] && range[0].format('YYYYMMDD') < EARLIEST_DATE) {
+      setRange(null);
+    }
   };
 
   const startPolling = (taskId, opts = {}) => {
@@ -1984,7 +1996,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const disabledDate = (current) => {
     if (!current) return false;
     const ds = current.format('YYYYMMDD');
-    return ds < EARLIEST_DATE || ds > maxDateStr;
+    const earliest = curIsExtremeWin ? EXTREME_WIN_EARLIEST_DATE : EARLIEST_DATE;
+    return ds < earliest || ds > maxDateStr;
   };
 
   const categoryOptions = useMemo(() => {

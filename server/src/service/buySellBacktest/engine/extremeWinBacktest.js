@@ -51,6 +51,7 @@ const {
   INDEX_DROP_PCT: REV_INDEX_DROP_PCT,
   STRENGTH_MIN: REV_STRENGTH_MIN,
   HIT_REQUIRED: REV_HIT_REQUIRED,
+  BIG_DROP_MAX_TIMES: REV_BIG_DROP_MAX_TIMES,
   buildReverseLeaderPool,
 } = require('./reverseLeaderPool');
 
@@ -306,7 +307,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
     let revPoolFilterText = '';
     if (eligibleRev) {
       try {
-        const pool = await buildReverseLeaderPool(dateStr);
+        const pool = await buildReverseLeaderPool(dateStr, null, { bigDropMaxTimes: REV_BIG_DROP_MAX_TIMES });
         revCandidatesRaw = pool.stocks || [];
         revPoolFilterText = pool.poolFilterText || '';
       } catch (e) { revCandidatesRaw = []; revPoolFilterText = ''; }

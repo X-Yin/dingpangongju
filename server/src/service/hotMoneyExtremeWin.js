@@ -38,6 +38,7 @@ const {
   STRENGTH_MIN: REV_STRENGTH_MIN,
   HIT_REQUIRED: REV_HIT_REQUIRED,
   NEG_STREAK_MIN_DAYS: REV_NEG_STREAK_MIN_DAYS,
+  BIG_DROP_MAX_TIMES: REV_BIG_DROP_MAX_TIMES,
   isReverseEligible,
   buildReverseLeaderPool,
 } = require('./buySellBacktest/engine/reverseLeaderPool');
@@ -285,7 +286,7 @@ const computeReverseHitCounts = async (codes, windowDates, todayNum) => {
     // 该交易日候选池（与今日池代码取交集）
     let dayCodes;
     try {
-      const dayPool = await buildReverseLeaderPool(String(dNum), codeSet);
+      const dayPool = await buildReverseLeaderPool(String(dNum), codeSet, { bigDropMaxTimes: REV_BIG_DROP_MAX_TIMES });
       dayCodes = new Set((dayPool.stocks || []).map(s => s.code));
     } catch (e) { dayCodes = new Set(); }
     if (dayCodes.size === 0) continue;
@@ -324,8 +325,9 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
   const isToday = dateStr === dayjs().format('YYYYMMDD');
   const afterClose = !isToday || isAfterMarketClose();
 
-  // 1) 候选池（过去 20 交易日出现过连板 ≥ 2 + 剔除创业板/科创板/题材黑名单 + 10 日滑动窗口区间涨幅 ≥ 60%）
-  const pool = await buildReverseLeaderPool(dateStr);
+  // 1) 候选池（过去 20 交易日出现过连板 ≥ 2 + 剔除创业板/科创板/题材黑名单 + 10 日滑动窗口区间涨幅 ≥ 60%
+  //    + 最近 10 个交易日收盘跌幅 < -9% 的日至多 2 次）
+  const pool = await buildReverseLeaderPool(dateStr, null, { bigDropMaxTimes: REV_BIG_DROP_MAX_TIMES });
   const poolStocks = pool.stocks || [];
   const codes = poolStocks.map(s => s.code);
 
