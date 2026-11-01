@@ -248,6 +248,11 @@ const STRATEGY_OPTIONS = [
   // 候选池剔除创业板/科创板与芯片、算力等题材黑名单（同「情绪游资-极致胜率」）；
   // 买点 = 9:30–14:30 分时首次 +9% 买入（竞价 >5% 直接买入已取消）；卖点 = 极致胜率顺周期腿去掉单分钟跳水；半仓单持仓
   { value: 'first_board_wash_relaunch', label: '首板洗盘-起爆拉升' },
+  // 放量洗盘-二板起爆（2026-11-01 用户新增，仅回测）：T-1 必须是首板，其之前须出现「拉升放量 1~3 日 → 震荡缩量
+  // 2~12 日」洗盘形态（参照 股票数据材料/只放量无涨停-打二板/washout.js），叠加震荡期单日涨跌幅 ±5%、震荡最低
+  // 不破首次爆量开盘价 -5%；15 日内 ≥3 板、20 日内三日窗口涨幅 > 20%、流通市值 > 100 亿者剔除；
+  // 买点 = 竞价必须高开，9:30–14:30 按 1 分钟回溯分时首次 +8% 买入；卖点五条与「首板洗盘-起爆拉升」同口径
+  { value: 'volume_washout_second_board', label: '放量洗盘-二板起爆' },
   { value: 'highest_3d_reports', label: '3日研报覆盖数最多' },
   { value: 'highest_5d_reports', label: '5日研报覆盖数最多' },
   { value: 'highest_3d_reports_top5_gain', label: '3日研报前五&涨幅最大' },
@@ -298,6 +303,7 @@ const STRATEGY_CATEGORIES = [
       'emotion_burst_drift_leader',
       'emotion_burst_follow_leader',
       'first_board_wash_relaunch',
+      'volume_washout_second_board',
     ],
   },
   {
@@ -706,6 +712,47 @@ const firstBoardWashNote = {
     '**仓位（2026-11-01 用户要求）**：**账户拆两份、每份半仓（权重 0.5）**——最多**同时持有 2 只不同股票**，每份仓位各自独立买卖、独立按自身买入价计收益（均按半仓 ×0.5 折算后计入账户）；持仓期内出现新的买点即可补入另一份（不会重复买入已持有的同一只股票）。任一份卖出当日**不再新开仓位**，次日起才可再买。账户整体收益按「重叠区间内各份相加、跨轮复利」计算。',
   ],
 };
+// 放量洗盘-二板起爆（volume_washout_second_board，2026-11-01 用户新增，仅回测；
+// 后端独立引擎 engine/volumeWashoutSecondBoardBacktest.js）：
+//   选股 = 「只放量无涨停-打二板」形态（参照 股票数据材料/只放量无涨停-打二板/washout.js）：
+//     T-1 必须是首板；T-1 之前的日K须出现「拉升放量 1~3 日 → 震荡缩量 2~12 日」，首板收盘突破震荡最高收盘、
+//     首板量 ≥ 震荡最后一日量 1.2 倍；震荡期单日涨跌幅须在 ±5% 内（-5%~-6% 最多 1 天、超 -6% 剔除）；
+//     震荡最低价不得低于首次爆量开盘价 -5%；
+//   候选池剔除创业板/科创板、代码黑名单、题材黑名单；15 日内 ≥3 板剔除；20 日内三日窗口涨幅 > 20% 剔除；
+//   流通市值 ≤ 100 亿元（预筛用 T-1 收盘价、买入时按买入价复核）；
+//   买点 = 竞价必须高开，9:30–14:30 按 1 分钟回溯分时首次 +8% 买入；竞价一字板买不进；
+//   卖点 = 五条（与「首板洗盘-起爆拉升」完全同口径）；账户拆两份、每份半仓，最多同时持有 2 只
+const VOLUME_WASHOUT_STRATEGY_IDS = ['volume_washout_second_board'];
+const isVolumeWashoutStrategy = (id) => VOLUME_WASHOUT_STRATEGY_IDS.includes(id);
+const volumeWashoutBuyRules = [
+  { key: 'vws_exclude', title: '候选池剔除：创业板/科创板 + 代码黑名单 + 题材黑名单', desc: '候选池统一剔除：① 全部**创业板（30/301）与科创板（688）**个股；② **代码黑名单**（源杰科技、联讯仪器）；③ **题材黑名单**——板块名含 **芯片、半导体、算力、算力租赁、PCB、玻璃基板、光模块、液冷、通信、靶材、电子气体、光刻胶、元器件、黄金、中报增长、次新股、金属、稀土、有色** 者（含派生板块名，如「芯片(玻璃基板)」「算力(液冷)」；非连板股按「东方财富板块成分股汇总」所属板块名判定）。' },
+  { key: 'vws_t1_board', title: '上个交易日（T-1）必须是首板，且 15 个交易日内未出现 ≥3 板', desc: '买点日 = 首板之后的次日。**上一交易日必须是首板**（连板快照中连板数为 1 且日期为买点日前一交易日）；同时**过去 15 个交易日内出现过 ≥3 板（三板及以上）**者一律剔除。' },
+  { key: 'vws_washout', title: '前置「拉升放量 1~3 日 → 震荡缩量 2~12 日 → 首板突破」洗盘形态', desc: '参照 **股票数据材料/只放量无涨停-打二板/washout.js** 的 isPotentialBullWashout：① **拉升放量段**（1~3 个交易日）：拉升均量 ≥ 前 5 日均量的 **1.8 倍**、累计涨幅 ≥ **3.5%**、最大单日涨幅 ≥ **2%**、最高价 ≥ 前 5 日最高价的 **1.02 倍**，且至少 min(2, 拉升天数) 天单日量 ≥ 前 5 日均量 1.3 倍（仅 1 天拉升时该日量须 ≥ 2 倍）；② **震荡缩量段**（2~12 个交易日，紧接拉升段之后、到 T-1 前一交易日为止）：震荡最高收盘 ≤ 拉升最高收盘的 **1.05 倍**、最低收盘 ≥ 拉升最低收盘的 **0.85 倍**、震荡振幅 ≤ **20%**、平台振幅 ≤ **25%**、震荡均量 ≤ 拉升均量的 **80%**、震荡最大量 ≤ 拉升最大量的 **95%**、后半段均量 ≤ 前半段均量的 **95%**；③ **首板突破确认**：首板收盘 ≥ 震荡最高收盘的 **1.01 倍**、首板量 ≥ 震荡最后一日量的 **1.2 倍**。形态判定只使用 T-1 及更早的日K（不使用买点日自身日K，避免未来函数）。' },
+  { key: 'vws_shock_calm', title: '震荡区间单日涨跌幅温和 + 最低价不破首次爆量开盘价 -5%', desc: '爆量日之后的**震荡区间内所有交易日涨跌幅都须在 ±5% 之内**（最大单日涨幅 ≤ +5%、单日跌幅不低于 -5%），**唯一例外是单日跌幅介于 -5%~-6%（不含两端）的交易日最多允许 1 天**，跌幅超过 **-6%** 的一律剔除；且**震荡区间最低价不得低于首次爆量（拉升段首日）开盘价的 -5%**，即（首次爆量开盘价 − 震荡最低价）÷ 首次爆量开盘价 ≤ 5%。' },
+  { key: 'vws_win3_cap', title: '买点日前 20 个交易日内最大三日滑动窗口涨幅 ≤ 20%', desc: '按买点日前一交易日及更早的日K，取最近 **20 个交易日**内**任意连续 3 个交易日**的涨幅（末日收盘 − 窗口前一日收盘 ÷ 窗口前一日收盘），其**最大值 > 20%** 的个股一律剔除（避免追短期已经大幅拉升的票）；历史日K不足 3 日时不拦截。' },
+  { key: 'vws_float_mv', title: '流通市值必须 ≤ 100 亿元（按买入日股价折算）', desc: '先用「**当下流通市值** ÷ 当下股价」反推**流通股本**（当下市值取自财联社快照缓存：自选股用 monitor_stocks_valuation、非自选股用 data/backtest_stock_valuation.json；两者都缺失时才退回连板快照日市值）；再把流通股本 × **买入日该分钟实际买入价**，得到**回测日期当天股价对应的流通市值**，该值 **> 100 亿元即剔除并顺延下一只**。候选池预筛时先用**买点日前一交易日收盘价**折算一次（预筛 ≤ 100 亿），买入时再按买入价复核，两者都满足才买入；**数据缺失时不拦截**。' },
+  { key: 'vws_entry', title: '买点：竞价必须高开 → 9:30–14:30 分时涨幅首次 +8% 按该分钟价买入', desc: '首板之后的次日（当前回测日期）**竞价必须高开**（9:30 开盘价高于昨收），随后**按 1 分钟回溯**，在 **9:30–14:30** 内**分时涨幅（较昨收）首次达到 +8%** 时按该分钟分时价买入（开盘即已 ≥ +8% 则在 9:30 按竞价价买入）；**14:30 之后不再买入**；竞价一字板（开盘即涨停）买不进，开盘未涨停而盘中才冲上涨停的仍按该分钟价买入。' },
+  { key: 'vws_position', title: '仓位：账户拆两份、每份半仓（权重 0.5），可同时持有 2 只不同股票', desc: '**账户拆两份、每份半仓（权重 0.5）**：最多**同时持有 2 只不同股票**，每份仓位各自独立买入、独立卖出、独立按自身买入价计算收益（均按半仓 ×0.5 折算后计入账户）；持仓期内出现新的买点即可补入另一份（不会重复买入已持有的同一只股票）。**任一份卖出当日不再新开仓位**，次日起才可再买。账户整体收益按「重叠区间内各份相加、跨轮复利」计算。' },
+];
+// 卖点五条与「首板洗盘-起爆拉升」完全同口径，直接复用 firstBoardWashSellRules
+const volumeWashoutNote = {
+  group: '情绪游资·放量洗盘二板起爆',
+  bullets: [
+    '**候选池剔除**：候选池统一剔除 ① **全部创业板（30/301）与科创板（688）**个股；② **代码黑名单**（源杰科技、联讯仪器）；③ **题材黑名单**——板块名含 **芯片、半导体、算力、算力租赁、PCB、玻璃基板、光模块、液冷、通信、靶材、电子气体、光刻胶、元器件、黄金、中报增长、次新股、金属、稀土、有色** 者（含派生板块名，如「芯片(玻璃基板)」「算力(液冷)」）。',
+    '**选股（参照 股票数据材料/只放量无涨停-打二板/washout.js）**：**上个交易日（T-1）必须是首板**（连板快照中连板数为 1，且日期为买点日前一交易日），且**过去 15 个交易日内出现过 ≥3 板者一律剔除**；T-1 之前的日K须出现「**拉升放量 1~3 日 → 震荡缩量 2~12 日**」形态——拉升段均量 ≥ 前 5 日均量 **1.8 倍**、累计涨幅 ≥ **3.5%**、最大单日涨幅 ≥ **2%**、最高价 ≥ 前 5 日最高价 **1.02 倍**；震荡段最高收盘 ≤ 拉升最高收盘 **1.05 倍**、最低收盘 ≥ 拉升最低收盘 **0.85 倍**、震荡振幅 ≤ **20%**、平台振幅 ≤ **25%**、震荡均量 ≤ 拉升均量 **80%**、震荡最大量 ≤ 拉升最大量 **95%**、后半段均量 ≤ 前半段均量 **95%**；首板收盘 ≥ 震荡最高收盘 **1.01 倍**、首板量 ≥ 震荡最后一日量 **1.2 倍**。**震荡区间内所有交易日涨跌幅须在 ±5% 之内**（最大单日涨幅 ≤ +5%、单日跌幅不低于 -5%），唯一例外是**单日跌幅介于 -5%~-6%（不含两端）最多 1 天**，跌幅超过 **-6%** 一律剔除；且**震荡区间最低价不得低于首次爆量开盘价 -5%**。形态判定只使用 T-1 及更早的日K（避免未来函数）。',
+    '**其他剔除**：**买点日前 20 个交易日内任意连续 3 个交易日的涨幅（末日收盘 − 窗口前一日收盘 ÷ 窗口前一日收盘）最大值 > 20%** 者一律剔除；**流通市值必须 ≤ 100 亿元**（先用「**当下流通市值** ÷ 当下股价」反推流通股本——自选股用 monitor_stocks_valuation、非自选股用 data/backtest_stock_valuation.json，两者都缺失时才退回连板快照日市值——再把股本 × **买入日该分钟实际买入价**折算；候选池预筛用 T-1 收盘价、买入时再按买入价复核，两者都满足才买入；数据缺失时不拦截）。',
+    '**买点（1 分钟回溯）**：首板之后的次日（当前回测日期）**竞价必须高开**（9:30 开盘价高于昨收），随后在 **9:30–14:30** 内**按 1 分钟**回溯，**分时涨幅（较昨收）首次达到 +8%** 时按该分钟分时价买入（开盘即已 ≥ +8% 则在 9:30 按竞价价买入）；**14:30 之后不再买入**；**竞价一字板（开盘即涨停）买不进**，开盘未涨停而盘中才冲上涨停的仍按该分钟价买入。',
+    '**卖点（七条，①~⑤ 与「首板洗盘-起爆拉升」同口径、⑥⑦ 为本策略新增，各份持仓逐份独立判定、任一条先触发即卖该份）**：① **跌破 5 日线**——**MA5 取当日之前 5 个交易日的收盘均价**（不含当日收盘，避免未来函数）；**收益率未拉开 +20%**（收盘口径历史最高收益 < +20%）时**盘中分时价跌破 MA5** 即按该分钟分时价卖出，**收益率已拉开 +20%**（收盘口径历史最高收益 ≥ +20%）后改为**只在收盘判定**，**当日收盘价 < MA5** 才按收盘价卖出（历史日K不足 5 日时该项不触发）；② **跌破成本线 -3%（连续 5 分钟）/-5%（立即卖）**——盘中分时价**较买入价跌幅 < -3%**（现价 < 买入价 × 0.97）时，须**连续 5 分钟（5 个连续分时点）都跌破**才在第 5 分钟按该分钟分时价卖出（中途回到 -3% 之上即**重新计时**）；若**跌幅 < -5%**（现价 < 买入价 × 0.95）则**立即卖出**、不等观察窗口；③ **盘中跌停**——盘中**分时跌幅（较昨收）≤ -9%** 即视为跌停，按该分钟分时价**立即卖出**。①②③ 逐分钟回溯取最先触发的那一分钟（同分钟优先级 ③ > ②(-5%) > ②(-3%) > ①）；④ **买入当日涨停、次日收盘未涨停**——**买入当日收盘涨停**（收盘涨幅 ≥ 9.5%）且**买入次一交易日收盘未涨停**，则在**次一交易日收盘（15:00）按收盘价卖出**；⑤ **买入后次日竞价低开**——**不论买入当日是否涨停**，只要**买入次一交易日竞价低开**（开盘涨幅 < 0），即在**次一交易日 9:30 按竞价开盘价直接卖出**（该条 9:30 即触发，早于当日盘中卖点与 ④ 的收盘判定）；⑥ **收益率未拉开 +20% 前，任一日收盘未涨停即当日收盘卖出**——**收益率未拉开 +20%**（收盘口径历史最高收益 < +20%）时，**买入次日起（A 股 T+1，买入当日不可卖）只要某一天收盘未涨停**（当日收盘涨幅 < 涨停阈值 9.5%），就在**当日收盘（15:00）按收盘价卖出**；**收益率已拉开 +20%** 后该条不再触发，④ 仍按原口径生效；⑦ **收益率未拉开 +20% 前，竞价低开超过 -3% 即当日 9:30 卖出**——**买入次日起任一持仓交易日**，只要**竞价低开超过 -3%**（开盘涨幅 < -3%），就在**当日 9:30 按竞价开盘价直接卖出**（早于当日盘中卖点与收盘判定）；**收益率已拉开 +20%** 后该条不再触发（T+1 竞价低开 < 0 已由 ⑤ 先卖，⑦ 主要约束 T+2 及以后）。',
+    '**仓位**：**账户拆两份、每份半仓（权重 0.5）**——最多**同时持有 2 只不同股票**，每份仓位各自独立买卖、独立按自身买入价计收益（均按半仓 ×0.5 折算后计入账户）；持仓期内出现新的买点即可补入另一份（不会重复买入已持有的同一只股票）。任一份卖出当日**不再新开仓位**，次日起才可再买。账户整体收益按「重叠区间内各份相加、跨轮复利」计算。',
+  ],
+};
+// 卖点：①~⑤ 复用「首板洗盘-起爆拉升」口径；⑥⑦ 为本策略新增
+// （收益率未拉开 +20% 之前：任一日收盘未涨停即当日收盘卖 / 竞价低开超过 -3% 即当日 9:30 卖；已拉开 +20% 后均不再触发）
+const volumeWashoutSellRules = [
+  ...firstBoardWashSellRules,
+  { key: 'vws_sell_close_not_limitup', title: '⑥ 收益率未拉开 20% 前，任一日收盘未涨停 → 当日收盘卖出', desc: '**收益率未拉开 +20%**（收盘口径历史最高收益 < +20%）时，**买入次日起（A 股 T+1，买入当日不可卖）只要某一天收盘未涨停**（当日收盘涨幅 < 涨停阈值 9.5%），就在**当日收盘（15:00）按收盘价卖出**；**收益率已拉开 +20%**（收盘口径历史最高收益 ≥ +20%）后该条不再触发，④ 仍按原口径生效（买入当日涨停、T+1 收盘未涨停 → T+1 收盘卖出）。' },
+  { key: 'vws_sell_gap_down_3', title: '⑦ 收益率未拉开 20% 前，竞价低开超过 -3% → 当日 9:30 卖出', desc: '**收益率未拉开 +20%**（收盘口径历史最高收益 < +20%）时，**买入次日起任一持仓交易日**，只要**竞价低开超过 -3%**（开盘涨幅 < -3%，即竞价价低于昨收的 97%），就在**当日 9:30 按竞价开盘价直接卖出**（早于当日盘中卖点与 ①~④ 的判定）。**收益率已拉开 +20%** 后该条不再触发。注：T+1 竞价低开（< 0）已由 ⑤ 先卖，故该条主要约束 T+2 及以后；若 T+1 仅低开 -1% 等小缺口，⑤ 仍会卖。' },
+];
 const EMOTION_BURST_DRIFT_STRATEGY_IDS = ['emotion_burst_drift_leader'];
 const isEmotionBurstDriftStrategy = (id) => EMOTION_BURST_DRIFT_STRATEGY_IDS.includes(id);
 const emotionBurstDriftBuyRules = [
@@ -1260,6 +1307,9 @@ const STRATEGY_SPECIFIC_NOTES = {
   // ---- 首板洗盘-起爆拉升（first_board_wash_relaunch，2026-10-31 用户新增，仅回测、单策略） ----
   first_board_wash_relaunch: firstBoardWashNote,
 
+  // ---- 放量洗盘-二板起爆（volume_washout_second_board，2026-11-01 用户新增，仅回测、单策略） ----
+  volume_washout_second_board: volumeWashoutNote,
+
   // ---- N 日涨幅最大-成交量占比（2026-10-25 用户新增，N = 2/3/4/5） ----
   highest_2d_gain_volume_share: gainVolumeShareNote(2),
   highest_3d_gain_volume_share: gainVolumeShareNote(3),
@@ -1502,7 +1552,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   // 「情绪游资-极致胜率」与「首板洗盘-起爆拉升」默认范围固定从 2026-07-01 起（其他策略仍为最近 60 个可用交易日），
   // 这两个策略引擎不依赖资金/成交量快照，可用更早的历史日期（2026-10-31 用户要求）
   const defaultRange = useMemo(() => {
-    if (curIsExtremeWin || isFirstBoardWashStrategy(strategy)) {
+    if (curIsExtremeWin || isFirstBoardWashStrategy(strategy) || isVolumeWashoutStrategy(strategy)) {
       const start = dayjs(EXTREME_WIN_EARLIEST_DATE, 'YYYYMMDD');
       const end = dayjs(maxDateStr, 'YYYYMMDD');
       return start.isAfter(end) ? [end, end] : [start, end];
@@ -1522,6 +1572,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const curIsEmotionBurstDrift = isEmotionBurstDriftStrategy(strategy);
   const curIsEmotionBurstFollow = isEmotionBurstFollowStrategy(strategy);
   const curIsFirstBoardWash = isFirstBoardWashStrategy(strategy);
+  const curIsVolumeWashout = isVolumeWashoutStrategy(strategy);
   const effectiveRange = range || defaultRange;
 
   // 组件卸载时停止轮询
@@ -1930,8 +1981,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
       const pick = effectiveRange;
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
-      const buyRules = curIsFirstBoardWash ? firstBoardWashBuyRules : (curIsEmotionBurstFollow ? emotionBurstFollowBuyRules : (curIsEmotionBurstDrift ? emotionBurstDriftBuyRules : (curIsGainVolumeShare ? gainVolumeShareBuyRules(gainVolumeShareN(strategy)) : (curIsVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (curIsNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (curIsExtremeWinLike ? extremeWinBuyRules : (curIsReverseLeader ? reverseLeaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : BUY_RULES)))))))));
-      const sellRules = curIsFirstBoardWash ? firstBoardWashSellRules : ((curIsEmotionBurstFollow || curIsEmotionBurstDrift) ? LEADER_SELL_RULES : (curIsGainVolumeShare ? SELL_RULES : (curIsVolumeShare ? volumeShareSellRules : (curIsNBoardAttack ? nBoardAttackSellRules : (curIsReverseLeader ? reverseLeaderSellRules : (curIsExtremeWinLike ? extremeWinSellRules : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : SELL_RULES))))))));
+      const buyRules = curIsVolumeWashout ? volumeWashoutBuyRules : (curIsFirstBoardWash ? firstBoardWashBuyRules : (curIsEmotionBurstFollow ? emotionBurstFollowBuyRules : (curIsEmotionBurstDrift ? emotionBurstDriftBuyRules : (curIsGainVolumeShare ? gainVolumeShareBuyRules(gainVolumeShareN(strategy)) : (curIsVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (curIsNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (curIsExtremeWinLike ? extremeWinBuyRules : (curIsReverseLeader ? reverseLeaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : BUY_RULES))))))))));
+      const sellRules = curIsVolumeWashout ? volumeWashoutSellRules : (curIsFirstBoardWash ? firstBoardWashSellRules : ((curIsEmotionBurstFollow || curIsEmotionBurstDrift) ? LEADER_SELL_RULES : (curIsGainVolumeShare ? SELL_RULES : (curIsVolumeShare ? volumeShareSellRules : (curIsNBoardAttack ? nBoardAttackSellRules : (curIsReverseLeader ? reverseLeaderSellRules : (curIsExtremeWinLike ? extremeWinSellRules : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : SELL_RULES)))))))));
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);
@@ -2066,7 +2117,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const disabledDate = (current) => {
     if (!current) return false;
     const ds = current.format('YYYYMMDD');
-    const earliest = (curIsExtremeWin || isFirstBoardWashStrategy(strategy)) ? EXTREME_WIN_EARLIEST_DATE : EARLIEST_DATE;
+    const earliest = (curIsExtremeWin || isFirstBoardWashStrategy(strategy) || isVolumeWashoutStrategy(strategy)) ? EXTREME_WIN_EARLIEST_DATE : EARLIEST_DATE;
     return ds < earliest || ds > maxDateStr;
   };
 
@@ -2487,7 +2538,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                         weight={t.weight}
                         halfReason={
                           splitLegHalfReason(t.splitLeg, { extremeWin: curIsExtremeWinLike, cycle: t.cycle })
-                          || (curIsFirstBoardWash ? '首板洗盘-起爆拉升为账户拆两份、每份半仓（权重 0.5）' : (curIsVolumeShare ? '情绪游资-成交量占比为半仓单持仓（权重 0.5、逐笔复利）' : (t.twoBuy ? '两次买入策略每份仓位均为半仓' : ((curIsIce || curIsIceRev) ? `${curIsIceRev ? '逆周期' : '顺周期'}情绪游资为半仓买入（权重 0.5、逐笔复利）` : '防御为半仓买入'))))
+                          || ((curIsFirstBoardWash || curIsVolumeWashout) ? '账户拆两份、每份半仓（权重 0.5）' : (curIsVolumeShare ? '情绪游资-成交量占比为半仓单持仓（权重 0.5、逐笔复利）' : (t.twoBuy ? '两次买入策略每份仓位均为半仓' : ((curIsIce || curIsIceRev) ? `${curIsIceRev ? '逆周期' : '顺周期'}情绪游资为半仓买入（权重 0.5、逐笔复利）` : '防御为半仓买入'))))
                         }
                       />
                       <Checkbox
@@ -2593,7 +2644,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                           label="浮盈"
                           halfReason={
                             splitLegHalfReason(h.splitLeg, { extremeWin: curIsExtremeWinLike, cycle: h.cycle })
-                            || (curIsFirstBoardWash ? '首板洗盘-起爆拉升为账户拆两份、每份半仓（权重 0.5）' : (curIsVolumeShare ? '情绪游资-成交量占比为半仓单持仓（权重 0.5、逐笔复利）' : (h.twoBuy ? '两次买入策略每份仓位均为半仓' : ((curIsIce || curIsIceRev) ? `${curIsIceRev ? '逆周期' : '顺周期'}情绪游资为半仓买入（权重 0.5、逐笔复利）` : '防御为半仓买入'))))
+                            || ((curIsFirstBoardWash || curIsVolumeWashout) ? '账户拆两份、每份半仓（权重 0.5）' : (curIsVolumeShare ? '情绪游资-成交量占比为半仓单持仓（权重 0.5、逐笔复利）' : (h.twoBuy ? '两次买入策略每份仓位均为半仓' : ((curIsIce || curIsIceRev) ? `${curIsIceRev ? '逆周期' : '顺周期'}情绪游资为半仓买入（权重 0.5、逐笔复利）` : '防御为半仓买入'))))
                           }
                         />
                       )}
@@ -2853,8 +2904,9 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         const isEmotionBurstDrift = isEmotionBurstDriftStrategy(strategy);
         const isEmotionBurstFollow = isEmotionBurstFollowStrategy(strategy);
         const isFirstBoardWash = isFirstBoardWashStrategy(strategy);
-        const buyRules = isFirstBoardWash ? firstBoardWashBuyRules : (isEmotionBurstFollow ? emotionBurstFollowBuyRules : (isEmotionBurstDrift ? emotionBurstDriftBuyRules : (isGainVolumeShare ? gainVolumeShareBuyRules(gainVolumeShareN(strategy)) : (isVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (isNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (isExtremeWinLike ? extremeWinBuyRules : (isReverseLeader ? reverseLeaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : BUY_RULES)))))))));
-        const sellRules = isFirstBoardWash ? firstBoardWashSellRules : ((isEmotionBurstFollow || isEmotionBurstDrift) ? LEADER_SELL_RULES : (isGainVolumeShare ? SELL_RULES : (isVolumeShare ? volumeShareSellRules : (isNBoardAttack ? nBoardAttackSellRules : (isReverseLeader ? reverseLeaderSellRules : (isExtremeWinLike ? extremeWinSellRules : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : SELL_RULES))))))));
+        const isVolumeWashout = isVolumeWashoutStrategy(strategy);
+        const buyRules = isVolumeWashout ? volumeWashoutBuyRules : (isFirstBoardWash ? firstBoardWashBuyRules : (isEmotionBurstFollow ? emotionBurstFollowBuyRules : (isEmotionBurstDrift ? emotionBurstDriftBuyRules : (isGainVolumeShare ? gainVolumeShareBuyRules(gainVolumeShareN(strategy)) : (isVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (isNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (isExtremeWinLike ? extremeWinBuyRules : (isReverseLeader ? reverseLeaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : BUY_RULES))))))))));
+        const sellRules = isVolumeWashout ? volumeWashoutSellRules : (isFirstBoardWash ? firstBoardWashSellRules : ((isEmotionBurstFollow || isEmotionBurstDrift) ? LEADER_SELL_RULES : (isGainVolumeShare ? SELL_RULES : (isVolumeShare ? volumeShareSellRules : (isNBoardAttack ? nBoardAttackSellRules : (isReverseLeader ? reverseLeaderSellRules : (isExtremeWinLike ? extremeWinSellRules : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : SELL_RULES)))))))));
         const notes = STRATEGY_SPECIFIC_NOTES[strategy];
 
         // 将文案中 **xxx** 这种 markdown 粗体标记解析为 React 节点（纯文本不解析）

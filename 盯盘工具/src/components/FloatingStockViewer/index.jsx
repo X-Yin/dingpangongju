@@ -511,7 +511,7 @@ const FloatingStockViewer = () => {
         setKLoading(true);
         setValuationLoading(true);
         const [kRes, zyjsRes, valRes] = await Promise.allSettled([
-            axios.get(`http://${local_ip}:3000/stock_data`, { params: { code, limit: 60 } }),
+            axios.get(`http://${local_ip}:3000/stock_data`, { params: { code, limit: 100 } }),
             axios.get(`http://${local_ip}:3000/api/ak/stock_zyjs`, { params: { code: symbol } }),
             axios.get(`http://${local_ip}:3000/stock_valuation`, { params: { code } }),
         ]);
@@ -661,7 +661,7 @@ const FloatingStockViewer = () => {
                     setStockCode('');
                     setDrawerOpen(false);
                 }}
-                width={750}
+                width={1150}
                 className="stock-viewer-drawer"
                 destroyOnClose={false}
             >

@@ -1,4 +1,4 @@
-const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC, FUSED_EMO_WIN_DESC, EMOTION_BURST_DRIFT_DESC, EMOTION_BURST_FOLLOW_DESC, FIRST_BOARD_WASH_DESC } = require('../descs');
+const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC, FUSED_EMO_WIN_DESC, EMOTION_BURST_DRIFT_DESC, EMOTION_BURST_FOLLOW_DESC, FIRST_BOARD_WASH_DESC, VOLUME_WASHOUT_SECOND_BOARD_DESC } = require('../descs');
 
 // 情绪游资系列（2026-10-17 用户要求：已删除「情绪游资-龙头战法」「情绪龙头+科技进攻」「科技进攻 + 情绪龙头」三个策略）：
 module.exports = {
@@ -141,5 +141,18 @@ module.exports = {
     name: '首板洗盘-起爆拉升',
     desc: FIRST_BOARD_WASH_DESC,
     firstBoardWashMode: true,
+  },
+  // 放量洗盘-二板起爆（2026-11-01 用户新增）：T-1 必须是首板，其之前须出现「拉升放量 1~3 日 → 震荡缩量 2~12 日」
+  //   洗盘形态（参照 股票数据材料/只放量无涨停-打二板/washout.js），并叠加震荡期单日涨跌幅 ±5%
+  //   （-5%~-6% 最多 1 天、超 -6% 剔除）与「震荡最低不破首次爆量开盘价 -5%」两道过滤；
+  //   15 日内 ≥3 板、20 日内三日窗口涨幅 > 20%、流通市值 > 100 亿者剔除；
+  //   买点 = 竞价必须高开，9:30–14:30 按 1 分钟回溯分时涨幅首次 +8% 买入；
+  //   卖点五条与「首板洗盘-起爆拉升」同口径；账户拆两份、每份半仓、最多同时持有 2 只
+  // volumeWashoutMode: true → 独立引擎 runVolumeWashoutSecondBoardBacktest
+  volume_washout_second_board: {
+    id: 'volume_washout_second_board',
+    name: '放量洗盘-二板起爆',
+    desc: VOLUME_WASHOUT_SECOND_BOARD_DESC,
+    volumeWashoutMode: true,
   },
 };

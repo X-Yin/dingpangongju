@@ -1524,5 +1524,642 @@
     "marketValue": 3067262351,
     "circulatingMarketValue": 3067262351,
     "updatedAt": "2026-11-01 12:24:45"
+  },
+  {
+    "code": "sh603662",
+    "name": "柯力传感",
+    "marketValue": 13881420375,
+    "circulatingMarketValue": 13881420375,
+    "updatedAt": "2026-11-01 13:32:49"
+  },
+  {
+    "code": "sz002921",
+    "name": "联诚精密",
+    "marketValue": 2466945303,
+    "circulatingMarketValue": 2132201512,
+    "updatedAt": "2026-11-01 13:32:49"
+  },
+  {
+    "code": "sh605305",
+    "name": "中际联合",
+    "marketValue": 5769918000,
+    "circulatingMarketValue": 5769918000,
+    "updatedAt": "2026-11-01 13:32:50"
+  },
+  {
+    "code": "sz003020",
+    "name": "立方制药",
+    "marketValue": 3377635546,
+    "circulatingMarketValue": 2494514174,
+    "updatedAt": "2026-11-01 13:32:50"
+  },
+  {
+    "code": "sh603578",
+    "name": "三星新材",
+    "marketValue": 3176201853,
+    "circulatingMarketValue": 2447444924,
+    "updatedAt": "2026-11-01 13:32:50"
+  },
+  {
+    "code": "sh601369",
+    "name": "陕鼓动力",
+    "marketValue": 13498810628,
+    "circulatingMarketValue": 13495658948,
+    "updatedAt": "2026-11-01 13:32:50"
+  },
+  {
+    "code": "sh600611",
+    "name": "大众交通",
+    "marketValue": 9291002855,
+    "circulatingMarketValue": 6143833310,
+    "updatedAt": "2026-11-01 13:32:51"
+  },
+  {
+    "code": "sh600354",
+    "name": "敦煌种业",
+    "marketValue": 3457103624,
+    "circulatingMarketValue": 3457103624,
+    "updatedAt": "2026-11-01 13:32:51"
+  },
+  {
+    "code": "sz003032",
+    "name": "传智教育",
+    "marketValue": 4008377100,
+    "circulatingMarketValue": 2833436815,
+    "updatedAt": "2026-11-01 13:32:51"
+  },
+  {
+    "code": "sh601700",
+    "name": "风范股份",
+    "marketValue": 5887375241,
+    "circulatingMarketValue": 5887375241,
+    "updatedAt": "2026-11-01 13:32:51"
+  },
+  {
+    "code": "sh600793",
+    "name": "宜宾纸业",
+    "marketValue": 2324518586,
+    "circulatingMarketValue": 2324518586,
+    "updatedAt": "2026-11-01 13:32:51"
+  },
+  {
+    "code": "sh600326",
+    "name": "西藏天路",
+    "marketValue": 7847795076,
+    "circulatingMarketValue": 7847795076,
+    "updatedAt": "2026-11-01 13:32:51"
+  },
+  {
+    "code": "sh601865",
+    "name": "福莱特  ",
+    "marketValue": 20522430966,
+    "circulatingMarketValue": 16653007566,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sz001376",
+    "name": "百通能源",
+    "marketValue": 4612384000,
+    "circulatingMarketValue": 2029508554,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sh603382",
+    "name": "海阳科技",
+    "marketValue": 3702965448,
+    "circulatingMarketValue": 2359376650,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sh600815",
+    "name": "厦工股份",
+    "marketValue": 4843277930,
+    "circulatingMarketValue": 4843277930,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sh603130",
+    "name": "云中马  ",
+    "marketValue": 5222789316,
+    "circulatingMarketValue": 5222789316,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sz002044",
+    "name": "美年健康",
+    "marketValue": 18240423281,
+    "circulatingMarketValue": 18053900741,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sh600356",
+    "name": "恒丰纸业",
+    "marketValue": 2801060284,
+    "circulatingMarketValue": 2539216713,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sz002031",
+    "name": "巨轮智能",
+    "marketValue": 11480845397,
+    "circulatingMarketValue": 11480806247,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sh600376",
+    "name": "首开股份",
+    "marketValue": 6655278324,
+    "circulatingMarketValue": 6655278324,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sz000736",
+    "name": "中交发展",
+    "marketValue": 2898741795,
+    "circulatingMarketValue": 2898741795,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sh603466",
+    "name": "风语筑  ",
+    "marketValue": 7149880207,
+    "circulatingMarketValue": 7149880207,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sz002582",
+    "name": "好想你",
+    "marketValue": 4445739357,
+    "circulatingMarketValue": 3417653559,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sz002742",
+    "name": "冀衡医药",
+    "marketValue": 2291741837,
+    "circulatingMarketValue": 1755135762,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sh600313",
+    "name": "农发种业",
+    "marketValue": 6375943089,
+    "circulatingMarketValue": 5941270659,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sz000505",
+    "name": "京粮控股",
+    "marketValue": 3867375335,
+    "circulatingMarketValue": 3521708335,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sz001207",
+    "name": "联科科技",
+    "marketValue": 4877486300,
+    "circulatingMarketValue": 4708289460,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sh603506",
+    "name": "南都物业",
+    "marketValue": 1919088901,
+    "circulatingMarketValue": 1919088901,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sh603801",
+    "name": "志邦家居",
+    "marketValue": 2380246126,
+    "circulatingMarketValue": 2380246126,
+    "updatedAt": "2026-11-01 13:32:52"
+  },
+  {
+    "code": "sz003010",
+    "name": "若羽臣",
+    "marketValue": 8454596557,
+    "circulatingMarketValue": 6146544479,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sz000560",
+    "name": "我爱我家",
+    "marketValue": 6477627340,
+    "circulatingMarketValue": 6442392327,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sh600359",
+    "name": "新农开发",
+    "marketValue": 2193698715,
+    "circulatingMarketValue": 2193698715,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sz000798",
+    "name": "中水渔业",
+    "marketValue": 2956138392,
+    "circulatingMarketValue": 2955956592,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sz000626",
+    "name": "远大控股",
+    "marketValue": 3521056704,
+    "circulatingMarketValue": 3504973758,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sh605577",
+    "name": "龙版传媒",
+    "marketValue": 5253333339,
+    "circulatingMarketValue": 5253333339,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sz000998",
+    "name": "隆平高科",
+    "marketValue": 11358833511,
+    "circulatingMarketValue": 10165340720,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sz002882",
+    "name": "金龙羽",
+    "marketValue": 8424234000,
+    "circulatingMarketValue": 4806426139,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sh603207",
+    "name": "小方制药",
+    "marketValue": 3549531350,
+    "circulatingMarketValue": 1197988635,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sz000721",
+    "name": "西安饮食",
+    "marketValue": 3363137844,
+    "circulatingMarketValue": 3002431404,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sh600318",
+    "name": "新力金融",
+    "marketValue": 3030220305,
+    "circulatingMarketValue": 3030220305,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sz000592",
+    "name": "平潭发展",
+    "marketValue": 12266808664,
+    "circulatingMarketValue": 12160837051,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sh603151",
+    "name": "邦基科技",
+    "marketValue": 2952083646,
+    "circulatingMarketValue": 2952083646,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sh603696",
+    "name": "安记食品",
+    "marketValue": 3001152000,
+    "circulatingMarketValue": 3001152000,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sz002862",
+    "name": "实丰文化",
+    "marketValue": 2581332700,
+    "circulatingMarketValue": 1958222577,
+    "updatedAt": "2026-11-01 13:32:53"
+  },
+  {
+    "code": "sz002349",
+    "name": "精华制药",
+    "marketValue": 5684512014,
+    "circulatingMarketValue": 5568997410,
+    "updatedAt": "2026-11-01 13:32:54"
+  },
+  {
+    "code": "sz002312",
+    "name": "川发龙蟒",
+    "marketValue": 12119093346,
+    "circulatingMarketValue": 12099364821,
+    "updatedAt": "2026-11-01 13:32:54"
+  },
+  {
+    "code": "sz000928",
+    "name": "中钢国际",
+    "marketValue": 7876198969,
+    "circulatingMarketValue": 7876102619,
+    "updatedAt": "2026-11-01 13:32:54"
+  },
+  {
+    "code": "sz002343",
+    "name": "慈文传媒",
+    "marketValue": 3822599908,
+    "circulatingMarketValue": 3822599908,
+    "updatedAt": "2026-11-01 13:32:54"
+  },
+  {
+    "code": "sz002201",
+    "name": "九鼎新材",
+    "marketValue": 4965468156,
+    "circulatingMarketValue": 4587418460,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sz001299",
+    "name": "美能能源",
+    "marketValue": 2733672126,
+    "circulatingMarketValue": 2456337798,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sz000812",
+    "name": "陕西金叶",
+    "marketValue": 2548836100,
+    "circulatingMarketValue": 2548157024,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sh605162",
+    "name": "新中港  ",
+    "marketValue": 3432058910,
+    "circulatingMarketValue": 3432058910,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sz002442",
+    "name": "龙星科技",
+    "marketValue": 2214869236,
+    "circulatingMarketValue": 2162672393,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sh603276",
+    "name": "恒兴新材",
+    "marketValue": 3617254237,
+    "circulatingMarketValue": 1328802843,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sh600616",
+    "name": "金枫酒业",
+    "marketValue": 2682709849,
+    "circulatingMarketValue": 2682709849,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sz002339",
+    "name": "积成电子",
+    "marketValue": 3069921948,
+    "circulatingMarketValue": 2915853048,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sz000504",
+    "name": "南华生物",
+    "marketValue": 2564279471,
+    "circulatingMarketValue": 2557281032,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sh603500",
+    "name": "祥和实业",
+    "marketValue": 3228031523,
+    "circulatingMarketValue": 3228031523,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sh600032",
+    "name": "浙江新能",
+    "marketValue": 16015137657,
+    "circulatingMarketValue": 16015137657,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sh600325",
+    "name": "华发股份",
+    "marketValue": 5586868795,
+    "circulatingMarketValue": 5586868795,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sh603598",
+    "name": "引力传媒",
+    "marketValue": 4247753076,
+    "circulatingMarketValue": 4247753076,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sh601519",
+    "name": "大智慧  ",
+    "marketValue": 15813822000,
+    "circulatingMarketValue": 15813822000,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sz002074",
+    "name": "国轩高科",
+    "marketValue": 40994645475,
+    "circulatingMarketValue": 39231097217,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sz000036",
+    "name": "华联控股",
+    "marketValue": 4492219920,
+    "circulatingMarketValue": 4489539939,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sz002244",
+    "name": "滨江集团",
+    "marketValue": 29372030321,
+    "circulatingMarketValue": 26031265769,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sh605388",
+    "name": "均瑶健康",
+    "marketValue": 3392734600,
+    "circulatingMarketValue": 3392734600,
+    "updatedAt": "2026-11-01 13:32:55"
+  },
+  {
+    "code": "sz002755",
+    "name": "奥赛康",
+    "marketValue": 10813068089,
+    "circulatingMarketValue": 10812965860,
+    "updatedAt": "2026-11-01 13:32:56"
+  },
+  {
+    "code": "sh603538",
+    "name": "美诺华  ",
+    "marketValue": 7104499129,
+    "circulatingMarketValue": 7041626975,
+    "updatedAt": "2026-11-01 13:32:56"
+  },
+  {
+    "code": "sh603739",
+    "name": "蔚蓝生物",
+    "marketValue": 2904771381,
+    "circulatingMarketValue": 2904771381,
+    "updatedAt": "2026-11-01 13:32:56"
+  },
+  {
+    "code": "sh601956",
+    "name": "东贝集团",
+    "marketValue": 3748348037,
+    "circulatingMarketValue": 3748348037,
+    "updatedAt": "2026-11-01 13:32:56"
+  },
+  {
+    "code": "sh600310",
+    "name": "广西能源",
+    "marketValue": 5994756852,
+    "circulatingMarketValue": 5994756852,
+    "updatedAt": "2026-11-01 13:32:56"
+  },
+  {
+    "code": "sz000420",
+    "name": "吉林化纤",
+    "marketValue": 8974869451,
+    "circulatingMarketValue": 8974530001,
+    "updatedAt": "2026-11-01 13:32:56"
+  },
+  {
+    "code": "sh600178",
+    "name": "东安动力",
+    "marketValue": 3881081659,
+    "circulatingMarketValue": 3881081659,
+    "updatedAt": "2026-11-01 13:32:56"
+  },
+  {
+    "code": "sh603239",
+    "name": "浙江仙通",
+    "marketValue": 3584332800,
+    "circulatingMarketValue": 3584332800,
+    "updatedAt": "2026-11-01 13:32:56"
+  },
+  {
+    "code": "sh603168",
+    "name": "莎普爱思",
+    "marketValue": 1914721985,
+    "circulatingMarketValue": 1914721985,
+    "updatedAt": "2026-11-01 13:32:56"
+  },
+  {
+    "code": "sh600661",
+    "name": "昂立教育",
+    "marketValue": 2197829526,
+    "circulatingMarketValue": 2197829526,
+    "updatedAt": "2026-11-01 13:32:57"
+  },
+  {
+    "code": "sh603366",
+    "name": "日出东方",
+    "marketValue": 6398688554,
+    "circulatingMarketValue": 6398688554,
+    "updatedAt": "2026-11-01 13:32:57"
+  },
+  {
+    "code": "sh603286",
+    "name": "日盈电子",
+    "marketValue": 6370478297,
+    "circulatingMarketValue": 6310579091,
+    "updatedAt": "2026-11-01 13:32:57"
+  },
+  {
+    "code": "sz000559",
+    "name": "万向钱潮",
+    "marketValue": 41945665154,
+    "circulatingMarketValue": 41921196206,
+    "updatedAt": "2026-11-01 13:32:57"
+  },
+  {
+    "code": "sz000700",
+    "name": "模塑科技",
+    "marketValue": 12457468828,
+    "circulatingMarketValue": 12457468828,
+    "updatedAt": "2026-11-01 13:32:57"
+  },
+  {
+    "code": "sh600785",
+    "name": "新华百货",
+    "marketValue": 3578963363,
+    "circulatingMarketValue": 3578963363,
+    "updatedAt": "2026-11-01 13:32:57"
+  },
+  {
+    "code": "sh601900",
+    "name": "南方传媒",
+    "marketValue": 12956140680,
+    "circulatingMarketValue": 12956140680,
+    "updatedAt": "2026-11-01 13:32:57"
+  },
+  {
+    "code": "sh603725",
+    "name": "天安新材",
+    "marketValue": 3042479646,
+    "circulatingMarketValue": 3042479646,
+    "updatedAt": "2026-11-01 13:40:59"
+  },
+  {
+    "code": "sh603351",
+    "name": "威尔药业",
+    "marketValue": 3608098476,
+    "circulatingMarketValue": 3608098476,
+    "updatedAt": "2026-11-01 13:40:59"
+  },
+  {
+    "code": "sh601162",
+    "name": "天风证券",
+    "marketValue": 31934533191,
+    "circulatingMarketValue": 27255566402,
+    "updatedAt": "2026-11-01 13:40:59"
+  },
+  {
+    "code": "sh600640",
+    "name": "国脉文化",
+    "marketValue": 8018415074,
+    "circulatingMarketValue": 8018415074,
+    "updatedAt": "2026-11-01 13:41:02"
+  },
+  {
+    "code": "sh600343",
+    "name": "航天动力",
+    "marketValue": 10549550932,
+    "circulatingMarketValue": 10549550932,
+    "updatedAt": "2026-11-01 13:41:02"
+  },
+  {
+    "code": "sz002471",
+    "name": "中超控股",
+    "marketValue": 6405235200,
+    "circulatingMarketValue": 6368108530,
+    "updatedAt": "2026-11-01 13:41:02"
+  },
+  {
+    "code": "sh603067",
+    "name": "振华股份",
+    "marketValue": 18230827998,
+    "circulatingMarketValue": 18230827998,
+    "updatedAt": "2026-11-01 13:41:02"
+  },
+  {
+    "code": "sh601566",
+    "name": "九牧王  ",
+    "marketValue": 5752117871,
+    "circulatingMarketValue": 5752117871,
+    "updatedAt": "2026-11-01 13:41:02"
   }
 ]
