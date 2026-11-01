@@ -447,7 +447,10 @@ const scanWashPriceSell = ({ points, preclose, buyPrice, cutoffMinute, ma5, prof
   return best;
 };
 
-const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgress) => {
+const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgress, options = {}) => {
+  // 无限仓位测试（2026-11-01 用户新增）：不限制同时持仓数量，每个买点只买排名最高且未被持有的一只
+  const unlimited = options.unlimited === true;
+  const maxPositions = unlimited ? Infinity : MAX_POSITIONS;
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.firstBoardWashMode !== true) {
     return { success: false, message: `未知首板洗盘-起爆拉升策略: ${strategyId}` };
@@ -767,7 +770,7 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
       }
 
       // ===== 买入（账户拆两份、每份半仓）：盘中分时涨幅首次 +9%，可同时持有 2 只不同股票 =====
-      if (positions.length < MAX_POSITIONS && !soldThisDate && bucketMinute <= BUY_CUTOFF_MINUTE + 5) {
+      if (positions.length < maxPositions && !soldThisDate && bucketMinute <= BUY_CUTOFF_MINUTE + 5) {
         await ensureSelected();
         if (candidates.length > 0) {
           await ensureEntries();
@@ -775,7 +778,7 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
           const heldCodes = new Set(positions.map((p) => p.code));
           const mvRejected = new Set(); // 按买入价折算后总市值 > 100 亿 → 当日顺延
           // 逐份补仓：每一轮取当前最早触发且未持有的候选，最多补到 2 份
-          while (positions.length < MAX_POSITIONS) {
+          while (positions.length < maxPositions) {
             let pick = null;
             // 盘中 +9% 买点：取最早触发分钟（同分钟取涨幅更大者）
             for (const c of candidates) {
@@ -832,6 +835,8 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
             pos.buyChecks = buildBuyChecks(pos);
             positions.push(pos);
             heldCodes.add(pos.code);
+            // 无限仓位：每个买点只买排名最高的一只，其余触发留给后续桶
+            if (unlimited) break;
           }
         }
       }

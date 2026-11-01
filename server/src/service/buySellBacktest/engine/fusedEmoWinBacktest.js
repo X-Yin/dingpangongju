@@ -128,7 +128,10 @@ const failPrevStrengthOpenGap = (r) => {
   return gap < OPEN_GAP_MIN_PCT;
 };
 
-const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress) => {
+const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress, options = {}) => {
+  // 无限仓位测试（2026-11-01 用户新增）：取消风格独占锁与仓位份数上限，不同股票可同时持有
+  // （A 风格按自身权重全仓/半仓、B 风格每份半仓），同一只股票卖出前不重复买入
+  const unlimited = options.unlimited === true;
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.fusedEmoWinMode !== true) {
     return { success: false, message: `未知科技进攻-情绪游资极致胜率策略: ${strategyId}` };
@@ -196,8 +199,9 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
   let styleLock = null;         // null = 空仓（两风格均可参与）| 'emo' | 'ew'
   const emoPositions = [];      // A 风格持仓：0~1 份（非快进快出全仓）或 1~2 份（快进快出半仓两份）
   let quickOutSoldDate = null;  // A 风格：最近一次 10:00 强卖/止损日期（当日禁止二次买入）
-  const ewPositions = new Array(LEG_COUNT).fill(null);  // B 风格两腿持仓槽
-  const ewLegLastSellDate = new Array(LEG_COUNT).fill(null);
+  const ewPositions = unlimited ? [] : new Array(LEG_COUNT).fill(null);  // B 风格两腿持仓槽（无限仓位：份数不设上限）
+  const ewLegLastSellDate = unlimited ? [] : new Array(LEG_COUNT).fill(null);
+  const soldTodayCodes = new Set(); // 无限仓位：当日卖出的股票不再当日追买
 
   // B 风格·逆周期腿命中计数（逐股独立累计；只在当前负斜率窗口内累计，窗口变化即清零）
   const revHitCount = new Map();
@@ -304,13 +308,13 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
     clearTlineCache();
 
     // B 风格逐份隔夜持仓的当日分时（卖点用）+ 当日收盘抗分歧指数（懒计算）
-    const posTlines = new Array(LEG_COUNT).fill(null);
-    for (let l = 0; l < LEG_COUNT; l++) {
+    const posTlines = new Array(ewPositions.length).fill(null);
+    for (let l = 0; l < ewPositions.length; l++) {
       const p = ewPositions[l];
       if (p && dateStr > p.buyDate) posTlines[l] = await loadTlinePoints(p.code, dateNum);
     }
-    const posResiliences = new Array(LEG_COUNT).fill(null);
-    const posResilienceLoaded = new Array(LEG_COUNT).fill(false);
+    const posResiliences = new Array(ewPositions.length).fill(null);
+    const posResilienceLoaded = new Array(ewPositions.length).fill(false);
     const ensurePosResilience = async (l) => {
       if (posResilienceLoaded[l]) return posResiliences[l];
       posResilienceLoaded[l] = true;
@@ -431,7 +435,9 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
 
     const revDayTriggered = new Set(); // 逆周期腿当日已登记命中的候选（同一天同一只只计一次）
-    const idleLegIdx = () => ewPositions.findIndex((p, i) => !p && ewLegLastSellDate[i] !== dateStr);
+    const idleLegIdx = () => (unlimited
+      ? ewPositions.length
+      : ewPositions.findIndex((p, i) => !p && ewLegLastSellDate[i] !== dateStr));
 
     // B 风格卖出记录（正常卖点与「科技进攻抢仓」强制卖出共用）：写成交、清空该份、登记当日已卖出
     const recordEwSell = (l, position, sellMinute, sellPx, sellChange, sellReason) => {
@@ -466,6 +472,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       });
       ewPositions[l] = null;
       ewLegLastSellDate[l] = dateStr;
+      soldTodayCodes.add(position.code);
     };
 
     // A 风格「科技进攻抢仓」（2026-10-20 用户新增）：B 风格持仓锁定账户期间，A 风格买点成交且当桶实时科技情绪
@@ -473,9 +480,10 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
     // （买入日早于当日）且当桶分时价可用时才执行——当日买入的 B 风格持仓保留不卖，该情形下放弃抢仓、账户仍由
     // B 风格独占；返回是否已完成抢仓（true 表示账户已空出、可立即由 A 风格建仓）
     const tryPreemptEwPositions = (bucketMinute, emotion) => {
+      if (unlimited) return true; // 无限仓位：不再独占账户、无需抢仓
       if (styleLock !== 'ew') return true; // 非 B 风格锁定：无需抢仓
       const plan = [];
-      for (let l = 0; l < LEG_COUNT; l++) {
+      for (let l = 0; l < ewPositions.length; l++) {
         const p = ewPositions[l];
         if (!p) continue;
         if (!(dateStr > p.buyDate)) return false; // 当日买入的 B 风格持仓不卖 → 放弃抢仓
@@ -510,6 +518,13 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
     let pendingIceConfirm = null;
     // 上一交易日（日期轴上一位）：用于「连续两日冰点」前置门禁的昨日 hasIce 判定
     const prevDateStr = di + axisOffset > 0 ? String(dateAxis[di + axisOffset - 1]) : null;
+    // 已持有股票（A/B 两种风格合并）：无限仓位下选股时跳过，保证同一只股票卖出前不重复买入
+    const heldStockMap = () => {
+      const m = new Map();
+      for (const p of emoPositions) m.set(p.code, { holding: true });
+      for (const p of ewPositions) if (p) m.set(p.code, { holding: true });
+      return m;
+    };
     // A 风格首次建仓（板块内即时路径 / 延时目标桶路径共用）：execBucket 为实际成交桶（延时路径即 T+15 桶）；
     // iceGateOpen = 连续两日冰点门禁是否成立（成立才启用板块内选股）
     const openEmoFirstPosition = async (execBucket, gatedBuyInfo, gateAllowedMarkets, gateTurnedPosInfo, delayInfo, iceGateOpen, opts = {}) => {
@@ -532,12 +547,12 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       let raisedBlock = null;
       if (!picked) {
         for (const rb of raisedBlocks) {
-          picked = pickBestStock(new Map(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, EMO_ID, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, rb.codes);
+          picked = pickBestStock(heldStockMap(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, EMO_ID, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, rb.codes);
           if (picked) { raisedBlock = rb; break; }
         }
         if (!picked) {
           // 全部板块交集内均选不出（或本就没有交集非空的板块）→ 回退原逻辑：全量自选股选 N 日涨幅最大
-          picked = pickBestStock(new Map(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, EMO_ID, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, null);
+          picked = pickBestStock(heldStockMap(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, EMO_ID, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, null);
           if (picked && raisedBlocks.length > 0) picked.raisedBlockFallbackInfo = { triedCount: raisedBlocks.length };
         }
       }
@@ -636,8 +651,8 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       const isTailBucket = hasTailBucket ? bucketMinute >= TAIL_MINUTE : bi === timeBuckets.length - 1;
       const timeText = fmtTime(bucket.timeKey).substring(0, 5);
 
-      // ===== 卖出①（B 风格：隔夜持仓按两条腿各自的卖点规则独立卖出）=====
-      for (let l = 0; l < LEG_COUNT; l++) {
+      // ===== 卖出①（B 风格：隔夜持仓按两条腿各自的卖点规则独立卖出，无限仓位下逐份）=====
+      for (let l = 0; l < ewPositions.length; l++) {
         const position = ewPositions[l];
         const posTline = posTlines[l];
         if (!position || !(dateStr > position.buyDate) || !posTline || posTline.points.length === 0) continue;
@@ -710,7 +725,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       if (styleLock === 'emo' && emoPositions.length === 0) styleLock = null;
       if (styleLock === 'ew' && ewPositions.every(p => !p)) styleLock = null;
       // A 风格冰点转折待确认期间 B 风格已独占账户（谁先成交谁占账户）→ 取消该笔待确认买入
-      if (pendingIceConfirm && styleLock === 'ew') pendingIceConfirm = null;
+      if (!unlimited && pendingIceConfirm && styleLock === 'ew') pendingIceConfirm = null;
 
       // ===== 买入①（A 风格·科技进攻）=====
       // 未被 B 风格独占时照常评估；B 风格（情绪游资-极致胜率）持仓锁定账户期间，仅当「科技进攻抢仓」条件成立时
@@ -719,11 +734,11 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
         ? Number(bucket.techEmotion)
         : null;
       const preemptGateOk = bucketTechEmotion != null && bucketTechEmotion > 0;
-      if ((styleLock !== 'ew' || preemptGateOk) && !pendingRaisedBuy && !delayedExec && !pendingIceConfirm) {
+      if ((unlimited || styleLock !== 'ew' || preemptGateOk) && !pendingRaisedBuy && !delayedExec && !pendingIceConfirm) {
         const quickOutNoRebuy = quickOutSoldDate === dateStr;
         // A 风格买点诊断按动态阈值判定资金净流入检查（见上方 fundGate；B 风格不受影响）；
         // 已持第一份半仓待补买第二份时，检查2 固定按基准 20 亿判定（2026-10-21 用户新增：第二份补买阈值降回 20 亿）
-        const waitingSecondLeg = emoPositions.length === 1 && emoPositions[0].leg === 1;
+        const waitingSecondLeg = !unlimited && emoPositions.length === 1 && emoPositions[0].leg === 1;
         const buyDiag = runBuyPointDiagnosis(timeBuckets, bi, campData, { ratioGatedOpeningBelow: OPENING_BELOW_RATIO_STRATEGY_IDS.has(EMO_ID), fundInflowThreshold: waitingSecondLeg ? EMO_QUICK_FUND_INFLOW_BASE : fundGate.getThreshold() })?.data;
         const buyHit = !quickOutNoRebuy && buyDiag?.allPassed === true;
         const buyInfo = buyHit ? buildBuyReasonFromDiag(buyDiag) : null;
@@ -732,7 +747,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
             { cybPrecomputed: cybGatePrecomputed, starPrecomputed: starGatePrecomputed, cybRuntime: cybGateRuntimeState, starRuntime: starGateRuntimeState });
           if (gatePassed) {
             const buyTime = fmtTime(bucket.timeKey).substring(0, 5);
-            if (emoPositions.length === 0) {
+            if (unlimited || emoPositions.length === 0) {
               // 「板块发酵延时」（2026-10-23 用户改）：连续两日冰点下买点触发后不立刻买入，等待 15 分钟到目标桶后
               // 按区间涨幅差值重新选板块与个股（给板块发酵时间）；目标落在非买入时段 → 本次不买
               const iceGateOpen = isTechIceGateOpen(prevDateStr, timeBuckets, bi);
@@ -750,7 +765,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
               } else if (await openEmoFirstPosition(bucket, gatedBuyInfo, gateAllowedMarkets, gateTurnedPosInfo, null, false)) {
                 styleLock = 'emo';
               }
-            } else if (emoPositions.length === 1 && emoPositions[0].leg === 1 && dateStr > emoPositions[0].buyDate) {
+            } else if (!unlimited && emoPositions.length === 1 && emoPositions[0].leg === 1 && dateStr > emoPositions[0].buyDate) {
               const first = emoPositions[0];
               const heldSc = (bucket.stockChanges || []).find(s => s.code === first.code);
               const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
@@ -780,7 +795,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       // 延时建仓执行：目标桶（买点触发后 15 分钟）到达时，按区间涨幅差值重新选板块与个股，按本桶价成交；
       // 连续两日冰点路径下还要先做「延时后涨幅确认」：到点只锁定标的、不成交，
       // 待后续 5min 桶涨幅超过窗口最高 +1 个百分点才由 pendingIceConfirm 确认成交
-      if (delayedExec && emoPositions.length === 0 && !(quickOutSoldDate === dateStr)) {
+      if (delayedExec && (unlimited || emoPositions.length === 0) && !(quickOutSoldDate === dateStr)) {
         const iceNow = isTechIceGateOpen(prevDateStr, timeBuckets, bi);
         if (await openEmoFirstPosition(bucket, delayedExec.gatedBuyInfo, delayedExec.gateAllowedMarkets, delayedExec.gateTurnedPosInfo, {
           triggerTime: delayedExec.triggerTime,
@@ -793,7 +808,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       }
 
       // 冰点转折·涨幅确认通过：沿用延时到点锁定的标的，按本桶（确认桶）价成交（等待期内不重复评估新买点）
-      if (iceConfirmHit && emoPositions.length === 0 && styleLock !== 'ew' && !(quickOutSoldDate === dateStr)) {
+      if (iceConfirmHit && (unlimited || emoPositions.length === 0) && (unlimited || styleLock !== 'ew') && !(quickOutSoldDate === dateStr)) {
         const saved = iceConfirmHit;
         pendingIceConfirm = null;
         const lockedPick = {
@@ -821,7 +836,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       }
 
       // ===== 买入②（B 风格·极致胜率双腿：仅在未被 A 风格独占时评估）=====
-      if (styleLock !== 'emo') {
+      if (unlimited || styleLock !== 'emo') {
         // 【顺周期腿】上证 3 日线分时斜率 > 0 + 今日「强度分 − 差劲分 >= 30」
         //   2026-10-20 用户新增：每天 13:30 之后不买（13:30 桶本身仍可买，13:35 起的桶一律不买）
         if (bucketMinute <= BUY_CUTOFF_MINUTE && idleLegIdx() !== -1) {
@@ -834,12 +849,13 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
                 const legIdx = idleLegIdx();
                 if (legIdx === -1) break;
                 const otherHeld = ewPositions.filter((p, i) => i !== legIdx && p).map(p => p.code);
-                if (pick.limitUp || otherHeld.includes(pick.code) || failPrevStrengthOpenGap(pick)) continue;
+                if (pick.limitUp || otherHeld.includes(pick.code) || soldTodayCodes.has(pick.code) || failPrevStrengthOpenGap(pick)) continue;
                 ewPositions[legIdx] = buildPosition({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx, otherHeld, cutoffMinute: BUY_CUTOFF_MINUTE });
                 ewPositions[legIdx].buyDi = todayIdx;
                 ewPositions[legIdx].cycle = CYCLE_PRO;
                 styleLock = 'ew';
                 for (const c of candidates) if (!seenStocks.has(c.code)) seenStocks.set(c.code, { code: c.code, name: c.name || c.code });
+                if (unlimited) break; // 每次买点只买排名第一（未被持有的）一只
               }
             }
           }
@@ -865,7 +881,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
                 const legIdx = idleLegIdx();
                 if (legIdx !== -1) {
                   const otherHeld = ewPositions.filter((p, i) => i !== legIdx && p).map(p => p.code);
-                  if (!otherHeld.includes(c.code)) {
+                  if (!otherHeld.includes(c.code) && !soldTodayCodes.has(c.code)) {
                     ewPositions[legIdx] = buildRevPosition({
                       pick: c, s, score: s.score, px: s.px, changePct: s.changePct,
                       dateStr, dateDisplay, timeText, hitCount: next,
@@ -876,6 +892,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
                     ewPositions[legIdx].cycle = CYCLE_COUNTER;
                     styleLock = 'ew';
                     for (const cc of revCandidatesRaw) if (!seenStocks.has(cc.code)) seenStocks.set(cc.code, { code: cc.code, name: cc.name || cc.code });
+                    if (unlimited) break; // 每次买点只买排名第一（未被持有的）一只
                   }
                 }
               }
@@ -913,7 +930,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
     holdings.push(h);
   }
   const lastPxDate = rangeDates[rangeDates.length - 1];
-  for (let l = 0; l < LEG_COUNT; l++) {
+  for (let l = 0; l < ewPositions.length; l++) {
     const p = ewPositions[l];
     if (!p) continue;
     const holding = { ...p, weight: LEG_WEIGHT };

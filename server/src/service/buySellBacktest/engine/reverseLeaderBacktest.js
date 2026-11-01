@@ -22,6 +22,7 @@ const { scanLeaderPriceSell } = require('./leaderSellMinute');
 const { EXCLUDED_THEMES } = require('../constants');
 const { fmtTime } = require('../diagnose/buyPoint');
 const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats');
+const { computeTwoBuyAccountReturn } = require('./twoBuy');
 // 强度分完全复用「情绪游资-极致胜率」口径（0.3×A + 0.2×B + 0.3×C + 0.2×D）
 const {
   STRENGTH_A_MAX, STRENGTH_B_MAX, STRENGTH_C_MAX, STRENGTH_D_MAX,
@@ -86,7 +87,9 @@ const getPrevCloseSlope = async (dateStr) => {
   }
 };
 
-const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgress) => {
+const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgress, options = {}) => {
+  // 无限仓位测试（2026-11-01 用户新增）：不同股票可同时持有，同一只股票在卖出前不重复买入
+  const unlimited = options.unlimited === true;
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.reverseLeaderMode !== true) {
     return { success: false, message: `未知情绪游资-反向抱团龙头策略: ${strategyId}` };
@@ -124,7 +127,7 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
   const skippedDates = [];
   const seenStocks = new Map(); // code -> { code, name }
 
-  let position = null;                 // 全仓单持仓
+  const positions = [];                // 持仓列表（常规模式最多 1 只；无限仓位模式可多只）
   let soldThisDate = false;            // 当日卖出后当日不再追买
   const hitCount = new Map();          // code -> 命中次数（同一天同一只只计一次，上限 2）
   let windowKey = null;                // 当前负斜率窗口标识（最近一次由正转负日）；窗口变化即清零命中计数
@@ -184,19 +187,22 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
     // 每日分时缓存重建，控制内存
     clearTlineCache();
 
-    // 隔夜持仓当日分时（卖点用）+ 当日收盘抗分歧指数（卖点⑥用；懒计算）
-    const posTline = (position && dateStr > position.buyDate) ? await loadTlinePoints(position.code, dateNum) : null;
+    // 隔夜持仓当日分时（卖点用）+ 当日收盘抗分歧指数（卖点⑥用；逐份懒计算）
+    const posTlineMap = new Map(); // code -> { preclose, points }
+    for (const pos of positions) {
+      if (!(dateStr > pos.buyDate)) continue;
+      try { posTlineMap.set(pos.code, await loadTlinePoints(pos.code, dateNum)); } catch (e) { posTlineMap.set(pos.code, null); }
+    }
     let prevCloseSlope = null;
-    if (posTline) prevCloseSlope = await getPrevCloseSlope(dateStr);
-    let posResilience = null;
-    let posResilienceLoaded = false;
-    const ensurePosResilience = async () => {
-      if (posResilienceLoaded) return posResilience;
-      posResilienceLoaded = true;
-      if (!position) return null;
+    if (posTlineMap.size > 0) prevCloseSlope = await getPrevCloseSlope(dateStr);
+    const posResilienceMap = new Map(); // code -> 抗分歧指数（懒计算）
+    const ensurePosResilience = async (pos) => {
+      if (!pos) return null;
+      if (posResilienceMap.has(pos.code)) return posResilienceMap.get(pos.code);
+      let res = null;
       try {
         const [stockT, indexT] = await Promise.all([
-          getSingleStockTlineDataByDate(position.code, dateNum),
+          getSingleStockTlineDataByDate(pos.code, dateNum),
           getSingleStockTlineDataByDate(LEADER_RESILIENCE_INDEX_CODE, dateNum),
         ]);
         const stockLine = (stockT?.line || [])
@@ -208,11 +214,12 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
           .map(x => ({ minute: parseInt(x.minute, 10), lastPx: parseFloat(x.last_px), change: x.change != null ? parseFloat(x.change) : 0 }))
           .filter(x => x.lastPx > 0);
         if (stockLine.length >= 5 && indexLine.length >= 5) {
-          const r = calculateReplayResilience(stockLine, indexLine, position.code);
-          if (r != null && Number.isFinite(Number(r))) posResilience = round2(r);
+          const r = calculateReplayResilience(stockLine, indexLine, pos.code);
+          if (r != null && Number.isFinite(Number(r))) res = round2(r);
         }
       } catch (e) { /* 数据不足则不触发该卖点 */ }
-      return posResilience;
+      posResilienceMap.set(pos.code, res);
+      return res;
     };
 
     // 候选池数据（懒加载：仅当可用日且需评估强度分时构建）
@@ -250,7 +257,9 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
       const timeText = fmtTime(bucket.timeKey).substring(0, 5);
 
       // ===== 卖出（隔夜持仓；沿用龙头战法全部卖点 + 新增「上证斜率盘中由负转正」卖点）=====
-      if (position && posTline && posTline.points.length > 0 && dateStr > position.buyDate) {
+      for (const position of Array.from(positions)) {
+        const posTline = posTlineMap.get(position.code);
+        if (!(posTline && posTline.points.length > 0 && dateStr > position.buyDate)) continue;
         const atPt = priceAtMinute(posTline.points, bucketMinute);
         if (atPt && atPt.lastPx > 0) {
           const px = atPt.lastPx;
@@ -299,7 +308,7 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
           }
           // ⑥ 收盘抗分歧指数 < 6
           if (!sellReason && isTailBucket) {
-            const res = await ensurePosResilience();
+            const res = await ensurePosResilience(position);
             if (res != null && Number(res) < RESILIENCE_SELL_MAX) {
               sellReason = `当日收盘抗分歧指数 ${Number(res)} < ${RESILIENCE_SELL_MAX}（收盘抗分歧过弱）`;
             }
@@ -333,7 +342,7 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
               returnRate: rawReturnRate,
               rawReturnRate,
             });
-            position = null;
+            positions.splice(positions.indexOf(position), 1);
             soldThisDate = true;
           }
         }
@@ -345,6 +354,7 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
         const idxChg = idxChangeAt(bucketMinute);
         // 买点前置：当日上证跌幅 >= 0.5%（较昨收 <= -0.5%）
         if (idxChg != null && idxChg <= INDEX_DROP_PCT) {
+          const heldCodes = new Set(positions.map(p => p.code));
           for (const c of candidatesRaw) {
             if (dayTriggered.has(c.code)) continue;
             const t = todayTline.get(c.code);
@@ -357,13 +367,18 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
             const next = Math.min(prev + 1, HIT_REQUIRED);
             hitCount.set(c.code, next);
             // 第 2 次命中（或已达标后再次命中）的这一刻为买点；若已涨停则不买，等下一个符合条件的交易日
-            if (prev >= 1 && position === null && !soldThisDate && !s.limitUp) {
-              position = buildPosition({
+            if (prev >= 1 && !soldThisDate && !s.limitUp
+              && (unlimited ? !heldCodes.has(c.code) : positions.length === 0)) {
+              const pos = buildPosition({
                 pick: c, s, score: s.score, px: s.px, changePct: s.changePct,
                 dateStr, dateDisplay, timeText, hitCount: next,
                 slopeClose, daysSinceTurnNeg, idxChg,
               });
-              position.buyDi = di;
+              pos.buyDi = di;
+              positions.push(pos);
+              heldCodes.add(c.code);
+              // 无限仓位：每个买点只买排名最高且未被持有的一只（其余候选继续累计命中次数）
+              if (unlimited) break;
             }
           }
         }
@@ -371,10 +386,10 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
     }
   }
 
-  // 组装结果（type:'single'：全仓单持仓，逐笔复利）
-  let holding = null;
-  if (position) {
-    holding = { ...position, weight: 1 };
+  // 组装结果（type:'single'：常规模式全仓单持仓逐笔复利；无限仓位模式多持仓按账户区间口径）
+  const holdings = [];
+  for (const position of positions) {
+    const holding = { ...position, weight: position.weight != null ? position.weight : 1 };
     let rawBuyReturn = null;
     const closePx = getStockCloseOnOrBefore(position.code, rangeDates[rangeDates.length - 1]);
     if (closePx != null && closePx > 0 && position.buyPrice > 0) {
@@ -382,19 +397,29 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
     }
     holding.rawBuyReturn = rawBuyReturn;
     holding.buyReturn = rawBuyReturn != null ? round2(rawBuyReturn) : null;
+    holdings.push(holding);
   }
-  let acc = 1;
-  for (const t of trades) {
-    if (t.rawReturnRate != null && Number.isFinite(Number(t.rawReturnRate))) acc *= 1 + Number(t.rawReturnRate) / 100;
+  let overallReturn;
+  if (unlimited) {
+    // 无限仓位：多个持仓可在时间上重叠，按账户口径「重叠区间收益相加、跨轮复利」
+    overallReturn = computeTwoBuyAccountReturn([
+      ...trades.map(t => ({ buyDate: t.buyDate, buyTime: t.buyTime, sellDate: t.sellDate, sellTime: t.sellTime, returnRate: t.rawReturnRate, weight: t.weight })),
+      ...holdings.map(h => ({ buyDate: h.buyDate, buyTime: h.buyTime, returnRate: h.rawBuyReturn, weight: h.weight })),
+    ]);
+  } else {
+    let acc = 1;
+    for (const t of trades) {
+      if (t.rawReturnRate != null && Number.isFinite(Number(t.rawReturnRate))) acc *= 1 + Number(t.rawReturnRate) / 100;
+    }
+    for (const h of holdings) {
+      if (h.rawBuyReturn != null && Number.isFinite(Number(h.rawBuyReturn))) acc *= 1 + Number(h.rawBuyReturn) / 100;
+    }
+    overallReturn = round2((acc - 1) * 100);
   }
-  if (holding && holding.rawBuyReturn != null && Number.isFinite(Number(holding.rawBuyReturn))) {
-    acc *= 1 + Number(holding.rawBuyReturn) / 100;
-  }
-  const overallReturn = round2((acc - 1) * 100);
   const validTrades = trades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
   const winCount = validTrades.filter(t => t.returnRate > 0).length;
   await attachBuyDayReturn(trades);
-  if (holding) await attachBuyDayReturn([holding]);
+  if (holdings.length > 0) await attachBuyDayReturn(holdings);
   return {
     success: true,
     type: 'single',
@@ -403,14 +428,15 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
     skippedDates,
     seenStocks: Array.from(seenStocks.values()),
     trades,
-    currentHolding: holding,
+    currentHolding: holdings[0] || null,
+    currentHoldings: holdings,
     summary: {
       tradeCount: trades.length,
       winCount,
       winRate: validTrades.length > 0 ? round2((winCount / validTrades.length) * 100) : null,
       ...calcDrawdownStats(validTrades),
       overallReturn,
-      holding: position != null,
+      holding: holdings.length > 0,
     },
   };
 };

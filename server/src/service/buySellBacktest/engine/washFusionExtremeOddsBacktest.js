@@ -93,7 +93,10 @@ const FALLBACK_TIME_BUCKETS = (() => {
 const fmtMinute = (m) => (m != null ? `${String(Math.floor(m / 100)).padStart(2, '0')}:${String(m % 100).padStart(2, '0')}` : '--');
 const gainText = (v) => (v == null ? '--' : `${v > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
 
-const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress) => {
+const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress, options = {}) => {
+  // 无限仓位测试（2026-11-01 用户新增）：不限制同时持仓数量，每个买点只买排名最高且未被持有的一只
+  const unlimited = options.unlimited === true;
+  const maxPositions = unlimited ? Infinity : MAX_POSITIONS;
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.washFusionMode !== true) {
     return { success: false, message: `未知情绪游资-极致赔率策略: ${strategyId}` };
@@ -493,14 +496,14 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress)
 
       // ===== 买入（两风格候选合并，谁先命中买谁；账户拆两份、每份半仓）=====
       //   桶循环一直走到 14:30（B 风格买点窗口），A 风格买点自身限制在 9:40 前
-      if (positions.length < MAX_POSITIONS && !soldThisDate && bucketMinute <= VWS_BUY_CUTOFF_MINUTE + 5) {
+      if (positions.length < maxPositions && !soldThisDate && bucketMinute <= VWS_BUY_CUTOFF_MINUTE + 5) {
         await ensureSelected();
         if (candidates.length > 0) {
           await ensureEntries();
 
           const heldCodes = new Set(positions.map((p) => p.code));
           const mvRejected = new Set();
-          while (positions.length < MAX_POSITIONS) {
+          while (positions.length < maxPositions) {
             let pick = null;
             for (const c of candidates) {
               if (heldCodes.has(c.code) || mvRejected.has(c.code)) continue;
@@ -563,6 +566,8 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress)
             pos.buyChecks = buildBuyChecks(pos);
             positions.push(pos);
             heldCodes.add(pos.code);
+            // 无限仓位：每个买点只买排名最高的一只，其余触发留给后续桶
+            if (unlimited) break;
           }
         }
       }

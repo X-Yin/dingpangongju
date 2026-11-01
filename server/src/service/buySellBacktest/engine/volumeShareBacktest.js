@@ -114,7 +114,9 @@ const computeNDayGain = (code, winDates, todayIntradayChange) => {
   return (prod - 1) * 100;
 };
 
-const runVolumeShareBacktest = async (startDate, endDate, strategyId, onProgress) => {
+const runVolumeShareBacktest = async (startDate, endDate, strategyId, onProgress, options = {}) => {
+  // 无限仓位测试（2026-11-01 用户新增）：不同股票可同时持有（每份仍按半仓权重），同一只股票卖出前不重复买入
+  const unlimited = options.unlimited === true;
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.volumeShareMode !== true) {
     return { success: false, message: `未知情绪游资-成交量占比策略: ${strategyId}` };
@@ -145,7 +147,7 @@ const runVolumeShareBacktest = async (startDate, endDate, strategyId, onProgress
   const skippedDates = [];
   const seenStocks = new Map(); // code -> { code, name }
 
-  let position = null;      // 半仓单持仓
+  const positions = [];     // 持仓列表（常规模式最多 1 只半仓；无限仓位模式可多只，每只半仓）
   let soldThisDate = false; // 当日卖出后当日不再追买
 
   for (let di = 0; di < total; di++) {
@@ -163,7 +165,8 @@ const runVolumeShareBacktest = async (startDate, endDate, strategyId, onProgress
     clearTlineCache();
 
     // ===== 卖出（隔夜持仓，且 D > buyDate）：所属前 3 板块中任一斜率（截止 T-1）转负 → 开盘卖出 =====
-    if (position && prevDate != null && dateStr > position.buyDate) {
+    for (const position of Array.from(positions)) {
+      if (!(prevDate != null && dateStr > position.buyDate)) continue;
       const negCats = (position.categories || []).filter(cat => {
         const s = blockSlope(seriesMap, cat, prevDate);
         return s != null && Number(s) < 0;
@@ -200,14 +203,14 @@ const runVolumeShareBacktest = async (startDate, endDate, strategyId, onProgress
             returnRate: rawReturnRate != null ? round2(rawReturnRate * TWO_BUY_LEG_WEIGHT) : null,
             rawReturnRate,
           });
-          position = null;
+          positions.splice(positions.indexOf(position), 1);
           soldThisDate = true;
         }
       }
     }
 
-    // ===== 买入（半仓单持仓）=====
-    if (!position && !soldThisDate && prevDate != null) {
+    // ===== 买入（常规模式半仓单持仓；无限仓位模式多只半仓）=====
+    if ((unlimited || positions.length === 0) && !soldThisDate && prevDate != null) {
       // ① 板块：算 T-1 斜率，取 > 0 者按斜率降序取前 3
       const ranked = CANDIDATE_CATEGORIES
         .map(cat => ({ cat, slope: blockSlope(seriesMap, cat, prevDate) }))
@@ -317,7 +320,10 @@ const runVolumeShareBacktest = async (startDate, endDate, strategyId, onProgress
             if (snap.length === 0) continue;
             snap.sort((a, b) => (b.gain == null ? -Infinity : b.gain) - (a.gain == null ? -Infinity : a.gain));
 
+            const heldCodes = new Set(positions.map(p => p.code));
+            let boughtAtBucket = false;
             for (const s of snap) {
+              if (heldCodes.has(s.c.code)) continue; // 无限仓位：同一只股票卖出前不重复买入
               if (s.curLimitUp) { blockReason.push(`${s.c.name} ${fmtMinute(M)} 已涨停（${chgText(s.todayChange)}）顺延`); continue; }
               if (s.todayChange <= DROP_LIMIT_PCT) { blockReason.push(`${s.c.name} ${fmtMinute(M)} 分时涨幅 ${chgText(s.todayChange)} ≤ ${DROP_LIMIT_PCT}% 顺延`); continue; }
               const rz = resilienceAtMinute(s.c.code, M);
@@ -325,7 +331,7 @@ const runVolumeShareBacktest = async (startDate, endDate, strategyId, onProgress
                 blockReason.push(`${s.c.name} ${fmtMinute(M)} 抗分歧 ${rz.ok ? rz.value : '--'}${rz.ok ? '' : `（${rz.reason}）`} < ${GLOBAL_RESILIENCE_MIN} 顺延`);
                 continue;
               }
-              position = buildPosition({
+              const pos = buildPosition({
                 pick: s.c,
                 minute: M,
                 px: s.pt.lastPx,
@@ -337,21 +343,23 @@ const runVolumeShareBacktest = async (startDate, endDate, strategyId, onProgress
                 dateStr,
                 n: N,
               });
-              position.buyDi = di;
-              position.resilienceIndex = resilienceIndexCodeOf(s.c.code);
+              pos.buyDi = di;
+              pos.resilienceIndex = resilienceIndexCodeOf(s.c.code);
+              positions.push(pos);
+              boughtAtBucket = true;
               break;
             }
-            if (position) break;
+            if (boughtAtBucket) break;
           }
         }
       }
     }
   }
 
-  // 组装结果（type:'single'：半仓单持仓，收益率按半仓折算逐笔复利）
-  let holding = null;
-  if (position) {
-    holding = { ...position, weight: TWO_BUY_LEG_WEIGHT };
+  // 组装结果（type:'single'：半仓持仓，收益率按半仓折算；无限仓位模式多持仓按账户区间口径）
+  const holdings = [];
+  for (const position of positions) {
+    const holding = { ...position, weight: TWO_BUY_LEG_WEIGHT };
     let rawBuyReturn = null;
     const closePx = getStockCloseOnOrBefore(position.code, rangeDates[rangeDates.length - 1]);
     if (closePx != null && closePx > 0 && position.buyPrice > 0) {
@@ -359,15 +367,16 @@ const runVolumeShareBacktest = async (startDate, endDate, strategyId, onProgress
     }
     holding.rawBuyReturn = rawBuyReturn;
     holding.buyReturn = rawBuyReturn != null ? round2(rawBuyReturn * TWO_BUY_LEG_WEIGHT) : null;
+    holdings.push(holding);
   }
   const overallReturn = computeTwoBuyAccountReturn([
     ...trades.map(t => ({ buyDate: t.buyDate, buyTime: t.buyTime, sellDate: t.sellDate, sellTime: t.sellTime, returnRate: t.returnRate })),
-    ...(holding ? [{ buyDate: holding.buyDate, buyTime: holding.buyTime, returnRate: holding.buyReturn }] : []),
+    ...holdings.map(h => ({ buyDate: h.buyDate, buyTime: h.buyTime, returnRate: h.buyReturn })),
   ]);
   const validTrades = trades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
   const winCount = validTrades.filter(t => t.returnRate > 0).length;
   await attachBuyDayReturn(trades);
-  if (holding) await attachBuyDayReturn([holding]);
+  if (holdings.length > 0) await attachBuyDayReturn(holdings);
   return {
     success: true,
     type: 'single',
@@ -376,15 +385,15 @@ const runVolumeShareBacktest = async (startDate, endDate, strategyId, onProgress
     skippedDates,
     seenStocks: Array.from(seenStocks.values()),
     trades: sortTradesByBuyTime(trades),
-    currentHolding: holding,
-    currentHoldings: holding ? [holding] : [],
+    currentHolding: holdings[0] || null,
+    currentHoldings: holdings,
     summary: {
       tradeCount: trades.length,
       winCount,
       winRate: validTrades.length > 0 ? round2((winCount / validTrades.length) * 100) : null,
       ...calcDrawdownStats(validTrades),
       overallReturn,
-      holding: position != null,
+      holding: holdings.length > 0,
     },
   };
 };

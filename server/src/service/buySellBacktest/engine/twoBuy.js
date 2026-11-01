@@ -73,7 +73,11 @@ const getPositionLegWeight = (pos, strategy) => {
 };
 
 // 是否为「分批建仓」仓位（两次买入 / 快进快出半仓）：用于成交流水附加字段与明细展示
-const isLegPosition = (pos, strategy) => (pos && pos.twoBuy === true) || (strategy && strategy.twoBuy === true);
+// 无限仓位测试（2026-11-01）里半仓买入的持仓不带 twoBuy/leg 标记，仅挂 weight=0.5，
+// 这里一并识别，保证成交流水带上权重与个股原始收益率（前端「半仓折算」提示与常规回测一致）
+const isLegPosition = (pos, strategy) => (pos && pos.twoBuy === true)
+  || (strategy && strategy.twoBuy === true)
+  || (pos && pos.weight != null && Number(pos.weight) < 1);
 
 // 组装两次买入某一份仓位在成交流水上追加的字段（半仓权重、个股原始收益率、所属份数 1/2）
 const buildTwoBuyTradeExtra = (position) => ({

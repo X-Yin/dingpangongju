@@ -54,7 +54,9 @@ const priceAtMinute = (points, minute) => {
 // 只买主板：剔除创业板（sz30/301）与科创板（sh688），北交所同样不参与
 const isMainBoardCode = (code) => !!code && !/^(sz30|sh688|bj)/i.test(code);
 
-const runEmotionBurstFollowBacktest = async (startDate, endDate, strategyId, onProgress) => {
+const runEmotionBurstFollowBacktest = async (startDate, endDate, strategyId, onProgress, options = {}) => {
+  // 无限仓位测试（2026-11-01 用户新增）：不同股票可同时持有（每份仍按半仓权重），同一只股票卖出前不重复买入
+  const unlimited = options.unlimited === true;
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.emotionBurstFollowMode !== true) {
     return { success: false, message: `未知连板题材-情绪瞬爆-惯性漂移-补涨策略: ${strategyId}` };
@@ -81,7 +83,7 @@ const runEmotionBurstFollowBacktest = async (startDate, endDate, strategyId, onP
   const skippedDates = [];
   const seenStocks = new Map();
 
-  let position = null;
+  const positions = []; // 持仓列表（常规模式最多 1 只半仓；无限仓位模式可多只，每只半仓）
   let soldThisDate = false;
 
   // 龙头触发日 → 该日该题材的首板股名单（懒加载并按事件缓存）
@@ -148,17 +150,20 @@ const runEmotionBurstFollowBacktest = async (startDate, endDate, strategyId, onP
       }
     }
 
-    // ---- 3) 隔夜持仓卖点数据（与龙头引擎同口径）----
-    const posTline = (position && dateStr > position.buyDate) ? await loadTlinePoints(position.code, dateNum) : null;
-    let posResilience = null;
-    let posResilienceLoaded = false;
-    const ensurePosResilience = async () => {
-      if (posResilienceLoaded) return posResilience;
-      posResilienceLoaded = true;
-      if (!position) return null;
+    // ---- 3) 隔夜持仓卖点数据（与龙头引擎同口径；逐份持仓独立）----
+    const posTlineMap = new Map();
+    for (const pos of positions) {
+      if (!(dateStr > pos.buyDate)) continue;
+      try { posTlineMap.set(pos.code, await loadTlinePoints(pos.code, dateNum)); } catch (e) { posTlineMap.set(pos.code, null); }
+    }
+    const posResilienceMap = new Map();
+    const ensurePosResilience = async (pos) => {
+      if (!pos) return null;
+      if (posResilienceMap.has(pos.code)) return posResilienceMap.get(pos.code);
+      let res = null;
       try {
         const [stockT, indexT] = await Promise.all([
-          getSingleStockTlineDataByDate(position.code, dateNum),
+          getSingleStockTlineDataByDate(pos.code, dateNum),
           getSingleStockTlineDataByDate(LEADER_RESILIENCE_INDEX_CODE, dateNum),
         ]);
         const toLine = (t) => (t?.line || [])
@@ -168,11 +173,12 @@ const runEmotionBurstFollowBacktest = async (startDate, endDate, strategyId, onP
         const stockLine = toLine(stockT);
         const indexLine = toLine(indexT);
         if (stockLine.length >= 5 && indexLine.length >= 5) {
-          const r = calculateReplayResilience(stockLine, indexLine, position.code);
-          if (r != null && Number.isFinite(Number(r))) posResilience = round2(r);
+          const r = calculateReplayResilience(stockLine, indexLine, pos.code);
+          if (r != null && Number.isFinite(Number(r))) res = round2(r);
         }
       } catch (e) { /* 数据不足则不触发该卖点 */ }
-      return posResilience;
+      posResilienceMap.set(pos.code, res);
+      return res;
     };
 
     // ---- 4) 补涨候选分时（仅空仓且存在候选时加载一次）----
@@ -224,12 +230,12 @@ const runEmotionBurstFollowBacktest = async (startDate, endDate, strategyId, onP
       const bucket = timeBuckets[bi];
       const bucketMinute = Number(bucket.minute);
       const isTailBucket = hasTailBucket ? bucketMinute >= TAIL_MINUTE : bi === timeBuckets.length - 1;
-      const atPtOfPos = posTline && posTline.points.length > 0
-        ? priceAtMinute(posTline.points, bucketMinute)
-        : null;
-
-      // ===== 卖出 =====
-      if (position) {
+      // ===== 卖出（逐份持仓独立判定）=====
+      for (const position of Array.from(positions)) {
+        const posTline = posTlineMap.get(position.code);
+        const atPtOfPos = posTline && posTline.points.length > 0
+          ? priceAtMinute(posTline.points, bucketMinute)
+          : null;
         const sellNow = dateStr > position.buyDate && atPtOfPos && atPtOfPos.lastPx > 0;
         let sellReason = null;
         let sellMinute = bucketMinute;
@@ -266,7 +272,7 @@ const runEmotionBurstFollowBacktest = async (startDate, endDate, strategyId, onP
           }
           // 当日收盘抗分歧指数 < 6
           if (!sellReason && isTailBucket) {
-            const res = await ensurePosResilience();
+            const res = await ensurePosResilience(position);
             if (res != null && Number(res) < RESILIENCE_SELL_MAX) {
               sellReason = `当日收盘抗分歧指数 ${Number(res)} < ${RESILIENCE_SELL_MAX}（收盘抗分歧过弱）`;
             }
@@ -302,17 +308,19 @@ const runEmotionBurstFollowBacktest = async (startDate, endDate, strategyId, onP
             returnRate: rawReturnRate != null ? round2(rawReturnRate * TWO_BUY_LEG_WEIGHT) : null,
             rawReturnRate,
           });
-          position = null;
+          positions.splice(positions.indexOf(position), 1);
           soldThisDate = true;
         }
       }
 
       // ===== 买入：窗口内首板股首个达到 +9% 者 =====
-      if (!position && !soldThisDate && activeCandidates.length > 0) {
+      if ((unlimited || positions.length === 0) && !soldThisDate && activeCandidates.length > 0) {
         await ensurePool();
         computeHits();
         let pick = null;
+        const heldCodes = new Set(positions.map(p => p.code));
         for (const c of activeCandidates) {
+          if (heldCodes.has(c.code)) continue; // 无限仓位：同一只股票卖出前不重复买入
           const hit = hitMemo.get(c.code);
           if (!hit || hit.minute > bucketMinute) continue;
           if (hit.px == null || !(hit.px > 0)) continue;
@@ -359,17 +367,17 @@ const runEmotionBurstFollowBacktest = async (startDate, endDate, strategyId, onP
           };
           pos.buyReason = buildBuyReason(pos);
           pos.buyChecks = buildBuyChecks(pos);
-          position = pos;
+          positions.push(pos);
           soldThisDate = false; // 买入当日仍可在尾盘触发「收盘不涨停即卖」
         }
       }
     }
   }
 
-  // 组装结果
-  let holding = null;
-  if (position) {
-    holding = { ...position, weight: TWO_BUY_LEG_WEIGHT };
+  // 组装结果（常规模式单持仓半仓；无限仓位模式多持仓按账户区间口径）
+  const holdings = [];
+  for (const position of positions) {
+    const holding = { ...position, weight: TWO_BUY_LEG_WEIGHT };
     let rawBuyReturn = null;
     const closePx = getStockCloseOnOrBefore(position.code, allDates[allDates.length - 1]);
     if (closePx != null && closePx > 0 && position.buyPrice > 0) {
@@ -377,16 +385,17 @@ const runEmotionBurstFollowBacktest = async (startDate, endDate, strategyId, onP
     }
     holding.rawBuyReturn = rawBuyReturn;
     holding.buyReturn = rawBuyReturn != null ? round2(rawBuyReturn * TWO_BUY_LEG_WEIGHT) : null;
+    holdings.push(holding);
   }
 
   const overallReturn = computeTwoBuyAccountReturn([
     ...trades.map((t) => ({ buyDate: t.buyDate, buyTime: t.buyTime, sellDate: t.sellDate, sellTime: t.sellTime, returnRate: t.returnRate })),
-    ...(holding ? [{ buyDate: holding.buyDate, buyTime: holding.buyTime, returnRate: holding.buyReturn }] : []),
+    ...holdings.map(h => ({ buyDate: h.buyDate, buyTime: h.buyTime, returnRate: h.buyReturn })),
   ]);
   const validTrades = trades.filter((t) => t.returnRate != null && Number.isFinite(t.returnRate));
   const winCount = validTrades.filter((t) => t.returnRate > 0).length;
   await attachBuyDayReturn(trades);
-  if (holding) await attachBuyDayReturn([holding]);
+  if (holdings.length > 0) await attachBuyDayReturn(holdings);
   return {
     success: true,
     type: 'single',
@@ -395,14 +404,15 @@ const runEmotionBurstFollowBacktest = async (startDate, endDate, strategyId, onP
     skippedDates,
     seenStocks: Array.from(seenStocks.values()),
     trades,
-    currentHolding: holding,
+    currentHolding: holdings[0] || null,
+    currentHoldings: holdings,
     summary: {
       tradeCount: trades.length,
       winCount,
       winRate: validTrades.length > 0 ? round2((winCount / validTrades.length) * 100) : null,
       ...calcDrawdownStats(validTrades),
       overallReturn,
-      holding: position != null,
+      holding: holdings.length > 0,
     },
   };
 };

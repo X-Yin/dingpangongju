@@ -29,67 +29,70 @@ const { computeEmoQuickOutInfo, createEmoQuickFundGate, getBucketTechEmotion, is
 const { attachBuyDayReturn, calcDrawdownStats, sortTradesByBuyTime } = require('../utils/tradeStats');
 const { ensureWatchlistValuation } = require('../../watchlistValuation');
 
-const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_gain', onProgress) => {
+const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_gain', onProgress, options = {}) => {
+  // 无限仓位测试（2026-11-01 用户新增）：不同股票可同时持有，买点触发时选「当前排名最高且未被持有」的一只买入；
+  // 同一只股票在持仓卖出前不重复买入。各独立引擎同样接收 options.unlimited
+  const unlimited = options.unlimited === true;
   // 买入估值限制预取：非当日缓存时拉取自选股流通市值/市盈率快照（除情绪游资相关策略外，买入候选须满足
   // 流通市值 ≥ 200 亿且市盈率非亏损；见 watchlistValuation.js）。覆盖全部路由（常规/重点板块/龙头战法）
   await ensureWatchlistValuation();
   // 重点板块-N日最高涨幅系列走独立的板块驱动回测逻辑（尾盘 14:50 买入，不走大盘买点诊断）
   if (STRATEGIES[strategyId]?.keyBlockDays != null) {
-    return runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
+    return runKeyBlockBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   // 情绪游资-极致胜率走独立引擎（过去20交易日三连板及以上个股，昨日差劲分/今日强度分阈值买入，卖点沿用龙头战法 10 条）
   if (STRATEGIES[strategyId]?.extremeWinMode === true) {
-    return runExtremeWinBacktest(startDate, endDate, strategyId, onProgress);
+    return runExtremeWinBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   // 情绪游资-反向抱团龙头走独立引擎（上证 3 日线斜率连续为负第 3 天起，当日上证跌幅 ≥ 0.5% 时
   // 候选股盘中强度分第 2 次 > 50 买入；卖点沿用龙头战法全部卖点并新增「上证斜率盘中由负转正」卖出；全仓单持仓）
   if (STRATEGIES[strategyId]?.reverseLeaderMode === true) {
-    return runReverseLeaderBacktest(startDate, endDate, strategyId, onProgress);
+    return runReverseLeaderBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   // 情绪游资-n板打板（n=2/3）走独立引擎（上证 3 日线斜率分时 > 0 时，买入上一交易日 n-1 板个股中
   // 当日首次冲高至 +8% 者；卖点沿用「情绪游资-极致胜率」顺周期腿；半仓单持仓）
   if (STRATEGIES[strategyId]?.nBoardMode === true) {
-    return runNBoardBacktest(startDate, endDate, strategyId, onProgress);
+    return runNBoardBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   // 情绪游资-成交量占比（N=2/3/5）走独立引擎（板块成交量占比 3 日线斜率前 3 板块成分股 ∩ 近 5 日连板，
   // 买 N 日涨幅最大者、9:40 起逐桶重试；卖点 = 所属板块占比斜率转负 → 次日开盘卖出；半仓单持仓）
   if (STRATEGIES[strategyId]?.volumeShareMode === true) {
-    return runVolumeShareBacktest(startDate, endDate, strategyId, onProgress);
+    return runVolumeShareBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   // N 日涨幅最大-成交量占比（N=2/3/4/5）走独立引擎（T-1 占比 3 日线斜率为正、较前 5 日最低占比高 30% 以上且该最低占比 >5% 的板块成分股中，
   // 按 N 日涨幅取前 5，9:40 单点买入排名最高且未涨停、分时涨幅为正且高于开盘价者；卖点同 N 日涨幅最大）
   if (STRATEGIES[strategyId]?.gainVolumeShareMode === true) {
-    return runGainVolumeShareBacktest(startDate, endDate, strategyId, onProgress);
+    return runGainVolumeShareBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   // 科技进攻-情绪游资极致胜率走独立引擎（快进快出 + 情绪游资-极致胜率双腿融合，账户被单一风格独占；
   // 空仓时谁先触发买谁、同一时间桶内快进快出优先；见 engine/fusedEmoWinBacktest.js）
   if (STRATEGIES[strategyId]?.fusedEmoWinMode === true) {
-    return runFusedEmoWinBacktest(startDate, endDate, strategyId, onProgress);
+    return runFusedEmoWinBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   // 连板题材-情绪瞬爆-惯性漂移-龙头走独立引擎（大盘资金 5min 净流入 ≥ 20 亿且延时 15min 持续流入后，
   // 近 5 日涨停题材中按 20min 平均涨幅选板块、突破窗口最大值确认后买该题材主板龙头；卖点沿用极致胜率顺周期腿）
   if (STRATEGIES[strategyId]?.emotionBurstDriftMode === true) {
-    return runEmotionBurstDriftBacktest(startDate, endDate, strategyId, onProgress);
+    return runEmotionBurstDriftBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   // 连板题材-情绪瞬爆-惯性漂移-补涨走独立引擎（记录龙头买点为触发，其后 3 个交易日内在触发日该题材爆发的
   // 首板股中，买首个分时涨幅达 +9% 者；卖点同龙头并新增「收盘未涨停即卖」）
   if (STRATEGIES[strategyId]?.emotionBurstFollowMode === true) {
-    return runEmotionBurstFollowBacktest(startDate, endDate, strategyId, onProgress);
+    return runEmotionBurstFollowBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   // 首板洗盘-起爆拉升走独立引擎（过去 15 交易日首/二板洗盘或三日放量起爆，竞价 >5% 或盘中 +9% 半仓买入；
   // 卖点沿用极致胜率顺周期腿去掉单分钟跳水）
   if (STRATEGIES[strategyId]?.firstBoardWashMode === true) {
-    return runFirstBoardWashBacktest(startDate, endDate, strategyId, onProgress);
+    return runFirstBoardWashBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   // 放量洗盘-二板起爆走独立引擎（T-1 首板 + 只放量无涨停洗盘形态，竞价高开后在 9:30–14:30 分时首次 +8% 半仓买入；
   // 卖点与「首板洗盘-起爆拉升」同口径）
   if (STRATEGIES[strategyId]?.volumeWashoutMode === true) {
-    return runVolumeWashoutSecondBoardBacktest(startDate, endDate, strategyId, onProgress);
+    return runVolumeWashoutSecondBoardBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   // 情绪游资-极致赔率走独立引擎（「首板洗盘-起爆拉升」与「放量洗盘-二板起爆」融合进同一账户，
   // 候选池取并集、谁先命中买谁；账户拆两份、每份半仓，各份按命中来源执行对应卖点体系）
   if (STRATEGIES[strategyId]?.washFusionMode === true) {
-    return runWashFusionBacktest(startDate, endDate, strategyId, onProgress);
+    return runWashFusionBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   const strategy = STRATEGIES[strategyId];
   // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：快进快出半仓（2026-10-13 用户新增）——
@@ -130,6 +133,14 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
 
   // 持仓列表：普通单股策略最多 1 个；两次买入策略最多 2 个（两份仓位各自独立买卖，均半仓）
   const positions = []; // { code, stockName, buyDate, buyDateDisplay, buyTime, buyPrice, buyChange, metric, ... }
+  // 无限仓位测试：把当前已持有的股票代码映射为 holding=true，传给选股函数后自动跳过已持有股票（同股不重复买）
+  const buildHeldStockMap = () => {
+    if (!unlimited) return new Map();
+    const m = new Map();
+    for (const p of positions) if (p && p.code) m.set(p.code, { holding: true });
+    return m;
+  };
+  const buyStockMap = () => buildHeldStockMap();
   // 情绪快进快出策略：最近一次 10:00 强制卖出的日期（该日禁止二次买入，哪怕买点再次触发）
   let quickOutSoldDate = null;
   // 「两次买入（同一天）」变体：当日 14:55 尾盘补买评估标记（每交易日评估一次，盈利未达标/涨停不重试）
@@ -248,18 +259,18 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       } else if (attackMode) {
         // 按全量重点板块 3 日涨幅降序逐个尝试：某板块交集内选不出可买标的（涨停/抗分歧/过热等被过滤）→ 顺延下一板块
         for (const blk of attackInfo.blocks) {
-          picked = pickBestStock(new Map(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, blk.codes);
+          picked = pickBestStock(buyStockMap(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, blk.codes);
           if (picked) { attackBlock = blk; break; }
         }
         if (!picked) return; // 全量重点板块均选不出 → 本次不买（不回退全量自选股）
       } else {
         for (const rb of raisedBlocks) {
-          picked = pickBestStock(new Map(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, rb.codes);
+          picked = pickBestStock(buyStockMap(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, rb.codes);
           if (picked) { raisedBlock = rb; break; }
         }
         if (!picked) {
           // 全部板块交集内均选不出（或本就没有交集非空的板块）→ 回退原逻辑：全量自选股选 N 日涨幅最大
-          picked = pickBestStock(new Map(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, null);
+          picked = pickBestStock(buyStockMap(), dateAxis, di + axisOffset, execBucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, prevOneWordSet, emoCycSet, null);
           if (picked && raisedBlocks.length > 0) picked.raisedBlockFallbackInfo = { triedCount: raisedBlocks.length, pulse: isPulseBlockPick };
         }
       }
@@ -338,7 +349,9 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
         raisedBlockDelay: delayInfo || null, // 板块发酵延时（触发时点 → 实际成交时点），供前端展示/追溯
         emoQuickOut: picked.emoQuickOut || null, // 情绪快进快出标注（quickOut=true → 次日 10:00 强制卖出；其余策略为 null）
         // 两次买入策略 / 快进快出半仓（第一份）：按半仓权重，标记 leg=1；非快进快出时全仓不标记
-        ...(strategy.twoBuy === true || halfByQuickOut ? { twoBuy: true, leg: 1, weight: TWO_BUY_LEG_WEIGHT } : {}),
+        ...(unlimited
+          ? { weight: (strategy.twoBuy === true || halfByQuickOut) ? TWO_BUY_LEG_WEIGHT : 1 }
+          : (strategy.twoBuy === true || halfByQuickOut ? { twoBuy: true, leg: 1, weight: TWO_BUY_LEG_WEIGHT } : {})),
       });
     };
 
@@ -358,7 +371,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       // 冰点转折·涨幅确认监控（2026-10-30 用户新增）：延时到点已锁定个股但尚未确认时，每个 5min 桶检查该股涨幅，
       // 超过窗口最高涨幅 +1 个百分点即本桶成交；本桶不做新买点评估，始终未确认 → 当日不买
       let iceConfirmHit = null;
-      if (pendingIceConfirm && positions.length === 0 && Number(bucket.minute) > pendingIceConfirm.targetMinute) {
+      if (pendingIceConfirm && (unlimited || positions.length === 0) && Number(bucket.minute) > pendingIceConfirm.targetMinute) {
         const confirmSc = (bucket.stockChanges || []).find(s => s.code === pendingIceConfirm.picked.stock.code);
         const curGain = confirmSc && confirmSc.changePct != null ? Number(confirmSc.changePct) : null;
         if (isIceGainConfirmed(curGain, pendingIceConfirm.windowMaxGain)) {
@@ -450,7 +463,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
         }
         const buyTime = fmtTime(bucket.timeKey).substring(0, 5); // 归一化 HH:MM
 
-        if (positions.length === 0) {
+        if (unlimited || positions.length === 0) {
           // 未持仓时按指标选最优的一只买入（普通策略同一时刻仅持有一只；两次买入策略建第一份）
           // 「板块发酵延时」（2026-10-23 用户改）：连续两日冰点下买点触发后不立刻买入，记录待执行建仓，
           // 等待 15 分钟到目标桶后按「区间涨幅差值」重新选板块与个股（给板块发酵时间）；目标落在非买入时段 → 本次不买
@@ -506,7 +519,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
               ? await buildCounterCycSet((bucket.stockChanges || []).map(s => s.code), dateStr)
               : null;
             const secondPicked = restrictCodes.size > 0
-              ? pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, secondPrevOneWordSet, secondEmoCycSet, restrictCodes)
+              ? pickBestStock(buyStockMap(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, secondPrevOneWordSet, secondEmoCycSet, restrictCodes)
               : null;
             if (secondPicked) {
               const secondBuyInfo = withResilienceGateInfo(gatedBuyInfo, secondPicked);
@@ -535,7 +548,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
             const secondEmoCycSet = isCycleFilterStrategy(strategy)
               ? await buildCounterCycSet((bucket.stockChanges || []).map(s => s.code), dateStr)
               : null;
-            const secondPicked = pickBestStock(new Map(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, secondPrevOneWordSet, secondEmoCycSet, null);
+            const secondPicked = pickBestStock(buyStockMap(), dateAxis, di + axisOffset, bucket, replayStocks, dailyInfos, strategy.id, axisOffset, gateAllowedMarkets, gateTurnedPosInfo, secondPrevOneWordSet, secondEmoCycSet, null);
             if (secondPicked) {
               const secondBuyInfo = withResilienceGateInfo(gatedBuyInfo, secondPicked);
               const sc2 = secondPicked.stock;
@@ -620,7 +633,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       // 延时建仓执行：目标桶（买点触发后 15 分钟）到达时，按区间涨幅差值重新选板块与个股，按本桶价成交；
       // 连续两日冰点（非脉冲最强）路径下还要先做「延时后涨幅确认」：到点只锁定标的、不成交，
       // 待后续 5min 桶涨幅超过窗口最高 +1 个百分点才由 pendingIceConfirm 确认成交
-      if (delayedExec && positions.length === 0 && !quickOutNoRebuy) {
+      if (delayedExec && (unlimited || positions.length === 0) && !quickOutNoRebuy) {
         const iceNow = emoQuickHalfBuy && isTechIceGateOpen(prevDateStr, timeBuckets, bi);
         const iceGateOpen = emoQuickHalfBuy && (isPulseBlockPick || iceNow);
         const needIceConfirm = emoQuickHalfBuy && !isPulseBlockPick && iceNow;
@@ -633,7 +646,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       }
 
       // 冰点转折·涨幅确认通过：沿用延时到点锁定的标的，按本桶（确认桶）价成交（等待期内不重复评估新买点）
-      if (iceConfirmHit && positions.length === 0 && !quickOutNoRebuy) {
+      if (iceConfirmHit && (unlimited || positions.length === 0) && !quickOutNoRebuy) {
         const saved = iceConfirmHit;
         pendingIceConfirm = null;
         const lockedPick = {
@@ -661,7 +674,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       // 「进攻延迟 n 分钟」建仓执行：目标桶到达时先逐 5min 桶校验延时窗口（资金净流入增量为正），
       // 未通过则本次买点作废、不买入；通过则在全量重点板块中取 3 日涨幅最大（前天+昨天+实时，复利）且与
       // 全量自选股有交集的板块，在板块成分股池内选 3 日涨幅最大者
-      if (attackExec && positions.length === 0 && !quickOutNoRebuy) {
+      if (attackExec && (unlimited || positions.length === 0) && !quickOutNoRebuy) {
         const window = buildAttackDelayWindowCheck(timeBuckets, attackExec.triggerIndex, bi);
         if (window.passed) {
           const blocks = await resolveAttackBlocks(bucket, dateStr, prevDateStr, prev2DateStr);
@@ -710,7 +723,13 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   const holding = currentHoldings[0] || null;
   // 整体收益：分批建仓（两次买入 / 快进快出半仓）按真实账户口径（同一轮多份同时持有 → 轮内收益相加，跨轮复利）；
   // 其余单份全仓策略同一时刻只持有一份，逐笔复利即等价账户口径
-  const overallReturn = strategy.twoBuy === true || emoQuickHalfBuy
+  // 无限仓位：多笔仓位在时间上可重叠（不同股票同时持有），按真实账户口径「重叠区间内收益相加、跨轮复利」计算
+  const overallReturn = unlimited
+    ? computeTwoBuyAccountReturn([
+        ...singleTrades.map(t => ({ buyDate: t.buyDate, buyTime: t.buyTime, sellDate: t.sellDate, sellTime: t.sellTime, returnRate: t.returnRate })),
+        ...currentHoldings.map(h => ({ buyDate: h.buyDate, buyTime: h.buyTime, returnRate: h.buyReturn })),
+      ])
+    : (strategy.twoBuy === true || emoQuickHalfBuy
     ? computeTwoBuyAccountReturn([
         ...singleTrades,
         ...currentHoldings.map(h => ({ ...h, returnRate: h.buyReturn })),
@@ -722,7 +741,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
         }
         for (const h of currentHoldings) acc *= 1 + (h.buyReturn || 0) / 100;
         return parseFloat(((acc - 1) * 100).toFixed(2));
-      })();
+      })());
   const validTrades = singleTrades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
   const winCount = validTrades.filter(t => t.returnRate > 0).length;
   // 买入当日收益（2026-10-10 用户新增）：为每笔成交与期末持仓补写「买入价 → 买入当日收盘价」收益率
@@ -759,7 +778,7 @@ const runRangeBacktest = (startDate, endDate, strategyId = 'highest_gain', onPro
   const excludeSet = excludeList.length > 0 ? new Set(excludeList.map(c => c.toLowerCase())) : null;
   // options.sim：随机模拟测试注入的合成股票集合（AsyncLocalStorage 上下文，见 backtestSimContext）
   const sim = options.sim || null;
-  return runWithSimContext(sim, () => runWithOscExclude(excludeSet, () => runRangeBacktestInner(startDate, endDate, strategyId, onProgress)));
+  return runWithSimContext(sim, () => runWithOscExclude(excludeSet, () => runRangeBacktestInner(startDate, endDate, strategyId, onProgress, options)));
 };
 
 // 多策略共享数据回测：外层日期、内层策略，同一天回放数据只加载一次依次喂给全部策略。

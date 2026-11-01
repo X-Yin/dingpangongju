@@ -21,6 +21,7 @@ import BacktestReportModal from '../BacktestReportModal';
 import TrendDiagnosisModal from '../TrendDiagnosisModal';
 import TimeFlexTestModal from '../TimeFlexTestModal';
 import RandomSimTestModal from '../RandomSimTestModal';
+import UnlimitedPositionDrawer from '../UnlimitedPositionDrawer';
 import StockKLineModal from '../../../../components/StockKLineModal';
 import StrategyFlowDiagram, { getStrategyFlow, parseNoteBullet, splitBoldClauses } from './StrategyFlowDiagram';
 
@@ -1514,6 +1515,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const [trendOpen, setTrendOpen] = useState(false); // 策略趋势诊断弹窗（三档时间范围 × 全部策略）
   const [timeFlexOpen, setTimeFlexOpen] = useState(false); // 时间伸缩测试弹窗
   const [randomSimOpen, setRandomSimOpen] = useState(false); // 随机模拟测试弹窗
+  const [unlimitedOpen, setUnlimitedOpen] = useState(false); // 无限仓位测试抽屉（不同股票可同时持有，同股不重复买）
   const [ruleOpen, setRuleOpen] = useState(false); // 策略说明弹窗（当前选中策略的买卖规则细节）
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(null); // { current, total, date, status }
@@ -2404,6 +2406,18 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
               </Button>
             </Tooltip>
             <span className="bt-action-sep" />
+            {/* 无限仓位测试：不再因仓位被占用放弃其他股票的买点，不同股票可同时持有（同股仍按买点 → 卖点、卖出前不重复买） */}
+            <Tooltip title="不再因为仓位被占用而放弃其他股票的买点：规定时间内满足策略要求的股票都会执行买入（该全仓的全仓、该半仓的半仓），不同股票可同时持有；同一只股票仍按原有「买点 → 卖点」执行，持仓未卖出前即使再次触发买点也不会重复买入">
+              <Button
+                type="text"
+                icon={<RiseOutlined />}
+                onClick={() => setUnlimitedOpen(true)}
+                disabled={running || workerRunning}
+              >
+                无限仓位测试
+              </Button>
+            </Tooltip>
+            <span className="bt-action-sep" />
             {/* 策略说明：始终可见，点击打开当前选中策略的买卖规则详情弹窗 */}
             <Tooltip title="查看当前选中策略的买入触发、选股口径、卖点判定等完整规则细节">
               <Button
@@ -2963,6 +2977,15 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         endDate={effectiveRange?.[1] ? effectiveRange[1].format('YYYYMMDD') : undefined}
         startDate={effectiveRange?.[0] ? effectiveRange[0].format('YYYYMMDD') : undefined}
         strategyName={STRATEGY_OPTIONS.find(o => o.value === strategy)?.label || strategy}
+      />
+      {/* 无限仓位测试抽屉：按当前策略/区间执行无限仓位回测，展示全部成交记录（支持收益/亏损正逆排序） */}
+      <UnlimitedPositionDrawer
+        open={unlimitedOpen}
+        onClose={() => setUnlimitedOpen(false)}
+        strategy={strategy}
+        dateRange={effectiveRange}
+        strategyName={STRATEGY_OPTIONS.find(o => o.value === strategy)?.label || strategy}
+        extremeWin={curIsExtremeWinLike}
       />
       {(() => {
         const opt = STRATEGY_OPTIONS.find(o => o.value === strategy);

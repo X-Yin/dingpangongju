@@ -558,7 +558,10 @@ const scanWashPriceSell = ({ points, preclose, buyPrice, cutoffMinute, ma5, prof
   return best;
 };
 
-const runVolumeWashoutSecondBoardBacktest = async (startDate, endDate, strategyId, onProgress) => {
+const runVolumeWashoutSecondBoardBacktest = async (startDate, endDate, strategyId, onProgress, options = {}) => {
+  // 无限仓位测试（2026-11-01 用户新增）：不限制同时持仓数量，每个买点只买排名最高且未被持有的一只
+  const unlimited = options.unlimited === true;
+  const maxPositions = unlimited ? Infinity : MAX_POSITIONS;
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.volumeWashoutMode !== true) {
     return { success: false, message: `未知放量洗盘-二板起爆策略: ${strategyId}` };
@@ -870,14 +873,14 @@ const runVolumeWashoutSecondBoardBacktest = async (startDate, endDate, strategyI
       }
 
       // ===== 买入（账户拆两份、每份半仓）=====
-      if (positions.length < MAX_POSITIONS && !soldThisDate && bucketMinute <= BUY_CUTOFF_MINUTE + 5) {
+      if (positions.length < maxPositions && !soldThisDate && bucketMinute <= BUY_CUTOFF_MINUTE + 5) {
         await ensureSelected();
         if (candidates.length > 0) {
           await ensureEntries();
 
           const heldCodes = new Set(positions.map((p) => p.code));
           const mvRejected = new Set();
-          while (positions.length < MAX_POSITIONS) {
+          while (positions.length < maxPositions) {
             let pick = null;
             for (const c of candidates) {
               if (heldCodes.has(c.code) || mvRejected.has(c.code)) continue;
@@ -934,6 +937,8 @@ const runVolumeWashoutSecondBoardBacktest = async (startDate, endDate, strategyI
             pos.buyChecks = buildBuyChecks(pos);
             positions.push(pos);
             heldCodes.add(pos.code);
+            // 无限仓位：每个买点只买排名最高的一只，其余触发留给后续桶
+            if (unlimited) break;
           }
         }
       }

@@ -369,7 +369,9 @@ const CACHE_VERSION_BY_STRATEGY = {
   //   融合进同一账户（候选池并集、谁先命中买谁），账户拆两份、每份半仓（权重 0.5）
   wash_fusion_extreme_odds: 1,
 };
-const getBacktestCacheVersion = (strategy) => CACHE_VERSION_BY_STRATEGY[strategy] || 1;
+// 无限仓位测试结果用 `${strategyId}__unlimited` 独立缓存键（文件名与常规结果隔离），
+// 但规则版本号仍跟随基础策略：基础策略规则升级后，无限仓位旧缓存同步失效
+const getBacktestCacheVersion = (strategy) => CACHE_VERSION_BY_STRATEGY[String(strategy).replace(/__unlimited$/, '')] || 1;
 
 // 研报目录
 const researchReportsDir = path.join(DATA_DIR, 'research_reports');

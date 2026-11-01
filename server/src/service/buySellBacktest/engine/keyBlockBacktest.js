@@ -11,13 +11,16 @@ const { locateCrashSellPoint, describeCrashSell, fmtMin } = require('./crashSell
 const { buildKeyBlockSyntheticBucketEntry, buildKeyBlockSyntheticDay } = require('./keyBlockSynthetic');
 const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats');
 const { isBuyBlockedByValuation } = require('../../watchlistValuation');
+const { computeTwoBuyAccountReturn } = require('./twoBuy');
 
 const KEY_BLOCK_POSITION_WEIGHT = { offense: 1, defense: 0.5 };
 const KEY_BLOCK_MODE_LABEL = { offense: '进攻·全仓', defense: '防御·半仓' };
 // 防御持仓止损线（个股成本线下 -5%，任一卖点先触发即卖出；2026-10-01 用户新增）
 const KEY_BLOCK_DEFENSE_STOP_LOSS_PCT = 5;
 
-const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) => {
+const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress, options = {}) => {
+  // 无限仓位测试（2026-11-01 用户新增）：不同股票可同时持有（进攻全仓 / 防御半仓），同一只股票卖出前不重复买入
+  const unlimited = options.unlimited === true;
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.keyBlockDays == null) {
     return { success: false, message: `未知重点板块策略: ${strategyId}` };
@@ -73,7 +76,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     return { success: false, message: `重点板块成分股日K拉取失败: ${e.message || e}` };
   }
 
-  let position = null; // 单股持仓（mode: 'offense' 进攻=自选科技股 / 'defense' 防御=防御+中性 tag 股）
+  const positions = []; // 持仓列表（常规模式最多 1 只；无限仓位模式可多只，进攻全仓 / 防御半仓）
   const trades = [];
   const skippedDates = [];
   const seenStocks = new Map(); // code -> { code, name }（回测期间出现过的自选股，供复制K线等使用）
@@ -121,7 +124,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
   //          retry_next_day_940（进攻卖出后次日开盘10分钟复测仍为正）
   const openPosition = async (intent, ctx) => {
     const { mode, trigger, fromValue, toValue, icePrevCloseSlope } = intent;
-    const { dateStr, dateDisplay, dateNum, winDates, bucket, bucketMinute, buyDi } = ctx;
+    const { dateStr, dateDisplay, dateNum, winDates, bucket, bucketMinute, buyDi, excludeCodes } = ctx;
     const isOffense = mode === 'offense';
     const allMembers = [];
     let lianbanAdded = []; // 防御池动态追加的历史涨停候选股（用于日志/文案）
@@ -271,6 +274,8 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     // 全部候选（涨停或抗分歧不足）均不可买时本桶不买、后续桶继续重试
     const iceResilienceSkipped = [];
     const best = candidates.find(c => {
+      // 无限仓位：同一只股票卖出前不重复买入，顺延至下一只
+      if (excludeCodes && excludeCodes.has(c.code)) return false;
       if (c.limitUp) return false;
       // 上一交易日一字板过滤（全策略通用）：昨日一字板的候选次日不买，顺延至排名下一只
       if (c.prevOneWord) return false;
@@ -393,7 +398,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       ice_next_day_940: `${triggerTimeText.substring(0, 5)}前一交易日上证指数3日线斜率由负转正，今日开盘10分钟后（9:40 桶）仍空仓补买（上证指数3日线斜率 ${slopeText}），买入防御+中性 tag 板块 ∪ 近20交易日出现三板及以上连板的红利板块个股中${gainBasisText}最大的股票（顺周期情绪游资次日9:40补买）`,
       ice_rev_next_day_940: `${triggerTimeText.substring(0, 5)}前一交易日上证指数3日线斜率盘中由正转负（${fromText}→${slopeText}），今日开盘10分钟后（9:40 桶）斜率依旧为负且仍空仓，买入防御+中性 tag 板块 ∪ 近20交易日出现三板及以上连板的红利板块个股中${gainBasisText}最大的股票（逆周期情绪游资买点，转负次日9:40）`,
     };
-    position = {
+    positions.push({
       code: best.code,
       stockName: best.name,
       mode: isOffense ? 'offense' : 'defense',
@@ -406,7 +411,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       costLinePct: Number(strategy.costLinePct) || 2,
       buyReason: buyReasonMap[trigger] || buyReasonMap.slope_turn_positive,
       buyChecks: [modeGateCheck, poolCheck, limitUpCheck, oneWordBoardCheck, ...(iceResilienceCheck ? [iceResilienceCheck] : []), bestCheck],
-    };
+    });
     return true;
   };
 
@@ -449,40 +454,47 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     // 当日隔夜持仓卖出数据预建（当日买入次日才可卖，同日买入不可同日卖出）：
     //   进攻持仓 → 通用 7 条件卖点诊断所需的日收盘斜率门禁（「科技板块情绪退潮」条件）+ 非自选股合成逐桶数据
     // 防御持仓 → 持仓股当日分时（卖点：斜率翻转当桶 ∪ 个股分时价跌破成本线止损 -5%/-2% ∪ 情绪游资 14:55 长下影强卖）
-    let sellBuckets = timeBuckets;
-    let sellReplayStocks = replayStocks;
-    let cybMa3SlopeForGate = null;
-    let defensePoints = null;
-    let defensePreclose = null;
-    if (position && dateStr > position.buyDate) {
+    // 每份隔夜持仓各自的卖出上下文（常规模式最多 1 只；无限仓位模式多只互不影响）：
+    //   进攻持仓 → 日收盘斜率门禁 + 非自选股合成逐桶数据；防御持仓 → 持仓股当日分时
+    const posSellCtxMap = new Map(); // code -> { sellBuckets, sellReplayStocks, cybMa3SlopeForGate, defensePoints, defensePreclose }
+    for (const position of positions) {
+      if (!(dateStr > position.buyDate)) continue;
+      const ctx = {
+        sellBuckets: timeBuckets,
+        sellReplayStocks: replayStocks,
+        cybMa3SlopeForGate: null,
+        defensePoints: null,
+        defensePreclose: null,
+      };
       if (position.mode === 'offense') {
-        cybMa3SlopeForGate = await getKeyBlockCybMa3Slope(dateStr);
+        ctx.cybMa3SlopeForGate = await getKeyBlockCybMa3Slope(dateStr);
         // 非自选股持仓：回放数据无该股，为卖出诊断合成逐桶 stockChanges 与 replayStocks 条目
         // （仅浅拷贝桶并追加条目，不改动共享回放缓存；合成失败当日安全跳过，次日重试）
         const hasRealEntry = timeBuckets.some(b => (b.stockChanges || []).some(sc => sc.code === position.code));
         if (!hasRealEntry) {
           const synth = await buildKeyBlockSyntheticDay(position.code, position.stockName, dateStr);
           if (synth) {
-            sellBuckets = timeBuckets.map(b => {
+            ctx.sellBuckets = timeBuckets.map(b => {
               const entry = buildKeyBlockSyntheticBucketEntry(position.code, position.stockName, synth.sortedPoints, synth.maInfo, synth.r3d, Number(b.minute));
               return entry ? { ...b, stockChanges: [...(b.stockChanges || []), entry] } : b;
             });
-            sellReplayStocks = [...replayStocks, synth.replayEntry];
+            ctx.sellReplayStocks = [...replayStocks, synth.replayEntry];
           }
         }
       } else {
         try {
           const tline = await getSingleStockTlineDataByDate(position.code, parseInt(dateStr, 10));
-          defensePreclose = tline?.preclose_px != null ? parseFloat(tline.preclose_px) : null;
-          defensePoints = (tline?.line || [])
+          ctx.defensePreclose = tline?.preclose_px != null ? parseFloat(tline.preclose_px) : null;
+          ctx.defensePoints = (tline?.line || [])
             .filter(p => p && p.minute != null && p.last_px != null)
             .map(p => ({ minute: parseInt(p.minute), lastPx: parseFloat(p.last_px) }))
             .filter(p => p.lastPx > 0)
             .sort((a, b) => a.minute - b.minute);
-          } catch (e) {
-            defensePoints = null; // 分时拉取失败当日安全跳过卖出（次日重试）
-          }
+        } catch (e) {
+          ctx.defensePoints = null; // 分时拉取失败当日安全跳过卖出（次日重试）
         }
+      }
+      posSellCtxMap.set(position.code, ctx);
     }
 
     const diA = di + axisOffset;
@@ -511,8 +523,16 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       const turnedPositive = lastSlopeSign !== null && signNow === 1 && lastSlopeSign === -1;
       const turnedNegative = lastSlopeSign !== null && signNow === -1 && lastSlopeSign === 1;
 
-      // ===== ② 卖出（仅隔夜持仓） =====
-      if (position && dateStr > position.buyDate) {
+      // ===== ② 卖出（仅隔夜持仓，逐份独立判定） =====
+      for (const position of Array.from(positions)) {
+        if (!(dateStr > position.buyDate)) continue;
+        const {
+          sellBuckets = timeBuckets,
+          sellReplayStocks = replayStocks,
+          cybMa3SlopeForGate = null,
+          defensePoints = null,
+          defensePreclose = null,
+        } = posSellCtxMap.get(position.code) || {};
         // 盘中大跌强卖预检（2026-10-16 用户新增，仅非情绪游资的重点板块策略启用）：该股当日跌幅（较昨收）
         // ≤ EMO_QUICK_CRASH_PCT（-7%）时无条件卖出，先于防御/进攻各自卖点判定；情绪游资/尾盘抄底/三日情绪
         // 冰点系列未启用（strategy.crashSell 未置位，见 strategies/registry.js）。2026-10-19 叠加竞价低开
@@ -555,7 +575,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
             returnRate: crashReturnRate,
             rawReturnRate: crashRawReturn,
           });
-          position = null;
+          positions.splice(positions.indexOf(position), 1);
           // 进攻持仓大跌卖出后斜率仍为正：当日不再追买、挂次日 9:40 复测（与通用卖点卖出后口径一致）
           if (modeWasOffense && signNow === 1) {
             pendingEntry = { mode: 'offense', trigger: 'retry_next_day_940', armDate: dateStr, fromValue: slopeNow, toValue: slopeNow };
@@ -698,7 +718,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
                 returnRate,
                 rawReturnRate: finalRawReturnRate,
               });
-              position = null;
+              positions.splice(positions.indexOf(position), 1);
             }
           }
         } else if (position.mode === 'offense') {
@@ -734,7 +754,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
               returnRate: rawReturnRate,
               rawReturnRate,
             });
-            position = null;
+            positions.splice(positions.indexOf(position), 1);
             // 卖出后斜率仍为正：当日不再继续买，次日开盘 10 分钟后（9:40 桶）复测仍为正才再买
             // （卖出时斜率为负且本桶由正转负的情形，交由下方③的防御事件处理）
             if (signNow === 1) {
@@ -745,8 +765,8 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
         }
       }
 
-      // ===== ③ 空仓时由翻转事件生成/覆盖入场意图 =====
-      if (!position) {
+      // ===== ③ 空仓（无限仓位：仍可持有其他股票）时由翻转事件生成/覆盖入场意图 =====
+      if (unlimited || positions.length === 0) {
         if (iceMode) {
           if (iceReverse) {
             // 逆周期情绪游资（2026-10-10 新增，与顺周期完全镜像）：上证 3 日线斜率「由正转负」为买点信号，
@@ -792,7 +812,7 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
       }
 
       // ===== ④ 按意图建仓（同桶先卖后买；候选全部涨停/无效时后续桶继续重试） =====
-      if (!position && winDates.length === days && pendingEntry) {
+      if ((unlimited || positions.length === 0) && winDates.length === days && pendingEntry) {
         // 顺周期情绪游资：转正当日 9:40 起持续重试；次日起仅在 9:40 及以后的桶补买
         const iceNextDay = iceMode && pendingEntry.trigger === 'ice_slope_turn_positive'
           && pendingEntry.armDi != null && di > pendingEntry.armDi;
@@ -816,7 +836,10 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
           const intent = pendingEntry.trigger === 'retry_next_day_940'
             ? { ...pendingEntry, toValue: slopeNow }
             : (iceNextDay ? { ...pendingEntry, trigger: 'ice_next_day_940', toValue: slopeNow } : pendingEntry);
-          const opened = await openPosition(intent, { dateStr, dateDisplay, dateNum, winDates, bucket, bucketMinute });
+          const opened = await openPosition(intent, {
+            dateStr, dateDisplay, dateNum, winDates, bucket, bucketMinute,
+            excludeCodes: new Set(positions.map(p => p.code)),
+          });
           if (opened) {
             pendingEntry = null;
           }
@@ -831,15 +854,11 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     }
   }
 
-  // 组装结果（type:'single'：单股顺序持仓，整体收益率 = 逐笔复利，与 rangeBacktest/sentimentHotMoney 口径一致；
-  // 半仓（防御/冰点）成交的 returnRate 已按权重折算，复利即为账户口径；期末持仓浮动收益并入复利）
-  let acc = 1;
-  for (const t of trades) {
-    if (t.returnRate != null && Number.isFinite(t.returnRate)) acc *= 1 + t.returnRate / 100;
-  }
-  let holding = null;
-  if (position) {
-    holding = { ...position };
+  // 组装结果（type:'single'）：常规模式 = 单股顺序持仓，整体收益率逐笔复利（与 rangeBacktest/sentimentHotMoney 口径一致）；
+  // 无限仓位模式 = 多只持仓可能重叠，整体收益率按账户口径（重叠区间收益相加、跨轮复利）
+  const holdings = [];
+  for (const position of positions) {
+    const holding = { ...position };
     holding.weight = KEY_BLOCK_POSITION_WEIGHT[position.mode] ?? 1;
     let rawBuyReturn = null; // 期末持仓的个股实际浮盈（未折算）
     for (let i = rangeDates.length - 1; i >= 0; i--) {
@@ -861,16 +880,29 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     // 防御半仓持仓：浮盈同样按 0.5 折算后计入整体收益
     holding.rawBuyReturn = rawBuyReturn;
     holding.buyReturn = rawBuyReturn != null ? parseFloat((rawBuyReturn * holding.weight).toFixed(2)) : null;
-    if (holding.buyReturn != null && Number.isFinite(holding.buyReturn)) {
-      acc *= 1 + holding.buyReturn / 100;
-    }
+    holdings.push(holding);
   }
-  const overallReturn = parseFloat(((acc - 1) * 100).toFixed(2));
+  let overallReturn;
+  if (unlimited) {
+    overallReturn = computeTwoBuyAccountReturn([
+      ...trades.map(t => ({ buyDate: t.buyDate, buyTime: t.buyTime, sellDate: t.sellDate, sellTime: t.sellTime, returnRate: t.returnRate })),
+      ...holdings.map(h => ({ buyDate: h.buyDate, buyTime: h.buyTime, returnRate: h.buyReturn })),
+    ]);
+  } else {
+    let acc = 1;
+    for (const t of trades) {
+      if (t.returnRate != null && Number.isFinite(t.returnRate)) acc *= 1 + t.returnRate / 100;
+    }
+    for (const holding of holdings) {
+      if (holding.buyReturn != null && Number.isFinite(holding.buyReturn)) acc *= 1 + holding.buyReturn / 100;
+    }
+    overallReturn = parseFloat(((acc - 1) * 100).toFixed(2));
+  }
   const validTrades = trades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
   const winCount = validTrades.filter(t => t.returnRate > 0).length;
   // 买入当日收益（2026-10-10 用户新增）：为每笔成交与期末持仓补写「买入价 → 买入当日收盘价」收益率
   await attachBuyDayReturn(trades);
-  if (holding) await attachBuyDayReturn([holding]);
+  if (holdings.length > 0) await attachBuyDayReturn(holdings);
   return {
     success: true,
     type: 'single',
@@ -879,14 +911,15 @@ const runKeyBlockBacktest = async (startDate, endDate, strategyId, onProgress) =
     skippedDates,
     seenStocks: Array.from(seenStocks.values()),
     trades,
-    currentHolding: holding,
+    currentHolding: holdings[0] || null,
+    currentHoldings: holdings,
     summary: {
       tradeCount: trades.length,
       winCount,
       winRate: validTrades.length > 0 ? parseFloat((winCount / validTrades.length * 100).toFixed(2)) : null,
       ...calcDrawdownStats(validTrades),
       overallReturn,
-      holding: position != null,
+      holding: holdings.length > 0,
     },
   };
 };

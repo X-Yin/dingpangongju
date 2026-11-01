@@ -3403,7 +3403,7 @@ app.post('/training_camp/backtest/daily_strategies', (req, res) => {
 const buySellBacktestTasks = new Map(); // taskId -> { status, progress, result, error }
 app.post('/training_camp/backtest', async (req, res) => {
   try {
-    const { startDate, endDate, strategy, force, excludeCodes } = req.body || {};
+    const { startDate, endDate, strategy, force, excludeCodes, unlimited } = req.body || {};
     if (!startDate || !endDate || !/^\d{8}$/.test(startDate) || !/^\d{8}$/.test(endDate)) {
       return res.status(400).json({ success: false, message: '参数错误：startDate/endDate 需为 YYYYMMDD' });
     }
@@ -3411,13 +3411,17 @@ app.post('/training_camp/backtest', async (req, res) => {
       return res.status(400).json({ success: false, message: '开始日期不能晚于结束日期' });
     }
     const strategyId = STRATEGIES[strategy] ? strategy : Object.keys(STRATEGIES)[0];
+    // 无限仓位测试（2026-11-01 用户新增）：不受账户持仓占用限制，不同股票可同时买入（同一股票仍只持一份），
+    // 结果使用独立缓存键（strategyId + __unlimited），与常规回测缓存互不影响
+    const isUnlimited = unlimited === true || unlimited === '1' || unlimited === 1;
+    const cacheStrategyId = isUnlimited ? `${strategyId}__unlimited` : strategyId;
     // 震荡测试（前端勾选隐藏个股后重跑）：excludeCodes 非空时跳过缓存读取，且结果不写入缓存（一次性，刷新即失效）
     const excludeList = Array.isArray(excludeCodes)
       ? excludeCodes.filter(c => typeof c === 'string' && c.trim()).map(c => c.trim())
       : [];
     const isOscTest = excludeList.length > 0;
     // 命中缓存则直接返回，不再重复回测（force=true 时忽略缓存强制重跑）
-    const cached = (force || isOscTest) ? null : readCachedBacktest(strategyId, startDate, endDate);
+    const cached = (force || isOscTest) ? null : readCachedBacktest(cacheStrategyId, startDate, endDate);
     if (cached) {
       // 旧缓存无「买入当日收益」字段：读取时补写（缓存文件本身不落盘该字段，兼容旧缓存）
       await attachBuyDayReturn(cached.trades);
@@ -3427,7 +3431,7 @@ app.post('/training_camp/backtest', async (req, res) => {
         await attachBuyDayReturn(st.trades);
         if (st.holding) await attachBuyDayReturn([st.holding]);
       }
-      return res.json({ success: true, cached: true, strategy: strategyId, taskId: null, result: cached });
+      return res.json({ success: true, cached: true, strategy: strategyId, unlimited: isUnlimited, taskId: null, result: cached });
     }
     const taskId = `bt${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     buySellBacktestTasks.set(taskId, { status: 'running', progress: { current: 0, total: 0, date: '', status: '' }, result: null, error: null });
@@ -3435,10 +3439,10 @@ app.post('/training_camp/backtest', async (req, res) => {
     runRangeBacktest(startDate, endDate, strategyId, (progress) => {
       const task = buySellBacktestTasks.get(taskId);
       if (task) task.progress = progress;
-    }, { excludeCodes: excludeList }).then(result => {
+    }, { excludeCodes: excludeList, unlimited: isUnlimited }).then(result => {
       const task = buySellBacktestTasks.get(taskId);
       if (task) { task.status = 'done'; task.result = result; }
-      if (result?.success && !isOscTest) writeCachedBacktest(strategyId, startDate, endDate, result);
+      if (result?.success && !isOscTest) writeCachedBacktest(cacheStrategyId, startDate, endDate, result);
     }).catch(err => {
       const task = buySellBacktestTasks.get(taskId);
       if (task) { task.status = 'error'; task.error = err.message || String(err); }

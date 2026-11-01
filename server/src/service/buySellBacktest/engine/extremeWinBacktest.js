@@ -22,6 +22,7 @@ const {
 const { scanLeaderPriceSell } = require('./leaderSellMinute');
 const { EXCLUDED_THEMES } = require('../constants');
 const { attachBuyDayReturn, calcDrawdownStats } = require('../utils/tradeStats');
+const { computeTwoBuyAccountReturn } = require('./twoBuy');
 // 差劲分 / 强度分的口径与打分函数（与「个股历史分析」接口共用同一份实现）
 const {
   DIFF_A_MAX, DIFF_B_MAX, DIFF_C_MAX, DIFF_D_MAX,
@@ -207,7 +208,9 @@ const buildThreeMinuteSlots = () => {
 // 死叉前置判定（computeCrossInfo）已迁移至 ./extremeWinPool，与「开盘实战页 live 龙头列表」共用同一实现
 
 
-const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress) => {
+const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress, options = {}) => {
+  // 无限仓位测试（2026-11-01 用户新增）：不同股票可同时持有（每份仍按半仓权重），同一只股票卖出前不重复买入
+  const unlimited = options.unlimited === true;
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.extremeWinMode !== true) {
     return { success: false, message: `未知情绪游资-极致胜率策略: ${strategyId}` };
@@ -257,8 +260,10 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
   // 「全量自选股科技股重叠剔除」在 ./extremeWinPool.buildExtremeWinPool 内完成
 
   // 账户拆两份（各半仓）独立持仓：两份各自独立买卖、互不重叠同一标的，可在同一交易日内连续建仓（直到占满两份）
-  const positions = new Array(LEG_COUNT).fill(null);
-  const legLastSellDate = new Array(LEG_COUNT).fill(null); // 该份卖出当日不再追买（两份间互不影响）
+  // 无限仓位模式：仓位份数不设上限（每份仍为半仓），不同股票可同时持有；同一只股票卖出前不重复买入
+  const positions = unlimited ? [] : new Array(LEG_COUNT).fill(null);
+  const legLastSellDate = unlimited ? [] : new Array(LEG_COUNT).fill(null); // 该份卖出当日不再追买（两份间互不影响）
+  const soldTodayCodes = new Set(); // 无限仓位：当日卖出的股票不再当日追买
 
   // 逆周期腿命中计数（逐股独立累计；只在当前负斜率窗口内累计，窗口变化即清零）
   const revHitCount = new Map();
@@ -337,13 +342,13 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
     clearTlineCache();
 
     // 逐份隔夜持仓的当日分时（卖点用），及逐份当日收盘抗分歧指数（卖点⑥用；懒计算）
-    const posTlines = new Array(LEG_COUNT).fill(null);
-    for (let l = 0; l < LEG_COUNT; l++) {
+    const posTlines = new Array(positions.length).fill(null);
+    for (let l = 0; l < positions.length; l++) {
       const p = positions[l];
       if (p && dateStr > p.buyDate) posTlines[l] = await loadTlinePoints(p.code, dateNum);
     }
-    const posResiliences = new Array(LEG_COUNT).fill(null);
-    const posResilienceLoaded = new Array(LEG_COUNT).fill(false);
+    const posResiliences = new Array(positions.length).fill(null);
+    const posResilienceLoaded = new Array(positions.length).fill(false);
     const ensurePosResilience = async (l) => {
       if (posResilienceLoaded[l]) return posResiliences[l];
       posResilienceLoaded[l] = true;
@@ -489,7 +494,10 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
     //   一天之内多个股票依次触发买点时，谁先触发就买谁（同一分钟内按差值降序）；
     //   不再限制「每条腿每交易日最多建仓一份」，但两份仍不得同时持有同一只股票
     const revDayTriggered = new Set(); // 逆周期腿当日已登记命中的候选（同一天同一只只计一次）
-    const idleLegIdx = () => positions.findIndex((p, i) => !p && legLastSellDate[i] !== dateStr);
+    // 无限仓位：仓位份数无上限，每次买点追加新的一份；常规模式：找空闲且当日未卖出过的份
+    const idleLegIdx = () => (unlimited
+      ? positions.length
+      : positions.findIndex((p, i) => !p && legLastSellDate[i] !== dateStr));
 
     for (let bi = 0; bi < minuteSlots.length; bi++) {
       const bucket = minuteSlots[bi];
@@ -498,7 +506,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
       const isTailBucket = hasTailBucket ? bucketMinute >= TAIL_MINUTE : bi === minuteSlots.length - 1;
 
       // ===== 卖出（隔夜持仓；按每条腿各自的卖点规则独立卖出）=====
-      for (let l = 0; l < LEG_COUNT; l++) {
+      for (let l = 0; l < positions.length; l++) {
         const position = positions[l];
         const posTline = posTlines[l];
         if (!position || !(dateStr > position.buyDate) || !posTline || posTline.points.length === 0) continue;
@@ -594,6 +602,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
           });
           positions[l] = null;
           legLastSellDate[l] = dateStr; // 该份卖出当日不再追买
+          soldTodayCodes.add(position.code);
         }
       }
 
@@ -612,11 +621,13 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
               const legIdx = idleLegIdx();
               if (legIdx === -1) break;
               const otherHeld = positions.filter((p, i) => i !== legIdx && p).map(p => p.code);
-              if (pick.limitUp || otherHeld.includes(pick.code) || failPrevStrengthOpenGap(pick)) continue;
+              if (pick.limitUp || otherHeld.includes(pick.code) || soldTodayCodes.has(pick.code) || failPrevStrengthOpenGap(pick)) continue;
+              if (legIdx >= positions.length) positions.length = legIdx + 1;
               positions[legIdx] = buildPosition({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx, otherHeld });
               positions[legIdx].buyDi = todayIdx;
               positions[legIdx].cycle = CYCLE_PRO;
               for (const c of candidates) if (!seenStocks.has(c.code)) seenStocks.set(c.code, { code: c.code, name: c.name || c.code });
+              if (unlimited) break; // 每次买点只买排名第一（未被持有的）一只
             }
           }
         }
@@ -645,7 +656,8 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
               const legIdx = idleLegIdx();
               if (legIdx !== -1) {
                 const otherHeld = positions.filter((p, i) => i !== legIdx && p).map(p => p.code);
-                if (!otherHeld.includes(c.code)) {
+                if (!otherHeld.includes(c.code) && !soldTodayCodes.has(c.code)) {
+                  if (legIdx >= positions.length) positions.length = legIdx + 1;
                   positions[legIdx] = buildRevPosition({
                     pick: c, s, score: s.score, px: s.px, changePct: s.changePct,
                     dateStr, dateDisplay, timeText, hitCount: next,
@@ -654,6 +666,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
                   positions[legIdx].buyDi = todayIdx;
                   positions[legIdx].cycle = CYCLE_COUNTER;
                   for (const cc of revCandidatesRaw) if (!seenStocks.has(cc.code)) seenStocks.set(cc.code, { code: cc.code, name: cc.name || cc.code });
+                  if (unlimited) break; // 每次买点只买排名第一（未被持有的）一只
                 }
               }
             }
@@ -672,7 +685,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
   };
   const holdings = [];
   const lastPxDate = rangeDates[rangeDates.length - 1];
-  for (let l = 0; l < LEG_COUNT; l++) {
+  for (let l = 0; l < positions.length; l++) {
     const p = positions[l];
     if (!p) continue;
     const holding = { ...p, weight: LEG_WEIGHT };
@@ -685,12 +698,18 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress)
     holding.buyReturn = rawBuyReturn != null ? round2(rawBuyReturn * LEG_WEIGHT) : null;
     holdings.push(holding);
   }
-  const overallReturn = round2(
-    (LEG_LABELS.reduce((sum, lb) => sum + LEG_WEIGHT * factorOf(
-      trades.filter(t => t.splitLeg === lb),
-      holdings.find(h => h.splitLeg === lb),
-    ), 0) - 1) * 100,
-  );
+  // 无限仓位：多份持仓可能重叠，按账户口径（重叠区间收益相加、跨轮复利）；常规模式保持两份各半仓子账户加权
+  const overallReturn = unlimited
+    ? computeTwoBuyAccountReturn([
+        ...trades.map(t => ({ buyDate: t.buyDate, buyTime: t.buyTime, sellDate: t.sellDate, sellTime: t.sellTime, returnRate: t.returnRate })),
+        ...holdings.map(h => ({ buyDate: h.buyDate, buyTime: h.buyTime, returnRate: h.buyReturn })),
+      ])
+    : round2(
+      (LEG_LABELS.reduce((sum, lb) => sum + LEG_WEIGHT * factorOf(
+        trades.filter(t => t.splitLeg === lb),
+        holdings.find(h => h.splitLeg === lb),
+      ), 0) - 1) * 100,
+    );
   const validTrades = trades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
   const winCount = validTrades.filter(t => t.returnRate > 0).length;
   await attachBuyDayReturn(trades);

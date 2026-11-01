@@ -18,6 +18,7 @@ const { round2 } = require('./extremeWinScores');
 const { buildReplayStocksWithTline } = require('./replayData');
 const { buildKeyBlockSyntheticBucketEntry, buildKeyBlockSyntheticDay } = require('./keyBlockSynthetic');
 const { generalSellPositions } = require('./sellHooks/generalSell');
+const { computeTwoBuyAccountReturn } = require('./twoBuy');
 const { getBlockCategoryRatio } = require('../../板块成交量占比计算/category_amount_money');
 
 // ============================================================
@@ -159,7 +160,9 @@ const loadBuySnapshot = async (code, dateNum) => {
   }
 };
 
-const runGainVolumeShareBacktest = async (startDate, endDate, strategyId, onProgress) => {
+const runGainVolumeShareBacktest = async (startDate, endDate, strategyId, onProgress, options = {}) => {
+  // 无限仓位测试（2026-11-01 用户新增）：不同股票可同时持有，同一只股票卖出前不重复买入
+  const unlimited = options.unlimited === true;
   const strategy = STRATEGIES[strategyId];
   if (!strategy || strategy.gainVolumeShareMode !== true) {
     return { success: false, message: `未知 N 日涨幅最大-成交量占比策略: ${strategyId}` };
@@ -188,16 +191,17 @@ const runGainVolumeShareBacktest = async (startDate, endDate, strategyId, onProg
   const trades = [];
   const skippedDates = [];
   const seenStocks = new Map(); // code -> { code, name }
-  let position = null;
+  const positions = []; // 持仓列表（常规模式最多 1 只；无限仓位模式可多只）
 
   for (let di = 0; di < total; di++) {
     const dateStr = String(rangeDates[di]);
     const dateNum = parseInt(dateStr, 10);
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'loading' });
-    const isHolding = position != null && dateStr > position.buyDate;
+    // 当日可卖持仓（买入日早于今天，T+1）
+    const salePositions = positions.filter(p => dateStr > p.buyDate);
 
     // ===== 卖点（隔夜持仓）：通用 7 条件 + 盘中大跌强卖；非自选股持仓合成逐桶数据 =====
-    if (isHolding) {
+    if (salePositions.length > 0) {
       let campData;
       try {
         campData = await loadTrainingCampData(dateStr, { allowMissingFund: true });
@@ -219,56 +223,69 @@ const runGainVolumeShareBacktest = async (startDate, endDate, strategyId, onProg
       }
       const dateDisplay = campData.dateDisplay || dateStr;
       const replayStocks = await buildReplayStocksWithTline(campData, dateStr);
-      const synth = await buildKeyBlockSyntheticDay(position.code, position.stockName, dateStr);
-      let sellBuckets = timeBuckets;
-      let sellReplayStocks = replayStocks;
-      if (synth) {
-        sellBuckets = timeBuckets.map(b => {
-          const entry = buildKeyBlockSyntheticBucketEntry(position.code, position.stockName, synth.sortedPoints, synth.maInfo, synth.r3d, Number(b.minute));
-          return entry ? { ...b, stockChanges: [...(b.stockChanges || []), entry] } : b;
-        });
-        sellReplayStocks = [...replayStocks, synth.replayEntry];
+      // 逐份持仓构建各自的卖点桶数据（非自选股持仓合成逐桶数据）
+      const sellCtx = new Map(); // code -> { sellBuckets, sellReplayStocks }
+      for (const pos of salePositions) {
+        let sellBuckets = timeBuckets;
+        let sellReplayStocks = replayStocks;
+        const synth = await buildKeyBlockSyntheticDay(pos.code, pos.stockName, dateStr);
+        if (synth) {
+          sellBuckets = timeBuckets.map(b => {
+            const entry = buildKeyBlockSyntheticBucketEntry(pos.code, pos.stockName, synth.sortedPoints, synth.maInfo, synth.r3d, Number(b.minute));
+            return entry ? { ...b, stockChanges: [...(b.stockChanges || []), entry] } : b;
+          });
+          sellReplayStocks = [...replayStocks, synth.replayEntry];
+        }
+        sellCtx.set(pos.code, { sellBuckets, sellReplayStocks });
       }
 
       let buyAttempted = false;
-      for (let bi = 0; bi < sellBuckets.length; bi++) {
-        const bucketMinute = Number(sellBuckets[bi].minute);
+      for (let bi = 0; bi < timeBuckets.length; bi++) {
+        const bucketMinute = Number(timeBuckets[bi].minute);
         // 9:40 买点窗口只在「首个 ≥9:40 的桶」打开一次：若此时仍持仓（或已被卖出）都消费掉本次机会，
         // 避免盘中卖出后（如 10:00）再用 9:40 的价格回补，导致买点时间早于上一笔卖点时间
         if (!buyAttempted && bucketMinute >= BUY_MINUTE) {
           buyAttempted = true;
-          if (!position) {
-            position = await tryBuy(dateStr, dateNum, N, seriesMap, seenStocks, onProgress);
+          if (unlimited || positions.length === 0) {
+            const bought = await tryBuy(dateStr, dateNum, N, seriesMap, seenStocks, onProgress, new Set(positions.map(p => p.code)));
+            if (bought) positions.push(bought);
           }
         }
-        if (!position) continue;
-        const arr = [position];
-        await generalSellPositions({
-          positions: arr,
-          strategy,
-          bi,
-          replayStocks: sellReplayStocks,
-          timeBuckets: sellBuckets,
-          dateStr,
-          dateDisplay,
-          singleTrades: trades,
-        });
-        if (arr.length === 0) position = null;
+        // 逐份卖出：每份持仓独立判定，命中即从 positions 移除
+        for (const pos of Array.from(salePositions)) {
+          const idx = positions.indexOf(pos);
+          if (idx < 0) continue;
+          const ctx = sellCtx.get(pos.code);
+          if (!ctx) continue;
+          const arr = [pos];
+          await generalSellPositions({
+            positions: arr,
+            strategy,
+            bi,
+            replayStocks: ctx.sellReplayStocks,
+            timeBuckets: ctx.sellBuckets,
+            dateStr,
+            dateDisplay,
+            singleTrades: trades,
+          });
+          if (arr.length === 0) positions.splice(idx, 1);
+        }
       }
-    } else if (!position) {
+    } else if (positions.length === 0) {
       // ===== 买点（空仓）：只在 9:40 单点尝试一次，无合格候选当日跳过 =====
       if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
-      position = await tryBuy(dateStr, dateNum, N, seriesMap, seenStocks, onProgress);
+      const bought = await tryBuy(dateStr, dateNum, N, seriesMap, seenStocks, onProgress, null);
+      if (bought) positions.push(bought);
     }
     // 每日结束释放分时内存缓存：本策略单日会批量加载命中板块数百只成分股的 9:40 分时，
     // 若跨日累积（tlineFileMemCache / tlineResultMemCache）全区间回测会撑爆堆内存（磁盘缓存不受影响）
     clearTlineMemCache();
   }
 
-  // 组装结果（type:'single'：全仓单持仓）
-  let holding = null;
-  if (position) {
-    holding = { ...position };
+  // 组装结果（type:'single'：常规模式全仓单持仓；无限仓位模式多持仓按账户区间口径）
+  const holdings = [];
+  for (const position of positions) {
+    const holding = { ...position };
     let rawBuyReturn = null;
     const closePx = getStockCloseOnOrBefore(position.code, rangeDates[rangeDates.length - 1]);
     if (closePx != null && closePx > 0 && position.buyPrice > 0) {
@@ -276,17 +293,26 @@ const runGainVolumeShareBacktest = async (startDate, endDate, strategyId, onProg
     }
     holding.rawBuyReturn = rawBuyReturn;
     holding.buyReturn = rawBuyReturn;
+    holdings.push(holding);
   }
-  let acc = 1;
-  for (const t of trades) {
-    if (t.returnRate != null && Number.isFinite(t.returnRate)) acc *= 1 + t.returnRate / 100;
+  let overallReturn;
+  if (unlimited) {
+    overallReturn = computeTwoBuyAccountReturn([
+      ...trades.map(t => ({ buyDate: t.buyDate, buyTime: t.buyTime, sellDate: t.sellDate, sellTime: t.sellTime, returnRate: t.returnRate })),
+      ...holdings.map(h => ({ buyDate: h.buyDate, buyTime: h.buyTime, returnRate: h.buyReturn })),
+    ]);
+  } else {
+    let acc = 1;
+    for (const t of trades) {
+      if (t.returnRate != null && Number.isFinite(t.returnRate)) acc *= 1 + t.returnRate / 100;
+    }
+    for (const h of holdings) acc *= 1 + (h.buyReturn || 0) / 100;
+    overallReturn = round2((acc - 1) * 100);
   }
-  if (holding) acc *= 1 + (holding.buyReturn || 0) / 100;
-  const overallReturn = round2((acc - 1) * 100);
   const validTrades = trades.filter(t => t.returnRate != null && Number.isFinite(t.returnRate));
   const winCount = validTrades.filter(t => t.returnRate > 0).length;
   await attachBuyDayReturn(trades);
-  if (holding) await attachBuyDayReturn([holding]);
+  if (holdings.length > 0) await attachBuyDayReturn(holdings);
 
   return {
     success: true,
@@ -296,21 +322,21 @@ const runGainVolumeShareBacktest = async (startDate, endDate, strategyId, onProg
     skippedDates,
     seenStocks: Array.from(seenStocks.values()),
     trades: sortTradesByBuyTime(trades),
-    currentHolding: holding,
-    currentHoldings: holding ? [holding] : [],
+    currentHolding: holdings[0] || null,
+    currentHoldings: holdings,
     summary: {
       tradeCount: trades.length,
       winCount,
       winRate: validTrades.length > 0 ? round2((winCount / validTrades.length) * 100) : null,
       ...calcDrawdownStats(validTrades),
       overallReturn,
-      holding: position != null,
+      holding: holdings.length > 0,
     },
   };
 };
 
 // 当日 9:40 买点：选板块 → 板块成分股按 N 日涨幅取前 5 → 排名从前到后取第一只满足条件的买入
-const tryBuy = async (dateStr, dateNum, N, seriesMap, seenStocks) => {
+const tryBuy = async (dateStr, dateNum, N, seriesMap, seenStocks, onProgressArg, excludeCodes = null) => {
   const prevTen = await getPastTradingDates(dateStr, RATIO_LOOKBACK);
   if (prevTen.length < RATIO_LOOKBACK) return null;
   const t1 = String(prevTen[prevTen.length - 1]);
@@ -359,8 +385,9 @@ const tryBuy = async (dateStr, dateNum, N, seriesMap, seenStocks) => {
     if (!seenStocks.has(c.code)) seenStocks.set(c.code, { code: c.code, name: c.name });
   }
 
-  // 排名从前到后：9:40 未涨停 + 分时涨幅 > 0 + 现价 > 当日开盘价
-  const chosen = top5.find(s => s.change > 0 && s.px > s.openPx && s.change < limitUpThresholdOf(s.code));
+  // 排名从前到后：9:40 未涨停 + 分时涨幅 > 0 + 现价 > 当日开盘价；无限仓位下跳过已持有股票
+  const chosen = top5.find(s => (excludeCodes ? !excludeCodes.has(s.code) : true)
+    && s.change > 0 && s.px > s.openPx && s.change < limitUpThresholdOf(s.code));
   if (!chosen) return null;
 
   const rank = top5.indexOf(chosen) + 1;
