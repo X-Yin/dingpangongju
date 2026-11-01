@@ -2168,5 +2168,47 @@
     "marketValue": 9929513016,
     "circulatingMarketValue": 9209370025,
     "updatedAt": "2026-11-01 15:04:42"
+  },
+  {
+    "code": "sz002687",
+    "name": "乔治白",
+    "marketValue": 3053915920,
+    "circulatingMarketValue": 2502380206,
+    "updatedAt": "2026-11-01 16:26:12"
+  },
+  {
+    "code": "sz000816",
+    "name": "智慧农业",
+    "marketValue": 3718824227,
+    "circulatingMarketValue": 3699538315,
+    "updatedAt": "2026-11-01 16:35:53"
+  },
+  {
+    "code": "sz002498",
+    "name": "汉缆股份",
+    "marketValue": 17299339200,
+    "circulatingMarketValue": 17299339200,
+    "updatedAt": "2026-11-01 16:35:54"
+  },
+  {
+    "code": "sz000993",
+    "name": "闽东电力",
+    "marketValue": 5037466005,
+    "circulatingMarketValue": 5037466005,
+    "updatedAt": "2026-11-01 16:35:54"
+  },
+  {
+    "code": "sh605088",
+    "name": "冠盛股份",
+    "marketValue": 3748560520,
+    "circulatingMarketValue": 3722087020,
+    "updatedAt": "2026-11-01 17:06:53"
+  },
+  {
+    "code": "sz000852",
+    "name": "石化机械",
+    "marketValue": 4740619874,
+    "circulatingMarketValue": 4713284010,
+    "updatedAt": "2026-11-01 17:06:54"
   }
 ]

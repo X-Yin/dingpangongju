@@ -66,6 +66,7 @@ const attachHoldingDays = (result) => {
   (result.stocks || []).forEach(st => {
     if (Array.isArray(st.trades)) st.trades = sortTradesByBuyTime(st.trades);
   });
+  attachIdleDays(result);
   // 平均持仓时间：仅统计已卖出成交（holdingDays 非空，不含期末仍持仓），保留 1 位小数；
   // 含退化估算（≈）的交易时在 summary.avgHoldingDaysApprox 标记
   const closedDays = [];
@@ -129,19 +130,51 @@ const attachBuyDayReturn = async (records) => {
 // 交易列表按买入时间升序排序（买入日升序，同日按买入时间升序），并按新顺序重编 seq：
 // 两次买入系列两份仓位独立平仓，成交记录生成顺序 = 平仓顺序（卖出时间序），
 // 展示统一按买入时间排序更符合直觉（不影响收益/胜率/回撤等统计，均为顺序无关计算）
+const compareByBuyTime = (a, b) => {
+  const da = String(a?.buyDate ?? '');
+  const db = String(b?.buyDate ?? '');
+  if (da !== db) return da < db ? -1 : 1;
+  const ta = String(a?.buyTime ?? '');
+  const tb = String(b?.buyTime ?? '');
+  if (ta !== tb) return ta < tb ? -1 : 1;
+  return 0;
+};
+
 const sortTradesByBuyTime = (trades) => {
   if (!Array.isArray(trades)) return trades;
   return [...trades]
-    .sort((a, b) => {
-      const da = String(a?.buyDate ?? '');
-      const db = String(b?.buyDate ?? '');
-      if (da !== db) return da < db ? -1 : 1;
-      const ta = String(a?.buyTime ?? '');
-      const tb = String(b?.buyTime ?? '');
-      if (ta !== tb) return ta < tb ? -1 : 1;
-      return 0;
-    })
+    .sort(compareByBuyTime)
     .map((t, idx) => ({ ...t, seq: idx + 1 }));
+};
+
+// 空仓交易日：每笔开仓（含已卖出成交与期末仍持仓）距「上一笔开仓（买入）」的交易日跨度
+// （账户级口径，跨股票统一按买入时间排序）
+// 例：上笔买入 8-1、本笔买入 8-2 且两者为相邻交易日 → 空仓 1 个交易日；首笔无上笔开仓，idleDays = null
+// idleDaysApprox = true 表示买卖日期所在年份未被交易日历覆盖、按周一~周五退化估算（前端显示 ≈）
+const attachIdleDays = (result) => {
+  const all = [];
+  const seen = new Set();
+  const push = (t) => { if (t && !seen.has(t)) { seen.add(t); all.push(t); } };
+  (result.trades || []).forEach(push);
+  (result.stocks || []).forEach(st => (st.trades || []).forEach(push));
+  // 期末仍持仓的记录也是「开仓」，一并参与排序（currentHolding 与 currentHoldings[0] 可能是同一对象，Set 去重）
+  push(result.currentHolding);
+  (result.currentHoldings || []).forEach(push);
+  (result.stocks || []).forEach(st => push(st.holding));
+  all.sort(compareByBuyTime);
+  all.forEach((t, i) => {
+    if (i === 0) {
+      t.idleDays = null;
+      t.idleDaysApprox = false;
+      return;
+    }
+    const prev = all[i - 1];
+    const days = tradingDayUtil.countTradingDaysBetween(normDateNum(prev.buyDate), normDateNum(t.buyDate));
+    t.idleDays = days;
+    t.idleDaysApprox = days == null ? false
+      : (!tradingDayUtil.isYearCovered(prev.buyDate) || !tradingDayUtil.isYearCovered(t.buyDate));
+  });
+  return result;
 };
 
 // 回撤统计（仅统计已卖出成交中收益率为负的单笔，returnRate 为百分数）：

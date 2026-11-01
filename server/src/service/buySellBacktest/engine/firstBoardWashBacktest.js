@@ -27,7 +27,8 @@ const { TWO_BUY_LEG_WEIGHT, computeTwoBuyAccountReturn } = require('./twoBuy');
 //     首板（或首板+二板）→ 次日/隔日放量峰值 → 之后 5~12 个交易日缩量洗盘，且
 //     洗盘区间不突破平台高点（最高价 ≤ 平台高点 1.03、最高收盘 ≤ 1.02）、不破位、
 //     洗盘区间幅度 8%~35%、洗盘期最大量 ≤ 峰值量 95%、最小量 ≤ 峰值量 60%；
-//     平台放量峰值须 ≥ 首板日前 20 日均量的 2 倍；洗盘期内不得出现涨停（forbidLimitUpInWash）；
+//     平台放量峰值须 ≥ 首板日前 20 日均量的 2 倍（线上口径；回测按 2026-11-01 用户要求提升至 3 倍，
+//     见 BACKTEST_VOL_MULT，线上仍用 WASHOUT_OPT.volMult=2）；洗盘期内不得出现涨停（forbidLimitUpInWash）；
 //     洗盘期内单日涨跌幅须温和：所有交易日涨跌幅都须在 ±5% 之内（最大涨幅 ≤ +5%、跌幅不低于 -5%）；
 //     唯一例外——单日跌幅介于 -5%~-6%（不含两端）的最多允许 1 天，跌幅超过 -6% 的一律剔除；
 //     且震荡区间最低价不得跌破首板涨停日开盘价（2026-11-01 用户要求）；
@@ -35,7 +36,7 @@ const { TWO_BUY_LEG_WEIGHT, computeTwoBuyAccountReturn } = require('./twoBuy');
 //     「买点日 D 收盘必须涨停」（requireBreakoutLimitUp）不在选股阶段校验（会用到买点日收盘数据），
 //     由买入后「跌破成本线 -3%」等卖点自然处理，不在选股阶段做额外校验。
 //   候选池剔除：创业板/科创板、代码黑名单、题材黑名单（同「情绪游资-极致胜率」）；
-//   且流通市值必须 ≤ 100 亿元（先按最新市值快照反推流通股本，再按买入日股价折算；预筛用前一交易日收盘价）
+//   且总市值必须 ≤ 100 亿元（先按最新总市值快照反推总股本，再按买入日股价折算；预筛用前一交易日收盘价）
 //   买点（两条路径，2026-11-01 用户要求）：
 //     ① 竞价高开 ≥ 5%：直接在 9:30 按竞价开盘价买入
 //     ② 竞价高开 < 5%（含低开）：9:30–9:40 分时涨幅首次达到 +8% 即买入（9:40 之后不再买入）；
@@ -60,7 +61,8 @@ const { TWO_BUY_LEG_WEIGHT, computeTwoBuyAccountReturn } = require('./twoBuy');
 // ============================================================
 
 const BUY_TRIGGER_PCT = 8;         // 竞价未到 5% 时：分时涨幅达到 +8% 即买入（2026-11-01 用户要求，由 9% 改为 8%）
-const MAX_FLOAT_MV_YI = 100;       // 流通市值（按买入日股价折算）须 ≤ 100 亿元（2026-11-01 用户要求）
+const MAX_FLOAT_MV_YI = 100;       // 流通市值（按买入日股价折算）须 ≤ 100 亿元（线上口径，firstBoardWashLive 使用）
+const MAX_TOTAL_MV_YI = 100;       // 回测口径：总市值（按买入日股价折算）须 ≤ 100 亿元（2026-11-01 用户要求，替代流通市值）
 const MAX_WIN3_GAIN_PCT = 20;      // 买点日前 20 个交易日内最大三日滑动窗口涨幅 ≤ 20%（2026-11-01 用户要求）
 const WIN3_LOOKBACK_DAYS = 20;     // 三日滑动窗口涨幅的回溯交易日数
 const BUY_OPEN_GAP_AUCTION_PCT = 5; // 竞价高开 ≥ 5% → 9:30 按竞价开盘价直接买入；< 5% → 等盘中 +8%（2026-11-01 用户要求）
@@ -76,9 +78,11 @@ const MAX_POSITIONS = 2;           // 账户拆两份、每份半仓（权重 0.
 //   本策略在买点日盘中买入、无法预知当日能否封板，故不在选股阶段校验（避免未来函数），
 //   改由买入后的「买入当日未涨停 → 次日收盘直接卖出」规则做同等验证（2026-11-01 用户选择）
 const WASHOUT_LOOKBACK_DAYS = 20;
+// 回测口径的峰值倍数（2026-11-01 用户要求：回测改为 ≥ 3 倍；线上 firstBoardWashLive 仍用 WASHOUT_OPT.volMult=2）
+const BACKTEST_VOL_MULT = 3.0;
 const WASHOUT_OPT = {
   limitPct: 9.5,             // 涨停阈值（主板）
-  volMult: 2.0,              // 峰值成交量 ≥ 首板日前 20 日均量的倍数
+  volMult: 2.0,              // 峰值成交量 ≥ 首板日前 20 日均量的倍数（线上口径，回测见 BACKTEST_VOL_MULT）
   minHistory: 3,             // 计算均量所需的最少历史交易日
   maxBaseToPeak: 2,          // 首板日（含）之后最多几个交易日寻找放量峰值
   minWashDays: 5,            // 洗盘至少 5 个交易日
@@ -148,40 +152,29 @@ const isThemeExcluded = (code, board) => {
   return getThemeBlockIndex().excludedCodes.has(String(code || '').replace(/^(sh|sz|bj)/i, ''));
 };
 
-// 流通市值换算（流通股本近似不变，市值 ∝ 股价）：
-//   「市值基准」优先取 **当下的流通市值**（对应最新股价）：
-//     ① 回测通用估值缓存 data/backtest_stock_valuation.json（财联社 cmc，非自选股也能拿到，2026-11-01 用户要求）；
-//     ② monitor_stocks_valuation.json（自选股估值快照，同为当下口径）；
-//   拿不到时退回 ③ 连板快照日的流通市值（extremeWin 同源字段 floatMarketValueYi，亿元，可能失真）。
-//   由「基准流通市值 ÷ 基准股价」反推流通股本，再把股本 × 目标日股价折算出该股价对应的流通市值。
+// 总市值换算（总股本近似不变，市值 ∝ 股价；2026-11-01 用户要求由流通市值改为总市值口径）：
+//   「市值基准」优先取 **当下的总市值**（财联社 mc，对应最新股价）：
+//     ① 回测通用估值缓存 data/backtest_stock_valuation.json（非自选股也能拿到）；
+//     ② monitor_stocks_valuation.json（自选股估值快照，同为当下口径）。
+//   由「基准总市值 ÷ 基准股价」反推总股本，再把股本 × 目标日股价折算出该股价对应的总市值。
 //   候选池预筛用「买点日前一交易日收盘价」；买入时再用「该分钟实际买入价」复核（回测日期当天的股价口径）。
 //   数据缺失返回 null（不拦截）。
 const VALUATION_MV_BASE_DATE = 99999999; // 当前估值快照对应最新收盘价
-const floatMvInfoFor = (code, snapshot, targetDate) => {
-  let mvYi = null;
-  let baseDate = null;
-  let source = null;
+const totalMvInfoFor = (code, targetDate) => {
   const bt = getBacktestValuationMap().get(code);
   const watch = getValuationMap().get(code);
-  const cmcNow = bt && Number.isFinite(Number(bt.circulatingMarketValue)) && Number(bt.circulatingMarketValue) > 0
-    ? Number(bt.circulatingMarketValue)
-    : (watch && Number.isFinite(Number(watch.circulatingMarketValue)) && Number(watch.circulatingMarketValue) > 0
-      ? Number(watch.circulatingMarketValue) : null);
-  if (cmcNow != null) {
-    mvYi = cmcNow / 1e8;
-    baseDate = VALUATION_MV_BASE_DATE;
-    source = 'current';
-  } else if (snapshot && Number.isFinite(Number(snapshot.mvYi)) && Number(snapshot.mvYi) > 0) {
-    mvYi = Number(snapshot.mvYi);
-    baseDate = snapshot.mvDate;
-    source = 'snapshot';
-  }
-  if (mvYi == null) return null;
-  const cBase = baseDate ? getStockCloseOnOrBefore(code, baseDate) : null;
-  const shares = cBase > 0 ? (mvYi * 1e8) / cBase : null; // 流通股本（股）
+  const mcNow = bt && Number.isFinite(Number(bt.marketValue)) && Number(bt.marketValue) > 0
+    ? Number(bt.marketValue)
+    : (watch && Number.isFinite(Number(watch.marketValue)) && Number(watch.marketValue) > 0
+      ? Number(watch.marketValue) : null);
+  if (mcNow == null) return null;
+  const baseDate = VALUATION_MV_BASE_DATE;
+  const mvYi = mcNow / 1e8;
+  const cBase = getStockCloseOnOrBefore(code, baseDate);
+  const shares = cBase > 0 ? (mvYi * 1e8) / cBase : null; // 总股本（股）
   const cTarget = targetDate ? getStockCloseOnOrBefore(code, targetDate) : null;
   const mvYiAtTarget = shares != null && cTarget > 0 ? (shares * cTarget) / 1e8 : mvYi;
-  return { mvYi: mvYiAtTarget, shares, baseMvYi: mvYi, baseDate, baseClose: cBase, targetClose: cTarget, source };
+  return { mvYi: mvYiAtTarget, shares, baseMvYi: mvYi, baseDate, baseClose: cBase, targetClose: cTarget, source: 'current' };
 };
 
 // ============================================================
@@ -510,7 +503,7 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
         occStocks = r.stocks || [];
       } catch (e) { occStocks = []; }
 
-      // 按 code 汇总连板记录：是否出现 ≥3 板 / 最近一次出现日的流通市值
+      // 按 code 汇总连板记录：是否出现 ≥3 板
       // 创业板（30/301）、科创板（688）、代码黑名单、题材黑名单（芯片/算力/PCB 等，与「情绪游资-极致胜率」
       // 共用同一份 EXCLUDED_THEMES）在这里统一剔除
       const recordMap = new Map();
@@ -527,13 +520,7 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
           if (cnt > item.maxCount) item.maxCount = cnt;
         }
         const d = String(s.date || '');
-        if (d && (!item.latestDate || d > item.latestDate)) {
-          item.latestDate = d;
-          // 记录该次连板快照日的流通市值（亿元），供「流通市值 ≤ 100 亿」过滤使用
-          item.mvYi = s.floatMarketValueYi != null && Number.isFinite(Number(s.floatMarketValueYi))
-            ? Number(s.floatMarketValueYi) : null;
-          item.mvDate = d;
-        }
+        if (d && (!item.latestDate || d > item.latestDate)) item.latestDate = d;
         if (s.board) item.board = s.board;
         recordMap.set(s.code, item);
       }
@@ -551,7 +538,7 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
       for (const item of washStocks) {
         const bars = getStockBarsCached(item.code);
         if (!bars || bars.length === 0) continue;
-        const washout = isPotentialBullWashout(bars, dateNum);
+        const washout = isPotentialBullWashout(bars, dateNum, { volMult: BACKTEST_VOL_MULT });
         if (!washout) continue;
         // 买点日前 20 个交易日内最大三日滑动窗口涨幅须 ≤ 20%（2026-11-01 用户要求）
         const win3 = maxThreeDayWindowGain(bars, dateNum);
@@ -561,28 +548,24 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
         candidates.push({ code: item.code, name: item.name, board: item.board, washout });
       }
 
-      // 流通市值 ≤ 100 亿元（2026-11-01 用户要求）：由基准日流通市值 ÷ 基准日收盘价反推流通股本，
+      // 总市值 ≤ 100 亿元（2026-11-01 用户要求，由流通市值改为总市值）：由基准日总市值 ÷ 基准日收盘价反推总股本，
       // 预筛按买点日前一交易日收盘价折算、买入时再按实际买入价复核；数据缺失时不拦截
-      const snapshotMv = new Map();
-      for (const item of recordMap.values()) {
-        if (item.mvYi != null) snapshotMv.set(item.code, { mvYi: item.mvYi, mvDate: item.mvDate });
-      }
       let prevTradeDate = null;
       try {
         const past = await getPastTradingDates(dateStr, 1);
         prevTradeDate = past && past.length ? String(past[past.length - 1]) : null;
       } catch (e) { prevTradeDate = null; }
-      // 预取「当下流通市值」（换算基准）：候选多为非自选股，只有通用估值缓存里才拿得到真实市值
-      try { await ensureBacktestValuation(candidates.map((c) => c.code)); } catch (e) { /* 拉取失败时退回快照口径 */ }
+      // 预取「当下总市值」（换算基准）：候选多为非自选股，只有通用估值缓存里才拿得到真实总市值
+      try { await ensureBacktestValuation(candidates.map((c) => c.code)); } catch (e) { /* 拉取失败时按缺失处理（不拦截） */ }
       candidates = candidates.filter((c) => {
-        const info = floatMvInfoFor(c.code, snapshotMv.get(c.code), prevTradeDate);
-        c.floatShares = info ? info.shares : null;
-        c.floatMvYiPrev = info ? info.mvYi : null;
-        c.floatMvBase = info
+        const info = totalMvInfoFor(c.code, prevTradeDate);
+        c.totalShares = info ? info.shares : null;
+        c.totalMvYiPrev = info ? info.mvYi : null;
+        c.totalMvBase = info
           ? { baseMvYi: info.baseMvYi, baseDate: info.baseDate, baseClose: info.baseClose }
           : null;
-        // 预筛：按买点日前一交易日收盘价折算的流通市值 ≤ 100 亿元（最终以买入价复核）
-        return c.floatMvYiPrev == null || c.floatMvYiPrev <= MAX_FLOAT_MV_YI;
+        // 预筛：按买点日前一交易日收盘价折算的总市值 ≤ 100 亿元（最终以买入价复核）
+        return c.totalMvYiPrev == null || c.totalMvYiPrev <= MAX_TOTAL_MV_YI;
       });
       // 分时加载前剪枝：买点 = 盘中首次 +8%（要求当日最高涨幅 ≥ 8%）或竞价高开 ≥ 5%（9:30 直接买），
       // 因此两者都不满足的候选不可能触发买点，直接剔除，不再为其加载完整分时
@@ -790,7 +773,7 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
           await ensureEntries();
 
           const heldCodes = new Set(positions.map((p) => p.code));
-          const mvRejected = new Set(); // 按买入价折算后流通市值 > 100 亿 → 当日顺延
+          const mvRejected = new Set(); // 按买入价折算后总市值 > 100 亿 → 当日顺延
           // 逐份补仓：每一轮取当前最早触发且未持有的候选，最多补到 2 份
           while (positions.length < MAX_POSITIONS) {
             let pick = null;
@@ -799,11 +782,11 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
               if (heldCodes.has(c.code) || mvRejected.has(c.code)) continue;
               const hit = hitMemo.get(c.code);
               if (!hit || hit.minute > bucketMinute) continue;
-              // 市值复核：以该分钟实际买入价折算流通市值（回测日期当天股价口径），> 100 亿顺延下一只
-              const mvYiAtBuy = c.floatShares != null && hit.px > 0
-                ? (c.floatShares * hit.px) / 1e8
+              // 市值复核：以该分钟实际买入价折算总市值（回测日期当天股价口径），> 100 亿顺延下一只
+              const mvYiAtBuy = c.totalShares != null && hit.px > 0
+                ? (c.totalShares * hit.px) / 1e8
                 : null;
-              if (mvYiAtBuy != null && mvYiAtBuy > MAX_FLOAT_MV_YI) {
+              if (mvYiAtBuy != null && mvYiAtBuy > MAX_TOTAL_MV_YI) {
                 mvRejected.add(c.code);
                 continue;
               }
@@ -840,9 +823,9 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
                 hitMinute: pick.hit.minute,
                 hitChange: round2(pick.hit.chg),
                 skippedLimitUp,
-                floatMvYiAtBuy: pick.mvYiAtBuy != null ? round2(pick.mvYiAtBuy) : null,
-                floatMvYiPrev: pick.cand.floatMvYiPrev != null ? round2(pick.cand.floatMvYiPrev) : null,
-                floatMvBase: pick.cand.floatMvBase || null,
+                totalMvYiAtBuy: pick.mvYiAtBuy != null ? round2(pick.mvYiAtBuy) : null,
+                totalMvYiPrev: pick.cand.totalMvYiPrev != null ? round2(pick.cand.totalMvYiPrev) : null,
+                totalMvBase: pick.cand.totalMvBase || null,
               },
             };
             pos.buyReason = buildBuyReason(pos);
@@ -964,7 +947,7 @@ const buildBuyReason = (pos) => {
     : '';
   const w = t.washout || {};
   const washText = t.washout
-    ? `前置洗盘：${w.boardCount} 板 ${w.boardDate} → ${w.peakDate} 放量峰值（${w.peakVolRatio} 倍 ≥ ${WASHOUT_OPT.volMult} 倍）→ ${w.washStartDate}~${w.washEndDate} 缩量洗盘 ${w.washDays} 日（最大量 ${w.maxVolRatioPct}% ≤ 95%、最小量 ${w.minVolRatioPct}% ≤ 60%），洗盘幅度 ${gainText(w.rangePct)}（8%~35%），单日涨幅最大 ${gainText(w.maxDayPct)}、跌幅最大 ${gainText(w.minDayPct)}（超 -6% 共 ${w.deepDropDays} 天 ≤ 1），洗盘最低 ${w.washLow} 未跌破首板开盘 ${w.boardOpen != null ? w.boardOpen : '数据缺失'}，未突破平台高点 ${w.platformHigh}`
+    ? `前置洗盘：${w.boardCount} 板 ${w.boardDate} → ${w.peakDate} 放量峰值（${w.peakVolRatio} 倍 ≥ ${BACKTEST_VOL_MULT} 倍）→ ${w.washStartDate}~${w.washEndDate} 缩量洗盘 ${w.washDays} 日（最大量 ${w.maxVolRatioPct}% ≤ 95%、最小量 ${w.minVolRatioPct}% ≤ 60%），洗盘幅度 ${gainText(w.rangePct)}（8%~35%），单日涨幅最大 ${gainText(w.maxDayPct)}、跌幅最大 ${gainText(w.minDayPct)}（超 -6% 共 ${w.deepDropDays} 天 ≤ 1），洗盘最低 ${w.washLow} 未跌破首板开盘 ${w.boardOpen != null ? w.boardOpen : '数据缺失'}，未突破平台高点 ${w.platformHigh}`
     : null;
   const modeText = t.mode === 'auction'
     ? `${fmtMinute(t.hitMinute)} 竞价高开 ${gainText(t.hitChange)}（≥ ${BUY_OPEN_GAP_AUCTION_PCT}%）直接按竞价开盘价买入`
@@ -983,7 +966,7 @@ const buildBuyChecks = (pos) => {
       value: t.washout
         ? `${w.boardCount} 板 ${w.boardDate}（开盘 ${w.boardOpen != null ? w.boardOpen : '数据缺失'}），峰值 ${w.peakDate} 量 ${w.peakVol}（前 20 日均量 ${w.avg20}，${w.peakVolRatio} 倍）；洗盘 ${w.washStartDate}~${w.washEndDate} 共 ${w.washDays} 日，最大量 ${w.maxVolRatioPct}%、最小量 ${w.minVolRatioPct}%，区间幅度 ${gainText(w.rangePct)}，单日涨幅最大 ${gainText(w.maxDayPct)} / 跌幅最大 ${gainText(w.minDayPct)}（所有交易日涨跌幅须在 ±5% 内，唯一例外是跌幅 -5%~-6% 最多 ${WASHOUT_OPT.maxMidDropDays} 天——本样本 ${w.midDropDays} 天；跌幅超 -6% 的 ${w.deepDropDays} 天一律不允许），洗盘最低 ${w.washLow}（未跌破首板开盘价），平台高点 ${w.platformHigh}`
         : '未命中前置洗盘形态',
-      reason: `参照 washout.js 最新版 isPotentialBullWashout：首板日（可叠加二板）须涨停（≥ ${WASHOUT_OPT.limitPct}%）→ 首板日（含）后 ${WASHOUT_OPT.maxBaseToPeak} 个交易日内出现放量峰值（≥ 首板日前 20 日均量的 ${WASHOUT_OPT.volMult} 倍）→ 之后 ${WASHOUT_OPT.minWashDays}~${WASHOUT_OPT.maxWashDays} 个交易日缩量洗盘（最大量 ≤ 峰值量 ${WASHOUT_OPT.maxWashVolRatio * 100}%、最小量 ≤ 峰值量 ${WASHOUT_OPT.minShrinkRatio * 100}%、洗盘期内不得出现涨停）→ 洗盘期最高价 ≤ 平台高点 ${WASHOUT_OPT.upperToleranceHigh} 倍、最高收盘 ≤ ${WASHOUT_OPT.upperToleranceClose} 倍 → 洗盘区间幅度 ${WASHOUT_OPT.minRangePct * 100}%~${WASHOUT_OPT.maxRangePct * 100}% → 洗盘期内单日涨跌幅须温和：所有交易日涨跌幅都须在 ±5% 之内（最大单日涨幅 ≤ ${gainText(WASHOUT_OPT.maxWashDayGainPct)}、单日跌幅不低于 ${gainText(WASHOUT_OPT.midDropLinePct)}），唯一例外是单日跌幅介于 ${gainText(WASHOUT_OPT.midDropLinePct)}~${gainText(WASHOUT_OPT.maxWashDayDropPct)}（不含两端）的日子最多 ${WASHOUT_OPT.maxMidDropDays} 天、跌幅超过 ${gainText(WASHOUT_OPT.maxWashDayDropPct)} 的一律剔除（2026-11-01 用户要求）→ 洗盘最低价不得跌破首板涨停日开盘价（2026-11-01 用户要求，开盘价缺失时不拦截）→ 起爆前（买点触发价）≥ 平台高点 ${Math.round(WASHOUT_OPT.breakoutMinRatio * 100) / 100} 倍。洗盘区间只取买点日前一交易日及更早（不使用买点日自身日K）`,
+      reason: `参照 washout.js 最新版 isPotentialBullWashout：首板日（可叠加二板）须涨停（≥ ${WASHOUT_OPT.limitPct}%）→ 首板日（含）后 ${WASHOUT_OPT.maxBaseToPeak} 个交易日内出现放量峰值（≥ 首板日前 20 日均量的 ${BACKTEST_VOL_MULT} 倍）→ 之后 ${WASHOUT_OPT.minWashDays}~${WASHOUT_OPT.maxWashDays} 个交易日缩量洗盘（最大量 ≤ 峰值量 ${WASHOUT_OPT.maxWashVolRatio * 100}%、最小量 ≤ 峰值量 ${WASHOUT_OPT.minShrinkRatio * 100}%、洗盘期内不得出现涨停）→ 洗盘期最高价 ≤ 平台高点 ${WASHOUT_OPT.upperToleranceHigh} 倍、最高收盘 ≤ ${WASHOUT_OPT.upperToleranceClose} 倍 → 洗盘区间幅度 ${WASHOUT_OPT.minRangePct * 100}%~${WASHOUT_OPT.maxRangePct * 100}% → 洗盘期内单日涨跌幅须温和：所有交易日涨跌幅都须在 ±5% 之内（最大单日涨幅 ≤ ${gainText(WASHOUT_OPT.maxWashDayGainPct)}、单日跌幅不低于 ${gainText(WASHOUT_OPT.midDropLinePct)}），唯一例外是单日跌幅介于 ${gainText(WASHOUT_OPT.midDropLinePct)}~${gainText(WASHOUT_OPT.maxWashDayDropPct)}（不含两端）的日子最多 ${WASHOUT_OPT.maxMidDropDays} 天、跌幅超过 ${gainText(WASHOUT_OPT.maxWashDayDropPct)} 的一律剔除（2026-11-01 用户要求）→ 洗盘最低价不得跌破首板涨停日开盘价（2026-11-01 用户要求，开盘价缺失时不拦截）→ 起爆前（买点触发价）≥ 平台高点 ${Math.round(WASHOUT_OPT.breakoutMinRatio * 100) / 100} 倍。洗盘区间只取买点日前一交易日及更早（不使用买点日自身日K）`,
     },
     {
       id: 'fbw_win3_cap',
@@ -995,20 +978,20 @@ const buildBuyChecks = (pos) => {
       reason: `按买点日前一交易日及更早日K，取最近 ${WIN3_LOOKBACK_DAYS} 个交易日内任意连续 3 个交易日的涨幅（末日收盘 − 窗口前一日收盘 ÷ 窗口前一日收盘）的最大值，超过 ${MAX_WIN3_GAIN_PCT}% 的个股一律剔除（不追短期已大涨的票，2026-11-01 用户要求）`,
     },
     {
-      id: 'fbw_float_mv',
-      title: `流通市值 ≤ ${MAX_FLOAT_MV_YI} 亿元（按买入日股价折算）`,
+      id: 'fbw_total_mv',
+      title: `总市值 ≤ ${MAX_TOTAL_MV_YI} 亿元（按买入日股价折算）`,
       passed: true,
       value: (() => {
-        const atBuy = t.floatMvYiAtBuy;
-        const prev = t.floatMvYiPrev;
-        const b = t.floatMvBase;
-        if (atBuy == null) return `流通市值数据缺失，该项不拦截（前一交易日折算值 ${prev != null ? `${prev} 亿` : '缺失'}）`;
+        const atBuy = t.totalMvYiAtBuy;
+        const prev = t.totalMvYiPrev;
+        const b = t.totalMvBase;
+        if (atBuy == null) return `总市值数据缺失，该项不拦截（前一交易日折算值 ${prev != null ? `${prev} 亿` : '缺失'}）`;
         const baseText = b && b.baseClose > 0
-          ? `基准 ${b.baseDate === VALUATION_MV_BASE_DATE ? '当下流通市值快照' : `连板快照 ${b.baseDate}`} ${round2(b.baseMvYi)} 亿 ÷ 基准收盘 ${round2(b.baseClose)} → `
+          ? `基准 ${b.baseDate === VALUATION_MV_BASE_DATE ? '当下总市值快照' : `连板快照 ${b.baseDate}`} ${round2(b.baseMvYi)} 亿 ÷ 基准收盘 ${round2(b.baseClose)} → `
           : '';
-        return `${baseText}买入价 ${round2(pos.buyPrice)} 对应流通市值 ${atBuy} 亿（前一交易日收盘价折算 ${prev != null ? `${prev} 亿` : '缺失'}，均 ≤ ${MAX_FLOAT_MV_YI} 亿）`;
+        return `${baseText}买入价 ${round2(pos.buyPrice)} 对应总市值 ${atBuy} 亿（前一交易日收盘价折算 ${prev != null ? `${prev} 亿` : '缺失'}，均 ≤ ${MAX_TOTAL_MV_YI} 亿）`;
       })(),
-      reason: `流通股本近似不变、市值 ∝ 股价：先由「当下流通市值 ÷ 当下股价」反推流通股本（自选股用 monitor_stocks_valuation，非自选股用 data/backtest_stock_valuation.json 的财联社快照；都缺失时才退回连板快照日市值），再把股本 × 买入日该分钟实际买入价折算出回测日当天的流通市值，> ${MAX_FLOAT_MV_YI} 亿元即剔除并顺延下一只（候选池预筛用买点日前一交易日收盘价，最终以买入价复核）；数据缺失时不拦截`,
+      reason: `总股本近似不变、市值 ∝ 股价：先由「当下总市值 ÷ 当下股价」反推总股本（自选股用 monitor_stocks_valuation，非自选股用 data/backtest_stock_valuation.json 的财联社 mc；数据缺失时不拦截），再把股本 × 买入日该分钟实际买入价折算出回测日当天的总市值，> ${MAX_TOTAL_MV_YI} 亿元即剔除并顺延下一只（候选池预筛用买点日前一交易日收盘价，最终以买入价复核）`,
     },
     {
       id: 'fbw_entry',

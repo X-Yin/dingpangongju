@@ -104,7 +104,7 @@ const readBacktestFile = () => {
   }
 };
 let backtestCache = { mtimeMs: -1, map: new Map() };
-// 同步读取通用估值缓存（回测热循环用）：Map<code, { name, circulatingMarketValue(元) }>
+// 同步读取通用估值缓存（回测热循环用）：Map<code, { name, marketValue(元), circulatingMarketValue(元) }>
 const getBacktestValuationMap = () => {
   try {
     const mtimeMs = fs.statSync(BACKTEST_VALUATION_PATH).mtimeMs;
@@ -114,6 +114,7 @@ const getBacktestValuationMap = () => {
         if (item && item.code) {
           map.set(item.code, {
             name: item.name || null,
+            marketValue: item.marketValue != null ? Number(item.marketValue) : null,
             circulatingMarketValue: item.circulatingMarketValue != null ? Number(item.circulatingMarketValue) : null,
           });
         }
@@ -126,13 +127,15 @@ const getBacktestValuationMap = () => {
   return backtestCache.map;
 };
 const btFailedAt = new Map();
-// 拉取通用估值缓存里缺失的代码（已缓存的不再请求；失败 60s 内不重试）
+// 拉取通用估值缓存里缺失（或缺少总市值字段）的代码（失败 60s 内不重试）
 const ensureBacktestValuation = async (codes) => {
   const map = getBacktestValuationMap();
   const now = Date.now();
   const missing = [];
   for (const code of new Set((codes || []).filter(Boolean))) {
-    if (map.has(code)) continue;
+    const rec = map.get(code);
+    // 已缓存且含总市值（mc）的记录跳过；仅有流通市值的旧记录需补拉，供「总市值」口径使用
+    if (rec && rec.marketValue != null) continue;
     if (now - (btFailedAt.get(code) || 0) < RETRY_INTERVAL_MS) continue;
     missing.push(code);
   }
