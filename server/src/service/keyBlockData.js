@@ -67,6 +67,33 @@ const ensureKeyBlockBars = async (extraCodes) => {
   return r;
 };
 
+// 个股某交易日成交量（日K original 成交量口径，与 barsCache 的 v 一致）；当日无K线或量能无效返回 null
+const stockVolumeAt = (code, dateStr) => {
+  const bars = barsCache.get(code);
+  if (!bars || bars.length === 0) return null;
+  const d = Number(dateStr);
+  const bar = bars.find(b => b.d === d);
+  if (!bar || bar.v == null || !(Number(bar.v) > 0)) return null;
+  return Number(bar.v);
+};
+
+// 已预取到 barsCache 的个股日K序列 [{ d, c, v, h, l }] 升序（供需要开高低收全量的形态判定使用）；
+// 未预取或拉取失败返回 null（调用前应先 ensureBarsForCodes）
+const getStockBarsCached = (code) => barsCache.get(code) || null;
+
+// 个股某交易日「最高价涨幅」（%）：当日最高价较前一交易日收盘价；当日无K线或无前收盘返回 null
+const stockHighChangeAt = (code, dateStr) => {
+  const bars = barsCache.get(code);
+  if (!bars || bars.length < 2) return null;
+  const d = Number(dateStr);
+  const idx = bars.findIndex(b => b.d === d);
+  if (idx <= 0) return null;
+  const prev = bars[idx - 1].c;
+  const high = bars[idx].h;
+  if (!prev || prev <= 0 || !high || high <= 0) return null;
+  return parseFloat((((high - prev) / prev) * 100).toFixed(4));
+};
+
 // 个股某交易日日涨幅（%）：相邻收盘价环比现算；当日无K线或无前收盘返回 null
 const stockDailyChange = (code, dateStr) => {
   const bars = barsCache.get(code);
@@ -611,6 +638,8 @@ module.exports = {
   ensureKeyBlockBars,
   ensureBarsForCodes,
   stockDailyChange,
+  stockHighChangeAt,
+  stockVolumeAt,
   stockWindowGain,
   stockWindowRangePct,
   getStockCloseOnOrBefore,
@@ -621,6 +650,7 @@ module.exports = {
   stockVolumeRatio,
   stockPriorAvgVolume,
   stockVolumeRatioAt,
+  getStockBarsCached,
   getHistoricalLianbanDefenseStocks,
   scanAllLianbanCodesInRange,
   getHongliMultiLianbanStocks,

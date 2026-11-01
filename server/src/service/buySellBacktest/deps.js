@@ -3,7 +3,7 @@ const { getSingleStockTlineDataByDate, getSingleStockTlineDataByDateLean, clearT
 const { calculateResilience, getLimitTypeByCode } = require('../stockDiagnose');
 const { isStockInWatchlistAt, getMonitorStocks } = require('../monitorStock');
 const { batchParallel } = require('../../utils');
-const { getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, ensureBarsForCodes, stockWindowGain, stockWindowRangePct, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange, getHongliMultiLianbanStocks, scanHongliMultiLianbanCodesInRange, getLeaderPool, hasRecentVolumeSurge, getPastTradingDates, getRecentMultiLianbanStocks, getRecentMultiLianbanOccurrences, stockVolumeRatio, stockPriorAvgVolume, stockVolumeRatioAt, getTopLianbanBoardStocks, stockDailyChange, getBoardCountAtDate } = require('../keyBlockData');
+const { getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, ensureBarsForCodes, stockWindowGain, stockWindowRangePct, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange, getHongliMultiLianbanStocks, scanHongliMultiLianbanCodesInRange, getLeaderPool, hasRecentVolumeSurge, getPastTradingDates, getRecentMultiLianbanStocks, getRecentMultiLianbanOccurrences, stockVolumeRatio, stockPriorAvgVolume, stockVolumeRatioAt, getTopLianbanBoardStocks, stockDailyChange, stockHighChangeAt, stockVolumeAt, getStockBarsCached, getBoardCountAtDate } = require('../keyBlockData');
 const { loadIndexKline } = require('../sentimentHotMoney');
 const { isOscExcluded, runWithOscExclude } = require('../backtestOscContext');
 const { getSimContext, isSimStock, runWithSimContext } = require('../backtestSimContext');
@@ -18,7 +18,7 @@ module.exports = {
   calculateResilience, getLimitTypeByCode,
   isStockInWatchlistAt, getMonitorStocks,
   batchParallel,
-  getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, ensureBarsForCodes, stockWindowGain, stockWindowRangePct, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange, getHongliMultiLianbanStocks, scanHongliMultiLianbanCodesInRange, getLeaderPool, hasRecentVolumeSurge, getPastTradingDates, getRecentMultiLianbanStocks, getRecentMultiLianbanOccurrences, stockVolumeRatio, stockPriorAvgVolume, stockVolumeRatioAt, getTopLianbanBoardStocks, stockDailyChange, getBoardCountAtDate,
+  getKeyBlockConstituents, getKeyBlockTagMap, ensureKeyBlockBars, ensureBarsForCodes, stockWindowGain, stockWindowRangePct, getStockCloseOnOrBefore, getHistoricalLianbanDefenseStocks, scanAllLianbanCodesInRange, getHongliMultiLianbanStocks, scanHongliMultiLianbanCodesInRange, getLeaderPool, hasRecentVolumeSurge, getPastTradingDates, getRecentMultiLianbanStocks, getRecentMultiLianbanOccurrences, stockVolumeRatio, stockPriorAvgVolume, stockVolumeRatioAt, getTopLianbanBoardStocks, stockDailyChange, stockHighChangeAt, stockVolumeAt, getStockBarsCached, getBoardCountAtDate,
   loadIndexKline,
   isOscExcluded, runWithOscExclude,
   getSimContext, isSimStock, runWithSimContext,

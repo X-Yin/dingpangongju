@@ -8,6 +8,7 @@ const { runGainVolumeShareBacktest } = require('./gainVolumeShareBacktest');
 const { runFusedEmoWinBacktest } = require('./fusedEmoWinBacktest');
 const { runEmotionBurstDriftBacktest } = require('./emotionBurstDriftBacktest');
 const { runEmotionBurstFollowBacktest } = require('./emotionBurstFollowBacktest');
+const { runFirstBoardWashBacktest } = require('./firstBoardWashBacktest');
 const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSimContext } = require('../deps');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -72,6 +73,11 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   // 首板股中，买首个分时涨幅达 +9% 者；卖点同龙头并新增「收盘未涨停即卖」）
   if (STRATEGIES[strategyId]?.emotionBurstFollowMode === true) {
     return runEmotionBurstFollowBacktest(startDate, endDate, strategyId, onProgress);
+  }
+  // 首板洗盘-起爆拉升走独立引擎（过去 15 交易日首/二板洗盘或三日放量起爆，竞价 >5% 或盘中 +9% 半仓买入；
+  // 卖点沿用极致胜率顺周期腿去掉单分钟跳水）
+  if (STRATEGIES[strategyId]?.firstBoardWashMode === true) {
+    return runFirstBoardWashBacktest(startDate, endDate, strategyId, onProgress);
   }
   const strategy = STRATEGIES[strategyId];
   // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：快进快出半仓（2026-10-13 用户新增）——

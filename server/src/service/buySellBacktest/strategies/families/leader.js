@@ -1,4 +1,4 @@
-const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC, FUSED_EMO_WIN_DESC, EMOTION_BURST_DRIFT_DESC, EMOTION_BURST_FOLLOW_DESC } = require('../descs');
+const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC, FUSED_EMO_WIN_DESC, EMOTION_BURST_DRIFT_DESC, EMOTION_BURST_FOLLOW_DESC, FIRST_BOARD_WASH_DESC } = require('../descs');
 
 // 情绪游资系列（2026-10-17 用户要求：已删除「情绪游资-龙头战法」「情绪龙头+科技进攻」「科技进攻 + 情绪龙头」三个策略）：
 module.exports = {
@@ -115,5 +115,31 @@ module.exports = {
     name: '连板题材-情绪瞬爆-惯性漂移-补涨',
     desc: EMOTION_BURST_FOLLOW_DESC,
     emotionBurstFollowMode: true,
+  },
+  // 首板洗盘-起爆拉升（2026-10-31 用户新增，仅回测、线上实盘无此模式）：独立引擎——
+  //   选股 = 前置洗盘形态判定（2026-11-01 用户要求，参照 股票数据材料/washout.js 的 isPotentialBullWashout；
+  //   仅用买点日前一交易日及更早的日K，避免未来函数）：
+  //     首板（或首板+二板）涨停日 → 首板日（含）后最多 2 个交易日内出现放量峰值（≥ 首板日前 20 日均量 2 倍）
+  //     → 之后 5~12 个交易日缩量洗盘（洗盘最大量 ≤ 峰值量 95%、最小量 ≤ 峰值量 60%、洗盘期内不得出现涨停、
+  //       所有交易日单日涨跌幅须在 ±5% 之内、唯一例外：跌幅介于 -5%~-6%（不含两端）最多 1 天、跌幅超 -6% 一律剔除、
+  //       洗盘最低价不跌破首板涨停日开盘价（2026-11-01 用户要求））
+  //     → 洗盘期最高价 ≤ 平台高点 1.03、最高收盘 ≤ 1.02，区间幅度 8%~35%，买点触发价 ≥ 平台高点 0.80；
+  //     15 日内出现 ≥3 板一律剔除；候选池另剔除创业板/科创板、代码黑名单、题材黑名单，且流通市值必须 ≤ 100 亿元（按买入日股价折算）；
+  //     买点日前 20 个交易日内最大三日滑动窗口涨幅须 ≤ 20%（2026-11-01 用户要求）；
+  //   买点（两条路径，2026-11-01 用户要求）：① 竞价高开 ≥ 5% → 9:30 按竞价开盘价直接买入（开盘即涨停买不进）；
+  //        ② 竞价高开 < 5%（含低开）→ 9:30–9:40 分时涨幅首次 +8% 即买入（9:40 后不买；区间内最多 1 次回落；
+  //        只有 9:30 开盘即涨停买不进，开盘未涨停而盘中 9:31 涨停仍可买入）；
+  //   卖点：共五条（2026-11-01 用户要求）——① 跌破 5 日线（MA5 取当日之前 5 个交易日收盘均值；
+  //        收益率未拉开 +20% 时盘中分时即卖，已拉开 +20% 后只在收盘判定）；
+  //        ② 跌破成本线 -3%（须连续 5 分钟都跌破）/ -5%（立即卖）；③ 盘中跌停（分时跌幅 ≤ -9%）立即卖；
+  //        ④ 买入当日收盘涨停、次一交易日收盘未涨停 → 次一交易日收盘卖出（次日涨停放量卖点已取消）；
+  //        ⑤ 买入后的次一交易日竞价低开（开盘涨幅 < 0，不看买入当日是否涨停）→ 次一交易日 9:30 竞价卖出（早于 ④ 收盘判定）；
+  //   仓位：账户拆两份、每份半仓（权重 0.5），最多同时持有 2 只不同股票、各自独立买卖。
+  // firstBoardWashMode: true → 独立引擎 runFirstBoardWashBacktest
+  first_board_wash_relaunch: {
+    id: 'first_board_wash_relaunch',
+    name: '首板洗盘-起爆拉升',
+    desc: FIRST_BOARD_WASH_DESC,
+    firstBoardWashMode: true,
   },
 };

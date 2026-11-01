@@ -88,6 +88,93 @@ const getValuationBlockReason = (code) => {
   return '';
 };
 
+// 回测用「当下」流通市值缓存（2026-11-01 用户要求，供首板洗盘等按市值过滤的策略使用）：
+//   自选股估值表只覆盖自选股，而连板记录里的候选多为非自选股，故另存一份通用缓存
+//   data/backtest_stock_valuation.json（字段：code / name / circulatingMarketValue(元) / updatedAt），
+//   仅用于「当下股价对应的流通市值 → 按股价比例折算到回测日期」的换算。
+const BACKTEST_VALUATION_PATH = path.join(__dirname, '../data/backtest_stock_valuation.json');
+const readBacktestFile = () => {
+  try {
+    if (!fs.existsSync(BACKTEST_VALUATION_PATH)) return [];
+    const parsed = JSON.parse(fs.readFileSync(BACKTEST_VALUATION_PATH, 'utf8') || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error('Error reading backtest valuation:', e.message);
+    return [];
+  }
+};
+let backtestCache = { mtimeMs: -1, map: new Map() };
+// 同步读取通用估值缓存（回测热循环用）：Map<code, { name, circulatingMarketValue(元) }>
+const getBacktestValuationMap = () => {
+  try {
+    const mtimeMs = fs.statSync(BACKTEST_VALUATION_PATH).mtimeMs;
+    if (mtimeMs !== backtestCache.mtimeMs) {
+      const map = new Map();
+      for (const item of readBacktestFile()) {
+        if (item && item.code) {
+          map.set(item.code, {
+            name: item.name || null,
+            circulatingMarketValue: item.circulatingMarketValue != null ? Number(item.circulatingMarketValue) : null,
+          });
+        }
+      }
+      backtestCache = { mtimeMs, map };
+    }
+  } catch (e) {
+    // 文件不存在/读取失败：返回已加载的空映射
+  }
+  return backtestCache.map;
+};
+const btFailedAt = new Map();
+// 拉取通用估值缓存里缺失的代码（已缓存的不再请求；失败 60s 内不重试）
+const ensureBacktestValuation = async (codes) => {
+  const map = getBacktestValuationMap();
+  const now = Date.now();
+  const missing = [];
+  for (const code of new Set((codes || []).filter(Boolean))) {
+    if (map.has(code)) continue;
+    if (now - (btFailedAt.get(code) || 0) < RETRY_INTERVAL_MS) continue;
+    missing.push(code);
+  }
+  if (missing.length === 0) return;
+  const clsHeaders = {
+    'Accept': 'application/json, text/plain, */*',
+    'Content-Type': 'application/json',
+    'Origin': 'https://www.cls.cn',
+    'Referer': 'https://www.cls.cn/',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36',
+  };
+  const updatedAt = `${localDateStr()} ${new Date().toTimeString().slice(0, 8)}`;
+  const fetched = await batchParallel(missing, async (code) => {
+    try {
+      const { data: resp } = await axios.get(getClsReqStockBasicUrl(code), { headers: clsHeaders, timeout: 10000 });
+      if (resp && resp.code === 200 && resp.data && resp.data.cmc != null) {
+        return {
+          code: resp.data.secu_code || code,
+          name: resp.data.secu_name || null,
+          marketValue: resp.data.mc != null ? Number(resp.data.mc) : null,
+          circulatingMarketValue: Number(resp.data.cmc),
+          updatedAt,
+        };
+      }
+    } catch (e) {
+      console.error(`获取 ${code} 估值数据失败:`, e.message);
+    }
+    return null;
+  }, 5);
+  missing.forEach((code, i) => {
+    if (fetched[i]) btFailedAt.delete(code);
+    else btFailedAt.set(code, Date.now());
+  });
+  const rows = fetched.filter(Boolean);
+  if (rows.length === 0) return;
+  const merged = new Map();
+  for (const item of readBacktestFile()) if (item && item.code) merged.set(item.code, item);
+  for (const item of rows) merged.set(item.code, item);
+  fs.writeFileSync(BACKTEST_VALUATION_PATH, JSON.stringify(Array.from(merged.values()), null, 2), 'utf8');
+  backtestCache = { mtimeMs: -1, map: new Map() };
+};
+
 // 拉取自选股估值快照并写入本地缓存文件（codes 为空时拉取全部自选股）。
 // 与已有记录合并（本次拉到的覆盖旧值），拉取失败的股票沿用旧记录
 const syncWatchlistValuation = async (codes = null) => {
@@ -176,6 +263,8 @@ module.exports = {
   MIN_MARKET_VALUE,
   ensureWatchlistValuation,
   getValuationMap,
+  getBacktestValuationMap,
+  ensureBacktestValuation,
   getValuationBlockReason,
   isBuyBlockedByValuation,
   syncWatchlistValuation,

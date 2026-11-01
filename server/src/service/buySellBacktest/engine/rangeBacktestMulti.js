@@ -8,6 +8,7 @@ const { runExtremeWinBacktest } = require('./extremeWinBacktest');
 const { runFusedEmoWinBacktest } = require('./fusedEmoWinBacktest');
 const { runEmotionBurstDriftBacktest } = require('./emotionBurstDriftBacktest');
 const { runEmotionBurstFollowBacktest } = require('./emotionBurstFollowBacktest');
+const { runFirstBoardWashBacktest } = require('./firstBoardWashBacktest');
 const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
 const { buildWindowAxis } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -52,7 +53,9 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   const emotionBurstDriftIds = ids.filter(id => STRATEGIES[id]?.emotionBurstDriftMode === true);
   // 连板题材-情绪瞬爆-惯性漂移-补涨走独立引擎（同单策略路径）
   const emotionBurstFollowIds = ids.filter(id => STRATEGIES[id]?.emotionBurstFollowMode === true);
-  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.extremeWinMode !== true && STRATEGIES[id]?.fusedEmoWinMode !== true && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true && STRATEGIES[id]?.volumeShareMode !== true && STRATEGIES[id]?.gainVolumeShareMode !== true && STRATEGIES[id]?.emotionBurstDriftMode !== true && STRATEGIES[id]?.emotionBurstFollowMode !== true);
+  // 首板洗盘-起爆拉升走独立引擎（同单策略路径）
+  const firstBoardWashIds = ids.filter(id => STRATEGIES[id]?.firstBoardWashMode === true);
+  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.extremeWinMode !== true && STRATEGIES[id]?.fusedEmoWinMode !== true && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true && STRATEGIES[id]?.volumeShareMode !== true && STRATEGIES[id]?.gainVolumeShareMode !== true && STRATEGIES[id]?.emotionBurstDriftMode !== true && STRATEGIES[id]?.emotionBurstFollowMode !== true && STRATEGIES[id]?.firstBoardWashMode !== true);
   const results = [];
   for (const strategyId of keyBlockIds) {
     const result = await runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
@@ -88,6 +91,10 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   }
   for (const strategyId of emotionBurstFollowIds) {
     const result = await runEmotionBurstFollowBacktest(startDate, endDate, strategyId, onProgress);
+    results.push({ strategyId, result });
+  }
+  for (const strategyId of firstBoardWashIds) {
+    const result = await runFirstBoardWashBacktest(startDate, endDate, strategyId, onProgress);
     results.push({ strategyId, result });
   }
   if (regularIds.length === 0) return results;

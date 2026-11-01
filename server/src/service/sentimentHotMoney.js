@@ -305,9 +305,11 @@ const getStockBars = async (code6) => {
       const c = Number(k.close_px);
       const h = Number(k.high_px);
       const l = Number(k.low_px);
+      const o = Number(k.open_px);
       return {
         d: Number(k.trade_date),
         c,
+        o: Number.isFinite(o) && o > 0 ? o : null, // 开盘价（缺失时置 null，供形态判定跳过开盘价相关条件）
         v: Number.isFinite(Number(k.business_amount)) ? Number(k.business_amount) : null,
         h: Number.isFinite(h) && h > 0 ? h : c,
         l: Number.isFinite(l) && l > 0 ? l : c,

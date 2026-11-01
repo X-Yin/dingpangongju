@@ -577,7 +577,7 @@ const buildBuyChecks = (pos) => {
       title: `选股①：前一交易日涨停家数最多的题材（涨停家数须 > ${THEME_LIMIT_UP_MIN}）`,
       passed: true,
       value: `选中「${t.eventBoard}」涨停 ${t.boardLimitUpCount} 家；前 5 名：${(t.themeTopList || []).map((x) => `${x.board}(${x.count})`).join('、')}`,
-      reason: `候选题材 = 前一交易日 lianbanSnapshot 中爆发（出现涨停）的题材板块（剔除板块名含「并购重组」「三季报」者，并按与「情绪游资-极致胜率」相同的题材黑名单剔除 PCB/玻璃基板/光模块/液冷/通信/算力/芯片/靶材/电子气体/光刻胶/算力租赁/元器件/黄金/中报增长/次新股 等板块）；按涨停家数降序取第一名，且涨停家数须 > ${THEME_LIMIT_UP_MIN}，否则当日不买`,
+      reason: `候选题材 = 前一交易日 lianbanSnapshot 中爆发（出现涨停）的题材板块（剔除板块名含「并购重组」「三季报」者，并按与「情绪游资-极致胜率」相同的题材黑名单剔除 PCB/玻璃基板/光模块/液冷/通信/算力/芯片/靶材/电子气体/光刻胶/算力租赁/元器件/黄金/中报增长/次新股/金属/稀土/有色 等板块）；按涨停家数降序取第一名，且涨停家数须 > ${THEME_LIMIT_UP_MIN}，否则当日不买`,
     },
     {
       id: 'ebd_leader_window',
