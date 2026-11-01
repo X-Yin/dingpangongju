@@ -365,6 +365,9 @@ const CACHE_VERSION_BY_STRATEGY = {
   // v4（2026-11-01）：修正卖点⑥的 A 股 T+1 约束——原口径含买入当日（会在买入当日收盘即卖，违反 T+1），
   //   改为「买入次日起」才判定收盘未涨停卖出；买入当日不再产生任何卖出
   volume_washout_second_board: 4,
+  // v1（2026-11-01 用户新增）：情绪游资-极致赔率初始版本——「首板洗盘-起爆拉升」与「放量洗盘-二板起爆」
+  //   融合进同一账户（候选池并集、谁先命中买谁），账户拆两份、每份半仓（权重 0.5）
+  wash_fusion_extreme_odds: 1,
 };
 const getBacktestCacheVersion = (strategy) => CACHE_VERSION_BY_STRATEGY[strategy] || 1;
 

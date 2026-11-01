@@ -1153,4 +1153,18 @@ const buildBuyChecks = (pos) => {
   ];
 };
 
-module.exports = { runVolumeWashoutSecondBoardBacktest };
+module.exports = {
+  runVolumeWashoutSecondBoardBacktest,
+  matchVolumeWashout,
+  analyzeBoardDayTline,
+  VOL_WASHOUT_OPT,
+  WASHOUT_LOOKBACK_DAYS,
+  BUY_TRIGGER_PCT,
+  BUY_START_MINUTE,
+  BUY_CUTOFF_MINUTE,
+  MAX_TOTAL_MV_YI,
+  MAX_WIN3_GAIN_PCT,
+  WIN3_LOOKBACK_DAYS,
+  WASH_SELL_PROFIT_UNLOCK_PCT,
+  WASH_SELL_GAP_DOWN_PCT,
+};

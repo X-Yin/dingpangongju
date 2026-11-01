@@ -1,4 +1,4 @@
-const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC, FUSED_EMO_WIN_DESC, EMOTION_BURST_DRIFT_DESC, EMOTION_BURST_FOLLOW_DESC, FIRST_BOARD_WASH_DESC, VOLUME_WASHOUT_SECOND_BOARD_DESC } = require('../descs');
+const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC, FUSED_EMO_WIN_DESC, EMOTION_BURST_DRIFT_DESC, EMOTION_BURST_FOLLOW_DESC, FIRST_BOARD_WASH_DESC, VOLUME_WASHOUT_SECOND_BOARD_DESC, WASH_FUSION_DESC } = require('../descs');
 
 // 情绪游资系列（2026-10-17 用户要求：已删除「情绪游资-龙头战法」「情绪龙头+科技进攻」「科技进攻 + 情绪龙头」三个策略）：
 module.exports = {
@@ -154,5 +154,17 @@ module.exports = {
     name: '放量洗盘-二板起爆',
     desc: VOLUME_WASHOUT_SECOND_BOARD_DESC,
     volumeWashoutMode: true,
+  },
+  // 情绪游资-极致赔率（2026-11-01 用户新增，仅回测）：把「首板洗盘-起爆拉升」与「放量洗盘-二板起爆」
+  //   融合进同一个账户——候选池取两者并集（同一只股票同时命中只保留一份、按首板洗盘口径建仓）；
+  //   两套买点共用账户，谁先命中买谁（跨候选取最早触发分钟、同分钟取涨幅更大者，同分钟同涨幅时首板洗盘优先）；
+  //   卖点按每份持仓的命中来源执行各自策略的卖出体系（首板洗盘五条 / 放量洗盘七条）；
+  //   账户拆两份、每份半仓（权重 0.5），最多同时持有 2 只不同股票
+  // washFusionMode: true → 独立引擎 runWashFusionBacktest
+  wash_fusion_extreme_odds: {
+    id: 'wash_fusion_extreme_odds',
+    name: '情绪游资-极致赔率',
+    desc: WASH_FUSION_DESC,
+    washFusionMode: true,
   },
 };

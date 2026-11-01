@@ -10,6 +10,7 @@ const { runEmotionBurstDriftBacktest } = require('./emotionBurstDriftBacktest');
 const { runEmotionBurstFollowBacktest } = require('./emotionBurstFollowBacktest');
 const { runFirstBoardWashBacktest } = require('./firstBoardWashBacktest');
 const { runVolumeWashoutSecondBoardBacktest } = require('./volumeWashoutSecondBoardBacktest');
+const { runWashFusionBacktest } = require('./washFusionExtremeOddsBacktest');
 const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSimContext } = require('../deps');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -84,6 +85,11 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   // 卖点与「首板洗盘-起爆拉升」同口径）
   if (STRATEGIES[strategyId]?.volumeWashoutMode === true) {
     return runVolumeWashoutSecondBoardBacktest(startDate, endDate, strategyId, onProgress);
+  }
+  // 情绪游资-极致赔率走独立引擎（「首板洗盘-起爆拉升」与「放量洗盘-二板起爆」融合进同一账户，
+  // 候选池取并集、谁先命中买谁；账户拆两份、每份半仓，各份按命中来源执行对应卖点体系）
+  if (STRATEGIES[strategyId]?.washFusionMode === true) {
+    return runWashFusionBacktest(startDate, endDate, strategyId, onProgress);
   }
   const strategy = STRATEGIES[strategyId];
   // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：快进快出半仓（2026-10-13 用户新增）——
