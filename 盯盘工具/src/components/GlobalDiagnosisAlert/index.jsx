@@ -8,19 +8,32 @@ import axios from 'axios';
 import { ThunderboltOutlined, WarningOutlined, CloseOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { local_ip } from '../../constant';
 import { getStrategyMode, MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } from '../../utils/strategyMode';
-import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush } from '../../utils/buyPointWs';
+import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeFirstBoardWashBuyPush } from '../../utils/buyPointWs';
 import './index.scss';
 
+// 首板洗盘-起爆拉升为常驻独立策略，复用本组件的统一买点诊断卡片（不走策略模式 buy_point，避免串到页面内诊断）
+const MODE_FIRST_BOARD_WASH = 'first_board_wash';
 const MODE_LABELS = {
   [MODE_TECH_ATTACK]: '科技进攻',
   [MODE_EXTREME_WIN]: '情绪游资',
   [MODE_ATTACK_DEFENSE]: '攻防兼备',
+  [MODE_FIRST_BOARD_WASH]: '首板起爆',
 };
 
 const fmtPct = (v) => {
   const num = Number(v);
   if (v === undefined || v === null || Number.isNaN(num)) return '--';
   return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
+};
+
+// 首板起爆：洗盘形态文案（与后端候选列表同一口径）
+const washText = (w) => {
+  if (!w) return '--';
+  const parts = [];
+  if (w.washDays != null) parts.push(`洗盘 ${w.washDays} 个交易日`);
+  if (w.rangePct != null) parts.push(`幅度 ${Number(w.rangePct).toFixed(2)}%`);
+  if (w.platformHigh != null) parts.push(`平台高点 ${Number(w.platformHigh).toFixed(2)}`);
+  return parts.length > 0 ? parts.join('，') : '--';
 };
 
 // 实时价格补齐：/stock_tline_data 取分时最后一点（last_px 优先，缺失时按昨收 × (1 + 涨幅) 折算）
@@ -87,6 +100,8 @@ const GlobalDiagnosisAlert = () => {
   const [sellAlert, setSellAlert] = useState(null);
   // 冰点转折延时观察卡片：{ mode, data:{ triggerTime, executeTime, delayMin, message }, ts }
   const [iceAlert, setIceAlert] = useState(null);
+  // 首板起爆买点卡片：{ mode:'first_board_wash', data, stocks, loading:false, remind, ts }
+  const [fbwAlert, setFbwAlert] = useState(null);
   const seqRef = useRef(0); // 旧请求返回晚于新触发时丢弃过期结果
 
   // 拉取本次买点命中对应的推荐标的（含实时买入价格）
@@ -189,15 +204,37 @@ const GlobalDiagnosisAlert = () => {
       }
       setIceAlert({ mode: msg.mode || getStrategyMode(), data: msg.data, ts: msg.ts ?? null });
     });
-    return () => { unsubBuy(); unsubSell(); unsubIce(); };
+    // 首板起爆买点：与科技进攻/情绪游资共用同一张买点诊断卡片
+    //   data.stocks 已带买入价/触发时间；data.checks 为线上真实阈值通过项
+    const unsubFbw = subscribeFirstBoardWashBuyPush((msg) => {
+      if (msg?.open !== true) return;
+      const raw = Array.isArray(msg.data?.stocks) ? msg.data.stocks : [];
+      const stocks = raw.map((s) => ({
+        ...s,
+        stockName: s.stockName || s.name,
+        buyPrice: s.price != null ? Number(s.price) : (s.buyPrice ?? null),
+      }));
+      if (stocks.length === 0) return;
+      setFbwAlert({
+        mode: MODE_FIRST_BOARD_WASH,
+        data: msg.data,
+        stocks,
+        loading: false,
+        remind: msg.data?.remind === true,
+        bucket: null,
+        ts: msg.ts ?? null,
+      });
+    });
+    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubFbw(); };
   }, [fetchBuyStocks]);
 
-  if (!buyAlert && !sellAlert && !iceAlert) return null;
+  if (!buyAlert && !sellAlert && !iceAlert && !fbwAlert) return null;
 
   return (
     <div className="gda-container">
       {iceAlert && <IceWaitCard alert={iceAlert} onClose={() => setIceAlert(null)} />}
       {buyAlert && <BuyCard alert={buyAlert} onClose={() => setBuyAlert(null)} />}
+      {fbwAlert && <BuyCard alert={fbwAlert} onClose={() => setFbwAlert(null)} />}
       {sellAlert && <SellCard alert={sellAlert} onClose={() => setSellAlert(null)} />}
     </div>
   );
@@ -268,32 +305,45 @@ const IceWaitCard = ({ alert, onClose }) => {
 
 // ==================== 买点卡片 ====================
 const BuyCard = ({ alert, onClose }) => {
-  const { mode, data, stocks, loading, bucket } = alert;
+  const { mode, data, stocks, loading, bucket, remind } = alert;
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isDefense = mode === MODE_ATTACK_DEFENSE;
+  const isFbw = mode === MODE_FIRST_BOARD_WASH;
   // 命中源（攻防兼备三组并行，展示全部命中的策略）
-  const hitTypes = isDefense
-    ? [
-      data?.tech?.allPassed === true && '科技进攻·快进快出',
-      data?.allPassed === true && '情绪游资·顺周期',
-      data?.reverse?.allPassed === true && '情绪游资·逆周期',
-    ].filter(Boolean)
-    : isExtreme
+  const hitTypes = isFbw
+    ? stocks
+      .map((s) => (s.mode === 'auction'
+        ? `竞价 ≥ ${data?.rules?.auctionBuyPct ?? 5}% · ${s.minute || '9:30'} 直接买入`
+        : `盘中 +${data?.rules?.buyTriggerPct ?? 8}% 触发`))
+      .filter((t, i, arr) => arr.indexOf(t) === i)
+    : isDefense
       ? [
+        data?.tech?.allPassed === true && '科技进攻·快进快出',
         data?.allPassed === true && '情绪游资·顺周期',
         data?.reverse?.allPassed === true && '情绪游资·逆周期',
       ].filter(Boolean)
-      : [
-        data?.allPassed === true && '全部前置条件通过',
-      ].filter(Boolean);
+      : isExtreme
+        ? [
+          data?.allPassed === true && '情绪游资·顺周期',
+          data?.reverse?.allPassed === true && '情绪游资·逆周期',
+        ].filter(Boolean)
+        : [
+          data?.allPassed === true && '全部前置条件通过',
+        ].filter(Boolean);
 
-  // 仓位说明：科技进攻按快进快出 / 抬高态 / 补买第二份分情形；情绪游资固定双腿半仓
-  const techPos = !isExtreme ? buildTechPositionExplain(isDefense ? data?.tech : data) : null;
+  // 仓位说明：科技进攻按快进快出 / 抬高态 / 补买第二份分情形；情绪游资固定双腿半仓；首板起爆固定半仓
+  const techPos = !isExtreme && !isFbw ? buildTechPositionExplain(isDefense ? data?.tech : data) : null;
   const ewPos = (isExtreme || isDefense)
     ? { pos: '半仓（50%）', why: '情绪游资为双腿结构，顺周期、逆周期各半仓' }
     : null;
+  const fbwPos = isFbw
+    ? {
+      pos: '半仓（50%）',
+      why: (data?.positionHint || '').replace(/^半仓（50%）——/, '') || '账户拆两份、每份半仓，最多同时持有 2 只不同股票，各自独立买卖',
+    }
+    : null;
 
-  const reasons = collectBuyReasons(isDefense ? data?.tech?.checks : data?.checks);
+  const reasons = collectBuyReasons(isFbw ? data?.checks : (isDefense ? data?.tech?.checks : data?.checks));
   const reverseReasons = collectBuyReasons(data?.reverseChecks);
   // 冰点转折延时买入（2026-10-23）：到点推送时携带 iceDelay（触发/执行时间 + 选中板块）
   const iceDelay = data?.iceDelay || null;
@@ -304,6 +354,7 @@ const BuyCard = ({ alert, onClose }) => {
         <ThunderboltOutlined className="gda-header-icon buy" />
         <span className="gda-title">买点诊断命中</span>
         <span className="gda-mode-badge">{MODE_LABELS[mode] || mode}</span>
+        {isFbw && remind && <span className="gda-hit-types">提前提醒 · 9:30 执行</span>}
         <CloseOutlined className="gda-close" onClick={onClose} />
       </div>
       <div className="gda-body">
@@ -313,6 +364,18 @@ const BuyCard = ({ alert, onClose }) => {
           <span className="gda-value">{MODE_LABELS[mode] || mode}</span>
           {hitTypes.length > 0 && <span className="gda-hit-types">命中：{hitTypes.join('、')}</span>}
         </div>
+        {/* ①-1 首板起爆：买入时间（竞价 9:30 直接买 / 盘中 +8% 触发） */}
+        {isFbw && stocks.length > 0 && (
+          <div className="gda-row">
+            <span className="gda-label">买入时间</span>
+            <span className="gda-value">{stocks[0].minute || '--'}</span>
+            <span className="gda-cost">
+              {stocks[0].mode === 'auction'
+                ? `竞价 ≥ ${data?.rules?.auctionBuyPct ?? 5}% 按竞价开盘价直接买入`
+                : `盘中分时涨幅 +${data?.rules?.buyTriggerPct ?? 8}% 首次触发买入`}
+            </span>
+          </div>
+        )}
         {/* ①-2 冰点转折 · 延时买入说明 */}
         {iceDelay?.phase === 'ready' && (
           <div className="gda-section">
@@ -357,6 +420,9 @@ const BuyCard = ({ alert, onClose }) => {
                   {asEw && (
                     <span className="gda-tag">{s.isReverse ? '逆周期 · 反向抱团' : '顺周期 · 龙头'}</span>
                   )}
+                  {isFbw && (
+                    <span className="gda-tag">{s.mode === 'auction' ? '竞价 ≥ 5% · 9:30 买入' : '盘中 +8% 触发'}</span>
+                  )}
                   {s.buyPrice != null ? (
                     <span className="gda-price">买入价格 <b>{s.buyPrice.toFixed(2)}</b></span>
                   ) : (
@@ -364,13 +430,16 @@ const BuyCard = ({ alert, onClose }) => {
                   )}
                 </div>
                 <div className="gda-stock-meta">
-                  {s.isReverse
-                    ? `强度分 ${s.strengthScore != null ? Number(s.strengthScore).toFixed(2) : '--'} · ${s.timingTag || '--'}`
-                    : asEw
-                      ? `强度−差劲 ${s.delta != null ? Number(s.delta).toFixed(2) : '--'}`
-                      : `3日 ${fmtPct(s.change3d)} · 抗分歧 ${s.resilienceScore != null ? Number(s.resilienceScore).toFixed(2) : '--'}`}
-                  {s.lianbanCount != null ? ` · ${s.lianbanCount} 连板` : ''}
-                  {s.priceChange != null ? ` · 当日 ${fmtPct(s.priceChange)}` : ''}
+                  {isFbw
+                    ? `触发 ${s.minute || '--'} · 竞价 ${fmtPct(s.auctionGap)} · 当日 ${fmtPct(s.change)}`
+                    : s.isReverse
+                      ? `强度分 ${s.strengthScore != null ? Number(s.strengthScore).toFixed(2) : '--'} · ${s.timingTag || '--'}`
+                      : asEw
+                        ? `强度−差劲 ${s.delta != null ? Number(s.delta).toFixed(2) : '--'}`
+                        : `3日 ${fmtPct(s.change3d)} · 抗分歧 ${s.resilienceScore != null ? Number(s.resilienceScore).toFixed(2) : '--'}`}
+                  {isFbw && ` · ${washText(s.washout)}`}
+                  {!isFbw && s.lianbanCount != null ? ` · ${s.lianbanCount} 连板` : ''}
+                  {!isFbw && s.priceChange != null ? ` · 当日 ${fmtPct(s.priceChange)}` : ''}
                 </div>
               </div>
             );
@@ -389,6 +458,12 @@ const BuyCard = ({ alert, onClose }) => {
             <div className="gda-position">
               <span className="gda-pos-value">{ewPos.pos}</span>
               <span className="gda-pos-why">情绪游资：{ewPos.why}{isDefense ? '；若科技进攻（快进快出）同时触发则其优先，本笔情绪游资暂缓' : ''}</span>
+            </div>
+          )}
+          {fbwPos && (
+            <div className="gda-position">
+              <span className="gda-pos-value">{fbwPos.pos}</span>
+              <span className="gda-pos-why">首板起爆：{fbwPos.why}</span>
             </div>
           )}
         </div>
@@ -420,6 +495,7 @@ const BuyCard = ({ alert, onClose }) => {
         <div className="gda-footer">
           诊断时间：{data?.timestamp || '--'}
           {bucket != null ? ` · 时间桶 ${String(bucket).slice(0, 2)}:${String(bucket).slice(2, 4)}` : ''}
+          {isFbw ? (remind ? ' · 竞价提醒（9:25-9:30 每 30 秒一次，9:30 执行买入）' : ' · 首板起爆买点') : ''}
         </div>
       </div>
     </div>

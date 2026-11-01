@@ -23,6 +23,8 @@ const DebugPanel = () => {
   const [buyMocking, setBuyMocking] = useState(false);
   const [sellMocking, setSellMocking] = useState(false);
   const [iceMocking, setIceMocking] = useState(false);
+  // 首板起爆 MOCK：auction_buy | burst_buy | sell
+  const [fwbMocking, setFwbMocking] = useState(null);
 
   // 模块一：WS 双向对等自检
   //   每轮流程：前端发 debug_ping → 后端回 debug_pong（方向一）；
@@ -114,6 +116,26 @@ const DebugPanel = () => {
       message.error(`mock 请求失败：${e.message}`);
     } finally {
       setIceMocking(false);
+    }
+  };
+
+  // 首板起爆 MOCK：与线上同一条 WS 推送 + 飞书链路（竞价买点 / 开盘 +8% 买点 / 卖点）
+  const triggerFirstBoardWashMock = async (kind) => {
+    if (fwbMocking) return;
+    setFwbMocking(kind);
+    const label = kind === 'auction_buy' ? '竞价买点' : (kind === 'burst_buy' ? '开盘买点（+8%）' : '卖点');
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/debug/mock_first_board_wash_${kind}`);
+      const d = res.data;
+      if (d?.success) {
+        message.success(`已模拟首板起爆${label}命中：${d.target?.name}（${d.target?.code}）`, 4);
+      } else {
+        message.error(d?.error || 'mock 触发失败');
+      }
+    } catch (e) {
+      message.error(`mock 请求失败：${e.message}`);
+    } finally {
+      setFwbMocking(null);
     }
   };
 
@@ -215,6 +237,42 @@ const DebugPanel = () => {
             >
               触发冰点转折延时提示
             </Button>
+          </Card>
+
+          {/* 模块五：首板起爆 买点 / 卖点 MOCK */}
+          <Card size="small" title="5. 首板起爆 买点 / 卖点 Mock">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              标的优先取自首板起爆候选股（非交易日 / 盘前取上一交易日候选），无候选则从全量自选股随机取一只。
+              卡片中的买入时间与买入条件（竞价 ≥ 5% → 9:30 直接买入；9:30-9:40 分时 +8%、最多 1 次回落、起爆价 ≥ 平台高点 ×0.80）
+              及卖出条件（跌破 5 日线、成本 -3% 连续 5 分钟 / -5% 立即、盘中 ≤ -9%、涨停次日收盘未涨停、次日竞价低开）
+              均使用线上真实阈值；触发后通过 WS 推送并发送飞书。
+            </Paragraph>
+            <Space wrap>
+              <Button
+                type="primary"
+                icon={<RocketOutlined />}
+                loading={fwbMocking === 'auction_buy'}
+                onClick={() => triggerFirstBoardWashMock('auction_buy')}
+              >
+                竞价买点诊断
+              </Button>
+              <Button
+                type="primary"
+                icon={<RocketOutlined />}
+                loading={fwbMocking === 'burst_buy'}
+                onClick={() => triggerFirstBoardWashMock('burst_buy')}
+              >
+                开盘买点诊断
+              </Button>
+              <Button
+                danger
+                icon={<FallOutlined />}
+                loading={fwbMocking === 'sell'}
+                onClick={() => triggerFirstBoardWashMock('sell')}
+              >
+                卖点诊断
+              </Button>
+            </Space>
           </Card>
 
           <Text type="secondary" style={{ fontSize: 12 }}>

@@ -289,4 +289,63 @@ function buildSellPointCard({ sellStocks, timestamp, mock }) {
   };
 }
 
-module.exports = { sendFeishuCard, sendFeishuText, buildBuyPointCard, buildHotMoneyLeaderCard, buildHotMoneyReverseLeaderCard, buildSellPointCard, buildMarketSnapshotText };
+// 首板洗盘-起爆拉升买点卡片：绿色主题，列出触发买点的候选股（竞价 ≥ 5% 直接买入 / 盘中 +8% 触发）
+//   positionHint：买入仓位提示（账户拆两份、每份半仓，最多同时持有 2 只不同股票）
+function buildFirstBoardWashBuyCard({ buyStocks, timestamp, positionHint, mock }) {
+  const list = Array.isArray(buyStocks) ? buyStocks : [];
+  const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
+  const fmtNum = (v) => (v == null || isNaN(Number(v)) ? '--' : Number(v).toFixed(2));
+  const elements = [
+    {
+      tag: "markdown",
+      content: `**🎯【首板洗盘-起爆拉升】买点触发${mock ? '（MOCK 测试）' : ''}**\n> ${timestamp || '--'}`,
+    },
+    { tag: "hr" },
+  ];
+  if (positionHint) {
+    elements.push({ tag: "markdown", content: `**📦 建议买入仓位：${positionHint}**` });
+  }
+
+  if (list.length === 0) {
+    elements.push({ tag: "markdown", content: "当前无触发买点的首板起爆候选股。" });
+  } else {
+    list.forEach((s, i) => {
+      const w = s.washout || {};
+      const washText = w.washDays != null
+        ? `洗盘 ${w.washDays} 日，幅度 ${fmtPct(w.rangePct)}，平台高点 ${fmtNum(w.platformHigh)}`
+        : '--';
+      elements.push({
+        tag: "markdown",
+        content: `**${i + 1}. ${s.stockName || s.name || '--'}（${s.code || '--'}）**${s.board ? `　${s.board}` : ''}\n买点：${s.modeText || '--'}`,
+      });
+      elements.push({
+        tag: "div",
+        fields: [
+          { is_short: true, text: { tag: "lark_md", content: `触发时间：${s.minute || '--'}` } },
+          { is_short: true, text: { tag: "lark_md", content: `买价：${fmtNum(s.price)}` } },
+          { is_short: true, text: { tag: "lark_md", content: `涨幅：${fmtPct(s.change)}` } },
+          { is_short: true, text: { tag: "lark_md", content: `竞价涨幅：${fmtPct(s.auctionGap)}` } },
+          { is_short: true, text: { tag: "lark_md", content: `流通市值：${s.floatMvYi != null ? `${fmtNum(s.floatMvYi)} 亿` : '--'}` } },
+          { is_short: true, text: { tag: "lark_md", content: `洗盘形态：${washText}` } },
+        ],
+      });
+    });
+  }
+
+  elements.push({
+    tag: "markdown",
+    content: "**9:40 之后不再买入；分仓管理是最后一道防火墙，谨防尾盘大盘跳水。**",
+  });
+
+  return {
+    schema: "2.0",
+    config: { wide_screen_mode: true },
+    header: {
+      template: "green",
+      title: { tag: "plain_text", content: mock ? "🔔 首板洗盘-起爆拉升 买点触发提醒（MOCK 测试）" : "🔔 首板洗盘-起爆拉升 买点触发提醒" },
+    },
+    body: { elements },
+  };
+}
+
+module.exports = { sendFeishuCard, sendFeishuText, buildBuyPointCard, buildHotMoneyLeaderCard, buildHotMoneyReverseLeaderCard, buildSellPointCard, buildMarketSnapshotText, buildFirstBoardWashBuyCard };

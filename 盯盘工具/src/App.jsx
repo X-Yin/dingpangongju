@@ -21,6 +21,7 @@ import MajorEventReminder from './components/MajorEventReminder';
 import PersonalFeelingModal from './components/PersonalFeelingModal';
 import ClosePipeline from './components/ClosePipeline';
 import GlobalDiagnosisAlert from './components/GlobalDiagnosisAlert';
+import FirstBoardWash from './components/FirstBoardWash';
 import dayjs from 'dayjs';
 import './App.scss';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -1360,7 +1361,7 @@ function App() {
           className="app-menu"
         />
       </Sider>
-      <Layout className="content-layout">
+      <Layout className={`content-layout${collapsed ? ' is-collapsed' : ''}`}>
         <div
           className={`app-header-wrapper${headerVisible ? ' app-header-visible-wrapper' : ''}`}
           onMouseEnter={() => setHeaderVisible(true)}
@@ -1568,6 +1569,8 @@ function App() {
       {location.pathname !== '/training_camp' && <FloatingStockPosition onOutflowDetected={handleOutflowDetected} />}
       {/* 全局买点 / 卖点诊断弹窗卡片：后端命中推送 open:true 时右下角弹出，全页面生效 */}
       <GlobalDiagnosisAlert />
+      {/* 首板洗盘-起爆拉升（常驻，与策略模式无关）：09:00 候选股弹窗 + 09:25/盘中买点诊断卡片 */}
+      <FirstBoardWash />
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingMonitorAlarm />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStrategyCenter />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStockViewer />}
@@ -1901,18 +1904,6 @@ function App() {
           </div>
         </div>
       </Modal>
-
-      <div class='global-fixed-bottom__tip'
-      onClick={() => setSenseColor(v => v === '#333' ? '#fff' : '#333')}
-      style={{
-        position: 'fixed',
-        bottom: 40,
-        right: '100px',
-        fontSize: 20,
-        marginLeft: '-50%',
-        opacity: .7,
-        color: senseColor
-      }}>防止潜意识的冲动，除了考虑标的是否有赔率，还要考虑当下是否是好时机</div>
     </Layout>
   );
 }

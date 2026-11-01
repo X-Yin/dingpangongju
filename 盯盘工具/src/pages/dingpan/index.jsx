@@ -22,6 +22,7 @@ import SectorRankingMonitor from './components/SectorRankingMonitor';
 import StockAlertCard from './components/StockAlertCard';
 import BlockAlertCard from './components/BlockAlertCard';
 import OverlayTimelineSection from './components/OverlayTimelineSection';
+import FirstBoardWashList from './components/FirstBoardWashList';
 import MarketPulsePanel from './components/MarketPulsePanel';
 import StockChangeMonitor from './components/StockChangeMonitor';
 import BlockMoneyMonitor from './components/BlockMoneyMonitor';
@@ -2705,6 +2706,12 @@ const DingPan = () => {
                                     onTitleClick={() => setIndexOverlayFullscreenVisible(true)}
                                 />
                             </div>
+
+                            {/* 首板洗盘-起爆拉升候选股列表（位于指数叠加分时模块下方，右上角可重新计算） */}
+                            <FirstBoardWashList
+                                onStockClick={showKLine}
+                                themeColor={effThemeColor}
+                            />
                         </Col>
                     </Row>
                 </>

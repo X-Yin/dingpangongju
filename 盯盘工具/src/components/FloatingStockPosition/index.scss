@@ -703,17 +703,17 @@
     }
   }
 
-  /* 顺逆周期标记列（仅「情绪游资-极致胜率」/「攻防兼备」模式展示） */
-  .fsp-list-header.has-cycle {
-    grid-template-columns: 1.05fr 0.85fr 1.05fr 0.75fr 1.25fr 88px 74px 1.3fr 1.5fr;
+  /* 统一卖点策略列（2026-11-01 用户要求，取代原顺/逆周期标记列；始终展示） */
+  .fsp-list-header.has-sell-strategy {
+    grid-template-columns: 1.05fr 0.85fr 1.05fr 0.75fr 1.25fr 88px 132px 1.3fr 1.5fr;
   }
 
-  .fsp-item-cycle {
+  .fsp-item-strategy {
     display: inline-flex;
     align-items: center;
     justify-content: center;
 
-    .fsp-cycle-select {
+    .fsp-strategy-select {
       width: 100%;
       font-size: 11px;
       font-weight: 600;
@@ -728,10 +728,21 @@
       }
     }
 
-    .fsp-cycle-select.is-reverse {
-      .ant-select-selection-item {
-        color: #d97706;
-      }
+    /* 策略配色：科技进攻=蓝、极致胜率顺/逆=橙/紫、首板起爆=绿 */
+    .fsp-strategy-select.is-tech_attack .ant-select-selection-item {
+      color: #2563eb;
+    }
+
+    .fsp-strategy-select.is-extreme_win_pro .ant-select-selection-item {
+      color: #d97706;
+    }
+
+    .fsp-strategy-select.is-extreme_win_reverse .ant-select-selection-item {
+      color: #7c3aed;
+    }
+
+    .fsp-strategy-select.is-first_board_wash .ant-select-selection-item {
+      color: #15803d;
     }
   }
 
@@ -772,9 +783,9 @@
       gap: 4px;
       align-items: center;
 
-      /* 展示顺逆周期标记列时多一列（放在 .fsp-item 内层，确保覆盖上面的 8 列栅格） */
-      &.has-cycle {
-        grid-template-columns: 1.05fr 0.85fr 1.05fr 0.75fr 1.25fr 88px 74px 1.3fr 1.5fr;
+      /* 展示统一卖点策略列时多一列（放在 .fsp-item 内层，确保覆盖上面的 8 列栅格） */
+      &.has-sell-strategy {
+        grid-template-columns: 1.05fr 0.85fr 1.05fr 0.75fr 1.25fr 88px 132px 1.3fr 1.5fr;
       }
     }
 

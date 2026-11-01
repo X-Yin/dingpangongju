@@ -9,11 +9,21 @@ import { local_ip } from '../../constant';
 import StockKLineModal from '../StockKLineModal';
 import StockFundFlowModal from '../StockFundFlowModal';
 import BuyPointDiagnosisDrawer from '../FloatingBuyPointDiagnosis';
-import { useStrategyMode, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } from '../../utils/strategyMode';
+import { useStrategyMode } from '../../utils/strategyMode';
 import { subscribeSellPointPush } from '../../utils/buyPointWs';
 import './index.scss';
 
 const ALERT_THRESHOLD = 0.15;
+
+// 统一卖点策略（2026-11-01 用户要求）：每笔持仓显式指定卖点诊断口径，取代原「顺/逆周期」下拉框。
+//   该选择只决定卖点诊断走哪套规则；未设置时后端按当前全局策略模式回退。
+const SELL_STRATEGY_OPTIONS = [
+  { value: 'tech_attack', label: '科技进攻' },
+  { value: 'extreme_win_pro', label: '极致胜率顺周期' },
+  { value: 'extreme_win_reverse', label: '极致胜率逆周期' },
+  { value: 'first_board_wash', label: '首板起爆' },
+];
+const SELL_STRATEGY_LABELS = Object.fromEntries(SELL_STRATEGY_OPTIONS.map((o) => [o.value, o.label]));
 
 const formatSignedPercent = (value) => {
   if (value === undefined || value === null || Number.isNaN(Number(value))) return '--';
@@ -44,13 +54,16 @@ const diagnosePositionSellPoint = async (stock, todayStr, mode) => {
   }
   try {
     // mode='hot_money_extreme_win' 时后端返回「情绪游资-极致胜率」11 条龙头战法卖点（含⑪冲高回落 / ⑫开盘自救）；buyDate 供「持仓第 3 日未拉开 +10%」判定
+    // mode 仅作为 sellStrategy 未设置时的回退口径；显式设置的 sellStrategy 优先生效
     const res = await axios.post(`http://${local_ip}:3000/check_single_stock_sell_point`, {
       code: stock.code,
       costPrice: stock.costPrice,
       buyDate: stock.buyDate || null,
       mode,
-      // 顺逆周期标记：后端据此决定⑪⑫「竞价大幅低开后冲高回落 / 开盘自救」是否启用（逆周期持仓不启用）
+      // 顺逆周期标记：旧口径回退用（sellStrategy 未设置时后端据此决定⑪⑫是否启用）
       cycle: stock.cycle || 'pro',
+      // 统一卖点策略：科技进攻 / 极致胜率顺周期 / 极致胜率逆周期 / 首板起爆（2026-11-01 用户要求）
+      sellStrategy: stock.sellStrategy || null,
     });
     return { ...res.data, ...base };
   } catch (error) {
@@ -72,9 +85,8 @@ const sortSellResults = (list) => [...(list || [])].sort((a, b) => (b.isSell ? 1
 const FloatingStockPosition = ({ onOutflowDetected }) => {
   const navigate = useNavigate();
   const mode = useStrategyMode();
-  // 顺逆周期标记列：仅在「情绪游资-极致胜率」/「攻防兼备（科技进攻-情绪游资极致胜率）」模式下展示
-  const showCycleColumn = mode === MODE_EXTREME_WIN || mode === MODE_ATTACK_DEFENSE;
-  const [cycleUpdating, setCycleUpdating] = useState({});
+  // 统一卖点策略列（2026-11-01 用户要求）：始终展示，取代原顺/逆周期标记列
+  const [sellStrategyUpdating, setSellStrategyUpdating] = useState({});
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -156,29 +168,25 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     }
   };
 
-  // 持仓顺逆周期标记：pro 顺周期 / reverse 逆周期（仅上述两种模式展示；后端卖点⑪据此启用）
-  const POSITION_CYCLE_OPTIONS = [
-    { value: 'pro', label: '顺周期' },
-    { value: 'reverse', label: '逆周期' },
-  ];
-
-  const handleCycleChange = async (stock, cycle) => {
+  // 修改某笔持仓的统一卖点策略（科技进攻 / 极致胜率顺周期 / 极致胜率逆周期 / 首板起爆）
+  //   sellStrategy=null（清空）时后端回退到当前全局策略模式
+  const handleSellStrategyChange = async (stock, sellStrategy) => {
     const key = stock.id || stock.code;
-    const prev = stock.cycle || 'pro';
-    if (cycle === prev) return;
-    setCycleUpdating((prevMap) => ({ ...prevMap, [key]: true }));
+    const prev = stock.sellStrategy || null;
+    if ((sellStrategy || null) === prev) return;
+    setSellStrategyUpdating((prevMap) => ({ ...prevMap, [key]: true }));
     try {
-      const res = await axios.post(`http://${local_ip}:3000/update_stock_position_cycle`, { id: stock.id, cycle });
+      const res = await axios.post(`http://${local_ip}:3000/update_stock_position_sell_strategy`, { id: stock.id, sellStrategy });
       if (res.data.success) {
-        message.success(`${stock.name} 已标记为${cycle === 'reverse' ? '逆周期' : '顺周期'}`);
+        message.success(`${stock.name} 卖点策略已设为${SELL_STRATEGY_LABELS[sellStrategy] || '跟随模式'}`);
       } else {
         message.warning(res.data.message || '更新失败');
       }
     } catch (error) {
-      console.error('更新顺逆周期标记失败:', error);
+      console.error('更新卖点策略失败:', error);
       message.error('更新失败');
     } finally {
-      setCycleUpdating((prevMap) => {
+      setSellStrategyUpdating((prevMap) => {
         const next = { ...prevMap };
         delete next[key];
         return next;
@@ -1048,14 +1056,14 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                 <div className="fsp-empty">暂无持仓</div>
               ) : (
                 <>
-                  <div className={`fsp-list-header${showCycleColumn ? ' has-cycle' : ''}`}>
+                  <div className="fsp-list-header has-sell-strategy">
                     <span className="col-name">股票名称</span>
                     <span className="col-change">涨幅</span>
                     <span className="col-fund">资金净流入</span>
                     <span className="col-voldiff">量比</span>
                     <span className="col-cost">持仓成本</span>
                     <span className="col-weight">仓位</span>
-                    {showCycleColumn && <span className="col-cycle">顺/逆周期</span>}
+                    <span className="col-strategy">卖点策略</span>
                     <span className="col-buytime">买入时间</span>
                     <span className="col-actions">操作</span>
                   </div>
@@ -1074,7 +1082,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                       const isAutoMirror = !!stock.mirror;
                       return (
                         <div key={posKey} className="fsp-item">
-                          <div className={`fsp-item-row${showCycleColumn ? ' has-cycle' : ''}`}>
+                          <div className="fsp-item-row has-sell-strategy">
                             <div className="fsp-item-main" onClick={() => handleStockClick(stock)}>
                               <span className={`fsp-item-name${isAutoMirror ? ' is-auto-mirror' : ''}`}>
                                 {stock.name}
@@ -1120,18 +1128,18 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                                   options={POSITION_WEIGHT_OPTIONS.map((w) => ({ value: w, label: `${w}%` }))}
                                 />
                               </span>
-                              {showCycleColumn && (
-                                <span className="fsp-item-cycle" onClick={stopProp}>
-                                  <Select
-                                    size="small"
-                                    className={`fsp-cycle-select${stock.cycle === 'reverse' ? ' is-reverse' : ''}`}
-                                    value={stock.cycle === 'reverse' ? 'reverse' : 'pro'}
-                                    loading={!!cycleUpdating[posKey]}
-                                    onChange={(val) => handleCycleChange(stock, val)}
-                                    options={POSITION_CYCLE_OPTIONS}
-                                  />
-                                </span>
-                              )}
+                              <span className="fsp-item-strategy" onClick={stopProp}>
+                                <Select
+                                  size="small"
+                                  className={`fsp-strategy-select${stock.sellStrategy ? ` is-${stock.sellStrategy}` : ''}`}
+                                  value={stock.sellStrategy || undefined}
+                                  placeholder="跟随模式"
+                                  allowClear
+                                  loading={!!sellStrategyUpdating[posKey]}
+                                  onChange={(val) => handleSellStrategyChange(stock, val || null)}
+                                  options={SELL_STRATEGY_OPTIONS}
+                                />
+                              </span>
                               <span className="fsp-item-buytime" title={formatBuyAt(stock)}>
                                 {formatBuyAt(stock)}
                               </span>

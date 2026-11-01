@@ -57,7 +57,7 @@ const {
   onPositionChange,
   updateStockPositionCost,
   updateStockPositionWeight,
-  updateStockPositionCycle,
+  updateStockPositionSellStrategy,
   diff2DayStockTline,
   getStockPositionFundFlow,
   getStockPositionAnalysisData,
@@ -138,6 +138,10 @@ const backtestPositionMirror = require('./service/backtestPositionMirror');
 // 快进快出「资金净流入阈值动态调节」线上同步（2026-10-21 用户新增）：启动回测后按成交序列设定阈值，
 // 持仓管理增删股票后后台重跑回测并重算阈值（见 emoQuickFundGateLive.js）
 const emoQuickFundGateLive = require('./service/emoQuickFundGateLive');
+// 首板洗盘-起爆拉升线上常驻服务（2026-11-01 用户新增）：独立于科技进攻/情绪游资模式的常驻功能，
+// 交易日 09:00 候选弹窗、09:15-09:41 每 3s 轮询、09:25 竞价诊断、09:30-09:40 盘中 +8% 买点
+const firstBoardWashLive = require('./service/firstBoardWashLive');
+const { checkFirstBoardWashSellPointDetailed } = require('./service/firstBoardWashSell');
 // 调试面板 MOCK：手动触发买点/卖点命中，走同一推送 + 飞书链路
 const debugMock = require('./service/debugMock');
 const wsServer = require('./wsServer');
@@ -1409,27 +1413,56 @@ app.get('/premium_diagnosis', async (req, res) => {
   }
 });
 
-// 单个股票卖点诊断（mode='hot_money_extreme_win' 时走「情绪游资-极致胜率」11 条龙头战法卖点；
-//   mode='attack_defense' 时按持仓股是否属于自选股科技股范围分流：科技股走科技卖点诊断，其余走龙头卖点诊断）
+// 单个股票卖点诊断
+//   - 优先按持仓显式设置的统一卖点策略 sellStrategy（2026-11-01 用户要求）：
+//       tech_attack 科技进攻 | extreme_win_pro 极致胜率顺周期 | extreme_win_reverse 极致胜率逆周期 | first_board_wash 首板起爆
+//   - 未设置时沿用原逻辑（mode + cycle）：
+//       mode='hot_money_extreme_win' 走「情绪游资-极致胜率」11 条龙头战法卖点；
+//       mode='attack_defense' 按持仓股是否属于自选股科技股范围分流：科技股走科技卖点诊断，其余走龙头卖点诊断
 app.post('/check_single_stock_sell_point', async (req, res) => {
   try {
-    const { code, costPrice, buyDate, mode, cycle } = req.body;
+    const { code, costPrice, buyDate, mode, cycle, sellStrategy } = req.body;
     if (!code) {
       return res.status(400).json({ success: false, message: '股票代码不能为空' });
     }
-    const useExtremeWin = mode === MODE_EXTREME_WIN
-      || (mode === MODE_ATTACK_DEFENSE && !isTechWatchlistStock(code));
-    // ⑪⑫「竞价大幅低开后冲高回落 / 开盘自救」仅顺周期持仓启用：两种相关模式下，持仓标记为 reverse（逆周期）时关闭；
-    //   未标记（缺省）按顺周期处理
-    const result = useExtremeWin
-      ? await checkExtremeWinSellPointDetailed(code, costPrice, buyDate, {
-        enableOpenGapReboundSell: (mode === MODE_EXTREME_WIN || mode === MODE_ATTACK_DEFENSE) && cycle !== 'reverse',
-      })
-      : await checkSingleStockSellPoint(code, costPrice);
+    let result;
+    if (sellStrategy === 'first_board_wash') {
+      result = await checkFirstBoardWashSellPointDetailed(code, costPrice, buyDate || null);
+    } else if (sellStrategy === 'tech_attack') {
+      result = await checkSingleStockSellPoint(code, costPrice);
+    } else if (sellStrategy === 'extreme_win_pro' || sellStrategy === 'extreme_win_reverse') {
+      // ⑪⑫「竞价大幅低开后冲高回落 / 开盘自救」仅顺周期（extreme_win_pro）启用
+      result = await checkExtremeWinSellPointDetailed(code, costPrice, buyDate || null, {
+        enableOpenGapReboundSell: sellStrategy !== 'extreme_win_reverse',
+      });
+    } else {
+      const useExtremeWin = mode === MODE_EXTREME_WIN
+        || (mode === MODE_ATTACK_DEFENSE && !isTechWatchlistStock(code));
+      // ⑪⑫「竞价大幅低开后冲高回落 / 开盘自救」仅顺周期持仓启用：两种相关模式下，持仓标记为 reverse（逆周期）时关闭；
+      //   未标记（缺省）按顺周期处理
+      result = useExtremeWin
+        ? await checkExtremeWinSellPointDetailed(code, costPrice, buyDate || null, {
+          enableOpenGapReboundSell: (mode === MODE_EXTREME_WIN || mode === MODE_ATTACK_DEFENSE) && cycle !== 'reverse',
+        })
+        : await checkSingleStockSellPoint(code, costPrice);
+    }
     res.json(result);
   } catch (error) {
     console.error('单个股票卖点诊断失败:', error);
     res.status(500).json({ success: false, message: error.message || '诊断失败' });
+  }
+});
+
+// 更新某笔持仓的统一卖点策略（tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash）
+app.post('/update_stock_position_sell_strategy', (req, res) => {
+  try {
+    const { id, sellStrategy } = req.body || {};
+    if (!id) return res.status(400).json({ success: false, message: '持仓 id 不能为空' });
+    const result = updateStockPositionSellStrategy(id, sellStrategy);
+    res.json(result);
+  } catch (error) {
+    console.error('更新持仓卖点策略失败:', error);
+    res.status(500).json({ success: false, message: error.message || '更新失败' });
   }
 });
 
@@ -1606,6 +1639,44 @@ app.get('/get_strategy_mode', (req, res) => {
   res.json({ success: true, data: { mode: strategyModeState.getMode() } });
 });
 
+// ===== 首板洗盘-起爆拉升（线上常驻功能，与策略模式无关）=====
+// 候选股列表：refresh=1 强制重算（叮盘页刷新按钮）；date 缺省按展示基准日
+//   交易日 09:00 起为当日；非交易日 / 交易日 09:00 前为上一交易日收盘后的候选（无候选前端显示空态）
+app.get('/first_board_wash_candidates', async (req, res) => {
+  try {
+    const dateStr = String(req.query.date || '').trim();
+    const refresh = String(req.query.refresh || '') === '1' || String(req.query.refresh || '') === 'true';
+    const data = dateStr
+      ? await firstBoardWashLive.getCandidates({ dateStr, refresh })
+      : await firstBoardWashLive.getDisplayData({ refresh });
+    res.json({
+      success: true,
+      data: {
+        date: data.date,
+        basisDate: data.basisDate || data.date,
+        isPreviousDay: data.isPreviousDay === true,
+        computedAt: data.computedAt,
+        count: (data.candidates || []).length,
+        candidates: data.candidates || [],
+      },
+    });
+  } catch (error) {
+    console.error('获取首板起爆候选股失败:', error);
+    res.status(500).json({ success: false, message: error.message || '获取失败' });
+  }
+});
+
+// 候选股实时快照（含最新价/涨幅/竞价/状态），供叮盘页列表首次加载补发；
+// 非交易日 / 盘前自动返回上一交易日收盘后的候选列表
+app.get('/first_board_wash_snapshot', async (req, res) => {
+  try {
+    res.json({ success: true, data: await firstBoardWashLive.getDisplayData() });
+  } catch (error) {
+    console.error('获取首板起爆快照失败:', error);
+    res.status(500).json({ success: false, message: error.message || '获取失败' });
+  }
+});
+
 // ===== 调试面板（MOCK）接口：仅在 debug 面板手动触发，直接推送 WS + 发送飞书，不做桶门控 =====
 app.post('/debug/mock_buy_point', async (req, res) => {
   try {
@@ -1631,6 +1702,34 @@ app.post('/debug/mock_sell_point', async (req, res) => {
   } catch (error) {
     console.error('MOCK 卖点失败:', error);
     res.json({ success: false, error: error.message || 'MOCK 卖点失败' });
+  }
+});
+
+// 首板起爆 MOCK：竞价买点 / 开盘（盘中 +8%）买点 / 卖点，走线上同一 WS + 飞书链路，不受时间窗与去重限制
+app.post('/debug/mock_first_board_wash_auction_buy', async (req, res) => {
+  try {
+    res.json(await debugMock.mockFirstBoardWashAuctionBuy());
+  } catch (error) {
+    console.error('MOCK 首板起爆竞价买点失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 首板起爆竞价买点失败' });
+  }
+});
+
+app.post('/debug/mock_first_board_wash_burst_buy', async (req, res) => {
+  try {
+    res.json(await debugMock.mockFirstBoardWashBurstBuy());
+  } catch (error) {
+    console.error('MOCK 首板起爆开盘买点失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 首板起爆开盘买点失败' });
+  }
+});
+
+app.post('/debug/mock_first_board_wash_sell', async (req, res) => {
+  try {
+    res.json(await debugMock.mockFirstBoardWashSell());
+  } catch (error) {
+    console.error('MOCK 首板起爆卖点失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 首板起爆卖点失败' });
   }
 });
 
@@ -2500,23 +2599,7 @@ app.post('/update_stock_position_weight', async (req, res) => {
   }
 });
 
-// 更新某笔持仓的顺逆周期标记（pro 顺周期 / reverse 逆周期；仅「情绪游资-极致胜率」/「攻防兼备」模式下的持仓管理列表展示）
-app.post('/update_stock_position_cycle', async (req, res) => {
-  try {
-    const { id, cycle } = req.body;
-    if (!id) {
-      return res.status(400).json({ success: false, message: '持仓 id 不能为空' });
-    }
-    const result = updateStockPositionCycle(id, cycle);
-    if (!result.success) {
-      return res.status(400).json({ success: false, message: result.message || '更新失败' });
-    }
-    res.json({ success: true, message: '顺逆周期标记已更新' });
-  } catch (error) {
-    console.error('更新持仓顺逆周期标记失败:', error);
-    res.status(500).json({ success: false, message: error.message || '更新失败' });
-  }
-});
+// 旧「顺/逆周期标记」接口已由统一卖点策略接口 /update_stock_position_sell_strategy 取代（2026-11-01 用户要求）
 
 app.get('/diff2_day_stock_tline', async (req, res) => {
   try {
@@ -5161,6 +5244,8 @@ const server = app.listen(port, () => {
   wsServer.attach(server, port);
   buyPointPushService.start();
   sellPointPushService.start();
+  // 首板洗盘-起爆拉升：交易日 09:00 候选弹窗 + 09:15-09:41 每 3s 轮询 + 09:25 竞价诊断（常驻，与策略模式无关）
+  firstBoardWashLive.start();
   // 回测持仓镜像同步：每天首次启动后台跑一次快进快出策略回测，期末未卖持仓自动写入持仓管理
   backtestPositionMirror.start();
   // 快进快出「资金净流入阈值动态调节」：监听持仓管理增删股票——每次操作后台重跑回测并重算
@@ -5182,6 +5267,7 @@ const shutdown = (signal) => {
   console.log(`收到 ${signal}，正在关闭 HTTP / WebSocket / 买点/卖点推送服务...`);
   try { buyPointPushService.stop(); } catch (e) { /* 忽略 */ }
   try { sellPointPushService.stop(); } catch (e) { /* 忽略 */ }
+  try { firstBoardWashLive.stop(); } catch (e) { /* 忽略 */ }
   try { wsServer.close(); } catch (e) { /* 忽略 */ }
   server.close(() => process.exit(0));
   // 兜底：3s 内未能正常关闭则强制退出

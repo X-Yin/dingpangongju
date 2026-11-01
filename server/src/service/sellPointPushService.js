@@ -15,9 +15,10 @@ const { getCurrentClosedBucket } = require('./buyPointBuckets');
 const strategyModeState = require('./strategyModeState');
 const wsServer = require('../wsServer');
 const { notifySellPointFeishu } = require('./sellPointNotifier');
-const { getStockPositions } = require('./stockPosition');
+const { getStockPositions, getPositionSellStrategy } = require('./stockPosition');
 const { checkSingleStockSellPoint } = require('./buySellDiagnose');
 const { checkExtremeWinSellPointDetailed, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } = require('./hotMoneyExtremeWin');
+const { checkFirstBoardWashSellPointDetailed } = require('./firstBoardWashSell');
 const { isTechWatchlistStock } = require('./monitorStock');
 
 const INTERVAL_MS = 10 * 1000;
@@ -79,9 +80,25 @@ const isInPushWindow = (date = new Date()) => {
   return true;
 };
 
+// 单笔持仓的卖点策略：优先用持仓显式设置的统一卖点策略（2026-11-01 用户要求），未设置时按全局策略模式回退
+//   tech_attack 科技进攻 | extreme_win_pro 极致胜率顺周期 | extreme_win_reverse 极致胜率逆周期 | first_board_wash 首板起爆
+const resolveSellStrategy = (stock, mode) => {
+  const explicit = getPositionSellStrategy(stock);
+  if (explicit) return explicit;
+  if (mode === MODE_EXTREME_WIN) {
+    return stock.cycle === 'reverse' ? 'extreme_win_reverse' : 'extreme_win_pro';
+  }
+  if (mode === MODE_ATTACK_DEFENSE) {
+    return isTechWatchlistStock(stock.code)
+      ? 'tech_attack'
+      : (stock.cycle === 'reverse' ? 'extreme_win_reverse' : 'extreme_win_pro');
+  }
+  return 'tech_attack';
+};
+
 // 单笔持仓卖点诊断：同一股票的不同仓位各自独立诊断（各自买入日期 / 成本线 / 仓位）
 //   口径与前端 diagnosePositionSellPoint 完全一致：买入当日不诊断、次日起生效
-const diagnosePosition = async (stock, todayStr, mode, ewEvalNow = true) => {
+const diagnosePosition = async (stock, todayStr, mode, minuteEvalNow = true) => {
   const base = {
     positionId: stock.id || stock.code,
     code: stock.code,
@@ -95,21 +112,25 @@ const diagnosePosition = async (stock, todayStr, mode, ewEvalNow = true) => {
     return { ...base, buyToday: true };
   }
   try {
-    // 攻防兼备模式：按持仓股是否属于自选股科技股范围分流——科技股走科技卖点诊断，其余（连板股）走龙头卖点诊断
-    const useExtremeWin = mode === MODE_EXTREME_WIN
-      || (mode === MODE_ATTACK_DEFENSE && !isTechWatchlistStock(stock.code));
-    if (!useExtremeWin) {
-      return { ...(await checkSingleStockSellPoint(stock.code, stock.costPrice)), ...base };
-    }
-    // 情绪游资-极致胜率卖点诊断按 1min 整数分钟执行：非整数分钟直接复用本分钟首次诊断结果
+    const strategy = resolveSellStrategy(stock, mode);
+    // 科技进攻的科技卖点按 10s 逐轮诊断；情绪游资-极致胜率与首板起爆均按 **1 分钟整数分钟** 诊断（2026-11-01 用户要求），
+    //   非整数分钟直接复用本分钟首次诊断结果
+    const minuteBased = strategy !== 'tech_attack';
     const cacheKey = String(base.positionId);
-    if (!ewEvalNow && ewSellCache.has(cacheKey)) return ewSellCache.get(cacheKey);
-    const res = await checkExtremeWinSellPointDetailed(stock.code, stock.costPrice, stock.buyDate || null, {
-      // ⑪⑫仅顺周期持仓启用：持仓标记 reverse（逆周期）时关闭；未标记按顺周期处理
-      enableOpenGapReboundSell: (mode === MODE_EXTREME_WIN || mode === MODE_ATTACK_DEFENSE) && stock.cycle !== 'reverse',
-    });
-    const merged = { ...res, ...base };
-    if (ewEvalNow) ewSellCache.set(cacheKey, merged);
+    if (minuteBased && !minuteEvalNow && ewSellCache.has(cacheKey)) return ewSellCache.get(cacheKey);
+    let res;
+    if (strategy === 'first_board_wash') {
+      res = await checkFirstBoardWashSellPointDetailed(stock.code, stock.costPrice, stock.buyDate || null);
+    } else if (strategy === 'extreme_win_pro' || strategy === 'extreme_win_reverse') {
+      res = await checkExtremeWinSellPointDetailed(stock.code, stock.costPrice, stock.buyDate || null, {
+        // ⑪⑫仅顺周期持仓启用：逆周期时关闭
+        enableOpenGapReboundSell: strategy !== 'extreme_win_reverse',
+      });
+    } else {
+      res = await checkSingleStockSellPoint(stock.code, stock.costPrice);
+    }
+    const merged = { ...res, ...base, sellStrategy: strategy, minuteBased };
+    if (minuteBased && minuteEvalNow) ewSellCache.set(cacheKey, merged);
     return merged;
   } catch (e) {
     return { ...base, error: '诊断失败' };
@@ -129,7 +150,8 @@ const tick = async () => {
     const positions = getStockPositions() || [];
     if (positions.length === 0) return;
 
-    // 情绪游资-极致胜率：卖点诊断只在 1 分钟整数分钟（9:30 / 9:31 / 9:32 …）执行一次，其余 10s tick 复用本分钟结果
+    // 分钟级策略（情绪游资-极致胜率 / 首板起爆）：卖点诊断只在 1 分钟整数分钟（9:30 / 9:31 / 9:32 …）执行一次，
+    //   其余 10s tick 复用本分钟结果；科技进攻仍按 10s 逐轮诊断
     const minuteKey = now.getHours() * 100 + now.getMinutes();
     if (ewSellEvalDate !== todayNum) {
       ewSellEvalDate = todayNum;
@@ -141,9 +163,8 @@ const tick = async () => {
       ewSellEvalMinute = minuteKey;
       ewSellCache.clear();
     }
-    const ewEvalForPositions = mode === MODE_EXTREME_WIN ? ewEvalNow : true;
 
-    const results = await Promise.all(positions.map((stock) => diagnosePosition(stock, todayStr, mode, ewEvalForPositions)));
+    const results = await Promise.all(positions.map((stock) => diagnosePosition(stock, todayStr, mode, ewEvalNow)));
     const hitResults = results.filter((r) => r.isSell === true);
     const bucket = getCurrentClosedBucket(now);
     const data = { results, hitCount: hitResults.length, total: results.length };
@@ -153,42 +174,48 @@ const tick = async () => {
 
     if (hitResults.length === 0) return;
 
-    // 2) 情绪游资-极致胜率：卖点诊断在 1 分钟整数分钟执行，命中即通知（不等 5 分钟桶）；
-    //    同一持仓同一分钟最多通知一次，跨分钟重新判定
-    if (mode === MODE_EXTREME_WIN) {
-      if (!ewEvalNow) return; // 非 1min 整数分钟：不通知（本次结果为复用的上一分钟诊断）
-      if (ewNotifiedDate !== todayNum) {
-        ewNotifiedMinute.clear();
-        ewNotifiedDate = todayNum;
+    let notified = false;
+
+    // 2) 分钟级策略（情绪游资-极致胜率 / 首板起爆）：1 分钟整数分钟命中即通知（不等 5 分钟桶）；
+    //    同一持仓同一分钟最多通知一次，跨分钟重新判定（2026-11-01：首板起爆卖点用 1min 时间桶）
+    const minuteHits = hitResults.filter((r) => r.minuteBased);
+    if (minuteHits.length > 0) {
+      // 非 1min 整数分钟：本次结果为复用的上一分钟诊断，已在该分钟首次通知，不再重复通知
+      if (ewEvalNow) {
+        if (ewNotifiedDate !== todayNum) {
+          ewNotifiedMinute.clear();
+          ewNotifiedDate = todayNum;
+        }
+        const hitKeyOf = (r) => String(r.positionId || r.code || '');
+        const freshHits = minuteHits.filter((r) => ewNotifiedMinute.get(hitKeyOf(r)) !== minuteKey);
+        if (freshHits.length > 0) {
+          freshHits.forEach((r) => ewNotifiedMinute.set(hitKeyOf(r), minuteKey));
+          notified = true;
+          try {
+            await notifySellPointFeishu({ hitResults: freshHits });
+          } catch (e) {
+            console.error('卖点飞书发送失败:', e.message);
+          }
+        }
       }
-      const hitKeyOf = (r) => String(r.positionId || r.code || '');
-      const freshHits = hitResults.filter((r) => ewNotifiedMinute.get(hitKeyOf(r)) !== minuteKey);
-      if (freshHits.length === 0) return;
-      freshHits.forEach((r) => ewNotifiedMinute.set(hitKeyOf(r), minuteKey));
-      const notifyMinuteObj = {};
-      ewNotifiedMinute.forEach((v, k) => { notifyMinuteObj[k] = v; });
-      writeState({ date: todayNum, bucket: lastNotifiedBucket, mode, ewNotifiedMinute: notifyMinuteObj });
+    }
+
+    // 3) 其余策略（科技进攻）：命中且进入新的合法桶时通知（每桶最多一次）
+    const otherHits = hitResults.filter((r) => !r.minuteBased);
+    if (otherHits.length > 0 && bucket != null && lastNotifiedBucket !== bucket) {
+      lastNotifiedBucket = bucket;
+      notified = true;
       try {
-        await notifySellPointFeishu({ hitResults: freshHits });
+        await notifySellPointFeishu({ hitResults: otherHits });
       } catch (e) {
         console.error('卖点飞书发送失败:', e.message);
       }
-      wsServer.broadcast({ type: 'sell_point', mode, bucket, ts: Date.now(), data, open: true });
-      return;
     }
 
-    // 3) 其余模式：命中且进入新的合法桶时，发飞书 + 额外广播 open:true（每桶最多一次）
-    if (bucket == null) return;
-    if (lastNotifiedBucket === bucket) return;
-
-    lastNotifiedBucket = bucket;
-    writeState({ date: todayNum, bucket, mode });
-
-    try {
-      await notifySellPointFeishu({ hitResults });
-    } catch (e) {
-      console.error('卖点飞书发送失败:', e.message);
-    }
+    if (!notified) return;
+    const notifyMinuteObj = {};
+    ewNotifiedMinute.forEach((v, k) => { notifyMinuteObj[k] = v; });
+    writeState({ date: todayNum, bucket: lastNotifiedBucket, mode, ewNotifiedMinute: notifyMinuteObj });
     wsServer.broadcast({ type: 'sell_point', mode, bucket, ts: Date.now(), data, open: true });
   } catch (e) {
     console.error('卖点诊断推送任务异常:', e.message);

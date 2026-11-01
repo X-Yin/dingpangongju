@@ -1030,4 +1030,20 @@ const buildBuyChecks = (pos) => {
   return checks;
 };
 
-module.exports = { runFirstBoardWashBacktest };
+// 线上服务（service/firstBoardWashLive.js）复用同一份前置洗盘判定 / 买点常量，保证线上与回测口径一致
+module.exports = {
+  runFirstBoardWashBacktest,
+  isPotentialBullWashout,
+  isThemeExcluded,
+  maxThreeDayWindowGain,
+  WASHOUT_OPT,
+  WASHOUT_LOOKBACK_DAYS,
+  BUY_TRIGGER_PCT,
+  BUY_OPEN_GAP_AUCTION_PCT,
+  BUY_START_MINUTE,
+  BUY_CUTOFF_MINUTE,
+  MAX_INTRADAY_PULLBACKS,
+  MAX_FLOAT_MV_YI,
+  MAX_WIN3_GAIN_PCT,
+  WIN3_LOOKBACK_DAYS,
+};

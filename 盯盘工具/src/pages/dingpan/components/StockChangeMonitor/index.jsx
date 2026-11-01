@@ -6,6 +6,8 @@ import { titleStyle, borderStyle, numberStyle } from '../../utils/themeColor';
 import './index.scss';
 
 const { Text } = Typography;
+// 分组标题与统计文字跟随主题包标题色
+const TITLE_COLOR = 'var(--dp-title-color, #12213a)';
 
 const StockChangeMonitor = ({
     stockViewMode,
@@ -268,8 +270,8 @@ const StockChangeMonitor = ({
                                 paddingBottom: 4,
                                 borderBottom: '1px solid rgba(60, 60, 67, 0.1)'
                             }}>
-                                <span style={{ fontSize: 13, fontWeight: 600 }}>大于等于开盘价</span>
-                                <span style={{ fontSize: 12 }}>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: TITLE_COLOR }}>大于等于开盘价</span>
+                                <span style={{ fontSize: 12, color: TITLE_COLOR }}>
                                     {fullStockData.aboveOpeningList.length} 只 · 涨 {fullStockData.aboveOpeningList.filter(s => s.changeValue > 0).length} / 跌 {fullStockData.aboveOpeningList.filter(s => s.changeValue < 0).length}
                                 </span>
                             </div>
@@ -289,8 +291,8 @@ const StockChangeMonitor = ({
                                 paddingBottom: 4,
                                 borderBottom: '1px solid rgba(60, 60, 67, 0.1)'
                             }}>
-                                <span style={{ fontSize: 13, fontWeight: 600 }}>小于开盘价</span>
-                                <span style={{ fontSize: 12 }}>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: TITLE_COLOR }}>小于开盘价</span>
+                                <span style={{ fontSize: 12, color: TITLE_COLOR }}>
                                     {fullStockData.belowOpeningList.length} 只 · 涨 {fullStockData.belowOpeningList.filter(s => s.changeValue > 0).length} / 跌 {fullStockData.belowOpeningList.filter(s => s.changeValue < 0).length}
                                 </span>
                             </div>

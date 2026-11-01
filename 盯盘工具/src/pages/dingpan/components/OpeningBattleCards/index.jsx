@@ -39,7 +39,7 @@ const OpeningBattleCards = ({
                     <div key={blockName} className="jingjia-block-item">
                         <div className="jingjia-block-header">
                             <Tag color={tagColor} style={{ fontSize: '11px', fontWeight: 600 }}>{blockName}</Tag>
-                            <span style={{ fontSize: '11px' }}>{grouped[blockName].length}只</span>
+                            <span style={{ fontSize: '11px', color: 'var(--dp-title-color, #12213a)' }}>{grouped[blockName].length}只</span>
                         </div>
                         <div className="jingjia-grid">
                             {grouped[blockName].map((item, idx) => {
@@ -50,8 +50,8 @@ const OpeningBattleCards = ({
                                         onClick={() => onStockClick({ name: item.stockName, code: item.code, change: item.change })}
                                         style={{ cursor: 'pointer', ...borderStyle(themeColor) }}
                                     >
-                                        <Text strong style={{ fontSize: '13px', color: '#12213a', ...titleStyle(themeColor) }}>{item.stockName}</Text>
-                                        <Text strong style={{ fontSize: '13px', color: item.change > 0 ? '#e11d48' : item.change < 0 ? '#059669' : '#12213a', ...numberStyle(themeColor) }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
+                                        <Text strong style={{ fontSize: '13px', color: 'var(--dp-title-color, #12213a)', ...titleStyle(themeColor) }}>{item.stockName}</Text>
+                                        <Text strong style={{ fontSize: '13px', color: item.change > 0 ? '#e11d48' : item.change < 0 ? '#059669' : 'var(--dp-title-color, #12213a)', ...numberStyle(themeColor) }}>{item.change > 0 ? '+' : ''}{item.change?.toFixed(2)}%</Text>
                                     </div>
                                 );
                             })}

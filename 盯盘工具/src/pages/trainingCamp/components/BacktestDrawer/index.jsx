@@ -2429,7 +2429,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
               {/* 实时日志：等宽字体终端风格 */}
               <div style={{ marginTop: 10, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', fontSize: 12, color: '#93a7e8', display: 'flex', alignItems: 'baseline', gap: 6, position: 'relative' }}>
                 <span style={{ color: '#40a9ff' }}>›</span>
-                <span style={{ wordBreak: 'break-all' }}>{workerLog || '正在启动 worker 进程…'}</span>
+                <span style={{ wordBreak: 'break-all' }}>{(workerLog + '').length > 100 ? workerLog.slice(0, 100) + '...' : workerLog || '正在启动 worker 进程…'}</span>
               </div>
 
               {/* 底部不定进度条：流光往复，暗示后台持续运转 */}

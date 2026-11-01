@@ -2161,5 +2161,12 @@
     "marketValue": 5752117871,
     "circulatingMarketValue": 5752117871,
     "updatedAt": "2026-11-01 13:41:02"
+  },
+  {
+    "code": "sz002607",
+    "name": "中公教育",
+    "marketValue": 9929513016,
+    "circulatingMarketValue": 9209370025,
+    "updatedAt": "2026-11-01 15:04:42"
   }
 ]

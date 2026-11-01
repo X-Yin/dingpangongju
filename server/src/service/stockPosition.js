@@ -88,6 +88,13 @@ const POSITION_WEIGHT_OPTIONS = [25, 50, 75, 100];
 // 顺逆周期标记（仅「情绪游资-极致胜率」/「攻防兼备」模式下前端展示、后端卖点使用）：
 //   pro = 顺周期；reverse = 逆周期；未标记（缺省）按顺周期处理
 const POSITION_CYCLE_OPTIONS = ['pro', 'reverse'];
+// 统一卖点策略（2026-11-01 用户要求）：每笔持仓显式指定用哪一套卖点诊断口径，取代原顺/逆周期下拉框
+//   tech_attack          科技进攻（科技卖点诊断）
+//   extreme_win_pro      情绪游资极致胜率-顺周期（含⑪⑫竞价大幅低开后冲高回落 / 开盘自救）
+//   extreme_win_reverse  情绪游资极致胜率-逆周期（关闭⑪⑫）
+//   first_board_wash     首板起爆（首板洗盘-起爆拉升五条卖点，1min 时间桶）
+//   未设置时按当前全局策略模式回退（保持旧行为）
+const POSITION_SELL_STRATEGY_OPTIONS = ['tech_attack', 'extreme_win_pro', 'extreme_win_reverse', 'first_board_wash'];
 
 // 读取资金流向全部数据
 const readFundFlowData = () => readJsonFile(stock_position_fund_flow_path, {});
@@ -752,25 +759,40 @@ const updateStockPositionWeight = (id, weight) => {
     }
 };
 
-// 更新某笔持仓的顺逆周期标记（pro 顺周期 / reverse 逆周期；传 null 或空串清除标记）
-const updateStockPositionCycle = (id, cycle) => {
+// 更新某笔持仓的统一卖点策略（tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash；
+//   传 null 或空串清除标记，清除后回退到当前全局策略模式）
+//   同时同步旧的 cycle 字段，保证仍有 cycle 口径的旧逻辑/回测镜像保持一致
+const updateStockPositionSellStrategy = (id, sellStrategy) => {
     try {
         const stock_positions = readStockPositionsFile();
         const target = stock_positions.find((item) => item.id === id);
         if (!target) return { success: false, message: '未找到该持仓' };
-        if (cycle == null || cycle === '') {
+        if (sellStrategy == null || sellStrategy === '') {
+            delete target.sellStrategy;
             delete target.cycle;
-        } else if (!POSITION_CYCLE_OPTIONS.includes(cycle)) {
-            return { success: false, message: '标记只能是 pro（顺周期）或 reverse（逆周期）' };
+        } else if (!POSITION_SELL_STRATEGY_OPTIONS.includes(sellStrategy)) {
+            return { success: false, message: '卖点策略只能是 tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash' };
         } else {
-            target.cycle = cycle;
+            target.sellStrategy = sellStrategy;
+            if (sellStrategy === 'extreme_win_reverse') {
+                target.cycle = 'reverse';
+            } else {
+                delete target.cycle;
+            }
         }
         writeJsonFile(stock_position_path, stock_positions);
         return { success: true };
     } catch (error) {
-        console.error('更新持仓顺逆周期标记失败:', error);
+        console.error('更新持仓卖点策略失败:', error);
         return { success: false, message: '更新失败' };
     }
+};
+
+// 读取持仓显式设置的统一卖点策略；未设置返回 null（由调用方按全局策略模式回退）
+const getPositionSellStrategy = (item) => {
+    if (item && POSITION_SELL_STRATEGY_OPTIONS.includes(item.sellStrategy)) return item.sellStrategy;
+    if (item && item.cycle === 'reverse') return 'extreme_win_reverse';
+    return null;
 };
 
 const getStockPositionMainFund = async () => {
@@ -791,6 +813,8 @@ const getStockPositionMainFund = async () => {
                 weight: item.weight != null ? item.weight : 50,
                 // 顺逆周期标记：pro 顺周期 / reverse 逆周期，未标记按顺周期（前端持仓管理展示、卖点诊断⑪⑫启用依据）
                 cycle: item.cycle === 'reverse' ? 'reverse' : 'pro',
+                // 统一卖点策略：未设置返回 null（前端下拉框显示「跟随模式」，后端按全局策略模式回退）
+                sellStrategy: getPositionSellStrategy(item),
                 // 镜像持仓标记：存在 mirror 说明为回测镜像同步自动添加，供前端以灰色标题区分手动添加
                 mirror: item.mirror || null,
                 mainFund: round(toNumber(mainFundDiff) / 100000000),
@@ -806,6 +830,7 @@ const getStockPositionMainFund = async () => {
                 buyTime: item.buyTime || null,
                 weight: item.weight != null ? item.weight : 50,
                 cycle: item.cycle === 'reverse' ? 'reverse' : 'pro',
+                sellStrategy: getPositionSellStrategy(item),
                 mirror: item.mirror || null,
                 mainFund: null,
             });
@@ -1051,7 +1076,9 @@ module.exports = {
     onPositionChange,
     updateStockPositionCost,
     updateStockPositionWeight,
-    updateStockPositionCycle,
+    updateStockPositionSellStrategy,
+    getPositionSellStrategy,
+    POSITION_SELL_STRATEGY_OPTIONS,
     getStockPositionMainFund,
     getWatchlistMainFund,
     getStockPositionAnalysisData,

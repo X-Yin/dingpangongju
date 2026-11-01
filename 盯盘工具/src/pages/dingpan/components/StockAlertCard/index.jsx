@@ -4,6 +4,8 @@ import { titleStyle, borderStyle, numberStyle } from '../../utils/themeColor';
 import './index.scss';
 
 const { Text } = Typography;
+// 默认黑色文字统一跟随主题包标题色
+const TITLE_COLOR = 'var(--dp-title-color, #12213a)';
 
 const StockAlertCard = ({ stockUpAlerts, stockDownAlerts, waveList, onStockClick, bodyHeight = '200px', itemsPerRow = 1, themeColor }) => {
     const gridCols = itemsPerRow === 2 ? '1fr 1fr' : '1fr';
@@ -47,9 +49,9 @@ const StockAlertCard = ({ stockUpAlerts, stockDownAlerts, waveList, onStockClick
             extra={
                 <div className="all-stock-card-extra">
                     <span className="all-stock-extra-dot" style={{ boxShadow: '0 0 10px rgba(245, 34, 45, 0.8)' }} />
-                    <Text>涨 {stockUpAlerts.length}</Text>
+                    <Text style={{ color: TITLE_COLOR }}>涨 {stockUpAlerts.length}</Text>
                     <Text style={{ color: 'rgba(71, 85, 105, 0.5)', margin: '0 2px' }}>/</Text>
-                    <Text>跌 {stockDownAlerts.length}</Text>
+                    <Text style={{ color: TITLE_COLOR }}>跌 {stockDownAlerts.length}</Text>
                 </div>
             }
         >
@@ -57,7 +59,7 @@ const StockAlertCard = ({ stockUpAlerts, stockDownAlerts, waveList, onStockClick
                 <Row gutter={[8, 8]}>
                     <Col span={12}>
                         <div style={{ marginBottom: 6 }}>
-                            <Text strong style={{ fontSize: '11px' }}>上涨</Text>
+                            <Text strong style={{ fontSize: '11px', color: TITLE_COLOR }}>上涨</Text>
                         </div>
                         {stockUpAlerts.length > 0 ? (
                             <div className="alert-items-grid" style={{ gridTemplateColumns: gridCols }}>
@@ -69,7 +71,7 @@ const StockAlertCard = ({ stockUpAlerts, stockDownAlerts, waveList, onStockClick
                     </Col>
                     <Col span={12}>
                         <div style={{ marginBottom: 6 }}>
-                            <Text strong style={{ fontSize: '11px' }}>下跌</Text>
+                            <Text strong style={{ fontSize: '11px', color: TITLE_COLOR }}>下跌</Text>
                         </div>
                         {stockDownAlerts.length > 0 ? (
                             <div className="alert-items-grid" style={{ gridTemplateColumns: gridCols }}>

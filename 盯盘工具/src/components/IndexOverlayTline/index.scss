@@ -99,7 +99,7 @@
     .iot-tags-title {
         font-size: 12px;
         font-weight: 600;
-        color: rgba(71, 85, 105, 0.72);
+        color: var(--dp-title-color, #12213a);
         white-space: nowrap;
     }
 
