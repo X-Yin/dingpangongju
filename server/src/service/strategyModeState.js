@@ -2,6 +2,7 @@
 //   tech_attack           = 科技进攻（默认）
 //   hot_money_extreme_win = 情绪游资-极致胜率
 //   attack_defense        = 攻防兼备（双策略同时诊断：科技进攻 + 情绪游资-极致胜率）
+//   wash_fusion_extreme_odds = 情绪游资-极致赔率（首板起爆 + 二板起爆融合，3s 买点 / 1min 卖点）
 // 前端在切换模式时通过 POST /set_strategy_mode 同步给后端；持久化到 strategy_mode.json，
 // 使后端即使浏览器未打开也能按当前模式诊断并发飞书。
 const fs = require('fs');
@@ -9,11 +10,13 @@ const path = require('path');
 const { MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } = require('./hotMoneyExtremeWin');
 
 const MODE_TECH_ATTACK = 'tech_attack';
+const MODE_WASH_FUSION = 'wash_fusion_extreme_odds';
 const statePath = path.resolve(__dirname, '../data/strategy_mode.json');
 
 const normalize = (value) => {
   if (value === MODE_EXTREME_WIN) return MODE_EXTREME_WIN;
   if (value === MODE_ATTACK_DEFENSE) return MODE_ATTACK_DEFENSE;
+  if (value === MODE_WASH_FUSION) return MODE_WASH_FUSION;
   return MODE_TECH_ATTACK;
 };
 
@@ -42,4 +45,4 @@ const setMode = (mode) => {
   return next;
 };
 
-module.exports = { MODE_TECH_ATTACK, getMode, setMode, normalize };
+module.exports = { MODE_TECH_ATTACK, MODE_WASH_FUSION, getMode, setMode, normalize };

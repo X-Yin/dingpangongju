@@ -22,6 +22,7 @@ const SELL_STRATEGY_OPTIONS = [
   { value: 'extreme_win_pro', label: '极致胜率顺周期' },
   { value: 'extreme_win_reverse', label: '极致胜率逆周期' },
   { value: 'first_board_wash', label: '首板起爆' },
+  { value: 'second_board_wash', label: '二板起爆' },
 ];
 const SELL_STRATEGY_LABELS = Object.fromEntries(SELL_STRATEGY_OPTIONS.map((o) => [o.value, o.label]));
 

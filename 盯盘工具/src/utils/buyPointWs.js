@@ -11,7 +11,7 @@ import { local_ip } from '../constant';
 const WS_URL = `ws://${local_ip}:3000/ws`;
 const RECONNECT_BASE_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
-const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'first_board_wash_candidates', 'first_board_wash_buy'];
+const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy'];
 
 let socket = null;
 let reconnectTimer = null;
@@ -150,16 +150,15 @@ export const subscribeIceDelayWaitPush = (handler) => subscribePush('ice_delay_w
 // 前端据此实时更新资金净流入阈值文案；页面刷新时的初始值走 HTTP /emo_quick_fund_gate（见 useFundGate）
 export const subscribeFundGatePush = (handler) => subscribePush('fund_gate', handler);
 
-// 首板洗盘-起爆拉升（线上常驻功能，2026-11-01 用户新增）：
-//   候选股列表 { type:'first_board_wash_candidates', open, ts, data:{ date, updatedAt, count, candidates, rules } }
-//     - 09:00 整理完成后 open:true → 前端弹窗展示当日候选股
-//     - 09:15-09:41 每 3s 轮询 open:false → 仅刷新列表（不重复弹窗）
-//   买点触达 { type:'first_board_wash_buy', open:true, ts, data:{ date, stocks:[...], checks, positionHint, remind, rules } }
-//     - 09:25-09:30 竞价涨幅 ≥ 5% 的候选每 30s 提前提醒一次（9:30 按竞价价直接买入）
-//     - 09:30-9:40 盘中分时涨幅首次 +8% 的候选弹出一次
-//     - 前端由 GlobalDiagnosisAlert 用统一买点诊断卡片展示（与科技进攻同一张卡片），飞书由后端发送
-export const subscribeFirstBoardWashCandidatesPush = (handler) => subscribePush('first_board_wash_candidates', handler);
-export const subscribeFirstBoardWashBuyPush = (handler) => subscribePush('first_board_wash_buy', handler);
+// 情绪游资-极致赔率（2026-11-01 用户新增）：
+//   候选股列表 { type:'wash_fusion_candidates', open, ts, data:{ date, updatedAt, count, firstBoard, secondBoard, rules } }
+//     - 交易日 09:10 起整理完成后 open:true；09:15-15:00 每 3s 轮询 open:false → 仅刷新列表
+//   买点触达 { type:'wash_fusion_buy', open:true, ts, data:{ date, source, sourceLabel, stocks:[...], checks, positionHint, remind, rules } }
+//     - 首板起爆：09:25-9:30 竞价涨幅 ≥ 5% 的候选每 30s 提前提醒一次；09:30-9:40 盘中分时涨幅首次 +8% 弹出一次
+//     - 二板起爆：09:30-14:30 盘中分时涨幅首次 +8% 弹出一次（竞价必须高开）
+//     - 前端由 GlobalDiagnosisAlert 用统一买点诊断卡片展示，飞书由后端发送
+export const subscribeWashFusionCandidatesPush = (handler) => subscribePush('wash_fusion_candidates', handler);
+export const subscribeWashFusionBuyPush = (handler) => subscribePush('wash_fusion_buy', handler);
 
 // 订阅 debug 自检消息（debug_pong / debug_ping / debug_pong_ack）；返回取消订阅函数
 export const subscribeDebugWs = (handler) => {

@@ -2,6 +2,7 @@
 //   tech_attack           = 科技进攻（现状，默认）
 //   hot_money_extreme_win = 情绪游资-极致胜率（买卖点与回测页同名策略一致）
 //   attack_defense        = 攻防兼备（双策略同时诊断：科技进攻 + 情绪游资-极致胜率，对应回测融合策略）
+//   wash_fusion_extreme_odds = 情绪游资-极致赔率（首板起爆 + 二板起爆，买卖点与回测页同名策略一致）
 // 模式为全局共享 + localStorage 持久化：模块级变量 + CustomEvent 广播，不引入 Context/Provider。
 import { useEffect, useState } from 'react';
 import { syncStrategyMode } from './buyPointWs';
@@ -9,11 +10,13 @@ import { syncStrategyMode } from './buyPointWs';
 export const MODE_TECH_ATTACK = 'tech_attack';
 export const MODE_EXTREME_WIN = 'hot_money_extreme_win';
 export const MODE_ATTACK_DEFENSE = 'attack_defense';
+export const MODE_WASH_FUSION = 'wash_fusion_extreme_odds';
 
 export const STRATEGY_MODE_OPTIONS = [
   { value: MODE_TECH_ATTACK, label: '科技进攻' },
   { value: MODE_EXTREME_WIN, label: '情绪游资-极致胜率' },
   { value: MODE_ATTACK_DEFENSE, label: '攻防兼备' },
+  { value: MODE_WASH_FUSION, label: '情绪游资-极致赔率' },
 ];
 
 const STORAGE_KEY = 'ob_strategy_mode';
@@ -22,6 +25,7 @@ const EVENT_NAME = 'strategy-mode-change';
 const normalize = (value) => {
   if (value === MODE_EXTREME_WIN) return MODE_EXTREME_WIN;
   if (value === MODE_ATTACK_DEFENSE) return MODE_ATTACK_DEFENSE;
+  if (value === MODE_WASH_FUSION) return MODE_WASH_FUSION;
   return MODE_TECH_ATTACK;
 };
 

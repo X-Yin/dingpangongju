@@ -93,8 +93,9 @@ const POSITION_CYCLE_OPTIONS = ['pro', 'reverse'];
 //   extreme_win_pro      情绪游资极致胜率-顺周期（含⑪⑫竞价大幅低开后冲高回落 / 开盘自救）
 //   extreme_win_reverse  情绪游资极致胜率-逆周期（关闭⑪⑫）
 //   first_board_wash     首板起爆（首板洗盘-起爆拉升五条卖点，1min 时间桶）
+//   second_board_wash    二板起爆（放量洗盘-二板起爆七条卖点，1min 时间桶）
 //   未设置时按当前全局策略模式回退（保持旧行为）
-const POSITION_SELL_STRATEGY_OPTIONS = ['tech_attack', 'extreme_win_pro', 'extreme_win_reverse', 'first_board_wash'];
+const POSITION_SELL_STRATEGY_OPTIONS = ['tech_attack', 'extreme_win_pro', 'extreme_win_reverse', 'first_board_wash', 'second_board_wash'];
 
 // 读取资金流向全部数据
 const readFundFlowData = () => readJsonFile(stock_position_fund_flow_path, {});
@@ -759,7 +760,7 @@ const updateStockPositionWeight = (id, weight) => {
     }
 };
 
-// 更新某笔持仓的统一卖点策略（tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash；
+// 更新某笔持仓的统一卖点策略（tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash / second_board_wash；
 //   传 null 或空串清除标记，清除后回退到当前全局策略模式）
 //   同时同步旧的 cycle 字段，保证仍有 cycle 口径的旧逻辑/回测镜像保持一致
 const updateStockPositionSellStrategy = (id, sellStrategy) => {
@@ -771,7 +772,7 @@ const updateStockPositionSellStrategy = (id, sellStrategy) => {
             delete target.sellStrategy;
             delete target.cycle;
         } else if (!POSITION_SELL_STRATEGY_OPTIONS.includes(sellStrategy)) {
-            return { success: false, message: '卖点策略只能是 tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash' };
+            return { success: false, message: '卖点策略只能是 tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash / second_board_wash' };
         } else {
             target.sellStrategy = sellStrategy;
             if (sellStrategy === 'extreme_win_reverse') {

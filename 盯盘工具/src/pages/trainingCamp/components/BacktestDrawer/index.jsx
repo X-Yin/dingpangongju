@@ -1589,6 +1589,15 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
     label: STRATEGY_OPTIONS.find(o => o.value === id)?.label || id,
   })), [dailyIds]);
 
+  // 下拉策略排序：日常回测已选的策略优先排在最前面（按日常回测配置顺序），其余策略保持原顺序
+  const strategyOptionsOrdered = useMemo(() => {
+    if (dailyIds.length === 0) return STRATEGY_OPTIONS;
+    const daily = dailyIds.map(id => STRATEGY_OPTIONS.find(o => o.value === id)).filter(Boolean);
+    if (daily.length === 0) return STRATEGY_OPTIONS;
+    const dailySet = new Set(daily.map(o => o.value));
+    return [...daily, ...STRATEGY_OPTIONS.filter(o => !dailySet.has(o.value))];
+  }, [dailyIds]);
+
   const availableDates = useMemo(() => (Array.isArray(dates) ? dates : []), [dates]);
   const maxDateStr = availableDates.length > 0 ? availableDates[0] : dayjs().format('YYYYMMDD');
   const curIsIce = isIceStrategy(strategy);
@@ -2351,7 +2360,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
             }}
             placeholder="输入策略名搜索"
             style={{ flex: 1, minWidth: 240, maxWidth: 360 }}
-            options={STRATEGY_OPTIONS}
+            options={strategyOptionsOrdered}
           />
           <style>{`
             .bt-action-group { display:inline-flex; align-items:center; border:1px solid #e9ecf1; border-radius:10px; background:#fff; box-shadow:0 1px 2px rgba(16,24,40,.04); overflow:hidden; }

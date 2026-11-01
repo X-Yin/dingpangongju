@@ -61,7 +61,7 @@ const { TWO_BUY_LEG_WEIGHT, computeTwoBuyAccountReturn } = require('./twoBuy');
 // ============================================================
 
 const BUY_TRIGGER_PCT = 8;         // 竞价未到 5% 时：分时涨幅达到 +8% 即买入（2026-11-01 用户要求，由 9% 改为 8%）
-const MAX_FLOAT_MV_YI = 100;       // 流通市值（按买入日股价折算）须 ≤ 100 亿元（线上口径，firstBoardWashLive 使用）
+const MAX_FLOAT_MV_YI = 100;       // 流通市值（按买入日股价折算）须 ≤ 100 亿元（线上口径，washFusionLive 使用）
 const MAX_TOTAL_MV_YI = 100;       // 回测口径：总市值（按买入日股价折算）须 ≤ 100 亿元（2026-11-01 用户要求，替代流通市值）
 const MAX_WIN3_GAIN_PCT = 20;      // 买点日前 20 个交易日内最大三日滑动窗口涨幅 ≤ 20%（2026-11-01 用户要求）
 const WIN3_LOOKBACK_DAYS = 20;     // 三日滑动窗口涨幅的回溯交易日数
@@ -78,11 +78,11 @@ const MAX_POSITIONS = 2;           // 账户拆两份、每份半仓（权重 0.
 //   本策略在买点日盘中买入、无法预知当日能否封板，故不在选股阶段校验（避免未来函数），
 //   改由买入后的「买入当日未涨停 → 次日收盘直接卖出」规则做同等验证（2026-11-01 用户选择）
 const WASHOUT_LOOKBACK_DAYS = 20;
-// 回测口径的峰值倍数（2026-11-01 用户要求：回测改为 ≥ 3 倍；线上 firstBoardWashLive 仍用 WASHOUT_OPT.volMult=2）
+// 峰值倍数（2026-11-01 用户要求：回测与线上统一 ≥ 3 倍，线上 washFusionLive 传 BACKTEST_VOL_MULT）
 const BACKTEST_VOL_MULT = 3.0;
 const WASHOUT_OPT = {
   limitPct: 9.5,             // 涨停阈值（主板）
-  volMult: 2.0,              // 峰值成交量 ≥ 首板日前 20 日均量的倍数（线上口径，回测见 BACKTEST_VOL_MULT）
+  volMult: 2.0,              // 峰值成交量 ≥ 首板日前 20 日均量的倍数默认值（回测/线上均显式传 BACKTEST_VOL_MULT）
   minHistory: 3,             // 计算均量所需的最少历史交易日
   maxBaseToPeak: 2,          // 首板日（含）之后最多几个交易日寻找放量峰值
   minWashDays: 5,            // 洗盘至少 5 个交易日
@@ -1013,7 +1013,7 @@ const buildBuyChecks = (pos) => {
   return checks;
 };
 
-// 线上服务（service/firstBoardWashLive.js）复用同一份前置洗盘判定 / 买点常量，保证线上与回测口径一致
+// 线上服务（service/washFusionLive.js）复用同一份前置洗盘判定 / 买点常量，保证线上与回测口径一致
 module.exports = {
   runFirstBoardWashBacktest,
   isPotentialBullWashout,

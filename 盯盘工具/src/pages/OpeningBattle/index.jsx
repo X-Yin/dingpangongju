@@ -12,8 +12,8 @@ import { local_ip } from '../../constant';
 import { parseMoneyValue, formatDisplayTime, aggregateFundByInterval } from '../../utils/fundAggregation';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import StockKLineModal from '../../components/StockKLineModal';
-import { useStrategyMode, setStrategyMode, STRATEGY_MODE_OPTIONS, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } from '../../utils/strategyMode';
-import { subscribeBuyPointPush, subscribeSellPointPush } from '../../utils/buyPointWs';
+import { useStrategyMode, setStrategyMode, STRATEGY_MODE_OPTIONS, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION } from '../../utils/strategyMode';
+import { subscribeBuyPointPush, subscribeSellPointPush, subscribeWashFusionCandidatesPush, subscribeWashFusionBuyPush } from '../../utils/buyPointWs';
 import './index.scss';
 
 // 首屏「旧数据秒开」：各诊断模块把最近一次结果写入 localStorage，页面重新挂载时先用缓存渲染，
@@ -860,6 +860,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isDefense = mode === MODE_ATTACK_DEFENSE;
+  const isWashFusion = mode === MODE_WASH_FUSION;
   const rankCacheKey = `ob_rank3_cache_${mode}`;
   const cachedRank = useMemo(() => readTodayLocalCache(rankCacheKey), [rankCacheKey]);
   // 记录当前 data 对应的策略模式，避免切换模式时把旧模式数据写进新模式缓存
@@ -874,6 +875,9 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   const [refreshing, setRefreshing] = useState(false);
   // 只看符合条件：开启后仅展示完全符合条件的个股（后端 qualifiedTop，按 3 日涨幅降序），默认关闭
   const [onlyQualified, setOnlyQualified] = useState(false);
+  // 情绪游资-极致赔率：双候选池（首板起爆 / 二板起爆），首屏用当日缓存，后端 3s WS 推送实时刷新
+  const [wfData, setWfData] = useState(() => readTodayLocalCache('ob_wash_fusion_cache') || null);
+  const [wfRefreshing, setWfRefreshing] = useState(false);
   const cybPassed = data?.cybGate?.passed === true;
   const starPassed = data?.starGate?.passed === true;
 
@@ -882,6 +886,8 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   //   hot_money_extreme_win  → /hot_money_leader_list（除 delta≥30 与上证斜率>0 外全部买点条件满足）
   //   attack_defense         → 两个接口同时拉（科技进攻 + 情绪游资双策略并示）
   const fetchStocks = useCallback(async (force = false) => {
+    // 情绪游资-极致赔率：候选池来自 wash_fusion 专属接口与 WS，不拉涨幅榜/龙头列表
+    if (isWashFusion) return;
     // force=true：手动刷新按钮传入，后端强制重算，绕过缓存直接拿最新数据
     const refreshFlag = force ? 1 : 0;
     // 攻防兼备需要同时拉两份数据，改为并行请求（原先串行等待两个接口，首屏耗时翻倍）
@@ -907,12 +913,44 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
       );
     }
     await Promise.all(tasks);
-  }, [mode, isExtreme, isDefense]);
+  }, [mode, isExtreme, isDefense, isWashFusion]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try { await fetchStocks(true); } finally { setRefreshing(false); }
   }, [fetchStocks]);
+
+  // 情绪游资-极致赔率：首次加载 / 手动刷新拉快照（含实时价/竞价/状态），之后由 WS 每 3s 覆盖
+  const fetchWashFusion = useCallback(async (force = false) => {
+    try {
+      const res = await axios.get(`http://${local_ip}:3000/wash_fusion_extreme_odds_snapshot`, {
+        params: force ? { refresh: 1 } : {},
+      });
+      const d = res.data?.data;
+      if (d) {
+        setWfData(d);
+        writeLocalCache('ob_wash_fusion_cache', d);
+      }
+    } catch (err) {
+      console.error('获取情绪游资-极致赔率候选池失败:', err);
+    }
+  }, []);
+
+  const handleWfRefresh = useCallback(async () => {
+    setWfRefreshing(true);
+    try { await fetchWashFusion(true); } finally { setWfRefreshing(false); }
+  }, [fetchWashFusion]);
+
+  useEffect(() => {
+    if (!isWashFusion) return undefined;
+    fetchWashFusion();
+    const unsub = subscribeWashFusionCandidatesPush((msg) => {
+      if (!msg?.data) return;
+      setWfData(msg.data);
+      writeLocalCache('ob_wash_fusion_cache', msg.data);
+    });
+    return unsub;
+  }, [isWashFusion, fetchWashFusion]);
 
   // 最近一次成功结果按「数据所属模式」写入 localStorage，供下次进入页面秒开
   useEffect(() => {
@@ -973,7 +1011,6 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
     return mergedList.find(s => s.isCandidate) || null;
   }, [mergedList, data]);
 
-  const rowCount = isExtreme ? leaderList.length : techList.length;
   const extremeGateNote = !leaderData
     ? '正在检测上证指数 3 日线斜率买点门槛…'
     : `上证指数 3 日线斜率 ${formatSlope(indexSlope)}（需 > 0）；龙头池共 ${leaderData.poolCount ?? 0} 只（过去 10 交易日连板准入：流通市值 > 100 亿元者出现过两连板 + 含该连板日 5 日累计涨幅 > 50%，其余四连板及以上，剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）`;
@@ -983,34 +1020,148 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
       ? '逆周期（反向抱团）数据获取失败，暂无法展示'
       : `当日上证跌幅 ${reverse.indexChange == null ? '--' : `${Number(reverse.indexChange).toFixed(2)}%`}（触发须 ≤ ${reverse.indexDropPct}%）；反向抱团池共 ${reverse.poolCount ?? 0} 只（过去 20 交易日连板 ≥ 2，剔除创业板/科创板/题材黑名单，近 20 日内滑动 10 日区间最大涨幅 ≥ 60%）`;
 
+  // ==================== 情绪游资-极致赔率：首板起爆 / 二板起爆 双列表 ====================
+  if (isWashFusion) {
+    const firstList = wfData?.firstBoard || [];
+    const secondList = wfData?.secondBoard || [];
+    const rules = wfData?.rules || {};
+    const pct = (v) => (v === null || v === undefined || !Number.isFinite(Number(v))
+      ? '--'
+      : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
+    const wfRow = (s, idx, keyPrefix) => (
+      <div className="ob-gainer-row ob-gainer-row-wf" key={`${keyPrefix}-${s.code}-${idx}`}>
+        <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
+        <span className="ob-gainer-name-cell">
+          <span
+            className="ob-stock-name ob-stock-name-clickable"
+            title="点击查看K线"
+            onClick={() => { setSelectedStock({ code: s.code, stockName: s.name, change: s.change }); setKlineVisible(true); }}
+          >{s.name}</span>
+          <span className="ob-gainer-market cyb">{s.board ? `${s.board} 板` : '--'}</span>
+          {s.status === 'auction_buy' || s.status === 'burst_buy'
+            ? <span className="ob-gainer-buyflag">买点触发</span>
+            : null}
+          {s.status === 'limit_open' && <span className="ob-gainer-limitup">涨停</span>}
+          {s.washout?.washDays != null && <span className="ob-gainer-reason">洗盘 {s.washout.washDays} 日</span>}
+        </span>
+        <span className={`ob-change-cell ${Number(s.change) >= 0 ? 'ob-up' : 'ob-down'}`}>
+          {pct(s.change)}
+        </span>
+        <span className={`ob-change-cell ${Number(s.auctionGap) >= 0 ? 'ob-up' : 'ob-down'}`}>
+          {pct(s.auctionGap)}
+        </span>
+        <span className="ob-gainer-resilience">
+          {s.totalMvYi != null ? `${Number(s.totalMvYi).toFixed(2)}亿` : '--'}
+        </span>
+        <span className="ob-wf-status-cell">
+          <span className={`ob-wf-status-tag ${s.status || ''}`}>{s.statusText || '--'}</span>
+        </span>
+      </div>
+    );
+
+    return (
+      <div className="ob-module ob-rank3-module">
+        <div className="ob-module-header">
+          <div className="ob-module-title" title="情绪游资-极致赔率 · 首板/二板候选池">
+            <CrownOutlined className="ob-module-icon" />
+            <span>情绪游资-极致赔率</span>
+          </div>
+          <div className="ob-module-actions">
+            <Select
+              size="small"
+              className="ob-mode-switch"
+              value={mode}
+              options={STRATEGY_MODE_OPTIONS}
+              onChange={setStrategyMode}
+              popupMatchSelectWidth={false}
+              style={{ fontSize: 12 }}
+              title="切换策略模式"
+              classNames={{ popup: { root: 'ob-mode-dropdown' } }}
+            />
+            <button className="ob-refresh-btn" onClick={handleWfRefresh} disabled={wfRefreshing} title="刷新候选池">
+              <ReloadOutlined spin={wfRefreshing} />
+            </button>
+          </div>
+        </div>
+        <div className={`ob-gainer-gate-note ${firstList.length + secondList.length > 0 ? 'both' : 'none'}`}>
+          {wfData
+            ? `基准日 ${wfData.basisDate || wfData.date || '--'}${wfData.isPreviousDay ? '（上一交易日收盘后候选）' : ` · 更新 ${wfData.updatedAt || '--'}`}；`
+              + `买点：竞价涨幅 ≥ ${rules.auctionBuyPct ?? 5}% 于 9:30 直接买入，否则盘中分时涨幅首次 ≥ ${rules.buyTriggerPct ?? 8}% 买入`
+              + `（首板 ${rules.firstBoardBuyWindow || '9:30-9:40'}、二板 ${rules.secondBoardBuyWindow || '9:30-14:30'}，竞价须高开）；`
+              + `候选池：过去 20 日洗盘形态 + 总市值 ≤ ${rules.maxTotalMvYi ?? 100} 亿`
+            : '正在整理当日首板 / 二板候选池…'}
+        </div>
+        <div className="ob-gainer-body defense">
+          <div className="ob-gainer-col">
+            <div className="ob-gainer-col-head">
+              <span className="ob-gainer-section-label">首板起爆 · {firstList.length}</span>
+              <span className="ob-total-tag">9:25-9:30 每 {rules.auctionRemindSeconds ?? 30}s 提醒</span>
+            </div>
+            <div className="ob-gainer-head ob-gainer-head-wf">
+              <span>#</span>
+              <span>股票</span>
+              <span>当日</span>
+              <span>竞价</span>
+              <span>总市值</span>
+              <span>状态</span>
+            </div>
+            {firstList.length === 0 ? (
+              <div className="ob-empty-mini ob-gainer-empty">暂无首板起爆候选</div>
+            ) : firstList.map((s, idx) => wfRow(s, idx, 'fb'))}
+          </div>
+          <div className="ob-gainer-col">
+            <div className="ob-gainer-col-head">
+              <span className="ob-gainer-section-label">二板起爆 · {secondList.length}</span>
+              <span className="ob-total-tag">9:30-14:30 盘中 +{rules.buyTriggerPct ?? 8}% 触发</span>
+            </div>
+            <div className="ob-gainer-head ob-gainer-head-wf">
+              <span>#</span>
+              <span>股票</span>
+              <span>当日</span>
+              <span>竞价</span>
+              <span>总市值</span>
+              <span>状态</span>
+            </div>
+            {secondList.length === 0 ? (
+              <div className="ob-empty-mini ob-gainer-empty">暂无二板起爆候选</div>
+            ) : secondList.map((s, idx) => wfRow(s, idx, 'sb'))}
+          </div>
+        </div>
+        <StockKLineModal
+          visible={klineVisible}
+          onCancel={() => setKlineVisible(false)}
+          code={selectedStock?.code}
+          stockInfo={{ name: selectedStock?.stockName, change: selectedStock?.change }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="ob-module ob-rank3-module">
       <div className="ob-module-header">
-        <div className="ob-module-title">
+        <div className="ob-module-title" title={
+          isExtreme ? '情绪游资-极致胜率 · 龙头列表' : isDefense ? '攻防兼备 · 涨幅榜 / 龙头列表' : '自选股 · 3日涨幅前十'
+        }>
           <CrownOutlined className="ob-module-icon" />
-          <span>{isExtreme ? '情绪游资-龙头列表' : isDefense ? '攻防兼备 · 涨幅榜与龙头列表' : '自选股 · 3日涨幅前十'}</span>
+          <span>{isExtreme ? '情绪游资-极致胜率' : isDefense ? '涨幅榜/龙头' : '自选股 · 3日涨幅前十'}</span>
         </div>
-        <span className="ob-mode-switch-label">切换模式</span>
-        <Select
-          size="small"
-          className="ob-mode-switch"
-          value={mode}
-          options={STRATEGY_MODE_OPTIONS}
-          onChange={setStrategyMode}
-          popupMatchSelectWidth={false}
-          style={{ fontSize: 12 }}
-          classNames={{ popup: { root: 'ob-mode-dropdown' } }}
-        />
-        <span className="ob-total-tag">
-          {isExtreme
-            ? `顺周期 ${rowCount} · 逆周期 ${reverseList.length}`
-            : isDefense
-              ? `科技 ${techList.length} · 顺周期 ${leaderList.length} · 逆周期 ${reverseList.length}`
-              : `共 ${rowCount} 只`}
-        </span>
-        <button className="ob-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="刷新卡片数据">
-          <ReloadOutlined spin={refreshing} />
-        </button>
+        <div className="ob-module-actions">
+          <Select
+            size="small"
+            className="ob-mode-switch"
+            value={mode}
+            options={STRATEGY_MODE_OPTIONS}
+            onChange={setStrategyMode}
+            popupMatchSelectWidth={false}
+            style={{ fontSize: 12 }}
+            title="切换策略模式"
+            classNames={{ popup: { root: 'ob-mode-dropdown' } }}
+          />
+          <button className="ob-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="刷新卡片数据">
+            <ReloadOutlined spin={refreshing} />
+          </button>
+        </div>
       </div>
       <div className={`ob-gainer-gate-note ${(isExtreme ? slopeOk : (cybPassed && starPassed)) ? 'both' : (isExtreme ? false : (cybPassed || starPassed)) ? 'partial' : 'none'}`}>
         {isExtreme ? extremeGateNote : gateNote}
@@ -1028,7 +1179,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
         {!isExtreme && (
           <div className="ob-gainer-col ob-gainer-col-tech">
             <div className="ob-gainer-col-head">
-              {isDefense && <span className="ob-gainer-section-label">科技进攻 · 快进快出</span>}
+              {isDefense && <span className="ob-gainer-section-label">科技进攻 · {techList.length}</span>}
               {[
                 { name: '创业板指', gate: data?.cybGate, passed: cybPassed },
                 { name: '科创50', gate: data?.starGate, passed: starPassed },
@@ -1092,7 +1243,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
         {showEwCols && (
           <div className="ob-gainer-col ob-gainer-col-ew">
             <div className="ob-gainer-col-head">
-              <span className="ob-gainer-section-label">顺周期 · 情绪游资-极致胜率</span>
+              <span className="ob-gainer-section-label">顺周期 · 情绪游资-极致胜率 {leaderList.length}</span>
               <div className={`ob-gainer-gate ${slopeOk ? 'passed' : 'failed'}`}>
                 <span className="ob-gainer-gate-slope">上证指数 {formatSlope(indexSlope)}</span>
                 <span className="ob-gainer-gate-turn">3 日线分时斜率</span>
@@ -1138,7 +1289,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
         {showEwCols && (
           <div className={`ob-gainer-col ob-gainer-col-reverse ${reverseSlopeOk ? 'active' : ''}`}>
             <div className="ob-gainer-col-head">
-              <span className="ob-gainer-section-label reverse">逆周期 · 反向抱团龙头</span>
+              <span className="ob-gainer-section-label reverse">逆周期 · 反向抱团 {reverseList.length}</span>
               <div className={`ob-gainer-gate ${reverseSlopeOk ? 'passed' : 'failed'}`}>
                 <span className="ob-gainer-gate-slope">上证指数 {formatSlope(reverseSlope)}</span>
                 <span className="ob-gainer-gate-turn">{reverse && reverse.slopeDayNo != null ? `连续为负第 ${reverse.slopeDayNo} 天` : '3 日线收盘口径斜率'}</span>
@@ -1206,12 +1357,16 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isDefense = mode === MODE_ATTACK_DEFENSE;
+  const isWashFusion = mode === MODE_WASH_FUSION;
   const buyCacheKey = `ob_buy_point_cache_${mode}`;
   const cachedBuyDiagnosis = useMemo(() => readTodayLocalCache(buyCacheKey), [buyCacheKey]);
   // 记录当前诊断数据对应的策略模式，避免切换模式时把旧模式数据写进新模式缓存
   const dataModeRef = useRef(cachedBuyDiagnosis ? mode : null);
   // 首屏直接用当日缓存的诊断结果渲染，接口/WS 返回后再覆盖，避免每次进入页面都等 1~3 秒
   const [data, setData] = useState(cachedBuyDiagnosis || null);
+  // 情绪游资-极致赔率：最近一次买点命中（wash_fusion_buy）与候选池（wash_fusion_candidates，3s 推送）
+  const [wfSignal, setWfSignal] = useState(null);
+  const [wfCandidates, setWfCandidates] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   // 标题旁实时时钟：每秒跳动，便于对照 3 分钟整点（9:30 / 9:33 / 9:36 …）判断下一次自动诊断时机
   const [now, setNow] = useState(() => dayjs());
@@ -1223,6 +1378,8 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
 
   // 手动 / 初始一次性刷新：仅拉取当前最新诊断数据用于展示，不发飞书、不弹窗（这些由后端集中处理）
   const run = useCallback(async (force = false) => {
+    // 情绪游资-极致赔率：不走科技进攻集中诊断，改由 wash_fusion 快照 + WS 推送
+    if (isWashFusion) return;
     try {
       // force=true：手动刷新按钮传入，绕过后端 30 秒重度刷新节流，随时点击随时真正重拉
       const res = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: 1, force: force ? 1 : 0, mode });
@@ -1240,12 +1397,19 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
     } catch (err) {
       console.error('买点诊断刷新失败:', err);
     }
-  }, [onResultChange, mode, isExtreme, isDefense]);
+  }, [onResultChange, mode, isExtreme, isDefense, isWashFusion]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    try { await run(true); } finally { setRefreshing(false); }
-  }, [run]);
+    try {
+      if (isWashFusion) {
+        const res = await axios.get(`http://${local_ip}:3000/wash_fusion_extreme_odds_snapshot`, { params: { refresh: 1 } });
+        if (res.data?.data) setWfCandidates(res.data.data);
+      } else {
+        await run(true);
+      }
+    } finally { setRefreshing(false); }
+  }, [run, isWashFusion]);
 
   // 最近一次诊断结果按「数据所属模式」落 localStorage，供下次进入页面秒开
   useEffect(() => {
@@ -1258,6 +1422,21 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
   //   - 命中弹窗不再由本组件处理（改由 App.jsx 全局诊断卡片弹出）
   //   - 初次挂载仍一次性拉取一次（非交易时段也能展示最近交易日的诊断结果）
   useEffect(() => {
+    // 情绪游资-极致赔率：候选池 3s 推送 + 买点命中推送（不限频控，命中即展示）
+    if (isWashFusion) {
+      axios.get(`http://${local_ip}:3000/wash_fusion_extreme_odds_snapshot`)
+        .then((res) => { if (res.data?.data) setWfCandidates(res.data.data); })
+        .catch((err) => console.error('获取极致赔率候选池失败:', err));
+      const unsubCandidates = subscribeWashFusionCandidatesPush((msg) => {
+        if (msg?.data) setWfCandidates(msg.data);
+      });
+      const unsubBuy = subscribeWashFusionBuyPush((msg) => {
+        if (msg?.open !== true || !msg.data) return;
+        setWfSignal(msg.data);
+        onResultChange?.(true);
+      });
+      return () => { unsubCandidates(); unsubBuy(); };
+    }
     run(false);
     const unsubscribe = subscribeBuyPointPush((msg) => {
       const result = msg?.data;
@@ -1270,12 +1449,19 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
       onResultChange?.(techHit || forwardHit || reverseHit);
     });
     return unsubscribe;
-  }, [run, onResultChange, isExtreme, isDefense]);
+  }, [run, onResultChange, isExtreme, isDefense, isWashFusion, mode]);
 
   // 攻防兼备：三组分开展示——科技进攻（tech.checks）/ 顺周期（checks）/ 逆周期（reverseChecks）
   const sortChecks = (list) => [...list].sort((a, b) => a.passed - b.passed);
   let checkGroups;
-  if (isDefense) {
+  if (isWashFusion) {
+    checkGroups = [
+      {
+        label: wfSignal ? `${wfSignal.sourceLabel || '极致赔率'} · 买点诊断（3s 时间桶，不限频控）` : '',
+        items: sortChecks(wfSignal?.checks || []),
+      },
+    ];
+  } else if (isDefense) {
     const techItems = sortChecks(data?.tech?.checks || []);
     const ewItems = sortChecks(data?.checks || []);
     const revItems = sortChecks(data?.reverseChecks || []);
@@ -1300,14 +1486,22 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
   const allPassed = data?.allPassed === true;
   // 科技进攻全部通过（tech_attack 时即 allPassed；attack_defense 时读 tech 嵌套）
   const techAllPassed = isDefense ? data?.tech?.allPassed === true : allPassed;
-  const hit = isDefense
-    ? (techAllPassed || allPassed || data?.reverse?.allPassed === true)
-    : allPassed;
+  const hit = isWashFusion
+    ? wfSignal != null
+    : isDefense
+      ? (techAllPassed || allPassed || data?.reverse?.allPassed === true)
+      : allPassed;
   const totalCheckCount = checkGroups.reduce((n, g) => n + g.items.length, 0);
   const totalPassedCount = checkGroups.reduce((n, g) => n + g.items.filter(c => c.passed).length, 0);
-  const conclusionText = isDefense
-    ? `科技进攻：${data?.tech?.conclusion || '--'}｜情绪游资：${data?.conclusion || '--'}`
-    : data?.conclusion;
+  const wfFirstCount = (wfCandidates?.firstBoard || []).length;
+  const wfSecondCount = (wfCandidates?.secondBoard || []).length;
+  const conclusionText = isWashFusion
+    ? (wfSignal
+      ? `${wfSignal.sourceLabel || '极致赔率'}买点命中：${(wfSignal.stocks || []).map((s) => `${s.stockName}（${s.code}）`).join('、')}；${wfSignal.positionHint || ''}`
+      : `等待买点触发：首板起爆 ${wfFirstCount} 只、二板起爆 ${wfSecondCount} 只候选；盘中每 3 秒扫描一次，命中即推送（不限频控）`)
+    : isDefense
+      ? `科技进攻：${data?.tech?.conclusion || '--'}｜情绪游资：${data?.conclusion || '--'}`
+      : data?.conclusion;
 
   // 建议买入仓位提示（与回测仓位管理完全一致）：
   //   科技进攻——快进快出日首次半仓、次日补足第二份半仓（次日10:00强卖），普通日全仓；
@@ -1315,14 +1509,17 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
   const quickOutHint = (isDefense ? (data?.tech?.checks || []) : (data?.checks || []))
     .find(c => c.id === 'quick_out_buy_hint')?.value;
   const isQuickOutDay = typeof quickOutHint === 'string' && quickOutHint.includes('快进快出');
-  const showTechPosition = !isExtreme; // tech_attack / attack_defense
+  const showTechPosition = !isExtreme && !isWashFusion; // tech_attack / attack_defense
   const showEwPosition = isExtreme || isDefense;
+  const showWfPosition = isWashFusion;
 
   // 情绪游资模式按 3 分钟整点（9:30/9:33/9:36…）高亮（与买点诊断触发口径一致），其余模式仍按 5 分钟整点；
-  // 整分钟内背景闪烁做重点提示，进入下一分钟自动恢复
-  const isTickMinute = (isExtreme || isDefense)
-    ? now.minute() % 3 === 0
-    : now.minute() % 5 === 0;
+  // 情绪游资-极致赔率为 3 秒时间桶：每 3 秒闪烁一次做重点提示
+  const isTickMinute = isWashFusion
+    ? now.second() % 3 === 0
+    : (isExtreme || isDefense)
+      ? now.minute() % 3 === 0
+      : now.minute() % 5 === 0;
 
   return (
     <div className={`ob-diagnosis-card ob-buy-card ${isTickMinute ? 'is-tick' : ''}`}>
@@ -1335,11 +1532,14 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
         <div className="ob-module-title">
           <RadarChartOutlined className="ob-module-icon" />
           <span>买点诊断</span>
+          {isWashFusion && <span className="ob-mode-switch-label">情绪游资-极致赔率 · 3s 桶</span>}
           <span className="ob-diagnosis-clock">{now.format('HH:mm:ss')}</span>
         </div>
         <div className="ob-diagnosis-actions">
           <span className={`ob-status-badge ${hit ? 'hit' : ''}`}>
-            {!data ? '诊断中...' : hit ? '🎯 已命中' : `未满足 ${totalPassedCount}/${totalCheckCount}`}
+            {isWashFusion
+              ? `${wfFirstCount + wfSecondCount} 候选 · ${hit ? '🎯 已命中' : '未触发'}`
+              : !data ? '诊断中...' : hit ? '🎯 已命中' : `未满足 ${totalPassedCount}/${totalCheckCount}`}
           </span>
           <button className="ob-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="手动刷新">
             <ReloadOutlined />
@@ -1347,7 +1547,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
         </div>
       </div>
       <div className="ob-diagnosis-body" style={{ maxHeight: 530,overflowY: 'auto', minHeight: 522 }}>
-        {!data ? (
+        {(!data && !isWashFusion) ? (
           <div className="ob-diagnosis-loading"><Spin size="small" /></div>
         ) : (
           <>
@@ -1387,6 +1587,12 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
                 {isDefense ? '；若科技进攻（快进快出）同时触发则其优先，本笔情绪游资暂缓，待上一笔完全结束后再考虑' : ''}
               </div>
             )}
+            {showWfPosition && (
+              <div className="ob-position-hint ew">
+                📦 极致赔率建议仓位：半仓（50%）——账户拆两份、每份半仓，最多同时持有 2 只不同股票
+                {wfSignal?.positionHint ? `；${wfSignal.positionHint.replace(/^半仓（50%）——/, '')}` : ''}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -1417,6 +1623,8 @@ const diagnosePositionSellPoint = async (stock, todayStr, mode) => {
       costPrice: stock.costPrice,
       buyDate: stock.buyDate || null,
       mode,
+      // 持仓显式指定的统一卖点策略优先（首板起爆 / 二板起爆等），未设置时后端按模式回退
+      sellStrategy: stock.sellStrategy || null,
       // 顺逆周期标记：逆周期持仓不启用⑪⑫「竞价大幅低开后冲高回落 / 开盘自救」
       cycle: stock.cycle || 'pro',
     });
@@ -1440,6 +1648,7 @@ const buildSellHint = (result) => {
 const SellPointDiagnosisCard = () => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
+  const isWashFusion = mode === MODE_WASH_FUSION;
   const [results, setResults] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   // 命中闪烁：后端下发 open:true 时卡片背景闪烁提示，数秒后自动恢复
@@ -1504,13 +1713,16 @@ const SellPointDiagnosisCard = () => {
       )}
       <div className="ob-diagnosis-header">
         <div className="ob-module-title" title={
-          isExtreme
-            ? '卖点条件：完整龙头战法 9 条 + 竞价大幅低开后「冲高回落 / 开盘自救」（共 11 条，情绪游资-极致胜率）'
-            : '卖点条件：N 日涨幅最大策略'
+          isWashFusion
+            ? '卖点条件：首板起爆 5 条 / 二板起爆 7 条（按持仓「卖点类型」区分，1min 时间桶集中诊断；未设置时按首板起爆兜底）'
+            : isExtreme
+              ? '卖点条件：完整龙头战法 9 条 + 竞价大幅低开后「冲高回落 / 开盘自救」（共 11 条，情绪游资-极致胜率）'
+              : '卖点条件：N 日涨幅最大策略'
         }>
           <WarningOutlined className="ob-module-icon" />
           <span>卖点诊断</span>
           {isExtreme && <span className="ob-mode-switch-label">{STRATEGY_MODE_OPTIONS[1].label}</span>}
+          {isWashFusion && <span className="ob-mode-switch-label">{STRATEGY_MODE_OPTIONS[3].label} · 1min 桶</span>}
         </div>
         <div className="ob-diagnosis-actions">
           <span className={`ob-status-badge ${hitStocks.length > 0 ? 'hit' : ''}`}>

@@ -18,7 +18,7 @@ const { notifySellPointFeishu } = require('./sellPointNotifier');
 const { getStockPositions, getPositionSellStrategy } = require('./stockPosition');
 const { checkSingleStockSellPoint } = require('./buySellDiagnose');
 const { checkExtremeWinSellPointDetailed, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } = require('./hotMoneyExtremeWin');
-const { checkFirstBoardWashSellPointDetailed } = require('./firstBoardWashSell');
+const { checkFirstBoardWashSellPointDetailed, checkSecondBoardWashSellPointDetailed } = require('./firstBoardWashSell');
 const { isTechWatchlistStock } = require('./monitorStock');
 
 const INTERVAL_MS = 10 * 1000;
@@ -81,7 +81,8 @@ const isInPushWindow = (date = new Date()) => {
 };
 
 // 单笔持仓的卖点策略：优先用持仓显式设置的统一卖点策略（2026-11-01 用户要求），未设置时按全局策略模式回退
-//   tech_attack 科技进攻 | extreme_win_pro 极致胜率顺周期 | extreme_win_reverse 极致胜率逆周期 | first_board_wash 首板起爆
+//   tech_attack 科技进攻 | extreme_win_pro 极致胜率顺周期 | extreme_win_reverse 极致胜率逆周期
+//   first_board_wash 首板起爆 | second_board_wash 二板起爆
 const resolveSellStrategy = (stock, mode) => {
   const explicit = getPositionSellStrategy(stock);
   if (explicit) return explicit;
@@ -93,6 +94,8 @@ const resolveSellStrategy = (stock, mode) => {
       ? 'tech_attack'
       : (stock.cycle === 'reverse' ? 'extreme_win_reverse' : 'extreme_win_pro');
   }
+  // 情绪游资-极致赔率：未显式设置卖点策略时按首板起爆口径（1min 时间桶）兜底
+  if (mode === strategyModeState.MODE_WASH_FUSION) return 'first_board_wash';
   return 'tech_attack';
 };
 
@@ -113,7 +116,7 @@ const diagnosePosition = async (stock, todayStr, mode, minuteEvalNow = true) => 
   }
   try {
     const strategy = resolveSellStrategy(stock, mode);
-    // 科技进攻的科技卖点按 10s 逐轮诊断；情绪游资-极致胜率与首板起爆均按 **1 分钟整数分钟** 诊断（2026-11-01 用户要求），
+    // 科技进攻的科技卖点按 10s 逐轮诊断；情绪游资-极致胜率、首板起爆、二板起爆均按 **1 分钟整数分钟** 诊断（2026-11-01 用户要求），
     //   非整数分钟直接复用本分钟首次诊断结果
     const minuteBased = strategy !== 'tech_attack';
     const cacheKey = String(base.positionId);
@@ -121,6 +124,8 @@ const diagnosePosition = async (stock, todayStr, mode, minuteEvalNow = true) => 
     let res;
     if (strategy === 'first_board_wash') {
       res = await checkFirstBoardWashSellPointDetailed(stock.code, stock.costPrice, stock.buyDate || null);
+    } else if (strategy === 'second_board_wash') {
+      res = await checkSecondBoardWashSellPointDetailed(stock.code, stock.costPrice, stock.buyDate || null);
     } else if (strategy === 'extreme_win_pro' || strategy === 'extreme_win_reverse') {
       res = await checkExtremeWinSellPointDetailed(stock.code, stock.costPrice, stock.buyDate || null, {
         // ⑪⑫仅顺周期持仓启用：逆周期时关闭

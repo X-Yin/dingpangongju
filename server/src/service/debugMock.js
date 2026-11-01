@@ -11,7 +11,7 @@ const strategyModeState = require('./strategyModeState');
 const wsServer = require('../wsServer');
 const feishuNotify = require('./feishuNotify');
 const iceDelayBuy = require('./iceDelayBuy');
-const firstBoardWashLive = require('./firstBoardWashLive');
+const washFusionLive = require('./washFusionLive');
 const { limitUpThresholdOf } = require('./buySellBacktest/engine/extremeWinScores');
 const { WASHOUT_OPT } = require('./buySellBacktest/engine/firstBoardWashBacktest');
 const { getPastTradingDates } = require('./buySellBacktest/deps');
@@ -457,33 +457,38 @@ const mockIceDelay = async () => {
   return { success: true, mode, target: null };
 };
 
-// ==================== MOCK 首板起爆（2026-11-01 用户要求）====================
-// 三个入口：竞价买点诊断 / 开盘买点诊断（盘中 +8%）/ 卖点诊断
-//   均走与线上一致的链路：WS 推送（first_board_wash_buy / sell_point，open:true）+ 飞书卡片；
+// ==================== MOCK 情绪游资-极致赔率（首板起爆 / 二板起爆，2026-11-01 用户要求）====================
+// 入口：首板起爆（竞价买点 / 盘中 +8% 买点 / 卖点）、二板起爆（买点 / 卖点）
+//   均走与线上一致的链路：WS 推送（wash_fusion_buy / sell_point，open:true）+ 飞书卡片；
 //   卡片中的买入时间、买入条件、卖出条件全部引用线上真实常量，不做自定义阈值
 const fmtHm = (m) => `${String(Math.floor(Number(m) / 100)).padStart(2, '0')}:${String(Number(m) % 100).padStart(2, '0')}`;
 const gainText2 = (v) => (v == null || Number.isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
 
 // 标的：优先候选股（非交易日/盘前为上一交易日候选），没有则从全量自选股随机取一只
-const pickFirstBoardWashTarget = async () => {
+const pickWashFusionTarget = async (source = 'first_board_wash') => {
   try {
-    const d = await firstBoardWashLive.getDisplayData();
-    const c = pickRandom(d && d.candidates);
+    const d = await washFusionLive.getDisplayData();
+    const list = source === 'second_board_wash' ? (d.secondBoard || []) : (d.firstBoard || []);
+    const c = pickRandom(list);
     if (c && c.code) {
       return {
         code: c.code,
         name: c.name || c.code,
         board: c.board || '',
         washout: c.washout || null,
-        floatMvYi: c.floatMvYi != null ? c.floatMvYi : null,
+        boardCheck: c.boardCheck || null,
+        totalMvYi: c.totalMvYi != null ? c.totalMvYi : null,
         source: 'candidate',
       };
     }
   } catch (e) { /* 候选股计算失败 → 回退自选股 */ }
   const s = pickRandom(getMonitorStocks() || []);
   if (!s) return null;
-  return { code: s.code, name: s.name || s.code, board: '', washout: null, floatMvYi: null, source: 'watchlist' };
+  return { code: s.code, name: s.name || s.code, board: '', washout: null, boardCheck: null, totalMvYi: null, source: 'watchlist' };
 };
+
+const pickFirstBoardWashTarget = () => pickWashFusionTarget('first_board_wash');
+const pickSecondBoardWashTarget = () => pickWashFusionTarget('second_board_wash');
 
 // 真实盘口（失败回退 mock 价），让卡片价格尽量贴近真实行情
 const fetchQuoteSafe = async (code) => {
@@ -498,15 +503,16 @@ const fetchQuoteSafe = async (code) => {
   } catch (e) { return null; }
 };
 
-const firstBoardWashRules = () => ({
-  buyTriggerPct: firstBoardWashLive.BUY_TRIGGER_PCT,
-  auctionBuyPct: firstBoardWashLive.BUY_OPEN_GAP_AUCTION_PCT,
-  buyWindow: `${fmtHm(firstBoardWashLive.BUY_START_MINUTE)}-${fmtHm(firstBoardWashLive.BUY_CUTOFF_MINUTE)}`,
-  maxPullbacks: firstBoardWashLive.MAX_INTRADAY_PULLBACKS,
-  maxFloatMvYi: firstBoardWashLive.MAX_FLOAT_MV_YI,
+const washFusionRules = () => ({
+  buyTriggerPct: washFusionLive.BUY_TRIGGER_PCT,
+  auctionBuyPct: washFusionLive.BUY_OPEN_GAP_AUCTION_PCT,
+  firstBoardBuyWindow: `${fmtHm(washFusionLive.BUY_START_MINUTE)}-${fmtHm(washFusionLive.BUY_CUTOFF_MINUTE)}`,
+  secondBoardBuyWindow: `${fmtHm(washFusionLive.BUY_START_MINUTE)}-${fmtHm(washFusionLive.B_BUY_CUTOFF_MINUTE)}`,
+  maxPullbacks: washFusionLive.MAX_INTRADAY_PULLBACKS,
+  maxTotalMvYi: washFusionLive.MAX_TOTAL_MV_YI,
 });
 
-// 候选股缺失（回退自选股）时补齐一份符合线上阈值的洗盘形态/流通市值，便于卡片完整展示真实阈值口径
+// 候选股缺失（回退自选股）时补齐一份符合线上阈值的洗盘形态/总市值，便于卡片完整展示真实阈值口径
 const mockWashout = (target, price) => target.washout || {
   washDays: rndInt(WASHOUT_OPT.minWashDays, WASHOUT_OPT.maxWashDays),
   rangePct: rnd(WASHOUT_OPT.minRangePct * 100 + 1, WASHOUT_OPT.maxRangePct * 100 - 1),
@@ -514,28 +520,33 @@ const mockWashout = (target, price) => target.washout || {
   maxWin3Pct: rnd(8, 19),
 };
 
-const emitFirstBoardWashBuyMock = async (stock, { checks = [], remind = false } = {}) => {
+const SOURCE_LABEL = { first_board_wash: '首板起爆', second_board_wash: '二板起爆' };
+
+const emitWashFusionBuyMock = async (stock, source, { checks = [], remind = false } = {}) => {
   wsServer.broadcast({
-    type: 'first_board_wash_buy',
+    type: 'wash_fusion_buy',
     ts: Date.now(),
     open: true,
     data: {
       date: dayjs().format('YYYYMMDD'),
+      source,
+      sourceLabel: SOURCE_LABEL[source],
       stocks: [stock],
       checks,
       positionHint: stock.positionHint,
       remind,
-      strategy: 'first_board_wash',
-      rules: firstBoardWashRules(),
+      strategy: 'wash_fusion_extreme_odds',
+      rules: washFusionRules(),
       mock: true,
     },
   });
   let feishu;
   try {
-    feishu = await feishuNotify.sendFeishuCard(feishuNotify.buildFirstBoardWashBuyCard({
+    feishu = await feishuNotify.sendFeishuCard(feishuNotify.buildWashFusionBuyCard({
       buyStocks: [stock],
       timestamp: stock.timestamp,
       positionHint: stock.positionHint,
+      sourceLabel: SOURCE_LABEL[source],
       mock: true,
     }));
   } catch (e) {
@@ -544,7 +555,7 @@ const emitFirstBoardWashBuyMock = async (stock, { checks = [], remind = false } 
   return feishu;
 };
 
-// 竞价买点：竞价涨幅 ≥ 5% 且未到涨停（一字板买不进）→ 9:30 按竞价开盘价直接买入
+// 首板起爆竞价买点：竞价涨幅 ≥ 5% 且未到涨停（一字板买不进）→ 9:30 按竞价开盘价直接买入
 const mockFirstBoardWashAuctionBuy = async () => {
   const target = await pickFirstBoardWashTarget();
   if (!target) return { success: false, error: '候选股与自选股均为空，无法 mock' };
@@ -553,7 +564,7 @@ const mockFirstBoardWashAuctionBuy = async () => {
   const quote = await fetchQuoteSafe(target.code);
   const preclose = quote ? quote.preclose : rnd(20, 80);
   const limitThr = limitUpThresholdOf(target.code);
-  const minGap = firstBoardWashLive.BUY_OPEN_GAP_AUCTION_PCT;
+  const minGap = washFusionLive.BUY_OPEN_GAP_AUCTION_PCT;
   const upper = Math.max(minGap + 1.5, limitThr - 0.3);
   let gap = quote && quote.change >= minGap && quote.change < limitThr ? quote.change : rnd(minGap + 0.3, upper);
   gap = +Math.min(gap, limitThr - 0.01).toFixed(2);
@@ -564,30 +575,35 @@ const mockFirstBoardWashAuctionBuy = async () => {
     name: target.name,
     code: target.code,
     board: target.board,
+    source: 'first_board_wash',
+    sourceLabel: SOURCE_LABEL.first_board_wash,
     mode: 'auction',
-    modeText: `${fmtHm(firstBoardWashLive.BUY_START_MINUTE)} 竞价高开 ${gainText2(gap)}（≥ ${minGap}%）按竞价开盘价直接买入`,
-    minute: fmtHm(firstBoardWashLive.BUY_START_MINUTE),
+    modeText: `${fmtHm(washFusionLive.BUY_START_MINUTE)} 竞价高开 ${gainText2(gap)}（≥ ${minGap}%）按竞价开盘价直接买入`,
+    minute: fmtHm(washFusionLive.BUY_START_MINUTE),
     price,
     change: gap,
     auctionGap: gap,
-    floatMvYi: target.floatMvYi != null ? target.floatMvYi : rnd(20, 95),
+    totalMvYi: target.totalMvYi != null ? target.totalMvYi : rnd(20, 95),
     washout: mockWashout(target, price),
     positionHint: '半仓（50%）——账户拆两份、每份半仓，最多同时持有 2 只不同股票，各自独立买卖',
     timestamp,
     mock: true,
   };
 
-  const feishu = await emitFirstBoardWashBuyMock(stock, {
-    checks: firstBoardWashLive.buildBuyChecks({
-      cand: { code: stock.code, washout: stock.washout, floatMvYi: stock.floatMvYi, lastClose: preclose },
-      mode: 'auction', minute: firstBoardWashLive.BUY_START_MINUTE, price, change: gap, auctionGap: gap,
+  const feishu = await emitWashFusionBuyMock(stock, 'first_board_wash', {
+    checks: washFusionLive.buildBuyChecks({
+      cand: {
+        code: stock.code, source: 'first_board_wash', sourceLabel: SOURCE_LABEL.first_board_wash,
+        washout: stock.washout, totalMvYi: stock.totalMvYi, lastClose: preclose,
+      },
+      mode: 'auction', minute: washFusionLive.BUY_START_MINUTE, price, change: gap, auctionGap: gap,
     }),
     remind: true,
   });
   return { success: true, target: { code: target.code, name: target.name }, source: target.source, kind: 'auction', feishu };
 };
 
-// 开盘买点：9:30-9:40 分时涨幅首次达 +8%（最多 1 次回落、起爆价 ≥ 平台高点 × 0.80）
+// 首板起爆买点：9:30-9:40 分时涨幅首次达 +8%（最多 1 次回落、起爆价 ≥ 平台高点 × 0.80）
 const mockFirstBoardWashBurstBuy = async () => {
   const target = await pickFirstBoardWashTarget();
   if (!target) return { success: false, error: '候选股与自选股均为空，无法 mock' };
@@ -596,49 +612,109 @@ const mockFirstBoardWashBurstBuy = async () => {
   const quote = await fetchQuoteSafe(target.code);
   const preclose = quote ? quote.preclose : rnd(20, 80);
   const limitThr = limitUpThresholdOf(target.code);
-  const minChg = firstBoardWashLive.BUY_TRIGGER_PCT;
+  const minChg = washFusionLive.BUY_TRIGGER_PCT;
   const upper = Math.max(minChg + 1.5, Math.min(limitThr - 0.3, 9.8));
   let chg = quote && quote.change >= minChg && quote.change < limitThr ? quote.change : rnd(minChg + 0.3, upper);
   chg = +Math.min(chg, limitThr - 0.01).toFixed(2);
   const price = +(preclose * (1 + chg / 100)).toFixed(2);
   const nowMinute = dayjs().hour() * 100 + dayjs().minute();
-  const minute = nowMinute >= firstBoardWashLive.BUY_START_MINUTE && nowMinute <= firstBoardWashLive.BUY_CUTOFF_MINUTE
+  const minute = nowMinute >= washFusionLive.BUY_START_MINUTE && nowMinute <= washFusionLive.BUY_CUTOFF_MINUTE
     ? nowMinute
-    : rndInt(firstBoardWashLive.BUY_START_MINUTE + 1, firstBoardWashLive.BUY_CUTOFF_MINUTE - 1);
+    : rndInt(washFusionLive.BUY_START_MINUTE + 1, washFusionLive.BUY_CUTOFF_MINUTE - 1);
   // 走 +8% 买点说明竞价未达 5%（否则 9:30 已竞价买入）
-  const auctionGap = +(quote ? Math.min(quote.change, firstBoardWashLive.BUY_OPEN_GAP_AUCTION_PCT - 0.3) : rnd(0.5, 4.5)).toFixed(2);
+  const auctionGap = +(quote ? Math.min(quote.change, washFusionLive.BUY_OPEN_GAP_AUCTION_PCT - 0.3) : rnd(0.5, 4.5)).toFixed(2);
 
   const stock = {
     stockName: target.name,
     name: target.name,
     code: target.code,
     board: target.board,
+    source: 'first_board_wash',
+    sourceLabel: SOURCE_LABEL.first_board_wash,
     mode: 'burst',
-    modeText: `盘中 ${fmtHm(minute)} 分时涨幅 ${gainText2(chg)} 首次达到 +${minChg}%（最多 ${firstBoardWashLive.MAX_INTRADAY_PULLBACKS} 次回落；起爆价 ≥ 平台高点 × ${WASHOUT_OPT.breakoutMinRatio}）`,
+    modeText: `盘中 ${fmtHm(minute)} 分时涨幅 ${gainText2(chg)} 首次达到 +${minChg}%（最多 ${washFusionLive.MAX_INTRADAY_PULLBACKS} 次回落；起爆价 ≥ 平台高点 × ${WASHOUT_OPT.breakoutMinRatio}）`,
     minute: fmtHm(minute),
     price,
     change: chg,
     auctionGap,
-    floatMvYi: target.floatMvYi != null ? target.floatMvYi : rnd(20, 95),
+    totalMvYi: target.totalMvYi != null ? target.totalMvYi : rnd(20, 95),
     washout: mockWashout(target, price),
     positionHint: '半仓（50%）——账户拆两份、每份半仓，最多同时持有 2 只不同股票，各自独立买卖',
     timestamp,
     mock: true,
   };
 
-  const feishu = await emitFirstBoardWashBuyMock(stock, {
-    checks: firstBoardWashLive.buildBuyChecks({
-      cand: { code: stock.code, washout: stock.washout, floatMvYi: stock.floatMvYi, lastClose: preclose },
+  const feishu = await emitWashFusionBuyMock(stock, 'first_board_wash', {
+    checks: washFusionLive.buildBuyChecks({
+      cand: {
+        code: stock.code, source: 'first_board_wash', sourceLabel: SOURCE_LABEL.first_board_wash,
+        washout: stock.washout, totalMvYi: stock.totalMvYi, lastClose: preclose,
+      },
       mode: 'burst', minute, price, change: chg, auctionGap,
     }),
   });
   return { success: true, target: { code: target.code, name: target.name }, source: target.source, kind: 'burst', feishu };
 };
 
-// 卖点诊断：命中「跌破 5 日线（盘中）」+「跌破成本线 -5%（立即卖出）」两个真实条件，
-//   其余条件按线上真实阈值给出未触发明细（成本 -3% 连续 5 分钟、盘中 ≤ -9%、涨停次日收盘变脸、+20% 后收盘破 5 日线）
-const mockFirstBoardWashSell = async () => {
-  const target = await pickFirstBoardWashTarget();
+// 二板起爆买点：竞价必须高开，9:30-14:30 分时涨幅首次达 +8%
+const mockSecondBoardWashBuy = async () => {
+  const target = await pickSecondBoardWashTarget();
+  if (!target) return { success: false, error: '候选股与自选股均为空，无法 mock' };
+
+  const timestamp = fmtNow();
+  const quote = await fetchQuoteSafe(target.code);
+  const preclose = quote ? quote.preclose : rnd(20, 80);
+  const limitThr = limitUpThresholdOf(target.code);
+  const minChg = washFusionLive.BUY_TRIGGER_PCT;
+  const upper = Math.max(minChg + 1.5, Math.min(limitThr - 0.3, 9.8));
+  let chg = quote && quote.change >= minChg && quote.change < limitThr ? quote.change : rnd(minChg + 0.3, upper);
+  chg = +Math.min(chg, limitThr - 0.01).toFixed(2);
+  const price = +(preclose * (1 + chg / 100)).toFixed(2);
+  const nowMinute = dayjs().hour() * 100 + dayjs().minute();
+  const minute = nowMinute >= washFusionLive.BUY_START_MINUTE && nowMinute <= washFusionLive.B_BUY_CUTOFF_MINUTE
+    ? nowMinute
+    : rndInt(washFusionLive.BUY_START_MINUTE + 1, Math.min(washFusionLive.B_BUY_CUTOFF_MINUTE - 1, 1130));
+  // 二板起爆必须竞价高开（> 0）
+  const auctionGap = +(quote && quote.change > 0 ? Math.min(quote.change, 4.5) : rnd(0.5, 4.5)).toFixed(2);
+
+  const stock = {
+    stockName: target.name,
+    name: target.name,
+    code: target.code,
+    board: target.board,
+    source: 'second_board_wash',
+    sourceLabel: SOURCE_LABEL.second_board_wash,
+    mode: 'burst',
+    modeText: `竞价高开 ${gainText2(auctionGap)}，盘中 ${fmtHm(minute)} 分时涨幅 ${gainText2(chg)} 首次达到 +${minChg}%（9:30-14:30）`,
+    minute: fmtHm(minute),
+    price,
+    change: chg,
+    auctionGap,
+    totalMvYi: target.totalMvYi != null ? target.totalMvYi : rnd(20, 95),
+    washout: mockWashout(target, price),
+    boardCheck: target.boardCheck || { failed: false, breaks: rndInt(0, 1), summary: '断板 0 次，封板满 20 分钟无漏量' },
+    positionHint: '半仓（50%）——账户拆两份、每份半仓，最多同时持有 2 只不同股票，各自独立买卖',
+    timestamp,
+    mock: true,
+  };
+
+  const feishu = await emitWashFusionBuyMock(stock, 'second_board_wash', {
+    checks: washFusionLive.buildBuyChecks({
+      cand: {
+        code: stock.code, source: 'second_board_wash', sourceLabel: SOURCE_LABEL.second_board_wash,
+        washout: stock.washout, boardCheck: stock.boardCheck, totalMvYi: stock.totalMvYi, lastClose: preclose,
+      },
+      mode: 'burst', minute, price, change: chg, auctionGap,
+    }),
+  });
+  return { success: true, target: { code: target.code, name: target.name }, source: target.source, kind: 'burst', feishu };
+};
+
+// 卖点诊断（首板起爆五条 / 二板起爆七条）：命中「跌破 5 日线（盘中）」+「跌破成本线 -5%（立即卖出）」两个真实条件，
+//   其余条件按线上真实阈值给出未触发明细
+const mockWashSell = async (strategy) => {
+  const isSecondBoard = strategy === 'second_board_wash';
+  const target = isSecondBoard ? await pickSecondBoardWashTarget() : await pickFirstBoardWashTarget();
   if (!target) return { success: false, error: '候选股与自选股均为空，无法 mock' };
 
   const positions = getStockPositions() || [];
@@ -690,6 +766,13 @@ const mockFirstBoardWashSell = async () => {
   const conditions = [
     mk('买入次一交易日竞价低开 → 9:30 直接卖出', true,
       `今日为买入次一交易日，竞价开盘 09:30 价 ${openPx.toFixed(2)}（昨收 ${preclose.toFixed(2)}，开盘涨幅 ${openChg.toFixed(2)}%），竞价低开 → 9:30 按竞价价直接卖出`),
+  ];
+  if (isSecondBoard) {
+    conditions.push(mk('收益率未拉开 +20% 前竞价低开超过 -3% → 9:30 直接卖出', false,
+      `竞价开盘涨幅 ${openChg.toFixed(2)}%，未超过 -3%，不触发`,
+      { pending: false }));
+  }
+  conditions.push(
     mk('盘中跌停（当日 ≤ -9%）', minChg <= -9,
       `当日最低分时涨跌幅 ${minChg}%（昨收 ${preclose.toFixed(2)}），${minChg <= -9 ? '已跌停，立即卖出' : '未达 -9%'}`),
     mk('跌破成本线 -5%（立即卖出）', true,
@@ -701,12 +784,17 @@ const mockFirstBoardWashSell = async () => {
       `MA5 ${ma5.toFixed(2)}，现价 ${closePrice.toFixed(2)}（低于 5 日线 ${ma5GapPct}%）`),
     mk('买入当日涨停而次日收盘未涨停 → 收盘卖出', false,
       '未到收盘判定时间（14:56 起判定）', { pending: true }),
-    mk('收益率已拉开 +20% 后收盘跌破 5 日线', false,
-      '收益率未拉开 +20%，不适用'),
-  ];
+  );
+  if (isSecondBoard) {
+    conditions.push(mk('收益率未拉开 +20% 前收盘未涨停 → 收盘卖出', false,
+      '未到收盘判定时间（14:56 起判定）', { pending: true }));
+  }
+  conditions.push(mk('收益率已拉开 +20% 后收盘跌破 5 日线', false,
+    '收益率未拉开 +20%，不适用'));
 
   const hitConds = conditions.filter((c) => c.satisfied && !c.exempted);
   const reasons = hitConds.map((c) => c.detail);
+  const label = isSecondBoard ? '放量洗盘-二板起爆' : '首板洗盘-起爆拉升';
   const hit = {
     positionId: pos ? (pos.id || pos.code) : target.code,
     code: target.code,
@@ -718,8 +806,8 @@ const mockFirstBoardWashSell = async () => {
     isSell: true,
     reasons,
     conditions,
-    conclusion: '已触发首板洗盘-起爆拉升卖点条件，建议卖出 / 减仓。',
-    sellStrategy: 'first_board_wash',
+    conclusion: `已触发${label}卖点条件，建议卖出 / 减仓。`,
+    sellStrategy: strategy,
     minuteBased: true,
     detail: {
       closePrice,
@@ -764,4 +852,16 @@ const mockFirstBoardWashSell = async () => {
   return { success: true, target: { code: hit.code, name: hit.stockName }, source: pos ? 'position' : target.source, kind: 'sell', feishu };
 };
 
-module.exports = { mockBuyPoint, mockSellPoint, mockIceDelay, mockFirstBoardWashAuctionBuy, mockFirstBoardWashBurstBuy, mockFirstBoardWashSell };
+const mockFirstBoardWashSell = () => mockWashSell('first_board_wash');
+const mockSecondBoardWashSell = () => mockWashSell('second_board_wash');
+
+module.exports = {
+  mockBuyPoint,
+  mockSellPoint,
+  mockIceDelay,
+  mockFirstBoardWashAuctionBuy,
+  mockFirstBoardWashBurstBuy,
+  mockFirstBoardWashSell,
+  mockSecondBoardWashBuy,
+  mockSecondBoardWashSell,
+};

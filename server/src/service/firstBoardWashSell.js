@@ -1,12 +1,16 @@
-// 首板洗盘-起爆拉升（线上）卖点诊断（2026-11-01 用户要求）
-//   与回测引擎（buySellBacktest/engine/firstBoardWashBacktest.js）同一套五条卖点口径，供持仓管理「统一卖点策略=首板起爆」的持仓使用：
+// 洗盘点卖点诊断（线上，2026-11-01 用户要求）
+//   ① first_board_wash  首板起爆：首板洗盘-起爆拉升五条卖点（1min 时间桶）
+//   ② second_board_wash 二板起爆：放量洗盘-二板起爆七条卖点（①~⑤ 同首板，⑥⑦ 为本策略新增；1min 时间桶）
+//   与回测引擎（buySellBacktest/engine/firstBoardWashBacktest.js / volumeWashoutSecondBoardBacktest.js）同一套口径：
 //     ① 跌破 5 日线（现价 < MA5，MA5 = 当日之前 5 个交易日收盘均值，不含当日收盘）：
 //        收益率未拉开 +20% 时盘中分时跌破即卖；已拉开 +20%（收盘口径历史最高 ≥ +20%）时改为只在收盘判定
 //     ② 跌破成本线：现价 < 买入价 × 0.97（-3%）须连续 5 分钟都跌破才卖；现价 < 买入价 × 0.95（-5%）立即卖
 //     ③ 盘中跌停：分时跌幅 ≤ -9%（相对昨收）即视为跌停，立即卖
 //     ④ 买入当日收盘涨停、买入次一交易日收盘未涨停 → 次一交易日收盘卖出（14:56 之后用现价近似收盘价判定）
 //     ⑤ 买入次一交易日竞价低开（开盘涨幅 < 0）→ 9:30 竞价直接卖出
-//   线上时间桶：卖点诊断每 1 分钟一次（由 sellPointPushService 调度），买点诊断由 firstBoardWashLive 每 3s 一次
+//     ⑥（仅二板起爆）收益率未拉开 +20% 之前，买入次日起某一天收盘未涨停 → 当日收盘卖出
+//     ⑦（仅二板起爆）收益率未拉开 +20% 之前，任一持仓交易日竞价低开超过 -3% → 当日 9:30 按竞价开盘价卖出
+//   线上时间桶：卖点诊断每 1 分钟一次（由 sellPointPushService 调度）
 const dayjs = require('dayjs');
 const { ensureBarsForCodes, getStockBarsCached } = require('./buySellBacktest/deps');
 const { loadTlinePoints, round2, limitUpThresholdOf } = require('./buySellBacktest/engine/extremeWinScores');
@@ -17,6 +21,22 @@ const COST_OBSERVE_MINUTES = 5;    // -3% 需连续 5 分钟
 const LIMIT_DOWN_PCT = -9;         // 盘中跌幅 ≤ -9% 视为跌停
 const PROFIT_UNLOCK_PCT = 20;      // 收益率拉开 +20% 后跌破 5 日线只在收盘判定
 const CLOSE_EVAL_MINUTE = 1456;    // 14:56 起用现价近似收盘价判定收盘卖点
+const GAP_DOWN_HARD_PCT = -3;      // 二板起爆⑦：竞价低开超过 -3%
+
+const STRATEGY_META = {
+  first_board_wash: {
+    label: '首板洗盘-起爆拉升',
+    conclusionHit: '已触发首板洗盘-起爆拉升卖点条件，建议卖出 / 减仓。',
+    conclusionHold: '当前未达到首板洗盘-起爆拉升卖点条件，可以继续持有。',
+    fallback: '当前未达到首板洗盘-起爆拉升卖点条件，可以继续持有',
+  },
+  second_board_wash: {
+    label: '放量洗盘-二板起爆',
+    conclusionHit: '已触发放量洗盘-二板起爆卖点条件，建议卖出 / 减仓。',
+    conclusionHold: '当前未达到放量洗盘-二板起爆卖点条件，可以继续持有。',
+    fallback: '当前未达到放量洗盘-二板起爆卖点条件，可以继续持有',
+  },
+};
 
 const fmtMinute = (m) => {
   const num = Number(m);
@@ -62,7 +82,9 @@ const maxConsecutiveBelow = (points, threshold) => {
   return { maxRun, maxStart };
 };
 
-const checkFirstBoardWashSellPointDetailed = async (code, costPrice = null, buyDate = null) => {
+const checkWashSellPointDetailed = async (code, costPrice, buyDate, strategy = 'first_board_wash') => {
+  const meta = STRATEGY_META[strategy] || STRATEGY_META.first_board_wash;
+  const isSecondBoard = strategy === 'second_board_wash';
   try {
     const targetDay = dayjs();
     const dateNum = Number(targetDay.format('YYYYMMDD'));
@@ -77,7 +99,7 @@ const checkFirstBoardWashSellPointDetailed = async (code, costPrice = null, buyD
     if (points.length === 0 || preclose == null) {
       return {
         success: false, isSell: false, reasons: ['分时数据不足'], stockName: code,
-        tradeDate: dateNum, conditions: [], conclusion: '分时数据不足，无法诊断', sellStrategy: 'first_board_wash',
+        tradeDate: dateNum, conditions: [], conclusion: '分时数据不足，无法诊断', sellStrategy: strategy,
       };
     }
     const lastPt = points[points.length - 1];
@@ -116,6 +138,10 @@ const checkFirstBoardWashSellPointDetailed = async (code, costPrice = null, buyD
     const isDay2 = buyIdx >= 0 && (todayIdx >= 0
       ? buyIdx === todayIdx - 1
       : buyIdx === bars.length - 1);
+    // 买入次日起（含 T+1 及之后，A 股 T+1 当日不卖）
+    const isAfterBuy = buyIdx >= 0 && (todayIdx >= 0
+      ? todayIdx > buyIdx
+      : buyIdx === bars.length - 1);
 
     const thr = limitUpThresholdOf(code);
     const openPx = points[0].lastPx;
@@ -135,6 +161,20 @@ const checkFirstBoardWashSellPointDetailed = async (code, costPrice = null, buyD
         ? `今日为买入次一交易日，竞价开盘 ${fmtMinute(points[0].minute)} 价 ${round2(openPx)}（昨收 ${round2(preclose)}，开盘涨幅 ${openChg}%），${openChg < 0 ? '竞价低开 → 9:30 按竞价价直接卖出' : '竞价未低开，不触发'}`
         : '非买入次一交易日（或买入日期缺失），不判定',
     ));
+
+    // ⑦（仅二板起爆）收益率未拉开 +20% 前，任一持仓交易日竞价低开超过 -3% → 9:30 竞价直接卖出
+    if (isSecondBoard) {
+      conditions.push(mkCond(
+        `收益率未拉开 +${PROFIT_UNLOCK_PCT}% 前竞价低开超过 ${GAP_DOWN_HARD_PCT}% → 9:30 直接卖出`,
+        isAfterBuy && !profitUnlocked && openChg < GAP_DOWN_HARD_PCT,
+        !isAfterBuy
+          ? '买入当日不卖（T+1），不判定'
+          : profitUnlocked
+            ? `收益率已拉开 +${PROFIT_UNLOCK_PCT}%（历史最高收盘 ${maxCloseGainPct}%），该条不再触发`
+            : `竞价开盘涨幅 ${openChg}%（昨收 ${round2(preclose)} → 竞价 ${round2(openPx)}），${openChg < GAP_DOWN_HARD_PCT ? `超过 ${GAP_DOWN_HARD_PCT}%，9:30 竞价直接卖出` : `未超过 ${GAP_DOWN_HARD_PCT}%，不触发`}`,
+        { exempted: isAfterBuy && profitUnlocked },
+      ));
+    }
 
     // ③ 盘中跌停（当日跌幅 ≤ -9%）
     conditions.push(mkCond(
@@ -176,17 +216,18 @@ const checkFirstBoardWashSellPointDetailed = async (code, costPrice = null, buyD
       { exempted: profitUnlocked },
     ));
 
-    // ④ 买入当日收盘涨停、买入次一交易日收盘未涨停 → 次一交易日收盘卖出
     const closeEvalNow = nowMinute >= CLOSE_EVAL_MINUTE;
     const closePx = todayIdx >= 0 ? Number(bars[todayIdx].c) : lastPx;
     const todayPct = preclose > 0 && closePx > 0 ? round2(((closePx - preclose) / preclose) * 100) : null;
+    const todayLimitUp = todayPct != null && todayPct >= thr;
+
+    // ④ 买入当日收盘涨停、买入次一交易日收盘未涨停 → 次一交易日收盘卖出
     let buyDayLimitUp = false;
     if (buyIdx > 0) {
       const bPre = Number(bars[buyIdx - 1].c);
       const bClose = Number(bars[buyIdx].c);
       buyDayLimitUp = bPre > 0 && bClose > 0 && round2(((bClose - bPre) / bPre) * 100) >= thr;
     }
-    const todayLimitUp = todayPct != null && todayPct >= thr;
     conditions.push(mkCond(
       '买入当日涨停而次日收盘未涨停 → 收盘卖出',
       closeEvalNow && isDay2 && buyDayLimitUp && !todayLimitUp,
@@ -199,6 +240,22 @@ const checkFirstBoardWashSellPointDetailed = async (code, costPrice = null, buyD
             : `买入当日收盘涨停，今日收盘涨幅 ${todayPct == null ? '--' : `${todayPct}%`}，${todayLimitUp ? '收盘涨停，不卖出' : '收盘未涨停，卖出'}`,
       { pending: !closeEvalNow },
     ));
+
+    // ⑥（仅二板起爆）收益率未拉开 +20% 前，买入次日起某一天收盘未涨停 → 当日收盘卖出
+    if (isSecondBoard) {
+      conditions.push(mkCond(
+        `收益率未拉开 +${PROFIT_UNLOCK_PCT}% 前收盘未涨停 → 收盘卖出`,
+        closeEvalNow && isAfterBuy && !profitUnlocked && !todayLimitUp,
+        !isAfterBuy
+          ? '买入当日不卖（T+1），不判定'
+          : profitUnlocked
+            ? `收益率已拉开 +${PROFIT_UNLOCK_PCT}%（历史最高收盘 ${maxCloseGainPct}%），该条不再触发`
+            : !closeEvalNow
+              ? '未到收盘判定时间（14:56 起判定）'
+              : `今日收盘涨幅 ${todayPct == null ? '--' : `${todayPct}%`}，${todayLimitUp ? '收盘涨停，不卖出' : '收盘未涨停，卖出'}`,
+        { exempted: isAfterBuy && profitUnlocked, pending: isAfterBuy && !profitUnlocked && !closeEvalNow },
+      ));
+    }
 
     // ①（收盘分支）收益率已拉开 +20% 后，收盘跌破 5 日线即卖
     conditions.push(mkCond(
@@ -215,7 +272,7 @@ const checkFirstBoardWashSellPointDetailed = async (code, costPrice = null, buyD
     const isSell = conditions.some((c) => c.satisfied && !c.exempted && !c.pending);
     const reasons = isSell
       ? conditions.filter((c) => c.satisfied && !c.exempted).map((c) => c.detail)
-      : ['当前未达到首板洗盘-起爆拉升卖点条件，可以继续持有'];
+      : [meta.fallback];
 
     return {
       success: true,
@@ -224,10 +281,8 @@ const checkFirstBoardWashSellPointDetailed = async (code, costPrice = null, buyD
       stockName: code,
       tradeDate: dateNum,
       conditions,
-      conclusion: isSell
-        ? '已触发首板洗盘-起爆拉升卖点条件，建议卖出 / 减仓。'
-        : '当前未达到首板洗盘-起爆拉升卖点条件，可以继续持有。',
-      sellStrategy: 'first_board_wash',
+      conclusion: isSell ? meta.conclusionHit : meta.conclusionHold,
+      sellStrategy: strategy,
       detail: {
         closePrice: round2(lastPx),
         change: chgOf(lastPx),
@@ -238,7 +293,7 @@ const checkFirstBoardWashSellPointDetailed = async (code, costPrice = null, buyD
       },
     };
   } catch (error) {
-    console.error('首板起爆卖点诊断失败:', error);
+    console.error(`${meta.label}卖点诊断失败:`, error);
     return {
       success: false,
       isSell: false,
@@ -246,16 +301,27 @@ const checkFirstBoardWashSellPointDetailed = async (code, costPrice = null, buyD
       stockName: code,
       conditions: [],
       conclusion: '诊断失败',
-      sellStrategy: 'first_board_wash',
+      sellStrategy: strategy,
     };
   }
 };
 
+const checkFirstBoardWashSellPointDetailed = (code, costPrice = null, buyDate = null) => (
+  checkWashSellPointDetailed(code, costPrice, buyDate, 'first_board_wash')
+);
+
+const checkSecondBoardWashSellPointDetailed = (code, costPrice = null, buyDate = null) => (
+  checkWashSellPointDetailed(code, costPrice, buyDate, 'second_board_wash')
+);
+
 module.exports = {
+  checkWashSellPointDetailed,
   checkFirstBoardWashSellPointDetailed,
+  checkSecondBoardWashSellPointDetailed,
   COST_STOP_PCT,
   COST_HARD_STOP_PCT,
   COST_OBSERVE_MINUTES,
   LIMIT_DOWN_PCT,
   PROFIT_UNLOCK_PCT,
+  GAP_DOWN_HARD_PCT,
 };

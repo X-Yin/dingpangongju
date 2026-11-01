@@ -2210,5 +2210,19 @@
     "marketValue": 4740619874,
     "circulatingMarketValue": 4713284010,
     "updatedAt": "2026-11-01 17:06:54"
+  },
+  {
+    "code": "sz002626",
+    "name": "金达威",
+    "marketValue": 10673885635,
+    "circulatingMarketValue": 10672573135,
+    "updatedAt": "2026-11-01 21:40:29"
+  },
+  {
+    "code": "sh600285",
+    "name": "羚锐制药",
+    "marketValue": 12476540692,
+    "circulatingMarketValue": 12462790692,
+    "updatedAt": "2026-11-01 21:42:46"
   }
 ]

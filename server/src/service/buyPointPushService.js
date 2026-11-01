@@ -262,6 +262,9 @@ const tick = async () => {
     if (!isInPushWindow(now)) return;
 
     const mode = strategyModeState.getMode();
+    // 情绪游资-极致赔率：买点诊断由 washFusionLive 每 3s 独立推送（wash_fusion_buy），
+    //   这里不再执行科技/情绪游资买点诊断，避免重复告警
+    if (mode === strategyModeState.MODE_WASH_FUSION) return;
     const ewMinute = now.getHours() * 60 + now.getMinutes();
     // 情绪游资腿（极致胜率 / 攻防兼备）只在 3 的整数倍分钟允许命中
     const ewEvalNow = (mode === MODE_EXTREME_WIN || mode === MODE_ATTACK_DEFENSE)

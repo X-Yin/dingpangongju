@@ -138,10 +138,10 @@ const backtestPositionMirror = require('./service/backtestPositionMirror');
 // 快进快出「资金净流入阈值动态调节」线上同步（2026-10-21 用户新增）：启动回测后按成交序列设定阈值，
 // 持仓管理增删股票后后台重跑回测并重算阈值（见 emoQuickFundGateLive.js）
 const emoQuickFundGateLive = require('./service/emoQuickFundGateLive');
-// 首板洗盘-起爆拉升线上常驻服务（2026-11-01 用户新增）：独立于科技进攻/情绪游资模式的常驻功能，
-// 交易日 09:00 候选弹窗、09:15-09:41 每 3s 轮询、09:25 竞价诊断、09:30-09:40 盘中 +8% 买点
-const firstBoardWashLive = require('./service/firstBoardWashLive');
-const { checkFirstBoardWashSellPointDetailed } = require('./service/firstBoardWashSell');
+// 情绪游资-极致赔率线上服务（2026-11-01 用户要求）：把回测融合策略搬到线上，
+// 股票列表分首板起爆 / 二板起爆两组；买点 3s 时间桶、卖点 1min 时间桶，仅在该模式下运行
+const washFusionLive = require('./service/washFusionLive');
+const { checkFirstBoardWashSellPointDetailed, checkSecondBoardWashSellPointDetailed } = require('./service/firstBoardWashSell');
 // 调试面板 MOCK：手动触发买点/卖点命中，走同一推送 + 飞书链路
 const debugMock = require('./service/debugMock');
 const wsServer = require('./wsServer');
@@ -1415,7 +1415,8 @@ app.get('/premium_diagnosis', async (req, res) => {
 
 // 单个股票卖点诊断
 //   - 优先按持仓显式设置的统一卖点策略 sellStrategy（2026-11-01 用户要求）：
-//       tech_attack 科技进攻 | extreme_win_pro 极致胜率顺周期 | extreme_win_reverse 极致胜率逆周期 | first_board_wash 首板起爆
+//       tech_attack 科技进攻 | extreme_win_pro 极致胜率顺周期 | extreme_win_reverse 极致胜率逆周期
+//       first_board_wash 首板起爆 | second_board_wash 二板起爆
 //   - 未设置时沿用原逻辑（mode + cycle）：
 //       mode='hot_money_extreme_win' 走「情绪游资-极致胜率」11 条龙头战法卖点；
 //       mode='attack_defense' 按持仓股是否属于自选股科技股范围分流：科技股走科技卖点诊断，其余走龙头卖点诊断
@@ -1428,6 +1429,8 @@ app.post('/check_single_stock_sell_point', async (req, res) => {
     let result;
     if (sellStrategy === 'first_board_wash') {
       result = await checkFirstBoardWashSellPointDetailed(code, costPrice, buyDate || null);
+    } else if (sellStrategy === 'second_board_wash') {
+      result = await checkSecondBoardWashSellPointDetailed(code, costPrice, buyDate || null);
     } else if (sellStrategy === 'tech_attack') {
       result = await checkSingleStockSellPoint(code, costPrice);
     } else if (sellStrategy === 'extreme_win_pro' || sellStrategy === 'extreme_win_reverse') {
@@ -1435,6 +1438,9 @@ app.post('/check_single_stock_sell_point', async (req, res) => {
       result = await checkExtremeWinSellPointDetailed(code, costPrice, buyDate || null, {
         enableOpenGapReboundSell: sellStrategy !== 'extreme_win_reverse',
       });
+    } else if (mode === strategyModeState.MODE_WASH_FUSION) {
+      // 情绪游资-极致赔率：未显式指定卖点策略的持仓按首板起爆（五条）兜底
+      result = await checkFirstBoardWashSellPointDetailed(code, costPrice, buyDate || null);
     } else {
       const useExtremeWin = mode === MODE_EXTREME_WIN
         || (mode === MODE_ATTACK_DEFENSE && !isTechWatchlistStock(code));
@@ -1453,7 +1459,7 @@ app.post('/check_single_stock_sell_point', async (req, res) => {
   }
 });
 
-// 更新某笔持仓的统一卖点策略（tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash）
+// 更新某笔持仓的统一卖点策略（tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash / second_board_wash）
 app.post('/update_stock_position_sell_strategy', (req, res) => {
   try {
     const { id, sellStrategy } = req.body || {};
@@ -1639,40 +1645,44 @@ app.get('/get_strategy_mode', (req, res) => {
   res.json({ success: true, data: { mode: strategyModeState.getMode() } });
 });
 
-// ===== 首板洗盘-起爆拉升（线上常驻功能，与策略模式无关）=====
-// 候选股列表：refresh=1 强制重算（叮盘页刷新按钮）；date 缺省按展示基准日
-//   交易日 09:00 起为当日；非交易日 / 交易日 09:00 前为上一交易日收盘后的候选（无候选前端显示空态）
-app.get('/first_board_wash_candidates', async (req, res) => {
+// ===== 情绪游资-极致赔率（首板起爆 + 二板起爆，仅在该策略模式下由 washFusionLive 推送）=====
+// 候选股列表：refresh=1 强制重算；date 缺省按展示基准日
+//   交易日 09:10 起为当日；非交易日 / 交易日 09:10 前为上一交易日收盘后的候选
+app.get('/wash_fusion_extreme_odds_candidates', async (req, res) => {
   try {
     const dateStr = String(req.query.date || '').trim();
     const refresh = String(req.query.refresh || '') === '1' || String(req.query.refresh || '') === 'true';
     const data = dateStr
-      ? await firstBoardWashLive.getCandidates({ dateStr, refresh })
-      : await firstBoardWashLive.getDisplayData({ refresh });
+      ? await washFusionLive.getPools({ dateStr, refresh })
+      : await washFusionLive.getDisplayData({ refresh });
+    const pools = data.pools || data;
     res.json({
       success: true,
       data: {
-        date: data.date,
-        basisDate: data.basisDate || data.date,
+        date: pools.date,
+        basisDate: data.basisDate || pools.date,
         isPreviousDay: data.isPreviousDay === true,
         computedAt: data.computedAt,
-        count: (data.candidates || []).length,
-        candidates: data.candidates || [],
+        firstBoard: pools.firstBoard || [],
+        secondBoard: pools.secondBoard || [],
+        count: (pools.firstBoard || []).length + (pools.secondBoard || []).length,
+        rules: data.rules || washFusionLive.buildRules(),
       },
     });
   } catch (error) {
-    console.error('获取首板起爆候选股失败:', error);
+    console.error('获取情绪游资-极致赔率候选股失败:', error);
     res.status(500).json({ success: false, message: error.message || '获取失败' });
   }
 });
 
-// 候选股实时快照（含最新价/涨幅/竞价/状态），供叮盘页列表首次加载补发；
-// 非交易日 / 盘前自动返回上一交易日收盘后的候选列表
-app.get('/first_board_wash_snapshot', async (req, res) => {
+// 候选股实时快照（含最新价/涨幅/竞价/状态，A/B 分两组），供 OpeningBattle 首次加载补发；
+// 非交易日 / 盘前自动返回「下一个买点日」的候选列表（数据基于上一交易日收盘）
+app.get('/wash_fusion_extreme_odds_snapshot', async (req, res) => {
   try {
-    res.json({ success: true, data: await firstBoardWashLive.getDisplayData() });
+    const refresh = String(req.query.refresh || '') === '1' || String(req.query.refresh || '') === 'true';
+    res.json({ success: true, data: await washFusionLive.getDisplayData({ refresh }) });
   } catch (error) {
-    console.error('获取首板起爆快照失败:', error);
+    console.error('获取情绪游资-极致赔率快照失败:', error);
     res.status(500).json({ success: false, message: error.message || '获取失败' });
   }
 });
@@ -1730,6 +1740,25 @@ app.post('/debug/mock_first_board_wash_sell', async (req, res) => {
   } catch (error) {
     console.error('MOCK 首板起爆卖点失败:', error);
     res.json({ success: false, error: error.message || 'MOCK 首板起爆卖点失败' });
+  }
+});
+
+// 二板起爆 MOCK：买点诊断（盘中 +8%）/ 卖点诊断（七条卖点）
+app.post('/debug/mock_second_board_wash_buy', async (req, res) => {
+  try {
+    res.json(await debugMock.mockSecondBoardWashBuy());
+  } catch (error) {
+    console.error('MOCK 二板起爆买点失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 二板起爆买点失败' });
+  }
+});
+
+app.post('/debug/mock_second_board_wash_sell', async (req, res) => {
+  try {
+    res.json(await debugMock.mockSecondBoardWashSell());
+  } catch (error) {
+    console.error('MOCK 二板起爆卖点失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 二板起爆卖点失败' });
   }
 });
 
@@ -5244,8 +5273,8 @@ const server = app.listen(port, () => {
   wsServer.attach(server, port);
   buyPointPushService.start();
   sellPointPushService.start();
-  // 首板洗盘-起爆拉升：交易日 09:00 候选弹窗 + 09:15-09:41 每 3s 轮询 + 09:25 竞价诊断（常驻，与策略模式无关）
-  firstBoardWashLive.start();
+  // 情绪游资-极致赔率：仅在拍板模式为 wash_fusion_extreme_odds 时每 3s 轮询首板/二板候选与买点
+  washFusionLive.start();
   // 回测持仓镜像同步：每天首次启动后台跑一次快进快出策略回测，期末未卖持仓自动写入持仓管理
   backtestPositionMirror.start();
   // 快进快出「资金净流入阈值动态调节」：监听持仓管理增删股票——每次操作后台重跑回测并重算
@@ -5267,7 +5296,7 @@ const shutdown = (signal) => {
   console.log(`收到 ${signal}，正在关闭 HTTP / WebSocket / 买点/卖点推送服务...`);
   try { buyPointPushService.stop(); } catch (e) { /* 忽略 */ }
   try { sellPointPushService.stop(); } catch (e) { /* 忽略 */ }
-  try { firstBoardWashLive.stop(); } catch (e) { /* 忽略 */ }
+  try { washFusionLive.stop(); } catch (e) { /* 忽略 */ }
   try { wsServer.close(); } catch (e) { /* 忽略 */ }
   server.close(() => process.exit(0));
   // 兜底：3s 内未能正常关闭则强制退出
