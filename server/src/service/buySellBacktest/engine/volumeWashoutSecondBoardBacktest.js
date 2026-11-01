@@ -581,7 +581,6 @@ const runVolumeWashoutSecondBoardBacktest = async (startDate, endDate, strategyI
   const skippedDates = [];
   const seenStocks = new Map();
   const positions = [];
-  let soldThisDate = false;
 
   for (let di = 0; di < total; di++) {
     const dateStr = allDates[di];
@@ -596,7 +595,6 @@ const runVolumeWashoutSecondBoardBacktest = async (startDate, endDate, strategyI
     const dateDisplay = (campData && campData.dateDisplay)
       || `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
     const dateNum = parseInt(dateStr, 10);
-    soldThisDate = false;
 
     clearTlineCache();
 
@@ -807,7 +805,6 @@ const runVolumeWashoutSecondBoardBacktest = async (startDate, endDate, strategyI
       });
       const idx = positions.indexOf(pos);
       if (idx >= 0) positions.splice(idx, 1);
-      soldThisDate = true;
     };
 
     // ===== ⑤ 买入后的次一交易日竞价低开 → 次日 9:30 竞价直接卖 =====
@@ -873,7 +870,7 @@ const runVolumeWashoutSecondBoardBacktest = async (startDate, endDate, strategyI
       }
 
       // ===== 买入（账户拆两份、每份半仓）=====
-      if (positions.length < maxPositions && !soldThisDate && bucketMinute <= BUY_CUTOFF_MINUTE + 5) {
+      if (positions.length < maxPositions && bucketMinute <= BUY_CUTOFF_MINUTE + 5) {
         await ensureSelected();
         if (candidates.length > 0) {
           await ensureEntries();

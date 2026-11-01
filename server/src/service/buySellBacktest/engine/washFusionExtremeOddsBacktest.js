@@ -59,7 +59,7 @@ const {
 //      A 风格五条（① 跌破 5 日线 ② 跌破成本线 -3%/-5% ③ 盘中跌停 ④ 买入当日涨停、次日收盘未涨停
 //        ⑤ 次日竞价低开），
 //      B 风格七条（①~⑤ 同 A，⑥ 未拉开 +20% 前收盘未涨停即卖，⑦ 未拉开 +20% 前竞价低开超过 -3% 即卖）；
-//   ④ 任一份卖出当日不再新开仓位，次日起才可再买；各份独立计收益（×0.5 折算），账户整体按重叠相加、跨轮复利。
+//   ④ 各份独立计收益（×0.5 折算），账户整体按重叠相加、跨轮复利；卖出后当日仍可继续买入（2026-11-01 用户要求取消该限制）。
 // ============================================================
 
 const MAX_POSITIONS = 2; // 账户拆两份、每份半仓，最多同时持有 2 只不同股票
@@ -116,7 +116,6 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
   const skippedDates = [];
   const seenStocks = new Map();
   const positions = [];
-  let soldThisDate = false;
 
   for (let di = 0; di < total; di++) {
     const dateStr = allDates[di];
@@ -131,7 +130,6 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
     const dateDisplay = (campData && campData.dateDisplay)
       || `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
     const dateNum = parseInt(dateStr, 10);
-    soldThisDate = false;
 
     clearTlineCache();
 
@@ -429,7 +427,6 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
       });
       const idx = positions.indexOf(pos);
       if (idx >= 0) positions.splice(idx, 1);
-      soldThisDate = true;
     };
 
     // ===== ⑤（两风格通用）买入后的次一交易日竞价低开 → 次日 9:30 竞价直接卖 =====
@@ -496,7 +493,7 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
 
       // ===== 买入（两风格候选合并，谁先命中买谁；账户拆两份、每份半仓）=====
       //   桶循环一直走到 14:30（B 风格买点窗口），A 风格买点自身限制在 9:40 前
-      if (positions.length < maxPositions && !soldThisDate && bucketMinute <= VWS_BUY_CUTOFF_MINUTE + 5) {
+      if (positions.length < maxPositions && bucketMinute <= VWS_BUY_CUTOFF_MINUTE + 5) {
         await ensureSelected();
         if (candidates.length > 0) {
           await ensureEntries();
@@ -800,7 +797,7 @@ const buildBuyChecks = (pos) => {
       title: '仓位：账户拆两份、每份半仓（权重 0.5），谁先命中买谁',
       passed: true,
       value: `本份为第 ${pos.leg} 份（半仓）`,
-      reason: '账户拆两份、每份半仓（权重 0.5），最多同时持有 2 只不同股票；两份仓位各自独立买卖、独立按自身买入价计收益（×0.5 折算）；任一份卖出当日不再新开仓位，次日起才可再买',
+      reason: '账户拆两份、每份半仓（权重 0.5），最多同时持有 2 只不同股票；两份仓位各自独立买卖、独立按自身买入价计收益（×0.5 折算）；卖出后当日仍可继续买入',
     },
   );
   return checks;

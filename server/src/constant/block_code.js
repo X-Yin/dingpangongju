@@ -1709,5 +1709,29 @@ exports.default = [
         "code": "sh603881",
         "name": "数据港",
         "tag": "中性"
+    },
+    {
+        "blockName": "互联网金融",
+        "code": "sz300033",
+        "name": "同花顺",
+        "tag": "中性"
+    },
+    {
+        "blockName": "互联网金融",
+        "code": "sz300803",
+        "name": "指南针",
+        "tag": "中性"
+    },
+    {
+        "blockName": "互联网金融",
+        "code": "sz300085",
+        "name": "银之杰",
+        "tag": "中性"
+    },
+    {
+        "blockName": "互联网金融",
+        "code": "sz300059",
+        "name": "东方财富",
+        "tag": "中性"
     }
 ]

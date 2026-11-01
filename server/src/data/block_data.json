@@ -1882,5 +1882,31 @@
       "code": "sh603881",
       "change": -4.82
     }
+  ],
+  "互联网金融": [
+    {
+      "name": "同花顺",
+      "blockName": "互联网金融",
+      "code": "sz300033",
+      "change": -4.88
+    },
+    {
+      "name": "指南针",
+      "blockName": "互联网金融",
+      "code": "sz300803",
+      "change": -18.37
+    },
+    {
+      "name": "银之杰",
+      "blockName": "互联网金融",
+      "code": "sz300085",
+      "change": -7.95
+    },
+    {
+      "name": "东方财富",
+      "blockName": "互联网金融",
+      "code": "sz300059",
+      "change": -2
+    }
   ]
 }

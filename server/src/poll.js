@@ -153,9 +153,9 @@ const startPolling = (force = false) => {
 
   // pollDaPanData(20000);
 
-  pollStockData(10000);
+  pollStockData(5000);
 
-  pollBlockData(60000);
+  pollBlockData(10000);
 
   pollJingJiaQiangChouData(POLL_CONFIG.jingjiaqiangchou.hour, POLL_CONFIG.jingjiaqiangchou.minute);
 

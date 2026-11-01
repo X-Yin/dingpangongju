@@ -57,7 +57,7 @@ const { TWO_BUY_LEG_WEIGHT, computeTwoBuyAccountReturn } = require('./twoBuy');
 //           （2026-11-01 用户要求：不看买入当日是否涨停，一律按次一交易日竞价是否低开判定；
 //            ⑤ 在 9:30 先触发，早于 ④ 的收盘判定）
 //   仓位：账户拆两份、每份半仓（权重 0.5），最多同时持有 2 只不同股票（2026-11-01 用户要求）；
-//        各份仓位各自独立买卖、独立按自身买入价计收益，任一份卖出当日不再新开仓位
+//        各份仓位各自独立买卖、独立按自身买入价计收益；卖出后当日仍可继续买入（2026-11-01 用户要求取消该限制）
 // ============================================================
 
 const BUY_TRIGGER_PCT = 8;         // 竞价未到 5% 时：分时涨幅达到 +8% 即买入（2026-11-01 用户要求，由 9% 改为 8%）
@@ -474,7 +474,6 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
 
   // 账户拆两份、每份半仓（权重 0.5）：最多同时持有 2 只不同股票，各自独立买卖（2026-11-01 用户要求）
   const positions = [];
-  let soldThisDate = false;
 
   for (let di = 0; di < total; di++) {
     const dateStr = allDates[di];
@@ -489,7 +488,6 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
     const dateDisplay = (campData && campData.dateDisplay)
       || `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
     const dateNum = parseInt(dateStr, 10);
-    soldThisDate = false;
 
     clearTlineCache();
 
@@ -683,7 +681,7 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
 
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
 
-    // 卖出统一入口：登记一笔交易、从持仓中移除该份、标记当日已卖出（卖出当日不再新开仓）
+    // 卖出统一入口：登记一笔交易、从持仓中移除该份（卖出后当日仍可继续买入）
     const sellPositionAt = (pos, sellMinute, sellPx, sellChange, sellReason) => {
       if (!pos) return;
       const rawReturnRate = pos.buyPrice > 0
@@ -716,7 +714,6 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
       });
       const idx = positions.indexOf(pos);
       if (idx >= 0) positions.splice(idx, 1);
-      soldThisDate = true;
     };
 
     // ===== ⑤ 买入后的次一交易日竞价低开 → 次日 9:30 竞价直接卖（2026-11-01 用户要求）=====
@@ -770,7 +767,7 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
       }
 
       // ===== 买入（账户拆两份、每份半仓）：盘中分时涨幅首次 +9%，可同时持有 2 只不同股票 =====
-      if (positions.length < maxPositions && !soldThisDate && bucketMinute <= BUY_CUTOFF_MINUTE + 5) {
+      if (positions.length < maxPositions && bucketMinute <= BUY_CUTOFF_MINUTE + 5) {
         await ensureSelected();
         if (candidates.length > 0) {
           await ensureEntries();
