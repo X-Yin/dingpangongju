@@ -256,6 +256,59 @@ const maxPreciseGainWindowInfo = (code, winDates, maxLen, opts) => {
 const PREV_STRENGTH_GAP_GATE = 60;   // 上个交易日强度分门槛（> 60 时触发竞价限制）
 const OPEN_GAP_MIN_PCT = -3;         // 竞价低开下限（开盘涨幅须 >= -3%）
 
+// ============================================================
+// 严重异动临近排除（2026-11-02 用户要求，回测与线上同口径）：
+//   买入前测算该股「连续 10 个交易日累计涨幅距 100%」「连续 30 个交易日累计涨幅距 200%」的剩余空间，
+//   任一剩余 ≤ 10 个百分点即视为临近异动，跳过不买。
+//   口径：累计涨幅 = (买入时点价 − 窗口前一交易日收盘价) ÷ 窗口前一交易日收盘价 × 100；
+//        10 日窗口基准 = T-10 收盘价（含买入当日共 10 个交易日），30 日窗口基准 = T-30 收盘价（共 30 个交易日）；
+//        基准收盘价缺失时该窗口不判定（不因此拦截买入）。
+// ============================================================
+const ABNORMAL_WARN_LIMITS = [
+  { days: 10, limitPct: 100 },
+  { days: 30, limitPct: 200 },
+];
+const ABNORMAL_WARN_MIN_ROOM_PCT = 10;
+
+// pastDates = getPastTradingDates(dateStr, 30)（升序、严格不含当日）
+const buildAbnormalWarnBases = (code, pastDates) => {
+  if (!Array.isArray(pastDates) || pastDates.length === 0) return null;
+  const closeOf = (d) => {
+    const c = getStockCloseOnOrBefore(code, Number(d));
+    return c != null && Number.isFinite(Number(c)) && Number(c) > 0 ? Number(c) : null;
+  };
+  const base10 = pastDates.length >= 10 ? closeOf(pastDates[pastDates.length - 10]) : null;
+  const base30 = pastDates.length >= 30 ? closeOf(pastDates[0]) : null;
+  if (base10 == null && base30 == null) return null;
+  return { base10, base30 };
+};
+
+// 以买入时点价（盘中分时价）测算两个异动窗口的已涨幅度与剩余空间；返回 { blocked, rows, minRoom }
+const evalAbnormalWarn = (bases, px) => {
+  const price = Number(px);
+  if (!bases || !Number.isFinite(price) || price <= 0) return { blocked: false, rows: [], minRoom: null };
+  const rows = [];
+  let minRoom = null;
+  for (const { days, limitPct } of ABNORMAL_WARN_LIMITS) {
+    const base = days === 10 ? bases.base10 : bases.base30;
+    if (base == null) { rows.push({ days, limitPct, gain: null, room: null }); continue; }
+    const gain = (price - base) / base * 100;
+    const room = limitPct - gain;
+    if (minRoom == null || room < minRoom) minRoom = room;
+    rows.push({ days, limitPct, gain: round2(gain), room: round2(room) });
+  }
+  const blocked = rows.some(r => r.room != null && r.room <= ABNORMAL_WARN_MIN_ROOM_PCT);
+  return { blocked, rows, minRoom: minRoom != null ? round2(minRoom) : null };
+};
+
+// 异动空间展示文案（买入诊断 / buyChecks 共用）
+const abnormalWarnText = (a) => {
+  if (!a || !Array.isArray(a.rows) || a.rows.length === 0) return '历史收盘价数据不足，不判定';
+  return a.rows.map(r => (r.room == null
+    ? `${r.days} 日内 ${r.limitPct}%（基准收盘价缺失，不判定）`
+    : `${r.days} 日内 ${r.limitPct}%：已涨 ${r.gain}%，剩余 ${r.room}%`)).join('；');
+};
+
 // 「全量自选股中的科技股」（monitor_stocks.json 中 isTech !== false）代码集合：
 // 候选池若与其重叠则不买，避免与科技股仓位重叠（仅作用于顺周期腿）
 const getTechWatchlistCodes = () => new Set(
@@ -600,6 +653,7 @@ module.exports = {
   RANGE_WINDOW_DAYS, RANGE_SLIDE_DAYS, MAX_WINDOW_RANGE_PCT, MAX_TOTAL_RANGE_PCT, POST_LIANBAN_DROP_PCT,
   NEW_MAX_WINDOW_RANGE_PCT, NEW_MIN_WINDOW_RANGE_PCT, PEAK_GAP_MIN_DAYS, POST_PEAK_MAX_RANGE_PCT, NEW_BASE_LOOKBACK_DAYS,
   PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
+  ABNORMAL_WARN_LIMITS, ABNORMAL_WARN_MIN_ROOM_PCT, buildAbnormalWarnBases, evalAbnormalWarn, abnormalWarnText,
   isChiNextOrStar, hasPostLianbanBigDrop, largeCapBoardPass, maxSlidingWindowRangeInfo, maxSlidingWindowRangePct, maxPreciseGainWindowInfo,
   getTechWatchlistCodes,
   computeCrossInfo, buildExtremeWinPool,

@@ -18,6 +18,7 @@ const { calculateReplayResilience } = require('./buySellBacktest/diagnose/sellPo
 const {
   DEATH_CROSS_WINDOW, DELTA_MIN, CLOSE_MINUTE,
   PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
+  ABNORMAL_WARN_MIN_ROOM_PCT, buildAbnormalWarnBases, evalAbnormalWarn, abnormalWarnText,
   LARGE_CAP_FLOAT_MV_YI, CAP_BOARD_WINDOW_DAYS, CAP_BOARD_MIN_GAIN_PCT, NEW_MIN_WINDOW_RANGE_PCT,
   computeCrossInfo, buildExtremeWinPool,
 } = require('./buySellBacktest/engine/extremeWinPool');
@@ -125,6 +126,15 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
     return null;
   }, 4);
 
+  // 4.5) 严重异动临近测算（2026-11-02 用户要求）：买入前按「T-10 / T-30 收盘价」测算累计涨幅剩余空间，
+  //   任一距 100% / 200% 的剩余 ≤ 10% 即视为临近严重异动，买点不命中（与回测引擎同口径）
+  let abnormalDates = [];
+  try { abnormalDates = await getPastTradingDates(dateStr, 30); } catch (e) { abnormalDates = []; }
+  const abnormalBases = new Map();
+  for (const s of poolStocks) {
+    try { abnormalBases.set(s.code, buildAbnormalWarnBases(s.code, abnormalDates)); } catch (e) { abnormalBases.set(s.code, null); }
+  }
+
   // 5) 计算口径分钟：收盘后按 1500；盘中取各股分时最后点的最大分钟
   let minute = CLOSE_MINUTE;
   let latestTlineMinute = 0;
@@ -174,6 +184,7 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
     const isLimitUp = strength
       ? !!strength.limitUp
       : (change != null && change > limitUpThresholdOf(code));
+    const abnormalWarn = evalAbnormalWarn(abnormalBases.get(code), px);
 
     const cross = crossInfos[i] || null;
     // 买点前置：死叉 + 未被历史消耗 + 上个交易日 delta>30 时须放量
@@ -187,7 +198,8 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
     const listPassed = crossPassed && gatePassed;
     const deltaOk = delta != null && delta >= DELTA_MIN;
     // 2026-10-20 用户新增：买入截止后不买——买入窗口关闭时买点一律不命中（与回测引擎同口径）
-    const buyPointHit = listPassed && deltaOk && indexSlope != null && indexSlope > 0 && buyWindowOpen;
+    // 2026-11-02 用户新增：临近严重异动（剩余空间 ≤ 10%）不买
+    const buyPointHit = listPassed && deltaOk && indexSlope != null && indexSlope > 0 && buyWindowOpen && !abnormalWarn.blocked;
 
     return {
       code,
@@ -216,6 +228,7 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
       } : null,
       listPassed,
       buyPointHit,
+      abnormalWarn,
       minute: stockMinute,
     };
   });
@@ -379,6 +392,15 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
   }
   const buyWindowOpen = afterClose ? false : (revLatestMinute > 0 ? revLatestMinute <= buyCutoffMinute : true);
 
+  // 4.6) 严重异动临近测算（2026-11-02 用户要求，与顺周期腿/回测引擎同口径）：
+  //   买入前按 T-10 / T-30 收盘价测算累计涨幅剩余空间，任一剩余 ≤ 10% 即视为临近严重异动，买点不触发（命中计数照常展示）
+  let abnormalDates = [];
+  try { abnormalDates = await getPastTradingDates(dateStr, 30); } catch (e) { abnormalDates = []; }
+  const abnormalBases = new Map();
+  for (const code of codes) {
+    try { abnormalBases.set(code, buildAbnormalWarnBases(code, abnormalDates)); } catch (e) { abnormalBases.set(code, null); }
+  }
+
   // 5) 负斜率窗口内各交易日的强度分命中次数
   //   仅统计「该交易日自身也满足择时前置（斜率 < 0 且已连续为负 ≥ 第 3 天）」的日期——与回测一致
   //   （回测只在当日 eligible 时构建池并登记命中，负斜率窗口前 2 天不计数）
@@ -414,12 +436,15 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
     const isLimitUp = strength
       ? !!strength.limitUp
       : (change != null && change > limitUpThresholdOf(code));
+    const abnormalWarn = evalAbnormalWarn(abnormalBases.get(code), px);
 
     const hitCount = hitCounts.get(code) || 0;
     // 2026-10-20 用户新增：买入截止后不买——买入窗口关闭时买点不触发（命中计数照常展示）
-    const timingPassed = eligible && indexDropOk && hitCount >= REV_HIT_REQUIRED && !isLimitUp && buyWindowOpen;
+    // 2026-11-02 用户新增：临近严重异动不买——命中计数照常展示
+    const timingPassed = eligible && indexDropOk && hitCount >= REV_HIT_REQUIRED && !isLimitUp && buyWindowOpen && !abnormalWarn.blocked;
     let timingTag;
-    if (!buyWindowOpen && eligible && hitCount >= REV_HIT_REQUIRED && !isLimitUp) timingTag = `已过${cutoffText({ buyCutoffMinute })}不买`;
+    if (!buyWindowOpen && eligible && hitCount >= REV_HIT_REQUIRED && !isLimitUp && !abnormalWarn.blocked) timingTag = `已过${cutoffText({ buyCutoffMinute })}不买`;
+    else if (eligible && indexDropOk && hitCount >= REV_HIT_REQUIRED && !isLimitUp && abnormalWarn.blocked) timingTag = '临近异动不可买';
     else if (!eligible) timingTag = '斜率未就绪';
     else if (!indexDropOk) timingTag = '大盘未达跌幅';
     else if (hitCount >= REV_HIT_REQUIRED && !isLimitUp) timingTag = '已触发买点';
@@ -428,7 +453,7 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
 
     const slopeText = slopeClose == null ? '--' : round2(slopeClose);
     const dayNoText = reverseTimestampText(daysSinceTurnNeg);
-    const timingDetail = `上证 3 日线斜率收盘口径 ${slopeText}（连续为负${daysSinceTurnNeg == null ? '--' : dayNoText}${eligible ? '，已满足 ≥ 第 ' + (REV_NEG_STREAK_MIN_DAYS + 1) + ' 天' : ''}）；当日上证跌幅 ${indexChange == null ? '--' : indexChange + '%'}${indexDropOk ? `（≤ ${REV_INDEX_DROP_PCT}%，已满足）` : `（须 ≤ ${REV_INDEX_DROP_PCT}%）`}；窗口内强度分命中 ${hitCount}/${REV_HIT_REQUIRED} 次${buyWindowOpen ? '' : `；已过 ${cutoffText({ buyCutoffMinute })} 买入截止，今日不再买入`}`;
+    const timingDetail = `上证 3 日线斜率收盘口径 ${slopeText}（连续为负${daysSinceTurnNeg == null ? '--' : dayNoText}${eligible ? '，已满足 ≥ 第 ' + (REV_NEG_STREAK_MIN_DAYS + 1) + ' 天' : ''}）；当日上证跌幅 ${indexChange == null ? '--' : indexChange + '%'}${indexDropOk ? `（≤ ${REV_INDEX_DROP_PCT}%，已满足）` : `（须 ≤ ${REV_INDEX_DROP_PCT}%）`}；窗口内强度分命中 ${hitCount}/${REV_HIT_REQUIRED} 次${buyWindowOpen ? '' : `；已过 ${cutoffText({ buyCutoffMinute })} 买入截止，今日不再买入`}；异动空间：${abnormalWarnText(abnormalWarn)}${abnormalWarn.blocked ? `（剩余 ≤ ${ABNORMAL_WARN_MIN_ROOM_PCT}%，临近严重异动，不买）` : ''}`;
 
     return {
       code,
@@ -447,6 +472,7 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
       timingPassed,
       timingTag,
       timingDetail,
+      abnormalWarn,
     };
   });
 
@@ -490,6 +516,11 @@ const buildReverseChecks = (rctx) => {
   const slopePassed = rctx.eligible === true;
   const triggerPassed = triggered.length > 0;
   const trigRow = triggered[0] || null;
+  // 2026-11-02 用户新增：异动空间门禁展示标的——优先已触发买点者，其次未临近异动的最高命中者
+  const abnormalRow = trigRow
+    || rows.find(r => !(r.abnormalWarn && r.abnormalWarn.blocked))
+    || best;
+  const abnormalOk = !(abnormalRow && abnormalRow.abnormalWarn && abnormalRow.abnormalWarn.blocked);
 
   return [
     {
@@ -525,6 +556,16 @@ const buildReverseChecks = (rctx) => {
             : rctx.buyWindowOpen === false
               ? `当日上证跌幅已满足且窗口内已有达标命中，但已过 ${cutoff} 买入截止（每天 ${cutoff} 之后不买，2026-10-20 用户新增），今日不再买入`
               : `当日上证跌幅已满足，但反向抱团池内暂无个股在窗口内累计命中 ${REV_HIT_REQUIRED} 次盘中强度分 > ${REV_STRENGTH_MIN}（当前最高 ${best ? `${best.stockName} ${best.hitCount}/${REV_HIT_REQUIRED} 次` : '--'}）`,
+    },
+    {
+      id: 'reverse_leader_abnormal_gate',
+      group: 'reverse',
+      title: `逆周期异动门禁：距「10 个交易日内累计涨幅 100%」或「30 个交易日内累计涨幅 200%」的剩余空间须 > ${ABNORMAL_WARN_MIN_ROOM_PCT}%`,
+      passed: abnormalOk,
+      value: abnormalRow ? abnormalWarnText(abnormalRow.abnormalWarn) : '--',
+      reason: abnormalOk
+        ? `2026-11-02 用户新增：逆周期腿买入前同样以当前时点价测算「含买入当日共 10 个交易日累计涨幅 = (时点价 − T-10 收盘价) ÷ T-10 收盘价」与「含买入当日共 30 个交易日累计涨幅 = (时点价 − T-30 收盘价) ÷ T-30 收盘价」，任一距 100% / 200% 的剩余空间 ≤ ${ABNORMAL_WARN_MIN_ROOM_PCT}% 即跳过不买；展示标的两个窗口剩余空间均 > ${ABNORMAL_WARN_MIN_ROOM_PCT}%，门禁通过（与回测引擎同口径）`
+        : `2026-11-02 用户新增：展示标的${abnormalRow ? ` ${abnormalRow.stockName}（${abnormalRow.code}） ` : ''}任一异动窗口剩余空间 ≤ ${ABNORMAL_WARN_MIN_ROOM_PCT}%，临近严重异动，逆周期腿跳过不买（命中计数照常展示；与回测引擎同口径）`,
     },
     {
       id: 'reverse_leader_time_gate',
@@ -645,6 +686,15 @@ const buildExtremeWinChecks = (ctx, candidate) => {
             ? `上个交易日强度分 ${cross.prevDayStrength} > ${PREV_STRENGTH_GAP_GATE}，故当日竞价低开不得超过 ${OPEN_GAP_MIN_PCT}%；本股当日竞价高开 ${candidate ? candidate.aRaw : '--'}% ≥ ${OPEN_GAP_MIN_PCT}%，满足门禁`
             : `上个交易日强度分 ${cross && cross.prevDayStrength != null ? cross.prevDayStrength : '数据缺失（不判定）'} ≤ ${PREV_STRENGTH_GAP_GATE}，不触发竞价低开限制`)
         : `上个交易日强度分 ${cross && cross.prevDayStrength != null ? cross.prevDayStrength : '--'} > ${PREV_STRENGTH_GAP_GATE}，当日竞价高开 ${candidate ? candidate.aRaw : '--'}% < ${OPEN_GAP_MIN_PCT}%，竞价低开超过限制，该候选不可买`,
+    },
+    {
+      id: 'extreme_win_abnormal_gate',
+      title: `买点门禁：距「10 个交易日内累计涨幅 100%」或「30 个交易日内累计涨幅 200%」的剩余空间须 > ${ABNORMAL_WARN_MIN_ROOM_PCT}%`,
+      passed: !(candidate && candidate.abnormalWarn && candidate.abnormalWarn.blocked),
+      value: candidate ? abnormalWarnText(candidate.abnormalWarn) : '--',
+      reason: candidate && candidate.abnormalWarn && candidate.abnormalWarn.blocked
+        ? `2026-11-02 用户新增：以当前时点价测算「含买入当日共 10 个交易日累计涨幅 = (时点价 − T-10 收盘价) ÷ T-10 收盘价」与「含买入当日共 30 个交易日累计涨幅 = (时点价 − T-30 收盘价) ÷ T-30 收盘价」，本股任一距 100% / 200% 的剩余空间 ≤ ${ABNORMAL_WARN_MIN_ROOM_PCT}%，临近严重异动，跳过不买（与回测引擎同口径）`
+        : `2026-11-02 用户新增：以当前时点价测算「10 个交易日内累计涨幅距 100%」与「30 个交易日内累计涨幅距 200%」的剩余空间，本股剩余空间均 > ${ABNORMAL_WARN_MIN_ROOM_PCT}%，不构成临近异动，门禁通过（与回测引擎同口径）`,
     },
     {
       id: 'extreme_win_diff',

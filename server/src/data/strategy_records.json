@@ -32,7 +32,7 @@
   {
     "id": "c01c6cca11829337",
     "time": "2026-11-02 09:45:28",
-    "read": false,
+    "read": true,
     "strategyId": "panic_outflow",
     "title": "🚨 恐慌盘出逃",
     "description": "成交量较约15分钟前放大 <strong>393亿</strong>（≥100亿），主力资金净流出加速（-7.3→-19.8亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
@@ -42,7 +42,7 @@
   {
     "id": "77cce716264112b6",
     "time": "2026-11-02 10:41:56",
-    "read": false,
+    "read": true,
     "strategyId": "panic_outflow",
     "title": "🚨 恐慌盘出逃",
     "description": "成交量较约15分钟前放大 <strong>110亿</strong>（≥100亿），主力资金净流出加速（-6.0→-15.6亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
@@ -52,7 +52,7 @@
   {
     "id": "44cf5d8b61189662",
     "time": "2026-11-02 11:14:34",
-    "read": false,
+    "read": true,
     "strategyId": "volume_price_surge",
     "title": "✅ 量价齐升",
     "description": "成交量放大 <strong>186亿</strong>（≥100亿），资金净流入-10.2→11.0亿（≥10亿，流入增加），创业板5分钟上涨0.72%。量价资金三者共振，多方占优。",
@@ -62,7 +62,7 @@
   {
     "id": "3c4d1c18019bd952",
     "time": "2026-11-02 13:00:05",
-    "read": false,
+    "read": true,
     "strategyId": "straight_rise_no_volume",
     "title": "⚠️ 无量拉升警惕回落",
     "description": "创业板5分钟上涨2.33%，但成交量仅增加 <strong>0亿</strong>（不足100亿），无量上涨持续性存疑，容易回落。",
@@ -72,7 +72,7 @@
   {
     "id": "8079235d2064d58e",
     "time": "2026-11-02 13:44:19",
-    "read": false,
+    "read": true,
     "strategyId": "volume_price_surge",
     "title": "✅ 量价齐升",
     "description": "成交量放大 <strong>114亿</strong>（≥100亿），资金净流入129.3→140.2亿（≥10亿，流入增加），创业板5分钟上涨1.69%。量价资金三者共振，多方占优。",

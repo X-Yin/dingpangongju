@@ -1086,5 +1086,21 @@
       "lowAvg": -6.725
     },
     "timestamp": "2026-10-30 15:01:47"
+  },
+  {
+    "date": 20261102,
+    "score": 145,
+    "level": 5,
+    "label": "风偏高涨",
+    "desc": "远期叙事股明显领涨，资金愿意为明年、后年的故事付溢价",
+    "detail": {
+      "spread": 1.22,
+      "breadth": 0.145,
+      "attackTilt": 0.081,
+      "avgChange": 1.871,
+      "highAvg": 1.115,
+      "lowAvg": -0.105
+    },
+    "timestamp": "2026-11-02 15:02:01"
   }
 ]

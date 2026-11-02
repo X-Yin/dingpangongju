@@ -1250,11 +1250,6 @@ exports.default = [
     },
     {
         "blockName": "消费",
-        "code": "sh603027",
-        "name": "千禾味业"
-    },
-    {
-        "blockName": "消费",
         "code": "sh603345",
         "name": "安井食品"
     },
@@ -1738,5 +1733,30 @@ exports.default = [
         "blockName": "AI 剧",
         "code": "sz301218",
         "name": "华是科技"
+    },
+    {
+        "blockName": "游戏",
+        "code": "sh603258",
+        "name": "电魂网络"
+    },
+    {
+        "blockName": "消费",
+        "code": "sh600865",
+        "name": "百大集团"
+    },
+    {
+        "blockName": "消费",
+        "code": "sz000417",
+        "name": "合百集团"
+    },
+    {
+        "blockName": "消费",
+        "code": "sz002187",
+        "name": "广百股份"
+    },
+    {
+        "blockName": "消费",
+        "code": "sz001219",
+        "name": "青岛食品"
     }
 ]

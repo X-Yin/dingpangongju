@@ -67,6 +67,7 @@ const {
 const {
   LOOKBACK_DAYS, BASE_MIN_BOARD_COUNT, DEATH_CROSS_WINDOW, DELTA_MIN,
   PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
+  buildAbnormalWarnBases, evalAbnormalWarn,
   computeCrossInfo, buildExtremeWinPool,
 } = require('./extremeWinPool');
 // B 风格·逆周期腿候选池 + 择时常量
@@ -364,6 +365,14 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
     };
 
     // B 风格·顺周期腿候选池数据（懒加载）：死叉前置 + 今日分时 + 今日前 3 日均量
+    // 严重异动临近测算（2026-11-02 用户要求）：B 风格两条腿买入前均需测算异动剩余空间
+    let abnormalPastDates = null;
+    const ensureAbnormalPastDates = async () => {
+      if (abnormalPastDates) return abnormalPastDates;
+      try { abnormalPastDates = await getPastTradingDates(dateStr, 30); } catch (e) { abnormalPastDates = []; }
+      return abnormalPastDates;
+    };
+    const abnormalBases = new Map();
     let poolReady = false;
     let candidates = [];
     const todayTline = new Map();
@@ -395,9 +404,11 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
         .map(c => ({ ...c, crossInfo: crossMap.get(c.code) }))
         .filter(c => c.crossInfo && c.crossInfo.hasCross && !c.crossInfo.consumed && c.crossInfo.prevDayVolumeOk);
       if (candidates.length === 0) return;
+      const abnormalDates = await ensureAbnormalPastDates();
       await batchParallel(candidates, async (c) => {
         try { todayTline.set(c.code, await loadTlinePoints(c.code, dateNum)); } catch (e) { todayTline.set(c.code, { preclose: null, points: [] }); }
         try { todayAvg3Vol.set(c.code, stockPriorAvgVolume(c.code, dateNum, 3)); } catch (e) { todayAvg3Vol.set(c.code, null); }
+        try { abnormalBases.set(c.code, buildAbnormalWarnBases(c.code, abnormalDates)); } catch (e) { abnormalBases.set(c.code, null); }
       }, 8);
     };
 
@@ -409,8 +420,10 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
       revPoolReady = true;
       if (revCandidatesRaw.length === 0) return;
       await ensureIdxTlines();
+      const abnormalDates = await ensureAbnormalPastDates();
       await batchParallel(revCandidatesRaw, async (c) => {
         try { revTodayTline.set(c.code, await loadTlinePoints(c.code, dateNum)); } catch (e) { revTodayTline.set(c.code, { preclose: null, points: [] }); }
+        try { abnormalBases.set(c.code, buildAbnormalWarnBases(c.code, abnormalDates)); } catch (e) { abnormalBases.set(c.code, null); }
       }, 8);
     };
 
@@ -426,7 +439,8 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
         if (!s) continue;
         const delta = round2(s.score - d.score);
         if (delta == null || delta < DELTA_MIN) continue;
-        out.push({ ...c, delta, strength: s.score, diffScore: d.score, s, d, px: s.px, changePct: s.changePct, limitUp: s.limitUp });
+        const abnormalWarn = evalAbnormalWarn(abnormalBases.get(c.code), s.px);
+        out.push({ ...c, delta, strength: s.score, diffScore: d.score, s, d, px: s.px, changePct: s.changePct, limitUp: s.limitUp, abnormalWarn });
       }
       out.sort((a, b) => b.delta - a.delta);
       return out;
@@ -849,7 +863,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
                 const legIdx = idleLegIdx();
                 if (legIdx === -1) break;
                 const otherHeld = ewPositions.filter((p, i) => i !== legIdx && p).map(p => p.code);
-                if (pick.limitUp || otherHeld.includes(pick.code) || soldTodayCodes.has(pick.code) || failPrevStrengthOpenGap(pick)) continue;
+                if (pick.limitUp || otherHeld.includes(pick.code) || soldTodayCodes.has(pick.code) || failPrevStrengthOpenGap(pick) || (pick.abnormalWarn && pick.abnormalWarn.blocked)) continue;
                 ewPositions[legIdx] = buildPosition({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx, otherHeld, cutoffMinute: BUY_CUTOFF_MINUTE });
                 ewPositions[legIdx].buyDi = todayIdx;
                 ewPositions[legIdx].cycle = CYCLE_PRO;
@@ -872,12 +886,14 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
               if (!t || t.points.length === 0 || !(t.preclose > 0)) continue;
               const s = strengthAtMinute(t, bucketMinute, c.code, idxPointsOf(c.code));
               if (!s || !(s.score > REV_STRENGTH_MIN)) continue;
+              const abnormalWarn = evalAbnormalWarn(abnormalBases.get(c.code), s.px);
               revDayTriggered.add(c.code);
               const prev = revHitCount.get(c.code) || 0;
               const next = Math.min(prev + 1, REV_HIT_REQUIRED);
               revHitCount.set(c.code, next);
               // 2026-10-20 用户新增：每天 13:30 之后不买——命中登记照常累计（与线上口径一致），仅不再实际买入
-              if (prev >= 1 && !s.limitUp && bucketMinute <= BUY_CUTOFF_MINUTE) {
+              // 2026-11-02 用户新增：临近异动（剩余空间 ≤ 10%）不买——命中登记照常累计
+              if (prev >= 1 && !s.limitUp && bucketMinute <= BUY_CUTOFF_MINUTE && !abnormalWarn.blocked) {
                 const legIdx = idleLegIdx();
                 if (legIdx !== -1) {
                   const otherHeld = ewPositions.filter((p, i) => i !== legIdx && p).map(p => p.code);
@@ -886,7 +902,7 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
                       pick: c, s, score: s.score, px: s.px, changePct: s.changePct,
                       dateStr, dateDisplay, timeText, hitCount: next,
                       slopeClose, daysSinceTurnNeg, idxChg, legIdx, otherHeld,
-                      cutoffMinute: BUY_CUTOFF_MINUTE,
+                      cutoffMinute: BUY_CUTOFF_MINUTE, abnormalWarn,
                     });
                     ewPositions[legIdx].buyDi = todayIdx;
                     ewPositions[legIdx].cycle = CYCLE_COUNTER;

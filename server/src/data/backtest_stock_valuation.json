@@ -2623,5 +2623,12 @@
     "marketValue": 5543882480,
     "circulatingMarketValue": 5491135460,
     "updatedAt": "2026-11-01 22:51:38"
+  },
+  {
+    "code": "sz002767",
+    "name": "先锋电子",
+    "marketValue": 2199000000,
+    "circulatingMarketValue": 1909961548,
+    "updatedAt": "2026-11-02 15:26:15"
   }
 ]

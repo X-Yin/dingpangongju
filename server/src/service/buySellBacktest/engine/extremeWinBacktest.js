@@ -39,6 +39,7 @@ const {
   RANGE_SLIDE_DAYS, MAX_WINDOW_RANGE_PCT, MAX_TOTAL_RANGE_PCT, POST_LIANBAN_DROP_PCT,
   NEW_MAX_WINDOW_RANGE_PCT, NEW_MIN_WINDOW_RANGE_PCT, PEAK_GAP_MIN_DAYS, POST_PEAK_MAX_RANGE_PCT, NEW_BASE_LOOKBACK_DAYS,
   PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
+  ABNORMAL_WARN_MIN_ROOM_PCT, buildAbnormalWarnBases, evalAbnormalWarn, abnormalWarnText,
   computeCrossInfo, buildExtremeWinPool,
 } = require('./extremeWinPool');
 // 逆周期腿候选池 + 择时常量 公共模块（与「情绪游资-反向抱团龙头」独立策略共用同一份实现，避免口径漂移）
@@ -108,6 +109,10 @@ const {
 //             （开盘价较昨收涨幅须 >= -3%），否则该候选取值不可买、顺延至差值排名下一只；上个交易日强度分数据缺失时不判定；
 //          ⑤ 时间门禁（2026-10-20 用户新增）：每天 14:30 之后不买（14:30 时间桶本身可买，14:33 起的桶一律不买），
 //             顺周期腿 14:30 后的桶直接跳过买入评估；逆周期腿命中登记照常累计、仅不再实际买入；
+//          ⑥ 严重异动门禁（2026-11-02 用户新增）：买入前以本桶分时价测算「含买入当日共 10 个交易日累计涨幅
+//             = (时点价 − T-10 收盘价) ÷ T-10 收盘价」与「含买入当日共 30 个交易日累计涨幅 = (时点价 − T-30 收盘价) ÷ T-30 收盘价」，
+//             任一距 100% / 200% 的剩余空间 ≤ 10% 即视为临近严重异动，跳过该候选不买（顺周期/逆周期两条腿均适用）；
+//             基准收盘价缺失时该窗口不判定；逆周期腿命中登记照常累计、仅不再实际买入；
 //          多候选触发同一桶时，按今日「强度分 − 差劲分」差值降序依次买入；买入时点已涨停（主板 > 9.5%、创业/科创 > 19%）不可买、跳过该只；
 //          2026-10-18 用户要求：同一交易日内可连续建仓——多个股票依次触发买点时「谁先触发就买谁」，每个空仓位槽买一只，
 //          直到两份仓位全部占满为止（不再限制「每条腿每交易日最多建仓一份」）；
@@ -341,6 +346,17 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
     // 每日分时缓存重建，控制内存
     clearTlineCache();
 
+    // ===== 严重异动临近测算（2026-11-02 用户要求）=====
+    //   买入前测算「10 个交易日内累计涨幅距 100%」「30 个交易日内累计涨幅距 200%」的剩余空间，
+    //   任一剩余 ≤ 10 个百分点即跳过不买；基准收盘价按当日候选懒加载（每个交易日取一次过去 30 个交易日）
+    let abnormalPastDates = null;
+    const ensureAbnormalPastDates = async () => {
+      if (abnormalPastDates) return abnormalPastDates;
+      try { abnormalPastDates = await getPastTradingDates(dateStr, 30); } catch (e) { abnormalPastDates = []; }
+      return abnormalPastDates;
+    };
+    const abnormalBases = new Map(); // code -> { base10, base30 } | null
+
     // 逐份隔夜持仓的当日分时（卖点用），及逐份当日收盘抗分歧指数（卖点⑥用；懒计算）
     const posTlines = new Array(positions.length).fill(null);
     for (let l = 0; l < positions.length; l++) {
@@ -442,9 +458,11 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
         .filter(c => c.crossInfo && c.crossInfo.hasCross && !c.crossInfo.consumed && c.crossInfo.prevDayVolumeOk);
       if (candidates.length === 0) return;
       // 今日分时 + 今日前 3 个交易日日均量（逐候选）
+      const abnormalDates = await ensureAbnormalPastDates();
       await batchParallel(candidates, async (c) => {
         try { todayTline.set(c.code, await loadTlinePoints(c.code, dateNum)); } catch (e) { todayTline.set(c.code, { preclose: null, points: [] }); }
         try { todayAvg3Vol.set(c.code, stockPriorAvgVolume(c.code, dateNum, 3)); } catch (e) { todayAvg3Vol.set(c.code, null); }
+        try { abnormalBases.set(c.code, buildAbnormalWarnBases(c.code, abnormalDates)); } catch (e) { abnormalBases.set(c.code, null); }
       }, 8);
     };
 
@@ -456,8 +474,10 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
       revPoolReady = true;
       if (revCandidatesRaw.length === 0) return;
       await ensureIdxTlines();
+      const abnormalDates = await ensureAbnormalPastDates();
       await batchParallel(revCandidatesRaw, async (c) => {
         try { revTodayTline.set(c.code, await loadTlinePoints(c.code, dateNum)); } catch (e) { revTodayTline.set(c.code, { preclose: null, points: [] }); }
+        try { abnormalBases.set(c.code, buildAbnormalWarnBases(c.code, abnormalDates)); } catch (e) { abnormalBases.set(c.code, null); }
       }, 8);
     };
 
@@ -473,7 +493,8 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
       if (!s) return null;
       const delta = round2(s.score - d.score);
       if (delta == null) return null;
-      return { ...c, delta, strength: s.score, diffScore: d.score, s, d, px: s.px, changePct: s.changePct, limitUp: s.limitUp };
+      const abnormalWarn = evalAbnormalWarn(abnormalBases.get(c.code), s.px);
+      return { ...c, delta, strength: s.score, diffScore: d.score, s, d, px: s.px, changePct: s.changePct, limitUp: s.limitUp, abnormalWarn };
     };
     // 顺周期腿评估某分钟的候选：返回按今日「强度分 − 差劲分」降序排列的达标（>= DELTA_MIN）候选数组
     const evalBucket = (bucketMinute) => {
@@ -621,7 +642,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
               const legIdx = idleLegIdx();
               if (legIdx === -1) break;
               const otherHeld = positions.filter((p, i) => i !== legIdx && p).map(p => p.code);
-              if (pick.limitUp || otherHeld.includes(pick.code) || soldTodayCodes.has(pick.code) || failPrevStrengthOpenGap(pick)) continue;
+              if (pick.limitUp || otherHeld.includes(pick.code) || soldTodayCodes.has(pick.code) || failPrevStrengthOpenGap(pick) || (pick.abnormalWarn && pick.abnormalWarn.blocked)) continue;
               if (legIdx >= positions.length) positions.length = legIdx + 1;
               positions[legIdx] = buildPosition({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx, otherHeld });
               positions[legIdx].buyDi = todayIdx;
@@ -645,6 +666,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
             if (!t || t.points.length === 0 || !(t.preclose > 0)) continue;
             const s = strengthAtMinute(t, bucketMinute, c.code, idxPointsOf(c.code));
             if (!s || !(s.score > REV_STRENGTH_MIN)) continue;
+            const abnormalWarn = evalAbnormalWarn(abnormalBases.get(c.code), s.px);
             // 首次 > 50 → 登记当日命中（同一天同一只股票只计一次）
             revDayTriggered.add(c.code);
             const prev = revHitCount.get(c.code) || 0;
@@ -652,7 +674,8 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
             revHitCount.set(c.code, next);
             // 第 2 次命中即按本桶分时价买入
             //   2026-10-20 用户新增：每天 14:30 之后不买——命中登记照常累计（与线上口径一致），仅不再实际买入
-            if (prev >= 1 && !s.limitUp && bucketMinute <= BUY_CUTOFF_MINUTE) {
+            //   2026-11-02 用户新增：临近异动（剩余空间 ≤ 10%）不买——命中登记照常累计
+            if (prev >= 1 && !s.limitUp && bucketMinute <= BUY_CUTOFF_MINUTE && !abnormalWarn.blocked) {
               const legIdx = idleLegIdx();
               if (legIdx !== -1) {
                 const otherHeld = positions.filter((p, i) => i !== legIdx && p).map(p => p.code);
@@ -661,7 +684,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
                   positions[legIdx] = buildRevPosition({
                     pick: c, s, score: s.score, px: s.px, changePct: s.changePct,
                     dateStr, dateDisplay, timeText, hitCount: next,
-                    slopeClose, daysSinceTurnNeg, idxChg, legIdx, otherHeld,
+                    slopeClose, daysSinceTurnNeg, idxChg, legIdx, otherHeld, abnormalWarn,
                   });
                   positions[legIdx].buyDi = todayIdx;
                   positions[legIdx].cycle = CYCLE_COUNTER;
@@ -775,6 +798,13 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
         : `上个交易日强度分 ${cross.prevDayStrength == null ? '数据缺失（不判定）' : cross.prevDayStrength} ≤ ${PREV_STRENGTH_GAP_GATE}，不触发竞价低开限制（2026-10-17 用户新增门禁）`,
     },
     {
+      id: 'extreme_win_abnormal_gate',
+      title: `买点门禁：距「10 个交易日内累计涨幅 100%」或「30 个交易日内累计涨幅 200%」的剩余空间须 > ${ABNORMAL_WARN_MIN_ROOM_PCT}%`,
+      passed: true,
+      value: `${abnormalWarnText(pick.abnormalWarn)}${pick.abnormalWarn && pick.abnormalWarn.minRoom != null ? `（最小剩余 ${pick.abnormalWarn.minRoom}%）` : ''}`,
+      reason: `2026-11-02 用户新增：买入前以本桶分时价测算「含买入当日共 10 个交易日累计涨幅 = (时点价 − T-10 收盘价) ÷ T-10 收盘价」与「含买入当日共 30 个交易日累计涨幅 = (时点价 − T-30 收盘价) ÷ T-30 收盘价」，任一距 100% / 200% 的剩余空间 ≤ ${ABNORMAL_WARN_MIN_ROOM_PCT}% 即视为临近严重异动、跳过不买；本股两个窗口的剩余空间均 > ${ABNORMAL_WARN_MIN_ROOM_PCT}%，门禁通过`,
+    },
+    {
       id: 'extreme_win_diff',
       title: `今日差劲分 ${diff}（越高越差）`,
       passed: true,
@@ -832,7 +862,7 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
 };
 
 // 构建逆周期腿持仓对象（反向抱团龙头口径；legIdx = 所属份别，各半仓；规则与独立「情绪游资-反向抱团龙头」完全一致）
-const buildRevPosition = ({ pick, s, score, px, changePct, dateStr, dateDisplay, timeText, hitCount, slopeClose, daysSinceTurnNeg, idxChg, legIdx = 0, otherHeld = [], cutoffMinute = BUY_CUTOFF_MINUTE }) => {
+const buildRevPosition = ({ pick, s, score, px, changePct, dateStr, dateDisplay, timeText, hitCount, slopeClose, daysSinceTurnNeg, idxChg, legIdx = 0, otherHeld = [], cutoffMinute = BUY_CUTOFF_MINUTE, abnormalWarn = null }) => {
   const chgText = (v) => (v == null ? '--' : `${v > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
   const cutoffTime = `${Math.floor(Number(cutoffMinute) / 100)}:${String(Number(cutoffMinute) % 100).padStart(2, '0')}`;
   const delayText = `按该分钟分时价 ${px.toFixed(2)} 买入`;
@@ -865,6 +895,13 @@ const buildRevPosition = ({ pick, s, score, px, changePct, dateStr, dateDisplay,
       passed: true,
       value: `A 竞价高开 ${s.aRaw}%（分 ${s.aScore}）· B 分钟最大涨幅 ${s.bRaw}%（分 ${s.bScore}）${s.isOneWord ? '（一字板）' : ''} · C 抗分歧 ${s.cRaw}（分 ${s.cScore}）· D 当日涨幅 ${s.dRaw}%（分 ${s.dScore}）`,
       reason: `强度分 = 0.3×A + 0.2×B + 0.3×C + 0.2×D = 0.3×${s.aScore} + 0.2×${s.bScore} + 0.3×${s.cScore} + 0.2×${s.dScore} = ${score} > ${REV_STRENGTH_MIN}（A 上限 ${STRENGTH_A_MAX}%、B 上限 ${STRENGTH_B_MAX}%、C 上限 ${STRENGTH_C_MAX}%、D 上限 ${STRENGTH_D_MAX}%；与「情绪游资-极致胜率」口径一致）；本股累计第 ${hitCount} 次命中（需达 ${REV_HIT_REQUIRED} 次），命中计数逐股独立累计、同一交易日同一只只计一次；时点价 ${px.toFixed(2)}（昨收 ${s.preclose}，现价涨幅 ${chgText(changePct)}）`,
+    },
+    {
+      id: 'reverse_leader_abnormal_gate',
+      title: `买点门禁：距「10 个交易日内累计涨幅 100%」或「30 个交易日内累计涨幅 200%」的剩余空间须 > ${ABNORMAL_WARN_MIN_ROOM_PCT}%`,
+      passed: true,
+      value: `${abnormalWarnText(abnormalWarn)}${abnormalWarn && abnormalWarn.minRoom != null ? `（最小剩余 ${abnormalWarn.minRoom}%）` : ''}`,
+      reason: `2026-11-02 用户新增：买入前以本桶分时价测算「含买入当日共 10 个交易日累计涨幅 = (时点价 − T-10 收盘价) ÷ T-10 收盘价」与「含买入当日共 30 个交易日累计涨幅 = (时点价 − T-30 收盘价) ÷ T-30 收盘价」，任一距 100% / 200% 的剩余空间 ≤ ${ABNORMAL_WARN_MIN_ROOM_PCT}% 即视为临近严重异动、跳过不买；本股两个窗口的剩余空间均 > ${ABNORMAL_WARN_MIN_ROOM_PCT}%，门禁通过`,
     },
     {
       id: 'reverse_leader_time_gate',
