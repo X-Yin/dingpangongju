@@ -1,5 +1,8 @@
 {
-  "date": "20261030",
-  "bucket": 595,
-  "mode": "tech_attack"
+  "date": "20261102",
+  "bucket": null,
+  "mode": "tech_attack",
+  "ewNotifiedMinute": {
+    "sz002565_1793325948196_mjda": 1402
+  }
 }

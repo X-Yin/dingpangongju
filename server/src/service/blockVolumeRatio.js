@@ -8,7 +8,7 @@
 // - 兜底路径 computeByPolling：全量行情接口不可用或不完整时，按平台配额逐只请求日K
 //   （同花顺 45 / 财联社 45，每秒 90 只），
 //   某只股票主平台失败时按 同花顺 → 财联社 兜底；请求结果写入临时缓存目录，结束后删除
-// - 结果按 10 分钟粒度追加写入 src/data/block_volume_ratio_intraday.json，供前端分时图使用
+// - 结果按 5 分钟粒度追加写入 src/data/block_volume_ratio_intraday.json，供前端分时图使用
 const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');

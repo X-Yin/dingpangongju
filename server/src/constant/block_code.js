@@ -1733,5 +1733,10 @@ exports.default = [
         "code": "sz300059",
         "name": "东方财富",
         "tag": "中性"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sz301218",
+        "name": "华是科技"
     }
 ]

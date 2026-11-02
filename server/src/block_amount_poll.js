@@ -1,6 +1,6 @@
 // 板块成交量占比轮询
-// - 每 10 分钟计算一次各板块当日成交量占比，写入 src/data/block_volume_ratio_intraday.json
-// - 默认仅在交易日的交易时段、且 10:00 之后执行（避开开盘初期成交量不稳定）
+// - 每 5 分钟计算一次各板块当日成交量占比，写入 src/data/block_volume_ratio_intraday.json
+// - 默认仅在交易日的交易时段、且 9:30 开盘之后执行
 // - npm run block_amount_poll        常驻轮询
 // - npm run block_amount_poll --now  立即执行一次（不判断交易日/时间），执行完退出
 // - 追加 --all：强制走多平台轮询兜底（同花顺/财联社）
@@ -8,9 +8,9 @@ const dayjs = require('dayjs');
 const { isTradingDay, isMiddayBreak, isAfterMarketClose } = require('./utils');
 const { runAndSaveIntradayPoint } = require('./service/blockVolumeRatio');
 
-const POLL_INTERVAL = 10 * 60 * 1000;
+const POLL_INTERVAL = 5 * 60 * 1000;
 const CHECK_INTERVAL = 60 * 1000;
-const START_MINUTE = 10 * 60; // 10:00 之后才开始
+const START_MINUTE = 9 * 60 + 30; // 9:30 开盘之后才开始
 // 校验失败 / 请求失败时的重试：等待 10s 后强制重新拉取行情（不复用同一份异常快照）
 const MAX_ATTEMPTS = 3;
 const RETRY_DELAY = 10 * 1000;
@@ -25,7 +25,7 @@ const NOW = process.argv.includes('--now')
 const ALL = process.argv.includes('--all')
     || String(process.env.npm_config_all || '').toLowerCase() === 'true';
 
-// 是否处于允许轮询的时段：交易日、非午休、未收盘、且已过 10:00
+// 是否处于允许轮询的时段：交易日、非午休、未收盘、且已过 9:30
 const isInPollWindow = (now = new Date()) => {
     if (!isTradingDay(now)) return false;
     if (isMiddayBreak(now) || isAfterMarketClose(now)) return false;
@@ -88,7 +88,8 @@ const runOnce = async () => {
 };
 
 const main = async () => {
-    console.log(`板块成交量占比轮询启动，间隔 ${POLL_INTERVAL / 60000} 分钟，${START_MINUTE / 60}:00 之后执行`);
+    const startText = `${String(Math.floor(START_MINUTE / 60)).padStart(2, '0')}:${String(START_MINUTE % 60).padStart(2, '0')}`;
+    console.log(`板块成交量占比轮询启动，间隔 ${POLL_INTERVAL / 60000} 分钟，${startText} 之后执行`);
 
     if (NOW) {
         console.log('--now 模式：忽略交易日与交易时段限制，立即执行一次');
@@ -114,7 +115,7 @@ const main = async () => {
         lastRunAt = Date.now();
         await runOnce();
     } else {
-        console.log('当前不在允许执行的时段（交易日 10:00 之后），等待下一次检查...');
+        console.log('当前不在允许执行的时段（交易日 09:30 之后），等待下一次检查...');
     }
 
     setInterval(tick, CHECK_INTERVAL);

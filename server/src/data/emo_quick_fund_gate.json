@@ -1,13 +1,13 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-10-30 10:07:18",
+  "computedAt": "2026-11-02 14:05:57",
   "reason": "持仓变动重跑（持仓管理增删股票）",
   "range": {
-    "startDate": "20260731",
-    "endDate": "20261030"
+    "startDate": "20260803",
+    "endDate": "20261102"
   },
-  "tradeCount": 8,
+  "tradeCount": 7,
   "threshold": 20,
   "consecutiveBelow": 1,
   "lastReturns": [
@@ -40,13 +40,6 @@
       "returnRate": -1.18
     },
     {
-      "code": "sz300394",
-      "name": "天孚通信",
-      "sellDate": "20261014",
-      "sellTime": "09:33",
-      "returnRate": -1.11
-    },
-    {
       "code": "sz001309",
       "name": "德明利",
       "sellDate": "20261022",
@@ -58,7 +51,7 @@
       "name": "奥比中光-W",
       "sellDate": "20261026",
       "sellTime": "10:15",
-      "returnRate": 7.75
+      "returnRate": 7.01
     },
     {
       "code": "sh688025",

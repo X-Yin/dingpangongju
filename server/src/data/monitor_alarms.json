@@ -1,1 +1,262 @@
-[]
+[
+  {
+    "id": "5c63a2b3e5cb8d02",
+    "time": "2026-11-02 14:22:38",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:22:38",
+        "title": "板块排名变化",
+        "description": "<b>光芯片</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">22/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "187be8329bae7c77",
+    "time": "2026-11-02 14:23:39",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:23:39",
+        "title": "板块排名变化",
+        "description": "<b>功率半导体</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">22/55</span><br/><b>光芯片</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">25/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "a486e28e68f55b36",
+    "time": "2026-11-02 14:26:45",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:26:45",
+        "title": "板块排名变化",
+        "description": "<b>消费</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">21/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "59c490907a7536c7",
+    "time": "2026-11-02 14:29:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:29:44",
+        "title": "板块排名变化",
+        "description": "<b>锂电</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">32/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "132e906ab12a706b",
+    "time": "2026-11-02 14:31:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:31:44",
+        "title": "板块排名变化",
+        "description": "<b>消费</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">19/55</span><br/><b>PPE树脂</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">5名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">32/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "193b2e9350844d99",
+    "time": "2026-11-02 14:32:44",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:32:44",
+        "title": "板块排名变化",
+        "description": "<b>证券</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">13/55</span><br/><b>军工</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">30/55</span><br/><b>国产超节点</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">32/55</span><br/><b>磷化铟</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">45/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "3a6ff1cf8143e035",
+    "time": "2026-11-02 14:35:48",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:35:48",
+        "title": "板块排名变化",
+        "description": "<b>粮食</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">31/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "174155b0ba445452",
+    "time": "2026-11-02 14:36:49",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:36:49",
+        "title": "板块排名变化",
+        "description": "<b>房地产</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">45/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "39241079c9a4e8d1",
+    "time": "2026-11-02 14:39:49",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:39:49",
+        "title": "板块排名变化",
+        "description": "<b>粮食</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">29/55</span><br/><b>消费</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">17/55</span><br/><b>氧化锆</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">33/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "13ccad275daa064a",
+    "time": "2026-11-02 14:40:49",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:40:49",
+        "title": "板块排名变化",
+        "description": "<b>消费</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">14/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "fc8249c979f38283",
+    "time": "2026-11-02 14:42:51",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:42:51",
+        "title": "板块排名变化",
+        "description": "<b>消费</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">17/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "cac1f23528676566",
+    "time": "2026-11-02 14:43:50",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:43:50",
+        "title": "板块排名变化",
+        "description": "<b>粮食</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">31/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "45e8d5ac1f282afc",
+    "time": "2026-11-02 14:44:52",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:44:52",
+        "title": "板块排名变化",
+        "description": "<b>功率半导体</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">21/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "62e4da0ad950475a",
+    "time": "2026-11-02 14:45:49",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:45:49",
+        "title": "板块排名变化",
+        "description": "<b>房地产</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">4名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">40/55</span><br/><b>粮食</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">33/55</span><br/><b>存储</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">43/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "eab8cff394a9abe4",
+    "time": "2026-11-02 14:46:52",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:46:52",
+        "title": "板块排名变化",
+        "description": "<b>化工</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">41/55</span><br/><b>房地产</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">43/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "03613aa160b7a44a",
+    "time": "2026-11-02 14:47:51",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:47:51",
+        "title": "板块排名变化",
+        "description": "<b>化工</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">44/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "06322b5e78dda992",
+    "time": "2026-11-02 14:48:52",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:48:52",
+        "title": "板块排名变化",
+        "description": "<b>粮食</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">30/55</span><br/><b>商业航天</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">42/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "e5611836fa018263",
+    "time": "2026-11-02 14:49:49",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:49:49",
+        "title": "板块排名变化",
+        "description": "<b>房地产</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">41/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "b4277d4c07421b58",
+    "time": "2026-11-02 14:50:49",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:50:49",
+        "title": "板块排名变化",
+        "description": "<b>PPE树脂</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">33/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "3c9ae171fe75a81d",
+    "time": "2026-11-02 14:51:50",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-02 14:51:50",
+        "title": "板块排名变化",
+        "description": "<b>染料</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">31/55</span>",
+        "path": "/block"
+      }
+    ]
+  }
+]

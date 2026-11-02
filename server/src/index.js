@@ -2390,7 +2390,7 @@ app.get('/block_volume_ratio_history', async (req, res) => {
   }
 });
 
-// 板块成交量占比：分时缓存（block_amount_poll 每 10 分钟写入一个时点）
+// 板块成交量占比：分时缓存（block_amount_poll 每 5 分钟写入一个时点）
 app.get('/block_volume_ratio_intraday', (req, res) => {
   try {
     res.json(getIntradayData());

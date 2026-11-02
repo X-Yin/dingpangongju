@@ -1,5 +1,32 @@
 [
   {
+    "date": "2026-11-02",
+    "operations": [
+      {
+        "id": "1793585523911_g40x",
+        "action": "buy",
+        "stockName": "国际复材",
+        "stockCode": "sz301526",
+        "position": "",
+        "time": "10:12"
+      },
+      {
+        "id": "1793599336990_l59o",
+        "action": "sell",
+        "stockName": "顺灏股份",
+        "stockCode": "sz002565",
+        "position": "",
+        "time": "14:02"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-02T02:12:04.098Z",
+    "updatedAt": "2026-11-02T06:02:44.547Z"
+  },
+  {
     "date": "2026-10-30",
     "operations": [
       {
