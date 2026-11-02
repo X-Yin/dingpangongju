@@ -52,6 +52,12 @@ const clearDirectories = () => {
         JSON.stringify({ date: '', updatedAt: '', points: [] }, null, 2),
         'utf-8'
     );
+    // 清空板块强度分时缓存（与成交量占比同步，每日首次启动时重置）
+    fs.writeFileSync(
+        path.resolve(__dirname, '../src/data/block_strength_intraday.json'),
+        JSON.stringify({ date: '', updatedAt: '', points: [] }, null, 2),
+        'utf-8'
+    );
 };
 
 clearDirectories();

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import axios from 'axios';
 import { Button, DatePicker, Empty, Modal, Select, Spin, Table } from 'antd';
-import { ReloadOutlined } from '@ant-design/icons';
+import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -75,6 +75,15 @@ const BlockVolumeRatio = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null); // null 表示默认全选板块
+  // 板块名搜索：支持多个关键字（逗号 / 空格分隔，回车确认），命中任意关键字即展示对应板块折线图
+  const [chartKeywords, setChartKeywords] = useState([]);
+  const chartKeywordNorms = useMemo(
+    () => chartKeywords.map((k) => String(k).trim().toLowerCase()).filter(Boolean),
+    [chartKeywords]
+  );
+  const matchChart = useCallback((name) => (
+    !chartKeywordNorms.length || chartKeywordNorms.some((kw) => String(name).toLowerCase().includes(kw))
+  ), [chartKeywordNorms]);
   const [range, setRange] = useState(() => [dayjs().subtract(60, 'day'), dayjs()]);
   const [stockModalOpen, setStockModalOpen] = useState(false);
   const [stockModalBlock, setStockModalBlock] = useState('');
@@ -192,7 +201,7 @@ const BlockVolumeRatio = () => {
     const liveTime = history.live?.time ? formatTime(history.live.time) : '';
 
     return history.blocks
-      .filter((block) => effectiveSelected.includes(block.name))
+      .filter((block) => effectiveSelected.includes(block.name) && matchChart(block.name))
       .map((block) => {
         const points = (block.points || []).filter((point) => point.date >= start && point.date <= end);
         const colorIndex = availableNames.indexOf(block.name);
@@ -232,7 +241,7 @@ const BlockVolumeRatio = () => {
           },
         };
       });
-  }, [history, effectiveSelected, availableNames, range]);
+  }, [history, effectiveSelected, availableNames, range, matchChart]);
 
   // 按「相比前一日占比变化」拆分：提升（含持平/无对比）与下降
   const upItems = useMemo(() => dailyChartItems
@@ -280,9 +289,9 @@ const BlockVolumeRatio = () => {
   }, [intraday, availableNames]);
 
   const intradaySelected = useMemo(() => {
-    if (selected === null) return intradayAvailableNames;
-    return intradayAvailableNames.filter((name) => selected.includes(name));
-  }, [selected, intradayAvailableNames]);
+    const base = selected === null ? intradayAvailableNames : intradayAvailableNames.filter((name) => selected.includes(name));
+    return base.filter((name) => matchChart(name));
+  }, [selected, intradayAvailableNames, matchChart]);
 
   // 每个板块「最新日 vs 上一日」的占比变化：与日成交量占比使用同一口径
   const latestChangeByName = useMemo(() => {
@@ -456,6 +465,18 @@ const BlockVolumeRatio = () => {
           <div className="bvr-subtitle">{historySubtitle}</div>
         </div>
         <div className="bvr-header-right">
+          <Select
+            mode="tags"
+            allowClear
+            suffixIcon={<SearchOutlined />}
+            placeholder="搜索板块，可多个（逗号 / 空格分隔，回车确认）"
+            value={chartKeywords}
+            onChange={setChartKeywords}
+            options={availableNames.map((name) => ({ label: name, value: name }))}
+            tokenSeparators={[',', '，', '、', ' ']}
+            maxTagCount="responsive"
+            className="bvr-search"
+          />
           <Button size="small" icon={<ReloadOutlined />} onClick={refreshWithLiveData} loading={loading}>
             刷新
           </Button>
@@ -516,7 +537,13 @@ const BlockVolumeRatio = () => {
 
           {dailyChartItems.length === 0 ? (
             <Empty
-              description={effectiveSelected.length === 0 ? '请选择要展示的板块' : '暂无历史占比数据'}
+              description={
+                chartKeywordNorms.length > 0 && effectiveSelected.length > 0
+                  ? '没有匹配搜索关键词的板块'
+                  : effectiveSelected.length === 0
+                    ? '请选择要展示的板块'
+                    : '暂无历史占比数据'
+              }
               style={{ marginTop: 48 }}
             />
           ) : (
@@ -590,7 +617,14 @@ const BlockVolumeRatio = () => {
           {intraday.points.length === 0 ? (
             <Empty description="暂无分时数据，交易时段内每 10 分钟自动采集一次" />
           ) : intradayChartItems.length === 0 ? (
-            <Empty description="请选择要展示的板块" style={{ marginTop: 48 }} />
+            <Empty
+              description={
+                chartKeywordNorms.length > 0
+                  ? '没有匹配搜索关键词的板块'
+                  : '请选择要展示的板块'
+              }
+              style={{ marginTop: 48 }}
+            />
           ) : (
             <>
               {intradayGroupMode === 'prevDay' ? (

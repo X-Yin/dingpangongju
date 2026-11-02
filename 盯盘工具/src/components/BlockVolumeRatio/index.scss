@@ -27,6 +27,23 @@
     color: #12213a;
   }
 
+  .bvr-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+
+    .bvr-search {
+      width: 320px;
+      max-width: 40vw;
+
+      .ant-select-selector {
+        min-height: 24px;
+        align-items: center;
+      }
+    }
+  }
+
   .bvr-subtitle {
     margin-top: 4px;
     font-size: 12px;

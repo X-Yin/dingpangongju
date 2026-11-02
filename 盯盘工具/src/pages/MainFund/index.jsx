@@ -9,6 +9,7 @@ import { marked } from 'marked';
 import { local_ip } from '../../constant';
 import BuyPointDiagnosisDrawer from '../../components/FloatingBuyPointDiagnosis';
 import BlockVolumeRatio from '../../components/BlockVolumeRatio';
+import BlockStrengthPanel from '../../components/BlockStrengthPanel';
 import { subscribeBuyPointPush } from '../../utils/buyPointWs';
 import '../../components/FloatingBuyPointDiagnosis/index.scss';
 import './index.scss';
@@ -2316,6 +2317,11 @@ export const MainFundContent = () => {
             key: 'blockVolume',
             label: '板块成交量',
             children: <BlockVolumeRatio />,
+          },
+          {
+            key: 'blockStrength',
+            label: '板块强度',
+            children: <BlockStrengthPanel mode="intraday" />,
           },
           {
             key: 'history',

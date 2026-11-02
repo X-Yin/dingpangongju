@@ -96,6 +96,12 @@ const scheduleAfterCloseTasks = (hour = 15, minute = 1) => {
       .then(() => console.log('收盘后板块资金日历史更新完成'))
       .catch(err => console.error('收盘后板块资金日历史更新失败:', err.message));
 
+    // 1.1 计算当日一级板块强度并写入 data/block_strength_daily.json
+    const { updateLatestDailyFromSpot } = require('./service/blockStrengthDaily');
+    updateLatestDailyFromSpot()
+      .then((payload) => console.log(`收盘后板块强度日线更新完成（${payload.blocks.length} 个板块）`))
+      .catch(err => console.error('收盘后板块强度日线更新失败:', err.message));
+
     // 2. 刷新市场情绪周期数据（对应 POST /refresh_market_emotion_cycle）
     analyzeMonitorStocks()
       .then(result => {

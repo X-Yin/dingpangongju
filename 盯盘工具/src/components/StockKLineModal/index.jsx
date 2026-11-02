@@ -27,6 +27,8 @@ const StockKLineModal = ({
   initialTab = 'kline',
   // 可选：极致胜率模式。开启后 K 线图默认叠加绘制「强度分 / 差劲分」两条曲线（情绪游资-极致胜率口径）
   extremeWin = false,
+  // 可选：从其他弹窗（如强度分析）内打开时传入更高的 zIndex，保证盖在已有弹窗之上
+  zIndex,
 }) => {
   const [kData, setKData] = useState([]);
   const [tData, setTData] = useState([]);
@@ -537,6 +539,7 @@ const StockKLineModal = ({
         width={1400}
         centered
         destroyOnClose
+        zIndex={zIndex}
         bodyStyle={{ padding: '24px', minHeight: '500px' }}
       >
         <div className="stock-chart-modal-content" style={{ width: '100%' }}>
@@ -745,7 +748,7 @@ const StockKLineModal = ({
         width={720}
         centered
         destroyOnClose
-        zIndex={1100}
+        zIndex={zIndex ? zIndex + 100 : 1100}
         bodyStyle={{ padding: '8px 24px', maxHeight: '65vh', overflowY: 'auto' }}
       >
         {newsLoading ? (

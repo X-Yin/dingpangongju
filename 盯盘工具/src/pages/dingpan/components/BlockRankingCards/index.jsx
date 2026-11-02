@@ -1,9 +1,9 @@
-import { Row, Col, Card, Popover } from 'antd';
-import { RiseOutlined, FallOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Row, Col, Card, Popover, Button } from 'antd';
+import { RiseOutlined, FallOutlined, ReloadOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { titleStyle, borderStyle, numberStyle } from '../../utils/themeColor';
 import './index.scss';
 
-const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockStockList, themeColor, vertical = false, fillContainer = false, onRefresh, refreshing = false }) => {
+const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockStockList, themeColor, vertical = false, fillContainer = false, onRefresh, refreshing = false, onStrengthAnalysis, strengthLoading = false }) => {
     return (
         <Row gutter={[12, 12]} style={{ marginBottom: 12, height: fillContainer ? '100%' : undefined, flex: fillContainer ? 1 : undefined }}>
             <Col span={vertical ? 24 : 12} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -52,12 +52,31 @@ const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockSto
                         className="monitor-card"
                         variant="borderless"
                         bodyStyle={{ padding: '12px 14px' }}
-                        extra={onRefresh ? (
-                            <ReloadOutlined
-                                spin={refreshing}
-                                style={{ cursor: 'pointer', fontSize: 14 }}
-                                onClick={onRefresh}
-                            />
+                        extra={onRefresh || onStrengthAnalysis ? (
+                            <div className="block-ranking-extra">
+                                {onStrengthAnalysis && (
+                                    <Button
+                                        size="small"
+                                        type="link"
+                                        className="block-ranking-strength-btn"
+                                        onClick={onStrengthAnalysis}
+                                        loading={strengthLoading}
+                                    >
+                                        <span
+                                            style={{ display: 'inline-block', padding: 2, }}>
+                                            <ThunderboltOutlined style={{ marginRight: 2 }} />
+                                            强度分析
+                                        </span>
+                                    </Button>
+                                )}
+                                {onRefresh && (
+                                    <ReloadOutlined
+                                        spin={refreshing}
+                                        style={{ cursor: 'pointer', fontSize: 14 }}
+                                        onClick={onRefresh}
+                                    />
+                                )}
+                            </div>
                         ) : null}
                     >
                         <div className="blocks-grid">

@@ -2372,10 +2372,31 @@ app.get('/refresh_block_volume_ratio', async (req, res) => {
     const { runAndSaveIntradayPoint } = require('./service/blockVolumeRatio');
     const forcePolling = ['1', 'true'].includes(String(req.query.polling || '').toLowerCase());
     const { point, stats } = await runAndSaveIntradayPoint({ forcePolling });
+    // 成交量占比写入后，同步计算一个板块强度分时点（两者复用同一份实时行情快照）
+    try {
+      const { runAndSaveStrengthPoint } = require('./service/blockStrengthIntraday');
+      await runAndSaveStrengthPoint();
+    } catch (strengthError) {
+      console.warn('刷新板块成交量占比后计算板块强度失败:', strengthError.message);
+    }
     res.json({ success: true, message: '刷新成功', mode: stats.mode, time: point.time });
   } catch (error) {
     console.error('刷新板块成交量占比失败:', error);
     res.status(500).json({ success: false, message: error.message || '刷新失败' });
+  }
+});
+
+// 一级板块强度分析：给 东方财富板块成分股汇总 下的全部一级板块打分（满分 100）
+// 明细包含平均涨幅、涨停板个数、日成交量占比、相较 30 分钟前占比及各自得分
+// 个股涨幅优先东财/新浪全市场行情（同花顺、财联社日K兜底）；占比复用分时缓存（刷新全部拥挤度时写入）
+app.get('/block_strength_analysis', async (req, res) => {
+  try {
+    const { analyzeBlockStrength } = require('./service/blockStrength');
+    const result = await analyzeBlockStrength();
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('板块强度分析失败:', error);
+    res.status(500).json({ success: false, message: error.message || '强度分析失败' });
   }
 });
 
@@ -2397,6 +2418,41 @@ app.get('/block_volume_ratio_intraday', (req, res) => {
   } catch (error) {
     console.error('获取板块成交量占比分时数据失败:', error);
     res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 板块强度：日线历史（收盘 15:01 计算，支持回溯 30 个交易日）
+app.get('/block_strength_history', (req, res) => {
+  try {
+    const { getDailyStrengthHistory } = require('./service/blockStrengthDaily');
+    res.json(getDailyStrengthHistory());
+  } catch (error) {
+    console.error('获取板块强度日线历史失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 板块强度：分时（与板块成交量占比同步，每 5 分钟一个时点）
+app.get('/block_strength_intraday', (req, res) => {
+  try {
+    const { getStrengthIntradayData } = require('./service/blockStrengthIntraday');
+    res.json(getStrengthIntradayData());
+  } catch (error) {
+    console.error('获取板块强度分时数据失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 立即计算并写入一个板块强度分时点
+app.get('/refresh_block_strength_intraday', async (req, res) => {
+  try {
+    const { runAndSaveStrengthPoint } = require('./service/blockStrengthIntraday');
+    const payload = await runAndSaveStrengthPoint();
+    const latest = payload.points[payload.points.length - 1];
+    res.json({ success: true, time: latest?.time || null, count: payload.points.length });
+  } catch (error) {
+    console.error('刷新板块强度分时失败:', error);
+    res.status(500).json({ success: false, message: error.message || '刷新失败' });
   }
 });
 

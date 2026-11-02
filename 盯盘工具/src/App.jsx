@@ -21,6 +21,7 @@ import MajorEventReminder from './components/MajorEventReminder';
 import PersonalFeelingModal from './components/PersonalFeelingModal';
 import ClosePipeline from './components/ClosePipeline';
 import GlobalDiagnosisAlert from './components/GlobalDiagnosisAlert';
+import BlockStrengthAlert from './components/BlockStrengthAlert';
 import dayjs from 'dayjs';
 import './App.scss';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -1568,6 +1569,8 @@ function App() {
       {location.pathname !== '/training_camp' && <FloatingStockPosition onOutflowDetected={handleOutflowDetected} />}
       {/* 全局买点 / 卖点诊断弹窗卡片：后端命中推送 open:true 时右下角弹出，全页面生效 */}
       <GlobalDiagnosisAlert />
+      {/* 板块强度突破 30 分全局提示：每 1 分钟轮询强度分时数据 */}
+      <BlockStrengthAlert />
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingMonitorAlarm />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStrategyCenter />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStockViewer />}

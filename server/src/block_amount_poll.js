@@ -66,6 +66,14 @@ const runOnce = async () => {
                 .map(([name, value]) => `${name} ${value.toFixed(2)}%`)
                 .join(' | ');
 
+            // 与成交量占比同步写入一个板块强度分时点
+            try {
+                const { runAndSaveStrengthPoint } = require('./service/blockStrengthIntraday');
+                await runAndSaveStrengthPoint();
+            } catch (strengthError) {
+                console.warn(`[${formatTime()}] 计算板块强度分时失败：${strengthError.message}`);
+            }
+
             console.log(`[${formatTime()}] 计算完成（${stats.mode === 'poll' ? '多平台轮询兜底' : '全 A 股实时行情'}），耗时 ${cost}s，全市场成交额 ${point.marketTotalAmount} 亿`);
             if (stats.mode === 'poll') {
                 console.log(`兜底轮询目标交易日 ${stats.targetDate}，覆盖 ${stats.matched}/${stats.total} 条成分股`);

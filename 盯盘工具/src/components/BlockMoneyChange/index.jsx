@@ -9,6 +9,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, 
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import dayjs from 'dayjs';
 import { getThemeColor, getThemeColorRgba } from '../../utils/theme';
+import BlockStrengthPanel from '../BlockStrengthPanel';
 import './index.scss';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, ChartTitle, ChartTooltip, Legend);
@@ -3031,6 +3032,11 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                             )}
                         </>
                     ),
+                },
+                {
+                    key: 'strength',
+                    label: '板块强度',
+                    children: <BlockStrengthPanel mode="daily" showAll groupByDelta />,
                 },
                 {
                     key: 'intraday',

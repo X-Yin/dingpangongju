@@ -10,6 +10,7 @@ akshare 行情数据接口封装
     python3 api.py stock_changes_all     # 盘口异动·全部类型合并
     python3 api.py hot_rank              # 东财股票热度前 100
     python3 api.py a_spot                # 全部 A 股实时行情（代码/名称/成交额）
+    python3 api.py a_spot_full           # 全部 A 股实时行情（含涨跌幅/成交量/成交额）
     python3 api.py stock_hist_em [代码]   # 东财个股日K
     python3 api.py stock_daily_sina [代码] # 新浪个股日K（代码需带 sh/sz 前缀）
     python3 api.py stock_hist_tx [代码]   # 腾讯个股日K（代码需带 sh/sz 前缀）
@@ -194,6 +195,53 @@ def get_a_spot():
     return df[cols]
 
 
+def _get_a_spot_full_sina():
+    """备用数据源：新浪全 A 股实时行情（含涨跌幅/最新价/昨收/成交量/成交额）"""
+    url = 'https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData'
+    rows = []
+    page = 1
+    while True:
+        resp = requests.get(url, params={
+            'page': page,
+            'num': 100,
+            'sort': 'symbol',
+            'asc': 1,
+            'node': 'hs_a',
+            'symbol': '',
+            '_s_r_a': 'page',
+        }, timeout=20)
+        data = resp.json()
+        if not data:
+            break
+        for item in data:
+            rows.append({
+                '代码': item.get('code'),
+                '名称': item.get('name'),
+                '涨跌幅': _parse_float(item.get('changepercent')),
+                '最新价': _parse_float(item.get('trade')),
+                '昨收': _parse_float(item.get('settlement')),
+                '成交量': _parse_float(item.get('volume')),
+                '成交额': _parse_float(item.get('amount')),
+            })
+        if len(data) < 100:
+            break
+        page += 1
+    return pd.DataFrame(rows)
+
+
+def get_a_spot_full():
+    """全部 A 股实时行情，返回 代码 / 名称 / 涨跌幅 / 最新价 / 昨收 / 成交量(股) / 成交额(元)
+    优先东财接口（ak.stock_zh_a_spot_em），失败时回退新浪全 A 行情"""
+    try:
+        df = ak.stock_zh_a_spot_em()
+    except Exception:
+        df = _get_a_spot_full_sina()
+    if df is None or df.empty:
+        return pd.DataFrame(columns=['代码', '名称', '涨跌幅', '最新价', '昨收', '成交量', '成交额'])
+    cols = [c for c in ('代码', '名称', '涨跌幅', '最新价', '昨收', '成交量', '成交额') if c in df.columns]
+    return df[cols]
+
+
 def get_stock_hist_em(symbol="000001", start_date="", end_date=""):
     """东财个股日K（symbol 为 6 位代码），返回 日期/开盘/收盘/最高/最低/成交量/成交额 等"""
     return ak.stock_zh_a_hist(symbol=symbol, period="daily", start_date=start_date, end_date=end_date, adjust="")
@@ -344,6 +392,7 @@ FETCHERS = {
     'stock_changes_all': get_stock_changes_all,
     'hot_rank': get_hot_rank,
     'a_spot': get_a_spot,
+    'a_spot_full': get_a_spot_full,
     'stock_hist_em': get_stock_hist_em,
     'stock_daily_sina': get_stock_daily_sina,
     'stock_hist_tx': get_stock_hist_tx,
@@ -430,7 +479,7 @@ if __name__ == '__main__':
     if len(sys.argv) < 2 or sys.argv[1] not in FETCHERS:
         print(json.dumps({
             'success': False,
-            'message': '用法: python3 api.py <cls_news|board_change|stock_changes|stock_changes_all|hot_rank|a_spot|stock_hist_em|stock_daily_sina|stock_hist_tx|foreign_commodity|stock_news|stock_zyjs|jgcyd|sector_spot|sector_detail|kline_batch|kline_worker> [参数]',
+            'message': '用法: python3 api.py <cls_news|board_change|stock_changes|stock_changes_all|hot_rank|a_spot|a_spot_full|stock_hist_em|stock_daily_sina|stock_hist_tx|foreign_commodity|stock_news|stock_zyjs|jgcyd|sector_spot|sector_detail|kline_batch|kline_worker> [参数]',
         }, ensure_ascii=False))
         sys.exit(1)
 

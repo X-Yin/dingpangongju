@@ -1,3 +1,19 @@
+.block-ranking-extra {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .block-ranking-strength-btn {
+    height: 24px;
+    padding: 0 4px;
+    font-size: 12px;
+
+    .ant-btn-icon {
+      margin-inline-end: 2px;
+    }
+  }
+}
+
 .blocks-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
