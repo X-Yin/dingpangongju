@@ -1366,10 +1366,10 @@
   },
   {
     "date": 20261103,
-    "changeSumResult": -60.44,
-    "baseEmotion": -42.11,
-    "pullbackPenalty": -91.66,
-    "avgChange": -6.48,
+    "changeSumResult": -59.72,
+    "baseEmotion": -41.63,
+    "pullbackPenalty": -90.47,
+    "avgChange": -6.38,
     "stockCount": 126,
     "algorithm": 2,
     "hasIce": true

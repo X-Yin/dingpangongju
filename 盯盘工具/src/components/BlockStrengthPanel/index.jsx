@@ -4,7 +4,7 @@
 // 支持关键字搜索、板块多选、点击标题查看成分股列表（点击股票可打开通用 K 线图）
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Button, Card, Empty, Input, Modal, Select, Spin, Table, Tag, Tooltip } from 'antd';
+import { Button, Card, Empty, Input, message, Modal, Select, Spin, Table, Tag, Tooltip } from 'antd';
 import { ReloadOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons';
 import { Line } from 'react-chartjs-2';
 import {
@@ -103,11 +103,15 @@ const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = fa
     setRefreshing(true);
     try {
       if (isDaily) {
-        await fetchData();
+        // 先让后端检查最新交易日的日线缓存：缺失时后端立即计算并写入，已有则直接返回
+        const resp = await axios.get(`http://${local_ip}:3000/refresh_block_strength_daily`, { timeout: 5 * 60 * 1000 });
+        if (resp.data?.refreshed) {
+          message.success(`已补算并写入 ${resp.data.date} 的板块强度数据`);
+        }
       } else {
         await axios.get(`http://${local_ip}:3000/refresh_block_strength_intraday`, { timeout: 5 * 60 * 1000 });
-        await fetchData();
       }
+      await fetchData();
       setError(null);
     } catch (err) {
       console.error('刷新板块强度失败:', err);
@@ -421,7 +425,14 @@ const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = fa
           options={rowItems.map((item) => ({ value: item.name, label: item.name }))}
           style={{ minWidth: 260, maxWidth: 420 }}
         />
-        <Button icon={<ReloadOutlined />} onClick={fetchAll} loading={loading}>刷新</Button>
+        <Button
+          icon={<ReloadOutlined />}
+          onClick={isDaily ? refresh : fetchAll}
+          loading={isDaily ? refreshing : loading}
+          style={{ marginRight: 10 }}
+        >
+          刷新
+        </Button>
         {!isDaily && (
           <Button type="primary" icon={<SyncOutlined spin={refreshing} />} onClick={refresh} loading={refreshing}>
             立即计算
@@ -460,9 +471,8 @@ const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = fa
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-                  gap: 16,
-                  height: 750,
-                  overflowY: 'auto'
+                  alignContent: 'start',
+                  gap: 16
                 }}>
                   {section.items.map(renderCard)}
                 </div>
@@ -474,9 +484,8 @@ const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = fa
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-          gap: 16,
-          height: 750,
-          overflowY: 'auto'
+          alignContent: 'start',
+          gap: 16
         }}>
           {displayItems.map(renderCard)}
         </div>

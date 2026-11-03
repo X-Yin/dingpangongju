@@ -2432,6 +2432,18 @@ app.get('/block_strength_history', (req, res) => {
   }
 });
 
+// 板块强度：检查最新交易日日线缓存，缺失时立即计算并写入缓存（已有则直接返回，不重复计算）
+app.get('/refresh_block_strength_daily', async (req, res) => {
+  try {
+    const { ensureLatestTradingDayData } = require('./service/blockStrengthDaily');
+    const result = await ensureLatestTradingDayData();
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('刷新板块强度日线失败:', error);
+    res.status(500).json({ success: false, message: error.message || '刷新失败' });
+  }
+});
+
 // 板块强度：分时（与板块成交量占比同步，每 5 分钟一个时点）
 app.get('/block_strength_intraday', (req, res) => {
   try {

@@ -1073,11 +1073,11 @@ const KeyBlocks = () => {
     return s === 'ai' ? 'ai' : 'tech';
   }, [location.search]);
 
-  // 板块资金内部子 tab（intraday/history/rzrq/crowd/dayAmount），支持从收盘流水线等外部直达拥挤度
+  // 板块资金内部子 tab（intraday/history/rzrq/crowd/strength/dayAmount），支持从收盘流水线等外部直达拥挤度/板块强度
   const moneySubTab = useMemo(() => {
     const params = new URLSearchParams(location.search);
     const s = params.get('subTab');
-    return ['intraday', 'history', 'rzrq', 'crowd', 'dayAmount'].includes(s) ? s : 'intraday';
+    return ['intraday', 'history', 'rzrq', 'crowd', 'strength', 'dayAmount'].includes(s) ? s : 'crowd';
   }, [location.search]);
 
   const handleTabChange = (key) => {

@@ -21,6 +21,7 @@ const {
   isLimitUp,
   normalizeCode,
 } = require('./blockStrength');
+const { resolveAnalysisDate } = require('../utils');
 
 const OUTPUT_FILE = path.resolve(__dirname, '../data/block_strength_daily.json');
 const CATEGORY_MONEY_FILE = path.resolve(__dirname, './板块成交量占比计算/category_amount_money_result.json');
@@ -307,12 +308,13 @@ const backfillDailyStrength = async ({ days = DEFAULT_BACKFILL_DAYS, onProgress 
 };
 
 // 收盘后（15:01）用实时/收盘行情更新当日强度，避免每天重新拉取 4000+ 只日K
+// 目标日取「最新交易日」（非交易日/开盘前自动回退到上一交易日），周末手动补算时也能写入正确日期
 const updateLatestDailyFromSpot = async () => {
   const categories = loadCategories();
   if (categories.length === 0) throw new Error('未找到一级板块成分股数据');
 
   const spot = await loadSpotQuotes(categories);
-  const today = dayjs().format('YYYYMMDD');
+  const today = dayjs(resolveAnalysisDate()).format('YYYYMMDD');
   const categoryMoney = loadCategoryMoney();
   const marketTotals = loadMarketTotals();
   const prevDay = getPrevDayRatios(today);
@@ -343,6 +345,7 @@ const updateLatestDailyFromSpot = async () => {
       ratioChangePct = clamp((todayRatio - prevRatio) / prevRatio * 100, -MAX_RATIO_CHANGE_PCT, MAX_RATIO_CHANGE_PCT);
     }
     return {
+      name: category.name,
       ...row,
       ratio: round2(todayRatio),
       prevRatio: round2(prevRatio),
@@ -374,9 +377,32 @@ const getDailyStrengthHistory = () => {
   return data;
 };
 
+// 缓存中已有的最新数据日期（取所有板块强度点的最大日期）
+const getLatestCachedDate = () => {
+  let latest = null;
+  for (const block of (getDailyStrengthHistory().blocks || [])) {
+    for (const point of (block.points || [])) {
+      const date = String(point.date);
+      if (date && (!latest || date > latest)) latest = date;
+    }
+  }
+  return latest;
+};
+
+// 确保缓存中有最新交易日的日线强度：已有则跳过，缺失则立即计算并写入缓存
+const ensureLatestTradingDayData = async () => {
+  const targetDate = dayjs(resolveAnalysisDate()).format('YYYYMMDD');
+  if (getLatestCachedDate() === targetDate) {
+    return { refreshed: false, date: targetDate };
+  }
+  await updateLatestDailyFromSpot();
+  return { refreshed: true, date: targetDate };
+};
+
 exports.SCORE_WEIGHTS = SCORE_WEIGHTS;
 exports.OUTPUT_FILE = OUTPUT_FILE;
 exports.backfillDailyStrength = backfillDailyStrength;
 exports.updateLatestDailyFromSpot = updateLatestDailyFromSpot;
 exports.getDailyStrengthHistory = getDailyStrengthHistory;
 exports.getAvailableDates = getAvailableDates;
+exports.ensureLatestTradingDayData = ensureLatestTradingDayData;

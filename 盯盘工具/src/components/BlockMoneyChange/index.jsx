@@ -333,7 +333,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     const [historyViewMode, setHistoryViewMode] = useState('line'); // 'line' or 'heatmap'
     const [historyHeatmapTab, setHistoryHeatmapTab] = useState('today'); // 'today' or 'fiveDay'
     const [modalBlock, setModalBlock] = useState(null); // 当前打开折线图弹窗的板块名
-    const [activeTab, setActiveTab] = useState('crowd'); // 'intraday' 当日资金 | 'history' 历史资金 | 'rzrq' 融资余额 | 'crowd' 拥挤度
+    const [activeTab, setActiveTab] = useState(defaultTab); // 'intraday' 当日资金 | 'history' 历史资金 | 'rzrq' 融资余额 | 'crowd' 拥挤度 | 'strength' 板块强度
     const [dayHistory, setDayHistory] = useState([]); // 按天维度的板块资金历史
     const [rzrqData, setRzrqData] = useState([]);
     const [rzrqLoading, setRzrqLoading] = useState(false);
