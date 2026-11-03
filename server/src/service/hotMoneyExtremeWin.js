@@ -529,6 +529,11 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
 
     const revIdxPts = (revIdxTlineMap.get(iceResilienceIndexCode(code)) || {}).points || [];
     const strength = points.length > 0 ? strengthAtMinute(t, stockMinute, code, revIdxPts) : null;
+    // 差劲分与「强度 − 差劲」（2026-11-03 用户要求：逆周期列表的强度分列改为强度−差劲）
+    let revAvg3Vol = null;
+    try { revAvg3Vol = stockPriorAvgVolume(code, dateNum, 3); } catch (e) { revAvg3Vol = null; }
+    const revDiff = points.length > 0 ? diffAtMinute(points, preclose, code, stockMinute, revAvg3Vol) : null;
+    const revDelta = (revDiff && strength) ? round2(strength.score - revDiff.score) : null;
     const atPt = points.length > 0 ? priceAtMinute(points, stockMinute) : null;
     const px = atPt ? round2(atPt.lastPx) : null;
     const change = (preclose > 0 && px != null) ? round2(((px - preclose) / preclose) * 100) : null;
@@ -574,6 +579,8 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
       px,
       change,
       strengthScore: strength ? strength.score : null,
+      diffScore: revDiff ? revDiff.score : null,
+      delta: revDelta,
       strengthDetail: strength,
       isLimitUp,
       hitCount,

@@ -5223,7 +5223,7 @@
         "itemBorderWidth": "1px",
         "itemRadius": "16px",
         "upColor": "rgb(212,231,36)",
-        "downColor": "rgb(57,52,199)",
+        "downColor": "rgb(4,101,137)",
         "btnBg": "linear-gradient(135deg, #16B7E3 0%, #49DCF2 100%)",
         "btnColor": "#0C2E2A",
         "btnRadius": "16px",

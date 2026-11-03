@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Spin, Empty, Select, Switch as AntSwitch, Popover } from 'antd';
+import { Spin, Empty, Select, Switch as AntSwitch } from 'antd';
 import {
   RocketOutlined, RiseOutlined, FallOutlined, StockOutlined,
   AreaChartOutlined, CrownOutlined, RadarChartOutlined, WarningOutlined,
@@ -851,11 +851,6 @@ const slopeTurnText = (gate) => {
   return d === 0 ? '指数今日由正转负' : `指数由正转负第 ${d} 天`;
 };
 
-// 逆周期（反向抱团）择时状态标签样式：已触发 / 涨停不可买 / 斜率未就绪 / 等待命中
-const reverseTimingClass = (tag) => (
-  tag === '已触发买点' ? 'hit' : tag === '涨停不可买' ? 'limitup' : tag === '斜率未就绪' ? 'idle' : 'wait'
-);
-
 const TopChange3dModule = ({ buyPointHit = false }) => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
@@ -875,6 +870,12 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   const [refreshing, setRefreshing] = useState(false);
   // 只看符合条件：开启后仅展示完全符合条件的个股（后端 qualifiedTop，按 3 日涨幅降序），默认关闭
   const [onlyQualified, setOnlyQualified] = useState(false);
+  // 显示涨幅开关（2026-11-03 用户要求）：默认关闭，隐藏候选列表中今日涨幅 / 3 日涨幅列
+  const [showChange, setShowChange] = useState(false);
+  // 涨幅列隐藏时同步收缩表格网格列数，保持单元格对齐
+  const techGrid = showChange ? undefined : '22px minmax(0, 1fr) 54px';
+  const ewGrid = showChange ? undefined : '22px minmax(0, 1fr) 54px 72px';
+  const revGrid = showChange ? '22px minmax(0, 1fr) 58px 54px 44px' : '22px minmax(0, 1fr) 54px 44px';
   // 情绪游资-极致赔率：双候选池（首板起爆 / 二板起爆），首屏用当日缓存，后端 3s WS 推送实时刷新
   const [wfData, setWfData] = useState(() => readTodayLocalCache('ob_wash_fusion_cache') || null);
   const [wfRefreshing, setWfRefreshing] = useState(false);
@@ -1147,6 +1148,14 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
           <span>{isExtreme ? '情绪游资-极致胜率' : isDefense ? '涨幅榜/龙头' : '自选股 · 3日涨幅前十'}</span>
         </div>
         <div className="ob-module-actions">
+          <label
+            className="ob-gainer-filter-row"
+            style={{ marginRight: 4, marginBottom: 0 }}
+            title="开启后展示候选列表中的今日涨幅 / 3 日涨幅列"
+          >
+            <AntSwitch size="small" checked={showChange} onChange={setShowChange} />
+            <span>显示涨幅</span>
+          </label>
           <Select
             size="small"
             className="ob-mode-switch"
@@ -1195,13 +1204,13 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
               <AntSwitch size="small" checked={onlyQualified} onChange={setOnlyQualified} />
               <span>只看符合条件</span>
             </div>
-            <div className="ob-gainer-head">
+            <div className="ob-gainer-head" style={{ gridTemplateColumns: techGrid }}>
               <>
                 <span>#</span>
                 <span>股票</span>
-                <span>当日</span>
+                {showChange && <span>当日</span>}
                 <span>抗分歧</span>
-                <span>3日涨幅</span>
+                {showChange && <span>3日涨幅</span>}
               </>
             </div>
             {techList.length === 0 ? (
@@ -1210,7 +1219,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
               // 全部符合条件时买点候选必为 3 日涨幅第一名（idx 0）；否则以后端唯一推荐标的为准
               const isPick = onlyQualified ? idx === 0 : (globalPick != null && s.code === globalPick.code);
               return (
-                <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
+                <div className="ob-gainer-row" key={`${s.code}-${idx}`} style={{ gridTemplateColumns: techGrid }}>
                   <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
                   <span className="ob-gainer-name-cell">
                     <span
@@ -1225,15 +1234,19 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
                     )}
                     {isPick && <span className="ob-gainer-buyflag">{buyPointHit ? '买点触发' : '买点候选'}</span>}
                   </span>
-                  <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
-                    {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
-                  </span>
+                  {showChange && (
+                    <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
+                      {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
+                    </span>
+                  )}
                   <span className="ob-gainer-resilience">
                     {s.resilienceScore !== null && s.resilienceScore !== undefined ? Number(s.resilienceScore).toFixed(2) : '--'}
                   </span>
-                  <span className={`ob-change-cell ${s.change3d >= 0 ? 'ob-up' : 'ob-down'}`}>
-                    {s.change3d !== null && s.change3d !== undefined ? `${s.change3d >= 0 ? '+' : ''}${Number(s.change3d).toFixed(2)}%` : '--'}
-                  </span>
+                  {showChange && (
+                    <span className={`ob-change-cell ${s.change3d >= 0 ? 'ob-up' : 'ob-down'}`}>
+                      {s.change3d !== null && s.change3d !== undefined ? `${s.change3d >= 0 ? '+' : ''}${Number(s.change3d).toFixed(2)}%` : '--'}
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -1250,11 +1263,11 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
                 <span className="ob-gainer-gate-badge">{slopeOk ? '满足买点门槛' : '不满足买点门槛'}</span>
               </div>
             </div>
-            <div className="ob-gainer-head">
+            <div className="ob-gainer-head" style={{ gridTemplateColumns: ewGrid }}>
               <>
                 <span>#</span>
                 <span>股票</span>
-                <span>当日</span>
+                {showChange && <span>当日</span>}
                 <span>强度−差劲</span>
                 <span>连板</span>
               </>
@@ -1262,7 +1275,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
             {leaderList.length === 0 ? (
               <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
             ) : leaderList.map((s, idx) => (
-              <div className="ob-gainer-row" key={`${s.code}-${idx}`}>
+              <div className="ob-gainer-row" key={`${s.code}-${idx}`} style={{ gridTemplateColumns: ewGrid }}>
                 <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
                 <span className="ob-gainer-name-cell">
                   <span
@@ -1273,9 +1286,11 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
                   {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
                   {s.buyPointHit && <span className="ob-gainer-buyflag">买点触发</span>}
                 </span>
-                <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
-                  {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
-                </span>
+                {showChange && (
+                  <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
+                    {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
+                  </span>
+                )}
                 <span className={`ob-gainer-resilience ${s.delta != null && s.delta >= 30 ? 'ob-up' : ''}`}>
                   {s.delta !== null && s.delta !== undefined ? Number(s.delta).toFixed(2) : '--'}
                 </span>
@@ -1297,18 +1312,17 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
               </div>
             </div>
             <div className={`ob-gainer-gate-note ${reverseSlopeOk ? 'both' : 'none'}`}>{reverseGateNote}</div>
-            <div className="ob-gainer-head ob-gainer-head-reverse">
+            <div className="ob-gainer-head ob-gainer-head-reverse" style={{ gridTemplateColumns: revGrid }}>
               <span>#</span>
               <span>股票</span>
-              <span>当日</span>
-              <span>强度分</span>
+              {showChange && <span>当日</span>}
+              <span>强度−差劲</span>
               <span>连板</span>
-              <span>逆周期择时</span>
             </div>
             {reverseList.length === 0 ? (
               <div className="ob-empty-mini ob-gainer-empty">暂无满足条件的反向抱团标的</div>
             ) : reverseList.map((s, idx) => (
-              <div className="ob-gainer-row ob-gainer-row-reverse" key={`rev-${s.code}-${idx}`}>
+              <div className="ob-gainer-row ob-gainer-row-reverse" key={`rev-${s.code}-${idx}`} style={{ gridTemplateColumns: revGrid }}>
                 <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
                 <span className="ob-gainer-name-cell">
                   <span
@@ -1319,20 +1333,16 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
                   {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
                   {s.timingPassed && <span className="ob-gainer-buyflag">逆周期买点</span>}
                 </span>
-                <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
-                  {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
-                </span>
-                <span className="ob-gainer-resilience">
-                  {s.strengthScore !== null && s.strengthScore !== undefined ? Number(s.strengthScore).toFixed(2) : '--'}
+                {showChange && (
+                  <span className={`ob-change-cell ${s.change >= 0 ? 'ob-up' : 'ob-down'}`}>
+                    {s.change !== null && s.change !== undefined ? `${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%` : '--'}
+                  </span>
+                )}
+                <span className={`ob-gainer-resilience ${s.delta != null && s.delta >= 30 ? 'ob-up' : ''}`}>
+                  {s.delta !== null && s.delta !== undefined ? Number(s.delta).toFixed(2) : '--'}
                 </span>
                 <span className="ob-gainer-resilience">
                   {s.lianbanCount != null ? `${s.lianbanCount} 板` : '--'}
-                </span>
-                <span className="ob-rev-timing-cell">
-                  <span
-                    className={`ob-rev-timing-tag ${reverseTimingClass(s.timingTag)}`}
-                    title={s.timingDetail || ''}
-                  >{s.timingTag || '--'}</span>
                 </span>
               </div>
             ))}
@@ -1794,155 +1804,6 @@ const SellPointDiagnosisCard = () => {
   );
 };
 
-// ==================== 重点板块涨跌幅前十 ====================
-// 数据与盯盘页「重点板块涨跌幅前十」完全一致：同一接口同一字段
-//   GET /notice_data → topAndBottomBlockData.firstNumList / lastNumList（后端已排序并给出 rankChange）
-// 交互：每个卡片横向一行展示 10 个板块，悬停 Popover 展示成分股，点击成分股打开 K 线弹窗
-const KeyBlockRankingCard = ({ title, tone, items, refreshing, onRefresh, onStockClick }) => (
-  <div className="ob-diagnosis-card ob-keysector-module">
-    <div className="ob-diagnosis-header">
-      <div className="ob-module-title">
-        {tone === 'up' ? <RiseOutlined className="ob-module-icon" /> : <FallOutlined className="ob-module-icon" />}
-        <span>{title}</span>
-      </div>
-      <div className="ob-diagnosis-actions">
-        <button className="ob-refresh-btn" onClick={onRefresh} disabled={refreshing} title="强制刷新板块数据">
-          <ReloadOutlined spin={refreshing} />
-        </button>
-      </div>
-    </div>
-    <div className="ob-diagnosis-body ob-keysector-body">
-      {items.length === 0 ? (
-        <div className="ob-empty-mini">暂无数据</div>
-      ) : items.map((item, idx) => (
-        <Popover
-          key={`${item.blockName}-${idx}`}
-          trigger="hover"
-          placement="top"
-          mouseEnterDelay={0.25}
-          mouseLeaveDelay={0.1}
-          content={
-            <div className="ob-keysector-popover">
-              <div className="ob-keysector-popover-title">{item.blockName} · 成分股涨跌幅</div>
-              {Array.isArray(item.data) && item.data.length > 0 ? (
-                <div className="ob-keysector-stocks">
-                  {item.data.map((s) => (
-                    <div
-                      key={s.code}
-                      className="ob-keysector-stock"
-                      title="点击查看K线"
-                      onClick={() => onStockClick(s)}
-                    >
-                      <span className="ob-keysector-stock-name">{s.name}</span>
-                      <span className={`ob-keysector-stock-change ${s.change >= 0 ? 'up' : 'down'}`}>
-                        {s.change !== null && s.change !== undefined ? `${s.change > 0 ? '+' : ''}${s.change}%` : '--'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="ob-keysector-popover-empty">暂无成分股数据</div>
-              )}
-            </div>
-          }
-        >
-          <div className="ob-keysector-chip">
-            <span className={`ob-keysector-chip-rank ${idx < 3 ? 'is-top' : ''}`}>{idx + 1}</span>
-            <span className="ob-keysector-chip-name" title={item.blockName}>{item.blockName}</span>
-            {item.rankChange != null && item.rankChange !== 0 && (
-              <span className={`ob-keysector-chip-delta ${item.rankChange > 0 ? 'up' : 'down'}`}>
-                {item.rankChange > 0 ? '↑' : '↓'}{Math.abs(item.rankChange)}
-              </span>
-            )}
-            <span className={`ob-keysector-chip-change ${item.avgChange > 0 ? 'up' : 'down'}`}>
-              {item.avgChange > 0 ? '+' : ''}{item.avgChange}%
-            </span>
-          </div>
-        </Popover>
-      ))}
-    </div>
-  </div>
-);
-
-const KeyBlockRankingSection = () => {
-  const [blockData, setBlockData] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [selectedStock, setSelectedStock] = useState(null);
-  const [klineVisible, setKlineVisible] = useState(false);
-
-  const fetchBlocks = useCallback(async () => {
-    try {
-      const res = await axios.get(`http://${local_ip}:3000/notice_data`);
-      setBlockData(res.data?.topAndBottomBlockData || null);
-    } catch (err) {
-      console.error('重点板块涨跌幅拉取失败:', err);
-    }
-  }, []);
-
-  // 强制刷新：先让后端重算所有板块成分股行情，再重新拉取（与盯盘页刷新口径一致）
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await axios.post(`http://${local_ip}:3000/api/block/refresh`);
-      await fetchBlocks();
-    } catch (err) {
-      console.error('重点板块数据刷新失败:', err);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [fetchBlocks]);
-
-  // 点击成分股打开 K 线弹窗
-  const openKLine = useCallback((stock) => {
-    setSelectedStock({ code: stock.code, stockName: stock.name, change: stock.change });
-    setKlineVisible(true);
-  }, []);
-
-  // 初次拉取 + 交易时段每 5s 轮询（收盘后停止轮询，保留最后一次结果）
-  useEffect(() => {
-    fetchBlocks();
-    const timers = [];
-    const schedulePoll = (callback, delay) => {
-      const timer = setTimeout(() => {
-        if (!isAfterMarketClose()) {
-          callback();
-          schedulePoll(callback, delay);
-        }
-      }, delay);
-      timers.push(timer);
-    };
-    if (!isAfterMarketClose()) schedulePoll(fetchBlocks, 5000);
-    return () => timers.forEach(clearTimeout);
-  }, [fetchBlocks]);
-
-  return (
-    <div className="ob-keysector-section">
-      <KeyBlockRankingCard
-        title="重点板块涨幅前十"
-        tone="up"
-        items={blockData?.firstNumList || []}
-        refreshing={refreshing}
-        onRefresh={handleRefresh}
-        onStockClick={openKLine}
-      />
-      <KeyBlockRankingCard
-        title="重点板块跌幅前十"
-        tone="down"
-        items={blockData?.lastNumList || []}
-        refreshing={refreshing}
-        onRefresh={handleRefresh}
-        onStockClick={openKLine}
-      />
-      <StockKLineModal
-        visible={klineVisible}
-        onCancel={() => setKlineVisible(false)}
-        code={selectedStock?.code}
-        stockInfo={{ name: selectedStock?.stockName, change: selectedStock?.change }}
-      />
-    </div>
-  );
-};
-
 // ==================== 主页面 ====================
 const OpeningBattle = () => {
   // 进入页面时回到顶部，避免沿用上一页面遗留的滚动位置（路由切换或刷新都会重新触发）
@@ -1981,10 +1842,8 @@ const OpeningBattle = () => {
           <FundChartModule />
           <PositionIntradayModule expanded={rankExpanded} onToggleExpanded={toggleRankExpanded} />
         </div>
-        {/* 第二、三行：重点板块涨幅前十 / 跌幅前十（各占一行横向排列，数据与盯盘页一致） */}
-        <KeyBlockRankingSection />
-        {/* 第四行：自选股 3 日涨幅前五（上下分行） | 买点诊断 | 卖点诊断（三列等宽，高度由内容撑开） */}
-        {/* 命中弹窗已移除，统一由 App.jsx 全局诊断卡片（GlobalDiagnosisAlert）提示 */}
+        {/* 第二行起：自选股 3 日涨幅前五（上下分行） | 买点诊断 | 卖点诊断（三列等宽，高度由内容撑开） */}
+        {/* 重点板块涨跌幅前十已移除（2026-11-03 用户要求） */}
         <div className="ob-row ob-row-second">
           <TopChange3dModule buyPointHit={buyPointHit} />
           <BuyPointDiagnosisCard onResultChange={setBuyPointHit} />
