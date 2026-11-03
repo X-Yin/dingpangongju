@@ -2492,3 +2492,392 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     z-index: 1;
   }
 }
+
+// ==================== 主题包 / DIY 覆盖层（--ob-* CSS 变量） ====================
+// 仅当容器挂载 .pack-active（或 .diy-active）且通过 style 注入 --ob-* CSS 变量时生效；
+// 未设置的 token 走 var() 回退值（与页面默认样式一致）。
+// 语义状态色（买点/卖点命中、通过/失败、大额进出等）在覆盖层内重新声明，任何主题下保持不变。
+
+// ---------- 主题包生效时的完整覆盖 ----------
+.opening-battle-container.pack-active {
+  background: var(--ob-page-bg,
+      radial-gradient(1100px 420px at 15% -8%, rgba(124, 58, 237, 0.05), transparent 60%),
+      radial-gradient(900px 380px at 88% -6%, rgba(225, 29, 72, 0.045), transparent 60%),
+      linear-gradient(165deg, #f7f9fc 0%, #f2f5f9 55%, #eef1f6 100%)) !important;
+  font-family: var(--ob-font-family, inherit);
+
+  // ---------- 卡片表面：白底模块卡（统计 / 斜率等） ----------
+  .ob-module:not(.ob-fund-module):not(.ob-intraday-module):not(.ob-rank3-module) {
+    background: var(--ob-card-bg, #fff) !important;
+    border: var(--ob-card-border-width, 1px) solid var(--ob-card-border-color, rgba(148, 163, 184, 0.22)) !important;
+    border-radius: var(--ob-card-radius, 14px) !important;
+    box-shadow: var(--ob-card-shadow, 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -16px rgba(15, 23, 42, 0.14)) !important;
+    color: var(--ob-item-title-color, #0f172a) !important;
+  }
+
+  // ---------- 卡片表面：渐变玻璃卡（涨幅榜 / 买点 / 卖点 / 重点板块 / 第一行子卡） ----------
+  .ob-rank3-module,
+  .ob-diagnosis-card,
+  .ob-row-first .ob-fund-chart-card,
+  .ob-row-first .ob-fund-detail,
+  .ob-row-first .ob-intraday-chart-card {
+    background: var(--ob-card-bg,
+      radial-gradient(118% 86% at 8% -8%, rgba(162, 124, 255, 0.95) 0%, rgba(162, 124, 255, 0) 62%),
+      radial-gradient(108% 94% at 106% 8%, rgba(48, 197, 210, 0.92) 0%, rgba(48, 197, 210, 0) 58%),
+      radial-gradient(130% 110% at -8% 108%, rgba(132, 94, 255, 0.9) 0%, rgba(132, 94, 255, 0) 64%),
+      linear-gradient(116deg, #7b4dff 0%, #4d55d8 46%, #1ba7c6 100%)) !important;
+    border: var(--ob-card-border-width, 0px) solid var(--ob-card-border-color, transparent) !important;
+    border-radius: var(--ob-card-radius, 22px) !important;
+    box-shadow: var(--ob-card-shadow, 0 22px 48px -26px rgba(49, 46, 129, 0.6)) !important;
+    color: var(--ob-item-title-color, #fff) !important;
+
+    // 渐变卡的内描边在非玻璃主题下去掉
+    &::after { border: none !important; }
+  }
+
+  // 第一行模块容器保持透明（表面由内部子卡片承载）
+  .ob-row-first .ob-fund-module,
+  .ob-row-first .ob-intraday-module {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  // ---------- 标题 ----------
+  .ob-module-title,
+  .ob-module-title > span,
+  .ob-fund-chart-title,
+  .ob-fund-detail-title,
+  .ob-intraday-chart-name {
+    color: var(--ob-title-color, #0f172a) !important;
+    text-shadow: none !important;
+  }
+
+  // ---------- 次要文字（白底语境） ----------
+  .ob-total-tag,
+  .ob-mode-switch-label,
+  .ob-stat-label,
+  .ob-slope-head,
+  .ob-fund-switch-label {
+    color: var(--ob-desc-color, #94a3b8) !important;
+  }
+
+  // ---------- 次要文字（渐变卡语境） ----------
+  .item-time,
+  .ob-intraday-chart-code,
+  .ob-diagnosis-clock,
+  .ob-gainer-gate-turn,
+  .ob-gainer-head,
+  .ob-keysector-chip-delta,
+  .ob-stat-pair small {
+    color: var(--ob-desc-color, rgba(255, 255, 255, 0.72)) !important;
+  }
+
+  // ---------- 子项表面：卡片头部条 ----------
+  .ob-fund-chart-header,
+  .ob-fund-detail-header,
+  .ob-intraday-chart-header {
+    background: var(--ob-item-bg, rgba(255, 255, 255, 0.08)) !important;
+    border-bottom: 1px solid var(--ob-item-border-color, rgba(255, 255, 255, 0.18)) !important;
+  }
+
+  // ---------- 子项表面：磨砂玻璃卡 / 行 / 芯片 ----------
+  .ob-gainer-col,
+  .ob-gainer-row,
+  .ob-buy-check,
+  .ob-sell-stock,
+  .ob-sell-cond,
+  .ob-conclusion,
+  .ob-keysector-chip,
+  .data-item {
+    background: var(--ob-item-bg, rgba(255, 255, 255, 0.08)) !important;
+    border: var(--ob-item-border-width, 1px) var(--ob-item-border-style, solid) var(--ob-item-border-color, rgba(255, 255, 255, 0.14)) !important;
+    border-radius: var(--ob-item-radius, 12px) !important;
+  }
+
+  // ---------- 子项标题 ----------
+  .ob-stock-name,
+  .ob-slope-col-title {
+    color: var(--ob-item-title-color, #334155) !important;
+  }
+  .ob-keysector-chip-name,
+  .ob-keysector-stock-name,
+  .ob-buy-check-name,
+  .ob-sell-stock-name {
+    color: var(--ob-item-title-color, #fff) !important;
+  }
+
+  // ---------- 涨跌色 ----------
+  .ob-up { color: var(--ob-up-color, #e11d48) !important; }
+  .ob-down { color: var(--ob-down-color, #059669) !important; }
+  // 渐变卡上的提亮涨跌变体一并接管
+  .ob-sell-stock-change.ob-up,
+  .ob-keysector-chip-change.up,
+  .ob-keysector-chip-delta.up,
+  .ob-keysector-stock-change.up { color: var(--ob-up-color, #ffd2dd) !important; }
+  .ob-sell-stock-change.ob-down,
+  .ob-keysector-chip-change.down,
+  .ob-keysector-chip-delta.down,
+  .ob-keysector-stock-change.down { color: var(--ob-down-color, #9ff2da) !important; }
+  // 资金明细数值与差值标签
+  .data-item.up .item-value { color: var(--ob-up-color, #e11d48) !important; }
+  .data-item.down .item-value { color: var(--ob-down-color, #059669) !important; }
+  .item-diff.up { color: var(--ob-up-color, #e11d48) !important; background: var(--ob-up-bg, rgba(225, 29, 72, 0.08)) !important; }
+  .item-diff.down { color: var(--ob-down-color, #059669) !important; background: var(--ob-down-bg, rgba(5, 150, 105, 0.08)) !important; }
+  // 持仓分时图右上角涨幅（原为固定青色，主题包下跟随子项标题色）
+  .ob-intraday-chart-change { color: var(--ob-item-title-color, #a5f3fc) !important; }
+
+  // ---------- 数字字体 ----------
+  .ob-fund-chart-value,
+  .item-value,
+  .item-time,
+  .ob-change-cell,
+  .ob-keysector-chip-change,
+  .ob-keysector-chip-rank,
+  .ob-keysector-stock-change,
+  .ob-intraday-chart-code,
+  .ob-intraday-chart-change,
+  .ob-gainer-gate-slope,
+  .ob-diagnosis-clock,
+  .ob-sell-stock-cost,
+  .ob-sell-stock-change,
+  .ob-stat-pair em {
+    font-family: var(--ob-number-font-family, 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace) !important;
+  }
+  // 数字字号（DIY 独有，主题包不设置时走各元素默认字号）
+  .ob-stat-pair em { font-size: var(--ob-number-font-size, 18px) !important; }
+  .ob-fund-chart-value,
+  .ob-sell-stock-change,
+  .ob-intraday-chart-change { font-size: var(--ob-number-font-size, 13px) !important; }
+
+  // ---------- 按钮（卡片内自定义按钮） ----------
+  .ob-refresh-btn {
+    background: var(--ob-btn-bg, rgba(255, 255, 255, 0.2)) !important;
+    color: var(--ob-btn-color, #fff) !important;
+    border: var(--ob-btn-border-width, 1px) var(--ob-btn-border-style, solid) var(--ob-btn-border-color, rgba(255, 255, 255, 0.32)) !important;
+    border-radius: var(--ob-btn-radius, 10px) !important;
+    box-shadow: var(--ob-btn-shadow, inset 0 1px 0 rgba(255, 255, 255, 0.3)) !important;
+    font-family: var(--ob-btn-font-family, inherit) !important;
+  }
+  .ob-fold-btn {
+    background: var(--ob-btn-bg, #fff) !important;
+    color: var(--ob-btn-color, #64748b) !important;
+    border: var(--ob-btn-border-width, 1px) var(--ob-btn-border-style, solid) var(--ob-btn-border-color, rgba(18, 33, 58, 0.12)) !important;
+    border-radius: var(--ob-btn-radius, 100px) !important;
+    box-shadow: var(--ob-btn-shadow, none) !important;
+    font-family: var(--ob-btn-font-family, inherit) !important;
+  }
+  // 涨幅榜卡内的策略模式下拉
+  .ob-mode-switch.ant-select {
+    background: var(--ob-btn-bg, rgba(255, 255, 255, 0.2)) !important;
+    border: var(--ob-btn-border-width, 1px) var(--ob-btn-border-style, solid) var(--ob-btn-border-color, rgba(255, 255, 255, 0.32)) !important;
+    border-radius: var(--ob-btn-radius, 10px) !important;
+  }
+  .ob-mode-switch .ant-select-content,
+  .ob-mode-switch .ant-select-content-value,
+  .ob-mode-switch .ant-select-suffix {
+    color: var(--ob-btn-color, #fff) !important;
+  }
+
+  // ---------- 标签 Tag ----------
+  .ob-total-tag {
+    color: var(--ob-tag-color, #64748b) !important;
+    background: var(--ob-tag-bg, rgba(148, 163, 184, 0.12)) !important;
+    border: var(--ob-tag-border-width, 1px) var(--ob-tag-border-style, solid) var(--ob-tag-border-color, rgba(148, 163, 184, 0.16)) !important;
+    border-radius: var(--ob-tag-radius, 100px) !important;
+    font-family: var(--ob-tag-font-family, inherit) !important;
+  }
+  .ob-status-badge,
+  .ob-gainer-gate-slope,
+  .ob-gainer-gate-badge,
+  .ob-sell-stock-weight,
+  .ob-sell-stock-buytime,
+  .ob-sell-stock-cost {
+    color: var(--ob-tag-color, #fff) !important;
+    background: var(--ob-tag-bg, rgba(255, 255, 255, 0.18)) !important;
+    border: var(--ob-tag-border-width, 1px) var(--ob-tag-border-style, solid) var(--ob-tag-border-color, rgba(255, 255, 255, 0.32)) !important;
+    border-radius: var(--ob-tag-radius, 999px) !important;
+    font-family: var(--ob-tag-font-family, inherit) !important;
+  }
+  .ob-rank {
+    color: var(--ob-tag-color, #64748b) !important;
+    background: var(--ob-tag-bg, rgba(148, 163, 184, 0.16)) !important;
+    border: var(--ob-tag-border-width, 0px) var(--ob-tag-border-style, solid) var(--ob-tag-border-color, transparent) !important;
+    border-radius: var(--ob-tag-radius, 6px) !important;
+  }
+  // 前三名排名徽章：未设置 tagBg 时保留渐变
+  .ob-rank-top {
+    color: var(--ob-tag-color, #fff) !important;
+    background: var(--ob-tag-bg, linear-gradient(135deg, #fb7185, #e11d48)) !important;
+  }
+
+  // ---------- 语义状态色（覆盖层内重新声明，主题包不改变业务语义） ----------
+  .ob-buy-check.passed {
+    color: #fff !important;
+    background: rgba(56, 132, 255, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.36) !important;
+  }
+  .ob-buy-check.failed {
+    color: #fff !important;
+    background: rgba(255, 71, 87, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.36) !important;
+  }
+  .ob-buy-check.exempted {
+    color: #fff !important;
+    background: rgba(255, 168, 24, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.36) !important;
+  }
+  .ob-sell-cond.safe {
+    color: #fff !important;
+    background: rgba(56, 132, 255, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.36) !important;
+  }
+  .ob-sell-cond.hit {
+    color: #fff !important;
+    background: rgba(255, 61, 119, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.38) !important;
+  }
+  .ob-sell-cond.pending {
+    color: #fff !important;
+    background: rgba(255, 168, 24, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.38) !important;
+  }
+  .ob-sell-cond.exempted {
+    color: #fff !important;
+    background: rgba(124, 58, 237, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.38) !important;
+  }
+  .ob-sell-stock.hit {
+    background: rgba(255, 61, 119, 0.24) !important;
+    border-color: rgba(255, 255, 255, 0.42) !important;
+  }
+  .ob-conclusion.hit {
+    color: #fff !important;
+    background: rgba(6, 214, 160, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.45) !important;
+  }
+  .ob-buy-card .ob-status-badge.hit {
+    color: #04372a !important;
+    background: #d9fff3 !important;
+    border-color: rgba(255, 255, 255, 0.72) !important;
+  }
+  .ob-sell-card .ob-status-badge.hit {
+    color: #4a0418 !important;
+    background: #ffe3ec !important;
+    border-color: rgba(255, 255, 255, 0.72) !important;
+  }
+  .ob-gainer-gate.passed .ob-gainer-gate-badge {
+    color: #04372a !important;
+    background: #d9fff3 !important;
+    border-color: rgba(255, 255, 255, 0.72) !important;
+  }
+  .ob-gainer-gate.failed .ob-gainer-gate-badge {
+    color: #4a0418 !important;
+    background: #ffe3ec !important;
+    border-color: rgba(255, 255, 255, 0.72) !important;
+  }
+  .ob-sell-stock-tag.safe { background: #06d6a0 !important; color: #fff !important; }
+  .ob-sell-stock-tag.hit { background: #ff3d77 !important; color: #fff !important; }
+  .data-item.big-outflow {
+    background: linear-gradient(90deg, rgba(134, 239, 172, 0.24), rgba(134, 239, 172, 0.05)) !important;
+    border-color: rgba(134, 239, 172, 0.34) !important;
+  }
+  .data-item.big-inflow {
+    background: linear-gradient(90deg, rgba(254, 205, 211, 0.24), rgba(254, 205, 211, 0.05)) !important;
+    border-color: rgba(254, 205, 211, 0.34) !important;
+  }
+
+  // 右下角主题切换按钮跟随按钮 token
+  .ob-theme-fab {
+    background: var(--ob-btn-bg, linear-gradient(135deg, #7b4dff, #4d55d8 55%, #1ba7c6)) !important;
+    color: var(--ob-btn-color, #fff) !important;
+    border: var(--ob-btn-border-width, 1px) var(--ob-btn-border-style, solid) var(--ob-btn-border-color, rgba(255, 255, 255, 0.35)) !important;
+    border-radius: var(--ob-btn-radius, 50%) !important;
+  }
+}
+
+// ---------- DIY 自定义生效时的局部覆盖（仅 DIY 已设置的字段注入了变量） ----------
+.opening-battle-container.diy-active {
+  // 卡片标题颜色
+  .ob-module-title,
+  .ob-module-title > span,
+  .ob-fund-chart-title,
+  .ob-fund-detail-title,
+  .ob-intraday-chart-name,
+  .ob-stock-name,
+  .ob-keysector-chip-name,
+  .ob-sell-stock-name {
+    color: var(--ob-item-title-color, #0f172a) !important;
+  }
+  // 卡片边框颜色
+  .ob-module,
+  .ob-diagnosis-card,
+  .ob-fund-chart-card,
+  .ob-fund-detail,
+  .ob-intraday-chart-card,
+  .ob-gainer-col,
+  .ob-gainer-row,
+  .ob-buy-check,
+  .ob-sell-stock,
+  .ob-sell-cond,
+  .ob-conclusion,
+  .ob-keysector-chip,
+  .data-item {
+    border-color: var(--ob-item-border-color, rgba(148, 163, 184, 0.22)) !important;
+  }
+  // 数字字体 / 字号
+  .ob-fund-chart-value,
+  .item-value,
+  .item-time,
+  .ob-change-cell,
+  .ob-keysector-chip-change,
+  .ob-keysector-chip-rank,
+  .ob-keysector-stock-change,
+  .ob-intraday-chart-code,
+  .ob-intraday-chart-change,
+  .ob-gainer-gate-slope,
+  .ob-diagnosis-clock,
+  .ob-sell-stock-cost,
+  .ob-sell-stock-change,
+  .ob-stat-pair em {
+    font-family: var(--ob-number-font-family, 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace) !important;
+  }
+  .ob-stat-pair em { font-size: var(--ob-number-font-size, 18px) !important; }
+  .ob-fund-chart-value,
+  .ob-sell-stock-change,
+  .ob-intraday-chart-change { font-size: var(--ob-number-font-size, 13px) !important; }
+}
+
+// ==================== 右下角固定主题切换按钮 ====================
+.ob-theme-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 72px;
+  z-index: 900;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: linear-gradient(135deg, #7b4dff, #4d55d8 55%, #1ba7c6);
+  color: #fff;
+  font-size: 19px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px -10px rgba(49, 46, 129, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px) rotate(-10deg);
+    filter: brightness(1.08);
+    box-shadow: 0 14px 30px -10px rgba(49, 46, 129, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.96);
+  }
+}

@@ -125,7 +125,10 @@ const { getMarketOverview, getThemeAnalysis, getStockQuotes, getThemeHistory, ge
 const { getSiweiLitiAnalysis } = require('./service/siweiLiti');
 const { getStore: getThemeCustomStore, saveTheme: saveCustomTheme, deleteTheme: deleteCustomTheme, saveOverride: saveThemeOverride, saveOrder: saveThemeOrder } = require('./service/themeCustom');
 // 盯盘页主题包配置：列表 / 新增 / 更新 / 删除
-const { getPacks: getThemePacks, addPack: addThemePack, updatePack: updateThemePack, deletePack: deleteThemePack } = require('./service/themePacks');
+const {
+  getPacks: getThemePacks, addPack: addThemePack, updatePack: updateThemePack, deletePack: deleteThemePack,
+  getObPacks: getObThemePacks, addObPack: addObThemePack, updateObPack: updateObThemePack, deleteObPack: deleteObThemePack,
+} = require('./service/themePacks');
 const { getClsNews, getBoardChange, getStockChangesAll, getStockNews, getStockZyjs, getInstitutionParticipation, getSectorSpot, getSectorDetail, getForeignCommodity } = require('./service/akData');
 // 买点诊断后端集中化：全局模式状态 / 飞书通知 / 10s 集中推送 / WebSocket 服务
 const strategyModeState = require('./service/strategyModeState');
@@ -1125,6 +1128,61 @@ app.post('/theme_packs/delete', (req, res) => {
     }
   } catch (error) {
     console.error('删除主题包失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 开盘作战页主题包：列表 / 新增 / 更新 / 删除（与盯盘页主题包相互独立存储）
+app.get('/ob_theme_packs/list', (req, res) => {
+  try {
+    res.json({ success: true, data: getObThemePacks() });
+  } catch (error) {
+    console.error('获取开盘作战页主题包列表失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/ob_theme_packs/add', (req, res) => {
+  try {
+    const { pack } = req.body || {};
+    const result = addObThemePack(pack);
+    if (result.success) {
+      res.json({ success: true, data: result.packs });
+    } else {
+      res.status(400).json({ success: false, message: result.error });
+    }
+  } catch (error) {
+    console.error('新增开盘作战页主题包失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/ob_theme_packs/update', (req, res) => {
+  try {
+    const { id, pack } = req.body || {};
+    const result = updateObThemePack(id, pack);
+    if (result.success) {
+      res.json({ success: true, data: result.packs });
+    } else {
+      res.status(400).json({ success: false, message: result.error });
+    }
+  } catch (error) {
+    console.error('更新开盘作战页主题包失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/ob_theme_packs/delete', (req, res) => {
+  try {
+    const { id } = req.body || {};
+    const result = deleteObThemePack(id);
+    if (result.success) {
+      res.json({ success: true, data: result.packs });
+    } else {
+      res.status(400).json({ success: false, message: result.error });
+    }
+  } catch (error) {
+    console.error('删除开盘作战页主题包失败:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

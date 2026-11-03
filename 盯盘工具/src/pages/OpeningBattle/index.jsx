@@ -3,7 +3,7 @@ import { Spin, Empty, Select, Switch as AntSwitch } from 'antd';
 import {
   RocketOutlined, RiseOutlined, FallOutlined, StockOutlined,
   AreaChartOutlined, CrownOutlined, RadarChartOutlined, WarningOutlined,
-  ReloadOutlined,
+  ReloadOutlined, BgColorsOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -14,6 +14,9 @@ import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import StockKLineModal from '../../components/StockKLineModal';
 import { useStrategyMode, setStrategyMode, STRATEGY_MODE_OPTIONS, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION } from '../../utils/strategyMode';
 import { subscribeBuyPointPush, subscribeSellPointPush, subscribeWashFusionCandidatesPush, subscribeWashFusionBuyPush } from '../../utils/buyPointWs';
+import ThemeColorModal from './components/ThemeColorModal';
+import { DEFAULT_THEME_COLOR, buildDiyVars, hasDiyFields } from './utils/themeColor';
+import { buildPackVars, getThemePacks, setRemoteThemePacks } from './utils/themePacks';
 import './index.scss';
 
 // 首屏「旧数据秒开」：各诊断模块把最近一次结果写入 localStorage，页面重新挂载时先用缓存渲染，
@@ -1543,9 +1546,9 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
   const showWfPosition = isWashFusion;
 
   // 情绪游资模式按 3 分钟整点（9:30/9:33/9:36…）高亮（与买点诊断触发口径一致），其余模式仍按 5 分钟整点；
-  // 情绪游资-极致赔率为 3 秒时间桶：每 3 秒闪烁一次做重点提示
+  // 极致赔率（3 秒桶）本身推送频率极高，不再加背景闪烁，避免视觉干扰
   const isTickMinute = isWashFusion
-    ? now.second() % 3 === 0
+    ? false
     : (isExtreme || isDefense)
       ? now.minute() % 3 === 0
       : now.minute() % 5 === 0;
@@ -1562,7 +1565,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
           <RadarChartOutlined className="ob-module-icon" />
           <span>买点诊断</span>
           {isWashFusion && <span className="ob-mode-switch-label">情绪游资-极致赔率 · 3s 桶</span>}
-          <span className="ob-diagnosis-clock">{now.format('HH:mm:ss')}</span>
+          {/* <span className="ob-diagnosis-clock">{now.format('HH:mm:ss')}</span> */}
         </div>
         <div className="ob-diagnosis-actions">
           <span className={`ob-status-badge ${hit ? 'hit' : ''}`}>
@@ -1853,8 +1856,147 @@ const OpeningBattle = () => {
     });
   }, []);
 
+  // ==================== 主题包 / DIY 主题色（与盯盘页同款功能体系） ====================
+  // themeColor 结构: { pack, randomPlay, itemTitleColor, itemBorderColor, numberFontFamily, numberFontSize }
+  // pack: 主题包 id（'' 为默认样式），生效时 DIY 字段禁用，样式由主题包 CSS 变量接管
+  const [themeColor, setThemeColor] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ob_themeColor');
+      return saved ? { ...DEFAULT_THEME_COLOR, ...JSON.parse(saved) } : { ...DEFAULT_THEME_COLOR };
+    } catch {
+      return { ...DEFAULT_THEME_COLOR };
+    }
+  });
+  const [themeColorModalVisible, setThemeColorModalVisible] = useState(false);
+  // 弹窗内未保存的实时预览主题包（null 表示无预览）；不写入 localStorage，取消时自动失效
+  const [themePreviewPack, setThemePreviewPack] = useState(null);
+  // 编辑主题包颜色时的实时预览数据（仅内存，点击保存才写入后端）
+  const [themePreviewPackData, setThemePreviewPackData] = useState(null);
+  // 主题包列表：由后端 /ob_theme_packs/list 返回，加载失败时回退到本地静态列表
+  const [themePacks, setThemePacks] = useState(() => getThemePacks());
+
+  // 预览优先于已保存配置，用于弹窗中悬停/点选时即时生效
+  const themeColorView = useMemo(
+    () => (themePreviewPack === null ? themeColor : { ...themeColor, pack: themePreviewPack }),
+    [themeColor, themePreviewPack]
+  );
+
+  // 当前生效的主题包（null 表示默认样式）
+  const activeThemePack = useMemo(() => {
+    if (!themeColorView.pack) return null;
+    // 编辑颜色中的实时预览数据优先
+    const previewData = themePreviewPackData?.id === themeColorView.pack ? themePreviewPackData : null;
+    return previewData || themePacks.find(p => p.id === themeColorView.pack) || null;
+  }, [themeColorView.pack, themePacks, themePreviewPackData]);
+
+  // 主题包 CSS 变量（挂到 .opening-battle-container 上）
+  const packVars = useMemo(
+    () => (activeThemePack ? buildPackVars(activeThemePack) : undefined),
+    [activeThemePack]
+  );
+
+  // 主题包未生效时的 DIY 变量（仅 DIY 已设置字段；与主题包互斥）
+  const diyActive = useMemo(
+    () => !activeThemePack && hasDiyFields(themeColorView),
+    [activeThemePack, themeColorView]
+  );
+  const diyVars = useMemo(
+    () => (diyActive ? buildDiyVars(themeColorView) : undefined),
+    [diyActive, themeColorView]
+  );
+
+  // 监听主题色配置变化并存入 localStorage
+  useEffect(() => {
+    localStorage.setItem('ob_themeColor', JSON.stringify(themeColor));
+  }, [themeColor]);
+
+  // 主题随机播放：开启后每隔 5 分钟随机切换一个主题包（不会切到当前包）
+  useEffect(() => {
+    if (!themeColor.randomPlay) return undefined;
+    const timer = setInterval(() => {
+      setThemeColor(prev => {
+        const ids = themePacks.map(p => p.id);
+        if (!ids.length) return prev;
+        let next = prev.pack;
+        while (next === prev.pack && ids.length > 1) {
+          next = ids[Math.floor(Math.random() * ids.length)];
+        }
+        if (next === prev.pack) return prev;
+        return { ...prev, pack: next };
+      });
+    }, 5 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [themeColor.randomPlay, themePacks]);
+
+  // 应用后端返回的主题包列表：同步到模块级缓存
+  const applyThemePacks = (packs) => {
+    if (!Array.isArray(packs)) return;
+    setRemoteThemePacks(packs);
+    setThemePacks(packs);
+  };
+
+  // 从后端加载主题包列表；失败时保留当前列表（首次加载失败则使用本地静态列表）
+  const loadThemePacks = async () => {
+    try {
+      const res = await axios.get(`http://${local_ip}:3000/ob_theme_packs/list`);
+      if (res.data?.success) applyThemePacks(res.data.data);
+    } catch (error) {
+      console.error('加载主题包列表失败:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadThemePacks();
+    // 仅首次进入页面加载一次，之后由弹窗打开/增删操作刷新
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 新增主题包：后端校验 JSON 结构，成功后刷新列表
+  const handleAddThemePack = async (pack) => {
+    const res = await axios.post(`http://${local_ip}:3000/ob_theme_packs/add`, { pack });
+    if (!res.data?.success) throw new Error(res.data?.message || '新增主题包失败');
+    applyThemePacks(res.data.data);
+    return res.data.data;
+  };
+
+  // 更新主题包（编辑颜色后保存）：后端按 token 合并，成功后刷新列表
+  const handleUpdateThemePack = async (id, tokens) => {
+    const res = await axios.post(`http://${local_ip}:3000/ob_theme_packs/update`, { id, pack: { tokens } });
+    if (!res.data?.success) throw new Error(res.data?.message || '更新主题包失败');
+    applyThemePacks(res.data.data);
+    return res.data.data;
+  };
+
+  // 删除主题包；若删除的是当前生效主题，则回退到默认主题
+  const handleDeleteThemePack = async (id) => {
+    const res = await axios.post(`http://${local_ip}:3000/ob_theme_packs/delete`, { id });
+    if (!res.data?.success) throw new Error(res.data?.message || '删除主题包失败');
+    applyThemePacks(res.data.data);
+    setThemeColor(prev => (prev.pack === id ? { ...prev, pack: '' } : prev));
+    setThemePreviewPack(prev => (prev === id ? '' : prev));
+    setThemePreviewPackData(prev => (prev?.id === id ? null : prev));
+    return res.data.data;
+  };
+
+  const handleSaveThemeColor = (next) => {
+    setThemeColor(next);
+    setThemePreviewPack(null);
+    setThemePreviewPackData(null);
+    setThemeColorModalVisible(false);
+  };
+
+  // 关闭弹窗：未保存的预览失效，恢复已保存的主题
+  const handleCancelThemeColor = () => {
+    setThemePreviewPack(null);
+    setThemePreviewPackData(null);
+    setThemeColorModalVisible(false);
+  };
+
   return (
-    <div className="opening-battle-container">
+    <div
+      className={`opening-battle-container${activeThemePack ? ' pack-active' : ''}${diyActive ? ' diy-active' : ''}`}
+      style={packVars || diyVars}
+    >
       <div className="ob-layout">
         {/* 第一行：资金分时图 | 资金明细 | 成交量（左） + 持仓分时图（右，与左侧模块等高） */}
         <div className="ob-row ob-row-first">
@@ -1869,6 +2011,29 @@ const OpeningBattle = () => {
           <SellPointDiagnosisCard />
         </div>
       </div>
+
+      {/* 右下角固定主题切换按钮：点击打开主题包弹窗 */}
+      <button
+        type="button"
+        className="ob-theme-fab"
+        title="主题与 DIY 主题色设置"
+        onClick={() => setThemeColorModalVisible(true)}
+      >
+        <BgColorsOutlined />
+      </button>
+
+      <ThemeColorModal
+        open={themeColorModalVisible}
+        onCancel={handleCancelThemeColor}
+        onOk={handleSaveThemeColor}
+        onPreview={setThemePreviewPack}
+        value={themeColor}
+        packs={themePacks}
+        onAddPack={handleAddThemePack}
+        onUpdatePack={handleUpdateThemePack}
+        onDeletePack={handleDeleteThemePack}
+        onPreviewPackData={setThemePreviewPackData}
+      />
     </div>
   );
 };
