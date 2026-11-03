@@ -144,13 +144,30 @@ const fetchThsIndexDailyKline = async (pureCode, market, limit) => {
     .sort((a, b) => a.trade_date - b.trade_date);
 };
 
+// 收盘后指数日K缓存过期检查：交易日 15:00 后缓存未含今日 bar，视为盘前/盘中拉取的旧快照
+//（与个股日K klineCacheIsStale 同口径；1 分钟冷却，避免数据源发布滞后时反复打接口）
+const indexStaleRefetchAt = new Map();
+const INDEX_STALE_REFETCH_COOLDOWN_MS = 60 * 1000;
+const indexKlineIsStale = (kline) => {
+  if (!Array.isArray(kline) || kline.length === 0) return false;
+  const now = new Date();
+  const hhmm = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+  if (hhmm < '1500') return false;
+  if (!isTradingDay(now)) return false;
+  const todayNum = Number(beijingToday());
+  return !kline.some(k => k && Number(k.trade_date) === todayNum && Number(k.close_px) > 0);
+};
+
 // 带文件缓存（当日有效）的指数/板块日K加载
 const loadIndexKline = async (cacheName, pureCode, market, limit) => {
   const file = path.join(DATA_DIR, cacheName);
   const cached = readJsonCache(file);
   if (cached && cached.fetchedAt === beijingToday() && Array.isArray(cached.kline) && cached.kline.length > 0) {
-    return cached.kline;
+    const stale = indexKlineIsStale(cached.kline);
+    const cooling = Date.now() - (indexStaleRefetchAt.get(cacheName) || 0) <= INDEX_STALE_REFETCH_COOLDOWN_MS;
+    if (!stale || cooling) return cached.kline;
   }
+  indexStaleRefetchAt.set(cacheName, Date.now());
   let kline = [];
   try { kline = await fetchThsIndexDailyKline(pureCode, market, limit); } catch (e) { /* 失败返回空 */ }
   if (kline.length > 0) writeJsonCache(file, { fetchedAt: beijingToday(), kline });

@@ -45,7 +45,7 @@ const WatchlistTopRanking = ({ stocks = [], onStockClick, onOpenOverlayTimeLine,
     const downColorStyle = { color: '#059669' };
 
     const statsTags = (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 8, flexWrap: 'nowrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'nowrap' }}>
             <span className="watchlist-stat-tag" style={tagStyle}>
                 上涨vs下跌：<span className="up" style={upColorStyle}>{upCount}</span> : <span className="down" style={downColorStyle}>{downCount}</span>
             </span>
@@ -67,6 +67,7 @@ const WatchlistTopRanking = ({ stocks = [], onStockClick, onOpenOverlayTimeLine,
                     const value = Number(s.change);
                     const itemContent = (
                         <div
+                            key={s.code}
                             className="unified-list-item"
                             onClick={() => onStockClick && onStockClick(s)}
                             style={{ cursor: onStockClick ? 'pointer' : 'default', ...borderStyle(themeColor) }}

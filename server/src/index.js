@@ -1647,7 +1647,7 @@ app.get('/get_strategy_mode', (req, res) => {
 
 // ===== 情绪游资-极致赔率（首板起爆 + 二板起爆，仅在该策略模式下由 washFusionLive 推送）=====
 // 候选股列表：refresh=1 强制重算；date 缺省按展示基准日
-//   交易日 09:10 起为当日；非交易日 / 交易日 09:10 前为上一交易日收盘后的候选
+//   交易日 09:10-15:00 为当日；非交易日 / 09:10 前 / 15:00 后为「下一买点日」候选（基于最近交易日收盘数据）
 app.get('/wash_fusion_extreme_odds_candidates', async (req, res) => {
   try {
     const dateStr = String(req.query.date || '').trim();

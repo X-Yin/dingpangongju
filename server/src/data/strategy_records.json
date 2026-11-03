@@ -1,25 +1,5 @@
 [
   {
-    "id": "d3e6a74e1a722818",
-    "time": "2026-11-03 09:38:20",
-    "read": true,
-    "strategyId": "volume_shrink_stagnation",
-    "title": "📉 放量后缩量滞涨",
-    "description": "成交量从高位 <strong>-444亿</strong> 回落至 <strong>-604亿</strong>，指数开始滞涨，需警惕回落风险。",
-    "severity": "medium",
-    "isBullish": false
-  },
-  {
-    "id": "5ec9dd1674cd070e",
-    "time": "2026-11-03 09:40:21",
-    "read": true,
-    "strategyId": "overnight_crisis_escape",
-    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
-    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-81.5亿</strong>（净流出）<br/>• 科技分时情绪 -31.8 → -29.3（上升 2.5）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
-    "severity": "high",
-    "isBullish": false
-  },
-  {
     "id": "cdeb0e1684fa22df",
     "time": "2026-11-03 09:51:59",
     "read": true,

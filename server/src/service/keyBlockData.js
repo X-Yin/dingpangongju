@@ -39,8 +39,10 @@ const getKeyBlockConstituents = () => {
 const barsCache = new Map();
 
 // 预拉取指定 codes（shxxxxxx 完整格式）日K到 barsCache；并发 8；已缓存的跳过，拉取失败存 null
-const ensureBarsForCodes = async (codeSet) => {
-  const codes = Array.from(codeSet).filter(c => !barsCache.has(c));
+// force=true：先删除进程内缓存再重新调用 getStockBars（收盘后手动刷新时用于拿到当日收盘K线）
+const ensureBarsForCodes = async (codeSet, { force = false } = {}) => {
+  const codes = force ? Array.from(codeSet) : Array.from(codeSet).filter(c => !barsCache.has(c));
+  if (force) for (const c of codes) barsCache.delete(c);
   if (codes.length === 0) return { total: 0, fetched: 0 };
   let fetched = 0;
   await batchParallel(codes, async (code) => {

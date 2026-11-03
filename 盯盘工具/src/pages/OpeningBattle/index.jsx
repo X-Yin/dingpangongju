@@ -38,6 +38,9 @@ const writeLocalCache = (key, value) => {
   }
 };
 
+// 手动刷新的最短 loading 展示时长：后端命中缓存时可能几十毫秒返回，不加下限用户会以为没触发
+const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
+
 // ==================== 网络检测轮询 ====================
 // 每 3s 探测一次外网（百度），单次请求超过 1s 未返回即判定为网络差/断网，
 // 由「正常」转为「异常」时通过浏览器通知提醒（持续断网不重复弹窗，恢复后再次异常会重新提醒）
@@ -939,7 +942,12 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
 
   const handleWfRefresh = useCallback(async () => {
     setWfRefreshing(true);
-    try { await fetchWashFusion(true); } finally { setWfRefreshing(false); }
+    const startedAt = Date.now();
+    try { await fetchWashFusion(true); } finally {
+      // 保证刷新有可感知的 loading（后端缓存命中时可能几十毫秒返回）
+      await sleep(Math.max(0, 500 - (Date.now() - startedAt)));
+      setWfRefreshing(false);
+    }
   }, [fetchWashFusion]);
 
   useEffect(() => {
@@ -1029,8 +1037,8 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
     const pct = (v) => (v === null || v === undefined || !Number.isFinite(Number(v))
       ? '--'
       : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
-    const wfRow = (s, idx, keyPrefix) => (
-      <div className="ob-gainer-row ob-gainer-row-wf" key={`${keyPrefix}-${s.code}-${idx}`}>
+    const wfRow = (s, idx, keyPrefix, showStatus = true) => (
+      <div className={`ob-gainer-row ob-gainer-row-wf${showStatus ? '' : ' ob-gainer-row-wf-nostatus'}`} key={`${keyPrefix}-${s.code}-${idx}`}>
         <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
         <span className="ob-gainer-name-cell">
           <span
@@ -1054,14 +1062,21 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
         <span className="ob-gainer-resilience">
           {s.totalMvYi != null ? `${Number(s.totalMvYi).toFixed(2)}亿` : '--'}
         </span>
-        <span className="ob-wf-status-cell">
-          <span className={`ob-wf-status-tag ${s.status || ''}`}>{s.statusText || '--'}</span>
-        </span>
+        {showStatus && (
+          <span className="ob-wf-status-cell">
+            <span className={`ob-wf-status-tag ${s.status || ''}`}>{s.statusText || '--'}</span>
+          </span>
+        )}
       </div>
     );
 
     return (
       <div className="ob-module ob-rank3-module">
+        {wfRefreshing && (
+          <div className="ob-refresh-mask">
+            <Spin size="large" />
+          </div>
+        )}
         <div className="ob-module-header">
           <div className="ob-module-title" title="情绪游资-极致赔率 · 首板/二板候选池">
             <CrownOutlined className="ob-module-icon" />
@@ -1098,17 +1113,16 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
               <span className="ob-gainer-section-label">首板起爆 · {firstList.length}</span>
               <span className="ob-total-tag">9:25-9:30 每 {rules.auctionRemindSeconds ?? 30}s 提醒</span>
             </div>
-            <div className="ob-gainer-head ob-gainer-head-wf">
+            <div className="ob-gainer-head ob-gainer-head-wf ob-gainer-head-wf-nostatus">
               <span>#</span>
               <span>股票</span>
               <span>当日</span>
               <span>竞价</span>
               <span>总市值</span>
-              <span>状态</span>
             </div>
             {firstList.length === 0 ? (
               <div className="ob-empty-mini ob-gainer-empty">暂无首板起爆候选</div>
-            ) : firstList.map((s, idx) => wfRow(s, idx, 'fb'))}
+            ) : firstList.map((s, idx) => wfRow(s, idx, 'fb', false))}
           </div>
           <div className="ob-gainer-col">
             <div className="ob-gainer-col-head">
@@ -1411,6 +1425,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
+    const startedAt = Date.now();
     try {
       if (isWashFusion) {
         const res = await axios.get(`http://${local_ip}:3000/wash_fusion_extreme_odds_snapshot`, { params: { refresh: 1 } });
@@ -1418,7 +1433,11 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
       } else {
         await run(true);
       }
-    } finally { setRefreshing(false); }
+    } finally {
+      // 极致赔率模式下后端可能几十毫秒返回，加最短展示时长避免「点了没反应」的错觉
+      if (isWashFusion) await sleep(Math.max(0, 500 - (Date.now() - startedAt)));
+      setRefreshing(false);
+    }
   }, [run, isWashFusion]);
 
   // 最近一次诊断结果按「数据所属模式」落 localStorage，供下次进入页面秒开

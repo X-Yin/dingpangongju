@@ -637,6 +637,398 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   font-variant-numeric: tabular-nums;
 }
 
+// ==================== 买点流水线弹窗 ====================
+// 弹窗沿用买点卡片的蓝紫「夜空极光」渐变，内部节点 / 面板仍为磨砂玻璃体系
+.gdp-modal {
+  .ant-modal-content {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .ant-modal-body {
+    padding: 0 !important;
+  }
+}
+
+.gdp-card {
+  width: 100%;
+  max-height: calc(100vh - 60px);
+  border-radius: 22px;
+
+  // 弹窗内不播放流光，避免扫过图表影响阅读
+  &::after {
+    display: none;
+  }
+}
+
+.gdp-body {
+  padding: 14px 18px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+// ---------- 流水线节点进程 ----------
+.gdp-steps {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gdp-step {
+  position: relative;
+  flex: 1;
+  min-width: 250px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.13);
+    transform: translateY(-1px);
+  }
+
+  &.is-active {
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.22), rgba(167, 139, 250, 0.26));
+    border-color: rgba(103, 232, 249, 0.55);
+    box-shadow:
+      0 12px 28px -16px rgba(56, 189, 248, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.26);
+  }
+
+  &.is-done {
+    border-color: rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.1);
+  }
+}
+
+.gdp-step-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #fff;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+
+  .is-active & {
+    background: linear-gradient(135deg, #22d3ee, #818cf8);
+    border-color: rgba(255, 255, 255, 0.38);
+    box-shadow: 0 8px 22px -8px rgba(34, 211, 238, 0.8);
+  }
+
+  .is-done & {
+    background: linear-gradient(135deg, #34d399, #10b981);
+    border-color: rgba(255, 255, 255, 0.34);
+    box-shadow: 0 8px 22px -8px rgba(52, 211, 153, 0.7);
+  }
+}
+
+.gdp-step-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  b {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.02em;
+  }
+
+  i {
+    font-style: normal;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.gdp-step-line {
+  position: absolute;
+  right: -11px;
+  top: 50%;
+  width: 11px;
+  height: 2px;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.22);
+}
+
+// ---------- 节点内容 ----------
+.gdp-step-body,
+.gdp-node {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gdp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 16px;
+  padding: 10px 12px 12px;
+  @include gda-glass(
+    rgba(255, 255, 255, 0.09),
+    rgba(255, 255, 255, 0.2),
+    0 12px 30px -20px rgba(8, 12, 45, 0.65)
+  );
+}
+
+.gdp-panel-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+
+  .gdp-panel-name {
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .gdp-panel-code {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: $gda-mono;
+  }
+
+  .gdp-panel-change {
+    margin-left: auto;
+    font-size: 14px;
+    font-weight: 800;
+    font-family: $gda-mono;
+    font-variant-numeric: tabular-nums;
+
+    &.up {
+      color: #ff9c9c;
+      text-shadow: 0 0 14px rgba(255, 107, 107, 0.4);
+    }
+
+    &.down {
+      color: #6ee7b7;
+      text-shadow: 0 0 14px rgba(110, 231, 183, 0.4);
+    }
+  }
+}
+
+.gdp-chart-box {
+  background: #fff;
+  border-radius: 10px;
+  padding: 4px;
+  overflow: hidden;
+
+  .stock-timeline-container {
+    border: none;
+    border-radius: 8px;
+  }
+}
+
+.gdp-chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 168px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+// 自选股 / 重点板块模块在外层为白色卡片，这里负责圆角裁切与投影
+.gdp-light-card {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 14px 34px -22px rgba(8, 12, 45, 0.7);
+
+  .monitor-card {
+    border-radius: 16px;
+    height: 100%;
+  }
+}
+
+.gdp-chart-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 16px;
+  padding: 10px 12px 12px;
+  @include gda-glass(
+    rgba(255, 255, 255, 0.09),
+    rgba(255, 255, 255, 0.2),
+    0 12px 30px -20px rgba(8, 12, 45, 0.65)
+  );
+}
+
+.gdp-chart-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.06em;
+
+  &::before {
+    content: '';
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #67e8f9, #a78bfa);
+    box-shadow: 0 0 8px rgba(103, 232, 249, 0.55);
+  }
+}
+
+// ---------- 条件核对 ----------
+.gdp-cond-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gdp-cond-group-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.62);
+  margin: 2px 0;
+}
+
+.gdp-cond {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 8px 12px;
+  @include gda-glass(
+    rgba(255, 255, 255, 0.09),
+    rgba(255, 255, 255, 0.18),
+    0 10px 26px -18px rgba(8, 12, 45, 0.6)
+  );
+
+  &.is-pass {
+    background: rgba(52, 211, 153, 0.13);
+    border-color: rgba(52, 211, 153, 0.3);
+
+    .gdp-cond-icon,
+    .gdp-cond-badge {
+      color: #a7f3d0;
+    }
+
+    .gdp-cond-badge {
+      background: rgba(52, 211, 153, 0.22);
+    }
+  }
+
+  &.is-exempt {
+    background: rgba(251, 191, 36, 0.12);
+    border-color: rgba(251, 191, 36, 0.3);
+
+    .gdp-cond-icon,
+    .gdp-cond-badge {
+      color: #fcd34d;
+    }
+
+    .gdp-cond-badge {
+      background: rgba(251, 191, 36, 0.22);
+    }
+  }
+
+  &.is-fail {
+    background: rgba(244, 63, 94, 0.13);
+    border-color: rgba(244, 63, 94, 0.32);
+
+    .gdp-cond-icon,
+    .gdp-cond-badge {
+      color: #fecdd3;
+    }
+
+    .gdp-cond-badge {
+      background: rgba(244, 63, 94, 0.22);
+    }
+  }
+}
+
+.gdp-cond-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gdp-cond-icon {
+  font-size: 14px;
+}
+
+.gdp-cond-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.gdp-cond-value {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: $gda-mono;
+  font-variant-numeric: tabular-nums;
+}
+
+.gdp-cond-badge {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 9px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.gdp-cond-detail {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 18px;
+}
+
+// ---------- 底部操作 ----------
+.gdp-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+  .gdp-nav-spacer {
+    flex: 1;
+  }
+}
+
 // 系统减弱动态效果时关闭装饰性动画
 @media (prefers-reduced-motion: reduce) {
   .gda-card,

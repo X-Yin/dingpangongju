@@ -146,6 +146,8 @@ const lastCloseOf = (bars, dateNum) => {
 // ============================================================
 // 候选池计算：A 首板起爆 + B 二板起爆（与回测选股阶段同口径）
 // ============================================================
+// 日K统一按最新口径取：ensureBarsForCodes 的 force 会清掉进程内旧快照，再走 getStockBars
+//（盘中有当日 K 线前命中内存缓存开销极小；收盘后首次会补拉当日收盘 K，避免用盘中旧数据算下一买点）
 const computePools = async (dateStr) => {
   const dateNum = Number(dateStr);
   let prevTradeDate = null;
@@ -176,7 +178,7 @@ const computePools = async (dateStr) => {
     }
 
     const washStocks = Array.from(recordMap.values()).filter((x) => !x.hasHighBoard);
-    try { await ensureBarsForCodes(new Set(washStocks.map((x) => x.code))); } catch (e) { /* 日K拉取失败按缺失处理 */ }
+    try { await ensureBarsForCodes(new Set(washStocks.map((x) => x.code)), { force: true }); } catch (e) { /* 日K拉取失败按缺失处理 */ }
 
     const out = [];
     for (const item of washStocks) {
@@ -226,7 +228,7 @@ const computePools = async (dateStr) => {
     }
 
     const poolStocks = Array.from(recordMap.values()).filter((x) => !x.hasHighBoard && x.firstBoardAtPrev);
-    try { await ensureBarsForCodes(new Set(poolStocks.map((x) => x.code))); } catch (e) { /* 日K拉取失败按缺失处理 */ }
+    try { await ensureBarsForCodes(new Set(poolStocks.map((x) => x.code)), { force: true }); } catch (e) { /* 日K拉取失败按缺失处理 */ }
 
     const prevNum = parseInt(prevTradeDate, 10);
     const out = [];
@@ -297,8 +299,9 @@ const getPools = async ({ dateStr = dayjs().format('YYYYMMDD'), refresh = false 
     return { pools: poolCache.pools, computedAt: poolCache.computedAt };
   }
   if (poolInflight && poolInflight.date === dateStr) {
+    // 手动刷新必须真正重算：先等当前轮算完，再强制重算一次，避免直接复用 3s 轮询中的结果
     await poolInflight.promise;
-    return { pools: poolCache.pools, computedAt: poolCache.computedAt };
+    if (!refresh) return { pools: poolCache.pools, computedAt: poolCache.computedAt };
   }
   const promise = (async () => {
     try {
@@ -828,14 +831,20 @@ const tick = async () => {
 
 // ============================================================
 // 展示基准日 = 候选所属的「买点日」（洗盘须在买点日前一交易日结束）：
-//   交易日任意时刻（含 09:10 前）→ 当日（盘前用上一交易日收盘数据算出的就是当日候选）
+//   交易日 09:10 前 → 当日（盘前用上一交易日收盘数据算出的就是当日候选）
+//   交易日 09:10-15:00 → 当日（盘中按实时行情刷新）
+//   交易日 15:00 后 → 下一交易日（用当日已收盘数据重新计算，供次日买点使用）
 //   非交易日 → 下一个交易日（周末/节假日展示的是下一交易日的候选，而不是已过去的上一交易日）
 // ============================================================
 const resolveDisplayBasis = async (now = new Date()) => {
   const todayStr = dayjs(now).format('YYYYMMDD');
   const minute = now.getHours() * 60 + now.getMinutes();
   if (isTradingDay(now)) {
-    return { dateStr: todayStr, isPreviousDay: minute < PREPARE_MINUTE };
+    if (minute < PREPARE_MINUTE) return { dateStr: todayStr, isPreviousDay: true };
+    if (minute >= POLL_END_MINUTE) {
+      return { dateStr: dayjs(getNextTradingDay(now)).format('YYYYMMDD'), isPreviousDay: true };
+    }
+    return { dateStr: todayStr, isPreviousDay: false };
   }
   return { dateStr: dayjs(getNextTradingDay(now)).format('YYYYMMDD'), isPreviousDay: true };
 };
@@ -861,20 +870,35 @@ const buildStaticRows = (pools) => {
 };
 
 // 前端展示数据（首次加载 / 手动刷新）：按基准日返回 A/B 两组候选
+//   refresh=true 时：盘中重新抓实时行情并按当前分钟重算状态；收盘后/盘前重新计算下一买点日候选
 const getDisplayData = async ({ refresh = false, now = new Date() } = {}) => {
   const basis = await resolveDisplayBasis(now);
   const { pools, computedAt } = await getPools({ dateStr: basis.dateStr, refresh });
-  const rows = basis.isPreviousDay
-    ? buildStaticRows(pools)
-    : (quoteRows.length > 0 ? quoteRows : buildStaticRows(pools));
+  const minute = now.getHours() * 60 + now.getMinutes();
+  let rows;
+  let updatedAt;
+  if (basis.isPreviousDay) {
+    rows = buildStaticRows(pools);
+    updatedAt = computedAt;
+  } else if (refresh) {
+    // 盘中手动刷新：必须重新抓取实时行情，否则只会返回上一轮 3s 推送的旧快照
+    const list = [...(pools.firstBoard || []), ...(pools.secondBoard || [])];
+    const quotes = await fetchQuotes(list.map((c) => c.code));
+    rows = buildRows(pools, quotes, minute);
+    quoteRows = rows;
+    quoteRowsTs = Date.now();
+    updatedAt = dayjs(quoteRowsTs).format('YYYY-MM-DD HH:mm:ss');
+  } else {
+    rows = quoteRows.length > 0 ? quoteRows : buildStaticRows(pools);
+    updatedAt = quoteRowsTs ? dayjs(quoteRowsTs).format('YYYY-MM-DD HH:mm:ss') : computedAt;
+  }
   const groups = splitGroups(rows);
   return {
     date: basis.dateStr,
     basisDate: basis.dateStr,
     isPreviousDay: basis.isPreviousDay,
     computedAt,
-    updatedAt: basis.isPreviousDay ? null
-      : (quoteRowsTs ? dayjs(quoteRowsTs).format('YYYY-MM-DD HH:mm:ss') : computedAt),
+    updatedAt,
     count: rows.length,
     firstBoardCount: groups.firstBoard.length,
     secondBoardCount: groups.secondBoard.length,

@@ -2637,5 +2637,26 @@
     "marketValue": 12651588517,
     "circulatingMarketValue": 12651588517,
     "updatedAt": "2026-11-03 09:07:13"
+  },
+  {
+    "code": "sh603901",
+    "name": "永创智能",
+    "marketValue": 5738071440,
+    "circulatingMarketValue": 5660546512,
+    "updatedAt": "2026-11-03 18:35:56"
+  },
+  {
+    "code": "sz002795",
+    "name": "永和智控",
+    "marketValue": 2734045173,
+    "circulatingMarketValue": 2686325967,
+    "updatedAt": "2026-11-03 18:35:56"
+  },
+  {
+    "code": "sh603719",
+    "name": "良品铺子",
+    "marketValue": 3864418814,
+    "circulatingMarketValue": 3864418814,
+    "updatedAt": "2026-11-03 18:35:56"
   }
 ]
