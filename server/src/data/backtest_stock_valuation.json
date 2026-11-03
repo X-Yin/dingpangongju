@@ -2630,5 +2630,12 @@
     "marketValue": 2199000000,
     "circulatingMarketValue": 1909961548,
     "updatedAt": "2026-11-02 15:26:15"
+  },
+  {
+    "code": "sh603713",
+    "name": "密尔克卫",
+    "marketValue": 12651588517,
+    "circulatingMarketValue": 12651588517,
+    "updatedAt": "2026-11-03 09:07:13"
   }
 ]

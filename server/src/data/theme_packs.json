@@ -5142,6 +5142,48 @@
         "sidebarBg": "#1E1229",
         "sidebarRadius": "0px"
       }
+    },
+    {
+      "id": "light-blue-orange-finance",
+      "name": "浅蓝橙活力金融",
+      "desc": "Light Blue Orange Finance · 明亮清爽行情看板",
+      "source": "#60",
+      "tokens": {
+        "pageBg": "#1DBFFE",
+        "fontFamily": "'Nunito', 'PingFang SC', sans-serif",
+        "numberFontFamily": "'JetBrains Mono', 'Roboto Mono', monospace",
+        "cardBg": "#FFFFFF",
+        "cardBorderColor": "rgba(249, 131, 54, 0.35)",
+        "cardBorderWidth": "1px",
+        "cardRadius": "22px",
+        "cardShadow": "0 10px 30px rgba(29, 191, 254, 0.18)",
+        "titleColor": "#F98336",
+        "descColor": "rgba(141, 137, 251, 0.85)",
+        "itemBg": "rgba(231, 202, 244, 0.45)",
+        "itemTitleColor": "#1DBFFE",
+        "itemDescColor": "rgba(30, 41, 59, 0.72)",
+        "itemBorderColor": "rgba(12, 219, 246, 0.45)",
+        "itemBorderStyle": "solid",
+        "itemBorderWidth": "1px",
+        "itemRadius": "16px",
+        "upColor": "#F98336",
+        "downColor": "#1DBFFE",
+        "btnBg": "#F98336",
+        "btnColor": "#FFFFFF",
+        "btnRadius": "999px",
+        "btnBorderColor": "#F98336",
+        "btnBorderStyle": "solid",
+        "btnBorderWidth": "2px",
+        "btnFontFamily": "'Nunito', 'PingFang SC', sans-serif",
+        "btnShadow": "0 6px 16px rgba(249, 131, 54, 0.35)",
+        "tagBg": "#0CDBF6",
+        "tagColor": "#FFFFFF",
+        "tagFontFamily": "'JetBrains Mono', monospace",
+        "tagBorderColor": "transparent",
+        "tagBorderStyle": "solid",
+        "tagBorderWidth": "0px",
+        "tagRadius": "999px"
+      }
     }
   ]
 }

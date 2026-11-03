@@ -144,10 +144,11 @@ const scoreBlockOnDate = (category, date, prevDate, categoryMoney, marketTotals,
   };
 };
 
-// 把某一天的强度行合并进按板块的历史序列
+// 把某一天的强度行合并进按板块的历史序列（跳过缺失板块名的脏数据行）
 const mergeRowsIntoBlocks = (blocks, date, rows) => {
-  const byName = new Map(blocks.map((block) => [block.name, block]));
+  const byName = new Map(blocks.filter((block) => block.name).map((block) => [block.name, block]));
   for (const row of rows) {
+    if (!row.name) continue;
     let block = byName.get(row.name);
     if (!block) {
       block = { name: row.name, points: [] };
@@ -185,6 +186,7 @@ const buildPayload = (blocks, extra = {}) => ({
   },
   ...extra,
   blocks: blocks
+    .filter((block) => block && block.name)
     .map((block) => ({
       ...block,
       latest: block.points[block.points.length - 1] || null,

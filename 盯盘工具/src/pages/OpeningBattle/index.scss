@@ -1193,18 +1193,19 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   // 逆周期表格：额外一列「逆周期择时」
   .ob-gainer-head-reverse,
   .ob-gainer-row-reverse {
-    grid-template-columns: 22px minmax(0, 1fr) 58px 44px 44px 96px;
+    // 最后一列按最长择时文案留足宽度，保证 tag 文字完整展示、不出现省略号
+    grid-template-columns: 22px minmax(0, 1fr) 58px 44px 44px 172px;
   }
 
   // ===== 情绪游资-极致赔率：首板起爆 / 二板起爆 双列表（6 列）=====
   .ob-gainer-head-wf,
   .ob-gainer-row-wf {
-    grid-template-columns: 22px minmax(0, 1fr) 52px 52px 56px 74px;
+    // 状态列按最长文案留足宽度，保证 tag 文字完整展示、不出现省略号
+    grid-template-columns: 22px minmax(0, 1fr) 52px 52px 56px 112px;
   }
 
   .ob-wf-status-cell {
     text-align: right;
-    overflow: hidden;
   }
 
   .ob-wf-status-tag {
@@ -1216,8 +1217,6 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     padding: 0 5px;
     line-height: 17px;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     vertical-align: middle;
     color: rgba(255, 255, 255, 0.9);
     background: rgba(148, 163, 184, 0.28);
@@ -1257,7 +1256,6 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
   .ob-rev-timing-cell {
     text-align: right;
-    overflow: hidden;
   }
 
   .ob-rev-timing-tag {
@@ -1269,8 +1267,6 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     padding: 0 6px;
     line-height: 17px;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     vertical-align: middle;
 
     &.hit {

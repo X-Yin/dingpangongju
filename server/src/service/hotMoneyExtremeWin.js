@@ -68,8 +68,55 @@ const ATTACK_DEFENSE_BUY_CUTOFF_MINUTE = 1330;
 const OPEN_GAP_REBOUND_PCT = -2;
 const RESCUE_EVAL_MINUTE = 935;   // 自救判定时点：9:35
 const RESCUE_TOLERANCE_PCT = 2;   // 自当日分时最高涨幅回落的容忍幅度（个百分点）
-// 命中次数缓存（仅历史交易日，key = `${code}|${dateNum}`）：当日盘中实时重算，不缓存
+// 命中次数缓存（仅历史交易日，key = `${code}|${dateNum}|3m|resIdx`）：当日盘中实时重算，不缓存
+//   3m/resIdx 后缀：与回测 3 分钟时间桶 + 个股韧性指数口径对齐后，旧的全分钟命中缓存不再可用
 const reversePastHitCache = new Map();
+
+// 回测买点评估时间桶：含 9:30 / 13:00，上午 9:30~11:30、下午 13:00~15:00，每 3 分钟一个桶边界
+//   与 engine/extremeWinBacktest.js buildThreeMinuteSlots 完全同口径
+const buildThreeMinuteSlots = () => {
+  const slots = [];
+  const pushRange = (startHour, startMinute, endHour, endMinute) => {
+    for (let t = startHour * 60 + startMinute; t <= endHour * 60 + endMinute; t += 3) {
+      slots.push(Math.floor(t / 60) * 100 + (t % 60));
+    }
+  };
+  pushRange(9, 30, 11, 30);
+  pushRange(13, 0, 15, 0);
+  return slots;
+};
+const THREE_MINUTE_SLOTS = buildThreeMinuteSlots();
+const THREE_MINUTE_SLOT_SET = new Set(THREE_MINUTE_SLOTS);
+
+// 盘中评估分钟：按当前时钟向下取整到 3 分钟桶（与回测逐桶推进一致）；午休归到 11:30，收盘归到 15:00
+const resolveEvalMinute = (minute) => {
+  const m = Number(minute);
+  if (!Number.isFinite(m) || m <= 0) return null;
+  const total = Math.floor(m / 100) * 60 + (m % 100);
+  const floored = total - (total % 3);
+  if (floored < 570) return null;                    // 9:30 之前
+  let hhmm = Math.floor(floored / 60) * 100 + (floored % 60);
+  if (hhmm > 1130 && hhmm < 1300) hhmm = 1130;       // 午休
+  if (hhmm > 1500) hhmm = 1500;                      // 收盘后
+  return THREE_MINUTE_SLOT_SET.has(hhmm) ? hhmm : null;
+};
+
+const fmtMinuteText = (m) => (m == null
+  ? '--'
+  : `${String(Math.floor(Number(m) / 100)).padStart(2, '0')}:${String(Number(m) % 100).padStart(2, '0')}`);
+
+// 取截至某分钟的最后一条分时点（与回测 priceAtMinute 同口径）
+const priceAtMinute = (points, minute) => {
+  let atPt = null;
+  for (const p of points) { if (p.minute <= minute) atPt = p; else break; }
+  return atPt;
+};
+
+// 当前时钟分钟（HHMM），用于盘中 3 分钟桶评估
+const currentClockMinute = () => {
+  const now = dayjs();
+  return now.hour() * 100 + now.minute();
+};
 
 // ---------- 交易日回退（与 getBuyPointChecks 口径一致） ----------
 const resolveTargetDay = (targetDate) => {
@@ -102,11 +149,20 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
   });
   const poolStocks = pool.stocks || [];
 
-  // 2) 死叉口径（过去 DEATH_CROSS_WINDOW 个交易日，不含当日）
-  const crossDates = await getPastTradingDates(dateStr, DEATH_CROSS_WINDOW);
+  // 2) 死叉口径（与回测 crossDatesOf 完全同口径）：
+  //   优先用候选池的完整 winDates + 个股峰值窗口起止日，由 computeCrossInfo 先做「死叉 + 次日未创新高 → 峰值锁死」，
+  //   再取锁定后峰值日之后的第一次死叉；峰值日缺失时退回过去 DEATH_CROSS_WINDOW 个交易日
+  const poolWinDates = (pool.winDates || []).map(Number);
+  const fallbackCrossDates = (await getPastTradingDates(dateStr, DEATH_CROSS_WINDOW)).map(Number);
   const crossInfos = poolStocks.length > 0
-    ? await batchParallel(poolStocks.map(s => s.code), async (code) => {
-        try { return await computeCrossInfo(code, crossDates); } catch (e) { return null; }
+    ? await batchParallel(poolStocks, async (s) => {
+        try {
+          const p = Number(s.peakDate);
+          const useWindow = Number.isFinite(p) && poolWinDates.length > 0;
+          const cd = useWindow ? poolWinDates : fallbackCrossDates;
+          const peakWindow = useWindow ? { windowStart: s.windowStart, windowEnd: s.windowEnd } : null;
+          return cd.length < 2 ? null : await computeCrossInfo(s.code, cd, s.peakDate, peakWindow);
+        } catch (e) { return null; }
       }, 6)
     : [];
 
@@ -135,7 +191,8 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
     try { abnormalBases.set(s.code, buildAbnormalWarnBases(s.code, abnormalDates)); } catch (e) { abnormalBases.set(s.code, null); }
   }
 
-  // 5) 计算口径分钟：收盘后按 1500；盘中取各股分时最后点的最大分钟
+  // 5) 计算口径分钟：收盘后按 1500；盘中按当前时钟向下取整到 3 分钟桶（与回测逐桶推进一致），
+  //   避免用「分时最后点」导致线上比回测多/少一个桶（数据端分钟可能领先本地时钟 1~2 分钟）
   let minute = CLOSE_MINUTE;
   let latestTlineMinute = 0;
   if (!afterClose) {
@@ -148,13 +205,15 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
       }
     }
     if (maxMinute > 0) {
-      minute = maxMinute;
       latestTlineMinute = maxMinute;
+      minute = resolveEvalMinute(currentClockMinute())
+        || resolveEvalMinute(maxMinute)
+        || CLOSE_MINUTE;
     }
   }
 
   // 5.5) 买入截止（2026-10-20 用户新增，与回测引擎同口径）：截止分钟之后不买（截止桶本身仍可买）
-  const buyWindowOpen = afterClose ? false : (latestTlineMinute > 0 ? latestTlineMinute <= buyCutoffMinute : true);
+  const buyWindowOpen = afterClose ? false : (latestTlineMinute > 0 ? minute <= buyCutoffMinute : true);
 
   // 6) 上证指数（sh000001）3 日线分时斜率门禁
   let indexSlope = null;
@@ -167,7 +226,7 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
     const preclose = t.preclose;
     const stockMinute = afterClose
       ? CLOSE_MINUTE
-      : (points.length > 0 ? points[points.length - 1].minute : CLOSE_MINUTE);
+      : (points.length > 0 ? minute : CLOSE_MINUTE);
 
     let avg3Vol = null;
     try { avg3Vol = stockPriorAvgVolume(code, dateNum, 3); } catch (e) { avg3Vol = null; }
@@ -177,8 +236,8 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
     const strength = points.length > 0 ? strengthAtMinute(t, stockMinute, code, idxT.points) : null;
     const delta = (diff && strength) ? round2(strength.score - diff.score) : null;
 
-    const lastPt = points.length > 0 ? points[points.length - 1] : null;
-    const px = lastPt ? round2(lastPt.lastPx) : null;
+    const atPt = points.length > 0 ? priceAtMinute(points, stockMinute) : null;
+    const px = atPt ? round2(atPt.lastPx) : null;
     const change = (preclose > 0 && px != null) ? round2(((px - preclose) / preclose) * 100) : null;
     const aRaw = strength ? strength.aRaw : null;
     const isLimitUp = strength
@@ -199,7 +258,8 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
     const deltaOk = delta != null && delta >= DELTA_MIN;
     // 2026-10-20 用户新增：买入截止后不买——买入窗口关闭时买点一律不命中（与回测引擎同口径）
     // 2026-11-02 用户新增：临近严重异动（剩余空间 ≤ 10%）不买
-    const buyPointHit = listPassed && deltaOk && indexSlope != null && indexSlope > 0 && buyWindowOpen && !abnormalWarn.blocked;
+    // 与回测 evalBucket → 买入分支同口径：涨停不可买（回测 finalPick 明确跳过 limitUp）
+    const buyPointHit = listPassed && deltaOk && !isLimitUp && indexSlope != null && indexSlope > 0 && buyWindowOpen && !abnormalWarn.blocked;
 
     return {
       code,
@@ -241,7 +301,7 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
     minute,
     buyWindowOpen,
     buyCutoffMinute,
-    buyGateMinute: afterClose ? null : (latestTlineMinute > 0 ? latestTlineMinute : null),
+    buyGateMinute: afterClose ? null : (latestTlineMinute > 0 ? minute : null),
     indexSlope,
     pool,
     rows,
@@ -264,9 +324,10 @@ const cutoffText = (ctx) => {
 
 // ============================================================
 // 逆周期（反向抱团龙头）上下文：候选池（全部）+ 择时状态（上证斜率天数 / 当日上证跌幅 / 强度分命中次数）
-//   与回测引擎口径一致：窗口自「上证 3 日线斜率由正转负日」起算，窗口变化即清零；
-//   命中判定 = 某交易日上证当日跌幅 ≤ -0.5% 的分钟桶内，候选股盘中强度分首次 > 50 记 1 次（同一天同股只计一次），
-//   累计上限 HIT_REQUIRED；已触发买点 = 命中达上限且该时点未涨停。
+//   与回测引擎口径完全一致：窗口自「上证 3 日线斜率由正转负日」起算，窗口变化即清零；
+//   命中判定 = 某交易日上证当日跌幅 ≤ -0.5% 的 3 分钟桶内，候选股盘中强度分首次 > 50 记 1 次（同一天同股只计一次），
+//   累计上限 HIT_REQUIRED；买点 = 历史已命中 ≥ 1 次后，当日某 3 分钟桶「新命中」的当桶（未涨停、未过买入截止）。
+//   即：历史已累计 2 次但当日没有再出现 > 50 新命中时，不再触发买点（与回测 revDayTriggered 逐桶买入完全对齐）。
 //   说明：为使线上展示轻量，命中次数按「当前（今日）候选池」回溯历史窗口各交易日统计
 //   （回测中每日池按当日行情独立重建，属已知近似）。
 // ============================================================
@@ -274,27 +335,39 @@ const reverseTimestampText = (daysSinceTurnNeg) => (daysSinceTurnNeg == null
   ? '--'
   : `第 ${daysSinceTurnNeg + 1} 天`);
 
-// 计算各候选在负斜率窗口内已累计的强度分命中次数（返回值 Map<code, 次数(≤HIT_REQUIRED)>）
-//   逐交易日重建「当日候选池 ∩ 今日池代码」再统计命中，与回测口径一致（回测每个交易日按当日行情重建池）
-const computeReverseHitCounts = async (codes, windowDates, todayNum) => {
+// 计算各候选在负斜率窗口内已累计的强度分命中次数（与回测 3 分钟桶口径完全一致）
+//   逐交易日重建「当日候选池 ∩ 今日池代码」再统计命中（回测每个交易日按当日行情重建池）：
+//   仅在「该 3 分钟桶的上证当日跌幅 ≤ -0.5%」时，统计该股盘中强度分首次 > 50（同一交易日同一只只计 1 次）
+//   返回值：{ counts: 累计次数(≤HIT_REQUIRED), priorCounts: 不含当日的历史次数, todayHitMinutes: 当日首次命中桶 }
+const computeReverseHitCounts = async (codes, windowDates, todayNum, todayCutoffMinute) => {
   const counts = new Map(codes.map(c => [c, 0]));
+  let priorCounts = null;
+  const todayHitMinutes = new Map();
   const codeSet = new Set(codes);
   for (const d of windowDates) {
     const dNum = Number(d);
     const isToday = dNum === todayNum;
+    // 当日命中只统计到「当前评估桶」为止；历史交易日统计完整全天
+    if (isToday) priorCounts = new Map(counts);
     let idxT;
     try { idxT = await loadTlinePoints(ICE_SIGNAL_INDEX_CODE, dNum); } catch (e) { idxT = { preclose: null, points: [] }; }
     const idxPts = idxT.points || [];
     const pre = idxT.preclose;
     if (!(pre > 0) || idxPts.length === 0) continue;
 
-    // 该交易日「上证当日跌幅 ≤ -0.5%」的分钟桶（升序）
-    const buckets = [];
-    for (const p of idxPts) {
-      const chg = ((p.lastPx - pre) / pre) * 100;
-      if (chg <= REV_INDEX_DROP_PCT) buckets.push(p.minute);
+    const daySlots = isToday && todayCutoffMinute != null
+      ? THREE_MINUTE_SLOTS.filter(m => m <= todayCutoffMinute)
+      : THREE_MINUTE_SLOTS;
+    if (daySlots.length === 0) continue;
+    // 该交易日「上证当日跌幅 ≤ -0.5%」的 3 分钟桶（升序，与回测 idxChangeAt(bucketMinute) 同口径）
+    const dropSlots = [];
+    for (const m of daySlots) {
+      const atPt = priceAtMinute(idxPts, m);
+      if (!atPt || !(atPt.lastPx > 0)) continue;
+      const chg = ((atPt.lastPx - pre) / pre) * 100;
+      if (chg <= REV_INDEX_DROP_PCT) dropSlots.push(m);
     }
-    if (buckets.length === 0) continue;
+    if (dropSlots.length === 0) continue;
 
     // 该交易日候选池（与今日池代码取交集）
     let dayCodes;
@@ -304,31 +377,43 @@ const computeReverseHitCounts = async (codes, windowDates, todayNum) => {
     } catch (e) { dayCodes = new Set(); }
     if (dayCodes.size === 0) continue;
 
+    // 与回测同口径：强度分的指数分时用个股对应的韧性指数（iceResilienceIndexCode）
+    const idxPointsByCode = new Map();
+    const idxCodes = Array.from(new Set(codes.map(c => iceResilienceIndexCode(c))));
+    await batchParallel(idxCodes, async (ic) => {
+      try { idxPointsByCode.set(ic, (await loadTlinePoints(ic, dNum)).points || []); } catch (e) { idxPointsByCode.set(ic, []); }
+      return null;
+    }, 6);
+
     await batchParallel(codes, async (code) => {
       const cur = counts.get(code) || 0;
-      if (cur >= REV_HIT_REQUIRED) return null;
+      // 历史日已达上限后无需再算；但「当日」必须继续检测新命中（回测中已达标后再次命中仍可买）
+      if (!isToday && cur >= REV_HIT_REQUIRED) return null;
       if (!dayCodes.has(code)) return null;
-      const ck = `${code}|${dNum}`;
-      let hit = null;
+      const ck = `${code}|${dNum}|3m|resIdx`;
+      let hit = null; // 历史日：0/1；当日：命中的桶分钟
       if (!isToday && reversePastHitCache.has(ck)) hit = reversePastHitCache.get(ck);
       if (hit == null) {
         let t;
         try { t = await loadTlinePoints(code, dNum); } catch (e) { t = { preclose: null, points: [] }; }
         const pts = t.points || [];
-        hit = 0;
         if (pts.length > 0 && t.preclose > 0) {
-          for (const m of buckets) {
-            const s = strengthAtMinute(t, m, code, idxPts);
-            if (s && Number.isFinite(s.score) && s.score > REV_STRENGTH_MIN) { hit = 1; break; }
+          const codeIdxPts = idxPointsByCode.get(iceResilienceIndexCode(code)) || [];
+          for (const m of dropSlots) {
+            const s = strengthAtMinute(t, m, code, codeIdxPts);
+            if (s && Number.isFinite(s.score) && s.score > REV_STRENGTH_MIN) { hit = isToday ? m : 1; break; }
           }
         }
-        if (!isToday) reversePastHitCache.set(ck, hit);
+        if (!isToday) reversePastHitCache.set(ck, hit == null ? 0 : 1);
       }
-      if (hit === 1) counts.set(code, Math.min(cur + 1, REV_HIT_REQUIRED));
+      if (hit != null && hit !== 0) {
+        counts.set(code, Math.min(cur + 1, REV_HIT_REQUIRED));
+        if (isToday) todayHitMinutes.set(code, hit);
+      }
       return null;
     }, 6);
   }
-  return counts;
+  return { counts, priorCounts: priorCounts || new Map(counts), todayHitMinutes };
 };
 
 const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BUY_CUTOFF_MINUTE) => {
@@ -368,19 +453,16 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
   try { indexTline = await loadTlinePoints(ICE_SIGNAL_INDEX_CODE, dateNum); } catch (e) { indexTline = { preclose: null, points: [] }; }
   const idxPts = indexTline.points || [];
   const idxPre = indexTline.preclose;
-  const indexChange = (idxPre > 0 && idxPts.length > 0)
-    ? round2(((idxPts[idxPts.length - 1].lastPx - idxPre) / idxPre) * 100)
-    : null;
-  const indexDropOk = indexChange != null && indexChange <= REV_INDEX_DROP_PCT;
 
-  // 4) 各候选当日分时 + 当日强度分（当前分钟口径）
+  // 4) 各候选当日分时
   const tlineList = codes.length > 0
     ? await batchParallel(codes, async (code) => {
         try { return await loadTlinePoints(code, dateNum); } catch (e) { return { preclose: null, points: [] }; }
       }, 6)
     : [];
 
-  // 4.5) 买入截止（2026-10-20 用户新增，与顺周期/回测引擎同口径）：截止分钟之后不买（截止桶本身仍可买）。
+  // 4.5) 评估分钟 + 买入截止（2026-10-20 用户新增，与回测引擎同口径）：
+  //   盘中按当前时钟向下取整到 3 分钟桶；截止分钟之后不买（截止桶本身仍可买）。
   //   命中登记（computeReverseHitCounts）照常累计，仅不再触发买入
   let revLatestMinute = 0;
   for (const t of tlineList) {
@@ -390,7 +472,15 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
       if (Number.isFinite(m) && m > revLatestMinute) revLatestMinute = m;
     }
   }
-  const buyWindowOpen = afterClose ? false : (revLatestMinute > 0 ? revLatestMinute <= buyCutoffMinute : true);
+  const minute = afterClose
+    ? CLOSE_MINUTE
+    : (resolveEvalMinute(currentClockMinute()) || resolveEvalMinute(revLatestMinute) || CLOSE_MINUTE);
+  const idxAt = (idxPre > 0 && idxPts.length > 0) ? priceAtMinute(idxPts, minute) : null;
+  const indexChange = (idxAt && idxAt.lastPx > 0)
+    ? round2(((idxAt.lastPx - idxPre) / idxPre) * 100)
+    : null;
+  const indexDropOk = indexChange != null && indexChange <= REV_INDEX_DROP_PCT;
+  const buyWindowOpen = afterClose ? false : (revLatestMinute > 0 ? minute <= buyCutoffMinute : true);
 
   // 4.6) 严重异动临近测算（2026-11-02 用户要求，与顺周期腿/回测引擎同口径）：
   //   买入前按 T-10 / T-30 收盘价测算累计涨幅剩余空间，任一剩余 ≤ 10% 即视为临近严重异动，买点不触发（命中计数照常展示）
@@ -404,7 +494,7 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
   // 5) 负斜率窗口内各交易日的强度分命中次数
   //   仅统计「该交易日自身也满足择时前置（斜率 < 0 且已连续为负 ≥ 第 3 天）」的日期——与回测一致
   //   （回测只在当日 eligible 时构建池并登记命中，负斜率窗口前 2 天不计数）
-  let hitCounts = new Map();
+  let reverseHit = { counts: new Map(), priorCounts: new Map(), todayHitMinutes: new Map() };
   if (eligible && codes.length > 0) {
     let windowDates = [];
     try {
@@ -417,8 +507,16 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
       const ti = turnMap.get(Number(dd));
       return !!ti && isReverseEligible(ti.slopeClose, ti.daysSinceTurnNeg);
     });
-    hitCounts = await computeReverseHitCounts(codes, eligibleDates, dateNum);
+    reverseHit = await computeReverseHitCounts(codes, eligibleDates, dateNum, minute);
   }
+
+  // 与回测同口径：强度分使用个股对应的韧性指数分时（iceResilienceIndexCode），不是上证指数
+  const revIdxCodes = Array.from(new Set(poolStocks.map(s => iceResilienceIndexCode(s.code))));
+  const revIdxTlineMap = new Map();
+  await batchParallel(revIdxCodes, async (ic) => {
+    try { revIdxTlineMap.set(ic, await loadTlinePoints(ic, dateNum)); } catch (e) { revIdxTlineMap.set(ic, { preclose: null, points: [] }); }
+    return null;
+  }, 6);
 
   const rows = poolStocks.map((s, i) => {
     const code = s.code;
@@ -427,33 +525,44 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
     const preclose = t.preclose;
     const stockMinute = afterClose
       ? CLOSE_MINUTE
-      : (points.length > 0 ? points[points.length - 1].minute : CLOSE_MINUTE);
+      : (points.length > 0 ? minute : CLOSE_MINUTE);
 
-    const strength = points.length > 0 ? strengthAtMinute(t, stockMinute, code, idxPts) : null;
-    const lastPt = points.length > 0 ? points[points.length - 1] : null;
-    const px = lastPt ? round2(lastPt.lastPx) : null;
+    const revIdxPts = (revIdxTlineMap.get(iceResilienceIndexCode(code)) || {}).points || [];
+    const strength = points.length > 0 ? strengthAtMinute(t, stockMinute, code, revIdxPts) : null;
+    const atPt = points.length > 0 ? priceAtMinute(points, stockMinute) : null;
+    const px = atPt ? round2(atPt.lastPx) : null;
     const change = (preclose > 0 && px != null) ? round2(((px - preclose) / preclose) * 100) : null;
     const isLimitUp = strength
       ? !!strength.limitUp
       : (change != null && change > limitUpThresholdOf(code));
     const abnormalWarn = evalAbnormalWarn(abnormalBases.get(code), px);
 
-    const hitCount = hitCounts.get(code) || 0;
+    const hitCount = reverseHit.counts.get(code) || 0;
+    const priorHitCount = reverseHit.priorCounts.get(code) || 0;
+    const todayHitMinute = reverseHit.todayHitMinutes.get(code) || null;
+    // 与回测逆周期腿同口径：必须「当日在该 3 分钟桶新命中」且「历史已命中 ≥ 1 次」，
+    //   即第 2 次命中（或已达标后再次命中）的当桶才买；历史已累计 2 次但当日未新命中，不再触发
+    const todayHitNow = todayHitMinute != null && todayHitMinute === minute;
+    const buyReady = priorHitCount >= 1 && todayHitNow;
     // 2026-10-20 用户新增：买入截止后不买——买入窗口关闭时买点不触发（命中计数照常展示）
     // 2026-11-02 用户新增：临近严重异动不买——命中计数照常展示
-    const timingPassed = eligible && indexDropOk && hitCount >= REV_HIT_REQUIRED && !isLimitUp && buyWindowOpen && !abnormalWarn.blocked;
+    const timingPassed = eligible && indexDropOk && buyReady && !isLimitUp && buyWindowOpen && !abnormalWarn.blocked;
     let timingTag;
-    if (!buyWindowOpen && eligible && hitCount >= REV_HIT_REQUIRED && !isLimitUp && !abnormalWarn.blocked) timingTag = `已过${cutoffText({ buyCutoffMinute })}不买`;
-    else if (eligible && indexDropOk && hitCount >= REV_HIT_REQUIRED && !isLimitUp && abnormalWarn.blocked) timingTag = '临近异动不可买';
-    else if (!eligible) timingTag = '斜率未就绪';
-    else if (!indexDropOk) timingTag = '大盘未达跌幅';
-    else if (hitCount >= REV_HIT_REQUIRED && !isLimitUp) timingTag = '已触发买点';
-    else if (isLimitUp) timingTag = '涨停不可买';
-    else timingTag = `待命中 ${hitCount}/${REV_HIT_REQUIRED}`;
+    if (!eligible) timingTag = '斜率未就绪';
+    else if (afterClose) timingTag = todayHitMinute != null ? `当日命中 ${fmtMinuteText(todayHitMinute)}（历史口径）` : '当日未命中（历史口径）';
+    else if (timingPassed) timingTag = '已触发买点';
+    else if (buyReady && !buyWindowOpen) timingTag = `已过${cutoffText({ buyCutoffMinute })}不买`;
+    else if (buyReady && abnormalWarn.blocked) timingTag = '临近异动不可买';
+    else if (buyReady && isLimitUp) timingTag = '涨停不可买';
+    else if (buyReady && !indexDropOk) timingTag = '大盘未达跌幅';
+    else if (todayHitMinute != null && !todayHitNow) timingTag = `今日已命中 ${fmtMinuteText(todayHitMinute)}（非买点桶）`;
+    else if (todayHitNow && priorHitCount === 0) timingTag = '今日首次命中，需历史已命中 1 次';
+    else if (priorHitCount >= REV_HIT_REQUIRED) timingTag = `已累计 ${priorHitCount}/${REV_HIT_REQUIRED}，待今日再次命中`;
+    else timingTag = `待命中 ${priorHitCount}/${REV_HIT_REQUIRED}`;
 
     const slopeText = slopeClose == null ? '--' : round2(slopeClose);
     const dayNoText = reverseTimestampText(daysSinceTurnNeg);
-    const timingDetail = `上证 3 日线斜率收盘口径 ${slopeText}（连续为负${daysSinceTurnNeg == null ? '--' : dayNoText}${eligible ? '，已满足 ≥ 第 ' + (REV_NEG_STREAK_MIN_DAYS + 1) + ' 天' : ''}）；当日上证跌幅 ${indexChange == null ? '--' : indexChange + '%'}${indexDropOk ? `（≤ ${REV_INDEX_DROP_PCT}%，已满足）` : `（须 ≤ ${REV_INDEX_DROP_PCT}%）`}；窗口内强度分命中 ${hitCount}/${REV_HIT_REQUIRED} 次${buyWindowOpen ? '' : `；已过 ${cutoffText({ buyCutoffMinute })} 买入截止，今日不再买入`}；异动空间：${abnormalWarnText(abnormalWarn)}${abnormalWarn.blocked ? `（剩余 ≤ ${ABNORMAL_WARN_MIN_ROOM_PCT}%，临近严重异动，不买）` : ''}`;
+    const timingDetail = `上证 3 日线斜率收盘口径 ${slopeText}（连续为负${daysSinceTurnNeg == null ? '--' : dayNoText}${eligible ? '，已满足 ≥ 第 ' + (REV_NEG_STREAK_MIN_DAYS + 1) + ' 天' : ''}）；评估桶 ${fmtMinuteText(minute)}；当日上证跌幅 ${indexChange == null ? '--' : indexChange + '%'}${indexDropOk ? `（≤ ${REV_INDEX_DROP_PCT}%，已满足）` : `（须 ≤ ${REV_INDEX_DROP_PCT}%）`}；窗口内强度分命中 ${hitCount}/${REV_HIT_REQUIRED} 次（历史 ${priorHitCount} 次，今日命中桶 ${fmtMinuteText(todayHitMinute)}）；与回测同口径：仅「今日新命中当桶」可买${buyWindowOpen ? '' : `；已过 ${cutoffText({ buyCutoffMinute })} 买入截止，今日不再买入`}；异动空间：${abnormalWarnText(abnormalWarn)}${abnormalWarn.blocked ? `（剩余 ≤ ${ABNORMAL_WARN_MIN_ROOM_PCT}%，临近严重异动，不买）` : ''}`;
 
     return {
       code,
@@ -468,6 +577,8 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
       strengthDetail: strength,
       isLimitUp,
       hitCount,
+      priorHitCount,
+      todayHitMinute,
       minute: stockMinute,
       timingPassed,
       timingTag,
@@ -487,11 +598,12 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
     daysSinceTurnNeg,
     turnNegDate,
     eligible,
+    minute,
     indexChange,
     indexDropOk,
     buyWindowOpen,
     buyCutoffMinute,
-    buyGateMinute: afterClose ? null : (revLatestMinute > 0 ? revLatestMinute : null),
+    buyGateMinute: afterClose ? null : (revLatestMinute > 0 ? minute : null),
     pool,
     rows: rows.sort(byHitDesc),
   };
@@ -500,7 +612,7 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
 // ============================================================
 // 逆周期（反向抱团龙头）买点诊断 4 项（独立分组，前端在顺周期 8 项之后单独展示）
 //   与回测引擎 reverseLeaderMode 买点口径一致：择时前置（上证 3 日线斜率连续为负第 3 天及以后）
-//   + 触发（当日上证跌幅 ≤ -0.5% 且窗口内强度分命中第 2 次、未涨停）+ 买入截止时间门禁
+//   + 触发（当日上证跌幅 ≤ -0.5% 且历史已命中 ≥ 1 次后、当日 3 分钟桶新命中、未涨停）+ 买入截止时间门禁
 // ============================================================
 const buildReverseChecks = (rctx) => {
   const cutoff = cutoffText(rctx);
@@ -544,18 +656,18 @@ const buildReverseChecks = (rctx) => {
     {
       id: 'reverse_leader_trigger',
       group: 'reverse',
-      title: `逆周期买点触发：当日上证跌幅 ≤ ${REV_INDEX_DROP_PCT}% 且窗口内盘中强度分命中第 ${REV_HIT_REQUIRED} 次（未涨停）`,
+      title: `逆周期买点触发：当日上证跌幅 ≤ ${REV_INDEX_DROP_PCT}% 且当日 3 分钟桶新命中（历史已命中 ≥ 1 次，未涨停）`,
       passed: triggerPassed,
-      value: `当日上证跌幅 ${idxChangeText}（${rctx.indexDropOk ? '已满足' : `须 ≤ ${REV_INDEX_DROP_PCT}%`}）；命中达标 ${triggered.length} 只`,
+      value: `当日上证跌幅 ${idxChangeText}（${rctx.indexDropOk ? '已满足' : `须 ≤ ${REV_INDEX_DROP_PCT}%`}）；评估桶 ${fmtMinuteText(rctx.minute)}；当日新命中买点 ${triggered.length} 只`,
       reason: triggerPassed
-        ? `当日上证跌幅 ${idxChangeText}（≤ ${REV_INDEX_DROP_PCT}%），反向抱团池内 ${trigRow.stockName}（${trigRow.code}）盘中强度分已在窗口内累计命中 ${trigRow.hitCount}/${REV_HIT_REQUIRED} 次且未涨停，触发逆周期反向抱团买点`
+        ? `当日上证跌幅 ${idxChangeText}（≤ ${REV_INDEX_DROP_PCT}%），反向抱团池内 ${trigRow.stockName}（${trigRow.code}）在 ${fmtMinuteText(trigRow.todayHitMinute)} 桶盘中强度分新命中（窗口内累计 ${trigRow.hitCount}/${REV_HIT_REQUIRED} 次，其中历史 ${trigRow.priorHitCount} 次），为第 ${REV_HIT_REQUIRED} 次（或已达标后再次命中）且未涨停，触发逆周期反向抱团买点`
         : !slopePassed
           ? '逆周期择时前置未满足（上证 3 日线斜率未连续为负第 ' + (REV_NEG_STREAK_MIN_DAYS + 1) + ' 天及以后），暂不判定逆周期买点触发'
           : !rctx.indexDropOk
             ? `当日上证跌幅 ${idxChangeText} 未达到 ≤ ${REV_INDEX_DROP_PCT}%，不触发逆周期买点（须等待大盘当日出现 ≥ ${Math.abs(REV_INDEX_DROP_PCT)}% 幅度的下跌）`
             : rctx.buyWindowOpen === false
-              ? `当日上证跌幅已满足且窗口内已有达标命中，但已过 ${cutoff} 买入截止（每天 ${cutoff} 之后不买，2026-10-20 用户新增），今日不再买入`
-              : `当日上证跌幅已满足，但反向抱团池内暂无个股在窗口内累计命中 ${REV_HIT_REQUIRED} 次盘中强度分 > ${REV_STRENGTH_MIN}（当前最高 ${best ? `${best.stockName} ${best.hitCount}/${REV_HIT_REQUIRED} 次` : '--'}）`,
+              ? `当日上证跌幅已满足且当日有新的强度分命中，但已过 ${cutoff} 买入截止（每天 ${cutoff} 之后不买，2026-10-20 用户新增），今日不再买入`
+              : `当日上证跌幅已满足，但反向抱团池内暂无个股在当日 ${fmtMinuteText(rctx.minute)} 桶新命中盘中强度分 > ${REV_STRENGTH_MIN}（回测口径：历史已命中 1 次后，当日新命中当桶才买；当前最高累计 ${best ? `${best.stockName} ${best.hitCount}/${REV_HIT_REQUIRED} 次` : '--'}）`,
     },
     {
       id: 'reverse_leader_abnormal_gate',

@@ -733,5 +733,15 @@
     "secu_code": "sz002403",
     "secu_name": "爱仕达",
     "TotalShares": 340638579
+  },
+  {
+    "secu_code": "sz001326",
+    "secu_name": "联域股份",
+    "TotalShares": 73200000
+  },
+  {
+    "secu_code": "sh688818",
+    "secu_name": "电科蓝天",
+    "TotalShares": 1736923890
   }
 ]

@@ -14,7 +14,7 @@ const AMOUNT_CHANGE_THRESHOLD = 200; // 成交量变化超过 100亿
 const BLOCK_RANK_THRESHOLD = 2;   // 板块排名变化超过 2名
 const BLOCK_MONEY_THRESHOLD = 5;  // 板块资金变化绝对值超过 5亿
 const ALARM_RETENTION_HOURS = 0.5;  // 报警信息保留时长（小时）
-const POLL_INTERVAL = 3000;       // 轮询间隔 3s
+const POLL_INTERVAL = 10000;      // 轮询间隔 10s（放宽以降低资源占用：每次需读取并解析 MB 级 JSON）
 
 // 生成随机 id
 const genId = () => crypto.randomBytes(8).toString('hex');

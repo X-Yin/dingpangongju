@@ -15,7 +15,7 @@ const snapshotPath = path.resolve(__dirname, '../data/attack_defense_snapshots.j
 const ATTACK_KEYWORDS = ['光通信', '半导体概念', '存储芯片'];
 const DEFENSE_KEYWORDS = ['银行', '保险', '创新药'];
 
-const POLL_INTERVAL = 3 * 1000; // 3s 采集间隔
+const POLL_INTERVAL = 10 * 1000; // 10s 采集间隔（放宽以降低资源占用）
 const MAX_WINDOW_MS = 3 * 60 * 1000; // 3min 滑动窗口
 
 // 快照缓存（内存 + 文件持久化）

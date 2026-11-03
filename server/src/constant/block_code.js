@@ -1758,5 +1758,20 @@ exports.default = [
         "blockName": "消费",
         "code": "sz001219",
         "name": "青岛食品"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sz301413",
+        "name": "安培龙"
+    },
+    {
+        "blockName": "商业航天",
+        "code": "sh688818",
+        "name": "电科蓝天"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sz000700",
+        "name": "模塑科技"
     }
 ]

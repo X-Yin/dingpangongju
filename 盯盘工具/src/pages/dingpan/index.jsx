@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -45,6 +45,28 @@ import './index.scss';
 
 // 市场盯盘页访问密码（前端写死，刷新页面后需重新输入）
 const DINGPAN_ACCESS_PASSWORD = '17631540414xY@46728531912341234rR';
+
+// 板块资金监控配置（模块级常量：引用稳定，传给自治子组件作 props 不会触发其轮询重建）
+const TARGET_BLOCKS = [
+    '光通信模块',
+    '创新药',
+    '半导体概念',
+    '银行Ⅱ',
+    '液冷',
+    '保险Ⅱ',
+    '证券Ⅱ',
+    'PCB',
+    '中证500',
+    'MLCC',
+    '商业航天',
+    '机器人概念',
+    '锂电池概念',
+    '存储芯片',
+    '黄金概念'
+];
+const BLOCK_MONEY_BIG_CHANGE_THRESHOLD = 500000000; // 5 亿
+// 卡片中只展示这几个板块（监控告警仍覆盖全部 TARGET_BLOCKS）
+const DISPLAY_BLOCKS = ['创新药', '银行Ⅱ', '光通信模块', '半导体概念', '存储芯片', '黄金概念'];
 
 const colorMap = {
     lowGreen: '#00B42A',
@@ -723,9 +745,6 @@ const DingPan = () => {
     const [defensiveBlockHistory, setDefensiveBlockHistory] = useState([]); // 记录防御板块历史，用于趋势预警
     const [alerts, setAlerts] = useState([]); // 存储当前显示的顶部告警信息列表
     const [techIndexData, setTechIndexData] = useState([]); // 科技情绪数据
-    const [rihanData, setRihanData] = useState([]); // 日韩指数数据
-    const [jisuYidongUpList, setJisuYidongUpList] = useState([]); // 急速异动上涨排名
-    const [jisuYidongDownList, setJisuYidongDownList] = useState([]); // 急速异动下跌排名
     const [showJingJiaQiangChou, setShowJingJiaQiangChou] = useState(true); // 控制竞价抢筹模块显示
     const [showKaiPanZhuDong, setShowKaiPanZhuDong] = useState(true); // 控制开盘主动拉升模块显示
     const [showKaiPanXiaCuo, setShowKaiPanXiaCuo] = useState(true); // 控制开盘持续下挫模块显示
@@ -754,40 +773,15 @@ const DingPan = () => {
     const volumeContainerRef = useRef(null);
     const volumeChartRef = useRef(null);
 
-    // 板块异动监控相关
+    // 板块异动监控相关（板块资金/日韩/急速异动排名的轮询已下沉到各自治组件内部）
     const [blockHistoryData, setBlockHistoryData] = useState([]);
     const prevBlockHistoryRef = useRef(null);
     const [blockAlerts, setBlockAlerts] = useState([]);
-
-    // 板块资金监控相关
-    const [blockMoneyData, setBlockMoneyData] = useState([]);
-    const [blockMoneyAlerts, setBlockMoneyAlerts] = useState([]);
-    const prevBlockMoneyRef = useRef(null);
     const overlayTimelineSectionRef = useRef(null);
     const rihanSectionRef = useRef(null); // 日韩涨跌监控区域，用于长按定位
     const hasAutoScrolledToRihanRef = useRef(false); // 进入页面自动滚动到日韩区域只执行一次的标记
     const longPressTimerRef = useRef(null); // 长按定时器
     const longPressStartPosRef = useRef(null); // 长按起始位置，用于拖拽判定
-    const targetBlocks = [
-        '光通信模块',
-        '创新药',
-        '半导体概念',
-        '银行Ⅱ',
-        '液冷',
-        '保险Ⅱ',
-        '证券Ⅱ',
-        'PCB',
-        '中证500',
-        'MLCC',
-        '商业航天',
-        '机器人概念',
-        '锂电池概念',
-        '存储芯片',
-        '黄金概念'
-    ];
-    const BLOCK_MONEY_BIG_CHANGE_THRESHOLD = 500000000; // 5 亿
-    // 卡片中只展示这 4 个板块（监控告警仍覆盖全部 targetBlocks）
-    const displayBlocks = ['创新药', '银行Ⅱ', '光通信模块', '半导体概念', '存储芯片', '黄金概念',];
 
     // 打开 K 线弹窗（tab 可选：指定打开时展示的 tab，如盘口异动点击股票名传 quantTimeline）
     const showKLine = (stock, tab) => {
@@ -878,13 +872,10 @@ const DingPan = () => {
         rihanSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    // 进入页面等日韩数据加载完成后自动滚动到日韩涨跌监控区域；刷新页面或切走路由再回来会重新触发
-    useEffect(() => {
-        if (!rihanData || rihanData.length === 0) return;
-        // 稍等页面渲染稳定后再滚动
-        const timer = window.setTimeout(autoScrollToRihanOnce, 500);
-        return () => window.clearTimeout(timer);
-    }, [rihanData]);
+    // 外盘数据首次加载完成后自动滚动到日韩区域（仅一次）；由 RihanMonitor 自治组件通过 onDataLoaded 回调触发
+    const handleRihanLoaded = useCallback(() => {
+        window.setTimeout(autoScrollToRihanOnce, 500);
+    }, []);
 
     // 兜底：日韩数据长时间未加载时也自动滚动一次
     useEffect(() => {
@@ -1043,6 +1034,7 @@ const DingPan = () => {
 
             if (isDuplicate) return prev;
 
+            // 只保留最近 200 条记录，防止长时间挂机内存无限增长
             return [{
                 id: now,
                 name: stockName,
@@ -1052,7 +1044,7 @@ const DingPan = () => {
                 changeDiff,
                 time: dayjs().format('HH:mm:ss'),
                 type: label.includes('拉升') ? 'up' : 'down'
-            }, ...prev];
+            }, ...prev].slice(0, 200);
         });
 
         if (!("Notification" in window) || Notification.permission !== "granted") return;
@@ -1622,47 +1614,8 @@ const DingPan = () => {
         }
     };
 
-    const fetchRiHanData = async () => {
-        try {
-            const [rihanRes, foreignRes] = await Promise.all([
-                axios.get(`http://${local_ip}:3000/rihan_data`),
-                // 外盘期货（新浪，OIL 布伦特原油 / GC 纽约金）：失败时不影响日经/韩指展示
-                axios.get(`http://${local_ip}:3000/api/ak/foreign_commodity?symbol=OIL,GC`).catch(() => null),
-            ]);
-            const list = Array.isArray(rihanRes.data) ? [...rihanRes.data] : [];
-            const foreignRows = foreignRes?.data?.data;
-            if (Array.isArray(foreignRows)) {
-                [
-                    { match: '布伦特', name: '布伦特原油', code: 'B00Y' },
-                    { match: '黄金', name: '纽约金', code: 'GC00Y' },
-                ].forEach(({ match, name, code }) => {
-                    const row = foreignRows.find((d) => String(d['名称'] || '').includes(match));
-                    if (!row) return;
-                    const pct = Number(row['涨跌幅']);
-                    const price = Number(row['最新价']);
-                    list.push({
-                        name,
-                        code,
-                        change: Number.isFinite(pct) ? `${pct.toFixed(2)}%` : '--',
-                        value: Number.isFinite(price) ? price.toFixed(2) : '--',
-                        showValue: true, // 名称后同时展示当前数值
-                    });
-                });
-            }
-            setRihanData(list);
-        } catch (error) {
-            console.error('Fetch rihan data failed:', error);
-        }
-    };
-
-    const refreshRihanData = async () => {
-        try {
-            await axios.post(`http://${local_ip}:3000/refresh_rihan_data`);
-            await fetchRiHanData();
-        } catch (error) {
-            console.error('Refresh rihan data failed:', error);
-        }
-    };
+    // 日韩/外盘指数与急速异动排名的轮询已下沉到 RihanMonitor / HistoryModal 组件内部，
+    // 数据更新不再触发整页 setState 重渲染
 
     const fetchJigouReports = async () => {
         try {
@@ -1940,18 +1893,6 @@ const DingPan = () => {
         }
     };
 
-    const fetchJisuYidongRank = async () => {
-        try {
-            const response = await axios.get(`http://${local_ip}:3000/jisuyidong_rank`);
-            if (response.data) {
-                setJisuYidongUpList(response.data.upList || []);
-                setJisuYidongDownList(response.data.downList || []);
-            }
-        } catch (error) {
-            console.error('Fetch jisuyidong_rank data failed:', error);
-        }
-    };
-
     const fetchHistoryData = async () => {
         try {
             const response = await axios.get(`http://${local_ip}:3000/amount_history`);
@@ -2029,47 +1970,7 @@ const DingPan = () => {
         }
     };
 
-    const fetchBlockMoneyChange = async () => {
-        try {
-            const response = await axios.get(`http://${local_ip}:3000/get_block_money_change`);
-            const data = response.data || [];
-            // 筛选目标板块
-            const filteredData = data.filter(item => targetBlocks.includes(item.block));
-            // 按照资金从大到小排序（流入最大的排前面，流出最大的排后面）
-            const sortedData = [...filteredData].sort((a, b) => b.money - a.money);
-
-            // 对比上一次数据，计算大幅流入/流出
-            const prevMap = prevBlockMoneyRef.current;
-            if (prevMap) {
-                const alerts = [];
-                sortedData.forEach((item) => {
-                    const prevMoney = prevMap.get(item.block);
-                    if (prevMoney !== undefined) {
-                        const diff = item.money - prevMoney;
-                        if (Math.abs(diff) >= BLOCK_MONEY_BIG_CHANGE_THRESHOLD) {
-                            alerts.push({
-                                block: item.block,
-                                diff,
-                                type: diff > 0 ? 'inflow' : 'outflow',
-                            });
-                        }
-                    }
-                });
-                alerts.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
-                setBlockMoneyAlerts(alerts);
-            }
-            // 保存本次数据供下次对比
-            const currentMap = new Map();
-            sortedData.forEach((item) => {
-                currentMap.set(item.block, item.money);
-            });
-            prevBlockMoneyRef.current = currentMap;
-
-            setBlockMoneyData(sortedData);
-        } catch (err) {
-            console.error('Fetch block money change data failed:', err);
-        }
-    };
+    // 板块资金监控的轮询与告警计算已下沉到 BlockMoneyMonitor 自治组件内部
 
     const createBaseChart = (container) => {
         return createChart(container, {
@@ -2399,12 +2300,10 @@ const DingPan = () => {
         fetchData();
         fetchAmountData();
         fetchEmotionData();
-        fetchJisuYidongRank();
         fetchHistoryData();
         fetchIndexOverlay();
-        fetchRiHanData();
-        fetchBlockHistory();
-        fetchBlockMoneyChange();
+        // fetchBlockHistory 仅在板块异动监控开关打开时才轮询（其数据无其他消费方）
+        if (SHOW_BLOCK_ALERT_MONITOR) fetchBlockHistory();
         fetchJigouReports();
         fetchRecentResearchReports();
         fetchWatchlistMainFund();
@@ -2422,14 +2321,15 @@ const DingPan = () => {
             return timer;
         };
 
-        schedulePoll(fetchData, 5000);
-        schedulePoll(fetchAmountData, 10000);
-        schedulePoll(fetchJisuYidongRank, 3000);
+        // 轮询频率与后端数据更新频率对齐（后端已降频），避免无意义的请求和全页重渲染
+        // 日韩指数 / 急速异动排名 / 板块资金的轮询已下沉到 RihanMonitor / HistoryModal / BlockMoneyMonitor 内部
+        schedulePoll(fetchData, 10000);          // 后端 stockData 15s 更新
+        schedulePoll(fetchAmountData, 10000);    // 后端 amount 10s 更新
         schedulePoll(fetchHistoryData, 10000);
         schedulePoll(fetchIndexOverlay, 30000);
-        schedulePoll(fetchRiHanData, 3000);
-        schedulePoll(fetchBlockHistory, 3000);
-        schedulePoll(fetchBlockMoneyChange, 3000);
+        if (SHOW_BLOCK_ALERT_MONITOR) {
+            schedulePoll(fetchBlockHistory, 15000); // 后端板块数据 30s 更新
+        }
         schedulePoll(fetchJigouReports, 60000);
 
         // 自选股主力资金：10:00 前每 10s，10:00 后每 1min；收盘(14:59)/非交易日（周末/节假日，以交易日历为准）停止，盘前每分钟探测是否开盘
@@ -2656,9 +2556,9 @@ const DingPan = () => {
                         <Col xs={24} lg={7}>
                             {/* 板块资金监控 */}
                             <BlockMoneyMonitor
-                                blockMoneyData={blockMoneyData}
-                                blockMoneyAlerts={blockMoneyAlerts}
-                                displayBlocks={displayBlocks}
+                                targetBlocks={TARGET_BLOCKS}
+                                displayBlocks={DISPLAY_BLOCKS}
+                                bigChangeThreshold={BLOCK_MONEY_BIG_CHANGE_THRESHOLD}
                                 onBlockClick={jumpToBlock}
                                 onViewMore={() => navigate('/block?tab=money')}
                                 themeColor={effThemeColor}
@@ -2667,7 +2567,7 @@ const DingPan = () => {
                             {/* 外盘涨跌监控（自选股展开时在其上方，折叠时移到自选股下方） */}
                             {!isWatchlistCollapsed && (
                                 <div ref={rihanSectionRef}>
-                                    <RihanMonitor rihanData={rihanData} themeColor={effThemeColor} onRefresh={refreshRihanData} />
+                                    <RihanMonitor themeColor={effThemeColor} onDataLoaded={handleRihanLoaded} />
                                 </div>
                             )}
 
@@ -2707,7 +2607,7 @@ const DingPan = () => {
                             />
                             {isWatchlistCollapsed && (
                                 <div ref={rihanSectionRef}>
-                                    <RihanMonitor rihanData={rihanData} themeColor={effThemeColor} onRefresh={refreshRihanData} />
+                                    <RihanMonitor themeColor={effThemeColor} onDataLoaded={handleRihanLoaded} />
                                 </div>
                             )}
                             {isWatchlistCollapsed && (
@@ -2759,8 +2659,6 @@ const DingPan = () => {
                 open={isModalOpen}
                 onCancel={() => setIsModalOpen(false)}
                 history={history}
-                jisuYidongUpList={jisuYidongUpList}
-                jisuYidongDownList={jisuYidongDownList}
                 onStockClick={showKLine}
                 themeColor={effThemeColor}
             />

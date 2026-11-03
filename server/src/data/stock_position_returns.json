@@ -1,5 +1,48 @@
 [
   {
+    "date": "2026-11-03",
+    "operations": [
+      {
+        "id": "1793669699173_f286",
+        "action": "sell",
+        "stockName": "金安国纪",
+        "stockCode": "sz002636",
+        "position": "",
+        "time": "09:34"
+      },
+      {
+        "id": "1793669707549_6p47",
+        "action": "buy",
+        "stockName": "五洲新春",
+        "stockCode": "sh603667",
+        "position": "",
+        "time": "09:35"
+      },
+      {
+        "id": "1793670127529_eliy",
+        "action": "sell",
+        "stockName": "国际复材",
+        "stockCode": "sz301526",
+        "position": "",
+        "time": "09:42"
+      },
+      {
+        "id": "1793670399219_tnad",
+        "action": "buy",
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "position": "",
+        "time": "09:46"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-03T01:34:59.539Z",
+    "updatedAt": "2026-11-03T01:46:42.916Z"
+  },
+  {
     "date": "2026-11-02",
     "operations": [
       {

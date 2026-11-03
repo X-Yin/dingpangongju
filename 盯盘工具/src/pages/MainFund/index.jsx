@@ -2321,7 +2321,7 @@ export const MainFundContent = () => {
           {
             key: 'blockStrength',
             label: '板块强度',
-            children: <BlockStrengthPanel mode="intraday" />,
+            children: <BlockStrengthPanel mode="intraday" showAll />,
           },
           {
             key: 'history',

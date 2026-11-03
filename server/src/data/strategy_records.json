@@ -1,12 +1,112 @@
 [
   {
-    "id": "8079235d2064d58e",
-    "time": "2026-11-02 13:44:19",
-    "read": true,
-    "strategyId": "volume_price_surge",
-    "title": "✅ 量价齐升",
-    "description": "成交量放大 <strong>114亿</strong>（≥100亿），资金净流入129.3→140.2亿（≥10亿，流入增加），创业板5分钟上涨1.69%。量价资金三者共振，多方占优。",
+    "id": "d3e6a74e1a722818",
+    "time": "2026-11-03 09:38:20",
+    "read": false,
+    "strategyId": "volume_shrink_stagnation",
+    "title": "📉 放量后缩量滞涨",
+    "description": "成交量从高位 <strong>-444亿</strong> 回落至 <strong>-604亿</strong>，指数开始滞涨，需警惕回落风险。",
     "severity": "medium",
-    "isBullish": true
+    "isBullish": false
+  },
+  {
+    "id": "5ec9dd1674cd070e",
+    "time": "2026-11-03 09:40:21",
+    "read": false,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-81.5亿</strong>（净流出）<br/>• 科技分时情绪 -31.8 → -29.3（上升 2.5）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "cdeb0e1684fa22df",
+    "time": "2026-11-03 09:51:59",
+    "read": false,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-88.3→-77.9亿（增加10.4亿，≥5亿）<br/>• 创业板指较10分钟前上涨1.08%<br/>• 成交量差值-548亿（<-500亿严重缩量），较10分钟前仅增加2亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "96a01ed89ef3de41",
+    "time": "2026-11-03 10:07:15",
+    "read": false,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-66.1→-60.4亿（增加5.6亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.46%<br/>• 成交量差值-667亿（<-500亿严重缩量），较10分钟前仅增加-29亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "0203af0bc58fb41d",
+    "time": "2026-11-03 10:09:16",
+    "read": false,
+    "strategyId": "volume_shrink_stagnation",
+    "title": "📉 放量后缩量滞涨",
+    "description": "成交量从高位 <strong>-621亿</strong> 回落至 <strong>-731亿</strong>，指数开始滞涨，需警惕回落风险。",
+    "severity": "medium",
+    "isBullish": false
+  },
+  {
+    "id": "f7cd6b9bb774e2f9",
+    "time": "2026-11-03 10:17:22",
+    "read": false,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-58.7→-44.6亿（增加14.1亿，≥5亿）<br/>• 科创板指较10分钟前上涨0.00%<br/>• 成交量差值-828亿（<-500亿严重缩量），较10分钟前仅增加-173亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "a388cd3708cba4d1",
+    "time": "2026-11-03 10:27:27",
+    "read": false,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-45.7→-26.2亿（增加19.6亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.21%<br/>• 成交量差值-814亿（<-500亿严重缩量），较10分钟前仅增加14亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "e420d9371fe4def0",
+    "time": "2026-11-03 10:57:05",
+    "read": false,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>131亿</strong>（≥100亿），主力资金净流出加速（-55.1→-77.9亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "ae7ef6035f607841",
+    "time": "2026-11-03 13:17:27",
+    "read": false,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>106亿</strong>（≥100亿），主力资金净流出加速（-167.9→-211.5亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "7661ead44727edf6",
+    "time": "2026-11-03 13:37:56",
+    "read": false,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>235亿</strong>（≥100亿），主力资金净流出加速（-271.6→-327.8亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "1aa96355df178a29",
+    "time": "2026-11-03 14:16:32",
+    "read": false,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>114亿</strong>（≥100亿），主力资金净流出加速（-394.3→-405.3亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
   }
 ]

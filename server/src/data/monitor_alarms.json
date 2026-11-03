@@ -1,1 +1,158 @@
-[]
+[
+  {
+    "id": "14fb645a848cdfd7",
+    "time": "2026-11-03 14:00:03",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-03 14:00:03",
+        "title": "板块排名变化",
+        "description": "<b>机器人</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">24/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "1577a5153c62342b",
+    "time": "2026-11-03 14:02:05",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-03 14:02:05",
+        "title": "板块排名变化",
+        "description": "<b>机器人</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">27/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "961d93618084d719",
+    "time": "2026-11-03 14:12:14",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-03 14:12:14",
+        "title": "板块排名变化",
+        "description": "<b>贵金属</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">11/55</span><br/><b>机器人大脑</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">41/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "bba31d1bac8c832a",
+    "time": "2026-11-03 14:13:14",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-03 14:13:14",
+        "title": "板块排名变化",
+        "description": "<b>房地产</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">8/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "8d9d725edb42071b",
+    "time": "2026-11-03 14:15:14",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-03 14:15:14",
+        "title": "板块资金变化",
+        "description": "<b>半导体概念</b> 资金变化 <span style=\"color: #389e0d; font-weight: bold;\">-8.12亿</span><br/><b>机器人概念</b> 资金变化 <span style=\"color: #389e0d; font-weight: bold;\">-5.28亿</span><br/><b>中证500</b> 资金变化 <span style=\"color: #389e0d; font-weight: bold;\">-5.11亿</span>",
+        "path": "/block_money_change"
+      }
+    ]
+  },
+  {
+    "id": "38343063706ab7f2",
+    "time": "2026-11-03 14:18:14",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-03 14:18:14",
+        "title": "板块资金变化",
+        "description": "<b>半导体概念</b> 资金变化 <span style=\"color: #389e0d; font-weight: bold;\">-6.54亿</span>",
+        "path": "/block_money_change"
+      }
+    ]
+  },
+  {
+    "id": "b27a9b124e5cc364",
+    "time": "2026-11-03 14:19:34",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-03 14:19:34",
+        "title": "大盘主力资金变化",
+        "description": "主力资金变化 <span style=\"color: #52c41a; font-weight: bold;\">-13.73亿</span>",
+        "path": "/volume"
+      }
+    ]
+  },
+  {
+    "id": "b0675f0b6229e74f",
+    "time": "2026-11-03 14:20:04",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-03 14:20:04",
+        "title": "大盘主力资金变化",
+        "description": "主力资金变化 <span style=\"color: #52c41a; font-weight: bold;\">-8.00亿</span>",
+        "path": "/volume"
+      }
+    ]
+  },
+  {
+    "id": "46893f35a9d436ff",
+    "time": "2026-11-03 14:20:14",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-03 14:20:14",
+        "title": "板块排名变化",
+        "description": "<b>医药</b>: 排名上升 <span style=\"color: #ff4d4f; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">21/55</span>",
+        "path": "/block"
+      }
+    ]
+  },
+  {
+    "id": "f6938f728e8c4d33",
+    "time": "2026-11-03 14:21:14",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-03 14:21:14",
+        "title": "大盘主力资金变化",
+        "description": "主力资金变化 <span style=\"color: #52c41a; font-weight: bold;\">-7.44亿</span>",
+        "path": "/volume"
+      }
+    ]
+  },
+  {
+    "id": "150aa9fd1aa19b7a",
+    "time": "2026-11-03 14:21:34",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-03 14:21:34",
+        "title": "大盘主力资金变化",
+        "description": "主力资金变化 <span style=\"color: #52c41a; font-weight: bold;\">-5.82亿</span>",
+        "path": "/volume"
+      }
+    ]
+  },
+  {
+    "id": "c687d59c5dd66274",
+    "time": "2026-11-03 14:23:15",
+    "read": false,
+    "alarms": [
+      {
+        "time": "2026-11-03 14:23:15",
+        "title": "板块排名变化",
+        "description": "<b>MFC</b>: 排名下降 <span style=\"color: #52c41a; font-weight: bold;\">3名</span>，当前 <span style=\"color: #8c8c8c; font-weight: bold;\">34/55</span>",
+        "path": "/block"
+      }
+    ]
+  }
+]

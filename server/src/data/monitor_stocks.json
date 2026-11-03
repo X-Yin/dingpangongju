@@ -1548,5 +1548,27 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-02 08:50:31"
+  },
+  {
+    "code": "sz001326",
+    "name": "联域股份",
+    "isImportant": false,
+    "blockName": "薄膜磷酸锂",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": false,
+    "watchPE": true,
+    "addedAt": "2026-11-03 08:39:28"
+  },
+  {
+    "code": "sh688818",
+    "name": "电科蓝天",
+    "isImportant": false,
+    "blockName": "军工",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-03 08:43:17"
   }
 ]

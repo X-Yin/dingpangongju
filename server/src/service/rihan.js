@@ -76,8 +76,8 @@ const pollRiHanData = async () => {
 
     // 首次立即执行
     await refreshRiHanData();
-    // 每隔10秒刷新一次
-    setInterval(refreshRiHanData, 10000);
+    // 每隔60秒刷新一次（日韩指数无需高频跟踪）
+    setInterval(refreshRiHanData, 60000);
 };
 
 const getRiHanData = () => {

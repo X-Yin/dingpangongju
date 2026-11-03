@@ -132,7 +132,7 @@ const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = fa
   // 统一转换为 [{ name, latest, points: [{ label, score, detail }] }]
   const series = useMemo(() => {
     if (isDaily) {
-      return (dailyData.blocks || []).map((block) => {
+      return (dailyData.blocks || []).filter((block) => block && block.name).map((block) => {
         const points = (block.points || []).map((point) => ({
           label: `${String(point.date).slice(4, 6)}-${String(point.date).slice(6, 8)}`,
           date: String(point.date),
@@ -150,7 +150,9 @@ const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = fa
     const points = intradayData.points || [];
     const names = new Set();
     for (const point of points) {
-      for (const block of point.blocks || []) names.add(block.name);
+      for (const block of point.blocks || []) {
+        if (block && block.name) names.add(block.name);
+      }
     }
     return Array.from(names).map((name) => {
       const list = points
@@ -195,7 +197,7 @@ const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = fa
   const displayItems = useMemo(() => (
     latestSorted.filter((item) => {
       const matchKeyword = !keywordNorms.length
-        || keywordNorms.some((kw) => item.name.toLowerCase().includes(kw));
+        || keywordNorms.some((kw) => String(item.name ?? '').toLowerCase().includes(kw));
       if (!matchKeyword) return false;
       // 有关键字时在全部板块中搜索；无关键字时按默认/手动选择展示
       if (keywordNorms.length) return true;
@@ -413,7 +415,7 @@ const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = fa
           mode="multiple"
           allowClear
           maxTagCount={4}
-          placeholder="选择板块（默认展示强度最高的 12 个）"
+          placeholder={showAll ? '选择板块（默认展示全部板块）' : '选择板块（默认展示强度最高的 12 个）'}
           value={selected ?? undefined}
           onChange={(value) => setSelected(value && value.length ? value : null)}
           options={rowItems.map((item) => ({ value: item.name, label: item.name }))}
@@ -459,6 +461,8 @@ const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = fa
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
                   gap: 16,
+                  height: 750,
+                  overflowY: 'auto'
                 }}>
                   {section.items.map(renderCard)}
                 </div>
@@ -471,6 +475,8 @@ const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = fa
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
           gap: 16,
+          height: 750,
+          overflowY: 'auto'
         }}>
           {displayItems.map(renderCard)}
         </div>

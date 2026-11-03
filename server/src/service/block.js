@@ -74,21 +74,21 @@ const pollBlockData = async (interval = 60000) => {
       const blockCodeList = getBlocksConfig();
       // 拆分板块数据
       const blockGroupData = divideBlockCodeList(blockCodeList);
-      // 每一个板块数据依次写入，防止同时发出的请求太多，接口返回有问题
+      // 板块数据依次请求，防止同时发出的请求太多，接口返回有问题
+      // 结果先在内存中累积，整个轮询结束后只写一次文件（避免每个板块都全量读+写 block_data.json）
+      let blockData = {};
+      try {
+        blockData = JSON.parse(fs.readFileSync(blockPath, 'utf-8') || '{}');
+      } catch (e) {
+        blockData = {};
+      }
       for (const blockName in blockGroupData) {
         const blockListData = await getSingleBlockData(blockName, blockGroupData[blockName]);
-        let originData = '{}';
-        try {
-          originData = fs.readFileSync(blockPath, 'utf-8');
-        } catch (e) {
-          originData = '{}';
-        }
-        const blockData = JSON.parse(originData || '{}');
         blockData[blockName] = blockListData[blockName];
-        fs.writeFileSync(blockPath, JSON.stringify(blockData, null, 2));
 
         if (useCLS()) await sleep(1000);
       }
+      fs.writeFileSync(blockPath, JSON.stringify(blockData, null, 2));
       console.log('---------- 轮询板块数据完成！---------- ', new Date().toLocaleString());
     } catch (error) {
       console.error("轮询板块数据任务失败:", error.message);

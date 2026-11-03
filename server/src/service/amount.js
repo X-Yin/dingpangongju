@@ -330,8 +330,8 @@ const pollAmountInfo = async (interval = 1000 * 10, type = 'api') => {
             const amountData = fs.existsSync(amountPath) ? JSON.parse(fs.readFileSync(amountPath, 'utf8') || '[]') : [];
             amountData.push([dayjs().format('HHmmss'), { ...amountInfo, date: dayjs().format('YYYYMMDD') }]);
 
-            // 保存到文件
-            fs.writeFileSync(amountPath, JSON.stringify(amountData, null, 2));
+            // 保存到文件（紧凑格式：该文件全天累计可达 MB 级，高频全量重写，去掉缩进可显著减少写盘量）
+            fs.writeFileSync(amountPath, JSON.stringify(amountData));
         } catch (error) {
             console.error('轮询获取成交量信息失败，等待下一次轮询:', error.message);
         }

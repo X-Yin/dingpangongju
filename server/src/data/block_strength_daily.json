@@ -4718,40 +4718,6 @@
       }
     },
     {
-      "points": [
-        {
-          "date": "20261102",
-          "totalScore": 15.01,
-          "avgChange": 1.9,
-          "avgChangeScore": 7.61,
-          "limitUpCount": 0,
-          "limitUpScore": 0,
-          "ratio": 0.57,
-          "prevRatio": 0.46,
-          "prevDate": "20261030",
-          "ratioChangePct": 24.67,
-          "ratioScore": 7.4,
-          "stockCount": 24,
-          "matchedCount": 24
-        }
-      ],
-      "latest": {
-        "date": "20261102",
-        "totalScore": 15.01,
-        "avgChange": 1.9,
-        "avgChangeScore": 7.61,
-        "limitUpCount": 0,
-        "limitUpScore": 0,
-        "ratio": 0.57,
-        "prevRatio": 0.46,
-        "prevDate": "20261030",
-        "ratioChangePct": 24.67,
-        "ratioScore": 7.4,
-        "stockCount": 24,
-        "matchedCount": 24
-      }
-    },
-    {
       "name": "汽车整车",
       "points": [
         {

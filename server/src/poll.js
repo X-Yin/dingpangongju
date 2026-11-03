@@ -159,9 +159,10 @@ const startPolling = (force = false) => {
 
   // pollDaPanData(20000);
 
-  pollStockData(5000);
+  // 轮询间隔已放宽，降低整机资源占用（可接受稍慢的数据更新）
+  pollStockData(15000);
 
-  pollBlockData(10000);
+  pollBlockData(30000);
 
   pollJingJiaQiangChouData(POLL_CONFIG.jingjiaqiangchou.hour, POLL_CONFIG.jingjiaqiangchou.minute);
 
@@ -179,7 +180,7 @@ const startPolling = (force = false) => {
 
   const hour = now.getHours();
   if (hour < 15) {
-    pollDFCFBlockMoney(10000);
+    pollDFCFBlockMoney(30000);
 
     pollTimeDFCFBlockMoneyChange();
 
@@ -191,13 +192,13 @@ const startPolling = (force = false) => {
   }
 
   // 9:45之前快速轮询主力资金，之后切换为慢速轮询
-  // pollType: 'api'（新浪接口，9:45前1s/后3s） | 'browser'（新浪Puppeteer，9:45前3s/后10s） | 'dfcf_browser'（东方财富主力资金+新浪成交量，9:45前3s/后10s）
+  // pollType: 'api'（新浪接口，9:45前5s/后10s） | 'browser'（新浪Puppeteer，9:45前3s/后10s） | 'dfcf_browser'（东方财富主力资金+新浪成交量，9:45前3s/后10s）
   const startAmountPolling = () => {
     const pollType = 'api';
     const now = new Date();
     const h = now.getHours(), m = now.getMinutes();
-    const beforeInterval = pollType === 'api' ? 1000 : 3000;
-    const afterInterval = pollType === 'api' ? 3000 : 10000;
+    const beforeInterval = pollType === 'api' ? 5000 : 3000;
+    const afterInterval = pollType === 'api' ? 10000 : 10000;
     if (h < 9 || (h === 9 && m < 45)) {
       pollAmountInfo(beforeInterval, pollType);
       const msTo945 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 45, 0, 0).getTime() - now.getTime();

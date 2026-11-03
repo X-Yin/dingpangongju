@@ -1,12 +1,22 @@
 [
   {
-    "id": "sz301526_1793585523899_s9lq",
-    "code": "sz301526",
-    "name": "国际复材",
-    "buyDate": "2026-11-02",
-    "buyTime": "10:12",
+    "id": "sh603667_1793669707474_txm3",
+    "code": "sh603667",
+    "name": "五洲新春",
+    "buyDate": "2026-11-03",
+    "buyTime": "09:35",
     "weight": 50,
-    "costPrice": 19.78,
+    "costPrice": 51.71,
     "sellStrategy": "tech_attack"
+  },
+  {
+    "id": "sh688818_1793670399128_yxfz",
+    "code": "sh688818",
+    "name": "电科蓝天",
+    "buyDate": "2026-11-03",
+    "buyTime": "09:46",
+    "weight": 50,
+    "sellStrategy": "tech_attack",
+    "costPrice": 46.58
   }
 ]

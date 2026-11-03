@@ -1,11 +1,46 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Modal, Tabs, List, Empty, Tag, Typography, Space, Divider, Card, Row, Col } from 'antd';
 import { HistoryOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { local_ip } from '../../../../constant';
 import './index.scss';
 
 const { Text } = Typography;
 const { TabPane } = Tabs;
 
-const HistoryModal = ({ open, onCancel, history, jisuYidongUpList, jisuYidongDownList, onStockClick, themeColor }) => (
+const JISU_POLL_INTERVAL = 5000;
+
+// 异动历史记录汇总弹窗：急速异动排名仅在弹窗打开时轮询，
+// 避免全天候拉取触发盯盘整页重渲染
+const HistoryModal = ({ open, onCancel, history, onStockClick, themeColor }) => {
+    const [jisuYidongUpList, setJisuYidongUpList] = useState([]);
+    const [jisuYidongDownList, setJisuYidongDownList] = useState([]);
+
+    useEffect(() => {
+        if (!open) return;
+        let cancelled = false;
+
+        const fetchJisuYidongRank = async () => {
+            try {
+                const response = await axios.get(`http://${local_ip}:3000/jisuyidong_rank`);
+                if (!cancelled && response.data) {
+                    setJisuYidongUpList(response.data.upList || []);
+                    setJisuYidongDownList(response.data.downList || []);
+                }
+            } catch (error) {
+                console.error('Fetch jisuyidong_rank data failed:', error);
+            }
+        };
+
+        fetchJisuYidongRank();
+        const timer = setInterval(fetchJisuYidongRank, JISU_POLL_INTERVAL);
+        return () => {
+            cancelled = true;
+            clearInterval(timer);
+        };
+    }, [open]);
+
+    return (
     <Modal
         title={<span><HistoryOutlined /> 异动历史记录汇总</span>}
         open={open}
@@ -125,6 +160,7 @@ const HistoryModal = ({ open, onCancel, history, jisuYidongUpList, jisuYidongDow
             </TabPane>
         </Tabs>
     </Modal>
-);
+    );
+};
 
 export default HistoryModal;
