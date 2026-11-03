@@ -555,6 +555,8 @@ const MultiStockTimeLineModal = ({
   // tag 区域折叠相关：折叠时分时图高度固定增加 100px，并整体重建图表
   const [tagsCollapsed, setTagsCollapsed] = useState(true);
   const [chartReloadVersion, setChartReloadVersion] = useState(0);
+  const chartReloadVersionRef = useRef(0); // 对比 chartReloadVersion 判断是否强制重建（弹窗切换/折叠/轴缩放）
+  const forcedPriceRangeRef = useRef(null); // 坐标轴放大模式下的固定价格范围，由 autoscaleInfoProvider 读取
 
   // 放大查看：打开后分时图整体移入 90% 宽高的大弹窗展示，关闭后移回卡片
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
@@ -563,6 +565,8 @@ const MultiStockTimeLineModal = ({
   // 放大时右侧价格轴范围固定为各股票「当前涨幅」的最小值~最大值（非历史极值），
   // 让涨幅相近的股票最大限度在可视区纵向展开，历史高低点超出范围的部分允许被裁掉
   const [axisZoomIn, setAxisZoomIn] = useState(Boolean(Number(localStorage.getItem('die_jia_fen_shi_guan_cha_axis_zoomin'))));
+  const axisZoomInRef = useRef(axisZoomIn); // 供图表增量更新路径读取（避免闭包捕获旧值）
+  useEffect(() => { axisZoomInRef.current = axisZoomIn; }, [axisZoomIn]);
 
   // 悬浮 tag 时高亮对应股票曲线，其他曲线虚化
   const applyHoverHighlight = useCallback((code) => {
@@ -775,7 +779,11 @@ const MultiStockTimeLineModal = ({
 
   useEffect(() => {
     if (!chartData || !containerRef.current) return;
-    return updateChart(chartData.alignedLines, chartData.infoList);
+    // chartReloadVersion 变化（弹窗开合/标签折叠/轴缩放切换）时强制整体重建，
+    // 其余情况（3s 轮询）由 updateChart 内部判断，默认走增量更新
+    const force = chartReloadVersionRef.current !== chartReloadVersion;
+    chartReloadVersionRef.current = chartReloadVersion;
+    updateChart(chartData.alignedLines, chartData.infoList, force);
   }, [chartData, chartReloadVersion]);
 
   useEffect(() => {
@@ -1130,31 +1138,33 @@ const MultiStockTimeLineModal = ({
     setRightAxisLabels(visibleLabels);
   }, []);
 
-  const updateChart = (alignedLines, infoList) => {
+  // 坐标轴放大模式：右侧价格轴固定为各股票当前（最新分时点）涨幅的最小值~最大值，
+  // 使涨幅相近的股票最大限度在可视区纵向展开；随每次轮询重算，历史高低点超出范围即被裁掉。
+  // 全部涨幅相同时向两侧各扩 0.5%，避免 min===max 的无效区间
+  const computeForcedPriceRange = (lines) => {
+    if (!axisZoomInRef.current) return null;
+    const lastChanges = lines
+      .map(line => (line && line.length > 0 ? Number(line[line.length - 1].change) : null))
+      .filter(v => v != null && Number.isFinite(v));
+    if (lastChanges.length === 0) return null;
+    const maxChange = Math.max(...lastChanges);
+    const minChange = Math.min(...lastChanges);
+    const pad = (maxChange - minChange) < 1e-9 ? 0.5 : 0;
+    return { minValue: minChange - pad, maxValue: maxChange + pad };
+  };
+
+  // 完整重建图表（仅在必要时：首次创建、股票数量变化、弹窗/折叠/轴缩放导致容器切换）。
+  // 原实现每次轮询（3s）都 remove + createChart 整个图表并重新订阅事件，长时间盯盘会
+  // 累积大量 canvas 内存与 GC 压力（Chrome 标签页内存可达 2GB），现改为默认增量更新
+  const rebuildChart = (alignedLines, infoList) => {
     if (!containerRef.current) return;
 
     if (chartRef.current) {
-      chartRef.current.remove();
+      try { chartRef.current.remove(); } catch { /* noop */ }
       chartRef.current = null;
     }
     seriesRef.current = [];
     setRightAxisLabels([]);
-
-    // 坐标轴放大模式：右侧价格轴固定为各股票当前（最新分时点）涨幅的最小值~最大值，
-    // 使涨幅相近的股票最大限度在可视区纵向展开；随每次轮询重算，历史高低点超出范围即被裁掉。
-    // 全部涨幅相同时向两侧各扩 0.5%，避免 min===max 的无效区间
-    let forcedPriceRange = null;
-    if (axisZoomIn) {
-      const lastChanges = alignedLines
-        .map(line => (line && line.length > 0 ? Number(line[line.length - 1].change) : null))
-        .filter(v => v != null && Number.isFinite(v));
-      if (lastChanges.length > 0) {
-        const maxChange = Math.max(...lastChanges);
-        const minChange = Math.min(...lastChanges);
-        const pad = (maxChange - minChange) < 1e-9 ? 0.5 : 0;
-        forcedPriceRange = { minValue: minChange - pad, maxValue: maxChange + pad };
-      }
-    }
 
     const chart = createChart(containerRef.current, {
       layout: {
@@ -1224,37 +1234,22 @@ const MultiStockTimeLineModal = ({
       const stockInfo = infoList[idx];
       const isIndex = stockInfo && INDEX_CODE_SET.has(stockInfo.code);
       const lineSeries = chart.addLineSeries({
-        color: stockInfo.color,
-        lineWidth: isIndex ? 2 : 2,
+        color: stockInfo ? stockInfo.color : '#888888',
+        lineWidth: 2,
         lineStyle: isIndex ? LineStyle.Dashed : LineStyle.Solid,
         priceFormat: {
           type: 'custom',
           formatter: (value) => `${value > 0 ? '+' : ''}${value.toFixed(2)}%`,
         },
         lastValueVisible: false,
-        // 坐标轴放大模式：每条序列都返回同一固定范围，图表取并集后即为该范围
-        ...(forcedPriceRange
-          ? { autoscaleInfoProvider: () => ({ priceRange: { minValue: forcedPriceRange.minValue, maxValue: forcedPriceRange.maxValue } }) }
-          : {}),
+        // 坐标轴放大模式：每条序列都返回同一固定范围（forcedPriceRangeRef 增量更新时刷新），
+        // 图表取并集后即为该范围；返回 null 时回退默认自动缩放
+        autoscaleInfoProvider: () => (forcedPriceRangeRef.current
+          ? { priceRange: forcedPriceRangeRef.current }
+          : null),
       });
 
-      let formattedData = line.map(item => ({
-        time: formatTimestamp(item.minute),
-        value: item.change,
-      }));
-
-      formattedData.sort((a, b) => a.time - b.time);
-
-      const deduplicated = [];
-      for (let i = 0; i < formattedData.length; i++) {
-        if (i === 0 || formattedData[i].time !== formattedData[i - 1].time) {
-          deduplicated.push(formattedData[i]);
-        } else {
-          deduplicated[deduplicated.length - 1] = formattedData[i];
-        }
-      }
-
-      lineSeries.setData(deduplicated);
+      lineSeries.setData(formatSeriesData(line));
       seriesRef.current.push(lineSeries);
     });
 
@@ -1267,21 +1262,30 @@ const MultiStockTimeLineModal = ({
       rightOffset: 0,
     });
 
-    // 保存当前 infoList 和各序列最新值，供右侧坐标轴标签计算使用
-    infoListRef.current = infoList;
-    lastValuesRef.current = alignedLines.map(line =>
-      line && line.length > 0 ? line[line.length - 1].change : null
-    );
-    minuteDeltaRef.current = alignedLines.map(line =>
-      line && line.length >= 2 ? line[line.length - 1].change - line[line.length - 2].change : null
-    );
-    requestAnimationFrame(() => updateRightAxisLabels());
+    // crosshair tooltip 每张图只挂一次（序列/信息经 ref 读取，增量更新后仍取最新值）
+    attachCrosshairTooltip(chart);
+  };
 
-    // 图表重建后恢复悬浮高亮状态
-    if (hoveredCodeRef.current) {
-      applyHoverHighlight(hoveredCodeRef.current);
+  // 将某只股票的分时序列格式化为 lightweight-charts 数据（时间排序 + 去重）
+  const formatSeriesData = (line) => {
+    const formatted = line.map(item => ({
+      time: formatTimestamp(item.minute),
+      value: item.change,
+    }));
+    formatted.sort((a, b) => a.time - b.time);
+    const deduplicated = [];
+    for (let i = 0; i < formatted.length; i++) {
+      if (i === 0 || formatted[i].time !== formatted[i - 1].time) {
+        deduplicated.push(formatted[i]);
+      } else {
+        deduplicated[deduplicated.length - 1] = formatted[i];
+      }
     }
+    return deduplicated;
+  };
 
+  // 给图表挂 crosshair tooltip（每张图只挂一次；序列/信息经 ref 读取，增量更新后仍取最新值）
+  const attachCrosshairTooltip = (chart) => {
     const tooltip = tooltipRef.current;
     const TOOLTIP_MARGIN = 15;
     chart.subscribeCrosshairMove(param => {
@@ -1301,7 +1305,7 @@ const MultiStockTimeLineModal = ({
         seriesRef.current.forEach((series, idx) => {
           const data = param.seriesData.get(series);
           if (data) {
-            const stockInfo = infoList[idx];
+            const stockInfo = infoListRef.current[idx];
             const resilienceText = stockInfo?.resilienceScore != null
               ? ` · 抗分歧 ${stockInfo.resilienceScore.toFixed(1)}`
               : '';
@@ -1364,20 +1368,73 @@ const MultiStockTimeLineModal = ({
         tooltip.style.top = `${top}px`;
       }
     });
+  };
 
+  // 应用最新分时数据：默认增量更新（仅 setData + 颜色重排），force 或容器变化时整体重建
+  const updateChart = (alignedLines, infoList, force = false) => {
+    if (!containerRef.current) return;
+
+    // 保存当前 infoList 和各序列最新值，供右侧坐标轴标签计算使用
+    infoListRef.current = infoList;
+    lastValuesRef.current = alignedLines.map(line =>
+      line && line.length > 0 ? line[line.length - 1].change : null
+    );
+    minuteDeltaRef.current = alignedLines.map(line =>
+      line && line.length >= 2 ? line[line.length - 1].change - line[line.length - 2].change : null
+    );
+    forcedPriceRangeRef.current = computeForcedPriceRange(alignedLines);
+
+    // 容器为空说明图表随 renderBody 在卡片/弹窗间迁移后 React 换了新容器节点，需要重建
+    const containerIsEmpty = containerRef.current.childElementCount === 0;
+    const needRebuild = force
+      || containerIsEmpty
+      || !chartRef.current
+      || seriesRef.current.length !== alignedLines.length;
+
+    if (needRebuild) {
+      rebuildChart(alignedLines, infoList);
+    } else {
+      // 增量更新：仅刷新颜色（按涨幅排名动态重排）与数据，不重建图表实例
+      seriesRef.current.forEach((series, idx) => {
+        const stockInfo = infoList[idx];
+        if (stockInfo) {
+          series.applyOptions({ color: stockInfo.color });
+        }
+        series.setData(formatSeriesData(alignedLines[idx] || []));
+      });
+      chartRef.current.timeScale().fitContent();
+    }
+
+    // 恢复悬浮高亮状态（增量刷新会重置颜色，需在其后重新应用）
+    if (hoveredCodeRef.current) {
+      applyHoverHighlight(hoveredCodeRef.current);
+    }
+
+    requestAnimationFrame(() => updateRightAxisLabels());
+  };
+
+  // 窗口尺寸变化：更新图表宽度并重算右侧标签（只挂一次，随组件卸载移除）
+  useEffect(() => {
     const handleResize = () => {
       if (chartRef.current && containerRef.current) {
         chartRef.current.applyOptions({ width: containerRef.current.clientWidth });
         requestAnimationFrame(() => updateRightAxisLabels());
       }
     };
-
     window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateRightAxisLabels]);
 
+  // 组件卸载：移除图表实例，释放 canvas 内存
+  useEffect(() => {
     return () => {
-      window.removeEventListener('resize', handleResize);
+      if (chartRef.current) {
+        try { chartRef.current.remove(); } catch { /* noop */ }
+        chartRef.current = null;
+      }
+      seriesRef.current = [];
     };
-  };
+  }, []);
 
   const fetchWatchlist = async () => {
     setWatchlistLoading(true);

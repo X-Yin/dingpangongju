@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-02 21:07:07",
+  "updatedAt": "2026-11-03 15:01:42",
   "weights": {
     "avgChange": 40,
     "limitUp": 30,
@@ -13,8 +13,8 @@
   "source": "spot_close",
   "spot": {
     "source": "eastmoney/sina",
-    "rowCount": 5575,
-    "validCount": 5573
+    "rowCount": 5577,
+    "validCount": 5576
   },
   "blocks": [
     {

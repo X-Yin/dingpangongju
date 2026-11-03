@@ -1,34 +1,5 @@
 [
   {
-    "tradeDate": 20260522,
-    "statusCode": "CAPITULATION",
-    "phase": "【全面退潮期】龙头补跌 / 泥沙俱下",
-    "stats": {
-      "avgMarketSlope": "-1.87%",
-      "avgLeaderSlope": "-1.87%",
-      "upRatio": "0.0%",
-      "flatRatio": "0.0%",
-      "downRatio": "100.0%"
-    },
-    "trueLeaders": [
-      {
-        "stockName": "新华传媒",
-        "stockCode": "sh600825",
-        "return15d": "-5.42%",
-        "slope": "-1.87%"
-      }
-    ],
-    "strongStocks": [],
-    "weakStocks": [
-      {
-        "stockName": "新华传媒",
-        "stockCode": "sh600825",
-        "slope": "-1.87"
-      }
-    ],
-    "reasoning": "全市场 100% 股票 3 日线转负，且近15日核心龙头（如：新华传媒）彻底崩溃补跌（平均斜率 -1.87%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
-  },
-  {
     "tradeDate": 20260525,
     "statusCode": "CAPITULATION",
     "phase": "【全面退潮期】龙头补跌 / 泥沙俱下",
@@ -43,7 +14,7 @@
       {
         "stockName": "新华传媒",
         "stockCode": "sh600825",
-        "return15d": "-5.77%",
+        "return15d": "-2.71%",
         "slope": "-0.92%"
       }
     ],
@@ -72,7 +43,7 @@
       {
         "stockName": "新华传媒",
         "stockCode": "sh600825",
-        "return15d": "-7.35%",
+        "return15d": "-4.33%",
         "slope": "-0.43%"
       }
     ],
@@ -88,30 +59,24 @@
   },
   {
     "tradeDate": 20260527,
-    "statusCode": "EARLY_DOWNTREND",
-    "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
+    "statusCode": "CAPITULATION",
+    "phase": "【全面退潮期】龙头补跌 / 泥沙俱下",
     "stats": {
-      "avgMarketSlope": "0.64%",
-      "avgLeaderSlope": "2.40%",
-      "upRatio": "50.0%",
+      "avgMarketSlope": "-1.12%",
+      "avgLeaderSlope": "-1.12%",
+      "upRatio": "0.0%",
       "flatRatio": "0.0%",
-      "downRatio": "50.0%"
+      "downRatio": "100.0%"
     },
     "trueLeaders": [
       {
-        "stockName": "拓荆科技",
-        "stockCode": "sh688072",
-        "return15d": "8.12%",
-        "slope": "2.40%"
+        "stockName": "新华传媒",
+        "stockCode": "sh600825",
+        "return15d": "-5.60%",
+        "slope": "-1.12%"
       }
     ],
-    "strongStocks": [
-      {
-        "stockName": "拓荆科技",
-        "stockCode": "sh688072",
-        "slope": "2.40"
-      }
-    ],
+    "strongStocks": [],
     "weakStocks": [
       {
         "stockName": "新华传媒",
@@ -119,7 +84,7 @@
         "slope": "-1.12"
       }
     ],
-    "reasoning": "大部分股票（50%）已转负走弱，但近15日龙头（如：拓荆科技）仍在强行死扛（平均斜率 2.40%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "全市场 100% 股票 3 日线转负，且近15日核心龙头（如：新华传媒）彻底崩溃补跌（平均斜率 -1.12%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
   },
   {
     "tradeDate": 20260528,
@@ -127,17 +92,17 @@
     "phase": "【全面退潮期】龙头补跌 / 泥沙俱下",
     "stats": {
       "avgMarketSlope": "-1.78%",
-      "avgLeaderSlope": "-2.27%",
+      "avgLeaderSlope": "-1.30%",
       "upRatio": "0.0%",
       "flatRatio": "0.0%",
       "downRatio": "100.0%"
     },
     "trueLeaders": [
       {
-        "stockName": "拓荆科技",
-        "stockCode": "sh688072",
-        "return15d": "9.03%",
-        "slope": "-2.27%"
+        "stockName": "新华传媒",
+        "stockCode": "sh600825",
+        "return15d": "-6.45%",
+        "slope": "-1.30%"
       }
     ],
     "strongStocks": [],
@@ -153,7 +118,7 @@
         "slope": "-1.30"
       }
     ],
-    "reasoning": "全市场 100% 股票 3 日线转负，且近15日核心龙头（如：拓荆科技）彻底崩溃补跌（平均斜率 -2.27%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
+    "reasoning": "全市场 100% 股票 3 日线转负，且近15日核心龙头（如：新华传媒）彻底崩溃补跌（平均斜率 -1.30%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
   },
   {
     "tradeDate": 20260529,
@@ -161,17 +126,17 @@
     "phase": "【全面退潮期】龙头补跌 / 泥沙俱下",
     "stats": {
       "avgMarketSlope": "-3.33%",
-      "avgLeaderSlope": "-5.84%",
+      "avgLeaderSlope": "-0.81%",
       "upRatio": "0.0%",
       "flatRatio": "0.0%",
       "downRatio": "100.0%"
     },
     "trueLeaders": [
       {
-        "stockName": "拓荆科技",
-        "stockCode": "sh688072",
-        "return15d": "1.79%",
-        "slope": "-5.84%"
+        "stockName": "新华传媒",
+        "stockCode": "sh600825",
+        "return15d": "-6.63%",
+        "slope": "-0.81%"
       }
     ],
     "strongStocks": [],
@@ -187,25 +152,25 @@
         "slope": "-0.81"
       }
     ],
-    "reasoning": "全市场 100% 股票 3 日线转负，且近15日核心龙头（如：拓荆科技）彻底崩溃补跌（平均斜率 -5.84%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
+    "reasoning": "全市场 100% 股票 3 日线转负，且近15日核心龙头（如：新华传媒）彻底崩溃补跌（平均斜率 -0.81%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
   },
   {
     "tradeDate": 20260601,
-    "statusCode": "BULL_TRAP",
-    "phase": "【退潮初期】龙头补跌 / 低位诱多陷阱",
+    "statusCode": "EARLY_DOWNTREND",
+    "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
       "avgMarketSlope": "-1.86%",
-      "avgLeaderSlope": "-4.26%",
+      "avgLeaderSlope": "0.53%",
       "upRatio": "50.0%",
       "flatRatio": "0.0%",
       "downRatio": "50.0%"
     },
     "trueLeaders": [
       {
-        "stockName": "拓荆科技",
-        "stockCode": "sh688072",
-        "return15d": "-5.46%",
-        "slope": "-4.26%"
+        "stockName": "新华传媒",
+        "stockCode": "sh600825",
+        "return15d": "-4.10%",
+        "slope": "0.53%"
       }
     ],
     "strongStocks": [
@@ -222,7 +187,7 @@
         "slope": "-4.26"
       }
     ],
-    "reasoning": "近15日涨幅最大的真龙头（如：拓荆科技）已开始补跌（龙头平均斜率 -4.26%）。此时即便有 50% 的新题材在补涨抬头，也大概率是高低切换的诱多陷阱，龙头退潮随时会把低位股带崩。"
+    "reasoning": "大部分股票（50%）已转负走弱，但近15日龙头（如：新华传媒）仍在强行死扛（平均斜率 0.53%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260602,
@@ -230,17 +195,17 @@
     "phase": "【全面退潮期】龙头补跌 / 泥沙俱下",
     "stats": {
       "avgMarketSlope": "-2.16%",
-      "avgLeaderSlope": "-4.07%",
+      "avgLeaderSlope": "-0.26%",
       "upRatio": "0.0%",
       "flatRatio": "0.0%",
       "downRatio": "100.0%"
     },
     "trueLeaders": [
       {
-        "stockName": "拓荆科技",
-        "stockCode": "sh688072",
-        "return15d": "-3.40%",
-        "slope": "-4.07%"
+        "stockName": "新华传媒",
+        "stockCode": "sh600825",
+        "return15d": "-7.17%",
+        "slope": "-0.26%"
       }
     ],
     "strongStocks": [],
@@ -256,25 +221,25 @@
         "slope": "-0.26"
       }
     ],
-    "reasoning": "全市场 100% 股票 3 日线转负，且近15日核心龙头（如：拓荆科技）彻底崩溃补跌（平均斜率 -4.07%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
+    "reasoning": "全市场 100% 股票 3 日线转负，且近15日核心龙头（如：新华传媒）彻底崩溃补跌（平均斜率 -0.26%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
   },
   {
     "tradeDate": 20260603,
     "statusCode": "CAPITULATION",
     "phase": "【全面退潮期】龙头补跌 / 泥沙俱下",
     "stats": {
-      "avgMarketSlope": "-0.93%",
-      "avgLeaderSlope": "-0.69%",
+      "avgMarketSlope": "-0.89%",
+      "avgLeaderSlope": "-1.09%",
       "upRatio": "0.0%",
       "flatRatio": "0.0%",
       "downRatio": "100.0%"
     },
     "trueLeaders": [
       {
-        "stockName": "拓荆科技",
-        "stockCode": "sh688072",
-        "return15d": "-0.24%",
-        "slope": "-0.69%"
+        "stockName": "新华传媒",
+        "stockCode": "sh600825",
+        "return15d": "-9.70%",
+        "slope": "-1.09%"
       }
     ],
     "strongStocks": [],
@@ -285,17 +250,12 @@
         "slope": "-1.09"
       },
       {
-        "stockName": "精测电子",
-        "stockCode": "sz300567",
-        "slope": "-1.01"
-      },
-      {
         "stockName": "拓荆科技",
         "stockCode": "sh688072",
         "slope": "-0.69"
       }
     ],
-    "reasoning": "全市场 100% 股票 3 日线转负，且近15日核心龙头（如：拓荆科技）彻底崩溃补跌（平均斜率 -0.69%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
+    "reasoning": "全市场 100% 股票 3 日线转负，且近15日核心龙头（如：新华传媒）彻底崩溃补跌（平均斜率 -1.09%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
   },
   {
     "tradeDate": 20260604,
@@ -312,7 +272,7 @@
       {
         "stockName": "精测电子",
         "stockCode": "sz300567",
-        "return15d": "4.94%",
+        "return15d": "10.62%",
         "slope": "3.50%"
       }
     ],
@@ -352,7 +312,7 @@
       {
         "stockName": "精测电子",
         "stockCode": "sz300567",
-        "return15d": "-2.56%",
+        "return15d": "2.71%",
         "slope": "0.38%"
       }
     ],
@@ -392,7 +352,7 @@
       {
         "stockName": "新华传媒",
         "stockCode": "sh600825",
-        "return15d": "-4.67%",
+        "return15d": "-1.57%",
         "slope": "3.03%"
       }
     ],
@@ -432,7 +392,7 @@
       {
         "stockName": "精测电子",
         "stockCode": "sz300567",
-        "return15d": "-2.74%",
+        "return15d": "2.52%",
         "slope": "-2.61%"
       }
     ],
@@ -459,794 +419,79 @@
   },
   {
     "tradeDate": 20260610,
-    "statusCode": "EARLY_DOWNTREND",
-    "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
+    "statusCode": "CONSOLIDATION",
+    "phase": "【震荡整理期】强弱方向不明显",
     "stats": {
-      "avgMarketSlope": "-0.06%",
-      "avgLeaderSlope": "9.20%",
-      "upRatio": "40.0%",
-      "flatRatio": "3.4%",
-      "downRatio": "56.6%"
+      "avgMarketSlope": "1.08%",
+      "avgLeaderSlope": "-0.08%",
+      "upRatio": "66.7%",
+      "flatRatio": "33.3%",
+      "downRatio": "0.0%"
     },
     "trueLeaders": [
       {
-        "stockName": "凡拓数创",
-        "stockCode": "sz301313",
-        "return15d": "41.37%",
-        "slope": "11.77%"
-      },
-      {
-        "stockName": "金安国纪",
-        "stockCode": "sz002636",
-        "return15d": "33.12%",
-        "slope": "10.00%"
-      },
-      {
-        "stockName": "华正新材",
-        "stockCode": "sh603186",
-        "return15d": "32.07%",
-        "slope": "9.69%"
-      },
-      {
-        "stockName": "海天瑞声",
-        "stockCode": "sh688787",
-        "return15d": "25.76%",
-        "slope": "7.65%"
-      },
-      {
-        "stockName": "南亚新材",
-        "stockCode": "sh688519",
-        "return15d": "22.79%",
-        "slope": "6.86%"
+        "stockName": "精测电子",
+        "stockCode": "sz300567",
+        "return15d": "2.48%",
+        "slope": "-0.08%"
       }
     ],
     "strongStocks": [
-      {
-        "stockName": "凡拓数创",
-        "stockCode": "sz301313",
-        "slope": "11.77"
-      },
-      {
-        "stockName": "金安国纪",
-        "stockCode": "sz002636",
-        "slope": "10.00"
-      },
-      {
-        "stockName": "华正新材",
-        "stockCode": "sh603186",
-        "slope": "9.69"
-      },
-      {
-        "stockName": "海天瑞声",
-        "stockCode": "sh688787",
-        "slope": "7.65"
-      },
-      {
-        "stockName": "南亚新材",
-        "stockCode": "sh688519",
-        "slope": "6.86"
-      },
-      {
-        "stockName": "光智科技",
-        "stockCode": "sz300489",
-        "slope": "6.27"
-      },
-      {
-        "stockName": "国际复材",
-        "stockCode": "sz301526",
-        "slope": "5.01"
-      },
-      {
-        "stockName": "德福科技",
-        "stockCode": "sz301511",
-        "slope": "4.64"
-      },
-      {
-        "stockName": "亨通光电",
-        "stockCode": "sh600487",
-        "slope": "3.64"
-      },
-      {
-        "stockName": "强一股份",
-        "stockCode": "sh688809",
-        "slope": "3.40"
-      },
-      {
-        "stockName": "铜冠铜箔",
-        "stockCode": "sz301217",
-        "slope": "3.33"
-      },
-      {
-        "stockName": "东材科技",
-        "stockCode": "sh601208",
-        "slope": "3.29"
-      },
-      {
-        "stockName": "长川科技",
-        "stockCode": "sz300604",
-        "slope": "3.23"
-      },
-      {
-        "stockName": "宏昌电子",
-        "stockCode": "sh603002",
-        "slope": "3.10"
-      },
-      {
-        "stockName": "源杰科技",
-        "stockCode": "sh688498",
-        "slope": "3.09"
-      },
-      {
-        "stockName": "彤程新材",
-        "stockCode": "sh603650",
-        "slope": "3.04"
-      },
-      {
-        "stockName": "华峰测控",
-        "stockCode": "sh688200",
-        "slope": "2.99"
-      },
-      {
-        "stockName": "鼎泰高科",
-        "stockCode": "sz301377",
-        "slope": "2.89"
-      },
-      {
-        "stockName": "先导基电",
-        "stockCode": "sh600641",
-        "slope": "2.37"
-      },
-      {
-        "stockName": "雅克科技",
-        "stockCode": "sz002409",
-        "slope": "2.28"
-      },
-      {
-        "stockName": "生益科技",
-        "stockCode": "sh600183",
-        "slope": "2.28"
-      },
-      {
-        "stockName": "中国巨石",
-        "stockCode": "sh600176",
-        "slope": "2.18"
-      },
-      {
-        "stockName": "微导纳米",
-        "stockCode": "sh688147",
-        "slope": "2.16"
-      },
-      {
-        "stockName": "泛亚微透",
-        "stockCode": "sh688386",
-        "slope": "2.08"
-      },
       {
         "stockName": "拓荆科技",
         "stockCode": "sh688072",
         "slope": "2.04"
       },
       {
-        "stockName": "奥比中光-W",
-        "stockCode": "sh688322",
-        "slope": "2.02"
-      },
-      {
-        "stockName": "景旺电子",
-        "stockCode": "sh603228",
-        "slope": "1.89"
-      },
-      {
-        "stockName": "盛美上海",
-        "stockCode": "sh688082",
-        "slope": "1.84"
-      },
-      {
-        "stockName": "中微公司",
-        "stockCode": "sh688012",
-        "slope": "1.59"
-      },
-      {
-        "stockName": "长芯博创",
-        "stockCode": "sz300548",
-        "slope": "1.52"
-      },
-      {
-        "stockName": "英维克",
-        "stockCode": "sz002837",
-        "slope": "1.51"
-      },
-      {
-        "stockName": "鹏鼎控股",
-        "stockCode": "sz002938",
-        "slope": "1.48"
-      },
-      {
-        "stockName": "长城军工",
-        "stockCode": "sh601606",
-        "slope": "1.44"
-      },
-      {
-        "stockName": "飞龙股份",
-        "stockCode": "sz002536",
-        "slope": "1.40"
-      },
-      {
-        "stockName": "中钨高新",
-        "stockCode": "sz000657",
-        "slope": "1.35"
-      },
-      {
-        "stockName": "海光信息",
-        "stockCode": "sh688041",
-        "slope": "1.34"
-      },
-      {
         "stockName": "新华传媒",
         "stockCode": "sh600825",
         "slope": "1.28"
-      },
-      {
-        "stockName": "华丰科技",
-        "stockCode": "sh688629",
-        "slope": "1.28"
-      },
-      {
-        "stockName": "申菱环境",
-        "stockCode": "sz301018",
-        "slope": "1.15"
-      },
-      {
-        "stockName": "新易盛",
-        "stockCode": "sz300502",
-        "slope": "1.09"
-      },
-      {
-        "stockName": "华海清科",
-        "stockCode": "sh688120",
-        "slope": "1.01"
-      },
-      {
-        "stockName": "北方导航",
-        "stockCode": "sh600435",
-        "slope": "1.00"
-      },
-      {
-        "stockName": "深南电路",
-        "stockCode": "sz002916",
-        "slope": "0.88"
-      },
-      {
-        "stockName": "北方华创",
-        "stockCode": "sz002371",
-        "slope": "0.88"
-      },
-      {
-        "stockName": "荣昌生物",
-        "stockCode": "sh688331",
-        "slope": "0.83"
-      },
-      {
-        "stockName": "长飞光纤",
-        "stockCode": "sh601869",
-        "slope": "0.81"
-      },
-      {
-        "stockName": "捷成股份",
-        "stockCode": "sz300182",
-        "slope": "0.68"
-      },
-      {
-        "stockName": "菲利华",
-        "stockCode": "sz300395",
-        "slope": "0.59"
-      },
-      {
-        "stockName": "盛科通信",
-        "stockCode": "sh688702",
-        "slope": "0.54"
-      },
-      {
-        "stockName": "中科飞测",
-        "stockCode": "sh688361",
-        "slope": "0.54"
-      },
-      {
-        "stockName": "福莱新材",
-        "stockCode": "sh605488",
-        "slope": "0.49"
-      },
-      {
-        "stockName": "超声电子",
-        "stockCode": "sz000823",
-        "slope": "0.49"
-      },
-      {
-        "stockName": "甬矽电子",
-        "stockCode": "sh688362",
-        "slope": "0.39"
-      },
-      {
-        "stockName": "联讯仪器",
-        "stockCode": "sh688808",
-        "slope": "0.34"
-      },
-      {
-        "stockName": "芯基微装",
-        "stockCode": "sh688630",
-        "slope": "0.34"
-      },
-      {
-        "stockName": "太辰光",
-        "stockCode": "sz300570",
-        "slope": "0.32"
-      },
-      {
-        "stockName": "宏和科技",
-        "stockCode": "sh603256",
-        "slope": "0.31"
-      },
-      {
-        "stockName": "凌云光",
-        "stockCode": "sh688400",
-        "slope": "0.18"
       }
     ],
-    "weakStocks": [
-      {
-        "stockName": "利通电子",
-        "stockCode": "sh603629",
-        "slope": "-7.13"
-      },
-      {
-        "stockName": "德才股份",
-        "stockCode": "sh605287",
-        "slope": "-4.54"
-      },
-      {
-        "stockName": "征和工业",
-        "stockCode": "sz003033",
-        "slope": "-4.43"
-      },
-      {
-        "stockName": "海川智能",
-        "stockCode": "sz300720",
-        "slope": "-4.36"
-      },
-      {
-        "stockName": "西部材料",
-        "stockCode": "sz002149",
-        "slope": "-4.27"
-      },
-      {
-        "stockName": "钧达股份",
-        "stockCode": "sz002865",
-        "slope": "-3.86"
-      },
-      {
-        "stockName": "上海港湾",
-        "stockCode": "sh605598",
-        "slope": "-3.79"
-      },
-      {
-        "stockName": "天孚通信",
-        "stockCode": "sz300394",
-        "slope": "-3.47"
-      },
-      {
-        "stockName": "英诺激光",
-        "stockCode": "sz301021",
-        "slope": "-3.32"
-      },
-      {
-        "stockName": "五洲新春",
-        "stockCode": "sh603667",
-        "slope": "-3.28"
-      },
-      {
-        "stockName": "航发科技",
-        "stockCode": "sh600391",
-        "slope": "-3.20"
-      },
-      {
-        "stockName": "信维通信",
-        "stockCode": "sz300136",
-        "slope": "-3.18"
-      },
-      {
-        "stockName": "中国卫星",
-        "stockCode": "sh600118",
-        "slope": "-2.97"
-      },
-      {
-        "stockName": "剑桥科技",
-        "stockCode": "sh603083",
-        "slope": "-2.93"
-      },
-      {
-        "stockName": "锐捷网络",
-        "stockCode": "sz301165",
-        "slope": "-2.89"
-      },
-      {
-        "stockName": "通富微电",
-        "stockCode": "sz002156",
-        "slope": "-2.79"
-      },
-      {
-        "stockName": "江顺科技",
-        "stockCode": "sz001400",
-        "slope": "-2.70"
-      },
-      {
-        "stockName": "力鼎光电",
-        "stockCode": "sh605118",
-        "slope": "-2.60"
-      },
-      {
-        "stockName": "长光华芯",
-        "stockCode": "sh688048",
-        "slope": "-2.50"
-      },
-      {
-        "stockName": "奥普特",
-        "stockCode": "sh688686",
-        "slope": "-2.46"
-      },
-      {
-        "stockName": "中石科技",
-        "stockCode": "sz300684",
-        "slope": "-2.38"
-      },
-      {
-        "stockName": "国瓷材料",
-        "stockCode": "sz300285",
-        "slope": "-2.14"
-      },
-      {
-        "stockName": "云南锗业",
-        "stockCode": "sz002428",
-        "slope": "-2.12"
-      },
-      {
-        "stockName": "上纬新材",
-        "stockCode": "sh688585",
-        "slope": "-2.12"
-      },
-      {
-        "stockName": "京东方",
-        "stockCode": "sz000725",
-        "slope": "-2.10"
-      },
-      {
-        "stockName": "银轮股份",
-        "stockCode": "sz002126",
-        "slope": "-2.10"
-      },
-      {
-        "stockName": "莱特光电",
-        "stockCode": "sh688150",
-        "slope": "-1.94"
-      },
-      {
-        "stockName": "永鼎股份",
-        "stockCode": "sh600105",
-        "slope": "-1.89"
-      },
-      {
-        "stockName": "东田微",
-        "stockCode": "sz301183",
-        "slope": "-1.83"
-      },
-      {
-        "stockName": "创维数字",
-        "stockCode": "sz000810",
-        "slope": "-1.82"
-      },
-      {
-        "stockName": "致尚科技",
-        "stockCode": "sz301486",
-        "slope": "-1.82"
-      },
-      {
-        "stockName": "洪都航空",
-        "stockCode": "sh600316",
-        "slope": "-1.81"
-      },
-      {
-        "stockName": "寒武纪",
-        "stockCode": "sh688256",
-        "slope": "-1.79"
-      },
-      {
-        "stockName": "朝阳科技",
-        "stockCode": "sz002981",
-        "slope": "-1.78"
-      },
-      {
-        "stockName": "上海电影",
-        "stockCode": "sh601595",
-        "slope": "-1.75"
-      },
-      {
-        "stockName": "罗博特科",
-        "stockCode": "sz300757",
-        "slope": "-1.75"
-      },
-      {
-        "stockName": "科森科技",
-        "stockCode": "sh603626",
-        "slope": "-1.69"
-      },
-      {
-        "stockName": "上海沪工",
-        "stockCode": "sh603131",
-        "slope": "-1.69"
-      },
-      {
-        "stockName": "浙江荣泰",
-        "stockCode": "sh603119",
-        "slope": "-1.60"
-      },
-      {
-        "stockName": "立讯精密",
-        "stockCode": "sz002475",
-        "slope": "-1.60"
-      },
-      {
-        "stockName": "顺灏股份",
-        "stockCode": "sz002565",
-        "slope": "-1.57"
-      },
-      {
-        "stockName": "博众精工",
-        "stockCode": "sh688097",
-        "slope": "-1.54"
-      },
-      {
-        "stockName": "浪潮信息",
-        "stockCode": "sz000977",
-        "slope": "-1.53"
-      },
-      {
-        "stockName": "三花智控",
-        "stockCode": "sz002050",
-        "slope": "-1.52"
-      },
-      {
-        "stockName": "巴比食品",
-        "stockCode": "sh605338",
-        "slope": "-1.49"
-      },
-      {
-        "stockName": "大族激光",
-        "stockCode": "sz002008",
-        "slope": "-1.44"
-      },
-      {
-        "stockName": "方正科技",
-        "stockCode": "sh600601",
-        "slope": "-1.44"
-      },
-      {
-        "stockName": "中国卫通",
-        "stockCode": "sh601698",
-        "slope": "-1.40"
-      },
-      {
-        "stockName": "东山精密",
-        "stockCode": "sz002384",
-        "slope": "-1.39"
-      },
-      {
-        "stockName": "工业富联",
-        "stockCode": "sh601138",
-        "slope": "-1.35"
-      },
-      {
-        "stockName": "航天晨光",
-        "stockCode": "sh600501",
-        "slope": "-1.33"
-      },
-      {
-        "stockName": "国科军工",
-        "stockCode": "sh688543",
-        "slope": "-1.31"
-      },
-      {
-        "stockName": "奥士康",
-        "stockCode": "sz002913",
-        "slope": "-1.29"
-      },
-      {
-        "stockName": "襄阳轴承",
-        "stockCode": "sz000678",
-        "slope": "-1.29"
-      },
-      {
-        "stockName": "银龙股份",
-        "stockCode": "sh603969",
-        "slope": "-1.26"
-      },
-      {
-        "stockName": "爱仕达",
-        "stockCode": "sz002403",
-        "slope": "-1.23"
-      },
-      {
-        "stockName": "宁德时代",
-        "stockCode": "sz300750",
-        "slope": "-1.22"
-      },
-      {
-        "stockName": "澜起科技",
-        "stockCode": "sh688008",
-        "slope": "-1.20"
-      },
-      {
-        "stockName": "仕佳光子",
-        "stockCode": "sh688313",
-        "slope": "-1.11"
-      },
-      {
-        "stockName": "青岛食品",
-        "stockCode": "sz001219",
-        "slope": "-1.08"
-      },
-      {
-        "stockName": "芒果超媒",
-        "stockCode": "sz300413",
-        "slope": "-1.06"
-      },
-      {
-        "stockName": "兆威机电",
-        "stockCode": "sz003021",
-        "slope": "-1.00"
-      },
-      {
-        "stockName": "航天电子",
-        "stockCode": "sh600879",
-        "slope": "-0.99"
-      },
-      {
-        "stockName": "中际旭创",
-        "stockCode": "sz300308",
-        "slope": "-0.94"
-      },
-      {
-        "stockName": "阳光照明",
-        "stockCode": "sh600261",
-        "slope": "-0.92"
-      },
-      {
-        "stockName": "邵阳液压",
-        "stockCode": "sz301079",
-        "slope": "-0.91"
-      },
-      {
-        "stockName": "胜宏科技",
-        "stockCode": "sz300476",
-        "slope": "-0.87"
-      },
-      {
-        "stockName": "华虹",
-        "stockCode": "sh688347",
-        "slope": "-0.78"
-      },
-      {
-        "stockName": "杰普特",
-        "stockCode": "sh688025",
-        "slope": "-0.77"
-      },
-      {
-        "stockName": "芯联集成-U",
-        "stockCode": "sh688469",
-        "slope": "-0.74"
-      },
-      {
-        "stockName": "长电科技",
-        "stockCode": "sh600584",
-        "slope": "-0.72"
-      },
-      {
-        "stockName": "三环集团",
-        "stockCode": "sz300408",
-        "slope": "-0.71"
-      },
-      {
-        "stockName": "沪电股份",
-        "stockCode": "sz002463",
-        "slope": "-0.64"
-      },
-      {
-        "stockName": "华大九天",
-        "stockCode": "sz301269",
-        "slope": "-0.63"
-      },
-      {
-        "stockName": "兴森科技",
-        "stockCode": "sz002436",
-        "slope": "-0.55"
-      },
-      {
-        "stockName": "中芯国际",
-        "stockCode": "sh688981",
-        "slope": "-0.55"
-      },
-      {
-        "stockName": "兆易创新",
-        "stockCode": "sh603986",
-        "slope": "-0.49"
-      },
-      {
-        "stockName": "慈文传媒",
-        "stockCode": "sz002343",
-        "slope": "-0.40"
-      },
-      {
-        "stockName": "杰克科技",
-        "stockCode": "sh603337",
-        "slope": "-0.35"
-      },
-      {
-        "stockName": "新华文轩",
-        "stockCode": "sh601811",
-        "slope": "-0.27"
-      },
-      {
-        "stockName": "内蒙一机",
-        "stockCode": "sh600967",
-        "slope": "-0.23"
-      },
-      {
-        "stockName": "麦格米特",
-        "stockCode": "sz002851",
-        "slope": "-0.19"
-      }
-    ],
-    "reasoning": "大部分股票（57%）已转负走弱，但近15日龙头（如：凡拓数创、金安国纪、华正新材、海天瑞声、南亚新材）仍在强行死扛（平均斜率 9.20%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "weakStocks": [],
+    "reasoning": "多空双方均无明显加速度，处于多空平衡的震荡期。"
   },
   {
     "tradeDate": 20260611,
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.79%",
-      "avgLeaderSlope": "7.09%",
-      "upRatio": "52.4%",
-      "flatRatio": "2.8%",
-      "downRatio": "44.8%"
+      "avgMarketSlope": "0.76%",
+      "avgLeaderSlope": "8.57%",
+      "upRatio": "51.7%",
+      "flatRatio": "2.7%",
+      "downRatio": "45.6%"
     },
     "trueLeaders": [
       {
         "stockName": "金安国纪",
         "stockCode": "sz002636",
-        "return15d": "45.80%",
+        "return15d": "32.54%",
         "slope": "9.83%"
       },
       {
         "stockName": "光智科技",
         "stockCode": "sz300489",
-        "return15d": "40.41%",
+        "return15d": "27.85%",
         "slope": "8.78%"
+      },
+      {
+        "stockName": "雅克科技",
+        "stockCode": "sz002409",
+        "return15d": "27.73%",
+        "slope": "8.62%"
+      },
+      {
+        "stockName": "强一股份",
+        "stockCode": "sh688809",
+        "return15d": "25.57%",
+        "slope": "7.98%"
       },
       {
         "stockName": "华正新材",
         "stockCode": "sh603186",
-        "return15d": "37.78%",
+        "return15d": "25.25%",
         "slope": "7.65%"
-      },
-      {
-        "stockName": "南亚新材",
-        "stockCode": "sh688519",
-        "return15d": "29.39%",
-        "slope": "6.20%"
-      },
-      {
-        "stockName": "海天瑞声",
-        "stockCode": "sh688787",
-        "return15d": "21.74%",
-        "slope": "2.99%"
       }
     ],
     "strongStocks": [
@@ -1758,6 +1003,11 @@
         "slope": "-1.94"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.92"
+      },
+      {
         "stockName": "杰克科技",
         "stockCode": "sh603337",
         "slope": "-1.78"
@@ -1790,6 +1040,11 @@
       {
         "stockName": "上海电影",
         "stockCode": "sh601595",
+        "slope": "-1.51"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
         "slope": "-1.51"
       },
       {
@@ -1958,49 +1213,49 @@
         "slope": "-0.19"
       }
     ],
-    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：金安国纪、光智科技、华正新材、南亚新材、海天瑞声）仍在极端加速飙车（平均斜率高达 7.09%）。资金极端抱团，随时可能见顶变盘。"
+    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：金安国纪、光智科技、雅克科技、强一股份、华正新材）仍在极端加速飙车（平均斜率高达 8.57%）。资金极端抱团，随时可能见顶变盘。"
   },
   {
     "tradeDate": 20260612,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.64%",
-      "avgLeaderSlope": "4.98%",
-      "upRatio": "34.5%",
-      "flatRatio": "2.1%",
-      "downRatio": "63.4%"
+      "avgMarketSlope": "-0.65%",
+      "avgLeaderSlope": "5.53%",
+      "upRatio": "34.0%",
+      "flatRatio": "2.0%",
+      "downRatio": "63.9%"
     },
     "trueLeaders": [
       {
         "stockName": "金安国纪",
         "stockCode": "sz002636",
-        "return15d": "54.54%",
+        "return15d": "40.48%",
         "slope": "8.38%"
-      },
-      {
-        "stockName": "华正新材",
-        "stockCode": "sh603186",
-        "return15d": "37.72%",
-        "slope": "4.28%"
       },
       {
         "stockName": "国际复材",
         "stockCode": "sz301526",
-        "return15d": "30.79%",
+        "return15d": "29.42%",
         "slope": "4.00%"
       },
       {
-        "stockName": "光智科技",
-        "stockCode": "sz300489",
-        "return15d": "29.92%",
-        "slope": "3.15%"
+        "stockName": "雅克科技",
+        "stockCode": "sz002409",
+        "return15d": "26.00%",
+        "slope": "5.87%"
       },
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "27.46%",
+        "return15d": "25.39%",
         "slope": "5.10%"
+      },
+      {
+        "stockName": "华正新材",
+        "stockCode": "sh603186",
+        "return15d": "25.19%",
+        "slope": "4.28%"
       }
     ],
     "strongStocks": [
@@ -2467,6 +1722,11 @@
         "slope": "-2.06"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.99"
+      },
+      {
         "stockName": "三花智控",
         "stockCode": "sz002050",
         "slope": "-1.95"
@@ -2597,6 +1857,11 @@
         "slope": "-1.06"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.03"
+      },
+      {
         "stockName": "盛科通信",
         "stockCode": "sh688702",
         "slope": "-1.03"
@@ -2717,49 +1982,49 @@
         "slope": "-0.22"
       }
     ],
-    "reasoning": "大部分股票（63%）已转负走弱，但近15日龙头（如：金安国纪、华正新材、国际复材、光智科技、铜冠铜箔）仍在强行死扛（平均斜率 4.98%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（64%）已转负走弱，但近15日龙头（如：金安国纪、国际复材、雅克科技、铜冠铜箔、华正新材）仍在强行死扛（平均斜率 5.53%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260615,
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "1.96%",
-      "avgLeaderSlope": "8.98%",
-      "upRatio": "75.2%",
-      "flatRatio": "5.5%",
-      "downRatio": "19.3%"
+      "avgMarketSlope": "1.94%",
+      "avgLeaderSlope": "10.00%",
+      "upRatio": "74.8%",
+      "flatRatio": "6.1%",
+      "downRatio": "19.0%"
     },
     "trueLeaders": [
       {
-        "stockName": "金安国纪",
-        "stockCode": "sz002636",
-        "return15d": "67.37%",
-        "slope": "7.90%"
-      },
-      {
         "stockName": "国际复材",
         "stockCode": "sz301526",
-        "return15d": "56.97%",
+        "return15d": "55.33%",
         "slope": "11.14%"
       },
       {
-        "stockName": "光智科技",
-        "stockCode": "sz300489",
-        "return15d": "55.91%",
-        "slope": "9.04%"
+        "stockName": "金安国纪",
+        "stockCode": "sz002636",
+        "return15d": "52.14%",
+        "slope": "7.90%"
       },
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "52.97%",
+        "return15d": "50.48%",
         "slope": "12.07%"
       },
       {
-        "stockName": "华正新材",
-        "stockCode": "sh603186",
-        "return15d": "51.49%",
-        "slope": "4.76%"
+        "stockName": "太辰光",
+        "stockCode": "sz300570",
+        "return15d": "44.60%",
+        "slope": "9.84%"
+      },
+      {
+        "stockName": "光智科技",
+        "stockCode": "sz300489",
+        "return15d": "41.97%",
+        "slope": "9.04%"
       }
     ],
     "strongStocks": [
@@ -3279,6 +2544,11 @@
         "slope": "0.45"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.38"
+      },
+      {
         "stockName": "源杰科技",
         "stockCode": "sh688498",
         "slope": "0.35"
@@ -3451,49 +2721,49 @@
         "slope": "-0.18"
       }
     ],
-    "reasoning": "虽然有 75% 股票 3 日线转正，但全市场平均斜率仅为 1.96%，属于横盘震荡而非强势主升。"
+    "reasoning": "虽然有 75% 股票 3 日线转正，但全市场平均斜率仅为 1.94%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260616,
     "statusCode": "UPTREND",
     "phase": "【主升期】全盘普涨 / 多头大面积共振",
     "stats": {
-      "avgMarketSlope": "2.76%",
-      "avgLeaderSlope": "8.97%",
-      "upRatio": "88.3%",
-      "flatRatio": "2.8%",
-      "downRatio": "9.0%"
+      "avgMarketSlope": "2.73%",
+      "avgLeaderSlope": "10.56%",
+      "upRatio": "87.8%",
+      "flatRatio": "2.7%",
+      "downRatio": "9.5%"
     },
     "trueLeaders": [
       {
         "stockName": "国际复材",
         "stockCode": "sz301526",
-        "return15d": "77.91%",
+        "return15d": "76.05%",
         "slope": "13.75%"
+      },
+      {
+        "stockName": "太辰光",
+        "stockCode": "sz300570",
+        "return15d": "71.54%",
+        "slope": "14.73%"
       },
       {
         "stockName": "金安国纪",
         "stockCode": "sz002636",
-        "return15d": "74.50%",
+        "return15d": "58.63%",
         "slope": "6.14%"
-      },
-      {
-        "stockName": "光智科技",
-        "stockCode": "sz300489",
-        "return15d": "69.27%",
-        "slope": "6.77%"
-      },
-      {
-        "stockName": "华正新材",
-        "stockCode": "sh603186",
-        "return15d": "66.63%",
-        "slope": "6.76%"
       },
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "60.17%",
+        "return15d": "57.56%",
         "slope": "11.41%"
+      },
+      {
+        "stockName": "光智科技",
+        "stockCode": "sz300489",
+        "return15d": "54.13%",
+        "slope": "6.77%"
       }
     ],
     "strongStocks": [
@@ -3958,6 +3228,11 @@
         "slope": "1.37"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.36"
+      },
+      {
         "stockName": "长光华芯",
         "stockCode": "sh688048",
         "slope": "1.33"
@@ -4155,6 +3430,11 @@
         "slope": "-1.19"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.98"
+      },
+      {
         "stockName": "青岛食品",
         "stockCode": "sz001219",
         "slope": "-0.94"
@@ -4205,49 +3485,49 @@
         "slope": "-0.17"
       }
     ],
-    "reasoning": "超过 70% 股票（实际 88%）向上冲刺，且全市场平均斜率达 2.76%。动能充沛，是真正的主升浪。"
+    "reasoning": "超过 70% 股票（实际 88%）向上冲刺，且全市场平均斜率达 2.73%。动能充沛，是真正的主升浪。"
   },
   {
     "tradeDate": 20260617,
     "statusCode": "UPTREND",
     "phase": "【主升期】全盘普涨 / 多头大面积共振",
     "stats": {
-      "avgMarketSlope": "3.60%",
-      "avgLeaderSlope": "8.50%",
-      "upRatio": "79.3%",
+      "avgMarketSlope": "3.59%",
+      "avgLeaderSlope": "10.36%",
+      "upRatio": "79.6%",
       "flatRatio": "1.4%",
-      "downRatio": "19.3%"
+      "downRatio": "19.0%"
     },
     "trueLeaders": [
       {
         "stockName": "国际复材",
         "stockCode": "sz301526",
-        "return15d": "85.04%",
+        "return15d": "83.11%",
         "slope": "11.65%"
+      },
+      {
+        "stockName": "太辰光",
+        "stockCode": "sz300570",
+        "return15d": "73.31%",
+        "slope": "12.12%"
       },
       {
         "stockName": "华正新材",
         "stockCode": "sh603186",
-        "return15d": "83.30%",
+        "return15d": "66.63%",
         "slope": "10.00%"
       },
       {
-        "stockName": "光智科技",
-        "stockCode": "sz300489",
-        "return15d": "70.72%",
-        "slope": "8.96%"
+        "stockName": "铜冠铜箔",
+        "stockCode": "sz301217",
+        "return15d": "60.68%",
+        "slope": "8.14%"
       },
       {
         "stockName": "南亚新材",
         "stockCode": "sh688519",
-        "return15d": "67.31%",
+        "return15d": "55.79%",
         "slope": "9.86%"
-      },
-      {
-        "stockName": "金安国纪",
-        "stockCode": "sz002636",
-        "return15d": "64.56%",
-        "slope": "2.02%"
       }
     ],
     "strongStocks": [
@@ -4475,6 +3755,11 @@
         "stockName": "深南电路",
         "stockCode": "sz002916",
         "slope": "5.47"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "5.34"
       },
       {
         "stockName": "沪电股份",
@@ -4817,6 +4102,11 @@
         "slope": "0.48"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.41"
+      },
+      {
         "stockName": "宁德时代",
         "stockCode": "sz300750",
         "slope": "0.35"
@@ -4969,49 +4259,49 @@
         "slope": "-0.16"
       }
     ],
-    "reasoning": "超过 70% 股票（实际 79%）向上冲刺，且全市场平均斜率达 3.60%。动能充沛，是真正的主升浪。"
+    "reasoning": "超过 70% 股票（实际 80%）向上冲刺，且全市场平均斜率达 3.59%。动能充沛，是真正的主升浪。"
   },
   {
     "tradeDate": 20260618,
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "2.29%",
-      "avgLeaderSlope": "5.41%",
-      "upRatio": "77.2%",
+      "avgMarketSlope": "2.30%",
+      "avgLeaderSlope": "6.17%",
+      "upRatio": "77.6%",
       "flatRatio": "4.1%",
-      "downRatio": "18.6%"
+      "downRatio": "18.4%"
     },
     "trueLeaders": [
       {
-        "stockName": "华正新材",
-        "stockCode": "sh603186",
-        "return15d": "92.55%",
-        "slope": "8.19%"
-      },
-      {
         "stockName": "国际复材",
         "stockCode": "sz301526",
-        "return15d": "88.08%",
+        "return15d": "86.11%",
         "slope": "5.98%"
-      },
-      {
-        "stockName": "光智科技",
-        "stockCode": "sz300489",
-        "return15d": "79.90%",
-        "slope": "4.84%"
       },
       {
         "stockName": "铜冠铜箔",
         "stockCode": "sz301217",
-        "return15d": "79.80%",
+        "return15d": "76.88%",
         "slope": "5.63%"
       },
       {
-        "stockName": "金安国纪",
-        "stockCode": "sz002636",
-        "return15d": "79.52%",
-        "slope": "2.40%"
+        "stockName": "华正新材",
+        "stockCode": "sh603186",
+        "return15d": "75.04%",
+        "slope": "8.19%"
+      },
+      {
+        "stockName": "太辰光",
+        "stockCode": "sz300570",
+        "return15d": "75.02%",
+        "slope": "6.21%"
+      },
+      {
+        "stockName": "光智科技",
+        "stockCode": "sz300489",
+        "return15d": "63.81%",
+        "slope": "4.84%"
       }
     ],
     "strongStocks": [
@@ -5188,6 +4478,11 @@
       {
         "stockName": "创维数字",
         "stockCode": "sz000810",
+        "slope": "4.28"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
         "slope": "4.28"
       },
       {
@@ -5444,6 +4739,11 @@
         "stockName": "博众精工",
         "stockCode": "sh688097",
         "slope": "1.86"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "1.84"
       },
       {
         "stockName": "英维克",
@@ -5713,49 +5013,49 @@
         "slope": "-0.16"
       }
     ],
-    "reasoning": "虽然有 77% 股票 3 日线转正，但全市场平均斜率仅为 2.29%，属于横盘震荡而非强势主升。"
+    "reasoning": "虽然有 78% 股票 3 日线转正，但全市场平均斜率仅为 2.30%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260622,
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "1.69%",
-      "avgLeaderSlope": "4.25%",
-      "upRatio": "61.4%",
-      "flatRatio": "6.2%",
-      "downRatio": "32.4%"
+      "avgMarketSlope": "1.68%",
+      "avgLeaderSlope": "4.04%",
+      "upRatio": "61.9%",
+      "flatRatio": "6.1%",
+      "downRatio": "32.0%"
     },
     "trueLeaders": [
       {
+        "stockName": "国际复材",
+        "stockCode": "sz301526",
+        "return15d": "89.34%",
+        "slope": "2.44%"
+      },
+      {
+        "stockName": "太辰光",
+        "stockCode": "sz300570",
+        "return15d": "83.24%",
+        "slope": "2.25%"
+      },
+      {
         "stockName": "华正新材",
         "stockCode": "sh603186",
-        "return15d": "101.51%",
+        "return15d": "83.19%",
         "slope": "6.43%"
       },
       {
         "stockName": "金安国纪",
         "stockCode": "sz002636",
-        "return15d": "96.39%",
+        "return15d": "78.52%",
         "slope": "4.22%"
       },
       {
         "stockName": "光智科技",
         "stockCode": "sz300489",
-        "return15d": "94.65%",
+        "return15d": "77.25%",
         "slope": "4.88%"
-      },
-      {
-        "stockName": "国际复材",
-        "stockCode": "sz301526",
-        "return15d": "91.35%",
-        "slope": "2.44%"
-      },
-      {
-        "stockName": "铜冠铜箔",
-        "stockCode": "sz301217",
-        "return15d": "76.65%",
-        "slope": "3.28%"
       }
     ],
     "strongStocks": [
@@ -6130,6 +5430,11 @@
         "slope": "1.27"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.23"
+      },
+      {
         "stockName": "风华高科",
         "stockCode": "sz000636",
         "slope": "1.08"
@@ -6188,6 +5493,11 @@
         "stockName": "宁德时代",
         "stockCode": "sz300750",
         "slope": "0.46"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.41"
       },
       {
         "stockName": "阳光照明",
@@ -6442,49 +5752,49 @@
         "slope": "-0.22"
       }
     ],
-    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：华正新材、金安国纪、光智科技、国际复材、铜冠铜箔）仍在极端加速飙车（平均斜率高达 4.25%）。资金极端抱团，随时可能见顶变盘。"
+    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：国际复材、太辰光、华正新材、金安国纪、光智科技）仍在极端加速飙车（平均斜率高达 4.04%）。资金极端抱团，随时可能见顶变盘。"
   },
   {
     "tradeDate": 20260623,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.07%",
-      "avgLeaderSlope": "1.90%",
-      "upRatio": "42.1%",
+      "avgMarketSlope": "-0.11%",
+      "avgLeaderSlope": "1.34%",
+      "upRatio": "41.5%",
       "flatRatio": "1.4%",
-      "downRatio": "56.6%"
+      "downRatio": "57.1%"
     },
     "trueLeaders": [
       {
+        "stockName": "国际复材",
+        "stockCode": "sz301526",
+        "return15d": "74.09%",
+        "slope": "-1.61%"
+      },
+      {
         "stockName": "光智科技",
         "stockCode": "sz300489",
-        "return15d": "90.79%",
+        "return15d": "73.73%",
         "slope": "3.68%"
+      },
+      {
+        "stockName": "太辰光",
+        "stockCode": "sz300570",
+        "return15d": "72.35%",
+        "slope": "-0.18%"
       },
       {
         "stockName": "华正新材",
         "stockCode": "sh603186",
-        "return15d": "87.29%",
+        "return15d": "70.26%",
         "slope": "0.69%"
       },
       {
         "stockName": "金安国纪",
         "stockCode": "sz002636",
-        "return15d": "86.80%",
+        "return15d": "69.80%",
         "slope": "4.11%"
-      },
-      {
-        "stockName": "国际复材",
-        "stockCode": "sz301526",
-        "return15d": "75.93%",
-        "slope": "-1.61%"
-      },
-      {
-        "stockName": "中国巨石",
-        "stockCode": "sh600176",
-        "return15d": "59.98%",
-        "slope": "2.62%"
       }
     ],
     "strongStocks": [
@@ -6866,8 +6176,18 @@
         "slope": "-3.08"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-3.06"
+      },
+      {
         "stockName": "福莱新材",
         "stockCode": "sh605488",
+        "slope": "-2.92"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
         "slope": "-2.92"
       },
       {
@@ -7206,49 +6526,49 @@
         "slope": "-0.18"
       }
     ],
-    "reasoning": "大部分股票（57%）已转负走弱，但近15日龙头（如：光智科技、华正新材、金安国纪、国际复材、中国巨石）仍在强行死扛（平均斜率 1.90%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（57%）已转负走弱，但近15日龙头（如：国际复材、光智科技、太辰光、华正新材、金安国纪）仍在强行死扛（平均斜率 1.34%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260624,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "0.34%",
+      "avgMarketSlope": "0.29%",
       "avgLeaderSlope": "4.19%",
-      "upRatio": "42.1%",
+      "upRatio": "41.5%",
       "flatRatio": "4.8%",
-      "downRatio": "53.1%"
+      "downRatio": "53.7%"
     },
     "trueLeaders": [
       {
-        "stockName": "光智科技",
-        "stockCode": "sz300489",
-        "return15d": "112.21%",
-        "slope": "5.72%"
-      },
-      {
         "stockName": "国际复材",
         "stockCode": "sz301526",
-        "return15d": "106.90%",
+        "return15d": "104.74%",
         "slope": "3.39%"
+      },
+      {
+        "stockName": "光智科技",
+        "stockCode": "sz300489",
+        "return15d": "93.23%",
+        "slope": "5.72%"
       },
       {
         "stockName": "华正新材",
         "stockCode": "sh603186",
-        "return15d": "102.52%",
+        "return15d": "84.11%",
         "slope": "1.72%"
-      },
-      {
-        "stockName": "金安国纪",
-        "stockCode": "sz002636",
-        "return15d": "99.12%",
-        "slope": "3.48%"
       },
       {
         "stockName": "中国巨石",
         "stockCode": "sh600176",
-        "return15d": "76.06%",
+        "return15d": "83.05%",
         "slope": "6.67%"
+      },
+      {
+        "stockName": "金安国纪",
+        "stockCode": "sz002636",
+        "return15d": "81.01%",
+        "slope": "3.48%"
       }
     ],
     "strongStocks": [
@@ -7570,6 +6890,11 @@
         "slope": "-4.25"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-4.00"
+      },
+      {
         "stockName": "鹏鼎控股",
         "stockCode": "sz002938",
         "slope": "-3.98"
@@ -7613,6 +6938,11 @@
         "stockName": "海天瑞声",
         "stockCode": "sh688787",
         "slope": "-3.06"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-2.95"
       },
       {
         "stockName": "爱仕达",
@@ -7945,49 +7275,49 @@
         "slope": "-0.32"
       }
     ],
-    "reasoning": "大部分股票（53%）已转负走弱，但近15日龙头（如：光智科技、国际复材、华正新材、金安国纪、中国巨石）仍在强行死扛（平均斜率 4.19%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（54%）已转负走弱，但近15日龙头（如：国际复材、光智科技、华正新材、中国巨石、金安国纪）仍在强行死扛（平均斜率 4.19%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260625,
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.73%",
+      "avgMarketSlope": "0.69%",
       "avgLeaderSlope": "3.86%",
-      "upRatio": "52.4%",
+      "upRatio": "51.7%",
       "flatRatio": "3.4%",
-      "downRatio": "44.1%"
+      "downRatio": "44.9%"
     },
     "trueLeaders": [
       {
+        "stockName": "国际复材",
+        "stockCode": "sz301526",
+        "return15d": "117.94%",
+        "slope": "5.03%"
+      },
+      {
         "stockName": "光智科技",
         "stockCode": "sz300489",
-        "return15d": "129.99%",
+        "return15d": "109.42%",
         "slope": "5.91%"
       },
       {
-        "stockName": "国际复材",
-        "stockCode": "sz301526",
-        "return15d": "120.25%",
-        "slope": "5.03%"
+        "stockName": "中国巨石",
+        "stockCode": "sh600176",
+        "return15d": "100.03%",
+        "slope": "6.86%"
       },
       {
         "stockName": "华正新材",
         "stockCode": "sh603186",
-        "return15d": "112.52%",
+        "return15d": "93.19%",
         "slope": "1.86%"
       },
       {
         "stockName": "金安国纪",
         "stockCode": "sz002636",
-        "return15d": "94.27%",
+        "return15d": "76.60%",
         "slope": "-0.36%"
-      },
-      {
-        "stockName": "中国巨石",
-        "stockCode": "sh600176",
-        "return15d": "92.38%",
-        "slope": "6.86%"
       }
     ],
     "strongStocks": [
@@ -8404,6 +7734,11 @@
         "slope": "-2.81"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-2.81"
+      },
+      {
         "stockName": "中国卫通",
         "stockCode": "sh601698",
         "slope": "-2.79"
@@ -8624,6 +7959,11 @@
         "slope": "-1.02"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.02"
+      },
+      {
         "stockName": "东材科技",
         "stockCode": "sh601208",
         "slope": "-1.00"
@@ -8694,49 +8034,49 @@
         "slope": "-0.18"
       }
     ],
-    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：光智科技、国际复材、华正新材、金安国纪、中国巨石）仍在极端加速飙车（平均斜率高达 3.86%）。资金极端抱团，随时可能见顶变盘。"
+    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：国际复材、光智科技、中国巨石、华正新材、金安国纪）仍在极端加速飙车（平均斜率高达 3.86%）。资金极端抱团，随时可能见顶变盘。"
   },
   {
     "tradeDate": 20260626,
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.86%",
-      "avgLeaderSlope": "5.45%",
+      "avgMarketSlope": "0.87%",
+      "avgLeaderSlope": "6.96%",
       "upRatio": "51.7%",
       "flatRatio": "3.4%",
-      "downRatio": "44.8%"
+      "downRatio": "44.9%"
     },
     "trueLeaders": [
       {
         "stockName": "国际复材",
         "stockCode": "sz301526",
-        "return15d": "140.45%",
+        "return15d": "137.93%",
         "slope": "10.70%"
-      },
-      {
-        "stockName": "光智科技",
-        "stockCode": "sz300489",
-        "return15d": "125.96%",
-        "slope": "5.56%"
       },
       {
         "stockName": "中国巨石",
         "stockCode": "sh600176",
-        "return15d": "101.45%",
+        "return15d": "109.45%",
         "slope": "7.85%"
+      },
+      {
+        "stockName": "光智科技",
+        "stockCode": "sz300489",
+        "return15d": "105.75%",
+        "slope": "5.56%"
+      },
+      {
+        "stockName": "中科飞测",
+        "stockCode": "sh688361",
+        "return15d": "84.90%",
+        "slope": "8.60%"
       },
       {
         "stockName": "华正新材",
         "stockCode": "sh603186",
-        "return15d": "99.94%",
+        "return15d": "81.76%",
         "slope": "2.10%"
-      },
-      {
-        "stockName": "金安国纪",
-        "stockCode": "sz002636",
-        "return15d": "92.80%",
-        "slope": "1.03%"
       }
     ],
     "strongStocks": [
@@ -8814,6 +8154,11 @@
         "stockName": "长电科技",
         "stockCode": "sh600584",
         "slope": "5.20"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "5.17"
       },
       {
         "stockName": "京东方",
@@ -9223,6 +8568,11 @@
         "slope": "-2.37"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-2.34"
+      },
+      {
         "stockName": "航发科技",
         "stockCode": "sh600391",
         "slope": "-2.33"
@@ -9443,18 +8793,18 @@
         "slope": "-0.28"
       }
     ],
-    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：国际复材、光智科技、中国巨石、华正新材、金安国纪）仍在极端加速飙车（平均斜率高达 5.45%）。资金极端抱团，随时可能见顶变盘。"
+    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：国际复材、中国巨石、光智科技、中科飞测、华正新材）仍在极端加速飙车（平均斜率高达 6.96%）。资金极端抱团，随时可能见顶变盘。"
   },
   {
     "tradeDate": 20260629,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.21%",
+      "avgMarketSlope": "-0.19%",
       "avgLeaderSlope": "4.57%",
-      "upRatio": "36.8%",
-      "flatRatio": "4.9%",
-      "downRatio": "58.3%"
+      "upRatio": "37.0%",
+      "flatRatio": "4.8%",
+      "downRatio": "58.2%"
     },
     "trueLeaders": [
       {
@@ -9558,6 +8908,11 @@
         "stockName": "三环集团",
         "stockCode": "sz300408",
         "slope": "4.57"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "4.37"
       },
       {
         "stockName": "中国卫星",
@@ -9962,6 +9317,11 @@
         "slope": "-2.32"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-2.32"
+      },
+      {
         "stockName": "襄阳轴承",
         "stockCode": "sz000678",
         "slope": "-2.31"
@@ -10184,10 +9544,10 @@
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.45%",
+      "avgMarketSlope": "0.46%",
       "avgLeaderSlope": "3.92%",
-      "upRatio": "47.2%",
-      "flatRatio": "3.5%",
+      "upRatio": "47.3%",
+      "flatRatio": "3.4%",
       "downRatio": "49.3%"
     },
     "trueLeaders": [
@@ -10282,6 +9642,11 @@
         "stockName": "中微公司",
         "stockCode": "sh688012",
         "slope": "5.47"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "5.11"
       },
       {
         "stockName": "京东方",
@@ -10656,6 +10021,11 @@
         "slope": "-2.65"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-2.63"
+      },
+      {
         "stockName": "生益科技",
         "stockCode": "sh600183",
         "slope": "-2.57"
@@ -10928,11 +10298,11 @@
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.90%",
+      "avgMarketSlope": "0.88%",
       "avgLeaderSlope": "3.93%",
-      "upRatio": "60.4%",
-      "flatRatio": "3.5%",
-      "downRatio": "36.1%"
+      "upRatio": "60.3%",
+      "flatRatio": "3.4%",
+      "downRatio": "36.3%"
     },
     "trueLeaders": [
       {
@@ -11273,6 +10643,11 @@
         "slope": "1.25"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "1.21"
+      },
+      {
         "stockName": "利通电子",
         "stockCode": "sh603629",
         "slope": "1.17"
@@ -11510,6 +10885,11 @@
         "slope": "-2.14"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-2.13"
+      },
+      {
         "stockName": "景旺电子",
         "stockCode": "sh603228",
         "slope": "-2.07"
@@ -11674,9 +11054,9 @@
     "stats": {
       "avgMarketSlope": "-0.51%",
       "avgLeaderSlope": "0.56%",
-      "upRatio": "44.4%",
+      "upRatio": "44.5%",
       "flatRatio": "1.4%",
-      "downRatio": "54.2%"
+      "downRatio": "54.1%"
     },
     "trueLeaders": [
       {
@@ -12020,6 +11400,11 @@
         "stockName": "盛科通信",
         "stockCode": "sh688702",
         "slope": "0.26"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.25"
       },
       {
         "stockName": "顺灏股份",
@@ -12369,6 +11754,11 @@
         "slope": "-1.16"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.01"
+      },
+      {
         "stockName": "浪潮信息",
         "stockCode": "sz000977",
         "slope": "-1.00"
@@ -12431,11 +11821,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.37%",
+      "avgMarketSlope": "-1.33%",
       "avgLeaderSlope": "1.50%",
-      "upRatio": "37.5%",
+      "upRatio": "38.4%",
       "flatRatio": "0.7%",
-      "downRatio": "61.8%"
+      "downRatio": "61.0%"
     },
     "trueLeaders": [
       {
@@ -12631,9 +12021,19 @@
         "slope": "2.07"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "2.07"
+      },
+      {
         "stockName": "长城军工",
         "stockCode": "sh601606",
         "slope": "2.00"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.75"
       },
       {
         "stockName": "中国卫星",
@@ -13188,18 +12588,18 @@
         "slope": "-0.16"
       }
     ],
-    "reasoning": "大部分股票（62%）已转负走弱，但近15日龙头（如：光智科技、中国巨石、锐捷网络、先导基电、国际复材）仍在强行死扛（平均斜率 1.50%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（61%）已转负走弱，但近15日龙头（如：光智科技、中国巨石、锐捷网络、先导基电、国际复材）仍在强行死扛（平均斜率 1.50%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260706,
     "statusCode": "BULL_TRAP",
     "phase": "【退潮初期】龙头补跌 / 低位诱多陷阱",
     "stats": {
-      "avgMarketSlope": "-2.04%",
+      "avgMarketSlope": "-2.02%",
       "avgLeaderSlope": "-0.74%",
-      "upRatio": "22.2%",
-      "flatRatio": "2.8%",
-      "downRatio": "75.0%"
+      "upRatio": "21.9%",
+      "flatRatio": "3.4%",
+      "downRatio": "74.7%"
     },
     "trueLeaders": [
       {
@@ -13837,6 +13237,11 @@
         "slope": "-1.34"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.29"
+      },
+      {
         "stockName": "力鼎光电",
         "stockCode": "sh605118",
         "slope": "-1.20"
@@ -13944,11 +13349,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.08%",
+      "avgMarketSlope": "-1.09%",
       "avgLeaderSlope": "1.43%",
-      "upRatio": "27.8%",
-      "flatRatio": "6.3%",
-      "downRatio": "66.0%"
+      "upRatio": "27.4%",
+      "flatRatio": "6.2%",
+      "downRatio": "66.4%"
     },
     "trueLeaders": [
       {
@@ -14481,6 +13886,11 @@
         "slope": "-1.87"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.82"
+      },
+      {
         "stockName": "上纬新材",
         "stockCode": "sh688585",
         "slope": "-1.79"
@@ -14524,6 +13934,11 @@
         "stockName": "北方华创",
         "stockCode": "sz002371",
         "slope": "-1.41"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.39"
       },
       {
         "stockName": "芯联集成-U",
@@ -14668,11 +14083,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-2.20%",
+      "avgMarketSlope": "-2.25%",
       "avgLeaderSlope": "4.98%",
-      "upRatio": "21.5%",
+      "upRatio": "21.2%",
       "flatRatio": "2.1%",
-      "downRatio": "76.4%"
+      "downRatio": "76.7%"
     },
     "trueLeaders": [
       {
@@ -14955,6 +14370,11 @@
         "slope": "-6.00"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-5.82"
+      },
+      {
         "stockName": "泛亚微透",
         "stockCode": "sh688386",
         "slope": "-5.57"
@@ -14983,6 +14403,11 @@
         "stockName": "钧达股份",
         "stockCode": "sz002865",
         "slope": "-5.14"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-5.03"
       },
       {
         "stockName": "三花智控",
@@ -15415,17 +14840,17 @@
         "slope": "-0.32"
       }
     ],
-    "reasoning": "大部分股票（76%）已转负走弱，但近15日龙头（如：中科飞测、锐捷网络、甬矽电子、精测电子、华虹）仍在强行死扛（平均斜率 4.98%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（77%）已转负走弱，但近15日龙头（如：中科飞测、锐捷网络、甬矽电子、精测电子、华虹）仍在强行死扛（平均斜率 4.98%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260709,
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.31%",
+      "avgMarketSlope": "0.29%",
       "avgLeaderSlope": "6.82%",
       "upRatio": "44.1%",
-      "flatRatio": "7.0%",
+      "flatRatio": "6.9%",
       "downRatio": "49.0%"
     },
     "trueLeaders": [
@@ -15737,6 +15162,11 @@
         "slope": "0.64"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.55"
+      },
+      {
         "stockName": "兆易创新",
         "stockCode": "sh603986",
         "slope": "0.49"
@@ -15847,6 +15277,11 @@
         "stockName": "凌云光",
         "stockCode": "sh688400",
         "slope": "-3.24"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-3.14"
       },
       {
         "stockName": "兆威机电",
@@ -16136,10 +15571,10 @@
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.17%",
+      "avgMarketSlope": "0.18%",
       "avgLeaderSlope": "3.31%",
       "upRatio": "43.4%",
-      "flatRatio": "9.1%",
+      "flatRatio": "9.0%",
       "downRatio": "47.6%"
     },
     "trueLeaders": [
@@ -16194,6 +15629,11 @@
         "stockName": "长川科技",
         "stockCode": "sz300604",
         "slope": "4.82"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "4.41"
       },
       {
         "stockName": "中国卫星",
@@ -16623,6 +16063,11 @@
         "slope": "-1.75"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.71"
+      },
+      {
         "stockName": "福莱新材",
         "stockCode": "sh605488",
         "slope": "-1.69"
@@ -16835,11 +16280,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.11%",
+      "avgMarketSlope": "-1.10%",
       "avgLeaderSlope": "0.47%",
-      "upRatio": "19.4%",
-      "flatRatio": "4.9%",
-      "downRatio": "75.7%"
+      "upRatio": "19.9%",
+      "flatRatio": "4.8%",
+      "downRatio": "75.3%"
     },
     "trueLeaders": [
       {
@@ -16963,6 +16408,11 @@
         "stockName": "航天电子",
         "stockCode": "sh600879",
         "slope": "0.94"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.90"
       },
       {
         "stockName": "长川科技",
@@ -17332,6 +16782,11 @@
         "slope": "-1.47"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.45"
+      },
+      {
         "stockName": "中科飞测",
         "stockCode": "sh688361",
         "slope": "-1.41"
@@ -17562,18 +17017,18 @@
         "slope": "-0.16"
       }
     ],
-    "reasoning": "大部分股票（76%）已转负走弱，但近15日龙头（如：锐捷网络、拓荆科技、华丰科技、中科飞测、华海清科）仍在强行死扛（平均斜率 0.47%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（75%）已转负走弱，但近15日龙头（如：锐捷网络、拓荆科技、华丰科技、中科飞测、华海清科）仍在强行死扛（平均斜率 0.47%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260714,
     "statusCode": "CAPITULATION",
     "phase": "【全面退潮期】龙头补跌 / 泥沙俱下",
     "stats": {
-      "avgMarketSlope": "-1.90%",
+      "avgMarketSlope": "-1.91%",
       "avgLeaderSlope": "-1.07%",
-      "upRatio": "13.9%",
-      "flatRatio": "2.8%",
-      "downRatio": "83.3%"
+      "upRatio": "13.7%",
+      "flatRatio": "2.7%",
+      "downRatio": "83.6%"
     },
     "trueLeaders": [
       {
@@ -17849,6 +17304,11 @@
         "stockName": "信维通信",
         "stockCode": "sz300136",
         "slope": "-3.51"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-3.41"
       },
       {
         "stockName": "长飞光纤",
@@ -18196,6 +17656,11 @@
         "slope": "-1.19"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.17"
+      },
+      {
         "stockName": "太辰光",
         "stockCode": "sz300570",
         "slope": "-1.13"
@@ -18311,18 +17776,18 @@
         "slope": "-0.27"
       }
     ],
-    "reasoning": "全市场 83% 股票 3 日线转负，且近15日核心龙头（如：锐捷网络、拓荆科技、征和工业、浪潮信息、华海清科）彻底崩溃补跌（平均斜率 -1.07%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
+    "reasoning": "全市场 84% 股票 3 日线转负，且近15日核心龙头（如：锐捷网络、拓荆科技、征和工业、浪潮信息、华海清科）彻底崩溃补跌（平均斜率 -1.07%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
   },
   {
     "tradeDate": 20260715,
     "statusCode": "CAPITULATION",
     "phase": "【全面退潮期】龙头补跌 / 泥沙俱下",
     "stats": {
-      "avgMarketSlope": "-2.11%",
+      "avgMarketSlope": "-2.14%",
       "avgLeaderSlope": "-0.64%",
-      "upRatio": "16.7%",
-      "flatRatio": "2.8%",
-      "downRatio": "80.6%"
+      "upRatio": "16.4%",
+      "flatRatio": "2.7%",
+      "downRatio": "80.8%"
     },
     "trueLeaders": [
       {
@@ -18488,6 +17953,11 @@
         "stockName": "上海港湾",
         "stockCode": "sh605598",
         "slope": "-7.93"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-7.69"
       },
       {
         "stockName": "甬矽电子",
@@ -19010,6 +18480,11 @@
         "slope": "-0.84"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.78"
+      },
+      {
         "stockName": "光智科技",
         "stockCode": "sz300489",
         "slope": "-0.71"
@@ -19067,11 +18542,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.05%",
+      "avgMarketSlope": "-1.06%",
       "avgLeaderSlope": "0.27%",
-      "upRatio": "34.5%",
-      "flatRatio": "2.1%",
-      "downRatio": "63.4%"
+      "upRatio": "34.7%",
+      "flatRatio": "2.0%",
+      "downRatio": "63.3%"
     },
     "trueLeaders": [
       {
@@ -19230,6 +18705,11 @@
         "stockName": "青岛食品",
         "stockCode": "sz001219",
         "slope": "1.57"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.54"
       },
       {
         "stockName": "襄阳轴承",
@@ -19422,6 +18902,11 @@
         "stockName": "拓荆科技",
         "stockCode": "sh688072",
         "slope": "-4.98"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-4.97"
       },
       {
         "stockName": "芯联集成-U",
@@ -19826,11 +19311,11 @@
     "statusCode": "CAPITULATION",
     "phase": "【全面退潮期】龙头补跌 / 泥沙俱下",
     "stats": {
-      "avgMarketSlope": "-4.65%",
+      "avgMarketSlope": "-4.64%",
       "avgLeaderSlope": "-2.56%",
-      "upRatio": "6.2%",
-      "flatRatio": "2.1%",
-      "downRatio": "91.7%"
+      "upRatio": "6.1%",
+      "flatRatio": "2.0%",
+      "downRatio": "91.8%"
     },
     "trueLeaders": [
       {
@@ -20081,6 +19566,11 @@
         "stockName": "中国巨石",
         "stockCode": "sh600176",
         "slope": "-6.95"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-6.91"
       },
       {
         "stockName": "先导基电",
@@ -20523,6 +20013,11 @@
         "slope": "-1.66"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.55"
+      },
+      {
         "stockName": "三花智控",
         "stockCode": "sz002050",
         "slope": "-1.53"
@@ -20585,11 +20080,11 @@
     "statusCode": "CAPITULATION",
     "phase": "【全面退潮期】龙头补跌 / 泥沙俱下",
     "stats": {
-      "avgMarketSlope": "-5.51%",
+      "avgMarketSlope": "-5.52%",
       "avgLeaderSlope": "-1.21%",
       "upRatio": "4.1%",
       "flatRatio": "3.4%",
-      "downRatio": "92.4%"
+      "downRatio": "92.5%"
     },
     "trueLeaders": [
       {
@@ -20820,6 +20315,11 @@
         "stockName": "云南锗业",
         "stockCode": "sz002428",
         "slope": "-8.23"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-8.19"
       },
       {
         "stockName": "菲利华",
@@ -21157,6 +20657,11 @@
         "slope": "-4.26"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-4.11"
+      },
+      {
         "stockName": "中国卫通",
         "stockCode": "sh601698",
         "slope": "-4.06"
@@ -21327,18 +20832,18 @@
         "slope": "-0.27"
       }
     ],
-    "reasoning": "全市场 92% 股票 3 日线转负，且近15日核心龙头（如：锐捷网络、浪潮信息、新华文轩、征和工业、朝阳科技）彻底崩溃补跌（平均斜率 -1.21%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
+    "reasoning": "全市场 93% 股票 3 日线转负，且近15日核心龙头（如：锐捷网络、浪潮信息、新华文轩、征和工业、朝阳科技）彻底崩溃补跌（平均斜率 -1.21%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
   },
   {
     "tradeDate": 20260721,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-2.42%",
+      "avgMarketSlope": "-2.46%",
       "avgLeaderSlope": "2.46%",
-      "upRatio": "22.1%",
+      "upRatio": "21.8%",
       "flatRatio": "0.0%",
-      "downRatio": "77.9%"
+      "downRatio": "78.2%"
     },
     "trueLeaders": [
       {
@@ -21601,6 +21106,11 @@
         "slope": "-5.75"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-5.57"
+      },
+      {
         "stockName": "英诺激光",
         "stockCode": "sz301021",
         "slope": "-5.51"
@@ -21669,6 +21179,11 @@
         "stockName": "申菱环境",
         "stockCode": "sz301018",
         "slope": "-4.70"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-4.69"
       },
       {
         "stockName": "剑桥科技",
@@ -22108,11 +21623,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.18%",
+      "avgMarketSlope": "-0.22%",
       "avgLeaderSlope": "7.53%",
-      "upRatio": "39.3%",
+      "upRatio": "38.8%",
       "flatRatio": "4.1%",
-      "downRatio": "56.6%"
+      "downRatio": "57.1%"
     },
     "trueLeaders": [
       {
@@ -22530,6 +22045,11 @@
         "slope": "-3.42"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-3.35"
+      },
+      {
         "stockName": "中石科技",
         "stockCode": "sz300684",
         "slope": "-3.05"
@@ -22553,6 +22073,11 @@
         "stockName": "奥普特",
         "stockCode": "sh688686",
         "slope": "-2.66"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-2.58"
       },
       {
         "stockName": "信维通信",
@@ -22849,14 +22374,14 @@
   },
   {
     "tradeDate": 20260723,
-    "statusCode": "TOPPING",
-    "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
+    "statusCode": "CONSOLIDATION_STRONG",
+    "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "1.31%",
+      "avgMarketSlope": "1.30%",
       "avgLeaderSlope": "3.96%",
-      "upRatio": "69.7%",
-      "flatRatio": "6.2%",
-      "downRatio": "24.1%"
+      "upRatio": "70.1%",
+      "flatRatio": "6.1%",
+      "downRatio": "23.8%"
     },
     "trueLeaders": [
       {
@@ -23327,6 +22852,11 @@
         "slope": "0.77"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "0.76"
+      },
+      {
         "stockName": "德福科技",
         "stockCode": "sz301511",
         "slope": "0.75"
@@ -23385,6 +22915,11 @@
         "stockName": "中芯国际",
         "stockCode": "sh688981",
         "slope": "0.24"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.21"
       },
       {
         "stockName": "沪电股份",
@@ -23574,7 +23109,7 @@
         "slope": "-0.22"
       }
     ],
-    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：锐捷网络、浪潮信息、盛科通信、华虹、征和工业）仍在极端加速飙车（平均斜率高达 3.96%）。资金极端抱团，随时可能见顶变盘。"
+    "reasoning": "虽然有 70% 股票 3 日线转正，但全市场平均斜率仅为 1.30%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260724,
@@ -23583,9 +23118,9 @@
     "stats": {
       "avgMarketSlope": "-1.73%",
       "avgLeaderSlope": "3.07%",
-      "upRatio": "14.5%",
+      "upRatio": "14.3%",
       "flatRatio": "4.8%",
-      "downRatio": "80.7%"
+      "downRatio": "81.0%"
     },
     "trueLeaders": [
       {
@@ -23973,6 +23508,11 @@
         "slope": "-2.69"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-2.67"
+      },
+      {
         "stockName": "鹏鼎控股",
         "stockCode": "sz002938",
         "slope": "-2.63"
@@ -24223,6 +23763,11 @@
         "slope": "-1.01"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.97"
+      },
+      {
         "stockName": "中科飞测",
         "stockCode": "sh688361",
         "slope": "-0.85"
@@ -24320,11 +23865,11 @@
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.25%",
+      "avgMarketSlope": "0.26%",
       "avgLeaderSlope": "2.51%",
-      "upRatio": "53.8%",
-      "flatRatio": "5.5%",
-      "downRatio": "40.7%"
+      "upRatio": "53.7%",
+      "flatRatio": "5.4%",
+      "downRatio": "40.8%"
     },
     "trueLeaders": [
       {
@@ -24428,6 +23973,11 @@
         "stockName": "立讯精密",
         "stockCode": "sz002475",
         "slope": "2.07"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "2.00"
       },
       {
         "stockName": "德才股份",
@@ -25002,6 +24552,11 @@
         "slope": "-0.36"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.33"
+      },
+      {
         "stockName": "浙江荣泰",
         "stockCode": "sh603119",
         "slope": "-0.32"
@@ -25056,9 +24611,9 @@
     "stats": {
       "avgMarketSlope": "-1.66%",
       "avgLeaderSlope": "0.52%",
-      "upRatio": "12.4%",
-      "flatRatio": "6.9%",
-      "downRatio": "80.7%"
+      "upRatio": "12.2%",
+      "flatRatio": "6.8%",
+      "downRatio": "81.0%"
     },
     "trueLeaders": [
       {
@@ -25406,6 +24961,11 @@
         "slope": "-2.58"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-2.58"
+      },
+      {
         "stockName": "剑桥科技",
         "stockCode": "sh603083",
         "slope": "-2.48"
@@ -25676,6 +25236,11 @@
         "slope": "-0.94"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.88"
+      },
+      {
         "stockName": "创维数字",
         "stockCode": "sz000810",
         "slope": "-0.83"
@@ -25778,11 +25343,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.37%",
+      "avgMarketSlope": "-1.36%",
       "avgLeaderSlope": "0.56%",
-      "upRatio": "33.8%",
-      "flatRatio": "2.1%",
-      "downRatio": "64.1%"
+      "upRatio": "33.3%",
+      "flatRatio": "2.0%",
+      "downRatio": "64.6%"
     },
     "trueLeaders": [
       {
@@ -26450,6 +26015,11 @@
         "slope": "-0.92"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.87"
+      },
+      {
         "stockName": "奥普特",
         "stockCode": "sh688686",
         "slope": "-0.87"
@@ -26468,6 +26038,11 @@
         "stockName": "凡拓数创",
         "stockCode": "sz301313",
         "slope": "-0.75"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.71"
       },
       {
         "stockName": "华峰测控",
@@ -26530,7 +26105,7 @@
         "slope": "-0.20"
       }
     ],
-    "reasoning": "大部分股票（64%）已转负走弱，但近15日龙头（如：长城军工、朝阳科技、景旺电子、新华文轩、内蒙一机）仍在强行死扛（平均斜率 0.56%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（65%）已转负走弱，但近15日龙头（如：长城军工、朝阳科技、景旺电子、新华文轩、内蒙一机）仍在强行死扛（平均斜率 0.56%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260730,
@@ -26539,9 +26114,9 @@
     "stats": {
       "avgMarketSlope": "-4.63%",
       "avgLeaderSlope": "0.18%",
-      "upRatio": "14.5%",
-      "flatRatio": "2.1%",
-      "downRatio": "83.4%"
+      "upRatio": "14.3%",
+      "flatRatio": "2.0%",
+      "downRatio": "83.7%"
     },
     "trueLeaders": [
       {
@@ -27104,6 +26679,11 @@
         "slope": "-4.38"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-4.08"
+      },
+      {
         "stockName": "银轮股份",
         "stockCode": "sz002126",
         "slope": "-4.06"
@@ -27117,6 +26697,11 @@
         "stockName": "凡拓数创",
         "stockCode": "sz301313",
         "slope": "-3.94"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-3.89"
       },
       {
         "stockName": "中国巨石",
@@ -27289,7 +26874,7 @@
         "slope": "-0.32"
       }
     ],
-    "reasoning": "大部分股票（83%）已转负走弱，但近15日龙头（如：长城军工、宁德时代、朝阳科技、新华文轩、内蒙一机）仍在强行死扛（平均斜率 0.18%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（84%）已转负走弱，但近15日龙头（如：长城军工、宁德时代、朝阳科技、新华文轩、内蒙一机）仍在强行死扛（平均斜率 0.18%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260731,
@@ -27298,9 +26883,9 @@
     "stats": {
       "avgMarketSlope": "-1.08%",
       "avgLeaderSlope": "3.74%",
-      "upRatio": "35.6%",
+      "upRatio": "35.1%",
       "flatRatio": "4.1%",
-      "downRatio": "60.3%"
+      "downRatio": "60.8%"
     },
     "trueLeaders": [
       {
@@ -27943,6 +27528,11 @@
         "slope": "-1.24"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.17"
+      },
+      {
         "stockName": "深南电路",
         "stockCode": "sz002916",
         "slope": "-1.10"
@@ -27971,6 +27561,11 @@
         "stockName": "新易盛",
         "stockCode": "sz300502",
         "slope": "-0.91"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.83"
       },
       {
         "stockName": "工业富联",
@@ -28038,18 +27633,18 @@
         "slope": "-0.22"
       }
     ],
-    "reasoning": "大部分股票（60%）已转负走弱，但近15日龙头（如：长城军工、杰克科技、上纬新材、长鑫科技、内蒙一机）仍在强行死扛（平均斜率 3.74%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（61%）已转负走弱，但近15日龙头（如：长城军工、杰克科技、上纬新材、长鑫科技、内蒙一机）仍在强行死扛（平均斜率 3.74%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260803,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.27%",
+      "avgMarketSlope": "-1.23%",
       "avgLeaderSlope": "1.77%",
-      "upRatio": "34.9%",
+      "upRatio": "35.8%",
       "flatRatio": "2.7%",
-      "downRatio": "62.3%"
+      "downRatio": "61.5%"
     },
     "trueLeaders": [
       {
@@ -28158,6 +27753,11 @@
         "stockName": "上海港湾",
         "stockCode": "sh605598",
         "slope": "2.22"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "2.14"
       },
       {
         "stockName": "三花智控",
@@ -28298,6 +27898,11 @@
         "stockName": "永鼎股份",
         "stockCode": "sh600105",
         "slope": "0.48"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.47"
       },
       {
         "stockName": "内蒙一机",
@@ -28797,18 +28402,18 @@
         "slope": "-0.21"
       }
     ],
-    "reasoning": "大部分股票（62%）已转负走弱，但近15日龙头（如：长城军工、杰克科技、长鑫科技、内蒙一机、上海电影）仍在强行死扛（平均斜率 1.77%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（61%）已转负走弱，但近15日龙头（如：长城军工、杰克科技、长鑫科技、内蒙一机、上海电影）仍在强行死扛（平均斜率 1.77%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260804,
     "statusCode": "UPTREND",
     "phase": "【主升期】全盘普涨 / 多头大面积共振",
     "stats": {
-      "avgMarketSlope": "2.88%",
+      "avgMarketSlope": "2.93%",
       "avgLeaderSlope": "3.53%",
-      "upRatio": "81.5%",
-      "flatRatio": "4.8%",
-      "downRatio": "13.7%"
+      "upRatio": "81.8%",
+      "flatRatio": "4.7%",
+      "downRatio": "13.5%"
     },
     "trueLeaders": [
       {
@@ -28909,6 +28514,11 @@
         "slope": "7.27"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "7.08"
+      },
+      {
         "stockName": "浙江荣泰",
         "stockCode": "sh603119",
         "slope": "6.92"
@@ -28992,6 +28602,11 @@
         "stockName": "致尚科技",
         "stockCode": "sz301486",
         "slope": "5.17"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "5.12"
       },
       {
         "stockName": "沪电股份",
@@ -29541,18 +29156,18 @@
         "slope": "-0.18"
       }
     ],
-    "reasoning": "超过 70% 股票（实际 82%）向上冲刺，且全市场平均斜率达 2.88%。动能充沛，是真正的主升浪。"
+    "reasoning": "超过 70% 股票（实际 82%）向上冲刺，且全市场平均斜率达 2.93%。动能充沛，是真正的主升浪。"
   },
   {
     "tradeDate": 20260805,
     "statusCode": "UPTREND",
     "phase": "【主升期】全盘普涨 / 多头大面积共振",
     "stats": {
-      "avgMarketSlope": "2.96%",
+      "avgMarketSlope": "3.00%",
       "avgLeaderSlope": "1.50%",
-      "upRatio": "92.5%",
-      "flatRatio": "2.1%",
-      "downRatio": "5.5%"
+      "upRatio": "92.6%",
+      "flatRatio": "2.0%",
+      "downRatio": "5.4%"
     },
     "trueLeaders": [
       {
@@ -29621,6 +29236,11 @@
         "stockName": "云南锗业",
         "stockCode": "sz002428",
         "slope": "7.49"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "6.81"
       },
       {
         "stockName": "奥士康",
@@ -29756,6 +29376,11 @@
         "stockName": "永鼎股份",
         "stockCode": "sh600105",
         "slope": "4.63"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "4.58"
       },
       {
         "stockName": "中材科技",
@@ -30305,7 +29930,7 @@
         "slope": "-0.27"
       }
     ],
-    "reasoning": "超过 70% 股票（实际 92%）向上冲刺，且全市场平均斜率达 2.96%。动能充沛，是真正的主升浪。"
+    "reasoning": "超过 70% 股票（实际 93%）向上冲刺，且全市场平均斜率达 3.00%。动能充沛，是真正的主升浪。"
   },
   {
     "tradeDate": 20260806,
@@ -30314,9 +29939,9 @@
     "stats": {
       "avgMarketSlope": "4.28%",
       "avgLeaderSlope": "4.75%",
-      "upRatio": "90.4%",
-      "flatRatio": "2.1%",
-      "downRatio": "7.5%"
+      "upRatio": "90.5%",
+      "flatRatio": "2.0%",
+      "downRatio": "7.4%"
     },
     "trueLeaders": [
       {
@@ -30550,6 +30175,11 @@
         "stockName": "国瓷材料",
         "stockCode": "sz300285",
         "slope": "6.34"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "6.29"
       },
       {
         "stockName": "中国巨石",
@@ -30800,6 +30430,11 @@
         "stockName": "西部材料",
         "stockCode": "sz002149",
         "slope": "3.36"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "3.26"
       },
       {
         "stockName": "博众精工",
@@ -31069,18 +30704,18 @@
         "slope": "-0.15"
       }
     ],
-    "reasoning": "超过 70% 股票（实际 90%）向上冲刺，且全市场平均斜率达 4.28%。动能充沛，是真正的主升浪。"
+    "reasoning": "超过 70% 股票（实际 91%）向上冲刺，且全市场平均斜率达 4.28%。动能充沛，是真正的主升浪。"
   },
   {
     "tradeDate": 20260807,
     "statusCode": "UPTREND",
     "phase": "【主升期】全盘普涨 / 多头大面积共振",
     "stats": {
-      "avgMarketSlope": "3.59%",
+      "avgMarketSlope": "3.58%",
       "avgLeaderSlope": "6.75%",
-      "upRatio": "86.3%",
+      "upRatio": "86.5%",
       "flatRatio": "0.7%",
-      "downRatio": "13.0%"
+      "downRatio": "12.8%"
     },
     "trueLeaders": [
       {
@@ -31451,6 +31086,11 @@
         "slope": "3.78"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "3.69"
+      },
+      {
         "stockName": "致尚科技",
         "stockCode": "sz301486",
         "slope": "3.61"
@@ -31614,6 +31254,11 @@
         "stockName": "奥比中光-W",
         "stockCode": "sh688322",
         "slope": "1.76"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "1.75"
       },
       {
         "stockName": "三环集团",
@@ -31843,18 +31488,18 @@
         "slope": "-0.26"
       }
     ],
-    "reasoning": "超过 70% 股票（实际 86%）向上冲刺，且全市场平均斜率达 3.59%。动能充沛，是真正的主升浪。"
+    "reasoning": "超过 70% 股票（实际 86%）向上冲刺，且全市场平均斜率达 3.58%。动能充沛，是真正的主升浪。"
   },
   {
     "tradeDate": 20260810,
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "2.11%",
+      "avgMarketSlope": "2.10%",
       "avgLeaderSlope": "4.72%",
-      "upRatio": "78.8%",
+      "upRatio": "79.1%",
       "flatRatio": "4.1%",
-      "downRatio": "17.1%"
+      "downRatio": "16.9%"
     },
     "trueLeaders": [
       {
@@ -32170,6 +31815,11 @@
         "slope": "2.45"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "2.44"
+      },
+      {
         "stockName": "国科军工",
         "stockCode": "sh688543",
         "slope": "2.34"
@@ -32347,6 +31997,11 @@
       {
         "stockName": "联讯仪器",
         "stockCode": "sh688808",
+        "slope": "0.94"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
         "slope": "0.94"
       },
       {
@@ -32592,18 +32247,18 @@
         "slope": "-0.19"
       }
     ],
-    "reasoning": "虽然有 79% 股票 3 日线转正，但全市场平均斜率仅为 2.11%，属于横盘震荡而非强势主升。"
+    "reasoning": "虽然有 79% 股票 3 日线转正，但全市场平均斜率仅为 2.10%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260811,
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "1.08%",
-      "avgLeaderSlope": "2.94%",
-      "upRatio": "71.2%",
+      "avgMarketSlope": "1.07%",
+      "avgLeaderSlope": "2.68%",
+      "upRatio": "70.9%",
       "flatRatio": "6.8%",
-      "downRatio": "21.9%"
+      "downRatio": "22.3%"
     },
     "trueLeaders": [
       {
@@ -32631,10 +32286,10 @@
         "slope": "2.91%"
       },
       {
-        "stockName": "云南锗业",
-        "stockCode": "sz002428",
-        "return15d": "33.35%",
-        "slope": "3.17%"
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "return15d": "33.47%",
+        "slope": "1.84%"
       }
     ],
     "strongStocks": [
@@ -32832,6 +32487,11 @@
         "stockName": "科森科技",
         "stockCode": "sh603626",
         "slope": "1.87"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.84"
       },
       {
         "stockName": "芯基微装",
@@ -33196,6 +32856,11 @@
         "slope": "-1.10"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.09"
+      },
+      {
         "stockName": "航天电子",
         "stockCode": "sh600879",
         "slope": "-1.06"
@@ -33321,18 +32986,18 @@
         "slope": "-0.16"
       }
     ],
-    "reasoning": "虽然有 71% 股票 3 日线转正，但全市场平均斜率仅为 1.08%，属于横盘震荡而非强势主升。"
+    "reasoning": "虽然有 71% 股票 3 日线转正，但全市场平均斜率仅为 1.07%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260812,
     "statusCode": "CONSOLIDATION",
     "phase": "【震荡整理期】强弱方向不明显",
     "stats": {
-      "avgMarketSlope": "0.60%",
+      "avgMarketSlope": "0.59%",
       "avgLeaderSlope": "1.81%",
-      "upRatio": "64.4%",
-      "flatRatio": "11.6%",
-      "downRatio": "24.0%"
+      "upRatio": "64.2%",
+      "flatRatio": "11.5%",
+      "downRatio": "24.3%"
     },
     "trueLeaders": [
       {
@@ -33561,6 +33226,11 @@
         "stockName": "青岛食品",
         "stockCode": "sz001219",
         "slope": "1.26"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.25"
       },
       {
         "stockName": "中微公司",
@@ -33920,6 +33590,11 @@
         "slope": "-0.92"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.89"
+      },
+      {
         "stockName": "顺灏股份",
         "stockCode": "sz002565",
         "slope": "-0.88"
@@ -34024,8 +33699,8 @@
     "stats": {
       "avgMarketSlope": "0.11%",
       "avgLeaderSlope": "0.64%",
-      "upRatio": "41.1%",
-      "flatRatio": "8.9%",
+      "upRatio": "41.2%",
+      "flatRatio": "8.8%",
       "downRatio": "50.0%"
     },
     "trueLeaders": [
@@ -34190,6 +33865,11 @@
         "stockName": "罗博特科",
         "stockCode": "sz300757",
         "slope": "1.30"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.24"
       },
       {
         "stockName": "西部材料",
@@ -34514,6 +34194,11 @@
         "slope": "-1.00"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.95"
+      },
+      {
         "stockName": "鹏鼎控股",
         "stockCode": "sz002938",
         "slope": "-0.95"
@@ -34738,9 +34423,9 @@
     "stats": {
       "avgMarketSlope": "0.91%",
       "avgLeaderSlope": "2.28%",
-      "upRatio": "57.5%",
-      "flatRatio": "15.8%",
-      "downRatio": "26.7%"
+      "upRatio": "58.1%",
+      "flatRatio": "15.5%",
+      "downRatio": "26.4%"
     },
     "trueLeaders": [
       {
@@ -35021,6 +34706,11 @@
         "slope": "1.17"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "1.10"
+      },
+      {
         "stockName": "中微公司",
         "stockCode": "sh688012",
         "slope": "1.05"
@@ -35099,6 +34789,11 @@
         "stockName": "通富微电",
         "stockCode": "sz002156",
         "slope": "0.48"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "0.47"
       },
       {
         "stockName": "长电科技",
@@ -35400,11 +35095,11 @@
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "1.56%",
+      "avgMarketSlope": "1.55%",
       "avgLeaderSlope": "6.63%",
-      "upRatio": "78.8%",
-      "flatRatio": "7.5%",
-      "downRatio": "13.7%"
+      "upRatio": "79.1%",
+      "flatRatio": "7.4%",
+      "downRatio": "13.5%"
     },
     "trueLeaders": [
       {
@@ -35765,6 +35460,11 @@
         "slope": "1.33"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.33"
+      },
+      {
         "stockName": "襄阳轴承",
         "stockCode": "sz000678",
         "slope": "1.33"
@@ -35783,6 +35483,11 @@
         "stockName": "云南锗业",
         "stockCode": "sz002428",
         "slope": "1.19"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "1.17"
       },
       {
         "stockName": "力鼎光电",
@@ -36117,7 +35822,7 @@
         "slope": "-0.20"
       }
     ],
-    "reasoning": "虽然有 79% 股票 3 日线转正，但全市场平均斜率仅为 1.56%，属于横盘震荡而非强势主升。"
+    "reasoning": "虽然有 79% 股票 3 日线转正，但全市场平均斜率仅为 1.55%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260818,
@@ -36126,9 +35831,9 @@
     "stats": {
       "avgMarketSlope": "1.88%",
       "avgLeaderSlope": "7.33%",
-      "upRatio": "87.0%",
-      "flatRatio": "2.1%",
-      "downRatio": "11.0%"
+      "upRatio": "87.2%",
+      "flatRatio": "2.0%",
+      "downRatio": "10.8%"
     },
     "trueLeaders": [
       {
@@ -36459,6 +36164,11 @@
         "slope": "2.00"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.93"
+      },
+      {
         "stockName": "鼎泰高科",
         "stockCode": "sz301377",
         "slope": "1.92"
@@ -36587,6 +36297,11 @@
         "stockName": "钧达股份",
         "stockCode": "sz002865",
         "slope": "1.22"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "1.21"
       },
       {
         "stockName": "澜起科技",
@@ -36888,11 +36603,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.34%",
+      "avgMarketSlope": "-1.35%",
       "avgLeaderSlope": "0.40%",
-      "upRatio": "16.4%",
+      "upRatio": "16.2%",
       "flatRatio": "3.4%",
-      "downRatio": "80.1%"
+      "downRatio": "80.4%"
     },
     "trueLeaders": [
       {
@@ -37265,6 +36980,11 @@
         "slope": "-2.34"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-2.32"
+      },
+      {
         "stockName": "致尚科技",
         "stockCode": "sz301486",
         "slope": "-2.22"
@@ -37595,6 +37315,11 @@
         "slope": "-0.49"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.46"
+      },
+      {
         "stockName": "宁德时代",
         "stockCode": "sz300750",
         "slope": "-0.41"
@@ -37642,11 +37367,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-2.57%",
+      "avgMarketSlope": "-2.56%",
       "avgLeaderSlope": "0.54%",
-      "upRatio": "8.2%",
-      "flatRatio": "2.1%",
-      "downRatio": "89.7%"
+      "upRatio": "8.1%",
+      "flatRatio": "2.0%",
+      "downRatio": "89.9%"
     },
     "trueLeaders": [
       {
@@ -37972,6 +37697,11 @@
         "stockName": "银轮股份",
         "stockCode": "sz002126",
         "slope": "-3.50"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-3.43"
       },
       {
         "stockName": "英维克",
@@ -38364,6 +38094,11 @@
         "slope": "-0.80"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.70"
+      },
+      {
         "stockName": "青岛食品",
         "stockCode": "sz001219",
         "slope": "-0.55"
@@ -38408,9 +38143,9 @@
     "stats": {
       "avgMarketSlope": "-2.33%",
       "avgLeaderSlope": "-0.29%",
-      "upRatio": "4.8%",
+      "upRatio": "4.7%",
       "flatRatio": "0.0%",
-      "downRatio": "95.2%"
+      "downRatio": "95.3%"
     },
     "trueLeaders": [
       {
@@ -38708,6 +38443,11 @@
         "slope": "-3.03"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-3.00"
+      },
+      {
         "stockName": "彤程新材",
         "stockCode": "sh603650",
         "slope": "-2.99"
@@ -39003,6 +38743,11 @@
         "slope": "-1.69"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.67"
+      },
+      {
         "stockName": "福莱新材",
         "stockCode": "sh605488",
         "slope": "-1.62"
@@ -39185,11 +38930,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.49%",
+      "avgMarketSlope": "-0.47%",
       "avgLeaderSlope": "2.66%",
-      "upRatio": "26.7%",
-      "flatRatio": "15.8%",
-      "downRatio": "57.5%"
+      "upRatio": "27.0%",
+      "flatRatio": "15.5%",
+      "downRatio": "57.4%"
     },
     "trueLeaders": [
       {
@@ -39248,6 +38993,11 @@
         "stockName": "长飞光纤",
         "stockCode": "sh601869",
         "slope": "3.21"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "2.51"
       },
       {
         "stockName": "福莱新材",
@@ -39657,6 +39407,11 @@
         "slope": "-0.98"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.98"
+      },
+      {
         "stockName": "中际旭创",
         "stockCode": "sz300308",
         "slope": "-0.93"
@@ -39842,18 +39597,18 @@
         "slope": "-0.18"
       }
     ],
-    "reasoning": "大部分股票（58%）已转负走弱，但近15日龙头（如：中石科技、华正新材、太辰光、东田微、科森科技）仍在强行死扛（平均斜率 2.66%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（57%）已转负走弱，但近15日龙头（如：中石科技、华正新材、太辰光、东田微、科森科技）仍在强行死扛（平均斜率 2.66%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260825,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.46%",
+      "avgMarketSlope": "-0.43%",
       "avgLeaderSlope": "1.23%",
-      "upRatio": "30.6%",
-      "flatRatio": "6.1%",
-      "downRatio": "63.3%"
+      "upRatio": "30.9%",
+      "flatRatio": "6.0%",
+      "downRatio": "63.1%"
     },
     "trueLeaders": [
       {
@@ -39912,6 +39667,11 @@
         "stockName": "长飞光纤",
         "stockCode": "sh601869",
         "slope": "3.34"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "2.89"
       },
       {
         "stockName": "兆威机电",
@@ -40526,6 +40286,11 @@
         "slope": "-0.42"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.40"
+      },
+      {
         "stockName": "深南电路",
         "stockCode": "sz002916",
         "slope": "-0.38"
@@ -40590,9 +40355,9 @@
     "stats": {
       "avgMarketSlope": "-0.75%",
       "avgLeaderSlope": "-0.33%",
-      "upRatio": "21.8%",
-      "flatRatio": "6.1%",
-      "downRatio": "72.1%"
+      "upRatio": "22.1%",
+      "flatRatio": "6.0%",
+      "downRatio": "71.8%"
     },
     "trueLeaders": [
       {
@@ -40701,6 +40466,11 @@
         "stockName": "兆威机电",
         "stockCode": "sz003021",
         "slope": "1.28"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.26"
       },
       {
         "stockName": "上海电影",
@@ -40998,6 +40768,11 @@
         "stockName": "宏和科技",
         "stockCode": "sh603256",
         "slope": "-1.59"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.57"
       },
       {
         "stockName": "三环集团",
@@ -41329,9 +41104,9 @@
     "stats": {
       "avgMarketSlope": "1.63%",
       "avgLeaderSlope": "2.11%",
-      "upRatio": "87.8%",
+      "upRatio": "87.9%",
       "flatRatio": "5.4%",
-      "downRatio": "6.8%"
+      "downRatio": "6.7%"
     },
     "trueLeaders": [
       {
@@ -41475,6 +41250,11 @@
         "stockName": "宏昌电子",
         "stockCode": "sh603002",
         "slope": "2.69"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "2.67"
       },
       {
         "stockName": "寒武纪",
@@ -41852,6 +41632,11 @@
         "slope": "1.03"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "1.00"
+      },
+      {
         "stockName": "内蒙一机",
         "stockCode": "sh600967",
         "slope": "1.00"
@@ -42071,11 +41856,11 @@
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "0.98%",
+      "avgMarketSlope": "0.97%",
       "avgLeaderSlope": "1.30%",
-      "upRatio": "74.1%",
-      "flatRatio": "8.8%",
-      "downRatio": "17.0%"
+      "upRatio": "73.8%",
+      "flatRatio": "8.7%",
+      "downRatio": "17.4%"
     },
     "trueLeaders": [
       {
@@ -42466,6 +42251,11 @@
         "slope": "0.95"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "0.93"
+      },
+      {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
         "slope": "0.83"
@@ -42773,6 +42563,11 @@
         "slope": "-0.25"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.23"
+      },
+      {
         "stockName": "银轮股份",
         "stockCode": "sz002126",
         "slope": "-0.23"
@@ -42783,18 +42578,18 @@
         "slope": "-0.15"
       }
     ],
-    "reasoning": "虽然有 74% 股票 3 日线转正，但全市场平均斜率仅为 0.98%，属于横盘震荡而非强势主升。"
+    "reasoning": "虽然有 74% 股票 3 日线转正，但全市场平均斜率仅为 0.97%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260831,
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "1.75%",
+      "avgMarketSlope": "1.77%",
       "avgLeaderSlope": "2.63%",
-      "upRatio": "85.0%",
-      "flatRatio": "7.5%",
-      "downRatio": "7.5%"
+      "upRatio": "85.2%",
+      "flatRatio": "7.4%",
+      "downRatio": "7.4%"
     },
     "trueLeaders": [
       {
@@ -42863,6 +42658,11 @@
         "stockName": "浪潮信息",
         "stockCode": "sz000977",
         "slope": "4.96"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "4.90"
       },
       {
         "stockName": "铜冠铜箔",
@@ -43335,6 +43135,11 @@
         "slope": "0.95"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.94"
+      },
+      {
         "stockName": "银轮股份",
         "stockCode": "sz002126",
         "slope": "0.91"
@@ -43512,18 +43317,18 @@
         "slope": "-0.19"
       }
     ],
-    "reasoning": "虽然有 85% 股票 3 日线转正，但全市场平均斜率仅为 1.75%，属于横盘震荡而非强势主升。"
+    "reasoning": "虽然有 85% 股票 3 日线转正，但全市场平均斜率仅为 1.77%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260901,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.41%",
+      "avgMarketSlope": "-0.42%",
       "avgLeaderSlope": "3.12%",
-      "upRatio": "32.7%",
+      "upRatio": "32.2%",
       "flatRatio": "5.4%",
-      "downRatio": "61.9%"
+      "downRatio": "62.4%"
     },
     "trueLeaders": [
       {
@@ -44051,6 +43856,11 @@
         "slope": "-1.34"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.33"
+      },
+      {
         "stockName": "通富微电",
         "stockCode": "sz002156",
         "slope": "-1.22"
@@ -44154,6 +43964,11 @@
         "stockName": "申菱环境",
         "stockCode": "sz301018",
         "slope": "-0.75"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.63"
       },
       {
         "stockName": "超声电子",
@@ -44263,11 +44078,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.33%",
+      "avgMarketSlope": "-0.31%",
       "avgLeaderSlope": "2.92%",
-      "upRatio": "33.3%",
+      "upRatio": "33.6%",
       "flatRatio": "2.7%",
-      "downRatio": "63.9%"
+      "downRatio": "63.8%"
     },
     "trueLeaders": [
       {
@@ -44356,6 +44171,11 @@
         "stockName": "上海电影",
         "stockCode": "sh601595",
         "slope": "2.73"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "2.46"
       },
       {
         "stockName": "江顺科技",
@@ -44995,6 +44815,11 @@
         "slope": "-0.43"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.38"
+      },
+      {
         "stockName": "芯联集成-U",
         "stockCode": "sh688469",
         "slope": "-0.31"
@@ -45027,11 +44852,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.20%",
+      "avgMarketSlope": "-1.19%",
       "avgLeaderSlope": "2.24%",
-      "upRatio": "17.0%",
-      "flatRatio": "4.1%",
-      "downRatio": "78.9%"
+      "upRatio": "16.8%",
+      "flatRatio": "4.0%",
+      "downRatio": "79.2%"
     },
     "trueLeaders": [
       {
@@ -45544,6 +45369,11 @@
         "slope": "-1.50"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.47"
+      },
+      {
         "stockName": "奥比中光-W",
         "stockCode": "sh688322",
         "slope": "-1.46"
@@ -45754,6 +45584,11 @@
         "slope": "-0.36"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.36"
+      },
+      {
         "stockName": "奥士康",
         "stockCode": "sz002913",
         "slope": "-0.33"
@@ -45781,11 +45616,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.23%",
+      "avgMarketSlope": "-1.21%",
       "avgLeaderSlope": "3.65%",
-      "upRatio": "17.0%",
-      "flatRatio": "1.4%",
-      "downRatio": "81.6%"
+      "upRatio": "17.4%",
+      "flatRatio": "1.3%",
+      "downRatio": "81.2%"
     },
     "trueLeaders": [
       {
@@ -45854,6 +45689,11 @@
         "stockName": "方正科技",
         "stockCode": "sh600601",
         "slope": "2.22"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.74"
       },
       {
         "stockName": "邵阳液压",
@@ -46408,6 +46248,11 @@
         "slope": "-0.99"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.97"
+      },
+      {
         "stockName": "长光华芯",
         "stockCode": "sh688048",
         "slope": "-0.96"
@@ -46548,18 +46393,18 @@
         "slope": "-0.19"
       }
     ],
-    "reasoning": "大部分股票（82%）已转负走弱，但近15日龙头（如：芒果超媒、飞龙股份、航发科技、内蒙一机、爱仕达）仍在强行死扛（平均斜率 3.65%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（81%）已转负走弱，但近15日龙头（如：芒果超媒、飞龙股份、航发科技、内蒙一机、爱仕达）仍在强行死扛（平均斜率 3.65%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260907,
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.50%",
+      "avgMarketSlope": "0.49%",
       "avgLeaderSlope": "3.51%",
-      "upRatio": "46.6%",
-      "flatRatio": "9.6%",
-      "downRatio": "43.8%"
+      "upRatio": "45.9%",
+      "flatRatio": "9.5%",
+      "downRatio": "44.6%"
     },
     "trueLeaders": [
       {
@@ -47117,6 +46962,11 @@
         "slope": "-0.56"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.55"
+      },
+      {
         "stockName": "中国卫星",
         "stockCode": "sh600118",
         "slope": "-0.55"
@@ -47139,6 +46989,11 @@
       {
         "stockName": "寒武纪",
         "stockCode": "sh688256",
+        "slope": "-0.48"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
         "slope": "-0.48"
       },
       {
@@ -47264,11 +47119,11 @@
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.52%",
+      "avgMarketSlope": "0.51%",
       "avgLeaderSlope": "4.68%",
-      "upRatio": "51.4%",
-      "flatRatio": "8.2%",
-      "downRatio": "40.4%"
+      "upRatio": "50.7%",
+      "flatRatio": "8.8%",
+      "downRatio": "40.5%"
     },
     "trueLeaders": [
       {
@@ -47821,6 +47676,11 @@
         "slope": "-1.04"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.02"
+      },
+      {
         "stockName": "中国巨石",
         "stockCode": "sh600176",
         "slope": "-1.00"
@@ -47983,11 +47843,11 @@
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "1.44%",
+      "avgMarketSlope": "1.43%",
       "avgLeaderSlope": "2.53%",
-      "upRatio": "71.9%",
-      "flatRatio": "8.9%",
-      "downRatio": "19.2%"
+      "upRatio": "71.6%",
+      "flatRatio": "8.8%",
+      "downRatio": "19.6%"
     },
     "trueLeaders": [
       {
@@ -48291,6 +48151,11 @@
         "stockName": "洪都航空",
         "stockCode": "sh600316",
         "slope": "1.83"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.82"
       },
       {
         "stockName": "云南锗业",
@@ -48660,6 +48525,11 @@
         "slope": "-0.44"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.43"
+      },
+      {
         "stockName": "京东方",
         "stockCode": "sz000725",
         "slope": "-0.36"
@@ -48690,7 +48560,7 @@
         "slope": "-0.17"
       }
     ],
-    "reasoning": "虽然有 72% 股票 3 日线转正，但全市场平均斜率仅为 1.44%，属于横盘震荡而非强势主升。"
+    "reasoning": "虽然有 72% 股票 3 日线转正，但全市场平均斜率仅为 1.43%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260910,
@@ -48699,9 +48569,9 @@
     "stats": {
       "avgMarketSlope": "-0.16%",
       "avgLeaderSlope": "3.26%",
-      "upRatio": "36.3%",
-      "flatRatio": "4.8%",
-      "downRatio": "58.9%"
+      "upRatio": "36.5%",
+      "flatRatio": "4.7%",
+      "downRatio": "58.8%"
     },
     "trueLeaders": [
       {
@@ -48909,6 +48779,11 @@
       {
         "stockName": "内蒙一机",
         "stockCode": "sh600967",
+        "slope": "0.67"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
         "slope": "0.67"
       },
       {
@@ -49279,6 +49154,11 @@
         "slope": "-0.83"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.78"
+      },
+      {
         "stockName": "银龙股份",
         "stockCode": "sh603969",
         "slope": "-0.74"
@@ -49441,11 +49321,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.35%",
+      "avgMarketSlope": "-0.34%",
       "avgLeaderSlope": "3.89%",
-      "upRatio": "31.5%",
+      "upRatio": "31.8%",
       "flatRatio": "4.1%",
-      "downRatio": "64.4%"
+      "downRatio": "64.2%"
     },
     "trueLeaders": [
       {
@@ -49568,6 +49448,11 @@
       {
         "stockName": "东田微",
         "stockCode": "sz301183",
+        "slope": "1.60"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
         "slope": "1.60"
       },
       {
@@ -49908,6 +49793,11 @@
         "slope": "-1.39"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.38"
+      },
+      {
         "stockName": "微导纳米",
         "stockCode": "sh688147",
         "slope": "-1.37"
@@ -50190,11 +50080,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.43%",
+      "avgMarketSlope": "-0.42%",
       "avgLeaderSlope": "3.07%",
-      "upRatio": "23.3%",
+      "upRatio": "23.6%",
       "flatRatio": "3.4%",
-      "downRatio": "73.3%"
+      "downRatio": "73.0%"
     },
     "trueLeaders": [
       {
@@ -50293,6 +50183,11 @@
         "stockName": "三环集团",
         "stockCode": "sz300408",
         "slope": "2.24"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "2.09"
       },
       {
         "stockName": "中国巨石",
@@ -50757,6 +50652,11 @@
         "slope": "-0.90"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.90"
+      },
+      {
         "stockName": "航天晨光",
         "stockCode": "sh600501",
         "slope": "-0.89"
@@ -50944,11 +50844,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.25%",
+      "avgMarketSlope": "-0.24%",
       "avgLeaderSlope": "3.71%",
-      "upRatio": "28.8%",
-      "flatRatio": "8.9%",
-      "downRatio": "62.3%"
+      "upRatio": "29.1%",
+      "flatRatio": "8.8%",
+      "downRatio": "62.2%"
     },
     "trueLeaders": [
       {
@@ -51082,6 +50982,11 @@
         "stockName": "中材科技",
         "stockCode": "sz002080",
         "slope": "1.88"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.75"
       },
       {
         "stockName": "华海清科",
@@ -51531,6 +51436,11 @@
         "slope": "-0.77"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.76"
+      },
+      {
         "stockName": "奥比中光-W",
         "stockCode": "sh688322",
         "slope": "-0.73"
@@ -51658,11 +51568,11 @@
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.99%",
+      "avgMarketSlope": "1.01%",
       "avgLeaderSlope": "3.13%",
-      "upRatio": "63.7%",
-      "flatRatio": "8.9%",
-      "downRatio": "27.4%"
+      "upRatio": "63.5%",
+      "flatRatio": "9.5%",
+      "downRatio": "27.0%"
     },
     "trueLeaders": [
       {
@@ -51716,6 +51626,11 @@
         "stockName": "致尚科技",
         "stockCode": "sz301486",
         "slope": "5.92"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "4.80"
       },
       {
         "stockName": "奥士康",
@@ -52369,14 +52284,14 @@
   },
   {
     "tradeDate": 20260917,
-    "statusCode": "CONSOLIDATION",
-    "phase": "【震荡整理期】强弱方向不明显",
+    "statusCode": "TOPPING",
+    "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "1.00%",
-      "avgLeaderSlope": "2.18%",
-      "upRatio": "65.8%",
-      "flatRatio": "6.2%",
-      "downRatio": "28.1%"
+      "avgMarketSlope": "1.02%",
+      "avgLeaderSlope": "2.97%",
+      "upRatio": "65.5%",
+      "flatRatio": "6.1%",
+      "downRatio": "28.4%"
     },
     "trueLeaders": [
       {
@@ -52398,16 +52313,16 @@
         "slope": "2.39%"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "return15d": "35.58%",
+        "slope": "5.62%"
+      },
+      {
         "stockName": "东田微",
         "stockCode": "sz301183",
         "return15d": "28.67%",
         "slope": "4.82%"
-      },
-      {
-        "stockName": "芒果超媒",
-        "stockCode": "sz300413",
-        "return15d": "28.20%",
-        "slope": "1.67%"
       }
     ],
     "strongStocks": [
@@ -52420,6 +52335,11 @@
         "stockName": "中科飞测",
         "stockCode": "sh688361",
         "slope": "5.75"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "5.62"
       },
       {
         "stockName": "微导纳米",
@@ -53034,6 +52954,11 @@
         "slope": "-0.41"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.41"
+      },
+      {
         "stockName": "中国卫通",
         "stockCode": "sh601698",
         "slope": "-0.36"
@@ -53099,18 +53024,18 @@
         "slope": "-0.16"
       }
     ],
-    "reasoning": "多空双方均无明显加速度，处于多空平衡的震荡期。"
+    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：超声电子、上海电影、奥士康、联域股份、东田微）仍在极端加速飙车（平均斜率高达 2.97%）。资金极端抱团，随时可能见顶变盘。"
   },
   {
     "tradeDate": 20260918,
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "1.72%",
-      "avgLeaderSlope": "3.07%",
-      "upRatio": "84.2%",
+      "avgMarketSlope": "1.74%",
+      "avgLeaderSlope": "3.11%",
+      "upRatio": "84.5%",
       "flatRatio": "4.1%",
-      "downRatio": "11.6%"
+      "downRatio": "11.5%"
     },
     "trueLeaders": [
       {
@@ -53138,10 +53063,10 @@
         "slope": "3.53%"
       },
       {
-        "stockName": "新华文轩",
-        "stockCode": "sh601811",
-        "return15d": "24.78%",
-        "slope": "5.78%"
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "return15d": "25.95%",
+        "slope": "5.99%"
       }
     ],
     "strongStocks": [
@@ -53159,6 +53084,11 @@
         "stockName": "微导纳米",
         "stockCode": "sh688147",
         "slope": "6.61"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "5.99"
       },
       {
         "stockName": "先导基电",
@@ -53606,6 +53536,11 @@
         "slope": "1.01"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.97"
+      },
+      {
         "stockName": "邵阳液压",
         "stockCode": "sz301079",
         "slope": "0.97"
@@ -53848,18 +53783,18 @@
         "slope": "-0.17"
       }
     ],
-    "reasoning": "虽然有 84% 股票 3 日线转正，但全市场平均斜率仅为 1.72%，属于横盘震荡而非强势主升。"
+    "reasoning": "虽然有 84% 股票 3 日线转正，但全市场平均斜率仅为 1.74%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260921,
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "0.97%",
-      "avgLeaderSlope": "1.21%",
-      "upRatio": "74.1%",
-      "flatRatio": "10.2%",
-      "downRatio": "15.6%"
+      "avgMarketSlope": "0.98%",
+      "avgLeaderSlope": "0.22%",
+      "upRatio": "74.5%",
+      "flatRatio": "10.1%",
+      "downRatio": "15.4%"
     },
     "trueLeaders": [
       {
@@ -53867,6 +53802,12 @@
         "stockCode": "sz000823",
         "return15d": "63.53%",
         "slope": "0.11%"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "return15d": "41.93%",
+        "slope": "3.44%"
       },
       {
         "stockName": "奥士康",
@@ -53885,12 +53826,6 @@
         "stockCode": "sz301183",
         "return15d": "35.20%",
         "slope": "0.12%"
-      },
-      {
-        "stockName": "新华文轩",
-        "stockCode": "sh601811",
-        "return15d": "34.24%",
-        "slope": "8.40%"
       }
     ],
     "strongStocks": [
@@ -53943,6 +53878,11 @@
         "stockName": "京东方",
         "stockCode": "sz000725",
         "slope": "3.62"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "3.44"
       },
       {
         "stockName": "华峰测控",
@@ -54198,6 +54138,11 @@
         "stockName": "华大九天",
         "stockCode": "sz301269",
         "slope": "1.02"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "1.01"
       },
       {
         "stockName": "立讯精密",
@@ -54557,18 +54502,18 @@
         "slope": "-0.34"
       }
     ],
-    "reasoning": "虽然有 74% 股票 3 日线转正，但全市场平均斜率仅为 0.97%，属于横盘震荡而非强势主升。"
+    "reasoning": "虽然有 74% 股票 3 日线转正，但全市场平均斜率仅为 0.98%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260922,
     "statusCode": "CONSOLIDATION_STRONG",
     "phase": "【震荡整理期】虚假繁荣 / 动能不足",
     "stats": {
-      "avgMarketSlope": "1.02%",
+      "avgMarketSlope": "1.03%",
       "avgLeaderSlope": "4.17%",
-      "upRatio": "73.5%",
-      "flatRatio": "8.2%",
-      "downRatio": "18.4%"
+      "upRatio": "73.8%",
+      "flatRatio": "8.1%",
+      "downRatio": "18.1%"
     },
     "trueLeaders": [
       {
@@ -54724,6 +54669,11 @@
         "slope": "2.15"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "2.14"
+      },
+      {
         "stockName": "芒果超媒",
         "stockCode": "sz300413",
         "slope": "2.14"
@@ -54867,6 +54817,11 @@
         "stockName": "杰克科技",
         "stockCode": "sh603337",
         "slope": "1.27"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "1.26"
       },
       {
         "stockName": "德明利",
@@ -55281,17 +55236,17 @@
         "slope": "-0.19"
       }
     ],
-    "reasoning": "虽然有 73% 股票 3 日线转正，但全市场平均斜率仅为 1.02%，属于横盘震荡而非强势主升。"
+    "reasoning": "虽然有 74% 股票 3 日线转正，但全市场平均斜率仅为 1.03%，属于横盘震荡而非强势主升。"
   },
   {
     "tradeDate": 20260923,
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.34%",
-      "avgLeaderSlope": "5.54%",
-      "upRatio": "43.5%",
-      "flatRatio": "8.2%",
+      "avgMarketSlope": "0.36%",
+      "avgLeaderSlope": "5.99%",
+      "upRatio": "43.6%",
+      "flatRatio": "8.1%",
       "downRatio": "48.3%"
     },
     "trueLeaders": [
@@ -55314,16 +55269,16 @@
         "slope": "8.69%"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "return15d": "46.52%",
+        "slope": "4.91%"
+      },
+      {
         "stockName": "东田微",
         "stockCode": "sz301183",
         "return15d": "43.56%",
         "slope": "1.17%"
-      },
-      {
-        "stockName": "奥士康",
-        "stockCode": "sz002913",
-        "return15d": "43.24%",
-        "slope": "2.65%"
       }
     ],
     "strongStocks": [
@@ -55356,6 +55311,11 @@
         "stockName": "超声电子",
         "stockCode": "sz000823",
         "slope": "5.18"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "4.91"
       },
       {
         "stockName": "征和工业",
@@ -55970,6 +55930,11 @@
         "slope": "-0.28"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.26"
+      },
+      {
         "stockName": "北方导航",
         "stockCode": "sh600435",
         "slope": "-0.26"
@@ -56005,18 +55970,18 @@
         "slope": "-0.16"
       }
     ],
-    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：超声电子、新华文轩、先导基电、东田微、奥士康）仍在极端加速飙车（平均斜率高达 5.54%）。资金极端抱团，随时可能见顶变盘。"
+    "reasoning": "后排股票斜率大幅减缓，但近15日核心龙头（如：超声电子、新华文轩、先导基电、联域股份、东田微）仍在极端加速飙车（平均斜率高达 5.99%）。资金极端抱团，随时可能见顶变盘。"
   },
   {
     "tradeDate": 20260924,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.69%",
-      "avgLeaderSlope": "5.68%",
-      "upRatio": "17.0%",
-      "flatRatio": "8.2%",
-      "downRatio": "74.8%"
+      "avgMarketSlope": "-0.65%",
+      "avgLeaderSlope": "6.64%",
+      "upRatio": "17.4%",
+      "flatRatio": "8.1%",
+      "downRatio": "74.5%"
     },
     "trueLeaders": [
       {
@@ -56044,10 +56009,10 @@
         "slope": "9.99%"
       },
       {
-        "stockName": "东田微",
-        "stockCode": "sz301183",
-        "return15d": "44.53%",
-        "slope": "0.33%"
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "return15d": "56.40%",
+        "slope": "5.14%"
       }
     ],
     "strongStocks": [
@@ -56070,6 +56035,11 @@
         "stockName": "中石科技",
         "stockCode": "sz300684",
         "slope": "5.69"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "5.14"
       },
       {
         "stockName": "光智科技",
@@ -56624,6 +56594,11 @@
         "slope": "-0.64"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.63"
+      },
+      {
         "stockName": "中国卫星",
         "stockCode": "sh600118",
         "slope": "-0.62"
@@ -56729,18 +56704,18 @@
         "slope": "-0.16"
       }
     ],
-    "reasoning": "大部分股票（75%）已转负走弱，但近15日龙头（如：新华文轩、先导基电、超声电子、新华传媒、东田微）仍在强行死扛（平均斜率 5.68%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（74%）已转负走弱，但近15日龙头（如：新华文轩、先导基电、超声电子、新华传媒、联域股份）仍在强行死扛（平均斜率 6.64%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20260928,
     "statusCode": "CONSOLIDATION_WEAK",
     "phase": "【震荡整理期】弱势阴跌 / 钝刀割肉",
     "stats": {
-      "avgMarketSlope": "-2.28%",
-      "avgLeaderSlope": "2.19%",
-      "upRatio": "6.1%",
+      "avgMarketSlope": "-2.25%",
+      "avgLeaderSlope": "2.91%",
+      "upRatio": "6.7%",
       "flatRatio": "0.7%",
-      "downRatio": "93.2%"
+      "downRatio": "92.6%"
     },
     "trueLeaders": [
       {
@@ -56762,16 +56737,16 @@
         "slope": "3.05%"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "return15d": "43.42%",
+        "slope": "1.59%"
+      },
+      {
         "stockName": "超声电子",
         "stockCode": "sz000823",
         "return15d": "39.15%",
         "slope": "-3.95%"
-      },
-      {
-        "stockName": "奥士康",
-        "stockCode": "sz002913",
-        "return15d": "27.17%",
-        "slope": "-2.00%"
       }
     ],
     "strongStocks": [
@@ -56804,6 +56779,11 @@
         "stockName": "江顺科技",
         "stockCode": "sz001400",
         "slope": "2.50"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "1.59"
       },
       {
         "stockName": "光智科技",
@@ -57323,6 +57303,11 @@
         "slope": "-1.96"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.95"
+      },
+      {
         "stockName": "上海港湾",
         "stockCode": "sh605598",
         "slope": "-1.92"
@@ -57508,18 +57493,18 @@
         "slope": "-0.29"
       }
     ],
-    "reasoning": "虽然 93% 股票斜率为负，但全市场平均斜率仅为 -2.28%，且核心龙头（新华传媒、先导基电、新华文轩、超声电子、奥士康）暂未崩盘，属于平缓阴跌，混沌期未见底。"
+    "reasoning": "虽然 93% 股票斜率为负，但全市场平均斜率仅为 -2.25%，且核心龙头（新华传媒、先导基电、新华文轩、联域股份、超声电子）暂未崩盘，属于平缓阴跌，混沌期未见底。"
   },
   {
     "tradeDate": 20260929,
     "statusCode": "CONSOLIDATION_WEAK",
     "phase": "【震荡整理期】弱势阴跌 / 钝刀割肉",
     "stats": {
-      "avgMarketSlope": "-2.05%",
-      "avgLeaderSlope": "2.05%",
-      "upRatio": "8.8%",
+      "avgMarketSlope": "-2.04%",
+      "avgLeaderSlope": "1.83%",
+      "upRatio": "8.7%",
       "flatRatio": "2.7%",
-      "downRatio": "88.4%"
+      "downRatio": "88.6%"
     },
     "trueLeaders": [
       {
@@ -57547,10 +57532,10 @@
         "slope": "-3.79%"
       },
       {
-        "stockName": "奥士康",
-        "stockCode": "sz002913",
-        "return15d": "40.62%",
-        "slope": "0.08%"
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "return15d": "46.55%",
+        "slope": "-1.00%"
       }
     ],
     "strongStocks": [
@@ -58032,6 +58017,11 @@
         "slope": "-2.13"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-2.13"
+      },
+      {
         "stockName": "菲利华",
         "stockCode": "sz300395",
         "slope": "-2.04"
@@ -58202,6 +58192,11 @@
         "slope": "-1.03"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.00"
+      },
+      {
         "stockName": "华大九天",
         "stockCode": "sz301269",
         "slope": "-1.00"
@@ -58272,18 +58267,18 @@
         "slope": "-0.23"
       }
     ],
-    "reasoning": "虽然 88% 股票斜率为负，但全市场平均斜率仅为 -2.05%，且核心龙头（新华传媒、新华文轩、先导基电、超声电子、奥士康）暂未崩盘，属于平缓阴跌，混沌期未见底。"
+    "reasoning": "虽然 89% 股票斜率为负，但全市场平均斜率仅为 -2.04%，且核心龙头（新华传媒、新华文轩、先导基电、超声电子、联域股份）暂未崩盘，属于平缓阴跌，混沌期未见底。"
   },
   {
     "tradeDate": 20260930,
     "statusCode": "CONSOLIDATION_WEAK",
     "phase": "【震荡整理期】弱势阴跌 / 钝刀割肉",
     "stats": {
-      "avgMarketSlope": "-1.66%",
+      "avgMarketSlope": "-1.67%",
       "avgLeaderSlope": "3.53%",
-      "upRatio": "12.9%",
+      "upRatio": "12.8%",
       "flatRatio": "2.0%",
-      "downRatio": "85.0%"
+      "downRatio": "85.2%"
     },
     "trueLeaders": [
       {
@@ -58606,6 +58601,11 @@
         "slope": "-2.88"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-2.87"
+      },
+      {
         "stockName": "海川智能",
         "stockCode": "sz300720",
         "slope": "-2.87"
@@ -58674,6 +58674,11 @@
         "stockName": "方正科技",
         "stockCode": "sh600601",
         "slope": "-2.55"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-2.52"
       },
       {
         "stockName": "华虹",
@@ -59041,18 +59046,18 @@
         "slope": "-0.23"
       }
     ],
-    "reasoning": "虽然 85% 股票斜率为负，但全市场平均斜率仅为 -1.66%，且核心龙头（新华传媒、新华文轩、先导基电、襄阳轴承、超声电子）暂未崩盘，属于平缓阴跌，混沌期未见底。"
+    "reasoning": "虽然 85% 股票斜率为负，但全市场平均斜率仅为 -1.67%，且核心龙头（新华传媒、新华文轩、先导基电、襄阳轴承、超声电子）暂未崩盘，属于平缓阴跌，混沌期未见底。"
   },
   {
     "tradeDate": 20261008,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.08%",
-      "avgLeaderSlope": "3.14%",
-      "upRatio": "19.0%",
-      "flatRatio": "6.1%",
-      "downRatio": "74.8%"
+      "avgMarketSlope": "-1.07%",
+      "avgLeaderSlope": "2.40%",
+      "upRatio": "19.5%",
+      "flatRatio": "6.0%",
+      "downRatio": "74.5%"
     },
     "trueLeaders": [
       {
@@ -59074,16 +59079,16 @@
         "slope": "-2.65%"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "return15d": "37.62%",
+        "slope": "-0.71%"
+      },
+      {
         "stockName": "襄阳轴承",
         "stockCode": "sz000678",
         "return15d": "34.51%",
         "slope": "4.51%"
-      },
-      {
-        "stockName": "奥士康",
-        "stockCode": "sz002913",
-        "return15d": "27.86%",
-        "slope": "2.99%"
       }
     ],
     "strongStocks": [
@@ -59151,6 +59156,11 @@
         "stockName": "邵阳液压",
         "stockCode": "sz301079",
         "slope": "0.92"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.85"
       },
       {
         "stockName": "新华文轩",
@@ -59670,6 +59680,11 @@
         "slope": "-0.72"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.71"
+      },
+      {
         "stockName": "剑桥科技",
         "stockCode": "sh603083",
         "slope": "-0.71"
@@ -59780,18 +59795,18 @@
         "slope": "-0.20"
       }
     ],
-    "reasoning": "大部分股票（75%）已转负走弱，但近15日龙头（如：新华传媒、新华文轩、先导基电、襄阳轴承、奥士康）仍在强行死扛（平均斜率 3.14%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（74%）已转负走弱，但近15日龙头（如：新华传媒、新华文轩、先导基电、联域股份、襄阳轴承）仍在强行死扛（平均斜率 2.40%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20261009,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.74%",
-      "avgLeaderSlope": "2.64%",
-      "upRatio": "15.6%",
-      "flatRatio": "4.1%",
-      "downRatio": "80.3%"
+      "avgMarketSlope": "-1.72%",
+      "avgLeaderSlope": "1.89%",
+      "upRatio": "16.1%",
+      "flatRatio": "4.0%",
+      "downRatio": "79.9%"
     },
     "trueLeaders": [
       {
@@ -59819,10 +59834,10 @@
         "slope": "2.44%"
       },
       {
-        "stockName": "光智科技",
-        "stockCode": "sz300489",
-        "return15d": "35.27%",
-        "slope": "2.75%"
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "return15d": "35.51%",
+        "slope": "-1.01%"
       }
     ],
     "strongStocks": [
@@ -59910,6 +59925,11 @@
         "stockName": "科森科技",
         "stockCode": "sh603626",
         "slope": "0.81"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.48"
       },
       {
         "stockName": "北方导航",
@@ -60474,6 +60494,11 @@
         "slope": "-1.12"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.01"
+      },
+      {
         "stockName": "强一股份",
         "stockCode": "sh688809",
         "slope": "-0.97"
@@ -60534,18 +60559,18 @@
         "slope": "-0.18"
       }
     ],
-    "reasoning": "大部分股票（80%）已转负走弱，但近15日龙头（如：新华传媒、新华文轩、先导基电、襄阳轴承、光智科技）仍在强行死扛（平均斜率 2.64%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（80%）已转负走弱，但近15日龙头（如：新华传媒、新华文轩、先导基电、襄阳轴承、联域股份）仍在强行死扛（平均斜率 1.89%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20261012,
     "statusCode": "CONSOLIDATION_WEAK",
     "phase": "【震荡整理期】弱势阴跌 / 钝刀割肉",
     "stats": {
-      "avgMarketSlope": "-2.38%",
+      "avgMarketSlope": "-2.35%",
       "avgLeaderSlope": "2.54%",
-      "upRatio": "10.2%",
+      "upRatio": "10.1%",
       "flatRatio": "3.4%",
-      "downRatio": "86.4%"
+      "downRatio": "86.6%"
     },
     "trueLeaders": [
       {
@@ -61268,6 +61293,11 @@
         "slope": "-0.55"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.53"
+      },
+      {
         "stockName": "朝阳科技",
         "stockCode": "sz002981",
         "slope": "-0.53"
@@ -61276,6 +61306,11 @@
         "stockName": "银龙股份",
         "stockCode": "sh603969",
         "slope": "-0.51"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.39"
       },
       {
         "stockName": "拓荆科技",
@@ -61293,18 +61328,18 @@
         "slope": "-0.21"
       }
     ],
-    "reasoning": "虽然 86% 股票斜率为负，但全市场平均斜率仅为 -2.38%，且核心龙头（新华传媒、新华文轩、芒果超媒、先导基电、光智科技）暂未崩盘，属于平缓阴跌，混沌期未见底。"
+    "reasoning": "虽然 87% 股票斜率为负，但全市场平均斜率仅为 -2.35%，且核心龙头（新华传媒、新华文轩、芒果超媒、先导基电、光智科技）暂未崩盘，属于平缓阴跌，混沌期未见底。"
   },
   {
     "tradeDate": 20261013,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.81%",
+      "avgMarketSlope": "-0.82%",
       "avgLeaderSlope": "5.08%",
-      "upRatio": "22.6%",
-      "flatRatio": "5.5%",
-      "downRatio": "71.9%"
+      "upRatio": "22.3%",
+      "flatRatio": "5.4%",
+      "downRatio": "72.3%"
     },
     "trueLeaders": [
       {
@@ -61682,6 +61717,11 @@
         "slope": "-2.18"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-2.16"
+      },
+      {
         "stockName": "联讯仪器",
         "stockCode": "sh688808",
         "slope": "-2.13"
@@ -61917,6 +61957,11 @@
         "slope": "-0.99"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.97"
+      },
+      {
         "stockName": "中国巨石",
         "stockCode": "sh600176",
         "slope": "-0.94"
@@ -62041,9 +62086,9 @@
     "stats": {
       "avgMarketSlope": "-1.17%",
       "avgLeaderSlope": "5.07%",
-      "upRatio": "19.2%",
-      "flatRatio": "3.4%",
-      "downRatio": "77.4%"
+      "upRatio": "18.9%",
+      "flatRatio": "4.1%",
+      "downRatio": "77.0%"
     },
     "trueLeaders": [
       {
@@ -62441,6 +62486,11 @@
         "slope": "-2.44"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-2.39"
+      },
+      {
         "stockName": "中石科技",
         "stockCode": "sz300684",
         "slope": "-2.35"
@@ -62793,11 +62843,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.38%",
+      "avgMarketSlope": "-1.39%",
       "avgLeaderSlope": "3.39%",
-      "upRatio": "17.8%",
+      "upRatio": "17.6%",
       "flatRatio": "3.4%",
-      "downRatio": "78.8%"
+      "downRatio": "79.1%"
     },
     "trueLeaders": [
       {
@@ -63230,6 +63280,11 @@
         "slope": "-2.60"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-2.58"
+      },
+      {
         "stockName": "德明利",
         "stockCode": "sz001309",
         "slope": "-2.54"
@@ -63308,6 +63363,11 @@
         "stockName": "上海港湾",
         "stockCode": "sh605598",
         "slope": "-1.97"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.94"
       },
       {
         "stockName": "力鼎光电",
@@ -63549,9 +63609,9 @@
     "stats": {
       "avgMarketSlope": "-1.90%",
       "avgLeaderSlope": "5.28%",
-      "upRatio": "10.9%",
-      "flatRatio": "1.4%",
-      "downRatio": "87.8%"
+      "upRatio": "10.7%",
+      "flatRatio": "1.3%",
+      "downRatio": "87.9%"
     },
     "trueLeaders": [
       {
@@ -64114,6 +64174,11 @@
         "slope": "-1.88"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.83"
+      },
+      {
         "stockName": "长电科技",
         "stockCode": "sh600584",
         "slope": "-1.81"
@@ -64147,6 +64212,11 @@
         "stockName": "荣昌生物",
         "stockCode": "sh688331",
         "slope": "-1.56"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.51"
       },
       {
         "stockName": "长鑫科技",
@@ -64321,11 +64391,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.33%",
+      "avgMarketSlope": "-1.32%",
       "avgLeaderSlope": "4.00%",
-      "upRatio": "23.8%",
-      "flatRatio": "1.4%",
-      "downRatio": "74.8%"
+      "upRatio": "23.5%",
+      "flatRatio": "2.0%",
+      "downRatio": "74.5%"
     },
     "trueLeaders": [
       {
@@ -65033,6 +65103,11 @@
         "slope": "-0.94"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.93"
+      },
+      {
         "stockName": "中芯国际",
         "stockCode": "sh688981",
         "slope": "-0.92"
@@ -65088,18 +65163,18 @@
         "slope": "-0.24"
       }
     ],
-    "reasoning": "大部分股票（75%）已转负走弱，但近15日龙头（如：新华传媒、慈文传媒、新华文轩、凡拓数创、德才股份）仍在强行死扛（平均斜率 4.00%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（74%）已转负走弱，但近15日龙头（如：新华传媒、慈文传媒、新华文轩、凡拓数创、德才股份）仍在强行死扛（平均斜率 4.00%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20261020,
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "0.57%",
+      "avgMarketSlope": "0.59%",
       "avgLeaderSlope": "5.90%",
-      "upRatio": "44.2%",
-      "flatRatio": "6.1%",
-      "downRatio": "49.7%"
+      "upRatio": "45.0%",
+      "flatRatio": "6.0%",
+      "downRatio": "49.0%"
     },
     "trueLeaders": [
       {
@@ -65260,6 +65335,11 @@
         "slope": "2.64"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "2.45"
+      },
+      {
         "stockName": "立讯精密",
         "stockCode": "sz002475",
         "slope": "2.18"
@@ -65278,6 +65358,11 @@
         "stockName": "信维通信",
         "stockCode": "sz300136",
         "slope": "2.04"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "2.00"
       },
       {
         "stockName": "邵阳液压",
@@ -65834,11 +65919,11 @@
     "statusCode": "TOPPING",
     "phase": "【分化赶顶期】后排减缓 / 龙头加速诱多",
     "stats": {
-      "avgMarketSlope": "1.00%",
+      "avgMarketSlope": "1.01%",
       "avgLeaderSlope": "6.90%",
-      "upRatio": "63.9%",
-      "flatRatio": "8.2%",
-      "downRatio": "27.9%"
+      "upRatio": "64.4%",
+      "flatRatio": "8.1%",
+      "downRatio": "27.5%"
     },
     "trueLeaders": [
       {
@@ -65997,6 +66082,11 @@
         "stockName": "云南锗业",
         "stockCode": "sz002428",
         "slope": "2.30"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "2.28"
       },
       {
         "stockName": "征和工业",
@@ -66299,6 +66389,11 @@
         "slope": "0.41"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "0.36"
+      },
+      {
         "stockName": "天孚通信",
         "stockCode": "sz300394",
         "slope": "0.35"
@@ -66558,11 +66653,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.28%",
+      "avgMarketSlope": "-0.29%",
       "avgLeaderSlope": "5.02%",
-      "upRatio": "28.6%",
-      "flatRatio": "6.1%",
-      "downRatio": "65.3%"
+      "upRatio": "28.2%",
+      "flatRatio": "6.0%",
+      "downRatio": "65.8%"
     },
     "trueLeaders": [
       {
@@ -66970,6 +67065,11 @@
         "slope": "-1.79"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-1.77"
+      },
+      {
         "stockName": "东材科技",
         "stockCode": "sh601208",
         "slope": "-1.76"
@@ -67190,6 +67290,11 @@
         "slope": "-0.67"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.65"
+      },
+      {
         "stockName": "麦格米特",
         "stockCode": "sz002851",
         "slope": "-0.61"
@@ -67290,18 +67395,18 @@
         "slope": "-0.18"
       }
     ],
-    "reasoning": "大部分股票（65%）已转负走弱，但近15日龙头（如：新华传媒、慈文传媒、凡拓数创、大业股份、海天瑞声）仍在强行死扛（平均斜率 5.02%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（66%）已转负走弱，但近15日龙头（如：新华传媒、慈文传媒、凡拓数创、大业股份、海天瑞声）仍在强行死扛（平均斜率 5.02%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20261023,
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "0.06%",
+      "avgMarketSlope": "0.04%",
       "avgLeaderSlope": "6.59%",
-      "upRatio": "35.4%",
-      "flatRatio": "6.1%",
-      "downRatio": "58.5%"
+      "upRatio": "34.9%",
+      "flatRatio": "6.7%",
+      "downRatio": "58.4%"
     },
     "trueLeaders": [
       {
@@ -67622,6 +67727,11 @@
         "stockName": "新华文轩",
         "stockCode": "sh601811",
         "slope": "-3.79"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-3.62"
       },
       {
         "stockName": "宁德时代",
@@ -68029,7 +68139,7 @@
         "slope": "-0.16"
       }
     ],
-    "reasoning": "大部分股票（59%）已转负走弱，但近15日龙头（如：新华传媒、凡拓数创、慈文传媒、海天瑞声、大业股份）仍在强行死扛（平均斜率 6.59%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（58%）已转负走弱，但近15日龙头（如：新华传媒、凡拓数创、慈文传媒、海天瑞声、大业股份）仍在强行死扛（平均斜率 6.59%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
   },
   {
     "tradeDate": 20261026,
@@ -68038,9 +68148,9 @@
     "stats": {
       "avgMarketSlope": "-1.37%",
       "avgLeaderSlope": "4.58%",
-      "upRatio": "26.5%",
-      "flatRatio": "1.4%",
-      "downRatio": "72.1%"
+      "upRatio": "26.2%",
+      "flatRatio": "1.3%",
+      "downRatio": "72.5%"
     },
     "trueLeaders": [
       {
@@ -68528,6 +68638,11 @@
         "slope": "-3.18"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-3.09"
+      },
+      {
         "stockName": "中钨高新",
         "stockCode": "sz000657",
         "slope": "-3.07"
@@ -68801,6 +68916,11 @@
         "stockName": "捷成股份",
         "stockCode": "sz300182",
         "slope": "-0.30"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-0.19"
       }
     ],
     "reasoning": "大部分股票（72%）已转负走弱，但近15日龙头（如：凡拓数创、新华传媒、慈文传媒、海天瑞声、大业股份）仍在强行死扛（平均斜率 4.58%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
@@ -68812,9 +68932,9 @@
     "stats": {
       "avgMarketSlope": "-1.24%",
       "avgLeaderSlope": "2.87%",
-      "upRatio": "23.8%",
+      "upRatio": "23.5%",
       "flatRatio": "2.0%",
-      "downRatio": "74.1%"
+      "downRatio": "74.5%"
     },
     "trueLeaders": [
       {
@@ -69337,6 +69457,11 @@
         "slope": "-2.57"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-2.56"
+      },
+      {
         "stockName": "云南锗业",
         "stockCode": "sz002428",
         "slope": "-2.54"
@@ -69487,6 +69612,11 @@
         "slope": "-1.13"
       },
       {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-1.06"
+      },
+      {
         "stockName": "浪潮信息",
         "stockCode": "sz000977",
         "slope": "-1.02"
@@ -69579,11 +69709,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-0.83%",
+      "avgMarketSlope": "-0.80%",
       "avgLeaderSlope": "2.20%",
-      "upRatio": "22.4%",
+      "upRatio": "22.8%",
       "flatRatio": "3.4%",
-      "downRatio": "74.1%"
+      "downRatio": "73.8%"
     },
     "trueLeaders": [
       {
@@ -69677,6 +69807,11 @@
         "stockName": "创维数字",
         "stockCode": "sz000810",
         "slope": "3.23"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "3.03"
       },
       {
         "stockName": "力鼎光电",
@@ -70301,6 +70436,11 @@
         "slope": "-0.36"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-0.33"
+      },
+      {
         "stockName": "先导基电",
         "stockCode": "sh600641",
         "slope": "-0.29"
@@ -70338,11 +70478,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.22%",
+      "avgMarketSlope": "-1.16%",
       "avgLeaderSlope": "-0.14%",
-      "upRatio": "21.8%",
+      "upRatio": "22.1%",
       "flatRatio": "2.0%",
-      "downRatio": "76.2%"
+      "downRatio": "75.8%"
     },
     "trueLeaders": [
       {
@@ -70396,6 +70536,11 @@
         "stockName": "江顺科技",
         "stockCode": "sz001400",
         "slope": "7.94"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "7.57"
       },
       {
         "stockName": "泛亚微透",
@@ -70895,6 +71040,11 @@
         "slope": "-2.19"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-2.19"
+      },
+      {
         "stockName": "彤程新材",
         "stockCode": "sh603650",
         "slope": "-2.16"
@@ -71107,11 +71257,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-1.61%",
+      "avgMarketSlope": "-1.55%",
       "avgLeaderSlope": "1.53%",
-      "upRatio": "22.4%",
-      "flatRatio": "1.4%",
-      "downRatio": "76.2%"
+      "upRatio": "22.8%",
+      "flatRatio": "1.3%",
+      "downRatio": "75.8%"
     },
     "trueLeaders": [
       {
@@ -71160,6 +71310,11 @@
         "stockName": "青岛食品",
         "stockCode": "sz001219",
         "slope": "10.00"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "8.25"
       },
       {
         "stockName": "西部材料",
@@ -71649,6 +71804,11 @@
         "slope": "-2.76"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-2.71"
+      },
+      {
         "stockName": "国瓷材料",
         "stockCode": "sz300285",
         "slope": "-2.70"
@@ -71881,11 +72041,11 @@
     "statusCode": "EARLY_DOWNTREND",
     "phase": "【下跌前期】弱势掉队 / 龙头高位死扛",
     "stats": {
-      "avgMarketSlope": "-2.57%",
+      "avgMarketSlope": "-2.52%",
       "avgLeaderSlope": "2.18%",
-      "upRatio": "15.0%",
-      "flatRatio": "1.4%",
-      "downRatio": "83.7%"
+      "upRatio": "15.4%",
+      "flatRatio": "1.3%",
+      "downRatio": "83.2%"
     },
     "trueLeaders": [
       {
@@ -71954,6 +72114,11 @@
         "stockName": "西部材料",
         "stockCode": "sz002149",
         "slope": "5.55"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "4.23"
       },
       {
         "stockName": "襄阳轴承",
@@ -72493,6 +72658,11 @@
         "slope": "-2.04"
       },
       {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-2.03"
+      },
+      {
         "stockName": "澜起科技",
         "stockCode": "sh688008",
         "slope": "-2.02"
@@ -72648,6 +72818,780 @@
         "slope": "-0.15"
       }
     ],
-    "reasoning": "大部分股票（84%）已转负走弱，但近15日龙头（如：凡拓数创、襄阳轴承、大业股份、青岛食品、福莱新材）仍在强行死扛（平均斜率 2.18%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+    "reasoning": "大部分股票（83%）已转负走弱，但近15日龙头（如：凡拓数创、襄阳轴承、大业股份、青岛食品、福莱新材）仍在强行死扛（平均斜率 2.18%）。进入下跌中段，死扛的高位龙头随时面临补跌风险。"
+  },
+  {
+    "tradeDate": 20261103,
+    "statusCode": "CAPITULATION",
+    "phase": "【全面退潮期】龙头补跌 / 泥沙俱下",
+    "stats": {
+      "avgMarketSlope": "-3.03%",
+      "avgLeaderSlope": "-0.45%",
+      "upRatio": "12.1%",
+      "flatRatio": "2.7%",
+      "downRatio": "85.2%"
+    },
+    "trueLeaders": [
+      {
+        "stockName": "襄阳轴承",
+        "stockCode": "sz000678",
+        "return15d": "93.32%",
+        "slope": "2.66%"
+      },
+      {
+        "stockName": "凡拓数创",
+        "stockCode": "sz301313",
+        "return15d": "75.49%",
+        "slope": "-2.58%"
+      },
+      {
+        "stockName": "青岛食品",
+        "stockCode": "sz001219",
+        "return15d": "70.10%",
+        "slope": "6.38%"
+      },
+      {
+        "stockName": "大业股份",
+        "stockCode": "sh603278",
+        "return15d": "65.55%",
+        "slope": "-3.77%"
+      },
+      {
+        "stockName": "福莱新材",
+        "stockCode": "sh605488",
+        "return15d": "51.88%",
+        "slope": "-4.96%"
+      }
+    ],
+    "strongStocks": [
+      {
+        "stockName": "阳光照明",
+        "stockCode": "sh600261",
+        "slope": "9.99"
+      },
+      {
+        "stockName": "青岛食品",
+        "stockCode": "sz001219",
+        "slope": "6.38"
+      },
+      {
+        "stockName": "芒果超媒",
+        "stockCode": "sz300413",
+        "slope": "6.22"
+      },
+      {
+        "stockName": "宁德时代",
+        "stockCode": "sz300750",
+        "slope": "2.88"
+      },
+      {
+        "stockName": "襄阳轴承",
+        "stockCode": "sz000678",
+        "slope": "2.66"
+      },
+      {
+        "stockName": "巴比食品",
+        "stockCode": "sh605338",
+        "slope": "2.40"
+      },
+      {
+        "stockName": "上海电影",
+        "stockCode": "sh601595",
+        "slope": "1.89"
+      },
+      {
+        "stockName": "捷成股份",
+        "stockCode": "sz300182",
+        "slope": "1.86"
+      },
+      {
+        "stockName": "朝阳科技",
+        "stockCode": "sz002981",
+        "slope": "1.85"
+      },
+      {
+        "stockName": "西部材料",
+        "stockCode": "sz002149",
+        "slope": "1.28"
+      },
+      {
+        "stockName": "江顺科技",
+        "stockCode": "sz001400",
+        "slope": "1.00"
+      },
+      {
+        "stockName": "力鼎光电",
+        "stockCode": "sh605118",
+        "slope": "0.66"
+      },
+      {
+        "stockName": "新华文轩",
+        "stockCode": "sh601811",
+        "slope": "0.65"
+      },
+      {
+        "stockName": "国科军工",
+        "stockCode": "sh688543",
+        "slope": "0.37"
+      },
+      {
+        "stockName": "中芯国际",
+        "stockCode": "sh688981",
+        "slope": "0.37"
+      },
+      {
+        "stockName": "金安国纪",
+        "stockCode": "sz002636",
+        "slope": "0.36"
+      },
+      {
+        "stockName": "超声电子",
+        "stockCode": "sz000823",
+        "slope": "0.29"
+      },
+      {
+        "stockName": "钧达股份",
+        "stockCode": "sz002865",
+        "slope": "0.15"
+      }
+    ],
+    "weakStocks": [
+      {
+        "stockName": "太辰光",
+        "stockCode": "sz300570",
+        "slope": "-9.59"
+      },
+      {
+        "stockName": "新易盛",
+        "stockCode": "sz300502",
+        "slope": "-8.94"
+      },
+      {
+        "stockName": "胜宏科技",
+        "stockCode": "sz300476",
+        "slope": "-8.67"
+      },
+      {
+        "stockName": "天孚通信",
+        "stockCode": "sz300394",
+        "slope": "-8.42"
+      },
+      {
+        "stockName": "南亚新材",
+        "stockCode": "sh688519",
+        "slope": "-8.18"
+      },
+      {
+        "stockName": "长芯博创",
+        "stockCode": "sz300548",
+        "slope": "-8.05"
+      },
+      {
+        "stockName": "飞龙股份",
+        "stockCode": "sz002536",
+        "slope": "-7.93"
+      },
+      {
+        "stockName": "杰克科技",
+        "stockCode": "sh603337",
+        "slope": "-7.87"
+      },
+      {
+        "stockName": "生益科技",
+        "stockCode": "sh600183",
+        "slope": "-7.69"
+      },
+      {
+        "stockName": "东田微",
+        "stockCode": "sz301183",
+        "slope": "-7.48"
+      },
+      {
+        "stockName": "罗博特科",
+        "stockCode": "sz300757",
+        "slope": "-7.44"
+      },
+      {
+        "stockName": "致尚科技",
+        "stockCode": "sz301486",
+        "slope": "-6.93"
+      },
+      {
+        "stockName": "杰普特",
+        "stockCode": "sh688025",
+        "slope": "-6.93"
+      },
+      {
+        "stockName": "鹏鼎控股",
+        "stockCode": "sz002938",
+        "slope": "-6.92"
+      },
+      {
+        "stockName": "深南电路",
+        "stockCode": "sz002916",
+        "slope": "-6.82"
+      },
+      {
+        "stockName": "先导基电",
+        "stockCode": "sh600641",
+        "slope": "-6.80"
+      },
+      {
+        "stockName": "盛科通信",
+        "stockCode": "sh688702",
+        "slope": "-6.76"
+      },
+      {
+        "stockName": "三环集团",
+        "stockCode": "sz300408",
+        "slope": "-6.52"
+      },
+      {
+        "stockName": "源杰科技",
+        "stockCode": "sh688498",
+        "slope": "-6.52"
+      },
+      {
+        "stockName": "凌云光",
+        "stockCode": "sh688400",
+        "slope": "-6.43"
+      },
+      {
+        "stockName": "华峰测控",
+        "stockCode": "sh688200",
+        "slope": "-6.36"
+      },
+      {
+        "stockName": "新华传媒",
+        "stockCode": "sh600825",
+        "slope": "-6.22"
+      },
+      {
+        "stockName": "中际旭创",
+        "stockCode": "sz300308",
+        "slope": "-6.04"
+      },
+      {
+        "stockName": "仕佳光子",
+        "stockCode": "sh688313",
+        "slope": "-6.00"
+      },
+      {
+        "stockName": "沪电股份",
+        "stockCode": "sz002463",
+        "slope": "-5.97"
+      },
+      {
+        "stockName": "兴森科技",
+        "stockCode": "sz002436",
+        "slope": "-5.89"
+      },
+      {
+        "stockName": "景旺电子",
+        "stockCode": "sh603228",
+        "slope": "-5.85"
+      },
+      {
+        "stockName": "强一股份",
+        "stockCode": "sh688809",
+        "slope": "-5.82"
+      },
+      {
+        "stockName": "长光华芯",
+        "stockCode": "sh688048",
+        "slope": "-5.53"
+      },
+      {
+        "stockName": "利通电子",
+        "stockCode": "sh603629",
+        "slope": "-5.50"
+      },
+      {
+        "stockName": "寒武纪",
+        "stockCode": "sh688256",
+        "slope": "-5.47"
+      },
+      {
+        "stockName": "德福科技",
+        "stockCode": "sz301511",
+        "slope": "-5.44"
+      },
+      {
+        "stockName": "信维通信",
+        "stockCode": "sz300136",
+        "slope": "-5.29"
+      },
+      {
+        "stockName": "微导纳米",
+        "stockCode": "sh688147",
+        "slope": "-5.05"
+      },
+      {
+        "stockName": "泛亚微透",
+        "stockCode": "sh688386",
+        "slope": "-4.96"
+      },
+      {
+        "stockName": "福莱新材",
+        "stockCode": "sh605488",
+        "slope": "-4.96"
+      },
+      {
+        "stockName": "联讯仪器",
+        "stockCode": "sh688808",
+        "slope": "-4.80"
+      },
+      {
+        "stockName": "光智科技",
+        "stockCode": "sz300489",
+        "slope": "-4.58"
+      },
+      {
+        "stockName": "风华高科",
+        "stockCode": "sz000636",
+        "slope": "-4.57"
+      },
+      {
+        "stockName": "英维克",
+        "stockCode": "sz002837",
+        "slope": "-4.53"
+      },
+      {
+        "stockName": "德明利",
+        "stockCode": "sz001309",
+        "slope": "-4.49"
+      },
+      {
+        "stockName": "麦格米特",
+        "stockCode": "sz002851",
+        "slope": "-4.38"
+      },
+      {
+        "stockName": "盛美上海",
+        "stockCode": "sh688082",
+        "slope": "-4.33"
+      },
+      {
+        "stockName": "长川科技",
+        "stockCode": "sz300604",
+        "slope": "-4.30"
+      },
+      {
+        "stockName": "东材科技",
+        "stockCode": "sh601208",
+        "slope": "-4.28"
+      },
+      {
+        "stockName": "海川智能",
+        "stockCode": "sz300720",
+        "slope": "-4.25"
+      },
+      {
+        "stockName": "剑桥科技",
+        "stockCode": "sh603083",
+        "slope": "-4.19"
+      },
+      {
+        "stockName": "精测电子",
+        "stockCode": "sz300567",
+        "slope": "-4.16"
+      },
+      {
+        "stockName": "大族激光",
+        "stockCode": "sz002008",
+        "slope": "-4.10"
+      },
+      {
+        "stockName": "芯基微装",
+        "stockCode": "sh688630",
+        "slope": "-4.08"
+      },
+      {
+        "stockName": "铜冠铜箔",
+        "stockCode": "sz301217",
+        "slope": "-4.02"
+      },
+      {
+        "stockName": "宏和科技",
+        "stockCode": "sh603256",
+        "slope": "-4.00"
+      },
+      {
+        "stockName": "中石科技",
+        "stockCode": "sz300684",
+        "slope": "-3.91"
+      },
+      {
+        "stockName": "永鼎股份",
+        "stockCode": "sh600105",
+        "slope": "-3.87"
+      },
+      {
+        "stockName": "英诺激光",
+        "stockCode": "sz301021",
+        "slope": "-3.79"
+      },
+      {
+        "stockName": "大业股份",
+        "stockCode": "sh603278",
+        "slope": "-3.77"
+      },
+      {
+        "stockName": "科森科技",
+        "stockCode": "sh603626",
+        "slope": "-3.73"
+      },
+      {
+        "stockName": "锐捷网络",
+        "stockCode": "sz301165",
+        "slope": "-3.73"
+      },
+      {
+        "stockName": "奥普特",
+        "stockCode": "sh688686",
+        "slope": "-3.60"
+      },
+      {
+        "stockName": "鼎泰高科",
+        "stockCode": "sz301377",
+        "slope": "-3.48"
+      },
+      {
+        "stockName": "华正新材",
+        "stockCode": "sh603186",
+        "slope": "-3.48"
+      },
+      {
+        "stockName": "兆威机电",
+        "stockCode": "sz003021",
+        "slope": "-3.44"
+      },
+      {
+        "stockName": "澜起科技",
+        "stockCode": "sh688008",
+        "slope": "-3.43"
+      },
+      {
+        "stockName": "中科飞测",
+        "stockCode": "sh688361",
+        "slope": "-3.41"
+      },
+      {
+        "stockName": "联域股份",
+        "stockCode": "sz001326",
+        "slope": "-3.39"
+      },
+      {
+        "stockName": "银轮股份",
+        "stockCode": "sz002126",
+        "slope": "-3.38"
+      },
+      {
+        "stockName": "甬矽电子",
+        "stockCode": "sh688362",
+        "slope": "-3.32"
+      },
+      {
+        "stockName": "华大九天",
+        "stockCode": "sz301269",
+        "slope": "-3.28"
+      },
+      {
+        "stockName": "兆易创新",
+        "stockCode": "sh603986",
+        "slope": "-3.23"
+      },
+      {
+        "stockName": "中微公司",
+        "stockCode": "sh688012",
+        "slope": "-3.23"
+      },
+      {
+        "stockName": "长鑫科技",
+        "stockCode": "sh688825",
+        "slope": "-3.22"
+      },
+      {
+        "stockName": "长电科技",
+        "stockCode": "sh600584",
+        "slope": "-3.20"
+      },
+      {
+        "stockName": "亨通光电",
+        "stockCode": "sh600487",
+        "slope": "-3.18"
+      },
+      {
+        "stockName": "华虹",
+        "stockCode": "sh688347",
+        "slope": "-3.13"
+      },
+      {
+        "stockName": "荣昌生物",
+        "stockCode": "sh688331",
+        "slope": "-3.13"
+      },
+      {
+        "stockName": "国瓷材料",
+        "stockCode": "sz300285",
+        "slope": "-3.12"
+      },
+      {
+        "stockName": "方正科技",
+        "stockCode": "sh600601",
+        "slope": "-3.12"
+      },
+      {
+        "stockName": "中国巨石",
+        "stockCode": "sh600176",
+        "slope": "-3.10"
+      },
+      {
+        "stockName": "通富微电",
+        "stockCode": "sz002156",
+        "slope": "-3.05"
+      },
+      {
+        "stockName": "海光信息",
+        "stockCode": "sh688041",
+        "slope": "-2.98"
+      },
+      {
+        "stockName": "海天瑞声",
+        "stockCode": "sh688787",
+        "slope": "-2.89"
+      },
+      {
+        "stockName": "莱特光电",
+        "stockCode": "sh688150",
+        "slope": "-2.88"
+      },
+      {
+        "stockName": "雅克科技",
+        "stockCode": "sz002409",
+        "slope": "-2.79"
+      },
+      {
+        "stockName": "航天电子",
+        "stockCode": "sh600879",
+        "slope": "-2.78"
+      },
+      {
+        "stockName": "华丰科技",
+        "stockCode": "sh688629",
+        "slope": "-2.77"
+      },
+      {
+        "stockName": "慈文传媒",
+        "stockCode": "sz002343",
+        "slope": "-2.69"
+      },
+      {
+        "stockName": "长飞光纤",
+        "stockCode": "sh601869",
+        "slope": "-2.65"
+      },
+      {
+        "stockName": "拓荆科技",
+        "stockCode": "sh688072",
+        "slope": "-2.65"
+      },
+      {
+        "stockName": "凡拓数创",
+        "stockCode": "sz301313",
+        "slope": "-2.58"
+      },
+      {
+        "stockName": "浪潮信息",
+        "stockCode": "sz000977",
+        "slope": "-2.57"
+      },
+      {
+        "stockName": "中材科技",
+        "stockCode": "sz002080",
+        "slope": "-2.51"
+      },
+      {
+        "stockName": "工业富联",
+        "stockCode": "sh601138",
+        "slope": "-2.43"
+      },
+      {
+        "stockName": "中国卫通",
+        "stockCode": "sh601698",
+        "slope": "-2.36"
+      },
+      {
+        "stockName": "上纬新材",
+        "stockCode": "sh688585",
+        "slope": "-2.36"
+      },
+      {
+        "stockName": "菲利华",
+        "stockCode": "sz300395",
+        "slope": "-2.36"
+      },
+      {
+        "stockName": "五洲新春",
+        "stockCode": "sh603667",
+        "slope": "-2.35"
+      },
+      {
+        "stockName": "奥士康",
+        "stockCode": "sz002913",
+        "slope": "-2.33"
+      },
+      {
+        "stockName": "申菱环境",
+        "stockCode": "sz301018",
+        "slope": "-2.32"
+      },
+      {
+        "stockName": "航天晨光",
+        "stockCode": "sh600501",
+        "slope": "-2.31"
+      },
+      {
+        "stockName": "征和工业",
+        "stockCode": "sz003033",
+        "slope": "-2.30"
+      },
+      {
+        "stockName": "爱仕达",
+        "stockCode": "sz002403",
+        "slope": "-2.29"
+      },
+      {
+        "stockName": "东山精密",
+        "stockCode": "sz002384",
+        "slope": "-2.21"
+      },
+      {
+        "stockName": "浙江荣泰",
+        "stockCode": "sh603119",
+        "slope": "-2.18"
+      },
+      {
+        "stockName": "中钨高新",
+        "stockCode": "sz000657",
+        "slope": "-2.12"
+      },
+      {
+        "stockName": "华海清科",
+        "stockCode": "sh688120",
+        "slope": "-2.10"
+      },
+      {
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "slope": "-2.07"
+      },
+      {
+        "stockName": "彤程新材",
+        "stockCode": "sh603650",
+        "slope": "-2.04"
+      },
+      {
+        "stockName": "中国卫星",
+        "stockCode": "sh600118",
+        "slope": "-1.92"
+      },
+      {
+        "stockName": "宇树科技-W",
+        "stockCode": "sh688836",
+        "slope": "-1.92"
+      },
+      {
+        "stockName": "立讯精密",
+        "stockCode": "sz002475",
+        "slope": "-1.89"
+      },
+      {
+        "stockName": "博众精工",
+        "stockCode": "sh688097",
+        "slope": "-1.74"
+      },
+      {
+        "stockName": "京东方",
+        "stockCode": "sz000725",
+        "slope": "-1.71"
+      },
+      {
+        "stockName": "奥比中光-W",
+        "stockCode": "sh688322",
+        "slope": "-1.48"
+      },
+      {
+        "stockName": "三花智控",
+        "stockCode": "sz002050",
+        "slope": "-1.46"
+      },
+      {
+        "stockName": "芯联集成-U",
+        "stockCode": "sh688469",
+        "slope": "-1.31"
+      },
+      {
+        "stockName": "北方导航",
+        "stockCode": "sh600435",
+        "slope": "-1.20"
+      },
+      {
+        "stockName": "德才股份",
+        "stockCode": "sh605287",
+        "slope": "-1.16"
+      },
+      {
+        "stockName": "银龙股份",
+        "stockCode": "sh603969",
+        "slope": "-1.05"
+      },
+      {
+        "stockName": "宏昌电子",
+        "stockCode": "sh603002",
+        "slope": "-1.00"
+      },
+      {
+        "stockName": "内蒙一机",
+        "stockCode": "sh600967",
+        "slope": "-1.00"
+      },
+      {
+        "stockName": "上海沪工",
+        "stockCode": "sh603131",
+        "slope": "-0.75"
+      },
+      {
+        "stockName": "长城军工",
+        "stockCode": "sh601606",
+        "slope": "-0.74"
+      },
+      {
+        "stockName": "北方华创",
+        "stockCode": "sz002371",
+        "slope": "-0.71"
+      },
+      {
+        "stockName": "上海港湾",
+        "stockCode": "sh605598",
+        "slope": "-0.37"
+      },
+      {
+        "stockName": "创维数字",
+        "stockCode": "sz000810",
+        "slope": "-0.36"
+      },
+      {
+        "stockName": "洪都航空",
+        "stockCode": "sh600316",
+        "slope": "-0.28"
+      },
+      {
+        "stockName": "航发科技",
+        "stockCode": "sh600391",
+        "slope": "-0.18"
+      }
+    ],
+    "reasoning": "全市场 85% 股票 3 日线转负，且近15日核心龙头（如：襄阳轴承、凡拓数创、青岛食品、大业股份、福莱新材）彻底崩溃补跌（平均斜率 -0.45%）。最后的避风港瓦解，市场处于真正的极度恐慌和出清阶段。"
   }
 ]
