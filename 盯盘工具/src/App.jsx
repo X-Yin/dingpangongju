@@ -1573,7 +1573,7 @@ function App() {
       <BlockStrengthAlert />
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingMonitorAlarm />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStrategyCenter />}
-      {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStockViewer />}
+      {location.pathname !== '/training_camp' && <FloatingStockViewer />}
       {debugEnabled && <DebugPanel />}
       <FloatingTechEmotion />
       <ClosePipeline />

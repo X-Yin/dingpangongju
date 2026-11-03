@@ -44,7 +44,7 @@ import { fetchAndCopyContext } from './utils/copyContext';
 import './index.scss';
 
 // 市场盯盘页访问密码（前端写死，刷新页面后需重新输入）
-const DINGPAN_ACCESS_PASSWORD = '17631540414xY@46728531912341234rR';
+const DINGPAN_ACCESS_PASSWORD = '00000000000000000000';
 
 // 板块资金监控配置（模块级常量：引用稳定，传给自治子组件作 props 不会触发其轮询重建）
 const TARGET_BLOCKS = [
@@ -2377,10 +2377,10 @@ const DingPan = () => {
 
     // 密码门禁：仅交易日的交易时段（9:15-11:30、13:00-15:00）需要解锁，其余时间直接放行
     // （所有 Hook 已在上方执行完毕，早退安全；数据轮询会持续触发重渲染，跨时段后条件自动重新生效）
-    if ((!unlocked && isWithinTradingHours()) && false) {
+    if (!unlocked && isWithinTradingHours()) {
         return (
             <div className={`dingpan-container${activeThemePack ? ' pack-active' : ''}`} style={packVars}>
-            <div className="dingpan-password-gate">
+                <div className="dingpan-password-gate">
                     <div className="password-gate-card">
                         <div className="password-gate-icon"><LockOutlined /></div>
                         <div className="password-gate-title">市场盯盘</div>
