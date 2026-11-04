@@ -279,7 +279,8 @@ const getTopLianbanBoardStocks = (dateStr, topN = 1, excludeBoards = []) => {
 
 // 从 lianbanSnapshot 某日期中取当日所有 ≥minBoardCount 连板的个股（minBoardCount 默认 3）
 // 返回 [{ code: 'shxxxxxx', name, lianbanCount, board, floatMarketValueYi }]
-//   floatMarketValueYi = 当日快照流通市值（亿元，取自 quote.floatMarketValueYi）；缺失时为 null
+//   floatMarketValueYi = 当日快照流通市值（亿元）：优先取 quote.fmv（流通市值口径），旧快照缺失时回退
+//   quote.floatMarketValueYi（自由流通市值口径）；两者均缺失时为 null
 const getMultiLianbanStocks = (dateStr, minBoardCount = 3) => {
   const data = readLianbanSnapshot(dateStr);
   if (!data || !Array.isArray(data.themes)) return [];
@@ -290,7 +291,7 @@ const getMultiLianbanStocks = (dateStr, minBoardCount = 3) => {
       if (Number.isFinite(cnt) && cnt >= minBoardCount) {
         const code = st.marketCode || st.code;
         if (!code) continue;
-        const rawFmv = st.quote ? Number(st.quote.floatMarketValueYi) : null;
+        const rawFmv = st.quote ? (Number(st.quote.fmv) || Number(st.quote.floatMarketValueYi)) : null;
         out.push({
           code,
           name: st.name || st.code || code,

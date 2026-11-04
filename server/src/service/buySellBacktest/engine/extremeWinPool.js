@@ -32,13 +32,13 @@ const DELTA_MIN = 30;              // 买点门槛：今日「强度分 − 差�
 const CLOSE_MINUTE = 1500;         // 日线 delta 序列的收盘口径分钟（与「个股历史分析」一致）
 
 // 2026-10-23 用户改：连板基础名单按流通市值分档（2026-10-24 用户改：大市值口径由「一次涨停」收紧为「两连板」）
-//   流通市值 > 100 亿元：出现过两连板（连板数 ≥ 2），且「含该连板日在内」的连续 5 个交易日累计涨幅 > 50% 即可入选
-//   （2026-10-31 用户要求：门槛由 40% 提高到 50%，线上实盘与回测同步）
+//   流通市值 > 100 亿元：出现过两连板（连板数 ≥ 2），且「含该连板日在内」的连续 5 个交易日累计涨幅 > 45% 即可入选
+//   （2026-10-31 用户要求：门槛由 40% 提高到 50%；2026-11-04 用户要求：由 50% 下调为 45%，线上实盘与回测同步）
 //   流通市值 ≤ 100 亿元（或市值数据缺失）：仍需四连板及以上
 const LARGE_CAP_FLOAT_MV_YI = 100;      // 流通市值门槛（亿元）：严格大于该值适用「两连板」口径
 const LARGE_CAP_MIN_BOARD_COUNT = 2;    // 大市值个股的连板基础门槛：出现过两连板（连板数 ≥ 2）即可
 const CAP_BOARD_WINDOW_DAYS = 5;        // 大市值个股的涨幅判定窗口：连续 5 个交易日（含连板日）
-const CAP_BOARD_MIN_GAIN_PCT = 50;      // 该 5 日窗口累计涨幅须 > 50%
+const CAP_BOARD_MIN_GAIN_PCT = 45;      // 该 5 日窗口累计涨幅须 > 45%（2026-11-04 由 50% 下调）
 
 // 2026-10-17 用户要求：本策略候选池一律剔除创业板（30/301）与科创板（688）
 const isChiNextOrStar = (code) => /^(30|688)/.test(String(code).replace(/^(sh|sz|bj)/i, ''));
@@ -426,9 +426,9 @@ const computeCrossInfo = async (code, crossDates, peakDate, peakWindow) => {
 };
 
 // 大市值（流通市值 > 100 亿元）个股的连板准入判定（2026-10-24 用户改：两连板口径）：
-//   出现过两连板（该条快照记录的连板数 ≥ 2）且「含该连板日在内」的连续 5 个交易日累计涨幅 > 50%（2026-10-31 由 40% 提高）：
+//   出现过两连板（该条快照记录的连板数 ≥ 2）且「含该连板日在内」的连续 5 个交易日累计涨幅 > 45%（2026-10-31 由 40% 提高，2026-11-04 由 50% 下调）：
 //   连板命中日为 hitDate（快照日 = 连板当日）；枚举所有包含该交易日的 5 日窗口（最多 5 个），
-//   窗口累计涨幅按复利口径（各交易日涨幅复利相乘，(∏(1+r)−1)×100，与「N 日涨幅」同口径），任一窗口 > 50% 即通过；日K缺失视为不通过
+//   窗口累计涨幅按复利口径（各交易日涨幅复利相乘，(∏(1+r)−1)×100，与「N 日涨幅」同口径），任一窗口 > 45% 即通过；日K缺失视为不通过
 const windowCompoundGain = (code, dates) => {
   let acc = 1;
   for (const d of dates) {
@@ -439,7 +439,7 @@ const windowCompoundGain = (code, dates) => {
   return parseFloat(((acc - 1) * 100).toFixed(4));
 };
 
-//   门槛可覆盖（minGainPct）：默认 CAP_BOARD_MIN_GAIN_PCT（50%，线上实盘与回测同口径）
+//   门槛可覆盖（minGainPct）：默认 CAP_BOARD_MIN_GAIN_PCT（45%，线上实盘与回测同口径）
 const largeCapBoardPass = (code, hitDate, winDates, minGainPct) => {
   if (!Array.isArray(winDates) || winDates.length < CAP_BOARD_WINDOW_DAYS) return false;
   const idx = winDates.findIndex(d => Number(d) === Number(hitDate));
@@ -457,8 +457,8 @@ const largeCapBoardPass = (code, hitDate, winDates, minGainPct) => {
 //   两条路径各自统计连板基础名单并取并集（2026-10-18 用户要求）：
 //     旧路径基础：过去 10 个交易日（不含当日）内满足下面的连板准入；
 //     新路径基础：过去 20 个交易日（不含当日）内满足下面的连板准入（单独统计，范围更宽）
-//   连板准入（2026-10-24 用户改，按流通市值分档；2026-10-31 用户改门槛 40% → 50%）：
-//     流通市值 > 100 亿元：出现过两连板（连板数 ≥ 2），且含该连板日在内的连续 5 个交易日累计涨幅 > 50% 即可；
+//   连板准入（2026-10-24 用户改，按流通市值分档；2026-10-31 用户改门槛 40% → 50%；2026-11-04 由 50% → 45%）：
+//     流通市值 > 100 亿元：出现过两连板（连板数 ≥ 2），且含该连板日在内的连续 5 个交易日累计涨幅 > 45% 即可；
 //     流通市值 ≤ 100 亿元（含市值数据缺失）：仍需四连板及以上
 //   两份基础名单均先剔除 ST 等黑名单 / 创业板(30/301) / 科创板(688) / 题材黑名单
 //   → 动量过滤（满足其一即入选）：
@@ -474,7 +474,7 @@ const largeCapBoardPass = (code, hitDate, winDates, minGainPct) => {
 const buildExtremeWinPool = async (dateStr, opts = {}) => {
   let themeFilterText = '';
   const fromFirstLimitUp = opts.fromFirstLimitUp !== false;
-  // 大市值「两连板 + 含连板日连续 5 日累计涨幅」门槛：默认 50%（线上实盘与回测同口径）
+  // 大市值「两连板 + 含连板日连续 5 日累计涨幅」门槛：默认 45%（线上实盘与回测同口径）
   const capBoardMinGain = Number.isFinite(Number(opts.capBoardMinGainPct)) ? Number(opts.capBoardMinGainPct) : CAP_BOARD_MIN_GAIN_PCT;
 
   // 过去 RANGE_WINDOW_DAYS 个交易日（不含当日）日期序列：动量过滤与大市值「涨停后 5 日涨幅」判定共用
@@ -496,7 +496,7 @@ const buildExtremeWinPool = async (dateStr, opts = {}) => {
   } catch (e) { winDates = []; }
 
   // 两条路径的连板基础名单分别统计（不合并：保留每次出现的快照日与当日流通市值，
-  //   以便大市值个股按「两连板 + 5 日累计涨幅 > 50%」逐次出现判定）
+  //   以便大市值个股按「两连板 + 5 日累计涨幅 > 45%」逐次出现判定）
   let occOld = { stocks: [] };
   let occNew = { stocks: [] };
   try {

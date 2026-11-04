@@ -647,7 +647,13 @@ process.on('exit', () => {
   try { process.stdout.write('\x1b[?25h'); } catch (e) { /* 忽略 */ }
 });
 
-main().catch(err => {
-  console.error('执行失败:', err.message || err);
-  process.exit(1);
-});
+// 任务跑完后必须显式退出：回测过程会留下一些不释放的 libuv 句柄（预构建子进程的 stdio/IPC 管道、
+// 分时解析 worker 线程等），事件循环无法自然清空，脚本会「跑完但永不退出」。
+// 结果是服务端 backtestWorkerJob 状态一直停在 running，前端轮询永远等不到 done，
+// 点击分类 Tag 后就一直卡在「分类回测中」。缓存已同步写入，未落盘的分时捆绑缓存由 exit 钩子补偿。
+main()
+  .then(() => process.exit(process.exitCode == null ? 0 : process.exitCode))
+  .catch(err => {
+    console.error('执行失败:', err.message || err);
+    process.exit(1);
+  });

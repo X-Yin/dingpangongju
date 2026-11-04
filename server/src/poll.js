@@ -160,9 +160,9 @@ const startPolling = (force = false) => {
   // pollDaPanData(20000);
 
   // 轮询间隔已放宽，降低整机资源占用（可接受稍慢的数据更新）
-  pollStockData(15000);
+  pollStockData(5000);
 
-  pollBlockData(30000);
+  pollBlockData(10000);
 
   pollJingJiaQiangChouData(POLL_CONFIG.jingjiaqiangchou.hour, POLL_CONFIG.jingjiaqiangchou.minute);
 

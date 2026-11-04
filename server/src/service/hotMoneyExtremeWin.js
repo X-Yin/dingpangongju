@@ -140,7 +140,7 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
   const isToday = dateStr === dayjs().format('YYYYMMDD');
   const afterClose = !isToday || isAfterMarketClose();
 
-  // 1) 候选池（过去 10/20 交易日连板准入：流通市值 > 100 亿元者两连板（连板数 ≥ 2）+ 含该连板日的 5 日累计涨幅 > 50%，其余需四连板及以上；
+  // 1) 候选池（过去 10/20 交易日连板准入：流通市值 > 100 亿元者两连板（连板数 ≥ 2）+ 含该连板日的 5 日累计涨幅 > 45%，其余需四连板及以上；
   //    10 日最大涨幅窗口「从第一天涨停的前一交易日收盘价起算」（2026-10-31 与回测同口径）；
   //    并剔除创业板/科创板/题材黑名单/科技自选股重叠/近期大幅拉升）
   const pool = await buildExtremeWinPool(dateStr, {

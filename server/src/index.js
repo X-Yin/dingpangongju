@@ -1,5 +1,7 @@
-const { execSync, spawn } = require('child_process');
+const { execSync, exec, spawn } = require('child_process');
 const net = require('net');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
 
 const { setConfig } = require('./config');
 
@@ -493,7 +495,7 @@ app.get('/ma_slope_diagnosis', async (req, res) => {
 // 查询浏览器进程内存（macOS 专用：用 top 拿 Chrome Heap 进程真实内存）
 // 返回 largestMB：所有 Chrome Heap 进程中最大的那个（大概率就是盯盘页所在的 renderer）
 // 同时返回 processes 数组供调试
-app.get('/browser_memory', (req, res) => {
+app.get('/browser_memory', async (req, res) => {
   try {
     const platform = process.platform;
     if (platform !== 'darwin') {
@@ -501,7 +503,9 @@ app.get('/browser_memory', (req, res) => {
       return;
     }
     // top -l 1: 采样一次退出；-o mem 按内存排序；-s 0 不暂停；只抓 Chrome Heap 进程
-    const out = execSync(
+    // 注意：必须用异步 exec 而不是 execSync，否则 top 的 ~2s 耗时会阻塞整个事件循环，
+    // 导致所有其他接口（哪怕 304 缓存校验）都排队数秒
+    const { stdout: out } = await execAsync(
       'top -l 1 -o mem -stats pid,command,mem -n 50 -s 0 2>/dev/null | ' +
       'grep -i "Google Chrome He\\|Safari\\|Firefox\\|WebKitWebContent" | head -20',
       { encoding: 'utf8', timeout: 4000 }

@@ -11,7 +11,7 @@ const { runEmotionBurstFollowBacktest } = require('./emotionBurstFollowBacktest'
 const { runFirstBoardWashBacktest } = require('./firstBoardWashBacktest');
 const { runVolumeWashoutSecondBoardBacktest } = require('./volumeWashoutSecondBoardBacktest');
 const { runWashFusionBacktest } = require('./washFusionExtremeOddsBacktest');
-const { runMoodBlockRotateBacktest } = require('./moodBlockRotateBacktest');
+const { runMoodBlockResonanceBacktest } = require('./moodBlockResonanceBacktest');
 const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSimContext } = require('../deps');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -95,11 +95,11 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   if (STRATEGIES[strategyId]?.washFusionMode === true) {
     return runWashFusionBacktest(startDate, endDate, strategyId, onProgress, options);
   }
-  // 情绪周期-板块轮换-N 日涨幅最大走独立引擎（重点板块成分股 ≥ 5 只、T-1/T-2 收盘板块均值 < 4%、
-  // 盘中板块均值 > 4% 持续超过 5 分钟 → 买入板块内 N 日涨幅最大者；两份半仓且买入时点至少相隔半天；
+  // 情绪周期-板块共振大盘走独立引擎（5 分钟内创业板指 > 0.5% + 主力资金净流入 > 10 亿 + 大盘成交量放大 > 50 亿
+  // 共振触发 → 选 5 分钟涨幅最大的重点板块、再选板块内 5 分钟涨幅最大者；两份半仓且买入时点至少相隔半天；
   // 卖点与「情绪游资-极致胜率」顺周期腿一致）
-  if (STRATEGIES[strategyId]?.moodBlockRotateMode === true) {
-    return runMoodBlockRotateBacktest(startDate, endDate, strategyId, onProgress, options);
+  if (STRATEGIES[strategyId]?.moodBlockResonanceMode === true) {
+    return runMoodBlockResonanceBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   const strategy = STRATEGIES[strategyId];
   // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：快进快出半仓（2026-10-13 用户新增）——

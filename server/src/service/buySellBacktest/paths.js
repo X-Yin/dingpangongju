@@ -98,7 +98,9 @@ const CACHE_VERSION_BY_STRATEGY = {
   // v60（2026-10-31）：顺周期腿今日盘中买点阈值恢复为 **≥ 30**（与线上实盘 hotMoneyExtremeWin.js、
   //   融合策略 sci_attack_emo_win 同口径；v57~v59 曾试验 25 / 29 / 28，最终按用户要求恢复 30）
   // v61（2026-11-01）：题材黑名单追加 半导体（东财板块名用「半导体」，此前只有「芯片」关键词，半导体设备类个股漏网）
-  hot_money_extreme_win: 61,
+  // v62（2026-11-04）：大市值连板准入「两连板 + 含该连板日连续 5 日累计涨幅」门槛由 > 50% 下调为 > 45%
+  //   （同步线上实盘 hotMoneyExtremeWin.js 与融合策略 sci_attack_emo_win）
+  hot_money_extreme_win: 62,
   // v3（2026-10-21）：B 腿（极致胜率）新路径选股加严，与 hot_money_extreme_win v32 同口径——波动窗口含峰值日本身 + 峰值日（含）至买点前收盘跌幅 < -9% 至多 1 次
   // v2（2026-10-20）：B 风格（情绪游资-极致胜率）双腿买入新增时间门禁「每天 13:30 之后不买」（13:30 桶本身可买；
   //   与 hot_money_extreme_win v31 同口径）；A 风格（科技进攻·快进快出）不受影响
@@ -145,7 +147,9 @@ const CACHE_VERSION_BY_STRATEGY = {
   // v34（2026-10-31）：B 腿逆周期候选池新增「最近 10 个交易日（不含当日）收盘跌幅 < -9% 的交易日 ≤ 2 次」，
   //   与 hot_money_extreme_win v53 同口径（2026-10-31 同日已同步至线上实盘 hotMoneyExtremeWin.js）
   // v35（2026-11-01）：B 腿题材黑名单追加 半导体（共享 constants.EXCLUDED_THEMES）
-  sci_attack_emo_win: 35,
+  // v36（2026-11-04）：B 腿大市值连板准入「两连板 + 含该连板日连续 5 日累计涨幅」门槛由 > 50% 下调为 > 45%
+  //   （与 hot_money_extreme_win v62、线上实盘同口径）
+  sci_attack_emo_win: 36,
   // v4（2026-10-17）：候选池新增「一律剔除创业板（30/301）与科创板（688）」
   // v3（2026-10-17）：候选池沿用「情绪游资-极致胜率」的题材黑名单（PCB/玻璃基板/光模块/液冷/通信/算力/芯片/靶材/电子气体/光刻胶/算力租赁，共享 constants.EXCLUDED_THEMES）
   // v2（2026-10-17）：卖点去掉龙头战法的「盘中 1 分钟内跳水 ≤ -3%」这一条（反向抱团龙头专用；共享模块 leaderSellMinute 的 disableMinutePlummet 开关）

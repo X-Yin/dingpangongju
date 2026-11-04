@@ -11,7 +11,7 @@ const { runEmotionBurstFollowBacktest } = require('./emotionBurstFollowBacktest'
 const { runFirstBoardWashBacktest } = require('./firstBoardWashBacktest');
 const { runVolumeWashoutSecondBoardBacktest } = require('./volumeWashoutSecondBoardBacktest');
 const { runWashFusionBacktest } = require('./washFusionExtremeOddsBacktest');
-const { runMoodBlockRotateBacktest } = require('./moodBlockRotateBacktest');
+const { runMoodBlockResonanceBacktest } = require('./moodBlockResonanceBacktest');
 const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
 const { buildWindowAxis } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -62,9 +62,9 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   const volumeWashoutIds = ids.filter(id => STRATEGIES[id]?.volumeWashoutMode === true);
   // 情绪游资-极致赔率走独立引擎（首板洗盘 + 放量洗盘融合、谁先命中买谁；同单策略路径）
   const washFusionIds = ids.filter(id => STRATEGIES[id]?.washFusionMode === true);
-  // 情绪周期-板块轮换-N 日涨幅最大走独立引擎（同单策略路径，避免落入常规循环）
-  const moodBlockRotateIds = ids.filter(id => STRATEGIES[id]?.moodBlockRotateMode === true);
-  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.extremeWinMode !== true && STRATEGIES[id]?.fusedEmoWinMode !== true && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true && STRATEGIES[id]?.volumeShareMode !== true && STRATEGIES[id]?.gainVolumeShareMode !== true && STRATEGIES[id]?.emotionBurstDriftMode !== true && STRATEGIES[id]?.emotionBurstFollowMode !== true && STRATEGIES[id]?.firstBoardWashMode !== true && STRATEGIES[id]?.volumeWashoutMode !== true && STRATEGIES[id]?.washFusionMode !== true && STRATEGIES[id]?.moodBlockRotateMode !== true);
+  // 情绪周期-板块共振大盘走独立引擎（同单策略路径，避免落入常规循环）
+  const moodBlockResonanceIds = ids.filter(id => STRATEGIES[id]?.moodBlockResonanceMode === true);
+  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.extremeWinMode !== true && STRATEGIES[id]?.fusedEmoWinMode !== true && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true && STRATEGIES[id]?.volumeShareMode !== true && STRATEGIES[id]?.gainVolumeShareMode !== true && STRATEGIES[id]?.emotionBurstDriftMode !== true && STRATEGIES[id]?.emotionBurstFollowMode !== true && STRATEGIES[id]?.firstBoardWashMode !== true && STRATEGIES[id]?.volumeWashoutMode !== true && STRATEGIES[id]?.washFusionMode !== true && STRATEGIES[id]?.moodBlockResonanceMode !== true);
   const results = [];
   for (const strategyId of keyBlockIds) {
     const result = await runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
@@ -114,8 +114,8 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
     const result = await runWashFusionBacktest(startDate, endDate, strategyId, onProgress);
     results.push({ strategyId, result });
   }
-  for (const strategyId of moodBlockRotateIds) {
-    const result = await runMoodBlockRotateBacktest(startDate, endDate, strategyId, onProgress);
+  for (const strategyId of moodBlockResonanceIds) {
+    const result = await runMoodBlockResonanceBacktest(startDate, endDate, strategyId, onProgress);
     results.push({ strategyId, result });
   }
   if (regularIds.length === 0) return results;

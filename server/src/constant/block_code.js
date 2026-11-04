@@ -1778,5 +1778,70 @@ exports.default = [
         "blockName": "军工",
         "code": "sh605123",
         "name": "派克新材"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sh688796",
+        "name": "百奥赛图"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sh688046",
+        "name": "药康生物"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sh688265",
+        "name": "南模生物"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sh688131",
+        "name": "皓元医药"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sh688073",
+        "name": "毕得医药"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sh688026",
+        "name": "洁特生物"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sh688114",
+        "name": "华大智造"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sz300676",
+        "name": "华大基因"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sh688315",
+        "name": "诺禾致源"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sh688139",
+        "name": "海尔生物"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sh603127",
+        "name": "昭衍新药"
+    },
+    {
+        "blockName": "AI 医药",
+        "code": "sh688202",
+        "name": "美迪西"
+    },
+    {
+        "blockName": "磷化铟",
+        "code": "sz300720",
+        "name": "海川智能"
     }
 ]
