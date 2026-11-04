@@ -798,47 +798,36 @@ const getPositionSellStrategy = (item) => {
 
 const getStockPositionMainFund = async () => {
     const stock_positions = readStockPositionsFile();
-    const result = [];
-    for (const item of stock_positions) {
+    // 先并行发起所有主力资金请求（原来是 for...of 串行，持仓多时首屏要等 N × 单请求耗时）
+    // 参考同文件 getWatchlistMainFund 已用 batchParallel 做并发
+    const fetched = await batchParallel(stock_positions, async (item) => {
         try {
             const mainFundData = getClsReqMainFundUrl(item.code);
             const res = await axios.get(mainFundData);
             const mainFundDiff = res.data?.data?.main_fund_diff;
-            result.push({
-                id: item.id,
-                code: item.code,
-                name: item.name,
-                costPrice: item.costPrice != null ? round(item.costPrice, 2) : null,
-                buyDate: item.buyDate || null,
-                buyTime: item.buyTime || null,
-                weight: item.weight != null ? item.weight : 50,
-                // 顺逆周期标记：pro 顺周期 / reverse 逆周期，未标记按顺周期（前端持仓管理展示、卖点诊断⑪⑫启用依据）
-                cycle: item.cycle === 'reverse' ? 'reverse' : 'pro',
-                // 统一卖点策略：未设置返回 null（前端下拉框显示「跟随模式」，后端按全局策略模式回退）
-                sellStrategy: getPositionSellStrategy(item),
-                // 镜像持仓标记：存在 mirror 说明为回测镜像同步自动添加，供前端以灰色标题区分手动添加
-                mirror: item.mirror || null,
-                mainFund: round(toNumber(mainFundDiff) / 100000000),
-            });
+            return { item, mainFund: round(toNumber(mainFundDiff) / 100000000) };
         } catch (error) {
             console.error(`获取 ${item.name} 主力资金失败:`, error.message);
-            result.push({
-                id: item.id,
-                code: item.code,
-                name: item.name,
-                costPrice: item.costPrice != null ? round(item.costPrice, 2) : null,
-                buyDate: item.buyDate || null,
-                buyTime: item.buyTime || null,
-                weight: item.weight != null ? item.weight : 50,
-                cycle: item.cycle === 'reverse' ? 'reverse' : 'pro',
-                sellStrategy: getPositionSellStrategy(item),
-                mirror: item.mirror || null,
-                mainFund: null,
-            });
+            return { item, mainFund: null };
         }
-    }
+    }, 5);
 
-    return result;
+    return fetched.map(({ item, mainFund }) => ({
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        costPrice: item.costPrice != null ? round(item.costPrice, 2) : null,
+        buyDate: item.buyDate || null,
+        buyTime: item.buyTime || null,
+        weight: item.weight != null ? item.weight : 50,
+        // 顺逆周期标记：pro 顺周期 / reverse 逆周期，未标记按顺周期（前端持仓管理展示、卖点诊断⑪⑫启用依据）
+        cycle: item.cycle === 'reverse' ? 'reverse' : 'pro',
+        // 统一卖点策略：未设置返回 null（前端下拉框显示「跟随模式」，后端按全局策略模式回退）
+        sellStrategy: getPositionSellStrategy(item),
+        // 镜像持仓标记：存在 mirror 说明为回测镜像同步自动添加，供前端以灰色标题区分手动添加
+        mirror: item.mirror || null,
+        mainFund,
+    }));
 };
 
 // 获取自选股列表的主力资金净流入数据（批量并行请求，单位：亿）

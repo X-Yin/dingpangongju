@@ -347,7 +347,10 @@ export const WatchlistUpDownModule = ({ stockList }) => {
 
 // ==================== 主力资金 & 成交量（左列窄容器适配） ====================
 const FundChartModule = () => {
-  const [data, setData] = useState([]);
+  // 首屏秒开：先用当日 localStorage 缓存渲染，接口返回后覆盖（后端 getAmountHistory 读本地 JSON 本应很快，
+  // 但首次渲染要等接口往返；加缓存后刷新即显）
+  const FUND_CACHE_KEY = 'ob_fund_amount_cache';
+  const [data, setData] = useState(() => readTodayLocalCache(FUND_CACHE_KEY) || []);
   // 默认只看变化（筛选掉 diff === 0 的条目），不再提供开关
   const [fiveMinAggEnabled, setFiveMinAggEnabled] = useState(true);
 
@@ -359,7 +362,9 @@ const FundChartModule = () => {
   const fetchData = async () => {
     try {
       const response = await axios.get(`http://${local_ip}:3000/amount_history`);
-      setData(response.data || []);
+      const fresh = response.data || [];
+      setData(fresh);
+      writeLocalCache(FUND_CACHE_KEY, fresh);
     } catch (err) {
       console.error('Fetch main fund data failed:', err);
     }
@@ -725,13 +730,32 @@ const PositionIntradayChart = ({ name, code, preclose, line }) => {
 };
 
 const PositionIntradayModule = ({ expanded, onToggleExpanded }) => {
-  const [positions, setPositions] = useState([]);
-  const [tlineMap, setTlineMap] = useState({});
+  // 首屏秒开：持仓列表 + 每只的分时线分别缓存到 localStorage
+  // 原来的串行加载链：positions 接口 → 对每只持仓发 /stock_tline_data → 渲染
+  // 现在先从缓存秒出，接口回来后覆盖
+  const POS_CACHE_KEY = 'ob_position_list_cache';
+  const TL_CACHE_PREFIX = 'ob_position_tline_cache_';
+  const [positions, setPositions] = useState(() => readTodayLocalCache(POS_CACHE_KEY) || []);
+  const [tlineMap, setTlineMap] = useState(() => {
+    try {
+      const cachedPositions = readTodayLocalCache(POS_CACHE_KEY) || [];
+      const map = {};
+      cachedPositions.forEach((p) => {
+        const cachedTL = readTodayLocalCache(TL_CACHE_PREFIX + p.code);
+        if (cachedTL) map[p.code] = cachedTL;
+      });
+      return map;
+    } catch {
+      return {};
+    }
+  });
 
   const fetchPositions = useCallback(async () => {
     try {
       const res = await axios.get(`http://${local_ip}:3000/get_stock_position`);
-      setPositions(res.data || []);
+      const fresh = res.data || [];
+      setPositions(fresh);
+      writeLocalCache(POS_CACHE_KEY, fresh);
     } catch (err) {
       console.error('获取持仓失败:', err);
     }
@@ -773,7 +797,10 @@ const PositionIntradayModule = ({ expanded, onToggleExpanded }) => {
         );
         if (cancelled) return;
         const map = {};
-        results.forEach((r) => { map[r.code] = r.data; });
+        results.forEach((r) => {
+          map[r.code] = r.data;
+          if (r.data && r.data.line) writeLocalCache(TL_CACHE_PREFIX + r.code, r.data);
+        });
         setTlineMap(map);
       } catch (err) {
         console.error('获取分时数据失败:', err);
