@@ -1,15 +1,15 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-11-04 10:21:30",
-  "reason": "持仓变动重跑（持仓管理增删股票）",
+  "computedAt": "2026-11-05 00:13:25",
+  "reason": "每日首次启动回测",
   "range": {
-    "startDate": "20260805",
-    "endDate": "20261104"
+    "startDate": "20260806",
+    "endDate": "20261105"
   },
-  "tradeCount": 11,
+  "tradeCount": 8,
   "threshold": 30,
-  "consecutiveBelow": 11,
+  "consecutiveBelow": 6,
   "lastReturns": [
     {
       "code": "sh688147",
@@ -19,32 +19,18 @@
       "returnRate": -2.2
     },
     {
-      "code": "sh601869",
-      "name": "长飞光纤",
-      "sellDate": "20260826",
-      "sellTime": "14:56",
-      "returnRate": -1.31
-    },
-    {
-      "code": "sh601869",
-      "name": "长飞光纤",
-      "sellDate": "20260827",
-      "sellTime": "09:32",
-      "returnRate": -1.08
-    },
-    {
       "code": "sz002837",
       "name": "英维克",
       "sellDate": "20260904",
       "sellTime": "13:55",
-      "returnRate": -0.79
+      "returnRate": 6.66
     },
     {
-      "code": "sz002837",
-      "name": "英维克",
-      "sellDate": "20260907",
-      "sellTime": "09:33",
-      "returnRate": -2.21
+      "code": "sh603228",
+      "name": "景旺电子",
+      "sellDate": "20260915",
+      "sellTime": "14:35",
+      "returnRate": -0.67
     },
     {
       "code": "sh688025",

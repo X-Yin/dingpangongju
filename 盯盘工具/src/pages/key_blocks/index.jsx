@@ -9,7 +9,7 @@ import {
   EditOutlined, DeleteOutlined, ReloadOutlined, RobotOutlined,
   CaretRightOutlined, SearchOutlined, AreaChartOutlined, LineChartOutlined,
   BulbOutlined, MinusCircleOutlined, SortDescendingOutlined, SortAscendingOutlined, FontSizeOutlined,
-  CalendarOutlined, FireOutlined
+  CalendarOutlined, FireOutlined, StarOutlined, StarFilled
 } from '@ant-design/icons';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
@@ -263,6 +263,9 @@ const BlockConfigPanel = () => {
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
   // 各板块独立刷新状态：key 为板块名
   const [refreshingBlocks, setRefreshingBlocks] = useState({});
+  // 重点板块列表（后端持久化 key_blocks.json）
+  const [keyBlocks, setKeyBlocks] = useState(null);
+  const [togglingKeyBlock, setTogglingKeyBlock] = useState(null);
   // 弹窗内通过搜索选择的股票列表：新增股票 / 新增板块共用（均为 { name, code }，code 带 sh/sz 前缀）
   const [pickStocks, setPickStocks] = useState([]);
 
@@ -299,6 +302,46 @@ const BlockConfigPanel = () => {
   useEffect(() => {
     fetchBlocks();
   }, [fetchBlocks]);
+
+  // 拉取重点板块列表（后端 key_blocks.json）
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await axios.get(`http://${local_ip}:3000/api/key_blocks`);
+        if (!alive) return;
+        setKeyBlocks(Array.isArray(res.data?.data) ? res.data.data : []);
+      } catch (err) {
+        console.error('读取重点板块失败:', err);
+        if (alive) setKeyBlocks([]);
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  // 切换板块是否属于「重点板块」（后端持久化）
+  const handleToggleKeyBlock = async (blockName) => {
+    if (!blockName) return;
+    setTogglingKeyBlock(blockName);
+    try {
+      const curSet = new Set(Array.isArray(keyBlocks) ? keyBlocks : []);
+      const willAdd = !curSet.has(blockName);
+      const res = await axios.post(`http://${local_ip}:3000/api/key_blocks`, {
+        action: willAdd ? 'add' : 'remove',
+        blockName,
+      });
+      if (res.data?.success) {
+        setKeyBlocks(res.data.data);
+        message.success(willAdd ? `已将「${blockName}」设为重点板块` : `已从重点板块移除「${blockName}」`);
+      } else {
+        message.error(res.data?.message || '保存失败');
+      }
+    } catch (err) {
+      message.error('操作失败: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setTogglingKeyBlock(null);
+    }
+  };
 
   // 仅刷新指定板块内所有股票的涨幅
   const refreshSingleBlock = useCallback(async (blockName) => {
@@ -638,6 +681,21 @@ const BlockConfigPanel = () => {
                       >
                         {block.avgChange > 0 ? '+' : ''}{block.avgChange}%
                       </Text>
+                      <Tooltip title="设为重点板块（在盯盘页折叠自选股时展示）">
+                        <Button
+                          size="small"
+                          type="text"
+                          className="block-group-key-btn"
+                          icon={Array.isArray(keyBlocks) && keyBlocks.includes(block.blockName) ? <StarFilled style={{ color: '#f59e0b' }} /> : <StarOutlined />}
+                          loading={togglingKeyBlock === block.blockName}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleKeyBlock(block.blockName);
+                          }}
+                        >
+                          {Array.isArray(keyBlocks) && keyBlocks.includes(block.blockName) ? '重点' : '设为重点'}
+                        </Button>
+                      </Tooltip>
                       <Tooltip title="仅刷新该板块内所有股票的涨幅">
                         <Button
                           size="small"

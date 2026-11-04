@@ -27,6 +27,7 @@ import StockChangeMonitor from './components/StockChangeMonitor';
 import BlockMoneyMonitor from './components/BlockMoneyMonitor';
 import RihanMonitor from './components/RihanMonitor';
 import WatchlistMonitor from './components/WatchlistMonitor';
+import KeyBlocksMonitor from './components/KeyBlocksMonitor';
 import HistoryModal from './components/HistoryModal';
 import GoodNewsModal from './components/GoodNewsModal';
 import LogicExploreModal from './components/LogicExploreModal';
@@ -2655,6 +2656,15 @@ const DingPan = () => {
                                 <div ref={rihanSectionRef}>
                                     <RihanMonitor themeColor={effThemeColor} onDataLoaded={handleRihanLoaded} />
                                 </div>
+                            )}
+                            {/* 重点板块：自选股折叠时在「外盘涨跌监控」下方展示（默认含商业航天/机器人/机器人大脑） */}
+                            {isWatchlistCollapsed && (
+                                <KeyBlocksMonitor
+                                    onBlockClick={jumpToBlock}
+                                    onOpenOverlayTimeLine={handleOpenOverlayTimeLine}
+                                    overlayInlineAddStock={overlayInlineAddStock}
+                                    themeColor={effThemeColor}
+                                />
                             )}
                             {isWatchlistCollapsed && (
                                 <div style={{ marginBottom: 24 }}>

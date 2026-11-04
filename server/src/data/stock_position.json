@@ -18,5 +18,21 @@
     "weight": 50,
     "costPrice": 10.91,
     "sellStrategy": "tech_attack"
+  },
+  {
+    "id": "sh688120_1793808805791_otlo",
+    "code": "sh688120",
+    "name": "华海清科",
+    "buyDate": "2026-11-04",
+    "buyTime": "13:35",
+    "weight": 50,
+    "costPrice": 179.13,
+    "mirror": {
+      "strategy": "highest_3d_gain_emoquick",
+      "strategyName": "3日涨幅最大&三日情绪-30快进快出",
+      "syncedDate": "2026-11-05",
+      "buyDateRaw": "20261104",
+      "source": "backtest_position_mirror"
+    }
   }
 ]

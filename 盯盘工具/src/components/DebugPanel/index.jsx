@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Drawer, Card, Button, Space, Typography, message, InputNumber } from 'antd';
 import {
   BugOutlined, SyncOutlined, CheckCircleFilled, WarningFilled, RocketOutlined, FallOutlined, ClockCircleOutlined,
-  BulbOutlined,
+  BulbOutlined, RiseOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../constant';
@@ -28,6 +28,8 @@ const DebugPanel = () => {
   const [fwbMocking, setFwbMocking] = useState(null);
   // 二板起爆 MOCK：buy | sell
   const [sbwMocking, setSbwMocking] = useState(null);
+  // 重点板块 5 分钟异动 MOCK
+  const [blockSurgeMocking, setBlockSurgeMocking] = useState(false);
 
   // 意志力锻炼弹窗间隔（分钟）：默认 5，持久化到 localStorage
   const [willpowerInterval, setWillpowerInterval] = useState(() => {
@@ -148,6 +150,25 @@ const DebugPanel = () => {
       message.error(`mock 请求失败：${e.message}`);
     } finally {
       setFwbMocking(null);
+    }
+  };
+
+  // 重点板块 5 分钟异动 MOCK：从最新板块快照随机挑若干板块构造 5min 涨幅 ≥1.5%，经 WS 推送前端弹窗
+  const triggerBlockSurgeMock = async () => {
+    if (blockSurgeMocking) return;
+    setBlockSurgeMocking(true);
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/debug/mock_block_5min_surge`, { count: 3 });
+      const d = res.data;
+      if (d?.success) {
+        message.success(`已模拟板块 5min 异动：${(d.blocks || []).join('、')}`, 4);
+      } else {
+        message.error(d?.error || 'mock 触发失败');
+      }
+    } catch (e) {
+      message.error(`mock 请求失败：${e.message}`);
+    } finally {
+      setBlockSurgeMocking(false);
     }
   };
 
@@ -335,8 +356,26 @@ const DebugPanel = () => {
             </Space>
           </Card>
 
-          {/* 模块七：意志力锻炼弹窗手动触发 */}
-          <Card size="small" title="7. 意志力锻炼弹窗">
+          {/* 模块七：重点板块 5 分钟异动 MOCK */}
+          <Card size="small" title="7. 重点板块 5 分钟异动 Mock">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              从最新板块快照随机挑 3 个板块，构造过去 5 分钟平均涨幅 ≥ 1.5% 的异动数据，
+              经与实盘完全一致的 WebSocket 链路（type:'block_5min_surge'）推送，前端右下角弹出异动板块列表卡片。
+              实盘由后端在每个 5 分钟整数倍时刻自动扫描重点板块并推送。
+            </Paragraph>
+            <Button
+              type="primary"
+              icon={<RiseOutlined />}
+              loading={blockSurgeMocking}
+              onClick={triggerBlockSurgeMock}
+              style={{ background: '#ea580c', borderColor: '#ea580c' }}
+            >
+              触发板块 5min 异动提示
+            </Button>
+          </Card>
+
+          {/* 模块八：意志力锻炼弹窗手动触发 */}
+          <Card size="small" title="8. 意志力锻炼弹窗">
             <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
               交易日交易时段（9:30-11:30、13:00-15:00）按设定间隔周期性弹出。
               支持自定义间隔（1-60 分钟），保存在 localStorage，应用重启后生效。

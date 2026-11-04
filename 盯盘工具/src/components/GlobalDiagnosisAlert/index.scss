@@ -1027,3 +1027,387 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   font-size: 12.5px;
   border-top: 1px solid rgba(15, 23, 42, 0.06);
 }
+
+// ==================== 重点板块 5 分钟涨幅异动卡片 ====================
+// 主题：烈焰橙红 → 深绯「异动告警」
+.gda-card.gda-block-surge {
+  background:
+    radial-gradient(120% 88% at 0% 0%, rgba(251, 146, 60, 0.38) 0%, transparent 54%),
+    radial-gradient(115% 100% at 100% 6%, rgba(239, 68, 68, 0.5) 0%, transparent 60%),
+    radial-gradient(150% 120% at 46% 118%, rgba(127, 29, 29, 0.7) 0%, transparent 68%),
+    linear-gradient(136deg, #431407 0%, #9a3412 46%, #b91c1c 100%);
+  box-shadow:
+    0 26px 60px -22px rgba(185, 28, 28, 0.6),
+    0 10px 28px -14px rgba(69, 10, 10, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+// 异动图标芯片：橙红渐变 + 呼吸辉光
+.gda-header .gda-header-icon.surge {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.92), rgba(239, 68, 68, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  animation: gda-icon-pulse-orange 2.8s ease-in-out infinite;
+}
+
+@keyframes gda-icon-pulse-orange {
+  0%,
+  100% {
+    box-shadow: 0 6px 18px -6px rgba(251, 146, 60, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+  50% {
+    box-shadow: 0 8px 24px -4px rgba(239, 68, 68, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  }
+}
+
+// 异动板块列表：表格式布局
+.gda-surge-head,
+.gda-surge-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 4px;
+  font-size: 12.5px;
+}
+
+.gda-surge-head {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  padding-bottom: 6px;
+}
+
+.gda-surge-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.gda-surge-name {
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gda-surge-delta {
+  font-family: $gda-mono;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #ffb4a2;
+  text-shadow: 0 0 12px rgba(255, 107, 107, 0.5);
+
+  &.up {
+    color: #ff9c9c;
+  }
+}
+
+.gda-surge-cur,
+.gda-surge-prev {
+  font-family: $gda-mono;
+  font-variant-numeric: tabular-nums;
+
+  &.up {
+    color: #ffb4a2;
+  }
+
+  &.down {
+    color: #86efac;
+  }
+}
+
+// ==================== 重点板块 5min 异动 Modal（浅色 · 与全站 light 主题一致） ====================
+// 白底圆角卡片 + 橙红点缀，配色对齐 BuyPointDiagnosisModal / dingpan 卡片体系
+.gda-surge-modal {
+  .ant-modal-content {
+    animation: gda-surge-modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(251, 146, 60, 0.18);
+    box-shadow: 0 24px 64px -22px rgba(18, 33, 58, 0.4);
+  }
+
+  .ant-modal-header {
+    padding: 16px 24px 14px;
+    border-bottom: 1px solid rgba(18, 33, 58, 0.06);
+    background: linear-gradient(135deg, rgba(255, 247, 237, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+  }
+
+  .ant-modal-body {
+    padding: 16px 24px 20px;
+    max-height: 62vh;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar { width: 6px; }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(18, 33, 58, 0.15);
+      border-radius: 999px;
+    }
+  }
+
+  .ant-modal-close {
+    top: 14px;
+    right: 20px;
+    color: #8a97ae;
+
+    &:hover { color: #12213a; }
+  }
+}
+
+@keyframes gda-surge-modal-in {
+  0% { opacity: 0; transform: translateY(10px) scale(0.985); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+// Header
+.gda-surge-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gda-surge-modal-icon {
+  font-size: 17px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #fb923c, #ef4444);
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow:
+    0 6px 16px -6px rgba(239, 68, 68, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.gda-surge-modal-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.gda-surge-modal-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #12213a;
+}
+
+.gda-surge-modal-sub {
+  font-size: 11.5px;
+  color: #8a97ae;
+  font-family: $gda-mono;
+  letter-spacing: 0.2px;
+}
+
+// ============ Tab 区（浅色卡片，active 橙红渐变） ============
+.gda-surge-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gda-surge-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 6px;
+  margin: -2px -2px -6px;
+
+  &::-webkit-scrollbar { height: 3px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(251, 146, 60, 0.35);
+    border-radius: 2px;
+  }
+}
+
+.gda-surge-tab {
+  flex: 0 0 168px;
+  flex-basis: 168px;
+  border-radius: 12px;
+  padding: 9px 13px;
+  cursor: pointer;
+  background: rgba(18, 33, 58, 0.03);
+  border: 1px solid rgba(18, 33, 58, 0.08);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &:hover {
+    background: rgba(251, 146, 60, 0.05);
+    border-color: rgba(251, 146, 60, 0.45);
+    transform: translateY(-1px);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, rgba(251, 146, 60, 0.12), rgba(239, 68, 68, 0.07));
+    border-color: rgba(251, 146, 60, 0.6);
+    box-shadow: 0 4px 14px -6px rgba(251, 146, 60, 0.5);
+  }
+}
+
+.gda-surge-tab-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.gda-surge-tab-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #12213a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gda-surge-tab-body {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-family: $gda-mono;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gda-surge-tab-delta {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.gda-surge-tab-cur.up { color: #e11d48; }
+.gda-surge-tab-cur.down { color: #16a34a; }
+
+// ============ 操作条 ============
+.gda-surge-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(18, 33, 58, 0.03);
+  border: 1px solid rgba(18, 33, 58, 0.06);
+
+  .ant-btn {
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    height: 30px;
+    padding: 0 14px;
+  }
+
+  // 实心主按钮（已是重点板块）：橙红渐变
+  .ant-btn-primary:not(.ant-btn-background-ghost) {
+    background: linear-gradient(135deg, #fb923c, #ef4444);
+    border: none;
+    box-shadow: 0 4px 12px -4px rgba(239, 68, 68, 0.5);
+
+    &:hover {
+      background: linear-gradient(135deg, #fdba74, #f87171);
+      box-shadow: 0 6px 16px -4px rgba(239, 68, 68, 0.65);
+    }
+  }
+
+  // ghost 主按钮（设为重点板块）：统一为橙红描边
+  .ant-btn-primary.ant-btn-background-ghost {
+    border-color: rgba(239, 68, 68, 0.55);
+    color: #ea580c;
+
+    &:hover {
+      border-color: #ef4444;
+      color: #dc2626;
+      background: rgba(239, 68, 68, 0.05);
+    }
+  }
+}
+
+// ============ 成分股表格 ============
+.gda-surge-stock-area {
+  border-radius: 12px;
+  border: 1px solid rgba(18, 33, 58, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  overflow: hidden;
+}
+
+.gda-surge-stock-head,
+.gda-surge-stock-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr auto;
+  gap: 14px;
+  padding: 9px 16px;
+  align-items: center;
+}
+
+.gda-surge-stock-head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #8a97ae;
+  text-transform: uppercase;
+  background: rgba(18, 33, 58, 0.02);
+  border-bottom: 1px solid rgba(18, 33, 58, 0.05);
+}
+
+.gda-surge-stock-row {
+  font-size: 13px;
+  border-bottom: 1px solid rgba(18, 33, 58, 0.04);
+  transition: background 0.15s ease;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: rgba(251, 146, 60, 0.05); }
+
+  .ant-btn-text {
+    color: #8a97ae;
+    border-radius: 6px;
+
+    &:hover {
+      color: #ea580c;
+      background: rgba(251, 146, 60, 0.12);
+    }
+  }
+}
+
+.gda-surge-stock-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.gda-surge-stock-name {
+  color: #12213a;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gda-surge-stock-code {
+  font-family: $gda-mono;
+  font-size: 11px;
+  color: #64748b;
+  background: rgba(18, 33, 58, 0.05);
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.gda-surge-stock-change {
+  font-family: $gda-mono;
+  font-weight: 700;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+
+  &.up { color: #e11d48; }
+  &.down { color: #16a34a; }
+}

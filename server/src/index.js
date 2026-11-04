@@ -149,6 +149,8 @@ const washFusionLive = require('./service/washFusionLive');
 const { checkFirstBoardWashSellPointDetailed, checkSecondBoardWashSellPointDetailed } = require('./service/firstBoardWashSell');
 // 调试面板 MOCK：手动触发买点/卖点命中，走同一推送 + 飞书链路
 const debugMock = require('./service/debugMock');
+// 重点板块 5 分钟涨幅异动监控（每 5min 整数倍计算，≥1.5% 经 WS 推送前端弹窗）
+const block5minSurge = require('./service/block5minSurge');
 const wsServer = require('./wsServer');
 const { getThsHotRank } = require('./service/thsHotRank');
 
@@ -351,6 +353,67 @@ app.get('/kaipan_high_change_stocks', (req, res) => {
 app.get('/block', (req, res) => {
   const blockData = getBlockData();
   res.json(blockData);
+});
+
+// 重点板块持久化：GET 读取、POST 整体覆盖或增删
+//   - 文件 data/key_blocks.json，不存在时返回默认值（商业航天 / 机器人 / 机器人大脑）
+//   - 注意：__dirname 是 server/src，所以 data 用相对路径 data/key_blocks.json
+const KEY_BLOCKS_PATH = path.resolve(__dirname, 'data/key_blocks.json');
+const DEFAULT_KEY_BLOCKS = ['商业航天', '机器人', '机器人大脑'];
+
+const readKeyBlocks = () => {
+  try {
+    if (!fs.existsSync(KEY_BLOCKS_PATH)) {
+      fs.writeFileSync(KEY_BLOCKS_PATH, JSON.stringify(DEFAULT_KEY_BLOCKS, null, 2), 'utf8');
+      return [...DEFAULT_KEY_BLOCKS];
+    }
+    const raw = fs.readFileSync(KEY_BLOCKS_PATH, 'utf8');
+    const arr = JSON.parse(raw || '[]');
+    return Array.isArray(arr) ? arr.filter((n) => typeof n === 'string' && n.trim()) : [];
+  } catch (e) {
+    console.error('读取重点板块失败:', e.message);
+    return [];
+  }
+};
+
+const writeKeyBlocks = (list) => {
+  try {
+    fs.writeFileSync(KEY_BLOCKS_PATH, JSON.stringify(list, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('写入重点板块失败:', e.message);
+    return false;
+  }
+};
+
+app.get('/api/key_blocks', (req, res) => {
+  res.json({ success: true, data: readKeyBlocks() });
+});
+
+app.post('/api/key_blocks', (req, res) => {
+  try {
+    const raw = req.body;
+    let list = [];
+    if (Array.isArray(raw)) {
+      list = raw.filter((n) => typeof n === 'string' && n.trim()).map((n) => n.trim());
+    } else if (raw && typeof raw.action === 'string' && typeof raw.blockName === 'string') {
+      const cur = new Set(readKeyBlocks());
+      const name = raw.blockName.trim();
+      if (raw.action === 'add') cur.add(name);
+      else if (raw.action === 'remove') cur.delete(name);
+      else if (raw.action === 'toggle') { if (cur.has(name)) cur.delete(name); else cur.add(name); }
+      else { res.status(400).json({ success: false, message: 'action 仅支持 add/remove/toggle，或直接传数组覆盖' }); return; }
+      list = Array.from(cur);
+    } else {
+      res.status(400).json({ success: false, message: 'body 需为板块名数组，或 {action,blockName}' });
+      return;
+    }
+    const ok = writeKeyBlocks(list);
+    res.json(ok ? { success: true, data: list } : { success: false, message: '写入失败' });
+  } catch (e) {
+    console.error('保存重点板块失败:', e.message);
+    res.status(500).json({ success: false, message: e.message });
+  }
 });
 
 // 板块近 N 个交易日数据：板块每日平均涨跌幅（默认 20 个交易日）
@@ -1884,6 +1947,19 @@ app.post('/debug/mock_second_board_wash_sell', async (req, res) => {
   } catch (error) {
     console.error('MOCK 二板起爆卖点失败:', error);
     res.json({ success: false, error: error.message || 'MOCK 二板起爆卖点失败' });
+  }
+});
+
+// 重点板块 5 分钟涨幅异动 MOCK：从最新板块快照随机挑若干板块，构造 5min 涨幅 ≥1.5%，
+// 经与实盘完全一致的 WS 链路（type:'block_5min_surge'）推送前端弹窗
+app.post('/debug/mock_block_5min_surge', (req, res) => {
+  try {
+    const count = Math.max(1, Math.min(parseInt(req.body?.count, 10) || 3, 10));
+    const result = block5minSurge.mockSurge(count);
+    res.json(result);
+  } catch (error) {
+    console.error('MOCK 板块 5min 异动失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 板块 5min 异动失败' });
   }
 });
 
@@ -5479,6 +5555,8 @@ const server = app.listen(port, () => {
   wsServer.attach(server, port);
   buyPointPushService.start();
   sellPointPushService.start();
+  // 重点板块 5 分钟异动监控：每 5min 整数倍扫描，单板块 5min 涨幅 ≥1.5% 即 WS 推送
+  block5minSurge.start();
   // 情绪游资-极致赔率：仅在拍板模式为 wash_fusion_extreme_odds 时每 3s 轮询首板/二板候选与买点
   washFusionLive.start();
   // 回测持仓镜像同步：每天首次启动后台跑一次快进快出策略回测，期末未卖持仓自动写入持仓管理
@@ -5502,6 +5580,7 @@ const shutdown = (signal) => {
   console.log(`收到 ${signal}，正在关闭 HTTP / WebSocket / 买点/卖点推送服务...`);
   try { buyPointPushService.stop(); } catch (e) { /* 忽略 */ }
   try { sellPointPushService.stop(); } catch (e) { /* 忽略 */ }
+  try { block5minSurge.stop(); } catch (e) { /* 忽略 */ }
   try { washFusionLive.stop(); } catch (e) { /* 忽略 */ }
   try { wsServer.close(); } catch (e) { /* 忽略 */ }
   server.close(() => process.exit(0));

@@ -11,7 +11,7 @@ import { local_ip } from '../constant';
 const WS_URL = `ws://${local_ip}:3000/ws`;
 const RECONNECT_BASE_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
-const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy'];
+const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'block_5min_surge'];
 
 let socket = null;
 let reconnectTimer = null;
@@ -159,6 +159,12 @@ export const subscribeFundGatePush = (handler) => subscribePush('fund_gate', han
 //     - 前端由 GlobalDiagnosisAlert 用统一买点诊断卡片展示，飞书由后端发送
 export const subscribeWashFusionCandidatesPush = (handler) => subscribePush('wash_fusion_candidates', handler);
 export const subscribeWashFusionBuyPush = (handler) => subscribePush('wash_fusion_buy', handler);
+
+// 重点板块 5 分钟涨幅异动推送（2026-11-04 用户新增）：
+//   后端在每个 5min 整数倍时刻扫描重点板块，任一板块过去 5min 平均涨幅 ≥ 1.5% 即广播
+//   { type:'block_5min_surge', ts, open:true, data:{ time, prevTime, threshold, blocks:[{blockName,avgChange,prevAvgChange,change5min}] } }
+//   前端全局弹窗提示异动板块；MOCK 调试消息额外带 mock:true 标记
+export const subscribeBlock5minSurgePush = (handler) => subscribePush('block_5min_surge', handler);
 
 // 订阅 debug 自检消息（debug_pong / debug_ping / debug_pong_ack）；返回取消订阅函数
 export const subscribeDebugWs = (handler) => {
