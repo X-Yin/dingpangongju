@@ -127,7 +127,7 @@ const WatchlistTopRanking = ({ stocks = [], onStockClick, onOpenOverlayTimeLine,
                     </Tooltip>
                 </div>
             }
-            className="monitor-card"
+            className="monitor-card compact-head-card"
             variant="borderless"
             bodyStyle={{ padding: '12px 14px' }}
         >

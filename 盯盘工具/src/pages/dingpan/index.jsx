@@ -2667,7 +2667,7 @@ const DingPan = () => {
                                 />
                             )}
                             {isWatchlistCollapsed && (
-                                <div style={{ marginBottom: 24 }}>
+                                <div style={{ marginBottom: 8 }}>
                                     <BlockRankingCards
                                         topAndBottomBlockData={data.topAndBottomBlockData}
                                         onBlockClick={jumpToBlock}
@@ -2684,7 +2684,7 @@ const DingPan = () => {
 
                             {/* 当前自选股个股涨跌幅前十：位于涨跌幅前十与指数叠加分时之间 */}
                             {isWatchlistCollapsed && (
-                                <div style={{ marginBottom: 16 }}>
+                                <div style={{ marginBottom: 8 }}>
                                     <WatchlistTopRanking
                                         stocks={visibleAllStockData}
                                         onStockClick={showKLine}

@@ -262,6 +262,17 @@
     }
   }
 
+  /* 紧凑标题栏：重点板块 / 自定义板块涨跌幅前十 / 自选股涨跌幅前十 */
+  .compact-head-card .ant-card-head {
+    min-height: 0 !important;
+  }
+
+  .compact-head-card .ant-card-head-title,
+  .compact-head-card .ant-card-extra {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
+
   .monitor-card {
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.7);

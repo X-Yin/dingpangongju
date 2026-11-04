@@ -244,7 +244,7 @@ const KeyBlocksMonitor = ({ onBlockClick, onOpenOverlayTimeLine, overlayInlineAd
         <>
             <Card
                 title={<><StarFilled style={{ color: '#f59e0b', marginRight: 8, userSelect: 'none' }} /> 重点板块</>}
-                className="monitor-card key-blocks-card"
+                className="monitor-card key-blocks-card compact-head-card"
                 variant="borderless"
                 bodyStyle={{ padding: '12px 14px' }}
                 extra={
@@ -266,7 +266,7 @@ const KeyBlocksMonitor = ({ onBlockClick, onOpenOverlayTimeLine, overlayInlineAd
                         />
                     </div>
                 }
-                style={{ marginBottom: 12 }}
+                style={{ marginBottom: 8 }}
             >
                 {loading && orderedBlocks.length === 0 ? (
                     <div className="kb-empty-tip">加载中...</div>

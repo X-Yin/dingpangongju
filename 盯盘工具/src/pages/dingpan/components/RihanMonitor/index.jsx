@@ -73,7 +73,7 @@ const RihanMonitor = ({ themeColor, onDataLoaded }) => {
         <Card
             className="monitor-card rihan-simple-card"
             variant="borderless"
-            style={{ marginBottom: 16 }}
+            style={{ marginBottom: 8 }}
             title={<><AreaChartOutlined style={{ color: getThemeColor(), marginRight: 8 }} /> 外盘涨跌监控</>}
             extra={
                 <ReloadOutlined

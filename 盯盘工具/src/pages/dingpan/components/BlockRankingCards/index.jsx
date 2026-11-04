@@ -5,7 +5,7 @@ import './index.scss';
 
 const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockStockList, themeColor, vertical = false, fillContainer = false, onRefresh, refreshing = false, onStrengthAnalysis, strengthLoading = false }) => {
     return (
-        <Row gutter={[12, 12]} style={{ marginBottom: 12, height: fillContainer ? '100%' : undefined, flex: fillContainer ? 1 : undefined }}>
+        <Row gutter={[12, 8]} style={{ marginBottom: 8, height: fillContainer ? '100%' : undefined, flex: fillContainer ? 1 : undefined }}>
             <Col span={vertical ? 24 : 12} style={{ display: 'flex', flexDirection: 'column' }}>
                 {fillContainer ? (
                     <Card
@@ -49,7 +49,7 @@ const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockSto
                 ) : (
                     <Card
                         title={<><RiseOutlined style={{ marginRight: 8, userSelect: 'none' }} /> 自定义板块涨幅前十</>}
-                        className="monitor-card"
+                        className="monitor-card compact-head-card"
                         variant="borderless"
                         bodyStyle={{ padding: '12px 14px' }}
                         extra={onRefresh || onStrengthAnalysis ? (
@@ -157,7 +157,7 @@ const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockSto
                 ) : (
                     <Card
                         title={<><FallOutlined style={{ marginRight: 8 }} /> 自定义板块跌幅前十</>}
-                        className="monitor-card"
+                        className="monitor-card compact-head-card"
                         variant="borderless"
                         bodyStyle={{ padding: '12px 14px' }}
                     >
