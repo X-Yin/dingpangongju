@@ -13,6 +13,29 @@ import { useStrategyMode } from '../../utils/strategyMode';
 import { subscribeSellPointPush } from '../../utils/buyPointWs';
 import './index.scss';
 
+// 首屏缓存：FloatingStockPosition 是全页最先展示的组件，刷新时持仓列表/涨幅/量能差先用
+// 当日 localStorage 缓存秒出，接口返回后覆盖。仅当日缓存，避免跨日展示过期数据。
+const POS_CACHE_KEY = 'fsp_positions_cache';
+const CHANGE_CACHE_KEY = 'fsp_change_cache';
+const VOLDIFF_CACHE_KEY = 'fsp_voldiff_cache';
+
+const readTodayLocalCache = (key) => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (!cached || cached.date !== dayjs().format('YYYYMMDD')) return null;
+    return cached.value;
+  } catch {
+    return null;
+  }
+};
+const writeLocalCache = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify({ date: dayjs().format('YYYYMMDD'), value, ts: Date.now() }));
+  } catch { /* 忽略 */ }
+};
+
 const ALERT_THRESHOLD = 0.15;
 
 // 统一卖点策略（2026-11-01 用户要求）：每笔持仓显式指定卖点诊断口径，取代原「顺/逆周期」下拉框。
@@ -88,7 +111,8 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   const mode = useStrategyMode();
   // 统一卖点策略列（2026-11-01 用户要求）：始终展示，取代原顺/逆周期标记列
   const [sellStrategyUpdating, setSellStrategyUpdating] = useState({});
-  const [positions, setPositions] = useState([]);
+  // 首屏秒开：先用当日 localStorage 缓存渲染，接口返回后覆盖
+  const [positions, setPositions] = useState(() => readTodayLocalCache(POS_CACHE_KEY) || []);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
   const [newStock, setNewStock] = useState(null);
@@ -98,8 +122,8 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   const [selectedStock, setSelectedStock] = useState(null);
   const [fundFlowVisible, setFundFlowVisible] = useState(false);
   const [fundFlowStock, setFundFlowStock] = useState(null);
-  const [changeMap, setChangeMap] = useState({});
-  const [volumeDiffPercentMap, setVolumeDiffPercentMap] = useState({});
+  const [changeMap, setChangeMap] = useState(() => readTodayLocalCache(CHANGE_CACHE_KEY) || {});
+  const [volumeDiffPercentMap, setVolumeDiffPercentMap] = useState(() => readTodayLocalCache(VOLDIFF_CACHE_KEY) || {});
   // 卖点诊断抽屉：抽屉内每个持仓股为一张大卡片，卡片内含该股的卖点诊断条件卡片
   const [sellDrawerOpen, setSellDrawerOpen] = useState(false);
   const [sellDrawerLoading, setSellDrawerLoading] = useState(false);
@@ -272,8 +296,9 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     try {
       setLoading(true);
       const res = await axios.get(`http://${local_ip}:3000/get_stock_position`);
-      console.log('res data', res.data);
-      setPositions(res.data || []);
+      const fresh = res.data || [];
+      setPositions(fresh);
+      writeLocalCache(POS_CACHE_KEY, fresh);
     } catch (error) {
       console.error('获取持仓失败:', error);
     } finally {
@@ -309,6 +334,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         newChangeMap[item.code] = item.change;
       });
       setChangeMap(newChangeMap);
+      writeLocalCache(CHANGE_CACHE_KEY, newChangeMap);
     } catch (error) {
       console.error('获取涨幅失败:', error);
     } finally {
@@ -329,6 +355,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         }
       });
       setVolumeDiffPercentMap(map);
+      writeLocalCache(VOLDIFF_CACHE_KEY, map);
     } catch (error) {
       console.error('获取量能差失败:', error);
     } finally {
@@ -460,7 +487,8 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       timers.push(timer);
       return timer;
     };
-    schedulePoll(fetchStockChanges, 1000);
+    // 后端已加 5s TTL 缓存，3s 轮询每轮都能命中一次新鲜值且避免对外部行情接口造成压力
+    schedulePoll(fetchStockChanges, 3000);
     return () => {
       timers.forEach(clearTimeout);
     };
@@ -484,24 +512,6 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       timers.forEach(clearTimeout);
     };
   }, [fetchVolumeDiff]);
-
-  useEffect(() => {
-    const timers = [];
-    const schedulePoll = (callback, delay) => {
-      const timer = setTimeout(() => {
-        if (!isAfterMarketClose()) {
-          callback();
-          schedulePoll(callback, delay);
-        }
-      }, delay);
-      timers.push(timer);
-      return timer;
-    };
-    schedulePoll(fetchStockChanges, 30000);
-    return () => {
-      timers.forEach(clearTimeout);
-    };
-  }, [fetchStockChanges]);
 
   // 买点诊断抽屉：不再随 WS 推送自动弹开（2026-10-21 用户调整）——命中提醒改由 App.jsx 全局诊断卡片
   //（GlobalDiagnosisAlert）弹出，抽屉仅通过 header 闪电图标手动打开，打开时自行拉取最新诊断数据。

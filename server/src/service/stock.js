@@ -6,6 +6,8 @@ const path = require('path');
 const os = require('os');
 const { Worker } = require('worker_threads');
 const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay, getThsSnapshotUrl, getThsSnapshotHeaders, buildThsSnapshotRequestBody, getThsMarketCode } = require('../utils');
+const { lianbanTlineUrl, lianbanHeaders } = require('../constant');
+const { refreshLBSessCookie } = require('./lianbanCookieRefresh');
 const { getMonitorStocks } = require('./monitorStock');
 const { useCLS } = require('../config');
 
@@ -18,6 +20,26 @@ const tlineCacheDir = '/Users/xieyin/Desktop/盯盘工具/自选股全量股票�
 // 原逻辑每只股票都要整份读取解析其全历史分时文件（目录共 8.6GB/9000+ 文件，单文件最大 11MB），
 // 是回测耗时大头（CPU 画像 ~62%）。按日捆绑后同一交易日只解析一个小文件，跨次回测直接复用
 const tlineDayCacheDir = path.resolve(__dirname, '../data/tline_day_cache');
+
+// ---------- 当日分时 TTL 内存缓存（2026-11-04） ----------
+// 对 getSingleStockTlineData 做模块级 TTL 缓存：外部行情接口（同花顺/财联社）偶发慢（1-3s）、
+// 前端每秒轮询会放大延迟并触发第三方限流。盘中 5s 内命中直接返回，既稳延迟又减轻外部压力。
+// 回测用的 getSingleStockTlineDataByDate 已按日落盘，不受此缓存影响。
+const LIVE_TLINE_TTL_MS = 5000;
+const liveTlineCache = new Map(); // key=code -> { res, ts }
+// 合并在途 Promise（同一 code 并发请求只发一次外部调用，其他并发挂这个 Promise）
+const liveTlineInFlight = new Map();
+const getSingleStockTlineDataCached = async (code) => {
+    const cached = liveTlineCache.get(code);
+    if (cached && Date.now() - cached.ts < LIVE_TLINE_TTL_MS) return cached.res;
+    // 如果同 code 正在请求，直接挂它的 Promise，避免重复打外部
+    if (liveTlineInFlight.has(code)) return liveTlineInFlight.get(code);
+    const promise = getSingleStockTlineDataRaw(code).finally(() => { liveTlineInFlight.delete(code); });
+    liveTlineInFlight.set(code, promise);
+    const res = await promise;
+    if (res) liveTlineCache.set(code, { res, ts: Date.now() });
+    return res;
+};
 
 // 保存当日开盘价（9:25 竞价结束后执行，非交易日不保存）
 function saveOpeningPricesIfNeeded() {
@@ -290,18 +312,43 @@ const getStockValuation = async (code) => {
 exports.getStockValuation = getStockValuation;
 
 let tlineNum = 0;
-const getSingleStockTlineData = async (code) => {
-    let result = await getSingleStockTlineDataFromTHS(code);
-    if (!result) {
-        console.log(`同花顺获取股票 ${code} 分时数据失败，尝试财联社接口兜底`);
-        result = await getSingleStockTlineDataFromCLS(code);
-    }
-    return result;
+
+// 分时数据源优先级（2026-11-04 并发 10 只实测）：
+//   财联社   并发 177-211ms / HTTP 200 稳定 → 主力
+//   连板网   并发 241-360ms / HTTP 200 稳定 → 一级兜底（腾讯底层）
+//   同花顺   偶发超时 / 需 500ms timeout → 最兜底
+const getSingleStockTlineDataRaw = async (code) => {
+    const _t0 = Date.now();
+
+    let result = await getSingleStockTlineDataFromCLS(code);
+    if (result) { console.log(`[tline] ${code} → CLS ${Date.now()-_t0}ms`); return result; }
+
+    result = await getSingleStockTlineDataFromLB(code);
+    if (result) { console.log(`[tline] ${code} → LB  ${Date.now()-_t0}ms`); return result; }
+
+    result = await getSingleStockTlineDataFromTHS(code);
+    if (result) { console.log(`[tline] ${code} → THS ${Date.now()-_t0}ms`); return result; }
+
+    console.warn(`[tline] ${code} 所有数据源均失败，总耗时 ${Date.now()-_t0}ms`);
+    return null;
+};
+
+// 对外导出：走 TTL 缓存 + 在途 Promise 合并
+const getSingleStockTlineData = getSingleStockTlineDataCached;
+
+// 统一的 sh/sz 前缀规范化（财联社 / 连板网都需要带前缀）
+const normalizeMarketPrefix = (code) => {
+    const c = String(code).toLowerCase();
+    if (c.startsWith('sh') || c.startsWith('sz')) return c;
+    if (/^(6|9)\d{5}$/.test(code)) return `sh${code}`;
+    if (/^(0|3)\d{5}$/.test(code)) return `sz${code}`;
+    return code; // 未知格式兜底原样
 };
 
 const getSingleStockTlineDataFromCLS = async (code) => {
     try {
-        const response = await axios.get(getClsReqStockTlineUrl(code));
+        const normalizedCode = normalizeMarketPrefix(code);
+        const response = await axios.get(getClsReqStockTlineUrl(normalizedCode));
         const data = response.data.data;
         const line = data?.line || [];
         if (!Array.isArray(line) || line.length === 0) {
@@ -309,18 +356,25 @@ const getSingleStockTlineDataFromCLS = async (code) => {
         }
         
         const preclosePx = data?.preclose_px || line[0]?.preclose_px || 0;
-        const dateInt = parseInt(timestampToDateStr(line[0].time || line[0].timestamp || Date.now()));
+        const dateInt = data?.date || parseInt(timestampToDateStr(line[0].time || line[0].timestamp || Date.now()));
         
         const processedLine = line.map((item) => {
-            const timestamp = item.time || item.timestamp || Date.now();
             const lastPx = item.last_px || item.price || item.p || 0;
-            const minute = timestampToMinute(timestamp);
+            // 财联社返回的 item.minute 本身就是 930/1530 数字格式（09:30/15:30 的简写），直接用；
+            // THS 返回 timestamp，用 timestampToMinute 转换后也是数字格式
+            let minuteNum;
+            if (typeof item.minute === 'number' && item.minute > 0) {
+                minuteNum = item.minute;
+            } else {
+                const ts = item.time || item.timestamp || Date.now();
+                minuteNum = timestampToMinute(ts);
+            }
             const change = item.change !== undefined ? item.change : 
                 (preclosePx > 0 ? parseFloat((((lastPx - preclosePx) / preclosePx) * 100).toFixed(2)) : null);
             const changePx = preclosePx > 0 ? parseFloat((lastPx - preclosePx).toFixed(2)) : null;
             return {
                 date: dateInt,
-                minute: minute,
+                minute: minuteNum, // 保持数字格式，跟抗分歧 stockLine 完全一致
                 last_px: lastPx,
                 av_px: lastPx,
                 change: change,
@@ -347,7 +401,8 @@ const getSingleStockTlineDataFromTHS = async (code) => {
         const headers = getThsTrendHeaders();
         const requestBody = buildThsTrendRequestBody(code);
 
-        const response = await axios.post(url, requestBody, { headers });
+        // 同花顺慢/卡/限流时 axios 默认超时会等很久，直接 500ms 过期兜底财联社
+        const response = await axios.post(url, requestBody, { headers, timeout: 500 });
         const quoteData = response.data.data?.quote_data?.[0];
         
         if (!quoteData || !quoteData.value || !Array.isArray(quoteData.value)) {
@@ -391,6 +446,89 @@ const getSingleStockTlineDataFromTHS = async (code) => {
         };
     } catch (error) {
         console.error(`同花顺获取股票 ${code} 分时数据失败:`, error.message);
+        return null;
+    }
+};
+
+// 连板网（腾讯底层）分时接口 — 复用统一前缀规范化
+async function _rawLBRequest(lbCode) {
+    // 动态读取当前 headers（cookie 可能被 refreshLBSessCookie 更新）
+    const { lianbanHeaders: headers } = require('../constant');
+    const response = await axios.get(lianbanTlineUrl(lbCode), { headers, timeout: 1500 });
+    return response.data;
+}
+
+const getSingleStockTlineDataFromLB = async (code) => {
+    const lbCode = normalizeMarketPrefix(code);
+
+    const parse = (data) => {
+        if (data?.code !== 0) return null; // cookie 过期时 code 可能 != 0
+        const payload = data?.data?.[lbCode];
+        if (!payload) return null;
+        const rawLine = payload?.data?.data || [];
+        if (!Array.isArray(rawLine) || rawLine.length === 0) return null;
+
+        const dateInt = parseInt(payload?.data?.date || timestampToDateStr(Date.now()));
+        const preclosePx = parseFloat(payload?.qt?.[lbCode]?.[4] || 0);
+        if (preclosePx <= 0) return null;
+
+        const processedLine = [];
+        let prevVol = 0, prevAmt = 0;
+        for (const entry of rawLine) {
+            const parts = entry.trim().split(/\s+/);
+            if (parts.length < 4) continue;
+            const timeStr = parts[0];
+            const price = parseFloat(parts[1]);
+            const vol = parseInt(parts[2], 10);
+            const amt = parseFloat(parts[3]);
+            if (isNaN(price) || isNaN(vol) || isNaN(amt)) continue;
+
+            processedLine.push({
+                date: dateInt,
+                minute: parseInt(timeStr, 10), // "0930" → 930，跟抗分歧 stockLine 保持一致
+                last_px: price,
+                av_px: price,
+                change: parseFloat((((price - preclosePx) / preclosePx) * 100).toFixed(2)),
+                change_px: parseFloat((price - preclosePx).toFixed(2)),
+                business_amount: vol - prevVol,
+                business_balance: amt - prevAmt
+            });
+            prevVol = vol; prevAmt = amt;
+        }
+        return processedLine.length > 0
+            ? { date: dateInt, preclose_px: preclosePx, line: processedLine }
+            : null;
+    };
+
+    try {
+        // 首次请求
+        const data1 = await _rawLBRequest(lbCode);
+        let result = parse(data1);
+
+        // 如果没拿到有效数据，疑似 cookie 过期 → 触发刷新（全局锁 + 节流），然后重放一次
+        if (!result) {
+            const isLikelyCookieExpired =
+                data1?.code !== 0 ||
+                (data1 && !data1.data?.[lbCode]) ||
+                (data1?.data?.[lbCode]?.qt?.[lbCode]?.length < 10);
+
+            if (isLikelyCookieExpired) {
+                console.log(`[lb] 连板网股票 ${code} 返回空，尝试刷新 cookie...`);
+                const newCookie = await refreshLBSessCookie();
+                if (newCookie) {
+                    console.log(`[lb] cookie 已刷新，重试 ${code}`);
+                    try {
+                        const data2 = await _rawLBRequest(lbCode);
+                        result = parse(data2);
+                    } catch { /* 仍然失败就返回 null，走 CLS 兜底 */ }
+                } else {
+                    console.log(`[lb] cookie 刷新失败或不需要刷新，直接返回 null 走 CLS 兜底`);
+                }
+            }
+        }
+        return result;
+    } catch (error) {
+        console.error(`连板网获取股票 ${code} 分时失败:`, error.message);
         return null;
     }
 };

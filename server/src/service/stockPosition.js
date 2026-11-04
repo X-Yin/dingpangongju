@@ -798,9 +798,8 @@ const getPositionSellStrategy = (item) => {
 
 const getStockPositionMainFund = async () => {
     const stock_positions = readStockPositionsFile();
-    // 先并行发起所有主力资金请求（原来是 for...of 串行，持仓多时首屏要等 N × 单请求耗时）
-    // 参考同文件 getWatchlistMainFund 已用 batchParallel 做并发
-    const fetched = await batchParallel(stock_positions, async (item) => {
+    // 全部并发：持仓一般 <10 只，直接 Promise.all 一把梭，不做分批限制
+    const fetched = await Promise.all(stock_positions.map(async (item) => {
         try {
             const mainFundData = getClsReqMainFundUrl(item.code);
             const res = await axios.get(mainFundData);
@@ -810,7 +809,7 @@ const getStockPositionMainFund = async () => {
             console.error(`获取 ${item.name} 主力资金失败:`, error.message);
             return { item, mainFund: null };
         }
-    }, 5);
+    }));
 
     return fetched.map(({ item, mainFund }) => ({
         id: item.id,
@@ -820,11 +819,8 @@ const getStockPositionMainFund = async () => {
         buyDate: item.buyDate || null,
         buyTime: item.buyTime || null,
         weight: item.weight != null ? item.weight : 50,
-        // 顺逆周期标记：pro 顺周期 / reverse 逆周期，未标记按顺周期（前端持仓管理展示、卖点诊断⑪⑫启用依据）
         cycle: item.cycle === 'reverse' ? 'reverse' : 'pro',
-        // 统一卖点策略：未设置返回 null（前端下拉框显示「跟随模式」，后端按全局策略模式回退）
         sellStrategy: getPositionSellStrategy(item),
-        // 镜像持仓标记：存在 mirror 说明为回测镜像同步自动添加，供前端以灰色标题区分手动添加
         mirror: item.mirror || null,
         mainFund,
     }));

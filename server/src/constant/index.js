@@ -80,13 +80,29 @@ exports.thsSnapshotHeaders = {
 // 同花顺分时API配置
 exports.thsTrendUrl = 'https://quota-h.10jqka.com.cn/fuyao/common_hq_aggr/quote/v1/single_trend';
 
+// 2026-11-04：新增 source-id + 完整 UA，同花顺接口偶发 500ms timeout（原项目 headers 最简，
+// 实测交易时段偶尔挂住；浏览器完整 headers 反而稳定得多）
 exports.thsTrendHeaders = {
     'accept': '*/*',
     'content-type': 'application/json',
     'platform': 'hxkline',
+    'source-id': 'hxkline-NEWS_appNewsFlowHome_Page',
     'x-auth-appname': 'AINVEST',
     'x-auth-progid': '7047',
     'x-auth-type': 'ths',
     'x-auth-version': '1.0',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36',
+    'origin': 'https://stockpage.10jqka.com.cn',
+    'referer': 'https://stockpage.10jqka.com.cn/',
     'x-fuyao-auth': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3JpemVyX25hbWVzcGFjZSI6ImNvbW1vbi1ocS1hZ2dyIiwibGljZW5zZWVfdHlwZSI6IkZST05UX0FQUCIsImxpY2Vuc2VlX25hbWVzcGFjZSI6Imh4a2xpbmUtTkVXU19hcHBOZXdzRmxvd0hvbWVfUGFnZSJ9.ldrvWTheNnGOa_rH_buA6OoUpLtW2bhcdr3fABrGHbk'
+};
+
+// 连板网（腾讯底层）分时接口 — 服务器端可用，HTTP 200 稳定 ~200ms
+exports.lianbanTlineUrl = (code) =>
+    `https://lianban.net/tx/appstock/app/minute/query?code=${code}`;
+
+exports.lianbanHeaders = {
+    'accept': '*/*',
+    'referer': 'https://lianban.net/',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36'
 };
