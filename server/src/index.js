@@ -1728,6 +1728,13 @@ app.post('/buy_point_single_stock_diagnosis', async (req, res) => {
 // 后端据此集中进行买点诊断与飞书发送，即使浏览器未打开也按当前模式运行
 app.post('/set_strategy_mode', (req, res) => {
   try {
+    // 前端「多选模式」下拉显示标记：不改变后端单模式与多选配置
+    if (req.body?.mode === strategyModeState.MODE_MULTI) {
+      return res.json({
+        success: true,
+        data: { mode: strategyModeState.getMode(), modes: strategyModeState.getModes() },
+      });
+    }
     const mode = strategyModeState.setMode(req.body?.mode);
     res.json({ success: true, data: { mode } });
   } catch (error) {
@@ -1738,6 +1745,25 @@ app.post('/set_strategy_mode', (req, res) => {
 
 app.get('/get_strategy_mode', (req, res) => {
   res.json({ success: true, data: { mode: strategyModeState.getMode() } });
+});
+
+// 多选模式（2026-11-04 新增）：前端弹窗勾选要同时诊断的模式列表，缓存到 strategy_mode.json；
+// 买点诊断调度按列表内全部模式并行执行（卖点诊断不受影响，仍按每笔持仓自身策略）
+app.post('/set_strategy_modes', (req, res) => {
+  try {
+    const modes = strategyModeState.setModes(req.body?.modes);
+    res.json({ success: true, data: { modes, multi: modes.length > 0 } });
+  } catch (error) {
+    console.error('设置多选策略模式失败:', error);
+    res.status(500).json({ success: false, message: error.message || '设置失败' });
+  }
+});
+
+app.get('/get_strategy_modes', (req, res) => {
+  res.json({
+    success: true,
+    data: { modes: strategyModeState.getModes(), multi: strategyModeState.isMultiMode() },
+  });
 });
 
 // ===== 情绪游资-极致赔率（首板起爆 + 二板起爆，仅在该策略模式下由 washFusionLive 推送）=====

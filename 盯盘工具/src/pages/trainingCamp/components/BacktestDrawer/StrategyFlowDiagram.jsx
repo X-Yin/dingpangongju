@@ -1178,6 +1178,67 @@ const specExtremeWin = () => {
   };
 };
 
+// 情绪游资-极致赔率（A 首板洗盘-起爆拉升 + B 放量洗盘-二板起爆 融合账户，2026-11-04 用户新增）
+const specWashFusion = () =>
+  build((ctx) => {
+    ctx.add('start', 'start', {
+      title: '每日收盘后构建**次一交易日**候选池：A「首板洗盘-起爆拉升」∪ B「放量洗盘-二板起爆」',
+      w: 380,
+      sub: '统一剔除：创业板/科创板 · 代码黑名单 · 题材黑名单 · 15 日内 ≥3 板 · 20 日内三日窗口涨幅 > 20% · 总市值 ≤ 100 亿元（按买入价折算，数据缺失不拦截）',
+    });
+    const yPool = ctx.yNow();
+    ctx.add('poolA', 'pool', {
+      title: 'A｜首板洗盘-起爆拉升',
+      w: 330,
+      items: [
+        '首板日（可叠二板）→ 最多 2 日内放量峰值 ≥ 前 20 日均量 3 倍',
+        '峰值后 5~12 日缩量洗盘：洗盘期最大量 ≤ 峰值 95%、最小量 ≤ 峰值 60%，洗盘期不得涨停',
+        '震荡期单日涨跌幅 ±5% 内、不突破平台高点、不低于首板开盘价、洗盘幅度 8%~35%',
+        '买点触发价 ≥ 平台高点 × 0.80',
+      ],
+    }, { x: X0, y: yPool });
+    ctx.add('poolB', 'pool', {
+      title: 'B｜放量洗盘-二板起爆',
+      w: 330,
+      items: [
+        'T-1 必须首板：断板次数 ≤ 1；封板满 20 交易分钟后不漏量（分钟量 ≤ 封板分钟量 130%）',
+        'T-1 前「拉升放量 1~3 日 → 震荡缩量 2~12 日」：首板收盘 ≥ 震荡最高收盘 1.01 倍、首板量 ≥ 震荡最后一日 1.2 倍',
+        '震荡期单日 ±5% 内、最低价不低于首次爆量开盘价 -5%',
+      ],
+    }, { x: X1, y: yPool + 4 });
+    ctx.link('start', 'poolA');
+    ctx.link('start', 'poolB', { sh: 's-r', th: 't-l' });
+    ctx.add('merge', 'step', {
+      title: '候选池**取并集**：同一只股票同时命中 A、B 时只保留一份，按 **A（首板洗盘）** 口径建仓',
+      w: 360,
+    });
+    ctx.link('poolA', 'merge');
+    ctx.link('poolB', 'merge');
+    ctx.add('gOpen', 'gate', { title: '竞价（9:30 开盘价）涨幅 **≥ +5%**？→ 是：9:30 按竞价开盘价**直接买入**（开盘即一字涨停买不进、顺延）', w: 350 });
+    ctx.link('merge', 'gOpen');
+    ctx.add('gIntra', 'gate', { title: '竞价 < +5%：按 1 分钟跟踪分时涨幅（较昨收）**首次 ≥ +8%** 买入 —— A 限 9:30–9:40（最多 1 次回落） · B 限 9:30–14:30', w: 360 });
+    ctx.link('gOpen', 'gIntra', { label: '否', tone: 'no' });
+    ctx.add('wait', 'wait', { title: 'A 过 9:40 / B 过 14:30 仍未达标 → 当日不买', w: 250 }, { x: X1, y: ctx.pos.gIntra.y + 8 });
+    ctx.link('gIntra', 'wait', { label: '否', tone: 'no', sh: 's-r', th: 't-l', dashed: true });
+    ctx.add('pick', 'step', { title: '跨候选取**最早触发买入的分钟**；同分钟取**涨幅更大者**；同分钟同涨幅 **A 优先**；最多占 2 个半仓槽', w: 340 });
+    ctx.link('gOpen', 'pick', { label: '是', tone: 'yes', sh: 's-r', th: 't-l' });
+    ctx.link('gIntra', 'pick', { label: '是', tone: 'yes' });
+    ctx.add('buy', 'buy', { title: '半仓买入（账户拆两份 ×0.5 · 每份独立买卖、独立按自身买入价计收益）', w: 330 });
+    ctx.link('pick', 'buy', { label: '买入', tone: 'yes' });
+    ctx.add('sell', 'sell', {
+      kind: 'sell',
+      title: '卖点：每份持仓**按命中来源独立执行**（任一触发即卖该份，另一份不受影响）',
+      w: 360,
+      items: [
+        'A（首板洗盘）五条：③ 盘中跌停 / ② -5% 立即、-3% 连续 5 分钟 / ① 跌破 5 日线 / ④ 买入日涨停、次日收盘未涨停 / ⑤ 次日竞价低开',
+        'B（放量洗盘）七条：A 的 ①~⑤ 同口径 + ⑥ 未拉开 20% 前任一日收盘未涨停 / ⑦ 未拉开 20% 前竞价低开 > -3%',
+        '盘中类卖点逐分钟回溯取最先触发：同分钟 ③ > ②(-5%) > ②(-3%) > ①',
+      ],
+      note: '卖出后当日仍可继续买入',
+    });
+    ctx.link('buy', 'sell', { label: '持仓期间', tone: 'sell' });
+  });
+
 // 科技进攻-情绪游资极致胜率（融合 · 账户风格独占）
 const specFused = () =>
   build((ctx) => {
@@ -1258,6 +1319,7 @@ export const getStrategyFlow = (id) => {
   // 10 日窗口为两位数，\dd 正则不匹配，需在通用分派前特判
   if (s === 'highest_10d_gain') return specNdGain('10');
   if (s === 'sci_attack_emo_win') return specFused();
+  if (s === 'wash_fusion_extreme_odds') return specWashFusion();
   if (s === 'hot_money_extreme_win') return specExtremeWin();
   if (s === 'hot_money_reverse_leader') return specReverseLeader();
   if (/^hot_money_[23]board_attack$/.test(s)) return specNBoard(nBoardN(s));

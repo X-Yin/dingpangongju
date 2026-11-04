@@ -1,37 +1,31 @@
 // 全局买点 / 卖点诊断提醒（挂载于 App 根组件，全页面生效）
 //   后端命中买点 / 卖点且进入新的 5 分钟桶时经 WS 推送 open:true，本组件据此提醒：
-//     买点：弹出「买点流水线」弹窗（大盘总览 → 股票细览 → 条件确认），确认买入后关闭
+//     买点：右下角弹出「买点诊断命中」精简卡片（股票名称 / 当前涨幅 / 策略命中 / 各策略核心指标，
+//           买点条件明细默认隐藏，点击卡片底部三角箭头展开）
 //     卖点：右下角卖点卡片（股票名称 / 卖出价格 / 卖出理由 / 本次收益率）
 //   抽屉（FloatingStockPosition）与页面内诊断卡片的数据展示不受影响，本组件只负责全局提醒。
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Modal, Row, Col, Button, Spin, Empty, Segmented, message } from 'antd';
+import { Button, Modal, message } from 'antd';
 import {
   ThunderboltOutlined,
   WarningOutlined,
   CloseOutlined,
   ClockCircleOutlined,
-  LineChartOutlined,
-  GlobalOutlined,
   CheckOutlined,
   CheckCircleFilled,
   CloseCircleFilled,
   MinusCircleFilled,
-  AreaChartOutlined,
-  BarChartOutlined,
+  CaretDownOutlined,
+  CaretUpOutlined,
 } from '@ant-design/icons';
 import { local_ip } from '../../constant';
 import { getStrategyMode, MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION } from '../../utils/strategyMode';
 import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush } from '../../utils/buyPointWs';
-import StockTimeLine from '../StockTimeLine';
-import StockKLine from '../StockKLine';
-import StockKLineModal from '../StockKLineModal';
-import WatchlistTopRanking from '../../pages/dingpan/components/WatchlistTopRanking';
-import BlockRankingCards from '../../pages/dingpan/components/BlockRankingCards';
+import { isTradingDay } from '../../utils/tradingDay';
 import './index.scss';
 
-// 情绪游资-极致赔率（首板起爆 + 二板起爆）复用本组件的统一买点流水线弹窗，
+// 情绪游资-极致赔率（首板起爆 + 二板起爆）复用本组件的统一买点卡片，
 // 走独立 WS 类型 wash_fusion_buy（不走策略模式 buy_point，避免串到页面内诊断）
 const MODE_LABELS = {
   [MODE_TECH_ATTACK]: '科技进攻',
@@ -40,27 +34,10 @@ const MODE_LABELS = {
   [MODE_WASH_FUSION]: '情绪游资-极致赔率',
 };
 
-// 大盘总览三大指数（分时图）
-const INDEX_CHARTS = [
-  { code: 'sh000001', label: '上证指数' },
-  { code: 'sz399006', label: '创业板指' },
-  { code: 'sh000688', label: '科创50' },
-];
-
 const fmtPct = (v) => {
   const num = Number(v);
   if (v === undefined || v === null || Number.isNaN(num)) return '--';
   return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
-};
-
-// 首板起爆：洗盘形态文案（与后端候选列表同一口径）
-const washText = (w) => {
-  if (!w) return '--';
-  const parts = [];
-  if (w.washDays != null) parts.push(`洗盘 ${w.washDays} 个交易日`);
-  if (w.rangePct != null) parts.push(`幅度 ${Number(w.rangePct).toFixed(2)}%`);
-  if (w.platformHigh != null) parts.push(`平台高点 ${Number(w.platformHigh).toFixed(2)}`);
-  return parts.length > 0 ? parts.join('，') : '--';
 };
 
 // 实时价格补齐：/stock_tline_data 取分时最后一点（last_px 优先，缺失时按昨收 × (1 + 涨幅) 折算）
@@ -137,15 +114,57 @@ const checkDetailText = (c) => {
 };
 
 const GlobalDiagnosisAlert = () => {
-  // 买点流水线弹窗：{ mode, data, bucket, ts, stocks, loading }
+  // 买点精简卡片：{ mode, data, bucket, ts, stocks, loading }
   const [buyAlert, setBuyAlert] = useState(null);
   // 卖点卡片：{ results, ts }
   const [sellAlert, setSellAlert] = useState(null);
   // 冰点转折延时观察卡片：{ mode, data:{ triggerTime, executeTime, delayMin, message }, ts }
   const [iceAlert, setIceAlert] = useState(null);
-  // 极致赔率买点弹窗：{ mode:'wash_fusion_extreme_odds', data, stocks, loading:false, remind, ts }
+  // 极致赔率买点卡片：{ mode:'wash_fusion_extreme_odds', data, stocks, loading:false, remind, ts }
   const [wfAlert, setWfAlert] = useState(null);
+  // 每交易日 9:05 候选池全局弹窗：{ firstBoard, secondBoard, rules, ... }
+  const [wfCandidates, setWfCandidates] = useState(null);
   const seqRef = useRef(0); // 旧请求返回晚于新触发时丢弃过期结果
+
+  // 每个交易日 9:05 自动弹出「情绪游资-极致赔率候选池」全局弹窗（不依赖当前策略模式，2026-11-04 用户新增）
+  //   9:05-9:30 每 30s 检查一次：候选列表非空且当日未弹过 → 弹出并按日标记（localStorage）；
+  //   首板 + 二板列表均为空（含数据未就绪）则不弹；超过 9:30 不再检查
+  useEffect(() => {
+    const todayKey = () => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+    const shownToday = () => {
+      try { return localStorage.getItem(`wf_candidates_modal_shown_${todayKey()}`) === '1'; } catch { return false; }
+    };
+    const markShown = () => {
+      try { localStorage.setItem(`wf_candidates_modal_shown_${todayKey()}`, '1'); } catch { /* 忽略 */ }
+    };
+    let stopped = false;
+    const check = async () => {
+      if (stopped) return;
+      const now = new Date();
+      const minuteOfDay = now.getHours() * 60 + now.getMinutes();
+      if (!isTradingDay(now) || shownToday()) return;
+      if (minuteOfDay < 9 * 60 + 5 || minuteOfDay >= 9 * 60 + 30) return;
+      try {
+        const res = await axios.get(`http://${local_ip}:3000/wash_fusion_extreme_odds_snapshot`);
+        const d = res.data?.data || null;
+        const first = Array.isArray(d?.firstBoard) ? d.firstBoard : [];
+        const second = Array.isArray(d?.secondBoard) ? d.secondBoard : [];
+        // 首板 + 二板均为空 → 不弹（数据未就绪时由下一个 30s 周期重试，9:30 后放弃）
+        if (first.length + second.length === 0) return;
+        markShown();
+        setWfCandidates(d);
+        stopped = true;
+      } catch (e) {
+        console.error('9:05 候选池弹窗获取极致赔率快照失败:', e);
+      }
+    };
+    check();
+    const timer = setInterval(check, 30000);
+    return () => { stopped = true; clearInterval(timer); };
+  }, []);
 
   // 拉取本次买点命中对应的推荐标的（含实时买入价格）
   //   MOCK 调试消息自带 buyable；实盘按模式取科技进攻 3 日涨幅榜唯一推荐 / 情绪游资顺周期前三 + 逆周期前三
@@ -186,7 +205,7 @@ const GlobalDiagnosisAlert = () => {
           || null;
         if (pick) stocks.push({ ...pick, isTechPick: true });
       } catch (e) {
-        console.error('全局买点弹窗获取科技进攻标的失败:', e);
+        console.error('全局买点卡片获取科技进攻标的失败:', e);
       }
     }
     // 情绪游资源（extreme_win / attack_defense）：顺周期完整买点股前三 + 逆周期择时触发股前三
@@ -199,7 +218,7 @@ const GlobalDiagnosisAlert = () => {
           .map((s) => ({ ...s, isReverse: true }));
         stocks.push(...forward, ...rev);
       } catch (e) {
-        console.error('全局买点弹窗获取情绪游资标的失败:', e);
+        console.error('全局买点卡片获取情绪游资标的失败:', e);
       }
     }
     return decorate(stocks);
@@ -208,7 +227,7 @@ const GlobalDiagnosisAlert = () => {
   useEffect(() => {
     const unsubBuy = subscribeBuyPointPush((msg) => {
       if (msg?.open !== true || !msg.data) return;
-      // 冰点转折延时到点：收起等待卡片，改由买点流水线弹窗展示本次要买入的个股
+      // 冰点转折延时到点：收起等待卡片，改由买点卡片展示本次要买入的个股
       if (msg.data.iceDelay) setIceAlert(null);
       const seq = ++seqRef.current;
       const mode = msg.mode || getStrategyMode();
@@ -230,7 +249,7 @@ const GlobalDiagnosisAlert = () => {
       setSellAlert({ results: hits, ts: msg.ts ?? null });
     });
     // 冰点转折：买点触发后先展示「延时 15min 观察资金聚焦主线板块」等待卡片（补发消息同样展示）；
-    // 延时到点转为「涨幅确认」阶段（phase='confirm'）同样展示，确认通过由买点弹窗接管，
+    // 延时到点转为「涨幅确认」阶段（phase='confirm'）同样展示，确认通过由买点卡片接管，
     // 15:00 仍未确认（phase='giveup'）则收起卡片
     const unsubIce = subscribeIceDelayWaitPush((msg) => {
       const phase = msg?.data?.phase;
@@ -247,7 +266,7 @@ const GlobalDiagnosisAlert = () => {
       }
       setIceAlert({ mode: msg.mode || getStrategyMode(), data: msg.data, ts: msg.ts ?? null });
     });
-    // 极致赔率买点（首板起爆 / 二板起爆）：与科技进攻/情绪游资共用同一套买点流水线弹窗
+    // 极致赔率买点（首板起爆 / 二板起爆）：与科技进攻/情绪游资共用同一张买点卡片
     //   data.stocks 已带买入价/触发时间；data.checks 为线上真实阈值通过项
     const unsubWf = subscribeWashFusionBuyPush((msg) => {
       if (msg?.open !== true) return;
@@ -271,25 +290,27 @@ const GlobalDiagnosisAlert = () => {
     return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); };
   }, [fetchBuyStocks]);
 
-  const pipelineAlert = buyAlert || wfAlert;
-  const closePipeline = () => {
+  const buyCardAlert = buyAlert || wfAlert;
+  const closeBuyCard = () => {
     if (buyAlert) setBuyAlert(null);
     if (wfAlert) setWfAlert(null);
   };
 
-  if (!pipelineAlert && !sellAlert && !iceAlert) return null;
+  if (!buyCardAlert && !sellAlert && !iceAlert && !wfCandidates) return null;
 
   return (
     <div className="gda-container">
       {iceAlert && <IceWaitCard alert={iceAlert} onClose={() => setIceAlert(null)} />}
-      {pipelineAlert && (
-        <BuyPipelineModal
-          key={`${pipelineAlert.mode}-${pipelineAlert.ts ?? 'new'}`}
-          alert={pipelineAlert}
-          onClose={closePipeline}
+      {buyCardAlert && (
+        <BuyAlertCard
+          key={`${buyCardAlert.mode}-${buyCardAlert.ts ?? 'new'}`}
+          alert={buyCardAlert}
+          onClose={closeBuyCard}
         />
       )}
       {sellAlert && <SellCard alert={sellAlert} onClose={() => setSellAlert(null)} />}
+      {/* 每交易日 9:05 候选池全局弹窗 */}
+      {wfCandidates && <WfCandidatesModal data={wfCandidates} onClose={() => setWfCandidates(null)} />}
     </div>
   );
 };
@@ -357,18 +378,82 @@ const IceWaitCard = ({ alert, onClose }) => {
   );
 };
 
-// ==================== 买点流水线弹窗 ====================
-const PIPELINE_STEPS = [
-  { key: 'market', title: '大盘总览', desc: '指数分时 · 自选股与重点板块', icon: <GlobalOutlined /> },
-  { key: 'stock', title: '股票细览', desc: '命中标的 K 线与分时', icon: <LineChartOutlined /> },
-  { key: 'confirm', title: '条件确认', desc: '买入条件逐项核对', icon: <CheckOutlined /> },
-];
+// ==================== 每交易日 9:05 候选池全局弹窗 ====================
+// 展示情绪游资-极致赔率当日候选：左列首板起爆、右列二板起爆；
+// 首板 + 二板均为空时外层已保证不会打开本弹窗
+const WfCandidatesModal = ({ data, onClose }) => {
+  const first = data?.firstBoard || [];
+  const second = data?.secondBoard || [];
+  const rules = data?.rules || {};
+  const basisDate = data?.basisDate || data?.date || '';
+  const updatedAt = data?.updatedAt || '';
+  const pct = (v) => {
+    const num = Number(v);
+    if (v == null || !Number.isFinite(num)) return '--';
+    return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
+  };
 
-const BuyPipelineModal = ({ alert, onClose }) => {
+  const renderCol = (title, list) => (
+    <div className="gda-wf-col">
+      <div className="gda-wf-col-head">
+        <span className="gda-wf-col-title">{title}</span>
+        <span className="gda-wf-col-tag">{list.length} 只</span>
+      </div>
+      <div className="gda-wf-head">
+        <span>#</span>
+        <span>股票</span>
+        <span>状态</span>
+        <span>当日</span>
+        <span>竞价</span>
+        <span>总市值</span>
+      </div>
+      {list.length === 0 ? (
+        <div className="gda-wf-empty">暂无候选</div>
+      ) : list.map((s, i) => (
+        <div key={`${s.code}-${i}`} className="gda-wf-row">
+          <span className="gda-wf-rank">{i + 1}</span>
+          <span className="gda-wf-name" title={`${s.name}（${s.board || s.code || ''}）`}>{s.name}</span>
+          <span className={`gda-wf-status ${s.status === 'limit_open' ? 'is-limit' : 'is-buy'}`}>
+            {s.status === 'limit_open' ? '涨停' : s.statusText || '买点触发'}
+          </span>
+          <span className={`gda-wf-pct ${Number(s.change) >= 0 ? 'up' : 'down'}`}>{pct(s.change)}</span>
+          <span className={`gda-wf-pct ${Number(s.auctionGap) >= 0 ? 'up' : 'down'}`}>{pct(s.auctionGap)}</span>
+          <span className="gda-wf-mv">{s.totalMvYi != null ? `${Number(s.totalMvYi).toFixed(2)}亿` : '--'}</span>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <Modal
+      open
+      onCancel={onClose}
+      footer={null}
+      width={1160}
+      centered
+      zIndex={2200}
+      title={`情绪游资-极致赔率 · 今日候选池（9:05 提醒）`}
+    >
+      <div className="gda-wf-modal-note">
+        {basisDate ? `基准日 ${basisDate}` : ''}{updatedAt ? ` · 更新于 ${updatedAt}` : ''}
+        ：竞价涨幅 ≥ {rules.auctionBuyPct ?? 5}% → 9:30 直接买入；否则盘中分时涨幅首次 ≥ {rules.buyTriggerPct ?? 8}% 触发买入
+      </div>
+      <div className="gda-wf-grid">
+        {renderCol('首板起爆', first)}
+        {renderCol('二板起爆', second)}
+      </div>
+    </Modal>
+  );
+};
+
+// ==================== 买点命中精简卡片 ====================
+// 2026-11-04：替代原「大盘总览 → 股票细览 → 条件确认」三步流水线弹窗。
+// 核心内容突出：股票名称 / 当前涨幅 / 策略命中 / 各策略核心指标
+//   （科技进攻：3日涨幅、抗分歧分数；情绪游资：强度分、差劲分、强度−差劲；极致赔率：竞价、触发时间、洗盘形态）
+// 各买点条件明细默认隐藏，点击卡片底部三角箭头展开查看
+const BuyAlertCard = ({ alert, onClose }) => {
   const { mode, data, stocks, loading, bucket, remind } = alert;
-  const [step, setStep] = useState(0);
-  const [stockIdx, setStockIdx] = useState(0);
-  const [klineStock, setKlineStock] = useState(null);
+  const [expanded, setExpanded] = useState(false);
 
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isDefense = mode === MODE_ATTACK_DEFENSE;
@@ -399,425 +484,6 @@ const BuyPipelineModal = ({ alert, onClose }) => {
           data?.allPassed === true && '全部前置条件通过',
         ].filter(Boolean);
 
-  // 标的数量变化时兜底，避免选中下标越界
-  const safeStockIdx = Math.min(stockIdx, Math.max(0, stocks.length - 1));
-
-  return (
-    <>
-      <Modal
-        open
-        onCancel={onClose}
-        footer={null}
-        width={1280}
-        centered
-        destroyOnClose
-        closable={false}
-        zIndex={2300}
-        className="gdp-modal"
-        styles={{ content: { padding: 0, background: 'transparent', boxShadow: 'none' }, body: { padding: 0 } }}
-      >
-        <div className="gda-card gda-buy gdp-card">
-          <div className="gda-header">
-            <ThunderboltOutlined className="gda-header-icon buy" />
-            <span className="gda-title">买点诊断命中 · 买入流水线</span>
-            <span className="gda-mode-badge">{MODE_LABELS[mode] || mode}</span>
-            {isWf && remind && <span className="gda-hit-types">提前提醒 · 9:30 执行</span>}
-            {hitTypes.length > 0 && <span className="gda-hit-types">命中：{hitTypes.join('、')}</span>}
-            <CloseOutlined className="gda-close" onClick={onClose} />
-          </div>
-
-          <div className="gdp-body">
-            {/* 流水线节点进程 */}
-            <div className="gdp-steps">
-              {PIPELINE_STEPS.map((s, i) => (
-                <div
-                  key={s.key}
-                  className={`gdp-step${i === step ? ' is-active' : ''}${i < step ? ' is-done' : ''}`}
-                  onClick={() => setStep(i)}
-                >
-                  <span className="gdp-step-dot">{i < step ? <CheckOutlined /> : s.icon}</span>
-                  <span className="gdp-step-text">
-                    <b>{`${i + 1}. ${s.title}`}</b>
-                    <i>{s.desc}</i>
-                  </span>
-                  {i < PIPELINE_STEPS.length - 1 && <span className="gdp-step-line" />}
-                </div>
-              ))}
-            </div>
-
-            <div className="gdp-step-body">
-              {step === 0 && <MarketOverview onStockClick={setKlineStock} />}
-              {step === 1 && (
-                <StockDetail
-                  stocks={stocks}
-                  loading={loading}
-                  stockIdx={safeStockIdx}
-                  onStockIdxChange={setStockIdx}
-                  isWf={isWf}
-                  data={data}
-                />
-              )}
-              {step === 2 && (
-                <ConditionConfirm
-                  mode={mode}
-                  data={data}
-                  stocks={stocks}
-                  loading={loading}
-                  stockIdx={safeStockIdx}
-                  isWf={isWf}
-                  isExtreme={isExtreme}
-                  isDefense={isDefense}
-                  bucket={bucket}
-                  remind={remind}
-                />
-              )}
-            </div>
-
-            <div className="gdp-nav">
-              {step > 0 && <Button onClick={() => setStep(step - 1)}>上一步</Button>}
-              <span className="gdp-nav-spacer" />
-              {step < 2 && (
-                <Button type="primary" onClick={() => setStep(step + 1)}>
-                  {step === 0 ? '下一步：股票细览' : '下一步：条件确认'}
-                </Button>
-              )}
-              {step === 2 && (
-                <Button
-                  type="primary"
-                  size="large"
-                  icon={<CheckOutlined />}
-                  onClick={() => {
-                    message.success('已确认买入，请按仓位执行下单');
-                    onClose();
-                  }}
-                >
-                  确认买入
-                </Button>
-              )}
-            </div>
-
-            <div className="gda-footer">
-              诊断时间：{data?.timestamp || '--'}
-              {bucket != null ? ` · 时间桶 ${String(bucket).slice(0, 2)}:${String(bucket).slice(2, 4)}` : ''}
-              {isWf ? (remind ? ' · 竞价提醒（9:25-9:30 每 30 秒一次，9:30 执行买入）' : ` · ${data?.sourceLabel || '极致赔率'}买点`) : ''}
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      {/* 大盘总览中点击股票 → K 线弹窗（层级高于流水线弹窗） */}
-      <StockKLineModal
-        visible={!!klineStock}
-        onCancel={() => setKlineStock(null)}
-        code={klineStock?.code}
-        stockInfo={{ name: klineStock?.stockName || klineStock?.name, change: klineStock?.change }}
-        zIndex={2400}
-      />
-    </>
-  );
-};
-
-// ==================== 节点一：大盘总览 ====================
-const MarketOverview = ({ onStockClick }) => (
-  <div className="gdp-node">
-    <div className="gda-section">
-      <div className="gda-section-title">三大指数分时</div>
-      <Row gutter={[12, 12]}>
-        {INDEX_CHARTS.map((item) => (
-          <Col key={item.code} xs={24} md={8}>
-            <IndexMiniChart item={item} />
-          </Col>
-        ))}
-      </Row>
-    </div>
-
-    <MarketBoards onStockClick={onStockClick} />
-  </div>
-);
-
-// 单个指数分时：/stock_tline_data 拉取当日分时（每 60s 刷新）
-const IndexMiniChart = ({ item }) => {
-  const [line, setLine] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let alive = true;
-    const load = async () => {
-      try {
-        const res = await axios.get(`http://${local_ip}:3000/stock_tline_data`, { params: { code: item.code } });
-        if (!alive) return;
-        setLine(res.data?.line || []);
-      } catch (e) {
-        console.error(`获取 ${item.label} 分时数据失败:`, e);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    };
-    load();
-    const timer = setInterval(load, 60000);
-    return () => { alive = false; clearInterval(timer); };
-  }, [item.code, item.label]);
-
-  const last = line.length > 0 ? line[line.length - 1] : null;
-  const change = last?.change != null ? Number(last.change) : null;
-
-  return (
-    <div className="gdp-panel">
-      <div className="gdp-panel-head">
-        <span className="gdp-panel-name">{item.label}</span>
-        <span className="gdp-panel-code">{item.code}</span>
-        {change != null && (
-          <span className={`gdp-panel-change ${change >= 0 ? 'up' : 'down'}`}>{fmtPct(change)}</span>
-        )}
-      </div>
-      <div className="gdp-chart-box">
-        {loading ? (
-          <div className="gdp-chart-loading"><Spin size="small" /></div>
-        ) : line.length > 0 ? (
-          <StockTimeLine data={line} height={168} />
-        ) : (
-          <div className="gdp-chart-loading"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无分时" /></div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// 自选股涨跌幅前十 + 重点板块涨跌幅前十（数据同盯盘页 /notice_data）
-const MarketBoards = ({ onStockClick }) => {
-  const navigate = useNavigate();
-  const [allStockData, setAllStockData] = useState([]);
-  const [blockData, setBlockData] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const load = useCallback(async () => {
-    try {
-      const res = await axios.get(`http://${local_ip}:3000/notice_data`);
-      setAllStockData(Array.isArray(res.data?.allStockData) ? res.data.allStockData : []);
-      setBlockData(res.data?.topAndBottomBlockData || null);
-    } catch (e) {
-      console.error('获取自选股 / 重点板块数据失败:', e);
-    }
-  }, []);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 组件挂载后首次拉取看板数据
-    load();
-    const timer = setInterval(load, 60000);
-    return () => clearInterval(timer);
-  }, [load]);
-
-  // 强制刷新：先让后端刷新自选股行情，再重新拉取看板数据
-  const handleRefreshStocks = async () => {
-    setRefreshing(true);
-    try {
-      await axios.post(`http://${local_ip}:3000/refresh_monitor_stock_data`);
-      await load();
-      message.success('自选股数据已刷新');
-    } catch {
-      message.error('刷新失败，请稍后重试');
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  // 强制刷新板块数据
-  const handleRefreshBlocks = async () => {
-    setRefreshing(true);
-    try {
-      await axios.post(`http://${local_ip}:3000/api/block/refresh`);
-      await load();
-      message.success('板块数据已强制刷新');
-    } catch {
-      message.error('板块数据刷新失败，请稍后重试');
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  // 板块成分股悬浮列表（内联样式，避免依赖盯盘页样式表）
-  const renderBlockStockList = (blockDataItem) => {
-    if (!blockDataItem || !Array.isArray(blockDataItem.data) || blockDataItem.data.length === 0) {
-      return <div style={{ padding: 8, color: '#999' }}>暂无数据</div>;
-    }
-    return (
-      <div style={{ maxHeight: 320, overflowY: 'auto', minWidth: 220 }}>
-        {blockDataItem.data.map((stock, idx) => (
-          <div
-            key={`${stock.code || idx}`}
-            style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '4px 8px', cursor: 'pointer' }}
-            onClick={() => onStockClick({ code: stock.code, stockName: stock.name, name: stock.name, change: stock.change })}
-          >
-            <span style={{ fontSize: 12, color: '#1f2937' }}>{stock.name}</span>
-            <span style={{ fontSize: 12, fontFamily: 'SF Mono, monospace', color: stock.change >= 0 ? '#e11d48' : '#059669' }}>
-              {stock.change > 0 ? '+' : ''}{stock.change}%
-            </span>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  return (
-    <div className="gda-section">
-      <div className="gda-section-title">自选股涨跌幅前十 · 重点板块涨跌幅前十</div>
-      <Row gutter={[12, 12]}>
-        <Col xs={24} lg={12}>
-          <div className="gdp-light-card">
-            <WatchlistTopRanking
-              stocks={allStockData}
-              onStockClick={(s) => onStockClick({ ...s, stockName: s.stockName || s.name })}
-              onRefresh={handleRefreshStocks}
-              refreshing={refreshing}
-            />
-          </div>
-        </Col>
-        <Col xs={24} lg={12}>
-          <div className="gdp-light-card">
-            <BlockRankingCards
-              topAndBottomBlockData={blockData}
-              renderBlockStockList={renderBlockStockList}
-              onBlockClick={(blockName) => navigate(`/block?blockName=${encodeURIComponent(blockName)}`)}
-              onRefresh={handleRefreshBlocks}
-              refreshing={refreshing}
-              vertical
-            />
-          </div>
-        </Col>
-      </Row>
-    </div>
-  );
-};
-
-// ==================== 节点二：股票细览 ====================
-const StockDetail = ({ stocks, loading, stockIdx, onStockIdxChange, isWf, data }) => {
-  const current = stocks[stockIdx] || null;
-
-  return (
-    <div className="gdp-node">
-      <div className="gda-section">
-        <div className="gda-section-title">当前命中的要买入的股票</div>
-        {loading ? (
-          <div className="gda-loading">正在获取推荐标的与实时价格…</div>
-        ) : stocks.length === 0 ? (
-          <div className="gda-empty">当前无满足买点条件的可买标的。</div>
-        ) : (
-          <>
-            {stocks.length > 1 && (
-              <Segmented
-                size="small"
-                value={stockIdx}
-                onChange={(v) => onStockIdxChange(Number(v))}
-                options={stocks.map((s, i) => ({
-                  label: `${s.stockName || s.name || s.code}${s.isReverse ? '（逆）' : ''}`,
-                  value: i,
-                }))}
-                style={{ marginBottom: 10 }}
-              />
-            )}
-            <div className="gda-stock">
-              <div className="gda-stock-head">
-                <b>{current.stockName || current.name}</b>
-                <span className="gda-code">{current.code}</span>
-                {(isWf || current.isReverse || current.isTechPick) && (
-                  <span className="gda-tag">
-                    {isWf
-                      ? (current.sourceLabel || (current.source === 'second_board_wash' ? '二板起爆' : '首板起爆'))
-                      : current.isReverse ? '逆周期 · 反向抱团' : '科技进攻'}
-                  </span>
-                )}
-                {current.buyPrice != null ? (
-                  <span className="gda-price">买入价格 <b>{Number(current.buyPrice).toFixed(2)}</b></span>
-                ) : (
-                  <span className="gda-price">买入价格 --</span>
-                )}
-              </div>
-              <div className="gda-stock-meta">
-                {isWf
-                  ? `触发 ${current.minute || '--'} · 竞价 ${fmtPct(current.auctionGap)} · 当日 ${fmtPct(current.change)}`
-                  : current.isReverse
-                    ? `强度分 ${current.strengthScore != null ? Number(current.strengthScore).toFixed(2) : '--'} · ${current.timingTag || '--'}`
-                    : current.isTechPick
-                      ? `3日 ${fmtPct(current.change3d)} · 抗分歧 ${current.resilienceScore != null ? Number(current.resilienceScore).toFixed(2) : '--'}`
-                      : `强度−差劲 ${current.delta != null ? Number(current.delta).toFixed(2) : '--'}`}
-                {isWf && ` · ${washText(current.washout)}`}
-                {!isWf && current.lianbanCount != null ? ` · ${current.lianbanCount} 连板` : ''}
-                {current.priceChange != null ? ` · 当日 ${fmtPct(current.priceChange)}` : ''}
-                {isWf && current.mode === 'auction' ? ` · 竞价 ≥ ${data?.rules?.auctionBuyPct ?? 5}%` : ''}
-              </div>
-            </div>
-
-            <Row gutter={[12, 12]} style={{ marginTop: 12 }}>
-              <Col xs={24} xl={12}>
-                <div className="gdp-chart-block">
-                  <div className="gdp-chart-title"><BarChartOutlined /> 日 K 线</div>
-                  <StockDetailCharts current={current} />
-                </div>
-              </Col>
-              <Col xs={24} xl={12}>
-                <div className="gdp-chart-block">
-                  <div className="gdp-chart-title"><AreaChartOutlined /> 当日分时</div>
-                  <StockDetailCharts current={current} timelineOnly />
-                </div>
-              </Col>
-            </Row>
-          </>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// K 线 / 分时数据加载：同一 code 只拉一次数据，按 timelineOnly 分别渲染
-const StockDetailCharts = ({ current, timelineOnly = false }) => {
-  const [kline, setKline] = useState([]);
-  const [line, setLine] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!current?.code) return undefined;
-    let alive = true;
-    const load = async () => {
-      try {
-        const [kRes, tRes] = await Promise.all([
-          axios.get(`http://${local_ip}:3000/stock_data`, { params: { code: current.code } }),
-          axios.get(`http://${local_ip}:3000/stock_tline_data`, { params: { code: current.code } }),
-        ]);
-        if (!alive) return;
-        setKline(kRes.data || []);
-        setLine(tRes.data?.line || []);
-      } catch (e) {
-        console.error('获取个股行情数据失败:', e);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    };
-    load();
-    const timer = setInterval(load, 30000);
-    return () => { alive = false; clearInterval(timer); };
-  }, [current?.code]);
-
-  const height = 340;
-
-  if (loading) {
-    return <div className="gdp-chart-loading" style={{ height }}><Spin tip="正在加载行情数据..." /></div>;
-  }
-
-  if (timelineOnly) {
-    return line.length > 0
-      ? <StockTimeLine data={line} height={height} />
-      : <div className="gdp-chart-loading" style={{ height }}><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无分时数据" /></div>;
-  }
-
-  return kline.length > 0
-    ? <StockKLine data={kline} height={height} />
-    : <div className="gdp-chart-loading" style={{ height }}><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无 K 线数据" /></div>;
-};
-
-// ==================== 节点三：条件确认 ====================
-const ConditionConfirm = ({ mode, data, stocks, loading, stockIdx, isWf, isExtreme, isDefense, bucket, remind }) => {
-  const current = stocks[stockIdx] || null;
-
   // 条件分组：攻防兼备展示三组；其余展示主条件（+ 逆周期条件）
   const groups = [];
   if (isDefense) {
@@ -833,8 +499,9 @@ const ConditionConfirm = ({ mode, data, stocks, loading, stockIdx, isWf, isExtre
     }
   }
   const hasChecks = groups.some((g) => Array.isArray(g.checks) && g.checks.length > 0);
+  const reverseReasons = collectBuyReasons(data?.reverseChecks);
 
-  // 仓位说明
+  // 建议仓位（精简展示）
   const techPos = !isExtreme && !isWf ? buildTechPositionExplain(isDefense ? data?.tech : data) : null;
   const ewPos = (isExtreme || isDefense)
     ? { pos: '半仓（50%）', why: '情绪游资为双腿结构，顺周期、逆周期各半仓' }
@@ -846,121 +513,202 @@ const ConditionConfirm = ({ mode, data, stocks, loading, stockIdx, isWf, isExtre
     }
     : null;
 
-  const reverseReasons = collectBuyReasons(data?.reverseChecks);
+  // 个股所属策略命中标签
+  const stockTag = (s) => {
+    if (isWf) return s.sourceLabel || (s.source === 'second_board_wash' ? '二板起爆' : '首板起爆');
+    if (s.isReverse) return '情绪游资·逆周期';
+    if (s.isTechPick) return '科技进攻';
+    return '情绪游资·顺周期';
+  };
+
+  // 个股核心指标 chips：按所属策略展示最关键的数值（抗分歧 / n日涨幅 / 强度分 / 差劲分 / 强度−差劲 等）
+  const stockMetrics = (s) => {
+    const chips = [];
+    const push = (label, value, hl = false) => {
+      if (value != null && value !== '--' && value !== '') chips.push({ label, value, hl });
+    };
+    if (isWf) {
+      push('触发', s.minute);
+      if (s.auctionGap != null) push('竞价', fmtPct(s.auctionGap));
+      if (s.washout?.washDays != null) push('洗盘', `${s.washout.washDays} 个交易日`);
+    } else if (s.isTechPick) {
+      if (s.change3d != null) push('3日涨幅', fmtPct(s.change3d));
+      if (s.resilienceScore != null) push('抗分歧', Number(s.resilienceScore).toFixed(2));
+    } else if (s.isReverse) {
+      if (s.strengthScore != null) push('强度分', Number(s.strengthScore).toFixed(2));
+      push('择时', s.timingTag);
+    } else {
+      if (s.strengthScore != null) push('强度分', Number(s.strengthScore).toFixed(2));
+      if (s.diffScore != null) push('差劲分', Number(s.diffScore).toFixed(2));
+      if (s.delta != null) push('强度−差劲', Number(s.delta).toFixed(2), true);
+    }
+    if (s.buyPrice != null) push('买入价', Number(s.buyPrice).toFixed(2), true);
+    if (s.lianbanCount != null && Number(s.lianbanCount) > 0) push('', `${s.lianbanCount} 连板`);
+    return chips;
+  };
+
+  const currentChange = (s) => (s.priceChange != null ? s.priceChange : s.change);
+
+  const handleConfirm = () => {
+    message.success('已确认买入，请按仓位执行下单');
+    onClose();
+  };
 
   return (
-    <div className="gdp-node">
-      <div className="gda-section">
-        <div className="gda-section-title">本次买入</div>
+    <div className="gda-card gda-buy">
+      <div className="gda-header">
+        <ThunderboltOutlined className="gda-header-icon buy" />
+        <span className="gda-title">买点诊断命中</span>
+        <span className="gda-mode-badge">{MODE_LABELS[mode] || mode}</span>
+        {isWf && remind && <span className="gda-hit-types">提前提醒 · 9:30 执行</span>}
+        {hitTypes.length > 0 && <span className="gda-hit-types">命中：{hitTypes.join('、')}</span>}
+        <CloseOutlined className="gda-close" onClick={onClose} />
+      </div>
+
+      {/* 核心：股票名称 / 当前涨幅 / 策略命中 / 各策略核心指标 */}
+      <div className="gda-body">
         {loading ? (
           <div className="gda-loading">正在获取推荐标的与实时价格…</div>
-        ) : current ? (
-          <div className="gda-stock">
+        ) : stocks.length === 0 ? (
+          <div className="gda-empty">当前无满足买点条件的可买标的。</div>
+        ) : stocks.map((s, idx) => (
+          <div key={`${s.code}-${idx}`} className="gda-stock gda-buy-stock">
             <div className="gda-stock-head">
-              <b>{current.stockName || current.name}</b>
-              <span className="gda-code">{current.code}</span>
-              <span className="gda-tag">{MODE_LABELS[mode] || mode}</span>
-              {current.buyPrice != null && (
-                <span className="gda-price">买入价格 <b>{Number(current.buyPrice).toFixed(2)}</b></span>
-              )}
+              <b className="gda-stock-name">{s.stockName || s.name}</b>
+              <span className="gda-code">{s.code}</span>
+              <span className="gda-tag">{stockTag(s)}</span>
+              <span className={`gda-change ${Number(currentChange(s) ?? 0) >= 0 ? 'up' : 'down'}`}>
+                {fmtPct(currentChange(s))}
+              </span>
             </div>
-            <div className="gda-stock-meta">
-              {current.priceChange != null ? `当日 ${fmtPct(current.priceChange)}` : '--'}
-              {bucket != null ? ` · 时间桶 ${String(bucket).slice(0, 2)}:${String(bucket).slice(2, 4)}` : ''}
-              {isWf && remind ? ' · 竞价提醒' : ''}
+            <div className="gda-metrics">
+              {stockMetrics(s).map((m, i) => (
+                <span key={i} className={`gda-metric${m.hl ? ' hl' : ''}`}>
+                  {m.label ? <i>{m.label}</i> : null}
+                  <b>{m.value}</b>
+                </span>
+              ))}
             </div>
           </div>
-        ) : (
-          <div className="gda-empty">当前无可买标的，请谨慎执行。</div>
-        )}
-      </div>
-
-      <div className="gda-section">
-        <div className="gda-section-title">建议仓位</div>
-        {techPos && (
-          <div className="gda-position">
-            <span className="gda-pos-value">{techPos.pos}</span>
-            <span className="gda-pos-why">科技进攻：{techPos.why}{isDefense ? '；两策略同时触发时科技进攻（快进快出）优先' : ''}</span>
-          </div>
-        )}
-        {ewPos && (
-          <div className="gda-position">
-            <span className="gda-pos-value">{ewPos.pos}</span>
-            <span className="gda-pos-why">情绪游资：{ewPos.why}{isDefense ? '；若科技进攻（快进快出）同时触发则其优先，本笔情绪游资暂缓' : ''}</span>
-          </div>
-        )}
-        {wfPos && (
-          <div className="gda-position">
-            <span className="gda-pos-value">{wfPos.pos}</span>
-            <span className="gda-pos-why">极致赔率：{wfPos.why}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="gda-section">
-        <div className="gda-section-title">买入条件核对</div>
-        {!hasChecks ? (
-          <div className="gda-empty">前置条件数据缺失</div>
-        ) : groups.map((g) => (
-          Array.isArray(g.checks) && g.checks.length > 0 && (
-            <div key={g.title} className="gdp-cond-group">
-              <div className="gdp-cond-group-title">{g.title}</div>
-              {g.checks.map((c) => {
-                const status = checkStatus(c);
-                const detailText = checkDetailText(c);
-                return (
-                  <div key={`${g.title}-${c.id}`} className={`gdp-cond is-${status}`}>
-                    <div className="gdp-cond-head">
-                      {status === 'pass' && <CheckCircleFilled className="gdp-cond-icon" />}
-                      {status === 'exempt' && <MinusCircleFilled className="gdp-cond-icon" />}
-                      {status === 'fail' && <CloseCircleFilled className="gdp-cond-icon" />}
-                      {status === 'unknown' && <MinusCircleFilled className="gdp-cond-icon" />}
-                      <span className="gdp-cond-title">{c.title || c.id}</span>
-                      <span className="gdp-cond-value">{c.value != null ? String(c.value) : '--'}</span>
-                      <span className="gdp-cond-badge">
-                        {status === 'pass' ? '已满足' : status === 'exempt' ? '豁免' : status === 'fail' ? '未满足' : '未知'}
-                      </span>
-                    </div>
-                    {detailText && <div className="gdp-cond-detail">{detailText}</div>}
-                  </div>
-                );
-              })}
-            </div>
-          )
         ))}
-        {reverseReasons.length > 0 && !isDefense && (
-          <div className="gdp-cond-group">
-            <div className="gdp-cond-group-title">逆周期（反向抱团）触发理由</div>
-            {reverseReasons.map((c) => (
-              <div key={`rev-${c.id}`} className="gdp-cond is-pass">
-                <div className="gdp-cond-head">
-                  <CheckCircleFilled className="gdp-cond-icon" />
-                  <span className="gdp-cond-title">{c.title}</span>
-                  <span className="gdp-cond-value">{c.value || '--'}</span>
-                  <span className="gdp-cond-badge">已满足</span>
-                </div>
-                {checkDetailText(c) && <div className="gdp-cond-detail">{checkDetailText(c)}</div>}
+
+        {/* 建议仓位（精简展示） */}
+        {(techPos || ewPos || wfPos) && (
+          <div className="gda-section">
+            <div className="gda-section-title">建议仓位</div>
+            {techPos && (
+              <div className="gda-position">
+                <span className="gda-pos-value">科技进攻 {techPos.pos}</span>
+                <span className="gda-pos-why">{techPos.why}{isDefense ? '；两策略同时触发时科技进攻（快进快出）优先' : ''}</span>
               </div>
-            ))}
+            )}
+            {ewPos && (
+              <div className="gda-position">
+                <span className="gda-pos-value">情绪游资 {ewPos.pos}</span>
+                <span className="gda-pos-why">{ewPos.why}{isDefense ? '；若科技进攻（快进快出）同时触发则其优先，本笔情绪游资暂缓' : ''}</span>
+              </div>
+            )}
+            {wfPos && (
+              <div className="gda-position">
+                <span className="gda-pos-value">极致赔率 {wfPos.pos}</span>
+                <span className="gda-pos-why">{wfPos.why}</span>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* 冰点转折 · 延时买入说明 */}
-      {data?.iceDelay?.phase === 'ready' && (
-        <div className="gda-section">
-          <div className="gda-section-title">冰点转折 · 延时买入</div>
-          <div className="gda-reason">
-            <span className="gda-reason-name">触发 / 执行</span>
-            <span className="gda-reason-value">{`${data.iceDelay.triggerTime || '--'} → ${data.iceDelay.executeTime || '--'}（延时 ${data.iceDelay.delayMin ?? 15} 分钟）`}</span>
+      {/* 买点条件明细：默认隐藏，点击底部三角箭头展开 */}
+      {expanded && (
+        <div className="gda-details">
+          <div className="gda-section">
+            <div className="gda-section-title">买入条件核对</div>
+            {!hasChecks ? (
+              <div className="gda-empty">前置条件数据缺失</div>
+            ) : groups.map((g) => (
+              Array.isArray(g.checks) && g.checks.length > 0 && (
+                <div key={g.title} className="gdp-cond-group">
+                  <div className="gdp-cond-group-title">{g.title}</div>
+                  {g.checks.map((c) => {
+                    const status = checkStatus(c);
+                    const detailText = checkDetailText(c);
+                    return (
+                      <div key={`${g.title}-${c.id}`} className={`gdp-cond is-${status}`}>
+                        <div className="gdp-cond-head">
+                          {status === 'pass' && <CheckCircleFilled className="gdp-cond-icon" />}
+                          {status === 'exempt' && <MinusCircleFilled className="gdp-cond-icon" />}
+                          {status === 'fail' && <CloseCircleFilled className="gdp-cond-icon" />}
+                          {status === 'unknown' && <MinusCircleFilled className="gdp-cond-icon" />}
+                          <span className="gdp-cond-title">{c.title || c.id}</span>
+                          <span className="gdp-cond-value">{c.value != null ? String(c.value) : '--'}</span>
+                          <span className="gdp-cond-badge">
+                            {status === 'pass' ? '已满足' : status === 'exempt' ? '豁免' : status === 'fail' ? '未满足' : '未知'}
+                          </span>
+                        </div>
+                        {detailText && <div className="gdp-cond-detail">{detailText}</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            ))}
+            {reverseReasons.length > 0 && !isDefense && (
+              <div className="gdp-cond-group">
+                <div className="gdp-cond-group-title">逆周期（反向抱团）触发理由</div>
+                {reverseReasons.map((c) => (
+                  <div key={`rev-${c.id}`} className="gdp-cond is-pass">
+                    <div className="gdp-cond-head">
+                      <CheckCircleFilled className="gdp-cond-icon" />
+                      <span className="gdp-cond-title">{c.title}</span>
+                      <span className="gdp-cond-value">{c.value || '--'}</span>
+                      <span className="gdp-cond-badge">已满足</span>
+                    </div>
+                    {checkDetailText(c) && <div className="gdp-cond-detail">{checkDetailText(c)}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="gda-reason">
-            <span className="gda-reason-name">资金聚焦板块</span>
-            <span className="gda-reason-value">{data.iceDelay.board || '全量科技自选股（回退）'}</span>
-          </div>
-          {data.iceDelay.reason && <div className="gda-reason-detail">{data.iceDelay.reason}</div>}
+
+          {/* 冰点转折 · 延时买入说明 */}
+          {data?.iceDelay?.phase === 'ready' && (
+            <div className="gda-section">
+              <div className="gda-section-title">冰点转折 · 延时买入</div>
+              <div className="gda-reason">
+                <span className="gda-reason-name">触发 / 执行</span>
+                <span className="gda-reason-value">{`${data.iceDelay.triggerTime || '--'} → ${data.iceDelay.executeTime || '--'}（延时 ${data.iceDelay.delayMin ?? 15} 分钟）`}</span>
+              </div>
+              <div className="gda-reason">
+                <span className="gda-reason-name">资金聚焦板块</span>
+                <span className="gda-reason-value">{data.iceDelay.board || '全量科技自选股（回退）'}</span>
+              </div>
+              {data.iceDelay.reason && <div className="gda-reason-detail">{data.iceDelay.reason}</div>}
+            </div>
+          )}
         </div>
       )}
+
+      {/* 卡片最下方：诊断时间 + 三角箭头（展开/收起条件明细）+ 确认买入 */}
+      <div className="gda-bottom">
+        <span className="gda-diag-time">
+          诊断时间：{data?.timestamp || '--'}
+          {bucket != null ? ` · 时间桶 ${String(bucket).slice(0, 2)}:${String(bucket).slice(2, 4)}` : ''}
+          {isWf ? (remind ? ' · 竞价提醒' : ` · ${data?.sourceLabel || '极致赔率'}买点`) : ''}
+        </span>
+        <span
+          className={`gda-expand${expanded ? ' open' : ''}`}
+          onClick={() => setExpanded((v) => !v)}
+          title={expanded ? '收起买点条件明细' : '展开买点条件明细'}
+        >
+          {expanded
+            ? <CaretUpOutlined className="gda-expand-arrow" />
+            : <CaretDownOutlined className="gda-expand-arrow" />}
+          <span>条件明细</span>
+        </span>
+        <Button type="primary" size="small" icon={<CheckOutlined />} onClick={handleConfirm}>
+          确认买入
+        </Button>
+      </div>
     </div>
   );
 };

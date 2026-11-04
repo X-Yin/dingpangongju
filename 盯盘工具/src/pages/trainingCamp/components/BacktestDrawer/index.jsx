@@ -890,7 +890,8 @@ const fusedNote = {
   ],
 };
 
-const STRATEGY_SPECIFIC_NOTES = {
+// eslint-disable-next-line react-refresh/only-export-components -- 策略说明文案供开盘实战页复用
+export const STRATEGY_SPECIFIC_NOTES = {
   // ---- 常规「N日涨幅最大」系列 ----
   highest_gain: {
     group: '常规·N日涨幅最大',
@@ -1412,6 +1413,41 @@ const STRATEGY_SPECIFIC_NOTES = {
   highest_4d_gain_volume_share: gainVolumeShareNote(4),
   highest_5d_gain_volume_share: gainVolumeShareNote(5),
 
+};
+
+// 策略对应的买入 / 卖出规则集合（策略说明弹窗复用，2026-11-04 抽出为模块级函数供开盘实战页复用）
+// eslint-disable-next-line react-refresh/only-export-components -- 供开盘实战页策略说明弹窗复用
+export const getStrategyRuleSets = (strategy) => {
+  const s = strategy;
+  let buyRules = BUY_RULES;
+  if (isMoodBlockRotateStrategy(s)) buyRules = moodBlockRotateBuyRules(moodBlockRotateN(s));
+  else if (isWashFusionStrategy(s)) buyRules = washFusionBuyRules;
+  else if (isVolumeWashoutStrategy(s)) buyRules = volumeWashoutBuyRules;
+  else if (isFirstBoardWashStrategy(s)) buyRules = firstBoardWashBuyRules;
+  else if (isEmotionBurstFollowStrategy(s)) buyRules = emotionBurstFollowBuyRules;
+  else if (isEmotionBurstDriftStrategy(s)) buyRules = emotionBurstDriftBuyRules;
+  else if (isGainVolumeShareStrategy(s)) buyRules = gainVolumeShareBuyRules(gainVolumeShareN(s));
+  else if (isVolumeShareStrategy(s)) buyRules = volumeShareBuyRules(volumeShareN(s));
+  else if (isNBoardAttackStrategy(s)) buyRules = nBoardAttackBuyRules(nBoardAttackN(s));
+  else if (isExtremeWinStrategy(s) || isFusedStrategy(s)) buyRules = extremeWinBuyRules;
+  else if (isReverseLeaderStrategy(s)) buyRules = reverseLeaderBuyRules;
+  else if (isIceRevStrategy(s)) buyRules = ICE_REV_BUY_RULES;
+  else if (isIceStrategy(s)) buyRules = ICE_BUY_RULES;
+
+  let sellRules = SELL_RULES;
+  if (isMoodBlockRotateStrategy(s)) sellRules = extremeWinSellRules;
+  else if (isWashFusionStrategy(s)) sellRules = washFusionSellRules;
+  else if (isVolumeWashoutStrategy(s)) sellRules = volumeWashoutSellRules;
+  else if (isFirstBoardWashStrategy(s)) sellRules = firstBoardWashSellRules;
+  else if (isEmotionBurstFollowStrategy(s) || isEmotionBurstDriftStrategy(s)) sellRules = LEADER_SELL_RULES;
+  else if (isVolumeShareStrategy(s)) sellRules = volumeShareSellRules;
+  else if (isNBoardAttackStrategy(s)) sellRules = nBoardAttackSellRules;
+  else if (isReverseLeaderStrategy(s)) sellRules = reverseLeaderSellRules;
+  else if (isExtremeWinStrategy(s) || isFusedStrategy(s)) sellRules = extremeWinSellRules;
+  else if (isIceStrategy(s)) sellRules = ICE_SELL_RULES;
+  else if (isIceRevStrategy(s)) sellRules = ICE_REV_SELL_RULES;
+
+  return { buyRules, sellRules };
 };
 
 // 买入原因标签：显示命中了哪些买入条件（悬停展示逐项明细：条件标题、数值与判定理由）
@@ -3059,17 +3095,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         // 融合策略（sci_attack_emo_win）复用极致胜率的规则集合与标签色
         const isExtremeWinLike = isExtremeWin || isFusedStrategy(strategy);
         const isReverseLeader = isReverseLeaderStrategy(strategy);
-        const isNBoardAttack = isNBoardAttackStrategy(strategy);
-        const isVolumeShare = isVolumeShareStrategy(strategy);
-        const isGainVolumeShare = isGainVolumeShareStrategy(strategy);
-        const isEmotionBurstDrift = isEmotionBurstDriftStrategy(strategy);
-        const isEmotionBurstFollow = isEmotionBurstFollowStrategy(strategy);
-        const isFirstBoardWash = isFirstBoardWashStrategy(strategy);
-        const isVolumeWashout = isVolumeWashoutStrategy(strategy);
-        const isWashFusion = isWashFusionStrategy(strategy);
-        const isMoodBlockRotate = isMoodBlockRotateStrategy(strategy);
-        const buyRules = isMoodBlockRotate ? moodBlockRotateBuyRules(moodBlockRotateN(strategy)) : (isWashFusion ? washFusionBuyRules : (isVolumeWashout ? volumeWashoutBuyRules : (isFirstBoardWash ? firstBoardWashBuyRules : (isEmotionBurstFollow ? emotionBurstFollowBuyRules : (isEmotionBurstDrift ? emotionBurstDriftBuyRules : (isGainVolumeShare ? gainVolumeShareBuyRules(gainVolumeShareN(strategy)) : (isVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (isNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (isExtremeWinLike ? extremeWinBuyRules : (isReverseLeader ? reverseLeaderBuyRules : (isIceRev ? ICE_REV_BUY_RULES : (isIce ? ICE_BUY_RULES : BUY_RULES))))))))))));
-        const sellRules = isMoodBlockRotate ? extremeWinSellRules : (isWashFusion ? washFusionSellRules : (isVolumeWashout ? volumeWashoutSellRules : (isFirstBoardWash ? firstBoardWashSellRules : ((isEmotionBurstFollow || isEmotionBurstDrift) ? LEADER_SELL_RULES : (isGainVolumeShare ? SELL_RULES : (isVolumeShare ? volumeShareSellRules : (isNBoardAttack ? nBoardAttackSellRules : (isReverseLeader ? reverseLeaderSellRules : (isExtremeWinLike ? extremeWinSellRules : (isIce ? ICE_SELL_RULES : (isIceRev ? ICE_REV_SELL_RULES : SELL_RULES)))))))))));
+        const { buyRules, sellRules } = getStrategyRuleSets(strategy);
         const notes = STRATEGY_SPECIFIC_NOTES[strategy];
 
         // 将文案中 **xxx** 这种 markdown 粗体标记解析为 React 节点（纯文本不解析）

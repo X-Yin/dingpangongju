@@ -677,7 +677,8 @@ const tick = async () => {
   if (running) return;
   running = true;
   try {
-    if (strategyModeState.getMode() !== MODE_WASH_FUSION) return;
+    // 单选极致赔率或多选模式勾选了极致赔率时均运行（2026-11-04 多选模式）
+    if (!strategyModeState.isModeActive(MODE_WASH_FUSION)) return;
     const now = new Date();
     if (!isTradingDay(now)) return;
     const minute = now.getHours() * 60 + now.getMinutes();

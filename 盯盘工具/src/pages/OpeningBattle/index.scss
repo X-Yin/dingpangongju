@@ -49,20 +49,59 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     gap: 12px;
   }
 
-  // ---------- 第四行 ----------
+  // ---------- 第二行：候选列表卡片 ----------
   .ob-row-second {
     display: flex;
     gap: 16px;
-    align-items: flex-start; // 买/卖点诊断高度由内容撑开
+    align-items: flex-start;
 
-    // 三卡按 4:3:3 分配：带策略模式切换的涨幅榜卡更宽，买点 / 卖点诊断各占 3 份
     > * {
-      flex: 19 1 0;
+      flex: 1 1 0;
+      min-width: 0;
+    }
+  }
+
+  // 第三行：买点诊断占 6 成宽度，卖点诊断占 4 成宽度
+  .ob-row-third {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start; // 两卡高度由内容各自撑开
+
+    > * {
       min-width: 0;
     }
 
     > :first-child {
-      flex: 20 1 0;
+      flex: 6 1 0;
+    }
+
+    > :last-child {
+      flex: 4 1 0;
+    }
+  }
+
+  // 多选模式：勾选的每个策略模式各一个候选列表卡片，
+  // 第二行内横向平分宽度、卡片高度一致，内容超出高度时卡片内滚动
+  .ob-multi-modules {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr; // 按勾选模式数量平分宽度
+    gap: 16px;
+    min-width: 0;
+
+    > .ob-rank3-module {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      height: 450px; // 各卡片等高（限高，让第三行买/卖点诊断卡片露出一部分）
+      overflow: hidden;
+
+      // 表格主体区滚动，标题栏与门槛提示固定
+      .ob-gainer-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+      }
     }
   }
 }
@@ -101,6 +140,20 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+// 标题旁「?」策略说明图标（2026-11-04 用户新增）
+.ob-help-icon {
+  flex: 0 0 auto;
+  font-size: 14px;
+  color: rgba(15, 23, 42, 0.45);
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    color: #1677ff;
+    transform: scale(1.1);
+  }
 }
 
 // 标题栏右侧操作区（模式下拉 + 刷新）：整体换行，避免被长标题拆散
@@ -942,6 +995,32 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
         flex-direction: column;
         align-items: flex-start;
         gap: 6px;
+      }
+    }
+
+    // 极致赔率（首板/二板）、极致胜率（顺周期/逆周期）：两组候选的排序与高度规则
+    //   两组都有内容 → 平分容器高度，单组内部滚动；
+    //   只有一组有内容 → 该组不限制高度，空组按内容自然高度（排序由 JS 的 order 控制，空组置后）
+    &.split {
+      min-height: 0;
+
+      .ob-gainer-col {
+        flex: 1 1 0;
+        min-height: 150px;
+        max-height: none;
+        overflow-y: auto;
+      }
+    }
+
+    &.single {
+      .ob-gainer-col {
+        flex: 0 0 auto;
+        max-height: none;
+        overflow: visible;
+      }
+
+      .ob-gainer-empty {
+        padding: 10px 0;
       }
     }
   }
@@ -1827,6 +1906,11 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     rgba(255, 255, 255, 0.28),
     0 10px 24px -18px rgba(15, 23, 42, 0.55)
   );
+
+  // 相邻条件项之间的上下间距（2026-11-04 用户新增）
+  & + .ob-buy-check {
+    margin-top: 6px;
+  }
 
   &:hover {
     transform: translateY(-1px);
@@ -2851,13 +2935,15 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   z-index: 900;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: var(--ob-btn-radius, 50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: linear-gradient(135deg, #7b4dff, #4d55d8 55%, #1ba7c6);
-  color: #fff;
+  // 按钮已通过 portal 挂到 body 下，主题包 / DIY 变量由按钮自身的 inline style 注入，
+  // 因此这里用 var + 兜底，保证主题按钮配色仍然生效
+  border: var(--ob-btn-border-width, 1px) var(--ob-btn-border-style, solid) var(--ob-btn-border-color, rgba(255, 255, 255, 0.35));
+  background: var(--ob-btn-bg, linear-gradient(135deg, #7b4dff, #4d55d8 55%, #1ba7c6));
+  color: var(--ob-btn-color, #fff);
   font-size: 19px;
   cursor: pointer;
   box-shadow: 0 10px 24px -10px rgba(49, 46, 129, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);

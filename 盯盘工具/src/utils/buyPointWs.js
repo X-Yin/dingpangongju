@@ -173,11 +173,34 @@ export const subscribeDebugWs = (handler) => {
 };
 
 // 同步全局策略模式到后端（后端据此集中诊断 / 发飞书，即使浏览器未打开也按当前模式运行）
+// multi_mode 仅为前端「多选模式」下拉显示标记，不回传后端（多选列表走 syncStrategyModes）
 export const syncStrategyMode = async (mode) => {
+  if (mode === 'multi_mode') return;
   try {
     await axios.post(`http://${local_ip}:3000/set_strategy_mode`, { mode });
   } catch (e) {
     console.error('同步策略模式到后端失败:', e);
+  }
+};
+
+// 多选模式（2026-11-04 新增）：把弹窗勾选的模式列表缓存到后端，
+// 后端买点诊断按列表内全部模式并行执行
+export const syncStrategyModes = async (modes) => {
+  try {
+    await axios.post(`http://${local_ip}:3000/set_strategy_modes`, { modes });
+  } catch (e) {
+    console.error('同步多选策略模式到后端失败:', e);
+  }
+};
+
+// 拉取后端已缓存的多选模式列表（打开多选弹窗时回显；后端为持久化真源）
+export const fetchStrategyModes = async () => {
+  try {
+    const res = await axios.get(`http://${local_ip}:3000/get_strategy_modes`);
+    return Array.isArray(res.data?.data?.modes) ? res.data.data.modes : null;
+  } catch (e) {
+    console.error('获取多选策略模式失败:', e);
+    return null;
   }
 };
 
