@@ -504,6 +504,7 @@ const MultiStockTimeLineModal = ({
   const [remoteResults, setRemoteResults] = useState({ query: '', list: [] }); // 搜索接口返回的非自选股，与查询词配对
   const [remoteSearching, setRemoteSearching] = useState(false);
   const remoteSearchSeqRef = useRef(0); // 请求序号，丢弃过期响应
+  const [watchlistCorrectedCodeSet, setWatchlistCorrectedCodeSet] = useState(() => new Set()); // /search_stock 纠错命中但本地子串未命中的自选股代码
   const [chartData, setChartData] = useState(null);
   const [rightAxisLabels, setRightAxisLabels] = useState([]);
   const [replayVersion, setReplayVersion] = useState(0);
@@ -1469,10 +1470,15 @@ const MultiStockTimeLineModal = ({
   };
 
   const filteredWatchlist = panelSearch
-    ? watchlist.filter(s =>
-        (s.stockName || '').toLowerCase().includes(panelSearch.toLowerCase()) ||
-        (s.code || '').toLowerCase().includes(panelSearch.toLowerCase())
-      )
+    ? watchlist.filter(s => {
+        const q = panelSearch.toLowerCase();
+        const localHit =
+          (s.stockName || '').toLowerCase().includes(q) ||
+          (s.code || '').toLowerCase().includes(q);
+        // 用户把自选股名称写了错字/形近字时，由同花顺 /search_stock 接口纠正后把对应自选股一并捞回
+        const remoteHit = watchlistCorrectedCodeSet.has(s.code);
+        return localHit || remoteHit;
+      })
     : watchlist;
 
   // 批量添加面板远程搜索：输入关键词后调用 /search_stock，把非自选股一并纳入可选项。
@@ -1480,14 +1486,31 @@ const MultiStockTimeLineModal = ({
   const remoteQuery = showBatchPanel && !replayMode ? panelSearch.trim() : '';
 
   useEffect(() => {
-    if (!remoteQuery) return;
+    if (!remoteQuery) {
+      setWatchlistCorrectedCodeSet(prev => (prev.size === 0 ? prev : new Set()));
+      return undefined;
+    }
+    // 本地子串能命中时不需要纠错兜底
+    const localHit = watchlist.some(s =>
+      (s.stockName || '').toLowerCase().includes(remoteQuery.toLowerCase()) ||
+      (s.code || '').toLowerCase().includes(remoteQuery.toLowerCase())
+    );
+    if (localHit) {
+      setWatchlistCorrectedCodeSet(prev => (prev.size === 0 ? prev : new Set()));
+      return undefined;
+    }
     const seq = ++remoteSearchSeqRef.current;
     const timer = window.setTimeout(async () => {
-      setRemoteSearching(true);
       try {
         const res = await axios.get(`http://${local_ip}:3000/search_stock`, { params: { query: remoteQuery } });
         if (seq !== remoteSearchSeqRef.current) return;
-        setRemoteResults({ query: remoteQuery, list: res.data?.data || [] });
+        const remoteList = res.data?.data || [];
+        const watchlistCodeSet = new Set(watchlist.map(s => s.code));
+        const correctedCodes = new Set(
+          remoteList.filter(r => watchlistCodeSet.has(r.code)).map(r => r.code)
+        );
+        setWatchlistCorrectedCodeSet(correctedCodes);
+        setRemoteResults({ query: remoteQuery, list: remoteList });
       } catch (error) {
         console.error('搜索股票失败:', error);
         if (seq === remoteSearchSeqRef.current) setRemoteResults({ query: remoteQuery, list: [] });

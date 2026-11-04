@@ -3018,5 +3018,25 @@
       }
     ],
     "isImportant": false
+  },
+  "sh688279": {
+    "stockName": "峰岹科技",
+    "kline": [
+      {
+        "trade_date": 20261104,
+        "open_px": 169.13,
+        "high_px": 199,
+        "low_px": 167.24,
+        "close_px": 195.86,
+        "business_amount": 4307659,
+        "business_balance": 805612950,
+        "change": 14.2,
+        "ma5_px": 183.19,
+        "ma10_px": 186.29,
+        "ma20_px": 177.1,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

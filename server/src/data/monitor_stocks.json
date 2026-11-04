@@ -1592,5 +1592,16 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-04 08:52:37"
+  },
+  {
+    "code": "sh688279",
+    "name": "峰岹科技",
+    "isImportant": false,
+    "blockName": "物理 AI",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-04 23:43:10"
   }
 ]

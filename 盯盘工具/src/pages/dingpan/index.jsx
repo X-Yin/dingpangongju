@@ -138,6 +138,8 @@ const DingPan = () => {
     const [lastUpdated, setLastUpdated] = useState(null);
     const [history, setHistory] = useState([]); // 记录所有发生过的急速异动
     const [searchQuery, setSearchQuery] = useState(''); // 自选股搜索关键词
+    const [watchlistRemoteCodeSet, setWatchlistRemoteCodeSet] = useState(() => new Set()); // 远程搜索纠错命中的自选股代码集合（比如用户输错形近字时由同花顺纠正）
+    const watchlistRemoteSeqRef = useRef(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
     // 一级板块强度分析弹窗
     const [strengthAnalysisVisible, setStrengthAnalysisVisible] = useState(false);
@@ -1106,6 +1108,48 @@ const DingPan = () => {
         filterHiddenStocks(data.allStockData, hiddenStockMap)
     ), [data.allStockData, hiddenStockMap]);
 
+    // 自选股搜索关键词纠错兜底：同花顺的 /search_stock 接口能纠正错字/形近字（如「峰绍科技」→「峰岹科技」）。
+    // 当本地子串匹配命中 0 条时（用户可能打错字），后台再做一次远程搜索，并把命中的自选股代码并入本地匹配结果。
+    useEffect(() => {
+        const rawQuery = (searchQuery || '').trim();
+        if (!rawQuery) {
+            setWatchlistRemoteCodeSet(prev => (prev.size === 0 ? prev : new Set()));
+            return undefined;
+        }
+        const localHit = (Array.isArray(visibleAllStockData) ? visibleAllStockData : []).some(s =>
+            (s.stockName || '').toLowerCase().includes(rawQuery.toLowerCase()) ||
+            (s.code || '').toLowerCase().includes(rawQuery.toLowerCase())
+        );
+        // 本地能命中时不需要远程兜底，避免每次搜索都多发请求
+        if (localHit) {
+            setWatchlistRemoteCodeSet(prev => (prev.size === 0 ? prev : new Set()));
+            return undefined;
+        }
+        const seq = ++watchlistRemoteSeqRef.current;
+        const timer = window.setTimeout(async () => {
+            try {
+                const res = await axios.get(`http://${local_ip}:3000/search_stock`, { params: { query: rawQuery } });
+                if (seq !== watchlistRemoteSeqRef.current) return;
+                const remoteList = (res.data && res.data.data) || [];
+                const watchlistCodeSet = new Set((Array.isArray(visibleAllStockData) ? visibleAllStockData : []).map(s => s.code));
+                const codes = new Set(
+                    remoteList
+                        .filter(r => watchlistCodeSet.has(r.code))
+                        .map(r => r.code)
+                );
+                setWatchlistRemoteCodeSet(codes);
+            } catch (e) {
+                if (seq === watchlistRemoteSeqRef.current) {
+                    setWatchlistRemoteCodeSet(new Set());
+                }
+            }
+        }, 250);
+        return () => {
+            window.clearTimeout(timer);
+            watchlistRemoteSeqRef.current += 1;
+        };
+    }, [searchQuery, visibleAllStockData]);
+
     const filteredAllStockData = useMemo(() => {
         let stocks = Array.isArray(visibleAllStockData) ? visibleAllStockData : [];
 
@@ -1126,7 +1170,9 @@ const DingPan = () => {
             const query = searchQuery.toLowerCase();
             stocks = stocks.filter(stock =>
                 (stock.stockName && stock.stockName.toLowerCase().includes(query)) ||
-                (stock.code && stock.code.toLowerCase().includes(query))
+                (stock.code && stock.code.toLowerCase().includes(query)) ||
+                // 远程纠错命中的自选股代码（比如用户把「峰岹科技」误写为「峰绍科技」时由同花顺纠正）
+                watchlistRemoteCodeSet.has(stock.code)
             );
         }
 
@@ -1160,7 +1206,7 @@ const DingPan = () => {
         }
 
         return stocks;
-    }, [visibleAllStockData, searchQuery, showOnlyImportant, techFilter, sortOrder, sortField, watchlistMainFund, jigouReports]);
+    }, [visibleAllStockData, searchQuery, watchlistRemoteCodeSet, showOnlyImportant, techFilter, sortOrder, sortField, watchlistMainFund, jigouReports]);
 
     const allStockOverview = useMemo(() => {
         const allStocks = Array.isArray(data.allStockData) ? data.allStockData : [];
