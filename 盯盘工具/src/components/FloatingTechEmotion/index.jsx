@@ -19,6 +19,7 @@ const FloatingTechEmotion = () => {
   const prevValueRef = useRef(null);
   const [jxhcChange, setJxhcChange] = useState(null);
   const [refreshLoading, setRefreshLoading] = useState(false);
+  const [memoryMB, setMemoryMB] = useState(null);
 
   const fetchTechEmotion = async () => {
     try {
@@ -96,6 +97,52 @@ const FloatingTechEmotion = () => {
     };
   }, [isReplayMode]);
 
+  // 内存占用显示：优先用后端 /browser_memory 接口（top 命令拿 Chrome Heap 真实 RSS，
+  // 1:1 对齐 Chrome 任务管理器）；后端不可用时 fallback 到 usedJSHeapSize × 7 估算；
+  // 每 5 秒刷新一次
+  useEffect(() => {
+    const perf = performance;
+    const hasHeapMemory = perf && typeof perf.memory !== 'undefined';
+
+    const JS_ESTIMATE_RATIO = 7; // 仅 macOS Chrome 上：JS 堆 × 7 ≈ 进程内存
+    let timer = null;
+    let cancelled = false;
+
+    // 启动时打印一次口径说明
+    console.info('[FloatingTechEmotion Memory] 优先后端 /browser_memory (top 命令)，fallback usedJSHeapSize × 7');
+
+    const tick = async () => {
+      if (cancelled) return;
+
+      // 先尝试后端接口（macOS top 命令拿真实内存）
+      try {
+        const res = await axios.get(`http://${local_ip}:3000/browser_memory`, { timeout: 2000 });
+        if (!cancelled && res.data?.success && res.data.largestMB != null) {
+          setMemoryMB(res.data.largestMB);
+          return; // 后端返回成功就用后端的值
+        }
+      } catch (_) {
+        // 后端不可用，fallback
+      }
+
+      // Fallback: JS 端估算
+      if (hasHeapMemory) {
+        try {
+          if (cancelled) return;
+          const heapMB = perf.memory.usedJSHeapSize / 1024 / 1024;
+          setMemoryMB(heapMB * JS_ESTIMATE_RATIO);
+        } catch (_) { /* ignore */ }
+      }
+    };
+
+    tick();
+    timer = setInterval(tick, 5000);
+    return () => {
+      cancelled = true;
+      if (timer) clearInterval(timer);
+    };
+  }, []);
+
   const isPositive = currentValue !== null && currentValue > 0;
   const isNegative = currentValue !== null && currentValue < 0;
   const isUp = prevValue !== null && currentValue !== null && currentValue > prevValue;
@@ -136,6 +183,11 @@ const FloatingTechEmotion = () => {
           </span>
           {isUp && <ArrowUpOutlined style={{ color: '#f5222d', fontSize: 14 }} />}
           {isDown && <ArrowDownOutlined style={{ color: '#52c41a', fontSize: 14 }} />}
+          {memoryMB != null && (
+            <span className={`fte-memory-label${memoryMB >= 1500 ? ' warn' : memoryMB >= 1800 ? ' danger' : ''}`}>
+              {(memoryMB >= 1024 ? (memoryMB / 1024).toFixed(1) + 'G' : memoryMB.toFixed(0) + 'M')}
+            </span>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,48 @@
 [
   {
+    "date": "2026-11-04",
+    "operations": [
+      {
+        "id": "1793756173201_n3aa",
+        "action": "sell",
+        "stockName": "五洲新春",
+        "stockCode": "sh603667",
+        "position": "",
+        "time": "09:36"
+      },
+      {
+        "id": "1793756309410_6z13",
+        "action": "sell",
+        "stockName": "电科蓝天",
+        "stockCode": "sh688818",
+        "position": "",
+        "time": "09:38"
+      },
+      {
+        "id": "1793758159085_s718",
+        "action": "buy",
+        "stockName": "顺灏股份",
+        "stockCode": "sz002565",
+        "position": "",
+        "time": "10:09"
+      },
+      {
+        "id": "1793758784724_y5vu",
+        "action": "buy",
+        "stockName": "创维数字",
+        "stockCode": "sz000810",
+        "position": "",
+        "time": "10:19"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-04T01:36:13.221Z",
+    "updatedAt": "2026-11-04T02:19:55.150Z"
+  },
+  {
     "date": "2026-11-03",
     "operations": [
       {

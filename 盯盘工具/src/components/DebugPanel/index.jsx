@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Drawer, Card, Button, Space, Typography, message } from 'antd';
+import { Drawer, Card, Button, Space, Typography, message, InputNumber } from 'antd';
 import {
   BugOutlined, SyncOutlined, CheckCircleFilled, WarningFilled, RocketOutlined, FallOutlined, ClockCircleOutlined,
+  BulbOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../constant';
@@ -27,6 +28,15 @@ const DebugPanel = () => {
   const [fwbMocking, setFwbMocking] = useState(null);
   // 二板起爆 MOCK：buy | sell
   const [sbwMocking, setSbwMocking] = useState(null);
+
+  // 意志力锻炼弹窗间隔（分钟）：默认 5，持久化到 localStorage
+  const [willpowerInterval, setWillpowerInterval] = useState(() => {
+    try {
+      const raw = localStorage.getItem('willpower_interval_min');
+      const n = raw ? parseInt(raw, 10) : 5;
+      return (Number.isFinite(n) && n >= 1 && n <= 60) ? n : 5;
+    } catch (_) { return 5; }
+  });
 
   // 模块一：WS 双向对等自检
   //   每轮流程：前端发 debug_ping → 后端回 debug_pong（方向一）；
@@ -323,6 +333,46 @@ const DebugPanel = () => {
                 卖点诊断
               </Button>
             </Space>
+          </Card>
+
+          {/* 模块七：意志力锻炼弹窗手动触发 */}
+          <Card size="small" title="7. 意志力锻炼弹窗">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              交易日交易时段（9:30-11:30、13:00-15:00）按设定间隔周期性弹出。
+              支持自定义间隔（1-60 分钟），保存在 localStorage，应用重启后生效。
+            </Paragraph>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <span style={{ fontSize: 13, color: '#595959' }}>弹出间隔：</span>
+              <InputNumber
+                min={1}
+                max={60}
+                step={1}
+                value={willpowerInterval}
+                onChange={(v) => { if (v != null) setWillpowerInterval(v); }}
+                style={{ width: 100 }}
+                suffix="分钟"
+              />
+              <Button
+                type="primary"
+                onClick={() => {
+                  const n = willpowerInterval;
+                  if (n < 1 || n > 60) { message.error('间隔需在 1 ~ 60 分钟之间'); return; }
+                  localStorage.setItem('willpower_interval_min', String(n));
+                  window.dispatchEvent(new CustomEvent('willpower-interval-changed'));
+                  message.success(`已保存：每 ${n} 分钟弹出一次`);
+                }}
+              >
+                保存设置
+              </Button>
+            </div>
+            <Button
+              type="primary"
+              icon={<BulbOutlined />}
+              onClick={() => window.dispatchEvent(new CustomEvent('willpower-modal-test'))}
+              style={{ background: '#722ed1', borderColor: '#722ed1' }}
+            >
+              立即测试弹窗
+            </Button>
           </Card>
 
           <Text type="secondary" style={{ fontSize: 12 }}>

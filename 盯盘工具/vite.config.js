@@ -9,6 +9,20 @@ export default defineConfig({
     fs: {
       // 允许访问上级目录（盯盘工具/）下的交易日历 JSON（2026交易日.json）
       allow: ['..']
-    }
-  }
+    },
+    // 开启 COOP/COEP，使 performance.measureUserAgentSpecificMemory() 可用
+    // 该 API 返回进程级内存估算，口径接近 Chrome 任务管理器
+    // credentialless 模式不拦截跨域资源，适合本地开发和小型项目
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
+    },
+  },
+  // 生产构建输出同样带上 COOP/COEP
+  preview: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
+    },
+  },
 })

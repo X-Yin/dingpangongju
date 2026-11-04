@@ -108,6 +108,30 @@
     }
   }
 
+  .fte-memory-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #8a94a6;
+    background: rgba(138, 148, 166, 0.12);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin-left: 2px;
+    transition: color 0.3s ease, background 0.3s ease;
+
+    &.warn {
+      color: #d48806;
+      background: rgba(250, 173, 20, 0.14);
+    }
+
+    &.danger {
+      color: #cf1322;
+      background: rgba(245, 34, 45, 0.14);
+      animation: fte-memory-pulse 1.2s ease-in-out infinite;
+    }
+  }
+
   .fte-jxhc-alert {
     padding: 10px 12px;
     border-radius: 14px;
@@ -181,5 +205,15 @@
   50% {
     opacity: 0.5;
     transform: scale(1.2);
+  }
+}
+
+@keyframes fte-memory-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
   }
 }

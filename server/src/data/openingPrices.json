@@ -1,4 +1,625 @@
 {
-  "date": "20261103",
-  "prices": {}
+  "date": "20261104",
+  "prices": {
+    "sh688347": {
+      "name": "华虹",
+      "open_px": 132.5,
+      "trade_date": 20261104
+    },
+    "sz002371": {
+      "name": "北方华创",
+      "open_px": 495,
+      "trade_date": 20261104
+    },
+    "sh688256": {
+      "name": "寒武纪",
+      "open_px": 767.93,
+      "trade_date": 20261104
+    },
+    "sz002837": {
+      "name": "英维克",
+      "open_px": 35.8,
+      "trade_date": 20261104
+    },
+    "sz301018": {
+      "name": "申菱环境",
+      "open_px": 60,
+      "trade_date": 20261104
+    },
+    "sz300757": {
+      "name": "罗博特科",
+      "open_px": 263.17,
+      "trade_date": 20261104
+    },
+    "sz300394": {
+      "name": "天孚通信",
+      "open_px": 123.65,
+      "trade_date": 20261104
+    },
+    "sz300502": {
+      "name": "新易盛",
+      "open_px": 176,
+      "trade_date": 20261104
+    },
+    "sh688048": {
+      "name": "长光华芯",
+      "open_px": 120.69,
+      "trade_date": 20261104
+    },
+    "sz301511": {
+      "name": "德福科技",
+      "open_px": 49.3,
+      "trade_date": 20261104
+    },
+    "sz301217": {
+      "name": "铜冠铜箔",
+      "open_px": 63.26,
+      "trade_date": 20261104
+    },
+    "sh688008": {
+      "name": "澜起科技",
+      "open_px": 150.67,
+      "trade_date": 20261104
+    },
+    "sz002475": {
+      "name": "立讯精密",
+      "open_px": 45.85,
+      "trade_date": 20261104
+    },
+    "sh688313": {
+      "name": "仕佳光子",
+      "open_px": 83.64,
+      "trade_date": 20261104
+    },
+    "sz002384": {
+      "name": "东山精密",
+      "open_px": 89,
+      "trade_date": 20261104
+    },
+    "sz002916": {
+      "name": "深南电路",
+      "open_px": 207.03,
+      "trade_date": 20261104
+    },
+    "sz002463": {
+      "name": "沪电股份",
+      "open_px": 78.2,
+      "trade_date": 20261104
+    },
+    "sz300476": {
+      "name": "胜宏科技",
+      "open_px": 125.77,
+      "trade_date": 20261104
+    },
+    "sh601869": {
+      "name": "长飞光纤",
+      "open_px": 253.62,
+      "trade_date": 20261104
+    },
+    "sh600487": {
+      "name": "亨通光电",
+      "open_px": 40.51,
+      "trade_date": 20261104
+    },
+    "sh603256": {
+      "name": "宏和科技",
+      "open_px": 71.93,
+      "trade_date": 20261104
+    },
+    "sz300408": {
+      "name": "三环集团",
+      "open_px": 68.98,
+      "trade_date": 20261104
+    },
+    "sz000657": {
+      "name": "中钨高新",
+      "open_px": 36.21,
+      "trade_date": 20261104
+    },
+    "sh688082": {
+      "name": "盛美上海",
+      "open_px": 159.31,
+      "trade_date": 20261104
+    },
+    "sh688808": {
+      "name": "联讯仪器",
+      "open_px": 840,
+      "trade_date": 20261104
+    },
+    "sz002851": {
+      "name": "麦格米特",
+      "open_px": 71.7,
+      "trade_date": 20261104
+    },
+    "sz301526": {
+      "name": "国际复材",
+      "open_px": 19.31,
+      "trade_date": 20261104
+    },
+    "sh688630": {
+      "name": "芯基微装",
+      "open_px": 203.79,
+      "trade_date": 20261104
+    },
+    "sh603629": {
+      "name": "利通电子",
+      "open_px": 59.45,
+      "trade_date": 20261104
+    },
+    "sz301377": {
+      "name": "鼎泰高科",
+      "open_px": 181.6,
+      "trade_date": 20261104
+    },
+    "sz002436": {
+      "name": "兴森科技",
+      "open_px": 25.7,
+      "trade_date": 20261104
+    },
+    "sh688147": {
+      "name": "微导纳米",
+      "open_px": 52.14,
+      "trade_date": 20261104
+    },
+    "sz300567": {
+      "name": "精测电子",
+      "open_px": 100.12,
+      "trade_date": 20261104
+    },
+    "sh688362": {
+      "name": "甬矽电子",
+      "open_px": 35,
+      "trade_date": 20261104
+    },
+    "sz002156": {
+      "name": "通富微电",
+      "open_px": 39.5,
+      "trade_date": 20261104
+    },
+    "sz002536": {
+      "name": "飞龙股份",
+      "open_px": 27.32,
+      "trade_date": 20261104
+    },
+    "sh600176": {
+      "name": "中国巨石",
+      "open_px": 26.97,
+      "trade_date": 20261104
+    },
+    "sh688120": {
+      "name": "华海清科",
+      "open_px": 166.13,
+      "trade_date": 20261104
+    },
+    "sz001309": {
+      "name": "德明利",
+      "open_px": 187,
+      "trade_date": 20261104
+    },
+    "sz300285": {
+      "name": "国瓷材料",
+      "open_px": 35.89,
+      "trade_date": 20261104
+    },
+    "sz000636": {
+      "name": "风华高科",
+      "open_px": 30.24,
+      "trade_date": 20261104
+    },
+    "sz301165": {
+      "name": "锐捷网络",
+      "open_px": 61,
+      "trade_date": 20261104
+    },
+    "sz000977": {
+      "name": "浪潮信息",
+      "open_px": 52.2,
+      "trade_date": 20261104
+    },
+    "sz300395": {
+      "name": "菲利华",
+      "open_px": 63.1,
+      "trade_date": 20261104
+    },
+    "sz002126": {
+      "name": "银轮股份",
+      "open_px": 27.78,
+      "trade_date": 20261104
+    },
+    "sh600105": {
+      "name": "永鼎股份",
+      "open_px": 21.3,
+      "trade_date": 20261104
+    },
+    "sh688012": {
+      "name": "中微公司",
+      "open_px": 205.81,
+      "trade_date": 20261104
+    },
+    "sh688825": {
+      "name": "长鑫科技",
+      "open_px": 39.1,
+      "trade_date": 20261104
+    },
+    "sz002428": {
+      "name": "云南锗业",
+      "open_px": 74,
+      "trade_date": 20261104
+    },
+    "sh603083": {
+      "name": "剑桥科技",
+      "open_px": 115.23,
+      "trade_date": 20261104
+    },
+    "sz002080": {
+      "name": "中材科技",
+      "open_px": 32.11,
+      "trade_date": 20261104
+    },
+    "sz002050": {
+      "name": "三花智控",
+      "open_px": 33.03,
+      "trade_date": 20261104
+    },
+    "sh603119": {
+      "name": "浙江荣泰",
+      "open_px": 55.35,
+      "trade_date": 20261104
+    },
+    "sh688809": {
+      "name": "强一股份",
+      "open_px": 189.66,
+      "trade_date": 20261104
+    },
+    "sz300570": {
+      "name": "太辰光",
+      "open_px": 102.7,
+      "trade_date": 20261104
+    },
+    "sz000725": {
+      "name": "京东方",
+      "open_px": 4.39,
+      "trade_date": 20261104
+    },
+    "sh600601": {
+      "name": "方正科技",
+      "open_px": 8.58,
+      "trade_date": 20261104
+    },
+    "sz300548": {
+      "name": "长芯博创",
+      "open_px": 108.47,
+      "trade_date": 20261104
+    },
+    "sz002636": {
+      "name": "金安国纪",
+      "open_px": 58.66,
+      "trade_date": 20261104
+    },
+    "sz000823": {
+      "name": "超声电子",
+      "open_px": 16.66,
+      "trade_date": 20261104
+    },
+    "sz002008": {
+      "name": "大族激光",
+      "open_px": 47.93,
+      "trade_date": 20261104
+    },
+    "sz002409": {
+      "name": "雅克科技",
+      "open_px": 76.51,
+      "trade_date": 20261104
+    },
+    "sz300604": {
+      "name": "长川科技",
+      "open_px": 159.13,
+      "trade_date": 20261104
+    },
+    "sh601208": {
+      "name": "东材科技",
+      "open_px": 30.54,
+      "trade_date": 20261104
+    },
+    "sh603002": {
+      "name": "宏昌电子",
+      "open_px": 12.52,
+      "trade_date": 20261104
+    },
+    "sz300182": {
+      "name": "捷成股份",
+      "open_px": 5.57,
+      "trade_date": 20261104
+    },
+    "sz301269": {
+      "name": "华大九天",
+      "open_px": 88.94,
+      "trade_date": 20261104
+    },
+    "sz002938": {
+      "name": "鹏鼎控股",
+      "open_px": 49.63,
+      "trade_date": 20261104
+    },
+    "sz300489": {
+      "name": "光智科技",
+      "open_px": 162.76,
+      "trade_date": 20261104
+    },
+    "sh601595": {
+      "name": "上海电影",
+      "open_px": 30.2,
+      "trade_date": 20261104
+    },
+    "sz301486": {
+      "name": "致尚科技",
+      "open_px": 123.81,
+      "trade_date": 20261104
+    },
+    "sz002343": {
+      "name": "慈文传媒",
+      "open_px": 8.37,
+      "trade_date": 20261104
+    },
+    "sh601811": {
+      "name": "新华文轩",
+      "open_px": 17.38,
+      "trade_date": 20261104
+    },
+    "sh600316": {
+      "name": "洪都航空",
+      "open_px": 32.8,
+      "trade_date": 20261104
+    },
+    "sh600435": {
+      "name": "北方导航",
+      "open_px": 11.43,
+      "trade_date": 20261104
+    },
+    "sh600825": {
+      "name": "新华传媒",
+      "open_px": 12.3,
+      "trade_date": 20261104
+    },
+    "sz301183": {
+      "name": "东田微",
+      "open_px": 138.08,
+      "trade_date": 20261104
+    },
+    "sh603626": {
+      "name": "科森科技",
+      "open_px": 24.14,
+      "trade_date": 20261104
+    },
+    "sh688469": {
+      "name": "芯联集成-U",
+      "open_px": 7.33,
+      "trade_date": 20261104
+    },
+    "sz300750": {
+      "name": "宁德时代",
+      "open_px": 249.32,
+      "trade_date": 20261104
+    },
+    "sh688150": {
+      "name": "莱特光电",
+      "open_px": 27.74,
+      "trade_date": 20261104
+    },
+    "sz002913": {
+      "name": "奥士康",
+      "open_px": 52.87,
+      "trade_date": 20261104
+    },
+    "sh605488": {
+      "name": "福莱新材",
+      "open_px": 40.66,
+      "trade_date": 20261104
+    },
+    "sz003021": {
+      "name": "兆威机电",
+      "open_px": 84.48,
+      "trade_date": 20261104
+    },
+    "sh600391": {
+      "name": "航发科技",
+      "open_px": 38.75,
+      "trade_date": 20261104
+    },
+    "sh688400": {
+      "name": "凌云光",
+      "open_px": 35.01,
+      "trade_date": 20261104
+    },
+    "sh688097": {
+      "name": "博众精工",
+      "open_px": 43.54,
+      "trade_date": 20261104
+    },
+    "sh688836": {
+      "name": "宇树科技-W",
+      "open_px": 624,
+      "trade_date": 20261104
+    },
+    "sh688585": {
+      "name": "上纬新材",
+      "open_px": 155,
+      "trade_date": 20261104
+    },
+    "sz000810": {
+      "name": "创维数字",
+      "open_px": 10.52,
+      "trade_date": 20261104
+    },
+    "sz300413": {
+      "name": "芒果超媒",
+      "open_px": 27.66,
+      "trade_date": 20261104
+    },
+    "sz300684": {
+      "name": "中石科技",
+      "open_px": 64.2,
+      "trade_date": 20261104
+    },
+    "sz300720": {
+      "name": "海川智能",
+      "open_px": 41.4,
+      "trade_date": 20261104
+    },
+    "sz002149": {
+      "name": "西部材料",
+      "open_px": 33.38,
+      "trade_date": 20261104
+    },
+    "sh600879": {
+      "name": "航天电子",
+      "open_px": 12.62,
+      "trade_date": 20261104
+    },
+    "sz300136": {
+      "name": "信维通信",
+      "open_px": 40.32,
+      "trade_date": 20261104
+    },
+    "sz002565": {
+      "name": "顺灏股份",
+      "open_px": 8.25,
+      "trade_date": 20261104
+    },
+    "sh600501": {
+      "name": "航天晨光",
+      "open_px": 15.55,
+      "trade_date": 20261104
+    },
+    "sh603131": {
+      "name": "上海沪工",
+      "open_px": 15.17,
+      "trade_date": 20261104
+    },
+    "sz001400": {
+      "name": "江顺科技",
+      "open_px": 93.57,
+      "trade_date": 20261104
+    },
+    "sz000678": {
+      "name": "襄阳轴承",
+      "open_px": 19.6,
+      "trade_date": 20261104
+    },
+    "sz301313": {
+      "name": "凡拓数创",
+      "open_px": 60.03,
+      "trade_date": 20261104
+    },
+    "sh688787": {
+      "name": "海天瑞声",
+      "open_px": 118,
+      "trade_date": 20261104
+    },
+    "sh601698": {
+      "name": "中国卫通",
+      "open_px": 21.51,
+      "trade_date": 20261104
+    },
+    "sh605598": {
+      "name": "上海港湾",
+      "open_px": 24.7,
+      "trade_date": 20261104
+    },
+    "sz002865": {
+      "name": "钧达股份",
+      "open_px": 38.49,
+      "trade_date": 20261104
+    },
+    "sh603969": {
+      "name": "银龙股份",
+      "open_px": 5.64,
+      "trade_date": 20261104
+    },
+    "sh600261": {
+      "name": "阳光照明",
+      "open_px": 4.95,
+      "trade_date": 20261104
+    },
+    "sh603337": {
+      "name": "杰克科技",
+      "open_px": 41.24,
+      "trade_date": 20261104
+    },
+    "sh603667": {
+      "name": "五洲新春",
+      "open_px": 49.45,
+      "trade_date": 20261104
+    },
+    "sh688386": {
+      "name": "泛亚微透",
+      "open_px": 48.73,
+      "trade_date": 20261104
+    },
+    "sz003033": {
+      "name": "征和工业",
+      "open_px": 69.9,
+      "trade_date": 20261104
+    },
+    "sh605118": {
+      "name": "力鼎光电",
+      "open_px": 34.68,
+      "trade_date": 20261104
+    },
+    "sz301079": {
+      "name": "邵阳液压",
+      "open_px": 31.9,
+      "trade_date": 20261104
+    },
+    "sz001219": {
+      "name": "青岛食品",
+      "open_px": 21.96,
+      "trade_date": 20261104
+    },
+    "sh605338": {
+      "name": "巴比食品",
+      "open_px": 20.44,
+      "trade_date": 20261104
+    },
+    "sz301021": {
+      "name": "英诺激光",
+      "open_px": 46.5,
+      "trade_date": 20261104
+    },
+    "sz002981": {
+      "name": "朝阳科技",
+      "open_px": 22.42,
+      "trade_date": 20261104
+    },
+    "sh688331": {
+      "name": "荣昌生物",
+      "open_px": 85,
+      "trade_date": 20261104
+    },
+    "sz002403": {
+      "name": "爱仕达",
+      "open_px": 10.01,
+      "trade_date": 20261104
+    },
+    "sz001326": {
+      "name": "联域股份",
+      "open_px": 77.05,
+      "trade_date": 20261104
+    },
+    "sh688818": {
+      "name": "电科蓝天",
+      "open_px": 43.4,
+      "trade_date": 20261104
+    },
+    "sh600893": {
+      "name": "航发动力",
+      "open_px": 38.55,
+      "trade_date": 20261104
+    },
+    "sh688239": {
+      "name": "航宇科技",
+      "open_px": 39.15,
+      "trade_date": 20261104
+    }
+  }
 }

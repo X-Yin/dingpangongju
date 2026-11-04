@@ -115,7 +115,7 @@ const DingPan = () => {
     const navigate = useNavigate();
 
     // 访问密码门禁状态（不持久化：刷新页面或重新进入菜单后需重新输入）
-    const [unlocked, setUnlocked] = useState(false);
+    const [unlocked, setUnlocked] = useState(true); // TODO: 暂时注释掉锁，恢复时改回 false
     const [passwordInput, setPasswordInput] = useState('');
     const [passwordError, setPasswordError] = useState(false);
 

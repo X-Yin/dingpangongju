@@ -1916,16 +1916,10 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   border-radius: 12px;
   font-size: 12px;
   line-height: 1.7;
-  color: #b45309;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--ob-desc-color, rgba(255, 255, 255, 0.72));
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   word-break: break-word;
-
-  &.ew {
-    color: #1e40af;
-    background: rgba(59, 130, 246, 0.1);
-    border-color: rgba(59, 130, 246, 0.26);
-  }
 }
 
 // 卖点持仓卡片（磨砂玻璃卡 + 半透明状态色条件条目）

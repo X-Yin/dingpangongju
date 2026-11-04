@@ -1,22 +1,22 @@
 [
   {
-    "id": "sh603667_1793669707474_txm3",
-    "code": "sh603667",
-    "name": "五洲新春",
-    "buyDate": "2026-11-03",
-    "buyTime": "09:35",
+    "id": "sz002565_1793758159076_e5oq",
+    "code": "sz002565",
+    "name": "顺灏股份",
+    "buyDate": "2026-11-04",
+    "buyTime": "10:09",
     "weight": 50,
-    "costPrice": 51.71,
+    "costPrice": 8.87,
     "sellStrategy": "tech_attack"
   },
   {
-    "id": "sh688818_1793670399128_yxfz",
-    "code": "sh688818",
-    "name": "电科蓝天",
-    "buyDate": "2026-11-03",
-    "buyTime": "09:46",
+    "id": "sz000810_1793758784715_diid",
+    "code": "sz000810",
+    "name": "创维数字",
+    "buyDate": "2026-11-04",
+    "buyTime": "10:19",
     "weight": 50,
-    "sellStrategy": "tech_attack",
-    "costPrice": 46.58
+    "costPrice": 10.91,
+    "sellStrategy": "tech_attack"
   }
 ]

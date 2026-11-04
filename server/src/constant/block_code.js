@@ -1773,5 +1773,10 @@ exports.default = [
         "blockName": "机器人",
         "code": "sz000700",
         "name": "模塑科技"
+    },
+    {
+        "blockName": "军工",
+        "code": "sh605123",
+        "name": "派克新材"
     }
 ]

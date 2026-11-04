@@ -1,24 +1,13 @@
 {
-  "lastSyncedEndDate": "20261103",
+  "lastSyncedEndDate": "20261104",
   "lastRange": {
-    "startDate": "20260804",
-    "endDate": "20261103"
+    "startDate": "20260805",
+    "endDate": "20261104"
   },
-  "lastSyncedAt": "2026-11-03 08:40:21",
-  "lastHoldings": [
-    {
-      "code": "sz002636",
-      "name": "金安国纪",
-      "buyDate": "20261102",
-      "buyPrice": 65.59,
-      "buyTime": "10:15",
-      "weight": 0.5
-    }
-  ],
-  "added": [
-    "金安国纪(sz002636) 成本 65.59 买入日 2026-11-02"
-  ],
+  "lastSyncedAt": "2026-11-04 08:49:51",
+  "lastHoldings": [],
+  "added": [],
   "skipped": [],
   "attempts": 0,
-  "attemptsDate": "2026-11-03"
+  "attemptsDate": "2026-11-04"
 }

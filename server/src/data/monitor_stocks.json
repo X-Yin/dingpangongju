@@ -1038,7 +1038,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "9",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-01 12:24:44",
     "watchMarketCap": true,
     "watchPE": true
@@ -1104,7 +1104,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-23 09:36:25",
     "watchMarketCap": true,
     "watchPE": true
@@ -1115,7 +1115,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "7",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-23 10:12:30",
     "watchMarketCap": true,
     "watchPE": true
@@ -1137,7 +1137,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "7",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-26 00:11:53",
     "watchMarketCap": true,
     "watchPE": true
@@ -1148,7 +1148,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "6",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-26 08:35:37",
     "watchMarketCap": true,
     "watchPE": true
@@ -1159,7 +1159,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-26 14:35:08",
     "watchMarketCap": true,
     "watchPE": true
@@ -1170,7 +1170,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": "8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-26 15:10:30",
     "watchMarketCap": true,
     "watchPE": true
@@ -1181,7 +1181,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": " 7",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-26 20:57:23",
     "watchMarketCap": true,
     "watchPE": true
@@ -1192,7 +1192,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "7",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-26 21:05:30",
     "watchMarketCap": true,
     "watchPE": true
@@ -1236,7 +1236,7 @@
     "isImportant": false,
     "blockName": "商业航天",
     "riskScore": " 8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 15:03:12",
     "watchMarketCap": false,
     "watchPE": false
@@ -1247,7 +1247,7 @@
     "isImportant": false,
     "blockName": "商业航天",
     "riskScore": " 8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 15:03:24",
     "watchMarketCap": true,
     "watchPE": true
@@ -1258,7 +1258,7 @@
     "isImportant": false,
     "blockName": "商业航天",
     "riskScore": " 7",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 15:03:36",
     "watchMarketCap": true,
     "watchPE": true
@@ -1269,7 +1269,7 @@
     "isImportant": false,
     "blockName": "商业航天",
     "riskScore": " 7",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 15:03:48",
     "watchMarketCap": true,
     "watchPE": true
@@ -1280,7 +1280,7 @@
     "isImportant": false,
     "blockName": "商业航天",
     "riskScore": "9",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 15:11:30",
     "watchMarketCap": true,
     "watchPE": true
@@ -1291,7 +1291,7 @@
     "isImportant": false,
     "blockName": "商业航天",
     "riskScore": "8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 15:11:42",
     "watchMarketCap": true,
     "watchPE": true
@@ -1302,7 +1302,7 @@
     "isImportant": false,
     "blockName": "商业航天",
     "riskScore": "8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 15:11:56",
     "watchMarketCap": true,
     "watchPE": true
@@ -1313,7 +1313,7 @@
     "isImportant": false,
     "blockName": "商业航天",
     "riskScore": " 7",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 15:26:45",
     "watchMarketCap": true,
     "watchPE": true
@@ -1324,7 +1324,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": " 8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 15:28:33",
     "watchMarketCap": true,
     "watchPE": true
@@ -1335,7 +1335,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": "8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 15:28:51",
     "watchMarketCap": true,
     "watchPE": true
@@ -1346,7 +1346,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": " 8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 17:01:39",
     "watchMarketCap": true,
     "watchPE": true
@@ -1357,7 +1357,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": " 8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 17:01:52",
     "watchMarketCap": true,
     "watchPE": true
@@ -1368,7 +1368,7 @@
     "isImportant": false,
     "blockName": "商业航天",
     "riskScore": " 8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 17:08:01",
     "watchMarketCap": true,
     "watchPE": true
@@ -1390,7 +1390,7 @@
     "isImportant": false,
     "blockName": "商业航天",
     "riskScore": "8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 19:19:59",
     "watchMarketCap": true,
     "watchPE": true
@@ -1412,7 +1412,7 @@
     "isImportant": false,
     "blockName": "商业航天",
     "riskScore": " 8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 20:34:32",
     "watchMarketCap": true,
     "watchPE": true
@@ -1423,7 +1423,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": " 8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 21:35:53",
     "watchMarketCap": true,
     "watchPE": true
@@ -1434,7 +1434,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": "8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 21:37:20",
     "watchMarketCap": true,
     "watchPE": true
@@ -1445,7 +1445,7 @@
     "isImportant": false,
     "blockName": "物理 AI",
     "riskScore": "8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-29 21:48:22",
     "watchMarketCap": true,
     "watchPE": true
@@ -1456,7 +1456,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": " 8",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-30 12:15:49",
     "watchMarketCap": true,
     "watchPE": true
@@ -1467,7 +1467,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": " 7",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-30 12:18:43",
     "watchMarketCap": true,
     "watchPE": true
@@ -1478,7 +1478,7 @@
     "isImportant": false,
     "blockName": "商业航天",
     "riskScore": " 7",
-    "isTech": true,
+    "isTech": false,
     "addedAt": "2026-10-30 15:23:01",
     "watchMarketCap": true,
     "watchPE": true
@@ -1522,7 +1522,7 @@
     "isImportant": false,
     "blockName": "耳机",
     "riskScore": null,
-    "isTech": true,
+    "isTech": false,
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-10-31 22:22:50"
@@ -1544,7 +1544,7 @@
     "isImportant": false,
     "blockName": "机器人",
     "riskScore": null,
-    "isTech": true,
+    "isTech": false,
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-02 08:50:31"
@@ -1566,9 +1566,31 @@
     "isImportant": false,
     "blockName": "军工",
     "riskScore": null,
-    "isTech": true,
+    "isTech": false,
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-03 08:43:17"
+  },
+  {
+    "code": "sh600893",
+    "name": "航发动力",
+    "isImportant": false,
+    "blockName": "航天军工",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": false,
+    "watchPE": false,
+    "addedAt": "2026-11-04 08:52:22"
+  },
+  {
+    "code": "sh688239",
+    "name": "航宇科技",
+    "isImportant": false,
+    "blockName": "航天军工",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-04 08:52:37"
   }
 ]

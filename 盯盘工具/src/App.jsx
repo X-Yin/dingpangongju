@@ -442,6 +442,15 @@ const applyThemeColor = (theme) => {
   root.style.setProperty('--theme-gradient-end', theme.gradientEnd);
 };
 
+// 内存监控 watchdog：
+//   优先后端 /browser_memory 接口（top 命令拿 Chrome 真实进程内存），
+//   后端不可用时 fallback 到 JS 堆 × 7 估算
+//   目标：真实进程内存 ≥ 2GB 时刷新
+const PROCESS_MEM_WATCHDOG_THRESHOLD_MB = 2048; // 真实进程内存 2GB
+const MEMORY_WATCHDOG_INTERVAL_MS = 30 * 1000; // 每 30 秒检查一次
+// JS fallback：JS 堆 × 7 ≈ 进程内存
+const PROCESS_MEM_ESTIMATE_RATIO = 7;
+
 // 盯盘页默认页面背景色（与 dingpan/index.scss 中 var(--dp-page-bg, #f6f9ff) 的回退值一致）
 const DEFAULT_DINGPAN_PAGE_BG = '#f6f9ff';
 
@@ -652,6 +661,9 @@ function App() {
   const [etfVolumeAlertInfo, setEtfVolumeAlertInfo] = useState(null); // { timeA, amountA, timeB, amountB }
   const etfVolumeCooldownEndRef = useRef(0); // 「不再提示（30分钟）」冷却截止时间戳
   const etfVolumeAlertedMinuteRef = useRef(null); // 上次已提示的最近分钟号（同一放量对不重复弹窗）
+
+  // 意志力锻炼弹窗：交易日每 5 分钟整点弹出，展示 10s 后自动关闭
+  const [willpowerModalVisible, setWillpowerModalVisible] = useState(false);
 
   // 删除持仓股资金净流出警示弹窗
   const [outflowWarningVisible, setOutflowWarningVisible] = useState(false);
@@ -1093,6 +1105,202 @@ function App() {
     updateLogoTime();
     const timer = setInterval(updateLogoTime, 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  // 内存监控 watchdog：每 30s 检查浏览器进程内存 ≥ 2GB（优先后端 top 命令，fallback JS 估算）
+  useEffect(() => {
+    let timer = null;
+    let consecutiveExceedCount = 0;
+    const EXCEED_TRIGGER_COUNT = 2; // 连续 2 次超过阈值才刷新
+
+    const checkMemory = async () => {
+      try {
+        let totalMB = null;
+        let source = '';
+
+        // 1) 优先后端 /browser_memory（macOS top 命令拿 Chrome Heap 真实 RSS）
+        try {
+          const res = await axios.get(`http://${local_ip}:3000/browser_memory`, { timeout: 2000 });
+          if (res.data?.success && res.data.largestMB != null) {
+            totalMB = res.data.largestMB;
+            source = 'top';
+          }
+        } catch (_) { /* 后端不可用，fallback */ }
+
+        // 2) Fallback：JS 堆 × 7 估算进程内存
+        if (totalMB == null && performance && typeof performance.memory !== 'undefined') {
+          totalMB = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024 * PROCESS_MEM_ESTIMATE_RATIO);
+          source = 'heap×7';
+        }
+
+        if (totalMB == null) return; // 完全拿不到，跳过本次
+
+        const thresholdMB = PROCESS_MEM_WATCHDOG_THRESHOLD_MB;
+
+        if (totalMB >= thresholdMB) {
+          consecutiveExceedCount += 1;
+          console.warn(
+            `[MemoryWatchdog][${source}] 浏览器进程内存 ${totalMB}MB ≥ 阈值 ${thresholdMB}MB, ` +
+            `连续超标第 ${consecutiveExceedCount}/${EXCEED_TRIGGER_COUNT} 次`
+          );
+          if (consecutiveExceedCount >= EXCEED_TRIGGER_COUNT) {
+            const reason =
+              `浏览器进程内存 ${totalMB}MB（${source}口径）超过阈值 ${thresholdMB}MB，自动刷新释放`;
+            console.error(`[MemoryWatchdog] ${reason}`);
+            setTimeout(() => {
+              try { sessionStorage.setItem('memory_watchdog_reload', reason); } catch (_) { /* ignore */ }
+              window.location.reload();
+            }, 1000);
+          }
+        } else {
+          if (consecutiveExceedCount > 0) {
+            console.info(
+              `[MemoryWatchdog][${source}] 内存回落至 ${totalMB}MB，重置连续超标计数`
+            );
+            consecutiveExceedCount = 0;
+          }
+        }
+      } catch (err) {
+        console.error('[MemoryWatchdog] 检查内存失败:', err);
+      }
+    };
+
+    checkMemory();
+    timer = setInterval(checkMemory, MEMORY_WATCHDOG_INTERVAL_MS);
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (timer) { clearInterval(timer); timer = null; }
+      } else {
+        if (!timer) {
+          checkMemory();
+          timer = setInterval(checkMemory, MEMORY_WATCHDOG_INTERVAL_MS);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    try {
+      const prevReason = sessionStorage.getItem('memory_watchdog_reload');
+      if (prevReason) {
+        console.warn(`[MemoryWatchdog] 上次刷新原因: ${prevReason}`);
+        sessionStorage.removeItem('memory_watchdog_reload');
+      }
+    } catch (_) { /* ignore */ }
+
+    return () => {
+      if (timer) clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // 意志力锻炼弹窗调度：交易日交易时段按可配置间隔弹出（默认 5min，localStorage 可调），展示 10s
+  useEffect(() => {
+    let timer = null;
+    let closeTimer = null;
+    let cancelled = false;
+
+    const STORAGE_KEY = 'willpower_interval_min';
+    const MIN_INTERVAL = 1;   // 最小 1 分钟
+    const MAX_INTERVAL = 60;  // 最大 60 分钟
+
+    const readInterval = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const n = raw ? parseInt(raw, 10) : 5;
+        if (Number.isFinite(n) && n >= MIN_INTERVAL && n <= MAX_INTERVAL) return n;
+      } catch (_) { /* ignore */ }
+      return 5;
+    };
+
+    // 按指定间隔生成一天内所有触发时刻（锚点 9:30）
+    const buildTriggerSlots = (baseDay, interval) => {
+      const slots = [];
+      // 上午窗口：9:30 ~ 11:30
+      const amStart = baseDay.hour(9).minute(30).second(0).millisecond(0);
+      const amEnd = baseDay.hour(11).minute(30).second(0).millisecond(0);
+      // 下午窗口：13:00 ~ 15:00
+      const pmStart = baseDay.hour(13).minute(0).second(0).millisecond(0);
+      const pmEnd = baseDay.hour(15).minute(0).second(0).millisecond(0);
+
+      const fill = (from, to) => {
+        let cur = from;
+        while (cur.isBefore(to) || cur.isSame(to)) {
+          slots.push(cur);
+          cur = cur.add(interval, 'minute');
+        }
+      };
+      fill(amStart, amEnd);
+      fill(pmStart, pmEnd);
+      return slots;
+    };
+
+    const scheduleNext = () => {
+      if (cancelled) return;
+      const now = dayjs();
+      const interval = readInterval();
+
+      if (!isTradingDay(now)) {
+        const nextDay = getNextTradingDay(now);
+        const target = nextDay.hour(9).minute(30).second(0).millisecond(0);
+        const diff = target.diff(now);
+        if (diff <= 0) { scheduleNext(); return; }
+        timer = setTimeout(scheduleNext, diff);
+        return;
+      }
+
+      const todaySlots = buildTriggerSlots(now, interval);
+      for (const slot of todaySlots) {
+        const diff = slot.diff(now);
+        if (diff > 0) {
+          timer = setTimeout(() => {
+            if (cancelled) return;
+            setWillpowerModalVisible(true);
+            closeTimer = setTimeout(() => {
+              setWillpowerModalVisible(false);
+            }, 10 * 1000);
+            scheduleNext();
+          }, diff);
+          return;
+        }
+      }
+
+      // 今天所有时段已过 → 下一个交易日 9:30
+      const nextDay = getNextTradingDay(now);
+      const target = nextDay.hour(9).minute(30).second(0).millisecond(0);
+      timer = setTimeout(scheduleNext, target.diff(now));
+    };
+
+    const reschedule = () => {
+      if (timer) clearTimeout(timer);
+      if (closeTimer) clearTimeout(closeTimer);
+      scheduleNext();
+    };
+
+    scheduleNext();
+    window.addEventListener('willpower-interval-changed', reschedule);
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+      if (closeTimer) clearTimeout(closeTimer);
+      window.removeEventListener('willpower-interval-changed', reschedule);
+    };
+  }, []);
+
+  // Debug 抽屉手动触发：监听 willpower-modal-test 事件，弹窗 10 秒后自动关闭
+  useEffect(() => {
+    let closeTimer = null;
+    const handler = () => {
+      setWillpowerModalVisible(true);
+      if (closeTimer) clearTimeout(closeTimer);
+      closeTimer = setTimeout(() => setWillpowerModalVisible(false), 10 * 1000);
+    };
+    window.addEventListener('willpower-modal-test', handler);
+    return () => {
+      window.removeEventListener('willpower-modal-test', handler);
+      if (closeTimer) clearTimeout(closeTimer);
+    };
   }, []);
 
   // 个人感受记录轮询：9:40 起每隔 20 分钟弹出，午休和收盘后不执行
@@ -1577,6 +1785,16 @@ function App() {
       {debugEnabled && <DebugPanel />}
       <FloatingTechEmotion />
       <ClosePipeline />
+
+      {/* 意志力锻炼弹窗：全屏遮罩 + 居中大字，10 秒自动关闭 */}
+      {willpowerModalVisible && (
+        <div className="willpower-modal-overlay">
+          <div className="willpower-modal-content">
+            <div className="willpower-modal-text">能说出一万种腿法的人遍地都是<br />用意志力把一种腿法练到骨头里的人<br />才真正可怕</div>
+            <div className="willpower-modal-tip">10 秒后自动关闭</div>
+          </div>
+        </div>
+      )}
 
       {/* 删除持仓股资金净流出警示弹窗 */}
       {outflowWarningVisible && (

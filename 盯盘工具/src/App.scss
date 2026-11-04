@@ -964,6 +964,64 @@
   }
 }
 
+// 意志力锻炼弹窗：全屏遮罩 + 居中大字
+.willpower-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: willpower-fade-in 0.3s ease;
+}
+
+@keyframes willpower-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.willpower-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.willpower-modal-text {
+  font-size: 52px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 4px;
+  line-height: 1.6;
+  text-align: center;
+  text-shadow:
+    0 0 20px rgba(24, 144, 255, 0.8),
+    0 0 40px rgba(24, 144, 255, 0.5),
+    0 4px 16px rgba(0, 0, 0, 0.6);
+  animation: willpower-pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes willpower-pop-in {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.willpower-modal-tip {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 2px;
+}
+
 .outflow-warning-popup {
   position: fixed;
   top: 20px;

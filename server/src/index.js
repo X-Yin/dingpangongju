@@ -490,6 +490,43 @@ app.get('/ma_slope_diagnosis', async (req, res) => {
   }
 });
 
+// 查询浏览器进程内存（macOS 专用：用 top 拿 Chrome Heap 进程真实内存）
+// 返回 largestMB：所有 Chrome Heap 进程中最大的那个（大概率就是盯盘页所在的 renderer）
+// 同时返回 processes 数组供调试
+app.get('/browser_memory', (req, res) => {
+  try {
+    const platform = process.platform;
+    if (platform !== 'darwin') {
+      res.json({ success: true, platform, note: '仅 macOS 支持精确查询', largestMB: null, processes: [] });
+      return;
+    }
+    // top -l 1: 采样一次退出；-o mem 按内存排序；-s 0 不暂停；只抓 Chrome Heap 进程
+    const out = execSync(
+      'top -l 1 -o mem -stats pid,command,mem -n 50 -s 0 2>/dev/null | ' +
+      'grep -i "Google Chrome He\\|Safari\\|Firefox\\|WebKitWebContent" | head -20',
+      { encoding: 'utf8', timeout: 4000 }
+    );
+    const processes = [];
+    let largestMB = 0;
+    out.split('\n').forEach((line) => {
+      const parts = line.trim().split(/\s+/);
+      if (parts.length >= 3) {
+        const pid = parseInt(parts[0], 10);
+        const name = parts.slice(1, -1).join(' ');
+        const memStr = parts[parts.length - 1];
+        const memMB = parseFloat(memStr);
+        if (!isNaN(pid) && !isNaN(memMB)) {
+          processes.push({ pid, name, memMB });
+          if (memMB > largestMB) largestMB = memMB;
+        }
+      }
+    });
+    res.json({ success: true, platform, largestMB: Math.round(largestMB), processes });
+  } catch (err) {
+    res.json({ success: false, error: err.message, largestMB: null, processes: [] });
+  }
+});
+
 app.get('/dapan_data', async (req, res) => {
   const dapanData = await getAllDaPanData();
   res.json(dapanData);
