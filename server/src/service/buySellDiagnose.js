@@ -2439,7 +2439,8 @@ const backtestBuySell = async (stockCodes, startDate, endDate) => {
 let _lastBuyPointHeavyRefreshAt = 0;
 const BUY_POINT_HEAVY_REFRESH_INTERVAL = 30 * 1000;
 
-const getBuyPointChecks = async (targetDate = null, refresh = false, force = false) => {
+// buyCutoffMinute：买入时段门禁上限（默认 13:30）；科技进攻类快进快出策略传 1400（与回测 pickBestStock 的 14:00 口径一致）
+const getBuyPointChecks = async (targetDate = null, refresh = false, force = false, buyCutoffMinute = BUY_TIME_MAX_MINUTE) => {
   let targetDay;
   if (targetDate) {
     const dateStr = String(targetDate).replace(/-/g, '');
@@ -2691,16 +2692,18 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
   const buyMinute = isTodayTarget
     ? Number(dayjs().format('HHmm'))
     : 1455;
-  const buyTimePassed = Number.isFinite(buyMinute) && buyMinute <= BUY_TIME_MAX_MINUTE;
+  const cutoffMinute = Number(buyCutoffMinute) > 0 ? Number(buyCutoffMinute) : BUY_TIME_MAX_MINUTE;
+  const cutoffText = `${String(Math.floor(cutoffMinute / 100)).padStart(2, '0')}:${String(cutoffMinute % 100).padStart(2, '0')}`;
+  const buyTimePassed = Number.isFinite(buyMinute) && buyMinute <= cutoffMinute;
   const fmtBM = (m) => `${String(Math.floor(m/100)).padStart(2,'0')}:${String(m%100).padStart(2,'0')}`;
   checks.push({
     id: 'buy_time_gate',
-    title: '买入时段门禁（仅 9:30 – 11:30 / 13:00 – 13:30）',
+    title: `买入时段门禁（仅 9:30 – 11:30 / 13:00 – ${cutoffText}）`,
     passed: buyTimePassed,
-    value: buyTimePassed ? `买点时刻 ${fmtBM(buyMinute)} 在允许时段内` : `买点时刻 ${fmtBM(buyMinute)} 已过 13:30，不允许买入`,
+    value: buyTimePassed ? `买点时刻 ${fmtBM(buyMinute)} 在允许时段内` : `买点时刻 ${fmtBM(buyMinute)} 已过 ${cutoffText}，不允许买入`,
     reason: buyTimePassed
-      ? `买点触发时刻 ${fmtBM(buyMinute)} 在允许时段（9:30 – 11:30 或 13:00 – 13:30）内`
-      : `买点触发时刻 ${fmtBM(buyMinute)} 已过 13:30，规则禁止此时段交易`,
+      ? `买点触发时刻 ${fmtBM(buyMinute)} 在允许时段（9:30 – 11:30 或 13:00 – ${cutoffText}）内`
+      : `买点触发时刻 ${fmtBM(buyMinute)} 已过 ${cutoffText}，规则禁止此时段交易`,
   });
   if (!buyTimePassed) allPassed = false;
 

@@ -1799,17 +1799,241 @@
       "buyDayReturn": -2.78
     }
   ],
-  "currentHolding": null,
-  "currentHoldings": [],
+  "currentHolding": {
+    "code": "sh688120",
+    "stockName": "华海清科",
+    "buyDate": "20261104",
+    "buyDateDisplay": "2026-11-04",
+    "buyTime": "13:35",
+    "buyPrice": 179.13,
+    "buyChange": 7.83,
+    "metric": 9.6038,
+    "buyReason": "5min 内资金净流入 42.36亿、冰点期豁免量能，当前量能 -361.16亿、开盘后自选科技股低于开盘价不超过 30 只、竞价情绪超 30 时当前情绪须低于 10；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票涨停顺延买入）",
+    "buyChecks": [
+      {
+        "id": "fund_inflow",
+        "title": "最近 5min 资金净流入大于 30 亿",
+        "passed": true,
+        "exempted": false,
+        "value": "+42.36亿",
+        "reason": "最近 5 分钟资金净流入 42.36 亿（13:30:00→13:35:00），超过 30 亿阈值",
+        "fundText": "5min 内资金净流入 42.36亿"
+      },
+      {
+        "id": "volume_expansion",
+        "title": "当前量能为正（今日累计成交额超昨日全天）",
+        "passed": true,
+        "exempted": true,
+        "value": "冰点期豁免量能，当前量能 -361.16亿",
+        "reason": "前一交易日盘中科技情绪触及 -39 退潮冰点（hasIce: true），冰点期豁免量能，当前量能 -361.16亿",
+        "volumeText": "冰点期豁免量能，当前量能 -361.16亿"
+      },
+      {
+        "id": "opening_below",
+        "title": "开盘后自选科技股低于开盘价不超过 30 只",
+        "passed": true,
+        "exempted": false,
+        "value": "非交易时段",
+        "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+      },
+      {
+        "id": "emotion_retrace_after_open",
+        "title": "竞价情绪超 30 时当前情绪须低于 10",
+        "passed": true,
+        "exempted": false,
+        "value": "开盘 12.26 / 当前 14.39",
+        "reason": "9:30 竞价科技情绪 12.26 未超过 30，当前情绪须低于 10 的限制不生效"
+      },
+      {
+        "id": "cyb_ma3_slope_gate",
+        "title": "创业板指 3 日线斜率门禁",
+        "passed": true,
+        "value": "创业板指 3 日线斜率 +8.48°，今日盘中由负转正，允许出手",
+        "reason": "创业板指 斜率 +8.48 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
+      },
+      {
+        "id": "star_ma3_slope_gate",
+        "title": "华海清科 跟踪科创50 3 日线斜率门禁",
+        "passed": true,
+        "value": "华海清科 跟踪科创50，3 日线斜率 +6.68°，今日盘中由负转正，允许出手",
+        "reason": "科创50 斜率 +6.68 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
+      },
+      {
+        "id": "limit_up_defer",
+        "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+        "passed": true,
+        "value": "顺延 1 只",
+        "skippedStocks": [
+          {
+            "code": "sz002428",
+            "name": "云南锗业",
+            "change": 10
+          }
+        ],
+        "reason": "买入时点涨停候选已剔除并顺延：云南锗业（触发时涨幅 +10.00%）（涨停股买入不可成交，顺延至排名下一只）"
+      },
+      {
+        "id": "gain_tie_break",
+        "title": "快进快出N日涨幅接近时按当日抗分歧优先",
+        "passed": true,
+        "value": "按抗分歧优先调整",
+        "reason": "第一名与第二名 N 日涨幅相差 0.98 个百分点（≤ 1），按买点触发时点的当日抗分歧分数更高者优先：云南锗业（涨幅 8.62% / 抗分歧 21.73）优先于 华海清科（涨幅 9.60% / 抗分歧 10.25）"
+      },
+      {
+        "id": "resilience_gate",
+        "title": "触发时点抗分歧分数≥9",
+        "passed": true,
+        "value": "10.25",
+        "skippedStocks": [],
+        "reason": "直接入选，未发生顺延（本股触发时点抗分歧 10.25，≥ 全局最低 9）"
+      },
+      {
+        "id": "emo_quick_out",
+        "title": "情绪快进快出（次日10:00强卖）",
+        "passed": true,
+        "value": "快进快出",
+        "reason": "上一交易日科技情绪 3 日 EMA = -41.58（< -30），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损、盘中当日跌幅较昨收 ≤ -7% 时无条件强卖（竞价低开时先等自救拉升结束的首个回落分钟再卖）；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选科技股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）"
+      }
+    ],
+    "raisedBlockDelay": null,
+    "emoQuickOut": {
+      "quickOut": true,
+      "trigger": "ema_below",
+      "ema": -41.58,
+      "prevRaw": -59.72,
+      "prev2Raw": -6.02
+    },
+    "twoBuy": true,
+    "leg": 1,
+    "weight": 0.5,
+    "rawBuyReturn": 9.41,
+    "buyReturn": 4.71,
+    "buyDayClose": 195.98,
+    "buyDayReturn": 9.41
+  },
+  "currentHoldings": [
+    {
+      "code": "sh688120",
+      "stockName": "华海清科",
+      "buyDate": "20261104",
+      "buyDateDisplay": "2026-11-04",
+      "buyTime": "13:35",
+      "buyPrice": 179.13,
+      "buyChange": 7.83,
+      "metric": 9.6038,
+      "buyReason": "5min 内资金净流入 42.36亿、冰点期豁免量能，当前量能 -361.16亿、开盘后自选科技股低于开盘价不超过 30 只、竞价情绪超 30 时当前情绪须低于 10；跨指数双门禁（允许市场: 主板/创业板/科创板）（因前序股票涨停顺延买入）",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 30 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+42.36亿",
+          "reason": "最近 5 分钟资金净流入 42.36 亿（13:30:00→13:35:00），超过 30 亿阈值",
+          "fundText": "5min 内资金净流入 42.36亿"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "当前量能为正（今日累计成交额超昨日全天）",
+          "passed": true,
+          "exempted": true,
+          "value": "冰点期豁免量能，当前量能 -361.16亿",
+          "reason": "前一交易日盘中科技情绪触及 -39 退潮冰点（hasIce: true），冰点期豁免量能，当前量能 -361.16亿",
+          "volumeText": "冰点期豁免量能，当前量能 -361.16亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选科技股低于开盘价不超过 30 只",
+          "passed": true,
+          "exempted": false,
+          "value": "非交易时段",
+          "reason": "此项检查仅在交易日 9:30-10:00 之间生效，当前时段跳过"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 30 时当前情绪须低于 10",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 12.26 / 当前 14.39",
+          "reason": "9:30 竞价科技情绪 12.26 未超过 30，当前情绪须低于 10 的限制不生效"
+        },
+        {
+          "id": "cyb_ma3_slope_gate",
+          "title": "创业板指 3 日线斜率门禁",
+          "passed": true,
+          "value": "创业板指 3 日线斜率 +8.48°，今日盘中由负转正，允许出手",
+          "reason": "创业板指 斜率 +8.48 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
+        },
+        {
+          "id": "star_ma3_slope_gate",
+          "title": "华海清科 跟踪科创50 3 日线斜率门禁",
+          "passed": true,
+          "value": "华海清科 跟踪科创50，3 日线斜率 +6.68°，今日盘中由负转正，允许出手",
+          "reason": "科创50 斜率 +6.68 ≥ 0，但由负转正当日（今日盘中判定），允许出手"
+        },
+        {
+          "id": "limit_up_defer",
+          "title": "涨停过滤（主板>9.5%、创业/科创>19%）",
+          "passed": true,
+          "value": "顺延 1 只",
+          "skippedStocks": [
+            {
+              "code": "sz002428",
+              "name": "云南锗业",
+              "change": 10
+            }
+          ],
+          "reason": "买入时点涨停候选已剔除并顺延：云南锗业（触发时涨幅 +10.00%）（涨停股买入不可成交，顺延至排名下一只）"
+        },
+        {
+          "id": "gain_tie_break",
+          "title": "快进快出N日涨幅接近时按当日抗分歧优先",
+          "passed": true,
+          "value": "按抗分歧优先调整",
+          "reason": "第一名与第二名 N 日涨幅相差 0.98 个百分点（≤ 1），按买点触发时点的当日抗分歧分数更高者优先：云南锗业（涨幅 8.62% / 抗分歧 21.73）优先于 华海清科（涨幅 9.60% / 抗分歧 10.25）"
+        },
+        {
+          "id": "resilience_gate",
+          "title": "触发时点抗分歧分数≥9",
+          "passed": true,
+          "value": "10.25",
+          "skippedStocks": [],
+          "reason": "直接入选，未发生顺延（本股触发时点抗分歧 10.25，≥ 全局最低 9）"
+        },
+        {
+          "id": "emo_quick_out",
+          "title": "情绪快进快出（次日10:00强卖）",
+          "passed": true,
+          "value": "快进快出",
+          "reason": "上一交易日科技情绪 3 日 EMA = -41.58（< -30），本次买入为快进快出：次日 10:00 强制卖出（不走通用 7 条件卖点；盘中跌破成本线 -2% 时先到先卖止损、盘中当日跌幅较昨收 ≤ -7% 时无条件强卖（竞价低开时先等自救拉升结束的首个回落分钟再卖）；命中强卖豁免——次日 10:00 前买点诊断再次触发，或 10:00 时点科技情绪>0、自选科技股低于开盘价<30只、主力资金净流入>0 三者同时满足——则不强卖、转由通用卖点接管）"
+        }
+      ],
+      "raisedBlockDelay": null,
+      "emoQuickOut": {
+        "quickOut": true,
+        "trigger": "ema_below",
+        "ema": -41.58,
+        "prevRaw": -59.72,
+        "prev2Raw": -6.02
+      },
+      "twoBuy": true,
+      "leg": 1,
+      "weight": 0.5,
+      "rawBuyReturn": 9.41,
+      "buyReturn": 4.71,
+      "buyDayClose": 195.98,
+      "buyDayReturn": 9.41
+    }
+  ],
   "summary": {
     "tradeCount": 11,
     "winCount": 2,
     "winRate": 18.18,
     "avgDrawdown": -1.7,
     "maxDrawdown": -3.19,
-    "overallReturn": -11.58,
-    "holding": false
+    "overallReturn": -7.41,
+    "holding": true
   },
   "cacheVersion": 18,
-  "generatedAt": 1793776514152
+  "generatedAt": 1793785485325
 }

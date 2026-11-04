@@ -13,9 +13,12 @@ const { cycCorrCache } = require('./cycleFilter');
 const GAIN_TIE_PCT = 1;
 
 const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos, strategyId, axisOffset = 0, allowedMarkets = null, turnedPosInfo = null, prevOneWordSet = null, emoCycSet = null, restrictCodes = null, emoQuickTie = false) => {
-  // 买入时段门禁（所有策略通用）：仅允许 9:30 – 11:30 和 13:00 – 13:30 之间的买点触发买入
+  // 买入时段门禁：普通策略仅允许 9:30 – 11:30 和 13:00 – 13:30；快进快出类（emoQuickOut）下午截止时间放宽到 14:00。
+  // emoQuickTie 由快进快出委派层（selectors/delegates）传 true：委派时 strategyId 已换成 highest_{N}d_gain，
+  // 其自身不带 emoQuickOut 标记，需靠该标记沿用 14:00 截止时间（否则快进快出被错误地卡在 13:30）
   const mNum = Number(bucket.minute);
-  if (Number.isFinite(mNum) && mNum > BUY_TIME_MAX_MINUTE) return null;
+  const buyMaxMinute = (STRATEGIES[strategyId]?.emoQuickOut === true || emoQuickTie === true) ? 1400 : BUY_TIME_MAX_MINUTE;
+  if (Number.isFinite(mNum) && mNum > buyMaxMinute) return null;
 
   const isReportStrategy = strategyId.includes('reports');
   const isTop5ReportGainMode = strategyId.includes('reports_top5_gain'); // 研报覆盖前五（含覆盖数相同）中取窗口涨幅最大

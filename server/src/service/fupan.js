@@ -3,7 +3,7 @@ const path = require('path');
 const { getSingleStockTlineDataByDate, getSingleStockTlineData } = require('./stock');
 const { getAllIndexKlineData, getLatestTechEmotion } = require('./emotion');
 const { getAmountHistory } = require('./amount');
-const { timestampToMinute } = require('../utils');
+const { timestampToMinute, isAfterMarketClose } = require('../utils');
 
 const fupanDataPath = path.resolve(__dirname, '../data/fupan_notes.json');
 const personalFeelingsPath = path.resolve(__dirname, '../data/personal_feelings.json');
@@ -114,14 +114,23 @@ const getTodayDateInt = () => {
   return parseInt(`${year}${month}${day}`);
 };
 
+// 进程内按日期 memo（2026-11-04 回测加速）：指数分时对历史日期不可变、当日收盘后定型，
+// 一次回测/复盘会多次取同一日期（大盘门槛 + 情绪分等），避免重复 HTTP 拉取
+const indexTlineByDateMemo = new Map(); // dateInt -> { promise } 复用同一次拉取
 const getIndexTlineByDate = async (tradeDate) => {
-  try {
+  const dateInt = parseInt(tradeDate);
+  const todayInt = getTodayDateInt();
+  const memoizable = dateInt < todayInt || (dateInt === todayInt && isAfterMarketClose());
+  if (memoizable) {
+    const memo = indexTlineByDateMemo.get(dateInt);
+    if (memo) return memo.promise;
+  }
+  const promise = (async () => {
+    try {
     const shangzhengCode = 'sh000001';
     const chuangyebanCode = 'sz399006';
     const kechuangbanCode = 'sh000688';
-    const dateInt = parseInt(tradeDate);
-    const todayInt = getTodayDateInt();
-    
+
     const getTlineData = async (code) => {
       let result = await getSingleStockTlineDataByDate(code, dateInt);
       
@@ -183,6 +192,12 @@ const getIndexTlineByDate = async (tradeDate) => {
       kechuangban: null,
     };
   }
+  })();
+  if (memoizable) {
+    indexTlineByDateMemo.set(dateInt, { promise });
+    promise.catch(() => indexTlineByDateMemo.delete(dateInt)); // 失败不缓存，下次重试
+  }
+  return promise;
 };
 
 const ensurePersonalFeelingsFile = () => {

@@ -98,7 +98,7 @@ const runDiagnosis = (mode, ewEvalNow = true) => {
     // 攻防兼备：双策略并行诊断，组合 data = 情绪游资顺周期（顶层）+ tech 字段（科技进攻完整诊断）
     //   情绪游资腿只在 3 的整数倍分钟才允许命中（非整数分钟抑制命中，科技腿不受影响）
     return Promise.all([
-      getBuyPointChecks(null, true, false),
+      getBuyPointChecks(null, true, false, 1400), // 科技进攻=快进快出类，下午截止 14:00
       getExtremeWinBuyPointChecks(null, true, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE),
     ]).then(([techRes, ewRes]) => {
       const ewData = ewRes?.data || {};
@@ -111,7 +111,7 @@ const runDiagnosis = (mode, ewEvalNow = true) => {
       };
     });
   }
-  return getBuyPointChecks(null, true, false);
+  return getBuyPointChecks(null, true, false, 1400); // 科技进攻=快进快出类，下午截止 14:00
 };
 
 // ============================================================

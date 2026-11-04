@@ -11,7 +11,7 @@ const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 // （与 emotion.js 实时路径、回溯脚本 script/backfill-tech-emotion-v2.js 完全同口径）
 const { computeTechEmotionV2Base, computeTechEmotionV2, computePullbackPenaltyFromPullback } = require('./emotion');
 const blockCodeList = require('../constant/block_code').default || [];
-const { batchParallel } = require('../utils');
+const { batchParallel, isAfterMarketClose } = require('../utils');
 
 const getBlockCodeStocks = () => {
   const map = new Map();
@@ -69,8 +69,10 @@ const readKlineFileCache = (code, targetDateInt) => {
     if (!fs.existsSync(file)) return null;
     const cached = JSON.parse(fs.readFileSync(file, 'utf-8'));
     if (!cached || !Array.isArray(cached.kline) || cached.kline.length === 0) return null;
-    // 仅当天拉取的缓存有效（隔天可能有新K线）；需覆盖目标回放日期
-    if (cached.fetchedAt !== beijingToday()) return null;
+    // 仅「无目标日期」的实时用法要求当天拉取的新鲜缓存；
+    // 回测（带历史 targetDateInt）场景下历史K线不可变，只需下方 maxDate 覆盖校验即可复用，
+    // 否则每个自然日首次回测都要为数百只候选股重新走 HTTP（实测拖慢 60s+）
+    if (targetDateInt == null && cached.fetchedAt !== beijingToday()) return null;
     if (targetDateInt != null) {
       const maxDate = Math.max(...cached.kline.map(k => Number(k.trade_date)).filter(Number.isFinite));
       if (!(maxDate >= targetDateInt)) return null;
@@ -93,8 +95,11 @@ const writeKlineFileCache = (code, kline) => {
 const getKlineCached = async (code, targetDateStr = null) => {
   const hit = klineCache.get(code);
   if (hit && hit.expiresAt > Date.now()) return hit.data;
-  // 历史回放日期优先读文件缓存（跨进程共享，当日盘中数据不走文件缓存）
-  const targetDateInt = targetDateStr != null && String(targetDateStr) < beijingToday() ? parseInt(targetDateStr) : null;
+  // 历史回放日期优先读文件缓存（跨进程共享，当日盘中数据不走文件缓存）。
+  // 目标日期为「今天」且已收盘（15:05 后）同样走文件缓存：当日K线收盘后已定型，
+  // 否则回测区间含当天时每只候选股都要现拉 HTTP（实测拖慢 10s+）
+  const isTodayAfterClose = targetDateStr != null && String(targetDateStr) === beijingToday() && isAfterMarketClose();
+  const targetDateInt = targetDateStr != null && (String(targetDateStr) < beijingToday() || isTodayAfterClose) ? parseInt(targetDateStr) : null;
   if (targetDateInt != null) {
     const fileKline = readKlineFileCache(code, targetDateInt);
     if (fileKline) {

@@ -79,16 +79,24 @@ const syncTotalShares = async (codes = null) => {
     return merged;
 };
 
+// mtime 缓存（2026-11-04 回测加速）：getStockNameByCode 等高频路径每次调用都整读+解析
+// monitor_stocks.json，回测单次会触发数千次。文件未变化时直接复用上次解析结果
+let monitorStocksCache = { mtimeMs: -1, data: [] };
 const getMonitorStocks = () => {
     try {
         if (!fs.existsSync(DATA_PATH)) {
             return [];
         }
-        const data = fs.readFileSync(DATA_PATH, 'utf8');
-        return JSON.parse(data);
+        const mtimeMs = fs.statSync(DATA_PATH).mtimeMs;
+        if (monitorStocksCache.mtimeMs === mtimeMs) {
+            return monitorStocksCache.data;
+        }
+        const data = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
+        monitorStocksCache = { mtimeMs, data };
+        return data;
     } catch (error) {
         console.error('Error reading monitor stocks:', error);
-        return [];
+        return monitorStocksCache.data || [];
     }
 };
 

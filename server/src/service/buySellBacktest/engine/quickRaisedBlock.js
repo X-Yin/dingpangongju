@@ -167,8 +167,8 @@ const resolveRaisedBlockLookbackBucket = (timeBuckets, execMinute) => {
 };
 
 // 板块发酵延时（2026-10-23 用户改）：买点触发后不立刻买入，等待 15 分钟到目标时点再按区间涨幅差值选板块并选股。
-// 返回目标分钟（HHMM 整数）；目标落在非法买入时段（午休或 13:30 之后）时返回 null → 本次触发不买。
-// 允许买入时段与 pickBestStock 门禁一致：9:30–11:30、13:00–13:30（上界 13:30 见 BUY_TIME_MAX_MINUTE）。
+// 返回目标分钟（HHMM 整数）；目标落在非法买入时段（午休或买入时段上限之后）时返回 null → 本次触发不买。
+// 快进快出类下午截止 14:00（调用方传 1400），其余沿用 BUY_TIME_MAX_MINUTE（13:30）。
 // HHMM 整数加分钟（不能直接 +分钟数：955 + 10 = 965，正确应为 1005）
 const addMinutesHHMM = (minute, delta) => {
   const h = Math.floor(minute / 100);
@@ -177,24 +177,24 @@ const addMinutesHHMM = (minute, delta) => {
   return Math.floor(total / 60) * 100 + (total % 60);
 };
 
-const resolveRaisedBlockDelayTarget = (minute) => resolveDelayTargetMinute(minute, EMO_QUICK_RAISED_BLOCK_DELAY_MIN);
+const resolveRaisedBlockDelayTarget = (minute, maxMinute = BUY_TIME_MAX_MINUTE) => resolveDelayTargetMinute(minute, EMO_QUICK_RAISED_BLOCK_DELAY_MIN, maxMinute);
 
 // 通用延时目标计算（重点板块-进攻延迟系列 n 可变）：触发分钟 + delayMin，落在非法买入时段返回 null
-const resolveDelayTargetMinute = (minute, delayMin) => {
+const resolveDelayTargetMinute = (minute, delayMin, maxMinute = BUY_TIME_MAX_MINUTE) => {
   const m = Number(minute);
   const d = Number(delayMin);
   if (!Number.isFinite(m) || !Number.isFinite(d) || d <= 0) return null;
   const target = addMinutesHHMM(m, d);
   const inMorning = target >= 930 && target <= 1130;
-  const inAfternoon = target >= 1300 && target <= BUY_TIME_MAX_MINUTE;
+  const inAfternoon = target >= 1300 && target <= maxMinute;
   return inMorning || inAfternoon ? target : null;
 };
 
 // 回放桶是否达到延时目标（允许相差一个 5 分钟桶的缺口，但不允许跨过目标 10 分钟以上或超出买入时段上限）
-const isRaisedBlockDelayBucket = (minute, targetMinute) => {
+const isRaisedBlockDelayBucket = (minute, targetMinute, maxMinute = BUY_TIME_MAX_MINUTE) => {
   const m = Number(minute);
   if (!Number.isFinite(m)) return false;
-  return m >= targetMinute && m <= addMinutesHHMM(targetMinute, 10) && m <= BUY_TIME_MAX_MINUTE;
+  return m >= targetMinute && m <= addMinutesHHMM(targetMinute, 10) && m <= maxMinute;
 };
 
 // 延时窗口已过期（目标桶后 10 分钟仍无可用桶 → 放弃本次买入）

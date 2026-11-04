@@ -274,6 +274,11 @@ const getLhbStocks = async (dateStr) => {
 // 个股日K线（任意龙虎榜股票，文件缓存跨进程共享）
 // ============================================================
 const stockKlineMem = new Map();
+// 当前时刻 HHmm（写入缓存 fetchedAtTime 用：标记是否为收盘后拉取，供跨天复用判定）
+const nowHHmm = () => {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2, '0')}${String(n.getMinutes()).padStart(2, '0')}`;
+};
 // 收盘后当日缓存过期检查：交易日 15:00 后，缓存未含今日有效 bar 即视为盘中拉取的旧快照
 //（修复：当日盘中拉过一次后 fetchedAt=今天全天有效，收盘后回测期末估值错用昨收价的问题）
 const STALE_REFETCH_COOLDOWN_MS = 60 * 1000; // 重拉冷却：收盘后数据源发布当日K线可能滞后，防止反复打接口
@@ -297,7 +302,16 @@ const getStockDailyKline = async (code) => {
   }
   const file = path.join(KLINE_CACHE_DIR, `${code}.json`);
   const cached = readJsonCache(file);
-  if (cached && cached.fetchedAt === beijingToday() && Array.isArray(cached.kline) && cached.kline.length > 0) {
+  // 缓存有效性（2026-11-04 回测加速）：除「当天拉取」外，若该缓存是在某交易日收盘后
+  // （fetchedAtTime ≥ 15:05）拉取的，其历史K线已完整覆盖至 fetchedAt 当天，跨天直接复用；
+  // 今日 bar 的时效性仍由下方 klineCacheIsStale（15:00 后缺今日 bar 视为过期）兜底。
+  // 原逻辑 fetchedAt !== 今天一律重拉，导致板块引擎每天首个回测要为全部成分股重拉日K（数十秒 HTTP）
+  const cachedCompleteThroughFetchedDay = Array.isArray(cached?.kline) && cached.kline.length > 0
+    && cached.fetchedAt !== beijingToday()
+    && typeof cached.fetchedAtTime === 'string' && cached.fetchedAtTime >= '1505'
+    && cached.kline.some(k => k && Number(k.trade_date) === Number(cached.fetchedAt) && Number(k.close_px) > 0);
+  if (cached && Array.isArray(cached.kline) && cached.kline.length > 0
+    && (cached.fetchedAt === beijingToday() || cachedCompleteThroughFetchedDay)) {
     if (!shouldRefetch(cached.kline)) {
       stockKlineMem.set(code, cached.kline);
       return cached.kline;
@@ -307,7 +321,7 @@ const getStockDailyKline = async (code) => {
   staleRefetchAt.set(code, Date.now());
   let kline = [];
   try { kline = (await getSingleStockData(code, 280)) || []; } catch (e) { /* 失败返回空 */ }
-  if (kline.length > 0) writeJsonCache(file, { fetchedAt: beijingToday(), kline });
+  if (kline.length > 0) writeJsonCache(file, { fetchedAt: beijingToday(), fetchedAtTime: nowHHmm(), kline });
   stockKlineMem.set(code, kline);
   return kline;
 };

@@ -875,7 +875,7 @@ const TopChange3dModule = ({ buyPointHit = false }) => {
   // 卡片右上角手动刷新：强制重拉涨幅榜 + 龙头列表（含指数斜率），不用缓存
   const [refreshing, setRefreshing] = useState(false);
   // 只看符合条件：开启后仅展示完全符合条件的个股（后端 qualifiedTop，按 3 日涨幅降序），默认关闭
-  const [onlyQualified, setOnlyQualified] = useState(false);
+  const [onlyQualified, setOnlyQualified] = useState(true);
   // 显示涨幅开关（2026-11-03 用户要求）：默认关闭，隐藏候选列表中今日涨幅 / 3 日涨幅列
   const [showChange, setShowChange] = useState(false);
   // 涨幅列隐藏时同步收缩表格网格列数，保持单元格对齐

@@ -11,6 +11,7 @@ const { runEmotionBurstFollowBacktest } = require('./emotionBurstFollowBacktest'
 const { runFirstBoardWashBacktest } = require('./firstBoardWashBacktest');
 const { runVolumeWashoutSecondBoardBacktest } = require('./volumeWashoutSecondBoardBacktest');
 const { runWashFusionBacktest } = require('./washFusionExtremeOddsBacktest');
+const { runMoodBlockRotateBacktest } = require('./moodBlockRotateBacktest');
 const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSimContext } = require('../deps');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -94,6 +95,12 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   if (STRATEGIES[strategyId]?.washFusionMode === true) {
     return runWashFusionBacktest(startDate, endDate, strategyId, onProgress, options);
   }
+  // 情绪周期-板块轮换-N 日涨幅最大走独立引擎（重点板块成分股 ≥ 5 只、T-1/T-2 收盘板块均值 < 4%、
+  // 盘中板块均值 > 4% 持续超过 5 分钟 → 买入板块内 N 日涨幅最大者；两份半仓且买入时点至少相隔半天；
+  // 卖点与「情绪游资-极致胜率」顺周期腿一致）
+  if (STRATEGIES[strategyId]?.moodBlockRotateMode === true) {
+    return runMoodBlockRotateBacktest(startDate, endDate, strategyId, onProgress, options);
+  }
   const strategy = STRATEGIES[strategyId];
   // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：快进快出半仓（2026-10-13 用户新增）——
   // 买点触发时看该笔买入是否属于「快进快出」情形（emoQuickOut.quickOut：情绪冰点/温和回升日买入、
@@ -174,6 +181,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   for (let di = 0; di < total; di++) {
     const dateStr = rangeDates[di];
     sameDayTailChecked = false; // 「两次买入（同一天）」尾盘补买评估标记按日重置
+    const dayT0 = Date.now();
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'loading' });
     let campData;
     try {
@@ -194,7 +202,10 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       continue;
     }
     await injectSimStocksIntoCampData(campData, dateStr); // 随机模拟：把合成股票混入当日候选池
+    const tLoad = Date.now() - dayT0;
+    const tReplayT0 = Date.now();
     const replayStocks = await buildReplayStocksWithTline(campData, dateStr);
+    const tReplay = Date.now() - tReplayT0;
     const dateDisplay = campData.dateDisplay || dateStr;
     // 记录当日 EOD 信息（供后续日期选股使用）
     dailyInfos.set(dateStr, extractDailyInfo(campData, dateStr));
@@ -206,7 +217,11 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       }
     }
 
-    if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
+    if (onProgress) onProgress({
+      current: di + 1, total, date: dateStr, status: 'running',
+      // 每日分阶段耗时（ms）：load=回放数据加载，replay=分时增强，rest=其余计算——供慢查询诊断
+      timing: { loadMs: tLoad, replayMs: tReplay, restMs: Date.now() - dayT0 - tLoad - tReplay },
+    });
 
     // 情绪快进快出策略专属卖点：次日 10:00 强卖 + 盘中跌破成本线止损（先到先卖）+ 强卖豁免
     // （见 engine/sellHooks/emoQuickOut.js）。返回强卖/止损发生日期，用于当日禁止二次买入
@@ -361,7 +376,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       // 抬高态延时建仓：到达目标桶（T+15，允许 5 分钟桶缺口）→ 本桶执行建仓；超过目标 10 分钟仍无桶 → 放弃本次买入
       let delayedExec = null;
       if (pendingRaisedBuy) {
-        if (isRaisedBlockDelayBucket(bucket.minute, pendingRaisedBuy.targetMinute)) {
+        if (isRaisedBlockDelayBucket(bucket.minute, pendingRaisedBuy.targetMinute, 1400)) {
           delayedExec = pendingRaisedBuy;
           pendingRaisedBuy = null;
         } else if (isRaisedBlockDelayExpired(bucket.minute, pendingRaisedBuy.targetMinute)) {
@@ -371,7 +386,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
       // 冰点转折·涨幅确认监控（2026-10-30 用户新增）：延时到点已锁定个股但尚未确认时，每个 5min 桶检查该股涨幅，
       // 超过窗口最高涨幅 +1 个百分点即本桶成交；本桶不做新买点评估，始终未确认 → 当日不买
       let iceConfirmHit = null;
-      if (pendingIceConfirm && (unlimited || positions.length === 0) && Number(bucket.minute) > pendingIceConfirm.targetMinute) {
+      if (pendingIceConfirm && (unlimited || positions.length === 0) && Number(bucket.minute) > pendingIceConfirm.targetMinute && Number(bucket.minute) <= 1400) {
         const confirmSc = (bucket.stockChanges || []).find(s => s.code === pendingIceConfirm.picked.stock.code);
         const curGain = confirmSc && confirmSc.changePct != null ? Number(confirmSc.changePct) : null;
         if (isIceGainConfirmed(curGain, pendingIceConfirm.windowMaxGain)) {
@@ -485,7 +500,7 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
               };
             }
           } else if (iceGateOpen) {
-            const targetMinute = resolveRaisedBlockDelayTarget(bucket.minute);
+            const targetMinute = resolveRaisedBlockDelayTarget(bucket.minute, 1400);
             if (targetMinute != null) {
               pendingRaisedBuy = {
                 targetMinute,

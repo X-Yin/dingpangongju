@@ -3,6 +3,8 @@
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const { Worker } = require('worker_threads');
 const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay, getThsSnapshotUrl, getThsSnapshotHeaders, buildThsSnapshotRequestBody, getThsMarketCode } = require('../utils');
 const { getMonitorStocks } = require('./monitorStock');
 const { useCLS } = require('../config');
@@ -11,6 +13,11 @@ const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
 const jisuyidongPath = path.resolve(__dirname, '../data/jisuyidong.json');
 const openingPricesPath = path.resolve(__dirname, '../data/openingPrices.json');
 const tlineCacheDir = '/Users/xieyin/Desktop/盯盘工具/自选股全量股票过去分时数据';
+// 按日捆绑分时缓存（回测加速，2026-11-04 新增）：{date}.json 紧凑存储当日全部分时结果
+// （cacheKey -> { trade_date, preclose_px, line }）。回测逐日请求大量 (股票, 日期) 分时，
+// 原逻辑每只股票都要整份读取解析其全历史分时文件（目录共 8.6GB/9000+ 文件，单文件最大 11MB），
+// 是回测耗时大头（CPU 画像 ~62%）。按日捆绑后同一交易日只解析一个小文件，跨次回测直接复用
+const tlineDayCacheDir = path.resolve(__dirname, '../data/tline_day_cache');
 
 // 保存当日开盘价（9:25 竞价结束后执行，非交易日不保存）
 function saveOpeningPricesIfNeeded() {
@@ -401,6 +408,182 @@ const getStockNameByCode = (code) => {
 // （resilience3d 等场景会对同一只股票反复按日期取分时，避免每次重复读盘+JSON.parse）
 const tlineFileMemCache = new Map(); // cacheKey -> 已解析的分时历史数组
 
+// ============================================================
+// worker 线程读盘解析池（回测加速，2026-11-04 新增）：
+// 历史分时 JSON 文件较大（平均 ~1MB、最大 11MB），主线程 readFileSync + JSON.parse
+// 会串行阻塞事件循环并带来大量 GC。读盘+解析移入 worker 线程并行执行，主线程只接收
+// 当日小对象。池化复用线程，任务队列满时排队。
+// ============================================================
+const TLINE_WORKER_SCRIPT = `
+const { parentPort, workerData } = require('worker_threads');
+const fs = require('fs');
+if (parentPort) {
+  parentPort.on('message', (task) => {
+    const { id, filePath, tradeDate } = task;
+    try {
+      if (!fs.existsSync(filePath)) { parentPort.postMessage({ id, found: false }); return; }
+      const cacheData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      if (!Array.isArray(cacheData)) { parentPort.postMessage({ id, found: false }); return; }
+      const dayData = cacheData.find(d => d.trade_date === tradeDate);
+      if (!dayData || !dayData.line || dayData.line.length === 0) { parentPort.postMessage({ id, found: false }); return; }
+      parentPort.postMessage({ id, found: true, dayData: { date: dayData.trade_date, preclose_px: dayData.preclose_px || 0, line: dayData.line } });
+    } catch (e) {
+      parentPort.postMessage({ id, found: false, error: e.message });
+    }
+  });
+}
+`;
+const TLINE_WORKER_COUNT = Math.min(6, Math.max(2, os.cpus().length - 2));
+const tlineWorkers = [];
+const tlineWorkerIdle = [];
+const tlineTaskQueue = [];
+let tlineTaskSeq = 0;
+const tlinePendingTasks = new Map(); // id -> resolve
+
+const tlineRunWorkerTask = (task) => new Promise((resolve) => {
+  const id = ++tlineTaskSeq;
+  tlinePendingTasks.set(id, resolve);
+  const dispatch = () => {
+    const worker = tlineWorkerIdle.pop();
+    if (worker) {
+      worker._busy = true;
+      worker.postMessage({ id, filePath: task.filePath, tradeDate: task.tradeDate });
+      return;
+    }
+    tlineTaskQueue.push({ id, filePath: task.filePath, tradeDate: task.tradeDate });
+  };
+  if (tlineWorkers.length < TLINE_WORKER_COUNT) {
+    const worker = new Worker(TLINE_WORKER_SCRIPT, { eval: true });
+    worker.unref();
+    worker.on('message', (msg) => {
+      const pending = tlinePendingTasks.get(msg.id);
+      if (pending) {
+        tlinePendingTasks.delete(msg.id);
+        pending(msg);
+      }
+      worker._busy = false;
+      tlineWorkerIdle.push(worker);
+      const next = tlineTaskQueue.shift();
+      if (next) {
+        const w = tlineWorkerIdle.pop();
+        if (w) {
+          w._busy = true;
+          w.postMessage({ id: next.id, filePath: next.filePath, tradeDate: next.tradeDate });
+        } else {
+          tlineTaskQueue.unshift(next);
+        }
+      }
+    });
+    worker.on('error', () => {
+      // worker 崩溃：把队列任务改为主线程兜底同步读取，避免永久挂起
+      const idx = tlineWorkerIdle.indexOf(worker);
+      if (idx >= 0) tlineWorkerIdle.splice(idx, 1);
+      const wIdx = tlineWorkers.indexOf(worker);
+      if (wIdx >= 0) tlineWorkers.splice(wIdx, 1);
+      for (const t of tlineTaskQueue.splice(0)) {
+        const pending = tlinePendingTasks.get(t.id);
+        tlinePendingTasks.delete(t.id);
+        if (pending) pending(tlineReadDaySync(t.filePath, t.tradeDate));
+      }
+    });
+    tlineWorkers.push(worker);
+    worker._busy = true;
+    worker.postMessage({ id, filePath: task.filePath, tradeDate: task.tradeDate });
+    return;
+  }
+  dispatch();
+});
+
+// 主线程兜底同步读取（worker 不可用时）
+const tlineReadDaySync = (filePath, tradeDate) => {
+  try {
+    if (!fs.existsSync(filePath)) return { found: false };
+    const cacheData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    if (!Array.isArray(cacheData)) return { found: false };
+    const dayData = cacheData.find(d => d.trade_date === tradeDate);
+    if (!dayData || !dayData.line || dayData.line.length === 0) return { found: false };
+    return { found: true, dayData: { date: dayData.trade_date, preclose_px: dayData.preclose_px || 0, line: dayData.line } };
+  } catch (e) {
+    return { found: false, error: e.message };
+  }
+};
+
+// ============================================================
+// 按日捆绑分时缓存：内存 Map + 落盘（data/tline_day_cache/{date}.json，紧凑 JSON）
+// - 读：getTlineDayBundle 每个交易日整文件只解析一次（约 2~5MB，主线程开销可忽略）
+// - 写：worker/文件/HTTP 拿到完整分时后 insertTlineDayCacheEntry 登记并标记脏，
+//       防抖 5s 后异步落盘（避免回测期间每股票一次同步写整文件）
+// - 只登记「数据完整」的分时（isTlineCacheComplete 通过后才写入），当日盘中数据不进捆绑缓存
+// ============================================================
+const tlineDayBundleMem = new Map(); // dateNum -> Map(cacheKey -> dayData)
+const tlineDayBundleLoaded = new Set(); // 已尝试加载过文件的日期（含文件不存在的）
+const tlineDayBundleDirty = new Set(); // 待落盘日期
+const tlineDayBundleTimers = new Map(); // date -> 防抖定时器
+
+const tlineDayCachePath = (dateNum) => path.join(tlineDayCacheDir, `${dateNum}.json`);
+
+const getTlineDayBundle = (dateNum) => {
+  let bundle = tlineDayBundleMem.get(dateNum);
+  if (bundle) return bundle;
+  bundle = new Map();
+  if (!tlineDayBundleLoaded.has(dateNum)) {
+    tlineDayBundleLoaded.add(dateNum);
+    try {
+      const file = tlineDayCachePath(dateNum);
+      if (fs.existsSync(file)) {
+        const parsed = JSON.parse(fs.readFileSync(file, 'utf-8'));
+        if (parsed && typeof parsed === 'object') {
+          for (const [k, v] of Object.entries(parsed)) bundle.set(k, v);
+        }
+      }
+    } catch (e) {
+      console.error(`读取按日分时捆绑缓存失败 (${dateNum}):`, e.message);
+    }
+  }
+  tlineDayBundleMem.set(dateNum, bundle);
+  return bundle;
+};
+
+const flushTlineDayBundle = (dateNum) => {
+  const bundle = tlineDayBundleMem.get(dateNum);
+  tlineDayBundleDirty.delete(dateNum);
+  if (!bundle || bundle.size === 0) return;
+  try {
+    if (!fs.existsSync(tlineDayCacheDir)) fs.mkdirSync(tlineDayCacheDir, { recursive: true });
+    const obj = {};
+    for (const [k, v] of bundle) obj[k] = v;
+    // 紧凑 JSON 落盘（无缩进），减小体积与下次解析开销
+    const tmpFile = `${tlineDayCachePath(dateNum)}.${process.pid}.tmp`;
+    fs.writeFileSync(tmpFile, JSON.stringify(obj), 'utf-8');
+    fs.renameSync(tmpFile, tlineDayCachePath(dateNum));
+  } catch (e) {
+    console.error(`写入按日分时捆绑缓存失败 (${dateNum}):`, e.message);
+  }
+};
+
+const insertTlineDayCacheEntry = (dateNum, cacheKey, dayData) => {
+  const bundle = getTlineDayBundle(dateNum);
+  if (bundle.has(cacheKey)) return; // 已有（历史分时不可变，无需覆盖）
+  bundle.set(cacheKey, dayData);
+  if (!tlineDayBundleDirty.has(dateNum)) {
+    tlineDayBundleDirty.add(dateNum);
+    const timer = setTimeout(() => {
+      tlineDayBundleTimers.delete(dateNum);
+      flushTlineDayBundle(dateNum);
+    }, 5000);
+    timer.unref();
+    tlineDayBundleTimers.set(dateNum, timer);
+  }
+};
+
+// 进程退出前尽力落盘未写入的捆绑缓存
+process.on('exit', () => {
+  for (const timer of tlineDayBundleTimers.values()) clearTimeout(timer);
+  for (const dateNum of [...tlineDayBundleDirty]) {
+    try { flushTlineDayBundle(dateNum); } catch (e) { /* 退出阶段尽力而为 */ }
+  }
+});
+
 // 从本地缓存读取分时数据
 const getTlineFromCache = (cacheKey, tradeDate) => {
     try {
@@ -465,7 +648,8 @@ const saveTlineToCache = (cacheKey, tradeDate, tlineData) => {
             line: line
         });
 
-        fs.writeFileSync(cacheFile, JSON.stringify(cacheData, null, 2), 'utf-8');
+        // 紧凑 JSON 落盘（无缩进）：目录 8.6GB/9000+ 文件，缩进格式体积与解析开销均显著更大
+        fs.writeFileSync(cacheFile, JSON.stringify(cacheData), 'utf-8');
         tlineFileMemCache.set(cacheKey, cacheData); // 同步内存缓存
     } catch (e) {
         console.error(`写入分时缓存失败 (${cacheKey}, ${tradeDate}):`, e.message);
@@ -552,6 +736,8 @@ const isTlineCacheComplete = (line, tradeDate) => {
 // 分时结果内存缓存（code|date -> 结果，历史分时不可变；当日盘中不缓存）
 // 消除 resilience3d 等场景对同一 (股票/指数, 日期) 的重复请求/读盘
 const tlineResultMemCache = new Map();
+// 分时拉取失败负缓存："code|dateNum" -> 失败过期时间戳（10 分钟内不再重试 THS/CLS，回测加速）
+const tlineFailMemo = new Map();
 
 const getSingleStockTlineDataByDate = async (code, tradeDate) => {
     const stockName = getStockNameByCode(code);
@@ -576,21 +762,53 @@ const getSingleStockTlineDataByDate = async (code, tradeDate) => {
         }
     }
 
+    // 按日捆绑缓存（回测加速）：整日一个紧凑 JSON 文件，命中时跳过大体积全历史文件读盘
     if (!skipCache && cacheKey) {
-        const cached = getTlineFromCache(cacheKey, tradeDate);
-        if (cached) {
-            if (isTlineCacheComplete(cached.line, tradeDate)) {
-                if (!skipCache) tlineResultMemCache.set(memKey, cached);
-                return { ...cached }; // 浅拷贝，防止调用方修改污染缓存
-            }
-            console.log(`分时缓存数据截止时间未到 15:00，视为不完整，重新请求: ${cacheKey} (${code}) ${tradeDate}`);
+        const bundled = getTlineDayBundle(tradeDate).get(cacheKey);
+        if (bundled && isTlineCacheComplete(bundled.line, tradeDate)) {
+            tlineResultMemCache.set(memKey, bundled);
+            return { ...bundled };
         }
+    }
+
+    if (!skipCache && cacheKey) {
+        // worker 线程读盘解析（不阻塞主线程；旧 tlineFileMemCache 保留给同步调用方 getTlineFromCache）
+        let fileHit = tlineFileMemCache.get(cacheKey);
+        if (fileHit !== undefined) {
+            const dayData = fileHit.find(d => d.trade_date === tradeDate);
+            if (dayData && dayData.line && dayData.line.length > 0 && isTlineCacheComplete(dayData.line, tradeDate)) {
+                const result = { date: dayData.trade_date, preclose_px: dayData.preclose_px || 0, line: dayData.line };
+                tlineResultMemCache.set(memKey, result);
+                return { ...result };
+            }
+        } else {
+            const r = await tlineRunWorkerTask({ filePath: path.join(tlineCacheDir, `${cacheKey}.json`), tradeDate });
+            if (r.found && isTlineCacheComplete(r.dayData.line, tradeDate)) {
+                tlineResultMemCache.set(memKey, r.dayData);
+                insertTlineDayCacheEntry(tradeDate, cacheKey, r.dayData); // 登记进按日捆绑缓存（防抖落盘）
+                return { ...r.dayData };
+            }
+            if (r.found) {
+                console.log(`分时缓存数据截止时间未到 15:00，视为不完整，重新请求: ${cacheKey} (${code}) ${tradeDate}`);
+            }
+        }
+    }
+
+    // 失败负缓存（2026-11-04 回测加速）：THS/CLS 都拿不到的 (股票, 日期) 记忆 10 分钟，
+    // 避免同一笔回测区间内反复超时重试（如长期停牌/退市代码每次都拖 2 次接口超时）
+    const failKey = `${code}|${tradeDate}`;
+    const failMemo = tlineFailMemo.get(failKey);
+    if (failMemo && Date.now() < failMemo) {
+        return null;
     }
 
     let result = await getSingleStockTlineDataByDateFromTHS(code, tradeDate);
     if (!result) {
         console.log(`同花顺获取股票 ${code} 日期 ${tradeDate} 分时数据失败，尝试财联社接口兜底`);
         result = await getSingleStockTlineDataByDateFromCLS(code, tradeDate);
+    }
+    if (!result || !result.line || result.line.length === 0) {
+        tlineFailMemo.set(failKey, Date.now() + 10 * 60 * 1000);
     }
 
     // 写入本地缓存
@@ -606,6 +824,10 @@ const getSingleStockTlineDataByDate = async (code, tradeDate) => {
         const todayComplete = !isToday || (resultLastMinute != null && resultLastMinute >= 1500);
         if (todayComplete) {
             tlineResultMemCache.set(memKey, result);
+            // HTTP 拉到的完整历史分时同样登记进按日捆绑缓存（防抖落盘），下次回测直接命中
+            if (isTlineCacheComplete(resultLine, tradeDate)) {
+                insertTlineDayCacheEntry(tradeDate, cacheKey, { date: result.date ?? tradeDate, preclose_px: result.preclose_px || 0, line: resultLine });
+            }
         }
     }
 

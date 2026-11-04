@@ -1626,7 +1626,7 @@ app.post('/buy_point_checks', async (req, res) => {
     const compute = async () => {
       if (mode === MODE_ATTACK_DEFENSE) {
         const [techRes, ewRes] = await Promise.all([
-          getBuyPointChecks(targetDate, refresh, force),
+          getBuyPointChecks(targetDate, refresh, force, 1400), // 科技进攻=快进快出类，下午截止 14:00
           getExtremeWinBuyPointChecks(targetDate, refresh, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE),
         ]);
         const ewData = ewRes?.data || {};
@@ -1635,7 +1635,7 @@ app.post('/buy_point_checks', async (req, res) => {
       }
       return mode === MODE_EXTREME_WIN
         ? await getExtremeWinBuyPointChecks(targetDate, refresh)
-        : await getBuyPointChecks(targetDate, refresh, force);
+        : await getBuyPointChecks(targetDate, refresh, force, 1400); // 科技进攻=快进快出类，下午截止 14:00
     };
     // 缓存键含自然日与模式：服务运行期间重复挂载直接秒回，后台按最小间隔刷新
     const cacheKey = `buy_point_checks_${dayjs().format('YYYYMMDD')}_${targetDate || 'live'}_${mode || 'tech_attack'}`;
@@ -3594,21 +3594,22 @@ app.post('/training_camp/backtest', async (req, res) => {
         await attachBuyDayReturn(st.trades);
         if (st.holding) await attachBuyDayReturn([st.holding]);
       }
-      return res.json({ success: true, cached: true, strategy: strategyId, unlimited: isUnlimited, taskId: null, result: cached });
+      return res.json({ success: true, cached: true, strategy: strategyId, unlimited: isUnlimited, taskId: null, elapsedSec: 0, result: cached });
     }
     const taskId = `bt${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    buySellBacktestTasks.set(taskId, { status: 'running', progress: { current: 0, total: 0, date: '', status: '' }, result: null, error: null });
+    // createdAt/doneAt：本次回测耗时（前端在「回测策略」label 下展示）
+    buySellBacktestTasks.set(taskId, { status: 'running', progress: { current: 0, total: 0, date: '', status: '' }, result: null, error: null, createdAt: Date.now(), doneAt: null });
     // 异步执行，避免阻塞事件循环
     runRangeBacktest(startDate, endDate, strategyId, (progress) => {
       const task = buySellBacktestTasks.get(taskId);
       if (task) task.progress = progress;
     }, { excludeCodes: excludeList, unlimited: isUnlimited }).then(result => {
       const task = buySellBacktestTasks.get(taskId);
-      if (task) { task.status = 'done'; task.result = result; }
+      if (task) { task.status = 'done'; task.result = result; task.doneAt = Date.now(); }
       if (result?.success && !isOscTest) writeCachedBacktest(cacheStrategyId, startDate, endDate, result);
     }).catch(err => {
       const task = buySellBacktestTasks.get(taskId);
-      if (task) { task.status = 'error'; task.error = err.message || String(err); }
+      if (task) { task.status = 'error'; task.error = err.message || String(err); task.doneAt = Date.now(); }
     });
     res.json({ success: true, cached: false, strategy: strategyId, taskId });
   } catch (error) {
@@ -3624,7 +3625,11 @@ app.get('/training_camp/backtest/status/:taskId', (req, res) => {
     if (!task) {
       return res.status(404).json({ success: false, message: '回测任务不存在或已过期' });
     }
-    res.json({ success: true, status: task.status, progress: task.progress, result: task.result ? attachHoldingDays(task.result) : null, error: task.error });
+    // 本次回测耗时（秒，保留 1 位小数）：结束时为总耗时，运行中为已耗时（前端实时展示）
+    const elapsedSec = task.createdAt
+      ? parseFloat((((task.doneAt || Date.now()) - task.createdAt) / 1000).toFixed(1))
+      : null;
+    res.json({ success: true, status: task.status, progress: task.progress, result: task.result ? attachHoldingDays(task.result) : null, error: task.error, elapsedSec });
   } catch (error) {
     console.error('查询买卖点回测任务失败:', error);
     res.status(500).json({ success: false, message: error.message || '查询任务状态失败' });
@@ -5436,6 +5441,10 @@ app.get('/api/ak/foreign_commodity', async (req, res) => {
 const server = app.listen(port, () => {
   console.log(`服务运行在 http://localhost:${port}`);
   console.log('轮询服务已分离到单独脚本，请运行 npm run poll 启动轮询');
+  // 自选股日K线预热（异步、不阻塞启动）：刷新 kline_cache 当日有效性，避免实时行情/回测路径首查走 HTTP
+  require('./service/trainingCamp').prewarmKlineCache().then(r => {
+    console.log(`自选股日K线预热完成：${r.total} 只中刷新 ${r.fetched} 只`);
+  }).catch(() => { /* 预热失败不影响服务 */ });
   // 买点诊断后端集中化：WebSocket 与 HTTP 共用同一 http.Server，并启动 10s 集中推送
   wsServer.attach(server, port);
   buyPointPushService.start();

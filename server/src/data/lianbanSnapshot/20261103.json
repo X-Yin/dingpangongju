@@ -12,7 +12,7 @@
   },
   "sentiment": {
     "phase": "退潮期",
-    "temperature": null
+    "temperature": 20.4
   },
   "kpi": {
     "limitUpCount": 48,
