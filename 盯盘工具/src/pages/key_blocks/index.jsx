@@ -268,6 +268,9 @@ const BlockConfigPanel = () => {
   const [togglingKeyBlock, setTogglingKeyBlock] = useState(null);
   // 弹窗内通过搜索选择的股票列表：新增股票 / 新增板块共用（均为 { name, code }，code 带 sh/sz 前缀）
   const [pickStocks, setPickStocks] = useState([]);
+  // 新增板块弹窗：批量添加的文本与解析状态
+  const [batchText, setBatchText] = useState('');
+  const [batchParsing, setBatchParsing] = useState(false);
 
   // 折叠状态：默认全部折叠；URL 携带 blockName 时仅展开该板块
   const [expandedKeys, setExpandedKeys] = useState(() => {
@@ -384,8 +387,49 @@ const BlockConfigPanel = () => {
     setEditing(null);
     setModalMode('block');
     setPickStocks([]); // 清空上一次残留的股票行
+    setBatchText(''); // 清空上一次批量添加的文本
     form.resetFields();
     setModalOpen(true);
+  };
+
+  // 批量解析文本并添加股票：支持逗号（中英文）、顿号、空格、换行分隔，
+  // 每段文字调用搜索接口取第一个匹配项解析为 { name, code }，重复与未匹配的会提示
+  const handleBatchParse = async () => {
+    const tokens = [...new Set(
+      batchText.split(/[,，、\s]+/).map(t => t.trim()).filter(Boolean)
+    )];
+    if (!tokens.length) {
+      message.warning('请先在文本框中输入股票名称');
+      return;
+    }
+    setBatchParsing(true);
+    const failed = [];
+    const resolved = [];
+    const existCodes = new Set(pickStocks.filter(s => s.code).map(s => s.code));
+    for (const token of tokens) {
+      try {
+        const { data } = await axios.get(`http://${local_ip}:3000/search_stock`, { params: { query: token } });
+        const first = data?.data?.[0];
+        if (first?.code) {
+          if (existCodes.has(first.code)) continue; // 与已有行 / 本批重复的跳过
+          existCodes.add(first.code);
+          resolved.push({ name: first.name, code: first.code });
+        } else {
+          failed.push(token);
+        }
+      } catch {
+        failed.push(token);
+      }
+    }
+    setBatchParsing(false);
+    if (resolved.length) {
+      setPickStocks(prev => [...prev.filter(s => s.name || s.code), ...resolved]);
+      setBatchText('');
+      message.success(`已解析并添加 ${resolved.length} 只股票`);
+    }
+    if (failed.length) {
+      message.warning(`以下 ${failed.length} 个未匹配到股票：${failed.join('、')}`);
+    }
   };
 
   // 打开板块编辑弹窗（编辑板块名称 / 板块 tag）
@@ -876,6 +920,26 @@ const BlockConfigPanel = () => {
                 icon={<PlusOutlined />}
               >
                 添加股票
+              </Button>
+              <Divider orientation="left" plain style={{ margin: '16px 0 8px', fontSize: 12 }}>
+                批量添加（逗号 / 顿号 / 空格 / 换行分隔）
+              </Divider>
+              <Input.TextArea
+                rows={4}
+                value={batchText}
+                onChange={(e) => setBatchText(e.target.value)}
+                placeholder={'例如：中芯国际，寒武纪、宁德时代 海光信息'}
+                disabled={batchParsing}
+              />
+              <Button
+                type="dashed"
+                block
+                icon={<PlusOutlined />}
+                loading={batchParsing}
+                onClick={handleBatchParse}
+                style={{ marginTop: 8 }}
+              >
+                解析并批量添加
               </Button>
             </>
           ) : editing ? (

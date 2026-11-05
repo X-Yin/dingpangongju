@@ -157,6 +157,12 @@
       "blockName": "机器人大脑",
       "code": "sz301413",
       "change": 3.38
+    },
+    {
+      "name": "永新光学",
+      "blockName": "机器人大脑",
+      "code": "sh603297",
+      "change": 10
     }
   ],
   "端侧SOC": [
@@ -2075,6 +2081,116 @@
       "blockName": "互联网金融",
       "code": "sz300059",
       "change": -1.15
+    }
+  ],
+  "光伏": [
+    {
+      "name": "闽发铝业",
+      "blockName": "光伏",
+      "code": "sz002578",
+      "change": 9.9
+    },
+    {
+      "name": "永臻股份",
+      "blockName": "光伏",
+      "code": "sh603381",
+      "change": 9.98
+    },
+    {
+      "name": "海源复材",
+      "blockName": "光伏",
+      "code": "sz002529",
+      "change": 9.98
+    },
+    {
+      "name": "时创能源",
+      "blockName": "光伏",
+      "code": "sh688429",
+      "change": 19.98
+    },
+    {
+      "name": "欧晶科技",
+      "blockName": "光伏",
+      "code": "sz001269",
+      "change": 9.98
+    },
+    {
+      "name": "东南网架",
+      "blockName": "光伏",
+      "code": "sz002135",
+      "change": 10.02
+    },
+    {
+      "name": "森特股份",
+      "blockName": "光伏",
+      "code": "sh603098",
+      "change": 10.01
+    },
+    {
+      "name": "贝特利",
+      "blockName": "光伏",
+      "code": "sz301697",
+      "change": 19.98
+    },
+    {
+      "name": "钧达股份",
+      "blockName": "光伏",
+      "code": "sz002865",
+      "change": 10
+    },
+    {
+      "name": "赛伍技术",
+      "blockName": "光伏",
+      "code": "sh603212",
+      "change": 10
+    },
+    {
+      "name": "弘元绿能",
+      "blockName": "光伏",
+      "code": "sh603185",
+      "change": 10.02
+    },
+    {
+      "name": "中利集团",
+      "blockName": "光伏",
+      "code": "sz002309",
+      "change": 10.19
+    },
+    {
+      "name": "协鑫集成",
+      "blockName": "光伏",
+      "code": "sz002506",
+      "change": 9.96
+    },
+    {
+      "name": "双良节能",
+      "blockName": "光伏",
+      "code": "sh600481",
+      "change": 9.89
+    },
+    {
+      "name": "华电辽能",
+      "blockName": "光伏",
+      "code": "sh600396",
+      "change": 10.05
+    },
+    {
+      "name": "狮头股份",
+      "blockName": "光伏",
+      "code": "sh600539",
+      "change": 9.99
+    },
+    {
+      "name": "金刚光伏",
+      "blockName": "光伏",
+      "code": "sz300093",
+      "change": 20
+    },
+    {
+      "name": "维通利",
+      "blockName": "光伏",
+      "code": "sz001393",
+      "change": 10
     }
   ]
 }

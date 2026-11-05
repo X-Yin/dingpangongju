@@ -2470,6 +2470,88 @@ app.get('/get_block_money_change_day_history', (req, res) => {
   }
 });
 
+// 板块资金按 category 聚合的日线：把东方财富概念板块名（半导体概念 / 第三代半导体 ...）
+// 按 Category 命名空间聚合成一个 series，返回 { categoryName: [{date, moneyY, money}] }
+// 前端四维立体的「板块资金流入流出日线」直接用这个接口即可按 categoryPool 筛选展示
+app.get('/get_block_money_day_by_category', (req, res) => {
+  try {
+    const raw = getBlockMoneyChangeDayHistory();
+    const cats = String(req.query.cats || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    // 允许外部覆盖默认映射；未指定 category 时返回全部 category
+    const keywordMappings = {
+      半导体: ['半导体概念', '第三代半导体', '第四代半导体'],
+      存储芯片: ['存储芯片'],
+      光通信: ['光通信模块', '光通信'],
+      先进封装: ['先进封装'],
+      PCB: ['PCB'],
+      黄金: ['黄金概念', '黄金首饰'],
+      贵金属: ['黄金概念', '黄金首饰', '白银', '铜'],
+      机器人: ['机器人概念', '人形机器人'],
+      商业航天: ['商业航天'],
+      军工: ['军工'],
+      算力: ['算力'],
+      国产算力: ['国产算力'],
+      液冷: ['液冷'],
+      MLCC: ['MLCC'],
+      光纤: ['光纤'],
+      铜缆高速连接: ['铜缆高速连接'],
+      消费电子: ['消费电子'],
+      跨境支付: ['跨境支付'],
+      游戏: ['短剧互动游戏', '游戏'],
+      传媒: ['传媒', '短剧互动游戏'],
+      农业: ['农业', '农产品'],
+      消费: ['消费', '食品饮料', '白酒'],
+      医药: ['创新医疗服务', '医药'],
+      电力: ['电力'],
+      锂电池: ['锂电池概念', '锂电池'],
+      固态电池: ['固态电池'],
+      汽车整车: ['汽车整车', '飞行汽车(eVTOL)'],
+      煤炭: ['煤炭'],
+      油气: ['油气'],
+      房地产: ['房地产'],
+      玻璃基板: ['玻璃基板'],
+      核聚变: ['核聚变'],
+      化工: ['化工'],
+      证券: ['证券'],
+      银行: ['银行'],
+    };
+
+    // 聚合时按 category 合并多个板块的 money（同属一个 category 的板块加总）
+    const result = {};
+    const allCats = cats.length ? cats : Object.keys(keywordMappings);
+    for (const cat of allCats) {
+      const kws = keywordMappings[cat];
+      if (!kws) continue;
+      const series = [];
+      for (const rec of raw || []) {
+        let total = 0;
+        let matched = false;
+        for (const block of rec.data || []) {
+          if (kws.some((kw) => (block.block || '').includes(kw))) {
+            total += Number(block.money || 0);
+            matched = true;
+          }
+        }
+        if (matched) {
+          series.push({
+            date: Number(rec.date),
+            money: total,
+            moneyY: Number((total / 1e8).toFixed(2)),
+          });
+        }
+      }
+      if (series.length) result[cat] = series;
+    }
+    res.json(result);
+  } catch (error) {
+    console.error('获取板块资金 category 聚合日线失败:', error);
+    res.status(500).json({ message: error.message || '获取数据失败' });
+  }
+});
+
 // 手动触发记录当日板块资金历史
 app.post('/update_block_money_change_day_history', (req, res) => {
   try {

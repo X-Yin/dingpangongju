@@ -244,6 +244,12 @@ $sl-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
       border-radius: 999px;
       padding: 1px 9px;
     }
+
+    .sl-section-sub {
+      font-size: 10.5px;
+      font-weight: 500;
+      color: #94a3b8;
+    }
   }
 
   // ---------- 通用磨砂卡 ----------
@@ -390,6 +396,198 @@ $sl-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     align-items: flex-start;
   }
 
+  // ---------- 板块成交 & 资金：筛选框 + 子模块 ----------
+  .sl-filter-row {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 12px;
+  }
+
+  .sl-filter-select {
+    flex: 0 1 420px;
+    min-width: 0;
+    max-width: 100%;
+
+    .ant-select-selector {
+      min-height: 34px;
+      border-radius: 10px !important;
+      background: rgba(255, 255, 255, 0.16) !important;
+      border: 1px solid rgba(255, 255, 255, 0.32) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      padding: 3px 30px 3px 10px !important;
+    }
+
+    .ant-select-selection-placeholder {
+      color: rgba(255, 255, 255, 0.6) !important;
+      font-size: 11.5px;
+      line-height: 26px;
+    }
+
+    .ant-select-selection-search-input {
+      color: #fff !important;
+      font-size: 11.5px;
+    }
+
+    .ant-select-selection-item {
+      background: rgba(255, 255, 255, 0.24) !important;
+      border: 1px solid rgba(255, 255, 255, 0.36) !important;
+      border-radius: 7px !important;
+      color: #fff !important;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 22px !important;
+      height: 24px !important;
+      margin-inline-end: 4px;
+      padding-inline: 8px !important;
+    }
+
+    .ant-select-selection-item-remove {
+      color: rgba(255, 255, 255, 0.72) !important;
+
+      &:hover { color: #fff !important; }
+    }
+
+    .ant-select-arrow,
+    .ant-select-clear {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    &:hover .ant-select-selector,
+    &.ant-select-focused .ant-select-selector {
+      border-color: rgba(255, 255, 255, 0.6) !important;
+      background: rgba(255, 255, 255, 0.22) !important;
+    }
+  }
+
+  .sl-filter-count {
+    flex-shrink: 0;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.72);
+    white-space: nowrap;
+  }
+
+  .sl-submodule {
+    position: relative;
+    z-index: 1;
+    padding: 10px 12px 6px;
+    margin-top: 10px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+  }
+
+  .sl-submodule-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+
+    .anticon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      font-size: 10px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.22);
+    }
+  }
+
+  .sl-submodule-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .sl-submodule-sub {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.62);
+  }
+
+  .sl-submodule-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 120px;
+  }
+
+  .sl-submodule .ant-empty {
+    margin: 14px 0 10px;
+  }
+
+  .sl-submodule .ant-empty-description {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 11.5px;
+  }
+
+  .sl-submodule .ant-empty-image {
+    opacity: 0.55;
+  }
+
+  .sl-sector-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+
+    @media (max-width: 1100px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .sl-sector-mini {
+    min-width: 0;
+    padding: 8px 10px 4px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .sl-sector-mini-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+
+    i {
+      width: 8px;
+      height: 8px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+  }
+
+  .sl-sector-mini-name {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sl-sector-mini-days {
+    margin-left: auto;
+    font-size: 9.5px;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: $sl-mono;
+  }
+
+  .sl-sector-mini-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+  }
+
   .sl-theme-chips {
     display: flex;
     flex-wrap: wrap;
@@ -433,7 +631,7 @@ $sl-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
       border-radius: 4px;
       background: rgba(233, 55, 6, 0.3);
       color: #e07809;
-s
+
       .active & { background: #f59e0b; color: #fff; }
     }
 
@@ -860,5 +1058,31 @@ s
     .sl-summary-grid { grid-template-columns: minmax(0, 1fr); }
     .sl-theme-chips { max-width: 100%; justify-content: flex-start; }
     .sl-chart-grid { grid-template-columns: minmax(0, 1fr); }
+
+    .sl-filter-row { flex-wrap: wrap; }
+    .sl-filter-select { max-width: 100%; }
+    .sl-sector-mini-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+}
+
+// 板块下拉弹层（antd 挂在 body 上，需要全局样式）
+.sl-sector-dropdown {
+  padding: 4px !important;
+  border-radius: 12px !important;
+
+  .ant-select-item {
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+
+  .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+    background: rgba(123, 77, 255, 0.1);
+  }
+
+  .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background: rgba(123, 77, 255, 0.18);
+    color: #4c1d95;
+    font-weight: 700;
   }
 }

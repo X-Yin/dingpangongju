@@ -199,7 +199,7 @@ const extractPageDate = (html) => {
 // 老版页面同样包含该卡片，结构一致：<div class="l">情绪周期</div><div class="v" ...>修复期</div><div class="ly">温度 36°</div>
 const extractSentiment = (html) => {
   const phaseM = html.match(/情绪周期[\s\S]{0,120}?<div class="v"[^>]*>([\s\S]*?)<\/div>/);
-  const tempM = html.match(/温度\s*(-?\d+)\s*°/);
+  const tempM = html.match(/温度\s*(-?\d+(?:\.\d+)?)\s*°/);
   const phase = phaseM ? decodeEntities(phaseM[1]).replace(/<[^>]+>/g, '').trim() : '';
   const temperature = tempM ? Number(tempM[1]) : null;
   if (!phase && temperature == null) return null;

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Empty, Spin, Tooltip, message } from 'antd';
-import { ReloadOutlined, RiseOutlined, LineChartOutlined, ThunderboltOutlined, FundOutlined } from '@ant-design/icons';
+import { Empty, Spin, Tooltip, message, Select } from 'antd';
+import { ReloadOutlined, RiseOutlined, LineChartOutlined, ThunderboltOutlined, FundOutlined, BarChartOutlined, SwapOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import dayjs from 'dayjs';
 import { createChart, ColorType, LineStyle, CrosshairMode } from 'lightweight-charts';
 import { local_ip } from '../../constant';
 import StockKLineModal from '../../components/StockKLineModal';
@@ -52,6 +53,7 @@ const BASE_PRICE_FORMAT = { type: 'price', precision: 1, minMove: 0.1 };
 const INT_FORMATTER = (p) => `${Number(p).toFixed(0)}`;
 const PHASE_FORMATTER = (p) => PHASE_NAMES[Math.round(Number(p))] || '';
 const PHASE_PRICE_FORMAT = { type: 'custom', formatter: PHASE_FORMATTER, minMove: 1 };
+const SECTOR_PRICE_FORMAT = { type: 'price', precision: 2, minMove: 0.01 };
 
 // 折线数据：{ date: YYYYMMDD, value } -> lightweight-charts time
 const toChartData = (list) => (list || [])
@@ -273,6 +275,29 @@ const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFo
   );
 };
 
+// 单板块迷你图：板块名 + 一条折线，无数据时占位
+const SectorMiniChart = ({ name, color, series, height = 170, priceFormat, priceFormatter, extraLine }) => (
+  <div className="sl-sector-mini">
+    <div className="sl-sector-mini-head">
+      <i style={{ background: color }} />
+      <span className="sl-sector-mini-name" title={name}>{name}</span>
+      {series && series.length ? <span className="sl-sector-mini-days">{series.length} 日</span> : null}
+    </div>
+    {series && series.length ? (
+      <MiniLineChart
+        series={series}
+        color={color}
+        height={height}
+        priceFormat={priceFormat}
+        priceFormatter={priceFormatter}
+        extraLine={extraLine}
+      />
+    ) : (
+      <div className="sl-sector-mini-empty" style={{ height }}>暂无数据</div>
+    )}
+  </div>
+);
+
 // 单个题材（主线/支线）卡片：龙头 / 中军 / 龙二~龙五
 const ThemeCard = ({ theme, onOpenStock }) => {
   const isMain = theme.type === '主线';
@@ -354,6 +379,11 @@ const SiweiLiti = () => {
   const [showAllBranches, setShowAllBranches] = useState(false);
   const [klineTarget, setKlineTarget] = useState(null);
   const [klineVisible, setKlineVisible] = useState(false);
+
+  // 板块成交量占比 / 板块资金流入流出（共用同一个筛选框）
+  const [sectorCats, setSectorCats] = useState([]);
+  const [sectorData, setSectorData] = useState(null); // { ratio: {name:[...]}, fund: {name:[...]} }
+  const [sectorLoading, setSectorLoading] = useState(false);
 
   const fetchData = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true); else setLoading(true);
@@ -442,6 +472,72 @@ const SiweiLiti = () => {
   };
 
   const fastRotation = data?.marketStatus?.isFastRotation;
+
+  // ===== 板块成交量占比 / 资金 日线 的题材池：去重后的 category + 原始板块名 =====
+  const categoryPool = useMemo(() => {
+    const set = new Set();
+    (themes || []).forEach((t) => {
+      if (t.category) set.add(t.category);
+      if (t.board) set.add(t.board);
+    });
+    return Array.from(set);
+  }, [themes]);
+
+  // ===== 板块成交量占比 + 板块资金（同一筛选框，两个子模块）=====
+  const fetchSectorData = useCallback(async () => {
+    if (sectorCats.length === 0) {
+      setSectorData(null);
+      return;
+    }
+    setSectorLoading(true);
+    try {
+      const startDate = dayjs().subtract(60, 'day').format('YYYY-MM-DD');
+      const endDate = dayjs().format('YYYY-MM-DD');
+      const [ratioRes, fundRes] = await Promise.all([
+        axios.get(`${API_BASE}/block_category_ratio`, { params: { startDate, endDate } }),
+        axios.get(`${API_BASE}/get_block_money_day_by_category`, { params: { cats: sectorCats.join(',') } }),
+      ]);
+      const ratioAll = ratioRes.data || {};
+      const byCat = {};
+      sectorCats.forEach((name) => {
+        if (ratioAll[name]) byCat[name] = ratioAll[name];
+      });
+      setSectorData({ ratio: byCat, fund: fundRes.data || {} });
+    } catch (e) {
+      console.error('获取板块日线数据失败:', e);
+      message.error('获取板块日线数据失败');
+    } finally {
+      setSectorLoading(false);
+    }
+  }, [sectorCats]);
+
+  useEffect(() => {
+    fetchSectorData();
+  }, [fetchSectorData]);
+
+  // 每个板块独立一张图：颜色按所选顺序固定，缺失数据留空占位
+  const ratioCharts = useMemo(() => sectorCats.map((name, idx) => ({
+    key: name,
+    name,
+    color: LINE_COLORS[idx % LINE_COLORS.length],
+    series: (sectorData?.ratio?.[name] || []).map((r) => ({
+      date: r.date,
+      value: Number.isFinite(Number(r.ratio)) ? Number(r.ratio) : null,
+    })),
+  })), [sectorCats, sectorData]);
+
+  const fundCharts = useMemo(() => sectorCats.map((name, idx) => ({
+    key: name,
+    name,
+    color: LINE_COLORS[idx % LINE_COLORS.length],
+    series: (sectorData?.fund?.[name] || [])
+      .slice()
+      .sort((a, b) => Number(a.date) - Number(b.date))
+      .map((r) => ({
+        date: r.date,
+        value: Number.isFinite(Number(r.moneyY)) ? Number(r.moneyY) : null,
+      })),
+  })), [sectorCats, sectorData]);
 
   return (
     <div className="siwei-liti-page">
@@ -583,7 +679,7 @@ const SiweiLiti = () => {
               <>
                 <MiniLineChart
                   lines={sectorLines}
-                  height={190}
+                  height={390}
                   priceFormat={PHASE_PRICE_FORMAT}
                   priceFormatter={PHASE_FORMATTER}
                 />
@@ -630,6 +726,98 @@ const SiweiLiti = () => {
             ) : (
               <Empty description="点击上方题材标签添加曲线，再次点击取消" />
             )}
+          </div>
+
+          {/* 板块成交量占比 + 板块资金流入流出（同一筛选框，两个子模块） */}
+          <div className="sl-section-title">
+            <BarChartOutlined /> 板块成交 &amp; 资金日线
+            <span className="sl-section-sub">
+              同一筛选框同时筛选成交量占比与资金净流入（近 60 个交易日）
+            </span>
+          </div>
+          <div className="sl-glass-card sl-chart-card">
+            <div className="sl-chart-card-head sl-sector-head">
+              <div>
+                <span className="sl-chart-title">板块成交 &amp; 资金</span>
+                <span className="sl-chart-sub">每个板块独立一张日线图，方便单独对比</span>
+              </div>
+            </div>
+            {categoryPool.length ? (
+              <div className="sl-filter-row">
+                <Select
+                  className="sl-filter-select"
+                  mode="multiple"
+                  showSearch
+                  allowClear
+                  placeholder="搜索板块名称，点击可多选"
+                  value={sectorCats}
+                  onChange={setSectorCats}
+                  filterOption={(input, option) => (
+                    String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  )}
+                  maxTagCount="responsive"
+                  popupClassName="sl-sector-dropdown"
+                  options={categoryPool.map((name) => ({
+                    value: name,
+                    label: name,
+                  }))}
+                />
+                <span className="sl-filter-count">已选 {sectorCats.length} 个板块</span>
+              </div>
+            ) : null}
+
+            <div className="sl-submodule">
+              <div className="sl-submodule-head">
+                <BarChartOutlined />
+                <span className="sl-submodule-title">板块成交量占比</span>
+                <span className="sl-submodule-sub">成分股成交额汇总 / 全市场成交额（%）</span>
+              </div>
+              {sectorLoading ? (
+                <div className="sl-submodule-loading"><Spin /></div>
+              ) : !sectorCats.length ? (
+                <Empty description="请在上方下拉框中选择板块" />
+              ) : (
+                <div className="sl-sector-mini-grid">
+                  {ratioCharts.map((c) => (
+                    <SectorMiniChart
+                      key={c.key}
+                      name={c.name}
+                      color={c.color}
+                      series={c.series}
+                      priceFormat={SECTOR_PRICE_FORMAT}
+                      priceFormatter={(p) => `${Number(p).toFixed(2)}%`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="sl-submodule">
+              <div className="sl-submodule-head">
+                <SwapOutlined />
+                <span className="sl-submodule-title">板块资金净流入 / 净流出</span>
+                <span className="sl-submodule-sub">东方财富概念板块（正=流入 / 负=流出，单位 亿）</span>
+              </div>
+              {sectorLoading ? (
+                <div className="sl-submodule-loading"><Spin /></div>
+              ) : !sectorCats.length ? (
+                <Empty description="请在上方下拉框中选择板块" />
+              ) : (
+                <div className="sl-sector-mini-grid">
+                  {fundCharts.map((c) => (
+                    <SectorMiniChart
+                      key={c.key}
+                      name={c.name}
+                      color={c.color}
+                      series={c.series}
+                      priceFormat={SECTOR_PRICE_FORMAT}
+                      priceFormatter={(p) => `${Number(p).toFixed(2)}亿`}
+                      extraLine={{ value: 0 }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 主线 */}

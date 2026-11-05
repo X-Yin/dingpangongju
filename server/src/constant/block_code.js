@@ -1873,5 +1873,118 @@ exports.default = [
         "blockName": "半导体",
         "code": "sz300567",
         "name": "精测电子"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sz002578",
+        "name": "闽发铝业",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sh603381",
+        "name": "永臻股份",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sz002529",
+        "name": "海源复材",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sh688429",
+        "name": "时创能源",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sz001269",
+        "name": "欧晶科技",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sz002135",
+        "name": "东南网架",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sh603098",
+        "name": "森特股份",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sz301697",
+        "name": "贝特利",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sz002865",
+        "name": "钧达股份",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sh603212",
+        "name": "赛伍技术",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sh603185",
+        "name": "弘元绿能",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sz002309",
+        "name": "中利集团",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sz002506",
+        "name": "协鑫集成",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sh600481",
+        "name": "双良节能",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sh600396",
+        "name": "华电辽能",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sh600539",
+        "name": "狮头股份",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sz300093",
+        "name": "金刚光伏",
+        "tag": "中性"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sz001393",
+        "name": "维通利",
+        "tag": "中性"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sh603297",
+        "name": "永新光学"
     }
 ]
