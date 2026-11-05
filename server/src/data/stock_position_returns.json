@@ -1,5 +1,32 @@
 [
   {
+    "date": "2026-11-05",
+    "operations": [
+      {
+        "id": "1793844891717_otcc",
+        "action": "sell",
+        "stockName": "创维数字",
+        "stockCode": "sz000810",
+        "position": "",
+        "time": "10:14"
+      },
+      {
+        "id": "1793846416665_b326",
+        "action": "sell",
+        "stockName": "华海清科",
+        "stockCode": "sh688120",
+        "position": "",
+        "time": "10:40"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-05T02:14:51.823Z",
+    "updatedAt": "2026-11-05T02:40:17.393Z"
+  },
+  {
     "date": "2026-11-04",
     "operations": [
       {

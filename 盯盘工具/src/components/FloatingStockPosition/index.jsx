@@ -488,7 +488,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
       return timer;
     };
     // 后端已加 5s TTL 缓存，3s 轮询每轮都能命中一次新鲜值且避免对外部行情接口造成压力
-    schedulePoll(fetchStockChanges, 3000);
+    schedulePoll(fetchStockChanges, 1000);
     return () => {
       timers.forEach(clearTimeout);
     };

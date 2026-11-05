@@ -1603,5 +1603,27 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-04 23:43:10"
+  },
+  {
+    "code": "sz300201",
+    "name": "海伦哲",
+    "isImportant": false,
+    "blockName": "锂电",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-05 12:15:46"
+  },
+  {
+    "code": "sh603893",
+    "name": "瑞芯微",
+    "isImportant": false,
+    "blockName": "soc",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-05 12:20:19"
   }
 ]

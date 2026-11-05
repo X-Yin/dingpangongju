@@ -8,7 +8,7 @@ const dayjs = require('dayjs');
 const { isTradingDay, isMiddayBreak, isAfterMarketClose } = require('./utils');
 const { runAndSaveIntradayPoint } = require('./service/blockVolumeRatio');
 
-const POLL_INTERVAL = 5 * 60 * 1000;
+const POLL_INTERVAL = 10 * 60 * 1000;
 const CHECK_INTERVAL = 60 * 1000;
 const START_MINUTE = 9 * 60 + 30; // 9:30 开盘之后才开始
 // 校验失败 / 请求失败时的重试：等待 10s 后强制重新拉取行情（不复用同一份异常快照）

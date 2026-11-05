@@ -1,5 +1,38 @@
 [
   {
+    "id": "1793846562598_rolc7u",
+    "type": "buy",
+    "code": "sh688120",
+    "name": "华海清科",
+    "date": "2026-11-05",
+    "time": "10:42:42",
+    "detail": "新增持仓：华海清科（sh688120）",
+    "pipelineStage": 0,
+    "createdAt": "2026-11-05T02:42:42.598Z"
+  },
+  {
+    "id": "1793846416547_fyaydw",
+    "type": "delete",
+    "code": "sh688120",
+    "name": "华海清科",
+    "date": "2026-11-05",
+    "time": "10:40:16",
+    "detail": "删除持仓：华海清科（sh688120）",
+    "pipelineStage": null,
+    "createdAt": "2026-11-05T02:40:16.547Z"
+  },
+  {
+    "id": "1793844891697_tob81s",
+    "type": "delete",
+    "code": "sz000810",
+    "name": "创维数字",
+    "date": "2026-11-05",
+    "time": "10:14:51",
+    "detail": "删除持仓：创维数字（sz000810）",
+    "pipelineStage": null,
+    "createdAt": "2026-11-05T02:14:51.697Z"
+  },
+  {
     "id": "1793808805792_ebdqbh",
     "type": "buy",
     "code": "sh688120",

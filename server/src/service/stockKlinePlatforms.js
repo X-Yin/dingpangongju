@@ -1,10 +1,13 @@
 // 多平台个股日K请求（板块成交量占比轮询兜底使用）
 // - 同花顺 / 财联社：复用线上已有的 HTTP 请求逻辑
 // 统一返回 [{ date: 'YYYYMMDD', amount: 成交额(元), close: 收盘价 }]，按日期升序
+// 2026-11-05：新增 source='auto' 支持 CLS/THS 加权随机（默认 60/40），
+//             主源失败时自动兜底到另一只主力；显式 'cls'/'ths' 保持原有单源语义不变。
 const axios = require('axios');
 const dayjs = require('dayjs');
 const { getClsReqUrl } = require('../utils');
 const { fetchStockKline } = require('./stockKlineCache');
+const { pickPrimarySource } = require('../config');
 
 // 平台标识 → 展示名称
 const PLATFORM_NAMES = {
@@ -60,20 +63,37 @@ const fetchClsKline = async (code, startDate) => {
     })));
 };
 
-// 单只股票日K：主平台失败时由调用方再走兜底链
+// 单只股票日K：单源请求（auto 时内部做随机 + 兜底）
 const fetchSingleKline = async (platform, code, startDate) => {
+    // 显式指定 → 原有单源语义
     if (platform === 'ths') return fetchThsKline(code, startDate);
     if (platform === 'cls') return fetchClsKline(code, startDate);
+
+    // auto：按权重选主源，失败兜底另一只主力
+    if (!platform || platform === 'auto') {
+        const primary = pickPrimarySource('kline');
+        const other = primary === 'cls' ? 'ths' : 'cls';
+        try {
+            const rows = await (primary === 'cls' ? fetchClsKline(code, startDate) : fetchThsKline(code, startDate));
+            if (rows && rows.length > 0) return rows;
+        } catch (e) {
+            // 主源失败继续兜底
+            console.warn(`[kline-auto] ${PLATFORM_NAMES[primary]} ${code} 失败：${e.message}，兜底 ${PLATFORM_NAMES[other]}`);
+        }
+        return (other === 'cls' ? fetchClsKline(code, startDate) : fetchThsKline(code, startDate));
+    }
+
     throw new Error(`未知平台: ${platform}`);
 };
 
 // 批量日K：同平台并发请求，返回 Map(code → rows)
+// platform='auto' 时：每只股票独立随机选主源（60/40），保持并发粒度不变
 const fetchKlineBatch = async (platform, codes, startDate) => {
     const result = new Map();
     if (!codes || codes.length === 0) return result;
 
     const settled = await Promise.allSettled(
-        codes.map((code) => fetchSingleKline(platform, code, startDate))
+        codes.map((code) => fetchSingleKline(platform || 'auto', code, startDate))
     );
     settled.forEach((item, index) => {
         result.set(codes[index], item.status === 'fulfilled' ? item.value : []);

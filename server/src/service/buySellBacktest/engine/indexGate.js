@@ -342,6 +342,13 @@ const checkIndexGate = async (indexCode, dateStr, minute, precomputed, runtimeSt
       if (posIdx >= 0 && curIdx >= 0 && curIdx >= posIdx) daysSincePos = curIdx - posIdx;
     } else if (info?.daysSinceTurnPos != null) {
       daysSincePos = info.daysSinceTurnPos; turnPosDate = info.turnPosDate;
+    } else if (info?.turnPosDate != null) {
+      // 实时链路兜底（2026-11-05 修复）：目标日（今日）日K尚未生成时，precomputed 的 daysSince
+      // 因 target 不在 dates 里算不出——改用「转正日之后已完结交易日数 + 1」推算距转正天数：
+      // 转正在前一交易日 → 今日为 T+1（规则②b 放行）；更早 → 超出转正窗口禁止
+      turnPosDate = info.turnPosDate;
+      const barsAfterTurn = dates.filter((d) => d > turnPosDate).length;
+      daysSincePos = turnPosDate === dateNum ? 0 : barsAfterTurn + 1;
     }
     state.daysSinceTurnPos = daysSincePos; state.turnPosDate = turnPosDate;
     if (daysSincePos != null && daysSincePos <= 1) {

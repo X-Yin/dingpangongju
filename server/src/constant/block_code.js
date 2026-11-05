@@ -1843,5 +1843,35 @@ exports.default = [
         "blockName": "磷化铟",
         "code": "sz300720",
         "name": "海川智能"
+    },
+    {
+        "blockName": "半导体",
+        "code": "sh688120",
+        "name": "华海清科"
+    },
+    {
+        "blockName": "半导体",
+        "code": "sh688361",
+        "name": "中科飞测"
+    },
+    {
+        "blockName": "半导体",
+        "code": "sh688809",
+        "name": "强一股份"
+    },
+    {
+        "blockName": "半导体",
+        "code": "sh688082",
+        "name": "盛美上海"
+    },
+    {
+        "blockName": "半导体",
+        "code": "sh688200",
+        "name": "华峰测控"
+    },
+    {
+        "blockName": "半导体",
+        "code": "sz300567",
+        "name": "精测电子"
     }
 ]

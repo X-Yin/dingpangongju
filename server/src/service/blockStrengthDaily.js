@@ -200,7 +200,7 @@ const savePayload = (payload) => {
   return payload;
 };
 
-// 并发拉取个股日K，返回 Map(code → rows)，失败自动回退财联社
+// 并发拉取个股日K，返回 Map(code → rows)，auto 路由会随机主源 + 兜底
 const fetchAllKlines = async (codes, startDate, onProgress) => {
   const result = new Map();
   let cursor = 0;
@@ -213,16 +213,10 @@ const fetchAllKlines = async (codes, startDate, onProgress) => {
       const code = codes[index];
       let rows = [];
       try {
-        rows = await fetchSingleKline('ths', code, startDate);
+        // 'auto'：CLS 60% / THS 40% 加权随机主源，失败自动兜底另一源
+        rows = await fetchSingleKline('auto', code, startDate);
       } catch (e) {
         rows = [];
-      }
-      if (!Array.isArray(rows) || rows.length === 0) {
-        try {
-          rows = await fetchSingleKline('cls', code, startDate);
-        } catch (e) {
-          rows = [];
-        }
       }
       if (Array.isArray(rows) && rows.length > 0) result.set(code, rows);
       done += 1;

@@ -9,5 +9,34 @@
       "prevRaw": -39.11,
       "prev2Raw": -36.12
     }
+  ],
+  "20261105": [
+    {
+      "code": "sh688120",
+      "name": "华海清科",
+      "time": "10:00",
+      "ema": -41.58,
+      "trigger": "ema_below",
+      "prevRaw": -59.72,
+      "prev2Raw": -6.02
+    },
+    {
+      "code": "sz002565",
+      "name": "顺灏股份",
+      "time": "10:00",
+      "ema": -41.58,
+      "trigger": "ema_below",
+      "prevRaw": -59.72,
+      "prev2Raw": -6.02
+    },
+    {
+      "code": "sz000810",
+      "name": "创维数字",
+      "time": "10:00",
+      "ema": -41.58,
+      "trigger": "ema_below",
+      "prevRaw": -59.72,
+      "prev2Raw": -6.02
+    }
   ]
 }

@@ -1374,5 +1374,21 @@
     "circulatingMarketValue": 18324285548,
     "ttmPe": 67.2233,
     "updatedAt": "2026-11-05 00:12:02"
+  },
+  {
+    "code": "sz300201",
+    "name": "海伦哲",
+    "marketValue": 11452644939,
+    "circulatingMarketValue": 11391979280,
+    "ttmPe": 34.4222,
+    "updatedAt": "2026-11-05 12:20:25"
+  },
+  {
+    "code": "sh603893",
+    "name": "瑞芯微  ",
+    "marketValue": 91898264587,
+    "circulatingMarketValue": 91887846187,
+    "ttmPe": 57.7018,
+    "updatedAt": "2026-11-05 12:20:25"
   }
 ]

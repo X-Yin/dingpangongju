@@ -1,1 +1,112 @@
-[]
+[
+  {
+    "id": "d4a21a148b585fb1",
+    "time": "2026-11-05 09:30:00",
+    "read": false,
+    "strategyId": "prev_day_tail_rally",
+    "title": "⚠️ 前一日尾盘拉升，今日低开大概率下跌",
+    "description": "前一日（20261104）创业板指：14:00后最低2505.95→收盘2544.73，拉升1.55%；科创50：14:00后最低1241.72→收盘1265.47，拉升1.91%。今日竞价低开-2.00%（开盘价2493.73 < 前日收盘2544.73），当日大概率低开低走大阴线，情况不对要赶快清仓！",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "b57c642ae2d8aa19",
+    "time": "2026-11-05 09:32:10",
+    "read": false,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-8.8亿</strong>（净流出）<br/>• 科技分时情绪 -21.8 → -16.2（上升 5.6）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "9ba9a369a8c4f9ca",
+    "time": "2026-11-05 09:41:19",
+    "read": false,
+    "strategyId": "volume_shrink_stagnation",
+    "title": "📉 放量后缩量滞涨",
+    "description": "成交量从高位 <strong>1487亿</strong> 回落至 <strong>1385亿</strong>，指数开始滞涨，需警惕回落风险。",
+    "severity": "medium",
+    "isBullish": false
+  },
+  {
+    "id": "b23e2365c1e7a744",
+    "time": "2026-11-05 09:45:23",
+    "read": false,
+    "strategyId": "volume_price_surge",
+    "title": "✅ 量价齐升",
+    "description": "成交量放大 <strong>428亿</strong>（≥100亿），资金净流入-11.6→17.2亿（≥10亿，流入增加），创业板5分钟上涨2.60%。量价资金三者共振，多方占优。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "ff0ea1addc264d2a",
+    "time": "2026-11-05 10:05:24",
+    "read": false,
+    "strategyId": "volume_price_surge",
+    "title": "✅ 量价齐升",
+    "description": "成交量放大 <strong>324亿</strong>（≥100亿），资金净流入56.0→65.7亿（≥10亿，流入增加），创业板5分钟上涨3.84%。量价资金三者共振，多方占优。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "2e7e8208e3eb717a",
+    "time": "2026-11-05 10:26:01",
+    "read": false,
+    "strategyId": "volume_price_surge",
+    "title": "✅ 量价齐升",
+    "description": "成交量放大 <strong>266亿</strong>（≥100亿），资金净流入144.5→171.7亿（≥10亿，流入增加），创业板5分钟上涨5.25%。量价资金三者共振，多方占优。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "93314833bba8bb5e",
+    "time": "2026-11-05 10:46:24",
+    "read": false,
+    "strategyId": "volume_price_surge",
+    "title": "✅ 量价齐升",
+    "description": "成交量放大 <strong>125亿</strong>（≥100亿），资金净流入181.3→189.2亿（≥10亿，流入增加），创业板5分钟上涨4.18%。量价资金三者共振，多方占优。",
+    "severity": "medium",
+    "isBullish": true
+  },
+  {
+    "id": "fa15ddc869354ebc",
+    "time": "2026-11-05 13:00:33",
+    "read": false,
+    "strategyId": "volume_shrink_stagnation",
+    "title": "📉 放量后缩量滞涨",
+    "description": "成交量从高位 <strong>5453亿</strong> 回落至 <strong>5278亿</strong>，指数开始滞涨，需警惕回落风险。",
+    "severity": "medium",
+    "isBullish": false
+  },
+  {
+    "id": "12989f9f3370de4b",
+    "time": "2026-11-05 13:00:33",
+    "read": false,
+    "strategyId": "straight_rise_no_volume",
+    "title": "⚠️ 无量拉升警惕回落",
+    "description": "创业板5分钟上涨2.66%，但成交量仅增加 <strong>-133亿</strong>（不足100亿），无量上涨持续性存疑，容易回落。",
+    "severity": "medium",
+    "isBullish": false
+  },
+  {
+    "id": "8567644067dd0ecc",
+    "time": "2026-11-05 13:31:40",
+    "read": false,
+    "strategyId": "volume_shrink_stagnation",
+    "title": "📉 放量后缩量滞涨",
+    "description": "成交量从高位 <strong>5215亿</strong> 回落至 <strong>5100亿</strong>，指数开始滞涨，需警惕回落风险。",
+    "severity": "medium",
+    "isBullish": false
+  },
+  {
+    "id": "14ea72dac1bea66c",
+    "time": "2026-11-05 14:22:22",
+    "read": false,
+    "strategyId": "volume_shrink_stagnation",
+    "title": "📉 放量后缩量滞涨",
+    "description": "成交量从高位 <strong>1825亿</strong> 回落至 <strong>1723亿</strong>，指数开始滞涨，需警惕回落风险。",
+    "severity": "medium",
+    "isBullish": false
+  }
+]

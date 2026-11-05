@@ -9,7 +9,7 @@ const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders
 const { lianbanTlineUrl, lianbanHeaders } = require('../constant');
 const { refreshLBSessCookie } = require('./lianbanCookieRefresh');
 const { getMonitorStocks } = require('./monitorStock');
-const { useCLS } = require('../config');
+const { useCLS, buildTryOrder } = require('../config');
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
 const jisuyidongPath = path.resolve(__dirname, '../data/jisuyidong.json');
@@ -102,12 +102,16 @@ function getOpeningPrices() {
 }
 
 const getSingleStockData = async (code, limit = 1) => {
-    let result = await getSingleStockDataFromTHS(code, limit);
-    if (!result || result.length === 0) {
-        console.log(`同花顺获取股票 ${code} K线数据失败，尝试财联社接口兜底`);
-        result = await getSingleStockDataFromCLS(code, limit);
+    // 日K路由：CLS / THS 之间加权随机（默认 60/40），主源失败则另一源兜底
+    const tryOrder = buildTryOrder('kline');
+    for (const src of tryOrder) {
+        let result = null;
+        if (src === 'ths') result = await getSingleStockDataFromTHS(code, limit);
+        else if (src === 'cls') result = await getSingleStockDataFromCLS(code, limit);
+        if (result && result.length > 0) return result;
+        console.log(`${src.toUpperCase()} 获取股票 ${code} K线失败，继续下一个兜底`);
     }
-    return result;
+    return [];
 };
 
 const getSingleStockDataFromCLS = async (code, limit = 1) => {
@@ -313,23 +317,26 @@ exports.getStockValuation = getStockValuation;
 
 let tlineNum = 0;
 
-// 分时数据源优先级（2026-11-04 并发 10 只实测）：
-//   财联社   并发 177-211ms / HTTP 200 稳定 → 主力
-//   连板网   并发 241-360ms / HTTP 200 稳定 → 一级兜底（腾讯底层）
-//   同花顺   偶发超时 / 需 500ms timeout → 最兜底
+// 分时数据源路由（2026-11-05 多源加权随机化）：
+//   主力：CLS 60% / THS 40%（加权随机）
+//   兜底：主源失败后依次走「另一只主力 → LB（连板网，腾讯底层）」
+// 2026-11-04 实测：CLS 并发 177-211ms / 稳定；LB 241-360ms / 稳定；THS 偶发 500ms+ timeout
 const getSingleStockTlineDataRaw = async (code) => {
     const _t0 = Date.now();
+    const tryOrder = buildTryOrder('tline'); // 例如 ['cls','ths','lb'] 或 ['ths','cls','lb']
 
-    let result = await getSingleStockTlineDataFromCLS(code);
-    if (result) { console.log(`[tline] ${code} → CLS ${Date.now()-_t0}ms`); return result; }
+    for (const src of tryOrder) {
+        let result = null;
+        if (src === 'cls') result = await getSingleStockTlineDataFromCLS(code);
+        else if (src === 'ths') result = await getSingleStockTlineDataFromTHS(code);
+        else if (src === 'lb') result = await getSingleStockTlineDataFromLB(code);
+        if (result) {
+            console.log(`[tline] ${code} → ${src.toUpperCase()} ${Date.now()-_t0}ms`);
+            return result;
+        }
+    }
 
-    result = await getSingleStockTlineDataFromLB(code);
-    if (result) { console.log(`[tline] ${code} → LB  ${Date.now()-_t0}ms`); return result; }
-
-    result = await getSingleStockTlineDataFromTHS(code);
-    if (result) { console.log(`[tline] ${code} → THS ${Date.now()-_t0}ms`); return result; }
-
-    console.warn(`[tline] ${code} 所有数据源均失败，总耗时 ${Date.now()-_t0}ms`);
+    console.warn(`[tline] ${code} 所有数据源(${tryOrder.join('/')})均失败，总耗时 ${Date.now()-_t0}ms`);
     return null;
 };
 
@@ -940,10 +947,14 @@ const getSingleStockTlineDataByDate = async (code, tradeDate) => {
         return null;
     }
 
-    let result = await getSingleStockTlineDataByDateFromTHS(code, tradeDate);
-    if (!result) {
-        console.log(`同花顺获取股票 ${code} 日期 ${tradeDate} 分时数据失败，尝试财联社接口兜底`);
-        result = await getSingleStockTlineDataByDateFromCLS(code, tradeDate);
+    // 历史日期分时路由：CLS/THS 之间加权随机（LB 不支持按日期查，跳过）
+    let result = null;
+    const histOrder = buildTryOrder('tlineHistorical');
+    for (const src of histOrder) {
+        if (src === 'ths') result = await getSingleStockTlineDataByDateFromTHS(code, tradeDate);
+        else if (src === 'cls') result = await getSingleStockTlineDataByDateFromCLS(code, tradeDate);
+        if (result && result.line && result.line.length > 0) break;
+        console.log(`${src.toUpperCase()} 获取股票 ${code} 日期 ${tradeDate} 分时失败，尝试下一个兜底`);
     }
     if (!result || !result.line || result.line.length === 0) {
         tlineFailMemo.set(failKey, Date.now() + 10 * 60 * 1000);
@@ -1062,8 +1073,14 @@ const getSingleStockTlineDataByDateLean = async (code, tradeDate) => {
     }
     if (cached && isTlineCacheComplete(cached.line, dateNum)) return cached;
 
-    let result = await getSingleStockTlineDataByDateFromTHS(code, tradeDate);
-    if (!result) result = await getSingleStockTlineDataByDateFromCLS(code, tradeDate);
+    // 历史分时路由（ByDateLean 路径，磁盘未命中才走 HTTP）
+    let result = null;
+    const histOrder = buildTryOrder('tlineHistorical');
+    for (const src of histOrder) {
+        if (src === 'ths') result = await getSingleStockTlineDataByDateFromTHS(code, tradeDate);
+        else if (src === 'cls') result = await getSingleStockTlineDataByDateFromCLS(code, tradeDate);
+        if (result && Array.isArray(result.line) && result.line.length > 0) break;
+    }
     if (result && Array.isArray(result.line) && result.line.length > 0) {
         saveTlineToCache(cacheKey, dateNum, result);
         tlineFileMemCache.delete(cacheKey); // 落盘后立即释放，不保留整份历史分时

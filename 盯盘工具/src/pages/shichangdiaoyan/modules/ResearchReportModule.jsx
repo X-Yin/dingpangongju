@@ -1004,6 +1004,8 @@ const ResearchReportModule = () => {
             type: 'markdown',
             value: currentContent,
             cache: { enable: false },
+            // 缩短 input 回调防抖（默认 800ms），让保存按钮尽快从 disabled 变为可点
+            undoDelay: 100,
             toolbar: [
               'emoji',
               'headings',
