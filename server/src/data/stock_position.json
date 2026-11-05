@@ -10,13 +10,13 @@
     "sellStrategy": "extreme_win_pro"
   },
   {
-    "id": "sh688120_1793846562591_x8r1",
+    "id": "sh688120_1793870555503_8xfo",
     "code": "sh688120",
     "name": "华海清科",
     "buyDate": "2026-11-05",
-    "buyTime": "10:42",
+    "buyTime": "17:22",
     "weight": 50,
-    "costPrice": 209.89,
+    "costPrice": 200.13,
     "sellStrategy": "tech_attack"
   }
 ]

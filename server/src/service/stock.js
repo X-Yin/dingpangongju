@@ -116,7 +116,7 @@ const getSingleStockData = async (code, limit = 1) => {
 
 const getSingleStockDataFromCLS = async (code, limit = 1) => {
     try {
-        const response = await axios.get(getClsReqUrl(code, limit));
+        const response = await axios.get(getClsReqUrl(code, limit), { timeout: 500 });
         const kline = response.data.data;
         return kline;
     } catch (error) {
@@ -133,7 +133,7 @@ const getSingleStockDataFromTHS = async (code, limit = 1) => {
         const fetchLimit = Math.max(limit + 20, 40);
         const requestBody = buildThsKlineRequestBody(pureCode, fetchLimit);
 
-        const response = await axios.post(url, requestBody, { headers });
+        const response = await axios.post(url, requestBody, { headers, timeout: 500 });
 
         if (response.data.status_code !== 0) {
             console.error(`同花顺API返回错误状态码: ${response.data.status_code}`);
@@ -355,7 +355,8 @@ const normalizeMarketPrefix = (code) => {
 const getSingleStockTlineDataFromCLS = async (code) => {
     try {
         const normalizedCode = normalizeMarketPrefix(code);
-        const response = await axios.get(getClsReqStockTlineUrl(normalizedCode));
+        // 500ms 超时：超时立刻返回 null，由 buildTryOrder 兜底链切换下一个数据源
+        const response = await axios.get(getClsReqStockTlineUrl(normalizedCode), { timeout: 500 });
         const data = response.data.data;
         const line = data?.line || [];
         if (!Array.isArray(line) || line.length === 0) {
@@ -803,7 +804,7 @@ const saveTlineToCache = (cacheKey, tradeDate, tlineData) => {
 
 const getSingleStockTlineDataByDateFromCLS = async (code, tradeDate) => {
     try {
-        const response = await axios.get(getClsReqStockTlineDay5Url(code));
+        const response = await axios.get(getClsReqStockTlineDay5Url(code), { timeout: 500 });
         const data = response.data.data;
         if (!data || !Array.isArray(data)) {
             return null;
@@ -989,7 +990,7 @@ const getSingleStockTlineDataByDateFromTHS = async (code, tradeDate) => {
         const headers = getThsTrendHeaders();
         const requestBody = buildThsTrendRequestBodyWithDate(code, tradeDate);
 
-        const response = await axios.post(url, requestBody, { headers });
+        const response = await axios.post(url, requestBody, { headers, timeout: 500 });
         const quoteData = response.data.data?.quote_data?.[0];
 
         if (!quoteData || !quoteData.value || !Array.isArray(quoteData.value) || quoteData.value.length === 0) {

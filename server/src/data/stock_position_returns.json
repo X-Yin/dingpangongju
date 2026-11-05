@@ -17,6 +17,22 @@
         "stockCode": "sh688120",
         "position": "",
         "time": "10:40"
+      },
+      {
+        "id": "1793870547309_g6nk",
+        "action": "sell",
+        "stockName": "华海清科",
+        "stockCode": "sh688120",
+        "position": "",
+        "time": "17:22"
+      },
+      {
+        "id": "1793870555506_oq3x",
+        "action": "buy",
+        "stockName": "华海清科",
+        "stockCode": "sh688120",
+        "position": "",
+        "time": "17:22"
       }
     ],
     "totalReturn": null,
@@ -24,7 +40,7 @@
     "score": null,
     "review": "",
     "createdAt": "2026-11-05T02:14:51.823Z",
-    "updatedAt": "2026-11-05T02:40:17.393Z"
+    "updatedAt": "2026-11-05T09:22:35.522Z"
   },
   {
     "date": "2026-11-04",

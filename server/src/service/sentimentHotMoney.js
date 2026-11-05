@@ -281,8 +281,17 @@ const nowHHmm = () => {
 };
 // 收盘后当日缓存过期检查：交易日 15:00 后，缓存未含今日有效 bar 即视为盘中拉取的旧快照
 //（修复：当日盘中拉过一次后 fetchedAt=今天全天有效，收盘后回测期末估值错用昨收价的问题）
+//（2026-11-05 修复：盘前（如 09:24 预热）拉取的快照已带「今日占位 bar」——close_px=集合竞价快照价、
+//   open_px 为空、business_amount=0——仅按 close_px>0 判定会误认为已有今日有效 bar，
+//   导致收盘后回测把占位价当作收盘价（例：东方海洋 20261105 占位 3.23 vs 实际涨停收盘 3.61）。
+//   故今日 bar 须为「已成交的完整 bar」（成交量 > 0 或开盘价存在）才视为有效）
 const STALE_REFETCH_COOLDOWN_MS = 60 * 1000; // 重拉冷却：收盘后数据源发布当日K线可能滞后，防止反复打接口
 const staleRefetchAt = new Map(); // code -> 上次重拉时间戳
+// 今日 bar 是否为已收盘的完整 bar（盘前占位 bar：open 为空且成交量为 0 → false）
+const isCompleteBarOf = (k, todayNum) => !!k
+  && Number(k.trade_date) === todayNum
+  && Number(k.close_px) > 0
+  && (Number(k.business_amount) > 0 || Number(k.open_px) > 0);
 const klineCacheIsStale = (kline) => {
   if (!Array.isArray(kline) || kline.length === 0) return false;
   const now = new Date();
@@ -290,7 +299,7 @@ const klineCacheIsStale = (kline) => {
   if (hhmm < '1500') return false; // 盘中维持当日缓存不变
   if (!isTradingDay(now)) return false; // 非交易日无今日K线
   const todayNum = Number(beijingToday());
-  return !kline.some(k => k && Number(k.trade_date) === todayNum && Number(k.close_px) > 0);
+  return !kline.some(k => isCompleteBarOf(k, todayNum));
 };
 const getStockDailyKline = async (code) => {
   // 过期且已过冷却期才真正重拉；冷却期内仍返回旧快照，避免数据源未就绪时高频重试

@@ -1,5 +1,27 @@
 [
   {
+    "id": "1793870555504_oeu43s",
+    "type": "buy",
+    "code": "sh688120",
+    "name": "华海清科",
+    "date": "2026-11-05",
+    "time": "17:22:35",
+    "detail": "新增持仓：华海清科（sh688120）",
+    "pipelineStage": 0,
+    "createdAt": "2026-11-05T09:22:35.504Z"
+  },
+  {
+    "id": "1793870547300_x275bo",
+    "type": "delete",
+    "code": "sh688120",
+    "name": "华海清科",
+    "date": "2026-11-05",
+    "time": "17:22:27",
+    "detail": "删除持仓：华海清科（sh688120）",
+    "pipelineStage": null,
+    "createdAt": "2026-11-05T09:22:27.300Z"
+  },
+  {
     "id": "1793846562598_rolc7u",
     "type": "buy",
     "code": "sh688120",

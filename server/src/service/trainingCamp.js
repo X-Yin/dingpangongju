@@ -76,6 +76,18 @@ const readKlineFileCache = (code, targetDateInt) => {
     if (targetDateInt != null) {
       const maxDate = Math.max(...cached.kline.map(k => Number(k.trade_date)).filter(Number.isFinite));
       if (!(maxDate >= targetDateInt)) return null;
+      // 2026-11-05 修复：盘前（如 09:24 预热）落盘的快照已带「今日占位 bar」（close=集合竞价快照价、
+      //   open 为空、成交量为 0）。目标日期为当天（收盘后回测补 buyDayClose 等场景）时，
+      //   该占位 bar 会被误当作收盘价（例：东方海洋 20261105 占位 3.23 vs 实际涨停收盘 3.61），
+      //   故目标日期为今天时必须确认该 bar 为已成交的完整 bar，否则视为未命中、强制重拉
+      const todayInt = parseInt(beijingToday(), 10);
+      if (Number.isFinite(todayInt) && targetDateInt >= todayInt) {
+        const todayBar = cached.kline.find(k => Number(k.trade_date) === targetDateInt);
+        const complete = todayBar
+          && Number(todayBar.close_px) > 0
+          && (Number(todayBar.business_amount) > 0 || Number(todayBar.open_px) > 0);
+        if (!complete) return null;
+      }
     }
     return cached.kline;
   } catch {
