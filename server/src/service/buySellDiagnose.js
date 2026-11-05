@@ -2782,9 +2782,19 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
     ? '全部前置条件已满足，可以出手买入，但是请分仓 1/3，随后逐步分批买入，分仓管理是最后一道防火墙，谨防尾盘大盘跳水！'
     : '当前前置条件未全部满足，请耐心等待，不要盲目出手。';
 
-  // 买点命中记录（2026-10-09 新增）：诊断目标日为今日且全部前置条件通过时记录一条命中（同分钟幂等），
-  // 供快进快出强卖豁免①（次日 10:00 前买点诊断再次触发）读取；历史日期/非命中不记录
-  if (allPassed && targetDateStr === dayjs().format('YYYYMMDD')) {
+  // 买点命中记录（2026-10-09 新增，2026-11-05 口径对齐回测）：诊断目标日为今日且
+  // 「runBuyPointDiagnosis 对应的 4 项核心买点条件」全部通过时记录一条命中（同分钟幂等），
+  // 供快进快出强卖豁免①（次日 10:00 前买点诊断再次触发）读取。
+  // 口径必须与回测 buildQuickOutExemptInfo → runBuyPointDiagnosis 完全一致，
+  // 所以只看 fund_inflow / volume_expansion / opening_below / emotion_retrace_after_open 这 4 项，
+  // 忽略 buy_time_gate / index_ma3_slope_gate / quick_out_no_rebuy 等策略模式附加门禁
+  // （这些门禁阻断实盘买点命中，但不应阻断"豁免①"的判定——豁免①语义是"次日 10:00 前策略最核心买点再次出现"）。
+  const HIT_RECORD_CORE_CHECK_IDS = ['fund_inflow', 'volume_expansion', 'opening_below', 'emotion_retrace_after_open'];
+  const coreChecksAllPassed = HIT_RECORD_CORE_CHECK_IDS.every((cid) => {
+    const c = checks.find((x) => x && x.id === cid);
+    return !!c && c.passed === true;
+  });
+  if (coreChecksAllPassed && targetDateStr === dayjs().format('YYYYMMDD')) {
     recordBuyPointHit(targetDateStr);
   }
 

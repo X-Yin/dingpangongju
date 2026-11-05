@@ -515,6 +515,8 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
           }
         } else if ((strategy.twoBuy === true || emoQuickHalfBuy) && positions.length === 1 && positions[0].leg === 1
           && dateStr > positions[0].buyDate) {
+          // DEBUG
+          if (dateStr === '20261105' && Number(bucket.minute) === 945) console.log('[DEBUG 0945] >> ENTER second-leg branch');
           // 两次买入 / 快进快出半仓策略：已持有第一份（半仓），买点再次触发 → 买入第二份 5 成
           // 约束：① 须在第一份建仓日之后的交易日买入（含「两次买入（同一天）」变体——当日不再因买点二次触发补买，
           //          改由下方 14:55 尾盘补买规则处理）；② 补买同样过滤涨停（买入时点该股已涨停不可成交）；
@@ -592,6 +594,8 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
             const heldSc = (bucket.stockChanges || []).find(s => s.code === first.code);
             const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
             const heldLimitUp = heldSc ? isLimitUpAtBuy(first.code, heldSc.changePct) : false;
+            // DEBUG
+            if (dateStr === '20261105' && Number(bucket.minute) === 945) console.log('[DEBUG 0945] same-stock path heldSc:', !!heldSc, 'secondPx:', secondPx, 'limitUp:', heldLimitUp);
             if (secondPx != null && secondPx > 0 && !heldLimitUp) {
               positions.push({
                 code: first.code,

@@ -127,9 +127,13 @@ const diagnosePosition = async (stock, todayStr, mode, minuteEvalNow = true) => 
     } else if (strategy === 'second_board_wash') {
       res = await checkSecondBoardWashSellPointDetailed(stock.code, stock.costPrice, stock.buyDate || null);
     } else if (strategy === 'extreme_win_pro' || strategy === 'extreme_win_reverse') {
+      // 逆周期持仓与回测逆周期腿同口径（2026-11-05 对齐，见 extremeWinBacktest.js / fusedEmoWinBacktest.js
+      // 逆周期腿 scanLeaderPriceSell 调用参数）：⑪⑫不启用、单分钟跳水⑩不启用、成本线 -5% 须连续 ≥5 分钟
       res = await checkExtremeWinSellPointDetailed(stock.code, stock.costPrice, stock.buyDate || null, {
-        // ⑪⑫仅顺周期持仓启用：逆周期时关闭
         enableOpenGapReboundSell: strategy !== 'extreme_win_reverse',
+        ...(strategy === 'extreme_win_reverse'
+          ? { disableMinutePlummet: true, costLineSustainMinutes: 5 }
+          : {}),
       });
     } else {
       res = await checkSingleStockSellPoint(stock.code, stock.costPrice);

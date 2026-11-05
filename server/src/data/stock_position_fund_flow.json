@@ -2241,6 +2241,33 @@
         "latestPrice": 9.82,
         "volumeDiffPercent": 18.68,
         "volumeState": "平量"
+      },
+      {
+        "time": "150242",
+        "minute": "1502",
+        "mainFund": 1.53,
+        "change": 9.97,
+        "latestPrice": 9.82,
+        "volumeDiffPercent": 18.68,
+        "volumeState": "平量"
+      },
+      {
+        "time": "150342",
+        "minute": "1503",
+        "mainFund": 1.53,
+        "change": 9.97,
+        "latestPrice": 9.82,
+        "volumeDiffPercent": 18.68,
+        "volumeState": "平量"
+      },
+      {
+        "time": "150442",
+        "minute": "1504",
+        "mainFund": 1.53,
+        "change": 9.97,
+        "latestPrice": 9.82,
+        "volumeDiffPercent": 18.68,
+        "volumeState": "平量"
       }
     ],
     "sz000810": [
@@ -5030,6 +5057,33 @@
       {
         "time": "150142",
         "minute": "1501",
+        "mainFund": 4.03,
+        "change": 2.48,
+        "latestPrice": 200.84,
+        "volumeDiffPercent": 12.14,
+        "volumeState": "平量"
+      },
+      {
+        "time": "150242",
+        "minute": "1502",
+        "mainFund": 4.03,
+        "change": 2.48,
+        "latestPrice": 200.84,
+        "volumeDiffPercent": 12.14,
+        "volumeState": "平量"
+      },
+      {
+        "time": "150342",
+        "minute": "1503",
+        "mainFund": 4.03,
+        "change": 2.48,
+        "latestPrice": 200.84,
+        "volumeDiffPercent": 12.14,
+        "volumeState": "平量"
+      },
+      {
+        "time": "150442",
+        "minute": "1504",
         "mainFund": 4.03,
         "change": 2.48,
         "latestPrice": 200.84,

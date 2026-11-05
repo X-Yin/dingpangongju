@@ -573,11 +573,11 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
                   twoBuy: true, leg: 2, weight: TWO_BUY_LEG_WEIGHT,
                 });
               }
-            } else {
-              const heldSc = (bucket.stockChanges || []).find(s => s.code === first.code);
-              const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
-              const heldLimitUp = heldSc ? isLimitUpAtBuy(first.code, heldSc.changePct) : false;
-              if (secondPx != null && secondPx > 0 && !heldLimitUp) {
+          } else {
+            const heldSc = (bucket.stockChanges || []).find(s => s.code === first.code);
+            const secondPx = heldSc && heldSc.lastPx != null ? parseFloat(Number(heldSc.lastPx).toFixed(2)) : null;
+            const heldLimitUp = heldSc ? isLimitUpAtBuy(first.code, heldSc.changePct) : false;
+            if (secondPx != null && secondPx > 0 && !heldLimitUp) {
                 st.positions.push({
                   code: first.code,
                   stockName: first.stockName,

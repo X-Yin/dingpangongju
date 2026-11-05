@@ -107,6 +107,7 @@ const ensureDayState = (dateStr) => {
   aBurstSignaled.clear();
   bSignaled.clear();
   auctionRemindAt.clear();
+  mvRejectedCodes.clear();
   quoteRows = [];
   quoteRowsTs = 0;
   const s = readState();
@@ -114,6 +115,7 @@ const ensureDayState = (dateStr) => {
     for (const code of Array.isArray(s.aAuctionSignaled) ? s.aAuctionSignaled : []) aAuctionSignaled.add(code);
     for (const code of Array.isArray(s.aBurstSignaled) ? s.aBurstSignaled : []) aBurstSignaled.add(code);
     for (const code of Array.isArray(s.bSignaled) ? s.bSignaled : []) bSignaled.add(code);
+    for (const code of Array.isArray(s.mvRejectedCodes) ? s.mvRejectedCodes : []) mvRejectedCodes.add(code);
   }
 };
 
@@ -122,6 +124,7 @@ const persistSignals = (dateStr) => writeState({
   aAuctionSignaled: Array.from(aAuctionSignaled),
   aBurstSignaled: Array.from(aBurstSignaled),
   bSignaled: Array.from(bSignaled),
+  mvRejectedCodes: Array.from(mvRejectedCodes),
 });
 
 const isChiNextOrStar = (code) => /^(30|688)/.test(String(code || '').replace(/^(sh|sz|bj)/i, ''));
@@ -351,6 +354,10 @@ const statusOf = (c, quotes, nowMinute) => {
   const auction = auctionGaps.get(c.code) || null;
   const auctionGap = auction ? auction.gap : change;
   const limitThreshold = limitUpThresholdOf(c.code);
+  // 买入价折算总市值超 100 亿 → 当日拉黑（与回测 mvRejected 顺延口径一致，2026-11-05 对齐）
+  if (mvRejectedCodes.has(c.code)) {
+    return { status: 'mv_over', statusText: '买入价折算总市值超 100 亿，当日不参与' };
+  }
   if (c.source === SOURCE_A) {
     if (auctionGap != null && auctionGap >= limitThreshold) {
       return { status: 'limit_open', statusText: '开盘即涨停，买不进' };
@@ -545,9 +552,25 @@ const buildBuyChecks = ({ cand, mode, minute, price, change, auctionGap }) => {
 
 const positionHint = '半仓（50%）——账户拆两份、每份半仓，最多同时持有 2 只不同股票，各自独立买卖';
 
+// 买入价折算总市值复核（2026-11-05 对齐回测 washFusionExtremeOddsBacktest.js）：
+//   回测买入时按「总股本 × 买入分钟价」复核总市值，> 100 亿剔除顺延且当日不再买入该股；
+//   线上此前只按 T-1 收盘价预筛，盘中大涨触发买点时市值可能已超限 → 回测不买、线上却推送。
+//   现在触发买点推送前按触发价复核，超限当日拉黑（不再推送买入提示）；数据缺失不拦截（与回测一致）
+const mvRejectedCodes = new Set();
+const mvOverLimitAtBuy = (cand, price) => cand.totalShares != null && Number(price) > 0
+  && ((cand.totalShares * Number(price)) / 1e8) > MAX_TOTAL_MV_YI;
+
 // 买点诊断卡片推送（WS）+ 飞书
 //   remind=true：A 首板起爆 09:25-09:30 竞价买点提前提醒（每 30s 一次，不重复发飞书）
 const emitBuySignal = async ({ dateStr, cand, mode, minute, price, change, auctionGap, remind = false, mock = false }) => {
+  // 买入价折算总市值复核（与回测 mvRejected 同口径）：超 100 亿不推送买入提示，当日拉黑不再评估
+  if (!mock && mvRejectedCodes.has(cand.code)) return;
+  if (!mock && mvOverLimitAtBuy(cand, price)) {
+    mvRejectedCodes.add(cand.code);
+    persistSignals(dateStr);
+    console.log(`[极致赔率] ${dateStr} ${cand.name}（${cand.code}）买点触发价 ${round2(price)} 折算总市值超 ${MAX_TOTAL_MV_YI} 亿，不推送买入（当日不再评估，与回测顺延口径一致）`);
+    return;
+  }
   const isA = cand.source === SOURCE_A;
   const signaledSet = isA ? (mode === 'auction' ? aAuctionSignaled : aBurstSignaled) : bSignaled;
   const already = signaledSet.has(cand.code);

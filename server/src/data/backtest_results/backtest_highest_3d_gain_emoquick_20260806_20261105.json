@@ -1571,8 +1571,8 @@
     "twoBuy": true,
     "leg": 1,
     "weight": 0.5,
-    "rawBuyReturn": 12.21,
-    "buyReturn": 6.11,
+    "rawBuyReturn": 12.12,
+    "buyReturn": 6.06,
     "buyDayClose": 195.98,
     "buyDayReturn": 9.41
   },
@@ -1689,10 +1689,85 @@
       "twoBuy": true,
       "leg": 1,
       "weight": 0.5,
-      "rawBuyReturn": 12.21,
-      "buyReturn": 6.11,
+      "rawBuyReturn": 12.12,
+      "buyReturn": 6.06,
       "buyDayClose": 195.98,
       "buyDayReturn": 9.41
+    },
+    {
+      "code": "sh688120",
+      "stockName": "华海清科",
+      "buyDate": "20261105",
+      "buyDateDisplay": "2026-11-05",
+      "buyTime": "09:45",
+      "buyPrice": 200.13,
+      "buyChange": 2.12,
+      "metric": 9.6038,
+      "buyReason": "5min 内资金净流入 28.91亿、当前量能 +1787.43亿、开盘后自选科技股低于开盘价不超过科技股数的 25%（24 只）、竞价情绪超 30 时当前情绪须低于 10；跨指数双门禁（允许市场: 主板/创业板/科创板）；买点第二次触发，买入第二份 5 成（同一股票 华海清科，09:45 价 200.13）",
+      "buyChecks": [
+        {
+          "id": "fund_inflow",
+          "title": "最近 5min 资金净流入大于 20 亿",
+          "passed": true,
+          "exempted": false,
+          "value": "+28.91亿",
+          "reason": "最近 5 分钟资金净流入 28.91 亿（09:40:00→09:45:00），超过 20 亿阈值",
+          "fundText": "5min 内资金净流入 28.91亿"
+        },
+        {
+          "id": "volume_expansion",
+          "title": "当前量能为正（今日累计成交额超昨日全天）",
+          "passed": true,
+          "exempted": false,
+          "value": "+ 1787.43亿",
+          "reason": "当前量能 1787.43 亿为正，今日累计成交额已超过昨日全天",
+          "volumeText": "当前量能 +1787.43亿"
+        },
+        {
+          "id": "opening_below",
+          "title": "开盘后自选科技股低于开盘价不超过科技股数的 25%（24 只）",
+          "passed": true,
+          "exempted": false,
+          "value": "0 / 94只",
+          "reason": "开盘后自选科技股共 94 只，0 只现价低于 9:30 开盘价，未超过 24 只（阈值 = 科技股数 94 只的 25% 向上取整）"
+        },
+        {
+          "id": "emotion_retrace_after_open",
+          "title": "竞价情绪超 30 时当前情绪须低于 10",
+          "passed": true,
+          "exempted": false,
+          "value": "开盘 -16.26 / 当前 -2.31",
+          "reason": "9:30 竞价科技情绪 -16.26 未超过 30，当前情绪须低于 10 的限制不生效"
+        },
+        {
+          "id": "cyb_ma3_slope_gate",
+          "title": "创业板指 3 日线斜率门禁",
+          "passed": true,
+          "value": "创业板指 3 日线斜率 +33.24°，由负转正 第 1 天（2026-11-04 翻转），允许出手（T+1 日）",
+          "reason": "创业板指 斜率 +33.24 ≥ 0，但由负转正后第 1 个交易日（2026-11-04 转正），允许出手"
+        },
+        {
+          "id": "star_ma3_slope_gate",
+          "title": "华海清科 跟踪科创50 3 日线斜率门禁",
+          "passed": true,
+          "value": "华海清科 跟踪科创50，3 日线斜率 +28.55°，由负转正 第 1 天（2026-11-04 翻转），允许出手（T+1 日）",
+          "reason": "科创50 斜率 +28.55 ≥ 0，但由负转正后第 1 个交易日（2026-11-04 转正），允许出手"
+        }
+      ],
+      "emoQuickOut": {
+        "quickOut": false,
+        "trigger": null,
+        "ema": 12.38,
+        "prevRaw": 66.35,
+        "prev2Raw": -59.72
+      },
+      "twoBuy": true,
+      "leg": 2,
+      "weight": 0.5,
+      "rawBuyReturn": 0.35,
+      "buyReturn": 0.17,
+      "buyDayClose": 205.61,
+      "buyDayReturn": 2.74
     }
   ],
   "summary": {
@@ -1701,9 +1776,9 @@
     "winRate": 37.5,
     "avgDrawdown": -1.67,
     "maxDrawdown": -3.19,
-    "overallReturn": 7.36,
+    "overallReturn": 7.48,
     "holding": true
   },
   "cacheVersion": 18,
-  "generatedAt": 1793860933030
+  "generatedAt": 1793865628211
 }

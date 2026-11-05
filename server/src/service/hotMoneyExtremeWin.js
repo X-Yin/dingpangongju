@@ -50,7 +50,10 @@ const MODE_EXTREME_WIN = 'hot_money_extreme_win';
 const MODE_ATTACK_DEFENSE = 'attack_defense';
 
 // 反向抱团「强度分命中次数」回溯窗口上限（交易日）：与回测口径一致（窗口自「上证 3 日线斜率由正转负日」起算）
-const REVERSE_HIT_WINDOW_MAX_DAYS = 20;
+// 逆周期命中计数窗口（2026-11-05 对齐回测）：回测 revHitCount 自「由负转正日」起全窗口累计、
+// 无天数上限（extremeWinBacktest.js / fusedEmoWinBacktest.js），线上此前截断 20 日会导致长负斜率
+// 窗口漏计命中 → 线上少买。现去掉截断，回溯拉取量放大到 250 个交易日覆盖任意长度窗口
+const REVERSE_HIT_LOOKBACK_DAYS = 250;
 // 2026-10-20 用户新增、2026-10-24 用户改为 14:30：每天 14:30 之后不买（14:30 桶本身仍可买；顺周期/逆周期两条腿均适用，与回测引擎 BUY_CUTOFF_MINUTE 同口径）。
 //   判定口径：盘中取「候选池分时最新分钟」；盘前尚无分时数据视为未过截止；收盘后/历史日期一律视为已过截止。
 //   顺周期作用于 buyPointHit；逆周期作用于 timingPassed（命中登记照常累计，仅不再触发买入）
@@ -498,9 +501,9 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
   if (eligible && codes.length > 0) {
     let windowDates = [];
     try {
-      const pastDates = await getPastTradingDates(dateStr, REVERSE_HIT_WINDOW_MAX_DAYS + 40);
+      // 与回测同口径：自 turnNegDate 起全窗口累计命中，无 20 日截断（2026-11-05 对齐）
+      const pastDates = await getPastTradingDates(dateStr, REVERSE_HIT_LOOKBACK_DAYS);
       windowDates = pastDates.filter(d => Number(d) >= Number(turnNegDate || 0));
-      if (windowDates.length > REVERSE_HIT_WINDOW_MAX_DAYS) windowDates = windowDates.slice(-REVERSE_HIT_WINDOW_MAX_DAYS);
     } catch (e) { windowDates = []; }
     windowDates.push(dateNum); // 含当日（盘中实时）
     const eligibleDates = windowDates.filter(dd => {
@@ -996,7 +999,7 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
         stockName: code,
         tradeDate: dateNum,
         conditions: [
-          mkCond('跌破成本线 -5%（即时）', false, '分时数据不足'),
+          mkCond('跌破成本线 -5%（即时/逆周期须连续 5 分钟）', false, '分时数据不足'),
           mkCond('盘中分时跌幅 ≤ -5%', false, '分时数据不足'),
           mkCond('较开盘价下挫 5 个点', false, '分时数据不足'),
           mkCond('单分钟跳水 ≥ 3 个点', false, '分时数据不足'),
@@ -1033,16 +1036,39 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
 
     const conditions = [];
 
-    // ① 跌破成本线 -5%（即时）
+    // ① 跌破成本线 -5%
+    //   顺周期持仓：即时卖出（回测 scanLeaderPriceSell costLineSustainMinutes: 0 同口径）
+    //   逆周期持仓：须连续 ≥5 分钟跌破才卖（opts.costLineSustainMinutes = 5，与回测逆周期腿
+    //   scanLeaderPriceSell 默认口径一致：中途回到阈值上方即清零重新计时，2026-11-05 对齐）
+    const costSustain = Number.isFinite(Number(opts.costLineSustainMinutes)) && Number(opts.costLineSustainMinutes) > 0
+      ? Math.floor(Number(opts.costLineSustainMinutes)) : 0;
+    const c1Name = costSustain > 0
+      ? `跌破成本线 -5%（连续 ${costSustain} 分钟）`
+      : '跌破成本线 -5%（即时）';
     let c1 = false;
     let c1Detail = '成本价缺失，无法判定';
     if (effCostPrice > 0 && lastPx != null) {
       const stopPx = effCostPrice * 0.95;
       const costRet = round2(((lastPx - effCostPrice) / effCostPrice) * 100);
-      c1 = lastPx < stopPx;
-      c1Detail = `${c1 ? '已' : '未'}跌破成本线 -5%（成本 ${effCostPrice.toFixed(2)}，止损价 ${stopPx.toFixed(2)}，现价 ${lastPx.toFixed(2)}，较成本 ${costRet}%），${c1 ? '即时卖出' : '继续持有'}`;
+      if (costSustain > 0) {
+        let run = 0;
+        let maxRun = 0;
+        for (const p of mins) {
+          if (p.lastPx > 0 && p.lastPx < stopPx) {
+            run += 1;
+            if (run > maxRun) maxRun = run;
+          } else {
+            run = 0;
+          }
+        }
+        c1 = maxRun >= costSustain;
+        c1Detail = `${c1 ? `已连续 ${maxRun} 分钟（≥ ${costSustain} 分钟）跌破成本线 -5%（成本 ${effCostPrice.toFixed(2)}，止损价 ${stopPx.toFixed(2)}，现价 ${lastPx.toFixed(2)}，较成本 ${costRet}%），卖出` : `未连续 ${costSustain} 分钟跌破成本线 -5%（成本 ${effCostPrice.toFixed(2)}，止损价 ${stopPx.toFixed(2)}，现价 ${lastPx.toFixed(2)}，较成本 ${costRet}%，本日最长连续 ${maxRun} 分钟），继续持有`}`;
+      } else {
+        c1 = lastPx < stopPx;
+        c1Detail = `${c1 ? '已' : '未'}跌破成本线 -5%（成本 ${effCostPrice.toFixed(2)}，止损价 ${stopPx.toFixed(2)}，现价 ${lastPx.toFixed(2)}，较成本 ${costRet}%），${c1 ? '即时卖出' : '继续持有'}`;
+      }
     }
-    conditions.push(mkCond('跌破成本线 -5%（即时）', c1, c1Detail));
+    conditions.push(mkCond(c1Name, c1, c1Detail));
 
     // ② 盘中分时跌幅 ≤ -5%（较昨收）；竞价低开 < -2% 开启自救时，观察期（≤9:35）内不判定
     const c2 = minChgJudged != null && minChgJudged <= -5;
@@ -1055,22 +1081,27 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
       `当日最低较开盘价跌幅 ${minOpenDrop == null ? '--' : minOpenDrop}%（开盘 ${openPx != null ? round2(openPx) : '--'}）${c3 ? ' ≤ -5%，直接卖出' : '，未达 -5%'}`));
 
     // ④ 单分钟跳水 ≥ 3 个点（含「上一分钟自身涨幅 > 2% 则豁免」）
+    //   逆周期持仓不启用（opts.disableMinutePlummet = true，与回测逆周期腿 disableMinutePlummet 同口径，2026-11-05 对齐）
     let c4 = false;
     let c4Detail = '未出现单分钟跳水';
-    for (let i = 1; i < mins.length; i++) {
-      const prev = mins[i - 1];
-      const cur = mins[i];
-      if (!(prev.lastPx > 0)) continue;
-      const plunge = round2(((cur.lastPx - prev.lastPx) / prev.lastPx) * 100);
-      if (plunge == null || plunge > -3) continue;
-      const prevPrev = i >= 2 ? mins[i - 2] : null;
-      const prevGain = prevPrev && prevPrev.lastPx > 0
-        ? round2(((prev.lastPx - prevPrev.lastPx) / prevPrev.lastPx) * 100)
-        : null;
-      if (prevGain != null && prevGain > 2) continue; // 上一分钟急拉 → 本次豁免
-      c4 = true;
-      c4Detail = `盘中 1 分钟内跳水（上一分钟 ${prev.lastPx.toFixed(2)} → 现价 ${cur.lastPx.toFixed(2)}，单分钟跌幅 ${plunge}% ≤ -3%），直接卖出`;
-      break;
+    if (opts.disableMinutePlummet === true) {
+      c4Detail = '逆周期持仓不启用单分钟跳水卖点（与回测逆周期腿口径一致）';
+    } else {
+      for (let i = 1; i < mins.length; i++) {
+        const prev = mins[i - 1];
+        const cur = mins[i];
+        if (!(prev.lastPx > 0)) continue;
+        const plunge = round2(((cur.lastPx - prev.lastPx) / prev.lastPx) * 100);
+        if (plunge == null || plunge > -3) continue;
+        const prevPrev = i >= 2 ? mins[i - 2] : null;
+        const prevGain = prevPrev && prevPrev.lastPx > 0
+          ? round2(((prev.lastPx - prevPrev.lastPx) / prevPrev.lastPx) * 100)
+          : null;
+        if (prevGain != null && prevGain > 2) continue; // 上一分钟急拉 → 本次豁免
+        c4 = true;
+        c4Detail = `盘中 1 分钟内跳水（上一分钟 ${prev.lastPx.toFixed(2)} → 现价 ${cur.lastPx.toFixed(2)}，单分钟跌幅 ${plunge}% ≤ -3%），直接卖出`;
+        break;
+      }
     }
     conditions.push(mkCond('单分钟跳水 ≥ 3 个点', c4, c4Detail));
 

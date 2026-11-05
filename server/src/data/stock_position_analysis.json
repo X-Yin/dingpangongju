@@ -1,5 +1,5 @@
 {
-  "updateTime": "2026-11-05T07:01:43.309Z",
+  "updateTime": "2026-11-05T07:04:44.219Z",
   "date": "20261105",
   "trading": true,
   "overview": {
@@ -17,12 +17,12 @@
       "capitalAction": "抢筹",
       "signalType": "bullish",
       "riskLevel": "低",
-      "summary": "大涨，当前涨幅 +9.97%，同刻量能 +18.68%，近5分钟主力资金变化 +0.02亿。当前更像抢筹。",
+      "summary": "大涨，当前涨幅 +9.97%，同刻量能 +18.68%，近5分钟主力资金变化 +0亿。当前更像抢筹。",
       "suggestion": "可继续持有，重点观察量价能否继续共振，避免追高加仓过猛。",
       "metrics": {
         "latestChange": 9.97,
         "latestMainFund": 1.53,
-        "recentFundChange": 0.02,
+        "recentFundChange": 0,
         "recentChangeDelta": 0,
         "volumeDiffPercent": 18.68,
         "volumeState": "平量",
@@ -32,33 +32,6 @@
       },
       "quant": null,
       "recentFlow": [
-        {
-          "time": "145442",
-          "minute": "1454",
-          "mainFund": 1.49,
-          "change": 9.97,
-          "latestPrice": 9.82,
-          "volumeDiffPercent": 18.51,
-          "volumeState": "平量"
-        },
-        {
-          "time": "145542",
-          "minute": "1455",
-          "mainFund": 1.5,
-          "change": 9.97,
-          "latestPrice": 9.82,
-          "volumeDiffPercent": 18.56,
-          "volumeState": "平量"
-        },
-        {
-          "time": "145642",
-          "minute": "1456",
-          "mainFund": 1.51,
-          "change": 9.97,
-          "latestPrice": 9.82,
-          "volumeDiffPercent": 18.64,
-          "volumeState": "平量"
-        },
         {
           "time": "145742",
           "minute": "1457",
@@ -103,12 +76,39 @@
           "latestPrice": 9.82,
           "volumeDiffPercent": 18.68,
           "volumeState": "平量"
+        },
+        {
+          "time": "150242",
+          "minute": "1502",
+          "mainFund": 1.53,
+          "change": 9.97,
+          "latestPrice": 9.82,
+          "volumeDiffPercent": 18.68,
+          "volumeState": "平量"
+        },
+        {
+          "time": "150342",
+          "minute": "1503",
+          "mainFund": 1.53,
+          "change": 9.97,
+          "latestPrice": 9.82,
+          "volumeDiffPercent": 18.68,
+          "volumeState": "平量"
+        },
+        {
+          "time": "150442",
+          "minute": "1504",
+          "mainFund": 1.53,
+          "change": 9.97,
+          "latestPrice": 9.82,
+          "volumeDiffPercent": 18.68,
+          "volumeState": "平量"
         }
       ],
-      "updatedTime": "150142",
+      "updatedTime": "150442",
       "latestDiagnosis": {
-        "time": "150142",
-        "minute": "1501",
+        "time": "150442",
+        "minute": "1504",
         "intervalLabel": "15:00 - 15:10",
         "pattern": "横盘震荡",
         "capitalAction": "震荡换手",
@@ -752,8 +752,8 @@
           }
         },
         {
-          "time": "150142",
-          "minute": "1501",
+          "time": "150442",
+          "minute": "1504",
           "intervalLabel": "15:00 - 15:10",
           "pattern": "横盘震荡",
           "capitalAction": "震荡换手",
@@ -785,13 +785,13 @@
       "capitalAction": "震荡换手",
       "signalType": "neutral",
       "riskLevel": "低",
-      "summary": "温和上涨，当前涨幅 +2.48%，同刻量能 +12.14%，近5分钟主力资金变化 -0.02亿。当前更像震荡换手。",
+      "summary": "温和上涨，当前涨幅 +2.48%，同刻量能 +12.14%，近5分钟主力资金变化 +0亿。当前更像震荡换手。",
       "suggestion": "先观察分时高低点是否被突破，再决定是否加减仓。",
       "metrics": {
         "latestChange": 2.48,
         "latestMainFund": 4.03,
-        "recentFundChange": -0.02,
-        "recentChangeDelta": 0.17,
+        "recentFundChange": 0,
+        "recentChangeDelta": 0.43,
         "volumeDiffPercent": 12.14,
         "volumeState": "平量",
         "amplitude": 16.48,
@@ -800,33 +800,6 @@
       },
       "quant": null,
       "recentFlow": [
-        {
-          "time": "145442",
-          "minute": "1454",
-          "mainFund": 4.05,
-          "change": 3.01,
-          "latestPrice": 201.88,
-          "volumeDiffPercent": 13.49,
-          "volumeState": "平量"
-        },
-        {
-          "time": "145542",
-          "minute": "1455",
-          "mainFund": 4.06,
-          "change": 2.97,
-          "latestPrice": 201.8,
-          "volumeDiffPercent": 12.86,
-          "volumeState": "平量"
-        },
-        {
-          "time": "145642",
-          "minute": "1456",
-          "mainFund": 4.05,
-          "change": 2.31,
-          "latestPrice": 200.5,
-          "volumeDiffPercent": 12.07,
-          "volumeState": "平量"
-        },
         {
           "time": "145742",
           "minute": "1457",
@@ -871,12 +844,39 @@
           "latestPrice": 200.84,
           "volumeDiffPercent": 12.14,
           "volumeState": "平量"
+        },
+        {
+          "time": "150242",
+          "minute": "1502",
+          "mainFund": 4.03,
+          "change": 2.48,
+          "latestPrice": 200.84,
+          "volumeDiffPercent": 12.14,
+          "volumeState": "平量"
+        },
+        {
+          "time": "150342",
+          "minute": "1503",
+          "mainFund": 4.03,
+          "change": 2.48,
+          "latestPrice": 200.84,
+          "volumeDiffPercent": 12.14,
+          "volumeState": "平量"
+        },
+        {
+          "time": "150442",
+          "minute": "1504",
+          "mainFund": 4.03,
+          "change": 2.48,
+          "latestPrice": 200.84,
+          "volumeDiffPercent": 12.14,
+          "volumeState": "平量"
         }
       ],
-      "updatedTime": "150142",
+      "updatedTime": "150442",
       "latestDiagnosis": {
-        "time": "150142",
-        "minute": "1501",
+        "time": "150442",
+        "minute": "1504",
         "intervalLabel": "15:00 - 15:10",
         "pattern": "缩量上涨",
         "capitalAction": "震荡换手",
@@ -1520,8 +1520,8 @@
           }
         },
         {
-          "time": "150142",
-          "minute": "1501",
+          "time": "150442",
+          "minute": "1504",
           "intervalLabel": "15:00 - 15:10",
           "pattern": "缩量上涨",
           "capitalAction": "震荡换手",
