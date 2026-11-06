@@ -411,8 +411,26 @@ const normalizeQuoteCode = (marketCode) => {
 // 因此按市场分组后拆成不超过 100 只的批次并发请求，再合并结果
 const THS_QUOTE_CHUNK_SIZE = 100;
 
-// 响应 value 数组（字段顺序以响应 data_fields 为准）：[成交量(股), 昨收, 今开, 最高, 均价, 最新价]
-const fetchThsBatchQuotes = async (codes) => {
+// 响应 value 数组的字段顺序以响应里的 data_fields 为准（与请求顺序不一致），
+// 用到的字段：6=昨收、10=最新价、13=成交量(股)、30=均价、19=成交额(元)
+const THS_QUOTE_FIELDS = ['6', '7', '8', '13', '19', '30', '10'];
+
+// 大批量（如全量板块成分股约 4,300 只 / 44 个分块）时限流：最多 4 个并发、每个请求间隔 150ms，
+// 约 2s 可拉完，避免瞬间打出几十个请求被同花顺限流或封禁
+const fetchWithThrottle = async (chunks, { concurrency, intervalMs }, fn) => {
+  const queue = chunks.slice();
+  const workerCount = Math.min(concurrency, queue.length);
+  await Promise.all(Array.from({ length: workerCount }, async () => {
+    while (queue.length > 0) {
+      const chunk = queue.shift();
+      if (!chunk) break;
+      await fn(chunk);
+      if (intervalMs > 0 && queue.length > 0) await new Promise((r) => setTimeout(r, intervalMs));
+    }
+  }));
+};
+
+const fetchThsBatchQuotes = async (codes, throttle = null) => {
   const groups = new Map(); // market -> [pureCode]
   codes.forEach(({ market, pureCode }) => {
     if (!groups.has(market)) groups.set(market, []);
@@ -429,17 +447,25 @@ const fetchThsBatchQuotes = async (codes) => {
   if (chunks.length === 0) return {};
 
   const out = {};
-  const responses = await Promise.all(chunks.map((chunk) => axios.post(thsSnapshotUrl, {
-    code_list: [chunk],
-    trade_class: 'intraday',
-    data_fields: ['6', '7', '8', '13', '30', '10'],
-    lang: 'zh_hans',
-    gpid: 1,
-  }, { headers: thsSnapshotHeaders, timeout: 10000 }).catch((e) => {
-    // 单块失败不影响其它块，记录日志后按无行情处理
-    console.error('[themeMonitor] 批量行情分块请求失败:', e.message);
-    return null;
-  })));
+  const responses = [];
+  const requestChunk = async (chunk) => {
+    try {
+      const res = await axios.post(thsSnapshotUrl, {
+        code_list: [chunk],
+        trade_class: 'intraday',
+        data_fields: THS_QUOTE_FIELDS,
+        lang: 'zh_hans',
+        gpid: 1,
+      }, { headers: thsSnapshotHeaders, timeout: 10000 });
+      responses.push(res);
+    } catch (e) {
+      // 单块失败不影响其它块，记录日志后按无行情处理
+      console.error('[themeMonitor] 批量行情分块请求失败:', e.message);
+    }
+  };
+
+  if (throttle) await fetchWithThrottle(chunks, throttle, requestChunk);
+  else await Promise.all(chunks.map(requestChunk));
 
   responses.forEach((res) => {
     if (!res) return;
@@ -449,17 +475,32 @@ const fetchThsBatchQuotes = async (codes) => {
     }
     (res.data?.data?.quote_data || []).forEach((item) => {
       const value = Array.isArray(item.value) ? item.value[0] : null;
-      if (!Array.isArray(value) || value.length < 3) return;
+      const fields = Array.isArray(item.data_fields) ? item.data_fields.map(String) : [];
+      if (!Array.isArray(value) || fields.length === 0) return;
+      const pick = (field) => {
+        const idx = fields.indexOf(field);
+        if (idx < 0) return null;
+        const v = value[idx];
+        if (v === null || v === undefined || v === '') return null;
+        const num = Number(v);
+        return Number.isFinite(num) ? num : null;
+      };
       const market = String(item.market);
       const prefix = market === '17' ? 'sh' : 'sz';
       const marketCode = `${prefix}${item.code}`;
-      const prevClose = Number(value[1]);
-      const rawLast = value[value.length - 1];
-      const last = Number(rawLast);
-      if (!Number.isFinite(prevClose)) return;
+      const prevClose = pick('6');
+      const last = pick('10');
+      if (prevClose === null) return;
+      const volume = pick('13') || 0;
+      const avgPrice = pick('30');
+      // 成交额优先取同花顺直接返回的字段 19（单位：元），缺失时用 成交量 × 均价 估算
+      const rawAmount = pick('19');
+      const amount = rawAmount !== null && rawAmount > 0
+        ? rawAmount
+        : (volume > 0 && avgPrice > 0 ? volume * avgPrice : 0);
       // 停牌股：同花顺返回最新价为 null（Number(null)===0，不能直接参与计算），标记 suspended
-      if (rawLast == null || !Number.isFinite(last) || last <= 0) {
-        out[marketCode] = { code: marketCode, price: null, prevClose, changePct: null, suspended: true };
+      if (last === null || last <= 0) {
+        out[marketCode] = { code: marketCode, price: null, prevClose, changePct: null, suspended: true, volume: 0, avgPrice: null, amount: 0 };
         return;
       }
       out[marketCode] = {
@@ -467,6 +508,9 @@ const fetchThsBatchQuotes = async (codes) => {
         price: last,
         prevClose,
         changePct: prevClose > 0 ? Math.round(((last - prevClose) / prevClose) * 10000) / 100 : null,
+        volume,
+        avgPrice,
+        amount,
       };
     });
   });
@@ -599,12 +643,13 @@ const getThemeDayStocks = async (dateYmd, themeKey) => {
   return { date: dateYmd, theme: key, name: theme.board, stocks };
 };
 
-const getStockQuotes = async (marketCodes) => {
+// throttle：大批量拉取时传入 { concurrency, intervalMs } 做限流；不传则全部分块并发（异动监控少量股票）
+const getStockQuotes = async (marketCodes, throttle = null) => {
   const list = (Array.isArray(marketCodes) ? marketCodes : [])
     .map(normalizeQuoteCode)
     .filter(Boolean);
   if (list.length === 0) return {};
-  return fetchThsBatchQuotes(list);
+  return fetchThsBatchQuotes(list, throttle);
 };
 
 // ==================== 3.1 基准指数实时行情 ====================

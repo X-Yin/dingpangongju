@@ -1,9 +1,10 @@
 // 板块成交量占比（实时）
-// - 主路径 computeFromSpot：一次获取全部 A 股实时行情（东财，含每只股票当日成交额），
-//   按成分股 code 匹配成交额后分别汇总各分类 + 科技板块；
+// - 主路径 computeFromAmountMap：用同花顺 multi_last_snapshot 全量批量拉取全部板块成分股
+//   （去重后约 4,300 只，100 只/包并发，实测约 0.5s）的当日成交额；同花顺未返回或停牌的股票
+//   再用财联社分时接口（累加 business_balance）兜底
 //   分母优先取 amount.json 里的全市场成交额（不被残缺快照带偏，避免向上突刺），
-//   缺失时退回新浪接口、最后才用快照合计。
-// - 快照完整性校验：有效股票数、成分股匹配率过低时判定为上游返回了不完整快照，
+//   缺失时退回新浪接口。
+// - 覆盖率校验：成分股命中率过低时判定为上游返回了不完整快照，
 //   直接回退同花顺 + 财联社多平台轮询兜底，避免写进向下的突刺
 // - 兜底路径 computeByPolling：全量行情接口不可用或不完整时，按平台配额逐只请求日K
 //   （同花顺 45 / 财联社 45，每秒 90 只），
@@ -15,7 +16,8 @@ const dayjs = require('dayjs');
 const { CATEGORY_NAMES, getBlockCategoryRatio } = require('./板块成交量占比计算/category_amount_money');
 const { getTechVolumeRatio } = require('./techCrowd');
 const { fetchMarketTotalAmountYi, parseAmountToYi } = require('./amount');
-const { getASpot } = require('./akData');
+const { getStockQuotes } = require('./themeMonitor');
+const { getSingleStockTlineDataFromCLS } = require('./stock');
 const { StockKlineTempCache } = require('./stockKlineCache');
 const {
     fetchKlineBatch,
@@ -46,13 +48,16 @@ const PLATFORM_QUOTAS = [
 // 平台连续失败达到该轮数后，本次轮询不再尝试（其股票直接走兜底链）
 const PLATFORM_DOWN_THRESHOLD = 3;
 
-// 快照完整性校验：全 A 股实时行情偶发只返回部分股票（或部分股票成交额为空），
+// 成分股完整性校验：同花顺批量行情偶发只返回部分股票（个别分块请求失败/被限流），
 // 各板块的分子成交额随之偏小，占比就会画出向下的突刺（如 10:31 军工、14:50 银行）。
-// 校验不通过时抛错，由轮询侧等待 10s 后强制重新拉取，而不是把坏点写进分时缓存。
-const MIN_SPOT_ROWS = 4800;          // 全 A 股约 5600 只，低于该数量视为不完整快照
-const MIN_HIT_RATE = 0.95;           // 成分股匹配率，完整快照实测约 0.998
+// 校验不通过时抛错，由调用方回退多平台轮询兜底，而不是把坏点写进分时缓存。
+const MIN_HIT_RATE = 0.95;           // 成分股命中率，完整快照实测约 0.98
 const MAX_TOTAL_DROP_RATIO = 0.95;   // 同一交易日内成交额是累计值，容忍 5% 抖动
 const MIN_BLOCK_AMOUNT_RATIO = 0.98; // 单板块累计成交额只增不减，容忍 2% 抖动
+// 财联社分时兜底的并发数（单股请求 180~250ms）
+const CLS_FALLBACK_CONCURRENCY = 20;
+// 同花顺全量拉取的限流参数：4 个并发 + 每请求间隔 150ms，44 个分块约 2s 拉完（远低于 20s 上限）
+const THS_QUOTE_THROTTLE = { concurrency: 4, intervalMs: 150 };
 // amount.json 记录超过该时长未更新则视为过期，改用新浪接口实时获取分母
 const AMOUNT_FILE_MAX_AGE_SEC = 5 * 60;
 
@@ -175,32 +180,86 @@ const buildGroups = () => {
     return groups;
 };
 
-// 主路径：用全 A 股实时行情（每只股票当日成交额）按成分股 code 汇总
-// 分母优先取外部全市场成交额（amount.json / 新浪接口），缺省时退回快照合计
-// onProgress: ({ done, total, matched, current, detail }) => void
-const computeFromSpot = (groups, spot, onProgress, totalInfo = {}) => {
-    const { marketTotalYi = null, totalSource = 'spot' } = totalInfo;
+// 主路径第一步：同花顺全量拉取全部板块成分股（去重）的当日成交额
+// 4,300 只左右按 100 只/包并发请求 multi_last_snapshot，实测 0.5s 内返回；
+// 同花顺未返回 / 停牌无成交额的股票再用财联社分时（累加分钟 business_balance）兜底
+const fetchConstituentAmounts = async (groups, { onProgress } = {}) => {
+    const codeSet = new Set();
+    for (const group of groups) {
+        for (const stock of group.stocks) {
+            const code = String(stock.code || '').trim();
+            if (/^\d{6}$/.test(code)) codeSet.add(code);
+        }
+    }
 
-    // 代码 → 当日成交额（元）；快照合计仅在缺少外部分母时兜底使用
+    const codes = Array.from(codeSet);
+    if (codes.length === 0) {
+        throw new Error('成分股代码为空，无法计算成交量占比');
+    }
+
+    // 6 开头（60/68）为沪市，0/3 开头为深市；北交所等其余代码同花顺快照不支持，直接交给财联社兜底
+    const marketCodeOf = (code) => {
+        if (code.startsWith('6')) return `sh${code}`;
+        if (code.startsWith('0') || code.startsWith('3')) return `sz${code}`;
+        return null;
+    };
+
+    const marketCodes = codes.map(marketCodeOf).filter(Boolean);
+    const quotes = await getStockQuotes(marketCodes, THS_QUOTE_THROTTLE);
+
+    // 代码 → 当日成交额（元）；停牌股成交额为 0，仍算命中（覆盖率只看行情是否返回）
     const amountByCode = new Map();
-    let spotTotalAmount = 0;
-    for (const item of spot) {
-        const code = String(item['代码'] || '').trim();
-        const amount = Number(item['成交额']);
-        if (!code || !isFinite(amount) || amount <= 0) continue;
-        amountByCode.set(code, amount);
-        spotTotalAmount += amount;
+    const missing = [];
+    for (const code of codes) {
+        const marketCode = marketCodeOf(code);
+        const quote = marketCode ? quotes[marketCode] : null;
+        if (!quote) {
+            missing.push(code);
+            continue;
+        }
+        const amount = Number(quote.amount);
+        amountByCode.set(code, Number.isFinite(amount) && amount > 0 ? amount : 0);
     }
 
-    if (amountByCode.size < MIN_SPOT_ROWS) {
-        throw createIncompleteError(`全 A 股实时行情数据不完整（有效 ${amountByCode.size} 只），放弃本次计算`);
+    let fallbackHit = 0;
+    if (missing.length > 0) {
+        await runWithConcurrency(missing, CLS_FALLBACK_CONCURRENCY, async (code) => {
+            const tline = await getSingleStockTlineDataFromCLS(code).catch(() => null);
+            // 财联社也没返回数据（退市/代码失效）时不计入覆盖率，避免虚高的命中率掩盖快照残缺
+            if (!tline) return;
+            const line = Array.isArray(tline.line) ? tline.line : [];
+            let sum = 0;
+            for (const item of line) {
+                const value = Number(item.business_balance);
+                if (Number.isFinite(value) && value > 0) sum += value;
+            }
+            // 停牌股 line 为空，成交额为 0，但仍算命中
+            amountByCode.set(code, sum);
+            if (sum > 0) fallbackHit += 1;
+        });
     }
 
-    const useExternalTotal = isFinite(Number(marketTotalYi)) && Number(marketTotalYi) > 0;
-    const marketTotalAmount = useExternalTotal ? Number(marketTotalYi) * 1e8 : spotTotalAmount;
+    if (onProgress) {
+        onProgress({
+            done: codes.length,
+            total: codes.length,
+            detail: `同花顺命中 ${codes.length - missing.length} 只，财联社兜底 ${fallbackHit}/${missing.length} 只`,
+            current: '同花顺全量行情',
+        });
+    }
 
-    if (marketTotalAmount <= 0) {
-        throw new Error('全 A 股成交额合计为 0，无法计算成交量占比');
+    return { amountByCode, totalCodes: codes.length };
+};
+
+// 主路径第二步：按成分股 code 汇总各板块成交额，占比 = 板块成交额 / 全市场成交额
+// 分母只取外部分母（amount.json / 新浪接口）：成分股仅覆盖全市场约 3/4，
+// 用成分股合计当分母会整体放大占比
+const computeFromAmountMap = (groups, amountByCode, totalCodes, totalInfo = {}, onProgress) => {
+    const { marketTotalYi = null, totalSource = '' } = totalInfo;
+    const marketTotalAmount = Number(marketTotalYi) * 1e8;
+
+    if (!isFinite(marketTotalAmount) || marketTotalAmount <= 0) {
+        throw new Error('全市场成交额获取失败，无法计算成交量占比');
     }
 
     const totalTasks = groups.reduce((sum, group) => sum + group.stocks.length, 0);
@@ -232,10 +291,10 @@ const computeFromSpot = (groups, spot, onProgress, totalInfo = {}) => {
         }
     }
 
-    // 匹配率过低说明快照漏掉了大量成分股：即使分母正确，各板块占比也会偏小（向下突刺）
-    const hitRate = totalTasks > 0 ? matched / totalTasks : 0;
+    // 命中率过低说明同花顺快照漏掉了大量成分股：即使分母正确，各板块占比也会偏小（向下突刺）
+    const hitRate = totalCodes > 0 ? amountByCode.size / totalCodes : 0;
     if (hitRate < MIN_HIT_RATE) {
-        throw createIncompleteError(`成分股匹配率过低（${(hitRate * 100).toFixed(1)}%），判定为行情快照不完整，放弃本次计算`);
+        throw createIncompleteError(`成分股命中率过低（${(hitRate * 100).toFixed(1)}%），判定为行情快照不完整，放弃本次计算`);
     }
 
     const ratios = {};
@@ -249,9 +308,10 @@ const computeFromSpot = (groups, spot, onProgress, totalInfo = {}) => {
         amounts,
         ratios,
         stats: {
-            mode: 'spot',
-            totalSource: useExternalTotal ? totalSource : 'spot',
-            spotRows: amountByCode.size,
+            mode: 'ths',
+            totalSource,
+            uniqueCodes: totalCodes,
+            hitCodes: amountByCode.size,
             matched,
             total: totalTasks,
             hitRate,
@@ -493,11 +553,11 @@ const computeByPolling = async (groups, { onProgress } = {}) => {
 };
 
 // 计算当日各板块成交量占比（单位：%）
-// 优先一次性拉取全 A 股实时行情；接口失败或返回股票数量过少（快照不完整）时回退同花顺 + 财联社多平台轮询兜底
+// 主路径同花顺全量批量拉取成分股成交额（不足部分财联社分时兜底），
+// 接口失败或命中率过低（快照不完整）时回退同花顺 + 财联社多平台轮询兜底
 // onProgress: ({ done, total, detail, current }) => void
-// forcePolling: true 时跳过全 A 股行情，强制走多平台轮询兜底（--all）
-// forceRefresh: true 时跳过实时行情缓存重新拉取（校验失败后的重试使用）
-const computeTodayRatios = async ({ onProgress, forcePolling = false, forceRefresh = false } = {}) => {
+// forcePolling: true 时跳过同花顺全量行情，强制走多平台轮询兜底（--all）
+const computeTodayRatios = async ({ onProgress, forcePolling = false } = {}) => {
     const groups = buildGroups();
 
     if (groups.length === 0) {
@@ -506,19 +566,16 @@ const computeTodayRatios = async ({ onProgress, forcePolling = false, forceRefre
 
     if (!forcePolling) {
         try {
-            const spot = await getASpot(forceRefresh);
-            if (!Array.isArray(spot) || spot.length === 0) {
-                throw new Error('全 A 股实时行情数据为空');
-            }
             const totalInfo = await resolveMarketTotalYi();
-            return computeFromSpot(groups, spot, onProgress, totalInfo);
+            const { amountByCode, totalCodes } = await fetchConstituentAmounts(groups, { onProgress });
+            return computeFromAmountMap(groups, amountByCode, totalCodes, totalInfo, onProgress);
         } catch (error) {
-            // 全 A 股行情不可用（东财/新浪接口挂掉，或返回股票数量过少、匹配率过低）。
+            // 同花顺全量行情不可用（接口挂掉，或命中率过低导致快照不完整）。
             // 手动刷新时不能直接失败，统一改走同花顺 + 财联社兜底轮询，保证能拿到真实数据
-            console.warn(`获取全 A 股实时行情失败，回退多平台轮询兜底: ${error.message}`);
+            console.warn(`同花顺全量拉取成分股成交额失败，回退多平台轮询兜底: ${error.message}`);
         }
     } else {
-        console.log('已指定 --all，跳过全 A 股实时行情，直接走多平台轮询兜底');
+        console.log('已指定 --all，跳过同花顺全量行情，直接走多平台轮询兜底');
     }
 
     return computeByPolling(groups, { onProgress });
@@ -668,8 +725,8 @@ const saveIntradayPoint = (point) => {
 };
 
 // 计算并写入当前时点的分时数据
-const runAndSaveIntradayPoint = async ({ onProgress, forcePolling = false, forceRefresh = false } = {}) => {
-    const { stats, ...point } = await computeTodayRatios({ onProgress, forcePolling, forceRefresh });
+const runAndSaveIntradayPoint = async ({ onProgress, forcePolling = false } = {}) => {
+    const { stats, ...point } = await computeTodayRatios({ onProgress, forcePolling });
     validateIntradayPoint(point, getIntradayData(), stats.mode);
     const payload = saveIntradayPoint(point);
 

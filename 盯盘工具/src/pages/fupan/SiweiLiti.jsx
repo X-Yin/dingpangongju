@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Empty, Spin, Tooltip, message, Select } from 'antd';
-import { ReloadOutlined, RiseOutlined, LineChartOutlined, ThunderboltOutlined, FundOutlined, BarChartOutlined, SwapOutlined, FileTextOutlined } from '@ant-design/icons';
+import { ReloadOutlined, LineChartOutlined, ThunderboltOutlined, FundOutlined, BarChartOutlined, SwapOutlined, FileTextOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { createChart, ColorType, LineStyle, CrosshairMode } from 'lightweight-charts';
@@ -36,10 +36,15 @@ const PHASE_COLOR = {
   修复期: '#a3e635',
   冰点期: '#64748b',
 };
-// 板块情绪周期多选时的曲线配色（按题材在标签列表中的顺序取色，保证颜色稳定）
+// 板块情绪周期多选时的曲线配色：红橙黄绿蓝靛紫，按题材顺序循环使用
 const LINE_COLORS = [
-  '#c4b5fd', '#67e8f9', '#fda4af', '#fde68a', '#86efac', '#f0abfc',
-  '#93c5fd', '#fdba74', '#bef264', '#f9a8d4', '#7dd3fc', '#fca5a5',
+  '#f87171', // 红
+  '#fb923c', // 橙
+  '#facc15', // 黄
+  '#4ade80', // 绿
+  '#60a5fa', // 蓝
+  '#818cf8', // 靛
+  '#c084fc', // 紫
 ];
 
 // 周期分析 txt 末尾附带的提示词
@@ -121,6 +126,18 @@ const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFo
         mode: CrosshairMode.Normal,
         vertLine: { color: 'rgba(255,255,255,0.45)', style: LineStyle.Dashed, labelBackgroundColor: '#334155' },
         horzLine: { color: 'rgba(255,255,255,0.45)', style: LineStyle.Dashed, labelBackgroundColor: '#334155' },
+      },
+      // 禁止鼠标滚轮缩放/滚动图表，滚轮只用于页面或弹窗滚动
+      handleScroll: {
+        mouseWheel: false,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+      },
+      handleScale: {
+        mouseWheel: false,
+        pinch: false,
+        axisPressedMouseMove: true,
       },
       rightPriceScale: {
         borderColor: 'rgba(255,255,255,0.18)',
@@ -329,15 +346,13 @@ const SectorMiniChart = ({ name, color, series, height = 170, priceFormat, price
   </div>
 );
 
-// 单个题材（主线/支线）卡片：龙头 / 中军 / 龙二~龙五
+// 单个题材卡片：龙头 / 中军 / 龙二~龙五
 const ThemeCard = ({ theme, onOpenStock }) => {
-  const isMain = theme.type === '主线';
   return (
-    <div className={`sl-theme-card ${isMain ? 'is-main' : 'is-branch'}`}>
+    <div className="sl-theme-card">
       <div className="sl-theme-head">
         <div className="sl-theme-title">
           <span className="sl-theme-name">{theme.board}</span>
-          <span className={`sl-type-badge ${isMain ? 'main' : 'branch'}`}>{theme.type}</span>
           {theme.category && (
             <Tooltip title={`题材涨停股与「${theme.category}」板块成分股交集 ${theme.categoryIntersection} 只（覆盖 ${theme.categoryRatio}%），成交量占比取该板块口径`}>
               <span className="sl-map-badge">→ {theme.category}</span>
@@ -362,7 +377,7 @@ const ThemeCard = ({ theme, onOpenStock }) => {
         </div>
       </div>
 
-      <div className={`sl-stock-head ${isMain ? 'main' : ''}`}>
+      <div className="sl-stock-head">
         <span>#</span>
         <span>股票</span>
         <span>连板</span>
@@ -401,17 +416,19 @@ const ThemeCard = ({ theme, onOpenStock }) => {
   );
 };
 
-const SiweiLiti = () => {
+// realtime=true 时用于盯盘页弹窗：后端会先用 Puppeteer 刷新当日连板快照，
+// 并刷新板块成交量占比实时分时点，再强制重算情绪周期
+const SiweiLiti = ({ realtime = false }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [selectedThemeKeys, setSelectedThemeKeys] = useState([]);
-  const [showAllBranches, setShowAllBranches] = useState(false);
+  const [selectionLoaded, setSelectionLoaded] = useState(false);
   const [klineTarget, setKlineTarget] = useState(null);
   const [klineVisible, setKlineVisible] = useState(false);
 
-  // 板块成交量占比 / 板块资金流入流出（共用同一个筛选框）
+  // 板块成交量占比 / 板块资金流入流出（共用同一个筛选框，选择存服务端）
   const [sectorCats, setSectorCats] = useState([]);
   const [sectorData, setSectorData] = useState(null); // { ratio: {name:[...]}, fund: {name:[...]} }
   const [sectorLoading, setSectorLoading] = useState(false);
@@ -419,10 +436,13 @@ const SiweiLiti = () => {
   const fetchData = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true); else setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/siwei_liti_analysis`);
+      const res = await axios.get(`${API_BASE}/siwei_liti_analysis`, {
+        params: realtime ? { realtime: 1 } : undefined,
+        timeout: realtime ? 5 * 60 * 1000 : undefined,
+      });
       setData(res.data || null);
       setError('');
-      if (manual) message.success('四维立体数据已刷新');
+      if (manual) message.success(realtime ? '实时数据已刷新' : '四维立体数据已刷新');
     } catch (e) {
       console.error('获取四维立体数据失败:', e);
       setError(e?.response?.data?.message || e.message || '获取失败');
@@ -431,49 +451,69 @@ const SiweiLiti = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [realtime]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const themes = data?.themes || [];
-  const mainThemes = useMemo(() => themes.filter((t) => t.type === '主线'), [themes]);
-  const branchThemes = useMemo(() => themes.filter((t) => t.type === '支线'), [themes]);
-
-  // 默认选中主线第一个，其次第一个支线；数据刷新后剔除已不存在的题材
+  // 从服务端恢复上次选择（板块情绪周期题材 + 板块成交&资金日线板块）
   useEffect(() => {
-    if (!themes.length) return;
+    let cancelled = false;
+    axios.get(`${API_BASE}/siwei_liti_selection`)
+      .then((res) => {
+        if (cancelled) return;
+        const themeKeys = Array.isArray(res.data?.themeKeys) ? res.data.themeKeys : [];
+        const cats = Array.isArray(res.data?.sectorCats) ? res.data.sectorCats : [];
+        setSelectedThemeKeys(themeKeys);
+        setSectorCats(cats);
+      })
+      .catch((e) => {
+        console.error('读取四维立体选择记忆失败:', e);
+      })
+      .finally(() => {
+        if (!cancelled) setSelectionLoaded(true);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const themes = useMemo(() => data?.themes || [], [data]);
+
+  // 恢复上次选中的板块情绪周期题材；数据刷新后剔除已不存在的题材，无有效选择时默认第一个
+  useEffect(() => {
+    if (!selectionLoaded || !themes.length) return;
     setSelectedThemeKeys((prev) => {
       const valid = prev.filter((k) => themes.some((t) => t.key === k));
       if (valid.length) return valid.length === prev.length ? prev : valid;
-      const def = mainThemes[0] || branchThemes[0];
-      return def ? [def.key] : [];
+      return [themes[0].key];
     });
-  }, [themes, mainThemes, branchThemes]);
+  }, [themes, selectionLoaded]);
 
-  // 情绪图可选题材：主线全部 + 前 10 个支线（已选中的题材一定在列表内）
-  const chipThemes = useMemo(() => {
-    const list = [...mainThemes, ...branchThemes.slice(0, 10)];
-    selectedThemeKeys.forEach((k) => {
-      if (!list.some((t) => t.key === k)) {
-        const sel = themes.find((t) => t.key === k);
-        if (sel) list.push(sel);
-      }
-    });
-    return list;
-  }, [mainThemes, branchThemes, themes, selectedThemeKeys]);
+  // 板块情绪周期可选题材：不再区分主线/支线，按题材顺序全部展示
+  const chipThemes = themes;
 
-  // 题材 -> 曲线颜色（按标签列表顺序，切换选中不影响其他题材颜色）
-  const themeColorOf = useMemo(() => {
-    const map = new Map();
-    chipThemes.forEach((t, idx) => map.set(t.key, LINE_COLORS[idx % LINE_COLORS.length]));
-    return map;
-  }, [chipThemes]);
+  // 选择变化后写回服务端（等首次读取完成，避免默认值覆盖历史选择）
+  useEffect(() => {
+    if (!selectionLoaded) return;
+    const timer = setTimeout(() => {
+      axios.post(`${API_BASE}/siwei_liti_selection`, {
+        themeKeys: selectedThemeKeys,
+        sectorCats,
+      }).catch((e) => console.error('保存四维立体选择记忆失败:', e));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [selectionLoaded, selectedThemeKeys, sectorCats]);
 
   // 已选题材（按标签列表顺序）
   const selectedThemes = useMemo(
     () => chipThemes.filter((t) => selectedThemeKeys.includes(t.key)),
     [chipThemes, selectedThemeKeys],
   );
+
+  // 已选题材的曲线依次取「红橙黄绿蓝靛紫」，颜色与图例顺序一致
+  const themeColorOf = useMemo(() => {
+    const map = new Map();
+    selectedThemes.forEach((t, idx) => map.set(t.key, LINE_COLORS[idx % LINE_COLORS.length]));
+    return map;
+  }, [selectedThemes]);
 
   // 每个已选题材一条折线
   const sectorLines = useMemo(() => selectedThemes.map((t) => ({
@@ -495,14 +535,16 @@ const SiweiLiti = () => {
 
   const marketSeries = useMemo(() => (data?.marketTemperature || []).map((item) => ({ ...item })), [data]);
 
-  const visibleBranches = showAllBranches ? branchThemes : branchThemes.slice(0, 6);
+  // 题材中出现的最高连板数（顶部概览用）
+  const maxLianban = useMemo(
+    () => themes.reduce((max, t) => Math.max(max, Number(t.maxLianban) || 0), 0),
+    [themes],
+  );
 
   const openStock = (stock) => {
     setKlineTarget(stock);
     setKlineVisible(true);
   };
-
-  const fastRotation = data?.marketStatus?.isFastRotation;
 
   // ===== 一级板块池：严格取自 东方财富板块成分股汇总 下的 {分类}.json =====
   const [sectorPool, setSectorPool] = useState([]);
@@ -523,8 +565,12 @@ const SiweiLiti = () => {
       const startDate = dayjs().subtract(60, 'day').format('YYYY-MM-DD');
       const endDate = dayjs().format('YYYY-MM-DD');
       const [ratioRes, fundRes] = await Promise.all([
-        axios.get(`${API_BASE}/block_category_ratio`, { params: { startDate, endDate } }),
-        axios.get(`${API_BASE}/get_block_money_day_by_category`, { params: { cats: sectorCats.join(',') } }),
+        axios.get(`${API_BASE}/block_category_ratio`, {
+          params: { startDate, endDate, realtime: realtime ? 1 : 0 },
+        }),
+        axios.get(`${API_BASE}/get_block_money_day_by_category`, {
+          params: { cats: sectorCats.join(','), realtime: realtime ? 1 : 0 },
+        }),
       ]);
       const ratioAll = ratioRes.data || {};
       const byCat = {};
@@ -538,11 +584,15 @@ const SiweiLiti = () => {
     } finally {
       setSectorLoading(false);
     }
-  }, [sectorCats]);
+  }, [sectorCats, realtime]);
 
+  // 实时模式下等四维立体主数据（含 Puppeteer 刷新连板 + 成交量占比）返回后再拉板块日线，
+  // 保证资金/占比图也能带上刚刷新的当日实时点；普通复盘页仍独立加载，避免重复请求
+  const sectorDataGate = realtime ? Boolean(data) : true;
   useEffect(() => {
+    if (!sectorDataGate) return;
     fetchSectorData();
-  }, [fetchSectorData]);
+  }, [fetchSectorData, sectorDataGate]);
 
   // 每个板块独立一张图：颜色按所选顺序固定，缺失数据留空占位
   const ratioCharts = useMemo(() => sectorCats.map((name, idx) => ({
@@ -587,7 +637,6 @@ const SiweiLiti = () => {
     line('');
 
     line('一、市场概览');
-    line(`市场状态：${data.marketStatus?.isFastRotation ? '快速轮动' : '主线明确'}`);
     line(`题材总数：${themes.length} 个`);
     line(`最新情绪温度：${lastTemp ? `${numText(lastTemp.value)}（${lastTemp.phase || '--'}）` : '--'}`);
     line(`最新科技情绪指数：${lastTech && lastTech.value != null ? Number(lastTech.value).toFixed(2) : '--'}`);
@@ -683,11 +732,11 @@ const SiweiLiti = () => {
         <div className="sl-hero-header">
           <div className="sl-hero-title">
             <span className="sl-hero-icon"><ThunderboltOutlined /></span>
-            <span>四维立体 · 主线与情绪周期</span>
+            <span>四维立体 · 板块与情绪周期</span>
           </div>
           <div className="sl-hero-actions">
             <span className="sl-total-tag">
-              主线 {mainThemes.length} · 支线 {branchThemes.length}
+              题材 {themes.length} 个
             </span>
             <button
               className="sl-cycle-analysis-btn"
@@ -708,8 +757,8 @@ const SiweiLiti = () => {
           </div>
         </div>
 
-        <div className={`sl-status-note ${fastRotation ? 'rotation' : 'main'}`}>
-          {data?.marketStatus?.description || '正在计算最近 10 个交易日的主线与支线…'}
+        <div className="sl-status-note">
+          最近 10 个交易日板块涨停家数与成交量占比趋势概览
           {data?.latestSnapshotDate && (
             <span className="sl-status-sub">数据截至 {String(data.latestSnapshotDate).slice(0, 4)}-{String(data.latestSnapshotDate).slice(4, 6)}-{String(data.latestSnapshotDate).slice(6, 8)}</span>
           )}
@@ -717,16 +766,12 @@ const SiweiLiti = () => {
 
         <div className="sl-summary-grid">
           <div className="sl-summary-item">
-            <span className="sl-summary-label">市场状态</span>
-            <span className={`sl-summary-value ${fastRotation ? 'rotation' : ''}`}>
-              {fastRotation ? '快速轮动' : (mainThemes.length ? '主线明确' : '--')}
-            </span>
+            <span className="sl-summary-label">题材数量</span>
+            <span className="sl-summary-value">{themes.length ? `${themes.length} 个` : '--'}</span>
           </div>
           <div className="sl-summary-item">
-            <span className="sl-summary-label">主线题材</span>
-            <span className="sl-summary-value small">
-              {mainThemes.length ? mainThemes.map((t) => t.board).join('、') : '无（全部为支线）'}
-            </span>
+            <span className="sl-summary-label">最高连板</span>
+            <span className="sl-summary-value">{maxLianban ? `${maxLianban} 板` : '--'}</span>
           </div>
           <div className="sl-summary-item">
             <span className="sl-summary-label">最新情绪温度</span>
@@ -746,7 +791,10 @@ const SiweiLiti = () => {
       </div>
 
       {loading && !data ? (
-        <div className="sl-loading"><Spin size="large" /></div>
+        <div className="sl-loading">
+          <Spin size="large" />
+          {realtime && <div className="sl-loading-tip">正在实时拉取当日连板与板块资金/成交量占比数据，约需 1 分钟…</div>}
+        </div>
       ) : error && !data ? (
         <div className="sl-error">
           <Empty description={error} />
@@ -807,13 +855,12 @@ const SiweiLiti = () => {
                   return (
                     <button
                       key={t.key}
-                      className={`sl-theme-chip ${active ? 'active' : ''} ${t.type === '主线' ? 'main' : ''}`}
+                      className={`sl-theme-chip ${active ? 'active' : ''}`}
                       onClick={() => toggleThemeKey(t.key)}
                       title={active ? `取消 ${t.board}` : `添加 ${t.board} 曲线`}
                     >
                       {active && <i className="sl-chip-dot" style={{ background: themeColorOf.get(t.key) }} />}
                       {t.board}
-                      {t.type === '主线' && <span className="sl-chip-star">主线</span>}
                     </button>
                   );
                 })}
@@ -966,14 +1013,13 @@ const SiweiLiti = () => {
             </div>
           </div>
 
-          {/* 主线 */}
+          {/* 板块股票：不再区分主线/支线，按顺序平铺全部题材 */}
           <div className="sl-section-title">
-            <RiseOutlined /> 主线 {mainThemes.length ? `（${mainThemes.length}）` : ''}
-            {fastRotation && <span className="sl-fast-rotation">当前无主线，市场快速轮动</span>}
+            <FundOutlined /> 板块股票（{themes.length}）
           </div>
-          {mainThemes.length ? (
+          {themes.length ? (
             <div className="sl-theme-grid">
-              {mainThemes.map((t) => (
+              {themes.map((t) => (
                 <ThemeCard key={t.key} theme={t} onOpenStock={openStock} />
               ))}
             </div>
@@ -981,25 +1027,8 @@ const SiweiLiti = () => {
             <div className="sl-empty-block">
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="最近 10 个交易日没有同时满足「涨停家数增加 + 板块成交量占比提升」的题材，全部题材按支线处理（快速轮动）"
+                description="暂无板块股票数据"
               />
-            </div>
-          )}
-
-          {/* 支线 */}
-          <div className="sl-section-title">
-            <FundOutlined /> 支线（{branchThemes.length}）
-          </div>
-          <div className="sl-theme-grid">
-            {visibleBranches.map((t) => (
-              <ThemeCard key={t.key} theme={t} onOpenStock={openStock} />
-            ))}
-          </div>
-          {branchThemes.length > 6 && (
-            <div className="sl-more-row">
-              <button className="sl-more-btn" onClick={() => setShowAllBranches((v) => !v)}>
-                {showAllBranches ? '收起支线' : `展开全部支线（${branchThemes.length - 6}）`}
-              </button>
             </div>
           )}
         </>

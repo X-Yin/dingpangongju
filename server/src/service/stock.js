@@ -542,6 +542,8 @@ const getSingleStockTlineDataFromLB = async (code) => {
 };
 
 exports.getSingleStockTlineData = getSingleStockTlineData;
+// 供板块成交额汇总兜底：直接走财联社分时，避免再次落到同花顺
+exports.getSingleStockTlineDataFromCLS = getSingleStockTlineDataFromCLS;
 
 // 通过股票代码获取股票名称
 const getStockNameByCode = (code) => {

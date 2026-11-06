@@ -121,7 +121,7 @@ const { isTradingDay } = require('./utils/tradingDay');
 const { getClsReqIndexUrl } = require('./utils');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
-const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refreshLianbanRange } = require('./service/lianban');
+const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refreshLianbanRange, saveTodayLianban } = require('./service/lianban');
 const { getMarketOverview, getThemeAnalysis, getStockQuotes, getThemeHistory, getThemeDayStocks, getIndexQuotes, invalidateThemeAnalysisCache } = require('./service/themeMonitor');
 // 复盘页「四维立体」：主线/支线 + 龙一~龙五 + 三线情绪周期
 const { getSiweiLitiAnalysis } = require('./service/siweiLiti');
@@ -881,13 +881,84 @@ app.post('/refresh_lianban_snapshot', async (req, res) => {
   }
 });
 
+// 实时四维立体结果缓存：Puppeteer 拉连板 + 全市场成交额约需 1 分钟，
+// 60 秒内重复打开弹窗直接复用结果，并合并并发请求避免重复抓取
+let siweiRealtimeCache = { ts: 0, data: null };
+let siweiRealtimeJob = null;
+const SIWEI_REALTIME_TTL = 60 * 1000;
+
+const refreshSiweiRealtime = async () => {
+  const { runAndSaveIntradayPoint } = require('./service/blockVolumeRatio');
+  await Promise.all([
+    saveTodayLianban().catch((e) => console.warn('[siweiLiti] 实时连板快照刷新失败:', e.message)),
+    runAndSaveIntradayPoint().catch((e) => console.warn('[siweiLiti] 实时板块成交量占比刷新失败:', e.message)),
+  ]);
+  const data = await getSiweiLitiAnalysis({ force: true });
+  return { ...data, realtime: true };
+};
+
 // 复盘页「四维立体」：最近 10 个交易日主线/支线 + 龙头/中军 + 三线情绪周期
+// realtime=1：先用 Puppeteer 拉取连板网当日最新复盘页刷新当天快照，
+// 再刷新板块成交量占比实时分时点（与 MainFund 同源算法），最后强制重算情绪周期
 app.get('/siwei_liti_analysis', async (req, res) => {
   try {
+    const realtime = String(req.query.realtime || '') === '1';
+    if (realtime) {
+      if (siweiRealtimeCache.data && Date.now() - siweiRealtimeCache.ts < SIWEI_REALTIME_TTL) {
+        return res.json(siweiRealtimeCache.data);
+      }
+      if (!siweiRealtimeJob) {
+        siweiRealtimeJob = refreshSiweiRealtime()
+          .then((data) => {
+            siweiRealtimeCache = { ts: Date.now(), data };
+            return data;
+          })
+          .finally(() => {
+            siweiRealtimeJob = null;
+          });
+      }
+      return res.json(await siweiRealtimeJob);
+    }
     res.json(await getSiweiLitiAnalysis());
   } catch (error) {
     console.error('获取四维立体分析失败:', error);
     res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 四维立体页面选择记忆：板块情绪周期的已选题材 + 板块成交&资金日线的已选板块
+// 存服务端文件，换浏览器/清缓存后仍能恢复
+const SIWEI_SELECTION_FILE = path.join(__dirname, 'data/siwei_liti_selection.json');
+app.get('/siwei_liti_selection', (req, res) => {
+  try {
+    if (!fs.existsSync(SIWEI_SELECTION_FILE)) return res.json({ themeKeys: [], sectorCats: [] });
+    const data = JSON.parse(fs.readFileSync(SIWEI_SELECTION_FILE, 'utf-8') || '{}');
+    res.json({
+      themeKeys: Array.isArray(data.themeKeys) ? data.themeKeys.filter((v) => typeof v === 'string') : [],
+      sectorCats: Array.isArray(data.sectorCats) ? data.sectorCats.filter((v) => typeof v === 'string') : [],
+    });
+  } catch (error) {
+    console.error('读取四维立体选择记忆失败:', error);
+    res.status(500).json({ message: error.message || '读取失败' });
+  }
+});
+app.post('/siwei_liti_selection', (req, res) => {
+  try {
+    const themeKeys = Array.isArray(req.body?.themeKeys)
+      ? req.body.themeKeys.filter((v) => typeof v === 'string')
+      : [];
+    const sectorCats = Array.isArray(req.body?.sectorCats)
+      ? req.body.sectorCats.filter((v) => typeof v === 'string')
+      : [];
+    fs.writeFileSync(
+      SIWEI_SELECTION_FILE,
+      JSON.stringify({ themeKeys, sectorCats, updatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss') }, null, 2),
+      'utf-8',
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('保存四维立体选择记忆失败:', error);
+    res.status(500).json({ message: error.message || '保存失败' });
   }
 });
 
@@ -2642,19 +2713,35 @@ app.get('/get_block_money_day_by_category', (req, res) => {
       锂电池: ['锂电池概念'],
     };
 
+    // 实时模式：把 MainFund 板块资金分时的最新点并入今天，
+    // 让四维立体弹窗里的「板块资金」日线也能显示当日实时资金
+    const realtime = String(req.query.realtime || '') === '1';
+    let liveFundPoint = null;
+    if (realtime) {
+      try {
+        const timeList = getBlockMoneyChangeTimeList();
+        const last = Array.isArray(timeList) && timeList.length ? timeList[timeList.length - 1] : null;
+        if (last && Array.isArray(last.data)) liveFundPoint = last.data;
+      } catch (e) {
+        liveFundPoint = null;
+      }
+    }
+    const liveDate = Number(dayjs().format('YYYYMMDD'));
+
     // 聚合时按 category 合并多个板块的 money（同属一个 category 的板块加总）
     const result = {};
     const allCats = cats.length ? cats : Object.keys(keywordMappings);
     for (const cat of allCats) {
       const kws = keywordMappings[cat];
       if (!kws) continue;
+      const lowerKws = kws.map((kw) => String(kw).toLowerCase());
       const series = [];
       for (const rec of raw || []) {
         let total = 0;
         let matched = false;
         for (const block of rec.data || []) {
           const blockName = String(block.block || '').toLowerCase();
-          if (kws.some((kw) => blockName.includes(String(kw).toLowerCase()))) {
+          if (lowerKws.some((kw) => blockName.includes(kw))) {
             total += Number(block.money || 0);
             matched = true;
           }
@@ -2665,6 +2752,29 @@ app.get('/get_block_money_day_by_category', (req, res) => {
             money: total,
             moneyY: Number((total / 1e8).toFixed(2)),
           });
+        }
+      }
+      // 当日实时资金点（同一日期覆盖收盘历史点）
+      if (liveFundPoint) {
+        let total = 0;
+        let matched = false;
+        for (const block of liveFundPoint) {
+          const blockName = String(block.block || '').toLowerCase();
+          if (lowerKws.some((kw) => blockName.includes(kw))) {
+            total += Number(block.money || 0);
+            matched = true;
+          }
+        }
+        if (matched) {
+          const liveRow = {
+            date: liveDate,
+            money: total,
+            moneyY: Number((total / 1e8).toFixed(2)),
+            live: true,
+          };
+          const idx = series.findIndex((row) => row.date === liveDate);
+          if (idx >= 0) series[idx] = liveRow;
+          else series.push(liveRow);
         }
       }
       if (series.length) result[cat] = series;
@@ -2772,8 +2882,8 @@ app.get('/refresh_block_category_ratio', async (req, res) => {
 });
 
 // 刷新板块成交量占比（复用主资金页「板块成交量」的实时算法）
-// 优先一次性拉取全 A 股实时行情（东财，失败时回退新浪全量列表）汇总各板块成交额；
-// 两种全量接口都失败时回退多平台轮询。结果写入分时缓存，拥挤度 tab 的科技/各分类占比会同步使用
+// 同花顺全量批量拉取全部板块成分股当日成交额，缺失部分用财联社分时兜底；
+// 同花顺不可用或命中率过低时回退多平台轮询。结果写入分时缓存，拥挤度 tab 的科技/各分类占比会同步使用
 app.get('/refresh_block_volume_ratio', async (req, res) => {
   try {
     const { runAndSaveIntradayPoint } = require('./service/blockVolumeRatio');

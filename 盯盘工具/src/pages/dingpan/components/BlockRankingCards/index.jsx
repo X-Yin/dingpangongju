@@ -3,7 +3,7 @@ import { RiseOutlined, FallOutlined, ReloadOutlined, ThunderboltOutlined } from 
 import { titleStyle, borderStyle, numberStyle } from '../../utils/themeColor';
 import './index.scss';
 
-const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockStockList, themeColor, vertical = false, fillContainer = false, onRefresh, refreshing = false, onStrengthAnalysis, strengthLoading = false }) => {
+const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockStockList, themeColor, vertical = false, fillContainer = false, onRefresh, refreshing = false, onEmotionCycle, emotionLoading = false }) => {
     return (
         <Row gutter={[12, 8]} style={{ marginBottom: 8, height: fillContainer ? '100%' : undefined, flex: fillContainer ? 1 : undefined }}>
             <Col span={vertical ? 24 : 12} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -52,20 +52,20 @@ const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockSto
                         className="monitor-card compact-head-card"
                         variant="borderless"
                         bodyStyle={{ padding: '12px 14px' }}
-                        extra={onRefresh || onStrengthAnalysis ? (
+                        extra={onRefresh || onEmotionCycle ? (
                             <div className="block-ranking-extra">
-                                {onStrengthAnalysis && (
+                                {onEmotionCycle && (
                                     <Button
                                         size="small"
                                         type="link"
                                         className="block-ranking-strength-btn"
-                                        onClick={onStrengthAnalysis}
-                                        loading={strengthLoading}
+                                        onClick={onEmotionCycle}
+                                        loading={emotionLoading}
                                     >
                                         <span
                                             style={{ display: 'inline-block', padding: 2, }}>
                                             <ThunderboltOutlined style={{ marginRight: 2 }} />
-                                            强度分析
+                                            情绪周期
                                         </span>
                                     </Button>
                                 )}

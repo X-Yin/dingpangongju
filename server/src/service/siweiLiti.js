@@ -531,8 +531,8 @@ const buildSiweiLiti = () => {
   };
 };
 
-const getSiweiLitiAnalysis = async () => {
-  if (cache.data && Date.now() - cache.ts < CACHE_TTL) return cache.data;
+const getSiweiLitiAnalysis = async ({ force = false } = {}) => {
+  if (!force && cache.data && Date.now() - cache.ts < CACHE_TTL) return cache.data;
   if (fetching) return fetching;
   fetching = (async () => {
     const data = buildSiweiLiti();

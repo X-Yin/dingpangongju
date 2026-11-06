@@ -36,8 +36,8 @@ import RenameStockModal from './components/RenameStockModal';
 import TempHideStockModal from './components/TempHideStockModal';
 import IndexOverlayFullscreenModal from './components/IndexOverlayFullscreenModal';
 import BuyPointDiagnosisModal from './components/BuyPointDiagnosisModal';
-import StrengthAnalysisModal from './components/StrengthAnalysisModal';
 import ThemeColorModal from './components/ThemeColorModal';
+import SiweiLiti from '../fupan/SiweiLiti';
 import { DEFAULT_THEME_COLOR } from './utils/themeColor';
 import { buildPackVars, getThemePacks, setRemoteThemePacks } from './utils/themePacks';
 import { hideStock, unhideStock, cleanExpiredHiddenStocks, filterHiddenStocks } from './utils/hiddenStocks';
@@ -142,10 +142,8 @@ const DingPan = () => {
     const [watchlistRemoteCodeSet, setWatchlistRemoteCodeSet] = useState(() => new Set()); // 远程搜索纠错命中的自选股代码集合（比如用户输错形近字时由同花顺纠正）
     const watchlistRemoteSeqRef = useRef(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    // 一级板块强度分析弹窗
-    const [strengthAnalysisVisible, setStrengthAnalysisVisible] = useState(false);
-    const [strengthAnalysisLoading, setStrengthAnalysisLoading] = useState(false);
-    const [strengthAnalysisResult, setStrengthAnalysisResult] = useState(null);
+    // 情绪周期弹窗（内嵌四维立体，使用实时连板 + 实时资金/成交量占比数据）
+    const [emotionCycleVisible, setEmotionCycleVisible] = useState(false);
     const [klineModalVisible, setKlineModalVisible] = useState(false);
     const [klineInitialTab, setKlineInitialTab] = useState(null); // K 线弹窗打开时默认定位的 tab
     const [selectedStock, setSelectedStock] = useState(null);
@@ -1600,39 +1598,9 @@ const DingPan = () => {
         }
     };
 
-    // 强度分析：先刷新全市场成交量占比，再拉取各一级板块评分（按钮 loading，成功后打开弹窗）
-    const runStrengthAnalysis = async () => {
-        setStrengthAnalysisLoading(true);
-        try {
-            // 复用拥挤度「刷新全部」接口，失败不阻断（回退使用已有分时缓存）
-            // 已收盘/非交易日不刷新：保留最近交易日的 15:00、14:30 分时点用于强度对比
-            if (!isAfterMarketClose(dayjs())) {
-                try {
-                    await axios.get(`http://${local_ip}:3000/refresh_block_volume_ratio`, { timeout: 5 * 60 * 1000 });
-                } catch {
-                    message.warning('实时成交量占比刷新失败，将使用已有分时缓存数据');
-                }
-            }
-            const res = await axios.get(`http://${local_ip}:3000/block_strength_analysis`, { timeout: 5 * 60 * 1000 });
-            if (res.data?.success) {
-                setStrengthAnalysisResult(res.data);
-                return res.data;
-            }
-            message.error(res.data?.message ? `强度分析接口失败：${res.data.message}` : '强度分析接口失败');
-            return null;
-        } catch (error) {
-            const detail = error.response?.data?.message || error.message;
-            message.error(detail ? `强度分析接口失败：${detail}` : '强度分析接口失败');
-            return null;
-        } finally {
-            setStrengthAnalysisLoading(false);
-        }
-    };
-
-    const handleOpenStrengthAnalysis = async () => {
-        if (strengthAnalysisLoading) return;
-        const result = await runStrengthAnalysis();
-        if (result) setStrengthAnalysisVisible(true);
+    // 情绪周期：直接打开内嵌四维立体的弹窗，由组件内部拉取实时数据（不再请求强度分析接口）
+    const handleOpenEmotionCycle = () => {
+        setEmotionCycleVisible(true);
     };
 
     const fetchEmotionData = async () => {
@@ -2537,8 +2505,7 @@ const DingPan = () => {
                                 themeColor={effThemeColor}
                                 onRefresh={handleRefreshBlockData}
                                 refreshing={refreshingBlockData}
-                                onStrengthAnalysis={handleOpenStrengthAnalysis}
-                                strengthLoading={strengthAnalysisLoading}
+                                onEmotionCycle={handleOpenEmotionCycle}
                             />
                             )}
 
@@ -2677,8 +2644,7 @@ const DingPan = () => {
                                         vertical
                                         onRefresh={handleRefreshBlockData}
                                         refreshing={refreshingBlockData}
-                                        onStrengthAnalysis={handleOpenStrengthAnalysis}
-                                        strengthLoading={strengthAnalysisLoading}
+                                        onEmotionCycle={handleOpenEmotionCycle}
                                     />
                                 </div>
                             )}
@@ -2730,7 +2696,6 @@ const DingPan = () => {
                     change: selectedStock?.change || selectedStock?.changeValue
                 }}
                 initialTab={klineInitialTab}
-                zIndex={strengthAnalysisVisible ? 1300 : undefined}
             />
 
             {/* 利好消息弹窗 */}
@@ -2800,15 +2765,19 @@ const DingPan = () => {
                 onUnhide={handleUnhideStock}
             />
 
-            {/* 一级板块强度分析弹窗 */}
-            <StrengthAnalysisModal
-                open={strengthAnalysisVisible}
-                onCancel={() => setStrengthAnalysisVisible(false)}
-                result={strengthAnalysisResult}
-                loading={strengthAnalysisLoading}
-                onRefresh={runStrengthAnalysis}
-                onStockClick={showKLine}
-            />
+            {/* 情绪周期弹窗：内嵌四维立体，后端实时刷新连板快照 + 板块资金/成交量占比 */}
+            <Modal
+                open={emotionCycleVisible}
+                onCancel={() => setEmotionCycleVisible(false)}
+                footer={null}
+                width="96vw"
+                style={{ top: 12, maxWidth: 1800 }}
+                styles={{ body: { maxHeight: '82vh', overflow: 'auto', padding: 12 } }}
+                title="四维立体 · 实时板块情绪周期"
+                destroyOnClose
+            >
+                {emotionCycleVisible && <SiweiLiti realtime />}
+            </Modal>
 
             {/* 指数叠加分时全屏弹窗 */}
             <IndexOverlayFullscreenModal
