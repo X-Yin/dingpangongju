@@ -921,54 +921,94 @@ const checkStrategy12_InflowRiseVolumeShrink = async (state) => {
 
 // Strategy 13: 隔夜危机跑路
 // 隔夜重大危机（美股暴跌/战争/关税利空等）下，开盘科技股直线拉升但主力资金净流出，量价背离，冲高清仓机会
+// 2026-11-06 用户新增：触发后每隔 10 分钟重复提醒一次，直至 11:00；
+// 若任一次检测发现资金明显回流（5 分钟内主力净流入 ≥ 20亿 且成交量增加 ≥ 100亿），先暂停提醒；
+// 暂停后一旦发现连续 10 分钟成交量持续萎缩（回流后量能跟不上），恢复提醒直至 11:00
 const checkStrategy13_OvernightCrisisEscape = async (state) => {
   const now = dayjs();
   const hour = now.hour();
   const minute = now.minute();
   const timeVal = hour * 60 + minute;
 
-  // 检测时段：9:30 - 10:00
-  if (timeVal < 9 * 60 + 30 || timeVal > 10 * 60) return null;
+  // 检测时段：9:30 - 11:00（每 10 分钟提醒一次，直至 11:00）
+  if (timeVal < 9 * 60 + 30 || timeVal > 11 * 60) return null;
 
   const nowStr = now.format('YYYY-MM-DD HH:mm:ss');
+  const today = now.format('YYYY-MM-DD');
   const state13 = state.overnight_crisis_escape || {};
 
-  // 每隔2分钟检测一次（用 lastCheckedTime 控制，避免每分钟都跑检测逻辑）
+  // 每隔10分钟检测/提醒一次（用 lastCheckedTime 控制）
   const lastCheckedTime = state13.lastCheckedTime;
-  if (lastCheckedTime && now.diff(dayjs(lastCheckedTime), 'second') < 110) return null;
+  if (lastCheckedTime && now.diff(dayjs(lastCheckedTime), 'second') < 10 * 60) return null;
 
   // 标记本次检测时间（由 pollOnce 末尾统一 writeState 持久化）
   state.overnight_crisis_escape = { ...state13, lastCheckedTime: nowStr };
 
-  // 触发后30分钟冷却
-  const lastTriggered = state13.lastTriggeredTime;
-  if (lastTriggered && now.diff(dayjs(lastTriggered), 'minute') < 30) return null;
-
   try {
-    // 1. 大盘资金净流出（当前主力资金净流入为负）
+    // 1. 资金回流检查（优先于命中条件）：5 分钟内主力净流入 ≥ 20亿 且成交量增加 ≥ 100亿 → 暂停提醒
+    //    mainMoney 为累计主力净流入、amountChangeDiff 为累计成交量增量（单位均为亿），取约 5 分钟前样本做差
     const amountHistory = require('./amount').getAmountHistory();
     if (!amountHistory || amountHistory.length === 0) return null;
 
     const currItem = amountHistory[amountHistory.length - 1];
     const currMainMoney = parseAmountToYi(currItem[1].mainMoney);
+    const currAmountDiff = parseAmountToYi(currItem[1].amountChangeDiff);
 
+    const nowMinus5Min = now.subtract(5, 'minute').format('HHmmss');
+    let prevItem = null;
+    for (let i = amountHistory.length - 2; i >= 0; i--) {
+      if (amountHistory[i][0] <= nowMinus5Min) {
+        prevItem = amountHistory[i];
+        break;
+      }
+    }
+
+    const isPaused = state13.pausedDate === today;
+
+    // 1a. 有 5 分钟前样本时才做回流判断（开盘首检无样本则跳过）
+    if (prevItem) {
+      const prevMainMoney = parseAmountToYi(prevItem[1].mainMoney);
+      const prevAmountDiff = parseAmountToYi(prevItem[1].amountChangeDiff);
+      const inflow5min = currMainMoney - prevMainMoney;
+      const volume5min = currAmountDiff - prevAmountDiff;
+      if (inflow5min >= 20 && volume5min >= 100) {
+        if (!isPaused) {
+          state.overnight_crisis_escape.pausedDate = today;
+          console.log(`[strategy] 策略13暂停提醒：5min 主力净流入 ${inflow5min.toFixed(1)}亿 ≥ 20亿 且成交量增加 ${volume5min.toFixed(1)}亿 ≥ 100亿（资金回流）`);
+        }
+        return null;
+      }
+    }
+
+    // 1b. 暂停中的恢复判断：连续 10 分钟成交量持续萎缩（逐分钟成交量增量递减）→ 恢复提醒
+    if (isPaused) {
+      const shrinking = checkVolumeShrinking10Min(amountHistory, now);
+      if (!shrinking) {
+        console.log('[strategy] 策略13暂停中：最近 10 分钟成交量未持续萎缩，继续保持暂停');
+        return null;
+      }
+      delete state.overnight_crisis_escape.pausedDate;
+      console.log('[strategy] 策略13恢复提醒：连续 10 分钟成交量持续萎缩，资金回流乏力');
+    }
+
+    // 2. 大盘资金净流出（当前主力资金净流入为负）
     if (currMainMoney >= 0) return null;
 
-    // 2. 科技分时情绪在上升（相较约5分钟前）
+    // 3. 科技分时情绪在上升（相较约5分钟前）
     const { getTechEmotionIntraday } = require('./emotion');
     const { data: intradayData } = getTechEmotionIntraday();
-    const today = now.format('YYYYMMDD');
-    const todayIntraday = intradayData[today] || [];
+    const todayYmd = now.format('YYYYMMDD');
+    const todayIntraday = intradayData[todayYmd] || [];
     if (todayIntraday.length < 2) return null;
 
     const sorted = [...todayIntraday].sort((a, b) => a.time.localeCompare(b.time));
     const currEmotion = sorted[sorted.length - 1].value;
 
     // 找约5分钟前的情绪快照作为对比基准
-    const nowMinus5Min = now.subtract(5, 'minute').format('HHmm');
+    const nowMinus5MinEmotion = now.subtract(5, 'minute').format('HHmm');
     let prevEmotion = null;
     for (let i = sorted.length - 2; i >= 0; i--) {
-      if (sorted[i].time <= nowMinus5Min) {
+      if (sorted[i].time <= nowMinus5MinEmotion) {
         prevEmotion = sorted[i].value;
         break;
       }
@@ -985,7 +1025,7 @@ const checkStrategy13_OvernightCrisisEscape = async (state) => {
     return {
       strategyId: 'overnight_crisis_escape',
       title: '⚠️ 隔夜危机跑路-冲高清仓机会',
-      description: `隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>${currMainMoney.toFixed(1)}亿</strong>（净流出）<br/>• 科技分时情绪 ${prevEmotion.toFixed(1)} → ${currEmotion.toFixed(1)}（上升 ${emotionRise.toFixed(1)}）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险`,
+      description: `隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>${currMainMoney.toFixed(1)}亿</strong>（净流出）<br/>• 科技分时情绪 ${prevEmotion.toFixed(1)} → ${currEmotion.toFixed(1)}（上升 ${emotionRise.toFixed(1)}）<br/>• 本提醒每 10 分钟重复一次直至 11:00；若 5 分钟内主力净流入 ≥20亿 且成交量增加 ≥100亿（资金回流）则暂停，之后连续 10 分钟成交量持续萎缩则恢复提醒<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险`,
       severity: 'high',
       isBullish: false
     };
@@ -993,6 +1033,45 @@ const checkStrategy13_OvernightCrisisEscape = async (state) => {
     console.error('[strategy] 策略13检测失败:', e.message);
   }
   return null;
+};
+
+// 策略13辅助：判断最近 10 分钟成交量是否持续萎缩
+//   取最近 11 个整分钟时刻（now-10min → now）的累计成交量样本（±30s 容差内找最近样本），
+//   计算逐分钟成交量增量 d1..d10，要求每一分钟增量都小于前一分钟（允许 SHRINK_TOLERANCE_YI 的噪声容差）。
+//   任一分钟样本缺失则视为不满足（返回 false）
+const SHRINK_TOLERANCE_YI = 0.5;
+const checkVolumeShrinking10Min = (amountHistory, now) => {
+  // 找距离 key（HHmmss）最近且相差 ≤ toleranceSec 的样本
+  const findSample = (key, toleranceSec = 30) => {
+    const toSec = (t) => Number(t.slice(0, 2)) * 3600 + Number(t.slice(2, 4)) * 60 + Number(t.slice(4, 6));
+    const keySec = toSec(key);
+    let best = null;
+    let bestDiff = Infinity;
+    for (const item of amountHistory) {
+      const diff = Math.abs(toSec(item[0]) - keySec);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = item;
+      }
+    }
+    return bestDiff <= toleranceSec ? best : null;
+  };
+
+  const samples = [];
+  for (let m = 10; m >= 0; m--) {
+    const key = now.subtract(m, 'minute').format('HHmmss');
+    const sample = findSample(key);
+    if (!sample) return false;
+    samples.push(parseAmountToYi(sample[1].amountChangeDiff));
+  }
+  // 逐分钟增量需持续递减（d[i] < d[i-1]，允许小幅噪声）
+  for (let i = 1; i < samples.length; i++) {
+    const deltaCurr = samples[i] - samples[i - 1];
+    const deltaPrev = samples[i - 1] - samples[i - 2] >= 0 ? samples[i - 1] - samples[i - 2] : null;
+    if (deltaPrev === null) continue;
+    if (i >= 2 && deltaCurr > deltaPrev + SHRINK_TOLERANCE_YI) return false;
+  }
+  return true;
 };
 
 // Strategy 14: 退潮直接反转
