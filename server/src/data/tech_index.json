@@ -1391,5 +1391,15 @@
     "avgChange": -0.87,
     "stockCount": 94,
     "algorithm": 2
+  },
+  {
+    "date": 20261106,
+    "changeSumResult": -41.85,
+    "baseEmotion": -28.94,
+    "pullbackPenalty": -64.55,
+    "avgChange": -4.04,
+    "stockCount": 94,
+    "algorithm": 2,
+    "hasIce": true
   }
 ]

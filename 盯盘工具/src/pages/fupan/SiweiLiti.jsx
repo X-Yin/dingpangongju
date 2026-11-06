@@ -473,15 +473,13 @@ const SiweiLiti = () => {
 
   const fastRotation = data?.marketStatus?.isFastRotation;
 
-  // ===== 板块成交量占比 / 资金 日线 的题材池：去重后的 category + 原始板块名 =====
-  const categoryPool = useMemo(() => {
-    const set = new Set();
-    (themes || []).forEach((t) => {
-      if (t.category) set.add(t.category);
-      if (t.board) set.add(t.board);
-    });
-    return Array.from(set);
-  }, [themes]);
+  // ===== 一级板块池：严格取自 东方财富板块成分股汇总 下的 {分类}.json =====
+  const [sectorPool, setSectorPool] = useState([]);
+  useEffect(() => {
+    axios.get(`${API_BASE}/block_category_names`)
+      .then((res) => setSectorPool(Array.isArray(res.data) ? res.data : []))
+      .catch((e) => console.error('获取一级板块清单失败:', e));
+  }, []);
 
   // ===== 板块成交量占比 + 板块资金（同一筛选框，两个子模块）=====
   const fetchSectorData = useCallback(async () => {
@@ -742,7 +740,7 @@ const SiweiLiti = () => {
                 <span className="sl-chart-sub">每个板块独立一张日线图，方便单独对比</span>
               </div>
             </div>
-            {categoryPool.length ? (
+            {sectorPool.length ? (
               <div className="sl-filter-row">
                 <Select
                   className="sl-filter-select"
@@ -757,7 +755,7 @@ const SiweiLiti = () => {
                   )}
                   maxTagCount="responsive"
                   popupClassName="sl-sector-dropdown"
-                  options={categoryPool.map((name) => ({
+                  options={sectorPool.map((name) => ({
                     value: name,
                     label: name,
                   }))}

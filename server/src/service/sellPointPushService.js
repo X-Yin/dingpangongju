@@ -23,6 +23,28 @@ const { isTechWatchlistStock } = require('./monitorStock');
 
 const INTERVAL_MS = 10 * 1000;
 const statePath = path.resolve(__dirname, '../data/sell_point_notify_state.json');
+// 卖点提醒开关（默认开启）：关闭后不再发飞书消息，也不再广播 open:true（前端不再弹提醒卡片 / 闪烁）
+const reminderPath = path.resolve(__dirname, '../data/sell_point_reminder.json');
+
+const isReminderEnabled = () => {
+  try {
+    if (!fs.existsSync(reminderPath)) return true;
+    const raw = JSON.parse(fs.readFileSync(reminderPath, 'utf8') || '{}');
+    return !(raw && raw.enabled === false);
+  } catch (e) {
+    return true;
+  }
+};
+
+const setReminderEnabled = (enabled) => {
+  const value = enabled !== false;
+  try {
+    fs.writeFileSync(reminderPath, JSON.stringify({ enabled: value }, null, 2));
+  } catch (e) {
+    console.error('写入卖点提醒开关失败:', e.message);
+  }
+  return value;
+};
 
 let timer = null;
 let running = false;
@@ -183,6 +205,8 @@ const tick = async () => {
 
     if (hitResults.length === 0) return;
 
+    // 提醒开关关闭时：诊断结果照常广播（卡片数据仍更新），但不再发飞书、不广播 open:true
+    const reminderEnabled = isReminderEnabled();
     let notified = false;
 
     // 2) 分钟级策略（情绪游资-极致胜率 / 首板起爆）：1 分钟整数分钟命中即通知（不等 5 分钟桶）；
@@ -198,12 +222,15 @@ const tick = async () => {
         const hitKeyOf = (r) => String(r.positionId || r.code || '');
         const freshHits = minuteHits.filter((r) => ewNotifiedMinute.get(hitKeyOf(r)) !== minuteKey);
         if (freshHits.length > 0) {
+          // 无论是否提醒都先记录去重，避免重新打开开关后把同一分钟/同一桶的旧命中再补发一遍
           freshHits.forEach((r) => ewNotifiedMinute.set(hitKeyOf(r), minuteKey));
-          notified = true;
-          try {
-            await notifySellPointFeishu({ hitResults: freshHits });
-          } catch (e) {
-            console.error('卖点飞书发送失败:', e.message);
+          if (reminderEnabled) {
+            notified = true;
+            try {
+              await notifySellPointFeishu({ hitResults: freshHits });
+            } catch (e) {
+              console.error('卖点飞书发送失败:', e.message);
+            }
           }
         }
       }
@@ -213,11 +240,13 @@ const tick = async () => {
     const otherHits = hitResults.filter((r) => !r.minuteBased);
     if (otherHits.length > 0 && bucket != null && lastNotifiedBucket !== bucket) {
       lastNotifiedBucket = bucket;
-      notified = true;
-      try {
-        await notifySellPointFeishu({ hitResults: otherHits });
-      } catch (e) {
-        console.error('卖点飞书发送失败:', e.message);
+      if (reminderEnabled) {
+        notified = true;
+        try {
+          await notifySellPointFeishu({ hitResults: otherHits });
+        } catch (e) {
+          console.error('卖点飞书发送失败:', e.message);
+        }
       }
     }
 
@@ -249,4 +278,4 @@ const stop = () => {
   }
 };
 
-module.exports = { start, stop, isInPushWindow };
+module.exports = { start, stop, isInPushWindow, isReminderEnabled, setReminderEnabled };

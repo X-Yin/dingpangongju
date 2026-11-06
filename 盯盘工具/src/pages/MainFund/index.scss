@@ -1269,6 +1269,18 @@
   color: #1e293b;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+
+  &.up {
+    color: #cf1322;
+  }
+
+  &.down {
+    color: #389e0d;
+  }
+
+  &.neutral {
+    color: #64748b;
+  }
 }
 
 .block-partition-card-delta {
@@ -1856,6 +1868,61 @@
     flex-direction: row-reverse;
     width: 240px;
     height: auto;
+  }
+}
+
+/* ========== 板块涨幅 tab（blockChange） ========== */
+.block-change-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+
+  .ant-input {
+    flex: 1;
+  }
+}
+
+.block-change-search-hint {
+  font-size: 12px;
+  color: #6b7a96;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.block-change-window-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  .block-change-window-label {
+    font-size: 12px;
+    color: #6b7890;
+    white-space: nowrap;
+  }
+
+  // 模拟 Button.Group 的贴合效果
+  .block-change-window-group {
+    display: inline-flex;
+    gap: 4px;
+  }
+}
+
+/* 板块涨幅标签条上的 delta 小字 */
+.block-tag-delta {
+  font-size: 11px;
+  padding: 0 4px;
+  border-radius: 3px;
+  margin-left: 2px;
+
+  &.up {
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.12);
+  }
+
+  &.down {
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.12);
   }
 }
 

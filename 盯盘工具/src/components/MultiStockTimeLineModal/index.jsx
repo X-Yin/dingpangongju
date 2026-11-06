@@ -901,29 +901,20 @@ const MultiStockTimeLineModal = ({
     }
     try {
       // 抗分歧指数计算依赖 sh000688/sz399006 指数分时，与 currentStocks 解耦：
-      // currentStocks 已包含对应指数时复用其结果，否则额外并发拉取
+      // currentStocks 已包含对应指数时复用其结果，否则一并放进批量请求
       const stockCodes = new Set(stocksToFetch.map(s => s.code));
       const extraIndexCodes = ['sh000688', 'sz399006'].filter(code => !stockCodes.has(code));
+      // 所有股票合并为一次请求，由后端并行拉取后一次性返回
+      const allCodes = Array.from(new Set([...stocksToFetch.map(s => s.code), ...extraIndexCodes]));
 
-      const stockPromises = stocksToFetch.map((s) =>
-        axios.get(`http://${local_ip}:3000/get_stock_tline?code=${s.code}`)
-      );
-      const indexPromises = extraIndexCodes.map((code) =>
-        axios.get(`http://${local_ip}:3000/get_stock_tline?code=${code}`)
-      );
-
-      const [stockResponses, indexResponses] = await Promise.all([
-        Promise.all(stockPromises),
-        Promise.all(indexPromises),
-      ]);
+      const batchRes = await axios.get(`http://${local_ip}:3000/get_stocks_tline`, {
+        params: { codes: allCodes.join(',') },
+      });
 
       if (fetchId !== fetchIdRef.current) return;
 
-      const timeLineData = stockResponses.map((res) => res.data);
-      const indexLineMap = {};
-      extraIndexCodes.forEach((code, idx) => {
-        indexLineMap[code] = indexResponses[idx]?.data?.line || [];
-      });
+      const lineMap = batchRes.data?.data || {};
+      const timeLineData = stocksToFetch.map((s) => lineMap[s.code] || { line: [] });
       const validData = timeLineData.filter((d) => d?.line && d.line.length > 0);
 
       if (validData.length === 0) {
@@ -949,24 +940,8 @@ const MultiStockTimeLineModal = ({
         }));
       });
 
-      const getIndexLine = (code) => {
-        const stockIdx = stocksToFetch.findIndex(s => s.code === code);
-        return stockIdx !== -1 ? (timeLineData[stockIdx]?.line || []) : (indexLineMap[code] || []);
-      };
-
-      const resilienceRes = await axios.post(`http://${local_ip}:3000/calculate_resilience_realtime`, {
-        stocks: stocksToFetch.map((s, idx) => ({
-          code: s.code,
-          stockName: timeLineData[idx]?.stockName || s.stockName || s.code,
-          line: timeLineData[idx]?.line || [],
-        })),
-        indexLines: {
-          sh000688: getIndexLine('sh000688'),
-          sz399006: getIndexLine('sz399006'),
-        },
-      });
       const resilienceMap = new Map(
-        (resilienceRes.data?.data || []).map((item) => [item.code, item])
+        (batchRes.data?.resilience || []).map((item) => [item.code, item])
       );
 
       // 按涨幅从高到低排名分配颜色（每次轮询后动态重排，涨幅相近的股票取到相邻色相而非相近颜色）

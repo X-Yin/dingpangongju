@@ -1,15 +1,5 @@
 [
   {
-    "id": "sz002565_1793758159076_e5oq",
-    "code": "sz002565",
-    "name": "顺灏股份",
-    "buyDate": "2026-11-04",
-    "buyTime": "10:09",
-    "weight": 50,
-    "costPrice": 8.87,
-    "sellStrategy": "extreme_win_pro"
-  },
-  {
     "id": "sh688120_1793870555503_8xfo",
     "code": "sh688120",
     "name": "华海清科",
@@ -18,5 +8,15 @@
     "weight": 50,
     "costPrice": 200.13,
     "sellStrategy": "tech_attack"
+  },
+  {
+    "id": "sz003021_1793932097947_ycbm",
+    "code": "sz003021",
+    "name": "兆威机电",
+    "buyDate": "2026-11-06",
+    "buyTime": "10:28",
+    "weight": 50,
+    "costPrice": 100.28,
+    "sellStrategy": "extreme_win_pro"
   }
 ]

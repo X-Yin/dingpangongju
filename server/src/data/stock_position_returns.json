@@ -1,5 +1,40 @@
 [
   {
+    "date": "2026-11-06",
+    "operations": [
+      {
+        "id": "1793932082595_fqqe",
+        "action": "sell",
+        "stockName": "顺灏股份",
+        "stockCode": "sz002565",
+        "position": "",
+        "time": "10:28"
+      },
+      {
+        "id": "1793932088652_mc2m",
+        "action": "sell",
+        "stockName": "华海清科",
+        "stockCode": "sh688120",
+        "position": "",
+        "time": "10:28"
+      },
+      {
+        "id": "1793932097956_hv6y",
+        "action": "buy",
+        "stockName": "兆威机电",
+        "stockCode": "sz003021",
+        "position": "",
+        "time": "10:28"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-06T02:28:02.644Z",
+    "updatedAt": "2026-11-06T02:28:17.984Z"
+  },
+  {
     "date": "2026-11-05",
     "operations": [
       {

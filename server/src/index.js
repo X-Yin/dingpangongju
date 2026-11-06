@@ -478,6 +478,56 @@ app.get('/get_stock_tline', async (req, res) => {
   res.json({ ...tline, stockName, line: tline?.line || [] });
 });
 
+// 批量返回多个股票分时数据（叠加分时一次请求拉取全部股票，避免前端并发 N 个请求）
+// codes: 逗号分隔的股票代码，如 ?codes=sh600000,sz000001
+app.get('/get_stocks_tline', async (req, res) => {
+  const codes = String(req.query.codes || '')
+    .split(',')
+    .map(c => c.trim())
+    .filter(Boolean);
+  if (!codes.length) {
+    return res.status(400).json({ success: false, message: '缺少 codes 参数' });
+  }
+  const uniqueCodes = Array.from(new Set(codes));
+  // 名称来源在批量请求中只读取一次，避免每只股票都读一遍 stockData.json
+  const monitorStockMap = new Map(getMonitorStocks().map(s => [s.code, s]));
+  let stockData = {};
+  try {
+    stockData = JSON.parse(fs.readFileSync(path.resolve(__dirname, './data/stockData.json'), 'utf-8'));
+  } catch (e) {
+    // stockData.json 暂不存在时回退到 monitorStocks 名称或代码
+  }
+  const resolveStockName = (code) => {
+    const monitorStock = monitorStockMap.get(code);
+    if (monitorStock?.name) return monitorStock.name;
+    return stockData[code]?.stockName || code;
+  };
+  // 并行拉取，单只失败不影响其他股票
+  const entries = await Promise.all(uniqueCodes.map(async (code) => {
+    try {
+      const tline = await getSingleStockTlineData(code);
+      return [code, { ...(tline || {}), stockName: resolveStockName(code), line: tline?.line || [] }];
+    } catch (error) {
+      console.error(`获取股票 ${code} 分时数据失败:`, error.message);
+      return [code, { stockName: resolveStockName(code), line: [] }];
+    }
+  }));
+  // 抗分歧实时分数在同一次响应中一并返回，前端无需再发第二个请求
+  const lineData = Object.fromEntries(entries);
+  const resilience = calculateRealtimeResilienceBatch({
+    stocks: uniqueCodes.map(code => ({
+      code,
+      stockName: lineData[code]?.stockName || code,
+      line: lineData[code]?.line || [],
+    })),
+    indexLines: {
+      sh000688: lineData.sh000688?.line || [],
+      sz399006: lineData.sz399006?.line || [],
+    },
+  });
+  res.json({ success: true, data: lineData, resilience });
+});
+
 // 返回所有个股数据（已按涨幅从高到低排序）
 app.get('/get_all_stock_data', (req, res) => {
   const allStockData = getAllStockData();
@@ -1833,6 +1883,22 @@ app.get('/get_strategy_modes', (req, res) => {
   });
 });
 
+// 卖点诊断提醒开关（默认开启，持久化到 sell_point_reminder.json）
+// 关闭后：后端不再发送飞书卖点消息，也不再广播 open:true（前端不再弹提醒卡片 / 闪烁）
+app.get('/get_sell_point_reminder', (req, res) => {
+  res.json({ success: true, data: { enabled: sellPointPushService.isReminderEnabled() } });
+});
+
+app.post('/set_sell_point_reminder', (req, res) => {
+  try {
+    const enabled = sellPointPushService.setReminderEnabled(req.body?.enabled);
+    res.json({ success: true, data: { enabled } });
+  } catch (error) {
+    console.error('设置卖点提醒开关失败:', error);
+    res.status(500).json({ success: false, message: error.message || '设置失败' });
+  }
+});
+
 // ===== 情绪游资-极致赔率（首板起爆 + 二板起爆，仅在该策略模式下由 washFusionLive 推送）=====
 // 候选股列表：refresh=1 强制重算；date 缺省按展示基准日
 //   交易日 09:10-15:00 为当日；非交易日 / 09:10 前 / 15:00 后为「下一买点日」候选（基于最近交易日收盘数据）
@@ -2070,6 +2136,49 @@ app.get('/current_day_hot_block', async (req, res) => {
 app.get('/block_history', async (req, res) => {
   const blockHistory = await getBlockHistory();
   res.json(blockHistory);
+});
+
+// 返回当日板块涨幅分时序列（用于 MainFund 「板块涨幅」Tab 按 1min 维度绘制折线图）
+// 后端 pollBlockHistory 每分钟把当前所有板块 avgChange 快照写入 data/block_data_change_time.json
+// 由于该文件跨日不切分，这里按当前自然日只保留今天的帧，避免历史多天数据混入今日视图
+app.get('/block_history/today', (req, res) => {
+  try {
+    const blockHistory = getBlockHistory();
+    const todayYYYYMMDD = beijingToday();
+    const filtered = [];
+    // block_data_change_time.json 不存完整日期，只有 HH:mm；通过「时间推进 + 午休跳变」判断归属自然日
+    // 简化口径：读取进程启动后累积数据时，取"时间戳单调递增 + 午休 11:30 → 13:00 跳变"的段，
+    // 再结合"第一条记录的 time 晚于北京时间当天 09:00"来锁定是今天。
+    // 更稳妥：直接读取文件 mtime 对应自然日；若跨日不重启，就让前端按 time 过滤 09:25-15:05 范围即可。
+    // 这里取后一种：只保留 HH:mm 落在 [09:25, 15:05] 的帧，并按时间升序。
+    const isTodayFrame = (frame) => {
+      const t = frame && frame.time;
+      if (!t || typeof t !== 'string' || !/^\d{2}:\d{2}$/.test(t)) return false;
+      const [h, m] = t.split(':').map(Number);
+      const mins = h * 60 + m;
+      return mins >= 9 * 60 + 25 && mins <= 15 * 60 + 5;
+    };
+    for (const frame of blockHistory || []) {
+      if (!isTodayFrame(frame)) continue;
+      filtered.push(frame);
+    }
+    // 去重相邻同 time 帧（一分钟内可能被多次写入）
+    const dedup = [];
+    for (const frame of filtered) {
+      if (dedup.length && dedup[dedup.length - 1].time === frame.time) dedup[dedup.length - 1] = frame;
+      else dedup.push(frame);
+    }
+    // 按时间升序
+    dedup.sort((a, b) => String(a.time).localeCompare(String(b.time)));
+    res.json({
+      date: todayYYYYMMDD,
+      count: dedup.length,
+      data: dedup,
+    });
+  } catch (error) {
+    console.error('获取当日板块涨幅分时失败:', error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // 返回时间线数据
@@ -2470,9 +2579,24 @@ app.get('/get_block_money_change_day_history', (req, res) => {
   }
 });
 
+// 一级板块清单：严格取自 data/东方财富板块成分股汇总 下的 {分类}.json（排除 *_blocks.json）
+// 前端四维立体的板块筛选下拉框用这个清单，保证与一级板块目录完全对齐
+app.get('/block_category_names', (req, res) => {
+  try {
+    const dir = path.resolve(__dirname, 'data/东方财富板块成分股汇总');
+    const names = fs.readdirSync(dir)
+      .filter((f) => f.endsWith('.json') && !f.includes('_blocks'))
+      .map((f) => f.replace(/\.json$/, ''))
+      .sort((a, b) => a.localeCompare(b, 'zh-CN'));
+    res.json(names);
+  } catch (error) {
+    console.error('获取一级板块清单失败:', error);
+    res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
 // 板块资金按 category 聚合的日线：把东方财富概念板块名（半导体概念 / 第三代半导体 ...）
-// 按 Category 命名空间聚合成一个 series，返回 { categoryName: [{date, moneyY, money}] }
-// 前端四维立体的「板块资金流入流出日线」直接用这个接口即可按 categoryPool 筛选展示
+// 按一级板块（{分类}.json）聚合成一个 series，返回 { categoryName: [{date, moneyY, money}] }
 app.get('/get_block_money_day_by_category', (req, res) => {
   try {
     const raw = getBlockMoneyChangeDayHistory();
@@ -2480,43 +2604,42 @@ app.get('/get_block_money_day_by_category', (req, res) => {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
-    // 允许外部覆盖默认映射；未指定 category 时返回全部 category
+    // 键严格对齐 data/东方财富板块成分股汇总 下的一级板块（{分类}.json）
+    // 值是该一级板块对应的东方财富概念板块名关键字（大小写不敏感的子串匹配）
     const keywordMappings = {
-      半导体: ['半导体概念', '第三代半导体', '第四代半导体'],
-      存储芯片: ['存储芯片'],
-      光通信: ['光通信模块', '光通信'],
-      先进封装: ['先进封装'],
-      PCB: ['PCB'],
-      黄金: ['黄金概念', '黄金首饰'],
-      贵金属: ['黄金概念', '黄金首饰', '白银', '铜'],
-      机器人: ['机器人概念', '人形机器人'],
-      商业航天: ['商业航天'],
-      军工: ['军工'],
-      算力: ['算力'],
-      国产算力: ['国产算力'],
-      液冷: ['液冷'],
       MLCC: ['MLCC'],
-      光纤: ['光纤'],
-      铜缆高速连接: ['铜缆高速连接'],
-      消费电子: ['消费电子'],
-      跨境支付: ['跨境支付'],
-      游戏: ['短剧互动游戏', '游戏'],
-      传媒: ['传媒', '短剧互动游戏'],
-      农业: ['农业', '农产品'],
-      消费: ['消费', '食品饮料', '白酒'],
-      医药: ['创新医疗服务', '医药'],
-      电力: ['电力'],
-      锂电池: ['锂电池概念', '锂电池'],
-      固态电池: ['固态电池'],
-      汽车整车: ['汽车整车', '飞行汽车(eVTOL)'],
-      煤炭: ['煤炭'],
-      油气: ['油气'],
-      房地产: ['房地产'],
+      pcb: ['PCB'],
+      传媒: ['短剧互动游戏', '小红书概念', '抖音概念'],
+      先进封装: ['先进封装'],
+      光纤: ['光纤概念'],
+      光通信: ['光通信模块', 'CPO概念'],
+      军工: ['军工', '大飞机'],
+      农业: ['农业种植'],
+      化工: ['煤化工概念', '氟化工概念'],
+      医药: ['创新药', 'CRO', '创新医疗服务'],
+      半导体: ['半导体概念', '第三代半导体', '第四代半导体', '碳化硅'],
+      商业航天: ['商业航天', '卫星互联网'],
+      固态电池: [], // 东财概念资金暂无对应板块
+      国产算力: ['华为昇腾', '华为欧拉', '华为海思'],
+      存储芯片: ['存储芯片'],
+      房地产: [],
+      机器人: ['机器人概念', '人形机器人', '减速器'],
+      核聚变: ['可控核聚变'],
+      汽车整车: ['汽车整车'],
+      油气: ['油气资源'],
+      消费: ['白酒', '新零售', '旅游概念'],
+      消费电子: ['AI眼镜'],
+      液冷: ['液冷服务器'],
+      游戏: ['短剧互动游戏'],
+      煤炭: [],
       玻璃基板: ['玻璃基板'],
-      核聚变: ['核聚变'],
-      化工: ['化工'],
-      证券: ['证券'],
-      银行: ['银行'],
+      电力: ['绿色电力', '虚拟电厂', '特高压'],
+      证券: ['证券Ⅱ'],
+      贵金属: ['黄金概念', '黄金首饰'],
+      跨境支付: ['跨境支付'],
+      铜缆高速连接: ['铜缆高速连接'],
+      银行: ['银行Ⅱ'],
+      锂电池: ['锂电池概念'],
     };
 
     // 聚合时按 category 合并多个板块的 money（同属一个 category 的板块加总）
@@ -2530,7 +2653,8 @@ app.get('/get_block_money_day_by_category', (req, res) => {
         let total = 0;
         let matched = false;
         for (const block of rec.data || []) {
-          if (kws.some((kw) => (block.block || '').includes(kw))) {
+          const blockName = String(block.block || '').toLowerCase();
+          if (kws.some((kw) => blockName.includes(String(kw).toLowerCase()))) {
             total += Number(block.money || 0);
             matched = true;
           }

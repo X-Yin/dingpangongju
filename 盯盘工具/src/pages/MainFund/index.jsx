@@ -400,7 +400,7 @@ const buildHeatmapItems = (dataList, valueKey = 'money') => {
   });
 };
 
-// 分区模式：单个板块的独立折线图卡片
+// 分区模式：单个板块的独立折线图卡片（主力资金 亿 口径）
 const BlockPartitionChart = ({ blockName, color, points, latest, delta, windowLabel }) => {
   const containerRef = useRef(null);
   const chartRef = useRef(null);
@@ -497,6 +497,108 @@ const BlockPartitionChart = ({ blockName, color, points, latest, delta, windowLa
   );
 };
 
+// 板块涨幅 Tab：单个板块的独立折线图卡片（涨跌幅 % 口径，按 1min 维度）
+const BlockChangePartitionChart = ({ blockName, color, points, latest, delta10, delta30, windowFilter }) => {
+  const containerRef = useRef(null);
+  const chartRef = useRef(null);
+  const seriesRef = useRef(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+    const chart = createChart(container, {
+      layout: {
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: '#6b7890',
+        fontSize: 10,
+      },
+      width: container.clientWidth,
+      height: container.clientHeight,
+      grid: {
+        vertLines: { color: 'rgba(18, 33, 58, 0.04)' },
+        horzLines: { color: 'rgba(18, 33, 58, 0.04)' },
+      },
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+        borderColor: 'rgba(18, 33, 58, 0.08)',
+        tickMarkFormatter: (time) => dayjs.unix(time).format('HH:mm'),
+      },
+      localization: {
+        timeFormatter: (time) => dayjs.unix(time).format('HH:mm'),
+      },
+      rightPriceScale: {
+        borderColor: 'rgba(18, 33, 58, 0.08)',
+        scaleMargins: { top: 0.15, bottom: 0.15 },
+      },
+      handleScroll: false,
+      handleScale: false,
+    });
+    chartRef.current = chart;
+    seriesRef.current = chart.addLineSeries({
+      color: 'transparent',
+      lineWidth: 2,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      priceFormat: {
+        type: 'custom',
+        formatter: (value) => `${value > 0 ? '+' : ''}${value.toFixed(2)}%`,
+      },
+    });
+
+    const resize = () => chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+    let observer = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(resize);
+      observer.observe(container);
+    } else {
+      window.addEventListener('resize', resize);
+    }
+
+    return () => {
+      if (observer) observer.disconnect();
+      else window.removeEventListener('resize', resize);
+      chart.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+    if (!chart || !series || !points.length) return;
+    series.applyOptions({ color });
+    series.setData(points);
+    chart.timeScale().fitContent();
+    chart.timeScale().applyOptions({ fixLeftEdge: true, fixRightEdge: true, rightOffset: 0 });
+  }, [points, color]);
+
+  // 根据当前 filter 选要展示的 delta
+  const deltaToShow = windowFilter === 'up30' ? delta30 : windowFilter === 'up10' ? delta10 : null;
+  const deltaWindowLabel = windowFilter === 'up30' ? '30min' : windowFilter === 'up10' ? '10min' : null;
+
+  return (
+    <div className="block-partition-card">
+      <div className="block-partition-card-header">
+        <span className="block-partition-card-name" style={{ color }}>{blockName}</span>
+        <span className={`block-partition-card-value ${latest >= 0 ? 'up' : latest < 0 ? 'down' : 'neutral'}`}>
+          {latest === null || latest === undefined ? '--' : `${latest >= 0 ? '+' : ''}${latest.toFixed(2)}%`}
+        </span>
+        {deltaToShow !== null && deltaToShow !== undefined && (
+          <span
+            className={`block-partition-card-delta ${deltaToShow >= 0 ? 'up' : 'down'}`}
+            title={`相比${deltaWindowLabel}前 avgChange 的变化`}
+          >
+            {deltaWindowLabel}前 {deltaToShow >= 0 ? '+' : ''}{deltaToShow.toFixed(2)}
+          </span>
+        )}
+      </div>
+      <div ref={containerRef} className="block-partition-card-body" />
+    </div>
+  );
+};
+
 export const MainFundContent = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -531,6 +633,13 @@ export const MainFundContent = () => {
   const [showBlockBatchPanel, setShowBlockBatchPanel] = useState(false);
   const [blockPanelSearch, setBlockPanelSearch] = useState('');
   const [selectedNewBlocks, setSelectedNewBlocks] = useState([]);
+
+  // 板块涨幅 Tab 相关状态
+  const [blockChangeSeriesData, setBlockChangeSeriesData] = useState([]); // [{time:'HH:mm', blockData:[{blockName, avgChange}]}]
+  const [blockChangeLoading, setBlockChangeLoading] = useState(true);
+  const [blockChangeSearch, setBlockChangeSearch] = useState('');
+  // 窗口涨幅排序：''=不排序 / 'up10'=按 10min 前涨升降序 / 'up30'=按 30min 前涨升降序
+  const [blockChangeWindowSort, setBlockChangeWindowSort] = useState('');
 
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
@@ -624,6 +733,42 @@ export const MainFundContent = () => {
       setBlockLoading(false);
     }
   }, []);
+
+  // 获取当日板块 avgChange 分时数据（后端 pollBlockHistory 每分钟快照）
+  const fetchBlockChangeTimeData = useCallback(async () => {
+    try {
+      const resp = await axios.get(`http://${local_ip}:3000/block_history/today`);
+      const payload = resp.data || {};
+      setBlockChangeSeriesData(payload.data || []);
+    } catch (err) {
+      console.error('获取板块涨幅分时数据失败:', err);
+    } finally {
+      setBlockChangeLoading(false);
+    }
+  }, []);
+
+  // 板块涨幅分时数据轮询：每 10 秒拉一次（后端每 1min 追加一帧，前端提高频率降低延迟），仅在交易时段内
+  useEffect(() => {
+    if (activeTab !== 'blockChange') return;
+    fetchBlockChangeTimeData();
+    const timers = [];
+    const schedulePoll = (callback, delay) => {
+      const timer = setTimeout(() => {
+        if (!isAfterMarketClose()) {
+          callback();
+          schedulePoll(callback, delay);
+        }
+      }, delay);
+      timers.push(timer);
+      return timer;
+    };
+    if (!isAfterMarketClose()) {
+      schedulePoll(fetchBlockChangeTimeData, 10000);
+    }
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, [activeTab, fetchBlockChangeTimeData]);
 
   // 板块资金分时数据轮询：每 30 秒拉取一次，仅在交易时段内；today tab 也需要叠加板块数据
   useEffect(() => {
@@ -1202,6 +1347,154 @@ export const MainFundContent = () => {
         .sort((a, b) => a.delta - b.delta),
     };
   }, [blockChartMode, blockChartFrames, allBlocks]);
+
+  // ========= 板块涨幅 Tab 派生数据 =========
+  // 所有出现过的板块（取最新一帧 + 历史所有帧的并集，避免某个板块全天没在最新一帧出现时丢失）
+  const blockChangeAllBlocks = useMemo(() => {
+    const set = new Set();
+    (blockChangeSeriesData || []).forEach(frame => {
+      (frame.blockData || []).forEach(item => {
+        if (item && item.blockName) set.add(item.blockName);
+      });
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [blockChangeSeriesData]);
+
+  // 搜索命中板块：支持逗号/空格/换行分隔多词；没搜索词时默认展示全部板块
+  const blockChangeMatchedBlocks = useMemo(() => {
+    const raw = (blockChangeSearch || '').trim();
+    if (!raw) return blockChangeAllBlocks;
+    const keywords = raw
+      .split(/[\s,，、\n]+/)
+      .map(k => k.trim().toLowerCase())
+      .filter(Boolean);
+    if (!keywords.length) return blockChangeAllBlocks;
+    return blockChangeAllBlocks.filter(name => keywords.some(kw => name.toLowerCase().includes(kw)));
+  }, [blockChangeSearch, blockChangeAllBlocks]);
+
+  // HH:mm → 连续交易分钟（跨午休跳过），用于回溯 N 分钟前的帧
+  const toTradingMinuteFromHHmm = useCallback((hhmm) => {
+    if (!hhmm || typeof hhmm !== 'string') return null;
+    const [hStr, mStr] = hhmm.split(':');
+    if (!hStr || !mStr) return null;
+    const h = Number(hStr), m = Number(mStr);
+    if (Number.isNaN(h) || Number.isNaN(m)) return null;
+    // 复用 toTradingMinute 的口径：HHmmss → totalMin 再跨午休
+    const totalMin = h * 60 + m;
+    if (totalMin <= 11 * 60 + 30) return totalMin - (9 * 60 + 30);
+    return 120 + (totalMin - 13 * 60);
+  }, []);
+
+  // 板块涨幅 Tab：为每个命中板块构建 1min 折线点 + 计算 latest 与 N 分钟前的涨升差值
+  const blockChangePartitionData = useMemo(() => {
+    if (!blockChangeMatchedBlocks.length || !blockChangeSeriesData.length) return [];
+    const today = dayjs().format('YYYY-MM-DD');
+    return blockChangeMatchedBlocks.map((blockName) => {
+      const rawPoints = [];
+      blockChangeSeriesData.forEach(frame => {
+        const blockItem = (frame.blockData || []).find(b => b.blockName === blockName);
+        if (!blockItem) return;
+        const [hh, mm] = String(frame.time).split(':').map(Number);
+        if (Number.isNaN(hh) || Number.isNaN(mm)) return;
+        const tMin = toTradingMinuteFromHHmm(frame.time);
+        if (tMin === null) return;
+        rawPoints.push({
+          tradingMinute: tMin,
+          time: dayjs(`${today} ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00`).unix(),
+          value: Number(blockItem.avgChange),
+          label: frame.time,
+        });
+      });
+      if (!rawPoints.length) {
+        return { name: blockName, points: [], latest: null, delta10: null, delta30: null };
+      }
+      rawPoints.sort((a, b) => a.tradingMinute - b.tradingMinute);
+      // 去重相邻 tradingMinute
+      const dedup = [];
+      for (const p of rawPoints) {
+        if (dedup.length && dedup[dedup.length - 1].tradingMinute === p.tradingMinute) dedup[dedup.length - 1] = p;
+        else dedup.push(p);
+      }
+
+      // === 孤立突刺平滑（数据清洗兜底） ===
+      // 后端理论上不会再往分时帧写 0 了，但历史数据里已存在的 v 形突刺需要前端拍平。
+      // 只处理"单个点明显异常、前后邻居都正常"的场景：
+      //   ① 有前后邻居（length >= 3）
+      //   ② 同时满足相对差 + 绝对差双重门限（避免正常连续波动被误杀）
+      //   ③ 用前后邻居的**中位数**替换（中位数比均值抗脏点）
+      // 门限经验值：相对差 150% + 绝对差 2%，适合 avgChange 这种通常在 -5~+8 范围的指标
+      const cleaned = [...dedup];
+      const REL_THRESHOLD = 1.5;
+      const ABS_THRESHOLD = 2.0;
+      for (let i = 1; i < cleaned.length - 1; i++) {
+        const prev = cleaned[i - 1].value;
+        const cur = cleaned[i].value;
+        const next = cleaned[i + 1].value;
+        const diffPrev = Math.abs(cur - prev);
+        const diffNext = Math.abs(cur - next);
+        const relPrev = diffPrev / Math.max(Math.abs(prev), 0.01);
+        const relNext = diffNext / Math.max(Math.abs(next), 0.01);
+        const isSpike =
+          diffPrev > ABS_THRESHOLD && diffNext > ABS_THRESHOLD &&
+          relPrev > REL_THRESHOLD && relNext > REL_THRESHOLD;
+        if (isSpike) {
+          const median = [prev, next].sort((a, b) => a - b)[1];
+          cleaned[i] = { ...cleaned[i], value: median };
+        }
+      }
+
+      // 回溯函数：在 tradingMinute 维度上向前找 targetMinute 最近的那帧
+      const findBaseByMinute = (offset) => {
+        const latestTradingMinute = cleaned[cleaned.length - 1].tradingMinute;
+        const targetMinute = latestTradingMinute - offset;
+        let base = null;
+        for (const p of cleaned) {
+          if (p.tradingMinute <= targetMinute) base = p;
+          else break;
+        }
+        return base;
+      };
+
+      const latestPoint = cleaned[cleaned.length - 1];
+      const base10 = findBaseByMinute(10);
+      const base30 = findBaseByMinute(30);
+
+      const pointsForChart = cleaned.map(p => ({ time: p.time, value: p.value }));
+
+      return {
+        name: blockName,
+        points: pointsForChart,
+        latest: latestPoint.value,
+        delta10: base10 ? latestPoint.value - base10.value : null,
+        delta30: base30 ? latestPoint.value - base30.value : null,
+      };
+    });
+  }, [blockChangeMatchedBlocks, blockChangeSeriesData, toTradingMinuteFromHHmm]);
+
+  // 最终渲染清单：名字命中 → 可选排序（全部展示，不截断）→ 重新分配颜色
+  const blockChangeRenderedData = useMemo(() => {
+    let list = blockChangePartitionData;
+    if (!blockChangeWindowSort) {
+      // 默认排序：按最新 avgChange 从高到低（涨幅最高的排前，跌幅最深的排后）
+      list = [...list].sort((a, b) => {
+        const aV = a.latest === null || a.latest === undefined ? -Infinity : a.latest;
+        const bV = b.latest === null || b.latest === undefined ? -Infinity : b.latest;
+        return bV - aV;
+      });
+    } else {
+      const sortKey = blockChangeWindowSort === 'up30' ? 'delta30' : 'delta10';
+      // 有对比数据的排在前，按 delta 降序；没有对比数据的按名字兜底
+      const withDelta = list.filter(item => item[sortKey] !== null);
+      const withoutDelta = list.filter(item => item[sortKey] === null);
+      withDelta.sort((a, b) => (b[sortKey] || 0) - (a[sortKey] || 0));
+      withoutDelta.sort((a, b) => a.name.localeCompare(b.name));
+      list = [...withDelta, ...withoutDelta];
+    }
+    return list.map((item, idx) => ({
+      ...item,
+      color: BLOCK_LINE_COLORS[idx % BLOCK_LINE_COLORS.length],
+    }));
+  }, [blockChangePartitionData, blockChangeWindowSort]);
 
 
   const formatBlockMoney = (money) => {
@@ -1928,6 +2221,115 @@ export const MainFundContent = () => {
     );
   };
 
+  // 渲染板块涨幅 tab
+  const renderBlockChangeTab = () => {
+    const latestFrame = blockChangeSeriesData.length ? blockChangeSeriesData[blockChangeSeriesData.length - 1] : null;
+    const latestFrameTime = latestFrame?.time || '--';
+    const renderedItems = blockChangeRenderedData;
+
+    return (
+      <div className="history-content">
+        <div className="content-area">
+          <div className="chart-section">
+            <div className="chart-title-row">
+              <div className="chart-left-section">
+                <div className="chart-title">板块涨幅（分时 avgChange 1min）</div>
+                <div className="chart-subtitle">
+                  {blockChangeSeriesData.length > 0 ? `已记录 ${blockChangeSeriesData.length} 帧 · 最新 ${latestFrameTime}` : '暂无数据'}
+                </div>
+              </div>
+              <div className="chart-right-section" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <div className="block-change-window-buttons">
+                  <span className="block-change-window-label">排序：</span>
+                  <div className="block-change-window-group">
+                    <Button
+                      size="small"
+                      type={blockChangeWindowSort === '' ? 'primary' : 'default'}
+                      onClick={() => setBlockChangeWindowSort('')}
+                    >
+                      默认
+                    </Button>
+                    <Button
+                      size="small"
+                      type={blockChangeWindowSort === 'up10' ? 'primary' : 'default'}
+                      onClick={() => setBlockChangeWindowSort('up10')}
+                    >
+                      10min 前涨幅提升
+                    </Button>
+                    <Button
+                      size="small"
+                      type={blockChangeWindowSort === 'up30' ? 'primary' : 'default'}
+                      onClick={() => setBlockChangeWindowSort('up30')}
+                    >
+                      30min 前涨幅提升
+                    </Button>
+                  </div>
+                </div>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    // 重置：搜索 + 排序 全部回到初始态
+                    setBlockChangeSearch('');
+                    setBlockChangeWindowSort('');
+                  }}
+                >
+                  重置
+                </Button>
+              </div>
+            </div>
+
+            {/* 搜索栏：支持逗号/空格/换行分隔的多关键词，任一命中即显示；没搜索词默认全量 */}
+            <div className="block-change-search-row">
+              <Input
+                placeholder="输入一个或多个板块名（逗号/空格/换行分隔），支持模糊匹配；空则展示全部"
+                prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                allowClear
+                size="middle"
+                value={blockChangeSearch}
+                onChange={(e) => setBlockChangeSearch(e.target.value)}
+              />
+              {blockChangeAllBlocks.length > 0 && (
+                <span className="block-change-search-hint">
+                  共 {blockChangeAllBlocks.length} 个板块 ·
+                  当前展示 <b style={{ color: '#f59e0b' }}>{renderedItems.length}</b>
+                  {blockChangeWindowSort
+                    ? <> · 按 <b style={{ color: '#22c55e' }}>{blockChangeWindowSort === 'up10' ? '10' : '30'}min 前涨升</b> 排序</>
+                    : null}
+                </span>
+              )}
+            </div>
+
+            {/* 单板块折线图卡片网格（全部命中板块） */}
+            <div className="block-partition-stage" style={{ marginTop: 16 }}>
+              {blockChangeLoading && renderedItems.length === 0 ? (
+                <div className="table-empty">加载中...</div>
+              ) : blockChangeMatchedBlocks.length === 0 ? (
+                <div className="table-empty">未找到匹配的板块</div>
+              ) : renderedItems.length === 0 ? (
+                <div className="table-empty">暂无数据</div>
+              ) : (
+                <div className="block-partition-grid">
+                  {renderedItems.map(item => (
+                    <BlockChangePartitionChart
+                      key={item.name}
+                      blockName={item.name}
+                      color={item.color}
+                      points={item.points}
+                      latest={item.latest}
+                      delta10={item.delta10}
+                      delta30={item.delta30}
+                      windowFilter={blockChangeWindowSort}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // 渲染板块资金明细数据列表
   const renderBlockDetailData = () => {
     if (!blockDetailDisplayData.length) return null;
@@ -2312,6 +2714,11 @@ export const MainFundContent = () => {
             key: 'block',
             label: '板块资金',
             children: renderBlockTab(),
+          },
+          {
+            key: 'blockChange',
+            label: '板块涨幅',
+            children: renderBlockChangeTab(),
           },
           {
             key: 'blockVolume',

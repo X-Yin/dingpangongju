@@ -2013,9 +2013,38 @@ const SellPointDiagnosisCard = () => {
   const isWashFusion = mode === MODE_WASH_FUSION;
   const [results, setResults] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  // 卖点提醒开关：默认打开；状态持久化在后端 sell_point_reminder.json
+  // 关闭后后端不再发飞书消息、也不再广播 open:true，前端因此不再弹提醒卡片 / 闪烁
+  const [reminderEnabled, setReminderEnabled] = useState(true);
+  const [reminderSaving, setReminderSaving] = useState(false);
   // 命中闪烁：后端下发 open:true 时卡片背景闪烁提示，数秒后自动恢复
   const [flash, setFlash] = useState(false);
   const flashTimerRef = useRef(null);
+
+  // 初次挂载读取后端持久化的提醒开关状态
+  useEffect(() => {
+    axios.get(`http://${local_ip}:3000/get_sell_point_reminder`)
+      .then((res) => {
+        const enabled = res.data?.data?.enabled;
+        if (typeof enabled === 'boolean') setReminderEnabled(enabled);
+      })
+      .catch(() => { /* 读取失败保持默认打开 */ });
+  }, []);
+
+  const handleToggleReminder = useCallback(async (checked) => {
+    setReminderEnabled(checked);
+    setReminderSaving(true);
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/set_sell_point_reminder`, { enabled: checked });
+      const saved = res.data?.data?.enabled;
+      if (typeof saved === 'boolean') setReminderEnabled(saved);
+    } catch {
+      setReminderEnabled(!checked);
+      message.error('卖点提醒开关保存失败');
+    } finally {
+      setReminderSaving(false);
+    }
+  }, []);
 
   // 独立接口拉取最新卖点诊断数据（卡片刷新按钮 / 初次挂载使用；不发飞书、不触发弹窗）
   const run = useCallback(async () => {
@@ -2086,6 +2115,15 @@ const SellPointDiagnosisCard = () => {
           {/* 2026-11-04：标题栏不再展示当前策略名称（策略由每笔持仓自身所属模式决定，见各持仓诊断明细） */}
         </div>
         <div className="ob-diagnosis-actions">
+          <div className="ob-reminder-switch" title="关闭后不再发送飞书提醒，也不弹出提醒卡片">
+            <span className="ob-reminder-switch-label">打开提醒</span>
+            <AntSwitch
+              size="small"
+              checked={reminderEnabled}
+              loading={reminderSaving}
+              onChange={handleToggleReminder}
+            />
+          </div>
           <span className={`ob-status-badge ${hitStocks.length > 0 ? 'hit' : ''}`}>
             {results.length === 0 ? '暂无持仓' : hitStocks.length > 0 ? `⚠️ ${hitStocks.length} 笔命中` : `${results.length} 笔持仓 · 未触发`}
           </span>

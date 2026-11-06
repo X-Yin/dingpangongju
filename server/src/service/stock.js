@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { Worker } = require('worker_threads');
-const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay, getThsSnapshotUrl, getThsSnapshotHeaders, buildThsSnapshotRequestBody, getThsMarketCode } = require('../utils');
+const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay, getThsSnapshotUrl, getThsSnapshotHeaders, buildThsSnapshotRequestBody, getThsMarketCode, batchParallel } = require('../utils');
 const { lianbanTlineUrl, lianbanHeaders } = require('../constant');
 const { refreshLBSessCookie } = require('./lianbanCookieRefresh');
 const { getMonitorStocks } = require('./monitorStock');
@@ -1099,8 +1099,8 @@ exports.getSingleStockTlineDataByDateLean = getSingleStockTlineDataByDateLean;
 let num = 0;
 const getStockListData = async (stockCodeList, limit = 1) => {
     const codes = Object.keys(stockCodeList);
-    const promises = codes.map(code => getSingleStockData(code, limit));
-    const klineList = await Promise.all(promises);
+    // 限制并发：一次性并发上百个请求容易触发上游限流/超时，导致大量股票抓取失败
+    const klineList = await batchParallel(codes, code => getSingleStockData(code, limit), 5);
     
     const stockListData = {};
     for (let i = 0; i < klineList.length; i++) {
@@ -1157,13 +1157,20 @@ const refreshStockData = async () => {
             }
         }
 
+        // 合并写入：本轮抓取失败的股票保留上一次的数据，避免上游抖动导致自选股大面积"消失"
+        const mergedStockData = { ...localDataList, ...stockListData };
+        const monitorCodeSet = new Set(monitorStocks.map(s => s.code));
+        Object.keys(mergedStockData).forEach(code => {
+            if (!monitorCodeSet.has(code)) delete mergedStockData[code];
+        });
+
         fs.writeFileSync(
             stockDataPath,
-            JSON.stringify(stockListData, null, 2),
+            JSON.stringify(mergedStockData, null, 2),
             'utf-8'
         );
         console.log('---------- 手动刷新股票列表数据完成！----------', new Date().toLocaleString());
-        return { success: true, message: '刷新成功', count: Object.keys(stockListData).length };
+        return { success: true, message: '刷新成功', count: Object.keys(mergedStockData).length };
     } catch (error) {
         console.error("手动刷新股票数据失败:", error.message);
         return { success: false, message: error.message };
@@ -1213,9 +1220,16 @@ exports.pollStockData = async (pollInterval = 10000) => {
                 }
             }
 
+            // 合并写入：本轮抓取失败的股票保留上一次的数据，避免上游抖动导致自选股大面积"消失"
+            const mergedStockData = { ...localDataList, ...stockListData };
+            const monitorCodeSet = new Set(monitorStocks.map(s => s.code));
+            Object.keys(mergedStockData).forEach(code => {
+                if (!monitorCodeSet.has(code)) delete mergedStockData[code];
+            });
+
             fs.writeFileSync(
                 stockDataPath,
-                JSON.stringify(stockListData, null, 2),
+                JSON.stringify(mergedStockData, null, 2),
                 'utf-8'
             );
             saveOpeningPricesIfNeeded();

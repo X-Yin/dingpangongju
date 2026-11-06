@@ -1569,6 +1569,26 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     gap: 8px;
   }
 
+  // 卖点诊断标题栏「打开提醒」开关
+  .ob-reminder-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    user-select: none;
+
+    .ob-reminder-switch-label {
+      letter-spacing: 0.02em;
+    }
+
+    .ant-switch {
+      flex-shrink: 0;
+    }
+  }
+
   .ob-refresh-btn {
     display: inline-flex;
     align-items: center;

@@ -206,9 +206,12 @@ const getBlockData = () => {
     
     // 计算平均涨跌幅（只计算有行情数据的股票）
     const stocksWithData = mergedData.filter(s => !s.noMarketData);
-    const avgChange = stocksWithData.length > 0
-      ? Number((stocksWithData.reduce((acc, cur) => acc + cur.change, 0) / stocksWithData.length).toFixed(2))
-      : 0;
+    // 配置里如果没有任何成分股拿到实时行情（极端情况：整板块那次轮询接口丢了），
+    // 就跳过这个板块——不要用 0 补，避免 pollBlockHistory 把 0 写进分时帧形成 v 形突刺。
+    if (stocksWithData.length === 0) {
+      return;
+    }
+    const avgChange = Number((stocksWithData.reduce((acc, cur) => acc + cur.change, 0) / stocksWithData.length).toFixed(2));
     
     blockList.push({
       blockName,
