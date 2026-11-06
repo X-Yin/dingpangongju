@@ -1117,6 +1117,7 @@ const Fupan = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryDate = searchParams.get('date');
+  const queryTab = searchParams.get('tab');
   const [indexKlineData, setIndexKlineData] = useState(null);
   const [techIndexData, setTechIndexData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1131,7 +1132,14 @@ const Fupan = () => {
   const [personalFeelingsLoading, setPersonalFeelingsLoading] = useState(false);
   const [notesList, setNotesList] = useState([]);
   // 页面双 Tab：复盘手记（原有内容） / 四维立体（主线与情绪周期）
-  const [activeTab, setActiveTab] = useState('notes');
+  // 支持 ?tab=siwei 直达四维立体（收盘流水线「情绪分析」节点）
+  const [activeTab, setActiveTab] = useState(queryTab === 'siwei' ? 'siwei' : 'notes');
+  // 已停留在复盘页时，从收盘流水线等外部携带 ?tab=siwei 进入也能切到四维立体
+  const [prevQueryTab, setPrevQueryTab] = useState(queryTab);
+  if (queryTab !== prevQueryTab) {
+    setPrevQueryTab(queryTab);
+    setActiveTab(queryTab === 'siwei' ? 'siwei' : 'notes');
+  }
   const [currentNote, setCurrentNote] = useState('');
   const [currentTitle, setCurrentTitle] = useState('');
   const [currentTag, setCurrentTag] = useState('');

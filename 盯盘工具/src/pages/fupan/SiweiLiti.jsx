@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Empty, Spin, Tooltip, message, Select } from 'antd';
-import { ReloadOutlined, RiseOutlined, LineChartOutlined, ThunderboltOutlined, FundOutlined, BarChartOutlined, SwapOutlined } from '@ant-design/icons';
+import { ReloadOutlined, RiseOutlined, LineChartOutlined, ThunderboltOutlined, FundOutlined, BarChartOutlined, SwapOutlined, FileTextOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { createChart, ColorType, LineStyle, CrosshairMode } from 'lightweight-charts';
@@ -11,13 +11,22 @@ import './SiweiLiti.scss';
 const API_BASE = `http://${local_ip}:3000`;
 
 const PHASE_SCORE = {
-  高潮期: 4,
-  一致期: 3,
-  分歧期: 2,
+  一致加速: 4,
+  全面高潮: 3,
+  爆量分歧: 2,
   弱势震荡: 1,
-  退潮期: 0,
+  退潮: 0,
 };
-const PHASE_NAMES = ['退潮期', '弱势震荡', '分歧期', '一致期', '高潮期'];
+const PHASE_NAMES = ['退潮', '弱势震荡', '爆量分歧', '全面高潮', '一致加速'];
+// 板块情绪周期（新口径）配色
+const SECTOR_PHASE_COLOR = {
+  全面高潮: '#f43f5e',
+  一致加速: '#f59e0b',
+  爆量分歧: '#38bdf8',
+  弱势震荡: '#94a3b8',
+  退潮: '#22c55e',
+};
+// 大盘情绪周期（快照口径）配色
 const PHASE_COLOR = {
   高潮期: '#f43f5e',
   一致期: '#f59e0b',
@@ -33,10 +42,24 @@ const LINE_COLORS = [
   '#93c5fd', '#fdba74', '#bef264', '#f9a8d4', '#7dd3fc', '#fca5a5',
 ];
 
+// 周期分析 txt 末尾附带的提示词
+const CYCLE_ANALYSIS_PROMPT = [
+  '主线和支线的定义：主线是跟大盘情绪周期共振启动爆发的板块，在大盘情绪高涨的当日，该板块达到了全面高潮 or 一致加速，主线跟大盘是高度共振的。而支线则跟大盘的节奏不同步，往往早于大盘的爆发节点，或者是晚于大盘的爆发节点，支线往往会在主线板块分歧的时候，突然拉升站出来抢夺主线资金的流动性，属于搅屎棍类型，支线板块来得快去得也快。另外主线还有一个要求就是在和大盘共振爆发当日的次日，不能直接退潮，否则也是支线，这种是资金趁着大盘当日情绪好而做的一日游强套利。',
+  '两个买点：这里只围绕主线做，不做支线。主线有两个买点，第一个买点在爆发的首日，第二个买点在第一次分歧退潮的时候做低吸。',
+  '分析几个问题，第一个问题谁是主线，谁是支线。第二个问题，主线和支线的节奏问题，下一次出手应该大概在什么时间、买哪个板块。',
+].join('\n');
+
 const formatYmd = (ymd) => {
   const str = String(ymd || '');
   if (str.length !== 8) return '--';
   return `${str.slice(4, 6)}/${str.slice(6, 8)}`;
+};
+
+// 完整年月日（用于 txt 导出）
+const formatDateFull = (ymd) => {
+  const s = String(ymd || '');
+  if (s.length !== 8) return String(ymd || '--');
+  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 };
 
 const fmtPct = (v, digits = 2) => {
@@ -65,10 +88,16 @@ const toChartData = (list) => (list || [])
 
 // 迷你折线图（lightweight-charts）：透明底 + 白色文字，适配渐变卡
 // series 单线；lines 多线（板块情绪周期多选时每条题材一条线）；统一带十字光标 tooltip
-const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFormat, priceFormatter, extraLine }) => {
+// fixedRange: 固定价格轴范围（如 { min: 0, max: 4 }），避免数据不满轴时刻度标签缺失
+const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFormat, priceFormatter, extraLine, fixedRange }) => {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const [tip, setTip] = useState(null);
+
+  // 数据不足时仍按固定范围自动缩放，保证坐标轴刻度完整
+  const autoscaleInfoProvider = fixedRange
+    ? () => ({ priceRange: { minValue: fixedRange.min, maxValue: fixedRange.max } })
+    : undefined;
 
   useEffect(() => {
     const el = canvasRef.current;
@@ -145,6 +174,7 @@ const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFo
           lastValueVisible: false,
           crosshairMarkerVisible: true,
           priceFormat: priceFormat || BASE_PRICE_FORMAT,
+          autoscaleInfoProvider,
         });
         const data = toChartData(ln.series);
         multiSeries.setData(data);
@@ -158,6 +188,7 @@ const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFo
         lastValueVisible: true,
         crosshairMarkerVisible: true,
         priceFormat: priceFormat || BASE_PRICE_FORMAT,
+        autoscaleInfoProvider,
       });
       const data = toChartData(series);
       line.setData(data);
@@ -250,7 +281,7 @@ const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFo
       wrap.removeEventListener('mouseleave', onMouseLeave);
       chart.remove();
     };
-  }, [series, lines, color, height, priceFormat, priceFormatter, extraLine]);
+  }, [series, lines, color, height, priceFormat, priceFormatter, extraLine, fixedRange]);
 
   const wrapWidth = containerRef.current?.clientWidth || 360;
   const tipLeft = tip ? (tip.x > wrapWidth - 200 ? Math.max(6, wrapWidth - 200) : tip.x + 14) : 0;
@@ -324,7 +355,7 @@ const ThemeCard = ({ theme, onOpenStock }) => {
             量比趋势 {fmtPct(theme.ratioTrend, 1)}
           </span>
           {theme.currentPhase && (
-            <span className="sl-phase-chip" style={{ '--phase-color': PHASE_COLOR[theme.currentPhase] }}>
+            <span className="sl-phase-chip" style={{ '--phase-color': SECTOR_PHASE_COLOR[theme.currentPhase] || PHASE_COLOR[theme.currentPhase] }}>
               {theme.currentPhase}
             </span>
           )}
@@ -537,6 +568,114 @@ const SiweiLiti = () => {
       })),
   })), [sectorCats, sectorData]);
 
+  // ===== 周期分析 txt 导出：包含页面全部数据 + 分析提示词 =====
+  const numText = (v, suffix = '') => (
+    v === null || v === undefined || Number.isNaN(Number(v)) ? '--' : `${Number(v)}${suffix}`
+  );
+
+  const buildCycleAnalysisText = useCallback(() => {
+    if (!data) return '';
+    const L = [];
+    const line = (t = '') => L.push(t);
+    const lastTemp = data.marketTemperature?.[data.marketTemperature.length - 1];
+    const lastTech = data.techEmotion?.[data.techEmotion.length - 1];
+
+    line('==================== 四维立体 · 周期分析 ====================');
+    line(`生成时间：${dayjs().format('YYYY-MM-DD HH:mm:ss')}`);
+    line(`数据截至：${formatDateFull(data.latestSnapshotDate)}`);
+    line(`服务端计算时间：${data.generatedAt || '--'}`);
+    line('');
+
+    line('一、市场概览');
+    line(`市场状态：${data.marketStatus?.isFastRotation ? '快速轮动' : '主线明确'}`);
+    line(`题材总数：${themes.length} 个`);
+    line(`最新情绪温度：${lastTemp ? `${numText(lastTemp.value)}（${lastTemp.phase || '--'}）` : '--'}`);
+    line(`最新科技情绪指数：${lastTech && lastTech.value != null ? Number(lastTech.value).toFixed(2) : '--'}`);
+    line('');
+
+    line('二、大盘情绪周期（最近 60 个交易日）');
+    line('日期        情绪温度  阶段        涨停家数');
+    (data.marketTemperature || []).forEach((item) => {
+      line(`${formatDateFull(item.date)}  ${numText(item.value)}\t${item.phase || '--'}\t${numText(item.limitUp)}`);
+    });
+    line('');
+
+    line('三、科技情绪指数（最近 60 个交易日）');
+    line('日期        指数值');
+    (data.techEmotion || []).forEach((item) => {
+      line(`${formatDateFull(item.date)}  ${item.value === null || item.value === undefined ? '--' : Number(item.value).toFixed(2)}`);
+    });
+    line('');
+
+    line(`四、板块情绪周期（最近 ${(data.cycleDates || []).length || 30} 个交易日）`);
+    line('判定规则：涨停≥10 且占比提升=全面高潮；涨停≥10 且占比降低=一致加速；涨停 6~9 且占比提升=爆量分歧（仅当前一日为全面高潮/一致加速，否则计全面高潮）；涨停 6~9 且占比降低=弱势震荡；涨停≤5=退潮');
+    themes.forEach((t) => {
+      line('');
+      line(`【${t.board}】${t.category ? `对应板块：${t.category}｜` : ''}当前阶段：${t.currentPhase || '--'}｜今日涨停 ${t.latestCount}｜10日合计 ${t.totalCount}｜最高 ${t.maxLianban}板｜涨停趋势 ${fmtPct(t.countTrend, 1)}｜量比趋势 ${fmtPct(t.ratioTrend, 1)}｜评分 ${fmtScore(t.score)}`);
+      line('日期        涨停家数  成交占比%  阶段        判定原因');
+      (t.emotionCycle || []).forEach((item) => {
+        line(`${formatDateFull(item.date)}  ${numText(item.count)}\t${item.ratio == null ? '--' : item.ratio}\t${item.phase || '--'}\t${item.reason || ''}`);
+      });
+    });
+    line('');
+
+    line('五、题材个股明细');
+    themes.forEach((t) => {
+      line(`【${t.board}】题材池 ${t.stockPoolCount} 只`);
+      line('股票            连板    区间涨幅%  评分    标签');
+      (t.stocks || []).forEach((s) => {
+        line(`${s.name}(${s.code})  ${s.maxLianban > 1 ? `${s.maxLianban}板` : '首板'}\t${fmtPct(s.gainPct)}\t${fmtScore(s.score)}\t${(s.tags || []).join('/') || '--'}`);
+      });
+      line('');
+    });
+
+    line('六、板块成交与资金日线（当前页面筛选）');
+    if (!sectorCats.length) {
+      line('（页面未选择板块）');
+    } else {
+      line(`已选板块：${sectorCats.join('、')}`);
+      sectorCats.forEach((name) => {
+        line('');
+        line(`【${name}】板块成交量占比（近 60 个交易日）`);
+        (sectorData?.ratio?.[name] || []).forEach((r) => {
+          line(`  ${formatDateFull(r.date)}  ${Number.isFinite(Number(r.ratio)) ? `${Number(r.ratio)}%` : '--'}`);
+        });
+        line(`【${name}】板块资金净流入 / 净流出（亿）`);
+        (sectorData?.fund?.[name] || [])
+          .slice()
+          .sort((a, b) => Number(a.date) - Number(b.date))
+          .forEach((r) => {
+            line(`  ${formatDateFull(r.date)}  ${Number.isFinite(Number(r.moneyY)) ? `${Number(r.moneyY)}亿` : '--'}`);
+          });
+      });
+    }
+    line('');
+
+    line('==================== 周期分析提示词 ====================');
+    line('请基于以上全部数据，按下面的定义与要求进行分析：');
+    line(CYCLE_ANALYSIS_PROMPT);
+    return L.join('\n');
+  }, [data, themes, sectorCats, sectorData]);
+
+  const handleExportCycleAnalysis = () => {
+    const text = buildCycleAnalysisText();
+    if (!text) {
+      message.warning('暂无数据，无法生成周期分析文件');
+      return;
+    }
+    // \ufeff BOM 保证 Windows 记事本打开不乱码
+    const blob = new Blob([`\ufeff${text}`], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `四维立体周期分析_${dayjs().format('YYYYMMDD_HHmmss')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    message.success('周期分析文件已生成');
+  };
+
   return (
     <div className="siwei-liti-page">
       {/* 顶部主卡（与「科技进攻股票涨幅列表」同一渐变磨砂风格） */}
@@ -550,6 +689,14 @@ const SiweiLiti = () => {
             <span className="sl-total-tag">
               主线 {mainThemes.length} · 支线 {branchThemes.length}
             </span>
+            <button
+              className="sl-cycle-analysis-btn"
+              onClick={handleExportCycleAnalysis}
+              disabled={!data}
+              title="导出本页全部数据与周期分析提示词（txt）"
+            >
+              <FileTextOutlined /> 周期分析
+            </button>
             <button
               className="sl-refresh-btn"
               onClick={() => fetchData(true)}
@@ -651,7 +798,7 @@ const SiweiLiti = () => {
               <div>
                 <span className="sl-chart-title">板块情绪周期</span>
                 <span className="sl-chart-sub">
-                  涨停家数变化 × 板块成交量占比变化（高潮 / 一致 / 分歧 / 弱势震荡 / 退潮）
+                  最近 {data?.cycleDates?.length || 30} 个交易日｜涨停家数 × 板块成交量占比变化（全面高潮 / 一致加速 / 爆量分歧 / 弱势震荡 / 退潮）
                 </span>
               </div>
               <div className="sl-theme-chips">
@@ -680,6 +827,7 @@ const SiweiLiti = () => {
                   height={390}
                   priceFormat={PHASE_PRICE_FORMAT}
                   priceFormatter={PHASE_FORMATTER}
+                  fixedRange={{ min: 0, max: 4 }}
                 />
                 <div className="sl-selected-legend">
                   {selectedThemes.map((t) => (
@@ -699,7 +847,7 @@ const SiweiLiti = () => {
                       <div className="sl-phase-cells">
                         {(t.emotionCycle || []).map((item) => (
                           <Tooltip key={`${t.key}-${item.date}`} title={`${t.board}｜${item.reason}`}>
-                            <div className="sl-phase-cell" style={{ '--phase-color': PHASE_COLOR[item.phase] }}>
+                            <div className="sl-phase-cell" style={{ '--phase-color': SECTOR_PHASE_COLOR[item.phase] || '#94a3b8' }}>
                               <span className="sl-phase-date">{formatYmd(item.date)}</span>
                               <span className="sl-phase-name">{item.phase}</span>
                               <span className="sl-phase-detail">涨停 {item.count} · 占比 {item.ratio != null ? `${item.ratio}%` : '--'}</span>
@@ -711,13 +859,13 @@ const SiweiLiti = () => {
                   ))}
                 </div>
                 <div className="sl-phase-legend">
-                  {Object.entries(PHASE_COLOR).reverse().map(([name, color]) => (
+                  {Object.entries(SECTOR_PHASE_COLOR).reverse().map(([name, color]) => (
                     <span key={name} className="sl-legend-item">
                       <i style={{ background: color }} />{name}
                     </span>
                   ))}
                   <span className="sl-legend-note">
-                    规则：家数增加+占比提升=高潮；增加+占比降低=一致；减少(&lt;30%)+占比提升=分歧；减少+占比降低=弱势震荡；家数≤5=退潮（减少≥30%且占比提升仍按高潮计）。上方标签支持多选，再次点击取消。
+                    规则：涨停≥10 且占比提升=全面高潮；涨停≥10 且占比降低=一致加速；涨停 6~9 且占比提升=爆量分歧（仅当前一日为全面高潮/一致加速，否则计全面高潮）；涨停 6~9 且占比降低=弱势震荡；涨停≤5=退潮。上方标签支持多选，再次点击取消。
                   </span>
                 </div>
               </>

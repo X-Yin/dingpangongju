@@ -20,6 +20,7 @@ const {
 
 const WINDOW_DAYS = 10; // 主窗口：最近 10 个交易日
 const GAIN_LOOKBACK_DAYS = 30; // 涨幅统计窗口：最近 30 个交易日
+const CYCLE_DAYS = 30; // 板块情绪周期展示窗口：最近 30 个交易日
 const EMOTION_DAYS = 60; // 科技情绪 / 大盘情绪折线：最近 60 个交易日
 const CONSTITUENTS_DIR = path.resolve(__dirname, '../data/东方财富板块成分股汇总');
 const KLINE_CACHE_DIR = path.resolve(__dirname, '../data/kline_cache');
@@ -116,48 +117,37 @@ const getCachedCloseBefore = (marketCode, ymd) => {
 };
 
 // 板块情绪周期规则：返回 { phase, reason }
-const calcPhase = ({ count, prevCount, ratio, prevRatio, isFirst }) => {
+// 家数≥10 且占比提升=全面高潮；家数≥10 且占比降低=一致加速；
+// 家数 6~9 且占比提升：前一日为全面高潮/一致加速（家数≥10）时计爆量分歧，否则计全面高潮；
+// 家数 6~9 且占比降低=弱势震荡；家数≤5=退潮
+const calcPhase = ({ count, prevCount, ratio, prevRatio }) => {
   const ratioText = (v) => (Number.isFinite(Number(v)) ? `${Number(v).toFixed(2)}%` : '--');
-  const countText = `${prevCount ?? '--'}→${count}`;
-  const dropPct = Number.isFinite(Number(prevCount)) && Number(prevCount) > 0
-    ? ((Number(prevCount) - count) / Number(prevCount)) * 100
+  const countText = prevCount != null ? `${prevCount}→${count}` : `${count}`;
+  const ratioTrend = Number.isFinite(Number(ratio)) && Number.isFinite(Number(prevRatio))
+    ? Number(ratio) - Number(prevRatio)
     : null;
-  const ratioUp = Number.isFinite(Number(ratio)) && Number.isFinite(Number(prevRatio))
-    ? Number(ratio) > Number(prevRatio)
-    : null;
-  const countUp = Number.isFinite(Number(prevCount)) ? count > Number(prevCount) : true;
-  const countDown = Number.isFinite(Number(prevCount)) ? count < Number(prevCount) : false;
+  const ratioUp = ratioTrend == null ? null : ratioTrend > 0;
+  const ratioDesc = ratioTrend == null
+    ? '无占比数据'
+    : `${ratioText(prevRatio)}→${ratioText(ratio)}（${ratioTrend > 0 ? '提升' : '降低'}）`;
 
   if (count <= 5) {
-    return { phase: '退潮期', reason: `涨停 ${count} 家（≤5），${prevCount != null ? `较前一日 ${countText}` : '情绪冰点'}` };
+    return { phase: '退潮', reason: `涨停 ${count} 家（≤5），${prevCount != null ? `较前一日 ${countText}` : '情绪冰点'}` };
   }
-  if (isFirst || !Number.isFinite(Number(prevCount))) {
-    return { phase: ratioUp === false ? '一致期' : '高潮期', reason: `窗口首日，涨停 ${count} 家，占比 ${ratioText(ratio)}` };
-  }
-  if (countUp) {
-    if (ratioUp === null) {
-      return { phase: '高潮期', reason: `涨停 ${countText}（增加），无对应板块占比数据` };
-    }
-    return ratioUp
-      ? { phase: '高潮期', reason: `涨停 ${countText}（增加），占比 ${ratioText(prevRatio)}→${ratioText(ratio)}（提升）` }
-      : { phase: '一致期', reason: `涨停 ${countText}（增加），占比 ${ratioText(prevRatio)}→${ratioText(ratio)}（降低）` };
-  }
-  if (countDown) {
+  if (count < 10) {
     if (ratioUp) {
-      // 按用户口径：减少 ≥30% 且占比提升仍记为高潮期；30% 以内且占比提升为分歧期
-      return Number(dropPct) >= 30
-        ? { phase: '高潮期', reason: `涨停 ${countText}（-${Number(dropPct).toFixed(1)}%，≥30%），占比 ${ratioText(prevRatio)}→${ratioText(ratio)}（提升）` }
-        : { phase: '分歧期', reason: `涨停 ${countText}（-${Number(dropPct).toFixed(1)}%），占比 ${ratioText(prevRatio)}→${ratioText(ratio)}（提升）` };
+      // 限制：仅当前一日处于高潮档（家数≥10，即全面高潮/一致加速）时才算爆量分歧，否则按全面高潮计
+      const prevHigh = prevCount != null && prevCount >= 10;
+      return prevHigh
+        ? { phase: '爆量分歧', reason: `涨停 ${countText} 家（6~9），占比 ${ratioDesc}，前一日 ${prevCount} 家（高潮档）` }
+        : { phase: '全面高潮', reason: `涨停 ${countText} 家（6~9），占比 ${ratioDesc}，前一日未达高潮档，按全面高潮计` };
     }
-    return { phase: '弱势震荡', reason: `涨停 ${countText}（减少），占比 ${ratioText(prevRatio)}→${ratioText(ratio)}（降低）` };
+    return { phase: '弱势震荡', reason: `涨停 ${countText} 家（6~9），占比 ${ratioDesc}` };
   }
-  // 家数持平
-  return ratioUp
-    ? { phase: '分歧期', reason: `涨停 ${countText}（持平），占比 ${ratioText(prevRatio)}→${ratioText(ratio)}（提升）` }
-    : { phase: '弱势震荡', reason: `涨停 ${countText}（持平），占比 ${ratioText(prevRatio)}→${ratioText(ratio)}（降低）` };
+  return { phase: ratioUp ? '全面高潮' : '一致加速', reason: `涨停 ${countText} 家（≥10），占比 ${ratioDesc}` };
 };
 
-const PHASE_ORDER = { 高潮期: 4, 一致期: 3, 分歧期: 2, 弱势震荡: 1, 退潮期: 0 };
+const PHASE_ORDER = { 全面高潮: 4, 一致加速: 3, 爆量分歧: 2, 弱势震荡: 1, 退潮: 0 };
 
 // ==================== 主计算 ====================
 
@@ -171,6 +161,7 @@ const buildSiweiLiti = () => {
   if (!allDates.length) {
     return {
       windowDates: [],
+      cycleDates: [],
       latestSnapshotDate: null,
       generatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       marketStatus: { isFastRotation: true, mainLineCount: 0, description: '暂无连板快照数据' },
@@ -184,6 +175,7 @@ const buildSiweiLiti = () => {
 
   const windowDates = allDates.slice(0, WINDOW_DAYS).reverse(); // 升序
   const longDates = allDates.slice(0, GAIN_LOOKBACK_DAYS).reverse(); // 升序
+  const cycleDates = allDates.slice(0, Math.max(CYCLE_DAYS, WINDOW_DAYS + 1)).reverse(); // 升序：板块情绪周期展示最近 30 个交易日
   const emotionDates = allDates.slice(0, EMOTION_DAYS).reverse(); // 升序：科技/大盘情绪取最近 60 个交易日
   const latestSnapshotDate = windowDates[windowDates.length - 1];
 
@@ -248,10 +240,25 @@ const buildSiweiLiti = () => {
     });
   });
 
+  // 各题材在 30 日窗口内逐日涨停家数（用于板块情绪周期展示）
+  const dailyCountByDay = new Map(); // ymd -> Map(题材key -> 涨停家数)
+  cycleDates.forEach((ymd) => {
+    const day = getDay(ymd);
+    if (!day || !Array.isArray(day.themes)) return;
+    const m = new Map();
+    day.themes.forEach((theme) => {
+      const key = boardKeyOf(theme.board) || theme.board;
+      if (!key || key === '其他') return;
+      m.set(key, (m.get(key) || 0) + (theme.stocks?.length || 0));
+    });
+    dailyCountByDay.set(ymd, m);
+  });
+
   // ---------- 2. 板块成交量占比 ----------
   let categoryRatio = {};
   try {
-    categoryRatio = getBlockCategoryRatio(windowDates[0], windowDates[windowDates.length - 1]) || {};
+    // 取 30 日窗口占比，供板块情绪周期展示（主线/支线判定仍用 10 日窗口趋势）
+    categoryRatio = getBlockCategoryRatio(cycleDates[0], windowDates[windowDates.length - 1]) || {};
   } catch (e) {
     console.error('[siweiLiti] 获取板块成交量占比失败:', e.message);
   }
@@ -423,13 +430,18 @@ const buildSiweiLiti = () => {
     const maxLianban = sorted.length ? sorted[0].maxLianban : 0;
     const score = weightedCount + maxLianban * 1.5 + Math.max(0, ratioTrend || 0) / 10 + Math.max(0, countTrend || 0) / 20;
 
-    // 板块情绪周期
-    const emotionCycle = windowDates.map((d, idx) => {
-      const count = dailyCounts[idx];
-      const prevCount = idx > 0 ? dailyCounts[idx - 1] : null;
-      const ratio = ratioSeries[idx];
-      const prevRatio = idx > 0 ? ratioSeries[idx - 1] : null;
-      const { phase, reason } = calcPhase({ count, prevCount, ratio, prevRatio, isFirst: idx === 0 });
+    // 板块情绪周期（最近 30 个交易日）
+    const cycleCounts = cycleDates.map((d) => dailyCountByDay.get(d)?.get(agg.key) || 0);
+    const cycleRatios = cycleDates.map((d) => {
+      const v = categoryRatios?.get(d);
+      return Number.isFinite(Number(v)) ? Number(v) : null;
+    });
+    const emotionCycle = cycleDates.map((d, idx) => {
+      const count = cycleCounts[idx];
+      const prevCount = idx > 0 ? cycleCounts[idx - 1] : null;
+      const ratio = cycleRatios[idx];
+      const prevRatio = idx > 0 ? cycleRatios[idx - 1] : null;
+      const { phase, reason } = calcPhase({ count, prevCount, ratio, prevRatio });
       return { date: d, count, ratio: round(ratio, 2), prevRatio: round(prevRatio, 2), phase, reason };
     });
 
@@ -501,6 +513,7 @@ const buildSiweiLiti = () => {
 
   return {
     windowDates,
+    cycleDates,
     latestSnapshotDate,
     generatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
     marketStatus: {

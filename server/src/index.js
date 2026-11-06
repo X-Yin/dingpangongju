@@ -5644,9 +5644,9 @@ setInterval(() => {
   if (isInMarketSnapshotWindow()) runMarketSnapshotJob();
 }, 60 * 1000);
 
-// 连板网每日连板数据：交易日 18:00 后自动抓取当日连板天梯涨停数据（见 service/lianban.js）
+// 连板网每日连板数据：交易日 15:05 后用 Puppeteer 打开 today.html 拦截 HTML 刷新当日数据（见 service/lianban.js）
 // 挂在常驻的 Web 服务进程上（poll 进程 15:05 收盘后会自动退出，无法覆盖盘后任务）
-scheduleLianbanDaily(18, 0);
+scheduleLianbanDaily(15, 5);
 
 // ==================== akshare 数据接口（python 脚本数据源，见 service/akData.js） ====================
 

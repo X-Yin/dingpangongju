@@ -2,8 +2,9 @@
  * 连板网（lianban.net）每日连板复盘数据抓取
  *
  * 数据页面：https://lianban.net/days/YYYY-MM-DD.html
- * 每个交易日 21:00 后抓取当日「连板天梯」中的全部涨停个股（剔除 ST），
- * 按板块题材归类，保存为 src/data/lianbanSnapshot/YYYYMMDD.json
+ * 每个交易日 15:05 后通过 Puppeteer 打开 https://lianban.net/today.html
+ * （自动跳转到最新交易日页面），直接拦截 HTML 响应抓取当日「连板天梯」中的
+ * 全部涨停个股（剔除 ST），按板块题材归类，保存为 src/data/lianbanSnapshot/YYYYMMDD.json
  *
  * 页面结构：
  *  - 「连板天梯」(id="s-ladder") 按连板档位（9板/5板/…/1板）列出当日最全的涨停名单，
@@ -20,10 +21,13 @@ const fs = require('fs');
 const axios = require('axios');
 const dayjs = require('dayjs');
 const { isTradingDay, parseDateNum } = require('../utils/tradingDay');
+const { getBrowser } = require('../utils/browser');
 
 const lianbanDir = path.resolve(__dirname, '../data/lianbanSnapshot');
 const cookieFile = path.resolve(__dirname, '../../.lianban-cookie');
 const BASE_URL = 'https://lianban.net/days';
+// 当日复盘页入口：站点会用 /manifest.json 自动跳转到最新交易日的 /days/YYYY-MM-DD.html
+const TODAY_URL = 'https://lianban.net/today.html';
 
 // 历史复盘页（非当日）必须登录后才会返回「热点题材」数据
 // cookie 优先级：环境变量 LIANBAN_COOKIE > server/.lianban-cookie 文件
@@ -175,6 +179,81 @@ const fetchDayHtml = async (dashDate, { retries = 3, timeout = 15000 } = {}) => 
     }
   }
   throw lastError;
+};
+
+// 把 .lianban-cookie / LIANBAN_COOKIE 中的登录态注入 Puppeteer 页面，
+// 匿名访问只能看到 KPI/情绪卡片，连板天梯与热点题材需要登录后才会返回
+const applyCookieToPage = async (page) => {
+  const cookieHeader = loadCookie();
+  if (!cookieHeader) return;
+  const cookies = cookieHeader.split(';').map((item) => {
+    const idx = item.indexOf('=');
+    if (idx === -1) return null;
+    const name = item.slice(0, idx).trim();
+    const value = item.slice(idx + 1).trim();
+    return name ? { name, value, domain: '.lianban.net', path: '/' } : null;
+  }).filter(Boolean);
+  if (cookies.length) {
+    await page.setCookie(...cookies);
+  }
+};
+
+// 盘后抓取当日复盘页：用 Puppeteer 打开 https://lianban.net/today.html，
+// 站点自动跳转到最新交易日的 /days/YYYY-MM-DD.html，直接拦截该 document
+// 响应拿原始 HTML（而不是重新请求接口）；拦截不到时退回 page.content() 兜底。
+const fetchTodayHtmlWithPuppeteer = async ({ timeout = 30000 } = {}) => {
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+  let captured = null;
+
+  const isFullPage = (html) => /var\s+S\s*=\s*\{/.test(html) && /id="s-ladder"/.test(html);
+
+  const onResponse = async (response) => {
+    try {
+      if (captured) return;
+      if (response.request().resourceType() !== 'document') return;
+      if (response.status() !== 200) return;
+      const url = response.url();
+      const m = url.match(/^https?:\/\/(?:www\.)?lianban\.net\/days\/(\d{4}-\d{2}-\d{2})\.html/);
+      if (!m) return;
+      const html = await response.text();
+      // 浏览器校验页/未登录页也含 var S，必须同时有连板天梯才算完整复盘页
+      if (!isFullPage(html)) return;
+      captured = { html, dash: m[1], url };
+    } catch (e) {
+      // 单个响应读取失败不影响后续响应拦截
+    }
+  };
+
+  try {
+    await applyCookieToPage(page);
+    page.on('response', onResponse);
+    try {
+      await page.goto(TODAY_URL, { waitUntil: 'domcontentloaded', timeout });
+    } catch (e) {
+      // today.html 可能在 goto 过程中被脚本重定向，忽略导航中断，继续等待拦截结果
+    }
+
+    // today.html 通过 /manifest.json 异步跳转，等待最终复盘页 HTML 被拦截
+    const deadline = Date.now() + timeout;
+    while (!captured && Date.now() < deadline) {
+      await sleep(300);
+    }
+
+    if (!captured) {
+      // 兜底：读取当前页面序列化 HTML（页面脚本仍保留，解析逻辑可用）
+      const html = await page.content();
+      const dash = extractPageDate(html) || dayjs().format('YYYY-MM-DD');
+      captured = { html, dash, url: page.url() };
+    }
+    if (!isFullPage(captured.html)) {
+      throw new Error('未拦截到连板网当日完整 HTML 数据（未登录/站点结构变化/页面未跳转）');
+    }
+    return captured;
+  } finally {
+    page.off('response', onResponse);
+    await page.close().catch(() => {});
+  }
 };
 
 // 提取页尾 var S = {...} 股票数据对象（合法 JSON，可直接 parse）
@@ -470,6 +549,27 @@ const saveLianbanDay = async (dateInput) => {
   return data;
 };
 
+// 盘后刷新当日连板数据：Puppeteer 打开 today.html 拦截 HTML，
+// 按拦截到的页面日期写入对应交易日的快照文件（覆盖当日旧数据）。
+// expectedYmd 用于盘后首次抓取：站点可能还没生成当日页（today.html 仍指向上一交易日），
+// 此时不写文件而是抛错，由调度器下一分钟重试，避免把旧数据占位成当日数据。
+const saveTodayLianban = async ({ expectedYmd } = {}) => {
+  ensureDir(lianbanDir);
+
+  const { html, dash } = await fetchTodayHtmlWithPuppeteer();
+  const { ymd, dash: pageDash } = normalizeDateInput(dash);
+  if (expectedYmd && ymd !== expectedYmd) {
+    throw new Error(`连板网最新复盘页为 ${pageDash}，${expectedYmd} 当日数据尚未生成`);
+  }
+  const data = parseLianbanHtml(html, { ymd, dash: pageDash });
+  if (data.themes.length === 0) {
+    throw new Error(`${pageDash} 连板数据解析结果为空，跳过写入`);
+  }
+
+  fs.writeFileSync(path.join(lianbanDir, `${ymd}.json`), JSON.stringify(data, null, 2));
+  return data;
+};
+
 const hasLianbanDay = (dateInput) => fs.existsSync(lianbanFilePath(dateInput));
 
 // 批量刷新时间范围内的连板快照：
@@ -550,12 +650,12 @@ const getLianbanSentimentSeries = () => {
   return series;
 };
 
-// 每个交易日 18:00 自动抓取当日连板数据；失败不占位，下一分钟自动重试
+// 每个交易日 15:05 自动用 Puppeteer 拦截 today.html 刷新当日连板数据；失败不占位，下一分钟自动重试
 let lianbanScheduled = false;
 let lianbanTaskRunning = false;
 const executedDates = new Set();
 
-const scheduleLianbanDaily = (hour = 21, minute = 30) => {
+const scheduleLianbanDaily = (hour = 15, minute = 5) => {
   if (lianbanScheduled) return;
   lianbanScheduled = true;
 
@@ -574,9 +674,9 @@ const scheduleLianbanDaily = (hour = 21, minute = 30) => {
 
     lianbanTaskRunning = true;
     try {
-      const data = await saveLianbanDay(ymd);
+      const data = await saveTodayLianban({ expectedYmd: ymd });
       executedDates.add(ymd);
-      console.log(`[lianban] ${ymd} 连板数据已保存：${data.summary.themeCount} 个题材 / ${data.summary.totalCount} 只涨停（其中连板 ${data.summary.lianbanCount} 只）`);
+      console.log(`[lianban] ${data.date} 连板数据已保存：${data.summary.themeCount} 个题材 / ${data.summary.totalCount} 只涨停（其中连板 ${data.summary.lianbanCount} 只）`);
     } catch (error) {
       if (error.noRetry) {
         // 404 等当日无数据情况：占位避免整晚报错，下个交易日重新判定
@@ -597,12 +697,14 @@ const scheduleLianbanDaily = (hour = 21, minute = 30) => {
 
 module.exports = {
   fetchDayHtml,
+  fetchTodayHtmlWithPuppeteer,
   parseLianbanHtml,
   parseThemesHtml,
   parseLadderHtml,
   extractSentiment,
   parseMarketKpi,
   saveLianbanDay,
+  saveTodayLianban,
   hasLianbanDay,
   refreshLianbanRange,
   getLianbanDayData,
