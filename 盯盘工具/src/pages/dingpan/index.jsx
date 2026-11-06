@@ -2663,6 +2663,7 @@ const DingPan = () => {
                                     onBlockClick={jumpToBlock}
                                     onOpenOverlayTimeLine={handleOpenOverlayTimeLine}
                                     overlayInlineAddStock={overlayInlineAddStock}
+                                    onShowKLine={showKLine}
                                     themeColor={effThemeColor}
                                 />
                             )}

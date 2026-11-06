@@ -23,6 +23,12 @@
     "triggeredToday": "2026-11-06"
   },
   "inflow_rise_volume_shrink": {
-    "lastTriggeredTime": "2026-11-06 10:41:35"
+    "lastTriggeredTime": "2026-11-06 14:27:25"
+  },
+  "straight_rise_no_volume": {
+    "lastTriggeredTime": "2026-11-06 14:39:34"
+  },
+  "tail_dip_buying": {
+    "checkedToday": "2026-11-06"
   }
 }

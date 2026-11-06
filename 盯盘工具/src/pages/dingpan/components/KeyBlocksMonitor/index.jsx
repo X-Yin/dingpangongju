@@ -13,7 +13,7 @@ const POLL_INTERVAL = 15 * 1000;
 // blocks-grid + unified-list-item 紧凑卡片，hover Popover 展示成分股涨跌幅
 // 卡片 extra 区域提供「添加」按钮打开重点板块管理弹窗（搜索 + 切换）；
 // 每个重点板块 item hover 时左上角出现删除按钮（取消重点）。
-const KeyBlocksMonitor = ({ onBlockClick, onOpenOverlayTimeLine, overlayInlineAddStock, themeColor }) => {
+const KeyBlocksMonitor = ({ onBlockClick, onOpenOverlayTimeLine, overlayInlineAddStock, onShowKLine, themeColor }) => {
     // 重点板块列表（已排好顺序，用于卡片展示）
     const [orderedBlocks, setOrderedBlocks] = useState([]);
     // 当前重点板块名称 Set（用于快速判断某个板块是否重点）
@@ -227,7 +227,15 @@ const KeyBlocksMonitor = ({ onBlockClick, onOpenOverlayTimeLine, overlayInlineAd
                         <div
                             key={s.code || i}
                             className="block-stock-item"
-                            onClick={() => overlayOneStock(s)}
+                            onClick={(e) => {
+                                // 点击 tooltip 里的股票 → 打开通用 K 线弹窗
+                                e.stopPropagation();
+                                onShowKLine && onShowKLine({
+                                    code: s.code,
+                                    name: s.name,
+                                    change: s.change,
+                                });
+                            }}
                         >
                             <span className="block-stock-name">{s.name}</span>
                             <span className={`block-stock-change ${Number(s.change) >= 0 ? 'up' : 'down'}`}>
