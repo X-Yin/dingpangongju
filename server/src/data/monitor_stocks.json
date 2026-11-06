@@ -1625,5 +1625,16 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-05 12:20:19"
+  },
+  {
+    "code": "sz301629",
+    "name": "矽电股份",
+    "isImportant": false,
+    "blockName": "半导体",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-06 22:39:28"
   }
 ]

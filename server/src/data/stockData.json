@@ -539,74 +539,6 @@
     ],
     "isImportant": false
   },
-  "sh603256": {
-    "stockName": "宏和科技",
-    "kline": [
-      {
-        "trade_date": 20261106,
-        "open_px": 74.25,
-        "high_px": 77.5,
-        "low_px": 72.15,
-        "close_px": 75.75,
-        "business_amount": 17360421,
-        "business_balance": 1296987770,
-        "change": -4.26,
-        "ma5_px": 76.12,
-        "ma10_px": 79.61,
-        "ma20_px": 90.71,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
-  "sz300408": {
-    "stockName": "三环集团",
-    "kline": [
-      {
-        "trade_date": 20261106,
-        "preclose_px": 76.66,
-        "close_px": 72.89,
-        "open_px": 71.38,
-        "high_px": 74.18,
-        "low_px": 68.88,
-        "ma5_px": 74.67,
-        "ma10_px": 78.82,
-        "ma20_px": 87.85,
-        "amp": 6.91,
-        "tr": 3.79,
-        "change_px": -3.77,
-        "change": -4.92,
-        "business_amount": 70874270,
-        "business_balance": 5071614549,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
-  "sh688200": {
-    "stockName": "华峰测控",
-    "kline": [
-      {
-        "trade_date": 20261106,
-        "preclose_px": 236,
-        "close_px": 227.8,
-        "open_px": 235.01,
-        "high_px": 243.71,
-        "low_px": 221.32,
-        "ma5_px": 214.29,
-        "ma10_px": 222.71,
-        "ma20_px": 269.03,
-        "amp": 9.49,
-        "tr": 6.08,
-        "change_px": -8.2,
-        "change": -3.47,
-        "business_amount": 12233807,
-        "business_balance": 2814779193,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
   "sz002463": {
     "stockName": "沪电股份",
     "kline": [
@@ -686,6 +618,50 @@
         "change": -6.43,
         "business_amount": 125550233,
         "business_balance": 5144265865,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh603256": {
+    "stockName": "宏和科技",
+    "kline": [
+      {
+        "trade_date": 20261106,
+        "open_px": 74.25,
+        "high_px": 77.5,
+        "low_px": 72.15,
+        "close_px": 75.75,
+        "business_amount": 17360421,
+        "business_balance": 1296987770,
+        "change": -4.26,
+        "ma5_px": 76.12,
+        "ma10_px": 79.61,
+        "ma20_px": 90.71,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz300408": {
+    "stockName": "三环集团",
+    "kline": [
+      {
+        "trade_date": 20261106,
+        "preclose_px": 76.66,
+        "close_px": 72.89,
+        "open_px": 71.38,
+        "high_px": 74.18,
+        "low_px": 68.88,
+        "ma5_px": 74.67,
+        "ma10_px": 78.82,
+        "ma20_px": 87.85,
+        "amp": 6.91,
+        "tr": 3.79,
+        "change_px": -3.77,
+        "change": -4.92,
+        "business_amount": 70874270,
+        "business_balance": 5071614549,
         "change_diff": 0
       }
     ],
@@ -866,6 +842,30 @@
         "change": -5.27,
         "business_amount": 5066000,
         "business_balance": 954911278,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh688200": {
+    "stockName": "华峰测控",
+    "kline": [
+      {
+        "trade_date": 20261106,
+        "preclose_px": 236,
+        "close_px": 227.8,
+        "open_px": 235.01,
+        "high_px": 243.71,
+        "low_px": 221.32,
+        "ma5_px": 214.29,
+        "ma10_px": 222.71,
+        "ma20_px": 269.03,
+        "amp": 9.49,
+        "tr": 6.08,
+        "change_px": -8.2,
+        "change": -3.47,
+        "business_amount": 12233807,
+        "business_balance": 2814779193,
         "change_diff": 0
       }
     ],
@@ -3430,6 +3430,30 @@
         "change": -2.36,
         "business_amount": 18510391,
         "business_balance": 3988586394,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz301629": {
+    "stockName": "矽电股份",
+    "kline": [
+      {
+        "trade_date": 20261106,
+        "preclose_px": 198.4,
+        "close_px": 187,
+        "open_px": 182.1,
+        "high_px": 194.74,
+        "low_px": 180.14,
+        "ma5_px": 181.87,
+        "ma10_px": 183.25,
+        "ma20_px": 200.74,
+        "amp": 7.36,
+        "tr": 9.61,
+        "change_px": -11.4,
+        "change": -5.75,
+        "business_amount": 1845153,
+        "business_balance": 344001039,
         "change_diff": 0
       }
     ],

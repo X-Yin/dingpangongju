@@ -1817,6 +1817,12 @@
       "blockName": "半导体",
       "code": "sz300567",
       "change": -4.58
+    },
+    {
+      "name": "矽电股份",
+      "blockName": "半导体",
+      "code": "sz301629",
+      "change": -5.75
     }
   ],
   "cpu": [

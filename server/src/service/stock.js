@@ -711,7 +711,10 @@ const flushTlineDayBundle = (dateNum) => {
 
 const insertTlineDayCacheEntry = (dateNum, cacheKey, dayData) => {
   const bundle = getTlineDayBundle(dateNum);
-  if (bundle.has(cacheKey)) return; // 已有（历史分时不可变，无需覆盖）
+  const existing = bundle.get(cacheKey);
+  // 已有且长度不短于新数据则跳过（历史分时不可变）；
+  // 当日盘中写入的短分时允许被收盘后的完整分时覆盖，避免收盘后一直判定缓存不完整而反复读盘
+  if (existing && (existing.line?.length || 0) >= (dayData.line?.length || 0)) return;
   bundle.set(cacheKey, dayData);
   if (!tlineDayBundleDirty.has(dateNum)) {
     tlineDayBundleDirty.add(dateNum);

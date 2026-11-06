@@ -117,8 +117,8 @@ const { generateReport, ensureLatestReport, getReportById, listReports, getTrend
 const { getAttackDefenseScore } = require('./service/attackDefenseScore');
 const feishuNotify = require('./service/feishuNotify');
 // 交易日历（月度策略报告以「每月最后一个交易日」为最终期末口径）
-const { isTradingDay } = require('./utils/tradingDay');
-const { getClsReqIndexUrl } = require('./utils');
+const { isTradingDay, getPrevTradingDay } = require('./utils/tradingDay');
+const { getClsReqIndexUrl, isTradingHours, timestampToDateStr } = require('./utils');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
 const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refreshLianbanRange, saveTodayLianban } = require('./service/lianban');
@@ -502,10 +502,26 @@ app.get('/get_stocks_tline', async (req, res) => {
     if (monitorStock?.name) return monitorStock.name;
     return stockData[code]?.stockName || code;
   };
+  // 收盘后（含非交易日）分时数据已定型，改走按日期读取的本地缓存（内存 → 按日捆绑 → 本地分时文件），
+  // 避免每次打开页面/手动刷新都向外部行情源重新拉取全量分时；盘中仍走实时行情接口。
+  const now = new Date();
+  const currentMinuteOfDay = now.getHours() * 60 + now.getMinutes();
+  let cachedTradeDateNum = null;
+  if (!isTradingDay(now) || currentMinuteOfDay >= 15 * 60) {
+    const targetDate = isTradingDay(now) ? now : getPrevTradingDay(now);
+    cachedTradeDateNum = parseInt(timestampToDateStr(targetDate.getTime()), 10);
+  }
   // 并行拉取，单只失败不影响其他股票
   const entries = await Promise.all(uniqueCodes.map(async (code) => {
     try {
-      const tline = await getSingleStockTlineData(code);
+      let tline = null;
+      if (cachedTradeDateNum) {
+        tline = await getSingleStockTlineDataByDate(code, cachedTradeDateNum);
+      }
+      // 缓存缺失/不完整时回退实时接口（如新增自选股当日尚未落盘）
+      if (!tline || !tline.line || tline.line.length === 0) {
+        tline = await getSingleStockTlineData(code);
+      }
       return [code, { ...(tline || {}), stockName: resolveStockName(code), line: tline?.line || [] }];
     } catch (error) {
       console.error(`获取股票 ${code} 分时数据失败:`, error.message);
