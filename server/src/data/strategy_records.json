@@ -2,7 +2,7 @@
   {
     "id": "8591bae862f54cb4",
     "time": "2026-11-06 09:31:23",
-    "read": false,
+    "read": true,
     "strategyId": "prev_day_tail_rally",
     "title": "⚠️ 前一日尾盘拉升，今日低开大概率下跌",
     "description": "前一日（20261105）创业板指：14:00后最低2533.60→收盘2566.80，拉升1.31%；科创50：14:00后最低1267.37→收盘1286.68，拉升1.52%。今日竞价低开-4.99%（开盘价2438.72 < 前日收盘2566.80），当日大概率低开低走大阴线，情况不对要赶快清仓！",
@@ -12,7 +12,7 @@
   {
     "id": "7ebe84110571c9bc",
     "time": "2026-11-06 09:31:23",
-    "read": false,
+    "read": true,
     "strategyId": "overnight_crisis_escape",
     "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
     "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-37.8亿</strong>（净流出）<br/>• 科技分时情绪 -56.4 → -43.9（上升 12.5）<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
@@ -22,7 +22,7 @@
   {
     "id": "278b6f6cfd4fd1a3",
     "time": "2026-11-06 09:32:23",
-    "read": false,
+    "read": true,
     "strategyId": "volume_shrink_stagnation",
     "title": "📉 放量后缩量滞涨",
     "description": "成交量从高位 <strong>96亿</strong> 回落至 <strong>-222亿</strong>，指数开始滞涨，需警惕回落风险。",
@@ -32,7 +32,7 @@
   {
     "id": "e7e24e3b16ba331b",
     "time": "2026-11-06 09:35:24",
-    "read": false,
+    "read": true,
     "strategyId": "opening_net_inflow",
     "title": "🚨 开盘大幅资金出逃-谨防大跌",
     "description": "开盘 5min 资金净流出 <strong>101.5亿</strong>，按照历史规律，当天大概率大盘要大幅下跌，谨慎出手。",
@@ -42,7 +42,7 @@
   {
     "id": "2e99d9fe8a61c0f4",
     "time": "2026-11-06 10:02:28",
-    "read": false,
+    "read": true,
     "strategyId": "volume_shrink_stagnation",
     "title": "📉 放量后缩量滞涨",
     "description": "成交量从高位 <strong>-903亿</strong> 回落至 <strong>-1024亿</strong>，指数开始滞涨，需警惕回落风险。",
@@ -52,7 +52,7 @@
   {
     "id": "40dbcdeee007c855",
     "time": "2026-11-06 10:31:33",
-    "read": false,
+    "read": true,
     "strategyId": "inflow_rise_volume_shrink",
     "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
     "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-352.4→-343.8亿（增加8.6亿，≥5亿）<br/>• 科创板指较10分钟前上涨0.38%<br/>• 成交量差值-2262亿（<-500亿严重缩量），较10分钟前仅增加-316亿（≤50亿）",
@@ -62,7 +62,7 @@
   {
     "id": "1bac484542f39a21",
     "time": "2026-11-06 10:41:35",
-    "read": false,
+    "read": true,
     "strategyId": "inflow_rise_volume_shrink",
     "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
     "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-343.8→-335.2亿（增加8.5亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.68%<br/>• 成交量差值-2416亿（<-500亿严重缩量），较10分钟前仅增加-158亿（≤50亿）",
@@ -72,7 +72,7 @@
   {
     "id": "20563c516b91a402",
     "time": "2026-11-06 13:00:00",
-    "read": false,
+    "read": true,
     "strategyId": "straight_rise_no_volume",
     "title": "⚠️ 无量拉升警惕回落",
     "description": "创业板5分钟上涨1.57%，但成交量仅增加 <strong>0亿</strong>（不足100亿），无量上涨持续性存疑，容易回落。",
@@ -82,7 +82,7 @@
   {
     "id": "eeb6a33db0175ba9",
     "time": "2026-11-06 13:47:13",
-    "read": false,
+    "read": true,
     "strategyId": "inflow_rise_volume_shrink",
     "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
     "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-444.6→-438.8亿（增加5.8亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.29%<br/>• 成交量差值-4151亿（<-500亿严重缩量），较10分钟前仅增加-180亿（≤50亿）",
@@ -92,7 +92,7 @@
   {
     "id": "15737ac2effa1393",
     "time": "2026-11-06 14:27:25",
-    "read": false,
+    "read": true,
     "strategyId": "inflow_rise_volume_shrink",
     "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
     "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-464.4→-458.7亿（增加5.7亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.30%<br/>• 成交量差值-4576亿（<-500亿严重缩量），较10分钟前仅增加-3亿（≤50亿）",
@@ -102,10 +102,20 @@
   {
     "id": "8689c5241e161527",
     "time": "2026-11-06 14:39:34",
-    "read": false,
+    "read": true,
     "strategyId": "straight_rise_no_volume",
     "title": "⚠️ 无量拉升警惕回落",
     "description": "创业板5分钟上涨1.33%，但成交量仅增加 <strong>-12亿</strong>（不足100亿），无量上涨持续性存疑，容易回落。",
+    "severity": "medium",
+    "isBullish": false
+  },
+  {
+    "id": "7f74a923b8501d2e",
+    "time": "2026-11-06 15:04:46",
+    "read": true,
+    "strategyId": "straight_rise_no_volume",
+    "title": "⚠️ 无量拉升警惕回落",
+    "description": "创业板5分钟上涨1.09%，但成交量仅增加 <strong>-17亿</strong>（不足100亿），无量上涨持续性存疑，容易回落。",
     "severity": "medium",
     "isBullish": false
   }

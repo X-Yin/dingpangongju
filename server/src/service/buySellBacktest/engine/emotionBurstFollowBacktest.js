@@ -1,6 +1,7 @@
 const { STRATEGIES } = require('../strategies/registry');
 const {
   batchParallel,
+  ensureBarsForCodes,
   getSingleStockTlineDataByDate,
   getStockCloseOnOrBefore,
   getTrainingCampDates,
@@ -375,6 +376,10 @@ const runEmotionBurstFollowBacktest = async (startDate, endDate, strategyId, onP
   }
 
   // 组装结果（常规模式单持仓半仓；无限仓位模式多持仓按账户区间口径）
+  // 收盘后强制刷新 barsCache，确保 getStockCloseOnOrBefore 能拿到当日收盘价（与 extremeWinBacktest 同理）
+  if (positions.length > 0) {
+    try { await ensureBarsForCodes(new Set(positions.map(p => p.code)), { force: true }); } catch (e) { /* 兜底 */ }
+  }
   const holdings = [];
   for (const position of positions) {
     const holding = { ...position, weight: TWO_BUY_LEG_WEIGHT };

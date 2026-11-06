@@ -22,10 +22,11 @@ import {
   StarOutlined,
   StarFilled,
   LineChartOutlined,
+  BulbOutlined,
 } from '@ant-design/icons';
 import { local_ip } from '../../constant';
 import { getStrategyMode, MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION } from '../../utils/strategyMode';
-import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeBlock5minSurgePush } from '../../utils/buyPointWs';
+import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeBlock5minSurgePush, subscribeStrategySignalPush } from '../../utils/buyPointWs';
 import { isTradingDay } from '../../utils/tradingDay';
 import './index.scss';
 
@@ -130,6 +131,8 @@ const GlobalDiagnosisAlert = () => {
   const [wfCandidates, setWfCandidates] = useState(null);
   // 重点板块 5 分钟涨幅异动弹窗：{ data:{ time, prevTime, threshold, blocks:[...] }, ts, mock }
   const [blockSurgeAlert, setBlockSurgeAlert] = useState(null);
+  // 策略中心命中提醒卡片（2026-11-06 用户新增）：{ signals:[{ id, time, title, description, isBullish }], ts, mock }
+  const [strategyAlert, setStrategyAlert] = useState(null);
   const seqRef = useRef(0); // 旧请求返回晚于新触发时丢弃过期结果
 
   // 每个交易日 9:05 自动弹出「情绪游资-极致赔率候选池」全局弹窗（不依赖当前策略模式，2026-11-04 用户新增）
@@ -300,7 +303,14 @@ const GlobalDiagnosisAlert = () => {
       if (blocks.length === 0) return;
       setBlockSurgeAlert({ data: msg.data, ts: msg.ts ?? null, mock: msg.mock === true });
     });
-    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubBlockSurge(); };
+    // 策略中心命中：新命中信号广播时弹出全局提醒卡片（与悬浮策略球/抽屉互不影响）
+    const unsubStrategy = subscribeStrategySignalPush((msg) => {
+      if (msg?.open !== true || !msg?.data) return;
+      const signals = Array.isArray(msg.data.signals) ? msg.data.signals.filter((s) => s && s.title) : [];
+      if (signals.length === 0) return;
+      setStrategyAlert({ signals, ts: msg.ts ?? null, mock: msg.mock === true });
+    });
+    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubBlockSurge(); unsubStrategy(); };
   }, [fetchBuyStocks]);
 
   const buyCardAlert = buyAlert || wfAlert;
@@ -311,7 +321,7 @@ const GlobalDiagnosisAlert = () => {
 
   // BlockSurgeModal 使用 antd Modal portal，不依赖 gda-container 渲染；
   // 因此只在没有任何卡片、仅一个 Modal 时，也必须返回一个能挂载 Modal 的根
-  const hasCardAlert = buyCardAlert || sellAlert || iceAlert || wfCandidates;
+  const hasCardAlert = buyCardAlert || sellAlert || iceAlert || wfCandidates || strategyAlert;
   if (!hasCardAlert && !blockSurgeAlert) return null;
 
   return (
@@ -325,6 +335,8 @@ const GlobalDiagnosisAlert = () => {
         />
       )}
       {sellAlert && <SellCard alert={sellAlert} onClose={() => setSellAlert(null)} />}
+      {/* 策略中心命中提醒：与买点诊断同风格的右下角全局卡片 */}
+      {strategyAlert && <StrategySignalCard alert={strategyAlert} onClose={() => setStrategyAlert(null)} />}
       {/* 重点板块 5 分钟涨幅异动：antd Modal 门户居中展示 */}
       {blockSurgeAlert && (
         <BlockSurgeCard alert={blockSurgeAlert} onClose={() => setBlockSurgeAlert(null)} />
@@ -805,6 +817,67 @@ const SellCard = ({ alert, onClose }) => {
         })}
         <div className="gda-footer">
           {ts ? `诊断时间 ${new Date(ts).toLocaleTimeString('zh-CN', { hour12: false })}` : ''}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ==================== 策略中心命中提醒卡片（2026-11-06 用户新增） ====================
+// 后端策略轮询新命中时经 WS（type:'strategy_signal'）广播，本卡片以类似买点诊断的
+// 全局卡片样式弹出提醒：策略名称 / 触发时间 / 利好利空 / 命中详情；
+// 支持「全部已读」同步到策略中心记录；悬浮策略球与抽屉（FloatingStrategyCenter）不受影响
+const StrategySignalCard = ({ alert, onClose }) => {
+  const { signals, ts, mock } = alert;
+  const [marking, setMarking] = useState(false);
+  const sorted = [...signals].sort((a, b) => ((a.time || '') < (b.time || '') ? 1 : -1));
+
+  const markAllRead = async () => {
+    setMarking(true);
+    try {
+      await axios.post(`http://${local_ip}:3000/strategy_signals/read_all`);
+      message.success('策略信号已全部标记为已读');
+      onClose();
+    } catch (e) {
+      message.error(`标记已读失败：${e.message}`);
+    } finally {
+      setMarking(false);
+    }
+  };
+
+  return (
+    <div className="gda-card gda-strategy">
+      <div className="gda-header">
+        <BulbOutlined className="gda-header-icon strategy" />
+        <span className="gda-title">策略命中提醒</span>
+        <span className="gda-count-badge strategy">{sorted.length} 条新信号</span>
+        {mock && <span className="gda-mock-badge">MOCK 测试</span>}
+        <CloseOutlined className="gda-close" onClick={onClose} />
+      </div>
+      <div className="gda-body">
+        {sorted.map((s) => (
+          <div key={s.id || `${s.strategyId}-${s.time}`} className={`gda-sig-item ${s.isBullish ? 'is-bullish' : 'is-bearish'}`}>
+            <div className="gda-sig-head">
+              <span className={`gda-sig-tag ${s.isBullish ? 'up' : 'down'}`}>{s.isBullish ? '利好' : '利空'}</span>
+              <b className="gda-sig-title">{s.title}</b>
+              <span className="gda-sig-time">{s.time ? s.time.slice(11, 16) || s.time : '--'}</span>
+            </div>
+            <div className="gda-sig-desc" dangerouslySetInnerHTML={{ __html: s.description || '' }} />
+          </div>
+        ))}
+        <div className="gda-footer">
+          <span>{ts ? `触发时间 ${new Date(ts).toLocaleTimeString('zh-CN', { hour12: false })}` : ''}</span>
+          <Button
+            type="primary"
+            size="small"
+            ghost
+            icon={<CheckOutlined />}
+            loading={marking}
+            onClick={markAllRead}
+            className="gda-strategy-read-btn"
+          >
+            全部已读
+          </Button>
         </div>
       </div>
     </div>

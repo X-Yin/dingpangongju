@@ -101,7 +101,7 @@ const { getAvailableDates, getSnapshotData, getLatestSnapshotDate, saveDailySnap
 const { getAllFupanNotes, getFupanNoteByDate, saveFupanNote, deleteFupanNote, getIndexTlineByDate, getPersonalFeelings, savePersonalFeelings, getMarketSnapshot, getTodayPlan, saveTodayPlan } = require('./service/fupan');
 const { listDataFiles, readDataFile, readDataFilesBatch, getAliases, saveAliases, setAlias, getHiddenPaths, setHiddenPath } = require('./service/dataCenter');
 const { runDisasterRecoveryCheck } = require('./service/disasterRecovery');
-const { getStrategyRecords, markStrategyRead, markAllStrategiesRead, getStrategyDefinitions } = require('./service/strategy');
+const { getStrategyRecords, markStrategyRead, markAllStrategiesRead, getStrategyDefinitions, mockStrategySignal } = require('./service/strategy');
 const { getAvailableDates: getBacktestAvailableDates, runBacktest, STRATEGY_DEFINITIONS, runAiDiagnosis: runStrategyAiDiagnosis, getAiDiagnosisContext: getStrategyAiDiagnosisContext } = require('./service/strategyBacktest');
 const { smartBacktestRun } = require('./service/smartBacktest');
 const { getAvailableDates: getAiPredictionDates, getPrediction: getAiPrediction, getRealtimePrediction: getAiRealtimePrediction, getBacktestPrediction: getAiBacktestPrediction, getOnlineBacktestPrediction: getAiOnlineBacktestPrediction, getOnlineRealtimePrediction: getAiOnlineRealtimePrediction, getPredictionContext: getAiPredictionContext, getKlinePrediction: getAiKlinePrediction, getKlineBacktestPrediction: getAiKlineBacktestPrediction, getOnlineKlinePrediction: getAiOnlineKlinePrediction, getOnlineKlineBacktestPrediction: getAiOnlineKlineBacktestPrediction, getKlinePredictionContext: getAiKlinePredictionContext, getHistoryExplorationResult: getAiHistoryExplorationResult, getHistoryExplorationContext: getAiHistoryExplorationContext, INTRADAY_MINUTES: AI_INTRADAY_MINUTES, INDEX_OPTIONS: AI_INDEX_OPTIONS } = require('./service/aiPrediction');
@@ -3688,6 +3688,17 @@ app.get('/strategy_definitions', (req, res) => {
   } catch (error) {
     console.error('获取策略定义失败:', error);
     res.status(500).json({ message: error.message || '获取策略定义失败' });
+  }
+});
+
+// 策略中心命中提醒 MOCK：随机取一个内置策略构造命中信号，经与实盘完全一致的
+// WS 链路（type:'strategy_signal'，open:true）推送前端全局卡片；不写 records、不发飞书
+app.post('/debug/mock_strategy_signal', (req, res) => {
+  try {
+    res.json(mockStrategySignal());
+  } catch (error) {
+    console.error('MOCK 策略中心命中失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 策略中心命中失败' });
   }
 });
 

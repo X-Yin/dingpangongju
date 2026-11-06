@@ -30,6 +30,8 @@ const DebugPanel = () => {
   const [sbwMocking, setSbwMocking] = useState(null);
   // 重点板块 5 分钟异动 MOCK
   const [blockSurgeMocking, setBlockSurgeMocking] = useState(false);
+  // 策略中心命中提醒 MOCK
+  const [strategySignalMocking, setStrategySignalMocking] = useState(false);
 
   // 意志力锻炼弹窗间隔（分钟）：默认 5，持久化到 localStorage
   const [willpowerInterval, setWillpowerInterval] = useState(() => {
@@ -189,6 +191,26 @@ const DebugPanel = () => {
       message.error(`mock 请求失败：${e.message}`);
     } finally {
       setSbwMocking(null);
+    }
+  };
+
+  // 策略中心命中提醒 MOCK：随机取一个内置策略构造命中信号，经 WS（type:'strategy_signal'）
+  // 推送前端全局卡片；不写策略记录、不发飞书
+  const triggerStrategySignalMock = async () => {
+    if (strategySignalMocking) return;
+    setStrategySignalMocking(true);
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/debug/mock_strategy_signal`);
+      const d = res.data;
+      if (d?.success) {
+        message.success(`已模拟策略命中：${d.target?.name}`, 4);
+      } else {
+        message.error(d?.error || 'mock 触发失败');
+      }
+    } catch (e) {
+      message.error(`mock 请求失败：${e.message}`);
+    } finally {
+      setStrategySignalMocking(false);
     }
   };
 
@@ -411,6 +433,24 @@ const DebugPanel = () => {
               style={{ background: '#722ed1', borderColor: '#722ed1' }}
             >
               立即测试弹窗
+            </Button>
+          </Card>
+
+          {/* 模块九：策略中心命中提醒 MOCK */}
+          <Card size="small" title="9. 策略中心命中提醒 Mock">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              随机取一个内置策略构造命中信号，经与实盘完全一致的 WebSocket 链路（type:'strategy_signal'）
+              推送，前端右下角弹出「策略命中提醒」全局卡片（样式同买点诊断卡片）。
+              实盘由后端策略轮询（每分钟）命中新信号时自动推送；MOCK 不写策略记录、不发飞书。
+            </Paragraph>
+            <Button
+              type="primary"
+              icon={<BulbOutlined />}
+              loading={strategySignalMocking}
+              onClick={triggerStrategySignalMock}
+              style={{ background: '#a16207', borderColor: '#a16207' }}
+            >
+              触发策略命中提醒
             </Button>
           </Card>
 

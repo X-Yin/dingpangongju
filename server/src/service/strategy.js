@@ -9,6 +9,7 @@ const { getLatestTechEmotion, getAllTechIndexData, getAllIndexKlineData } = requ
 const { getIndexTlineByDate } = require('./fupan');
 const { getMonitorStocks } = require('./monitorStock');
 const { STRATEGY_DEFINITIONS } = require('./strategyBacktest');
+const wsServer = require('../wsServer');
 
 const strategyRecordsPath = path.resolve(__dirname, '../data/strategy_records.json');
 const strategyStatePath = path.resolve(__dirname, '../data/strategy_state.json');
@@ -1534,27 +1535,41 @@ const pollOnce = async () => {
   if (newSignals.length > 0) {
     const records = readRecords();
     const oneMinuteAgo = now.subtract(1, 'minute');
-    
+    const addedRecords = [];
+
     for (const signal of newSignals) {
-      const isDuplicate = records.some(r => 
-        r.strategyId === signal.strategyId && 
+      const isDuplicate = records.some(r =>
+        r.strategyId === signal.strategyId &&
         dayjs(r.time).isAfter(oneMinuteAgo)
       );
-      
+
       if (!isDuplicate) {
-        records.push({
+        const record = {
           id: genId(),
           time: nowStr,
           read: false,
           ...signal
-        });
+        };
+        records.push(record);
+        addedRecords.push(record);
         console.log(`[strategy] 策略触发: ${signal.title}`);
       }
     }
-    
+
     const cutoff = now.subtract(STRATEGY_RETENTION_HOURS, 'hour');
     const filtered = records.filter(r => r && r.time && dayjs(r.time).isAfter(cutoff));
     writeRecords(filtered);
+
+    // 新命中策略经 WS 广播（2026-11-06 用户新增）：前端全局卡片弹出提醒，
+    // 与策略中心悬浮球/抽屉（HTTP 轮询 /strategy_signals）互不影响
+    if (addedRecords.length > 0) {
+      wsServer.broadcast({
+        type: 'strategy_signal',
+        ts: Date.now(),
+        open: true,
+        data: { signals: addedRecords },
+      });
+    }
   }
 };
 
@@ -1614,10 +1629,39 @@ const getStrategyDefinitions = () => {
   return Object.values(STRATEGY_DEFINITIONS);
 };
 
+// 调试 MOCK：随机取一个内置策略构造一条命中信号，经与实盘完全一致的 WS 链路
+// （type:'strategy_signal'，open:true，mock:true）广播前端全局卡片；不写 records、不发飞书
+const mockStrategySignal = () => {
+  const defs = Object.values(STRATEGY_DEFINITIONS);
+  if (defs.length === 0) return { success: false, error: '无可用策略定义' };
+  const def = defs[Math.floor(Math.random() * defs.length)];
+  const record = {
+    id: genId(),
+    time: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+    read: false,
+    strategyId: def.id,
+    title: `${def.name}（MOCK）`,
+    description: def.detail || def.description || '（MOCK）模拟策略命中信号',
+    severity: 'high',
+    isBullish: def.type === 'bullish',
+    mock: true,
+  };
+  wsServer.broadcast({
+    type: 'strategy_signal',
+    ts: Date.now(),
+    open: true,
+    mock: true,
+    data: { signals: [record] },
+  });
+  console.log(`[strategy] MOCK 策略触发: ${record.title}`);
+  return { success: true, target: { id: def.id, name: def.name } };
+};
+
 module.exports = {
   startStrategyPolling,
   getStrategyRecords,
   markStrategyRead,
   markAllStrategiesRead,
   getStrategyDefinitions,
+  mockStrategySignal,
 };

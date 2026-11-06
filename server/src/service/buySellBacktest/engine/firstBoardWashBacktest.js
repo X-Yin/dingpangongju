@@ -900,6 +900,10 @@ const runFirstBoardWashBacktest = async (startDate, endDate, strategyId, onProgr
   }
 
   // 组装结果（期末可能同时持有 2 份，每份半仓）
+  // 收盘后强制刷新 barsCache，确保 getStockCloseOnOrBefore 能拿到当日收盘价（与 extremeWinBacktest 同理）
+  if (positions.length > 0) {
+    try { await ensureBarsForCodes(new Set(positions.map(p => p.code)), { force: true }); } catch (e) { /* 兜底 */ }
+  }
   const holdings = [];
   for (const pos of positions) {
     const h = { ...pos, weight: TWO_BUY_LEG_WEIGHT };

@@ -923,6 +923,14 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
   const trades = sortTradesByBuyTime([...emoTrades, ...ewTrades]);
   trades.forEach((t, i) => { t.seq = i + 1; });
 
+  // 收盘后强制刷新 barsCache，确保 getStockCloseOnOrBefore 能拿到当日收盘价（与 extremeWinBacktest 同理）
+  const allHoldingCodes = new Set();
+  for (const pos of emoPositions) if (pos && pos.code) allHoldingCodes.add(pos.code);
+  for (const pos of ewPositions) if (pos && pos.code) allHoldingCodes.add(pos.code);
+  if (allHoldingCodes.size > 0) {
+    try { await ensureBarsForCodes(allHoldingCodes, { force: true }); } catch (e) { /* 兜底 */ }
+  }
+
   // 期末持仓：A 风格（按权重折算）+ B 风格（双腿各半仓）（两风格互斥，不会同时存在）
   const holdings = [];
   for (const pos of emoPositions) {

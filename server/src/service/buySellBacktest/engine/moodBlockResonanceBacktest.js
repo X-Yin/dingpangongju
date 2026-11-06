@@ -23,6 +23,7 @@ const { STRATEGIES } = require('../strategies/registry');
 const {
   batchParallel,
   clearTlineMemCache,
+  ensureBarsForCodes,
   getKeyBlockConstituents,
   getSingleStockTlineDataByDate,
   getStockCloseOnOrBefore,
@@ -571,6 +572,10 @@ const runMoodBlockResonanceBacktest = async (startDate, endDate, strategyId, onP
   }
 
   // ---- 组装结果 ----
+  // 收盘后强制刷新 barsCache，确保 getStockCloseOnOrBefore 能拿到当日收盘价（与 extremeWinBacktest 同理）
+  if (positions.length > 0) {
+    try { await ensureBarsForCodes(new Set(positions.map(p => p.code)), { force: true }); } catch (e) { /* 兜底 */ }
+  }
   const holdings = [];
   for (const pos of positions) {
     const h = { ...pos, weight: TWO_BUY_LEG_WEIGHT };

@@ -11,7 +11,7 @@ import { local_ip } from '../constant';
 const WS_URL = `ws://${local_ip}:3000/ws`;
 const RECONNECT_BASE_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
-const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'block_5min_surge'];
+const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'block_5min_surge', 'strategy_signal'];
 
 let socket = null;
 let reconnectTimer = null;
@@ -165,6 +165,12 @@ export const subscribeWashFusionBuyPush = (handler) => subscribePush('wash_fusio
 //   { type:'block_5min_surge', ts, open:true, data:{ time, prevTime, threshold, blocks:[{blockName,avgChange,prevAvgChange,change5min}] } }
 //   前端全局弹窗提示异动板块；MOCK 调试消息额外带 mock:true 标记
 export const subscribeBlock5minSurgePush = (handler) => subscribePush('block_5min_surge', handler);
+
+// 策略中心命中推送（2026-11-06 用户新增）：后端策略轮询新命中时广播
+//   { type:'strategy_signal', ts, open:true, data:{ signals:[{ id, time, read, strategyId, title, description, severity, isBullish }] } }
+//   前端由 GlobalDiagnosisAlert 用类似买点诊断的全局卡片提醒（悬浮策略球/抽屉不受影响）；
+//   MOCK 调试消息额外带 mock:true 标记
+export const subscribeStrategySignalPush = (handler) => subscribePush('strategy_signal', handler);
 
 // 订阅 debug 自检消息（debug_pong / debug_ping / debug_pong_ack）；返回取消订阅函数
 export const subscribeDebugWs = (handler) => {

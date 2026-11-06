@@ -517,6 +517,10 @@ const runEmotionBurstDriftBacktest = async (startDate, endDate, strategyId, onPr
   }
 
   // 组装结果（逐份持仓）
+  // 收盘后强制刷新 barsCache，确保 getStockCloseOnOrBefore 能拿到当日收盘价（与 extremeWinBacktest 同理）
+  if (positions.length > 0) {
+    try { await ensureBarsForCodes(new Set(positions.map(p => p.code)), { force: true }); } catch (e) { /* 兜底 */ }
+  }
   const holdings = [];
   for (const position of positions) {
     const holding = { ...position, weight: TWO_BUY_LEG_WEIGHT };

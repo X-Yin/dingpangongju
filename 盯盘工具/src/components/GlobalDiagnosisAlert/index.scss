@@ -1411,3 +1411,167 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   &.up { color: #e11d48; }
   &.down { color: #16a34a; }
 }
+
+// ==================== 策略中心命中提醒卡（2026-11-06 用户新增） ====================
+// 琥珀金 → 琥珀紫「策略灯泡」渐变，与买点（蓝紫）/ 卖点（绯红）/ 冰点（金橙）区分
+.gda-card.gda-strategy {
+  background:
+    radial-gradient(120% 88% at 0% 0%, rgba(250, 204, 21, 0.30) 0%, transparent 56%),
+    radial-gradient(115% 100% at 100% 6%, rgba(217, 119, 6, 0.42) 0%, transparent 60%),
+    radial-gradient(150% 120% at 46% 118%, rgba(76, 29, 149, 0.55) 0%, transparent 68%),
+    linear-gradient(136deg, #292005 0%, #713f12 46%, #a16207 100%);
+  box-shadow:
+    0 26px 60px -22px rgba(161, 98, 7, 0.6),
+    0 10px 28px -14px rgba(66, 48, 5, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+// 头部：灯泡渐变芯片 + MOCK 徽标
+.gda-header {
+  .gda-header-icon.strategy {
+    background: linear-gradient(135deg, rgba(253, 230, 138, 0.95), rgba(245, 158, 11, 0.95));
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    animation: gda-icon-pulse-amber 2.8s ease-in-out infinite;
+  }
+
+  .gda-count-badge.strategy {
+    color: #fde68a;
+    background: rgba(253, 230, 138, 0.14);
+    border-color: rgba(253, 230, 138, 0.32);
+  }
+}
+
+@keyframes gda-icon-pulse-amber {
+  0%,
+  100% {
+    box-shadow: 0 6px 18px -6px rgba(245, 158, 11, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+  50% {
+    box-shadow: 0 8px 24px -4px rgba(245, 158, 11, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  }
+}
+
+// MOCK 调试徽标（琥珀描边小胶囊）
+.gda-mock-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fde68a;
+  background: rgba(253, 230, 138, 0.12);
+  border: 1px dashed rgba(253, 230, 138, 0.5);
+  border-radius: 999px;
+  padding: 2px 9px;
+  white-space: nowrap;
+}
+
+// 信号条目：磨砂玻璃小卡，左缘按利好 / 利空着色
+.gda-sig-item {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  &.is-bullish::before {
+    background: linear-gradient(180deg, #fb7185, #ef4444);
+  }
+
+  &.is-bearish::before {
+    background: linear-gradient(180deg, #34d399, #10b981);
+  }
+}
+
+.gda-sig-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gda-sig-tag {
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 1px 8px;
+  flex-shrink: 0;
+
+  &.up {
+    color: #fecaca;
+    background: rgba(248, 113, 113, 0.22);
+    border: 1px solid rgba(248, 113, 113, 0.42);
+  }
+
+  &.down {
+    color: #bbf7d0;
+    background: rgba(52, 211, 153, 0.18);
+    border: 1px solid rgba(52, 211, 153, 0.4);
+  }
+}
+
+.gda-sig-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gda-sig-time {
+  font-family: $gda-mono;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.62);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.gda-sig-desc {
+  font-size: 12px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.86);
+
+  strong {
+    color: #fde68a;
+    font-weight: 700;
+  }
+
+  br {
+    display: none; // 描述中的 <br/> 在卡片窄宽下交给自动换行
+  }
+}
+
+// 底部：时间 + 全部已读按钮
+.gda-card.gda-strategy .gda-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gda-strategy-read-btn {
+  &.ant-btn-primary {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.45);
+    color: #fff;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.26) !important;
+      border-color: rgba(255, 255, 255, 0.7) !important;
+      color: #fff !important;
+    }
+  }
+}

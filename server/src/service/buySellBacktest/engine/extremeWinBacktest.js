@@ -706,8 +706,15 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
     if (holding && holding.rawBuyReturn != null && Number.isFinite(Number(holding.rawBuyReturn))) f *= 1 + Number(holding.rawBuyReturn) / 100;
     return f;
   };
-  const holdings = [];
+  // 收盘后强制刷新 barsCache：positions 中的持仓可能在回测运行时（盘中/刚过 15:00）没有覆盖到「今日日线 bar」，
+  // 导致 getStockCloseOnOrBefore 拿不到当日收盘价、收益被截在昨日收盘；
+  // 这里在组装期末估值前 force 一次，确保 kline_cache 已刷新的前提下 barsCache 同步到最新。
   const lastPxDate = rangeDates[rangeDates.length - 1];
+  const holdingCodes = new Set(positions.filter(Boolean).map(p => p.code));
+  if (holdingCodes.size > 0) {
+    try { await ensureBarsForCodes(holdingCodes, { force: true }); } catch (e) { /* 兜底：刷新失败时仍用已缓存的 */ }
+  }
+  const holdings = [];
   for (let l = 0; l < positions.length; l++) {
     const p = positions[l];
     if (!p) continue;

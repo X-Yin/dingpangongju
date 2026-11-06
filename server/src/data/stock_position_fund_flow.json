@@ -3170,6 +3170,15 @@
         "latestPrice": 200.8,
         "volumeDiffPercent": -29.67,
         "volumeState": "缩量"
+      },
+      {
+        "time": "150400",
+        "minute": "1504",
+        "mainFund": -0.18,
+        "change": -0.02,
+        "latestPrice": 200.8,
+        "volumeDiffPercent": -29.67,
+        "volumeState": "缩量"
       }
     ],
     "sz003021": [
@@ -4814,6 +4823,15 @@
       {
         "time": "150300",
         "minute": "1503",
+        "mainFund": 0.58,
+        "change": 3.25,
+        "latestPrice": 101.99,
+        "volumeDiffPercent": -1.51,
+        "volumeState": "平量"
+      },
+      {
+        "time": "150400",
+        "minute": "1504",
         "mainFund": 0.58,
         "change": 3.25,
         "latestPrice": 101.99,

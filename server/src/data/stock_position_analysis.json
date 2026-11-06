@@ -1,5 +1,5 @@
 {
-  "updateTime": "2026-11-06T07:03:01.320Z",
+  "updateTime": "2026-11-06T07:04:01.429Z",
   "date": "20261106",
   "trading": true,
   "overview": {
@@ -32,15 +32,6 @@
       },
       "quant": null,
       "recentFlow": [
-        {
-          "time": "145600",
-          "minute": "1456",
-          "mainFund": 0.58,
-          "change": 3.37,
-          "latestPrice": 102.11,
-          "volumeDiffPercent": -2.27,
-          "volumeState": "平量"
-        },
         {
           "time": "145700",
           "minute": "1457",
@@ -103,12 +94,21 @@
           "latestPrice": 101.99,
           "volumeDiffPercent": -1.51,
           "volumeState": "平量"
+        },
+        {
+          "time": "150400",
+          "minute": "1504",
+          "mainFund": 0.58,
+          "change": 3.25,
+          "latestPrice": 101.99,
+          "volumeDiffPercent": -1.51,
+          "volumeState": "平量"
         }
       ],
-      "updatedTime": "150300",
+      "updatedTime": "150400",
       "latestDiagnosis": {
-        "time": "150300",
-        "minute": "1503",
+        "time": "150400",
+        "minute": "1504",
         "intervalLabel": "15:00 - 15:10",
         "pattern": "横盘震荡",
         "capitalAction": "震荡换手",
@@ -591,8 +591,8 @@
           }
         },
         {
-          "time": "150300",
-          "minute": "1503",
+          "time": "150400",
+          "minute": "1504",
           "intervalLabel": "15:00 - 15:10",
           "pattern": "横盘震荡",
           "capitalAction": "震荡换手",
@@ -639,15 +639,6 @@
       },
       "quant": null,
       "recentFlow": [
-        {
-          "time": "145600",
-          "minute": "1456",
-          "mainFund": -0.18,
-          "change": -0.23,
-          "latestPrice": 200.38,
-          "volumeDiffPercent": -29.88,
-          "volumeState": "缩量"
-        },
         {
           "time": "145700",
           "minute": "1457",
@@ -710,12 +701,21 @@
           "latestPrice": 200.8,
           "volumeDiffPercent": -29.67,
           "volumeState": "缩量"
+        },
+        {
+          "time": "150400",
+          "minute": "1504",
+          "mainFund": -0.18,
+          "change": -0.02,
+          "latestPrice": 200.8,
+          "volumeDiffPercent": -29.67,
+          "volumeState": "缩量"
         }
       ],
-      "updatedTime": "150300",
+      "updatedTime": "150400",
       "latestDiagnosis": {
-        "time": "150300",
-        "minute": "1503",
+        "time": "150400",
+        "minute": "1504",
         "intervalLabel": "15:00 - 15:10",
         "pattern": "横盘震荡",
         "capitalAction": "震荡换手",
@@ -1313,8 +1313,8 @@
           }
         },
         {
-          "time": "150300",
-          "minute": "1503",
+          "time": "150400",
+          "minute": "1504",
           "intervalLabel": "15:00 - 15:10",
           "pattern": "横盘震荡",
           "capitalAction": "震荡换手",
