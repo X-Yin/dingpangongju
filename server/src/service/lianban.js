@@ -21,13 +21,27 @@ const fs = require('fs');
 const axios = require('axios');
 const dayjs = require('dayjs');
 const { isTradingDay, parseDateNum } = require('../utils/tradingDay');
-const { getBrowser } = require('../utils/browser');
+const puppeteer = require('puppeteer');
 
 const lianbanDir = path.resolve(__dirname, '../data/lianbanSnapshot');
 const cookieFile = path.resolve(__dirname, '../../.lianban-cookie');
 const BASE_URL = 'https://lianban.net/days';
 // 当日复盘页入口：站点会用 /manifest.json 自动跳转到最新交易日的 /days/YYYY-MM-DD.html
 const TODAY_URL = 'https://lianban.net/today.html';
+
+// 无头（headless）启动参数：不打开任何可见窗口，抓取完成后立即关闭整个浏览器进程
+const HEADLESS_LAUNCH_ARGS = [
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-gpu',
+  '--mute-audio',
+  '--no-first-run',
+  '--no-default-browser-check',
+  '--disable-background-timer-throttling',
+  '--disable-backgrounding-occluded-windows',
+  '--disable-renderer-backgrounding',
+];
 
 // 历史复盘页（非当日）必须登录后才会返回「热点题材」数据
 // cookie 优先级：环境变量 LIANBAN_COOKIE > server/.lianban-cookie 文件
@@ -198,11 +212,12 @@ const applyCookieToPage = async (page) => {
   }
 };
 
-// 盘后抓取当日复盘页：用 Puppeteer 打开 https://lianban.net/today.html，
+// 盘后抓取当日复盘页：用 Puppeteer 无头模式打开 https://lianban.net/today.html，
 // 站点自动跳转到最新交易日的 /days/YYYY-MM-DD.html，直接拦截该 document
-// 响应拿原始 HTML（而不是重新请求接口）；拦截不到时退回 page.content() 兜底。
+// 响应拿原始 HTML（而不是重新请求接口）；抓取结束后立即关闭并回收浏览器进程。
 const fetchTodayHtmlWithPuppeteer = async ({ timeout = 30000 } = {}) => {
-  const browser = await getBrowser();
+  const browser = await puppeteer.launch({ headless: true, args: HEADLESS_LAUNCH_ARGS });
+  const browserProcess = browser.process();
   const page = await browser.newPage();
   let captured = null;
 
@@ -226,6 +241,7 @@ const fetchTodayHtmlWithPuppeteer = async ({ timeout = 30000 } = {}) => {
   };
 
   try {
+    await page.setUserAgent(HTTP_HEADERS['user-agent']);
     await applyCookieToPage(page);
     page.on('response', onResponse);
     try {
@@ -251,8 +267,13 @@ const fetchTodayHtmlWithPuppeteer = async ({ timeout = 30000 } = {}) => {
     }
     return captured;
   } finally {
-    page.off('response', onResponse);
+    try { page.off('response', onResponse); } catch (e) { /* 忽略 */ }
     await page.close().catch(() => {});
+    // 抓取完成立即关闭整个无头浏览器，避免残留进程占用 CPU / 内存
+    await browser.close().catch(() => {});
+    if (browserProcess && browserProcess.exitCode == null && !browserProcess.killed) {
+      try { browserProcess.kill('SIGKILL'); } catch (e) { /* 忽略 */ }
+    }
   }
 };
 
