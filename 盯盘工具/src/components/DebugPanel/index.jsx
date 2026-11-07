@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Drawer, Card, Button, Space, Typography, message, InputNumber } from 'antd';
 import {
   BugOutlined, SyncOutlined, CheckCircleFilled, WarningFilled, RocketOutlined, FallOutlined, ClockCircleOutlined,
-  BulbOutlined, RiseOutlined,
+  BulbOutlined, RiseOutlined, ThunderboltOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../constant';
@@ -32,6 +32,7 @@ const DebugPanel = () => {
   const [blockSurgeMocking, setBlockSurgeMocking] = useState(false);
   // 策略中心命中提醒 MOCK
   const [strategySignalMocking, setStrategySignalMocking] = useState(false);
+  const [resonanceMocking, setResonanceMocking] = useState(false);
 
   // 意志力锻炼弹窗间隔（分钟）：默认 5，持久化到 localStorage
   const [willpowerInterval, setWillpowerInterval] = useState(() => {
@@ -191,6 +192,26 @@ const DebugPanel = () => {
       message.error(`mock 请求失败：${e.message}`);
     } finally {
       setSbwMocking(null);
+    }
+  };
+
+  // 大盘 × 板块情绪共振 MOCK：构造大盘温度 ≥60 且板块全面高潮/一致加速的数据，
+  // 经 WS（type:'emotion_resonance'）推送前端全局共振弹窗
+  const triggerResonanceMock = async () => {
+    if (resonanceMocking) return;
+    setResonanceMocking(true);
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/debug/mock_emotion_resonance`);
+      const d = res.data;
+      if (d?.success) {
+        message.success(`已模拟情绪共振：${(d.blocks || []).join('、')}`, 4);
+      } else {
+        message.error(d?.error || 'mock 触发失败');
+      }
+    } catch (e) {
+      message.error(`mock 请求失败：${e.message}`);
+    } finally {
+      setResonanceMocking(false);
     }
   };
 
@@ -451,6 +472,24 @@ const DebugPanel = () => {
               style={{ background: '#a16207', borderColor: '#a16207' }}
             >
               触发策略命中提醒
+            </Button>
+          </Card>
+
+          {/* 模块十：大盘 × 板块情绪共振 MOCK */}
+          <Card size="small" title="10. 大盘 × 板块情绪共振 Mock">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              构造大盘情绪温度 ≥60、板块处于「全面高潮 / 一致加速」的共振数据，
+              经与实盘完全一致的 WebSocket 链路（type:'emotion_resonance'）推送，前端弹出全局共振提示。
+              实盘由 block_amount_poll 每 5 分钟触发后端即时情绪周期运算，满足条件时自动推送。
+            </Paragraph>
+            <Button
+              type="primary"
+              icon={<ThunderboltOutlined />}
+              loading={resonanceMocking}
+              onClick={triggerResonanceMock}
+              style={{ background: '#d97706', borderColor: '#d97706' }}
+            >
+              触发情绪共振提示
             </Button>
           </Card>
 

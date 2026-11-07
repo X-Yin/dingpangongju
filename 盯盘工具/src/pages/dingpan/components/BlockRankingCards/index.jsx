@@ -3,7 +3,7 @@ import { RiseOutlined, FallOutlined, ReloadOutlined, ThunderboltOutlined } from 
 import { titleStyle, borderStyle, numberStyle } from '../../utils/themeColor';
 import './index.scss';
 
-const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockStockList, themeColor, vertical = false, fillContainer = false, onRefresh, refreshing = false, onEmotionCycle, emotionLoading = false }) => {
+const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockStockList, themeColor, vertical = false, fillContainer = false, onRefresh, refreshing = false, onEmotionCycle, emotionLoading = false, emotionLoadingSeconds = 0 }) => {
     return (
         <Row gutter={[12, 8]} style={{ marginBottom: 8, height: fillContainer ? '100%' : undefined, flex: fillContainer ? 1 : undefined }}>
             <Col span={vertical ? 24 : 12} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -65,7 +65,7 @@ const BlockRankingCards = ({ topAndBottomBlockData, onBlockClick, renderBlockSto
                                         <span
                                             style={{ display: 'inline-block', padding: 2, }}>
                                             <ThunderboltOutlined style={{ marginRight: 2 }} />
-                                            情绪周期
+                                            {emotionLoading ? `${Number(emotionLoadingSeconds || 0).toFixed(1)}s` : '情绪周期'}
                                         </span>
                                     </Button>
                                 )}

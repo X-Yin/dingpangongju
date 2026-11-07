@@ -1,19 +1,24 @@
 // 板块成交量占比轮询
 // - 每 5 分钟计算一次各板块当日成交量占比，写入 src/data/block_volume_ratio_intraday.json
+// - 每次写完后触发一次即时情绪周期运算（与点击盯盘页情绪周期按钮同一套链路），
+//   大盘情绪温度 ≥60 且板块全面高潮/一致加速时由后端 WS 推送共振提示
 // - 默认仅在交易日的交易时段、且 9:30 开盘之后执行
 // - npm run block_amount_poll        常驻轮询
 // - npm run block_amount_poll --now  立即执行一次（不判断交易日/时间），执行完退出
 // - 追加 --all：强制走多平台轮询兜底（同花顺/财联社）
+const axios = require('axios');
 const dayjs = require('dayjs');
 const { isTradingDay, isMiddayBreak, isAfterMarketClose } = require('./utils');
 const { runAndSaveIntradayPoint } = require('./service/blockVolumeRatio');
 
-const POLL_INTERVAL = 10 * 60 * 1000;
+const POLL_INTERVAL = 5 * 60 * 1000;
 const CHECK_INTERVAL = 60 * 1000;
 const START_MINUTE = 9 * 60 + 30; // 9:30 开盘之后才开始
 // 校验失败 / 请求失败时的重试：等待 10s 后强制重新拉取行情（不复用同一份异常快照）
 const MAX_ATTEMPTS = 3;
 const RETRY_DELAY = 10 * 1000;
+// 后端服务端口（共振检查走服务端进程，才能通过 WS 广播到前端）
+const SERVER_PORT = process.env.SERVER_PORT || 3000;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -43,6 +48,27 @@ const renderProgress = ({ done, total, current, detail }) => {
     const detailText = detail ? ` ${detail}` : '';
     const line = `[${formatTime()}] ${bar} ${(percent * 100).toFixed(1).padStart(5)}% (${done}/${total})${detailText} 当前:${current}`;
     process.stdout.write(`\r${line}\x1b[K`);
+};
+
+// 触发服务端即时情绪周期运算：服务端进程内完成同花顺+财联社实时快照与四维立体重算，
+// 满足共振条件时由服务端 WS 广播给前端弹窗（本进程无法直接广播）
+const triggerEmotionResonanceCheck = async () => {
+    try {
+        const res = await axios.post(
+            `http://127.0.0.1:${SERVER_PORT}/emotion_resonance/check`,
+            {},
+            { timeout: 60 * 1000 }
+        );
+        const d = res.data || {};
+        const blocks = Array.isArray(d.blocks) ? d.blocks : [];
+        if (blocks.length) {
+            console.log(`[${formatTime()}] 情绪共振：大盘 ${d.marketTemperature}°，${blocks.map((b) => `${b.board} ${b.phase}`).join('、')}`);
+        } else {
+            console.log(`[${formatTime()}] 即时情绪周期：大盘 ${d.marketTemperature ?? '--'}°，未触发共振`);
+        }
+    } catch (error) {
+        console.warn(`[${formatTime()}] 即时情绪周期运算失败：${error.message}`);
+    }
 };
 
 const runOnce = async () => {
@@ -78,6 +104,8 @@ const runOnce = async () => {
             }
             console.log(`占比: ${ratioText}`);
             console.log(`已写入分时缓存（${payload.points.length} 个时点）: ${payload.date}`);
+            // 每次成交量占比写完后，顺带跑一次即时情绪周期共振检查
+            await triggerEmotionResonanceCheck();
             return true;
         } catch (error) {
             process.stdout.write('\n');

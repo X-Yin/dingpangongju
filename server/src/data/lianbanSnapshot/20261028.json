@@ -12,7 +12,7 @@
   },
   "sentiment": {
     "phase": "修复期",
-    "temperature": null
+    "temperature": 44.9
   },
   "kpi": {
     "limitUpCount": 71,

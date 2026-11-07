@@ -408,26 +408,46 @@ $sl-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     }
   }
 
-  .sl-mini-phase-row {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 4px;
-  }
-
-  .sl-mini-phase-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--phase-color, #94a3b8);
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.16);
-  }
-
   .sl-sector-head {
     align-items: flex-start;
+  }
+
+  .sl-sector-head-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  // 合并 / 分开 切换按钮
+  .sl-chart-mode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover { background: rgba(255, 255, 255, 0.3); }
+
+    &.active {
+      color: #04372a;
+      background: #d9fff3;
+      border-color: rgba(255, 255, 255, 0.7);
+    }
+  }
+
+  // 板块情绪周期：分开模式下每个板块一张小图（两列）
+  .sl-sector-cycle-grid {
+    margin-top: 8px;
   }
 
   // ---------- 板块成交 & 资金：筛选框 + 子模块 ----------

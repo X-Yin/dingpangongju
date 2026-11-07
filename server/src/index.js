@@ -121,7 +121,7 @@ const { isTradingDay, getPrevTradingDay } = require('./utils/tradingDay');
 const { getClsReqIndexUrl, isTradingHours, timestampToDateStr } = require('./utils');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
-const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refreshLianbanRange, saveTodayLianban } = require('./service/lianban');
+const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refreshLianbanRange } = require('./service/lianban');
 const { getMarketOverview, getThemeAnalysis, getStockQuotes, getThemeHistory, getThemeDayStocks, getIndexQuotes, invalidateThemeAnalysisCache } = require('./service/themeMonitor');
 // 复盘页「四维立体」：主线/支线 + 龙一~龙五 + 三线情绪周期
 const { getSiweiLitiAnalysis } = require('./service/siweiLiti');
@@ -151,6 +151,8 @@ const { checkFirstBoardWashSellPointDetailed, checkSecondBoardWashSellPointDetai
 const debugMock = require('./service/debugMock');
 // 重点板块 5 分钟涨幅异动监控（每 5min 整数倍计算，≥1.5% 经 WS 推送前端弹窗）
 const block5minSurge = require('./service/block5minSurge');
+// 盘中情绪共振监测（大盘情绪温度 ≥60 且板块全面高潮/一致加速时 WS 广播）
+const emotionResonance = require('./service/emotionResonance');
 const wsServer = require('./wsServer');
 const { getThsHotRank } = require('./service/thsHotRank');
 
@@ -897,7 +899,7 @@ app.post('/refresh_lianban_snapshot', async (req, res) => {
   }
 });
 
-// 实时四维立体结果缓存：Puppeteer 拉连板 + 全市场成交额约需 1 分钟，
+// 实时四维立体结果缓存：同花顺 + 财联社并行取数（目标 10s 内完成），
 // 60 秒内重复打开弹窗直接复用结果，并合并并发请求避免重复抓取
 let siweiRealtimeCache = { ts: 0, data: null };
 let siweiRealtimeJob = null;
@@ -905,17 +907,21 @@ const SIWEI_REALTIME_TTL = 60 * 1000;
 
 const refreshSiweiRealtime = async () => {
   const { runAndSaveIntradayPoint } = require('./service/blockVolumeRatio');
-  await Promise.all([
-    saveTodayLianban().catch((e) => console.warn('[siweiLiti] 实时连板快照刷新失败:', e.message)),
+  const { buildTodaySnapshot } = require('./service/emotionCycleRealtime');
+  const [todaySnapshot] = await Promise.all([
+    buildTodaySnapshot().catch((e) => {
+      console.warn('[siweiLiti] 同花顺+财联社实时快照刷新失败:', e.message);
+      return null;
+    }),
     runAndSaveIntradayPoint().catch((e) => console.warn('[siweiLiti] 实时板块成交量占比刷新失败:', e.message)),
   ]);
-  const data = await getSiweiLitiAnalysis({ force: true });
+  const data = await getSiweiLitiAnalysis({ force: true, todayOverride: todaySnapshot });
   return { ...data, realtime: true };
 };
 
 // 复盘页「四维立体」：最近 10 个交易日主线/支线 + 龙头/中军 + 三线情绪周期
-// realtime=1：先用 Puppeteer 拉取连板网当日最新复盘页刷新当天快照，
-// 再刷新板块成交量占比实时分时点（与 MainFund 同源算法），最后强制重算情绪周期
+// realtime=1：同花顺（7 成）+ 财联社（3 成）并行拉取当日涨停/情绪数据生成实时快照，
+// 同时刷新板块成交量占比实时分时点，最后强制重算情绪周期
 app.get('/siwei_liti_analysis', async (req, res) => {
   try {
     const realtime = String(req.query.realtime || '') === '1';
@@ -939,6 +945,17 @@ app.get('/siwei_liti_analysis', async (req, res) => {
   } catch (error) {
     console.error('获取四维立体分析失败:', error);
     res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 盘中情绪共振即时检查：block_amount_poll 每 5 分钟调用一次，走与情绪周期按钮一致的实时快照链路
+app.post('/emotion_resonance/check', async (req, res) => {
+  try {
+    const result = await emotionResonance.checkEmotionResonance();
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('即时情绪周期共振检查失败:', error);
+    res.status(500).json({ success: false, message: error.message || '检查失败' });
   }
 });
 
@@ -2113,6 +2130,16 @@ app.post('/debug/mock_block_5min_surge', (req, res) => {
   } catch (error) {
     console.error('MOCK 板块 5min 异动失败:', error);
     res.json({ success: false, error: error.message || 'MOCK 板块 5min 异动失败' });
+  }
+});
+
+// 情绪共振 MOCK：广播一条与实盘结构一致的共振提示（type:'emotion_resonance'）
+app.post('/debug/mock_emotion_resonance', (req, res) => {
+  try {
+    res.json(emotionResonance.mockResonance());
+  } catch (error) {
+    console.error('MOCK 情绪共振失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 情绪共振失败' });
   }
 });
 

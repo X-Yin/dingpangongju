@@ -11,7 +11,7 @@ import { local_ip } from '../constant';
 const WS_URL = `ws://${local_ip}:3000/ws`;
 const RECONNECT_BASE_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
-const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'block_5min_surge', 'strategy_signal'];
+const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'block_5min_surge', 'strategy_signal', 'emotion_resonance'];
 
 let socket = null;
 let reconnectTimer = null;
@@ -171,6 +171,14 @@ export const subscribeBlock5minSurgePush = (handler) => subscribePush('block_5mi
 //   前端由 GlobalDiagnosisAlert 用类似买点诊断的全局卡片提醒（悬浮策略球/抽屉不受影响）；
 //   MOCK 调试消息额外带 mock:true 标记
 export const subscribeStrategySignalPush = (handler) => subscribePush('strategy_signal', handler);
+
+// 大盘 × 板块情绪共振推送（2026-11-07 用户新增）：
+//   后端每 5 分钟（block_amount_poll 触发）计算即时情绪周期，大盘情绪温度 ≥60 且板块
+//   当日情绪周期达到全面高潮 / 一致加速时广播
+//   { type:'emotion_resonance', ts, open:true, data:{ date, marketTemperature, threshold,
+//     blocks:[{ board, phase, count, ratio, prevRatio, deltaRatio, reason }] } }
+//   前端由 GlobalDiagnosisAlert 弹出全局共振提示；MOCK 调试消息额外带 mock:true 标记
+export const subscribeEmotionResonancePush = (handler) => subscribePush('emotion_resonance', handler);
 
 // 订阅 debug 自检消息（debug_pong / debug_ping / debug_pong_ack）；返回取消订阅函数
 export const subscribeDebugWs = (handler) => {

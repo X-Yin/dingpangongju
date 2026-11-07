@@ -94,7 +94,7 @@ const toChartData = (list) => (list || [])
 // 迷你折线图（lightweight-charts）：透明底 + 白色文字，适配渐变卡
 // series 单线；lines 多线（板块情绪周期多选时每条题材一条线）；统一带十字光标 tooltip
 // fixedRange: 固定价格轴范围（如 { min: 0, max: 4 }），避免数据不满轴时刻度标签缺失
-const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFormat, priceFormatter, extraLine, fixedRange }) => {
+const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFormat, priceFormatter, extraLine, fixedRange, hotDates, sideTooltip }) => {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const [tip, setTip] = useState(null);
@@ -180,9 +180,24 @@ const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFo
       values: new Map(data.map((d) => [String(d.time), d.value])),
     });
 
+    // 大盘情绪 ≥ 60 的日期打点（hotDates 为 YYYY-MM-DD → 温度值 的 Map），文字标注「大盘 xx°」
+    const buildMarkers = (chartData) => {
+      if (!hotDates || !hotDates.size) return [];
+      return chartData
+        .filter((d) => hotDates.has(String(d.time)))
+        .map((d) => ({
+          time: d.time,
+          position: 'aboveBar',
+          color: '#fbbf24',
+          shape: 'circle',
+          size: 0.5,
+          text: `大盘 ${Math.round(Number(hotDates.get(String(d.time))))}°`,
+        }));
+    };
+
     const hasMultiLines = Array.isArray(lines) && lines.length > 0;
     if (hasMultiLines) {
-      lines.forEach((ln) => {
+      lines.forEach((ln, idx) => {
         const multiSeries = chart.addLineSeries({
           color: ln.color,
           lineWidth: 2,
@@ -195,6 +210,8 @@ const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFo
         });
         const data = toChartData(ln.series);
         multiSeries.setData(data);
+        // 合并模式只在第一条曲线上打一次标记，避免同一日期重复出现
+        if (idx === 0) multiSeries.setMarkers(buildMarkers(data));
         pushMeta(ln.name, ln.color, data);
       });
     } else {
@@ -209,6 +226,7 @@ const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFo
       });
       const data = toChartData(series);
       line.setData(data);
+      line.setMarkers(buildMarkers(data));
       pushMeta('', color, data);
 
       if (extraLine && extraLine.value !== undefined && Number.isFinite(Number(extraLine.value))) {
@@ -298,17 +316,42 @@ const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFo
       wrap.removeEventListener('mouseleave', onMouseLeave);
       chart.remove();
     };
-  }, [series, lines, color, height, priceFormat, priceFormatter, extraLine, fixedRange]);
+  }, [series, lines, color, height, priceFormat, priceFormatter, extraLine, fixedRange, hotDates]);
 
   const wrapWidth = containerRef.current?.clientWidth || 360;
-  const tipLeft = tip ? (tip.x > wrapWidth - 200 ? Math.max(6, wrapWidth - 200) : tip.x + 14) : 0;
-  const tipTop = tip ? Math.max(4, tip.y - 14) : 0;
+  // 板块情绪周期：左半区 tooltip 放在鼠标右 100px、上 200px；右半区放在鼠标左 100px 再左移自身宽度、上 200px
+  // 卡片 overflow: hidden，超出图表范围时贴边显示，避免被裁掉
+  let tipLeft = 0;
+  let tipTop = 0;
+  let tipAlignRight = false;
+  if (tip) {
+    if (sideTooltip) {
+      if (tip.x < wrapWidth / 2) {
+        tipLeft = Math.min(tip.x + 100, Math.max(4, wrapWidth - 204));
+      } else {
+        // 右半区：先放到鼠标左侧 100px，再用 translateX(-100%) 左移自身宽度
+        tipLeft = Math.max(204, Math.min(tip.x - 100, wrapWidth - 4));
+        tipAlignRight = true;
+      }
+      tipTop = Math.max(4, tip.y - 200);
+    } else {
+      tipLeft = tip.x > wrapWidth - 200 ? Math.max(6, wrapWidth - 200) : tip.x + 14;
+      tipTop = Math.max(4, tip.y - 14);
+    }
+  }
 
   return (
     <div className="sl-chart" ref={containerRef}>
       <div className="sl-chart-canvas" ref={canvasRef} />
       {tip && (
-        <div className="sl-chart-tooltip" style={{ left: tipLeft, top: tipTop }}>
+        <div
+          className="sl-chart-tooltip"
+          style={{
+            left: tipLeft,
+            top: tipTop,
+            transform: tipAlignRight ? 'translateX(-100%)' : undefined,
+          }}
+        >
           <div className="sl-tip-date">{tip.date}</div>
           {tip.rows.map((r, idx) => (
             <div className="sl-tip-row" key={`${r.name || 'value'}-${idx}`}>
@@ -324,7 +367,7 @@ const MiniLineChart = ({ series, lines, height = 170, color = '#67e8f9', priceFo
 };
 
 // 单板块迷你图：板块名 + 一条折线，无数据时占位
-const SectorMiniChart = ({ name, color, series, height = 170, priceFormat, priceFormatter, extraLine }) => (
+const SectorMiniChart = ({ name, color, series, height = 170, priceFormat, priceFormatter, extraLine, fixedRange, hotDates, sideTooltip }) => (
   <div className="sl-sector-mini">
     <div className="sl-sector-mini-head">
       <i style={{ background: color }} />
@@ -339,6 +382,9 @@ const SectorMiniChart = ({ name, color, series, height = 170, priceFormat, price
         priceFormat={priceFormat}
         priceFormatter={priceFormatter}
         extraLine={extraLine}
+        fixedRange={fixedRange}
+        hotDates={hotDates}
+        sideTooltip={sideTooltip}
       />
     ) : (
       <div className="sl-sector-mini-empty" style={{ height }}>暂无数据</div>
@@ -416,22 +462,35 @@ const ThemeCard = ({ theme, onOpenStock }) => {
   );
 };
 
-// realtime=true 时用于盯盘页弹窗：后端会先用 Puppeteer 刷新当日连板快照，
+// realtime=true 时用于盯盘页弹窗：后端会用同花顺（7 成）+ 财联社（3 成）并行刷新当日涨停/情绪快照，
 // 并刷新板块成交量占比实时分时点，再强制重算情绪周期
-const SiweiLiti = ({ realtime = false }) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+// initialData / initialSelection / initialSectorPool / initialSectorData：由盯盘页按钮预取后传入，传入时跳过对应请求
+const SiweiLiti = ({
+  realtime = false,
+  initialData = null,
+  initialSelection = null,
+  initialSectorPool = null,
+  initialSectorData = null,
+}) => {
+  const [data, setData] = useState(initialData);
+  const [loading, setLoading] = useState(!initialData);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
-  const [selectedThemeKeys, setSelectedThemeKeys] = useState([]);
-  const [selectionLoaded, setSelectionLoaded] = useState(false);
+  const [selectedThemeKeys, setSelectedThemeKeys] = useState(() => (
+    Array.isArray(initialSelection?.themeKeys) ? initialSelection.themeKeys : []
+  ));
+  const [selectionLoaded, setSelectionLoaded] = useState(Boolean(initialSelection));
   const [klineTarget, setKlineTarget] = useState(null);
   const [klineVisible, setKlineVisible] = useState(false);
 
   // 板块成交量占比 / 板块资金流入流出（共用同一个筛选框，选择存服务端）
-  const [sectorCats, setSectorCats] = useState([]);
-  const [sectorData, setSectorData] = useState(null); // { ratio: {name:[...]}, fund: {name:[...]} }
+  const [sectorCats, setSectorCats] = useState(() => (
+    Array.isArray(initialSelection?.sectorCats) ? initialSelection.sectorCats : []
+  ));
+  const [sectorData, setSectorData] = useState(initialSectorData || null); // { ratio: {name:[...]}, fund: {name:[...]} }
   const [sectorLoading, setSectorLoading] = useState(false);
+  // 板块情绪周期展示方式：合并（一张多线图）/ 分开（每个板块一张小图，一排两个）
+  const [sectorChartMode, setSectorChartMode] = useState('merged');
 
   const fetchData = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true); else setLoading(true);
@@ -453,10 +512,11 @@ const SiweiLiti = ({ realtime = false }) => {
     }
   }, [realtime]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { if (!initialData) fetchData(); }, [fetchData, initialData]);
 
   // 从服务端恢复上次选择（板块情绪周期题材 + 板块成交&资金日线板块）
   useEffect(() => {
+    if (initialSelection) return undefined;
     let cancelled = false;
     axios.get(`${API_BASE}/siwei_liti_selection`)
       .then((res) => {
@@ -473,7 +533,7 @@ const SiweiLiti = ({ realtime = false }) => {
         if (!cancelled) setSelectionLoaded(true);
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [initialSelection]);
 
   const themes = useMemo(() => data?.themes || [], [data]);
 
@@ -489,6 +549,16 @@ const SiweiLiti = ({ realtime = false }) => {
 
   // 板块情绪周期可选题材：不再区分主线/支线，按题材顺序全部展示
   const chipThemes = themes;
+
+  // 标签展示顺序：已选中的排在最前面，其余保持题材顺序
+  const sortedChipThemes = useMemo(() => {
+    const picked = [];
+    const rest = [];
+    chipThemes.forEach((t) => {
+      (selectedThemeKeys.includes(t.key) ? picked : rest).push(t);
+    });
+    return [...picked, ...rest];
+  }, [chipThemes, selectedThemeKeys]);
 
   // 选择变化后写回服务端（等首次读取完成，避免默认值覆盖历史选择）
   useEffect(() => {
@@ -535,6 +605,18 @@ const SiweiLiti = ({ realtime = false }) => {
 
   const marketSeries = useMemo(() => (data?.marketTemperature || []).map((item) => ({ ...item })), [data]);
 
+  // 大盘情绪温度 ≥ 60 的日期 → 温度值（YYYY-MM-DD），用于在板块情绪周期折线上打点
+  const hotMarketDates = useMemo(() => {
+    const map = new Map();
+    marketSeries.forEach((item) => {
+      if (Number(item?.value) < 60) return;
+      const ymd = String(item.date || '');
+      if (ymd.length !== 8) return;
+      map.set(`${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)}`, Number(item.value));
+    });
+    return map;
+  }, [marketSeries]);
+
   // 题材中出现的最高连板数（顶部概览用）
   const maxLianban = useMemo(
     () => themes.reduce((max, t) => Math.max(max, Number(t.maxLianban) || 0), 0),
@@ -547,12 +629,16 @@ const SiweiLiti = ({ realtime = false }) => {
   };
 
   // ===== 一级板块池：严格取自 东方财富板块成分股汇总 下的 {分类}.json =====
-  const [sectorPool, setSectorPool] = useState([]);
+  const [sectorPool, setSectorPool] = useState(() => (
+    Array.isArray(initialSectorPool) ? initialSectorPool : []
+  ));
   useEffect(() => {
+    if (Array.isArray(initialSectorPool) && initialSectorPool.length) return undefined;
     axios.get(`${API_BASE}/block_category_names`)
       .then((res) => setSectorPool(Array.isArray(res.data) ? res.data : []))
       .catch((e) => console.error('获取一级板块清单失败:', e));
-  }, []);
+    return undefined;
+  }, [initialSectorPool]);
 
   // ===== 板块成交量占比 + 板块资金（同一筛选框，两个子模块）=====
   const fetchSectorData = useCallback(async () => {
@@ -586,11 +672,17 @@ const SiweiLiti = ({ realtime = false }) => {
     }
   }, [sectorCats, realtime]);
 
-  // 实时模式下等四维立体主数据（含 Puppeteer 刷新连板 + 成交量占比）返回后再拉板块日线，
+  // 实时模式下等四维立体主数据（含当日实时快照 + 成交量占比）返回后再拉板块日线，
   // 保证资金/占比图也能带上刚刷新的当日实时点；普通复盘页仍独立加载，避免重复请求
   const sectorDataGate = realtime ? Boolean(data) : true;
+  // 盯盘页按钮已预取过板块日线数据时，跳过挂载后的首次重复请求
+  const skipInitialSectorFetch = useRef(Boolean(initialSectorData));
   useEffect(() => {
     if (!sectorDataGate) return;
+    if (skipInitialSectorFetch.current) {
+      skipInitialSectorFetch.current = false;
+      return;
+    }
     fetchSectorData();
   }, [fetchSectorData, sectorDataGate]);
 
@@ -793,7 +885,7 @@ const SiweiLiti = ({ realtime = false }) => {
       {loading && !data ? (
         <div className="sl-loading">
           <Spin size="large" />
-          {realtime && <div className="sl-loading-tip">正在实时拉取当日连板与板块资金/成交量占比数据，约需 1 分钟…</div>}
+          {realtime && <div className="sl-loading-tip">正在并行拉取同花顺 + 财联社当日实时数据与板块资金/成交量占比…</div>}
         </div>
       ) : error && !data ? (
         <div className="sl-error">
@@ -831,26 +923,30 @@ const SiweiLiti = ({ realtime = false }) => {
                 extraLine={FIFTY_LINE}
                 priceFormatter={INT_FORMATTER}
               />
-              <div className="sl-mini-phase-row">
-                {(data?.marketTemperature || []).map((item) => (
-                  <Tooltip key={item.date} title={`${formatYmd(item.date)} 情绪温度 ${item.value ?? '--'}（${item.phase || '--'}），涨停 ${item.limitUp ?? '--'} 家`}>
-                    <span className="sl-mini-phase-dot" style={{ '--phase-color': PHASE_COLOR[item.phase] || '#94a3b8' }} />
-                  </Tooltip>
-                ))}
-              </div>
             </div>
           </div>
 
           <div className="sl-glass-card sl-chart-card sl-sector-card">
             <div className="sl-chart-card-head sl-sector-head">
-              <div>
-                <span className="sl-chart-title">板块情绪周期</span>
-                <span className="sl-chart-sub">
-                  最近 {data?.cycleDates?.length || 30} 个交易日｜涨停家数 × 板块成交量占比变化（全面高潮 / 一致加速 / 爆量分歧 / 弱势震荡 / 退潮）
-                </span>
+              <div className="sl-sector-head-main">
+                <div>
+                  <span className="sl-chart-title">板块情绪周期</span>
+                  <span className="sl-chart-sub" style={{ marginLeft: 8 }}>
+                    最近 {data?.cycleDates?.length || 30} 个交易日｜涨停家数 × 板块成交量占比变化（全面高潮 / 一致加速 / 爆量分歧 / 弱势震荡 / 退潮）
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className={`sl-chart-mode-btn ${sectorChartMode === 'split' ? 'active' : ''}`}
+                  onClick={() => setSectorChartMode((mode) => (mode === 'merged' ? 'split' : 'merged'))}
+                  title={sectorChartMode === 'merged' ? '当前合并展示，点击分开展示' : '当前分开展示，点击合并展示'}
+                >
+                  <SwapOutlined />
+                  {sectorChartMode === 'merged' ? '合并' : '分开'}
+                </button>
               </div>
               <div className="sl-theme-chips">
-                {chipThemes.map((t) => {
+                {sortedChipThemes.map((t) => {
                   const active = selectedThemeKeys.includes(t.key);
                   return (
                     <button
@@ -869,20 +965,43 @@ const SiweiLiti = ({ realtime = false }) => {
 
             {selectedThemes.length ? (
               <>
-                <MiniLineChart
-                  lines={sectorLines}
-                  height={390}
-                  priceFormat={PHASE_PRICE_FORMAT}
-                  priceFormatter={PHASE_FORMATTER}
-                  fixedRange={{ min: 0, max: 4 }}
-                />
-                <div className="sl-selected-legend">
-                  {selectedThemes.map((t) => (
-                    <span key={t.key} className="sl-legend-item sl-legend-clickable" onClick={() => toggleThemeKey(t.key)}>
-                      <i style={{ background: themeColorOf.get(t.key) }} />{t.board}
-                    </span>
-                  ))}
-                </div>
+                {sectorChartMode === 'merged' ? (
+                  <MiniLineChart
+                    lines={sectorLines}
+                    height={390}
+                    priceFormat={PHASE_PRICE_FORMAT}
+                    priceFormatter={PHASE_FORMATTER}
+                    fixedRange={{ min: 0, max: 4 }}
+                    hotDates={hotMarketDates}
+                    sideTooltip
+                  />
+                ) : (
+                  <div className="sl-sector-mini-grid sl-sector-cycle-grid">
+                    {sectorLines.map((c) => (
+                      <SectorMiniChart
+                        key={c.key}
+                        name={c.name}
+                        color={c.color}
+                        series={c.series}
+                        height={190}
+                        priceFormat={PHASE_PRICE_FORMAT}
+                        priceFormatter={PHASE_FORMATTER}
+                        fixedRange={{ min: 0, max: 4 }}
+                        hotDates={hotMarketDates}
+                        sideTooltip
+                      />
+                    ))}
+                  </div>
+                )}
+                {sectorChartMode === 'merged' && (
+                  <div className="sl-selected-legend">
+                    {selectedThemes.map((t) => (
+                      <span key={t.key} className="sl-legend-item sl-legend-clickable" onClick={() => toggleThemeKey(t.key)}>
+                        <i style={{ background: themeColorOf.get(t.key) }} />{t.board}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="sl-phase-strip sl-phase-strip-multi">
                   {selectedThemes.map((t) => (
                     <div className="sl-phase-row" key={t.key}>
@@ -892,15 +1011,17 @@ const SiweiLiti = ({ realtime = false }) => {
                         title={t.board}
                       >{t.board}</span>
                       <div className="sl-phase-cells">
-                        {(t.emotionCycle || []).map((item) => (
-                          <Tooltip key={`${t.key}-${item.date}`} title={`${t.board}｜${item.reason}`}>
-                            <div className="sl-phase-cell" style={{ '--phase-color': SECTOR_PHASE_COLOR[item.phase] || '#94a3b8' }}>
-                              <span className="sl-phase-date">{formatYmd(item.date)}</span>
-                              <span className="sl-phase-name">{item.phase}</span>
-                              <span className="sl-phase-detail">涨停 {item.count} · 占比 {item.ratio != null ? `${item.ratio}%` : '--'}</span>
-                            </div>
-                          </Tooltip>
-                        ))}
+                        {[...(t.emotionCycle || [])]
+                          .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+                          .map((item) => (
+                            <Tooltip key={`${t.key}-${item.date}`} title={`${t.board}｜${item.reason}`}>
+                              <div className="sl-phase-cell" style={{ '--phase-color': SECTOR_PHASE_COLOR[item.phase] || '#94a3b8' }}>
+                                <span className="sl-phase-date">{formatYmd(item.date)}</span>
+                                <span className="sl-phase-name">{item.phase}</span>
+                                <span className="sl-phase-detail">涨停 {item.count} · 占比 {item.ratio != null ? `${item.ratio}%` : '--'}</span>
+                              </div>
+                            </Tooltip>
+                          ))}
                       </div>
                     </div>
                   ))}

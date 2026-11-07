@@ -12,7 +12,7 @@
   },
   "sentiment": {
     "phase": "冰点期",
-    "temperature": null
+    "temperature": 5
   },
   "kpi": {
     "limitUpCount": 39,

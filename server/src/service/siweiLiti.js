@@ -155,9 +155,14 @@ let cache = { ts: 0, data: null };
 let fetching = null;
 const CACHE_TTL = 60 * 1000;
 
-const buildSiweiLiti = () => {
+// todayOverride：当日实时快照（同花顺 + 财联社），仅覆盖当天，历史快照仍读 lianbanSnapshot
+const buildSiweiLiti = (todayOverride = null) => {
   const todayYmd = dayjs().format('YYYYMMDD');
-  const allDates = getAvailableLianbanDates().filter((d) => d <= todayYmd); // 降序
+  const overrideDate = todayOverride?.date ? String(todayOverride.date) : null;
+  const fileDates = getAvailableLianbanDates().filter((d) => d <= todayYmd); // 降序
+  const allDates = overrideDate && !fileDates.includes(overrideDate)
+    ? [overrideDate, ...fileDates].sort((a, b) => b.localeCompare(a))
+    : fileDates;
   if (!allDates.length) {
     return {
       windowDates: [],
@@ -182,6 +187,7 @@ const buildSiweiLiti = () => {
   // 预先加载快照（避免重复读文件）
   const dayCache = new Map();
   const getDay = (ymd) => {
+    if (overrideDate && ymd === overrideDate) return todayOverride;
     if (!dayCache.has(ymd)) dayCache.set(ymd, getLianbanDayData(ymd));
     return dayCache.get(ymd);
   };
@@ -531,11 +537,15 @@ const buildSiweiLiti = () => {
   };
 };
 
-const getSiweiLitiAnalysis = async ({ force = false } = {}) => {
-  if (!force && cache.data && Date.now() - cache.ts < CACHE_TTL) return cache.data;
-  if (fetching) return fetching;
+const getSiweiLitiAnalysis = async ({ force = false, todayOverride = null } = {}) => {
+  if (!todayOverride && !force && cache.data && Date.now() - cache.ts < CACHE_TTL) return cache.data;
+  if (fetching) {
+    // 普通请求可复用进行中的计算；带当日实时快照的请求必须等前一次结束后重算，避免拿到无实时快照的结果
+    if (!todayOverride) return fetching;
+    await fetching.catch(() => {});
+  }
   fetching = (async () => {
-    const data = buildSiweiLiti();
+    const data = buildSiweiLiti(todayOverride);
     cache = { ts: Date.now(), data };
     return data;
   })();

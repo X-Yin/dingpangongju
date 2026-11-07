@@ -26,7 +26,8 @@ import {
 } from '@ant-design/icons';
 import { local_ip } from '../../constant';
 import { getStrategyMode, MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION } from '../../utils/strategyMode';
-import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeBlock5minSurgePush, subscribeStrategySignalPush } from '../../utils/buyPointWs';
+import { createChart, ColorType, LineStyle, CrosshairMode } from 'lightweight-charts';
+import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeBlock5minSurgePush, subscribeStrategySignalPush, subscribeEmotionResonancePush } from '../../utils/buyPointWs';
 import { isTradingDay } from '../../utils/tradingDay';
 import './index.scss';
 
@@ -133,6 +134,8 @@ const GlobalDiagnosisAlert = () => {
   const [blockSurgeAlert, setBlockSurgeAlert] = useState(null);
   // 策略中心命中提醒卡片（2026-11-06 用户新增）：{ signals:[{ id, time, title, description, isBullish }], ts, mock }
   const [strategyAlert, setStrategyAlert] = useState(null);
+  // 大盘 × 板块情绪共振弹窗（2026-11-07 用户新增）：{ data:{ date, marketTemperature, blocks:[...] }, ts, mock }
+  const [resonanceAlert, setResonanceAlert] = useState(null);
   const seqRef = useRef(0); // 旧请求返回晚于新触发时丢弃过期结果
 
   // 每个交易日 9:05 自动弹出「情绪游资-极致赔率候选池」全局弹窗（不依赖当前策略模式，2026-11-04 用户新增）
@@ -310,7 +313,14 @@ const GlobalDiagnosisAlert = () => {
       if (signals.length === 0) return;
       setStrategyAlert({ signals, ts: msg.ts ?? null, mock: msg.mock === true });
     });
-    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubBlockSurge(); unsubStrategy(); };
+    // 大盘 × 板块情绪共振：大盘情绪温度 ≥60 且板块全面高潮/一致加速时弹出
+    const unsubResonance = subscribeEmotionResonancePush((msg) => {
+      if (msg?.open !== true || !msg?.data) return;
+      const blocks = Array.isArray(msg.data.blocks) ? msg.data.blocks : [];
+      if (blocks.length === 0) return;
+      setResonanceAlert({ data: msg.data, ts: msg.ts ?? null, mock: msg.mock === true });
+    });
+    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubBlockSurge(); unsubStrategy(); unsubResonance(); };
   }, [fetchBuyStocks]);
 
   const buyCardAlert = buyAlert || wfAlert;
@@ -322,7 +332,7 @@ const GlobalDiagnosisAlert = () => {
   // BlockSurgeModal 使用 antd Modal portal，不依赖 gda-container 渲染；
   // 因此只在没有任何卡片、仅一个 Modal 时，也必须返回一个能挂载 Modal 的根
   const hasCardAlert = buyCardAlert || sellAlert || iceAlert || wfCandidates || strategyAlert;
-  if (!hasCardAlert && !blockSurgeAlert) return null;
+  if (!hasCardAlert && !blockSurgeAlert && !resonanceAlert) return null;
 
   return (
     <div className="gda-container">
@@ -340,6 +350,10 @@ const GlobalDiagnosisAlert = () => {
       {/* 重点板块 5 分钟涨幅异动：antd Modal 门户居中展示 */}
       {blockSurgeAlert && (
         <BlockSurgeCard alert={blockSurgeAlert} onClose={() => setBlockSurgeAlert(null)} />
+      )}
+      {/* 大盘 × 板块情绪共振：大盘情绪 ≥60 且板块全面高潮/一致加速时弹出 */}
+      {resonanceAlert && (
+        <EmotionResonanceModal alert={resonanceAlert} onClose={() => setResonanceAlert(null)} />
       )}
       {/* 每交易日 9:05 候选池全局弹窗 */}
       {wfCandidates && <WfCandidatesModal data={wfCandidates} onClose={() => setWfCandidates(null)} />}
@@ -1104,6 +1118,330 @@ const BlockSurgeModal = ({ alert, onClose }) => {
           )}
         </div>
       )}
+    </Modal>
+  );
+};
+
+// ==================== 大盘 × 板块 情绪共振弹窗 ====================
+// 后端每 5 分钟（block_amount_poll 触发）计算即时情绪周期，大盘情绪温度 ≥60 且板块达到
+// 全面高潮 / 一致加速时广播：
+//   { type:'emotion_resonance', ts, open:true, data:{ date, marketTemperature, threshold,
+//     blocks:[{ board, phase, count, ratio, prevRatio, deltaRatio, reason }] } }
+const RESONANCE_PHASE_COLOR = {
+  全面高潮: '#f43f5e',
+  一致加速: '#f59e0b',
+};
+
+const formatResonanceDate = (ymd) => {
+  const s = String(ymd || '');
+  return s.length === 8 ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` : s;
+};
+
+// 板块情绪周期相位 → 0~4 数值（与四维立体口径一致）
+const RESONANCE_PHASE_SCORE = {
+  一致加速: 4,
+  全面高潮: 3,
+  爆量分歧: 2,
+  弱势震荡: 1,
+  退潮: 0,
+};
+const RESONANCE_PHASE_NAMES = ['退潮', '弱势震荡', '爆量分歧', '全面高潮', '一致加速'];
+
+// 弹窗内的板块情绪周期折线（近 10 个交易日）：视觉与四维立体的板块情绪周期图一致
+const ResonanceCycleChart = ({ cycle = [], color = '#67e8f9' }) => {
+  const wrapRef = useRef(null);
+  // 右侧 5 个情绪阶段标签的像素位置（自己绘制，避免库自动省略刻度文字导致阶段展示不全）
+  const [axisLabels, setAxisLabels] = useState([]);
+  // 十字光标 tooltip：{ date, phase, count, ratio, temp }
+  const [tip, setTip] = useState(null);
+
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return undefined;
+
+    const toTime = (ymd) => `${String(ymd).slice(0, 4)}-${String(ymd).slice(4, 6)}-${String(ymd).slice(6, 8)}`;
+    const items = (Array.isArray(cycle) ? cycle : [])
+      .filter((item) => item && RESONANCE_PHASE_SCORE[item.phase] !== undefined && String(item.date).length === 8)
+      .slice()
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    const data = items.map((item) => ({
+      time: toTime(item.date),
+      value: RESONANCE_PHASE_SCORE[item.phase],
+    }));
+
+    const chart = createChart(wrap, {
+      width: wrap.clientWidth || 560,
+      height: 180,
+      layout: {
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: 'rgba(255,255,255,0.82)',
+        fontSize: 11,
+      },
+      grid: {
+        vertLines: { color: 'rgba(255,255,255,0.08)' },
+        horzLines: { color: 'rgba(255,255,255,0.08)' },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: { color: 'rgba(255,255,255,0.45)', style: LineStyle.Dashed, labelBackgroundColor: '#334155' },
+        horzLine: { color: 'rgba(255,255,255,0.45)', style: LineStyle.Dashed, labelBackgroundColor: '#334155' },
+      },
+      handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
+      handleScale: { mouseWheel: false, pinch: false, axisPressedMouseMove: true },
+      rightPriceScale: {
+        visible: false,
+        borderColor: 'rgba(255,255,255,0.18)',
+        scaleMargins: { top: 0.16, bottom: 0.12 },
+      },
+      timeScale: {
+        borderColor: 'rgba(255,255,255,0.18)',
+        fixLeftEdge: true,
+        fixRightEdge: true,
+        tickMarkFormatter: (time) => {
+          const s = typeof time === 'string'
+            ? time
+            : (time && time.year
+              ? `${time.year}-${String(time.month).padStart(2, '0')}-${String(time.day).padStart(2, '0')}`
+              : '');
+          return s.length >= 10 ? `${s.slice(5, 7)}/${s.slice(8, 10)}` : s;
+        },
+      },
+      localization: {
+        locale: 'zh-CN',
+        priceFormatter: (p) => RESONANCE_PHASE_NAMES[Math.round(Number(p))] || '',
+        timeFormatter: (time) => {
+          if (typeof time === 'string') return time;
+          if (time && time.year) {
+            return `${time.year}-${String(time.month).padStart(2, '0')}-${String(time.day).padStart(2, '0')}`;
+          }
+          return '';
+        },
+      },
+    });
+
+    const line = chart.addLineSeries({
+      color,
+      lineWidth: 2,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: true,
+      priceFormat: {
+        type: 'custom',
+        formatter: (p) => RESONANCE_PHASE_NAMES[Math.round(Number(p))] || '',
+        minMove: 1,
+      },
+      // 固定 0~4，保证「退潮 / 弱势震荡 / 爆量分歧 / 全面高潮 / 一致加速」刻度完整
+      autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 4 } }),
+    });
+    line.setData(data);
+    // 标注大盘情绪 ≥ 60° 的交易日（文字：大盘 xx°）
+    const hotMarkers = items
+      .filter((item) => Number(item.marketTemperature) >= 60)
+      .map((item) => ({
+        time: toTime(item.date),
+        position: 'aboveBar',
+        color: '#fbbf24',
+        shape: 'circle',
+        size: 0.5,
+        text: `大盘 ${Math.round(Number(item.marketTemperature))}°`,
+      }));
+    if (hotMarkers.length) line.setMarkers(hotMarkers);
+
+    chart.timeScale().fitContent();
+
+    // 按 0~4 与 scaleMargins 计算 5 个阶段标签的纵向位置
+    const paneHeight = 180 - (chart.timeScale().height?.() || 26);
+    const plotTop = paneHeight * 0.16;
+    const plotBottom = paneHeight * (1 - 0.12);
+    setAxisLabels(RESONANCE_PHASE_NAMES.map((name, value) => ({
+      name,
+      top: plotTop + ((4 - value) / 4) * (plotBottom - plotTop),
+    })));
+
+    // 鼠标移动显示 tooltip：按横坐标取最近的交易日
+    const onMouseMove = (ev) => {
+      const rect = wrap.getBoundingClientRect();
+      const x = ev.clientX - rect.left;
+      const y = ev.clientY - rect.top;
+      if (!items.length || x < 0 || y < 0 || x > rect.width || y > rect.height) {
+        setTip(null);
+        return;
+      }
+      const logical = chart.timeScale().coordinateToLogical(x);
+      if (logical === null || logical === undefined || !Number.isFinite(Number(logical))) {
+        setTip(null);
+        return;
+      }
+      const idx = Math.min(items.length - 1, Math.max(0, Math.round(Number(logical))));
+      const item = items[idx];
+      setTip({
+        date: String(item.date),
+        phase: item.phase,
+        count: item.count,
+        ratio: item.ratio,
+        temp: item.marketTemperature,
+      });
+    };
+    const onMouseLeave = () => setTip(null);
+    wrap.addEventListener('mousemove', onMouseMove);
+    wrap.addEventListener('mouseleave', onMouseLeave);
+
+    const ro = new ResizeObserver(() => {
+      chart.applyOptions({ width: wrap.clientWidth || 560 });
+    });
+    ro.observe(wrap);
+
+    return () => {
+      ro.disconnect();
+      wrap.removeEventListener('mousemove', onMouseMove);
+      wrap.removeEventListener('mouseleave', onMouseLeave);
+      chart.remove();
+    };
+  }, [cycle, color]);
+
+  return (
+    <div style={{ position: 'relative', paddingRight: 62 }}>
+      <div ref={wrapRef} style={{ width: '100%', height: 180 }} />
+      <div style={{ position: 'absolute', right: 0, top: 0, width: 60, height: 180, pointerEvents: 'none' }}>
+        {axisLabels.map((label) => (
+          <span
+            key={label.name}
+            style={{
+              position: 'absolute',
+              top: label.top - 7,
+              right: 2,
+              fontSize: 10,
+              lineHeight: '14px',
+              color: 'rgba(255,255,255,0.72)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {label.name}
+          </span>
+        ))}
+      </div>
+      {tip && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 8,
+            top: 8,
+            zIndex: 5,
+            pointerEvents: 'none',
+            padding: '6px 8px',
+            borderRadius: 6,
+            background: 'rgba(15, 23, 42, 0.92)',
+            border: '1px solid rgba(255,255,255,0.16)',
+            color: '#fff',
+            fontSize: 11,
+            lineHeight: '16px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <div style={{ color: 'rgba(255,255,255,0.65)' }}>{formatResonanceDate(tip.date)}</div>
+          <div style={{ fontWeight: 700, color: RESONANCE_PHASE_COLOR[tip.phase] || '#fff' }}>{tip.phase}</div>
+          <div>
+            涨停 {tip.count ?? '--'} · 占比 {tip.ratio != null ? `${Number(tip.ratio).toFixed(2)}%` : '--'}
+          </div>
+          {Number.isFinite(Number(tip.temp)) && (
+            <div style={{ color: Number(tip.temp) >= 60 ? '#fbbf24' : 'rgba(255,255,255,0.65)' }}>
+              大盘 {Math.round(Number(tip.temp))}°
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const RESONANCE_LINE_COLORS = ['#f87171', '#60a5fa', '#facc15'];
+
+const EmotionResonanceModal = ({ alert, onClose }) => {
+  const { data, mock } = alert || {};
+  const blocks = Array.isArray(data?.blocks) ? data.blocks : [];
+  const temp = Number(data?.marketTemperature);
+  return (
+    <Modal
+      open
+      onCancel={onClose}
+      width={640}
+      destroyOnClose
+      title={(
+        <span>
+          <ThunderboltOutlined style={{ color: '#f59e0b', marginRight: 8 }} />
+          大盘 × 板块 情绪共振{mock ? '（MOCK）' : ''}
+        </span>
+      )}
+      footer={<Button type="primary" onClick={onClose}>知道了</Button>}
+    >
+      <div style={{ fontSize: 13, color: '#595959', marginBottom: 12 }}>
+        {data?.date ? `${formatResonanceDate(data.date)}｜` : ''}
+        大盘情绪温度{' '}
+        <b style={{ color: '#f43f5e', fontSize: 15 }}>
+          {Number.isFinite(temp) ? `${Math.round(temp)}°` : '--'}
+        </b>
+        {data?.threshold ? `（阈值 ${data.threshold}°）` : ''}，以下板块与大盘发生共振：
+      </div>
+      {blocks.map((b, idx) => {
+        const phaseColor = RESONANCE_PHASE_COLOR[b.phase] || '#94a3b8';
+        const delta = Number(b.deltaRatio);
+        return (
+          <div
+            key={b.board}
+            style={{
+              padding: '10px 12px',
+              borderRadius: 10,
+              background: 'rgba(245, 158, 11, 0.08)',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              marginBottom: 8,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700 }}>
+              <span>{b.board}</span>
+              <span
+                style={{
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  color: phaseColor,
+                  padding: '1px 8px',
+                  borderRadius: 999,
+                  background: `${phaseColor}1f`,
+                  border: `1px solid ${phaseColor}59`,
+                }}
+              >
+                {b.phase}
+              </span>
+            </div>
+            <div style={{ fontSize: 12.5, color: '#595959', marginTop: 4 }}>
+              涨停 {b.count ?? '--'} 家，成交量占比绝对值 {b.ratio != null ? `${Number(b.ratio).toFixed(2)}%` : '--'}，
+              相较上一日
+              {Number.isFinite(delta)
+                ? ` ${delta >= 0 ? '增加' : '减少'} ${Math.abs(delta).toFixed(2)}%`
+                : ' --'}
+            </div>
+            {/* 板块情绪周期（近 10 个交易日）：与四维立体的板块情绪周期折线一致 */}
+            {Array.isArray(b.cycle) && b.cycle.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ fontSize: 11.5, color: '#8c8c8c', marginBottom: 4 }}>
+                  板块情绪周期（近 {b.cycle.length} 个交易日）
+                </div>
+                <div
+                  style={{
+                    borderRadius: 10,
+                    padding: '6px 4px 0',
+                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                  }}
+                >
+                  <ResonanceCycleChart
+                    cycle={b.cycle}
+                    color={RESONANCE_LINE_COLORS[idx % RESONANCE_LINE_COLORS.length]}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </Modal>
   );
 };

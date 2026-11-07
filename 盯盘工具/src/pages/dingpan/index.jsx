@@ -144,6 +144,12 @@ const DingPan = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     // 情绪周期弹窗（内嵌四维立体，使用实时连板 + 实时资金/成交量占比数据）
     const [emotionCycleVisible, setEmotionCycleVisible] = useState(false);
+    const [emotionCycleLoading, setEmotionCycleLoading] = useState(false);
+    const [emotionCycleLoadingSeconds, setEmotionCycleLoadingSeconds] = useState(0);
+    const [emotionCycleData, setEmotionCycleData] = useState(null);
+    const [emotionCyclePrefetch, setEmotionCyclePrefetch] = useState(null);
+    const emotionCycleLoadingRef = useRef(false);
+    const emotionCycleTimerRef = useRef(null);
     const [klineModalVisible, setKlineModalVisible] = useState(false);
     const [klineInitialTab, setKlineInitialTab] = useState(null); // K 线弹窗打开时默认定位的 tab
     const [selectedStock, setSelectedStock] = useState(null);
@@ -1598,10 +1604,70 @@ const DingPan = () => {
         }
     };
 
-    // 情绪周期：直接打开内嵌四维立体的弹窗，由组件内部拉取实时数据（不再请求强度分析接口）
-    const handleOpenEmotionCycle = () => {
-        setEmotionCycleVisible(true);
+    // 情绪周期：点击后同花顺 + 财联社并行取数（请求分工 7:3，目标 10s），按钮实时显示耗时，
+    // 全部请求返回后再打开弹窗；弹窗直接复用预取结果，避免打开后长时间 loading
+    const handleOpenEmotionCycle = async () => {
+        if (emotionCycleLoadingRef.current) return;
+        emotionCycleLoadingRef.current = true;
+        setEmotionCycleLoading(true);
+        setEmotionCycleLoadingSeconds(0);
+        const startedAt = Date.now();
+        clearInterval(emotionCycleTimerRef.current);
+        emotionCycleTimerRef.current = setInterval(() => {
+            setEmotionCycleLoadingSeconds(Math.floor((Date.now() - startedAt) / 100) / 10);
+        }, 100);
+        const base = `http://${local_ip}:3000`;
+        try {
+            const [analysisRes, selectionRes, namesRes] = await Promise.all([
+                axios.get(`${base}/siwei_liti_analysis`, { params: { realtime: 1 }, timeout: 0 }),
+                axios.get(`${base}/siwei_liti_selection`, { timeout: 0 }).catch(() => ({ data: {} })),
+                axios.get(`${base}/block_category_names`, { timeout: 0 }).catch(() => ({ data: [] })),
+            ]);
+            const selection = selectionRes?.data || {};
+            const sectorCats = Array.isArray(selection.sectorCats) ? selection.sectorCats : [];
+            let sectorData = null;
+            if (sectorCats.length) {
+                const startDate = dayjs().subtract(60, 'day').format('YYYY-MM-DD');
+                const endDate = dayjs().format('YYYY-MM-DD');
+                const [ratioRes, fundRes] = await Promise.all([
+                    axios.get(`${base}/block_category_ratio`, {
+                        params: { startDate, endDate, realtime: 1 },
+                        timeout: 0,
+                    }).catch(() => ({ data: {} })),
+                    axios.get(`${base}/get_block_money_day_by_category`, {
+                        params: { cats: sectorCats.join(','), realtime: 1 },
+                        timeout: 0,
+                    }).catch(() => ({ data: {} })),
+                ]);
+                const ratioAll = ratioRes?.data || {};
+                const byCat = {};
+                sectorCats.forEach((name) => {
+                    if (ratioAll[name]) byCat[name] = ratioAll[name];
+                });
+                sectorData = { ratio: byCat, fund: fundRes?.data || {} };
+            }
+            setEmotionCycleData(analysisRes.data || null);
+            setEmotionCyclePrefetch({
+                selection: {
+                    themeKeys: Array.isArray(selection.themeKeys) ? selection.themeKeys : [],
+                    sectorCats,
+                },
+                sectorPool: Array.isArray(namesRes?.data) ? namesRes.data : [],
+                sectorData,
+            });
+            setEmotionCycleVisible(true);
+        } catch (e) {
+            console.error('情绪周期实时数据获取失败:', e);
+            message.error('情绪周期数据获取失败，请稍后重试');
+        } finally {
+            clearInterval(emotionCycleTimerRef.current);
+            emotionCycleTimerRef.current = null;
+            emotionCycleLoadingRef.current = false;
+            setEmotionCycleLoading(false);
+        }
     };
+
+    useEffect(() => () => clearInterval(emotionCycleTimerRef.current), []);
 
     const fetchEmotionData = async () => {
         try {
@@ -2506,6 +2572,8 @@ const DingPan = () => {
                                 onRefresh={handleRefreshBlockData}
                                 refreshing={refreshingBlockData}
                                 onEmotionCycle={handleOpenEmotionCycle}
+                                emotionLoading={emotionCycleLoading}
+                                emotionLoadingSeconds={emotionCycleLoadingSeconds}
                             />
                             )}
 
@@ -2645,6 +2713,8 @@ const DingPan = () => {
                                         onRefresh={handleRefreshBlockData}
                                         refreshing={refreshingBlockData}
                                         onEmotionCycle={handleOpenEmotionCycle}
+                                        emotionLoading={emotionCycleLoading}
+                                        emotionLoadingSeconds={emotionCycleLoadingSeconds}
                                     />
                                 </div>
                             )}
@@ -2765,7 +2835,7 @@ const DingPan = () => {
                 onUnhide={handleUnhideStock}
             />
 
-            {/* 情绪周期弹窗：内嵌四维立体，后端实时刷新连板快照 + 板块资金/成交量占比 */}
+            {/* 情绪周期弹窗：按钮预取完同花顺 + 财联社实时数据后再打开，弹窗直接复用预取结果 */}
             <Modal
                 open={emotionCycleVisible}
                 onCancel={() => setEmotionCycleVisible(false)}
@@ -2776,7 +2846,15 @@ const DingPan = () => {
                 title="四维立体 · 实时板块情绪周期"
                 destroyOnClose
             >
-                {emotionCycleVisible && <SiweiLiti realtime />}
+                {emotionCycleVisible && (
+                    <SiweiLiti
+                        realtime
+                        initialData={emotionCycleData}
+                        initialSelection={emotionCyclePrefetch?.selection}
+                        initialSectorPool={emotionCyclePrefetch?.sectorPool}
+                        initialSectorData={emotionCyclePrefetch?.sectorData}
+                    />
+                )}
             </Modal>
 
             {/* 指数叠加分时全屏弹窗 */}
