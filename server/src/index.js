@@ -925,6 +925,8 @@ const refreshSiweiRealtime = async () => {
 app.get('/siwei_liti_analysis', async (req, res) => {
   try {
     const realtime = String(req.query.realtime || '') === '1';
+    const cycleDays = req.query.cycleDays !== undefined ? Number(req.query.cycleDays) : undefined;
+    const emotionDays = req.query.emotionDays !== undefined ? Number(req.query.emotionDays) : undefined;
     if (realtime) {
       if (siweiRealtimeCache.data && Date.now() - siweiRealtimeCache.ts < SIWEI_REALTIME_TTL) {
         return res.json(siweiRealtimeCache.data);
@@ -941,7 +943,7 @@ app.get('/siwei_liti_analysis', async (req, res) => {
       }
       return res.json(await siweiRealtimeJob);
     }
-    res.json(await getSiweiLitiAnalysis());
+    res.json(await getSiweiLitiAnalysis({ cycleDays, emotionDays }));
   } catch (error) {
     console.error('获取四维立体分析失败:', error);
     res.status(500).json({ message: error.message || '获取失败' });

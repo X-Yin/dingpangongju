@@ -13,6 +13,7 @@ const path = require('path');
 const dayjs = require('dayjs');
 const { getAvailableLianbanDates, getLianbanDayData } = require('./lianban');
 const { getAllTechIndexData } = require('./emotion');
+const { calcPhase, PHASE_ORDER } = require('./emotionCyclePhase');
 const {
   getBlockCategoryRatio,
   CATEGORY_NAMES,
@@ -116,38 +117,7 @@ const getCachedCloseBefore = (marketCode, ymd) => {
   return found;
 };
 
-// 板块情绪周期规则：返回 { phase, reason }
-// 家数≥10 且占比提升=全面高潮；家数≥10 且占比降低=一致加速；
-// 家数 6~9 且占比提升：前一日为全面高潮/一致加速（家数≥10）时计爆量分歧，否则计全面高潮；
-// 家数 6~9 且占比降低=弱势震荡；家数≤5=退潮
-const calcPhase = ({ count, prevCount, ratio, prevRatio }) => {
-  const ratioText = (v) => (Number.isFinite(Number(v)) ? `${Number(v).toFixed(2)}%` : '--');
-  const countText = prevCount != null ? `${prevCount}→${count}` : `${count}`;
-  const ratioTrend = Number.isFinite(Number(ratio)) && Number.isFinite(Number(prevRatio))
-    ? Number(ratio) - Number(prevRatio)
-    : null;
-  const ratioUp = ratioTrend == null ? null : ratioTrend > 0;
-  const ratioDesc = ratioTrend == null
-    ? '无占比数据'
-    : `${ratioText(prevRatio)}→${ratioText(ratio)}（${ratioTrend > 0 ? '提升' : '降低'}）`;
-
-  if (count <= 5) {
-    return { phase: '退潮', reason: `涨停 ${count} 家（≤5），${prevCount != null ? `较前一日 ${countText}` : '情绪冰点'}` };
-  }
-  if (count < 10) {
-    if (ratioUp) {
-      // 限制：仅当前一日处于高潮档（家数≥10，即全面高潮/一致加速）时才算爆量分歧，否则按全面高潮计
-      const prevHigh = prevCount != null && prevCount >= 10;
-      return prevHigh
-        ? { phase: '爆量分歧', reason: `涨停 ${countText} 家（6~9），占比 ${ratioDesc}，前一日 ${prevCount} 家（高潮档）` }
-        : { phase: '全面高潮', reason: `涨停 ${countText} 家（6~9），占比 ${ratioDesc}，前一日未达高潮档，按全面高潮计` };
-    }
-    return { phase: '弱势震荡', reason: `涨停 ${countText} 家（6~9），占比 ${ratioDesc}` };
-  }
-  return { phase: ratioUp ? '全面高潮' : '一致加速', reason: `涨停 ${countText} 家（≥10），占比 ${ratioDesc}` };
-};
-
-const PHASE_ORDER = { 全面高潮: 4, 一致加速: 3, 爆量分歧: 2, 弱势震荡: 1, 退潮: 0 };
+// 板块情绪周期规则见 ./emotionCyclePhase（复盘页 / 盯盘页 / 盘中轮询三处共用同一套算法）
 
 // ==================== 主计算 ====================
 
@@ -156,7 +126,12 @@ let fetching = null;
 const CACHE_TTL = 60 * 1000;
 
 // todayOverride：当日实时快照（同花顺 + 财联社），仅覆盖当天，历史快照仍读 lianbanSnapshot
-const buildSiweiLiti = (todayOverride = null) => {
+// opts.cycleDays / opts.emotionDays：可选，覆盖默认窗口（板块情绪周期 / 大盘&科技情绪）
+const buildSiweiLiti = (todayOverride = null, opts = {}) => {
+  const cycleDays = Number.isFinite(Number(opts.cycleDays)) && Number(opts.cycleDays) > 0
+    ? Number(opts.cycleDays) : CYCLE_DAYS;
+  const emotionDays = Number.isFinite(Number(opts.emotionDays)) && Number(opts.emotionDays) > 0
+    ? Number(opts.emotionDays) : EMOTION_DAYS;
   const todayYmd = dayjs().format('YYYYMMDD');
   const overrideDate = todayOverride?.date ? String(todayOverride.date) : null;
   const fileDates = getAvailableLianbanDates().filter((d) => d <= todayYmd); // 降序
@@ -180,8 +155,8 @@ const buildSiweiLiti = (todayOverride = null) => {
 
   const windowDates = allDates.slice(0, WINDOW_DAYS).reverse(); // 升序
   const longDates = allDates.slice(0, GAIN_LOOKBACK_DAYS).reverse(); // 升序
-  const cycleDates = allDates.slice(0, Math.max(CYCLE_DAYS, WINDOW_DAYS + 1)).reverse(); // 升序：板块情绪周期展示最近 30 个交易日
-  const emotionDates = allDates.slice(0, EMOTION_DAYS).reverse(); // 升序：科技/大盘情绪取最近 60 个交易日
+  const cycleDates = allDates.slice(0, Math.max(cycleDays, WINDOW_DAYS + 1)).reverse(); // 升序：板块情绪周期展示窗口
+  const emotionDates = allDates.slice(0, emotionDays).reverse(); // 升序：科技/大盘情绪窗口
   const latestSnapshotDate = windowDates[windowDates.length - 1];
 
   // 预先加载快照（避免重复读文件）
@@ -537,16 +512,19 @@ const buildSiweiLiti = (todayOverride = null) => {
   };
 };
 
-const getSiweiLitiAnalysis = async ({ force = false, todayOverride = null } = {}) => {
-  if (!todayOverride && !force && cache.data && Date.now() - cache.ts < CACHE_TTL) return cache.data;
+const getSiweiLitiAnalysis = async ({ force = false, todayOverride = null, cycleDays, emotionDays } = {}) => {
+  const hasCustomWindow = (cycleDays !== undefined && Number(cycleDays) !== CYCLE_DAYS)
+    || (emotionDays !== undefined && Number(emotionDays) !== EMOTION_DAYS);
+  // 自定义窗口不复用默认缓存，避免拿到窗口不一致的数据
+  if (!todayOverride && !force && !hasCustomWindow && cache.data && Date.now() - cache.ts < CACHE_TTL) return cache.data;
   if (fetching) {
     // 普通请求可复用进行中的计算；带当日实时快照的请求必须等前一次结束后重算，避免拿到无实时快照的结果
-    if (!todayOverride) return fetching;
+    if (!todayOverride && !hasCustomWindow) return fetching;
     await fetching.catch(() => {});
   }
   fetching = (async () => {
-    const data = buildSiweiLiti(todayOverride);
-    cache = { ts: Date.now(), data };
+    const data = buildSiweiLiti(todayOverride, { cycleDays, emotionDays });
+    if (!hasCustomWindow) cache = { ts: Date.now(), data };
     return data;
   })();
   try {
