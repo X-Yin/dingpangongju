@@ -524,7 +524,8 @@ const SiweiLiti = ({
   const [ladderData, setLadderData] = useState(null);
   const [ladderLoading, setLadderLoading] = useState(false);
   // 题材分类开关：开启后每个题材一行（连板数最高的个股排最前）
-  const [ladderByTheme, setLadderByTheme] = useState(false);
+  // realtime 模式默认开启，配合当日实时快照使用
+  const [ladderByTheme, setLadderByTheme] = useState(realtime);
 
   // 板块成交量占比 / 板块资金流入流出（共用同一个筛选框，选择存服务端）
   const [sectorCats, setSectorCats] = useState(() => (
@@ -533,7 +534,7 @@ const SiweiLiti = ({
   const [sectorData, setSectorData] = useState(initialSectorData || null); // { ratio: {name:[...]}, fund: {name:[...]} }
   const [sectorLoading, setSectorLoading] = useState(false);
   // 板块情绪周期展示方式：合并（一张多线图）/ 分开（每个板块一张小图，一排两个）
-  const [sectorChartMode, setSectorChartMode] = useState('merged');
+  const [sectorChartMode, setSectorChartMode] = useState('split');
 
   const fetchData = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true); else setLoading(true);
@@ -799,7 +800,11 @@ const SiweiLiti = ({
     if (!ladderDate) return undefined;
     let cancelled = false;
     setLadderLoading(true);
-    axios.get(`${API_BASE}/lianban_day`, { params: { date: ladderDate } })
+    // realtime 模式 + 所选日期为当日时，走同花顺+财联社实时快照（后端 60s 缓存）
+    const params = { date: ladderDate };
+    const todayYmd = dayjs().format('YYYYMMDD');
+    if (realtime && ladderDate === todayYmd) params.realtime = 1;
+    axios.get(`${API_BASE}/lianban_day`, { params })
       .then((res) => { if (!cancelled) setLadderData(res.data || null); })
       .catch((e) => {
         console.error('获取连板天梯数据失败:', e);
@@ -807,7 +812,7 @@ const SiweiLiti = ({
       })
       .finally(() => { if (!cancelled) setLadderLoading(false); });
     return () => { cancelled = true; };
-  }, [ladderDate]);
+  }, [ladderDate, realtime]);
 
   // 连板梯队：按连板数从高到低分组（同一代码去重，取最高连板）
   const ladderTiers = useMemo(() => {
@@ -844,11 +849,13 @@ const SiweiLiti = ({
     .reduce((sum, tier) => sum + tier.stocks.length, 0);
   const ladderMax = ladderTiers.length ? ladderTiers[0].lianbanCount : 0;
 
-  // 题材分类视图：每个题材一行，行内连板数最高的个股排最前，题材之间按最高连板降序
+  // 题材分类视图：每个题材一行，行内连板数最高的个股排最前；
+  // 题材之间按「涨停数降序」排列，"其他" 永远放最后
   const ladderThemeGroups = useMemo(() => (
     (ladderData?.themes || [])
       .map((theme) => ({
         board: theme.board,
+        count: Number(theme.count) || (theme.stocks || []).length,
         stocks: (theme.stocks || [])
           .slice()
           .sort((a, b) => (
@@ -857,9 +864,12 @@ const SiweiLiti = ({
           )),
       }))
       .filter((group) => group.stocks.length)
-      .sort((a, b) => (
-        (Number(b.stocks[0]?.lianbanCount) || 1) - (Number(a.stocks[0]?.lianbanCount) || 1)
-      ))
+      .sort((a, b) => {
+        const aIsOther = String(a.board || '') === '其他';
+        const bIsOther = String(b.board || '') === '其他';
+        if (aIsOther !== bIsOther) return aIsOther ? 1 : -1;
+        return b.count - a.count;
+      })
   ), [ladderData]);
 
   // 自动导出周期分析：数据（含板块资金日线）就绪后触发一次下载

@@ -872,10 +872,43 @@ app.get('/lianban_sentiment_series', (req, res) => {
   }
 });
 
+// 当日实时连板快照：每次请求都触发同花顺+财联社抓取（内部 60s 去重）
+let lianbanRealtimeCache = { ts: 0, data: null };
+let lianbanRealtimeJob = null;
+const LIANBAN_REALTIME_TTL = 60 * 1000;
+
+const fetchLianbanRealtime = async () => {
+  const { buildTodaySnapshot } = require('./service/emotionCycleRealtime');
+  // buildTodaySnapshot 内部已判断非交易日 / 无涨停池数据时返回 null
+  return buildTodaySnapshot();
+};
+
 // 连板单日完整数据（含题材与涨停个股），供连板情绪悬浮展示当日及前四日题材使用
-app.get('/lianban_day', (req, res) => {
+// realtime=1 且请求当日时，返回同花顺+财联社实时快照，60s 内复用结果避免重复抓取
+app.get('/lianban_day', async (req, res) => {
   try {
     const date = String(req.query.date || '').replace(/\D/g, '');
+    const realtime = String(req.query.realtime || '') === '1';
+    const dayjs = require('dayjs');
+    const todayYmd = dayjs().format('YYYYMMDD');
+
+    if (realtime && date === todayYmd) {
+      if (lianbanRealtimeCache.data && Date.now() - lianbanRealtimeCache.ts < LIANBAN_REALTIME_TTL) {
+        return res.json(lianbanRealtimeCache.data);
+      }
+      if (!lianbanRealtimeJob) {
+        lianbanRealtimeJob = fetchLianbanRealtime()
+          .then((data) => {
+            lianbanRealtimeCache = { ts: Date.now(), data };
+            return data;
+          })
+          .finally(() => {
+            lianbanRealtimeJob = null;
+          });
+      }
+      return res.json(await lianbanRealtimeJob);
+    }
+
     res.json(date ? getLianbanDayData(date) : null);
   } catch (error) {
     console.error('获取连板单日数据失败:', error);
