@@ -961,16 +961,22 @@ app.post('/emotion_resonance/check', async (req, res) => {
   }
 });
 
-// 四维立体页面选择记忆：板块情绪周期的已选题材 + 板块成交&资金日线的已选板块
+// 四维立体页面选择记忆：板块情绪周期的已选题材 + 板块成交&资金日线的已选板块 + 板块股票展示的板块
 // 存服务端文件，换浏览器/清缓存后仍能恢复
+// stockThemeKeys 为 null 表示从未设置过（前端按默认板块初始化），空数组表示用户显式清空
 const SIWEI_SELECTION_FILE = path.join(__dirname, 'data/siwei_liti_selection.json');
 app.get('/siwei_liti_selection', (req, res) => {
   try {
-    if (!fs.existsSync(SIWEI_SELECTION_FILE)) return res.json({ themeKeys: [], sectorCats: [] });
+    if (!fs.existsSync(SIWEI_SELECTION_FILE)) {
+      return res.json({ themeKeys: [], sectorCats: [], stockThemeKeys: null });
+    }
     const data = JSON.parse(fs.readFileSync(SIWEI_SELECTION_FILE, 'utf-8') || '{}');
     res.json({
       themeKeys: Array.isArray(data.themeKeys) ? data.themeKeys.filter((v) => typeof v === 'string') : [],
       sectorCats: Array.isArray(data.sectorCats) ? data.sectorCats.filter((v) => typeof v === 'string') : [],
+      stockThemeKeys: Array.isArray(data.stockThemeKeys)
+        ? data.stockThemeKeys.filter((v) => typeof v === 'string')
+        : null,
     });
   } catch (error) {
     console.error('读取四维立体选择记忆失败:', error);
@@ -985,9 +991,12 @@ app.post('/siwei_liti_selection', (req, res) => {
     const sectorCats = Array.isArray(req.body?.sectorCats)
       ? req.body.sectorCats.filter((v) => typeof v === 'string')
       : [];
+    const stockThemeKeys = Array.isArray(req.body?.stockThemeKeys)
+      ? req.body.stockThemeKeys.filter((v) => typeof v === 'string')
+      : [];
     fs.writeFileSync(
       SIWEI_SELECTION_FILE,
-      JSON.stringify({ themeKeys, sectorCats, updatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss') }, null, 2),
+      JSON.stringify({ themeKeys, sectorCats, stockThemeKeys, updatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss') }, null, 2),
       'utf-8',
     );
     res.json({ success: true });

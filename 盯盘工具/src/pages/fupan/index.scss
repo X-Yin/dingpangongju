@@ -100,44 +100,6 @@
       }
     }
 
-    .personal-feelings-card {
-      .ant-card-body {
-        padding: 12px 16px;
-      }
-
-      .personal-feelings-list {
-        max-height: 360px;
-        overflow-y: auto;
-      }
-
-      .personal-feelings-row {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        padding: 8px 0;
-        border-bottom: 1px dashed #f0f0f0;
-
-        &:last-child {
-          border-bottom: none;
-        }
-      }
-
-      .personal-feelings-time {
-        flex-shrink: 0;
-        width: 60px;
-        padding-top: 1px;
-      }
-
-      .personal-feelings-content {
-        flex: 1;
-        font-size: 13px;
-        line-height: 1.6;
-        color: #333;
-        white-space: pre-wrap;
-        word-break: break-word;
-      }
-    }
-
     .overnight-meigu-card {
       .ant-card-body {
         padding: 10px;
@@ -323,32 +285,51 @@
       }
 
       .vditor-container {
-        min-height: 400px;
+        min-height: 1100px;
       }
     }
   }
 
+  // 右侧复盘列表：与左侧四维立体一致的紫→靛蓝→青蓝渐变磨砂风格
   .fupan-sider {
-    background: #fff;
-    border-left: 1px solid #e8e8e8;
+    border-left: 1px solid rgba(255, 255, 255, 0.24);
     padding: 12px 8px;
+    background:
+      radial-gradient(118% 86% at 8% -8%, rgba(162, 124, 255, 0.95) 0%, rgba(162, 124, 255, 0) 62%),
+      radial-gradient(108% 94% at 106% 8%, rgba(48, 197, 210, 0.92) 0%, rgba(48, 197, 210, 0) 58%),
+      radial-gradient(130% 110% at -8% 108%, rgba(132, 94, 255, 0.9) 0%, rgba(132, 94, 255, 0) 64%),
+      linear-gradient(116deg, #7b4dff 0%, #4d55d8 46%, #1ba7c6 100%) !important;
+    color: #fff;
 
     .notes-card {
+      background: transparent;
+      border: none;
+      color: #fff;
+
       .ant-card-head {
         min-height: 40px;
         padding: 0 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.24);
+        color: #fff;
 
         .ant-card-head-title {
           padding: 10px 0;
           font-size: 14px;
           font-weight: 600;
+          color: #fff;
+
+          .anticon {
+            color: rgba(255, 255, 255, 0.85);
+          }
         }
       }
 
       .ant-card-body {
         padding: 8px;
-        max-height: 1000px;
+        max-height: 1800px;
         overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
       }
 
       .notes-list {
@@ -358,21 +339,22 @@
           align-items: flex-start;
           padding: 10px 12px;
           margin-bottom: 6px;
-          border-radius: 6px;
+          border-radius: 10px;
           cursor: pointer;
           transition: all 0.2s ease;
-          border: 1px solid transparent;
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          background: rgba(255, 255, 255, 0.1);
 
           &:hover {
-            background: #f5f5f5;
+            background: rgba(255, 255, 255, 0.2);
           }
 
           &.active {
-            background: #e6f7ff;
-            border-color: #91d5ff;
+            background: rgba(255, 255, 255, 0.26);
+            border-color: rgba(255, 255, 255, 0.6);
 
             .note-date, .note-title {
-              color: #1890ff;
+              color: #fff;
             }
           }
 
@@ -387,8 +369,8 @@
             flex-wrap: wrap;
             gap: 4px;
             font-size: 12px;
-            font-weight: 500;
-            color: #333;
+            font-weight: 600;
+            color: #fff;
             margin-bottom: 4px;
 
             .note-title-text {
@@ -411,7 +393,7 @@
             display: flex;
             align-items: center;
             font-size: 12px;
-            color: #999;
+            color: rgba(255, 255, 255, 0.68);
           }
 
           .note-actions {
@@ -427,6 +409,14 @@
         }
       }
     }
+
+    .ant-empty-description {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .ant-spin-dot-item {
+      background-color: #fff;
+    }
   }
 }
 
@@ -435,4 +425,145 @@
   font-size: 12px;
   line-height: 1.5;
   white-space: nowrap;
+  color: #1e293b;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.18);
+
+  // 内部容器默认层 — 子 tooltip content 也带背景色，这里做兜底
+  > div,
+  > span { color: #1e293b; }
 }
+
+// 所有独立的 K 线/分时/资金/成交量 tooltip 外层（之前多处 inline style 的白底 tooltip）
+.chart-tooltip > div[style*="background:"] {
+  color: #1e293b;
+}
+
+// 四维立体也有 tooltip，统一兜底文字颜色
+.sl-page,
+.siwei-liti-page {
+  .chart-tooltip { color: #1e293b; }
+}
+
+// ---------- 复盘手记：沿用四维立体的渐变磨砂风格 ----------
+.siwei-liti-page.fupan-notes-page {
+  // .sl-section-title 不做覆盖 —— 直接复用 SiweiLiti.scss 的默认：
+  //   color: #1e293b（深色文字）
+  //   .anticon 为渐变背景白字图标
+  // 和四维立体保持完全一致，不再强制改成白字/半透明图标
+
+  .ant-card {
+    // 所有卡统一渐变磨砂背景（包括 K 线 / 分时 / 资金 / 隔夜美股 / 编辑器 / 复盘列表）
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    border: none;
+    background:
+      radial-gradient(118% 86% at 8% -8%, rgba(162, 124, 255, 0.95) 0%, rgba(162, 124, 255, 0) 62%),
+      radial-gradient(108% 94% at 106% 8%, rgba(48, 197, 210, 0.92) 0%, rgba(48, 197, 210, 0) 58%),
+      radial-gradient(130% 110% at -8% 108%, rgba(132, 94, 255, 0.9) 0%, rgba(132, 94, 255, 0) 64%),
+      linear-gradient(116deg, #7b4dff 0%, #4d55d8 46%, #1ba7c6 100%);
+    box-shadow: 0 18px 38px -26px rgba(30, 27, 75, 0.55);
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      pointer-events: none;
+    }
+
+    .ant-card-head {
+      position: relative;
+      z-index: 1;
+      border-bottom-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .ant-card-body {
+      position: relative;
+      z-index: 1;
+    }
+  }
+
+  // 渐变卡上保留深色标题文字（和四维立体一致）
+  .kline-card .ant-card-head-title,
+  .tline-card .ant-card-head-title,
+  .fund-card .ant-card-head-title,
+  .overnight-meigu-card .ant-card-head-title,
+  .editor-card .ant-card-head-title {
+    color: #1e293b !important;
+  }
+
+  // 右侧复盘列表卡：深色渐变背景 + 白色正文（保持原逻辑）
+  .notes-card {
+    color: #fff;
+    .ant-card-head-title { color: #fff !important; }
+    .ant-card-body { color: rgba(255, 255, 255, 0.88); }
+  }
+
+  // 隔夜美股内部 item：半透明白底 + 深色字
+  .overnight-meigu-card {
+    .meigu-item {
+      background: rgba(255, 255, 255, 0.18) !important;
+      border-left-color: rgba(255, 255, 255, 0.55) !important;
+
+      &:hover { background: rgba(255, 255, 255, 0.28) !important; }
+    }
+
+    .meigu-name { color: #1e293b !important; }
+    .meigu-price { color: #1e293b !important; }
+  }
+
+  .editor-card {
+    .ant-card-body {
+      padding: 0;
+    }
+
+    .editor-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+
+      .editor-tag-label {
+        color: rgba(255, 255, 255, 0.75);
+
+        .anticon {
+          color: rgba(255, 255, 255, 0.6);
+        }
+      }
+
+      .market-phase-value {
+        color: rgba(255, 255, 255, 0.75);
+      }
+
+      .market-phase-selector .market-phase-chip {
+        color: rgba(255, 255, 255, 0.75);
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      .editor-title-input {
+        &:hover {
+          background: rgba(255, 255, 255, 0.08);
+        }
+
+        .ant-input {
+          color: #fff;
+          font-size: 16px;
+          font-weight: 600;
+
+          &::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+          }
+        }
+      }
+    }
+
+    .vditor {
+      border-radius: 0 0 18px 18px;
+      overflow: hidden;
+    }
+  }
+}
+

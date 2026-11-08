@@ -1651,6 +1651,7 @@ const DingPan = () => {
                 selection: {
                     themeKeys: Array.isArray(selection.themeKeys) ? selection.themeKeys : [],
                     sectorCats,
+                    stockThemeKeys: Array.isArray(selection.stockThemeKeys) ? selection.stockThemeKeys : null,
                 },
                 sectorPool: Array.isArray(namesRes?.data) ? namesRes.data : [],
                 sectorData,

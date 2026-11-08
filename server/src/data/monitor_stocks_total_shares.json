@@ -420,11 +420,6 @@
     "TotalShares": 1134078509
   },
   {
-    "secu_code": "sz300182",
-    "secu_name": "捷成股份",
-    "TotalShares": 2663825632
-  },
-  {
     "secu_code": "sz301269",
     "secu_name": "华大九天",
     "TotalShares": 547874648
@@ -460,24 +455,9 @@
     "TotalShares": 473680286
   },
   {
-    "secu_code": "sh601811",
-    "secu_name": "新华文轩",
-    "TotalShares": 1233841000
-  },
-  {
     "secu_code": "sh600967",
     "secu_name": "内蒙一机",
     "TotalShares": 1701794667
-  },
-  {
-    "secu_code": "sh601606",
-    "secu_name": "长城军工",
-    "TotalShares": 724228400
-  },
-  {
-    "secu_code": "sh600316",
-    "secu_name": "洪都航空",
-    "TotalShares": 717114512
   },
   {
     "secu_code": "sh600435",
@@ -515,16 +495,6 @@
     "TotalShares": 8382687172
   },
   {
-    "secu_code": "sz300750",
-    "secu_name": "宁德时代",
-    "TotalShares": 4627249686
-  },
-  {
-    "secu_code": "sh688150",
-    "secu_name": "莱特光电",
-    "TotalShares": 402437585
-  },
-  {
     "secu_code": "sz002913",
     "secu_name": "奥士康",
     "TotalShares": 317360504
@@ -545,19 +515,9 @@
     "TotalShares": 330129367
   },
   {
-    "secu_code": "sh688400",
-    "secu_name": "凌云光  ",
-    "TotalShares": 475749645
-  },
-  {
     "secu_code": "sh688686",
     "secu_name": "奥普特  ",
     "TotalShares": 122235455
-  },
-  {
-    "secu_code": "sh688097",
-    "secu_name": "博众精工",
-    "TotalShares": 447225638
   },
   {
     "secu_code": "sh688836",
@@ -598,16 +558,6 @@
     "secu_code": "sh600118",
     "secu_name": "中国卫星",
     "TotalShares": 1182489135
-  },
-  {
-    "secu_code": "sh600879",
-    "secu_name": "航天电子",
-    "TotalShares": 3299299334
-  },
-  {
-    "secu_code": "sz300136",
-    "secu_name": "信维通信",
-    "TotalShares": 967568638
   },
   {
     "secu_code": "sz002565",
@@ -655,29 +605,14 @@
     "TotalShares": 4224385412
   },
   {
-    "secu_code": "sh605598",
-    "secu_name": "上海港湾",
-    "TotalShares": 240868649
-  },
-  {
     "secu_code": "sz002865",
     "secu_name": "钧达股份",
     "TotalShares": 311266052
   },
   {
-    "secu_code": "sh603969",
-    "secu_name": "银龙股份",
-    "TotalShares": 871533800
-  },
-  {
     "secu_code": "sh600261",
     "secu_name": "阳光照明",
     "TotalShares": 1335052966
-  },
-  {
-    "secu_code": "sh603337",
-    "secu_name": "杰克科技",
-    "TotalShares": 476388091
   },
   {
     "secu_code": "sh603667",
@@ -688,11 +623,6 @@
     "secu_code": "sh688386",
     "secu_name": "泛亚微透",
     "TotalShares": 99608958
-  },
-  {
-    "secu_code": "sz003033",
-    "secu_name": "征和工业",
-    "TotalShares": 81750000
   },
   {
     "secu_code": "sh605118",
@@ -710,49 +640,14 @@
     "TotalShares": 194983750
   },
   {
-    "secu_code": "sh605338",
-    "secu_name": "巴比食品",
-    "TotalShares": 239566662
-  },
-  {
     "secu_code": "sz301021",
     "secu_name": "英诺激光",
     "TotalShares": 152869941
   },
   {
-    "secu_code": "sz002981",
-    "secu_name": "朝阳科技",
-    "TotalShares": 136558715
-  },
-  {
-    "secu_code": "sh688331",
-    "secu_name": "荣昌生物",
-    "TotalShares": 564477483
-  },
-  {
-    "secu_code": "sz002403",
-    "secu_name": "爱仕达",
-    "TotalShares": 340638579
-  },
-  {
     "secu_code": "sz001326",
     "secu_name": "联域股份",
     "TotalShares": 73200000
-  },
-  {
-    "secu_code": "sh688818",
-    "secu_name": "电科蓝天",
-    "TotalShares": 1736923890
-  },
-  {
-    "secu_code": "sh600893",
-    "secu_name": "航发动力",
-    "TotalShares": 2665594238
-  },
-  {
-    "secu_code": "sh688239",
-    "secu_name": "航宇科技",
-    "TotalShares": 190912852
   },
   {
     "secu_code": "sh688279",
@@ -773,5 +668,25 @@
     "secu_code": "sz301629",
     "secu_name": "矽电股份",
     "TotalShares": 41727274
+  },
+  {
+    "secu_code": "sh603777",
+    "secu_name": "来伊份  ",
+    "TotalShares": 334424166
+  },
+  {
+    "secu_code": "sh603719",
+    "secu_name": "良品铺子",
+    "TotalShares": 397983400
+  },
+  {
+    "secu_code": "sh603901",
+    "secu_name": "永创智能",
+    "TotalShares": 576690597
+  },
+  {
+    "secu_code": "sh603680",
+    "secu_name": "今创集团",
+    "TotalShares": 783718767
   }
 ]

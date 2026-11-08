@@ -486,22 +486,27 @@ $sl-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     }
 
     .ant-select-selection-item {
-      background: rgba(255, 255, 255, 0.24) !important;
-      border: 1px solid rgba(255, 255, 255, 0.36) !important;
+      // 选中项：实底白底 + 深色文字，保证在渐变背景上清晰可读
+      background: rgba(255, 255, 255, 0.94) !important;
+      border: 1px solid rgba(255, 255, 255, 0.6) !important;
       border-radius: 7px !important;
-      color: #fff !important;
+      color: #312e81 !important;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       line-height: 22px !important;
       height: 24px !important;
       margin-inline-end: 4px;
       padding-inline: 8px !important;
     }
 
-    .ant-select-selection-item-remove {
-      color: rgba(255, 255, 255, 0.72) !important;
+    .ant-select-selection-item-content {
+      color: #312e81 !important;
+    }
 
-      &:hover { color: #fff !important; }
+    .ant-select-selection-item-remove {
+      color: #64748b !important;
+
+      &:hover { color: #1e293b !important; }
     }
 
     .ant-select-arrow,
@@ -836,6 +841,347 @@ $sl-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     line-height: 1.6;
   }
 
+  // ---------- 连板天梯 ----------
+  .sl-ladder-card {
+    padding-bottom: 10px;
+  }
+
+  .sl-ladder-head {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .sl-ladder-date-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sl-ladder-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) { background: rgba(255, 255, 255, 0.32); }
+    &:disabled { opacity: 0.4; cursor: default; }
+  }
+
+  .sl-ladder-date-picker.ant-picker {
+    width: 140px;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    box-shadow: none;
+
+    input {
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+
+      &::placeholder { color: rgba(255, 255, 255, 0.6); }
+    }
+
+    .ant-picker-suffix { color: rgba(255, 255, 255, 0.7); }
+
+    &:hover,
+    &.ant-picker-focused {
+      background: rgba(255, 255, 255, 0.26);
+      border-color: rgba(255, 255, 255, 0.55);
+    }
+  }
+
+  .sl-ladder-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.76);
+
+    b {
+      color: #fff;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .sl-ladder-phase {
+    padding: 1px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #04372a;
+    background: #d9fff3;
+  }
+
+  // 题材分类开关（连板天梯右上角）
+  .sl-ladder-mode-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 22px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.36);
+    background: rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 10.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.26);
+      color: #fff;
+    }
+
+    &.is-active {
+      background: #fff;
+      border-color: #fff;
+      color: #4d55d8;
+    }
+  }
+
+  // 题材分类视图：每行左侧的题材名按钮（横排，不再竖写省高度）
+  .sl-ladder-theme-name {
+    flex: 0 0 auto;
+    min-width: 110px;
+    padding: 0 12px;
+    height: 32px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 10px;
+    border: 1px solid rgba(165, 243, 252, 0.45);
+    background: rgba(34, 211, 238, 0.18);
+    color: #cffafe;
+    font-size: 11.5px;
+    font-weight: 800;
+    line-height: 1.25;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.16s ease;
+
+    em {
+      font-style: normal;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 0 6px;
+      line-height: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.86);
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      background: rgba(34, 211, 238, 0.38);
+      color: #fff;
+    }
+  }
+
+  .sl-ladder {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  }
+
+  .sl-ladder-row {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .sl-ladder-tier {
+    flex: 0 0 62px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #fff;
+
+    b {
+      font-size: 19px;
+      font-weight: 900;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+      color: #cffafe;
+    }
+
+    span {
+      font-size: 9px;
+      color: rgba(255, 255, 255, 0.66);
+      letter-spacing: 0.1em;
+    }
+
+    em {
+      margin-top: 2px;
+      font-style: normal;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.86);
+    }
+
+    &.is-high {
+      border-color: rgba(253, 230, 138, 0.55);
+      background: rgba(253, 230, 138, 0.16);
+
+      b { color: #fde68a; }
+    }
+  }
+
+  .sl-ladder-stocks {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-content: flex-start;
+  }
+
+  .sl-ladder-stock {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.9);
+    transition: background 0.16s ease;
+
+    &:hover { background: rgba(255, 255, 255, 0.2); }
+  }
+
+  .sl-ladder-stock-name {
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover { color: #cffafe; text-decoration: underline; }
+  }
+
+  .sl-ladder-board {
+    padding: 0 6px;
+    height: 18px;
+    line-height: 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(165, 243, 252, 0.45);
+    background: rgba(34, 211, 238, 0.22);
+    color: #cffafe;
+    font-size: 9.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.16s ease;
+
+    &:hover {
+      background: rgba(34, 211, 238, 0.42);
+      color: #fff;
+    }
+  }
+
+  .sl-ladder-concept {
+    max-width: 120px;
+    font-size: 9.5px;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sl-ladder-leader {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 0 5px;
+    line-height: 15px;
+    border-radius: 4px;
+    color: #4a1d00;
+    background: #fed7aa;
+  }
+
+  .sl-ladder-lbtext {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #fde68a;
+    white-space: nowrap;
+  }
+
+  .sl-ladder-time {
+    font-size: 9.5px;
+    color: rgba(255, 255, 255, 0.55);
+    font-family: $sl-mono;
+  }
+
+  // ---------- 板块股票：板块选择 + 定位高亮 ----------
+  .sl-stock-filter-card {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+  }
+
+  .sl-theme-anchor {
+    min-width: 0;
+    border-radius: 18px;
+    scroll-margin: 90px;
+
+    &.is-flash {
+      animation: sl-flash-ring 2.4s ease;
+
+      .sl-theme-card::after {
+        border-color: rgba(253, 230, 138, 0.9);
+        box-shadow: inset 0 0 0 1px rgba(253, 230, 138, 0.55);
+      }
+    }
+  }
+
+  @keyframes sl-flash-ring {
+    0% { box-shadow: 0 0 0 0 rgba(253, 230, 138, 0.9); }
+    45% { box-shadow: 0 0 0 8px rgba(253, 230, 138, 0.28); }
+    100% { box-shadow: 0 0 0 0 rgba(253, 230, 138, 0); }
+  }
+
   // ---------- 题材卡 ----------
   .sl-theme-grid {
     display: grid;
@@ -856,6 +1202,10 @@ $sl-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     @include sl-gradient();
     box-shadow: 0 18px 40px -28px rgba(30, 27, 75, 0.6);
     min-width: 0;
+    // 所有卡都已补足到 10 行，grid 同行默认 stretch 保证等高，无需固定 min-height
+    // 改为 flex-col + foot 贴底，底部不留白
+    display: flex;
+    flex-direction: column;
 
     &::after {
       content: '';
@@ -993,6 +1343,23 @@ $sl-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
       .sl-stock-name { color: #cffafe; text-decoration: underline; }
     }
+
+    &.sl-stock-row-empty {
+      cursor: default;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed rgba(255, 255, 255, 0.16);
+
+      &:hover { background: rgba(255, 255, 255, 0.03); }
+    }
+  }
+
+  .sl-rank-empty {
+    color: rgba(255, 255, 255, 0.28) !important;
+  }
+
+  .sl-empty-dash {
+    color: rgba(255, 255, 255, 0.28) !important;
+    font-style: italic;
   }
 
   .sl-rank {

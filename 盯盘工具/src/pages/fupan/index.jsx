@@ -88,8 +88,8 @@ const ClickableKLineChart = ({ data = [], height = 300, title = '', selectedDate
 
     const chart = createChart(containerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#ffffff' },
-        textColor: '#333',
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: 'rgba(255, 255, 255, 0.82)',
         fontSize: 12,
       },
       width: containerRef.current.clientWidth,
@@ -108,7 +108,7 @@ const ClickableKLineChart = ({ data = [], height = 300, title = '', selectedDate
         },
       },
       timeScale: {
-        borderColor: '#D1D4DC',
+        borderColor: 'rgba(255, 255, 255, 0.26)',
         timeVisible: true,
         secondsVisible: false,
         tickMarkFormatter: (time) => {
@@ -131,11 +131,11 @@ const ClickableKLineChart = ({ data = [], height = 300, title = '', selectedDate
         },
       },
       grid: {
-        vertLines: { color: '#f0f0f0' },
-        horzLines: { color: '#f0f0f0' },
+        vertLines: { color: 'rgba(255, 255, 255, 0.12)' },
+        horzLines: { color: 'rgba(255, 255, 255, 0.12)' },
       },
       rightPriceScale: {
-        borderColor: '#D1D4DC',
+        borderColor: 'rgba(255, 255, 255, 0.26)',
         autoScale: true,
       },
       handleScroll: false,
@@ -477,18 +477,18 @@ const TlineChart = ({ data = null, height = 280, title = '' }) => {
 
     const chart = createChart(containerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#ffffff' },
-        textColor: '#333',
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: 'rgba(255, 255, 255, 0.82)',
         fontSize: 11,
       },
       width: containerRef.current.clientWidth,
       height: height,
       grid: {
-        vertLines: { color: '#f0f0f0', style: LineStyle.Dotted },
-        horzLines: { color: '#f0f0f0', style: LineStyle.Dotted },
+        vertLines: { color: 'rgba(255, 255, 255, 0.12)', style: LineStyle.Dotted },
+        horzLines: { color: 'rgba(255, 255, 255, 0.12)', style: LineStyle.Dotted },
       },
       timeScale: {
-        borderColor: '#D1D4DC',
+        borderColor: 'rgba(255, 255, 255, 0.26)',
         timeVisible: true,
         secondsVisible: false,
         tickMarkFormatter: (time) => {
@@ -502,7 +502,7 @@ const TlineChart = ({ data = null, height = 280, title = '' }) => {
         priceFormatter: (price) => price?.toFixed(2) || '-',
       },
       rightPriceScale: {
-        borderColor: '#D1D4DC',
+        borderColor: 'rgba(255, 255, 255, 0.26)',
         autoScale: true,
       },
       handleScroll: false,
@@ -800,20 +800,20 @@ const FundCharts = ({ fundData = null, mainHeight = 250, volHeight = 250 }) => {
 
     const mainChart = createChart(mainContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#ffffff' },
-        textColor: '#333',
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: 'rgba(255, 255, 255, 0.82)',
         fontSize: 11,
       },
       width: mainContainerRef.current.clientWidth,
       height: mainHeight,
       grid: {
-        vertLines: { color: '#f0f0f0' },
-        horzLines: { color: '#f0f0f0' },
+        vertLines: { color: 'rgba(255, 255, 255, 0.12)' },
+        horzLines: { color: 'rgba(255, 255, 255, 0.12)' },
       },
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
-        borderColor: '#D1D4DC',
+        borderColor: 'rgba(255, 255, 255, 0.26)',
         tickMarkFormatter: (time) => timeIndexMap[time] || '',
       },
       localization: {
@@ -821,7 +821,7 @@ const FundCharts = ({ fundData = null, mainHeight = 250, volHeight = 250 }) => {
         priceFormatter: (price) => formatMoney(price),
       },
       rightPriceScale: {
-        borderColor: '#D1D4DC',
+        borderColor: 'rgba(255, 255, 255, 0.26)',
         autoScale: true,
         scaleMargins: { top: 0.1, bottom: 0.1 },
       },
@@ -894,20 +894,20 @@ const FundCharts = ({ fundData = null, mainHeight = 250, volHeight = 250 }) => {
 
     const volChart = createChart(volContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#ffffff' },
-        textColor: '#333',
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: 'rgba(255, 255, 255, 0.82)',
         fontSize: 11,
       },
       width: volContainerRef.current.clientWidth,
       height: volHeight,
       grid: {
-        vertLines: { color: '#f0f0f0' },
-        horzLines: { color: '#f0f0f0' },
+        vertLines: { color: 'rgba(255, 255, 255, 0.12)' },
+        horzLines: { color: 'rgba(255, 255, 255, 0.12)' },
       },
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
-        borderColor: '#D1D4DC',
+        borderColor: 'rgba(255, 255, 255, 0.26)',
         tickMarkFormatter: (time) => timeIndexMap[time] || '',
       },
       localization: {
@@ -915,7 +915,7 @@ const FundCharts = ({ fundData = null, mainHeight = 250, volHeight = 250 }) => {
         priceFormatter: (price) => formatMoney(price),
       },
       rightPriceScale: {
-        borderColor: '#D1D4DC',
+        borderColor: 'rgba(255, 255, 255, 0.26)',
         autoScale: true,
         scaleMargins: { top: 0.1, bottom: 0.1 },
       },
@@ -1128,17 +1128,14 @@ const Fupan = () => {
   const [fundLoading, setFundLoading] = useState(false);
   const [meiguData, setMeiguData] = useState([]);
   const [meiguLoading, setMeiguLoading] = useState(false);
-  const [personalFeelings, setPersonalFeelings] = useState([]);
-  const [personalFeelingsLoading, setPersonalFeelingsLoading] = useState(false);
   const [notesList, setNotesList] = useState([]);
-  // 页面双 Tab：复盘手记（原有内容） / 四维立体（主线与情绪周期）
-  // 支持 ?tab=siwei 直达四维立体（收盘流水线「情绪分析」节点）
-  const [activeTab, setActiveTab] = useState(queryTab === 'siwei' ? 'siwei' : 'notes');
-  // 已停留在复盘页时，从收盘流水线等外部携带 ?tab=siwei 进入也能切到四维立体
+  // 页面双 Tab：默认四维立体（主线与情绪周期），复盘手记通过 ?tab=notes 进入
+  const [activeTab, setActiveTab] = useState(queryTab === 'notes' ? 'notes' : 'siwei');
+  // 已停留在复盘页时，从收盘流水线等外部携带 ?tab=... 进入也能切换
   const [prevQueryTab, setPrevQueryTab] = useState(queryTab);
   if (queryTab !== prevQueryTab) {
     setPrevQueryTab(queryTab);
-    setActiveTab(queryTab === 'siwei' ? 'siwei' : 'notes');
+    setActiveTab(queryTab === 'notes' ? 'notes' : 'siwei');
   }
   const [currentNote, setCurrentNote] = useState('');
   const [currentTitle, setCurrentTitle] = useState('');
@@ -1320,24 +1317,6 @@ const Fupan = () => {
     }
   }, []);
 
-  const fetchPersonalFeelings = useCallback(async (date) => {
-    if (!date) return;
-    setPersonalFeelingsLoading(true);
-    try {
-      const res = await axios.get(`http://${local_ip}:3000/fupan/personal_feelings?date=${date}`);
-      if (res.data?.success) {
-        setPersonalFeelings(res.data.data?.records || []);
-      } else {
-        setPersonalFeelings([]);
-      }
-    } catch (error) {
-      console.error('获取个人感受记录失败:', error);
-      setPersonalFeelings([]);
-    } finally {
-      setPersonalFeelingsLoading(false);
-    }
-  }, []);
-
   const handleDateClick = useCallback((dateNum) => {
     setSelectedDate(dateNum);
     setTlineData(null);
@@ -1516,10 +1495,9 @@ const Fupan = () => {
       fetchTlineData(selectedDate);
       fetchNoteByDate(selectedDate);
       fetchFundData(selectedDate);
-      fetchPersonalFeelings(selectedDate);
       fetchMeiguData(selectedDate);
     }
-  }, [selectedDate, fetchTlineData, fetchNoteByDate, fetchFundData, fetchPersonalFeelings, fetchMeiguData]);
+  }, [selectedDate, fetchTlineData, fetchNoteByDate, fetchFundData, fetchMeiguData]);
 
   useEffect(() => {
     if (loading || !indexKlineData) return;
@@ -1536,8 +1514,8 @@ const Fupan = () => {
 
       const currentVditor = new Vditor(vditorRef.current, {
         cdn: VDITOR_CDN,
-        minHeight: 300,
-        height: 400,
+        minHeight: 1000,
+        height: 1100,
         type: 'markdown',
         cache: { enable: false },
         placeholder: selectedDate ? `编写 ${formatDateStr(selectedDate)} 的复盘总结...` : '请先点击K线选择日期',
@@ -1647,20 +1625,97 @@ const Fupan = () => {
           className="fupan-tabs"
           items={[
             {
+              key: 'siwei',
+              label: <span><LineChartOutlined /> 四维立体</span>,
+              children: <SiweiLiti autoCycleExport={searchParams.get('autoCycle') === '1'} />,
+            },
+            {
               key: 'notes',
               label: <span><FileTextOutlined /> 复盘手记</span>,
               children: (
-                <div className="fupan-tab-pane">
+                <div className="siwei-liti-page fupan-notes-page">
         {loading ? (
-          <div className="loading-container">
-            <Spin size="large" tip="加载中..." />
+          <div className="sl-loading">
+            <Spin size="large" />
+            <div className="sl-loading-tip">加载复盘数据中…</div>
           </div>
         ) : (
           <>
+            <div className="sl-hero">
+              <div className="sl-hero-header">
+                <div className="sl-hero-title">
+                  <span className="sl-hero-icon"><FileTextOutlined /></span>
+                  <span>复盘手记 · {selectedDate ? formatDateStr(selectedDate) : '请选择日期'}</span>
+                </div>
+                <div className="sl-hero-actions">
+                  {isContentModified && <span className="sl-total-tag">未保存</span>}
+                  <button
+                    type="button"
+                    className="sl-cycle-analysis-btn"
+                    onClick={handleVolumePriceAnalysis}
+                    disabled={vpLoading}
+                  >
+                    <BarChartOutlined /> {vpLoading ? '分析中…' : '量价分析'}
+                  </button>
+                  <button
+                    type="button"
+                    className="sl-cycle-analysis-btn"
+                    onClick={() => navigate('/block?tab=smart&subTab=ai')}
+                  >
+                    主线分析
+                  </button>
+                  <button
+                    type="button"
+                    className="sl-cycle-analysis-btn sl-hero-save-btn"
+                    onClick={handleSave}
+                    disabled={!selectedDate || saving}
+                  >
+                    <SaveOutlined /> {saving ? '保存中…' : '保存复盘'}
+                  </button>
+                  <button
+                    type="button"
+                    className="sl-refresh-btn"
+                    onClick={handleRefresh}
+                    disabled={loading}
+                    title="刷新数据"
+                  >
+                    <ReloadOutlined spin={loading} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="sl-status-note">
+                选择 K 线日期后回看当日指数、分时、主力资金与隔夜美股，并记录复盘总结
+                {selectedDate && <span className="sl-status-sub">当前复盘 {formatDateStr(selectedDate)}</span>}
+              </div>
+
+              <div className="sl-summary-grid">
+                <div className="sl-summary-item">
+                  <span className="sl-summary-label">市场情绪</span>
+                  <span className="sl-summary-value">{marketPhaseName || '--'}</span>
+                </div>
+                <div className="sl-summary-item">
+                  <span className="sl-summary-label">科技情绪指数</span>
+                  <span className={`sl-summary-value ${techEmotion === null ? '' : techEmotion > 0 ? 'sl-up' : techEmotion < 0 ? 'sl-down' : ''}`}>
+                    {techEmotion === null ? '--' : techEmotion.toFixed(2)}
+                  </span>
+                </div>
+                <div className="sl-summary-item">
+                  <span className="sl-summary-label">隔夜美股</span>
+                  <span className="sl-summary-value">{meiguData?.length ? `${meiguData.length} 个指数` : '--'}</span>
+                </div>
+                <div className="sl-summary-item">
+                  <span className="sl-summary-label">复盘标题</span>
+                  <span className="sl-summary-value" title={currentTitle}>{currentTitle || '--'}</span>
+                </div>
+              </div>
+            </div>
+
             {indexKlineData && (
               <>
-                <div className="section-divider">
-                  <LineChartOutlined /> 三大指数K线图（点击K线选择日期）
+                <div className="sl-section-title">
+                  <LineChartOutlined /> 三大指数K线图
+                  <span className="sl-section-sub">点击 K 线切换复盘日期</span>
                 </div>
                 <Row gutter={[16, 16]}>
                   <Col span={8}>
@@ -1692,7 +1747,7 @@ const Fupan = () => {
                   </Col>
                 </Row>
 
-                <div className="section-divider">
+                <div className="sl-section-title">
                   <LineChartOutlined /> 当日分时图 {selectedDate ? `(${formatDateStr(selectedDate)})` : ''}
                   {tlineLoading && <Spin size="small" style={{ marginLeft: 12 }} />}
                 </div>
@@ -1700,7 +1755,7 @@ const Fupan = () => {
                 <Row gutter={[16, 16]}>
                   <Col span={8}>
                     {tlineLoading ? (
-                      <Card bordered={false} size="small">
+                      <Card bordered={false} size="small" className="sl-glass-card">
                         <div style={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <Spin />
                         </div>
@@ -1711,7 +1766,7 @@ const Fupan = () => {
                   </Col>
                   <Col span={8}>
                     {tlineLoading ? (
-                      <Card bordered={false} size="small">
+                      <Card bordered={false} size="small" className="sl-glass-card">
                         <div style={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <Spin />
                         </div>
@@ -1722,7 +1777,7 @@ const Fupan = () => {
                   </Col>
                   <Col span={8}>
                     {tlineLoading ? (
-                      <Card bordered={false} size="small">
+                      <Card bordered={false} size="small" className="sl-glass-card">
                         <div style={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <Spin />
                         </div>
@@ -1733,7 +1788,7 @@ const Fupan = () => {
                   </Col>
                 </Row>
 
-                <div className="section-divider">
+                <div className="sl-section-title">
                   <LineChartOutlined /> 主力资金与成交量 {selectedDate ? `(${formatDateStr(selectedDate)})` : ''}
                   {fundLoading && <Spin size="small" style={{ marginLeft: 12 }} />}
                 </div>
@@ -1741,7 +1796,7 @@ const Fupan = () => {
                 <Row gutter={[16, 16]} className="fund-row">
                   {fundLoading ? (
                     <Col span={24}>
-                      <Card bordered={false} size="small">
+                      <Card bordered={false} size="small" className="sl-glass-card">
                         <div style={{ height: 250, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <Spin size="large" />
                         </div>
@@ -1752,7 +1807,7 @@ const Fupan = () => {
                   )}
                 </Row>
 
-                <div className="section-divider">
+                <div className="sl-section-title">
                   <GlobalOutlined /> 隔夜美股 {selectedDate ? `(${formatDateStr(selectedDate)})` : ''}
                   {meiguLoading && <Spin size="small" style={{ marginLeft: 12 }} />}
                   <span style={{ marginLeft: 'auto' }}>
@@ -1770,45 +1825,16 @@ const Fupan = () => {
 
                 <OvernightMeigu data={meiguData} loading={meiguLoading} />
 
-                <div className="section-divider">
-                  <EditOutlined /> 个人感受记录 {selectedDate ? `(${formatDateStr(selectedDate)})` : ''}
-                  {personalFeelingsLoading && <Spin size="small" style={{ marginLeft: 12 }} />}
-                </div>
-
-                <Card bordered={false} className="personal-feelings-card" size="small">
-                  {personalFeelingsLoading ? (
-                    <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                      <Spin size="small" />
-                    </div>
-                  ) : personalFeelings.length === 0 ? (
-                    <Empty description="当日暂无感受记录" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ padding: '16px 0' }} />
-                  ) : (
-                    <div className="personal-feelings-list">
-                      {personalFeelings.map((record, idx) => (
-                        <div key={record.time} className="personal-feelings-row">
-                          <div className="personal-feelings-time">
-                            <Tag color={idx === personalFeelings.length - 1 ? 'orange' : 'blue'} style={{ margin: 0 }}>
-                              {record.time}
-                            </Tag>
-                          </div>
-                          <div className="personal-feelings-content">
-                            {record.feeling || <span style={{ color: '#ccc' }}>（未填写）</span>}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Card>
-
-                <div className="section-divider">
+                <div className="sl-section-title">
                   <FileTextOutlined /> 复盘总结
+                  {isContentModified && <span className="sl-section-sub">有未保存修改</span>}
                 </div>
 
-                <Card bordered={false} className="editor-card">
+                <Card bordered={false} className="editor-card sl-glass-card">
                   <div className="editor-header">
                     <div className="editor-header-row">
                       <div className="editor-title-input">
-                        <EditOutlined style={{ color: '#999', marginRight: 8 }} />
+                        <EditOutlined style={{ color: 'rgba(255,255,255,0.6)', marginRight: 8 }} />
                         <Input
                           value={currentTitle}
                           onChange={handleTitleChange}
@@ -1818,8 +1844,8 @@ const Fupan = () => {
                         />
                       </div>
                       <Space>
-                        <CalendarOutlined style={{ color: '#999' }} />
-                        <span style={{ color: '#666' }}>
+                        <CalendarOutlined style={{ color: 'rgba(255,255,255,0.6)' }} />
+                        <span style={{ color: 'rgba(255,255,255,0.82)' }}>
                           {selectedDate ? formatDateStr(selectedDate) : '请选择日期'}
                         </span>
                         {isContentModified && (
@@ -1848,53 +1874,15 @@ const Fupan = () => {
                         科技指数情绪：
                         <b style={{
                           color: techEmotion === null
-                            ? '#999'
-                            : techEmotion > 0 ? '#f5222d' : techEmotion < 0 ? '#52c41a' : '#666',
+                            ? 'rgba(255,255,255,0.6)'
+                            : techEmotion > 0 ? '#ff8f8f' : techEmotion < 0 ? '#86efac' : '#fff',
                         }}>
                           {techEmotion === null ? '暂无数据' : techEmotion.toFixed(2)}
                         </b>
                       </span>
                     </div>
                   </div>
-                  <div className="editor-toolbar">
-                    <Space>
-                      <AntTooltip title="刷新数据">
-                        <Button 
-                          icon={<ReloadOutlined />} 
-                          onClick={handleRefresh}
-                          loading={loading}
-                          size="small"
-                        >
-                          刷新
-                        </Button>
-                      </AntTooltip>
-                      <Button
-                        icon={<BarChartOutlined />}
-                        onClick={handleVolumePriceAnalysis}
-                        loading={vpLoading}
-                        size="small"
-                      >
-                        量价分析
-                      </Button>
-                    </Space>
-                    <Space>
-                      <Button
-                        onClick={() => navigate('/block?tab=smart&subTab=ai')}
-                      >
-                        主线分析
-                      </Button>
-                      <Button
-                        type="primary"
-                        icon={<SaveOutlined />}
-                        onClick={handleSave}
-                        loading={saving}
-                        disabled={!selectedDate}
-                      >
-                        保存复盘
-                      </Button>
-                    </Space>
-                  </div>
-                  <div ref={vditorRef} style={{ minHeight: 400 }} />
+                  <div ref={vditorRef} style={{ minHeight: 1100 }} />
                 </Card>
               </>
             )}
@@ -1902,11 +1890,6 @@ const Fupan = () => {
         )}
                 </div>
               ),
-            },
-            {
-              key: 'siwei',
-              label: <span><LineChartOutlined /> 四维立体</span>,
-              children: <SiweiLiti />,
             },
           ]}
         />

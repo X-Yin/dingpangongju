@@ -14,9 +14,9 @@ const TRIGGER_MINUTE = 15 * 60 + 1;
 const PIPELINE_NODES = [
   { key: 'crowd', name: '拥挤度计算', desc: '板块资金 / 拥挤度', path: '/block?tab=money&subTab=crowd' },
   { key: 'strength', name: '板块强度', desc: '板块资金 / 板块强度', path: '/block?tab=money&subTab=strength' },
-  { key: 'fupan', name: '复盘分析', desc: '复盘分析', path: '/fupan' },
+  { key: 'fupan', name: '复盘分析', desc: '复盘 / 复盘手记', path: '/fupan?tab=notes' },
   { key: 'backtest', name: '回测诊断', desc: '回测诊断', path: '/backtest' },
-  { key: 'mood', name: '情绪分析', desc: '复盘 / 四维立体', path: '/fupan?tab=siwei' },
+  { key: 'mood', name: '情绪分析', desc: '复盘 / 四维立体（自动下载周期分析）', path: '/fupan?tab=siwei&autoCycle=1' },
 ];
 
 // const isTradingDay = (d) => {

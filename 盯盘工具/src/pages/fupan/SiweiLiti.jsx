@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Empty, Spin, Tooltip, message, Select } from 'antd';
-import { ReloadOutlined, LineChartOutlined, ThunderboltOutlined, FundOutlined, BarChartOutlined, SwapOutlined, FileTextOutlined } from '@ant-design/icons';
+import { DatePicker, Empty, Spin, Tooltip, message, Select } from 'antd';
+import {
+  ReloadOutlined, LineChartOutlined, ThunderboltOutlined, FundOutlined, BarChartOutlined,
+  SwapOutlined, FileTextOutlined, TrophyOutlined, LeftOutlined, RightOutlined, AppstoreOutlined,
+} from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { createChart, ColorType, LineStyle, CrosshairMode } from 'lightweight-charts';
@@ -59,6 +62,17 @@ const formatYmd = (ymd) => {
   if (str.length !== 8) return '--';
   return `${str.slice(4, 6)}/${str.slice(6, 8)}`;
 };
+
+// 板块名归一化：与后端 siweiLiti 的 boardKeyOf 保持一致（去掉括号补充说明）
+const boardKeyOf = (board) => String(board || '').replace(/（[^）]*）|\([^)]*\)/g, '').trim();
+
+// YYYYMMDD -> dayjs（DatePicker 用）
+const ymdToDayjs = (ymd) => {
+  const s = String(ymd || '');
+  if (s.length !== 8) return null;
+  return dayjs(`${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`);
+};
+
 
 // 完整年月日（用于 txt 导出）
 const formatDateFull = (ymd) => {
@@ -452,6 +466,18 @@ const ThemeCard = ({ theme, onOpenStock }) => {
           <span className="sl-mono sl-score">{fmtScore(s.score)}</span>
         </div>
       ))}
+      {Array.from({ length: Math.max(0, 10 - ((theme.stocks || []).length)) }).map((_, i) => {
+        const idx = (theme.stocks || []).length + i;
+        return (
+          <div className="sl-stock-row sl-stock-row-empty" key={`${theme.key}-pad-${idx}`}>
+            <span className="sl-rank sl-rank-empty">{idx + 1}</span>
+            <span className="sl-stock-name-cell"><span className="sl-stock-name sl-empty-dash">—</span></span>
+            <span className="sl-mono sl-empty-dash">—</span>
+            <span className="sl-mono sl-empty-dash">—</span>
+            <span className="sl-mono sl-score sl-empty-dash">—</span>
+          </div>
+        );
+      })}
       {(!theme.stocks || theme.stocks.length === 0) && (
         <div className="sl-empty-row">暂无个股数据</div>
       )}
@@ -471,6 +497,7 @@ const SiweiLiti = ({
   initialSelection = null,
   initialSectorPool = null,
   initialSectorData = null,
+  autoCycleExport = false, // 收盘流水线「情绪分析」节点进入时自动导出周期分析 txt
 }) => {
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(!initialData);
@@ -482,6 +509,22 @@ const SiweiLiti = ({
   const [selectionLoaded, setSelectionLoaded] = useState(Boolean(initialSelection));
   const [klineTarget, setKlineTarget] = useState(null);
   const [klineVisible, setKlineVisible] = useState(false);
+
+  // 板块股票：手动选择要展示的板块（null = 尚未设置过，用默认板块初始化；[] = 用户清空）
+  const [stockThemeKeys, setStockThemeKeys] = useState(() => (
+    Array.isArray(initialSelection?.stockThemeKeys) ? initialSelection.stockThemeKeys : null
+  ));
+  const [flashThemeKey, setFlashThemeKey] = useState('');
+  const [flashSeq, setFlashSeq] = useState(0);
+  const stockCardRefs = useRef(new Map());
+
+  // 连板天梯：可选日期（本地连板快照）+ 当前查看日 + 当日数据
+  const [ladderDates, setLadderDates] = useState([]);
+  const [ladderDate, setLadderDate] = useState('');
+  const [ladderData, setLadderData] = useState(null);
+  const [ladderLoading, setLadderLoading] = useState(false);
+  // 题材分类开关：开启后每个题材一行（连板数最高的个股排最前）
+  const [ladderByTheme, setLadderByTheme] = useState(false);
 
   // 板块成交量占比 / 板块资金流入流出（共用同一个筛选框，选择存服务端）
   const [sectorCats, setSectorCats] = useState(() => (
@@ -514,7 +557,7 @@ const SiweiLiti = ({
 
   useEffect(() => { if (!initialData) fetchData(); }, [fetchData, initialData]);
 
-  // 从服务端恢复上次选择（板块情绪周期题材 + 板块成交&资金日线板块）
+  // 从服务端恢复上次选择（板块情绪周期题材 + 板块成交&资金日线板块 + 板块股票展示板块）
   useEffect(() => {
     if (initialSelection) return undefined;
     let cancelled = false;
@@ -523,8 +566,10 @@ const SiweiLiti = ({
         if (cancelled) return;
         const themeKeys = Array.isArray(res.data?.themeKeys) ? res.data.themeKeys : [];
         const cats = Array.isArray(res.data?.sectorCats) ? res.data.sectorCats : [];
+        const stockKeys = res.data?.stockThemeKeys;
         setSelectedThemeKeys(themeKeys);
         setSectorCats(cats);
+        setStockThemeKeys(Array.isArray(stockKeys) ? stockKeys : null);
       })
       .catch((e) => {
         console.error('读取四维立体选择记忆失败:', e);
@@ -547,6 +592,97 @@ const SiweiLiti = ({
     });
   }, [themes, selectionLoaded]);
 
+  // 板块股票：数据刷新后剔除已不存在的板块；首次进入（未设置过）默认展示前 4 个板块
+  useEffect(() => {
+    if (!selectionLoaded || !themes.length || stockThemeKeys === null) return;
+    const valid = stockThemeKeys.filter((k) => themes.some((t) => t.key === k));
+    if (valid.length !== stockThemeKeys.length) setStockThemeKeys(valid);
+  }, [themes, selectionLoaded, stockThemeKeys]);
+
+  useEffect(() => {
+    if (!selectionLoaded || !themes.length || stockThemeKeys !== null) return;
+    setStockThemeKeys(themes.slice(0, 4).map((t) => t.key));
+  }, [themes, selectionLoaded, stockThemeKeys]);
+
+  // 板块股票展示的板块（按选择顺序）
+  const selectedStockThemes = useMemo(() => (
+    (Array.isArray(stockThemeKeys) ? stockThemeKeys : [])
+      .map((k) => themes.find((t) => t.key === k))
+      .filter(Boolean)
+  ), [stockThemeKeys, themes]);
+
+  // 点击连板天梯里的板块名：加入板块股票展示列表并滚动定位
+  const focusStockTheme = (boardName) => {
+    const key = boardKeyOf(boardName);
+    const theme = themes.find((t) => t.key === key || t.board === boardName);
+    if (!theme) {
+      message.warning(`板块股票中没有「${boardName}」`);
+      return;
+    }
+    setStockThemeKeys((prev) => {
+      const list = Array.isArray(prev) ? prev : [];
+      return list.includes(theme.key) ? list : [...list, theme.key];
+    });
+    setFlashThemeKey(theme.key);
+    setFlashSeq((seq) => seq + 1);
+  };
+
+  // 等新卡片渲染完成后再滚动到目标板块，并保持高亮一段时间
+  useEffect(() => {
+    if (!flashThemeKey || !flashSeq) return undefined;
+    const scrollToTarget = () => {
+      const el = stockCardRefs.current.get(flashThemeKey);
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      // 页面滚动发生在 window 上（内部容器 overflow 可见），按窗口坐标将卡片居中。
+      // 不要同时调用 scrollIntoView：两个 smooth 滚动会互相打断导致定位不准。
+      window.scrollTo({
+        top: Math.max(0, window.scrollY + rect.top - window.innerHeight / 2 + rect.height / 2),
+        behavior: 'smooth',
+      });
+    };
+    scrollToTarget();
+    // 长列表 + 新卡片插入后可能有一次重排，稍后再校准一次位置
+    const retry = setTimeout(scrollToTarget, 500);
+    const timer = setTimeout(() => setFlashThemeKey(''), 4000);
+    return () => {
+      clearTimeout(retry);
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flashSeq]);
+
+  // 连板天梯个股芯片（梯队视图 / 题材分类视图共用）
+  const renderLadderStock = (stock) => (
+    <div className="sl-ladder-stock" key={stock.code}>
+      <span
+        className="sl-ladder-stock-name"
+        onClick={() => openStock(stock)}
+        title="点击查看 K 线"
+      >
+        {stock.name}
+      </span>
+      {stock.board && (
+        <button
+          type="button"
+          className="sl-ladder-board"
+          onClick={() => focusStockTheme(stock.board)}
+          title={`定位到板块股票：${stock.board}`}
+        >
+          {stock.board}
+        </button>
+      )}
+      {(stock.concept || stock.concepts) && (
+        <span className="sl-ladder-concept" title={stock.concepts || stock.concept}>
+          {stock.concept || stock.concepts}
+        </span>
+      )}
+      {stock.leader && <span className="sl-ladder-leader">龙头</span>}
+      {stock.lianbanText && <span className="sl-ladder-lbtext">{stock.lianbanText}</span>}
+      {stock.sealTime && <span className="sl-ladder-time">{stock.sealTime}</span>}
+    </div>
+  );
+
   // 板块情绪周期可选题材：不再区分主线/支线，按题材顺序全部展示
   const chipThemes = themes;
 
@@ -562,15 +698,16 @@ const SiweiLiti = ({
 
   // 选择变化后写回服务端（等首次读取完成，避免默认值覆盖历史选择）
   useEffect(() => {
-    if (!selectionLoaded) return;
+    if (!selectionLoaded || stockThemeKeys === null) return;
     const timer = setTimeout(() => {
       axios.post(`${API_BASE}/siwei_liti_selection`, {
         themeKeys: selectedThemeKeys,
         sectorCats,
+        stockThemeKeys,
       }).catch((e) => console.error('保存四维立体选择记忆失败:', e));
     }, 300);
     return () => clearTimeout(timer);
-  }, [selectionLoaded, selectedThemeKeys, sectorCats]);
+  }, [selectionLoaded, selectedThemeKeys, sectorCats, stockThemeKeys]);
 
   // 已选题材（按标签列表顺序）
   const selectedThemes = useMemo(
@@ -639,6 +776,102 @@ const SiweiLiti = ({
       .catch((e) => console.error('获取一级板块清单失败:', e));
     return undefined;
   }, [initialSectorPool]);
+
+  // ===== 连板天梯：可回看的连板快照日期（升序） =====
+  useEffect(() => {
+    let cancelled = false;
+    axios.get(`${API_BASE}/lianban_sentiment_series`)
+      .then((res) => {
+        if (cancelled) return;
+        const dates = (Array.isArray(res.data) ? res.data : [])
+          .map((item) => String(item?.date || ''))
+          .filter(Boolean)
+          .sort();
+        setLadderDates(dates);
+        if (dates.length) setLadderDate(dates[dates.length - 1]);
+      })
+      .catch((e) => console.error('获取连板天梯日期失败:', e));
+    return () => { cancelled = true; };
+  }, []);
+
+  // 按所选日期拉取当日连板快照
+  useEffect(() => {
+    if (!ladderDate) return undefined;
+    let cancelled = false;
+    setLadderLoading(true);
+    axios.get(`${API_BASE}/lianban_day`, { params: { date: ladderDate } })
+      .then((res) => { if (!cancelled) setLadderData(res.data || null); })
+      .catch((e) => {
+        console.error('获取连板天梯数据失败:', e);
+        if (!cancelled) setLadderData(null);
+      })
+      .finally(() => { if (!cancelled) setLadderLoading(false); });
+    return () => { cancelled = true; };
+  }, [ladderDate]);
+
+  // 连板梯队：按连板数从高到低分组（同一代码去重，取最高连板）
+  const ladderTiers = useMemo(() => {
+    const seen = new Map();
+    (ladderData?.themes || []).forEach((theme) => {
+      (theme.stocks || []).forEach((stock) => {
+        const code = String(stock?.code || '');
+        if (!code) return;
+        const prev = seen.get(code);
+        if (!prev || Number(stock.lianbanCount) > Number(prev.lianbanCount)) {
+          seen.set(code, { ...stock, board: stock.board || theme.board });
+        }
+      });
+    });
+    const byCount = new Map();
+    seen.forEach((stock) => {
+      const lb = Number(stock.lianbanCount) || 1;
+      if (!byCount.has(lb)) byCount.set(lb, []);
+      byCount.get(lb).push(stock);
+    });
+    return [...byCount.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([lianbanCount, stocks]) => ({
+        lianbanCount,
+        stocks: stocks.slice().sort((a, b) => String(a.sealTime || '99:99').localeCompare(String(b.sealTime || '99:99'))),
+      }));
+  }, [ladderData]);
+
+  const ladderDateSet = useMemo(() => new Set(ladderDates), [ladderDates]);
+  const ladderIndex = ladderDates.indexOf(ladderDate);
+  const ladderTotal = ladderTiers.reduce((sum, tier) => sum + tier.stocks.length, 0);
+  const ladderLianbanTotal = ladderTiers
+    .filter((tier) => tier.lianbanCount >= 2)
+    .reduce((sum, tier) => sum + tier.stocks.length, 0);
+  const ladderMax = ladderTiers.length ? ladderTiers[0].lianbanCount : 0;
+
+  // 题材分类视图：每个题材一行，行内连板数最高的个股排最前，题材之间按最高连板降序
+  const ladderThemeGroups = useMemo(() => (
+    (ladderData?.themes || [])
+      .map((theme) => ({
+        board: theme.board,
+        stocks: (theme.stocks || [])
+          .slice()
+          .sort((a, b) => (
+            (Number(b.lianbanCount) || 1) - (Number(a.lianbanCount) || 1)
+            || String(a.sealTime || '99:99').localeCompare(String(b.sealTime || '99:99'))
+          )),
+      }))
+      .filter((group) => group.stocks.length)
+      .sort((a, b) => (
+        (Number(b.stocks[0]?.lianbanCount) || 1) - (Number(a.stocks[0]?.lianbanCount) || 1)
+      ))
+  ), [ladderData]);
+
+  // 自动导出周期分析：数据（含板块资金日线）就绪后触发一次下载
+  const autoCycleDoneRef = useRef(false);
+  useEffect(() => {
+    if (!autoCycleExport || autoCycleDoneRef.current) return;
+    if (loading || !data || sectorLoading) return;
+    autoCycleDoneRef.current = true;
+    const timer = setTimeout(() => handleExportCycleAnalysis(), 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCycleExport, loading, data, sectorLoading]);
 
   // ===== 板块成交量占比 + 板块资金（同一筛选框，两个子模块）=====
   const fetchSectorData = useCallback(async () => {
@@ -1134,16 +1367,154 @@ const SiweiLiti = ({
             </div>
           </div>
 
-          {/* 板块股票：不再区分主线/支线，按顺序平铺全部题材 */}
+          {/* 连板天梯：按日期回看每日连板梯队，点击板块名联动板块股票 */}
           <div className="sl-section-title">
-            <FundOutlined /> 板块股票（{themes.length}）
+            <TrophyOutlined /> 连板天梯
+            <span className="sl-section-sub">
+              按日期回看每日连板梯队；点击个股所属板块可在下方板块股票中自动选中并定位
+            </span>
+          </div>
+          <div className="sl-glass-card sl-ladder-card">
+            <div className="sl-ladder-head">
+              <div className="sl-ladder-date-nav">
+                <button
+                  type="button"
+                  className="sl-ladder-nav-btn"
+                  disabled={ladderIndex <= 0}
+                  onClick={() => ladderIndex > 0 && setLadderDate(ladderDates[ladderIndex - 1])}
+                  title="上一个交易日"
+                >
+                  <LeftOutlined />
+                </button>
+                <DatePicker
+                  className="sl-ladder-date-picker"
+                  value={ymdToDayjs(ladderDate)}
+                  allowClear={false}
+                  placeholder="选择日期"
+                  format="YYYY-MM-DD"
+                  disabledDate={(current) => !current || !ladderDateSet.has(current.format('YYYYMMDD'))}
+                  onChange={(d) => d && setLadderDate(d.format('YYYYMMDD'))}
+                />
+                <button
+                  type="button"
+                  className="sl-ladder-nav-btn"
+                  disabled={ladderIndex < 0 || ladderIndex >= ladderDates.length - 1}
+                  onClick={() => ladderIndex >= 0 && ladderIndex < ladderDates.length - 1 && setLadderDate(ladderDates[ladderIndex + 1])}
+                  title="下一个交易日"
+                >
+                  <RightOutlined />
+                </button>
+              </div>
+              <div className="sl-ladder-meta">
+                <span>涨停 <b>{ladderTotal}</b> 只</span>
+                <span>连板 <b>{ladderLianbanTotal}</b> 只</span>
+                <span>最高 <b>{ladderMax || '--'}</b> 板</span>
+                {ladderData?.sentiment?.phase && (
+                  <span className="sl-ladder-phase">{ladderData.sentiment.phase}</span>
+                )}
+                <button
+                  type="button"
+                  className={`sl-ladder-mode-toggle ${ladderByTheme ? 'is-active' : ''}`}
+                  onClick={() => setLadderByTheme((v) => !v)}
+                  title="按题材分类展示：每个题材一行，连板数最高的个股排最前"
+                >
+                  <AppstoreOutlined /> 题材分类
+                </button>
+              </div>
+            </div>
+
+            {ladderLoading ? (
+              <div className="sl-submodule-loading"><Spin /></div>
+            ) : !ladderTiers.length ? (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={ladderDates.length ? '当日暂无连板数据' : '暂无连板快照数据'}
+              />
+            ) : ladderByTheme ? (
+              <div className="sl-ladder">
+                {ladderThemeGroups.map((group) => (
+                  <div className="sl-ladder-row" key={group.board}>
+                    <button
+                      type="button"
+                      className="sl-ladder-theme-name"
+                      onClick={() => focusStockTheme(group.board)}
+                      title={`定位到板块股票：${group.board}`}
+                    >
+                      {group.board}
+                      <em>{group.stocks.length}</em>
+                    </button>
+                    <div className="sl-ladder-stocks">
+                      {group.stocks.map((stock) => renderLadderStock(stock))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="sl-ladder">
+                {ladderTiers.map((tier) => (
+                  <div className="sl-ladder-row" key={tier.lianbanCount}>
+                    <div className={`sl-ladder-tier ${tier.lianbanCount >= 3 ? 'is-high' : ''}`}>
+                      <b>{tier.lianbanCount}</b>
+                      <span>板</span>
+                      <em>{tier.stocks.length}</em>
+                    </div>
+                    <div className="sl-ladder-stocks">
+                      {tier.stocks.map((stock) => renderLadderStock(stock))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 板块股票：手动选择要展示的板块（选择结果存服务端） */}
+          <div className="sl-section-title">
+            <FundOutlined /> 板块股票（{selectedStockThemes.length}/{themes.length}）
+            <span className="sl-section-sub">手动选择需要展示的板块，选择结果自动保存</span>
           </div>
           {themes.length ? (
-            <div className="sl-theme-grid">
-              {themes.map((t) => (
-                <ThemeCard key={t.key} theme={t} onOpenStock={openStock} />
-              ))}
-            </div>
+            <>
+              <div className="sl-glass-card sl-chart-card sl-stock-filter-card">
+                <div className="sl-filter-row">
+                  <Select
+                    className="sl-filter-select"
+                    mode="multiple"
+                    showSearch
+                    allowClear
+                    placeholder="搜索板块名称，点击可多选"
+                    value={Array.isArray(stockThemeKeys) ? stockThemeKeys : []}
+                    onChange={setStockThemeKeys}
+                    filterOption={(input, option) => (
+                      String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    )}
+                    maxTagCount="responsive"
+                    popupClassName="sl-sector-dropdown"
+                    options={themes.map((t) => ({ value: t.key, label: t.board }))}
+                  />
+                  <span className="sl-filter-count">已展示 {selectedStockThemes.length} 个板块</span>
+                </div>
+              </div>
+              {selectedStockThemes.length ? (
+                <div className="sl-theme-grid">
+                  {selectedStockThemes.map((t) => (
+                    <div
+                      key={t.key}
+                      className={`sl-theme-anchor ${flashThemeKey === t.key ? 'is-flash' : ''}`}
+                      ref={(el) => {
+                        if (el) stockCardRefs.current.set(t.key, el);
+                        else stockCardRefs.current.delete(t.key);
+                      }}
+                    >
+                      <ThemeCard theme={t} onOpenStock={openStock} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="sl-empty-block">
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="请在上方选择要展示的板块" />
+                </div>
+              )}
+            </>
           ) : (
             <div className="sl-empty-block">
               <Empty

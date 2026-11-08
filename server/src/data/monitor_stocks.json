@@ -858,17 +858,6 @@
     "watchPE": true
   },
   {
-    "code": "sz300182",
-    "name": "捷成股份",
-    "isImportant": false,
-    "blockName": "AI 应用",
-    "riskScore": " 7",
-    "isTech": false,
-    "addedAt": "2026-10-12 10:54:25",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
     "code": "sz301269",
     "name": "华大九天",
     "isImportant": false,
@@ -946,17 +935,6 @@
     "watchPE": true
   },
   {
-    "code": "sh601811",
-    "name": "新华文轩",
-    "isImportant": false,
-    "blockName": "AI 短剧",
-    "riskScore": " 8",
-    "isTech": false,
-    "addedAt": "2026-10-15 09:38:50",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
     "code": "sh600967",
     "name": "内蒙一机",
     "isImportant": false,
@@ -964,28 +942,6 @@
     "riskScore": "7",
     "isTech": false,
     "addedAt": "2026-10-16 09:45:12",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
-    "code": "sh601606",
-    "name": "长城军工",
-    "isImportant": false,
-    "blockName": "军工",
-    "riskScore": "9",
-    "isTech": false,
-    "addedAt": "2026-10-16 09:45:33",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
-    "code": "sh600316",
-    "name": "洪都航空",
-    "isImportant": false,
-    "blockName": "军工",
-    "riskScore": "8",
-    "isTech": false,
-    "addedAt": "2026-10-17 21:30:13",
     "watchMarketCap": true,
     "watchPE": true
   },
@@ -1066,28 +1022,6 @@
     "watchPE": true
   },
   {
-    "code": "sz300750",
-    "name": "宁德时代",
-    "isImportant": false,
-    "blockName": "锂电",
-    "riskScore": " 5",
-    "isTech": false,
-    "addedAt": "2026-10-21 11:09:03",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
-    "code": "sh688150",
-    "name": "莱特光电",
-    "isImportant": false,
-    "blockName": "oled",
-    "riskScore": "8",
-    "isTech": false,
-    "addedAt": "2026-10-21 21:11:25",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
     "code": "sz002913",
     "name": "奥士康",
     "isImportant": false,
@@ -1132,17 +1066,6 @@
     "watchPE": true
   },
   {
-    "code": "sh688400",
-    "name": "凌云光",
-    "isImportant": false,
-    "blockName": "物理 AI",
-    "riskScore": "7",
-    "isTech": false,
-    "addedAt": "2026-10-26 00:11:53",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
     "code": "sh688686",
     "name": "奥普特",
     "isImportant": false,
@@ -1150,17 +1073,6 @@
     "riskScore": "6",
     "isTech": false,
     "addedAt": "2026-10-26 08:35:37",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
-    "code": "sh688097",
-    "name": "博众精工",
-    "isImportant": false,
-    "blockName": "物理 AI",
-    "riskScore": "8",
-    "isTech": false,
-    "addedAt": "2026-10-26 14:35:08",
     "watchMarketCap": true,
     "watchPE": true
   },
@@ -1249,28 +1161,6 @@
     "riskScore": " 8",
     "isTech": false,
     "addedAt": "2026-10-29 15:03:24",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
-    "code": "sh600879",
-    "name": "航天电子",
-    "isImportant": false,
-    "blockName": "商业航天",
-    "riskScore": " 7",
-    "isTech": false,
-    "addedAt": "2026-10-29 15:03:36",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
-    "code": "sz300136",
-    "name": "信维通信",
-    "isImportant": false,
-    "blockName": "商业航天",
-    "riskScore": " 7",
-    "isTech": false,
-    "addedAt": "2026-10-29 15:03:48",
     "watchMarketCap": true,
     "watchPE": true
   },
@@ -1374,17 +1264,6 @@
     "watchPE": true
   },
   {
-    "code": "sh605598",
-    "name": "上海港湾",
-    "isImportant": false,
-    "blockName": "商业航天",
-    "riskScore": "8",
-    "isTech": false,
-    "addedAt": "2026-10-29 19:19:49",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
     "code": "sz002865",
     "name": "钧达股份",
     "isImportant": false,
@@ -1396,17 +1275,6 @@
     "watchPE": true
   },
   {
-    "code": "sh603969",
-    "name": "银龙股份",
-    "isImportant": false,
-    "blockName": "机器人",
-    "riskScore": "8",
-    "isTech": false,
-    "addedAt": "2026-10-29 20:26:29",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
     "code": "sh600261",
     "name": "阳光照明",
     "isImportant": false,
@@ -1414,17 +1282,6 @@
     "riskScore": " 8",
     "isTech": false,
     "addedAt": "2026-10-29 20:34:32",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
-    "code": "sh603337",
-    "name": "杰克科技",
-    "isImportant": false,
-    "blockName": "机器人",
-    "riskScore": " 8",
-    "isTech": false,
-    "addedAt": "2026-10-29 21:35:53",
     "watchMarketCap": true,
     "watchPE": true
   },
@@ -1447,17 +1304,6 @@
     "riskScore": "8",
     "isTech": false,
     "addedAt": "2026-10-29 21:48:22",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
-    "code": "sz003033",
-    "name": "征和工业",
-    "isImportant": false,
-    "blockName": "机器人",
-    "riskScore": " 8",
-    "isTech": false,
-    "addedAt": "2026-10-30 12:15:49",
     "watchMarketCap": true,
     "watchPE": true
   },
@@ -1495,17 +1341,6 @@
     "watchPE": true
   },
   {
-    "code": "sh605338",
-    "name": "巴比食品",
-    "isImportant": false,
-    "blockName": "消费",
-    "riskScore": " 6",
-    "isTech": false,
-    "addedAt": "2026-10-30 19:56:16",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
     "code": "sz301021",
     "name": "英诺激光",
     "isImportant": false,
@@ -1517,39 +1352,6 @@
     "addedAt": "2026-10-31 22:19:23"
   },
   {
-    "code": "sz002981",
-    "name": "朝阳科技",
-    "isImportant": false,
-    "blockName": "耳机",
-    "riskScore": null,
-    "isTech": false,
-    "watchMarketCap": true,
-    "watchPE": true,
-    "addedAt": "2026-10-31 22:22:50"
-  },
-  {
-    "code": "sh688331",
-    "name": "荣昌生物",
-    "isImportant": false,
-    "blockName": "创新药",
-    "riskScore": null,
-    "isTech": false,
-    "watchMarketCap": false,
-    "watchPE": true,
-    "addedAt": "2026-10-31 22:33:04"
-  },
-  {
-    "code": "sz002403",
-    "name": "爱仕达",
-    "isImportant": false,
-    "blockName": "机器人",
-    "riskScore": null,
-    "isTech": false,
-    "watchMarketCap": true,
-    "watchPE": true,
-    "addedAt": "2026-11-02 08:50:31"
-  },
-  {
     "code": "sz001326",
     "name": "联域股份",
     "isImportant": false,
@@ -1559,39 +1361,6 @@
     "watchMarketCap": false,
     "watchPE": true,
     "addedAt": "2026-11-03 08:39:28"
-  },
-  {
-    "code": "sh688818",
-    "name": "电科蓝天",
-    "isImportant": false,
-    "blockName": "军工",
-    "riskScore": null,
-    "isTech": false,
-    "watchMarketCap": true,
-    "watchPE": true,
-    "addedAt": "2026-11-03 08:43:17"
-  },
-  {
-    "code": "sh600893",
-    "name": "航发动力",
-    "isImportant": false,
-    "blockName": "航天军工",
-    "riskScore": null,
-    "isTech": false,
-    "watchMarketCap": false,
-    "watchPE": false,
-    "addedAt": "2026-11-04 08:52:22"
-  },
-  {
-    "code": "sh688239",
-    "name": "航宇科技",
-    "isImportant": false,
-    "blockName": "航天军工",
-    "riskScore": null,
-    "isTech": false,
-    "watchMarketCap": true,
-    "watchPE": true,
-    "addedAt": "2026-11-04 08:52:37"
   },
   {
     "code": "sh688279",
@@ -1636,5 +1405,49 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-06 22:39:28"
+  },
+  {
+    "code": "sh603777",
+    "name": "来伊份",
+    "isImportant": false,
+    "blockName": "消费",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-08 15:26:22"
+  },
+  {
+    "code": "sh603719",
+    "name": "良品铺子",
+    "isImportant": false,
+    "blockName": "消费",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-08 15:26:42"
+  },
+  {
+    "code": "sh603901",
+    "name": "永创智能",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-08 15:26:53"
+  },
+  {
+    "code": "sh603680",
+    "name": "今创集团",
+    "isImportant": false,
+    "blockName": "商业航天",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-08 15:27:02"
   }
 ]
