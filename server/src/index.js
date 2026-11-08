@@ -5369,47 +5369,70 @@ app.get('/api/blocks_config', (req, res) => {
   }
 });
 
-app.post('/api/blocks_config', (req, res) => {
+app.post('/api/blocks_config', async (req, res) => {
   try {
     const { action, block, blockName } = req.body || {};
     if (!action || !['add', 'addBlock', 'update', 'updateBlock', 'delete', 'deleteByName'].includes(action)) {
       return res.status(400).json({ success: false, message: 'action 必须为 add/addBlock/update/updateBlock/delete/deleteByName' });
     }
+    // 需要立即拉行情的板块名集合：add / addBlock 写完配置后同步刷一次该板块的行情
+    let blockToRefresh = null;
     let data;
     if (action === 'add') {
       if (!block?.blockName || !block?.code || !block?.name) {
         return res.status(400).json({ success: false, message: 'block 需包含 blockName/code/name' });
       }
       data = addBlock(block);
+      blockToRefresh = block.blockName;
     } else if (action === 'addBlock') {
-      const { blockName, stocks, tag } = req.body || {};
-      if (!blockName) {
+      const { blockName: newBlockName, stocks, tag } = req.body || {};
+      if (!newBlockName) {
         return res.status(400).json({ success: false, message: 'blockName 不能为空' });
       }
-      data = addBlockName({ blockName, stocks: stocks || [], tag });
+      data = addBlockName({ blockName: newBlockName, stocks: stocks || [], tag });
+      blockToRefresh = newBlockName;
     } else if (action === 'updateBlock') {
       const { blockName, newBlockName, tag } = req.body || {};
       if (!blockName) {
         return res.status(400).json({ success: false, message: 'blockName 不能为空' });
       }
       data = updateBlockInfo({ blockName, newBlockName, tag });
+      // 板块改名：新旧板块名都尝试刷一遍（兜底）
+      blockToRefresh = blockName !== (newBlockName || blockName) ? [blockName, newBlockName] : blockName;
     } else if (action === 'update') {
       if (!block?.code) {
         return res.status(400).json({ success: false, message: 'block.code 不能为空' });
       }
       data = updateBlock(block);
+      // 改名/改板块：原板块和新板块都刷一下
+      const oldBlock = block.originalBlockName || block.blockName;
+      blockToRefresh = oldBlock !== block.blockName ? [oldBlock, block.blockName] : block.blockName;
     } else if (action === 'delete') {
       if (!block?.code) {
         return res.status(400).json({ success: false, message: 'block.code 不能为空' });
       }
       data = deleteBlock(block.code, block.blockName);
+      blockToRefresh = block.blockName;
     } else if (action === 'deleteByName') {
       if (!blockName) {
         return res.status(400).json({ success: false, message: 'blockName 不能为空' });
       }
       data = deleteBlockByName(blockName);
     }
-    res.json({ success: true, data });
+    // 写完配置后同步拉取该板块的行情涨跌幅，让前端立刻看到带数据的板块
+    const refreshResults = [];
+    if (blockToRefresh) {
+      const targets = Array.isArray(blockToRefresh) ? blockToRefresh : [blockToRefresh];
+      for (const name of targets.filter(Boolean)) {
+        try {
+          const r = await refreshBlockData(name);
+          refreshResults.push({ blockName: name, success: r.success });
+        } catch (e) {
+          refreshResults.push({ blockName: name, success: false, message: e.message });
+        }
+      }
+    }
+    res.json({ success: true, data, refreshResults });
   } catch (error) {
     console.error('更新板块配置失败:', error);
     res.status(500).json({ success: false, message: error.message || '更新板块配置失败' });

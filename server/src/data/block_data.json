@@ -2198,5 +2198,129 @@
       "code": "sz001393",
       "change": 0.24
     }
+  ],
+  "AIDC": [
+    {
+      "name": "城地香江",
+      "blockName": "AIDC",
+      "code": "sh603887",
+      "change": -0.76
+    },
+    {
+      "name": "润建股份",
+      "blockName": "AIDC",
+      "code": "sz002929",
+      "change": 10.01
+    },
+    {
+      "name": "利通电子",
+      "blockName": "AIDC",
+      "code": "sh603629",
+      "change": -7.48
+    },
+    {
+      "name": "XD数据港",
+      "blockName": "AIDC",
+      "code": "sh603881",
+      "change": -3.6
+    },
+    {
+      "name": "润泽科技",
+      "blockName": "AIDC",
+      "code": "sz300442",
+      "change": -3.7
+    },
+    {
+      "name": "奥飞数据",
+      "blockName": "AIDC",
+      "code": "sz300738",
+      "change": -3.33
+    },
+    {
+      "name": "美利云",
+      "blockName": "AIDC",
+      "code": "sz000815",
+      "change": -3.09
+    },
+    {
+      "name": "大位科技",
+      "blockName": "AIDC",
+      "code": "sh600589",
+      "change": -2.66
+    },
+    {
+      "name": "光环新网",
+      "blockName": "AIDC",
+      "code": "sz300383",
+      "change": -2.34
+    }
+  ],
+  "太空算力": [
+    {
+      "name": "西部材料",
+      "blockName": "太空算力",
+      "code": "sz002149",
+      "change": 3.54
+    },
+    {
+      "name": "宇晶股份",
+      "blockName": "太空算力",
+      "code": "sz002943",
+      "change": 5.14
+    },
+    {
+      "name": "蓝思科技",
+      "blockName": "太空算力",
+      "code": "sz300433",
+      "change": -3.19
+    },
+    {
+      "name": "迈为股份",
+      "blockName": "太空算力",
+      "code": "sz300751",
+      "change": -2.42
+    },
+    {
+      "name": "佳都科技",
+      "blockName": "太空算力",
+      "code": "sh600728",
+      "change": -0.2
+    },
+    {
+      "name": "震裕科技",
+      "blockName": "太空算力",
+      "code": "sz300953",
+      "change": -3.91
+    },
+    {
+      "name": "顺灏股份",
+      "blockName": "太空算力",
+      "code": "sz002565",
+      "change": -2.44
+    },
+    {
+      "name": "飞沃科技",
+      "blockName": "太空算力",
+      "code": "sz301232",
+      "change": -3.94
+    },
+    {
+      "name": "西测测试",
+      "blockName": "太空算力",
+      "code": "sz301306",
+      "change": -4.79
+    },
+    {
+      "name": "斯瑞新材",
+      "blockName": "太空算力",
+      "code": "sh688102",
+      "change": -4.88
+    },
+    {
+      "name": "昊志机电",
+      "blockName": "太空算力",
+      "code": "sz300503",
+      "change": -4.09
+    }
   ]
 }

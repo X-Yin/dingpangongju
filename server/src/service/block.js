@@ -178,6 +178,8 @@ const getBlockData = () => {
     (blockData[blockName] || []).forEach(item => {
       marketDataMap[item.code] = item;
     });
+    // block_data.json 里根本没有该板块的 key：说明它是新建板块、还没被轮询到
+    const hasPolledData = Object.prototype.hasOwnProperty.call(blockData, blockName);
     
     // 合并：以配置为准，实时行情作为补充
     const mergedData = configStocks.map(stock => {
@@ -206,12 +208,16 @@ const getBlockData = () => {
     
     // 计算平均涨跌幅（只计算有行情数据的股票）
     const stocksWithData = mergedData.filter(s => !s.noMarketData);
-    // 配置里如果没有任何成分股拿到实时行情（极端情况：整板块那次轮询接口丢了），
-    // 就跳过这个板块——不要用 0 补，避免 pollBlockHistory 把 0 写进分时帧形成 v 形突刺。
-    if (stocksWithData.length === 0) {
+    // 只有当该板块在 block_data.json 里已经被轮询过、但所有成分股依然没行情时，
+    // 才跳过——不要用 0 补，避免 pollBlockHistory 把 0 写进分时帧形成 v 形突刺。
+    // 对于 block_data.json 里根本没有 key 的新建板块，保留展示（全部股票标记 noMarketData），
+    // 让前端能看到"板块已创建，待轮询刷新行情"的状态，而不是被静默吞掉。
+    if (stocksWithData.length === 0 && hasPolledData) {
       return;
     }
-    const avgChange = Number((stocksWithData.reduce((acc, cur) => acc + cur.change, 0) / stocksWithData.length).toFixed(2));
+    const avgChange = stocksWithData.length > 0
+      ? Number((stocksWithData.reduce((acc, cur) => acc + cur.change, 0) / stocksWithData.length).toFixed(2))
+      : 0;
     
     blockList.push({
       blockName,

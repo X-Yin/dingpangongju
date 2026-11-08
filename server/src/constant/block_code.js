@@ -1991,5 +1991,123 @@ exports.default = [
         "blockName": "半导体",
         "code": "sz301629",
         "name": "矽电股份"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sh603887",
+        "name": "城地香江",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sz002929",
+        "name": "润建股份",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sh603629",
+        "name": "利通电子",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sh603881",
+        "name": "XD数据港",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sz300442",
+        "name": "润泽科技",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sz300738",
+        "name": "奥飞数据",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sz000815",
+        "name": "美利云",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sh600589",
+        "name": "大位科技"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sz300383",
+        "name": "光环新网"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sz002149",
+        "name": "西部材料",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sz002943",
+        "name": "宇晶股份",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sz300433",
+        "name": "蓝思科技",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sz300751",
+        "name": "迈为股份",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sh600728",
+        "name": "佳都科技",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sz300953",
+        "name": "震裕科技",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sz002565",
+        "name": "顺灏股份",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sz301232",
+        "name": "飞沃科技",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sz301306",
+        "name": "西测测试",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sh688102",
+        "name": "斯瑞新材",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sz300503",
+        "name": "昊志机电",
+        "tag": "进攻"
     }
 ]
