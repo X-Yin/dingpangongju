@@ -1,5 +1,27 @@
 [
   {
+    "id": "1794192834837_sfs6lo",
+    "type": "buy",
+    "code": "sh605488",
+    "name": "福莱新材",
+    "date": "2026-11-09",
+    "time": "10:53:54",
+    "detail": "新增持仓：福莱新材（sh605488）",
+    "pipelineStage": 0,
+    "createdAt": "2026-11-09T02:53:54.837Z"
+  },
+  {
+    "id": "1794192826094_0lvbi7",
+    "type": "delete",
+    "code": "sz003021",
+    "name": "兆威机电",
+    "date": "2026-11-09",
+    "time": "10:53:46",
+    "detail": "删除持仓：兆威机电（sz003021）",
+    "pipelineStage": null,
+    "createdAt": "2026-11-09T02:53:46.094Z"
+  },
+  {
     "id": "1793932097948_2dmfq3",
     "type": "buy",
     "code": "sz003021",

@@ -3888,6 +3888,17 @@ app.get('/strategy_definitions', (req, res) => {
   }
 });
 
+// WS 弹卡对账（2026-11-09 用户新增）：返回近 12 小时内所有 open:true 的弹卡类广播（含 aid）。
+// 前端在 WS 连上 / 页面重新可见时拉取本接口，与本地「已弹」记录（localStorage 按 aid）比对，漏弹的补弹
+app.get('/pending_alerts', (req, res) => {
+  try {
+    res.json(wsServer.getPendingAlerts());
+  } catch (error) {
+    console.error('获取待对账弹卡失败:', error);
+    res.status(500).json({ message: error.message || '获取待对账弹卡失败' });
+  }
+});
+
 // 策略中心命中提醒 MOCK：随机取一个内置策略构造命中信号，经与实盘完全一致的
 // WS 链路（type:'strategy_signal'，open:true）推送前端全局卡片；不写 records、不发飞书
 app.post('/debug/mock_strategy_signal', (req, res) => {

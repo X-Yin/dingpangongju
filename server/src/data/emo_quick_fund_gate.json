@@ -1,15 +1,15 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-11-06 10:30:39",
-  "reason": "持仓变动重跑（持仓管理增删股票、持仓管理增删股票）",
+  "computedAt": "2026-11-09 10:56:14",
+  "reason": "持仓变动重跑（持仓管理增删股票）",
   "range": {
-    "startDate": "20260807",
-    "endDate": "20261106"
+    "startDate": "20260810",
+    "endDate": "20261109"
   },
-  "tradeCount": 9,
-  "threshold": 30,
-  "consecutiveBelow": 7,
+  "tradeCount": 10,
+  "threshold": 20,
+  "consecutiveBelow": 1,
   "lastReturns": [
     {
       "code": "sh688147",
@@ -71,8 +71,15 @@
       "code": "sh688120",
       "name": "华海清科",
       "sellDate": "20261106",
-      "sellTime": "09:41",
-      "returnRate": -1.06
+      "sellTime": "09:35",
+      "returnRate": 5.19
+    },
+    {
+      "code": "sh688120",
+      "name": "华海清科",
+      "sellDate": "20261106",
+      "sellTime": "09:35",
+      "returnRate": -0.6
     }
   ]
 }

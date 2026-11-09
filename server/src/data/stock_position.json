@@ -10,13 +10,13 @@
     "sellStrategy": "tech_attack"
   },
   {
-    "id": "sz003021_1793932097947_ycbm",
-    "code": "sz003021",
-    "name": "兆威机电",
-    "buyDate": "2026-11-06",
-    "buyTime": "10:28",
+    "id": "sh605488_1794192834836_6rro",
+    "code": "sh605488",
+    "name": "福莱新材",
+    "buyDate": "2026-11-09",
+    "buyTime": "10:53",
     "weight": 50,
-    "costPrice": 100.28,
+    "costPrice": 52.47,
     "sellStrategy": "extreme_win_pro"
   }
 ]

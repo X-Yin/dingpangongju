@@ -2,7 +2,7 @@
 const path = require('path');
 const fs = require('fs');
 const { getBlocksConfig } = require('./blockConfig');
-const { getSingleStockData } = require('./stock');
+const { getSingleStockData, getRealtimeQuotes } = require('./stock');
 const { getStockBars } = require('./sentimentHotMoney');
 const { sleep, batchParallel, isTradingDay } = require('../utils/index.js');
 const { useCLS } = require('../config');
@@ -46,22 +46,70 @@ const divideBlockCodeList = (codeList) => {
 }
 
 //  根据指定的 codeList 返回板块数据
+// 盘前竞价（9:15-9:30）日线 K 线接口通常停在上一交易日 bar，
+// 与 emotion.js 采用同样的兜底策略：K 线 trade_date 不是今日 或 K 线缺失有效 change 时，
+// 用同花顺实时快照接口 getRealtimeQuotes 拉竞价涨跌幅覆盖，保证盘前刷新榜单也能反映当日竞价。
 const getSingleBlockData = async (blockName, codeList) => {
-  const promises = [];
-  const blockListData = [];
-  for (const item of codeList) {
-    promises.push(getSingleStockData(item.code, 1));
+  // 1) 批量并发拉日线 K 线（每只股票只取最新 1 条）
+  const klineResults = await batchParallel(codeList, async (item) => {
+    try {
+      const arr = await getSingleStockData(item.code, 1);
+      const first = arr && arr[0];
+      return { code: item.code, kline: first || null };
+    } catch (e) {
+      return { code: item.code, kline: null };
+    }
+  }, useCLS() ? 5 : 20);
+
+  // 2) 判断是否在竞价时段（9:15-9:30，且交易日）
+  const now = dayjs();
+  const todayNum = Number(now.format('YYYYMMDD'));
+  const timeStr = now.format('HHmm');
+  const inAuction = isTradingDay(now.toDate()) && timeStr >= '0915' && timeStr < '0930';
+
+  // 3) 先取 K 线 change；竞价阶段 + trade_date 不是今日 的，标记为 stale 后续用实时快照兜底
+  let staleCodes = [];
+  const perCodeChange = new Map(); // code -> 初始 change
+  for (const r of klineResults) {
+    const kline = r.kline;
+    if (kline && kline.change != null && !isNaN(kline.change)) {
+      perCodeChange.set(r.code, Number(kline.change));
+      if (inAuction && kline.trade_date != null && Number(kline.trade_date) !== todayNum) {
+        staleCodes.push(r.code);
+      }
+    } else {
+      // K 线没有有效 change 也算 stale，竞价快照兜底
+      staleCodes.push(r.code);
+    }
   }
-  const klineList = await Promise.all(promises);
-  for (let i = 0; i < klineList.length; i++) {
-    const item = klineList[i][0];
-    blockListData.push({
-      name: codeList[i].name,
-      blockName: codeList[i].blockName,
-      code: codeList[i].code,
-      change: item && item.change || 0
-    });
+
+  // 4) 竞价阶段 + 有 stale → 批量拉实时快照覆盖 change
+  if (inAuction && staleCodes.length > 0) {
+    try {
+      const quotes = await getRealtimeQuotes(staleCodes);
+      let hitCount = 0;
+      for (const code of staleCodes) {
+        const q = quotes[code];
+        if (q && q.change != null && q.change !== undefined && !isNaN(q.change)) {
+          perCodeChange.set(code, Number(q.change));
+          hitCount++;
+        }
+      }
+      if (hitCount > 0) {
+        console.log(`板块 ${blockName} 竞价兜底：${hitCount}/${staleCodes.length} 只股票从实时快照拿到 change`);
+      }
+    } catch (err) {
+      console.error(`板块 ${blockName} 竞价实时快照兜底失败:`, err.message);
+    }
   }
+
+  // 5) 组装返回
+  const blockListData = codeList.map((item) => ({
+    name: item.name,
+    blockName: item.blockName,
+    code: item.code,
+    change: perCodeChange.has(item.code) ? perCodeChange.get(item.code) : 0,
+  }));
 
   return { [blockName]: blockListData };
 };

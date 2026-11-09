@@ -76,6 +76,48 @@ const splitReason = (reason) => String(reason || '')
   .map((s) => s.trim())
   .filter(Boolean);
 
+// 题材归一：同花顺涨停原因的细分表述（人形机器人/机器人关节/机器人股东/防冰机器人…）
+// 统一归并到主题材，键名与连板网快照历史口径保持一致（否则 10 日涨停家数序列会断）
+const THEME_CANON = [
+  { test: /机器人/, key: '机器人概念' },
+];
+
+const normalizeThemeKey = (name) => {
+  const s = String(name || '')
+    .replace(/（[^）]*）|\([^)]*\)/g, '')
+    .trim();
+  if (!s) return '';
+  const rule = THEME_CANON.find((r) => r.test.test(s));
+  return rule ? rule.key : s;
+};
+
+// 通用利好段（回购/业绩/三季报扭亏等）：没有题材指向性，作为归组依据时跳过
+const GENERIC_REASON_RE = /(回购|增持|减持|中标|业绩|预增|预亏|扭亏|减亏|增亏|三季报|中报|年报|季报|股权激励|并购|重组|收购|摘帽|高送转|分红|派息|次新|破净|债务|控制权变更|实控人变更)/;
+
+// 当日题材归属：与连板网今日页口径对齐
+// 1. 前一交易日已归组且当日原因仍能印证原板块 → 沿用（保持个股板块稳定）；
+// 2. 原因分段归一后命中 THEME_CANON 主题材（新题材爆发日优先级最高）；
+// 3. 分段命中近期快照已有的题材（保持与历史序列连续）；
+// 4. 兜底取第一个非通用利好分段，再退回旧板块/其他
+const boardOfReason = (reason, ref, knownBoards) => {
+  const segs = [];
+  splitReason(reason).forEach((seg) => {
+    const k = normalizeThemeKey(seg);
+    if (k && !segs.includes(k)) segs.push(k);
+  });
+  const refBoard = ref?.board ? String(ref.board).trim() : '';
+  const refKey = normalizeThemeKey(refBoard);
+  const refConfirmed = refKey && refKey !== '其他'
+    && segs.some((s) => s === refKey || s.includes(refKey) || refKey.includes(s));
+  if (refConfirmed) return refBoard;
+  const canonKey = segs.find((s) => THEME_CANON.some((r) => r.key === s));
+  if (canonKey) return canonKey;
+  const fromKnown = segs.find((s) => knownBoards.has(s));
+  if (fromKnown) return fromKnown;
+  const firstReal = segs.find((s) => !GENERIC_REASON_RE.test(s));
+  return firstReal || segs[0] || refBoard || '其他';
+};
+
 const sealTimeOf = (timestamp) => {
   const ts = Number(timestamp);
   if (!Number.isFinite(ts) || ts <= 0) return '';
@@ -230,13 +272,19 @@ const buildTodaySnapshot = async () => {
 
   const refThemes = getReferenceThemes(todayYmd);
   const limitUpHistory = buildLimitUpHistory(todayYmd);
+  // 近期快照中出现过的题材（归一后），供当日归组保持序列连续
+  const knownBoards = new Set();
+  refThemes.forEach((v) => {
+    const k = normalizeThemeKey(v.board);
+    if (k && k !== '其他') knownBoards.add(k);
+  });
   const stocks = pool.map((item) => {
     const code = pureCodeOf(item.code);
     const marketCode = marketCodeOf(code, item.market_id);
     const lianbanCount = limitUpHistory.length ? streakOf(code, limitUpHistory) : boardCountOf(item);
     const reasonParts = splitReason(item.reason_type);
     const ref = refThemes.get(code);
-    const board = ref?.board || reasonParts[0] || '其他';
+    const board = boardOfReason(item.reason_type, ref, knownBoards);
     const sealTime = sealTimeOf(item.first_limit_up_time);
     const sealMinutes = sealTime
       ? Number(sealTime.slice(0, 2)) * 60 + Number(sealTime.slice(3, 5))

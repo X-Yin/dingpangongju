@@ -2109,5 +2109,10 @@ exports.default = [
         "code": "sz300503",
         "name": "昊志机电",
         "tag": "进攻"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sh688378",
+        "name": "奥来德"
     }
 ]

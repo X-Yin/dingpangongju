@@ -1,5 +1,32 @@
 [
   {
+    "date": "2026-11-09",
+    "operations": [
+      {
+        "id": "1794192826116_7yoi",
+        "action": "sell",
+        "stockName": "兆威机电",
+        "stockCode": "sz003021",
+        "position": "",
+        "time": "10:53"
+      },
+      {
+        "id": "1794192834838_0aah",
+        "action": "buy",
+        "stockName": "福莱新材",
+        "stockCode": "sh605488",
+        "position": "",
+        "time": "10:53"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-09T02:53:46.396Z",
+    "updatedAt": "2026-11-09T02:53:54.880Z"
+  },
+  {
     "date": "2026-11-06",
     "operations": [
       {

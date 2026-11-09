@@ -80,6 +80,15 @@ const WatchlistMonitor = ({
                                 style={{ color: 'rgba(0,0,0,0.45)', padding: '0 4px', height: 24 }}
                             />
                         </Tooltip>
+                        <Tooltip title="新增股票">
+                            <Button
+                                size="small"
+                                type="text"
+                                icon={<PlusOutlined />}
+                                onClick={onAddStock}
+                                style={{ color: 'rgba(0,0,0,0.45)', padding: '0 4px', height: 24 }}
+                            />
+                        </Tooltip>
                         <Tooltip title="展开自选股监控">
                             <Button
                                 size="small"

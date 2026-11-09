@@ -25,6 +25,64 @@ const debugListeners = new Set();
 const activeCount = () => listeners.size + debugListeners.size;
 const isDebugType = (t) => typeof t === 'string' && t.startsWith('debug_');
 
+// ==================== 弹卡对账（2026-11-09 用户新增） ====================
+// 凡 open:true 的弹卡类广播，后端都会补全局唯一 aid 并登记（保留 12 小时，GET /pending_alerts 拉取）。
+// 前端若在广播瞬间不在线（页面未开 / WS 断连 / 服务重启）会错过弹卡；
+// 本模块在 WS 连上 / 页面重新可见时拉取对账：本地没弹过的一律经 notify() 以 open:true 重新分发，
+// 复用各组件现有订阅逻辑弹卡（GlobalDiagnosisAlert 卡片 / App 屏蔽弹窗等无需改动）。
+const SHOWN_KEY = 'ws_alert_shown_ids';    // localStorage 已弹记录 { [aid]: 时间戳 }
+const SHOWN_TTL_MS = 3 * 24 * 3600 * 1000; // 已弹记录保留 3 天，防 localStorage 无限膨胀
+const dispatchedIds = new Set();           // 本次会话已分发过的 aid（防在线推送与对账拉取重复弹）
+
+const loadShownIds = () => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SHOWN_KEY) || '{}');
+    const cutoff = Date.now() - SHOWN_TTL_MS;
+    const out = {};
+    Object.keys(raw).forEach((id) => { if (raw[id] >= cutoff) out[id] = raw[id]; });
+    return out;
+  } catch {
+    return {};
+  }
+};
+
+// 标记某条提醒「已弹」：写入 localStorage + 本会话内存去重集合
+const markAlertShown = (aid) => {
+  if (!aid) return;
+  dispatchedIds.add(aid);
+  try {
+    const shown = loadShownIds();
+    shown[aid] = Date.now();
+    localStorage.setItem(SHOWN_KEY, JSON.stringify(shown));
+  } catch { /* 忽略 */ }
+};
+
+// 对账补弹：拉取后端登记的 open:true 广播，本地没弹过的重新分发（消息带 replayed:true 便于排查）
+let replaying = false;
+export const replayPendingAlerts = async () => {
+  if (replaying || activeCount() === 0) return;
+  replaying = true;
+  try {
+    const res = await axios.get(`http://${local_ip}:3000/pending_alerts`, { timeout: 5000 });
+    const list = Array.isArray(res.data) ? res.data : [];
+    if (list.length === 0) return;
+    const shown = loadShownIds();
+    let replayed = 0;
+    for (const item of list) {
+      if (!item || !item.id || !item.msg || !item.msg.type) continue;
+      if (dispatchedIds.has(item.id) || shown[item.id]) continue; // 已弹过（本会话或历史）不重弹
+      markAlertShown(item.id);
+      notify({ ...item.msg, replayed: true });
+      replayed += 1;
+    }
+    if (replayed > 0) console.log(`[ws对账] 补弹 ${replayed} 条漏收提醒`);
+  } catch (e) {
+    console.error('[ws对账] 拉取待补弹提醒失败:', e);
+  } finally {
+    replaying = false;
+  }
+};
+
 const notify = (msg) => {
   if (msg && msg.type) lastByType[msg.type] = msg;
   [...listeners].forEach((fn) => {
@@ -83,6 +141,7 @@ function ensureConnected() {
   socket.onopen = () => {
     connecting = false;
     reconnectAttempts = 0;
+    replayPendingAlerts(); // 对账补弹：连上后立刻检查有没有漏收的弹卡提醒
   };
   socket.onmessage = (evt) => {
     let msg;
@@ -96,8 +155,10 @@ function ensureConnected() {
     if (msg.type === 'debug_ping' && msg.src === 'server') {
       sendRaw({ type: 'debug_pong', seq: msg.seq, src: 'client' });
     }
-    if (PUSH_TYPES.includes(msg.type)) notify(msg);
-    else if (isDebugType(msg.type)) dispatchDebug(msg);
+    if (PUSH_TYPES.includes(msg.type)) {
+      if (msg.open === true && msg.aid) markAlertShown(msg.aid); // 在线收到弹卡推送即记账，避免对账时重复弹
+      notify(msg);
+    } else if (isDebugType(msg.type)) dispatchDebug(msg);
   };
   socket.onclose = () => {
     connecting = false;
@@ -224,9 +285,12 @@ export const fetchStrategyModes = async () => {
   }
 };
 
-// 后台标签页被浏览器挂起后恢复时主动重连
+// 后台标签页被浏览器挂起后恢复时主动重连 + 对账补弹
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && activeCount() > 0) ensureConnected();
+    if (document.visibilityState === 'visible' && activeCount() > 0) {
+      ensureConnected();
+      replayPendingAlerts();
+    }
   });
 }

@@ -1,34 +1,13 @@
 {
-  "lastSyncedEndDate": "20261106",
+  "lastSyncedEndDate": "20261109",
   "lastRange": {
-    "startDate": "20260807",
-    "endDate": "20261106"
+    "startDate": "20260810",
+    "endDate": "20261109"
   },
-  "lastSyncedAt": "2026-11-06 08:56:19",
-  "lastHoldings": [
-    {
-      "code": "sh688120",
-      "name": "华海清科",
-      "buyDate": "20261104",
-      "buyPrice": 179.13,
-      "buyTime": "13:35",
-      "weight": 0.5
-    },
-    {
-      "code": "sh688120",
-      "name": "华海清科",
-      "buyDate": "20261105",
-      "buyPrice": 200.13,
-      "buyTime": "09:45",
-      "weight": 0.5
-    }
-  ],
-  "added": [
-    "华海清科(sh688120) 成本 179.13 买入日 2026-11-04"
-  ],
-  "skipped": [
-    "华海清科（同股票同买入日持仓已存在）"
-  ],
+  "lastSyncedAt": "2026-11-09 09:08:27",
+  "lastHoldings": [],
+  "added": [],
+  "skipped": [],
   "attempts": 0,
-  "attemptsDate": "2026-11-06"
+  "attemptsDate": "2026-11-09"
 }

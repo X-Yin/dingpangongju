@@ -688,5 +688,15 @@
     "secu_code": "sh603680",
     "secu_name": "今创集团",
     "TotalShares": 783718767
+  },
+  {
+    "secu_code": "sz300751",
+    "secu_name": "迈为股份",
+    "TotalShares": 278901752
+  },
+  {
+    "secu_code": "sz002583",
+    "secu_name": "海能达",
+    "TotalShares": 1818619381
   }
 ]

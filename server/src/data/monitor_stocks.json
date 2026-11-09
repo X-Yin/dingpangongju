@@ -1449,5 +1449,27 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-08 15:27:02"
+  },
+  {
+    "code": "sz300751",
+    "name": "迈为股份",
+    "isImportant": false,
+    "blockName": "太空光伏",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-09 08:50:53"
+  },
+  {
+    "code": "sz002583",
+    "name": "海能达",
+    "isImportant": false,
+    "blockName": "通信",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-09 12:27:07"
   }
 ]

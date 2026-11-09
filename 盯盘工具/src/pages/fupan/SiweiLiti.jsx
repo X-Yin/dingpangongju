@@ -517,6 +517,69 @@ const SiweiLiti = ({
   const [flashThemeKey, setFlashThemeKey] = useState('');
   const [flashSeq, setFlashSeq] = useState(0);
   const stockCardRefs = useRef(new Map());
+  const ladderSectionRef = useRef(null);
+  const techEmotionCardRef = useRef(null);
+  // 左键长按 > 150ms → 滚到科技情绪指数：用 mouseDown + 定时器实现，避免 contextmenu 干扰
+  const LONG_PRESS_MS = 150;
+  const longPressRef = useRef({ timer: null, triggered: false });
+
+  // 找最近的可滚动祖先 + 把某个 ref 滚到容器顶部
+  const scrollRefIntoView = useCallback((refEl, anchorEl) => {
+    if (!anchorEl || !(anchorEl instanceof HTMLElement)) return;
+    let scroller = anchorEl;
+    while (scroller && scroller !== document.body) {
+      const style = getComputedStyle(scroller);
+      const canScrollY = /auto|scroll|overlay|clip/.test(style.overflowY);
+      if (canScrollY && scroller.scrollHeight > scroller.clientHeight + 4) break;
+      scroller = scroller.parentElement;
+    }
+    if (!scroller) scroller = document.scrollingElement || document.documentElement;
+    const tRect = refEl.getBoundingClientRect();
+    const sRect = scroller.getBoundingClientRect();
+    const desiredTop = tRect.top - sRect.top + scroller.scrollTop - 12;
+    scroller.scrollTo({ top: Math.max(0, desiredTop), behavior: 'smooth' });
+  }, []);
+
+  // 弹窗空白区域双击 → 滚动到连板天梯
+  const handlePageDoubleClick = useCallback((e) => {
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest('button, a, input, textarea, select, [contenteditable="true"]')) return;
+    if (!ladderSectionRef.current) return;
+    scrollRefIntoView(ladderSectionRef.current, target);
+  }, [scrollRefIntoView]);
+
+  // 左键长按超过 150ms（在空白区域）→ 滚到科技情绪指数
+  // 只有 button/a/input 等交互元素以外的区域才启动长按计时
+  const clearLongPress = () => {
+    const lp = longPressRef.current;
+    if (lp.timer) { clearTimeout(lp.timer); lp.timer = null; }
+  };
+  const handlePageMouseDown = useCallback((e) => {
+    if (e.button !== 0) return; // 只关心左键
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest('button, a, input, textarea, select, [contenteditable="true"]')) return;
+    clearLongPress();
+    longPressRef.current.triggered = false;
+    longPressRef.current.timer = setTimeout(() => {
+      longPressRef.current.triggered = true;
+      if (techEmotionCardRef.current) scrollRefIntoView(techEmotionCardRef.current, target);
+    }, LONG_PRESS_MS);
+  }, [scrollRefIntoView]);
+
+  const handlePageMouseUp = useCallback(() => {
+    clearLongPress();
+  }, []);
+
+  const handlePageMouseLeave = useCallback(() => {
+    clearLongPress();
+  }, []);
+
+  const handlePageContextMenu = useCallback(() => {
+    // 右键菜单也会触发右键 mousedown/up，但长按只认左键；这里兜底清掉计时器
+    clearLongPress();
+  }, []);
 
   // 连板天梯：可选日期（本地连板快照）+ 当前查看日 + 当日数据
   const [ladderDates, setLadderDates] = useState([]);
@@ -786,14 +849,20 @@ const SiweiLiti = ({
         if (cancelled) return;
         const dates = (Array.isArray(res.data) ? res.data : [])
           .map((item) => String(item?.date || ''))
-          .filter(Boolean)
-          .sort();
+          .filter(Boolean);
+        // realtime 模式（盯盘页弹窗）：当日快照 15:05 后才落盘，盘中手动补进今天，
+        // 使默认选中当日并走 /lianban_day?realtime=1 的实时快照链路
+        if (realtime) {
+          const todayYmd = dayjs().format('YYYYMMDD');
+          if (!dates.includes(todayYmd)) dates.push(todayYmd);
+        }
+        dates.sort();
         setLadderDates(dates);
         if (dates.length) setLadderDate(dates[dates.length - 1]);
       })
       .catch((e) => console.error('获取连板天梯日期失败:', e));
     return () => { cancelled = true; };
-  }, []);
+  }, [realtime]);
 
   // 按所选日期拉取当日连板快照
   useEffect(() => {
@@ -1061,7 +1130,14 @@ const SiweiLiti = ({
   };
 
   return (
-    <div className="siwei-liti-page">
+    <div
+      className="siwei-liti-page"
+      onDoubleClick={handlePageDoubleClick}
+      onMouseDown={handlePageMouseDown}
+      onMouseUp={handlePageMouseUp}
+      onMouseLeave={handlePageMouseLeave}
+      onContextMenu={handlePageContextMenu}
+    >
       {/* 顶部主卡（与「科技进攻股票涨幅列表」同一渐变磨砂风格） */}
       <div className="sl-hero">
         <div className="sl-hero-header">
@@ -1142,7 +1218,7 @@ const SiweiLiti = ({
           </div>
 
           <div className="sl-chart-grid">
-            <div className="sl-glass-card sl-chart-card">
+            <div ref={techEmotionCardRef} className="sl-glass-card sl-chart-card">
               <div className="sl-chart-card-head">
                 <span className="sl-chart-title">科技情绪指数</span>
                 <span className="sl-chart-sub">现成科技情绪口径（-100 ~ 100）</span>
@@ -1378,7 +1454,7 @@ const SiweiLiti = ({
           </div>
 
           {/* 连板天梯：按日期回看每日连板梯队，点击板块名联动板块股票 */}
-          <div className="sl-section-title">
+          <div ref={ladderSectionRef} className="sl-section-title">
             <TrophyOutlined /> 连板天梯
             <span className="sl-section-sub">
               按日期回看每日连板梯队；点击个股所属板块可在下方板块股票中自动选中并定位
