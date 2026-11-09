@@ -3479,7 +3479,9 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
 
   // 展示榜：按 3 日涨幅降序取前十，不做剔除（涨停 / 3日涨幅>30% / 昨日一字板 / 估值禁买 仍在榜内），
   // 由 excludeReason 说明为什么不是买点候选（2026-10-22）
-  const mergedTop = [...gatePassedList].sort(byChange3d).slice(0, 10);
+  // 2026-11-09 用户要求：市场门槛未通过时也照常展示完整榜单，便于查看候选个股；
+  // 门禁只影响买点候选判定（candidatePool / qualifiedTop），不再清空展示榜
+  const mergedTop = [...cybMainList, ...starList].sort(byChange3d).slice(0, 10);
 
   // 买点候选池：剔除估值禁买、昨日一字板与最近 3 日涨幅 > 30% 的个股后按 3 日涨幅降序取前十，
   // 再应用「涨幅领先但当日爆发力不足」顺延，得到唯一买点候选

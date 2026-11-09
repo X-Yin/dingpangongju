@@ -1790,7 +1790,7 @@ function App() {
       {willpowerModalVisible && (
         <div className="willpower-modal-overlay">
           <div className="willpower-modal-content">
-            <div className="willpower-modal-text">能说出一万种腿法的人遍地都是<br />用意志力把一种腿法练到骨头里的人<br />才真正可怕</div>
+            <div className="willpower-modal-text">定力与耐心！</div>
             <div className="willpower-modal-tip">10 秒后自动关闭</div>
           </div>
         </div>

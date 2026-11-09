@@ -1110,8 +1110,10 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
   const mergedList = useMemo(() => data?.mergedTop || [], [data]);
   // 只看符合条件榜单：后端全量扫描得到的完全符合条件个股，已按 3 日涨幅降序，首位即买点候选
   const qualifiedList = useMemo(() => data?.qualifiedTop || [], [data]);
-  // 科技进攻列当前展示的榜单（开关开启时切换到只看符合条件）
-  const techList = onlyQualified ? qualifiedList : mergedList;
+  // 「只看符合条件」为空时回退展示完整榜单（2026-11-09 用户要求：即使没有符合条件的也能看到候选股列表）
+  const onlyQualifiedEmpty = onlyQualified && qualifiedList.length === 0;
+  // 科技进攻列当前展示的榜单（开关开启时切换到只看符合条件；为空则回退完整榜单）
+  const techList = onlyQualifiedEmpty ? mergedList : (onlyQualified ? qualifiedList : mergedList);
 
   // 情绪游资龙头列表（后端已按 delta 降序返回全部达标股；attack_defense 模式下也计算，供顺周期列展示）
   const showEwCols = isExtreme || isDefense;
@@ -1355,7 +1357,7 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
             </div>
             <div className="ob-gainer-filter-row">
               <AntSwitch size="small" checked={onlyQualified} onChange={setOnlyQualified} />
-              <span>只看符合条件</span>
+              <span>只看符合条件{onlyQualifiedEmpty && mergedList.length > 0 ? '（无符合条件，已展示全部候选）' : ''}</span>
             </div>
             <div className="ob-gainer-head" style={{ gridTemplateColumns: techGrid }}>
               <>
@@ -1367,10 +1369,13 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
               </>
             </div>
             {techList.length === 0 ? (
-              <div className="ob-empty-mini ob-gainer-empty">{onlyQualified ? '暂无完全符合条件的标的' : '暂无数据'}</div>
+              <div className="ob-empty-mini ob-gainer-empty">{onlyQualified && !onlyQualifiedEmpty ? '暂无完全符合条件的标的' : '暂无数据'}</div>
             ) : techList.map((s, idx) => {
               // 全部符合条件时买点候选必为 3 日涨幅第一名（idx 0）；否则以后端唯一推荐标的为准
-              const isPick = onlyQualified ? idx === 0 : (globalPick != null && s.code === globalPick.code);
+              //（回退展示全部候选时不按 idx 0 标记，避免把不符合条件的个股误标为买点候选）
+              const isPick = onlyQualified && !onlyQualifiedEmpty
+                ? idx === 0
+                : (globalPick != null && s.code === globalPick.code);
               return (
                 <div className="ob-gainer-row" key={`${s.code}-${idx}`} style={{ gridTemplateColumns: techGrid }}>
                   <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
