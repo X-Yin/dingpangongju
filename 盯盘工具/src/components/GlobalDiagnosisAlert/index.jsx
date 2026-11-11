@@ -21,13 +21,14 @@ import {
   RiseOutlined,
   StarOutlined,
   StarFilled,
+  CrownOutlined,
   LineChartOutlined,
   BulbOutlined,
 } from '@ant-design/icons';
 import { local_ip } from '../../constant';
 import { getStrategyMode, MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION } from '../../utils/strategyMode';
 import { createChart, ColorType, LineStyle, CrosshairMode } from 'lightweight-charts';
-import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeBlock5minSurgePush, subscribeStrategySignalPush, subscribeEmotionResonancePush, subscribeImportantStockSurgePush } from '../../utils/buyPointWs';
+import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeBlock5minSurgePush, subscribeStrategySignalPush, subscribeEmotionResonancePush, subscribeImportantStockSurgePush, subscribeBigcapOpenSurgePush } from '../../utils/buyPointWs';
 import { isTradingDay } from '../../utils/tradingDay';
 import './index.scss';
 
@@ -153,6 +154,8 @@ const GlobalDiagnosisAlert = () => {
   const [resonanceAlert, setResonanceAlert] = useState(null);
   // 重点股 1 分钟涨跌幅异动卡片（2026-11-10 用户新增）：{ data:{ time, prevTime, threshold, stocks:[...] }, ts, mock }
   const [stockSurgeAlert, setStockSurgeAlert] = useState(null);
+  // 千亿市值高开走强卡片（2026-11-12 用户新增）：{ data:{ date, openTime, checkTime, rules, stocks:[...] }, ts, mock }
+  const [bigcapAlert, setBigcapAlert] = useState(null);
   const seqRef = useRef(0); // 旧请求返回晚于新触发时丢弃过期结果
 
   // 每个交易日 9:05 自动弹出「情绪游资-极致赔率候选池」全局弹窗（不依赖当前策略模式，2026-11-04 用户新增）
@@ -344,7 +347,14 @@ const GlobalDiagnosisAlert = () => {
       if (stocks.length === 0) return;
       setStockSurgeAlert({ data: msg.data, ts: msg.ts ?? null, mock: msg.mock === true });
     });
-    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubBlockSurge(); unsubStrategy(); unsubResonance(); unsubStockSurge(); };
+    // 千亿市值高开走强：后端 9:31 检出「总市值≥1000亿 + 竞价涨幅≥1% + 9:31 涨幅高于开盘」时广播
+    const unsubBigcap = subscribeBigcapOpenSurgePush((msg) => {
+      if (msg?.open !== true || !msg?.data) return;
+      const stocks = Array.isArray(msg.data.stocks) ? msg.data.stocks : [];
+      if (stocks.length === 0) return;
+      setBigcapAlert({ data: msg.data, ts: msg.ts ?? null, mock: msg.mock === true });
+    });
+    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubBlockSurge(); unsubStrategy(); unsubResonance(); unsubStockSurge(); unsubBigcap(); };
   }, [fetchBuyStocks]);
 
   const buyCardAlert = buyAlert || wfAlert;
@@ -355,7 +365,7 @@ const GlobalDiagnosisAlert = () => {
 
   // BlockSurgeModal 使用 antd Modal portal，不依赖 gda-container 渲染；
   // 因此只在没有任何卡片、仅一个 Modal 时，也必须返回一个能挂载 Modal 的根
-  const hasCardAlert = buyCardAlert || sellAlert || iceAlert || wfCandidates || strategyAlert || stockSurgeAlert;
+  const hasCardAlert = buyCardAlert || sellAlert || iceAlert || wfCandidates || strategyAlert || stockSurgeAlert || bigcapAlert;
   if (!hasCardAlert && !blockSurgeAlert && !resonanceAlert) return null;
 
   return (
@@ -373,6 +383,8 @@ const GlobalDiagnosisAlert = () => {
       {strategyAlert && <StrategySignalCard alert={strategyAlert} onClose={() => setStrategyAlert(null)} />}
       {/* 重点股 1 分钟涨跌幅异动：与买点诊断同风格的右下角全局卡片，一次列出全部命中股票 */}
       {stockSurgeAlert && <StockSurgeCard alert={stockSurgeAlert} onClose={() => setStockSurgeAlert(null)} />}
+      {/* 千亿市值高开走强：与买点诊断同风格的右下角全局卡片，一次列出全部走强股票 */}
+      {bigcapAlert && <BigcapOpenSurgeCard alert={bigcapAlert} onClose={() => setBigcapAlert(null)} />}
       {/* 重点板块 5 分钟涨幅异动：antd Modal 门户居中展示 */}
       {blockSurgeAlert && (
         <BlockSurgeCard alert={blockSurgeAlert} onClose={() => setBlockSurgeAlert(null)} />
@@ -976,6 +988,65 @@ const StockSurgeCard = ({ alert, onClose }) => {
         <div className="gda-footer">
           <span>{ts ? `触发时间 ${new Date(ts).toLocaleTimeString('zh-CN', { hour12: false })}` : ''}</span>
           <span className="gda-ss-tip">重点自选股 1 分钟内涨跌幅异动提醒</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ==================== 千亿市值高开走强卡片（2026-11-12 用户新增） ====================
+// 后端每个交易日 9:31 检出「总市值 ≥1000 亿 + 9:30 竞价涨幅 ≥1% + 9:31 涨幅高于开盘涨幅」的
+// 全量自选股后经 WS（type:'bigcap_open_surge'）广播，本卡片以买点诊断同风格全局卡片弹出：
+// 一次列出全部走强股票：名称(代码) / 总市值 / 竞价涨幅 → 当前涨幅
+const BigcapOpenSurgeCard = ({ alert, onClose }) => {
+  const { data, ts, mock } = alert || {};
+  const stocks = Array.isArray(data?.stocks) ? data.stocks : [];
+  const rules = data?.rules || {};
+  useCloseOnArrowKey(onClose);
+
+  const fmt = (v) => {
+    const num = Number(v);
+    if (v == null || !Number.isFinite(num)) return '--';
+    return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
+  };
+
+  return (
+    <div className="gda-card gda-bigcap">
+      <div className="gda-header">
+        <CrownOutlined className="gda-header-icon bigcap" />
+        <span className="gda-title">千亿市值高开走强</span>
+        <span className="gda-count-badge bigcap">{stocks.length} 只走强</span>
+        {mock && <span className="gda-mock-badge">MOCK 测试</span>}
+        <CloseOutlined className="gda-close" onClick={onClose} />
+      </div>
+      <div className="gda-body">
+        <div className="gda-row">
+          <span className="gda-label">筛选规则</span>
+          <span className="gda-value">
+            {`总市值 ≥ ${rules.minTotalMvYi ?? 1000} 亿 · 9:30 竞价涨幅 ≥ ${rules.minAuctionChange ?? 1}% · 9:31 涨幅 > 竞价涨幅`}
+          </span>
+        </div>
+        {stocks.map((s) => (
+          <div key={s.code} className="gda-ss-item is-up">
+            <div className="gda-ss-head">
+              <span className="gda-ss-tag up">走强</span>
+              <b className="gda-ss-name">{s.name || s.code}</b>
+              <span className="gda-ss-code">{s.code}</span>
+              <span className="gda-bc-mv">{Number.isFinite(Number(s.totalMvYi)) ? `${Number(s.totalMvYi).toFixed(0)} 亿` : '--'}</span>
+              <span className="gda-ss-delta up">{fmt(s.change)}</span>
+            </div>
+            <div className="gda-ss-sub">
+              9:30 竞价 <b className="up">{fmt(s.openChange)}</b>
+              <span className="gda-ss-sep">·</span>
+              开盘价 <b>{s.openPrice ?? '--'}</b>
+              <span className="gda-ss-sep">·</span>
+              现价 <b>{s.price ?? '--'}</b>
+            </div>
+          </div>
+        ))}
+        <div className="gda-footer">
+          <span>{ts ? `触发时间 ${new Date(ts).toLocaleTimeString('zh-CN', { hour12: false })}` : ''}</span>
+          <span className="gda-ss-tip">千亿市值高开后再走强提醒（9:31 检查）</span>
         </div>
       </div>
     </div>

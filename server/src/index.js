@@ -153,6 +153,8 @@ const debugMock = require('./service/debugMock');
 const block5minSurge = require('./service/block5minSurge');
 // 盘中情绪共振监测（大盘情绪温度 ≥60 且板块全面高潮/一致加速时 WS 广播）
 const emotionResonance = require('./service/emotionResonance');
+// 千亿市值高开走强监控（2026-11-12 用户新增：总市值≥1000亿 + 9:30竞价涨幅≥1% + 9:31涨幅高于开盘，WS 推送）
+const bigcapOpenSurge = require('./service/bigcapOpenSurge');
 const wsServer = require('./wsServer');
 const { getThsHotRank } = require('./service/thsHotRank');
 
@@ -2184,6 +2186,17 @@ app.post('/debug/mock_emotion_resonance', (req, res) => {
   } catch (error) {
     console.error('MOCK 情绪共振失败:', error);
     res.json({ success: false, error: error.message || 'MOCK 情绪共振失败' });
+  }
+});
+
+// 千亿市值高开走强 MOCK（2026-11-12 用户新增）：优先取真实千亿市值自选股 + 实时行情构造走强数据，
+// 经与实盘完全一致的 WS 链路（type:'bigcap_open_surge'）推送前端全局卡片
+app.post('/debug/mock_bigcap_open_surge', async (req, res) => {
+  try {
+    res.json(await bigcapOpenSurge.mockSurge());
+  } catch (error) {
+    console.error('MOCK 千亿市值高开走强失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 千亿市值高开走强失败' });
   }
 });
 
@@ -6012,6 +6025,8 @@ const server = app.listen(port, () => {
   sellPointPushService.start();
   // 重点板块 5 分钟异动监控：每 5min 整数倍扫描，单板块 5min 涨幅 ≥1.5% 即 WS 推送
   block5minSurge.start();
+  // 千亿市值高开走强监控：9:30 采集竞价快照（市值≥1000亿 且 竞价涨幅≥1%），9:31 涨幅高于开盘即 WS 推送
+  bigcapOpenSurge.start();
   // 策略中心轮询：新命中经 WS（type:'strategy_signal'）推送前端全局卡片 + 登记 pending_alerts 对账。
   // 必须在本进程启动——WS 服务（wsServer.attach）只挂载在 index.js；之前在 poll.js 进程里
   // broadcast 因 wss 为 null 静默空转，导致记录写入但全局卡片/对账补弹均收不到（2026-11-10 修复）
@@ -6040,6 +6055,7 @@ const shutdown = (signal) => {
   try { buyPointPushService.stop(); } catch (e) { /* 忽略 */ }
   try { sellPointPushService.stop(); } catch (e) { /* 忽略 */ }
   try { block5minSurge.stop(); } catch (e) { /* 忽略 */ }
+  try { bigcapOpenSurge.stop(); } catch (e) { /* 忽略 */ }
   try { washFusionLive.stop(); } catch (e) { /* 忽略 */ }
   try { wsServer.close(); } catch (e) { /* 忽略 */ }
   server.close(() => process.exit(0));

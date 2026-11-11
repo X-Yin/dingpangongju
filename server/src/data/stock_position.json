@@ -28,5 +28,21 @@
     "weight": 25,
     "costPrice": 228.83,
     "sellStrategy": "tech_attack"
+  },
+  {
+    "id": "sz300570_1794414353350_sxgt",
+    "code": "sz300570",
+    "name": "太辰光",
+    "buyDate": "2026-11-11",
+    "buyTime": "13:15",
+    "weight": 50,
+    "costPrice": 123.9,
+    "mirror": {
+      "strategy": "highest_3d_gain_emoquick",
+      "strategyName": "3日涨幅最大&三日情绪-30快进快出",
+      "syncedDate": "2026-11-12",
+      "buyDateRaw": "20261111",
+      "source": "backtest_position_mirror"
+    }
   }
 ]

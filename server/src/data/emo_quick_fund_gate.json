@@ -1,11 +1,11 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-11-11 10:32:11",
-  "reason": "持仓变动重跑（持仓管理增删股票）",
+  "computedAt": "2026-11-12 00:25:53",
+  "reason": "每日首次启动回测",
   "range": {
-    "startDate": "20260812",
-    "endDate": "20261111"
+    "startDate": "20260813",
+    "endDate": "20261112"
   },
   "tradeCount": 10,
   "threshold": 20,

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Drawer, Card, Button, Space, Typography, message, InputNumber } from 'antd';
 import {
   BugOutlined, SyncOutlined, CheckCircleFilled, WarningFilled, RocketOutlined, FallOutlined, ClockCircleOutlined,
-  BulbOutlined, RiseOutlined, ThunderboltOutlined,
+  BulbOutlined, RiseOutlined, ThunderboltOutlined, CrownOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../constant';
@@ -35,6 +35,8 @@ const DebugPanel = () => {
   const [resonanceMocking, setResonanceMocking] = useState(false);
   // 重点股 1 分钟异动 MOCK
   const [stockSurgeMocking, setStockSurgeMocking] = useState(false);
+  // 千亿市值高开走强 MOCK
+  const [bigcapMocking, setBigcapMocking] = useState(false);
 
   // 意志力锻炼弹窗间隔（分钟）：默认 5，持久化到 localStorage
   const [willpowerInterval, setWillpowerInterval] = useState(() => {
@@ -278,6 +280,26 @@ const DebugPanel = () => {
       message.success(`已模拟重点股 1 分钟异动：${stocks.map((s) => s.stockName).join('、')}`, 4);
     } finally {
       setStockSurgeMocking(false);
+    }
+  };
+
+  // 千亿市值高开走强 MOCK：优先取真实千亿市值自选股 + 实时行情构造走强数据，
+  // 经后端 WS（type:'bigcap_open_surge'）推送前端全局卡片（与实盘完全一致链路）
+  const triggerBigcapMock = async () => {
+    if (bigcapMocking) return;
+    setBigcapMocking(true);
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/debug/mock_bigcap_open_surge`);
+      const d = res.data;
+      if (d?.success) {
+        message.success(`已模拟千亿市值高开走强：${(d.stocks || []).join('、')}`, 4);
+      } else {
+        message.error(d?.error || 'mock 触发失败');
+      }
+    } catch (e) {
+      message.error(`mock 请求失败：${e.message}`);
+    } finally {
+      setBigcapMocking(false);
     }
   };
 
@@ -555,6 +577,25 @@ const DebugPanel = () => {
               style={{ background: '#be123c', borderColor: '#be123c' }}
             >
               触发重点股 1 分钟异动提醒
+            </Button>
+          </Card>
+
+          {/* 模块十二：千亿市值高开走强 MOCK */}
+          <Card size="small" title="12. 千亿市值高开走强 Mock">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              优先取真实千亿市值（总市值 ≥1000 亿）自选股 + 实时行情构造「9:30 竞价涨幅 ≥1% 且 9:31 涨幅高于开盘」
+              的走强数据，经后端与实盘完全一致的 WebSocket 链路（type:'bigcap_open_surge'）推送，
+              前端右下角弹出「千亿市值高开走强」全局卡片（样式同买点诊断卡片）。
+              实盘由后端监控在交易日 9:30 采集竞价快照、9:31 自动检查触发。
+            </Paragraph>
+            <Button
+              type="primary"
+              icon={<CrownOutlined />}
+              loading={bigcapMocking}
+              onClick={triggerBigcapMock}
+              style={{ background: '#b45309', borderColor: '#b45309' }}
+            >
+              触发千亿市值高开走强提醒
             </Button>
           </Card>
 
