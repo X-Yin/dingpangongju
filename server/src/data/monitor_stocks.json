@@ -893,7 +893,7 @@
   {
     "code": "sh601595",
     "name": "上海电影",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "AI 短剧",
     "riskScore": " 7",
     "isTech": false,
@@ -1035,7 +1035,7 @@
   {
     "code": "sh605488",
     "name": "福莱新材",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "物理 AI",
     "riskScore": "8",
     "isTech": false,
@@ -1079,7 +1079,7 @@
   {
     "code": "sh688836",
     "name": "宇树科技-W",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "机器人",
     "riskScore": "8",
     "isTech": false,
@@ -1101,7 +1101,7 @@
   {
     "code": "sz000810",
     "name": "创维数字",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "物理 AI",
     "riskScore": "7",
     "isTech": false,
@@ -1145,7 +1145,7 @@
   {
     "code": "sz002149",
     "name": "西部材料",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "商业航天",
     "riskScore": " 8",
     "isTech": false,
@@ -1167,7 +1167,7 @@
   {
     "code": "sz002565",
     "name": "顺灏股份",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "商业航天",
     "riskScore": "9",
     "isTech": false,
@@ -1189,7 +1189,7 @@
   {
     "code": "sh603131",
     "name": "上海沪工",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "商业航天",
     "riskScore": "8",
     "isTech": false,
@@ -1211,7 +1211,7 @@
   {
     "code": "sh603278",
     "name": "大业股份",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "机器人",
     "riskScore": " 8",
     "isTech": false,
@@ -1222,7 +1222,7 @@
   {
     "code": "sz000678",
     "name": "襄阳轴承",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "机器人",
     "riskScore": "8",
     "isTech": false,
@@ -1266,7 +1266,7 @@
   {
     "code": "sz002865",
     "name": "钧达股份",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "商业航天",
     "riskScore": "8",
     "isTech": false,
@@ -1319,17 +1319,6 @@
     "watchPE": true
   },
   {
-    "code": "sz301079",
-    "name": "邵阳液压",
-    "isImportant": false,
-    "blockName": "商业航天",
-    "riskScore": " 7",
-    "isTech": false,
-    "addedAt": "2026-10-30 15:23:01",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
     "code": "sz001219",
     "name": "青岛食品",
     "isImportant": false,
@@ -1374,17 +1363,6 @@
     "addedAt": "2026-11-04 23:43:10"
   },
   {
-    "code": "sz300201",
-    "name": "海伦哲",
-    "isImportant": false,
-    "blockName": "锂电",
-    "riskScore": null,
-    "isTech": false,
-    "watchMarketCap": true,
-    "watchPE": true,
-    "addedAt": "2026-11-05 12:15:46"
-  },
-  {
     "code": "sh603893",
     "name": "瑞芯微",
     "isImportant": false,
@@ -1409,7 +1387,7 @@
   {
     "code": "sh603777",
     "name": "来伊份",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "消费",
     "riskScore": null,
     "isTech": false,
@@ -1420,7 +1398,7 @@
   {
     "code": "sh603719",
     "name": "良品铺子",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "消费",
     "riskScore": null,
     "isTech": false,
@@ -1442,7 +1420,7 @@
   {
     "code": "sh603680",
     "name": "今创集团",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "商业航天",
     "riskScore": null,
     "isTech": false,
@@ -1471,5 +1449,115 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-09 12:27:07"
+  },
+  {
+    "code": "sz002981",
+    "name": "朝阳科技",
+    "isImportant": true,
+    "blockName": "消费电子",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-10 15:05:36"
+  },
+  {
+    "code": "sz002432",
+    "name": "九安医疗",
+    "isImportant": true,
+    "blockName": "医疗",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-10 15:29:35"
+  },
+  {
+    "code": "sz002578",
+    "name": "闽发铝业",
+    "isImportant": true,
+    "blockName": "光伏",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-10 16:10:01"
+  },
+  {
+    "code": "sh601599",
+    "name": "浙文影业",
+    "isImportant": true,
+    "blockName": "传媒",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-10 16:10:10"
+  },
+  {
+    "code": "sz002582",
+    "name": "好想你",
+    "isImportant": true,
+    "blockName": "消费",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-10 16:10:59"
+  },
+  {
+    "code": "sh600113",
+    "name": "浙江东日",
+    "isImportant": true,
+    "blockName": "消费",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-10 16:11:15"
+  },
+  {
+    "code": "sz001296",
+    "name": "长江材料",
+    "isImportant": true,
+    "blockName": "3D 打印",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-10 16:12:34"
+  },
+  {
+    "code": "sz300556",
+    "name": "丝路视觉",
+    "isImportant": false,
+    "blockName": "Ai 应用",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-10 21:34:16"
+  },
+  {
+    "code": "sh603466",
+    "name": "风语筑",
+    "isImportant": false,
+    "blockName": "AI应用",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-10 21:34:23"
+  },
+  {
+    "code": "sz300133",
+    "name": "华策影视",
+    "isImportant": false,
+    "blockName": "AI 影视",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-10 21:51:32"
   }
 ]

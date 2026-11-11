@@ -6,7 +6,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../constant';
-import { sendRaw, subscribeDebugWs } from '../../utils/buyPointWs';
+import { sendRaw, subscribeDebugWs, publishLocalPush } from '../../utils/buyPointWs';
 
 const { Text, Paragraph } = Typography;
 
@@ -33,6 +33,8 @@ const DebugPanel = () => {
   // 策略中心命中提醒 MOCK
   const [strategySignalMocking, setStrategySignalMocking] = useState(false);
   const [resonanceMocking, setResonanceMocking] = useState(false);
+  // 重点股 1 分钟异动 MOCK
+  const [stockSurgeMocking, setStockSurgeMocking] = useState(false);
 
   // 意志力锻炼弹窗间隔（分钟）：默认 5，持久化到 localStorage
   const [willpowerInterval, setWillpowerInterval] = useState(() => {
@@ -232,6 +234,50 @@ const DebugPanel = () => {
       message.error(`mock 请求失败：${e.message}`);
     } finally {
       setStrategySignalMocking(false);
+    }
+  };
+
+  // 重点股 1 分钟涨跌幅异动 MOCK：优先从全量自选股的重点股（isImportant）里随机挑 2 只
+  // （无重点股时兜底取任意 2 只 / 内置假数据），构造 1 分钟内涨跌幅变化 ≥2% 的异动数据，
+  // 走与实盘完全一致的本地广播链路（type:'important_stock_surge'），前端弹出全局异动卡片
+  const triggerStockSurgeMock = async () => {
+    if (stockSurgeMocking) return;
+    setStockSurgeMocking(true);
+    try {
+      let picks = [];
+      try {
+        const res = await axios.get(`http://${local_ip}:3000/get_all_stock_data`, { timeout: 10 * 1000 });
+        const all = Array.isArray(res.data) ? res.data : [];
+        const important = all.filter((s) => s?.isImportant);
+        const pool = important.length >= 2 ? important : all;
+        picks = [...pool].sort(() => Math.random() - 0.5).slice(0, 2)
+          .map((s, i) => ({
+            code: s.code,
+            stockName: s.stockName || s.name || s.code,
+            prevChange: Number(s.change) || 0,
+            change: (Number(s.change) || 0) + (i === 0 ? 2.36 : -2.18), // 一只急拉、一只急杀
+          }));
+      } catch { /* 拉取失败时用内置假数据 */ }
+      if (picks.length < 2) {
+        picks = [
+          { code: '000001', stockName: '模拟急拉股', prevChange: 1.2, change: 3.56 },
+          { code: '600000', stockName: '模拟急杀股', prevChange: -0.8, change: -3.02 },
+        ];
+      }
+      const stocks = picks.map((s) => ({ ...s, delta: Number((s.change - s.prevChange).toFixed(2)) }));
+      publishLocalPush({
+        type: 'important_stock_surge',
+        mock: true,
+        data: {
+          time: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
+          prevTime: new Date(Date.now() - 60 * 1000).toLocaleTimeString('zh-CN', { hour12: false }),
+          threshold: 2,
+          stocks,
+        },
+      });
+      message.success(`已模拟重点股 1 分钟异动：${stocks.map((s) => s.stockName).join('、')}`, 4);
+    } finally {
+      setStockSurgeMocking(false);
     }
   };
 
@@ -490,6 +536,25 @@ const DebugPanel = () => {
               style={{ background: '#d97706', borderColor: '#d97706' }}
             >
               触发情绪共振提示
+            </Button>
+          </Card>
+
+          {/* 模块十一：重点股 1 分钟涨跌幅异动 MOCK */}
+          <Card size="small" title="11. 重点股 1 分钟异动 Mock">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              优先从全量自选股的重点股（isImportant）里随机挑 2 只（无重点股时兜底取任意股票 / 内置假数据），
+              构造 1 分钟内涨跌幅变化 ≥2% 的异动数据，走与实盘完全一致的本地广播链路
+              （type:'important_stock_surge'），前端右下角弹出「重点股急速异动」全局卡片（样式同买点诊断卡片）。
+              实盘由全局监控每 1 分钟采样比对重点股涨跌幅自动触发。
+            </Paragraph>
+            <Button
+              type="primary"
+              icon={<RiseOutlined />}
+              loading={stockSurgeMocking}
+              onClick={triggerStockSurgeMock}
+              style={{ background: '#be123c', borderColor: '#be123c' }}
+            >
+              触发重点股 1 分钟异动提醒
             </Button>
           </Card>
 

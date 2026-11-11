@@ -4,6 +4,11 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  preview: {
+    port: 5173,
+    strictPort: true, // 端口被占用时直接报错，而不是自动换端口
+    host: true,       // 可选：允许局域网访问；默认只监听 localhost
+  },
   server: {
     host: true,
     fs: {
@@ -24,5 +29,8 @@ export default defineConfig({
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'credentialless',
     },
+    port: 5173,
+    strictPort: true, // 端口被占用时直接报错，而不是自动换端口
+    host: true,       // 可选：允许局域网访问；默认只监听 localhost
   },
 })

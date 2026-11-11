@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Menu } from 'antd';
+import { useLocation } from 'react-router-dom';
 import { ClockCircleOutlined, BookOutlined, FileTextOutlined, FileSearchOutlined, ReadOutlined } from '@ant-design/icons';
 import TimelineModule from './modules/TimelineModule';
 import MainProblemModule from './modules/MainProblemModule';
@@ -9,7 +10,17 @@ import JigouReportsModule from './modules/JigouReportsModule';
 import './index.scss';
 
 const ShiChangDiaoYan = () => {
-  const [currentModule, setCurrentModule] = useState('researchReport');
+  const location = useLocation();
+  const shortcutState = location.state;
+  const [currentModule, setCurrentModule] = useState(shortcutState?.module || 'researchReport');
+  // 全局快捷键 Alt+V 再次进入时（location.state 变化），同步切换到「近期研报」模块
+  const [lastShortcutState, setLastShortcutState] = useState(shortcutState);
+  if (shortcutState !== lastShortcutState) {
+    setLastShortcutState(shortcutState);
+    if (shortcutState?.module) {
+      setCurrentModule(shortcutState.module);
+    }
+  }
 
   const menuItems = [
     {
@@ -52,7 +63,7 @@ const ShiChangDiaoYan = () => {
       case 'suggestion':
         return <SuggestionModule />;
       case 'researchReport':
-        return <ResearchReportModule />;
+        return <ResearchReportModule expandTodayRequest={shortcutState?.expandTodayReportFolder} />;
       case 'jigouReports':
         return <JigouReportsModule />;
       default:

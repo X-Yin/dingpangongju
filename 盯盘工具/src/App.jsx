@@ -22,6 +22,7 @@ import PersonalFeelingModal from './components/PersonalFeelingModal';
 import ClosePipeline from './components/ClosePipeline';
 import GlobalDiagnosisAlert from './components/GlobalDiagnosisAlert';
 import BlockStrengthAlert from './components/BlockStrengthAlert';
+import ImportantStockSurgeMonitor from './components/ImportantStockSurgeMonitor';
 import dayjs from 'dayjs';
 import './App.scss';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -1542,6 +1543,35 @@ function App() {
     return () => window.removeEventListener('keydown', handleArrowKeyDown);
   }, [location.pathname, navigate]);
 
+  // 全局快捷键：Alt+Z 市场盯盘、Alt+X 专注交易、Alt+C 重点板块、
+  // Alt+V 市场调研（近期研报）并自动展开当天日期文件夹
+  useEffect(() => {
+    const handleGlobalShortcut = (e) => {
+      if (!e.altKey || e.metaKey || e.ctrlKey || e.shiftKey || e.repeat) return;
+      // macOS 下 Option + 字母的 e.key 可能是特殊字符，用 e.code 判断物理按键
+      const routeMap = {
+        KeyZ: '/dingpan',
+        KeyX: '/opening_battle',
+        KeyC: '/block',
+      };
+      const route = routeMap[e.code];
+      if (route) {
+        e.preventDefault();
+        navigate(route);
+        return;
+      }
+      if (e.code === 'KeyV') {
+        e.preventDefault();
+        navigate('/shichangdiaoyan', {
+          state: { module: 'researchReport', expandTodayReportFolder: Date.now() },
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalShortcut);
+    return () => window.removeEventListener('keydown', handleGlobalShortcut);
+  }, [navigate]);
+
   const [senseColor, setSenseColor] = useState('#333');
 
   return (
@@ -1779,6 +1809,8 @@ function App() {
       <GlobalDiagnosisAlert />
       {/* 板块强度突破 30 分全局提示：每 1 分钟轮询强度分时数据 */}
       <BlockStrengthAlert />
+      {/* 重点股 1 分钟涨跌幅异动监控：重点股 1min 内涨跌幅绝对值变化 ≥2% 时全局弹卡 */}
+      <ImportantStockSurgeMonitor />
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingMonitorAlarm />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStrategyCenter />}
       {location.pathname !== '/training_camp' && <FloatingStockViewer />}
@@ -1791,6 +1823,13 @@ function App() {
         <div className="willpower-modal-overlay">
           <div className="willpower-modal-content">
             <div className="willpower-modal-text">定力与耐心！</div>
+            <div className="willpower-modal-desc">
+              确有把握之后再动手。否则宁可退让，持重待机，不可轻率迎战。
+              <br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;在第一次反围剿的时候，仅仅因为敌人不脱离源头那个居高临下的阵地，<span style={{ fontWeight: 'bold', color: 'purple' }}>我军两度开进，却两度忍耐撤回</span>，<span style={{ fontWeight: 'bold', color: 'orange' }}>过了好几天才找到了</span>好打的张辉瓒。
+              <br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;第二次反围剿的时候，我军开到东固。仅仅因为等待王金钰脱离巩固阵地，<span style={{ fontWeight: 'bold', color: 'purple' }}>拒绝一切性急快打</span>的建议。<span style={{ fontWeight: 'bold', color: 'orange' }}>等了二十五天之久</span>，终于达到了要求。
+            </div>
             <div className="willpower-modal-tip">10 秒后自动关闭</div>
           </div>
         </div>

@@ -2114,5 +2114,25 @@ exports.default = [
         "blockName": "太空算力",
         "code": "sh688378",
         "name": "奥来德"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sh688726",
+        "name": "拉普拉斯"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sz300316",
+        "name": "晶盛机电"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sh688516",
+        "name": "奥特维"
+    },
+    {
+        "blockName": "光伏",
+        "code": "sh688556",
+        "name": "高测股份"
     }
 ]

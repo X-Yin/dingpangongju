@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Layout, Menu, Button, Input, Modal, message, Space, Dropdown, Typography, Tooltip, Checkbox } from 'antd';
+import { Layout, Menu, Button, Input, Modal, message, Space, Dropdown, Typography, Tooltip, Checkbox, DatePicker } from 'antd';
 import {
   FolderOutlined,
   FileTextOutlined,
@@ -12,12 +12,14 @@ import {
   StarOutlined,
   PushpinOutlined,
   EyeOutlined,
-  EyeInvisibleOutlined
+  EyeInvisibleOutlined,
+  CopyOutlined
 } from '@ant-design/icons';
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
 import { VDITOR_CDN } from '../../../utils/vditorConfig';
 import axios from 'axios';
+import dayjs from 'dayjs';
 import { local_ip } from '../../../constant';
 import { getThemeColor } from '../../../utils/theme';
 import './ResearchReportModule.scss';
@@ -38,7 +40,24 @@ const removeMarkdownFirstLine = (content) => {
 // 左侧菜单分页（2026-10-12 用户要求）：首屏只加载前 10 个顶层项，点「加载更多」再取剩余全量
 const MENU_PAGE_SIZE = 10;
 
-const ResearchReportModule = () => {
+// 查找当天日期文件夹（文件夹名形如 20261110 或 2026-11-10），返回从根到该文件夹的 id 路径
+const findTodayFolderPath = (items) => {
+  const todayKeys = [dayjs().format('YYYYMMDD'), dayjs().format('YYYY-MM-DD')];
+  const walk = (list, path) => {
+    for (const item of list) {
+      const nextPath = item.type === 'folder' ? [...path, item.id] : path;
+      if (item.type === 'folder' && todayKeys.includes(item.name)) return nextPath;
+      if (item.children?.length) {
+        const result = walk(item.children, nextPath);
+        if (result) return result;
+      }
+    }
+    return null;
+  };
+  return walk(items, []);
+};
+
+const ResearchReportModule = ({ expandTodayRequest }) => {
   const [treeData, setTreeData] = useState([]);
   const [selectedKey, setSelectedKey] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -70,6 +89,12 @@ const ResearchReportModule = () => {
   const previousOpenKeysRef = useRef([]);
   // 用于标记是否正在进行数据刷新操作，避免菜单自动收起
   const isRefreshingRef = useRef(false);
+  // 批量复制弹窗：默认时间范围为最近十天
+  const [batchCopyVisible, setBatchCopyVisible] = useState(false);
+  const [batchCopyRange, setBatchCopyRange] = useState([dayjs().subtract(9, 'day'), dayjs()]);
+  const [batchCopyLoading, setBatchCopyLoading] = useState(false);
+  // 记录已处理过的「展开当天文件夹」快捷键请求，避免重复触发
+  const handledExpandRequestRef = useRef(null);
 
   const handleToggleSelect = (item) => {
     if (item.type !== 'folder') return;
@@ -245,8 +270,22 @@ const ResearchReportModule = () => {
     const searchKeys = getOpenKeysFromTree(treeData, searchKeyword, filterImportant, showHiddenFolders);
     const parentKeys = selectedKey ? getParentKeys(treeData, selectedKey) : [];
     const mergedKeys = [...new Set([...searchKeys, ...parentKeys])];
-    setOpenKeys(mergedKeys);
-  }, [searchKeyword, treeData, selectedKey, filterImportant, showHiddenFolders]);
+
+    // 全局快捷键 Alt+V 进入：把当天日期文件夹一并展开（若不在当前分页窗口内则先补齐全量）
+    if (expandTodayRequest && handledExpandRequestRef.current !== expandTodayRequest && treeData.length) {
+      const todayPath = findTodayFolderPath(treeData);
+      if (todayPath) {
+        mergedKeys.push(...todayPath);
+        handledExpandRequestRef.current = expandTodayRequest;
+      } else if (treeData.length < totalCount) {
+        loadMoreReports();
+      } else {
+        handledExpandRequestRef.current = expandTodayRequest;
+      }
+    }
+
+    setOpenKeys([...new Set(mergedKeys)]);
+  }, [searchKeyword, treeData, selectedKey, filterImportant, showHiddenFolders, expandTodayRequest, totalCount]);
 
   const filterTreeData = (items, keyword, onlyImportant = false, showHidden = false) => {
     const filterAndSortItems = (items) => {
@@ -940,6 +979,102 @@ const ResearchReportModule = () => {
     }
   };
 
+  // 从树中收集所有研报及其所在文件夹路径（路径用于按日期文件夹过滤）
+  const collectAllReports = (items, folderPath = []) => {
+    const results = [];
+    (items || []).forEach(item => {
+      if (item.type === 'folder') {
+        if (item.children && item.children.length > 0) {
+          results.push(...collectAllReports(item.children, [...folderPath, item.name]));
+        }
+      } else if (item.type === 'report') {
+        results.push({ ...item, folderPath: folderPath.join(' / ') });
+      }
+    });
+    return results;
+  };
+
+  const handleBatchCopy = async () => {
+    if (!batchCopyRange || batchCopyRange.length !== 2) {
+      message.warning('请选择时间范围');
+      return;
+    }
+
+    const [start, end] = batchCopyRange;
+
+    try {
+      setBatchCopyLoading(true);
+
+      // 取全量树（避免分页窗口遗漏），并按文件夹路径中的 8 位日期过滤
+      const items = await loadReportsTree(true);
+      const allReports = collectAllReports(items);
+      const reportsInRange = allReports.filter(report => {
+        const match = report.folderPath?.match(/(\d{8})/);
+        if (!match) return false;
+        const reportDate = dayjs(match[1], 'YYYYMMDD');
+        return !reportDate.isBefore(start.startOf('day')) && !reportDate.isAfter(end.startOf('day'));
+      });
+
+      if (reportsInRange.length === 0) {
+        message.warning('该时间范围内没有研报');
+        return;
+      }
+
+      // 分批获取每篇研报的完整内容，避免并发过高
+      const batchSize = 10;
+      const fullReports = [];
+      for (let i = 0; i < reportsInRange.length; i += batchSize) {
+        const batch = reportsInRange.slice(i, i + batchSize);
+        const batchResults = await Promise.all(
+          batch.map(async (report) => {
+            try {
+              const response = await axios.get(`http://${local_ip}:3000/get_research_report`, {
+                params: { id: report.id }
+              });
+              return { ...report, content: removeMarkdownFirstLine(response.data?.content || '') };
+            } catch (e) {
+              return { ...report, content: '' };
+            }
+          })
+        );
+        fullReports.push(...batchResults);
+      }
+
+      // 按日期分组：key 为日期（YYYY-MM-DD），value 为该日期下的研报数组
+      const groupedByDate = {};
+      fullReports.forEach(report => {
+        const match = report.folderPath?.match(/(\d{8})/);
+        const dateKey = match ? dayjs(match[1], 'YYYYMMDD').format('YYYY-MM-DD') : '未知日期';
+        if (!groupedByDate[dateKey]) {
+          groupedByDate[dateKey] = [];
+        }
+        groupedByDate[dateKey].push({
+          name: report.name,
+          content: report.content
+        });
+      });
+
+      // 下载为本地 JSON 文件
+      const blob = new Blob([JSON.stringify(groupedByDate, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `研报_${start.format('YYYYMMDD')}_${end.format('YYYYMMDD')}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      message.success(`已下载 ${fullReports.length} 篇研报`);
+      setBatchCopyVisible(false);
+    } catch (error) {
+      console.error('批量导出失败:', error);
+      message.error('批量导出失败');
+    } finally {
+      setBatchCopyLoading(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!selectedKey || !currentItem || currentItem.type !== 'report') {
       message.warning('请先选择一个研报');
@@ -1197,15 +1332,27 @@ const ResearchReportModule = () => {
                 <Text strong className="report-title">{currentItem.name}</Text>
                 {isModified && <span className="modified-tag">有未保存的修改</span>}
               </div>
-              <Button
-                type="primary"
-                icon={<SaveOutlined />}
-                onClick={handleSave}
-                disabled={!isModified}
-                className="save-btn"
-              >
-                保存
-              </Button>
+              <div className="header-buttons">
+                <Button
+                  icon={<CopyOutlined />}
+                  onClick={() => {
+                    setBatchCopyRange([dayjs().subtract(9, 'day'), dayjs()]);
+                    setBatchCopyVisible(true);
+                  }}
+                  className="save-btn"
+                >
+                  批量导出
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<SaveOutlined />}
+                  onClick={handleSave}
+                  disabled={!isModified}
+                  className="save-btn"
+                >
+                  保存
+                </Button>
+              </div>
             </div>
             <div
               ref={vditorRef}
@@ -1258,6 +1405,26 @@ const ResearchReportModule = () => {
           onPressEnter={confirmRename}
           autoFocus
         />
+      </Modal>
+
+      <Modal
+        title="批量导出研报"
+        open={batchCopyVisible}
+        onOk={handleBatchCopy}
+        onCancel={() => setBatchCopyVisible(false)}
+        okText="下载"
+        cancelText="取消"
+        confirmLoading={batchCopyLoading}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span>时间范围：</span>
+          <DatePicker.RangePicker
+            value={batchCopyRange}
+            onChange={(dates) => setBatchCopyRange(dates)}
+            allowClear={false}
+            style={{ flex: 1 }}
+          />
+        </div>
       </Modal>
     </Layout>
   );

@@ -1270,7 +1270,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
-      await axios.get(`http://${local_ip}:3000/refresh_tech_block_crowd`);
+      await axios.get(`http://${local_ip}:3000/refresh_tech_block_crowd`, { timeout: 10000 });
       await Promise.all([fetchCrowdData(), fetchTechRatioData()]);
     } catch (error) {
       console.error('Refresh tech_block_crowd data failed:', error);
@@ -1617,7 +1617,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
       const url = name
         ? `http://${local_ip}:3000/refresh_block_category_ratio?category=${encodeURIComponent(name)}`
         : `http://${local_ip}:3000/refresh_block_category_ratio`;
-      await axios.get(url);
+      await axios.get(url, { timeout: 10000 });
       await fetchCategoryRatioData();
     } catch (error) {
       console.error('Refresh block_category_ratio data failed:', error);
@@ -1632,7 +1632,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     if (isRefreshingAll || categoryRefreshingName) return;
     setIsRefreshingAll(true);
     try {
-      await axios.get(`http://${local_ip}:3000/refresh_block_volume_ratio`);
+      await axios.get(`http://${local_ip}:3000/refresh_block_volume_ratio`, { timeout: 10000 });
       await Promise.all([fetchCrowdData(), fetchTechRatioData(), fetchCategoryRatioData()]);
     } catch (error) {
       console.error('Refresh all crowd data failed:', error);

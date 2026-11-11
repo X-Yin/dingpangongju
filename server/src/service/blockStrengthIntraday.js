@@ -74,20 +74,27 @@ const saveStrengthPoint = (point) => {
 };
 
 // 计算并写入当前时点的强度分时
-const runAndSaveStrengthPoint = async () => {
+// quoteMap: 可选的「代码 → 涨跌幅」映射（来自同花顺全量快照）；
+// 传入时直接复用，跳过 akshare 全 A 股实时行情，保证拥挤度刷新在 10s 内完成
+const runAndSaveStrengthPoint = async ({ quoteMap: providedQuoteMap } = {}) => {
   const categories = loadCategories();
   if (categories.length === 0) throw new Error('未找到一级板块成分股数据');
 
-  const spot = await getASpotFull();
-  if (!Array.isArray(spot) || spot.length === 0) {
-    throw new Error('全 A 股实时行情数据为空，无法计算板块强度');
-  }
+  let quoteMap;
+  if (providedQuoteMap instanceof Map && providedQuoteMap.size > 0) {
+    quoteMap = providedQuoteMap;
+  } else {
+    const spot = await getASpotFull();
+    if (!Array.isArray(spot) || spot.length === 0) {
+      throw new Error('全 A 股实时行情数据为空，无法计算板块强度');
+    }
 
-  const quoteMap = new Map();
-  for (const row of spot) {
-    const code = normalizeCode(row['代码']);
-    const changePct = Number(row['涨跌幅']);
-    if (code && Number.isFinite(changePct)) quoteMap.set(code, changePct);
+    quoteMap = new Map();
+    for (const row of spot) {
+      const code = normalizeCode(row['代码']);
+      const changePct = Number(row['涨跌幅']);
+      if (code && Number.isFinite(changePct)) quoteMap.set(code, changePct);
+    }
   }
   if (quoteMap.size < MIN_SPOT_ROWS) {
     throw new Error(`全 A 股实时行情不完整（有效 ${quoteMap.size} 只），跳过本次强度计算`);

@@ -93,7 +93,7 @@ const { predictSentimentCycle } = require('./service/sentimentPrediction');
 const { runQuantAnalysis, getQuantAnalysisData, analyzeSingleStock } = require('./service/quantAnalysis');
 const { getRZRQData } = require('./service/rzrq');
 const { getTechBlockCrowd, getTechVolumeRatio } = require('./service/techCrowd');
-const { getBlockCategoryRatio, run: runCategoryAmount, categoryRatioStartDate } = require('./service/板块成交量占比计算/category_amount_money');
+const { getBlockCategoryRatio } = require('./service/板块成交量占比计算/category_amount_money');
 const { getBlockVolumeRatioHistory, getIntradayData, getBlockConstituents } = require('./service/blockVolumeRatio');
 const { getRiskScoreHistory, calculateAndSaveRiskScore } = require('./service/marketRiskScore');
 const { analyzeMonitorStocks } = require('./service/strongAndWeakStock');
@@ -101,7 +101,7 @@ const { getAvailableDates, getSnapshotData, getLatestSnapshotDate, saveDailySnap
 const { getAllFupanNotes, getFupanNoteByDate, saveFupanNote, deleteFupanNote, getIndexTlineByDate, getPersonalFeelings, savePersonalFeelings, getMarketSnapshot, getTodayPlan, saveTodayPlan } = require('./service/fupan');
 const { listDataFiles, readDataFile, readDataFilesBatch, getAliases, saveAliases, setAlias, getHiddenPaths, setHiddenPath } = require('./service/dataCenter');
 const { runDisasterRecoveryCheck } = require('./service/disasterRecovery');
-const { getStrategyRecords, markStrategyRead, markAllStrategiesRead, getStrategyDefinitions, mockStrategySignal } = require('./service/strategy');
+const { getStrategyRecords, markStrategyRead, markAllStrategiesRead, getStrategyDefinitions, mockStrategySignal, startStrategyPolling } = require('./service/strategy');
 const { getAvailableDates: getBacktestAvailableDates, runBacktest, STRATEGY_DEFINITIONS, runAiDiagnosis: runStrategyAiDiagnosis, getAiDiagnosisContext: getStrategyAiDiagnosisContext } = require('./service/strategyBacktest');
 const { smartBacktestRun } = require('./service/smartBacktest');
 const { getAvailableDates: getAiPredictionDates, getPrediction: getAiPrediction, getRealtimePrediction: getAiRealtimePrediction, getBacktestPrediction: getAiBacktestPrediction, getOnlineBacktestPrediction: getAiOnlineBacktestPrediction, getOnlineRealtimePrediction: getAiOnlineRealtimePrediction, getPredictionContext: getAiPredictionContext, getKlinePrediction: getAiKlinePrediction, getKlineBacktestPrediction: getAiKlineBacktestPrediction, getOnlineKlinePrediction: getAiOnlineKlinePrediction, getOnlineKlineBacktestPrediction: getAiOnlineKlineBacktestPrediction, getKlinePredictionContext: getAiKlinePredictionContext, getHistoryExplorationResult: getAiHistoryExplorationResult, getHistoryExplorationContext: getAiHistoryExplorationContext, INTRADAY_MINUTES: AI_INTRADAY_MINUTES, INDEX_OPTIONS: AI_INDEX_OPTIONS } = require('./service/aiPrediction');
@@ -2921,13 +2921,14 @@ app.get('/tech_block_ratio', async (req, res) => {
   }
 });
 
-// 刷新科技板块拥挤度数据
+// 刷新科技板块拥挤度数据（拥挤度页右上角刷新）
+// 不再逐只拉取科技成分股日K（耗时数分钟），改为同花顺全量快照 + 财联社分时兜底并行取数，
+// 整体限定在 10s 内；成交额占比写入实时分时缓存后，拥挤度/科技占比接口会同步使用
 app.get('/refresh_tech_block_crowd', async (req, res) => {
   try {
-    const { run, techCrowdStartDate } = require('./service/科技板块拥挤度计算/block_amount_money');
-    // 结束日期必须用「当天」：模块内的默认结束日期在服务启动时即被冻结，跨天后会截断新数据
-    await run(techCrowdStartDate, dayjs().format('YYYY-MM-DD'), false);
-    res.json({ success: true, message: '刷新成功' });
+    const { refreshCrowdRealtime } = require('./service/blockVolumeRatio');
+    const { point, elapsedMs } = await refreshCrowdRealtime();
+    res.json({ success: true, message: '刷新成功', time: point.time, elapsedMs });
   } catch (error) {
     console.error('刷新科技板块拥挤度数据失败:', error);
     res.status(500).json({ success: false, message: error.message || '刷新失败' });
@@ -2948,33 +2949,39 @@ app.get('/block_category_ratio', async (req, res) => {
   }
 });
 
-// 刷新各板块成交额数据（重新拉取成分股日K汇总，耗时较长）
-// 传入 category 参数时仅刷新指定分类（各折线图右上角刷新按钮），否则刷新全部分类（页面「刷新全部」按钮）
+// 刷新各板块成交额数据（拥挤度页各折线图右上角刷新 / 「刷新全部」）
+// 不再逐只拉取成分股日K，改为与「刷新全部」一致的实时链路：
+// 同花顺全量快照 + 财联社分时兜底并行取数，整体 10s 内完成，写入实时分时缓存
 app.get('/refresh_block_category_ratio', async (req, res) => {
   try {
     const { category } = req.query;
-    // 结束日期同科技拥挤度，必须实时取当天，避免服务长期不重启时把新一天的数据截断
-    const endDate = dayjs().format('YYYY-MM-DD');
-    if (category) {
-      await runCategoryAmount(categoryRatioStartDate, endDate, [String(category)]);
-      res.json({ success: true, message: `刷新成功：${category}` });
-    } else {
-      await runCategoryAmount(categoryRatioStartDate, endDate);
-      res.json({ success: true, message: '刷新成功' });
-    }
+    const { refreshCrowdRealtime } = require('./service/blockVolumeRatio');
+    const { point, elapsedMs } = await refreshCrowdRealtime();
+    res.json({
+      success: true,
+      message: category ? `刷新成功：${category}` : '刷新成功',
+      time: point.time,
+      elapsedMs,
+    });
   } catch (error) {
     console.error('刷新板块成交额数据失败:', error);
     res.status(500).json({ success: false, message: error.message || '刷新失败' });
   }
 });
 
-// 刷新板块成交量占比（复用主资金页「板块成交量」的实时算法）
-// 同花顺全量批量拉取全部板块成分股当日成交额，缺失部分用财联社分时兜底；
-// 同花顺不可用或命中率过低时回退多平台轮询。结果写入分时缓存，拥挤度 tab 的科技/各分类占比会同步使用
+// 刷新板块成交量占比（拥挤度页「刷新全部」/ 主资金页「板块成交量」）
+// 默认走同花顺全量快照 + 财联社分时兜底并行取数，整体 10s 内完成；
+// polling=1 时保留原多平台轮询兜底（定时任务 / 手动强制全量）
 app.get('/refresh_block_volume_ratio', async (req, res) => {
   try {
-    const { runAndSaveIntradayPoint } = require('./service/blockVolumeRatio');
+    const { runAndSaveIntradayPoint, refreshCrowdRealtime } = require('./service/blockVolumeRatio');
     const forcePolling = ['1', 'true'].includes(String(req.query.polling || '').toLowerCase());
+
+    if (!forcePolling) {
+      const { point, stats, elapsedMs } = await refreshCrowdRealtime();
+      return res.json({ success: true, message: '刷新成功', mode: stats.mode, time: point.time, elapsedMs });
+    }
+
     const { point, stats } = await runAndSaveIntradayPoint({ forcePolling });
     // 成交量占比写入后，同步计算一个板块强度分时点（两者复用同一份实时行情快照）
     try {
@@ -6005,6 +6012,10 @@ const server = app.listen(port, () => {
   sellPointPushService.start();
   // 重点板块 5 分钟异动监控：每 5min 整数倍扫描，单板块 5min 涨幅 ≥1.5% 即 WS 推送
   block5minSurge.start();
+  // 策略中心轮询：新命中经 WS（type:'strategy_signal'）推送前端全局卡片 + 登记 pending_alerts 对账。
+  // 必须在本进程启动——WS 服务（wsServer.attach）只挂载在 index.js；之前在 poll.js 进程里
+  // broadcast 因 wss 为 null 静默空转，导致记录写入但全局卡片/对账补弹均收不到（2026-11-10 修复）
+  startStrategyPolling();
   // 情绪游资-极致赔率：仅在拍板模式为 wash_fusion_extreme_odds 时每 3s 轮询首板/二板候选与买点
   washFusionLive.start();
   // 回测持仓镜像同步：每天首次启动后台跑一次快进快出策略回测，期末未卖持仓自动写入持仓管理

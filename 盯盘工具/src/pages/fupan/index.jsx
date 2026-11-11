@@ -1652,25 +1652,9 @@ const Fupan = () => {
                   <button
                     type="button"
                     className="sl-cycle-analysis-btn"
-                    onClick={handleVolumePriceAnalysis}
-                    disabled={vpLoading}
-                  >
-                    <BarChartOutlined /> {vpLoading ? '分析中…' : '量价分析'}
-                  </button>
-                  <button
-                    type="button"
-                    className="sl-cycle-analysis-btn"
                     onClick={() => navigate('/block?tab=smart&subTab=ai')}
                   >
                     主线分析
-                  </button>
-                  <button
-                    type="button"
-                    className="sl-cycle-analysis-btn sl-hero-save-btn"
-                    onClick={handleSave}
-                    disabled={!selectedDate || saving}
-                  >
-                    <SaveOutlined /> {saving ? '保存中…' : '保存复盘'}
                   </button>
                   <button
                     type="button"
@@ -1843,20 +1827,34 @@ const Fupan = () => {
                           style={{ fontSize: 16, fontWeight: 600, flex: 1 }}
                         />
                       </div>
-                      <Space>
-                        <CalendarOutlined style={{ color: 'rgba(255,255,255,0.6)' }} />
-                        <span style={{ color: 'rgba(255,255,255,0.82)' }}>
-                          {selectedDate ? formatDateStr(selectedDate) : '请选择日期'}
-                        </span>
-                        {isContentModified && (
-                          <Tag color="orange" style={{ marginLeft: 8 }}>
-                            未保存
-                          </Tag>
-                        )}
+                      <Space size={8}>
+                        <button
+                          type="button"
+                          className="sl-cycle-analysis-btn"
+                          onClick={handleVolumePriceAnalysis}
+                          disabled={vpLoading}
+                        >
+                          <BarChartOutlined /> {vpLoading ? '分析中…' : '量价分析'}
+                        </button>
+                        <button
+                          type="button"
+                          className="sl-cycle-analysis-btn sl-hero-save-btn"
+                          onClick={handleSave}
+                          disabled={!selectedDate || saving}
+                        >
+                          <SaveOutlined /> {saving ? '保存中…' : '保存复盘'}
+                        </button>
                       </Space>
                     </div>
                     <div className="editor-tag-row">
                       <span className="editor-tag-label">
+                        <CalendarOutlined />
+                        <span style={{ marginLeft: 4 }}>
+                          {selectedDate ? formatDateStr(selectedDate) : '请选择日期'}
+                        </span>
+                      </span>
+                      {isContentModified && <Tag color="orange">未保存</Tag>}
+                      <span className="editor-tag-label" style={{ marginLeft: 16 }}>
                         <TagOutlined /> 市场情绪
                       </span>
                       <div className="market-phase-selector">

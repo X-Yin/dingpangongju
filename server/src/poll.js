@@ -47,7 +47,6 @@ const { pollResilienceMultiDay } = require('./service/stockDiagnose');
 const { pollPremiumDiagnosis } = require('./service/premiumDiagnosis');
 const { fetchZsxqTopics } = require('./service/jigouReports');
 const { scheduleDailySnapshot } = require('./service/fundSnapshot');
-const { startStrategyPolling } = require('./service/strategy');
 const { startAttackDefensePolling } = require('./service/attackDefenseScore');
 const { analyzeMonitorStocks } = require('./service/strongAndWeakStock');
 
@@ -227,7 +226,8 @@ const startPolling = (force = false) => {
 
   // pollPremiumDiagnosis();
 
-  startStrategyPolling();
+  // 策略中心轮询已移至 index.js（2026-11-10 修复）：WS 服务只挂载在 index.js 进程，
+  // 在本进程轮询时 wsServer.broadcast 因 wss 为 null 静默空转，前端全局卡片/对账补弹收不到推送
 
   setInterval(async () => {
     try {

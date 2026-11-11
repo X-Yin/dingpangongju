@@ -11,7 +11,7 @@ import { local_ip } from '../constant';
 const WS_URL = `ws://${local_ip}:3000/ws`;
 const RECONNECT_BASE_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
-const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'block_5min_surge', 'strategy_signal', 'emotion_resonance'];
+const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'block_5min_surge', 'strategy_signal', 'emotion_resonance', 'important_stock_surge'];
 
 let socket = null;
 let reconnectTimer = null;
@@ -240,6 +240,19 @@ export const subscribeStrategySignalPush = (handler) => subscribePush('strategy_
 //     blocks:[{ board, phase, count, ratio, prevRatio, deltaRatio, reason }] } }
 //   前端由 GlobalDiagnosisAlert 弹出全局共振提示；MOCK 调试消息额外带 mock:true 标记
 export const subscribeEmotionResonancePush = (handler) => subscribePush('emotion_resonance', handler);
+
+// 重点股 1 分钟涨跌幅异动推送（2026-11-10 用户新增）：前端 ImportantStockSurgeMonitor 每 1min
+// 采样全量自选股，任一重点股（isImportant）1 分钟内涨跌幅绝对值变化 ≥ 2% 时本地广播
+//   { type:'important_stock_surge', ts, open:true, mock?, data:{ time, prevTime, threshold, stocks:[{ code, stockName, change, prevChange, delta }] } }
+//   前端由 GlobalDiagnosisAlert 弹出全局异动卡片（一次列出全部命中股票）；调试面板可发 MOCK 消息
+export const subscribeImportantStockSurgePush = (handler) => subscribePush('important_stock_surge', handler);
+
+// 本地广播：不经过后端 WS，直接把一条消息按推送协议分发给所有订阅者
+//   （默认补 open:true，供前端自产自销的监控触发 / 调试面板 MOCK 使用）
+export const publishLocalPush = (msg) => {
+  if (!msg || !msg.type) return;
+  notify({ open: true, ts: Date.now(), ...msg });
+};
 
 // 订阅 debug 自检消息（debug_pong / debug_ping / debug_pong_ack）；返回取消订阅函数
 export const subscribeDebugWs = (handler) => {

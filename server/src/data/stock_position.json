@@ -1,22 +1,32 @@
 [
   {
-    "id": "sh688120_1793870555503_8xfo",
-    "code": "sh688120",
-    "name": "华海清科",
-    "buyDate": "2026-11-05",
-    "buyTime": "17:22",
-    "weight": 50,
-    "costPrice": 200.13,
-    "sellStrategy": "tech_attack"
-  },
-  {
     "id": "sh605488_1794192834836_6rro",
     "code": "sh605488",
     "name": "福莱新材",
     "buyDate": "2026-11-09",
     "buyTime": "10:53",
-    "weight": 50,
+    "weight": 25,
     "costPrice": 52.47,
     "sellStrategy": "extreme_win_pro"
+  },
+  {
+    "id": "sh688322_1794364195445_gz9p",
+    "code": "sh688322",
+    "name": "奥比中光-W",
+    "buyDate": "2026-11-11",
+    "buyTime": "10:29",
+    "weight": 50,
+    "sellStrategy": "extreme_win_pro",
+    "costPrice": 117.44
+  },
+  {
+    "id": "sh688200_1794374112140_a7ci",
+    "code": "sh688200",
+    "name": "华峰测控",
+    "buyDate": "2026-11-11",
+    "buyTime": "13:15",
+    "weight": 25,
+    "costPrice": 228.83,
+    "sellStrategy": "tech_attack"
   }
 ]

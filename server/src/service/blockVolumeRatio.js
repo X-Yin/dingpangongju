@@ -38,6 +38,9 @@ const CATEGORY_MONEY_FILE = path.resolve(__dirname, './板块成交量占比计�
 
 const TECH_GROUP_NAME = '科技';
 
+// 拥挤度刷新整体预算：同花顺全量快照 + 财联社兜底必须在该时间内返回（前端 10s 超时）
+const REFRESH_DEADLINE_MS = 8 * 1000;
+
 // 兜底轮询：每秒 90 只，按平台配额分配
 const ROUND_SIZE = 90;
 const ROUND_INTERVAL = 1000;
@@ -71,6 +74,28 @@ const readJsonSafe = (file, fallback) => {
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// 给上游请求设置统一截止时间：超时即失败返回，保证整个刷新在 10s 内结束
+const withDeadline = (promise, deadlineAt, label) => {
+    if (!deadlineAt) return promise;
+    const remain = deadlineAt - Date.now();
+    if (remain <= 0) {
+        const error = new Error(`${label}超时，已放弃本次刷新`);
+        error.deadlineExceeded = true;
+        return Promise.reject(error);
+    }
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+            const error = new Error(`${label}超时（${Math.round(remain / 1000)}s），已放弃本次刷新`);
+            error.deadlineExceeded = true;
+            reject(error);
+        }, remain);
+        promise.then(
+            (value) => { clearTimeout(timer); resolve(value); },
+            (error) => { clearTimeout(timer); reject(error); },
+        );
+    });
+};
 
 // 快照不完整错误：与网络失败区分开，避免因为一次残缺快照就触发耗时的多平台轮询兜底
 const createIncompleteError = (message) => {
@@ -209,6 +234,8 @@ const fetchConstituentAmounts = async (groups, { onProgress } = {}) => {
 
     // 代码 → 当日成交额（元）；停牌股成交额为 0，仍算命中（覆盖率只看行情是否返回）
     const amountByCode = new Map();
+    // 代码 → 最新涨跌幅（%），供板块强度直接复用同一份同花顺快照，避免再跑 akshare
+    const changePctByCode = new Map();
     const missing = [];
     for (const code of codes) {
         const marketCode = marketCodeOf(code);
@@ -219,6 +246,10 @@ const fetchConstituentAmounts = async (groups, { onProgress } = {}) => {
         }
         const amount = Number(quote.amount);
         amountByCode.set(code, Number.isFinite(amount) && amount > 0 ? amount : 0);
+        const changePct = Number(quote.changePct);
+        if (quote.changePct !== null && quote.changePct !== undefined && Number.isFinite(changePct)) {
+            changePctByCode.set(code, changePct);
+        }
     }
 
     let fallbackHit = 0;
@@ -248,7 +279,7 @@ const fetchConstituentAmounts = async (groups, { onProgress } = {}) => {
         });
     }
 
-    return { amountByCode, totalCodes: codes.length };
+    return { amountByCode, totalCodes: codes.length, changePctByCode };
 };
 
 // 主路径第二步：按成分股 code 汇总各板块成交额，占比 = 板块成交额 / 全市场成交额
@@ -557,7 +588,8 @@ const computeByPolling = async (groups, { onProgress } = {}) => {
 // 接口失败或命中率过低（快照不完整）时回退同花顺 + 财联社多平台轮询兜底
 // onProgress: ({ done, total, detail, current }) => void
 // forcePolling: true 时跳过同花顺全量行情，强制走多平台轮询兜底（--all）
-const computeTodayRatios = async ({ onProgress, forcePolling = false } = {}) => {
+// deadlineAt: 时间戳截止点；拥挤度页刷新时传入，保证同花顺+财联社并行取数在 10s 内结束
+const computeTodayRatios = async ({ onProgress, forcePolling = false, deadlineAt } = {}) => {
     const groups = buildGroups();
 
     if (groups.length === 0) {
@@ -566,12 +598,22 @@ const computeTodayRatios = async ({ onProgress, forcePolling = false } = {}) => 
 
     if (!forcePolling) {
         try {
-            const totalInfo = await resolveMarketTotalYi();
-            const { amountByCode, totalCodes } = await fetchConstituentAmounts(groups, { onProgress });
-            return computeFromAmountMap(groups, amountByCode, totalCodes, totalInfo, onProgress);
+            // 分母（全市场成交额）与分子（同花顺快照、缺失部分财联社分时兜底）并行请求
+            const totalInfoPromise = withDeadline(resolveMarketTotalYi(), deadlineAt, '全市场成交额');
+            const { amountByCode, totalCodes, changePctByCode } = await withDeadline(
+                fetchConstituentAmounts(groups, { onProgress }),
+                deadlineAt,
+                '同花顺+财联社成分股行情',
+            );
+            const totalInfo = await totalInfoPromise;
+            const point = computeFromAmountMap(groups, amountByCode, totalCodes, totalInfo, onProgress);
+            return { ...point, changePctByCode };
         } catch (error) {
+            // 有截止时间的场景（前端刷新）不做耗时的多平台轮询兜底，直接快速失败返回
+            if (error.deadlineExceeded) throw error;
             // 同花顺全量行情不可用（接口挂掉，或命中率过低导致快照不完整）。
             // 手动刷新时不能直接失败，统一改走同花顺 + 财联社兜底轮询，保证能拿到真实数据
+            if (deadlineAt) throw error;
             console.warn(`同花顺全量拉取成分股成交额失败，回退多平台轮询兜底: ${error.message}`);
         }
     } else {
@@ -725,8 +767,9 @@ const saveIntradayPoint = (point) => {
 };
 
 // 计算并写入当前时点的分时数据
-const runAndSaveIntradayPoint = async ({ onProgress, forcePolling = false } = {}) => {
-    const { stats, ...point } = await computeTodayRatios({ onProgress, forcePolling });
+// deadlineAt: 整体截止时间戳（拥挤度页刷新时传入，保证 10s 内结束）
+const runAndSaveIntradayPoint = async ({ onProgress, forcePolling = false, deadlineAt } = {}) => {
+    const { stats, changePctByCode, ...point } = await computeTodayRatios({ onProgress, forcePolling, deadlineAt });
     validateIntradayPoint(point, getIntradayData(), stats.mode);
     const payload = saveIntradayPoint(point);
 
@@ -737,7 +780,7 @@ const runAndSaveIntradayPoint = async ({ onProgress, forcePolling = false } = {}
         persistClosedDayToHistory(point, dayjs().format('YYYYMMDD'));
     }
 
-    return { point, payload, stats };
+    return { point, payload, stats, changePctByCode };
 };
 
 // 各板块成交量占比历史日线（按日期升序），并把当日分时缓存中的最新占比作为实时点补上
@@ -830,7 +873,31 @@ const getBlockConstituents = (name) => {
     return result;
 };
 
+// 拥挤度页「刷新」统一入口：同花顺全量快照 + 财联社分时兜底并行取数，
+// 整体限定在 REFRESH_DEADLINE_MS 内完成（前端 10s 超时）；写入实时分时点后，
+// 复用同一份同花顺快照计算板块强度分时，避免再跑耗时的 akshare / 逐只日K
+const refreshCrowdRealtime = async () => {
+    const startedAt = Date.now();
+    const deadlineAt = startedAt + REFRESH_DEADLINE_MS;
+    const { point, stats, changePctByCode } = await runAndSaveIntradayPoint({ deadlineAt });
+
+    let strengthError = null;
+    if (changePctByCode && changePctByCode.size > 0) {
+        try {
+            const { runAndSaveStrengthPoint } = require('./blockStrengthIntraday');
+            await withDeadline(runAndSaveStrengthPoint({ quoteMap: changePctByCode }), deadlineAt, '板块强度计算');
+        } catch (error) {
+            strengthError = error.message;
+            console.warn('拥挤度刷新后计算板块强度失败:', error.message);
+        }
+    }
+
+    return { point, stats, elapsedMs: Date.now() - startedAt, strengthError };
+};
+
 exports.TECH_GROUP_NAME = TECH_GROUP_NAME;
+exports.REFRESH_DEADLINE_MS = REFRESH_DEADLINE_MS;
+exports.refreshCrowdRealtime = refreshCrowdRealtime;
 exports.computeTodayRatios = computeTodayRatios;
 exports.runAndSaveIntradayPoint = runAndSaveIntradayPoint;
 exports.persistClosedDayToHistory = persistClosedDayToHistory;

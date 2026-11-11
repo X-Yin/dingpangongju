@@ -2665,5 +2665,61 @@
     "marketValue": 8558208935,
     "circulatingMarketValue": 8558208935,
     "updatedAt": "2026-11-06 15:27:37"
+  },
+  {
+    "code": "sh600113",
+    "name": "浙江东日",
+    "marketValue": 9804404542,
+    "circulatingMarketValue": 9804404542,
+    "updatedAt": "2026-11-09 21:06:40"
+  },
+  {
+    "code": "sh600576",
+    "name": "祥源文旅",
+    "marketValue": 5831652873,
+    "circulatingMarketValue": 3651957158,
+    "updatedAt": "2026-11-10 21:26:22"
+  },
+  {
+    "code": "sz000417",
+    "name": "合百集团",
+    "marketValue": 4718299410,
+    "circulatingMarketValue": 4713116078,
+    "updatedAt": "2026-11-10 21:26:22"
+  },
+  {
+    "code": "sz000819",
+    "name": "岳阳兴长",
+    "marketValue": 4322697451,
+    "circulatingMarketValue": 4322697451,
+    "updatedAt": "2026-11-10 21:26:22"
+  },
+  {
+    "code": "sh601099",
+    "name": "太平洋  ",
+    "marketValue": 23243638821,
+    "circulatingMarketValue": 23243638821,
+    "updatedAt": "2026-11-10 21:26:22"
+  },
+  {
+    "code": "sz002094",
+    "name": "青岛金王",
+    "marketValue": 3281763357,
+    "circulatingMarketValue": 3279654357,
+    "updatedAt": "2026-11-10 21:26:22"
+  },
+  {
+    "code": "sz002432",
+    "name": "九安医疗",
+    "marketValue": 26878985048,
+    "circulatingMarketValue": 26843152056,
+    "updatedAt": "2026-11-10 21:26:22"
+  },
+  {
+    "code": "sz002876",
+    "name": "三利谱",
+    "marketValue": 5341745111,
+    "circulatingMarketValue": 4575481651,
+    "updatedAt": "2026-11-10 21:26:22"
   }
 ]

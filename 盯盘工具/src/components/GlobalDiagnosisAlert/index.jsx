@@ -27,7 +27,7 @@ import {
 import { local_ip } from '../../constant';
 import { getStrategyMode, MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION } from '../../utils/strategyMode';
 import { createChart, ColorType, LineStyle, CrosshairMode } from 'lightweight-charts';
-import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeBlock5minSurgePush, subscribeStrategySignalPush, subscribeEmotionResonancePush } from '../../utils/buyPointWs';
+import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeBlock5minSurgePush, subscribeStrategySignalPush, subscribeEmotionResonancePush, subscribeImportantStockSurgePush } from '../../utils/buyPointWs';
 import { isTradingDay } from '../../utils/tradingDay';
 import './index.scss';
 
@@ -44,6 +44,21 @@ const fmtPct = (v) => {
   const num = Number(v);
   if (v === undefined || v === null || Number.isNaN(num)) return '--';
   return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
+};
+
+// 卡片展示期间：按下任意方向键即关闭（与点击右上角 × 效果一致）
+const useCloseOnArrowKey = (onClose) => {
+  useEffect(() => {
+    const handleArrowKeyDown = (e) => {
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+      // 捕获阶段拦截，避免同时触发 App 里「连按两次方向键切换路由」等其它快捷键
+      e.preventDefault();
+      e.stopPropagation();
+      onClose();
+    };
+    window.addEventListener('keydown', handleArrowKeyDown, true);
+    return () => window.removeEventListener('keydown', handleArrowKeyDown, true);
+  }, [onClose]);
 };
 
 // 实时价格补齐：/stock_tline_data 取分时最后一点（last_px 优先，缺失时按昨收 × (1 + 涨幅) 折算）
@@ -136,6 +151,8 @@ const GlobalDiagnosisAlert = () => {
   const [strategyAlert, setStrategyAlert] = useState(null);
   // 大盘 × 板块情绪共振弹窗（2026-11-07 用户新增）：{ data:{ date, marketTemperature, blocks:[...] }, ts, mock }
   const [resonanceAlert, setResonanceAlert] = useState(null);
+  // 重点股 1 分钟涨跌幅异动卡片（2026-11-10 用户新增）：{ data:{ time, prevTime, threshold, stocks:[...] }, ts, mock }
+  const [stockSurgeAlert, setStockSurgeAlert] = useState(null);
   const seqRef = useRef(0); // 旧请求返回晚于新触发时丢弃过期结果
 
   // 每个交易日 9:05 自动弹出「情绪游资-极致赔率候选池」全局弹窗（不依赖当前策略模式，2026-11-04 用户新增）
@@ -320,7 +337,14 @@ const GlobalDiagnosisAlert = () => {
       if (blocks.length === 0) return;
       setResonanceAlert({ data: msg.data, ts: msg.ts ?? null, mock: msg.mock === true });
     });
-    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubBlockSurge(); unsubStrategy(); unsubResonance(); };
+    // 重点股 1 分钟涨跌幅异动：ImportantStockSurgeMonitor 检出重点股 1min 内 |Δ|≥2% 时本地广播
+    const unsubStockSurge = subscribeImportantStockSurgePush((msg) => {
+      if (msg?.open !== true || !msg?.data) return;
+      const stocks = Array.isArray(msg.data.stocks) ? msg.data.stocks : [];
+      if (stocks.length === 0) return;
+      setStockSurgeAlert({ data: msg.data, ts: msg.ts ?? null, mock: msg.mock === true });
+    });
+    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubBlockSurge(); unsubStrategy(); unsubResonance(); unsubStockSurge(); };
   }, [fetchBuyStocks]);
 
   const buyCardAlert = buyAlert || wfAlert;
@@ -331,7 +355,7 @@ const GlobalDiagnosisAlert = () => {
 
   // BlockSurgeModal 使用 antd Modal portal，不依赖 gda-container 渲染；
   // 因此只在没有任何卡片、仅一个 Modal 时，也必须返回一个能挂载 Modal 的根
-  const hasCardAlert = buyCardAlert || sellAlert || iceAlert || wfCandidates || strategyAlert;
+  const hasCardAlert = buyCardAlert || sellAlert || iceAlert || wfCandidates || strategyAlert || stockSurgeAlert;
   if (!hasCardAlert && !blockSurgeAlert && !resonanceAlert) return null;
 
   return (
@@ -347,6 +371,8 @@ const GlobalDiagnosisAlert = () => {
       {sellAlert && <SellCard alert={sellAlert} onClose={() => setSellAlert(null)} />}
       {/* 策略中心命中提醒：与买点诊断同风格的右下角全局卡片 */}
       {strategyAlert && <StrategySignalCard alert={strategyAlert} onClose={() => setStrategyAlert(null)} />}
+      {/* 重点股 1 分钟涨跌幅异动：与买点诊断同风格的右下角全局卡片，一次列出全部命中股票 */}
+      {stockSurgeAlert && <StockSurgeCard alert={stockSurgeAlert} onClose={() => setStockSurgeAlert(null)} />}
       {/* 重点板块 5 分钟涨幅异动：antd Modal 门户居中展示 */}
       {blockSurgeAlert && (
         <BlockSurgeCard alert={blockSurgeAlert} onClose={() => setBlockSurgeAlert(null)} />
@@ -845,6 +871,7 @@ const StrategySignalCard = ({ alert, onClose }) => {
   const { signals, ts, mock } = alert;
   const [marking, setMarking] = useState(false);
   const sorted = [...signals].sort((a, b) => ((a.time || '') < (b.time || '') ? 1 : -1));
+  useCloseOnArrowKey(onClose);
 
   const markAllRead = async () => {
     setMarking(true);
@@ -892,6 +919,63 @@ const StrategySignalCard = ({ alert, onClose }) => {
           >
             全部已读
           </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ==================== 重点股 1 分钟涨跌幅异动卡片（2026-11-10 用户新增） ====================
+// ImportantStockSurgeMonitor 每 1min 采样全量自选股，重点股 1min 内涨跌幅绝对值变化 ≥2% 时触发；
+// 卡片与买点诊断同风格（右下角 gda-card），一次列出全部命中股票：名称(代码) / 当前涨幅 / 1 分钟变化
+const StockSurgeCard = ({ alert, onClose }) => {
+  const { data, ts, mock } = alert || {};
+  const stocks = Array.isArray(data?.stocks) ? data.stocks : [];
+  const threshold = data?.threshold ?? 2;
+  useCloseOnArrowKey(onClose);
+
+  const fmt = (v) => {
+    const num = Number(v);
+    if (v == null || !Number.isFinite(num)) return '--';
+    return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
+  };
+
+  return (
+    <div className="gda-card gda-stock-surge">
+      <div className="gda-header">
+        <RiseOutlined className="gda-header-icon stock-surge" />
+        <span className="gda-title">重点股急速异动</span>
+        <span className="gda-count-badge stock-surge">{stocks.length} 只命中</span>
+        {mock && <span className="gda-mock-badge">MOCK 测试</span>}
+        <CloseOutlined className="gda-close" onClick={onClose} />
+      </div>
+      <div className="gda-body">
+        <div className="gda-row">
+          <span className="gda-label">异动规则</span>
+          <span className="gda-value">{`${data?.prevTime || '--'} → ${data?.time || '--'}（1 分钟）|Δ涨跌幅| ≥ ${threshold}%`}</span>
+        </div>
+        {stocks.map((s) => {
+          const delta = Number(s.delta);
+          const up = Number.isFinite(delta) && delta > 0;
+          return (
+            <div key={s.code} className={`gda-ss-item ${up ? 'is-up' : 'is-down'}`}>
+              <div className="gda-ss-head">
+                <span className={`gda-ss-tag ${up ? 'up' : 'down'}`}>{up ? '急拉' : '急杀'}</span>
+                <b className="gda-ss-name">{s.stockName || s.code}</b>
+                <span className="gda-ss-code">{s.code}</span>
+                <span className={`gda-ss-delta ${up ? 'up' : 'down'}`}>{up ? '+' : ''}{Number.isFinite(delta) ? delta.toFixed(2) : '--'}%</span>
+              </div>
+              <div className="gda-ss-sub">
+                当前涨幅 <b className={Number(s.change) >= 0 ? 'up' : 'down'}>{fmt(s.change)}</b>
+                <span className="gda-ss-sep">·</span>
+                1 分钟前 <b>{fmt(s.prevChange)}</b>
+              </div>
+            </div>
+          );
+        })}
+        <div className="gda-footer">
+          <span>{ts ? `触发时间 ${new Date(ts).toLocaleTimeString('zh-CN', { hour12: false })}` : ''}</span>
+          <span className="gda-ss-tip">重点自选股 1 分钟内涨跌幅异动提醒</span>
         </div>
       </div>
     </div>

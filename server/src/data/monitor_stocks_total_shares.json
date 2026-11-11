@@ -630,11 +630,6 @@
     "TotalShares": 411219000
   },
   {
-    "secu_code": "sz301079",
-    "secu_name": "邵阳液压",
-    "TotalShares": 108457734
-  },
-  {
     "secu_code": "sz001219",
     "secu_name": "青岛食品",
     "TotalShares": 194983750
@@ -653,11 +648,6 @@
     "secu_code": "sh688279",
     "secu_name": "峰岹科技",
     "TotalShares": 115114080
-  },
-  {
-    "secu_code": "sz300201",
-    "secu_name": "海伦哲",
-    "TotalShares": 1009043607
   },
   {
     "secu_code": "sh603893",
@@ -698,5 +688,55 @@
     "secu_code": "sz002583",
     "secu_name": "海能达",
     "TotalShares": 1818619381
+  },
+  {
+    "secu_code": "sz002981",
+    "secu_name": "朝阳科技",
+    "TotalShares": 136558715
+  },
+  {
+    "secu_code": "sz002432",
+    "secu_name": "九安医疗",
+    "TotalShares": 466244320
+  },
+  {
+    "secu_code": "sz002578",
+    "secu_name": "闽发铝业",
+    "TotalShares": 938630183
+  },
+  {
+    "secu_code": "sh601599",
+    "secu_name": "浙文影业",
+    "TotalShares": 1160542453
+  },
+  {
+    "secu_code": "sz002582",
+    "secu_name": "好想你",
+    "TotalShares": 447707891
+  },
+  {
+    "secu_code": "sh600113",
+    "secu_name": "浙江东日",
+    "TotalShares": 411431160
+  },
+  {
+    "secu_code": "sz001296",
+    "secu_name": "长江材料",
+    "TotalShares": 149591086
+  },
+  {
+    "secu_code": "sz300556",
+    "secu_name": "丝路视觉",
+    "TotalShares": 121565424
+  },
+  {
+    "secu_code": "sh603466",
+    "secu_name": "风语筑  ",
+    "TotalShares": 594831964
+  },
+  {
+    "secu_code": "sz300133",
+    "secu_name": "华策影视",
+    "TotalShares": 1874771665
   }
 ]

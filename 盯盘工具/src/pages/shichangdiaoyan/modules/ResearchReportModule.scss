@@ -167,6 +167,13 @@
         }
       }
 
+      .header-buttons {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+
       .save-btn {
         border-radius: 8px;
         height: 36px;
