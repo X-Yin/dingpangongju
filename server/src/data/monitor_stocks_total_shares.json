@@ -665,39 +665,9 @@
     "TotalShares": 334424166
   },
   {
-    "secu_code": "sh603719",
-    "secu_name": "良品铺子",
-    "TotalShares": 397983400
-  },
-  {
-    "secu_code": "sh603901",
-    "secu_name": "永创智能",
-    "TotalShares": 576690597
-  },
-  {
-    "secu_code": "sh603680",
-    "secu_name": "今创集团",
-    "TotalShares": 783718767
-  },
-  {
     "secu_code": "sz300751",
     "secu_name": "迈为股份",
     "TotalShares": 278901752
-  },
-  {
-    "secu_code": "sz002583",
-    "secu_name": "海能达",
-    "TotalShares": 1818619381
-  },
-  {
-    "secu_code": "sz002981",
-    "secu_name": "朝阳科技",
-    "TotalShares": 136558715
-  },
-  {
-    "secu_code": "sz002432",
-    "secu_name": "九安医疗",
-    "TotalShares": 466244320
   },
   {
     "secu_code": "sz002578",
@@ -708,21 +678,6 @@
     "secu_code": "sh601599",
     "secu_name": "浙文影业",
     "TotalShares": 1160542453
-  },
-  {
-    "secu_code": "sz002582",
-    "secu_name": "好想你",
-    "TotalShares": 447707891
-  },
-  {
-    "secu_code": "sh600113",
-    "secu_name": "浙江东日",
-    "TotalShares": 411431160
-  },
-  {
-    "secu_code": "sz001296",
-    "secu_name": "长江材料",
-    "TotalShares": 149591086
   },
   {
     "secu_code": "sz300556",
@@ -738,5 +693,15 @@
     "secu_code": "sz300133",
     "secu_name": "华策影视",
     "TotalShares": 1874771665
+  },
+  {
+    "secu_code": "sz002765",
+    "secu_name": "蓝黛科技",
+    "TotalShares": 652128090
+  },
+  {
+    "secu_code": "sh603135",
+    "secu_name": "中重科技",
+    "TotalShares": 635650580
   }
 ]

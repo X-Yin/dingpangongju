@@ -499,7 +499,8 @@ const MultiStockTimeLineModal = ({
   const [showBatchPanel, setShowBatchPanel] = useState(false);
   const [watchlist, setWatchlist] = useState([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
-  const [selectedNewCodes, setSelectedNewCodes] = useState([]);
+  // 勾选时即保存股票快照（code -> 股票对象），避免切换搜索词后列表里取不到已选项
+  const [selectedNewStocks, setSelectedNewStocks] = useState({});
   const [panelSearch, setPanelSearch] = useState('');
   const [remoteResults, setRemoteResults] = useState({ query: '', list: [] }); // 搜索接口返回的非自选股，与查询词配对
   const [remoteSearching, setRemoteSearching] = useState(false);
@@ -731,7 +732,7 @@ const MultiStockTimeLineModal = ({
       activeGroupIdRef.current = 'basic';
       setActiveGroupId('basic');
       setShowBatchPanel(false);
-      setSelectedNewCodes([]);
+      setSelectedNewStocks({});
       setPanelSearch('');
       setStockInfoList(buildFallbackInfoList(initial));
     }
@@ -1507,27 +1508,29 @@ const MultiStockTimeLineModal = ({
     .filter(s => !watchlistCodeSet.has(s.code))
     .map(s => ({ code: s.code, stockName: s.name || s.code, isSearchResult: true }));
   const panelStocks = [...filteredWatchlist, ...remoteSearchStocks];
+  const selectedNewCount = Object.keys(selectedNewStocks).length;
 
   const handleConfirmBatchAdd = () => {
+    const selectedStocks = Object.values(selectedNewStocks);
     if (replayMode) {
       const current = readReplayOverlayCodes();
-      const newCodes = [...new Set([...current, ...selectedNewCodes])];
+      const newCodes = [...new Set([...current, ...selectedStocks.map(s => s.code)])];
       writeReplayOverlayCodes(newCodes);
-      setSelectedNewCodes([]);
+      setSelectedNewStocks({});
       setShowBatchPanel(false);
       setReplayVersion(v => v + 1);
       return;
     }
     const current = basicStocksRef.current;
-    const newStocks = panelStocks
-      .filter(s => selectedNewCodes.includes(s.code) && !current.some(c => c.code === s.code))
+    const newStocks = selectedStocks
+      .filter(s => !current.some(c => c.code === s.code))
       .map(s => (s.isSearchResult
         ? { code: s.code, stockName: s.stockName }
         : { code: s.code, stockName: s.stockName, change: s.change }));
     if (newStocks.length > 0) {
       updateBasicStocks(prev => [...prev, ...newStocks]);
     }
-    setSelectedNewCodes([]);
+    setSelectedNewStocks({});
     setShowBatchPanel(false);
   };
 
@@ -1708,7 +1711,7 @@ const MultiStockTimeLineModal = ({
             <div className="mtlm-panel-header">
               <div className="mtlm-panel-title">
                 自选股列表
-                <span className="mtlm-panel-count">{selectedNewCodes.length}</span>
+                <span className="mtlm-panel-count">{selectedNewCount}</span>
               </div>
               <div className="mtlm-panel-search">
                 <Input
@@ -1747,13 +1750,17 @@ const MultiStockTimeLineModal = ({
                     >
                       <div className="mtlm-panel-checkbox">
                         <Checkbox
-                          checked={selectedNewCodes.includes(s.code)}
+                          checked={!!selectedNewStocks[s.code]}
                           disabled={alreadyAdded}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedNewCodes(prev => [...prev, s.code]);
+                              setSelectedNewStocks(prev => ({ ...prev, [s.code]: s }));
                             } else {
-                              setSelectedNewCodes(prev => prev.filter(c => c !== s.code));
+                              setSelectedNewStocks(prev => {
+                                const next = { ...prev };
+                                delete next[s.code];
+                                return next;
+                              });
                             }
                           }}
                         />
@@ -1785,10 +1792,10 @@ const MultiStockTimeLineModal = ({
                 size="small"
                 type="primary"
                 className="mtlm-panel-btn"
-                disabled={selectedNewCodes.length === 0}
+                disabled={selectedNewCount === 0}
                 onClick={handleConfirmBatchAdd}
               >
-                确定（{selectedNewCodes.length}）
+                确定（{selectedNewCount}）
               </Button>
             </div>
           </div>

@@ -1518,5 +1518,21 @@
     "circulatingMarketValue": 18786564132,
     "ttmPe": 109.8546,
     "updatedAt": "2026-11-11 08:47:40"
+  },
+  {
+    "code": "sz002765",
+    "name": "蓝黛科技",
+    "marketValue": 5086599102,
+    "circulatingMarketValue": 4648085442,
+    "ttmPe": -470.9069,
+    "updatedAt": "2026-11-11 22:02:19"
+  },
+  {
+    "code": "sh603135",
+    "name": "中重科技",
+    "marketValue": 5879767865,
+    "circulatingMarketValue": 5823227240,
+    "ttmPe": 139.107,
+    "updatedAt": "2026-11-11 22:08:57"
   }
 ]

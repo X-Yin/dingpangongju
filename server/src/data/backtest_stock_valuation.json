@@ -2721,5 +2721,40 @@
     "marketValue": 5341745111,
     "circulatingMarketValue": 4575481651,
     "updatedAt": "2026-11-10 21:26:22"
+  },
+  {
+    "code": "sz000599",
+    "name": "青岛双星",
+    "marketValue": 9601434557,
+    "circulatingMarketValue": 3209796500,
+    "updatedAt": "2026-11-11 22:02:20"
+  },
+  {
+    "code": "sh600779",
+    "name": "水井坊  ",
+    "marketValue": 13432028762,
+    "circulatingMarketValue": 13432028762,
+    "updatedAt": "2026-11-11 22:02:20"
+  },
+  {
+    "code": "sh603402",
+    "name": "陕西旅游",
+    "marketValue": 5502189369,
+    "circulatingMarketValue": 1375547369,
+    "updatedAt": "2026-11-11 22:02:20"
+  },
+  {
+    "code": "sh603135",
+    "name": "中重科技",
+    "marketValue": 5879767865,
+    "circulatingMarketValue": 5823227240,
+    "updatedAt": "2026-11-11 22:02:20"
+  },
+  {
+    "code": "sh600876",
+    "name": "凯盛新能",
+    "marketValue": 4913586468,
+    "circulatingMarketValue": 3011086468,
+    "updatedAt": "2026-11-11 22:02:20"
   }
 ]

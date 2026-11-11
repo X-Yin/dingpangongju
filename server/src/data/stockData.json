@@ -3011,70 +3011,6 @@
     ],
     "isImportant": true
   },
-  "sh603719": {
-    "stockName": "良品铺子",
-    "kline": [
-      {
-        "trade_date": 20261111,
-        "open_px": 10.02,
-        "high_px": 10.02,
-        "low_px": 9.8,
-        "close_px": 9.85,
-        "business_amount": 6748664,
-        "business_balance": 66509483,
-        "change": -1.99,
-        "ma5_px": 9.95,
-        "ma10_px": 9.75,
-        "ma20_px": 9.34,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": true
-  },
-  "sh603901": {
-    "stockName": "永创智能",
-    "kline": [
-      {
-        "trade_date": 20261111,
-        "preclose_px": 11.8,
-        "close_px": 11.84,
-        "open_px": 11.78,
-        "high_px": 12.09,
-        "low_px": 11.53,
-        "ma5_px": 11.09,
-        "ma10_px": 10.68,
-        "ma20_px": 10.04,
-        "amp": 4.75,
-        "tr": 6.76,
-        "change_px": 0.04,
-        "change": 0.34,
-        "business_amount": 38459474,
-        "business_balance": 453459902,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
-  "sh603680": {
-    "stockName": "今创集团",
-    "kline": [
-      {
-        "trade_date": 20261111,
-        "open_px": 10.81,
-        "high_px": 10.95,
-        "low_px": 10.57,
-        "close_px": 10.71,
-        "business_amount": 11542500,
-        "business_balance": 123693603,
-        "change": -0.93,
-        "ma5_px": 10.78,
-        "ma10_px": 10.98,
-        "ma20_px": 10.54,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": true
-  },
   "sz300751": {
     "stockName": "迈为股份",
     "kline": [
@@ -3098,70 +3034,6 @@
       }
     ],
     "isImportant": false
-  },
-  "sz002583": {
-    "stockName": "海能达",
-    "kline": [
-      {
-        "trade_date": 20261111,
-        "open_px": 8.18,
-        "high_px": 8.3,
-        "low_px": 8.11,
-        "close_px": 8.23,
-        "business_amount": 26069452,
-        "business_balance": 214038030,
-        "change": 0.12,
-        "ma5_px": 8.16,
-        "ma10_px": 8.03,
-        "ma20_px": 7.95,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
-  "sz002981": {
-    "stockName": "朝阳科技",
-    "kline": [
-      {
-        "trade_date": 20261111,
-        "open_px": 24.35,
-        "high_px": 24.59,
-        "low_px": 22.92,
-        "close_px": 23.39,
-        "business_amount": 14504202,
-        "business_balance": 340796090,
-        "change": -3.35,
-        "ma5_px": 22.67,
-        "ma10_px": 22.25,
-        "ma20_px": 22.04,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": true
-  },
-  "sz002432": {
-    "stockName": "九安医疗",
-    "kline": [
-      {
-        "trade_date": 20261111,
-        "preclose_px": 57.65,
-        "close_px": 59.54,
-        "open_px": 57.9,
-        "high_px": 60.42,
-        "low_px": 56.56,
-        "ma5_px": 55.29,
-        "ma10_px": 54.68,
-        "ma20_px": 53.77,
-        "amp": 6.7,
-        "tr": 9.09,
-        "change_px": 1.89,
-        "change": 3.28,
-        "business_amount": 42331295,
-        "business_balance": 2498565015,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": true
   },
   "sz002578": {
     "stockName": "闽发铝业",
@@ -3198,78 +3070,6 @@
         "ma5_px": 5.25,
         "ma10_px": 4.42,
         "ma20_px": 3.84,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": true
-  },
-  "sz002582": {
-    "stockName": "好想你",
-    "kline": [
-      {
-        "trade_date": 20261111,
-        "preclose_px": 10.17,
-        "close_px": 10.05,
-        "open_px": 10.1,
-        "high_px": 10.25,
-        "low_px": 10.03,
-        "ma5_px": 10.06,
-        "ma10_px": 9.96,
-        "ma20_px": 9.51,
-        "amp": 2.16,
-        "tr": 7.64,
-        "change_px": -0.12,
-        "change": -1.18,
-        "business_amount": 26303100,
-        "business_balance": 265213864,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": true
-  },
-  "sh600113": {
-    "stockName": "浙江东日",
-    "kline": [
-      {
-        "trade_date": 20261111,
-        "preclose_px": 24.27,
-        "close_px": 24.29,
-        "open_px": 24.09,
-        "high_px": 24.48,
-        "low_px": 24,
-        "ma5_px": 24.23,
-        "ma10_px": 24.18,
-        "ma20_px": 25.23,
-        "amp": 1.98,
-        "tr": 0.67,
-        "change_px": 0.02,
-        "change": 0.08,
-        "business_amount": 2776400,
-        "business_balance": 67165820,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": true
-  },
-  "sz001296": {
-    "stockName": "长江材料",
-    "kline": [
-      {
-        "trade_date": 20261111,
-        "preclose_px": 19.6,
-        "close_px": 20.03,
-        "open_px": 19.55,
-        "high_px": 20.2,
-        "low_px": 19.43,
-        "ma5_px": 19.61,
-        "ma10_px": 19.75,
-        "ma20_px": 19.15,
-        "amp": 3.93,
-        "tr": 6.53,
-        "change_px": 0.43,
-        "change": 2.19,
-        "business_amount": 5285868,
-        "business_balance": 105125698,
         "change_diff": 0
       }
     ],
@@ -3334,6 +3134,50 @@
         "ma5_px": 10.67,
         "ma10_px": 9.96,
         "ma20_px": 9.5,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz002765": {
+    "stockName": "蓝黛科技",
+    "kline": [
+      {
+        "trade_date": 20261111,
+        "open_px": 7.05,
+        "high_px": 7.8,
+        "low_px": 7,
+        "close_px": 7.8,
+        "business_amount": 51678137,
+        "business_balance": 391715390,
+        "change": 10.01,
+        "ma5_px": 6.97,
+        "ma10_px": 6.76,
+        "ma20_px": 6.7,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh603135": {
+    "stockName": "中重科技",
+    "kline": [
+      {
+        "trade_date": 20261111,
+        "preclose_px": 8.41,
+        "close_px": 9.25,
+        "open_px": 8.51,
+        "high_px": 9.25,
+        "low_px": 8.5,
+        "ma5_px": 8.45,
+        "ma10_px": 8.32,
+        "ma20_px": 8.15,
+        "amp": 8.92,
+        "tr": 2.93,
+        "change_px": 0.84,
+        "change": 9.99,
+        "business_amount": 18460914,
+        "business_balance": 169468059,
         "change_diff": 0
       }
     ],

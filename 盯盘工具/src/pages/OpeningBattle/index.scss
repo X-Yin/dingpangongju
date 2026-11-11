@@ -1297,7 +1297,7 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     grid-template-columns: 22px minmax(0, 1fr) 52px 52px 56px 112px;
   }
 
-  // 首板起爆不展示「状态」列（5 列）
+  // 首板 / 二板起爆均不展示「状态」列（5 列）
   .ob-gainer-head-wf-nostatus,
   .ob-gainer-row-wf-nostatus {
     grid-template-columns: 22px minmax(0, 1fr) 58px 58px 64px;

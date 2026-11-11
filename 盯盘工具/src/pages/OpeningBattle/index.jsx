@@ -1165,8 +1165,8 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
     const pct = (v) => (v === null || v === undefined || !Number.isFinite(Number(v))
       ? '--'
       : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
-    const wfRow = (s, idx, keyPrefix, showStatus = true) => (
-      <div className={`ob-gainer-row ob-gainer-row-wf${showStatus ? '' : ' ob-gainer-row-wf-nostatus'}`} key={`${keyPrefix}-${s.code}-${idx}`}>
+    const wfRow = (s, idx, keyPrefix) => (
+      <div className="ob-gainer-row ob-gainer-row-wf ob-gainer-row-wf-nostatus" key={`${keyPrefix}-${s.code}-${idx}`}>
         <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
         <span className="ob-gainer-name-cell">
           <span
@@ -1190,11 +1190,6 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
         <span className="ob-gainer-resilience">
           {s.totalMvYi != null ? `${Number(s.totalMvYi).toFixed(2)}亿` : '--'}
         </span>
-        {showStatus && (
-          <span className="ob-wf-status-cell">
-            <span className={`ob-wf-status-tag ${s.status || ''}`}>{s.statusText || '--'}</span>
-          </span>
-        )}
       </div>
     );
 
@@ -1250,20 +1245,19 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
             </div>
             {firstList.length === 0 ? (
               <div className="ob-empty-mini ob-gainer-empty">暂无首板起爆候选</div>
-            ) : firstList.map((s, idx) => wfRow(s, idx, 'fb', false))}
+            ) : firstList.map((s, idx) => wfRow(s, idx, 'fb'))}
           </div>
           <div className="ob-gainer-col" style={{ order: sbOrder }}>
             <div className="ob-gainer-col-head">
               <span className="ob-gainer-section-label">二板起爆 · {secondList.length}</span>
               <span className="ob-total-tag">9:30-14:30 盘中 +{rules.buyTriggerPct ?? 8}% 触发</span>
             </div>
-            <div className="ob-gainer-head ob-gainer-head-wf">
+            <div className="ob-gainer-head ob-gainer-head-wf ob-gainer-head-wf-nostatus">
               <span>#</span>
               <span>股票</span>
               <span>当日</span>
               <span>竞价</span>
               <span>总市值</span>
-              <span>状态</span>
             </div>
             {secondList.length === 0 ? (
               <div className="ob-empty-mini ob-gainer-empty">暂无二板起爆候选</div>
