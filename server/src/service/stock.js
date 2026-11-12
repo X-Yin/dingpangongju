@@ -280,6 +280,53 @@ const getRealtimeQuotes = async (codes = []) => {
 };
 exports.getRealtimeQuotes = getRealtimeQuotes;
 
+// 竞价阶段（交易日 9:15-9:30）日 K 线接口通常仍停在上一交易日 bar（当日 bar 要到开盘后才生成），
+// 与 block.js getSingleBlockData 采用同样的兜底策略：K 线 trade_date 不是今日或无有效 change 时，
+// 用同花顺实时快照 getRealtimeQuotes 拉竞价涨跌幅覆盖 change / close_px，
+// 保证盘前轮询 / 手动刷新自选股时写入 stockData.json 的也是当日实时竞价数据，而非上一交易日收盘数据。
+const applyAuctionQuotesFallback = async (stockListData) => {
+    const now = new Date();
+    const timeNum = now.getHours() * 100 + now.getMinutes();
+    const inAuction = isTradingDay(now) && timeNum >= 915 && timeNum < 930;
+    if (!inAuction) return;
+
+    const todayNum = Number(
+        `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
+    );
+
+    const staleCodes = [];
+    for (const code of Object.keys(stockListData)) {
+        const kline = stockListData[code] && stockListData[code].kline && stockListData[code].kline[0];
+        if (!kline || kline.change == null || isNaN(Number(kline.change)) || Number(kline.trade_date) !== todayNum) {
+            staleCodes.push(code);
+        }
+    }
+    if (staleCodes.length === 0) return;
+
+    try {
+        const quotes = await getRealtimeQuotes(staleCodes);
+        let hitCount = 0;
+        for (const code of staleCodes) {
+            const q = quotes[code];
+            const kline = stockListData[code] && stockListData[code].kline && stockListData[code].kline[0];
+            if (!kline || !q) continue;
+            if (q.change != null && !isNaN(Number(q.change))) {
+                kline.change = Number(q.change);
+                hitCount++;
+            }
+            // 现价一并覆盖为竞价最新价，避免涨幅与现价不一致
+            if (q.price != null && Number(q.price) > 0) {
+                kline.close_px = Number(q.price);
+            }
+        }
+        if (hitCount > 0) {
+            console.log(`自选股竞价兜底：${hitCount}/${staleCodes.length} 只股票从实时快照拿到竞价涨跌幅`);
+        }
+    } catch (err) {
+        console.error('自选股竞价实时快照兜底失败:', err.message);
+    }
+};
+
 // 获取单个股票估值信息（总市值/流通市值/市盈率）
 // 快照接口 value[0] 数组下标对应：4=流通市值(元)、7=市盈率(null 表示亏损)、9=总市值(元)
 const getStockValuation = async (code) => {
@@ -1137,6 +1184,9 @@ const refreshStockData = async () => {
         const stockListData = await getStockListData(stockListObj, 1);
         console.log(`Manual refresh: fetched ${Object.keys(stockListData).length} stocks data`);
 
+        // 竞价阶段 K 线仍是上一交易日 bar，先用实时快照的竞价涨跌幅覆盖再落盘
+        await applyAuctionQuotesFallback(stockListData);
+
         let localDataList = {};
         try {
             localDataList = JSON.parse(fs.readFileSync(stockDataPath, 'utf-8'));
@@ -1199,6 +1249,10 @@ exports.pollStockData = async (pollInterval = 10000) => {
 
             const stockListData = await getStockListData(stockListObj, 1);
             console.log(`Poll: fetched ${Object.keys(stockListData).length} stocks data`);
+
+            // 竞价阶段 K 线仍是上一交易日 bar，先用实时快照的竞价涨跌幅覆盖再落盘
+            // （不覆盖的话，本轮询每 5s 会把上一交易日数据写回 stockData.json，手动刷新的竞价兜底也会被冲掉）
+            await applyAuctionQuotesFallback(stockListData);
 
             let localDataList = {};
             try {

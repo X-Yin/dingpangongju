@@ -12,6 +12,7 @@ import PreMarketReading from './components/PreMarketReading';
 import TodayPlan from './components/TodayPlan';
 import FloatingStockPosition from './components/FloatingStockPosition';
 import FloatingMonitorAlarm from './components/FloatingMonitorAlarm';
+import FloatingLongErBo from './components/FloatingLongErBo';
 import FloatingTechEmotion from './components/FloatingTechEmotion';
 import FloatingStrategyCenter from './components/FloatingStrategyCenter';
 import FloatingStockViewer from './components/FloatingStockViewer';
@@ -663,7 +664,7 @@ function App() {
   const etfVolumeCooldownEndRef = useRef(0); // 「不再提示（30分钟）」冷却截止时间戳
   const etfVolumeAlertedMinuteRef = useRef(null); // 上次已提示的最近分钟号（同一放量对不重复弹窗）
 
-  // 意志力锻炼弹窗：交易日每 5 分钟整点弹出，展示 10s 后自动关闭
+  // 意志力锻炼弹窗：交易日每 5 分钟整点弹出，展示 15s 后自动关闭
   const [willpowerModalVisible, setWillpowerModalVisible] = useState(false);
 
   // 删除持仓股资金净流出警示弹窗
@@ -1195,10 +1196,9 @@ function App() {
     };
   }, []);
 
-  // 意志力锻炼弹窗调度：交易日交易时段按可配置间隔弹出（默认 5min，localStorage 可调），展示 10s
+  // 意志力锻炼弹窗调度：交易日交易时段按可配置间隔弹出（默认 5min，localStorage 可调），展示 15s
   useEffect(() => {
     let timer = null;
-    let closeTimer = null;
     let cancelled = false;
 
     const STORAGE_KEY = 'willpower_interval_min';
@@ -1257,9 +1257,6 @@ function App() {
           timer = setTimeout(() => {
             if (cancelled) return;
             setWillpowerModalVisible(true);
-            closeTimer = setTimeout(() => {
-              setWillpowerModalVisible(false);
-            }, 10 * 1000);
             scheduleNext();
           }, diff);
           return;
@@ -1274,7 +1271,6 @@ function App() {
 
     const reschedule = () => {
       if (timer) clearTimeout(timer);
-      if (closeTimer) clearTimeout(closeTimer);
       scheduleNext();
     };
 
@@ -1284,23 +1280,73 @@ function App() {
     return () => {
       cancelled = true;
       if (timer) clearTimeout(timer);
-      if (closeTimer) clearTimeout(closeTimer);
       window.removeEventListener('willpower-interval-changed', reschedule);
     };
   }, []);
 
-  // Debug 抽屉手动触发：监听 willpower-modal-test 事件，弹窗 10 秒后自动关闭
+  // Debug 抽屉手动触发：监听 willpower-modal-test 事件，弹出弹窗（点击页面或按空格关闭）
   useEffect(() => {
-    let closeTimer = null;
     const handler = () => {
       setWillpowerModalVisible(true);
-      if (closeTimer) clearTimeout(closeTimer);
-      closeTimer = setTimeout(() => setWillpowerModalVisible(false), 10 * 1000);
     };
     window.addEventListener('willpower-modal-test', handler);
     return () => {
       window.removeEventListener('willpower-modal-test', handler);
-      if (closeTimer) clearTimeout(closeTimer);
+    };
+  }, []);
+
+  // 弹窗关闭交互：弹窗展示期间，点击页面任意处或敲击空格即关闭
+  useEffect(() => {
+    if (!willpowerModalVisible) return;
+    const close = () => setWillpowerModalVisible(false);
+    const onKeyDown = (e) => {
+      if (e.key === ' ') {
+        e.preventDefault();
+        close();
+      }
+    };
+    window.addEventListener('pointerdown', close);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [willpowerModalVisible]);
+
+  // 快捷键触发：双击 Command（400ms 内连按两次，中间无其他普通按键）弹出意志力弹窗（点击页面或按空格关闭）
+  // 类似 Spotlight 的唤起手势；单次长按 / Cmd+C 等常规快捷键不会误触
+  useEffect(() => {
+    const DOUBLE_PRESS_GAP = 400;
+    let lastMetaDown = 0;
+
+    const onKeyDown = (e) => {
+      if (e.repeat) return;
+      if (e.key === 'Meta') {
+        const now = Date.now();
+        if (lastMetaDown && now - lastMetaDown <= DOUBLE_PRESS_GAP) {
+          lastMetaDown = 0;
+          setWillpowerModalVisible(true);
+        } else {
+          lastMetaDown = now;
+        }
+        return;
+      }
+      // 两次 Cmd 之间夹了普通按键（如 Cmd+C → Cmd+V 连续操作）不算双击
+      if (!['Shift', 'Control', 'Alt', 'CapsLock'].includes(e.key)) {
+        lastMetaDown = 0;
+      }
+    };
+
+    // 切走应用后回来，不把切走前的那次按下计入双击
+    const onBlur = () => {
+      lastMetaDown = 0;
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('blur', onBlur);
     };
   }, []);
 
@@ -1811,6 +1857,8 @@ function App() {
       <BlockStrengthAlert />
       {/* 重点股 1 分钟涨跌幅异动监控：重点股 1min 内涨跌幅绝对值变化 ≥2% 时全局弹卡 */}
       <ImportantStockSurgeMonitor />
+      {/* 龙二波：情绪游资-极致胜率候选监控，命中「强度−差劲 ≥ 30」自动弹抽屉提示 */}
+      {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingLongErBo />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingMonitorAlarm />}
       {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStrategyCenter />}
       {location.pathname !== '/training_camp' && <FloatingStockViewer />}
@@ -1818,19 +1866,22 @@ function App() {
       <FloatingTechEmotion />
       <ClosePipeline />
 
-      {/* 意志力锻炼弹窗：全屏遮罩 + 居中大字，10 秒自动关闭 */}
+      {/* 意志力锻炼弹窗：全屏遮罩 + 居中大字，15 秒自动关闭 */}
       {willpowerModalVisible && (
         <div className="willpower-modal-overlay">
           <div className="willpower-modal-content">
-            <div className="willpower-modal-text">定力与耐心！</div>
+            <div className="willpower-modal-text">主线龙头，拒绝杂毛；敢于追高，惯性漂移；<br/>耐心定力，确定收敛；情绪周期，一周一次；<br/>场外利好，提高胜率；模式信号，运动游击！<br/>既要又要，一定失败；内心忐忑，盈利来源！</div>
             <div className="willpower-modal-desc">
-              确有把握之后再动手。否则宁可退让，持重待机，不可轻率迎战。
+              极其确定的个股、极其确定的行情、极其确定的模式。等大盘极其确定的拉升、等模式给出信号、等研报极其确定的推荐个股这三种情况再出手。运动游击战，短时间内打完就走，一般持仓最多也就 3-4 天。
               <br />
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;在第一次反围剿的时候，仅仅因为敌人不脱离源头那个居高临下的阵地，<span style={{ fontWeight: 'bold', color: 'purple' }}>我军两度开进，却两度忍耐撤回</span>，<span style={{ fontWeight: 'bold', color: 'orange' }}>过了好几天才找到了</span>好打的张辉瓒。
               <br />
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;第二次反围剿的时候，我军开到东固。仅仅因为等待王金钰脱离巩固阵地，<span style={{ fontWeight: 'bold', color: 'purple' }}>拒绝一切性急快打</span>的建议。<span style={{ fontWeight: 'bold', color: 'orange' }}>等了二十五天之久</span>，终于达到了要求。
+              锚定主线，不看支线。锚定龙头，不看补涨。 <br />
+              把每一笔交易都做好，<span style={{ fontWeight: 'bold', color: 'purple' }}>以胜率为主，不要被赔率诱惑</span>，能吃到多少利润算多少，积小胜为大胜。
+               <br />把确定性拉满，不要被噪音蛊惑，<span style={{ fontWeight: 'bold', color: 'purple' }}>一周最多出手两次</span>。
+               <br /><br />
+               大盘放量大涨 or 最近赚钱较多的时候就会放松警惕，随意出手，这个一定要警惕！
             </div>
-            <div className="willpower-modal-tip">10 秒后自动关闭</div>
+            <div className="willpower-modal-tip">点击页面任意处或按空格键关闭</div>
           </div>
         </div>
       )}

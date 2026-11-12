@@ -1,5 +1,40 @@
 [
   {
+    "date": "2026-11-12",
+    "operations": [
+      {
+        "id": "1794447837053_j13y",
+        "action": "sell",
+        "stockName": "奥比中光-W",
+        "stockCode": "sh688322",
+        "position": "",
+        "time": "09:43"
+      },
+      {
+        "id": "1794448423567_2r6p",
+        "action": "sell",
+        "stockName": "福莱新材",
+        "stockCode": "sh605488",
+        "position": "",
+        "time": "09:53"
+      },
+      {
+        "id": "1794449730920_aiv7",
+        "action": "buy",
+        "stockName": "国际复材",
+        "stockCode": "sz301526",
+        "position": "",
+        "time": "10:15"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-12T01:43:57.069Z",
+    "updatedAt": "2026-11-12T02:15:30.990Z"
+  },
+  {
     "date": "2026-11-11",
     "operations": [
       {

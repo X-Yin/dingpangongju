@@ -1,5 +1,38 @@
 [
   {
+    "id": "1794449730903_340v23",
+    "type": "buy",
+    "code": "sz301526",
+    "name": "国际复材",
+    "date": "2026-11-12",
+    "time": "10:15:30",
+    "detail": "新增持仓：国际复材（sz301526）",
+    "pipelineStage": 0,
+    "createdAt": "2026-11-12T02:15:30.903Z"
+  },
+  {
+    "id": "1794448423559_flewt8",
+    "type": "delete",
+    "code": "sh605488",
+    "name": "福莱新材",
+    "date": "2026-11-12",
+    "time": "09:53:43",
+    "detail": "删除持仓：福莱新材（sh605488）",
+    "pipelineStage": null,
+    "createdAt": "2026-11-12T01:53:43.559Z"
+  },
+  {
+    "id": "1794447837041_o1lmht",
+    "type": "delete",
+    "code": "sh688322",
+    "name": "奥比中光-W",
+    "date": "2026-11-12",
+    "time": "09:43:57",
+    "detail": "删除持仓：奥比中光-W（sh688322）",
+    "pipelineStage": null,
+    "createdAt": "2026-11-12T01:43:57.041Z"
+  },
+  {
     "id": "1794414353351_unejfh",
     "type": "buy",
     "code": "sz300570",

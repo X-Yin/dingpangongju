@@ -1482,5 +1482,16 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-11 22:06:24"
+  },
+  {
+    "code": "sz001339",
+    "name": "智微智能",
+    "isImportant": false,
+    "blockName": "物理 AI",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-12 09:08:43"
   }
 ]

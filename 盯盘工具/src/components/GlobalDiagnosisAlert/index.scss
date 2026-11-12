@@ -1626,6 +1626,8 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   gap: 5px;
   position: relative;
   overflow: hidden;
+  // 禁止在 flex 列容器内被压缩：条目数量多时保持固定高度，由 .gda-body 滚动
+  flex-shrink: 0;
 
   &::before {
     content: '';
@@ -1735,6 +1737,15 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
 .gda-ss-tip {
   color: rgba(255, 255, 255, 0.55);
+}
+
+// 条目数量多时压缩压力会转移到信息行/底栏，同样禁止收缩，保证卡片整体走滚动
+.gda-card.gda-stock-surge,
+.gda-card.gda-bigcap {
+  .gda-row,
+  .gda-footer {
+    flex-shrink: 0;
+  }
 }
 
 // ==================== 千亿市值高开走强卡片（2026-11-12 用户新增） ====================

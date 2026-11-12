@@ -131,7 +131,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   // 持仓成本线价格输入框本地值（key: 股票代码），失焦时保存
   const [costInputs, setCostInputs] = useState({});
   const [buyPointDrawerOpen, setBuyPointDrawerOpen] = useState(false);
-  const [pos, setPos] = useState({ x: 20, y: window.innerHeight - 300 });
+  const [pos, setPos] = useState({ x: 20, y: window.innerHeight - 320 });
   const dragRef = useRef({ dragging: false, moved: false, offsetX: 0, offsetY: 0, startX: 0, startY: 0 });
   const containerRef = useRef(null);
   const positionsRef = useRef([]);

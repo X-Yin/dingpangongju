@@ -40,6 +40,9 @@ const removeMarkdownFirstLine = (content) => {
 // 左侧菜单分页（2026-10-12 用户要求）：首屏只加载前 10 个顶层项，点「加载更多」再取剩余全量
 const MENU_PAGE_SIZE = 10;
 
+// Cmd/Ctrl+空格 快捷新建研报时使用的默认标题（弹窗打开后自动全选，输入即覆盖）
+const QUICK_NEW_REPORT_NAME = '未命名研报';
+
 // 查找当天日期文件夹（文件夹名形如 20261110 或 2026-11-10），返回从根到该文件夹的 id 路径
 const findTodayFolderPath = (items) => {
   const todayKeys = [dayjs().format('YYYYMMDD'), dayjs().format('YYYY-MM-DD')];
@@ -95,6 +98,14 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
   const [batchCopyLoading, setBatchCopyLoading] = useState(false);
   // 记录已处理过的「展开当天文件夹」快捷键请求，避免重复触发
   const handledExpandRequestRef = useRef(null);
+  // Cmd+空格 快捷新建研报相关：handler 引用、防重入标记、待自动选中的研报 id
+  const quickCreateShortcutRef = useRef(null);
+  const quickCreateBusyRef = useRef(false);
+  const pendingSelectReportIdRef = useRef(null);
+  // 自动创建当日文件夹后待展开的文件夹 id（树刷新后由 openKeys 逻辑消费）
+  const pendingExpandFolderIdRef = useRef(null);
+  // 当日文件夹自动创建检查是否已执行（每次挂载只检查一次）
+  const todayFolderCheckRef = useRef(false);
 
   const handleToggleSelect = (item) => {
     if (item.type !== 'folder') return;
@@ -177,6 +188,7 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
     if (renameModalVisible) {
       setTimeout(() => {
         renameInputRef.current?.focus();
+        renameInputRef.current?.select?.();
       }, 100);
     }
   }, [renameModalVisible]);
@@ -243,6 +255,40 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
     fetchReports();
   }, []);
 
+  // 每次进入「近期研报」时检查今日日期文件夹，不存在则自动创建（同一天内已存在则跳过，即每日仅首次生效）
+  useEffect(() => {
+    if (!treeData.length || todayFolderCheckRef.current) return;
+    todayFolderCheckRef.current = true;
+    (async () => {
+      try {
+        // 用全量树判断，避免分页窗口漏掉当日文件夹
+        const items = await loadReportsTree(true);
+        if (findTodayFolderPath(items)) return;
+
+        isRefreshingRef.current = true;
+        const response = await axios.post(`http://${local_ip}:3000/create_research_report`, {
+          parentId: null,
+          name: dayjs().format('YYYYMMDD'),
+          type: 'folder',
+          content: ''
+        });
+        const newFolder = response.data.data;
+        message.success(`已自动创建当日文件夹: ${newFolder.name}`);
+
+        const newTreeData = await loadReportsTreeEnsuring(newFolder.id);
+        setTreeData(newTreeData);
+        // 树刷新后自动展开当日文件夹
+        pendingExpandFolderIdRef.current = newFolder.id;
+        setTimeout(() => {
+          isRefreshingRef.current = false;
+        }, 100);
+      } catch (error) {
+        console.error('自动创建当日文件夹失败', error);
+        isRefreshingRef.current = false;
+      }
+    })();
+  }, [treeData]);
+
   // 点「加载更多」：一次性取回剩余全量顶层项，并把窗口切换为全量（后续刷新不再被截断）
   const loadMoreReports = async () => {
     try {
@@ -270,6 +316,14 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
     const searchKeys = getOpenKeysFromTree(treeData, searchKeyword, filterImportant, showHiddenFolders);
     const parentKeys = selectedKey ? getParentKeys(treeData, selectedKey) : [];
     const mergedKeys = [...new Set([...searchKeys, ...parentKeys])];
+
+    // 自动创建的当日文件夹：树刷新后自动展开一次
+    if (pendingExpandFolderIdRef.current && treeData.length) {
+      if (findItemById(treeData, pendingExpandFolderIdRef.current)) {
+        mergedKeys.push(pendingExpandFolderIdRef.current);
+        pendingExpandFolderIdRef.current = null;
+      }
+    }
 
     // 全局快捷键 Alt+V 进入：把当天日期文件夹一并展开（若不在当前分页窗口内则先补齐全量）
     if (expandTodayRequest && handledExpandRequestRef.current !== expandTodayRequest && treeData.length) {
@@ -1117,6 +1171,89 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Command+Control 快捷新建研报：在今日日期文件夹（不存在则自动创建）下新建研报，
+  // 并弹出标题输入弹窗（打开后自动聚焦、全选默认名）
+  const handleQuickCreateReport = async () => {
+    if (quickCreateBusyRef.current || createModalVisible || renameModalVisible) return;
+    quickCreateBusyRef.current = true;
+    try {
+      // 取全量树定位今日日期文件夹，避免分页窗口漏掉
+      const items = await loadReportsTree(true);
+      const todayPath = findTodayFolderPath(items);
+      let dateFolderId = todayPath ? todayPath[todayPath.length - 1] : null;
+
+      if (!dateFolderId) {
+        const folderResponse = await axios.post(`http://${local_ip}:3000/create_research_report`, {
+          parentId: null,
+          name: dayjs().format('YYYYMMDD'),
+          type: 'folder',
+          content: ''
+        });
+        dateFolderId = folderResponse.data.data.id;
+      }
+
+      isRefreshingRef.current = true;
+
+      const response = await axios.post(`http://${local_ip}:3000/create_research_report`, {
+        parentId: dateFolderId,
+        name: QUICK_NEW_REPORT_NAME,
+        type: 'report',
+        content: ''
+      });
+      const newItem = response.data.data;
+
+      const newTreeData = await loadReportsTreeEnsuring(newItem.id);
+      setTreeData(newTreeData);
+
+      // 树刷新后自动选中新建的研报（其所在日期文件夹会随 selectedKey 自动展开）
+      pendingSelectReportIdRef.current = newItem.id;
+
+      // 弹出标题输入弹窗，输入完成后回车或点确定即完成重命名
+      setNewItemName(QUICK_NEW_REPORT_NAME);
+      setRenameModalVisible(true);
+
+      setTimeout(() => {
+        isRefreshingRef.current = false;
+      }, 100);
+    } catch (error) {
+      console.error('快捷新建研报失败', error);
+      message.error('快捷新建研报失败');
+      isRefreshingRef.current = false;
+    } finally {
+      quickCreateBusyRef.current = false;
+    }
+  };
+
+  // 让快捷键监听器始终调用最新的 handler（读取最新的弹窗状态）
+  useEffect(() => {
+    quickCreateShortcutRef.current = handleQuickCreateReport;
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Command+Control 组合：按下第二个修饰键（Meta 或 Control）时即触发
+      if (e.metaKey && e.ctrlKey && !e.altKey && !e.shiftKey && (e.key === 'Meta' || e.key === 'Control')) {
+        e.preventDefault();
+        quickCreateShortcutRef.current?.();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // 快捷新建的研报：树刷新后自动选中并清空编辑器（日期文件夹由 openKeys 逻辑随 selectedKey 展开）
+  useEffect(() => {
+    const pendingId = pendingSelectReportIdRef.current;
+    if (!pendingId || !treeData.length) return;
+    const item = findItemById(treeData, pendingId);
+    if (!item) return;
+    pendingSelectReportIdRef.current = null;
+    setSelectedKey(item.id);
+    setCurrentItem(item);
+    setCurrentContent('');
+    setIsModified(false);
+  }, [treeData]);
 
   // 用 ref 来跟踪当前正在编辑的项目 id，防止内容错位
   const currentEditingIdRef = useRef(null);

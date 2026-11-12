@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Modal, Typography, Space, Tag, Spin, Empty, Segmented, Button, message, Switch, List } from 'antd';
-import { LineChartOutlined, BarChartOutlined, AreaChartOutlined, HistoryOutlined, RadarChartOutlined, StarOutlined, FileTextOutlined } from '@ant-design/icons';
+import { LineChartOutlined, BarChartOutlined, AreaChartOutlined, HistoryOutlined, RadarChartOutlined, StarOutlined, FileTextOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { isTradingDay, getPrevTradingDay } from '../../utils/tradingDay';
+import { showAbnormalQuery, fetchAbnormalBasis, fetchIndexQuotes } from '../../utils/abnormalAlert';
 import { local_ip } from '../../constant';
 import StockKLine from '../StockKLine';
 import StockTimeLine from '../StockTimeLine';
@@ -55,6 +56,8 @@ const StockKLineModal = ({
   const [newsData, setNewsData] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [valuation, setValuation] = useState(null);
+  // 异动查询（与「看股」抽屉同一套偏离值口径）
+  const [abnormalLoading, setAbnormalLoading] = useState(false);
   const pollingRef = useRef(null);
   const klinePollingRef = useRef(null);
 
@@ -197,6 +200,34 @@ const StockKLineModal = ({
     setNewsVisible(true);
     if (newsData.length === 0 && !newsLoading) {
       fetchNewsData();
+    }
+  };
+
+  // 异动查询：与「看股」抽屉同一套口径（累计偏离值 = 个股区间涨跌幅 - 对应分类指数区间涨跌幅）
+  const handleAbnormalQuery = async () => {
+    const c = String(code || '').toLowerCase();
+    if (!/^(sh|sz)\d{6}$/.test(c)) {
+      message.warning('暂无该股异动基准数据');
+      return;
+    }
+    setAbnormalLoading(true);
+    try {
+      const [basisData, indexQuotes, quoteRes] = await Promise.all([
+        fetchAbnormalBasis([c]),
+        fetchIndexQuotes().catch(() => ({})),
+        axios.get(`http://${local_ip}:3000/theme_monitor_quotes`, { params: { codes: c } }),
+      ]);
+      const basis = basisData?.[c];
+      if (!basis) {
+        message.warning('暂无该股异动基准数据');
+        return;
+      }
+      showAbnormalQuery({ name: displayName }, quoteRes?.data?.[c], basis, indexQuotes?.[basis.indexCode]);
+    } catch (e) {
+      console.error('异动查询失败:', e);
+      message.error('异动查询失败');
+    } finally {
+      setAbnormalLoading(false);
     }
   };
 
@@ -504,6 +535,15 @@ const StockKLineModal = ({
                 style={{ fontSize: '12px', padding: '2px 8px' }}
               >
                 个股新闻
+              </Button>
+              <Button
+                size="small"
+                icon={<ThunderboltOutlined />}
+                loading={abnormalLoading}
+                onClick={handleAbnormalQuery}
+                style={{ fontSize: '12px', padding: '2px 8px' }}
+              >
+                异动查询
               </Button>
               {valuation && (
                 <Space size={10} style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>

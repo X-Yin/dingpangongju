@@ -2756,5 +2756,47 @@
     "marketValue": 4913586468,
     "circulatingMarketValue": 3011086468,
     "updatedAt": "2026-11-11 22:02:20"
+  },
+  {
+    "code": "sz002652",
+    "name": "扬子新材",
+    "marketValue": 2273564160,
+    "circulatingMarketValue": 2273564160,
+    "updatedAt": "2026-11-12 20:14:34"
+  },
+  {
+    "code": "sz000151",
+    "name": "中成股份",
+    "marketValue": 3512571922,
+    "circulatingMarketValue": 3082426296,
+    "updatedAt": "2026-11-12 20:14:34"
+  },
+  {
+    "code": "sz000591",
+    "name": "太阳能",
+    "marketValue": 18391861836,
+    "circulatingMarketValue": 18384449120,
+    "updatedAt": "2026-11-12 20:14:34"
+  },
+  {
+    "code": "sz000919",
+    "name": "金陵药业",
+    "marketValue": 3862151318,
+    "circulatingMarketValue": 3860868643,
+    "updatedAt": "2026-11-12 20:14:34"
+  },
+  {
+    "code": "sh603777",
+    "name": "来伊份  ",
+    "marketValue": 4842461923,
+    "circulatingMarketValue": 4842461923,
+    "updatedAt": "2026-11-12 20:14:34"
+  },
+  {
+    "code": "sh600569",
+    "name": "安阳钢铁",
+    "marketValue": 5744842772,
+    "circulatingMarketValue": 5744842772,
+    "updatedAt": "2026-11-12 20:14:34"
   }
 ]

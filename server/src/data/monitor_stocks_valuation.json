@@ -1534,5 +1534,13 @@
     "circulatingMarketValue": 5823227240,
     "ttmPe": 139.107,
     "updatedAt": "2026-11-12 00:24:22"
+  },
+  {
+    "code": "sz001339",
+    "name": "智微智能",
+    "marketValue": 22234956808,
+    "circulatingMarketValue": 11007558631,
+    "ttmPe": 30.9972,
+    "updatedAt": "2026-11-12 09:27:45"
   }
 ]
