@@ -222,20 +222,6 @@
       }
     }
 
-    .mtlm-tag-resilience {
-      font-size: 9px;
-      font-weight: 600;
-      padding: 2px 6px;
-      border-radius: 999px;
-      border: 1px solid rgba(0, 0, 0, 0.04);
-      cursor: default;
-      transition: all 0.15s ease;
-
-      &:hover {
-        transform: scale(1.01);
-      }
-    }
-
     .mtlm-tag-close {
       display: inline-flex;
       align-items: center;
@@ -290,7 +276,7 @@
     top: 0;
     right: 0;
     bottom: 0;
-    width: 216px;
+    width: 170px;
     pointer-events: none;
     z-index: 5;
     overflow: visible;
@@ -299,11 +285,14 @@
   .mtlm-right-label {
     position: absolute;
     left: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
     transform: translateY(-50%);
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 6px 2px 5px;
+    gap: 3px;
+    padding: 2px 4px 2px 5px;
     background: rgba(255, 255, 255, 0.96);
     border-left: 3px solid;
     border-radius: 0 4px 4px 0;
@@ -390,16 +379,6 @@
     }
   }
 
-  .mtlm-right-label-resilience {
-    font-size: 9px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    padding: 1px 4px;
-    border-radius: 999px;
-    background: rgba(100, 116, 139, 0.06);
-    flex-shrink: 0;
-  }
-
   .mtlm-right-label-fund {
     font-size: 9px;
     font-weight: 700;
@@ -477,12 +456,6 @@
   .mtlm-lw-tooltip-value {
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
-  }
-
-  .mtlm-lw-tooltip-resilience {
-    color: #64748b;
-    font-size: 11px;
     flex-shrink: 0;
   }
 

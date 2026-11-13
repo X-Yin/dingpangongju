@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Modal, Spin, Tag, Button, Input, Checkbox, Empty, Card, Tooltip, Popconfirm, message } from 'antd';
+import { Modal, Spin, Tag, Button, Input, Checkbox, Empty, Card, Popconfirm, message } from 'antd';
 import { LineChartOutlined, PlusOutlined, SearchOutlined, CloseOutlined, GroupOutlined, EditOutlined, DeleteOutlined, StarOutlined, ApiOutlined, CaretUpOutlined, CaretDownOutlined, ReloadOutlined, FullscreenOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import dayjs from 'dayjs';
@@ -491,6 +491,7 @@ const MultiStockTimeLineModal = ({
   hideIndexTags = false,
   includeDefaultIndex = true,
   compactHeader = false,
+  onBatchPanelChange,
 }) => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false); // 手动刷新蒙层
@@ -1085,8 +1086,6 @@ const MultiStockTimeLineModal = ({
         changeClass: change > 0 ? 'up' : change < 0 ? 'down' : 'neutral',
         fundStr,
         fundClass,
-        resilienceStr: stockInfo.resilienceScore != null ? stockInfo.resilienceScore.toFixed(1) : null,
-        resilienceColor: stockInfo.resilienceColor || '#64748b',
         y,
       });
     });
@@ -1178,7 +1177,7 @@ const MultiStockTimeLineModal = ({
       rightPriceScale: {
         borderColor: '#D1D4DC',
         autoScale: true,
-        minimumWidth: 216,
+        minimumWidth: 170,
         scaleMargins: {
           top: 0.1,
           bottom: 0.1,
@@ -1283,14 +1282,10 @@ const MultiStockTimeLineModal = ({
           const data = param.seriesData.get(series);
           if (data) {
             const stockInfo = infoListRef.current[idx];
-            const resilienceText = stockInfo?.resilienceScore != null
-              ? ` · 抗分歧 ${stockInfo.resilienceScore.toFixed(1)}`
-              : '';
             seriesData.push({
               name: stockInfo.stockName,
               value: data.value,
               color: stockInfo.color,
-              resilience: resilienceText,
             });
           }
         });
@@ -1304,7 +1299,6 @@ const MultiStockTimeLineModal = ({
               <span class="mtlm-lw-tooltip-dot" style="background: ${item.color}"></span>
               <span class="mtlm-lw-tooltip-name">${item.name}</span>
               <span class="mtlm-lw-tooltip-value" style="color: ${item.color}">${sign}${item.value.toFixed(2)}%</span>
-              ${item.resilience ? `<span class="mtlm-lw-tooltip-resilience">${item.resilience}</span>` : ''}
             </div>
           `;
         });
@@ -1390,7 +1384,7 @@ const MultiStockTimeLineModal = ({
     requestAnimationFrame(() => updateRightAxisLabels());
   };
 
-  // 窗口尺寸变化：更新图表宽度并重算右侧标签（只挂一次，随组件卸载移除）
+  // 容器尺寸变化：更新图表宽度并重算右侧标签（窗口缩放、批量面板展开/收起都会触发）
   useEffect(() => {
     const handleResize = () => {
       if (chartRef.current && containerRef.current) {
@@ -1399,7 +1393,12 @@ const MultiStockTimeLineModal = ({
       }
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const observer = new ResizeObserver(handleResize);
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+    };
   }, [updateRightAxisLabels]);
 
   // 组件卸载：移除图表实例，释放 canvas 内存
@@ -1442,7 +1441,10 @@ const MultiStockTimeLineModal = ({
         fetchWatchlist();
       }
     }
-    setShowBatchPanel(!showBatchPanel);
+    const nextShowBatchPanel = !showBatchPanel;
+    setShowBatchPanel(nextShowBatchPanel);
+    // 通知外部（盯盘页）批量添加侧边栏的展开状态：展开时收起旁边模块，让分时图占满整行
+    onBatchPanelChange?.(nextShowBatchPanel);
   };
 
   const filteredWatchlist = panelSearch
@@ -1510,6 +1512,11 @@ const MultiStockTimeLineModal = ({
   const panelStocks = [...filteredWatchlist, ...remoteSearchStocks];
   const selectedNewCount = Object.keys(selectedNewStocks).length;
 
+  const closeBatchPanel = () => {
+    setShowBatchPanel(false);
+    onBatchPanelChange?.(false);
+  };
+
   const handleConfirmBatchAdd = () => {
     const selectedStocks = Object.values(selectedNewStocks);
     if (replayMode) {
@@ -1517,7 +1524,7 @@ const MultiStockTimeLineModal = ({
       const newCodes = [...new Set([...current, ...selectedStocks.map(s => s.code)])];
       writeReplayOverlayCodes(newCodes);
       setSelectedNewStocks({});
-      setShowBatchPanel(false);
+      closeBatchPanel();
       setReplayVersion(v => v + 1);
       return;
     }
@@ -1531,7 +1538,7 @@ const MultiStockTimeLineModal = ({
       updateBasicStocks(prev => [...prev, ...newStocks]);
     }
     setSelectedNewStocks({});
-    setShowBatchPanel(false);
+    closeBatchPanel();
   };
 
   const handleRemoveStock = (code) => {
@@ -1621,28 +1628,6 @@ const MultiStockTimeLineModal = ({
             <span className={`mtlm-tag-change ${getChangeClass(item.finalChange)}`}>
               {parseFloat(item.finalChange) > 0 ? '+' : ''}{item.finalChange}%
             </span>
-            <Tooltip
-              title={
-                item.resilienceScore != null
-                  ? `相对 ${item.benchmarkName} 的实时抗分歧指数`
-                  : '当前暂无可计算的抗分歧指数'
-              }
-            >
-              {
-                item.resilienceLabel !== '基准指数' && <span
-                className="mtlm-tag-resilience"
-                style={{
-                  color: item.resilienceColor,
-                  background: item.resilienceBg || '#fafafa',
-                  borderColor: `${item.resilienceColor}22`,
-                }}
-              >
-                {
-                  item.resilienceLabel === '基准指数' ? item.resilienceLabel : `${item.resilienceScore != null ? item.resilienceScore.toFixed(1) : '--'}`
-                }
-              </span>
-              }
-            </Tooltip>
             </div>
         ))}
           </div>
@@ -1671,19 +1656,11 @@ const MultiStockTimeLineModal = ({
                   >
                     <span className="mtlm-right-label-name" style={label.isImportant ? { color: '#ffffff', background: label.color } : { color: label.color }}>
                       {label.rank && <span className={`mtlm-right-label-rank rank-${label.rank}`}>{label.rank}</span>}
-                      {label.name}
+                      {label.name.length > 4 ? label.name.slice(0, 4) : label.name}
                     </span>
                     <span className={`mtlm-right-label-change ${label.changeClass}`}>
                       {label.changeStr}
                     </span>
-                    {label.resilienceStr && (
-                      <span
-                        className="mtlm-right-label-resilience"
-                        style={{ color: label.resilienceColor }}
-                      >
-                        {label.resilienceStr}
-                      </span>
-                    )}
                     {label.fundStr && (
                       <span className={`mtlm-right-label-fund ${label.fundClass}`}>
                         {label.fundStr}
@@ -1784,7 +1761,7 @@ const MultiStockTimeLineModal = ({
               <Button
                 size="small"
                 className="mtlm-panel-btn"
-                onClick={() => setShowBatchPanel(false)}
+                onClick={closeBatchPanel}
               >
                 取消
               </Button>

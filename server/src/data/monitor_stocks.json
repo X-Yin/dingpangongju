@@ -390,7 +390,7 @@
   {
     "code": "sh688200",
     "name": "华峰测控",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "半导体",
     "riskScore": 4,
     "isTech": true,
@@ -490,7 +490,7 @@
   {
     "code": "sh688629",
     "name": "华丰科技",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "国产超节点",
     "riskScore": 6,
     "isTech": true,
@@ -530,7 +530,7 @@
   {
     "code": "sh688702",
     "name": "盛科通信",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "国产超节点",
     "riskScore": 7,
     "isTech": true,
@@ -540,7 +540,7 @@
   {
     "code": "sz301165",
     "name": "锐捷网络",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "国产超节点",
     "riskScore": 4,
     "isTech": true,
@@ -550,7 +550,7 @@
   {
     "code": "sh688025",
     "name": "杰普特",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "MPO",
     "riskScore": 6,
     "isTech": true,
@@ -904,7 +904,7 @@
   {
     "code": "sh605287",
     "name": "德才股份",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "AI 应用",
     "riskScore": " 6",
     "isTech": false,
@@ -1046,7 +1046,7 @@
   {
     "code": "sz003021",
     "name": "兆威机电",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "物理 AI",
     "riskScore": "7",
     "isTech": false,
@@ -1068,7 +1068,7 @@
   {
     "code": "sh688686",
     "name": "奥普特",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "物理 AI",
     "riskScore": "6",
     "isTech": false,
@@ -1090,7 +1090,7 @@
   {
     "code": "sh688585",
     "name": "上纬新材",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "机器人",
     "riskScore": " 7",
     "isTech": false,
@@ -1117,17 +1117,6 @@
     "riskScore": " 8",
     "isTech": false,
     "addedAt": "2026-10-28 10:52:08",
-    "watchMarketCap": true,
-    "watchPE": true
-  },
-  {
-    "code": "sz300684",
-    "name": "中石科技",
-    "isImportant": false,
-    "blockName": "TIM",
-    "riskScore": "8",
-    "isTech": true,
-    "addedAt": "2026-10-29 00:24:35",
     "watchMarketCap": true,
     "watchPE": true
   },
@@ -1354,7 +1343,7 @@
   {
     "code": "sh688279",
     "name": "峰岹科技",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "物理 AI",
     "riskScore": null,
     "isTech": false,
@@ -1473,20 +1462,9 @@
     "addedAt": "2026-11-11 15:28:59"
   },
   {
-    "code": "sh603135",
-    "name": "中重科技",
-    "isImportant": true,
-    "blockName": "机器人",
-    "riskScore": null,
-    "isTech": false,
-    "watchMarketCap": true,
-    "watchPE": true,
-    "addedAt": "2026-11-11 22:06:24"
-  },
-  {
     "code": "sz001339",
     "name": "智微智能",
-    "isImportant": false,
+    "isImportant": true,
     "blockName": "物理 AI",
     "riskScore": null,
     "isTech": false,
@@ -1537,5 +1515,60 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-13 09:00:01"
+  },
+  {
+    "code": "sh603767",
+    "name": "中马传动",
+    "isImportant": true,
+    "blockName": "机器人",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-13 21:48:33"
+  },
+  {
+    "code": "sz002520",
+    "name": "日发精机",
+    "isImportant": true,
+    "blockName": "机器人",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-13 21:48:40"
+  },
+  {
+    "code": "sh603286",
+    "name": "日盈电子",
+    "isImportant": true,
+    "blockName": "机器人",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-13 21:48:51"
+  },
+  {
+    "code": "sz002131",
+    "name": "利欧股份",
+    "isImportant": false,
+    "blockName": "AI 应用",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-13 22:55:32"
+  },
+  {
+    "code": "sh600410",
+    "name": "华胜天成",
+    "isImportant": false,
+    "blockName": "国产算力",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-13 22:55:41"
   }
 ]

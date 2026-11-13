@@ -1,7 +1,7 @@
 import MultiStockTimeLineModal from '../../../../components/MultiStockTimeLineModal';
 import './index.scss';
 
-const OverlayTimelineSection = ({ overlayInlineAddStock, onStockClick, sectionRef, themeColor }) => (
+const OverlayTimelineSection = ({ overlayInlineAddStock, onStockClick, sectionRef, themeColor, onBatchPanelChange }) => (
     <div className="overlay-timeline-section" style={{ marginTop: 16 }} ref={sectionRef}>
         <MultiStockTimeLineModal
             embedded
@@ -12,6 +12,7 @@ const OverlayTimelineSection = ({ overlayInlineAddStock, onStockClick, sectionRe
             hideIndexTags
             includeDefaultIndex={false}
             compactHeader
+            onBatchPanelChange={onBatchPanelChange}
         />
     </div>
 );

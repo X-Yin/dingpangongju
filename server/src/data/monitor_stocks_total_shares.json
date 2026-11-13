@@ -540,11 +540,6 @@
     "TotalShares": 1870720815
   },
   {
-    "secu_code": "sz300684",
-    "secu_name": "中石科技",
-    "TotalShares": 299509223
-  },
-  {
     "secu_code": "sz300720",
     "secu_name": "海川智能",
     "TotalShares": 194877256
@@ -700,11 +695,6 @@
     "TotalShares": 652128090
   },
   {
-    "secu_code": "sh603135",
-    "secu_name": "中重科技",
-    "TotalShares": 635650580
-  },
-  {
     "secu_code": "sz001339",
     "secu_name": "智微智能",
     "TotalShares": 327032752
@@ -728,5 +718,30 @@
     "secu_code": "sh688333",
     "secu_name": "铂力特  ",
     "TotalShares": 274322174
+  },
+  {
+    "secu_code": "sh603767",
+    "secu_name": "中马传动",
+    "TotalShares": 308631500
+  },
+  {
+    "secu_code": "sz002520",
+    "secu_name": "日发精机",
+    "TotalShares": 750245171
+  },
+  {
+    "secu_code": "sh603286",
+    "secu_name": "日盈电子",
+    "TotalShares": 117993671
+  },
+  {
+    "secu_code": "sz002131",
+    "secu_name": "利欧股份",
+    "TotalShares": 6771778703
+  },
+  {
+    "secu_code": "sh600410",
+    "secu_name": "华胜天成",
+    "TotalShares": 1096494683
   }
 ]

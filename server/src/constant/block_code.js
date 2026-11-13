@@ -2156,5 +2156,50 @@ exports.default = [
         "code": "sh688333",
         "name": "铂力特",
         "tag": "进攻"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sz301052",
+        "name": "果麦文化"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sh600977",
+        "name": "中国电影"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sz002905",
+        "name": "金逸影视"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sh603103",
+        "name": "横店影视"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sz000665",
+        "name": "湖北广电"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sz002739",
+        "name": "儒意电影"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sz300528",
+        "name": "幸福蓝海"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sh603598",
+        "name": "引力传媒"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sz002343",
+        "name": "慈文传媒"
     }
 ]

@@ -892,6 +892,8 @@
 
 /* 板块成分股悬浮窗样式 - 全局样式 */
 .block-stock-popover {
+  /* 低于 Modal（1000），避免点击股票打开 K 线弹窗后被悬浮窗盖住 */
+  z-index: 900 !important;
   border-radius: 10px !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
   backdrop-filter: blur(12px) !important;

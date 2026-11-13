@@ -1705,6 +1705,60 @@
       "blockName": "AI 剧",
       "code": "sz301218",
       "change": 15.31
+    },
+    {
+      "name": "果麦文化",
+      "blockName": "AI 剧",
+      "code": "sz301052",
+      "change": 5.04
+    },
+    {
+      "name": "中国电影",
+      "blockName": "AI 剧",
+      "code": "sh600977",
+      "change": 10
+    },
+    {
+      "name": "金逸影视",
+      "blockName": "AI 剧",
+      "code": "sz002905",
+      "change": 10
+    },
+    {
+      "name": "横店影视",
+      "blockName": "AI 剧",
+      "code": "sh603103",
+      "change": 10.03
+    },
+    {
+      "name": "湖北广电",
+      "blockName": "AI 剧",
+      "code": "sz000665",
+      "change": 10.1
+    },
+    {
+      "name": "儒意电影",
+      "blockName": "AI 剧",
+      "code": "sz002739",
+      "change": 9.96
+    },
+    {
+      "name": "幸福蓝海",
+      "blockName": "AI 剧",
+      "code": "sz300528",
+      "change": 20.01
+    },
+    {
+      "name": "引力传媒",
+      "blockName": "AI 剧",
+      "code": "sh603598",
+      "change": -1.94
+    },
+    {
+      "name": "慈文传媒",
+      "blockName": "AI 剧",
+      "code": "sz002343",
+      "change": -4.38
     }
   ],
   "氧化锆": [

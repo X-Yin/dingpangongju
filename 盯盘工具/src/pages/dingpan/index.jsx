@@ -22,6 +22,7 @@ import SectorRankingMonitor from './components/SectorRankingMonitor';
 import StockAlertCard from './components/StockAlertCard';
 import BlockAlertCard from './components/BlockAlertCard';
 import OverlayTimelineSection from './components/OverlayTimelineSection';
+import SiweiLitePanel from './components/SiweiLitePanel';
 import MarketPulsePanel from './components/MarketPulsePanel';
 import StockChangeMonitor from './components/StockChangeMonitor';
 import BlockMoneyMonitor from './components/BlockMoneyMonitor';
@@ -764,13 +765,8 @@ const DingPan = () => {
     const [copyContextLoading, setCopyContextLoading] = useState(false);
 
     // 自选股全量监控折叠状态
-    // 交易日（以交易日历为准）9:00-15:00 默认折叠，其他时间默认展开
-    const [isWatchlistCollapsed, setIsWatchlistCollapsed] = useState(() => {
-        const now = new Date();
-        const hour = now.getHours();
-        const isTradingTime = isTradingDay(now) && hour >= 9 && hour < 15;
-        return isTradingTime;
-    });
+    // 始终默认折叠，用户手动点击后展开
+    const [isWatchlistCollapsed, setIsWatchlistCollapsed] = useState(true);
     const isWatchlistCollapseInitialized = useRef(false);
 
     // 指数叠加分时全屏弹窗状态
@@ -785,10 +781,27 @@ const DingPan = () => {
     const prevBlockHistoryRef = useRef(null);
     const [blockAlerts, setBlockAlerts] = useState([]);
     const overlayTimelineSectionRef = useRef(null);
+    // 叠加分时批量添加侧边栏是否展开：展开时隐藏简版四维立体，让分时图占满整行
+    const [overlayBatchPanelOpen, setOverlayBatchPanelOpen] = useState(false);
+    // 简版四维立体高度与叠加分时卡片保持一致
+    const [overlaySectionHeight, setOverlaySectionHeight] = useState(0);
     const rihanSectionRef = useRef(null); // 日韩涨跌监控区域，用于长按定位
     const hasAutoScrolledToRihanRef = useRef(false); // 进入页面自动滚动到日韩区域只执行一次的标记
     const longPressTimerRef = useRef(null); // 长按定时器
     const longPressStartPosRef = useRef(null); // 长按起始位置，用于拖拽判定
+
+    // 实时测量叠加分时卡片高度，供右侧简版四维立体对齐（宽度变化/批量面板展开都会触发重测）
+    useEffect(() => {
+        if (loading) return undefined;
+        const el = overlayTimelineSectionRef.current;
+        if (!el) return undefined;
+        const syncHeight = () => setOverlaySectionHeight(el.offsetHeight || 0);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        syncHeight();
+        const observer = new ResizeObserver(syncHeight);
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [loading]);
 
     // 打开 K 线弹窗（tab 可选：指定打开时展示的 tab，如盘口异动点击股票名传 quantTimeline）
     const showKLine = (stock, tab) => {
@@ -2578,13 +2591,30 @@ const DingPan = () => {
                             />
                             )}
 
-                            {/* 首页常驻叠加分时模块 */}
-                            <OverlayTimelineSection
-                                overlayInlineAddStock={overlayInlineAddStock}
-                                onStockClick={showKLine}
-                                sectionRef={overlayTimelineSectionRef}
-                                themeColor={effThemeColor}
-                            />
+                            {/* 首页常驻叠加分时模块 + 简版四维立体（固定 300px，放在叠加分时后面） */}
+                            <Row gutter={[16, 0]} align="stretch">
+                                <Col style={{ flex: '1 1 440px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                                    <OverlayTimelineSection
+                                        overlayInlineAddStock={overlayInlineAddStock}
+                                        onStockClick={showKLine}
+                                        sectionRef={overlayTimelineSectionRef}
+                                        themeColor={effThemeColor}
+                                        onBatchPanelChange={setOverlayBatchPanelOpen}
+                                    />
+                                </Col>
+                                <Col
+                                    style={{
+                                        flex: '0 0 300px',
+                                        width: 300,
+                                        maxWidth: 300,
+                                        flexDirection: 'column',
+                                        // 批量添加侧边栏展开时隐藏本模块，让叠加分时占满整行
+                                        display: overlayBatchPanelOpen ? 'none' : 'flex',
+                                    }}
+                                >
+                                    <SiweiLitePanel onStockClick={showKLine} height={overlaySectionHeight} />
+                                </Col>
+                            </Row>
 
                             {/* 主力资金趋势监控（全宽，左右结构） - 置于叠加分时图下方、个股幅度异动上方 */}
                             <MainMoneyCharts

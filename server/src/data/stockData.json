@@ -2435,30 +2435,6 @@
     ],
     "isImportant": true
   },
-  "sz300684": {
-    "stockName": "中石科技",
-    "kline": [
-      {
-        "trade_date": 20261113,
-        "preclose_px": 70.93,
-        "close_px": 62.78,
-        "open_px": 71.22,
-        "high_px": 72,
-        "low_px": 61.81,
-        "ma5_px": 68.34,
-        "ma10_px": 68.32,
-        "ma20_px": 71.05,
-        "amp": 14.37,
-        "tr": 12.3,
-        "change_px": -8.15,
-        "change": -11.49,
-        "business_amount": 25163965,
-        "business_balance": 1635626895,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": false
-  },
   "sz300720": {
     "stockName": "海川智能",
     "kline": [
@@ -3147,26 +3123,6 @@
     ],
     "isImportant": false
   },
-  "sh603135": {
-    "stockName": "中重科技",
-    "kline": [
-      {
-        "trade_date": 20261113,
-        "open_px": 9.94,
-        "high_px": 10.49,
-        "low_px": 9.16,
-        "close_px": 9.16,
-        "business_amount": 56370452,
-        "business_balance": 540358910,
-        "change": -10.02,
-        "ma5_px": 9.04,
-        "ma10_px": 8.6,
-        "ma20_px": 8.34,
-        "change_diff": 0
-      }
-    ],
-    "isImportant": true
-  },
   "sz001339": {
     "stockName": "智微智能",
     "kline": [
@@ -3278,6 +3234,118 @@
         "change": -8.5,
         "business_amount": 12017174,
         "business_balance": 889298625,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh603767": {
+    "stockName": "中马传动",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "preclose_px": 16.13,
+        "close_px": 17.74,
+        "open_px": 16.11,
+        "high_px": 17.74,
+        "low_px": 16.08,
+        "ma5_px": 16.68,
+        "ma10_px": 15.99,
+        "ma20_px": 16.12,
+        "amp": 10.29,
+        "tr": 6.96,
+        "change_px": 1.61,
+        "change": 9.98,
+        "business_amount": 21472889,
+        "business_balance": 377697714,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz002520": {
+    "stockName": "日发精机",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "preclose_px": 7,
+        "close_px": 7.7,
+        "open_px": 6.99,
+        "high_px": 7.7,
+        "low_px": 6.88,
+        "ma5_px": 7,
+        "ma10_px": 6.6,
+        "ma20_px": 6.31,
+        "amp": 11.71,
+        "tr": 28.87,
+        "change_px": 0.7,
+        "change": 10,
+        "business_amount": 203650953,
+        "business_balance": 1503111205,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh603286": {
+    "stockName": "日盈电子",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "open_px": 59.01,
+        "high_px": 64.91,
+        "low_px": 58.01,
+        "close_px": 64.91,
+        "business_amount": 10698350,
+        "business_balance": 670562300,
+        "change": 10,
+        "ma5_px": 60.54,
+        "ma10_px": 56.19,
+        "ma20_px": 53.01,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz002131": {
+    "stockName": "利欧股份",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "preclose_px": 4.28,
+        "close_px": 4.13,
+        "open_px": 4.2,
+        "high_px": 4.24,
+        "low_px": 4.11,
+        "ma5_px": 4.24,
+        "ma10_px": 4.15,
+        "ma20_px": 4.11,
+        "amp": 3.04,
+        "tr": 5.51,
+        "change_px": -0.15,
+        "change": -3.5,
+        "business_amount": 322429073,
+        "business_balance": 1342198468,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh600410": {
+    "stockName": "华胜天成",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "open_px": 13.4,
+        "high_px": 14.3,
+        "low_px": 12.88,
+        "close_px": 14.3,
+        "business_amount": 178925530,
+        "business_balance": 2510163600,
+        "change": 10,
+        "ma5_px": 12.96,
+        "ma10_px": 12.36,
+        "ma20_px": 12.23,
         "change_diff": 0
       }
     ],
