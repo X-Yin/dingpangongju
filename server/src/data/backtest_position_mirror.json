@@ -1,10 +1,10 @@
 {
-  "lastSyncedEndDate": "20261112",
+  "lastSyncedEndDate": "20261113",
   "lastRange": {
-    "startDate": "20260813",
-    "endDate": "20261112"
+    "startDate": "20260814",
+    "endDate": "20261113"
   },
-  "lastSyncedAt": "2026-11-12 00:25:53",
+  "lastSyncedAt": "2026-11-13 08:56:45",
   "lastHoldings": [
     {
       "code": "sz300570",
@@ -15,10 +15,10 @@
       "weight": null
     }
   ],
-  "added": [
-    "太辰光(sz300570) 成本 123.90 买入日 2026-11-11"
+  "added": [],
+  "skipped": [
+    "太辰光（同股票同买入日持仓已存在）"
   ],
-  "skipped": [],
   "attempts": 0,
-  "attemptsDate": "2026-11-12"
+  "attemptsDate": "2026-11-13"
 }

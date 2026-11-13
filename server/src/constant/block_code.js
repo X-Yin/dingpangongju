@@ -2134,5 +2134,27 @@ exports.default = [
         "blockName": "光伏",
         "code": "sh688556",
         "name": "高测股份"
+    },
+    {
+        "blockName": "国产超节点",
+        "code": "sz300843",
+        "name": "胜蓝股份"
+    },
+    {
+        "blockName": "MPO",
+        "code": "sh688090",
+        "name": "瑞松科技"
+    },
+    {
+        "blockName": "3D 打印",
+        "code": "sh688433",
+        "name": "华曙高科",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "3D 打印",
+        "code": "sh688333",
+        "name": "铂力特",
+        "tag": "进攻"
     }
 ]

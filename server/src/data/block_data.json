@@ -769,6 +769,12 @@
       "blockName": "国产超节点",
       "code": "sh688702",
       "change": 11.34
+    },
+    {
+      "name": "胜蓝股份",
+      "blockName": "国产超节点",
+      "code": "sz300843",
+      "change": 3.05
     }
   ],
   "光纤": [
@@ -1939,6 +1945,12 @@
       "blockName": "MPO",
       "code": "sh688025",
       "change": 0.51
+    },
+    {
+      "name": "瑞松科技",
+      "blockName": "MPO",
+      "code": "sh688090",
+      "change": -2.83
     }
   ],
   "光芯片": [
@@ -2351,6 +2363,20 @@
       "blockName": "太空算力",
       "code": "sh688378",
       "change": 1.25
+    }
+  ],
+  "3D 打印": [
+    {
+      "name": "华曙高科",
+      "blockName": "3D 打印",
+      "code": "sh688433",
+      "change": 3.81
+    },
+    {
+      "name": "铂力特",
+      "blockName": "3D 打印",
+      "code": "sh688333",
+      "change": -3.86
     }
   ]
 }

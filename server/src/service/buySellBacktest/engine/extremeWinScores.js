@@ -74,6 +74,13 @@ const loadTlinePoints = async (code, dateNum) => {
   return res;
 };
 const clearTlineCache = () => tlineCache.clear();
+// 仅清除「当日」分时缓存（手动刷新时保证实时拉取；历史交易日分时不可变，无需清除）
+const clearTodayTlineCache = () => {
+  const todayNum = Number(dayjs().format('YYYYMMDD'));
+  for (const key of Array.from(tlineCache.keys())) {
+    if (Number(String(key).split('|')[1]) === todayNum) tlineCache.delete(key);
+  }
+};
 
 // ==================== 原始项提取 ====================
 // B 单分钟最大跳水（%）：相邻分钟最大跌幅
@@ -287,7 +294,7 @@ module.exports = {
   // 工具
   limitTypeOf, limitPctOf, limitUpThresholdOf, clamp100, round2,
   // 分时缓存
-  loadTlinePoints, clearTlineCache,
+  loadTlinePoints, clearTlineCache, clearTodayTlineCache,
   // 原始项
   maxMinuteDrop, maxMinuteRise, closeDropFromHigh, fanbanCount, diffDFrom, volumeRatioAtDate,
   // 打分

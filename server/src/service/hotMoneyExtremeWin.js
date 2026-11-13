@@ -23,7 +23,7 @@ const {
   computeCrossInfo, buildExtremeWinPool,
 } = require('./buySellBacktest/engine/extremeWinPool');
 const {
-  loadTlinePoints, strengthAtMinute, diffAtMinute, round2, limitUpThresholdOf,
+  loadTlinePoints, strengthAtMinute, diffAtMinute, round2, limitUpThresholdOf, clearTodayTlineCache,
 } = require('./buySellBacktest/engine/extremeWinScores');
 const {
   ICE_SIGNAL_INDEX_CODE, getIceMa3SlopeIntraday, fmtKeyBlockSlope, iceResilienceIndexCode, precomputeTurnMap,
@@ -1293,4 +1293,5 @@ module.exports = {
   getHotMoneyLeaderList,
   getExtremeWinBuyPointChecks,
   checkExtremeWinSellPointDetailed,
+  clearTodayTlineCache,
 };

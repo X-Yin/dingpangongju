@@ -4,6 +4,7 @@ import { ThunderboltOutlined, AimOutlined, ReloadOutlined } from '@ant-design/ic
 import axios from 'axios';
 import { Button } from 'antd';
 import { isAfterMarketClose } from '../../utils/tradingDay';
+import { fetchAbnormalBasis, fetchIndexQuotes, getAbnormalWindowRows } from '../../utils/abnormalAlert';
 import { local_ip } from '../../constant';
 import StockKLineModal from '../StockKLineModal';
 import './index.scss';
@@ -21,6 +22,8 @@ const FloatingLongErBo = () => {
   const [reverseStocks, setReverseStocks] = useState([]); // 逆周期（反向抱团）候选股列表
   const [reverseMeta, setReverseMeta] = useState(null);   // { slopeClose, eligible }
   const [meta, setMeta] = useState(null);          // { date, minute, indexSlope }
+  const [abnormalBasis, setAbnormalBasis] = useState({}); // 各股异动基准（10/30 交易日期初价 + 对应指数基准）
+  const [indexQuotes, setIndexQuotes] = useState({});     // 分类指数实时点位
   const [hits, setHits] = useState([]);            // 今日命中卡片（新命中在前）
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [blinking, setBlinking] = useState(false);
@@ -139,8 +142,24 @@ const FloatingLongErBo = () => {
       });
       if (newHits.length > 0) {
         setHits((prev) => [...newHits, ...prev]);
-        setBlinking(true);
-        if (!force) setDrawerOpen(true); // 轮询命中即自动弹出抽屉；手动刷新不抢焦点
+        // 仅交易时间自动弹出抽屉（含闪烁提醒）；非交易时间只累积卡片、不弹出不打扰
+        // 每只股票命中后当日只自动弹出一次（seenRef 已按 code 去重）
+        if (!isAfterMarketClose()) {
+          setBlinking(true);
+          if (!force) setDrawerOpen(true); // 轮询命中即自动弹出抽屉；手动刷新不抢焦点
+        }
+      }
+      // 异动数据（10/30 日窗口基准 + 对应分类指数实时点位），供「距异动还差涨幅」实时计算
+      const codes = [...list, ...reverseList]
+        .map((s) => String(s?.code || '').toLowerCase())
+        .filter((c) => /^(sh|sz)\d{6}$/.test(c));
+      if (codes.length > 0) {
+        const [basisData, quotes] = await Promise.all([
+          fetchAbnormalBasis(codes).catch(() => ({})),
+          fetchIndexQuotes().catch(() => ({})),
+        ]);
+        setAbnormalBasis(basisData || {});
+        setIndexQuotes(quotes || {});
       }
     } catch (e) {
       console.error('获取龙二波候选列表失败:', e);
@@ -174,6 +193,30 @@ const FloatingLongErBo = () => {
     : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
   const fmtNum = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? '--' : Number(v).toFixed(2));
 
+  // 10/30 日异动列：交易所口径偏离值 = 个股区间涨跌幅 − 对应指数区间涨跌幅；
+  // 「还差多少涨幅」= 异动价相对现价还需的涨幅（needPct），已触发单独标注
+  const getAbnormalCols = (s) => {
+    const basis = abnormalBasis[String(s?.code || '').toLowerCase()];
+    const price = Number(s?.px);
+    if (!basis || !Number.isFinite(price) || price <= 0) return { d10: null, d30: null };
+    const idxQuote = indexQuotes?.[basis.indexCode];
+    const rows = getAbnormalWindowRows(basis, price, idxQuote);
+    return {
+      d10: rows.find((r) => r.days === 10) || null,
+      d30: rows.find((r) => r.days === 30) || null,
+    };
+  };
+
+  const renderAbnormalCell = (row, title) => {
+    if (!row || row.needPct == null) return <span className="flb-col-abn" title={title}>--</span>;
+    if (row.triggered) return <span className="flb-col-abn triggered" title={title}>已触发</span>;
+    return (
+      <span className={`flb-col-abn ${row.near ? 'near' : ''}`} title={title}>
+        {`${row.needPct > 0 ? '+' : ''}${row.needPct.toFixed(2)}%`}
+      </span>
+    );
+  };
+
   // 候选股列表区块（顺周期 / 逆周期共用；点击股票名称打开通用 K 线弹窗）
   const renderSection = (title, list, extra, keyPrefix) => (
     <div className="flb-section">
@@ -192,10 +235,13 @@ const FloatingLongErBo = () => {
             <span className="flb-col-delta">强度−差劲</span>
             <span className="flb-col-change">当日</span>
             <span className="flb-col-lianban">连板</span>
+            <span className="flb-col-abn">10日异动</span>
+            <span className="flb-col-abn">30日异动</span>
           </div>
           {list.map((s, idx) => {
             const delta = s?.delta != null ? Number(s.delta) : null;
             const hit = delta != null && delta >= DELTA_MIN;
+            const { d10, d30 } = getAbnormalCols(s);
             return (
               <div className={`flb-stock-row ${hit ? 'hit' : ''}`} key={`${keyPrefix}-${s.code}-${idx}`}>
                 <span className={`flb-col-rank ${idx < 3 ? 'top' : ''}`}>{idx + 1}</span>
@@ -210,6 +256,8 @@ const FloatingLongErBo = () => {
                 <span className={`flb-col-delta ${hit ? 'hit-val' : ''}`}>{fmtNum(delta)}</span>
                 <span className={`flb-col-change ${Number(s.change) >= 0 ? 'up' : 'down'}`}>{fmtChange(s.change)}</span>
                 <span className="flb-col-lianban">{s.lianbanCount != null ? `${s.lianbanCount} 板` : '--'}</span>
+                {renderAbnormalCell(d10, '距离触发10日异动（连续10个交易日累计偏离值≥+100%）还差的涨幅')}
+                {renderAbnormalCell(d30, '距离触发30日异动（连续30个交易日累计偏离值≥+200%）还差的涨幅')}
               </div>
             );
           })}
@@ -248,7 +296,7 @@ const FloatingLongErBo = () => {
         placement="right"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        width={480}
+        width={780}
         className="long-erbo-drawer"
         extra={(
           <Button

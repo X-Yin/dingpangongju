@@ -85,7 +85,7 @@ const { addMonitorStock, deleteMonitorStock, toggleStockImportant, batchSetImpor
 const { diagnoseResilience, diagnoseResilienceMultiDay, calculateRealtimeResilienceBatch, diagnoseSingleStockResilience, diagnoseIntradayResilience, checkPositionSellAlerts } = require('./service/stockDiagnose');
 const { diagnosePremium } = require('./service/premiumDiagnosis');
 const { backtestBuySell, diagnoseRealtimeBuyPoints, getBuyPointChecks, getBuyPointStocks, getTopGainersByMarket, getSingleStockBuyPointDiagnosis, getBuySellSelectableStocks, checkSingleStockSellPoint } = require('./service/buySellDiagnose');
-const { MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE, getHotMoneyLeaderList, getExtremeWinBuyPointChecks, checkExtremeWinSellPointDetailed } = require('./service/hotMoneyExtremeWin');
+const { MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE, getHotMoneyLeaderList, getExtremeWinBuyPointChecks, checkExtremeWinSellPointDetailed, clearTodayTlineCache } = require('./service/hotMoneyExtremeWin');
 const { diagnoseTrendStocks } = require('./service/trendDiagnose');
 const { getTechnicalDiagnosis } = require('./service/technicalDiagnosis');
 const { getMaSlopeDiagnosis } = require('./service/maSlopeDiagnosis');
@@ -1924,7 +1924,11 @@ app.post('/hot_money_leader_list', async (req, res) => {
     const cacheKey = `hot_money_leader_list_${dayjs().format('YYYYMMDD')}_${targetDate || 'live'}_${limit || 50}`;
     const result = await withApiCache(
       cacheKey,
-      () => getHotMoneyLeaderList(targetDate, limit),
+      async () => {
+        // 强制刷新时先清空「当日」分时缓存，确保实时拉取最新分时并重算强度分/差劲分
+        if (force) clearTodayTlineCache();
+        return getHotMoneyLeaderList(targetDate, limit);
+      },
       force,
       4000
     );

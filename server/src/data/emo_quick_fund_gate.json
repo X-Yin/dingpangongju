@@ -1,23 +1,16 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-11-12 09:54:30",
-  "reason": "持仓变动重跑（持仓管理增删股票）",
+  "computedAt": "2026-11-13 08:56:45",
+  "reason": "每日首次启动回测",
   "range": {
-    "startDate": "20260813",
-    "endDate": "20261112"
+    "startDate": "20260814",
+    "endDate": "20261113"
   },
-  "tradeCount": 10,
+  "tradeCount": 9,
   "threshold": 20,
   "consecutiveBelow": 1,
   "lastReturns": [
-    {
-      "code": "sh688147",
-      "name": "微导纳米",
-      "sellDate": "20260818",
-      "sellTime": "10:25",
-      "returnRate": -2.2
-    },
     {
       "code": "sz002837",
       "name": "英维克",

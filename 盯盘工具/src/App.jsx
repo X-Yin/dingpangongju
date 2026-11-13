@@ -1870,7 +1870,12 @@ function App() {
       {willpowerModalVisible && (
         <div className="willpower-modal-overlay">
           <div className="willpower-modal-content">
-            <div className="willpower-modal-text">主线龙头，拒绝杂毛；敢于追高，惯性漂移；<br/>耐心定力，确定收敛；情绪周期，一周一次；<br/>场外利好，提高胜率；模式信号，运动游击！<br/>既要又要，一定失败；内心忐忑，盈利来源！</div>
+            <div className="willpower-modal-text">
+              主线龙头，拒绝杂毛；敢于追高，惯性漂移；<br/>
+              耐心定力，确定收敛；情绪周期，一周一次；<br/>
+              场外利好，提高胜率；模式信号，运动游击；<br/>
+              既要又要，虚假安全；极致审美，非它不可！
+            </div>
             <div className="willpower-modal-desc">
               极其确定的个股、极其确定的行情、极其确定的模式。等大盘极其确定的拉升、等模式给出信号、等研报极其确定的推荐个股这三种情况再出手。运动游击战，短时间内打完就走，一般持仓最多也就 3-4 天。
               <br />

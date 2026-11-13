@@ -3198,5 +3198,89 @@
       }
     ],
     "isImportant": false
+  },
+  "sz300843": {
+    "stockName": "胜蓝股份",
+    "kline": [
+      {
+        "trade_date": 20261112,
+        "open_px": 95.3,
+        "high_px": 102.6,
+        "low_px": 95.3,
+        "close_px": 99.07,
+        "business_amount": 7230046,
+        "business_balance": 719369870,
+        "change": 3.05,
+        "ma5_px": 92.09,
+        "ma10_px": 85.49,
+        "ma20_px": 89.21,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh688090": {
+    "stockName": "瑞松科技",
+    "kline": [
+      {
+        "trade_date": 20261112,
+        "preclose_px": 56.25,
+        "close_px": 54.66,
+        "open_px": 56.19,
+        "high_px": 57.88,
+        "low_px": 54.41,
+        "ma5_px": 51.67,
+        "ma10_px": 48.94,
+        "ma20_px": 52.18,
+        "amp": 6.17,
+        "tr": 6.13,
+        "change_px": -1.59,
+        "change": -2.83,
+        "business_amount": 9728169,
+        "business_balance": 545863606,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh688433": {
+    "stockName": "华曙高科",
+    "kline": [
+      {
+        "trade_date": 20261112,
+        "open_px": 67.5,
+        "high_px": 71.78,
+        "low_px": 66,
+        "close_px": 66.74,
+        "business_amount": 10081770,
+        "business_balance": 696518440,
+        "change": 3.81,
+        "ma5_px": 63.36,
+        "ma10_px": 59.51,
+        "ma20_px": 59.06,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh688333": {
+    "stockName": "铂力特",
+    "kline": [
+      {
+        "trade_date": 20261112,
+        "open_px": 80.57,
+        "high_px": 82.88,
+        "low_px": 77.39,
+        "close_px": 77.39,
+        "business_amount": 10102719,
+        "business_balance": 811323520,
+        "change": -3.86,
+        "ma5_px": 78.77,
+        "ma10_px": 77.32,
+        "ma20_px": 79.67,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

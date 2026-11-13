@@ -708,5 +708,25 @@
     "secu_code": "sz001339",
     "secu_name": "智微智能",
     "TotalShares": 327032752
+  },
+  {
+    "secu_code": "sz300843",
+    "secu_name": "胜蓝股份",
+    "TotalShares": 171966172
+  },
+  {
+    "secu_code": "sh688090",
+    "secu_name": "瑞松科技",
+    "TotalShares": 158722465
+  },
+  {
+    "secu_code": "sh688433",
+    "secu_name": "华曙高科",
+    "TotalShares": 416270341
+  },
+  {
+    "secu_code": "sh688333",
+    "secu_name": "铂力特  ",
+    "TotalShares": 274322174
   }
 ]
