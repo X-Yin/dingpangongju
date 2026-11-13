@@ -1,5 +1,187 @@
 [
   {
+    "date": "20261113",
+    "blocks": {
+      "银行": {
+        "avgChange": 1.78
+      },
+      "国产超节点": {
+        "avgChange": 1.41
+      },
+      "AI 剧": {
+        "avgChange": 0.96
+      },
+      "厄尔尼诺": {
+        "avgChange": 0.34
+      },
+      "证券": {
+        "avgChange": 0.27
+      },
+      "煤炭": {
+        "avgChange": 0.13
+      },
+      "特高压": {
+        "avgChange": 0.04
+      },
+      "AI-EDA": {
+        "avgChange": -0.46
+      },
+      "AIDC": {
+        "avgChange": -0.68
+      },
+      "化工": {
+        "avgChange": -0.71
+      },
+      "互联网金融": {
+        "avgChange": -0.72
+      },
+      "游戏": {
+        "avgChange": -0.98
+      },
+      "cpu": {
+        "avgChange": -1.07
+      },
+      "医药": {
+        "avgChange": -1.56
+      },
+      "机器人": {
+        "avgChange": -1.75
+      },
+      "消费": {
+        "avgChange": -2.01
+      },
+      "染料": {
+        "avgChange": -2.15
+      },
+      "贵金属": {
+        "avgChange": -2.23
+      },
+      "电力": {
+        "avgChange": -2.32
+      },
+      "锂电": {
+        "avgChange": -2.38
+      },
+      "端侧SOC": {
+        "avgChange": -2.56
+      },
+      "半导体": {
+        "avgChange": -2.58
+      },
+      "军工": {
+        "avgChange": -2.62
+      },
+      "阿里耳机": {
+        "avgChange": -2.81
+      },
+      "MFC": {
+        "avgChange": -2.93
+      },
+      "机器人大脑": {
+        "avgChange": -3.12
+      },
+      "先进封装": {
+        "avgChange": -3.21
+      },
+      "太空算力": {
+        "avgChange": -3.25
+      },
+      "AI 安全": {
+        "avgChange": -3.42
+      },
+      "3D 打印": {
+        "avgChange": -3.68
+      },
+      "半导体材料": {
+        "avgChange": -3.86
+      },
+      "氧化锆": {
+        "avgChange": -3.94
+      },
+      "功率半导体": {
+        "avgChange": -4.07
+      },
+      "存储": {
+        "avgChange": -4.08
+      },
+      "玻璃基板": {
+        "avgChange": -4.11
+      },
+      "AI 应用": {
+        "avgChange": -4.12
+      },
+      "房地产": {
+        "avgChange": -4.29
+      },
+      "固态电池": {
+        "avgChange": -4.37
+      },
+      "商业航天": {
+        "avgChange": -4.87
+      },
+      "北美缺电": {
+        "avgChange": -4.96
+      },
+      "粮食": {
+        "avgChange": -5.36
+      },
+      "光伏": {
+        "avgChange": -5.37
+      },
+      "光纤": {
+        "avgChange": -5.41
+      },
+      "PPE树脂": {
+        "avgChange": -5.67
+      },
+      "MPO": {
+        "avgChange": -6.28
+      },
+      "AI电源": {
+        "avgChange": -6.31
+      },
+      "光模块": {
+        "avgChange": -6.56
+      },
+      "铜箔": {
+        "avgChange": -6.76
+      },
+      "磷化铟": {
+        "avgChange": -6.84
+      },
+      "钨": {
+        "avgChange": -7.02
+      },
+      "MLCC": {
+        "avgChange": -7.09
+      },
+      "AI 医药": {
+        "avgChange": -7.09
+      },
+      "金刚石散热": {
+        "avgChange": -7.29
+      },
+      "液冷": {
+        "avgChange": -7.36
+      },
+      "电子布": {
+        "avgChange": -7.41
+      },
+      "pcb": {
+        "avgChange": -8.6
+      },
+      "CCL": {
+        "avgChange": -8.96
+      },
+      "cpo": {
+        "avgChange": -9.36
+      },
+      "光芯片": {
+        "avgChange": -9.94
+      }
+    }
+  },
+  {
     "date": "20261112",
     "blocks": {
       "国产超节点": {

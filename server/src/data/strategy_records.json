@@ -1,1 +1,112 @@
-[]
+[
+  {
+    "id": "9602b6a7d947bd1b",
+    "time": "2026-11-13 09:30:04",
+    "read": true,
+    "strategyId": "ebb_tide_direct_reversal",
+    "title": "⚠️ 退潮直接反转概率低，切勿追涨",
+    "description": "创业板指前一日涨跌幅 -2.44%。<br/>创业板指前一个交易日大跌超过-2%，次日直接反转的概率只有 <strong>23%</strong>，不要追涨！就算参与只能 <strong>1/3 仓位</strong>参与。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "0f5b944168513c1a",
+    "time": "2026-11-13 09:30:04",
+    "read": true,
+    "strategyId": "high_open_max_half_position",
+    "title": "⚠️ 高开最多半仓",
+    "description": "9:30 开盘 创业板指高开 +0.64%、科创50高开 +1.56%（>0.5%）。\n大A惯例高开容易低走，此时如果开盘想要加仓，最多只能买单半仓，分摊到两个个股身上就是各自1/4仓位。最后等到收盘的时候再视情况是否要把剩下的仓位加上。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "c7cabaf54c5eb50f",
+    "time": "2026-11-13 09:37:04",
+    "read": true,
+    "strategyId": "outflow_fake_rally",
+    "title": "⚠️ 资金流出但指数上涨-诱多信号",
+    "description": "主力资金净流出扩大（-75.0亿 → -85.5亿），但创业板/科创板指数仍在上涨，可能是诱多信号，注意风险。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "5ce1ecf9ba7bef15",
+    "time": "2026-11-13 09:40:36",
+    "read": true,
+    "strategyId": "volume_shrink_stagnation",
+    "title": "📉 放量后缩量滞涨",
+    "description": "成交量从高位 <strong>-137亿</strong> 回落至 <strong>-245亿</strong>，指数开始滞涨，需警惕回落风险。",
+    "severity": "medium",
+    "isBullish": false
+  },
+  {
+    "id": "ad6ebaa9bd9661ec",
+    "time": "2026-11-13 09:50:44",
+    "read": true,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-183.0亿</strong>（净流出）<br/>• 科技分时情绪 -21.4 → -20.2（上升 1.1）<br/>• 本提醒每 10 分钟重复一次直至 11:00；若 5 分钟内主力净流入 ≥20亿 且成交量增加 ≥100亿（资金回流）则暂停，之后连续 10 分钟成交量持续萎缩则恢复提醒<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "9fa4d534be81999d",
+    "time": "2026-11-13 09:57:44",
+    "read": true,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-181.7→-168.8亿（增加12.9亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.95%<br/>• 成交量差值-504亿（<-500亿严重缩量），较10分钟前仅增加-178亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "cd11e6f2bea5594d",
+    "time": "2026-11-13 10:07:45",
+    "read": true,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-168.8→-157.8亿（增加11.0亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.17%<br/>• 成交量差值-868亿（<-500亿严重缩量），较10分钟前仅增加-366亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "f632d8efa01bb4df",
+    "time": "2026-11-13 10:41:08",
+    "read": true,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-206.9亿</strong>（净流出）<br/>• 科技分时情绪 -24.0 → -22.3（上升 1.7）<br/>• 本提醒每 10 分钟重复一次直至 11:00；若 5 分钟内主力净流入 ≥20亿 且成交量增加 ≥100亿（资金回流）则暂停，之后连续 10 分钟成交量持续萎缩则恢复提醒<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "bb2d323e7e92ca3e",
+    "time": "2026-11-13 13:00:24",
+    "read": true,
+    "strategyId": "volume_shrink_stagnation",
+    "title": "📉 放量后缩量滞涨",
+    "description": "成交量从高位 <strong>-2444亿</strong> 回落至 <strong>-2615亿</strong>，指数开始滞涨，需警惕回落风险。",
+    "severity": "medium",
+    "isBullish": false
+  },
+  {
+    "id": "e0e55e55589240d2",
+    "time": "2026-11-13 13:28:32",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>103亿</strong>（≥100亿），主力资金净流出加速（-352.3→-423.0亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "c3eeebbd698607f8",
+    "time": "2026-11-13 14:18:45",
+    "read": true,
+    "strategyId": "inflow_rise_volume_shrink",
+    "title": "⚠️ 资金流入&指数上涨但严重缩量-量价背离",
+    "description": "资金虽然持续净流入&指数配合上涨，但是量能萎缩严重，量价背离，容易冲高回落，切勿追高。<br/>• 主力资金净流入-568.6→-562.4亿（增加6.3亿，≥5亿）<br/>• 创业板指较10分钟前上涨0.54%<br/>• 成交量差值-2642亿（<-500亿严重缩量），较10分钟前仅增加6亿（≤50亿）",
+    "severity": "high",
+    "isBullish": false
+  }
+]

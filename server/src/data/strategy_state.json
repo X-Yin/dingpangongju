@@ -1,1 +1,37 @@
-{}
+{
+  "overnight_crisis_escape": {
+    "lastCheckedTime": "2026-11-13 10:51:09",
+    "lastTriggeredTime": "2026-11-13 10:41:08"
+  },
+  "ebb_tide_direct_reversal": {
+    "triggeredToday": "2026-11-13"
+  },
+  "high_open_high_walk": {
+    "advisoryToday": "2026-11-13",
+    "preconditionMet": false,
+    "triggerIndexCode": "sz399006",
+    "triggerIndexName": "创业板指",
+    "checkedToday": "2026-11-13"
+  },
+  "high_open_max_half_position": {
+    "triggeredToday": "2026-11-13"
+  },
+  "opening_net_inflow": {
+    "triggeredToday": "2026-11-13"
+  },
+  "outflow_fake_rally": {
+    "lastTriggeredTime": "2026-11-13 09:37:04"
+  },
+  "volume_shrink_stagnation": {
+    "lastTriggeredTime": "2026-11-13 13:00:24"
+  },
+  "inflow_rise_volume_shrink": {
+    "lastTriggeredTime": "2026-11-13 14:18:45"
+  },
+  "panic_outflow": {
+    "lastTriggeredTime": "2026-11-13 13:28:32"
+  },
+  "tail_dip_buying": {
+    "checkedToday": "2026-11-13"
+  }
+}

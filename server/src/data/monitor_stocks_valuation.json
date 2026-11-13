@@ -1558,5 +1558,21 @@
     "circulatingMarketValue": 8675769936,
     "ttmPe": 130.2024,
     "updatedAt": "2026-11-13 08:53:33"
+  },
+  {
+    "code": "sh688433",
+    "name": "华曙高科",
+    "marketValue": 29163900090,
+    "circulatingMarketValue": 29163900090,
+    "ttmPe": 393.9755,
+    "updatedAt": "2026-11-13 09:30:14"
+  },
+  {
+    "code": "sh688333",
+    "name": "铂力特  ",
+    "marketValue": 21424561789,
+    "circulatingMarketValue": 21424561789,
+    "ttmPe": 137.754,
+    "updatedAt": "2026-11-13 09:30:14"
   }
 ]

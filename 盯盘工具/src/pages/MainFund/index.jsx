@@ -4,7 +4,7 @@ import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import dayjs from 'dayjs';
 import { isAfterMarketClose } from '../../utils/tradingDay';
 import { Tabs, Switch as AntSwitch, Select, Spin, Button, Modal, message, Checkbox, Input, Tag } from 'antd';
-import { RobotOutlined, CopyOutlined, ThunderboltOutlined, LineChartOutlined, AppstoreOutlined, PlusOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
+import { RobotOutlined, CopyOutlined, ThunderboltOutlined, LineChartOutlined, AppstoreOutlined, PlusOutlined, SearchOutlined, CloseOutlined, ReloadOutlined } from '@ant-design/icons';
 import { marked } from 'marked';
 import { local_ip } from '../../constant';
 import BuyPointDiagnosisDrawer from '../../components/FloatingBuyPointDiagnosis';
@@ -627,6 +627,9 @@ export const MainFundContent = () => {
   const [blockFiveMinAgg, setBlockFiveMinAgg] = useState(false);
   // 折线图分区模式：default=当前叠加现状，diff30/diff10=按相比 N 分钟前分区后每板块独立折线图
   const [blockChartMode, setBlockChartMode] = useState('default');
+  // 手动刷新拉到的实时板块资金帧：仅叠加到折线图展示，不写入分时数据；轮询拿到更新的帧后自动失效
+  const [blockRealtimeFrame, setBlockRealtimeFrame] = useState(null);
+  const [blockRealtimeRefreshing, setBlockRealtimeRefreshing] = useState(false);
   // 板块折线图 hover 高亮 + 批量添加面板相关状态
   const [blockHoveredBlock, setBlockHoveredBlock] = useState(null);
   const blockHoveredBlockRef = useRef(null);
@@ -1244,6 +1247,30 @@ export const MainFundContent = () => {
     return result.reverse(); // 按时间倒序，最新的在最上面
   }, [blockDetailData, blockFiveMinAgg]);
 
+  // 手动刷新板块资金：拉取最新实时快照（/get_block_money_change，服务端 10s 轮询的那份数据），
+  // 仅叠加到折线图上展示，不写入分时数据；后面每次轮询拿到最新的 n 分钟间隔帧后自动被覆盖
+  const handleBlockRealtimeRefresh = async () => {
+    if (blockRealtimeRefreshing) return;
+    setBlockRealtimeRefreshing(true);
+    try {
+      const resp = await axios.get(`http://${local_ip}:3000/get_block_money_change`);
+      const list = resp.data || [];
+      if (list.length) {
+        let time = dayjs().format('HHmmss');
+        // 非交易时段的时间夹到最近的交易时间点，避免折线图时间轴越界
+        if (time > '113000' && time < '130000') time = '113000';
+        else if (time > '150000') time = '150000';
+        else if (time < '093000') time = '093000';
+        setBlockRealtimeFrame({ time, data: list });
+      }
+    } catch (err) {
+      console.error('手动刷新板块资金失败:', err);
+      message.error('手动刷新板块资金失败');
+    } finally {
+      setBlockRealtimeRefreshing(false);
+    }
+  };
+
   // 折线图数据帧：11:30 前按原有序列展示，11:30 后（午后）按 5min 维度聚合
   const blockChartFrames = useMemo(() => {
     if (!blockTimeSeriesData.length) return [];
@@ -1282,8 +1309,15 @@ export const MainFundContent = () => {
       .filter(slot => buckets[slot])
       .map(slot => buckets[slot]);
 
-    return [...morning, ...aggregatedAfternoon];
-  }, [blockTimeSeriesData]);
+    const frames = [...morning, ...aggregatedAfternoon];
+
+    // 叠加手动刷新的实时帧：仅当其时间比最新分时帧新时展示，轮询数据追上后自动失效（被覆盖）
+    const lastFrameTime = frames.length ? frames[frames.length - 1].time : '';
+    if (blockRealtimeFrame && blockRealtimeFrame.time > lastFrameTime) {
+      frames.push({ time: blockRealtimeFrame.time, data: blockRealtimeFrame.data });
+    }
+    return frames;
+  }, [blockTimeSeriesData, blockRealtimeFrame]);
 
   // 分区模式数据：展示全部板块，每个板块的资金序列 + 最新值与 N 分钟前的差值，按变化方向分组
   const blockPartitionData = useMemo(() => {
@@ -2390,6 +2424,14 @@ export const MainFundContent = () => {
                   type={showBlockBatchPanel ? 'primary' : 'default'}
                 >
                   {showBlockBatchPanel ? '收起批量添加' : '批量添加'}
+                </Button>
+                <Button
+                  size="small"
+                  icon={<ReloadOutlined spin={blockRealtimeRefreshing} />}
+                  onClick={handleBlockRealtimeRefresh}
+                  loading={blockRealtimeRefreshing}
+                >
+                  刷新
                 </Button>
               </div>
             </div>

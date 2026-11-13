@@ -729,6 +729,7 @@ module.exports = {
   getMarketOverview,
   getThemeAnalysis,
   getStockQuotes,
+  fetchThsBatchQuotes,
   getIndexQuotes,
   getThemeHistory,
   getThemeDayStocks,

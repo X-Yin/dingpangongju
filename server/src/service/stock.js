@@ -854,9 +854,17 @@ const saveTlineToCache = (cacheKey, tradeDate, tlineData) => {
     }
 };
 
+// 分时请求超时：当日（live）数据交易时段必须拿到，超时放宽到 5s（盘中高峰 500ms 会大面积超时）；
+// 历史日期多为回测批量拉取，维持 500ms 快速失败由负缓存兜底
+const tlineReqTimeout = (tradeDate) => {
+    const t = new Date();
+    const todayStr = `${t.getFullYear()}${String(t.getMonth() + 1).padStart(2, '0')}${String(t.getDate()).padStart(2, '0')}`;
+    return String(tradeDate) === todayStr ? 5000 : 500;
+};
+
 const getSingleStockTlineDataByDateFromCLS = async (code, tradeDate) => {
     try {
-        const response = await axios.get(getClsReqStockTlineDay5Url(code), { timeout: 500 });
+        const response = await axios.get(getClsReqStockTlineDay5Url(code), { timeout: tlineReqTimeout(tradeDate) });
         const data = response.data.data;
         if (!data || !Array.isArray(data)) {
             return null;
@@ -993,11 +1001,14 @@ const getSingleStockTlineDataByDate = async (code, tradeDate) => {
     }
 
     // 失败负缓存（2026-11-04 回测加速）：THS/CLS 都拿不到的 (股票, 日期) 记忆 10 分钟，
-    // 避免同一笔回测区间内反复超时重试（如长期停牌/退市代码每次都拖 2 次接口超时）
+    // 避免同一笔回测区间内反复超时重试（如长期停牌/退市代码每次都拖 2 次接口超时）。
+    // 当日（live）数据随时会出现（竞价→开盘后逐分钟生成），失败不可负缓存，否则盘中负缓存期内涨幅/强度分全部为 '--'
     const failKey = `${code}|${tradeDate}`;
-    const failMemo = tlineFailMemo.get(failKey);
-    if (failMemo && Date.now() < failMemo) {
-        return null;
+    if (!isToday) {
+        const failMemo = tlineFailMemo.get(failKey);
+        if (failMemo && Date.now() < failMemo) {
+            return null;
+        }
     }
 
     // 历史日期分时路由：CLS/THS 之间加权随机（LB 不支持按日期查，跳过）
@@ -1009,7 +1020,7 @@ const getSingleStockTlineDataByDate = async (code, tradeDate) => {
         if (result && result.line && result.line.length > 0) break;
         console.log(`${src.toUpperCase()} 获取股票 ${code} 日期 ${tradeDate} 分时失败，尝试下一个兜底`);
     }
-    if (!result || !result.line || result.line.length === 0) {
+    if (!isToday && (!result || !result.line || result.line.length === 0)) {
         tlineFailMemo.set(failKey, Date.now() + 10 * 60 * 1000);
     }
 
@@ -1042,7 +1053,7 @@ const getSingleStockTlineDataByDateFromTHS = async (code, tradeDate) => {
         const headers = getThsTrendHeaders();
         const requestBody = buildThsTrendRequestBodyWithDate(code, tradeDate);
 
-        const response = await axios.post(url, requestBody, { headers, timeout: 500 });
+        const response = await axios.post(url, requestBody, { headers, timeout: tlineReqTimeout(tradeDate) });
         const quoteData = response.data.data?.quote_data?.[0];
 
         if (!quoteData || !quoteData.value || !Array.isArray(quoteData.value) || quoteData.value.length === 0) {

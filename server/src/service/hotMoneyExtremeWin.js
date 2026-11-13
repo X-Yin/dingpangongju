@@ -11,7 +11,7 @@
 // ============================================================
 const dayjs = require('dayjs');
 const { batchParallel, isAfterMarketClose, resolveAnalysisDate } = require('../utils');
-const { countTradingDaysBetween } = require('../utils/tradingDay');
+const { countTradingDaysBetween, isTradingDay } = require('../utils/tradingDay');
 const { getStockPositions } = require('./stockPosition');
 const { getPastTradingDates, stockPriorAvgVolume } = require('./buySellBacktest/deps');
 const { calculateReplayResilience } = require('./buySellBacktest/diagnose/sellPoint');
@@ -129,7 +129,13 @@ const resolveTargetDay = (targetDate) => {
     return d.isValid() ? d : dayjs();
   }
   const now = dayjs();
-  // 非交易日 / 开盘前：回退到上一个交易日，避免列表与诊断因当日无数据而为空
+  // 竞价时间（交易日 9:15–9:30）使用当天：当日分时尚未生成，涨幅/强度−差劲以 '--' 展示
+  // （THS/CLS 分时接口均有请求日期校验，竞价期间查当天只会返回空分时，不会误用昨日数据）
+  const minuteOfDay = now.hour() * 60 + now.minute();
+  if (isTradingDay(now.toDate()) && minuteOfDay >= 9 * 60 + 15 && minuteOfDay < 9 * 60 + 30) {
+    return now;
+  }
+  // 非交易日 / 9:15 前：回退到上一个交易日，避免列表与诊断因当日无数据而为空
   return dayjs(resolveAnalysisDate(now.toDate()));
 };
 

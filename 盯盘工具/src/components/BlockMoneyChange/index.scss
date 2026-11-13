@@ -135,6 +135,40 @@
                 text-overflow: ellipsis;
             }
 
+            // 历史资金折线图标题：板块名靠左 + 区间净流入靠右，整体可点击打开主力成本测算弹窗
+            .line-chart-card-title.history-chart-title {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                text-align: left;
+                cursor: pointer;
+                transition: background-color 0.2s;
+
+                &:hover {
+                    background-color: #e8ebf0;
+                }
+
+                .history-chart-title-name {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .history-chart-title-value {
+                    flex-shrink: 0;
+                    font-size: 12px;
+                    font-weight: 600;
+
+                    &.pos {
+                        color: #e11d48;
+                    }
+
+                    &.neg {
+                        color: #059669;
+                    }
+                }
+            }
+
             .line-chart-card-body {
                 position: relative;
                 height: 220px;
@@ -273,6 +307,22 @@
 
     .history-control-bar {
         padding-bottom: 8px;
+
+        .history-range-toggle {
+            justify-content: flex-end;
+            border-bottom: none;
+            padding-bottom: 0;
+
+            .ant-btn {
+                padding: 4px 12px;
+                border-radius: 6px;
+
+                &.ant-btn-primary {
+                    background: #4f46e5;
+                    color: #fff;
+                }
+            }
+        }
     }
 
     .heatmap-header {

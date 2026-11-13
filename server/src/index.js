@@ -96,6 +96,7 @@ const { getTechBlockCrowd, getTechVolumeRatio } = require('./service/techCrowd')
 const { getBlockCategoryRatio } = require('./service/板块成交量占比计算/category_amount_money');
 const { getBlockVolumeRatioHistory, getIntradayData, getBlockConstituents } = require('./service/blockVolumeRatio');
 const { getRiskScoreHistory, calculateAndSaveRiskScore } = require('./service/marketRiskScore');
+const { fetchThsBatchQuotes } = require('./service/themeMonitor');
 const { analyzeMonitorStocks } = require('./service/strongAndWeakStock');
 const { getAvailableDates, getSnapshotData, getLatestSnapshotDate, saveDailySnapshots, aggregateByInterval } = require('./service/fundSnapshot');
 const { getAllFupanNotes, getFupanNoteByDate, saveFupanNote, deleteFupanNote, getIndexTlineByDate, getPersonalFeelings, savePersonalFeelings, getMarketSnapshot, getTodayPlan, saveTodayPlan } = require('./service/fupan');
@@ -3132,6 +3133,127 @@ app.get('/block_volume_ratio_stocks', async (req, res) => {
   } catch (error) {
     console.error('获取板块成分股行情失败:', error);
     res.status(500).json({ message: error.message || '获取失败' });
+  }
+});
+
+// 历史资金折线图：返回板块内总市值最大的股票
+// 市值 = 实时最新价 × 总股本（股本来自离线缓存 data/block_max_cap/stock_shares.json，由脚本 fetchBlockMaxCapPool.js 定期刷新）；
+// 最新价通过腾讯批量实时行情（60 只/批）并行拉取，全部覆盖、秒级完成；不再实时调用东财 clist（避免被限流）
+const BLOCK_MAX_CAP_DIR = path.resolve(__dirname, 'data/block_max_cap');
+const BLOCK_CONSTITUENTS_FILE = path.join(BLOCK_MAX_CAP_DIR, 'block_constituents.json');
+const STOCK_SHARES_FILE = path.join(BLOCK_MAX_CAP_DIR, 'stock_shares.json');
+const MAX_CAP_RESULT_CACHE_TTL = 60 * 1000;   // 结果短缓存，避免快速重复点击重复拉行情
+const maxCapResultCache = new Map();          // BKxxxx -> { ts, payload }
+
+const readBlockMaxCapPool = () => {
+  let boards = {};
+  let shares = {};
+  try {
+    const raw = JSON.parse(fs.readFileSync(BLOCK_CONSTITUENTS_FILE, 'utf-8'));
+    boards = raw?.boards || {};
+  } catch (e) { /* 文件缺失时按空处理 */ }
+  try {
+    const raw = JSON.parse(fs.readFileSync(STOCK_SHARES_FILE, 'utf-8'));
+    shares = raw?.shares || {};
+  } catch (e) { /* 文件缺失时按空处理 */ }
+  return { boards, shares };
+};
+
+app.get('/block_max_cap_stock', async (req, res) => {
+  try {
+    const blockCode = String(req.query.blockCode || '').trim();
+    const name = String(req.query.name || '').trim();
+    const m = blockCode.match(/BK\d+/i);
+    if (!m) {
+      return res.status(400).json({ success: false, message: '缺少有效的 blockCode（如 90.BK1071）' });
+    }
+    const bk = m[0].toUpperCase();
+
+    const cached = maxCapResultCache.get(bk);
+    if (cached && Date.now() - cached.ts < MAX_CAP_RESULT_CACHE_TTL) {
+      return res.json({ ...cached.payload, name, cached: true });
+    }
+
+    const { boards, shares } = readBlockMaxCapPool();
+    const board = boards[bk];
+    if (!Array.isArray(board?.stocks) || board.stocks.length === 0) {
+      return res.status(404).json({ success: false, message: `本地缓存中不存在板块 ${name || bk}，请先运行 node src/scripts/fetchBlockMaxCapPool.js` });
+    }
+
+    // 只保留有股本数据的股票（无股本无法算市值）
+    const candidates = board.stocks.filter((s) => shares[s.code] > 0);
+    if (candidates.length === 0) {
+      return res.status(404).json({ success: false, message: '板块内没有可用股本数据的股票，请刷新股本缓存' });
+    }
+
+    // 选最大市值股只需最新价：腾讯批量实时行情（60 只/批）分批并行拉取。
+    // 之前用同花顺+财联社逐股拉 K 线，大板块（如半导体概念 518 只）瞬时 250+ 并发会被限流，
+    // 5s 截止后只剩零星幸存者，导致选出的"最大市值股"完全随机（如时代电气）。
+    const priceMap = new Map();
+    const BATCH = 60;
+    const batches = [];
+    for (let i = 0; i < candidates.length; i += BATCH) {
+      batches.push(candidates.slice(i, i + BATCH).map((s) => s.code));
+    }
+    await Promise.allSettled(batches.map(async (batch) => {
+      const query = batch.map((c) => (/^6/.test(c) ? 'sh' : 'sz') + c).join(',');
+      const resp = await axios.get(`https://qt.gtimg.cn/q=${query}`, {
+        timeout: 5000,
+        responseType: 'arraybuffer',
+        headers: { Referer: 'https://gu.qq.com/' },
+      });
+      const text = Buffer.from(resp.data).toString('latin1');
+      const re = /v_(?:sh|sz)(\d{6})="([^"]*)"/g;
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        const price = parseFloat(m[2].split('~')[3]); // 字段3 = 最新价
+        if (price > 0) priceMap.set(m[1], price);
+      }
+    }));
+
+    // 兜底：腾讯批次部分/全部失败时，用同花顺批量行情补齐缺失股票的最新价
+    if (priceMap.size < candidates.length) {
+      try {
+        const missing = candidates
+          .filter((s) => !priceMap.has(s.code))
+          .map((s) => ({ market: /^[69]/.test(s.code) ? '17' : '33', pureCode: s.code }));
+        const quotes = await fetchThsBatchQuotes(missing, { concurrency: 4, intervalMs: 150 });
+        Object.values(quotes || {}).forEach((q) => {
+          if (q && q.price > 0 && !q.suspended) {
+            priceMap.set(String(q.code).replace(/^(sh|sz)/, ''), q.price);
+          }
+        });
+        console.log(`[block_max_cap_stock] ${name || bk} 腾讯行情缺失 ${missing.length} 只，同花顺兜底后覆盖 ${priceMap.size}/${candidates.length}`);
+      } catch (e) {
+        console.error(`[block_max_cap_stock] ${name || bk} 同花顺兜底行情失败:`, e.message);
+      }
+    }
+
+    // 市值 = 最新价 × 总股本，取最大
+    let best = null;
+    for (const stock of candidates) {
+      const price = priceMap.get(stock.code);
+      if (!(price > 0)) continue;
+      const marketCap = price * shares[stock.code];
+      if (!best || marketCap > best.marketCap) {
+        best = {
+          code: (/^[69]/.test(stock.code) ? 'sh' : 'sz') + stock.code,
+          name: stock.name || stock.code,
+          marketCap,
+        };
+      }
+    }
+    if (!best) {
+      return res.status(504).json({ success: false, message: '行情拉取失败，请重试' });
+    }
+
+    const payload = { success: true, name, stock: best };
+    maxCapResultCache.set(bk, { ts: Date.now(), payload });
+    if (maxCapResultCache.size > 300) maxCapResultCache.clear();
+    res.json(payload);
+  } catch (error) {
+    console.error('获取板块最大市值股失败:', error.message);
+    res.status(500).json({ success: false, message: error.message || '获取失败' });
   }
 });
 

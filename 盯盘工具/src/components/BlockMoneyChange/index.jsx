@@ -10,6 +10,7 @@ import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import dayjs from 'dayjs';
 import { getThemeColor, getThemeColorRgba } from '../../utils/theme';
 import BlockStrengthPanel from '../BlockStrengthPanel';
+import MainForceCostModal from './MainForceCostModal';
 import './index.scss';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, ChartTitle, ChartTooltip, Legend);
@@ -331,8 +332,11 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
     const [selectedBlocks, setSelectedBlocks] = useState(DEFAULT_SELECTED_BLOCKS);
     const [viewMode, setViewMode] = useState('line'); // 'heatmap' or 'bar' or 'line'
     const [historyViewMode, setHistoryViewMode] = useState('line'); // 'line' or 'heatmap'
+    const [historyRangeDays, setHistoryRangeDays] = useState(10); // 折线图显示范围：5 / 10 / 'all' / 'custom'
+    const [historyCustomRange, setHistoryCustomRange] = useState(null); // 自选范围 { start: 'YYYYMMDD', end: 'YYYYMMDD' }
     const [historyHeatmapTab, setHistoryHeatmapTab] = useState('today'); // 'today' or 'fiveDay'
     const [modalBlock, setModalBlock] = useState(null); // 当前打开折线图弹窗的板块名
+    const [costModalData, setCostModalData] = useState(null); // 主力成本测算弹窗：{ block, blockCode, flows }
     const [activeTab, setActiveTab] = useState(defaultTab); // 'intraday' 当日资金 | 'history' 历史资金 | 'rzrq' 融资余额 | 'crowd' 拥挤度 | 'strength' 板块强度
     const [dayHistory, setDayHistory] = useState([]); // 按天维度的板块资金历史
     const [rzrqData, setRzrqData] = useState([]);
@@ -2294,15 +2298,40 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
         const sorted = [...dayHistory]
             .filter(item => item.date)
             .sort((a, b) => a.date.localeCompare(b.date));
-        const labels = sorted.map(item => formatDayLabel(item.date));
+        // 自选时间范围：按日期过滤（两端都含），无有效范围时回退显示全部
+        let visible;
+        if (historyRangeDays === 'all') {
+            visible = sorted;
+        } else if (historyRangeDays === 'custom' && historyCustomRange?.start && historyCustomRange?.end) {
+            visible = sorted.filter(item => item.date >= historyCustomRange.start && item.date <= historyCustomRange.end);
+        } else if (historyRangeDays === 'custom') {
+            visible = sorted;
+        } else {
+            visible = sorted.slice(-historyRangeDays);
+        }
+        const labels = visible.map(item => formatDayLabel(item.date));
         return selectedBlocks.map((block, idx) => {
             const color = LINE_COLOR_PALETTE[idx % LINE_COLOR_PALETTE.length];
-            const data = sorted.map(item => {
+            const data = visible.map(item => {
                 const blockItem = item.data?.find(d => d.block === block);
                 return blockItem ? blockItem.money : null;
             });
+            // 标题栏右侧展示的区间净流入 = 各日净流入之和（总流入 - 总流出），单位元
+            const netSum = visible.reduce((sum, item) => {
+                const blockItem = item.data?.find(d => d.block === block);
+                return sum + (blockItem?.money ?? 0);
+            }, 0);
+            // 弹窗需要：最新一天的板块代码 + 区间内每日净流入（日期 → 金额）
+            const latestBlockItem = visible[visible.length - 1]?.data?.find(d => d.block === block);
+            const flows = visible.map(item => ({
+                date: item.date,
+                money: item.data?.find(d => d.block === block)?.money ?? 0,
+            }));
             return {
                 block,
+                netSum,
+                blockCode: latestBlockItem?.blockCode || null,
+                flows,
                 data: {
                     labels,
                     datasets: [{
@@ -2325,7 +2354,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                 },
             };
         });
-    }, [dayHistory, selectedBlocks]);
+    }, [dayHistory, selectedBlocks, historyRangeDays, historyCustomRange]);
 
     const historyHeatmapItems = useMemo(() => {
         if (!dayHistory.length || selectedBlocks.length === 0) return [];
@@ -3162,6 +3191,50 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                         热力图
                                     </Button>
                                 </div>
+                                <div className="view-toggle history-range-toggle">
+                                    <Button
+                                        type={historyRangeDays === 5 ? 'primary' : 'default'}
+                                        onClick={() => setHistoryRangeDays(5)}
+                                        size="small"
+                                    >
+                                        最近5天
+                                    </Button>
+                                    <Button
+                                        type={historyRangeDays === 10 ? 'primary' : 'default'}
+                                        onClick={() => setHistoryRangeDays(10)}
+                                        size="small"
+                                    >
+                                        最近10天
+                                    </Button>
+                                    <Button
+                                        type={historyRangeDays === 'all' ? 'primary' : 'default'}
+                                        onClick={() => setHistoryRangeDays('all')}
+                                        size="small"
+                                    >
+                                        查看全部
+                                    </Button>
+                                    <DatePicker.RangePicker
+                                        size="small"
+                                        style={{ width: 220 }}
+                                        placeholder={['开始日期', '结束日期']}
+                                        value={historyCustomRange?.start && historyCustomRange?.end
+                                            ? [dayjs(historyCustomRange.start), dayjs(historyCustomRange.end)]
+                                            : null}
+                                        onChange={(dates) => {
+                                            if (dates && dates[0] && dates[1]) {
+                                                setHistoryCustomRange({
+                                                    start: dates[0].format('YYYYMMDD'),
+                                                    end: dates[1].format('YYYYMMDD'),
+                                                });
+                                                setHistoryRangeDays('custom');
+                                            } else {
+                                                // 清空选择时回到最近10天
+                                                setHistoryCustomRange(null);
+                                                if (historyRangeDays === 'custom') setHistoryRangeDays(10);
+                                            }
+                                        }}
+                                    />
+                                </div>
                             </div>
                             {filterBar}
                             {historyViewMode === 'line' && dayHistoryChartItems.length > 0 ? (
@@ -3169,7 +3242,20 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                                     <div className="line-chart-grid">
                                         {dayHistoryChartItems.map((item) => (
                                             <div key={item.block} className="line-chart-card">
-                                                <div className="line-chart-card-title">{item.block}</div>
+                                                <div
+                                                    className="line-chart-card-title history-chart-title"
+                                                    title={`点击查看「${item.block}」最大市值股主力成本测算`}
+                                                    onClick={() => setCostModalData({
+                                                        block: item.block,
+                                                        blockCode: item.blockCode,
+                                                        flows: item.flows,
+                                                    })}
+                                                >
+                                                    <span className="history-chart-title-name">{item.block}</span>
+                                                    <span className={`history-chart-title-value ${item.netSum >= 0 ? 'pos' : 'neg'}`}>
+                                                        净流入 {item.netSum >= 0 ? '+' : ''}{(item.netSum / 1e8).toFixed(1)}亿
+                                                    </span>
+                                                </div>
                                                 <div className="line-chart-card-body">
                                                     <Line data={item.data} options={dayHistoryChartOptions} />
                                                 </div>
@@ -3447,6 +3533,13 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
                     )}
                 </div>
             </Modal>
+
+            {/* 历史资金折线图标题点击：板块最大市值股主力成本测算 */}
+            <MainForceCostModal
+                visible={!!costModalData}
+                data={costModalData}
+                onClose={() => setCostModalData(null)}
+            />
 
             <Modal
                 title="板块自动诊断"

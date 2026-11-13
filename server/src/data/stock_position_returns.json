@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-11-13",
+    "operations": [
+      {
+        "id": "1794533461494_aevl",
+        "action": "sell",
+        "stockName": "国际复材",
+        "stockCode": "sz301526",
+        "position": "",
+        "time": "09:31"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-13T01:31:01.527Z",
+    "updatedAt": "2026-11-13T01:31:01.527Z"
+  },
+  {
     "date": "2026-11-12",
     "operations": [
       {
