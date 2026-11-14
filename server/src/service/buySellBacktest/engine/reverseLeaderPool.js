@@ -6,6 +6,8 @@
 //   候选池口径（与两处回测引擎逐字节一致）：
 //     getRecentMultiLianbanStocks(dateStr, 20, 2) → 剔除 ST 等黑名单 / 创业板(30/301) / 科创板(688) / 题材黑名单
 //     → 过去 20 个交易日（不含当日）内任意连续 10 个交易日子窗口区间最大涨幅 ≥ 60%
+//   2026-11-14 用户要求（回测与线上实盘同口径）：额外要求「峰值日（含）至买点前区间最大波动 < 30%」，
+//     由回测引擎通过 opts.postPeakMaxRangePct 传入；不传时不生效。
 //   注意：本函数「无条件」构建候选池（不看择时门禁），择时状态由调用方自行判定/
 //     回测引擎仍在各自 eligible 门禁内调用（保持回测结果不变）。
 // ============================================================
@@ -14,10 +16,11 @@ const {
   getPastTradingDates,
   getRecentMultiLianbanStocks,
   stockDailyChange,
+  stockWindowRangePct,
 } = require('../deps');
 const { EXCLUDED_CODES, EXCLUDED_THEMES, isExcludedTheme } = require('../constants');
 // 复用顺周期腿已抽出的工具函数（候选池剔除创业板/科创板、滑动窗口区间涨幅）
-const { isChiNextOrStar, maxSlidingWindowRangePct } = require('./extremeWinPool');
+const { isChiNextOrStar, maxSlidingWindowRangeInfo } = require('./extremeWinPool');
 
 // ---- 选股与择时常量（与两个回测引擎完全一致）----
 const LOOKBACK_DAYS = 20;          // 选股回溯窗口：过去 20 个交易日
@@ -34,6 +37,9 @@ const HIT_REQUIRED = 2;            // 需要累计 2 次命中
 const BIG_DROP_WINDOW_DAYS = 10;
 const BIG_DROP_THRESHOLD = -9;
 const BIG_DROP_MAX_TIMES = 2;
+// 2026-11-14 用户要求：峰值日（含）至买点前区间最大波动上限（区间最大波动 = (最高收盘价 − 最低收盘价) ÷ 最低收盘价 × 100）。
+//   仅回测引擎与线上 live 均通过 opts.postPeakMaxRangePct 传入（30）
+const POST_PEAK_MAX_RANGE_PCT = 30;
 
 // 逆周期买点前置（收盘口径）：上证 3 日线斜率 < 0 且已进入连续为负的第 3 天及以后
 const isReverseEligible = (slopeClose, daysSinceTurnNeg) => slopeClose != null && slopeClose < 0
@@ -45,9 +51,12 @@ const isReverseEligible = (slopeClose, daysSinceTurnNeg) => slopeClose != null &
 // filterCodes：可选代码集合（Set）；提供时仅保留其中的代码（供 live 按历史交易日重建「当日池 ∩ 关注代码」使用）
 // opts.bigDropMaxTimes：可选——最近 BIG_DROP_WINDOW_DAYS 个交易日内收盘跌幅 < BIG_DROP_THRESHOLD%
 //   的交易日最多允许出现该次数，超出则剔除；不传时不做该过滤（回测与线上实盘均传入 BIG_DROP_MAX_TIMES，口径一致）
+// opts.postPeakMaxRangePct：可选——「峰值日（含）至买点前（窗口最后一日）区间最大波动」上限（%），
+//   峰值日 = 取到最大 10 日滑动窗口区间涨幅的那个子窗口内最高收盘日；回测引擎与线上 live 均传入（30）
 // 返回 { stocks, poolFilterText, winDates }
 const buildReverseLeaderPool = async (dateStr, filterCodes = null, opts = {}) => {
   const bigDropMaxTimes = opts.bigDropMaxTimes != null ? Number(opts.bigDropMaxTimes) : null;
+  const postPeakMaxRangePct = Number.isFinite(Number(opts.postPeakMaxRangePct)) ? Number(opts.postPeakMaxRangePct) : null;
   let base = [];
   let themeFilterText = '';
   try {
@@ -82,9 +91,15 @@ const buildReverseLeaderPool = async (dateStr, filterCodes = null, opts = {}) =>
       const recentDates = bigDropMaxTimes == null ? [] : winDates.slice(-BIG_DROP_WINDOW_DAYS);
       let bigDropRemoved = 0;
       candidates = base.filter(s => {
-        const rp = maxSlidingWindowRangePct(s.code, winDates, RANGE_SLIDE_DAYS);
+        const info = maxSlidingWindowRangeInfo(s.code, winDates, RANGE_SLIDE_DAYS);
+        const rp = info ? info.max : null;
         // 区间振幅缺失（日K未覆盖）视为不达标
         if (rp == null || !Number.isFinite(rp) || rp < MIN_WINDOW_RANGE_PCT) return false;
+        // 峰值日（含）至买点前（窗口最后一日）区间最大波动上限（回测与线上 live 同口径）
+        if (postPeakMaxRangePct != null) {
+          const postPeakRange = stockWindowRangePct(s.code, winDates.slice(info.peakIdx));
+          if (!(postPeakRange != null && Number.isFinite(postPeakRange) && postPeakRange < postPeakMaxRangePct)) return false;
+        }
         if (bigDropMaxTimes != null) {
           let bigDropCount = 0;
           for (const d of recentDates) {
@@ -98,7 +113,10 @@ const buildReverseLeaderPool = async (dateStr, filterCodes = null, opts = {}) =>
       const bigDropText = bigDropMaxTimes == null
         ? ''
         : `，且最近 ${BIG_DROP_WINDOW_DAYS} 个交易日（不含当日）收盘跌幅 < ${BIG_DROP_THRESHOLD}% 的交易日 ≤ ${bigDropMaxTimes} 次（不要求连续、只计频次；第 ${bigDropMaxTimes + 1} 次起剔除${bigDropRemoved > 0 ? `，剔除 ${bigDropRemoved} 只` : ''}）`;
-      poolFilterText = `${themeFilterText}；过去 ${RANGE_WINDOW_DAYS} 个交易日（不含当日）内任意连续 ${RANGE_SLIDE_DAYS} 个交易日区间最大涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 ≥ ${MIN_WINDOW_RANGE_PCT}%${bigDropText} 保留 ${candidates.length}/${before} 只`;
+      const postPeakText = postPeakMaxRangePct == null
+        ? ''
+        : `，且该最大涨幅窗口峰值日（窗内最高收盘日，含当日）至买点前区间最大波动 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 < ${postPeakMaxRangePct}%`;
+      poolFilterText = `${themeFilterText}；过去 ${RANGE_WINDOW_DAYS} 个交易日（不含当日）内任意连续 ${RANGE_SLIDE_DAYS} 个交易日区间最大涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 ≥ ${MIN_WINDOW_RANGE_PCT}%${postPeakText}${bigDropText} 保留 ${candidates.length}/${before} 只`;
     } else {
       poolFilterText = `${themeFilterText}；过去 ${RANGE_WINDOW_DAYS} 个交易日日K数据不足，本日无候选`;
     }
@@ -111,6 +129,6 @@ const buildReverseLeaderPool = async (dateStr, filterCodes = null, opts = {}) =>
 module.exports = {
   LOOKBACK_DAYS, MIN_BOARD_COUNT, RANGE_WINDOW_DAYS, RANGE_SLIDE_DAYS, MIN_WINDOW_RANGE_PCT,
   NEG_STREAK_MIN_DAYS, INDEX_DROP_PCT, STRENGTH_MIN, HIT_REQUIRED,
-  BIG_DROP_WINDOW_DAYS, BIG_DROP_THRESHOLD, BIG_DROP_MAX_TIMES,
+  BIG_DROP_WINDOW_DAYS, BIG_DROP_THRESHOLD, BIG_DROP_MAX_TIMES, POST_PEAK_MAX_RANGE_PCT,
   isReverseEligible, buildReverseLeaderPool,
 };

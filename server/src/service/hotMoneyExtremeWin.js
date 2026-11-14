@@ -20,6 +20,7 @@ const {
   PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
   ABNORMAL_WARN_MIN_ROOM_PCT, buildAbnormalWarnBases, evalAbnormalWarn, abnormalWarnText,
   LARGE_CAP_FLOAT_MV_YI, CAP_BOARD_WINDOW_DAYS, CAP_BOARD_MIN_GAIN_PCT, NEW_MIN_WINDOW_RANGE_PCT,
+  OLD_POST_PEAK_MAX_RANGE_PCT,
   computeCrossInfo, buildExtremeWinPool,
 } = require('./buySellBacktest/engine/extremeWinPool');
 const {
@@ -40,6 +41,7 @@ const {
   HIT_REQUIRED: REV_HIT_REQUIRED,
   NEG_STREAK_MIN_DAYS: REV_NEG_STREAK_MIN_DAYS,
   BIG_DROP_MAX_TIMES: REV_BIG_DROP_MAX_TIMES,
+  POST_PEAK_MAX_RANGE_PCT: REV_POST_PEAK_MAX_RANGE_PCT,
   isReverseEligible,
   buildReverseLeaderPool,
 } = require('./buySellBacktest/engine/reverseLeaderPool');
@@ -155,6 +157,8 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
   const pool = await buildExtremeWinPool(dateStr, {
     fromFirstLimitUp: true,
     capBoardMinGainPct: CAP_BOARD_MIN_GAIN_PCT,
+    // 2026-11-14 用户要求：旧路径追加「峰值日（含）至买点前区间最大波动 < 20%」（与回测同口径）
+    oldPostPeakMaxRangePct: OLD_POST_PEAK_MAX_RANGE_PCT,
   });
   const poolStocks = pool.stocks || [];
 
@@ -381,7 +385,10 @@ const computeReverseHitCounts = async (codes, windowDates, todayNum, todayCutoff
     // 该交易日候选池（与今日池代码取交集）
     let dayCodes;
     try {
-      const dayPool = await buildReverseLeaderPool(String(dNum), codeSet, { bigDropMaxTimes: REV_BIG_DROP_MAX_TIMES });
+      const dayPool = await buildReverseLeaderPool(String(dNum), codeSet, {
+        bigDropMaxTimes: REV_BIG_DROP_MAX_TIMES,
+        postPeakMaxRangePct: REV_POST_PEAK_MAX_RANGE_PCT,
+      });
       dayCodes = new Set((dayPool.stocks || []).map(s => s.code));
     } catch (e) { dayCodes = new Set(); }
     if (dayCodes.size === 0) continue;
@@ -434,7 +441,11 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
 
   // 1) 候选池（过去 20 交易日出现过连板 ≥ 2 + 剔除创业板/科创板/题材黑名单 + 10 日滑动窗口区间涨幅 ≥ 60%
   //    + 最近 10 个交易日收盘跌幅 < -9% 的日至多 2 次）
-  const pool = await buildReverseLeaderPool(dateStr, null, { bigDropMaxTimes: REV_BIG_DROP_MAX_TIMES });
+  const pool = await buildReverseLeaderPool(dateStr, null, {
+    bigDropMaxTimes: REV_BIG_DROP_MAX_TIMES,
+    // 2026-11-14 用户要求：峰值日（含）至买点前区间最大波动 < 30%（与回测同口径）
+    postPeakMaxRangePct: REV_POST_PEAK_MAX_RANGE_PCT,
+  });
   const poolStocks = pool.stocks || [];
   const codes = poolStocks.map(s => s.code);
 

@@ -1712,16 +1712,6 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
   const totalPassedCount = views.reduce((n, v) => n + v.checkGroups.reduce((x, g) => x + g.items.filter(c => c.passed).length, 0), 0);
   const hit = views.some((v) => v.hit);
 
-  // 情绪游资模式按 3 分钟整点（9:30/9:33/9:36…）高亮（与买点诊断触发口径一致），其余模式仍按 5 分钟整点；
-  // 极致赔率（3 秒桶）本身推送频率极高，不再加背景闪烁，避免视觉干扰
-  const isTickMinute = isWashFusion
-    ? false
-    : (isMulti
-      ? multiModes.some((m) => m === MODE_EXTREME_WIN || m === MODE_ATTACK_DEFENSE)
-      : (isExtreme || isDefense))
-      ? now.minute() % 3 === 0
-      : now.minute() % 5 === 0;
-
   // 详细条件（弹窗内容）：条件分组 + 结论 + 建议仓位
   const renderDetail = () => (
     <>
@@ -1763,7 +1753,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
   return (
     <>
       <div
-        className={`ob-diagnosis-card ob-buy-card ob-summary-card ${isTickMinute ? 'is-tick' : ''}`}
+        className="ob-diagnosis-card ob-buy-card ob-summary-card"
         role="button"
         tabIndex={0}
         title="点击查看买点诊断详细条件"
@@ -2065,15 +2055,6 @@ const SellPointDiagnosisCard = () => {
           {/* 2026-11-04：标题栏不再展示当前策略名称（策略由每笔持仓自身所属模式决定，见弹窗明细） */}
         </div>
         <div className="ob-diagnosis-actions" onClick={(e) => e.stopPropagation()}>
-          <div className="ob-reminder-switch" title="关闭后不再发送飞书提醒，也不弹出提醒卡片">
-            <span className="ob-reminder-switch-label">打开提醒</span>
-            <AntSwitch
-              size="small"
-              checked={reminderEnabled}
-              loading={reminderSaving}
-              onChange={handleToggleReminder}
-            />
-          </div>
           <span className={`ob-status-badge ${hitStocks.length > 0 ? 'hit' : ''}`}>
             {results.length === 0 ? '暂无持仓' : hitStocks.length > 0 ? `⚠️ ${hitStocks.length} 笔命中` : `${results.length} 笔持仓 · 未触发`}
           </span>
@@ -2084,30 +2065,41 @@ const SellPointDiagnosisCard = () => {
       </div>
       {/* 汇总信息：持仓笔数与命中情况（逐笔明细点击弹窗查看） */}
       <div className="ob-diagnosis-body ob-summary-body">
-        {results.length === 0 ? (
-          <div className="ob-empty-mini" style={{ fontSize: 14 }}>暂无持仓</div>
-        ) : (
-          <>
-            <div className="ob-summary-meta">
-              <span className="ob-summary-label">持仓</span>
-              <span className="ob-summary-text">
-                {results.length} 笔持仓 · {hitStocks.length > 0 ? `${hitStocks.length} 笔命中卖点` : '暂无命中'}
-              </span>
-            </div>
-            <div className="ob-summary-stock-list">
-              {results.map((r) => (
-                <div key={r.positionId || r.code} className={`ob-summary-stock ${r.isSell ? 'hit' : ''}`}>
-                  <span className="ob-summary-stock-name">
-                    {r.stockName}
-                    <i>{r.code}</i>
-                  </span>
-                  <span className={`ob-summary-stock-tag ${r.buyToday ? 'today' : r.error ? 'error' : r.isSell ? 'hit' : 'safe'}`}>
-                    {r.buyToday ? '买入当日' : r.error ? '诊断失败' : r.isSell ? '建议卖出' : '建议持有'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </>
+        <div className="ob-summary-meta">
+          <span className="ob-summary-label">持仓</span>
+          <span className="ob-summary-text">
+            {results.length === 0
+              ? '暂无持仓'
+              : `${results.length} 笔持仓 · ${hitStocks.length > 0 ? `${hitStocks.length} 笔命中卖点` : '暂无命中'}`}
+          </span>
+          <div
+            className="ob-reminder-switch"
+            title="关闭后不再发送飞书提醒，也不弹出提醒卡片"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="ob-reminder-switch-label">打开提醒</span>
+            <AntSwitch
+              size="small"
+              checked={reminderEnabled}
+              loading={reminderSaving}
+              onChange={handleToggleReminder}
+            />
+          </div>
+        </div>
+        {results.length > 0 && (
+          <div className="ob-summary-stock-list">
+            {results.map((r) => (
+              <div key={r.positionId || r.code} className={`ob-summary-stock ${r.isSell ? 'hit' : ''}`}>
+                <span className="ob-summary-stock-name">
+                  {r.stockName}
+                  <i>{r.code}</i>
+                </span>
+                <span className={`ob-summary-stock-tag ${r.buyToday ? 'today' : r.error ? 'error' : r.isSell ? 'hit' : 'safe'}`}>
+                  {r.buyToday ? '买入当日' : r.error ? '诊断失败' : r.isSell ? '建议卖出' : '建议持有'}
+                </span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
       </div>

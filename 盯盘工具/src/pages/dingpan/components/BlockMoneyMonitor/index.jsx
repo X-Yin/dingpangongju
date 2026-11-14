@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Card, Button, Empty, Typography } from 'antd';
+import { Card, Button, Typography } from 'antd';
 import { DollarOutlined } from '@ant-design/icons';
 import { local_ip } from '../../../../constant';
-import { getThemeColor } from '../../../../utils/theme';
 import { titleStyle, borderStyle, numberStyle } from '../../utils/themeColor';
 import './index.scss';
 
@@ -73,57 +72,64 @@ const BlockMoneyMonitor = ({ targetBlocks, displayBlocks, bigChangeThreshold, on
 
     const displayData = blockMoneyData.filter(item => displayBlocks.includes(item.block));
 
+    // 标题与内容同处一行：内容超出卡片宽度时横向滚动；
+    // 复用 all-stock-card 卡片头部结构，与右侧「自选股全量监控」缩略态高度完全一致
     return (
         <Card
-            title={<><DollarOutlined style={{ color: getThemeColor(), marginRight: 8 }} /> 板块资金监控</>}
-            className="monitor-card block-money-card"
+            title={
+                <div className="block-money-strip">
+                    <div className="block-money-strip-title">
+                        <div className="all-stock-card-title-icon">
+                            <DollarOutlined />
+                        </div>
+                        <span>板块资金监控</span>
+                    </div>
+                    <div className="block-money-strip-list">
+                        {blockMoneyAlerts.map((alert, idx) => {
+                            const isBigInflow = alert.type === 'inflow';
+                            const yiValue = Math.abs(alert.diff) / 100000000;
+                            return (
+                                <span
+                                    key={`alert-${idx}`}
+                                    className="block-money-alert-tag"
+                                    style={{ ...numberStyle(themeColor) }}
+                                >
+                                    {alert.block} {isBigInflow ? '流入' : '流出'} {isBigInflow ? '+' : '-'}{yiValue.toFixed(1)}亿
+                                </span>
+                            );
+                        })}
+                        {displayData.map((item, index) => {
+                            const isInflow = item.money >= 0;
+                            return (
+                                <div
+                                    key={index}
+                                    className="unified-list-item block-money-item"
+                                    onClick={() => onBlockClick(item.block)}
+                                    style={borderStyle(themeColor)}
+                                >
+                                    <Text strong className="item-name" style={{ fontSize: '12px', ...titleStyle(themeColor) }}>{item.block}</Text>
+                                    <Text strong className={`item-value ${isInflow ? 'up' : 'down'}`} style={numberStyle(themeColor)}>
+                                        {isInflow ? '+' : ''}{(item.money / 100000000).toFixed(2)}亿
+                                    </Text>
+                                </div>
+                            );
+                        })}
+                        {displayData.length === 0 && (
+                            <span className="block-money-empty">暂无数据</span>
+                        )}
+                    </div>
+                </div>
+            }
+            className="monitor-card all-stock-card block-money-card"
             variant="borderless"
+            bodyStyle={{ display: 'none' }}
             extra={
                 <Button type="link" size="small" onClick={onViewMore}>
                     查看更多
                 </Button>
             }
-            style={{ marginBottom: 16 }}
-        >
-            {blockMoneyAlerts.length > 0 && (
-                <div className="block-money-alerts">
-                    {blockMoneyAlerts.map((alert, idx) => {
-                        const isBigInflow = alert.type === 'inflow';
-                        const yiValue = Math.abs(alert.diff) / 100000000;
-                        return (
-                            <span
-                                key={idx}
-                                className="block-money-alert-tag"
-                                style={{ ...numberStyle(themeColor) }}
-                            >
-                                {alert.block} {isBigInflow ? '流入' : '流出'} {isBigInflow ? '+' : '-'}{yiValue.toFixed(1)}亿
-                            </span>
-                        );
-                    })}
-                </div>
-            )}
-            <div className="block-money-grid">
-                {displayData.map((item, index) => {
-                    const isInflow = item.money >= 0;
-                    return (
-                        <div
-                            key={index}
-                            className="unified-list-item"
-                            onClick={() => onBlockClick(item.block)}
-                            style={borderStyle(themeColor)}
-                        >
-                            <Text strong className="item-name" style={{ fontSize: '12px', ...titleStyle(themeColor) }}>{item.block}</Text>
-                            <Text strong className={`item-value ${isInflow ? 'up' : 'down'}`} style={numberStyle(themeColor)}>
-                                {isInflow ? '+' : ''}{(item.money / 100000000).toFixed(2)}亿
-                            </Text>
-                        </div>
-                    );
-                })}
-            </div>
-            {displayData.length === 0 && (
-                <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            )}
-        </Card>
+            style={{ marginBottom: 0, height: 'auto' }}
+        />
     );
 };
 

@@ -38,6 +38,7 @@ const {
   LARGE_CAP_FLOAT_MV_YI, CAP_BOARD_WINDOW_DAYS, CAP_BOARD_MIN_GAIN_PCT,
   RANGE_SLIDE_DAYS, MAX_WINDOW_RANGE_PCT, MAX_TOTAL_RANGE_PCT, POST_LIANBAN_DROP_PCT,
   NEW_MAX_WINDOW_RANGE_PCT, NEW_MIN_WINDOW_RANGE_PCT, PEAK_GAP_MIN_DAYS, POST_PEAK_MAX_RANGE_PCT, NEW_BASE_LOOKBACK_DAYS,
+  OLD_POST_PEAK_MAX_RANGE_PCT,
   PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
   ABNORMAL_WARN_MIN_ROOM_PCT, buildAbnormalWarnBases, evalAbnormalWarn, abnormalWarnText,
   computeCrossInfo, buildExtremeWinPool,
@@ -54,6 +55,7 @@ const {
   STRENGTH_MIN: REV_STRENGTH_MIN,
   HIT_REQUIRED: REV_HIT_REQUIRED,
   BIG_DROP_MAX_TIMES: REV_BIG_DROP_MAX_TIMES,
+  POST_PEAK_MAX_RANGE_PCT: REV_POST_PEAK_MAX_RANGE_PCT,
   buildReverseLeaderPool,
 } = require('./reverseLeaderPool');
 
@@ -72,6 +74,7 @@ const {
 //          旧路径：过去 10 个交易日（不含当日）内出现过连板准入（2026-10-24 用户改，按流通市值分档：
 //                  流通市值 > 100 亿元者出现过两连板（连板数 >= 2）+ 含该连板日在内连续 5 个交易日累计涨幅 > 45%（2026-10-31 由 40% 提高到 50%，2026-11-04 由 50% 下调，线上实盘同口径）；否则连板数 >= 4）；
 //                  动量：「最多 10 个交易日的最精准窗口区间最大涨幅 < 80%」剔除近期已大幅拉升者（先枚举长度 ≤ 10 的子窗口取最大涨幅者，再双向缩进到「同时包含窗内最高/最低收盘日的最短跨度」）；
+//                        且「峰值日（含）至买点前全部交易日区间最大波动 < 20%」（2026-11-14 用户要求）；
 //                  且连板准入事件之后若出现过任一交易日涨幅 < -9%，一并剔除该股；且 20 日总涨幅 < 100%；
 //          新路径：连板基础名单单独按「过去 20 个交易日（不含当日）内连板准入（同上市值分档）」统计；
 //                  动量：「最多 10 个交易日的最精准窗口区间最大涨幅 > 70%（2026-10-22 用户新增）且 < 100%」且「该窗口峰值日（窗内最高收盘日）之后至买点前严格相隔 >= 5 个交易日」
@@ -315,6 +318,8 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
       const pool = await buildExtremeWinPool(dateStr, {
         fromFirstLimitUp: true,
         capBoardMinGainPct: EXTREME_CAP_BOARD_MIN_GAIN_PCT,
+        // 2026-11-14 用户要求：旧路径追加「峰值日（含）至买点前区间最大波动 < 20%」（新路径仍 15%）
+        oldPostPeakMaxRangePct: OLD_POST_PEAK_MAX_RANGE_PCT,
       });
       candidatesRaw = pool.stocks || [];
       poolWinDates = pool.winDates || [];
@@ -331,7 +336,11 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
     let revPoolFilterText = '';
     if (eligibleRev) {
       try {
-        const pool = await buildReverseLeaderPool(dateStr, null, { bigDropMaxTimes: REV_BIG_DROP_MAX_TIMES });
+        const pool = await buildReverseLeaderPool(dateStr, null, {
+          bigDropMaxTimes: REV_BIG_DROP_MAX_TIMES,
+          // 2026-11-14 用户要求：峰值日（含）至买点前区间最大波动 < 30%
+          postPeakMaxRangePct: REV_POST_PEAK_MAX_RANGE_PCT,
+        });
         revCandidatesRaw = pool.stocks || [];
         revPoolFilterText = pool.poolFilterText || '';
       } catch (e) { revCandidatesRaw = []; revPoolFilterText = ''; }
@@ -783,7 +792,7 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
   const checks = [
     {
       id: 'extreme_win_pool',
-      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板（连板数 ≥ 2）且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${EXTREME_CAP_BOARD_MIN_GAIN_PCT}% 即可、≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者需四连板及以上；均剔除创业板/科创板与 ${EXCLUDED_THEMES.join('/')} 题材。旧路径：过去 ${LOOKBACK_DAYS} 个交易日达标，10 日最大涨幅窗口（从第一天涨停的前一交易日收盘价起算）区间涨幅 < ${MAX_WINDOW_RANGE_PCT}%，连板后无单日涨幅 < ${POST_LIANBAN_DROP_PCT}%，20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。新路径：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日达标，10 日最大涨幅窗口（同口径）区间涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < ${NEW_MAX_WINDOW_RANGE_PCT}% 且该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%、该窗口内收盘跌幅 < ${POST_LIANBAN_DROP_PCT}% 的交易日至多 1 次（≥ 2 次剔除），20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。两路径均剔除与全量自选股科技股重叠者）`,
+      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板（连板数 ≥ 2）且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${EXTREME_CAP_BOARD_MIN_GAIN_PCT}% 即可、≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者需四连板及以上；均剔除创业板/科创板与 ${EXCLUDED_THEMES.join('/')} 题材。旧路径：过去 ${LOOKBACK_DAYS} 个交易日达标，10 日最大涨幅窗口（从第一天涨停的前一交易日收盘价起算）区间涨幅 < ${MAX_WINDOW_RANGE_PCT}%、峰值日（含）至买点前区间最大波动 < ${OLD_POST_PEAK_MAX_RANGE_PCT}%，连板后无单日涨幅 < ${POST_LIANBAN_DROP_PCT}%，20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。新路径：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日达标，10 日最大涨幅窗口（同口径）区间涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < ${NEW_MAX_WINDOW_RANGE_PCT}% 且该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%、该窗口内收盘跌幅 < ${POST_LIANBAN_DROP_PCT}% 的交易日至多 1 次（≥ 2 次剔除），20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。两路径均剔除与全量自选股科技股重叠者）`,
       passed: true,
       value: `${pick.name}（${pick.code}）· ${pick.lianbanCount} 连板`,
       reason: `候选 = 旧路径（过去 ${LOOKBACK_DAYS} 个交易日内连板准入达标）与新路径（过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日内连板准入达标）并集（命中日 ${pick.date}，板块 ${pick.board || '--'}）；已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、${EXCLUDED_THEMES.join('/')} 题材（板块名包含关键词即剔除）与全量自选股科技股（isTech ≠ false）重叠者${pick.poolFilterText || ''}；本分钟达标候选共 ${ranked.length} 只，按今日「强度分 − 差劲分」降序取第一个「未涨停且未被另一腿持有」者作为顺周期腿（第 ${legIdx + 1} 份半仓）建仓标的`,

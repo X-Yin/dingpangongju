@@ -34,7 +34,7 @@ const {
 const {
   LOOKBACK_DAYS, MIN_BOARD_COUNT, RANGE_WINDOW_DAYS, RANGE_SLIDE_DAYS, MIN_WINDOW_RANGE_PCT,
   NEG_STREAK_MIN_DAYS, INDEX_DROP_PCT, STRENGTH_MIN, HIT_REQUIRED,
-  BIG_DROP_MAX_TIMES,
+  BIG_DROP_MAX_TIMES, POST_PEAK_MAX_RANGE_PCT,
   buildReverseLeaderPool,
 } = require('./reverseLeaderPool');
 
@@ -45,7 +45,8 @@ const {
 //   选股（候选池）= 过去 20 个交易日（不含当日）内出现过连板（连板数 >= 2）的个股（剔除 ST 等黑名单）；
 //        并叠加动量过滤——过去 20 个交易日（不含当日）内滑动「连续 10 个交易日」子窗口，
 //        子窗口区间最大涨幅 = (窗口最高收盘价 − 窗口最低收盘价) ÷ 窗口最低收盘价 × 100，
-//        取各子窗口的最大值须 >= 60%（子窗口缺日K数据视为不达标）。
+//        取各子窗口的最大值须 >= 60%（子窗口缺日K数据视为不达标）；
+//        2026-11-14 用户要求：该最大涨幅窗口的峰值日（窗内最高收盘日，含当日）至买点前区间最大波动须 < 30%。
 //   买点（盘中逐桶实时）= 在某交易日「上证指数当日跌幅 >= 0.5%（较昨收 <= -0.5%，按该桶分时价实时判定）」时，
 //        对候选股逐桶计算盘中强度分：某候选股当日盘中强度分首次 > 50 即计作一次命中（同一天同一只股票只计一次）；
 //        每只候选股各自独立累计，累计到第 2 次命中（即「第二次当日强度分 > 50」）的那一刻按该分钟分时价买入；
@@ -172,7 +173,10 @@ const runReverseLeaderBacktest = async (startDate, endDate, strategyId, onProgre
     let poolFilterText = '';
     if (eligible) {
       try {
-        const pool = await buildReverseLeaderPool(dateStr, null, { bigDropMaxTimes: BIG_DROP_MAX_TIMES });
+        const pool = await buildReverseLeaderPool(dateStr, null, {
+          bigDropMaxTimes: BIG_DROP_MAX_TIMES,
+          postPeakMaxRangePct: POST_PEAK_MAX_RANGE_PCT,
+        });
         candidatesRaw = pool.stocks || [];
         poolFilterText = pool.poolFilterText || '';
       } catch (e) { candidatesRaw = []; poolFilterText = ''; }

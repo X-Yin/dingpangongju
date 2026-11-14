@@ -1,28 +1,70 @@
+/* 板块资金监控：标题与内容单行排布，超出部分横向滚动；
+   卡片头部复用 all-stock-card 结构，与自选股缩略卡片等高 */
 .block-money-card {
   height: auto !important;
+  overflow: hidden;
 
-  .block-money-alerts {
-    margin-bottom: 8px;
+  .block-money-strip {
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .block-money-strip-title {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+  }
+
+  .block-money-strip-list {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+
+    > * {
+      flex: 0 0 auto;
+    }
+
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 999px;
+      background: rgba(18, 33, 58, 0.16);
+    }
   }
 
   .block-money-alert-tag {
     font-size: 11px;
+    line-height: 16px;
     padding: 2px 8px;
     border-radius: 999px;
     color: #fff;
     font-weight: 600;
   }
 
-  .block-money-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+  .block-money-strip-list .block-money-item {
+    padding: 3px 8px;
     gap: 6px;
+  }
 
-    .item-name {
-      font-size: 13px;
-    }
+  .block-money-empty {
+    font-size: 12px;
+    color: rgba(71, 85, 105, 0.6);
   }
 }

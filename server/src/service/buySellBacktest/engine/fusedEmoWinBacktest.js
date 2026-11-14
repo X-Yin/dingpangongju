@@ -67,6 +67,7 @@ const {
 const {
   LOOKBACK_DAYS, BASE_MIN_BOARD_COUNT, DEATH_CROSS_WINDOW, DELTA_MIN,
   PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
+  OLD_POST_PEAK_MAX_RANGE_PCT,
   buildAbnormalWarnBases, evalAbnormalWarn,
   computeCrossInfo, buildExtremeWinPool,
 } = require('./extremeWinPool');
@@ -79,6 +80,7 @@ const {
   STRENGTH_MIN: REV_STRENGTH_MIN,
   HIT_REQUIRED: REV_HIT_REQUIRED,
   BIG_DROP_MAX_TIMES: REV_BIG_DROP_MAX_TIMES,
+  POST_PEAK_MAX_RANGE_PCT: REV_POST_PEAK_MAX_RANGE_PCT,
   buildReverseLeaderPool,
 } = require('./reverseLeaderPool');
 const { buildPosition, buildRevPosition } = require('./extremeWinBacktest');
@@ -279,7 +281,8 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
     let candidatesRaw = [];
     let poolWinDates = [];
     try {
-      const pool = await buildExtremeWinPool(dateStr);
+      // 2026-11-14 用户要求：顺周期旧路径追加「峰值日（含）至买点前区间最大波动 < 20%」（新路径仍 15%）
+      const pool = await buildExtremeWinPool(dateStr, { oldPostPeakMaxRangePct: OLD_POST_PEAK_MAX_RANGE_PCT });
       candidatesRaw = pool.stocks || [];
       poolWinDates = pool.winDates || [];
     } catch (e) { candidatesRaw = []; }
@@ -293,7 +296,11 @@ const runFusedEmoWinBacktest = async (startDate, endDate, strategyId, onProgress
     let revPoolFilterText = '';
     if (eligibleRev) {
       try {
-        const pool = await buildReverseLeaderPool(dateStr, null, { bigDropMaxTimes: REV_BIG_DROP_MAX_TIMES });
+        const pool = await buildReverseLeaderPool(dateStr, null, {
+          bigDropMaxTimes: REV_BIG_DROP_MAX_TIMES,
+          // 2026-11-14 用户要求：峰值日（含）至买点前区间最大波动 < 30%
+          postPeakMaxRangePct: REV_POST_PEAK_MAX_RANGE_PCT,
+        });
         revCandidatesRaw = pool.stocks || [];
         revPoolFilterText = pool.poolFilterText || '';
       } catch (e) { revCandidatesRaw = []; revPoolFilterText = ''; }

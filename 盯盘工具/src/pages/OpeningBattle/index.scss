@@ -1483,24 +1483,7 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
 // ==================== 买点 / 卖点诊断卡片（紫 → 青渐变 · 磨砂玻璃） ====================
 // 参考图效果：整卡使用紫罗兰 → 青蓝渐变底，内部条目统一为半透明磨砂玻璃卡
-// 整点高亮：整分钟内卡片背景闪烁做重点提示（情绪游资模式按 3 分钟整点 9:30/9:33/9:36…，其余模式按 5 分钟整点）
-.ob-buy-card.is-tick::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background-color: rgba(255, 196, 0, 0.65);
-  animation: ob-tick-blink 1.2s ease-in-out infinite;
-}
-
-// 闪烁层压在内容之下，避免把标题 / 正文染色
-.ob-buy-card.is-tick > .ob-diagnosis-header,
-.ob-buy-card.is-tick > .ob-diagnosis-body {
-  position: relative;
-  z-index: 1;
-}
+// 买点诊断卡不再做整点背景闪烁
 
 @keyframes ob-tick-blink {
   0%, 100% { opacity: 0; }
@@ -1592,13 +1575,17 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     display: flex;
     align-items: center;
     gap: 8px;
+    // 标题栏换行时操作区仍靠右（徽章 + 刷新按钮保持在标题栏右侧）
+    margin-left: auto;
   }
 
-  // 卖点诊断标题栏「打开提醒」开关
+  // 卖点诊断内容区「打开提醒」开关（标题栏位置不足，2026-11-14 移到持仓信息行右侧）
   .ob-reminder-switch {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    margin-left: auto;
+    flex-shrink: 0;
     font-size: 12px;
     font-weight: 600;
     color: #fff;

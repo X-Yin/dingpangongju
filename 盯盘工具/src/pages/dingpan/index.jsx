@@ -19,7 +19,6 @@ import OpeningBattleCards from './components/OpeningBattleCards';
 import BlockRankingCards from './components/BlockRankingCards';
 import WatchlistTopRanking from './components/WatchlistTopRanking';
 import SectorRankingMonitor from './components/SectorRankingMonitor';
-import StockAlertCard from './components/StockAlertCard';
 import BlockAlertCard from './components/BlockAlertCard';
 import OverlayTimelineSection from './components/OverlayTimelineSection';
 import SiweiLitePanel from './components/SiweiLitePanel';
@@ -2492,8 +2491,6 @@ const DingPan = () => {
         return null;
     }, [data.kaiPanXiaCuoData]);
 
-    const stockUpAlerts = stockData.waveList.filter(item => item.statusKey === 'highRed');
-    const stockDownAlerts = stockData.waveList.filter(item => item.statusKey !== 'highRed');
     const blockUpAlerts = blockAlerts.filter(item => item.type === 'up');
     const blockDownAlerts = blockAlerts.filter(item => item.type !== 'up');
 
@@ -2561,31 +2558,15 @@ const DingPan = () => {
                         </div>
                     ) : (
                         <>
-                            {/* 抢筹与拉升模块 */}
-                            <OpeningBattleCards
-                                jingJiaQiangChouData={data.jingJiaQiangChouData}
-                                kaiPanZhuDongData={data.kaiPanZhuDongData}
-                                kaiPanXiaCuoData={data.kaiPanXiaCuoData}
-                                showJingJiaQiangChou={showJingJiaQiangChou}
-                                showKaiPanZhuDong={showKaiPanZhuDong}
-                                showKaiPanXiaCuo={showKaiPanXiaCuo}
-                                emotionSuggestion={emotionSuggestion}
-                                onCloseJingJia={() => setShowJingJiaQiangChou(false)}
-                                onCloseKaiPanZhuDong={() => setShowKaiPanZhuDong(false)}
-                                onCloseKaiPanXiaCuo={() => setShowKaiPanXiaCuo(false)}
-                                onStockClick={showKLine}
-                                themeColor={effThemeColor}
-                            />
-                            {/* 个股异动监控（含板块异动，置于涨跌幅前十上方） */}
+                            {/* 板块资金监控：左侧第一列第一行，与右侧自选股缩略卡片等高等对齐 */}
                             <Row gutter={[16, 16]} style={{ marginBottom: 12 }}>
                                 <Col xs={24} lg={SHOW_BLOCK_ALERT_MONITOR ? 12 : 24}>
-                                    <StockAlertCard
-                                        stockUpAlerts={stockUpAlerts}
-                                        stockDownAlerts={stockDownAlerts}
-                                        waveList={stockData.waveList}
-                                        onStockClick={showKLine}
-                                        bodyHeight="200px"
-                                        itemsPerRow={SHOW_BLOCK_ALERT_MONITOR ? 1 : 2}
+                                    <BlockMoneyMonitor
+                                        targetBlocks={TARGET_BLOCKS}
+                                        displayBlocks={DISPLAY_BLOCKS}
+                                        bigChangeThreshold={BLOCK_MONEY_BIG_CHANGE_THRESHOLD}
+                                        onBlockClick={jumpToBlock}
+                                        onViewMore={() => navigate('/block?tab=money')}
                                         themeColor={effThemeColor}
                                     />
                                 </Col>
@@ -2602,6 +2583,22 @@ const DingPan = () => {
                                 </Col>
                                 )}
                             </Row>
+
+                            {/* 抢筹与拉升模块 */}
+                            <OpeningBattleCards
+                                jingJiaQiangChouData={data.jingJiaQiangChouData}
+                                kaiPanZhuDongData={data.kaiPanZhuDongData}
+                                kaiPanXiaCuoData={data.kaiPanXiaCuoData}
+                                showJingJiaQiangChou={showJingJiaQiangChou}
+                                showKaiPanZhuDong={showKaiPanZhuDong}
+                                showKaiPanXiaCuo={showKaiPanXiaCuo}
+                                emotionSuggestion={emotionSuggestion}
+                                onCloseJingJia={() => setShowJingJiaQiangChou(false)}
+                                onCloseKaiPanZhuDong={() => setShowKaiPanZhuDong(false)}
+                                onCloseKaiPanXiaCuo={() => setShowKaiPanXiaCuo(false)}
+                                onStockClick={showKLine}
+                                themeColor={effThemeColor}
+                            />
 
                             {/* 板块涨跌幅前十 - 左右布局（展开时在左侧，折叠时移动到右侧自选股监控下方） */}
                             {!isWatchlistCollapsed && (
@@ -2695,16 +2692,6 @@ const DingPan = () => {
 
                 {/* 右侧独立列：自选股全量监控 */}
                 <Col xs={24} lg={7}>
-                            {/* 板块资金监控 */}
-                            <BlockMoneyMonitor
-                                targetBlocks={TARGET_BLOCKS}
-                                displayBlocks={DISPLAY_BLOCKS}
-                                bigChangeThreshold={BLOCK_MONEY_BIG_CHANGE_THRESHOLD}
-                                onBlockClick={jumpToBlock}
-                                onViewMore={() => navigate('/block?tab=money')}
-                                themeColor={effThemeColor}
-                            />
-
                             {/* 外盘涨跌监控（自选股展开时在其上方，折叠时移到自选股下方） */}
                             {!isWatchlistCollapsed && (
                                 <div ref={rihanSectionRef}>
