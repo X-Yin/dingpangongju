@@ -69,9 +69,9 @@ const fetchSingleKline = async (platform, code, startDate) => {
     if (platform === 'ths') return fetchThsKline(code, startDate);
     if (platform === 'cls') return fetchClsKline(code, startDate);
 
-    // auto：按权重选主源，失败兜底另一只主力
+    // auto：按权重选主源（同 code 稳定命中同一主源，保证重算可复现），失败兜底另一只主力
     if (!platform || platform === 'auto') {
-        const primary = pickPrimarySource('kline');
+        const primary = pickPrimarySource('kline', code);
         const other = primary === 'cls' ? 'ths' : 'cls';
         try {
             const rows = await (primary === 'cls' ? fetchClsKline(code, startDate) : fetchThsKline(code, startDate));

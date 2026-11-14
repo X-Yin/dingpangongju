@@ -102,8 +102,9 @@ function getOpeningPrices() {
 }
 
 const getSingleStockData = async (code, limit = 1) => {
-    // 日K路由：CLS / THS 之间加权随机（默认 60/40），主源失败则另一源兜底
-    const tryOrder = buildTryOrder('kline');
+    // 日K路由：CLS / THS 之间按 code 稳定哈希选择（默认 60/40 分布），主源失败则另一源兜底；
+    // 同一股票固定同一主源，保证收盘后重算结果可复现
+    const tryOrder = buildTryOrder('kline', code);
     for (const src of tryOrder) {
         let result = null;
         if (src === 'ths') result = await getSingleStockDataFromTHS(code, limit);
@@ -370,7 +371,7 @@ let tlineNum = 0;
 // 2026-11-04 实测：CLS 并发 177-211ms / 稳定；LB 241-360ms / 稳定；THS 偶发 500ms+ timeout
 const getSingleStockTlineDataRaw = async (code) => {
     const _t0 = Date.now();
-    const tryOrder = buildTryOrder('tline'); // 例如 ['cls','ths','lb'] 或 ['ths','cls','lb']
+    const tryOrder = buildTryOrder('tline', code); // 例如 ['cls','ths','lb'] 或 ['ths','cls','lb']，同 code 稳定命中同一主源
 
     for (const src of tryOrder) {
         let result = null;
@@ -1011,9 +1012,9 @@ const getSingleStockTlineDataByDate = async (code, tradeDate) => {
         }
     }
 
-    // 历史日期分时路由：CLS/THS 之间加权随机（LB 不支持按日期查，跳过）
+    // 历史日期分时路由：CLS/THS 之间按 (code, 日期) 稳定哈希选择（LB 不支持按日期查，跳过）
     let result = null;
-    const histOrder = buildTryOrder('tlineHistorical');
+    const histOrder = buildTryOrder('tlineHistorical', `${code}|${tradeDate}`);
     for (const src of histOrder) {
         if (src === 'ths') result = await getSingleStockTlineDataByDateFromTHS(code, tradeDate);
         else if (src === 'cls') result = await getSingleStockTlineDataByDateFromCLS(code, tradeDate);
@@ -1137,9 +1138,9 @@ const getSingleStockTlineDataByDateLean = async (code, tradeDate) => {
     }
     if (cached && isTlineCacheComplete(cached.line, dateNum)) return cached;
 
-    // 历史分时路由（ByDateLean 路径，磁盘未命中才走 HTTP）
+    // 历史分时路由（ByDateLean 路径，磁盘未命中才走 HTTP；同 (code, 日期) 稳定命中同一主源）
     let result = null;
-    const histOrder = buildTryOrder('tlineHistorical');
+    const histOrder = buildTryOrder('tlineHistorical', `${code}|${tradeDate}`);
     for (const src of histOrder) {
         if (src === 'ths') result = await getSingleStockTlineDataByDateFromTHS(code, tradeDate);
         else if (src === 'cls') result = await getSingleStockTlineDataByDateFromCLS(code, tradeDate);

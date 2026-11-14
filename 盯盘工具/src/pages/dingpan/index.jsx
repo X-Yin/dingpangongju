@@ -115,6 +115,19 @@ const isWithinTradingHours = () => {
 const DingPan = () => {
     const navigate = useNavigate();
 
+    // 交易日交易时间内，停留在本页超过 1 分钟自动跳转到专注交易页（/opening_battle）
+    useEffect(() => {
+        const STAY_LIMIT_MS = 60 * 1000; // 停留上限：1 分钟
+        const enterTime = Date.now();
+        const timer = setInterval(() => {
+            if (Date.now() - enterTime > STAY_LIMIT_MS && isWithinTradingHours()) {
+                clearInterval(timer);
+                navigate('/opening_battle');
+            }
+        }, 5 * 1000);
+        return () => clearInterval(timer);
+    }, [navigate]);
+
     // 访问密码门禁状态（不持久化：刷新页面或重新进入菜单后需重新输入）
     const [unlocked, setUnlocked] = useState(true); // TODO: 暂时注释掉锁，恢复时改回 false
     const [passwordInput, setPasswordInput] = useState('');

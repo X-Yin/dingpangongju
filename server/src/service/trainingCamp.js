@@ -240,6 +240,39 @@ const getDailyBacktestStrategies = () => {
   }
 };
 
+// 回测随笔：每个策略一篇富文本（Markdown）笔记，落盘 data/backtest_notes.json（key=策略 id）
+const backtestNotesFile = path.resolve(__dirname, '../data/backtest_notes.json');
+
+const readBacktestNotes = () => {
+  try {
+    if (!fs.existsSync(backtestNotesFile)) return {};
+    const raw = JSON.parse(fs.readFileSync(backtestNotesFile, 'utf-8'));
+    return raw && typeof raw === 'object' ? raw : {};
+  } catch (e) {
+    return {};
+  }
+};
+
+// 读取某策略的回测随笔（无记录时返回 null）
+const getBacktestNote = (strategyId) => {
+  const id = String(strategyId || '').trim();
+  if (!id) return null;
+  const hit = readBacktestNotes()[id];
+  return hit ? { strategyId: id, content: hit.content || '', updatedAt: hit.updatedAt || null } : null;
+};
+
+// 保存某策略的回测随笔（content 为 Markdown 文本；原子写避免并发损坏）
+const saveBacktestNote = (strategyId, content) => {
+  const id = String(strategyId || '').trim();
+  if (!id) throw new Error('策略 id 不能为空');
+  const notes = readBacktestNotes();
+  notes[id] = { content: String(content ?? ''), updatedAt: new Date().toISOString() };
+  const tmpFile = `${backtestNotesFile}.${process.pid}.tmp`;
+  fs.writeFileSync(tmpFile, JSON.stringify(notes, null, 2));
+  fs.renameSync(tmpFile, backtestNotesFile);
+  return { strategyId: id, content: notes[id].content, updatedAt: notes[id].updatedAt };
+};
+
 // 保存日常回测策略 id 列表（去重；空数组表示清空配置）
 const saveDailyBacktestStrategies = (ids) => {
   const list = Array.isArray(ids)
@@ -713,6 +746,8 @@ module.exports = {
   deleteTrainingCampGroup,
   getDailyBacktestStrategies,
   saveDailyBacktestStrategies,
+  getBacktestNote,
+  saveBacktestNote,
   prewarmKlineCache,
   calcDailyMaInfo, // 供重点板块策略为非自选股持仓合成卖出诊断所需的日K衍生字段（口径与自选股完全一致）
   getKlineCached,

@@ -110,7 +110,7 @@ const { getActiveProvider, getHeaders, buildRequestBody } = require('./utils/aiP
 const aiSettings = require('./service/aiSettings');
 const { getMainFundAiSummary, getMainFundAiContext } = require('./service/mainFundAi');
 const { getAllGroups: getAllIndexOverlayGroups, saveGroup: saveIndexOverlayGroup, deleteGroup: deleteIndexOverlayGroup } = require('./service/indexOverlayGroup');
-const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup, getDailyBacktestStrategies, saveDailyBacktestStrategies } = require('./service/trainingCamp');
+const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup, getDailyBacktestStrategies, saveDailyBacktestStrategies, getBacktestNote, saveBacktestNote } = require('./service/trainingCamp');
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, ''); // 北京今天 YYYYMMDD
 const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, attachHoldingDays, attachBuyDayReturn, getStockRecentReports, queryLiveIndexGate } = require('./service/buySellBacktest');
 const { startRandomSim, getRandomSimStatus, getRandomSimDetail } = require('./service/randomSim');
@@ -119,7 +119,7 @@ const { getAttackDefenseScore } = require('./service/attackDefenseScore');
 const feishuNotify = require('./service/feishuNotify');
 // 交易日历（月度策略报告以「每月最后一个交易日」为最终期末口径）
 const { isTradingDay, getPrevTradingDay } = require('./utils/tradingDay');
-const { getClsReqIndexUrl, isTradingHours, timestampToDateStr } = require('./utils');
+const { getClsReqIndexUrl, isTradingHours, timestampToDateStr, isAfterMarketClose } = require('./utils');
 const { getAllGroups: getAllOverlayStockGroups, saveGroup: saveOverlayStockGroup, deleteGroup: deleteOverlayStockGroup } = require('./service/overlayStockGroup');
 const { refreshOvernightMeiguData, getOvernightMeiguData, getLatestMeiguDate } = require('./service/meigu');
 const { scheduleLianbanDaily, getLianbanSentimentSeries, getLianbanDayData, refreshLianbanRange } = require('./service/lianban');
@@ -150,12 +150,8 @@ const washFusionLive = require('./service/washFusionLive');
 const { checkFirstBoardWashSellPointDetailed, checkSecondBoardWashSellPointDetailed } = require('./service/firstBoardWashSell');
 // 调试面板 MOCK：手动触发买点/卖点命中，走同一推送 + 飞书链路
 const debugMock = require('./service/debugMock');
-// 重点板块 5 分钟涨幅异动监控（每 5min 整数倍计算，≥1.5% 经 WS 推送前端弹窗）
-const block5minSurge = require('./service/block5minSurge');
 // 盘中情绪共振监测（大盘情绪温度 ≥60 且板块全面高潮/一致加速时 WS 广播）
 const emotionResonance = require('./service/emotionResonance');
-// 千亿市值高开走强监控（2026-11-12 用户新增：总市值≥1000亿 + 9:30竞价涨幅≥1% + 9:31涨幅高于开盘，WS 推送）
-const bigcapOpenSurge = require('./service/bigcapOpenSurge');
 const wsServer = require('./wsServer');
 const { getThsHotRank } = require('./service/thsHotRank');
 
@@ -229,19 +225,21 @@ const refreshApiCacheInBackground = (key, compute) => {
 /**
  * 读取缓存结果；无缓存时同步计算一次。
  * force=true 时强制同步重算并更新缓存（前端手动刷新按钮）。
+ * 2026-11-14 用户要求更新：取消「收盘后冻结」——force 时任何时段都真正重算，
+ * 不再返回收盘时的冻结结果。
  */
 const withApiCache = async (key, compute, force = false, minIntervalMs = API_CACHE_MIN_INTERVAL_MS) => {
+  let entry = apiCacheMem.get(key);
+  if (!entry) {
+    entry = readApiCacheFromDisk(key);
+    if (entry) apiCacheMem.set(key, entry);
+  }
   if (force) {
     const payload = await compute();
     const fresh = { payload, at: Date.now(), refreshing: false };
     apiCacheMem.set(key, fresh);
     persistApiCache(key, fresh);
     return payload;
-  }
-  let entry = apiCacheMem.get(key);
-  if (!entry) {
-    entry = readApiCacheFromDisk(key);
-    if (entry) apiCacheMem.set(key, entry);
   }
   if (!entry) {
     // 冷启动并发去重：同一缓存键的多请求（StrictMode 双挂载 / 多标签页）共用一次计算
@@ -1984,20 +1982,10 @@ app.post('/hot_money_leader_list', async (req, res) => {
   try {
     const targetDate = req.body?.targetDate;
     const limit = req.body?.limit;
-    // force=1：前端卡片手动刷新按钮传入，强制重算，绕开缓存等待下一轮轮询
-    const force = req.body?.force === true || req.body?.force === 1 || req.body?.force === '1';
-    const cacheKey = `hot_money_leader_list_${dayjs().format('YYYYMMDD')}_${targetDate || 'live'}_${limit || 50}`;
-    const result = await withApiCache(
-      cacheKey,
-      async () => {
-        // 强制刷新时先清空「当日」分时缓存，确保实时拉取最新分时并重算强度分/差劲分
-        if (force) clearTodayTlineCache();
-        // 2026-11-14 用户要求：临近异动（10/30 日窗口剩余涨幅 ≤ 10%）的候选改由后端过滤，前端不再过滤
-        return filterNearAbnormalCandidates(await getHotMoneyLeaderList(targetDate, limit));
-      },
-      force,
-      4000
-    );
+    // 2026-11-14 用户要求：候选股列表永远真实重算，不走任何缓存 / 收盘冻结（前端已固定 force 轮询）；
+    // 每次重算前清空「当日」分时缓存，确保实时拉取最新分时并重算强度分/差劲分
+    clearTodayTlineCache();
+    const result = await filterNearAbnormalCandidates(await getHotMoneyLeaderList(targetDate, limit));
     res.json(result);
   } catch (error) {
     console.error('获取情绪游资龙头列表失败:', error);
@@ -2032,15 +2020,8 @@ app.post('/top_gainers_by_market', async (req, res) => {
     // limit：每市场最大条数，缺省 5（开盘实战页）；优选个股全量展示时传较大的值
     const targetDate = req.body?.targetDate;
     const limit = req.body?.limit;
-    // force=1：前端卡片手动刷新按钮传入，强制重算，绕开缓存等待下一轮轮询
-    const force = req.body?.force === true || req.body?.force === 1 || req.body?.force === '1';
-    const cacheKey = `top_gainers_by_market_${dayjs().format('YYYYMMDD')}_${targetDate || 'live'}_${limit || 5}`;
-    const result = await withApiCache(
-      cacheKey,
-      () => getTopGainersByMarket(targetDate, limit),
-      force,
-      4000
-    );
+    // 2026-11-14 用户要求：候选股列表永远真实重算，不走任何缓存 / 收盘冻结（前端已固定 force 轮询）
+    const result = await getTopGainersByMarket(targetDate, limit);
     res.json(result);
   } catch (error) {
     console.error('获取自选股涨幅榜失败:', error);
@@ -2236,19 +2217,6 @@ app.post('/debug/mock_second_board_wash_sell', async (req, res) => {
   }
 });
 
-// 重点板块 5 分钟涨幅异动 MOCK：从最新板块快照随机挑若干板块，构造 5min 涨幅 ≥1.5%，
-// 经与实盘完全一致的 WS 链路（type:'block_5min_surge'）推送前端弹窗
-app.post('/debug/mock_block_5min_surge', (req, res) => {
-  try {
-    const count = Math.max(1, Math.min(parseInt(req.body?.count, 10) || 3, 10));
-    const result = block5minSurge.mockSurge(count);
-    res.json(result);
-  } catch (error) {
-    console.error('MOCK 板块 5min 异动失败:', error);
-    res.json({ success: false, error: error.message || 'MOCK 板块 5min 异动失败' });
-  }
-});
-
 // 情绪共振 MOCK：广播一条与实盘结构一致的共振提示（type:'emotion_resonance'）
 app.post('/debug/mock_emotion_resonance', (req, res) => {
   try {
@@ -2256,17 +2224,6 @@ app.post('/debug/mock_emotion_resonance', (req, res) => {
   } catch (error) {
     console.error('MOCK 情绪共振失败:', error);
     res.json({ success: false, error: error.message || 'MOCK 情绪共振失败' });
-  }
-});
-
-// 千亿市值高开走强 MOCK（2026-11-12 用户新增）：优先取真实千亿市值自选股 + 实时行情构造走强数据，
-// 经与实盘完全一致的 WS 链路（type:'bigcap_open_surge'）推送前端全局卡片
-app.post('/debug/mock_bigcap_open_surge', async (req, res) => {
-  try {
-    res.json(await bigcapOpenSurge.mockSurge());
-  } catch (error) {
-    console.error('MOCK 千亿市值高开走强失败:', error);
-    res.json({ success: false, error: error.message || 'MOCK 千亿市值高开走强失败' });
   }
 });
 
@@ -4275,6 +4232,36 @@ app.delete('/training_camp/groups/:id', (req, res) => {
   }
 });
 
+// 训练营 - 回测随笔：读取某策略的富文本笔记（每个策略独立一篇，未写过时返回空内容）
+app.get('/training_camp/backtest/note', (req, res) => {
+  try {
+    const { strategyId } = req.query;
+    if (!strategyId) {
+      return res.status(400).json({ success: false, message: '参数错误：缺少 strategyId' });
+    }
+    const note = getBacktestNote(strategyId);
+    res.json({ success: true, strategyId, content: note?.content || '', updatedAt: note?.updatedAt || null });
+  } catch (error) {
+    console.error('获取回测随笔失败:', error);
+    res.status(500).json({ success: false, message: error.message || '获取回测随笔失败' });
+  }
+});
+
+// 训练营 - 回测随笔：保存某策略的富文本笔记（Markdown），下次打开同一策略时回显
+app.post('/training_camp/backtest/note', (req, res) => {
+  try {
+    const { strategyId, content } = req.body || {};
+    if (!strategyId) {
+      return res.status(400).json({ success: false, message: '参数错误：缺少 strategyId' });
+    }
+    const saved = saveBacktestNote(strategyId, content);
+    res.json({ success: true, ...saved });
+  } catch (error) {
+    console.error('保存回测随笔失败:', error);
+    res.status(500).json({ success: false, message: error.message || '保存回测随笔失败' });
+  }
+});
+
 // 训练营 - 日常回测策略配置（用户在前端「策略分类 → 日常回测」弹窗中勾选的策略，点该 Tag 时只回测这些策略）
 app.get('/training_camp/backtest/daily_strategies', (req, res) => {
   try {
@@ -6214,10 +6201,6 @@ const server = app.listen(port, () => {
   wsServer.attach(server, port);
   buyPointPushService.start();
   sellPointPushService.start();
-  // 重点板块 5 分钟异动监控：每 5min 整数倍扫描，单板块 5min 涨幅 ≥1.5% 即 WS 推送
-  block5minSurge.start();
-  // 千亿市值高开走强监控：9:30 采集竞价快照（市值≥1000亿 且 竞价涨幅≥1%），9:31 涨幅高于开盘即 WS 推送
-  bigcapOpenSurge.start();
   // 策略中心轮询：新命中经 WS（type:'strategy_signal'）推送前端全局卡片 + 登记 pending_alerts 对账。
   // 必须在本进程启动——WS 服务（wsServer.attach）只挂载在 index.js；之前在 poll.js 进程里
   // broadcast 因 wss 为 null 静默空转，导致记录写入但全局卡片/对账补弹均收不到（2026-11-10 修复）
@@ -6245,8 +6228,6 @@ const shutdown = (signal) => {
   console.log(`收到 ${signal}，正在关闭 HTTP / WebSocket / 买点/卖点推送服务...`);
   try { buyPointPushService.stop(); } catch (e) { /* 忽略 */ }
   try { sellPointPushService.stop(); } catch (e) { /* 忽略 */ }
-  try { block5minSurge.stop(); } catch (e) { /* 忽略 */ }
-  try { bigcapOpenSurge.stop(); } catch (e) { /* 忽略 */ }
   try { washFusionLive.stop(); } catch (e) { /* 忽略 */ }
   try { wsServer.close(); } catch (e) { /* 忽略 */ }
   server.close(() => process.exit(0));

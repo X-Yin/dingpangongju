@@ -18,6 +18,7 @@ import dayjs from 'dayjs';
 import axios from 'axios';
 import { local_ip } from '../../../../constant';
 import BacktestReportModal from '../BacktestReportModal';
+import BacktestNoteModal from '../BacktestNoteModal';
 import TrendDiagnosisModal from '../TrendDiagnosisModal';
 import TimeFlexTestModal from '../TimeFlexTestModal';
 import RandomSimTestModal from '../RandomSimTestModal';
@@ -1638,6 +1639,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const [randomSimOpen, setRandomSimOpen] = useState(false); // 随机模拟测试弹窗
   const [unlimitedOpen, setUnlimitedOpen] = useState(false); // 无限仓位测试抽屉（不同股票可同时持有，同股不重复买）
   const [ruleOpen, setRuleOpen] = useState(false); // 策略说明弹窗（当前选中策略的买卖规则细节）
+  const [noteOpen, setNoteOpen] = useState(false); // 回测随笔弹窗（每个策略独立一篇富文本笔记，保存后端）
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(null); // { current, total, date, status, elapsedSec }
   // 本次回测耗时（秒，服务端计时；null=尚未回测/已重置。运行中实时刷新，结束后为总耗时）
@@ -2556,6 +2558,18 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                 策略说明
               </Button>
             </Tooltip>
+            <span className="bt-action-sep" />
+            {/* 回测随笔：当前选中策略独立的富文本笔记，保存到后端，下次打开同一策略回显 */}
+            <Tooltip title="记录当前选中策略的个人随笔（心得、观察、改进想法），按策略独立保存，下次打开同一策略自动回显上次内容">
+              <Button
+                type="text"
+                icon={<EditOutlined />}
+                onClick={() => setNoteOpen(true)}
+                disabled={running}
+              >
+                回测随笔
+              </Button>
+            </Tooltip>
           </div>
         </div>
 
@@ -3120,6 +3134,13 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
         dateRange={effectiveRange}
         strategyName={STRATEGY_OPTIONS.find(o => o.value === strategy)?.label || strategy}
         extremeWin={curIsExtremeWinLike}
+      />
+      {/* 回测随笔弹窗：按当前选中策略读写后端富文本笔记 */}
+      <BacktestNoteModal
+        open={noteOpen}
+        strategyId={strategy}
+        strategyLabel={STRATEGY_OPTIONS.find(o => o.value === strategy)?.label || strategy}
+        onClose={() => setNoteOpen(false)}
       />
       {(() => {
         const opt = STRATEGY_OPTIONS.find(o => o.value === strategy);

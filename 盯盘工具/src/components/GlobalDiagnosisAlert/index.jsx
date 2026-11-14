@@ -18,17 +18,12 @@ import {
   MinusCircleFilled,
   CaretDownOutlined,
   CaretUpOutlined,
-  RiseOutlined,
-  StarOutlined,
-  StarFilled,
-  CrownOutlined,
-  LineChartOutlined,
   BulbOutlined,
 } from '@ant-design/icons';
 import { local_ip } from '../../constant';
 import { getStrategyMode, MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION } from '../../utils/strategyMode';
 import { createChart, ColorType, LineStyle, CrosshairMode } from 'lightweight-charts';
-import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeBlock5minSurgePush, subscribeStrategySignalPush, subscribeEmotionResonancePush, subscribeImportantStockSurgePush, subscribeBigcapOpenSurgePush } from '../../utils/buyPointWs';
+import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeStrategySignalPush, subscribeEmotionResonancePush } from '../../utils/buyPointWs';
 import { isTradingDay } from '../../utils/tradingDay';
 import './index.scss';
 
@@ -146,16 +141,10 @@ const GlobalDiagnosisAlert = () => {
   const [wfAlert, setWfAlert] = useState(null);
   // 每交易日 9:05 候选池全局弹窗：{ firstBoard, secondBoard, rules, ... }
   const [wfCandidates, setWfCandidates] = useState(null);
-  // 重点板块 5 分钟涨幅异动弹窗：{ data:{ time, prevTime, threshold, blocks:[...] }, ts, mock }
-  const [blockSurgeAlert, setBlockSurgeAlert] = useState(null);
   // 策略中心命中提醒卡片（2026-11-06 用户新增）：{ signals:[{ id, time, title, description, isBullish }], ts, mock }
   const [strategyAlert, setStrategyAlert] = useState(null);
   // 大盘 × 板块情绪共振弹窗（2026-11-07 用户新增）：{ data:{ date, marketTemperature, blocks:[...] }, ts, mock }
   const [resonanceAlert, setResonanceAlert] = useState(null);
-  // 重点股 1 分钟涨跌幅异动卡片（2026-11-10 用户新增）：{ data:{ time, prevTime, threshold, stocks:[...] }, ts, mock }
-  const [stockSurgeAlert, setStockSurgeAlert] = useState(null);
-  // 千亿市值高开走强卡片（2026-11-12 用户新增）：{ data:{ date, openTime, checkTime, rules, stocks:[...] }, ts, mock }
-  const [bigcapAlert, setBigcapAlert] = useState(null);
   const seqRef = useRef(0); // 旧请求返回晚于新触发时丢弃过期结果
 
   // 每个交易日 9:05 自动弹出「情绪游资-极致赔率候选池」全局弹窗（不依赖当前策略模式，2026-11-04 用户新增）
@@ -319,13 +308,6 @@ const GlobalDiagnosisAlert = () => {
         ts: msg.ts ?? null,
       });
     });
-    // 重点板块 5 分钟涨幅异动：open:true 时弹出异动板块列表卡片
-    const unsubBlockSurge = subscribeBlock5minSurgePush((msg) => {
-      if (msg?.open !== true || !msg?.data) return;
-      const blocks = Array.isArray(msg.data.blocks) ? msg.data.blocks : [];
-      if (blocks.length === 0) return;
-      setBlockSurgeAlert({ data: msg.data, ts: msg.ts ?? null, mock: msg.mock === true });
-    });
     // 策略中心命中：新命中信号广播时弹出全局提醒卡片（与悬浮策略球/抽屉互不影响）
     const unsubStrategy = subscribeStrategySignalPush((msg) => {
       if (msg?.open !== true || !msg?.data) return;
@@ -340,21 +322,7 @@ const GlobalDiagnosisAlert = () => {
       if (blocks.length === 0) return;
       setResonanceAlert({ data: msg.data, ts: msg.ts ?? null, mock: msg.mock === true });
     });
-    // 重点股 1 分钟涨跌幅异动：ImportantStockSurgeMonitor 检出重点股 1min 内 |Δ|≥2% 时本地广播
-    const unsubStockSurge = subscribeImportantStockSurgePush((msg) => {
-      if (msg?.open !== true || !msg?.data) return;
-      const stocks = Array.isArray(msg.data.stocks) ? msg.data.stocks : [];
-      if (stocks.length === 0) return;
-      setStockSurgeAlert({ data: msg.data, ts: msg.ts ?? null, mock: msg.mock === true });
-    });
-    // 千亿市值高开走强：后端 9:31 检出「总市值≥1000亿 + 竞价涨幅≥1% + 9:31 涨幅高于开盘」时广播
-    const unsubBigcap = subscribeBigcapOpenSurgePush((msg) => {
-      if (msg?.open !== true || !msg?.data) return;
-      const stocks = Array.isArray(msg.data.stocks) ? msg.data.stocks : [];
-      if (stocks.length === 0) return;
-      setBigcapAlert({ data: msg.data, ts: msg.ts ?? null, mock: msg.mock === true });
-    });
-    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubBlockSurge(); unsubStrategy(); unsubResonance(); unsubStockSurge(); unsubBigcap(); };
+    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubStrategy(); unsubResonance(); };
   }, [fetchBuyStocks]);
 
   const buyCardAlert = buyAlert || wfAlert;
@@ -363,10 +331,10 @@ const GlobalDiagnosisAlert = () => {
     if (wfAlert) setWfAlert(null);
   };
 
-  // BlockSurgeModal 使用 antd Modal portal，不依赖 gda-container 渲染；
+  // 弹窗类提醒使用 antd Modal portal，不依赖 gda-container 渲染；
   // 因此只在没有任何卡片、仅一个 Modal 时，也必须返回一个能挂载 Modal 的根
-  const hasCardAlert = buyCardAlert || sellAlert || iceAlert || wfCandidates || strategyAlert || stockSurgeAlert || bigcapAlert;
-  if (!hasCardAlert && !blockSurgeAlert && !resonanceAlert) return null;
+  const hasCardAlert = buyCardAlert || sellAlert || iceAlert || wfCandidates || strategyAlert;
+  if (!hasCardAlert && !resonanceAlert) return null;
 
   return (
     <div className="gda-container">
@@ -381,14 +349,6 @@ const GlobalDiagnosisAlert = () => {
       {sellAlert && <SellCard alert={sellAlert} onClose={() => setSellAlert(null)} />}
       {/* 策略中心命中提醒：与买点诊断同风格的右下角全局卡片 */}
       {strategyAlert && <StrategySignalCard alert={strategyAlert} onClose={() => setStrategyAlert(null)} />}
-      {/* 重点股 1 分钟涨跌幅异动：与买点诊断同风格的右下角全局卡片，一次列出全部命中股票 */}
-      {stockSurgeAlert && <StockSurgeCard alert={stockSurgeAlert} onClose={() => setStockSurgeAlert(null)} />}
-      {/* 千亿市值高开走强：与买点诊断同风格的右下角全局卡片，一次列出全部走强股票 */}
-      {bigcapAlert && <BigcapOpenSurgeCard alert={bigcapAlert} onClose={() => setBigcapAlert(null)} />}
-      {/* 重点板块 5 分钟涨幅异动：antd Modal 门户居中展示 */}
-      {blockSurgeAlert && (
-        <BlockSurgeCard alert={blockSurgeAlert} onClose={() => setBlockSurgeAlert(null)} />
-      )}
       {/* 大盘 × 板块情绪共振：大盘情绪 ≥60 且板块全面高潮/一致加速时弹出 */}
       {resonanceAlert && (
         <EmotionResonanceModal alert={resonanceAlert} onClose={() => setResonanceAlert(null)} />
@@ -937,346 +897,6 @@ const StrategySignalCard = ({ alert, onClose }) => {
   );
 };
 
-// ==================== 重点股 1 分钟涨跌幅异动卡片（2026-11-10 用户新增） ====================
-// ImportantStockSurgeMonitor 每 1min 采样全量自选股，重点股 1min 内涨跌幅绝对值变化 ≥2% 时触发；
-// 卡片与买点诊断同风格（右下角 gda-card），一次列出全部命中股票：名称(代码) / 当前涨幅 / 1 分钟变化
-const StockSurgeCard = ({ alert, onClose }) => {
-  const { data, ts, mock } = alert || {};
-  const stocks = Array.isArray(data?.stocks) ? data.stocks : [];
-  const threshold = data?.threshold ?? 2;
-  useCloseOnArrowKey(onClose);
-
-  const fmt = (v) => {
-    const num = Number(v);
-    if (v == null || !Number.isFinite(num)) return '--';
-    return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
-  };
-
-  return (
-    <div className="gda-card gda-stock-surge">
-      <div className="gda-header">
-        <RiseOutlined className="gda-header-icon stock-surge" />
-        <span className="gda-title">重点股急速异动</span>
-        <span className="gda-count-badge stock-surge">{stocks.length} 只命中</span>
-        {mock && <span className="gda-mock-badge">MOCK 测试</span>}
-        <CloseOutlined className="gda-close" onClick={onClose} />
-      </div>
-      <div className="gda-body">
-        <div className="gda-row">
-          <span className="gda-label">异动规则</span>
-          <span className="gda-value">{`${data?.prevTime || '--'} → ${data?.time || '--'}（1 分钟）|Δ涨跌幅| ≥ ${threshold}%`}</span>
-        </div>
-        {stocks.map((s) => {
-          const delta = Number(s.delta);
-          const up = Number.isFinite(delta) && delta > 0;
-          return (
-            <div key={s.code} className={`gda-ss-item ${up ? 'is-up' : 'is-down'}`}>
-              <div className="gda-ss-head">
-                <span className={`gda-ss-tag ${up ? 'up' : 'down'}`}>{up ? '急拉' : '急杀'}</span>
-                <b className="gda-ss-name">{s.stockName || s.code}</b>
-                <span className="gda-ss-code">{s.code}</span>
-                <span className={`gda-ss-delta ${up ? 'up' : 'down'}`}>{up ? '+' : ''}{Number.isFinite(delta) ? delta.toFixed(2) : '--'}%</span>
-              </div>
-              <div className="gda-ss-sub">
-                当前涨幅 <b className={Number(s.change) >= 0 ? 'up' : 'down'}>{fmt(s.change)}</b>
-                <span className="gda-ss-sep">·</span>
-                1 分钟前 <b>{fmt(s.prevChange)}</b>
-              </div>
-            </div>
-          );
-        })}
-        <div className="gda-footer">
-          <span>{ts ? `触发时间 ${new Date(ts).toLocaleTimeString('zh-CN', { hour12: false })}` : ''}</span>
-          <span className="gda-ss-tip">重点自选股 1 分钟内涨跌幅异动提醒</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ==================== 千亿市值高开走强卡片（2026-11-12 用户新增） ====================
-// 后端每个交易日 9:31 检出「总市值 ≥1000 亿 + 9:30 竞价涨幅 ≥1% + 9:31 涨幅高于开盘涨幅」的
-// 全量自选股后经 WS（type:'bigcap_open_surge'）广播，本卡片以买点诊断同风格全局卡片弹出：
-// 一次列出全部走强股票：名称(代码) / 总市值 / 竞价涨幅 → 当前涨幅
-const BigcapOpenSurgeCard = ({ alert, onClose }) => {
-  const { data, ts, mock } = alert || {};
-  const stocks = Array.isArray(data?.stocks) ? data.stocks : [];
-  const rules = data?.rules || {};
-  useCloseOnArrowKey(onClose);
-
-  const fmt = (v) => {
-    const num = Number(v);
-    if (v == null || !Number.isFinite(num)) return '--';
-    return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
-  };
-
-  return (
-    <div className="gda-card gda-bigcap">
-      <div className="gda-header">
-        <CrownOutlined className="gda-header-icon bigcap" />
-        <span className="gda-title">千亿市值高开走强</span>
-        <span className="gda-count-badge bigcap">{stocks.length} 只走强</span>
-        {mock && <span className="gda-mock-badge">MOCK 测试</span>}
-        <CloseOutlined className="gda-close" onClick={onClose} />
-      </div>
-      <div className="gda-body">
-        <div className="gda-row">
-          <span className="gda-label">筛选规则</span>
-          <span className="gda-value">
-            {`总市值 ≥ ${rules.minTotalMvYi ?? 1000} 亿 · 9:30 竞价涨幅 ≥ ${rules.minAuctionChange ?? 1}% · 9:31 涨幅 > 竞价涨幅`}
-          </span>
-        </div>
-        {stocks.map((s) => (
-          <div key={s.code} className="gda-ss-item is-up">
-            <div className="gda-ss-head">
-              <span className="gda-ss-tag up">走强</span>
-              <b className="gda-ss-name">{s.name || s.code}</b>
-              <span className="gda-ss-code">{s.code}</span>
-              <span className="gda-bc-mv">{Number.isFinite(Number(s.totalMvYi)) ? `${Number(s.totalMvYi).toFixed(0)} 亿` : '--'}</span>
-              <span className="gda-ss-delta up">{fmt(s.change)}</span>
-            </div>
-            <div className="gda-ss-sub">
-              9:30 竞价 <b className="up">{fmt(s.openChange)}</b>
-              <span className="gda-ss-sep">·</span>
-              开盘价 <b>{s.openPrice ?? '--'}</b>
-              <span className="gda-ss-sep">·</span>
-              现价 <b>{s.price ?? '--'}</b>
-            </div>
-          </div>
-        ))}
-        <div className="gda-footer">
-          <span>{ts ? `触发时间 ${new Date(ts).toLocaleTimeString('zh-CN', { hour12: false })}` : ''}</span>
-          <span className="gda-ss-tip">千亿市值高开后再走强提醒（9:31 检查）</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ==================== 重点板块 5 分钟涨幅异动弹窗（居中 Modal） ====================
-// 后端在每个 5min 整数倍时刻扫描重点板块，单板块过去 5min 平均涨幅 ≥ 1.5% 即推送；
-//   - Modal 居中展示（antd Modal，不再放右下角）
-//   - 支持切换板块 tab，查看成分股涨跌幅
-//   - 支持「设为重点板块 / 取消重点」（写后端 key_blocks.json）
-//   - 支持「叠加到盯盘分时」：用 localStorage 跨页通信让盯盘页面 MultiStockTimeLineModal 接收
-//   - WS payload: { type:'block_5min_surge', ts, open:true, data:{ time, prevTime, threshold, blocks:[{blockName,avgChange,prevAvgChange,change5min,stocks:[{name,code,change}]}] } }
-const BlockSurgeModal = ({ alert, onClose }) => {
-  const { data, ts, mock } = alert || {};
-  const blocks = Array.isArray(data?.blocks) ? data.blocks : [];
-  const threshold = data?.threshold ?? 1.5;
-
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [keyBlocks, setKeyBlocks] = useState(null);           // null = 加载中
-  const [loadingKeyBlocks, setLoadingKeyBlocks] = useState(false);
-  const [overlayAllLoading, setOverlayAllLoading] = useState(null); // 当前叠加全部的板块名
-  const [overlayStockLoading, setOverlayStockLoading] = useState(null); // code 正在单只叠加
-
-  const active = blocks[activeIdx] || null;
-  const activeStocks = Array.isArray(active?.stocks) ? active.stocks : [];
-
-  // 拉取当前重点板块列表
-  useEffect(() => {
-    let alive = true;
-    const load = async () => {
-      try {
-        const res = await axios.get(`http://${local_ip}:3000/api/key_blocks`);
-        if (!alive) return;
-        setKeyBlocks(Array.isArray(res.data?.data) ? res.data.data : []);
-      } catch {
-        if (alive) setKeyBlocks([]);
-      }
-    };
-    load();
-    return () => { alive = false; };
-  }, []);
-
-  const setBlockKey = async (blockName, isKey) => {
-    if (!blockName) return;
-    setLoadingKeyBlocks(true);
-    try {
-      const res = await axios.post(`http://${local_ip}:3000/api/key_blocks`, {
-        action: isKey ? 'add' : 'remove',
-        blockName,
-      });
-      if (res.data?.success) {
-        setKeyBlocks(res.data.data);
-        message.success(isKey ? `已将「${blockName}」设为重点板块` : `已从重点板块移除「${blockName}」`);
-      } else {
-        message.error(res.data?.message || '保存失败');
-      }
-    } catch (e) {
-      message.error(`保存失败：${e.message}`);
-    } finally {
-      setLoadingKeyBlocks(false);
-    }
-  };
-
-  // 将板块内所有成分股（或单只）写入 localStorage，供盯盘页叠加分时监听
-  const writeOverlaySignal = (stock) => {
-    try {
-      localStorage.setItem('dingpan_overlay_add_stock', JSON.stringify({
-        code: stock.code,
-        stockName: stock.name || stock.stockName,
-        change: stock.change,
-        _fromBlockSurge: true,
-      }));
-      localStorage.setItem('dingpan_overlay_add_stock_ts', String(Date.now()));
-    } catch (e) {
-      console.error('写入叠加分时信号失败:', e);
-    }
-  };
-
-  const overlayAllStocks = async (block) => {
-    if (!block?.blockName || !Array.isArray(block.stocks) || !block.stocks.length) return;
-    setOverlayAllLoading(block.blockName);
-    let added = 0;
-    for (let i = 0; i < block.stocks.length; i += 1) {
-      const s = block.stocks[i];
-      if (!s?.code) continue;
-      writeOverlaySignal(s);
-      added += 1;
-      await new Promise((r) => setTimeout(r, 120)); // 让盯盘页 storage 监听器逐条接收
-    }
-    setOverlayAllLoading(null);
-    message.success(`已将「${block.blockName}」全部 ${added} 只成分股叠加到分时观察`);
-  };
-
-  const overlayOneStock = async (stock) => {
-    if (!stock?.code) return;
-    setOverlayStockLoading(stock.code);
-    writeOverlaySignal(stock);
-    message.success(`已叠加 ${stock.name || stock.code}`);
-    setTimeout(() => setOverlayStockLoading(null), 200);
-  };
-
-  const pct = (v) => {
-    const num = Number(v);
-    if (v == null || !Number.isFinite(num)) return '--';
-    return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
-  };
-
-  return (
-    <Modal
-      open={!!alert}
-      onCancel={onClose}
-      footer={null}
-      width={820}
-      centered
-      className="gda-surge-modal"
-      title={
-        <div className="gda-surge-modal-header">
-          <RiseOutlined className="gda-surge-modal-icon" />
-          <div className="gda-surge-modal-title-wrap">
-            <div className="gda-surge-modal-title">重点板块 5 分钟异动</div>
-            <div className="gda-surge-modal-sub">
-              {data?.prevTime || '--'} → {data?.time || '--'} · 阈值 +{threshold}%
-              {ts ? ` · ${new Date(ts).toLocaleTimeString('zh-CN', { hour12: false })}` : ''}
-              {mock ? ' · MOCK 测试' : ''}
-            </div>
-          </div>
-        </div>
-      }
-    >
-      {blocks.length === 0 ? (
-        <div style={{ padding: '40px 0', textAlign: 'center', color: '#94a3b8' }}>暂无异动板块</div>
-      ) : (
-        <div className="gda-surge-modal-body">
-          {/* 顶部板块 tab */}
-          <div className="gda-surge-tabs">
-            {blocks.map((b, i) => {
-              const isActive = i === activeIdx;
-              const isKey = Array.isArray(keyBlocks) && keyBlocks.includes(b.blockName);
-              return (
-                <div
-                  key={`${b.blockName}-${i}`}
-                  className={`gda-surge-tab ${isActive ? 'active' : ''}`}
-                  onClick={() => setActiveIdx(i)}
-                >
-                  <div className="gda-surge-tab-head">
-                    <span className="gda-surge-tab-name" title={b.blockName}>{b.blockName}</span>
-                    {isKey && <StarFilled style={{ color: '#f59e0b', fontSize: 12 }} />}
-                  </div>
-                  <div className="gda-surge-tab-body">
-                    <span className="gda-surge-tab-delta">5min {pct(b.change5min)}</span>
-                    <span className={`gda-surge-tab-cur ${Number(b.avgChange) >= 0 ? 'up' : 'down'}`}>
-                      当前 {pct(b.avgChange)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* 板块操作条 */}
-          {active && (
-            <div className="gda-surge-actions">
-              <Button
-                size="small"
-                type="primary"
-                ghost={!Array.isArray(keyBlocks) || !keyBlocks.includes(active.blockName)}
-                icon={Array.isArray(keyBlocks) && keyBlocks.includes(active.blockName) ? <StarFilled /> : <StarOutlined />}
-                loading={loadingKeyBlocks}
-                onClick={() => setBlockKey(active.blockName, !(Array.isArray(keyBlocks) && keyBlocks.includes(active.blockName)))}
-              >
-                {Array.isArray(keyBlocks) && keyBlocks.includes(active.blockName) ? '取消重点' : '设为重点板块'}
-              </Button>
-              <Button
-                size="small"
-                icon={<LineChartOutlined />}
-                loading={overlayAllLoading === active.blockName}
-                disabled={overlayAllLoading != null}
-                onClick={() => overlayAllStocks(active)}
-              >
-                板块全部成分股叠加到分时观察
-              </Button>
-            </div>
-          )}
-
-          {/* 成分股列表 */}
-          {active && (
-            <div className="gda-surge-stock-area">
-              <div className="gda-surge-stock-head">
-                <span>成分股（{activeStocks.length} 只）</span>
-                <span>当前涨幅</span>
-                <span>操作</span>
-              </div>
-              <div className="gda-surge-stock-list">
-                {activeStocks.length === 0 ? (
-                  <div style={{ padding: 20, textAlign: 'center', color: '#94a3b8' }}>暂无成分股数据</div>
-                ) : (
-                  activeStocks
-                    .slice()
-                    .sort((a, b) => (Number(b.change) || 0) - (Number(a.change) || 0))
-                    .map((s, i) => (
-                      <div key={`${s.code || s.name}-${i}`} className="gda-surge-stock-row">
-                        <div className="gda-surge-stock-info">
-                          <span className="gda-surge-stock-name">{s.name}</span>
-                          {s.code && <span className="gda-surge-stock-code">{s.code}</span>}
-                        </div>
-                        <span className={`gda-surge-stock-change ${Number(s.change) >= 0 ? 'up' : 'down'}`}>
-                          {pct(s.change)}
-                        </span>
-                        <Button
-                          size="small"
-                          type="text"
-                          icon={<LineChartOutlined />}
-                          loading={overlayStockLoading === s.code}
-                          onClick={() => overlayOneStock(s)}
-                        >
-                          叠加
-                        </Button>
-                      </div>
-                    ))
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </Modal>
-  );
-};
-
 // ==================== 大盘 × 板块 情绪共振弹窗 ====================
 // 后端每 5 分钟（block_amount_poll 触发）计算即时情绪周期，大盘情绪温度 ≥60 且板块达到
 // 全面高潮 / 一致加速时广播：
@@ -1600,10 +1220,5 @@ const EmotionResonanceModal = ({ alert, onClose }) => {
     </Modal>
   );
 };
-
-// 旧右下角卡片样式已废弃，保留一个同名别名作为过渡
-const BlockSurgeCard = ({ alert, onClose }) => (
-  <BlockSurgeModal alert={alert} onClose={onClose} />
-);
 
 export default GlobalDiagnosisAlert;

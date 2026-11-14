@@ -11,7 +11,7 @@ import { local_ip } from '../constant';
 const WS_URL = `ws://${local_ip}:3000/ws`;
 const RECONNECT_BASE_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
-const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'block_5min_surge', 'strategy_signal', 'emotion_resonance', 'important_stock_surge', 'bigcap_open_surge'];
+const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'strategy_signal', 'emotion_resonance'];
 
 let socket = null;
 let reconnectTimer = null;
@@ -221,12 +221,6 @@ export const subscribeFundGatePush = (handler) => subscribePush('fund_gate', han
 export const subscribeWashFusionCandidatesPush = (handler) => subscribePush('wash_fusion_candidates', handler);
 export const subscribeWashFusionBuyPush = (handler) => subscribePush('wash_fusion_buy', handler);
 
-// 重点板块 5 分钟涨幅异动推送（2026-11-04 用户新增）：
-//   后端在每个 5min 整数倍时刻扫描重点板块，任一板块过去 5min 平均涨幅 ≥ 1.5% 即广播
-//   { type:'block_5min_surge', ts, open:true, data:{ time, prevTime, threshold, blocks:[{blockName,avgChange,prevAvgChange,change5min}] } }
-//   前端全局弹窗提示异动板块；MOCK 调试消息额外带 mock:true 标记
-export const subscribeBlock5minSurgePush = (handler) => subscribePush('block_5min_surge', handler);
-
 // 策略中心命中推送（2026-11-06 用户新增）：后端策略轮询新命中时广播
 //   { type:'strategy_signal', ts, open:true, data:{ signals:[{ id, time, read, strategyId, title, description, severity, isBullish }] } }
 //   前端由 GlobalDiagnosisAlert 用类似买点诊断的全局卡片提醒（悬浮策略球/抽屉不受影响）；
@@ -240,20 +234,6 @@ export const subscribeStrategySignalPush = (handler) => subscribePush('strategy_
 //     blocks:[{ board, phase, count, ratio, prevRatio, deltaRatio, reason }] } }
 //   前端由 GlobalDiagnosisAlert 弹出全局共振提示；MOCK 调试消息额外带 mock:true 标记
 export const subscribeEmotionResonancePush = (handler) => subscribePush('emotion_resonance', handler);
-
-// 重点股 1 分钟涨跌幅异动推送（2026-11-10 用户新增）：前端 ImportantStockSurgeMonitor 每 1min
-// 采样全量自选股，任一重点股（isImportant）1 分钟内涨跌幅绝对值变化 ≥ 2% 时本地广播
-//   { type:'important_stock_surge', ts, open:true, mock?, data:{ time, prevTime, threshold, stocks:[{ code, stockName, change, prevChange, delta }] } }
-//   前端由 GlobalDiagnosisAlert 弹出全局异动卡片（一次列出全部命中股票）；调试面板可发 MOCK 消息
-export const subscribeImportantStockSurgePush = (handler) => subscribePush('important_stock_surge', handler);
-
-// 千亿市值高开走强推送（2026-11-12 用户新增）：交易日 9:30 后端采集竞价快照（全量自选股中
-// 总市值 ≥1000 亿且竞价涨幅 ≥1% 的个股），9:31 实时涨幅仍高于开盘涨幅（高开走强）时广播
-//   { type:'bigcap_open_surge', ts, open:true, mock?, data:{ date, openTime, checkTime,
-//     rules:{ minTotalMvYi, minAuctionChange }, stocks:[{ code, name, totalMvYi, preclose,
-//     openPrice, openChange, price, change }] } }
-//   前端由 GlobalDiagnosisAlert 弹出全局卡片（一次列出全部走强股票）；调试面板可 MOCK 触发
-export const subscribeBigcapOpenSurgePush = (handler) => subscribePush('bigcap_open_surge', handler);
 
 // 本地广播：不经过后端 WS，直接把一条消息按推送协议分发给所有订阅者
 //   （默认补 open:true，供前端自产自销的监控触发 / 调试面板 MOCK 使用）

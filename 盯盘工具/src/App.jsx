@@ -23,7 +23,6 @@ import PersonalFeelingModal from './components/PersonalFeelingModal';
 import ClosePipeline from './components/ClosePipeline';
 import GlobalDiagnosisAlert from './components/GlobalDiagnosisAlert';
 import BlockStrengthAlert from './components/BlockStrengthAlert';
-import ImportantStockSurgeMonitor from './components/ImportantStockSurgeMonitor';
 import dayjs from 'dayjs';
 import './App.scss';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -1855,8 +1854,6 @@ function App() {
       <GlobalDiagnosisAlert />
       {/* 板块强度突破 30 分全局提示：每 1 分钟轮询强度分时数据 */}
       <BlockStrengthAlert />
-      {/* 重点股 1 分钟涨跌幅异动监控：重点股 1min 内涨跌幅绝对值变化 ≥2% 时全局弹卡 */}
-      <ImportantStockSurgeMonitor />
       {/* 龙二波：情绪游资-极致胜率候选监控，命中「强度−差劲 ≥ 30」自动弹抽屉提示 */}
       {/* 专注交易（/opening_battle）下同样展示右侧悬浮组件（龙二波 / 监控 / 策略，2026-11-14 用户要求） */}
       {location.pathname !== '/training_camp' && <FloatingLongErBo />}
@@ -1871,6 +1868,15 @@ function App() {
       {willpowerModalVisible && (
         <div className="willpower-modal-overlay">
           <div className="willpower-modal-content">
+            <div className="willpower-modal-title" style={{ fontSize: 38, fontWeight: 'bold', marginBottom: 16, color: 'green' }}>
+              亏损的来源是你不敢让自己踏空！
+            </div>
+            <div className="willpower-modal-subtitle" style={{ fontSize: 22, marginBottom: 16, color: '#666' }}>
+              盈亏同源：赔率越大的时候胜率越小，亏损的概率越高。你需要牺牲一些赔率来换取更高的胜率，这就是耐心和定力的重要性！
+            </div>
+            <div className="willpower-modal-subtitle" style={{ fontSize: 24, marginBottom: 16, color: '#ccc' }}>
+              患得当先患失：在想要获取利益之前，先想好自己准备为此而支付的代价是什么，内心准备为此而承受什么样的煎熬
+            </div>
             <div className="willpower-modal-text"  style={{ fontSize: 24 }}>
               短线之道，在于两点；先寻辨识，再看择时；<br/>
               辨识候选，研报涨幅；盘中择时，以赔换胜；<br/>

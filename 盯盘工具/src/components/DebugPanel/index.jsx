@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { Drawer, Card, Button, Space, Typography, message, InputNumber } from 'antd';
 import {
   BugOutlined, SyncOutlined, CheckCircleFilled, WarningFilled, RocketOutlined, FallOutlined, ClockCircleOutlined,
-  BulbOutlined, RiseOutlined, ThunderboltOutlined, CrownOutlined,
+  BulbOutlined, ThunderboltOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../constant';
-import { sendRaw, subscribeDebugWs, publishLocalPush } from '../../utils/buyPointWs';
+import { sendRaw, subscribeDebugWs } from '../../utils/buyPointWs';
 
 const { Text, Paragraph } = Typography;
 
@@ -28,15 +28,9 @@ const DebugPanel = () => {
   const [fwbMocking, setFwbMocking] = useState(null);
   // 二板起爆 MOCK：buy | sell
   const [sbwMocking, setSbwMocking] = useState(null);
-  // 重点板块 5 分钟异动 MOCK
-  const [blockSurgeMocking, setBlockSurgeMocking] = useState(false);
   // 策略中心命中提醒 MOCK
   const [strategySignalMocking, setStrategySignalMocking] = useState(false);
   const [resonanceMocking, setResonanceMocking] = useState(false);
-  // 重点股 1 分钟异动 MOCK
-  const [stockSurgeMocking, setStockSurgeMocking] = useState(false);
-  // 千亿市值高开走强 MOCK
-  const [bigcapMocking, setBigcapMocking] = useState(false);
 
   // 意志力锻炼弹窗间隔（分钟）：默认 5，持久化到 localStorage
   const [willpowerInterval, setWillpowerInterval] = useState(() => {
@@ -160,25 +154,6 @@ const DebugPanel = () => {
     }
   };
 
-  // 重点板块 5 分钟异动 MOCK：从最新板块快照随机挑若干板块构造 5min 涨幅 ≥1.5%，经 WS 推送前端弹窗
-  const triggerBlockSurgeMock = async () => {
-    if (blockSurgeMocking) return;
-    setBlockSurgeMocking(true);
-    try {
-      const res = await axios.post(`http://${local_ip}:3000/debug/mock_block_5min_surge`, { count: 3 });
-      const d = res.data;
-      if (d?.success) {
-        message.success(`已模拟板块 5min 异动：${(d.blocks || []).join('、')}`, 4);
-      } else {
-        message.error(d?.error || 'mock 触发失败');
-      }
-    } catch (e) {
-      message.error(`mock 请求失败：${e.message}`);
-    } finally {
-      setBlockSurgeMocking(false);
-    }
-  };
-
   // 二板起爆 MOCK：与线上同一条 WS 推送 + 飞书链路（盘中 +8% 买点 / 卖点）
   const triggerSecondBoardWashMock = async (kind) => {
     if (sbwMocking) return;
@@ -236,70 +211,6 @@ const DebugPanel = () => {
       message.error(`mock 请求失败：${e.message}`);
     } finally {
       setStrategySignalMocking(false);
-    }
-  };
-
-  // 重点股 1 分钟涨跌幅异动 MOCK：优先从全量自选股的重点股（isImportant）里随机挑 2 只
-  // （无重点股时兜底取任意 2 只 / 内置假数据），构造 1 分钟内涨跌幅变化 ≥2% 的异动数据，
-  // 走与实盘完全一致的本地广播链路（type:'important_stock_surge'），前端弹出全局异动卡片
-  const triggerStockSurgeMock = async () => {
-    if (stockSurgeMocking) return;
-    setStockSurgeMocking(true);
-    try {
-      let picks = [];
-      try {
-        const res = await axios.get(`http://${local_ip}:3000/get_all_stock_data`, { timeout: 10 * 1000 });
-        const all = Array.isArray(res.data) ? res.data : [];
-        const important = all.filter((s) => s?.isImportant);
-        const pool = important.length >= 2 ? important : all;
-        picks = [...pool].sort(() => Math.random() - 0.5).slice(0, 2)
-          .map((s, i) => ({
-            code: s.code,
-            stockName: s.stockName || s.name || s.code,
-            prevChange: Number(s.change) || 0,
-            change: (Number(s.change) || 0) + (i === 0 ? 2.36 : -2.18), // 一只急拉、一只急杀
-          }));
-      } catch { /* 拉取失败时用内置假数据 */ }
-      if (picks.length < 2) {
-        picks = [
-          { code: '000001', stockName: '模拟急拉股', prevChange: 1.2, change: 3.56 },
-          { code: '600000', stockName: '模拟急杀股', prevChange: -0.8, change: -3.02 },
-        ];
-      }
-      const stocks = picks.map((s) => ({ ...s, delta: Number((s.change - s.prevChange).toFixed(2)) }));
-      publishLocalPush({
-        type: 'important_stock_surge',
-        mock: true,
-        data: {
-          time: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
-          prevTime: new Date(Date.now() - 60 * 1000).toLocaleTimeString('zh-CN', { hour12: false }),
-          threshold: 2,
-          stocks,
-        },
-      });
-      message.success(`已模拟重点股 1 分钟异动：${stocks.map((s) => s.stockName).join('、')}`, 4);
-    } finally {
-      setStockSurgeMocking(false);
-    }
-  };
-
-  // 千亿市值高开走强 MOCK：优先取真实千亿市值自选股 + 实时行情构造走强数据，
-  // 经后端 WS（type:'bigcap_open_surge'）推送前端全局卡片（与实盘完全一致链路）
-  const triggerBigcapMock = async () => {
-    if (bigcapMocking) return;
-    setBigcapMocking(true);
-    try {
-      const res = await axios.post(`http://${local_ip}:3000/debug/mock_bigcap_open_surge`);
-      const d = res.data;
-      if (d?.success) {
-        message.success(`已模拟千亿市值高开走强：${(d.stocks || []).join('、')}`, 4);
-      } else {
-        message.error(d?.error || 'mock 触发失败');
-      }
-    } catch (e) {
-      message.error(`mock 请求失败：${e.message}`);
-    } finally {
-      setBigcapMocking(false);
     }
   };
 
@@ -467,26 +378,8 @@ const DebugPanel = () => {
             </Space>
           </Card>
 
-          {/* 模块七：重点板块 5 分钟异动 MOCK */}
-          <Card size="small" title="7. 重点板块 5 分钟异动 Mock">
-            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
-              从最新板块快照随机挑 3 个板块，构造过去 5 分钟平均涨幅 ≥ 1.5% 的异动数据，
-              经与实盘完全一致的 WebSocket 链路（type:'block_5min_surge'）推送，前端右下角弹出异动板块列表卡片。
-              实盘由后端在每个 5 分钟整数倍时刻自动扫描重点板块并推送。
-            </Paragraph>
-            <Button
-              type="primary"
-              icon={<RiseOutlined />}
-              loading={blockSurgeMocking}
-              onClick={triggerBlockSurgeMock}
-              style={{ background: '#ea580c', borderColor: '#ea580c' }}
-            >
-              触发板块 5min 异动提示
-            </Button>
-          </Card>
-
-          {/* 模块八：意志力锻炼弹窗手动触发 */}
-          <Card size="small" title="8. 意志力锻炼弹窗">
+          {/* 模块七：意志力锻炼弹窗手动触发 */}
+          <Card size="small" title="7. 意志力锻炼弹窗">
             <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
               交易日交易时段（9:30-11:30、13:00-15:00）按设定间隔周期性弹出。
               支持自定义间隔（1-60 分钟），保存在 localStorage，应用重启后生效。
@@ -525,8 +418,8 @@ const DebugPanel = () => {
             </Button>
           </Card>
 
-          {/* 模块九：策略中心命中提醒 MOCK */}
-          <Card size="small" title="9. 策略中心命中提醒 Mock">
+          {/* 模块八：策略中心命中提醒 MOCK */}
+          <Card size="small" title="8. 策略中心命中提醒 Mock">
             <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
               随机取一个内置策略构造命中信号，经与实盘完全一致的 WebSocket 链路（type:'strategy_signal'）
               推送，前端右下角弹出「策略命中提醒」全局卡片（样式同买点诊断卡片）。
@@ -543,8 +436,8 @@ const DebugPanel = () => {
             </Button>
           </Card>
 
-          {/* 模块十：大盘 × 板块情绪共振 MOCK */}
-          <Card size="small" title="10. 大盘 × 板块情绪共振 Mock">
+          {/* 模块九：大盘 × 板块情绪共振 MOCK */}
+          <Card size="small" title="9. 大盘 × 板块情绪共振 Mock">
             <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
               构造大盘情绪温度 ≥60、板块处于「全面高潮 / 一致加速」的共振数据，
               经与实盘完全一致的 WebSocket 链路（type:'emotion_resonance'）推送，前端弹出全局共振提示。
@@ -558,44 +451,6 @@ const DebugPanel = () => {
               style={{ background: '#d97706', borderColor: '#d97706' }}
             >
               触发情绪共振提示
-            </Button>
-          </Card>
-
-          {/* 模块十一：重点股 1 分钟涨跌幅异动 MOCK */}
-          <Card size="small" title="11. 重点股 1 分钟异动 Mock">
-            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
-              优先从全量自选股的重点股（isImportant）里随机挑 2 只（无重点股时兜底取任意股票 / 内置假数据），
-              构造 1 分钟内涨跌幅变化 ≥2% 的异动数据，走与实盘完全一致的本地广播链路
-              （type:'important_stock_surge'），前端右下角弹出「重点股急速异动」全局卡片（样式同买点诊断卡片）。
-              实盘由全局监控每 1 分钟采样比对重点股涨跌幅自动触发。
-            </Paragraph>
-            <Button
-              type="primary"
-              icon={<RiseOutlined />}
-              loading={stockSurgeMocking}
-              onClick={triggerStockSurgeMock}
-              style={{ background: '#be123c', borderColor: '#be123c' }}
-            >
-              触发重点股 1 分钟异动提醒
-            </Button>
-          </Card>
-
-          {/* 模块十二：千亿市值高开走强 MOCK */}
-          <Card size="small" title="12. 千亿市值高开走强 Mock">
-            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
-              优先取真实千亿市值（总市值 ≥1000 亿）自选股 + 实时行情构造「9:30 竞价涨幅 ≥1% 且 9:31 涨幅高于开盘」
-              的走强数据，经后端与实盘完全一致的 WebSocket 链路（type:'bigcap_open_surge'）推送，
-              前端右下角弹出「千亿市值高开走强」全局卡片（样式同买点诊断卡片）。
-              实盘由后端监控在交易日 9:30 采集竞价快照、9:31 自动检查触发。
-            </Paragraph>
-            <Button
-              type="primary"
-              icon={<CrownOutlined />}
-              loading={bigcapMocking}
-              onClick={triggerBigcapMock}
-              style={{ background: '#b45309', borderColor: '#b45309' }}
-            >
-              触发千亿市值高开走强提醒
             </Button>
           </Card>
 

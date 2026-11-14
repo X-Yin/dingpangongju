@@ -23,6 +23,35 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     gap: 16px;
   }
 
+  // ---------- 顶部交易纪律横幅 ----------
+  .ob-principle-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(124, 58, 237, 0.18);
+    border-radius: 10px;
+    background: linear-gradient(90deg, rgba(124, 58, 237, 0.07), rgba(225, 29, 72, 0.06));
+    box-shadow: $ob-shadow-card;
+
+    .ob-principle-banner-icon {
+      flex: 0 0 auto;
+      font-size: 18px;
+      color: #7c3aed;
+    }
+
+    .ob-principle-banner-text {
+      flex: 1 1 0;
+      min-width: 0;
+      font-size: 14px;
+      line-height: 1.7;
+      // 跟随主题包 / DIY 的条目标题色（--ob-item-title-color 由 buildPackVars / buildDiyVars 挂载）
+      color: var(--ob-item-title-color, #334155);
+      font-weight: 500;
+    }
+  }
+
   // ---------- 第一行 ----------
   .ob-row-first {
     display: flex;
