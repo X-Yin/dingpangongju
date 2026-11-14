@@ -28,6 +28,9 @@
 //      ③ 9:35 时若当日涨幅已脱离 ≤ -5% 区域（涨幅 > -5%）→ 自救成功，当日剩余时间不再因⑪⑫卖出（交由其他卖点）；
 //         9:35 时仍处于 ≤ -5% 区域 → 自救失败，在 9:35 按分时价卖出。
 //      为让自救有机会执行，开启本开关时⑤竞价低开与⑦盘中跌幅在自救观察期（≤9:35）不再直接卖（见上）。
+//   2026-11-14 用户要求（openGapLossOrSecondDayOnly）：⑪⑫ 仅在「买入之后的第二个交易日」
+//      （买入日计为第 1 天，即持仓次日 / daysAfterBuy === 1）或「当前时点价 < 成本价（处于亏损）」时才生效；
+//      盈利状态下且非该交易日时，⑪⑫ 不触发，⑤竞价低开与⑦盘中跌幅也不再被抑制（按原规则判定）。
 //
 // 选取规则：命中分钟最早者胜出；同一分钟命中多条时按优先级 ⑤①②⑦⑧⑩③⑪⑫（序号小者先）打破平局。
 // 注意：④（持仓第 3 日尾盘未拉开 +10%）与 ⑥（收盘抗分歧 < 6）属尾盘时点判定，不参与回溯，
@@ -88,7 +91,10 @@ const round2 = (v) => (v == null || !Number.isFinite(Number(v)) ? null : parseFl
 // disableMinutePlummet 可选：传 true 时**关闭⑩单分钟跳水卖点**（2026-10-17 用户要求：情绪游资-反向抱团龙头策略不使用该卖点）
 // enableOpenGapReboundSell 可选：传 true 时**开启⑪冲高回落与⑫开盘自救卖点**（2026-10-31 用户要求：仅「情绪游资-极致胜率」**顺周期腿**使用，逆周期腿不启用）；
 //   开启后当低开 < -2% 时，⑤竞价低开与⑦盘中跌幅在开盘分钟不直接卖（给开盘自救留出逐分钟判定）
-const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute, costLinePct = STOP_LOSS_PCT, costLineSustainMinutes = STOP_LOSS_SUSTAIN_MINUTES, resolveCostLinePct, disableMinutePlummet = false, enableOpenGapReboundSell = false }) => {
+// openGapLossOrSecondDayOnly / daysAfterBuy（2026-11-14 用户新增）：传 true 时，⑪⑫ 仅在
+//   「买入之后的第二个交易日（买入日计第 1 天，即持仓次日 daysAfterBuy === 1）」或「当前时点价 < 成本价（处于亏损）」时才生效；
+//   其它情况即使低开 < -2% 也不启用⑪⑫（⑤竞价低开 / ⑦盘中跌幅按原规则正常判定）
+const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute, costLinePct = STOP_LOSS_PCT, costLineSustainMinutes = STOP_LOSS_SUSTAIN_MINUTES, resolveCostLinePct, disableMinutePlummet = false, enableOpenGapReboundSell = false, openGapLossOrSecondDayOnly = false, daysAfterBuy = null }) => {
   if (!Array.isArray(points) || points.length === 0) return null;
   const mins = points.filter(p => p.minute <= cutoffMinute && p.lastPx > 0);
   if (mins.length === 0) return null;
@@ -100,7 +106,11 @@ const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute, costLin
 
   // ⑪⑫ 竞价低开幅度（开盘价较昨收）；仅在开启且低开超过 -2% 时进入自救观察期
   const openGapPct = preclose && preclose > 0 ? round2(((openPx - preclose) / preclose) * 100) : null;
-  const gapReboundArmed = enableOpenGapReboundSell && openGapPct != null && openGapPct < OPEN_GAP_REBOUND_PCT;
+  const openGapBaseArmed = enableOpenGapReboundSell && openGapPct != null && openGapPct < OPEN_GAP_REBOUND_PCT;
+  // 新增门槛：仅在「买入之后的第二个交易日（买入日计第 1 天，即持仓次日）」或「当前处于亏损」时，⑪⑫ 才生效
+  const openGapArmedAt = (px) => openGapBaseArmed && (!openGapLossOrSecondDayOnly
+    || Number(daysAfterBuy) === 1
+    || (canStop && Number(px) < Number(buyPrice)));
   let rescuePeakChangePct = null; // 自救观察期内当日分时最高涨幅（较昨收）
   let rescueSuccess = false;      // 9:35 已脱离 ≤ -5% 区域 → 自救成功，当日剩余时间不再因⑪⑫卖出
   let rescueFailed = false;       // 9:35 仍未脱离 ≤ -5% 区域 → 自救失败并已记录卖出
@@ -117,6 +127,8 @@ const scanLeaderPriceSell = ({ points, preclose, buyPrice, cutoffMinute, costLin
   let prevPrevPx = null; // 再上一分钟分时价（用于 ⑩ 豁免：判定上一分钟自身涨幅）
   for (const p of mins) {
     const px = p.lastPx;
+    // ⑪⑫ 是否在该分钟生效（新增门槛：第二个交易日或当前亏损才生效）
+    const gapReboundArmed = openGapArmedAt(px);
     if (px > dayHigh) dayHigh = px;
     const changePct = preclose && preclose > 0
       ? round2(((px - preclose) / preclose) * 100)

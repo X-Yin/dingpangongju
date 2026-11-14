@@ -159,6 +159,9 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
     capBoardMinGainPct: CAP_BOARD_MIN_GAIN_PCT,
     // 2026-11-14 用户要求：旧路径追加「峰值日（含）至买点前区间最大波动 < 20%」（与回测同口径）
     oldPostPeakMaxRangePct: OLD_POST_PEAK_MAX_RANGE_PCT,
+    // 2026-11-14 用户要求：线上同步「研报补充候选」——全量自选股中非科技股（isTech = false）
+    //   最近 10 个报告日研报数 ≥ 15 篇者并入候选池（不限创业板/科创板），买点只按「强度分 − 差劲分 ≥ 30」判定
+    reportBoost: true,
   });
   const poolStocks = pool.stocks || [];
 
@@ -260,7 +263,9 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
 
     const cross = crossInfos[i] || null;
     // 买点前置：死叉 + 未被历史消耗 + 上个交易日 delta>30 时须放量
-    const crossPassed = !!(cross && cross.hasCross && !cross.consumed && cross.prevDayVolumeOk);
+    // 研报补充候选（viaReport，2026-11-14 用户新增）：不要求死叉前置，只按今日「强度分 − 差劲分 ≥ 30」判定
+    const isReport = s.viaReport === true;
+    const crossPassed = isReport ? true : !!(cross && cross.hasCross && !cross.consumed && cross.prevDayVolumeOk);
     // 竞价低开门禁：上个交易日强度分 > 60 时，当日竞价低开须 ≥ -3%
     const gatePassed = !cross
       || cross.prevDayStrength == null
@@ -280,6 +285,8 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
       name: s.name || code,
       board: s.board || '',
       lianbanCount: s.lianbanCount || 0,
+      viaReport: isReport,
+      reportCount: s.reportCount != null ? s.reportCount : null,
       preclose: round2(preclose),
       px,
       change,
@@ -796,25 +803,43 @@ const buildExtremeWinChecks = (ctx, candidate) => {
     : '--';
   const d = candidate ? candidate.diffDetail : null;
   const s = candidate ? candidate.strengthDetail : null;
-  const nameText = candidate ? `${candidate.stockName}（${candidate.code}）· ${candidate.lianbanCount} 连板` : '--';
+  // 研报补充候选（viaReport，2026-11-14 用户新增）：不要求死叉前置，只按「强度分 − 差劲分 ≥ 30」判定
+  const isReport = !!(candidate && candidate.viaReport === true);
+  const nameText = candidate
+    ? (isReport
+      ? `${candidate.stockName}（${candidate.code}）· 研报 ${candidate.reportCount != null ? candidate.reportCount : '--'} 篇`
+      : `${candidate.stockName}（${candidate.code}）· ${candidate.lianbanCount} 连板`)
+    : '--';
 
   const checks = [
     {
-      id: 'extreme_win_pool',
-      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板（连板数 ≥ 2）且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${CAP_BOARD_MIN_GAIN_PCT}% 即可，流通市值 ≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者仍需四连板及以上；10 日最大涨幅窗口 = 从第一天涨停的前一交易日收盘价起算、最多 10 个交易日；旧路径=过去 10 个交易日达标 + 该窗口区间最大涨幅 < 80% 且连板后无单日跌幅 < -9%；新路径=过去 20 个交易日达标 + 该窗口区间最大涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < 100% 且该窗口峰值日至买点严格相隔 ≥ 5 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < 15%、该窗口内收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除）；均剔除创业板/科创板/题材黑名单/全量自选股科技股）`,
+      id: isReport ? 'extreme_win_report_pool' : 'extreme_win_pool',
+      title: isReport
+        ? `选股（研报补充：全量自选股中非科技股（isTech = false）且最近 10 个报告日研报数 ≥ 15 篇；不限创业板/科创板）`
+        : `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板（连板数 ≥ 2）且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${CAP_BOARD_MIN_GAIN_PCT}% 即可，流通市值 ≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者仍需四连板及以上；10 日最大涨幅窗口 = 从第一天涨停的前一交易日收盘价起算、最多 10 个交易日；旧路径=过去 10 个交易日达标 + 该窗口区间最大涨幅 < 80% 且连板后无单日跌幅 < -9%；新路径=过去 20 个交易日达标 + 该窗口区间最大涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < 100% 且该窗口峰值日至买点严格相隔 ≥ 5 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < 15%、该窗口内收盘跌幅 < -9% 的交易日至多 1 次（≥ 2 次剔除）；均剔除创业板/科创板/题材黑名单/全量自选股科技股）`,
       passed: poolCount > 0,
-      value: `龙头池 ${poolCount} 只`,
-      reason: `候选 = 旧路径（过去 10 个交易日连板准入达标 + 上述动量过滤）与新路径（过去 20 个交易日连板准入达标 + 上述动量过滤）并集，已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、题材黑名单与全量自选股科技股（isTech ≠ false）重叠者${ctx.pool.poolFilterText || ''}；当前龙头池共 ${poolCount} 只，展示标的为 ${nameText}`,
+      value: isReport ? `${nameText} · 龙头池 ${poolCount} 只` : `龙头池 ${poolCount} 只`,
+      reason: isReport
+        ? `2026-11-14 用户新增：候选来源 = 全量自选股中非科技股（isTech = false）在最近 10 个报告日（仅统计当日 09:30 前已创建的研报）内标题或正文命中股票名的研报数 ≥ 15 篇；不限创业板（30/301）与科创板（688），不叠加连板准入 / 动量过滤${ctx.pool.poolFilterText || ''}；当前龙头池共 ${poolCount} 只，展示标的为 ${nameText}`
+        : `候选 = 旧路径（过去 10 个交易日连板准入达标 + 上述动量过滤）与新路径（过去 20 个交易日连板准入达标 + 上述动量过滤）并集，已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、题材黑名单与全量自选股科技股（isTech ≠ false）重叠者${ctx.pool.poolFilterText || ''}；当前龙头池共 ${poolCount} 只，展示标的为 ${nameText}`,
     },
-    {
-      id: 'extreme_win_cross',
-      title: `买点前置：过去 ${DEATH_CROSS_WINDOW} 个交易日死叉且死叉后达标次数 ≤ 1（上个交易日 delta > ${DELTA_MIN} 时须放量）`,
-      passed: crossPassed,
-      value: `死叉日 ${crossDateText}（死叉后达标 ${hitCount} 次；上个交易日 delta ${cross ? (cross.prevDayDelta == null ? '--' : cross.prevDayDelta) : '--'}）；日线「强度 − 差劲」序列 ${deltasText}`,
-      reason: crossPassed
-        ? `过去 ${DEATH_CROSS_WINDOW} 个交易日内出现过「强度分由高于差劲分转为一度低于差劲分」的死叉（${crossDateText}）；死叉之后至昨日 delta ≥ ${DELTA_MIN} 的交易日数为 ${hitCount}（≤ 1 天视为未被历史消耗，本策略只允许「第一次或第二次」达标才买）；且上个交易日 delta = ${cross ? cross.prevDayDelta : '--'}${cross && cross.prevDayDelta != null && cross.prevDayDelta > DELTA_MIN ? ' > ' + DELTA_MIN + '，该日成交量须 ≥ 其前 3 个交易日成交量均值（放量门禁已通过）' : '（未超过 ' + DELTA_MIN + '，不触发放量要求）'}`
-        : `尚未满足「过去 ${DEATH_CROSS_WINDOW} 个交易日内死叉 + 死叉后达标次数 ≤ 1 + 上个交易日 delta > ${DELTA_MIN} 时须放量」的买点前置（死叉日 ${crossDateText}，死叉后达标 ${hitCount} 次）`,
-    },
+    isReport
+      ? {
+        id: 'extreme_win_report_no_cross',
+        title: `买点前置：研报补充候选不要求死叉前置，仅按今日「强度分 − 差劲分 ≥ ${DELTA_MIN}」判定`,
+        passed: true,
+        value: '不判定死叉 / 达标次数 / 上日放量',
+        reason: `2026-11-14 用户新增：研报补充候选的买点筛选标准只有「强度分 − 差劲分 ≥ ${DELTA_MIN}」，不要求过去 ${DEATH_CROSS_WINDOW} 个交易日内出现死叉、不限制死叉后达标次数、也不要求上个交易日放量；其余门禁（未涨停、${cutoff} 后不买、上日强度 > ${PREV_STRENGTH_GAP_GATE} 时竞价低开须 ≥ ${OPEN_GAP_MIN_PCT}%、严重异动临近不买）仍照常生效`,
+      }
+      : {
+        id: 'extreme_win_cross',
+        title: `买点前置：过去 ${DEATH_CROSS_WINDOW} 个交易日死叉且死叉后达标次数 ≤ 1（上个交易日 delta > ${DELTA_MIN} 时须放量）`,
+        passed: crossPassed,
+        value: `死叉日 ${crossDateText}（死叉后达标 ${hitCount} 次；上个交易日 delta ${cross ? (cross.prevDayDelta == null ? '--' : cross.prevDayDelta) : '--'}）；日线「强度 − 差劲」序列 ${deltasText}`,
+        reason: crossPassed
+          ? `过去 ${DEATH_CROSS_WINDOW} 个交易日内出现过「强度分由高于差劲分转为一度低于差劲分」的死叉（${crossDateText}）；死叉之后至昨日 delta ≥ ${DELTA_MIN} 的交易日数为 ${hitCount}（≤ 1 天视为未被历史消耗，本策略只允许「第一次或第二次」达标才买）；且上个交易日 delta = ${cross ? cross.prevDayDelta : '--'}${cross && cross.prevDayDelta != null && cross.prevDayDelta > DELTA_MIN ? ' > ' + DELTA_MIN + '，该日成交量须 ≥ 其前 3 个交易日成交量均值（放量门禁已通过）' : '（未超过 ' + DELTA_MIN + '，不触发放量要求）'}`
+          : `尚未满足「过去 ${DEATH_CROSS_WINDOW} 个交易日内死叉 + 死叉后达标次数 ≤ 1 + 上个交易日 delta > ${DELTA_MIN} 时须放量」的买点前置（死叉日 ${crossDateText}，死叉后达标 ${hitCount} 次）`,
+      },
     {
       id: 'extreme_win_prev_strength_gap',
       title: `买点门禁：上个交易日强度分 > ${PREV_STRENGTH_GAP_GATE} 时当日竞价低开须 ≥ ${OPEN_GAP_MIN_PCT}%`,
@@ -1004,9 +1029,17 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
     const openPx = mins.length > 0 ? mins[0].lastPx : null;
     const lastPx = mins.length > 0 ? mins[mins.length - 1].lastPx : null;
     const openChg = mins.length > 0 ? chgOf(mins[0].lastPx) : null;
-    // ⑪⑫ 开盘自救启用条件（仅顺周期持仓）：竞价低开 < -2% 且调用方开启该卖点
+    // 2026-11-14 用户要求：⑪⑫「竞价大幅低开」仅在「买入之后的第二个交易日（买入日计第 1 天，即持仓次日）」
+    //   或「当前处于亏损（现价 < 成本价）」时生效；否则该卖点不触发，⑧竞价低开与⑦盘中跌幅按原规则正常判定
+    const bd = buyDate ? String(buyDate).replace(/-/g, '') : null;
+    const daysSinceBuy = bd ? countTradingDaysBetween(bd, dateStr) : null;
+    const currentLoss = effCostPrice > 0 && lastPx != null && Number(lastPx) < Number(effCostPrice);
+    const openGapGateOk = opts.openGapLossOrSecondDayOnly !== true
+      || Number(daysSinceBuy) === 1
+      || currentLoss;
+    // ⑪⑫ 开盘自救启用条件（仅顺周期持仓）：竞价低开 < -2% 且调用方开启该卖点且通过上述门槛
     const rescueEnabled = !!opts.enableOpenGapReboundSell;
-    const gapArmed = rescueEnabled && openChg != null && openChg < OPEN_GAP_REBOUND_PCT;
+    const gapArmed = rescueEnabled && openGapGateOk && openChg != null && openChg < OPEN_GAP_REBOUND_PCT;
 
     if (mins.length === 0) {
       return {
@@ -1190,7 +1223,11 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
       let c11Detail = '未出现竞价大幅低开后的冲高回落';
       let c12 = false;
       let c12Detail = '未出现竞价大幅低开后的开盘自救卖点';
-      if (!gapArmed) {
+      if (!openGapGateOk) {
+        const gateText = `当前不满足⑪⑫生效门槛（仅买入之后的第二个交易日或当前亏损时生效；当前为持仓第 ${daysSinceBuy != null ? daysSinceBuy + 1 : '--'} 日、${currentLoss ? '处于亏损' : '处于盈利'}），本卖点不触发`;
+        c11Detail = gateText;
+        c12Detail = gateText;
+      } else if (!gapArmed) {
         const noArmed = `当日竞价开盘涨跌幅 ${openChg == null ? '--' : openChg}%（未低于 ${OPEN_GAP_REBOUND_PCT}%），本卖点不触发`;
         c11Detail = noArmed;
         c12Detail = noArmed;

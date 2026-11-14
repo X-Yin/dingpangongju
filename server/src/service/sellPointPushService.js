@@ -153,6 +153,8 @@ const diagnosePosition = async (stock, todayStr, mode, minuteEvalNow = true) => 
       // 逆周期腿 scanLeaderPriceSell 调用参数）：⑪⑫不启用、单分钟跳水⑩不启用、成本线 -5% 须连续 ≥5 分钟
       res = await checkExtremeWinSellPointDetailed(stock.code, stock.costPrice, stock.buyDate || null, {
         enableOpenGapReboundSell: strategy !== 'extreme_win_reverse',
+        // 2026-11-14 用户要求：⑪⑫仅在「买入之后的第二个交易日（买入日计第 1 天，即持仓次日）」或「当前亏损」时生效
+        openGapLossOrSecondDayOnly: strategy !== 'extreme_win_reverse',
         ...(strategy === 'extreme_win_reverse'
           ? { disableMinutePlummet: true, costLineSustainMinutes: 5 }
           : {}),

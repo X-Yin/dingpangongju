@@ -15,6 +15,7 @@ const {
 } = require('../deps');
 const { iceResilienceIndexCode } = require('./indexGate');
 const { EXCLUDED_CODES, EXCLUDED_THEMES, isExcludedTheme } = require('../constants');
+const { loadReportIndex, sumReportCount } = require('../utils/reportIndex');
 const {
   round2,
   loadTlinePoints,
@@ -30,6 +31,12 @@ const BASE_MIN_BOARD_COUNT = 2;    // 连板基础门槛（仅供其它引擎预
 const DEATH_CROSS_WINDOW = 10;     // 死叉检索窗口：过去 10 个交易日（不含当日）
 const DELTA_MIN = 30;              // 买点门槛：今日「强度分 − 差劲分」>= 30
 const CLOSE_MINUTE = 1500;         // 日线 delta 序列的收盘口径分钟（与「个股历史分析」一致）
+
+// 2026-11-14 用户新增（仅回测「情绪游资-极致胜率」）：
+//   全量自选股中「非科技股」（isTech === false）在最近 10 个报告日内的研报数 ≥ 15 篇即补充进候选池，
+//   不限创业板 / 科创板；其买点不要求死叉前置，只按今日「强度分 − 差劲分 >= 30」判定。
+const REPORT_BOOST_WINDOW_DAYS = 10;
+const REPORT_BOOST_MIN_COUNT = 15;
 
 // 2026-10-23 用户改：连板基础名单按流通市值分档（2026-10-24 用户改：大市值口径由「一次涨停」收紧为「两连板」）
 //   流通市值 > 100 亿元：出现过两连板（连板数 ≥ 2），且「含该连板日在内」的连续 5 个交易日累计涨幅 > 45% 即可入选
@@ -329,6 +336,55 @@ const getTechWatchlistCodes = () => new Set(
     .map(s => s.code),
 );
 
+// 回测当日开盘（09:30 北京时间）时间戳：研报覆盖只统计该时点前已存在的研报，避免用当日盘中/盘后补录的研报做历史决策
+const dayOpenTimestamp = (dateStr) => {
+  const s = String(dateStr || '');
+  if (!/^\d{8}$/.test(s)) return null;
+  const ms = Date.parse(`${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}T01:30:00.000Z`);
+  return Number.isFinite(ms) ? ms : null;
+};
+
+// 研报补充候选（2026-11-14 用户新增，仅回测）：
+//   全量自选股中非科技股（isTech === false）在「最近 REPORT_BOOST_WINDOW_DAYS 个报告日（≤ 回测当日）」内
+//   标题或正文命中股票名的研报数 ≥ REPORT_BOOST_MIN_COUNT 篇即可纳入；不限创业板（30/301）与科创板（688）。
+//   返回的候选带 viaReport / noCross 标记，买点跳过死叉前置，仅按今日「强度分 − 差劲分 >= 30」判定。
+const buildReportBoostStocks = (dateStr) => {
+  const reportIndex = loadReportIndex();
+  const winDates = Object.keys(reportIndex || {})
+    .filter(d => /^\d{8}$/.test(d) && d <= String(dateStr))
+    .sort()
+    .slice(-REPORT_BOOST_WINDOW_DAYS);
+  if (winDates.length === 0) return [];
+  const beforeTs = dayOpenTimestamp(dateStr);
+  const out = [];
+  const seen = new Set();
+  for (const s of (getMonitorStocks() || [])) {
+    if (!s || !s.code || s.isTech !== false) continue;
+    if (EXCLUDED_CODES.has(s.code) || seen.has(s.code)) continue;
+    const count = sumReportCount(s.name, winDates, reportIndex, beforeTs);
+    if (count < REPORT_BOOST_MIN_COUNT) continue;
+    seen.add(s.code);
+    out.push({
+      code: s.code,
+      name: s.name || s.code,
+      board: s.blockName || '',
+      date: null,
+      lianbanCount: 0,
+      reportCount: count,
+      viaReport: true,
+      noCross: true,
+    });
+  }
+  return out;
+};
+
+// 研报补充候选的过滤说明文案（无候选时返回空串）
+const reportBoostPoolText = (stocks, addedCount) => {
+  if (!Array.isArray(stocks) || stocks.length === 0) return '';
+  const n = addedCount == null ? stocks.length : addedCount;
+  return `；研报补充候选（仅回测，2026-11-14 用户新增）：全量自选股中非科技股（isTech = false）且最近 ${REPORT_BOOST_WINDOW_DAYS} 个报告日研报数 ≥ ${REPORT_BOOST_MIN_COUNT} 篇者 ${n} 只（不限创业板/科创板；买点不要求死叉前置，仅按今日「强度分 − 差劲分 ≥ ${DELTA_MIN}」判定）`;
+};
+
 // 死叉检索（2026-10-18 用户要求改为「峰值日之后的第一次死叉」）：
 //   从 fromIdx 之后（严格晚于 fromIdx）起，取最先出现的「deltas[i-1] > 0 且 deltas[i] < 0」的下标；未找到返回 -1
 //   deltas 为按日期升序的「强度分 − 差劲分」序列（元素可能为 null）；fromIdx 为 -1 时等价于在整个序列里取第一次死叉
@@ -493,6 +549,13 @@ const buildExtremeWinPool = async (dateStr, opts = {}) => {
   // 旧路径「峰值日（含）至买点前区间最大波动」上限（2026-11-14 用户要求；不传时旧路径不做该过滤，
   //   线上 live 与历史回测口径保持不变；新路径本就固定用 POST_PEAK_MAX_RANGE_PCT）
   const oldPostPeakMaxRangePct = Number.isFinite(Number(opts.oldPostPeakMaxRangePct)) ? Number(opts.oldPostPeakMaxRangePct) : null;
+  // 2026-11-14 用户新增（仅回测）：追加「全量自选股非科技股 + 最近 10 个报告日研报数 ≥ 5」的候选，
+  //   默认关闭，线上实盘（hotMoneyExtremeWin.js）不传该参数、口径保持不变。
+  const includeReportBoost = opts.reportBoost === true;
+  let reportBoostStocks = [];
+  if (includeReportBoost) {
+    try { reportBoostStocks = buildReportBoostStocks(dateStr); } catch (e) { reportBoostStocks = []; }
+  }
 
   // 过去 RANGE_WINDOW_DAYS 个交易日（不含当日）日期序列：动量过滤与大市值「涨停后 5 日涨幅」判定共用
   //   新口径下额外多取 1 天，作为「首个涨停日恰为窗口首日」时的窗口外基准日
@@ -520,7 +583,7 @@ const buildExtremeWinPool = async (dateStr, opts = {}) => {
     occOld = await getRecentMultiLianbanOccurrences(dateStr, LOOKBACK_DAYS, LARGE_CAP_MIN_BOARD_COUNT);
     occNew = await getRecentMultiLianbanOccurrences(dateStr, NEW_BASE_LOOKBACK_DAYS, LARGE_CAP_MIN_BOARD_COUNT);
   } catch (e) {
-    return { stocks: [], poolFilterText: '', winDates: [] };
+    return { stocks: reportBoostStocks, poolFilterText: reportBoostPoolText(reportBoostStocks), winDates: [] };
   }
   const themeRemoved = [];
   const accept = (s, out) => {
@@ -665,6 +728,17 @@ const buildExtremeWinPool = async (dateStr, opts = {}) => {
     }
   }
 
+  // 研报补充候选（仅回测，2026-11-14 用户新增）：与连板池去重后并入，标记 viaReport / noCross
+  if (reportBoostStocks.length > 0) {
+    const exist = new Set(candidates.map(s => s.code));
+    const added = reportBoostStocks.filter(s => !exist.has(s.code));
+    if (added.length > 0) {
+      candidates = [...candidates, ...added];
+      poolFilterText += reportBoostPoolText(added, added.length)
+        + `（${added.map(s => `${s.name || s.code}（${s.code}，${s.reportCount} 篇）`).join('、')}）`;
+    }
+  }
+
   for (const s of candidates) s.poolFilterText = poolFilterText;
   return { stocks: candidates, poolFilterText, winDates };
 };
@@ -675,6 +749,7 @@ module.exports = {
   RANGE_WINDOW_DAYS, RANGE_SLIDE_DAYS, MAX_WINDOW_RANGE_PCT, MAX_TOTAL_RANGE_PCT, POST_LIANBAN_DROP_PCT,
   NEW_MAX_WINDOW_RANGE_PCT, NEW_MIN_WINDOW_RANGE_PCT, PEAK_GAP_MIN_DAYS, POST_PEAK_MAX_RANGE_PCT,
   OLD_POST_PEAK_MAX_RANGE_PCT, NEW_BASE_LOOKBACK_DAYS,
+  REPORT_BOOST_WINDOW_DAYS, REPORT_BOOST_MIN_COUNT,
   PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
   ABNORMAL_WARN_LIMITS, ABNORMAL_WARN_MIN_ROOM_PCT, buildAbnormalWarnBases, evalAbnormalWarn, abnormalWarnText,
   isChiNextOrStar, hasPostLianbanBigDrop, largeCapBoardPass, maxSlidingWindowRangeInfo, maxSlidingWindowRangePct, maxPreciseGainWindowInfo,

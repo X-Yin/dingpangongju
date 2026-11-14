@@ -1860,6 +1860,8 @@ app.post('/check_single_stock_sell_point', async (req, res) => {
       // ⑪⑫「竞价大幅低开后冲高回落 / 开盘自救」仅顺周期（extreme_win_pro）启用
       result = await checkExtremeWinSellPointDetailed(code, costPrice, buyDate || null, {
         enableOpenGapReboundSell: sellStrategy !== 'extreme_win_reverse',
+        // 2026-11-14 用户要求：⑪⑫仅在「买入之后的第二个交易日（买入日计第 1 天，即持仓次日）」或「当前亏损」时生效
+        openGapLossOrSecondDayOnly: sellStrategy !== 'extreme_win_reverse',
       });
     } else if (mode === strategyModeState.MODE_WASH_FUSION) {
       // 情绪游资-极致赔率：未显式指定卖点策略的持仓按首板起爆（五条）兜底
@@ -1872,6 +1874,8 @@ app.post('/check_single_stock_sell_point', async (req, res) => {
       result = useExtremeWin
         ? await checkExtremeWinSellPointDetailed(code, costPrice, buyDate || null, {
           enableOpenGapReboundSell: (mode === MODE_EXTREME_WIN || mode === MODE_ATTACK_DEFENSE) && cycle !== 'reverse',
+          // 2026-11-14 用户要求：⑪⑫仅在「买入之后的第二个交易日（买入日计第 1 天，即持仓次日）」或「当前亏损」时生效
+          openGapLossOrSecondDayOnly: (mode === MODE_EXTREME_WIN || mode === MODE_ATTACK_DEFENSE) && cycle !== 'reverse',
         })
         : await checkSingleStockSellPoint(code, costPrice);
     }
