@@ -223,6 +223,9 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
   if (!strategy || strategy.extremeWinMode !== true) {
     return { success: false, message: `未知情绪游资-极致胜率策略: ${strategyId}` };
   }
+  // 无视大盘变体（2026-11-14 用户新增，仅回测）：买点唯一触发条件 = 「强度分 − 差劲分 ≥ 30」，
+  //   不判定指数斜率，逆周期腿不判定负斜率第 3 天 / 当日上证跌幅 / 命中两次
+  const ignoreMarket = strategy.extremeWinIgnoreMarket === true;
 
   // 不依赖资金快照：日期序列并入 tech_index 覆盖的交易日（与龙头战法引擎同口径）
   const allDates = Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]));
@@ -234,12 +237,14 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
 
   if (onProgress) onProgress({ current: 0, total, date: '', status: 'loading' });
 
-  // 顺周期腿预计算：历史「由正转负 / 由负转正」事件（逆周期腿买点前置）
+  // 顺周期腿预计算：历史「由正转负 / 由负转正」事件（逆周期腿买点前置；无视大盘变体不需要）
   let turnMap = new Map();
-  try {
-    turnMap = await precomputeTurnMap(ICE_SIGNAL_INDEX_CODE, rangeDates.map(Number));
-  } catch (e) {
-    turnMap = new Map();
+  if (!ignoreMarket) {
+    try {
+      turnMap = await precomputeTurnMap(ICE_SIGNAL_INDEX_CODE, rangeDates.map(Number));
+    } catch (e) {
+      turnMap = new Map();
+    }
   }
 
   // 启动预拉取：扫描整个回测区间每个交易日可能出现的候选股，一次性拉取日K（供放量比 / 死叉日线序列使用）
@@ -301,13 +306,14 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
     const todayIdx = di;
 
     // 逆周期腿买点前置：上证 3 日线斜率收盘口径连续为负第 3 天及以后（转负当日为第 1 天）
-    const tInfo = turnMap.get(Number(dateStr));
+    // 无视大盘变体：不判定任何大盘条件，逆周期池每个交易日都可参与
+    const tInfo = ignoreMarket ? null : turnMap.get(Number(dateStr));
     const slopeClose = tInfo ? tInfo.slopeClose : null;
     const daysSinceTurnNeg = tInfo ? tInfo.daysSinceTurnNeg : null;
     const curWindowKey = tInfo ? tInfo.turnNegDate : null;
-    if (curWindowKey !== revWindowKey) { revHitCount.clear(); revWindowKey = curWindowKey; }
-    const eligibleRev = slopeClose != null && slopeClose < 0
-      && daysSinceTurnNeg != null && daysSinceTurnNeg >= REV_NEG_STREAK_MIN_DAYS;
+    if (!ignoreMarket && curWindowKey !== revWindowKey) { revHitCount.clear(); revWindowKey = curWindowKey; }
+    const eligibleRev = ignoreMarket || (slopeClose != null && slopeClose < 0
+      && daysSinceTurnNeg != null && daysSinceTurnNeg >= REV_NEG_STREAK_MIN_DAYS);
 
     // ===== 顺周期腿候选池（与「开盘实战页 live 龙头列表」共用 ./extremeWinPool 同一实现）=====
     let candidatesRaw = [];
@@ -333,6 +339,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
     // ===== 逆周期腿候选池（仅在可用日构建；连板名单 + 题材黑名单 + 动量过滤）=====
     // 构建实现与「情绪游资-反向抱团龙头」独立策略共用 ./reverseLeaderPool.buildReverseLeaderPool
     let revCandidatesRaw = [];
+    let revCandidates = []; // 无视大盘变体：逆周期池中通过顺周期买点前置（死叉等）的候选
     let revPoolFilterText = '';
     if (eligibleRev) {
       try {
@@ -478,6 +485,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
     // 逆周期腿候选池数据（懒加载：仅在可用日需要评估强度分时构建）：今日分时（指数分时已由 ensureIdxTlines 覆盖）
     let revPoolReady = false;
     const revTodayTline = new Map(); // code -> { preclose, points }
+    const revTodayAvg3Vol = new Map(); // code -> 今日前 3 个交易日日均量（无视大盘变体计算差劲分用）
     const ensureRevPoolData = async () => {
       if (revPoolReady) return;
       revPoolReady = true;
@@ -486,16 +494,37 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
       const abnormalDates = await ensureAbnormalPastDates();
       await batchParallel(revCandidatesRaw, async (c) => {
         try { revTodayTline.set(c.code, await loadTlinePoints(c.code, dateNum)); } catch (e) { revTodayTline.set(c.code, { preclose: null, points: [] }); }
+        if (ignoreMarket) {
+          try { revTodayAvg3Vol.set(c.code, stockPriorAvgVolume(c.code, dateNum, 3)); } catch (e) { revTodayAvg3Vol.set(c.code, null); }
+        }
         try { abnormalBases.set(c.code, buildAbnormalWarnBases(c.code, abnormalDates)); } catch (e) { abnormalBases.set(c.code, null); }
       }, 8);
+      if (!ignoreMarket) return;
+      // 2026-11-14 用户要求（更新）：逆周期池仅用于选股，买点统一走顺周期口径——同样要求「死叉前置」
+      //   （峰值日之后的第一次死叉、死叉后达标次数 ≤ 1、上日 delta > 30 须放量）；逆周期池无峰值窗口信息，
+      //   死叉检索窗口退回过去 DEATH_CROSS_WINDOW 个交易日（与顺周期池数据不足时同口径）
+      try {
+        await ensureBarsForCodes(new Set(revCandidatesRaw.map(s => s.code)));
+      } catch (e) { /* 单只失败后续按 null 处理 */ }
+      let fallbackCrossDates = [];
+      try { fallbackCrossDates = (await getPastTradingDates(dateStr, DEATH_CROSS_WINDOW)).map(Number); } catch (e) { fallbackCrossDates = []; }
+      const crossMap = new Map();
+      await batchParallel(revCandidatesRaw, async (c) => {
+        try {
+          crossMap.set(c.code, fallbackCrossDates.length < 2 ? null : await computeCrossInfo(c.code, fallbackCrossDates, null, null));
+        } catch (e) { crossMap.set(c.code, null); }
+      }, 8);
+      revCandidates = revCandidatesRaw
+        .map(c => ({ ...c, crossInfo: crossMap.get(c.code) }))
+        .filter(c => c.crossInfo && c.crossInfo.hasCross && !c.crossInfo.consumed && c.crossInfo.prevDayVolumeOk);
     };
 
-    // 顺周期腿评估某候选在某分钟的分数（差劲分 / 强度分 / 差值）；数据不足返回 null
-    const evalCandidateAt = (c, bucketMinute, tline) => {
-      const t = tline || todayTline.get(c.code);
+    // 评估某候选在某分钟的分数（差劲分 / 强度分 / 差值）；数据不足返回 null
+    const evalCandidateWith = (c, bucketMinute, tlineMap, volMap) => {
+      const t = tlineMap.get(c.code);
       if (!t || t.points.length === 0 || !(t.preclose > 0)) return null;
       // 今日实时差劲分（A 用分时累计成交量对前 3 日日均量的放量比）
-      const d = diffAtMinute(t.points, t.preclose, c.code, bucketMinute, todayAvg3Vol.get(c.code));
+      const d = diffAtMinute(t.points, t.preclose, c.code, bucketMinute, volMap.get(c.code));
       if (!d) return null;
       // 今日实时强度分（截至当前分钟）
       const s = strengthAtMinute(t, bucketMinute, c.code, idxPointsOf(c.code));
@@ -505,17 +534,19 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
       const abnormalWarn = evalAbnormalWarn(abnormalBases.get(c.code), s.px);
       return { ...c, delta, strength: s.score, diffScore: d.score, s, d, px: s.px, changePct: s.changePct, limitUp: s.limitUp, abnormalWarn };
     };
-    // 顺周期腿评估某分钟的候选：返回按今日「强度分 − 差劲分」降序排列的达标（>= DELTA_MIN）候选数组
-    const evalBucket = (bucketMinute) => {
+    // 评估某分钟的候选列表：返回按今日「强度分 − 差劲分」降序排列的达标（>= DELTA_MIN）候选数组
+    const evalList = (list, bucketMinute, tlineMap, volMap) => {
       const out = [];
-      for (const c of candidates) {
-        const p = evalCandidateAt(c, bucketMinute);
+      for (const c of list) {
+        const p = evalCandidateWith(c, bucketMinute, tlineMap, volMap);
         if (!p || p.delta < DELTA_MIN) continue;
         out.push(p);
       }
       out.sort((a, b) => b.delta - a.delta);
       return out;
     };
+    // 顺周期腿评估某分钟的候选（与逆周期腿共用同一套「强度分 − 差劲分 ≥ 30」判定）
+    const evalBucket = (bucketMinute) => evalList(candidates, bucketMinute, todayTline, todayAvg3Vol);
     // 今日前 3 个交易日日均量（按 code 懒加载）在 ensurePoolData 中预取
 
     if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'running' });
@@ -640,10 +671,11 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
       const timeText = fmtMinute(bucketMinute);
 
       // 【顺周期腿】极致胜率逻辑：指数门禁（上证 3 日线分时斜率 > 0）+ 今日「强度分 − 差劲分 >= 30」
+      //   无视大盘变体：跳过指数门禁，只看今日「强度分 − 差劲分 >= 30」
       //   2026-10-20 用户新增：每天 14:30 之后不买——14:33 起的时间桶直接跳过买入评估（14:30 桶本身仍可买）
       if (bucketMinute <= BUY_CUTOFF_MINUTE && idleLegIdx() !== -1) {
-        const idxMa3Slope = await getIceMa3SlopeIntraday(dateStr, bucketMinute);
-        if (Number(idxMa3Slope) > 0) {
+        const idxMa3Slope = ignoreMarket ? null : await getIceMa3SlopeIntraday(dateStr, bucketMinute);
+        if (ignoreMarket || Number(idxMa3Slope) > 0) {
           await ensurePoolData();
           if (candidates.length > 0) {
             const ranked = evalBucket(bucketMinute);
@@ -653,7 +685,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
               const otherHeld = positions.filter((p, i) => i !== legIdx && p).map(p => p.code);
               if (pick.limitUp || otherHeld.includes(pick.code) || soldTodayCodes.has(pick.code) || failPrevStrengthOpenGap(pick) || (pick.abnormalWarn && pick.abnormalWarn.blocked)) continue;
               if (legIdx >= positions.length) positions.length = legIdx + 1;
-              positions[legIdx] = buildPosition({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx, otherHeld });
+              positions[legIdx] = buildPosition({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx, otherHeld, noMarket: ignoreMarket });
               positions[legIdx].buyDi = todayIdx;
               positions[legIdx].cycle = CYCLE_PRO;
               for (const c of candidates) if (!seenStocks.has(c.code)) seenStocks.set(c.code, { code: c.code, name: c.name || c.code });
@@ -665,40 +697,64 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
 
       // 【逆周期腿】反向抱团龙头逻辑：斜率连续为负 + 当日上证跌幅 ≥ 0.5% 时逐桶累计强度分命中，
       //   第 2 次命中且有空仓位即按本桶分时价买入（同一天同一只股票只计一次命中）
+      //   无视大盘变体：逆周期池只用于选股，买点完全走顺周期口径（死叉前置 + 今日「强度分 − 差劲分 >= 30」），
+      //   不判定斜率 / 当日跌幅 / 命中次数
       if (eligibleRev && revCandidatesRaw.length > 0) {
         await ensureRevPoolData();
-        const idxChg = idxChangeAt(bucketMinute);
-        if (idxChg != null && idxChg <= REV_INDEX_DROP_PCT) {
-          for (const c of revCandidatesRaw) {
-            if (revDayTriggered.has(c.code)) continue;
-            const t = revTodayTline.get(c.code);
-            if (!t || t.points.length === 0 || !(t.preclose > 0)) continue;
-            const s = strengthAtMinute(t, bucketMinute, c.code, idxPointsOf(c.code));
-            if (!s || !(s.score > REV_STRENGTH_MIN)) continue;
-            const abnormalWarn = evalAbnormalWarn(abnormalBases.get(c.code), s.px);
-            // 首次 > 50 → 登记当日命中（同一天同一只股票只计一次）
-            revDayTriggered.add(c.code);
-            const prev = revHitCount.get(c.code) || 0;
-            const next = Math.min(prev + 1, REV_HIT_REQUIRED);
-            revHitCount.set(c.code, next);
-            // 第 2 次命中即按本桶分时价买入
-            //   2026-10-20 用户新增：每天 14:30 之后不买——命中登记照常累计（与线上口径一致），仅不再实际买入
-            //   2026-11-02 用户新增：临近异动（剩余空间 ≤ 10%）不买——命中登记照常累计
-            if (prev >= 1 && !s.limitUp && bucketMinute <= BUY_CUTOFF_MINUTE && !abnormalWarn.blocked) {
+        if (ignoreMarket) {
+          if (revCandidates.length > 0) {
+            // 通过顺周期买点前置的逆周期候选，逐桶按「强度分 − 差劲分」降序依次买入
+            const rankedRev = evalList(revCandidates, bucketMinute, revTodayTline, revTodayAvg3Vol);
+            for (const pick of rankedRev) {
               const legIdx = idleLegIdx();
-              if (legIdx !== -1) {
-                const otherHeld = positions.filter((p, i) => i !== legIdx && p).map(p => p.code);
-                if (!otherHeld.includes(c.code) && !soldTodayCodes.has(c.code)) {
-                  if (legIdx >= positions.length) positions.length = legIdx + 1;
-                  positions[legIdx] = buildRevPosition({
-                    pick: c, s, score: s.score, px: s.px, changePct: s.changePct,
-                    dateStr, dateDisplay, timeText, hitCount: next,
-                    slopeClose, daysSinceTurnNeg, idxChg, legIdx, otherHeld, abnormalWarn,
-                  });
-                  positions[legIdx].buyDi = todayIdx;
-                  positions[legIdx].cycle = CYCLE_COUNTER;
-                  for (const cc of revCandidatesRaw) if (!seenStocks.has(cc.code)) seenStocks.set(cc.code, { code: cc.code, name: cc.name || cc.code });
-                  if (unlimited) break; // 每次买点只买排名第一（未被持有的）一只
+              if (legIdx === -1) break;
+              const otherHeld = positions.filter((p, i) => i !== legIdx && p).map(p => p.code);
+              if (pick.limitUp || otherHeld.includes(pick.code) || soldTodayCodes.has(pick.code) || failPrevStrengthOpenGap(pick) || (pick.abnormalWarn && pick.abnormalWarn.blocked)) continue;
+              if (legIdx >= positions.length) positions.length = legIdx + 1;
+              positions[legIdx] = buildPosition({
+                pick, ranked: rankedRev, dateStr, dateDisplay, timeText, idxMa3Slope: null,
+                legIdx, otherHeld, noMarket: true, poolKind: 'reverse',
+              });
+              positions[legIdx].buyDi = todayIdx;
+              positions[legIdx].cycle = CYCLE_COUNTER;
+              for (const cc of revCandidatesRaw) if (!seenStocks.has(cc.code)) seenStocks.set(cc.code, { code: cc.code, name: cc.name || cc.code });
+              if (unlimited) break; // 每次买点只买排名第一（未被持有的）一只
+            }
+          }
+        } else {
+          const idxChg = idxChangeAt(bucketMinute);
+          if (idxChg != null && idxChg <= REV_INDEX_DROP_PCT) {
+            for (const c of revCandidatesRaw) {
+              if (revDayTriggered.has(c.code)) continue;
+              const t = revTodayTline.get(c.code);
+              if (!t || t.points.length === 0 || !(t.preclose > 0)) continue;
+              const s = strengthAtMinute(t, bucketMinute, c.code, idxPointsOf(c.code));
+              if (!s || !(s.score > REV_STRENGTH_MIN)) continue;
+              const abnormalWarn = evalAbnormalWarn(abnormalBases.get(c.code), s.px);
+              // 首次 > 50 → 登记当日命中（同一天同一只股票只计一次）
+              revDayTriggered.add(c.code);
+              const prev = revHitCount.get(c.code) || 0;
+              const next = Math.min(prev + 1, REV_HIT_REQUIRED);
+              revHitCount.set(c.code, next);
+              // 第 2 次命中即按本桶分时价买入
+              //   2026-10-20 用户新增：每天 14:30 之后不买——命中登记照常累计（与线上口径一致），仅不再实际买入
+              //   2026-11-02 用户新增：临近异动（剩余空间 ≤ 10%）不买——命中登记照常累计
+              if (prev >= 1 && !s.limitUp && bucketMinute <= BUY_CUTOFF_MINUTE && !abnormalWarn.blocked) {
+                const legIdx = idleLegIdx();
+                if (legIdx !== -1) {
+                  const otherHeld = positions.filter((p, i) => i !== legIdx && p).map(p => p.code);
+                  if (!otherHeld.includes(c.code) && !soldTodayCodes.has(c.code)) {
+                    if (legIdx >= positions.length) positions.length = legIdx + 1;
+                    positions[legIdx] = buildRevPosition({
+                      pick: c, s, score: s.score, px: s.px, changePct: s.changePct,
+                      dateStr, dateDisplay, timeText, hitCount: next,
+                      slopeClose, daysSinceTurnNeg, idxChg, legIdx, otherHeld, abnormalWarn,
+                    });
+                    positions[legIdx].buyDi = todayIdx;
+                    positions[legIdx].cycle = CYCLE_COUNTER;
+                    for (const cc of revCandidatesRaw) if (!seenStocks.has(cc.code)) seenStocks.set(cc.code, { code: cc.code, name: cc.name || cc.code });
+                    if (unlimited) break; // 每次买点只买排名第一（未被持有的）一只
+                  }
                 }
               }
             }
@@ -775,7 +831,7 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
 };
 
 // 构建顺周期腿持仓对象（含买入原因与死叉 / 差劲分 / 强度分诊断明细；legIdx = 所属份别，各半仓）
-const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx = 0, otherHeld = [], cutoffMinute = BUY_CUTOFF_MINUTE }) => {
+const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slope, legIdx = 0, otherHeld = [], cutoffMinute = BUY_CUTOFF_MINUTE, noMarket = false, poolKind = 'pro' }) => {
   const s = pick.s;
   const d = pick.d;
   const diff = pick.diffScore;
@@ -788,15 +844,25 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
   const deltasText = cross ? cross.deltas.map(v => (v == null ? '--' : v)).join(' → ') : '--';
   const hitCount = cross && cross.hitCount != null ? cross.hitCount : 0;
   const delayText = `触发时点价 ${pick.px.toFixed(2)}`;
-  const buyReason = `${timeText} 过去 ${DEATH_CROSS_WINDOW} 个交易日内出现死叉（${crossDate}）后，今日满足「强度分 − 差劲分 = ${delta} ≥ ${DELTA_MIN}」（死叉后第 ${hitCount + 1} 次达标，本策略只允许前 2 次），买入候选 ${pick.name}（${pick.code}，${pick.lianbanCount} 连板），${delayText}；本次建仓为顺周期腿（极致胜率，第 ${legIdx + 1} 份半仓 ${LEG_WEIGHT * 100}%）${otherHeld.length > 0 ? `，已排除另一腿当前持仓标的（${otherHeld.join('、')}）` : ''}`;
+  const buyReason = poolKind === 'reverse'
+    ? `${timeText} 过去 ${DEATH_CROSS_WINDOW} 个交易日内出现死叉（${crossDate}）后，今日满足「强度分 − 差劲分 = ${delta} ≥ ${DELTA_MIN}」（死叉后第 ${hitCount + 1} 次达标），买入逆周期候选 ${pick.name}（${pick.code}，${pick.lianbanCount} 连板），${delayText}；本次建仓为逆周期腿（逆周期池选股 + 顺周期买点触发，第 ${legIdx + 1} 份半仓 ${LEG_WEIGHT * 100}%）${otherHeld.length > 0 ? `，已排除另一腿当前持仓标的（${otherHeld.join('、')}）` : ''}`
+    : `${timeText} 过去 ${DEATH_CROSS_WINDOW} 个交易日内出现死叉（${crossDate}）后，今日满足「强度分 − 差劲分 = ${delta} ≥ ${DELTA_MIN}」（死叉后第 ${hitCount + 1} 次达标，本策略只允许前 2 次），买入候选 ${pick.name}（${pick.code}，${pick.lianbanCount} 连板），${delayText}；本次建仓为顺周期腿（极致胜率，第 ${legIdx + 1} 份半仓 ${LEG_WEIGHT * 100}%）${otherHeld.length > 0 ? `，已排除另一腿当前持仓标的（${otherHeld.join('、')}）` : ''}`;
   const checks = [
-    {
-      id: 'extreme_win_pool',
-      title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板（连板数 ≥ 2）且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${EXTREME_CAP_BOARD_MIN_GAIN_PCT}% 即可、≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者需四连板及以上；均剔除创业板/科创板与 ${EXCLUDED_THEMES.join('/')} 题材。旧路径：过去 ${LOOKBACK_DAYS} 个交易日达标，10 日最大涨幅窗口（从第一天涨停的前一交易日收盘价起算）区间涨幅 < ${MAX_WINDOW_RANGE_PCT}%、峰值日（含）至买点前区间最大波动 < ${OLD_POST_PEAK_MAX_RANGE_PCT}%，连板后无单日涨幅 < ${POST_LIANBAN_DROP_PCT}%，20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。新路径：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日达标，10 日最大涨幅窗口（同口径）区间涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < ${NEW_MAX_WINDOW_RANGE_PCT}% 且该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%、该窗口内收盘跌幅 < ${POST_LIANBAN_DROP_PCT}% 的交易日至多 1 次（≥ 2 次剔除），20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。两路径均剔除与全量自选股科技股重叠者）`,
-      passed: true,
-      value: `${pick.name}（${pick.code}）· ${pick.lianbanCount} 连板`,
-      reason: `候选 = 旧路径（过去 ${LOOKBACK_DAYS} 个交易日内连板准入达标）与新路径（过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日内连板准入达标）并集（命中日 ${pick.date}，板块 ${pick.board || '--'}）；已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、${EXCLUDED_THEMES.join('/')} 题材（板块名包含关键词即剔除）与全量自选股科技股（isTech ≠ false）重叠者${pick.poolFilterText || ''}；本分钟达标候选共 ${ranked.length} 只，按今日「强度分 − 差劲分」降序取第一个「未涨停且未被另一腿持有」者作为顺周期腿（第 ${legIdx + 1} 份半仓）建仓标的`,
-    },
+    poolKind === 'reverse'
+      ? {
+        id: 'reverse_leader_pool',
+        title: `选股（逆周期池：过去 ${REV_LOOKBACK_DAYS} 个交易日出现过连板数 ≥ ${REV_MIN_BOARD_COUNT} 的个股；过去 ${REV_RANGE_WINDOW_DAYS} 个交易日（不含当日）内任意连续 ${REV_RANGE_SLIDE_DAYS} 个交易日区间最大涨幅 ≥ ${REV_MIN_WINDOW_RANGE_PCT}%）`,
+        passed: true,
+        value: `${pick.name}（${pick.code}）· ${pick.lianbanCount} 连板`,
+        reason: `候选 = 过去 ${REV_LOOKBACK_DAYS} 个交易日内出现过连板数 ≥ ${REV_MIN_BOARD_COUNT} 的个股（命中日 ${pick.date}，板块 ${pick.board || '--'}）；已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、${EXCLUDED_THEMES.join('/')} 题材；并叠加动量过滤——过去 ${REV_RANGE_WINDOW_DAYS} 个交易日（不含当日）内滑动「连续 ${REV_RANGE_SLIDE_DAYS} 个交易日」子窗口区间最大涨幅 (最高收盘价 − 最低收盘价) ÷ 最低收盘价 ≥ ${REV_MIN_WINDOW_RANGE_PCT}%${pick.poolFilterText || ''}；本分钟达标候选共 ${ranked.length} 只，按今日「强度分 − 差劲分」降序取第一个「未涨停且未被另一腿持有」者作为逆周期腿（第 ${legIdx + 1} 份半仓）建仓标的`,
+      }
+      : {
+        id: 'extreme_win_pool',
+        title: `选股（两路径并集，满足其一即可；连板准入按流通市值分档：流通市值 > ${LARGE_CAP_FLOAT_MV_YI} 亿元者出现过两连板（连板数 ≥ 2）且含该连板日在内的连续 ${CAP_BOARD_WINDOW_DAYS} 个交易日累计涨幅 > ${EXTREME_CAP_BOARD_MIN_GAIN_PCT}% 即可、≤ ${LARGE_CAP_FLOAT_MV_YI} 亿元者需四连板及以上；均剔除创业板/科创板与 ${EXCLUDED_THEMES.join('/')} 题材。旧路径：过去 ${LOOKBACK_DAYS} 个交易日达标，10 日最大涨幅窗口（从第一天涨停的前一交易日收盘价起算）区间涨幅 < ${MAX_WINDOW_RANGE_PCT}%、峰值日（含）至买点前区间最大波动 < ${OLD_POST_PEAK_MAX_RANGE_PCT}%，连板后无单日涨幅 < ${POST_LIANBAN_DROP_PCT}%，20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。新路径：过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日达标，10 日最大涨幅窗口（同口径）区间涨幅 > ${NEW_MIN_WINDOW_RANGE_PCT}% 且 < ${NEW_MAX_WINDOW_RANGE_PCT}% 且该窗口峰值日（窗内最高收盘日）至买点前严格相隔 ≥ ${PEAK_GAP_MIN_DAYS} 个交易日、峰值日（含峰值日本身）至买点前区间最大波动 < ${POST_PEAK_MAX_RANGE_PCT}%、该窗口内收盘跌幅 < ${POST_LIANBAN_DROP_PCT}% 的交易日至多 1 次（≥ 2 次剔除），20 日总涨幅 < ${MAX_TOTAL_RANGE_PCT}%。两路径均剔除与全量自选股科技股重叠者）`,
+        passed: true,
+        value: `${pick.name}（${pick.code}）· ${pick.lianbanCount} 连板`,
+        reason: `候选 = 旧路径（过去 ${LOOKBACK_DAYS} 个交易日内连板准入达标）与新路径（过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日内连板准入达标）并集（命中日 ${pick.date}，板块 ${pick.board || '--'}）；已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、${EXCLUDED_THEMES.join('/')} 题材（板块名包含关键词即剔除）与全量自选股科技股（isTech ≠ false）重叠者${pick.poolFilterText || ''}；本分钟达标候选共 ${ranked.length} 只，按今日「强度分 − 差劲分」降序取第一个「未涨停且未被另一腿持有」者作为顺周期腿（第 ${legIdx + 1} 份半仓）建仓标的`,
+      },
     {
       id: 'extreme_win_cross',
       title: `买点前置：峰值日之后的第一次死叉（窗口＝峰值日→买点前一日；若窗口内出现「死叉 + 次日收盘未创新高」，峰值日锁死为死叉前最高收盘日，2026-10-24 用户新增）且死叉后达标次数 ≤ 1（上个交易日 delta > ${DELTA_MIN} 时须放量）`,
@@ -844,11 +910,13 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
       reason: `今日强度分 ${strength} 高于今日差劲分 ${diff} 达 ${delta}，达到 ${DELTA_MIN} 门槛，满足死叉后金叉「分歧转一致」低吸反转买入条件`,
     },
     {
-      id: 'extreme_win_index_slope',
-      title: '买点门禁：上证指数 3 日线分时斜率为正',
+      id: noMarket ? 'extreme_win_ignore_market' : 'extreme_win_index_slope',
+      title: noMarket ? '买点门禁：无视大盘（不判定上证指数斜率）' : '买点门禁：上证指数 3 日线分时斜率为正',
       passed: true,
-      value: `上证指数 3 日线斜率 ${fmtKeyBlockSlope(idxMa3Slope)}（> 0）`,
-      reason: `买入时点计算上证指数（sh000001）3 日线分时斜率 = MA3(今日实时) − MA3(昨日收盘) = ${idxMa3Slope}，为正（> 0），大盘短期趋势向上，允许买入；若斜率 ≤ 0 或数据不足则该分钟跳过买入`,
+      value: noMarket ? '无视大盘：不判定指数斜率，只按「强度分 − 差劲分 ≥ 30」触发' : `上证指数 3 日线斜率 ${fmtKeyBlockSlope(idxMa3Slope)}（> 0）`,
+      reason: noMarket
+        ? '2026-11-14 用户新增「无视大盘」变体：顺周期腿不再要求上证指数 3 日线分时斜率为正，盘中任意时间桶只要「强度分 − 差劲分 ≥ 30」且通过其余门禁即买入'
+        : `买入时点计算上证指数（sh000001）3 日线分时斜率 = MA3(今日实时) − MA3(昨日收盘) = ${idxMa3Slope}，为正（> 0），大盘短期趋势向上，允许买入；若斜率 ≤ 0 或数据不足则该分钟跳过买入`,
     },
     {
       id: 'extreme_win_time_gate',
@@ -863,7 +931,7 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
     stockName: pick.name,
     mode: 'offense',
     splitLeg: LEG_LABELS[legIdx],
-    cycle: CYCLE_PRO,
+    cycle: poolKind === 'reverse' ? CYCLE_COUNTER : CYCLE_PRO,
     board: pick.board,
     buyDate: dateStr,
     buyDateDisplay: dateDisplay,

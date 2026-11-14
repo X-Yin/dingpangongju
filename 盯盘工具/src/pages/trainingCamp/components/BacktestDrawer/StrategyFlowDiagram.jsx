@@ -1181,6 +1181,97 @@ const specExtremeWin = () => {
   };
 };
 
+// 情绪游资-极致胜率-无视大盘（双腿，2026-11-14 用户新增，仅回测）：
+// 选股同极致胜率（顺周期新旧路径 + 逆周期），买点唯一触发条件 = 盘中「强度分 − 差劲分 ≥ 30」，不判定大盘
+const specExtremeWinNoMarket = () => {
+  const legA = build((ctx) => {
+    ctx.x = X0;
+    ctx.add('start', 'start', {
+      title: '账户拆两份：**两个半仓槽**，两腿共用 · **无视大盘**',
+      w: 900,
+      sub: '唯一买点触发条件 = 今日盘中逐 3 分钟桶「强度分 − 差劲分 ≥ 30」 · 不判定指数斜率 / 命中次数 · 14:30 后不再买入（14:30 桶仍可买）',
+    });
+    ctx.add('poolA', 'pool', {
+      title: '【顺周期腿】候选池：过去 10 日（旧）/ 20 日（新）出现过**连板准入**的个股',
+      w: 350,
+      items: [
+        '连板准入：流通市值 > 100 亿 → 两连板且含该连板日 5 日累计涨幅 > 45%；其余 → 连板数 ≥ 4',
+        '剔除 ST / 创业板 / 科创板 / 题材黑名单；剔除与自选科技股重叠',
+        '旧路径：10 日最大涨幅窗口 < 80%、峰值日（含）至买点前区间最大波动 < 20%',
+        '新路径：10 日窗口涨幅 > 70% 且 < 100%、峰值日后相隔 ≥ 5 个交易日、峰值日（含）起区间最大波动 < 15%',
+      ],
+    });
+    ctx.link('start', 'poolA');
+    ctx.add('gA2', 'gate', { title: '近 10 日（收盘 1500 口径）「强度分−差劲分」出现**死叉** 且 死叉后达标（≥30）天数 ≤ 1？（上日差值 > 30 → 该日须较前 3 日均量**放量**）', w: 360 });
+    ctx.link('poolA', 'gA2');
+    ctx.add('waitA2', 'wait', { title: '机会已被历史消耗 / 前置不满足 → 不买', w: 260 }, { x: X2, y: ctx.pos.gA2.y + 6 });
+    ctx.link('gA2', 'waitA2', { label: '否', tone: 'no', sh: 's-r', th: 't-l', dashed: true });
+    ctx.link('waitA2', 'start', { tone: 'loop', sh: 's-t', th: 't-r', dashed: true, animated: true });
+    ctx.add('gA3', 'gate', { title: '今日盘中逐 **3 分钟**时间桶「**强度分 − 差劲分 ≥ 30**」？（**无视大盘：不判定上证斜率**；触发即买，多只候选取差值最大）', w: 350 });
+    ctx.link('gA2', 'gA3', { label: '是', tone: 'yes' });
+    ctx.add('waitA3', 'wait', { title: '逐桶继续实时判定', w: 220 }, { x: X2, y: ctx.pos.gA3.y + 6 });
+    ctx.link('gA3', 'waitA3', { label: '否', tone: 'no', sh: 's-r', th: 't-l', dashed: true });
+    ctx.link('waitA3', 'gA3', { tone: 'loop', sh: 's-t', th: 't-r', dashed: true, animated: true });
+    ctx.add('gA4', 'gate', { title: '买点门禁都通过？① 上日强度分 > 60 → 今日竞价低开须 ≥ -3%；② 触发时点未涨停；③ 未临近严重异动', w: 370 });
+    ctx.link('gA3', 'gA4', { label: '是', tone: 'yes' });
+    ctx.add('waitA4', 'wait', { title: '顺延差值排名下一只；均不可买则本桶不买', w: 270 }, { x: X2, y: ctx.pos.gA4.y + 6 });
+    ctx.link('gA4', 'waitA4', { label: '否', tone: 'no', sh: 's-r', th: 't-l', dashed: true });
+    ctx.link('waitA4', 'gA3', { tone: 'loop', sh: 's-t', th: 't-r', dashed: true, animated: true, label: '顺延' });
+    ctx.add('buyA', 'buy', { title: '【顺周期腿】按该时间桶分时价买入（半仓 ×0.5）', w: 310 });
+    ctx.link('gA4', 'buyA', { label: '通过', tone: 'yes' });
+    ctx.add('sellA', 'sell', leaderSellData({ instant: true, openGapRebound: true, title: '【顺周期腿】卖点（11 条 · 任一触发即卖）' }), {});
+    ctx.link('buyA', 'sellA', { label: '持仓期间', tone: 'sell' });
+  });
+  const legB = build((ctx) => {
+    ctx.x = X1;
+    ctx.add('poolB', 'pool', {
+      title: '【逆周期腿】候选池（= 反向抱团龙头）',
+      w: 340,
+      items: [
+        '近 20 日出现过**连板 ≥ 2** 的个股（剔 ST / 创业板 / 科创板 / 题材黑名单）',
+        '∩ 20 日内滑动 10 日子窗口区间最大涨幅 ≥ 60%',
+        '∩ 峰值日（含）至买点前区间最大波动 < 30%',
+        '∩ 最近 10 个交易日收盘涨幅 < -9% 的日至多 2 次',
+        '**无视大盘：逆周期池每个交易日均参与，但买点仍须通过顺周期死叉前置**',
+      ],
+    }, { y: legA.pos.poolA.y });
+    ctx.add('gB0', 'gate', { title: '【逆周期腿】买点**完全走顺周期口径**：近 10 日（收盘 1500 口径）「强度分−差劲分」出现**死叉** 且 死叉后达标（≥30）天数 ≤ 1？（上日差值 > 30 → 该日须较前 3 日均量**放量**）', w: 360 }, { y: legA.pos.gA2.y });
+    ctx.link('poolB', 'gB0');
+    ctx.add('waitB0', 'wait', { title: '前置不满足 → 不买', w: 220 }, { x: X2, y: legA.pos.gA2.y + 6 });
+    ctx.link('gB0', 'waitB0', { label: '否', tone: 'no', sh: 's-r', th: 't-l', dashed: true });
+    ctx.add('gB1', 'gate', { title: '【逆周期腿】今日盘中逐 3 分钟桶「**强度分 − 差劲分 ≥ 30**」？（**无视大盘：不判定上证斜率**）', w: 340 }, { y: legA.pos.gA3.y });
+    ctx.link('gB0', 'gB1', { label: '是', tone: 'yes' });
+    ctx.add('waitB1', 'wait', { title: '未达标 → 逐桶继续实时判定', w: 260 }, { x: X2, y: legA.pos.gA3.y + 6 });
+    ctx.link('gB1', 'waitB1', { label: '否', tone: 'no', sh: 's-r', th: 't-l', dashed: true });
+    ctx.link('waitB1', 'gB1', { tone: 'loop', sh: 's-t', th: 't-r', dashed: true, animated: true });
+    ctx.add('gB2', 'gate', { title: '【逆周期腿】买点门禁都通过？① 上日强度分 > 60 → 今日竞价低开须 ≥ -3%；② 触发时点未涨停；③ 未临近严重异动', w: 360 }, { y: legA.pos.gA4.y });
+    ctx.link('gB1', 'gB2', { label: '是', tone: 'yes' });
+    ctx.add('buyB', 'buy', { title: '【逆周期腿】按该时间桶分时价买入（半仓 ×0.5）', w: 340 }, { y: legA.pos.buyA.y });
+    ctx.link('gB2', 'buyB', { label: '通过', tone: 'yes' });
+    ctx.add('sellB', 'sell', {
+      kind: 'sell',
+      title: '【逆周期腿】卖点（8 条 · 任一触发即卖；⑪⑫仅顺周期腿启用）',
+      w: 340,
+      items: [
+        '① 跌破成本线 -5% 止损（须连续维持 ≥ 5 分钟）',
+        '② 盘中分时较昨收跌幅 ≤ -5% 直接卖',
+        '③ 开盘后较当日开盘价下挫 ≥ 5 个点直接卖',
+        '④ 持仓股跌停（较昨收 < -9%）',
+        '⑤ 高位放量大阴线：最高回落 > 8% 且现价 < 开盘价',
+        '⑥ 持仓第 3 个交易日 14:57 收益未拉开 +10% 即卖',
+        '⑦ 竞价低开 < -5% 按开盘价卖',
+        '⑧ 当日收盘抗分歧指数 < 6 按尾盘价卖',
+      ],
+      note: '价格类卖点按分钟级回溯成交；卖出后该腿当日不再追买（另一腿不受影响）',
+    }, { y: legA.pos.buyA.y + 150 });
+    ctx.link('buyB', 'sellB', { label: '持仓期间', tone: 'sell' });
+  });
+  return {
+    nodes: [...legA.nodes, ...legB.nodes],
+    edges: [...legA.edges, ...legB.edges],
+  };
+};
+
 // 情绪游资-极致赔率（A 首板洗盘-起爆拉升 + B 放量洗盘-二板起爆 融合账户，2026-11-04 用户新增）
 const specWashFusion = () =>
   build((ctx) => {
@@ -1324,6 +1415,7 @@ export const getStrategyFlow = (id) => {
   if (s === 'sci_attack_emo_win') return specFused();
   if (s === 'wash_fusion_extreme_odds') return specWashFusion();
   if (s === 'hot_money_extreme_win') return specExtremeWin();
+  if (s === 'hot_money_extreme_win_ignore_market') return specExtremeWinNoMarket();
   if (s === 'hot_money_reverse_leader') return specReverseLeader();
   if (/^hot_money_[23]board_attack$/.test(s)) return specNBoard(nBoardN(s));
   if (/^hot_money_volume_share_\dd$/.test(s)) return specVolumeShare(vsN(s));

@@ -1,4 +1,4 @@
-const { EXTREME_WIN_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC, FUSED_EMO_WIN_DESC, EMOTION_BURST_DRIFT_DESC, EMOTION_BURST_FOLLOW_DESC, FIRST_BOARD_WASH_DESC, VOLUME_WASHOUT_SECOND_BOARD_DESC, WASH_FUSION_DESC } = require('../descs');
+const { EXTREME_WIN_DESC, EXTREME_WIN_NO_MARKET_DESC, REVERSE_LEADER_DESC, N_BOARD_ATTACK_DESC, VOLUME_SHARE_DESC, FUSED_EMO_WIN_DESC, EMOTION_BURST_DRIFT_DESC, EMOTION_BURST_FOLLOW_DESC, FIRST_BOARD_WASH_DESC, VOLUME_WASHOUT_SECOND_BOARD_DESC, WASH_FUSION_DESC } = require('../descs');
 
 // 情绪游资系列（2026-10-17 用户要求：已删除「情绪游资-龙头战法」「情绪龙头+科技进攻」「科技进攻 + 情绪龙头」三个策略）：
 module.exports = {
@@ -13,6 +13,18 @@ module.exports = {
     name: '情绪游资-极致胜率',
     desc: EXTREME_WIN_DESC,
     extremeWinMode: true,
+  },
+  // 情绪游资-极致胜率-无视大盘（2026-11-14 用户新增，仅回测）：在「情绪游资-极致胜率」基础上衍生的变体——
+  //   顺周期（新旧路径）与逆周期两套候选池只负责选股；所有买点统一按顺周期口径触发（必须经过死叉前置 + 今日逐 3 分钟桶「强度分 − 差劲分 ≥ 30」）；
+  //   完全不判定指数斜率（不看大盘，只看个股自身节奏）；逆周期池不再要求负斜率第 3 天 / 当日上证跌幅 / 命中两次；
+  //   涨停/14:30/严重异动/上日强度低开门禁保留（两腿均适用）；卖点同「情绪游资-极致胜率」。
+  // extremeWinMode + extremeWinIgnoreMarket: true → 独立引擎 runExtremeWinBacktest 的「无视大盘」分支
+  hot_money_extreme_win_ignore_market: {
+    id: 'hot_money_extreme_win_ignore_market',
+    name: '情绪游资-极致胜率-无视大盘',
+    desc: EXTREME_WIN_NO_MARKET_DESC,
+    extremeWinMode: true,
+    extremeWinIgnoreMarket: true,
   },
   // 科技进攻-情绪游资极致胜率（2026-10-19 用户新增）：把「3日涨幅最大&三日情绪-30快进快出」（A 风格）
   //   与「情绪游资-极致胜率」（B 风格，双腿）融合为一个账户——账户被单一风格独占（仍 2 个半仓槽）：
