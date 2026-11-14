@@ -20,6 +20,7 @@ const { checkSingleStockSellPoint } = require('./buySellDiagnose');
 const { checkExtremeWinSellPointDetailed, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } = require('./hotMoneyExtremeWin');
 const { checkFirstBoardWashSellPointDetailed, checkSecondBoardWashSellPointDetailed } = require('./firstBoardWashSell');
 const { isTechWatchlistStock } = require('./monitorStock');
+const { logSell } = require('./diagnosisLog');
 
 const INTERVAL_MS = 10 * 1000;
 const statePath = path.resolve(__dirname, '../data/sell_point_notify_state.json');
@@ -173,6 +174,7 @@ const diagnosePosition = async (stock, todayStr, mode, minuteEvalNow = true) => 
 const tick = async () => {
   if (running) return; // 上一 tick 未完成则跳过，避免重入
   running = true;
+  const startedAt = Date.now();
   try {
     const now = new Date();
     if (!isInPushWindow(now)) return;
@@ -204,6 +206,16 @@ const tick = async () => {
 
     // 1) 每 10s 广播诊断结果（仅供前端展示，不触发打开）
     wsServer.broadcast({ type: 'sell_point', mode, bucket, ts: Date.now(), data, open: false });
+
+    // 每个诊断周期都落盘（无论是否命中卖点），便于后续排查
+    logSell({
+      mode,
+      bucket,
+      results,
+      hitCount: hitResults.length,
+      total: results.length,
+      durationMs: Date.now() - startedAt,
+    });
 
     if (hitResults.length === 0) return;
 
@@ -259,6 +271,7 @@ const tick = async () => {
     wsServer.broadcast({ type: 'sell_point', mode, bucket, ts: Date.now(), data, open: true });
   } catch (e) {
     console.error('卖点诊断推送任务异常:', e.message);
+    logSell({ error: e.message, durationMs: Date.now() - startedAt });
   } finally {
     running = false;
   }

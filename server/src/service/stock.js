@@ -101,23 +101,29 @@ function getOpeningPrices() {
     }
 }
 
-const getSingleStockData = async (code, limit = 1) => {
+const getSingleStockData = async (code, limit = 1, timeoutMs = 500, sourceOrder = null) => {
     // 日K路由：CLS / THS 之间按 code 稳定哈希选择（默认 60/40 分布），主源失败则另一源兜底；
     // 同一股票固定同一主源，保证收盘后重算结果可复现
-    const tryOrder = buildTryOrder('kline', code);
+    // timeoutMs：调用方可在批量拉取全量自选股时放宽超时（500ms 在高并发下会随机丢股票）
+    // sourceOrder：显式指定重试顺序（如 ['ths','cls']），用于「必须拿到数据」的严格重试场景；
+    //              连板网没有日K接口，因此这里只接受 ths / cls
+    const timeout = Number(timeoutMs) > 0 ? Number(timeoutMs) : 500;
+    const tryOrder = (Array.isArray(sourceOrder) && sourceOrder.length > 0
+        ? sourceOrder
+        : buildTryOrder('kline', code)).filter((src) => src === 'ths' || src === 'cls');
     for (const src of tryOrder) {
         let result = null;
-        if (src === 'ths') result = await getSingleStockDataFromTHS(code, limit);
-        else if (src === 'cls') result = await getSingleStockDataFromCLS(code, limit);
+        if (src === 'ths') result = await getSingleStockDataFromTHS(code, limit, timeout);
+        else if (src === 'cls') result = await getSingleStockDataFromCLS(code, limit, timeout);
         if (result && result.length > 0) return result;
         console.log(`${src.toUpperCase()} 获取股票 ${code} K线失败，继续下一个兜底`);
     }
     return [];
 };
 
-const getSingleStockDataFromCLS = async (code, limit = 1) => {
+const getSingleStockDataFromCLS = async (code, limit = 1, timeoutMs = 500) => {
     try {
-        const response = await axios.get(getClsReqUrl(code, limit), { timeout: 500 });
+        const response = await axios.get(getClsReqUrl(code, limit), { timeout: Number(timeoutMs) > 0 ? Number(timeoutMs) : 500 });
         const kline = response.data.data;
         return kline;
     } catch (error) {
@@ -126,7 +132,7 @@ const getSingleStockDataFromCLS = async (code, limit = 1) => {
     }
 };
 
-const getSingleStockDataFromTHS = async (code, limit = 1) => {
+const getSingleStockDataFromTHS = async (code, limit = 1, timeoutMs = 500) => {
     try {
         const pureCode = code.replace(/^[a-zA-Z]+/, '');
         const url = getThsKlineUrl();
@@ -134,7 +140,7 @@ const getSingleStockDataFromTHS = async (code, limit = 1) => {
         const fetchLimit = Math.max(limit + 20, 40);
         const requestBody = buildThsKlineRequestBody(pureCode, fetchLimit);
 
-        const response = await axios.post(url, requestBody, { headers, timeout: 500 });
+        const response = await axios.post(url, requestBody, { headers, timeout: Number(timeoutMs) > 0 ? Number(timeoutMs) : 500 });
 
         if (response.data.status_code !== 0) {
             console.error(`同花顺API返回错误状态码: ${response.data.status_code}`);
@@ -369,22 +375,35 @@ let tlineNum = 0;
 //   主力：CLS 60% / THS 40%（加权随机）
 //   兜底：主源失败后依次走「另一只主力 → LB（连板网，腾讯底层）」
 // 2026-11-04 实测：CLS 并发 177-211ms / 稳定；LB 241-360ms / 稳定；THS 偶发 500ms+ timeout
+const LIVE_TLINE_RETRY_WINDOW_MS = 6 * 1000;
 const getSingleStockTlineDataRaw = async (code) => {
     const _t0 = Date.now();
-    const tryOrder = buildTryOrder('tline', code); // 例如 ['cls','ths','lb'] 或 ['ths','cls','lb']，同 code 稳定命中同一主源
-
-    for (const src of tryOrder) {
-        let result = null;
-        if (src === 'cls') result = await getSingleStockTlineDataFromCLS(code);
-        else if (src === 'ths') result = await getSingleStockTlineDataFromTHS(code);
-        else if (src === 'lb') result = await getSingleStockTlineDataFromLB(code);
-        if (result) {
-            console.log(`[tline] ${code} → ${src.toUpperCase()} ${Date.now()-_t0}ms`);
-            return result;
+    // 2026-11-14 用户要求：按「同花顺 → 财联社 → 连板网」固定顺序重试，不能一次失败就丢个股。
+    // 连板网只有当日分时，因此这里的三源兜底仅适用于当日实时分时；历史日期分时见
+    // getSingleStockTlineDataByDate（LB 不支持历史，只走 THS/CLS）。
+    const tryOrder = ['ths', 'cls', 'lb'];
+    const deadline = _t0 + LIVE_TLINE_RETRY_WINDOW_MS;
+    let attempts = 0;
+    while (Date.now() < deadline) {
+        attempts++;
+        for (const src of tryOrder) {
+            let result = null;
+            try {
+                if (src === 'ths') result = await getSingleStockTlineDataFromTHS(code, 2000);
+                else if (src === 'cls') result = await getSingleStockTlineDataFromCLS(code, 2000);
+                else if (src === 'lb') result = await getSingleStockTlineDataFromLB(code);
+            } catch (e) {
+                // 单源异常继续下一个源
+            }
+            if (result) {
+                console.log(`[tline] ${code} → ${src.toUpperCase()} ${Date.now() - _t0}ms（第 ${attempts} 轮）`);
+                return result;
+            }
         }
+        await new Promise((resolve) => setTimeout(resolve, 200));
     }
 
-    console.warn(`[tline] ${code} 所有数据源(${tryOrder.join('/')})均失败，总耗时 ${Date.now()-_t0}ms`);
+    console.warn(`[tline] ${code} 所有数据源(${tryOrder.join('/')})在 ${LIVE_TLINE_RETRY_WINDOW_MS}ms 内均失败，总耗时 ${Date.now() - _t0}ms`);
     return null;
 };
 
@@ -400,11 +419,14 @@ const normalizeMarketPrefix = (code) => {
     return code; // 未知格式兜底原样
 };
 
-const getSingleStockTlineDataFromCLS = async (code) => {
+const getSingleStockTlineDataFromCLS = async (code, timeoutMs = 500) => {
     try {
         const normalizedCode = normalizeMarketPrefix(code);
-        // 500ms 超时：超时立刻返回 null，由 buildTryOrder 兜底链切换下一个数据源
-        const response = await axios.get(getClsReqStockTlineUrl(normalizedCode), { timeout: 500 });
+        // 默认 500ms 超时：超时立刻返回 null，由兜底链切换下一个数据源；
+        // 严格重试场景传入更长超时（如 2500ms）
+        const response = await axios.get(getClsReqStockTlineUrl(normalizedCode), {
+            timeout: Number(timeoutMs) > 0 ? Number(timeoutMs) : 500,
+        });
         const data = response.data.data;
         const line = data?.line || [];
         if (!Array.isArray(line) || line.length === 0) {
@@ -451,14 +473,18 @@ const getSingleStockTlineDataFromCLS = async (code) => {
     }
 };
 
-const getSingleStockTlineDataFromTHS = async (code) => {
+const getSingleStockTlineDataFromTHS = async (code, timeoutMs = 500) => {
     try {
         const url = getThsTrendUrl();
         const headers = getThsTrendHeaders();
         const requestBody = buildThsTrendRequestBody(code);
 
-        // 同花顺慢/卡/限流时 axios 默认超时会等很久，直接 500ms 过期兜底财联社
-        const response = await axios.post(url, requestBody, { headers, timeout: 500 });
+        // 同花顺慢/卡/限流时 axios 默认超时会等很久，默认 500ms 过期兜底财联社；
+        // 严格重试场景传入更长超时
+        const response = await axios.post(url, requestBody, {
+            headers,
+            timeout: Number(timeoutMs) > 0 ? Number(timeoutMs) : 500,
+        });
         const quoteData = response.data.data?.quote_data?.[0];
         
         if (!quoteData || !quoteData.value || !Array.isArray(quoteData.value)) {
@@ -863,9 +889,11 @@ const tlineReqTimeout = (tradeDate) => {
     return String(tradeDate) === todayStr ? 5000 : 500;
 };
 
-const getSingleStockTlineDataByDateFromCLS = async (code, tradeDate) => {
+const getSingleStockTlineDataByDateFromCLS = async (code, tradeDate, timeoutMs) => {
     try {
-        const response = await axios.get(getClsReqStockTlineDay5Url(code), { timeout: tlineReqTimeout(tradeDate) });
+        const response = await axios.get(getClsReqStockTlineDay5Url(code), {
+            timeout: Number(timeoutMs) > 0 ? Number(timeoutMs) : tlineReqTimeout(tradeDate),
+        });
         const data = response.data.data;
         if (!data || !Array.isArray(data)) {
             return null;
@@ -946,7 +974,11 @@ const tlineResultMemCache = new Map();
 // 分时拉取失败负缓存："code|dateNum" -> 失败过期时间戳（10 分钟内不再重试 THS/CLS，回测加速）
 const tlineFailMemo = new Map();
 
-const getSingleStockTlineDataByDate = async (code, tradeDate) => {
+// opts: { ignoreFailCache, timeoutMs }
+//   ignoreFailCache：批量实时榜单重试时使用，跳过历史分时 10 分钟失败负缓存，避免一次超时导致个股被稳定剔除
+const getSingleStockTlineDataByDate = async (code, tradeDate, opts = {}) => {
+    const ignoreFailCache = opts && opts.ignoreFailCache === true;
+    const reqTimeoutMs = opts && Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : null;
     const stockName = getStockNameByCode(code);
     // 非自选股（指数/板块股）无股票名，按代码落盘缓存，避免每次都走 HTTP
     const cacheKey = stockName || String(code);
@@ -1005,7 +1037,7 @@ const getSingleStockTlineDataByDate = async (code, tradeDate) => {
     // 避免同一笔回测区间内反复超时重试（如长期停牌/退市代码每次都拖 2 次接口超时）。
     // 当日（live）数据随时会出现（竞价→开盘后逐分钟生成），失败不可负缓存，否则盘中负缓存期内涨幅/强度分全部为 '--'
     const failKey = `${code}|${tradeDate}`;
-    if (!isToday) {
+    if (!isToday && !ignoreFailCache) {
         const failMemo = tlineFailMemo.get(failKey);
         if (failMemo && Date.now() < failMemo) {
             return null;
@@ -1013,15 +1045,19 @@ const getSingleStockTlineDataByDate = async (code, tradeDate) => {
     }
 
     // 历史日期分时路由：CLS/THS 之间按 (code, 日期) 稳定哈希选择（LB 不支持按日期查，跳过）
+    // opts.sourceOrder：严格重试场景可显式指定 ['ths','cls'] 顺序
     let result = null;
-    const histOrder = buildTryOrder('tlineHistorical', `${code}|${tradeDate}`);
+    const histOrder = (Array.isArray(opts.sourceOrder) && opts.sourceOrder.length > 0
+        ? opts.sourceOrder
+        : buildTryOrder('tlineHistorical', `${code}|${tradeDate}`))
+        .filter((src) => src === 'ths' || src === 'cls');
     for (const src of histOrder) {
-        if (src === 'ths') result = await getSingleStockTlineDataByDateFromTHS(code, tradeDate);
-        else if (src === 'cls') result = await getSingleStockTlineDataByDateFromCLS(code, tradeDate);
+        if (src === 'ths') result = await getSingleStockTlineDataByDateFromTHS(code, tradeDate, reqTimeoutMs);
+        else if (src === 'cls') result = await getSingleStockTlineDataByDateFromCLS(code, tradeDate, reqTimeoutMs);
         if (result && result.line && result.line.length > 0) break;
         console.log(`${src.toUpperCase()} 获取股票 ${code} 日期 ${tradeDate} 分时失败，尝试下一个兜底`);
     }
-    if (!isToday && (!result || !result.line || result.line.length === 0)) {
+    if (!isToday && !ignoreFailCache && (!result || !result.line || result.line.length === 0)) {
         tlineFailMemo.set(failKey, Date.now() + 10 * 60 * 1000);
     }
 
@@ -1048,13 +1084,16 @@ const getSingleStockTlineDataByDate = async (code, tradeDate) => {
     return result;
 };
 
-const getSingleStockTlineDataByDateFromTHS = async (code, tradeDate) => {
+const getSingleStockTlineDataByDateFromTHS = async (code, tradeDate, timeoutMs) => {
     try {
         const url = getThsTrendUrl();
         const headers = getThsTrendHeaders();
         const requestBody = buildThsTrendRequestBodyWithDate(code, tradeDate);
 
-        const response = await axios.post(url, requestBody, { headers, timeout: tlineReqTimeout(tradeDate) });
+        const response = await axios.post(url, requestBody, {
+            headers,
+            timeout: Number(timeoutMs) > 0 ? Number(timeoutMs) : tlineReqTimeout(tradeDate),
+        });
         const quoteData = response.data.data?.quote_data?.[0];
 
         if (!quoteData || !quoteData.value || !Array.isArray(quoteData.value) || quoteData.value.length === 0) {

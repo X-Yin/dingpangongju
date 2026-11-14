@@ -962,6 +962,16 @@ const getExtremeWinBuyPointChecks = async (targetDate = null, refresh = false, b
       : poolCount === 0
         ? '龙头池当前无满足条件的标的，请耐心等待。'
         : '龙头池暂未出现完整买点标的（需强度分 − 差劲分 ≥ 30 且上证 3 日线斜率为正），请耐心等待。';
+    // 命中时随诊断结果一并返回可买个股：后端 WS 推送 / 飞书 / 前端卡片共用同一份快照，
+    // 避免「先弹卡片、几秒后再单独拉个股」以及两次拉取口径不一致的问题（2026-11-14 用户要求）
+    const hitStocks = allPassed
+      ? rows.filter((r) => r.buyPointHit).sort(byDeltaDesc).slice(0, 3)
+      : [];
+    const stockEmptyReason = allPassed
+      ? (hitStocks.length > 0 ? null : '买点已命中，但当前龙头池没有可返回的个股')
+      : (poolCount === 0
+        ? '龙头池当前无满足条件的标的，暂无可买个股'
+        : '龙头池暂未出现完整买点标的（需强度分 − 差劲分 ≥ 30 且上证 3 日线斜率为正），暂无可买个股');
     const cutoff = cutoffText(ctx);
     const gateSuffix = ctx.buyWindowOpen ? '' : ` 已过 ${cutoff} 买入截止（每天 ${cutoff} 之后不买），今日买入窗口已关闭。`;
     const conclusionBase = `${baseConclusion}${gateSuffix}`;
@@ -983,6 +993,9 @@ const getExtremeWinBuyPointChecks = async (targetDate = null, refresh = false, b
         totalCheckCount,
         reverseChecks,
         reverse,
+        // 命中时携带可买个股（未命中一律为空数组，前端不会展示个股）
+        stocks: hitStocks,
+        stockEmptyReason,
         conclusion,
       },
     };

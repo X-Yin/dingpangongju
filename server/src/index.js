@@ -1967,9 +1967,9 @@ app.post('/buy_point_checks', async (req, res) => {
         ? await getExtremeWinBuyPointChecks(targetDate, refresh)
         : await getBuyPointChecks(targetDate, refresh, force, 1400); // 科技进攻=快进快出类，下午截止 14:00
     };
-    // 缓存键含自然日与模式：服务运行期间重复挂载直接秒回，后台按最小间隔刷新
-    const cacheKey = `buy_point_checks_${dayjs().format('YYYYMMDD')}_${targetDate || 'live'}_${mode || 'tech_attack'}`;
-    const result = await withApiCache(cacheKey, compute, force, 15000);
+    // 2026-11-14 用户要求：买点诊断必须实时重算，不再走 HTTP 结果缓存
+    // （此前 withApiCache 会返回最多 15 秒前的旧结果，与开盘实战页手动刷新口径不一致）
+    const result = await compute();
     res.json(result);
   } catch (error) {
     console.error('买点前置检查失败:', error);
@@ -2000,13 +2000,8 @@ app.post('/buy_point_stocks', async (req, res) => {
     const sortBy = req.body?.sortBy || 'resilience';
     const days = req.body?.days || 3; // 研报模式窗口天数：3 或 5
     const filterGate = req.body?.filterGate === true;
-    const cacheKey = `buy_point_stocks_${dayjs().format('YYYYMMDD')}_${targetDate || 'live'}_${sortBy}_${days}_${filterGate ? 1 : 0}`;
-    const result = await withApiCache(
-      cacheKey,
-      () => getBuyPointStocks(targetDate, sortBy, days, filterGate),
-      false,
-      4000
-    );
+    // 2026-11-14 用户要求：买点个股同样实时重算，不再走 4s 结果缓存
+    const result = await getBuyPointStocks(targetDate, sortBy, days, filterGate);
     res.json(result);
   } catch (error) {
     console.error('筛选买点个股失败:', error);

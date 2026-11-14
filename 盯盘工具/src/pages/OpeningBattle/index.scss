@@ -1099,6 +1099,17 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     margin-bottom: 6px;
   }
 
+  .ob-gainer-missing {
+    margin-bottom: 6px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: rgba(255, 190, 92, 0.95);
+    background: rgba(255, 170, 60, 0.1);
+    border: 1px solid rgba(255, 170, 60, 0.22);
+  }
+
   // 两个指数门槛芯片（创业板指 / 科创50）
   .ob-gainer-gate {
     display: flex;

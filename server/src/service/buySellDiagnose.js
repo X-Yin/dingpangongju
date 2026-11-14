@@ -34,7 +34,7 @@ const path = require('path');
 const dayjs = require('dayjs');
 const axios = require('axios');
 const { isTradingDay, getPrevTradingDay, resolveAnalysisDate } = require('../utils/tradingDay');
-const { getSingleStockData, getSingleStockTlineDataByDate, getAllStockData, getRealtimeQuotes } = require('./stock');
+const { getSingleStockData, getSingleStockTlineDataByDate, getSingleStockTlineData, getAllStockData, getRealtimeQuotes } = require('./stock');
 const { getAllTechIndexData, updateCurrentTechIndexData, getCurrentTechEmotion, getTechEmotionIntraday } = require('./emotion');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 const { getMonitorStocks } = require('./monitorStock');
@@ -3154,6 +3154,15 @@ const getBuyPointStocks = async (targetDate = null, sortBy = 'resilience', repor
 // 同时返回两个指数的 3 日线斜率门禁信息（供表头披露）
 const TOP_GAINERS_PER_MARKET = 5;
 
+// 已收盘 / 非交易日快照（2026-11-14）：目标日数据已不可变，重复请求必须返回完全一致的结果。
+// 仅缓存「非目标交易日实时时段」的调用；盘中实时请求仍每次真实重算（用户要求实时刷新）。
+// key = `${targetDateStr}|${maxPerMarket}`；限制条目数，避免历史 targetDate 调用无限增长。
+const closedTopGainersSnapshot = new Map();
+const CLOSED_SNAPSHOT_MAX_ENTRIES = 20;
+// 同一 (目标日, limit) 正在严格重试构建时，后续并发请求直接等待同一结果，
+// 避免前端 5s 轮询 + 手动刷新在「30s 严格重试窗口」内重复堆叠请求
+const closedTopGainersBuilding = new Map(); // key -> { waiters: [] }
+
 // 全局最低抗分歧门槛（与 buySellBacktest.GLOBAL_RESILIENCE_MIN=9 对齐；该常量未从其模块导出，故此处显式声明）
 const MIN_RESILIENCE_SCORE = 9;
 
@@ -3306,6 +3315,33 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     ? Number(dayjs().format('HHmm'))
     : 1455;
 
+  // 已收盘 / 非交易日：返回同一份快照，保证重复请求（含 5s 轮询与手动刷新并发）完全一致。
+  // 目标日当天 15:05 前仍视为实时时段，不缓存。
+  const nowMinuteOfDay = nowDay.hour() * 60 + nowDay.minute();
+  const targetIsToday = targetDateStr === nowDay.format('YYYYMMDD');
+  const liveTradingMoment = preOpenAuction
+    || (targetIsToday && isTradingDay(nowDay.toDate()) && nowMinuteOfDay < 15 * 60 + 5);
+  const snapshotAllowed = !targetDate && !liveTradingMoment;
+  const snapshotKey = `${targetDateStr}|${maxPerMarket}`;
+  if (snapshotAllowed) {
+    const snap = closedTopGainersSnapshot.get(snapshotKey);
+    if (snap) return snap;
+    const building = closedTopGainersBuilding.get(snapshotKey);
+    if (building) {
+      return new Promise((resolve) => building.waiters.push(resolve));
+    }
+    const entry = { waiters: [] };
+    closedTopGainersBuilding.set(snapshotKey, entry);
+    // 安全阀：异常路径下最多 90s，避免等待方永久挂起
+    const guard = setTimeout(() => {
+      if (closedTopGainersBuilding.get(snapshotKey) === entry) {
+        closedTopGainersBuilding.delete(snapshotKey);
+        entry.waiters.splice(0).forEach((resolve) => resolve({ success: false, message: '榜单严格重试超时，下一轮继续重试' }));
+      }
+    }, 90 * 1000);
+    if (guard && typeof guard.unref === 'function') guard.unref();
+  }
+
   // 估值快照（流通市值/市盈率）：非当日缓存时拉取一次，供榜单标注估值禁买原因
   await ensureWatchlistValuation();
   // 自选股榜单仅纳入科技股（isTech !== false，与全站「自选股科技股」口径一致）；
@@ -3326,15 +3362,40 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   const cyIndexLine = cybIdxTline?.line || [];
   const kcIndexLine = starIdxTline?.line || [];
 
-  // 阶段1：并行拉取全部自选股 K 线（并发 30：与 /get_all_stock_data 轮询的全量并发同级，
-  // 将 100+ 只股票的串行轮次从 12 轮降到约 4 轮，显著压缩首屏等待）
+  // 阶段1：并行拉取全部自选股 K 线（严格重试，不允许静默丢股票）
+  // 2026-11-14 用户要求：失败后按「同花顺 → 财联社」固定顺序不断重试，必须拿到数据。
+  //   - 连板网没有日K接口（见 config/index.js），日K只能在 THS / CLS 之间重试
+  //   - 每只股票在整轮 30s 窗口内循环重试（单次 2500ms，失败后间隔 200ms 再试）
+  //   - 到窗口仍未拿到的股票不会被静默丢弃：结果里通过 dataMissing 显式返回，且不落收盘快照，
+  //     下一次 5s 轮询会继续重试，直到拿到为止
+  const hasTargetBar = (rows) => Array.isArray(rows) && rows.some((k) => parseInt(k.trade_date) === parseInt(targetDateStr));
+  // 非当日目标日必须含目标交易日 K 线；当日开盘前 5 分钟（9:30-9:35）日 K 可能尚未生成，
+  // 9:35 起同样严格要求，期间拿不到就继续重试而不是用旧数据凑数
+  const requireTargetBar = targetDateStr !== nowDay.format('YYYYMMDD')
+    || (isTradingDay(nowDay.toDate()) && nowMinuteOfDay >= 9 * 60 + 35);
+  const klineOk = (rows) => (requireTargetBar
+    ? hasTargetBar(rows)
+    : (Array.isArray(rows) && rows.length > 0));
+  const KLINE_STRICT_WINDOW_MS = 30 * 1000;
+  const klineDeadline = Date.now() + KLINE_STRICT_WINDOW_MS;
   const klineResults = await batchParallel(monitorStocks, async (stock) => {
-    try {
-      return { stock, klineData: await getSingleStockData(stock.code, 30) };
-    } catch (e) {
-      return { stock, klineData: null };
+    let last = null;
+    let attempts = 0;
+    while (Date.now() < klineDeadline) {
+      attempts++;
+      try {
+        // 固定顺序：同花顺 → 财联社；失败立刻换源，两个源都失败后稍等再从头重试
+        const d = await getSingleStockData(stock.code, 30, 2500, ['ths', 'cls']);
+        if (klineOk(d)) return { stock, klineData: d, klineAttempts: attempts };
+        if (Array.isArray(d) && d.length > 0) last = d;
+      } catch (e) {
+        // 单次异常继续下一轮，不允许因异常丢股票
+      }
+      await new Promise((resolve) => setTimeout(resolve, 200));
     }
-  }, 30);
+    console.warn(`[日K严格重试] ${stock.code} ${stock.name} 在 ${KLINE_STRICT_WINDOW_MS}ms 内未取到目标交易日K线，标记缺失并等待下一轮继续重试`);
+    return { stock, klineData: last, klineAttempts: attempts, klineMissing: true };
+  }, 15);
 
   // 集合竞价阶段：一次性批量拉取实时快照（按市场分组），为当日 K 线缺失的个股补齐竞价涨幅/现价
   const preOpenQuotes = preOpenAuction
@@ -3405,10 +3466,38 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   const topStar = base.filter(s => s.isSh688).sort(byChange3d).slice(0, maxPerMarket);
 
   // 阶段2：对入选个股拉分时，计算实时涨幅、抗分歧分数、涨停与买点资格
+  // 分时同样严格重试：同花顺 → 财联社固定顺序；整轮分时阶段共享 15s 重试窗口。
+  // 连板网不支持历史日期分时（见 config/index.js），周末/历史日期只能在 THS / CLS 间重试。
+  const tlineStageDeadline = Date.now() + 15 * 1000;
+  const liveTlineToday = targetDateStr === dayjs().format('YYYYMMDD');
+  const fetchTlineOnceStrict = async (code) => {
+    // 历史日期：同花顺 → 财联社（连板网不支持历史分时）
+    let tline = await getSingleStockTlineDataByDate(code, targetDateStr, {
+      ignoreFailCache: true,
+      timeoutMs: 2500,
+      sourceOrder: ['ths', 'cls'],
+    });
+    // 当日实时：历史接口拿不到时再走「同花顺 → 财联社 → 连板网」三源实时分时
+    if ((!tline || !tline.line || tline.line.length === 0) && liveTlineToday) {
+      tline = await getSingleStockTlineData(code);
+    }
+    return tline;
+  };
+  const fetchTlineStrict = async (code) => {
+    let tline = await fetchTlineOnceStrict(code);
+    while ((!tline || !tline.line || tline.line.length === 0) && Date.now() < tlineStageDeadline) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      tline = await fetchTlineOnceStrict(code);
+    }
+    return tline;
+  };
   const enrich = async (s) => {
     const trackedGate = s.isSh688 ? gate?.starGate : gate?.cybGate;
     const indexLine = s.isSh688 ? kcIndexLine : cyIndexLine;
-    const tline = await getSingleStockTlineDataByDate(s.stock.code, targetDateStr);
+    // 集合竞价阶段分时本来就不完整，不做严格重试，避免拖慢开盘首屏
+    const tline = preOpenAuction
+      ? await getSingleStockTlineDataByDate(s.stock.code, targetDateStr)
+      : await fetchTlineStrict(s.stock.code);
     const stockLine = tline?.line || [];
     // 实时涨幅：优先取分时最后一分钟累计涨幅，回退 K 线当日涨幅
     const lastPoint = stockLine.length > 0 ? stockLine[stockLine.length - 1] : null;
@@ -3538,7 +3627,18 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     reason: g.reason || '',
   } : null);
 
-  return {
+  // 严格重试后仍缺失的个股：显式返回，绝不静默丢弃（前端/日志可据此提示，下一轮继续重试）
+  const missingKlineStocks = klineResults
+    .filter((r) => r.klineMissing === true || !r.klineData || !klineOk(r.klineData))
+    .map((r) => ({
+      code: r.stock.code,
+      stockName: r.stock.name,
+      blockName: r.stock.blockName || '',
+      klineAttempts: r.klineAttempts || 0,
+      reason: '同花顺/财联社多轮重试后仍未取到目标交易日K线',
+    }));
+
+  const result = {
     success: true,
     data: {
       targetDate: targetDateStr,
@@ -3555,8 +3655,29 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
       gainGapSkipped: techGainGapSkipped,
       // 3 日涨幅接近（第一名与第二名相差 ≤ 1 个百分点）时的抗分歧优先判定明细（未触发时为 null）
       gainTie: techGainTie,
+      // 严格重试后仍缺数据的个股（正常为 0；不为 0 时本轮不落快照，下一轮继续重试）
+      dataMissing: missingKlineStocks,
+      dataMissingCount: missingKlineStocks.length,
     },
   };
+
+  // 已收盘 / 非交易日快照：必须本轮所有自选股都拿到目标日 K 线才落快照，
+  // 避免把一次网络抖动造成的残缺榜单固化；有缺失时下一次 5s 轮询会继续严格重试
+  if (snapshotAllowed && missingKlineStocks.length === 0) {
+    if (closedTopGainersSnapshot.size >= CLOSED_SNAPSHOT_MAX_ENTRIES) {
+      closedTopGainersSnapshot.delete(closedTopGainersSnapshot.keys().next().value);
+    }
+    closedTopGainersSnapshot.set(snapshotKey, result);
+  }
+  // 唤醒同一构建轮次的并发等待者（无论是否完整，都先返回本轮结果；有缺失则下一轮继续重试）
+  if (snapshotAllowed) {
+    const entry = closedTopGainersBuilding.get(snapshotKey);
+    if (entry) {
+      closedTopGainersBuilding.delete(snapshotKey);
+      entry.waiters.splice(0).forEach((resolve) => resolve(result));
+    }
+  }
+  return result;
 };
 
 // ========== 个股买点诊断：7 项前置检查 + 个股抗分歧指数检查 ==========

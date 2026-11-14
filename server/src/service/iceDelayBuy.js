@@ -535,6 +535,9 @@ const tick = async ({ data = null } = {}) => {
   }
 };
 
+// 当前正在延时等待 / 涨幅确认的模式（无进行中的冰点转折任务时返回 null）
+const getActiveMode = () => (pending && pending.mode) || (confirm && confirm.mode) || null;
+
 module.exports = {
   DELAY_MIN,
   LOOKBACK_MIN,
@@ -543,6 +546,7 @@ module.exports = {
   shouldSuppressTech,
   trigger,
   tick,
+  getActiveMode,
   hasPending,
   computeExecuteAt,
 };

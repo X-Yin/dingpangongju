@@ -1,11 +1,15 @@
-// 买点诊断后端集中调度（每 10s 一次）
-//   - 每 10s 计算一次诊断，经 WebSocket 广播给所有前端（卡片/抽屉实时刷新，前端不再轮询）
-//   - 命中且进入新的 5 分钟时间桶时（每桶最多一次）：后端发飞书 + 额外广播 open:true 让前端开抽屉/弹窗
-//   - 5 分钟桶标签口径严格对齐回测（见 buyPointBuckets.js）
-//   - 例外（2026-10-31 用户要求）：「情绪游资-极致胜率」（MODE_EXTREME_WIN）与「科技进攻-情绪游资-极致胜率」
-//     （MODE_ATTACK_DEFENSE）的情绪游资腿，买点诊断只在 3 的整数倍分钟（9:30 / 9:33 / 9:36 … 11:30、
-//     13:00 / 13:03 … 15:00）执行与命中（后端仍每 10s 轮询，非整数分钟不产生新命中）；其余模式维持 10s 一次
-//   - 非交易日 / 午休 / 收盘后不发；幂等状态落盘，重启同桶不重复发
+// 买点诊断后端集中调度（按模式固定间隔执行，实时诊断）
+//   - 各模式诊断间隔（分钟，对齐回测桶口径）：
+//       科技进攻 tech_attack            → 每 5 分钟（9:30 / 9:35 / … / 15:00）
+//       情绪游资-极致胜率 extreme_win   → 每 3 分钟（9:30 / 9:33 / … / 15:00）
+//       攻防兼备 attack_defense         → 每 3 分钟（科技腿命中仍按 5 分钟闭合桶门控）
+//       情绪游资-极致赔率 wash_fusion   → 由 washFusionLive 每 3s 独立推送，本服务不处理
+//   - 每个间隔都会经 WebSocket 广播一条 buy_point 消息（open:false，用于前端卡片实时刷新；
+//     未命中同样推送，只是 data.stocks 为空数组，不会展示个股）
+//   - 命中且进入新的合法时间桶时：随消息携带可买个股（data.stocks，后端同一次诊断内产出），
+//     同时发飞书 + 额外广播 open:true 让前端弹卡片（不再由前端二次请求榜单补个股）
+//   - 每个间隔无论是否命中都写入本地诊断日志（diagnosisLog，按天文件，保留 30 天）
+//   - 非交易日 / 午休 / 收盘后不执行；幂等状态落盘，重启同桶不重复发
 const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
@@ -13,19 +17,31 @@ const { isTradingDay } = require('../utils');
 const { getCurrentClosedBucket } = require('./buyPointBuckets');
 const strategyModeState = require('./strategyModeState');
 const wsServer = require('../wsServer');
-const { notifyBuyPointFeishu } = require('./buyPointNotifier');
+const { notifyBuyPointFeishu, buildTechBuyStocks } = require('./buyPointNotifier');
 const { getBuyPointChecks } = require('./buySellDiagnose');
 const { getExtremeWinBuyPointChecks, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE } = require('./hotMoneyExtremeWin');
 const iceDelayBuy = require('./iceDelayBuy');
+const { logBuy } = require('./diagnosisLog');
 
 const INTERVAL_MS = 10 * 1000;
 const statePath = path.resolve(__dirname, '../data/buy_point_notify_state.json');
+
+// 各模式诊断间隔（分钟）：每分钟边界由 10s tick 命中一次
+const MODE_INTERVAL_MIN = {
+  [strategyModeState.MODE_TECH_ATTACK]: 5,
+  [MODE_EXTREME_WIN]: 3,
+  [MODE_ATTACK_DEFENSE]: 3,
+};
 
 let timer = null;
 let running = false;
 // 每模式独立命中通知状态（2026-11-04 多选模式改造）：
 //   { [mode]: { bucket: 主命中桶(科技进攻/情绪游资单模式), tech: 攻防兼备科技腿桶, ew: 攻防兼备情绪游资腿桶, blocked: 买点屏蔽桶 } }
 let notifyStateByMode = {};
+// 每个模式「本分钟是否已执行」：10s tick 在同一分钟内只执行一次，避免重复诊断/重复推送
+const lastRunKeyByMode = new Map();
+// 最近一次诊断数据：冰点转折延时/涨幅确认按 10s 独立 tick，需要复用对应模式的最新诊断结果
+const lastDataByMode = new Map();
 
 const readState = () => {
   try {
@@ -117,81 +133,85 @@ const isInPushWindow = (date = new Date()) => {
   return true;
 };
 
-const runDiagnosis = (mode, ewEvalNow = true) => {
+const hhmmOf = (now) => now.getHours() * 100 + now.getMinutes();
+const runKeyOf = (now) => `${dayjs(now).format('YYYYMMDD')}-${now.getHours() * 60 + now.getMinutes()}`;
+
+// 当前模式是否到达诊断间隔（分钟数能被间隔整除）
+const isModeDue = (mode, now) => {
+  const interval = MODE_INTERVAL_MIN[mode];
+  if (!interval) return false;
+  const minute = now.getHours() * 60 + now.getMinutes();
+  return minute % interval === 0;
+};
+
+// 同一轮诊断内产出「科技进攻」可买个股（命中才调用，避免无命中时做全量榜单计算）
+const fetchTechStocks = async (techData) => {
+  if (!techData || techData.allPassed !== true) return { result: null, stocks: [], reason: null };
+  try {
+    const result = await buildTechBuyStocks();
+    return { result, stocks: result.pickStocks || [], reason: result.stockEmptyReason || null };
+  } catch (e) {
+    console.error('获取科技进攻买点标的失败:', e.message);
+    return { result: null, stocks: [], reason: `获取科技进攻标的失败：${e.message}` };
+  }
+};
+
+// 汇总一条买点消息里展示给前端的个股（科技腿 + 情绪游资顺周期 + 逆周期）
+const collectDisplayStocks = (data) => {
+  if (!data) return [];
+  const out = [];
+  if (data.tech) {
+    (data.tech.stocks || []).forEach((s) => out.push({ ...s, isTechPick: true }));
+  }
+  (data.stocks || []).forEach((s) => out.push({ ...s, isReverse: false }));
+  const reverseTriggered = (data.reverse && Array.isArray(data.reverse.triggered)) ? data.reverse.triggered : [];
+  reverseTriggered.filter((s) => s && s.timingPassed).forEach((s) => out.push({ ...s, isReverse: true }));
+  return out;
+};
+
+const buildHitSources = (mode, data) => {
+  const sources = [];
+  if (!data) return sources;
+  if (mode === MODE_ATTACK_DEFENSE) {
+    if (data.tech && data.tech.allPassed === true) sources.push('tech');
+    if (data.allPassed === true) sources.push('ew');
+    if (data.reverse && data.reverse.allPassed === true) sources.push('ew_reverse');
+    return sources.length > 0 ? sources : ['none'];
+  }
+  if (mode === strategyModeState.MODE_TECH_ATTACK) {
+    return data.allPassed === true ? ['tech'] : ['none'];
+  }
+  if (data.allPassed === true) sources.push('ew');
+  if (data.reverse && data.reverse.allPassed === true) sources.push('ew_reverse');
+  return sources.length > 0 ? sources : ['none'];
+};
+
+const runDiagnosis = async (mode) => {
   if (mode === MODE_ATTACK_DEFENSE) {
     // 攻防兼备：双策略并行诊断，组合 data = 情绪游资顺周期（顶层）+ tech 字段（科技进攻完整诊断）
-    //   情绪游资腿只在 3 的整数倍分钟才允许命中（非整数分钟抑制命中，科技腿不受影响）
-    return Promise.all([
-      getBuyPointChecks(null, true, false, 1400), // 科技进攻=快进快出类，下午截止 14:00
+    const [techRes, ewRes] = await Promise.all([
+      getBuyPointChecks(null, true, true, 1400), // 科技进攻=快进快出类，下午截止 14:00；force=true 保证每轮真实重算
       getExtremeWinBuyPointChecks(null, true, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE),
-    ]).then(([techRes, ewRes]) => {
-      const ewData = ewRes?.data || {};
-      return {
-        data: {
-          ...(ewEvalNow ? ewData : suppressEwBuyHit(ewData)),
-          tech: techRes?.data || null,
-          mode: MODE_ATTACK_DEFENSE,
-        },
-      };
-    });
+    ]);
+    return {
+      data: {
+        ...(ewRes?.data || {}),
+        tech: techRes?.data || null,
+        mode: MODE_ATTACK_DEFENSE,
+      },
+    };
   }
-  return getBuyPointChecks(null, true, false, 1400); // 科技进攻=快进快出类，下午截止 14:00
-};
-
-// ============================================================
-// 「情绪游资-极致胜率」买点诊断执行门禁（2026-10-31 用户要求，线上两个模式同步）：
-//   后端仍是每 10s 轮询，但买点诊断「命中」只允许在 3 的整数倍分钟评估/触发——
-//   9:30 / 9:33 / 9:36 … 11:30、13:00 / 13:03 … 15:00（自 0 点起分钟数为 3 的倍数）；
-//   非整数分钟不重新执行诊断，直接复用最近一次整数分钟的结果（命中标记同样保持，不会在非整数分钟新命中）
-// ============================================================
-const buildEwEvalMinutes = () => {
-  const set = new Set();
-  for (let m = 9 * 60 + 30; m <= 11 * 60 + 30; m += 3) set.add(m);
-  for (let m = 13 * 60; m <= 15 * 60; m += 3) set.add(m);
-  return set;
-};
-const EW_BUY_EVAL_MINUTES = buildEwEvalMinutes();
-let ewBuyEvalDate = null;
-let lastEwBuyData = null;
-
-// 非整数分钟（当日尚无缓存）的展示兜底：算一份结果但不允许命中
-const suppressEwBuyHit = (d) => {
-  if (!d) return d;
-  return {
-    ...d,
-    allPassed: false,
-    reverse: d.reverse ? { ...d.reverse, allPassed: false, triggeredCount: 0, triggered: [] } : d.reverse,
-    hitGate: '当前非 3 分钟整数分钟，买点命中暂不评估（9:30 / 9:33 / 9:36 … 等 3 的整数倍分钟才判定）',
-  };
-};
-
-const runExtremeWinBuyDiagnosis = async (now) => {
-  const today = dayjs().format('YYYYMMDD');
-  if (ewBuyEvalDate !== today) {
-    ewBuyEvalDate = today;
-    lastEwBuyData = null;
-  }
-  const m = now.getHours() * 60 + now.getMinutes();
-  if (EW_BUY_EVAL_MINUTES.has(m)) {
-    const res = await getExtremeWinBuyPointChecks(null, true);
-    lastEwBuyData = res && res.data ? res.data : null;
-    return lastEwBuyData;
-  }
-  if (lastEwBuyData != null) return lastEwBuyData;
-  const res = await getExtremeWinBuyPointChecks(null, true);
-  lastEwBuyData = suppressEwBuyHit(res && res.data ? res.data : null);
-  return lastEwBuyData;
+  return getBuyPointChecks(null, true, true, 1400); // 科技进攻=快进快出类，下午截止 14:00；force=true
 };
 
 // 攻防兼备 tick：双策略分源桶门控——科技进攻(tech)与情绪游资(ew)各自独立判定命中与通知（每桶每源至多一次），
 // 任一源命中新桶即广播 open:true；tech 源的快进快出强卖当日禁买屏蔽检测独立生效（不遮蔽 ew 源）
-const tickAttackDefense = async (mode, st, data, bucket, ewBucket = null) => {
+const tickAttackDefense = async (mode, st, data, bucket, ewBucket, techStockResult) => {
   const techData = data.tech || null;
   const techBlocked = detectQuickOutBlock(techData);
   const techHit = !techBlocked && techData != null && techData.allPassed === true;
-  // 情绪游资腿只在 3 的整数倍分钟（ewBucket 非空）才允许命中与通知
-  const ewHit = ewBucket != null && (data.allPassed === true
-    || (data.reverse && data.reverse.allPassed === true));
+  const ewHit = data.allPassed === true || (data.reverse && data.reverse.allPassed === true);
+  const hit = techHit || ewHit;
 
   // tech 屏蔽（其余前置条件全部通过但被禁买拦截）且 ew 未命中时，推买点屏蔽通知（独立桶门控，每桶一次）
   if (techBlocked && !ewHit && bucket != null && st.blocked !== bucket) {
@@ -238,14 +258,22 @@ const tickAttackDefense = async (mode, st, data, bucket, ewBucket = null) => {
     }
   } else if (techNewBucket && !techSuppressed) {
     try {
-      await notifyBuyPointFeishu({ mode, source: 'tech' });
+      await notifyBuyPointFeishu({
+        mode,
+        source: 'tech',
+        ...(techStockResult && techStockResult.feishuStocks ? { topStocks: techStockResult.feishuStocks } : {}),
+      });
     } catch (e) {
       console.error('科技进攻买点飞书发送失败:', e.message);
     }
   }
   if (ewNewBucket) {
     try {
-      await notifyBuyPointFeishu({ mode, source: 'ew' });
+      await notifyBuyPointFeishu({
+        mode,
+        source: 'ew',
+        ...(Array.isArray(data.stocks) && data.stocks.length > 0 ? { buyStocks: data.stocks } : {}),
+      });
     } catch (e) {
       console.error('情绪游资买点飞书发送失败:', e.message);
     }
@@ -258,63 +286,145 @@ const tickAttackDefense = async (mode, st, data, bucket, ewBucket = null) => {
         mode,
         bucket: msgBucket,
         ts: Date.now(),
-        data: { ...data, tech: data.tech ? { ...data.tech, allPassed: false } : null },
+        data: { ...data, tech: data.tech ? { ...data.tech, allPassed: false, stocks: [] } : null },
+        hit,
         open: true,
       });
     }
     return;
   }
-  wsServer.broadcast({ type: 'buy_point', mode, bucket: msgBucket, ts: Date.now(), data, open: true });
+  wsServer.broadcast({ type: 'buy_point', mode, bucket: msgBucket, ts: Date.now(), data, hit, open: true });
 };
 
-// 单模式诊断 tick（2026-11-04 多选模式改造）：每个生效模式独立执行，通知桶状态按模式隔离
+// 单模式诊断 tick（多选模式下每个生效模式独立执行，通知桶状态按模式隔离）
 const tickMode = async (mode, now) => {
+  const startedAt = Date.now();
   try {
     if (mode === strategyModeState.MODE_WASH_FUSION) {
       // 情绪游资-极致赔率：买点诊断由 washFusionLive 每 3s 独立推送（wash_fusion_buy），这里不再执行
       return;
     }
     const st = getModeState(mode);
-    const ewMinute = now.getHours() * 60 + now.getMinutes();
-    // 情绪游资腿（极致胜率 / 攻防兼备）只在 3 的整数倍分钟允许命中
-    const ewEvalNow = (mode === MODE_EXTREME_WIN || mode === MODE_ATTACK_DEFENSE)
-      && EW_BUY_EVAL_MINUTES.has(ewMinute);
-    const res = mode === MODE_EXTREME_WIN
-      ? { data: await runExtremeWinBuyDiagnosis(now) }
-      : await runDiagnosis(mode, ewEvalNow);
-    const data = res && res.data ? res.data : null;
-    // 命中门控用的桶键：情绪游资腿在 3 的整数倍分钟用「当前分钟 HHMM」（9:30 / 9:33 无闭合桶也能命中通知、
-    //   每个整数分钟至多通知一次）；其余情形沿用 5min 闭合桶标签
-    const bucket = mode === MODE_EXTREME_WIN
-      ? (ewEvalNow ? now.getHours() * 100 + now.getMinutes() : getCurrentClosedBucket(now))
-      : getCurrentClosedBucket(now);
-    const ewBucket = ewEvalNow ? now.getHours() * 100 + now.getMinutes() : null;
-
-    // 冰点转折延时买入到点：达到 15min 延时目标后选股并推送买入标的（13:30 之后同样执行；
-    // 即使本轮诊断失败也按时执行，避免错过买入时点）
+    let data = null;
+    let error = null;
     try {
-      await iceDelayBuy.tick({ data });
+      const res = mode === MODE_EXTREME_WIN
+        ? await getExtremeWinBuyPointChecks(null, true)
+        : await runDiagnosis(mode);
+      data = res && res.data ? res.data : null;
     } catch (e) {
-      console.error('冰点转折延时买入任务异常:', e.message);
+      error = e.message || '诊断失败';
+      console.error(`买点诊断执行失败(${mode}):`, error);
     }
 
-    if (!data) return;
+    // 冰点转折延时买入到点：由外层 10s tick 独立推进（见 tick()），这里只缓存本轮诊断数据供其使用；
+    // 避免把 15min 延时/涨幅确认也降到 3~5 分钟间隔
+    if (data && (mode === strategyModeState.MODE_TECH_ATTACK || mode === MODE_ATTACK_DEFENSE)) {
+      lastDataByMode.set(mode, data);
+    }
 
-    // 1) 每 10s 广播诊断结果（仅供前端展示，不触发打开）
-    wsServer.broadcast({ type: 'buy_point', mode, bucket, ts: Date.now(), data, open: false });
+    const bucket = mode === MODE_EXTREME_WIN ? hhmmOf(now) : getCurrentClosedBucket(now);
+    const ewBucket = mode === MODE_ATTACK_DEFENSE ? hhmmOf(now) : null;
 
-    // 攻防兼备：双策略分源桶门控 + 分源飞书通知，独立于单模式逻辑
-    if (mode === MODE_ATTACK_DEFENSE) {
-      await tickAttackDefense(mode, st, data, bucket, ewBucket);
+    if (!data) {
+      // 诊断失败也推送一条消息（data 为空），保证「每个间隔都有消息」，前端会忽略空数据
+      wsServer.broadcast({
+        type: 'buy_point',
+        mode,
+        bucket,
+        ts: Date.now(),
+        data: null,
+        hit: false,
+        error,
+        open: false,
+      });
+      logBuy({
+        mode,
+        bucket,
+        hit: false,
+        error,
+        durationMs: Date.now() - startedAt,
+        note: '本轮诊断结果为空',
+      });
       return;
     }
 
-    // 情绪游资-极致胜率：命中通知只允许在 3 的整数倍分钟（非整数分钟仅广播展示、不再命中通知）
-    if (mode === MODE_EXTREME_WIN && !ewEvalNow) return;
+    // 命中时在同一轮诊断内产出可买个股：科技腿走 3 日涨幅榜唯一候选；情绪游资腿由诊断结果自带 stocks
+    let payloadData = data;
+    let techStockResult = null;
+    if (mode === strategyModeState.MODE_TECH_ATTACK) {
+      const tech = await fetchTechStocks(data);
+      techStockResult = tech.result;
+      payloadData = {
+        ...data,
+        stocks: tech.stocks,
+        stockEmptyReason: data.allPassed === true ? tech.reason : null,
+      };
+    } else if (mode === MODE_ATTACK_DEFENSE) {
+      const tech = await fetchTechStocks(data.tech);
+      techStockResult = tech.result;
+      payloadData = {
+        ...data,
+        tech: data.tech
+          ? { ...data.tech, stocks: tech.stocks, stockEmptyReason: data.tech.allPassed === true ? tech.reason : null }
+          : null,
+      };
+    } else {
+      // 情绪游资：getExtremeWinBuyPointChecks 已按命中结果返回 stocks / stockEmptyReason
+      payloadData = {
+        ...data,
+        stocks: Array.isArray(data.stocks) ? data.stocks : [],
+      };
+    }
 
-    // 2) 买点屏蔽（快进快出强卖当日禁买）：其余前置条件全部通过但被该规则拦截时，抑制买点命中
+    const hit = mode === MODE_ATTACK_DEFENSE
+      ? (payloadData.tech && payloadData.tech.allPassed === true)
+        || payloadData.allPassed === true
+        || (payloadData.reverse && payloadData.reverse.allPassed === true)
+      : payloadData.allPassed === true
+        || (payloadData.reverse && payloadData.reverse.allPassed === true);
+    const displayStocks = collectDisplayStocks(payloadData);
+    // 命中但无个股时的原因：攻防兼备优先展示科技腿（科技腿命中时），否则展示情绪游资腿
+    const stockEmptyReason = mode === MODE_ATTACK_DEFENSE
+      ? ((payloadData.tech && payloadData.tech.allPassed === true)
+        ? (payloadData.tech.stockEmptyReason || null)
+        : (payloadData.stockEmptyReason || null))
+      : (payloadData.stockEmptyReason || null);
+
+    // 1) 每个诊断间隔都广播一次（open:false）：命中/未命中都推，未命中时 stocks 为空数组
+    wsServer.broadcast({
+      type: 'buy_point',
+      mode,
+      bucket: mode === MODE_EXTREME_WIN ? bucket : (bucket != null ? bucket : ewBucket),
+      ts: Date.now(),
+      data: payloadData,
+      hit,
+      open: false,
+    });
+
+    // 2) 每个诊断间隔都落盘日志（无论是否命中）
+    logBuy({
+      mode,
+      bucket,
+      hit,
+      sources: buildHitSources(mode, payloadData),
+      checks: payloadData.checks,
+      techChecks: mode === MODE_ATTACK_DEFENSE && payloadData.tech ? payloadData.tech.checks : null,
+      reverseChecks: payloadData.reverseChecks,
+      stocks: displayStocks,
+      stockEmptyReason,
+      durationMs: Date.now() - startedAt,
+    });
+
+    // 攻防兼备：双策略分源桶门控 + 分源飞书通知，独立于单模式逻辑
+    if (mode === MODE_ATTACK_DEFENSE) {
+      await tickAttackDefense(mode, st, payloadData, bucket, ewBucket, techStockResult);
+      return;
+    }
+
+    // 3) 买点屏蔽（快进快出强卖当日禁买）：其余前置条件全部通过但被该规则拦截时，抑制买点命中
     //    通知与飞书，改为推送 buy_point_blocked 屏蔽通知（每桶最多一次）
-    const block = detectQuickOutBlock(data);
+    const block = detectQuickOutBlock(payloadData);
     if (block) {
       if (bucket != null && st.blocked !== bucket) {
         st.blocked = bucket;
@@ -336,9 +446,9 @@ const tickMode = async (mode, now) => {
       return;
     }
 
-    // 3) 桶门控命中：命中且进入新的合法桶时，发飞书 + 额外广播 open:true（每桶最多一次）
-    const canonicalHit = data.allPassed === true
-      || (data.reverse && data.reverse.allPassed === true);
+    // 4) 桶门控命中：命中且进入新的合法桶时，发飞书 + 额外广播 open:true（每桶最多一次）
+    const canonicalHit = payloadData.allPassed === true
+      || (payloadData.reverse && payloadData.reverse.allPassed === true);
     if (bucket == null || !canonicalHit) return;
 
     // 冰点转折延时买入（2026-10-23）：科技进攻模式命中且属冰点转折时，不立即通知买入，
@@ -363,13 +473,25 @@ const tickMode = async (mode, now) => {
     writeNotifyState();
 
     try {
-      await notifyBuyPointFeishu({ mode });
+      if (mode === MODE_EXTREME_WIN) {
+        await notifyBuyPointFeishu({
+          mode,
+          source: 'ew',
+          ...(Array.isArray(payloadData.stocks) && payloadData.stocks.length > 0 ? { buyStocks: payloadData.stocks } : {}),
+        });
+      } else {
+        await notifyBuyPointFeishu({
+          mode,
+          ...(techStockResult && techStockResult.feishuStocks ? { topStocks: techStockResult.feishuStocks } : {}),
+        });
+      }
     } catch (e) {
       console.error('买点飞书发送失败:', e.message);
     }
-    wsServer.broadcast({ type: 'buy_point', mode, bucket, ts: Date.now(), data, open: true });
+    wsServer.broadcast({ type: 'buy_point', mode, bucket, ts: Date.now(), data: payloadData, hit, open: true });
   } catch (e) {
     console.error(`买点诊断推送任务异常(${mode}):`, e.message);
+    logBuy({ mode, hit: false, error: e.message, note: '诊断调度异常' });
   }
 };
 
@@ -381,10 +503,24 @@ const tick = async () => {
     if (!isInPushWindow(now)) return;
 
     // 多选模式（2026-11-04）：getModes() 返回生效模式集合（多选列表；未开启多选时为单模式），
-    // 逐个模式独立执行诊断、桶门控与通知
+    // 逐个模式按各自的诊断间隔执行；同一分钟只执行一次，避免 10s tick 重复计算
     const modes = strategyModeState.getModes();
     for (const mode of modes) {
+      if (mode === strategyModeState.MODE_WASH_FUSION) continue;
+      if (!isModeDue(mode, now)) continue;
+      const key = runKeyOf(now);
+      if (lastRunKeyByMode.get(mode) === key) continue;
+      lastRunKeyByMode.set(mode, key);
       await tickMode(mode, now);
+    }
+
+    // 冰点转折延时买入 / 涨幅确认仍按 10s 独立推进（不受 3~5min 诊断间隔影响），
+    // 使用对应模式最近一次诊断数据（到点即使没有新诊断也能按时执行）
+    try {
+      const activeMode = iceDelayBuy.getActiveMode();
+      await iceDelayBuy.tick({ data: activeMode ? (lastDataByMode.get(activeMode) || null) : null });
+    } catch (e) {
+      console.error('冰点转折延时买入任务异常:', e.message);
     }
   } catch (e) {
     console.error('买点诊断推送任务异常:', e.message);
@@ -399,7 +535,7 @@ const start = () => {
   loadLastNotifiedBucket();
   tick(); // 立即执行一次，启动即有数据
   timer = setInterval(tick, INTERVAL_MS);
-  console.log('买点诊断集中推送服务已启动（每 10s 一次）');
+  console.log('买点诊断集中推送服务已启动（按模式间隔：科技进攻 5min / 情绪游资 3min / 攻防兼备 3min）');
 };
 
 const stop = () => {
@@ -409,4 +545,4 @@ const stop = () => {
   }
 };
 
-module.exports = { start, stop, isInPushWindow };
+module.exports = { start, stop, isInPushWindow, MODE_INTERVAL_MIN };

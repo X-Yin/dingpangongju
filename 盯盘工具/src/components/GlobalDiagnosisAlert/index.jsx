@@ -187,20 +187,57 @@ const GlobalDiagnosisAlert = () => {
     return () => { stopped = true; clearInterval(timer); };
   }, []);
 
+  // 给后端直达的个股补实时价格（失败时保留后端返回的涨幅/价格）
+  const decorateStocks = useCallback(async (list) => {
+    const withPrice = await Promise.all((list || []).map(async (s) => {
+      const { price, change } = await fetchStockPrice(s.code);
+      return { ...s, buyPrice: price != null ? price : (s.buyPrice ?? null), priceChange: s.change != null ? s.change : change };
+    }));
+    return withPrice;
+  }, []);
+
+  // 后端随买点 WS 消息直达的个股（命中才会携带 stocks；未命中为空数组）
+  //   返回 null 表示消息未携带个股字段（旧协议 / MOCK），需要前端回退到榜单拉取
+  const collectEmbeddedStocks = useCallback((mode, data) => {
+    if (!data) return null;
+    if (mode === MODE_ATTACK_DEFENSE) {
+      const hasField = Array.isArray(data.tech?.stocks) || Array.isArray(data.stocks) || Array.isArray(data.reverse?.triggered);
+      if (!hasField) return null;
+      const out = [];
+      if (data.tech?.allPassed === true) {
+        (data.tech.stocks || []).forEach((s) => out.push({ ...s, isTechPick: true }));
+      }
+      if (data.allPassed === true) out.push(...(data.stocks || []));
+      if (data.reverse?.allPassed === true) {
+        (data.reverse.triggered || []).filter((s) => s && s.timingPassed).slice(0, 3).forEach((s) => out.push({ ...s, isReverse: true }));
+      }
+      return out;
+    }
+    if (mode === MODE_TECH_ATTACK) {
+      if (!Array.isArray(data.stocks)) return null;
+      return data.stocks.map((s) => ({ ...s, isTechPick: true }));
+    }
+    // 情绪游资-极致胜率：顺周期 + 逆周期
+    if (!Array.isArray(data.stocks) && !Array.isArray(data.reverse?.triggered)) return null;
+    const out = [];
+    if (data.allPassed === true) out.push(...(data.stocks || []));
+    if (data.reverse?.allPassed === true) {
+      (data.reverse.triggered || []).filter((s) => s && s.timingPassed).slice(0, 3).forEach((s) => out.push({ ...s, isReverse: true }));
+    }
+    return out;
+  }, []);
+
   // 拉取本次买点命中对应的推荐标的（含实时买入价格）
-  //   MOCK 调试消息自带 buyable；实盘按模式取科技进攻 3 日涨幅榜唯一推荐 / 情绪游资顺周期前三 + 逆周期前三
+  //   MOCK 调试消息自带 buyable；后端 WS 已直达 stocks 时优先使用（不再等二次榜单拉取）
   const fetchBuyStocks = useCallback(async (mode, data) => {
-    const decorate = async (list) => {
-      const withPrice = await Promise.all(list.map(async (s) => {
-        const { price, change } = await fetchStockPrice(s.code);
-        return { ...s, buyPrice: price != null ? price : (s.buyPrice ?? null), priceChange: s.change != null ? s.change : change };
-      }));
-      return withPrice;
-    };
+    const decorate = decorateStocks;
     // MOCK：后端调试触发直接携带标的
     if (Array.isArray(data?.buyable) && data.buyable.length > 0) {
       return decorate(data.buyable);
     }
+    // 后端随消息直达个股：直接使用（未命中时为空数组，立即展示无标的，不再等待）
+    const embedded = collectEmbeddedStocks(mode, data);
+    if (embedded) return decorate(embedded);
     // 冰点转折延时买入（2026-10-23）：到点由后端直接给出标的；无标的时不回退普通榜单拉取
     if (data?.iceDelay) {
       return [];
@@ -243,7 +280,7 @@ const GlobalDiagnosisAlert = () => {
       }
     }
     return decorate(stocks);
-  }, []);
+  }, [decorateStocks, collectEmbeddedStocks]);
 
   useEffect(() => {
     const unsubBuy = subscribeBuyPointPush((msg) => {
@@ -252,6 +289,18 @@ const GlobalDiagnosisAlert = () => {
       if (msg.data.iceDelay) setIceAlert(null);
       const seq = ++seqRef.current;
       const mode = msg.mode || getStrategyMode();
+      // 后端已随消息直达个股：立即展示，再异步补实时价格（不再出现「先弹卡片、后出个股」）
+      const embedded = collectEmbeddedStocks(mode, msg.data);
+      if (embedded) {
+        setBuyAlert({ mode, data: msg.data, bucket: msg.bucket ?? null, ts: msg.ts ?? null, stocks: embedded, loading: false });
+        decorateStocks(embedded)
+          .then((stocks) => {
+            if (seq !== seqRef.current) return;
+            setBuyAlert((prev) => (prev ? { ...prev, stocks } : prev));
+          })
+          .catch(() => { /* 价格补齐失败时保留后端直达数据 */ });
+        return;
+      }
       setBuyAlert({ mode, data: msg.data, bucket: msg.bucket ?? null, ts: msg.ts ?? null, stocks: [], loading: true });
       fetchBuyStocks(mode, msg.data)
         .then((stocks) => {
@@ -323,7 +372,7 @@ const GlobalDiagnosisAlert = () => {
       setResonanceAlert({ data: msg.data, ts: msg.ts ?? null, mock: msg.mock === true });
     });
     return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubStrategy(); unsubResonance(); };
-  }, [fetchBuyStocks]);
+  }, [fetchBuyStocks, collectEmbeddedStocks, decorateStocks]);
 
   const buyCardAlert = buyAlert || wfAlert;
   const closeBuyCard = () => {
@@ -502,6 +551,10 @@ const BuyAlertCard = ({ alert, onClose }) => {
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isDefense = mode === MODE_ATTACK_DEFENSE;
   const isWf = mode === MODE_WASH_FUSION;
+  // 命中但无个股时的原因（后端随诊断结果返回，便于排查是「命中但无候选」还是「未命中」）
+  const stockEmptyReason = isDefense
+    ? (data?.tech?.allPassed === true ? (data?.tech?.stockEmptyReason || null) : (data?.stockEmptyReason || null))
+    : (data?.stockEmptyReason || data?.tech?.stockEmptyReason || null);
 
   // 命中源（攻防兼备三组并行，展示全部命中的策略）
   const hitTypes = isWf
@@ -614,7 +667,10 @@ const BuyAlertCard = ({ alert, onClose }) => {
         {loading ? (
           <div className="gda-loading">正在获取推荐标的与实时价格…</div>
         ) : stocks.length === 0 ? (
-          <div className="gda-empty">当前无满足买点条件的可买标的。</div>
+          <div className="gda-empty">
+            当前无满足买点条件的可买标的。
+            {stockEmptyReason ? <div className="gda-empty-reason">{stockEmptyReason}</div> : null}
+          </div>
         ) : stocks.map((s, idx) => (
           <div key={`${s.code}-${idx}`} className="gda-stock gda-buy-stock">
             <div className="gda-stock-head">

@@ -1164,6 +1164,13 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
               <AntSwitch size="small" checked={onlyQualified} onChange={setOnlyQualified} />
               <span>只看符合条件</span>
             </div>
+            {data?.dataMissingCount > 0 && (
+              <div className="ob-gainer-missing">
+                数据仍在严格重试（同花顺→财联社），暂未入榜 {data.dataMissingCount} 只：
+                {(data.dataMissing || []).slice(0, 5).map((s) => s.stockName).join('、')}
+                {data.dataMissingCount > 5 ? ' 等' : ''}；本轮不冻结快照，下一轮继续重试
+              </div>
+            )}
             <div className="ob-gainer-head" style={{ gridTemplateColumns: techGrid }}>
               <>
                 <span>#</span>

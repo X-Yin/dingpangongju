@@ -116,6 +116,60 @@ const buildEwHoldOnlyWarn = () => {
   return `**⚠️ 本条消息仅做提醒，不执行买入**：因为当下已经有科技股持仓：${listText}——「科技进攻-情绪游资极致胜率」为风格独占，科技持仓期间情绪游资（连板股）不建仓，待科技持仓全部平仓后恢复。`;
 };
 
+// 科技进攻买点标的：与「开盘实战」页自选股 3 日涨幅榜同源，一次拉取同时产出
+//   - pickStocks   : 供 WS 全局卡片直接展示的唯一买点候选（isTechPick 标记）
+//   - feishuStocks : 供飞书卡片展示的榜单前三 + 候选补位
+//   - stockEmptyReason : 无候选时的原因说明（用于前端/日志排查）
+const buildTechBuyStocks = async () => {
+  const gainers = await getTopGainersByMarket(null, 10);
+  const d = gainers?.data || {};
+  const cybPassed = d.cybGate?.passed === true;
+  const starPassed = d.starGate?.passed === true;
+  // 归并：后端前十展示榜优先（已按门槛筛选市场、3 日涨幅降序），再补分市场明细（防止候选跌出前十），
+  // 按 code 去重；候选只信任 isCandidate / pickCode，避免把过热、一字板个股当候选
+  const mergedMap = new Map();
+  for (const s of [
+    ...(Array.isArray(d.mergedTop) ? d.mergedTop : []),
+    ...(cybPassed ? (d.markets?.cybMain || []) : []),
+    ...(starPassed ? (d.markets?.star || []) : []),
+  ]) {
+    if (s && s.code && !mergedMap.has(s.code)) mergedMap.set(s.code, s);
+  }
+  const merged = Array.from(mergedMap.values());
+  const toRow = (s) => ({
+    stockName: s.stockName,
+    code: s.code,
+    market: s.isSh688 ? '科创板' : '创业板/主板',
+    change: s.change,
+    change3d: s.change3d,
+    resilienceScore: s.resilienceScore,
+  });
+  // 买点候选：后端已按「涨幅领先但当日爆发力不足」规则顺延后的唯一候选（pickCode）；
+  // 缺省时只信任后端 isCandidate 标记，避免把过热/一字板个股当候选
+  const candidate = d.pickCode
+    ? (merged.find((s) => s.code === d.pickCode) || null)
+    : (merged.find((s) => s.isCandidate) || null);
+  const top3 = merged.slice(0, 3);
+  const feishuStocks = top3.map((s) => ({
+    ...toRow(s),
+    isCandidate: candidate != null && s.code === candidate.code,
+  }));
+  // 候选不在前三时补一行，保证买点候选始终被点出
+  if (candidate && !top3.some((s) => s.code === candidate.code)) {
+    feishuStocks.push({ ...toRow(candidate), isCandidate: true });
+  }
+  const pickStocks = candidate
+    ? [{ ...toRow(candidate), isCandidate: true, isTechPick: true }]
+    : [];
+  return {
+    pickStocks,
+    feishuStocks,
+    stockEmptyReason: pickStocks.length > 0
+      ? null
+      : '3 日涨幅榜当前没有满足买点资格的个股（估值禁买 / 昨日一字板 / 3日涨幅超过上限 / 涨停 / 抗分歧不足）',
+  };
+};
+
 // 构建并发送买点飞书卡片
 // @param {Object} opts
 //   mode       : 全局策略模式
@@ -175,43 +229,7 @@ const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, top
       ? buyStocks
       : (Array.isArray(topStocks) && topStocks.length > 0 ? topStocks : null);
     if (!resultStocks) {
-      const gainers = await getTopGainersByMarket(null, 10);
-      const d = gainers?.data || {};
-      const cybPassed = d.cybGate?.passed === true;
-      const starPassed = d.starGate?.passed === true;
-      // 归并：后端前十展示榜优先（已按门槛筛选市场、3 日涨幅降序），再补分市场明细（防止候选跌出前十），
-      // 按 code 去重；候选只信任 isCandidate / pickCode，避免把过热、一字板个股当候选
-      const mergedMap = new Map();
-      for (const s of [
-        ...(Array.isArray(d.mergedTop) ? d.mergedTop : []),
-        ...(cybPassed ? (d.markets?.cybMain || []) : []),
-        ...(starPassed ? (d.markets?.star || []) : []),
-      ]) {
-        if (s && s.code && !mergedMap.has(s.code)) mergedMap.set(s.code, s);
-      }
-      const merged = Array.from(mergedMap.values());
-      const toRow = (s) => ({
-        stockName: s.stockName,
-        code: s.code,
-        market: s.isSh688 ? '科创板' : '创业板/主板',
-        change: s.change,
-        change3d: s.change3d,
-        resilienceScore: s.resilienceScore,
-      });
-      // 买点候选：后端已按「涨幅领先但当日爆发力不足」规则顺延后的唯一候选（pickCode）；
-      // 缺省时只信任后端 isCandidate 标记，避免把过热/一字板个股当候选
-      const candidate = d.pickCode
-        ? (merged.find((s) => s.code === d.pickCode) || null)
-        : (merged.find((s) => s.isCandidate) || null);
-      const top3 = merged.slice(0, 3);
-      resultStocks = top3.map((s) => ({
-        ...toRow(s),
-        isCandidate: candidate != null && s.code === candidate.code,
-      }));
-      // 候选不在前三时补一行，保证买点候选始终被点出
-      if (candidate && !top3.some((s) => s.code === candidate.code)) {
-        resultStocks.push({ ...toRow(candidate), isCandidate: true });
-      }
+      resultStocks = (await buildTechBuyStocks()).feishuStocks;
     }
     card = feishuNotify.buildBuyPointCard({
       buyStocks: resultStocks,
@@ -225,4 +243,4 @@ const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, top
   return feishuNotify.sendFeishuCard(card);
 };
 
-module.exports = { notifyBuyPointFeishu };
+module.exports = { notifyBuyPointFeishu, buildTechBuyStocks };

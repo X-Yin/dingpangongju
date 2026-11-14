@@ -47,6 +47,7 @@ const { getRealtimeQuotes } = require('./stock');
 const wsServer = require('../wsServer');
 const feishuNotify = require('./feishuNotify');
 const strategyModeState = require('./strategyModeState');
+const { logWashFusion } = require('./diagnosisLog');
 
 const MODE_WASH_FUSION = 'wash_fusion_extreme_odds';
 const SOURCE_A = 'first_board_wash';
@@ -437,6 +438,15 @@ const broadcastCandidates = (dateStr, rows, updatedAt, open = false) => {
       rules: buildRules(),
     },
   });
+  // 每个 3s 诊断周期都落盘一条候选池摘要（无论是否命中）；只记数量，避免日志体积过大，
+  // 命中个股由 emitBuySignal 单独记录
+  logWashFusion({
+    date: dateStr,
+    firstBoardCount: groups.firstBoard.length,
+    secondBoardCount: groups.secondBoard.length,
+    rows: [],
+    note: `${open ? '候选池推送(open)' : '候选池刷新'}：A ${groups.firstBoard.length} 只 / B ${groups.secondBoard.length} 只`,
+  });
 };
 
 // 洗盘形态文案（与前端候选列表 / 买点卡片同一口径）
@@ -620,6 +630,13 @@ const emitBuySignal = async ({ dateStr, cand, mode, minute, price, change, aucti
     },
   });
   console.log(`[极致赔率·${cand.sourceLabel}] ${dateStr} ${cand.name}（${cand.code}）${stock.modeText}，价 ${stock.price}${remind ? '（竞价提前提醒）' : ''}`);
+  logWashFusion({
+    date: dateStr,
+    firstBoardCount: cand.source === SOURCE_A ? 1 : 0,
+    secondBoardCount: cand.source === SOURCE_B ? 1 : 0,
+    rows: [stock],
+    note: `买点命中：${cand.sourceLabel} ${stock.modeText}`,
+  });
 
   if (already) return;
   try {

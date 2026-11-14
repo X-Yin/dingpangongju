@@ -80,7 +80,8 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
   const fetchChecks = useCallback(async (refresh = false) => {
     setChecksLoading(true);
     try {
-      const response = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: refresh ? 1 : 0, mode });
+      // refresh=1 时同时带 force=1：与开盘实战页手动刷新一致，绕过后端 30s 重度刷新节流
+      const response = await axios.post(`http://${local_ip}:3000/buy_point_checks`, { refresh: refresh ? 1 : 0, force: refresh ? 1 : 0, mode });
       setChecksData(response.data);
     } catch (error) {
       console.error('Fetch buy point checks failed:', error);
