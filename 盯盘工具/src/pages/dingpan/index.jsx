@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { useEffect, useLayoutEffect, useState, useMemo, useRef, useCallback } from "react";
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -885,23 +885,50 @@ const DingPan = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
-    // 自动滚动到日韩涨跌监控区域（进入页面后仅执行一次）
-    const autoScrollToRihanOnce = () => {
-        if (hasAutoScrolledToRihanRef.current) return;
+    // 瞬时定位到外盘涨跌监控区域：直接用 scrollTo，不走 smooth 动画，避免“慢慢滚过去”
+    const scrollToRihanInstant = useCallback(() => {
+        const el = rihanSectionRef.current;
+        if (!el) return;
+        window.scrollTo(0, Math.max(el.getBoundingClientRect().top + window.scrollY, 0));
+    }, []);
+
+    // 打开页面时立即定位到外盘涨跌监控：右列（含外盘监控）首帧即渲染，不等任何接口返回，
+    // 且在浏览器绘制前完成定位，所以页面一出现就已经在目标位置
+    useLayoutEffect(() => {
+        if (hasAutoScrolledToRihanRef.current || !rihanSectionRef.current) return;
         hasAutoScrolledToRihanRef.current = true;
-        rihanSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
+        scrollToRihanInstant();
+    }, [scrollToRihanInstant, unlocked]);
 
-    // 外盘数据首次加载完成后自动滚动到日韩区域（仅一次）；由 RihanMonitor 自治组件通过 onDataLoaded 回调触发
-    const handleRihanLoaded = useCallback(() => {
-        window.setTimeout(autoScrollToRihanOnce, 500);
-    }, []);
-
-    // 兜底：日韩数据长时间未加载时也自动滚动一次
+    // 上方卡片（板块资金 / 顶部告警）数据到达会让外盘监控位置下移，
+    // 打开后短时间内逐帧瞬时校正，把它“钉”在视口顶部；用户一旦自己滚动或点击就停止
     useEffect(() => {
-        const timer = window.setTimeout(autoScrollToRihanOnce, 5000);
-        return () => window.clearTimeout(timer);
-    }, []);
+        if (!hasAutoScrolledToRihanRef.current) return undefined;
+        const startedAt = performance.now();
+        let rafId = 0;
+        let stopped = false;
+        const stop = () => {
+            stopped = true;
+            cancelAnimationFrame(rafId);
+        };
+        const tick = () => {
+            if (stopped) return;
+            scrollToRihanInstant();
+            if (performance.now() - startedAt < 1200) rafId = requestAnimationFrame(tick);
+        };
+        rafId = requestAnimationFrame(tick);
+        window.addEventListener('wheel', stop, { passive: true });
+        window.addEventListener('touchstart', stop, { passive: true });
+        window.addEventListener('pointerdown', stop, { passive: true });
+        window.addEventListener('keydown', stop);
+        return () => {
+            stop();
+            window.removeEventListener('wheel', stop);
+            window.removeEventListener('touchstart', stop);
+            window.removeEventListener('pointerdown', stop);
+            window.removeEventListener('keydown', stop);
+        };
+    }, [scrollToRihanInstant, unlocked]);
 
     // 跳转到重点板块并定位
     const jumpToBlock = (blockName) => {
@@ -2525,15 +2552,15 @@ const DingPan = () => {
                 }}
             />
 
-            {loading ? (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-                    <Spin size="large" tip="正在初始化实时监控数据..." />
-                </div>
-            ) : (
-                <>
-                    <Row gutter={[24, 24]}>
-                        {/* 左侧主要监控区 */}
-                        <Col xs={24} lg={17}>
+            <Row gutter={[24, 24]}>
+                {/* 左侧主要监控区 */}
+                <Col xs={24} lg={17}>
+                    {loading ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                            <Spin size="large" tip="正在初始化实时监控数据..." />
+                        </div>
+                    ) : (
+                        <>
                             {/* 抢筹与拉升模块 */}
                             <OpeningBattleCards
                                 jingJiaQiangChouData={data.jingJiaQiangChouData}
@@ -2662,11 +2689,12 @@ const DingPan = () => {
                                 refreshing={refreshingStockData}
                                 themeColor={effThemeColor}
                             />
+                        </>
+                    )}
+                </Col>
 
-                        </Col>
-
-                        {/* 右侧独立列：自选股全量监控 */}
-                        <Col xs={24} lg={7}>
+                {/* 右侧独立列：自选股全量监控 */}
+                <Col xs={24} lg={7}>
                             {/* 板块资金监控 */}
                             <BlockMoneyMonitor
                                 targetBlocks={TARGET_BLOCKS}
@@ -2680,7 +2708,7 @@ const DingPan = () => {
                             {/* 外盘涨跌监控（自选股展开时在其上方，折叠时移到自选股下方） */}
                             {!isWatchlistCollapsed && (
                                 <div ref={rihanSectionRef}>
-                                    <RihanMonitor themeColor={effThemeColor} onDataLoaded={handleRihanLoaded} />
+                                    <RihanMonitor themeColor={effThemeColor} />
                                 </div>
                             )}
 
@@ -2720,7 +2748,7 @@ const DingPan = () => {
                             />
                             {isWatchlistCollapsed && (
                                 <div ref={rihanSectionRef}>
-                                    <RihanMonitor themeColor={effThemeColor} onDataLoaded={handleRihanLoaded} />
+                                    <RihanMonitor themeColor={effThemeColor} />
                                 </div>
                             )}
                             {/* 重点板块：自选股折叠时在「外盘涨跌监控」下方展示（默认含商业航天/机器人/机器人大脑） */}
@@ -2774,9 +2802,7 @@ const DingPan = () => {
                                 />
                             </div>
                         </Col>
-                    </Row>
-                </>
-            )}
+            </Row>
 
             {/* 异动历史弹窗 */}
             <HistoryModal

@@ -1231,6 +1231,84 @@ const fetchAbnormalBasis = async (marketCode, dayYmd) => {
   };
 };
 
+// 确保一批标的的异动基准已加载（按自然日缓存；日 K 接口较慢，限制并发避免压垮数据源）
+const ensureAbnormalBases = async (codes, dayYmd) => {
+  if (abnormalBasisCache.day !== dayYmd) {
+    abnormalBasisCache = { day: dayYmd, data: new Map() };
+  }
+  const missing = codes.filter((c) => !abnormalBasisCache.data.has(c));
+  if (missing.length === 0) return;
+  // 先按标的所属板块把用到的基准指数日 K 拉一遍，避免并发重复请求
+  const indexCodes = [...new Set(missing.map(getBenchmarkIndexCode).filter(Boolean))];
+  await Promise.all(indexCodes.map((indexCode) => fetchBenchmarkIndexKlines(indexCode, dayYmd)));
+  const chunkSize = 10;
+  for (let i = 0; i < missing.length; i += chunkSize) {
+    await Promise.all(missing.slice(i, i + chunkSize).map(async (code) => {
+      try {
+        abnormalBasisCache.data.set(code, await fetchAbnormalBasis(code, dayYmd));
+      } catch (error) {
+        console.error(`[themeMonitor] 获取 ${code} 异动基准失败:`, error.message);
+        abnormalBasisCache.data.set(code, null);
+      }
+    }));
+  }
+};
+
+// 候选股「临近异动」隐藏（2026-11-14 用户要求）：10 日 / 30 日窗口距触发异动的剩余涨幅 ≤ 10% 直接隐藏
+// 口径与前端「10日异动 / 30日异动」列一致：交易所偏离值 = 个股区间涨跌幅 − 对应分类指数区间涨跌幅，
+// 异动价 = 期初收盘价 × (1 + (阈值 + 指数区间涨幅) ÷ 100)，剩余涨幅 = (异动价 ÷ 现价 − 1) × 100
+const ABNORMAL_HIDE_NEED_PCT = 10;
+const ABNORMAL_HIDE_WINDOWS = [{ days: 10, up: 100 }, { days: 30, up: 200 }];
+
+const abnormalNeedPctOf = (basis, price, indexQuote, { days, up }) => {
+  const base = Number(days === 10 ? basis?.base10 : basis?.base30);
+  const last = Number(price);
+  if (!Number.isFinite(base) || base <= 0 || !Number.isFinite(last) || last <= 0) return null;
+  const indexBase = Number(days === 10 ? basis?.indexBase10 : basis?.indexBase30);
+  const live = Number(indexQuote?.price);
+  const indexNow = Number.isFinite(live) && live > 0 ? live : Number(basis?.indexLastClose);
+  const indexCum = Number.isFinite(indexBase) && indexBase > 0 && Number.isFinite(indexNow) && indexNow > 0
+    ? (indexNow / indexBase - 1) * 100
+    : 0;
+  const targetPrice = base * (1 + (up + indexCum) / 100);
+  return (targetPrice / last - 1) * 100;
+};
+
+const isAbnormalNear = (basis, price, indexQuote) => {
+  if (!basis) return false;
+  return ABNORMAL_HIDE_WINDOWS.some((win) => {
+    const needPct = abnormalNeedPctOf(basis, price, indexQuote, win);
+    return needPct != null && needPct <= ABNORMAL_HIDE_NEED_PCT;
+  });
+};
+
+// 龙头列表后端过滤：顺周期 / 逆周期候选里，临近异动（剩余涨幅 ≤ 10%，含已触发）的个股直接剔除
+const filterNearAbnormalCandidates = async (result) => {
+  const data = result?.data;
+  if (!data) return result;
+  const stocks = Array.isArray(data.stocks) ? data.stocks : [];
+  const reverseStocks = Array.isArray(data.reverse?.stocks) ? data.reverse.stocks : [];
+  const codes = [...new Set([...stocks, ...reverseStocks]
+    .map((s) => String(s?.code || '').toLowerCase())
+    .filter((c) => /^(sh|sz)\d{6}$/.test(c)))];
+  if (codes.length === 0) return result;
+  const todayYmd = Number(new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' }).replace(/\D/g, ''));
+  try {
+    await ensureAbnormalBases(codes, todayYmd);
+  } catch (error) {
+    console.error('[hotMoneyLeaderList] 加载异动基准失败，跳过临近异动过滤:', error.message);
+    return result;
+  }
+  const quotes = await getIndexQuotes().catch(() => ({}));
+  const hide = (s) => {
+    const basis = abnormalBasisCache.data.get(String(s?.code || '').toLowerCase());
+    return isAbnormalNear(basis, s?.px, quotes?.[basis?.indexCode]);
+  };
+  data.stocks = stocks.filter((s) => !hide(s));
+  if (data.reverse) data.reverse.stocks = reverseStocks.filter((s) => !hide(s));
+  return result;
+};
+
 app.get('/theme_monitor_alert_basis', async (req, res) => {
   try {
     const codes = [...new Set(String(req.query.codes || '')
@@ -1238,25 +1316,7 @@ app.get('/theme_monitor_alert_basis', async (req, res) => {
       .map((c) => c.trim().toLowerCase())
       .filter((c) => /^(sh|sz)\d{6}$/.test(c)))];
     const todayYmd = Number(new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' }).replace(/\D/g, ''));
-    if (abnormalBasisCache.day !== todayYmd) {
-      abnormalBasisCache = { day: todayYmd, data: new Map() };
-    }
-    const missing = codes.filter((c) => !abnormalBasisCache.data.has(c));
-    // 先按标的所属板块把用到的基准指数日 K 拉一遍，避免并发重复请求
-    const indexCodes = [...new Set(missing.map(getBenchmarkIndexCode).filter(Boolean))];
-    await Promise.all(indexCodes.map((indexCode) => fetchBenchmarkIndexKlines(indexCode, todayYmd)));
-    // 日 K 接口较慢，限制并发避免压垮数据源
-    const chunkSize = 10;
-    for (let i = 0; i < missing.length; i += chunkSize) {
-      await Promise.all(missing.slice(i, i + chunkSize).map(async (code) => {
-        try {
-          abnormalBasisCache.data.set(code, await fetchAbnormalBasis(code, todayYmd));
-        } catch (error) {
-          console.error(`[themeMonitor] 获取 ${code} 异动基准失败:`, error.message);
-          abnormalBasisCache.data.set(code, null);
-        }
-      }));
-    }
+    await ensureAbnormalBases(codes, todayYmd);
     const out = {};
     codes.forEach((code) => {
       const basis = abnormalBasisCache.data.get(code);
@@ -1928,7 +1988,8 @@ app.post('/hot_money_leader_list', async (req, res) => {
       async () => {
         // 强制刷新时先清空「当日」分时缓存，确保实时拉取最新分时并重算强度分/差劲分
         if (force) clearTodayTlineCache();
-        return getHotMoneyLeaderList(targetDate, limit);
+        // 2026-11-14 用户要求：临近异动（10/30 日窗口剩余涨幅 ≤ 10%）的候选改由后端过滤，前端不再过滤
+        return filterNearAbnormalCandidates(await getHotMoneyLeaderList(targetDate, limit));
       },
       force,
       4000

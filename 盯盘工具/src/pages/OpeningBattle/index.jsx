@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Spin, Empty, Select, Switch as AntSwitch, Modal, Checkbox, message, Tooltip } from 'antd';
 import {
   RocketOutlined, RiseOutlined, FallOutlined, StockOutlined,
-  AreaChartOutlined, CrownOutlined, RadarChartOutlined, WarningOutlined,
+  CrownOutlined, RadarChartOutlined, WarningOutlined,
   ReloadOutlined, BgColorsOutlined, QuestionCircleOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
@@ -115,14 +115,6 @@ const formatSignedPercent = (value) => {
   if (value === undefined || value === null || Number.isNaN(Number(value))) return '--';
   const num = Number(value);
   return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
-};
-
-const formatMinute = (minute) => {
-  const m = Number(minute);
-  if (!Number.isFinite(m)) return '';
-  const h = Math.floor(m / 100);
-  const min = m % 100;
-  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
 };
 
 // 判断数据中是否包含 11:30 之后的时间点，用于决定是否按1分钟聚合
@@ -621,249 +613,6 @@ const FundChartModule = () => {
   );
 };
 
-// ==================== 持仓股分时图 ====================
-const PositionIntradayChart = ({ name, code, preclose, line }) => {
-  const containerRef = useRef(null);
-  const chartRef = useRef(null);
-
-  const data = useMemo(() => {
-    if (!Array.isArray(line) || line.length === 0) return [];
-    return line
-      .filter((item) => {
-        const v = parseFloat(item.last_px);
-        if (!Number.isFinite(v) || v <= 0) return false;
-        const m = Number(item.minute);
-        return !(m > 1130 && m < 1300); // 过滤午休 11:30-13:00
-      })
-      .map((item, idx) => ({
-        time: idx,
-        value: parseFloat(item.last_px),
-        label: formatMinute(item.minute),
-      }));
-  }, [line]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || data.length === 0) return;
-
-    const chart = createChart(container, {
-      layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: 'rgba(255,255,255,0.75)', fontSize: 10 },
-      grid: { vertLines: { color: 'rgba(255,255,255,0.08)' }, horzLines: { color: 'rgba(255,255,255,0.08)' } },
-      width: container.clientWidth,
-      height: container.clientHeight,
-      timeScale: {
-        visible: true,
-        borderColor: 'rgba(255,255,255,0.18)',
-        tickMarkFormatter: (time) => data[time]?.label || '',
-      },
-      localization: {
-        timeFormatter: (time) => data[time]?.label || '',
-        priceFormatter: (price) => {
-          if (price === undefined || price === null) return '-';
-          // 右侧坐标轴展示相对昨收的涨幅百分比
-          if (preclose > 0) {
-            const pct = ((price - preclose) / preclose) * 100;
-            return `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
-          }
-          return price.toFixed(2);
-        },
-      },
-      rightPriceScale: { borderColor: 'rgba(255,255,255,0.18)', autoScale: true, scaleMargins: { top: 0.1, bottom: 0.1 } },
-      handleScroll: false,
-      handleScale: false,
-    });
-
-    const lastVal = data[data.length - 1].value;
-    // 渐变卡内统一用浅青色线条，保证在紫蓝背景上清晰可见
-    const lineColor = '#67e8f9';
-    const lineSeries = chart.addLineSeries({
-      color: lineColor,
-      lineWidth: 2,
-      priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
-    });
-    lineSeries.setData(data.map((d) => ({ time: d.time, value: d.value })));
-
-    if (preclose > 0) {
-      const baseline = chart.addLineSeries({
-        color: 'rgba(255,255,255,0.4)',
-        lineWidth: 1,
-        lineStyle: LineStyle.Dashed,
-        priceLineVisible: false,
-        lastValueVisible: false,
-        crosshairMarkerVisible: false,
-      });
-      baseline.setData(data.map((d) => ({ time: d.time, value: preclose })));
-    }
-
-    chart.timeScale().fitContent();
-    chart.timeScale().applyOptions({ fixLeftEdge: true, fixRightEdge: true, rightOffset: 0 });
-    chartRef.current = chart;
-
-    const ro = new ResizeObserver(() => {
-      if (chartRef.current && container) {
-        chartRef.current.applyOptions({ width: container.clientWidth, height: container.clientHeight });
-      }
-    });
-    ro.observe(container);
-
-    return () => {
-      ro.disconnect();
-      chart.remove();
-      chartRef.current = null;
-    };
-  }, [data, preclose]);
-
-  const lastVal = data.length > 0 ? data[data.length - 1].value : null;
-  const changePct = preclose > 0 && lastVal !== null ? ((lastVal - preclose) / preclose) * 100 : null;
-
-  return (
-    <div className="ob-intraday-chart-card">
-      <div className="ob-intraday-chart-header">
-        <span className="ob-intraday-chart-name">{name}</span>
-        <span className="ob-intraday-chart-code">{code}</span>
-        <span className="ob-intraday-chart-change" style={{ color: '#a5f3fc' }}>
-          {formatSignedPercent(changePct)}
-        </span>
-      </div>
-      <div ref={containerRef} className="ob-intraday-chart-body" />
-    </div>
-  );
-};
-
-const PositionIntradayModule = ({ expanded, onToggleExpanded }) => {
-  // 首屏秒开：持仓列表 + 每只的分时线分别缓存到 localStorage
-  // 原来的串行加载链：positions 接口 → 对每只持仓发 /stock_tline_data → 渲染
-  // 现在先从缓存秒出，接口回来后覆盖
-  const POS_CACHE_KEY = 'ob_position_list_cache';
-  const TL_CACHE_PREFIX = 'ob_position_tline_cache_';
-  const [positions, setPositions] = useState(() => readTodayLocalCache(POS_CACHE_KEY) || []);
-  const [tlineMap, setTlineMap] = useState(() => {
-    try {
-      const cachedPositions = readTodayLocalCache(POS_CACHE_KEY) || [];
-      const map = {};
-      cachedPositions.forEach((p) => {
-        const cachedTL = readTodayLocalCache(TL_CACHE_PREFIX + p.code);
-        if (cachedTL) map[p.code] = cachedTL;
-      });
-      return map;
-    } catch {
-      return {};
-    }
-  });
-
-  const fetchPositions = useCallback(async () => {
-    try {
-      const res = await axios.get(`http://${local_ip}:3000/get_stock_position`);
-      const fresh = res.data || [];
-      setPositions(fresh);
-      writeLocalCache(POS_CACHE_KEY, fresh);
-    } catch (err) {
-      console.error('获取持仓失败:', err);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchPositions();
-    const timers = [];
-    const schedulePoll = (callback, delay) => {
-      const timer = setTimeout(() => {
-        if (!isAfterMarketClose()) {
-          callback();
-          schedulePoll(callback, delay);
-        }
-      }, delay);
-      timers.push(timer);
-    };
-    if (!isAfterMarketClose()) schedulePoll(fetchPositions, 30000);
-    return () => timers.forEach(clearTimeout);
-  }, [fetchPositions]);
-
-  useEffect(() => {
-    if (positions.length === 0) {
-      setTlineMap({});
-      return;
-    }
-    let cancelled = false;
-    const fetchTlines = async () => {
-      try {
-        const results = await Promise.all(
-          positions.map(async (stock) => {
-            try {
-              const res = await axios.get(`http://${local_ip}:3000/stock_tline_data`, { params: { code: stock.code } });
-              return { code: stock.code, data: res.data || {} };
-            } catch (err) {
-              return { code: stock.code, data: {} };
-            }
-          })
-        );
-        if (cancelled) return;
-        const map = {};
-        results.forEach((r) => {
-          map[r.code] = r.data;
-          if (r.data && r.data.line) writeLocalCache(TL_CACHE_PREFIX + r.code, r.data);
-        });
-        setTlineMap(map);
-      } catch (err) {
-        console.error('获取分时数据失败:', err);
-      }
-    };
-    fetchTlines();
-    const timers = [];
-    const schedulePoll = (callback, delay) => {
-      const timer = setTimeout(() => {
-        if (!isAfterMarketClose()) {
-          callback();
-          schedulePoll(callback, delay);
-        }
-      }, delay);
-      timers.push(timer);
-    };
-    if (!isAfterMarketClose()) schedulePoll(fetchTlines, 1000);
-    return () => { cancelled = true; timers.forEach(clearTimeout); };
-  }, [positions]);
-
-  // 同一股票可能有多笔持仓（不同仓位/成本线），分时图按股票去重展示
-  const uniquePositions = useMemo(() => {
-    const seen = new Set();
-    return positions.filter((p) => {
-      if (seen.has(p.code)) return false;
-      seen.add(p.code);
-      return true;
-    });
-  }, [positions]);
-
-  return (
-    <div className="ob-module ob-intraday-module">
-      <div className="ob-module-header">
-        <div className="ob-module-title">
-          <AreaChartOutlined className="ob-module-icon" />
-          <span>持仓股分时图</span>
-        </div>
-        <div className="ob-intraday-header-actions">
-          <span className="ob-total-tag">{uniquePositions.length} 只持仓</span>
-        </div>
-      </div>
-      {positions.length === 0 ? (
-        <div className="ob-intraday-empty">
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无持仓" />
-        </div>
-      ) : (
-        <div className={`ob-intraday-grid ${uniquePositions.length >= 2 ? 'two' : 'single'}`}>
-          {uniquePositions.map((stock) => (
-            <PositionIntradayChart
-              key={stock.code}
-              name={stock.name}
-              code={stock.code}
-              preclose={parseFloat(tlineMap[stock.code]?.preclose_px) || 0}
-              line={tlineMap[stock.code]?.line}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 // ==================== 自选股 3 日涨幅前五（创业板+主板 / 科创板 上下分行） ====================
 const formatSlope = (v) => (
   v === null || v === undefined || Number.isNaN(Number(v))
@@ -982,6 +731,14 @@ const computeGroupOrders = (aCount, bCount) => {
   return aCount <= bCount ? [1, 2] : [2, 1];
 };
 
+// 候选股排名口径（2026-11-14 用户要求）：顺周期 / 逆周期均按「强度分 − 差劲分」（delta）降序排名，
+// 缺失 delta 的排在最后；临近异动（10/30 日窗口剩余涨幅 ≤ 10%）的个股已由后端过滤，前端不再处理
+const deltaRankValue = (s) => {
+  const v = s?.delta;
+  return v != null && Number.isFinite(Number(v)) ? Number(v) : -Infinity;
+};
+const byDeltaDesc = (a, b) => deltaRankValue(b) - deltaRankValue(a);
+
 const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch = true, multiLabel = '' }) => {
   const mode = modeProp;
   const isExtreme = mode === MODE_EXTREME_WIN;
@@ -1006,12 +763,12 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
   const [refreshing, setRefreshing] = useState(false);
   // 只看符合条件：开启后仅展示完全符合条件的个股（后端 qualifiedTop，按 3 日涨幅降序），默认关闭
   const [onlyQualified, setOnlyQualified] = useState(true);
-  // 显示涨幅开关（2026-11-03 用户要求）：默认关闭，隐藏候选列表中今日涨幅 / 3 日涨幅列
-  const [showChange, setShowChange] = useState(false);
+  // 显示涨幅开关（2026-11-03 用户要求）：科技进攻 / 极致胜率默认展示今日涨幅列
+  const [showChange, setShowChange] = useState(true);
   // 涨幅列隐藏时同步收缩表格网格列数，保持单元格对齐
   const techGrid = showChange ? undefined : '22px minmax(0, 1fr) 54px';
-  const ewGrid = showChange ? undefined : '22px minmax(0, 1fr) 54px 72px 58px 58px';
-  const revGrid = showChange ? '22px minmax(0, 1fr) 58px 54px 44px 58px 58px' : '22px minmax(0, 1fr) 54px 44px 58px 58px';
+  const ewGrid = showChange ? undefined : '22px minmax(0, 1fr) 54px 58px 58px';
+  const revGrid = showChange ? '22px minmax(0, 1fr) 58px 54px 58px 58px' : '22px minmax(0, 1fr) 54px 58px 58px';
 
   // 10/30 日异动列：与龙二波抽屉一致，按「个股区间涨幅 − 对应指数区间涨幅」计算偏离值，
   // needPct 为距触发异动还需的涨幅（已触发单独标注）
@@ -1159,10 +916,13 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
   // 逆周期（反向抱团龙头）：池全部 + 择时状态（列表下半部分）
   const reverse = leaderData?.reverse || null;
   const reverseList = useMemo(() => (showEwCols ? (reverse?.stocks || []) : []), [showEwCols, reverse]);
+  // 临近异动过滤已下沉到后端（/hot_money_leader_list），这里只按「强度分 − 差劲分」降序排名
+  const leaderVisible = leaderList.slice().sort(byDeltaDesc);
+  const reverseVisible = reverseList.slice().sort(byDeltaDesc);
   // 顺周期 / 逆周期两组：为空者置后；两组都有内容时内容少的在前；
   // 任一组 ≤ 2 只时不做均分高度，直接由内容撑开（2026-11-04 用户要求）
-  const [ewOrder, reverseOrder] = computeGroupOrders(leaderList.length, reverseList.length);
-  const ewSplit = leaderList.length > 2 && reverseList.length > 2;
+  const [ewOrder, reverseOrder] = computeGroupOrders(leaderVisible.length, reverseVisible.length);
+  const ewSplit = leaderVisible.length > 2 && reverseVisible.length > 2;
   const indexSlope = leaderData?.indexSlope;
   const slopeOk = indexSlope != null && Number(indexSlope) > 0;
   const reverseSlope = reverse?.slopeClose ?? null;
@@ -1203,6 +963,11 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
     const pct = (v) => (v === null || v === undefined || !Number.isFinite(Number(v))
       ? '--'
       : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
+    // 候选行 tag 最多展示 4 个字，超出部分用「...」省略
+    const wfTag = (text) => {
+      const str = text == null ? '' : String(text);
+      return str.length > 4 ? `${str.slice(0, 4)}...` : str;
+    };
     const wfRow = (s, idx, keyPrefix) => (
       <div className="ob-gainer-row ob-gainer-row-wf ob-gainer-row-wf-nostatus" key={`${keyPrefix}-${s.code}-${idx}`}>
         <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
@@ -1212,7 +977,7 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
             title="点击查看K线"
             onClick={() => { setSelectedStock({ code: s.code, stockName: s.name, change: s.change }); setKlineVisible(true); }}
           >{s.name}</span>
-          <span className="ob-gainer-market cyb">{s.board ? `${s.board} 板` : '--'}</span>
+          <span className="ob-gainer-market cyb">{wfTag(s.board ? `${s.board} 板` : '--')}</span>
           {s.status === 'auction_buy' || s.status === 'burst_buy'
             ? <span className="ob-gainer-buyflag">买点触发</span>
             : null}
@@ -1254,7 +1019,8 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
               <Select
                 size="small"
                 className="ob-mode-switch"
-                value={mode}
+                // 多选模式下每个卡片按各自模式取数，但下拉需回填「多选模式」而不是首个勾选模式
+                value={multiLabel ? MODE_MULTI : mode}
                 options={STRATEGY_MODE_OPTIONS}
                 onSelect={handleModeSelect}
                 popupMatchSelectWidth={false}
@@ -1349,7 +1115,8 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
             <Select
               size="small"
               className="ob-mode-switch"
-              value={mode}
+              // 多选模式下每个卡片按各自模式取数，但下拉需回填「多选模式」而不是首个勾选模式
+              value={multiLabel ? MODE_MULTI : mode}
               options={STRATEGY_MODE_OPTIONS}
               onSelect={handleModeSelect}
               popupMatchSelectWidth={false}
@@ -1445,7 +1212,7 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
         {showEwCols && (
           <div className="ob-gainer-col ob-gainer-col-ew" style={{ order: ewOrder }}>
             <div className="ob-gainer-col-head">
-              <span className="ob-gainer-section-label">顺周期 · 情绪游资-极致胜率 {leaderList.length}</span>
+              <span className="ob-gainer-section-label">顺周期 · 情绪游资-极致胜率 {leaderVisible.length}</span>
               <div className={`ob-gainer-gate ${slopeOk ? 'passed' : 'failed'}`}>
                 <span className="ob-gainer-gate-slope">上证指数 {formatSlope(indexSlope)}</span>
                 <span className="ob-gainer-gate-turn">3 日线分时斜率</span>
@@ -1458,14 +1225,13 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
                 <span>股票</span>
                 {showChange && <span>当日</span>}
                 <span>强度−差劲</span>
-                <span>连板</span>
                 <span>10日异动</span>
                 <span>30日异动</span>
               </>
             </div>
-            {leaderList.length === 0 ? (
+            {leaderVisible.length === 0 ? (
               <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
-            ) : leaderList.map((s, idx) => {
+            ) : leaderVisible.map((s, idx) => {
               const { d10, d30 } = getAbnormalCols(s);
               return (
               <div className="ob-gainer-row ob-gainer-row-ew" key={`${s.code}-${idx}`} style={{ gridTemplateColumns: ewGrid }}>
@@ -1487,9 +1253,6 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
                 <span className={`ob-gainer-resilience ${s.delta != null && s.delta >= 30 ? 'ob-up' : ''}`}>
                   {s.delta !== null && s.delta !== undefined ? Number(s.delta).toFixed(2) : '--'}
                 </span>
-                <span className="ob-gainer-resilience">
-                  {s.lianbanCount != null ? `${s.lianbanCount} 连板` : '--'}
-                </span>
                 {renderAbnormalCell(d10, '距离触发10日异动（连续10个交易日累计偏离值≥+100%）还差的涨幅')}
                 {renderAbnormalCell(d30, '距离触发30日异动（连续30个交易日累计偏离值≥+200%）还差的涨幅')}
               </div>
@@ -1500,7 +1263,7 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
         {showEwCols && (
           <div className={`ob-gainer-col ob-gainer-col-reverse ${reverseSlopeOk ? 'active' : ''}`} style={{ order: reverseOrder }}>
             <div className="ob-gainer-col-head">
-              <span className="ob-gainer-section-label reverse">逆周期 · 反向抱团 {reverseList.length}</span>
+              <span className="ob-gainer-section-label reverse">逆周期 · 反向抱团 {reverseVisible.length}</span>
               <div className={`ob-gainer-gate ${reverseSlopeOk ? 'passed' : 'failed'}`}>
                 <span className="ob-gainer-gate-slope">上证指数 {formatSlope(reverseSlope)}</span>
                 <span className="ob-gainer-gate-turn">{reverse && reverse.slopeDayNo != null ? `连续为负第 ${reverse.slopeDayNo} 天` : '3 日线收盘口径斜率'}</span>
@@ -1512,13 +1275,12 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
               <span>股票</span>
               {showChange && <span>当日</span>}
               <span>强度−差劲</span>
-              <span>连板</span>
               <span>10日异动</span>
               <span>30日异动</span>
             </div>
-            {reverseList.length === 0 ? (
+            {reverseVisible.length === 0 ? (
               <div className="ob-empty-mini ob-gainer-empty">暂无满足条件的反向抱团标的</div>
-            ) : reverseList.map((s, idx) => {
+            ) : reverseVisible.map((s, idx) => {
               const { d10, d30 } = getAbnormalCols(s);
               return (
               <div className="ob-gainer-row ob-gainer-row-reverse" key={`rev-${s.code}-${idx}`} style={{ gridTemplateColumns: revGrid }}>
@@ -1539,9 +1301,6 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
                 )}
                 <span className={`ob-gainer-resilience ${s.delta != null && s.delta >= 30 ? 'ob-up' : ''}`}>
                   {s.delta !== null && s.delta !== undefined ? Number(s.delta).toFixed(2) : '--'}
-                </span>
-                <span className="ob-gainer-resilience">
-                  {s.lianbanCount != null ? `${s.lianbanCount} 板` : '--'}
                 </span>
                 {renderAbnormalCell(d10, '距离触发10日异动（连续10个交易日累计偏离值≥+100%）还差的涨幅')}
                 {renderAbnormalCell(d30, '距离触发30日异动（连续30个交易日累计偏离值≥+200%）还差的涨幅')}
@@ -1712,6 +1471,24 @@ const buildBuyModeView = (m, d) => {
   };
 };
 
+// 买点 / 卖点诊断详情弹窗：整窗沿用诊断卡的渐变玻璃底色，内容区滚动
+const DIAGNOSIS_MODAL_STYLES = {
+  container: {
+    padding: 0,
+    overflow: 'hidden',
+    borderRadius: 22,
+    background:
+      'radial-gradient(118% 86% at 8% -8%, rgba(162, 124, 255, 0.95) 0%, rgba(162, 124, 255, 0) 62%), '
+      + 'radial-gradient(108% 94% at 106% 8%, rgba(48, 197, 210, 0.92) 0%, rgba(48, 197, 210, 0) 58%), '
+      + 'radial-gradient(130% 110% at -8% 108%, rgba(132, 94, 255, 0.9) 0%, rgba(132, 94, 255, 0) 64%), '
+      + 'linear-gradient(116deg, #7b4dff 0%, #4d55d8 46%, #1ba7c6 100%)',
+  },
+  header: { background: 'transparent', margin: 0, padding: '18px 22px 4px', borderBottom: 'none' },
+  title: { color: '#fff', fontWeight: 800 },
+  body: { padding: 0 },
+  close: { color: 'rgba(255, 255, 255, 0.85)' },
+};
+
 const BuyPointDiagnosisCard = ({ onResultChange }) => {
   const mode = useStrategyMode();
   const multiModes = useStrategyModes(); // 多选模式勾选列表（持久化于后端，弹窗保存后同步）
@@ -1742,6 +1519,8 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
   const [refreshing, setRefreshing] = useState(false);
   // 标题旁实时时钟：每秒跳动，便于对照 3 分钟整点（9:30 / 9:33 / 9:36 …）判断下一次自动诊断时机
   const [now, setNow] = useState(() => dayjs());
+  // 详细条件弹窗：卡片只展示汇总信息，点击卡片后弹窗展示逐条诊断条件
+  const [detailOpen, setDetailOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(dayjs()), 1000);
@@ -1943,8 +1722,59 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
       ? now.minute() % 3 === 0
       : now.minute() % 5 === 0;
 
+  // 详细条件（弹窗内容）：条件分组 + 结论 + 建议仓位
+  const renderDetail = () => (
+    <>
+      {views.map((v) => (
+        <div key={v.mode}>
+          {isMulti && (
+            <div className="ob-check-group-label">{v.label}</div>
+          )}
+          {v.checkGroups.map((g, gi) => [
+            g.label
+              ? <div key={`g-${gi}`} className={`ob-check-group-label${g.reverse ? ' reverse' : ''}`}>{g.label}</div>
+              : null,
+            ...g.items.map((c) => (
+              <div key={c.id} className={`ob-buy-check ${c.exempted ? 'exempted' : c.passed ? 'passed' : 'failed'}`}>
+                <span className="ob-buy-check-name">{c.title}</span>
+                <span className={`ob-buy-check-badge ${c.exempted ? 'exempted' : c.passed ? 'passed' : 'failed'}`}>
+                  {c.exempted ? '已豁免' : c.passed ? '通过' : '未通过'}
+                </span>
+                {(c.value || !c.passed) && (
+                  <span className="ob-buy-check-detail">
+                    {c.value ? <b>{c.value}</b> : null}
+                    {!c.passed && c.reason ? <span>{c.reason}</span> : null}
+                  </span>
+                )}
+              </div>
+            )),
+          ])}
+          <div className={`ob-conclusion ${v.hit ? 'hit' : ''}`}>
+            {v.conclusionText}
+          </div>
+          {(v.posHints || []).map((p, pi) => (
+            <div key={pi} className={`ob-position-hint${p.ew ? ' ew' : ''}`}>{p.text}</div>
+          ))}
+        </div>
+      ))}
+    </>
+  );
+
   return (
-    <div className={`ob-diagnosis-card ob-buy-card ${isTickMinute ? 'is-tick' : ''}`}>
+    <>
+      <div
+        className={`ob-diagnosis-card ob-buy-card ob-summary-card ${isTickMinute ? 'is-tick' : ''}`}
+        role="button"
+        tabIndex={0}
+        title="点击查看买点诊断详细条件"
+        onClick={() => setDetailOpen(true)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setDetailOpen(true);
+          }
+        }}
+      >
       {refreshing && (
         <div className="ob-refresh-mask">
           <Spin size="large" />
@@ -1954,10 +1784,8 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
         <div className="ob-module-title">
           <RadarChartOutlined className="ob-module-icon" />
           <span>买点诊断</span>
-          {/* 2026-11-04：标题栏不再展示当前策略名称；改为实时时钟 HH:mm:ss */}
-          <span className="ob-diagnosis-clock">{now.format('HH:mm:ss')}</span>
         </div>
-        <div className="ob-diagnosis-actions">
+        <div className="ob-diagnosis-actions" onClick={(e) => e.stopPropagation()}>
           <span className={`ob-status-badge ${hit ? 'hit' : ''}`}>
             {isWashFusion
               ? `${wfFirstCount + wfSecondCount} 候选 · ${hit ? '🎯 已命中' : '未触发'}`
@@ -1968,47 +1796,49 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
           </button>
         </div>
       </div>
-      <div className="ob-diagnosis-body" style={{ maxHeight: 530,overflowY: 'auto', minHeight: 522 }}>
+      {/* 汇总信息：当前时间 + 各模式是否满足（详细条件点击弹窗查看） */}
+      <div className="ob-diagnosis-body ob-summary-body">
         {(!data && !isWashFusion && !isMulti) ? (
           <div className="ob-diagnosis-loading"><Spin size="small" /></div>
         ) : (
           <>
-            {views.map((v) => (
-              <div key={v.mode}>
-                {isMulti && (
-                  <div className="ob-check-group-label">{v.label}</div>
-                )}
-                {v.checkGroups.map((g, gi) => [
-                  g.label
-                    ? <div key={`g-${gi}`} className={`ob-check-group-label${g.reverse ? ' reverse' : ''}`}>{g.label}</div>
-                    : null,
-                  ...g.items.map((c) => (
-                    <div key={c.id} className={`ob-buy-check ${c.exempted ? 'exempted' : c.passed ? 'passed' : 'failed'}`}>
-                      <span className="ob-buy-check-name">{c.title}</span>
-                      <span className={`ob-buy-check-badge ${c.exempted ? 'exempted' : c.passed ? 'passed' : 'failed'}`}>
-                        {c.exempted ? '已豁免' : c.passed ? '通过' : '未通过'}
-                      </span>
-                      {(c.value || !c.passed) && (
-                        <span className="ob-buy-check-detail">
-                          {c.value ? <b>{c.value}</b> : null}
-                          {!c.passed && c.reason ? <span>{c.reason}</span> : null}
-                        </span>
-                      )}
-                    </div>
-                  )),
-                ])}
-                <div className={`ob-conclusion ${v.hit ? 'hit' : ''}`}>
-                  {v.conclusionText}
-                </div>
-                {(v.posHints || []).map((p, pi) => (
-                  <div key={pi} className={`ob-position-hint${p.ew ? ' ew' : ''}`}>{p.text}</div>
-                ))}
-              </div>
-            ))}
+            <div className="ob-summary-meta">
+              <span className="ob-summary-label">当前时间</span>
+              <span className="ob-summary-text">{now.format('HH:mm:ss')}</span>
+            </div>
+            <div className="ob-summary-mode-list">
+              {views.map((v) => {
+                const total = v.checkGroups.reduce((n, g) => n + g.items.length, 0);
+                const passed = v.checkGroups.reduce((n, g) => n + g.items.filter((c) => c.passed).length, 0);
+                return (
+                  <div key={v.mode} className={`ob-summary-mode ${v.hit ? 'hit' : 'miss'}`}>
+                    <span className="ob-summary-mode-name">{v.label}</span>
+                    <span className="ob-summary-mode-state">
+                      {v.hit ? '已满足' : total === 0 ? '诊断中…' : `未满足 · 通过 ${passed}/${total}`}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </>
         )}
       </div>
-    </div>
+      </div>
+      {/* 弹窗放在卡片外层：避免关闭/点击弹窗时事件冒泡到卡片 onClick 又重新打开 */}
+      <Modal
+        open={detailOpen}
+        onCancel={() => {
+          setDetailOpen(false);
+        }}
+        title={`买点诊断 · 详细条件（${now.format('HH:mm:ss')}）`}
+        footer={null}
+        width={820}
+        destroyOnClose
+        styles={DIAGNOSIS_MODAL_STYLES}
+      >
+        <div className="ob-diagnosis-modal-body">{renderDetail()}</div>
+      </Modal>
+    </>
   );
 };
 
@@ -2070,6 +1900,8 @@ const SellPointDiagnosisCard = () => {
   // 命中闪烁：后端下发 open:true 时卡片背景闪烁提示，数秒后自动恢复
   const [flash, setFlash] = useState(false);
   const flashTimerRef = useRef(null);
+  // 详细条件弹窗：卡片只汇总持仓命中情况，点击卡片后弹窗展示每笔持仓的逐条卖点条件
+  const [detailOpen, setDetailOpen] = useState(false);
 
   // 初次挂载读取后端持久化的提醒开关状态
   useEffect(() => {
@@ -2145,8 +1977,76 @@ const SellPointDiagnosisCard = () => {
 
   const hitStocks = results.filter((r) => r.isSell === true);
 
+  // 详细条件（弹窗内容）：每笔持仓的逐条卖点条件与卖出提示
+  const renderDetail = () => results.map((r) => (
+    <div key={r.positionId || r.code} className={`ob-sell-stock ${r.isSell ? 'hit' : ''}`}>
+      <div className="ob-sell-stock-header">
+        {/* 第一行：股票名称 + 代码 */}
+        <div className="ob-sell-header-row ob-sell-header-row--title">
+          <div>
+            <span className="ob-sell-stock-name">{r.stockName}</span>
+            <span className="ob-sell-stock-code">{r.code}</span>
+          </div>
+          <span className={`ob-sell-stock-tag ${r.isSell ? 'hit' : 'safe'}`}>
+            {r.buyToday ? '买入当日' : r.error ? '诊断失败' : r.isSell ? '建议卖出' : '建议持有'}
+          </span>
+        </div>
+        {/* 第二行：仓位 / 买入时间 / 成本线 / 涨幅 / 状态 */}
+        <div className="ob-sell-header-row">
+          {r.weight != null && (
+            <span className="ob-sell-stock-weight">仓位 {r.weight}%</span>
+          )}
+          <span className="ob-sell-stock-buytime">
+            买入 {r.buyDate || '--'}{r.buyTime ? ` ${r.buyTime}` : ''}
+          </span>
+          {r.costPrice != null && (
+            <span className="ob-sell-stock-cost">成本线 {Number(r.costPrice).toFixed(2)}</span>
+          )}
+          {r.detail?.change !== undefined && (
+            <span className={`ob-sell-stock-change ${r.detail.change >= 0 ? 'ob-up' : 'ob-down'}`}>
+              {formatSignedPercent(r.detail.change)}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="ob-sell-stock-conds">
+        {r.buyToday ? (
+          <div className="ob-check-reason">买入当日卖点诊断不生效，次日起生效</div>
+        ) : r.error ? (
+          <div className="ob-check-reason">{r.error}</div>
+        ) : (r.conditions && r.conditions.length > 0 ? r.conditions.sort((a, b) => (b.satisfied ? 3 : b.exempted ? 2 : b.pending ? 1 : 0) - (a.satisfied ? 3 : a.exempted ? 2 : a.pending ? 1 : 0)).map((cond, cidx) => (
+          <div key={cidx} className={`ob-sell-cond ${cond.satisfied ? 'hit' : cond.exempted ? 'exempted' : cond.pending ? 'pending' : 'safe'}`}>
+            <span className="ob-sell-cond-name">{cond.name}</span>
+            <span className="ob-sell-cond-badge">
+              {cond.satisfied ? '触发' : cond.exempted ? '已豁免' : cond.pending ? (cond.pendingMinutes != null ? `确认中 ${cond.pendingMinutes}/5min` : '确认中') : '未触发'}
+            </span>
+            <div className="ob-sell-cond-detail">{cond.detail}</div>
+          </div>
+        )) : (
+          <div className="ob-check-reason">{r.conclusion}</div>
+        ))}
+        {r.isSell && !r.buyToday && !r.error && (
+          <div className="ob-sell-hint">{buildSellHint(r)}</div>
+        )}
+      </div>
+    </div>
+  ));
+
   return (
-    <div className={`ob-diagnosis-card ob-sell-card ${flash ? 'is-flash' : ''}`}>
+    <>
+      <div
+        className={`ob-diagnosis-card ob-sell-card ob-summary-card ${flash ? 'is-flash' : ''}`}
+        role="button"
+        tabIndex={0}
+        title="点击查看卖点诊断详细条件"
+        onClick={() => setDetailOpen(true)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setDetailOpen(true);
+          }
+        }}
+      >
       {refreshing && (
         <div className="ob-refresh-mask">
           <Spin size="large" />
@@ -2162,9 +2062,9 @@ const SellPointDiagnosisCard = () => {
         }>
           <WarningOutlined className="ob-module-icon" />
           <span>卖点诊断</span>
-          {/* 2026-11-04：标题栏不再展示当前策略名称（策略由每笔持仓自身所属模式决定，见各持仓诊断明细） */}
+          {/* 2026-11-04：标题栏不再展示当前策略名称（策略由每笔持仓自身所属模式决定，见弹窗明细） */}
         </div>
-        <div className="ob-diagnosis-actions">
+        <div className="ob-diagnosis-actions" onClick={(e) => e.stopPropagation()}>
           <div className="ob-reminder-switch" title="关闭后不再发送飞书提醒，也不弹出提醒卡片">
             <span className="ob-reminder-switch-label">打开提醒</span>
             <AntSwitch
@@ -2182,64 +2082,48 @@ const SellPointDiagnosisCard = () => {
           </button>
         </div>
       </div>
-      <div className="ob-diagnosis-body" style={{ maxHeight: 530,overflowY: 'auto', minHeight: 522 }}>
+      {/* 汇总信息：持仓笔数与命中情况（逐笔明细点击弹窗查看） */}
+      <div className="ob-diagnosis-body ob-summary-body">
         {results.length === 0 ? (
-          <div className="ob-empty-mini" style={{ height: 500, fontSize: 16 }}>暂无持仓</div>
-        ) : results.map((r) => (
-          <div key={r.positionId || r.code} className={`ob-sell-stock ${r.isSell ? 'hit' : ''}`}>
-            <div className="ob-sell-stock-header">
-              {/* 第一行：股票名称 + 代码 */}
-              <div className="ob-sell-header-row ob-sell-header-row--title">
-                <div>
-                  <span className="ob-sell-stock-name">{r.stockName}</span>
-                  <span className="ob-sell-stock-code">{r.code}</span>
-                </div>
-                <span className={`ob-sell-stock-tag ${r.isSell ? 'hit' : 'safe'}`}>
-                  {r.buyToday ? '买入当日' : r.error ? '诊断失败' : r.isSell ? '建议卖出' : '建议持有'}
-                </span>
-              </div>
-              {/* 第二行：仓位 / 买入时间 / 成本线 / 涨幅 / 状态 */}
-              <div className="ob-sell-header-row">
-                {r.weight != null && (
-                  <span className="ob-sell-stock-weight">仓位 {r.weight}%</span>
-                )}
-                <span className="ob-sell-stock-buytime">
-                  买入 {r.buyDate || '--'}{r.buyTime ? ` ${r.buyTime}` : ''}
-                </span>
-                {r.costPrice != null && (
-                  <span className="ob-sell-stock-cost">成本线 {Number(r.costPrice).toFixed(2)}</span>
-                )}
-                {r.detail?.change !== undefined && (
-                  <span className={`ob-sell-stock-change ${r.detail.change >= 0 ? 'ob-up' : 'ob-down'}`}>
-                    {formatSignedPercent(r.detail.change)}
-                  </span>
-                )}
-              </div>
+          <div className="ob-empty-mini" style={{ fontSize: 14 }}>暂无持仓</div>
+        ) : (
+          <>
+            <div className="ob-summary-meta">
+              <span className="ob-summary-label">持仓</span>
+              <span className="ob-summary-text">
+                {results.length} 笔持仓 · {hitStocks.length > 0 ? `${hitStocks.length} 笔命中卖点` : '暂无命中'}
+              </span>
             </div>
-            <div className="ob-sell-stock-conds">
-              {r.buyToday ? (
-                <div className="ob-check-reason">买入当日卖点诊断不生效，次日起生效</div>
-              ) : r.error ? (
-                <div className="ob-check-reason">{r.error}</div>
-              ) : (r.conditions && r.conditions.length > 0 ? r.conditions.sort((a, b) => (b.satisfied ? 3 : b.exempted ? 2 : b.pending ? 1 : 0) - (a.satisfied ? 3 : a.exempted ? 2 : a.pending ? 1 : 0)).map((cond, cidx) => (
-                <div key={cidx} className={`ob-sell-cond ${cond.satisfied ? 'hit' : cond.exempted ? 'exempted' : cond.pending ? 'pending' : 'safe'}`}>
-                  <span className="ob-sell-cond-name">{cond.name}</span>
-                  <span className="ob-sell-cond-badge">
-                    {cond.satisfied ? '触发' : cond.exempted ? '已豁免' : cond.pending ? (cond.pendingMinutes != null ? `确认中 ${cond.pendingMinutes}/5min` : '确认中') : '未触发'}
+            <div className="ob-summary-stock-list">
+              {results.map((r) => (
+                <div key={r.positionId || r.code} className={`ob-summary-stock ${r.isSell ? 'hit' : ''}`}>
+                  <span className="ob-summary-stock-name">
+                    {r.stockName}
+                    <i>{r.code}</i>
                   </span>
-                  <div className="ob-sell-cond-detail">{cond.detail}</div>
+                  <span className={`ob-summary-stock-tag ${r.buyToday ? 'today' : r.error ? 'error' : r.isSell ? 'hit' : 'safe'}`}>
+                    {r.buyToday ? '买入当日' : r.error ? '诊断失败' : r.isSell ? '建议卖出' : '建议持有'}
+                  </span>
                 </div>
-              )) : (
-                <div className="ob-check-reason">{r.conclusion}</div>
               ))}
-              {r.isSell && !r.buyToday && !r.error && (
-                <div className="ob-sell-hint">{buildSellHint(r)}</div>
-              )}
             </div>
-          </div>
-        ))}
+          </>
+        )}
       </div>
-    </div>
+      </div>
+      {/* 弹窗放在卡片外层：避免关闭/点击弹窗时事件冒泡到卡片 onClick 又重新打开 */}
+      <Modal
+        open={detailOpen}
+        onCancel={() => setDetailOpen(false)}
+        title={`卖点诊断 · 详细条件（${results.length} 笔持仓）`}
+        footer={null}
+        width={820}
+        destroyOnClose
+        styles={DIAGNOSIS_MODAL_STYLES}
+      >
+        <div className="ob-diagnosis-modal-body">{renderDetail()}</div>
+      </Modal>
+    </>
   );
 };
 
@@ -2255,23 +2139,6 @@ const OpeningBattle = () => {
 
   // 买点是否命中（由买点诊断卡片回调），命中时 3 日涨幅榜中唯一推荐标的的标签改为「买点触发」
   const [buyPointHit, setBuyPointHit] = useState(false);
-
-  // 持仓分时图展开状态，状态持久化到 localStorage
-  const [rankExpanded, setRankExpanded] = useState(() => {
-    try {
-      return localStorage.getItem('ob_rank_expanded') === '1';
-    } catch (e) {
-      return false;
-    }
-  });
-
-  const toggleRankExpanded = useCallback(() => {
-    setRankExpanded((prev) => {
-      const next = !prev;
-      try { localStorage.setItem('ob_rank_expanded', next ? '1' : '0'); } catch (e) { }
-      return next;
-    });
-  }, []);
 
   // ==================== 主题包 / DIY 主题色（与盯盘页同款功能体系） ====================
   // themeColor 结构: { pack, randomPlay, itemTitleColor, itemBorderColor, numberFontFamily, numberFontSize }
@@ -2415,20 +2282,18 @@ const OpeningBattle = () => {
       style={packVars || diyVars}
     >
       <div className="ob-layout">
-        {/* 第一行：资金分时图 | 资金明细 | 成交量（左） + 持仓分时图（右，与左侧模块等高） */}
+        {/* 第一行：资金分时图 | 资金明细 | 成交量（左） + 买点诊断 / 卖点诊断汇总卡（右，与左侧模块等高） */}
         <div className="ob-row ob-row-first">
           <FundChartModule />
-          <PositionIntradayModule expanded={rankExpanded} onToggleExpanded={toggleRankExpanded} />
+          <div className="ob-summary-column">
+            <BuyPointDiagnosisCard onResultChange={setBuyPointHit} />
+            <SellPointDiagnosisCard />
+          </div>
         </div>
         {/* 第二行：候选列表卡片（单模式一个卡片；多选模式每个勾选模式各一个卡片，平分宽度、等高、超内容滚动） */}
         {/* 重点板块涨跌幅前十已移除（2026-11-03 用户要求） */}
         <div className="ob-row ob-row-second">
           <TopChange3dModule buyPointHit={buyPointHit} />
-        </div>
-        {/* 第三行：买点诊断（6 成宽度） | 卖点诊断（4 成宽度） */}
-        <div className="ob-row ob-row-third">
-          <BuyPointDiagnosisCard onResultChange={setBuyPointHit} />
-          <SellPointDiagnosisCard />
         </div>
       </div>
 

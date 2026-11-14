@@ -11,7 +11,7 @@ const POLL_INTERVAL = 60 * 1000; // 后端 60s 更新一次，对齐即可
 
 // 外盘涨跌监控：自治组件，自己拉取数据并持有状态，
 // 数据更新时只重渲染本卡片，不再触发盯盘整页重渲染
-const RihanMonitor = ({ themeColor, onDataLoaded }) => {
+const RihanMonitor = ({ themeColor }) => {
     const [rihanData, setRihanData] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -43,11 +43,10 @@ const RihanMonitor = ({ themeColor, onDataLoaded }) => {
                 });
             }
             setRihanData(list);
-            if (list.length > 0) onDataLoaded?.();
         } catch (error) {
             console.error('Fetch rihan data failed:', error);
         }
-    }, [onDataLoaded]);
+    }, []);
 
     useEffect(() => {
         fetchRiHanData();

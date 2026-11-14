@@ -1858,9 +1858,10 @@ function App() {
       {/* 重点股 1 分钟涨跌幅异动监控：重点股 1min 内涨跌幅绝对值变化 ≥2% 时全局弹卡 */}
       <ImportantStockSurgeMonitor />
       {/* 龙二波：情绪游资-极致胜率候选监控，命中「强度−差劲 ≥ 30」自动弹抽屉提示 */}
-      {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingLongErBo />}
-      {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingMonitorAlarm />}
-      {location.pathname !== '/training_camp' && location.pathname !== '/opening_battle' && <FloatingStrategyCenter />}
+      {/* 专注交易（/opening_battle）下同样展示右侧悬浮组件（龙二波 / 监控 / 策略，2026-11-14 用户要求） */}
+      {location.pathname !== '/training_camp' && <FloatingLongErBo />}
+      {location.pathname !== '/training_camp' && <FloatingMonitorAlarm />}
+      {location.pathname !== '/training_camp' && <FloatingStrategyCenter />}
       {location.pathname !== '/training_camp' && <FloatingStockViewer />}
       {debugEnabled && <DebugPanel />}
       <FloatingTechEmotion />
@@ -1870,7 +1871,10 @@ function App() {
       {willpowerModalVisible && (
         <div className="willpower-modal-overlay">
           <div className="willpower-modal-content">
-            <div className="willpower-modal-text">
+            <div className="willpower-modal-text"  style={{ fontSize: 24 }}>
+              短线之道，在于两点；先寻辨识，再看择时；<br/>
+              辨识候选，研报涨幅；盘中择时，以赔换胜；<br/>
+              科技择时，大盘瞬爆；龙头择时，自身节奏；<br/>
               主线龙头，拒绝杂毛；敢于追高，惯性漂移；<br/>
               耐心定力，确定收敛；情绪周期，一周一次；<br/>
               场外利好，提高胜率；模式信号，运动游击；<br/>

@@ -17,6 +17,14 @@ import './index.scss';
 const POLL_INTERVAL = 60 * 1000;
 const DELTA_MIN = 30;
 
+// 候选股排名口径（2026-11-14 用户要求）：顺周期 / 逆周期均按「强度分 − 差劲分」（delta）降序排名，
+// 缺失 delta 的排在最后；临近异动（10/30 日窗口剩余涨幅 ≤ 10%）的个股已由后端过滤，前端不再处理
+const deltaRankValue = (s) => {
+  const v = s?.delta;
+  return v != null && Number.isFinite(Number(v)) ? Number(v) : -Infinity;
+};
+const byDeltaDesc = (a, b) => deltaRankValue(b) - deltaRankValue(a);
+
 const FloatingLongErBo = () => {
   const [stocks, setStocks] = useState([]);        // 顺周期候选股列表（已按 delta 降序）
   const [reverseStocks, setReverseStocks] = useState([]); // 逆周期（反向抱团）候选股列表
@@ -217,6 +225,10 @@ const FloatingLongErBo = () => {
     );
   };
 
+  // 临近异动过滤已下沉到后端（/hot_money_leader_list），这里只按「强度分 − 差劲分」降序排名
+  const visibleStocks = stocks.slice().sort(byDeltaDesc);
+  const visibleReverse = reverseStocks.slice().sort(byDeltaDesc);
+
   // 候选股列表区块（顺周期 / 逆周期共用；点击股票名称打开通用 K 线弹窗）
   const renderSection = (title, list, extra, keyPrefix) => (
     <div className="flb-section">
@@ -338,7 +350,7 @@ const FloatingLongErBo = () => {
 
         {renderSection(
           '顺周期候选',
-          stocks,
+          visibleStocks,
           <span className="flb-list-meta">
             {meta?.date || '--'}
             {meta?.minute != null ? ` · ${String(meta.minute).slice(0, 2)}:${String(meta.minute).slice(2, 4)}` : ''}
@@ -347,7 +359,7 @@ const FloatingLongErBo = () => {
         )}
         {renderSection(
           '逆周期候选（反向抱团）',
-          reverseStocks,
+          visibleReverse,
           reverseMeta ? (
             <span className={`flb-list-gate ${reverseMeta.eligible ? 'passed' : ''}`}>
               {reverseMeta.eligible ? '逆周期窗口已开启' : '未进入逆周期窗口'}

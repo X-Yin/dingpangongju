@@ -6,9 +6,9 @@ $ob-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -16px rgba(15, 23
 $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 
 // ==================== 页面布局：网格 ====================
-// 第一行：资金模块（左 62%）+ 持仓分时（右，与左侧严格等高）
-// 第二、三行：重点板块涨幅前十 / 跌幅前十（各占一行横向排列）
-// 第四行：涨幅前五 | 买点诊断 | 卖点诊断（三列等宽，高度由内容撑开）
+// 第一行：资金模块（左 60%）+ 买点诊断 / 卖点诊断汇总卡（右，两张卡同一行左右排列，与左侧严格等高）
+// 第二行：候选股列表卡片（单模式一个，多选模式按勾选模式平分宽度）
+// 诊断详细条件不占页面空间，点击汇总卡后弹窗展示
 .opening-battle-container {
   padding: 18px 22px 40px;
   min-height: 100vh;
@@ -34,11 +34,22 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
       min-width: 0;
     }
 
-    // 持仓模块内部图表区 flex 收缩（flex-basis 0），不撑高行高，
-    // 从而完全跟随左侧资金模块的高度（stretch 等高）
-    > .ob-intraday-module {
+    // 右侧：买点诊断 / 卖点诊断汇总卡同一行左右排列，高度严格跟随左侧资金模块
+    > .ob-summary-column {
       flex: 1 1 0;
       min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+      // 卡片高度不受内部内容撑高，始终与左侧资金模块等高（内容超出由卡片内部滚动）
+      contain: size;
+
+      > .ob-diagnosis-card {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 0;
+      }
     }
   }
 
@@ -59,24 +70,10 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
       flex: 1 1 0;
       min-width: 0;
     }
-  }
 
-  // 第三行：买点诊断占 6 成宽度，卖点诊断占 4 成宽度
-  .ob-row-third {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start; // 两卡高度由内容各自撑开
-
-    > * {
-      min-width: 0;
-    }
-
-    > :first-child {
-      flex: 6 1 0;
-    }
-
-    > :last-child {
-      flex: 4 1 0;
+    // 单模式候选卡：最低高度在原来基础上增加 200px
+    > .ob-rank3-module {
+      min-height: 650px;
     }
   }
 
@@ -93,7 +90,7 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
       min-width: 0;
       display: flex;
       flex-direction: column;
-      height: 450px; // 各卡片等高（限高，让第三行买/卖点诊断卡片露出一部分）
+      height: 650px; // 各卡片等高（原 450px + 200px）
       overflow: hidden;
 
       // 表格主体区滚动，标题栏与门槛提示固定
@@ -1286,13 +1283,13 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   // 情绪游资-极致胜率顺周期表格：额外两列「10日异动 / 30日异动」
   .ob-gainer-head-ew,
   .ob-gainer-row-ew {
-    grid-template-columns: 22px minmax(0, 1fr) 62px 54px 72px 58px 58px;
+    grid-template-columns: 22px minmax(0, 1fr) 62px 54px 58px 58px;
   }
 
   // 逆周期表格：额外两列「10日异动 / 30日异动」
   .ob-gainer-head-reverse,
   .ob-gainer-row-reverse {
-    grid-template-columns: 22px minmax(0, 1fr) 58px 54px 44px 58px 58px;
+    grid-template-columns: 22px minmax(0, 1fr) 58px 54px 58px 58px;
   }
 
   // 逆周期表头不折行（如「强度−差劲」）
@@ -1321,7 +1318,7 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   // ===== 情绪游资-极致赔率：首板起爆 / 二板起爆 双列表（6 列）=====
   .ob-gainer-head-wf,
   .ob-gainer-row-wf {
-    // 状态列按最长文案留足宽度，保证 tag 文字完整展示、不出现省略号
+    // 状态列按最长文案留足宽度
     grid-template-columns: 22px minmax(0, 1fr) 52px 52px 56px 112px;
   }
 
@@ -1562,31 +1559,31 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 18px 12px;
+    flex-wrap: wrap;
+    padding: 14px 16px 8px;
     flex-shrink: 0;
     gap: 8px;
+    row-gap: 8px;
 
     .ob-module-title {
-      font-size: 16px;
+      flex-shrink: 0;
+      font-size: 15px;
       font-weight: 800;
       color: #fff;
       letter-spacing: 0.01em;
       text-shadow: 0 1px 2px rgba(30, 27, 75, 0.28);
+
+      // 标题不拆字换行（窄卡片下避免被操作区挤压成竖排）
+      > span {
+        white-space: nowrap;
+      }
     }
 
     .ob-module-icon {
-      width: 30px;
-      height: 30px;
-      border-radius: 10px;
-      font-size: 15px;
-    }
-
-    .ob-diagnosis-clock {
-      font-size: 12px;
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.85);
-      font-variant-numeric: tabular-nums;
-      letter-spacing: 0.03em;
+      width: 26px;
+      height: 26px;
+      border-radius: 9px;
+      font-size: 13px;
     }
   }
 
@@ -2054,6 +2051,144 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   word-break: break-word;
 }
 
+// ==================== 买点 / 卖点诊断 · 汇总卡片 ====================
+// 卡片只展示汇总信息（当前时间 / 各模式是否满足 / 持仓及命中情况），点击后弹窗查看逐条条件
+.ob-summary-card {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.03);
+  }
+}
+
+.ob-diagnosis-body.ob-summary-body {
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 14px 12px;
+}
+
+.ob-summary-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.ob-summary-label {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border-radius: 7px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  letter-spacing: 0.02em;
+}
+
+.ob-summary-text {
+  font-weight: 600;
+  color: #fff;
+  word-break: break-word;
+}
+
+.ob-summary-mode-list,
+.ob-summary-stock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ob-summary-mode,
+.ob-summary-stock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  @include ob-glass(
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.28),
+    0 10px 24px -18px rgba(15, 23, 42, 0.55)
+  );
+}
+
+.ob-summary-mode {
+  &.hit {
+    @include ob-glass(rgba(6, 214, 160, 0.55), rgba(255, 255, 255, 0.42), 0 10px 24px -14px rgba(6, 214, 160, 0.55));
+  }
+
+  &.miss {
+    @include ob-glass(rgba(255, 71, 87, 0.45), rgba(255, 255, 255, 0.32), 0 10px 24px -18px rgba(255, 71, 87, 0.5));
+  }
+}
+
+.ob-summary-mode-name,
+.ob-summary-stock-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  i {
+    margin-left: 6px;
+    font-style: normal;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.72);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.ob-summary-mode-state {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ob-summary-stock {
+  &.hit {
+    @include ob-glass(rgba(255, 61, 119, 0.45), rgba(255, 255, 255, 0.42), 0 10px 24px -14px rgba(255, 61, 119, 0.55));
+  }
+}
+
+.ob-summary-stock-tag {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+
+  &.hit { background: rgba(255, 255, 255, 0.9); color: #9f1239; }
+  &.safe { background: rgba(255, 255, 255, 0.22); color: #fff; }
+  &.today { background: rgba(255, 255, 255, 0.2); color: rgba(255, 255, 255, 0.9); }
+  &.error { background: rgba(255, 196, 0, 0.85); color: #451a03; }
+}
+
+// 诊断详情弹窗内容区：沿用卡片渐变背景，内容超高时滚动
+.ob-diagnosis-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  max-height: 68vh;
+  overflow-y: auto;
+  padding: 12px 22px 22px;
+}
+
 // 卖点持仓卡片（磨砂玻璃卡 + 半透明状态色条件条目）
 .ob-sell-stock {
   position: relative;
@@ -2427,23 +2562,21 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     }
 
     .ob-row-first > .ob-fund-module,
-    .ob-row-first > .ob-intraday-module,
+    .ob-row-first > .ob-summary-column,
     .ob-row-second > *,
     .ob-row-second > :first-child {
       flex: none;
       width: 100%;
     }
 
-    // 持仓模块恢复自然高度（不再与资金模块等高）
-    .ob-intraday-grid {
-      flex: 0 0 auto;
-      overflow-y: visible;
-      grid-auto-rows: minmax(200px, auto);
+    // 窄屏：汇总卡改为上下排列，恢复自然高度
+    .ob-summary-column {
+      flex-direction: column;
     }
 
-    .ob-intraday-empty {
-      flex: 0 0 auto;
-      padding: 48px 0;
+    .ob-summary-column > .ob-diagnosis-card {
+      flex: none;
+      min-height: 0;
     }
 
     .ob-fund-row {
