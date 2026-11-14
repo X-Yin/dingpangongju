@@ -212,7 +212,7 @@ const FloatingLongErBo = () => {
     if (row.triggered) return <span className="flb-col-abn triggered" title={title}>已触发</span>;
     return (
       <span className={`flb-col-abn ${row.near ? 'near' : ''}`} title={title}>
-        {`${row.needPct > 0 ? '+' : ''}${row.needPct.toFixed(2)}%`}
+        {`${Math.round(row.needPct)}%`}
       </span>
     );
   };

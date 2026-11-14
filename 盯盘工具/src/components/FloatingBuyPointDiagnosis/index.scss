@@ -676,7 +676,7 @@
 
   .fbd-market-list-header {
     display: grid;
-    grid-template-columns: 24px minmax(0, 1fr) 54px 60px 70px;
+    grid-template-columns: 24px minmax(0, 1fr) 54px 60px 70px 58px 58px;
     gap: 6px;
     padding: 4px 8px;
     font-size: 10px;
@@ -694,7 +694,7 @@
 
   .fbd-market-row {
     display: grid;
-    grid-template-columns: 24px minmax(0, 1fr) 54px 60px 70px;
+    grid-template-columns: 24px minmax(0, 1fr) 54px 60px 70px 58px 58px;
     gap: 6px;
     padding: 7px 8px;
     align-items: center;
@@ -806,7 +806,25 @@
   // 逆周期（反向抱团）表格：额外一列「逆周期择时」
   .fbd-market-list-header-reverse,
   .fbd-market-row-reverse {
-    grid-template-columns: 24px minmax(0, 1fr) 48px 52px 54px 86px;
+    grid-template-columns: 24px minmax(0, 1fr) 48px 52px 54px 86px 58px 58px;
+  }
+
+  // 10 日 / 30 日异动列（与龙二波抽屉一致）
+  .fbd-col-abn {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+
+    &.near {
+      color: #d46b08;
+    }
+
+    &.triggered {
+      color: #cf1322;
+      font-weight: 700;
+    }
   }
 
   .fbd-market-rev-timing {

@@ -1283,11 +1283,39 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     }
   }
 
-  // 逆周期表格：额外一列「逆周期择时」
+  // 情绪游资-极致胜率顺周期表格：额外两列「10日异动 / 30日异动」
+  .ob-gainer-head-ew,
+  .ob-gainer-row-ew {
+    grid-template-columns: 22px minmax(0, 1fr) 62px 54px 72px 58px 58px;
+  }
+
+  // 逆周期表格：额外两列「10日异动 / 30日异动」
   .ob-gainer-head-reverse,
   .ob-gainer-row-reverse {
-    // 最后一列按最长择时文案留足宽度，保证 tag 文字完整展示、不出现省略号
-    grid-template-columns: 22px minmax(0, 1fr) 58px 44px 44px 172px;
+    grid-template-columns: 22px minmax(0, 1fr) 58px 54px 44px 58px 58px;
+  }
+
+  // 逆周期表头不折行（如「强度−差劲」）
+  .ob-gainer-head-reverse span {
+    white-space: nowrap;
+  }
+
+  // 10 日 / 30 日异动列（与龙二波抽屉一致）
+  .ob-col-abn {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.78);
+    white-space: nowrap;
+
+    &.near {
+      color: #ffd666;
+    }
+
+    &.triggered {
+      color: #ff7875;
+      font-weight: 700;
+    }
   }
 
   // ===== 情绪游资-极致赔率：首板起爆 / 二板起爆 双列表（6 列）=====

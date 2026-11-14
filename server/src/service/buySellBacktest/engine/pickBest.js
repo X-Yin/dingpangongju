@@ -1,5 +1,5 @@
 const { BUY_TIME_MAX_MINUTE, GLOBAL_RESILIENCE_MIN, RESILIENCE_GATE_INTRADAY_SORT_IDS, RESILIENCE_GATE_MIN, RESILIENCE_GATE_STRATEGY_IDS, STRATEGIES } = require('../strategies/registry');
-const { isNonTechWatchlistStock, passWatchlistGate } = require('./pickHelpers');
+const { isNonTechWatchlistStock, passWatchlistGate, isOverseasComputeWatchlistStock, EMO_DOMESTIC_ONLY_FROM_DATE } = require('./pickHelpers');
 const { EXCLUDED_CODES } = require('../constants');
 const { isBuyBlockedByValuation } = require('../../watchlistValuation');
 const { resolveDelegatePick } = require('./selectors/delegates');
@@ -90,6 +90,12 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   const quickTieScope = emoQuickTie || (strategyConf.emoQuickOut === true && strategyConf.twoBuy !== true);
   const applyGainTieRule = quickTieScope && days != null && gainMode && !isReportStrategy && !gateIntradaySort;
 
+  // 快进快出类「国产算力」候选过滤（2026-11-13 用户要求）：
+  // 自 2026-11-01 起，快进快出类策略（emoQuickOut 且非两次买入，含 10×n / 门禁 / 研报 / 脉冲系列）
+  // 不再买入海外算力产业链个股（CPO/PCB/CCL/AI电源/光芯片/光模块/电子布/树脂/铜箔/MPO/算力租赁/光纤/光通信/液冷），
+  // 仅保留国产算力方向的科技股；两融买入等其它策略不受影响。
+  const applyEmoDomesticOnly = quickTieScope && String(rangeDates[di]) >= EMO_DOMESTIC_ONLY_FROM_DATE;
+
   // 收集全部候选（与原 best/second 口径一致：按指标值排序，同值保持自选股原顺序）
   const candidates = [];
   const top5Candidates = isTop5ReportGainMode ? [] : null;
@@ -110,6 +116,7 @@ const pickBestStock = (stocks, rangeDates, di, bucket, replayStocks, dailyInfos,
   for (const sc of bucket.stockChanges) {
     if (EXCLUDED_CODES.has(sc.code)) continue;
     if (isNonTechWatchlistStock(sc.code)) continue; // 非科技股不参与选股（候选池=全量自选股）
+    if (applyEmoDomesticOnly && isOverseasComputeWatchlistStock(sc.code)) continue; // 快进快出类：2026-11-01 起剔除海外算力板块
     if (isBuyBlockedByValuation(sc.code)) continue; // 估值限制：流通市值 < 200 亿 或 市盈率亏损 不买（2026-10-14 由总市值改为流通市值口径）
     if (isOscExcluded(sc.code)) continue; // 震荡测试：勾选隐藏的股票不参与选股
     // 候选池限制（科技板块前三系列）：只保留「进攻 tag 板块当日涨幅前三 ∩ 全量自选科技股」交集内的股票

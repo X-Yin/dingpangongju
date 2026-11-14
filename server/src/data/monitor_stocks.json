@@ -535,7 +535,7 @@
     "riskScore": 7,
     "isTech": true,
     "watchMarketCap": true,
-    "watchPE": true
+    "watchPE": false
   },
   {
     "code": "sz301165",

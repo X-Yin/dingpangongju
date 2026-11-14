@@ -2798,5 +2798,40 @@
     "marketValue": 5744842772,
     "circulatingMarketValue": 5744842772,
     "updatedAt": "2026-11-12 20:14:34"
+  },
+  {
+    "code": "sh603098",
+    "name": "森特股份",
+    "marketValue": 5702726167,
+    "circulatingMarketValue": 5695115767,
+    "updatedAt": "2026-11-13 23:53:12"
+  },
+  {
+    "code": "sh600396",
+    "name": "华电辽能",
+    "marketValue": 14123258375,
+    "circulatingMarketValue": 14123258375,
+    "updatedAt": "2026-11-13 23:53:12"
+  },
+  {
+    "code": "sh600986",
+    "name": "浙文互联",
+    "marketValue": 11095810502,
+    "circulatingMarketValue": 11095810502,
+    "updatedAt": "2026-11-13 23:53:12"
+  },
+  {
+    "code": "sz002318",
+    "name": "久立特材",
+    "marketValue": 16709619312,
+    "circulatingMarketValue": 16313829192,
+    "updatedAt": "2026-11-13 23:53:12"
+  },
+  {
+    "code": "sz001393",
+    "name": "维通利",
+    "marketValue": 10756240028,
+    "circulatingMarketValue": 2072453408,
+    "updatedAt": "2026-11-13 23:53:12"
   }
 ]

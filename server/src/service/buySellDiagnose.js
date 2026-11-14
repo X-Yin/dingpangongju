@@ -51,6 +51,7 @@ const { locateCrashSellPoint, describeCrashSell } = require('./buySellBacktest/e
 // 状态落盘 emo_quick_fund_gate.json，科技进攻与攻防兼备（tech 腿）买点诊断共用
 const { getLiveFundInflowThreshold, getTechHalfPositionState } = require('./emoQuickFundGateLive');
 const { EMO_QUICK_FUND_INFLOW_BASE } = require('./buySellBacktest/constants');
+const { isOverseasComputeWatchlistStock, EMO_DOMESTIC_ONLY_FROM_DATE } = require('./buySellBacktest/engine/pickHelpers');
 
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
 const monitorAlarmsPath = path.resolve(__dirname, '../data/monitor_alarms.json');
@@ -3310,7 +3311,11 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   // 自选股榜单仅纳入科技股（isTech !== false，与全站「自选股科技股」口径一致）；
   // 2026-10-22 起涨幅榜展示全部科技自选股：估值禁买（流通市值 < 200 亿 / 市盈率亏损）个股不再从榜单剔除，
   // 只在名称后标注原因，且仍不进入买点候选
-  const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false);
+  // 2026-11-14 同步回测：自 2026-11-01 起，线上科技进攻模式剔除海外算力产业链个股
+  // （CPO/PCB/CCL/AI电源/光芯片/光模块/电子布/树脂/铜箔/MPO/算力租赁/光纤/光通信/液冷），仅保留国产算力方向
+  const emoDomesticOnly = targetDateStr >= EMO_DOMESTIC_ONLY_FROM_DATE;
+  const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false
+    && !(emoDomesticOnly && isOverseasComputeWatchlistStock(s.code)));
   const gate = await queryLiveIndexGate(null, targetDateStr, buyMinute);
 
   // 两个指数的分时（算个股抗分歧用）
@@ -3462,14 +3467,13 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   // 「只看符合条件」候选池（2026-10-27 用户新增）：展示榜每市场仅取 maxPerMarket 只，
   // 完全符合条件的个股（excludeReason 为空）可能凑不满 10 只；此处按 3 日涨幅降序对榜单之外的
   // 个股继续补充 enrich，集满 QUALIFIED_TOP_N 只即停止，最多补充至 MAX_QUALIFIED_SCAN 只以控制计算量。
+  // 2026-11-14 用户要求：strict 模式只看个股自身条件，不把指数门槛作为过滤条件，
+  // 因此候选池覆盖全部市场（不再区分 cybGate / starGate 是否通过）。
   const QUALIFIED_TOP_N = 10;
   const MAX_QUALIFIED_SCAN = 60;
-  const qualifiedScan = [...gatePassedList];
+  const qualifiedScan = [...cybMainList, ...starList];
   const scannedCodes = new Set(qualifiedScan.map((s) => s.code));
-  const qualifiedGateBase = [
-    ...(gate?.cybGate?.passed === true ? base.filter((b) => !b.isSh688) : []),
-    ...(gate?.starGate?.passed === true ? base.filter((b) => b.isSh688) : []),
-  ].sort(byChange3d);
+  const qualifiedGateBase = [...base].sort(byChange3d);
   const qualifiedFound = () => qualifiedScan.reduce((n, s) => n + (s.excludeReason ? 0 : 1), 0);
   const restCandidates = qualifiedGateBase.filter((b) => !scannedCodes.has(b.stock.code));
   for (let i = 0; i < restCandidates.length && qualifiedScan.length < MAX_QUALIFIED_SCAN && qualifiedFound() < QUALIFIED_TOP_N; i += 8) {
@@ -3480,7 +3484,7 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   // 展示榜：按 3 日涨幅降序取前十，不做剔除（涨停 / 3日涨幅>30% / 昨日一字板 / 估值禁买 仍在榜内），
   // 由 excludeReason 说明为什么不是买点候选（2026-10-22）
   // 2026-11-09 用户要求：市场门槛未通过时也照常展示完整榜单，便于查看候选个股；
-  // 门禁只影响买点候选判定（candidatePool / qualifiedTop），不再清空展示榜
+  // 2026-11-14 起门禁只影响买点候选判定（candidatePool），不再影响「只看符合条件」榜单
   const mergedTop = [...cybMainList, ...starList].sort(byChange3d).slice(0, 10);
 
   // 买点候选池：剔除估值禁买、昨日一字板与最近 3 日涨幅 > 30% 的个股后按 3 日涨幅降序取前十，
@@ -3514,7 +3518,8 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   const starOut = starList.map(decorate);
 
   // 「只看符合条件」榜单（2026-10-27 用户新增）：完全符合条件的个股（名称后无排除原因）按
-  // 3 日涨幅降序取前十；首位即买点候选（热榜顺延 / 涨幅接近抗分歧优先等已通过 excludeReason 反映）
+  // 3 日涨幅降序取前十；该榜单只按个股条件筛选，不参与指数门槛判断（2026-11-14 用户要求）。
+  // 真正买点候选仍由 candidatePool / pickCode 决定，前端按 isCandidate / pickCode 标记。
   const qualifiedTop = qualifiedScan
     .map(decorate)
     .filter((s) => !s.excludeReason)

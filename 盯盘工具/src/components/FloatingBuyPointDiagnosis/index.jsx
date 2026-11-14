@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
+import { fetchAbnormalBasis, fetchIndexQuotes, getAbnormalWindowRows } from '../../utils/abnormalAlert';
 import { MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } from '../../utils/strategyMode';
 import './index.scss';
 
@@ -63,6 +64,9 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
   // 情绪游资-极致胜率模式：龙头列表（除「强度分 − 差劲分 ≥ 30」与「上证 3 日线斜率为正」外，其余买点条件全部满足）
   const [leaderData, setLeaderData] = useState(null);
   const [leaderLoading, setLeaderLoading] = useState(false);
+  // 龙头列表 10 日 / 30 日异动基准与分类指数实时点位（与龙二波抽屉口径一致）
+  const [abnormalBasis, setAbnormalBasis] = useState({});
+  const [indexQuotes, setIndexQuotes] = useState({});
   // 「立刻可买」推荐那一行的 DOM 引用，用于数据就绪后滚动到可视区域
   const pickRefs = useRef({});
 
@@ -115,7 +119,20 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
     setLeaderLoading(true);
     try {
       const response = await axios.post(`http://${local_ip}:3000/hot_money_leader_list`, { limit: 999 });
-      setLeaderData(response.data?.data || null);
+      const d = response.data?.data || null;
+      setLeaderData(d);
+      // 10/30 日异动列：拉取顺周期 + 逆周期个股的异动基准与分类指数实时点位
+      const codes = [...(d?.stocks || []), ...(d?.reverse?.stocks || [])]
+        .map((s) => String(s?.code || '').toLowerCase())
+        .filter((c) => /^(sh|sz)\d{6}$/.test(c));
+      if (codes.length > 0) {
+        const [basisData, quotes] = await Promise.all([
+          fetchAbnormalBasis(codes).catch(() => ({})),
+          fetchIndexQuotes().catch(() => ({})),
+        ]);
+        setAbnormalBasis(basisData || {});
+        setIndexQuotes(quotes || {});
+      }
     } catch (error) {
       console.error('Fetch hot money leader list failed:', error);
     } finally {
@@ -444,6 +461,30 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
     }
   };
 
+  // 10/30 日异动列：与龙二波抽屉一致，按「个股区间涨幅 − 对应指数区间涨幅」计算偏离值，
+  // needPct 为距触发异动还需的涨幅（已触发单独标注）
+  const getAbnormalCols = (s) => {
+    const basis = abnormalBasis[String(s?.code || '').toLowerCase()];
+    const price = Number(s?.px);
+    if (!basis || !Number.isFinite(price) || price <= 0) return { d10: null, d30: null };
+    const idxQuote = indexQuotes?.[basis.indexCode];
+    const rows = getAbnormalWindowRows(basis, price, idxQuote);
+    return {
+      d10: rows.find((r) => r.days === 10) || null,
+      d30: rows.find((r) => r.days === 30) || null,
+    };
+  };
+
+  const renderAbnormalCell = (row, title) => {
+    if (!row || row.needPct == null) return <span className="fbd-col-abn" title={title}>--</span>;
+    if (row.triggered) return <span className="fbd-col-abn triggered" title={title}>已触发</span>;
+    return (
+      <span className={`fbd-col-abn ${row.near ? 'near' : ''}`} title={title}>
+        {`${Math.round(row.needPct)}%`}
+      </span>
+    );
+  };
+
   // 情绪游资-极致胜率：龙头列表（除「强度分 − 差劲分 ≥ 30」与「上证 3 日线斜率为正」外，其余买点条件全部满足）
   //   上半部分 = 顺周期；下半部分 = 逆周期（反向抱团龙头，池全部 + 择时状态）
   const renderExtremeLeaderList = () => {
@@ -494,12 +535,15 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
                   <span>连板</span>
                   <span>当日</span>
                   <span>强度−差劲</span>
+                  <span>10日异动</span>
+                  <span>30日异动</span>
                 </div>
                 {leaderStocks.length === 0 ? (
                   <div className="fbd-market-empty">暂无符合前置条件的龙头标的</div>
                 ) : leaderStocks.map((item, idx) => {
                   const isPick = pick != null && item.code === pick.code;
                   const lianban = item.lianbanCount > 0 ? `${item.lianbanCount}板` : '--';
+                  const { d10, d30 } = getAbnormalCols(item);
                   return (
                     <div
                       key={item.code}
@@ -521,6 +565,8 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
                       <span className="fbd-market-change">
                         {item.delta != null ? Number(item.delta).toFixed(2) : '--'}
                       </span>
+                      {renderAbnormalCell(d10, '距离触发10日异动（连续10个交易日累计偏离值≥+100%）还差的涨幅')}
+                      {renderAbnormalCell(d30, '距离触发30日异动（连续30个交易日累计偏离值≥+200%）还差的涨幅')}
                     </div>
                   );
                 })}
@@ -543,11 +589,14 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
                   <span>强度分</span>
                   <span>当日</span>
                   <span>逆周期择时</span>
+                  <span>10日异动</span>
+                  <span>30日异动</span>
                 </div>
                 {reverseStocks.length === 0 ? (
                   <div className="fbd-market-empty">暂无满足条件的反向抱团标的</div>
                 ) : reverseStocks.map((item, idx) => {
                   const lianban = item.lianbanCount > 0 ? `${item.lianbanCount}板` : '--';
+                  const { d10, d30 } = getAbnormalCols(item);
                   return (
                     <div
                       key={`rev-${item.code}`}
@@ -573,6 +622,8 @@ const BuyPointDiagnosisDrawer = ({ open, onClose, onStockClick, mode = MODE_TECH
                           {item.timingTag || '--'}
                         </span>
                       </span>
+                      {renderAbnormalCell(d10, '距离触发10日异动（连续10个交易日累计偏离值≥+100%）还差的涨幅')}
+                      {renderAbnormalCell(d30, '距离触发30日异动（连续30个交易日累计偏离值≥+200%）还差的涨幅')}
                     </div>
                   );
                 })}

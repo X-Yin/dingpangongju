@@ -30,6 +30,43 @@ const getNonTechWatchlistCodeSet = () => {
 // 该代码是否为自选股中的非科技股（是则不参与选股策略）
 const isNonTechWatchlistStock = (code) => getNonTechWatchlistCodeSet().has(code);
 
+// ============================================================
+// 快进快出类策略「国产算力」候选过滤（2026-11-13 用户要求）：
+// 自 2026-11-01 起，快进快出类策略选股只保留国产算力方向的科技股，
+// 剔除海外算力产业链个股。海外算力板块（按 monitor_stocks.json 的 blockName 匹配）：
+// CPO / PCB / CCL / AI 电源 / 光芯片 / 光模块 / 电子布 / 树脂 / 铜箔 / MPO / 算力租赁 / 光纤 / 光通信 / 液冷。
+// 与科技股过滤一样按文件 mtime 懒加载缓存，避免回测热循环逐候选读盘。
+// ============================================================
+const EMO_DOMESTIC_ONLY_FROM_DATE = '20261101';
+const OVERSEAS_COMPUTE_BLOCK_KEYWORDS = [
+  'cpo', 'pcb', 'ccl', 'ai电源', '光芯片', '光模块', '电子布',
+  '树脂', '铜箔', 'mpo', '算力租赁', '光纤', '光通信', '液冷',
+];
+const normalizeBlockName = (name) => String(name || '').toLowerCase().replace(/\s+/g, '');
+const isOverseasComputeBlockName = (blockName) => {
+  const normalized = normalizeBlockName(blockName);
+  return Boolean(normalized) && OVERSEAS_COMPUTE_BLOCK_KEYWORDS.some((keyword) => normalized.includes(keyword));
+};
+
+let overseasComputeCodeSetCache = { mtimeMs: -1, set: new Set() };
+const getOverseasComputeCodeSet = () => {
+  try {
+    const mtimeMs = fs.statSync(stockBlockFilePath).mtimeMs;
+    if (mtimeMs !== overseasComputeCodeSetCache.mtimeMs) {
+      const set = new Set();
+      for (const s of getMonitorStocks() || []) {
+        if (s && s.code && isOverseasComputeBlockName(s.blockName)) set.add(s.code);
+      }
+      overseasComputeCodeSetCache = { mtimeMs, set };
+    }
+  } catch (e) {
+    // 读取失败：沿用上次集合（空集合 = 不拦截任何候选）
+  }
+  return overseasComputeCodeSetCache.set;
+};
+
+const isOverseasComputeWatchlistStock = (code) => getOverseasComputeCodeSet().has(code);
+
 const injectSimStocksIntoCampData = async (campData, dateStr) => {
   const sim = getSimContext();
   if (!sim || !Array.isArray(sim.codes) || sim.codes.length === 0) return;
@@ -90,5 +127,7 @@ module.exports = {
   buildWindowAxis,
   injectSimStocksIntoCampData,
   isNonTechWatchlistStock,
+  isOverseasComputeWatchlistStock,
+  EMO_DOMESTIC_ONLY_FROM_DATE,
   passWatchlistGate,
 };

@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import { isAfterMarketClose } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
 import { parseMoneyValue, formatDisplayTime, aggregateFundByInterval } from '../../utils/fundAggregation';
+import { fetchAbnormalBasis, fetchIndexQuotes, getAbnormalWindowRows } from '../../utils/abnormalAlert';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import StockKLineModal from '../../components/StockKLineModal';
 import StrategyRuleModal from '../../components/StrategyRuleModal';
@@ -995,6 +996,9 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
   // 首屏优先用当日缓存渲染，接口返回后再覆盖，避免每次进入页面都先白屏等待
   const [data, setData] = useState(cachedRank?.data || null);        // 科技进攻：自选股 3 日涨幅榜
   const [leaderData, setLeaderData] = useState(cachedRank?.leaderData || null); // 情绪游资-极致胜率：龙头列表
+  // 龙头列表 10 日 / 30 日异动基准与分类指数实时点位（与龙二波抽屉口径一致）
+  const [abnormalBasis, setAbnormalBasis] = useState({});
+  const [indexQuotes, setIndexQuotes] = useState({});
   // 点击股票名称打开 K 线弹窗
   const [selectedStock, setSelectedStock] = useState(null);
   const [klineVisible, setKlineVisible] = useState(false);
@@ -1006,8 +1010,31 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
   const [showChange, setShowChange] = useState(false);
   // 涨幅列隐藏时同步收缩表格网格列数，保持单元格对齐
   const techGrid = showChange ? undefined : '22px minmax(0, 1fr) 54px';
-  const ewGrid = showChange ? undefined : '22px minmax(0, 1fr) 54px 72px';
-  const revGrid = showChange ? '22px minmax(0, 1fr) 58px 54px 44px' : '22px minmax(0, 1fr) 54px 44px';
+  const ewGrid = showChange ? undefined : '22px minmax(0, 1fr) 54px 72px 58px 58px';
+  const revGrid = showChange ? '22px minmax(0, 1fr) 58px 54px 44px 58px 58px' : '22px minmax(0, 1fr) 54px 44px 58px 58px';
+
+  // 10/30 日异动列：与龙二波抽屉一致，按「个股区间涨幅 − 对应指数区间涨幅」计算偏离值，
+  // needPct 为距触发异动还需的涨幅（已触发单独标注）
+  const getAbnormalCols = (s) => {
+    const basis = abnormalBasis[String(s?.code || '').toLowerCase()];
+    const price = Number(s?.px);
+    if (!basis || !Number.isFinite(price) || price <= 0) return { d10: null, d30: null };
+    const idxQuote = indexQuotes?.[basis.indexCode];
+    const rows = getAbnormalWindowRows(basis, price, idxQuote);
+    return {
+      d10: rows.find((r) => r.days === 10) || null,
+      d30: rows.find((r) => r.days === 30) || null,
+    };
+  };
+  const renderAbnormalCell = (row, title) => {
+    if (!row || row.needPct == null) return <span className="ob-col-abn" title={title}>--</span>;
+    if (row.triggered) return <span className="ob-col-abn triggered" title={title}>已触发</span>;
+    return (
+      <span className={`ob-col-abn ${row.near ? 'near' : ''}`} title={title}>
+        {`${Math.round(row.needPct)}%`}
+      </span>
+    );
+  };
   // 情绪游资-极致赔率：双候选池（首板起爆 / 二板起爆），首屏用当日缓存，后端 3s WS 推送实时刷新
   const [wfData, setWfData] = useState(() => readTodayLocalCache('ob_wash_fusion_cache') || null);
   const [wfRefreshing, setWfRefreshing] = useState(false);
@@ -1038,9 +1065,22 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
     if (isExtreme || isDefense) {
       tasks.push(
         axios.post(`http://${local_ip}:3000/hot_money_leader_list`, { limit: 50, force: refreshFlag })
-          .then((res) => {
+          .then(async (res) => {
             dataModeRef.current = mode;
-            setLeaderData(res.data?.data || null);
+            const d = res.data?.data || null;
+            setLeaderData(d);
+            // 10/30 日异动列：顺周期 + 逆周期个股的异动基准与分类指数实时点位
+            const codes = [...(d?.stocks || []), ...(d?.reverse?.stocks || [])]
+              .map((s) => String(s?.code || '').toLowerCase())
+              .filter((c) => /^(sh|sz)\d{6}$/.test(c));
+            if (codes.length > 0) {
+              const [basisData, quotes] = await Promise.all([
+                fetchAbnormalBasis(codes).catch(() => ({})),
+                fetchIndexQuotes().catch(() => ({})),
+              ]);
+              setAbnormalBasis(basisData || {});
+              setIndexQuotes(quotes || {});
+            }
           })
           .catch((err) => console.error('获取情绪游资龙头列表失败:', err))
       );
@@ -1110,10 +1150,8 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
   const mergedList = useMemo(() => data?.mergedTop || [], [data]);
   // 只看符合条件榜单：后端全量扫描得到的完全符合条件个股，已按 3 日涨幅降序，首位即买点候选
   const qualifiedList = useMemo(() => data?.qualifiedTop || [], [data]);
-  // 「只看符合条件」为空时回退展示完整榜单（2026-11-09 用户要求：即使没有符合条件的也能看到候选股列表）
-  const onlyQualifiedEmpty = onlyQualified && qualifiedList.length === 0;
-  // 科技进攻列当前展示的榜单（开关开启时切换到只看符合条件；为空则回退完整榜单）
-  const techList = onlyQualifiedEmpty ? mergedList : (onlyQualified ? qualifiedList : mergedList);
+  // 科技进攻列当前展示的榜单（开关开启时只展示完全符合条件的个股，无符合条件时展示空状态）
+  const techList = onlyQualified ? qualifiedList : mergedList;
 
   // 情绪游资龙头列表（后端已按 delta 降序返回全部达标股；attack_defense 模式下也计算，供顺周期列展示）
   const showEwCols = isExtreme || isDefense;
@@ -1351,7 +1389,7 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
             </div>
             <div className="ob-gainer-filter-row">
               <AntSwitch size="small" checked={onlyQualified} onChange={setOnlyQualified} />
-              <span>只看符合条件{onlyQualifiedEmpty && mergedList.length > 0 ? '（无符合条件，已展示全部候选）' : ''}</span>
+              <span>只看符合条件</span>
             </div>
             <div className="ob-gainer-head" style={{ gridTemplateColumns: techGrid }}>
               <>
@@ -1363,13 +1401,12 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
               </>
             </div>
             {techList.length === 0 ? (
-              <div className="ob-empty-mini ob-gainer-empty">{onlyQualified && !onlyQualifiedEmpty ? '暂无完全符合条件的标的' : '暂无数据'}</div>
+              <div className="ob-empty-mini ob-gainer-empty">
+                {onlyQualified ? '暂无完全符合条件的标的（可关闭「只看符合条件」查看全部候选）' : '暂无数据'}
+              </div>
             ) : techList.map((s, idx) => {
-              // 全部符合条件时买点候选必为 3 日涨幅第一名（idx 0）；否则以后端唯一推荐标的为准
-              //（回退展示全部候选时不按 idx 0 标记，避免把不符合条件的个股误标为买点候选）
-              const isPick = onlyQualified && !onlyQualifiedEmpty
-                ? idx === 0
-                : (globalPick != null && s.code === globalPick.code);
+              // 买点候选以后端唯一推荐标的为准；符合条件榜单不再把首位强制标成候选
+              const isPick = globalPick != null && s.code === globalPick.code;
               return (
                 <div className="ob-gainer-row" key={`${s.code}-${idx}`} style={{ gridTemplateColumns: techGrid }}>
                   <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
@@ -1415,19 +1452,23 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
                 <span className="ob-gainer-gate-badge">{slopeOk ? '满足买点门槛' : '不满足买点门槛'}</span>
               </div>
             </div>
-            <div className="ob-gainer-head" style={{ gridTemplateColumns: ewGrid }}>
+            <div className="ob-gainer-head ob-gainer-head-ew" style={{ gridTemplateColumns: ewGrid }}>
               <>
                 <span>#</span>
                 <span>股票</span>
                 {showChange && <span>当日</span>}
                 <span>强度−差劲</span>
                 <span>连板</span>
+                <span>10日异动</span>
+                <span>30日异动</span>
               </>
             </div>
             {leaderList.length === 0 ? (
               <div className="ob-empty-mini ob-gainer-empty">暂无数据</div>
-            ) : leaderList.map((s, idx) => (
-              <div className="ob-gainer-row" key={`${s.code}-${idx}`} style={{ gridTemplateColumns: ewGrid }}>
+            ) : leaderList.map((s, idx) => {
+              const { d10, d30 } = getAbnormalCols(s);
+              return (
+              <div className="ob-gainer-row ob-gainer-row-ew" key={`${s.code}-${idx}`} style={{ gridTemplateColumns: ewGrid }}>
                 <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
                 <span className="ob-gainer-name-cell">
                   <span
@@ -1449,8 +1490,11 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
                 <span className="ob-gainer-resilience">
                   {s.lianbanCount != null ? `${s.lianbanCount} 连板` : '--'}
                 </span>
+                {renderAbnormalCell(d10, '距离触发10日异动（连续10个交易日累计偏离值≥+100%）还差的涨幅')}
+                {renderAbnormalCell(d30, '距离触发30日异动（连续30个交易日累计偏离值≥+200%）还差的涨幅')}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
         {showEwCols && (
@@ -1469,10 +1513,14 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
               {showChange && <span>当日</span>}
               <span>强度−差劲</span>
               <span>连板</span>
+              <span>10日异动</span>
+              <span>30日异动</span>
             </div>
             {reverseList.length === 0 ? (
               <div className="ob-empty-mini ob-gainer-empty">暂无满足条件的反向抱团标的</div>
-            ) : reverseList.map((s, idx) => (
+            ) : reverseList.map((s, idx) => {
+              const { d10, d30 } = getAbnormalCols(s);
+              return (
               <div className="ob-gainer-row ob-gainer-row-reverse" key={`rev-${s.code}-${idx}`} style={{ gridTemplateColumns: revGrid }}>
                 <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
                 <span className="ob-gainer-name-cell">
@@ -1495,8 +1543,11 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
                 <span className="ob-gainer-resilience">
                   {s.lianbanCount != null ? `${s.lianbanCount} 板` : '--'}
                 </span>
+                {renderAbnormalCell(d10, '距离触发10日异动（连续10个交易日累计偏离值≥+100%）还差的涨幅')}
+                {renderAbnormalCell(d30, '距离触发30日异动（连续30个交易日累计偏离值≥+200%）还差的涨幅')}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
