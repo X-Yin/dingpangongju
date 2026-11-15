@@ -2831,6 +2831,15 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   }
 
   // ---------- 标题 ----------
+  .ob-principle-banner {
+    background: var(--ob-card-bg, #fff) !important;
+    border: var(--ob-card-border-width, 1px) solid var(--ob-card-border-color, rgba(148, 163, 184, 0.22)) !important;
+    border-radius: var(--ob-card-radius, 10px) !important;
+    box-shadow: var(--ob-card-shadow, 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -16px rgba(15, 23, 42, 0.14)) !important;
+  }
+  .ob-principle-banner .ob-principle-banner-text {
+    color: var(--ob-title-color, #0f172a) !important;
+  }
   .ob-module-title,
   .ob-module-title > span,
   .ob-fund-chart-title,
@@ -3081,6 +3090,147 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     border: var(--ob-btn-border-width, 1px) var(--ob-btn-border-style, solid) var(--ob-btn-border-color, rgba(255, 255, 255, 0.35)) !important;
     border-radius: var(--ob-btn-radius, 50%) !important;
   }
+}
+
+// ---------- 浅色主题包：把沿用深色渐变卡的浅色文字统一压深 ----------
+// 浅色背景（白 / 米白 / 浅黄等）下，原渐变卡上的白字、浅紫字、浅黄字对比度不足，
+// 这里按元素语义统一改为深色；深色主题包不受影响。
+.opening-battle-container.pack-active.ob-tone-light {
+  // 诊断卡时钟 / 资金明细时间 / 分时代码
+  .ob-diagnosis-clock,
+  .ob-intraday-chart-code { color: #334155 !important; }
+  .item-time { color: #64748b !important; }
+  // 卖点诊断「打开提醒」开关文案
+  .ob-reminder-switch { color: #475569 !important; }
+
+  // 分组标题 / 表头 / 过滤行 / 门槛说明
+  .ob-gainer-section-label,
+  .ob-gainer-section-label.reverse { color: #1e293b !important; }
+  .ob-gainer-head { color: #64748b !important; }
+  .ob-gainer-filter-row,
+  .ob-gainer-gate,
+  .ob-gainer-gate-turn { color: #475569 !important; }
+  .ob-gainer-gate-slope {
+    color: #1e293b !important;
+    background: rgba(148, 163, 184, 0.16) !important;
+    border-color: rgba(148, 163, 184, 0.3) !important;
+    box-shadow: none !important;
+  }
+  .ob-gainer-gate-note { color: #475569 !important; }
+  .ob-gainer-gate-note.both { color: #047857 !important; }
+  .ob-gainer-gate-note.partial { color: #b45309 !important; }
+  .ob-gainer-gate-note.none { color: #be123c !important; }
+
+  // 名称类（部分浅色主题未提供 itemTitleColor，回退到深色）
+  .ob-stock-name,
+  .ob-keysector-chip-name,
+  .ob-sell-stock-name { color: #1e293b !important; }
+
+  // 表格内弱化数值：抗分歧 / 总市值 / 10、30 日异动
+  .ob-gainer-resilience,
+  .ob-col-abn { color: #475569 !important; }
+  .ob-col-abn.near { color: #b45309 !important; }
+  .ob-col-abn.triggered { color: #b91c1c !important; }
+
+  // 名称后的市场 / 排除原因 / 涨停标签
+  .ob-gainer-market.cyb {
+    color: #334155 !important;
+    background: rgba(148, 163, 184, 0.16) !important;
+    border-color: rgba(148, 163, 184, 0.32) !important;
+  }
+  .ob-gainer-market.star {
+    color: #5b21b6 !important;
+    background: rgba(139, 92, 246, 0.14) !important;
+    border-color: rgba(139, 92, 246, 0.3) !important;
+  }
+  .ob-gainer-reason {
+    color: #b45309 !important;
+    background: rgba(245, 158, 11, 0.14) !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+  }
+  .ob-gainer-limitup {
+    color: #b91c1c !important;
+    background: rgba(255, 71, 87, 0.14) !important;
+    border-color: rgba(255, 71, 87, 0.3) !important;
+  }
+
+  // 空态文案
+  .ob-empty-mini,
+  .ob-gainer-empty,
+  .ob-diagnosis-card .ob-empty-mini { color: #94a3b8 !important; }
+
+  // 买点 / 卖点诊断汇总卡
+  .ob-summary-meta { color: #475569 !important; }
+  .ob-summary-label {
+    color: #475569 !important;
+    background: rgba(148, 163, 184, 0.14) !important;
+    border-color: rgba(148, 163, 184, 0.28) !important;
+  }
+  .ob-summary-text,
+  .ob-summary-mode,
+  .ob-summary-stock { color: #1e293b !important; }
+  .ob-summary-mode-state { color: #475569 !important; }
+  .ob-summary-mode-name i { color: #475569 !important; }
+  .ob-summary-stock-tag.safe,
+  .ob-summary-stock-tag.today {
+    color: #334155 !important;
+    background: rgba(148, 163, 184, 0.16) !important;
+    border-color: rgba(148, 163, 184, 0.3) !important;
+  }
+
+  // 买点 / 卖点条件条目：保留状态底色，文字改为深色
+  .ob-buy-check,
+  .ob-sell-cond { color: #1e293b !important; }
+  .ob-buy-check.passed,
+  .ob-sell-cond.safe { color: #0b3d91 !important; }
+  .ob-buy-check.failed,
+  .ob-sell-cond.hit { color: #7f1d1d !important; }
+  .ob-buy-check.exempted,
+  .ob-sell-cond.pending { color: #6b3b00 !important; }
+  .ob-sell-cond.exempted { color: #4c1d95 !important; }
+  .ob-buy-check-badge,
+  .ob-sell-cond-badge {
+    color: #1f2937 !important;
+    background: rgba(255, 255, 255, 0.62) !important;
+    border-color: rgba(255, 255, 255, 0.82) !important;
+  }
+  .ob-buy-check-detail,
+  .ob-sell-cond-detail { color: #334155 !important; }
+  .ob-buy-check-detail b { color: #0f172a !important; }
+  .ob-conclusion { color: #1e293b !important; }
+  .ob-conclusion.hit { color: #04372a !important; }
+  .ob-check-reason { color: #334155 !important; }
+  .ob-sell-hint { color: #7f1d1d !important; }
+
+  // 卖点诊断持仓卡
+  .ob-sell-stock { color: #1e293b !important; }
+  .ob-sell-stock-code { color: #64748b !important; }
+  .ob-sell-stock-tag.safe { color: #04372a !important; }
+  .ob-sell-stock-tag.hit { color: #4a0418 !important; }
+
+  // 排名徽章（部分浅色主题 tagColor 仍为浅色）
+  .ob-rank {
+    color: #334155 !important;
+    background: rgba(148, 163, 184, 0.18) !important;
+    border-color: rgba(148, 163, 184, 0.3) !important;
+  }
+
+  // 重点板块涨跌幅芯片
+  .ob-keysector-chip { color: #1e293b !important; }
+  .ob-keysector-chip-rank {
+    color: #475569 !important;
+    background: rgba(148, 163, 184, 0.18) !important;
+    border-color: rgba(148, 163, 184, 0.3) !important;
+  }
+  .ob-keysector-chip-delta { color: #64748b !important; }
+  .ob-keysector-chip-delta.up,
+  .ob-keysector-chip-change { color: #be123c !important; }
+  .ob-keysector-chip-delta.down,
+  .ob-keysector-chip-change.down { color: #047857 !important; }
+
+  // 第一行资金 / 成交量卡右上角数值（深色渐变卡用浅黄 / 浅青，浅色卡改为深色）
+  .ob-fund-chart-main .ob-fund-chart-value { color: #b45309 !important; }
+  .ob-fund-chart-volume .ob-fund-chart-value { color: #0e7490 !important; }
 }
 
 // ---------- DIY 自定义生效时的局部覆盖（仅 DIY 已设置的字段注入了变量） ----------

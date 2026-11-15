@@ -85,6 +85,55 @@ const TOKEN_TO_VAR = {
     tagRadius: '--ob-tag-radius',
 };
 
+// 解析颜色字符串中的第一个颜色（支持 hex / rgb / rgba）
+const parseFirstColor = (value) => {
+    if (typeof value !== 'string') return null;
+    const hex = value.match(/#([0-9a-f]{3}|[0-9a-f]{6})\b/i);
+    if (hex) {
+        let h = hex[1];
+        if (h.length === 3) h = h.split('').map(c => c + c).join('');
+        return {
+            r: parseInt(h.slice(0, 2), 16),
+            g: parseInt(h.slice(2, 4), 16),
+            b: parseInt(h.slice(4, 6), 16),
+            a: 1,
+        };
+    }
+    const rgb = value.match(/rgba?\(([^)]+)\)/i);
+    if (rgb) {
+        const parts = rgb[1].split(',').map(v => parseFloat(v));
+        if (parts.length >= 3 && parts.slice(0, 3).every(Number.isFinite)) {
+            return {
+                r: parts[0],
+                g: parts[1],
+                b: parts[2],
+                a: Number.isFinite(parts[3]) ? parts[3] : 1,
+            };
+        }
+    }
+    return null;
+};
+
+const relativeLuminance = ({ r, g, b }) => {
+    const [rl, gl, bl] = [r, g, b].map((v) => {
+        const c = v / 255;
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * rl + 0.7152 * gl + 0.0722 * bl;
+};
+
+// 判断主题包属于浅色还是深色：文字落在卡片表面，优先看卡片底色；
+// 卡片底色近透明或未设置时回退到页面底色。返回 'light' | 'dark'
+export const getPackTone = (pack) => {
+    const tokens = pack?.tokens;
+    if (!tokens) return 'dark';
+    const card = parseFirstColor(tokens.cardBg);
+    const page = parseFirstColor(tokens.pageBg);
+    const surface = card && card.a >= 0.6 ? card : (page || card);
+    if (!surface) return 'light';
+    return relativeLuminance(surface) > 0.5 ? 'light' : 'dark';
+};
+
 // hex -> rgba（用于派生涨跌底色；非 hex 值返回中性半透明灰）
 export const hexToRgba = (hex, alpha = 0.12) => {
     if (typeof hex === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) {

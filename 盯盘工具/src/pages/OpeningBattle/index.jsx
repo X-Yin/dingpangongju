@@ -19,7 +19,7 @@ import { useStrategyMode, useStrategyModes, setStrategyMode, getStrategyMode, ST
 import { subscribeBuyPointPush, subscribeSellPointPush, subscribeWashFusionCandidatesPush, subscribeWashFusionBuyPush, fetchStrategyModes } from '../../utils/buyPointWs';
 import ThemeColorModal from './components/ThemeColorModal';
 import { DEFAULT_THEME_COLOR, buildDiyVars, hasDiyFields } from './utils/themeColor';
-import { buildPackVars, getThemePacks, setRemoteThemePacks } from './utils/themePacks';
+import { buildPackVars, getPackTone, getThemePacks, setRemoteThemePacks } from './utils/themePacks';
 import './index.scss';
 
 // 首屏「旧数据秒开」：各诊断模块把最近一次结果写入 localStorage，页面重新挂载时先用缓存渲染，
@@ -339,7 +339,7 @@ export const WatchlistUpDownModule = ({ stockList }) => {
 };
 
 // ==================== 主力资金 & 成交量（左列窄容器适配） ====================
-const FundChartModule = () => {
+const FundChartModule = ({ chartTone = 'dark' }) => {
   // 首屏秒开：先用当日 localStorage 缓存渲染，接口返回后覆盖（后端 getAmountHistory 读本地 JSON 本应很快，
   // 但首次渲染要等接口往返；加缓存后刷新即显）
   const FUND_CACHE_KEY = 'ob_fund_amount_cache';
@@ -419,14 +419,26 @@ const FundChartModule = () => {
       : [];
 
     const today = dayjs().format('YYYY-MM-DD');
+    // 浅色主题包下把坐标轴 / 网格 / 参考线从浅色改为深色，避免在白底或浅黄底上看不清
+    const lightTone = chartTone === 'light';
+    const axisTextColor = lightTone ? 'rgba(15, 23, 42, 0.72)' : 'rgba(255, 255, 255, 0.75)';
+    const gridColor = lightTone ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.09)';
+    const axisBorderColor = lightTone ? 'rgba(15, 23, 42, 0.2)' : 'rgba(255, 255, 255, 0.18)';
+    const priceLineColor = lightTone ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.35)';
+    const mainLineColor = lightTone ? '#4f46e5' : '#a5b4fc';
+    const mainTopColor = lightTone ? 'rgba(79, 70, 229, 0.28)' : 'rgba(165, 180, 252, 0.45)';
+    const mainBottomColor = lightTone ? 'rgba(79, 70, 229, 0.02)' : 'rgba(165, 180, 252, 0.02)';
+    const volLineColor = lightTone ? '#0891b2' : '#67e8f9';
+    const volTopColor = lightTone ? 'rgba(8, 145, 178, 0.26)' : 'rgba(103, 232, 249, 0.4)';
+    const volBottomColor = lightTone ? 'rgba(8, 145, 178, 0.02)' : 'rgba(103, 232, 249, 0.02)';
 
     const baseOpts = {
-      layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: 'rgba(255,255,255,0.75)', fontSize: 10 },
-      grid: { vertLines: { color: 'rgba(255,255,255,0.09)' }, horzLines: { color: 'rgba(255,255,255,0.09)' } },
+      layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: axisTextColor, fontSize: 10 },
+      grid: { vertLines: { color: gridColor }, horzLines: { color: gridColor } },
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
-        borderColor: 'rgba(255,255,255,0.18)',
+        borderColor: axisBorderColor,
         tickMarkFormatter: (time) => {
           return dayjs.unix(time).format('HH:mm');
         },
@@ -436,7 +448,7 @@ const FundChartModule = () => {
           return dayjs.unix(time).format('HH:mm');
         },
       },
-      rightPriceScale: { borderColor: 'rgba(255,255,255,0.18)', autoScale: true, scaleMargins: { top: 0.12, bottom: 0.12 } },
+      rightPriceScale: { borderColor: axisBorderColor, autoScale: true, scaleMargins: { top: 0.12, bottom: 0.12 } },
       handleScroll: false,
       handleScale: false,
     };
@@ -475,7 +487,7 @@ const FundChartModule = () => {
     dummySeries.setData(allTimePoints.map(t => ({ time: t, value: 0 })));
 
     const series = chart.addAreaSeries({
-      lineColor: '#a5b4fc', topColor: 'rgba(165, 180, 252, 0.45)', bottomColor: 'rgba(165, 180, 252, 0.02)',
+      lineColor: mainLineColor, topColor: mainTopColor, bottomColor: mainBottomColor,
       lineWidth: 2.5, priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
     });
     const cData = sortedData.map((item) => {
@@ -486,7 +498,7 @@ const FundChartModule = () => {
       return { time: dayjs(`${today} ${hh}:${mm}:${ss}`).unix(), value: parseMoneyValue(item.mainMoney) };
     });
     series.setData(cData);
-    series.createPriceLine({ price: -100, color: 'rgba(255,255,255,0.35)', lineStyle: LineStyle.Dashed });
+    series.createPriceLine({ price: -100, color: priceLineColor, lineStyle: LineStyle.Dashed });
     if (cData.length > 0) chart.timeScale().fitContent();
 
     if (volContainer) {
@@ -505,7 +517,7 @@ const FundChartModule = () => {
       volDummySeries.setData(allTimePoints.map(t => ({ time: t, value: 0 })));
 
       const volumeSeries = volumeChart.addAreaSeries({
-        lineColor: '#67e8f9', topColor: 'rgba(103, 232, 249, 0.4)', bottomColor: 'rgba(103, 232, 249, 0.02)',
+        lineColor: volLineColor, topColor: volTopColor, bottomColor: volBottomColor,
         lineWidth: 2.5, priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
       });
       const vData = sortedData.map((item) => {
@@ -518,7 +530,7 @@ const FundChartModule = () => {
       volumeSeries.setData(vData);
       if (vData.length > 0) volumeChart.timeScale().fitContent();
     }
-  }, []);
+  }, [chartTone]);
 
   useEffect(() => {
     if (chartContainerRef.current) {
@@ -2190,6 +2202,9 @@ const OpeningBattle = () => {
     [activeThemePack]
   );
 
+  // 主题包明暗：浅色主题下需要把仍沿用深色渐变的浅色文字压深，保证可读性
+  const packTone = useMemo(() => getPackTone(activeThemePack), [activeThemePack]);
+
   // 主题包未生效时的 DIY 变量（仅 DIY 已设置字段；与主题包互斥）
   const diyActive = useMemo(
     () => !activeThemePack && hasDiyFields(themeColorView),
@@ -2289,7 +2304,7 @@ const OpeningBattle = () => {
 
   return (
     <div
-      className={`opening-battle-container${activeThemePack ? ' pack-active' : ''}${diyActive ? ' diy-active' : ''}`}
+      className={`opening-battle-container${activeThemePack ? ' pack-active' : ''}${activeThemePack && packTone === 'light' ? ' ob-tone-light' : ''}${diyActive ? ' diy-active' : ''}`}
       style={packVars || diyVars}
     >
       {/* 顶部交易纪律横幅：结构化出手 > 绝杀（2026-11-14 用户要求） */}
@@ -2302,7 +2317,7 @@ const OpeningBattle = () => {
       <div className="ob-layout">
         {/* 第一行：资金分时图 | 资金明细 | 成交量（左） + 买点诊断 / 卖点诊断汇总卡（右，与左侧模块等高） */}
         <div className="ob-row ob-row-first">
-          <FundChartModule />
+          <FundChartModule chartTone={packTone} />
           <div className="ob-summary-column">
             <BuyPointDiagnosisCard onResultChange={setBuyPointHit} />
             <SellPointDiagnosisCard />
