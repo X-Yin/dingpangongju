@@ -376,6 +376,7 @@ const BlockConfigPanel = () => {
     setEditing(null);
     setModalMode('stock');
     setPickStocks([{ name: '', code: '' }]); // 默认一行，可点击下方按钮继续追加
+    setBatchText(''); // 清空上一次批量添加的文本
     form.resetFields();
     if (blockName) {
       form.setFieldsValue({ blockName });
@@ -431,6 +432,32 @@ const BlockConfigPanel = () => {
       message.warning(`以下 ${failed.length} 个未匹配到股票：${failed.join('、')}`);
     }
   };
+
+  // 批量添加区块（新增板块 / 在已有板块中添加股票共用）
+  const renderBatchAdd = () => (
+    <>
+      <Divider orientation="left" plain style={{ margin: '16px 0 8px', fontSize: 12 }}>
+        批量添加（逗号 / 顿号 / 空格 / 换行分隔）
+      </Divider>
+      <Input.TextArea
+        rows={4}
+        value={batchText}
+        onChange={(e) => setBatchText(e.target.value)}
+        placeholder={'例如：中芯国际，寒武纪、宁德时代 海光信息'}
+        disabled={batchParsing}
+      />
+      <Button
+        type="dashed"
+        block
+        icon={<PlusOutlined />}
+        loading={batchParsing}
+        onClick={handleBatchParse}
+        style={{ marginTop: 8 }}
+      >
+        解析并批量添加
+      </Button>
+    </>
+  );
 
   // 打开板块编辑弹窗（编辑板块名称 / 板块 tag）
   const handleEditBlock = (block) => {
@@ -921,26 +948,7 @@ const BlockConfigPanel = () => {
               >
                 添加股票
               </Button>
-              <Divider orientation="left" plain style={{ margin: '16px 0 8px', fontSize: 12 }}>
-                批量添加（逗号 / 顿号 / 空格 / 换行分隔）
-              </Divider>
-              <Input.TextArea
-                rows={4}
-                value={batchText}
-                onChange={(e) => setBatchText(e.target.value)}
-                placeholder={'例如：中芯国际，寒武纪、宁德时代 海光信息'}
-                disabled={batchParsing}
-              />
-              <Button
-                type="dashed"
-                block
-                icon={<PlusOutlined />}
-                loading={batchParsing}
-                onClick={handleBatchParse}
-                style={{ marginTop: 8 }}
-              >
-                解析并批量添加
-              </Button>
+              {renderBatchAdd()}
             </>
           ) : editing ? (
             <>
@@ -979,6 +987,7 @@ const BlockConfigPanel = () => {
               >
                 继续添加股票
               </Button>
+              {renderBatchAdd()}
             </>
           )}
         </Form>

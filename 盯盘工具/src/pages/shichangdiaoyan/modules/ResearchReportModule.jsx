@@ -84,7 +84,8 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
   const [currentContent, setCurrentContent] = useState('');
   const [isModified, setIsModified] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
-  const [shouldFocusEditor, setShouldFocusEditor] = useState(false);
+  // 是否需要在编辑器就绪后自动聚焦（用 ref 而非 state，避免异步初始化回调读到过期值）
+  const shouldFocusEditorRef = useRef(false);
   const createInputRef = useRef(null);
   const renameInputRef = useRef(null);
   const blurTimerRef = useRef(null);
@@ -106,6 +107,28 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
   const pendingExpandFolderIdRef = useRef(null);
   // 当日文件夹自动创建检查是否已执行（每次挂载只检查一次）
   const todayFolderCheckRef = useRef(false);
+  // 快捷新建（Cmd+Ctrl）后是否需要在填写完标题时聚焦编辑器
+  const quickCreateFocusRef = useRef(false);
+
+  // 编辑器就绪后聚焦：Vditor 初始化与 DOM 渲染均为异步，需轮询等待挂载完成；
+  // 聚焦后再校验焦点是否真的落在编辑器内（setValue 等异步操作可能抢占焦点），未成功则重试
+  const focusEditorWhenReady = () => {
+    let tries = 0;
+    const tryFocus = () => {
+      tries += 1;
+      const editorEl = vditorRef.current?.querySelector('.vditor-reset');
+      if (editorInstance.current && editorEl) {
+        try {
+          editorInstance.current.focus();
+        } catch (error) {
+          console.warn('聚焦编辑器失败:', error);
+        }
+        if (vditorRef.current?.contains(document.activeElement)) return;
+      }
+      if (tries < 20) setTimeout(tryFocus, 100);
+    };
+    setTimeout(tryFocus, 0);
+  };
 
   const handleToggleSelect = (item) => {
     if (item.type !== 'folder') return;
@@ -880,7 +903,7 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
 
         // 如果是新创建的研报，就选中它
         if (newItem.type === 'report') {
-          setShouldFocusEditor(true);
+          shouldFocusEditorRef.current = true;
           // 先清空编辑器和内容状态
           setCurrentContent('');
           setIsModified(false);
@@ -930,6 +953,11 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
       message.success('重命名成功');
       setRenameModalVisible(false);
       await refreshAndKeepSelection();
+      // 快捷新建研报：填写完标题后自动聚焦编辑器，便于直接开始写作
+      if (quickCreateFocusRef.current) {
+        quickCreateFocusRef.current = false;
+        focusEditorWhenReady();
+      }
     } catch (error) {
       console.error('重命名失败', error);
       message.error('重命名失败');
@@ -1210,6 +1238,7 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
       pendingSelectReportIdRef.current = newItem.id;
 
       // 弹出标题输入弹窗，输入完成后回车或点确定即完成重命名
+      quickCreateFocusRef.current = true;
       setNewItemName(QUICK_NEW_REPORT_NAME);
       setRenameModalVisible(true);
 
@@ -1315,9 +1344,9 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
               }
             },
             after: () => {
-              if (shouldFocusEditor) {
-                editorInstance.current?.focus();
-                setShouldFocusEditor(false);
+              if (shouldFocusEditorRef.current) {
+                shouldFocusEditorRef.current = false;
+                focusEditorWhenReady();
               }
             }
           });
@@ -1352,9 +1381,9 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
           if (editorInstance.current && currentEditingIdRef.current === currentItem.id) {
             try {
               editorInstance.current.setValue(currentContent || '');
-              if (shouldFocusEditor) {
-                editorInstance.current.focus();
-                setShouldFocusEditor(false);
+              if (shouldFocusEditorRef.current) {
+                shouldFocusEditorRef.current = false;
+                focusEditorWhenReady();
               }
             } catch (error) {
               console.warn('设置编辑器内容时出错:', error);

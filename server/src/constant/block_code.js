@@ -2321,5 +2321,55 @@ exports.default = [
         "blockName": "太空算力",
         "code": "sh601615",
         "name": "明阳智能"
+    },
+    {
+        "blockName": "电力",
+        "code": "sh600795",
+        "name": "国电电力"
+    },
+    {
+        "blockName": "电力",
+        "code": "sz000690",
+        "name": "宝新能源"
+    },
+    {
+        "blockName": "电力",
+        "code": "sh600310",
+        "name": "广西能源"
+    },
+    {
+        "blockName": "电力",
+        "code": "sh600863",
+        "name": "华能蒙电"
+    },
+    {
+        "blockName": "电力",
+        "code": "sz001286",
+        "name": "陕西能源"
+    },
+    {
+        "blockName": "电力",
+        "code": "sh600027",
+        "name": "华电国际"
+    },
+    {
+        "blockName": "电力",
+        "code": "sh600011",
+        "name": "华能国际"
+    },
+    {
+        "blockName": "电力",
+        "code": "sz002608",
+        "name": "江苏国信"
+    },
+    {
+        "blockName": "电力",
+        "code": "sh600023",
+        "name": "浙能电力"
+    },
+    {
+        "blockName": "电力",
+        "code": "sz000027",
+        "name": "深圳能源"
     }
 ]
