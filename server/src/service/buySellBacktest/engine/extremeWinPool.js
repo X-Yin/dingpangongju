@@ -552,6 +552,8 @@ const buildExtremeWinPool = async (dateStr, opts = {}) => {
   // 2026-11-14 用户新增（仅回测）：追加「全量自选股非科技股 + 最近 10 个报告日研报数 ≥ 5」的候选，
   //   默认关闭，线上实盘（hotMoneyExtremeWin.js）不传该参数、口径保持不变。
   const includeReportBoost = opts.reportBoost === true;
+  // 线上实盘（极致胜率）强制日K严格重试；回测默认关闭，避免历史批量回测被个别停牌股拖慢
+  const strictBars = opts.strictBars === true;
   let reportBoostStocks = [];
   if (includeReportBoost) {
     try { reportBoostStocks = buildReportBoostStocks(dateStr); } catch (e) { reportBoostStocks = []; }
@@ -609,7 +611,7 @@ const buildExtremeWinPool = async (dateStr, opts = {}) => {
   // 大市值个股的 5 日涨幅判定需要日K：只为待校验的大市值记录预拉，避免无谓拉取全部涨停个股
   const pendingCodes = new Set([...rawOld, ...rawNew].filter(needsBarCheck).map(s => s.code));
   if (pendingCodes.size > 0 && winDates.length >= CAP_BOARD_WINDOW_DAYS) {
-    try { await ensureBarsForCodes(pendingCodes); } catch (e) { /* 拉取失败按数据缺失处理（不通过） */ }
+    try { await ensureBarsForCodes(pendingCodes, { strict: strictBars, windowMs: 10000 }); } catch (e) { /* 拉取失败按数据缺失处理（不通过） */ }
   }
 
   // 单条连板记录是否通过「连板准入」
@@ -648,7 +650,7 @@ const buildExtremeWinPool = async (dateStr, opts = {}) => {
   let poolFilterText = '';
   let candidates = [];
   if (byCode.size > 0) {
-    try { await ensureBarsForCodes(new Set(byCode.keys())); } catch (e) { /* 拉取失败按数据缺失处理 */ }
+    try { await ensureBarsForCodes(new Set(byCode.keys()), { strict: strictBars, windowMs: 10000 }); } catch (e) { /* 拉取失败按数据缺失处理 */ }
     if (winDates.length >= RANGE_WINDOW_DAYS) {
       // 旧路径：最多 10 日最精准窗口区间最大涨幅 < 80% + 连板后无单日跌幅 < -9% + 20 日总涨幅 < 100%
       //   （可选）峰值日（含）至买点前区间最大波动 < oldPostPeakMaxRangePct（2026-11-14 用户要求，回测与线上 live 同口径传入）

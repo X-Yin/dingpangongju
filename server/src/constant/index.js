@@ -106,3 +106,19 @@ exports.lianbanHeaders = {
     'referer': 'https://lianban.net/',
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36'
 };
+
+// 雪球日K / 当日分时接口（2026-11-15 新增）
+// 注意：stock.xueqiu.com 必须带 cookie（xq_a_token），未登录访问一次 https://xueqiu.com/
+// 服务端就会下发匿名 token，因此不需要手工维护 cookie（见 service/xueqiu.js）
+// 直接用 www 域名：xueqiu.com 的 301 跳转偶发卡 20s+，而 www 直接 200 并下发 xq_a_token
+exports.xueqiuHomeUrl = 'https://www.xueqiu.com/';
+exports.xueqiuKlineUrl = 'https://stock.xueqiu.com/v5/stock/chart/kline.json';
+exports.xueqiuMinuteUrl = 'https://stock.xueqiu.com/v5/stock/chart/minute.json';
+
+exports.xueqiuHeaders = {
+    'accept': 'application/json, text/plain, */*',
+    'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+    'origin': 'https://www.xueqiu.com',
+    'referer': 'https://www.xueqiu.com/',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36'
+};

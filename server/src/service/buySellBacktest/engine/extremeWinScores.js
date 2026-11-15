@@ -4,6 +4,7 @@
 //   2) 个股历史分析接口 GET /stock_history_analysis（index.js）
 const dayjs = require('dayjs');
 const { getSingleStockTlineDataByDate } = require('../deps');
+const { getSingleStockTlineData } = require('../../stock');
 const { calculateReplayResilience } = require('../diagnose/sellPoint');
 const { isAfterMarketClose } = require('../../../utils');
 
@@ -44,34 +45,82 @@ const round2 = (v) => (v == null || !Number.isFinite(Number(v)) ? null : parseFl
 // 当日未收盘时改为 TTL 短缓存——页面每 5s 轮询可拿到新数据，同轮询周期内的并发/重复调用仍共享一次拉取
 const tlineCache = new Map(); // `${code}|${dateNum}` -> { res: { preclose, points }, ts: 拉取时间戳 }
 const TODAY_TLINE_TTL_MS = 5000;
-const loadTlinePoints = async (code, dateNum) => {
+const tlineInflight = new Map();
+const mapTline = (t) => ({
+  preclose: t?.preclose_px != null ? parseFloat(t.preclose_px) : null,
+  points: (t?.line || [])
+    .filter(p => p && p.minute != null && p.last_px != null)
+    .map(p => ({
+      minute: parseInt(p.minute, 10),
+      lastPx: parseFloat(p.last_px),
+      change: p.change != null ? parseFloat(p.change) : 0,
+      // 每分钟成交量（THS 为逐分钟增量、CLS 为 item.business_amount）；缺失记 null
+      vol: p.business_amount != null && Number.isFinite(Number(p.business_amount)) ? Number(p.business_amount) : null,
+    }))
+    .filter(p => p.lastPx > 0)
+    .sort((a, b) => a.minute - b.minute),
+});
+const loadTlinePoints = async (code, dateNum, opts = {}) => {
+  // strict=true：线上极致胜率/极致赔率使用，失败后按同花顺→财联社（当日再兜底连板网）持续重试，且不缓存空值；
+  // strict=false：回测默认路径，保持原有「一次拉取 + 空结果永久缓存」，避免历史批量回测被停牌股反复拖慢
+  const strict = opts.strict === true;
   const key = `${code}|${dateNum}`;
   const isToday = Number(dateNum) === Number(dayjs().format('YYYYMMDD'));
   const todayLive = isToday && !isAfterMarketClose(); // 当日且未收盘（15:05 前，含盘前/午间）
   if (tlineCache.has(key)) {
     const entry = tlineCache.get(key);
-    if (!todayLive || Date.now() - entry.ts < TODAY_TLINE_TTL_MS) return entry.res;
+    const cacheUsable = strict
+      ? (entry.res && entry.res.points.length > 0)
+      : (!todayLive || Date.now() - entry.ts < TODAY_TLINE_TTL_MS);
+    if (cacheUsable) return entry.res;
   }
-  let res = { preclose: null, points: [] };
+  if (tlineInflight.has(key)) return tlineInflight.get(key);
+  const task = (async () => {
+    if (!strict) {
+      let res = { preclose: null, points: [] };
+      try {
+        const t = await getSingleStockTlineDataByDate(code, dateNum);
+        res = mapTline(t);
+      } catch (e) { /* 回测口径：失败返回空并缓存 */ }
+      tlineCache.set(key, { res, ts: Date.now() });
+      return res;
+    }
+    let res = { preclose: null, points: [] };
+    const deadline = Date.now() + 6 * 1000;
+    while (Date.now() < deadline) {
+      let t = null;
+      try {
+        t = await getSingleStockTlineDataByDate(code, dateNum, {
+          ignoreFailCache: true,
+          timeoutMs: 2500,
+          sourceOrder: ['ths', 'cls'],
+        });
+      } catch (e) { /* 继续重试 */ }
+      if (!t || !t.line || t.line.length === 0) {
+        if (isToday) {
+          try { t = await getSingleStockTlineData(code); } catch (e) { /* 继续重试 */ }
+        }
+      }
+      if (t && t.line && t.line.length > 0) {
+        res = mapTline(t);
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    if (res.points.length > 0) {
+      tlineCache.set(key, { res, ts: Date.now() });
+    } else {
+      tlineCache.delete(key);
+      console.warn(`[分时严格重试] ${code} ${dateNum} 6s 内未取到分时（同花顺→财联社${isToday ? '→连板网' : ''}），不缓存空值，下一轮继续重试`);
+    }
+    return res;
+  })();
+  tlineInflight.set(key, task);
   try {
-    const t = await getSingleStockTlineDataByDate(code, dateNum);
-    res = {
-      preclose: t?.preclose_px != null ? parseFloat(t.preclose_px) : null,
-      points: (t?.line || [])
-        .filter(p => p && p.minute != null && p.last_px != null)
-        .map(p => ({
-          minute: parseInt(p.minute, 10),
-          lastPx: parseFloat(p.last_px),
-          change: p.change != null ? parseFloat(p.change) : 0,
-          // 每分钟成交量（THS 为逐分钟增量、CLS 为 item.business_amount）；缺失记 null
-          vol: p.business_amount != null && Number.isFinite(Number(p.business_amount)) ? Number(p.business_amount) : null,
-        }))
-        .filter(p => p.lastPx > 0)
-        .sort((a, b) => a.minute - b.minute),
-    };
-  } catch (e) { /* 拉取失败返回空 */ }
-  tlineCache.set(key, { res, ts: Date.now() });
-  return res;
+    return await task;
+  } finally {
+    tlineInflight.delete(key);
+  }
 };
 const clearTlineCache = () => tlineCache.clear();
 // 仅清除「当日」分时缓存（手动刷新时保证实时拉取；历史交易日分时不可变，无需清除）

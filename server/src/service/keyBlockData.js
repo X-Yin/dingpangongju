@@ -40,21 +40,52 @@ const barsCache = new Map();
 
 // 预拉取指定 codes（shxxxxxx 完整格式）日K到 barsCache；并发 8；已缓存的跳过，拉取失败存 null
 // force=true：先删除进程内缓存再重新调用 getStockBars（收盘后手动刷新时用于拿到当日收盘K线）
-const ensureBarsForCodes = async (codeSet, { force = false } = {}) => {
-  const codes = force ? Array.from(codeSet) : Array.from(codeSet).filter(c => !barsCache.has(c));
+const ensureBarsForCodes = async (codeSet, { force = false, strict = false, windowMs = 10000 } = {}) => {
+  // 只跳过已有有效日K的股票；缺失/空数组/旧 null 缓存都会重新进入严格重试
+  const codes = force ? Array.from(codeSet) : Array.from(codeSet).filter(c => {
+    const b = barsCache.get(c);
+    return !b || b.length === 0;
+  });
   if (force) for (const c of codes) barsCache.delete(c);
-  if (codes.length === 0) return { total: 0, fetched: 0 };
+  if (codes.length === 0) return { total: 0, fetched: 0, missing: [] };
   let fetched = 0;
-  await batchParallel(codes, async (code) => {
+  // 失败不写 null：getStockBars 内部已按同花顺→财联社严格重试，仍失败则下一轮继续重试，
+  // 避免极致胜率/极致赔率把该股永久当成「无K线」剔除
+  const fetchOne = async (code) => {
     try {
       const bars = await getStockBars(code.replace(/^(sh|sz|bj)/i, ''));
-      barsCache.set(code, bars && bars.length > 0 ? bars : null);
-      if (bars && bars.length > 0) fetched++;
+      if (bars && bars.length > 0) {
+        barsCache.set(code, bars);
+        fetched++;
+        return true;
+      }
+      barsCache.delete(code);
+      return false;
     } catch (e) {
-      barsCache.set(code, null);
+      barsCache.delete(code);
+      return false;
     }
-  }, 8);
-  return { total: codes.length, fetched };
+  };
+  await batchParallel(codes, fetchOne, 8);
+  // strict：对仍缺失的个股在窗口内继续重试（极致胜率/极致赔率线上路径使用，回测默认不开启）
+  let missing = codes.filter(c => {
+    const b = barsCache.get(c);
+    return !b || b.length === 0;
+  });
+  if (strict) {
+    const deadline = Date.now() + windowMs;
+    while (missing.length > 0 && Date.now() < deadline) {
+      await batchParallel(missing, fetchOne, 4);
+      missing = missing.filter(c => {
+        const b = barsCache.get(c);
+        return !b || b.length === 0;
+      });
+    }
+    if (missing.length > 0) {
+      console.warn(`[日K严格重试] ${windowMs}ms 内仍有 ${missing.length} 只未取到日K：${missing.slice(0, 10).join(',')}；不缓存空值，下一轮继续重试`);
+    }
+  }
+  return { total: codes.length, fetched, missing };
 };
 
 // 预拉取全部重点板块成分股日K（回测启动时调用一次，避免逐桶逐日阻塞；并发 8）

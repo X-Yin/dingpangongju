@@ -1,18 +1,21 @@
 // 多平台个股日K请求（板块成交量占比轮询兜底使用）
-// - 同花顺 / 财联社：复用线上已有的 HTTP 请求逻辑
+// - 同花顺 / 财联社 / 雪球：复用线上已有的 HTTP 请求逻辑
 // 统一返回 [{ date: 'YYYYMMDD', amount: 成交额(元), close: 收盘价 }]，按日期升序
 // 2026-11-05：新增 source='auto' 支持 CLS/THS 加权随机（默认 60/40），
 //             主源失败时自动兜底到另一只主力；显式 'cls'/'ths' 保持原有单源语义不变。
+// 2026-11-15：新增 'xq'（雪球）并设为第一优先级，auto 兜底链为 XQ → CLS → THS。
 const axios = require('axios');
 const dayjs = require('dayjs');
 const { getClsReqUrl } = require('../utils');
 const { fetchStockKline } = require('./stockKlineCache');
-const { pickPrimarySource } = require('../config');
+const { fetchXueqiuKline } = require('./xueqiu');
+const { buildTryOrder } = require('../config');
 
 // 平台标识 → 展示名称
 const PLATFORM_NAMES = {
     ths: '同花顺',
     cls: '财联社',
+    xq: '雪球',
 };
 
 const toPlainCode = (code) => String(code || '').trim().replace(/^[a-zA-Z]+/, '');
@@ -63,24 +66,44 @@ const fetchClsKline = async (code, startDate) => {
     })));
 };
 
+// 雪球日K（2026-11-15 新增，需匿名 cookie，模块内自动维护）
+const fetchXqKline = async (code, startDate) => {
+    const limit = Math.min(Math.max(dayjs().diff(dayjs(startDate), 'day'), 10), 60);
+    // 雪球超时硬上限 1s，超时由 auto 兜底链切财联社 / 同花顺
+    const rows = await fetchXueqiuKline(code, limit, 1000);
+    return normalizeRows(rows.map((item) => ({
+        date: item.trade_date,
+        amount: item.business_balance,
+        close: item.close_px,
+    })));
+};
+
 // 单只股票日K：单源请求（auto 时内部做随机 + 兜底）
 const fetchSingleKline = async (platform, code, startDate) => {
     // 显式指定 → 原有单源语义
     if (platform === 'ths') return fetchThsKline(code, startDate);
     if (platform === 'cls') return fetchClsKline(code, startDate);
+    if (platform === 'xq') return fetchXqKline(code, startDate);
 
-    // auto：按权重选主源（同 code 稳定命中同一主源，保证重算可复现），失败兜底另一只主力
+    // auto：按权重选主源（同 code 稳定命中同一主源，保证重算可复现），失败按兜底链依次重试
     if (!platform || platform === 'auto') {
-        const primary = pickPrimarySource('kline', code);
-        const other = primary === 'cls' ? 'ths' : 'cls';
-        try {
-            const rows = await (primary === 'cls' ? fetchClsKline(code, startDate) : fetchThsKline(code, startDate));
-            if (rows && rows.length > 0) return rows;
-        } catch (e) {
-            // 主源失败继续兜底
-            console.warn(`[kline-auto] ${PLATFORM_NAMES[primary]} ${code} 失败：${e.message}，兜底 ${PLATFORM_NAMES[other]}`);
+        const tryOrder = buildTryOrder('kline', code).filter((src) => src === 'cls' || src === 'ths' || src === 'xq');
+        let lastError = null;
+        for (const src of tryOrder) {
+            try {
+                const rows = src === 'cls'
+                    ? await fetchClsKline(code, startDate)
+                    : src === 'ths'
+                        ? await fetchThsKline(code, startDate)
+                        : await fetchXqKline(code, startDate);
+                if (rows && rows.length > 0) return rows;
+            } catch (e) {
+                lastError = e;
+                console.warn(`[kline-auto] ${PLATFORM_NAMES[src]} ${code} 失败：${e.message}，尝试下一个兜底源`);
+            }
         }
-        return (other === 'cls' ? fetchClsKline(code, startDate) : fetchThsKline(code, startDate));
+        if (lastError) throw lastError;
+        return [];
     }
 
     throw new Error(`未知平台: ${platform}`);

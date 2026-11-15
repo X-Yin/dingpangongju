@@ -274,6 +274,8 @@ const getLhbStocks = async (dateStr) => {
 // 个股日K线（任意龙虎榜股票，文件缓存跨进程共享）
 // ============================================================
 const stockKlineMem = new Map();
+// 同一 code 正在严格重试拉取时，复用同一个 Promise，避免极致胜率/极致赔率多轮诊断并发重复打数据源
+const stockKlineInflight = new Map();
 // 当前时刻 HHmm（写入缓存 fetchedAtTime 用：标记是否为收盘后拉取，供跨天复用判定）
 const nowHHmm = () => {
   const n = new Date();
@@ -327,12 +329,36 @@ const getStockDailyKline = async (code) => {
     }
     // 收盘后旧快照已过期 → 继续走重拉
   }
-  staleRefetchAt.set(code, Date.now());
-  let kline = [];
-  try { kline = (await getSingleStockData(code, 280)) || []; } catch (e) { /* 失败返回空 */ }
-  if (kline.length > 0) writeJsonCache(file, { fetchedAt: beijingToday(), fetchedAtTime: nowHHmm(), kline });
-  stockKlineMem.set(code, kline);
-  return kline;
+  // 严格重试：同花顺 → 财联社（连板网无日K接口），直到拿到数据或到达本轮窗口上限。
+  // 失败时绝不把空数组写入进程缓存，否则极致胜率/极致赔率会把该股永久剔除。
+  if (stockKlineInflight.has(code)) return stockKlineInflight.get(code);
+  const task = (async () => {
+    staleRefetchAt.set(code, Date.now());
+    let kline = [];
+    const deadline = Date.now() + 20 * 1000;
+    while (Date.now() < deadline) {
+      try {
+        kline = (await getSingleStockData(code, 280, 2500, ['ths', 'cls'])) || [];
+      } catch (e) {
+        kline = [];
+      }
+      if (kline.length > 0) break;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    if (kline.length > 0) {
+      writeJsonCache(file, { fetchedAt: beijingToday(), fetchedAtTime: nowHHmm(), kline });
+      stockKlineMem.set(code, kline);
+    } else {
+      stockKlineMem.delete(code);
+    }
+    return kline;
+  })();
+  stockKlineInflight.set(code, task);
+  try {
+    return await task;
+  } finally {
+    stockKlineInflight.delete(code);
+  }
 };
 
 // 个股日K序列 [{ d, c, v, h, l }] 升序（d=YYYYMMDD 数字，v=成交量 business_amount，h/l=当日最高/最低价）

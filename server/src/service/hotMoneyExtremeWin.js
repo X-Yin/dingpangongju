@@ -26,6 +26,8 @@ const {
 const {
   loadTlinePoints, strengthAtMinute, diffAtMinute, round2, limitUpThresholdOf, clearTodayTlineCache,
 } = require('./buySellBacktest/engine/extremeWinScores');
+// 线上极致胜率：分时失败按同花顺→财联社（当日再兜底连板网）严格重试，不再一次失败就剔除个股
+const loadTlinePointsStrict = (code, dateNum) => loadTlinePoints(code, dateNum, { strict: true });
 const {
   ICE_SIGNAL_INDEX_CODE, getIceMa3SlopeIntraday, fmtKeyBlockSlope, iceResilienceIndexCode, precomputeTurnMap,
 } = require('./buySellBacktest/engine/indexGate');
@@ -162,6 +164,8 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
     // 2026-11-14 用户要求：线上同步「研报补充候选」——全量自选股中非科技股（isTech = false）
     //   最近 10 个报告日研报数 ≥ 15 篇者并入候选池（不限创业板/科创板），买点只按「强度分 − 差劲分 ≥ 30」判定
     reportBoost: true,
+    // 2026-11-14 用户要求：极致胜率也不允许静默丢股票，日K缺失时按同花顺→财联社严格重试
+    strictBars: true,
   });
   const poolStocks = pool.stocks || [];
 
@@ -185,7 +189,7 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
   // 3) 当日分时（进程内缓存；当日盘中 5s TTL 短缓存支持 live 刷新，历史日期永久缓存）
   const tlineList = poolStocks.length > 0
     ? await batchParallel(poolStocks.map(s => s.code), async (code) => {
-        try { return await loadTlinePoints(code, dateNum); } catch (e) { return { preclose: null, points: [] }; }
+        try { return await loadTlinePointsStrict(code, dateNum); } catch (e) { return { preclose: null, points: [] }; }
       }, 6)
     : [];
 
@@ -193,7 +197,7 @@ const fetchExtremeWinContext = async (targetDate = null, buyCutoffMinute = BUY_C
   const idxCodes = Array.from(new Set(poolStocks.map(s => iceResilienceIndexCode(s.code))));
   const idxTlineMap = new Map();
   await batchParallel(idxCodes, async (idxCode) => {
-    try { idxTlineMap.set(idxCode, await loadTlinePoints(idxCode, dateNum)); }
+    try { idxTlineMap.set(idxCode, await loadTlinePointsStrict(idxCode, dateNum)); }
     catch (e) { idxTlineMap.set(idxCode, { preclose: null, points: [] }); }
     return null;
   }, 4);
@@ -370,7 +374,7 @@ const computeReverseHitCounts = async (codes, windowDates, todayNum, todayCutoff
     // 当日命中只统计到「当前评估桶」为止；历史交易日统计完整全天
     if (isToday) priorCounts = new Map(counts);
     let idxT;
-    try { idxT = await loadTlinePoints(ICE_SIGNAL_INDEX_CODE, dNum); } catch (e) { idxT = { preclose: null, points: [] }; }
+    try { idxT = await loadTlinePointsStrict(ICE_SIGNAL_INDEX_CODE, dNum); } catch (e) { idxT = { preclose: null, points: [] }; }
     const idxPts = idxT.points || [];
     const pre = idxT.preclose;
     if (!(pre > 0) || idxPts.length === 0) continue;
@@ -404,7 +408,7 @@ const computeReverseHitCounts = async (codes, windowDates, todayNum, todayCutoff
     const idxPointsByCode = new Map();
     const idxCodes = Array.from(new Set(codes.map(c => iceResilienceIndexCode(c))));
     await batchParallel(idxCodes, async (ic) => {
-      try { idxPointsByCode.set(ic, (await loadTlinePoints(ic, dNum)).points || []); } catch (e) { idxPointsByCode.set(ic, []); }
+      try { idxPointsByCode.set(ic, (await loadTlinePointsStrict(ic, dNum)).points || []); } catch (e) { idxPointsByCode.set(ic, []); }
       return null;
     }, 6);
 
@@ -418,7 +422,7 @@ const computeReverseHitCounts = async (codes, windowDates, todayNum, todayCutoff
       if (!isToday && reversePastHitCache.has(ck)) hit = reversePastHitCache.get(ck);
       if (hit == null) {
         let t;
-        try { t = await loadTlinePoints(code, dNum); } catch (e) { t = { preclose: null, points: [] }; }
+        try { t = await loadTlinePointsStrict(code, dNum); } catch (e) { t = { preclose: null, points: [] }; }
         const pts = t.points || [];
         if (pts.length > 0 && t.preclose > 0) {
           const codeIdxPts = idxPointsByCode.get(iceResilienceIndexCode(code)) || [];
@@ -477,14 +481,14 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
 
   // 3) 当日上证指数分时（当日跌幅 + 命中桶）
   let indexTline;
-  try { indexTline = await loadTlinePoints(ICE_SIGNAL_INDEX_CODE, dateNum); } catch (e) { indexTline = { preclose: null, points: [] }; }
+  try { indexTline = await loadTlinePointsStrict(ICE_SIGNAL_INDEX_CODE, dateNum); } catch (e) { indexTline = { preclose: null, points: [] }; }
   const idxPts = indexTline.points || [];
   const idxPre = indexTline.preclose;
 
   // 4) 各候选当日分时
   const tlineList = codes.length > 0
     ? await batchParallel(codes, async (code) => {
-        try { return await loadTlinePoints(code, dateNum); } catch (e) { return { preclose: null, points: [] }; }
+        try { return await loadTlinePointsStrict(code, dateNum); } catch (e) { return { preclose: null, points: [] }; }
       }, 6)
     : [];
 
@@ -541,7 +545,7 @@ const fetchReverseLeaderContext = async (targetDate = null, buyCutoffMinute = BU
   const revIdxCodes = Array.from(new Set(poolStocks.map(s => iceResilienceIndexCode(s.code))));
   const revIdxTlineMap = new Map();
   await batchParallel(revIdxCodes, async (ic) => {
-    try { revIdxTlineMap.set(ic, await loadTlinePoints(ic, dateNum)); } catch (e) { revIdxTlineMap.set(ic, { preclose: null, points: [] }); }
+    try { revIdxTlineMap.set(ic, await loadTlinePointsStrict(ic, dateNum)); } catch (e) { revIdxTlineMap.set(ic, { preclose: null, points: [] }); }
     return null;
   }, 6);
 
@@ -1025,7 +1029,7 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
     const isToday = dateStr === dayjs().format('YYYYMMDD');
     const afterClose = !isToday || isAfterMarketClose();
 
-    const t = await loadTlinePoints(code, dateNum);
+    const t = await loadTlinePointsStrict(code, dateNum);
     const points = t.points || [];
     const preclose = t.preclose;
     const mins = points.filter(p => p.lastPx > 0);
@@ -1295,7 +1299,7 @@ const checkExtremeWinSellPointDetailed = async (code, costPrice = null, buyDate 
     let c9Pending = false;
     let c9Detail = '抗分歧指数待判定';
     let resilienceScore = null;
-    const idxT = await loadTlinePoints(iceResilienceIndexCode(code), dateNum);
+    const idxT = await loadTlinePointsStrict(iceResilienceIndexCode(code), dateNum);
     const idxPts = idxT.points || [];
     const atClose = afterClose || (mins.length > 0 && mins[mins.length - 1].minute >= 1457);
     if (!atClose) {

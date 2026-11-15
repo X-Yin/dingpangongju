@@ -42,6 +42,8 @@ const {
   BUY_CUTOFF_MINUTE: B_BUY_CUTOFF_MINUTE,
 } = require('./buySellBacktest/engine/volumeWashoutSecondBoardBacktest');
 const { loadTlinePoints, round2, limitUpThresholdOf } = require('./buySellBacktest/engine/extremeWinScores');
+// 线上极致赔率：分时失败按同花顺→财联社（当日再兜底连板网）严格重试，不再一次失败就剔除个股
+const loadTlinePointsStrict = (code, dateNum) => loadTlinePoints(code, dateNum, { strict: true });
 const { ensureBacktestValuation } = require('./watchlistValuation');
 const { getRealtimeQuotes } = require('./stock');
 const wsServer = require('../wsServer');
@@ -182,7 +184,7 @@ const computePools = async (dateStr) => {
     }
 
     const washStocks = Array.from(recordMap.values()).filter((x) => !x.hasHighBoard);
-    try { await ensureBarsForCodes(new Set(washStocks.map((x) => x.code)), { force: true }); } catch (e) { /* 日K拉取失败按缺失处理 */ }
+    try { await ensureBarsForCodes(new Set(washStocks.map((x) => x.code)), { force: true, strict: true, windowMs: 8000 }); } catch (e) { /* 日K严格重试后仍失败：不缓存空值，下一轮继续 */ }
 
     const out = [];
     for (const item of washStocks) {
@@ -232,7 +234,7 @@ const computePools = async (dateStr) => {
     }
 
     const poolStocks = Array.from(recordMap.values()).filter((x) => !x.hasHighBoard && x.firstBoardAtPrev);
-    try { await ensureBarsForCodes(new Set(poolStocks.map((x) => x.code)), { force: true }); } catch (e) { /* 日K拉取失败按缺失处理 */ }
+    try { await ensureBarsForCodes(new Set(poolStocks.map((x) => x.code)), { force: true, strict: true, windowMs: 8000 }); } catch (e) { /* 日K严格重试后仍失败：不缓存空值，下一轮继续 */ }
 
     const prevNum = parseInt(prevTradeDate, 10);
     const out = [];
@@ -261,7 +263,7 @@ const computePools = async (dateStr) => {
     // 首板日（T-1）分时限制：断板 ≤ 1 次、封板满 20 分钟无漏量（与回测口径一致）
     await batchParallel(out, async (c) => {
       let bt = null;
-      try { bt = await loadTlinePoints(c.code, prevNum); } catch (e) { bt = null; }
+      try { bt = await loadTlinePointsStrict(c.code, prevNum); } catch (e) { bt = null; }
       c.boardCheck = analyzeBoardDayTline(c.code, bt);
       return null;
     }, 4);
@@ -797,7 +799,7 @@ const tick = async () => {
       const missing = allCands.filter((c) => !auctionGaps.has(c.code));
       await batchParallel(missing, async (c) => {
         let t = null;
-        try { t = await loadTlinePoints(c.code, Number(dateStr)); } catch (e) { t = null; }
+        try { t = await loadTlinePointsStrict(c.code, Number(dateStr)); } catch (e) { t = null; }
         if (!t || !(t.preclose > 0)) return null;
         const p0 = (t.points || []).find((p) => p.lastPx > 0 && p.minute <= BUY_START_MINUTE);
         if (!p0) return null;
@@ -821,7 +823,7 @@ const tick = async () => {
       });
       await batchParallel(near, async (c) => {
         let t = null;
-        try { t = await loadTlinePoints(c.code, Number(dateStr)); } catch (e) { t = null; }
+        try { t = await loadTlinePointsStrict(c.code, Number(dateStr)); } catch (e) { t = null; }
         if (!t) return null;
         const hit = scanFirstBoardBurstHit(t, c, minute);
         if (!hit || hit.limitOpen || hit.auction) return null;
@@ -847,7 +849,7 @@ const tick = async () => {
       });
       await batchParallel(near, async (c) => {
         let t = null;
-        try { t = await loadTlinePoints(c.code, Number(dateStr)); } catch (e) { t = null; }
+        try { t = await loadTlinePointsStrict(c.code, Number(dateStr)); } catch (e) { t = null; }
         if (!t) return null;
         const hit = scanSecondBoardBurstHit(t, c, minute);
         if (!hit || hit.limitOpen || hit.gapDown) return null;
