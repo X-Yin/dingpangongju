@@ -11,6 +11,14 @@ const { getStockPositions } = require('./stockPosition');
 const { isTechWatchlistStock } = require('./monitorStock');
 const { getTechEmotionIntraday } = require('./emotion');
 const { getTechHalfPositionState, isGateRaised } = require('./emoQuickFundGateLive');
+const { MODE_TECH_ATTACK } = require('./strategyModeState');
+
+// 模式展示名（用于 10s 兜底临时卡片中说明「命中了什么模式」）
+const MODE_LABELS = {
+  [MODE_TECH_ATTACK]: '科技进攻',
+  [MODE_EXTREME_WIN]: '情绪游资-极致胜率',
+  [MODE_ATTACK_DEFENSE]: '攻防兼备',
+};
 
 // 科技进攻（快进快出）仓位提示：与回测 fusedEmoWinBacktest 的 A 风格仓位管理完全一致——
 //   快进快出日 → 首次半仓 50%，次日买点再次触发补足第二份半仓，该笔次日 10:00 强卖；
@@ -178,8 +186,20 @@ const buildTechBuyStocks = async () => {
 //   buyStocks  : 可选，直接指定卡片标的（优先）
 //   topStocks  : 可选，指定科技进攻榜单前三
 //   triggerTime: 可选，真实的买点诊断触发时间（默认与卡片生成时间相同）
+//   provisional: 可选，10s 兜底临时命中卡片——不带候选股，只说明命中模式并提示人工查看
 // @returns {Object} { success, skipped?, message?, data?, error? }
-const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, topStocks = null, triggerTime = null } = {}) => {
+const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, topStocks = null, triggerTime = null, provisional = false } = {}) => {
+  // 10 秒兜底：候选股尚未算完，先单独发一张不带候选股的命中通知
+  if (provisional) {
+    return feishuNotify.sendFeishuCard(feishuNotify.buildBuyPointCard({
+      buyStocks: [],
+      timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+      triggerTime,
+      provisional: true,
+      modeLabel: MODE_LABELS[mode] || mode,
+    }));
+  }
+
   let card = null;
 
   const isEwSource = source === 'ew' || (!source && mode === MODE_EXTREME_WIN);

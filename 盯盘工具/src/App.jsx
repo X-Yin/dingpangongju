@@ -1875,7 +1875,7 @@ function App() {
               盈亏同源：赔率越大的时候胜率越小，亏损的概率越高。你需要牺牲一些赔率来换取更高的胜率，这就是耐心和定力的重要性！
             </div>
             <div className="willpower-modal-subtitle" style={{ fontSize: 24, marginBottom: 16, color: '#ccc' }}>
-              患得当先患失：在想要获取利益之前，先想好自己准备为此而支付的代价是什么，内心准备为此而承受什么样的煎熬
+              患得当先患失：毛选中的主动性和灵活性的前提就是要敢于放手、敢于舍弃。什么都不想放手，就没有主动权！
             </div>
             <div className="willpower-modal-text"  style={{ fontSize: 24 }}>
               短线之道，在于两点；先寻辨识，再看择时；<br/>

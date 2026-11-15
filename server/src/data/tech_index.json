@@ -1440,11 +1440,11 @@
   },
   {
     "date": 20261113,
-    "changeSumResult": -50.4,
-    "baseEmotion": -30.95,
+    "changeSumResult": -50.14,
+    "baseEmotion": -30.69,
     "pullbackPenalty": -97.27,
-    "avgChange": -4.24,
-    "stockCount": 103,
+    "avgChange": -4.21,
+    "stockCount": 107,
     "algorithm": 2
   }
 ]

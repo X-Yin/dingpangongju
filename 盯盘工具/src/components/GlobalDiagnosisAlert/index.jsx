@@ -19,6 +19,7 @@ import {
   CaretDownOutlined,
   CaretUpOutlined,
   BulbOutlined,
+  SyncOutlined,
 } from '@ant-design/icons';
 import { local_ip } from '../../constant';
 import { getStrategyMode, MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION } from '../../utils/strategyMode';
@@ -289,6 +290,21 @@ const GlobalDiagnosisAlert = () => {
       if (msg.data.iceDelay) setIceAlert(null);
       const seq = ++seqRef.current;
       const mode = msg.mode || getStrategyMode();
+      // 10s 兜底临时命中卡片（后端候选股尚未算完）：直接展示特殊卡片，不再二次拉取榜单；
+      // 候选股算完后端会补发一条完整消息，覆盖本卡片
+      if (msg.provisional === true || msg.data?.stockPending === true) {
+        if (msg.data.iceDelay) setIceAlert(null);
+        setBuyAlert({
+          mode,
+          data: msg.data,
+          bucket: msg.bucket ?? null,
+          ts: msg.ts ?? null,
+          stocks: [],
+          loading: false,
+          provisional: true,
+        });
+        return;
+      }
       // 后端已随消息直达个股：立即展示，再异步补实时价格（不再出现「先弹卡片、后出个股」）
       const embedded = collectEmbeddedStocks(mode, msg.data);
       if (embedded) {
@@ -545,7 +561,7 @@ const WfCandidatesModal = ({ data, onClose }) => {
 //   （科技进攻：3日涨幅、抗分歧分数；情绪游资：强度分、差劲分、强度−差劲；极致赔率：竞价、触发时间、洗盘形态）
 // 各买点条件明细默认隐藏，点击卡片底部三角箭头展开查看
 const BuyAlertCard = ({ alert, onClose }) => {
-  const { mode, data, stocks, loading, bucket, remind } = alert;
+  const { mode, data, stocks, loading, bucket, remind, provisional } = alert;
   const [expanded, setExpanded] = useState(false);
 
   const isExtreme = mode === MODE_EXTREME_WIN;
@@ -652,19 +668,40 @@ const BuyAlertCard = ({ alert, onClose }) => {
   };
 
   return (
-    <div className="gda-card gda-buy">
+    <div className={`gda-card gda-buy${provisional ? ' gda-provisional' : ''}`}>
       <div className="gda-header">
-        <ThunderboltOutlined className="gda-header-icon buy" />
-        <span className="gda-title">买点诊断命中</span>
+        {provisional
+          ? <ClockCircleOutlined className="gda-header-icon provisional" />
+          : <ThunderboltOutlined className="gda-header-icon buy" />}
+        <span className="gda-title">{provisional ? '买点已命中 · 候选计算中' : '买点诊断命中'}</span>
         <span className="gda-mode-badge">{MODE_LABELS[mode] || mode}</span>
+        {provisional && <span className="gda-provisional-badge">10s 兜底</span>}
         {isWf && remind && <span className="gda-hit-types">提前提醒 · 9:30 执行</span>}
-        {hitTypes.length > 0 && <span className="gda-hit-types">命中：{hitTypes.join('、')}</span>}
+        {!provisional && hitTypes.length > 0 && <span className="gda-hit-types">命中：{hitTypes.join('、')}</span>}
         <CloseOutlined className="gda-close" onClick={onClose} />
       </div>
 
       {/* 核心：股票名称 / 当前涨幅 / 策略命中 / 各策略核心指标 */}
       <div className="gda-body">
-        {loading ? (
+        {provisional ? (
+          <>
+            <div className="gda-provisional-alert">
+              <ClockCircleOutlined className="gda-provisional-alert-icon" />
+              <div className="gda-provisional-alert-text">
+                <b>买点已命中，候选股票仍在计算中</b>
+                <span>本卡片不携带候选股。请立即前往交易页面人工查看哪些标的命中，并自行决策，无需等待。</span>
+                <span className="gda-provisional-pending">候选股计算完成后会自动补发完整卡片</span>
+              </div>
+            </div>
+            <div className="gda-provisional-modes">
+              <span className="gda-provisional-label">命中模式</span>
+              <span className="gda-provisional-mode-chip">{MODE_LABELS[mode] || mode}</span>
+              {hitTypes.map((t) => (
+                <span key={t} className="gda-provisional-hit-chip">{t}</span>
+              ))}
+            </div>
+          </>
+        ) : loading ? (
           <div className="gda-loading">正在获取推荐标的与实时价格…</div>
         ) : stocks.length === 0 ? (
           <div className="gda-empty">
@@ -692,8 +729,8 @@ const BuyAlertCard = ({ alert, onClose }) => {
           </div>
         ))}
 
-        {/* 建议仓位（精简展示） */}
-        {(techPos || ewPos || wfPos) && (
+        {/* 建议仓位（精简展示；10s 兜底卡片不展示，避免误导在没有候选股时下单） */}
+        {!provisional && (techPos || ewPos || wfPos) && (
           <div className="gda-section">
             <div className="gda-section-title">建议仓位</div>
             {techPos && (
@@ -805,9 +842,17 @@ const BuyAlertCard = ({ alert, onClose }) => {
             : <CaretDownOutlined className="gda-expand-arrow" />}
           <span>条件明细</span>
         </span>
-        <Button type="primary" size="small" icon={<CheckOutlined />} onClick={handleConfirm}>
-          确认买入
-        </Button>
+        {!provisional && (
+          <Button type="primary" size="small" icon={<CheckOutlined />} onClick={handleConfirm}>
+            确认买入
+          </Button>
+        )}
+        {provisional && (
+          <span className="gda-provisional-status">
+            <SyncOutlined spin />
+            候选计算中
+          </span>
+        )}
       </div>
     </div>
   );

@@ -22,6 +22,7 @@ const DebugPanel = () => {
   // WS 稳定性：testing | ok | error
   const [wsStatus, setWsStatus] = useState('testing');
   const [buyMocking, setBuyMocking] = useState(false);
+  const [provisionalMocking, setProvisionalMocking] = useState(false);
   const [sellMocking, setSellMocking] = useState(false);
   const [iceMocking, setIceMocking] = useState(false);
   // 首板起爆 MOCK：auction_buy | burst_buy | sell
@@ -113,6 +114,25 @@ const DebugPanel = () => {
       message.error(`mock 请求失败：${e.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 科技进攻 10s 兜底临时命中卡片 MOCK：不带候选股，只说明命中模式，
+  // 用于调试前端特殊样式（橙色警示卡 + 人工查看提示）与飞书临时通知
+  const triggerProvisionalMock = async () => {
+    setProvisionalMocking(true);
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/debug/mock_buy_point_provisional`);
+      const d = res.data;
+      if (d?.success) {
+        message.success('已模拟 10s 兜底命中卡片（不带候选股）', 4);
+      } else {
+        message.error(d?.error || 'mock 触发失败');
+      }
+    } catch (e) {
+      message.error(`mock 请求失败：${e.message}`);
+    } finally {
+      setProvisionalMocking(false);
     }
   };
 
@@ -269,15 +289,28 @@ const DebugPanel = () => {
             <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
               从全量自选股随机取一只，模拟命中买点诊断：向后端推送 WS 消息（打开弹窗/抽屉）并发送飞书卡片，
               飞书卡片中会标注为 MOCK 测试。
+              <br />
+              「10s 兜底」按钮模拟候选股尚未算完的临时命中卡片：<b>不带候选股</b>，只说明命中了什么模式，
+              并提示立即前往交易页面人工查看。
             </Paragraph>
-            <Button
-              type="primary"
-              icon={<RocketOutlined />}
-              loading={buyMocking}
-              onClick={() => triggerMock('buy')}
-            >
-              触发 Mock 买点命中
-            </Button>
+            <Space wrap>
+              <Button
+                type="primary"
+                icon={<RocketOutlined />}
+                loading={buyMocking}
+                onClick={() => triggerMock('buy')}
+              >
+                触发 Mock 买点命中
+              </Button>
+              <Button
+                icon={<ClockCircleOutlined />}
+                loading={provisionalMocking}
+                onClick={triggerProvisionalMock}
+                style={{ background: '#c2410c', borderColor: '#c2410c', color: '#fff' }}
+              >
+                触发 10s 兜底命中卡片
+              </Button>
+            </Space>
           </Card>
 
           {/* 模块三：卖点诊断 MOCK */}

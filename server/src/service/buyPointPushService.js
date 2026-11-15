@@ -26,6 +26,9 @@ const iceDelayBuy = require('./iceDelayBuy');
 const { logBuy } = require('./diagnosisLog');
 
 const INTERVAL_MS = 10 * 1000;
+// 科技进攻 10s 兜底（2026-11-15 用户要求）：5 分钟整数倍一旦命中买点，
+// 前端必须在 10s 内看到卡片——候选股计算超时先发「命中买点」临时卡片，完成后补发完整卡片
+const TECH_PROVISIONAL_TIMEOUT_MS = 10 * 1000;
 const statePath = path.resolve(__dirname, '../data/buy_point_notify_state.json');
 
 // 各模式诊断间隔（分钟）：每分钟边界由 10s tick 命中一次
@@ -359,8 +362,42 @@ const tickMode = async (mode, now) => {
     // 命中时在同一轮诊断内产出可买个股：科技腿走 3 日涨幅榜唯一候选；情绪游资腿由诊断结果自带 stocks
     let payloadData = data;
     let techStockResult = null;
+    // 科技进攻 10s 兜底（2026-11-15 用户要求）：命中买点后如果候选股在 10s 内还没算完，
+    // 先发一张不带候选股的命中卡片（WS + 飞书），后端继续计算，完成后补发完整卡片
+    let bucketReserved = false;
     if (mode === strategyModeState.MODE_TECH_ATTACK) {
+      const provisionalEligible = bucket != null
+        && data.allPassed === true
+        && detectQuickOutBlock(data) == null
+        && !(iceDelayBuy.canTrigger(bucket) && iceDelayBuy.isIceTransition())
+        && !iceDelayBuy.shouldSuppressTech()
+        && st.bucket !== bucket;
+      let provisionalTimer = null;
+      if (provisionalEligible) {
+        // 提前占桶：10s 兜底卡片与随后补发的完整卡片共用同一桶，避免重复通知
+        st.bucket = bucket;
+        bucketReserved = true;
+        writeNotifyState();
+        const triggerTime = dayjs(now).format('YYYY-MM-DD HH:mm:ss');
+        // 计时从本轮诊断开始（5 分钟整数倍）算起，保证 10s 内前端一定能看到卡片
+        const remaining = Math.max(0, TECH_PROVISIONAL_TIMEOUT_MS - (Date.now() - startedAt));
+        provisionalTimer = setTimeout(() => {
+          wsServer.broadcast({
+            type: 'buy_point',
+            mode,
+            bucket,
+            ts: Date.now(),
+            data: { ...data, stocks: [], stockPending: true },
+            hit: true,
+            provisional: true,
+            open: true,
+          });
+          notifyBuyPointFeishu({ mode, triggerTime, provisional: true })
+            .catch((e) => console.error('买点临时命中飞书发送失败:', e.message));
+        }, remaining);
+      }
       const tech = await fetchTechStocks(data);
+      if (provisionalTimer) clearTimeout(provisionalTimer);
       techStockResult = tech.result;
       payloadData = {
         ...data,
@@ -474,7 +511,8 @@ const tickMode = async (mode, now) => {
     // 当日已进入冰点转折延时模式：后续普通科技买点通知一律抑制（避免延时买入后又弹普通卡片）
     if (mode === strategyModeState.MODE_TECH_ATTACK && iceDelayBuy.shouldSuppressTech()) return;
 
-    if (st.bucket === bucket) return;
+    // 10s 兜底已提前占桶时（bucketReserved），本轮仍需补发带候选股的完整卡片
+    if (st.bucket === bucket && !bucketReserved) return;
 
     st.bucket = bucket;
     writeNotifyState();

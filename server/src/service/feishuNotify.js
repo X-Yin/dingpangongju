@@ -69,10 +69,44 @@ const formatBuyPointTimeLines = (triggerTime, timestamp) => {
 
 // 买点诊断卡片：绿色主题，列出「开盘实战」页自选股 3 日涨幅榜前三，并点出其中的买点候选
 //   mock=true 时为调试面板触发的 MOCK 测试卡片，卡片中额外标注说明
+//   provisional=true 时为「10 秒兜底」临时命中卡片（2026-11-15 用户要求）：
+//     橙色警告主题、不携带任何候选股，只说明命中了什么模式，提示立即去交易页面人工查看并自行决策；
+//     候选股计算完成后由后端补发一张完整的绿色卡片
 //   positionHint：买入仓位提示（与回测仓位管理一致的口径）
-function buildBuyPointCard({ buyStocks, topStocks, timestamp, triggerTime, mock, positionHint, grabWarn }) {
+function buildBuyPointCard({ buyStocks, topStocks, timestamp, triggerTime, mock, provisional, modeLabel, positionHint, grabWarn }) {
   const list = Array.isArray(buyStocks) ? buyStocks : (Array.isArray(topStocks) ? topStocks : []);
   const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
+
+  // 10 秒兜底：不带候选股，只发命中模式 + 人工查看说明
+  if (provisional) {
+    const elements = [
+      {
+        tag: "markdown",
+        content: `**⚡【买点诊断】已命中${modeLabel ? ` · ${modeLabel}` : ''}**\n${formatBuyPointTimeLines(triggerTime, timestamp)}`,
+      },
+    ];
+    if (mock) {
+      elements.push({ tag: "markdown", content: "**🧪【MOCK 测试卡片】本条为调试用途，非实盘信号**" });
+    }
+    elements.push({ tag: "hr" });
+    elements.push({
+      tag: "markdown",
+      content: "**⏳ 候选股票仍在计算中，本卡片不携带候选股。**\n\n请**立即前往交易页面人工查看**哪些标的命中，并自行决策，无需等待本卡片。\n\n候选股计算完成后会**自动补发一张带候选股的完整卡片**。",
+    });
+    elements.push({
+      tag: "markdown",
+      content: "**分仓管理是最后一道防火墙，谨防尾盘大盘跳水。**",
+    });
+    return {
+      schema: "2.0",
+      config: { wide_screen_mode: true },
+      header: {
+        template: "orange",
+        title: { tag: "plain_text", content: mock ? "⚡ 买点诊断已命中（候选计算中 · MOCK）" : "⚡ 买点诊断已命中（候选计算中）" },
+      },
+      body: { elements },
+    };
+  }
   const elements = [
     {
       tag: "markdown",

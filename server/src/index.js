@@ -2147,6 +2147,16 @@ app.post('/debug/mock_buy_point', async (req, res) => {
   }
 });
 
+// 科技进攻 10s 兜底临时命中卡片 MOCK：不带候选股，只说明命中模式（前端特殊样式 + 飞书临时通知）
+app.post('/debug/mock_buy_point_provisional', async (req, res) => {
+  try {
+    res.json(await debugMock.mockBuyPointProvisional());
+  } catch (error) {
+    console.error('MOCK 买点临时命中卡片失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 买点临时命中卡片失败' });
+  }
+});
+
 app.post('/debug/mock_ice_delay', async (req, res) => {
   try {
     res.json(await debugMock.mockIceDelay());

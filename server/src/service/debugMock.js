@@ -26,10 +26,10 @@ const rndInt = (min, max) => Math.floor(min + Math.random() * (max - min + 1));
 // ==================== MOCK 买点 ====================
 // 结构与 getBuyPointChecks 返回一致：9 项检查全部通过（阈值取最低要求），
 // 结论 / 命中类型 / 仓位提示（普通买入日 → 全仓）与实盘同文案
-const mockBuyPoint = async () => {
+const buildMockBuyPointPayload = () => {
   const stocks = getMonitorStocks() || [];
   const target = pickRandom(stocks);
-  if (!target) return { success: false, error: '自选股为空，无法 mock' };
+  if (!target) return null;
 
   const mode = strategyModeState.getMode();
   const timestamp = fmtNow();
@@ -165,6 +165,14 @@ const mockBuyPoint = async () => {
     }],
   };
 
+  return { target, mode, timestamp, data };
+};
+
+const mockBuyPoint = async () => {
+  const payload = buildMockBuyPointPayload();
+  if (!payload) return { success: false, error: '自选股为空，无法 mock' };
+  const { target, mode, timestamp, data } = payload;
+
   wsServer.broadcast({ type: 'buy_point', mode, bucket: null, ts: Date.now(), data, open: true });
 
   const b = data.buyable[0];
@@ -184,6 +192,40 @@ const mockBuyPoint = async () => {
       mock: true,
     });
     feishu = await feishuNotify.sendFeishuCard(card);
+  } catch (e) {
+    feishu = { success: false, error: e.message };
+  }
+
+  return { success: true, target: { code: target.code, name: target.name }, mode, feishu };
+};
+
+// 10s 兜底临时命中卡片 MOCK（2026-11-15 用户要求）：与线上同一条 WS 推送 + 飞书链路，
+// 但不携带任何候选股，只说明命中了什么模式，用于调试前端特殊样式与飞书临时通知
+const mockBuyPointProvisional = async () => {
+  const payload = buildMockBuyPointPayload();
+  if (!payload) return { success: false, error: '自选股为空，无法 mock' };
+  const { target, mode, timestamp, data } = payload;
+
+  wsServer.broadcast({
+    type: 'buy_point',
+    mode,
+    bucket: null,
+    ts: Date.now(),
+    data: { ...data, buyable: [], stocks: [], stockPending: true },
+    hit: true,
+    provisional: true,
+    open: true,
+  });
+
+  let feishu;
+  try {
+    feishu = await feishuNotify.sendFeishuCard(feishuNotify.buildBuyPointCard({
+      buyStocks: [],
+      timestamp,
+      triggerTime: timestamp,
+      provisional: true,
+      mock: true,
+    }));
   } catch (e) {
     feishu = { success: false, error: e.message };
   }
@@ -857,6 +899,7 @@ const mockSecondBoardWashSell = () => mockWashSell('second_board_wash');
 
 module.exports = {
   mockBuyPoint,
+  mockBuyPointProvisional,
   mockSellPoint,
   mockIceDelay,
   mockFirstBoardWashAuctionBuy,
