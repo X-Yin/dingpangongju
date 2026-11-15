@@ -175,6 +175,12 @@
       "blockName": "机器人大脑",
       "code": "sh605288",
       "change": 5.24
+    },
+    {
+      "name": "佰奥智能",
+      "blockName": "机器人大脑",
+      "code": "sz300836",
+      "change": -5.73
     }
   ],
   "端侧SOC": [
@@ -2429,6 +2435,18 @@
       "blockName": "太空算力",
       "code": "sh688378",
       "change": -4.79
+    },
+    {
+      "name": "电科蓝天",
+      "blockName": "太空算力",
+      "code": "sh688818",
+      "change": -2.67
+    },
+    {
+      "name": "明阳智能",
+      "blockName": "太空算力",
+      "code": "sh601615",
+      "change": 0.51
     }
   ],
   "3D 打印": [

@@ -10,11 +10,11 @@ import StockKLineModal from '../StockKLineModal';
 import './index.scss';
 
 // 龙二波悬浮组件：监控「情绪游资-极致胜率」顺周期 + 逆周期候选股列表（/hot_money_leader_list）
-// 交易日交易时间每 1min 刷新一次；一旦有顺周期候选股命中「强度分 − 差劲分 ≥ 30」（含涨停股），
+// 交易日交易时间每 3min 刷新一次；一旦有顺周期候选股命中「强度分 − 差劲分 ≥ 30」（含涨停股），
 // 抽屉自动弹出并在顶部以卡片提示命中个股。
 // 点击股票名称打开通用 K 线弹窗（StockKLineModal，含异动查询按钮）。
 
-const POLL_INTERVAL = 60 * 1000;
+const POLL_INTERVAL = 3 * 60 * 1000;
 const DELTA_MIN = 30;
 
 // 候选股排名口径（2026-11-14 用户要求）：顺周期 / 逆周期均按「强度分 − 差劲分」（delta）降序排名，
@@ -176,7 +176,7 @@ const FloatingLongErBo = () => {
     }
   };
 
-  // 交易日交易时间每 1min 轮询（挂载立即拉一次）
+  // 交易日交易时间每 3min 轮询（挂载立即拉一次）
   useEffect(() => {
     fetchData();
     const timer = setInterval(() => {

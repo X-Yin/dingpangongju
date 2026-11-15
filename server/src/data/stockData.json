@@ -3062,5 +3062,49 @@
       }
     ],
     "isImportant": false
+  },
+  "sh688135": {
+    "stockName": "利扬芯片",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "open_px": 34.71,
+        "high_px": 36.5,
+        "low_px": 33.25,
+        "close_px": 34.59,
+        "business_amount": 25858072,
+        "business_balance": 900108857,
+        "change": 2.46,
+        "ma5_px": 32.12,
+        "ma10_px": 29.45,
+        "ma20_px": 29.11,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz300836": {
+    "stockName": "佰奥智能",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "preclose_px": 44,
+        "close_px": 41.48,
+        "open_px": 43.6,
+        "high_px": 44.41,
+        "low_px": 40.72,
+        "ma5_px": 41.9,
+        "ma10_px": 40.04,
+        "ma20_px": 41.94,
+        "amp": 8.39,
+        "tr": 5.72,
+        "change_px": -2.52,
+        "change": -5.73,
+        "business_amount": 3630632,
+        "business_balance": 153438949,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

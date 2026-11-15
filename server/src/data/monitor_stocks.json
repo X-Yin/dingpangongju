@@ -1614,5 +1614,27 @@
     "watchMarketCap": false,
     "watchPE": false,
     "addedAt": "2026-11-15 16:35:31"
+  },
+  {
+    "code": "sh688135",
+    "name": "利扬芯片",
+    "isImportant": false,
+    "blockName": "半导体",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-15 21:20:56"
+  },
+  {
+    "code": "sz300836",
+    "name": "佰奥智能",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-15 21:22:16"
   }
 ]

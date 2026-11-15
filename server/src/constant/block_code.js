@@ -2306,5 +2306,20 @@ exports.default = [
         "blockName": "华为超节点",
         "code": "sh600246",
         "name": "万通发展"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sz300836",
+        "name": "佰奥智能"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sh688818",
+        "name": "电科蓝天"
+    },
+    {
+        "blockName": "太空算力",
+        "code": "sh601615",
+        "name": "明阳智能"
     }
 ]
