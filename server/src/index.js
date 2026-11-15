@@ -4083,6 +4083,18 @@ app.post('/debug/mock_strategy_signal', (req, res) => {
   }
 });
 
+// 买点预热 MOCK（2026-11-15）：kind = tech | extreme_win | wash_fusion
+// 绕过预热条件与当日去重，直接经 WS 广播 type:'buy_point_preheat'（open:true）弹出预热卡片
+app.post('/debug/mock_preheat', (req, res) => {
+  try {
+    const kind = String(req.body?.kind || '').trim();
+    res.json(debugMock.mockBuyPointPreheat(kind));
+  } catch (error) {
+    console.error('MOCK 买点预热失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 买点预热失败' });
+  }
+});
+
 // 策略回测 - 获取可回测日期
 app.get('/backtest/dates', (req, res) => {
   try {

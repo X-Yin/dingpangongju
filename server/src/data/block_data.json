@@ -581,6 +581,12 @@
       "blockName": "机器人",
       "code": "sz000700",
       "change": 6.54
+    },
+    {
+      "name": "继峰股份",
+      "blockName": "机器人",
+      "code": "sh603997",
+      "change": -1.33
     }
   ],
   "消费": [
@@ -1837,6 +1843,12 @@
       "blockName": "AI 剧",
       "code": "sz002343",
       "change": -4.38
+    },
+    {
+      "name": "春光科技",
+      "blockName": "AI 剧",
+      "code": "sh603657",
+      "change": -4.58
     }
   ],
   "氧化锆": [

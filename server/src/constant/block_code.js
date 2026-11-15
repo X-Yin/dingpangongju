@@ -2371,5 +2371,15 @@ exports.default = [
         "blockName": "电力",
         "code": "sz000027",
         "name": "深圳能源"
+    },
+    {
+        "blockName": "AI 剧",
+        "code": "sh603657",
+        "name": "春光科技"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sh603997",
+        "name": "继峰股份"
     }
 ]

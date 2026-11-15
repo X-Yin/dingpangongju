@@ -32,6 +32,8 @@ const DebugPanel = () => {
   // 策略中心命中提醒 MOCK
   const [strategySignalMocking, setStrategySignalMocking] = useState(false);
   const [resonanceMocking, setResonanceMocking] = useState(false);
+  // 买点预热 MOCK：tech | extreme_win | wash_fusion（2026-11-15）
+  const [preheatMocking, setPreheatMocking] = useState(null);
 
   // 意志力锻炼弹窗间隔（分钟）：默认 5，持久化到 localStorage
   const [willpowerInterval, setWillpowerInterval] = useState(() => {
@@ -231,6 +233,26 @@ const DebugPanel = () => {
       message.error(`mock 请求失败：${e.message}`);
     } finally {
       setStrategySignalMocking(false);
+    }
+  };
+
+  // 买点预热 MOCK（2026-11-15）：绕过预热条件与当日去重，经 WS（type:'buy_point_preheat'）直接弹预热卡片
+  const triggerPreheatMock = async (kind) => {
+    if (preheatMocking) return;
+    setPreheatMocking(kind);
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/debug/mock_preheat`, { kind });
+      const d = res.data;
+      if (d?.success) {
+        const label = kind === 'tech' ? '科技进攻' : kind === 'extreme_win' ? '极致胜率' : '极致赔率';
+        message.success(`已模拟${label}买点预热提醒`, 4);
+      } else {
+        message.error(d?.error || 'mock 触发失败');
+      }
+    } catch (e) {
+      message.error(`mock 请求失败：${e.message}`);
+    } finally {
+      setPreheatMocking(null);
     }
   };
 
@@ -485,6 +507,44 @@ const DebugPanel = () => {
             >
               触发情绪共振提示
             </Button>
+          </Card>
+
+          {/* 模块十：买点预热提醒 MOCK */}
+          <Card size="small" title="10. 买点预热提醒 Mock">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              经与实盘一致的 WebSocket 链路（type:'buy_point_preheat'）推送预热卡片：
+              科技进攻 = 指数斜率门禁通过 + 资金净流入 ≥ 10 亿；极致胜率 = 候选股强度−差劲 ≥ 15；
+              极致赔率 = 盘中候选股涨幅 ≥ 5%（不含首板竞价）。MOCK 绕过条件与当日去重，不发飞书。
+            </Paragraph>
+            <Space wrap>
+              <Button
+                type="primary"
+                icon={<ThunderboltOutlined />}
+                loading={preheatMocking === 'tech'}
+                onClick={() => triggerPreheatMock('tech')}
+                style={{ background: '#0891b2', borderColor: '#0891b2' }}
+              >
+                科技进攻预热
+              </Button>
+              <Button
+                type="primary"
+                icon={<RocketOutlined />}
+                loading={preheatMocking === 'extreme_win'}
+                onClick={() => triggerPreheatMock('extreme_win')}
+                style={{ background: '#7c3aed', borderColor: '#7c3aed' }}
+              >
+                极致胜率预热
+              </Button>
+              <Button
+                type="primary"
+                icon={<BulbOutlined />}
+                loading={preheatMocking === 'wash_fusion'}
+                onClick={() => triggerPreheatMock('wash_fusion')}
+                style={{ background: '#d97706', borderColor: '#d97706' }}
+              >
+                极致赔率预热
+              </Button>
+            </Space>
           </Card>
 
           <Text type="secondary" style={{ fontSize: 12 }}>

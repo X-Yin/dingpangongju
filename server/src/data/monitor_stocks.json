@@ -1636,5 +1636,38 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-15 21:22:16"
+  },
+  {
+    "code": "sz300017",
+    "name": "网宿科技",
+    "isImportant": false,
+    "blockName": "cdn",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-15 22:27:24"
+  },
+  {
+    "code": "sh603657",
+    "name": "春光科技",
+    "isImportant": false,
+    "blockName": "游戏",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-15 22:29:03"
+  },
+  {
+    "code": "sz300442",
+    "name": "润泽科技",
+    "isImportant": false,
+    "blockName": "AIDC",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-15 22:31:07"
   }
 ]

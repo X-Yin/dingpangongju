@@ -20,11 +20,12 @@ import {
   CaretUpOutlined,
   BulbOutlined,
   SyncOutlined,
+  RiseOutlined,
 } from '@ant-design/icons';
 import { local_ip } from '../../constant';
 import { getStrategyMode, MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION } from '../../utils/strategyMode';
 import { createChart, ColorType, LineStyle, CrosshairMode } from 'lightweight-charts';
-import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeStrategySignalPush, subscribeEmotionResonancePush } from '../../utils/buyPointWs';
+import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeStrategySignalPush, subscribeEmotionResonancePush, subscribeBuyPointPreheatPush } from '../../utils/buyPointWs';
 import { isTradingDay } from '../../utils/tradingDay';
 import './index.scss';
 
@@ -131,6 +132,62 @@ const checkDetailText = (c) => {
   return '';
 };
 
+// 买点预热卡片（2026-11-15 用户新增）：与买点诊断卡片同结构，琥珀色系区分「预热 ≠ 正式买点」；
+// 不展示买入价 / 仓位建议，仅提示关注对应候选股列表
+const PREHEAT_KIND_LABELS = {
+  tech: '科技进攻 · 预热',
+  extreme_win: '极致胜率 · 预热',
+  wash_fusion: '极致赔率 · 预热',
+};
+
+const PreheatCard = ({ alert, onClose }) => {
+  useCloseOnArrowKey(onClose);
+  const data = alert?.data || {};
+  const stocks = Array.isArray(data.stocks) ? data.stocks : [];
+  const kindLabel = PREHEAT_KIND_LABELS[data.kind] || data.title || '买点预热';
+  return (
+    <div className="gda-card gda-preheat">
+      <div className="gda-header">
+        <RiseOutlined className="gda-header-icon preheat" />
+        <span className="gda-title">买点预热提醒</span>
+        <span className="gda-mode-badge gda-mode-preheat">{kindLabel}</span>
+        {data.mock && <span className="gda-provisional-badge">MOCK</span>}
+        <CloseOutlined className="gda-close" onClick={onClose} />
+      </div>
+      <div className="gda-body">
+        <div className="gda-preheat-message">{data.message}</div>
+        {stocks.length > 0 && stocks.map((s, idx) => (
+          <div key={`${s.code}-${idx}`} className="gda-stock gda-preheat-stock">
+            <div className="gda-stock-head">
+              <b className="gda-stock-name">{s.stockName || s.code}</b>
+              <span className="gda-code">{s.code}</span>
+              {s.sourceLabel && <span className="gda-tag">{s.sourceLabel}</span>}
+              <span className={`gda-change ${Number(s.change ?? 0) >= 0 ? 'up' : 'down'}`}>{fmtPct(s.change)}</span>
+            </div>
+            {(s.delta != null || s.strengthScore != null) && (
+              <div className="gda-metrics">
+                {s.strengthScore != null && (
+                  <span className="gda-metric"><i>强度分</i><b>{Number(s.strengthScore).toFixed(2)}</b></span>
+                )}
+                {s.diffScore != null && (
+                  <span className="gda-metric"><i>差劲分</i><b>{Number(s.diffScore).toFixed(2)}</b></span>
+                )}
+                {s.delta != null && (
+                  <span className="gda-metric hl"><i>强度−差劲</i><b>{Number(s.delta).toFixed(2)}</b></span>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+        <div className="gda-preheat-footer">
+          <span className="gda-preheat-note">预热仅代表关注时机临近，不代表已满足全部买入条件；请以正式买点卡片为准。</span>
+          {data.timestamp && <span className="gda-preheat-time">{data.timestamp}</span>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const GlobalDiagnosisAlert = () => {
   // 买点精简卡片：{ mode, data, bucket, ts, stocks, loading }
   const [buyAlert, setBuyAlert] = useState(null);
@@ -146,6 +203,8 @@ const GlobalDiagnosisAlert = () => {
   const [strategyAlert, setStrategyAlert] = useState(null);
   // 大盘 × 板块情绪共振弹窗（2026-11-07 用户新增）：{ data:{ date, marketTemperature, blocks:[...] }, ts, mock }
   const [resonanceAlert, setResonanceAlert] = useState(null);
+  // 买点预热提醒卡片（2026-11-15 用户新增）：{ data:{ kind, title, message, stocks, timestamp, mock }, ts }
+  const [preheatAlert, setPreheatAlert] = useState(null);
   const seqRef = useRef(0); // 旧请求返回晚于新触发时丢弃过期结果
 
   // 每个交易日 9:05 自动弹出「情绪游资-极致赔率候选池」全局弹窗（不依赖当前策略模式，2026-11-04 用户新增）
@@ -286,6 +345,8 @@ const GlobalDiagnosisAlert = () => {
   useEffect(() => {
     const unsubBuy = subscribeBuyPointPush((msg) => {
       if (msg?.open !== true || !msg.data) return;
+      // 正式买点已命中：收起同类预热卡片，避免「预热」与「命中」并排误导
+      setPreheatAlert(null);
       // 冰点转折延时到点：收起等待卡片，改由买点卡片展示本次要买入的个股
       if (msg.data.iceDelay) setIceAlert(null);
       const seq = ++seqRef.current;
@@ -356,6 +417,8 @@ const GlobalDiagnosisAlert = () => {
     //   data.stocks 已带买入价/触发时间；data.checks 为线上真实阈值通过项
     const unsubWf = subscribeWashFusionBuyPush((msg) => {
       if (msg?.open !== true) return;
+      // 极致赔率正式买点已触发：收起预热卡片
+      setPreheatAlert(null);
       const raw = Array.isArray(msg.data?.stocks) ? msg.data.stocks : [];
       const stocks = raw.map((s) => ({
         ...s,
@@ -387,7 +450,12 @@ const GlobalDiagnosisAlert = () => {
       if (blocks.length === 0) return;
       setResonanceAlert({ data: msg.data, ts: msg.ts ?? null, mock: msg.mock === true });
     });
-    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubStrategy(); unsubResonance(); };
+    // 买点预热提醒（2026-11-15）：科技进攻 / 极致胜率 / 极致赔率在各自诊断频控内提前提醒
+    const unsubPreheat = subscribeBuyPointPreheatPush((msg) => {
+      if (msg?.open !== true || !msg?.data) return;
+      setPreheatAlert({ data: msg.data, ts: msg.ts ?? null });
+    });
+    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubStrategy(); unsubResonance(); unsubPreheat(); };
   }, [fetchBuyStocks, collectEmbeddedStocks, decorateStocks]);
 
   const buyCardAlert = buyAlert || wfAlert;
@@ -398,7 +466,7 @@ const GlobalDiagnosisAlert = () => {
 
   // 弹窗类提醒使用 antd Modal portal，不依赖 gda-container 渲染；
   // 因此只在没有任何卡片、仅一个 Modal 时，也必须返回一个能挂载 Modal 的根
-  const hasCardAlert = buyCardAlert || sellAlert || iceAlert || wfCandidates || strategyAlert;
+  const hasCardAlert = buyCardAlert || sellAlert || iceAlert || wfCandidates || strategyAlert || preheatAlert;
   if (!hasCardAlert && !resonanceAlert) return null;
 
   return (
@@ -411,6 +479,7 @@ const GlobalDiagnosisAlert = () => {
           onClose={closeBuyCard}
         />
       )}
+      {preheatAlert && <PreheatCard alert={preheatAlert} onClose={() => setPreheatAlert(null)} />}
       {sellAlert && <SellCard alert={sellAlert} onClose={() => setSellAlert(null)} />}
       {/* 策略中心命中提醒：与买点诊断同风格的右下角全局卡片 */}
       {strategyAlert && <StrategySignalCard alert={strategyAlert} onClose={() => setStrategyAlert(null)} />}

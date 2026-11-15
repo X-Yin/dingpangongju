@@ -119,6 +119,19 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
       0 10px 28px -14px rgba(69, 26, 3, 0.5),
       inset 0 1px 0 rgba(255, 255, 255, 0.22);
   }
+
+  // 买点预热卡（2026-11-15）：金橙 → 琥珀「预警前哨」，与买点命中卡的蓝紫区分
+  &.gda-preheat {
+    background:
+      radial-gradient(120% 88% at 0% 0%, rgba(253, 230, 138, 0.34) 0%, transparent 56%),
+      radial-gradient(115% 100% at 100% 6%, rgba(251, 146, 60, 0.42) 0%, transparent 60%),
+      radial-gradient(150% 120% at 46% 118%, rgba(124, 45, 18, 0.68) 0%, transparent 68%),
+      linear-gradient(136deg, #3d1f06 0%, #9a3412 44%, #b45309 100%);
+    box-shadow:
+      0 26px 60px -22px rgba(217, 119, 6, 0.55),
+      0 10px 28px -14px rgba(69, 26, 3, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
 }
 
 // 入场：上浮 + 缩放 + 模糊消散（backwards：动画结束回归基础样式，不阻塞 hover）
@@ -215,6 +228,13 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
       background: linear-gradient(135deg, rgba(253, 224, 71, 0.92), rgba(245, 158, 11, 0.92));
       border: 1px solid rgba(255, 255, 255, 0.32);
     }
+
+    // 买点预热：金橙渐变芯片 + 呼吸辉光
+    &.preheat {
+      background: linear-gradient(135deg, rgba(253, 224, 71, 0.92), rgba(249, 115, 22, 0.92));
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      animation: gda-icon-pulse-amber 2.8s ease-in-out infinite;
+    }
   }
 
   .gda-title {
@@ -223,6 +243,9 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     letter-spacing: 0.02em;
     color: #fff;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    // 标题必须保持单行且不被徽标 / 时间挤压（否则中文标题会逐字竖排折断）
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .gda-mode-badge {
@@ -234,6 +257,13 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     border-radius: 999px;
     padding: 2px 10px;
     white-space: nowrap;
+  }
+
+  // 预热卡模式徽标：琥珀金
+  .gda-mode-preheat {
+    color: #fde68a;
+    background: rgba(251, 191, 36, 0.16);
+    border-color: rgba(251, 191, 36, 0.38);
   }
 
   .gda-count-badge {
@@ -406,9 +436,51 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   }
 }
 
+// ==================== 买点预热卡（2026-11-15） ====================
+.gda-preheat-message {
+  font-size: 13px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(253, 230, 138, 0.1);
+  border: 1px solid rgba(253, 230, 138, 0.26);
+  border-radius: 12px;
+  padding: 10px 12px;
+
+  b {
+    color: #fde68a;
+  }
+}
+
+.gda-preheat-stock {
+  border-color: rgba(253, 230, 138, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.gda-preheat-note {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.5);
+  flex: 1;
+  min-width: 0;
+}
+
+.gda-preheat-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+
+  .gda-preheat-time {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
 // ==================== 买点卡：标的条目（磨砂玻璃卡） ====================
-.gda-stock {
-  border-radius: 14px;
+.gda-stock {  border-radius: 14px;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;

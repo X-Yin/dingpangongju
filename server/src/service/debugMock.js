@@ -897,6 +897,12 @@ const mockWashSell = async (strategy) => {
 const mockFirstBoardWashSell = () => mockWashSell('first_board_wash');
 const mockSecondBoardWashSell = () => mockWashSell('second_board_wash');
 
+// 买点预热 MOCK（2026-11-15）：绕过条件与当日去重，直接广播一张预热卡片
+const mockBuyPointPreheat = (kind) => {
+  const pushed = require('./buyPointPreheat').mockPreheat(kind);
+  return { success: !!pushed, kind };
+};
+
 module.exports = {
   mockBuyPoint,
   mockBuyPointProvisional,
@@ -907,4 +913,5 @@ module.exports = {
   mockFirstBoardWashSell,
   mockSecondBoardWashBuy,
   mockSecondBoardWashSell,
+  mockBuyPointPreheat,
 };

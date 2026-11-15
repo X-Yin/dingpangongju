@@ -971,6 +971,20 @@ const getExtremeWinBuyPointChecks = async (targetDate = null, refresh = false, b
     const hitStocks = allPassed
       ? rows.filter((r) => r.buyPointHit).sort(byDeltaDesc).slice(0, 3)
       : [];
+    // 预热候选（2026-11-15 用户新增）：强度分 − 差劲分 ≥ 15 但尚未构成完整买点，
+    // 供后端按 3min 诊断频控推送「买点预热」卡片（命中买点时不再预热）
+    const preheatCandidates = rows
+      .filter((r) => r.listPassed && !r.buyPointHit && !r.isLimitUp
+        && r.delta != null && Number(r.delta) >= 15)
+      .sort(byDeltaDesc)
+      .map((r) => ({
+        code: r.code,
+        stockName: r.stockName || r.name || r.code,
+        change: r.change,
+        strengthScore: r.strengthScore,
+        diffScore: r.diffScore,
+        delta: r.delta,
+      }));
     const stockEmptyReason = allPassed
       ? (hitStocks.length > 0 ? null : '买点已命中，但当前龙头池没有可返回的个股')
       : (poolCount === 0
@@ -999,6 +1013,8 @@ const getExtremeWinBuyPointChecks = async (targetDate = null, refresh = false, b
         reverse,
         // 命中时携带可买个股（未命中一律为空数组，前端不会展示个股）
         stocks: hitStocks,
+        // 预热候选（未命中完整买点但强度−差劲已达标）
+        preheatCandidates,
         stockEmptyReason,
         conclusion,
       },

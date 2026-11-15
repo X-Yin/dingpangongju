@@ -1021,6 +1021,15 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
         flex-direction: column;
         align-items: flex-start;
         gap: 6px;
+
+        // 需要左右分栏的标题栏（科技进攻 / 顺周期 / 逆周期 / 首板 / 二板）仍保持一行两端对齐
+        &.ob-gainer-col-head-between {
+          flex-direction: row;
+          flex-wrap: nowrap;
+          align-items: flex-end;
+          justify-content: space-between;
+          gap: 10px;
+        }
       }
     }
 
@@ -1082,10 +1091,39 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   .ob-gainer-col-head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 8px;
     flex-wrap: wrap;
     margin-bottom: 8px;
+
+    &.ob-gainer-col-head-between {
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: nowrap;
+      gap: 10px;
+
+      > :first-child {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+    }
+  }
+
+  // 科技进攻卡的两个斜率门槛芯片作为一组，保持间距内聚
+  .ob-gainer-gates {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  // 只看符合条件开关：右对齐并与上方斜率门槛文案底部对齐
+  .ob-gainer-filter-row-end {
+    flex-shrink: 0;
+    margin-bottom: 0;
   }
 
   // 只看符合条件开关：位于股票列表上方
@@ -2131,37 +2169,26 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   gap: 6px;
 }
 
+// 汇总卡条目与候选列表条目（.ob-gainer-row）共用同一套主题包条目样式（--ob-item-*），
+// 不再单独定制玻璃质感，保证两处 item 视觉统一
 .ob-summary-mode,
 .ob-summary-stock {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 12px;
-  border-radius: 12px;
+  padding: 8px 10px;
   font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-  @include ob-glass(
-    rgba(255, 255, 255, 0.16),
-    rgba(255, 255, 255, 0.28),
-    0 10px 24px -18px rgba(15, 23, 42, 0.55)
-  );
-}
-
-.ob-summary-mode {
-  &.hit {
-    @include ob-glass(rgba(6, 214, 160, 0.55), rgba(255, 255, 255, 0.42), 0 10px 24px -14px rgba(6, 214, 160, 0.55));
-  }
-
-  &.miss {
-    @include ob-glass(rgba(255, 71, 87, 0.45), rgba(255, 255, 255, 0.32), 0 10px 24px -18px rgba(255, 71, 87, 0.5));
-  }
+  color: var(--ob-item-title-color, #fff);
+  background: var(--ob-item-bg, rgba(255, 255, 255, 0.08));
+  border: var(--ob-item-border-width, 1px) var(--ob-item-border-style, solid) var(--ob-item-border-color, rgba(255, 255, 255, 0.14));
+  border-radius: var(--ob-item-radius, 10px);
 }
 
 .ob-summary-mode-name,
 .ob-summary-stock-name {
   min-width: 0;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2182,12 +2209,6 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   font-weight: 700;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-}
-
-.ob-summary-stock {
-  &.hit {
-    @include ob-glass(rgba(255, 61, 119, 0.45), rgba(255, 255, 255, 0.42), 0 10px 24px -14px rgba(255, 61, 119, 0.55));
-  }
 }
 
 .ob-summary-stock-tag {
@@ -2785,7 +2806,10 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 // 语义状态色（买点/卖点命中、通过/失败、大额进出等）在覆盖层内重新声明，任何主题下保持不变。
 
 // ---------- 主题包生效时的完整覆盖 ----------
-.opening-battle-container.pack-active {
+// .ob-theme-scope：诊断详情弹窗内容层（Modal 渲染在 body 下，无法继承页面容器变量，
+// 由弹窗自身挂载 --ob-* 变量并使用同一套覆盖规则）
+.opening-battle-container.pack-active,
+.ob-theme-scope.pack-active {
   background: var(--ob-page-bg,
       radial-gradient(1100px 420px at 15% -8%, rgba(124, 58, 237, 0.05), transparent 60%),
       radial-gradient(900px 380px at 88% -6%, rgba(225, 29, 72, 0.045), transparent 60%),
@@ -2880,6 +2904,8 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   // ---------- 子项表面：磨砂玻璃卡 / 行 / 芯片 ----------
   .ob-gainer-col,
   .ob-gainer-row,
+  .ob-summary-mode,
+  .ob-summary-stock,
   .ob-buy-check,
   .ob-sell-stock,
   .ob-sell-cond,
@@ -3095,7 +3121,8 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 // ---------- 浅色主题包：把沿用深色渐变卡的浅色文字统一压深 ----------
 // 浅色背景（白 / 米白 / 浅黄等）下，原渐变卡上的白字、浅紫字、浅黄字对比度不足，
 // 这里按元素语义统一改为深色；深色主题包不受影响。
-.opening-battle-container.pack-active.ob-tone-light {
+.opening-battle-container.pack-active.ob-tone-light,
+.ob-theme-scope.pack-active.ob-tone-light {
   // 诊断卡时钟 / 资金明细时间 / 分时代码
   .ob-diagnosis-clock,
   .ob-intraday-chart-code { color: #334155 !important; }
@@ -3234,7 +3261,8 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
 }
 
 // ---------- DIY 自定义生效时的局部覆盖（仅 DIY 已设置的字段注入了变量） ----------
-.opening-battle-container.diy-active {
+.opening-battle-container.diy-active,
+.ob-theme-scope.diy-active {
   // 卡片标题颜色
   .ob-module-title,
   .ob-module-title > span,
@@ -3254,6 +3282,8 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   .ob-intraday-chart-card,
   .ob-gainer-col,
   .ob-gainer-row,
+  .ob-summary-mode,
+  .ob-summary-stock,
   .ob-buy-check,
   .ob-sell-stock,
   .ob-sell-cond,

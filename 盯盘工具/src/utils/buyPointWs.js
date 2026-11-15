@@ -11,7 +11,7 @@ import { local_ip } from '../constant';
 const WS_URL = `ws://${local_ip}:3000/ws`;
 const RECONNECT_BASE_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
-const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'strategy_signal', 'emotion_resonance'];
+const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'strategy_signal', 'emotion_resonance', 'buy_point_preheat'];
 
 let socket = null;
 let reconnectTimer = null;
@@ -226,6 +226,12 @@ export const subscribeWashFusionBuyPush = (handler) => subscribePush('wash_fusio
 //   前端由 GlobalDiagnosisAlert 用类似买点诊断的全局卡片提醒（悬浮策略球/抽屉不受影响）；
 //   MOCK 调试消息额外带 mock:true 标记
 export const subscribeStrategySignalPush = (handler) => subscribePush('strategy_signal', handler);
+
+// 买点预热推送（2026-11-15 用户新增）：各策略在自己的诊断频控内，预热条件满足且买点尚未命中时广播
+//   { type:'buy_point_preheat', ts, open:true, mode, data:{ kind:'tech'|'extreme_win'|'wash_fusion',
+//     title, message, stocks:[{ code, stockName, change, delta?, sourceLabel? }], threshold, timestamp, mock } }
+//   前端由 GlobalDiagnosisAlert 用与买点诊断类似的卡片展示；MOCK 调试消息额外带 mock:true 标记
+export const subscribeBuyPointPreheatPush = (handler) => subscribePush('buy_point_preheat', handler);
 
 // 大盘 × 板块情绪共振推送（2026-11-07 用户新增）：
 //   后端每 5 分钟（block_amount_poll 触发）计算即时情绪周期，大盘情绪温度 ≥60 且板块

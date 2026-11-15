@@ -23,6 +23,7 @@ const { notifyBuyPointFeishu, buildTechBuyStocks } = require('./buyPointNotifier
 const { getBuyPointChecks } = require('./buySellDiagnose');
 const { getExtremeWinBuyPointChecks, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE } = require('./hotMoneyExtremeWin');
 const iceDelayBuy = require('./iceDelayBuy');
+const buyPointPreheat = require('./buyPointPreheat');
 const { logBuy } = require('./diagnosisLog');
 
 const INTERVAL_MS = 10 * 1000;
@@ -434,6 +435,14 @@ const tickMode = async (mode, now) => {
         ? (payloadData.tech.stockEmptyReason || null)
         : (payloadData.stockEmptyReason || null))
       : (payloadData.stockEmptyReason || null);
+
+    // 预热提醒（2026-11-15）：在各自诊断频控内评估，只有「预热条件满足且买点未命中」才推送；
+    // 攻防兼备按科技腿 / 情绪游资腿分别判断（某腿已命中只跳过该腿预热）
+    // 被快进快出强卖规则屏蔽（当日禁买）时不预热，避免提示关注无法买入的标的
+    const preheatData = mode === MODE_ATTACK_DEFENSE ? (payloadData.tech || payloadData) : payloadData;
+    if (!detectQuickOutBlock(preheatData)) {
+      buyPointPreheat.maybePushForMode(mode, payloadData);
+    }
 
     // 1) 每个诊断间隔都广播一次（open:false）：命中/未命中都推，未命中时 stocks 为空数组
     wsServer.broadcast({

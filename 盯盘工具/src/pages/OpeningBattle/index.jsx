@@ -1045,7 +1045,7 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
         </div>
         <div className={`ob-gainer-body defense ${wfSplit ? 'split' : 'single'}`}>
           <div className="ob-gainer-col" style={{ order: fbOrder }}>
-            <div className="ob-gainer-col-head">
+            <div className="ob-gainer-col-head ob-gainer-col-head-between">
               <span className="ob-gainer-section-label">首板起爆 · {firstList.length}</span>
               <span className="ob-total-tag">9:25-9:30 每 {rules.auctionRemindSeconds ?? 30}s 提醒</span>
             </div>
@@ -1063,7 +1063,7 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
             ) : firstList.map((s, idx) => wfRow(s, idx, 'fb'))}
           </div>
           <div className="ob-gainer-col" style={{ order: sbOrder }}>
-            <div className="ob-gainer-col-head">
+            <div className="ob-gainer-col-head ob-gainer-col-head-between">
               <span className="ob-gainer-section-label">二板起爆 · {secondList.length}</span>
               <span className="ob-total-tag">9:30-14:30 盘中 +{rules.buyTriggerPct ?? 8}% 触发</span>
             </div>
@@ -1159,22 +1159,24 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
         {/* 科技进攻列（tech_attack / attack_defense） */}
         {!isExtreme && (
           <div className="ob-gainer-col ob-gainer-col-tech">
-            <div className="ob-gainer-col-head">
-              {isDefense && <span className="ob-gainer-section-label">科技进攻 · {techList.length}</span>}
-              {[
-                { name: '创业板指', gate: data?.cybGate, passed: cybPassed },
-                { name: '科创50', gate: data?.starGate, passed: starPassed },
-              ].map(({ name, gate, passed }) => (
-                <div key={name} className={`ob-gainer-gate ${passed ? 'passed' : 'failed'}`}>
-                  <span className="ob-gainer-gate-slope">{name} {formatSlope(gate?.slope)}</span>
-                  <span className="ob-gainer-gate-turn">{slopeTurnText(gate)}</span>
-                  <span className="ob-gainer-gate-badge">{passed ? '满足买点门槛' : '不满足买点门槛'}</span>
-                </div>
-              ))}
-            </div>
-            <div className="ob-gainer-filter-row">
-              <AntSwitch size="small" checked={onlyQualified} onChange={setOnlyQualified} />
-              <span>只看符合条件</span>
+            <div className="ob-gainer-col-head ob-gainer-col-head-between">
+              <div className="ob-gainer-gates">
+                {isDefense && <span className="ob-gainer-section-label">科技进攻 · {techList.length}</span>}
+                {[
+                  { name: '创业板指', gate: data?.cybGate, passed: cybPassed },
+                  { name: '科创50', gate: data?.starGate, passed: starPassed },
+                ].map(({ name, gate, passed }) => (
+                  <div key={name} className={`ob-gainer-gate ${passed ? 'passed' : 'failed'}`}>
+                    <span className="ob-gainer-gate-slope">{name} {formatSlope(gate?.slope)}</span>
+                    <span className="ob-gainer-gate-turn">{slopeTurnText(gate)}</span>
+                    <span className="ob-gainer-gate-badge">{passed ? '满足买点门槛' : '不满足买点门槛'}</span>
+                  </div>
+                ))}
+              </div>
+              <label className="ob-gainer-filter-row ob-gainer-filter-row-end">
+                <AntSwitch size="small" checked={onlyQualified} onChange={setOnlyQualified} />
+                <span>只看符合条件</span>
+              </label>
             </div>
             {data?.dataMissingCount > 0 && (
               <div className="ob-gainer-missing">
@@ -1238,8 +1240,8 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
         {/* 顺周期列（hot_money_extreme_win / attack_defense） */}
         {showEwCols && (
           <div className="ob-gainer-col ob-gainer-col-ew" style={{ order: ewOrder }}>
-            <div className="ob-gainer-col-head">
-              <span className="ob-gainer-section-label">顺周期 · 情绪游资-极致胜率 {leaderVisible.length}</span>
+            <div className="ob-gainer-col-head ob-gainer-col-head-between">
+              <span className="ob-gainer-section-label">顺周期 · 极致胜率 {leaderVisible.length}</span>
               <div className={`ob-gainer-gate ${slopeOk ? 'passed' : 'failed'}`}>
                 <span className="ob-gainer-gate-slope">上证指数 {formatSlope(indexSlope)}</span>
                 <span className="ob-gainer-gate-turn">3 日线分时斜率</span>
@@ -1291,7 +1293,7 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
         )}
         {showEwCols && (
           <div className={`ob-gainer-col ob-gainer-col-reverse ${reverseSlopeOk ? 'active' : ''}`} style={{ order: reverseOrder }}>
-            <div className="ob-gainer-col-head">
+            <div className="ob-gainer-col-head ob-gainer-col-head-between">
               <span className="ob-gainer-section-label reverse">逆周期 · 反向抱团 {reverseVisible.length}</span>
               <div className={`ob-gainer-gate ${reverseSlopeOk ? 'passed' : 'failed'}`}>
                 <span className="ob-gainer-gate-slope">上证指数 {formatSlope(reverseSlope)}</span>
@@ -1502,25 +1504,47 @@ const buildBuyModeView = (m, d) => {
   };
 };
 
-// 买点 / 卖点诊断详情弹窗：整窗沿用诊断卡的渐变玻璃底色，内容区滚动
+// 买点 / 卖点诊断详情弹窗：默认沿用诊断卡的渐变玻璃底色；
+// 主题包 / DIY 生效时改由挂载在弹窗上的 --ob-* 变量接管表面与文字颜色
+const DEFAULT_DIAGNOSIS_MODAL_BG =
+  'radial-gradient(118% 86% at 8% -8%, rgba(162, 124, 255, 0.95) 0%, rgba(162, 124, 255, 0) 62%), '
+  + 'radial-gradient(108% 94% at 106% 8%, rgba(48, 197, 210, 0.92) 0%, rgba(48, 197, 210, 0) 58%), '
+  + 'radial-gradient(130% 110% at -8% 108%, rgba(132, 94, 255, 0.9) 0%, rgba(132, 94, 255, 0) 64%), '
+  + 'linear-gradient(116deg, #7b4dff 0%, #4d55d8 46%, #1ba7c6 100%)';
+
 const DIAGNOSIS_MODAL_STYLES = {
   container: {
     padding: 0,
     overflow: 'hidden',
-    borderRadius: 22,
-    background:
-      'radial-gradient(118% 86% at 8% -8%, rgba(162, 124, 255, 0.95) 0%, rgba(162, 124, 255, 0) 62%), '
-      + 'radial-gradient(108% 94% at 106% 8%, rgba(48, 197, 210, 0.92) 0%, rgba(48, 197, 210, 0) 58%), '
-      + 'radial-gradient(130% 110% at -8% 108%, rgba(132, 94, 255, 0.9) 0%, rgba(132, 94, 255, 0) 64%), '
-      + 'linear-gradient(116deg, #7b4dff 0%, #4d55d8 46%, #1ba7c6 100%)',
+    borderRadius: 'var(--ob-card-radius, 22px)',
+    background: `var(--ob-card-bg, ${DEFAULT_DIAGNOSIS_MODAL_BG})`,
   },
   header: { background: 'transparent', margin: 0, padding: '18px 22px 4px', borderBottom: 'none' },
-  title: { color: '#fff', fontWeight: 800 },
+  title: { color: 'var(--ob-title-color, #fff)', fontWeight: 800 },
   body: { padding: 0 },
-  close: { color: 'rgba(255, 255, 255, 0.85)' },
+  close: { color: 'var(--ob-desc-color, rgba(255, 255, 255, 0.85))' },
 };
 
-const BuyPointDiagnosisCard = ({ onResultChange }) => {
+// 诊断弹窗统一的样式入参：主题变量挂到弹窗内容层，内容区标记为 ob-theme-scope 以命中主题覆盖层
+const buildDiagnosisModalTheme = ({ themeVars, themeClass, themeTone }) => {
+  const active = !!(themeClass && themeVars);
+  const container = active
+    ? {
+        ...DIAGNOSIS_MODAL_STYLES.container,
+        ...themeVars,
+        // 与主题包卡片同口径：边框 / 阴影 / 文字色也取主题 token
+        border: 'var(--ob-card-border-width, 0px) solid var(--ob-card-border-color, transparent)',
+        boxShadow: 'var(--ob-card-shadow, 0 22px 48px -26px rgba(49, 46, 129, 0.6))',
+        color: 'var(--ob-item-title-color, #fff)',
+      }
+    : DIAGNOSIS_MODAL_STYLES.container;
+  return {
+    styles: { ...DIAGNOSIS_MODAL_STYLES, container },
+    bodyClassName: `ob-diagnosis-modal-body${active ? ` ob-theme-scope ${themeClass}` : ''}${active && themeTone === 'light' ? ' ob-tone-light' : ''}`,
+  };
+};
+
+const BuyPointDiagnosisCard = ({ onResultChange, themeVars, themeClass, themeTone }) => {
   const mode = useStrategyMode();
   const multiModes = useStrategyModes(); // 多选模式勾选列表（持久化于后端，弹窗保存后同步）
   const isExtreme = mode === MODE_EXTREME_WIN;
@@ -1742,6 +1766,7 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
   const totalCheckCount = views.reduce((n, v) => n + v.checkGroups.reduce((x, g) => x + g.items.length, 0), 0);
   const totalPassedCount = views.reduce((n, v) => n + v.checkGroups.reduce((x, g) => x + g.items.filter(c => c.passed).length, 0), 0);
   const hit = views.some((v) => v.hit);
+  const modalTheme = buildDiagnosisModalTheme({ themeVars, themeClass, themeTone });
 
   // 详细条件（弹窗内容）：条件分组 + 结论 + 建议仓位
   const renderDetail = () => (
@@ -1855,9 +1880,9 @@ const BuyPointDiagnosisCard = ({ onResultChange }) => {
         footer={null}
         width={820}
         destroyOnClose
-        styles={DIAGNOSIS_MODAL_STYLES}
+        styles={modalTheme.styles}
       >
-        <div className="ob-diagnosis-modal-body">{renderDetail()}</div>
+        <div className={modalTheme.bodyClassName}>{renderDetail()}</div>
       </Modal>
     </>
   );
@@ -1908,7 +1933,7 @@ const buildSellHint = (result) => {
 // ==================== 卖点诊断卡片（自动运行） ====================
 // 命中弹窗已移除（2026-10-21 用户调整）：命中提醒改由 App.jsx 全局诊断卡片（GlobalDiagnosisAlert）负责，
 // 本卡片仅负责诊断数据展示；命中时保留卡片背景闪烁提示
-const SellPointDiagnosisCard = () => {
+const SellPointDiagnosisCard = ({ themeVars, themeClass, themeTone }) => {
   const mode = useStrategyMode();
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isWashFusion = mode === MODE_WASH_FUSION;
@@ -1997,6 +2022,7 @@ const SellPointDiagnosisCard = () => {
   }, [run]);
 
   const hitStocks = results.filter((r) => r.isSell === true);
+  const modalTheme = buildDiagnosisModalTheme({ themeVars, themeClass, themeTone });
 
   // 详细条件（弹窗内容）：每笔持仓的逐条卖点条件与卖出提示
   const renderDetail = () => results.map((r) => (
@@ -2142,9 +2168,9 @@ const SellPointDiagnosisCard = () => {
         footer={null}
         width={820}
         destroyOnClose
-        styles={DIAGNOSIS_MODAL_STYLES}
+        styles={modalTheme.styles}
       >
-        <div className="ob-diagnosis-modal-body">{renderDetail()}</div>
+        <div className={modalTheme.bodyClassName}>{renderDetail()}</div>
       </Modal>
     </>
   );
@@ -2319,8 +2345,17 @@ const OpeningBattle = () => {
         <div className="ob-row ob-row-first">
           <FundChartModule chartTone={packTone} />
           <div className="ob-summary-column">
-            <BuyPointDiagnosisCard onResultChange={setBuyPointHit} />
-            <SellPointDiagnosisCard />
+            <BuyPointDiagnosisCard
+              onResultChange={setBuyPointHit}
+              themeVars={packVars || diyVars}
+              themeClass={activeThemePack ? 'pack-active' : diyActive ? 'diy-active' : ''}
+              themeTone={packTone}
+            />
+            <SellPointDiagnosisCard
+              themeVars={packVars || diyVars}
+              themeClass={activeThemePack ? 'pack-active' : diyActive ? 'diy-active' : ''}
+              themeTone={packTone}
+            />
           </div>
         </div>
         {/* 第二行：候选列表卡片（单模式一个卡片；多选模式每个勾选模式各一个卡片，平分宽度、等高、超内容滚动） */}

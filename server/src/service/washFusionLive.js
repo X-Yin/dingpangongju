@@ -50,6 +50,7 @@ const wsServer = require('../wsServer');
 const feishuNotify = require('./feishuNotify');
 const strategyModeState = require('./strategyModeState');
 const { logWashFusion } = require('./diagnosisLog');
+const { maybeWashFusionPreheat } = require('./buyPointPreheat');
 
 const MODE_WASH_FUSION = 'wash_fusion_extreme_odds';
 const SOURCE_A = 'first_board_wash';
@@ -147,6 +148,21 @@ const lastCloseOf = (bars, dateNum) => {
     if (Number(bars[i].d) <= dateNum && Number(bars[i].c) > 0) return Number(bars[i].c);
   }
   return null;
+};
+
+// 最近一个交易日（日K最后一根真实 bar）的当日涨幅与竞价高开：
+// 非交易日 / 盘前 / 收盘后展示时无法取实时快照，用日K现算，避免「当日 / 竞价」列显示为空
+const latestBarStats = (bars) => {
+  if (!Array.isArray(bars) || bars.length < 2) return { change: null, auctionGap: null };
+  const last = bars[bars.length - 1];
+  const prev = bars[bars.length - 2];
+  const prevClose = Number(prev && prev.c);
+  const close = Number(last && last.c);
+  if (!(prevClose > 0) || !(close > 0)) return { change: null, auctionGap: null };
+  const change = round2(((close - prevClose) / prevClose) * 100);
+  const open = last.o != null && Number(last.o) > 0 ? Number(last.o) : null;
+  const auctionGap = open != null ? round2(((open - prevClose) / prevClose) * 100) : null;
+  return { change, auctionGap };
 };
 
 // ============================================================
@@ -418,9 +434,16 @@ const buildRows = (pools, quotes, nowMinute) => {
   });
 };
 
+// 首板 / 二板两组列表统一按「当日涨幅」从高到低排序（缺失涨幅的置后）
+const byChangeDesc = (a, b) => {
+  const av = a.change != null && Number.isFinite(Number(a.change)) ? Number(a.change) : -Infinity;
+  const bv = b.change != null && Number.isFinite(Number(b.change)) ? Number(b.change) : -Infinity;
+  return bv - av;
+};
+
 const splitGroups = (rows) => ({
-  firstBoard: rows.filter((r) => r.source === SOURCE_A),
-  secondBoard: rows.filter((r) => r.source === SOURCE_B),
+  firstBoard: rows.filter((r) => r.source === SOURCE_A).sort(byChangeDesc),
+  secondBoard: rows.filter((r) => r.source === SOURCE_B).sort(byChangeDesc),
 });
 
 const broadcastCandidates = (dateStr, rows, updatedAt, open = false) => {
@@ -866,6 +889,11 @@ const tick = async () => {
     quoteRows = buildRows(pools, quotes, minute);
     quoteRowsTs = Date.now();
     broadcastCandidates(dateStr, quoteRows, dayjs(quoteRowsTs).format('YYYY-MM-DD HH:mm:ss'), false);
+
+    // 买点预热（2026-11-15）：打板模式（忽略首板竞价）候选盘中涨幅 ≥ 5% 且尚未触发正式买点的，
+    // 提前提示关注候选股列表；同一标的当日只提醒一次
+    const preheatSignaled = new Set([...aAuctionSignaled, ...aBurstSignaled, ...bSignaled]);
+    maybeWashFusionPreheat({ dateStr, pools, quotes, minute, signaledCodes: preheatSignaled });
   } catch (e) {
     console.error('情绪游资-极致赔率线上轮询任务异常:', e.message);
   } finally {
@@ -895,22 +923,26 @@ const resolveDisplayBasis = async (now = new Date()) => {
 
 const buildStaticRows = (pools) => {
   const list = [...(pools.firstBoard || []), ...(pools.secondBoard || [])];
-  return list.map((c) => ({
-    code: c.code,
-    name: c.name,
-    board: c.board,
-    source: c.source,
-    sourceLabel: c.sourceLabel,
-    totalMvYi: c.totalMvYi,
-    washout: c.washout,
-    boardCheck: c.boardCheck || null,
-    preclose: c.lastClose,
-    price: c.lastClose,
-    change: null,
-    auctionGap: null,
-    status: 'closed',
-    statusText: '上一交易日收盘',
-  }));
+  return list.map((c) => {
+    // 非交易时段没有实时快照：用日K最后一根（最近一个交易日）现算当日涨幅 / 竞价高开
+    const { change, auctionGap } = latestBarStats(getStockBarsCached(c.code));
+    return {
+      code: c.code,
+      name: c.name,
+      board: c.board,
+      source: c.source,
+      sourceLabel: c.sourceLabel,
+      totalMvYi: c.totalMvYi,
+      washout: c.washout,
+      boardCheck: c.boardCheck || null,
+      preclose: c.lastClose,
+      price: c.lastClose,
+      change,
+      auctionGap,
+      status: 'closed',
+      statusText: '最近交易日收盘',
+    };
+  });
 };
 
 // 前端展示数据（首次加载 / 手动刷新）：按基准日返回 A/B 两组候选

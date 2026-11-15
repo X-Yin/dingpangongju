@@ -1654,5 +1654,29 @@
     "circulatingMarketValue": 2631908571,
     "ttmPe": 40.2102,
     "updatedAt": "2026-11-15 21:41:28"
+  },
+  {
+    "code": "sz300017",
+    "name": "网宿科技",
+    "marketValue": 38183977088,
+    "circulatingMarketValue": 36206984925,
+    "ttmPe": 50.2007,
+    "updatedAt": "2026-11-15 22:34:53"
+  },
+  {
+    "code": "sh603657",
+    "name": "春光科技",
+    "marketValue": 4334193003,
+    "circulatingMarketValue": 4334193003,
+    "ttmPe": -32.3734,
+    "updatedAt": "2026-11-15 22:34:53"
+  },
+  {
+    "code": "sz300442",
+    "name": "润泽科技",
+    "marketValue": 94392734286,
+    "circulatingMarketValue": 94115856014,
+    "ttmPe": 43.9302,
+    "updatedAt": "2026-11-15 22:34:53"
   }
 ]

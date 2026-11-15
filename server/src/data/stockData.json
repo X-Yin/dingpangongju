@@ -3106,5 +3106,65 @@
       }
     ],
     "isImportant": false
+  },
+  "sz300017": {
+    "stockName": "网宿科技",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "open_px": 15.58,
+        "high_px": 15.82,
+        "low_px": 15.23,
+        "close_px": 15.3,
+        "business_amount": 77811560,
+        "business_balance": 1205819280,
+        "change": -1.67,
+        "ma5_px": 15.88,
+        "ma10_px": 15.71,
+        "ma20_px": 15.08,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh603657": {
+    "stockName": "春光科技",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "open_px": 34,
+        "high_px": 35.36,
+        "low_px": 31.33,
+        "close_px": 32.06,
+        "business_amount": 9661824,
+        "business_balance": 321176480,
+        "change": -4.58,
+        "ma5_px": 33.83,
+        "ma10_px": 31.4,
+        "ma20_px": 30.96,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz300442": {
+    "stockName": "润泽科技",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "open_px": 56.39,
+        "high_px": 60.17,
+        "low_px": 56,
+        "close_px": 57.52,
+        "business_amount": 39855376,
+        "business_balance": 2326137780,
+        "change": 2.7,
+        "ma5_px": 57.04,
+        "ma10_px": 55.89,
+        "ma20_px": 56.04,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }
