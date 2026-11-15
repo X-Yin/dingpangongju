@@ -2201,5 +2201,110 @@ exports.default = [
         "blockName": "AI 剧",
         "code": "sz002343",
         "name": "慈文传媒"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sh603496",
+        "name": "恒为科技",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sz000034",
+        "name": "神州数码",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sh603019",
+        "name": "中科曙光",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sz002261",
+        "name": "拓维信息",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sh688702",
+        "name": "盛科通信-U",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sh600410",
+        "name": "华胜天成",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sz000062",
+        "name": "深圳华强",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sz301236",
+        "name": "软通动力",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sh688629",
+        "name": "华丰科技",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sz002897",
+        "name": "意华股份",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sz300843",
+        "name": "胜蓝股份",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sz300991",
+        "name": "创益通",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sz000938",
+        "name": "紫光股份",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sz301191",
+        "name": "菲菱科思",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sz002843",
+        "name": "泰嘉股份",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sh603179",
+        "name": "新泉股份"
+    },
+    {
+        "blockName": "机器人大脑",
+        "code": "sh605288",
+        "name": "凯迪股份"
+    },
+    {
+        "blockName": "华为超节点",
+        "code": "sh600246",
+        "name": "万通发展"
     }
 ]

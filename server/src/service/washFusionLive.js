@@ -644,7 +644,8 @@ const emitBuySignal = async ({ dateStr, cand, mode, minute, price, change, aucti
   try {
     await feishuNotify.sendFeishuCard(feishuNotify.buildWashFusionBuyCard({
       buyStocks: [stock],
-      timestamp: stock.timestamp,
+      triggerTime: stock.timestamp,
+      timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       positionHint,
       sourceLabel: cand.sourceLabel,
       mock,

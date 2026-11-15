@@ -2,26 +2,31 @@
 // CLS = 财联社、THS = 同花顺、XQ = 雪球（2026-11-15 新增）、LB = 连板网（仅分时兜底）
 // 说明：连板网只有当日分时接口（腾讯底层 app/minute/query），没有日K接口，也不支持历史日期分时。
 //   雪球有日K + 最新一日分时，同样不支持按历史日期查分时。
-// 2026-11-15 用户要求：雪球作为第一优先级，其余源全部降为兜底（临时观察效果，改回加权只需恢复权重）。
-//   - tline          : 当日分时 → XQ 主源 + CLS/THS/LB 兜底
-//   - tlineHistorical: 历史日期分时 → 仅 CLS/THS（请求日期为「最新交易日」时由 stock.js 优先走 XQ，
-//                      更早的历史日期雪球无数据，固定 CLS/THS 兜底，不再引入其他源）
-//   - kline          : 日K → XQ 主源 + CLS/THS 兜底（连板网无日K接口）
+// 2026-11-15 用户要求（负载均衡）：不再让所有股票都先打雪球，而是按股票把请求均匀分散到
+//   雪球 / 财联社 / 同花顺（约 1/3 each），某只股票主源失败时再按 fallbackOrder 依次兜底，
+//   避免单一接口方被同时打满触发限流。
+//   - tline          : 当日分时 → XQ / CLS / THS 各约 1/3 + LB 最终兜底
+//   - tlineHistorical: 历史日期分时 → CLS / THS 各 1/2（雪球/连板网不支持历史日期）
+//   - kline          : 日K → XQ / CLS / THS 各约 1/3（连板网无日K接口）
 const DATA_SOURCE_ROUTE = {
     tline: {
-        primaryWeights: { xq: 1 },
+        primaryWeights: { xq: 0.34, cls: 0.33, ths: 0.33 },
         fallbackOrder: {
             xq: ['cls', 'ths', 'lb'],
+            cls: ['ths', 'xq', 'lb'],
+            ths: ['cls', 'xq', 'lb'],
         },
     },
     tlineHistorical: {
-        primaryWeights: { cls: 0.6, ths: 0.4 },
+        primaryWeights: { cls: 0.5, ths: 0.5 },
         fallbackOrder: { cls: ['ths'], ths: ['cls'] },
     },
     kline: {
-        primaryWeights: { xq: 1 },
+        primaryWeights: { xq: 0.34, cls: 0.33, ths: 0.33 },
         fallbackOrder: {
             xq: ['cls', 'ths'],
+            cls: ['ths', 'xq'],
+            ths: ['cls', 'xq'],
         },
     },
 };

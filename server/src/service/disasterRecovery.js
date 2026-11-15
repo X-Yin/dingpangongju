@@ -20,7 +20,7 @@ const { isEmotionFreezing } = require('./buySellDiagnose');
 const { getAmountHistory } = require('./amount');
 const { getDaPanData } = require('./dapan');
 const { getMonitorStocks } = require('./monitorStock');
-const { getClsReqUrl, getClsReqStockTlineUrl, batchParallel, isTradingDay } = require('../utils');
+const { getClsReqUrl, getClsReqStockTlineUrl, batchParallel, isTradingDay, withHardTimeout } = require('../utils');
 const { useCLS } = require('../config');
 
 const dapanDataPath = path.resolve(__dirname, '../data/dapanData.json');
@@ -127,7 +127,11 @@ async function fetchMonitorStocksChange() {
 
     const fetchChange = async (stockCode) => {
       try {
-        const { data: { data: klineData } } = await axios.get(getClsReqUrl(stockCode, 1));
+        const { data: { data: klineData } } = await withHardTimeout(
+          axios.get(getClsReqUrl(stockCode, 1), { timeout: 600 }),
+          600,
+          `cls recovery kline ${stockCode}`
+        );
         if (klineData && klineData.length > 0) {
           return klineData[0].change;
         }

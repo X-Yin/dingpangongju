@@ -8,6 +8,21 @@ exports.sleep = async (n) => {
     })
 }
 
+// 2026-11-15：硬超时。Node 下 axios 的 timeout 只是 socket 空闲超时，
+// 服务端 hold 住连接/慢速返回时可能远超配置值（实测配置 600ms 仍出现 2.2s）。
+// 这里用 Promise.race 保证调用方最多等 ms，超时立即走下一个数据源兜底。
+exports.withHardTimeout = (promise, ms, label = 'request') => {
+    let timer = null;
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error(`hard timeout ${ms}ms: ${label}`)), ms);
+        }),
+    ]).finally(() => {
+        if (timer) clearTimeout(timer);
+    });
+};
+
 // 返回财联社请求 k 线数据的 url
 exports.getClsReqUrl = (code, limit) => {
     return clsReqStockUrl.replace('$code', code).replace('$limit', limit);

@@ -121,7 +121,8 @@ const buildEwHoldOnlyWarn = () => {
 //   - feishuStocks : 供飞书卡片展示的榜单前三 + 候选补位
 //   - stockEmptyReason : 无候选时的原因说明（用于前端/日志排查）
 const buildTechBuyStocks = async () => {
-  const gainers = await getTopGainersByMarket(null, 10);
+  // 买点诊断只需要展示榜与候选，跳过「只看符合条件」补充扫描（最多 60 只个股分时）
+  const gainers = await getTopGainersByMarket(null, 10, { skipQualifiedScan: true });
   const d = gainers?.data || {};
   const cybPassed = d.cybGate?.passed === true;
   const starPassed = d.starGate?.passed === true;
@@ -176,8 +177,9 @@ const buildTechBuyStocks = async () => {
 //   source     : 攻防兼备模式下的命中源——'tech'（科技进攻）/ 'ew'（情绪游资）；单模式无需传
 //   buyStocks  : 可选，直接指定卡片标的（优先）
 //   topStocks  : 可选，指定科技进攻榜单前三
+//   triggerTime: 可选，真实的买点诊断触发时间（默认与卡片生成时间相同）
 // @returns {Object} { success, skipped?, message?, data?, error? }
-const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, topStocks = null } = {}) => {
+const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, topStocks = null, triggerTime = null } = {}) => {
   let card = null;
 
   const isEwSource = source === 'ew' || (!source && mode === MODE_EXTREME_WIN);
@@ -210,6 +212,7 @@ const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, top
       card = feishuNotify.buildHotMoneyLeaderCard({
         buyStocks: resultStocks,
         timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        triggerTime,
         positionHint: ewPositionHint,
         holdOnlyWarn,
       });
@@ -218,6 +221,7 @@ const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, top
         buyStocks: reverseStocks,
         timing: reverseTiming,
         timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        triggerTime,
         positionHint: ewPositionHint,
         holdOnlyWarn,
       });
@@ -234,6 +238,7 @@ const notifyBuyPointFeishu = async ({ mode, source = null, buyStocks = null, top
     card = feishuNotify.buildBuyPointCard({
       buyStocks: resultStocks,
       timestamp: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+      triggerTime,
       positionHint: buildTechPositionHint(mode),
       // 攻防兼备（2026-10-20 用户新增）：存在隔夜非科技连板持仓且实时科技情绪 > 0 时，提醒先卖后买（与回测抢仓规则一致）
       grabWarn: mode === MODE_ATTACK_DEFENSE ? buildTechGrabWarn() : null,

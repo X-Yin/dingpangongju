@@ -10,6 +10,8 @@
 //     同时发飞书 + 额外广播 open:true 让前端弹卡片（不再由前端二次请求榜单补个股）
 //   - 每个间隔无论是否命中都写入本地诊断日志（diagnosisLog，按天文件，保留 30 天）
 //   - 非交易日 / 午休 / 收盘后不执行；幂等状态落盘，重启同桶不重复发
+//   - 各模式独立调度（2026-11-15）：不同模式各自加锁并行执行，单个模式诊断耗时过长
+//     只会跳过它自己的下一轮槽位，不再阻塞 / 吞掉其他模式的 3 分钟或 5 分钟整数倍槽位
 const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
@@ -34,7 +36,10 @@ const MODE_INTERVAL_MIN = {
 };
 
 let timer = null;
-let running = false;
+// 每模式独立执行锁：慢诊断只阻塞自身，不吞掉其他模式的诊断槽（2026-11-15）
+const runningModes = new Set();
+// 冰点转折延时买入的 10s 推进锁（避免与诊断并行时重入）
+let iceTicking = false;
 // 每模式独立命中通知状态（2026-11-04 多选模式改造）：
 //   { [mode]: { bucket: 主命中桶(科技进攻/情绪游资单模式), tech: 攻防兼备科技腿桶, ew: 攻防兼备情绪游资腿桶, blocked: 买点屏蔽桶 } }
 let notifyStateByMode = {};
@@ -206,7 +211,7 @@ const runDiagnosis = async (mode) => {
 
 // 攻防兼备 tick：双策略分源桶门控——科技进攻(tech)与情绪游资(ew)各自独立判定命中与通知（每桶每源至多一次），
 // 任一源命中新桶即广播 open:true；tech 源的快进快出强卖当日禁买屏蔽检测独立生效（不遮蔽 ew 源）
-const tickAttackDefense = async (mode, st, data, bucket, ewBucket, techStockResult) => {
+const tickAttackDefense = async (mode, st, data, bucket, ewBucket, techStockResult, now) => {
   const techData = data.tech || null;
   const techBlocked = detectQuickOutBlock(techData);
   const techHit = !techBlocked && techData != null && techData.allPassed === true;
@@ -261,6 +266,7 @@ const tickAttackDefense = async (mode, st, data, bucket, ewBucket, techStockResu
       await notifyBuyPointFeishu({
         mode,
         source: 'tech',
+        triggerTime: dayjs(now).format('YYYY-MM-DD HH:mm:ss'),
         ...(techStockResult && techStockResult.feishuStocks ? { topStocks: techStockResult.feishuStocks } : {}),
       });
     } catch (e) {
@@ -272,6 +278,7 @@ const tickAttackDefense = async (mode, st, data, bucket, ewBucket, techStockResu
       await notifyBuyPointFeishu({
         mode,
         source: 'ew',
+        triggerTime: dayjs(now).format('YYYY-MM-DD HH:mm:ss'),
         ...(Array.isArray(data.stocks) && data.stocks.length > 0 ? { buyStocks: data.stocks } : {}),
       });
     } catch (e) {
@@ -418,7 +425,7 @@ const tickMode = async (mode, now) => {
 
     // 攻防兼备：双策略分源桶门控 + 分源飞书通知，独立于单模式逻辑
     if (mode === MODE_ATTACK_DEFENSE) {
-      await tickAttackDefense(mode, st, payloadData, bucket, ewBucket, techStockResult);
+      await tickAttackDefense(mode, st, payloadData, bucket, ewBucket, techStockResult, now);
       return;
     }
 
@@ -477,11 +484,13 @@ const tickMode = async (mode, now) => {
         await notifyBuyPointFeishu({
           mode,
           source: 'ew',
+          triggerTime: dayjs(now).format('YYYY-MM-DD HH:mm:ss'),
           ...(Array.isArray(payloadData.stocks) && payloadData.stocks.length > 0 ? { buyStocks: payloadData.stocks } : {}),
         });
       } else {
         await notifyBuyPointFeishu({
           mode,
+          triggerTime: dayjs(now).format('YYYY-MM-DD HH:mm:ss'),
           ...(techStockResult && techStockResult.feishuStocks ? { topStocks: techStockResult.feishuStocks } : {}),
         });
       }
@@ -496,36 +505,46 @@ const tickMode = async (mode, now) => {
 };
 
 const tick = async () => {
-  if (running) return; // 上一 tick 未完成则跳过，避免重入
-  running = true;
   try {
     const now = new Date();
     if (!isInPushWindow(now)) return;
 
     // 多选模式（2026-11-04）：getModes() 返回生效模式集合（多选列表；未开启多选时为单模式），
-    // 逐个模式按各自的诊断间隔执行；同一分钟只执行一次，避免 10s tick 重复计算
+    // 各模式按自己的诊断间隔独立并行执行；同一分钟每个模式只执行一次，避免 10s tick 重复计算。
+    // 2026-11-15：不再串行 await，慢模式（如科技进攻全量重拉 3 分钟）只跳过自己下一轮，
+    // 不会阻塞其他模式的 3 分钟整数倍槽位
     const modes = strategyModeState.getModes();
     for (const mode of modes) {
       if (mode === strategyModeState.MODE_WASH_FUSION) continue;
       if (!isModeDue(mode, now)) continue;
+      if (runningModes.has(mode)) {
+        console.warn(`[买点诊断] ${mode} 上一轮尚未完成，跳过本轮（不阻塞其他模式）`);
+        continue;
+      }
       const key = runKeyOf(now);
       if (lastRunKeyByMode.get(mode) === key) continue;
       lastRunKeyByMode.set(mode, key);
-      await tickMode(mode, now);
+      runningModes.add(mode);
+      tickMode(mode, now)
+        .catch((e) => console.error(`买点诊断推送任务异常(${mode}):`, e.message))
+        .finally(() => runningModes.delete(mode));
     }
 
     // 冰点转折延时买入 / 涨幅确认仍按 10s 独立推进（不受 3~5min 诊断间隔影响），
     // 使用对应模式最近一次诊断数据（到点即使没有新诊断也能按时执行）
-    try {
-      const activeMode = iceDelayBuy.getActiveMode();
-      await iceDelayBuy.tick({ data: activeMode ? (lastDataByMode.get(activeMode) || null) : null });
-    } catch (e) {
-      console.error('冰点转折延时买入任务异常:', e.message);
+    if (!iceTicking) {
+      iceTicking = true;
+      try {
+        const activeMode = iceDelayBuy.getActiveMode();
+        await iceDelayBuy.tick({ data: activeMode ? (lastDataByMode.get(activeMode) || null) : null });
+      } catch (e) {
+        console.error('冰点转折延时买入任务异常:', e.message);
+      } finally {
+        iceTicking = false;
+      }
     }
   } catch (e) {
     console.error('买点诊断推送任务异常:', e.message);
-  } finally {
-    running = false;
   }
 };
 

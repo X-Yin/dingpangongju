@@ -58,16 +58,25 @@ function buildMarketSnapshotText({ mainMoney, amountChangeDiff, chuangyeban, kec
   return `资金：${mainMoney || '--'}、成交量：${amountChangeDiff || '--'}、创业指数：${formatIndex(chuangyeban)}、科创指数：${formatIndex(kechuangban)}、科技情绪：${emotionText}`;
 }
 
+// 卡片时间标注（2026-11-15 用户要求）：明确区分
+//   买点诊断触发时间（调度真正开始诊断的时刻，通常是 3/5 分钟整数倍）
+//   卡片数据生成时间（诊断 + 选股全部跑完、构建卡片的时刻）
+const formatBuyPointTimeLines = (triggerTime, timestamp) => {
+  const generatedAt = timestamp || '--';
+  const triggeredAt = triggerTime || generatedAt;
+  return `> 买点诊断触发：${triggeredAt}\n> 卡片数据生成：${generatedAt}`;
+};
+
 // 买点诊断卡片：绿色主题，列出「开盘实战」页自选股 3 日涨幅榜前三，并点出其中的买点候选
 //   mock=true 时为调试面板触发的 MOCK 测试卡片，卡片中额外标注说明
 //   positionHint：买入仓位提示（与回测仓位管理一致的口径）
-function buildBuyPointCard({ buyStocks, topStocks, timestamp, mock, positionHint, grabWarn }) {
+function buildBuyPointCard({ buyStocks, topStocks, timestamp, triggerTime, mock, positionHint, grabWarn }) {
   const list = Array.isArray(buyStocks) ? buyStocks : (Array.isArray(topStocks) ? topStocks : []);
   const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
   const elements = [
     {
       tag: "markdown",
-      content: `**🎯【买点诊断】命中买点**\n> ${timestamp || '--'}`,
+      content: `**🎯【买点诊断】命中买点**\n${formatBuyPointTimeLines(triggerTime, timestamp)}`,
     },
   ];
   if (mock) {
@@ -124,14 +133,14 @@ function buildBuyPointCard({ buyStocks, topStocks, timestamp, mock, positionHint
 
 // 情绪游资-极致胜率买点卡片：绿色主题，列出「情绪游资-龙头列表」中的完整买点标的
 //   positionHint：买入仓位提示（顺周期腿半仓，与回测双腿结构一致）
-function buildHotMoneyLeaderCard({ buyStocks, timestamp, positionHint, holdOnlyWarn }) {
+function buildHotMoneyLeaderCard({ buyStocks, timestamp, triggerTime, positionHint, holdOnlyWarn }) {
   const list = Array.isArray(buyStocks) ? buyStocks : [];
   const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
   const fmtNum = (v) => (v == null || isNaN(Number(v)) ? '--' : Number(v).toFixed(2));
   const elements = [
     {
       tag: "markdown",
-      content: `**🎯【情绪游资-极致胜率】龙头列表出现完整买点标的**\n> ${timestamp || '--'}`,
+      content: `**🎯【情绪游资-极致胜率】龙头列表出现完整买点标的**\n${formatBuyPointTimeLines(triggerTime, timestamp)}`,
     },
     {
       tag: "hr",
@@ -180,14 +189,14 @@ function buildHotMoneyLeaderCard({ buyStocks, timestamp, positionHint, holdOnlyW
 
 // 情绪游资-反向抱团龙头（逆周期）买点卡片：红色主题，列出反向抱团池中已触发择时的买点标的
 //   positionHint：买入仓位提示（逆周期腿半仓，与回测双腿结构一致）
-function buildHotMoneyReverseLeaderCard({ buyStocks, timing, timestamp, positionHint, holdOnlyWarn }) {
+function buildHotMoneyReverseLeaderCard({ buyStocks, timing, timestamp, triggerTime, positionHint, holdOnlyWarn }) {
   const list = Array.isArray(buyStocks) ? buyStocks : [];
   const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
   const fmtNum = (v) => (v == null || isNaN(Number(v)) ? '--' : Number(v).toFixed(2));
   const elements = [
     {
       tag: "markdown",
-      content: `**🎯【情绪游资-反向抱团龙头】逆周期择时触发反向抱团买点**\n> ${timestamp || '--'}`,
+      content: `**🎯【情绪游资-反向抱团龙头】逆周期择时触发反向抱团买点**\n${formatBuyPointTimeLines(triggerTime, timestamp)}`,
     },
     {
       tag: "hr",
@@ -291,14 +300,14 @@ function buildSellPointCard({ sellStocks, timestamp, mock }) {
 
 // 首板洗盘-起爆拉升买点卡片：绿色主题，列出触发买点的候选股（竞价 ≥ 5% 直接买入 / 盘中 +8% 触发）
 //   positionHint：买入仓位提示（账户拆两份、每份半仓，最多同时持有 2 只不同股票）
-function buildFirstBoardWashBuyCard({ buyStocks, timestamp, positionHint, mock }) {
+function buildFirstBoardWashBuyCard({ buyStocks, timestamp, triggerTime, positionHint, mock }) {
   const list = Array.isArray(buyStocks) ? buyStocks : [];
   const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
   const fmtNum = (v) => (v == null || isNaN(Number(v)) ? '--' : Number(v).toFixed(2));
   const elements = [
     {
       tag: "markdown",
-      content: `**🎯【首板洗盘-起爆拉升】买点触发${mock ? '（MOCK 测试）' : ''}**\n> ${timestamp || '--'}`,
+      content: `**🎯【首板洗盘-起爆拉升】买点触发${mock ? '（MOCK 测试）' : ''}**\n${formatBuyPointTimeLines(triggerTime, timestamp)}`,
     },
     { tag: "hr" },
   ];
@@ -350,7 +359,7 @@ function buildFirstBoardWashBuyCard({ buyStocks, timestamp, positionHint, mock }
 
 // 情绪游资-极致赔率买点卡片（2026-11-01 用户要求）：绿色主题，sourceLabel 区分首板起爆 / 二板起爆
 //   positionHint：买入仓位提示（账户拆两份、每份半仓，最多同时持有 2 只不同股票）
-function buildWashFusionBuyCard({ buyStocks, timestamp, positionHint, sourceLabel, mock }) {
+function buildWashFusionBuyCard({ buyStocks, timestamp, triggerTime, positionHint, sourceLabel, mock }) {
   const list = Array.isArray(buyStocks) ? buyStocks : [];
   const label = sourceLabel || '首板起爆';
   const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
@@ -358,7 +367,7 @@ function buildWashFusionBuyCard({ buyStocks, timestamp, positionHint, sourceLabe
   const elements = [
     {
       tag: "markdown",
-      content: `**🎯【情绪游资-极致赔率 · ${label}】买点触发${mock ? '（MOCK 测试）' : ''}**\n> ${timestamp || '--'}`,
+      content: `**🎯【情绪游资-极致赔率 · ${label}】买点触发${mock ? '（MOCK 测试）' : ''}**\n${formatBuyPointTimeLines(triggerTime, timestamp)}`,
     },
     { tag: "hr" },
   ];

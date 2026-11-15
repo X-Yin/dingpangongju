@@ -163,6 +163,18 @@
       "blockName": "机器人大脑",
       "code": "sh603297",
       "change": 3.11
+    },
+    {
+      "name": "新泉股份",
+      "blockName": "机器人大脑",
+      "code": "sh603179",
+      "change": -0.31
+    },
+    {
+      "name": "凯迪股份",
+      "blockName": "机器人大脑",
+      "code": "sh605288",
+      "change": 5.24
     }
   ],
   "端侧SOC": [
@@ -2431,6 +2443,104 @@
       "blockName": "3D 打印",
       "code": "sh688333",
       "change": -8.5
+    }
+  ],
+  "华为超节点": [
+    {
+      "name": "恒为科技",
+      "blockName": "华为超节点",
+      "code": "sh603496",
+      "change": 1.58
+    },
+    {
+      "name": "神州数码",
+      "blockName": "华为超节点",
+      "code": "sz000034",
+      "change": 5.36
+    },
+    {
+      "name": "中科曙光",
+      "blockName": "华为超节点",
+      "code": "sh603019",
+      "change": 1.76
+    },
+    {
+      "name": "拓维信息",
+      "blockName": "华为超节点",
+      "code": "sz002261",
+      "change": 2.74
+    },
+    {
+      "name": "盛科通信-U",
+      "blockName": "华为超节点",
+      "code": "sh688702",
+      "change": 1.75
+    },
+    {
+      "name": "华胜天成",
+      "blockName": "华为超节点",
+      "code": "sh600410",
+      "change": 10
+    },
+    {
+      "name": "深圳华强",
+      "blockName": "华为超节点",
+      "code": "sz000062",
+      "change": 2.79
+    },
+    {
+      "name": "软通动力",
+      "blockName": "华为超节点",
+      "code": "sz301236",
+      "change": 7.32
+    },
+    {
+      "name": "华丰科技",
+      "blockName": "华为超节点",
+      "code": "sh688629",
+      "change": 7.1
+    },
+    {
+      "name": "意华股份",
+      "blockName": "华为超节点",
+      "code": "sz002897",
+      "change": 0.97
+    },
+    {
+      "name": "胜蓝股份",
+      "blockName": "华为超节点",
+      "code": "sz300843",
+      "change": 1.34
+    },
+    {
+      "name": "创益通",
+      "blockName": "华为超节点",
+      "code": "sz300991",
+      "change": -3.26
+    },
+    {
+      "name": "紫光股份",
+      "blockName": "华为超节点",
+      "code": "sz000938",
+      "change": -0.32
+    },
+    {
+      "name": "菲菱科思",
+      "blockName": "华为超节点",
+      "code": "sz301191",
+      "change": 1.32
+    },
+    {
+      "name": "泰嘉股份",
+      "blockName": "华为超节点",
+      "code": "sz002843",
+      "change": 4.02
+    },
+    {
+      "name": "万通发展",
+      "blockName": "华为超节点",
+      "code": "sh600246",
+      "change": -1.94
     }
   ]
 }

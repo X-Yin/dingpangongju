@@ -1,6 +1,6 @@
 // 复盘大盘的情绪，为后续操作出手时机提供参考
 
-const { getClsReqEmotionUrl, getClsReqIndexUrl, getClsReqUrl, batchParallel } = require("../utils");
+const { getClsReqEmotionUrl, getClsReqIndexUrl, batchParallel } = require("../utils");
 const { getDaPanData } = require("./dapan");
 const { getSingleStockTlineData, getRealtimeQuotes, getSingleStockData } = require("./stock");
 const axios = require("axios");
@@ -187,13 +187,9 @@ const fetchTechStockItems = async (stockCodes) => {
 
     const fetchChange = async (stockCode) => {
         try {
-            let klineData;
-            if (inAuction) {
-                klineData = await getSingleStockData(stockCode, 1);
-            } else {
-                const { data: { data } } = await axios.get(getClsReqUrl(stockCode, 1));
-                klineData = data;
-            }
+            // 2026-11-15：科技情绪 103 只不再全部打财联社，统一走按 code 稳定哈希分流的日K
+            // （雪球 / 财联社 / 同花顺各约 1/3），降低单一数据源压力；单源 600ms 超时自动兜底
+            const klineData = await getSingleStockData(stockCode, 1);
             if (klineData && klineData.length > 0) {
                 const klineItem = klineData[0];
                 // 现价：盘中为最新收盘价字段，缺失时退回昨收（市值加权因子用）
@@ -403,10 +399,12 @@ const updateCurrentTechIndexData = async () => {
     const changeSumData = [];
 
     // V2 算法：个股按板块涨跌幅限制归一化 → 市值加权平均 + 冲高回落惩罚 × 0.2
-    const items = await fetchTechStockItems(stockCodes);
+    // 个股行情与指数分时互相独立，并行拉取（2026-11-15 提速）
+    const [items, pullbackPenalty] = await Promise.all([
+      fetchTechStockItems(stockCodes),
+      computePullbackPenalty(),
+    ]);
     const baseEmotion = computeTechEmotionV2Base(items);
-    // 计算冲高回落惩罚（实时获取创业板指和科创50分时数据）
-    const pullbackPenalty = await computePullbackPenalty();
     const finalEmotion = computeTechEmotionV2(baseEmotion, pullbackPenalty);
     changeSumData.push({
         date: Number(dayjs().format('YYYYMMDD')),

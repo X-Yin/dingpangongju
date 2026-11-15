@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { Worker } = require('worker_threads');
-const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay, getThsSnapshotUrl, getThsSnapshotHeaders, buildThsSnapshotRequestBody, getThsMarketCode, batchParallel, resolveAnalysisDate } = require('../utils');
+const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay, getThsSnapshotUrl, getThsSnapshotHeaders, buildThsSnapshotRequestBody, getThsMarketCode, batchParallel, resolveAnalysisDate, withHardTimeout } = require('../utils');
 const { lianbanTlineUrl, lianbanHeaders } = require('../constant');
 const { refreshLBSessCookie } = require('./lianbanCookieRefresh');
 const { fetchXueqiuKline, fetchXueqiuTline } = require('./xueqiu');
@@ -102,25 +102,41 @@ function getOpeningPrices() {
     }
 }
 
-const getSingleStockData = async (code, limit = 1, timeoutMs = 500, sourceOrder = null) => {
-    // 日K路由：CLS / THS / XQ 之间按 code 稳定哈希选择（默认 40/30/30 分布），主源失败则按兜底链切换；
+// 按股票分散数据源（2026-11-15 负载均衡）：日K/分时的主源由 buildTryOrder 按 code 稳定哈希选出，
+//   不同股票均匀落到雪球/财联社/同花顺；主源失败时按 fallbackOrder 依次兜底，不并发打满单一接口。
+// 2026-11-15 用户要求：单源单请求最多 600ms，超时立刻切换下一个数据源，
+// 避免某一只股票的网络抖动把整批拖到一两秒；调用方传入更大的超时也会被压到 600ms。
+const PER_SOURCE_TIMEOUT_MS = 600;
+const getSingleStockData = async (code, limit = 1, timeoutMs = 500, sourceOrder = null, sourceValidator = null) => {
+    // 日K路由：XQ / CLS / THS 之间按 code 稳定哈希选择（约 1/3 each），主源失败则按兜底链切换；
     // 同一股票固定同一主源，保证收盘后重算结果可复现
-    // timeoutMs：调用方可在批量拉取全量自选股时放宽超时（500ms 在高并发下会随机丢股票）
-    // sourceOrder：显式指定重试顺序（如 ['ths','cls']），用于「必须拿到数据」的严格重试场景；
-    //              连板网没有日K接口，因此这里只接受 ths / cls / xq
-    const timeout = Number(timeoutMs) > 0 ? Number(timeoutMs) : 500;
+    // sourceOrder：显式指定重试顺序；不传时按 code 稳定哈希分散到 xq / cls / ths
+    // sourceValidator：严格重试场景用（如要求包含目标交易日），主源返回不满足时继续走兜底源
+    const timeout = Math.min(Number(timeoutMs) > 0 ? Number(timeoutMs) : 500, PER_SOURCE_TIMEOUT_MS);
     const tryOrder = (Array.isArray(sourceOrder) && sourceOrder.length > 0
         ? sourceOrder
         : buildTryOrder('kline', code)).filter((src) => src === 'ths' || src === 'cls' || src === 'xq');
+    const runSource = (src) => {
+        if (src === 'ths') return getSingleStockDataFromTHS(code, limit, timeout);
+        if (src === 'cls') return getSingleStockDataFromCLS(code, limit, timeout);
+        if (src === 'xq') return getSingleStockDataFromXQ(code, limit, timeout);
+        return Promise.resolve(null);
+    };
+    let last = null;
     for (const src of tryOrder) {
         let result = null;
-        if (src === 'ths') result = await getSingleStockDataFromTHS(code, limit, timeout);
-        else if (src === 'cls') result = await getSingleStockDataFromCLS(code, limit, timeout);
-        else if (src === 'xq') result = await getSingleStockDataFromXQ(code, limit, timeout);
-        if (result && result.length > 0) return result;
-        console.log(`${src.toUpperCase()} 获取股票 ${code} K线失败，继续下一个兜底`);
+        try {
+            result = await withHardTimeout(runSource(src), PER_SOURCE_TIMEOUT_MS, `${src} kline ${code}`);
+        } catch (e) {
+            result = null;
+        }
+        if (result && result.length > 0) {
+            if (typeof sourceValidator !== 'function' || sourceValidator(result)) return result;
+            if (!last) last = result;
+        }
+        console.log(`${src.toUpperCase()} 获取股票 ${code} K线${typeof sourceValidator === 'function' ? '未通过校验' : '失败'}，继续下一个兜底`);
     }
-    return [];
+    return last || [];
 };
 
 // 雪球日K（口径已对齐同花顺：trade_date 倒序 + change + ma5/10/20）
@@ -394,8 +410,9 @@ exports.getStockValuation = getStockValuation;
 
 let tlineNum = 0;
 
-// 分时数据源路由（2026-11-05 多源加权随机化 / 2026-11-15 雪球第一优先级）：
-//   固定尝试顺序：雪球（1s 超时）→ 财联社 → 同花顺 → 连板网（连板网/雪球只有当日分时）
+// 分时数据源路由（2026-11-15 负载均衡）：
+//   按 code 稳定哈希把股票分散到 雪球 / 财联社 / 同花顺（各约 1/3），主源失败按 fallbackOrder
+//   依次兜底，最终连板网兜底；避免所有股票同时打满单一接口触发限流。
 // 2026-11-04 实测：CLS 并发 177-211ms / 稳定；LB 241-360ms / 稳定；THS 偶发 500ms+ timeout
 // 2026-11-15 实测：XQ 日K/分时 50-200ms（需匿名 cookie，启动时预热），超 1s 视为失败切兜底
 const LIVE_TLINE_RETRY_WINDOW_MS = 6 * 1000;
@@ -404,7 +421,7 @@ const getSingleStockTlineDataRaw = async (code) => {
     // 2026-11-14 用户要求：按固定顺序重试，不能一次失败就丢个股。
     // 雪球/连板网只有当日分时，因此这里的多源兜底仅适用于当日实时分时；历史日期分时见
     // getSingleStockTlineDataByDate（LB / XQ 不支持历史，只走 THS/CLS）。
-    const tryOrder = ['xq', 'cls', 'ths', 'lb'];
+    const tryOrder = buildTryOrder('tline', code);
     const deadline = _t0 + LIVE_TLINE_RETRY_WINDOW_MS;
     let attempts = 0;
     while (Date.now() < deadline) {
@@ -412,12 +429,12 @@ const getSingleStockTlineDataRaw = async (code) => {
         for (const src of tryOrder) {
             let result = null;
             try {
-                if (src === 'ths') result = await getSingleStockTlineDataFromTHS(code, 2000);
-                else if (src === 'cls') result = await getSingleStockTlineDataFromCLS(code, 2000);
-                else if (src === 'xq') result = await getSingleStockTlineDataFromXQ(code, 1000);
-                else if (src === 'lb') result = await getSingleStockTlineDataFromLB(code);
+                if (src === 'ths') result = await withHardTimeout(getSingleStockTlineDataFromTHS(code, PER_SOURCE_TIMEOUT_MS), PER_SOURCE_TIMEOUT_MS, `ths tline ${code}`);
+                else if (src === 'cls') result = await withHardTimeout(getSingleStockTlineDataFromCLS(code, PER_SOURCE_TIMEOUT_MS), PER_SOURCE_TIMEOUT_MS, `cls tline ${code}`);
+                else if (src === 'xq') result = await withHardTimeout(getSingleStockTlineDataFromXQ(code, PER_SOURCE_TIMEOUT_MS), PER_SOURCE_TIMEOUT_MS, `xq tline ${code}`);
+                else if (src === 'lb') result = await withHardTimeout(getSingleStockTlineDataFromLB(code), PER_SOURCE_TIMEOUT_MS, `lb tline ${code}`);
             } catch (e) {
-                // 单源异常继续下一个源
+                // 单源异常/硬超时继续下一个源
             }
             if (result) {
                 console.log(`[tline] ${code} → ${src.toUpperCase()} ${Date.now() - _t0}ms（第 ${attempts} 轮）`);
@@ -570,7 +587,7 @@ const getSingleStockTlineDataFromTHS = async (code, timeoutMs = 500) => {
 async function _rawLBRequest(lbCode) {
     // 动态读取当前 headers（cookie 可能被 refreshLBSessCookie 更新）
     const { lianbanHeaders: headers } = require('../constant');
-    const response = await axios.get(lianbanTlineUrl(lbCode), { headers, timeout: 1500 });
+    const response = await axios.get(lianbanTlineUrl(lbCode), { headers, timeout: PER_SOURCE_TIMEOUT_MS });
     return response.data;
 }
 
@@ -1032,7 +1049,10 @@ const getSingleStockTlineDataByDateFromXQ = async (code, tradeDate, timeoutMs) =
 //   ignoreFailCache：批量实时榜单重试时使用，跳过历史分时 10 分钟失败负缓存，避免一次超时导致个股被稳定剔除
 const getSingleStockTlineDataByDate = async (code, tradeDate, opts = {}) => {
     const ignoreFailCache = opts && opts.ignoreFailCache === true;
-    const reqTimeoutMs = opts && Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : null;
+    const reqTimeoutMs = Math.min(
+        opts && Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : tlineReqTimeout(tradeDate),
+        PER_SOURCE_TIMEOUT_MS
+    );
     const stockName = getStockNameByCode(code);
     // 非自选股（指数/板块股）无股票名，按代码落盘缓存，避免每次都走 HTTP
     const cacheKey = stockName || String(code);
@@ -1098,20 +1118,28 @@ const getSingleStockTlineDataByDate = async (code, tradeDate, opts = {}) => {
         }
     }
 
-    // 分时数据源路由（按「最新交易日」而非日历当天判定）：
-    //   请求日期 === 最新交易日 → 雪球优先（minute 接口返回的就是最新交易日分时），失败兜底 CLS/THS
-    //   请求更早的历史日期     → 只用 CLS/THS（雪球没有历史分时，LB 也不支持按日期查）
-    // opts.sourceOrder：严格重试场景可显式指定 ['ths','cls'] 顺序（不会因此放宽雪球的日期限制）
+    // 分时数据源路由（2026-11-15 负载均衡）：
+    //   请求日期 === 最新交易日 → 按 code 稳定哈希把股票分散到 XQ / CLS / THS（各约 1/3），失败依次兜底
+    //   请求更早的历史日期     → 只用 CLS/THS（雪球没有历史分时，LB 也不支持按日期查），同样按 code 分散
+    // opts.sourceOrder：严格重试场景可显式指定来源顺序（不会因此放宽雪球的日期限制）
     const isLatestTradingDate = Number(tradeDate) === getLatestTlineDateNum();
     let result = null;
     const histOrder = (Array.isArray(opts.sourceOrder) && opts.sourceOrder.length > 0
         ? opts.sourceOrder
-        : (isLatestTradingDate ? ['xq', 'cls', 'ths'] : ['cls', 'ths']))
+        : buildTryOrder(isLatestTradingDate ? 'tline' : 'tlineHistorical', `${code}|${tradeDate}`))
         .filter((src) => (src === 'xq' ? isLatestTradingDate : (src === 'ths' || src === 'cls')));
+    const runTlineSource = (src) => {
+        if (src === 'ths') return getSingleStockTlineDataByDateFromTHS(code, tradeDate, reqTimeoutMs);
+        if (src === 'cls') return getSingleStockTlineDataByDateFromCLS(code, tradeDate, reqTimeoutMs);
+        if (src === 'xq') return getSingleStockTlineDataByDateFromXQ(code, tradeDate, reqTimeoutMs);
+        return Promise.resolve(null);
+    };
     for (const src of histOrder) {
-        if (src === 'ths') result = await getSingleStockTlineDataByDateFromTHS(code, tradeDate, reqTimeoutMs);
-        else if (src === 'cls') result = await getSingleStockTlineDataByDateFromCLS(code, tradeDate, reqTimeoutMs);
-        else if (src === 'xq') result = await getSingleStockTlineDataByDateFromXQ(code, tradeDate, reqTimeoutMs);
+        try {
+            result = await withHardTimeout(runTlineSource(src), PER_SOURCE_TIMEOUT_MS, `${src} tline ${code} ${tradeDate}`);
+        } catch (e) {
+            result = null;
+        }
         if (result && result.line && result.line.length > 0) break;
         console.log(`${src.toUpperCase()} 获取股票 ${code} 日期 ${tradeDate} 分时失败，尝试下一个兜底`);
     }
@@ -1236,11 +1264,12 @@ const getSingleStockTlineDataByDateLean = async (code, tradeDate) => {
     if (cached && isTlineCacheComplete(cached.line, dateNum)) return cached;
 
     // 分时路由（ByDateLean 路径，磁盘未命中才走 HTTP）：
-    //   最新交易日 → 雪球优先，失败兜底 CLS/THS；更早的历史日期 → 只用 CLS/THS
+    //   最新交易日 → 按 code 稳定哈希分散到 XQ / CLS / THS；更早的历史日期 → CLS / THS 各半
     let result = null;
-    const histOrder = Number(tradeDate) === getLatestTlineDateNum()
-        ? ['xq', 'cls', 'ths']
-        : buildTryOrder('tlineHistorical', `${code}|${tradeDate}`);
+    const histOrder = buildTryOrder(
+        Number(tradeDate) === getLatestTlineDateNum() ? 'tline' : 'tlineHistorical',
+        `${code}|${tradeDate}`,
+    ).filter((src) => src === 'xq' || src === 'cls' || src === 'ths');
     for (const src of histOrder) {
         if (src === 'ths') result = await getSingleStockTlineDataByDateFromTHS(code, tradeDate);
         else if (src === 'cls') result = await getSingleStockTlineDataByDateFromCLS(code, tradeDate);

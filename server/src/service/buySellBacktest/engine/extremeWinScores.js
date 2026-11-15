@@ -61,7 +61,8 @@ const mapTline = (t) => ({
     .sort((a, b) => a.minute - b.minute),
 });
 const loadTlinePoints = async (code, dateNum, opts = {}) => {
-  // strict=true：线上极致胜率/极致赔率使用，失败后按同花顺→财联社（当日再兜底连板网）持续重试，且不缓存空值；
+  // strict=true：线上极致胜率/极致赔率使用，失败后在 6s 窗口内持续重试，且不缓存空值；
+  //   主源按 code 稳定哈希分散到雪球 / 财联社 / 同花顺（各约 1/3），失败再按兜底链切换
   // strict=false：回测默认路径，保持原有「一次拉取 + 空结果永久缓存」，避免历史批量回测被停牌股反复拖慢
   const strict = opts.strict === true;
   const key = `${code}|${dateNum}`;
@@ -93,7 +94,6 @@ const loadTlinePoints = async (code, dateNum, opts = {}) => {
         t = await getSingleStockTlineDataByDate(code, dateNum, {
           ignoreFailCache: true,
           timeoutMs: 2500,
-          sourceOrder: ['ths', 'cls'],
         });
       } catch (e) { /* 继续重试 */ }
       if (!t || !t.line || t.line.length === 0) {
@@ -111,7 +111,7 @@ const loadTlinePoints = async (code, dateNum, opts = {}) => {
       tlineCache.set(key, { res, ts: Date.now() });
     } else {
       tlineCache.delete(key);
-      console.warn(`[分时严格重试] ${code} ${dateNum} 6s 内未取到分时（同花顺→财联社${isToday ? '→连板网' : ''}），不缓存空值，下一轮继续重试`);
+      console.warn(`[分时严格重试] ${code} ${dateNum} 6s 内未取到分时（雪球/同花顺/财联社分源兜底${isToday ? '+连板网' : ''}），不缓存空值，下一轮继续重试`);
     }
     return res;
   })();

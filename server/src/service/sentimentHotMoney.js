@@ -329,8 +329,8 @@ const getStockDailyKline = async (code) => {
     }
     // 收盘后旧快照已过期 → 继续走重拉
   }
-  // 严格重试：同花顺 → 财联社（连板网无日K接口），直到拿到数据或到达本轮窗口上限。
-  // 失败时绝不把空数组写入进程缓存，否则极致胜率/极致赔率会把该股永久剔除。
+  // 严格重试：按 code 分散到雪球 / 财联社 / 同花顺（主源失败自动兜底，连板网无日K接口），
+  // 直到拿到数据或到达本轮 20s 窗口上限。失败时绝不把空数组写入进程缓存，否则极致胜率/极致赔率会把该股永久剔除。
   if (stockKlineInflight.has(code)) return stockKlineInflight.get(code);
   const task = (async () => {
     staleRefetchAt.set(code, Date.now());
@@ -338,7 +338,8 @@ const getStockDailyKline = async (code) => {
     const deadline = Date.now() + 20 * 1000;
     while (Date.now() < deadline) {
       try {
-        kline = (await getSingleStockData(code, 280, 2500, ['ths', 'cls'])) || [];
+        // 2026-11-15 负载均衡：不再固定同花顺→财联社，按 code 稳定哈希分散到雪球/财联社/同花顺
+        kline = (await getSingleStockData(code, 280, 2500)) || [];
       } catch (e) {
         kline = [];
       }

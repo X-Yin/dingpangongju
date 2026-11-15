@@ -17,7 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
 const axios = require('axios');
-const { getClsReqUrl, batchParallel, isTradingDay } = require("../utils");
+const { getClsReqUrl, batchParallel, isTradingDay, withHardTimeout } = require("../utils");
 const { useCLS } = require('../config');
 const monitorStocks = require('../data/monitor_stocks.json');
 
@@ -95,7 +95,11 @@ function calcRiskAppetite(stocks) {
 
 const getStockChangePct = async (stockCode) => {
   try {
-    const { data: { data: klineData } } = await axios.get(getClsReqUrl(stockCode, 1));
+    const { data: { data: klineData } } = await withHardTimeout(
+      axios.get(getClsReqUrl(stockCode, 1), { timeout: 600 }),
+      600,
+      `cls risk kline ${stockCode}`
+    );
     if (klineData && klineData.length > 0) {
       return klineData[0].change;
     }

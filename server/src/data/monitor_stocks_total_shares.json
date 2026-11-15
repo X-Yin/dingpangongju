@@ -743,5 +743,25 @@
     "secu_code": "sh600410",
     "secu_name": "华胜天成",
     "TotalShares": 1096494683
+  },
+  {
+    "secu_code": "sz000062",
+    "secu_name": "深圳华强",
+    "TotalShares": 1045909322
+  },
+  {
+    "secu_code": "sz002261",
+    "secu_name": "拓维信息",
+    "TotalShares": 1259928174
+  },
+  {
+    "secu_code": "sz002897",
+    "secu_name": "意华股份",
+    "TotalShares": 193858976
+  },
+  {
+    "secu_code": "sh600246",
+    "secu_name": "万通发展",
+    "TotalShares": 1955704226
   }
 ]

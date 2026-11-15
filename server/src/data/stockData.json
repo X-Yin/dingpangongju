@@ -2978,5 +2978,89 @@
       }
     ],
     "isImportant": false
+  },
+  "sz000062": {
+    "stockName": "深圳华强",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "preclose_px": 19.71,
+        "close_px": 20.26,
+        "open_px": 20.11,
+        "high_px": 20.98,
+        "low_px": 19.57,
+        "ma5_px": 19.77,
+        "ma10_px": 19.54,
+        "ma20_px": 19.8,
+        "amp": 7.15,
+        "tr": 2.61,
+        "change_px": 0.55,
+        "change": 2.79,
+        "business_amount": 27316246,
+        "business_balance": 550120337,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz002261": {
+    "stockName": "拓维信息",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "open_px": 22.3,
+        "high_px": 22.99,
+        "low_px": 21.84,
+        "close_px": 22.15,
+        "business_amount": 73004353,
+        "business_balance": 1627046565,
+        "change": 2.74,
+        "ma5_px": 21.8,
+        "ma10_px": 21.65,
+        "ma20_px": 21.59,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sz002897": {
+    "stockName": "意华股份",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "open_px": 46.05,
+        "high_px": 48.5,
+        "low_px": 44.69,
+        "close_px": 44.93,
+        "business_amount": 16189044,
+        "business_balance": 749254600,
+        "change": 0.97,
+        "ma5_px": 44.15,
+        "ma10_px": 42.67,
+        "ma20_px": 43.17,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
+  },
+  "sh600246": {
+    "stockName": "万通发展",
+    "kline": [
+      {
+        "trade_date": 20261113,
+        "open_px": 11.04,
+        "high_px": 11.5,
+        "low_px": 10.55,
+        "close_px": 10.64,
+        "business_amount": 95161086,
+        "business_balance": 1050373743,
+        "change": -1.94,
+        "ma5_px": 10.5,
+        "ma10_px": 9.89,
+        "ma20_px": 10.22,
+        "change_diff": 0
+      }
+    ],
+    "isImportant": false
   }
 }

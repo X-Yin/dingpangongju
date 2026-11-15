@@ -3,7 +3,7 @@
 // 统一返回 [{ date: 'YYYYMMDD', amount: 成交额(元), close: 收盘价 }]，按日期升序
 // 2026-11-05：新增 source='auto' 支持 CLS/THS 加权随机（默认 60/40），
 //             主源失败时自动兜底到另一只主力；显式 'cls'/'ths' 保持原有单源语义不变。
-// 2026-11-15：新增 'xq'（雪球）并设为第一优先级，auto 兜底链为 XQ → CLS → THS。
+// 2026-11-15：新增 'xq'（雪球）；auto 模式按 code 稳定哈希分散到 XQ / CLS / THS，失败依次兜底。
 const axios = require('axios');
 const dayjs = require('dayjs');
 const { getClsReqUrl } = require('../utils');

@@ -398,8 +398,11 @@ const checkDualIndexGates = async (dateStr, minute, cybPrecomputed, starPrecompu
 //       盘中 runtimeState 实时修正只有在回测循环里才生效——前端实时买点诊断场景足够了。
 const queryLiveIndexGate = async (stockCode, dateStr, minute) => {
   const trackedIndex = codeToGateIndex(stockCode);
-  const cybPrecomputed = await precomputeTurnMap(CYB_INDEX_CODE, [Number(dateStr)]);
-  const starPrecomputed = await precomputeTurnMap(STAR_INDEX_CODE, [Number(dateStr)]);
+  // 创业板指 / 科创50 的 turnMap 互相独立，并行预计算（2026-11-15 提速）
+  const [cybPrecomputed, starPrecomputed] = await Promise.all([
+    precomputeTurnMap(CYB_INDEX_CODE, [Number(dateStr)]),
+    precomputeTurnMap(STAR_INDEX_CODE, [Number(dateStr)]),
+  ]);
   const { allowedMarkets, allBlocked, cybGate, starGate } = await checkDualIndexGates(
     dateStr, minute, cybPrecomputed, starPrecomputed, null, null
   );

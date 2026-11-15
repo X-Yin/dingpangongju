@@ -374,7 +374,13 @@ const pushBuyPoint = async (p, data, pick, extra = {}) => {
   const payload = buildReadyData(p, data, pick, extra);
   wsServer.broadcast({ type: 'buy_point', mode: p.mode, bucket: p.triggerBucket, ts: Date.now(), data: payload, open: true });
   try {
-    await notifyBuyPointFeishu({ mode: p.mode, source: 'tech', buyStocks: [pick.stock] });
+    await notifyBuyPointFeishu({
+      mode: p.mode,
+      source: 'tech',
+      buyStocks: [pick.stock],
+      // 冰点转折延时：真实买点诊断触发时间为原始 5min 桶时刻（p.triggerTime 为 HH:mm）
+      triggerTime: p.triggerTime ? `${dayjs().format('YYYY-MM-DD')} ${p.triggerTime}:00` : null,
+    });
   } catch (e) {
     console.error('冰点转折延时买入飞书发送失败:', e.message);
   }

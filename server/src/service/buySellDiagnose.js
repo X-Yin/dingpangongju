@@ -43,7 +43,7 @@ const { getStockPositions } = require('./stockPosition');
 const { loadReportIndex, sumReportCount, queryLiveIndexGate, CYB_INDEX_CODE, STAR_INDEX_CODE, codeToGateIndex, gateIndexName, GLOBAL_RESILIENCE_MIN, BUY_TIME_MAX_MINUTE, getTechEmotionEmaMap, getTechEmotionRawMap } = require('./buySellBacktest');
 const { getAmountHistory, parseAmountToYi } = require('./amount');
 const { getDaPanData } = require('./dapan');
-const { getClsReqUrl, getClsReqStockTlineUrl, batchParallel, sleep } = require('../utils');
+const { getClsReqStockTlineUrl, batchParallel, sleep } = require('../utils');
 const { useCLS } = require('../config');
 const { locateCrashSellPoint, describeCrashSell } = require('./buySellBacktest/engine/crashSellWindow');
 // 快进快出「资金净流入阈值动态调节」线上同步（2026-10-21 用户新增）：阈值由启动回测/持仓增删重跑
@@ -698,10 +698,9 @@ async function fetchMonitorStocksChange() {
 
     const fetchChange = async (stockCode) => {
       try {
-        const { data: { data: klineData } } = await axios.get(getClsReqUrl(stockCode, 1));
-        if (klineData && klineData.length > 0) {
-          return klineData[0].change;
-        }
+        // 2026-11-15：涨跌家数统计不再全部打财联社，走按 code 分流的日K
+        const rows = await getSingleStockData(stockCode, 1);
+        if (rows && rows.length > 0) return rows[0].change;
       } catch (error) {
         // ignore single stock error
       }
@@ -2461,27 +2460,42 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
   // force=true（前端手动刷新按钮）绕过 30 秒节流，随时点击随时真正重拉
   if (refresh && (force || Date.now() - _lastBuyPointHeavyRefreshAt >= BUY_POINT_HEAVY_REFRESH_INTERVAL)) {
     _lastBuyPointHeavyRefreshAt = Date.now();
-    try {
-      freshDapanData = await getDaPanData();
-      if (freshDapanData) {
-        fs.writeFileSync(dapanDataPath, JSON.stringify(freshDapanData, null, 2));
-      }
-    } catch (e) {
-      console.error('刷新大盘数据失败:', e.message);
-    }
-    try {
-      await updateCurrentTechIndexData();
-    } catch (e) {
-      console.error('刷新科技情绪失败:', e.message);
-      try {
-        await getCurrentTechEmotion();
-      } catch (e2) {
-        // ignore
-      }
-    }
+    // 大盘、科技情绪、开盘统计互相独立，并行刷新（2026-11-15 提速：原来串行累加时延）
+    const refreshTasks = [
+      (async () => {
+        try {
+          const d = await getDaPanData();
+          if (d) {
+            freshDapanData = d;
+            fs.writeFileSync(dapanDataPath, JSON.stringify(d, null, 2));
+          }
+        } catch (e) {
+          console.error('刷新大盘数据失败:', e.message);
+        }
+      })(),
+      (async () => {
+        try {
+          await updateCurrentTechIndexData();
+        } catch (e) {
+          console.error('刷新科技情绪失败:', e.message);
+          try {
+            await getCurrentTechEmotion();
+          } catch (e2) {
+            // ignore
+          }
+        }
+      })(),
+    ];
     if (isInOpeningCheckWindow()) {
-      freshOpeningStats = await fetchOpeningBelowCount();
+      refreshTasks.push((async () => {
+        try {
+          freshOpeningStats = await fetchOpeningBelowCount();
+        } catch (e) {
+          console.error('刷新开盘涨跌家数失败:', e.message);
+        }
+      })());
     }
+    await Promise.all(refreshTasks);
   }
 
   // ============================================================
@@ -3289,11 +3303,19 @@ const isPrevDayOneWordBoardBars = (code, prevBar, preBar) => {
   }
 };
 
-const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_MARKET) => {
+// 同一只股票的日K并发请求合并（2026-11-15 提速）：
+//   前端榜单轮询与买点诊断可能同时为同一批股票拉 K 线；这里只保留一份在途请求，
+//   后到的调用直接复用，不引入额外缓存、不改变每次诊断的实时性。
+const liveKlineInflight = new Map();
+
+const buildTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_MARKET, opts = {}) => {
   // limit：每个市场返回的最大条数；传入较大的值（如全部自选股）时用于「优选个股」全量分市场展示
   const maxPerMarket = Number.isFinite(Number(limit)) && Number(limit) > 0
     ? Math.floor(Number(limit))
     : TOP_GAINERS_PER_MARKET;
+  // skipQualifiedScan：买点诊断只消费展示榜 / 买点候选，不需要「只看符合条件」补充扫描（最多 60 只个股分时），
+  // 跳过可显著缩短一轮诊断耗时（2026-11-15 提速）
+  const skipQualifiedScan = opts.skipQualifiedScan === true;
   let targetDay;
   // 集合竞价（9:15-9:30）：当日日 K 线尚未生成，但竞价已有最新价格，
   // 按今日取数并用实时快照补齐当日涨幅，避免刷新后仍展示上一交易日涨幅
@@ -3343,7 +3365,7 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   }
 
   // 估值快照（流通市值/市盈率）：非当日缓存时拉取一次，供榜单标注估值禁买原因
-  await ensureWatchlistValuation();
+  // （已并入下方 Promise.all 与指数门禁并行）
   // 自选股榜单仅纳入科技股（isTech !== false，与全站「自选股科技股」口径一致）；
   // 2026-10-22 起涨幅榜展示全部科技自选股：估值禁买（流通市值 < 200 亿 / 市盈率亏损）个股不再从榜单剔除，
   // 只在名称后标注原因，且仍不进入买点候选
@@ -3352,10 +3374,10 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   const emoDomesticOnly = targetDateStr >= EMO_DOMESTIC_ONLY_FROM_DATE;
   const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false
     && !(emoDomesticOnly && isOverseasComputeWatchlistStock(s.code)));
-  const gate = await queryLiveIndexGate(null, targetDateStr, buyMinute);
-
-  // 两个指数的分时（算个股抗分歧用）
-  const [cybIdxTline, starIdxTline] = await Promise.all([
+  // 指数门禁 / 两个指数分时 / 估值快照互相独立，四者并行（2026-11-15 提速）
+  const [, gate, cybIdxTline, starIdxTline] = await Promise.all([
+    ensureWatchlistValuation(),
+    queryLiveIndexGate(null, targetDateStr, buyMinute),
     getSingleStockTlineDataByDate(CYB_INDEX_CODE, targetDateStr),
     getSingleStockTlineDataByDate(STAR_INDEX_CODE, targetDateStr),
   ]);
@@ -3363,8 +3385,7 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   const kcIndexLine = starIdxTline?.line || [];
 
   // 阶段1：并行拉取全部自选股 K 线（严格重试，不允许静默丢股票）
-  // 2026-11-14 用户要求：失败后按「同花顺 → 财联社」固定顺序不断重试，必须拿到数据。
-  //   - 连板网没有日K接口（见 config/index.js），日K只能在 THS / CLS 之间重试
+  // 2026-11-15：按股票哈希把日K请求分散到雪球 / 同花顺 / 财联社；同一股票的在途请求全局合并
   //   - 每只股票在整轮 30s 窗口内循环重试（单次 2500ms，失败后间隔 200ms 再试）
   //   - 到窗口仍未拿到的股票不会被静默丢弃：结果里通过 dataMissing 显式返回，且不落收盘快照，
   //     下一次 5s 轮询会继续重试，直到拿到为止
@@ -3376,6 +3397,20 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   const klineOk = (rows) => (requireTargetBar
     ? hasTargetBar(rows)
     : (Array.isArray(rows) && rows.length > 0));
+  // 同一只股票在途请求合并：前端榜单轮询 / 买点诊断同时拉同一批股票时只发一份请求
+  const fetchKlineShared = (code, dateKey) => {
+    const cacheKey = `${code}|${dateKey}`;
+    const existing = liveKlineInflight.get(cacheKey);
+    if (existing) return existing;
+    // 主源按 code 稳定哈希分散到雪球 / 财联社 / 同花顺（各约 1/3），失败按兜底链切换；
+    // klineOk 作为校验：主源返回不含目标交易日 K 线时继续尝试下一个源
+    const task = getSingleStockData(code, 30, 2500, null, klineOk)
+      .finally(() => {
+        if (liveKlineInflight.get(cacheKey) === task) liveKlineInflight.delete(cacheKey);
+      });
+    liveKlineInflight.set(cacheKey, task);
+    return task;
+  };
   const KLINE_STRICT_WINDOW_MS = 30 * 1000;
   const klineDeadline = Date.now() + KLINE_STRICT_WINDOW_MS;
   const klineResults = await batchParallel(monitorStocks, async (stock) => {
@@ -3384,8 +3419,9 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     while (Date.now() < klineDeadline) {
       attempts++;
       try {
-        // 固定顺序：同花顺 → 财联社；失败立刻换源，两个源都失败后稍等再从头重试
-        const d = await getSingleStockData(stock.code, 30, 2500, ['ths', 'cls']);
+        // 2026-11-15 负载均衡：按股票把请求分散到雪球 / 财联社 / 同花顺，主源失败自动兜底；
+        // 同一股票在途请求全局合并，避免前端轮询与诊断重复打同一个源
+        const d = await fetchKlineShared(stock.code, requireTargetBar ? targetDateStr : 'latest');
         if (klineOk(d)) return { stock, klineData: d, klineAttempts: attempts };
         if (Array.isArray(d) && d.length > 0) last = d;
       } catch (e) {
@@ -3466,20 +3502,21 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   const topStar = base.filter(s => s.isSh688).sort(byChange3d).slice(0, maxPerMarket);
 
   // 阶段2：对入选个股拉分时，计算实时涨幅、抗分歧分数、涨停与买点资格
-  // 分时同样严格重试：同花顺 → 财联社固定顺序；整轮分时阶段共享 15s 重试窗口。
-  // 连板网不支持历史日期分时（见 config/index.js），周末/历史日期只能在 THS / CLS 间重试。
+  // 分时同样严格重试；整轮分时阶段共享 15s 重试窗口。
+  // 2026-11-15：当日实时优先复用 getSingleStockTlineData（5s TTL + 在途合并 + 分源兜底），
+  //   缓存未命中时按 code 稳定哈希分散到雪球 / 财联社 / 同花顺，主源失败再兜底。
   const tlineStageDeadline = Date.now() + 15 * 1000;
   const liveTlineToday = targetDateStr === dayjs().format('YYYYMMDD');
   const fetchTlineOnceStrict = async (code) => {
-    // 历史日期：同花顺 → 财联社（连板网不支持历史分时）
-    let tline = await getSingleStockTlineDataByDate(code, targetDateStr, {
-      ignoreFailCache: true,
-      timeoutMs: 2500,
-      sourceOrder: ['ths', 'cls'],
-    });
-    // 当日实时：历史接口拿不到时再走「同花顺 → 财联社 → 连板网」三源实时分时
-    if ((!tline || !tline.line || tline.line.length === 0) && liveTlineToday) {
+    let tline = null;
+    if (liveTlineToday) {
       tline = await getSingleStockTlineData(code);
+    }
+    if (!tline || !tline.line || tline.line.length === 0) {
+      tline = await getSingleStockTlineDataByDate(code, targetDateStr, {
+        ignoreFailCache: true,
+        timeoutMs: 2500,
+      });
     }
     return tline;
   };
@@ -3565,9 +3602,12 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
   const qualifiedGateBase = [...base].sort(byChange3d);
   const qualifiedFound = () => qualifiedScan.reduce((n, s) => n + (s.excludeReason ? 0 : 1), 0);
   const restCandidates = qualifiedGateBase.filter((b) => !scannedCodes.has(b.stock.code));
-  for (let i = 0; i < restCandidates.length && qualifiedScan.length < MAX_QUALIFIED_SCAN && qualifiedFound() < QUALIFIED_TOP_N; i += 8) {
-    const enrichedChunk = await batchParallel(restCandidates.slice(i, i + 8), enrich, 8);
-    qualifiedScan.push(...enrichedChunk);
+  // 买点诊断路径不需要「只看符合条件」榜，跳过最多 60 只个股的分时补充扫描（2026-11-15 提速）
+  if (!skipQualifiedScan) {
+    for (let i = 0; i < restCandidates.length && qualifiedScan.length < MAX_QUALIFIED_SCAN && qualifiedFound() < QUALIFIED_TOP_N; i += 8) {
+      const enrichedChunk = await batchParallel(restCandidates.slice(i, i + 8), enrich, 8);
+      qualifiedScan.push(...enrichedChunk);
+    }
   }
 
   // 展示榜：按 3 日涨幅降序取前十，不做剔除（涨停 / 3日涨幅>30% / 昨日一字板 / 估值禁买 仍在榜内），
@@ -3678,6 +3718,33 @@ const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_
     }
   }
   return result;
+};
+
+// 并发合并 + 1s 短 TTL（2026-11-15 提速）：
+//   前端 5s 轮询、买点诊断 tick、冰点延时买入可能同时触发全量拉取；
+//   这里保证同一批参数只有一个构建在途，后到的请求直接复用同一结果，
+//   避免多份全量 K 线/分时请求同时打满数据源、把单轮诊断拖到数分钟。
+const TOP_GAINERS_LIVE_TTL_MS = 1000;
+const topGainersInflight = new Map();
+const topGainersResultCache = new Map();
+const getTopGainersByMarket = (targetDate = null, limit = TOP_GAINERS_PER_MARKET, opts = {}) => {
+  const dateKey = targetDate ? String(targetDate).replace(/-/g, '') : dayjs().format('YYYYMMDD');
+  const perMarket = Number.isFinite(Number(limit)) && Number(limit) > 0
+    ? Math.floor(Number(limit))
+    : TOP_GAINERS_PER_MARKET;
+  const key = `${dateKey}|${perMarket}|${opts.skipQualifiedScan === true ? 1 : 0}`;
+  const hit = topGainersResultCache.get(key);
+  if (hit && Date.now() - hit.ts < TOP_GAINERS_LIVE_TTL_MS) return Promise.resolve(hit.result);
+  const inflight = topGainersInflight.get(key);
+  if (inflight) return inflight;
+  const task = buildTopGainersByMarket(targetDate, limit, opts)
+    .then((result) => {
+      topGainersResultCache.set(key, { result, ts: Date.now() });
+      return result;
+    })
+    .finally(() => topGainersInflight.delete(key));
+  topGainersInflight.set(key, task);
+  return task;
 };
 
 // ========== 个股买点诊断：7 项前置检查 + 个股抗分歧指数检查 ==========
