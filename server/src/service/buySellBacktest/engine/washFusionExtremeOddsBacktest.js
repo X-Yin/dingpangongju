@@ -10,6 +10,7 @@ const {
   getStockBarsCached,
   stockHighChangeAt,
   clearTlineMemCache,
+  isBjStockCode,
 } = require('../deps');
 const { getTechIndexDates } = require('../utils/techEmotion');
 const { EXCLUDED_CODES } = require('../constants');
@@ -116,10 +117,243 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
   const skippedDates = [];
   const seenStocks = new Map();
   const positions = [];
+  // MA5 缓存提升到整个回测周期（日K不可变，跨日复用，无需每日重算）
+  const ma5Cache = new Map();
 
+  // ============================================================
+  // 全量并行预取（2026-11-16 用户要求：全部交易日 1 分钟内跑完，请求不要串行、不要间隔）：
+  // 候选池 / 分时命中全部是「纯日期函数」（不依赖持仓状态），先跨日并行算好；
+  // 逐日模拟只剩纯 CPU 计算 + 最多 2 份持仓分时的并行加载
+  // ============================================================
+  clearTlineCache();
+
+  // ---- ① 每日上一交易日 + 连板池原始记录（本地 lianbanSnapshot 读盘，12 并发）----
+  const dayCtxMap = new Map(); // dateStr -> 每日预取上下文
+  const collectRawPool = async (dateStr, lookbackDays, prevTradeDate, source) => {
+    let occStocks = [];
+    try {
+      const r = await getRecentMultiLianbanOccurrences(dateStr, lookbackDays, 1);
+      occStocks = r.stocks || [];
+    } catch (e) { occStocks = []; }
+    const recordMap = new Map();
+    for (const s of occStocks) {
+      if (!s || !s.code) continue;
+      if (isChiNextOrStar(s.code) || isBjStockCode(s.code) || EXCLUDED_CODES.has(s.code) || isThemeExcluded(s.code, s.board)) continue;
+      const item = recordMap.get(s.code) || {
+        code: s.code, name: s.name || s.code, board: s.board || '', hasHighBoard: false, firstBoardAtPrev: false,
+      };
+      const cnt = Number(s.lianbanCount);
+      if (Number.isFinite(cnt) && cnt >= 3) item.hasHighBoard = true;
+      const d = String(s.date || '');
+      if (source === SOURCE_B && cnt === 1 && d === prevTradeDate) item.firstBoardAtPrev = true;
+      if (s.board) item.board = s.board;
+      recordMap.set(s.code, item);
+    }
+    return Array.from(recordMap.values());
+  };
+
+  await batchParallel(allDates, async (dateStr) => {
+    let prevTradeDate = null;
+    try {
+      const past = await getPastTradingDates(dateStr, 1);
+      prevTradeDate = past && past.length ? String(past[past.length - 1]) : null;
+    } catch (e) { prevTradeDate = null; }
+    const [aRaw, bRaw] = await Promise.all([
+      collectRawPool(dateStr, WASHOUT_LOOKBACK_DAYS, prevTradeDate, SOURCE_A),
+      prevTradeDate ? collectRawPool(dateStr, VWS_LOOKBACK_DAYS, prevTradeDate, SOURCE_B) : Promise.resolve([]),
+    ]);
+    dayCtxMap.set(dateStr, {
+      dateStr,
+      dateNum: parseInt(dateStr, 10),
+      prevTradeDate,
+      aRaw: aRaw.filter((x) => !x.hasHighBoard),
+      bRaw: bRaw.filter((x) => !x.hasHighBoard && x.firstBoardAtPrev),
+      candidates: [],
+      hitMemo: new Map(),
+      limitUpMemo: new Map(),
+    });
+    if (onProgress) onProgress({ current: dayCtxMap.size, total, date: dateStr, status: 'loading' });
+  }, 12);
+
+  // ---- ② 池内全部代码日K一次性并行预取（跨日去重，不再逐日各拉一遍）----
+  const allPoolCodes = new Set();
+  for (const ctx of dayCtxMap.values()) {
+    for (const c of ctx.aRaw) allPoolCodes.add(c.code);
+    for (const c of ctx.bRaw) allPoolCodes.add(c.code);
+  }
+  try { await ensureBarsForCodes(allPoolCodes); } catch (e) { /* 日K拉取失败按缺失处理 */ }
+
+  // ---- ③ 每日洗盘形态过滤（纯 CPU，读 barsCache，12 并发）----
+  await batchParallel(allDates, async (dateStr) => {
+    const ctx = dayCtxMap.get(dateStr);
+    const out = [];
+    for (const item of ctx.aRaw) {
+      const bars = getStockBarsCached(item.code);
+      if (!bars || bars.length === 0) continue;
+      const washout = isPotentialBullWashout(bars, ctx.dateNum, { volMult: BACKTEST_VOL_MULT });
+      if (!washout) continue;
+      const win3 = maxThreeDayWindowGain(bars, ctx.dateNum);
+      if (win3 != null && win3 > MAX_WIN3_GAIN_PCT) continue;
+      washout.maxWin3Pct = win3 != null ? round2(win3) : null;
+      out.push({ code: item.code, name: item.name, board: item.board, source: SOURCE_A, washout });
+    }
+    for (const item of ctx.bRaw) {
+      const bars = getStockBarsCached(item.code);
+      if (!bars || bars.length === 0) continue;
+      const washout = matchVolumeWashout(bars, ctx.prevTradeDate ? parseInt(ctx.prevTradeDate, 10) : null);
+      if (!washout) continue;
+      const win3 = maxThreeDayWindowGain(bars, ctx.dateNum);
+      if (win3 != null && win3 > MAX_WIN3_GAIN_PCT) continue;
+      washout.maxWin3Pct = win3 != null ? round2(win3) : null;
+      out.push({ code: item.code, name: item.name, board: item.board, source: SOURCE_B, washout });
+    }
+    ctx.preValuation = out;
+  }, 12);
+
+  // ---- ④ 总市值估值一次性并行预取（跨日去重，一次网络往返搞定全部日期）----
+  try {
+    const allCandCodes = new Set();
+    for (const ctx of dayCtxMap.values()) for (const c of ctx.preValuation) allCandCodes.add(c.code);
+    await ensureBacktestValuation(Array.from(allCandCodes));
+  } catch (e) { /* 拉取失败按缺失处理 */ }
+
+  // ---- ⑤ 市值预筛 + 分时加载前剪枝（纯 CPU，日K已全部就绪）----
+  for (const dateStr of allDates) {
+    const ctx = dayCtxMap.get(dateStr);
+    const seen = new Set();
+    let candidates = [];
+    for (const c of ctx.preValuation) {
+      if (seen.has(c.code)) continue;
+      seen.add(c.code);
+      candidates.push(c);
+    }
+    // 总市值 ≤ 100 亿元：预筛按买点日前一交易日收盘价折算，买入时再按买入价复核；数据缺失不拦截
+    candidates = candidates.filter((c) => {
+      const info = totalMvInfoFor(c.code, ctx.prevTradeDate);
+      c.totalShares = info ? info.shares : null;
+      c.totalMvYiPrev = info ? info.mvYi : null;
+      c.totalMvBase = info
+        ? { baseMvYi: info.baseMvYi, baseDate: info.baseDate, baseClose: info.baseClose }
+        : null;
+      return c.totalMvYiPrev == null || c.totalMvYiPrev <= MAX_TOTAL_MV_YI;
+    });
+    // 分时加载前剪枝：该候选不可能触发任一来源的买点时直接剔除（日K缺失时保守保留）
+    candidates = candidates.filter((c) => {
+      const bars = getStockBarsCached(c.code);
+      const idx = bars ? bars.findIndex((b) => String(b.d) === dateStr) : -1;
+      let openChg = null;
+      if (idx > 0) {
+        const pre = Number(bars[idx - 1].c);
+        const o = Number(bars[idx].o);
+        if (pre > 0 && o > 0) openChg = ((o - pre) / pre) * 100;
+      }
+      const highChg = stockHighChangeAt(c.code, dateStr);
+      if (c.source === SOURCE_A) {
+        // A：竞价 ≥ 5% 直接买，或盘中首次 +8%
+        if (highChg == null || highChg >= BUY_TRIGGER_PCT) return true;
+        return openChg != null && openChg >= BUY_OPEN_GAP_AUCTION_PCT;
+      }
+      // B：竞价必须高开，且盘中首次 +8%
+      if (openChg != null && openChg <= 0) return false;
+      if (highChg == null) return true;
+      if (highChg >= BUY_TRIGGER_PCT) return true;
+      return openChg != null && openChg >= BUY_TRIGGER_PCT;
+    });
+    for (const c of candidates) {
+      if (!seenStocks.has(c.code)) seenStocks.set(c.code, { code: c.code, name: c.name });
+    }
+    ctx.candidates = candidates;
+  }
+
+  // ---- ⑥ 每日候选分时命中预取（跨日 6 并发 × 日内候选 8 并发，不再逐日串行拉分时）----
+  await batchParallel(allDates, async (dateStr) => {
+    const ctx = dayCtxMap.get(dateStr);
+    const { candidates, hitMemo, limitUpMemo } = ctx;
+    if (candidates.length === 0) return;
+    const prevNum = ctx.prevTradeDate ? parseInt(ctx.prevTradeDate, 10) : null;
+    await batchParallel(candidates, async (c) => {
+      // B 风格：首板日（T-1）分时检查（断板 ≤ 1 次、封板满 20 分钟无漏量）
+      if (c.source === SOURCE_B) {
+        let bt = null;
+        try { bt = prevNum ? await loadTlinePoints(c.code, prevNum) : null; } catch (e) { bt = null; }
+        c.boardCheck = analyzeBoardDayTline(c.code, bt);
+        if (c.boardCheck.failed) return;
+      }
+      let t = null;
+      try { t = await loadTlinePoints(c.code, ctx.dateNum); } catch (e) { t = null; }
+      if (!t || !(t.preclose > 0) || !Array.isArray(t.points) || t.points.length === 0) return;
+      const preclose = t.preclose;
+      const thr = limitUpThresholdOf(c.code);
+      const pts = t.points;
+      const p0 = pts.find((p) => p.lastPx > 0);
+      if (!p0) return;
+      const openChg = ((p0.lastPx - preclose) / preclose) * 100;
+
+      if (c.source === SOURCE_A) {
+        // 只有 9:30 开盘即涨停（竞价一字板）买不进；盘中封板仍可买
+        if (openChg >= thr) {
+          limitUpMemo.set(c.code, { minute: p0.minute, px: p0.lastPx, chg: round2(openChg) });
+          return;
+        }
+        if (openChg >= BUY_OPEN_GAP_AUCTION_PCT) {
+          hitMemo.set(c.code, { minute: p0.minute, px: p0.lastPx, chg: round2(openChg), mode: 'auction', source: SOURCE_A });
+          return;
+        }
+        // 9:30–9:40 内首次 +8%，最多允许 1 次分钟级回落
+        let pullbackCount = 0;
+        const inBuyWindow = (p) => p.minute >= BUY_START_MINUTE && p.minute <= BUY_CUTOFF_MINUTE;
+        for (let i = 0; i < pts.length; i += 1) {
+          const p = pts[i];
+          if (!inBuyWindow(p)) continue;
+          if (!(p.lastPx > 0)) continue;
+          if (i > 0 && inBuyWindow(pts[i - 1]) && pts[i - 1].lastPx > 0 && p.lastPx < pts[i - 1].lastPx) {
+            pullbackCount += 1;
+            if (pullbackCount > MAX_INTRADAY_PULLBACKS) break;
+          }
+          const chg = ((p.lastPx - preclose) / preclose) * 100;
+          if (chg < BUY_TRIGGER_PCT) continue;
+          const minBreakoutPx = (c.washout.platformHigh || 0) * WASHOUT_OPT.breakoutMinRatio;
+          if (p.lastPx < minBreakoutPx) continue;
+          hitMemo.set(c.code, { minute: p.minute, px: p.lastPx, chg: round2(chg), mode: 'burst8', source: SOURCE_A });
+          break;
+        }
+        return;
+      }
+
+      // B 风格：竞价必须高开；竞价一字板买不进
+      if (openChg >= thr) {
+        limitUpMemo.set(c.code, { minute: p0.minute, px: p0.lastPx, chg: round2(openChg) });
+        return;
+      }
+      if (openChg <= 0) return;
+      for (let i = 0; i < pts.length; i += 1) {
+        const p = pts[i];
+        if (p.minute < BUY_START_MINUTE || p.minute > VWS_BUY_CUTOFF_MINUTE) continue;
+        if (!(p.lastPx > 0)) continue;
+        const chg = ((p.lastPx - preclose) / preclose) * 100;
+        if (chg < BUY_TRIGGER_PCT) continue;
+        hitMemo.set(c.code, {
+          minute: p.minute,
+          px: p.lastPx,
+          chg: round2(chg),
+          mode: p.minute <= p0.minute ? 'auction8' : 'burst8',
+          source: SOURCE_B,
+        });
+        break;
+      }
+    }, 8);
+    // B 风格首板日分时不合格者从候选池剔除
+    ctx.candidates = candidates.filter((c) => !(c.boardCheck && c.boardCheck.failed));
+    clearTlineCache();      // 当日命中信息已提取进 memo，防内存膨胀
+    clearTlineMemCache();
+  }, 6);
+
+  // ============================================================
+  // 逐日串行模拟：账户持仓状态跨日依赖，无法并行；此处只剩纯 CPU 计算
+  // ============================================================
   for (let di = 0; di < total; di++) {
     const dateStr = allDates[di];
-    if (onProgress) onProgress({ current: di + 1, total, date: dateStr, status: 'loading' });
+    const ctx = dayCtxMap.get(dateStr);
 
     let campData;
     try {
@@ -129,264 +363,36 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
     const timeBuckets = campBuckets.length > 0 ? campBuckets : FALLBACK_TIME_BUCKETS;
     const dateDisplay = (campData && campData.dateDisplay)
       || `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
-    const dateNum = parseInt(dateStr, 10);
+    const dateNum = ctx.dateNum;
+    const prevTradeDate = ctx.prevTradeDate;
+    const candidates = ctx.candidates;
+    const hitMemo = ctx.hitMemo;
+    const limitUpMemo = ctx.limitUpMemo;
 
     clearTlineCache();
 
-    let prevTradeDate = null;
-    try {
-      const past = await getPastTradingDates(dateStr, 1);
-      prevTradeDate = past && past.length ? String(past[past.length - 1]) : null;
-    } catch (e) { prevTradeDate = null; }
-
-    // ---- 选股：A 风格（首板洗盘-起爆拉升）候选池 ----
-    let selectedReady = false;
-    let candidates = [];
-    const collectFirstBoardWash = async () => {
-      let occStocks = [];
-      try {
-        const r = await getRecentMultiLianbanOccurrences(dateStr, WASHOUT_LOOKBACK_DAYS, 1);
-        occStocks = r.stocks || [];
-      } catch (e) { occStocks = []; }
-
-      const recordMap = new Map();
-      for (const s of occStocks) {
-        if (!s || !s.code) continue;
-        if (isChiNextOrStar(s.code) || EXCLUDED_CODES.has(s.code) || isThemeExcluded(s.code, s.board)) continue;
-        const item = recordMap.get(s.code) || {
-          code: s.code, name: s.name || s.code, board: s.board || '', hasHighBoard: false,
-        };
-        const cnt = Number(s.lianbanCount);
-        if (Number.isFinite(cnt) && cnt >= 3) item.hasHighBoard = true;
-        if (s.board) item.board = s.board;
-        recordMap.set(s.code, item);
-      }
-
-      const washStocks = Array.from(recordMap.values()).filter((x) => !x.hasHighBoard);
-      try { await ensureBarsForCodes(new Set(washStocks.map((x) => x.code))); } catch (e) { /* 日K拉取失败按缺失处理 */ }
-
-      const out = [];
-      for (const item of washStocks) {
-        const bars = getStockBarsCached(item.code);
-        if (!bars || bars.length === 0) continue;
-        const washout = isPotentialBullWashout(bars, dateNum, { volMult: BACKTEST_VOL_MULT });
-        if (!washout) continue;
-        const win3 = maxThreeDayWindowGain(bars, dateNum);
-        if (win3 != null && win3 > MAX_WIN3_GAIN_PCT) continue;
-        washout.maxWin3Pct = win3 != null ? round2(win3) : null;
-        out.push({ code: item.code, name: item.name, board: item.board, source: SOURCE_A, washout });
-      }
-      return out;
-    };
-
-    // ---- 选股：B 风格（放量洗盘-二板起爆）候选池 ----
-    const collectVolumeWashout = async () => {
-      if (!prevTradeDate) return [];
-      let occStocks = [];
-      try {
-        const r = await getRecentMultiLianbanOccurrences(dateStr, VWS_LOOKBACK_DAYS, 1);
-        occStocks = r.stocks || [];
-      } catch (e) { occStocks = []; }
-
-      const recordMap = new Map();
-      for (const s of occStocks) {
-        if (!s || !s.code) continue;
-        if (isChiNextOrStar(s.code) || EXCLUDED_CODES.has(s.code) || isThemeExcluded(s.code, s.board)) continue;
-        const item = recordMap.get(s.code) || {
-          code: s.code, name: s.name || s.code, board: s.board || '', hasHighBoard: false, firstBoardAtPrev: false,
-        };
-        const cnt = Number(s.lianbanCount);
-        if (Number.isFinite(cnt) && cnt >= 3) item.hasHighBoard = true;
-        const d = String(s.date || '');
-        if (cnt === 1 && d === prevTradeDate) item.firstBoardAtPrev = true;
-        if (s.board) item.board = s.board;
-        recordMap.set(s.code, item);
-      }
-
-      const poolStocks = Array.from(recordMap.values()).filter((x) => !x.hasHighBoard && x.firstBoardAtPrev);
-      try { await ensureBarsForCodes(new Set(poolStocks.map((x) => x.code))); } catch (e) { /* 日K拉取失败按缺失处理 */ }
-
-      const prevNum = parseInt(prevTradeDate, 10);
-      const out = [];
-      for (const item of poolStocks) {
-        const bars = getStockBarsCached(item.code);
-        if (!bars || bars.length === 0) continue;
-        const washout = matchVolumeWashout(bars, prevNum);
-        if (!washout) continue;
-        const win3 = maxThreeDayWindowGain(bars, dateNum);
-        if (win3 != null && win3 > MAX_WIN3_GAIN_PCT) continue;
-        washout.maxWin3Pct = win3 != null ? round2(win3) : null;
-        out.push({ code: item.code, name: item.name, board: item.board, source: SOURCE_B, washout });
-      }
-      return out;
-    };
-
-    const ensureSelected = async () => {
-      if (selectedReady) return;
-      selectedReady = true;
-
-      const [aPool, bPool] = await Promise.all([collectFirstBoardWash(), collectVolumeWashout()]);
-
-      // 同一只股票同时命中两个策略时只保留一份（按 A 风格口径建仓）
-      const seen = new Set();
-      candidates = [];
-      for (const c of [...aPool, ...bPool]) {
-        if (seen.has(c.code)) continue;
-        seen.add(c.code);
-        candidates.push(c);
-      }
-
-      // 总市值 ≤ 100 亿元：预筛按买点日前一交易日收盘价折算，买入时再按买入价复核；数据缺失不拦截
-      try { await ensureBacktestValuation(candidates.map((c) => c.code)); } catch (e) { /* 拉取失败按缺失处理 */ }
-      candidates = candidates.filter((c) => {
-        const info = totalMvInfoFor(c.code, prevTradeDate);
-        c.totalShares = info ? info.shares : null;
-        c.totalMvYiPrev = info ? info.mvYi : null;
-        c.totalMvBase = info
-          ? { baseMvYi: info.baseMvYi, baseDate: info.baseDate, baseClose: info.baseClose }
-          : null;
-        return c.totalMvYiPrev == null || c.totalMvYiPrev <= MAX_TOTAL_MV_YI;
-      });
-
-      // 分时加载前剪枝：该候选不可能触发任一来源的买点时直接剔除（日K缺失时保守保留）
-      candidates = candidates.filter((c) => {
-        const bars = getStockBarsCached(c.code);
-        const idx = bars ? bars.findIndex((b) => String(b.d) === dateStr) : -1;
-        let openChg = null;
-        if (idx > 0) {
-          const pre = Number(bars[idx - 1].c);
-          const o = Number(bars[idx].o);
-          if (pre > 0 && o > 0) openChg = ((o - pre) / pre) * 100;
-        }
-        const highChg = stockHighChangeAt(c.code, dateStr);
-        if (c.source === SOURCE_A) {
-          // A：竞价 ≥ 5% 直接买，或盘中首次 +8%
-          if (highChg == null || highChg >= BUY_TRIGGER_PCT) return true;
-          return openChg != null && openChg >= BUY_OPEN_GAP_AUCTION_PCT;
-        }
-        // B：竞价必须高开，且盘中首次 +8%
-        if (openChg != null && openChg <= 0) return false;
-        if (highChg == null) return true;
-        if (highChg >= BUY_TRIGGER_PCT) return true;
-        return openChg != null && openChg >= BUY_TRIGGER_PCT;
-      });
-
-      for (const c of candidates) {
-        if (!seenStocks.has(c.code)) seenStocks.set(c.code, { code: c.code, name: c.name });
-      }
-    };
-
-    // ---- 候选股分时（流式提取，不保留分时点位）----
-    const hitMemo = new Map();     // code -> { minute, px, chg, mode, source }
-    const limitUpMemo = new Map(); // code -> { minute, px, chg }
-    let entriesReady = false;
-    const ensureEntries = async () => {
-      if (entriesReady) return;
-      entriesReady = true;
-      if (candidates.length === 0) return;
-      const prevNum = prevTradeDate ? parseInt(prevTradeDate, 10) : null;
-      await batchParallel(candidates, async (c) => {
-        // B 风格：首板日（T-1）分时检查（断板 ≤ 1 次、封板满 20 分钟无漏量）
-        if (c.source === SOURCE_B) {
-          let bt = null;
-          try { bt = prevNum ? await loadTlinePoints(c.code, prevNum) : null; } catch (e) { bt = null; }
-          c.boardCheck = analyzeBoardDayTline(c.code, bt);
-          if (c.boardCheck.failed) return;
-        }
-        let t = null;
-        try { t = await loadTlinePoints(c.code, dateNum); } catch (e) { t = null; }
-        if (!t || !(t.preclose > 0) || !Array.isArray(t.points) || t.points.length === 0) return;
-        const preclose = t.preclose;
-        const thr = limitUpThresholdOf(c.code);
-        const pts = t.points;
-        const p0 = pts.find((p) => p.lastPx > 0);
-        if (!p0) return;
-        const openChg = ((p0.lastPx - preclose) / preclose) * 100;
-
-        if (c.source === SOURCE_A) {
-          // 只有 9:30 开盘即涨停（竞价一字板）买不进；盘中封板仍可买
-          if (openChg >= thr) {
-            limitUpMemo.set(c.code, { minute: p0.minute, px: p0.lastPx, chg: round2(openChg) });
-            return;
-          }
-          if (openChg >= BUY_OPEN_GAP_AUCTION_PCT) {
-            hitMemo.set(c.code, { minute: p0.minute, px: p0.lastPx, chg: round2(openChg), mode: 'auction', source: SOURCE_A });
-            return;
-          }
-          // 9:30–9:40 内首次 +8%，最多允许 1 次分钟级回落
-          let pullbackCount = 0;
-          const inBuyWindow = (p) => p.minute >= BUY_START_MINUTE && p.minute <= BUY_CUTOFF_MINUTE;
-          for (let i = 0; i < pts.length; i += 1) {
-            const p = pts[i];
-            if (!inBuyWindow(p)) continue;
-            if (!(p.lastPx > 0)) continue;
-            if (i > 0 && inBuyWindow(pts[i - 1]) && pts[i - 1].lastPx > 0 && p.lastPx < pts[i - 1].lastPx) {
-              pullbackCount += 1;
-              if (pullbackCount > MAX_INTRADAY_PULLBACKS) break;
-            }
-            const chg = ((p.lastPx - preclose) / preclose) * 100;
-            if (chg < BUY_TRIGGER_PCT) continue;
-            const minBreakoutPx = (c.washout.platformHigh || 0) * WASHOUT_OPT.breakoutMinRatio;
-            if (p.lastPx < minBreakoutPx) continue;
-            hitMemo.set(c.code, { minute: p.minute, px: p.lastPx, chg: round2(chg), mode: 'burst8', source: SOURCE_A });
-            break;
-          }
-          return;
-        }
-
-        // B 风格：竞价必须高开；竞价一字板买不进
-        if (openChg >= thr) {
-          limitUpMemo.set(c.code, { minute: p0.minute, px: p0.lastPx, chg: round2(openChg) });
-          return;
-        }
-        if (openChg <= 0) return;
-        for (let i = 0; i < pts.length; i += 1) {
-          const p = pts[i];
-          if (p.minute < BUY_START_MINUTE || p.minute > VWS_BUY_CUTOFF_MINUTE) continue;
-          if (!(p.lastPx > 0)) continue;
-          const chg = ((p.lastPx - preclose) / preclose) * 100;
-          if (chg < BUY_TRIGGER_PCT) continue;
-          hitMemo.set(c.code, {
-            minute: p.minute,
-            px: p.lastPx,
-            chg: round2(chg),
-            mode: p.minute <= p0.minute ? 'auction8' : 'burst8',
-            source: SOURCE_B,
-          });
-          break;
-        }
-      }, 4);
-      // B 风格首板日分时不合格者从候选池剔除
-      candidates = candidates.filter((c) => !(c.boardCheck && c.boardCheck.failed));
-      clearTlineCache();
-    };
-
-    // ---- 隔夜持仓分时（买入当日不卖）----
+    // ---- 隔夜持仓分时（并行加载，不再逐份串行）----
     const posTlines = new Map();
-    for (const p of positions) {
-      if (dateStr > p.buyDate) {
-        try {
-          const t = await loadTlinePoints(p.code, dateNum);
-          if (t) posTlines.set(p.code, t);
-        } catch (e) { /* 分时缺失时该份持仓不做盘中卖点判定 */ }
-      }
-    }
-    // MA5 = 当日之前 5 个交易日收盘均值（盘中不含当日收盘，避免未来函数）
-    const ma5Cache = new Map();
-    const ensureMa5 = async (code) => {
+    await Promise.all(positions.filter((p) => dateStr > p.buyDate).map(async (p) => {
+      try {
+        const t = await loadTlinePoints(p.code, dateNum);
+        if (t) posTlines.set(p.code, t);
+      } catch (e) { /* 分时缺失时该份持仓不做盘中卖点判定 */ }
+    }));
+
+    // MA5 = 当日之前 5 个交易日收盘均值（盘中不含当日收盘，避免未来函数）；
+    // 日K已在预取阶段全部就绪（持仓股必属某日候选池），纯同步计算、结果跨日复用
+    const ensureMa5 = (code) => {
       if (ma5Cache.has(code)) return ma5Cache.get(code);
       let map = null;
-      try {
-        await ensureBarsForCodes(new Set([code]));
-        const bars = getStockBarsCached(code) || [];
-        if (bars.length >= 6) {
-          map = new Map();
-          for (let i = 5; i < bars.length; i += 1) {
-            const sum = bars.slice(i - 5, i).reduce((acc, b) => acc + Number(b.c), 0);
-            map.set(String(bars[i].d), round2(sum / 5));
-          }
+      const bars = getStockBarsCached(code) || [];
+      if (bars.length >= 6) {
+        map = new Map();
+        for (let i = 5; i < bars.length; i += 1) {
+          const sum = bars.slice(i - 5, i).reduce((acc, b) => acc + Number(b.c), 0);
+          map.set(String(bars[i].d), round2(sum / 5));
         }
-      } catch (e) { /* 日K不足时「跌破 5 日线」不判定 */ }
+      }
       ma5Cache.set(code, map);
       return map;
     };
@@ -478,7 +484,7 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
 
         const profitUnlocked = pos.maxCloseGainPct != null
           && pos.maxCloseGainPct >= WASH_SELL_PROFIT_UNLOCK_PCT;
-        const ma5Map = profitUnlocked ? null : await ensureMa5(pos.code);
+        const ma5Map = profitUnlocked ? null : ensureMa5(pos.code);
         const ma5 = ma5Map ? ma5Map.get(dateStr) : null;
         const hit = scanWashPriceSell({
           points: tline.points,
@@ -494,10 +500,7 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
       // ===== 买入（两风格候选合并，谁先命中买谁；账户拆两份、每份半仓）=====
       //   桶循环一直走到 14:30（B 风格买点窗口），A 风格买点自身限制在 9:40 前
       if (positions.length < maxPositions && bucketMinute <= VWS_BUY_CUTOFF_MINUTE + 5) {
-        await ensureSelected();
         if (candidates.length > 0) {
-          await ensureEntries();
-
           const heldCodes = new Set(positions.map((p) => p.code));
           const mvRejected = new Set();
           while (positions.length < maxPositions) {
@@ -574,7 +577,7 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
     for (const pos of Array.from(positions)) {
       if (dateStr < pos.buyDate) continue;
       try {
-        await ensureBarsForCodes(new Set([pos.code]));
+        // 日K已在预取阶段全部就绪，直接读缓存
         const bars = getStockBarsCached(pos.code) || [];
         let idx = -1;
         for (let i = 0; i < bars.length; i += 1) if (String(bars[i].d) === dateStr) idx = i;
@@ -618,7 +621,7 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
 
             // ①（收盘分支，两风格通用）：收益率已拉开 +20% 后，收盘跌破 5 日线即卖
             if (positions.includes(pos) && profitUnlocked) {
-              const ma5Map = await ensureMa5(pos.code);
+              const ma5Map = ensureMa5(pos.code);
               const ma5 = ma5Map ? ma5Map.get(dateStr) : null;
               if (ma5 != null && closePx > 0 && closePx < ma5) {
                 sellPositionAt(pos, 1500, closePx, dayPct,

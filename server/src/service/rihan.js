@@ -6,9 +6,10 @@ const RIHAN_DATA_PATH = path.resolve(__dirname, '../data/rihan.json');
 
 const SINA_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36';
 
-// 日韩指数均通过新浪环球指数接口获取，不再依赖 Puppeteer 打开网页
-const N225_SINA_URL = 'https://w.sinajs.cn/list=znb_NKY';
-const KS11_SINA_URL = 'https://w.sinajs.cn/list=znb_KOSPI';
+// 外盘指数均通过新浪环球/期货接口获取，不再依赖 Puppeteer 打开网页
+const NQ_FUTURES_SINA_URL = 'https://w.sinajs.cn/list=hf_NQ';          // 纳指期货
+const KS11_SINA_URL = 'https://w.sinajs.cn/list=znb_KOSPI';             // 韩国综合指数
+const N225_SINA_URL = 'https://w.sinajs.cn/list=znb_NKY';               // 日经225
 
 const buildSinaHeaders = (referer) => ({
     'Accept': '*/*',
@@ -25,7 +26,7 @@ const buildSinaHeaders = (referer) => ({
     'sec-ch-ua-platform': '"macOS"',
 });
 
-// 从新浪接口获取单个环球指数
+// 从新浪接口获取单个环球指数（znb_* 常规盘）
 // 返回结构：var hq_str_znb_XXX = "名称,最新价,涨跌额,涨跌幅,时间,时间戳,日期,时间,昨收,今开,最高,最低,0";
 const fetchIndexFromSina = async (url, referer, name, code) => {
     try {
@@ -54,19 +55,53 @@ const fetchIndexFromSina = async (url, referer, name, code) => {
     }
 };
 
-// 手动刷新日韩指数数据（同时供轮询和 API 调用）
+// 从新浪接口获取期货指数（hf_* 实时期货）
+// 返回结构：var hq_str_hf_NQ = "最新价,,昨收,今开,最高,最低,时间,... ,开盘原始价,...";
+// fields[0] 最新价, fields[1] 空, fields[2] 昨收, fields[8] 开盘原始数据
+// 涨幅 = (最新价 - 开盘原始数据) / 开盘原始数据
+const fetchFuturesFromSina = async (url, referer, name, code) => {
+    try {
+        const { data } = await axios.get(url, {
+            headers: buildSinaHeaders(referer),
+            timeout: 15000,
+            responseType: 'text',
+            transformResponse: [(d) => d],
+        });
+        const start = data.indexOf('"');
+        const end = data.lastIndexOf('"');
+        if (start === -1 || end <= start) throw new Error('响应格式异常');
+        const fields = data.slice(start + 1, end).split(',');
+        const value = Number(fields[0]);                 // 实时价
+        const openRef = Number(fields[8]);                // 开盘原始价
+        if (!Number.isFinite(value) || !Number.isFinite(openRef)) throw new Error('字段解析失败');
+        const changePct = ((value - openRef) / openRef) * 100;
+        return {
+            name,
+            code,
+            change: `${changePct.toFixed(2)}%`,
+            value: `${value.toFixed(2)}`,
+        };
+    } catch (error) {
+        console.error(`>>> 获取${name}数据失败:`, error.message);
+        return { name, code, change: '--', value: '--' };
+    }
+};
+
+// 手动刷新外盘指数数据（同时供轮询和 API 调用）
+// 返回顺序：纳指期货 → 韩国综合指数 → 日经225
 const refreshRiHanData = async () => {
     try {
-        const [n225, ks11] = await Promise.all([
+        const [nq, ks11, n225] = await Promise.all([
+            fetchFuturesFromSina(NQ_FUTURES_SINA_URL, 'https://gu.sina.cn/ft/hq/hf.php?symbol=NQ&autocallup=no&isfromsina=yes', '纳指期货', 'NQ'),
+            fetchIndexFromSina(KS11_SINA_URL, 'https://quotes.sina.cn/index/global/ks11', '韩国综合指数', 'KS11'),
             fetchIndexFromSina(N225_SINA_URL, 'https://quotes.sina.cn/index/global/n225', '日经225', 'N225'),
-            fetchIndexFromSina(KS11_SINA_URL, 'https://quotes.sina.cn/index/global/ks11', '韩国KOSPI', 'KS11'),
         ]);
-        const result = [n225, ks11];
+        const result = [nq, ks11, n225];
         fs.writeFileSync(RIHAN_DATA_PATH, JSON.stringify(result, null, 2));
-        console.log(`>>> 日韩指数更新成功 (${new Date().toLocaleTimeString()}):`, result.map(r => `${r.name}: ${r.change}`).join(', '));
+        console.log(`>>> 外盘指数更新成功 (${new Date().toLocaleTimeString()}):`, result.map(r => `${r.name}: ${r.change}`).join(', '));
         return result;
     } catch (e) {
-        console.error('>>> 日韩指数获取失败:', e.message);
+        console.error('>>> 外盘指数获取失败:', e.message);
         throw e;
     }
 };

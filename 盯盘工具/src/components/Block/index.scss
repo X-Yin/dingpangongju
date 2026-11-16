@@ -278,14 +278,14 @@
       }
 
       .chart-tooltip {
-        position: absolute;
+        position: fixed;
         display: none;
         padding: 12px;
         background: rgba(255, 255, 255, 0.95);
         border: 1px solid #f0f0f0;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
+        z-index: 2000;
         pointer-events: none;
         min-width: 160px;
         font-size: 13px;

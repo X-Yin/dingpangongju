@@ -3,7 +3,7 @@ const path = require('path');
 const dayjs = require('dayjs');
 const { getIndexTlineByDate } = require('./fupan');
 const { getAllIndexKlineData, getAllTechIndexData } = require('./emotion');
-const { getMonitorStocks } = require('./monitorStock');
+const { getMonitorStocks, isBacktestEligibleCode } = require('./monitorStock');
 const { getSingleStockTlineDataByDate } = require('./stock');
 const { getFundSnapshot, getAmountSnapshot } = require('./fundSnapshot');
 const { isTradingDay } = require('../utils/tradingDay');
@@ -574,7 +574,7 @@ const runBacktest = async (dateStr, strategyIds = null, opts = {}) => {
   // Check at 9:25-9:45 window using monitor stocks tline data fetched from 分时接口
   if ((!strategyIds || strategyIds.includes('high_open_low_close'))) {
     try {
-      const monitorStocks = getMonitorStocks();
+      const monitorStocks = (getMonitorStocks() || []).filter(s => s && isBacktestEligibleCode(s.code));
       let highOpenCount = 0;
       let totalValidCount = 0;
       const highOpenStocks = [];
@@ -1570,7 +1570,7 @@ const minuteToHhmm = (minute) => {
 
 // 从全量自选股中均匀抽样 N 只股票，拉取分时数据，返回每只股票的涨跌幅摘要 + 采样分时序列
 const sampleStockIntradayForAi = async (dateStr, sampleCount = 20) => {
-  const allStocks = getMonitorStocks();
+  const allStocks = (getMonitorStocks() || []).filter(s => s && isBacktestEligibleCode(s.code));
   if (!allStocks || allStocks.length === 0) return { count: 0, total: 0, lines: [] };
 
   // 均匀抽样

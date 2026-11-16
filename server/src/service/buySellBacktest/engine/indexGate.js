@@ -239,7 +239,14 @@ const precomputeTurnMap = async (indexCode, rangeDates) => {
         if (a === -1 && dates[i] === fromDate) a = i;
         if (b === -1 && dates[i] === target) b = i;
       }
-      return a >= 0 && b >= 0 && b >= a ? b - a : null;
+      if (a >= 0 && b >= 0 && b >= a) return b - a;
+      // 目标日（如今日日K未生成）不在 dates 序列时的兜底：用「转正/转负日之后、目标日之前
+      // 已完结的交易日数 + 目标日自身」推算距翻转天数，与 checkIndexGate 的正斜率兜底同口径
+      if (a >= 0 && b === -1) {
+        const barsAfterTurn = dates.filter((d) => d > fromDate && d < target).length;
+        return barsAfterTurn + 1;
+      }
+      return null;
     };
     const dPos = daysSince(lastPosDateNum);
     const dNeg = daysSince(lastNegDateNum);

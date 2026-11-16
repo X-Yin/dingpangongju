@@ -41,11 +41,15 @@ const round2 = (v) => (v == null || !Number.isFinite(Number(v)) ? null : parseFl
 
 // ==================== 分时数据加载（进程内缓存） ====================
 // 历史交易日分时不可变，永久缓存供回测复用；当日分时盘中随时在变，
-// 曾因无条件永久缓存导致龙头列表「当日涨幅/强度分/差劲分」冻结在首次拉取值（2026-10-20 修复）：
-// 当日未收盘时改为 TTL 短缓存——页面每 5s 轮询可拿到新数据，同轮询周期内的并发/重复调用仍共享一次拉取
+// 2026-10-20 修复：当日未收盘时改为 TTL 短缓存（5s），页面每 5s 轮询可拿到新数据
+// 2026-11-16 用户反馈候选股涨幅不实时：strict=true 的线上路径（极致胜率/极致赔率/买点诊断）
+//   一律跳过 tlineCache，每次直接拉外部行情；只有回测 strict=false 才保留历史永久缓存
 const tlineCache = new Map(); // `${code}|${dateNum}` -> { res: { preclose, points }, ts: 拉取时间戳 }
+// 保留 TODAY_TLINE_TTL_MS 常量供其他引用，不再参与 strict 路径判定
 const TODAY_TLINE_TTL_MS = 5000;
 const tlineInflight = new Map();
+// 清 stock.js 的 liveTlineCache（虽然已在 stock.js 中禁用，但留接口兼容外部调用）
+const { clearLiveTlineCache } = require('../../stock');
 const mapTline = (t) => ({
   preclose: t?.preclose_px != null ? parseFloat(t.preclose_px) : null,
   points: (t?.line || [])
@@ -61,18 +65,16 @@ const mapTline = (t) => ({
     .sort((a, b) => a.minute - b.minute),
 });
 const loadTlinePoints = async (code, dateNum, opts = {}) => {
-  // strict=true：线上极致胜率/极致赔率使用，失败后在 6s 窗口内持续重试，且不缓存空值；
-  //   主源按 code 稳定哈希分散到雪球 / 财联社 / 同花顺（各约 1/3），失败再按兜底链切换
+  // strict=true：线上极致胜率/极致赔率/买点诊断使用；2026-11-16 改为彻底无缓存（除 strict=false 的回测路径）
+  //   每次直接重新拉外部行情（雪球/财联社/同花顺分源兜底），保证龙头列表 change / 强度分 / 差劲分全实时
   // strict=false：回测默认路径，保持原有「一次拉取 + 空结果永久缓存」，避免历史批量回测被停牌股反复拖慢
   const strict = opts.strict === true;
   const key = `${code}|${dateNum}`;
-  const isToday = Number(dateNum) === Number(dayjs().format('YYYYMMDD'));
-  const todayLive = isToday && !isAfterMarketClose(); // 当日且未收盘（15:05 前，含盘前/午间）
-  if (tlineCache.has(key)) {
+  // 仅回测路径读缓存：strict=true 的线上路径一律跳过，确保盘中涨幅/强度分实时
+  if (!strict && tlineCache.has(key)) {
     const entry = tlineCache.get(key);
-    const cacheUsable = strict
-      ? (entry.res && entry.res.points.length > 0)
-      : (!todayLive || Date.now() - entry.ts < TODAY_TLINE_TTL_MS);
+    const isToday = Number(dateNum) === Number(dayjs().format('YYYYMMDD'));
+    const cacheUsable = !isToday || Date.now() - entry.ts < TODAY_TLINE_TTL_MS;
     if (cacheUsable) return entry.res;
   }
   if (tlineInflight.has(key)) return tlineInflight.get(key);
@@ -97,6 +99,7 @@ const loadTlinePoints = async (code, dateNum, opts = {}) => {
         });
       } catch (e) { /* 继续重试 */ }
       if (!t || !t.line || t.line.length === 0) {
+        const isToday = Number(dateNum) === Number(dayjs().format('YYYYMMDD'));
         if (isToday) {
           try { t = await getSingleStockTlineData(code); } catch (e) { /* 继续重试 */ }
         }
@@ -107,9 +110,11 @@ const loadTlinePoints = async (code, dateNum, opts = {}) => {
       }
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
-    if (res.points.length > 0) {
+    // 2026-11-16 改动：strict=true 线上路径不再写入 tlineCache，保证每次轮询都真正重新拉取
+    const isToday = Number(dateNum) === Number(dayjs().format('YYYYMMDD'));
+    if (!isToday && res.points.length > 0) {
       tlineCache.set(key, { res, ts: Date.now() });
-    } else {
+    } else if (res.points.length === 0) {
       tlineCache.delete(key);
       console.warn(`[分时严格重试] ${code} ${dateNum} 6s 内未取到分时（雪球/同花顺/财联社分源兜底${isToday ? '+连板网' : ''}），不缓存空值，下一轮继续重试`);
     }
@@ -343,7 +348,7 @@ module.exports = {
   // 工具
   limitTypeOf, limitPctOf, limitUpThresholdOf, clamp100, round2,
   // 分时缓存
-  loadTlinePoints, clearTlineCache, clearTodayTlineCache,
+  loadTlinePoints, clearTlineCache, clearTodayTlineCache, clearLiveTlineCache,
   // 原始项
   maxMinuteDrop, maxMinuteRise, closeDropFromHigh, fanbanCount, diffDFrom, volumeRatioAtDate,
   // 打分

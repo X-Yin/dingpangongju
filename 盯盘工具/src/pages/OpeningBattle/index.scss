@@ -258,6 +258,14 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   font-variant-numeric: tabular-nums;
 }
 
+// 极致赔率：后端实时推送未运行时的警示标签（列表不会刷新、也不会推买点卡片）
+.ob-wf-no-push {
+  color: #b42318;
+  background: rgba(240, 68, 56, 0.1);
+  border-color: rgba(240, 68, 56, 0.28);
+  white-space: nowrap;
+}
+
 // 「切换模式」下拉的辅助标签（仅买点/卖点诊断卡标题使用）
 .ob-mode-switch-label {
   font-size: 11px;
@@ -1240,6 +1248,13 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     }
   }
 
+  // 科技进攻候选列表：每条上下间距在通用行样式基础上再 +2px（2026-11-15 用户要求）
+  .ob-gainer-col-tech .ob-gainer-row {
+    margin-bottom: 6px;
+
+    &:last-child { margin-bottom: 0; }
+  }
+
   .ob-gainer-name-cell {
     display: flex;
     align-items: center;
@@ -1318,6 +1333,29 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     border-radius: 5px;
     padding: 0 6px;
     line-height: 16px;
+  }
+
+  // 逆周期命中进度 tag（x/y）：x = 窗口内已命中次数，y = 需命中次数（2）；
+  // 2/2 即已进入购买状态，染薄荷绿高亮；未满时中性灰白
+  .ob-gainer-hitcount {
+    flex-shrink: 0;
+    font-size: 9.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 5px;
+    padding: 0 5px;
+    line-height: 16px;
+    white-space: nowrap;
+
+    &.full {
+      color: #04372a;
+      background: #d9fff3;
+      border-color: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 4px 12px -6px rgba(6, 214, 160, 0.6);
+    }
   }
 
   // 分组标题（上：顺周期 / 下：逆周期）

@@ -3720,31 +3720,11 @@ const buildTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PE
   return result;
 };
 
-// 并发合并 + 1s 短 TTL（2026-11-15 提速）：
-//   前端 5s 轮询、买点诊断 tick、冰点延时买入可能同时触发全量拉取；
-//   这里保证同一批参数只有一个构建在途，后到的请求直接复用同一结果，
-//   避免多份全量 K 线/分时请求同时打满数据源、把单轮诊断拖到数分钟。
-const TOP_GAINERS_LIVE_TTL_MS = 1000;
-const topGainersInflight = new Map();
-const topGainersResultCache = new Map();
-const getTopGainersByMarket = (targetDate = null, limit = TOP_GAINERS_PER_MARKET, opts = {}) => {
-  const dateKey = targetDate ? String(targetDate).replace(/-/g, '') : dayjs().format('YYYYMMDD');
-  const perMarket = Number.isFinite(Number(limit)) && Number(limit) > 0
-    ? Math.floor(Number(limit))
-    : TOP_GAINERS_PER_MARKET;
-  const key = `${dateKey}|${perMarket}|${opts.skipQualifiedScan === true ? 1 : 0}`;
-  const hit = topGainersResultCache.get(key);
-  if (hit && Date.now() - hit.ts < TOP_GAINERS_LIVE_TTL_MS) return Promise.resolve(hit.result);
-  const inflight = topGainersInflight.get(key);
-  if (inflight) return inflight;
-  const task = buildTopGainersByMarket(targetDate, limit, opts)
-    .then((result) => {
-      topGainersResultCache.set(key, { result, ts: Date.now() });
-      return result;
-    })
-    .finally(() => topGainersInflight.delete(key));
-  topGainersInflight.set(key, task);
-  return task;
+// 2026-11-15 引入的 1s 短 TTL / 并发合并（TOP_GAINERS_LIVE_TTL_MS / topGainersInflight / topGainersResultCache）
+// 2026-11-16 干掉：用户反馈科技进攻候选股卡片涨幅经常不实时，根因是 TTL 缓存 + 并发合并让同参请求直接复用 1s 内旧结果。
+// 前端已固定 5s 轮询 + force，每次都应该真正重算；同参并发现在各自独立执行 buildTopGainersByMarket。
+const getTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PER_MARKET, opts = {}) => {
+  return buildTopGainersByMarket(targetDate, limit, opts);
 };
 
 // ========== 个股买点诊断：7 项前置检查 + 个股抗分歧指数检查 ==========

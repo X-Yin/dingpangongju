@@ -9,6 +9,7 @@ const path = require('path');
 const { getBlocksConfig } = require('./blockConfig');
 const { getStockBars, loadIndexKline } = require('./sentimentHotMoney');
 const { batchParallel } = require('../utils');
+const { isBjStockCode } = require('./stock');
 
 const blockCodePath = path.resolve(__dirname, '../constant/block_code.js');
 const lianbanSnapshotDir = path.resolve(__dirname, '../data/lianbanSnapshot');
@@ -42,10 +43,17 @@ const barsCache = new Map();
 // force=true：先删除进程内缓存再重新调用 getStockBars（收盘后手动刷新时用于拿到当日收盘K线）
 const ensureBarsForCodes = async (codeSet, { force = false, strict = false, windowMs = 10000 } = {}) => {
   // 只跳过已有有效日K的股票；缺失/空数组/旧 null 缓存都会重新进入严格重试
-  const codes = force ? Array.from(codeSet) : Array.from(codeSet).filter(c => {
-    const b = barsCache.get(c);
-    return !b || b.length === 0;
-  });
+  // 北交所股票（2026-11-16）：无日K数据源，缓存空序列并跳过拉取，
+  // 避免进入严格重试窗口空转拖慢回测；下游 getStockBarsCached 返回 [] 按「无数据」处理
+  const allCodes = Array.from(codeSet);
+  for (const c of allCodes) if (isBjStockCode(c) && !barsCache.has(c)) barsCache.set(c, []);
+  const codes = force
+    ? allCodes.filter(c => !isBjStockCode(c))
+    : allCodes.filter(c => {
+      if (isBjStockCode(c)) return false;
+      const b = barsCache.get(c);
+      return !b || b.length === 0;
+    });
   if (force) for (const c of codes) barsCache.delete(c);
   if (codes.length === 0) return { total: 0, fetched: 0, missing: [] };
   let fetched = 0;

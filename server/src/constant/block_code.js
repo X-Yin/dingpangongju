@@ -2381,5 +2381,35 @@ exports.default = [
         "blockName": "机器人",
         "code": "sh603997",
         "name": "继峰股份"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sz300953",
+        "name": "震裕科技"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sh603955",
+        "name": "大千生态"
+    },
+    {
+        "blockName": "机器人",
+        "code": "sz002164",
+        "name": "宁波东力"
+    },
+    {
+        "blockName": "电力",
+        "code": "sh603530",
+        "name": "神马电力"
+    },
+    {
+        "blockName": "电力",
+        "code": "sz002606",
+        "name": "大连电瓷"
+    },
+    {
+        "blockName": "电力",
+        "code": "sh600885",
+        "name": "宏发股份"
     }
 ]

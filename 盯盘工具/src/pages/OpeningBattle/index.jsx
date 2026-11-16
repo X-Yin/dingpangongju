@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
 import { Spin, Empty, Select, Switch as AntSwitch, Modal, Checkbox, message, Tooltip } from 'antd';
 import {
   RocketOutlined, RiseOutlined, FallOutlined, StockOutlined,
@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { isAfterMarketClose } from '../../utils/tradingDay';
+import { isAfterMarketClose, isTradingDay } from '../../utils/tradingDay';
 import { local_ip } from '../../constant';
 import { parseMoneyValue, formatDisplayTime, aggregateFundByInterval } from '../../utils/fundAggregation';
 import { fetchAbnormalBasis, fetchIndexQuotes, getAbnormalWindowRows } from '../../utils/abnormalAlert';
@@ -15,7 +15,7 @@ import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import StockKLineModal from '../../components/StockKLineModal';
 import StrategyRuleModal from '../../components/StrategyRuleModal';
 import { createPortal } from 'react-dom';
-import { useStrategyMode, useStrategyModes, setStrategyMode, getStrategyMode, STRATEGY_MODE_OPTIONS, MULTI_CHECKABLE_OPTIONS, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION, MODE_MULTI, getStrategyModes, cacheStrategyModes, setStrategyModes } from '../../utils/strategyMode';
+import { useStrategyMode, useStrategyModes, setStrategyMode, getStrategyMode, STRATEGY_MODE_OPTIONS, MULTI_CHECKABLE_OPTIONS, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION, MODE_MULTI, getStrategyModes, cacheStrategyModes, setStrategyModes, refreshModesFromBackend } from '../../utils/strategyMode';
 import { subscribeBuyPointPush, subscribeSellPointPush, subscribeWashFusionCandidatesPush, subscribeWashFusionBuyPush, fetchStrategyModes } from '../../utils/buyPointWs';
 import ThemeColorModal from './components/ThemeColorModal';
 import { DEFAULT_THEME_COLOR, buildDiyVars, hasDiyFields } from './utils/themeColor';
@@ -917,12 +917,36 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
     return unsub;
   }, [isWashFusion, fetchWashFusion]);
 
+  // 后端实时推送按「全局策略模式」运行：进入页面时与后端对账一次（2026-11-16 用户反馈）。
+  // 本地显示极致赔率而后端仍停留在其他模式时，后端不轮询也不推送（列表看着实时，实际不会更新），
+  // 这里自动把后端模式纠偏为当前页面模式。
+  // 2026-11-16 补充：仅在后端多选列表为空（纯单模式状态）时才纠偏——多选列表非空时线上诊断
+  // 集合由弹窗勾选列表决定，此处不得用单选回传覆盖（原实现会触发后端 setMode，误伤多选配置）
+  useEffect(() => {
+    if (!isWashFusion || getStrategyMode() !== MODE_WASH_FUSION) return undefined;
+    let cancelled = false;
+    axios.get(`http://${local_ip}:3000/get_strategy_modes`)
+      .then((res) => {
+        const modes = Array.isArray(res.data?.data?.modes) ? res.data.data.modes : [];
+        if (!cancelled && modes.length === 0) setStrategyMode(MODE_WASH_FUSION);
+      })
+      .catch(() => { /* 对账失败不影响展示 */ });
+    return () => { cancelled = true; };
+  }, [isWashFusion]);
+
   // 合并榜单：后端已按门槛筛选市场、按 3 日涨幅降序取前十，并补充 excludeReason（2026-10-22）
   const mergedList = useMemo(() => data?.mergedTop || [], [data]);
   // 只看符合条件榜单：后端全量扫描得到的完全符合条件个股，已按 3 日涨幅降序，首位即买点候选
   const qualifiedList = useMemo(() => data?.qualifiedTop || [], [data]);
-  // 科技进攻列当前展示的榜单（开关开启时只展示完全符合条件的个股，无符合条件时展示空状态）
-  const techList = onlyQualified ? qualifiedList : mergedList;
+  // 集合竞价阶段（交易日 9:15-9:30）：当日分时不足 5 分钟，抗分歧指数必然算不出，
+  // 后端会把所有个股标注为「抗分歧缺失 / 抗分歧<9」，导致「只看符合条件」榜单恒为空（2026-11-16 用户反馈）。
+  // 竞价阶段改为回退展示全部候选（当日涨幅已由后端实时快照补齐为竞价涨幅），开盘后自动恢复严格筛选。
+  const auctionNow = dayjs();
+  const auctionHHmm = Number(auctionNow.format('HHmm'));
+  const isAuctionPhase = isTradingDay(auctionNow.toDate()) && auctionHHmm >= 915 && auctionHHmm < 930;
+  const techAuctionFallback = onlyQualified && isAuctionPhase && qualifiedList.length === 0;
+  // 科技进攻列当前展示的榜单（开关开启时只展示完全符合条件的个股；竞价阶段无符合条件个股时回退展示全部候选）
+  const techList = techAuctionFallback || !onlyQualified ? mergedList : qualifiedList;
 
   // 情绪游资龙头列表（后端已按 delta 降序返回全部达标股；attack_defense 模式下也计算，供顺周期列展示）
   const showEwCols = isExtreme || isDefense;
@@ -932,7 +956,10 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
   const reverseList = useMemo(() => (showEwCols ? (reverse?.stocks || []) : []), [showEwCols, reverse]);
   // 临近异动过滤已下沉到后端（/hot_money_leader_list），这里只按「强度分 − 差劲分」降序排名
   const leaderVisible = leaderList.slice().sort(byDeltaDesc);
-  const reverseVisible = reverseList.slice().sort(byDeltaDesc);
+  // 逆周期排序（2026-11-16 用户要求）：已命中 1/2 的排最前、0/2 的靠后，各分组内部按「强度分 − 差劲分」降序
+  const byHitThenDeltaDesc = (a, b) =>
+    ((b.hitCount || 0) - (a.hitCount || 0)) || (deltaRankValue(b) - deltaRankValue(a));
+  const reverseVisible = reverseList.slice().sort(byHitThenDeltaDesc);
   // 顺周期 / 逆周期两组：为空者置后；两组都有内容时内容少的在前；
   // 任一组 ≤ 2 只时不做均分高度，直接由内容撑开（2026-11-04 用户要求）
   const [ewOrder, reverseOrder] = computeGroupOrders(leaderVisible.length, reverseVisible.length);
@@ -977,7 +1004,10 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
       const str = text == null ? '' : String(text);
       return str.length > 4 ? `${str.slice(0, 4)}...` : str;
     };
-    const wfRow = (s, idx, keyPrefix) => (
+    const wfRow = (s, idx, keyPrefix) => {
+      // 只认后端真实命中标记（hit）：status 仅用于涨停等展示，不再据此判断买点触发
+      const buyHit = s.hit === true;
+      return (
       <div className="ob-gainer-row ob-gainer-row-wf ob-gainer-row-wf-nostatus" key={`${keyPrefix}-${s.code}-${idx}`}>
         <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
         <span className="ob-gainer-name-cell">
@@ -986,10 +1016,9 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
             title="点击查看K线"
             onClick={() => { setSelectedStock({ code: s.code, stockName: s.name, change: s.change }); setKlineVisible(true); }}
           >{s.name}</span>
-          <span className="ob-gainer-market cyb">{wfTag(s.board ? `${s.board} 板` : '--')}</span>
-          {s.status === 'auction_buy' || s.status === 'burst_buy'
-            ? <span className="ob-gainer-buyflag">买点触发</span>
-            : null}
+          {/* 买点触发时隐藏板块 tag，避免股票名称被挤成「利...」 */}
+          {!buyHit && <span className="ob-gainer-market cyb">{wfTag(s.board ? `${s.board} 板` : '--')}</span>}
+          {buyHit ? <span className="ob-gainer-buyflag">买点触发</span> : null}
           {s.status === 'limit_open' && <span className="ob-gainer-limitup">涨停</span>}
           {s.washout?.washDays != null && <span className="ob-gainer-reason">洗盘 {s.washout.washDays} 日</span>}
         </span>
@@ -1003,7 +1032,8 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
           {s.totalMvYi != null ? `${Number(s.totalMvYi).toFixed(2)}亿` : '--'}
         </span>
       </div>
-    );
+      );
+    };
 
     return (
       <div className="ob-module ob-rank3-module">
@@ -1024,6 +1054,11 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
             </Tooltip>
           </div>
           <div className="ob-module-actions">
+            {wfData?.pushing === false && (
+              <Tooltip title="后端当前未在极致赔率模式运行：候选列表不会实时刷新，也不会推送买点卡片">
+                <span className="ob-total-tag ob-wf-no-push">实时推送未开启</span>
+              </Tooltip>
+            )}
             {showModeSwitch && (
               <Select
                 size="small"
@@ -1185,6 +1220,11 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
                 {data.dataMissingCount > 5 ? ' 等' : ''}；本轮不冻结快照，下一轮继续重试
               </div>
             )}
+            {techAuctionFallback && (
+              <div className="ob-gainer-missing">
+                集合竞价阶段（9:15–9:30）：当日涨幅为竞价实时值；抗分歧需开盘后计算，暂按 3 日涨幅展示全部候选，9:30 起自动恢复「只看符合条件」
+              </div>
+            )}
             <div className="ob-gainer-head" style={{ gridTemplateColumns: techGrid }}>
               <>
                 <span>#</span>
@@ -1198,7 +1238,7 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
               <div className="ob-empty-mini ob-gainer-empty"><Spin size="small" /></div>
             ) : techList.length === 0 ? (
               <div className="ob-empty-mini ob-gainer-empty">
-                {onlyQualified ? '暂无完全符合条件的标的（可关闭「只看符合条件」查看全部候选）' : '暂无数据'}
+                {onlyQualified && !techAuctionFallback ? '暂无完全符合条件的标的（可关闭「只看符合条件」查看全部候选）' : '暂无数据'}
               </div>
             ) : techList.map((s, idx) => {
               // 买点候选以后端唯一推荐标的为准；符合条件榜单不再把首位强制标成候选
@@ -1215,7 +1255,9 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
                     <span className={`ob-gainer-market ${s.isSh688 ? 'star' : 'cyb'}`}>{s.isSh688 ? '科创' : '创业/主板'}</span>
                     {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
                     {!isPick && s.excludeReason && s.excludeReason !== '涨停' && (
-                      <span className="ob-gainer-reason">{s.excludeReason}</span>
+                      <span className="ob-gainer-reason">
+                        {techAuctionFallback && /^抗分歧/.test(s.excludeReason) ? '抗分歧待开盘' : s.excludeReason}
+                      </span>
                     )}
                     {isPick && <span className="ob-gainer-buyflag">{buyPointHit ? '买点触发' : '买点候选'}</span>}
                   </span>
@@ -1225,7 +1267,9 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
                     </span>
                   )}
                   <span className="ob-gainer-resilience">
-                    {s.resilienceScore !== null && s.resilienceScore !== undefined ? Number(s.resilienceScore).toFixed(2) : '--'}
+                    {isAuctionPhase
+                      ? '--'
+                      : (s.resilienceScore !== null && s.resilienceScore !== undefined ? Number(s.resilienceScore).toFixed(2) : '--')}
                   </span>
                   {showChange && (
                     <span className={`ob-change-cell ${s.change3d >= 0 ? 'ob-up' : 'ob-down'}`}>
@@ -1324,6 +1368,17 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
                     title="点击查看K线"
                     onClick={() => { setSelectedStock({ code: s.code, stockName: s.stockName, change: s.change }); setKlineVisible(true); }}
                   >{s.stockName}</span>
+                  {/* 逆周期命中进度 tag：x/y = 窗口内已命中次数 / 需命中次数（2 次命中才可买，2/2 即进入购买状态） */}
+                  {(() => {
+                    const y = reverse?.hitRequired ?? 2;
+                    const x = Math.min(Number.isFinite(Number(s.hitCount)) ? Number(s.hitCount) : 0, y);
+                    return (
+                      <span
+                        className={`ob-gainer-hitcount ${x >= y ? 'full' : ''}`}
+                        title={`逆周期窗口内已命中 ${x}/${y} 次（需命中 ${y} 次才可买）`}
+                      >{`${x}/${y}`}</span>
+                    );
+                  })()}
                   {s.isLimitUp && <span className="ob-gainer-limitup">涨停</span>}
                   {s.timingPassed && <span className="ob-gainer-buyflag">逆周期买点</span>}
                 </span>
@@ -1368,8 +1423,15 @@ const TopChange3dModule = ({ buyPointHit }) => {
   const mode = useStrategyMode();
   const multiModes = useStrategyModes();
   const [multiModalOpen, setMultiModalOpen] = useState(false);
+  // 进入页面时与后端多选列表对账一次（2026-11-16 用户反馈）：本地展示覆盖为后端实际
+  // 持久化的勾选列表，杜绝「页面按旧本地缓存渲染多张候选卡片、后端实际只诊断一个模式」的误导
+  useEffect(() => {
+    refreshModesFromBackend();
+  }, []);
   const handleModeSelect = useCallback((v) => {
     if (v === MODE_MULTI) {
+      // 已有勾选列表时切回多选视图（各模式卡片同屏），同时打开弹窗便于调整勾选
+      if (multiModes.length > 0) setStrategyMode(MODE_MULTI);
       setMultiModalOpen(true);
       return;
     }
@@ -2178,9 +2240,24 @@ const SellPointDiagnosisCard = ({ themeVars, themeClass, themeTone }) => {
 
 // ==================== 主页面 ====================
 const OpeningBattle = () => {
-  // 进入页面时回到顶部，避免沿用上一页面遗留的滚动位置（路由切换或刷新都会重新触发）
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  const bannerRef = useRef(null);
+
+  // 进入页面时直接定位到顶部横幅条：在浏览器绘制前设置滚动位置，
+  // 不产生任何滚动动画，也不沿用上一页面遗留的滚动位置（路由切换或刷新都会重新触发）
+  useLayoutEffect(() => {
+    // 刷新时关闭浏览器自身的滚动位置恢复，避免先停在旧位置再跳动
+    const prevRestoration = 'scrollRestoration' in window.history ? window.history.scrollRestoration : null;
+    if (prevRestoration !== null) window.history.scrollRestoration = 'manual';
+
+    const banner = bannerRef.current;
+    if (banner) {
+      const top = banner.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo(0, Math.max(0, top));
+    }
+
+    return () => {
+      if (prevRestoration !== null) window.history.scrollRestoration = prevRestoration;
+    };
   }, []);
 
   // 网络检测轮询：每 3s 探测外网，超过 1s 未返回即通过浏览器通知提醒网络差
@@ -2334,7 +2411,7 @@ const OpeningBattle = () => {
       style={packVars || diyVars}
     >
       {/* 顶部交易纪律横幅：结构化出手 > 绝杀（2026-11-14 用户要求） */}
-      <div className="ob-principle-banner">
+      <div className="ob-principle-banner" ref={bannerRef}>
         <RocketOutlined className="ob-principle-banner-icon" />
         <span className="ob-principle-banner-text">
           不管你打球再怎么随机应变，数据想要好看一定永远来自于高度结构化的出手分布，比如库里的无球跑动经挡拆掩护后的接球三分。结构化出手永远比绝杀更重要，不可被复制的出手机会宁可不要！宁可不要的前提是你愿意接受踏空！

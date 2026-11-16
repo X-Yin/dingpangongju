@@ -24,7 +24,7 @@ const {
   computeCrossInfo, buildExtremeWinPool,
 } = require('./buySellBacktest/engine/extremeWinPool');
 const {
-  loadTlinePoints, strengthAtMinute, diffAtMinute, round2, limitUpThresholdOf, clearTodayTlineCache,
+  loadTlinePoints, strengthAtMinute, diffAtMinute, round2, limitUpThresholdOf, clearTodayTlineCache, clearLiveTlineCache,
 } = require('./buySellBacktest/engine/extremeWinScores');
 // 线上极致胜率：分时失败按同花顺→财联社（当日再兜底连板网）严格重试，不再一次失败就剔除个股
 const loadTlinePointsStrict = (code, dateNum) => loadTlinePoints(code, dateNum, { strict: true });
@@ -1381,4 +1381,7 @@ module.exports = {
   getExtremeWinBuyPointChecks,
   checkExtremeWinSellPointDetailed,
   clearTodayTlineCache,
+  // 2026-11-16 新增：线上路由每次重算龙头列表 / 候选股前清掉 stock.js 的实时分时缓存
+  // （stock.js 的 liveTlineCache 已在 11-16 禁用，这里导出保持接口兼容）
+  clearLiveTlineCache,
 };

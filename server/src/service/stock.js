@@ -22,24 +22,16 @@ const tlineCacheDir = '/Users/xieyin/Desktop/盯盘工具/自选股全量股票�
 // 是回测耗时大头（CPU 画像 ~62%）。按日捆绑后同一交易日只解析一个小文件，跨次回测直接复用
 const tlineDayCacheDir = path.resolve(__dirname, '../data/tline_day_cache');
 
-// ---------- 当日分时 TTL 内存缓存（2026-11-04） ----------
-// 对 getSingleStockTlineData 做模块级 TTL 缓存：外部行情接口（同花顺/财联社）偶发慢（1-3s）、
-// 前端每秒轮询会放大延迟并触发第三方限流。盘中 5s 内命中直接返回，既稳延迟又减轻外部压力。
-// 回测用的 getSingleStockTlineDataByDate 已按日落盘，不受此缓存影响。
-const LIVE_TLINE_TTL_MS = 5000;
-const liveTlineCache = new Map(); // key=code -> { res, ts }
-// 合并在途 Promise（同一 code 并发请求只发一次外部调用，其他并发挂这个 Promise）
-const liveTlineInFlight = new Map();
+// ---------- 当日分时 TTL 内存缓存（2026-11-04 → 2026-11-16 移除） ----------
+// 用户反馈候选股卡片涨幅经常不是实时的；根因是这里的 5s TTL 缓存导致 loadTlinePoints 在 strict 模式下回退
+// 到 getSingleStockTlineData（而不是 getSingleStockTlineDataByDate 当日分支）时命中旧快照，
+// 龙头列表 / 科技进攻榜的 change 字段会停在上一次缓存时刻。现在彻底禁用缓存，每次都直接拉外部行情。
+// 回测用的 getSingleStockTlineDataByDate 已按日落盘，不受此改动影响。
+const liveTlineCache = new Map(); // 仅保留声明，不再读写；供 clearLiveTlineCache 导出清空
+const clearLiveTlineCache = () => liveTlineCache.clear();
 const getSingleStockTlineDataCached = async (code) => {
-    const cached = liveTlineCache.get(code);
-    if (cached && Date.now() - cached.ts < LIVE_TLINE_TTL_MS) return cached.res;
-    // 如果同 code 正在请求，直接挂它的 Promise，避免重复打外部
-    if (liveTlineInFlight.has(code)) return liveTlineInFlight.get(code);
-    const promise = getSingleStockTlineDataRaw(code).finally(() => { liveTlineInFlight.delete(code); });
-    liveTlineInFlight.set(code, promise);
-    const res = await promise;
-    if (res) liveTlineCache.set(code, { res, ts: Date.now() });
-    return res;
+    // 直接透传 getSingleStockTlineDataRaw，不走任何内存缓存 / 在途合并
+    return getSingleStockTlineDataRaw(code);
 };
 
 // 保存当日开盘价（9:25 竞价结束后执行，非交易日不保存）
@@ -107,12 +99,22 @@ function getOpeningPrices() {
 // 2026-11-15 用户要求：单源单请求最多 600ms，超时立刻切换下一个数据源，
 // 避免某一只股票的网络抖动把整批拖到一两秒；调用方传入更大的超时也会被压到 600ms。
 const PER_SOURCE_TIMEOUT_MS = 600;
+// 北交所股票过滤（2026-11-16 用户要求）：北交所（920/43/82/83/87/88 开头，含被误挂 sz/sh 前缀的）
+// 行情源不支持 K 线/分时，直接跳过，不再走多数据源兜底刷屏报错；仅支持主板/创业板/科创板
+const isBjStockCode = (code) => {
+    const pure = String(code || '').replace(/^[a-zA-Z]+/, '');
+    return /^(43|82|83|87|88|92)\d{4}$/.test(pure);
+};
 const getSingleStockData = async (code, limit = 1, timeoutMs = 500, sourceOrder = null, sourceValidator = null) => {
     // 日K路由：XQ / CLS / THS 之间按 code 稳定哈希选择（约 1/3 each），主源失败则按兜底链切换；
     // 同一股票固定同一主源，保证收盘后重算结果可复现
     // sourceOrder：显式指定重试顺序；不传时按 code 稳定哈希分散到 xq / cls / ths
     // sourceValidator：严格重试场景用（如要求包含目标交易日），主源返回不满足时继续走兜底源
     const timeout = Math.min(Number(timeoutMs) > 0 ? Number(timeoutMs) : 500, PER_SOURCE_TIMEOUT_MS);
+    if (isBjStockCode(code)) {
+        console.log(`北交所股票 ${code} 不在支持范围（仅主板/创业板/科创板），直接过滤`);
+        return [];
+    }
     const tryOrder = (Array.isArray(sourceOrder) && sourceOrder.length > 0
         ? sourceOrder
         : buildTryOrder('kline', code)).filter((src) => src === 'ths' || src === 'cls' || src === 'xq');
@@ -250,6 +252,7 @@ const getSingleStockDataFromTHS = async (code, limit = 1, timeoutMs = 500) => {
     }
 }
 exports.getSingleStockData = getSingleStockData;
+exports.isBjStockCode = isBjStockCode;
 
 // 批量获取个股实时快照（涨跌幅 / 现价 / 昨收），按同花顺市场分组，一次请求同市场多只股票
 // 用途：集合竞价（9:15-9:30）当日日 K 线尚未生成时，补充「当日实时涨幅」，
@@ -667,6 +670,8 @@ const getSingleStockTlineDataFromLB = async (code) => {
 };
 
 exports.getSingleStockTlineData = getSingleStockTlineData;
+// 清空分时实时行情缓存（2026-11-16 新增，配合 /hot_money_leader_list / /top_gainers_by_market 路由在每次重算前调用）
+exports.clearLiveTlineCache = clearLiveTlineCache;
 // 供板块成交额汇总兜底：直接走财联社分时，避免再次落到同花顺
 exports.getSingleStockTlineDataFromCLS = getSingleStockTlineDataFromCLS;
 

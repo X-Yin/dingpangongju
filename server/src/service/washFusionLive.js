@@ -370,8 +370,10 @@ const statusOf = (c, quotes, nowMinute) => {
   const preclose = q.preclose != null && Number(q.preclose) > 0 ? Number(q.preclose) : c.lastClose;
   const change = q.change != null ? Number(q.change)
     : (price != null && preclose > 0 ? ((price - preclose) / preclose) * 100 : null);
+  // 竞价涨幅只认真实竞价（2026-11-16 用户反馈）：auctionGaps 缺失时置 null，不再用实时涨幅兜底。
+  // 否则盘中涨幅 ≥5% 会被当成「竞价买点」返回 auction_buy，前端打出「买点触发」但后端从未推送卡片。
   const auction = auctionGaps.get(c.code) || null;
-  const auctionGap = auction ? auction.gap : change;
+  const auctionGap = auction ? auction.gap : null;
   const limitThreshold = limitUpThresholdOf(c.code);
   // 买入价折算总市值超 100 亿 → 当日拉黑（与回测 mvRejected 顺延口径一致，2026-11-05 对齐）
   if (mvRejectedCodes.has(c.code)) {
@@ -413,7 +415,8 @@ const buildRows = (pools, quotes, nowMinute) => {
     const change = q.change != null ? Number(q.change)
       : (price != null && preclose > 0 ? ((price - preclose) / preclose) * 100 : null);
     const auction = auctionGaps.get(c.code) || null;
-    const auctionGap = auction ? auction.gap : change;
+    // 与 statusOf 同口径：缺失真实竞价时返回 null（前端显示 --），不用实时涨幅冒充竞价
+    const auctionGap = auction ? auction.gap : null;
     const st = statusOf(c, quotes, nowMinute);
     return {
       code: c.code,
@@ -430,6 +433,10 @@ const buildRows = (pools, quotes, nowMinute) => {
       auctionGap: auctionGap != null ? round2(auctionGap) : null,
       status: st.status,
       statusText: st.statusText,
+      // 是否真实命中（后端已推送买点卡片）：前端「买点触发」标签以此为准，不再用 status 推导
+      hit: c.source === SOURCE_A
+        ? (aAuctionSignaled.has(c.code) || aBurstSignaled.has(c.code))
+        : bSignaled.has(c.code),
     };
   });
 };
@@ -461,6 +468,8 @@ const broadcastCandidates = (dateStr, rows, updatedAt, open = false) => {
       firstBoard: groups.firstBoard,
       secondBoard: groups.secondBoard,
       rules: buildRules(),
+      // 能走到这里说明该模式处于生效状态，实时推送正在运行
+      pushing: true,
     },
   });
   // 每个 3s 诊断周期都落盘一条候选池摘要（无论是否命中）；只记数量，避免日志体积过大，
@@ -982,6 +991,9 @@ const getDisplayData = async ({ refresh = false, now = new Date() } = {}) => {
     secondBoard: groups.secondBoard,
     candidates: rows,
     rules: buildRules(),
+    // 后端当前是否在该模式下运行实时推送：false 时前端提示「实时推送未开启」，
+    // 避免列表看着是实时的、实际既不会刷新也不会推送买点卡片（2026-11-16 用户反馈）
+    pushing: strategyModeState.isModeActive(MODE_WASH_FUSION),
   };
 };
 

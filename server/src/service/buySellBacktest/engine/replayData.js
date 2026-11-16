@@ -1,4 +1,4 @@
-const { getKlineCached, getSingleStockTlineDataByDate } = require('../deps');
+const { getKlineCached, getSingleStockTlineDataByDate, isBjStockCode } = require('../deps');
 const { calculateReplayResilience, getTlinePoints } = require('../diagnose/sellPoint');
 
 const buildReplayStocks = (campData) => {
@@ -15,6 +15,7 @@ const buildReplayStocks = (campData) => {
       indexTline.sz399006.push({ minute: bucket.minute, change: itl.cyb.changePct, lastPx: itl.cyb.price });
     }
     for (const sc of bucket.stockChanges) {
+      if (isBjStockCode(sc.code)) continue; // 北交所股票（仅主板/创业板/科创板支持）直接过滤
       if (!stockMap.has(sc.code)) {
         const lowByCode = campData.dailyLowByCode || {};
         stockMap.set(sc.code, { code: sc.code, stockName: sc.name, tlinePoints: [], dailyLowMap: lowByCode[sc.code] || null });
@@ -113,6 +114,7 @@ const extractDailyInfo = (campData, dateStr = null) => {
   const lastBucket = buckets[buckets.length - 1];
   const info = new Map();
   for (const sc of lastBucket?.stockChanges || []) {
+    if (isBjStockCode(sc.code)) continue; // 北交所股票直接过滤，不进 EOD 候选池
     let resilience = null;
     if (Array.isArray(sc.resilience3dScores) && sc.resilience3dScores.length === 3) {
       const today = sc.resilience3dScores[2];

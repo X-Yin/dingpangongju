@@ -331,6 +331,27 @@ const isTechWatchlistStock = (code) => {
     return !!s && s.isTech !== false;
 };
 
+// 判断一个股票代码是否属于回测范围（仅主板 / 创业板 / 科创板）
+// 过滤掉：北交所（bj 前缀、bj920、sz920 映射、bj920、sh920）、B股、老三板等
+// 白名单规则：
+//   sh 开头 + 600/601/603/605/688 → 沪市主板 / 科创板
+//   sz 开头 + 000/001/002/003/300 → 深市主板 / 创业板
+// 不符合以上规则的一律返回 false
+const isBacktestEligibleCode = (code) => {
+    if (!code || typeof code !== 'string') return false;
+    const c = code.toUpperCase();
+    if (c.startsWith('SH')) {
+        const num = c.slice(2);
+        return /^(600|601|603|605|688)\d{3}$/.test(num);
+    }
+    if (c.startsWith('SZ')) {
+        const num = c.slice(2);
+        return /^(000|001|002|003|300)\d{3}$/.test(num);
+    }
+    // bj / sh920 / sz920 / 不带前缀 等一律过滤
+    return false;
+};
+
 module.exports = {
     getMonitorStocks,
     addMonitorStock,
@@ -344,5 +365,6 @@ module.exports = {
     syncTotalShares,
     isStockInWatchlistAt,
     getStockWatchFlags,
-    isTechWatchlistStock
+    isTechWatchlistStock,
+    isBacktestEligibleCode
 };

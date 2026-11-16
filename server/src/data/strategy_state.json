@@ -1,37 +1,37 @@
 {
+  "prev_day_volume_price_bottom": {
+    "triggeredToday": "2026-11-16"
+  },
   "overnight_crisis_escape": {
-    "lastCheckedTime": "2026-11-13 10:51:09",
-    "lastTriggeredTime": "2026-11-13 10:41:08"
+    "lastCheckedTime": "2026-11-16 10:52:42",
+    "lastTriggeredTime": "2026-11-16 10:11:41"
   },
   "ebb_tide_direct_reversal": {
-    "triggeredToday": "2026-11-13"
+    "triggeredToday": "2026-11-16"
   },
   "high_open_high_walk": {
-    "advisoryToday": "2026-11-13",
+    "advisoryToday": "2026-11-16",
     "preconditionMet": false,
-    "triggerIndexCode": "sz399006",
-    "triggerIndexName": "创业板指",
-    "checkedToday": "2026-11-13"
+    "triggerIndexCode": null,
+    "triggerIndexName": null,
+    "checkedToday": "2026-11-16"
   },
   "high_open_max_half_position": {
-    "triggeredToday": "2026-11-13"
-  },
-  "opening_net_inflow": {
-    "triggeredToday": "2026-11-13"
-  },
-  "outflow_fake_rally": {
-    "lastTriggeredTime": "2026-11-13 09:37:04"
+    "triggeredToday": "2026-11-16"
   },
   "volume_shrink_stagnation": {
-    "lastTriggeredTime": "2026-11-13 13:00:24"
+    "lastTriggeredTime": "2026-11-16 09:31:28"
   },
-  "inflow_rise_volume_shrink": {
-    "lastTriggeredTime": "2026-11-13 14:18:45"
+  "opening_net_inflow": {
+    "triggeredToday": "2026-11-16"
   },
   "panic_outflow": {
-    "lastTriggeredTime": "2026-11-13 13:28:32"
+    "lastTriggeredTime": "2026-11-16 14:49:09"
+  },
+  "inflow_rise_volume_shrink": {
+    "lastTriggeredTime": "2026-11-16 11:26:16"
   },
   "tail_dip_buying": {
-    "checkedToday": "2026-11-13"
+    "checkedToday": "2026-11-16"
   }
 }

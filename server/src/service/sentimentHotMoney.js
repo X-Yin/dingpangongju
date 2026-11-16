@@ -27,7 +27,7 @@ const path = require('path');
 const axios = require('axios');
 const iconv = require('iconv-lite');
 const { getThsKlineUrl, getThsKlineHeaders, timestampToDateStr } = require('../utils');
-const { getSingleStockData, getSingleStockTlineDataByDate } = require('./stock');
+const { getSingleStockData, getSingleStockTlineDataByDate, isBjStockCode } = require('./stock');
 const { beijingToday } = require('./trainingCamp');
 const { isTradingDay } = require('../utils/tradingDay');
 const { batchParallel } = require('../utils');
@@ -364,6 +364,8 @@ const getStockDailyKline = async (code) => {
 
 // 个股日K序列 [{ d, c, v, h, l }] 升序（d=YYYYMMDD 数字，v=成交量 business_amount，h/l=当日最高/最低价）
 const getStockBars = async (code6) => {
+  // 北交所股票（2026-11-16）：行情源无日K数据，直接返回空，避免 20s 严格重试窗口拖慢回测
+  if (isBjStockCode(code6)) return [];
   const prefixed = toThsStockCode(code6);
   const kline = await getStockDailyKline(prefixed);
   return (kline || [])

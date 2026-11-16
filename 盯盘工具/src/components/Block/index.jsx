@@ -30,6 +30,13 @@ const blockColors = [
 ];
 
 const Block = ({ embedded = false }) => {
+  // 组件卸载时清理 portal 到 body 的 tooltip
+  useEffect(() => {
+    return () => {
+      document.querySelectorAll('.chart-tooltip').forEach(t => t.remove());
+    };
+  }, []);
+
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -193,18 +200,17 @@ const Block = ({ embedded = false }) => {
       chartRef.current.remove();
     }
 
-    // 清理旧的 tooltip 元素
-    const existingTooltips = chartContainerRef.current.querySelectorAll('.chart-tooltip');
-    existingTooltips.forEach(tooltip => tooltip.remove());
+    // 清理旧的 tooltip 元素（portal 到 body，用全局查询）
+    document.querySelectorAll('.chart-tooltip').forEach(tooltip => tooltip.remove());
 
     const chart = createBaseChart(chartContainerRef.current);
     chartRef.current = chart;
     seriesRef.current = {};
 
-    // 创建 Tooltip 元素
+    // 创建 Tooltip 元素并 portal 到 body，避免被父容器层叠上下文限制
     const tooltip = document.createElement('div');
     tooltip.className = 'chart-tooltip';
-    chartContainerRef.current.appendChild(tooltip);
+    document.body.appendChild(tooltip);
 
     // 始终创建基准线（100 线），即使没有历史数据也会显示空图
     const baselineSeries = chart.addLineSeries({
@@ -386,29 +392,30 @@ const Block = ({ embedded = false }) => {
           // 获取 tooltip 的实际尺寸
           const tooltipWidth = tooltip.offsetWidth || 200;
           const tooltipHeight = tooltip.offsetHeight || 100;
-          
-          // 计算 tooltip 的位置，避免超出容器
-          let x = param.point.x + 15;
-          let y = param.point.y + 15;
-          
-          // 检查右侧边界
-          if (x + tooltipWidth > chartContainerRef.current.clientWidth) {
-            x = param.point.x - tooltipWidth - 10;
+
+          // portal 到 body 后，需将容器相对坐标转为 viewport 坐标
+          const rect = chartContainerRef.current.getBoundingClientRect();
+          let x = rect.left + param.point.x + 15;
+          let y = rect.top + param.point.y + 15;
+
+          // 检查右侧边界（以容器右侧为限）
+          if (x + tooltipWidth > rect.right) {
+            x = rect.left + param.point.x - tooltipWidth - 10;
           }
-          
+
           // 检查左侧边界
-          if (x < 0) {
-            x = 10;
+          if (x < rect.left) {
+            x = rect.left + 10;
           }
-          
+
           // 检查底部边界
-          if (y + tooltipHeight > 350) {
-            y = param.point.y - tooltipHeight - 10;
+          if (y + tooltipHeight > rect.bottom) {
+            y = rect.top + param.point.y - tooltipHeight - 10;
           }
-          
+
           // 检查顶部边界
-          if (y < 0) {
-            y = 10;
+          if (y < rect.top) {
+            y = rect.top + 10;
           }
 
           tooltip.style.left = x + 'px';
@@ -511,18 +518,17 @@ const Block = ({ embedded = false }) => {
       dayChartRef.current.remove();
     }
 
-    // 清理旧的 tooltip 元素
-    const existingTooltips = dayChartContainerRef.current.querySelectorAll('.chart-tooltip');
-    existingTooltips.forEach(tooltip => tooltip.remove());
+    // 清理旧的 tooltip 元素（portal 到 body，用全局查询）
+    document.querySelectorAll('.chart-tooltip').forEach(tooltip => tooltip.remove());
 
     const chart = createBaseChart(dayChartContainerRef.current);
     dayChartRef.current = chart;
     daySeriesRef.current = {};
 
-    // 创建 Tooltip 元素
+    // 创建 Tooltip 元素并 portal 到 body
     const tooltip = document.createElement('div');
     tooltip.className = 'chart-tooltip';
-    dayChartContainerRef.current.appendChild(tooltip);
+    document.body.appendChild(tooltip);
 
     // 基准线始终创建
     const baselineSeries = chart.addLineSeries({
@@ -699,29 +705,30 @@ const Block = ({ embedded = false }) => {
           // 获取 tooltip 的实际尺寸
           const tooltipWidth = tooltip.offsetWidth || 200;
           const tooltipHeight = tooltip.offsetHeight || 100;
-          
-          // 计算 tooltip 的位置，避免超出容器
-          let x = param.point.x + 15;
-          let y = param.point.y + 15;
-          
+
+          // portal 到 body 后，需将容器相对坐标转为 viewport 坐标
+          const rect = dayChartContainerRef.current.getBoundingClientRect();
+          let x = rect.left + param.point.x + 15;
+          let y = rect.top + param.point.y + 15;
+
           // 检查右侧边界
-          if (x + tooltipWidth > dayChartContainerRef.current.clientWidth) {
-            x = param.point.x - tooltipWidth - 10;
+          if (x + tooltipWidth > rect.right) {
+            x = rect.left + param.point.x - tooltipWidth - 10;
           }
-          
+
           // 检查左侧边界
-          if (x < 0) {
-            x = 10;
+          if (x < rect.left) {
+            x = rect.left + 10;
           }
-          
+
           // 检查底部边界
-          if (y + tooltipHeight > 350) {
-            y = param.point.y - tooltipHeight - 10;
+          if (y + tooltipHeight > rect.bottom) {
+            y = rect.top + param.point.y - tooltipHeight - 10;
           }
-          
+
           // 检查顶部边界
-          if (y < 0) {
-            y = 10;
+          if (y < rect.top) {
+            y = rect.top + 10;
           }
 
           tooltip.style.left = x + 'px';
@@ -787,15 +794,15 @@ const Block = ({ embedded = false }) => {
       cpIntradayChartRef.current.remove();
     }
 
-    const existingTooltips = cpIntradayContainerRef.current.querySelectorAll('.chart-tooltip');
-    existingTooltips.forEach(tooltip => tooltip.remove());
+    // 清理旧的 tooltip 元素（portal 到 body，用全局查询）
+    document.querySelectorAll('.chart-tooltip').forEach(tooltip => tooltip.remove());
 
     const chart = createBaseChart(cpIntradayContainerRef.current);
     cpIntradayChartRef.current = chart;
 
     const tooltip = document.createElement('div');
     tooltip.className = 'chart-tooltip';
-    cpIntradayContainerRef.current.appendChild(tooltip);
+    document.body.appendChild(tooltip);
 
     // 基准线（0轴）始终创建
     const baselineSeries = chart.addLineSeries({
@@ -919,14 +926,16 @@ const Block = ({ embedded = false }) => {
         `;
         const tooltipWidth = tooltip.offsetWidth || 200;
         const tooltipHeight = tooltip.offsetHeight || 100;
-        let x = param.point.x + 15;
-        let y = param.point.y + 15;
-        if (x + tooltipWidth > cpIntradayContainerRef.current.clientWidth) {
-          x = param.point.x - tooltipWidth - 10;
+        // portal 到 body 后，需将容器相对坐标转为 viewport 坐标
+        const rect = cpIntradayContainerRef.current.getBoundingClientRect();
+        let x = rect.left + param.point.x + 15;
+        let y = rect.top + param.point.y + 15;
+        if (x + tooltipWidth > rect.right) {
+          x = rect.left + param.point.x - tooltipWidth - 10;
         }
-        if (x < 0) x = 10;
-        if (y + tooltipHeight > 350) y = param.point.y - tooltipHeight - 10;
-        if (y < 0) y = 10;
+        if (x < rect.left) x = rect.left + 10;
+        if (y + tooltipHeight > rect.bottom) y = rect.top + param.point.y - tooltipHeight - 10;
+        if (y < rect.top) y = rect.top + 10;
         tooltip.style.left = x + 'px';
         tooltip.style.top = y + 'px';
       }
@@ -951,15 +960,15 @@ const Block = ({ embedded = false }) => {
       cpDailyChartRef.current.remove();
     }
 
-    const existingTooltips = cpDailyContainerRef.current.querySelectorAll('.chart-tooltip');
-    existingTooltips.forEach(tooltip => tooltip.remove());
+    // 清理旧的 tooltip 元素（portal 到 body，用全局查询）
+    document.querySelectorAll('.chart-tooltip').forEach(tooltip => tooltip.remove());
 
     const chart = createBaseChart(cpDailyContainerRef.current);
     cpDailyChartRef.current = chart;
 
     const tooltip = document.createElement('div');
     tooltip.className = 'chart-tooltip';
-    cpDailyContainerRef.current.appendChild(tooltip);
+    document.body.appendChild(tooltip);
 
     // 基准线始终创建
     const baselineSeries = chart.addLineSeries({
@@ -1105,14 +1114,16 @@ const Block = ({ embedded = false }) => {
         `;
         const tooltipWidth = tooltip.offsetWidth || 200;
         const tooltipHeight = tooltip.offsetHeight || 100;
-        let x = param.point.x + 15;
-        let y = param.point.y + 15;
-        if (x + tooltipWidth > cpDailyContainerRef.current.clientWidth) {
-          x = param.point.x - tooltipWidth - 10;
+        // portal 到 body 后，需将容器相对坐标转为 viewport 坐标
+        const rect = cpDailyContainerRef.current.getBoundingClientRect();
+        let x = rect.left + param.point.x + 15;
+        let y = rect.top + param.point.y + 15;
+        if (x + tooltipWidth > rect.right) {
+          x = rect.left + param.point.x - tooltipWidth - 10;
         }
-        if (x < 0) x = 10;
-        if (y + tooltipHeight > 350) y = param.point.y - tooltipHeight - 10;
-        if (y < 0) y = 10;
+        if (x < rect.left) x = rect.left + 10;
+        if (y + tooltipHeight > rect.bottom) y = rect.top + param.point.y - tooltipHeight - 10;
+        if (y < rect.top) y = rect.top + 10;
         tooltip.style.left = x + 'px';
         tooltip.style.top = y + 'px';
       }

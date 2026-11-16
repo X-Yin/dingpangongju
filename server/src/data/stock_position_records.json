@@ -1,5 +1,16 @@
 [
   {
+    "id": "1794792637779_nlp35c",
+    "type": "delete",
+    "code": "sh688200",
+    "name": "华峰测控",
+    "date": "2026-11-16",
+    "time": "09:30:37",
+    "detail": "删除持仓：华峰测控（sh688200）",
+    "pipelineStage": null,
+    "createdAt": "2026-11-16T01:30:37.779Z"
+  },
+  {
     "id": "1794533983023_memhrl",
     "type": "delete",
     "code": "sz300570",

@@ -1396,17 +1396,6 @@
     "addedAt": "2026-11-09 08:50:53"
   },
   {
-    "code": "sz002578",
-    "name": "闽发铝业",
-    "isImportant": true,
-    "blockName": "光伏",
-    "riskScore": null,
-    "isTech": false,
-    "watchMarketCap": true,
-    "watchPE": true,
-    "addedAt": "2026-11-10 16:10:01"
-  },
-  {
     "code": "sh601599",
     "name": "浙文影业",
     "isImportant": true,
@@ -1669,5 +1658,16 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-15 22:31:07"
+  },
+  {
+    "code": "sz002242",
+    "name": "九阳股份",
+    "isImportant": false,
+    "blockName": "机器人",
+    "riskScore": null,
+    "isTech": false,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-16 14:20:50"
   }
 ]

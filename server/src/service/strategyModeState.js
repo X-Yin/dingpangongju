@@ -78,7 +78,11 @@ const setMode = (mode) => {
   if (mode === MODE_MULTI) return current;
   const next = normalize(mode);
   current = next;
-  modes = []; // 切回单模式时关闭多选
+  // 2026-11-16 用户反馈：单选切换不再清空多选列表。开盘实战页的「切换模式」下拉
+  // 同时承担页面展示模块的切换职责，若每次单选切换都关闭多选，用户在几个模块间
+  // 浏览一遍后线上诊断集合就被静默清空（曾导致极致赔率整日未轮询、无卡片推送）。
+  // 现改为：线上诊断集合只由「多选模式」弹窗的勾选列表决定（多选生效时 getModes()
+  // 返回列表）；想只跑单个模式请在弹窗中只勾选该模式。
   persist(current, modes);
   return next;
 };

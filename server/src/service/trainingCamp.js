@@ -4,7 +4,7 @@ const path = require('path');
 const { getAvailableDates, runBacktest, getStrategyDefinitions } = require('./strategyBacktest');
 const { getFundSnapshot, getAmountSnapshot } = require('./fundSnapshot');
 const { getIndexTlineByDate } = require('./fupan');
-const { getMonitorStocks } = require('./monitorStock');
+const { getMonitorStocks, isBacktestEligibleCode } = require('./monitorStock');
 const { getSingleStockTlineDataByDate, getSingleStockData } = require('./stock');
 const { calculateResilience, getLimitTypeByCode } = require('./stockDiagnose');
 // 科技情绪 V2：个股板块限制归一化得分 × 市值加权（分时当时价格）+ 指数冲高回落惩罚 × 0.2
@@ -16,7 +16,7 @@ const { batchParallel, isAfterMarketClose } = require('../utils');
 const getBlockCodeStocks = () => {
   const map = new Map();
   blockCodeList.forEach(item => {
-    if (item.code && !map.has(item.code)) {
+    if (item.code && !map.has(item.code) && isBacktestEligibleCode(item.code)) {
       map.set(item.code, { code: item.code, name: item.name || item.code, blockName: item.blockName || '其他' });
     }
   });
@@ -409,7 +409,10 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
   }
 
   // 并发预取全部自选股当日分时（runBacktest 内部为逐只串行拉取，先并发拉好可让后续全部命中缓存）
-  const monitorStocks = getMonitorStocks() || [];
+  const monitorStocksAll = getMonitorStocks() || [];
+  // 过滤掉北交所 / B股 / 老三板等非主板 / 创业板 / 科创板的代码（如 sz920249 北交所映射），
+  // 避免每只都走 K 线 3 源兜底重试拖慢回测
+  const monitorStocks = monitorStocksAll.filter(s => s && isBacktestEligibleCode(s.code));
   await batchParallel(monitorStocks, async (stock) => {
     try { await getSingleStockTlineDataByDate(stock.code, parseInt(dateStr)); } catch (e) { /* 单只失败忽略 */ }
   }, 10);

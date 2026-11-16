@@ -665,11 +665,6 @@
     "TotalShares": 278901752
   },
   {
-    "secu_code": "sz002578",
-    "secu_name": "闽发铝业",
-    "TotalShares": 938630183
-  },
-  {
     "secu_code": "sh601599",
     "secu_name": "浙文影业",
     "TotalShares": 1160542453
@@ -788,5 +783,10 @@
     "secu_code": "sz300442",
     "secu_name": "润泽科技",
     "TotalShares": 1641041973
+  },
+  {
+    "secu_code": "sz002242",
+    "secu_name": "九阳股份",
+    "TotalShares": 763017000
   }
 ]

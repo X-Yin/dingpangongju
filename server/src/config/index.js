@@ -8,13 +8,15 @@
 //   - tline          : 当日分时 → XQ / CLS / THS 各约 1/3 + LB 最终兜底
 //   - tlineHistorical: 历史日期分时 → CLS / THS 各 1/2（雪球/连板网不支持历史日期）
 //   - kline          : 日K → XQ / CLS / THS 各约 1/3（连板网无日K接口）
+// 2026-11-16 雪球反爬升级：www.xueqiu.com 与 stock.xueqiu.com 全部重定向到 check.xueqiu.com/captcha，
+//   匿名 token 拿不到，接口也无法访问，XQ 源整体不可用；路由权重里先临时全部下掉 xq，统一走 CLS / THS。
+//   后续雪球反爬回松或找到新 token 获取路径再把 xq 加回来。
 const DATA_SOURCE_ROUTE = {
     tline: {
-        primaryWeights: { xq: 0.34, cls: 0.33, ths: 0.33 },
+        primaryWeights: { cls: 0.5, ths: 0.5 },
         fallbackOrder: {
-            xq: ['cls', 'ths', 'lb'],
-            cls: ['ths', 'xq', 'lb'],
-            ths: ['cls', 'xq', 'lb'],
+            cls: ['ths', 'lb'],
+            ths: ['cls', 'lb'],
         },
     },
     tlineHistorical: {
@@ -22,11 +24,10 @@ const DATA_SOURCE_ROUTE = {
         fallbackOrder: { cls: ['ths'], ths: ['cls'] },
     },
     kline: {
-        primaryWeights: { xq: 0.34, cls: 0.33, ths: 0.33 },
+        primaryWeights: { cls: 0.5, ths: 0.5 },
         fallbackOrder: {
-            xq: ['cls', 'ths'],
-            cls: ['ths', 'xq'],
-            ths: ['cls', 'xq'],
+            cls: ['ths'],
+            ths: ['cls'],
         },
     },
 };

@@ -2833,5 +2833,19 @@
     "marketValue": 10756240028,
     "circulatingMarketValue": 2072453408,
     "updatedAt": "2026-11-13 23:53:12"
+  },
+  {
+    "code": "sh600643",
+    "name": "爱建集团",
+    "marketValue": 6786907514,
+    "circulatingMarketValue": 6774898310,
+    "updatedAt": "2026-11-16 16:02:44"
+  },
+  {
+    "code": "sh605378",
+    "name": "野马电池",
+    "marketValue": 4056096128,
+    "circulatingMarketValue": 4056096128,
+    "updatedAt": "2026-11-16 16:02:44"
   }
 ]

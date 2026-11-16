@@ -1,15 +1,15 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-11-13 09:33:48",
-  "reason": "持仓变动重跑（持仓管理增删股票）",
+  "computedAt": "2026-11-16 00:31:38",
+  "reason": "每日首次启动回测",
   "range": {
-    "startDate": "20260814",
-    "endDate": "20261113"
+    "startDate": "20260817",
+    "endDate": "20261116"
   },
-  "tradeCount": 9,
+  "tradeCount": 11,
   "threshold": 20,
-  "consecutiveBelow": 1,
+  "consecutiveBelow": 0,
   "lastReturns": [
     {
       "code": "sz002837",
@@ -54,11 +54,11 @@
       "returnRate": -1.1
     },
     {
-      "code": "sz002636",
-      "name": "金安国纪",
+      "code": "sz002428",
+      "name": "云南锗业",
       "sellDate": "20261103",
       "sellTime": "09:32",
-      "returnRate": -3.19
+      "returnRate": -1.81
     },
     {
       "code": "sh688120",
@@ -73,6 +73,13 @@
       "sellDate": "20261106",
       "sellTime": "09:35",
       "returnRate": -0.6
+    },
+    {
+      "code": "sh688702",
+      "name": "盛科通信",
+      "sellDate": "20261113",
+      "sellTime": "10:55",
+      "returnRate": 15.92
     }
   ]
 }

@@ -7,7 +7,7 @@
 //                           后端买点诊断按全部勾选模式并行执行；卖点诊断不受影响（按每笔持仓自身策略）
 // 模式为全局共享 + localStorage 持久化：模块级变量 + CustomEvent 广播，不引入 Context/Provider。
 import { useEffect, useState } from 'react';
-import { syncStrategyMode, syncStrategyModes } from './buyPointWs';
+import { syncStrategyMode, syncStrategyModes, fetchStrategyModes } from './buyPointWs';
 
 export const MODE_TECH_ATTACK = 'tech_attack';
 export const MODE_EXTREME_WIN = 'hot_money_extreme_win';
@@ -106,6 +106,25 @@ export const setStrategyModes = (list) => {
   window.dispatchEvent(new CustomEvent(MODES_EVENT_NAME, { detail: [...next] }));
   syncStrategyModes(next);
   return next;
+};
+
+// 与后端对账（2026-11-16 用户反馈）：拉取后端持久化的多选列表覆盖本地缓存并广播。
+// 页面卡片渲染读本地列表、线上诊断读后端列表，两者脱节时会误导用户
+//（曾出现后端只剩单模式、页面仍渲染多张候选卡片）。进入开盘实战页时调用一次，
+// 保证「页面展示的模式 = 后端实际诊断的模式」
+export const refreshModesFromBackend = async () => {
+  try {
+    const modes = await fetchStrategyModes();
+    if (!Array.isArray(modes)) return getStrategyModes();
+    currentModes = normalizeModeList(modes);
+    try {
+      localStorage.setItem(MODES_STORAGE_KEY, JSON.stringify(currentModes));
+    } catch { /* 忽略存储失败 */ }
+    window.dispatchEvent(new CustomEvent(MODES_EVENT_NAME, { detail: [...currentModes] }));
+    return [...currentModes];
+  } catch {
+    return getStrategyModes();
+  }
 };
 
 // 订阅全局模式：任意组件调用即可随模式切换自动重渲染

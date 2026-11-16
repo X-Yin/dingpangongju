@@ -85,7 +85,7 @@ const { addMonitorStock, deleteMonitorStock, toggleStockImportant, batchSetImpor
 const { diagnoseResilience, diagnoseResilienceMultiDay, calculateRealtimeResilienceBatch, diagnoseSingleStockResilience, diagnoseIntradayResilience, checkPositionSellAlerts } = require('./service/stockDiagnose');
 const { diagnosePremium } = require('./service/premiumDiagnosis');
 const { backtestBuySell, diagnoseRealtimeBuyPoints, getBuyPointChecks, getBuyPointStocks, getTopGainersByMarket, getSingleStockBuyPointDiagnosis, getBuySellSelectableStocks, checkSingleStockSellPoint } = require('./service/buySellDiagnose');
-const { MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE, getHotMoneyLeaderList, getExtremeWinBuyPointChecks, checkExtremeWinSellPointDetailed, clearTodayTlineCache } = require('./service/hotMoneyExtremeWin');
+const { MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, ATTACK_DEFENSE_BUY_CUTOFF_MINUTE, getHotMoneyLeaderList, getExtremeWinBuyPointChecks, checkExtremeWinSellPointDetailed, clearTodayTlineCache, clearLiveTlineCache } = require('./service/hotMoneyExtremeWin');
 const { diagnoseTrendStocks } = require('./service/trendDiagnose');
 const { getTechnicalDiagnosis } = require('./service/technicalDiagnosis');
 const { getMaSlopeDiagnosis } = require('./service/maSlopeDiagnosis');
@@ -1983,8 +1983,10 @@ app.post('/hot_money_leader_list', async (req, res) => {
     const targetDate = req.body?.targetDate;
     const limit = req.body?.limit;
     // 2026-11-14 用户要求：候选股列表永远真实重算，不走任何缓存 / 收盘冻结（前端已固定 force 轮询）；
-    // 每次重算前清空「当日」分时缓存，确保实时拉取最新分时并重算强度分/差劲分
+    // 2026-11-16 补充：彻底清掉所有层级的当日分时缓存（stock.js 底层 + extremeWinScores 中层），
+    //   确保本轮 fetchExtremeWinContext 里 loadTlinePoints / getSingleStockTlineData 走的全是新鲜行情。
     clearTodayTlineCache();
+    clearLiveTlineCache();
     const result = await filterNearAbnormalCandidates(await getHotMoneyLeaderList(targetDate, limit));
     res.json(result);
   } catch (error) {
@@ -2016,6 +2018,10 @@ app.post('/top_gainers_by_market', async (req, res) => {
     const targetDate = req.body?.targetDate;
     const limit = req.body?.limit;
     // 2026-11-14 用户要求：候选股列表永远真实重算，不走任何缓存 / 收盘冻结（前端已固定 force 轮询）
+    // 2026-11-16 补充：清掉 stock.js 底层实时分时缓存 + extremeWinScores 中层分时缓存（虽然 getTopGainersByMarket
+    //   的 TTL 已被移除，但 buildTopGainersByMarket 内部拉抗分歧还要走分时，必须清干净）
+    clearLiveTlineCache();
+    clearTodayTlineCache();
     const result = await getTopGainersByMarket(targetDate, limit);
     res.json(result);
   } catch (error) {
