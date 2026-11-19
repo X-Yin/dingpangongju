@@ -2488,5 +2488,40 @@ exports.default = [
         "blockName": "AIDC",
         "code": "sz301189",
         "name": "奥尼电子"
+    },
+    {
+        "blockName": "光刻机",
+        "code": "sz300331",
+        "name": "苏大维格",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "光刻机",
+        "code": "sh688502",
+        "name": "茂莱光学",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "光刻机",
+        "code": "sz301421",
+        "name": "波长光电",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "光刻机",
+        "code": "sh600895",
+        "name": "张江高科",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "光刻机",
+        "code": "sh600619",
+        "name": "海立股份",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "半导体",
+        "code": "sh688757",
+        "name": "胜科纳米"
     }
 ]

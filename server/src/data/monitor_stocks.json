@@ -1471,5 +1471,16 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-18 20:34:02"
+  },
+  {
+    "code": "sh688757",
+    "name": "胜科纳米",
+    "isImportant": false,
+    "blockName": "先进制程",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-19 12:38:26"
   }
 ]

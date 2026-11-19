@@ -109,6 +109,10 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
   const todayFolderCheckRef = useRef(false);
   // 快捷新建（Cmd+Ctrl）后是否需要在填写完标题时聚焦编辑器
   const quickCreateFocusRef = useRef(false);
+  // 重命名目标项 id（handleRename 设置，confirmRename 使用）
+  const renameTargetIdRef = useRef(null);
+  // 快捷新建研报的「后台创建完成」信号：弹窗先开、创建后台进行，确认重命名时等待该信号拿到新研报 id
+  const quickCreateReadyRef = useRef(null);
 
   // 编辑器就绪后聚焦：Vditor 初始化与 DOM 渲染均为异步，需轮询等待挂载完成；
   // 聚焦后再校验焦点是否真的落在编辑器内（setValue 等异步操作可能抢占焦点），未成功则重试
@@ -934,6 +938,7 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
 
   const handleRename = (item) => {
     setNewItemName(item.name);
+    renameTargetIdRef.current = item.id;
     setSelectedKey(item.id);
     setRenameModalVisible(true);
   };
@@ -945,9 +950,19 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
     }
 
     try {
-      // 使用 handleRename 中设置的 item 的 id（通过 selectedKey 保存）
+      // 确定重命名目标：快捷新建流程需等待后台创建完成拿到新研报 id（创建失败时返回 null，弹窗已关闭）
+      let targetId;
+      if (quickCreateReadyRef.current) {
+        targetId = await quickCreateReadyRef.current.promise;
+        quickCreateReadyRef.current = null;
+        if (!targetId) return;
+      } else {
+        targetId = renameTargetIdRef.current || selectedKey;
+      }
+      renameTargetIdRef.current = null;
+
       await axios.post(`http://${local_ip}:3000/update_research_report`, {
-        id: selectedKey,
+        id: targetId,
         name: newItemName
       });
       message.success('重命名成功');
@@ -1200,11 +1215,20 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Command+Control 快捷新建研报：在今日日期文件夹（不存在则自动创建）下新建研报，
-  // 并弹出标题输入弹窗（打开后自动聚焦、全选默认名）
+  // Command+Control 快捷新建研报：先立即弹出标题输入弹窗（打开后自动聚焦、全选默认名），
+  // 研报创建在后台异步进行（定位今日文件夹 -> 必要时创建 -> 新建研报），消除等待网络请求造成的卡顿感；
+  // 用户点确定时若创建尚未完成，会等待创建结果再执行重命名
   const handleQuickCreateReport = async () => {
     if (quickCreateBusyRef.current || createModalVisible || renameModalVisible) return;
     quickCreateBusyRef.current = true;
+
+    // 立即弹出标题输入弹窗，并准备好「创建完成」信号供 confirmRename 等待
+    let resolveReady;
+    const readyPromise = new Promise((resolve) => { resolveReady = resolve; });
+    quickCreateReadyRef.current = { promise: readyPromise, resolve: resolveReady };
+    setNewItemName(QUICK_NEW_REPORT_NAME);
+    setRenameModalVisible(true);
+
     try {
       // 取全量树定位今日日期文件夹，避免分页窗口漏掉
       const items = await loadReportsTree(true);
@@ -1237,10 +1261,9 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
       // 树刷新后自动选中新建的研报（其所在日期文件夹会随 selectedKey 自动展开）
       pendingSelectReportIdRef.current = newItem.id;
 
-      // 弹出标题输入弹窗，输入完成后回车或点确定即完成重命名
+      // 输入完成后回车或点确定即完成重命名
       quickCreateFocusRef.current = true;
-      setNewItemName(QUICK_NEW_REPORT_NAME);
-      setRenameModalVisible(true);
+      quickCreateReadyRef.current?.resolve(newItem.id);
 
       setTimeout(() => {
         isRefreshingRef.current = false;
@@ -1248,6 +1271,10 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
     } catch (error) {
       console.error('快捷新建研报失败', error);
       message.error('快捷新建研报失败');
+      // 创建失败：关闭弹窗，并让等待中的重命名流程直接结束
+      setRenameModalVisible(false);
+      quickCreateReadyRef.current?.resolve(null);
+      quickCreateReadyRef.current = null;
       isRefreshingRef.current = false;
     } finally {
       quickCreateBusyRef.current = false;
@@ -1561,7 +1588,12 @@ const ResearchReportModule = ({ expandTodayRequest }) => {
         title="重命名"
         open={renameModalVisible}
         onOk={confirmRename}
-        onCancel={() => setRenameModalVisible(false)}
+        onCancel={() => {
+          setRenameModalVisible(false);
+          // 取消快捷新建的标题弹窗时，清掉「创建完成」信号，避免影响后续的重命名操作
+          quickCreateReadyRef.current = null;
+          renameTargetIdRef.current = null;
+        }}
       >
         <Input
           ref={renameInputRef}

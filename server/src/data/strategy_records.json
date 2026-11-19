@@ -1,1 +1,102 @@
-[]
+[
+  {
+    "id": "4674e2829d7e5f5e",
+    "time": "2026-11-19 09:32:07",
+    "read": true,
+    "strategyId": "volume_shrink_stagnation",
+    "title": "📉 放量后缩量滞涨",
+    "description": "成交量从高位 <strong>-40亿</strong> 回落至 <strong>-144亿</strong>，指数开始滞涨，需警惕回落风险。",
+    "severity": "medium",
+    "isBullish": false
+  },
+  {
+    "id": "3b1fe5baeadd09eb",
+    "time": "2026-11-19 09:38:11",
+    "read": true,
+    "strategyId": "outflow_fake_rally",
+    "title": "⚠️ 资金流出但指数上涨-诱多信号",
+    "description": "主力资金净流出扩大（-68.9亿 → -74.1亿），但创业板/科创板指数仍在上涨，可能是诱多信号，注意风险。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "76af11a8a3f762d1",
+    "time": "2026-11-19 09:40:12",
+    "read": true,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-83.4亿</strong>（净流出）<br/>• 科技分时情绪 -22.7 → -11.9（上升 10.8）<br/>• 本提醒每 10 分钟重复一次直至 11:00；若 5 分钟内主力净流入 ≥20亿 且成交量增加 ≥100亿（资金回流）则暂停，之后连续 10 分钟成交量持续萎缩则恢复提醒<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "4eca2f4fe2c3d214",
+    "time": "2026-11-19 09:45:12",
+    "read": true,
+    "strategyId": "panic_outflow",
+    "title": "🚨 恐慌盘出逃",
+    "description": "成交量较约15分钟前放大 <strong>341亿</strong>（≥100亿），主力资金净流出加速（-46.4→-96.2亿），净流出≥10亿。放量+资金出逃，恐慌盘涌出。",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "1a31a312908a43be",
+    "time": "2026-11-19 09:50:13",
+    "read": true,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-104.0亿</strong>（净流出）<br/>• 科技分时情绪 -16.4 → -10.6（上升 5.9）<br/>• 本提醒每 10 分钟重复一次直至 11:00；若 5 分钟内主力净流入 ≥20亿 且成交量增加 ≥100亿（资金回流）则暂停，之后连续 10 分钟成交量持续萎缩则恢复提醒<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "50e5a12038101896",
+    "time": "2026-11-19 10:30:25",
+    "read": false,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-178.7亿</strong>（净流出）<br/>• 科技分时情绪 -10.6 → -10.6（上升 0.1）<br/>• 本提醒每 10 分钟重复一次直至 11:00；若 5 分钟内主力净流入 ≥20亿 且成交量增加 ≥100亿（资金回流）则暂停，之后连续 10 分钟成交量持续萎缩则恢复提醒<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "354adb7d3d2aed60",
+    "time": "2026-11-19 10:40:27",
+    "read": false,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-203.3亿</strong>（净流出）<br/>• 科技分时情绪 -13.8 → -13.4（上升 0.4）<br/>• 本提醒每 10 分钟重复一次直至 11:00；若 5 分钟内主力净流入 ≥20亿 且成交量增加 ≥100亿（资金回流）则暂停，之后连续 10 分钟成交量持续萎缩则恢复提醒<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "c4651514666af890",
+    "time": "2026-11-19 10:50:29",
+    "read": false,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-212.1亿</strong>（净流出）<br/>• 科技分时情绪 -7.7 → -7.5（上升 0.2）<br/>• 本提醒每 10 分钟重复一次直至 11:00；若 5 分钟内主力净流入 ≥20亿 且成交量增加 ≥100亿（资金回流）则暂停，之后连续 10 分钟成交量持续萎缩则恢复提醒<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "1d8ebe5d14146147",
+    "time": "2026-11-19 11:00:31",
+    "read": false,
+    "strategyId": "overnight_crisis_escape",
+    "title": "⚠️ 隔夜危机跑路-冲高清仓机会",
+    "description": "隔夜危机背景下，开盘科技股直线拉升，但主力资金持续净流出，量价背离，是冲高清仓的机会。<br/>• 主力资金净流入 <strong>-215.7亿</strong>（净流出）<br/>• 科技分时情绪 -7.3 → -6.3（上升 1.1）<br/>• 本提醒每 10 分钟重复一次直至 11:00；若 5 分钟内主力净流入 ≥20亿 且成交量增加 ≥100亿（资金回流）则暂停，之后连续 10 分钟成交量持续萎缩则恢复提醒<br/>• 当前为科技股虚拉、主力资金出货，建议冲高清仓避险",
+    "severity": "high",
+    "isBullish": false
+  },
+  {
+    "id": "23b4f23149bda428",
+    "time": "2026-11-19 13:00:42",
+    "read": false,
+    "strategyId": "straight_rise_no_volume",
+    "title": "⚠️ 无量拉升警惕回落",
+    "description": "科创板5分钟上涨1.21%，但成交量仅增加 <strong>23亿</strong>（不足100亿），无量上涨持续性存疑，容易回落。",
+    "severity": "medium",
+    "isBullish": false
+  }
+]
