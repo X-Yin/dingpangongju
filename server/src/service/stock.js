@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { Worker } = require('worker_threads');
-const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay, getThsSnapshotUrl, getThsSnapshotHeaders, buildThsSnapshotRequestBody, getThsMarketCode, batchParallel, resolveAnalysisDate, withHardTimeout } = require('../utils');
+const { getClsReqUrl, getClsReqStockTlineUrl, getThsKlineUrl, getThsKlineHeaders, buildThsKlineRequestBody, timestampToDateStr, getThsTrendUrl, getThsTrendHeaders, buildThsTrendRequestBody, buildThsTrendRequestBodyWithDate, timestampToMinute, getClsReqStockTlineDay5Url, isTradingHours, isTradingDay, getThsSnapshotUrl, getThsSnapshotHeaders, buildThsSnapshotRequestBody, getThsMarketCode, batchParallel, resolveAnalysisDate, withHardTimeout, getRecentTradingDays } = require('../utils');
 const { lianbanTlineUrl, lianbanHeaders } = require('../constant');
 const { refreshLBSessCookie } = require('./lianbanCookieRefresh');
 const { fetchXueqiuKline, fetchXueqiuTline } = require('./xueqiu');
@@ -931,7 +931,16 @@ const saveTlineToCache = (cacheKey, tradeDate, tlineData) => {
 
         // 紧凑 JSON 落盘（无缩进）：目录 8.6GB/9000+ 文件，缩进格式体积与解析开销均显著更大
         fs.writeFileSync(cacheFile, JSON.stringify(cacheData), 'utf-8');
-        tlineFileMemCache.set(cacheKey, cacheData); // 同步内存缓存
+        hasLocalTlineFileSet.add(cacheKey); // 新股票首次落盘后即进入离线锁定范围
+        // 内存驻留策略（2026-11-18 防 OOM）：仅当日（实盘轮询路径）保留整份全历史数组供同步读取，
+        // 历史日期（回测批量补数路径）落盘后立即释放——单文件可达 11MB，回测一次落盘数百只股票
+        // 全部驻留会撑爆堆内存（本次回测 OOM 崩溃根因），与 Lean 路径「落盘后立即释放」同口径
+        if (Number(tradeDate) === getLatestTlineDateNum()) {
+            if (tlineFileMemCache.size > 50) tlineFileMemCache.clear();
+            tlineFileMemCache.set(cacheKey, cacheData);
+        } else {
+            tlineFileMemCache.delete(cacheKey);
+        }
     } catch (e) {
         console.error(`写入分时缓存失败 (${cacheKey}, ${tradeDate}):`, e.message);
     }
@@ -1027,8 +1036,102 @@ const isTlineCacheComplete = (line, tradeDate) => {
 // 分时结果内存缓存（code|date -> 结果，历史分时不可变；当日盘中不缓存）
 // 消除 resilience3d 等场景对同一 (股票/指数, 日期) 的重复请求/读盘
 const tlineResultMemCache = new Map();
-// 分时拉取失败负缓存："code|dateNum" -> 失败过期时间戳（10 分钟内不再重试 THS/CLS，回测加速）
+// 分时拉取失败负缓存，分两类（2026-11-18）：
+//   tlineFailMemo：源明确返回「无数据」（THS/CLS 正常响应但查不到该日期）→ 历史分时确定不存在，
+//     持久化到磁盘 + 7 天 TTL，跨进程/跨次回测跳过请求（保留每周重试一次的机会，数据源可能补数据）
+//   tlineFailMemoTransient：超时/网络异常等暂时性失败 → 仅内存 10 分钟，
+//     避免把本可拿到的数据（如并发限流导致的偶发超时）误标为长期失败而错误剔除个股
+// 历史日期失败的典型场景：THS 对个别股票部分区间数据缺失（如科创板 20260629-20260710）、CLS 仅最近 5 个交易日
 const tlineFailMemo = new Map();
+const tlineFailMemoTransient = new Map();
+const tlineFailMemoPath = path.resolve(__dirname, '../data/tline_fail_memo.json');
+const TLINE_FAIL_TTL_TRANSIENT = 10 * 60 * 1000;
+const TLINE_FAIL_TTL_HISTORY = 7 * 24 * 60 * 60 * 1000;
+let tlineFailMemoLoaded = false;
+let tlineFailMemoSaveTimer = null;
+
+const loadTlineFailMemo = () => {
+    if (tlineFailMemoLoaded) return;
+    tlineFailMemoLoaded = true;
+    try {
+        if (fs.existsSync(tlineFailMemoPath)) {
+            const parsed = JSON.parse(fs.readFileSync(tlineFailMemoPath, 'utf-8'));
+            if (parsed && typeof parsed === 'object') {
+                const now = Date.now();
+                for (const [k, v] of Object.entries(parsed)) {
+                    if (Number(v) > now) tlineFailMemo.set(k, Number(v));
+                }
+            }
+        }
+    } catch (e) { /* 负缓存文件损坏等价于无负缓存，忽略 */ }
+};
+
+const saveTlineFailMemo = () => {
+    if (tlineFailMemoSaveTimer) return;
+    tlineFailMemoSaveTimer = setTimeout(() => {
+        tlineFailMemoSaveTimer = null;
+        try {
+            const now = Date.now();
+            const obj = {};
+            for (const [k, v] of tlineFailMemo) {
+                if (v > now) obj[k] = v;
+            }
+            const tmpFile = `${tlineFailMemoPath}.${process.pid}.tmp`;
+            fs.writeFileSync(tmpFile, JSON.stringify(obj), 'utf-8');
+            fs.renameSync(tmpFile, tlineFailMemoPath);
+        } catch (e) { /* 尽力而为 */ }
+    }, 2000);
+    if (tlineFailMemoSaveTimer.unref) tlineFailMemoSaveTimer.unref();
+};
+
+// 进程退出前同步落盘失败负缓存（防抖定时器带 unref，退出时可能尚未触发）
+process.on('exit', () => {
+    if (!tlineFailMemoLoaded || tlineFailMemo.size === 0) return;
+    if (tlineFailMemoSaveTimer) { clearTimeout(tlineFailMemoSaveTimer); tlineFailMemoSaveTimer = null; }
+    try {
+        const now = Date.now();
+        const obj = {};
+        for (const [k, v] of tlineFailMemo) {
+            if (v > now) obj[k] = v;
+        }
+        fs.writeFileSync(tlineFailMemoPath, JSON.stringify(obj), 'utf-8');
+    } catch (e) { /* 尽力而为 */ }
+});
+
+// ---------- 历史分时离线锁定（2026-11-18 用户要求） ----------
+// 超出 CLS 5 日窗口（最近 5 个交易日，CLS tline_5d 只覆盖这么多）的历史日期一律不再在线请求分时：
+//   - 本地已有该股票分时落盘文件（曾经缓存过）→ 直接判空返回。本地没有该日期就是没有
+//     （如 THS 数据空洞），永久不再重试，杜绝每次回测对同批 (股票, 旧日期) 反复在线请求；
+//   - 全新股票（从未缓存过任何分时，无落盘文件）→ 允许在线拉取，拉到即经 saveTlineToCache
+//     落盘并登记进 hasLocalTlineFileSet，此后同样被锁定。
+// 最近 5 个交易日内（CLS 窗口内）保持现状仍允许在线兜底，否则明天回测今天刚产生的分时会拿不到。
+const CLS_TLINE_WINDOW_DAYS = 5;
+let clsWindowOldestDateNum = null; // 最近 5 个交易日的最早一天（按天缓存，避免每天重复计算）
+const getClsWindowOldestDateNum = () => {
+    if (clsWindowOldestDateNum) return clsWindowOldestDateNum;
+    const days = getRecentTradingDays(CLS_TLINE_WINDOW_DAYS);
+    const first = days && days[0];
+    if (!first) return 0;
+    clsWindowOldestDateNum = Number(`${first.getFullYear()}${String(first.getMonth() + 1).padStart(2, '0')}${String(first.getDate()).padStart(2, '0')}`);
+    return clsWindowOldestDateNum;
+};
+const hasLocalTlineFileSet = new Set(); // cacheKey -> 本地确认存在分时落盘文件（进程内记忆，避免反复 existsSync）
+const hasLocalTlineFile = (cacheKey) => {
+    if (hasLocalTlineFileSet.has(cacheKey)) return true;
+    try {
+        if (fs.existsSync(path.join(tlineCacheDir, `${cacheKey}.json`))) {
+            hasLocalTlineFileSet.add(cacheKey);
+            return true;
+        }
+    } catch (e) { /* 读盘失败按无文件处理 */ }
+    return false;
+};
+// 超出 CLS 窗口且该股票已被缓存过 → 离线锁定：不再在线请求，直接返回 null
+const isTlineOfflineLocked = (cacheKey, tradeDate) => {
+    const dateNum = Number(tradeDate);
+    if (!Number.isFinite(dateNum) || dateNum >= getClsWindowOldestDateNum()) return false;
+    return hasLocalTlineFile(cacheKey);
+};
 
 // 最新一个交易日（周末/节假日、交易日盘前都会回退到上一个交易日），返回 YYYYMMDD 数字
 const getLatestTlineDateNum = () => {
@@ -1112,12 +1215,21 @@ const getSingleStockTlineDataByDate = async (code, tradeDate, opts = {}) => {
         }
     }
 
-    // 失败负缓存（2026-11-04 回测加速）：THS/CLS 都拿不到的 (股票, 日期) 记忆 10 分钟，
+    // 历史分时离线锁定（2026-11-18）：超出 CLS 5 日窗口的旧日期，只要该股票曾经落盘过分时，
+    // 就不再发起任何在线请求——本地没有该日期就是没有（THS 空洞等永久缺口），直接判空返回。
+    // 全新股票（从未缓存过）不受锁定，允许一次在线拉取，成功落盘后即被锁定（见 saveTlineToCache）
+    if (!isToday && isTlineOfflineLocked(cacheKey, tradeDate)) {
+        return null;
+    }
+
+    // 失败负缓存（2026-11-04 回测加速）：THS/CLS 都拿不到的 (股票, 日期) 记忆一段时间，
     // 避免同一笔回测区间内反复超时重试（如长期停牌/退市代码每次都拖 2 次接口超时）。
     // 当日（live）数据随时会出现（竞价→开盘后逐分钟生成），失败不可负缓存，否则盘中负缓存期内涨幅/强度分全部为 '--'
+    // 历史日期失败持久化到磁盘（7 天 TTL），跨进程/跨次回测不再重复在线重试注定失败的组合
     const failKey = `${code}|${tradeDate}`;
     if (!isToday && !ignoreFailCache) {
-        const failMemo = tlineFailMemo.get(failKey);
+        loadTlineFailMemo();
+        const failMemo = tlineFailMemo.get(failKey) || tlineFailMemoTransient.get(failKey);
         if (failMemo && Date.now() < failMemo) {
             return null;
         }
@@ -1139,17 +1251,26 @@ const getSingleStockTlineDataByDate = async (code, tradeDate, opts = {}) => {
         if (src === 'xq') return getSingleStockTlineDataByDateFromXQ(code, tradeDate, reqTimeoutMs);
         return Promise.resolve(null);
     };
+    let sawSourceError = false; // 是否出现过超时/网络异常（区别于源正常响应「无数据」）
     for (const src of histOrder) {
         try {
             result = await withHardTimeout(runTlineSource(src), PER_SOURCE_TIMEOUT_MS, `${src} tline ${code} ${tradeDate}`);
         } catch (e) {
             result = null;
+            sawSourceError = true;
         }
         if (result && result.line && result.line.length > 0) break;
         console.log(`${src.toUpperCase()} 获取股票 ${code} 日期 ${tradeDate} 分时失败，尝试下一个兜底`);
     }
     if (!isToday && !ignoreFailCache && (!result || !result.line || result.line.length === 0)) {
-        tlineFailMemo.set(failKey, Date.now() + 10 * 60 * 1000);
+        if (sawSourceError) {
+            // 有超时/异常：视为暂时性失败，仅内存短 TTL（下次运行会重试，直到拿到或确认无数据）
+            tlineFailMemoTransient.set(failKey, Date.now() + TLINE_FAIL_TTL_TRANSIENT);
+        } else {
+            // 各源均正常响应但无数据：历史分时确定不存在，持久化 7 天
+            tlineFailMemo.set(failKey, Date.now() + TLINE_FAIL_TTL_HISTORY);
+            saveTlineFailMemo();
+        }
     }
 
     // 写入本地缓存
@@ -1267,6 +1388,10 @@ const getSingleStockTlineDataByDateLean = async (code, tradeDate) => {
         cached = null;
     }
     if (cached && isTlineCacheComplete(cached.line, dateNum)) return cached;
+
+    // 历史分时离线锁定（2026-11-18）：与 getSingleStockTlineDataByDate 同口径，
+    // 超出 CLS 5 日窗口的旧日期 + 股票已有落盘文件 → 不再在线请求，直接判空
+    if (isTlineOfflineLocked(cacheKey, dateNum)) return null;
 
     // 分时路由（ByDateLean 路径，磁盘未命中才走 HTTP）：
     //   最新交易日 → 按 code 稳定哈希分散到 XQ / CLS / THS；更早的历史日期 → CLS / THS 各半

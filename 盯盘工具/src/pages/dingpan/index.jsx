@@ -28,7 +28,6 @@ import BlockMoneyMonitor from './components/BlockMoneyMonitor';
 import RihanMonitor from './components/RihanMonitor';
 import WatchlistMonitor from './components/WatchlistMonitor';
 import KeyBlocksMonitor from './components/KeyBlocksMonitor';
-import HistoryModal from './components/HistoryModal';
 import GoodNewsModal from './components/GoodNewsModal';
 import LogicExploreModal from './components/LogicExploreModal';
 import AddStockModal from './components/AddStockModal';
@@ -115,12 +114,30 @@ const isWithinTradingHours = () => {
 const DingPan = () => {
     const navigate = useNavigate();
 
-    // 交易日交易时间内，停留在本页超过 1 分钟自动跳转到专注交易页（/opening_battle）
+    // 交易日交易时间内，停留在本页超过设定分钟自动跳转到专注交易页（/opening_battle）
+    // 停留上限（分钟）保存在后端 data/dingpan_settings.json，可在 debug 面板修改；
+    // 用 ref 存当前上限，修改设置后无需重置本页停留计时
+    const stayLimitMsRef = useRef(60 * 1000);
+    const fetchStayLimit = useCallback(() => {
+        axios.get(`http://${local_ip}:3000/api/dingpan_settings`)
+            .then((res) => {
+                const n = Number(res.data?.data?.stayLimitMinutes);
+                if (Number.isFinite(n) && n > 0) stayLimitMsRef.current = n * 60 * 1000;
+            })
+            .catch(() => {}); // 拉取失败保持默认 1 分钟
+    }, []);
+
     useEffect(() => {
-        const STAY_LIMIT_MS = 60 * 1000; // 停留上限：1 分钟
+        fetchStayLimit();
+        // debug 面板保存后广播事件，立即生效
+        window.addEventListener('dingpan-stay-limit-changed', fetchStayLimit);
+        return () => window.removeEventListener('dingpan-stay-limit-changed', fetchStayLimit);
+    }, [fetchStayLimit]);
+
+    useEffect(() => {
         const enterTime = Date.now();
         const timer = setInterval(() => {
-            if (Date.now() - enterTime > STAY_LIMIT_MS && isWithinTradingHours()) {
+            if (Date.now() - enterTime > stayLimitMsRef.current && isWithinTradingHours()) {
                 clearInterval(timer);
                 navigate('/opening_battle');
             }
@@ -150,11 +167,9 @@ const DingPan = () => {
     const [data, setData] = useState({ unNormalDaPanData: [], unNormalStockList: [], diagnoseData: [], topAndBottomBlockData: null, allStockData: {}, amountInfo: null, jingJiaQiangChouData: [], kaiPanZhuDongData: [], kaiPanXiaCuoData: [], openingPrices: null });
     const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState(null);
-    const [history, setHistory] = useState([]); // 记录所有发生过的急速异动
     const [searchQuery, setSearchQuery] = useState(''); // 自选股搜索关键词
     const [watchlistRemoteCodeSet, setWatchlistRemoteCodeSet] = useState(() => new Set()); // 远程搜索纠错命中的自选股代码集合（比如用户输错形近字时由同花顺纠正）
     const watchlistRemoteSeqRef = useRef(0);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     // 情绪周期弹窗（内嵌四维立体，使用实时连板 + 实时资金/成交量占比数据）
     const [emotionCycleVisible, setEmotionCycleVisible] = useState(false);
     const [emotionCycleLoading, setEmotionCycleLoading] = useState(false);
@@ -1076,36 +1091,7 @@ const DingPan = () => {
         };
     }, []);
 
-    const sendDesktopNotification = (stockName, label, changeDiff, stockCode, desc) => {
-
-        // 记录到历史记录中（去重逻辑：如果 3 分钟内名称、代码、标签、幅度都一致，则不重复添加）
-        setHistory(prev => {
-            const now = Date.now();
-            const threeMinutesAgo = now - 3 * 60 * 1000;
-
-            const isDuplicate = prev.some(item =>
-                item.id > threeMinutesAgo && // 只检查 3 分钟内的记录
-                item.name === stockName &&
-                item.code === stockCode &&
-                item.label === label &&
-                item.changeDiff === changeDiff
-            );
-
-            if (isDuplicate) return prev;
-
-            // 只保留最近 200 条记录，防止长时间挂机内存无限增长
-            return [{
-                id: now,
-                name: stockName,
-                code: stockCode,
-                label,
-                desc,
-                changeDiff,
-                time: dayjs().format('HH:mm:ss'),
-                type: label.includes('拉升') ? 'up' : 'down'
-            }, ...prev].slice(0, 200);
-        });
-
+    const sendDesktopNotification = (stockName, label, changeDiff, stockCode) => {
         if (!("Notification" in window) || Notification.permission !== "granted") return;
 
         const time = dayjs().format('HH:mm');
@@ -1472,8 +1458,8 @@ const DingPan = () => {
                     index === arr.findIndex(t => t.code === item.code)
                 );
 
-                // 触发桌面通知和记录
-                sendDesktopNotification(item.name, label, changeDiffStr, item.code, item.desc);
+                // 触发桌面通知
+                sendDesktopNotification(item.name, label, changeDiffStr, item.code);
             }
         });
 
@@ -1748,7 +1734,7 @@ const DingPan = () => {
         }
     };
 
-    // 日韩/外盘指数与急速异动排名的轮询已下沉到 RihanMonitor / HistoryModal 组件内部，
+    // 日韩/外盘指数的轮询已下沉到 RihanMonitor 组件内部，
     // 数据更新不再触发整页 setState 重渲染
 
     const fetchJigouReports = async () => {
@@ -2456,7 +2442,7 @@ const DingPan = () => {
         };
 
         // 轮询频率与后端数据更新频率对齐（后端已降频），避免无意义的请求和全页重渲染
-        // 日韩指数 / 急速异动排名 / 板块资金的轮询已下沉到 RihanMonitor / HistoryModal / BlockMoneyMonitor 内部
+        // 日韩指数 / 板块资金的轮询已下沉到 RihanMonitor / BlockMoneyMonitor 内部
         schedulePoll(fetchData, 10000);          // 后端 stockData 15s 更新
         schedulePoll(fetchAmountData, 10000);    // 后端 amount 10s 更新
         schedulePoll(fetchHistoryData, 10000);
@@ -2552,8 +2538,6 @@ const DingPan = () => {
             />
             <PageMeta
                 lastUpdated={lastUpdated}
-                historyCount={history.length}
-                onHistoryClick={() => setIsModalOpen(true)}
                 onOpenThemeColor={() => {
                     setThemePreviewPack(null);
                     setThemeColorModalVisible(true);
@@ -2804,19 +2788,11 @@ const DingPan = () => {
                         </Col>
             </Row>
 
-            {/* 异动历史弹窗 */}
-            <HistoryModal
-                open={isModalOpen}
-                onCancel={() => setIsModalOpen(false)}
-                history={history}
-                onStockClick={showKLine}
-                themeColor={effThemeColor}
-            />
-
             {/* K 线图弹窗 */}
             <StockKLineModal
                 visible={klineModalVisible}
                 onCancel={() => setKlineModalVisible(false)}
+                zIndex={1600}
                 code={selectedStock?.code}
                 stockInfo={{
                     name: selectedStock?.name,

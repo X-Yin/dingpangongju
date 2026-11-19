@@ -760,6 +760,7 @@ const StockKLineModal = ({
         width={1100}
         centered
         destroyOnClose
+        zIndex={zIndex ? zIndex + 100 : undefined}
         bodyStyle={{ padding: '24px', minHeight: '400px' }}
       >
         {dayTlineLoading ? (

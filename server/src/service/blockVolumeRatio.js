@@ -668,12 +668,16 @@ const validateIntradayPoint = (point, existing, mode) => {
 };
 
 // 过滤分时缓存中的历史坏点：分母骤降（向上突刺）或任一板块累计成交额下降（向下突刺）的时点
+// 同时过滤 09:30 开盘前的时点：开盘前行情快照仍是上一交易日的累计成交额，
+// 写入后会以昨日收盘额污染当日「只增不减」校验基线，导致盘中真实刷新全被误判拒绝
+const PRE_OPEN_TIME = '093000';
 const sanitizeIntradayPoints = (points) => {
     const list = [];
     let maxTotal = 0;
     const maxAmountByName = {};
 
     for (const item of points) {
+        if (String(item && item.time) < PRE_OPEN_TIME) continue;
         const total = Number(item.marketTotalAmount);
         if (!isFinite(total) || total <= 0) continue;
         if (maxTotal > 0 && total < maxTotal * MAX_TOTAL_DROP_RATIO) continue;
@@ -768,7 +772,15 @@ const saveIntradayPoint = (point) => {
 
 // 计算并写入当前时点的分时数据
 // deadlineAt: 整体截止时间戳（拥挤度页刷新时传入，保证 10s 内结束）
-const runAndSaveIntradayPoint = async ({ onProgress, forcePolling = false, deadlineAt } = {}) => {
+const runAndSaveIntradayPoint = async ({ onProgress, forcePolling = false, ignoreMarketWindow = false, deadlineAt } = {}) => {
+    // 交易日 09:30 开盘前不写入：此时行情快照是上一交易日的累计成交额，
+    // 写入会以昨日收盘额污染当日校验基线（盘中缩量时所有真实刷新都会被误判拒绝）
+    if (!ignoreMarketWindow) {
+        const now = new Date();
+        if (isTradingDay(now) && now.getHours() * 60 + now.getMinutes() < 9 * 60 + 30) {
+            throw new Error('09:30 开盘前行情快照为上一交易日数据，跳过分时点写入');
+        }
+    }
     const { stats, changePctByCode, ...point } = await computeTodayRatios({ onProgress, forcePolling, deadlineAt });
     validateIntradayPoint(point, getIntradayData(), stats.mode);
     const payload = saveIntradayPoint(point);

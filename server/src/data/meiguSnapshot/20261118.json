@@ -1,0 +1,248 @@
+{
+  "date": "20261118",
+  "fetchTime": "2026-11-18 08:49:17",
+  "data": [
+    {
+      "name": "Coherent",
+      "code": "gb_cohr",
+      "price": 210.86,
+      "changePercent": 3.65,
+      "datetime": "2026-11-18 08:49:08",
+      "changeAmount": 7.43,
+      "open": 214.91,
+      "high": 217.2,
+      "low": 200.5301
+    },
+    {
+      "name": "Lumentum",
+      "code": "gb_lite",
+      "price": 559.97,
+      "changePercent": 2.56,
+      "datetime": "2026-11-18 08:49:09",
+      "changeAmount": 13.97,
+      "open": 566.6,
+      "high": 575.46,
+      "low": 534.6896
+    },
+    {
+      "name": "博通",
+      "code": "gb_avgo",
+      "price": 341.6,
+      "changePercent": 2.46,
+      "datetime": "2026-11-18 08:49:11",
+      "changeAmount": 8.2,
+      "open": 335.59,
+      "high": 344,
+      "low": 330.13
+    },
+    {
+      "name": "迈威尔科技",
+      "code": "gb_mrvl",
+      "price": 148.74,
+      "changePercent": 2.33,
+      "datetime": "2026-11-18 08:49:11",
+      "changeAmount": 3.38,
+      "open": 150.196,
+      "high": 150.95,
+      "low": 140.9
+    },
+    {
+      "name": "康宁",
+      "code": "gb_glw",
+      "price": 108.49,
+      "changePercent": 2.19,
+      "datetime": "2026-11-18 08:49:11",
+      "changeAmount": 2.32,
+      "open": 108.34,
+      "high": 109.46,
+      "low": 104.42
+    },
+    {
+      "name": "SK海力士",
+      "code": "gb_skhy",
+      "price": 122.61,
+      "changePercent": 0.35,
+      "datetime": "2026-11-18 08:49:10",
+      "changeAmount": 0.43,
+      "open": 123.49,
+      "high": 123.62,
+      "low": 117.4
+    },
+    {
+      "name": "AAOI",
+      "code": "gb_aaoi",
+      "price": 45.22,
+      "changePercent": 0.13,
+      "datetime": "2026-11-18 08:49:06",
+      "changeAmount": 0.06,
+      "open": 48.125,
+      "high": 48.22,
+      "low": 42.6501
+    },
+    {
+      "name": "特斯拉",
+      "code": "gb_tsla",
+      "price": 380.11,
+      "changePercent": 0.1,
+      "datetime": "2026-11-18 08:48:57",
+      "changeAmount": 0.37,
+      "open": 382.19,
+      "high": 382.8399,
+      "low": 374.13
+    },
+    {
+      "name": "亚马逊",
+      "code": "gb_amzn",
+      "price": 257.89,
+      "changePercent": 0.05,
+      "datetime": "2026-11-18 08:49:10",
+      "changeAmount": 0.14,
+      "open": 257.55,
+      "high": 259.9,
+      "low": 254
+    },
+    {
+      "name": "CoreWeave",
+      "code": "gb_crwv",
+      "price": 49.89,
+      "changePercent": 0.02,
+      "datetime": "2026-11-18 08:49:12",
+      "changeAmount": 0.01,
+      "open": 49.7,
+      "high": 50.79,
+      "low": 46.835
+    },
+    {
+      "name": "AMD",
+      "code": "gb_amd",
+      "price": 503.41,
+      "changePercent": -0.17,
+      "datetime": "2026-11-18 08:49:12",
+      "changeAmount": -0.87,
+      "open": 512.12,
+      "high": 512.12,
+      "low": 480.5001
+    },
+    {
+      "name": "苹果",
+      "code": "gb_aapl",
+      "price": 351.91,
+      "changePercent": -0.25,
+      "datetime": "2026-11-18 08:49:13",
+      "changeAmount": -0.87,
+      "open": 352.83,
+      "high": 355.36,
+      "low": 349.67
+    },
+    {
+      "name": "英伟达",
+      "code": "gb_nvda",
+      "price": 155.46,
+      "changePercent": -0.44,
+      "datetime": "2026-11-18 08:49:13",
+      "changeAmount": -0.68,
+      "open": 156.895,
+      "high": 158.19,
+      "low": 150.3301
+    },
+    {
+      "name": "英特尔",
+      "code": "gb_intc",
+      "price": 55.17,
+      "changePercent": -0.54,
+      "datetime": "2026-11-18 08:49:13",
+      "changeAmount": -0.3,
+      "open": 55.17,
+      "high": 55.24,
+      "low": 52.4201
+    },
+    {
+      "name": "美光",
+      "code": "gb_mu",
+      "price": 712.42,
+      "changePercent": -0.92,
+      "datetime": "2026-11-18 08:49:09",
+      "changeAmount": -6.6,
+      "open": 726.195,
+      "high": 726.99,
+      "low": 666.88
+    },
+    {
+      "name": "高通",
+      "code": "gb_qcom",
+      "price": 166.67,
+      "changePercent": -1.1,
+      "datetime": "2026-11-18 08:46:51",
+      "changeAmount": -1.85,
+      "open": 169.1,
+      "high": 171,
+      "low": 162.455
+    },
+    {
+      "name": "Meta",
+      "code": "gb_meta",
+      "price": 618.87,
+      "changePercent": -1.2,
+      "datetime": "2026-11-18 08:49:12",
+      "changeAmount": -7.54,
+      "open": 624.21,
+      "high": 627.48,
+      "low": 613.51
+    },
+    {
+      "name": "谷歌",
+      "code": "gb_googl",
+      "price": 280.2,
+      "changePercent": -1.24,
+      "datetime": "2026-11-18 08:49:12",
+      "changeAmount": -3.52,
+      "open": 283.4,
+      "high": 284.09,
+      "low": 278.46
+    },
+    {
+      "name": "闪迪",
+      "code": "gb_sndk",
+      "price": 797.24,
+      "changePercent": -1.47,
+      "datetime": "2026-11-18 08:49:12",
+      "changeAmount": -11.87,
+      "open": 809.825,
+      "high": 821.46,
+      "low": 749.39
+    },
+    {
+      "name": "ASML",
+      "code": "gb_asml",
+      "price": 1383.11,
+      "changePercent": -1.68,
+      "datetime": "2026-11-18 08:48:43",
+      "changeAmount": -23.675,
+      "open": 1405.675,
+      "high": 1408.175,
+      "low": 1351.78
+    },
+    {
+      "name": "微软",
+      "code": "gb_msft",
+      "price": 506.24,
+      "changePercent": -2.27,
+      "datetime": "2026-11-18 08:49:07",
+      "changeAmount": -11.75,
+      "open": 514.565,
+      "high": 515.64,
+      "low": 496.51
+    },
+    {
+      "name": "台积电",
+      "code": "gb_tsm",
+      "price": 359.69,
+      "changePercent": -3.68,
+      "datetime": "2026-11-18 08:49:11",
+      "changeAmount": -13.76,
+      "open": 372.18,
+      "high": 373.1,
+      "low": 353.5
+    }
+  ]
+}

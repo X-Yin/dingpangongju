@@ -2847,5 +2847,19 @@
     "marketValue": 4056096128,
     "circulatingMarketValue": 4056096128,
     "updatedAt": "2026-11-16 16:02:44"
+  },
+  {
+    "code": "sh600299",
+    "name": "安迪苏  ",
+    "marketValue": 24699829641,
+    "circulatingMarketValue": 24699829641,
+    "updatedAt": "2026-11-18 16:04:36"
+  },
+  {
+    "code": "sz002324",
+    "name": "普利特",
+    "marketValue": 9554968370,
+    "circulatingMarketValue": 6667802488,
+    "updatedAt": "2026-11-18 16:04:36"
   }
 ]

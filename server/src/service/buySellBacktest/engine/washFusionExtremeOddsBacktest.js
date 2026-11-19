@@ -31,6 +31,7 @@ const {
   WASHOUT_LOOKBACK_DAYS,
   BACKTEST_VOL_MULT,
   BUY_TRIGGER_PCT,
+  BUY_SEAL_PCT,
   BUY_OPEN_GAP_AUCTION_PCT,
   BUY_START_MINUTE,
   BUY_CUTOFF_MINUTE,
@@ -290,8 +291,8 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
       const openChg = ((p0.lastPx - preclose) / preclose) * 100;
 
       if (c.source === SOURCE_A) {
-        // 只有 9:30 开盘即涨停（竞价一字板）买不进；盘中封板仍可买
-        if (openChg >= thr) {
+        // 开盘即涨停（竞价一字板）或竞价涨幅 ≥ 9.5%（视为已涨停）买不进；盘中封板仍可买
+        if (openChg >= thr || openChg >= BUY_SEAL_PCT) {
           limitUpMemo.set(c.code, { minute: p0.minute, px: p0.lastPx, chg: round2(openChg) });
           return;
         }
@@ -312,6 +313,8 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
           }
           const chg = ((p.lastPx - preclose) / preclose) * 100;
           if (chg < BUY_TRIGGER_PCT) continue;
+          // 触发时涨幅 ≥ 9.5% 视为已涨停封板，该分钟不能买入；后续炸板回落到 8%~9.5% 区间仍可买
+          if (chg >= BUY_SEAL_PCT) continue;
           const minBreakoutPx = (c.washout.platformHigh || 0) * WASHOUT_OPT.breakoutMinRatio;
           if (p.lastPx < minBreakoutPx) continue;
           hitMemo.set(c.code, { minute: p.minute, px: p.lastPx, chg: round2(chg), mode: 'burst8', source: SOURCE_A });
@@ -320,8 +323,8 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
         return;
       }
 
-      // B 风格：竞价必须高开；竞价一字板买不进
-      if (openChg >= thr) {
+      // B 风格：竞价必须高开；竞价一字板或竞价涨幅 ≥ 9.5%（视为已涨停）买不进
+      if (openChg >= thr || openChg >= BUY_SEAL_PCT) {
         limitUpMemo.set(c.code, { minute: p0.minute, px: p0.lastPx, chg: round2(openChg) });
         return;
       }
@@ -332,6 +335,8 @@ const runWashFusionBacktest = async (startDate, endDate, strategyId, onProgress,
         if (!(p.lastPx > 0)) continue;
         const chg = ((p.lastPx - preclose) / preclose) * 100;
         if (chg < BUY_TRIGGER_PCT) continue;
+        // 触发时涨幅 ≥ 9.5% 视为已涨停封板，该分钟不能买入；后续炸板回落到 8%~9.5% 区间仍可买
+        if (chg >= BUY_SEAL_PCT) continue;
         hitMemo.set(c.code, {
           minute: p.minute,
           px: p.lastPx,
@@ -778,6 +783,13 @@ const buildBuyChecks = (pos) => {
     );
   }
   checks.push(
+    {
+      id: 'wf_buy_not_sealed',
+      title: `买入时涨幅 < ${BUY_SEAL_PCT}%（≥ ${BUY_SEAL_PCT}% 视为涨停封板，不买）`,
+      passed: true,
+      value: `买入时涨幅 ${gainText(pos.buyChange)}（< ${BUY_SEAL_PCT}%）`,
+      reason: `买入（竞价或盘中触发）那一刻涨幅 ≥ ${BUY_SEAL_PCT}% 视为已涨停封板、买不进；竞价一字板判定同步加入该阈值，盘中触发时若涨幅已达 ${BUY_SEAL_PCT}% 该分钟跳过，炸板回落到 +${BUY_TRIGGER_PCT}%~${BUY_SEAL_PCT}% 区间仍可买`,
+    },
     {
       id: 'wf_win3_cap',
       title: `买点日前 20 个交易日内最大三日滑动窗口涨幅 ≤ ${MAX_WIN3_GAIN_PCT}%`,

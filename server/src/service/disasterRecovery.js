@@ -67,7 +67,7 @@ function getRecent5MinInflow() {
     const latestTotalSec = timeStrToSeconds(latestTime);
 
     let targetEntry = null;
-    let minDiff = Infinity;
+    let minDelta = Infinity;
 
     for (let i = sorted.length - 2; i >= 0; i--) {
       const t = sorted[i][0];
@@ -75,8 +75,10 @@ function getRecent5MinInflow() {
       const diff = latestTotalSec - totalSec;
 
       if (diff >= 240 && diff <= 360) {
-        if (diff < minDiff) {
-          minDiff = diff;
+        // 取与「5 分钟前」(300s) 最接近的锚点（与 buySellDiagnose.getRecent5MinInflow 同口径）
+        const delta = Math.abs(diff - 300);
+        if (delta < minDelta) {
+          minDelta = delta;
           targetEntry = sorted[i];
         }
       } else if (diff > 360) {

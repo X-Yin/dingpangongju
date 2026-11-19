@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Card, Tag, Empty, Spin, Segmented } from 'antd';
-import { LineChartOutlined } from '@ant-design/icons';
+import { Card, Tag, Empty, Spin, Segmented, Button, Tooltip } from 'antd';
+import { LineChartOutlined, ReloadOutlined } from '@ant-design/icons';
 import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -282,13 +282,16 @@ const IndexOverlayTline = ({
         try {
             const res = await axios.get(`http://${local_ip}:3000/get_stock_tline?code=${code}`);
             // 已切换指数，丢弃过期响应
-            if (code !== indexCodeRef.current) return;
+            if (code !== indexCodeRef.current) return null;
+            const line = extractChangeLine(res.data);
             setRealtimeInfo({
                 date: res.data?.date ? String(res.data.date) : null,
-                line: extractChangeLine(res.data),
+                line,
             });
+            return line;
         } catch (e) {
             console.error('获取实时指数分时数据失败', e);
+            return null;
         }
     }, []);
 
@@ -323,15 +326,36 @@ const IndexOverlayTline = ({
         cutoffIdxRef.current = cutoffIdx;
     }, [currentVec, cutoffIdx]);
 
-    const runComparison = useCallback(() => {
-        const vec = currentVecRef.current;
-        const cutoff = cutoffIdxRef.current;
+    const compareWithVec = useCallback((vec, cutoff) => {
         if (!vec || cutoff < MIN_COMPARE_POINTS - 1) {
             setComparison(null);
             return;
         }
         setComparison({ cutoffIdx: cutoff, vec });
     }, []);
+
+    const runComparison = useCallback(() => {
+        compareWithVec(currentVecRef.current, cutoffIdxRef.current);
+    }, [compareWithVec]);
+
+    // 手动刷新：拉取最新实时分时后立刻重算相似度（拉取失败/非交易时段则用当前数据重算）
+    const [refreshing, setRefreshing] = useState(false);
+    const handleRefreshSimilarity = useCallback(async () => {
+        if (refreshing) return;
+        setRefreshing(true);
+        let freshLine = null;
+        try {
+            freshLine = await fetchRealtimeData();
+        } catch (e) { /* noop */ }
+        setRefreshing(false);
+        if (freshLine && freshLine.length > 0) {
+            const grid = mapLineToGrid(freshLine);
+            const cutoff = getGridCutoff(grid);
+            compareWithVec(sliceAndFill(grid, cutoff), cutoff);
+        } else {
+            runComparison();
+        }
+    }, [refreshing, fetchRealtimeData, compareWithVec, runComparison]);
 
     // 历史数据加载完成 / 指数切换后立即对比一次（收盘后、周末也能展示）
     useEffect(() => {
@@ -662,6 +686,13 @@ const IndexOverlayTline = ({
                         onChange={setIndexCode}
                         size="small"
                     />
+                    <Tooltip title="重新计算相似度">
+                        <Button
+                            size="small"
+                            icon={<ReloadOutlined spin={refreshing} />}
+                            onClick={handleRefreshSimilarity}
+                        />
+                    </Tooltip>
                 </div>
             )}
             <div className="iot-toolbar">
@@ -761,6 +792,13 @@ const IndexOverlayTline = ({
                         onChange={setIndexCode}
                         size="small"
                     />
+                    <Tooltip title="重新计算相似度">
+                        <Button
+                            size="small"
+                            icon={<ReloadOutlined spin={refreshing} />}
+                            onClick={handleRefreshSimilarity}
+                        />
+                    </Tooltip>
                 </div>
             }
         >

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { local_ip } from '../../constant';
 import { AppstoreOutlined, BarChartOutlined, LineChartOutlined, FundOutlined, ReloadOutlined, CheckOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Modal, Tabs, Empty, DatePicker, Card, Row, Col, Alert, Spin, Tag, Space, Typography, Switch, Table, Select } from 'antd';
+import { Button, Checkbox, Modal, Tabs, Empty, DatePicker, Card, Row, Col, Alert, Spin, Tag, Space, Typography, Switch, Table, Select, message } from 'antd';
 import { SyncOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, Title as ChartTitle, Tooltip as ChartTooltip, Legend } from 'chart.js';
@@ -1278,6 +1278,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
       await Promise.all([fetchCrowdData(), fetchTechRatioData()]);
     } catch (error) {
       console.error('Refresh tech_block_crowd data failed:', error);
+      message.warning(error.response?.data?.message || '刷新失败，请稍后重试');
     } finally {
       setIsRefreshing(false);
     }
@@ -1625,6 +1626,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
       await fetchCategoryRatioData();
     } catch (error) {
       console.error('Refresh block_category_ratio data failed:', error);
+      message.warning(error.response?.data?.message || '刷新失败，请稍后重试');
     } finally {
       setCategoryRefreshingName(null);
     }
@@ -1640,6 +1642,7 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
       await Promise.all([fetchCrowdData(), fetchTechRatioData(), fetchCategoryRatioData()]);
     } catch (error) {
       console.error('Refresh all crowd data failed:', error);
+      message.warning(error.response?.data?.message || '刷新失败，请稍后重试');
     } finally {
       setIsRefreshingAll(false);
     }

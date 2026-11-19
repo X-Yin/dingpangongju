@@ -575,7 +575,7 @@ function getRecent5MinInflow() {
     }
 
     let targetEntry = null;
-    let minDiff = Infinity;
+    let minDelta = Infinity;
 
     for (let i = sorted.length - 2; i >= 0; i--) {
       const t = sorted[i][0];
@@ -583,8 +583,12 @@ function getRecent5MinInflow() {
       const diff = latestTotalSec - totalSec;
 
       if (diff >= 240 && diff <= 360) {
-        if (diff < minDiff) {
-          minDiff = diff;
+        // 取与「5 分钟前」(300s) 最接近的锚点，而不是最旧允许锚点：
+        // 取 diff 最小值会拿到 ~4 分钟前的记录，窗口实际只有 4 分钟，资金净流入被低估
+        // （2026-11-17 排查深圳华强买点漏报时发现，与回测 11:00→11:05 分钟桶口径对齐）
+        const delta = Math.abs(diff - 300);
+        if (delta < minDelta) {
+          minDelta = delta;
           targetEntry = sorted[i];
         }
       } else if (diff > 360) {
@@ -2722,7 +2726,10 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
   });
   if (!buyTimePassed) allPassed = false;
 
-  // 双指数 3 日线斜率门禁（实时查询，无状态）：科创50 + 创业板指两个都需通过
+  // 双指数 3 日线斜率门禁（实时查询，无状态）：与回测 withDualGateInfo 口径对齐（2026-11-17 用户确认）——
+  // 任一指数允许出手即通过（gatePassed = !allBlocked），命中后候选个股再按允许市场过滤
+  // （创业板指通过 → 主板/创业板可买；科创50 通过 → 科创板可买；个股市场过滤由
+  //   buildTopGainersByMarket 的 gatePassedList / candidatePool 完成，与回测 pickBestStock 一致）
   try {
     const gate = await queryLiveIndexGate(null, targetDateStr, buyMinute);
     const cybGate = gate?.cybGate;
@@ -2730,21 +2737,25 @@ const getBuyPointChecks = async (targetDate = null, refresh = false, force = fal
     const cybPassed = cybGate?.passed === true;
     const starPassed = starGate?.passed === true;
     // "允许出手" 语义：两个指数的整体门禁（规则① 持续负斜率、规则② 转正窗口）至少有一个市场可买；
-    // 全市场级买点前置条件：两个指数**都可买**才算市场整体健康
-    const bothPassed = cybPassed && starPassed;
+    // 此前要求两个指数都通过，导致科创50 T+1 禁买日（如 2026-11-17）全天买点不提示、与回测不一致
+    const anyPassed = cybPassed || starPassed;
     const fmtGate = (g, name) => g?.reason || `${name} 数据不足`;
     const slopeStr = (g) => g?.slope != null ? `${g.slope >= 0 ? '+' : ''}${g.slope.toFixed(2)}°` : '数据不足';
+    const allowedMarkets = [];
+    if (cybPassed) allowedMarkets.push('主板/创业板');
+    if (starPassed) allowedMarkets.push('科创板');
+    const marketText = allowedMarkets.length > 0 ? `允许市场: ${allowedMarkets.join('/')}` : '两个指数均未通过，禁止买入';
     const reasonParts = [];
     reasonParts.push(`创业板指 ${slopeStr(cybGate)}：${fmtGate(cybGate, '创业板指')}`);
     reasonParts.push(`科创50 ${slopeStr(starGate)}：${fmtGate(starGate, '科创50')}`);
     checks.push({
       id: 'index_ma3_slope_gate',
-      title: '双指数 3 日线斜率门禁',
-      passed: bothPassed,
-      value: bothPassed ? '两个指数均允许出手' : `${cybPassed ? '创业板指✅' : '创业板指❌'} ${starPassed ? '科创50✅' : '科创50❌'}`,
+      title: '双指数 3 日线斜率门禁（任一指数可买即通过）',
+      passed: anyPassed,
+      value: anyPassed ? `${marketText}（${cybPassed ? '创业板指✅' : '创业板指❌'} ${starPassed ? '科创50✅' : '科创50❌'}）` : `${cybPassed ? '创业板指✅' : '创业板指❌'} ${starPassed ? '科创50✅' : '科创50❌'}，${marketText}`,
       reason: reasonParts.join('；'),
     });
-    if (!bothPassed) allPassed = false;
+    if (!anyPassed) allPassed = false;
   } catch (e) {
     console.error('双指数 3 日线斜率门禁查询失败:', e.message);
     checks.push({

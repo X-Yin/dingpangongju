@@ -35,6 +35,53 @@ const DebugPanel = () => {
   // 买点预热 MOCK：tech | extreme_win | wash_fusion（2026-11-15）
   const [preheatMocking, setPreheatMocking] = useState(null);
 
+  // 盯盘页自动跳转专注交易停留上限（分钟）：持久化在后端 data/dingpan_settings.json
+  const [stayLimitMinutes, setStayLimitMinutes] = useState(1);
+  const [stayLimitLoading, setStayLimitLoading] = useState(false);
+  const [stayLimitSaving, setStayLimitSaving] = useState(false);
+
+  const fetchStayLimit = async () => {
+    setStayLimitLoading(true);
+    try {
+      const res = await axios.get(`http://${local_ip}:3000/api/dingpan_settings`);
+      const n = Number(res.data?.data?.stayLimitMinutes);
+      if (Number.isFinite(n) && n > 0) setStayLimitMinutes(n);
+    } catch (e) {
+      message.error(`读取跳转设置失败：${e.message}`);
+    } finally {
+      setStayLimitLoading(false);
+    }
+  };
+
+  // 抽屉打开时加载当前设置
+  useEffect(() => {
+    if (drawerOpen) fetchStayLimit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawerOpen]);
+
+  const saveStayLimit = async () => {
+    const n = stayLimitMinutes;
+    if (!Number.isFinite(n) || n < 1 || n > 120) {
+      message.error('停留上限需在 1 ~ 120 分钟之间');
+      return;
+    }
+    setStayLimitSaving(true);
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/api/dingpan_settings`, { stayLimitMinutes: n });
+      if (res.data?.success) {
+        message.success(`已保存：盯盘页停留 ${n} 分钟后自动跳转专注交易`);
+        // 通知盯盘页立即生效
+        window.dispatchEvent(new CustomEvent('dingpan-stay-limit-changed'));
+      } else {
+        message.error(res.data?.message || '保存失败');
+      }
+    } catch (e) {
+      message.error(`保存请求失败：${e.response?.data?.message || e.message}`);
+    } finally {
+      setStayLimitSaving(false);
+    }
+  };
+
   // 意志力锻炼弹窗间隔（分钟）：默认 5，持久化到 localStorage
   const [willpowerInterval, setWillpowerInterval] = useState(() => {
     try {
@@ -545,6 +592,30 @@ const DebugPanel = () => {
                 极致赔率预热
               </Button>
             </Space>
+          </Card>
+
+          {/* 模块十一：盯盘页自动跳转专注交易设置 */}
+          <Card size="small" title="11. 盯盘页自动跳转专注交易">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              交易日交易时段内，停留在盯盘页超过设定分钟数后自动跳转到专注交易页（/opening_battle）。
+              支持自定义停留上限（1-120 分钟），保存在后端，所有页面通用、重启后仍生效。
+            </Paragraph>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 13, color: '#595959' }}>停留上限：</span>
+              <InputNumber
+                min={1}
+                max={120}
+                step={1}
+                value={stayLimitMinutes}
+                loading={stayLimitLoading}
+                onChange={(v) => { if (v != null) setStayLimitMinutes(v); }}
+                style={{ width: 110 }}
+                suffix="分钟"
+              />
+              <Button type="primary" loading={stayLimitSaving} onClick={saveStayLimit}>
+                保存设置
+              </Button>
+            </div>
           </Card>
 
           <Text type="secondary" style={{ fontSize: 12 }}>

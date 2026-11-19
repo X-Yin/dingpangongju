@@ -28,6 +28,7 @@ const {
   WASHOUT_LOOKBACK_DAYS,
   BACKTEST_VOL_MULT,
   BUY_TRIGGER_PCT,
+  BUY_SEAL_PCT,
   BUY_OPEN_GAP_AUCTION_PCT,
   BUY_START_MINUTE,
   BUY_CUTOFF_MINUTE,
@@ -45,7 +46,7 @@ const { loadTlinePoints, round2, limitUpThresholdOf } = require('./buySellBackte
 // 线上极致赔率：分时失败按同花顺→财联社（当日再兜底连板网）严格重试，不再一次失败就剔除个股
 const loadTlinePointsStrict = (code, dateNum) => loadTlinePoints(code, dateNum, { strict: true });
 const { ensureBacktestValuation } = require('./watchlistValuation');
-const { getRealtimeQuotes } = require('./stock');
+const { getRealtimeQuotes, isBjStockCode } = require('./stock');
 const wsServer = require('../wsServer');
 const feishuNotify = require('./feishuNotify');
 const strategyModeState = require('./strategyModeState');
@@ -189,7 +190,8 @@ const computePools = async (dateStr) => {
     const recordMap = new Map();
     for (const s of occStocks) {
       if (!s || !s.code) continue;
-      if (isChiNextOrStar(s.code) || EXCLUDED_CODES.has(s.code) || isThemeExcluded(s.code, s.board)) continue;
+      // 与回测 collectRawPool 同口径：剔除创业板/科创板、北交所、黑名单代码、题材黑名单
+      if (isChiNextOrStar(s.code) || isBjStockCode(s.code) || EXCLUDED_CODES.has(s.code) || isThemeExcluded(s.code, s.board)) continue;
       const item = recordMap.get(s.code) || {
         code: s.code, name: s.name || s.code, board: s.board || '', hasHighBoard: false,
       };
@@ -237,7 +239,8 @@ const computePools = async (dateStr) => {
     const recordMap = new Map();
     for (const s of occStocks) {
       if (!s || !s.code) continue;
-      if (isChiNextOrStar(s.code) || EXCLUDED_CODES.has(s.code) || isThemeExcluded(s.code, s.board)) continue;
+      // 与回测 collectRawPool 同口径：剔除创业板/科创板、北交所、黑名单代码、题材黑名单
+      if (isChiNextOrStar(s.code) || isBjStockCode(s.code) || EXCLUDED_CODES.has(s.code) || isThemeExcluded(s.code, s.board)) continue;
       const item = recordMap.get(s.code) || {
         code: s.code, name: s.name || s.code, board: s.board || '', hasHighBoard: false, firstBoardAtPrev: false,
       };
@@ -355,6 +358,7 @@ const gainText = (v) => (v == null ? '--' : `${Number(v) > 0 ? '+' : ''}${Number
 
 const buildRules = () => ({
   buyTriggerPct: BUY_TRIGGER_PCT,
+  buySealPct: BUY_SEAL_PCT,
   auctionBuyPct: BUY_OPEN_GAP_AUCTION_PCT,
   firstBoardBuyWindow: `${fmtMinute(BUY_START_MINUTE)}-${fmtMinute(BUY_CUTOFF_MINUTE)}`,
   secondBoardBuyWindow: `${fmtMinute(BUY_START_MINUTE)}-${fmtMinute(B_CUTOFF)}`,
@@ -383,6 +387,10 @@ const statusOf = (c, quotes, nowMinute) => {
     if (auctionGap != null && auctionGap >= limitThreshold) {
       return { status: 'limit_open', statusText: '开盘即涨停，买不进' };
     }
+    // 涨幅 ≥ 9.5% 视为已涨停封板，不能再买入（2026-11-17 用户要求，与回测口径一致）
+    if (auctionGap != null && auctionGap >= BUY_SEAL_PCT) {
+      return { status: 'limit_open', statusText: `竞价涨幅 ${round2(auctionGap)}% ≥ ${BUY_SEAL_PCT}% 视为涨停，买不进` };
+    }
     if (aAuctionSignaled.has(c.code)) return { status: 'auction_buy', statusText: '9:30 竞价直接买入' };
     if (aBurstSignaled.has(c.code)) return { status: 'burst_buy', statusText: '盘中 +8% 已触发' };
     if (auctionGap != null && auctionGap >= BUY_OPEN_GAP_AUCTION_PCT) {
@@ -396,6 +404,9 @@ const statusOf = (c, quotes, nowMinute) => {
   // B 二板起爆
   if (auctionGap != null && auctionGap >= limitThreshold) {
     return { status: 'limit_open', statusText: '开盘即涨停，买不进' };
+  }
+  if (auctionGap != null && auctionGap >= BUY_SEAL_PCT) {
+    return { status: 'limit_open', statusText: `竞价涨幅 ${round2(auctionGap)}% ≥ ${BUY_SEAL_PCT}% 视为涨停，买不进` };
   }
   if (auctionGap != null && auctionGap <= 0) {
     return { status: 'gap_down', statusText: '竞价未高开，不参与' };
@@ -537,9 +548,9 @@ const buildBuyChecks = ({ cand, mode, minute, price, change, auctionGap }) => {
       {
         id: 'not_limit_open',
         passed: true,
-        title: '开盘未涨停（可买入）',
-        value: `竞价涨幅 ${gainText(auctionGap)} < 涨停阈值 ${round2(thr)}%`,
-        reason: '9:30 开盘即涨停（一字板）买不进，本次竞价涨幅未达涨停阈值，可按竞价价买入',
+        title: `开盘未涨停（竞价涨幅 < ${BUY_SEAL_PCT}%，可买入）`,
+        value: `竞价涨幅 ${gainText(auctionGap)} < ${BUY_SEAL_PCT}%（涨停阈值 ${round2(thr)}%）`,
+        reason: '9:30 开盘即涨停（一字板）或竞价涨幅 ≥ 9.5%（视为已涨停）买不进，本次竞价涨幅未达 9.5%，可按竞价价买入',
       },
       ...common,
     ];
@@ -554,6 +565,13 @@ const buildBuyChecks = ({ cand, mode, minute, price, change, auctionGap }) => {
         ? `竞价高开 ${gainText(auctionGap)}，${fmtMinute(BUY_START_MINUTE)}-${fmtMinute(B_CUTOFF)} 分时涨幅首次达到 +${BUY_TRIGGER_PCT}% 时买入`
         : `竞价 ${gainText(auctionGap)} 未达 ${BUY_OPEN_GAP_AUCTION_PCT}%，`
           + `${fmtMinute(BUY_START_MINUTE)}-${fmtMinute(BUY_CUTOFF_MINUTE)} 分时涨幅首次达到 +${BUY_TRIGGER_PCT}% 时买入`,
+    },
+    {
+      id: 'buy_not_sealed',
+      passed: true,
+      title: `买入时涨幅 < ${BUY_SEAL_PCT}%（≥ ${BUY_SEAL_PCT}% 视为涨停不买）`,
+      value: `买入时涨幅 ${gainText(change)}（< ${BUY_SEAL_PCT}%）`,
+      reason: `触发那一刻涨幅 ≥ ${BUY_SEAL_PCT}% 视为已涨停封板、不能买入；该分钟跳过，炸板回落到 +${BUY_TRIGGER_PCT}%~${BUY_SEAL_PCT}% 区间仍可买`,
     },
   ];
   if (cand.source === SOURCE_A) {
@@ -695,9 +713,11 @@ const scanFirstBoardBurstHit = (t, cand, nowMinute) => {
   const pts = t.points;
   const inBuyWindow = (p) => p.minute >= BUY_START_MINUTE && p.minute <= BUY_CUTOFF_MINUTE;
   const p0 = pts.find((p) => p.lastPx > 0);
-  if (p0 && p0.minute <= BUY_START_MINUTE) {
+  // 竞价买点口径与回测一致：p0 = 分时首个有效分钟点（开盘价），不限其 minute 是否 ≤ 9:30
+  if (p0) {
     const openChg = ((p0.lastPx - preclose) / preclose) * 100;
-    if (openChg >= thr) return { limitOpen: true, openChg };
+    // 开盘即涨停（一字板）或竞价涨幅 ≥ 9.5% 视为已涨停，买不进
+    if (openChg >= thr || openChg >= BUY_SEAL_PCT) return { limitOpen: true, openChg };
     if (openChg >= BUY_OPEN_GAP_AUCTION_PCT) {
       return { auction: true, minute: p0.minute, px: p0.lastPx, chg: round2(openChg), openChg };
     }
@@ -715,6 +735,8 @@ const scanFirstBoardBurstHit = (t, cand, nowMinute) => {
     }
     const chg = ((p.lastPx - preclose) / preclose) * 100;
     if (chg < BUY_TRIGGER_PCT) continue;
+    // 触发时涨幅 ≥ 9.5% 视为已涨停封板，该分钟不能买入；后续炸板回落到 8%~9.5% 区间仍可买
+    if (chg >= BUY_SEAL_PCT) continue;
     const minBreakoutPx = (cand.washout.platformHigh || 0) * WASHOUT_OPT.breakoutMinRatio;
     if (minBreakoutPx > 0 && p.lastPx < minBreakoutPx) continue;
     return { minute: p.minute, px: p.lastPx, chg: round2(chg), openChg: null };
@@ -731,7 +753,8 @@ const scanSecondBoardBurstHit = (t, cand, nowMinute) => {
   const p0 = pts.find((p) => p.lastPx > 0);
   if (!p0) return null;
   const openChg = ((p0.lastPx - preclose) / preclose) * 100;
-  if (openChg >= thr) return { limitOpen: true, openChg };
+  // 开盘即涨停（一字板）或竞价涨幅 ≥ 9.5% 视为已涨停，买不进
+  if (openChg >= thr || openChg >= BUY_SEAL_PCT) return { limitOpen: true, openChg };
   if (openChg <= 0) return { gapDown: true, openChg };
   for (let i = 0; i < pts.length; i += 1) {
     const p = pts[i];
@@ -740,6 +763,8 @@ const scanSecondBoardBurstHit = (t, cand, nowMinute) => {
     if (!(p.lastPx > 0)) continue;
     const chg = ((p.lastPx - preclose) / preclose) * 100;
     if (chg < BUY_TRIGGER_PCT) continue;
+    // 触发时涨幅 ≥ 9.5% 视为已涨停封板，该分钟不能买入；后续炸板回落到 8%~9.5% 区间仍可买
+    if (chg >= BUY_SEAL_PCT) continue;
     return { minute: p.minute, px: p.lastPx, chg: round2(chg), openChg };
   }
   return null;
@@ -801,29 +826,25 @@ const tick = async () => {
       }
     }
 
-    // A 首板起爆：09:25-09:30 竞价 ≥ 5% 且未涨停 → 每 30s 提前提醒一次；09:30 后补推一次
+    // A 首板起爆：09:25-09:30 竞价 ≥ 5% 且未涨停 → 每 30s 提前提醒一次（仅提醒，不作为正式买点判定）。
+    // 正式竞价买点（2026-11-17 与回测口径对齐）：回测用 9:30 分时首个分钟点开盘价判定（≥5%、未涨停、<9.5%）
+    // 并按开盘价买入——此前线上按 9:25 竞价判定，存在「竞价 <5% 但 9:30 开盘 ≥5% → 回测买线上不推」的漏报，
+    // 该场景现由下方 9:30-9:40 扫描块内的 auction 分支覆盖
     const firstBoard = pools.firstBoard || [];
-    if (minute >= AUCTION_END_MINUTE) {
+    if (minute >= AUCTION_END_MINUTE && minute < BUY_START_MINUTE) {
       const nowMs = now.getTime();
-      const inRemindWindow = minute < BUY_START_MINUTE;
       for (const c of firstBoard) {
         const a = auctionGaps.get(c.code);
         if (!a || !(a.gap >= BUY_OPEN_GAP_AUCTION_PCT)) continue;
         if (a.gap >= limitUpThresholdOf(c.code)) continue; // 一字板买不进
-        if (inRemindWindow) {
-          const last = auctionRemindAt.get(c.code) || 0;
-          if (nowMs - last < AUCTION_REMIND_MS) continue;
-          auctionRemindAt.set(c.code, nowMs);
-          await emitBuySignal({
-            dateStr, cand: c, mode: 'auction', minute: BUY_START_MINUTE,
-            price: a.price, change: a.gap, auctionGap: a.gap, remind: true,
-          });
-        } else if (!aAuctionSignaled.has(c.code)) {
-          await emitBuySignal({
-            dateStr, cand: c, mode: 'auction', minute: BUY_START_MINUTE,
-            price: a.price, change: a.gap, auctionGap: a.gap,
-          });
-        }
+        if (a.gap >= BUY_SEAL_PCT) continue; // 竞价涨幅 ≥ 9.5% 视为涨停，买不进（2026-11-17 用户要求）
+        const last = auctionRemindAt.get(c.code) || 0;
+        if (nowMs - last < AUCTION_REMIND_MS) continue;
+        auctionRemindAt.set(c.code, nowMs);
+        await emitBuySignal({
+          dateStr, cand: c, mode: 'auction', minute: BUY_START_MINUTE,
+          price: a.price, change: a.gap, auctionGap: a.gap, remind: true,
+        });
       }
     }
 
@@ -846,10 +867,16 @@ const tick = async () => {
       }, 4);
     }
 
-    // A 首板起爆 09:30-09:40：竞价 < 5% 的候选，分时涨幅首次达到 +8% 即买入
+    // A 首板起爆 09:30-09:40：竞价买点 + 盘中买点（与回测预取同一套口径）
+    //   竞价买点：9:30 分时首个分钟点开盘价 ≥ 5%、未涨停、< 9.5% → 按开盘价买入（回测 hitMemo auction 同口径）；
+    //   盘中买点：分时首次 +8% 且 < 9.5% → 按该分钟价买入。
+    //   9:30-9:32 前两分钟评估全部未触发候选（覆盖「竞价 <5% 但开盘 ≥5%」场景），之后用实时涨幅收敛评估范围
     if (minute >= BUY_START_MINUTE && minute <= BUY_CUTOFF_MINUTE) {
       const near = firstBoard.filter((c) => {
         if (aAuctionSignaled.has(c.code) || aBurstSignaled.has(c.code)) return false;
+        const a = auctionGaps.get(c.code);
+        if (a && a.gap >= BUY_OPEN_GAP_AUCTION_PCT) return true;
+        if (minute <= BUY_START_MINUTE + 2) return true;
         const q = quotes[c.code];
         if (!q || q.change == null) return false;
         return Number(q.change) >= BUY_TRIGGER_PCT - 2;
@@ -859,7 +886,15 @@ const tick = async () => {
         try { t = await loadTlinePointsStrict(c.code, Number(dateStr)); } catch (e) { t = null; }
         if (!t) return null;
         const hit = scanFirstBoardBurstHit(t, c, minute);
-        if (!hit || hit.limitOpen || hit.auction) return null;
+        if (!hit || hit.limitOpen) return null;
+        if (hit.auction) {
+          // 正式竞价买点：按 9:30 开盘价（分时首点）判定与成交，与回测一致（9:25 竞价仅做提前提醒）
+          await emitBuySignal({
+            dateStr, cand: c, mode: 'auction', minute: hit.minute,
+            price: hit.px, change: hit.chg, auctionGap: auctionGaps.get(c.code)?.gap ?? null,
+          });
+          return null;
+        }
         await emitBuySignal({
           dateStr, cand: c, mode: 'burst', minute: hit.minute,
           price: hit.px, change: hit.chg, auctionGap: auctionGaps.get(c.code)?.gap ?? null,
@@ -876,6 +911,7 @@ const tick = async () => {
         const a = auctionGaps.get(c.code);
         if (a && a.gap <= 0) return false;             // 竞价未高开，不参与
         if (a && a.gap >= limitUpThresholdOf(c.code)) return false; // 一字板买不进
+        if (a && a.gap >= BUY_SEAL_PCT) return false;  // 竞价涨幅 ≥ 9.5% 视为涨停，买不进（2026-11-17 用户要求）
         const q = quotes[c.code];
         if (!q || q.change == null) return false;
         return Number(q.change) >= BUY_TRIGGER_PCT - 2;
@@ -1030,6 +1066,7 @@ module.exports = {
   buildRules,
   // 常量导出便于前端文案/调试面板/回测对照
   BUY_TRIGGER_PCT,
+  BUY_SEAL_PCT,
   BUY_OPEN_GAP_AUCTION_PCT,
   BUY_START_MINUTE,
   BUY_CUTOFF_MINUTE,

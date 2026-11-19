@@ -1,8 +1,8 @@
-import { Badge, Button, Tooltip } from 'antd';
-import { ClockCircleOutlined, HistoryOutlined, BgColorsOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
+import { ClockCircleOutlined, BgColorsOutlined } from '@ant-design/icons';
 import './index.scss';
 
-const PageMeta = ({ lastUpdated, historyCount, onHistoryClick, onOpenThemeColor }) => (
+const PageMeta = ({ lastUpdated, onOpenThemeColor }) => (
     <div className="page-meta">
         <div className="title-block">
             <div className="title-row">
@@ -18,16 +18,6 @@ const PageMeta = ({ lastUpdated, historyCount, onHistoryClick, onOpenThemeColor 
                 <ClockCircleOutlined /> 最后更新: {lastUpdated}
             </div>
         </div>
-        <Badge count={historyCount} overflowCount={99} size="small" offset={[0, 0]}>
-            <Button
-                type="primary"
-                icon={<HistoryOutlined />}
-                onClick={onHistoryClick}
-                className="history-btn"
-            >
-                异动历史记录
-            </Button>
-        </Badge>
     </div>
 );
 

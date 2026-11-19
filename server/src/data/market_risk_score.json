@@ -1262,5 +1262,37 @@
       "lowAvg": -3.955
     },
     "timestamp": "2026-11-16 15:01:07"
+  },
+  {
+    "date": 20261117,
+    "score": 43,
+    "level": 2,
+    "label": "防御收缩",
+    "desc": "风险偏好低位：资金只认最近可兑现的业绩，叙事股被持续抛弃",
+    "detail": {
+      "spread": -1.869,
+      "breadth": -0.176,
+      "attackTilt": -0.304,
+      "avgChange": -1.092,
+      "highAvg": -2.71,
+      "lowAvg": -0.841
+    },
+    "timestamp": "2026-11-17 15:01:04"
+  },
+  {
+    "date": 20261118,
+    "score": 75,
+    "level": 2,
+    "label": "防御收缩",
+    "desc": "风险偏好低位：资金只认最近可兑现的业绩，叙事股被持续抛弃",
+    "detail": {
+      "spread": -1.294,
+      "breadth": -0.048,
+      "attackTilt": -0.15,
+      "avgChange": 3.023,
+      "highAvg": 2.395,
+      "lowAvg": 3.689
+    },
+    "timestamp": "2026-11-18 15:01:32"
   }
 ]

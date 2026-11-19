@@ -1,5 +1,51 @@
 [
   {
+    "date": "2026-11-18",
+    "operations": [
+      {
+        "id": "1794967888455_4a40",
+        "action": "sell",
+        "stockName": "深圳华强",
+        "stockCode": "sz000062",
+        "position": "",
+        "time": "10:11"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-18T02:11:28.491Z",
+    "updatedAt": "2026-11-18T02:11:28.491Z"
+  },
+  {
+    "date": "2026-11-17",
+    "operations": [
+      {
+        "id": "1794880810677_zdk8",
+        "action": "buy",
+        "stockName": "华海清科",
+        "stockCode": "sh688120",
+        "position": "",
+        "time": "10:00"
+      },
+      {
+        "id": "1794884785670_rcbm",
+        "action": "buy",
+        "stockName": "中科飞测",
+        "stockCode": "sh688361",
+        "position": "",
+        "time": "11:06"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-17T02:00:10.846Z",
+    "updatedAt": "2026-11-17T03:06:25.939Z"
+  },
+  {
     "date": "2026-11-16",
     "operations": [
       {

@@ -195,7 +195,7 @@ const BLOCK_LINE_COLORS = [
 // 板块资金默认选中板块
 const DEFAULT_SELECTED_BLOCKS = [
   'PCB', '半导体概念', '光通信模块', '创新药', '银行Ⅱ', '存储芯片',
-  '液冷服务器', '黄金概念', '人形机器人','商业航天'
+  '液冷服务器', '黄金概念', '人形机器人', '商业航天', '短剧互动游戏'
 ];
 
 // 热力图最小面积占比（百分比）
@@ -1552,12 +1552,9 @@ export const MainFundContent = () => {
     setSelectedBlocks(prev => prev.filter(b => b !== blockName));
   };
 
-  // 确认批量添加板块：受 BLOCK_LINE_COLORS 数量限制
+  // 确认批量添加板块：不设数量上限，颜色循环使用
   const handleConfirmBlockBatchAdd = () => {
-    const remaining = BLOCK_LINE_COLORS.length - selectedBlocks.length;
-    const newBlocks = allBlocks.filter(b => selectedNewBlocks.includes(b) && !selectedBlocks.includes(b));
-    const toAdd = newBlocks.slice(0, Math.max(0, remaining));
-    if (newBlocks.length > toAdd.length) message.warning(`最多选择 ${BLOCK_LINE_COLORS.length} 个板块`);
+    const toAdd = allBlocks.filter(b => selectedNewBlocks.includes(b) && !selectedBlocks.includes(b));
     if (toAdd.length > 0) setSelectedBlocks(prev => [...prev, ...toAdd]);
     setSelectedNewBlocks([]);
     setShowBlockBatchPanel(false);
@@ -1722,8 +1719,7 @@ export const MainFundContent = () => {
     const infoList = [];
     const lastValues = [];
     selectedBlocks.forEach((blockName, idx) => {
-      if (idx >= BLOCK_LINE_COLORS.length) return;
-      const color = BLOCK_LINE_COLORS[idx];
+      const color = BLOCK_LINE_COLORS[idx % BLOCK_LINE_COLORS.length];
       const lineData = [];
       blockChartFrames.forEach(frame => {
         const blockItem = frame.data?.find(item => item.block === blockName);

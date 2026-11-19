@@ -419,6 +419,48 @@ app.post('/api/key_blocks', (req, res) => {
   }
 });
 
+// ==================== 盯盘页自动跳转专注交易设置 ====================
+// 持久化到 data/dingpan_settings.json：{ stayLimitMinutes: 1 }
+// 盯盘页在交易时段停留超过 stayLimitMinutes 分钟后自动跳转 /opening_battle；
+// 前端在 debug 面板修改该值，存后端不落前端
+const DINGPAN_SETTINGS_PATH = path.resolve(__dirname, 'data/dingpan_settings.json');
+const DEFAULT_DINGPAN_STAY_LIMIT_MIN = 1;
+
+const readDingpanSettings = () => {
+  try {
+    if (!fs.existsSync(DINGPAN_SETTINGS_PATH)) {
+      const defaults = { stayLimitMinutes: DEFAULT_DINGPAN_STAY_LIMIT_MIN };
+      fs.writeFileSync(DINGPAN_SETTINGS_PATH, JSON.stringify(defaults, null, 2), 'utf8');
+      return defaults;
+    }
+    const obj = JSON.parse(fs.readFileSync(DINGPAN_SETTINGS_PATH, 'utf8') || '{}');
+    const n = Number(obj.stayLimitMinutes);
+    return { stayLimitMinutes: Number.isFinite(n) && n > 0 ? n : DEFAULT_DINGPAN_STAY_LIMIT_MIN };
+  } catch (e) {
+    console.error('读取盯盘页跳转设置失败:', e.message);
+    return { stayLimitMinutes: DEFAULT_DINGPAN_STAY_LIMIT_MIN };
+  }
+};
+
+app.get('/api/dingpan_settings', (req, res) => {
+  res.json({ success: true, data: readDingpanSettings() });
+});
+
+app.post('/api/dingpan_settings', (req, res) => {
+  try {
+    const n = Number(req.body?.stayLimitMinutes);
+    if (!Number.isFinite(n) || n <= 0 || n > 120) {
+      res.status(400).json({ success: false, message: 'stayLimitMinutes 需为 1 ~ 120 的分钟数' });
+      return;
+    }
+    fs.writeFileSync(DINGPAN_SETTINGS_PATH, JSON.stringify({ stayLimitMinutes: n }, null, 2), 'utf8');
+    res.json({ success: true, data: { stayLimitMinutes: n } });
+  } catch (e) {
+    console.error('保存盯盘页跳转设置失败:', e.message);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 // 板块近 N 个交易日数据：板块每日平均涨跌幅（默认 20 个交易日）
 app.get('/block_avg_change_history', async (req, res) => {
   try {

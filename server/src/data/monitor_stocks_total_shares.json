@@ -440,34 +440,9 @@
     "TotalShares": 448200000
   },
   {
-    "secu_code": "sh605287",
-    "secu_name": "德才股份",
-    "TotalShares": 140000000
-  },
-  {
     "secu_code": "sz301486",
     "secu_name": "致尚科技",
     "TotalShares": 128743244
-  },
-  {
-    "secu_code": "sz002343",
-    "secu_name": "慈文传媒",
-    "TotalShares": 473680286
-  },
-  {
-    "secu_code": "sh600967",
-    "secu_name": "内蒙一机",
-    "TotalShares": 1701794667
-  },
-  {
-    "secu_code": "sh600435",
-    "secu_name": "北方导航",
-    "TotalShares": 1512357749
-  },
-  {
-    "secu_code": "sh600825",
-    "secu_name": "新华传媒",
-    "TotalShares": 1044887850
   },
   {
     "secu_code": "sz301183",
@@ -483,11 +458,6 @@
     "secu_code": "sh688322",
     "secu_name": "奥比中光-W",
     "TotalShares": 412834732
-  },
-  {
-    "secu_code": "sh688543",
-    "secu_name": "国科军工",
-    "TotalShares": 250610433
   },
   {
     "secu_code": "sh688469",
@@ -510,11 +480,6 @@
     "TotalShares": 267942700
   },
   {
-    "secu_code": "sh600391",
-    "secu_name": "航发科技",
-    "TotalShares": 330129367
-  },
-  {
     "secu_code": "sh688686",
     "secu_name": "奥普特  ",
     "TotalShares": 122235455
@@ -528,11 +493,6 @@
     "secu_code": "sh688585",
     "secu_name": "上纬新材",
     "TotalShares": 403361728
-  },
-  {
-    "secu_code": "sz000810",
-    "secu_name": "创维数字",
-    "TotalShares": 1150195579
   },
   {
     "secu_code": "sz300413",
@@ -560,39 +520,14 @@
     "TotalShares": 1059988922
   },
   {
-    "secu_code": "sh600501",
-    "secu_name": "航天晨光",
-    "TotalShares": 427824200
-  },
-  {
-    "secu_code": "sh603131",
-    "secu_name": "上海沪工",
-    "TotalShares": 336907220
-  },
-  {
-    "secu_code": "sz001400",
-    "secu_name": "江顺科技",
-    "TotalShares": 84000000
-  },
-  {
     "secu_code": "sh603278",
     "secu_name": "大业股份",
     "TotalShares": 341759392
   },
   {
-    "secu_code": "sz000678",
-    "secu_name": "襄阳轴承",
-    "TotalShares": 459611797
-  },
-  {
     "secu_code": "sz301313",
     "secu_name": "凡拓数创",
     "TotalShares": 102333400
-  },
-  {
-    "secu_code": "sh688787",
-    "secu_name": "海天瑞声",
-    "TotalShares": 60325180
   },
   {
     "secu_code": "sh601698",
@@ -605,29 +540,9 @@
     "TotalShares": 311266052
   },
   {
-    "secu_code": "sh600261",
-    "secu_name": "阳光照明",
-    "TotalShares": 1335052966
-  },
-  {
     "secu_code": "sh603667",
     "secu_name": "五洲新春",
     "TotalShares": 383151922
-  },
-  {
-    "secu_code": "sh688386",
-    "secu_name": "泛亚微透",
-    "TotalShares": 99608958
-  },
-  {
-    "secu_code": "sh605118",
-    "secu_name": "力鼎光电",
-    "TotalShares": 411219000
-  },
-  {
-    "secu_code": "sz001219",
-    "secu_name": "青岛食品",
-    "TotalShares": 194983750
   },
   {
     "secu_code": "sz301021",
@@ -655,24 +570,9 @@
     "TotalShares": 41727274
   },
   {
-    "secu_code": "sh603777",
-    "secu_name": "来伊份  ",
-    "TotalShares": 334424166
-  },
-  {
     "secu_code": "sz300751",
     "secu_name": "迈为股份",
     "TotalShares": 278901752
-  },
-  {
-    "secu_code": "sh601599",
-    "secu_name": "浙文影业",
-    "TotalShares": 1160542453
-  },
-  {
-    "secu_code": "sz300556",
-    "secu_name": "丝路视觉",
-    "TotalShares": 121565424
   },
   {
     "secu_code": "sh603466",
@@ -683,16 +583,6 @@
     "secu_code": "sz300133",
     "secu_name": "华策影视",
     "TotalShares": 1874771665
-  },
-  {
-    "secu_code": "sz002765",
-    "secu_name": "蓝黛科技",
-    "TotalShares": 652128090
-  },
-  {
-    "secu_code": "sz001339",
-    "secu_name": "智微智能",
-    "TotalShares": 327032752
   },
   {
     "secu_code": "sz300843",
@@ -713,11 +603,6 @@
     "secu_code": "sh688333",
     "secu_name": "铂力特  ",
     "TotalShares": 274322174
-  },
-  {
-    "secu_code": "sh603767",
-    "secu_name": "中马传动",
-    "TotalShares": 308631500
   },
   {
     "secu_code": "sz002520",
@@ -765,11 +650,6 @@
     "TotalShares": 233103941
   },
   {
-    "secu_code": "sz300836",
-    "secu_name": "佰奥智能",
-    "TotalShares": 92685610
-  },
-  {
     "secu_code": "sz300017",
     "secu_name": "网宿科技",
     "TotalShares": 2495684777
@@ -788,5 +668,35 @@
     "secu_code": "sz002242",
     "secu_name": "九阳股份",
     "TotalShares": 763017000
+  },
+  {
+    "secu_code": "sz301717",
+    "secu_name": "超纯应材",
+    "TotalShares": 101846154
+  },
+  {
+    "secu_code": "sh688502",
+    "secu_name": "茂莱光学",
+    "TotalShares": 52801012
+  },
+  {
+    "secu_code": "sz002272",
+    "secu_name": "川润股份",
+    "TotalShares": 484877300
+  },
+  {
+    "secu_code": "sz002685",
+    "secu_name": "华东重机",
+    "TotalShares": 1007690641
+  },
+  {
+    "secu_code": "sh688372",
+    "secu_name": "伟测科技",
+    "TotalShares": 169078820
+  },
+  {
+    "secu_code": "sh688820",
+    "secu_name": "盛合晶微",
+    "TotalShares": 1869062215
   }
 ]

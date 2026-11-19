@@ -80,6 +80,8 @@ const runOnce = async () => {
             const { point, payload, stats } = await runAndSaveIntradayPoint({
                 onProgress: renderProgress,
                 forcePolling: ALL,
+                // --now 显式要求立即执行，绕过开盘前写入守卫
+                ignoreMarketWindow: NOW,
             });
             process.stdout.write('\n');
 

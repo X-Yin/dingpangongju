@@ -1,23 +1,16 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-11-16 00:31:38",
+  "computedAt": "2026-11-19 08:45:17",
   "reason": "每日首次启动回测",
   "range": {
-    "startDate": "20260817",
-    "endDate": "20261116"
+    "startDate": "20260820",
+    "endDate": "20261119"
   },
   "tradeCount": 11,
   "threshold": 20,
-  "consecutiveBelow": 0,
+  "consecutiveBelow": 1,
   "lastReturns": [
-    {
-      "code": "sz002837",
-      "name": "英维克",
-      "sellDate": "20260904",
-      "sellTime": "13:55",
-      "returnRate": 6.66
-    },
     {
       "code": "sh603228",
       "name": "景旺电子",
@@ -36,15 +29,15 @@
       "code": "sz001309",
       "name": "德明利",
       "sellDate": "20261022",
-      "sellTime": "13:40",
-      "returnRate": 0.65
+      "sellTime": "14:45",
+      "returnRate": 3.6
     },
     {
-      "code": "sz301269",
-      "name": "华大九天",
+      "code": "sz002475",
+      "name": "立讯精密",
       "sellDate": "20261026",
-      "sellTime": "10:05",
-      "returnRate": 2.54
+      "sellTime": "10:10",
+      "returnRate": 2.85
     },
     {
       "code": "sh688025",
@@ -80,6 +73,13 @@
       "sellDate": "20261113",
       "sellTime": "10:55",
       "returnRate": 15.92
+    },
+    {
+      "code": "sz000062",
+      "name": "深圳华强",
+      "sellDate": "20261118",
+      "sellTime": "10:00",
+      "returnRate": 1.55
     }
   ]
 }

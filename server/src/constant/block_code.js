@@ -2203,91 +2203,91 @@ exports.default = [
         "name": "慈文传媒"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sh603496",
         "name": "恒为科技",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sz000034",
         "name": "神州数码",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sh603019",
         "name": "中科曙光",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sz002261",
         "name": "拓维信息",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sh688702",
         "name": "盛科通信-U",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sh600410",
         "name": "华胜天成",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sz000062",
         "name": "深圳华强",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sz301236",
         "name": "软通动力",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sh688629",
         "name": "华丰科技",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sz002897",
         "name": "意华股份",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sz300843",
         "name": "胜蓝股份",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sz300991",
         "name": "创益通",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sz000938",
         "name": "紫光股份",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sz301191",
         "name": "菲菱科思",
         "tag": "进攻"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sz002843",
         "name": "泰嘉股份",
         "tag": "进攻"
@@ -2303,9 +2303,10 @@ exports.default = [
         "name": "凯迪股份"
     },
     {
-        "blockName": "华为超节点",
+        "blockName": "华为",
         "code": "sh600246",
-        "name": "万通发展"
+        "name": "万通发展",
+        "tag": "进攻"
     },
     {
         "blockName": "机器人大脑",
@@ -2411,5 +2412,81 @@ exports.default = [
         "blockName": "电力",
         "code": "sh600885",
         "name": "宏发股份"
+    },
+    {
+        "blockName": "华为",
+        "code": "sz301391",
+        "name": "卡莱特",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "光刻胶",
+        "code": "sh603650",
+        "name": "彤程新材",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "光刻胶",
+        "code": "sz300346",
+        "name": "南大光电",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "光刻胶",
+        "code": "sz300054",
+        "name": "鼎龙股份",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "光刻胶",
+        "code": "sz300236",
+        "name": "上海新阳",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为",
+        "code": "sh688757",
+        "name": "胜科纳米",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "华为",
+        "code": "sz002272",
+        "name": "川润股份"
+    },
+    {
+        "blockName": "华为",
+        "code": "sz000158",
+        "name": "常山北明"
+    },
+    {
+        "blockName": "华为",
+        "code": "sh600839",
+        "name": "四川长虹"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sz301396",
+        "name": "宏景科技"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sz300857",
+        "name": "协创数据"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sz300209",
+        "name": "行云科技"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sz002990",
+        "name": "盛视科技"
+    },
+    {
+        "blockName": "AIDC",
+        "code": "sz301189",
+        "name": "奥尼电子"
     }
 ]

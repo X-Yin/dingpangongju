@@ -892,8 +892,9 @@
 
 /* 板块成分股悬浮窗样式 - 全局样式 */
 .block-stock-popover {
-  /* 低于 Modal（1000），避免点击股票打开 K 线弹窗后被悬浮窗盖住 */
-  z-index: 900 !important;
+  /* 高于右侧悬浮窗（龙二波/监控等 z-index: 1000），避免板块成分股悬浮窗被遮挡；
+     配合盯盘页 K 线弹窗显式 zIndex 1600，仍低于该弹窗，点击股票后弹窗正常盖住悬浮窗 */
+  z-index: 1500 !important;
   border-radius: 10px !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
   backdrop-filter: blur(12px) !important;

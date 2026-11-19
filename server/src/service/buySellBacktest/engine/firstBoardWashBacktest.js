@@ -61,6 +61,7 @@ const { TWO_BUY_LEG_WEIGHT, computeTwoBuyAccountReturn } = require('./twoBuy');
 // ============================================================
 
 const BUY_TRIGGER_PCT = 8;         // 竞价未到 5% 时：分时涨幅达到 +8% 即买入（2026-11-01 用户要求，由 9% 改为 8%）
+const BUY_SEAL_PCT = 9.5;          // 买入时涨幅 ≥ 9.5% 视为已涨停封板，不能再买入（2026-11-17 用户要求，回测与线上共用）
 const MAX_FLOAT_MV_YI = 100;       // 流通市值（按买入日股价折算）须 ≤ 100 亿元（线上口径，washFusionLive 使用）
 const MAX_TOTAL_MV_YI = 100;       // 回测口径：总市值（按买入日股价折算）须 ≤ 100 亿元（2026-11-01 用户要求，替代流通市值）
 const MAX_WIN3_GAIN_PCT = 20;      // 买点日前 20 个交易日内最大三日滑动窗口涨幅 ≤ 20%（2026-11-01 用户要求）
@@ -1032,6 +1033,7 @@ module.exports = {
   WASHOUT_LOOKBACK_DAYS,
   BACKTEST_VOL_MULT,
   BUY_TRIGGER_PCT,
+  BUY_SEAL_PCT,
   BUY_OPEN_GAP_AUCTION_PCT,
   BUY_START_MINUTE,
   BUY_CUTOFF_MINUTE,

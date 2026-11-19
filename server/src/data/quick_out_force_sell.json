@@ -1,42 +1,31 @@
 {
-  "20261029": [
+  "20261118": [
     {
-      "code": "sz003021",
-      "name": "兆威机电",
+      "code": "sz000062",
+      "name": "深圳华强",
       "time": "10:00",
-      "ema": -30.35,
+      "ema": -34.55,
       "trigger": "ema_below",
-      "prevRaw": -39.11,
-      "prev2Raw": -36.12
-    }
-  ],
-  "20261105": [
+      "prevRaw": -40.77,
+      "prev2Raw": -50.14
+    },
+    {
+      "code": "sh688361",
+      "name": "中科飞测",
+      "time": "10:00",
+      "ema": -34.55,
+      "trigger": "ema_below",
+      "prevRaw": -40.77,
+      "prev2Raw": -50.14
+    },
     {
       "code": "sh688120",
       "name": "华海清科",
       "time": "10:00",
-      "ema": -41.58,
+      "ema": -34.55,
       "trigger": "ema_below",
-      "prevRaw": -59.72,
-      "prev2Raw": -6.02
-    },
-    {
-      "code": "sz002565",
-      "name": "顺灏股份",
-      "time": "10:00",
-      "ema": -41.58,
-      "trigger": "ema_below",
-      "prevRaw": -59.72,
-      "prev2Raw": -6.02
-    },
-    {
-      "code": "sz000810",
-      "name": "创维数字",
-      "time": "10:00",
-      "ema": -41.58,
-      "trigger": "ema_below",
-      "prevRaw": -59.72,
-      "prev2Raw": -6.02
+      "prevRaw": -40.77,
+      "prev2Raw": -50.14
     }
   ]
 }
