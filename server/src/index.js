@@ -81,6 +81,7 @@ const { getBlockAiContext, runBlockAiAnalysis } = require('./service/blockAi');
 const { getAiScreenContext, runAiScreen } = require('./service/aiStockScreener');
 const { getJigouReportsData, refreshJigouReports, getPendingNewReports, acknowledgeNewReports } = require('./service/jigouReports');
 const { getMonitorAlarms, markAlarmRead, markAllAlarmsRead } = require('./service/monitor');
+const monitorSnapshot = require('./service/monitorSnapshot');
 const { addMonitorStock, deleteMonitorStock, toggleStockImportant, batchSetImportant, updateMonitorStockName, updateMonitorStockInfo, getMonitorStocks, toggleStockTop, syncTotalShares, isTechWatchlistStock } = require('./service/monitorStock');
 const { diagnoseResilience, diagnoseResilienceMultiDay, calculateRealtimeResilienceBatch, diagnoseSingleStockResilience, diagnoseIntradayResilience, checkPositionSellAlerts } = require('./service/stockDiagnose');
 const { diagnosePremium } = require('./service/premiumDiagnosis');
@@ -790,6 +791,28 @@ app.post('/monitor_alarms/read_all', (req, res) => {
   } catch (error) {
     console.error('全部标记已读失败:', error);
     res.status(500).json({ message: error.message || '全部标记已读失败' });
+  }
+});
+
+// 当日 10 分钟监控快照：最新在前分页返回
+app.get('/monitor_snapshots', (req, res) => {
+  try {
+    const { limit, offset, date } = req.query;
+    res.json(monitorSnapshot.getSnapshots({ limit, offset, date }));
+  } catch (error) {
+    console.error('获取监控快照失败:', error);
+    res.status(500).json({ message: error.message || '获取监控快照失败' });
+  }
+});
+
+// 调试面板：模拟一条监控快照并经 WS 推送前端弹卡（不写入当日缓存）
+app.post('/debug/mock_monitor_snapshot', (req, res) => {
+  try {
+    const data = monitorSnapshot.runMock();
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('模拟监控快照失败:', error);
+    res.status(500).json({ success: false, error: error.message || '模拟监控快照失败' });
   }
 });
 
@@ -6266,6 +6289,8 @@ const server = app.listen(port, () => {
   wsServer.attach(server, port);
   buyPointPushService.start();
   sellPointPushService.start();
+  // 10 分钟监控：交易日每整 10 分钟读取本地分时缓存生成快照，写入当日缓存并经 WS 推送前端弹卡
+  monitorSnapshot.start();
   // 策略中心轮询：新命中经 WS（type:'strategy_signal'）推送前端全局卡片 + 登记 pending_alerts 对账。
   // 必须在本进程启动——WS 服务（wsServer.attach）只挂载在 index.js；之前在 poll.js 进程里
   // broadcast 因 wss 为 null 静默空转，导致记录写入但全局卡片/对账补弹均收不到（2026-11-10 修复）
@@ -6294,6 +6319,7 @@ const shutdown = (signal) => {
   try { buyPointPushService.stop(); } catch (e) { /* 忽略 */ }
   try { sellPointPushService.stop(); } catch (e) { /* 忽略 */ }
   try { washFusionLive.stop(); } catch (e) { /* 忽略 */ }
+  try { monitorSnapshot.stop(); } catch (e) { /* 忽略 */ }
   try { wsServer.close(); } catch (e) { /* 忽略 */ }
   server.close(() => process.exit(0));
   // 兜底：3s 内未能正常关闭则强制退出

@@ -367,6 +367,10 @@ export default function IntradayResilienceChart({
               <span class="label">成交量</span>
               <span class="value">${(volume / 10000).toFixed(2)}万</span>
             </div>
+            <div class="item">
+              <span class="label">成交额</span>
+              <span class="value">${Math.round((Number(price) || 0) * (Number(volume) || 0) / 10000)}万</span>
+            </div>
             ${resilienceHtml}
           </div>
         `;

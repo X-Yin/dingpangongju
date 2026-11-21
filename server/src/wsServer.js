@@ -15,6 +15,8 @@ let wss = null;
 const PENDING_TTL_MS = 12 * 3600 * 1000;
 const PENDING_MAX = 200;
 let pendingAlerts = [];
+// 10 分钟监控快照只要求「收到即弹卡」，不参与断线对账补弹（否则重连会补弹大量历史监控）
+const NO_PENDING_TYPES = new Set(['monitor_snapshot']);
 
 const genAlertId = () => `${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}`;
 
@@ -68,7 +70,7 @@ const attach = (server, port) => {
 // 广播一条消息给所有已连接客户端（对象自动 JSON 序列化）
 // open:true 的弹卡类消息：补上全局唯一 aid 并登记，供前端对账补弹（见文件头注释）
 const broadcast = (msg) => {
-  if (msg && typeof msg === 'object' && msg.open === true) {
+  if (msg && typeof msg === 'object' && msg.open === true && !NO_PENDING_TYPES.has(msg.type)) {
     const enriched = { ...msg, aid: msg.aid || genAlertId() };
     pendingAlerts.push({ id: enriched.aid, ts: Date.now(), msg: enriched });
     prunePendingAlerts();

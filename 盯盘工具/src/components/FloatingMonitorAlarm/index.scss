@@ -299,7 +299,271 @@
     flex-direction: column;
     gap: 8px;
   }
+}
 
+// 监控快照样式放在抽屉外，同时供右下角全局监控卡片使用
+.fma-list-loading {
+    padding: 80px 0;
+    text-align: center;
+  }
+
+  // ==================== 10 分钟监控快照卡片 ====================
+  .fma-snap-card {
+    border: 1px solid rgba(157, 176, 207, 0.16);
+    border-radius: 16px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.72);
+    transition: all 0.24s ease;
+
+    &:hover {
+      border-color: rgba(105, 124, 161, 0.24);
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 10px 24px rgba(78, 102, 145, 0.08);
+    }
+
+    &.is-mock {
+      border-color: rgba(250, 173, 20, 0.38);
+      background: linear-gradient(180deg, rgba(255, 251, 235, 0.9), rgba(255, 255, 255, 0.9));
+    }
+  }
+
+  .fma-snap-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed rgba(157, 176, 207, 0.24);
+  }
+
+  .fma-snap-card-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #12213a;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fma-snap-card-date {
+    font-size: 11px;
+    color: #8a97ae;
+  }
+
+  .fma-snap-mock {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 800;
+    color: #b45309;
+    background: rgba(250, 173, 20, 0.16);
+    border: 1px dashed rgba(250, 173, 20, 0.6);
+    border-radius: 999px;
+    padding: 1px 8px;
+  }
+
+  .fma-snap-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .fma-snap-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .fma-snap-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #334155;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 12px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, #67e8f9, #a78bfa);
+    }
+  }
+
+  .fma-snap-hint {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+
+  .fma-snap-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .fma-snap-col {
+    min-width: 0;
+    padding: 6px 8px;
+    border-radius: 10px;
+    background: rgba(248, 250, 252, 0.9);
+    border: 1px solid rgba(157, 176, 207, 0.14);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .fma-snap-col-head {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+
+    &.up {
+      color: #e11d48;
+    }
+
+    &.down {
+      color: #059669;
+    }
+  }
+
+  .fma-snap-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    line-height: 17px;
+    min-width: 0;
+  }
+
+  .fma-snap-rank {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 800;
+    color: #64748b;
+    background: rgba(148, 163, 184, 0.16);
+  }
+
+  .fma-snap-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #334155;
+    font-weight: 600;
+  }
+
+  .fma-snap-val {
+    flex-shrink: 0;
+    font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    font-size: 11.5px;
+
+    &.up {
+      color: #e11d48;
+    }
+
+    &.down {
+      color: #059669;
+    }
+  }
+
+  .fma-snap-empty {
+    font-size: 11px;
+    color: #b0bac9;
+    padding: 2px 0;
+  }
+
+  // 深色卡（全局买点卡片风格）内的文字配色
+  .fma-snap-body.is-dark {
+    gap: 12px;
+
+    .fma-snap-title {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .fma-snap-hint {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .fma-snap-col {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(10px) saturate(150%);
+      -webkit-backdrop-filter: blur(10px) saturate(150%);
+    }
+
+    .fma-snap-col-head {
+      &.up {
+        color: #fda4af;
+      }
+
+      &.down {
+        color: #6ee7b7;
+      }
+    }
+
+    .fma-snap-rank {
+      color: rgba(255, 255, 255, 0.72);
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .fma-snap-name {
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .fma-snap-val {
+      &.up {
+        color: #ff9c9c;
+        text-shadow: 0 0 12px rgba(255, 107, 107, 0.35);
+      }
+
+      &.down {
+        color: #6ee7b7;
+        text-shadow: 0 0 12px rgba(110, 231, 183, 0.35);
+      }
+    }
+
+    .fma-snap-empty {
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+
+  .fma-load-more {
+    margin-top: 2px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px dashed rgba(99, 102, 241, 0.35);
+    color: #4f46e5;
+    background: rgba(238, 242, 255, 0.6);
+    font-size: 12.5px;
+    font-weight: 700;
+
+    &:hover {
+      color: #4338ca !important;
+      border-color: rgba(99, 102, 241, 0.6) !important;
+      background: rgba(224, 231, 255, 0.9) !important;
+    }
+  }
+
+  .fma-snap-end {
+    text-align: center;
+    font-size: 11.5px;
+    color: #9aa6b8;
+    padding: 8px 0 2px;
+  }
+
+.monitor-alarm-drawer {
   .fma-card {
     border: 1px solid rgba(157, 176, 207, 0.14);
     border-radius: 16px;
@@ -448,5 +712,34 @@
         color: #cbd5e1;
       }
     }
+  }
+}
+
+// ==================== 全局监控提示卡片（复用买点卡片的蓝紫玻璃渐变） ====================
+.fma-monitor-pop {
+  position: fixed;
+  right: 456px;
+  bottom: 24px;
+  z-index: 2080;
+  pointer-events: auto;
+
+  .fma-monitor-card {
+    width: 460px;
+    max-height: calc(100vh - 48px);
+  }
+
+  .gda-body {
+    max-height: calc(100vh - 190px);
+  }
+
+  .gda-footer {
+    padding: 9px 16px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .fma-monitor-pop {
+    right: 24px;
+    bottom: 24px;
   }
 }

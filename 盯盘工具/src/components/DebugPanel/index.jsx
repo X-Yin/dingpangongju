@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Drawer, Card, Button, Space, Typography, message, InputNumber } from 'antd';
 import {
   BugOutlined, SyncOutlined, CheckCircleFilled, WarningFilled, RocketOutlined, FallOutlined, ClockCircleOutlined,
-  BulbOutlined, ThunderboltOutlined,
+  BulbOutlined, ThunderboltOutlined, BellOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import { local_ip } from '../../constant';
@@ -34,6 +34,8 @@ const DebugPanel = () => {
   const [resonanceMocking, setResonanceMocking] = useState(false);
   // 买点预热 MOCK：tech | extreme_win | wash_fusion（2026-11-15）
   const [preheatMocking, setPreheatMocking] = useState(null);
+  // 10 分钟监控卡片 MOCK（2026-11-21）
+  const [monitorSnapshotMocking, setMonitorSnapshotMocking] = useState(false);
 
   // 盯盘页自动跳转专注交易停留上限（分钟）：持久化在后端 data/dingpan_settings.json
   const [stayLimitMinutes, setStayLimitMinutes] = useState(1);
@@ -300,6 +302,26 @@ const DebugPanel = () => {
       message.error(`mock 请求失败：${e.message}`);
     } finally {
       setPreheatMocking(null);
+    }
+  };
+
+  // 10 分钟监控卡片 MOCK：后端生成一条监控快照并经 WS（type:'monitor_snapshot'）推送，
+  // 前端右下角弹出监控卡片（不写入当日缓存，不重复弹历史）
+  const triggerMonitorSnapshotMock = async () => {
+    if (monitorSnapshotMocking) return;
+    setMonitorSnapshotMocking(true);
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/debug/mock_monitor_snapshot`);
+      const d = res.data;
+      if (d?.success) {
+        message.success(`已模拟 ${d.data?.time || ''} 监控卡片`, 4);
+      } else {
+        message.error(d?.error || 'mock 触发失败');
+      }
+    } catch (e) {
+      message.error(`mock 请求失败：${e.message}`);
+    } finally {
+      setMonitorSnapshotMocking(false);
     }
   };
 
@@ -616,6 +638,24 @@ const DebugPanel = () => {
                 保存设置
               </Button>
             </div>
+          </Card>
+
+          {/* 模块十二：10 分钟监控卡片 MOCK */}
+          <Card size="small" title="12. 10 分钟监控卡片 Mock">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              读取当前板块涨幅 / 资金 / 成交量分时缓存，生成一条「近 10 分钟前 5 / 后 5」监控快照，
+              经与实盘一致的 WebSocket 链路（type:'monitor_snapshot'）推送，前端右下角弹出监控卡片。
+              实盘由后端每整 10 分钟自动生成并写入当日缓存；MOCK 不写入当日缓存。
+            </Paragraph>
+            <Button
+              type="primary"
+              icon={<BellOutlined />}
+              loading={monitorSnapshotMocking}
+              onClick={triggerMonitorSnapshotMock}
+              style={{ background: '#4f46e5', borderColor: '#4f46e5' }}
+            >
+              触发监控卡片
+            </Button>
           </Card>
 
           <Text type="secondary" style={{ fontSize: 12 }}>

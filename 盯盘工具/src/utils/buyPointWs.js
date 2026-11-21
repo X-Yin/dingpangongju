@@ -11,7 +11,7 @@ import { local_ip } from '../constant';
 const WS_URL = `ws://${local_ip}:3000/ws`;
 const RECONNECT_BASE_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
-const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'strategy_signal', 'emotion_resonance', 'buy_point_preheat'];
+const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'strategy_signal', 'emotion_resonance', 'buy_point_preheat', 'monitor_snapshot'];
 
 let socket = null;
 let reconnectTimer = null;
@@ -240,6 +240,12 @@ export const subscribeBuyPointPreheatPush = (handler) => subscribePush('buy_poin
 //     blocks:[{ board, phase, count, ratio, prevRatio, deltaRatio, reason }] } }
 //   前端由 GlobalDiagnosisAlert 弹出全局共振提示；MOCK 调试消息额外带 mock:true 标记
 export const subscribeEmotionResonancePush = (handler) => subscribePush('emotion_resonance', handler);
+
+// 10 分钟监控快照推送（2026-11-21 用户新增）：后端每整 10 分钟生成一次监控快照并广播
+//   { type:'monitor_snapshot', ts, open:true, data:{ id, date, time, createdAt, windowMinutes,
+//     change:{ up:[{name,value,delta}], down:[...] }, fund:{...}, volume:{...} } }
+//   前端由 FloatingMonitorAlarm 收到 open:true 时右下角弹监控卡片，并写入抽屉列表
+export const subscribeMonitorSnapshotPush = (handler) => subscribePush('monitor_snapshot', handler);
 
 // 本地广播：不经过后端 WS，直接把一条消息按推送协议分发给所有订阅者
 //   （默认补 open:true，供前端自产自销的监控触发 / 调试面板 MOCK 使用）

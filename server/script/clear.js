@@ -58,6 +58,20 @@ const clearDirectories = () => {
         JSON.stringify({ date: '', updatedAt: '', points: [] }, null, 2),
         'utf-8'
     );
+
+    // 清理每日 10 分钟监控快照缓存（monitor_snapshots_YYYYMMDD.json）
+    // dev-with-clear.js 在每个交易日首次启动时调用本脚本，监控缓存随当日数据一起清除
+    const dataDir = path.resolve(__dirname, '../src/data');
+    fs.readdirSync(dataDir)
+        .filter((name) => /^monitor_snapshots_\d{8}\.json$/.test(name))
+        .forEach((name) => {
+            try {
+                fs.unlinkSync(path.join(dataDir, name));
+                console.log(`已清理监控快照缓存: ${name}`);
+            } catch (e) {
+                console.warn(`清理监控快照缓存失败: ${name} - ${e.message}`);
+            }
+        });
 };
 
 clearDirectories();
