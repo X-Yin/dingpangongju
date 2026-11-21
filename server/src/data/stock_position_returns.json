@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-11-20",
+    "operations": [
+      {
+        "id": "1795157833237_pg7o",
+        "action": "sell",
+        "stockName": "中科飞测",
+        "stockCode": "sh688361",
+        "position": "",
+        "time": "14:57"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-20T06:57:13.252Z",
+    "updatedAt": "2026-11-20T06:57:13.252Z"
+  },
+  {
     "date": "2026-11-18",
     "operations": [
       {

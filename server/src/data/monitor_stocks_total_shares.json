@@ -625,16 +625,6 @@
     "TotalShares": 1096494683
   },
   {
-    "secu_code": "sz000062",
-    "secu_name": "深圳华强",
-    "TotalShares": 1045909322
-  },
-  {
-    "secu_code": "sz002261",
-    "secu_name": "拓维信息",
-    "TotalShares": 1259928174
-  },
-  {
     "secu_code": "sz002897",
     "secu_name": "意华股份",
     "TotalShares": 193858976
@@ -680,11 +670,6 @@
     "TotalShares": 52801012
   },
   {
-    "secu_code": "sz002272",
-    "secu_name": "川润股份",
-    "TotalShares": 484877300
-  },
-  {
     "secu_code": "sz002685",
     "secu_name": "华东重机",
     "TotalShares": 1007690641
@@ -703,5 +688,10 @@
     "secu_code": "sh688757",
     "secu_name": "胜科纳米",
     "TotalShares": 403311486
+  },
+  {
+    "secu_code": "sz000158",
+    "secu_name": "常山北明",
+    "TotalShares": 1598616721
   }
 ]

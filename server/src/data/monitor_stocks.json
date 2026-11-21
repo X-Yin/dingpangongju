@@ -1308,28 +1308,6 @@
     "addedAt": "2026-11-13 22:55:41"
   },
   {
-    "code": "sz000062",
-    "name": "深圳华强",
-    "isImportant": false,
-    "blockName": "超节点",
-    "riskScore": null,
-    "isTech": true,
-    "watchMarketCap": false,
-    "watchPE": false,
-    "addedAt": "2026-11-15 16:31:05"
-  },
-  {
-    "code": "sz002261",
-    "name": "拓维信息",
-    "isImportant": false,
-    "blockName": "超节点",
-    "riskScore": null,
-    "isTech": true,
-    "watchMarketCap": false,
-    "watchPE": false,
-    "addedAt": "2026-11-15 16:31:33"
-  },
-  {
     "code": "sz002897",
     "name": "意华股份",
     "isImportant": false,
@@ -1429,17 +1407,6 @@
     "addedAt": "2026-11-17 12:39:21"
   },
   {
-    "code": "sz002272",
-    "name": "川润股份",
-    "isImportant": false,
-    "blockName": "液冷",
-    "riskScore": null,
-    "isTech": true,
-    "watchMarketCap": true,
-    "watchPE": true,
-    "addedAt": "2026-11-18 12:36:06"
-  },
-  {
     "code": "sz002685",
     "name": "华东重机",
     "isImportant": true,
@@ -1482,5 +1449,16 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-19 12:38:26"
+  },
+  {
+    "code": "sz000158",
+    "name": "常山北明",
+    "isImportant": false,
+    "blockName": "华为昇腾",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-20 13:35:12"
   }
 ]

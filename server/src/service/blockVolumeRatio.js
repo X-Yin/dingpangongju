@@ -13,7 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
-const { CATEGORY_NAMES, getBlockCategoryRatio } = require('./板块成交量占比计算/category_amount_money');
+const { CATEGORY_NAMES, getBlockCategoryRatio, appendClosedDayBlockAmounts } = require('./板块成交量占比计算/category_amount_money');
 const { getTechVolumeRatio } = require('./techCrowd');
 const { fetchMarketTotalAmountYi, parseAmountToYi } = require('./amount');
 const { getStockQuotes } = require('./themeMonitor');
@@ -205,6 +205,42 @@ const buildGroups = () => {
     return groups;
 };
 
+// 加载带子板块拆分的分类映射（{分类}_blocks.json：子板块名 → 成分股列表）
+// 拥挤度页「分题材展示」的子板块折线依赖该映射计算当日实时成交额
+const loadBlockSplits = () => {
+    const splits = {};
+    for (const name of CATEGORY_NAMES) {
+        const file = path.join(CONSTITUENTS_DIR, `${name}_blocks.json`);
+        const blocksMap = readJsonSafe(file, null);
+        if (!blocksMap || typeof blocksMap !== 'object' || Array.isArray(blocksMap)) continue;
+        const blocks = Object.entries(blocksMap)
+            .map(([blockName, stocks]) => ({ blockName, stocks: Array.isArray(stocks) ? stocks : [] }))
+            .filter((block) => block.stocks.length > 0);
+        if (blocks.length > 0) splits[name] = blocks;
+    }
+    return splits;
+};
+
+// 按子板块映射汇总各子板块成交额：{ 分类名: { 子板块名: 成交额(元) } }
+// amountOf: (code) => 当日成交额（元），无数据返回 undefined
+const computeBlockAmounts = (splits, amountOf) => {
+    if (!splits) return null;
+    const blockAmounts = {};
+    for (const [name, blocks] of Object.entries(splits)) {
+        const amounts = {};
+        for (const block of blocks) {
+            let sum = 0;
+            for (const stock of block.stocks) {
+                const amount = amountOf(String(stock.code || '').trim());
+                if (amount !== undefined && isFinite(amount) && amount > 0) sum += amount;
+            }
+            amounts[block.blockName] = sum;
+        }
+        blockAmounts[name] = amounts;
+    }
+    return Object.keys(blockAmounts).length > 0 ? blockAmounts : null;
+};
+
 // 主路径第一步：同花顺全量拉取全部板块成分股（去重）的当日成交额
 // 4,300 只左右按 100 只/包并发请求 multi_last_snapshot，实测 0.5s 内返回；
 // 同花顺未返回 / 停牌无成交额的股票再用财联社分时（累加分钟 business_balance）兜底
@@ -333,11 +369,14 @@ const computeFromAmountMap = (groups, amountByCode, totalCodes, totalInfo = {}, 
         ratios[name] = Number((amount / marketTotalAmount * 100).toFixed(4));
     }
 
+    const blockAmounts = computeBlockAmounts(loadBlockSplits(), (code) => amountByCode.get(code));
+
     return {
         time: dayjs().format('HHmmss'),
         marketTotalAmount: Number((marketTotalAmount / 1e8).toFixed(2)),
         amounts,
         ratios,
+        blockAmounts,
         stats: {
             mode: 'ths',
             totalSource,
@@ -558,6 +597,14 @@ const computeByPolling = async (groups, { onProgress } = {}) => {
             ratios[name] = Number((amount / marketTotalAmount * 100).toFixed(4));
         }
 
+        const blockAmounts = computeBlockAmounts(loadBlockSplits(), (code) => {
+            const rows = stockCache.get(code, startDate);
+            if (!Array.isArray(rows)) return undefined;
+            const row = rows.find((item) => item.date === targetDate);
+            const amount = Number(row && row.amount);
+            return isFinite(amount) && amount > 0 ? amount : undefined;
+        });
+
         const stats = {
             mode: 'poll',
             targetDate,
@@ -576,6 +623,7 @@ const computeByPolling = async (groups, { onProgress } = {}) => {
             marketTotalAmount: Number((marketTotalAmount / 1e8).toFixed(2)),
             amounts,
             ratios,
+            blockAmounts,
             stats,
         };
     } finally {
@@ -740,6 +788,9 @@ const persistClosedDayToHistory = (point, date) => {
             fs.writeFileSync(CATEGORY_MONEY_FILE, JSON.stringify(categoryMoney, null, 2), 'utf-8');
         }
     }
+
+    // 子板块拆分成交额同步落盘（分题材折线的日线数据），避免只依赖 run() 批量任务更新而过期
+    appendClosedDayBlockAmounts(date, point.blockAmounts);
 };
 
 // 写入一个分时点（同一天内按时间排序，同一时间点覆盖）

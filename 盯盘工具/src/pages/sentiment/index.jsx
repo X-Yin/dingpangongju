@@ -1174,7 +1174,7 @@ const Sentiment = () => {
           const ma3Value = ma3Point?.value;
 
           tooltip.innerHTML = `
-             <div class="tooltip-title">${dayjs(dateStr).format('YYYY-MM-DD')}</div>
+             <div class="tooltip-title">${dayjs(dateStr).format('YYYY-MM-DD')}（周${'日一二三四五六'[dayjs(dateStr).day()]}）</div>
              <div class="tooltip-item">
                <span class="label">科技情绪指数:</span>
                <span class="value ${value >= 0 ? 'up' : 'down'}">${value.toFixed(2)}</span>

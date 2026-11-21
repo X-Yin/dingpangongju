@@ -1,11 +1,11 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-11-19 08:45:17",
-  "reason": "每日首次启动回测",
+  "computedAt": "2026-11-20 14:59:45",
+  "reason": "持仓变动重跑（持仓管理增删股票）",
   "range": {
-    "startDate": "20260820",
-    "endDate": "20261119"
+    "startDate": "20260821",
+    "endDate": "20261120"
   },
   "tradeCount": 11,
   "threshold": 20,
@@ -75,11 +75,11 @@
       "returnRate": 15.92
     },
     {
-      "code": "sz000062",
-      "name": "深圳华强",
+      "code": "sz002897",
+      "name": "意华股份",
       "sellDate": "20261118",
-      "sellTime": "10:00",
-      "returnRate": 1.55
+      "sellTime": "09:31",
+      "returnRate": -1.36
     }
   ]
 }

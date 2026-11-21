@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Button, DatePicker, Empty, Modal, Select, Spin, Table } from 'antd';
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
@@ -67,7 +67,8 @@ const isRiseSustained = (points, name, windowMinutes) => {
   return true;
 };
 
-const BlockVolumeRatio = () => {
+// refreshSignal：父组件递增该值时触发一次刷新（配合双击空格快捷键）
+const BlockVolumeRatio = ({ refreshSignal = 0 }) => {
   const [subTab, setSubTab] = useState('daily');
   const [intradayGroupMode, setIntradayGroupMode] = useState('prevDay');
   const [history, setHistory] = useState({ blocks: [], live: null });
@@ -145,6 +146,15 @@ const BlockVolumeRatio = () => {
       setLoading(false);
     }
   }, [loading, fetchHistory, fetchIntraday]);
+
+  // 父组件通过递增 refreshSignal 触发刷新（双击空格快捷键），跳过首次挂载
+  const lastRefreshSignalRef = useRef(0);
+  useEffect(() => {
+    if (refreshSignal > lastRefreshSignalRef.current) {
+      lastRefreshSignalRef.current = refreshSignal;
+      refreshWithLiveData();
+    }
+  }, [refreshSignal, refreshWithLiveData]);
 
   // 点击折线卡片标题：拉取该板块全部成分股的最新行情
   const openBlockStocks = useCallback(async (name) => {
@@ -311,12 +321,14 @@ const BlockVolumeRatio = () => {
 
   // 分时图：每个板块一张独立折线图，涨跌分组与日成交量占比保持一致
   const intradayChartItems = useMemo(() => {
-    const labels = intraday.points.map((point) => formatTime(point.time));
+    // 9:30 开盘首点不展示，折线从 9:30 之后的采集点开始画
+    const displayPoints = intraday.points.filter((point) => formatTime(point.time) !== '09:30');
+    const labels = displayPoints.map((point) => formatTime(point.time));
 
     return intradaySelected.map((name) => {
       const index = intradayAvailableNames.indexOf(name);
       const color = COLORS[index >= 0 ? index % COLORS.length : 0];
-      const values = intraday.points.map((point) => {
+      const values = displayPoints.map((point) => {
         const value = point.ratios ? point.ratios[name] : null;
         return value === null || value === undefined || !isFinite(Number(value)) ? null : Number(value);
       });

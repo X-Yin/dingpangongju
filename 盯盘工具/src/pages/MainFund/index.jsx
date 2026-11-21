@@ -82,6 +82,15 @@ const getPartitionBlockColor = (index) => {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 };
 
+// hex 转rgba（虚化其他折线时降低透明度用）
+const hexToRgba = (hex, alpha = 1) => {
+  if (!hex || !hex.startsWith('#')) return hex;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const aggregateToInterval = (data, intervalMinutes) => {
   if (!data || data.length === 0) return [];
   const sortedData = [...data].sort((a, b) => {
@@ -607,7 +616,7 @@ export const MainFundContent = () => {
   const [fiveMinAggEnabled, setFiveMinAggEnabled] = useState(true);
   // 买点诊断抽屉：点击控制栏「买点诊断」按钮手动打开，展示各条件是否符合
   const [buyPointDrawerOpen, setBuyPointDrawerOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('today');
+  const [activeTab, setActiveTab] = useState('block');
   const [availableDates, setAvailableDates] = useState([]);
   const [historyDate, setHistoryDate] = useState(null);
   const [historyData, setHistoryData] = useState(null);
@@ -622,9 +631,7 @@ export const MainFundContent = () => {
   const [blockLoading, setBlockLoading] = useState(true);
   const [blockTab, setBlockTab] = useState('line');
   const [selectedBlocks, setSelectedBlocks] = useState(DEFAULT_SELECTED_BLOCKS);
-  const [blockDetailSelected, setBlockDetailSelected] = useState(null);
   const [blockRightAxisLabels, setBlockRightAxisLabels] = useState([]);
-  const [blockFiveMinAgg, setBlockFiveMinAgg] = useState(false);
   // 折线图分区模式：default=当前叠加现状，diff30/diff10=按相比 N 分钟前分区后每板块独立折线图
   const [blockChartMode, setBlockChartMode] = useState('default');
   // 手动刷新拉到的实时板块资金帧：仅叠加到折线图展示，不写入分时数据；轮询拿到更新的帧后自动失效
@@ -643,6 +650,11 @@ export const MainFundContent = () => {
   const [blockChangeSearch, setBlockChangeSearch] = useState('');
   // 窗口涨幅排序：''=不排序 / 'up10'=按 10min 前涨升降序 / 'up30'=按 30min 前涨升降序
   const [blockChangeWindowSort, setBlockChangeWindowSort] = useState('');
+  // 板块涨幅 tab 手动刷新中状态（强制刷新重点板块成分股行情后重算涨幅）
+  const [blockChangeRefreshing, setBlockChangeRefreshing] = useState(false);
+  // 双击空格刷新的信号量：递增以触发对应 tab 子组件刷新
+  const [volumeRefreshSignal, setVolumeRefreshSignal] = useState(0);
+  const [strengthRefreshSignal, setStrengthRefreshSignal] = useState(0);
 
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
@@ -1167,7 +1179,7 @@ export const MainFundContent = () => {
     });
   }, [blockTimeSeriesData, selectedBlocks]);
 
-  // allBlocks 变化时同步 selectedBlocks 和 blockDetailSelected
+  // allBlocks 变化时同步 selectedBlocks
   useEffect(() => {
     if (!allBlocks.length) return;
     setSelectedBlocks(prev => {
@@ -1175,11 +1187,6 @@ export const MainFundContent = () => {
       if (validPrev.length > 0) return validPrev;
       const preferred = DEFAULT_SELECTED_BLOCKS.filter(block => allBlocks.includes(block));
       return preferred.length > 0 ? preferred : allBlocks.slice(0, Math.min(BLOCK_LINE_COLORS.length, allBlocks.length));
-    });
-    setBlockDetailSelected(prev => {
-      if (prev && allBlocks.includes(prev)) return prev;
-      // return allBlocks[0];
-      return 'PCB'
     });
   }, [allBlocks]);
 
@@ -1191,65 +1198,9 @@ export const MainFundContent = () => {
     return buildHeatmapItems(filtered, 'money');
   }, [blockTimeSeriesData, selectedBlocks]);
 
-  // 右侧明细数据：选中板块在各时间点的资金净流入（按时间倒序）
-  const blockDetailData = useMemo(() => {
-    if (!blockTimeSeriesData.length || !blockDetailSelected) return [];
-    const result = [];
-    blockTimeSeriesData.forEach(frame => {
-      const blockItem = frame.data?.find(item => item.block === blockDetailSelected);
-      if (blockItem) {
-        result.push({
-          time: frame.time,
-          displayTime: formatDisplayTime(frame.time),
-          money: blockItem.money / 100000000,
-        });
-      }
-    });
-    return result.sort((a, b) => b.time.localeCompare(a.time));
-  }, [blockTimeSeriesData, blockDetailSelected]);
-
-  // 明细展示数据：开启 5min 聚合时按 5 分钟桶聚合（取每桶最新一条），否则原样返回
-  const blockDetailDisplayData = useMemo(() => {
-    if (!blockDetailData.length || !blockFiveMinAgg) return blockDetailData;
-    // 先按时间升序便于分桶
-    const asc = [...blockDetailData].sort((a, b) => a.time.localeCompare(b.time));
-    const morningStart = 9 * 60 + 30, morningEnd = 11 * 60 + 30;
-    const afternoonStart = 13 * 60, afternoonEnd = 15 * 60;
-    const slots = [];
-    for (let t = morningStart; t <= morningEnd; t += 5) slots.push(t);
-    for (let t = afternoonStart; t <= afternoonEnd; t += 5) slots.push(t);
-
-    const buckets = {};
-    asc.forEach(item => {
-      const hh = parseInt(item.time.substring(0, 2));
-      const mm = parseInt(item.time.substring(2, 4));
-      const totalMin = hh * 60 + mm;
-      let bucket = null;
-      for (const slot of slots) {
-        if (totalMin <= slot + 2) { bucket = slot; break; }
-      }
-      if (bucket === null && totalMin > slots[slots.length - 1]) bucket = slots[slots.length - 1];
-      if (bucket !== null) buckets[bucket] = item; // 后来的覆盖先来的（取桶内最新）
-    });
-
-    const result = [];
-    slots.forEach(slot => {
-      if (buckets[slot]) {
-        const h = Math.floor(slot / 60), m = slot % 60;
-        const timeStr = `${String(h).padStart(2, '0')}${String(m).padStart(2, '0')}00`;
-        result.push({
-          time: timeStr,
-          displayTime: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`,
-          money: buckets[slot].money,
-        });
-      }
-    });
-    return result.reverse(); // 按时间倒序，最新的在最上面
-  }, [blockDetailData, blockFiveMinAgg]);
-
   // 手动刷新板块资金：拉取最新实时快照（/get_block_money_change，服务端 10s 轮询的那份数据），
   // 仅叠加到折线图上展示，不写入分时数据；后面每次轮询拿到最新的 n 分钟间隔帧后自动被覆盖
-  const handleBlockRealtimeRefresh = async () => {
+  const handleBlockRealtimeRefresh = useCallback(async () => {
     if (blockRealtimeRefreshing) return;
     setBlockRealtimeRefreshing(true);
     try {
@@ -1269,7 +1220,82 @@ export const MainFundContent = () => {
     } finally {
       setBlockRealtimeRefreshing(false);
     }
-  };
+  }, [blockRealtimeRefreshing]);
+
+  // 板块涨幅 tab 手动刷新：与盯盘页板块涨幅前十的刷新按钮一致，
+  // 先让后端强制请求所有重点板块成分股的最新行情（非缓存），再重新拉取涨幅分时数据
+  const handleBlockChangeRefresh = useCallback(async () => {
+    if (blockChangeRefreshing) return;
+    setBlockChangeRefreshing(true);
+    try {
+      await axios.post(`http://${local_ip}:3000/api/block/refresh`);
+      await fetchBlockChangeTimeData();
+      message.success('板块涨幅已强制刷新');
+    } catch (err) {
+      console.error('刷新板块涨幅失败:', err);
+      message.error('板块涨幅刷新失败，请稍后重试');
+    } finally {
+      setBlockChangeRefreshing(false);
+    }
+  }, [blockChangeRefreshing, fetchBlockChangeTimeData]);
+
+  // 连续两次 ↓ 刷新当前 tab 的数据：板块资金/板块涨幅走各自的手动刷新，
+  // 板块成交量/板块强度通过递增 signal 触发子组件内部刷新；历史数据无刷新
+  const handleTabDoubleDownRefresh = useCallback(() => {
+    switch (activeTab) {
+      case 'block':
+        handleBlockRealtimeRefresh();
+        break;
+      case 'blockChange':
+        handleBlockChangeRefresh();
+        break;
+      case 'blockVolume':
+        setVolumeRefreshSignal((v) => v + 1);
+        break;
+      case 'blockStrength':
+        setStrengthRefreshSignal((v) => v + 1);
+        break;
+      default:
+        break;
+    }
+  }, [activeTab, handleBlockRealtimeRefresh, handleBlockChangeRefresh]);
+
+  // 快捷键：←/→ 横向切换 tab；连续两次↓（500ms 内）刷新当前 tab 数据。
+  // 输入框/文本域聚焦时不响应，避免打字与搜索时误触
+  const lastDownPressTimeRef = useRef(0);
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const target = e.target;
+      const tag = (target?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || target?.isContentEditable) return;
+
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        const keys = ['block', 'blockChange', 'blockVolume', 'today', 'blockStrength', 'history'];
+        const idx = keys.indexOf(activeTab);
+        if (idx === -1) return;
+        const nextIdx = e.key === 'ArrowRight' ? Math.min(idx + 1, keys.length - 1) : Math.max(idx - 1, 0);
+        if (nextIdx !== idx) {
+          setActiveTab(keys[nextIdx]);
+        }
+        return;
+      }
+
+      // 连续两次下箭头触发刷新（忽略按住不放的 repeat 事件）
+      if (e.key === 'ArrowDown' && !e.repeat) {
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastDownPressTimeRef.current <= 500) {
+          lastDownPressTimeRef.current = 0;
+          handleTabDoubleDownRefresh();
+        } else {
+          lastDownPressTimeRef.current = now;
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, handleTabDoubleDownRefresh]);
 
   // 折线图数据帧：11:30 前按原有序列展示，11:30 后（午后）按 5min 维度聚合
   const blockChartFrames = useMemo(() => {
@@ -1373,6 +1399,7 @@ export const MainFundContent = () => {
 
     return {
       windowLabel,
+      items,
       up: items
         .filter(item => item.delta === null || item.delta >= 0)
         .sort((a, b) => (b.delta || 0) - (a.delta || 0)),
@@ -1381,6 +1408,32 @@ export const MainFundContent = () => {
         .sort((a, b) => a.delta - b.delta),
     };
   }, [blockChartMode, blockChartFrames, allBlocks]);
+
+  // 板块资金排名：跟随分区模式展示
+  // default=按板块资金当前净流入总量排名；diff30/diff10=按相比 N 分钟前的变化量排名
+  const blockFundRanking = useMemo(() => {
+    if (blockChartMode === 'default') {
+      if (!blockChartFrames.length) return { items: [], metricLabel: '当前净流入' };
+      const latestFrame = blockChartFrames[blockChartFrames.length - 1];
+      const items = (latestFrame.data || [])
+        .map(item => {
+          const idx = allBlocks.indexOf(item.block);
+          return {
+            name: item.block,
+            color: getPartitionBlockColor(idx >= 0 ? idx : 0),
+            value: item.money / 100000000,
+          };
+        })
+        .filter(item => item.name);
+      return { items, metricLabel: '当前净流入' };
+    }
+    const items = (blockPartitionData.items || []).map(item => ({
+      name: item.name,
+      color: item.color,
+      value: item.delta === null ? item.latest : item.delta,
+    }));
+    return { items, metricLabel: `相比${blockPartitionData.windowLabel}变化` };
+  }, [blockChartMode, blockChartFrames, blockPartitionData, allBlocks]);
 
   // ========= 板块涨幅 Tab 派生数据 =========
   // 所有出现过的板块（取最新一帧 + 历史所有帧的并集，避免某个板块全天没在最新一帧出现时丢失）
@@ -1603,7 +1656,7 @@ export const MainFundContent = () => {
     setBlockRightAxisLabels(labels);
   }, []);
 
-  // 悬浮 tag 时只展示该板块折线，其他折线全部隐藏，坐标轴自动适配到该板块取值范围
+  // 长按右侧 label 时高亮对应板块折线（加粗实线），其他板块折线虚化（与叠加分时观察交互一致）
   const applyBlockHoverHighlight = useCallback((blockName) => {
     blockSeriesRef.current.forEach((series, idx) => {
       const info = blockInfoListRef.current[idx];
@@ -1611,7 +1664,7 @@ export const MainFundContent = () => {
       if (blockName && info.name === blockName) {
         series.applyOptions({ visible: true, color: info.color, lineWidth: 3, lineStyle: LineStyle.Solid });
       } else if (blockName) {
-        series.applyOptions({ visible: false });
+        series.applyOptions({ visible: true, color: hexToRgba(info.color, 0.12), lineWidth: 1, lineStyle: LineStyle.Solid });
       } else {
         series.applyOptions({ visible: true, color: info.color, lineWidth: 2, lineStyle: LineStyle.Solid });
       }
@@ -1621,22 +1674,28 @@ export const MainFundContent = () => {
     requestAnimationFrame(() => updateBlockRightAxisLabels());
   }, [updateBlockRightAxisLabels]);
 
-  // tag 悬浮进入：只展示该板块折线，右侧明细同步切换到该板块
-  const handleBlockTagEnter = (e) => {
-    const blockName = e.currentTarget.getAttribute('data-block-name');
-    if (!blockName) return;
-    blockHoveredBlockRef.current = blockName;
-    setBlockHoveredBlock(blockName);
-    applyBlockHoverHighlight(blockName);
-    // 右侧明细同步切换到 hover 的板块（移开后不恢复）
-    setBlockDetailSelected(blockName);
-  };
-
-  // tag 悬浮离开：恢复所有折线显示，右侧明细保持 hover 时选中的板块
-  const handleBlockTagLeave = () => {
-    blockHoveredBlockRef.current = null;
-    setBlockHoveredBlock(null);
-    applyBlockHoverHighlight(null);
+  // 长按右侧 label：按住 200ms 后高亮对应板块折线，其他板块虚化；松开后恢复（与叠加分时观察的按住 label 交互一致）
+  const handleBlockLabelMouseDown = (e, blockName) => {
+    if (e.button !== 0) return;
+    e.preventDefault(); // 防止按住拖动时选中文字
+    let fired = false;
+    const timer = window.setTimeout(() => {
+      fired = true;
+      blockHoveredBlockRef.current = blockName;
+      setBlockHoveredBlock(blockName);
+      applyBlockHoverHighlight(blockName);
+    }, 200);
+    const release = () => {
+      window.removeEventListener('mouseup', release);
+      window.removeEventListener('blur', release);
+      if (timer) window.clearTimeout(timer);
+      if (!fired) return;
+      blockHoveredBlockRef.current = null;
+      setBlockHoveredBlock(null);
+      applyBlockHoverHighlight(null);
+    };
+    window.addEventListener('mouseup', release);
+    window.addEventListener('blur', release);
   };
 
   // 渲染板块资金叠加折线图
@@ -2297,6 +2356,14 @@ export const MainFundContent = () => {
                 </div>
                 <Button
                   size="small"
+                  icon={<ReloadOutlined />}
+                  loading={blockChangeRefreshing}
+                  onClick={handleBlockChangeRefresh}
+                >
+                  刷新
+                </Button>
+                <Button
+                  size="small"
                   onClick={() => {
                     // 重置：搜索 + 排序 全部回到初始态
                     setBlockChangeSearch('');
@@ -2360,30 +2427,15 @@ export const MainFundContent = () => {
     );
   };
 
-  // 渲染板块资金明细数据列表
-  const renderBlockDetailData = () => {
-    if (!blockDetailDisplayData.length) return null;
-    return blockDetailDisplayData.map((item, index) => {
-      const prevItem = blockDetailDisplayData[index + 1];
-      const prevMoney = prevItem ? prevItem.money : item.money;
-      const { status, className } = getAccelerationStatus(item.money, prevMoney);
-      const diff = item.money - prevMoney;
-      return (
-        <div key={item.time} className={`data-item ${item.money >= 0 ? 'up' : 'down'}`}>
-          <span className="item-time">{item.displayTime}</span>
-          <span className={`item-value ${item.money >= 0 ? 'up' : 'down'}`}>
-            {item.money >= 0 ? '+' : ''}{item.money.toFixed(2)}
-            {diff !== 0 && (
-              <span className={`item-diff ${diff >= 0 ? 'up' : 'down'}`}>
-                ({diff >= 0 ? '+' : ''}{diff.toFixed(2)})
-              </span>
-            )}
-          </span>
-          <span className={`item-status ${className}`}>{status}</span>
-        </div>
-      );
-    });
-  };
+  // 板块资金排名双列表：上面从高到低（一眼看到流入最多），下面从低到高（一眼看到流出最多）
+  const rankingDesc = useMemo(
+    () => [...blockFundRanking.items].sort((a, b) => b.value - a.value),
+    [blockFundRanking]
+  );
+  const rankingAsc = useMemo(
+    () => [...rankingDesc].reverse(),
+    [rankingDesc]
+  );
 
   // 渲染板块资金 tab
   const renderBlockTab = () => {
@@ -2462,15 +2514,13 @@ export const MainFundContent = () => {
                   </div>
                 </div>
 
-                {/* tag 展示区 */}
-                <div className="block-tags">
+                {/* tag 展示区：高亮状态由长按右侧 label 触发；分区模式下压缩为可滚动区域，避免挤占折线图列表空间 */}
+                <div className={`block-tags ${blockChartMode !== 'default' ? 'block-tags-compact' : ''}`}>
                   {blockTagInfoList.map(item => (
                     <div
                       key={item.name}
                       data-block-name={item.name}
                       className={`block-tag-item ${blockHoveredBlock === item.name ? 'tag-highlighted' : ''} ${blockHoveredBlock && blockHoveredBlock !== item.name ? 'tag-dimmed' : ''}`}
-                      onMouseEnter={handleBlockTagEnter}
-                      onMouseLeave={handleBlockTagLeave}
                     >
                       <span className="block-tag-name" style={{ color: item.color }}>{item.name}</span>
                       <span className={`block-tag-money ${item.money > 0 ? 'up' : item.money < 0 ? 'down' : 'neutral'}`}>
@@ -2497,13 +2547,12 @@ export const MainFundContent = () => {
                       <div ref={blockChartContainerRef} className="block-chart" />
                       <div ref={blockTooltipRef} className="block-tooltip" />
                       <div className="block-right-axis-labels">
-                        {blockRightAxisLabels
-                          .filter(label => !blockHoveredBlock || label.key === blockHoveredBlock)
-                          .map(label => (
+                        {blockRightAxisLabels.map(label => (
                           <div
                             key={label.key}
-                            className={`block-right-label ${blockHoveredBlock === label.key ? 'label-highlighted' : ''}`}
+                            className={`block-right-label ${blockHoveredBlock === label.key ? 'label-highlighted' : ''} ${blockHoveredBlock && blockHoveredBlock !== label.key ? 'label-dimmed' : ''}`}
                             style={{ top: `${label.y}px`, borderColor: label.color }}
+                            onMouseDown={(e) => handleBlockLabelMouseDown(e, label.key)}
                           >
                             <span className="block-right-label-name" style={{ color: label.color }}>
                               {label.name}
@@ -2691,37 +2740,44 @@ export const MainFundContent = () => {
           <div className="table-section">
             <div className="table-header">
               <div className="header-top">
-                <span className="table-title">板块资金明细</span>
-                <div className="header-controls">
-                  <label className="switch-label five-min-switch">
-                    <AntSwitch
-                      size="small"
-                      checked={blockFiveMinAgg}
-                      onChange={setBlockFiveMinAgg}
-                    />
-                    <span className="switch-text">5分钟级别</span>
-                  </label>
-                  <Select
-                    value={blockDetailSelected || undefined}
-                    onChange={setBlockDetailSelected}
-                    style={{ width: 160 }}
-                    placeholder="选择板块"
-                    showSearch
-                    optionFilterProp="children"
-                    size="small"
-                  >
-                    {allBlocks.map(b => (
-                      <Option key={b} value={b}>{b}</Option>
-                    ))}
-                  </Select>
-                </div>
+                <span className="table-title">板块资金排名</span>
+                <span className="block-ranking-metric">{blockFundRanking.metricLabel}</span>
               </div>
             </div>
-            <div className="table-wrapper">
-              {blockDetailDisplayData.length === 0 ? (
+            <div className="table-wrapper block-ranking-split">
+              {rankingDesc.length === 0 ? (
                 <div className="table-empty">{blockLoading ? '加载中...' : '暂无数据'}</div>
               ) : (
-                renderBlockDetailData()
+                <>
+                  <div className="block-ranking-group">
+                    <div className="block-ranking-group-title high">高 → 低（流入最多在前）</div>
+                    <div className="block-ranking-list">
+                      {rankingDesc.map((item, idx) => (
+                        <div key={`desc-${item.name}`} className="block-ranking-item">
+                          <span className="block-ranking-rank">{idx + 1}</span>
+                          <span className="block-ranking-name">{item.name}</span>
+                          <span className={`block-ranking-value ${item.value > 0 ? 'up' : item.value < 0 ? 'down' : 'neutral'}`}>
+                            {item.value > 0 ? '+' : ''}{item.value.toFixed(2)}亿
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="block-ranking-group">
+                    <div className="block-ranking-group-title low">低 → 高（流出最多在前）</div>
+                    <div className="block-ranking-list">
+                      {rankingAsc.map((item, idx) => (
+                        <div key={`asc-${item.name}`} className="block-ranking-item">
+                          <span className="block-ranking-rank">{idx + 1}</span>
+                          <span className="block-ranking-name">{item.name}</span>
+                          <span className={`block-ranking-value ${item.value > 0 ? 'up' : item.value < 0 ? 'down' : 'neutral'}`}>
+                            {item.value > 0 ? '+' : ''}{item.value.toFixed(2)}亿
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -2744,11 +2800,6 @@ export const MainFundContent = () => {
         className="main-fund-tabs"
         items={[
           {
-            key: 'today',
-            label: '当天数据',
-            children: renderTodayContent(),
-          },
-          {
             key: 'block',
             label: '板块资金',
             children: renderBlockTab(),
@@ -2761,12 +2812,17 @@ export const MainFundContent = () => {
           {
             key: 'blockVolume',
             label: '板块成交量',
-            children: <BlockVolumeRatio />,
+            children: <BlockVolumeRatio refreshSignal={volumeRefreshSignal} />,
+          },
+          {
+            key: 'today',
+            label: '当天数据',
+            children: renderTodayContent(),
           },
           {
             key: 'blockStrength',
             label: '板块强度',
-            children: <BlockStrengthPanel mode="intraday" showAll />,
+            children: <BlockStrengthPanel mode="intraday" showAll refreshSignal={strengthRefreshSignal} />,
           },
           {
             key: 'history',

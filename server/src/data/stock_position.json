@@ -8,15 +8,5 @@
     "weight": 50,
     "costPrice": 193.62,
     "sellStrategy": "tech_attack"
-  },
-  {
-    "id": "sh688361_1794884785617_ejpe",
-    "code": "sh688361",
-    "name": "中科飞测",
-    "buyDate": "2026-11-17",
-    "buyTime": "11:06",
-    "weight": 50,
-    "costPrice": 241.01,
-    "sellStrategy": "tech_attack"
   }
 ]

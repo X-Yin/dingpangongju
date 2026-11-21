@@ -225,6 +225,43 @@ const buildRatioRows = (moneyRows, totalAmountMap, start, end) => {
     return rows;
 };
 
+// 收盘落盘：把当日实时汇总的各子板块成交额追加进子板块结果文件
+// 与 persistClosedDayToHistory 配套：主分类成交额每天收盘后落盘，子板块拆分数据同步更新，
+// 避免 category_block_amount_result.json 只能靠 run() 批量任务更新而过期
+// blockAmounts: { 分类名: { 子板块名: 成交额(元) } }
+const appendClosedDayBlockAmounts = (date, blockAmounts) => {
+    if (!date || !blockAmounts || typeof blockAmounts !== 'object') return;
+    let blockResult = {};
+    if (fs.existsSync(BLOCK_OUTPUT_FILE)) {
+        try {
+            blockResult = JSON.parse(fs.readFileSync(BLOCK_OUTPUT_FILE, 'utf-8'));
+        } catch (e) {
+            console.error('读取子板块结果文件失败，跳过当日落盘:', e.message);
+            return;
+        }
+    }
+    for (const [name, amounts] of Object.entries(blockAmounts)) {
+        if (!amounts || typeof amounts !== 'object') continue;
+        const blocks = Array.isArray(blockResult[name]) ? blockResult[name] : null;
+        if (!blocks) continue; // 子板块拆分结果里没有该分类，交给 run() 全量生成
+        for (const block of blocks) {
+            const money = Number(amounts[block.blockName]);
+            if (!isFinite(money) || money <= 0) continue;
+            const data = Array.isArray(block.data) ? block.data : [];
+            block.data = [
+                ...data.filter((row) => String(row.date) !== String(date)),
+                { date: String(date), money, gain5: null },
+            ].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+        }
+        blockResult[name] = blocks;
+    }
+    try {
+        fs.writeFileSync(BLOCK_OUTPUT_FILE, JSON.stringify(blockResult, null, 2), 'utf-8');
+    } catch (e) {
+        console.error('写入子板块结果文件失败:', e.message);
+    }
+};
+
 // 读取当日分时缓存的最新实时点（与主资金页「板块成交量」同一份数据）
 // 仅交易日当天有效：周末补跑产生的全 0 时点不接入，避免污染当日数据
 const getLiveIntradayPoint = () => {
@@ -297,10 +334,12 @@ const getBlockCategoryRatio = (startDate, endDate, todayTotalAmountYi) => {
     }
 
     // 当日占比改用分时缓存的最新实时点（全 A 股实时行情汇总，失败时为多平台轮询兜底）
+    // 子板块拆分（{分类}_blocks）同样补当日实时点，保证分题材折线的最新日期与主分类折线一致
     if (live) {
         const liveDate = String(live.date);
         const inRange = (!start || liveDate >= start) && (!end || liveDate <= end);
         if (inRange) {
+            const marketTotalYuan = Number(live.marketTotalAmount) * 1e8;
             for (const name of CATEGORY_NAMES) {
                 const ratio = Number(live.ratios[name]);
                 if (!isFinite(ratio)) continue;
@@ -315,6 +354,30 @@ const getBlockCategoryRatio = (startDate, endDate, todayTotalAmountYi) => {
                         live: true,
                     },
                 ];
+
+                // 子板块实时点：按子板块成交额 / 全市场成交额计算占比（实时点无法算近5日涨幅，gain5 留空）
+                const blockAmounts = live.blockAmounts && live.blockAmounts[name];
+                const blocksList = Array.isArray(result[`${name}_blocks`]) ? result[`${name}_blocks`] : null;
+                if (!blockAmounts || !blocksList || !isFinite(marketTotalYuan) || marketTotalYuan <= 0) continue;
+                result[`${name}_blocks`] = blocksList.map((block) => {
+                    const money = Number(blockAmounts[block.blockName]);
+                    if (!isFinite(money) || money <= 0) return block;
+                    const blockRatio = Number(((money / marketTotalYuan) * 100).toFixed(4));
+                    const data = Array.isArray(block.data) ? block.data : [];
+                    return {
+                        ...block,
+                        data: [
+                            ...data.filter((row) => String(row.date) !== liveDate),
+                            {
+                                date: liveDate,
+                                ratio: blockRatio,
+                                money,
+                                totalAmount: Number(live.marketTotalAmount) || 0,
+                                live: true,
+                            },
+                        ],
+                    };
+                });
             }
         }
     }
@@ -325,6 +388,7 @@ const getBlockCategoryRatio = (startDate, endDate, todayTotalAmountYi) => {
 
 exports.run = run;
 exports.getBlockCategoryRatio = getBlockCategoryRatio;
+exports.appendClosedDayBlockAmounts = appendClosedDayBlockAmounts;
 exports.CATEGORY_NAMES = CATEGORY_NAMES;
 exports.categoryRatioStartDate = defaultStartDate;
 exports.categoryRatioEndDate = defaultEndDate;

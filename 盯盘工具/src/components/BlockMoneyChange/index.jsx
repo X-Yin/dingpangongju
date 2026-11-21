@@ -1893,13 +1893,19 @@ const BlockMoneyChange = ({ defaultTab = 'intraday' }) => {
       });
 
       if (isSplit) {
-        // 按最近5日涨幅（数据最后一天的 gain5）从高到低取前五，只展示前五个子题材
+        // 按最近5日涨幅（数据最后一天有 gain5 用最后一天，收盘落盘的最新一天无 gain5 时取最近一天）从高到低取前五，只展示前五个子题材
+        const lastGain5Of = (rows) => {
+          if (!Array.isArray(rows)) return null;
+          for (let i = rows.length - 1; i >= 0; i--) {
+            const gain = Number(rows[i] && rows[i].gain5);
+            if (Number.isFinite(gain)) return gain;
+          }
+          return null;
+        };
         const rankedBlocks = blocksList
           .map((block) => ({
             ...block,
-            lastGain5: Array.isArray(block.data) && block.data.length > 0
-              ? Number(block.data[block.data.length - 1].gain5)
-              : null,
+            lastGain5: lastGain5Of(block.data),
           }))
           .sort((a, b) => (Number.isFinite(b.lastGain5) ? b.lastGain5 : -Infinity) - (Number.isFinite(a.lastGain5) ? a.lastGain5 : -Infinity))
           .slice(0, 5);

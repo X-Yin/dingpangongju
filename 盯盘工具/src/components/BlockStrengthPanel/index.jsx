@@ -2,7 +2,7 @@
 // mode='daily'     : 读取 /block_strength_history，绘制每个板块的日线强度折线
 // mode='intraday'  : 读取 /block_strength_intraday，绘制每个板块的强度分时折线（与板块成交量占比同步）
 // 支持关键字搜索、板块多选、点击标题查看成分股列表（点击股票可打开通用 K 线图）
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { Button, Card, Empty, Input, message, Modal, Select, Spin, Table, Tag, Tooltip } from 'antd';
 import { ReloadOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons';
@@ -50,7 +50,8 @@ const scoreColor = (score) => {
   return '#64748b';
 };
 
-const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = false }) => {
+// refreshSignal：父组件递增该值时触发一次刷新（配合双击空格快捷键）
+const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = false, refreshSignal = 0 }) => {
   const isDaily = mode === 'daily';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -120,6 +121,15 @@ const BlockStrengthPanel = ({ mode = 'daily', showAll = false, groupByDelta = fa
       setRefreshing(false);
     }
   }, [isDaily, refreshing, fetchData]);
+
+  // 父组件通过递增 refreshSignal 触发刷新（双击空格快捷键），跳过首次挂载
+  const lastRefreshSignalRef = useRef(0);
+  useEffect(() => {
+    if (refreshSignal > lastRefreshSignalRef.current) {
+      lastRefreshSignalRef.current = refreshSignal;
+      refresh();
+    }
+  }, [refreshSignal, refresh]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

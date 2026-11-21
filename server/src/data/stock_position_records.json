@@ -1,5 +1,16 @@
 [
   {
+    "id": "1795157833224_70giqv",
+    "type": "delete",
+    "code": "sh688361",
+    "name": "中科飞测",
+    "date": "2026-11-20",
+    "time": "14:57:13",
+    "detail": "删除持仓：中科飞测（sh688361）",
+    "pipelineStage": null,
+    "createdAt": "2026-11-20T06:57:13.224Z"
+  },
+  {
     "id": "1794967888443_3rcgfb",
     "type": "delete",
     "code": "sz000062",
