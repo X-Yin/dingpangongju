@@ -5,6 +5,7 @@ const emoQuickStrategies = require('./families/emoQuick');
 const iceStrategies = require('./families/ice');
 const leaderStrategies = require('./families/leader');
 const moodBlockResonanceStrategies = require('./families/moodBlockResonance');
+const moodTimingStrategies = require('./families/moodTiming');
 const { OPENING_BELOW_RATIO, OPENING_BELOW_RATIO_STRATEGY_IDS } = require('../constants');
 
 const STRATEGIES = {
@@ -15,6 +16,7 @@ const STRATEGIES = {
   ...iceStrategies,
   ...leaderStrategies,
   ...moodBlockResonanceStrategies,
+  ...moodTimingStrategies,
 };
 
 
@@ -37,7 +39,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 规则：候选按排名依次判断个股与创业板指最近 20 个已完结交易日的日收益率相关系数，corr > 0（正相关）
 // = 顺周期可买，corr <= 0（逆周期）剔除并顺延排名下一只；数据不足不拦截。下列 desc 文案自动追加到所有适用策略
 const CYC_FILTER_DESC = '顺周期过滤：候选按排名依次判断与创业板指最近 20 个已完结交易日的日收益率相关系数，相关系数 > 0（正相关，顺周期）才可买入，≤ 0（逆周期）则顺延至排名下一只（数据不足不拦截）';
-const isCycleFilterStrategy = (s) => !!s && s.iceMode !== true && s.keyBlockDays == null && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true && s.fusedEmoWinMode !== true && s.gainVolumeShareMode !== true && s.emotionBurstDriftMode !== true && s.emotionBurstFollowMode !== true && s.firstBoardWashMode !== true && s.volumeWashoutMode !== true && s.washFusionMode !== true && s.moodBlockResonanceMode !== true;
+const isCycleFilterStrategy = (s) => !!s && s.iceMode !== true && s.keyBlockDays == null && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true && s.fusedEmoWinMode !== true && s.gainVolumeShareMode !== true && s.emotionBurstDriftMode !== true && s.emotionBurstFollowMode !== true && s.firstBoardWashMode !== true && s.volumeWashoutMode !== true && s.washFusionMode !== true && s.moodBlockResonanceMode !== true && s.moodTimingMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (isCycleFilterStrategy(s)) s.desc = `${s.desc}；${CYC_FILTER_DESC}`;
 }
@@ -70,7 +72,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 达 N 分（均值 − 该股 ≥ N），说明该股只是历史涨幅大、当日爆发力不强 → 剔除并顺延排名下一只，
 // 顺延后对新的第一名重新按同规则判定；买入条件明细追加 gain_gap_defer 项
 const GAIN_GAP_DEFER_DESC = '；涨幅领先但当日爆发力不足过滤（2026-10-22 新增）：按 N 日窗口涨幅排名后，若当前候选的 N 日涨幅领先第二名超过 N 个百分点，且其买点时刻抗分歧分数低于「第二名~第五名」抗分歧均值达 N 分（均值 − 该股 ≥ N），则视为仅历史涨幅大、当日爆发力不强，剔除并顺延排名下一只（顺延后重新判定），买入条件明细追加顺延说明';
-const isGainGapDescStrategy = (s) => !!s && s.id !== 'highest_gain' && s.id.includes('_gain') && !s.id.includes('reports') && s.gainVolumeShareMode !== true;
+const isGainGapDescStrategy = (s) => !!s && s.id !== 'highest_gain' && s.id.includes('_gain') && !s.id.includes('reports') && s.gainVolumeShareMode !== true && s.moodTimingMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (isGainGapDescStrategy(s)) s.desc = `${s.desc}${GAIN_GAP_DEFER_DESC}`;
 }
@@ -102,7 +104,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 2026-10-19 叠加竞价低开自救窗口：竞价首分钟即 ≤ -7% 时不在 9:30 直接卖出，改为等自救拉升结束的
 // 首个「回落且仍 ≤ -7%」的分钟再卖（10:00 前未回落且 10:00 仍 ≤ -7% 则按 10:00 时点价兜底）
 const CRASH_SELL_DESC = '；盘中大跌强卖（2026-10-16 新增）：持仓当日跌幅（较昨收涨跌幅）≤ -7% 时无条件卖出（先于其他卖点判定；2026-10-19 起叠加竞价低开自救窗口——竞价首分钟即跌破 -7% 时改为等自救拉升结束的首个回落分钟再卖）';
-const isCrashSellStrategy = (s) => !!s && s.iceMode !== true && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true && s.fusedEmoWinMode !== true && s.emotionBurstDriftMode !== true && s.emotionBurstFollowMode !== true && s.firstBoardWashMode !== true && s.volumeWashoutMode !== true && s.washFusionMode !== true && s.moodBlockResonanceMode !== true;
+const isCrashSellStrategy = (s) => !!s && s.iceMode !== true && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true && s.fusedEmoWinMode !== true && s.emotionBurstDriftMode !== true && s.emotionBurstFollowMode !== true && s.firstBoardWashMode !== true && s.volumeWashoutMode !== true && s.washFusionMode !== true && s.moodBlockResonanceMode !== true && s.moodTimingMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (!isCrashSellStrategy(s)) continue;
   s.crashSell = true;

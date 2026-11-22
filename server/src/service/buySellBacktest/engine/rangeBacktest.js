@@ -12,6 +12,7 @@ const { runFirstBoardWashBacktest } = require('./firstBoardWashBacktest');
 const { runVolumeWashoutSecondBoardBacktest } = require('./volumeWashoutSecondBoardBacktest');
 const { runWashFusionBacktest } = require('./washFusionExtremeOddsBacktest');
 const { runMoodBlockResonanceBacktest } = require('./moodBlockResonanceBacktest');
+const { runMoodTimingBacktest } = require('./moodTimingBacktest');
 const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSimContext } = require('../deps');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -100,6 +101,11 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   // 卖点与「情绪游资-极致胜率」顺周期腿一致）
   if (STRATEGIES[strategyId]?.moodBlockResonanceMode === true) {
     return runMoodBlockResonanceBacktest(startDate, endDate, strategyId, onProgress, options);
+  }
+  // 情绪周期-择时为主-N日涨幅最大走独立引擎（前一日科技情绪 < -40 冰点，今日盘中情绪首次 > -20 时
+  // 从全量自选科技股中买 N 日涨幅最大者；全仓单持仓；卖点 = 10日线/高位大阴线/情绪退潮/抗分歧/成本线）
+  if (STRATEGIES[strategyId]?.moodTimingMode === true) {
+    return runMoodTimingBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   const strategy = STRATEGIES[strategyId];
   // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：快进快出半仓（2026-10-13 用户新增）——

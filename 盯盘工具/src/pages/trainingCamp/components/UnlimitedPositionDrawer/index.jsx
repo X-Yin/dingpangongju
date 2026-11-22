@@ -306,7 +306,7 @@ const UnlimitedPositionDrawer = ({ open, onClose, strategy, dateRange, strategyN
                   </span>
                   <span style={{ fontSize: 12, color: '#6b7890' }}>
                     {fmtIdleDays(t) != null
-                      ? <>距上笔开仓空仓 <b style={{ color: '#12213a' }}>{fmtIdleDays(t)}</b></>
+                      ? <>距上笔卖出空仓 <b style={{ color: '#12213a' }}>{fmtIdleDays(t)}</b></>
                       : <span style={{ color: '#9ca3af' }}>首笔开仓</span>}
                   </span>
                   <span style={{ fontSize: 12, color: '#6b7890' }}>

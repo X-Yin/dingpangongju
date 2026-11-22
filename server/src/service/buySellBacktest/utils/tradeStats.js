@@ -147,9 +147,9 @@ const sortTradesByBuyTime = (trades) => {
     .map((t, idx) => ({ ...t, seq: idx + 1 }));
 };
 
-// 空仓交易日：每笔开仓（含已卖出成交与期末仍持仓）距「上一笔开仓（买入）」的交易日跨度
-// （账户级口径，跨股票统一按买入时间排序）
-// 例：上笔买入 8-1、本笔买入 8-2 且两者为相邻交易日 → 空仓 1 个交易日；首笔无上笔开仓，idleDays = null
+// 空仓交易日：每笔开仓（含已卖出成交与期末仍持仓）距「上一笔交易卖出时间」的交易日跨度
+// （账户级口径，跨股票统一按买入时间排序；上笔仍持仓/未卖出时无空仓区间，idleDays = null）
+// 例：上笔 8-1 卖出、本笔 8-2 买入且两者为相邻交易日 → 空仓 1 个交易日；首笔无上笔卖出，idleDays = null
 // idleDaysApprox = true 表示买卖日期所在年份未被交易日历覆盖、按周一~周五退化估算（前端显示 ≈）
 const attachIdleDays = (result) => {
   const all = [];
@@ -169,10 +169,16 @@ const attachIdleDays = (result) => {
       return;
     }
     const prev = all[i - 1];
-    const days = tradingDayUtil.countTradingDaysBetween(normDateNum(prev.buyDate), normDateNum(t.buyDate));
-    t.idleDays = days;
-    t.idleDaysApprox = days == null ? false
-      : (!tradingDayUtil.isYearCovered(prev.buyDate) || !tradingDayUtil.isYearCovered(t.buyDate));
+    // 上一笔尚未卖出 → 期间账户并非空仓，不计算空仓交易日
+    if (!prev.sellDate) {
+      t.idleDays = null;
+      t.idleDaysApprox = false;
+      return;
+    }
+    const days = tradingDayUtil.countTradingDaysBetween(normDateNum(prev.sellDate), normDateNum(t.buyDate));
+    // 上笔卖出晚于本笔买入（多份仓位重叠）→ 账户并未空仓，按 0 个交易日计
+    t.idleDays = days == null ? 0 : days;
+    t.idleDaysApprox = !tradingDayUtil.isYearCovered(prev.sellDate) || !tradingDayUtil.isYearCovered(t.buyDate);
   });
   return result;
 };

@@ -12,6 +12,7 @@ const { runFirstBoardWashBacktest } = require('./firstBoardWashBacktest');
 const { runVolumeWashoutSecondBoardBacktest } = require('./volumeWashoutSecondBoardBacktest');
 const { runWashFusionBacktest } = require('./washFusionExtremeOddsBacktest');
 const { runMoodBlockResonanceBacktest } = require('./moodBlockResonanceBacktest');
+const { runMoodTimingBacktest } = require('./moodTimingBacktest');
 const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
 const { buildWindowAxis } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -64,7 +65,9 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   const washFusionIds = ids.filter(id => STRATEGIES[id]?.washFusionMode === true);
   // 情绪周期-板块共振大盘走独立引擎（同单策略路径，避免落入常规循环）
   const moodBlockResonanceIds = ids.filter(id => STRATEGIES[id]?.moodBlockResonanceMode === true);
-  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.extremeWinMode !== true && STRATEGIES[id]?.fusedEmoWinMode !== true && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true && STRATEGIES[id]?.volumeShareMode !== true && STRATEGIES[id]?.gainVolumeShareMode !== true && STRATEGIES[id]?.emotionBurstDriftMode !== true && STRATEGIES[id]?.emotionBurstFollowMode !== true && STRATEGIES[id]?.firstBoardWashMode !== true && STRATEGIES[id]?.volumeWashoutMode !== true && STRATEGIES[id]?.washFusionMode !== true && STRATEGIES[id]?.moodBlockResonanceMode !== true);
+  // 情绪周期-择时为主-N日涨幅最大走独立引擎（同单策略路径，避免落入常规循环）
+  const moodTimingIds = ids.filter(id => STRATEGIES[id]?.moodTimingMode === true);
+  const regularIds = ids.filter(id => STRATEGIES[id]?.keyBlockDays == null && STRATEGIES[id]?.extremeWinMode !== true && STRATEGIES[id]?.fusedEmoWinMode !== true && STRATEGIES[id]?.reverseLeaderMode !== true && STRATEGIES[id]?.nBoardMode !== true && STRATEGIES[id]?.volumeShareMode !== true && STRATEGIES[id]?.gainVolumeShareMode !== true && STRATEGIES[id]?.emotionBurstDriftMode !== true && STRATEGIES[id]?.emotionBurstFollowMode !== true && STRATEGIES[id]?.firstBoardWashMode !== true && STRATEGIES[id]?.volumeWashoutMode !== true && STRATEGIES[id]?.washFusionMode !== true && STRATEGIES[id]?.moodBlockResonanceMode !== true && STRATEGIES[id]?.moodTimingMode !== true);
   const results = [];
   for (const strategyId of keyBlockIds) {
     const result = await runKeyBlockBacktest(startDate, endDate, strategyId, onProgress);
@@ -116,6 +119,10 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
   }
   for (const strategyId of moodBlockResonanceIds) {
     const result = await runMoodBlockResonanceBacktest(startDate, endDate, strategyId, onProgress);
+    results.push({ strategyId, result });
+  }
+  for (const strategyId of moodTimingIds) {
+    const result = await runMoodTimingBacktest(startDate, endDate, strategyId, onProgress);
     results.push({ strategyId, result });
   }
   if (regularIds.length === 0) return results;

@@ -272,6 +272,12 @@ const STRATEGY_OPTIONS = [
   // 账户拆两份、每份半仓，第一份仅上午 ≤ 11:30 买入，第二份可上午或 13:00–14:00，两份不得同日同半天（至少相隔半天）；
   // 卖点与「情绪游资-极致胜率」顺周期腿完全一致
   { value: 'mood_block_resonance', label: '情绪周期-板块共振大盘' },
+  // 情绪周期-择时为主-N 日涨幅最大（2026-11-22 用户新增）：前一日科技情绪 < -40（情绪冰点）时，今日盘中分时
+  // 科技情绪首次 > -20 的时点，从全量自选科技股中买入最近 N 个交易日涨幅最大的一只（涨停按排名顺延），全仓单持仓；
+  // 卖点 = 跌破10日线 / 高位放量大阴线 / 科技情绪≤-40且跌幅≤-9%科技股≥5只 / 抗分歧<6且涨幅≤-5%(14:50后) / 跌破成本线-3%
+  { value: 'mood_timing_1d_gain', label: '情绪周期-择时为主-1日涨幅最大' },
+  { value: 'mood_timing_2d_gain', label: '情绪周期-择时为主-2日涨幅最大' },
+  { value: 'mood_timing_3d_gain', label: '情绪周期-择时为主-3日涨幅最大' },
   { value: 'highest_3d_reports', label: '3日研报覆盖数最多' },
   { value: 'highest_5d_reports', label: '5日研报覆盖数最多' },
   { value: 'highest_3d_reports_top5_gain', label: '3日研报前五&涨幅最大' },
@@ -369,6 +375,11 @@ const STRATEGY_CATEGORIES = [
     key: 'mood_block_resonance',
     label: '情绪周期-板块共振大盘类',
     ids: ['mood_block_resonance'],
+  },
+  {
+    key: 'mood_timing',
+    label: '情绪周期-择时为主类',
+    ids: ['mood_timing_1d_gain', 'mood_timing_2d_gain', 'mood_timing_3d_gain'],
   },
 ];
 
@@ -876,6 +887,37 @@ const moodBlockResonanceNote = {
     '**数据覆盖**：只在当日出现「创业板 + 资金 + 成交额」共振桶时才拉取重点板块成分股分时；板块均值要求至少 5 只且不少于成分股 50% 有有效数据。',
   ],
 };
+// 情绪周期-择时为主-N 日涨幅最大（2026-11-22 用户新增）：前一日科技情绪 < -40（情绪冰点），今日盘中分时
+// 科技情绪首次 > -20 的时点买入；选股 = 全量自选科技股 N 日涨幅最大（涨停顺延）；全仓单持仓
+const MOOD_TIMING_STRATEGY_IDS = ['mood_timing_1d_gain', 'mood_timing_2d_gain', 'mood_timing_3d_gain'];
+const isMoodTimingStrategy = (id) => MOOD_TIMING_STRATEGY_IDS.includes(id);
+const moodTimingN = (id) => {
+  const m = /mood_timing_(\d+)d/.exec(String(id || ''));
+  return m ? Number(m[1]) : 1;
+};
+const moodTimingBuyRules = (n) => [
+  { key: 'mt_prev_ice', title: '买点前置：前一日科技情绪 < -40（情绪冰点）', desc: '取**前一交易日**科技情绪指数收盘值，须 **< -40**，视为情绪冰点；不低于 -40 或数据缺失时**当日不买**。' },
+  { key: 'mt_intraday_emotion', title: '买点：今日盘中分时科技情绪首次 > -20 的 5 分钟桶', desc: '逐 5 分钟桶读取当日分时科技情绪，取**首次突破 -20**（严格大于 -20）的桶作为买点，按该桶分时价成交；买入时段沿用普通策略 **9:30 – 13:30**，13:30 后才首次突破则当日不买。' },
+  { key: 'mt_pick_gain', title: `选股：全量自选科技股 ${n} 日涨幅最大（涨停顺延）`, desc: `候选池 = 全量自选股中 **isTech !== false** 的科技股；按最近 **${n} 个交易日累计涨幅**（含当日盘中涨幅，复利）降序排名，买排名最高者；买点时刻已涨停（主板涨幅 > 9.5%、创业板/科创板 > 19%）则**按排名顺延下一只**，全部涨停则当日不买。` },
+  { key: 'mt_full_position', title: '仓位：全仓单持仓', desc: '每次买入均**全仓（权重 1）**，账户同一时间最多持有 1 只股票，未卖出前不再买入其它股票。' },
+];
+const moodTimingSellRules = [
+  { key: 'mt_sell_ma10', title: '盘中现价跌破 10 日线', desc: '买入次日起逐桶比较：持仓股分时**现价 < 当日 MA10** 即卖出，按该桶分时价成交。' },
+  { key: 'mt_sell_high_bearish', title: '高位放量大阴线', desc: '买入次日起逐桶检查：当日分时**最高价回落到现价幅度 > 8%**，且**现价 < 当日开盘价**（高位被砸收阴）即卖出。' },
+  { key: 'mt_sell_emotion', title: '科技情绪退潮：科技情绪指数 ≤ -40 且跌幅 ≤ -9% 的科技股 ≥ 5 只', desc: '当日分时**科技情绪指数 ≤ -40**，且**自选科技股中跌幅 ≤ -9% 的个股数量 ≥ 5 只**时卖出（仅统计 isTech !== false 的科技股）。' },
+  { key: 'mt_sell_resilience', title: '抗分歧指数 < 6 且涨幅 ≤ -5%（14:50 后生效）', desc: '买入次日起 **14:50 后**检查：持仓股**抗分歧指数 < 6** 且**当前涨幅 ≤ -5%** 即卖出（沿用现有卖点诊断条件4口径）。' },
+  { key: 'mt_sell_cost', title: '跌破成本线 -3%', desc: '持仓股分时**现价 < 买入价 × 0.97**（即较成本线跌幅 ≤ -3%）即卖出。' },
+];
+const moodTimingNote = (n) => ({
+  group: `情绪周期·择时为主（${n}日涨幅最大）`,
+  bullets: [
+    `**策略定位**：以情绪周期择时为主——前一日科技情绪进入冰点（< -40）后，今日盘中情绪修复站上 -20 时全仓出手，买入**全量自选科技股中 ${n} 日涨幅最大**的强势股。`,
+    '**买点**：① 前一日科技情绪 **< -40**（情绪冰点）；② 今日盘中逐 5 分钟桶，科技情绪**首次 > -20** 即为买点，按该桶分时价成交；买入时段沿用 **9:30 – 13:30**。',
+    `**选股**：候选池 = **全量自选科技股**（isTech !== false）；按最近 **${n} 个交易日累计涨幅**（含当日盘中涨幅）降序排名，买第一名；买点时刻已涨停（主板 > 9.5%、创业板/科创板 > 19%）则**按排名顺延**，全部涨停则当日不买。`,
+    '**仓位**：**全仓单持仓**——每次买入均全仓，未卖出前不再买入其它股票。',
+    '**卖点（买入次日起，满足其一即卖）**：① 盘中现价**跌破 10 日线**；② **高位放量大阴线**（当日最高回落 > 8% 且现价 < 开盘）；③ **科技情绪指数 ≤ -40** 且自选科技股中**跌幅 ≤ -9% 的个股 ≥ 5 只**；④ **抗分歧 < 6 且涨幅 ≤ -5%**（仅 **14:50 后**生效）；⑤ **跌破成本线 -3%**（现价 < 买入价 × 0.97）。',
+  ],
+});
 const EMOTION_BURST_DRIFT_STRATEGY_IDS = ['emotion_burst_drift_leader'];
 const isEmotionBurstDriftStrategy = (id) => EMOTION_BURST_DRIFT_STRATEGY_IDS.includes(id);
 const emotionBurstDriftBuyRules = [
@@ -1442,6 +1484,11 @@ export const STRATEGY_SPECIFIC_NOTES = {
   // ---- 情绪周期-板块共振大盘（mood_block_resonance，2026-11-04 重构合并，仅回测） ----
   mood_block_resonance: moodBlockResonanceNote,
 
+  // ---- 情绪周期-择时为主-N 日涨幅最大（2026-11-22 用户新增，N = 1/2/3，仅回测） ----
+  mood_timing_1d_gain: moodTimingNote(1),
+  mood_timing_2d_gain: moodTimingNote(2),
+  mood_timing_3d_gain: moodTimingNote(3),
+
   // ---- N 日涨幅最大-成交量占比（2026-10-25 用户新增，N = 2/3/4/5） ----
   highest_2d_gain_volume_share: gainVolumeShareNote(2),
   highest_3d_gain_volume_share: gainVolumeShareNote(3),
@@ -1455,7 +1502,8 @@ export const STRATEGY_SPECIFIC_NOTES = {
 export const getStrategyRuleSets = (strategy) => {
   const s = strategy;
   let buyRules = BUY_RULES;
-  if (isMoodBlockResonanceStrategy(s)) buyRules = moodBlockResonanceBuyRules;
+  if (isMoodTimingStrategy(s)) buyRules = moodTimingBuyRules(moodTimingN(s));
+  else if (isMoodBlockResonanceStrategy(s)) buyRules = moodBlockResonanceBuyRules;
   else if (isWashFusionStrategy(s)) buyRules = washFusionBuyRules;
   else if (isVolumeWashoutStrategy(s)) buyRules = volumeWashoutBuyRules;
   else if (isFirstBoardWashStrategy(s)) buyRules = firstBoardWashBuyRules;
@@ -1471,7 +1519,8 @@ export const getStrategyRuleSets = (strategy) => {
   else if (isIceStrategy(s)) buyRules = ICE_BUY_RULES;
 
   let sellRules = SELL_RULES;
-  if (isMoodBlockResonanceStrategy(s)) sellRules = extremeWinSellRules;
+  if (isMoodTimingStrategy(s)) sellRules = moodTimingSellRules;
+  else if (isMoodBlockResonanceStrategy(s)) sellRules = extremeWinSellRules;
   else if (isWashFusionStrategy(s)) sellRules = washFusionSellRules;
   else if (isVolumeWashoutStrategy(s)) sellRules = volumeWashoutSellRules;
   else if (isFirstBoardWashStrategy(s)) sellRules = firstBoardWashSellRules;
@@ -1756,6 +1805,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const curIsVolumeWashout = isVolumeWashoutStrategy(strategy);
   const curIsWashFusion = isWashFusionStrategy(strategy);
   const curIsMoodBlockResonance = isMoodBlockResonanceStrategy(strategy);
+  const curIsMoodTiming = isMoodTimingStrategy(strategy);
   const effectiveRange = range || defaultRange;
 
   // 组件卸载时停止轮询
@@ -2167,8 +2217,8 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
       const pick = effectiveRange;
       const startDate = pick[0].format('YYYYMMDD');
       const endDate = pick[1].format('YYYYMMDD');
-      const buyRules = curIsWashFusion ? washFusionBuyRules : (curIsVolumeWashout ? volumeWashoutBuyRules : (curIsFirstBoardWash ? firstBoardWashBuyRules : (curIsEmotionBurstFollow ? emotionBurstFollowBuyRules : (curIsEmotionBurstDrift ? emotionBurstDriftBuyRules : (curIsGainVolumeShare ? gainVolumeShareBuyRules(gainVolumeShareN(strategy)) : (curIsVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (curIsNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (curIsExtremeWinLike ? extremeWinBuyRules : (curIsReverseLeader ? reverseLeaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : BUY_RULES)))))))))));
-      const sellRules = curIsWashFusion ? washFusionSellRules : (curIsVolumeWashout ? volumeWashoutSellRules : (curIsFirstBoardWash ? firstBoardWashSellRules : ((curIsEmotionBurstFollow || curIsEmotionBurstDrift) ? LEADER_SELL_RULES : (curIsGainVolumeShare ? SELL_RULES : (curIsVolumeShare ? volumeShareSellRules : (curIsNBoardAttack ? nBoardAttackSellRules : (curIsReverseLeader ? reverseLeaderSellRules : (curIsExtremeWinLike ? extremeWinSellRules : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : SELL_RULES))))))))));
+      const buyRules = curIsMoodTiming ? moodTimingBuyRules(moodTimingN(strategy)) : (curIsWashFusion ? washFusionBuyRules : (curIsVolumeWashout ? volumeWashoutBuyRules : (curIsFirstBoardWash ? firstBoardWashBuyRules : (curIsEmotionBurstFollow ? emotionBurstFollowBuyRules : (curIsEmotionBurstDrift ? emotionBurstDriftBuyRules : (curIsGainVolumeShare ? gainVolumeShareBuyRules(gainVolumeShareN(strategy)) : (curIsVolumeShare ? volumeShareBuyRules(volumeShareN(strategy)) : (curIsNBoardAttack ? nBoardAttackBuyRules(nBoardAttackN(strategy)) : (curIsExtremeWinLike ? extremeWinBuyRules : (curIsReverseLeader ? reverseLeaderBuyRules : (curIsIceRev ? ICE_REV_BUY_RULES : (curIsIce ? ICE_BUY_RULES : BUY_RULES))))))))))));
+      const sellRules = curIsMoodTiming ? moodTimingSellRules : (curIsWashFusion ? washFusionSellRules : (curIsVolumeWashout ? volumeWashoutSellRules : (curIsFirstBoardWash ? firstBoardWashSellRules : ((curIsEmotionBurstFollow || curIsEmotionBurstDrift) ? LEADER_SELL_RULES : (curIsGainVolumeShare ? SELL_RULES : (curIsVolumeShare ? volumeShareSellRules : (curIsNBoardAttack ? nBoardAttackSellRules : (curIsReverseLeader ? reverseLeaderSellRules : (curIsExtremeWinLike ? extremeWinSellRules : (curIsIce ? ICE_SELL_RULES : (curIsIceRev ? ICE_REV_SELL_RULES : SELL_RULES)))))))))));
 
       // 1) 批量拉取全部自选股 K 线数据（覆盖回测范围，limit 取 100）
       const codes = (result.stocks || result.seenStocks || []).map(s => s.code).filter(Boolean);
@@ -2777,7 +2827,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                           </span>
                           <span style={{ fontSize: 12, color: '#6b7890' }}>
                             {fmtIdleDays(t) != null
-                              ? <>距上笔开仓空仓 <b style={{ color: '#12213a' }}>{fmtIdleDays(t)}</b></>
+                              ? <>距上笔卖出空仓 <b style={{ color: '#12213a' }}>{fmtIdleDays(t)}</b></>
                               : <span style={{ color: '#9ca3af' }}>首笔开仓</span>}
                           </span>
                           <span style={{ fontSize: 12, color: '#6b7890' }}>
@@ -2886,7 +2936,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                       </span>
                       <span style={{ fontSize: 12, color: '#6b7890', marginLeft: 10 }}>
                         {fmtIdleDays(h) != null
-                          ? <>距上笔开仓空仓 <b style={{ color: '#12213a' }}>{fmtIdleDays(h)}</b></>
+                          ? <>距上笔卖出空仓 <b style={{ color: '#12213a' }}>{fmtIdleDays(h)}</b></>
                           : <span style={{ color: '#9ca3af' }}>首笔开仓</span>}
                       </span>
                       <span style={{ fontSize: 12, marginLeft: 10 }}>
@@ -2978,7 +3028,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                                 </span>
                                 <span style={{ fontSize: 12, color: '#6b7890' }}>
                                   {fmtIdleDays(t) != null
-                                    ? <>距上笔开仓空仓 <b style={{ color: '#12213a' }}>{fmtIdleDays(t)}</b></>
+                                    ? <>距上笔卖出空仓 <b style={{ color: '#12213a' }}>{fmtIdleDays(t)}</b></>
                                     : <span style={{ color: '#9ca3af' }}>首笔开仓</span>}
                                 </span>
                                 <span style={{ fontSize: 12, color: '#6b7890' }}>
@@ -3034,7 +3084,7 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
                               </span>
                               <span style={{ fontSize: 12, color: '#6b7890', marginLeft: 10 }}>
                                 {fmtIdleDays(stock.holding) != null
-                                  ? <>距上笔开仓空仓 <b style={{ color: '#12213a' }}>{fmtIdleDays(stock.holding)}</b></>
+                                  ? <>距上笔卖出空仓 <b style={{ color: '#12213a' }}>{fmtIdleDays(stock.holding)}</b></>
                                   : <span style={{ color: '#9ca3af' }}>首笔开仓</span>}
                               </span>
                               <span style={{ fontSize: 12, marginLeft: 10 }}>
