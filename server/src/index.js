@@ -360,10 +360,10 @@ app.get('/block', (req, res) => {
 });
 
 // 重点板块持久化：GET 读取、POST 整体覆盖或增删
-//   - 文件 data/key_blocks.json，不存在时返回默认值（商业航天 / 机器人 / 机器人大脑）
+//   - 文件 data/key_blocks.json，不存在时返回默认值（商业航天 / 物理AI）
 //   - 注意：__dirname 是 server/src，所以 data 用相对路径 data/key_blocks.json
 const KEY_BLOCKS_PATH = path.resolve(__dirname, 'data/key_blocks.json');
-const DEFAULT_KEY_BLOCKS = ['商业航天', '机器人', '机器人大脑'];
+const DEFAULT_KEY_BLOCKS = ['商业航天', '物理AI'];
 
 const readKeyBlocks = () => {
   try {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Drawer, Empty, Button, Space, Spin, message } from 'antd';
 import {
   BellOutlined,
@@ -8,11 +9,15 @@ import {
   ClockCircleOutlined,
   CloseOutlined,
   ArrowDownOutlined,
+  ThunderboltOutlined,
+  RiseOutlined,
+  FundOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 import { marked } from 'marked';
 import axios from 'axios';
 import { local_ip } from '../../constant';
-import { subscribeMonitorSnapshotPush } from '../../utils/buyPointWs';
+import { subscribeMonitorSnapshotPush, triggerInstantMonitor } from '../../utils/buyPointWs';
 import './index.scss';
 
 marked.setOptions({
@@ -22,6 +27,16 @@ marked.setOptions({
 
 // 抽屉分页：默认最近 10 次，点击「加载更多」每页再取 10 个
 const PAGE_SIZE = 10;
+
+// 重点板块高亮：模糊匹配（忽略空格与大小写，板块名包含任一关键词即高亮）
+const HIGHLIGHT_KEYWORDS = ['AI', '银行', '半导体', '机器人', '光通信', '光芯片', 'MPO', 'CCL', 'pcb', '电子布', '光纤', '存储', '算力', '液冷']
+  .map((keyword) => keyword.replace(/\s/g, '').toLowerCase());
+
+const isHighlightBlock = (name) => {
+  const normalized = String(name || '').replace(/\s/g, '').toLowerCase();
+  if (!normalized) return false;
+  return HIGHLIGHT_KEYWORDS.some((keyword) => normalized.includes(keyword));
+};
 
 const fmtSigned = (value, digits = 2, unit = '') => {
   const num = Number(value);
@@ -57,8 +72,59 @@ const buildSnapshotText = (snapshot) => {
   return lines.join('\n');
 };
 
-// 单组排名：左列前 5 / 右列后 5
-const MonitorRankSection = ({ title, hint, section, unit, dark }) => {
+// 单组排名渲染：
+//   - 抽屉（默认）：每个模块一张渐变卡（模仿专注交易候选列表卡片），内部「领涨前5 / 领跌后5」
+//     两个磨砂玻璃面板纵向堆叠，三模块在快照卡片内横向并列；
+//   - 深色弹卡（dark，右下角全局监控卡片）：保持原有纵向 + 前5/后5 两列结构。
+const MonitorRankSection = ({ title, hint, section, unit, dark = false, tone = 'violet', icon = null }) => {
+  // ===== 抽屉：渐变卡 + 双磨砂玻璃面板 =====
+  if (!dark) {
+    const renderPanel = (items, label, dir) => (
+      <div className={`fma-mod-panel fma-mod-panel--${dir}`}>
+        <div className="fma-mod-panel-head">
+          <span className="fma-mod-panel-label">{label}</span>
+          <span className="fma-mod-panel-count">{(items || []).length}</span>
+        </div>
+        <div className="fma-mod-panel-list">
+          {(items || []).length === 0 ? (
+            <div className="fma-mod-empty">暂无数据</div>
+          ) : (
+            items.map((item, index) => {
+              const delta = Number(item.delta);
+              return (
+                <div className="fma-mod-row" key={`${item.name}-${index}`}>
+                  <span className={`fma-mod-rank ${index < 3 ? 'is-top' : ''}`}>{index + 1}</span>
+                  <span className="fma-mod-name" title={`${item.name} 当前 ${item.value}${unit}`}>
+                    <span className={`fma-mod-name-text ${isHighlightBlock(item.name) ? 'is-highlight' : ''}`}>
+                      {item.name}
+                    </span>
+                  </span>
+                  <span className={`fma-mod-val ${delta >= 0 ? 'up' : 'down'}`}>{fmtSigned(item.delta, 2, unit)}</span>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+    return (
+      <div className={`fma-mod-card fma-mod-card--${tone}`}>
+        <div className="fma-mod-card-head">
+          <span className={`fma-mod-card-icon fma-mod-card-icon--${tone}`}>{icon}</span>
+          <div className="fma-mod-card-titles">
+            <span className="fma-mod-card-name">{title}</span>
+            <span className="fma-mod-card-hint">{hint}</span>
+          </div>
+        </div>
+        <div className="fma-mod-card-body">
+          {renderPanel(section?.up, '领涨 · 前 5', 'up')}
+          {renderPanel(section?.down, '领跌 · 后 5', 'down')}
+        </div>
+      </div>
+    );
+  }
+
+  // ===== 深色弹卡：保持原有结构 =====
   const renderColumn = (items, headLabel, headClass) => (
     <div className="fma-snap-col">
       <div className={`fma-snap-col-head ${headClass}`}>{headLabel}</div>
@@ -70,7 +136,11 @@ const MonitorRankSection = ({ title, hint, section, unit, dark }) => {
           return (
             <div className="fma-snap-row" key={`${item.name}-${index}`}>
               <span className="fma-snap-rank">{index + 1}</span>
-              <span className="fma-snap-name" title={`${item.name} 当前 ${item.value}${unit}`}>{item.name}</span>
+              <span className="fma-snap-name" title={`${item.name} 当前 ${item.value}${unit}`}>
+                <span className={`fma-snap-name-text ${isHighlightBlock(item.name) ? 'is-highlight' : ''}`}>
+                  {item.name}
+                </span>
+              </span>
               <span className={`fma-snap-val ${delta >= 0 ? 'up' : 'down'}`}>{fmtSigned(item.delta, 2, unit)}</span>
             </div>
           );
@@ -80,7 +150,7 @@ const MonitorRankSection = ({ title, hint, section, unit, dark }) => {
   );
 
   return (
-    <div className={`fma-snap-section ${dark ? 'is-dark' : ''}`}>
+    <div className="fma-snap-section is-dark">
       <div className="fma-snap-title">
         {title}
         <span className="fma-snap-hint">{hint}</span>
@@ -104,11 +174,22 @@ const filterFundSection = (section) => ({
 
 const MonitorSnapshotBody = ({ snapshot, dark = false }) => {
   const fundSection = filterFundSection(snapshot.fund);
+  // 深色弹卡：三模块纵向堆叠
+  if (dark) {
+    return (
+      <div className="fma-snap-body is-dark">
+        <MonitorRankSection title="板块平均涨幅" hint="近 10min 变化" section={snapshot.change} unit="%" dark />
+        <MonitorRankSection title="板块资金净流入" hint="近 10min 变化" section={fundSection} unit="亿" dark />
+        <MonitorRankSection title="板块成交量占比" hint="近10min持续 · 较上一日" section={snapshot.volume} unit="pp" dark />
+      </div>
+    );
+  }
+  // 抽屉：三模块横向并列，一行三张渐变卡
   return (
-    <div className={`fma-snap-body ${dark ? 'is-dark' : ''}`}>
-      <MonitorRankSection title="板块平均涨幅" hint="近 10min 变化" section={snapshot.change} unit="%" dark={dark} />
-      <MonitorRankSection title="板块资金净流入" hint="近 10min 变化" section={fundSection} unit="亿" dark={dark} />
-      <MonitorRankSection title="板块成交量占比" hint="近10min持续 · 较上一日" section={snapshot.volume} unit="pp" dark={dark} />
+    <div className="fma-snap-body fma-snap-body--row">
+      <MonitorRankSection title="板块平均涨幅" hint="近 10min 变化" section={snapshot.change} unit="%" tone="rose" icon={<RiseOutlined />} />
+      <MonitorRankSection title="板块资金净流入" hint="近 10min 变化" section={fundSection} unit="亿" tone="violet" icon={<FundOutlined />} />
+      <MonitorRankSection title="板块成交量占比" hint="近10min持续 · 较上一日" section={snapshot.volume} unit="pp" tone="cyan" icon={<BarChartOutlined />} />
     </div>
   );
 };
@@ -121,12 +202,16 @@ const FloatingMonitorAlarm = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [blinking, setBlinking] = useState(false);
   const [popupSnapshot, setPopupSnapshot] = useState(null);
+  // 全局卡片堆叠容器（由 GlobalDiagnosisAlert 渲染的 #gda-alert-stack）：
+  // 监控卡通过 portal 挂进同一容器，与买点/卖点卡上下堆叠、互不遮挡。
+  const [portalHost, setPortalHost] = useState(null);
   const [aiContent, setAiContent] = useState('');
   const [aiTime, setAiTime] = useState('');
   const [loadingAI, setLoadingAI] = useState(false);
   const [aiPanelVisible, setAiPanelVisible] = useState(false);
   const [pos, setPos] = useState({ x: window.innerWidth - 76, y: window.innerHeight / 2 - 28 });
   const [now, setNow] = useState(new Date());
+  const [instantLoading, setInstantLoading] = useState(false);
   const knownIdsRef = useRef(new Set());
   const dragRef = useRef({ dragging: false, moved: false, offsetX: 0, offsetY: 0, startX: 0, startY: 0 });
   const containerRef = useRef(null);
@@ -157,8 +242,9 @@ const FloatingMonitorAlarm = () => {
       }
       const x = e.clientX - dragRef.current.offsetX;
       const y = e.clientY - dragRef.current.offsetY;
-      const maxX = window.innerWidth - 72;
-      const maxY = window.innerHeight - 72;
+      const rect = containerRef.current.getBoundingClientRect();
+      const maxX = window.innerWidth - (rect.width || 84);
+      const maxY = window.innerHeight - (rect.height || 92);
       const newX = Math.max(0, Math.min(x, maxX));
       const newY = Math.max(0, Math.min(y, maxY));
       containerRef.current.style.left = `${newX}px`;
@@ -194,6 +280,26 @@ const FloatingMonitorAlarm = () => {
     setPopupSnapshot(null);
   };
 
+  // 「即刻监控」：立即经 WS 通知后端用最新分时缓存计算最近 10 分钟数据并推送卡片
+  const handleInstantMonitor = async (e) => {
+    e.stopPropagation(); // 阻止冒泡触发悬浮球打开抽屉（点击文字以外区域才开抽屉）
+    // 拖拽中松手不触发即刻监控（与 handleClick 的 moved 判定保持一致，避免拖完误触）
+    if (dragRef.current.moved) {
+      dragRef.current.moved = false;
+      return;
+    }
+    if (instantLoading) return;
+    setInstantLoading(true);
+    try {
+      const res = await triggerInstantMonitor();
+      message.success(res.message || '即刻监控已触发，正在推送最新监控卡片');
+    } catch (err) {
+      message.error(err.message || '即刻监控失败，请稍后重试');
+    } finally {
+      setInstantLoading(false);
+    }
+  };
+
   const fetchSnapshots = useCallback(async ({ offset = 0, append = false } = {}) => {
     if (append) setLoadingMore(true);
     else setListLoading(true);
@@ -220,6 +326,12 @@ const FloatingMonitorAlarm = () => {
     fetchSnapshots();
   }, [fetchSnapshots]);
 
+  // 获取全局卡片堆叠容器（GlobalDiagnosisAlert 始终渲染该容器，挂载完成后即可取到）
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPortalHost(document.getElementById('gda-alert-stack'));
+  }, []);
+
   // 后端每 10 分钟推送一次：写入列表，并右下角弹出监控卡片
   useEffect(() => {
     const unsubscribe = subscribeMonitorSnapshotPush((msg) => {
@@ -237,6 +349,21 @@ const FloatingMonitorAlarm = () => {
     });
     return unsubscribe;
   }, []);
+
+  // 监控卡片展示期间：按任意方向键关闭（与策略卡片 / 全局买点卡片一致）
+  useEffect(() => {
+    if (!popupSnapshot) return undefined;
+    const handleArrowKeyDown = (e) => {
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+      // 捕获阶段拦截，避免同时触发 App 方向键快捷键
+      e.preventDefault();
+      e.stopPropagation();
+      setPopupSnapshot(null);
+      setBlinking(false);
+    };
+    window.addEventListener('keydown', handleArrowKeyDown, true);
+    return () => window.removeEventListener('keydown', handleArrowKeyDown, true);
+  }, [popupSnapshot]);
 
   // 实时时间每秒更新
   useEffect(() => {
@@ -345,12 +472,19 @@ const FloatingMonitorAlarm = () => {
           <div className="fma-icon-wrap">
             <BellOutlined className="fma-icon" />
           </div>
-          <span className="fma-label">监控</span>
+          <span
+            className={`fma-label ${instantLoading ? 'is-loading' : ''}`}
+            onClick={handleInstantMonitor}
+            title="点击即刻监控：立即计算最近 10 分钟数据并推送卡片"
+          >
+            <ThunderboltOutlined spin={instantLoading} />
+            监控
+          </span>
         </div>
       </div>
 
-      {/* 全局监控提示卡片：样式复用全局买点卡片（蓝紫玻璃渐变），收到推送时右下角弹出 */}
-      {popupSnapshot && (
+      {/* 全局监控提示卡片：portal 挂到全局卡片堆叠容器，与买点/卖点卡上下排列（不再单独 fixed 在左侧） */}
+      {popupSnapshot && portalHost && createPortal(
         <div className="fma-monitor-pop">
           <div className="gda-card gda-buy fma-monitor-card">
             <div className="gda-header">
@@ -376,7 +510,8 @@ const FloatingMonitorAlarm = () => {
               监控时间 {popupSnapshot.createdAt || popupSnapshot.time} · 每 10 分钟自动推送
             </div>
           </div>
-        </div>
+        </div>,
+        portalHost,
       )}
 
       <Drawer
@@ -387,8 +522,8 @@ const FloatingMonitorAlarm = () => {
           setDrawerOpen(false);
           setAiPanelVisible(false);
         }}
-        width={aiPanelVisible ? 900 : 520}
-        className="monitor-alarm-drawer"
+        width={aiPanelVisible ? '72vw' : '50vw'}
+        className={`monitor-alarm-drawer ${aiPanelVisible ? 'with-ai' : ''}`}
         destroyOnClose={false}
         extra={
           <Space size="middle">
@@ -427,13 +562,18 @@ const FloatingMonitorAlarm = () => {
             ) : (
               <div className="fma-list">
                 {sortedSnapshots.map((snapshot) => (
-                  <div key={snapshot.id} className={`fma-snap-card ${snapshot.mock ? 'is-mock' : ''}`}>
+                  <div key={snapshot.id} className={`fma-snap-card ${snapshot.mock ? 'is-mock' : ''} ${snapshot.instant ? 'is-instant' : ''}`}>
                     <div className="fma-snap-card-head">
                       <span className="fma-snap-card-time">
                         <ClockCircleOutlined /> {snapshot.time}
                       </span>
                       <span className="fma-snap-card-date">{snapshot.date}</span>
-                      {snapshot.mock && <span className="fma-snap-mock">MOCK</span>}
+                      <span className="fma-snap-card-badges">
+                        {snapshot.instant && (
+                          <span className="fma-snap-instant"><ThunderboltOutlined /> 即刻</span>
+                        )}
+                        {snapshot.mock && <span className="fma-snap-mock">MOCK</span>}
+                      </span>
                     </div>
                     <MonitorSnapshotBody snapshot={snapshot} />
                   </div>

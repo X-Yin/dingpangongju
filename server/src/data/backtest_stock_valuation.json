@@ -2868,5 +2868,12 @@
     "marketValue": 2404843500,
     "circulatingMarketValue": 2404843500,
     "updatedAt": "2026-11-19 22:35:48"
+  },
+  {
+    "code": "sz002749",
+    "name": "国光股份",
+    "marketValue": 4835737752,
+    "circulatingMarketValue": 4730113834,
+    "updatedAt": "2026-11-22 15:30:44"
   }
 ]

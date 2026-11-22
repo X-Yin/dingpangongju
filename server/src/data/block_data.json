@@ -31,158 +31,6 @@
       "change": -6.97
     }
   ],
-  "机器人大脑": [
-    {
-      "name": "科森科技",
-      "blockName": "机器人大脑",
-      "code": "sh603626",
-      "change": -10.01
-    },
-    {
-      "name": "奥比中光-W",
-      "blockName": "机器人大脑",
-      "code": "sh688322",
-      "change": -0.33
-    },
-    {
-      "name": "福莱新材",
-      "blockName": "机器人大脑",
-      "code": "sh605488",
-      "change": 3.1
-    },
-    {
-      "name": "凡拓数创",
-      "blockName": "机器人大脑",
-      "code": "sz301313",
-      "change": 20
-    },
-    {
-      "name": "海天瑞声",
-      "blockName": "机器人大脑",
-      "code": "sh688787",
-      "change": -0.93
-    },
-    {
-      "name": "奥普特",
-      "blockName": "机器人大脑",
-      "code": "sh688686",
-      "change": -3.31
-    },
-    {
-      "name": "龙旗科技",
-      "blockName": "机器人大脑",
-      "code": "sh603341",
-      "change": -7.95
-    },
-    {
-      "name": "博众精工",
-      "blockName": "机器人大脑",
-      "code": "sh688097",
-      "change": -8.07
-    },
-    {
-      "name": "德马科技",
-      "blockName": "机器人大脑",
-      "code": "sh688360",
-      "change": -6.24
-    },
-    {
-      "name": "华依科技",
-      "blockName": "机器人大脑",
-      "code": "sh688071",
-      "change": -4.39
-    },
-    {
-      "name": "峰岹科技",
-      "blockName": "机器人大脑",
-      "code": "sh688279",
-      "change": -6.76
-    },
-    {
-      "name": "凌云光",
-      "blockName": "机器人大脑",
-      "code": "sh688400",
-      "change": -5.24
-    },
-    {
-      "name": "科达利",
-      "blockName": "机器人大脑",
-      "code": "sz002850",
-      "change": -3.95
-    },
-    {
-      "name": "慈星股份",
-      "blockName": "机器人大脑",
-      "code": "sz300307",
-      "change": -3.23
-    },
-    {
-      "name": "达瑞电子",
-      "blockName": "机器人大脑",
-      "code": "sz300976",
-      "change": -8.72
-    },
-    {
-      "name": "创维数字",
-      "blockName": "机器人大脑",
-      "code": "sz000810",
-      "change": -4.09
-    },
-    {
-      "name": "新国都",
-      "blockName": "机器人大脑",
-      "code": "sz300130",
-      "change": -5.19
-    },
-    {
-      "name": "利亚德",
-      "blockName": "机器人大脑",
-      "code": "sz300296",
-      "change": -2.37
-    },
-    {
-      "name": "弘景光电",
-      "blockName": "机器人大脑",
-      "code": "sz301479",
-      "change": -12.62
-    },
-    {
-      "name": "力鼎光电",
-      "blockName": "机器人大脑",
-      "code": "sh605118",
-      "change": -7.53
-    },
-    {
-      "name": "安培龙",
-      "blockName": "机器人大脑",
-      "code": "sz301413",
-      "change": -7.03
-    },
-    {
-      "name": "永新光学",
-      "blockName": "机器人大脑",
-      "code": "sh603297",
-      "change": -7.98
-    },
-    {
-      "name": "新泉股份",
-      "blockName": "机器人大脑",
-      "code": "sh603179",
-      "change": -9.99
-    },
-    {
-      "name": "凯迪股份",
-      "blockName": "机器人大脑",
-      "code": "sh605288",
-      "change": -9.88
-    },
-    {
-      "name": "佰奥智能",
-      "blockName": "机器人大脑",
-      "code": "sz300836",
-      "change": -9.01
-    }
-  ],
   "端侧SOC": [
     {
       "name": "瑞芯微",
@@ -489,122 +337,6 @@
       "blockName": "商业航天",
       "code": "sh688818",
       "change": -9.05
-    }
-  ],
-  "机器人": [
-    {
-      "name": "三花智控",
-      "blockName": "机器人",
-      "code": "sz002050",
-      "change": -3.5
-    },
-    {
-      "name": "绿的谐波",
-      "blockName": "机器人",
-      "code": "sh688017",
-      "change": -6.1
-    },
-    {
-      "name": "浙江荣泰",
-      "blockName": "机器人",
-      "code": "sh603119",
-      "change": -6.85
-    },
-    {
-      "name": "拓普集团",
-      "blockName": "机器人",
-      "code": "sh601689",
-      "change": -2.69
-    },
-    {
-      "name": "五洲新春",
-      "blockName": "机器人",
-      "code": "sh603667",
-      "change": -3.3
-    },
-    {
-      "name": "万向钱潮",
-      "blockName": "机器人",
-      "code": "sz000559",
-      "change": -6.45
-    },
-    {
-      "name": "襄阳轴承",
-      "blockName": "机器人",
-      "code": "sz000678",
-      "change": 1.43
-    },
-    {
-      "name": "九阳股份",
-      "blockName": "机器人",
-      "code": "sz002242",
-      "change": -7.21
-    },
-    {
-      "name": "宇树科技-W",
-      "blockName": "机器人",
-      "code": "sh688836",
-      "change": -1.01
-    },
-    {
-      "name": "兆威机电",
-      "blockName": "机器人",
-      "code": "sz003021",
-      "change": -0.19
-    },
-    {
-      "name": "双林股份",
-      "blockName": "机器人",
-      "code": "sz300100",
-      "change": -6.82
-    },
-    {
-      "name": "大业股份",
-      "blockName": "机器人",
-      "code": "sh603278",
-      "change": -1.76
-    },
-    {
-      "name": "双环传动",
-      "blockName": "机器人",
-      "code": "sz002472",
-      "change": -3.9
-    },
-    {
-      "name": "上纬新材",
-      "blockName": "机器人",
-      "code": "sh688585",
-      "change": -6.19
-    },
-    {
-      "name": "模塑科技",
-      "blockName": "机器人",
-      "code": "sz000700",
-      "change": -3.74
-    },
-    {
-      "name": "继峰股份",
-      "blockName": "机器人",
-      "code": "sh603997",
-      "change": -5.98
-    },
-    {
-      "name": "震裕科技",
-      "blockName": "机器人",
-      "code": "sz300953",
-      "change": -4.93
-    },
-    {
-      "name": "大千生态",
-      "blockName": "机器人",
-      "code": "sh603955",
-      "change": -9.98
-    },
-    {
-      "name": "宁波东力",
-      "blockName": "机器人",
-      "code": "sz002164",
-      "change": -9.39
     }
   ],
   "消费": [
@@ -2869,6 +2601,30 @@
       "blockName": "华为",
       "code": "sh600839",
       "change": -8.16
+    },
+    {
+      "name": "深南电路",
+      "blockName": "华为",
+      "code": "sz002916",
+      "change": -0.59
+    },
+    {
+      "name": "光迅科技",
+      "blockName": "华为",
+      "code": "sz002281",
+      "change": -6.25
+    },
+    {
+      "name": "华正新材",
+      "blockName": "华为",
+      "code": "sh603186",
+      "change": 0.29
+    },
+    {
+      "name": "华工科技",
+      "blockName": "华为",
+      "code": "sz000988",
+      "change": -6.88
     }
   ],
   "光刻机": [
@@ -2901,6 +2657,272 @@
       "blockName": "光刻机",
       "code": "sh600619",
       "change": -8.36
+    }
+  ],
+  "物理AI": [
+    {
+      "name": "三花智控",
+      "blockName": "物理AI",
+      "code": "sz002050",
+      "change": -3.5
+    },
+    {
+      "name": "绿的谐波",
+      "blockName": "物理AI",
+      "code": "sh688017",
+      "change": -6.1
+    },
+    {
+      "name": "浙江荣泰",
+      "blockName": "物理AI",
+      "code": "sh603119",
+      "change": -6.85
+    },
+    {
+      "name": "拓普集团",
+      "blockName": "物理AI",
+      "code": "sh601689",
+      "change": -2.69
+    },
+    {
+      "name": "五洲新春",
+      "blockName": "物理AI",
+      "code": "sh603667",
+      "change": -3.3
+    },
+    {
+      "name": "万向钱潮",
+      "blockName": "物理AI",
+      "code": "sz000559",
+      "change": -6.45
+    },
+    {
+      "name": "襄阳轴承",
+      "blockName": "物理AI",
+      "code": "sz000678",
+      "change": 1.43
+    },
+    {
+      "name": "九阳股份",
+      "blockName": "物理AI",
+      "code": "sz002242",
+      "change": -7.21
+    },
+    {
+      "name": "宇树科技-W",
+      "blockName": "物理AI",
+      "code": "sh688836",
+      "change": -1.01
+    },
+    {
+      "name": "兆威机电",
+      "blockName": "物理AI",
+      "code": "sz003021",
+      "change": -0.19
+    },
+    {
+      "name": "双林股份",
+      "blockName": "物理AI",
+      "code": "sz300100",
+      "change": -6.82
+    },
+    {
+      "name": "大业股份",
+      "blockName": "物理AI",
+      "code": "sh603278",
+      "change": -1.76
+    },
+    {
+      "name": "双环传动",
+      "blockName": "物理AI",
+      "code": "sz002472",
+      "change": -3.9
+    },
+    {
+      "name": "上纬新材",
+      "blockName": "物理AI",
+      "code": "sh688585",
+      "change": -6.19
+    },
+    {
+      "name": "模塑科技",
+      "blockName": "物理AI",
+      "code": "sz000700",
+      "change": -3.74
+    },
+    {
+      "name": "继峰股份",
+      "blockName": "物理AI",
+      "code": "sh603997",
+      "change": -5.98
+    },
+    {
+      "name": "震裕科技",
+      "blockName": "物理AI",
+      "code": "sz300953",
+      "change": -4.93
+    },
+    {
+      "name": "大千生态",
+      "blockName": "物理AI",
+      "code": "sh603955",
+      "change": -9.98
+    },
+    {
+      "name": "宁波东力",
+      "blockName": "物理AI",
+      "code": "sz002164",
+      "change": -9.39
+    },
+    {
+      "name": "科森科技",
+      "blockName": "物理AI",
+      "code": "sh603626",
+      "change": -10.01
+    },
+    {
+      "name": "奥比中光-W",
+      "blockName": "物理AI",
+      "code": "sh688322",
+      "change": -0.33
+    },
+    {
+      "name": "福莱新材",
+      "blockName": "物理AI",
+      "code": "sh605488",
+      "change": 3.1
+    },
+    {
+      "name": "凡拓数创",
+      "blockName": "物理AI",
+      "code": "sz301313",
+      "change": 20
+    },
+    {
+      "name": "海天瑞声",
+      "blockName": "物理AI",
+      "code": "sh688787",
+      "change": -0.93
+    },
+    {
+      "name": "奥普特",
+      "blockName": "物理AI",
+      "code": "sh688686",
+      "change": -3.31
+    },
+    {
+      "name": "龙旗科技",
+      "blockName": "物理AI",
+      "code": "sh603341",
+      "change": -7.95
+    },
+    {
+      "name": "博众精工",
+      "blockName": "物理AI",
+      "code": "sh688097",
+      "change": -8.07
+    },
+    {
+      "name": "德马科技",
+      "blockName": "物理AI",
+      "code": "sh688360",
+      "change": -6.24
+    },
+    {
+      "name": "华依科技",
+      "blockName": "物理AI",
+      "code": "sh688071",
+      "change": -4.39
+    },
+    {
+      "name": "峰岹科技",
+      "blockName": "物理AI",
+      "code": "sh688279",
+      "change": -6.76
+    },
+    {
+      "name": "凌云光",
+      "blockName": "物理AI",
+      "code": "sh688400",
+      "change": -5.24
+    },
+    {
+      "name": "科达利",
+      "blockName": "物理AI",
+      "code": "sz002850",
+      "change": -3.95
+    },
+    {
+      "name": "慈星股份",
+      "blockName": "物理AI",
+      "code": "sz300307",
+      "change": -3.23
+    },
+    {
+      "name": "达瑞电子",
+      "blockName": "物理AI",
+      "code": "sz300976",
+      "change": -8.72
+    },
+    {
+      "name": "创维数字",
+      "blockName": "物理AI",
+      "code": "sz000810",
+      "change": -4.09
+    },
+    {
+      "name": "新国都",
+      "blockName": "物理AI",
+      "code": "sz300130",
+      "change": -5.19
+    },
+    {
+      "name": "利亚德",
+      "blockName": "物理AI",
+      "code": "sz300296",
+      "change": -2.37
+    },
+    {
+      "name": "弘景光电",
+      "blockName": "物理AI",
+      "code": "sz301479",
+      "change": -12.62
+    },
+    {
+      "name": "力鼎光电",
+      "blockName": "物理AI",
+      "code": "sh605118",
+      "change": -7.53
+    },
+    {
+      "name": "安培龙",
+      "blockName": "物理AI",
+      "code": "sz301413",
+      "change": -7.03
+    },
+    {
+      "name": "永新光学",
+      "blockName": "物理AI",
+      "code": "sh603297",
+      "change": -7.98
+    },
+    {
+      "name": "新泉股份",
+      "blockName": "物理AI",
+      "code": "sh603179",
+      "change": -9.99
+    },
+    {
+      "name": "凯迪股份",
+      "blockName": "物理AI",
+      "code": "sh605288",
+      "change": -9.88
+    },
+    {
+      "name": "佰奥智能",
+      "blockName": "物理AI",
+      "code": "sz300836",
+      "change": -9.01
     }
   ]
 }

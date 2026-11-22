@@ -465,12 +465,10 @@ const GlobalDiagnosisAlert = () => {
   };
 
   // 弹窗类提醒使用 antd Modal portal，不依赖 gda-container 渲染；
-  // 因此只在没有任何卡片、仅一个 Modal 时，也必须返回一个能挂载 Modal 的根
-  const hasCardAlert = buyCardAlert || sellAlert || iceAlert || wfCandidates || strategyAlert || preheatAlert;
-  if (!hasCardAlert && !resonanceAlert) return null;
-
+  // 容器始终渲染（即使当前无卡片），作为全局提醒卡片的统一堆叠区：
+  // 监控快照卡等外部组件通过 portal 挂进 #gda-alert-stack，与这里买点/卖点卡上下排列、互不遮挡。
   return (
-    <div className="gda-container">
+    <div className="gda-container" id="gda-alert-stack">
       {iceAlert && <IceWaitCard alert={iceAlert} onClose={() => setIceAlert(null)} />}
       {buyCardAlert && (
         <BuyAlertCard

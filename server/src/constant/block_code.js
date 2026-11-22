@@ -360,37 +360,37 @@ exports.default = [
         "tag": "中性"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sz002050",
         "name": "三花智控",
         "tag": "中性"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sh688017",
         "name": "绿的谐波",
         "tag": "中性"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sh603119",
         "name": "浙江荣泰",
         "tag": "中性"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sh601689",
         "name": "拓普集团",
         "tag": "中性"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sh603667",
         "name": "五洲新春",
         "tag": "中性"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sz000559",
         "name": "万向钱潮",
         "tag": "中性"
@@ -1007,12 +1007,12 @@ exports.default = [
         "name": "金健米业"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sz000678",
         "name": "襄阳轴承"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sz002242",
         "name": "九阳股份"
     },
@@ -1401,17 +1401,17 @@ exports.default = [
         "name": "图南股份"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sh688836",
         "name": "宇树科技-W"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sz003021",
         "name": "兆威机电"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sz300100",
         "name": "双林股份"
     },
@@ -1440,37 +1440,37 @@ exports.default = [
         "tag": "进攻"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh603626",
         "name": "科森科技",
         "tag": "中性"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh688322",
         "name": "奥比中光-W",
         "tag": "中性"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh605488",
         "name": "福莱新材",
         "tag": "中性"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sz301313",
         "name": "凡拓数创",
         "tag": "中性"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh688787",
         "name": "海天瑞声",
         "tag": "中性"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sh603278",
         "name": "大业股份"
     },
@@ -1480,52 +1480,52 @@ exports.default = [
         "name": "海洋王"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh688686",
         "name": "奥普特"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh603341",
         "name": "龙旗科技"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh688097",
         "name": "博众精工"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh688360",
         "name": "德马科技"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sz002472",
         "name": "双环传动"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh688071",
         "name": "华依科技"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh688279",
         "name": "峰岹科技"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh688400",
         "name": "凌云光"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sz002850",
         "name": "科达利"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sz300307",
         "name": "慈星股份"
     },
@@ -1584,32 +1584,32 @@ exports.default = [
         "tag": "中性"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sz300976",
         "name": "达瑞电子"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sz000810",
         "name": "创维数字"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sz300130",
         "name": "新国都"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sz300296",
         "name": "利亚德"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sh688585",
         "name": "上纬新材"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sz301479",
         "name": "弘景光电"
     },
@@ -1659,7 +1659,7 @@ exports.default = [
         "name": "中重科技"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh605118",
         "name": "力鼎光电"
     },
@@ -1760,7 +1760,7 @@ exports.default = [
         "name": "青岛食品"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sz301413",
         "name": "安培龙"
     },
@@ -1770,7 +1770,7 @@ exports.default = [
         "name": "电科蓝天"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sz000700",
         "name": "模塑科技"
     },
@@ -1983,7 +1983,7 @@ exports.default = [
         "tag": "中性"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh603297",
         "name": "永新光学"
     },
@@ -2293,12 +2293,12 @@ exports.default = [
         "tag": "进攻"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh603179",
         "name": "新泉股份"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sh605288",
         "name": "凯迪股份"
     },
@@ -2309,7 +2309,7 @@ exports.default = [
         "tag": "进攻"
     },
     {
-        "blockName": "机器人大脑",
+        "blockName": "物理AI",
         "code": "sz300836",
         "name": "佰奥智能"
     },
@@ -2379,22 +2379,22 @@ exports.default = [
         "name": "春光科技"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sh603997",
         "name": "继峰股份"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sz300953",
         "name": "震裕科技"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sh603955",
         "name": "大千生态"
     },
     {
-        "blockName": "机器人",
+        "blockName": "物理AI",
         "code": "sz002164",
         "name": "宁波东力"
     },
@@ -2523,5 +2523,25 @@ exports.default = [
         "blockName": "半导体",
         "code": "sh688757",
         "name": "胜科纳米"
+    },
+    {
+        "blockName": "华为",
+        "code": "sz002916",
+        "name": "深南电路"
+    },
+    {
+        "blockName": "华为",
+        "code": "sz002281",
+        "name": "光迅科技"
+    },
+    {
+        "blockName": "华为",
+        "code": "sh603186",
+        "name": "华正新材"
+    },
+    {
+        "blockName": "华为",
+        "code": "sz000988",
+        "name": "华工科技"
     }
 ]

@@ -57,6 +57,28 @@ const attach = (server, port) => {
         setTimeout(() => sendTo(socket, { type: 'debug_ping', seq: msg.seq, src: 'server' }), 1000);
       } else if (msg.type === 'debug_pong' && msg.src === 'client') {
         sendTo(socket, { type: 'debug_pong_ack', seq: msg.seq });
+      } else if (msg.type === 'monitor_instant') {
+        // 前端「即刻监控」按钮：立即生成最近 10 分钟监控快照并广播，回传 ack（带回 reqId）
+        // 懒加载避免与 monitorSnapshot 的循环依赖（monitorSnapshot 顶部 require 了 wsServer）
+        try {
+          // eslint-disable-next-line global-require
+          const monitorSnapshot = require('./service/monitorSnapshot');
+          const result = monitorSnapshot.triggerInstant();
+          sendTo(socket, {
+            type: 'monitor_instant_ack',
+            reqId: msg.reqId,
+            success: !!result.ok,
+            message: result.message || '',
+            data: result.snapshot || null,
+          });
+        } catch (e) {
+          sendTo(socket, {
+            type: 'monitor_instant_ack',
+            reqId: msg.reqId,
+            success: false,
+            message: e.message || '生成监控快照失败',
+          });
+        }
       }
     });
   });

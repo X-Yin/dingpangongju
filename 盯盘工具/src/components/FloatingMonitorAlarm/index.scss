@@ -38,8 +38,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    padding: 8px 10px;
+    gap: 4px;
+    padding: 8px 10px 9px;
 
     .fma-icon-wrap {
       display: flex;
@@ -56,12 +56,44 @@
       }
     }
 
+    // 「监控」二字本身即可点击：点击触发即刻监控（经 WS 通知后端立即计算最近 10 分钟数据并推送卡片）。
+    // 点击文字以外的区域（铃铛图标等）才打开抽屉——靠 onClick 的 stopPropagation 分隔两条路径。
     .fma-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
       font-size: 10px;
       font-weight: 700;
       color: #475569;
       line-height: 1;
       letter-spacing: 0.02em;
+      padding: 2px 5px;
+      border-radius: 6px;
+      transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+
+      .anticon {
+        font-size: 9px;
+        color: #e11d48;
+      }
+
+      &:hover {
+        color: #e11d48;
+        background: rgba(225, 29, 72, 0.08);
+        transform: translateY(-0.5px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      &.is-loading {
+        color: #7c3aed;
+
+        .anticon {
+          color: #7c3aed;
+        }
+      }
     }
   }
 }
@@ -86,6 +118,23 @@
 }
 
 .monitor-alarm-drawer {
+  // 半屏宽度（50vw / 72vw）的下限，避免小屏时三张并列卡片被压得过窄
+  .ant-drawer-content-wrapper {
+    min-width: 640px;
+  }
+
+  &.with-ai .ant-drawer-content-wrapper {
+    min-width: 920px;
+  }
+
+  // 抽屉整体背景：浅色高级感底纹（与专注交易页基调一致）
+  .ant-drawer-content {
+    background:
+      radial-gradient(900px 360px at 12% -6%, rgba(124, 58, 237, 0.05), transparent 60%),
+      radial-gradient(800px 320px at 92% -4%, rgba(225, 29, 72, 0.04), transparent 60%),
+      linear-gradient(165deg, #f7f9fc 0%, #f2f5f9 55%, #eef1f6 100%);
+  }
+
   .ant-drawer-header {
     border-bottom: 1px solid rgba(110, 126, 162, 0.1);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.42));
@@ -307,52 +356,87 @@
     text-align: center;
   }
 
-  // ==================== 10 分钟监控快照卡片 ====================
+  // ==================== 10 分钟监控快照卡片（抽屉外层白卡，模仿专注交易 .ob-module） ====================
   .fma-snap-card {
-    border: 1px solid rgba(157, 176, 207, 0.16);
-    border-radius: 16px;
-    padding: 12px 14px;
-    background: rgba(255, 255, 255, 0.72);
-    transition: all 0.24s ease;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 14px;
+    padding: 14px 16px 16px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -16px rgba(15, 23, 42, 0.14);
+    transition: border-color 0.24s ease, box-shadow 0.24s ease, transform 0.24s ease;
 
     &:hover {
-      border-color: rgba(105, 124, 161, 0.24);
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 10px 24px rgba(78, 102, 145, 0.08);
+      border-color: rgba(105, 124, 161, 0.32);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 18px 40px -18px rgba(15, 23, 42, 0.2);
+      transform: translateY(-1px);
     }
 
     &.is-mock {
-      border-color: rgba(250, 173, 20, 0.38);
-      background: linear-gradient(180deg, rgba(255, 251, 235, 0.9), rgba(255, 255, 255, 0.9));
+      border-color: rgba(250, 173, 20, 0.4);
+      background: linear-gradient(180deg, #fffbeb, #ffffff);
+    }
+
+    &.is-instant {
+      border-color: rgba(225, 29, 72, 0.3);
     }
   }
 
   .fma-snap-card-head {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 1px dashed rgba(157, 176, 207, 0.24);
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
   }
 
   .fma-snap-card-time {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-size: 13px;
+    gap: 6px;
+    font-size: 14px;
     font-weight: 800;
-    color: #12213a;
+    color: #0f172a;
     font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+
+    .anticon {
+      color: #64748b;
+      font-size: 13px;
+    }
   }
 
   .fma-snap-card-date {
     font-size: 11px;
-    color: #8a97ae;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  .fma-snap-card-badges {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .fma-snap-instant {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(135deg, #fb7185, #e11d48);
+    border-radius: 999px;
+    padding: 2px 9px;
+    box-shadow: 0 2px 6px rgba(225, 29, 72, 0.3);
+
+    .anticon {
+      font-size: 9px;
+    }
   }
 
   .fma-snap-mock {
-    margin-left: auto;
     font-size: 10px;
     font-weight: 800;
     color: #b45309;
@@ -366,6 +450,14 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+  }
+
+  // 抽屉：三模块横向并列，一行三张渐变卡（窄屏自动换行降为 2 / 1 列）
+  .fma-snap-body--row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(208px, 1fr));
+    gap: 12px;
+    align-items: stretch;
   }
 
   .fma-snap-section {
@@ -462,6 +554,26 @@
     font-weight: 600;
   }
 
+  // 重点板块名称高亮（包含关键词即高亮）
+  .fma-snap-name-text {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+    border-radius: 4px;
+
+    &.is-highlight {
+      color: #b45309;
+      font-weight: 800;
+      padding: 0 4px;
+      margin-left: -4px;
+      background: linear-gradient(90deg, rgba(250, 204, 21, 0.28), rgba(250, 173, 20, 0.05));
+      box-shadow: inset 0 -1px 0 rgba(250, 173, 20, 0.55);
+    }
+  }
+
   .fma-snap-val {
     flex-shrink: 0;
     font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
@@ -522,6 +634,13 @@
       color: rgba(255, 255, 255, 0.92);
     }
 
+    .fma-snap-name-text.is-highlight {
+      color: #fde68a;
+      background: linear-gradient(90deg, rgba(250, 204, 21, 0.32), rgba(250, 204, 21, 0.06));
+      box-shadow: inset 0 -1px 0 rgba(250, 204, 21, 0.68);
+      text-shadow: 0 0 10px rgba(250, 204, 21, 0.45);
+    }
+
     .fma-snap-val {
       &.up {
         color: #ff9c9c;
@@ -536,6 +655,243 @@
 
     .fma-snap-empty {
       color: rgba(255, 255, 255, 0.45);
+    }
+  }
+
+  // ==================== 抽屉三模块渐变卡片（模仿专注交易候选列表卡片 .ob-rank3-module） ====================
+  // 每张卡 = 渐变底 + 顶部高光 + 两张磨砂玻璃面板（领涨前5 / 领跌后5）+ 半透明排行行
+  .fma-mod-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border-radius: 16px;
+    padding: 12px 12px 10px;
+    color: #fff;
+    overflow: hidden;
+    box-shadow: 0 14px 30px -18px rgba(15, 23, 42, 0.45);
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 38px -18px rgba(15, 23, 42, 0.55);
+    }
+
+    // 顶部内高光，营造玻璃质感
+    &::before {
+      content: '';
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+      pointer-events: none;
+    }
+
+    // 三种色调：涨幅 rose、资金 violet、成交量 cyan
+    &.fma-mod-card--rose {
+      background: linear-gradient(140deg, #fb7185 0%, #e11d48 58%, #be123c 100%);
+    }
+
+    &.fma-mod-card--violet {
+      background: linear-gradient(140deg, #a78bfa 0%, #7c3aed 58%, #6d28d9 100%);
+    }
+
+    &.fma-mod-card--cyan {
+      background: linear-gradient(140deg, #22d3ee 0%, #0ea5e9 58%, #0284c7 100%);
+    }
+
+    .fma-mod-card-head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 10px;
+    }
+
+    .fma-mod-card-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 6px rgba(15, 23, 42, 0.18);
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .fma-mod-card-titles {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+    }
+
+    .fma-mod-card-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .fma-mod-card-hint {
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.72);
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .fma-mod-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    // 磨砂玻璃面板（领涨前5 / 领跌后5）
+    .fma-mod-panel {
+      min-width: 0;
+      border-radius: 12px;
+      padding: 8px 9px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 8px rgba(15, 23, 42, 0.14);
+    }
+
+    .fma-mod-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .fma-mod-panel-label {
+      position: relative;
+      padding-left: 9px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.92);
+      letter-spacing: 0.02em;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 11px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.85);
+      }
+    }
+
+    .fma-mod-panel--up .fma-mod-panel-label::before {
+      background: #fecdd3;
+    }
+
+    .fma-mod-panel--down .fma-mod-panel-label::before {
+      background: #bbf7d0;
+    }
+
+    .fma-mod-panel-count {
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.6);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .fma-mod-panel-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .fma-mod-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 7px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: background 0.18s ease, transform 0.18s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateX(2px);
+      }
+    }
+
+    .fma-mod-rank {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 17px;
+      height: 17px;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.18);
+      font-variant-numeric: tabular-nums;
+
+      &.is-top {
+        color: #fff;
+        background: linear-gradient(135deg, #fde68a, #f59e0b);
+        box-shadow: 0 1px 3px rgba(245, 158, 11, 0.45);
+      }
+    }
+
+    .fma-mod-name {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.92);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fma-mod-name-text.is-highlight {
+      color: #fff;
+      background: linear-gradient(90deg, rgba(250, 204, 21, 0.45), rgba(250, 204, 21, 0.12));
+      box-shadow: inset 0 -1px 0 rgba(250, 204, 21, 0.75);
+      border-radius: 3px;
+      padding: 0 3px;
+    }
+
+    .fma-mod-val {
+      flex: 0 0 auto;
+      font-size: 11.5px;
+      font-weight: 800;
+      font-family: 'DIN Alternate', 'SF Pro Display', 'PingFang SC', -apple-system, sans-serif;
+      font-variant-numeric: tabular-nums;
+
+      &.up {
+        color: #fff;
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+      }
+
+      &.down {
+        color: #d1fae5;
+      }
+    }
+
+    .fma-mod-empty {
+      padding: 8px 0;
+      text-align: center;
+      font-size: 10.5px;
+      color: rgba(255, 255, 255, 0.55);
     }
   }
 
@@ -716,15 +1072,14 @@
 }
 
 // ==================== 全局监控提示卡片（复用买点卡片的蓝紫玻璃渐变） ====================
+// 通过 portal 挂进 #gda-alert-stack（GlobalDiagnosisAlert 的 .gda-container），
+// 与买点/卖点卡纵向堆叠，不再单独 fixed 定位在左侧。
 .fma-monitor-pop {
-  position: fixed;
-  right: 456px;
-  bottom: 24px;
-  z-index: 2080;
+  position: relative;
   pointer-events: auto;
 
   .fma-monitor-card {
-    width: 460px;
+    width: 420px; // 与全局诊断卡同宽，堆叠时右边缘对齐
     max-height: calc(100vh - 48px);
   }
 
@@ -734,12 +1089,5 @@
 
   .gda-footer {
     padding: 9px 16px;
-  }
-}
-
-@media (max-width: 1100px) {
-  .fma-monitor-pop {
-    right: 24px;
-    bottom: 24px;
   }
 }

@@ -10,7 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
-const { isTradingDay, isMiddayBreak, isAfterMarketClose } = require('../utils');
+const { isTradingDay, isMiddayBreak, isAfterMarketClose, resolveAnalysisDate } = require('../utils');
 const { getBlockCategoryRatio } = require('./板块成交量占比计算/category_amount_money');
 const wsServer = require('../wsServer');
 
@@ -357,6 +357,61 @@ const runOnce = ({ mock = false } = {}) => {
     return snapshot;
 };
 
+// 三个分时缓存文件里最新一帧的 HH:MM（按连续交易分钟取最大）
+// 缓存只保留最近一个交易日的分时数据，故该时刻即「最新交易日的最近交易时间」
+const getLatestDataTime = () => {
+    const candidates = [];
+    const changeFrames = readJsonSafe(CHANGE_FILE, []);
+    if (Array.isArray(changeFrames)) changeFrames.forEach((f) => candidates.push(f && f.time));
+    const fundFrames = readJsonSafe(FUND_FILE, []);
+    if (Array.isArray(fundFrames)) fundFrames.forEach((f) => candidates.push(f && f.time));
+    const volPayload = readJsonSafe(VOLUME_FILE, {});
+    if (Array.isArray(volPayload.points)) volPayload.points.forEach((p) => candidates.push(p && p.time));
+
+    let latest = null;
+    let latestTm = -Infinity;
+    candidates.forEach((t) => {
+        const tm = toTradingMinute(t);
+        if (tm !== null && tm > latestTm) {
+            latestTm = tm;
+            latest = t;
+        }
+    });
+    return latest;
+};
+
+// 前端「即刻监控」按钮触发（2026-11-22 用户新增）：
+//   点击即立刻用本地分时缓存生成一次监控快照并广播，不必等到整 10 分钟调度。
+//   - 非交易时段（盘后 / 周末 / 节假日 / 午休 / 开盘前）也能生成：直接复用缓存里
+//     「最新一个交易日的最近交易时间」往前取 10 分钟；快照时间标签取该帧的真实
+//     交易时间（而非点击时刻），避免把周五数据标成周末时间；
+//   - 不足 10 分钟（无 10 分钟前基准点）时 buildSnapshot 返回空，提示数据不足；
+//   - 同一交易时点重复点击不重复落盘（snapshot.id = 日期+时分），但每次都重新广播弹卡；
+//   - 返回 { ok, message, snapshot } 供 WS 回执给前端。
+const triggerInstant = () => {
+    // 缓存里持有的是「最新一个交易日」的分时数据：
+    //   非交易日 / 交易日 09:30 前 → 上一个交易日；交易日盘中 / 盘后 → 当日。
+    const latestTradingDate = dayjs(resolveAnalysisDate(new Date())).format('YYYY-MM-DD');
+    const latestDataTime = getLatestDataTime();
+    if (!latestDataTime) {
+        return { ok: false, message: '当前分时缓存为空，暂无法生成监控快照' };
+    }
+    const snapshot = buildSnapshot({ date: latestTradingDate, time: latestDataTime });
+    if (!snapshot) {
+        return { ok: false, message: '当前分时数据不足（不足 10 分钟），暂无法生成监控快照' };
+    }
+    snapshot.instant = true;
+    const exists = readTodaySnapshots(snapshot.date).some((s) => s && s.id === snapshot.id);
+    if (!exists) appendSnapshot(snapshot);
+    // 即刻监控：每次点击都重新广播弹卡（已存在则不重复落盘）
+    broadcastSnapshot(snapshot);
+    const message = exists
+        ? `${snapshot.date} ${snapshot.time} 监控快照已存在，已重新推送`
+        : `已生成 ${snapshot.date} ${snapshot.time} 监控快照`;
+    console.log(`[monitorSnapshot] 即刻监控：${snapshot.date} ${snapshot.time} 快照已${exists ? '重新' : ''}推送`);
+    return { ok: true, message, snapshot };
+};
+
 // 调试 MOCK：优先使用实时缓存；数据不足时构造一份可展示的示例快照
 const runMock = () => {
     const snapshot = buildSnapshot() || buildFallbackMock();
@@ -435,6 +490,7 @@ module.exports = {
     stop,
     runOnce,
     runMock,
+    triggerInstant,
     buildSnapshot,
     appendSnapshot,
     getSnapshots,

@@ -25,6 +25,28 @@ const debugListeners = new Set();
 const activeCount = () => listeners.size + debugListeners.size;
 const isDebugType = (t) => typeof t === 'string' && t.startsWith('debug_');
 
+// ==================== 请求-回执（前端→后端→前端） ====================
+// 前端主动发消息并等待后端回传 ack（ack 需带回相同 reqId），用于「即刻监控」等需要结果反馈的触发。
+// ack 不走 notify 分发给普通订阅者，避免污染 lastByType / 触发无关组件。
+const ackWaiters = new Map(); // reqId -> { resolve, reject, timer }
+let reqSeq = 0;
+const genReqId = () => `r${Date.now().toString(36)}${(reqSeq += 1).toString(36)}`;
+
+export const sendRequest = (msg, { ackType, timeout = 12000 } = {}) => new Promise((resolve, reject) => {
+  ensureConnected();
+  const reqId = genReqId();
+  const timer = setTimeout(() => {
+    if (ackWaiters.delete(reqId)) reject(new Error(`等待${ackType || '回执'}超时，请稍后重试`));
+  }, timeout);
+  ackWaiters.set(reqId, { resolve, reject, timer });
+  const ok = sendRaw({ ...msg, reqId });
+  if (!ok) {
+    clearTimeout(timer);
+    ackWaiters.delete(reqId);
+    reject(new Error('WebSocket 未连接，请稍后重试'));
+  }
+});
+
 // ==================== 弹卡对账（2026-11-09 用户新增） ====================
 // 凡 open:true 的弹卡类广播，后端都会补全局唯一 aid 并登记（保留 12 小时，GET /pending_alerts 拉取）。
 // 前端若在广播瞬间不在线（页面未开 / WS 断连 / 服务重启）会错过弹卡；
@@ -151,6 +173,15 @@ function ensureConnected() {
       return;
     }
     if (!msg || !msg.type) return;
+    // 请求-回执：带 reqId 的 ack 直接交给对应等待者，不分发给普通订阅者 / 不写入 lastByType
+    if (msg.reqId && ackWaiters.has(msg.reqId)) {
+      const waiter = ackWaiters.get(msg.reqId);
+      ackWaiters.delete(msg.reqId);
+      clearTimeout(waiter.timer);
+      if (msg.success === false) waiter.reject(new Error(msg.message || '请求失败'));
+      else waiter.resolve(msg);
+      return;
+    }
     // debug 双向自检：后端主动推送 debug_ping → 前端自动回 debug_pong
     if (msg.type === 'debug_ping' && msg.src === 'server') {
       sendRaw({ type: 'debug_pong', seq: msg.seq, src: 'client' });
@@ -164,6 +195,12 @@ function ensureConnected() {
     connecting = false;
     socket = null;
     PUSH_TYPES.forEach((t) => { delete lastByType[t]; });
+    // 连接断开时拒绝所有在途请求，避免前端一直 loading
+    ackWaiters.forEach((waiter) => {
+      clearTimeout(waiter.timer);
+      waiter.reject(new Error('WebSocket 连接已断开'));
+    });
+    ackWaiters.clear();
     scheduleReconnect();
   };
   socket.onerror = () => { /* 随后触发 onclose，由 onclose 负责重连 */ };
@@ -246,6 +283,14 @@ export const subscribeEmotionResonancePush = (handler) => subscribePush('emotion
 //     change:{ up:[{name,value,delta}], down:[...] }, fund:{...}, volume:{...} } }
 //   前端由 FloatingMonitorAlarm 收到 open:true 时右下角弹监控卡片，并写入抽屉列表
 export const subscribeMonitorSnapshotPush = (handler) => subscribePush('monitor_snapshot', handler);
+
+// 「即刻监控」触发（2026-11-22 用户新增）：前端主动发 WS 消息，后端立即用最新分时缓存
+// 计算最近 10 分钟的板块涨幅 / 资金净流入 / 成交量占比排名，生成快照并经 monitor_snapshot 广播弹卡。
+// 返回 ack：{ success, message, data }；success=false 时 reject（message 为失败原因）。
+export const triggerInstantMonitor = () => sendRequest(
+  { type: 'monitor_instant' },
+  { ackType: 'monitor_instant_ack', timeout: 12000 }
+);
 
 // 本地广播：不经过后端 WS，直接把一条消息按推送协议分发给所有订阅者
 //   （默认补 open:true，供前端自产自销的监控触发 / 调试面板 MOCK 使用）
