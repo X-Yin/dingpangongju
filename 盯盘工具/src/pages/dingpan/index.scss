@@ -55,7 +55,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 8px;
+    padding: 6px 8px !important;
     border-radius: 10px;
     font-weight: 700;
     transition: all 0.22s ease;
@@ -247,7 +247,7 @@
     }
 
     .ant-card-body {
-      padding: 12px 14px !important;
+      padding: 4px 14px 12px 14px !important;
     }
     
     &.jingjia-card, &.zhudong-card, &.stock-card {

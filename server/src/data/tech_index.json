@@ -1493,5 +1493,42 @@
     "stockCount": 115,
     "algorithm": 2,
     "hasIce": true
+  },
+  {
+    "date": 20261123,
+    "changeSumResult": 3.95,
+    "baseEmotion": 13.11,
+    "pullbackPenalty": -45.82,
+    "avgChange": 1.86,
+    "stockCount": 115,
+    "algorithm": 2
+  },
+  {
+    "date": 20261124,
+    "changeSumResult": -6.44,
+    "baseEmotion": 12.22,
+    "pullbackPenalty": -93.32,
+    "avgChange": 1.86,
+    "stockCount": 117,
+    "algorithm": 2
+  },
+  {
+    "date": 20261125,
+    "changeSumResult": -54.28,
+    "baseEmotion": -35.2,
+    "pullbackPenalty": -95.4,
+    "avgChange": -5.43,
+    "stockCount": 117,
+    "algorithm": 2,
+    "hasIce": true
+  },
+  {
+    "date": 20261126,
+    "changeSumResult": -11.13,
+    "baseEmotion": 4.93,
+    "pullbackPenalty": -80.32,
+    "avgChange": 0.47,
+    "stockCount": 117,
+    "algorithm": 2
   }
 ]

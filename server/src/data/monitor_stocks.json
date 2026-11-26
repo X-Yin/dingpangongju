@@ -1460,5 +1460,27 @@
     "watchMarketCap": true,
     "watchPE": true,
     "addedAt": "2026-11-20 13:35:12"
+  },
+  {
+    "code": "sz002741",
+    "name": "光华科技",
+    "isImportant": false,
+    "blockName": "光刻胶",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": false,
+    "watchPE": true,
+    "addedAt": "2026-11-24 08:46:43"
+  },
+  {
+    "code": "sz300903",
+    "name": "科翔股份",
+    "isImportant": false,
+    "blockName": "pcb",
+    "riskScore": null,
+    "isTech": true,
+    "watchMarketCap": true,
+    "watchPE": true,
+    "addedAt": "2026-11-24 08:47:27"
   }
 ]

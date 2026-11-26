@@ -11,7 +11,7 @@ import { local_ip } from '../constant';
 const WS_URL = `ws://${local_ip}:3000/ws`;
 const RECONNECT_BASE_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
-const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'strategy_signal', 'emotion_resonance', 'buy_point_preheat', 'monitor_snapshot'];
+const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'strategy_signal', 'emotion_resonance', 'buy_point_preheat', 'monitor_snapshot', 'market_surge_alert'];
 
 let socket = null;
 let reconnectTimer = null;
@@ -283,6 +283,12 @@ export const subscribeEmotionResonancePush = (handler) => subscribePush('emotion
 //     change:{ up:[{name,value,delta}], down:[...] }, fund:{...}, volume:{...} } }
 //   前端由 FloatingMonitorAlarm 收到 open:true 时右下角弹监控卡片，并写入抽屉列表
 export const subscribeMonitorSnapshotPush = (handler) => subscribePush('monitor_snapshot', handler);
+
+// 大盘放量急拉 · 重点板块推送（后端判定条件 + 实时拉取板块数据后广播）
+//   { type:'market_surge_alert', ts, open:true, data:{ trigger:{ amountDiff, amountTotal, cyb, kcb, hitCyb, hitKcb, time },
+//     blocks:[{ blockName, avgChange, avgChange1mAgo, delta1m, stockCount, stocks }], historyTime } }
+//   前端 MarketSurgeAlert 收到 open:true 直接打开弹窗展示（数据已在后端准备完成）
+export const subscribeMarketSurgeAlertPush = (handler) => subscribePush('market_surge_alert', handler);
 
 // 「即刻监控」触发（2026-11-22 用户新增）：前端主动发 WS 消息，后端立即用最新分时缓存
 // 计算最近 10 分钟的板块涨幅 / 资金净流入 / 成交量占比排名，生成快照并经 monitor_snapshot 广播弹卡。

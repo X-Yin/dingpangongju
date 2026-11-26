@@ -201,6 +201,9 @@ const BLOCK_LINE_COLORS = [
   '#a0d911', '#2f54eb',
 ];
 
+// 板块涨幅「合并视图」默认叠加的板块关键词（按去空格小写包含匹配解析为真实板块名）
+const DEFAULT_MERGED_BLOCK_KEYWORDS = ['物理AI', 'AI局', '光模块', 'PCB', '证券', '银行', '半导体'];
+
 // 板块资金默认选中板块
 const DEFAULT_SELECTED_BLOCKS = [
   'PCB', '半导体概念', '光通信模块', '创新药', '银行Ⅱ', '存储芯片',
@@ -608,6 +611,259 @@ const BlockChangePartitionChart = ({ blockName, color, points, latest, delta10, 
   );
 };
 
+// 板块涨幅「合并视图」：多个板块的 avgChange 折线叠加在同一张 lightweight-charts 图中
+// 交互与板块资金 tab 的默认叠加折线图一致：crosshair tooltip + 右侧轴 label（悬浮 label 高亮对应折线、虚化其他）
+const BlockChangeMergedChart = ({ seriesList }) => {
+  const containerRef = useRef(null);
+  const chartRef = useRef(null);
+  const tooltipRef = useRef(null);
+  const seriesMapRef = useRef(new Map());
+  const infoListRef = useRef([]);
+  const lastValuesRef = useRef([]);
+  const [axisLabels, setAxisLabels] = useState([]);
+  const [hoveredBlock, setHoveredBlock] = useState(null);
+
+  // 计算右侧轴 label 位置：按每条折线最新值的 y 坐标定位，带最小间距防重叠
+  const updateAxisLabels = useCallback(() => {
+    const chart = chartRef.current;
+    const container = containerRef.current;
+    if (!chart || !container) return;
+    const height = container.clientHeight;
+    const labels = [];
+    infoListRef.current.forEach((info, idx) => {
+      const series = seriesMapRef.current.get(info.name);
+      const lastValue = lastValuesRef.current[idx];
+      if (!series || lastValue == null) return;
+      const y = series.priceToCoordinate(lastValue);
+      if (y == null) return;
+      labels.push({ name: info.name, color: info.color, value: lastValue, y });
+    });
+    labels.sort((a, b) => a.y - b.y);
+    const minGap = 18;
+    for (let i = 1; i < labels.length; i++) {
+      if (labels[i].y - labels[i - 1].y < minGap) {
+        labels[i].y = labels[i - 1].y + minGap;
+      }
+    }
+    labels.forEach(label => {
+      label.y = Math.max(10, Math.min(height - 10, label.y));
+    });
+    setAxisLabels(labels);
+  }, []);
+
+  // 悬浮高亮：选中的折线加粗，其他虚化（与板块资金折线图交互一致）
+  const applyHighlight = useCallback((blockName) => {
+    seriesMapRef.current.forEach((series, name) => {
+      const info = infoListRef.current.find(i => i.name === name);
+      if (!info) return;
+      if (blockName && name === blockName) {
+        series.applyOptions({ color: info.color, lineWidth: 3 });
+      } else if (blockName) {
+        series.applyOptions({ color: hexToRgba(info.color, 0.12), lineWidth: 1 });
+      } else {
+        series.applyOptions({ color: info.color, lineWidth: 2 });
+      }
+    });
+    requestAnimationFrame(() => updateAxisLabels());
+  }, [updateAxisLabels]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+    const chart = createChart(container, {
+      layout: {
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: '#6b7890',
+        fontSize: 11,
+      },
+      width: container.clientWidth,
+      height: container.clientHeight,
+      grid: {
+        vertLines: { color: 'rgba(18, 33, 58, 0.04)' },
+        horzLines: { color: 'rgba(18, 33, 58, 0.04)' },
+      },
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+        borderColor: 'rgba(18, 33, 58, 0.08)',
+        tickMarkFormatter: (time) => dayjs.unix(time).format('HH:mm'),
+      },
+      localization: {
+        timeFormatter: (time) => dayjs.unix(time).format('HH:mm'),
+      },
+      rightPriceScale: {
+        borderColor: 'rgba(18, 33, 58, 0.08)',
+        autoScale: true,
+        minimumWidth: 130,
+        scaleMargins: { top: 0.1, bottom: 0.1 },
+      },
+      handleScroll: false,
+      handleScale: false,
+      crosshair: {
+        mode: 1,
+        vertLine: { width: 1, color: '#94a3b8', style: LineStyle.Dotted, labelBackgroundColor: '#1e293b' },
+        horzLine: { width: 1, color: '#94a3b8', style: LineStyle.Dotted, labelBackgroundColor: '#1e293b' },
+      },
+    });
+    chartRef.current = chart;
+
+    const resize = () => {
+      chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+      requestAnimationFrame(() => updateAxisLabels());
+    };
+    let observer = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(resize);
+      observer.observe(container);
+    } else {
+      window.addEventListener('resize', resize);
+    }
+
+    // tooltip 悬浮显示（口径与板块资金折线图一致，值为 % 涨跌幅）
+    const tooltip = tooltipRef.current;
+    const TOOLTIP_MARGIN = 15;
+    chart.subscribeCrosshairMove(param => {
+      if (
+        !param.point || !param.time ||
+        param.point.x < 0 || param.point.x > container.clientWidth ||
+        param.point.y < 0 || param.point.y > container.clientHeight
+      ) {
+        tooltip.style.display = 'none';
+      } else {
+        tooltip.style.display = 'block';
+        const seriesData = [];
+        seriesMapRef.current.forEach((series, name) => {
+          const data = param.seriesData.get(series);
+          const info = infoListRef.current.find(i => i.name === name);
+          if (data && info) {
+            seriesData.push({ name, value: data.value, color: info.color });
+          }
+        });
+        seriesData.sort((a, b) => b.value - a.value);
+        const timeStr = typeof param.time === 'number' ? dayjs.unix(param.time).format('HH:mm:ss') : param.time;
+        let content = `<div class="block-tooltip-header">${timeStr}</div>`;
+        seriesData.forEach(item => {
+          const sign = item.value > 0 ? '+' : '';
+          content += `<div class="block-tooltip-item"><span class="block-tooltip-dot" style="background: ${item.color}"></span><span class="block-tooltip-name">${item.name}</span><span class="block-tooltip-value" style="color: ${item.color}">${sign}${item.value.toFixed(2)}%</span></div>`;
+        });
+        tooltip.innerHTML = content;
+        const tw = tooltip.offsetWidth;
+        const th = tooltip.offsetHeight;
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        let left;
+        if (param.point.x + TOOLTIP_MARGIN + tw > cw) {
+          left = param.point.x - TOOLTIP_MARGIN - tw;
+        } else {
+          left = param.point.x + TOOLTIP_MARGIN;
+        }
+        if (left < 0) left = 4;
+        if (left + tw > cw) left = cw - tw - 4;
+        let top = param.point.y - th / 2;
+        if (top < 4) top = 4;
+        if (top + th > ch - 4) top = ch - th - 4;
+        tooltip.style.left = `${left}px`;
+        tooltip.style.right = 'auto';
+        tooltip.style.top = `${top}px`;
+      }
+    });
+
+    return () => {
+      if (observer) observer.disconnect();
+      else window.removeEventListener('resize', resize);
+      chart.remove();
+      chartRef.current = null;
+      seriesMapRef.current = new Map();
+      infoListRef.current = [];
+      lastValuesRef.current = [];
+    };
+  }, [updateAxisLabels]);
+
+  // seriesList 变化（增删板块/轮询更新）：移除多余 series、新增缺失 series、刷新数据
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    const map = seriesMapRef.current;
+    const nameSet = new Set(seriesList.map(s => s.name));
+    Array.from(map.entries()).forEach(([name, series]) => {
+      if (!nameSet.has(name)) {
+        chart.removeSeries(series);
+        map.delete(name);
+      }
+    });
+    const infoList = [];
+    const lastValues = [];
+    seriesList.forEach((s) => {
+      let series = map.get(s.name);
+      if (!series) {
+        series = chart.addLineSeries({
+          color: s.color,
+          lineWidth: 2,
+          priceLineVisible: false,
+          lastValueVisible: false,
+          priceFormat: {
+            type: 'custom',
+            formatter: (value) => `${value > 0 ? '+' : ''}${value.toFixed(2)}%`,
+          },
+        });
+        map.set(s.name, series);
+      } else {
+        series.applyOptions({ color: s.color, lineWidth: hoveredBlock === s.name ? 3 : 2 });
+      }
+      series.setData(s.points);
+      infoList.push({ name: s.name, color: s.color });
+      lastValues.push(s.points.length > 0 ? s.points[s.points.length - 1].value : null);
+    });
+    infoListRef.current = infoList;
+    lastValuesRef.current = lastValues;
+    // 时间轴随实际数据动态伸缩（与叠加分时观察一致）：折线最右端紧挨右侧 label，不锁全天范围
+    chart.timeScale().fitContent();
+    chart.timeScale().applyOptions({
+      fixLeftEdge: true,
+      fixRightEdge: true,
+      lockVisibleTimeRangeOnResize: true,
+      rightOffset: 0,
+    });
+    requestAnimationFrame(() => updateAxisLabels());
+  }, [seriesList, updateAxisLabels, hoveredBlock]);
+
+  return (
+    <div className="block-change-merged-wrapper">
+      <div ref={containerRef} className="block-change-merged-chart" />
+      <div ref={tooltipRef} className="block-tooltip" />
+      <div className="block-right-axis-labels">
+        {axisLabels.map(label => (
+          <div
+            key={label.name}
+            className={`block-right-label ${hoveredBlock === label.name ? 'label-highlighted' : ''} ${hoveredBlock && hoveredBlock !== label.name ? 'label-dimmed' : ''}`}
+            style={{ top: `${label.y}px`, borderColor: label.color }}
+            onMouseEnter={() => { setHoveredBlock(label.name); applyHighlight(label.name); }}
+            onMouseLeave={() => { setHoveredBlock(null); applyHighlight(null); }}
+          >
+            <span className="block-right-label-name" style={{ color: label.color }}>
+              {label.name}
+            </span>
+            <span className={`block-right-label-value ${label.value > 0 ? 'up' : label.value < 0 ? 'down' : 'neutral'}`}>
+              {`${label.value > 0 ? '+' : ''}${label.value.toFixed(2)}%`}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="block-change-merged-legend">
+        {seriesList.map(s => (
+          <div key={s.name} className="block-change-merged-legend-item">
+            <span className="legend-dot" style={{ background: s.color }} />
+            <span className="legend-name" style={{ color: s.color }}>{s.name}</span>
+            <span className={`legend-value ${s.latest >= 0 ? 'up' : 'down'}`}>
+              {s.latest === null || s.latest === undefined ? '--' : `${s.latest > 0 ? '+' : ''}${s.latest.toFixed(2)}%`}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const MainFundContent = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -650,6 +906,10 @@ export const MainFundContent = () => {
   const [blockChangeSearch, setBlockChangeSearch] = useState('');
   // 窗口涨幅排序：''=不排序 / 'up10'=按 10min 前涨升降序 / 'up30'=按 30min 前涨升降序
   const [blockChangeWindowSort, setBlockChangeWindowSort] = useState('');
+  // 板块涨幅子视图：'split'=分拆（每板块独立折线图卡片）/ 'merged'=合并（多板块叠加同一折线图）；仅排序为「默认」时可用
+  const [blockChangeViewMode, setBlockChangeViewMode] = useState('split');
+  // 合并视图板块列表（存关键词/确切名，渲染前解析为真实板块名）
+  const [blockChangeMergedBlocks, setBlockChangeMergedBlocks] = useState(DEFAULT_MERGED_BLOCK_KEYWORDS);
   // 板块涨幅 tab 手动刷新中状态（强制刷新重点板块成分股行情后重算涨幅）
   const [blockChangeRefreshing, setBlockChangeRefreshing] = useState(false);
   // 双击空格刷新的信号量：递增以触发对应 tab 子组件刷新
@@ -1472,62 +1732,70 @@ export const MainFundContent = () => {
     return 120 + (totalMin - 13 * 60);
   }, []);
 
+  // 为单个板块构建清洗后的 1min 折线点（排序去重 + 孤立突刺平滑），分拆/合并两种视图共用
+  const buildBlockChangePoints = useCallback((blockName) => {
+    if (!blockChangeSeriesData.length) return [];
+    const today = dayjs().format('YYYY-MM-DD');
+    const rawPoints = [];
+    blockChangeSeriesData.forEach(frame => {
+      const blockItem = (frame.blockData || []).find(b => b.blockName === blockName);
+      if (!blockItem) return;
+      const [hh, mm] = String(frame.time).split(':').map(Number);
+      if (Number.isNaN(hh) || Number.isNaN(mm)) return;
+      const tMin = toTradingMinuteFromHHmm(frame.time);
+      if (tMin === null) return;
+      rawPoints.push({
+        tradingMinute: tMin,
+        time: dayjs(`${today} ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00`).unix(),
+        value: Number(blockItem.avgChange),
+        label: frame.time,
+      });
+    });
+    if (!rawPoints.length) return [];
+    rawPoints.sort((a, b) => a.tradingMinute - b.tradingMinute);
+    // 去重相邻 tradingMinute
+    const dedup = [];
+    for (const p of rawPoints) {
+      if (dedup.length && dedup[dedup.length - 1].tradingMinute === p.tradingMinute) dedup[dedup.length - 1] = p;
+      else dedup.push(p);
+    }
+
+    // === 孤立突刺平滑（数据清洗兜底） ===
+    // 后端理论上不会再往分时帧写 0 了，但历史数据里已存在的 v 形突刺需要前端拍平。
+    // 只处理"单个点明显异常、前后邻居都正常"的场景：
+    //   ① 有前后邻居（length >= 3）
+    //   ② 同时满足相对差 + 绝对差双重门限（避免正常连续波动被误杀）
+    //   ③ 用前后邻居的**中位数**替换（中位数比均值抗脏点）
+    // 门限经验值：相对差 150% + 绝对差 2%，适合 avgChange 这种通常在 -5~+8 范围的指标
+    const cleaned = [...dedup];
+    const REL_THRESHOLD = 1.5;
+    const ABS_THRESHOLD = 2.0;
+    for (let i = 1; i < cleaned.length - 1; i++) {
+      const prev = cleaned[i - 1].value;
+      const cur = cleaned[i].value;
+      const next = cleaned[i + 1].value;
+      const diffPrev = Math.abs(cur - prev);
+      const diffNext = Math.abs(cur - next);
+      const relPrev = diffPrev / Math.max(Math.abs(prev), 0.01);
+      const relNext = diffNext / Math.max(Math.abs(next), 0.01);
+      const isSpike =
+        diffPrev > ABS_THRESHOLD && diffNext > ABS_THRESHOLD &&
+        relPrev > REL_THRESHOLD && relNext > REL_THRESHOLD;
+      if (isSpike) {
+        const median = [prev, next].sort((a, b) => a - b)[1];
+        cleaned[i] = { ...cleaned[i], value: median };
+      }
+    }
+    return cleaned;
+  }, [blockChangeSeriesData, toTradingMinuteFromHHmm]);
+
   // 板块涨幅 Tab：为每个命中板块构建 1min 折线点 + 计算 latest 与 N 分钟前的涨升差值
   const blockChangePartitionData = useMemo(() => {
-    if (!blockChangeMatchedBlocks.length || !blockChangeSeriesData.length) return [];
-    const today = dayjs().format('YYYY-MM-DD');
+    if (!blockChangeMatchedBlocks.length) return [];
     return blockChangeMatchedBlocks.map((blockName) => {
-      const rawPoints = [];
-      blockChangeSeriesData.forEach(frame => {
-        const blockItem = (frame.blockData || []).find(b => b.blockName === blockName);
-        if (!blockItem) return;
-        const [hh, mm] = String(frame.time).split(':').map(Number);
-        if (Number.isNaN(hh) || Number.isNaN(mm)) return;
-        const tMin = toTradingMinuteFromHHmm(frame.time);
-        if (tMin === null) return;
-        rawPoints.push({
-          tradingMinute: tMin,
-          time: dayjs(`${today} ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00`).unix(),
-          value: Number(blockItem.avgChange),
-          label: frame.time,
-        });
-      });
-      if (!rawPoints.length) {
+      const cleaned = buildBlockChangePoints(blockName);
+      if (!cleaned.length) {
         return { name: blockName, points: [], latest: null, delta10: null, delta30: null };
-      }
-      rawPoints.sort((a, b) => a.tradingMinute - b.tradingMinute);
-      // 去重相邻 tradingMinute
-      const dedup = [];
-      for (const p of rawPoints) {
-        if (dedup.length && dedup[dedup.length - 1].tradingMinute === p.tradingMinute) dedup[dedup.length - 1] = p;
-        else dedup.push(p);
-      }
-
-      // === 孤立突刺平滑（数据清洗兜底） ===
-      // 后端理论上不会再往分时帧写 0 了，但历史数据里已存在的 v 形突刺需要前端拍平。
-      // 只处理"单个点明显异常、前后邻居都正常"的场景：
-      //   ① 有前后邻居（length >= 3）
-      //   ② 同时满足相对差 + 绝对差双重门限（避免正常连续波动被误杀）
-      //   ③ 用前后邻居的**中位数**替换（中位数比均值抗脏点）
-      // 门限经验值：相对差 150% + 绝对差 2%，适合 avgChange 这种通常在 -5~+8 范围的指标
-      const cleaned = [...dedup];
-      const REL_THRESHOLD = 1.5;
-      const ABS_THRESHOLD = 2.0;
-      for (let i = 1; i < cleaned.length - 1; i++) {
-        const prev = cleaned[i - 1].value;
-        const cur = cleaned[i].value;
-        const next = cleaned[i + 1].value;
-        const diffPrev = Math.abs(cur - prev);
-        const diffNext = Math.abs(cur - next);
-        const relPrev = diffPrev / Math.max(Math.abs(prev), 0.01);
-        const relNext = diffNext / Math.max(Math.abs(next), 0.01);
-        const isSpike =
-          diffPrev > ABS_THRESHOLD && diffNext > ABS_THRESHOLD &&
-          relPrev > REL_THRESHOLD && relNext > REL_THRESHOLD;
-        if (isSpike) {
-          const median = [prev, next].sort((a, b) => a - b)[1];
-          cleaned[i] = { ...cleaned[i], value: median };
-        }
       }
 
       // 回溯函数：在 tradingMinute 维度上向前找 targetMinute 最近的那帧
@@ -1556,7 +1824,56 @@ export const MainFundContent = () => {
         delta30: base30 ? latestPoint.value - base30.value : null,
       };
     });
-  }, [blockChangeMatchedBlocks, blockChangeSeriesData, toTradingMinuteFromHHmm]);
+  }, [blockChangeMatchedBlocks, buildBlockChangePoints]);
+
+  // 合并视图：把板块关键词解析为真实板块名（精确匹配优先，否则按去空格小写包含匹配），并按名称去重
+  const blockChangeMergedResolved = useMemo(() => {
+    const resolveName = (keyword) => {
+      if (blockChangeAllBlocks.includes(keyword)) return keyword;
+      const kw = keyword.replace(/\s+/g, '').toLowerCase();
+      return blockChangeAllBlocks.find(b => b.replace(/\s+/g, '').toLowerCase().includes(kw)) || null;
+    };
+    const seen = new Set();
+    const result = [];
+    blockChangeMergedBlocks.forEach((keyword) => {
+      const name = resolveName(keyword);
+      if (name && !seen.has(name)) {
+        seen.add(name);
+        result.push({ keyword, name });
+      }
+    });
+    return result;
+  }, [blockChangeMergedBlocks, blockChangeAllBlocks]);
+
+  // 合并视图折线数据：仅在「分拆/合并 = 合并」且排序为「默认」时计算
+  const blockChangeMergedSeries = useMemo(() => {
+    if (blockChangeViewMode !== 'merged' || blockChangeWindowSort) return [];
+    return blockChangeMergedResolved.map((item, idx) => {
+      const cleaned = buildBlockChangePoints(item.name);
+      return {
+        name: item.name,
+        keyword: item.keyword,
+        color: BLOCK_LINE_COLORS[idx % BLOCK_LINE_COLORS.length],
+        points: cleaned.map(p => ({ time: p.time, value: p.value })),
+        latest: cleaned.length ? cleaned[cleaned.length - 1].value : null,
+      };
+    });
+  }, [blockChangeViewMode, blockChangeWindowSort, blockChangeMergedResolved, buildBlockChangePoints]);
+
+  // 合并视图：移除某个板块（按解析映射反查其对应的板块关键词，精确删除）
+  const handleRemoveMergedBlock = useCallback((resolvedName) => {
+    const keywordsFor = blockChangeMergedResolved
+      .filter(r => r.name === resolvedName)
+      .map(r => r.keyword);
+    setBlockChangeMergedBlocks(prev => prev.filter(keyword => !keywordsFor.includes(keyword)));
+  }, [blockChangeMergedResolved]);
+
+  // 排序切到 10min/30min 时强制回到分拆视图（合并视图仅默认排序下可用）
+  useEffect(() => {
+    if (blockChangeWindowSort !== '') {
+      setBlockChangeViewMode('split');
+    }
+  }, [blockChangeWindowSort]);
 
   // 最终渲染清单：名字命中 → 可选排序（全部展示，不截断）→ 重新分配颜色
   const blockChangeRenderedData = useMemo(() => {
@@ -2315,6 +2632,8 @@ export const MainFundContent = () => {
     const latestFrame = blockChangeSeriesData.length ? blockChangeSeriesData[blockChangeSeriesData.length - 1] : null;
     const latestFrameTime = latestFrame?.time || '--';
     const renderedItems = blockChangeRenderedData;
+    // 合并视图仅默认排序下可用；切到 10min/30min 排序时强制分拆
+    const blockChangeEffectiveViewMode = blockChangeWindowSort ? 'split' : blockChangeViewMode;
 
     return (
       <div className="history-content">
@@ -2328,6 +2647,27 @@ export const MainFundContent = () => {
                 </div>
               </div>
               <div className="chart-right-section" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <div className="block-change-window-buttons">
+                  <span className="block-change-window-label">展示：</span>
+                  <div className="block-change-window-group">
+                    <Button
+                      size="small"
+                      type={blockChangeEffectiveViewMode === 'split' ? 'primary' : 'default'}
+                      onClick={() => setBlockChangeViewMode('split')}
+                    >
+                      分拆
+                    </Button>
+                    <Button
+                      size="small"
+                      type={blockChangeEffectiveViewMode === 'merged' ? 'primary' : 'default'}
+                      onClick={() => setBlockChangeViewMode('merged')}
+                      disabled={blockChangeWindowSort !== ''}
+                      title={blockChangeWindowSort !== '' ? '合并视图仅在排序为「默认」时可用' : undefined}
+                    >
+                      合并
+                    </Button>
+                  </div>
+                </div>
                 <div className="block-change-window-buttons">
                   <span className="block-change-window-label">排序：</span>
                   <div className="block-change-window-group">
@@ -2388,7 +2728,7 @@ export const MainFundContent = () => {
               {blockChangeAllBlocks.length > 0 && (
                 <span className="block-change-search-hint">
                   共 {blockChangeAllBlocks.length} 个板块 ·
-                  当前展示 <b style={{ color: '#f59e0b' }}>{renderedItems.length}</b>
+                  当前展示 <b style={{ color: '#f59e0b' }}>{blockChangeEffectiveViewMode === 'merged' ? blockChangeMergedSeries.length : renderedItems.length}</b>
                   {blockChangeWindowSort
                     ? <> · 按 <b style={{ color: '#22c55e' }}>{blockChangeWindowSort === 'up10' ? '10' : '30'}min 前涨升</b> 排序</>
                     : null}
@@ -2396,7 +2736,55 @@ export const MainFundContent = () => {
               )}
             </div>
 
-            {/* 单板块折线图卡片网格（全部命中板块） */}
+            {/* 合并视图：板块管理（tag 列表 + 添加）+ 多板块叠加折线图 */}
+            {blockChangeEffectiveViewMode === 'merged' ? (
+              <>
+                <div className="block-change-merged-toolbar">
+                  <div className="block-tags block-tags-compact">
+                    {blockChangeMergedSeries.map(item => (
+                      <div key={item.name} className="block-tag-item">
+                        <span className="block-tag-name" style={{ color: item.color }}>{item.name}</span>
+                        <span className={`block-tag-money ${item.latest > 0 ? 'up' : item.latest < 0 ? 'down' : 'neutral'}`}>
+                          {item.latest === null || item.latest === undefined ? '--' : `${item.latest > 0 ? '+' : ''}${item.latest.toFixed(2)}%`}
+                        </span>
+                        <span className="block-tag-close" onClick={() => handleRemoveMergedBlock(item.name)}>
+                          <CloseOutlined />
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <Select
+                    showSearch
+                    value={undefined}
+                    placeholder="+ 添加板块"
+                    style={{ minWidth: 160, flexShrink: 0 }}
+                    size="small"
+                    optionFilterProp="value"
+                    onSelect={(name) => {
+                      if (blockChangeMergedBlocks.includes(name)) return;
+                      setBlockChangeMergedBlocks(prev => [...prev, name]);
+                    }}
+                  >
+                    {blockChangeAllBlocks
+                      .filter(name => !blockChangeMergedResolved.some(r => r.name === name))
+                      .map(name => (
+                        <Option key={name} value={name}>{name}</Option>
+                      ))}
+                  </Select>
+                </div>
+
+                <div className="block-change-merged-stage" style={{ marginTop: 12 }}>
+                  {blockChangeLoading && blockChangeSeriesData.length === 0 ? (
+                    <div className="table-empty">加载中...</div>
+                  ) : blockChangeMergedSeries.length === 0 ? (
+                    <div className="table-empty">暂无板块，请在上方添加</div>
+                  ) : (
+                    <BlockChangeMergedChart seriesList={blockChangeMergedSeries} />
+                  )}
+                </div>
+              </>
+            ) : (
+            /* 分拆视图：单板块折线图卡片网格（全部命中板块） */
             <div className="block-partition-stage" style={{ marginTop: 16 }}>
               {blockChangeLoading && renderedItems.length === 0 ? (
                 <div className="table-empty">加载中...</div>
@@ -2421,6 +2809,7 @@ export const MainFundContent = () => {
                 </div>
               )}
             </div>
+            )}
           </div>
         </div>
       </div>

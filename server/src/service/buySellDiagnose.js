@@ -51,8 +51,6 @@ const { locateCrashSellPoint, describeCrashSell } = require('./buySellBacktest/e
 // 状态落盘 emo_quick_fund_gate.json，科技进攻与攻防兼备（tech 腿）买点诊断共用
 const { getLiveFundInflowThreshold, getTechHalfPositionState } = require('./emoQuickFundGateLive');
 const { EMO_QUICK_FUND_INFLOW_BASE } = require('./buySellBacktest/constants');
-const { isOverseasComputeWatchlistStock, EMO_DOMESTIC_ONLY_FROM_DATE } = require('./buySellBacktest/engine/pickHelpers');
-
 const stockDataPath = path.resolve(__dirname, '../data/stockData.json');
 const monitorAlarmsPath = path.resolve(__dirname, '../data/monitor_alarms.json');
 const dapanDataPath = path.resolve(__dirname, '../data/dapanData.json');
@@ -3380,11 +3378,7 @@ const buildTopGainersByMarket = async (targetDate = null, limit = TOP_GAINERS_PE
   // 自选股榜单仅纳入科技股（isTech !== false，与全站「自选股科技股」口径一致）；
   // 2026-10-22 起涨幅榜展示全部科技自选股：估值禁买（流通市值 < 200 亿 / 市盈率亏损）个股不再从榜单剔除，
   // 只在名称后标注原因，且仍不进入买点候选
-  // 2026-11-14 同步回测：自 2026-11-01 起，线上科技进攻模式剔除海外算力产业链个股
-  // （CPO/PCB/CCL/AI电源/光芯片/光模块/电子布/树脂/铜箔/MPO/算力租赁/光纤/光通信/液冷），仅保留国产算力方向
-  const emoDomesticOnly = targetDateStr >= EMO_DOMESTIC_ONLY_FROM_DATE;
-  const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false
-    && !(emoDomesticOnly && isOverseasComputeWatchlistStock(s.code)));
+  const monitorStocks = getMonitorStocks().filter(s => s && s.code && s.isTech !== false);
   // 指数门禁 / 两个指数分时 / 估值快照互相独立，四者并行（2026-11-15 提速）
   const [, gate, cybIdxTline, starIdxTline] = await Promise.all([
     ensureWatchlistValuation(),

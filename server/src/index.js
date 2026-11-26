@@ -19,7 +19,7 @@ const axios = require('axios');
 const { filterUnNormalDaPanData, getAllDaPanData } = require('./service/dapan');
 const { filterUnNormalStockData, getSingleStockData, getSingleStockTlineData, getSingleStockTlineDataByDate, getAllStockData, getJiSuYiDongRankData, triggerUpdateStockData, refreshStockData, getOpeningPrices, getStockValuation } = require('./service/stock');
 const { analyzeStockHistory } = require('./service/stockHistoryAnalysis');
-const { getBlockData, refreshBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock, getBlockHistory, getBlockDayHistory, getBlockAvgChangeHistory, updateBlockDayHistory, getBlockMoneyDayHistory, updateBlockMoneyDayHistory } = require('./service/block');
+const { getBlockData, getBlocksRealtimeData, refreshBlockData, getTopAndBottomBlockData, getCurrentDayHotBlock, getBlockHistory, getBlockDayHistory, getBlockAvgChangeHistory, updateBlockDayHistory, getBlockMoneyDayHistory, updateBlockMoneyDayHistory } = require('./service/block');
 // const { diagnose } = require('./service/diagnose');
 const { getJingJiaQiangChouData } = require('./service/jingjiaqiangchou');
 const { getKaiPanZhuDongData, getKaiPanHighChangeStocks } = require('./service/kaipanzhudong');
@@ -154,6 +154,7 @@ const debugMock = require('./service/debugMock');
 // 盘中情绪共振监测（大盘情绪温度 ≥60 且板块全面高潮/一致加速时 WS 广播）
 const emotionResonance = require('./service/emotionResonance');
 const wsServer = require('./wsServer');
+const marketSurgeAlert = require('./service/marketSurgeAlert');
 const { getThsHotRank } = require('./service/thsHotRank');
 
 
@@ -417,6 +418,30 @@ app.post('/api/key_blocks', (req, res) => {
   } catch (e) {
     console.error('保存重点板块失败:', e.message);
     res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 指定板块实时涨幅（大盘放量急拉全局弹窗用）：不落盘、无 sleep、全部板块并行，
+// 成分股跨板块去重后统一并发拉取，尽量以最快速度返回
+app.get('/api/key_blocks_realtime', async (req, res) => {
+  try {
+    const names = String(req.query.names || '')
+      .split(',')
+      .map((n) => n.trim())
+      .filter(Boolean);
+    if (names.length === 0) {
+      return res.status(400).json({ success: false, message: '缺少 names 参数（逗号分隔的板块名）' });
+    }
+    const result = await getBlocksRealtimeData(names);
+    res.json({
+      success: true,
+      data: result.blocks,
+      historyTime: result.historyTime,
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('获取重点板块实时涨幅失败:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -6291,6 +6316,8 @@ const server = app.listen(port, () => {
   sellPointPushService.start();
   // 10 分钟监控：交易日每整 10 分钟读取本地分时缓存生成快照，写入当日缓存并经 WS 推送前端弹卡
   monitorSnapshot.start();
+  // 大盘放量急拉监控：后端判定条件并实时拉取重点板块数据，全部就绪后经 WS 推送前端直接弹窗
+  marketSurgeAlert.start();
   // 策略中心轮询：新命中经 WS（type:'strategy_signal'）推送前端全局卡片 + 登记 pending_alerts 对账。
   // 必须在本进程启动——WS 服务（wsServer.attach）只挂载在 index.js；之前在 poll.js 进程里
   // broadcast 因 wss 为 null 静默空转，导致记录写入但全局卡片/对账补弹均收不到（2026-11-10 修复）
@@ -6320,6 +6347,7 @@ const shutdown = (signal) => {
   try { sellPointPushService.stop(); } catch (e) { /* 忽略 */ }
   try { washFusionLive.stop(); } catch (e) { /* 忽略 */ }
   try { monitorSnapshot.stop(); } catch (e) { /* 忽略 */ }
+  try { marketSurgeAlert.stop(); } catch (e) { /* 忽略 */ }
   try { wsServer.close(); } catch (e) { /* 忽略 */ }
   server.close(() => process.exit(0));
   // 兜底：3s 内未能正常关闭则强制退出

@@ -40,3 +40,61 @@
 *::-webkit-scrollbar-thumb:active {
   background: rgba(71, 85, 105, 0.52);
 }
+
+// ================================================================
+// 全局 Toast（antd message）· 主题色透明玻璃胶囊皮肤
+// 呼应全局"果冻玻璃风"：以当前主题色为底的毛玻璃胶囊 + 白色文字
+// 随 App 动态切换的 --theme-color / --theme-color-rgb 自动变色
+// 所有 message.success / error / warning / info / loading 生效
+// ================================================================
+
+body .ant-message {
+  // 顶部留一点呼吸感（antd 默认 8px）
+  &.ant-message-top {
+    top: 20px;
+  }
+
+  // ---------- 胶囊主体：主题色透明玻璃 ----------
+  .ant-message-notice,
+  .ant-message-notice-success,
+  .ant-message-notice-error,
+  .ant-message-notice-warning,
+  .ant-message-notice-info,
+  .ant-message-notice-loading {
+    padding: 8px 22px;
+    border-radius: 999px;
+    // 玻璃本体：接近实色的主题色渐变，保留轻微通透感
+    background: linear-gradient(
+      135deg,
+      rgba(var(--theme-color-rgb, 22, 119, 255), 0.96) 0%,
+      rgba(var(--theme-color-rgb, 22, 119, 255), 0.82) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    box-shadow:
+      0 8px 32px rgba(var(--theme-color-rgb, 22, 119, 255), 0.35),
+      0 2px 10px rgba(var(--theme-color-rgb, 22, 119, 255), 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -2px 8px rgba(255, 255, 255, 0.12);
+    transition: box-shadow 0.3s ease;
+  }
+
+  // ---------- 文案：白色 + 细腻排版 ----------
+  .ant-message-notice-title {
+    color: #ffffff;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  }
+
+  // ---------- 图标：统一白色 + 柔和微光 ----------
+  .ant-message-notice-icon.ant-message-notice-icon-success,
+  .ant-message-notice-icon.ant-message-notice-icon-error,
+  .ant-message-notice-icon.ant-message-notice-icon-warning,
+  .ant-message-notice-icon.ant-message-notice-icon-info,
+  .ant-message-notice-icon.ant-message-notice-icon-loading {
+    color: #ffffff;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
+  }
+}

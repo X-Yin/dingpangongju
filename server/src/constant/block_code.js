@@ -2543,5 +2543,40 @@ exports.default = [
         "blockName": "华为",
         "code": "sz000988",
         "name": "华工科技"
+    },
+    {
+        "blockName": "智能驾驶",
+        "code": "sh600611",
+        "name": "大众交通",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "智能驾驶",
+        "code": "sz002703",
+        "name": "浙江世宝",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "智能驾驶",
+        "code": "sh603179",
+        "name": "新泉股份",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "智能驾驶",
+        "code": "sz002920",
+        "name": "德赛西威",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "智能驾驶",
+        "code": "sh603786",
+        "name": "科博达",
+        "tag": "进攻"
+    },
+    {
+        "blockName": "光刻胶",
+        "code": "sz002741",
+        "name": "光华科技"
     }
 ]

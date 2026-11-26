@@ -16,7 +16,8 @@ const PENDING_TTL_MS = 12 * 3600 * 1000;
 const PENDING_MAX = 200;
 let pendingAlerts = [];
 // 10 分钟监控快照只要求「收到即弹卡」，不参与断线对账补弹（否则重连会补弹大量历史监控）
-const NO_PENDING_TYPES = new Set(['monitor_snapshot']);
+// 大盘放量急拉是分钟级时效提示，同样不做补弹，避免几小时后重连弹出过期提醒
+const NO_PENDING_TYPES = new Set(['monitor_snapshot', 'market_surge_alert']);
 
 const genAlertId = () => `${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}`;
 

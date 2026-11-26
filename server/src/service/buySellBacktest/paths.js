@@ -110,7 +110,9 @@ const CACHE_VERSION_BY_STRATEGY = {
   //   或「当前处于亏损（现价 < 成本价）」时生效；盈利且非第二个交易日时不触发
   // v67（2026-11-14）：上式「第二个交易日」按用户口径修正为「买入日计第 1 天、持仓次日（daysAfterBuy === 1）」
   //   （原实现按买入日之后第 2 个交易日，导致 11/4 买入、11/6 盈利时仍被⑫卖出）
-  hot_money_extreme_win: 67,
+  // v68（2026-11-26）：按用户要求移除「研报补充候选」（2026-11-14 v64/v65 新增）——候选池只保留连板准入 +
+  //   技术指标（死叉前置 / 动量过滤）筛选的个股；线上实盘 hotMoneyExtremeWin.js 同步移除（龙头列表不再并入研报候选）
+  hot_money_extreme_win: 68,
   // v3（2026-10-21）：B 腿（极致胜率）新路径选股加严，与 hot_money_extreme_win v32 同口径——波动窗口含峰值日本身 + 峰值日（含）至买点前收盘跌幅 < -9% 至多 1 次
   // v2（2026-10-20）：B 风格（情绪游资-极致胜率）双腿买入新增时间门禁「每天 13:30 之后不买」（13:30 桶本身可买；
   //   与 hot_money_extreme_win v31 同口径）；A 风格（科技进攻·快进快出）不受影响
@@ -160,7 +162,8 @@ const CACHE_VERSION_BY_STRATEGY = {
   // v36（2026-11-04）：B 腿大市值连板准入「两连板 + 含该连板日连续 5 日累计涨幅」门槛由 > 50% 下调为 > 45%
   //   （与 hot_money_extreme_win v62、线上实盘同口径）
   // v38（2026-11-14）：A 腿（快进快出选股）海外算力排除板块追加液冷
-  sci_attack_emo_win: 38,
+  // v39（2026-11-26）：A 腿（快进快出选股）移除 2026-11-01 起只买国产算力的候选过滤（同 emoQuick 系列 v21）
+  sci_attack_emo_win: 39,
   // v4（2026-10-17）：候选池新增「一律剔除创业板（30/301）与科创板（688）」
   // v3（2026-10-17）：候选池沿用「情绪游资-极致胜率」的题材黑名单（PCB/玻璃基板/光模块/液冷/通信/算力/芯片/靶材/电子气体/光刻胶/算力租赁，共享 constants.EXCLUDED_THEMES）
   // v2（2026-10-17）：卖点去掉龙头战法的「盘中 1 分钟内跳水 ≤ -3%」这一条（反向抱团龙头专用；共享模块 leaderSellMinute 的 disableMinutePlummet 开关）
@@ -198,12 +201,14 @@ const CACHE_VERSION_BY_STRATEGY = {
   // v18（2026-10-30）：冰点转折·延时后涨幅确认——延时 15 分钟到点后不直接买，须后续某个 5 分钟桶涨幅
   //   超过「触发 T→T+15 窗口内该股最高涨幅 + 1 个百分点」才买，否则本次不买（脉冲最强 / 重点板块-进攻延迟不适用）
   // v20（2026-11-14）：海外算力排除板块追加「液冷」
-  highest_2d_gain_emoquick: 20,
-  highest_3d_gain_emoquick: 20,
-  highest_4d_gain_emoquick: 20,
-  highest_5d_gain_emoquick: 20,
-  highest_2d5_gain_emoquick: 20,
-  highest_3d5_gain_emoquick: 20,
+  // v21（2026-11-26）：按用户要求移除「自 2026-11-01 起快进快出类只买国产算力（剔除海外算力板块）」的候选过滤，
+  //   选股恢复为全量自选科技股按 N 日涨幅最大
+  highest_2d_gain_emoquick: 21,
+  highest_3d_gain_emoquick: 21,
+  highest_4d_gain_emoquick: 21,
+  highest_5d_gain_emoquick: 21,
+  highest_2d5_gain_emoquick: 21,
+  highest_3d5_gain_emoquick: 21,
   // 研报覆盖快进快出：v7（2026-10-23）通用卖点条件3 阈值改为 < -30
   // v8（2026-10-23）：同上「N 日涨幅接近时按当日抗分歧优先」（仅走 3 日涨幅最大选股的路径生效，研报前五路径不适用）
   // v9（2026-10-23）：同上「资金净流入阈值抬高态改板块内选股」
@@ -217,7 +222,8 @@ const CACHE_VERSION_BY_STRATEGY = {
   // v17（2026-10-30）：冰点门禁改为「当日任意分时点（分钟级）≤ -39」（同 emoQuick 系列）
   // v18（2026-10-30）：冰点转折·延时后涨幅确认（须超过窗口最高涨幅 + 1 个百分点，否则本次不买）
   // v20（2026-11-14）：同上「海外算力排除板块追加液冷」
-  highest_3d_reports_top5_gain_emoquick: 20,
+  // v21（2026-11-26）：同 emoQuick 系列「移除 2026-11-01 起只买国产算力的候选过滤」
+  highest_3d_reports_top5_gain_emoquick: 21,
   // v2（2026-10-22）：同上「涨幅领先但当日爆发力不足」顺延规则（首版为默认版本 1，未列此表）
   // v3（2026-10-22）：选股叠加「最近 3 日涨幅 > 30% 直接剔除」过热门槛
   // v4（2026-10-23）：通用卖点条件3 阈值改为 < -30
@@ -234,16 +240,18 @@ const CACHE_VERSION_BY_STRATEGY = {
   // v14（2026-10-30）：冰点门禁改为「当日任意分时点（分钟级）≤ -39」（同 emoQuick 系列）
   // v15（2026-10-30）：冰点转折·延时后涨幅确认（须超过窗口最高涨幅 + 1 个百分点，否则本次不买）
   // v17（2026-11-14）：同上「海外算力排除板块追加液冷」
-  highest_3d_gain_emoquick_emo10: 17,
-  highest_3d_gain_emoquick_emo20: 17,
-  highest_3d_gain_emoquick_emo30: 17,
-  highest_3d_gain_emoquick_g10: 17,
+  // v18（2026-11-26）：同 emoQuick 系列「移除 2026-11-01 起只买国产算力的候选过滤」
+  highest_3d_gain_emoquick_emo10: 18,
+  highest_3d_gain_emoquick_emo20: 18,
+  highest_3d_gain_emoquick_emo30: 18,
+  highest_3d_gain_emoquick_g10: 18,
   // 脉冲最强系列（2026-10-23 用户新增）：每次买点触发都无条件走「板块发酵延时」选股（等 15 分钟、
   // 回溯 20 分钟板块涨幅差值降序、交集内选 N 日涨幅最大），其余与快进快出系列一致
   // v3（2026-11-14）：同上「海外算力排除板块追加液冷」
-  highest_2d_gain_emoquick_pulse: 3,
-  highest_3d_gain_emoquick_pulse: 3,
-  highest_4d_gain_emoquick_pulse: 3,
+  // v4（2026-11-26）：同 emoQuick 系列「移除 2026-11-01 起只买国产算力的候选过滤」
+  highest_2d_gain_emoquick_pulse: 4,
+  highest_3d_gain_emoquick_pulse: 4,
+  highest_4d_gain_emoquick_pulse: 4,
   // 重点板块-进攻延迟 n 分钟系列（2026-10-30 用户重构）：基于「3日涨幅最大」——买点诊断通过后延迟 n 分钟、
   // 窗口内资金净流入 5min 桶逐桶为正才买；选股改为「全量重点板块中 3 日涨幅最大（前天+昨天+实时）且与全量
   // 自选股有交集」的板块内选 3 日涨幅最大者；卖点改为与 3日涨幅最大一致（去掉快进快出）。

@@ -56,9 +56,9 @@ const fetchIndexFromSina = async (url, referer, name, code) => {
 };
 
 // 从新浪接口获取期货指数（hf_* 实时期货）
-// 返回结构：var hq_str_hf_NQ = "最新价,,昨收,今开,最高,最低,时间,... ,开盘原始价,...";
-// fields[0] 最新价, fields[1] 空, fields[2] 昨收, fields[8] 开盘原始数据
-// 涨幅 = (最新价 - 开盘原始数据) / 开盘原始数据
+// 返回结构：var hq_str_hf_NQ = "最新价,,昨收,今开,最高,最低,时间,昨结算,开盘原始价,...";
+// fields[0] 最新价, fields[2] 昨收, fields[7] 昨结算价, fields[8] 开盘原始价
+// 涨幅基准与新浪页面一致：期货涨跌幅相对「昨结算价」（fields[7]），而非开盘价
 const fetchFuturesFromSina = async (url, referer, name, code) => {
     try {
         const { data } = await axios.get(url, {
@@ -72,9 +72,11 @@ const fetchFuturesFromSina = async (url, referer, name, code) => {
         if (start === -1 || end <= start) throw new Error('响应格式异常');
         const fields = data.slice(start + 1, end).split(',');
         const value = Number(fields[0]);                 // 实时价
-        const openRef = Number(fields[8]);                // 开盘原始价
-        if (!Number.isFinite(value) || !Number.isFinite(openRef)) throw new Error('字段解析失败');
-        const changePct = ((value - openRef) / openRef) * 100;
+        const prevSettle = Number(fields[7]);             // 昨结算价（新浪页面涨跌幅基准）
+        const prevClose = Number(fields[2]);              // 昨收（兜底）
+        const ref = Number.isFinite(prevSettle) && prevSettle > 0 ? prevSettle : prevClose;
+        if (!Number.isFinite(value) || !Number.isFinite(ref) || ref <= 0) throw new Error('字段解析失败');
+        const changePct = ((value - ref) / ref) * 100;
         return {
             name,
             code,

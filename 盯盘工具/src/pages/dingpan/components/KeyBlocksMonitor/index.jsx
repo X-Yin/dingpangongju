@@ -93,10 +93,16 @@ const KeyBlocksMonitor = ({ onBlockClick, onOpenOverlayTimeLine, overlayInlineAd
         return () => { alive = false; clearInterval(timer); };
     }, [fetchAll]);
 
+    // 手动刷新：与「自定义板块涨幅前十」的刷新保持一致，
+    // 先强制后端实时请求所有板块成分股最新行情（非缓存），再重新拉取并重算涨幅
     const handleManualRefresh = async () => {
         setRefreshing(true);
         try {
+            await axios.post(`http://${local_ip}:3000/api/block/refresh`);
             await fetchAll(true);
+        } catch (e) {
+            console.error('KeyBlocksMonitor 手动刷新失败:', e.message);
+            message.error('板块数据刷新失败，请稍后重试');
         } finally {
             setRefreshing(false);
         }
@@ -254,7 +260,7 @@ const KeyBlocksMonitor = ({ onBlockClick, onOpenOverlayTimeLine, overlayInlineAd
                 title={<><StarFilled style={{ color: '#f59e0b', marginRight: 8, userSelect: 'none' }} /> 重点板块</>}
                 className="monitor-card key-blocks-card compact-head-card"
                 variant="borderless"
-                bodyStyle={{ padding: '12px 14px' }}
+                bodyStyle={{ padding: '0 14px 12px 14px !important' }}
                 extra={
                     <div className="kb-card-extra">
                         <Tooltip title="添加 / 管理重点板块">
@@ -308,7 +314,7 @@ const KeyBlocksMonitor = ({ onBlockClick, onOpenOverlayTimeLine, overlayInlineAd
                                         onClick={() => onBlockClick && onBlockClick(b.blockName)}
                                         style={borderStyle(themeColor)}
                                     >
-                                        {/* 悬浮删除按钮（交互参考主题包弹窗：白底灰字 + 左侧滑入 + Popconfirm 防误触） */}
+                                        {/* 悬浮删除按钮（右侧垂直居中滑入 + 红色图标 + Popconfirm 防误触） */}
                                         <Popconfirm
                                             title={`取消重点板块「${b.blockName}」？`}
                                             okText="取消重点"
@@ -328,7 +334,8 @@ const KeyBlocksMonitor = ({ onBlockClick, onOpenOverlayTimeLine, overlayInlineAd
                                             </span>
                                         </Popconfirm>
                                         <div className="item-name">
-                                            <span style={{ userSelect: 'none', fontSize: '12px', ...titleStyle(themeColor) }}>{b.blockName}</span>
+                                            {/* 默认 11px，超过 4 个字的名称用 10px */}
+                                            <span style={{ userSelect: 'none', fontSize: b.blockName.length > 4 ? '10px' : '11px', ...titleStyle(themeColor) }}>{b.blockName}</span>
                                         </div>
                                         <span
                                             className={`item-value ${Number(b.avgChange) >= 0 ? 'up' : 'down'}`}

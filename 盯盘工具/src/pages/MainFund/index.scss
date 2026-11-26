@@ -2063,3 +2063,81 @@
   }
 }
 
+/* ========== 板块涨幅 · 合并视图 ========== */
+.block-change-merged-toolbar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  .block-tags {
+    flex: 1;
+    margin-bottom: 0;
+  }
+}
+
+.block-change-merged-stage {
+  flex: 1;
+  min-height: 0;
+}
+
+.block-change-merged-wrapper {
+  position: relative;
+  height: calc(100vh - 320px);
+  min-height: 360px;
+  border: 1px solid rgba(157, 176, 207, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  overflow: hidden;
+}
+
+.block-change-merged-chart {
+  width: 100%;
+  height: 100%;
+}
+
+/* 合并视图左上角图例：板块名 + 最新涨跌幅 */
+.block-change-merged-legend {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  max-width: 70%;
+  pointer-events: none;
+
+  .block-change-merged-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    line-height: 16px;
+    user-select: none;
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+
+    .legend-name {
+      font-weight: 600;
+    }
+
+    .legend-value {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+
+      &.up {
+        color: #cf1322;
+      }
+
+      &.down {
+        color: #389e0d;
+      }
+    }
+  }
+}
+

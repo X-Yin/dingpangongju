@@ -39,7 +39,6 @@ const {
   RANGE_SLIDE_DAYS, MAX_WINDOW_RANGE_PCT, MAX_TOTAL_RANGE_PCT, POST_LIANBAN_DROP_PCT,
   NEW_MAX_WINDOW_RANGE_PCT, NEW_MIN_WINDOW_RANGE_PCT, PEAK_GAP_MIN_DAYS, POST_PEAK_MAX_RANGE_PCT, NEW_BASE_LOOKBACK_DAYS,
   OLD_POST_PEAK_MAX_RANGE_PCT,
-  REPORT_BOOST_WINDOW_DAYS, REPORT_BOOST_MIN_COUNT,
   PREV_STRENGTH_GAP_GATE, OPEN_GAP_MIN_PCT,
   ABNORMAL_WARN_MIN_ROOM_PCT, buildAbnormalWarnBases, evalAbnormalWarn, abnormalWarnText,
   computeCrossInfo, buildExtremeWinPool,
@@ -227,8 +226,6 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
   // 无视大盘变体（2026-11-14 用户新增，仅回测）：买点唯一触发条件 = 「强度分 − 差劲分 ≥ 30」，
   //   不判定指数斜率，逆周期腿不判定负斜率第 3 天 / 当日上证跌幅 / 命中两次
   const ignoreMarket = strategy.extremeWinIgnoreMarket === true;
-  // 研报补充候选（2026-11-14 用户新增，仅回测）：只对「情绪游资-极致胜率」本尊启用，无视大盘变体不启用
-  const reportBoost = strategyId === 'hot_money_extreme_win';
 
   // 不依赖资金快照：日期序列并入 tech_index 覆盖的交易日（与龙头战法引擎同口径）
   const allDates = Array.from(new Set([...getTrainingCampDates(), ...getTechIndexDates()]));
@@ -329,8 +326,6 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
         capBoardMinGainPct: EXTREME_CAP_BOARD_MIN_GAIN_PCT,
         // 2026-11-14 用户要求：旧路径追加「峰值日（含）至买点前区间最大波动 < 20%」（新路径仍 15%）
         oldPostPeakMaxRangePct: OLD_POST_PEAK_MAX_RANGE_PCT,
-        // 2026-11-14 用户新增（仅回测）：追加「全量自选股非科技股 + 最近 10 个报告日研报数 ≥ 5」候选
-        reportBoost,
       });
       candidatesRaw = pool.stocks || [];
       poolWinDates = pool.winDates || [];
@@ -466,32 +461,16 @@ const runExtremeWinBacktest = async (startDate, endDate, strategyId, onProgress,
         return { dates: poolWinDates.map(Number), peakWindow: { windowStart: c.windowStart, windowEnd: c.windowEnd } };
       };
       // 逐候选判定死叉前置：峰值日之后须出现过第一次死叉，且该死叉之后至昨日达标次数 ≤ 1
-      // 研报补充候选（viaReport）不判定死叉前置，仅补算上个交易日强度分（供「上日强度 > 60 竞价低开」门禁使用）
       const crossMap = new Map();
-      await batchParallel(candidatesRaw.filter(c => c.viaReport !== true), async (c) => {
+      await batchParallel(candidatesRaw, async (c) => {
         try {
           const { dates: cd, peakWindow } = crossDatesOf(c);
           crossMap.set(c.code, cd.length < 2 ? null : await computeCrossInfo(c.code, cd, c.peakDate, peakWindow));
         } catch (e) { crossMap.set(c.code, null); }
       }, 8);
-      if (candidatesRaw.some(c => c.viaReport === true) && fallbackCrossDates.length > 0) {
-        const prevDate = fallbackCrossDates[fallbackCrossDates.length - 1];
-        await batchParallel(candidatesRaw.filter(c => c.viaReport === true), async (c) => {
-          try {
-            const t = await loadTlinePoints(c.code, prevDate);
-            if (!t || t.points.length === 0 || !(t.preclose > 0)) return;
-            const idxT = await loadTlinePoints(iceResilienceIndexCode(c.code), prevDate);
-            const s = strengthAtMinute(t, CLOSE_MINUTE, c.code, (idxT && idxT.points) || []);
-            if (s) crossMap.set(c.code, { prevDayStrength: s.score });
-          } catch (e) { /* 数据缺失则不启用该门禁 */ }
-        }, 8);
-      }
       candidates = candidatesRaw
         .map(c => ({ ...c, crossInfo: crossMap.get(c.code) }))
-        // 研报补充候选（viaReport）：不要求死叉前置，只按今日「强度分 − 差劲分 >= 30」判定
-        .filter(c => (c.viaReport === true
-          ? true
-          : c.crossInfo && c.crossInfo.hasCross && !c.crossInfo.consumed && c.crossInfo.prevDayVolumeOk));
+        .filter(c => c.crossInfo && c.crossInfo.hasCross && !c.crossInfo.consumed && c.crossInfo.prevDayVolumeOk);
       if (candidates.length === 0) return;
       // 今日分时 + 今日前 3 个交易日日均量（逐候选）
       const abnormalDates = await ensureAbnormalPastDates();
@@ -861,28 +840,17 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
   const strength = pick.strength;
   const delta = pick.delta;
   const cross = pick.crossInfo;
-  const isReport = pick.viaReport === true;
   const cutoffTime = `${Math.floor(Number(cutoffMinute) / 100)}:${String(Number(cutoffMinute) % 100).padStart(2, '0')}`;
   const limitUpText = (v) => (v > 0 ? `+${v}%` : `${v}%`);
-  const crossDate = !isReport && cross && cross.crossIdx >= 0 ? cross.dates[cross.crossIdx] : '';
-  const deltasText = !isReport && cross ? cross.deltas.map(v => (v == null ? '--' : v)).join(' → ') : '--';
-  const hitCount = !isReport && cross && cross.hitCount != null ? cross.hitCount : 0;
+  const crossDate = cross && cross.crossIdx >= 0 ? cross.dates[cross.crossIdx] : '';
+  const deltasText = cross ? cross.deltas.map(v => (v == null ? '--' : v)).join(' → ') : '--';
+  const hitCount = cross && cross.hitCount != null ? cross.hitCount : 0;
   const prevDayStrength = cross ? cross.prevDayStrength : null;
   const delayText = `触发时点价 ${pick.px.toFixed(2)}`;
-  const buyReason = isReport
-    ? `${timeText} 研报补充候选（全量自选股非科技股，最近 ${REPORT_BOOST_WINDOW_DAYS} 个报告日研报 ${pick.reportCount} 篇 ≥ ${REPORT_BOOST_MIN_COUNT}），今日满足「强度分 − 差劲分 = ${delta} ≥ ${DELTA_MIN}」，${delayText}，买入 ${pick.name}（${pick.code}）；本次建仓为顺周期腿（极致胜率·研报补充，第 ${legIdx + 1} 份半仓 ${LEG_WEIGHT * 100}%）${otherHeld.length > 0 ? `，已排除另一腿当前持仓标的（${otherHeld.join('、')}）` : ''}`
-    : poolKind === 'reverse'
+  const buyReason = poolKind === 'reverse'
     ? `${timeText} 过去 ${DEATH_CROSS_WINDOW} 个交易日内出现死叉（${crossDate}）后，今日满足「强度分 − 差劲分 = ${delta} ≥ ${DELTA_MIN}」（死叉后第 ${hitCount + 1} 次达标），买入逆周期候选 ${pick.name}（${pick.code}，${pick.lianbanCount} 连板），${delayText}；本次建仓为逆周期腿（逆周期池选股 + 顺周期买点触发，第 ${legIdx + 1} 份半仓 ${LEG_WEIGHT * 100}%）${otherHeld.length > 0 ? `，已排除另一腿当前持仓标的（${otherHeld.join('、')}）` : ''}`
     : `${timeText} 过去 ${DEATH_CROSS_WINDOW} 个交易日内出现死叉（${crossDate}）后，今日满足「强度分 − 差劲分 = ${delta} ≥ ${DELTA_MIN}」（死叉后第 ${hitCount + 1} 次达标，本策略只允许前 2 次），买入候选 ${pick.name}（${pick.code}，${pick.lianbanCount} 连板），${delayText}；本次建仓为顺周期腿（极致胜率，第 ${legIdx + 1} 份半仓 ${LEG_WEIGHT * 100}%）${otherHeld.length > 0 ? `，已排除另一腿当前持仓标的（${otherHeld.join('、')}）` : ''}`;
-  const poolCheck = isReport
-    ? {
-      id: 'extreme_win_report_pool',
-      title: `选股（研报补充：全量自选股中非科技股（isTech = false）且最近 ${REPORT_BOOST_WINDOW_DAYS} 个报告日研报数 ≥ ${REPORT_BOOST_MIN_COUNT} 篇；不限创业板/科创板）`,
-      passed: true,
-      value: `${pick.name}（${pick.code}）· 研报 ${pick.reportCount} 篇`,
-      reason: `2026-11-14 用户新增（仅回测）：候选来源 = 全量自选股中非科技股（isTech = false）在最近 ${REPORT_BOOST_WINDOW_DAYS} 个报告日（≤ 回测当日、且仅统计当日 09:30 前已创建的研报）内标题或正文命中股票名的研报数 ≥ ${REPORT_BOOST_MIN_COUNT} 篇；本股 ${pick.reportCount} 篇，不限创业板（30/301）与科创板（688）；不叠加连板准入 / 动量过滤${pick.poolFilterText || ''}；本分钟达标候选共 ${ranked.length} 只，按今日「强度分 − 差劲分」降序取第一个「未涨停且未被另一腿持有」者作为顺周期腿（第 ${legIdx + 1} 份半仓）建仓标的`,
-    }
-    : poolKind === 'reverse'
+  const poolCheck = poolKind === 'reverse'
       ? {
         id: 'reverse_leader_pool',
         title: `选股（逆周期池：过去 ${REV_LOOKBACK_DAYS} 个交易日出现过连板数 ≥ ${REV_MIN_BOARD_COUNT} 的个股；过去 ${REV_RANGE_WINDOW_DAYS} 个交易日（不含当日）内任意连续 ${REV_RANGE_SLIDE_DAYS} 个交易日区间最大涨幅 ≥ ${REV_MIN_WINDOW_RANGE_PCT}%）`,
@@ -897,16 +865,8 @@ const buildPosition = ({ pick, ranked, dateStr, dateDisplay, timeText, idxMa3Slo
         value: `${pick.name}（${pick.code}）· ${pick.lianbanCount} 连板`,
         reason: `候选 = 旧路径（过去 ${LOOKBACK_DAYS} 个交易日内连板准入达标）与新路径（过去 ${NEW_BASE_LOOKBACK_DAYS} 个交易日内连板准入达标）并集（命中日 ${pick.date}，板块 ${pick.board || '--'}）；已剔除 ST 等黑名单、创业板（30/301）与科创板（688）、${EXCLUDED_THEMES.join('/')} 题材（板块名包含关键词即剔除）与全量自选股科技股（isTech ≠ false）重叠者${pick.poolFilterText || ''}；本分钟达标候选共 ${ranked.length} 只，按今日「强度分 − 差劲分」降序取第一个「未涨停且未被另一腿持有」者作为顺周期腿（第 ${legIdx + 1} 份半仓）建仓标的`,
       };
-  const crossCheck = isReport
-    ? {
-      id: 'extreme_win_report_no_cross',
-      title: `买点前置：研报补充候选不要求死叉前置，仅按今日「强度分 − 差劲分 ≥ ${DELTA_MIN}」判定`,
-      passed: true,
-      value: '不判定死叉 / 达标次数 / 上日放量',
-      reason: `2026-11-14 用户新增（仅回测）：研报补充候选的买点筛选标准只有「强度分 − 差劲分 ≥ ${DELTA_MIN}」，不要求峰值日之后的第一次死叉、不限制死叉后达标次数、也不要求上个交易日放量；其余门禁（未涨停、14:30 后不买、上日强度 > ${PREV_STRENGTH_GAP_GATE} 时竞价低开须 ≥ ${OPEN_GAP_MIN_PCT}%、严重异动临近不买）仍照常生效`,
-    }
-    : {
-      id: 'extreme_win_cross',
+  const crossCheck = {
+    id: 'extreme_win_cross',
       title: `买点前置：峰值日之后的第一次死叉（窗口＝峰值日→买点前一日；若窗口内出现「死叉 + 次日收盘未创新高」，峰值日锁死为死叉前最高收盘日，2026-10-24 用户新增）且死叉后达标次数 ≤ 1（上个交易日 delta > ${DELTA_MIN} 时须放量）`,
       passed: true,
       value: `峰值锁死 ${cross && cross.peakLocked ? `是（锁至 ${cross.effectivePeakDate}）` : `否（峰值日 ${cross ? cross.effectivePeakDate || '--' : '--'}）`}；死叉日 ${crossDate}（死叉后达标 ${hitCount} 次，本次为第 ${hitCount + 1} 次；上个交易日 delta ${cross && cross.prevDayDelta != null ? cross.prevDayDelta : '--'}${cross && cross.prevDayDelta != null && cross.prevDayDelta > DELTA_MIN ? `、放量比 ${cross.prevDayVolRatio == null ? '--' : cross.prevDayVolRatio}` : ''}；日线「强度 − 差劲」序列 ${deltasText}）`,

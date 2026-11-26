@@ -658,6 +658,24 @@ const DebugPanel = () => {
             </Button>
           </Card>
 
+          {/* 模块十三：大盘放量急拉 · 重点板块监控弹窗 */}
+          <Card size="small" title="13. 大盘放量急拉 · 重点板块监控">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              实盘触发条件：当日两市成交额较昨日同期放量 ≥ 500 亿，且创业板指 1 分钟涨幅 ≥ 0.2%
+              （或科创50 1 分钟涨幅 ≥ 0.3%）。触发后弹出全局弹窗，实时并行重算 20 个重点板块的平均涨幅，
+              并用后端板块分时文件（1 分钟一帧）中 1 分钟前的均值即时算出近 1 分钟涨幅变化。
+              此按钮直接弹出调试弹窗。
+            </Paragraph>
+            <Button
+              type="primary"
+              icon={<ThunderboltOutlined />}
+              onClick={() => window.dispatchEvent(new CustomEvent('market-surge-alert-test'))}
+              style={{ background: '#dc2626', borderColor: '#dc2626' }}
+            >
+              触发放量急拉弹窗
+            </Button>
+          </Card>
+
           <Text type="secondary" style={{ fontSize: 12 }}>
             提示：MOCK 触发不受 5 分钟时间桶频控限制，点击即刻推送。
           </Text>

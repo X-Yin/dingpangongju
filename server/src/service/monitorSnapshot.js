@@ -223,9 +223,13 @@ const buildVolumeSection = (limitTm = Infinity) => {
     const sustained = list
         .filter((item) => item.rise10m)
         .sort((a, b) => b.delta - a.delta);
-    const upSource = sustained.length > 0
-        ? sustained
-        : [...list].sort((a, b) => b.delta - a.delta);
+    // 「近10min持续提升」的板块保持优先展示（按较上一日变化降序）；
+    // 不足 5 个时用其余板块按同一排序补齐，保证「前5」始终满 5 个（与 MainFund 其余板块同口径）
+    const sustainedNames = new Set(sustained.map((item) => item.name));
+    const restSorted = [...list]
+        .filter((item) => !sustainedNames.has(item.name))
+        .sort((a, b) => b.delta - a.delta);
+    const upSource = [...sustained, ...restSorted];
     const formatItem = ({ rise10m, ...item }) => ({ ...item, delta: round(item.delta, 2) });
     const up = upSource.slice(0, TOP_N).map(formatItem);
     const upNames = new Set(up.map((item) => item.name));

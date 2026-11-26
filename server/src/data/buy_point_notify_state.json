@@ -1,6 +1,10 @@
 {
-  "date": "20261112",
+  "date": "20261126",
   "byMode": {
+    "hot_money_extreme_win": {
+      "bucket": null,
+      "blocked": null
+    },
     "tech_attack": {
       "bucket": 615,
       "blocked": null

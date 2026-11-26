@@ -1,6 +1,8 @@
 {
-  "date": "20261120",
-  "bucket": 900,
+  "date": "20261126",
+  "bucket": null,
   "mode": "tech_attack",
-  "ewNotifiedMinute": {}
+  "ewNotifiedMinute": {
+    "sh605488_1795588236949_9jqp": 931
+  }
 }

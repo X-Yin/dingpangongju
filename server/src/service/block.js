@@ -568,7 +568,166 @@ const refreshBlockData = async (blockName = null) => {
   }
 };
 
+// 读取板块分时记录（pollBlockHistory 每 1 分钟写入 data/block_data_change_time.json），
+// 取「1 分钟前」那一帧的板块平均涨幅，用于实时计算近 1 分钟涨幅变化
+const getBlockAvgChangeOneMinuteAgo = () => {
+  try {
+    const history = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/block_data_change_time.json'), 'utf-8') || '[]');
+    if (!Array.isArray(history) || history.length === 0) return { historyTime: null, map: new Map() };
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const targetMin = nowMin - 1;
+    // 从后往前找最新一条落在 [targetMin - 2, targetMin] 的记录，
+    // 从后往前可优先命中当日最新帧，避免文件中残留的前一日同刻记录
+    let picked = null;
+    for (let i = history.length - 1; i >= 0; i -= 1) {
+      const rec = history[i];
+      const m = /^(\d{1,2}):(\d{2})$/.exec(String(rec?.time || '').trim());
+      if (!m || !Array.isArray(rec?.blockData)) continue;
+      const tMin = Number(m[1]) * 60 + Number(m[2]);
+      if (tMin <= targetMin && tMin >= targetMin - 2) {
+        picked = { rec };
+        break;
+      }
+      if (tMin < targetMin - 2) break; // 继续往前只会更早，不可能命中
+    }
+    if (!picked) return { historyTime: null, map: new Map() };
+    const map = new Map();
+    for (const item of picked.rec.blockData) {
+      if (item && item.blockName && Number.isFinite(Number(item.avgChange))) {
+        map.set(item.blockName, Number(item.avgChange));
+      }
+    }
+    return { historyTime: picked.rec.time, map };
+  } catch (e) {
+    console.error('读取板块分时记录失败:', e.message);
+    return { historyTime: null, map: new Map() };
+  }
+};
+
+// 指定板块的实时平均涨幅与成分股涨幅（大盘放量急拉全局弹窗专用）
+// 与 pollBlockData / refreshBlockData 的区别：不落盘、不 sleep，全部板块并行；
+// 成分股跨板块去重后统一并发拉取，避免重复请求与串行等待
+const getBlocksRealtimeData = async (blockNames = []) => {
+  const blockCodeList = getBlocksConfig();
+  const blockGroupData = divideBlockCodeList(blockCodeList);
+  const groups = blockNames
+    .map((name) => [name, blockGroupData[name] || []])
+    .filter(([, stocks]) => stocks.length > 0);
+  if (groups.length === 0) return { historyTime: null, blocks: [] };
+
+  // 1 分钟前的板块平均涨幅（来自板块分时记录，用于即时计算近 1 分钟变化）
+  const { historyTime, map: prevAvgMap } = getBlockAvgChangeOneMinuteAgo();
+
+  const allCodes = Array.from(new Set(groups.flatMap(([, stocks]) => stocks.map((s) => s.code))));
+
+  // 1) 全部成分股并发拉最新日 K（无 sleep；CLS 模式降低并发避免被上游限流）
+  const quoteMap = new Map(); // code -> { change, tradeDate }
+  await batchParallel(allCodes, async (code) => {
+    try {
+      const arr = await getSingleStockData(code, 1);
+      const first = arr && arr[0];
+      if (first && first.change != null && !isNaN(first.change)) {
+        quoteMap.set(code, {
+          change: Number(first.change),
+          tradeDate: first.trade_date != null ? Number(first.trade_date) : null,
+        });
+      }
+    } catch (e) {
+      // 单只失败不影响整体
+    }
+  }, useCLS() ? 10 : 30);
+
+  // 2) 兜底补齐：K 线拉取失败 / 无 change 的股票，先用 pollBlockData 每 10s 落盘的
+  //    block_data.json（5 分钟内有效）补齐，再对仍缺失的股票用实时快照兜底；
+  //    竞价时段额外覆盖仍停留在上一交易日的 K 线（与 getSingleBlockData 口径一致）
+  const now = dayjs();
+  const todayNum = Number(now.format('YYYYMMDD'));
+  const timeStr = now.format('HHmm');
+  const inAuction = isTradingDay(now.toDate()) && timeStr >= '0915' && timeStr < '0930';
+  const needFallbackCodes = allCodes.filter((code) => {
+    const q = quoteMap.get(code);
+    if (!q) return true;
+    return inAuction && q.tradeDate != null && q.tradeDate !== todayNum;
+  });
+  if (needFallbackCodes.length > 0) {
+    // 2.1) block_data.json 缓存兜底（不需要额外请求）
+    try {
+      const cachePath = path.resolve(__dirname, '../data/block_data.json');
+      const cacheFresh = Date.now() - fs.statSync(cachePath).mtimeMs <= 5 * 60 * 1000;
+      if (cacheFresh) {
+        const cache = JSON.parse(fs.readFileSync(cachePath, 'utf-8') || '{}');
+        const cacheChange = new Map();
+        for (const arr of Object.values(cache)) {
+          for (const s of Array.isArray(arr) ? arr : []) {
+            if (s && s.code && s.change != null && !isNaN(s.change)) {
+              cacheChange.set(s.code, Number(s.change));
+            }
+          }
+        }
+        for (const code of needFallbackCodes) {
+          if (!quoteMap.has(code) && cacheChange.has(code)) {
+            quoteMap.set(code, { change: cacheChange.get(code), tradeDate: todayNum });
+          }
+        }
+      }
+    } catch (e) {
+      // 缓存不可用时忽略，继续走实时快照
+    }
+
+    // 2.2) 仍缺失的股票用实时快照批量兜底
+    const stillMissingCodes = allCodes.filter((code) => {
+      const q = quoteMap.get(code);
+      if (!q) return true;
+      return inAuction && q.tradeDate != null && q.tradeDate !== todayNum;
+    });
+    if (stillMissingCodes.length > 0) {
+      try {
+        const quotes = await getRealtimeQuotes(stillMissingCodes);
+        for (const code of stillMissingCodes) {
+          const q = quotes[code];
+          if (q && q.change != null && !isNaN(q.change)) {
+            quoteMap.set(code, { change: Number(q.change), tradeDate: todayNum });
+          }
+        }
+      } catch (e) {
+        console.error('重点板块实时涨幅兜底失败:', e.message);
+      }
+    }
+  }
+
+  // 3) 组装：成分股按涨幅从高到低，板块平均涨幅取有行情股票的均值，
+  //    并即时用「当前均值 − 1 分钟前分时记录均值」得到近 1 分钟变化
+  const blocks = groups.map(([blockName, stocks]) => {
+    const list = stocks
+      .map((s) => ({
+        name: s.name,
+        code: s.code,
+        change: quoteMap.has(s.code) ? quoteMap.get(s.code).change : null,
+      }))
+      .sort((a, b) => {
+        const av = a.change == null ? -Infinity : a.change;
+        const bv = b.change == null ? -Infinity : b.change;
+        return bv - av;
+      });
+    const valid = list.filter((s) => Number.isFinite(s.change));
+    const avgChange = valid.length
+      ? Number((valid.reduce((sum, s) => sum + s.change, 0) / valid.length).toFixed(2))
+      : null;
+    const prevAvg = prevAvgMap.has(blockName) ? prevAvgMap.get(blockName) : null;
+    const delta1m = Number.isFinite(avgChange) && Number.isFinite(prevAvg)
+      ? Number((avgChange - prevAvg).toFixed(2))
+      : null;
+    return {
+      blockName, avgChange, avgChange1mAgo: prevAvg, delta1m, stockCount: list.length, stocks: list,
+    };
+  });
+
+  return { historyTime, blocks };
+};
+
 exports.getBlockData = getBlockData;
+exports.getBlocksRealtimeData = getBlocksRealtimeData;
 exports.refreshBlockData = refreshBlockData;
 exports.pollBlockData = pollBlockData;
 exports.getTopAndBottomBlockData = getTopAndBottomBlockData;

@@ -1,5 +1,185 @@
 [
   {
+    "date": "2026-11-26",
+    "operations": [
+      {
+        "id": "1795656683899_mgjc",
+        "action": "sell",
+        "stockName": "福莱新材",
+        "stockCode": "sh605488",
+        "position": "",
+        "time": "09:31"
+      },
+      {
+        "id": "1795656690759_hll1",
+        "action": "buy",
+        "stockName": "福莱新材",
+        "stockCode": "sh605488",
+        "position": "",
+        "time": "09:31"
+      },
+      {
+        "id": "1795657556309_x2nt",
+        "action": "sell",
+        "stockName": "福莱新材",
+        "stockCode": "sh605488",
+        "position": "",
+        "time": "09:45"
+      },
+      {
+        "id": "1795659341308_vj22",
+        "action": "buy",
+        "stockName": "德福科技",
+        "stockCode": "sz301511",
+        "position": "",
+        "time": "10:15"
+      },
+      {
+        "id": "1795671579905_o70k",
+        "action": "sell",
+        "stockName": "天孚通信",
+        "stockCode": "sz300394",
+        "position": "",
+        "time": "13:39"
+      },
+      {
+        "id": "1795675135149_rfoy",
+        "action": "buy",
+        "stockName": "天孚通信",
+        "stockCode": "sz300394",
+        "position": "",
+        "time": "14:38"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-26T01:31:23.927Z",
+    "updatedAt": "2026-11-26T06:38:55.194Z"
+  },
+  {
+    "date": "2026-11-25",
+    "operations": [
+      {
+        "id": "1795568296648_z513",
+        "action": "sell",
+        "stockName": "风华高科",
+        "stockCode": "sz000636",
+        "position": "",
+        "time": "08:58"
+      },
+      {
+        "id": "1795573284380_yl9q",
+        "action": "sell",
+        "stockName": "中科飞测",
+        "stockCode": "sh688361",
+        "position": "",
+        "time": "10:21"
+      },
+      {
+        "id": "1795587455198_b2o7",
+        "action": "buy",
+        "stockName": "天孚通信",
+        "stockCode": "sz300394",
+        "position": "",
+        "time": "14:17"
+      },
+      {
+        "id": "1795588221673_ky14",
+        "action": "sell",
+        "stockName": "福莱新材",
+        "stockCode": "sh605488",
+        "position": "",
+        "time": "14:30"
+      },
+      {
+        "id": "1795588236960_fotb",
+        "action": "buy",
+        "stockName": "福莱新材",
+        "stockCode": "sh605488",
+        "position": "",
+        "time": "14:30"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-25T00:58:16.682Z",
+    "updatedAt": "2026-11-25T06:30:37.120Z"
+  },
+  {
+    "date": "2026-11-24",
+    "operations": [
+      {
+        "id": "1795484617121_8cut",
+        "action": "sell",
+        "stockName": "风华高科",
+        "stockCode": "sz000636",
+        "position": "",
+        "time": "09:43"
+      },
+      {
+        "id": "1795484624669_h5xq",
+        "action": "buy",
+        "stockName": "中科飞测",
+        "stockCode": "sh688361",
+        "position": "",
+        "time": "09:43"
+      },
+      {
+        "id": "1795503424564_8jp6",
+        "action": "sell",
+        "stockName": "华海清科",
+        "stockCode": "sh688120",
+        "position": "",
+        "time": "14:57"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-24T01:43:37.132Z",
+    "updatedAt": "2026-11-24T06:57:04.602Z"
+  },
+  {
+    "date": "2026-11-23",
+    "operations": [
+      {
+        "id": "1795398233943_0d9z",
+        "action": "buy",
+        "stockName": "福莱新材",
+        "stockCode": "sh605488",
+        "position": "",
+        "time": "09:43"
+      },
+      {
+        "id": "1795410626260_caky",
+        "action": "sell",
+        "stockName": "华海清科",
+        "stockCode": "sh688120",
+        "position": "",
+        "time": "13:10"
+      },
+      {
+        "id": "1795410633101_q4g1",
+        "action": "buy",
+        "stockName": "华海清科",
+        "stockCode": "sh688120",
+        "position": "",
+        "time": "13:10"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-23T01:43:53.994Z",
+    "updatedAt": "2026-11-23T05:10:33.230Z"
+  },
+  {
     "date": "2026-11-20",
     "operations": [
       {

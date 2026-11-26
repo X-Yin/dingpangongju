@@ -1326,5 +1326,69 @@
       "lowAvg": -3.512
     },
     "timestamp": "2026-11-20 15:01:25"
+  },
+  {
+    "date": 20261123,
+    "score": 141,
+    "level": 5,
+    "label": "风偏高涨",
+    "desc": "远期叙事股明显领涨，资金愿意为明年、后年的故事付溢价",
+    "detail": {
+      "spread": 0.992,
+      "breadth": 0.176,
+      "attackTilt": -0.073,
+      "avgChange": 2.954,
+      "highAvg": 3.694,
+      "lowAvg": 2.701
+    },
+    "timestamp": "2026-11-23 15:01:43"
+  },
+  {
+    "date": 20261124,
+    "score": 72,
+    "level": 2,
+    "label": "防御收缩",
+    "desc": "风险偏好低位：资金只认最近可兑现的业绩，叙事股被持续抛弃",
+    "detail": {
+      "spread": -1.069,
+      "breadth": -0.303,
+      "attackTilt": 0.311,
+      "avgChange": 1.071,
+      "highAvg": 0.745,
+      "lowAvg": 1.813
+    },
+    "timestamp": "2026-11-24 15:01:02"
+  },
+  {
+    "date": 20261125,
+    "score": 49,
+    "level": 2,
+    "label": "防御收缩",
+    "desc": "风险偏好低位：资金只认最近可兑现的业绩，叙事股被持续抛弃",
+    "detail": {
+      "spread": -1.424,
+      "breadth": -0.042,
+      "attackTilt": -0.458,
+      "avgChange": -5.661,
+      "highAvg": -5.179,
+      "lowAvg": -3.755
+    },
+    "timestamp": "2026-11-25 15:01:10"
+  },
+  {
+    "date": 20261126,
+    "score": 137,
+    "level": 4,
+    "label": "温和回升",
+    "desc": "资金开始试探性给远期叙事定价，风险偏好修复中",
+    "detail": {
+      "spread": 0.985,
+      "breadth": 0.242,
+      "attackTilt": -0.304,
+      "avgChange": 1.256,
+      "highAvg": 1.935,
+      "lowAvg": 0.949
+    },
+    "timestamp": "2026-11-26 15:01:16"
   }
 ]

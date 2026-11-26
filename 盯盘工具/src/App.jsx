@@ -23,6 +23,7 @@ import PersonalFeelingModal from './components/PersonalFeelingModal';
 import ClosePipeline from './components/ClosePipeline';
 import GlobalDiagnosisAlert from './components/GlobalDiagnosisAlert';
 import BlockStrengthAlert from './components/BlockStrengthAlert';
+import MarketSurgeAlert from './components/MarketSurgeAlert';
 import dayjs from 'dayjs';
 import './App.scss';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -1854,6 +1855,8 @@ function App() {
       <GlobalDiagnosisAlert />
       {/* 板块强度突破 30 分全局提示：每 1 分钟轮询强度分时数据 */}
       <BlockStrengthAlert />
+      {/* 大盘放量 + 创业板/科创板 1 分钟急拉 全局弹窗：实时并行重算 20 个重点板块涨幅 */}
+      <MarketSurgeAlert />
       {/* 龙二波：情绪游资-极致胜率候选监控，命中「强度−差劲 ≥ 30」自动弹抽屉提示 */}
       {/* 专注交易（/opening_battle）下同样展示右侧悬浮组件（龙二波 / 监控 / 策略，2026-11-14 用户要求） */}
       {location.pathname !== '/training_camp' && <FloatingLongErBo />}
