@@ -13,6 +13,7 @@ const { runVolumeWashoutSecondBoardBacktest } = require('./volumeWashoutSecondBo
 const { runWashFusionBacktest } = require('./washFusionExtremeOddsBacktest');
 const { runMoodBlockResonanceBacktest } = require('./moodBlockResonanceBacktest');
 const { runMoodTimingBacktest } = require('./moodTimingBacktest');
+const { runEmotionWeeklyBacktest } = require('./emotionWeeklyBacktest');
 const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSimContext } = require('../deps');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -106,6 +107,12 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   // 从全量自选科技股中买 N 日涨幅最大者；全仓单持仓；卖点 = 10日线/高位大阴线/情绪退潮/抗分歧/成本线）
   if (STRATEGIES[strategyId]?.moodTimingMode === true) {
     return runMoodTimingBacktest(startDate, endDate, strategyId, onProgress, options);
+  }
+  // 情绪周期-一周一次走独立引擎（大盘分时放量 ≥ 500 亿 + 前两日收盘未放量 + 创业板/科创 10 分钟上涨，
+  // 从半导体/光通信/光芯片/cpo/MPO/半导体材料/CCL/pcb 中取当日涨幅最大板块、买入板块内分时涨幅最大个股；
+  // 卖点 = 「3日涨幅最大&三日情绪-30快进快出」的通用卖点，不含快进快出机制）
+  if (STRATEGIES[strategyId]?.moodWeeklyMode === true) {
+    return runEmotionWeeklyBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   const strategy = STRATEGIES[strategyId];
   // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：快进快出半仓（2026-10-13 用户新增）——
