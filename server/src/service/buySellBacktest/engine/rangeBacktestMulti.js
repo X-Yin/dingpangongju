@@ -18,7 +18,7 @@ const { getTrainingCampDates, loadTrainingCampData } = require('../deps');
 const { buildWindowAxis } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
 const { buildPrevOneWordBoardSet, buildReplayStocksWithTline, extractDailyInfo, isLimitUpAtBuy } = require('./replayData');
-const { EXCLUDED_CODES, EMO_QUICK_FUND_INFLOW_BASE, OPENING_BELOW_RATIO_STRATEGY_IDS } = require('../constants');
+const { EXCLUDED_CODES, EMO_QUICK_FUND_INFLOW_BASE, OPENING_BELOW_RATIO_STRATEGY_IDS, QUICK_OUT_SAME_DAY_REBUY_STRATEGY_IDS } = require('../constants');
 const { withResilienceGateInfo } = require('./checkBuilders');
 const { TWO_BUY_LEG_WEIGHT, TWO_BUY_SAME_DAY_TAIL_PROFIT_PCT, computeTwoBuyAccountReturn, getPositionLegWeight, getStockBlockName } = require('./twoBuy');
 const { buildBuyReasonFromDiag, fmtTime, runBuyPointDiagnosis } = require('../diagnose/buyPoint');
@@ -412,8 +412,10 @@ const runRangeBacktestMulti = async (startDate, endDate, strategyIds, onProgress
           }
         }
 
-        // 买入信号：情绪快进快出策略当日已发生 10:00 强制卖出 → 当日禁止二次买入（哪怕买点再次触发）；其余沿用买点诊断 allPassed
-        const quickOutNoRebuy = strategy.emoQuickOut === true && st.quickOutSoldDate === dateStr;
+        // 买入信号：情绪快进快出策略当日已发生 10:00 强制卖出 → 当日禁止二次买入（哪怕买点再次触发）；
+        // QUICK_OUT_SAME_DAY_REBUY_STRATEGY_IDS 内的策略（3日涨幅最大&三日情绪-30快进快出）当日卖出后再次触发买点仍可继续买入；
+        // 其余沿用买点诊断 allPassed
+        const quickOutNoRebuy = strategy.emoQuickOut === true && st.quickOutSoldDate === dateStr && !QUICK_OUT_SAME_DAY_REBUY_STRATEGY_IDS.has(strategy.id);
         // 「10n 科技情绪-快进快出」系列（emoBreak 阈值 = 10×n）：买点时机不走买点诊断，改为盘中分时科技情绪
         // 突破 10×n——当前桶分时科技情绪 ≥ 阈值即处于突破买点窗口（情绪线每日 9:30 竞价起算、跨日不累计，
         // 首个满足的桶即为突破时点）；该桶选股失败时情绪仍 ≥ 阈值的后续桶持续重试。其余机制与快进快出系列一致

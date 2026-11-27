@@ -63,6 +63,13 @@ const EMO_QUICK_ICE_CONFIRM_PCT = 1;
 // 改为回溯当日任意分时点（分钟级）分时科技情绪是否 <= 该阈值（见 engine/emoQuick.isTechIceGateOpen）。
 const TECH_ICE_THRESHOLD = -39;
 
+// 当日强卖/止损后允许再次买入的快进快出策略（2026-11-27 用户改）：
+// 「3日涨幅最大&三日情绪-30快进快出」当日卖出之后，若再次触发买点仍可继续买入；
+// 其余快进快出策略维持「强卖/止损当日禁止二次买入」不变
+const QUICK_OUT_SAME_DAY_REBUY_STRATEGY_IDS = new Set([
+  'highest_3d_gain_emoquick',
+]);
+
 // 检查4「开盘后自选科技股低于开盘价」按比例收紧（2026-10-19 用户定，取代原「创业板指斜率负时固定收紧为 15」）：
 // 适用范围（31 个）= 快进快出（emoQuickOut）7 个 + 脉冲最强 3 个 + 纯「N 日涨幅最大」7 个 + 两次买入 7 个
 // + 两次买入不同板块 4 个 + 两次买入（不同股）3 个。
@@ -128,6 +135,7 @@ module.exports = {
   EMO_QUICK_RAISED_BLOCK_LOOKBACK_MIN,
   EMO_QUICK_ICE_CONFIRM_PCT,
   TECH_ICE_THRESHOLD,
+  QUICK_OUT_SAME_DAY_REBUY_STRATEGY_IDS,
   EMO_QUICK_RANGE_HIGH,
   EMO_QUICK_RANGE_LOW,
   EMO_SWITCH_EMA_THRESHOLD,
