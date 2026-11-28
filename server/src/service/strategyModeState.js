@@ -14,6 +14,9 @@ const { MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE } = require('./hotMoneyExtremeWin'
 
 const MODE_TECH_ATTACK = 'tech_attack';
 const MODE_WASH_FUSION = 'wash_fusion_extreme_odds';
+// 冰点反弹-率先冲击5%（2026-11-28 用户新增）：买点由 iceReboundLive 常驻扫描（1 分钟诊断），
+//   卖点按通用卖点 + 低于成本价即卖（costLinePct=0）走 5 分钟时间桶诊断
+const MODE_ICE_REBOUND = 'ice_rebound';
 const statePath = path.resolve(__dirname, '../data/strategy_mode.json');
 
 const MODE_MULTI = 'multi_mode'; // 前端「多选模式」下拉显示标记（非真实模式，仅本地展示用）
@@ -22,6 +25,7 @@ const normalize = (value) => {
   if (value === MODE_EXTREME_WIN) return MODE_EXTREME_WIN;
   if (value === MODE_ATTACK_DEFENSE) return MODE_ATTACK_DEFENSE;
   if (value === MODE_WASH_FUSION) return MODE_WASH_FUSION;
+  if (value === MODE_ICE_REBOUND) return MODE_ICE_REBOUND;
   return MODE_TECH_ATTACK;
 };
 
@@ -100,6 +104,7 @@ const setModes = (list) => {
 module.exports = {
   MODE_TECH_ATTACK,
   MODE_WASH_FUSION,
+  MODE_ICE_REBOUND,
   MODE_MULTI,
   getMode,
   getModes,

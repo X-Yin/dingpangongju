@@ -1647,3 +1647,111 @@
   }
 }
 
+
+/* ==================== 竞价抢筹弹窗（2026-11-28 用户要求） ====================
+   原盯盘页内嵌「竞价抢筹监控」卡片改为弹窗展示：9:25-9:30 每次进入盯盘页自动打开；
+   弹窗挂载在 body（不在 .dingpan-container 内），故样式需在此平铺定义 */
+.jingjia-modal {
+  .ant-modal-content {
+    border-radius: 18px;
+    padding: 18px 20px 20px;
+    background: linear-gradient(135deg, rgba(255, 247, 230, 0.98), rgba(255, 255, 255, 0.96));
+    box-shadow: 0 24px 60px rgba(71, 96, 139, 0.22);
+  }
+
+  .jingjia-modal-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: var(--dp-title-color, #12213a);
+    font-weight: 700;
+
+    .jingjia-modal-sub {
+      font-size: 12px;
+      font-weight: 400;
+      color: #8c6d1f;
+    }
+  }
+
+  .jingjia-block-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 62vh;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .jingjia-block-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .jingjia-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px;
+    background: rgba(18, 33, 58, 0.03);
+    border-radius: 8px;
+  }
+
+  .jingjia-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+  }
+
+  .jingjia-item {
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: rgba(255, 247, 230, 0.94);
+    border: 1px solid rgba(250, 173, 20, 0.18);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    transition: all 0.22s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      border-color: rgba(250, 173, 20, 0.3);
+      box-shadow: 0 10px 24px rgba(250, 173, 20, 0.14);
+    }
+  }
+}
+
+/* 竞价抢筹弹窗的常驻入口（关闭弹窗后 / 9:25 前点击可再次打开） */
+.jingjia-modal-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+  background: linear-gradient(135deg, rgba(255, 247, 230, 0.98), rgba(255, 255, 255, 0.9));
+  border: 1px solid rgba(250, 173, 20, 0.32);
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(250, 173, 20, 0.55);
+    box-shadow: 0 8px 20px rgba(250, 173, 20, 0.16);
+  }
+
+  .jingjia-trigger-tip {
+    font-weight: 400;
+    color: #8c6d1f;
+  }
+
+  .jingjia-trigger-action {
+    font-weight: 500;
+    color: #b45309;
+    opacity: 0.8;
+  }
+}

@@ -95,7 +95,7 @@ const POSITION_CYCLE_OPTIONS = ['pro', 'reverse'];
 //   first_board_wash     首板起爆（首板洗盘-起爆拉升五条卖点，1min 时间桶）
 //   second_board_wash    二板起爆（放量洗盘-二板起爆七条卖点，1min 时间桶）
 //   未设置时按当前全局策略模式回退（保持旧行为）
-const POSITION_SELL_STRATEGY_OPTIONS = ['tech_attack', 'extreme_win_pro', 'extreme_win_reverse', 'first_board_wash', 'second_board_wash'];
+const POSITION_SELL_STRATEGY_OPTIONS = ['tech_attack', 'extreme_win_pro', 'extreme_win_reverse', 'first_board_wash', 'second_board_wash', 'ice_rebound'];
 
 // 读取资金流向全部数据
 const readFundFlowData = () => readJsonFile(stock_position_fund_flow_path, {});
@@ -743,6 +743,38 @@ const updateStockPositionCost = (id, costPrice) => {
     }
 };
 
+// 更新某笔持仓的买入日期与买入时间（2026-11-28 用户要求：持仓管理列表每笔可重新设置买入时间）
+//   buyDate 支持 'YYYY-MM-DD' / 'YYYYMMDD'，统一存为 'YYYY-MM-DD'；buyTime 存为 'HH:mm'
+//   买入时间直接影响卖点诊断：买入当日不诊断、次日起生效
+const updateStockPositionBuyTime = (id, buyDate, buyTime) => {
+    try {
+        const stock_positions = readStockPositionsFile();
+        const target = stock_positions.find((item) => item.id === id);
+        if (!target) return { success: false, message: '未找到该持仓' };
+        const dateStr = String(buyDate || '').trim();
+        const timeStr = String(buyTime || '').trim();
+        // 日期支持 'YYYY-MM-DD' / 'YYYYMMDD'，统一归一为 'YYYY-MM-DD'（非法日期如 2026-02-31 拒绝）
+        const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+        const compactMatch = /^(\d{4})(\d{2})(\d{2})$/.exec(dateStr);
+        const normalizedDate = isoMatch
+            ? dateStr
+            : (compactMatch ? `${compactMatch[1]}-${compactMatch[2]}-${compactMatch[3]}` : '');
+        const dateObj = normalizedDate ? dayjs(normalizedDate) : null;
+        if (!dateObj || !dateObj.isValid() || dateObj.format('YYYY-MM-DD') !== normalizedDate) {
+            return { success: false, message: '请选择有效的买入日期' };
+        }
+        const timeMatch = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(timeStr);
+        if (!timeMatch) return { success: false, message: '买入时间格式应为 HH:mm（00:00 ~ 23:59）' };
+        target.buyDate = dateObj.format('YYYY-MM-DD');
+        target.buyTime = timeStr;
+        writeJsonFile(stock_position_path, stock_positions);
+        return { success: true, buyDate: target.buyDate, buyTime: target.buyTime };
+    } catch (error) {
+        console.error('更新持仓买入时间失败:', error);
+        return { success: false, message: '更新失败' };
+    }
+};
+
 // 更新某笔持仓的仓位（25/50/75/100 百分比）
 const updateStockPositionWeight = (id, weight) => {
     try {
@@ -760,7 +792,8 @@ const updateStockPositionWeight = (id, weight) => {
     }
 };
 
-// 更新某笔持仓的统一卖点策略（tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash / second_board_wash；
+// 更新某笔持仓的统一卖点策略（tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash / second_board_wash
+//   / ice_rebound 冰点反弹，2026-11-28）；
 //   传 null 或空串清除标记，清除后回退到当前全局策略模式）
 //   同时同步旧的 cycle 字段，保证仍有 cycle 口径的旧逻辑/回测镜像保持一致
 const updateStockPositionSellStrategy = (id, sellStrategy) => {
@@ -772,7 +805,7 @@ const updateStockPositionSellStrategy = (id, sellStrategy) => {
             delete target.sellStrategy;
             delete target.cycle;
         } else if (!POSITION_SELL_STRATEGY_OPTIONS.includes(sellStrategy)) {
-            return { success: false, message: '卖点策略只能是 tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash / second_board_wash' };
+            return { success: false, message: '卖点策略只能是 tech_attack / extreme_win_pro / extreme_win_reverse / first_board_wash / second_board_wash / ice_rebound' };
         } else {
             target.sellStrategy = sellStrategy;
             if (sellStrategy === 'extreme_win_reverse') {
@@ -1062,6 +1095,7 @@ module.exports = {
     onPositionChange,
     updateStockPositionCost,
     updateStockPositionWeight,
+    updateStockPositionBuyTime,
     updateStockPositionSellStrategy,
     getPositionSellStrategy,
     POSITION_SELL_STRATEGY_OPTIONS,

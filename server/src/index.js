@@ -59,6 +59,7 @@ const {
   onPositionChange,
   updateStockPositionCost,
   updateStockPositionWeight,
+  updateStockPositionBuyTime,
   updateStockPositionSellStrategy,
   diff2DayStockTline,
   getStockPositionFundFlow,
@@ -148,6 +149,9 @@ const emoQuickFundGateLive = require('./service/emoQuickFundGateLive');
 // 情绪游资-极致赔率线上服务（2026-11-01 用户要求）：把回测融合策略搬到线上，
 // 股票列表分首板起爆 / 二板起爆两组；买点 3s 时间桶、卖点 1min 时间桶，仅在该模式下运行
 const washFusionLive = require('./service/washFusionLive');
+// 冰点反弹-率先冲击5%线上服务（2026-11-28 用户要求）：买点 1 分钟诊断（9:20-15:05 常驻扫描），
+// 卖点为通用卖点 + 低于成本价即卖，按 5 分钟时间桶诊断（sellPointPushService ice_rebound 分支）
+const iceReboundLive = require('./service/iceReboundLive');
 const { checkFirstBoardWashSellPointDetailed, checkSecondBoardWashSellPointDetailed } = require('./service/firstBoardWashSell');
 // 调试面板 MOCK：手动触发买点/卖点命中，走同一推送 + 飞书链路
 const debugMock = require('./service/debugMock');
@@ -1951,6 +1955,9 @@ app.post('/check_single_stock_sell_point', async (req, res) => {
         // 2026-11-14 用户要求：⑪⑫仅在「买入之后的第二个交易日（买入日计第 1 天，即持仓次日）」或「当前亏损」时生效
         openGapLossOrSecondDayOnly: sellStrategy !== 'extreme_win_reverse',
       });
+    } else if (sellStrategy === 'ice_rebound' || mode === strategyModeState.MODE_ICE_REBOUND) {
+      // 冰点反弹-率先冲击5%（2026-11-28 用户要求）：通用卖点 + 低于成本价即卖（costLinePct=0）+ 禁用竞价低开自救
+      result = await checkSingleStockSellPoint(code, costPrice, { costLinePct: 0, disableCostLineSelfRescue: true });
     } else if (mode === strategyModeState.MODE_WASH_FUSION) {
       // 情绪游资-极致赔率：未显式指定卖点策略的持仓按首板起爆（五条）兜底
       result = await checkFirstBoardWashSellPointDetailed(code, costPrice, buyDate || null);
@@ -2233,6 +2240,17 @@ app.get('/wash_fusion_extreme_odds_snapshot', async (req, res) => {
   }
 });
 
+// 冰点反弹-率先冲击5% 实时快照（2026-11-28 用户要求）：返回最近一次诊断的内存快照
+// （快照本身实时——每 15s tick 内同一分钟只诊断一次；refresh 参数忽略，接受但不额外重算）
+app.get('/ice_rebound_snapshot', (req, res) => {
+  try {
+    res.json({ success: true, data: iceReboundLive.getDisplayData() });
+  } catch (error) {
+    console.error('获取冰点反弹快照失败:', error);
+    res.status(500).json({ success: false, message: error.message || '获取失败' });
+  }
+});
+
 // ===== 调试面板（MOCK）接口：仅在 debug 面板手动触发，直接推送 WS + 发送飞书，不做桶门控 =====
 app.post('/debug/mock_buy_point', async (req, res) => {
   try {
@@ -2315,6 +2333,25 @@ app.post('/debug/mock_second_board_wash_sell', async (req, res) => {
   } catch (error) {
     console.error('MOCK 二板起爆卖点失败:', error);
     res.json({ success: false, error: error.message || 'MOCK 二板起爆卖点失败' });
+  }
+});
+
+// 冰点反弹 MOCK（2026-11-28）：买点（率先冲击 +5%，线上同一 WS ice_rebound_buy + 飞书链路）/ 卖点（通用卖点 + 低于成本价即卖）
+app.post('/debug/mock_ice_rebound_buy', async (req, res) => {
+  try {
+    res.json(await debugMock.mockIceReboundBuy());
+  } catch (error) {
+    console.error('MOCK 冰点反弹买点失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 冰点反弹买点失败' });
+  }
+});
+
+app.post('/debug/mock_ice_rebound_sell', async (req, res) => {
+  try {
+    res.json(await debugMock.mockIceReboundSell());
+  } catch (error) {
+    console.error('MOCK 冰点反弹卖点失败:', error);
+    res.json({ success: false, error: error.message || 'MOCK 冰点反弹卖点失败' });
   }
 });
 
@@ -3565,6 +3602,24 @@ app.post('/update_stock_position_weight', async (req, res) => {
     res.json({ success: true, message: '仓位已更新' });
   } catch (error) {
     console.error('更新持仓仓位失败:', error);
+    res.status(500).json({ success: false, message: error.message || '更新失败' });
+  }
+});
+
+// 更新某笔持仓的买入日期 / 买入时间（2026-11-28 用户要求：持仓管理列表每笔可重新设置买入时间）
+app.post('/update_stock_position_buy_time', async (req, res) => {
+  try {
+    const { id, buyDate, buyTime } = req.body;
+    if (!id) {
+      return res.status(400).json({ success: false, message: '持仓 id 不能为空' });
+    }
+    const result = updateStockPositionBuyTime(id, buyDate, buyTime);
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message || '更新失败' });
+    }
+    res.json({ success: true, message: '买入时间已更新', data: { buyDate: result.buyDate, buyTime: result.buyTime } });
+  } catch (error) {
+    console.error('更新持仓买入时间失败:', error);
     res.status(500).json({ success: false, message: error.message || '更新失败' });
   }
 });
@@ -6339,6 +6394,8 @@ const server = app.listen(port, () => {
   startStrategyPolling();
   // 情绪游资-极致赔率：仅在拍板模式为 wash_fusion_extreme_odds 时每 3s 轮询首板/二板候选与买点
   washFusionLive.start();
+  // 冰点反弹-率先冲击5%：交易日 9:20-15:05 每 15s 轮询，买点 1 分钟诊断一次（2026-11-28 用户要求）
+  iceReboundLive.start();
   // 回测持仓镜像同步：每天首次启动后台跑一次快进快出策略回测，期末未卖持仓自动写入持仓管理
   backtestPositionMirror.start();
   // 快进快出「资金净流入阈值动态调节」：监听持仓管理增删股票——每次操作后台重跑回测并重算
@@ -6361,6 +6418,7 @@ const shutdown = (signal) => {
   try { buyPointPushService.stop(); } catch (e) { /* 忽略 */ }
   try { sellPointPushService.stop(); } catch (e) { /* 忽略 */ }
   try { washFusionLive.stop(); } catch (e) { /* 忽略 */ }
+  try { iceReboundLive.stop(); } catch (e) { /* 忽略 */ }
   try { monitorSnapshot.stop(); } catch (e) { /* 忽略 */ }
   try { marketSurgeAlert.stop(); } catch (e) { /* 忽略 */ }
   try { wsServer.close(); } catch (e) { /* 忽略 */ }

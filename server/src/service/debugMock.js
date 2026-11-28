@@ -12,6 +12,7 @@ const wsServer = require('../wsServer');
 const feishuNotify = require('./feishuNotify');
 const iceDelayBuy = require('./iceDelayBuy');
 const washFusionLive = require('./washFusionLive');
+const iceReboundLive = require('./iceReboundLive');
 const { limitUpThresholdOf } = require('./buySellBacktest/engine/extremeWinScores');
 const { WASHOUT_OPT } = require('./buySellBacktest/engine/firstBoardWashBacktest');
 const { getPastTradingDates } = require('./buySellBacktest/deps');
@@ -897,6 +898,242 @@ const mockWashSell = async (strategy) => {
 const mockFirstBoardWashSell = () => mockWashSell('first_board_wash');
 const mockSecondBoardWashSell = () => mockWashSell('second_board_wash');
 
+// ==================== 冰点反弹 MOCK（2026-11-28 用户要求）====================
+// 标的：优先冰点反弹实时快照（dayEvent → candidates），无则从全量自选股随机取一只
+const pickIceReboundTarget = () => {
+  try {
+    const d = iceReboundLive.getDisplayData();
+    if (d && d.dayEvent && d.dayEvent.code) {
+      const e = d.dayEvent.event || {};
+      return { code: d.dayEvent.code, name: d.dayEvent.name, event: { minute: e.minute, px: e.px, pct: e.pct }, stockCapYi: d.dayEvent.stockCapYi ?? null, triggerEmo: d.dayEvent.triggerEmo ?? null, source: 'candidate' };
+    }
+    const c = pickRandom((d && d.candidates) || []);
+    if (c && c.code) return { code: c.code, name: c.name || c.code, event: c.event || null, stockCapYi: null, triggerEmo: null, source: 'candidate' };
+  } catch (e) { /* 快照失败 → 回退自选股 */ }
+  const s = pickRandom(getMonitorStocks() || []);
+  if (!s) return null;
+  return { code: s.code, name: s.name || s.code, event: null, stockCapYi: null, triggerEmo: null, source: 'watchlist' };
+};
+
+// 买点 MOCK：与线上同一条 WS（type:'ice_rebound_buy'）+ 飞书链路，构造「率先冲击 +5%」触发事件
+const mockIceReboundBuy = async () => {
+  const target = pickIceReboundTarget();
+  if (!target) return { success: false, error: '候选股与自选股均为空，无法 mock' };
+
+  const timestamp = fmtNow();
+  const quote = await fetchQuoteSafe(target.code);
+  const preclose = quote ? quote.preclose : rnd(20, 80);
+  // 触发分钟：交易时段用当前分钟，否则 mock 一个 9:31-11:25 的上午分钟（买点仅限上午）
+  const nowMinute = dayjs().hour() * 100 + dayjs().minute();
+  const minute = nowMinute >= 931 && nowMinute <= 1130 ? nowMinute : rndInt(931, 1125);
+  // 触发涨幅：优先用快照事件真实值，否则落在 [5, 8) 窗口内
+  let pct = target.event && Number.isFinite(Number(target.event.pct)) ? Number(target.event.pct) : rnd(5.05, 7.6);
+  if (!(pct >= 5 && pct < 8)) pct = rnd(5.05, 7.6);
+  const px = +(quote && quote.price > 0 ? quote.price : (target.event && Number(target.event.px)) || preclose * (1 + pct / 100)).toFixed(2);
+
+  const stock = {
+    code: target.code,
+    name: target.name,
+    stockName: target.name,
+    event: { minute, px, pct: +pct.toFixed(2) },
+    minute: fmtHm(minute),
+    price: px,
+    change: +pct.toFixed(2),
+    stockCapYi: target.stockCapYi != null ? target.stockCapYi : rnd(300, 2600, 1),
+    triggerEmo: target.triggerEmo,
+    timestamp,
+    mock: true,
+  };
+  let prevTechEmotion = null;
+  try { prevTechEmotion = iceReboundLive.getDisplayData()?.gates?.prevTechEmotion ?? null; } catch (e) { /* 忽略 */ }
+  if (prevTechEmotion == null || !Number.isFinite(Number(prevTechEmotion))) prevTechEmotion = rnd(-55, -22, 2); // 冰点区间 mock 值
+
+  wsServer.broadcast({
+    type: 'ice_rebound_buy',
+    ts: Date.now(),
+    open: true,
+    data: {
+      date: dayjs().format('YYYYMMDD'),
+      source: 'ice_rebound_live',
+      sourceLabel: '冰点反弹-率先冲击5%',
+      stocks: [stock],
+      checks: [{
+        id: 'ice_rebound_mock',
+        title: 'MOCK 模拟触发（绕过门禁与当日去重）',
+        passed: true,
+        value: `${stock.stockName} ${stock.minute} ${gainText2(stock.change)}（模拟数据）`,
+        reason: '调试面板 MOCK：按线上同一 WS + 飞书链路推送，仅用于验证卡片样式与链路',
+      }],
+      rules: { hitPct: 5, floatCapPct: 8, buyWindow: '9:30-11:30' },
+      mock: true,
+    },
+  });
+
+  let feishu;
+  try {
+    feishu = await feishuNotify.sendFeishuCard(feishuNotify.buildIceReboundBuyCard({
+      buyStocks: [stock],
+      triggerTime: timestamp,
+      timestamp,
+      prevTechEmotion,
+      mock: true,
+    }));
+  } catch (e) { feishu = { success: false, error: e.message }; }
+  return { success: true, target: { code: target.code, name: target.name }, kind: 'ice_rebound_buy', feishu };
+};
+
+// 卖点 MOCK：冰点反弹卖点口径（5 分钟桶维度）——通用 7 条件 + 盘中大跌强卖；
+// 命中「均线破位」+「跌破成本线」（costLinePct=0，低于成本价即卖；竞价低开自救已禁用）
+const mockIceReboundSell = async () => {
+  const target = pickIceReboundTarget();
+  if (!target) return { success: false, error: '候选股与自选股均为空，无法 mock' };
+
+  const positions = getStockPositions() || [];
+  const pos = positions.find((p) => p && p.code === target.code) || null;
+  const timestamp = fmtNow();
+
+  const quote = await fetchQuoteSafe(target.code);
+  let closePrice = quote ? quote.price : rnd(20, 80);
+  let change = quote ? quote.change : rnd(-6, -2);
+  try {
+    const tline = await getSingleStockTlineData(target.code);
+    const line = tline?.line || [];
+    const last = line[line.length - 1];
+    if (last && last.last_px != null && Number(last.last_px) > 0) {
+      closePrice = Number(last.last_px);
+      if (last.change != null && Number.isFinite(Number(last.change))) change = Number(last.change);
+    }
+  } catch (e) { /* 分时失败用 mock 值 */ }
+  closePrice = +Number(closePrice).toFixed(2);
+  change = +Number(change).toFixed(2);
+
+  // 成本价：持仓用真实成本；否则按浮亏 0.5%~3% 反推（保证跌破成本价，即 costLinePct=0 口径触发）
+  const realCost = pos && pos.costPrice != null && Number.isFinite(Number(pos.costPrice)) && Number(pos.costPrice) > 0
+    ? Number(pos.costPrice)
+    : +(closePrice * rnd(1.005, 1.03)).toFixed(2);
+  const costPrice = +realCost.toFixed(2);
+  const brokenCost = closePrice < costPrice;
+  const ma5 = +(closePrice * rnd(1.002, 1.02)).toFixed(2);
+  const ma10 = +(closePrice * rnd(1.008, 1.03)).toFixed(2);
+  const prevDayLow = +(closePrice * rnd(1.004, 1.018)).toFixed(2);
+  const openPrice = +(closePrice * rnd(1.005, 1.03)).toFixed(2);
+  const amp = +(((openPrice - closePrice) / openPrice) * 100).toFixed(2);
+  const techEmotion = rnd(-45, -12);
+  const resilience = rnd(6.5, 12);
+  const minChg = rnd(-6.2, -5.1);
+  const buyDateStr = pos?.buyDate || dayjs().subtract(3, 'day').format('YYYY-MM-DD');
+  const buyTimeStr = pos?.buyTime || '09:35';
+  const weight = pos?.weight != null ? pos.weight : 100;
+  const d1 = dayjs().subtract(2, 'day').format('MMDD');
+  const d2 = dayjs().subtract(1, 'day').format('MMDD');
+  const d3 = dayjs().format('MMDD');
+
+  const mk = (name, satisfied, detail, subConditions = []) => ({
+    name, satisfied, detail, subConditions, pending: false, pendingMinutes: 0,
+  });
+
+  const conditions = [
+    { // 命中1：均线破位
+      name: '均线破位', satisfied: true, pending: false, pendingMinutes: 0,
+      detail: `现价 ${closePrice.toFixed(2)} 跌破 5 日线 ${ma5.toFixed(2)}（低于 ${+(((closePrice - ma5) / ma5) * 100).toFixed(2)}%），触发卖点`,
+      subConditions: [
+        { label: '5日线', value: ma5.toFixed(2) },
+        { label: '10日线', value: ma10.toFixed(2) },
+        { label: '现价', value: closePrice.toFixed(2) },
+        { label: '判断规则', value: '现价跌破 5 日线（通用卖点条件①）' },
+      ],
+    },
+    mk('高位放量大阴线', false, `回落 ${amp.toFixed(2)}% ≤ 8%，收盘 ${closePrice.toFixed(2)} < 开盘 ${openPrice.toFixed(2)}，未触发`, [
+      { label: '开盘价', value: openPrice.toFixed(2) },
+      { label: '收盘价', value: closePrice.toFixed(2) },
+      { label: '回落幅度', value: `${amp.toFixed(2)}%` },
+    ]),
+    mk('科技板块情绪退潮', false, `科技情绪指数 ${techEmotion.toFixed(2)}，未低于 -30（需 < -30 且自选股中跌幅<-9%个股 >=5 才触发）`, [
+      { label: '科技情绪指数', value: techEmotion.toFixed(2) },
+      { label: '阈值', value: '< -30（持续≥5分钟才触发）' },
+    ]),
+    mk('抗分歧指数弱势', false, `抗分歧指数 ${resilience.toFixed(2)} ≥ 6，未触发`, [
+      { label: '抗分歧指数', value: resilience.toFixed(2) },
+      { label: '阈值', value: '< 6 且 涨幅 ≤ -5%（14:50后生效）' },
+    ]),
+    mk('连续三日抗分歧弱势', false, `近三日抗分歧指数未全部 < 10（${d1}: 12.4、${d2}: 10.8、${d3}: ${resilience.toFixed(2)}），未触发`, [
+      { label: '近3日抗分歧', value: `${d1}: 12.4 | ${d2}: 10.8 | ${d3}: ${resilience.toFixed(2)}` },
+    ]),
+    mk('跌破最迟买入日低点', false, '未找到该股票的买入/加仓记录，无法判断最迟买入日低点', [
+      { label: '状态', value: '无买入记录' },
+    ]),
+    { // 命中2：跌破成本线（冰点反弹口径 costLinePct=0：低于成本价即卖；竞价低开自救已禁用）
+      name: '跌破成本线', satisfied: brokenCost, pending: false, pendingMinutes: 0,
+      detail: brokenCost
+        ? `现价 ${closePrice.toFixed(2)} 已低于成本价 ${costPrice.toFixed(2)}（低于成本价即卖，不等 -2%），触发卖点`
+        : `现价 ${closePrice.toFixed(2)} 未低于成本价 ${costPrice.toFixed(2)}，未触发`,
+      subConditions: [
+        { label: '成本价', value: costPrice.toFixed(2) },
+        { label: '现价', value: closePrice.toFixed(2) },
+        { label: '判断规则', value: '低于成本价即卖（costLinePct=0，2026-11-28 用户改）' },
+        { label: '竞价低开自救', value: '已禁用：9:30 开盘价低于成本线直接卖，不等开盘拉升回落' },
+      ],
+    },
+    mk('盘中大跌强卖（≤ -7%）', false, `当日最低涨幅 ${minChg.toFixed(2)}% > -7%，未触发`, [
+      { label: '当日最低涨幅', value: `${minChg.toFixed(2)}%` },
+      { label: '阈值', value: '≤ -7% 立即卖出（与快进快出通用卖点一致）' },
+    ]),
+  ];
+
+  const hitConds = conditions.filter((c) => c.satisfied);
+  const hit = {
+    positionId: pos ? (pos.id || pos.code) : target.code,
+    code: target.code,
+    stockName: target.name,
+    weight,
+    buyDate: buyDateStr,
+    buyTime: buyTimeStr,
+    costPrice,
+    isSell: true,
+    reasons: hitConds.map((c) => c.detail),
+    conditions,
+    conclusion: '已触发冰点反弹卖点条件（均线破位 / 跌破成本线），建议卖出。',
+    sellStrategy: 'ice_rebound',
+    minuteBased: false, // 冰点反弹卖点按 5 分钟时间桶维度（2026-11-28 用户要求）
+    detail: {
+      closePrice,
+      change,
+      ma5,
+      ma10,
+      costPrice,
+    },
+    mock: true,
+  };
+
+  wsServer.broadcast({
+    type: 'sell_point',
+    mode: 'ice_rebound',
+    bucket: null,
+    ts: Date.now(),
+    data: { results: [hit], hitCount: 1, total: 1, mock: true },
+    open: true,
+  });
+
+  let feishu;
+  try {
+    feishu = await feishuNotify.sendFeishuCard(feishuNotify.buildSellPointCard({
+      sellStocks: [{
+        stockName: hit.stockName,
+        code: hit.code,
+        weight: hit.weight,
+        buyDate: hit.buyDate,
+        buyTime: hit.buyTime,
+        costPrice: hit.costPrice,
+        reasons: hit.reasons,
+        closePrice: hit.detail.closePrice,
+      }],
+      timestamp,
+      mock: true,
+    }));
+  } catch (e) { feishu = { success: false, error: e.message }; }
+  return { success: true, target: { code: target.code, name: target.name }, kind: 'ice_rebound_sell', feishu };
+};
+
 // 买点预热 MOCK（2026-11-15）：绕过条件与当日去重，直接广播一张预热卡片
 const mockBuyPointPreheat = (kind) => {
   const pushed = require('./buyPointPreheat').mockPreheat(kind);
@@ -913,5 +1150,7 @@ module.exports = {
   mockFirstBoardWashSell,
   mockSecondBoardWashBuy,
   mockSecondBoardWashSell,
+  mockIceReboundBuy,
+  mockIceReboundSell,
   mockBuyPointPreheat,
 };

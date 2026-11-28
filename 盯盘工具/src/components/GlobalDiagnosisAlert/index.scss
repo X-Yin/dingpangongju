@@ -237,14 +237,28 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     }
   }
 
+  // 2026-11-28 用户要求：标题 + 命中文案两行展示（纵向排列，命中文案不再与标题挤同一行）
+  .gda-title-wrap {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
   .gda-title {
     font-size: 15.5px;
     font-weight: 800;
     letter-spacing: 0.02em;
     color: #fff;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-    // 标题必须保持单行且不被徽标 / 时间挤压（否则中文标题会逐字竖排折断）
-    flex-shrink: 0;
+    // 标题保持单行（2026-11-28 修复：冰点反弹标题较长，允许收缩省略，
+    //   不再把右侧「命中：…」挤成逐字竖排折断）
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
@@ -257,6 +271,7 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     border-radius: 999px;
     padding: 2px 10px;
     white-space: nowrap;
+    flex-shrink: 0;
   }
 
   // 预热卡模式徽标：琥珀金
@@ -365,6 +380,12 @@ $gda-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     font-size: 12px;
     font-weight: 600;
     color: #fde68a;
+    // 2026-11-28：位于标题下方副标题行，保持单行、可收缩省略
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .gda-cost {

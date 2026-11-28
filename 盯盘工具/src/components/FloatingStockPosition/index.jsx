@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button, Spin, message, Tooltip, Tag, Drawer, InputNumber, Select } from 'antd';
+import { Button, Spin, message, Tooltip, Tag, Drawer, InputNumber, Select, Modal, DatePicker } from 'antd';
 import { PlusOutlined, DeleteOutlined, FolderOpenOutlined, WarningOutlined, RadarChartOutlined, CheckCircleOutlined, CloseCircleOutlined, ThunderboltOutlined, ExperimentOutlined, ReloadOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -46,6 +46,8 @@ const SELL_STRATEGY_OPTIONS = [
   { value: 'extreme_win_reverse', label: '极致胜率逆周期' },
   { value: 'first_board_wash', label: '首板起爆' },
   { value: 'second_board_wash', label: '二板起爆' },
+  // 冰点反弹（2026-11-28 用户要求）：通用卖点 + 低于成本价即卖（costLinePct=0）+ 禁用竞价低开自救
+  { value: 'ice_rebound', label: '冰点反弹' },
 ];
 const SELL_STRATEGY_LABELS = Object.fromEntries(SELL_STRATEGY_OPTIONS.map((o) => [o.value, o.label]));
 
@@ -86,7 +88,7 @@ const diagnosePositionSellPoint = async (stock, todayStr, mode) => {
       mode,
       // 顺逆周期标记：旧口径回退用（sellStrategy 未设置时后端据此决定⑪⑫是否启用）
       cycle: stock.cycle || 'pro',
-      // 统一卖点策略：科技进攻 / 极致胜率顺周期 / 极致胜率逆周期 / 首板起爆（2026-11-01 用户要求）
+      // 统一卖点策略：科技进攻 / 极致胜率顺周期 / 极致胜率逆周期 / 首板起爆 / 二板起爆 / 冰点反弹（2026-11-01 用户要求）
       sellStrategy: stock.sellStrategy || null,
     });
     return { ...res.data, ...base };
@@ -130,12 +132,15 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   const [sellDrawerResults, setSellDrawerResults] = useState([]);
   // 持仓成本线价格输入框本地值（key: 股票代码），失焦时保存
   const [costInputs, setCostInputs] = useState({});
+  // 买入时间编辑弹窗（2026-11-28 用户要求）：点击某笔持仓的买入时间打开，可设置年月日时分，含「此刻」快捷按钮
+  const [buyTimeModal, setBuyTimeModal] = useState(null); // 正在编辑的持仓 { id, name, code }
+  const [buyTimeValue, setBuyTimeValue] = useState(null); // dayjs 对象
+  const [buyTimeSaving, setBuyTimeSaving] = useState(false);
   const [buyPointDrawerOpen, setBuyPointDrawerOpen] = useState(false);
   const [pos, setPos] = useState({ x: 20, y: window.innerHeight - 320 });
   const dragRef = useRef({ dragging: false, moved: false, offsetX: 0, offsetY: 0, startX: 0, startY: 0 });
   const containerRef = useRef(null);
   const positionsRef = useRef([]);
-  const backtestTriggeredRef = useRef(false);
   // 持仓数据刷新中：任一轮询/手动请求进行中时为 true，刷新按钮跟随转动，全部数据返回后恢复静止
   const [dataRefreshing, setDataRefreshing] = useState(false);
   const dataRefreshCountRef = useRef(0);
@@ -193,7 +198,7 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     }
   };
 
-  // 修改某笔持仓的统一卖点策略（科技进攻 / 极致胜率顺周期 / 极致胜率逆周期 / 首板起爆）
+  // 修改某笔持仓的统一卖点策略（科技进攻 / 极致胜率顺周期 / 极致胜率逆周期 / 首板起爆 / 二板起爆 / 冰点反弹）
   //   sellStrategy=null（清空）时后端回退到当前全局策略模式
   const handleSellStrategyChange = async (stock, sellStrategy) => {
     const key = stock.id || stock.code;
@@ -224,6 +229,38 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
   const formatBuyAt = (stock) => {
     if (!stock.buyDate) return '--';
     return stock.buyTime ? `${stock.buyDate} ${stock.buyTime}` : stock.buyDate;
+  };
+
+  // 打开买入时间编辑弹窗：以该笔持仓现有买入日期+时分回填（缺失/非法时回填当前时刻）
+  const openBuyTimeModal = (stock) => {
+    const parsed = stock.buyDate ? dayjs(`${stock.buyDate} ${stock.buyTime || '09:30'}`) : null;
+    setBuyTimeValue(parsed && parsed.isValid() ? parsed : dayjs());
+    setBuyTimeModal({ id: stock.id, name: stock.name, code: stock.code });
+  };
+
+  // 保存买入时间：后端按 YYYY-MM-DD + HH:mm 存储（买入时间决定卖点诊断何时生效：买入当日不诊断、次日起生效）
+  const handleBuyTimeSave = async () => {
+    if (!buyTimeModal || !buyTimeValue) return;
+    setBuyTimeSaving(true);
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/update_stock_position_buy_time`, {
+        id: buyTimeModal.id,
+        buyDate: buyTimeValue.format('YYYY-MM-DD'),
+        buyTime: buyTimeValue.format('HH:mm'),
+      });
+      if (res.data?.success) {
+        message.success(`${buyTimeModal.name} 买入时间已更新为 ${buyTimeValue.format('YYYY-MM-DD HH:mm')}`);
+        setBuyTimeModal(null);
+        await fetchPositions();
+      } else {
+        message.warning(res.data?.message || '更新失败');
+      }
+    } catch (error) {
+      console.error('更新买入时间失败:', error);
+      message.error(error.response?.data?.message || '更新失败');
+    } finally {
+      setBuyTimeSaving(false);
+    }
   };
 
   const handleHeaderClick = () => {
@@ -405,45 +442,8 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
     navigate(`/stock_diagnosis?backtest=1&code=${encodeURIComponent(code)}&name=${encodeURIComponent(name)}&days=10&autoBacktest=1`);
   };
 
-  // 14:50 自动将所有持仓加入回测列表并跳转
-  const handleAutoBacktestAll = useCallback(() => {
-    const currentPositions = positionsRef.current;
-    if (currentPositions.length === 0) return;
-    // 同一股票可能有多笔持仓，回测按股票去重
-    const seen = new Set();
-    const uniq = currentPositions.filter((p) => {
-      if (seen.has(p.code)) return false;
-      seen.add(p.code);
-      return true;
-    });
-    const codes = uniq.map(p => p.code).join(',');
-    const names = uniq.map(p => p.name).join(',');
-    navigate(`/stock_diagnosis?backtest=1&codes=${encodeURIComponent(codes)}&names=${encodeURIComponent(names)}&autoBacktest=1&days=10`);
-  }, [navigate]);
-
-  // 14:50 自动回测定时检测
-    useEffect(() => {
-    const checkTime = () => {
-      const now = dayjs();
-      // 非交易日（周末/节假日，以交易日历为准）不触发
-      if (!isTradingDay(now)) return;
-      const hour = now.hour();
-      const minute = now.minute();
-      // 14:50 触发
-      if (hour === 14 && minute === 50 && !backtestTriggeredRef.current) {
-        backtestTriggeredRef.current = true;
-        handleAutoBacktestAll();
-      }
-      // 每天重置标记（凌晨）
-      if (hour === 0 && minute === 0) {
-        backtestTriggeredRef.current = false;
-      }
-    };
-
-    checkTime();
-    const timer = setInterval(checkTime, 30000);
-    return () => clearInterval(timer);
-  }, [handleAutoBacktestAll]);
+  // 14:50 自动把所有持仓加入回测并跳转的功能已下线（2026-11-28 用户要求先干掉）；
+  // 回测诊断改为仅通过每笔持仓的「回测诊断」按钮手动触发
 
   useEffect(() => {
     positionsRef.current = positions;
@@ -800,6 +800,44 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
         }}
       />
 
+      {/* 买入时间编辑弹窗（2026-11-28 用户要求）：设置具体年月日时分 + 「此刻」快捷按钮 */}
+      <Modal
+        title={<span><ClockCircleOutlined style={{ color: '#0284c7', marginRight: 8 }} />设置买入时间</span>}
+        open={!!buyTimeModal}
+        onCancel={() => { if (!buyTimeSaving) setBuyTimeModal(null); }}
+        onOk={handleBuyTimeSave}
+        okText="保存"
+        cancelText="取消"
+        confirmLoading={buyTimeSaving}
+        okButtonProps={{ disabled: !buyTimeValue }}
+        destroyOnHidden
+        width={420}
+      >
+        {buyTimeModal && (
+          <div className="fsp-buytime-modal">
+            <div className="fsp-buytime-target">
+              {buyTimeModal.name}
+              <span className="fsp-buytime-code">{buyTimeModal.code}</span>
+            </div>
+            <div className="fsp-buytime-row">
+              <DatePicker
+                showTime={{ format: 'HH:mm' }}
+                format="YYYY-MM-DD HH:mm"
+                value={buyTimeValue}
+                onChange={(v) => setBuyTimeValue(v)}
+                allowClear={false}
+                style={{ flex: 1 }}
+                placeholder="选择买入日期与时分"
+              />
+              <Button onClick={() => setBuyTimeValue(dayjs())}>此刻</Button>
+            </div>
+            <div className="fsp-buytime-tip">
+              买入时间影响卖点诊断生效时间：买入当日不诊断卖点，次日起生效。
+            </div>
+          </div>
+        )}
+      </Modal>
+
       {/* 卖点诊断抽屉：每个持仓股为一张大卡片，卡片内含该股的卖点诊断条件卡片 */}
       <Drawer
         title={
@@ -1151,7 +1189,12 @@ const FloatingStockPosition = ({ onOutflowDetected }) => {
                                   options={SELL_STRATEGY_OPTIONS}
                                 />
                               </span>
-                              <span className="fsp-item-buytime" title={formatBuyAt(stock)}>
+                              {/* 买入时间（2026-11-28 用户要求）：悬浮为 pointer，点击打开弹窗修改年/月/日/时分 */}
+                              <span
+                                className="fsp-item-buytime fsp-buytime-editable"
+                                title={`${formatBuyAt(stock)}（点击修改买入时间）`}
+                                onClick={(e) => { e.stopPropagation(); openBuyTimeModal(stock); }}
+                              >
                                 {formatBuyAt(stock)}
                               </span>
                             </div>

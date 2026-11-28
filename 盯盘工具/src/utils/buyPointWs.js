@@ -11,7 +11,7 @@ import { local_ip } from '../constant';
 const WS_URL = `ws://${local_ip}:3000/ws`;
 const RECONNECT_BASE_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
-const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'strategy_signal', 'emotion_resonance', 'buy_point_preheat', 'monitor_snapshot', 'market_surge_alert'];
+const PUSH_TYPES = ['buy_point', 'sell_point', 'buy_point_blocked', 'fund_gate', 'ice_delay_wait', 'wash_fusion_candidates', 'wash_fusion_buy', 'ice_rebound_candidates', 'ice_rebound_buy', 'strategy_signal', 'emotion_resonance', 'buy_point_preheat', 'monitor_snapshot', 'market_surge_alert'];
 
 let socket = null;
 let reconnectTimer = null;
@@ -257,6 +257,16 @@ export const subscribeFundGatePush = (handler) => subscribePush('fund_gate', han
 //     - 前端由 GlobalDiagnosisAlert 用统一买点诊断卡片展示，飞书由后端发送
 export const subscribeWashFusionCandidatesPush = (handler) => subscribePush('wash_fusion_candidates', handler);
 export const subscribeWashFusionBuyPush = (handler) => subscribePush('wash_fusion_buy', handler);
+
+// 冰点反弹-率先冲击5%（2026-11-28 用户新增）：
+//   候选池 { type:'ice_rebound_candidates', open, ts, data:{ date, updatedAt, minute, pushing, gateOpen,
+//     gates:{ prevTechEmotion, recentOver }, poolSize, dayEvent, candidates, checks, notified } }
+//     前端 5s 轮询 /ice_rebound_snapshot + 本推送刷新（开盘实战页候选卡片 + 买点诊断卡共用）
+//   买点触发 { type:'ice_rebound_buy', open:true, ts, data:{ date, source, sourceLabel,
+//     stocks:[{ code, name, event:{minute,px,pct}, ... }], checks, rules } }
+//     前端由 GlobalDiagnosisAlert 用统一买点诊断卡片展示，飞书由后端发送
+export const subscribeIceReboundCandidatesPush = (handler) => subscribePush('ice_rebound_candidates', handler);
+export const subscribeIceReboundBuyPush = (handler) => subscribePush('ice_rebound_buy', handler);
 
 // 策略中心命中推送（2026-11-06 用户新增）：后端策略轮询新命中时广播
 //   { type:'strategy_signal', ts, open:true, data:{ signals:[{ id, time, read, strategyId, title, description, severity, isBullish }] } }

@@ -453,4 +453,64 @@ function buildWashFusionBuyCard({ buyStocks, timestamp, triggerTime, positionHin
   };
 }
 
-module.exports = { sendFeishuCard, sendFeishuText, buildBuyPointCard, buildHotMoneyLeaderCard, buildHotMoneyReverseLeaderCard, buildSellPointCard, buildMarketSnapshotText, buildFirstBoardWashBuyCard, buildWashFusionBuyCard };
+// 冰点反弹-率先冲击5% 买点卡片（2026-11-28 用户新增）：模仿 buildWashFusionBuyCard，绿色主题
+//   文案包含：触发分钟、触发涨幅、1分钟回溯买价、个股总市值、前一日情绪、买点时段 9:30–11:30、
+//   卖点为通用卖点 + 低于成本价即卖 + 9:30 低于成本线直接卖
+function buildIceReboundBuyCard({ buyStocks, timestamp, triggerTime, prevTechEmotion, mock }) {
+  const list = Array.isArray(buyStocks) ? buyStocks : [];
+  const fmtPct = (v) => (v == null || isNaN(Number(v)) ? '--' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
+  const fmtNum = (v) => (v == null || isNaN(Number(v)) ? '--' : Number(v).toFixed(2));
+  const mockTag = mock === true ? '（MOCK 测试）' : '';
+  const elements = [
+    {
+      tag: "markdown",
+      content: `**🎯【冰点反弹-率先冲击5%】买点触发${mockTag}**\n${formatBuyPointTimeLines(triggerTime, timestamp)}`,
+    },
+    { tag: "hr" },
+  ];
+  if (list.length === 0) {
+    elements.push({ tag: "markdown", content: "当前无触发买点的冰点反弹候选股。" });
+  } else {
+    list.forEach((s, i) => {
+      elements.push({
+        tag: "markdown",
+        content: `**${i + 1}. ${s.stockName || s.name || '--'}（${s.code || '--'}）**\n买点：${fmtMinuteSafe(s.minute)} 率先盘中涨幅达到 +5%（触发涨幅 ${fmtPct(s.change)} ≤ +8%）`,
+      });
+      elements.push({
+        tag: "div",
+        fields: [
+          { is_short: true, text: { tag: "lark_md", content: `触发分钟：${s.minute || '--'}` } },
+          { is_short: true, text: { tag: "lark_md", content: `触发涨幅：${fmtPct(s.change)}` } },
+          { is_short: true, text: { tag: "lark_md", content: `买价（1分钟回溯）：${fmtNum(s.price)}` } },
+          { is_short: true, text: { tag: "lark_md", content: `个股总市值：${s.stockCapYi != null ? `${fmtNum(s.stockCapYi)} 亿` : '--'}` } },
+          { is_short: true, text: { tag: "lark_md", content: `前一日科技情绪：${prevTechEmotion != null ? Number(prevTechEmotion).toFixed(2) : '--'}（≤ -20 冰点）` } },
+          { is_short: true, text: { tag: "lark_md", content: `买点时段：9:30-11:30（仅上午）` } },
+        ],
+      });
+    });
+  }
+
+  elements.push({
+    tag: "markdown",
+    content: "**卖点：通用卖点 + 低于成本价即卖（不等 -2%）；9:30 开盘价低于成本线直接卖（无竞价低开自救窗口）。分仓管理是最后一道防火墙，谨防尾盘大盘跳水。**",
+  });
+
+  return {
+    schema: "2.0",
+    config: { wide_screen_mode: true },
+    header: {
+      template: "green",
+      title: { tag: "plain_text", content: `🔔 冰点反弹-率先冲击5% 买点触发提醒${mockTag}` },
+    },
+    body: { elements },
+  };
+}
+
+// HHMM 数字 → HH:MM 文案（buildIceReboundBuyCard 用；缺失返回 '--'）
+function fmtMinuteSafe(m) {
+  const n = Number(m);
+  if (!Number.isFinite(n)) return '--';
+  return `${String(Math.floor(n / 100)).padStart(2, '0')}:${String(n % 100).padStart(2, '0')}`;
+}
+
+module.exports = { sendFeishuCard, sendFeishuText, buildBuyPointCard, buildHotMoneyLeaderCard, buildHotMoneyReverseLeaderCard, buildSellPointCard, buildMarketSnapshotText, buildFirstBoardWashBuyCard, buildWashFusionBuyCard, buildIceReboundBuyCard };

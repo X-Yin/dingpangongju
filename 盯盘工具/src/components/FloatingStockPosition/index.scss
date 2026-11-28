@@ -748,6 +748,11 @@
     .fsp-strategy-select.is-second_board_wash .ant-select-selection-item {
       color: #0e7490;
     }
+
+    /* 冰点反弹：青蓝（2026-11-28） */
+    .fsp-strategy-select.is-ice_rebound .ant-select-selection-item {
+      color: #0284c7;
+    }
   }
 
   /* 买入时间（日期 + 时分） */
@@ -761,6 +766,19 @@
     color: #64748b;
     text-align: center;
     font-variant-numeric: tabular-nums;
+  }
+
+  /* 买入时间可编辑（2026-11-28 用户要求）：悬浮 pointer + 下划线提示可点击 */
+  .fsp-buytime-editable {
+    cursor: pointer;
+    border-radius: 4px;
+    transition: color 0.15s ease, background 0.15s ease;
+
+    &:hover {
+      color: #0284c7;
+      background: rgba(2, 132, 199, 0.08);
+      text-decoration: underline;
+    }
   }
 
   .fsp-item {
@@ -922,4 +940,38 @@
     }
   }
 
+}
+
+/* 买入时间编辑弹窗（2026-11-28 用户要求）：设置具体年月日时分 + 「此刻」快捷按钮 */
+.fsp-buytime-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .fsp-buytime-target {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #12213a;
+  }
+
+  .fsp-buytime-code {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8c9bb5;
+  }
+
+  .fsp-buytime-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .fsp-buytime-tip {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #8c9bb5;
+  }
 }

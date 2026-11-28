@@ -1444,6 +1444,73 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
     grid-template-columns: 22px minmax(0, 1fr) 58px 58px 64px;
   }
 
+  // ===== 冰点反弹 · 率先冲击5%：候选池单列表格（6 列：#/股票/当日/触发/总市值/状态）=====
+  .ob-gainer-head-ice,
+  .ob-gainer-row-ice {
+    grid-template-columns: 22px minmax(0, 1fr) 58px 52px 64px 96px;
+  }
+
+  .ob-gainer-head-ice span {
+    white-space: nowrap;
+  }
+
+  // 触发分钟列（HH:MM）
+  .ob-ice-minute {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-family: $ob-mono;
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .ob-ice-status-cell {
+    text-align: right;
+  }
+
+  // 状态列 tag：买点触发 = 高亮薄荷胶囊；顺延原因（超浮动/涨停/触发时情绪过热等）= 中性灰
+  .ob-ice-status-tag {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 9.5px;
+    font-weight: 600;
+    border-radius: 5px;
+    padding: 0 5px;
+    line-height: 17px;
+    white-space: nowrap;
+    vertical-align: middle;
+    color: rgba(255, 255, 255, 0.78);
+    background: rgba(100, 116, 139, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+
+    &.hit {
+      color: #04372a;
+      background: #d9fff3;
+      border-color: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 4px 10px -4px rgba(6, 214, 160, 0.55);
+    }
+  }
+
+  // 今日信号行：标题下方展示当日已触发的买点（如「今日信号：XX 09:37 +5.58%」）
+  .ob-ice-signal {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #b8ffe9;
+    margin: -2px 0 10px;
+
+    &::before {
+      content: '⚡';
+      font-size: 11px;
+    }
+  }
+
   .ob-wf-status-cell {
     text-align: right;
   }
@@ -3185,6 +3252,21 @@ $ob-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
   .ob-gainer-gate-note.both { color: #047857 !important; }
   .ob-gainer-gate-note.partial { color: #b45309 !important; }
   .ob-gainer-gate-note.none { color: #be123c !important; }
+
+  // 冰点反弹：今日信号行 / 触发分钟 / 状态 tag（浅色主题压深）
+  .ob-ice-signal { color: #047857 !important; }
+  .ob-ice-minute { color: #475569 !important; }
+  .ob-ice-status-tag {
+    color: #475569 !important;
+    background: rgba(148, 163, 184, 0.18) !important;
+    border-color: rgba(148, 163, 184, 0.32) !important;
+  }
+  .ob-ice-status-tag.hit {
+    color: #047857 !important;
+    background: rgba(13, 148, 136, 0.14) !important;
+    border-color: rgba(13, 148, 136, 0.4) !important;
+    box-shadow: none !important;
+  }
 
   // 名称类（部分浅色主题未提供 itemTitleColor，回退到深色）
   .ob-stock-name,

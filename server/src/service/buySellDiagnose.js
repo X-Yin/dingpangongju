@@ -1316,7 +1316,7 @@ const checkSellPoint = async (code, tradeDate, klineData, prefetchedStockTline =
 };
 
 // ========== 卖点详细诊断（逐一列出所有条件的满足情况） ==========
-const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = null) => {
+const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = null, opts = {}) => {
   const date = parseInt(tradeDate);
   const sortedKline = [...klineData].sort((a, b) => a.trade_date - b.trade_date);
   const targetIdx = sortedKline.findIndex(k => k.trade_date === date);
@@ -1847,11 +1847,19 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
   //   只有当「拉升结束、开始回落」且该回落分钟价仍跌破阈值时，才卖出（卖点信号保持触发，提示尽快离场）。
   //   若开盘价未跌破成本线、盘中才跌破 → 维持原即时止损（该卖就得卖）。买入当日不适用（无「次日竞价」概念）。
   const costPriceNum = costPrice != null && Number.isFinite(Number(costPrice)) && Number(costPrice) > 0 ? Number(costPrice) : null;
-  const costLineThreshold = costPriceNum !== null ? costPriceNum * 0.98 : null;
+  // 2026-11-28 用户要求：checkSellPointDetailed 增加末位可选参数 opts（不传时行为与之前完全一致）：
+  //   opts.costLinePct —— 成本线止损阈值百分比（默认 2，即成本价 × 0.98）；冰点反弹-率先冲击5% 传 0 = 低于成本价即卖；
+  //   opts.disableCostLineSelfRescue —— 置 true 时跳过整个竞价低开自救窗口，开盘破线即直接止损
+  const costLinePctC7 = opts != null && Number.isFinite(Number(opts.costLinePct)) ? Number(opts.costLinePct) : 2;
+  const costLineNameC7 = costLinePctC7 === 0 ? '跌破成本线' : `跌破成本线-${costLinePctC7}%`;
+  const costLineThrLabelC7 = costLinePctC7 === 0 ? '成本线' : `成本线 -${costLinePctC7}%`;
+  const costLineMultLabelC7 = costLinePctC7 === 0 ? '成本价' : `成本价 × ${(1 - costLinePctC7 / 100).toFixed(2)}`;
+  const costLineThreshold = costPriceNum !== null ? costPriceNum * (1 - costLinePctC7 / 100) : null;
   const brokenCostLine = costLineThreshold !== null && closePrice < costLineThreshold;
   let condition7Satisfied = brokenCostLine;
   let openBreakC7 = null; // { openPx, firstDecline: { minute, lastPx, prevMinute, prevPx } | null }，null 表示非开盘破线场景
-  if (costLineThreshold !== null) {
+  const disableSelfRescueC7 = opts?.disableCostLineSelfRescue === true;
+  if (!disableSelfRescueC7 && costLineThreshold !== null) {
     try {
       // 仅隔夜持仓适用：买入日早于诊断日（持仓记录缺失时默认按隔夜处理，与浮窗「买入当日不生效」口径一致）
       const posC7 = (getStockPositions() || []).find((p) => p && String(p.code) === code);
@@ -1885,26 +1893,33 @@ const checkSellPointDetailed = async (code, tradeDate, klineData, costPrice = nu
   }
   const fmtMinuteC7 = (m) => (m != null ? `${String(Math.floor(m / 100)).padStart(2, '0')}:${String(m % 100).padStart(2, '0')}` : '--');
   const condition7 = {
-    name: '跌破成本线-2%',
+    name: costLineNameC7,
     satisfied: condition7Satisfied,
     pending: false,
     pendingMinutes: 0,
     detail: costPriceNum === null
-      ? '未设置持仓成本价（可在持仓管理弹窗中设置），无法判断是否跌破成本线 -2%'
+      ? `未设置持仓成本价（可在持仓管理弹窗中设置），无法判断是否跌破${costLineThrLabelC7}`
       : openBreakC7 !== null
         ? (openBreakC7.firstDecline !== null
-          ? `竞价开盘 ${openBreakC7.openPx.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），自救拉升已于 ${fmtMinuteC7(openBreakC7.firstDecline.minute)} 回落（${fmtMinuteC7(openBreakC7.firstDecline.minute)} 价 ${openBreakC7.firstDecline.lastPx.toFixed(2)} 低于 ${fmtMinuteC7(openBreakC7.firstDecline.prevMinute)} 价 ${openBreakC7.firstDecline.prevPx.toFixed(2)}）且仍跌破阈值，卖出`
-          : `竞价开盘 ${openBreakC7.openPx.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），开盘后资金拉升中（截至 ${fmtMinuteC7(openBreakC7.lastMinute)} 尚无「回落且仍跌破阈值」信号；若回补至阈值上方则不自救止损、待再次跌破再卖），自救窗口观察中、暂不卖出`)
+          ? `竞价开盘 ${openBreakC7.openPx.toFixed(2)} 已跌破${costLineThrLabelC7}阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），自救拉升已于 ${fmtMinuteC7(openBreakC7.firstDecline.minute)} 回落（${fmtMinuteC7(openBreakC7.firstDecline.minute)} 价 ${openBreakC7.firstDecline.lastPx.toFixed(2)} 低于 ${fmtMinuteC7(openBreakC7.firstDecline.prevMinute)} 价 ${openBreakC7.firstDecline.prevPx.toFixed(2)}）且仍跌破阈值，卖出`
+          : `竞价开盘 ${openBreakC7.openPx.toFixed(2)} 已跌破${costLineThrLabelC7}阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），开盘后资金拉升中（截至 ${fmtMinuteC7(openBreakC7.lastMinute)} 尚无「回落且仍跌破阈值」信号；若回补至阈值上方则不自救止损、待再次跌破再卖），自救窗口观察中、暂不卖出`)
         : brokenCostLine
-          ? `现价 ${closePrice.toFixed(2)} 已跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），触发卖点`
-          : `现价 ${closePrice.toFixed(2)} 未跌破成本线 -2% 阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），未触发`,
+          ? `现价 ${closePrice.toFixed(2)} 已跌破${costLineThrLabelC7}阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），触发卖点`
+          : `现价 ${closePrice.toFixed(2)} 未跌破${costLineThrLabelC7}阈值 ${costLineThreshold.toFixed(2)}（成本价 ${costPriceNum.toFixed(2)}），未触发`,
     subConditions: [
       { label: '成本价', value: costPriceNum !== null ? costPriceNum.toFixed(2) : '--' },
-      { label: '阈值（成本价-2%）', value: costLineThreshold !== null ? costLineThreshold.toFixed(2) : '--' },
+      { label: `阈值（${costLinePctC7 === 0 ? '成本价' : `成本价-${costLinePctC7}%`}）`, value: costLineThreshold !== null ? costLineThreshold.toFixed(2) : '--' },
       ...(openBreakC7 !== null ? [{ label: '竞价开盘价', value: openBreakC7.openPx.toFixed(2) }] : []),
       { label: '现价', value: closePrice.toFixed(2) },
       ...(openBreakC7 !== null ? [{ label: '自救窗口', value: openBreakC7.firstDecline !== null ? `已于 ${fmtMinuteC7(openBreakC7.firstDecline.minute)} 回落（仍跌破阈值，卖出）` : `进行中（截至 ${fmtMinuteC7(openBreakC7.lastMinute)} 拉升中/已回补阈值上方，暂不卖）` }] : []),
-      { label: '判断规则', value: openBreakC7 !== null ? '开盘破线 → 拉升中持有；回补至阈值上方则不再止损、待再次跌破阈值再卖；回落时仍跌破阈值才卖。盘中破线 → 现价 < 成本价 × 0.98 即时卖' : '现价 < 成本价 × 0.98 即触发' },
+      ...(disableSelfRescueC7 ? [{ label: '竞价低开自救', value: '已禁用（9:30 开盘价低于成本线直接卖）' }] : []),
+      { label: '判断规则', value: disableSelfRescueC7
+        ? (costLinePctC7 === 0
+          ? '低于成本价即卖（costLinePct=0）：9:30 开盘价低于成本线直接卖；盘中现价 < 成本价即时卖'
+          : `开盘破线直接卖（无竞价低开自救窗口）；盘中现价 < ${costLineMultLabelC7} 即时卖`)
+        : (openBreakC7 !== null
+          ? `开盘破线 → 拉升中持有；回补至阈值上方则不再止损、待再次跌破阈值再卖；回落时仍跌破阈值才卖。盘中破线 → 现价 < ${costLineMultLabelC7} 即时卖`
+          : `现价 < ${costLineMultLabelC7} 即触发`) },
     ],
   };
 
@@ -3959,7 +3974,7 @@ const getBuySellSelectableStocks = () => {
   return result;
 };
 
-const checkSingleStockSellPoint = async (code, costPrice = null) => {
+const checkSingleStockSellPoint = async (code, costPrice = null, opts = {}) => {
   try {
     const klineData = await getSingleStockData(code, 30);
     if (!klineData || klineData.length === 0) {
@@ -3978,7 +3993,8 @@ const checkSingleStockSellPoint = async (code, costPrice = null) => {
       effectiveCostPrice = pos?.costPrice != null ? Number(pos.costPrice) : null;
     }
 
-    const sellResult = await checkSellPointDetailed(code, tradeDate, sortedKline, effectiveCostPrice);
+    // opts 透传（2026-11-28 用户要求）：如冰点反弹策略传 { costLinePct: 0, disableCostLineSelfRescue: true }
+    const sellResult = await checkSellPointDetailed(code, tradeDate, sortedKline, effectiveCostPrice, opts);
 
     return {
       success: true,

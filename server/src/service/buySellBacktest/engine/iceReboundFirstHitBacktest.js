@@ -319,7 +319,10 @@ const runIceReboundFirstHitBacktest = async (startDate, endDate, strategyId, onP
 
     // ---- 确定当日「率先达标」事件序列：候选按「第一个达到 n% 的分钟」升序，逐个过滤（顺延）----
     // 候选 = 置顶板块候选池中「当日最高涨幅曾 ≥ n%（日K口径预筛；缺失时保守保留）」的个股
-    let dayEvent = null; // { code, name, event: { minute, px, pct }, stockCapYi }
+    // 2026-11-28 用户改：当日卖出后仍可继续买入——保存全部通过过滤的事件（passingEvents），
+    //   卖出后顺延消费下一只（不再只取第一个通过者）
+    const passingEvents = [];
+    let dayEventIdx = 0; // 已消费的事件指针
     let poolSize = 0;
     const skippedOverCap = [];
     const skippedLimitUp = [];
@@ -380,8 +383,7 @@ const runIceReboundFirstHitBacktest = async (startDate, endDate, strategyId, onP
             });
             continue;
           }
-          dayEvent = { ...cand, stockCapYi, triggerEmo };
-          break; // 率先达标且通过全部过滤 → 当日事件确定
+          passingEvents.push({ ...cand, stockCapYi, triggerEmo }); // 通过全部过滤 → 进入当日可买事件序列（按触发先后）
         }
       }
     }
@@ -393,10 +395,14 @@ const runIceReboundFirstHitBacktest = async (startDate, endDate, strategyId, onP
       // ---- 卖出（与「3日涨幅最大&三日情绪-30快进快出」通用卖点一致：通用 7 条件 + 盘中大跌强卖）----
       await generalSellPositions({ positions, strategy, bi, replayStocks, timeBuckets, dateStr, dateDisplay, singleTrades: trades });
 
-      // ---- 买入：到达事件触发所在桶（事件分钟 ≤ 本桶分钟）且已空仓时，按回溯到的达标分钟价成交 ----
-      if (!dayEvent || positions.length > 0) continue;
-      if (!Number.isFinite(minute) || minute < dayEvent.event.minute) continue;
-      if (minute < BUY_TIME_MIN_MINUTE || minute > BUY_TIME_MAX_MINUTE) continue;
+      // ---- 买入：空仓且已到达事件触发所在桶（事件分钟 ≤ 本桶分钟）时，按回溯到的达标分钟价成交
+      //      （2026-11-28 用户改：当日卖出后仍可继续买入——同桶卖出后即可顺延消费事件序列中的下一只，
+      //      全仓单持仓口径不变：同一时刻最多持 1 只）----
+      if (passingEvents.length === 0 || positions.length > 0) continue;
+      if (!Number.isFinite(minute) || minute < BUY_TIME_MIN_MINUTE || minute > BUY_TIME_MAX_MINUTE) continue;
+      const dayEvent = passingEvents[dayEventIdx];
+      if (!dayEvent || minute < dayEvent.event.minute) continue;
+      dayEventIdx += 1; // 消费该事件（后续卖出后顺延到下一只）
 
       const { code, name, event, stockCapYi, triggerEmo } = dayEvent;
       const pos = {
@@ -436,7 +442,6 @@ const runIceReboundFirstHitBacktest = async (startDate, endDate, strategyId, onP
         + `；卖点与「3日涨幅最大&三日情绪-30快进快出」通用卖点基本一致（差异：跌破成本价即卖，costLinePct=0）`;
       pos.buyChecks = buildBuyChecks({ prevTechEmotion, recentOver, hitPct, event, poolSize, skippedOverCap, skippedLimitUp, skippedStockCap, skippedTriggerEmo, stockCapYi, triggerEmo });
       positions.push(pos);
-      dayEvent = null; // 当日事件已消费（单持仓买入后不再评估）
     }
   }
 
@@ -492,4 +497,211 @@ const runIceReboundFirstHitBacktest = async (startDate, endDate, strategyId, onP
   };
 };
 
-module.exports = { runIceReboundFirstHitBacktest };
+// 线上实时分时加载（2026-11-28 用户要求）：与 getDayTline 的 pts 转换完全一致，差异仅在
+// loadTlinePoints 传 { strict: true }——线上无缓存实时拉（雪球/财联社/同花顺分源兜底严格重试），
+// 保证线上诊断每个周期拿到的都是最新 1 分钟分时；strict=false 时走回测同款缓存路径
+const getDayTlineStrict = async (cache, code, dateNum) => {
+  if (cache.map.has(code)) return cache.map.get(code);
+  let pts = null;
+  try {
+    const t = await loadTlinePoints(code, dateNum, { strict: true });
+    if (t && t.preclose > 0 && Array.isArray(t.points) && t.points.length > 0) {
+      pts = {
+        preclose: t.preclose,
+        points: t.points
+          .filter((p) => p && p.minute != null && p.lastPx > 0)
+          .map((p) => ({
+            minute: parseInt(p.minute, 10),
+            lastPx: parseFloat(p.lastPx),
+            pct: ((parseFloat(p.lastPx) - t.preclose) / t.preclose) * 100,
+          }))
+          .filter((p) => Number.isFinite(p.minute))
+          .sort((a, b) => a.minute - b.minute),
+      };
+    }
+  } catch (e) { /* 分时缺失按无候选处理 */ }
+  cache.map.set(code, pts);
+  return pts;
+};
+
+// ============================================================
+// 线上实时买点信号（2026-11-28 用户要求：把回测当日买点事件判定搬到线上实时诊断）
+// 逻辑与 runIceReboundFirstHitBacktest 当日买点部分（事件确定段）完全一致：
+//   门禁（前一交易日科技情绪 ≤ -20 + 往前两个交易日科技情绪均 < 20）→ 置顶板块候选池 ∩ 自选股门禁
+//   → 日K最高涨幅 ≥ 5% 预筛（缺失保守保留）→ 1 分钟分时首个达标（strict=true 实时拉取）
+//   → 事件按触发分钟升序逐个过滤顺延（涨幅窗口/涨停/触发时盘中情绪/个股总市值；excludeCodes 中的
+//   持仓股直接跳过顺延），第一个通过者即当日买点事件 dayEvent。
+// 无并发保护（调用方负责）；不做任何通知/推送，仅返回判定结果
+// ============================================================
+const getIceReboundBuySignal = async ({ dateStr, strategyId = 'ice_rebound_first_hit_5', excludeCodes = [], strict = true } = {}) => {
+  const strategy = STRATEGIES[strategyId];
+  if (!strategy || strategy.iceReboundFirstHitMode !== true) {
+    return { success: false, message: `未知「冰点反弹-率先冲击」策略: ${strategyId}` };
+  }
+  const hitPct = Number(strategy.firstHitPct);
+  if (!Number.isFinite(hitPct) || hitPct <= 0) {
+    return { success: false, message: `「冰点反弹-率先冲击」策略配置错误（firstHitPct=${strategy.firstHitPct}）` };
+  }
+  const floatCapPct = hitPct + MAX_FLOAT_OVER_HIT;
+  const excludeSet = new Set((Array.isArray(excludeCodes) ? excludeCodes : []).map((c) => String(c)));
+
+  const dateNum = parseInt(String(dateStr), 10);
+  let campData;
+  try {
+    campData = await loadTrainingCampData(String(dateStr), { allowMissingFund: true });
+  } catch (e) {
+    return { success: false, message: e.message || '加载当日回放数据失败' };
+  }
+  if (!campData || campData.success === false) {
+    return { success: false, message: (campData && campData.message) || '无当日回放数据' };
+  }
+  const timeBuckets = campData.timeBuckets || [];
+  if (timeBuckets.length === 0) {
+    return { success: false, message: '无时间桶数据' };
+  }
+
+  // 买点门禁：与回测一致（前一交易日科技情绪 ≤ -20；近两日无过热）
+  const prevTechEmotion = campData.prevDayTechEmotion != null && Number.isFinite(Number(campData.prevDayTechEmotion))
+    ? Number(campData.prevDayTechEmotion)
+    : null;
+  const recentOver = hasRecentEmotionOverheated(dateStr);
+  if (recentOver && !Array.isArray(recentOver.recent)) {
+    recentOver.recent = getTechIndexDates().filter((d) => d < String(dateStr)).sort().slice(-RECENT_EMO_OVER_LOOKBACK);
+  }
+  const gateOpen = prevTechEmotion != null && prevTechEmotion <= PREV_EMO_ICE_MAX
+    && !(recentOver && recentOver.overheated === true);
+
+  // 候选池：当日回放桶 ∩ 置顶板块成分 ∩ 自选股门禁（与回测完全一致）
+  const dayPool = new Map();
+  for (const bucket of timeBuckets) {
+    const minute = Number(bucket.minute);
+    for (const sc of bucket.stockChanges || []) {
+      if (!sc || !sc.code || EXCLUDED_CODES.has(sc.code)) continue;
+      if (!codePinnedBlocks.has(sc.code)) continue; // 候选池 = 置顶板块成分股
+      if (!passWatchlistGate(sc.code, dateStr, minute)) continue;
+      if (!dayPool.has(sc.code)) dayPool.set(sc.code, { name: sc.name || sc.code, changePct: null });
+      dayPool.get(sc.code).name = sc.name || sc.code;
+      if (sc.changePct != null) dayPool.get(sc.code).changePct = Number(sc.changePct);
+    }
+  }
+
+  let dayEvent = null; // { code, name, event: { minute, px, pct }, stockCapYi, triggerEmo }
+  let potentialCount = 0;
+  const candidates = []; // 全部已评估事件（带 skipReason 标注顺延原因；通过者带 isBuy: true）
+  const skippedOverCap = [];
+  const skippedLimitUp = [];
+  const skippedStockCap = [];
+  const skippedTriggerEmo = [];
+  const bucketEmoList = buildBucketEmoList(timeBuckets);
+  if (gateOpen && dayPool.size > 0) {
+    // 预筛：日K最高涨幅曾 ≥ n%（缺失时保守保留）
+    const potential = [];
+    for (const [code, info] of dayPool) {
+      const highChg = stockHighChangeAt(code, dateStr);
+      if (highChg != null && Number.isFinite(Number(highChg)) && Number(highChg) < hitPct) continue;
+      potential.push({ code, name: info.name });
+    }
+    potentialCount = potential.length;
+    if (potential.length > 0) {
+      // 候选估值/日K预拉取（个股总市值门槛用，与回测一致；拉取失败按缺失处理、严格顺延）
+      try { await ensureBacktestValuation(potential.map((c) => c.code)); } catch (e) { /* 拉取失败按缺失处理 */ }
+      try { await ensureBarsForCodes(potential.map((c) => c.code)); } catch (e) { /* 拉取失败按缺失处理 */ }
+      // 仅对潜在候选加载 1 分钟分时（strict=true 走线上实时无缓存路径）并计算首个达标分钟
+      const dayTline = buildDayTlineCache();
+      await batchParallel(potential, async (c) => {
+        c.pts = strict === false
+          ? await getDayTline(dayTline, c.code, dateNum)
+          : await getDayTlineStrict(dayTline, c.code, dateNum);
+      }, 8);
+      const events = [];
+      for (const c of potential) {
+        const ev = firstHitEventOf(c.pts, hitPct);
+        if (ev) events.push({ code: c.code, name: c.name, event: ev });
+      }
+      // 触发先后排序（同分钟取涨幅更大者），逐个过滤顺延
+      events.sort((a, b) => (a.event.minute - b.event.minute) || (b.event.pct - a.event.pct));
+      for (const cand of events) {
+        const row = {
+          code: cand.code,
+          name: cand.name,
+          event: { minute: cand.event.minute, px: round2(cand.event.px), pct: round2(cand.event.pct) },
+        };
+        candidates.push(row);
+        // ⓪ 已持仓排除（用户要求：正持仓不再作为买点候选，直接顺延下一只）
+        if (excludeSet.has(String(cand.code))) {
+          row.skipReason = '已持仓，跳过顺延';
+          continue;
+        }
+        // ① 涨幅窗口：触发那一刻涨幅 > n+3（含开盘即超过）→ 整日不买，顺延下一只
+        if (cand.event.pct > floatCapPct) {
+          skippedOverCap.push({ code: cand.code, name: cand.name, pct: round2(cand.event.pct) });
+          row.skipReason = `触发涨幅超窗口（${gainText(cand.event.pct)} > +${floatCapPct}%）`;
+          continue;
+        }
+        // ② 涨停过滤：触发分钟已涨停（涨停价买不进）→ 顺延下一只
+        if (isLimitUpAtBuy(cand.code, cand.event.pct)) {
+          skippedLimitUp.push({ code: cand.code, name: cand.name, pct: round2(cand.event.pct) });
+          row.skipReason = '触发时已涨停，买不进顺延';
+          continue;
+        }
+        // ③ 触发时盘中科技情绪 ≥ 30：触发那一刻盘中情绪过热 → 顺延
+        const triggerEmo = getTechEmotionAt(bucketEmoList, cand.event.minute);
+        if (triggerEmo != null && triggerEmo >= TRIGGER_EMO_MAX) {
+          skippedTriggerEmo.push({ code: cand.code, name: cand.name, emo: round2(triggerEmo), minute: cand.event.minute });
+          row.skipReason = `触发时盘中科技情绪过热（${round2(triggerEmo)} ≥ ${TRIGGER_EMO_MAX}）顺延`;
+          continue;
+        }
+        // ④ 个股总市值 ≥ 300 亿（严格口径：市值不足或数据不足均顺延）
+        const stockCapYi = stockTotalMvYiAt(cand.code, dateStr);
+        if (stockCapYi == null || stockCapYi < STOCK_MIN_TOTAL_MV_YI) {
+          skippedStockCap.push({
+            code: cand.code,
+            name: cand.name,
+            reason: stockCapYi != null ? `总市值${stockCapYi}亿` : '市值数据不足',
+          });
+          row.skipReason = stockCapYi != null
+            ? `个股总市值不足（${stockCapYi} 亿 < ${STOCK_MIN_TOTAL_MV_YI} 亿）顺延`
+            : '个股总市值数据不足，严格口径顺延';
+          continue;
+        }
+        dayEvent = { ...cand, stockCapYi, triggerEmo };
+        row.stockCapYi = stockCapYi;
+        row.triggerEmo = triggerEmo;
+        row.isBuy = true; // 率先达标且通过全部过滤 → 当日买点事件
+        break;
+      }
+    }
+  }
+
+  return {
+    success: true,
+    dateStr: String(dateStr),
+    gateOpen,
+    gates: { prevTechEmotion, recentOver },
+    poolSize: dayPool.size,
+    potentialCount,
+    dayEvent,
+    candidates,
+    skippedOverCap,
+    skippedLimitUp,
+    skippedStockCap,
+    skippedTriggerEmo,
+    checks: dayEvent
+      ? buildBuyChecks({
+        prevTechEmotion,
+        recentOver,
+        hitPct,
+        event: dayEvent.event,
+        poolSize: potentialCount,
+        skippedOverCap,
+        skippedLimitUp,
+        skippedStockCap,
+        skippedTriggerEmo,
+        stockCapYi: dayEvent.stockCapYi,
+        triggerEmo: dayEvent.triggerEmo,
+      })
+      : [],
+  };
+};
+
+module.exports = { runIceReboundFirstHitBacktest, getIceReboundBuySignal };

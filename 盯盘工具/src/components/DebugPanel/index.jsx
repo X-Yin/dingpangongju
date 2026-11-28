@@ -36,6 +36,8 @@ const DebugPanel = () => {
   const [preheatMocking, setPreheatMocking] = useState(null);
   // 10 分钟监控卡片 MOCK（2026-11-21）
   const [monitorSnapshotMocking, setMonitorSnapshotMocking] = useState(false);
+  // 冰点反弹 MOCK：buy | sell（2026-11-28）
+  const [irMocking, setIrMocking] = useState(null);
 
   // 盯盘页自动跳转专注交易停留上限（分钟）：持久化在后端 data/dingpan_settings.json
   const [stayLimitMinutes, setStayLimitMinutes] = useState(1);
@@ -322,6 +324,27 @@ const DebugPanel = () => {
       message.error(`mock 请求失败：${e.message}`);
     } finally {
       setMonitorSnapshotMocking(false);
+    }
+  };
+
+  // 冰点反弹 MOCK（2026-11-28）：买点 = 率先冲击 +5% 触发（线上同一 ice_rebound_buy WS + 飞书链路）；
+  // 卖点 = 通用卖点 + 低于成本价即卖（costLinePct=0、禁竞价自救），按 5 分钟桶口径
+  const triggerIceReboundMock = async (kind) => {
+    if (irMocking) return;
+    setIrMocking(kind);
+    const label = kind === 'buy' ? '买点' : '卖点';
+    try {
+      const res = await axios.post(`http://${local_ip}:3000/debug/mock_ice_rebound_${kind}`);
+      const d = res.data;
+      if (d?.success) {
+        message.success(`已模拟冰点反弹${label}命中：${d.target?.name}（${d.target?.code}）`, 4);
+      } else {
+        message.error(d?.error || 'mock 触发失败');
+      }
+    } catch (e) {
+      message.error(`mock 请求失败：${e.message}`);
+    } finally {
+      setIrMocking(null);
     }
   };
 
@@ -674,6 +697,37 @@ const DebugPanel = () => {
             >
               触发放量急拉弹窗
             </Button>
+          </Card>
+
+          {/* 模块十四：冰点反弹 买点 / 卖点 MOCK */}
+          <Card size="small" title="14. 冰点反弹 买点 / 卖点 Mock">
+            <Paragraph type="secondary" style={{ marginBottom: 12, fontSize: 12 }}>
+              标的优先取自冰点反弹实时候选（当日信号 → 候选池），无候选则从全量自选股随机取一只。
+              买点模拟「盘中率先冲击 +5%」触发（触发分钟仅限上午 9:30-11:30、涨幅窗口 [+5%, +8%)，
+              经线上同一 WS（type:'ice_rebound_buy'）推送全局买点卡片并发飞书；
+              卖点模拟通用卖点 + 低于成本价即卖（不等 -2%、9:30 开盘低于成本线直接卖，无竞价自救窗口），
+              命中「均线破位」+「跌破成本线」，经 type:'sell_point' 推送并发飞书。
+              买点线上为 1 分钟维度诊断、卖点为 5 分钟桶维度诊断。
+            </Paragraph>
+            <Space wrap>
+              <Button
+                type="primary"
+                icon={<RocketOutlined />}
+                loading={irMocking === 'buy'}
+                onClick={() => triggerIceReboundMock('buy')}
+                style={{ background: '#0e7490', borderColor: '#0e7490' }}
+              >
+                买点诊断
+              </Button>
+              <Button
+                danger
+                icon={<FallOutlined />}
+                loading={irMocking === 'sell'}
+                onClick={() => triggerIceReboundMock('sell')}
+              >
+                卖点诊断
+              </Button>
+            </Space>
           </Card>
 
           <Text type="secondary" style={{ fontSize: 12 }}>

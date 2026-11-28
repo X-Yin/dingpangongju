@@ -15,8 +15,8 @@ import { createChart, ColorType, LineStyle } from 'lightweight-charts';
 import StockKLineModal from '../../components/StockKLineModal';
 import StrategyRuleModal from '../../components/StrategyRuleModal';
 import { createPortal } from 'react-dom';
-import { useStrategyMode, useStrategyModes, setStrategyMode, getStrategyMode, STRATEGY_MODE_OPTIONS, MULTI_CHECKABLE_OPTIONS, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION, MODE_MULTI, getStrategyModes, cacheStrategyModes, setStrategyModes, refreshModesFromBackend } from '../../utils/strategyMode';
-import { subscribeBuyPointPush, subscribeSellPointPush, subscribeWashFusionCandidatesPush, subscribeWashFusionBuyPush, fetchStrategyModes } from '../../utils/buyPointWs';
+import { useStrategyMode, useStrategyModes, setStrategyMode, getStrategyMode, STRATEGY_MODE_OPTIONS, MULTI_CHECKABLE_OPTIONS, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION, MODE_ICE_REBOUND, MODE_MULTI, getStrategyModes, cacheStrategyModes, setStrategyModes, refreshModesFromBackend } from '../../utils/strategyMode';
+import { subscribeBuyPointPush, subscribeSellPointPush, subscribeWashFusionCandidatesPush, subscribeWashFusionBuyPush, subscribeIceReboundCandidatesPush, subscribeIceReboundBuyPush, fetchStrategyModes } from '../../utils/buyPointWs';
 import ThemeColorModal from './components/ThemeColorModal';
 import { DEFAULT_THEME_COLOR, buildDiyVars, hasDiyFields } from './utils/themeColor';
 import { buildPackVars, getPackTone, getThemePacks, setRemoteThemePacks } from './utils/themePacks';
@@ -115,6 +115,13 @@ const formatSignedPercent = (value) => {
   if (value === undefined || value === null || Number.isNaN(Number(value))) return '--';
   const num = Number(value);
   return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
+};
+
+// 冰点反弹 event.minute（如 937）→ '09:37'；无效值返回 '--'
+const formatEventMinute = (m) => {
+  const n = Number(m);
+  if (m == null || !Number.isFinite(n) || n <= 0) return '--';
+  return `${String(Math.floor(n / 100)).padStart(2, '0')}:${String(Math.round(n % 100)).padStart(2, '0')}`;
 };
 
 // 判断数据中是否包含 11:30 之后的时间点，用于决定是否按1分钟聚合
@@ -730,6 +737,7 @@ const HELP_STRATEGY_MAP = {
   attack_defense: 'highest_3d_gain',
   hot_money_extreme_win: 'hot_money_extreme_win',
   wash_fusion_extreme_odds: 'wash_fusion_extreme_odds',
+  ice_rebound: 'ice_rebound_first_hit_5',
 };
 
 // 两组候选列表的展示顺序（2026-11-04 用户要求）：
@@ -756,6 +764,7 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isDefense = mode === MODE_ATTACK_DEFENSE;
   const isWashFusion = mode === MODE_WASH_FUSION;
+  const isIceRebound = mode === MODE_ICE_REBOUND;
   // 策略说明弹窗：当前打开的说明所对应的回测策略 id（null 表示关闭）
   const [helpStrategy, setHelpStrategy] = useState(null);
   // 2026-11-14 用户要求：候选股列表卡片不走任何本地缓存，进入页面即实时请求最新数据
@@ -805,6 +814,9 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
   // 情绪游资-极致赔率：双候选池（首板起爆 / 二板起爆），实时请求 + 后端 3s WS 推送刷新（不读本地缓存）
   const [wfData, setWfData] = useState(null);
   const [wfRefreshing, setWfRefreshing] = useState(false);
+  // 冰点反弹-率先冲击5%：快照（门禁/候选池/当日信号），5s 轮询 + WS 推送刷新（不读本地缓存）
+  const [irData, setIrData] = useState(null);
+  const [irRefreshing, setIrRefreshing] = useState(false);
   // 多选模式弹窗（2026-11-04 新增）：下拉选择「多选模式」时打开，勾选的模式列表缓存到后端
   const [multiModalOpen, setMultiModalOpen] = useState(false);
   // 模式下拉统一入口：选「多选模式」打开勾选弹窗（不动当前单模式）；其余照常切换单模式
@@ -825,6 +837,8 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
   const fetchStocks = useCallback(async () => {
     // 情绪游资-极致赔率：候选池来自 wash_fusion 专属接口与 WS，不拉涨幅榜/龙头列表
     if (isWashFusion) return;
+    // 冰点反弹：候选池来自 ice_rebound 快照接口与 WS，不拉涨幅榜/龙头列表
+    if (isIceRebound) return;
     // 2026-11-14 用户要求：所有请求都让后端强制重算、绕过缓存直接拿最新数据
     const refreshFlag = 1;
     // 攻防兼备需要同时拉两份数据，改为并行请求（原先串行等待两个接口，首屏耗时翻倍）
@@ -866,7 +880,7 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
       // 无论成功失败都结束首屏 loading，避免接口全部失败时卡片一直转圈
       setLoading(false);
     }
-  }, [mode, isExtreme, isDefense, isWashFusion]);
+  }, [mode, isExtreme, isDefense, isWashFusion, isIceRebound]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -916,6 +930,44 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
     });
     return unsub;
   }, [isWashFusion, fetchWashFusion]);
+
+  // 冰点反弹-率先冲击5%：5s 轮询快照（门禁/候选池/当日信号）+ WS 推送刷新，不读本地缓存
+  const fetchIceRebound = useCallback(async () => {
+    try {
+      const res = await axios.get(`http://${local_ip}:3000/ice_rebound_snapshot`);
+      const d = res.data?.data;
+      if (d) setIrData(d);
+    } catch (err) {
+      console.error('获取冰点反弹快照失败:', err);
+    } finally {
+      // 无论成功失败都结束首屏 loading，避免接口异常时卡片一直转圈
+      setLoading(false);
+    }
+  }, []);
+
+  const handleIrRefresh = useCallback(async () => {
+    setIrRefreshing(true);
+    const startedAt = Date.now();
+    try { await fetchIceRebound(); } finally {
+      // 保证刷新有可感知的 loading（后端缓存命中时可能几十毫秒返回）
+      await sleep(Math.max(0, 500 - (Date.now() - startedAt)));
+      setIrRefreshing(false);
+    }
+  }, [fetchIceRebound]);
+
+  useEffect(() => {
+    if (!isIceRebound) return undefined;
+    fetchIceRebound();
+    const timer = setInterval(fetchIceRebound, 5000);
+    const unsub = subscribeIceReboundCandidatesPush((msg) => {
+      if (!msg?.data) return;
+      setIrData(msg.data);
+    });
+    return () => {
+      clearInterval(timer);
+      unsub();
+    };
+  }, [isIceRebound, fetchIceRebound]);
 
   // 后端实时推送按「全局策略模式」运行：进入页面时与后端对账一次（2026-11-16 用户反馈）。
   // 本地显示极致赔率而后端仍停留在其他模式时，后端不轮询也不推送（列表看着实时，实际不会更新），
@@ -1128,6 +1180,142 @@ const ModeStockModule = ({ mode: modeProp, buyPointHit = false, showModeSwitch =
           onClose={() => setHelpStrategy(null)}
           strategy={helpStrategy}
           label={STRATEGY_MODE_OPTIONS.find((o) => o.value === (helpStrategy === 'highest_3d_gain' ? 'tech_attack' : helpStrategy))?.label || ''}
+        />
+      </div>
+    );
+  }
+
+  // ==================== 冰点反弹 · 率先冲击5%：情绪门禁横幅 + 候选池单列（最多 20 条） ====================
+  if (isIceRebound) {
+    // minute(如 937) → '09:37'
+    const irFmtMinute = (m) => {
+      const n = Number(m);
+      if (m == null || !Number.isFinite(n) || n <= 0) return '--';
+      return `${String(Math.floor(n / 100)).padStart(2, '0')}:${String(Math.round(n % 100)).padStart(2, '0')}`;
+    };
+    const irPct = (v) => (v === null || v === undefined || !Number.isFinite(Number(v))
+      ? '--'
+      : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`);
+    const gates = irData?.gates || {};
+    const gateOpen = irData?.gateOpen === true;
+    const dayEvent = irData?.dayEvent || null;
+    const candidates = (irData?.candidates || []).slice(0, 20);
+    return (
+      <div className="ob-module ob-rank3-module">
+        {irRefreshing && (
+          <div className="ob-refresh-mask">
+            <Spin size="large" />
+          </div>
+        )}
+        <div className="ob-module-header">
+          <div className="ob-module-title" title="冰点反弹-率先冲击5% · 候选池">
+            <CrownOutlined className="ob-module-icon" />
+            <span>冰点反弹 · 率先冲击5%</span>
+            <Tooltip title="策略说明">
+              <QuestionCircleOutlined
+                className="ob-help-icon"
+                onClick={() => setHelpStrategy(HELP_STRATEGY_MAP[MODE_ICE_REBOUND])}
+              />
+            </Tooltip>
+          </div>
+          <div className="ob-module-actions">
+            {irData?.pushing === false && (
+              <Tooltip title="后端当前未在冰点反弹模式运行：候选列表不会实时刷新，也不会推送买点卡片">
+                <span className="ob-total-tag ob-wf-no-push">实时推送未开启</span>
+              </Tooltip>
+            )}
+            {showModeSwitch && (
+              <Select
+                size="small"
+                className="ob-mode-switch"
+                // 多选模式下每个卡片按各自模式取数，但下拉需回填「多选模式」而不是首个勾选模式
+                value={multiLabel ? MODE_MULTI : mode}
+                options={STRATEGY_MODE_OPTIONS}
+                onSelect={handleModeSelect}
+                popupMatchSelectWidth={false}
+                style={{ fontSize: 12 }}
+                title="切换策略模式"
+                classNames={{ popup: { root: 'ob-mode-dropdown' } }}
+              />
+            )}
+            <button className="ob-refresh-btn" onClick={handleIrRefresh} disabled={irRefreshing} title="刷新候选池">
+              <ReloadOutlined spin={irRefreshing} />
+            </button>
+          </div>
+        </div>
+        {/* 情绪门禁横幅：gateOpen 决定今日可出手 / 不买 */}
+        <div className={`ob-gainer-gate-note ${gateOpen ? 'both' : 'none'}`}>
+          {gateOpen
+            ? `情绪冰点 · 今日可出手（前一日情绪 ${gates.prevTechEmotion ?? '--'}）`
+            : `情绪门禁未过 · 今日不买（前一日情绪 ${gates.prevTechEmotion ?? '--'}${gates.recentOver ? '；近两日出现过 ≥20' : ''}）`}
+        </div>
+        {dayEvent && (
+          <div className="ob-ice-signal" title="今日已触发的买点信号">
+            今日信号：{dayEvent.name}（{dayEvent.code}） {irFmtMinute(dayEvent.event?.minute)} {irPct(dayEvent.event?.pct)}
+          </div>
+        )}
+        <div className="ob-gainer-body single">
+          <div className="ob-gainer-col">
+            <div className="ob-gainer-col-head ob-gainer-col-head-between">
+              <span className="ob-gainer-section-label">候选池 · {candidates.length}{irData?.poolSize != null ? ` / 池 ${irData.poolSize}` : ''}</span>
+              <span className="ob-total-tag">盘中涨幅率先冲击 5% 触发</span>
+            </div>
+            <div className="ob-gainer-head ob-gainer-head-ice">
+              <span>#</span>
+              <span>股票</span>
+              <span>当日</span>
+              <span>触发</span>
+              <span>总市值</span>
+              <span>状态</span>
+            </div>
+            {loading ? (
+              <div className="ob-empty-mini ob-gainer-empty"><Spin size="small" /></div>
+            ) : candidates.length === 0 ? (
+              <div className="ob-empty-mini ob-gainer-empty">暂无冰点反弹候选</div>
+            ) : candidates.map((s, idx) => {
+              // 当日买点信号股：状态列高亮「买点触发」；其余按顺延原因（skipReason）展示灰色 tag
+              const isDayEvent = dayEvent != null && s.code === dayEvent.code;
+              return (
+                <div className="ob-gainer-row ob-gainer-row-ice" key={`${s.code}-${idx}`}>
+                  <span className={`ob-rank ${idx < 3 ? 'ob-rank-' + (idx + 1) : ''}`}>{idx + 1}</span>
+                  <span className="ob-gainer-name-cell">
+                    <span
+                      className="ob-stock-name ob-stock-name-clickable"
+                      title="点击查看K线"
+                      onClick={() => { setSelectedStock({ code: s.code, stockName: s.name, change: s.pct }); setKlineVisible(true); }}
+                    >{s.name}</span>
+                  </span>
+                  <span className={`ob-change-cell ${Number(s.pct) >= 0 ? 'ob-up' : 'ob-down'}`}>
+                    {irPct(s.pct)}
+                  </span>
+                  <span className="ob-ice-minute">{irFmtMinute(s.event?.minute)}</span>
+                  <span className="ob-gainer-resilience">--</span>
+                  <span className="ob-ice-status-cell">
+                    {isDayEvent ? (
+                      <span className="ob-ice-status-tag hit">买点触发</span>
+                    ) : s.skipReason ? (
+                      <span className="ob-ice-status-tag skip" title={s.skipReason}>{s.skipReason}</span>
+                    ) : (
+                      '--'
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <StockKLineModal
+          visible={klineVisible}
+          onCancel={() => setKlineVisible(false)}
+          code={selectedStock?.code}
+          stockInfo={{ name: selectedStock?.stockName, change: selectedStock?.change }}
+        />
+        {showModeSwitch && <MultiModeModal open={multiModalOpen} onClose={() => setMultiModalOpen(false)} />}
+        <StrategyRuleModal
+          open={!!helpStrategy}
+          onClose={() => setHelpStrategy(null)}
+          strategy={helpStrategy}
+          label={STRATEGY_MODE_OPTIONS.find((o) => o.value === (helpStrategy === 'ice_rebound_first_hit_5' ? MODE_ICE_REBOUND : helpStrategy))?.label || ''}
         />
       </div>
     );
@@ -1612,6 +1800,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, themeVars, themeClass, themeTon
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isDefense = mode === MODE_ATTACK_DEFENSE;
   const isWashFusion = mode === MODE_WASH_FUSION;
+  const isIceRebound = mode === MODE_ICE_REBOUND;
   const isMulti = mode === MODE_MULTI;
   const buyCacheKey = `ob_buy_point_cache_${mode}`;
   const cachedBuyDiagnosis = useMemo(() => readTodayLocalCache(buyCacheKey), [buyCacheKey]);
@@ -1633,6 +1822,8 @@ const BuyPointDiagnosisCard = ({ onResultChange, themeVars, themeClass, themeTon
   // 情绪游资-极致赔率：最近一次买点命中（wash_fusion_buy）与候选池（wash_fusion_candidates，3s 推送）
   const [wfSignal, setWfSignal] = useState(null);
   const [wfCandidates, setWfCandidates] = useState(null);
+  // 冰点反弹-率先冲击5%：候选池快照（ice_rebound_snapshot 5s 轮询 + ice_rebound_candidates 推送）
+  const [irCandidates, setIrCandidates] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   // 标题旁实时时钟：每秒跳动，便于对照 3 分钟整点（9:30 / 9:33 / 9:36 …）判断下一次自动诊断时机
   const [now, setNow] = useState(() => dayjs());
@@ -1648,7 +1839,15 @@ const BuyPointDiagnosisCard = ({ onResultChange, themeVars, themeClass, themeTon
   const run = useCallback(async (force = false) => {
     // 情绪游资-极致赔率：不走科技进攻集中诊断，改由 wash_fusion 快照 + WS 推送
     if (isWashFusion) return;
-    // 多选模式（2026-11-04）：对勾选的每个模式分别拉取最新诊断（wash_fusion 走候选池快照）
+    // 冰点反弹-率先冲击5%：不走科技进攻集中诊断，改由 ice_rebound 快照 + WS 推送
+    if (isIceRebound) {
+      try {
+        const res = await axios.get(`http://${local_ip}:3000/ice_rebound_snapshot`);
+        if (res.data?.data) setIrCandidates(res.data.data);
+      } catch (err) { console.error('获取冰点反弹快照失败:', err); }
+      return;
+    }
+    // 多选模式（2026-11-04）：对勾选的每个模式分别拉取最新诊断（wash_fusion / ice_rebound 各走候选池快照）
     if (isMulti) {
       const list = getStrategyModes();
       await Promise.all(list.map(async (m) => {
@@ -1657,6 +1856,13 @@ const BuyPointDiagnosisCard = ({ onResultChange, themeVars, themeClass, themeTon
             const res = await axios.get(`http://${local_ip}:3000/wash_fusion_extreme_odds_snapshot`);
             if (res.data?.data) setWfCandidates(res.data.data);
           } catch (err) { console.error('获取极致赔率候选池失败:', err); }
+          return;
+        }
+        if (m === MODE_ICE_REBOUND) {
+          try {
+            const res = await axios.get(`http://${local_ip}:3000/ice_rebound_snapshot`);
+            if (res.data?.data) setIrCandidates(res.data.data);
+          } catch (err) { console.error('获取冰点反弹快照失败:', err); }
           return;
         }
         try {
@@ -1689,7 +1895,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, themeVars, themeClass, themeTon
     } catch (err) {
       console.error('买点诊断刷新失败:', err);
     }
-  }, [onResultChange, mode, isExtreme, isDefense, isWashFusion, isMulti]);
+  }, [onResultChange, mode, isExtreme, isDefense, isWashFusion, isIceRebound, isMulti]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -1704,11 +1910,11 @@ const BuyPointDiagnosisCard = ({ onResultChange, themeVars, themeClass, themeTon
         await run(true);
       }
     } finally {
-      // 极致赔率模式下后端可能几十毫秒返回，加最短展示时长避免「点了没反应」的错觉
-      if (isWashFusion) await sleep(Math.max(0, 500 - (Date.now() - startedAt)));
+      // 快照类模式（极致赔率 / 冰点反弹）后端可能几十毫秒返回，加最短展示时长避免「点了没反应」的错觉
+      if (isWashFusion || isIceRebound) await sleep(Math.max(0, 500 - (Date.now() - startedAt)));
       setRefreshing(false);
     }
-  }, [run, isWashFusion, isMulti]);
+  }, [run, isWashFusion, isIceRebound, isMulti]);
 
   // 最近一次诊断结果按「数据所属模式」落 localStorage，供下次进入页面秒开
   useEffect(() => {
@@ -1736,32 +1942,57 @@ const BuyPointDiagnosisCard = ({ onResultChange, themeVars, themeClass, themeTon
       });
       return () => { unsubCandidates(); unsubBuy(); };
     }
+    // 冰点反弹-率先冲击5%：快照 5s 轮询 + 候选池推送（买点命中弹卡由 GlobalDiagnosisAlert 全局处理）
+    if (isIceRebound) {
+      const fetchIr = () => {
+        axios.get(`http://${local_ip}:3000/ice_rebound_snapshot`)
+          .then((res) => { if (res.data?.data) setIrCandidates(res.data.data); })
+          .catch((err) => console.error('获取冰点反弹快照失败:', err));
+      };
+      fetchIr();
+      const timer = setInterval(fetchIr, 5000);
+      const unsubCandidates = subscribeIceReboundCandidatesPush((msg) => {
+        if (msg?.data) setIrCandidates(msg.data);
+      });
+      return () => { clearInterval(timer); unsubCandidates(); };
+    }
     // 多选模式（2026-11-04）：后端逐模式广播 buy_point（消息自带 mode），按模式分桶落到对应模式；
-    // 勾选了极致赔率时另订阅其 3s 推送（候选池 + 买点命中）
+    // 勾选了极致赔率 / 冰点反弹时另订阅其候选池推送（极致赔率另含买点命中推送）
     if (isMulti) {
       run(false);
       const handleBuyPointMsg = (msg) => {
         const result = msg?.data;
         const m = msg?.mode;
-        if (!result || !m || m === MODE_WASH_FUSION) return;
+        if (!result || !m || m === MODE_WASH_FUSION || m === MODE_ICE_REBOUND) return;
         setMultiData((prev) => ({ ...prev, [m]: result }));
         writeLocalCache(`ob_buy_point_cache_${m}`, result);
         onResultChange?.(modeResultHit(m, result));
       };
-      if (multiModes.includes(MODE_WASH_FUSION)) {
-        axios.get(`http://${local_ip}:3000/wash_fusion_extreme_odds_snapshot`)
-          .then((res) => { if (res.data?.data) setWfCandidates(res.data.data); })
-          .catch((err) => console.error('获取极致赔率候选池失败:', err));
-        const unsubCandidates = subscribeWashFusionCandidatesPush((msg) => {
-          if (msg?.data) setWfCandidates(msg.data);
-        });
-        const unsubBuy = subscribeWashFusionBuyPush((msg) => {
-          if (msg?.open !== true || !msg.data) return;
-          setWfSignal(msg.data);
-          onResultChange?.(true);
-        });
+      if (multiModes.includes(MODE_WASH_FUSION) || multiModes.includes(MODE_ICE_REBOUND)) {
+        const unsubs = [];
+        if (multiModes.includes(MODE_WASH_FUSION)) {
+          axios.get(`http://${local_ip}:3000/wash_fusion_extreme_odds_snapshot`)
+            .then((res) => { if (res.data?.data) setWfCandidates(res.data.data); })
+            .catch((err) => console.error('获取极致赔率候选池失败:', err));
+          unsubs.push(subscribeWashFusionCandidatesPush((msg) => {
+            if (msg?.data) setWfCandidates(msg.data);
+          }));
+          unsubs.push(subscribeWashFusionBuyPush((msg) => {
+            if (msg?.open !== true || !msg.data) return;
+            setWfSignal(msg.data);
+            onResultChange?.(true);
+          }));
+        }
+        if (multiModes.includes(MODE_ICE_REBOUND)) {
+          axios.get(`http://${local_ip}:3000/ice_rebound_snapshot`)
+            .then((res) => { if (res.data?.data) setIrCandidates(res.data.data); })
+            .catch((err) => console.error('获取冰点反弹快照失败:', err));
+          unsubs.push(subscribeIceReboundCandidatesPush((msg) => {
+            if (msg?.data) setIrCandidates(msg.data);
+          }));
+        }
         const unsubscribe = subscribeBuyPointPush(handleBuyPointMsg);
-        return () => { unsubCandidates(); unsubBuy(); unsubscribe(); };
+        return () => { unsubs.forEach((u) => u()); unsubscribe(); };
       }
       return subscribeBuyPointPush(handleBuyPointMsg);
     }
@@ -1777,7 +2008,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, themeVars, themeClass, themeTon
       onResultChange?.(techHit || forwardHit || reverseHit);
     });
     return unsubscribe;
-  }, [run, onResultChange, isExtreme, isDefense, isWashFusion, isMulti, multiModes, mode]);
+  }, [run, onResultChange, isExtreme, isDefense, isWashFusion, isIceRebound, isMulti, multiModes, mode]);
 
   // 情绪游资-极致赔率候选池统计（极致赔率视图的结论与头部徽标使用）
   const wfFirstCount = (wfCandidates?.firstBoard || []).length;
@@ -1810,16 +2041,41 @@ const BuyPointDiagnosisCard = ({ onResultChange, themeVars, themeClass, themeTon
         ],
       });
     };
+    // 冰点反弹-率先冲击5%：检查项来自 ice_rebound_snapshot 的 checks（门禁未过时后端直接给出未通过原因）
+    const pushIceView = () => {
+      const dayEvt = irCandidates?.dayEvent || null;
+      const gateOpen = irCandidates?.gateOpen === true;
+      list.push({
+        mode: MODE_ICE_REBOUND,
+        label: STRATEGY_MODE_OPTIONS.find((o) => o.value === MODE_ICE_REBOUND)?.label,
+        checkGroups: [
+          { label: '', items: sortChecks(irCandidates?.checks || []) },
+        ],
+        hit: dayEvt != null,
+        conclusionText: dayEvt
+          ? `今日买点已触发：${dayEvt.name}（${dayEvt.code}） ${formatEventMinute(dayEvt.event?.minute)} ${formatSignedPercent(dayEvt.event?.pct)}`
+          : !gateOpen
+            ? '情绪门禁未过 · 今日不买（前一日情绪未达冰点阈值，或近两日出现过 ≥20）'
+            : `等待触发：候选池 ${irCandidates?.poolSize ?? 0} 只；盘中涨幅率先冲击 5% 即推送买点（5s 轮询 + 实时推送）`,
+        posHints: [],
+      });
+    };
     if (isMulti) {
       getStrategyModes().forEach((m) => {
         if (m === MODE_WASH_FUSION) {
           pushWfView();
           return;
         }
+        if (m === MODE_ICE_REBOUND) {
+          pushIceView();
+          return;
+        }
         list.push(buildBuyModeView(m, multiData[m]));
       });
     } else if (isWashFusion) {
       pushWfView();
+    } else if (isIceRebound) {
+      pushIceView();
     } else {
       list.push(buildBuyModeView(mode, data));
     }
@@ -1897,7 +2153,9 @@ const BuyPointDiagnosisCard = ({ onResultChange, themeVars, themeClass, themeTon
           <span className={`ob-status-badge ${hit ? 'hit' : ''}`}>
             {isWashFusion
               ? `${wfFirstCount + wfSecondCount} 候选 · ${hit ? '🎯 已命中' : '未触发'}`
-              : (isMulti && totalCheckCount === 0) ? '诊断中...' : (!data && !isWashFusion && !isMulti) ? '诊断中...' : hit ? '🎯 已命中' : `未满足 ${totalPassedCount}/${totalCheckCount}`}
+              : isIceRebound
+                ? `${irCandidates?.poolSize ?? 0} 候选 · ${hit ? '🎯 已触发' : '未触发'}`
+                : (isMulti && totalCheckCount === 0) ? '诊断中...' : (!data && !isWashFusion && !isIceRebound && !isMulti) ? '诊断中...' : hit ? '🎯 已命中' : `未满足 ${totalPassedCount}/${totalCheckCount}`}
           </span>
           <button className="ob-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="手动刷新">
             <ReloadOutlined />
@@ -1906,7 +2164,7 @@ const BuyPointDiagnosisCard = ({ onResultChange, themeVars, themeClass, themeTon
       </div>
       {/* 汇总信息：当前时间 + 各模式是否满足（详细条件点击弹窗查看） */}
       <div className="ob-diagnosis-body ob-summary-body">
-        {(!data && !isWashFusion && !isMulti) ? (
+        {(!data && !isWashFusion && !isIceRebound && !isMulti) ? (
           <div className="ob-diagnosis-loading"><Spin size="small" /></div>
         ) : (
           <>

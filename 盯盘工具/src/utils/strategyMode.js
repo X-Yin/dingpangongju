@@ -13,6 +13,7 @@ export const MODE_TECH_ATTACK = 'tech_attack';
 export const MODE_EXTREME_WIN = 'hot_money_extreme_win';
 export const MODE_ATTACK_DEFENSE = 'attack_defense';
 export const MODE_WASH_FUSION = 'wash_fusion_extreme_odds';
+export const MODE_ICE_REBOUND = 'ice_rebound';
 export const MODE_MULTI = 'multi_mode';
 
 export const STRATEGY_MODE_OPTIONS = [
@@ -20,6 +21,7 @@ export const STRATEGY_MODE_OPTIONS = [
   { value: MODE_EXTREME_WIN, label: '情绪游资-极致胜率' },
   // attack_defense（攻防兼备）已从下拉移除（2026-11-04 用户要求）；常量与诊断逻辑保留，兼容历史缓存值
   { value: MODE_WASH_FUSION, label: '情绪游资-极致赔率' },
+  { value: MODE_ICE_REBOUND, label: '冰点反弹' },
   { value: MODE_MULTI, label: '多选模式' },
 ];
 
@@ -36,6 +38,7 @@ const normalize = (value) => {
   if (value === MODE_EXTREME_WIN) return MODE_EXTREME_WIN;
   if (value === MODE_ATTACK_DEFENSE) return MODE_ATTACK_DEFENSE;
   if (value === MODE_WASH_FUSION) return MODE_WASH_FUSION;
+  if (value === MODE_ICE_REBOUND) return MODE_ICE_REBOUND;
   return MODE_TECH_ATTACK;
 };
 

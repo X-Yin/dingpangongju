@@ -119,6 +119,8 @@ const resolveSellStrategy = (stock, mode) => {
   }
   // 情绪游资-极致赔率：未显式设置卖点策略时按首板起爆口径（1min 时间桶）兜底
   if (mode === strategyModeState.MODE_WASH_FUSION) return 'first_board_wash';
+  // 冰点反弹-率先冲击5%（2026-11-28 用户新增）：未显式设置卖点策略时按通用卖点 + 低于成本价即卖口径（5min 时间桶）兜底
+  if (mode === strategyModeState.MODE_ICE_REBOUND) return 'ice_rebound';
   return 'tech_attack';
 };
 
@@ -140,8 +142,9 @@ const diagnosePosition = async (stock, todayStr, mode, minuteEvalNow = true) => 
   try {
     const strategy = resolveSellStrategy(stock, mode);
     // 科技进攻的科技卖点按 10s 逐轮诊断；情绪游资-极致胜率、首板起爆、二板起爆均按 **1 分钟整数分钟** 诊断（2026-11-01 用户要求），
-    //   非整数分钟直接复用本分钟首次诊断结果
-    const minuteBased = strategy !== 'tech_attack';
+    //   非整数分钟直接复用本分钟首次诊断结果；
+    //   2026-11-28 用户要求：冰点反弹买点 1min 诊断、卖点按 **5 分钟时间桶** 诊断（与 tech_attack 相同的桶节流推送逻辑）
+    const minuteBased = strategy !== 'tech_attack' && strategy !== 'ice_rebound';
     const cacheKey = String(base.positionId);
     if (minuteBased && !minuteEvalNow && ewSellCache.has(cacheKey)) return ewSellCache.get(cacheKey);
     let res;
@@ -149,6 +152,9 @@ const diagnosePosition = async (stock, todayStr, mode, minuteEvalNow = true) => 
       res = await checkFirstBoardWashSellPointDetailed(stock.code, stock.costPrice, stock.buyDate || null);
     } else if (strategy === 'second_board_wash') {
       res = await checkSecondBoardWashSellPointDetailed(stock.code, stock.costPrice, stock.buyDate || null);
+    } else if (strategy === 'ice_rebound') {
+      // 冰点反弹（2026-11-28 用户要求）：通用卖点 + 低于成本价即卖（costLinePct=0）+ 禁用竞价低开自救（9:30 低于成本线直接卖）
+      res = await checkSingleStockSellPoint(stock.code, stock.costPrice, { costLinePct: 0, disableCostLineSelfRescue: true });
     } else if (strategy === 'extreme_win_pro' || strategy === 'extreme_win_reverse') {
       // 逆周期持仓与回测逆周期腿同口径（2026-11-05 对齐，见 extremeWinBacktest.js / fusedEmoWinBacktest.js
       // 逆周期腿 scanLeaderPriceSell 调用参数）：⑪⑫不启用、单分钟跳水⑩不启用、成本线 -5% 须连续 ≥5 分钟

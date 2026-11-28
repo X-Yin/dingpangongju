@@ -23,25 +23,33 @@ import {
   RiseOutlined,
 } from '@ant-design/icons';
 import { local_ip } from '../../constant';
-import { getStrategyMode, MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION } from '../../utils/strategyMode';
+import { getStrategyMode, MODE_TECH_ATTACK, MODE_EXTREME_WIN, MODE_ATTACK_DEFENSE, MODE_WASH_FUSION, MODE_ICE_REBOUND } from '../../utils/strategyMode';
 import { createChart, ColorType, LineStyle, CrosshairMode } from 'lightweight-charts';
-import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeStrategySignalPush, subscribeEmotionResonancePush, subscribeBuyPointPreheatPush } from '../../utils/buyPointWs';
+import { subscribeBuyPointPush, subscribeSellPointPush, subscribeIceDelayWaitPush, subscribeWashFusionBuyPush, subscribeIceReboundBuyPush, subscribeStrategySignalPush, subscribeEmotionResonancePush, subscribeBuyPointPreheatPush } from '../../utils/buyPointWs';
 import { isTradingDay } from '../../utils/tradingDay';
 import './index.scss';
 
-// 情绪游资-极致赔率（首板起爆 + 二板起爆）复用本组件的统一买点卡片，
-// 走独立 WS 类型 wash_fusion_buy（不走策略模式 buy_point，避免串到页面内诊断）
+// 情绪游资-极致赔率（首板起爆 + 二板起爆）与冰点反弹-率先冲击5% 复用本组件的统一买点卡片，
+// 各走独立 WS 类型（wash_fusion_buy / ice_rebound_buy，不走策略模式 buy_point，避免串到页面内诊断）
 const MODE_LABELS = {
   [MODE_TECH_ATTACK]: '科技进攻',
   [MODE_EXTREME_WIN]: '情绪游资',
   [MODE_ATTACK_DEFENSE]: '攻防兼备',
   [MODE_WASH_FUSION]: '情绪游资-极致赔率',
+  [MODE_ICE_REBOUND]: '冰点反弹',
 };
 
 const fmtPct = (v) => {
   const num = Number(v);
   if (v === undefined || v === null || Number.isNaN(num)) return '--';
   return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
+};
+
+// 冰点反弹 event.minute（如 937）→ '09:37'
+const fmtMinute = (m) => {
+  const n = Number(m);
+  if (m == null || !Number.isFinite(n) || n <= 0) return '--';
+  return `${String(Math.floor(n / 100)).padStart(2, '0')}:${String(Math.round(n % 100)).padStart(2, '0')}`;
 };
 
 // 卡片展示期间：按下任意方向键即关闭（与点击右上角 × 效果一致）
@@ -197,6 +205,8 @@ const GlobalDiagnosisAlert = () => {
   const [iceAlert, setIceAlert] = useState(null);
   // 极致赔率买点卡片：{ mode:'wash_fusion_extreme_odds', data, stocks, loading:false, remind, ts }
   const [wfAlert, setWfAlert] = useState(null);
+  // 冰点反弹买点卡片：{ mode:'ice_rebound', data, stocks, loading:false, ts }
+  const [irAlert, setIrAlert] = useState(null);
   // 每交易日 9:05 候选池全局弹窗：{ firstBoard, secondBoard, rules, ... }
   const [wfCandidates, setWfCandidates] = useState(null);
   // 策略中心命中提醒卡片（2026-11-06 用户新增）：{ signals:[{ id, time, title, description, isBullish }], ts, mock }
@@ -436,6 +446,27 @@ const GlobalDiagnosisAlert = () => {
         ts: msg.ts ?? null,
       });
     });
+    // 冰点反弹-率先冲击5% 买点触发：与极致赔率共用同一张买点卡片
+    //   data.stocks 带 event:{minute,px,pct}；data.checks 为冰点反弹专属检查项
+    const unsubIr = subscribeIceReboundBuyPush((msg) => {
+      if (msg?.open !== true) return;
+      const raw = Array.isArray(msg.data?.stocks) ? msg.data.stocks : [];
+      const stocks = raw.map((s) => ({
+        ...s,
+        stockName: s.stockName || s.name,
+        buyPrice: s.event?.px != null ? Number(s.event.px) : (s.buyPrice ?? null),
+      }));
+      if (stocks.length === 0) return;
+      setIrAlert({
+        mode: MODE_ICE_REBOUND,
+        data: msg.data,
+        stocks,
+        loading: false,
+        remind: false,
+        bucket: null,
+        ts: msg.ts ?? null,
+      });
+    });
     // 策略中心命中：新命中信号广播时弹出全局提醒卡片（与悬浮策略球/抽屉互不影响）
     const unsubStrategy = subscribeStrategySignalPush((msg) => {
       if (msg?.open !== true || !msg?.data) return;
@@ -455,13 +486,14 @@ const GlobalDiagnosisAlert = () => {
       if (msg?.open !== true || !msg?.data) return;
       setPreheatAlert({ data: msg.data, ts: msg.ts ?? null });
     });
-    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubStrategy(); unsubResonance(); unsubPreheat(); };
+    return () => { unsubBuy(); unsubSell(); unsubIce(); unsubWf(); unsubIr(); unsubStrategy(); unsubResonance(); unsubPreheat(); };
   }, [fetchBuyStocks, collectEmbeddedStocks, decorateStocks]);
 
-  const buyCardAlert = buyAlert || wfAlert;
+  const buyCardAlert = buyAlert || wfAlert || irAlert;
   const closeBuyCard = () => {
     if (buyAlert) setBuyAlert(null);
     if (wfAlert) setWfAlert(null);
+    if (irAlert) setIrAlert(null);
   };
 
   // 弹窗类提醒使用 antd Modal portal，不依赖 gda-container 渲染；
@@ -634,6 +666,7 @@ const BuyAlertCard = ({ alert, onClose }) => {
   const isExtreme = mode === MODE_EXTREME_WIN;
   const isDefense = mode === MODE_ATTACK_DEFENSE;
   const isWf = mode === MODE_WASH_FUSION;
+  const isIr = mode === MODE_ICE_REBOUND;
   // 命中但无个股时的原因（后端随诊断结果返回，便于排查是「命中但无候选」还是「未命中」）
   const stockEmptyReason = isDefense
     ? (data?.tech?.allPassed === true ? (data?.tech?.stockEmptyReason || null) : (data?.stockEmptyReason || null))
@@ -649,7 +682,9 @@ const BuyAlertCard = ({ alert, onClose }) => {
           : `${label}·盘中 +${data?.rules?.buyTriggerPct ?? 8}% 触发`;
       })
       .filter((t, i, arr) => arr.indexOf(t) === i)
-    : isDefense
+    : isIr
+      ? ['盘中率先冲击 +5%'].filter(Boolean) // 2026-11-28：短文案（模式徽标已展示「冰点反弹」，sourceLabel 与标题重复且过长）
+      : isDefense
       ? [
         data?.tech?.allPassed === true && '科技进攻·快进快出',
         data?.allPassed === true && '情绪游资·顺周期',
@@ -672,6 +707,8 @@ const BuyAlertCard = ({ alert, onClose }) => {
     groups.push({ title: '情绪游资 · 逆周期（反向抱团）条件', checks: data?.reverseChecks });
   } else if (isWf) {
     groups.push({ title: '极致赔率 · 买入条件', checks: data?.checks });
+  } else if (isIr) {
+    groups.push({ title: '冰点反弹 · 买入条件', checks: data?.checks });
   } else {
     groups.push({ title: '买入前置条件', checks: data?.checks });
     if (Array.isArray(data?.reverseChecks) && data.reverseChecks.length > 0) {
@@ -681,8 +718,8 @@ const BuyAlertCard = ({ alert, onClose }) => {
   const hasChecks = groups.some((g) => Array.isArray(g.checks) && g.checks.length > 0);
   const reverseReasons = collectBuyReasons(data?.reverseChecks);
 
-  // 建议仓位（精简展示）
-  const techPos = !isExtreme && !isWf ? buildTechPositionExplain(isDefense ? data?.tech : data) : null;
+  // 建议仓位（精简展示；冰点反弹仓位规则由后端卡片文案携带，此处不拼科技进攻默认仓位）
+  const techPos = !isExtreme && !isWf && !isIr ? buildTechPositionExplain(isDefense ? data?.tech : data) : null;
   const ewPos = (isExtreme || isDefense)
     ? { pos: '半仓（50%）', why: '情绪游资为双腿结构，顺周期、逆周期各半仓' }
     : null;
@@ -695,6 +732,7 @@ const BuyAlertCard = ({ alert, onClose }) => {
 
   // 个股所属策略命中标签
   const stockTag = (s) => {
+    if (isIr) return data?.sourceLabel || '冰点反弹';
     if (isWf) return s.sourceLabel || (s.source === 'second_board_wash' ? '二板起爆' : '首板起爆');
     if (s.isReverse) return '情绪游资·逆周期';
     if (s.isTechPick) return '科技进攻';
@@ -707,7 +745,11 @@ const BuyAlertCard = ({ alert, onClose }) => {
     const push = (label, value, hl = false) => {
       if (value != null && value !== '--' && value !== '') chips.push({ label, value, hl });
     };
-    if (isWf) {
+    if (isIr) {
+      push('触发', fmtMinute(s.event?.minute));
+      if (s.event?.px != null) push('触发价', Number(s.event.px).toFixed(2));
+      if (s.event?.pct != null) push('触发涨幅', fmtPct(s.event.pct), true);
+    } else if (isWf) {
       push('触发', s.minute);
       if (s.auctionGap != null) push('竞价', fmtPct(s.auctionGap));
       if (s.washout?.washDays != null) push('洗盘', `${s.washout.washDays} 个交易日`);
@@ -740,11 +782,14 @@ const BuyAlertCard = ({ alert, onClose }) => {
         {provisional
           ? <ClockCircleOutlined className="gda-header-icon provisional" />
           : <ThunderboltOutlined className="gda-header-icon buy" />}
-        <span className="gda-title">{provisional ? '买点已命中 · 候选计算中' : '买点诊断命中'}</span>
+        {/* 2026-11-28 用户要求：标题与「命中：…」两行展示（标题行 + 副标题行），避免标题过长把命中文案挤到竖排 */}
+        <div className="gda-title-wrap">
+          <span className="gda-title">{provisional ? '买点已命中 · 候选计算中' : isIr ? '冰点反弹-率先冲击5% · 买点触发' : '买点诊断命中'}</span>
+          {!provisional && hitTypes.length > 0 && <span className="gda-hit-types">命中：{hitTypes.join('、')}</span>}
+        </div>
         <span className="gda-mode-badge">{MODE_LABELS[mode] || mode}</span>
         {provisional && <span className="gda-provisional-badge">10s 兜底</span>}
         {isWf && remind && <span className="gda-hit-types">提前提醒 · 9:30 执行</span>}
-        {!provisional && hitTypes.length > 0 && <span className="gda-hit-types">命中：{hitTypes.join('、')}</span>}
         <CloseOutlined className="gda-close" onClick={onClose} />
       </div>
 

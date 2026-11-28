@@ -7,7 +7,7 @@
     "buyTime": "09:39",
     "weight": 50,
     "costPrice": 231.57,
-    "sellStrategy": "tech_attack"
+    "sellStrategy": "ice_rebound"
   },
   {
     "id": "sz300394_1795746644011_0kiy",
@@ -17,6 +17,6 @@
     "buyTime": "10:30",
     "weight": 50,
     "costPrice": 135,
-    "sellStrategy": "tech_attack"
+    "sellStrategy": "ice_rebound"
   }
 ]
