@@ -13,6 +13,73 @@
       margin-inline-end: 2px;
     }
   }
+
+  .block-ranking-expand-btn {
+    height: 24px;
+    width: 24px;
+    padding: 0;
+    font-size: 13px;
+  }
+}
+
+// 展开态合并卡片：置顶板块 / 全部板块分区
+.block-ranking-expanded-card {
+  display: flex;
+  flex-direction: column;
+
+  .ant-card-body {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+.block-ranking-section {
+  & + .block-ranking-section {
+    margin-top: 12px;
+  }
+
+  .block-ranking-section-label {
+    font-size: 12px;
+    color: #6b7890;
+    margin-bottom: 6px;
+    user-select: none;
+  }
+}
+
+// 展开态扁平样式：label 在左、涨幅在右，一行四个，高度更扁、字体更小
+.blocks-grid.block-ranking-flat-grid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+
+  .unified-list-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 8px;
+    gap: 6px;
+
+    .item-name {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      font-size: 11px;
+      min-width: 0;
+
+      > span {
+        font-size: 11px !important;
+      }
+    }
+
+    .item-value {
+      font-size: 11px !important;
+      flex-shrink: 0;
+    }
+
+    .item-rank-change {
+      font-size: 10px;
+      margin-left: 2px;
+    }
+  }
 }
 
 .blocks-grid {

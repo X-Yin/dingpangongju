@@ -33,7 +33,7 @@ const dailyStrategiesFile = path.resolve(__dirname, '../data/daily_backtest_stra
 const CAMP_BUILT_DIR = path.resolve(__dirname, '../data/backtest_camp_cache');
 // 构建逻辑版本：修改 loadTrainingCampData 的构建逻辑（如为 campData 新增预计算字段）时必须 +1，
 // 使全部旧缓存自动失效重建；仅新增策略或调整买卖点条件无需动它（条件在回测阶段实时应用，不依赖此缓存失效）
-const CAMP_BUILDER_VERSION = 7;
+const CAMP_BUILDER_VERSION = 9;
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
 // 构建签名：构建器版本 + 自选股清单 + 板块清单；仅无资金快照兜底构建追加 'no-fund' 标记
 // （allowMissingFund=false 时不追加任何元素，常规签名与历史缓存保持一致，避免全量缓存失效）
@@ -58,8 +58,12 @@ const padTimeKey = (t) => String(t).padStart(6, '0');
 // 日K线缓存（按股票代码），回放日期的历史均线不随最新行情变化，TTL 可较长
 const klineCache = new Map();
 const KLINE_CACHE_TTL_MS = 30 * 60 * 1000;
+// 日K拉取根数（2026-11-28 由 60 调大）：默认回测范围已改为从 20260728 起到最新交易日（约 85 个
+// 交易日），外加选股窗口/均线/顺周期过滤等前置回看，60 根已覆盖不到区间开头的买入日 → 「买入当日
+// 收益」因找不到买入日日K而显示 --。调大到 160 根一次性覆盖整个回测区间 + 回看窗口
+const KLINE_FETCH_LIMIT = 160;
 // 日K线文件缓存（跨进程共享）：历史日期的均线计算只需截至回放日的K线，
-// 当天拉取的 60 根日K对全部历史回放日期均有效，落盘后多进程/多次运行直接读文件，免 HTTP
+// 当天拉取的日K对全部历史回放日期均有效，落盘后多进程/多次运行直接读文件，免 HTTP
 const klineFileCacheDir = path.resolve(__dirname, '../data/kline_cache');
 const getKlineFileCachePath = (code) => path.join(klineFileCacheDir, `${code}.json`);
 
@@ -69,9 +73,12 @@ const readKlineFileCache = (code, targetDateInt) => {
     if (!fs.existsSync(file)) return null;
     const cached = JSON.parse(fs.readFileSync(file, 'utf-8'));
     if (!cached || !Array.isArray(cached.kline) || cached.kline.length === 0) return null;
-    // 仅「无目标日期」的实时用法要求当天拉取的新鲜缓存；
+    // 拉取根数版本校验（2026-11-28 新增）：旧缓存只拉了 60 根、覆盖不到新默认回测范围（20260728 起）
+    // 的区间开头，直接判未命中触发重拉（重拉一次落盘后即恢复命中）；仅「无目标日期」的实时用法要求
+    // 当天拉取的新鲜缓存；
     // 回测（带历史 targetDateInt）场景下历史K线不可变，只需下方 maxDate 覆盖校验即可复用，
     // 否则每个自然日首次回测都要为数百只候选股重新走 HTTP（实测拖慢 60s+）
+    if (Number(cached.limit || 60) < KLINE_FETCH_LIMIT) return null;
     if (targetDateInt == null && cached.fetchedAt !== beijingToday()) return null;
     if (targetDateInt != null) {
       const maxDate = Math.max(...cached.kline.map(k => Number(k.trade_date)).filter(Number.isFinite));
@@ -99,7 +106,7 @@ const writeKlineFileCache = (code, kline) => {
   try {
     if (!fs.existsSync(klineFileCacheDir)) fs.mkdirSync(klineFileCacheDir, { recursive: true });
     const tmpFile = `${getKlineFileCachePath(code)}.${process.pid}.tmp`;
-    fs.writeFileSync(tmpFile, JSON.stringify({ fetchedAt: beijingToday(), kline }));
+    fs.writeFileSync(tmpFile, JSON.stringify({ fetchedAt: beijingToday(), limit: KLINE_FETCH_LIMIT, kline }));
     fs.renameSync(tmpFile, getKlineFileCachePath(code));
   } catch (e) { /* 写缓存失败不影响主流程 */ }
 };
@@ -119,7 +126,7 @@ const getKlineCached = async (code, targetDateStr = null) => {
       return fileKline;
     }
   }
-  const data = await getSingleStockData(code, 60);
+  const data = await getSingleStockData(code, KLINE_FETCH_LIMIT);
   klineCache.set(code, { expiresAt: Date.now() + KLINE_CACHE_TTL_MS, data });
   if (data && data.length > 0) writeKlineFileCache(code, data);
   return data;
@@ -135,7 +142,7 @@ const prewarmKlineCache = async () => {
       // 无目标日期：只要求当天缓存有效即命中，否则拉取落盘
       const fileKline = readKlineFileCache(code, null);
       if (fileKline) return;
-      const data = await getSingleStockData(code, 60);
+      const data = await getSingleStockData(code, KLINE_FETCH_LIMIT);
       if (data && data.length > 0) {
         writeKlineFileCache(code, data);
         fetched++;
@@ -595,8 +602,14 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
   // 桶骨架来源：优先资金快照（与页面口径一致）；无资金快照时用创业板指分时的 5 分钟时间点合成
   // （time 为 6 位 hhmmss 语义：minute * 100，mainMoney 置 0，displayTime 由 timeKey 推导；
   //   指数分时为 1 分钟线，按 5 分钟对齐过滤，与其他日期的桶粒度保持一致）
+  // 2026-11-28 用户新增：回放从 9:30 开始、个股/板块/指数/科技情绪可见开盘竞价实时涨幅；资金与成交量仍从 9:35 桶开始
+  // 注意：旧版归档算法的快照首条本身就是 093000（旧版按向后归属、标签从 9:30 开始，带真实资金数据），
+  // 此时不能再插入合成 9:30 桶，否则 timeBuckets 出现重复 timeKey → 前端 lightweight-charts 报
+  // 「data must be asc ordered by time」断言错误（如 20260804）
   const bucketSource = fundData.length > 0
-    ? fundData
+    ? (String(fundData[0]?.time) === '093000'
+        ? fundData
+        : [{ time: '093000', displayTime: '09:30:00', mainMoney: null }, ...fundData])
     : (cybMap.sortedLine || []).filter(p => Number(p.minute) % 5 === 0).map(p => ({ time: p.minute * 100, mainMoney: 0 }));
 
   // 分钟级科技情绪（「当日任意分时点 ≤ 冰点阈值」口径）：先算全天每分钟情绪，再按桶时间取前缀最低值随桶下发
@@ -675,7 +688,8 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
       timeKey,
       displayTime,
       minute,
-      fundFlow: parseFloat(f.mainMoney) || 0,
+      // 9:30 桶无资金快照数据（mainMoney 为 null），下发 null 由前端在资金/成交量图表中跳过该点
+      fundFlow: f.mainMoney == null ? null : (parseFloat(f.mainMoney) || 0),
       volume: findVolume(minute),
       indexTline: {
         cyb: cybPoint,
@@ -740,6 +754,32 @@ const loadTrainingCampData = async (dateStr, opts = {}) => {
   return campData;
 };
 
+// 回放页「板块涨跌幅」卡片 hover 时的成分股明细：按日期 + 板块名返回成分股分钟级涨幅序列
+// （板块成分股不在自选股清单内，回放数据包不含其分时，故按需拉取；分钟点按 5 分钟采样，与回放时间桶粒度一致）
+const getTrainingCampBlockStocks = async (dateStr, blockName) => {
+  const targets = getBlockCodeStocks().filter(s => s.blockName === blockName);
+  const results = await batchParallel(targets, async (stock) => {
+    try {
+      const tlineData = await getSingleStockTlineDataByDate(stock.code, parseInt(dateStr, 10));
+      const preclose = parseFloat(tlineData?.preclose_px);
+      const line = tlineData?.line || [];
+      if (!preclose || preclose <= 0 || line.length === 0) return null;
+      const points = [];
+      for (const p of line) {
+        if (!p || p.minute == null || p.last_px == null) continue;
+        const minute = parseInt(p.minute, 10);
+        if (!Number.isFinite(minute) || minute % 5 !== 0) continue;
+        points.push([minute, parseFloat((((parseFloat(p.last_px) - preclose) / preclose) * 100).toFixed(2))]);
+      }
+      points.sort((a, b) => a[0] - b[0]);
+      return points.length > 0 ? { code: stock.code, name: stock.name, points } : null;
+    } catch (e) {
+      return null;
+    }
+  }, 10);
+  return results.filter(Boolean);
+};
+
 module.exports = {
   getTrainingCampDates,
   loadTrainingCampData,
@@ -754,4 +794,5 @@ module.exports = {
   prewarmKlineCache,
   calcDailyMaInfo, // 供重点板块策略为非自选股持仓合成卖出诊断所需的日K衍生字段（口径与自选股完全一致）
   getKlineCached,
+  getTrainingCampBlockStocks,
 };

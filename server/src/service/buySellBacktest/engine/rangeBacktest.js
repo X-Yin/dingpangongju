@@ -14,6 +14,7 @@ const { runWashFusionBacktest } = require('./washFusionExtremeOddsBacktest');
 const { runMoodBlockResonanceBacktest } = require('./moodBlockResonanceBacktest');
 const { runMoodTimingBacktest } = require('./moodTimingBacktest');
 const { runEmotionWeeklyBacktest } = require('./emotionWeeklyBacktest');
+const { runIceReboundFirstHitBacktest } = require('./iceReboundFirstHitBacktest');
 const { getTrainingCampDates, loadTrainingCampData, runWithOscExclude, runWithSimContext } = require('../deps');
 const { buildWindowAxis, injectSimStocksIntoCampData } = require('./pickHelpers');
 const { CYB_GATE_STRATEGY_IDS, CYB_INDEX_CODE, STAR_INDEX_CODE, annotateIndexGateChecksWithStock, precomputeTurnMap, withDualGateInfo } = require('./indexGate');
@@ -113,6 +114,11 @@ const runRangeBacktestInner = async (startDate, endDate, strategyId = 'highest_g
   // 卖点 = 「3日涨幅最大&三日情绪-30快进快出」的通用卖点，不含快进快出机制）
   if (STRATEGIES[strategyId]?.moodWeeklyMode === true) {
     return runEmotionWeeklyBacktest(startDate, endDate, strategyId, onProgress, options);
+  }
+  // 冰点反弹-率先冲击n%（2026-11-28 用户新增）走独立引擎：前一交易日科技情绪指数 ≤ -20（冰点）次日出手，
+  // 全量自选科技股中谁第一个盘中涨幅达到 +n% 就买谁（全仓单持仓）；卖点 = 快进快出系列的通用卖点
+  if (STRATEGIES[strategyId]?.iceReboundFirstHitMode === true) {
+    return runIceReboundFirstHitBacktest(startDate, endDate, strategyId, onProgress, options);
   }
   const strategy = STRATEGIES[strategyId];
   // 「N日涨幅最大-快进快出」系列（emoQuickOut 且非两次买入）：快进快出半仓（2026-10-13 用户新增）——

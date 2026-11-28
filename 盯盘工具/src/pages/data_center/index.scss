@@ -194,6 +194,34 @@
       background: #fff;
     }
   }
+
+  // ========== 拥挤度数据 Tab ==========
+  .dc-crowd-data {
+    .dc-crowd-preview {
+      height: 520px;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #f0f0f0;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .dc-crowd-content {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      margin: 0;
+      padding: 12px;
+      font-size: 12px;
+      line-height: 1.6;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #333;
+      background: #fff;
+    }
+  }
 }
 
 // ========== 自选股数据 Tab ==========

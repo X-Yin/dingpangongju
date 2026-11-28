@@ -7,6 +7,7 @@ const leaderStrategies = require('./families/leader');
 const moodBlockResonanceStrategies = require('./families/moodBlockResonance');
 const moodTimingStrategies = require('./families/moodTiming');
 const moodWeeklyStrategies = require('./families/moodWeekly');
+const iceReboundStrategies = require('./families/iceRebound');
 const { OPENING_BELOW_RATIO, OPENING_BELOW_RATIO_STRATEGY_IDS } = require('../constants');
 
 const STRATEGIES = {
@@ -19,6 +20,7 @@ const STRATEGIES = {
   ...moodBlockResonanceStrategies,
   ...moodTimingStrategies,
   ...moodWeeklyStrategies,
+  ...iceReboundStrategies,
 };
 
 
@@ -41,7 +43,7 @@ for (const s of Object.values(STRATEGIES)) {
 // 规则：候选按排名依次判断个股与创业板指最近 20 个已完结交易日的日收益率相关系数，corr > 0（正相关）
 // = 顺周期可买，corr <= 0（逆周期）剔除并顺延排名下一只；数据不足不拦截。下列 desc 文案自动追加到所有适用策略
 const CYC_FILTER_DESC = '顺周期过滤：候选按排名依次判断与创业板指最近 20 个已完结交易日的日收益率相关系数，相关系数 > 0（正相关，顺周期）才可买入，≤ 0（逆周期）则顺延至排名下一只（数据不足不拦截）';
-const isCycleFilterStrategy = (s) => !!s && s.iceMode !== true && s.keyBlockDays == null && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true && s.fusedEmoWinMode !== true && s.gainVolumeShareMode !== true && s.emotionBurstDriftMode !== true && s.emotionBurstFollowMode !== true && s.firstBoardWashMode !== true && s.volumeWashoutMode !== true && s.washFusionMode !== true && s.moodBlockResonanceMode !== true && s.moodTimingMode !== true && s.moodWeeklyMode !== true;
+const isCycleFilterStrategy = (s) => !!s && s.iceMode !== true && s.keyBlockDays == null && s.extremeWinMode !== true && s.reverseLeaderMode !== true && s.nBoardMode !== true && s.volumeShareMode !== true && s.fusedEmoWinMode !== true && s.gainVolumeShareMode !== true && s.emotionBurstDriftMode !== true && s.emotionBurstFollowMode !== true && s.firstBoardWashMode !== true && s.volumeWashoutMode !== true && s.washFusionMode !== true && s.moodBlockResonanceMode !== true && s.moodTimingMode !== true && s.moodWeeklyMode !== true && s.iceReboundFirstHitMode !== true;
 for (const s of Object.values(STRATEGIES)) {
   if (isCycleFilterStrategy(s)) s.desc = `${s.desc}；${CYC_FILTER_DESC}`;
 }

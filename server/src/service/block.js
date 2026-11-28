@@ -325,6 +325,8 @@ const getTopAndBottomBlockData = (num = 10) => {
   return {
     firstNumList,
     lastNumList,
+    // 全部板块（按涨幅降序，含排名变化），供盯盘页展开态「全部板块」完整排名展示
+    allNumList: blockDataWithRankChange,
     upRankBlocks,
     downRankBlocks,
     defensiveBlock: blockDataWithRankChange.filter(i => ['煤炭', '电力', '银行', '医药', '消费'].includes(i.blockName)).map(i => ({

@@ -11,9 +11,10 @@ import useReplay from './utils/useReplay';
 import TopBar from './components/TopBar';
 import ReplayProgressBar from './components/ReplayProgressBar';
 import MainMoneyCharts from '../dingpan/components/MainMoneyCharts';
-import BlockRankingCards from '../dingpan/components/BlockRankingCards';
 import StockChangeMonitor from '../dingpan/components/StockChangeMonitor';
 import MultiStockTimeLineModal from '../../components/MultiStockTimeLineModal';
+import StockKLineModal from '../../components/StockKLineModal';
+import BlockChangeBoard from './components/BlockChangeBoard';
 import BuyPointCheckModal from './components/BuyPointCheckModal';
 import SellPointCheckModal from './components/SellPointCheckModal';
 import SimPositionsModal from './components/SimPositionsModal';
@@ -305,10 +306,13 @@ const TrainingCamp = () => {
 
   const historyData = useMemo(() => {
     if (!campData) return [];
-    return timeBuckets.slice(0, currentIndex + 1).map(b => [
-      b.timeKey,
-      { mainMoney: b.fundFlow, amountChangeDiff: b.volume, rawTime: b.timeKey },
-    ]);
+    // 9:30 桶无资金/成交量数据（fundFlow 为 null），主力资金与成交量图表仍从 9:35 开始展示
+    return timeBuckets.slice(0, currentIndex + 1)
+      .filter(b => b.fundFlow != null)
+      .map(b => [
+        b.timeKey,
+        { mainMoney: b.fundFlow, amountChangeDiff: b.volume, rawTime: b.timeKey },
+      ]);
   }, [campData, timeBuckets, currentIndex]);
 
   const moneyStatus = useMemo(() => {
@@ -375,9 +379,10 @@ const TrainingCamp = () => {
     return { cyb, kcb };
   }, [campData, timeBuckets, currentIndex]);
 
-  const topAndBottomBlockData = useMemo(() => {
-    if (!currentBucket?.blockRanking) return { firstNumList: [], lastNumList: [] };
-    return currentBucket.blockRanking;
+  // 板块涨跌幅统一卡片数据：全部重点板块在该时点的盘中实时涨幅（按涨幅降序）
+  const blockChangeList = useMemo(() => {
+    if (!currentBucket?.blockRanking) return [];
+    return currentBucket.blockRanking.all || [];
   }, [currentBucket]);
 
 
@@ -664,8 +669,10 @@ const TrainingCamp = () => {
       window.scrollTo(0, 0);
     }, []);
 
-  const handleStockClick = useCallback((stock) => {
-    if (stock?.code) message.info(`查看 ${stock.name || stock.code}（回放模式暂不支持K线跳转）`);
+  // 打开 K 线弹窗（板块 tooltip 成分股、个股幅度异动、叠加分时右侧 label 双击共用）
+  const [klineStock, setKlineStock] = useState(null);
+  const handleStockClick = useCallback((stock, tab) => {
+    if (stock?.code) setKlineStock({ ...stock, initialTab: tab || 'kline' });
   }, []);
 
   const handleGroupsChange = useCallback((newGroups) => setGroups(newGroups), []);
@@ -695,7 +702,7 @@ const TrainingCamp = () => {
         <>
           <Row gutter={[24, 24]} style={{ marginBottom: 80 }}>
             <Col xs={24}>
-              {/* 第一行：叠加分时观察 + 个股幅度异动 并排 */}
+              {/* 第一行：叠加分时观察 + 板块涨跌幅 并排 */}
               <Row gutter={[12, 12]} style={{ marginBottom: 12, height: 580 }}>
                 <Col xs={24} md={12} style={{ height: '100%' }}>
                   <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -710,30 +717,20 @@ const TrainingCamp = () => {
                     />
                   </div>
                 </Col>
-                <Col xs={24} md={12} style={{ height: '100%', overflow: 'auto' }}>
-                  <StockChangeMonitor
-                    stockViewMode={stockViewMode}
-                    onStockViewModeChange={setStockViewMode}
-                    stockData={{ changeList: fullStockData.changeList }}
-                    fullStockData={fullStockData}
-                    marketRiskWarning={false}
-                    reportStockData={{ topGain: [], topCoverage: [], intersection: [] }}
-                    researchReportsLoading={false}
-                    researchReportsLoaded={false}
-                    allStockData={[]}
-                    watchlistMainFund={{}}
+                <Col xs={24} md={12} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <BlockChangeBoard
+                    blocks={blockChangeList}
+                    replayDate={campData?.date || ''}
+                    replayMinute={currentBucket?.minute ?? null}
+                    displayTime={currentBucket?.displayTime || ''}
                     onStockClick={handleStockClick}
-                    onViewYanbaoDetail={() => {}}
-                    themeColor={null}
-                    hideFundFlow
-                    viewModes={['grouped', 'merged']}
                   />
                 </Col>
               </Row>
 
-              {/* 第二行：主力资金+成交量 与 涨跌幅前十 并排 */}
+              {/* 第二行：主力资金+成交量 与 个股幅度异动 并排 */}
               <Row gutter={[12, 12]} style={{ marginBottom: 12, height: 340 }}>
-                <Col xs={24} md={17}style={{ height: '100%' }}>
+                <Col xs={24} md={17} style={{ height: '100%' }}>
                   <MainMoneyCharts
                     isMainMoneyExpanded={isMainMoneyExpanded}
                     key={chartEpoch}
@@ -753,14 +750,23 @@ const TrainingCamp = () => {
                     fillContainer
                   />
                 </Col>
-                <Col xs={24} md={7} style={{ display: 'flex', flexDirection: 'column', gap: 12, height: '100%' }}>
-                  <BlockRankingCards
-                    topAndBottomBlockData={topAndBottomBlockData}
-                    onBlockClick={() => {}}
-                    renderBlockStockList={() => <span style={{ fontSize: 12, color: '#999' }}>训练营回放模式</span>}
+                <Col xs={24} md={7} style={{ height: '100%', overflow: 'auto' }}>
+                  <StockChangeMonitor
+                    stockViewMode={stockViewMode}
+                    onStockViewModeChange={setStockViewMode}
+                    stockData={{ changeList: fullStockData.changeList }}
+                    fullStockData={fullStockData}
+                    marketRiskWarning={false}
+                    reportStockData={{ topGain: [], topCoverage: [], intersection: [] }}
+                    researchReportsLoading={false}
+                    researchReportsLoaded={false}
+                    allStockData={[]}
+                    watchlistMainFund={{}}
+                    onStockClick={handleStockClick}
+                    onViewYanbaoDetail={() => {}}
                     themeColor={null}
-                    vertical
-                    fillContainer
+                    hideFundFlow
+                    viewModes={['grouped', 'merged']}
                   />
                 </Col>
               </Row>
@@ -829,6 +835,20 @@ const TrainingCamp = () => {
         onDelete={handleDeleteSimPosition}
         onRollback={handleRollbackSimPosition}
         onReset={handleResetSimPositions}
+      />
+
+      {/* K 线图弹窗（回放模式下展示实时行情数据） */}
+      <StockKLineModal
+        visible={!!klineStock}
+        onCancel={() => setKlineStock(null)}
+        zIndex={1600}
+        code={klineStock?.code}
+        stockInfo={{
+          name: klineStock?.name || klineStock?.stockName,
+          code: klineStock?.code,
+          change: klineStock?.change,
+        }}
+        initialTab={klineStock?.initialTab || 'kline'}
       />
     </div>
   );

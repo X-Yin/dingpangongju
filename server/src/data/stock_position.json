@@ -1,22 +1,22 @@
 [
   {
-    "id": "sz301511_1795659341302_jnni",
-    "code": "sz301511",
-    "name": "德福科技",
-    "buyDate": "2026-11-26",
-    "buyTime": "10:15",
+    "id": "sh688361_1795743564589_p57g",
+    "code": "sh688361",
+    "name": "中科飞测",
+    "buyDate": "2026-11-27",
+    "buyTime": "09:39",
     "weight": 50,
-    "costPrice": 49.42,
+    "costPrice": 231.57,
     "sellStrategy": "tech_attack"
   },
   {
-    "id": "sz300394_1795675135138_3d54",
+    "id": "sz300394_1795746644011_0kiy",
     "code": "sz300394",
     "name": "天孚通信",
-    "buyDate": "2026-11-26",
-    "buyTime": "14:38",
-    "weight": 25,
-    "costPrice": 131.7,
+    "buyDate": "2026-11-27",
+    "buyTime": "10:30",
+    "weight": 50,
+    "costPrice": 135,
     "sellStrategy": "tech_attack"
   }
 ]

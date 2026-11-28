@@ -2753,6 +2753,7 @@ const DingPan = () => {
                                         renderBlockStockList={renderBlockStockList}
                                         themeColor={effThemeColor}
                                         vertical
+                                        expandable
                                         onRefresh={handleRefreshBlockData}
                                         refreshing={refreshingBlockData}
                                         onEmotionCycle={handleOpenEmotionCycle}

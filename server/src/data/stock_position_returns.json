@@ -1,5 +1,56 @@
 [
   {
+    "date": "2026-11-27",
+    "operations": [
+      {
+        "id": "1795743315189_g3b9",
+        "action": "sell",
+        "stockName": "胜宏科技",
+        "stockCode": "sz300476",
+        "position": "",
+        "time": "09:35"
+      },
+      {
+        "id": "1795743553290_u2of",
+        "action": "sell",
+        "stockName": "德福科技",
+        "stockCode": "sz301511",
+        "position": "",
+        "time": "09:39"
+      },
+      {
+        "id": "1795743564604_kxib",
+        "action": "buy",
+        "stockName": "中科飞测",
+        "stockCode": "sh688361",
+        "position": "",
+        "time": "09:39"
+      },
+      {
+        "id": "1795746636540_yt4h",
+        "action": "sell",
+        "stockName": "天孚通信",
+        "stockCode": "sz300394",
+        "position": "",
+        "time": "10:30"
+      },
+      {
+        "id": "1795746644016_m14u",
+        "action": "buy",
+        "stockName": "天孚通信",
+        "stockCode": "sz300394",
+        "position": "",
+        "time": "10:30"
+      }
+    ],
+    "totalReturn": null,
+    "principleViolated": false,
+    "score": null,
+    "review": "",
+    "createdAt": "2026-11-27T01:35:15.227Z",
+    "updatedAt": "2026-11-27T02:30:44.080Z"
+  },
+  {
     "date": "2026-11-26",
     "operations": [
       {

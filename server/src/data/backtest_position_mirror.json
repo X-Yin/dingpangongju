@@ -1,13 +1,24 @@
 {
-  "lastSyncedEndDate": "20261126",
+  "lastSyncedEndDate": "20261127",
   "lastRange": {
-    "startDate": "20260827",
-    "endDate": "20261126"
+    "startDate": "20260828",
+    "endDate": "20261127"
   },
-  "lastSyncedAt": "2026-11-26 08:49:32",
-  "lastHoldings": [],
-  "added": [],
+  "lastSyncedAt": "2026-11-27 00:40:11",
+  "lastHoldings": [
+    {
+      "code": "sz300476",
+      "name": "胜宏科技",
+      "buyDate": "20261126",
+      "buyPrice": 128.5,
+      "buyTime": "10:15",
+      "weight": 0.5
+    }
+  ],
+  "added": [
+    "胜宏科技(sz300476) 成本 128.50 买入日 2026-11-26"
+  ],
   "skipped": [],
   "attempts": 0,
-  "attemptsDate": "2026-11-26"
+  "attemptsDate": "2026-11-27"
 }

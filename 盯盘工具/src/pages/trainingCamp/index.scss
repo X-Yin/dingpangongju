@@ -192,6 +192,94 @@
   }
 }
 
+// 板块涨跌幅统一卡片：分「置顶板块 / 全部板块」上下两个区域，名称与涨幅同行排列
+// （覆盖 blocks-grid 的固定 5 列与纵向大芯片样式）
+.block-change-section {
+  margin-bottom: 10px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .block-change-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7890;
+    margin-bottom: 5px;
+    padding-left: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 10px;
+      border-radius: 2px;
+      background: var(--theme-color, #1677ff);
+    }
+  }
+}
+
+.blocks-grid.block-change-grid {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+
+  .unified-list-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 10px;
+    gap: 6px;
+    text-align: left;
+
+    .item-name {
+      font-size: 12px;
+      justify-content: flex-start;
+    }
+
+    .item-value {
+      font-size: 12px;
+    }
+  }
+
+  // 置顶板块：淡橙底色 + 橙色左边框 + 前置圆点，与普通板块区分
+  .unified-list-item.pinned-block {
+    background: #fff7ed;
+    border-color: rgba(249, 115, 22, 0.35);
+    box-shadow: inset 3px 0 0 #f97316;
+
+    &:hover {
+      background: #ffedd5;
+      box-shadow: inset 3px 0 0 #ea580c, 0 8px 20px rgba(74, 99, 140, 0.1);
+    }
+
+    .pinned-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #f97316;
+      flex-shrink: 0;
+    }
+  }
+}
+
+// 板块成分股悬浮窗加载/空数据提示（复用全局 .block-stock-popover 内的成分股列表样式）
+.block-change-pop-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 180px;
+  padding: 6px 4px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+// 个股幅度异动挪到第二行窄列后，固定 6 列过挤，改为自适应列宽
+.training-camp-container .stock-change-grid {
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+}
+
 .training-camp-replay-bar {
   position: fixed;
   bottom: 0;

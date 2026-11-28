@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Tabs, Tree, Spin, message, Button, Input, Radio, Space, Card, Empty, Tag, InputNumber, Modal, Checkbox } from 'antd';
-import { DatabaseOutlined, StockOutlined, CopyOutlined, SearchOutlined, FileTextOutlined, ReloadOutlined, CheckCircleOutlined, EditOutlined, FolderOutlined, EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
+import { Tabs, Tree, Spin, message, Button, Input, Radio, Space, Card, Empty, Tag, InputNumber, Modal, Checkbox, DatePicker } from 'antd';
+import { DatabaseOutlined, StockOutlined, CopyOutlined, SearchOutlined, FileTextOutlined, ReloadOutlined, CheckCircleOutlined, EditOutlined, FolderOutlined, EyeInvisibleOutlined, EyeOutlined, FireOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import dayjs from 'dayjs';
 import { local_ip } from '../../constant';
 import { getThemeColor } from '../../utils/theme';
 import './index.scss';
@@ -649,6 +650,112 @@ const IndexesDataTab = () => {
   );
 };
 
+// ========== 拥挤度数据 Tab（对应重点板块-板块资金-拥挤度 tab） ==========
+// 数据类型 -> 后端接口：拥挤度 tech_block_crowd / 科技板块成交量占比 tech_block_ratio / 各板块成交量占比 block_category_ratio
+const CROWD_DATA_TYPES = [
+  { value: 'crowd', label: '拥挤度', endpoint: '/tech_block_crowd', key: '拥挤度' },
+  { value: 'techRatio', label: '科技成交量占比', endpoint: '/tech_block_ratio', key: '科技板块成交量占比' },
+  { value: 'categoryRatio', label: '各板块成交量占比', endpoint: '/block_category_ratio', key: '各板块成交量占比' },
+];
+
+const CrowdDataTab = () => {
+  // 与拥挤度 tab 默认区间保持一致
+  const [dateRange, setDateRange] = useState([dayjs('2026-04-01'), dayjs()]);
+  const [dataType, setDataType] = useState('crowd');
+  const [loading, setLoading] = useState(false);
+  const [copying, setCopying] = useState(false);
+  const [data, setData] = useState(null);
+
+  const currentType = CROWD_DATA_TYPES.find(t => t.value === dataType) || CROWD_DATA_TYPES[0];
+
+  const fetchData = useCallback(async () => {
+    if (!dateRange?.[0] || !dateRange?.[1]) return;
+    setLoading(true);
+    try {
+      const res = await axios.get(`${BASE_URL}${currentType.endpoint}`, {
+        params: {
+          startDate: dateRange[0].format('YYYY-MM-DD'),
+          endDate: dateRange[1].format('YYYY-MM-DD'),
+        },
+      });
+      setData(res.data ?? null);
+    } catch (err) {
+      message.error('获取拥挤度数据失败: ' + (err.response?.data?.message || err.message));
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [dataType, dateRange]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleCopy = async () => {
+    if (data === null) {
+      message.warning('暂无数据可复制');
+      return;
+    }
+    setCopying(true);
+    try {
+      const text = JSON.stringify({ [currentType.key]: data }, null, 2);
+      const ok = await copyToClipboard(text);
+      if (ok) message.success('拥挤度数据已复制到剪贴板');
+      else message.error('复制失败，请手动复制');
+    } finally {
+      setCopying(false);
+    }
+  };
+
+  return (
+    <div className="dc-crowd-data">
+      <div className="dc-toolbar">
+        <Space>
+          <span>数据类型:</span>
+          <Radio.Group value={dataType} onChange={e => setDataType(e.target.value)}>
+            {CROWD_DATA_TYPES.map(t => (
+              <Radio.Button key={t.value} value={t.value}>{t.label}</Radio.Button>
+            ))}
+          </Radio.Group>
+        </Space>
+        <Space>
+          <span>日期范围:</span>
+          <DatePicker.RangePicker
+            value={dateRange}
+            onChange={v => v && setDateRange(v)}
+            allowClear={false}
+          />
+        </Space>
+        <Button icon={<ReloadOutlined />} onClick={fetchData}>刷新</Button>
+        <Button
+          type="primary"
+          icon={<CopyOutlined />}
+          onClick={handleCopy}
+          loading={copying}
+          disabled={data === null}
+        >
+          复制拥挤度数据
+        </Button>
+      </div>
+
+      <Card className="dc-indexes-tips" size="small">
+        <p>· <strong>拥挤度</strong>：基于科技板块成交额占比、融资余额、融资买入综合计算的拥挤度评分与等级</p>
+        <p>· <strong>科技成交量占比</strong>：科技板块成交额占全市场成交额比例（仅缓存数据，不含融资融券实时计算）</p>
+        <p>· <strong>各板块成交量占比</strong>：各分类板块（传媒/农业/消费等）成交额占全市场比例</p>
+        <p>· 复制后以 JSON 形式包含日期范围内的全部数据点，可直接粘贴到 AI 对话中使用</p>
+      </Card>
+
+      <div className="dc-crowd-preview">
+        <Spin spinning={loading} style={{ overflowY: 'auto' }}>
+          <pre className="dc-crowd-content">
+            {data !== null
+              ? JSON.stringify(data, null, 2)
+              : '// 暂无数据'}
+          </pre>
+        </Spin>
+      </div>
+    </div>
+  );
+};
+
 // ========== 主组件 ==========
 const DataCenter = ({ hideHeader = false }) => {
   const items = [
@@ -672,6 +779,13 @@ const DataCenter = ({ hideHeader = false }) => {
         <span><StockOutlined /> 指数数据</span>
       ),
       children: <IndexesDataTab />,
+    },
+    {
+      key: 'crowd',
+      label: (
+        <span><FireOutlined /> 拥挤度数据</span>
+      ),
+      children: <CrowdDataTab />,
     },
   ];
 

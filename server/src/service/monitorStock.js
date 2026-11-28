@@ -335,7 +335,7 @@ const isTechWatchlistStock = (code) => {
 // 过滤掉：北交所（bj 前缀、bj920、sz920 映射、bj920、sh920）、B股、老三板等
 // 白名单规则：
 //   sh 开头 + 600/601/603/605/688 → 沪市主板 / 科创板
-//   sz 开头 + 000/001/002/003/300 → 深市主板 / 创业板
+//   sz 开头 + 000/001/002/003/300/301/302 → 深市主板 / 创业板（301/302 为注册制新股代码段）
 // 不符合以上规则的一律返回 false
 const isBacktestEligibleCode = (code) => {
     if (!code || typeof code !== 'string') return false;
@@ -346,7 +346,7 @@ const isBacktestEligibleCode = (code) => {
     }
     if (c.startsWith('SZ')) {
         const num = c.slice(2);
-        return /^(000|001|002|003|300)\d{3}$/.test(num);
+        return /^(000|001|002|003|300|301|302)\d{3}$/.test(num);
     }
     // bj / sh920 / sz920 / 不带前缀 等一律过滤
     return false;

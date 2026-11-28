@@ -111,7 +111,7 @@ const { getActiveProvider, getHeaders, buildRequestBody } = require('./utils/aiP
 const aiSettings = require('./service/aiSettings');
 const { getMainFundAiSummary, getMainFundAiContext } = require('./service/mainFundAi');
 const { getAllGroups: getAllIndexOverlayGroups, saveGroup: saveIndexOverlayGroup, deleteGroup: deleteIndexOverlayGroup } = require('./service/indexOverlayGroup');
-const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup, getDailyBacktestStrategies, saveDailyBacktestStrategies, getBacktestNote, saveBacktestNote } = require('./service/trainingCamp');
+const { getTrainingCampDates, loadTrainingCampData, getTrainingCampGroups, saveTrainingCampGroup, deleteTrainingCampGroup, getDailyBacktestStrategies, saveDailyBacktestStrategies, getBacktestNote, saveBacktestNote, getTrainingCampBlockStocks } = require('./service/trainingCamp');
 const beijingToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, ''); // 北京今天 YYYYMMDD
 const { runRangeBacktest, STRATEGIES, readCachedBacktest, writeCachedBacktest, attachHoldingDays, attachBuyDayReturn, getStockRecentReports, queryLiveIndexGate } = require('./service/buySellBacktest');
 const { startRandomSim, getRandomSimStatus, getRandomSimDetail } = require('./service/randomSim');
@@ -4304,6 +4304,21 @@ app.get('/training_camp/data', async (req, res) => {
   } catch (error) {
     console.error('获取训练营回放数据失败:', error);
     res.status(500).json({ success: false, message: error.message || '获取训练营回放数据失败' });
+  }
+});
+
+// 训练营 - 板块成分股分钟级涨幅（板块涨跌幅卡片 hover 时按需拉取，供回放时间点展示成分股实时涨幅）
+app.get('/training_camp/block_stocks', async (req, res) => {
+  try {
+    const { date, block } = req.query;
+    if (!date || !block) {
+      return res.status(400).json({ success: false, message: '缺少日期或板块名' });
+    }
+    const stocks = await getTrainingCampBlockStocks(String(date), String(block));
+    res.json({ success: true, stocks });
+  } catch (error) {
+    console.error('获取训练营板块成分股失败:', error);
+    res.status(500).json({ success: false, message: error.message || '获取训练营板块成分股失败' });
   }
 });
 

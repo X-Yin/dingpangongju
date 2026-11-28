@@ -96,27 +96,15 @@ exports.default = [
         "tag": "进攻"
     },
     {
-        "blockName": "光模块",
+        "blockName": "光通信",
         "code": "sz300308",
         "name": "中际旭创",
         "tag": "进攻"
     },
     {
-        "blockName": "光模块",
+        "blockName": "光通信",
         "code": "sz300502",
         "name": "新易盛",
-        "tag": "进攻"
-    },
-    {
-        "blockName": "光模块",
-        "code": "sz001267",
-        "name": "汇绿生态",
-        "tag": "进攻"
-    },
-    {
-        "blockName": "光模块",
-        "code": "sz002475",
-        "name": "立讯精密",
         "tag": "进攻"
     },
     {
@@ -126,33 +114,21 @@ exports.default = [
         "tag": "进攻"
     },
     {
-        "blockName": "光芯片",
+        "blockName": "光通信",
         "code": "sz002384",
         "name": "东山精密",
         "tag": "进攻"
     },
     {
-        "blockName": "光模块",
-        "code": "sh600105",
-        "name": "永鼎股份",
-        "tag": "进攻"
-    },
-    {
-        "blockName": "cpo",
+        "blockName": "光通信",
         "code": "sz300394",
         "name": "天孚通信",
         "tag": "进攻"
     },
     {
-        "blockName": "cpo",
+        "blockName": "光通信",
         "code": "sz300757",
         "name": "罗博特科",
-        "tag": "进攻"
-    },
-    {
-        "blockName": "cpo",
-        "code": "sh601138",
-        "name": "工业富联",
         "tag": "进攻"
     },
     {
@@ -1264,12 +1240,12 @@ exports.default = [
         "name": "云意电气"
     },
     {
-        "blockName": "光芯片",
+        "blockName": "光通信",
         "code": "sh688498",
         "name": "源杰科技"
     },
     {
-        "blockName": "光芯片",
+        "blockName": "光通信",
         "code": "sh688048",
         "name": "长光华芯"
     },
@@ -2578,5 +2554,23 @@ exports.default = [
         "blockName": "光刻胶",
         "code": "sz002741",
         "name": "光华科技"
+    },
+    {
+        "blockName": "字节 pico",
+        "code": "sz300264",
+        "name": "佳创视讯",
+        "tag": "中性"
+    },
+    {
+        "blockName": "字节 pico",
+        "code": "sz002876",
+        "name": "三利谱",
+        "tag": "中性"
+    },
+    {
+        "blockName": "字节 pico",
+        "code": "sz300752",
+        "name": "隆利科技",
+        "tag": "中性"
     }
 ]

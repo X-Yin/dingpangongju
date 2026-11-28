@@ -33,9 +33,6 @@ const EARLIEST_DATE = '20260728';
 const EXTREME_WIN_EARLIEST_DATE = '20260701';
 // 策略分类「最近点击」顺序缓存键：值为分类 key 数组，最近点击的排首位
 const CATEGORY_ORDER_LS_KEY = 'backtest_drawer_category_order';
-// 默认回测范围窗口（最近 N 个交易日），与后端 backtestReport.js 的 getDefaultReportRange /
-// backtest-worker.js 的回测时间口径一致；可用交易日不足 N 个时自动取最早的一个日期
-const REPORT_DAYS = 60;
 const fmtDate = (d) => `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}`;
 const fmtPct = (v) => {
   if (v == null || Number.isNaN(Number(v))) return '--';
@@ -279,10 +276,20 @@ const STRATEGY_OPTIONS = [
   { value: 'mood_timing_2d_gain', label: '情绪周期-择时为主-2日涨幅最大' },
   { value: 'mood_timing_3d_gain', label: '情绪周期-择时为主-3日涨幅最大' },
   // 情绪周期-一周一次（2026-11-27 用户新增，仅回测）：大盘分时放量 ≥ 500 亿（成交额快照 = 今日累计成交额较昨日同期增量），
-  // 且往前两个交易日收盘口径均未放量（< 500 亿）；创业板指与科创 50 过去 10 分钟均上涨时，从
-  // 半导体/光通信/光芯片/cpo/MPO/半导体材料/CCL/pcb 中取当日涨幅最大板块，买板块内当日分时涨幅最大个股（涨停顺延）；
+  // 创业板指与科创 50 过去 10 分钟均上涨、且至少一个当下涨幅 > 1% 时，从
+  // 半导体/光通信/光芯片/cpo/MPO/半导体材料/CCL/pcb/电子布/铜箔/PPE树脂 中取当日涨幅最大板块，买板块内当日分时涨幅最大个股（涨停顺延）；
+  // 买入时段 9:30–14:55（覆盖午后放量）；不做「往前两日不得放量」的前置检查；
   // 卖点 = 「3日涨幅最大&三日情绪-30快进快出」通用卖点（通用 7 条件 + 盘中大跌强卖），不含快进快出机制
   { value: 'mood_weekly_once', label: '情绪周期-一周一次' },
+  // 冰点反弹-率先冲击n%（2026-11-28 用户新增，仅回测）：前一交易日科技情绪指数 ≤ -20（情绪冰点）时次日可出手，
+  // 候选池 = 盯盘页板块涨跌幅「置顶板块」成分股；逐 1 分钟回溯取当日第一个涨幅达到 +n% 的分钟按该分钟价全仓买入
+  // （谁先达到买谁、同分钟取涨幅更大者）；触发涨幅窗口 [n, n+3]（超浮动/开盘即超整日不买、向后顺延）、
+  // 个股自身总市值 ≥ 300 亿（2026-11-28 用户明确：按个股总市值过滤、只买中盘/权重股不要小盘股）、涨停买不进顺延；单持仓；
+  // 卖点 = 「3日涨幅最大&三日情绪-30快进快出」的通用卖点（通用 7 条件 + 盘中大跌强卖），不含快进快出机制
+  // （后端独立引擎 iceReboundFirstHitBacktest.js）
+  { value: 'ice_rebound_first_hit_3', label: '冰点反弹-率先冲击3%' },
+  { value: 'ice_rebound_first_hit_4', label: '冰点反弹-率先冲击4%' },
+  { value: 'ice_rebound_first_hit_5', label: '冰点反弹-率先冲击5%' },
   { value: 'highest_3d_reports', label: '3日研报覆盖数最多' },
   { value: 'highest_5d_reports', label: '5日研报覆盖数最多' },
   { value: 'highest_3d_reports_top5_gain', label: '3日研报前五&涨幅最大' },
@@ -390,6 +397,11 @@ const STRATEGY_CATEGORIES = [
     key: 'mood_weekly',
     label: '情绪周期-一周一次类',
     ids: ['mood_weekly_once'],
+  },
+  {
+    key: 'ice_rebound',
+    label: '冰点反弹类',
+    ids: ['ice_rebound_first_hit_3', 'ice_rebound_first_hit_4', 'ice_rebound_first_hit_5'],
   },
 ];
 
@@ -929,28 +941,62 @@ const moodTimingNote = (n) => ({
   ],
 });
 // 情绪周期-一周一次（2026-11-27 用户新增）：大盘分时放量 ≥ 500 亿（成交额快照 = 今日累计成交额 − 昨日同期累计成交额），
-// 往前两个交易日收盘口径放量均 < 500 亿；创业板指与科创 50 过去 10 分钟均上涨时，从目标板块中取当日涨幅最大板块、
-// 买板块内当日分时涨幅最大个股（涨停顺延）；全仓单持仓；卖点 = 「3日涨幅最大&三日情绪-30快进快出」通用卖点（不含快进快出机制）
+// 创业板指与科创 50 过去 10 分钟均上涨、且至少一个当下涨幅 > 1% 时，从目标板块中取当日涨幅最大板块、
+// 买板块内当日分时涨幅最大个股（涨停顺延）；全仓单持仓；不做往期放量的前置检查；
+// 卖点 = 「3日涨幅最大&三日情绪-30快进快出」通用卖点（不含快进快出机制）
 const MOOD_WEEKLY_STRATEGY_IDS = ['mood_weekly_once'];
 const isMoodWeeklyStrategy = (id) => MOOD_WEEKLY_STRATEGY_IDS.includes(id);
 const moodWeeklyBuyRules = [
-  { key: 'ew_prior_volume', title: '买点前置：往前两个交易日收盘口径均未放量（< 500 亿）', desc: '取**前两个交易日**各自的**最后一个成交额快照**（收盘口径）的 **amountChangeDiff**（今日累计成交额 − 昨日同期累计成交额，单位亿），两者均须 **< 500 亿**；任一 ≥ 500 亿（近期已出现过放量日）则当日不买。缺失快照不拦截。' },
-  { key: 'ew_intraday_volume', title: '买点①：大盘分时放量 ≥ 500 亿', desc: '逐 5 分钟读取**大盘成交额快照**的 **amountChangeDiff**（今日全市场累计成交额 − 昨日同期累计成交额，单位亿），**≥ 500 亿** 视为放量；买入时段沿用普通策略 **9:30 – 13:30**（13:30 之后的快照不再触发）。' },
-  { key: 'ew_index_rise', title: '买点②：创业板指与科创 50 过去 10 分钟均为上涨', desc: '以 **创业板指（sz399006）** 与 **科创 50（sh000688）** 分时涨幅（change）计算过去 **10 分钟**的涨幅差（当下涨幅 − 10 分钟前涨幅），两者均须 **> 0**。' },
-  { key: 'ew_block_pick', title: '选股：目标板块中当日涨幅最大板块 → 板块内分时涨幅最大个股（涨停顺延）', desc: '目标板块 = **半导体、光通信（光模块 + 光纤）、光芯片、cpo、MPO、半导体材料、CCL、pcb**；板块当日涨幅 = 有效成分股**当日涨幅均值**（覆盖 ≥ 50% 且 ≥ 2 只），取**涨幅最大**的板块；再按**当日分时涨幅**降序买第一只**未涨停**的个股（主板涨幅 > 9.5%、创业板/科创板 > 19% 视为涨停），已涨停则**按排名顺延下一只**。' },
+  { key: 'ew_intraday_volume', title: '买点①：大盘分时放量 ≥ 500 亿', desc: '逐 5 分钟读取**大盘成交额快照**的 **amountChangeDiff**（今日全市场累计成交额 − 昨日同期累计成交额，单位亿），**≥ 500 亿** 视为放量；买入时段 **9:30 – 14:55**（覆盖午后放量）；**不做**「往前两个交易日不得放量」的前置检查（2026-11-27 用户确认取消）。' },
+  { key: 'ew_index_rise', title: '买点②：创业板指与科创 50 过去 10 分钟均为上涨，且至少一个当下涨幅 > 1%', desc: '以 **创业板指（sz399006）** 与 **科创 50（sh000688）** 分时涨幅（change）计算过去 **10 分钟**的涨幅差（当下涨幅 − 10 分钟前涨幅），两者均须 **> 0**；同时两者**当下涨幅的较大值须 > 1%**。' },
+  { key: 'ew_block_pick', title: '选股：目标板块中当日涨幅最大板块 → 板块内分时涨幅最大个股（涨停顺延）', desc: '目标板块 = **半导体、光通信（光模块 + 光纤）、光芯片、cpo、MPO、半导体材料、CCL、pcb、电子布、铜箔、PPE树脂**；板块当日涨幅 = 有效成分股**当日涨幅均值**（覆盖 ≥ 50% 且 ≥ 2 只），取**涨幅最大**的板块；再按**当日分时涨幅**降序买第一只**未涨停**的个股（主板涨幅 > 9.5%、创业板/科创板 > 19% 视为涨停），已涨停则**按排名顺延下一只**。' },
   { key: 'ew_full_position', title: '仓位：全仓单持仓', desc: '每次买入均**全仓（权重 1）**，账户同一时间最多持有 1 只股票，未卖出前不再买入其它股票。' },
 ];
 const moodWeeklySellRules = SELL_RULES;
 const moodWeeklyNote = {
   group: '情绪周期·一周一次',
   bullets: [
-    '**策略定位**：等大盘出现「单日放量」（今日成交额较昨日明显放大）且创业板 / 科创板本轮分时转强时，买入当日最强的科技硬件板块中最强个股，赚放量启动的脉冲段；因放量需间隔两个交易日以上，出手频率约为**一周一次**。',
-    '**买点（三条同时满足）**：① **大盘分时放量 ≥ 500 亿**（成交额快照 amountChangeDiff = 今日全市场累计成交额 − 昨日同期累计成交额，单位亿）；② **往前两个交易日「收盘口径」放量均 < 500 亿**（即最近两天没出现过放量日，取各自当日最后一个成交额快照判定，缺失不拦截）；③ **创业板指与科创 50 过去 10 分钟均为上涨**（当下涨幅 − 10 分钟前涨幅 > 0）。买入时段沿用 **9:30 – 13:30**。',
-    '**选股**：目标板块 = **半导体、光通信（光模块 + 光纤）、光芯片、cpo、MPO、半导体材料、CCL、pcb**；先取**当日涨幅最大**的板块（板块当日涨幅 = 有效成分股当日涨幅均值，覆盖 ≥ 50% 且 ≥ 2 只），再买该板块内**当日分时涨幅最大**的个股（已涨停则按涨幅排名**顺延下一只**；全部涨停则本次不买）。',
+    '**策略定位**：等大盘出现「单日放量」（今日成交额较昨日明显放大）且创业板 / 科创板本轮分时转强时，买入当日最强的科技硬件板块中最强个股，赚放量启动的脉冲段；放量日通常每周出现 1~2 次，不做往期放量的前置过滤。',
+    '**买点（两条同时满足）**：① **大盘分时放量 ≥ 500 亿**（成交额快照 amountChangeDiff = 今日全市场累计成交额 − 昨日同期累计成交额，单位亿）；② **创业板指与科创 50 过去 10 分钟均为上涨**（当下涨幅 − 10 分钟前涨幅 > 0），**且两者至少一个当下涨幅 > 1%**。买入时段 **9:30 – 14:55**（覆盖午后放量）。',
+    '**选股**：目标板块 = **半导体、光通信（光模块 + 光纤）、光芯片、cpo、MPO、半导体材料、CCL、pcb、电子布、铜箔、PPE树脂**；先取**当日涨幅最大**的板块（板块当日涨幅 = 有效成分股当日涨幅均值，覆盖 ≥ 50% 且 ≥ 2 只），再买该板块内**当日分时涨幅最大**的个股（已涨停则按涨幅排名**顺延下一只**；全部涨停则本次不买）。',
     '**仓位**：**全仓单持仓**——同一时间最多持有 1 只，未卖出前不再买入其它股票。',
     '**卖点（与「3日涨幅最大&三日情绪-30快进快出」的通用卖点一致）**：通用 7 条件卖点（均线破位 / 高位放量大阴线 / 科技板块情绪退潮 / 抗分歧弱势 / 连续三日抗分歧弱势 / 跌破最迟买入日低点 / 跌破成本线 -2%）+ 盘中大跌 -7% 强卖；**快进快出专属机制不启用**（无次日 10:00 强卖、无快进快出半仓、无冰点门禁 / 强卖豁免）。',
   ],
 };
+// 冰点反弹-率先冲击n%（2026-11-28 用户新增，仅回测）：前一交易日科技情绪指数 ≤ -20（冰点）时次日出手，
+// 候选池 = 盯盘页板块涨跌幅「置顶板块」成分股；逐 1 分钟回溯取当日第一个涨幅达到 +n% 的分钟买入；
+// 个股自身总市值 ≥ 300 亿、涨停买不进顺延；全仓单持仓；
+// 卖点 = 「3日涨幅最大&三日情绪-30快进快出」通用卖点（通用 7 条件 + 盘中大跌强卖），不含快进快出机制
+const ICE_REBOUND_STRATEGY_IDS = ['ice_rebound_first_hit_3', 'ice_rebound_first_hit_4', 'ice_rebound_first_hit_5'];
+const isIceReboundStrategy = (id) => ICE_REBOUND_STRATEGY_IDS.includes(id);
+const iceReboundN = (id) => {
+  const m = /ice_rebound_first_hit_(\d+)/.exec(String(id || ''));
+  return m ? Number(m[1]) : 5;
+};
+const iceReboundBuyRules = (n) => [
+  { key: 'ir_prev_ice', title: '买点前置：前一交易日科技情绪指数 ≤ -20（情绪冰点）', desc: '取**前一交易日**科技情绪指数收盘值，须 **≤ -20** 视为情绪冰点；**次日就可以出手**（买入时段 **9:30 – 11:30，仅上午**；2026-11-28 用户改：下午不买，下午才首次达标的候选整日不参与、也不阻塞上午候选顺延）。不低于 -20 或数据缺失时当日不买。' },
+  { key: 'ir_recent_emo', title: '近端过热门禁：往前数两个交易日科技情绪均 < 20', desc: '往前数**两个交易日**（T-1、T-2），任一日**科技情绪指数收盘值 ≥ 20** 即视为情绪已回暖/过热，**当日不能出手购买**（数据缺失的日期跳过，两日均无数据不拦截）。' },
+  { key: 'ir_pool', title: '候选池：盯盘页板块涨跌幅「置顶板块」成分股（剔除物理AI、AI剧）', desc: '候选池 = **置顶板块**（**光通信、mpo、pcb、ccl、电子布、铜箔、半导体、国产超节点、华为、先进封装**，与盯盘页/训练营置顶清单保持一致；**回测剔除「物理AI」「AI剧」两个板块，仅影响策略候选池，盯盘页/训练营置顶展示不受影响**）的成分股 ∩ 当日自选股回放；**不再使用「全量自选科技股」口径**，已剔除黑名单个股。' },
+  { key: 'ir_first_hit', title: `买点：逐 1 分钟回溯，当日第一个涨幅达到 +${n}% 的分钟（谁先达到买谁）`, desc: `**不严格按 5 分钟桶成交**：命中候选后向前回溯 **1 分钟分时**，取个股当日**第一个涨幅（较昨收）达到 +${n}% 的分钟**，按该分钟分时价成交（模糊 1 分钟买点诊断）；跨个股取**首次触及最早**者（同分钟取涨幅更大者），被过滤的候选按触发先后**向后顺延**。` },
+  { key: 'ir_float_cap', title: `触发涨幅窗口：+${n}% ≤ 触发时涨幅 ≤ +${n + 3}%（最多向上浮动 3 个点）`, desc: `个股「率先达到 +${n}%」**那一刻**的涨幅若已 **> +${n + 3}%**（含 **9:30 开盘即大于 +${n + 3}%**），该股**整日不买**，**向后顺延**其他股票。` },
+  { key: 'ir_trigger_emo', title: '触发时盘中科技情绪 < 30', desc: '触发买点那一刻的**盘中科技情绪**（取触发分钟所在 5 分钟桶情绪）**≥ 30** 即视为情绪过热，该候选**不买、向后顺延**（2026-11-28 用户追加；情绪数据缺失时不拦截）。' },
+  { key: 'ir_stock_cap', title: '个股总市值 ≥ 300 亿（只买中盘/权重股）', desc: '买入**个股自身**的总市值（按当日股价折算）须 **≥ 300 亿元**（2026-11-28 用户明确：按个股总市值过滤，只买中盘/权重股、不要小盘股；**并非板块整体市值**——全部置顶板块整体市值均远超 300 亿，按板块口径华正新材（196 亿）这类小市值股拦不住）；总市值不足**或市值数据不足**的候选均顺延下一只（严格口径）。' },
+  { key: 'ir_limit_up_skip', title: '涨停过滤：触发时未涨停（涨停价买不进）', desc: '触发分钟已涨停（主板涨幅 > 9.5%、创业/科创板 > 19%）的候选**整日不买**、向后顺延；全部达标股均不可买则当日不买。' },
+  { key: 'ir_position', title: '仓位：全仓直接买入，单持仓；当日仅一次出手机会', desc: '每次买入均**全仓（权重 1）**，账户同一时间最多持有 1 只股票；当日「率先达标」事件**仅一次**——事件发生时正持仓无法出手则错过，**当日不再补买、也不追高后到者**。' },
+];
+const iceReboundSellRules = SELL_RULES;
+const iceReboundNote = (n) => ({
+  group: `冰点反弹·率先冲击（${n}%）`,
+  bullets: [
+    '**策略定位**：情绪冰点次日博反弹——前一交易日科技情绪跌至冰点（≤ -20）后，次日**置顶板块中谁第一个率先冲高**就追谁，买「当日最强先动手」的个股。',
+    `**买点（三步）**：① 前一交易日科技情绪指数 **≤ -20**（情绪冰点）；② **往前数两个交易日**（T-1、T-2）科技情绪均 **< 20**（任一日 ≥ 20 视为情绪已回暖/过热，当日不能出手）；③ **逐 1 分钟回溯分时**（不严格按 5 分钟桶），取个股当日**第一个涨幅达到 +${n}% 的分钟**按该分钟分时价成交（模糊 1 分钟买点诊断，**9:30 – 13:30**），跨个股取**首次触及最早**者（同分钟取涨幅更大者）。`,
+    '**候选池（2026-11-28 用户改）**：不再是全量自选科技股，改为盯盘页「板块涨跌幅」**置顶板块**（**光通信、mpo、pcb、ccl、电子布、铜箔、半导体、国产超节点、华为、先进封装**；**回测剔除「物理AI」「AI剧」**，盯盘页/训练营置顶展示不受影响）的成分股 ∩ 当日自选股回放。',
+    `**涨幅窗口（2026-11-28 用户改）**：**最多向上浮动 3 个点**——触发那一刻涨幅须在 **+${n}% ~ +${n + 3}%** 区间；超过 +${n + 3}%（含 **9:30 开盘即超过**）的个股**整日不买**，**向后顺延**其他股票。`,
+    '**板块市值门槛（2026-11-28 用户改）**：买入**个股自身总市值 ≥ 300 亿元**（按当日股价折算；只买中盘/权重股、不要小盘股——并非板块整体市值口径，板块整体市值均远超 300 亿）；总市值不足的候选顺延下一只；另保留涨停过滤（触发分钟已涨停买不进 → 顺延）。',
+    '**仓位**：**全仓直接买入、单持仓**——未卖出前不再买入其它股票；当日「率先达标」事件仅一次，正持仓错过则当日不再补买。',
+    '**卖点（与「3日涨幅最大&三日情绪-30快进快出」通用卖点基本一致）**：通用 7 条件卖点（均线破位 / 高位放量大阴线 / 科技板块情绪退潮 / 抗分歧弱势 / 连续三日抗分歧弱势 / 跌破最迟买入日低点 / 跌破成本线）+ 盘中大跌 -7% 强卖；**本策略差异（2026-11-28 用户改）**：① 成本线止损为「低于成本价即卖」（costLinePct=0，不再等 -2%）；② **禁用竞价低开自救窗口**——**9:30 开盘价低于成本线即按 9:30 分时价直接卖**，不再观察开盘拉升/回落；**快进快出专属机制不启用**（无次日 10:00 强卖、无快进快出半仓）。',
+  ],
+});
 const EMOTION_BURST_DRIFT_STRATEGY_IDS = ['emotion_burst_drift_leader'];const isEmotionBurstDriftStrategy = (id) => EMOTION_BURST_DRIFT_STRATEGY_IDS.includes(id);
 const emotionBurstDriftBuyRules = [
   { key: 'ebd_tech_emotion', title: '买点前置：前一交易日「科技情绪指数」收盘 > 10', desc: '取**前一交易日**科技情绪指数的**收盘值**，须 **> 10**；数值 ≤ 10 或缺失时**次日不买**。' },
@@ -1524,6 +1570,11 @@ export const STRATEGY_SPECIFIC_NOTES = {
   // ---- 情绪周期-一周一次（mood_weekly_once，2026-11-27 用户新增，仅回测） ----
   mood_weekly_once: moodWeeklyNote,
 
+  // ---- 冰点反弹-率先冲击n%（2026-11-28 用户新增，n = 5/6/7/8，仅回测） ----
+  ice_rebound_first_hit_3: iceReboundNote(3),
+  ice_rebound_first_hit_4: iceReboundNote(4),
+  ice_rebound_first_hit_5: iceReboundNote(5),
+
   // ---- N 日涨幅最大-成交量占比（2026-10-25 用户新增，N = 2/3/4/5） ----
   highest_2d_gain_volume_share: gainVolumeShareNote(2),
   highest_3d_gain_volume_share: gainVolumeShareNote(3),
@@ -1538,6 +1589,7 @@ export const getStrategyRuleSets = (strategy) => {
   const s = strategy;
   let buyRules = BUY_RULES;
   if (isMoodWeeklyStrategy(s)) buyRules = moodWeeklyBuyRules;
+  else if (isIceReboundStrategy(s)) buyRules = iceReboundBuyRules(iceReboundN(s));
   else if (isMoodTimingStrategy(s)) buyRules = moodTimingBuyRules(moodTimingN(s));
   else if (isMoodBlockResonanceStrategy(s)) buyRules = moodBlockResonanceBuyRules;
   else if (isWashFusionStrategy(s)) buyRules = washFusionBuyRules;
@@ -1816,20 +1868,17 @@ const BacktestDrawer = ({ open = true, onClose, dates = [], embedded = false }) 
   const curIsIce = isIceStrategy(strategy);
   const curIsIceRev = isIceRevStrategy(strategy);
   const curIsExtremeWin = isExtremeWinStrategy(strategy);
-  // 「情绪游资-极致胜率」与「首板洗盘-起爆拉升」默认范围固定从 2026-07-01 起（其他策略仍为最近 60 个可用交易日），
-  // 这两个策略引擎不依赖资金/成交量快照，可用更早的历史日期（2026-10-31 用户要求）
+  // 默认回测范围（2026-11-28 用户要求）：全部策略默认从 2026-07-28（回放数据最早支持日期）开始、
+  // 一直到最新一个交易日；仅特殊策略（极致胜率 / 首板洗盘 / 放量洗盘 / 极致赔率 / 板块共振，
+  // 引擎不依赖资金/成交量快照）指定从 2026-07-01 起
   const defaultRange = useMemo(() => {
-    if (curIsExtremeWin || isFirstBoardWashStrategy(strategy) || isVolumeWashoutStrategy(strategy) || isWashFusionStrategy(strategy) || isMoodBlockResonanceStrategy(strategy)) {
-      const start = dayjs(EXTREME_WIN_EARLIEST_DATE, 'YYYYMMDD');
-      const end = dayjs(maxDateStr, 'YYYYMMDD');
-      return start.isAfter(end) ? [end, end] : [start, end];
-    }
-    if (availableDates.length === 0) return [dayjs(EARLIEST_DATE, 'YYYYMMDD'), dayjs(maxDateStr, 'YYYYMMDD')];
-    const sortedAsc = [...availableDates].sort();
-    const start = sortedAsc[Math.max(0, sortedAsc.length - REPORT_DAYS)];
-    const end = sortedAsc[sortedAsc.length - 1];
-    return [dayjs(start, 'YYYYMMDD'), dayjs(end, 'YYYYMMDD')];
-  }, [availableDates, maxDateStr, curIsExtremeWin, strategy]);
+    const startDateStr = (curIsExtremeWin || isFirstBoardWashStrategy(strategy) || isVolumeWashoutStrategy(strategy) || isWashFusionStrategy(strategy) || isMoodBlockResonanceStrategy(strategy))
+      ? EXTREME_WIN_EARLIEST_DATE
+      : EARLIEST_DATE;
+    const start = dayjs(startDateStr, 'YYYYMMDD');
+    const end = dayjs(maxDateStr, 'YYYYMMDD');
+    return start.isAfter(end) ? [end, end] : [start, end];
+  }, [maxDateStr, curIsExtremeWin, strategy]);
   // 融合策略（sci_attack_emo_win）在记录标签/规则集合上与极致胜率共用同一套渲染分支
   const curIsExtremeWinLike = curIsExtremeWin || isFusedStrategy(strategy);
   const curIsReverseLeader = isReverseLeaderStrategy(strategy);

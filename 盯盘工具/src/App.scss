@@ -939,6 +939,10 @@
     &:hover {
       background: rgba(var(--theme-color-rgb, 24, 144, 255), 0.06) !important;
     }
+
+    &.clickable {
+      cursor: pointer;
+    }
   }
 
   .block-stock-name {

@@ -211,6 +211,12 @@ const KeyBlocksMonitor = ({ onBlockClick, onOpenOverlayTimeLine, overlayInlineAd
         return [...keyList, ...otherList];
     }, [allBlocks, keyBlockNames, searchKeyword]);
 
+    // 展示顺序：按平均涨幅从高到低排列
+    const displayBlocks = useMemo(
+        () => orderedBlocks.slice().sort((a, b) => (Number(b.avgChange) || 0) - (Number(a.avgChange) || 0)),
+        [orderedBlocks]
+    );
+
     const renderBlockStockPopover = (b) => (
         <div className="kb-pop-body">
             {/* <div className="kb-pop-toolbar">
@@ -282,9 +288,9 @@ const KeyBlocksMonitor = ({ onBlockClick, onOpenOverlayTimeLine, overlayInlineAd
                 }
                 style={{ marginBottom: 8 }}
             >
-                {loading && orderedBlocks.length === 0 ? (
+                {loading && displayBlocks.length === 0 ? (
                     <div className="kb-empty-tip">加载中...</div>
-                ) : orderedBlocks.length === 0 ? (
+                ) : displayBlocks.length === 0 ? (
                     <div className="kb-empty-tip">
                         暂无重点板块 ·
                         <a
@@ -296,7 +302,7 @@ const KeyBlocksMonitor = ({ onBlockClick, onOpenOverlayTimeLine, overlayInlineAd
                     </div>
                 ) : (
                     <div className="blocks-grid">
-                        {orderedBlocks.map((b) => {
+                        {displayBlocks.map((b) => {
                             const isToggling = togglingBlock === b.blockName;
                             return (
                                 <Popover

@@ -573,7 +573,10 @@ const runSellPointDiagnosis = async (position, currentBucket, replayStocks, time
     ? Number(position.costLinePrice)
     : buyPrice;
   const costLineThreshold = costLineBase !== null && costLineBase > 0 ? costLineBase * costLineRatio : null;
-  const openBrokeCostLine = costLineThreshold !== null && openPrice != null && openPrice > 0 && openPrice < costLineThreshold;
+  // 竞价低开自救窗口可按策略禁用（position.disableCostLineSelfRescue，2026-11-28 冰点反弹系列启用）：
+  //   禁用后 9:30 开盘价低于成本线阈值 → 条件7 立即触发、按当桶（9:30）分时价直接卖，不再观察开盘拉升/回落
+  const disableCostLineSelfRescue = position?.disableCostLineSelfRescue === true;
+  const openBrokeCostLine = !disableCostLineSelfRescue && costLineThreshold !== null && openPrice != null && openPrice > 0 && openPrice < costLineThreshold;
   // 自救窗口观察：在截至当前桶的分时点中找首个「分钟价低于上一分钟、且该分钟价仍跌破阈值」的回落点
   //（stockPoints 已按分钟升序、过滤无效价）——若拉升已回补至阈值上方，此时的回落不计入；待再次跌破阈值并回落才触发
   let costLineFirstDecline = null;

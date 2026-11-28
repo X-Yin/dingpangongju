@@ -7333,7 +7333,7 @@
         "titleColor": "#FFFFFF",
         "descColor": "rgba(255, 255, 255, 0.75)",
         "itemBg": "#9A73FF",
-        "itemTitleColor": "#1A1A1A",
+        "itemTitleColor": "rgb(255,250,250)",
         "itemDescColor": "rgba(26, 26, 26, 0.7)",
         "itemBorderColor": "transparent",
         "itemBorderStyle": "none",

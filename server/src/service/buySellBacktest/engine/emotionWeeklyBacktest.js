@@ -1,12 +1,13 @@
 // 情绪周期-一周一次（2026-11-27 用户新增；仅回测；独立引擎）
 //
-// 买点（5 分钟成交额快照逐桶判定，三条同时满足）：
+// 买点（5 分钟成交额快照逐桶判定，两条同时满足）：
 //   ① 大盘分时放量 ≥ 500 亿：成交额快照 amountChangeDiff（今日全市场累计成交额 − 昨日同期累计成交额，单位亿）≥ 500；
-//   ② 往前数最近两个交易日「收盘口径」放量（当日最后一个成交额快照的 amountChangeDiff）均 < 500 亿；
-//   ③ 创业板指（sz399006）与科创 50（sh000688）过去 10 分钟内均为上涨（当下涨幅 − 10 分钟前涨幅 > 0）；
-//   买入时段沿用普通策略 9:30 – 13:30（13:30 之后的快照不再触发买入）。
-// 选股：目标板块（半导体 / 光通信 / 光芯片 / cpo / MPO / 半导体材料 / CCL / pcb，光通信取「光模块 + 光纤」）
-//       中取触发时点当日涨幅（成分股当日涨幅均值）最大的板块，再买该板块内当日分时涨幅最大的个股；
+//   ② 创业板指（sz399006）与科创 50（sh000688）过去 10 分钟内均为上涨（当下涨幅 − 10 分钟前涨幅 > 0），
+//      且两者至少一个「当下涨幅」> 1%（2026-11-27 用户补充）；
+//   买入时段 9:30 – 14:55（覆盖午后放量；2026-11-27 由 13:30 延长）。
+//   2026-11-27 用户确认：取消「往前两个交易日收盘口径不得放量」的前置检查（11-04 这类 T-2 放量日也可买）。
+// 选股：目标板块（半导体 / 光通信 / 光芯片 / cpo / MPO / 半导体材料 / CCL / pcb / 电子布 / 铜箔 / PPE树脂，
+//       光通信取「光模块 + 光纤」）中取触发时点当日涨幅（成分股当日涨幅均值）最大的板块，再买该板块内当日分时涨幅最大的个股；
 //       买点时刻已涨停（主板 > 9.5%、创业板/科创板 > 19%）则按涨幅排名顺延下一只；全部涨停则本次不买。
 // 仓位：全仓单持仓（同一时间最多 1 只，未卖出前不再买入）。
 // 卖点：完全复用「3日涨幅最大&三日情绪-30快进快出」的通用卖点——通用 7 条件卖点 + 盘中大跌强卖（-7%）；
@@ -15,9 +16,11 @@ const { STRATEGIES } = require('../strategies/registry');
 const {
   batchParallel,
   calcDailyMaInfo,
+  calculateResilience,
   clearTlineMemCache,
   getKeyBlockConstituents,
   getKlineCached,
+  getLimitTypeByCode,
   getSingleStockTlineDataByDate,
   getTrainingCampDates,
   loadTrainingCampData,
@@ -28,10 +31,10 @@ const { generalSellPositions } = require('./sellHooks/generalSell');
 const { attachBuyDayReturn, calcDrawdownStats, sortTradesByBuyTime } = require('../utils/tradeStats');
 const { round2 } = require('./extremeWinScores');
 
-const BUY_TIME_MAX_MINUTE = 1330;   // 买入时段上限（与普通策略一致）
+const BUY_TIME_MAX_MINUTE = 1455;   // 买入时段上限（本策略延长至 14:55，覆盖午后放量；普通策略为 13:30）
 const VOLUME_MIN_YI = 500;          // 大盘分时放量阈值：≥ 500 亿
-const PRIOR_VOLUME_DAYS = 2;        // 往前两个交易日不得出现放量日（收盘口径）
 const INDEX_RISE_WINDOW = 10;       // 创业板 / 科创板过去 10 分钟涨幅差 > 0
+const INDEX_MIN_CURRENT_GAIN = 1;   // 创业板 / 科创板至少一个当下涨幅 > 1%
 const CYB_INDEX_CODE = 'sz399006';  // 创业板指
 const STAR_INDEX_CODE = 'sh000688'; // 科创 50
 const BLOCK_COVERAGE_RATIO = 0.5;   // 板块当日涨幅 = 有效成分股当日涨幅均值，覆盖需 ≥ 50% 且不少于 2 只
@@ -46,6 +49,9 @@ const TARGET_BLOCKS = [
   { label: '半导体材料', names: ['半导体材料'] },
   { label: 'CCL', names: ['CCL'] },
   { label: 'pcb', names: ['pcb'] },
+  { label: '电子布', names: ['电子布'] },
+  { label: '铜箔', names: ['铜箔'] },
+  { label: 'PPE树脂', names: ['PPE树脂'] },
 ];
 
 const toAbsMinute = (mm) => Math.floor(mm / 100) * 60 + (mm % 100);
@@ -76,16 +82,6 @@ const getDayAmountList = (dateStr) => {
   }
   list.sort((a, b) => toAbsMinute(a.minute) - toAbsMinute(b.minute));
   return list;
-};
-
-// 某交易日「收盘口径」放量（当日最后一个快照的 amountChangeDiff）；无快照返回 null（视为未放量，不拦截）
-const closeDiffCache = new Map();
-const getCloseAmountDiff = (dateStr) => {
-  if (closeDiffCache.has(dateStr)) return closeDiffCache.get(dateStr);
-  const list = getDayAmountList(dateStr);
-  const value = list.length > 0 ? list[list.length - 1].diff : null;
-  closeDiffCache.set(dateStr, value);
-  return value;
 };
 
 const pointAtMinute = (points, minute) => {
@@ -131,18 +127,18 @@ const loadDayTline = async (code, dateNum) => {
   }
 };
 
-// 指数过去 N 分钟涨幅差（当下涨幅 − N 分钟前涨幅）
+// 指数过去 N 分钟涨幅差（当下涨幅 − N 分钟前涨幅）与当下涨幅
 const indexRiseOverWindow = (tline, minute) => {
   const cur = pointAtMinute(tline.points, minute);
   const prev = pointAtAbs(tline.points, toAbsMinute(minute) - INDEX_RISE_WINDOW);
   if (!cur || !prev) return null;
   const diff = Number(cur.change) - Number(prev.change);
-  return Number.isFinite(diff) ? round2(diff) : null;
+  if (!Number.isFinite(diff) || !Number.isFinite(Number(cur.change))) return null;
+  return { rise: round2(diff), current: round2(Number(cur.change)) };
 };
 
-// 构建当日买点触发桶（放量 ≥ 500 亿 + 前两日未放量 + 创业板/科创 10 分钟上涨）
-const buildTriggers = async (dateStr, dateNum, prevCloseDiffs) => {
-  if (prevCloseDiffs.some((v) => v != null && v >= VOLUME_MIN_YI)) return [];
+// 构建当日买点触发桶（放量 ≥ 500 亿 + 创业板/科创 10 分钟上涨且至少一个当下涨幅 > 1%）
+const buildTriggers = async (dateStr, dateNum) => {
   const list = getDayAmountList(dateStr).filter((x) => x.minute >= 930 && x.minute <= BUY_TIME_MAX_MINUTE && x.diff >= VOLUME_MIN_YI);
   if (list.length === 0) return [];
   const [cyb, star] = await Promise.all([
@@ -152,11 +148,19 @@ const buildTriggers = async (dateStr, dateNum, prevCloseDiffs) => {
   if (!cyb || !star) return [];
   const triggers = [];
   for (const item of list) {
-    const cybRise = indexRiseOverWindow(cyb, item.minute);
-    const starRise = indexRiseOverWindow(star, item.minute);
-    if (cybRise == null || starRise == null) continue;
-    if (!(cybRise > 0) || !(starRise > 0)) continue;
-    triggers.push({ minute: item.minute, diff: item.diff, cybRise, starRise });
+    const cybWindow = indexRiseOverWindow(cyb, item.minute);
+    const starWindow = indexRiseOverWindow(star, item.minute);
+    if (!cybWindow || !starWindow) continue;
+    if (!(cybWindow.rise > 0) || !(starWindow.rise > 0)) continue;
+    if (!(Math.max(cybWindow.current, starWindow.current) > INDEX_MIN_CURRENT_GAIN)) continue;
+    triggers.push({
+      minute: item.minute,
+      diff: item.diff,
+      cybRise: cybWindow.rise,
+      starRise: starWindow.rise,
+      cybChange: cybWindow.current,
+      starChange: starWindow.current,
+    });
   }
   return triggers;
 };
@@ -241,18 +245,9 @@ const pickStock = (blocks, tlineMap, minute) => {
   };
 };
 
-const buildBuyChecks = (pos, prevCloseDiffs, prevDates) => {
+const buildBuyChecks = (pos) => {
   const t = pos.buyInfo;
   return [
-    {
-      id: 'ew_prior_volume',
-      title: `往前 ${PRIOR_VOLUME_DAYS} 个交易日收盘口径放量均 < ${VOLUME_MIN_YI} 亿`,
-      passed: true,
-      value: prevCloseDiffs
-        .map((v, i) => `${prevDates[i] ? fmtDate(prevDates[i]) : '--'} ${v == null ? '无快照' : `${v} 亿`}`)
-        .join('、'),
-      reason: `取前 ${PRIOR_VOLUME_DAYS} 个交易日当日最后一个成交额快照的 amountChangeDiff 作为收盘口径放量，均须 < ${VOLUME_MIN_YI} 亿（无快照不拦截）`,
-    },
     {
       id: 'ew_intraday_volume',
       title: `大盘分时放量 ≥ ${VOLUME_MIN_YI} 亿`,
@@ -262,10 +257,10 @@ const buildBuyChecks = (pos, prevCloseDiffs, prevDates) => {
     },
     {
       id: 'ew_index_rise',
-      title: `创业板指与科创 50 过去 ${INDEX_RISE_WINDOW} 分钟均为上涨`,
+      title: `创业板指与科创 50 过去 ${INDEX_RISE_WINDOW} 分钟均为上涨，且至少一个当下涨幅 > ${INDEX_MIN_CURRENT_GAIN}%`,
       passed: true,
-      value: `创业板指 ${gainText(t.cybRise)}、科创 50 ${gainText(t.starRise)}（当下涨幅 − ${INDEX_RISE_WINDOW} 分钟前涨幅）`,
-      reason: `以两只指数分时涨幅（change）计算过去 ${INDEX_RISE_WINDOW} 分钟的涨幅差，均须 > 0`,
+      value: `创业板指 ${gainText(t.cybChange)}（10 分钟 ${gainText(t.cybRise)}）、科创 50 ${gainText(t.starChange)}（10 分钟 ${gainText(t.starRise)}）`,
+      reason: `以两只指数分时涨幅（change）计算过去 ${INDEX_RISE_WINDOW} 分钟的涨幅差，两者均须 > 0；且两者当下涨幅的较大值须 > ${INDEX_MIN_CURRENT_GAIN}%`,
     },
     {
       id: 'ew_block_pick',
@@ -289,8 +284,34 @@ const buildBuyChecks = (pos, prevCloseDiffs, prevDates) => {
 
 const fmtDate = (dateStr) => `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
 
+// 非自选股持仓：现算前两个交易日抗分歧分数（通用卖点条件5「连续三日抗分歧弱势」依赖 resilience3dScores[0]/[1]）
+const computePrevResilienceScores = async (code, dateStr, allDates) => {
+  const idx = allDates.indexOf(dateStr);
+  if (idx < 2) return [];
+  const indexCode = String(code).startsWith('sh688') ? 'sh000688' : 'sz399006';
+  const scores = [];
+  for (const d of [allDates[idx - 2], allDates[idx - 1]]) {
+    try {
+      const [st, it] = await Promise.all([
+        getSingleStockTlineDataByDate(code, parseInt(d, 10)),
+        getSingleStockTlineDataByDate(indexCode, parseInt(d, 10)),
+      ]);
+      const sLine = (st?.line || []).filter((p) => p && p.minute != null);
+      const iLine = (it?.line || []).filter((p) => p && p.minute != null);
+      if (sLine.length >= 5 && iLine.length >= 5) {
+        scores.push(parseFloat(calculateResilience(iLine, sLine, getLimitTypeByCode(code)).toFixed(2)));
+      } else {
+        scores.push(null);
+      }
+    } catch (e) {
+      scores.push(null);
+    }
+  }
+  return scores;
+};
+
 // 将非自选股的持仓个股补进当日时间桶与回放数据（通用 7 条件卖点依赖 stockChanges 的现价/涨幅/均线字段）
-const injectHeldStock = async (pos, dateStr, dateNum, timeBuckets, replayStocks, maCache) => {
+const injectHeldStock = async (pos, dateStr, dateNum, timeBuckets, replayStocks, maCache, allDates) => {
   const inBuckets = timeBuckets.some((b) => (b.stockChanges || []).some((s) => s.code === pos.code));
   if (inBuckets) return;
   const tline = await loadDayTline(pos.code, dateNum);
@@ -304,6 +325,7 @@ const injectHeldStock = async (pos, dateStr, dateNum, timeBuckets, replayStocks,
     }
     maCache.set(pos.code, maInfo);
   }
+  const prevScores = await computePrevResilienceScores(pos.code, dateStr, allDates);
   for (const b of timeBuckets) {
     const pt = pointAtMinute(tline.points, Number(b.minute));
     b.stockChanges = b.stockChanges || [];
@@ -317,8 +339,8 @@ const injectHeldStock = async (pos, dateStr, dateNum, timeBuckets, replayStocks,
       dailyMa10: maInfo?.ma10 ?? null,
       dailyMa10Slope: maInfo?.ma10Slope ?? null,
       dailyPrevLow: maInfo?.prevLow ?? null,
-      resilience3dScores: [],
-      resilience3dValid: false,
+      resilience3dScores: prevScores,
+      resilience3dValid: prevScores.every((v) => v != null),
     });
   }
   if (!replayStocks.some((s) => s.code === pos.code)) {
@@ -379,18 +401,8 @@ const runEmotionWeeklyBacktest = async (startDate, endDate, strategyId, onProgre
 
     const replayStocks = await buildReplayStocksWithTline(campData, dateStr);
 
-    // 最近两个交易日「收盘口径」放量
-    const allIdx = allDates.indexOf(dateStr);
-    const prevDates = [];
-    const prevCloseDiffs = [];
-    for (let k = 1; k <= PRIOR_VOLUME_DAYS; k += 1) {
-      const d = allIdx - k >= 0 ? allDates[allIdx - k] : null;
-      prevDates.push(d);
-      prevCloseDiffs.push(d ? getCloseAmountDiff(d) : null);
-    }
-
     // 当日买点触发桶（未触发时不加载板块分时）
-    const triggers = await buildTriggers(dateStr, dateNum, prevCloseDiffs);
+    const triggers = await buildTriggers(dateStr, dateNum);
     const triggerByMinute = new Map(triggers.map((t) => [t.minute, t]));
     const tlineMap = new Map();
     if (triggers.length > 0) {
@@ -410,7 +422,7 @@ const runEmotionWeeklyBacktest = async (startDate, endDate, strategyId, onProgre
     const maCache = new Map();
     for (const pos of positions) {
       if (dateStr <= pos.buyDate) continue;
-      await injectHeldStock(pos, dateStr, dateNum, timeBuckets, replayStocks, maCache);
+      await injectHeldStock(pos, dateStr, dateNum, timeBuckets, replayStocks, maCache, allDates);
       const tl = tlineMap.get(pos.code) || await loadDayTline(pos.code, dateNum);
       if (tl && tl.points.length > 0) lastPxByCode.set(pos.code, tl.points[tl.points.length - 1].lastPx);
     }
@@ -439,8 +451,8 @@ const runEmotionWeeklyBacktest = async (startDate, endDate, strategyId, onProgre
         buyPrice: round2(sel.pick.lastPx),
         buyChange: round2(sel.pick.currentPct),
         metric: null,
-        buyReason: `大盘分时放量 ${trigger.diff} 亿（≥ ${VOLUME_MIN_YI} 亿，前两日收盘口径未放量），`
-          + `创业板指 ${gainText(trigger.cybRise)}、科创 50 ${gainText(trigger.starRise)}（过去 ${INDEX_RISE_WINDOW} 分钟上涨），`
+        buyReason: `大盘分时放量 ${trigger.diff} 亿（≥ ${VOLUME_MIN_YI} 亿），`
+          + `创业板指 ${gainText(trigger.cybChange)}、科创 50 ${gainText(trigger.starChange)}（过去 ${INDEX_RISE_WINDOW} 分钟上涨，至少一个当下涨幅 > ${INDEX_MIN_CURRENT_GAIN}%），`
           + `目标板块「${sel.block.label}」当日涨幅 ${gainText(sel.blockGain)} 最高，`
           + `买入板块内分时涨幅最大 ${sel.pick.name}（当日 ${gainText(sel.pick.currentPct)}）`
           + `${sel.skippedLimitUp.length > 0 ? `，涨停顺延 ${sel.skippedLimitUp.map((x) => x.name).join('、')}` : ''}`
@@ -451,6 +463,8 @@ const runEmotionWeeklyBacktest = async (startDate, endDate, strategyId, onProgre
           volumeDiff: round2(trigger.diff),
           cybRise: trigger.cybRise,
           starRise: trigger.starRise,
+          cybChange: trigger.cybChange,
+          starChange: trigger.starChange,
           blockLabel: sel.block.label,
           blockGain: sel.blockGain,
           candidateCount: sel.candidateCount,
@@ -458,7 +472,7 @@ const runEmotionWeeklyBacktest = async (startDate, endDate, strategyId, onProgre
           skippedLimitUp: sel.skippedLimitUp,
         },
       };
-      pos.buyChecks = buildBuyChecks(pos, prevCloseDiffs, prevDates);
+      pos.buyChecks = buildBuyChecks(pos);
       positions.push(pos);
 
       const tl = tlineMap.get(sel.pick.code);

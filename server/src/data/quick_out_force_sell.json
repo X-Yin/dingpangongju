@@ -1,31 +1,13 @@
 {
-  "20261118": [
+  "20261127": [
     {
-      "code": "sz000062",
-      "name": "深圳华强",
+      "code": "sz300394",
+      "name": "天孚通信",
       "time": "10:00",
-      "ema": -34.55,
+      "ema": -31.08,
       "trigger": "ema_below",
-      "prevRaw": -40.77,
-      "prev2Raw": -50.14
-    },
-    {
-      "code": "sh688361",
-      "name": "中科飞测",
-      "time": "10:00",
-      "ema": -34.55,
-      "trigger": "ema_below",
-      "prevRaw": -40.77,
-      "prev2Raw": -50.14
-    },
-    {
-      "code": "sh688120",
-      "name": "华海清科",
-      "time": "10:00",
-      "ema": -34.55,
-      "trigger": "ema_below",
-      "prevRaw": -40.77,
-      "prev2Raw": -50.14
+      "prevRaw": -54.28,
+      "prev2Raw": -6.44
     }
   ]
 }

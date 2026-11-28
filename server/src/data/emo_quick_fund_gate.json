@@ -1,22 +1,29 @@
 {
   "strategyId": "highest_3d_gain_emoquick",
   "strategyName": "3日涨幅最大&三日情绪-30快进快出",
-  "computedAt": "2026-11-26 14:41:03",
+  "computedAt": "2026-11-27 10:35:07",
   "reason": "持仓变动重跑（持仓管理增删股票）",
   "range": {
-    "startDate": "20260827",
-    "endDate": "20261126"
+    "startDate": "20260828",
+    "endDate": "20261127"
   },
   "tradeCount": 12,
   "threshold": 30,
-  "consecutiveBelow": 2,
+  "consecutiveBelow": 3,
   "lastReturns": [
     {
-      "code": "sz300548",
-      "name": "长芯博创",
-      "sellDate": "20260917",
-      "sellTime": "09:56",
-      "returnRate": -1.12
+      "code": "sh688082",
+      "name": "盛美上海",
+      "sellDate": "20260930",
+      "sellTime": "10:00",
+      "returnRate": 0.97
+    },
+    {
+      "code": "sh688120",
+      "name": "华海清科",
+      "sellDate": "20261019",
+      "sellTime": "09:31",
+      "returnRate": -1.56
     },
     {
       "code": "sz001309",
@@ -40,11 +47,11 @@
       "returnRate": -1.1
     },
     {
-      "code": "sh688981",
-      "name": "中芯国际",
+      "code": "sz002636",
+      "name": "金安国纪",
       "sellDate": "20261103",
-      "sellTime": "09:40",
-      "returnRate": -0.56
+      "sellTime": "09:32",
+      "returnRate": -3.19
     },
     {
       "code": "sh688120",
@@ -61,25 +68,18 @@
       "returnRate": -0.6
     },
     {
-      "code": "sh688702",
-      "name": "盛科通信",
-      "sellDate": "20261113",
-      "sellTime": "10:55",
-      "returnRate": 15.92
+      "code": "sz300502",
+      "name": "新易盛",
+      "sellDate": "20261112",
+      "sellTime": "14:00",
+      "returnRate": -0.48
     },
     {
       "code": "sz002897",
       "name": "意华股份",
       "sellDate": "20261118",
       "sellTime": "09:31",
-      "returnRate": -1.36
-    },
-    {
-      "code": "sz000636",
-      "name": "风华高科",
-      "sellDate": "20261125",
-      "sellTime": "09:35",
-      "returnRate": -0.86
+      "returnRate": -1.4
     }
   ]
 }

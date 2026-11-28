@@ -74,7 +74,7 @@ const generalSellPositions = async ({ positions, strategy, bi, replayStocks, tim
     //（仅条件7「跌破成本线 -2%」判定使用；收益率 returnRate 仍按各自实际买入价计算）
     // 「两次买入（不同股）」同股合并（2026-10-23）：用循环前快照，避免先卖出一份后另一份失效
     const unifiedCost = unifiedCostMap.has(pos.code) ? unifiedCostMap.get(pos.code) : getUnifiedCostLinePrice(pos, positions, strategy);
-    const position = { code: pos.code, stockName: pos.stockName, buyPrice: pos.buyPrice, buyDate: pos.buyDate, costLinePct: strategy.costLinePct, ...(unifiedCost != null ? { costLinePrice: unifiedCost } : {}) };
+    const position = { code: pos.code, stockName: pos.stockName, buyPrice: pos.buyPrice, buyDate: pos.buyDate, costLinePct: strategy.costLinePct, ...(strategy.disableCostLineSelfRescue === true ? { disableCostLineSelfRescue: true } : {}), ...(unifiedCost != null ? { costLinePrice: unifiedCost } : {}) };
     const result = await runSellPointDiagnosis(position, bucket, replayStocks, timeBuckets, bi, dateStr);
     if (result.isSell && result.closePrice != null) {
       const satisfiedNames = result.conditions.filter(c => c.satisfied).map(c => c.name).join('、');

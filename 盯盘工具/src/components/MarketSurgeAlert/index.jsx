@@ -25,6 +25,9 @@ const TARGET_BLOCKS = [
 
 const AMOUNT_DIFF_THRESHOLD = 500; // 亿（较昨日同期放量）
 const BLOCK_REFRESH_INTERVAL = 60 * 1000; // 弹窗内板块涨幅刷新间隔（对应「近 1 分钟变化」）
+const RATE_LIMIT_STORAGE_KEY = 'market_surge_alert_rate_limit';
+const MAX_POPUPS_PER_DAY = 5; // 全天最多弹出次数
+const MIN_POPUP_INTERVAL_MS = 10 * 60 * 1000; // 两次弹出最小间隔（10 分钟）
 
 const fmtMinute = (m) => `${String(Math.floor(m / 100)).padStart(2, '0')}:${String(m % 100).padStart(2, '0')}`;
 const fmtPct = (v, digits = 2) => {
@@ -38,6 +41,26 @@ const fmtYi = (v) => {
   return `${num >= 0 ? '+' : ''}${num.toFixed(2)} 亿`;
 };
 const changeColor = (v) => (Number(v) >= 0 ? '#dc2626' : '#16a34a');
+
+// 弹窗频控：全天最多 MAX_POPUPS_PER_DAY 次，两次间隔至少 MIN_POPUP_INTERVAL_MS。
+// 记录写入 localStorage（按日期分桶），页面刷新后当日计数不重置。
+const canPopup = () => {
+  const now = Date.now();
+  const today = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD
+  let times = [];
+  try {
+    const saved = JSON.parse(localStorage.getItem(RATE_LIMIT_STORAGE_KEY) || 'null');
+    if (saved && saved.date === today) times = Array.isArray(saved.times) ? saved.times : [];
+  } catch { /* 忽略损坏数据 */ }
+  if (times.length >= MAX_POPUPS_PER_DAY) return false;
+  const last = times.length ? Number(times[times.length - 1]) : 0;
+  if (last && now - last < MIN_POPUP_INTERVAL_MS) return false;
+  times.push(now);
+  try {
+    localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify({ date: today, times }));
+  } catch { /* 存储失败时仅限本次会话内生效 */ }
+  return true;
+};
 
 const MarketSurgeAlert = () => {
   const [visible, setVisible] = useState(false);
@@ -93,8 +116,9 @@ const MarketSurgeAlert = () => {
     setSession((s) => s + 1);
   }, []);
 
-  // 后端推送：条件判定与板块数据请求都已完成，前端直接展示
+  // 后端推送：条件判定与板块数据请求都已完成，前端直接展示（受频控约束）
   const applyPush = useCallback((data) => {
+    if (!canPopup()) return;
     const list = Array.isArray(data?.blocks) ? data.blocks : [];
     const next = new Map();
     for (const b of list) {
